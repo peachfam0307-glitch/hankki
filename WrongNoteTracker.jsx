@@ -1404,9 +1404,24 @@ export default function WrongNoteTracker() {
   }
 
   // 저장된 문제 사진을 기기(사진첩)로 내려받기 — 클로드 앱에서 첨부해 정확히 물어볼 수 있게
-  function savePhoto(id) {
+  async function savePhoto(id) {
     const imgs = imageCache[id] || [];
     if (!imgs.length) return;
+    // iOS: 공유 시트로 열어 '사진에 추가'로 사진첩에 바로 저장 (다운로드는 사진첩에 안 감)
+    try {
+      const files = [];
+      for (let i = 0; i < imgs.length; i++) {
+        const blob = await (await fetch(imgs[i])).blob();
+        files.push(new File([blob], `오답_문제_${i + 1}.jpg`, { type: blob.type || "image/jpeg" }));
+      }
+      if (navigator.canShare && navigator.canShare({ files })) {
+        await navigator.share({ files, title: "오답 문제 사진" });
+        return;
+      }
+    } catch (e) {
+      if (e && e.name === "AbortError") return; // 사용자가 공유 취소
+    }
+    // 폴백: 다운로드 (공유 미지원 환경)
     imgs.forEach((src, i) => {
       const a = document.createElement("a");
       a.href = src;
