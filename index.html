@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>오답노트 트래커</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --paper: #FAFAF7;
+  --card: #FFFFFF;
+  --ink: #1F2328;
+  --ink-soft: #6B7075;
+  --line: #E4E2DC;
+  --pen: #C43D2B;
+  --pen-soft: #FBEFEC;
+  --ok: #2E7D4F;
+  --ok-soft: #EAF4EE;
+  --due: #A66A00;
+  --due-soft: #FBF3E2;
+  --focus: #2B5FC4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #17181A;
+    --card: #1F2124;
+    --ink: #E8E6E1;
+    --ink-soft: #9A9D9F;
+    --line: #33363A;
+    --pen: #E06A55;
+    --pen-soft: #3A2521;
+    --ok: #6FBF8F;
+    --ok-soft: #21342A;
+    --due: #D9A24A;
+    --due-soft: #383021;
+    --focus: #7FA6E8;
+  }
+}
+:root[data-theme="light"] {
+  --paper: #FAFAF7; --card: #FFFFFF; --ink: #1F2328; --ink-soft: #6B7075;
+  --line: #E4E2DC; --pen: #C43D2B; --pen-soft: #FBEFEC; --ok: #2E7D4F;
+  --ok-soft: #EAF4EE; --due: #A66A00; --due-soft: #FBF3E2; --focus: #2B5FC4;
+}
+:root[data-theme="dark"] {
+  --paper: #17181A; --card: #1F2124; --ink: #E8E6E1; --ink-soft: #9A9D9F;
+  --line: #33363A; --pen: #E06A55; --pen-soft: #3A2521; --ok: #6FBF8F;
+  --ok-soft: #21342A; --due: #D9A24A; --due-soft: #383021; --focus: #7FA6E8;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+:is(button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 24px 20px 64px; }
+
+/* ── Header ── */
+header {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 14px; margin-bottom: 18px;
+}
+header h1 { font-size: 22px; font-weight: 800; margin: 0; letter-spacing: -0.01em; }
+header h1 .mark { color: var(--pen); }
+header .sub { color: var(--ink-soft); font-size: 13px; }
+header .tools { margin-left: auto; display: flex; gap: 8px; }
+
+/* ── Summary chips ── */
+.summary { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.chip {
+  display: flex; align-items: baseline; gap: 7px;
+  border: 1px solid var(--line); background: var(--card);
+  border-radius: 999px; padding: 6px 14px; font-size: 13px; color: var(--ink-soft);
+}
+.chip b { font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.chip.due b { color: var(--due); }
+.chip.done b { color: var(--ok); }
+
+/* ── Layout ── */
+.cols { display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
+@media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+
+/* ── Form ── */
+.panel {
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 18px;
+}
+.panel h2 {
+  margin: 0 0 14px; font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft);
+}
+.field { margin-bottom: 12px; }
+.field label {
+  display: block; font-size: 12px; font-weight: 600; color: var(--ink-soft);
+  margin-bottom: 4px; letter-spacing: 0.02em;
+}
+.field :is(input, select, textarea) {
+  width: 100%; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--paper); padding: 8px 10px;
+}
+.field textarea { resize: vertical; min-height: 60px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn {
+  border: 1px solid var(--line); background: var(--card); border-radius: 7px;
+  padding: 7px 14px; cursor: pointer; font-weight: 600; font-size: 13px;
+}
+.btn:hover { border-color: var(--ink-soft); }
+.btn.primary { background: var(--pen); border-color: var(--pen); color: #fff; width: 100%; padding: 10px; font-size: 14px; }
+.btn.primary:hover { filter: brightness(1.06); }
+
+/* ── Filters ── */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
+.filters input[type="search"] {
+  flex: 1; min-width: 160px; border: 1px solid var(--line); border-radius: 7px;
+  background: var(--card); padding: 7px 12px;
+}
+.fbtn {
+  border: 1px solid var(--line); background: var(--card); border-radius: 999px;
+  padding: 5px 13px; cursor: pointer; font-size: 13px; color: var(--ink-soft);
+}
+.fbtn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.subjects { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.subjects .fbtn { font-size: 12px; }
+.subjects .fbtn small { opacity: 0.7; font-variant-numeric: tabular-nums; }
+
+/* ── Cards ── */
+.list { display: flex; flex-direction: column; gap: 12px; }
+.entry {
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 14px 16px; border-left: 4px solid var(--pen);
+}
+.entry.done { border-left-color: var(--ok); }
+.entry.due-today { border-left-color: var(--due); }
+.entry .top { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-bottom: 6px; }
+.tag {
+  font-size: 11px; font-weight: 700; border-radius: 4px; padding: 2px 8px;
+  letter-spacing: 0.03em;
+}
+.tag.subject { background: var(--pen-soft); color: var(--pen); }
+.tag.reason { background: var(--paper); border: 1px solid var(--line); color: var(--ink-soft); font-weight: 600; }
+.tag.status-due { background: var(--due-soft); color: var(--due); }
+.tag.status-done { background: var(--ok-soft); color: var(--ok); }
+.entry .date { margin-left: auto; font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.entry .src { font-weight: 700; margin-bottom: 4px; }
+.entry .q { white-space: pre-wrap; margin-bottom: 8px; }
+.answers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+@media (max-width: 560px) { .answers { grid-template-columns: 1fr; } }
+.answers .a {
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px;
+  font-size: 13px; background: var(--paper);
+}
+.answers .a b { display: block; font-size: 11px; letter-spacing: 0.05em; margin-bottom: 2px; }
+.answers .wrong b { color: var(--pen); }
+.answers .right b { color: var(--ok); }
+.entry .note { font-size: 13px; color: var(--ink-soft); white-space: pre-wrap; margin-bottom: 8px; }
+.entry .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-top: 1px dashed var(--line); padding-top: 10px; }
+.entry .actions .meta { font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.entry .actions .spacer { flex: 1; }
+.btn.small { padding: 4px 11px; font-size: 12px; }
+.btn.review { background: var(--ok-soft); border-color: transparent; color: var(--ok); }
+.btn.danger:hover { border-color: var(--pen); color: var(--pen); }
+
+.empty {
+  text-align: center; color: var(--ink-soft); padding: 48px 16px;
+  border: 1px dashed var(--line); border-radius: 10px;
+}
+.empty b { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>오답노트<span class="mark">.</span></h1>
+    <span class="sub">틀린 문제를 기록하고, 잊기 전에 다시 푼다</span>
+    <div class="tools">
+      <button class="btn small" id="exportBtn">내보내기</button>
+      <button class="btn small" id="importBtn">가져오기</button>
+      <input type="file" id="importFile" accept=".json" hidden>
+    </div>
+  </header>
+
+  <div class="summary">
+    <span class="chip">총 오답 <b id="statTotal">0</b></span>
+    <span class="chip due">오늘 복습할 문제 <b id="statDue">0</b></span>
+    <span class="chip done">복습 완료 <b id="statDone">0</b></span>
+  </div>
+
+  <div class="cols">
+    <section class="panel">
+      <h2>오답 기록하기</h2>
+      <form id="addForm">
+        <div class="row2">
+          <div class="field">
+            <label for="fSubject">과목</label>
+            <input id="fSubject" list="subjectList" placeholder="수학" required>
+            <datalist id="subjectList"></datalist>
+          </div>
+          <div class="field">
+            <label for="fReason">틀린 이유</label>
+            <select id="fReason">
+              <option>개념 부족</option>
+              <option>단순 실수</option>
+              <option>문제 이해 못함</option>
+              <option>시간 부족</option>
+              <option>암기 안 됨</option>
+              <option>기타</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fSource">출처 · 문제 번호</label>
+          <input id="fSource" placeholder="쎈 수학상 p.42 13번">
+        </div>
+        <div class="field">
+          <label for="fQuestion">문제 내용</label>
+          <textarea id="fQuestion" placeholder="문제를 요약해서 적거나 그대로 옮겨 적기" required></textarea>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="fMyAnswer">내가 쓴 답</label>
+            <input id="fMyAnswer" placeholder="③">
+          </div>
+          <div class="field">
+            <label for="fAnswer">정답</label>
+            <input id="fAnswer" placeholder="⑤">
+          </div>
+        </div>
+        <div class="field">
+          <label for="fNote">해설 · 메모</label>
+          <textarea id="fNote" placeholder="왜 틀렸는지, 다음에 어떻게 풀지"></textarea>
+        </div>
+        <button type="submit" class="btn primary">오답 추가</button>
+      </form>
+    </section>
+
+    <section>
+      <div class="filters">
+        <input type="search" id="fSearch" placeholder="문제·출처·메모 검색">
+        <button class="fbtn" data-filter="all" aria-pressed="true">전체</button>
+        <button class="fbtn" data-filter="due" aria-pressed="false">오늘 복습</button>
+        <button class="fbtn" data-filter="pending" aria-pressed="false">복습 전</button>
+        <button class="fbtn" data-filter="done" aria-pressed="false">완료</button>
+      </div>
+      <div class="subjects" id="subjectChips"></div>
+      <div class="list" id="list"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const KEY = "odapnote.entries.v1";
+const INTERVALS = [1, 3, 7, 14]; // 복습 간격(일): 4회 복습하면 완료
+const DAY = 86400000;
+
+let entries = load();
+let statusFilter = "all";
+let subjectFilter = null;
+let query = "";
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+  catch { return []; }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(entries)); }
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const fmt = iso => iso ? iso.replaceAll("-", ".") : "";
+
+function nextReviewDate(entry) {
+  if (entry.reviews >= INTERVALS.length) return null; // 완료
+  const base = entry.lastReview || entry.created;
+  const t = new Date(base + "T00:00:00").getTime() + INTERVALS[Math.min(entry.reviews, INTERVALS.length - 1)] * DAY;
+  return new Date(t).toISOString().slice(0, 10);
+}
+function isDue(entry) {
+  const next = nextReviewDate(entry);
+  return next !== null && next <= todayStr();
+}
+function isDone(entry) { return entry.reviews >= INTERVALS.length; }
+
+// ── 추가 ──
+document.getElementById("addForm").addEventListener("submit", e => {
+  e.preventDefault();
+  entries.unshift({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    subject: v("fSubject"), reason: v("fReason"), source: v("fSource"),
+    question: v("fQuestion"), myAnswer: v("fMyAnswer"), answer: v("fAnswer"),
+    note: v("fNote"), created: todayStr(), reviews: 0, lastReview: null,
+  });
+  save();
+  e.target.reset();
+  document.getElementById("fSubject").focus();
+  render();
+});
+const v = id => document.getElementById(id).value.trim();
+
+// ── 필터 ──
+document.querySelectorAll(".fbtn[data-filter]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    statusFilter = btn.dataset.filter;
+    document.querySelectorAll(".fbtn[data-filter]").forEach(b =>
+      b.setAttribute("aria-pressed", String(b === btn)));
+    render();
+  });
+});
+document.getElementById("fSearch").addEventListener("input", e => {
+  query = e.target.value.trim().toLowerCase();
+  render();
+});
+
+// ── 내보내기 / 가져오기 ──
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `오답노트-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById("importBtn").addEventListener("click", () =>
+  document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  file.text().then(text => {
+    const data = JSON.parse(text);
+    if (!Array.isArray(data)) throw new Error();
+    const ids = new Set(entries.map(x => x.id));
+    let added = 0;
+    for (const item of data) {
+      if (item && item.id && !ids.has(item.id)) { entries.push(item); added++; }
+    }
+    entries.sort((a, b) => (b.created || "").localeCompare(a.created || ""));
+    save(); render();
+    alert(`${added}개의 오답을 가져왔습니다.`);
+  }).catch(() => alert("파일을 읽을 수 없습니다. 이 앱에서 내보낸 JSON 파일인지 확인해 주세요."));
+  e.target.value = "";
+});
+
+// ── 렌더링 ──
+function render() {
+  document.getElementById("statTotal").textContent = entries.length;
+  document.getElementById("statDue").textContent = entries.filter(isDue).length;
+  document.getElementById("statDone").textContent = entries.filter(isDone).length;
+
+  // 과목 자동완성 + 과목 칩
+  const counts = {};
+  for (const en of entries) counts[en.subject] = (counts[en.subject] || 0) + 1;
+  document.getElementById("subjectList").innerHTML =
+    Object.keys(counts).map(s => `<option value="${esc(s)}">`).join("");
+  const chips = document.getElementById("subjectChips");
+  chips.innerHTML = "";
+  for (const s of Object.keys(counts).sort()) {
+    const b = document.createElement("button");
+    b.className = "fbtn";
+    b.setAttribute("aria-pressed", String(subjectFilter === s));
+    b.innerHTML = `${esc(s)} <small>${counts[s]}</small>`;
+    b.addEventListener("click", () => {
+      subjectFilter = subjectFilter === s ? null : s;
+      render();
+    });
+    chips.appendChild(b);
+  }
+
+  const shown = entries.filter(en => {
+    if (statusFilter === "due" && !isDue(en)) return false;
+    if (statusFilter === "pending" && (isDone(en) || isDue(en))) return false;
+    if (statusFilter === "done" && !isDone(en)) return false;
+    if (subjectFilter && en.subject !== subjectFilter) return false;
+    if (query) {
+      const hay = [en.subject, en.source, en.question, en.note, en.myAnswer, en.answer]
+        .join(" ").toLowerCase();
+      if (!hay.includes(query)) return false;
+    }
+    return true;
+  });
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  if (!shown.length) {
+    list.innerHTML = entries.length
+      ? `<div class="empty">조건에 맞는 오답이 없습니다.</div>`
+      : `<div class="empty"><b>아직 기록된 오답이 없어요.</b><br>왼쪽 폼에서 첫 번째 오답을 추가해 보세요.</div>`;
+    return;
+  }
+  for (const en of shown) list.appendChild(card(en));
+}
+
+function card(en) {
+  const el = document.createElement("article");
+  const done = isDone(en), due = isDue(en);
+  el.className = "entry" + (done ? " done" : due ? " due-today" : "");
+  const next = nextReviewDate(en);
+  const statusTag = done
+    ? `<span class="tag status-done">복습 완료</span>`
+    : due
+      ? `<span class="tag status-due">오늘 복습</span>`
+      : "";
+  el.innerHTML = `
+    <div class="top">
+      <span class="tag subject">${esc(en.subject)}</span>
+      <span class="tag reason">${esc(en.reason)}</span>
+      ${statusTag}
+      <span class="date">${fmt(en.created)}</span>
+    </div>
+    ${en.source ? `<div class="src">${esc(en.source)}</div>` : ""}
+    <div class="q">${esc(en.question)}</div>
+    ${(en.myAnswer || en.answer) ? `
+    <div class="answers">
+      <div class="a wrong"><b>내가 쓴 답</b>${esc(en.myAnswer) || "—"}</div>
+      <div class="a right"><b>정답</b>${esc(en.answer) || "—"}</div>
+    </div>` : ""}
+    ${en.note ? `<div class="note">${esc(en.note)}</div>` : ""}
+    <div class="actions">
+      <span class="meta">복습 ${en.reviews}/${INTERVALS.length}회${next ? ` · 다음 복습 ${fmt(next)}` : ""}</span>
+      <span class="spacer"></span>
+      ${done ? "" : `<button class="btn small review" data-act="review">복습 완료 체크</button>`}
+      <button class="btn small danger" data-act="delete">삭제</button>
+    </div>`;
+  el.querySelector('[data-act="review"]')?.addEventListener("click", () => {
+    en.reviews += 1;
+    en.lastReview = todayStr();
+    save(); render();
+  });
+  el.querySelector('[data-act="delete"]').addEventListener("click", () => {
+    if (!confirm("이 오답을 삭제할까요?")) return;
+    entries = entries.filter(x => x.id !== en.id);
+    save(); render();
+  });
+  return el;
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+render();
+</script>
+</body>
+</html>
