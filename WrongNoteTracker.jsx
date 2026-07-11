@@ -95,7 +95,48 @@ function fmtSec(s) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-async function callClaude(messages) {
+// messages 배열을 window.claude.complete 용 단일 텍스트 프롬프트로 펼침 (사진은 못 실으므로 개수만 표시)
+function messagesToText(messages) {
+  const parts = [];
+  let imageCount = 0;
+  (messages || []).forEach((m) => {
+    const tag = m.role === "assistant" ? "[이전 답변]\n" : "";
+    const c = m.content;
+    if (typeof c === "string") {
+      if (c.trim()) parts.push(tag + c);
+    } else if (Array.isArray(c)) {
+      c.forEach((b) => {
+        if (b.type === "text" && b.text) parts.push(tag + b.text);
+        else if (b.type === "image") imageCount++;
+      });
+    }
+  });
+  return { text: parts.join("\n\n"), imageCount };
+}
+
+// AI 호출: ① Claude 앱 안 채널(window.claude.complete)을 우선 사용 — API 키·추가요금 없이
+//          아이패드·공유 링크에서도 작동하고 fetch를 아예 하지 않음.
+//        ② 사진 인식이 꼭 필요하거나(발상카드·필기채점) 위 채널이 없을 때만 직접 API 호출을 시도.
+// opts.needsVision === true 이면 사진을 반드시 읽어야 하는 기능 → 채널로는 불가, fetch 실패 시 visionRequired 신호.
+async function callClaude(messages, opts) {
+  const needsVision = !!(opts && opts.needsVision);
+  const canComplete =
+    typeof window !== "undefined" && window.claude && typeof window.claude.complete === "function";
+
+  // ① 텍스트 기반 요청은 Claude 앱 채널로 (사진 없이도 되는 기능은 여기서 인라인 처리)
+  if (!needsVision && canComplete) {
+    const { text, imageCount } = messagesToText(messages);
+    const prompt =
+      text + (imageCount ? "\n\n(참고: 첨부 사진은 이 채널로 전달되지 않으니 위 텍스트 정보만으로 최대한 답해줘.)" : "");
+    try {
+      const reply = await window.claude.complete(prompt);
+      if (reply && String(reply).trim()) return String(reply);
+    } catch (e) {
+      // 채널 실패 시 아래 직접 호출로 폴백
+    }
+  }
+
+  // ② 직접 API 호출 (claude.ai 편집 미리보기에서는 사진 포함 작동)
   let response;
   try {
     response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -104,6 +145,11 @@ async function callClaude(messages) {
       body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, messages }),
     });
   } catch (e) {
+    if (needsVision) {
+      const err = new Error("사진 인식 필요");
+      err.visionRequired = true;
+      throw err;
+    }
     const err = new Error("네트워크 차단");
     err.detail = "네트워크 차단 (fetch 실패: " + ((e && e.message) || "원인 미상") + ")";
     throw err;
@@ -111,6 +157,11 @@ async function callClaude(messages) {
   let data = null;
   try { data = await response.json(); } catch (e) {}
   if (!response.ok || (data && data.error)) {
+    if (needsVision) {
+      const err = new Error("사진 인식 필요");
+      err.visionRequired = true;
+      throw err;
+    }
     const emsg = data && data.error && data.error.message ? data.error.message : "";
     const err = new Error(emsg || "HTTP " + response.status);
     err.detail = "HTTP " + response.status + (emsg ? " · " + emsg.slice(0, 120) : "");
@@ -139,6 +190,14 @@ function copyText(t) {
     ta.remove();
     return ok;
   } catch (e) { return false; }
+}
+
+// 사진이 꼭 필요한 기능(발상카드·필기채점)용: 질문을 복사하고 Claude 앱(새 채팅)을 연다.
+// 버튼 클릭(사용자 제스처)에서 호출해야 새 창이 안 막힌다.
+function openInClaudeApp(text) {
+  const ok = copyText(text);
+  try { window.open("https://claude.ai/new", "_blank"); } catch (e) {}
+  return ok;
 }
 
 function parseJsonReply(text) {
@@ -282,6 +341,7 @@ function SolvePad({ gradeFn, bridge }) {
   const [notes, setNotes] = useState([]);
   const [grading, setGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState("");
+  const [bridgeText, setBridgeText] = useState(""); // Claude 앱으로 보낼 채점 질문 (사진 인식 불가 시)
   const drawing = useRef(false);
   const start = useRef({ x: 0, y: 0 });
   const snapshot = useRef(null);
@@ -408,16 +468,20 @@ function SolvePad({ gradeFn, bridge }) {
     if (grading) return;
     setGrading(true);
     setGradeResult("");
+    setBridgeText("");
     try {
       const drawUrl = canvasRef.current.toDataURL("image/jpeg", 0.82);
       const noteText = notes.filter((n) => n.text.trim()).map((n, i) => `메모${i + 1}: ${n.text.trim()}`).join("\n");
       const result = await gradeFn(drawUrl, noteText);
       setGradeResult(result || "채점 결과를 받지 못했어요.");
     } catch (e) {
-      const ok = copyText(bridge ? bridge() : "첨부한 손글씨 풀이를 읽고 채점해줘. 정답 여부와 잘한 점·틀린 부분을 알려줘.");
+      const bp = bridge ? bridge() : "첨부한 손글씨 풀이를 읽고 채점해줘. 정답 여부와 잘한 점·틀린 부분을 알려줘.";
+      copyText(bp);
+      setBridgeText(bp);
       setGradeResult(
-        (ok ? "연결이 잠시 원활하지 않아 채점 질문을 복사해뒀어요.\n" : "연결이 잠시 원활하지 않았어요.\n") +
-        "다시 한 번 ✅ AI 채점을 눌러보고, 계속 안 되면 새 채팅에 붙여넣기 → 이 패드 화면을 캡처해서 첨부하면 채점받을 수 있어요." + ((e && (e.detail || e.message)) ? "\n\n[진단] " + (e.detail || e.message) : "")
+        (e && e.visionRequired)
+          ? "필기 채점은 손글씨 사진을 읽어야 해서 이 화면에선 바로 못 해요. 채점 질문을 복사해뒀어요 — 아래 버튼으로 Claude 앱을 열고, 붙여넣은 뒤 이 풀이 패드 화면을 캡처해 첨부하면 채점받을 수 있어요."
+          : "연결이 잠시 원활하지 않아 채점 질문을 복사해뒀어요. 아래 버튼으로 Claude 앱에 붙여넣고 이 패드 화면을 캡처해 첨부하세요." + ((e && (e.detail || e.message)) ? "\n\n[진단] " + (e.detail || e.message) : "")
       );
     } finally {
       setGrading(false);
@@ -457,6 +521,11 @@ function SolvePad({ gradeFn, bridge }) {
         <button className="wnt-btn-primary" onClick={grade} disabled={grading}>{grading ? "채점 중… 🔍" : "✅ AI 채점 받기"}</button>
       </div>
       {gradeResult && <div className="pad-result">{gradeResult}</div>}
+      {bridgeText && (
+        <div className="pad-actions">
+          <button className="wnt-mini idea" onClick={() => openInClaudeApp(bridgeText)}>📲 Claude 앱에서 채점받기</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -512,6 +581,7 @@ export default function WrongNoteTracker() {
   const [insightLoading, setInsightLoading] = useState({});
   const [insightOpen, setInsightOpen] = useState({});
   const [insightMsg, setInsightMsg] = useState({});
+  const [insightBridge, setInsightBridge] = useState({}); // id → Claude 앱으로 보낼 발상 요약 질문
 
   // ---- 카드 내 변형문제 상태 ----
   const [variantOpen, setVariantOpen] = useState({});
@@ -1028,6 +1098,7 @@ export default function WrongNoteTracker() {
     if (!file || insightLoading[entry.id]) return;
     setInsightLoading((l) => ({ ...l, [entry.id]: true }));
     setInsightMsg((m) => ({ ...m, [entry.id]: "" }));
+    setInsightBridge((m) => ({ ...m, [entry.id]: "" }));
     try {
       const photo = await compressFile(file);
       const prompt =
@@ -1044,7 +1115,7 @@ export default function WrongNoteTracker() {
             { type: "text", text: prompt },
           ],
         },
-      ]);
+      ], { needsVision: true });
       const parsed = parseJsonReply(reply);
       if (parsed.error || !parsed.title) {
         setInsightMsg((m) => ({ ...m, [entry.id]: "사진 속 글씨를 알아보기 어려웠어요. 조금 더 가까이 찍어 다시 올려주세요." }));
@@ -1059,10 +1130,14 @@ export default function WrongNoteTracker() {
         setInsightOpen((o) => ({ ...o, [entry.id]: true }));
       }
     } catch (err) {
-      const ok = copyText("이 사진은 내가 손으로 정리한 문제 발상 노트야. 핵심 발상 한 줄 제목과 2~4개의 짧은 포인트로 요약해줘.\n과목: " + entry.subject + " / 단원: " + entry.unit);
-      setInsightMsg((m) => ({ ...m, [entry.id]: (ok
-        ? "연결이 잠시 원활하지 않아 요약 질문을 복사해뒀어요. 한 번 더 시도해 보고, 계속 안 되면 새 채팅에 붙여넣고 발상 사진을 첨부하면 요약해줘요."
-        : "발상 카드 생성에 실패했어요. 잠시 후 다시 시도해 주세요.") + ((err && (err.detail || err.message)) ? "\n\n[진단] " + (err.detail || err.message) : "") }));
+      const bridgePrompt =
+        "이 사진은 내가 손으로 정리한 문제 발상 노트야. 핵심 발상 한 줄 제목과 2~4개의 짧은 포인트로 요약해줘.\n과목: " +
+        entry.subject + " / 단원: " + entry.unit + "\n(이 채팅에 발상 사진을 첨부해줘)";
+      copyText(bridgePrompt);
+      setInsightBridge((m) => ({ ...m, [entry.id]: bridgePrompt }));
+      setInsightMsg((m) => ({ ...m, [entry.id]: (err && err.visionRequired)
+        ? "발상 카드는 손글씨 사진을 읽어야 해서 이 화면에선 바로 못 만들어요. 요약 질문을 복사해뒀어요 — 아래 버튼으로 Claude 앱을 열고, 붙여넣은 뒤 발상 사진을 첨부하면 카드 내용을 받을 수 있어요."
+        : "연결이 잠시 원활하지 않아 요약 질문을 복사해뒀어요. 한 번 더 시도해 보고, 계속 안 되면 아래 버튼으로 Claude 앱에 붙여넣고 발상 사진을 첨부하세요." }));
     } finally {
       setInsightLoading((l) => ({ ...l, [entry.id]: false }));
     }
@@ -1212,7 +1287,7 @@ export default function WrongNoteTracker() {
         `[문제] ${v.question}\n[모범 풀이·정답] ${v.answer || "미제공 — 직접 풀어서 비교해"}\n` +
         (noteText ? `[학생 포스트잇 메모]\n${noteText}\n` : "") +
         "\n채점 방식: 1) 정답 여부 ⭕/❌ 2) 풀이 과정에서 잘한 점과 틀린 부분을 구체적으로 3) 글씨를 읽기 어려우면 솔직하게 어느 부분이 안 읽히는지 말해. 친근한 존댓말로 간결하게. 수식은 일반 텍스트로.";
-      return await callClaude([{ role: "user", content: [...imgBlocks([drawUrl]), { type: "text", text: prompt }] }]);
+      return await callClaude([{ role: "user", content: [...imgBlocks([drawUrl]), { type: "text", text: prompt }] }], { needsVision: true });
     };
   }
 
@@ -1225,7 +1300,7 @@ export default function WrongNoteTracker() {
         `[과목] ${entry.subject} / [단원] ${entry.unit}\n[학생 메모] ${entry.memo || "없음"}\n` +
         (noteText ? `[학생 포스트잇 메모]\n${noteText}\n` : "") +
         "\n먼저 문제를 직접 풀고, 학생의 손글씨 풀이와 비교해 채점해줘: 1) 정답 여부 ⭕/❌ 2) 잘한 점과 틀린 부분 3) 글씨를 읽기 어려우면 솔직하게 말해. 친근한 존댓말로 간결하게. 수식은 일반 텍스트로.";
-      return await callClaude([{ role: "user", content: [...imgBlocks(probImgs), ...imgBlocks([drawUrl]), { type: "text", text: prompt }] }]);
+      return await callClaude([{ role: "user", content: [...imgBlocks(probImgs), ...imgBlocks([drawUrl]), { type: "text", text: prompt }] }], { needsVision: true });
     };
   }
 
@@ -1375,16 +1450,22 @@ export default function WrongNoteTracker() {
     if (aiChecking) return;
     setAiChecking(true);
     setAiCheckMsg("");
+    const canComplete = typeof window !== "undefined" && window.claude && typeof window.claude.complete === "function";
     try {
       const reply = await callClaude([{ role: "user", content: "연결 테스트야. '연결 성공'이라고만 짧게 답해줘." }]);
-      setAiCheckMsg("✅ AI 연결 정상! 응답: " + (reply || "(빈 응답)").slice(0, 60) + "\n변형문제·도우미·채점 모두 쓸 수 있어요.");
+      setAiCheckMsg(
+        "✅ AI 연결 정상! 응답: " + (reply || "(빈 응답)").slice(0, 60) +
+        (canComplete
+          ? "\n변형문제·도우미(텍스트)는 이 화면에서 바로 작동해요. 발상카드·필기채점처럼 사진을 읽어야 하는 기능은 '📲 Claude 앱에서 열기' 버튼으로 넘어가서 사진을 첨부해 쓰면 돼요. (추가 요금 없이 Claude 계정으로 처리됨)"
+          : "\n변형문제·도우미·채점 모두 쓸 수 있어요.")
+      );
     } catch (e) {
       const d = e.detail || e.message || "원인 미상";
       if (d.indexOf("네트워크 차단") !== -1) {
         setAiCheckMsg(
-          "❌ 이 화면(파일 미리보기)은 보안상 외부 연결이 차단돼 있어요 — 코드 문제가 아니라 환경 제한이에요.\n\n" +
-          "✅ 지금 바로 쓰는 법: AI 버튼(변형문제·도우미·채점)을 누르면 질문이 자동 복사돼요 → Claude 새 채팅에 붙여넣으면 답을 받아요.\n\n" +
-          "✅ 앱 안에서 AI까지 원하면: 이 미리보기 오른쪽 위의 게시/공유 버튼으로 링크를 만들어 Safari 주소창에 붙여넣어 여세요. 그 화면에서는 AI가 직접 작동해요."
+          "❌ 이 화면에선 AI 채널을 찾지 못했어요.\n\n" +
+          "✅ 지금 바로 쓰는 법: AI 버튼(변형문제·도우미·채점)을 누르면 질문이 자동 복사돼요 → '📲 Claude 앱에서 열기' 버튼으로 앱을 열고 붙여넣으면 답을 받아요 (사진 기능은 사진도 함께 첨부).\n\n" +
+          "이 오답노트는 Claude 앱/웹 아티팩트로 열면 텍스트 AI가 바로 작동해요."
         );
       } else {
         setAiCheckMsg("❌ 연결 실패\n[진단] " + d + "\n\n이 [진단] 문구를 그대로 Claude 채팅에 알려주면 원인을 바로 잡을 수 있어요.");
@@ -1774,6 +1855,11 @@ export default function WrongNoteTracker() {
                     </div>
                   )}
                   {insightMsg[e.id] && <div className="wnt-note-msg">{insightMsg[e.id]}</div>}
+                  {insightBridge[e.id] && (
+                    <button className="wnt-mini idea" style={{ marginTop: 6 }} onClick={() => openInClaudeApp(insightBridge[e.id])}>
+                      📲 Claude 앱에서 발상 정리하기
+                    </button>
+                  )}
 
                   {/* 문제 사진 */}
                   {e.hasImage && (
@@ -2389,11 +2475,12 @@ export default function WrongNoteTracker() {
           </div>
 
           <div className="wnt-set-section">
-            <h2 className="wnt-h2">📲 이 버전(Claude 안 실행판) 안내</h2>
+            <h2 className="wnt-h2">📲 AI 기능 사용 안내 (아이패드 포함)</h2>
             <p className="wnt-set-desc">
-              이 버전은 Claude 안에서 실행돼서 <strong>API 키 없이 AI 기능(도우미·발상카드·변형문제·필기 채점)이 전부 작동</strong>해요.
-              Claude 계정 로그인이 곧 잠금 역할을 하고, 기록·사진은 자동 저장돼요.<br />
-              인터넷 없이 쓰거나 홈 화면 앱으로 쓰려면 함께 받은 오답끝.html 파일 버전을 여세요. (그 버전은 AI 기능에만 API 키가 필요해요)
+              이 앱은 <strong>API 키 없이</strong>, 소이님의 Claude 계정으로 AI가 작동해요. <strong>추가 요금은 없어요</strong> (기존 Claude 요금제 사용량으로 처리).<br />
+              • <strong>변형문제·AI 도우미(텍스트)</strong>: 아이패드·공유 링크에서도 화면 안에서 바로 작동해요.<br />
+              • <strong>발상 카드·필기 채점</strong>: 손글씨 <em>사진</em>을 읽어야 하는데, 이 방식은 사진을 못 실어요. 그래서 질문이 자동 복사되고 <strong>「📲 Claude 앱에서 열기」</strong> 버튼이 떠요 — 눌러서 앱에 붙여넣고 사진(또는 풀이 패드 캡처)을 첨부하면 바로 받을 수 있어요.<br />
+              기록·사진은 이 기기에 자동 저장돼요.
             </p>
           </div>
         </section>
