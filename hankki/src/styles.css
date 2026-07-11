@@ -1,0 +1,690 @@
+:root {
+  --bg: #fff8f1;
+  --surface: #ffffff;
+  --cream: #f3ece2;
+  --cream-deep: #ebdcc6;
+  --sand: #d7c4a8;
+  --brown: #6b4f3a;
+  --text: #3f3227;
+  --text-sub: #9b8b79;
+  --line: #efe7dc;
+  --danger: #c2703f;
+
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-pill: 999px;
+
+  --shadow-soft: 0 1px 2px rgba(107, 79, 58, 0.04);
+  --shadow-card: 0 6px 20px rgba(107, 79, 58, 0.06);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-h: 64px;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Pretendard', 'Pretendard Variable', -apple-system,
+    BlinkMacSystemFont, 'Apple SD Gothic Neo', system-ui, sans-serif;
+  background: #e9ddce;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+
+input,
+textarea {
+  font-family: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/* 앱을 폰 프레임 안에 담아 데스크톱에서도 자연스럽게 보이도록 */
+.app-frame {
+  max-width: 440px;
+  margin: 0 auto;
+  height: 100dvh;
+  background: var(--bg);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(107, 79, 58, 0.12);
+}
+
+.screen {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px);
+}
+
+.screen::-webkit-scrollbar {
+  width: 0;
+}
+
+.pad {
+  padding: 0 20px;
+}
+
+/* ---- 공용 타이포 ---- */
+.h-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.h-section {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.t-sub {
+  color: var(--text-sub);
+  font-size: 13px;
+  letter-spacing: -0.01em;
+}
+.t-more {
+  color: var(--text-sub);
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ---- pill / 태그 ---- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text-sub);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.pill.active {
+  background: var(--cream-deep);
+  border-color: transparent;
+  color: var(--brown);
+  font-weight: 600;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--cream);
+  color: var(--brown);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+/* 배지 (Inbox 상태 · 출처) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+}
+.badge-unsorted {
+  background: #f6ede0;
+  color: #b98a4e;
+}
+.badge-sorted {
+  background: #eaf0e7;
+  color: #7b9068;
+}
+
+/* 얇은 구분선 */
+.divider {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+  margin: 0;
+}
+
+/* 카드 */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-soft);
+}
+
+/* 하단 고정 CTA 버튼 */
+.btn-primary {
+  width: 100%;
+  background: var(--brown);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 16px;
+  border-radius: var(--r-md);
+  letter-spacing: -0.01em;
+  transition: transform 0.08s ease, opacity 0.15s ease;
+}
+.btn-primary:active {
+  transform: scale(0.985);
+  opacity: 0.95;
+}
+
+.press:active {
+  transform: scale(0.98);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0.4;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.stack-layer > .screen {
+  flex: 1;
+}
+
+/* 뷰 진입 페이드 */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade {
+  animation: fadeUp 0.28s ease both;
+}
+
+/* 스크롤 가로 리스트 */
+.hscroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 2px 20px;
+  margin: 0 -20px;
+}
+.hscroll::-webkit-scrollbar {
+  height: 0;
+}
+.hscroll > * {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+}
+
+/* 빈 상태 */
+.empty {
+  text-align: center;
+  color: var(--text-sub);
+  padding: 48px 24px;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+/* 하단 네비게이션 */
+.bottom-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--nav-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(255, 248, 241, 0.92);
+  backdrop-filter: saturate(1.4) blur(14px);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: stretch;
+  z-index: 40;
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 10.5px;
+  letter-spacing: -0.02em;
+  transition: transform 0.08s ease;
+}
+
+/* 세그먼트 컨트롤 */
+.segment {
+  display: flex;
+  background: var(--cream);
+  border-radius: var(--r-pill);
+  padding: 4px;
+  margin: 2px 0 16px;
+}
+.seg {
+  flex: 1;
+  padding: 9px;
+  border-radius: var(--r-pill);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-sub);
+  transition: all 0.18s ease;
+}
+.seg.on {
+  background: var(--surface);
+  color: var(--brown);
+  box-shadow: var(--shadow-soft);
+}
+
+/* 상단 헤더 */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 8px;
+  padding-top: calc(14px + var(--safe-top));
+}
+.topbar-back {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 6px;
+  padding-top: calc(10px + var(--safe-top));
+}
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  transition: background 0.15s ease, transform 0.08s ease;
+}
+.icon-btn:active {
+  background: var(--cream);
+  transform: scale(0.94);
+}
+
+/* 검색 바 */
+.searchbar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 12px 16px;
+  color: var(--text-sub);
+}
+.searchbar input {
+  border: none;
+  outline: none;
+  background: none;
+  flex: 1;
+  font-size: 14.5px;
+  color: var(--text);
+}
+.searchbar input::placeholder {
+  color: var(--text-sub);
+}
+
+/* 홈 - 자주 해먹는 요리 (가로 카드) */
+.mini-card {
+  width: 108px;
+}
+.mini-card .name {
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-top: 7px;
+  text-align: center;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 홈 - 최근 저장 (리스트 행) */
+.list-row {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  padding: 12px 0;
+}
+.list-row .meta {
+  flex: 1;
+  min-width: 0;
+}
+.list-row .name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 섹션 헤더 */
+.sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 26px 0 13px;
+}
+
+/* 내 레시피 - 그리드 */
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.grid-card .name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 8px;
+  letter-spacing: -0.02em;
+}
+.grid-card .date {
+  font-size: 11.5px;
+  color: var(--text-sub);
+  margin-top: 2px;
+}
+.grid-card {
+  position: relative;
+}
+.fav-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 옵션 리스트 (가져오기 / 설정) */
+.opt-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  width: 100%;
+  text-align: left;
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+.opt-row:active {
+  background: var(--cream);
+  transform: scale(0.99);
+}
+.opt-ico {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.opt-row .t {
+  flex: 1;
+  min-width: 0;
+}
+.opt-row .t .a {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.opt-row .t .b {
+  font-size: 12.5px;
+  color: var(--text-sub);
+  margin-top: 2px;
+}
+
+/* Inbox 행 */
+.inbox-row {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  padding: 14px 0;
+}
+
+/* 상세 - 정보 pill */
+.info-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.info-pill {
+  background: var(--cream);
+  color: var(--brown);
+  border-radius: var(--r-pill);
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 리스트 아이템 (재료/단계) */
+.ing {
+  display: flex;
+  gap: 10px;
+  padding: 9px 0;
+  font-size: 14.5px;
+  color: var(--text);
+  align-items: flex-start;
+}
+.ing::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--sand);
+  margin-top: 9px;
+  flex: 0 0 auto;
+}
+.step {
+  display: flex;
+  gap: 12px;
+  padding: 11px 0;
+}
+.step .n {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--cream-deep);
+  color: var(--brown);
+  font-size: 12.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.step .txt {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--text);
+  padding-top: 2px;
+}
+
+/* 폼 */
+.field {
+  margin-bottom: 18px;
+}
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 7px;
+  letter-spacing: -0.01em;
+}
+.field input,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  padding: 13px 14px;
+  font-size: 14.5px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--sand);
+}
+.field textarea {
+  resize: none;
+  line-height: 1.5;
+}
+
+/* 하단 고정 액션 바 */
+.action-bar {
+  position: sticky;
+  bottom: 0;
+  padding: 14px 20px calc(14px + var(--safe-bottom));
+  background: linear-gradient(to top, var(--bg) 72%, transparent);
+}
+
+/* 상세 상단 원형 버튼 (이미지 위) */
+.round-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 248, 241, 0.86);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(107, 79, 58, 0.12);
+  transition: transform 0.08s ease;
+}
+.round-btn:active {
+  transform: scale(0.92);
+}
+
+/* 바텀 시트 */
+.sheet-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(63, 50, 39, 0.35);
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  animation: fadeUp 0.18s ease both;
+}
+.sheet {
+  width: 100%;
+  background: var(--surface);
+  border-radius: 22px 22px 0 0;
+  padding: 8px 8px calc(12px + var(--safe-bottom));
+  animation: sheetUp 0.26s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@keyframes sheetUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+.sheet-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  border-radius: 14px;
+}
+.sheet-item:active {
+  background: var(--cream);
+}
+
+/* 장보기 행 */
+.shop-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.check-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 1.6px solid var(--sand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  transition: all 0.15s ease;
+}
+.check-box[data-on='true'] {
+  background: var(--brown);
+  border-color: var(--brown);
+}
+
+/* 토스트 */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-h) + 24px + var(--safe-bottom));
+  transform: translateX(-50%);
+  background: var(--brown);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(107, 79, 58, 0.28);
+  animation: fadeUp 0.22s ease both;
+  max-width: 88%;
+  text-align: center;
+}

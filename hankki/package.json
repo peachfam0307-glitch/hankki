@@ -1,0 +1,21 @@
+{
+  "name": "hankki",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "한끼 — 흩어진 레시피를, 한곳에. 나만의 레시피 아카이브.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11",
+    "vite-plugin-pwa": "^0.21.1"
+  }
+}
