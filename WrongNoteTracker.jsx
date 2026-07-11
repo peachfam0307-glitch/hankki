@@ -364,7 +364,7 @@ function HelpTip({ text }) {
 }
 
 // ---- ✍️ 풀이 패드 (펜슬 필기: 모눈·색깔펜·지우개·직선자·포스트잇·AI 채점) ----
-function SolvePad({ gradeFn, bridge, solveFn }) {
+function SolvePad({ gradeFn, bridge, solveFn, problem }) {
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
   const [tool, setTool] = useState("pen");
@@ -377,6 +377,8 @@ function SolvePad({ gradeFn, bridge, solveFn }) {
   const [solveResult, setSolveResult] = useState(""); // 📖 간략 풀이 결과
   const [bgGrid, setBgGrid] = useState(true);    // 모눈 배경 on/off (기본=모눈)
   const [penOnly, setPenOnly] = useState(false); // 손바닥 터치 방지 (애플펜슬만 인식)
+  const [leftPct, setLeftPct] = useState(48); // 좌우분할 시 문제(왼쪽) 너비 %
+  const splitRef = useRef(null);
   const drawing = useRef(false);
   const start = useRef({ x: 0, y: 0 });
   const snapshot = useRef(null);
@@ -396,18 +398,59 @@ function SolvePad({ gradeFn, bridge, solveFn }) {
     g.restore();
   }
 
-  useEffect(() => {
+  // 캔버스를 부모 너비에 맞춰 다시 크기 잡기 (좌우분할 비율 조정·회전 시). 필기는 늘려서 보존.
+  function fitCanvas(initial) {
     const c = canvasRef.current;
+    if (!c) return;
     const dpr = window.devicePixelRatio || 1;
-    const w = c.parentElement.clientWidth;
+    const w = Math.max(c.parentElement.clientWidth, 40);
+    if (!initial && Math.abs(c.style.width ? parseFloat(c.style.width) - w : w) < 1) return;
+    let prev = null, pw = c.width, ph = c.height;
+    if (!initial) { try { prev = c.toDataURL(); } catch (e) {} }
     c.width = w * dpr;
     c.height = PAD_H * dpr;
     c.style.width = w + "px";
     c.style.height = PAD_H + "px";
-    ctx().scale(dpr, dpr);
+    const g = ctx();
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.scale(dpr, dpr);
     clearCanvas();
+    if (prev) {
+      const img = new Image();
+      img.onload = () => {
+        const gg = ctx();
+        gg.save(); gg.setTransform(1, 0, 0, 1, 0, 0);
+        gg.globalCompositeOperation = "source-over";
+        gg.drawImage(img, 0, 0, pw, ph, 0, 0, c.width, c.height);
+        gg.restore();
+      };
+      img.src = prev;
+    }
+  }
+
+  useEffect(() => {
+    fitCanvas(true);
+    const wrap = canvasRef.current && canvasRef.current.parentElement;
+    if (!wrap || typeof ResizeObserver === "undefined") return;
+    let t = null;
+    const ro = new ResizeObserver(() => { clearTimeout(t); t = setTimeout(() => fitCanvas(false), 120); });
+    ro.observe(wrap);
+    return () => { clearTimeout(t); ro.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 좌우분할 경계선 드래그로 비율 조정 (25%~75%)
+  function dividerDown(e) {
+    e.preventDefault();
+    const rect = splitRef.current.getBoundingClientRect();
+    const move = (ev) => {
+      let pct = ((ev.clientX - rect.left) / rect.width) * 100;
+      setLeftPct(Math.min(75, Math.max(25, pct)));
+    };
+    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
 
   function getPos(e) {
     const rect = canvasRef.current.getBoundingClientRect();
@@ -602,18 +645,33 @@ function SolvePad({ gradeFn, bridge, solveFn }) {
         <button className={penOnly ? "wnt-mini strong" : "wnt-mini"} onClick={() => setPenOnly(!penOnly)}>✋ 손바닥 방지 {penOnly ? "켜짐" : "꺼짐"}</button>
         <HelpTip text="애플펜슬이나 손가락으로 풀이를 쓰세요. ↩️ 되돌리기·↪️ 다시하기로 획을 오갈 수 있어요. ▦ 버튼으로 모눈/기본 배경을 바꿔요 (필기는 안 지워져요). ✋ 손바닥 방지를 켜면 애플펜슬로만 그려져서 손을 대고 써도 돼요. 📏 직선은 그래프 축·점근선 긋기에 좋아요. ✅ AI 채점은 필기와 포스트잇 메모를 읽고 채점해요." />
       </div>
-      <div className={bgGrid ? "pad-wrap grid" : "pad-wrap"} ref={wrapRef}>
-        <canvas ref={canvasRef} className="pad-canvas" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} />
-        {notes.map((n) => (
-          <div key={n.id} className="pad-note" style={{ left: n.x, top: n.y }}>
-            <div className="pad-note-bar" onPointerDown={(e) => noteDragStart(e, n.id)}>
-              <span>≡</span>
-              <button onClick={() => delNote(n.id)} aria-label="포스트잇 삭제">✕</button>
-            </div>
-            <textarea value={n.text} placeholder="메모…" onChange={(e) => setNotes((ns) => ns.map((x) => (x.id === n.id ? { ...x, text: e.target.value } : x)))} />
+      {(() => {
+        const padWrap = (
+          <div className={bgGrid ? "pad-wrap grid" : "pad-wrap"} ref={wrapRef}>
+            <canvas ref={canvasRef} className="pad-canvas" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} />
+            {notes.map((n) => (
+              <div key={n.id} className="pad-note" style={{ left: n.x, top: n.y }}>
+                <div className="pad-note-bar" onPointerDown={(e) => noteDragStart(e, n.id)}>
+                  <span>≡</span>
+                  <button onClick={() => delNote(n.id)} aria-label="포스트잇 삭제">✕</button>
+                </div>
+                <textarea value={n.text} placeholder="메모…" onChange={(e) => setNotes((ns) => ns.map((x) => (x.id === n.id ? { ...x, text: e.target.value } : x)))} />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        );
+        if (!problem) return padWrap;
+        return (
+          <div className="pad-split" ref={splitRef}>
+            <div className="pad-problem" style={{ width: leftPct + "%" }}>
+              <div className="pad-problem-label">문제</div>
+              {problem}
+            </div>
+            <div className="pad-divider" onPointerDown={dividerDown} role="separator" aria-label="문제·풀이 비율 조정" title="드래그해서 좌우 비율 조정">⋮</div>
+            <div className="pad-main" style={{ width: (100 - leftPct) + "%" }}>{padWrap}</div>
+          </div>
+        );
+      })()}
       <div className="pad-actions">
         {solveFn && (
           <button className="wnt-mini" onClick={solve} disabled={solving} style={{ marginRight: "auto" }}>
@@ -638,6 +696,7 @@ export default function WrongNoteTracker() {
   const [subjects, setSubjects] = useState(DEFAULT_SUBJECTS);
   const [customTags, setCustomTags] = useState([]);
   const [motto, setMotto] = useState(""); // 상단 명언·공부 자극 문구
+  const [dueDismiss, setDueDismiss] = useState(false); // 오늘 복습 안내 배너 닫기
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState(false);
   const [tab, setTab] = useState("list"); // list | flash | variant | stats | settings
@@ -2027,6 +2086,26 @@ export default function WrongNoteTracker() {
             </section>
           )}
 
+          {/* 오늘 복습할 문제 자동 안내 — 앱 켜면 뜸 */}
+          {(() => {
+            if (dueDismiss || fDueOnly) return null;
+            const dueCount = entries.filter((e) => {
+              if (e.status === 3 || e.graduated) return false;
+              const r = nextReviewInfo(e);
+              return r && r.due;
+            }).length;
+            if (dueCount === 0) return null;
+            return (
+              <div className="wnt-due-banner">
+                <span>📅 오늘 복습할 문제가 <b>{dueCount}개</b> 있어요!</span>
+                <div className="wnt-due-banner-btns">
+                  <button className="wnt-mini strong" onClick={() => { setListView("active"); setFDueOnly(true); }}>지금 풀기 →</button>
+                  <button className="wnt-due-x" onClick={() => setDueDismiss(true)} aria-label="닫기">✕</button>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* 복습 중 / 맞은 문제 전환 */}
           <div className="wnt-viewtabs">
             <button className={listView === "active" ? "wnt-viewtab on" : "wnt-viewtab"} onClick={() => setListView("active")}>
@@ -2454,13 +2533,15 @@ export default function WrongNoteTracker() {
               )}
               {gradMsg && <div className="wnt-grad">{gradMsg}</div>}
 
-              <div className="wnt-flash-imgs">
-                {imageCache[flashEntry.id]
-                  ? imageCache[flashEntry.id].map((src, i) => (
-                      <img key={i} className="wnt-photo" src={src} alt={`${flashEntry.unit} 문제 ${i + 1}`} />
-                    ))
-                  : <div className="wnt-loading">사진 불러오는 중…</div>}
-              </div>
+              {!flashPadOpen && (
+                <div className="wnt-flash-imgs">
+                  {imageCache[flashEntry.id]
+                    ? imageCache[flashEntry.id].map((src, i) => (
+                        <img key={i} className="wnt-photo" src={src} alt={`${flashEntry.unit} 문제 ${i + 1}`} />
+                      ))
+                    : <div className="wnt-loading">사진 불러오는 중…</div>}
+                </div>
+              )}
 
               <div className="wnt-flash-reveals">
                 <button className={flashPadOpen ? "wnt-mini strong" : "wnt-mini"} onClick={() => setFlashPadOpen(!flashPadOpen)}>
@@ -2489,7 +2570,17 @@ export default function WrongNoteTracker() {
                 )}
               </div>
 
-              {flashPadOpen && <SolvePad key={"pad-" + flashEntry.id} gradeFn={flashGradeFn(flashEntry)} solveFn={flashSolveFn(flashEntry)} bridge={() => "너는 채점 선생님이야. 첨부한 이미지 중 손글씨가 내 풀이고, 나머지는 문제 사진이야.\n과목: " + flashEntry.subject + " / 단원: " + flashEntry.unit + "\n먼저 짧게 채점만 해줘: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 내가 '풀이도 짧게 알려줘'라고 하면 3~4줄 간략 풀이를 줘."} />}
+              {flashPadOpen && <SolvePad key={"pad-" + flashEntry.id} gradeFn={flashGradeFn(flashEntry)} solveFn={flashSolveFn(flashEntry)}
+                problem={
+                  <div className="wnt-flash-imgs in-pad">
+                    {imageCache[flashEntry.id]
+                      ? imageCache[flashEntry.id].map((src, i) => (
+                          <img key={i} className="wnt-photo" src={src} alt={`${flashEntry.unit} 문제 ${i + 1}`} />
+                        ))
+                      : <div className="wnt-loading">사진 불러오는 중…</div>}
+                  </div>
+                }
+                bridge={() => "너는 채점 선생님이야. 첨부한 이미지 중 손글씨가 내 풀이고, 나머지는 문제 사진이야.\n과목: " + flashEntry.subject + " / 단원: " + flashEntry.unit + "\n먼저 짧게 채점만 해줘: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 내가 '풀이도 짧게 알려줘'라고 하면 3~4줄 간략 풀이를 줘."} />}
 
               {flashHint && flashEntry.insight && (
                 <div className="wnt-idea">
@@ -2608,7 +2699,9 @@ export default function WrongNoteTracker() {
                       )}
                     </div>
                   )}
-                  {vtPadOpen[i] && <SolvePad key={"vtpad-" + i} gradeFn={vtGradeFn(v)} solveFn={vtSolveFn(v)} bridge={() => "너는 채점 선생님이야. 아래 문제에 대한 첨부 이미지(손글씨)가 내 풀이야.\n[문제] " + v.question + (v.answer ? "\n[모범 풀이·정답] " + v.answer : "") + "\n먼저 짧게 채점만: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 '풀이도 짧게'라고 하면 3~4줄 간략 풀이."} />}
+                  {vtPadOpen[i] && <SolvePad key={"vtpad-" + i} gradeFn={vtGradeFn(v)} solveFn={vtSolveFn(v)}
+                    problem={<p className="wnt-variant-q in-pad">{v.question}</p>}
+                    bridge={() => "너는 채점 선생님이야. 아래 문제에 대한 첨부 이미지(손글씨)가 내 풀이야.\n[문제] " + v.question + (v.answer ? "\n[모범 풀이·정답] " + v.answer : "") + "\n먼저 짧게 채점만: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 '풀이도 짧게'라고 하면 3~4줄 간략 풀이."} />}
                   {vtReveal[`${i}-h`] && v.hint && <p className="wnt-variant-reveal">💡 {v.hint}</p>}
                   {vtReveal[`${i}-a`] && v.answer && <p className="wnt-variant-reveal ans">{v.answer}</p>}
                 </div>
@@ -2999,7 +3092,16 @@ const css = `
 
 .wnt-note-msg { margin-top: 8px; font-size: 12.5px; color: var(--red); }
 
-.wnt-star { background: none; border: none; font-size: 17px; cursor: pointer; padding: 0 2px; line-height: 1; }
+.wnt-star { background: none; border: none; font-size: 23px; cursor: pointer; padding: 0 3px; line-height: 1; filter: saturate(1.2); }
+.wnt-star:hover { transform: scale(1.12); }
+.wnt-due-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  background: linear-gradient(90deg, #FFF6E9, #FEFBF3); border: 1.5px solid var(--gold);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; font-size: 14px; color: var(--ink);
+}
+.wnt-due-banner b { color: var(--gold); }
+.wnt-due-banner-btns { display: flex; align-items: center; gap: 6px; }
+.wnt-due-x { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 2px 4px; }
 .wnt-star:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
 .wnt-retry-badge {
   font-size: 11.5px; font-weight: 700; color: var(--gold);
@@ -3300,6 +3402,31 @@ const css = `
   background-size: 24px 24px;
 }
 .pad-canvas { display: block; touch-action: none; cursor: crosshair; background: transparent; }
+/* 좌우분할: 문제(왼쪽) | 풀이 패드(오른쪽) */
+.pad-split { display: flex; align-items: stretch; gap: 0; width: 100%; }
+.pad-problem {
+  flex: 0 0 auto; min-width: 0; overflow: auto; max-height: 400px;
+  border: 1.5px solid var(--line); border-radius: 10px; background: var(--paper);
+  padding: 8px; box-sizing: border-box;
+}
+.pad-problem-label {
+  font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .04em;
+  margin-bottom: 6px;
+}
+.pad-problem .wnt-photo { width: 100%; margin: 0 0 6px; }
+.pad-problem .wnt-variant-q.in-pad { margin: 0; font-size: 15px; line-height: 1.6; }
+.pad-divider {
+  flex: 0 0 16px; align-self: stretch; display: flex; align-items: center; justify-content: center;
+  cursor: col-resize; touch-action: none; color: var(--muted); user-select: none;
+  font-size: 15px;
+}
+.pad-divider:hover { color: var(--red); }
+.pad-main { flex: 0 0 auto; min-width: 0; }
+@media (max-width: 560px) {
+  .pad-split { flex-direction: column; }
+  .pad-problem, .pad-main { width: 100% !important; }
+  .pad-divider { display: none; }
+}
 .pad-note {
   position: absolute; width: 130px; background: #FFF3B0; border: 1px solid #E8D26B;
   border-radius: 6px; box-shadow: 0 3px 8px rgba(30,42,58,0.18); z-index: 10;
