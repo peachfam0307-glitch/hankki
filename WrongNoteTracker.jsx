@@ -223,11 +223,20 @@ function copyText(t) {
   } catch (e) { return false; }
 }
 
-// 사진이 꼭 필요한 기능(발상카드·필기채점)용: 질문을 복사하고 Claude 앱(새 채팅)을 연다.
+// 사용자가 설정한 '오답 질문방' 링크 (없으면 새 채팅). 컴포넌트가 setClaudeRoom으로 갱신.
+let CLAUDE_ROOM = "";
+function setClaudeRoom(u) { CLAUDE_ROOM = (u || "").trim(); }
+
+// 처음 한 번만 질문방에 붙여넣을 세팅 문구
+const ROOM_SETUP_TEXT =
+  "이 방은 내 오답을 도와주는 방이야. 앞으로 내가 문제 사진을 올리면, 먼저 힌트로 방향을 잡아주고 내가 '풀이 보여줘'라고 하면 그때 단계별로 풀어줘. 대한민국 자사고 고등학생 수준으로, 수식은 일반 텍스트로 알려줘.";
+
+// 사진이 꼭 필요한 기능용: 질문을 복사하고 Claude 앱을 연다 (질문방이 설정돼 있으면 그 방으로).
 // 버튼 클릭(사용자 제스처)에서 호출해야 새 창이 안 막힌다.
 function openInClaudeApp(text) {
   const ok = copyText(text);
-  try { window.open("https://claude.ai/new", "_blank"); } catch (e) {}
+  const url = /^https?:\/\/(claude\.ai|www\.anthropic\.com)/.test(CLAUDE_ROOM) ? CLAUDE_ROOM : "https://claude.ai/new";
+  try { window.open(url, "_blank"); } catch (e) {}
   return ok;
 }
 
@@ -696,7 +705,9 @@ export default function WrongNoteTracker() {
   const [subjects, setSubjects] = useState(DEFAULT_SUBJECTS);
   const [customTags, setCustomTags] = useState([]);
   const [motto, setMotto] = useState(""); // 상단 명언·공부 자극 문구
+  const [claudeRoom, setClaudeRoomState] = useState(""); // 오답 질문방 Claude 링크
   const [dueDismiss, setDueDismiss] = useState(false); // 오늘 복습 안내 배너 닫기
+  const [dueModalClosed, setDueModalClosed] = useState(false); // 오늘 복습 팝업 닫기
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState(false);
   const [tab, setTab] = useState("list"); // list | flash | variant | stats | settings
@@ -827,6 +838,7 @@ export default function WrongNoteTracker() {
           }
           if (Array.isArray(parsed.customTags)) setCustomTags(parsed.customTags);
           if (typeof parsed.motto === "string") setMotto(parsed.motto);
+          if (typeof parsed.claudeRoom === "string") { setClaudeRoomState(parsed.claudeRoom); setClaudeRoom(parsed.claudeRoom); }
         }
       } catch (e) {
         // 저장된 데이터가 아직 없는 경우 — 빈 상태로 시작
@@ -871,11 +883,13 @@ export default function WrongNoteTracker() {
       subjects: patch.subjects !== undefined ? patch.subjects : subjects,
       customTags: patch.customTags !== undefined ? patch.customTags : customTags,
       motto: patch.motto !== undefined ? patch.motto : motto,
+      claudeRoom: patch.claudeRoom !== undefined ? patch.claudeRoom : claudeRoom,
     };
     if (patch.entries !== undefined) setEntries(data.entries);
     if (patch.subjects !== undefined) setSubjects(data.subjects);
     if (patch.customTags !== undefined) setCustomTags(data.customTags);
     if (patch.motto !== undefined) setMotto(data.motto);
+    if (patch.claudeRoom !== undefined) { setClaudeRoomState(data.claudeRoom); setClaudeRoom(data.claudeRoom); }
     try {
       const res = await window.storage.set(STORAGE_KEY, JSON.stringify(data));
       setSaveError(!res);
@@ -1988,6 +2002,35 @@ export default function WrongNoteTracker() {
         </div>
       </header>
 
+      {/* 오늘 복습 팝업 — 앱 열면 눈에 띄게 (복습할 문제가 있을 때) */}
+      {!loading && !dueModalClosed && (() => {
+        const dueList = entries.filter((e) => {
+          if (e.status === 3 || e.graduated) return false;
+          const r = nextReviewInfo(e);
+          return r && r.due;
+        });
+        if (dueList.length === 0) return null;
+        return (
+          <div className="wnt-due-modal-backdrop" onClick={() => setDueModalClosed(true)}>
+            <div className="wnt-due-modal" onClick={(ev) => ev.stopPropagation()}>
+              <div className="wnt-due-modal-bell">🔔</div>
+              <div className="wnt-due-modal-count">오늘 복습할 문제 <b>{dueList.length}개</b></div>
+              <p className="wnt-due-modal-sub">복습 타이밍이 된 오답이에요. 지금 풀면 기억에 딱 남아요! ✍️</p>
+              <ul className="wnt-due-modal-list">
+                {dueList.slice(0, 4).map((e) => (
+                  <li key={e.id}><span className="wnt-subj sm" style={{ background: subjColor(e.subject) }}>{e.subject}</span> {e.unit}</li>
+                ))}
+                {dueList.length > 4 && <li className="wnt-due-modal-more">외 {dueList.length - 4}개 더</li>}
+              </ul>
+              <div className="wnt-due-modal-btns">
+                <button className="wnt-btn-primary" onClick={() => { setTab("list"); setListView("active"); setFDueOnly(true); setDueModalClosed(true); }}>지금 풀기 →</button>
+                <button className="wnt-mini" onClick={() => setDueModalClosed(true)}>나중에</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {saveError && (
         <div className="wnt-warn">저장에 실패했어요. 저장 공간이 가득 찼을 수 있어요 — 오래된 기록이나 사진을 정리해 보세요.</div>
       )}
@@ -2878,6 +2921,30 @@ export default function WrongNoteTracker() {
           </div>
 
           <div className="wnt-set-section">
+            <h2 className="wnt-h2">📲 오답 질문방 <HelpTip text="사진을 봐야 하는 AI(도우미·채점·풀이)는 클로드 앱에서 정확히 도와줘요. 오답 전용 채팅방을 하나 만들어 그 링크를 여기 넣으면, 앱의 📲 버튼이 항상 그 방을 열어요. 방이 지저분해지지 않고 대화 맥락도 이어져요." /></h2>
+            <p className="wnt-set-desc">
+              클로드 앱/사이트에서 <b>오답 질문 전용 채팅방</b>을 하나 만들고, 그 방의 <b>링크(주소)</b>를 아래에 붙여넣으세요.
+              그러면 📲 버튼이 매번 새 채팅이 아니라 <b>그 방</b>을 열어요.
+            </p>
+            <div className="wnt-newtag-row">
+              <input
+                className="wnt-input"
+                placeholder="예: https://claude.ai/chat/xxxxxxxx"
+                value={claudeRoom}
+                onChange={(e) => setClaudeRoomState(e.target.value)}
+                onBlur={() => saveData({ claudeRoom: claudeRoom.trim() })}
+              />
+              {claudeRoom && (
+                <button className="wnt-mini" onClick={() => saveData({ claudeRoom: "" })}>지우기</button>
+              )}
+            </div>
+            <p className="wnt-set-desc" style={{ marginTop: 8 }}>
+              <b>딱 한 번</b> 그 방에 아래 문구를 붙여넣어 두면, 이후엔 <b>사진만 첨부</b>해도 알아서 도와줘요.
+            </p>
+            <button className="wnt-mini idea" onClick={() => { copyText(ROOM_SETUP_TEXT); setSettingMsg("세팅 문구를 복사했어요! 질문방에 붙여넣어 두세요."); }}>📋 세팅 문구 복사</button>
+          </div>
+
+          <div className="wnt-set-section">
             <h2 className="wnt-h2">과목 관리 <HelpTip text="과목이 바뀌면 여기서 추가·삭제하세요. 기록이 남아 있는 과목은 삭제할 수 없어요. ◀▶로 순서를 바꾸면 폼·필터에 나오는 과목 순서가 함께 바뀌어요." /></h2>
             <p className="wnt-set-desc">과목을 추가·삭제하고, ◀▶로 순서를 바꿀 수 있어요 (기록 있는 과목은 삭제만 불가).</p>
             <div className="wnt-subj-list">
@@ -3198,6 +3265,32 @@ const css = `
 .wnt-due-banner b { color: var(--gold); }
 .wnt-due-banner-btns { display: flex; align-items: center; gap: 6px; }
 .wnt-due-x { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 2px 4px; }
+.wnt-due-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(30,42,58,0.45); z-index: 100;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  animation: wnt-fade 0.2s ease;
+}
+@keyframes wnt-fade { from { opacity: 0; } to { opacity: 1; } }
+.wnt-due-modal {
+  background: var(--paper); border-radius: 18px; max-width: 380px; width: 100%;
+  padding: 24px 22px 20px; text-align: center; box-shadow: 0 18px 50px rgba(30,42,58,0.35);
+  border: 2px solid var(--gold); animation: wnt-pop 0.28s cubic-bezier(.2,1.3,.5,1);
+}
+@keyframes wnt-pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.wnt-due-modal-bell { font-size: 44px; animation: wnt-swing 1.2s ease-in-out infinite; transform-origin: 50% 8%; }
+@keyframes wnt-swing { 0%,100% { transform: rotate(0); } 20% { transform: rotate(16deg); } 40% { transform: rotate(-12deg); } 60% { transform: rotate(7deg); } 80% { transform: rotate(-4deg); } }
+.wnt-due-modal-count { font-size: 21px; font-weight: 800; margin-top: 6px; }
+.wnt-due-modal-count b { color: var(--gold); }
+.wnt-due-modal-sub { font-size: 13px; color: var(--muted); margin: 6px 0 14px; line-height: 1.5; }
+.wnt-due-modal-list { list-style: none; padding: 0; margin: 0 0 16px; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.wnt-due-modal-list li { font-size: 13.5px; display: flex; align-items: center; gap: 7px; }
+.wnt-due-modal-more { color: var(--muted); font-size: 12.5px; padding-left: 2px; }
+.wnt-subj.sm { font-size: 11px; padding: 1px 7px; }
+.wnt-due-modal-btns { display: flex; gap: 8px; justify-content: center; align-items: center; }
+@media (prefers-reduced-motion: reduce) {
+  .wnt-due-modal-bell { animation: none; }
+  .wnt-due-modal, .wnt-due-modal-backdrop { animation: none; }
+}
 .wnt-star:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
 .wnt-retry-badge {
   font-size: 11.5px; font-weight: 700; color: var(--gold);
