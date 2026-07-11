@@ -82,6 +82,33 @@ function makeId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
+// ---- 간격 반복 복습(뇌과학 망각곡선): 복습 단계가 오를수록 다음 복습일이 멀어짐 ----
+const REVIEW_GAPS = [1, 3, 7, 14]; // 미복습→1일, 1차→3일, 2차→7일, (그 이상 14일)
+
+function parseYmd(s) {
+  const p = String(s || "").split(".").map((x) => parseInt(x, 10));
+  if (p.length < 3 || p.some((n) => isNaN(n))) return null;
+  return new Date(p[0], p[1] - 1, p[2]);
+}
+
+function daysFromToday(dateObj) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const d = new Date(dateObj); d.setHours(0, 0, 0, 0);
+  return Math.round((d - today) / 86400000);
+}
+
+// 다음 복습 예정 정보 (정복(status 3)은 안내 없음)
+function nextReviewInfo(entry) {
+  if (!entry || entry.status >= 3) return null;
+  const log = entry.reviewLog || [];
+  const base = parseYmd(log.length ? log[log.length - 1] : entry.createdAt);
+  if (!base) return null;
+  const gap = REVIEW_GAPS[Math.min(entry.status, REVIEW_GAPS.length - 1)];
+  const next = new Date(base); next.setDate(next.getDate() + gap);
+  const days = daysFromToday(next);
+  return { days, due: days <= 0, dateStr: `${next.getMonth() + 1}.${next.getDate()}` };
+}
+
 function shuffleArr(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -333,7 +360,7 @@ function HelpTip({ text }) {
 }
 
 // ---- ✍️ 풀이 패드 (펜슬 필기: 모눈·색깔펜·지우개·직선자·포스트잇·AI 채점) ----
-function SolvePad({ gradeFn, bridge }) {
+function SolvePad({ gradeFn, bridge, solveFn }) {
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
   const [tool, setTool] = useState("pen");
@@ -342,6 +369,8 @@ function SolvePad({ gradeFn, bridge }) {
   const [grading, setGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState("");
   const [bridgeText, setBridgeText] = useState(""); // Claude 앱으로 보낼 채점 질문 (사진 인식 불가 시)
+  const [solving, setSolving] = useState(false);
+  const [solveResult, setSolveResult] = useState(""); // 📖 간략 풀이 결과
   const [bgGrid, setBgGrid] = useState(true);    // 모눈 배경 on/off (기본=모눈)
   const [penOnly, setPenOnly] = useState(false); // 손바닥 터치 방지 (애플펜슬만 인식)
   const drawing = useRef(false);
@@ -531,6 +560,24 @@ function SolvePad({ gradeFn, bridge }) {
     }
   }
 
+  async function solve() {
+    if (solving || !solveFn) return;
+    setSolving(true);
+    setSolveResult("");
+    try {
+      const result = await solveFn();
+      setSolveResult(result || "풀이를 받지 못했어요.");
+    } catch (e) {
+      setSolveResult(
+        (e && e.visionRequired)
+          ? "이 문제의 간략 풀이는 문제 사진을 읽어야 해서 이 화면에선 안 나와요. 위 채점을 Claude 앱에서 받을 때 '풀이도 짧게 알려줘'라고 함께 물어보세요."
+          : "풀이를 가져오지 못했어요. 잠시 후 다시 눌러주세요." + ((e && (e.detail || e.message)) ? "\n\n[진단] " + (e.detail || e.message) : "")
+      );
+    } finally {
+      setSolving(false);
+    }
+  }
+
   const COLORS = ["#1E2A3A", "#D6453D", "#2B57C6"];
 
   return (
@@ -564,6 +611,11 @@ function SolvePad({ gradeFn, bridge }) {
         ))}
       </div>
       <div className="pad-actions">
+        {solveFn && (
+          <button className="wnt-mini" onClick={solve} disabled={solving} style={{ marginRight: "auto" }}>
+            {solving ? "풀이 가져오는 중…" : "📖 간략 풀이"}
+          </button>
+        )}
         <button className="wnt-btn-primary" onClick={grade} disabled={grading}>{grading ? "채점 중… 🔍" : "✅ AI 채점 받기"}</button>
       </div>
       {gradeResult && <div className="pad-result">{gradeResult}</div>}
@@ -572,6 +624,7 @@ function SolvePad({ gradeFn, bridge }) {
           <button className="wnt-mini idea" onClick={() => openInClaudeApp(bridgeText)}>📲 Claude 앱에서 채점받기</button>
         </div>
       )}
+      {solveResult && <div className="pad-result">📖 {solveResult}</div>}
     </div>
   );
 }
@@ -591,6 +644,7 @@ export default function WrongNoteTracker() {
   const [fTag, setFTag] = useState("전체");
   const [fStatus, setFStatus] = useState("전체");
   const [fStarOnly, setFStarOnly] = useState(false);
+  const [fDueOnly, setFDueOnly] = useState(false); // 오늘 복습할 오답만
   const [search, setSearch] = useState("");
   const [exporting, setExporting] = useState(false);
 
@@ -1333,19 +1387,29 @@ export default function WrongNoteTracker() {
     }
   }
 
-  // 변형문제 필기 채점
+  // 변형문제 필기 채점 (짧게: ⭕/❌ + 1~2줄)
   function vtGradeFn(v) {
     return async (drawUrl, noteText) => {
       const prompt =
         "너는 채점 선생님이야. 아래 문제에 대한 학생의 손글씨 풀이(첨부 이미지)를 채점해줘.\n\n" +
         `[문제] ${v.question}\n[모범 풀이·정답] ${v.answer || "미제공 — 직접 풀어서 비교해"}\n` +
         (noteText ? `[학생 포스트잇 메모]\n${noteText}\n` : "") +
-        "\n채점 방식: 1) 정답 여부 ⭕/❌ 2) 풀이 과정에서 잘한 점과 틀린 부분을 구체적으로 3) 글씨를 읽기 어려우면 솔직하게 어느 부분이 안 읽히는지 말해. 친근한 존댓말로 간결하게. 수식은 일반 텍스트로.";
+        "\n아주 짧게: 첫 줄에 ⭕ 또는 ❌만, 그다음 잘한 점·틀린 부분을 딱 1~2줄. 전체 풀이·해설은 절대 쓰지 마 (학생이 '풀이 보기'로 따로 요청할 거야). 글씨를 못 읽겠으면 그것만 말해. 친근한 존댓말, 수식은 일반 텍스트.";
       return await callClaude([{ role: "user", content: [...imgBlocks([drawUrl]), { type: "text", text: prompt }] }], { needsVision: true });
     };
   }
 
-  // 플래시카드 필기 채점
+  // 변형문제 간략 풀이 (사진 불필요 → 아이패드에서도 인라인 작동)
+  function vtSolveFn(v) {
+    return async () => {
+      const prompt =
+        "아래 문제의 핵심 풀이를 정답 해설지처럼 아주 간략히 알려줘. 3~4줄 이내, '핵심 아이디어 → 최종 답' 위주로. 잡담·장황한 설명 없이.\n\n" +
+        `[문제] ${v.question}\n` + (v.answer ? `[정답·풀이 요약] ${v.answer}\n` : "");
+      return await callClaude([{ role: "user", content: prompt }]);
+    };
+  }
+
+  // 플래시카드 필기 채점 (짧게: ⭕/❌ + 1~2줄)
   function flashGradeFn(entry) {
     return async (drawUrl, noteText) => {
       const probImgs = (imageCache[entry.id] || []).slice(0, 2);
@@ -1353,8 +1417,19 @@ export default function WrongNoteTracker() {
         "너는 채점 선생님이야. 앞의 이미지들은 문제 사진이고, 마지막 이미지는 학생의 손글씨 풀이야.\n\n" +
         `[과목] ${entry.subject} / [단원] ${entry.unit}\n[학생 메모] ${entry.memo || "없음"}\n` +
         (noteText ? `[학생 포스트잇 메모]\n${noteText}\n` : "") +
-        "\n먼저 문제를 직접 풀고, 학생의 손글씨 풀이와 비교해 채점해줘: 1) 정답 여부 ⭕/❌ 2) 잘한 점과 틀린 부분 3) 글씨를 읽기 어려우면 솔직하게 말해. 친근한 존댓말로 간결하게. 수식은 일반 텍스트로.";
+        "\n먼저 문제를 직접 풀고 학생 풀이와 비교해서 아주 짧게: 첫 줄에 ⭕ 또는 ❌만, 그다음 잘한 점·틀린 부분을 딱 1~2줄. 전체 풀이·해설은 절대 쓰지 마 (학생이 '풀이 보기'로 따로 요청할 거야). 글씨를 못 읽겠으면 그것만 말해. 친근한 존댓말, 수식은 일반 텍스트.";
       return await callClaude([{ role: "user", content: [...imgBlocks(probImgs), ...imgBlocks([drawUrl]), { type: "text", text: prompt }] }], { needsVision: true });
+    };
+  }
+
+  // 플래시카드 간략 풀이 (문제 사진 필요 → 아이패드에선 Claude 앱 안내)
+  function flashSolveFn(entry) {
+    return async () => {
+      const probImgs = (imageCache[entry.id] || []).slice(0, 2);
+      const prompt =
+        "첨부한 문제 사진을 보고, 핵심 풀이를 정답 해설지처럼 아주 간략히 알려줘. 3~4줄 이내, '핵심 아이디어 → 최종 답' 위주로. 장황한 설명 없이.\n" +
+        `[과목] ${entry.subject} / [단원] ${entry.unit}`;
+      return await callClaude([{ role: "user", content: [...imgBlocks(probImgs), { type: "text", text: prompt }] }], { needsVision: true });
     };
   }
 
@@ -1438,6 +1513,19 @@ export default function WrongNoteTracker() {
     setFlashIdx((i) => Math.min(Math.max(i + dir, 0), Math.max(flashDeck.length - 1, 0)));
   }
 
+  // 개인화 피드백: 이 문제의 실수 태그 중 지금까지 가장 자주 나온 것을 짚어줌
+  function mistakeNote(entry) {
+    const tags = (entry && entry.tags) || [];
+    if (!tags.length) return "";
+    let best = null, bestN = 0;
+    tags.forEach((t) => {
+      const n = entries.filter((e) => (e.tags || []).includes(t)).length;
+      if (n > bestN) { bestN = n; best = t; }
+    });
+    if (best && bestN >= 2) return `⚠️ '${best}'(으)로 틀린 게 지금까지 ${bestN}번째야. 이번엔 특히 조심!`;
+    return "";
+  }
+
   // 못 풀었을 때(❌·시간초과): 틀린 횟수 +1, 연속 정답 초기화, 다시 풀기 표시
   function flashWrong(id) {
     saveData({
@@ -1506,6 +1594,15 @@ export default function WrongNoteTracker() {
   function removeCustomTag(tag) {
     saveData({ customTags: customTags.filter((t) => t !== tag) });
     setSettingMsg(`'${tag}' 태그를 목록에서 뺐어요. 이미 기록된 오답의 태그는 그대로 남아요.`);
+  }
+
+  // 과목 순서 변경 (↑/↓) — 폼 칩·필터·통계 순서가 함께 바뀜
+  function moveSubject(idx, dir) {
+    const j = idx + dir;
+    if (j < 0 || j >= subjects.length) return;
+    const next = subjects.slice();
+    const tmp = next[idx]; next[idx] = next[j]; next[j] = tmp;
+    saveData({ subjects: next });
   }
 
   function saveBook() {
@@ -1626,6 +1723,10 @@ export default function WrongNoteTracker() {
     if (fTag !== "전체" && !(e.tags || []).includes(fTag)) return false;
     if (fStatus !== "전체" && STATUS[e.status].label !== fStatus) return false;
     if (fStarOnly && !e.starred) return false;
+    if (fDueOnly) {
+      const r = nextReviewInfo(e);
+      if (!r || !r.due) return false;
+    }
     if (search.trim()) {
       const hay = `${e.unit} ${e.source} ${e.memo}`;
       if (!hay.includes(search.trim())) return false;
@@ -1845,6 +1946,7 @@ export default function WrongNoteTracker() {
             </select>
             <input className="wnt-input wnt-search" placeholder="검색" value={search} onChange={(e) => setSearch(e.target.value)} />
             <button className={fStarOnly ? "wnt-mini strong" : "wnt-mini"} onClick={() => setFStarOnly(!fStarOnly)}>⭐ 중요만</button>
+            <button className={fDueOnly ? "wnt-mini strong" : "wnt-mini"} onClick={() => setFDueOnly(!fDueOnly)}>📅 오늘 복습</button>
             <button className="wnt-mini" onClick={exportPrint} disabled={exporting || filtered.length === 0}>
               {exporting ? "만드는 중…" : "🖨 인쇄용 저장"}
             </button>
@@ -1916,6 +2018,13 @@ export default function WrongNoteTracker() {
                       if (last < prev) return ` · ⚡ ${fmtSec(prev)}→${fmtSec(last)} 단축`;
                       return "";
                     })()}
+                    {(() => {
+                      const r = nextReviewInfo(e);
+                      if (!r) return "";
+                      return r.due
+                        ? <span className="wnt-due"> · 📅 복습할 때!</span>
+                        : ` · 📅 복습 ${r.days}일 뒤(${r.dateStr})`;
+                    })()}
                   </div>
                   {(e.tags || []).length > 0 && (
                     <div className="wnt-card-tags">
@@ -1981,13 +2090,10 @@ export default function WrongNoteTracker() {
                           )}
                         </label>
                       )}
-                      <button className="wnt-mini variant" onClick={() => toggleVariants(e)}>
-                        🔁 변형문제{variantOpen[e.id] ? " ▲" : ""}
-                      </button>
                       <button className="wnt-mini ai" onClick={() => toggleAi(e.id)}>
                         🤖 AI 도우미{aiOpen[e.id] ? " ▲" : ""}
                       </button>
-                      <HelpTip text="✏️ 풀이 남기기: 다시 푼 풀이를 글·사진으로 기록. 💡 발상 올리기: 손으로 정리한 발상 사진을 AI가 카드로 요약해 저장 (플래시카드 힌트로 쓰여요). 🔁 변형문제: 이 문제 기준 즉석 출제. 🤖 AI 도우미: 힌트 유도 또는 전체 풀이 선택." />
+                      <HelpTip text="✏️ 풀이 남기기: 다시 푼 풀이를 글·사진으로 기록. 💡 발상 올리기: 손으로 정리한 발상 사진을 AI가 카드로 요약해 저장 (플래시카드 힌트로 쓰여요). 🤖 AI 도우미: 힌트 유도 또는 전체 풀이 선택. (변형문제는 위 '변형문제' 탭에서 만들어요.)" />
                     </div>
                   )}
 
@@ -2054,42 +2160,6 @@ export default function WrongNoteTracker() {
                             ))}
                         </div>
                       ))}
-                    </div>
-                  )}
-
-                  {/* 카드 내 변형문제 */}
-                  {!selectMode && variantOpen[e.id] && (
-                    <div className="wnt-variants">
-                      <div className="wnt-panel-head">🔁 변형문제 <span>앱을 닫으면 사라지니 남기고 싶은 문제는 캡처해 두세요 📸</span></div>
-                      {(variants[e.id] || []).map((v, i) => (
-                        <div key={i} className="wnt-variant-item">
-                          <span className={v.level === "최상" ? "wnt-level top" : "wnt-level"}>{v.level}</span>
-                          <p className="wnt-variant-q">{v.question}</p>
-                          {(v.hint || v.answer) && (
-                            <div className="wnt-variant-btns">
-                              {v.hint && (
-                                <button className="wnt-mini" onClick={() => setVariantReveal((r) => ({ ...r, [`${e.id}-${i}-h`]: !r[`${e.id}-${i}-h`] }))}>
-                                  {variantReveal[`${e.id}-${i}-h`] ? "힌트 접기" : "💡 힌트 보기"}
-                                </button>
-                              )}
-                              {v.answer && (
-                                <button className="wnt-mini" onClick={() => setVariantReveal((r) => ({ ...r, [`${e.id}-${i}-a`]: !r[`${e.id}-${i}-a`] }))}>
-                                  {variantReveal[`${e.id}-${i}-a`] ? "정답 접기" : "✅ 정답 보기"}
-                                </button>
-                              )}
-                            </div>
-                          )}
-                          {variantReveal[`${e.id}-${i}-h`] && v.hint && <p className="wnt-variant-reveal">💡 {v.hint}</p>}
-                          {variantReveal[`${e.id}-${i}-a`] && v.answer && <p className="wnt-variant-reveal ans">{v.answer}</p>}
-                        </div>
-                      ))}
-                      {variantLoading[e.id] ? (
-                        <div className="wnt-loading">출제 중… 잠시만요 ✍️</div>
-                      ) : (
-                        (variants[e.id] || []).length > 0 && (
-                          <button className="wnt-mini strong" onClick={() => makeVariants(e, true)}>➕ 더 만들어줘 (상·최상 1문제씩)</button>
-                        )
-                      )}
                     </div>
                   )}
 
@@ -2194,8 +2264,11 @@ export default function WrongNoteTracker() {
                 <span className="wnt-subj" style={{ background: subjColor(flashEntry.subject) }}>{flashEntry.subject}</span>
                 <span className="wnt-unit">{flashEntry.unit}</span>
                 {flashEntry.retry && <span className="wnt-retry-badge">🔁 다시 풀기</span>}
+                {(flashEntry.wrongCount || 0) > 1 && <span className="wnt-wrong-badge">❌ {flashEntry.wrongCount}회</span>}
                 {flashEntry.source && <span className="wnt-flash-src">{flashEntry.source}</span>}
               </div>
+
+              {mistakeNote(flashEntry) && <div className="wnt-mistake-note">{mistakeNote(flashEntry)}</div>}
 
               {/* 타이머: 스톱워치 / 3분 타이머 (+1분 최대 2회) */}
               <div className="wnt-timer">
@@ -2271,7 +2344,7 @@ export default function WrongNoteTracker() {
                 )}
               </div>
 
-              {flashPadOpen && <SolvePad key={"pad-" + flashEntry.id} gradeFn={flashGradeFn(flashEntry)} bridge={() => "너는 채점 선생님이야. 첨부한 이미지 중 손글씨가 내 풀이고, 나머지는 문제 사진이야.\n과목: " + flashEntry.subject + " / 단원: " + flashEntry.unit + "\n문제를 먼저 풀고 내 풀이와 비교해서 채점해줘: 정답 여부 ⭕/❌, 잘한 점과 틀린 부분."} />}
+              {flashPadOpen && <SolvePad key={"pad-" + flashEntry.id} gradeFn={flashGradeFn(flashEntry)} solveFn={flashSolveFn(flashEntry)} bridge={() => "너는 채점 선생님이야. 첨부한 이미지 중 손글씨가 내 풀이고, 나머지는 문제 사진이야.\n과목: " + flashEntry.subject + " / 단원: " + flashEntry.unit + "\n먼저 짧게 채점만 해줘: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 내가 '풀이도 짧게 알려줘'라고 하면 3~4줄 간략 풀이를 줘."} />}
 
               {flashHint && flashEntry.insight && (
                 <div className="wnt-idea">
@@ -2390,7 +2463,7 @@ export default function WrongNoteTracker() {
                       )}
                     </div>
                   )}
-                  {vtPadOpen[i] && <SolvePad key={"vtpad-" + i} gradeFn={vtGradeFn(v)} bridge={() => "너는 채점 선생님이야. 아래 문제에 대한 첨부 이미지(손글씨)가 내 풀이야.\n[문제] " + v.question + (v.answer ? "\n[모범 풀이·정답] " + v.answer : "") + "\n채점해줘: 정답 여부 ⭕/❌, 잘한 점과 틀린 부분."} />}
+                  {vtPadOpen[i] && <SolvePad key={"vtpad-" + i} gradeFn={vtGradeFn(v)} solveFn={vtSolveFn(v)} bridge={() => "너는 채점 선생님이야. 아래 문제에 대한 첨부 이미지(손글씨)가 내 풀이야.\n[문제] " + v.question + (v.answer ? "\n[모범 풀이·정답] " + v.answer : "") + "\n먼저 짧게 채점만: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 '풀이도 짧게'라고 하면 3~4줄 간략 풀이."} />}
                   {vtReveal[`${i}-h`] && v.hint && <p className="wnt-variant-reveal">💡 {v.hint}</p>}
                   {vtReveal[`${i}-a`] && v.answer && <p className="wnt-variant-reveal ans">{v.answer}</p>}
                 </div>
@@ -2471,12 +2544,14 @@ export default function WrongNoteTracker() {
           </div>
 
           <div className="wnt-set-section">
-            <h2 className="wnt-h2">과목 관리 <HelpTip text="2학년이 되어 과목이 바뀌면 여기서 직접 추가·삭제하세요. 기록이 남아 있는 과목은 삭제할 수 없어요. 새 과목엔 색이 자동 배정돼요." /></h2>
-            <p className="wnt-set-desc">2학년이 되어 과목이 바뀌면 여기서 추가·삭제하세요. 기록이 있는 과목은 삭제할 수 없어요.</p>
-            <div className="wnt-chip-row">
-              {subjects.map((s) => (
+            <h2 className="wnt-h2">과목 관리 <HelpTip text="과목이 바뀌면 여기서 추가·삭제하세요. 기록이 남아 있는 과목은 삭제할 수 없어요. ◀▶로 순서를 바꾸면 폼·필터에 나오는 과목 순서가 함께 바뀌어요." /></h2>
+            <p className="wnt-set-desc">과목을 추가·삭제하고, ◀▶로 순서를 바꿀 수 있어요 (기록 있는 과목은 삭제만 불가).</p>
+            <div className="wnt-subj-list">
+              {subjects.map((s, i) => (
                 <span key={s.name} className="wnt-subj-manage" style={{ borderColor: s.color, color: s.color }}>
+                  <button className="wnt-subj-move" onClick={() => moveSubject(i, -1)} disabled={i === 0} aria-label={`${s.name} 앞으로`}>◀</button>
                   {s.name}
+                  <button className="wnt-subj-move" onClick={() => moveSubject(i, 1)} disabled={i === subjects.length - 1} aria-label={`${s.name} 뒤로`}>▶</button>
                   <button className="wnt-subj-x" onClick={() => removeSubject(s.name)} aria-label={`${s.name} 삭제`}>✕</button>
                 </span>
               ))}
@@ -2797,6 +2872,11 @@ const css = `
   background: #EDF5EE; border: 1px solid #BFDCC4; color: #1E5A2C;
   border-radius: 8px; padding: 8px 12px; font-size: 12.5px; margin-bottom: 12px; font-weight: 700;
 }
+.wnt-mistake-note {
+  background: #FFF6F5; border: 1px solid #F2C9C6; color: #8C2B27;
+  border-radius: 8px; padding: 8px 12px; font-size: 12.5px; margin-bottom: 12px; font-weight: 700;
+}
+.wnt-due { color: var(--red); font-weight: 700; }
 .wnt-idea-inline { margin-top: 8px; display: flex; flex-direction: column; gap: 0; align-items: flex-start; }
 .wnt-idea-inline .wnt-idea { width: 100%; box-sizing: border-box; }
 .wnt-timer-modes { display: flex; gap: 4px; }
@@ -2976,11 +3056,17 @@ const css = `
   background: #EDF5EE; border: 1px solid #BFDCC4; color: #1E5A2C;
   border-radius: 8px; padding: 9px 13px; font-size: 13px;
 }
+.wnt-subj-list { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .wnt-subj-manage {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 8px 5px 12px; font-size: 13px; font-weight: 700;
+  padding: 5px 8px 5px 8px; font-size: 13px; font-weight: 700;
   border: 1.5px solid; border-radius: 999px; background: #fff;
 }
+.wnt-subj-move {
+  width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line);
+  background: #fff; color: var(--muted); font-size: 10px; cursor: pointer; line-height: 1;
+}
+.wnt-subj-move:disabled { opacity: 0.3; cursor: default; }
 .wnt-subj-x {
   width: 18px; height: 18px; border-radius: 50%; border: none;
   background: var(--line); color: var(--ink); font-size: 10px; cursor: pointer; line-height: 1;
