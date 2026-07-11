@@ -865,7 +865,9 @@ export default function WrongNoteTracker() {
   useEffect(() => {
     if (loading || !formOpen) return;
     const t = setTimeout(() => {
-      window.storage.set("wrongnote:draft", JSON.stringify(form)).catch(() => {});
+      // 사진은 용량이 커서 임시저장에서 제외 (본저장은 사진 포함). 글·태그만 자동 복구.
+      const light = { ...form, photos: [] };
+      window.storage.set("wrongnote:draft", JSON.stringify(light)).catch(() => {});
     }, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -875,6 +877,32 @@ export default function WrongNoteTracker() {
     setDraftNotice(false);
     setPhotoMsg("");
     window.storage.delete("wrongnote:draft").catch(() => {});
+  }
+
+  // 저장공간 비우기 — 임시저장 + 어떤 오답에도 연결되지 않은 사진·풀이 데이터(찌꺼기)를 삭제
+  const [cleaning, setCleaning] = useState(false);
+  async function cleanupStorage() {
+    if (cleaning) return;
+    setCleaning(true);
+    try {
+      const validImg = new Set(entries.filter((e) => e.hasImage).map((e) => `wrongnote:img:${e.id}`));
+      const validSol = new Set(entries.flatMap((e) => (e.solutions || []).filter((s) => s.hasPhotos).map((s) => `wrongnote:sol:${s.id}`)));
+      let keys = [];
+      try { const r = await window.storage.list("wrongnote:"); keys = (r && r.keys) || []; } catch (e) {}
+      let freed = 0;
+      for (const k of keys) {
+        if (k === STORAGE_KEY) continue;
+        if (k === "wrongnote:draft"
+          || (k.indexOf("wrongnote:img:") === 0 && !validImg.has(k))
+          || (k.indexOf("wrongnote:sol:") === 0 && !validSol.has(k))) {
+          try { await window.storage.delete(k); freed++; } catch (e) {}
+        }
+      }
+      setSaveError(false);
+      setSettingMsg(freed > 0 ? `저장공간을 비웠어요! 안 쓰는 데이터 ${freed}개 삭제 완료. 이제 다시 저장해 보세요.` : "지울 찌꺼기 데이터가 없었어요. 사진이 큰 경우일 수 있어요 — 사진을 1~2장만 넣어보세요.");
+    } finally {
+      setCleaning(false);
+    }
   }
 
   async function saveData(patch) {
@@ -925,13 +953,24 @@ export default function WrongNoteTracker() {
       img.onerror = rej;
       img.src = dataUrl;
     });
-    const MAX = 1100;
-    const scale = Math.min(1, MAX / Math.max(img.width, img.height));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(img.width * scale);
-    canvas.height = Math.round(img.height * scale);
-    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.72);
+    // 앱 저장소 한도에 맞게 사진을 목표 용량(~200KB) 이하로 줄인다. 글씨는 읽히게 유지.
+    function render(maxDim, quality) {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(Math.round(img.width * scale), 1);
+      canvas.height = Math.max(Math.round(img.height * scale), 1);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", quality);
+    }
+    const TARGET = 200000; // base64 문자 길이 기준 (~150KB 정도)
+    let maxDim = 1000, quality = 0.6;
+    let out = render(maxDim, quality);
+    while (out.length > TARGET && (maxDim > 560 || quality > 0.4)) {
+      if (quality > 0.42) quality -= 0.1;
+      else { maxDim -= 140; quality = 0.55; }
+      out = render(maxDim, quality);
+    }
+    return out;
   }
 
   async function loadEntryImages(id) {
@@ -2910,6 +2949,12 @@ export default function WrongNoteTracker() {
         /* ---- 설정 탭 ---- */
         <section className="wnt-settings">
           {settingMsg && <div className="wnt-setting-msg">{settingMsg}</div>}
+
+          <div className="wnt-set-section">
+            <h2 className="wnt-h2">🧹 저장공간 <HelpTip text="저장에 실패하거나 '공간 부족'이 뜰 때 눌러요. 어떤 오답에도 연결되지 않은 옛 사진·임시저장 찌꺼기를 지워 공간을 되찾아요. 실제 오답 기록은 지우지 않아요." /></h2>
+            <p className="wnt-set-desc">저장이 안 되거나 '공간 부족'이 뜨면 눌러요. 안 쓰는 찌꺼기 데이터만 비워요 (오답 기록은 안 지워져요).</p>
+            <button className="wnt-btn-primary" onClick={cleanupStorage} disabled={cleaning}>{cleaning ? "비우는 중…" : "🧹 저장공간 비우기"}</button>
+          </div>
 
           <div className="wnt-set-section">
             <h2 className="wnt-h2">🤖 AI 연결 점검</h2>
