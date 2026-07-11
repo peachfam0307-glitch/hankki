@@ -645,6 +645,7 @@ export default function WrongNoteTracker() {
   const [fStatus, setFStatus] = useState("전체");
   const [fStarOnly, setFStarOnly] = useState(false);
   const [fDueOnly, setFDueOnly] = useState(false); // 오늘 복습할 오답만
+  const [listView, setListView] = useState("active"); // active=복습 중, done=맞은 문제
   const [search, setSearch] = useState("");
   const [exporting, setExporting] = useState(false);
 
@@ -683,6 +684,16 @@ export default function WrongNoteTracker() {
   const [insightOpen, setInsightOpen] = useState({});
   const [insightMsg, setInsightMsg] = useState({});
   const [insightBridge, setInsightBridge] = useState({}); // id → Claude 앱으로 보낼 발상 요약 질문
+
+  // ---- 문제 풀이(AI 해설) 상태 ----
+  const [explainLoading, setExplainLoading] = useState({});
+  const [explainResult, setExplainResult] = useState({});
+  const [explainBridge, setExplainBridge] = useState({});
+
+  // ---- 내 풀이 채점 상태 (풀이 기록별) ----
+  const [solGradeLoading, setSolGradeLoading] = useState({});
+  const [solGrade, setSolGrade] = useState({});
+  const [solGradeBridge, setSolGradeBridge] = useState({});
 
   // ---- 카드 내 변형문제 상태 ----
   const [variantOpen, setVariantOpen] = useState({});
@@ -1152,7 +1163,20 @@ export default function WrongNoteTracker() {
 
   function chooseAiMode(entry, mode) {
     setAiMode((m) => ({ ...m, [entry.id]: mode }));
+    // 두 모드 모두 즉시 첫 응답을 보내 '아무 반응 없음'을 없앰
     if (mode === "direct") sendAi(entry, "이 문제의 전체 풀이를 단계별로 보여주세요", mode);
+    else sendAi(entry, "이 문제를 어디서부터 접근하면 좋을지 힌트 하나만 주세요", mode);
+  }
+
+  // AI 도우미: 사진 문제를 Claude 앱에서 제대로 물어보기 위한 프롬프트
+  function aiBridgePrompt(entry) {
+    return (
+      "이 문제 풀이를 도와줘 (이 채팅에 문제 사진을 첨부할게).\n" +
+      `[과목] ${entry.subject} / [단원] ${entry.unit}\n` +
+      `[내가 기록한 실수] ${(entry.tags || []).join(", ") || "미기재"}\n` +
+      (entry.memo ? `[메모] ${entry.memo}\n` : "") +
+      "먼저 힌트로 방향을 잡아주고, 내가 '전체 풀이 보여줘'라고 하면 단계별 풀이를 알려줘."
+    );
   }
 
   function resetAiMode(id) {
@@ -1255,12 +1279,75 @@ export default function WrongNoteTracker() {
     saveData({ entries: entries.map((x) => (x.id === id ? { ...x, insight: null } : x)) });
   }
 
+  // ---- 내가 남긴 풀이 채점: 문제 사진 + 내 풀이(글·사진)를 보고 맞았는지 짧게 피드백 ----
+  async function gradeSolution(entry, sol) {
+    const key = sol.id;
+    if (solGradeLoading[key]) return;
+    setSolGradeLoading((l) => ({ ...l, [key]: true }));
+    setSolGrade((m) => ({ ...m, [key]: "" }));
+    setSolGradeBridge((m) => ({ ...m, [key]: "" }));
+    const prompt =
+      "앞의 이미지는 '문제 사진'이고, (있다면) 그다음 이미지와 아래 글은 '학생이 쓴 풀이'야. 학생 풀이가 맞았는지 짧게 채점해줘.\n" +
+      `[과목] ${entry.subject} / [단원] ${entry.unit}\n` +
+      (sol.text ? `[학생 풀이 글]\n${sol.text}\n` : "") +
+      "형식: 첫 줄에 ⭕ 또는 ❌만, 그다음 잘한 점·틀린 부분을 1~2줄. 수식은 일반 텍스트.";
+    const bridge = prompt + "\n(이 채팅에 문제 사진과 내 풀이를 첨부할게)";
+    try {
+      const probImgs = (await loadEntryImages(entry.id)).slice(0, 2);
+      const solImgs = (solPhotoCache[key] || []).slice(0, 2);
+      const reply = await callClaude(
+        [{ role: "user", content: [...imgBlocks(probImgs), ...imgBlocks(solImgs), { type: "text", text: prompt }] }],
+        { needsVision: true }
+      );
+      setSolGrade((m) => ({ ...m, [key]: reply || "채점 결과를 받지 못했어요." }));
+    } catch (err) {
+      copyText(bridge);
+      setSolGradeBridge((m) => ({ ...m, [key]: bridge }));
+      setSolGrade((m) => ({ ...m, [key]: (err && err.visionRequired)
+        ? "이 화면에선 사진을 못 읽어서 채점을 바로 못 해요. 질문을 복사해뒀어요 — 아래 버튼으로 Claude 앱을 열고 문제·풀이 사진을 첨부하면 채점받을 수 있어요."
+        : "연결이 잠시 원활하지 않아 질문을 복사해뒀어요. 아래 버튼으로 Claude 앱에 붙여넣고 사진을 첨부하세요." }));
+    } finally {
+      setSolGradeLoading((l) => ({ ...l, [key]: false }));
+    }
+  }
+
+  // ---- 문제 풀이(AI 해설): 문제 사진을 분석해 정답 해설지처럼 풀이를 알려줌 ----
+  async function explainProblem(entry) {
+    const id = entry.id;
+    if (explainLoading[id]) return;
+    setExplainLoading((l) => ({ ...l, [id]: true }));
+    setExplainResult((m) => ({ ...m, [id]: "" }));
+    setExplainBridge((m) => ({ ...m, [id]: "" }));
+    const tagTxt = (entry.tags || []).join(", ") || "미기재";
+    const prompt =
+      "첨부한 문제 사진을 분석해서 정답 해설지처럼 풀이를 알려줘.\n" +
+      `[과목] ${entry.subject} / [단원] ${entry.unit}\n[학생이 기록한 실수] ${tagTxt}\n` +
+      "형식: 1) 핵심 개념 한 줄 2) 단계별 풀이 3) 최종 답. 학생이 기록한 실수를 특히 조심하라고 짚어줘. 수식은 LaTeX 없이 일반 텍스트로.";
+    const bridge = prompt + "\n(이 채팅에 문제 사진을 첨부해줘)";
+    try {
+      const imgs = await loadEntryImages(id);
+      const reply = await callClaude(
+        [{ role: "user", content: [...imgBlocks(imgs), { type: "text", text: prompt }] }],
+        { needsVision: true }
+      );
+      setExplainResult((m) => ({ ...m, [id]: reply || "풀이를 받지 못했어요. 다시 시도해 주세요." }));
+    } catch (err) {
+      copyText(bridge);
+      setExplainBridge((m) => ({ ...m, [id]: bridge }));
+      setExplainResult((m) => ({ ...m, [id]: (err && err.visionRequired)
+        ? "이 화면에선 문제 사진을 못 읽어서 풀이를 바로 못 만들어요. 질문을 복사해뒀어요 — 아래 버튼으로 Claude 앱을 열고 문제 사진을 첨부하면 풀이를 받을 수 있어요."
+        : "연결이 잠시 원활하지 않아 질문을 복사해뒀어요. 아래 버튼으로 Claude 앱에 붙여넣고 문제 사진을 첨부하세요." }));
+    } finally {
+      setExplainLoading((l) => ({ ...l, [id]: false }));
+    }
+  }
+
   // ---- 변형문제 (공통 프롬프트) ----
   function variantJsonRule() {
     return (
       "\n반드시 아래 JSON 형식으로만 응답해. 마크다운 코드블록이나 다른 텍스트 없이:\n" +
-      '{"problems": [{"level": "상", "question": "문제 전문", "hint": "발상 힌트 한두 문장", "answer": "풀이 요약과 최종 답"}, {"level": "최상", "question": "...", "hint": "...", "answer": "..."}]}\n' +
-      "수식은 LaTeX 없이 일반 텍스트로 읽기 쉽게. answer는 핵심 풀이 3~4문장으로 간결하게. JSON 문자열 안에서 줄바꿈이 필요하면 \\n 을 쓰고, JSON 앞뒤에 다른 말은 절대 붙이지 마. 키 이름은 반드시 영어 그대로(problems, level, question, hint, answer)만 사용해."
+      '{"problems": [{"level": "쌍둥이", "question": "문제 전문", "hint": "발상 힌트 한두 문장", "answer": "풀이 요약과 최종 답"}, {"level": "상", "question": "...", "hint": "...", "answer": "..."}, {"level": "최상", "question": "...", "hint": "...", "answer": "..."}]}\n' +
+      "수식은 LaTeX 없이 일반 텍스트로 읽기 쉽게. answer는 핵심 풀이 3~4문장으로 간결하게. JSON 문자열 안에서 줄바꿈이 필요하면 \\n 을 쓰고, JSON 앞뒤에 다른 말은 절대 붙이지 마. 키 이름은 반드시 영어 그대로(problems, level, question, hint, answer)만 사용하고, level 값은 반드시 '쌍둥이'/'상'/'최상' 중 하나만 써."
     );
   }
 
@@ -1270,10 +1357,11 @@ export default function WrongNoteTracker() {
       `[과목] ${entry.subject}\n[단원·주제] ${entry.unit}\n[학생의 실수 패턴] ${(entry.tags || []).join(", ") || "미기재"}\n[학생 메모] ${entry.memo || "없음"}\n` +
       (subjBook(entry.subject) ? `[출제 기준 교재] ${subjBook(entry.subject)} — 이 교재의 난이도와 출제 스타일을 기준으로 변형해.\n` : "") +
       (imgCount ? `[첨부] 원 문제 사진 ${imgCount}장. 사진 속 문제를 변형의 기준으로 삼아.\n` : "") +
-      "\n출제 조건:\n" +
-      "1. [상] 1문제 — 원 문제와 같은 핵심 개념. 학생의 실수 패턴을 정확히 찌르는 함정 포함.\n" +
-      "2. [최상] 1문제 — 조건을 비틀거나 교육과정 내 다른 개념과 융합한 킬러 문항.\n" +
-      (prevQs ? `3. 아래 이전 출제 문제와 겹치지 않는 새로운 문제로:\n${prevQs}\n` : "") +
+      "\n출제 조건 (총 3문제):\n" +
+      "1. [쌍둥이] 1문제 — 원 문제와 거의 같은 유형·같은 난이도. 숫자·상황만 바꾼 연습용 문제.\n" +
+      "2. [상] 1문제 — 원 문제와 같은 핵심 개념이되, 학생의 실수 패턴을 정확히 찌르는 함정 포함.\n" +
+      "3. [최상] 1문제 — 조건을 비틀거나 교육과정 내 다른 개념과 융합한 킬러 문항.\n" +
+      (prevQs ? `4. 아래 이전 출제 문제와 겹치지 않는 새로운 문제로:\n${prevQs}\n` : "") +
       variantJsonRule()
     );
   }
@@ -1291,10 +1379,11 @@ export default function WrongNoteTracker() {
       `[대상 과목] ${subjectName}\n` +
       (subjBook(subjectName) ? `[출제 기준 교재] ${subjBook(subjectName)} — 이 교재의 난이도와 출제 스타일을 기준으로 출제해.\n` : "") +
       `[자주 걸리는 실수 패턴] ${topTags || "데이터 부족"}\n[최근 오답 목록]\n${lines}\n` +
-      "\n출제 조건:\n" +
-      "1. [상] 1문제 — 위 오답 단원들의 핵심 개념을 다루되, 학생이 자주 걸리는 실수 패턴을 정확히 찌르는 함정 포함.\n" +
-      "2. [최상] 1문제 — 위 단원 중 둘 이상을 융합하거나 조건을 비튼 킬러 문항.\n" +
-      (prevQs ? `3. 아래 이전 출제 문제와 겹치지 않는 새로운 문제로:\n${prevQs}\n` : "") +
+      "\n출제 조건 (총 3문제):\n" +
+      "1. [쌍둥이] 1문제 — 위 오답 유형 중 하나와 거의 같은 유형·같은 난이도의 연습용 문제.\n" +
+      "2. [상] 1문제 — 위 오답 단원들의 핵심 개념을 다루되, 학생이 자주 걸리는 실수 패턴을 정확히 찌르는 함정 포함.\n" +
+      "3. [최상] 1문제 — 위 단원 중 둘 이상을 융합하거나 조건을 비튼 킬러 문항.\n" +
+      (prevQs ? `4. 아래 이전 출제 문제와 겹치지 않는 새로운 문제로:\n${prevQs}\n` : "") +
       variantJsonRule()
     );
   }
@@ -1722,6 +1811,9 @@ export default function WrongNoteTracker() {
     if (fSubject !== "전체" && e.subject !== fSubject) return false;
     if (fTag !== "전체" && !(e.tags || []).includes(fTag)) return false;
     if (fStatus !== "전체" && STATUS[e.status].label !== fStatus) return false;
+    const isDone = e.status === 3 || e.graduated;
+    if (listView === "active" && isDone) return false; // 복습 중 탭: 맞은(정복·졸업) 문제 숨김
+    if (listView === "done" && !isDone) return false;  // 맞은 문제 탭: 맞은 것만
     if (fStarOnly && !e.starred) return false;
     if (fDueOnly) {
       const r = nextReviewInfo(e);
@@ -1930,6 +2022,16 @@ export default function WrongNoteTracker() {
             </section>
           )}
 
+          {/* 복습 중 / 맞은 문제 전환 */}
+          <div className="wnt-viewtabs">
+            <button className={listView === "active" ? "wnt-viewtab on" : "wnt-viewtab"} onClick={() => setListView("active")}>
+              📚 복습 중 <em>{entries.filter((e) => !(e.status === 3 || e.graduated)).length}</em>
+            </button>
+            <button className={listView === "done" ? "wnt-viewtab on" : "wnt-viewtab"} onClick={() => setListView("done")}>
+              ✅ 맞은 문제 <em>{entries.filter((e) => e.status === 3 || e.graduated).length}</em>
+            </button>
+          </div>
+
           {/* 필터 + 선택 모드 */}
           <section className="wnt-filters">
             <select className="wnt-select" value={fSubject} onChange={(e) => setFSubject(e.target.value)}>
@@ -2090,10 +2192,26 @@ export default function WrongNoteTracker() {
                           )}
                         </label>
                       )}
+                      {e.hasImage && (
+                        <button className="wnt-mini variant" onClick={() => explainProblem(e)} disabled={explainLoading[e.id]}>
+                          {explainLoading[e.id] ? "풀이 분석 중…" : "📖 문제 풀이"}
+                        </button>
+                      )}
                       <button className="wnt-mini ai" onClick={() => toggleAi(e.id)}>
                         🤖 AI 도우미{aiOpen[e.id] ? " ▲" : ""}
                       </button>
-                      <HelpTip text="✏️ 풀이 남기기: 다시 푼 풀이를 글·사진으로 기록. 💡 발상 올리기: 손으로 정리한 발상 사진을 AI가 카드로 요약해 저장 (플래시카드 힌트로 쓰여요). 🤖 AI 도우미: 힌트 유도 또는 전체 풀이 선택. (변형문제는 위 '변형문제' 탭에서 만들어요.)" />
+                      <HelpTip text="📖 문제 풀이: 문제 사진을 분석해 정답 해설지처럼 풀이를 알려줘요. ✏️ 풀이 남기기: 다시 푼 풀이를 글·사진으로 기록 + 채점. 💡 발상 올리기: 손으로 정리한 발상 사진을 AI가 카드로 요약. 🤖 AI 도우미: 힌트 유도 또는 대화. (변형문제는 위 '변형문제' 탭에서 만들어요.)" />
+                    </div>
+                  )}
+
+                  {/* 문제 풀이(AI 해설) 결과 */}
+                  {!selectMode && explainResult[e.id] && (
+                    <div className="wnt-solve-box">
+                      <div className="wnt-panel-head">📖 문제 풀이</div>
+                      <p className="wnt-solve-text">{explainResult[e.id]}</p>
+                      {explainBridge[e.id] && (
+                        <button className="wnt-mini idea" onClick={() => openInClaudeApp(explainBridge[e.id])}>📲 Claude 앱에서 풀이 받기</button>
+                      )}
                     </div>
                   )}
 
@@ -2158,6 +2276,13 @@ export default function WrongNoteTracker() {
                             solPhotoCache[s.id].map((src, j) => (
                               <img key={j} className="wnt-photo" src={src} alt={`풀이 사진 ${j + 1}`} />
                             ))}
+                          <button className="wnt-mini strong" style={{ marginTop: 6 }} onClick={() => gradeSolution(e, s)} disabled={solGradeLoading[s.id]}>
+                            {solGradeLoading[s.id] ? "채점 중…" : "✅ 이 풀이 채점받기"}
+                          </button>
+                          {solGrade[s.id] && <p className="wnt-sol-grade">{solGrade[s.id]}</p>}
+                          {solGradeBridge[s.id] && (
+                            <button className="wnt-mini idea" style={{ marginTop: 4 }} onClick={() => openInClaudeApp(solGradeBridge[s.id])}>📲 Claude 앱에서 채점받기</button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -2167,6 +2292,13 @@ export default function WrongNoteTracker() {
                   {!selectMode && aiOpen[e.id] && (
                     <div className="wnt-ai">
                       <div className="wnt-panel-head">🤖 AI 풀이 도우미 <span>대화는 앱을 닫으면 사라져요</span></div>
+                      {e.hasImage && (
+                        <div className="wnt-ai-tip">
+                          📷 사진 문제는 이 화면에서 직접 못 읽어요. 제대로 물어보려면 👉
+                          <button className="wnt-mini idea" onClick={() => openInClaudeApp(aiBridgePrompt(e))}>📲 Claude 앱에서 물어보기</button>
+                          <span> (열고 문제 사진 첨부)</span>
+                        </div>
+                      )}
                       {!aiMode[e.id] ? (
                         <div className="wnt-ai-modes">
                           <p className="wnt-ai-q">어떤 방식으로 도와드릴까요?</p>
@@ -2444,7 +2576,7 @@ export default function WrongNoteTracker() {
 
               {vtProblems.map((v, i) => (
                 <div key={i} className="wnt-variant-item big">
-                  <span className={v.level === "최상" ? "wnt-level top" : "wnt-level"}>{v.level}</span>
+                  <span className={v.level === "최상" ? "wnt-level top" : v.level === "쌍둥이" ? "wnt-level twin" : "wnt-level"}>{v.level}</span>
                   <p className="wnt-variant-q">{v.question}</p>
                   {(v.hint || v.answer) && (
                     <div className="wnt-variant-btns">
@@ -2877,6 +3009,26 @@ const css = `
   border-radius: 8px; padding: 8px 12px; font-size: 12.5px; margin-bottom: 12px; font-weight: 700;
 }
 .wnt-due { color: var(--red); font-weight: 700; }
+.wnt-solve-box {
+  margin-top: 10px; border: 1px solid #D8D3F2; border-radius: 10px; background: #F8F7FE; padding: 12px;
+}
+.wnt-solve-text { margin: 4px 0 8px; font-size: 13.5px; line-height: 1.7; white-space: pre-wrap; color: #3A4657; }
+.wnt-sol-grade {
+  margin: 6px 0 0; font-size: 13px; line-height: 1.7; white-space: pre-wrap;
+  background: #F6F8FE; border: 1px solid #C9D4F0; border-radius: 6px; padding: 8px 10px;
+}
+.wnt-ai-tip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  background: #FFF9EC; border: 1px solid #EBD9AE; border-radius: 8px;
+  padding: 8px 10px; font-size: 12px; color: #4A4433; margin-bottom: 10px; line-height: 1.5;
+}
+.wnt-viewtabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.wnt-viewtab {
+  flex: 1; padding: 9px 10px; font-size: 13.5px; font-weight: 700; font-family: inherit;
+  border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--muted); cursor: pointer;
+}
+.wnt-viewtab.on { border-color: var(--ink); color: var(--ink); background: var(--paper); }
+.wnt-viewtab em { font-style: normal; color: var(--red); margin-left: 3px; }
 .wnt-idea-inline { margin-top: 8px; display: flex; flex-direction: column; gap: 0; align-items: flex-start; }
 .wnt-idea-inline .wnt-idea { width: 100%; box-sizing: border-box; }
 .wnt-timer-modes { display: flex; gap: 4px; }
@@ -2925,6 +3077,7 @@ const css = `
   border-radius: 4px; padding: 2px 8px; margin-bottom: 6px;
 }
 .wnt-level.top { background: var(--red); }
+.wnt-level.twin { background: var(--green); }
 .wnt-variant-q { margin: 0 0 8px; font-size: 13.5px; line-height: 1.7; white-space: pre-wrap; }
 .wnt-variant-btns { display: flex; gap: 6px; flex-wrap: wrap; }
 .wnt-variant-reveal {
