@@ -773,6 +773,9 @@ export default function WrongNoteTracker() {
   const [vtLoading, setVtLoading] = useState(false);
   const [vtReveal, setVtReveal] = useState({});
   const [vtPadOpen, setVtPadOpen] = useState({});
+  const [vtLevels, setVtLevels] = useState(["쌍둥이", "상", "최상"]); // 출제할 난이도 선택
+  const [vtCollapsed, setVtCollapsed] = useState({}); // 변형문제 개별 접기
+  const [vtPadNonce, setVtPadNonce] = useState({}); // '다시 풀기' 시 풀이 패드 초기화용
   const [vtTimerSec, setVtTimerSec] = useState(0);
   const [vtTimerOn, setVtTimerOn] = useState(false);
   const [vtExtends, setVtExtends] = useState(0);
@@ -1210,6 +1213,20 @@ export default function WrongNoteTracker() {
     setAiOpen((o) => ({ ...o, [id]: true }));
   }
 
+  // 저장된 문제 사진을 기기(사진첩)로 내려받기 — 클로드 앱에서 첨부해 정확히 물어볼 수 있게
+  function savePhoto(id) {
+    const imgs = imageCache[id] || [];
+    if (!imgs.length) return;
+    imgs.forEach((src, i) => {
+      const a = document.createElement("a");
+      a.href = src;
+      a.download = `오답_문제_${i + 1}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+  }
+
   function buildContext(entry, imgCount, mode) {
     const base =
       "너는 대한민국 자사고 수준 고등학생의 오답 복습을 돕는 과외 선생님이야. 아래는 학생이 기록한 오답 정보야.\n\n" +
@@ -1218,10 +1235,10 @@ export default function WrongNoteTracker() {
       `[출처] ${entry.source || "미기재"}\n` +
       `[학생이 기록한 틀린 이유] ${(entry.tags || []).join(", ") || "미기재"}\n` +
       `[학생 메모] ${entry.memo || "없음"}\n` +
-      (imgCount > 0 ? `[첨부] 문제 사진 ${imgCount}장이 첨부돼 있어. 사진 속 문제를 근거로 답해.\n` : "") +
-      "\n공통 규칙: 친근한 존댓말로 간결하게. 확실하지 않은 내용은 추측하지 말고 그렇다고 말해. 수식은 LaTeX 없이 일반 텍스트로 읽기 쉽게 써. 학생이 기록한 틀린 이유와 관련된 함정을 특히 짚어줘.\n\n";
+      "\n중요: 문제 원문(사진)은 여기 없어. 위 단원·유형·학생이 적은 실수 정보만으로 도와줘. 문제를 못 봤다며 사진을 요구하지 말고, 이 단원에서 그 실수가 나오는 전형적인 상황을 가정해 접근법·핵심 개념·자주 걸리는 함정을 알려줘. 특정 숫자·조건이 꼭 필요하면 학생에게 짧게 되물어봐.\n" +
+      "공통 규칙: 친근한 존댓말로 간결하게. 확실하지 않은 내용은 추측하지 말고 그렇다고 말해. 수식은 LaTeX 없이 일반 텍스트로 읽기 쉽게 써. 학생이 기록한 틀린 이유와 관련된 함정을 특히 짚어줘.\n\n";
     if (mode === "direct") {
-      return base + "모드: 학생이 풀이를 먼저 보길 원했어. 전체 풀이를 단계별로 명확하게 보여주고, 각 단계의 근거를 함께 써. 이후 학생의 추가 질문에 답해.";
+      return base + "모드: 학생이 풀이 방향을 먼저 보길 원했어. 이 유형의 표준 풀이 흐름을 단계별로 명확하게 보여주고, 각 단계의 근거를 함께 써. 이후 학생의 추가 질문에 답해.";
     }
     return base + "모드: 소크라테스식. 정답이나 전체 풀이를 바로 알려주지 마. 힌트는 한 번에 하나씩만 주고, 학생이 다음 단계를 스스로 생각하도록 짧은 질문으로 유도해. 학생이 '전체 풀이'를 명확히 요청한 경우에만 단계별 풀이를 전부 보여줘.";
   }
@@ -1416,22 +1433,34 @@ export default function WrongNoteTracker() {
     );
   }
 
-  function entryVariantPrompt(entry, imgCount, prevQs) {
+  // 선택된 난이도(쌍둥이/상/최상)만 출제하도록 조건 문구를 만든다
+  const LEVEL_DESC = {
+    "쌍둥이": "원 문제와 거의 같은 유형·같은 난이도. 숫자·상황만 바꾼 연습용 문제.",
+    "상": "같은 핵심 개념이되, 학생의 실수 패턴을 정확히 찌르는 함정 포함.",
+    "최상": "조건을 비틀거나 교육과정 내 다른 개념과 융합한 킬러 문항.",
+  };
+  function levelSpec(levels) {
+    const chosen = (levels && levels.length ? levels : ["쌍둥이", "상", "최상"]).filter((l) => LEVEL_DESC[l]);
+    const list = chosen.length ? chosen : ["쌍둥이", "상", "최상"];
+    const lines = list.map((l, i) => `${i + 1}. [${l}] 1문제 — ${LEVEL_DESC[l]}`).join("\n");
+    return { count: list.length, lines, list };
+  }
+
+  function entryVariantPrompt(entry, imgCount, prevQs, levels) {
+    const spec = levelSpec(levels);
     return (
       TEACHER_PERSONA + "\n\n아래 오답 정보를 바탕으로 변형문제를 출제해.\n\n" +
       `[과목] ${entry.subject}\n[단원·주제] ${entry.unit}\n[학생의 실수 패턴] ${(entry.tags || []).join(", ") || "미기재"}\n[학생 메모] ${entry.memo || "없음"}\n` +
       (subjBook(entry.subject) ? `[출제 기준 교재] ${subjBook(entry.subject)} — 이 교재의 난이도와 출제 스타일을 기준으로 변형해.\n` : "") +
       (imgCount ? `[첨부] 원 문제 사진 ${imgCount}장. 사진 속 문제를 변형의 기준으로 삼아.\n` : "") +
-      "\n출제 조건 (총 3문제):\n" +
-      "1. [쌍둥이] 1문제 — 원 문제와 거의 같은 유형·같은 난이도. 숫자·상황만 바꾼 연습용 문제.\n" +
-      "2. [상] 1문제 — 원 문제와 같은 핵심 개념이되, 학생의 실수 패턴을 정확히 찌르는 함정 포함.\n" +
-      "3. [최상] 1문제 — 조건을 비틀거나 교육과정 내 다른 개념과 융합한 킬러 문항.\n" +
-      (prevQs ? `4. 아래 이전 출제 문제와 겹치지 않는 새로운 문제로:\n${prevQs}\n` : "") +
+      `\n출제 조건 (총 ${spec.count}문제, 아래 난이도만 정확히 출제):\n` + spec.lines + "\n" +
+      (prevQs ? `그리고 아래 이전 출제 문제와 겹치지 않는 새로운 문제로:\n${prevQs}\n` : "") +
       variantJsonRule()
     );
   }
 
-  function summaryVariantPrompt(subjectName, pool, prevQs) {
+  function summaryVariantPrompt(subjectName, pool, prevQs, levels) {
+    const spec = levelSpec(levels);
     const lines = pool
       .slice(0, 8)
       .map((e) => `- [${e.subject}/${e.unit}] 틀린 이유: ${(e.tags || []).join(", ") || "미기재"}${e.memo ? ` / 메모: ${e.memo.slice(0, 60)}` : ""}`)
@@ -1444,11 +1473,8 @@ export default function WrongNoteTracker() {
       `[대상 과목] ${subjectName}\n` +
       (subjBook(subjectName) ? `[출제 기준 교재] ${subjBook(subjectName)} — 이 교재의 난이도와 출제 스타일을 기준으로 출제해.\n` : "") +
       `[자주 걸리는 실수 패턴] ${topTags || "데이터 부족"}\n[최근 오답 목록]\n${lines}\n` +
-      "\n출제 조건 (총 3문제):\n" +
-      "1. [쌍둥이] 1문제 — 위 오답 유형 중 하나와 거의 같은 유형·같은 난이도의 연습용 문제.\n" +
-      "2. [상] 1문제 — 위 오답 단원들의 핵심 개념을 다루되, 학생이 자주 걸리는 실수 패턴을 정확히 찌르는 함정 포함.\n" +
-      "3. [최상] 1문제 — 위 단원 중 둘 이상을 융합하거나 조건을 비튼 킬러 문항.\n" +
-      (prevQs ? `4. 아래 이전 출제 문제와 겹치지 않는 새로운 문제로:\n${prevQs}\n` : "") +
+      `\n출제 조건 (총 ${spec.count}문제, 아래 난이도만 정확히 출제):\n` + spec.lines + "\n" +
+      (prevQs ? `그리고 아래 이전 출제 문제와 겹치지 않는 새로운 문제로:\n${prevQs}\n` : "") +
       variantJsonRule()
     );
   }
@@ -1509,11 +1535,11 @@ export default function WrongNoteTracker() {
         if (!entry) return;
         const imgs = await loadEntryImages(entry.id);
         reply = await callClaude([
-          { role: "user", content: [...imgBlocks(imgs), { type: "text", text: entryVariantPrompt(entry, imgs.length, prev) }] },
+          { role: "user", content: [...imgBlocks(imgs), { type: "text", text: entryVariantPrompt(entry, imgs.length, prev, vtLevels) }] },
         ]);
       } else {
         reply = await callClaude([
-          { role: "user", content: [{ type: "text", text: summaryVariantPrompt(vtSubject, vtPool, prev) }] },
+          { role: "user", content: [{ type: "text", text: summaryVariantPrompt(vtSubject, vtPool, prev, vtLevels) }] },
         ]);
       }
       const probs = extractProblems(reply);
@@ -1539,6 +1565,17 @@ export default function WrongNoteTracker() {
     } finally {
       setVtLoading(false);
     }
+  }
+
+  // 변형문제: 다시 풀기(풀이 패드 초기화, 정답 숨김) / 치우기(목록에서 제거)
+  function retryVariant(i) {
+    setVtPadNonce((n) => ({ ...n, [i]: (n[i] || 0) + 1 }));
+    setVtReveal((r) => ({ ...r, [`${i}-a`]: false }));
+    setVtPadOpen((o) => ({ ...o, [i]: true }));
+  }
+  function hideVariant(i) {
+    setVtProblems((ps) => ps.filter((_, idx) => idx !== i));
+    setVtPadOpen({}); setVtReveal({}); setVtCollapsed({}); setVtPadNonce({});
   }
 
   // 변형문제 필기 채점 (짧게: ⭕/❌ + 1~2줄)
@@ -2257,9 +2294,12 @@ export default function WrongNoteTracker() {
                   {/* 문제 사진 */}
                   {e.hasImage && (
                     <div className="wnt-photo-area">
-                      <button className="wnt-mini" onClick={() => toggleImage(e.id)}>
-                        {openImages[e.id] ? "사진 접기 ▲" : `📷 문제 사진 보기${e.photoCount > 1 ? ` (${e.photoCount}장)` : ""}`}
-                      </button>
+                      <div className="wnt-photo-btns">
+                        <button className="wnt-mini" onClick={() => toggleImage(e.id)}>
+                          {openImages[e.id] ? "사진 접기 ▲" : `📷 문제 사진 보기${e.photoCount > 1 ? ` (${e.photoCount}장)` : ""}`}
+                        </button>
+                        <button className="wnt-mini" onClick={() => savePhoto(e.id)} disabled={!imageCache[e.id]}>📥 사진첩에 저장</button>
+                      </div>
                       {openImages[e.id] && imageCache[e.id] &&
                         imageCache[e.id].map((src, i) => (
                           <img key={i} className="wnt-photo" src={src} alt={`${e.unit} 문제 사진 ${i + 1}`} />
@@ -2402,14 +2442,20 @@ export default function WrongNoteTracker() {
                   {!selectMode && aiOpen[e.id] && (
                     <div className="wnt-ai">
                       <div className="wnt-panel-head">🤖 AI 풀이 도우미 <span>대화는 앱을 닫으면 사라져요</span></div>
-                      {e.hasImage && (
-                        <div className="wnt-ai-tip">
-                          📷 사진 문제는 이 화면에서 직접 못 읽어요. 제대로 물어보려면 👉
-                          <button className="wnt-mini idea" onClick={() => openInClaudeApp(aiBridgePrompt(e))}>📲 Claude 앱에서 물어보기</button>
-                          <span> (열고 문제 사진 첨부)</span>
+                      {e.hasImage ? (
+                        <div className="wnt-ai-accurate">
+                          <p className="wnt-ai-q">📷 이 문제는 사진을 봐야 정확히 도와줄 수 있어요.</p>
+                          <ol className="wnt-ai-steps">
+                            <li>아래 <b>📥 문제 사진 저장</b>으로 사진첩에 저장해요.</li>
+                            <li><b>📲 Claude 앱에서 물어보기</b>를 눌러 새 채팅을 열어요 (질문은 자동 복사돼요).</li>
+                            <li>클로드 앱 입력창의 <b>＋</b>(사진 첨부)로 방금 저장한 문제 사진을 붙이고 전송해요.</li>
+                          </ol>
+                          <div className="wnt-ai-accurate-btns">
+                            <button className="wnt-mini" onClick={() => savePhoto(e.id)} disabled={!imageCache[e.id]}>📥 문제 사진 저장</button>
+                            <button className="wnt-mini idea" onClick={() => openInClaudeApp(aiBridgePrompt(e))}>📲 Claude 앱에서 물어보기</button>
+                          </div>
                         </div>
-                      )}
-                      {!aiMode[e.id] ? (
+                      ) : !aiMode[e.id] ? (
                         <div className="wnt-ai-modes">
                           <p className="wnt-ai-q">어떤 방식으로 도와드릴까요?</p>
                           <button className="wnt-mode-btn" onClick={() => chooseAiMode(e, "socratic")}>
@@ -2669,6 +2715,22 @@ export default function WrongNoteTracker() {
                 </button>
               </div>
 
+              <div className="wnt-vt-levels">
+                <span className="wnt-vt-levels-label">난이도 선택:</span>
+                {["쌍둥이", "상", "최상"].map((lv) => (
+                  <button
+                    key={lv}
+                    className={vtLevels.includes(lv) ? "wnt-mini strong" : "wnt-mini"}
+                    onClick={() => setVtLevels((ls) =>
+                      ls.includes(lv)
+                        ? (ls.length > 1 ? ls.filter((x) => x !== lv) : ls)
+                        : ["쌍둥이", "상", "최상"].filter((x) => x === lv || ls.includes(x))
+                    )}
+                  >{vtLevels.includes(lv) ? "✓ " : ""}{lv}</button>
+                ))}
+                <HelpTip text="출제할 난이도를 골라요. 쌍둥이=원 문제와 같은 난이도 연습용, 상=실수를 찌르는 함정, 최상=킬러 문항. 여러 개 켜면 각각 1문제씩 나와요." />
+              </div>
+
               {vtSubject !== "전체" && subjBook(vtSubject) && (
                 <div className="wnt-vt-book">📚 출제 기준 교재: <strong>{subjBook(vtSubject)}</strong> — 이 교재의 난이도·스타일로 변형해요 (설정 탭에서 변경 가능)</div>
               )}
@@ -2697,15 +2759,28 @@ export default function WrongNoteTracker() {
                 </div>
               )}
 
-              {vtProblems.map((v, i) => (
+              {vtProblems.map((v, i) => {
+                const collapsed = vtCollapsed[i];
+                return (
                 <div key={i} className="wnt-variant-item big">
-                  <span className={v.level === "최상" ? "wnt-level top" : v.level === "쌍둥이" ? "wnt-level twin" : "wnt-level"}>{v.level}</span>
+                  <div className="wnt-variant-head">
+                    <span className={v.level === "최상" ? "wnt-level top" : v.level === "쌍둥이" ? "wnt-level twin" : "wnt-level"}>{v.level}</span>
+                    {collapsed && <span className="wnt-variant-peek">{(v.question || "").slice(0, 24)}…</span>}
+                    <div className="wnt-variant-head-btns">
+                      <button className="wnt-card-toggle" onClick={() => setVtCollapsed((c) => ({ ...c, [i]: !c[i] }))}>
+                        {collapsed ? "▾ 펼치기" : "▴ 접기"}
+                      </button>
+                      <button className="wnt-variant-x" onClick={() => hideVariant(i)} aria-label="이 문제 치우기" title="치우기">✕</button>
+                    </div>
+                  </div>
+                  {!collapsed && (<>
                   <p className="wnt-variant-q">{v.question}</p>
                   {(v.hint || v.answer) && (
                     <div className="wnt-variant-btns">
                       <button className={vtPadOpen[i] ? "wnt-mini strong" : "wnt-mini"} onClick={() => setVtPadOpen((o) => ({ ...o, [i]: !o[i] }))}>
                         {vtPadOpen[i] ? "✍️ 풀이 패드 접기" : "✍️ 풀이 패드"}
                       </button>
+                      <button className="wnt-mini" onClick={() => retryVariant(i)}>🔁 다시 풀기</button>
                       {v.hint && (
                         <button className="wnt-mini" onClick={() => setVtReveal((r) => ({ ...r, [`${i}-h`]: !r[`${i}-h`] }))}>
                           {vtReveal[`${i}-h`] ? "힌트 접기" : "💡 힌트 보기"}
@@ -2713,24 +2788,26 @@ export default function WrongNoteTracker() {
                       )}
                       {v.answer && (
                         <button className="wnt-mini" onClick={() => setVtReveal((r) => ({ ...r, [`${i}-a`]: !r[`${i}-a`] }))}>
-                          {vtReveal[`${i}-a`] ? "정답 접기" : "✅ 정답 보기"}
+                          {vtReveal[`${i}-a`] ? "정답 접기" : "✅ 정답 바로 보기"}
                         </button>
                       )}
                     </div>
                   )}
-                  {vtPadOpen[i] && <SolvePad key={"vtpad-" + i} gradeFn={vtGradeFn(v)} solveFn={vtSolveFn(v)}
+                  {vtPadOpen[i] && <SolvePad key={"vtpad-" + i + "-" + (vtPadNonce[i] || 0)} gradeFn={vtGradeFn(v)} solveFn={vtSolveFn(v)}
                     problem={<p className="wnt-variant-q in-pad">{v.question}</p>}
                     bridge={() => "너는 채점 선생님이야. 아래 문제에 대한 첨부 이미지(손글씨)가 내 풀이야.\n[문제] " + v.question + (v.answer ? "\n[모범 풀이·정답] " + v.answer : "") + "\n먼저 짧게 채점만: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 '풀이도 짧게'라고 하면 3~4줄 간략 풀이."} />}
                   {vtReveal[`${i}-h`] && v.hint && <p className="wnt-variant-reveal">💡 {v.hint}</p>}
                   {vtReveal[`${i}-a`] && v.answer && <p className="wnt-variant-reveal ans">{v.answer}</p>}
+                  </>)}
                 </div>
-              ))}
+                );
+              })}
 
               {vtLoading ? (
                 <div className="wnt-loading">출제 중… 함정을 파는 중이에요 ✍️</div>
               ) : (
                 vtProblems.length > 0 && (
-                  <button className="wnt-mini strong" onClick={() => vtGenerate(true)}>➕ 더 만들어줘 (상·최상 1문제씩)</button>
+                  <button className="wnt-mini strong" onClick={() => vtGenerate(true)}>➕ 더 만들어줘 (선택한 난이도로)</button>
                 )
               )}
             </>
@@ -3161,6 +3238,21 @@ const css = `
   background: #FFF9EC; border: 1px solid #EBD9AE; border-radius: 8px;
   padding: 8px 10px; font-size: 12px; color: #4A4433; margin-bottom: 10px; line-height: 1.5;
 }
+.wnt-photo-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.wnt-ai-accurate {
+  background: #F6F8FE; border: 1px solid #C9D4F0; border-radius: 10px;
+  padding: 12px 14px; font-size: 13px; color: var(--ink); line-height: 1.6;
+}
+.wnt-ai-steps { margin: 6px 0 10px; padding-left: 20px; }
+.wnt-ai-steps li { margin: 4px 0; }
+.wnt-ai-accurate-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.wnt-vt-levels { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.wnt-vt-levels-label { font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.wnt-variant-head { display: flex; align-items: center; gap: 8px; }
+.wnt-variant-head-btns { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.wnt-variant-peek { font-size: 12.5px; color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; }
+.wnt-variant-x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 2px 5px; border-radius: 5px; }
+.wnt-variant-x:hover { background: #F2D9D6; color: var(--red); }
 .wnt-viewtabs { display: flex; gap: 6px; margin-bottom: 12px; }
 .wnt-viewtab {
   flex: 1; padding: 9px 10px; font-size: 13.5px; font-weight: 700; font-family: inherit;
