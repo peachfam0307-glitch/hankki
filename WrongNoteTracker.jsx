@@ -342,25 +342,24 @@ function SolvePad({ gradeFn, bridge }) {
   const [grading, setGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState("");
   const [bridgeText, setBridgeText] = useState(""); // Claude 앱으로 보낼 채점 질문 (사진 인식 불가 시)
+  const [bgGrid, setBgGrid] = useState(true);    // 모눈 배경 on/off (기본=모눈)
+  const [penOnly, setPenOnly] = useState(false); // 손바닥 터치 방지 (애플펜슬만 인식)
   const drawing = useRef(false);
   const start = useRef({ x: 0, y: 0 });
   const snapshot = useRef(null);
   const undoStack = useRef([]);
+  const redoStack = useRef([]);
   const PAD_H = 400;
 
   function ctx() { return canvasRef.current.getContext("2d"); }
 
-  function drawGrid() {
+  // 캔버스는 투명하게 비운다 (배경·모눈은 CSS가 그려서, 배경을 켜고 꺼도 필기가 지워지지 않음)
+  function clearCanvas() {
     const c = canvasRef.current;
     const g = ctx();
-    const w = c.clientWidth, h = PAD_H;
     g.save();
-    g.fillStyle = "#FBFCF9";
-    g.fillRect(0, 0, w, h);
-    g.strokeStyle = "rgba(63,94,145,0.14)";
-    g.lineWidth = 1;
-    for (let x = 0; x <= w; x += 24) { g.beginPath(); g.moveTo(x + 0.5, 0); g.lineTo(x + 0.5, h); g.stroke(); }
-    for (let y = 0; y <= h; y += 24) { g.beginPath(); g.moveTo(0, y + 0.5); g.lineTo(w, y + 0.5); g.stroke(); }
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, c.width, c.height);
     g.restore();
   }
 
@@ -373,7 +372,7 @@ function SolvePad({ gradeFn, bridge }) {
     c.style.width = w + "px";
     c.style.height = PAD_H + "px";
     ctx().scale(dpr, dpr);
-    drawGrid();
+    clearCanvas();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -382,21 +381,45 @@ function SolvePad({ gradeFn, bridge }) {
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }
 
+  // 새 획 직전의 상태를 undo 스택에 저장하고 redo는 비운다
   function pushUndo() {
     try {
       undoStack.current.push(canvasRef.current.toDataURL());
-      if (undoStack.current.length > 15) undoStack.current.shift();
+      if (undoStack.current.length > 25) undoStack.current.shift();
+      redoStack.current = [];
     } catch (e) {}
   }
 
-  function strokeStyle(g) {
+  function applyStroke(g) {
     g.lineCap = "round"; g.lineJoin = "round";
-    if (tool === "eraser") { g.strokeStyle = "#FBFCF9"; g.lineWidth = 18; }
-    else { g.strokeStyle = color; g.lineWidth = 2.5; }
+    if (tool === "eraser") {
+      g.globalCompositeOperation = "destination-out"; // 투명하게 지움
+      g.strokeStyle = "rgba(0,0,0,1)";
+      g.lineWidth = 18;
+    } else {
+      g.globalCompositeOperation = "source-over";
+      g.strokeStyle = color;
+      g.lineWidth = 2.5;
+    }
+  }
+
+  // dataURL 이미지를 캔버스에 복원 (composite를 정상으로 되돌려 그린다)
+  function restoreFrom(dataUrl) {
+    const img = new Image();
+    img.onload = () => {
+      const g = ctx(); const c = canvasRef.current;
+      g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = "source-over";
+      g.clearRect(0, 0, c.width, c.height);
+      g.drawImage(img, 0, 0);
+      g.restore();
+    };
+    img.src = dataUrl;
   }
 
   function onDown(e) {
     if (e.target !== canvasRef.current) return;
+    if (penOnly && e.pointerType && e.pointerType !== "pen") return; // 손바닥·손가락 무시
     e.preventDefault();
     if (canvasRef.current.setPointerCapture) canvasRef.current.setPointerCapture(e.pointerId);
     drawing.current = true;
@@ -413,38 +436,58 @@ function SolvePad({ gradeFn, bridge }) {
 
   function onMove(e) {
     if (!drawing.current) return;
+    if (penOnly && e.pointerType && e.pointerType !== "pen") return;
     e.preventDefault();
     const p = getPos(e);
     const g = ctx();
     if (tool === "line") {
       g.putImageData(snapshot.current, 0, 0);
-      g.beginPath(); strokeStyle(g);
+      g.beginPath(); applyStroke(g);
       g.moveTo(start.current.x, start.current.y);
       g.lineTo(p.x, p.y); g.stroke();
     } else {
-      strokeStyle(g);
+      applyStroke(g);
       g.lineTo(p.x, p.y); g.stroke();
       g.beginPath(); g.moveTo(p.x, p.y);
     }
   }
 
-  function onUp() { drawing.current = false; snapshot.current = null; }
-
-  function undo() {
-    const last = undoStack.current.pop();
-    if (!last) return;
-    const img = new Image();
-    img.onload = () => {
-      const g = ctx(); const c = canvasRef.current;
-      g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
-      g.clearRect(0, 0, c.width, c.height);
-      g.drawImage(img, 0, 0);
-      g.restore();
-    };
-    img.src = last;
+  function onUp() {
+    drawing.current = false;
+    snapshot.current = null;
+    try { ctx().globalCompositeOperation = "source-over"; } catch (e) {}
   }
 
-  function clearPad() { undoStack.current = []; drawGrid(); setGradeResult(""); }
+  function undo() {
+    if (!undoStack.current.length) return;
+    try { redoStack.current.push(canvasRef.current.toDataURL()); } catch (e) {}
+    restoreFrom(undoStack.current.pop());
+  }
+
+  function redo() {
+    if (!redoStack.current.length) return;
+    try { undoStack.current.push(canvasRef.current.toDataURL()); } catch (e) {}
+    restoreFrom(redoStack.current.pop());
+  }
+
+  function clearPad() {
+    try { undoStack.current.push(canvasRef.current.toDataURL()); redoStack.current = []; } catch (e) {}
+    clearCanvas();
+    setGradeResult("");
+    setBridgeText("");
+  }
+
+  // 채점용 내보내기: 투명 캔버스를 흰 종이 위에 합성해야 어두운 글씨가 안 사라짐 (JPEG는 투명→검정)
+  function exportForGrade() {
+    const c = canvasRef.current;
+    const tmp = document.createElement("canvas");
+    tmp.width = c.width; tmp.height = c.height;
+    const tg = tmp.getContext("2d");
+    tg.fillStyle = "#FBFCF9";
+    tg.fillRect(0, 0, tmp.width, tmp.height);
+    tg.drawImage(c, 0, 0);
+    return tmp.toDataURL("image/jpeg", 0.82);
+  }
 
   function addNote() { setNotes((n) => [...n, { id: makeId(), x: 16 + n.length * 14, y: 16 + n.length * 14, text: "" }]); }
   function delNote(id) { setNotes((n) => n.filter((x) => x.id !== id)); }
@@ -470,7 +513,7 @@ function SolvePad({ gradeFn, bridge }) {
     setGradeResult("");
     setBridgeText("");
     try {
-      const drawUrl = canvasRef.current.toDataURL("image/jpeg", 0.82);
+      const drawUrl = exportForGrade();
       const noteText = notes.filter((n) => n.text.trim()).map((n, i) => `메모${i + 1}: ${n.text.trim()}`).join("\n");
       const result = await gradeFn(drawUrl, noteText);
       setGradeResult(result || "채점 결과를 받지 못했어요.");
@@ -501,11 +544,14 @@ function SolvePad({ gradeFn, bridge }) {
         <button className={tool === "line" ? "wnt-mini strong" : "wnt-mini"} onClick={() => setTool("line")}>📏 직선</button>
         <button className={tool === "eraser" ? "wnt-mini strong" : "wnt-mini"} onClick={() => setTool("eraser")}>🧽 지우개</button>
         <button className="wnt-mini" onClick={undo}>↩️ 되돌리기</button>
+        <button className="wnt-mini" onClick={redo}>↪️ 다시하기</button>
         <button className="wnt-mini" onClick={clearPad}>🗑 전체 지우기</button>
         <button className="wnt-mini idea" onClick={addNote}>🗒 포스트잇</button>
-        <HelpTip text="애플펜슬이나 손가락으로 모눈 위에 풀이를 쓰세요. 📏 직선은 그래프 축·점근선 긋기에 좋아요. 🗒 포스트잇은 위 막대를 끌어 옮기고 조건 정리에 쓰세요. ✅ AI 채점은 필기와 포스트잇 메모를 읽고 채점해요 — 글씨가 흘려 쓰이면 인식이 어려울 수 있어요." />
+        <button className={bgGrid ? "wnt-mini strong" : "wnt-mini"} onClick={() => setBgGrid(!bgGrid)}>▦ {bgGrid ? "모눈" : "기본"}</button>
+        <button className={penOnly ? "wnt-mini strong" : "wnt-mini"} onClick={() => setPenOnly(!penOnly)}>✋ 손바닥 방지 {penOnly ? "켜짐" : "꺼짐"}</button>
+        <HelpTip text="애플펜슬이나 손가락으로 풀이를 쓰세요. ↩️ 되돌리기·↪️ 다시하기로 획을 오갈 수 있어요. ▦ 버튼으로 모눈/기본 배경을 바꿔요 (필기는 안 지워져요). ✋ 손바닥 방지를 켜면 애플펜슬로만 그려져서 손을 대고 써도 돼요. 📏 직선은 그래프 축·점근선 긋기에 좋아요. ✅ AI 채점은 필기와 포스트잇 메모를 읽고 채점해요." />
       </div>
-      <div className="pad-wrap" ref={wrapRef}>
+      <div className={bgGrid ? "pad-wrap grid" : "pad-wrap"} ref={wrapRef}>
         <canvas ref={canvasRef} className="pad-canvas" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} />
         {notes.map((n) => (
           <div key={n.id} className="pad-note" style={{ left: n.x, top: n.y }}>
@@ -534,6 +580,7 @@ export default function WrongNoteTracker() {
   const [entries, setEntries] = useState([]);
   const [subjects, setSubjects] = useState(DEFAULT_SUBJECTS);
   const [customTags, setCustomTags] = useState([]);
+  const [motto, setMotto] = useState(""); // 상단 명언·공부 자극 문구
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState(false);
   const [tab, setTab] = useState("list"); // list | flash | variant | stats | settings
@@ -615,6 +662,7 @@ export default function WrongNoteTracker() {
   const [timerMode, setTimerMode] = useState("stop"); // stop=스톱워치, count=3분 타이머
   const [extendsUsed, setExtendsUsed] = useState(0); // +1분 추가 사용 횟수 (최대 2회)
   const [flashTimeout, setFlashTimeout] = useState(false);
+  const [gradMsg, setGradMsg] = useState(""); // 졸업 안내 문구
 
   // ---- 설정 상태 ----
   const [newSubjectInput, setNewSubjectInput] = useState("");
@@ -645,6 +693,7 @@ export default function WrongNoteTracker() {
             setSubjects(merged);
           }
           if (Array.isArray(parsed.customTags)) setCustomTags(parsed.customTags);
+          if (typeof parsed.motto === "string") setMotto(parsed.motto);
         }
       } catch (e) {
         // 저장된 데이터가 아직 없는 경우 — 빈 상태로 시작
@@ -688,10 +737,12 @@ export default function WrongNoteTracker() {
       entries: patch.entries !== undefined ? patch.entries : entries,
       subjects: patch.subjects !== undefined ? patch.subjects : subjects,
       customTags: patch.customTags !== undefined ? patch.customTags : customTags,
+      motto: patch.motto !== undefined ? patch.motto : motto,
     };
     if (patch.entries !== undefined) setEntries(data.entries);
     if (patch.subjects !== undefined) setSubjects(data.subjects);
     if (patch.customTags !== undefined) setCustomTags(data.customTags);
+    if (patch.motto !== undefined) setMotto(data.motto);
     try {
       const res = await window.storage.set(STORAGE_KEY, JSON.stringify(data));
       setSaveError(!res);
@@ -840,6 +891,9 @@ export default function WrongNoteTracker() {
       insight: null,
       starred: false,
       retry: false,
+      wrongCount: 1,      // 기록 시점에 1번 틀린 상태
+      correctStreak: 0,   // 플래시카드 연속 정답 수
+      graduated: false,   // 2회 연속 정답 → 졸업(플래시카드에서 숨김)
     };
     saveData({ entries: [entry, ...entries] });
     setForm({ ...emptyForm, subject: form.subject });
@@ -930,7 +984,7 @@ export default function WrongNoteTracker() {
           }
         }
       } catch (e) {}
-      await window.storage.set(STORAGE_KEY, JSON.stringify({ entries: [], subjects, customTags }));
+      await window.storage.set(STORAGE_KEY, JSON.stringify({ entries: [], subjects, customTags, motto }));
       setEntries([]);
       setImageCache({});
       setSolPhotoCache({});
@@ -1308,6 +1362,7 @@ export default function WrongNoteTracker() {
   const flashPool = entries.filter(
     (e) =>
       e.hasImage &&
+      !e.graduated && // 졸업한 문제는 플래시카드에서 숨김 (기록엔 남음)
       (flashSubject === "전체" || e.subject === flashSubject) &&
       (!flashRetryOnly || e.retry) &&
       (!flashStarOnly || e.starred)
@@ -1323,6 +1378,7 @@ export default function WrongNoteTracker() {
     setTimerSec(0);
     setExtendsUsed(0);
     setFlashTimeout(false);
+    setGradMsg("");
   }
 
   useEffect(() => {
@@ -1353,7 +1409,7 @@ export default function WrongNoteTracker() {
     if (timerSec >= limit) {
       setTimerOn(false);
       setFlashTimeout(true);
-      if (flashEntry) markRetry(flashEntry.id, true);
+      if (flashEntry) flashWrong(flashEntry.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timerSec, timerMode, timerOn, extendsUsed]);
@@ -1378,15 +1434,30 @@ export default function WrongNoteTracker() {
     setTimerSec(0);
     setExtendsUsed(0);
     setFlashTimeout(false);
+    setGradMsg("");
     setFlashIdx((i) => Math.min(Math.max(i + dir, 0), Math.max(flashDeck.length - 1, 0)));
+  }
+
+  // 못 풀었을 때(❌·시간초과): 틀린 횟수 +1, 연속 정답 초기화, 다시 풀기 표시
+  function flashWrong(id) {
+    saveData({
+      entries: entries.map((e) =>
+        e.id === id
+          ? { ...e, retry: true, correctStreak: 0, wrongCount: (e.wrongCount || 0) + 1 }
+          : e
+      ),
+    });
   }
 
   function flashCorrect(entry) {
     setTimerOn(false);
+    let graduatedNow = false;
     saveData({
       entries: entries.map((e) => {
         if (e.id !== entry.id) return e;
-        const updated = { ...e, retry: false };
+        const streak = (e.correctStreak || 0) + 1;
+        const updated = { ...e, retry: false, correctStreak: streak };
+        if (streak >= 2) { updated.graduated = true; graduatedNow = !e.graduated; }
         if (e.status < 3) {
           updated.status = e.status + 1;
           updated.reviewLog = [...(e.reviewLog || []), todayStr()];
@@ -1398,6 +1469,8 @@ export default function WrongNoteTracker() {
       }),
     });
     setTimerSec(0);
+    if (graduatedNow) setGradMsg("🎓 2회 연속 정답! 이 문제는 졸업했어요 — 플래시카드에서는 이제 안 보여요 (기록엔 남아요).");
+    else setGradMsg("");
   }
 
   // ---- 설정: 과목 관리 ----
@@ -1593,6 +1666,14 @@ export default function WrongNoteTracker() {
           </h1>
           <span className="wnt-subtitle">틀린 문제는 두 번 안 틀린다</span>
         </div>
+        <input
+          className="wnt-motto"
+          placeholder="✍️ 여기에 나만의 명언·공부 자극 문구를 적어보세요 (자동 저장)"
+          value={motto}
+          onChange={(e) => setMotto(e.target.value)}
+          onBlur={() => saveData({ motto })}
+          maxLength={80}
+        />
         <div className="wnt-tabs">
           <button className={tab === "list" ? "wnt-tab on" : "wnt-tab"} onClick={() => setTab("list")}>
             기록 <em>{total}</em>
@@ -1820,12 +1901,21 @@ export default function WrongNoteTracker() {
                     <span className="wnt-subj" style={{ background: subjColor(e.subject) }}>{e.subject}</span>
                     <span className="wnt-unit">{e.unit}</span>
                     {e.retry && <span className="wnt-retry-badge">🔁 다시</span>}
+                    {(e.wrongCount || 0) > 1 && <span className="wnt-wrong-badge">❌ {e.wrongCount}회</span>}
+                    {e.graduated && <span className="wnt-grad-badge">🎓 졸업</span>}
                     {e.status === 3 && <span className="wnt-stamp">정복</span>}
                   </div>
                   <div className="wnt-source">
                     {e.source ? `${e.source} · ` : ""}{e.createdAt}
                     {e.timeSpent ? ` · ⏱ ${e.timeSpent}` : ""}
                     {lastSolve(e) ? ` · 최근 복습 ⏱ ${fmtSec(lastSolve(e).sec)}` : ""}
+                    {(() => {
+                      const st = e.solveTimes || [];
+                      if (st.length < 2) return "";
+                      const prev = st[st.length - 2].sec, last = st[st.length - 1].sec;
+                      if (last < prev) return ` · ⚡ ${fmtSec(prev)}→${fmtSec(last)} 단축`;
+                      return "";
+                    })()}
                   </div>
                   {(e.tags || []).length > 0 && (
                     <div className="wnt-card-tags">
@@ -2144,6 +2234,7 @@ export default function WrongNoteTracker() {
                   ⏰ 시간 초과 — '다시 풀기' 목록에 담았어요.{extendsUsed < 2 ? " ＋1분으로 이어서 풀 수도 있어요." : " 다음에 다시 도전해요!"}
                 </div>
               )}
+              {gradMsg && <div className="wnt-grad">{gradMsg}</div>}
 
               <div className="wnt-flash-imgs">
                 {imageCache[flashEntry.id]
@@ -2205,7 +2296,7 @@ export default function WrongNoteTracker() {
                   <button
                     className="wnt-mini danger"
                     onClick={() => {
-                      markRetry(flashEntry.id, true);
+                      flashWrong(flashEntry.id);
                       setTimerOn(false);
                       if (flashIdx < flashDeck.length - 1) flashMove(1);
                     }}
@@ -2525,6 +2616,14 @@ const css = `
 .wnt-title { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
 .wnt-title-mark { color: var(--red); font-size: 20px; margin-left: 4px; vertical-align: super; }
 .wnt-subtitle { color: var(--muted); font-size: 13px; }
+.wnt-motto {
+  width: 100%; box-sizing: border-box; margin-top: 12px; padding: 9px 13px;
+  font-family: inherit; font-size: 13.5px; color: var(--ink); font-style: italic;
+  border: 1px solid var(--line); border-left: 4px solid var(--gold);
+  border-radius: 8px; background: #FFF9EC;
+}
+.wnt-motto::placeholder { font-style: normal; color: var(--muted); }
+.wnt-motto:focus { outline: 2px solid var(--gold); outline-offset: 0; }
 
 .wnt-tabs { display: flex; gap: 2px; margin-top: 16px; border-bottom: 2px solid var(--line); overflow-x: auto; }
 .wnt-tab {
@@ -2685,6 +2784,18 @@ const css = `
 .wnt-retry-badge {
   font-size: 11.5px; font-weight: 700; color: var(--gold);
   border: 1px solid #EBD9AE; background: #FFF9EC; border-radius: 4px; padding: 2px 7px;
+}
+.wnt-wrong-badge {
+  font-size: 11.5px; font-weight: 700; color: var(--red);
+  border: 1px solid #F2C9C6; background: #FFF6F5; border-radius: 4px; padding: 2px 7px;
+}
+.wnt-grad-badge {
+  font-size: 11.5px; font-weight: 700; color: var(--green);
+  border: 1px solid #BFDCC4; background: #EDF5EE; border-radius: 4px; padding: 2px 7px;
+}
+.wnt-grad {
+  background: #EDF5EE; border: 1px solid #BFDCC4; color: #1E5A2C;
+  border-radius: 8px; padding: 8px 12px; font-size: 12.5px; margin-bottom: 12px; font-weight: 700;
 }
 .wnt-idea-inline { margin-top: 8px; display: flex; flex-direction: column; gap: 0; align-items: flex-start; }
 .wnt-idea-inline .wnt-idea { width: 100%; box-sizing: border-box; }
@@ -2925,7 +3036,13 @@ const css = `
 }
 .pad-color.on { box-shadow: 0 0 0 2.5px var(--red); }
 .pad-wrap { position: relative; border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); }
-.pad-canvas { display: block; touch-action: none; cursor: crosshair; }
+.pad-wrap.grid {
+  background-image:
+    linear-gradient(rgba(63,94,145,0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(63,94,145,0.14) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.pad-canvas { display: block; touch-action: none; cursor: crosshair; background: transparent; }
 .pad-note {
   position: absolute; width: 130px; background: #FFF3B0; border: 1px solid #E8D26B;
   border-radius: 6px; box-shadow: 0 3px 8px rgba(30,42,58,0.18); z-index: 10;
