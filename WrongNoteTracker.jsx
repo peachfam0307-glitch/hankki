@@ -700,6 +700,112 @@ function SolvePad({ gradeFn, bridge, solveFn, problem }) {
   );
 }
 
+// 사진 자르기(크롭) 모달 — 문제만 남기고 잘라서 풀 때 크게 보이게
+function CropModal({ src, onApply, onClose }) {
+  const imgRef = useRef(null);
+  const [ready, setReady] = useState(false);
+  const [rect, setRect] = useState({ x: 0, y: 0, w: 0, h: 0 });
+  const disp = useRef({ w: 0, h: 0 });
+
+  function initRect() {
+    const im = imgRef.current;
+    if (!im) return;
+    const w = im.clientWidth, h = im.clientHeight;
+    disp.current = { w, h };
+    setRect({ x: w * 0.08, y: h * 0.08, w: w * 0.84, h: h * 0.84 });
+    setReady(true);
+  }
+  function clampRect(r) {
+    const { w: W, h: H } = disp.current;
+    let w = Math.max(36, Math.min(r.w, W));
+    let h = Math.max(36, Math.min(r.h, H));
+    let x = Math.max(0, Math.min(r.x, W - w));
+    let y = Math.max(0, Math.min(r.y, H - h));
+    return { x, y, w, h };
+  }
+  function dragBody(e) {
+    if (e.target !== e.currentTarget) return; // 핸들은 제외
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY, r0 = { ...rect };
+    const move = (ev) => setRect(clampRect({ ...r0, x: r0.x + (ev.clientX - sx), y: r0.y + (ev.clientY - sy) }));
+    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
+  }
+  function dragCorner(e, cx, cy) {
+    e.preventDefault(); e.stopPropagation();
+    const sx = e.clientX, sy = e.clientY, r0 = { ...rect };
+    const move = (ev) => {
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      let nr = { ...r0 };
+      if (cx < 0) { nr.x = r0.x + dx; nr.w = r0.w - dx; } else { nr.w = r0.w + dx; }
+      if (cy < 0) { nr.y = r0.y + dy; nr.h = r0.h - dy; } else { nr.h = r0.h + dy; }
+      if (nr.w < 36) { nr.w = 36; if (cx < 0) nr.x = r0.x + r0.w - 36; }
+      if (nr.h < 36) { nr.h = 36; if (cy < 0) nr.y = r0.y + r0.h - 36; }
+      setRect(clampRect(nr));
+    };
+    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
+  }
+  function apply() {
+    const im = imgRef.current;
+    const { w: W, h: H } = disp.current;
+    const natW = im.naturalWidth, natH = im.naturalHeight;
+    const sx = rect.x / W * natW, sy = rect.y / H * natH;
+    const sw = rect.w / W * natW, sh = rect.h / H * natH;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(Math.round(sw), 1);
+    canvas.height = Math.max(Math.round(sh), 1);
+    const im2 = new Image();
+    im2.onload = () => {
+      canvas.getContext("2d").drawImage(im2, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+      onApply(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    im2.src = src;
+  }
+  const handles = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
+  return (
+    <div className="wnt-crop-backdrop" onClick={onClose}>
+      <div className="wnt-crop" onClick={(e) => e.stopPropagation()}>
+        <div className="wnt-crop-title">✂️ 문제만 남기고 잘라요 <span>모서리를 끌어 크기 조절</span></div>
+        <div className="wnt-crop-stage">
+          <img ref={imgRef} src={src} alt="자를 사진" className="wnt-crop-img" onLoad={initRect} draggable={false} />
+          {ready && (
+            <div className="wnt-crop-box" style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }} onPointerDown={dragBody}>
+              {handles.map(([cx, cy], i) => (
+                <span key={i} className="wnt-crop-handle"
+                  style={{ left: cx < 0 ? -9 : "auto", right: cx > 0 ? -9 : "auto", top: cy < 0 ? -9 : "auto", bottom: cy > 0 ? -9 : "auto" }}
+                  onPointerDown={(e) => dragCorner(e, cx, cy)} />
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="wnt-crop-btns">
+          <button className="wnt-btn-ghost" onClick={onClose}>취소</button>
+          <button className="wnt-btn-primary" onClick={apply}>✂️ 자르기 적용</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 사진 확대(줌) 모달 — 풀 때 문제를 크게 보기
+function ZoomModal({ src, onClose }) {
+  const [zoom, setZoom] = useState(1);
+  return (
+    <div className="wnt-zoom-backdrop" onClick={onClose}>
+      <div className="wnt-zoom-bar" onClick={(e) => e.stopPropagation()}>
+        <button className="wnt-mini" onClick={() => setZoom((z) => Math.max(1, +(z - 0.5).toFixed(1)))}>➖</button>
+        <span className="wnt-zoom-pct">{Math.round(zoom * 100)}%</span>
+        <button className="wnt-mini" onClick={() => setZoom((z) => Math.min(4, +(z + 0.5).toFixed(1)))}>➕</button>
+        <button className="wnt-mini strong" onClick={onClose}>✕ 닫기</button>
+      </div>
+      <div className="wnt-zoom-scroll" onClick={(e) => e.stopPropagation()}>
+        <img src={src} alt="확대한 문제 사진" className="wnt-zoom-img" style={{ width: zoom * 100 + "%" }} />
+      </div>
+    </div>
+  );
+}
+
 export default function WrongNoteTracker() {
   const [entries, setEntries] = useState([]);
   const [subjects, setSubjects] = useState(DEFAULT_SUBJECTS);
@@ -741,6 +847,8 @@ export default function WrongNoteTracker() {
   const [openImages, setOpenImages] = useState({});
   const [openCard, setOpenCard] = useState(null); // 펼쳐진(풀이 모드) 카드 id — 한 번에 하나
   const [cardPadOpen, setCardPadOpen] = useState({}); // 기록 카드 내 풀이 패드 열림 여부
+  const [cropTarget, setCropTarget] = useState(null); // 자르기 대상 폼 사진 index
+  const [zoomSrc, setZoomSrc] = useState(null); // 확대해서 볼 사진 (라이트박스)
 
   // ---- 풀이 기록 상태 ----
   const [solFormOpen, setSolFormOpen] = useState({});
@@ -971,6 +1079,35 @@ export default function WrongNoteTracker() {
       out = render(maxDim, quality);
     }
     return out;
+  }
+
+  // 크롭 결과(dataURL)를 저장소 한도에 맞게 다시 줄인다
+  async function shrinkDataUrl(dataUrl) {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl; });
+    function render(maxDim, quality) {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.max(Math.round(img.width * scale), 1);
+      c.height = Math.max(Math.round(img.height * scale), 1);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      return c.toDataURL("image/jpeg", quality);
+    }
+    const TARGET = 200000;
+    let maxDim = 1000, quality = 0.6;
+    let out = render(maxDim, quality);
+    while (out.length > TARGET && (maxDim > 560 || quality > 0.4)) {
+      if (quality > 0.42) quality -= 0.1;
+      else { maxDim -= 140; quality = 0.55; }
+      out = render(maxDim, quality);
+    }
+    return out;
+  }
+
+  async function applyCropped(index, croppedDataUrl) {
+    let out = croppedDataUrl;
+    try { out = await shrinkDataUrl(croppedDataUrl); } catch (e) {}
+    setForm((f) => ({ ...f, photos: f.photos.map((p, i) => (i === index ? out : p)) }));
+    setCropTarget(null);
   }
 
   async function loadEntryImages(id) {
@@ -2070,6 +2207,11 @@ export default function WrongNoteTracker() {
         );
       })()}
 
+      {cropTarget != null && form.photos[cropTarget] && (
+        <CropModal src={form.photos[cropTarget]} onClose={() => setCropTarget(null)} onApply={(d) => applyCropped(cropTarget, d)} />
+      )}
+      {zoomSrc && <ZoomModal src={zoomSrc} onClose={() => setZoomSrc(null)} />}
+
       {saveError && (
         <div className="wnt-warn">저장에 실패했어요. 저장 공간이 가득 찼을 수 있어요 — 오래된 기록이나 사진을 정리해 보세요.</div>
       )}
@@ -2178,7 +2320,8 @@ export default function WrongNoteTracker() {
                   <div className="wnt-photo-thumbs">
                     {form.photos.map((p, i) => (
                       <div key={i} className="wnt-photo-thumb">
-                        <img src={p} alt={`문제 사진 ${i + 1}`} />
+                        <img src={p} alt={`문제 사진 ${i + 1}`} onClick={() => setCropTarget(i)} />
+                        <button className="wnt-thumb-crop" onClick={() => setCropTarget(i)} aria-label={`사진 ${i + 1} 자르기`}>✂️</button>
                         <button className="wnt-thumb-x" onClick={() => removePhoto(i)} aria-label={`사진 ${i + 1} 제거`}>✕</button>
                       </div>
                     ))}
@@ -2194,7 +2337,7 @@ export default function WrongNoteTracker() {
                       🖼 앨범에서 선택
                       <input type="file" accept="image/*" multiple onChange={handlePhotoSelect} style={{ display: "none" }} />
                     </label>
-                    <HelpTip text="📷 촬영은 카메라가 바로 열리고, 🖼 앨범은 갤러리에서 골라요. 사진은 자동 압축돼 이 기기에 저장돼요." />
+                    <HelpTip text="📷 촬영은 카메라가 바로 열리고, 🖼 앨범은 갤러리에서 골라요. 올린 사진을 눌러(또는 ✂️) 문제만 남게 자를 수 있어요. 사진은 자동 압축돼 저장되고, 풀 때 사진을 탭하면 크게 볼 수 있어요." />
                   </div>
                 )}
               </div>
@@ -2384,7 +2527,7 @@ export default function WrongNoteTracker() {
                       </div>
                       {openImages[e.id] && imageCache[e.id] &&
                         imageCache[e.id].map((src, i) => (
-                          <img key={i} className="wnt-photo" src={src} alt={`${e.unit} 문제 사진 ${i + 1}`} />
+                          <img key={i} className="wnt-photo" src={src} alt={`${e.unit} 문제 사진 ${i + 1}`} style={{ cursor: "zoom-in" }} onClick={() => setZoomSrc(src)} />
                         ))}
                     </div>
                   )}
@@ -2428,7 +2571,7 @@ export default function WrongNoteTracker() {
                         <div className="wnt-flash-imgs in-pad">
                           {imageCache[e.id]
                             ? imageCache[e.id].map((src, i) => (
-                                <img key={i} className="wnt-photo" src={src} alt={`${e.unit} 문제 ${i + 1}`} />
+                                <img key={i} className="wnt-photo" src={src} alt={`${e.unit} 문제 ${i + 1}`} style={{ cursor: "zoom-in" }} onClick={() => setZoomSrc(src)} />
                               ))
                             : <div className="wnt-loading">사진 불러오는 중…</div>}
                         </div>
@@ -2684,7 +2827,7 @@ export default function WrongNoteTracker() {
                 <div className="wnt-flash-imgs">
                   {imageCache[flashEntry.id]
                     ? imageCache[flashEntry.id].map((src, i) => (
-                        <img key={i} className="wnt-photo" src={src} alt={`${flashEntry.unit} 문제 ${i + 1}`} />
+                        <img key={i} className="wnt-photo" src={src} alt={`${flashEntry.unit} 문제 ${i + 1}`} style={{ cursor: "zoom-in" }} onClick={() => setZoomSrc(src)} />
                       ))
                     : <div className="wnt-loading">사진 불러오는 중…</div>}
                 </div>
@@ -2722,7 +2865,7 @@ export default function WrongNoteTracker() {
                   <div className="wnt-flash-imgs in-pad">
                     {imageCache[flashEntry.id]
                       ? imageCache[flashEntry.id].map((src, i) => (
-                          <img key={i} className="wnt-photo" src={src} alt={`${flashEntry.unit} 문제 ${i + 1}`} />
+                          <img key={i} className="wnt-photo" src={src} alt={`${flashEntry.unit} 문제 ${i + 1}`} style={{ cursor: "zoom-in" }} onClick={() => setZoomSrc(src)} />
                         ))
                       : <div className="wnt-loading">사진 불러오는 중…</div>}
                   </div>
@@ -3269,6 +3412,42 @@ const css = `
   font-size: 11px; cursor: pointer; line-height: 1;
 }
 .wnt-thumb-x:hover { background: var(--red); }
+.wnt-photo-thumb img { cursor: zoom-in; }
+.wnt-thumb-crop {
+  position: absolute; bottom: -6px; right: -6px; width: 22px; height: 22px;
+  border-radius: 50%; border: none; background: var(--gold); color: #fff;
+  font-size: 10px; cursor: pointer; line-height: 1;
+}
+.wnt-thumb-crop:hover { filter: brightness(1.1); }
+/* 사진 자르기 모달 */
+.wnt-crop-backdrop, .wnt-zoom-backdrop {
+  position: fixed; inset: 0; background: rgba(20,26,34,0.72); z-index: 120;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  animation: wnt-fade 0.18s ease;
+}
+.wnt-crop { background: var(--paper); border-radius: 16px; padding: 16px; max-width: 92vw; }
+.wnt-crop-title { font-weight: 800; font-size: 15px; margin-bottom: 10px; }
+.wnt-crop-title span { font-weight: 500; font-size: 12px; color: var(--muted); margin-left: 6px; }
+.wnt-crop-stage { position: relative; display: inline-block; line-height: 0; max-width: 84vw; }
+.wnt-crop-img { display: block; max-width: 84vw; max-height: 56vh; user-select: none; -webkit-user-select: none; }
+.wnt-crop-box {
+  position: absolute; border: 2px solid var(--gold); box-shadow: 0 0 0 9999px rgba(20,26,34,0.45);
+  cursor: move; touch-action: none;
+}
+.wnt-crop-handle {
+  position: absolute; width: 18px; height: 18px; background: var(--gold); border: 2px solid #fff;
+  border-radius: 50%; touch-action: none;
+}
+.wnt-crop-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+/* 사진 확대(줌) 모달 */
+.wnt-zoom-backdrop { flex-direction: column; padding: 0; }
+.wnt-zoom-bar {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 10px; background: rgba(20,26,34,0.9); color: #fff;
+}
+.wnt-zoom-pct { color: #fff; font-size: 13px; min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; }
+.wnt-zoom-scroll { flex: 1; width: 100%; overflow: auto; -webkit-overflow-scrolling: touch; display: flex; align-items: flex-start; justify-content: center; }
+.wnt-zoom-img { display: block; height: auto; max-width: none; }
 .wnt-photo-area { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
 .wnt-photo {
   max-width: 100%; border-radius: 8px; border: 1px solid var(--line);
