@@ -729,6 +729,7 @@ export default function WrongNoteTracker() {
   const [imageCache, setImageCache] = useState({});
   const [openImages, setOpenImages] = useState({});
   const [openCard, setOpenCard] = useState(null); // 펼쳐진(풀이 모드) 카드 id — 한 번에 하나
+  const [cardPadOpen, setCardPadOpen] = useState({}); // 기록 카드 내 풀이 패드 열림 여부
 
   // ---- 풀이 기록 상태 ----
   const [solFormOpen, setSolFormOpen] = useState({});
@@ -2269,6 +2270,9 @@ export default function WrongNoteTracker() {
                   {/* 도구 버튼 줄 */}
                   {!selectMode && (
                     <div className="wnt-tools">
+                      <button className={cardPadOpen[e.id] ? "wnt-mini strong" : "wnt-mini"} onClick={() => setCardPadOpen((o) => ({ ...o, [e.id]: !o[e.id] }))}>
+                        {cardPadOpen[e.id] ? "✍️ 풀이 패드 접기 ▲" : "✍️ 풀이 패드 (펜슬로 풀기)"}
+                      </button>
                       <button className="wnt-mini" onClick={() => openSolutionForm(e.id)}>✏️ 풀이 남기기</button>
                       {(e.solutions || []).length > 0 && (
                         <button className="wnt-mini" onClick={() => toggleSolutions(e.id)}>
@@ -2293,6 +2297,21 @@ export default function WrongNoteTracker() {
                       </button>
                       <HelpTip text="📖 문제 풀이: 문제 사진을 분석해 정답 해설지처럼 풀이를 알려줘요. ✏️ 풀이 남기기: 다시 푼 풀이를 글·사진으로 기록 + 채점. 💡 발상 올리기: 손으로 정리한 발상 사진을 AI가 카드로 요약. 🤖 AI 도우미: 힌트 유도 또는 대화. (변형문제는 위 '변형문제' 탭에서 만들어요.)" />
                     </div>
+                  )}
+
+                  {/* 기록 카드에서 바로 풀기 — 좌우분할 풀이 패드 */}
+                  {!selectMode && cardPadOpen[e.id] && (
+                    <SolvePad key={"cardpad-" + e.id} gradeFn={flashGradeFn(e)} solveFn={e.hasImage ? flashSolveFn(e) : null}
+                      problem={e.hasImage ? (
+                        <div className="wnt-flash-imgs in-pad">
+                          {imageCache[e.id]
+                            ? imageCache[e.id].map((src, i) => (
+                                <img key={i} className="wnt-photo" src={src} alt={`${e.unit} 문제 ${i + 1}`} />
+                              ))
+                            : <div className="wnt-loading">사진 불러오는 중…</div>}
+                        </div>
+                      ) : null}
+                      bridge={() => "너는 채점 선생님이야. 첨부한 이미지 중 손글씨가 내 풀이고, 나머지는 문제 사진이야.\n과목: " + e.subject + " / 단원: " + e.unit + "\n먼저 짧게 채점만 해줘: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 내가 '풀이도 짧게 알려줘'라고 하면 3~4줄 간략 풀이를 줘."} />
                   )}
 
                   {/* 문제 풀이(AI 해설) 결과 */}
