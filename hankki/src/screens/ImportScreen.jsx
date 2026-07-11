@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
+import { guessCategory } from '../utils'
 import Icon from '../components/Icon'
 
 const OPTIONS = [
@@ -160,14 +161,14 @@ function placeholderFor(flow) {
   return 'https://...'
 }
 
-export function makeInboxRecipe({ source, title, sourceUrl = '', image = null }) {
+export function makeInboxRecipe({ source, title, sourceUrl = '', image = null, category }) {
   return {
     id: newId(),
     title,
     emoji: '🍽️',
     image,
     source,
-    category: '전체',
+    category: category || guessCategory(title + ' ' + sourceUrl),
     tags: [],
     time: 0,
     servings: 0,

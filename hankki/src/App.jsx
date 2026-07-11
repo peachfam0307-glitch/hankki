@@ -1,4 +1,7 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useStore } from './store'
+import { consumeSharedIntake, detectSource, firstUrl } from './shareIntake'
+import { makeInboxRecipe } from './screens/ImportScreen'
 import BottomNav from './components/BottomNav'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
@@ -37,6 +40,31 @@ export default function App() {
     setToast(msg)
     if (toastTimer.current) clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(null), 1900)
+  }, [])
+
+  // '공유받기' — 인스타/갤러리에서 한끼로 공유된 링크·사진을 앱 시작 시 받아 Inbox 로.
+  const store = useStore()
+  useEffect(() => {
+    let cancelled = false
+    consumeSharedIntake().then((data) => {
+      if (cancelled || !data) return
+      const link = firstUrl(data.url, data.text)
+      const source = data.imageDataUrl ? 'photo' : detectSource(link, data.text)
+      const title =
+        (data.title || '').trim() || (data.imageDataUrl ? '사진 레시피' : '공유된 레시피')
+      store.addRecipe(
+        makeInboxRecipe({ source, title, sourceUrl: link, image: data.imageDataUrl || null })
+      )
+      setStack([{ name: 'inbox' }])
+      showToast('공유한 레시피를 Inbox에 담았어요')
+      if (typeof history !== 'undefined' && location.search) {
+        history.replaceState(null, '', location.pathname)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const nav = { push, pop, popAll, go, showToast, tab, setTab }

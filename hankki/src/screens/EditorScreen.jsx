@@ -5,6 +5,7 @@ import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import { CATEGORIES, colors } from '../theme'
 import { TAG_LIST } from '../data/seed'
+import { guessCategory } from '../utils'
 
 const DIFFS = ['쉬움', '보통', '어려움']
 
@@ -18,7 +19,7 @@ export default function EditorScreen({ id }) {
     title: editing?.title && editing.title !== '새 레시피' ? editing.title : editing?.title || '',
     image: editing?.image || null,
     emoji: editing?.emoji || '🍽️',
-    category: editing?.category && editing.category !== '전체' ? editing.category : '한식',
+    category: editing?.category && editing.category !== '전체' ? editing.category : guessCategory(editing?.title || ''),
     time: editing?.time || '',
     servings: editing?.servings || '',
     difficulty: editing?.difficulty || '쉬움',
