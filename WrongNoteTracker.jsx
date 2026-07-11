@@ -70,8 +70,12 @@ const STORAGE_KEY = "wrongnote:data:v1";
 
 const TEACHER_PERSONA =
   "너는 포항제철고등학교에서 20년째 내신 문제를 극악하게 어렵게 내기로 악명 높은 베테랑 교사야. " +
-  "평범한 유형 문제는 절대 내지 않고, 조건을 비틀고, 여러 개념을 융합하고, 학생들이 습관적으로 빠지는 함정을 정확히 찌르는 킬러 문항이 특기야. " +
-  "단, 반드시 대한민국 고등학교 교육과정 범위 안에서만 출제해.";
+  "평범한 유형 문제는 절대 내지 않고, 조건을 비틀고, 여러 개념을 융합하고, 학생들이 습관적으로 빠지는 함정을 정확히 찌르는 킬러 문항이 특기야.\n" +
+  "[출제 기준]\n" +
+  "- 반드시 대한민국 2022 개정 교육과정 범위 안에서만 출제하고, 교육과정을 벗어나는 대학 수준 내용은 절대 쓰지 마.\n" +
+  "- 자사고 내신 스타일을 따라: 수능·평가원 모의고사 기출의 고난도 유형과 그 변형을 적극 반영해 (내신에도 수능형이 많이 나온다).\n" +
+  "- 특히 수학은 해당 학년 부교재 수준의 고난도 문항을 기준으로 삼아 (기준 교재가 주어지면 그 교재의 난이도·스타일을 최우선으로).\n" +
+  "- 문제·정답·풀이는 스스로 한 번 더 검산해서 오류가 없게 해.";
 
 function todayStr() {
   const d = new Date();
@@ -665,6 +669,7 @@ export default function WrongNoteTracker() {
   const MAX_SOL_PHOTOS = 2;
   const [imageCache, setImageCache] = useState({});
   const [openImages, setOpenImages] = useState({});
+  const [openCard, setOpenCard] = useState(null); // 펼쳐진(풀이 모드) 카드 id — 한 번에 하나
 
   // ---- 풀이 기록 상태 ----
   const [solFormOpen, setSolFormOpen] = useState({});
@@ -2055,7 +2060,7 @@ export default function WrongNoteTracker() {
             {entries.length > 0 && (
               <button
                 className={selectMode ? "wnt-mini strong" : "wnt-mini"}
-                onClick={() => { setSelectMode(!selectMode); setSelected({}); }}
+                onClick={() => { setSelectMode(!selectMode); setSelected({}); setOpenCard(null); }}
               >
                 {selectMode ? "선택 취소" : "☑ 선택 삭제"}
               </button>
@@ -2108,6 +2113,11 @@ export default function WrongNoteTracker() {
                     {(e.wrongCount || 0) > 1 && <span className="wnt-wrong-badge">❌ {e.wrongCount}회</span>}
                     {e.graduated && <span className="wnt-grad-badge">🎓 졸업</span>}
                     {e.status === 3 && <span className="wnt-stamp">정복</span>}
+                    {!selectMode && (
+                      <button className="wnt-card-toggle" onClick={() => setOpenCard(openCard === e.id ? null : e.id)}>
+                        {openCard === e.id ? "▴ 접기" : "▾ 풀기"}
+                      </button>
+                    )}
                   </div>
                   <div className="wnt-source">
                     {e.source ? `${e.source} · ` : ""}{e.createdAt}
@@ -2133,6 +2143,8 @@ export default function WrongNoteTracker() {
                       {e.tags.map((t) => <span key={t} className="wnt-red-tag">{t}</span>)}
                     </div>
                   )}
+
+                  {openCard === e.id && (<>
                   {e.memo && <p className="wnt-memo">{e.memo}</p>}
 
                   {/* 발상 노트 — 메모 아래, 접혀 있다가 클릭하면 표시 */}
@@ -2359,6 +2371,7 @@ export default function WrongNoteTracker() {
                       </div>
                     )}
                   </div>
+                  </>)}
                 </li>
               ))}
             </ul>
@@ -3009,6 +3022,11 @@ const css = `
   border-radius: 8px; padding: 8px 12px; font-size: 12.5px; margin-bottom: 12px; font-weight: 700;
 }
 .wnt-due { color: var(--red); font-weight: 700; }
+.wnt-card-toggle {
+  margin-left: auto; font-size: 12px; font-weight: 700; font-family: inherit;
+  border: 1px solid var(--ink); border-radius: 6px; background: var(--ink); color: #fff;
+  padding: 4px 10px; cursor: pointer; white-space: nowrap;
+}
 .wnt-solve-box {
   margin-top: 10px; border: 1px solid #D8D3F2; border-radius: 10px; background: #F8F7FE; padding: 12px;
 }
