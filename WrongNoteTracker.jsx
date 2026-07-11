@@ -814,6 +814,7 @@ export default function WrongNoteTracker() {
   const [claudeRoom, setClaudeRoomState] = useState(""); // 오답 질문방 Claude 링크
   const [dueDismiss, setDueDismiss] = useState(false); // 오늘 복습 안내 배너 닫기
   const [dueModalClosed, setDueModalClosed] = useState(false); // 오늘 복습 팝업 닫기
+  const [crownShow, setCrownShow] = useState(false); // 정복 왕관 축하 연출
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState(false);
   const [tab, setTab] = useState("list"); // list | flash | variant | stats | settings
@@ -1225,6 +1226,8 @@ export default function WrongNoteTracker() {
   }
 
   function advanceStatus(id) {
+    const target = entries.find((e) => e.id === id);
+    const conquering = target && target.status === 2; // 2→3 = 완전 정복!
     saveData({
       entries: entries.map((e) =>
         e.id === id && e.status < 3
@@ -1232,6 +1235,12 @@ export default function WrongNoteTracker() {
           : e
       ),
     });
+    if (conquering) celebrateCrown();
+  }
+
+  function celebrateCrown() {
+    setCrownShow(true);
+    setTimeout(() => setCrownShow(false), 2400);
   }
 
   function revertStatus(id) {
@@ -1936,6 +1945,7 @@ export default function WrongNoteTracker() {
   function flashCorrect(entry) {
     setTimerOn(false);
     let graduatedNow = false;
+    let conqueringNow = false;
     saveData({
       entries: entries.map((e) => {
         if (e.id !== entry.id) return e;
@@ -1945,6 +1955,7 @@ export default function WrongNoteTracker() {
         if (e.status < 3) {
           updated.status = e.status + 1;
           updated.reviewLog = [...(e.reviewLog || []), todayStr()];
+          if (e.status === 2) conqueringNow = true;
         }
         if (timerSec > 0) {
           updated.solveTimes = [...(e.solveTimes || []), { date: todayStr(), sec: timerSec }];
@@ -1955,6 +1966,7 @@ export default function WrongNoteTracker() {
     setTimerSec(0);
     if (graduatedNow) setGradMsg("🎓 2회 연속 정답! 이 문제는 졸업했어요 — 플래시카드에서는 이제 안 보여요 (기록엔 남아요).");
     else setGradMsg("");
+    if (conqueringNow || graduatedNow) celebrateCrown();
   }
 
   // ---- 설정: 과목 관리 ----
@@ -2222,6 +2234,19 @@ export default function WrongNoteTracker() {
         );
       })()}
 
+      {crownShow && (
+        <div className="wnt-crown-celebrate" onClick={() => setCrownShow(false)}>
+          <div className="wnt-crown-burst">
+            <div className="wnt-crown-emoji">👑</div>
+            <div className="wnt-crown-text">완전 정복!</div>
+            <div className="wnt-crown-sub">이 문제는 이제 네 거야 ✨</div>
+            {["✨", "🎉", "⭐", "✨", "🎊", "⭐"].map((s, i) => (
+              <span key={i} className={"wnt-crown-spark s" + i}>{s}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {cropTarget != null && form.photos[cropTarget] && (
         <CropModal src={form.photos[cropTarget]} onClose={() => setCropTarget(null)} onApply={(d) => applyCropped(cropTarget, d)} />
       )}
@@ -2469,7 +2494,7 @@ export default function WrongNoteTracker() {
                     {e.retry && <span className="wnt-retry-badge">🔁 다시</span>}
                     {(e.wrongCount || 0) > 1 && <span className="wnt-wrong-badge">❌ {e.wrongCount}회</span>}
                     {e.graduated && <span className="wnt-grad-badge">🎓 졸업</span>}
-                    {e.status === 3 && <span className="wnt-stamp">정복</span>}
+                    {e.status === 3 && <span className="wnt-stamp">👑 정복</span>}
                     {!selectMode && (
                       <button className="wnt-card-toggle" onClick={() => setOpenCard(openCard === e.id ? null : e.id)}>
                         {openCard === e.id ? "▴ 접기" : "▾ 풀기"}
@@ -2905,7 +2930,7 @@ export default function WrongNoteTracker() {
                       이번엔 맞음 ✓{timerSec > 0 ? ` (${fmtSec(timerSec)} 기록)` : ""}
                     </button>
                   ) : (
-                    <span className="wnt-stamp">정복</span>
+                    <span className="wnt-stamp">👑 정복</span>
                   )}
                   <button
                     className="wnt-mini danger"
@@ -3395,8 +3420,38 @@ const css = `
 .wnt-subj { color: #fff; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
 .wnt-unit { font-size: 15.5px; font-weight: 700; }
 .wnt-stamp {
-  margin-left: auto; color: var(--green); border: 2px solid var(--green); border-radius: 6px;
+  margin-left: auto; color: var(--gold); border: 2px solid var(--gold); border-radius: 6px;
   font-size: 12px; font-weight: 700; padding: 2px 8px; transform: rotate(-6deg);
+  background: #FFF8EC;
+}
+/* 정복 왕관 축하 연출 */
+.wnt-crown-celebrate {
+  position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
+  background: rgba(30,42,58,0.35); animation: wnt-fade 0.2s ease;
+}
+.wnt-crown-burst { position: relative; text-align: center; }
+.wnt-crown-emoji { font-size: 120px; animation: wnt-crown-pop 0.6s cubic-bezier(.2,1.5,.4,1); }
+@keyframes wnt-crown-pop {
+  0% { transform: scale(0) rotate(-40deg); opacity: 0; }
+  60% { transform: scale(1.25) rotate(8deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.wnt-crown-text { font-size: 34px; font-weight: 800; color: #fff; margin-top: 4px; text-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+.wnt-crown-sub { font-size: 15px; color: #FFE9B8; margin-top: 6px; }
+.wnt-crown-spark { position: absolute; font-size: 34px; opacity: 0; animation: wnt-spark 1.4s ease-out forwards; }
+.wnt-crown-spark.s0 { top: -10px; left: -60px; animation-delay: .1s; }
+.wnt-crown-spark.s1 { top: 20px; right: -70px; animation-delay: .25s; }
+.wnt-crown-spark.s2 { top: 80px; left: -80px; animation-delay: .18s; }
+.wnt-crown-spark.s3 { top: -30px; right: -30px; animation-delay: .32s; }
+.wnt-crown-spark.s4 { top: 110px; right: -40px; animation-delay: .12s; }
+.wnt-crown-spark.s5 { top: 60px; left: -30px; animation-delay: .28s; }
+@keyframes wnt-spark {
+  0% { opacity: 0; transform: scale(0.3) translateY(0); }
+  40% { opacity: 1; transform: scale(1.2) translateY(-14px); }
+  100% { opacity: 0; transform: scale(0.8) translateY(-40px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wnt-crown-emoji, .wnt-crown-spark { animation: none; opacity: 1; }
 }
 .wnt-source { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
 
