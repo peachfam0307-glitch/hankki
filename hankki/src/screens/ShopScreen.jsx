@@ -4,10 +4,12 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import TextTile from '../components/TextTile'
 import EmojiPicker from '../components/EmojiPicker'
+import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
+import FoodIconPicker from '../components/FoodIconPicker'
 import { ocrImage } from '../ocr'
 import { guessEmoji } from '../emoji'
 
-// 재료 썸네일 — 사진 > 이모지 > 글자 타일 순으로 표시
+// 재료 썸네일 — 사진 > 커스텀아이콘 > 이모지 > 글자 타일 순으로 표시
 function WishThumb({ item, size = 46 }) {
   if (item.thumb === 'photo' && item.image) {
     return <img src={item.image} alt="" style={{ width: size, height: size, borderRadius: 12, objectFit: 'cover', flex: '0 0 auto' }} />
@@ -15,7 +17,15 @@ function WishThumb({ item, size = 46 }) {
   if (item.thumb === 'emoji' && item.emoji) {
     return <div className="emoji-tile" style={{ width: size, height: size, fontSize: size * 0.5 }}>{item.emoji}</div>
   }
-  return <TextTile text={item.name} size={size} />
+  if (item.thumb === 'label') {
+    return <TextTile text={item.name} size={size} />
+  }
+  // 기본: 이름으로 자동 매칭되는 커스텀 아이콘
+  return (
+    <div className="emoji-tile" style={{ width: size, height: size, flex: '0 0 auto' }}>
+      <FoodIcon name={item.icon || guessFoodIcon(item.name)} size={size * 0.62} />
+    </div>
+  )
 }
 
 // 외부 쇼핑몰 열기 — 설치된 앱에서도 브라우저(로그인 세션 유지)로 열린다.
@@ -62,6 +72,13 @@ export default function ShopScreen() {
               >
                 {s.iconType === 'label' ? (
                   <TextTile text={s.name} size={54} radius={14} />
+                ) : s.iconType === 'icon' ? (
+                  <>
+                    <div className="emoji-tile" style={{ width: 54, height: 54 }}>
+                      <FoodIcon name={s.icon || 'bag'} size={34} />
+                    </div>
+                    <span className="nm">{s.name}</span>
+                  </>
                 ) : (
                   <>
                     <span style={{ fontSize: '1.7rem' }}>{s.emoji || '🛍️'}</span>
@@ -186,12 +203,17 @@ function WishAdd({ onClose }) {
   const { addWish } = useStore()
   const nav = useNav()
   const fileRef = useRef(null)
-  // thumb: 'label'(글자) | 'emoji' | 'photo'
-  const [f, setF] = useState({ name: '', url: '', memo: '', image: null, emoji: '🍽️', thumb: 'label', emojiPicked: false })
+  // thumb: 'icon'(커스텀 아이콘) | 'label'(글자) | 'emoji' | 'photo'
+  const [f, setF] = useState({ name: '', url: '', memo: '', image: null, emoji: '🍽️', icon: 'default', thumb: 'icon', emojiPicked: false, iconPicked: false })
   const [busy, setBusy] = useState(false)
 
   const setName = (name) =>
-    setF((p) => ({ ...p, name, emoji: p.emojiPicked ? p.emoji : guessEmoji(name) }))
+    setF((p) => ({
+      ...p,
+      name,
+      emoji: p.emojiPicked ? p.emoji : guessEmoji(name),
+      icon: p.iconPicked ? p.icon : guessFoodIcon(name),
+    }))
 
   const onPhoto = (e) => {
     const file = e.target.files?.[0]
@@ -218,6 +240,7 @@ function WishAdd({ onClose }) {
       thumb: f.thumb,
       image: f.thumb === 'photo' ? f.image : null,
       emoji: f.thumb === 'emoji' ? f.emoji : null,
+      icon: f.thumb === 'icon' ? (f.iconPicked ? f.icon : guessFoodIcon(name)) : null,
       bought: false,
       savedAt: Date.now(),
     })
@@ -241,7 +264,9 @@ function WishAdd({ onClose }) {
       <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
       <div style={{ display: 'flex', gap: 12, marginBottom: 10, alignItems: 'flex-start' }}>
         {/* 썸네일 미리보기 */}
-        {f.thumb === 'emoji' ? (
+        {f.thumb === 'icon' ? (
+          <FoodIconPicker value={f.icon} size={64} onChange={(k) => setF((p) => ({ ...p, icon: k, iconPicked: true }))} />
+        ) : f.thumb === 'emoji' ? (
           <EmojiPicker value={f.emoji} size={64} onChange={(e) => setF((p) => ({ ...p, emoji: e, emojiPicked: true }))} />
         ) : f.thumb === 'photo' && f.image ? (
           <button className="press" onClick={() => fileRef.current?.click()} style={{ width: 64, height: 64, borderRadius: 14, overflow: 'hidden', flex: '0 0 auto' }}>
@@ -258,6 +283,7 @@ function WishAdd({ onClose }) {
 
       {/* 썸네일 방식 선택 */}
       <div className="segment" style={{ margin: '0 0 10px' }}>
+        <Mode id="icon" label="아이콘" />
         <Mode id="label" label="글자" />
         <Mode id="emoji" label="이모지" />
         <Mode id="photo" label="사진" />
@@ -279,12 +305,13 @@ function ShopEdit({ shop, onClose }) {
     name: shop.name || '',
     url: shop.url || '',
     emoji: shop.emoji || '🛍️',
+    icon: shop.icon || 'bag',
     iconType: shop.iconType || 'emoji',
   })
 
   const save = () => {
     if (!f.name.trim() || !f.url.trim()) return
-    const data = { name: f.name.trim(), url: f.url.trim(), emoji: f.emoji, iconType: f.iconType }
+    const data = { name: f.name.trim(), url: f.url.trim(), emoji: f.emoji, icon: f.icon, iconType: f.iconType }
     if (isNew) store.addShop({ id: newId(), search: '', ...data })
     else store.updateShop(shop.id, data)
     onClose()
@@ -295,6 +322,8 @@ function ShopEdit({ shop, onClose }) {
       <div style={{ display: 'flex', gap: 12, marginBottom: 10, alignItems: 'flex-start' }}>
         {f.iconType === 'label' ? (
           <TextTile text={f.name || '쇼핑몰'} size={64} radius={14} />
+        ) : f.iconType === 'icon' ? (
+          <FoodIconPicker value={f.icon} size={64} onChange={(k) => setF((p) => ({ ...p, icon: k }))} />
         ) : (
           <EmojiPicker value={f.emoji} size={64} onChange={(e) => setF((p) => ({ ...p, emoji: e }))} />
         )}
@@ -304,6 +333,7 @@ function ShopEdit({ shop, onClose }) {
         </div>
       </div>
       <div className="segment" style={{ margin: '0 0 10px' }}>
+        <button type="button" className={`seg ${f.iconType === 'icon' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setF((p) => ({ ...p, iconType: 'icon' }))}>아이콘</button>
         <button type="button" className={`seg ${f.iconType === 'emoji' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setF((p) => ({ ...p, iconType: 'emoji' }))}>이모지</button>
         <button type="button" className={`seg ${f.iconType === 'label' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setF((p) => ({ ...p, iconType: 'label' }))}>글자</button>
       </div>
