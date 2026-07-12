@@ -38,3 +38,31 @@ export function dateLabel(ts) {
     dt.getDate()
   ).padStart(2, '0')}`
 }
+
+// 음식 사진을 아이콘용 정사각형으로 예쁘게 다듬는다.
+// 가운데(세로 사진은 살짝 위쪽 — 접시가 보통 화면 위쪽에 오니까)를 잘라
+// 적당한 크기 JPEG 로 압축 → 카드에 딱 맞고 저장 용량도 가볍다.
+export function cropSquare(dataUrl, out = 800, quality = 0.85) {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      try {
+        const s = Math.min(img.width, img.height)
+        const sx = (img.width - s) / 2
+        const sy = img.height > img.width ? (img.height - s) * 0.38 : (img.height - s) / 2
+        const size = Math.min(out, s)
+        const c = document.createElement('canvas')
+        c.width = size
+        c.height = size
+        const ctx = c.getContext('2d')
+        ctx.imageSmoothingQuality = 'high'
+        ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size)
+        resolve(c.toDataURL('image/jpeg', quality))
+      } catch {
+        resolve(dataUrl)
+      }
+    }
+    img.onerror = () => resolve(dataUrl)
+    img.src = dataUrl
+  })
+}

@@ -45,7 +45,8 @@ async function detectWithPlatform(dataUrl) {
 //  · 작은 캡처는 키우고(글자 해상도↑), 큰 사진은 적당히 줄여 메모리 부담↓
 //  · 흑백 + 대비 강화
 //  · 어두운 배경(흰 글씨: 인스타·유튜브 다크모드)은 자동 반전 → 검은 글씨/흰 배경
-function preprocess(dataUrl) {
+//    판단은 평균이 아닌 '중앙값' — 캡처 안에 밝은 음식 사진이 섞여 있어도 속지 않는다.
+function preprocess(dataUrl, forceInvert) {
   return new Promise((resolve) => {
     const img = new Image()
     img.onload = () => {
@@ -63,15 +64,21 @@ function preprocess(dataUrl) {
         ctx.drawImage(img, 0, 0, w, h)
         const im = ctx.getImageData(0, 0, w, h)
         const d = im.data
-        // 1) 그레이스케일 + 평균 밝기
-        let sum = 0
+        // 1) 그레이스케일 + 밝기 히스토그램
+        const hist = new Uint32Array(256)
         for (let i = 0; i < d.length; i += 4) {
-          const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
+          const g = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) | 0
           d[i] = d[i + 1] = d[i + 2] = g
-          sum += g
+          hist[g]++
         }
-        const mean = sum / (d.length / 4)
-        const invert = mean < 115 // 어두운 배경이면 반전
+        const total = d.length / 4
+        let acc = 0
+        let median = 127
+        for (let v = 0; v < 256; v++) {
+          acc += hist[v]
+          if (acc >= total / 2) { median = v; break }
+        }
+        const invert = forceInvert !== undefined ? forceInvert : median < 110
         // 2) (필요시) 반전 + 대비 강화
         const contrast = 1.5
         for (let i = 0; i < d.length; i += 4) {
@@ -81,12 +88,12 @@ function preprocess(dataUrl) {
           d[i] = d[i + 1] = d[i + 2] = g
         }
         ctx.putImageData(im, 0, 0)
-        resolve(c.toDataURL('image/png'))
+        resolve({ url: c.toDataURL('image/png'), inverted: invert })
       } catch {
-        resolve(dataUrl)
+        resolve({ url: dataUrl, inverted: false })
       }
     }
-    img.onerror = () => resolve(dataUrl)
+    img.onerror = () => resolve({ url: dataUrl, inverted: false })
     img.src = dataUrl
   })
 }
@@ -124,6 +131,11 @@ function getWorker() {
   return _workerPromise
 }
 
+// 뜻있는 글자 수 — 두 인식 결과 중 나은 쪽 고르는 기준
+function goodChars(s) {
+  return (String(s).match(/[가-힣a-zA-Z0-9]/g) || []).length
+}
+
 export async function ocrImage(image, onProgress) {
   // 1) 폰 내장 OCR 먼저 (있으면 훨씬 정확, 언어데이터 다운로드도 없음)
   if (typeof image === 'string') {
@@ -136,17 +148,29 @@ export async function ocrImage(image, onProgress) {
   }
   // 2) tesseract (전처리 + LSTM 엔진)
   try {
-    const processed = typeof image === 'string' ? await preprocess(image) : image
-    _progressCb = onProgress || null
     const worker = await getWorker()
-    const { data } = await worker.recognize(processed)
-    _progressCb = null
-    return (data && data.text) || ''
+    const recognize = async (src) => {
+      _progressCb = onProgress || null
+      const { data } = await worker.recognize(src)
+      _progressCb = null
+      return (data && data.text) || ''
+    }
+    if (typeof image !== 'string') return await recognize(image)
+
+    const p1 = await preprocess(image)
+    let text = await recognize(p1.url)
+    // 결과가 외계어면 반전을 뒤집어 한 번 더 — 다크모드/혼합 배경 캡처 대비
+    if (looksGibberish(text)) {
+      const p2 = await preprocess(image, !p1.inverted)
+      const t2 = await recognize(p2.url)
+      if (goodChars(t2) > goodChars(text)) text = t2
+    }
+    return text
   } catch {
     _progressCb = null
     // 워커 생성 실패 등 — 편의 함수로 한 번 더 시도
     try {
-      const processed = typeof image === 'string' ? await preprocess(image) : image
+      const processed = typeof image === 'string' ? (await preprocess(image)).url : image
       const res = await Tesseract.recognize(processed, 'kor+eng')
       return (res && res.data && res.data.text) || ''
     } catch {

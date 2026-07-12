@@ -2,14 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
-import Thumb from '../components/Thumb'
 import FoodIconPicker from '../components/FoodIconPicker'
 import EmojiPicker from '../components/EmojiPicker'
 import TextTile from '../components/TextTile'
 import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES, colors } from '../theme'
 import { TAG_LIST } from '../data/seed'
-import { guessCategory } from '../utils'
+import { guessCategory, cropSquare } from '../utils'
 import { ocrImage } from '../ocr'
 import { parseRecipeText } from '../parseRecipe'
 
@@ -64,14 +63,16 @@ export default function EditorScreen({ id, prefill }) {
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }))
   const toggleTag = (t) => set('tags', f.tags.includes(t) ? f.tags.filter((x) => x !== t) : [...f.tags, t])
 
-  // 썸네일용 사진 — 사진을 골랐을 때만 카드 이미지가 된다. (OCR 안 함)
+  // 썸네일용 사진 — 아이콘 크기에 맞춰 정사각으로 예쁘게 잘라 저장한다. (OCR 안 함)
   const onPhoto = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => {
-      set('image', reader.result)
+    reader.onload = async () => {
+      const cropped = await cropSquare(reader.result, 800)
+      set('image', cropped)
       set('thumb', 'photo')
+      nav.showToast('사진을 아이콘 크기로 다듬었어요 ✨')
     }
     reader.readAsDataURL(file)
     e.target.value = ''
@@ -196,13 +197,35 @@ export default function EditorScreen({ id, prefill }) {
             </div>
           )}
           {f.thumb === 'photo' && (
-            <button className="press" onClick={() => photoRef.current?.click()} style={{ width: '100%', position: 'relative' }}>
-              <Thumb recipe={{ image: f.image, thumb: 'photo', title: f.title }} ratio="16/10" radius={16} />
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, color: f.image ? '#fff' : 'var(--brown)', textShadow: f.image ? '0 1px 4px rgba(0,0,0,0.4)' : 'none' }}>
-                <Icon name="camera" size={26} color={f.image ? '#fff' : 'var(--brown)'} />
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{f.image ? '사진 변경' : '사진 추가'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <button
+                className="press"
+                onClick={() => photoRef.current?.click()}
+                aria-label={f.image ? '사진 변경' : '사진 추가'}
+                style={{
+                  width: 74,
+                  height: 74,
+                  flex: '0 0 auto',
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                  background: 'var(--cream)',
+                  border: f.image ? 'none' : '1.5px dashed var(--sand)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {f.image ? (
+                  <img src={f.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <Icon name="camera" size={26} color="var(--brown)" />
+                )}
+              </button>
+              <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.55 }}>
+                {f.image ? '탭해서 사진을 바꿔요.' : '탭해서 음식 사진을 골라요.'}<br />
+                음식이 가운데 오도록 정사각으로 예쁘게 다듬어져요.
               </div>
-            </button>
+            </div>
           )}
         </div>
 
