@@ -12,12 +12,6 @@ const OPTIONS = [
   { key: 'manual', icon: 'pen', title: '직접 작성하기', desc: '직접 레시피를 작성하기', color: '#B98A4E' },
 ]
 
-const GUESS = {
-  instagram: '명란 크림 파스타',
-  youtube: '닭갈비 볶음밥',
-  link: '단호박 스프',
-}
-
 export default function ImportScreen() {
   const { addRecipe } = useStore()
   const nav = useNav()
@@ -40,7 +34,7 @@ export default function ImportScreen() {
   }
 
   const saveLink = () => {
-    const t = title.trim() || GUESS[flow] || '새 레시피'
+    const t = title.trim() || `${flowMeta?.title || '새'} 레시피`
     addRecipe(makeInboxRecipe({ source: flow, title: t, sourceUrl: url.trim() }))
     nav.pop()
     nav.push({ name: 'inbox' })
@@ -161,21 +155,21 @@ function placeholderFor(flow) {
   return 'https://...'
 }
 
-export function makeInboxRecipe({ source, title, sourceUrl = '', image = null, category }) {
+export function makeInboxRecipe({ source, title, sourceUrl = '', image = null, category, memo = '' }) {
   return {
     id: newId(),
     title,
     emoji: '🍽️',
     image,
     source,
-    category: category || guessCategory(title + ' ' + sourceUrl),
+    category: category || guessCategory(title + ' ' + memo),
     tags: [],
     time: 0,
     servings: 0,
     difficulty: '',
     ingredients: [],
     steps: [],
-    memo: '',
+    memo,
     sourceUrl,
     status: 'unsorted',
     folder: null,

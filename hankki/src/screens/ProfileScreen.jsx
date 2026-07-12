@@ -4,7 +4,7 @@ import Icon from '../components/Icon'
 import { Avatar } from './HomeScreen'
 
 export default function ProfileScreen() {
-  const { profile, setProfile, recipes, reset } = useStore()
+  const { profile, setProfile, recipes, clearAll, reset } = useStore()
   const nav = useNav()
 
   const editProfile = () => {
@@ -65,19 +65,33 @@ export default function ProfileScreen() {
           ))}
         </div>
 
-        <button
-          className="press"
-          onClick={() => {
-            if (window.confirm('모든 레시피를 처음 상태(예시 데이터)로 되돌릴까요?')) {
-              reset()
-              nav.showToast('초기 데이터로 되돌렸어요')
-            }
-          }}
-          style={{ width: '100%', marginTop: 22, color: 'var(--text-sub)', fontSize: 13, padding: 12 }}
-        >
-          데이터 초기화
-        </button>
-        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 12, marginTop: 6 }}>
+        <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+          <button
+            className="press"
+            onClick={() => {
+              if (window.confirm('예시 레시피를 포함해 모든 레시피를 비울까요?\n(내 폴더·태그는 유지돼요)')) {
+                clearAll()
+                nav.showToast('깨끗하게 비웠어요 · 이제 내 레시피만 담아요 ✨')
+              }
+            }}
+            style={{ flex: 1, color: 'var(--brown)', fontSize: 13, fontWeight: 600, padding: 13, background: 'var(--cream)', borderRadius: 'var(--r-md)' }}
+          >
+            예시 데이터 비우기
+          </button>
+          <button
+            className="press"
+            onClick={() => {
+              if (window.confirm('예시 레시피를 다시 불러올까요?\n(현재 내용이 초기 예시로 바뀌어요)')) {
+                reset()
+                nav.showToast('초기 예시로 되돌렸어요')
+              }
+            }}
+            style={{ flex: 1, color: 'var(--text-sub)', fontSize: 13, fontWeight: 500, padding: 13, background: 'var(--cream)', borderRadius: 'var(--r-md)' }}
+          >
+            예시 되돌리기
+          </button>
+        </div>
+        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 12, marginTop: 14 }}>
           한끼 · v1.0 — 흩어진 레시피를, 한곳에.
         </div>
       </div>

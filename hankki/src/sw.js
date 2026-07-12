@@ -2,12 +2,17 @@
 // - 앱 자산 프리캐시(오프라인)
 // - 폰트/이미지 런타임 캐시
 // - '공유받기(share_target)': 안드로이드 공유 시트 → 한끼 로 들어온 링크/사진을 가로채 저장
+import { clientsClaim } from 'workbox-core'
 import { precacheAndRoute } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { CacheFirst } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
 
 precacheAndRoute(self.__WB_MANIFEST || [])
+
+// 새 버전이 배포되면 즉시 반영되도록: 대기 없이 활성화 + 모든 탭 장악
+self.skipWaiting()
+clientsClaim()
 
 // Pretendard 폰트
 registerRoute(

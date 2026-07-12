@@ -77,6 +77,10 @@ function reducer(state, action) {
     case 'setProfile': {
       return { ...state, profile: { ...state.profile, ...action.patch } }
     }
+    case 'clear': {
+      // 예시(시드) 포함 모든 레시피를 비우고 빈 아카이브로.
+      return { ...state, recipes: [] }
+    }
     case 'reset': {
       return {
         recipes: seedRecipes,
@@ -111,6 +115,7 @@ export function StoreProvider({ children }) {
     cook: useCallback((id) => dispatch({ type: 'cook', id }), []),
     addFolder: useCallback((name) => dispatch({ type: 'addFolder', name }), []),
     setProfile: useCallback((patch) => dispatch({ type: 'setProfile', patch }), []),
+    clearAll: useCallback(() => dispatch({ type: 'clear' }), []),
     reset: useCallback(() => dispatch({ type: 'reset' }), []),
   }
 

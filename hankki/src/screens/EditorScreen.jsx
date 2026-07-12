@@ -113,11 +113,11 @@ export default function EditorScreen({ id }) {
         <div style={{ display: 'flex', gap: 12 }}>
           <div className="field" style={{ flex: 1 }}>
             <label>조리시간 (분)</label>
-            <input value={f.time} onChange={(e) => set('time', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="20" />
+            <input value={f.time} onChange={(e) => set('time', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="예: 20" />
           </div>
           <div className="field" style={{ flex: 1 }}>
             <label>인분</label>
-            <input value={f.servings} onChange={(e) => set('servings', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="2" />
+            <input value={f.servings} onChange={(e) => set('servings', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="예: 2" />
           </div>
         </div>
 
@@ -132,12 +132,12 @@ export default function EditorScreen({ id }) {
 
         <div className="field">
           <label>재료 (한 줄에 하나씩)</label>
-          <textarea rows={5} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} placeholder={'스파게티 면 160g\n명란 2큰술\n생크림 200ml'} />
+          <textarea rows={5} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} placeholder={'재료를 한 줄에 하나씩 적어주세요'} />
         </div>
 
         <div className="field">
           <label>만드는 법 (한 줄에 한 단계)</label>
-          <textarea rows={5} value={f.steps} onChange={(e) => set('steps', e.target.value)} placeholder={'면을 삶는다.\n소스를 만든다.\n면과 소스를 섞는다.'} />
+          <textarea rows={5} value={f.steps} onChange={(e) => set('steps', e.target.value)} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
         </div>
 
         <div className="field">

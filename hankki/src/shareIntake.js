@@ -52,3 +52,22 @@ export function firstUrl(...vals) {
   }
   return ''
 }
+
+// 공유된 텍스트에서 링크를 뺀 캡션만 추출 (인스타 캡션 등)
+export function captionFrom(text = '') {
+  return String(text || '')
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+// 캡션 첫 줄을 제목 후보로 (너무 길면 잘라줌)
+export function firstLine(s = '', max = 40) {
+  const line = String(s || '')
+    .split('\n')
+    .map((x) => x.trim())
+    .find(Boolean)
+  if (!line) return ''
+  return line.length > max ? line.slice(0, max).trim() + '…' : line
+}

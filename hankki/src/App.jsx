@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useStore } from './store'
-import { consumeSharedIntake, detectSource, firstUrl } from './shareIntake'
+import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
 import BottomNav from './components/BottomNav'
 import HomeScreen from './screens/HomeScreen'
@@ -49,11 +49,20 @@ export default function App() {
     consumeSharedIntake().then((data) => {
       if (cancelled || !data) return
       const link = firstUrl(data.url, data.text)
+      const caption = captionFrom(data.text)
       const source = data.imageDataUrl ? 'photo' : detectSource(link, data.text)
       const title =
-        (data.title || '').trim() || (data.imageDataUrl ? '사진 레시피' : '공유된 레시피')
+        (data.title || '').trim() ||
+        firstLine(caption) ||
+        (data.imageDataUrl ? '사진 레시피' : '공유된 레시피')
       store.addRecipe(
-        makeInboxRecipe({ source, title, sourceUrl: link, image: data.imageDataUrl || null })
+        makeInboxRecipe({
+          source,
+          title,
+          sourceUrl: link,
+          image: data.imageDataUrl || null,
+          memo: caption && caption !== title ? caption : '',
+        })
       )
       setStack([{ name: 'inbox' }])
       showToast('공유한 레시피를 Inbox에 담았어요')
