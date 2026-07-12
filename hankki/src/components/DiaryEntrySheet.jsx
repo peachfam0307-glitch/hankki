@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import Icon from './Icon'
 import CropSheet from './CropSheet'
+import Portal from './Portal'
 
 // 사진을 캔버스로 축소해 저장 공간을 아낀다.
 function downscale(dataUrl, max = 900) {
@@ -56,8 +57,9 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete }) {
   }
 
   return (
+   <Portal>
     <div className="sheet-mask" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
+      <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 0 }}>
         <div className="emoji-sheet-head">
           <span>요리 기록 남기기</span>
           <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
@@ -89,14 +91,15 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete }) {
             placeholder="나만의 팁 · 다음엔 이렇게! (예: 면 1분 덜 삶기, 간 약하게)"
             rows={3}
           />
+        </div>
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            {onDelete && (
-              <button className="press" onClick={onDelete} style={{ padding: '12px 14px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 14 }}>삭제</button>
-            )}
-            <button className="press" onClick={onClose} style={{ flex: 1, padding: 12, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>나중에</button>
-            <button className="press" onClick={save} style={{ flex: 1, padding: 12, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 600, fontSize: 14 }}>저장</button>
-          </div>
+        {/* 저장 버튼은 항상 보이게 시트 하단에 고정 */}
+        <div style={{ position: 'sticky', bottom: 0, background: 'var(--surface)', display: 'flex', gap: 8, padding: '10px 16px calc(6px + var(--safe-bottom))', boxShadow: '0 -6px 14px rgba(0,0,0,0.05)' }}>
+          {onDelete && (
+            <button className="press" onClick={onDelete} style={{ padding: '13px 14px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 14 }}>삭제</button>
+          )}
+          <button className="press" onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>나중에</button>
+          <button className="press" onClick={save} style={{ flex: 1.4, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 14.5 }}>저장하기</button>
         </div>
       </div>
 
@@ -109,5 +112,6 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete }) {
         />
       )}
     </div>
+   </Portal>
   )
 }

@@ -206,6 +206,8 @@ export default function EditorScreen({ id, prefill }) {
             title="원본 영상"
             allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
+            /* allow-top-navigation 을 빼서 영상 안을 눌러도 앱(한끼)이 인스타로 넘어가지 않게 막는다 */
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox"
             style={
               embed.type === 'youtube'
                 ? { display: 'block', width: '100%', aspectRatio: '16/9', border: 0 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Portal from './Portal'
 
 // 사진 자르기 — OCR 전에 글자 영역만 선택. (블로그 캡처의 광고·그림을 빼고 읽기)
 // 모서리 4개를 드래그해 영역을 조절하고, 안쪽을 드래그하면 통째로 이동.
@@ -109,6 +110,7 @@ export default function CropSheet({ image, index = 0, total = 1, onDone, onSkip,
   )
 
   return (
+   <Portal>
     <div style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(20,19,17,0.96)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '14px 18px calc(6px)', paddingTop: 'calc(14px + var(--safe-top, 0px))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button className="press" onClick={once(onCancel)} style={{ color: '#d8d5cf', fontSize: 14, fontWeight: 600 }}>취소</button>
@@ -157,5 +159,6 @@ export default function CropSheet({ image, index = 0, total = 1, onDone, onSkip,
         </button>
       </div>
     </div>
+   </Portal>
   )
 }

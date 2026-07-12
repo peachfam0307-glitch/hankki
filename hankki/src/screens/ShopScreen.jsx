@@ -8,6 +8,7 @@ import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import FoodIconPicker from '../components/FoodIconPicker'
 import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
+import Portal from '../components/Portal'
 import { ocrImage } from '../ocr'
 import { guessEmoji } from '../emoji'
 
@@ -287,41 +288,51 @@ function WishAdd({ onClose }) {
   )
 
   return (
-    <div className="card" style={{ padding: 14, marginBottom: 12 }}>
-      <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
-      <div style={{ display: 'flex', gap: 12, marginBottom: 10, alignItems: 'flex-start' }}>
-        {/* 썸네일 미리보기 */}
-        {f.thumb === 'icon' ? (
-          <FoodIconPicker value={f.icon} size={64} onChange={(k) => setF((p) => ({ ...p, icon: k, iconPicked: true }))} />
-        ) : f.thumb === 'emoji' ? (
-          <EmojiPicker value={f.emoji} size={64} onChange={(e) => setF((p) => ({ ...p, emoji: e, emojiPicked: true }))} />
-        ) : f.thumb === 'photo' && f.image ? (
-          <button className="press" onClick={() => fileRef.current?.click()} style={{ width: 64, height: 64, borderRadius: 14, overflow: 'hidden', flex: '0 0 auto' }}>
-            <img src={f.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          </button>
-        ) : (
-          <TextTile text={f.name} size={64} radius={14} />
-        )}
-        <div style={{ flex: 1 }}>
-          <input className="wa-inp" value={f.name} onChange={(e) => setName(e.target.value)} placeholder={busy ? '사진에서 이름 읽는 중…' : '재료 이름 (예: 고추장)'} autoFocus />
-          <input className="wa-inp" style={{ marginTop: 8 }} value={f.url} onChange={(e) => setF((p) => ({ ...p, url: e.target.value }))} placeholder="링크 (선택)" inputMode="url" />
+   <Portal>
+    <div className="sheet-mask" onClick={onClose}>
+      <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 0 }}>
+        <div className="emoji-sheet-head">
+          <span>사고 싶은 재료 담기</span>
+          <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+        </div>
+        <div style={{ padding: '2px 16px 0' }}>
+          <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
+          <div style={{ display: 'flex', gap: 12, marginBottom: 10, alignItems: 'flex-start' }}>
+            {/* 썸네일 미리보기 */}
+            {f.thumb === 'icon' ? (
+              <FoodIconPicker value={f.icon} size={64} onChange={(k) => setF((p) => ({ ...p, icon: k, iconPicked: true }))} />
+            ) : f.thumb === 'emoji' ? (
+              <EmojiPicker value={f.emoji} size={64} onChange={(e) => setF((p) => ({ ...p, emoji: e, emojiPicked: true }))} />
+            ) : f.thumb === 'photo' && f.image ? (
+              <button className="press" onClick={() => fileRef.current?.click()} style={{ width: 64, height: 64, borderRadius: 14, overflow: 'hidden', flex: '0 0 auto' }}>
+                <img src={f.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </button>
+            ) : (
+              <TextTile text={f.name} size={64} radius={14} />
+            )}
+            <div style={{ flex: 1 }}>
+              <input className="wa-inp" value={f.name} onChange={(e) => setName(e.target.value)} placeholder={busy ? '사진에서 이름 읽는 중…' : '재료 이름 (예: 고추장)'} autoFocus />
+              <input className="wa-inp" style={{ marginTop: 8 }} value={f.url} onChange={(e) => setF((p) => ({ ...p, url: e.target.value }))} placeholder="링크 (선택)" inputMode="url" />
+            </div>
+          </div>
+
+          {/* 썸네일 방식 선택 */}
+          <div className="segment" style={{ margin: '0 0 10px' }}>
+            <Mode id="icon" label="아이콘" />
+            <Mode id="label" label="글자" />
+            <Mode id="emoji" label="이모지" />
+            <Mode id="photo" label="사진" />
+          </div>
+
+          <input className="wa-inp" value={f.memo} onChange={(e) => setF((p) => ({ ...p, memo: e.target.value }))} placeholder="메모 (선택)" />
+        </div>
+        <div style={{ position: 'sticky', bottom: 0, background: 'var(--surface)', display: 'flex', gap: 8, padding: '10px 16px calc(6px + var(--safe-bottom))' }}>
+          <button className="press" onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>취소</button>
+          <button className="press" onClick={save} style={{ flex: 1.4, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 14.5 }}>담기</button>
         </div>
       </div>
-
-      {/* 썸네일 방식 선택 */}
-      <div className="segment" style={{ margin: '0 0 10px' }}>
-        <Mode id="icon" label="아이콘" />
-        <Mode id="label" label="글자" />
-        <Mode id="emoji" label="이모지" />
-        <Mode id="photo" label="사진" />
-      </div>
-
-      <input className="wa-inp" value={f.memo} onChange={(e) => setF((p) => ({ ...p, memo: e.target.value }))} placeholder="메모 (선택)" />
-      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-        <button className="press" onClick={onClose} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>취소</button>
-        <button className="press" onClick={save} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 600, fontSize: 14 }}>담기</button>
-      </div>
     </div>
+   </Portal>
   )
 }
 

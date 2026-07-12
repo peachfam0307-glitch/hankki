@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTimer, SOUNDS } from '../timer'
 import Icon from './Icon'
+import Portal from './Portal'
 
 const PRESETS = [1, 3, 5, 10, 15, 30]
 
@@ -24,6 +25,7 @@ export default function TimerSheet({ label = '요리 타이머', onClose }) {
   const goCustom = () => { const s = min * 60 + sec; if (s > 0) { start(s, label); onClose() } }
 
   return (
+   <Portal>
     <div className="sheet-mask" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
         <div className="emoji-sheet-head">
@@ -63,5 +65,6 @@ export default function TimerSheet({ label = '요리 타이머', onClose }) {
         </div>
       </div>
     </div>
+   </Portal>
   )
 }
