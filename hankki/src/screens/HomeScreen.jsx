@@ -58,12 +58,21 @@ export default function HomeScreen() {
           <div className="h-title">한끼</div>
           <TabTips tab="home" />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {/* 가져오기 — 제일 자주 쓰는 기능이라 맨 위에 */}
+          <button
+            className="press"
+            onClick={() => nav.push({ name: 'import' })}
+            aria-label="가져오기"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--brown)', color: '#fff', fontSize: 13, fontWeight: 700, padding: '8px 13px', borderRadius: 999 }}
+          >
+            <Icon name="plus" size={16} color="#fff" stroke={2.4} /> 가져오기
+          </button>
           <button className="icon-btn press" onClick={() => nav.push({ name: 'inbox' })} aria-label="Inbox">
             <Icon name="inbox" size={22} />
           </button>
           <button className="icon-btn press" onClick={() => nav.go('profile')} aria-label="프로필">
-            <Avatar name={profile.name} />
+            <Avatar name={profile.name} avatar={profile.avatar} />
           </button>
         </div>
       </div>
@@ -101,7 +110,7 @@ export default function HomeScreen() {
           <>
             <div className="sec-head">
               <div className="h-section">자주 해먹는 요리</div>
-              <button className="t-more press" onClick={() => nav.go('search')}>
+              <button className="t-more press" onClick={() => nav.push({ name: 'cooked' })}>
                 더보기 <Icon name="chevron-right" size={14} color="var(--text-sub)" />
               </button>
             </div>
@@ -132,7 +141,7 @@ export default function HomeScreen() {
                   <div className="name">{r.title}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                     <SourceBadge source={r.source} showLabel={false} size={14} />
-                    <span className="t-sub">{sourceLabel(r.source)}에서 가져옴 · {timeAgo(r.savedAt)}</span>
+                    <span className="t-sub">{r.source === 'hankki' ? '한끼 기본 레시피' : `${sourceLabel(r.source)}에서 가져옴`} · {timeAgo(r.savedAt)}</span>
                   </div>
                 </div>
                 <Icon name="chevron-right" size={18} color="var(--sand)" />
@@ -179,7 +188,18 @@ function sourceLabel(s) {
   return { instagram: 'Instagram', youtube: 'YouTube', link: '링크', photo: '사진', manual: '직접 작성' }[s] || '링크'
 }
 
-export function Avatar({ name, size = 32 }) {
+// 아바타 — 사진·이모지를 고를 수 있고, 없으면 이름 첫 글자.
+export function Avatar({ name, avatar, size = 32 }) {
+  if (avatar?.type === 'photo' && avatar.value) {
+    return (
+      <img
+        src={avatar.value}
+        alt=""
+        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flex: '0 0 auto' }}
+      />
+    )
+  }
+  const isEmoji = avatar?.type === 'emoji' && avatar.value
   return (
     <div
       style={{
@@ -192,10 +212,11 @@ export function Avatar({ name, size = 32 }) {
         alignItems: 'center',
         justifyContent: 'center',
         fontWeight: 700,
-        fontSize: size * 0.42,
+        fontSize: size * (isEmoji ? 0.54 : 0.42),
+        flex: '0 0 auto',
       }}
     >
-      {(name || '한')[0]}
+      {isEmoji ? avatar.value : (name || '한')[0]}
     </div>
   )
 }

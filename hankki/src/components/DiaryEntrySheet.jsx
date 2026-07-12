@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store'
 import Icon from './Icon'
+import CropSheet from './CropSheet'
 
 // 사진을 캔버스로 축소해 저장 공간을 아낀다.
 function downscale(dataUrl, max = 900) {
@@ -38,13 +39,15 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete }) {
   const [rating, setRating] = useState(entry.rating || 0)
   const [note, setNote] = useState(entry.note || '')
   const [photo, setPhoto] = useState(entry.photo || null)
+  const [cropSrc, setCropSrc] = useState(null) // 사진 자르기 단계
 
   const onPhoto = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = async () => setPhoto(await downscale(reader.result))
+    reader.onload = () => setCropSrc(reader.result) // 자르기부터
     reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
   const save = () => {
@@ -96,6 +99,15 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete }) {
           </div>
         </div>
       </div>
+
+      {cropSrc && (
+        <CropSheet
+          image={cropSrc}
+          onDone={async (img) => { setCropSrc(null); setPhoto(await downscale(img)) }}
+          onSkip={async () => { const s = cropSrc; setCropSrc(null); setPhoto(await downscale(s)) }}
+          onCancel={() => setCropSrc(null)}
+        />
+      )}
     </div>
   )
 }

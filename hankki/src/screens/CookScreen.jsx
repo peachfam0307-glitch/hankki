@@ -3,6 +3,7 @@ import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import TimerSheet from '../components/TimerSheet'
+import CookBuddy from '../components/CookBuddy'
 import { scaleIngredient } from '../scale'
 
 // 요리 모드 — 단계별 풀스크린. 큰 글씨 · 화면 안 꺼짐 · 단계 타이머 · 재료 보기.
@@ -68,6 +69,7 @@ export default function CookScreen({ id }) {
       </div>
 
       <div className="cook-body">
+        <CookBuddy stepText={steps[i]} />
         <div className="cook-stepno">STEP {i + 1} <span>/ {steps.length}</span></div>
         <div className="cook-steptext">{steps[i]}</div>
         <button className="cook-timer press" onClick={() => setShowTimer(true)}>

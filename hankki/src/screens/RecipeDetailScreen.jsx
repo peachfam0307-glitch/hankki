@@ -67,6 +67,7 @@ export default function RecipeDetailScreen({ id }) {
       title: r.title,
       info,
       ingredients: (r.ingredients || []).map((i) => scaleIngredient(i, ratio)),
+      steps: r.steps || [],
       iconSvg: svg,
       appUrl,
     })
@@ -83,6 +84,9 @@ export default function RecipeDetailScreen({ id }) {
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5, display: 'flex', justifyContent: 'space-between', padding: '10px 12px', paddingTop: 'calc(10px + var(--safe-top))' }}>
         <button className="round-btn press" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button className="round-btn press" onClick={onShare} aria-label="친구와 레시피 나누기" style={{ fontSize: 17 }}>
+            💌
+          </button>
           <button className="round-btn press" onClick={() => toggleFavorite(r.id)} aria-label="즐겨찾기">
             <Icon name="bookmark" size={20} color={r.favorite ? 'var(--brown)' : 'var(--text)'} style={{ fill: r.favorite ? 'var(--brown)' : 'none' }} />
           </button>
@@ -274,7 +278,7 @@ export default function RecipeDetailScreen({ id }) {
             </button>
             <hr className="divider" />
             <button className="sheet-item press" onClick={onShare}>
-              <Icon name="link" size={20} color="var(--text)" /> 이미지로 공유
+              <Icon name="link" size={20} color="var(--text)" /> 친구와 레시피 나누기
             </button>
             <hr className="divider" />
             <button className="sheet-item press" onClick={del} style={{ color: 'var(--danger)' }}>

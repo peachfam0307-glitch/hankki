@@ -48,7 +48,8 @@ export default function ImportScreen() {
     if (!t) return
     const r = parseRecipeText(t)
     nav.pop()
-    nav.push({ name: 'editor', prefill: { source: 'manual', title: r.title, ingredients: r.ingredients, steps: r.steps, memo: r.memo } })
+    // 메모는 직접 입력 전용 — 분류 안 된 찌꺼기를 메모에 붙이지 않는다
+    nav.push({ name: 'editor', prefill: { source: 'manual', title: r.title, ingredients: r.ingredients, steps: r.steps } })
   }
 
   const choose = (key) => {
@@ -105,10 +106,11 @@ export default function ImportScreen() {
 
     const r = combined ? parseRecipeText(combined, { fromOcr: true }) : { title: '', ingredients: [], steps: [], memo: '' }
     nav.pop()
-    // 캡처 사진은 '글자 읽기'용일 뿐 — 썸네일(아이콘)과 분리한다. 그래서 image 는 넘기지 않는다.
+    // 캡처 사진은 '글자 읽기'용일 뿐 — 썸네일과 분리. 메모는 직접 입력 전용(자동으로 안 채움).
+    // 잘라낸 캡처들은 refImages 로 넘겨 '캡쳐 보면서 쓰기'에 띄운다. (저장은 안 됨)
     nav.push({
       name: 'editor',
-      prefill: { source: 'photo', title: r.title, ingredients: r.ingredients, steps: r.steps, memo: r.memo, autoOcr: false },
+      prefill: { source: 'photo', title: r.title, ingredients: r.ingredients, steps: r.steps, refImages: images, autoOcr: false },
     })
   }
 
@@ -136,8 +138,7 @@ export default function ImportScreen() {
           title: title.trim() || parsed.title || r.title || '',
           ingredients: parsed.ingredients,
           steps: parsed.steps,
-          memo: parsed.memo,
-          sourceUrl: u,
+          sourceUrl: u, // 메모는 직접 입력 전용 — 자동으로 채우지 않는다
         },
       })
       nav.showToast(hasContent ? '링크에서 레시피를 읽어왔어요 ✨' : '글을 읽어왔어요 · 내용을 확인해 주세요')

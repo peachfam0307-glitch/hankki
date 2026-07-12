@@ -88,12 +88,12 @@ export default function App() {
         (parsed && parsed.title) ||
         firstLine(caption) ||
         (data.imageDataUrl ? '사진 레시피' : '공유된 레시피')
+      // 메모는 직접 입력 전용 — 캡션 찌꺼기를 자동으로 붙이지 않는다
       const rec = makeInboxRecipe({
         source,
         title,
         sourceUrl: link,
         image: data.imageDataUrl || null,
-        memo: parsed ? parsed.memo : caption && caption !== title ? caption : '',
       })
       if (parsed && (parsed.ingredients.length || parsed.steps.length)) {
         rec.ingredients = parsed.ingredients
@@ -115,8 +115,7 @@ export default function App() {
         store.updateRecipe(rec.id, {
           title: rec.title && rec.title !== '사진 레시피' ? rec.title : r.title || rec.title,
           ingredients: r.ingredients,
-          steps: r.steps,
-          memo: r.memo || rec.memo, // OCR 메모가 비면 캡션 메모를 지우지 않는다
+          steps: r.steps, // 메모는 건드리지 않는다 — 직접 입력 전용
           category: guessCategory((r.title || '') + ' ' + r.memo),
         })
         showToast('사진에서 글자를 읽어 채웠어요 ✨')

@@ -163,11 +163,21 @@ export default function ShopScreen() {
         {/* 3) 장보기 리스트 */}
         <div className="sec-head">
           <div className="h-section">장보기 리스트</div>
-          {doneCount > 0 && (
-            <button className="t-more press" onClick={() => store.clearDoneShopItems()}>
-              완료 지우기
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: 14 }}>
+            {doneCount > 0 && (
+              <button className="t-more press" onClick={() => store.clearDoneShopItems()}>
+                완료 지우기
+              </button>
+            )}
+            {shoppingList.length > 0 && (
+              <button
+                className="t-more press"
+                onClick={() => { if (window.confirm('장보기 리스트를 모두 지울까요?')) store.clearShopItemsAll() }}
+              >
+                전체 비우기
+              </button>
+            )}
+          </div>
         </div>
         <ChecklistAdd />
         {shoppingList.length === 0 ? (

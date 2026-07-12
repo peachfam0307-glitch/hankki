@@ -30,7 +30,9 @@ export default function EditorScreen({ id, prefill }) {
   const ocrRef = useRef(null) // 글자 읽기용(썸네일과 별개)
   const [ocr, setOcr] = useState({ busy: false, pct: 0 })
   const [cropImg, setCropImg] = useState(null) // 글자 읽기 전 '자르기' 단계
-  const [watch, setWatch] = useState(!!prefill?.watch) // 📺 영상 보면서 쓰기
+  // 위에 고정해 두고 보면서 쓰기 — 'video'(유튜브·인스타) | 'photo'(캡처 원본) | null
+  const [refs, setRefs] = useState(prefill?.refImages || []) // 캡처 원본들(저장 안 됨)
+  const [pin, setPin] = useState(prefill?.watch ? 'video' : prefill?.refImages?.length ? 'photo' : null)
 
   const [f, setF] = useState(() => {
     const e = editing
@@ -109,8 +111,8 @@ export default function EditorScreen({ id, prefill }) {
       title: prev.title.trim() || r.title,
       ingredients: prev.ingredients.trim() || r.ingredients.join('\n'),
       steps: prev.steps.trim() || r.steps.join('\n'),
-      // 기존 메모에서 재료·순서와 겹치는 줄과 잡음을 걷어내고, 남은 게 없으면 새 메모로.
-      memo: cleanMemo(prev.memo, r.ingredients, r.steps) || r.memo,
+      // 메모는 직접 입력 전용 — 사진에서 읽은 내용을 자동으로 붙이지 않는다.
+      memo: prev.memo,
       category:
         prev.category && prev.category !== '한식'
           ? prev.category
@@ -177,17 +179,22 @@ export default function EditorScreen({ id, prefill }) {
       <input ref={photoRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
       <input ref={ocrRef} type="file" accept="image/*" onChange={onOcrFile} style={{ display: 'none' }} />
 
-      {/* 📺 영상 보면서 쓰기 — 원본 링크가 유튜브·인스타면 영상을 위에 고정하고 아래에서 적는다 */}
-      {embed && !watch && (
-        <button
-          className="press"
-          onClick={() => setWatch(true)}
-          style={{ margin: '6px 16px 0', padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700 }}
-        >
-          📺 영상 보면서 쓰기
-        </button>
+      {/* 보면서 쓰기 — 영상(유튜브·인스타)이나 캡처 원본을 위에 고정하고 아래에서 적는다 */}
+      {(embed || refs.length > 0) && pin === null && (
+        <div style={{ display: 'flex', gap: 8, margin: '6px 16px 0' }}>
+          {embed && (
+            <button className="press" onClick={() => setPin('video')} style={{ flex: 1, padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700 }}>
+              📺 영상 보면서 쓰기
+            </button>
+          )}
+          {refs.length > 0 && (
+            <button className="press" onClick={() => setPin('photo')} style={{ flex: 1, padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700 }}>
+              📷 캡쳐 보면서 쓰기
+            </button>
+          )}
+        </div>
       )}
-      {embed && watch && (
+      {pin === 'video' && embed && (
         <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#141311' }}>
           <iframe
             src={embed.src}
@@ -202,8 +209,36 @@ export default function EditorScreen({ id, prefill }) {
           />
           <button
             className="press"
-            onClick={() => setWatch(false)}
+            onClick={() => setPin(null)}
             aria-label="영상 닫기"
+            style={{ position: 'absolute', top: 8, right: 8, padding: '6px 12px', borderRadius: 10, background: 'rgba(20,19,17,0.72)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}
+          >
+            ✕ 닫기
+          </button>
+        </div>
+      )}
+      {pin === 'photo' && refs.length > 0 && (
+        <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#141311' }}>
+          {/* 캡처 원본 — 인식이 100%가 아니니 보면서 고친다. 좌우로 넘겨 여러 장 확인. */}
+          <div style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', height: '42vh' }}>
+            {refs.map((img, k) => (
+              <img
+                key={k}
+                src={img}
+                alt={`캡처 ${k + 1}`}
+                style={{ height: '100%', width: 'auto', maxWidth: 'none', flex: '0 0 auto', scrollSnapAlign: 'center', margin: '0 auto' }}
+              />
+            ))}
+          </div>
+          {refs.length > 1 && (
+            <div style={{ position: 'absolute', bottom: 8, left: 0, right: 0, textAlign: 'center', color: '#fff', fontSize: 11.5, fontWeight: 600, textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
+              ← 옆으로 넘겨 {refs.length}장 보기 →
+            </div>
+          )}
+          <button
+            className="press"
+            onClick={() => setPin(null)}
+            aria-label="캡처 닫기"
             style={{ position: 'absolute', top: 8, right: 8, padding: '6px 12px', borderRadius: 10, background: 'rgba(20,19,17,0.72)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}
           >
             ✕ 닫기
@@ -393,8 +428,8 @@ export default function EditorScreen({ id, prefill }) {
       {cropImg && (
         <CropSheet
           image={cropImg}
-          onDone={(img) => { setCropImg(null); runOcr(img) }}
-          onSkip={() => { const img = cropImg; setCropImg(null); runOcr(img) }}
+          onDone={(img) => { setCropImg(null); setRefs((p) => [...p, img]); setPin('photo'); runOcr(img) }}
+          onSkip={() => { const img = cropImg; setCropImg(null); setRefs((p) => [...p, img]); setPin('photo'); runOcr(img) }}
           onCancel={() => setCropImg(null)}
         />
       )}

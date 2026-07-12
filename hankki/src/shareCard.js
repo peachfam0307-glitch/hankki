@@ -41,7 +41,7 @@ function loadSvg(svg) {
   return loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s))
 }
 
-export async function shareRecipeCard({ title, info = [], ingredients = [], iconSvg, appUrl }) {
+export async function shareRecipeCard({ title, info = [], ingredients = [], steps = [], iconSvg, appUrl }) {
   const W = 1080
   const F = "'Pretendard', 'Apple SD Gothic Neo', sans-serif"
 
@@ -50,6 +50,8 @@ export async function shareRecipeCard({ title, info = [], ingredients = [], icon
   m.font = `800 66px ${F}`
   const titleLines = wrapLines(m, title, 770).slice(0, 2)
   const shown = ingredients.slice(0, 8)
+  m.font = `400 33px ${F}`
+  const shownSteps = steps.slice(0, 6).map((s) => wrapLines(m, s, W - 420).slice(0, 2))
 
   const cardTop = 72
   const tile = 232
@@ -63,6 +65,14 @@ export async function shareRecipeCard({ title, info = [], ingredients = [], icon
   const ingHeadY = dividerY + 60
   const ingTop = ingHeadY + 58
   y = ingTop + shown.length * 55 + (ingredients.length > shown.length ? 50 : 0)
+  // 만드는 법
+  const stepHeadY = shownSteps.length ? y + 52 : y
+  const stepTop = shownSteps.length ? stepHeadY + 58 : y
+  if (shownSteps.length) {
+    y = stepTop
+    shownSteps.forEach((lines) => { y += lines.length * 46 + 18 })
+    if (steps.length > shownSteps.length) y += 44
+  }
   const footerTop = y + 40
   const cardBottom = footerTop + 120
   const H = cardBottom + 72
@@ -143,6 +153,34 @@ export async function shareRecipeCard({ title, info = [], ingredients = [], icon
   if (ingredients.length > shown.length) {
     ctx.fillStyle = '#a9a99f'
     ctx.fillText(`외 ${ingredients.length - shown.length}가지`, 186, iy)
+  }
+
+  // 만드는 법
+  if (shownSteps.length) {
+    ctx.fillStyle = '#6b4f3a'
+    ctx.font = `800 37px ${F}`
+    ctx.fillText('만드는 법', 150, stepHeadY)
+    let sy = stepTop
+    shownSteps.forEach((lines, i) => {
+      // 번호 동그라미
+      ctx.fillStyle = '#edeee9'
+      ctx.beginPath()
+      ctx.arc(168, sy - 11, 21, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = '#6b4f3a'
+      ctx.font = `800 25px ${F}`
+      ctx.textAlign = 'center'
+      ctx.fillText(String(i + 1), 168, sy - 2)
+      ctx.textAlign = 'left'
+      ctx.font = `400 33px ${F}`
+      ctx.fillStyle = '#3d3830'
+      lines.forEach((ln) => { ctx.fillText(ln, 210, sy); sy += 46 })
+      sy += 18
+    })
+    if (steps.length > shownSteps.length) {
+      ctx.fillStyle = '#a9a99f'
+      ctx.fillText(`… 나머지 ${steps.length - shownSteps.length}단계는 한끼 앱에서`, 210, sy)
+    }
   }
 
   // ── 푸터: 브랜드 + 슬로건 ──

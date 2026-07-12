@@ -60,12 +60,12 @@ async function detectWithPlatform(dataUrl) {
 //  · 흑백 + 대비 강화
 //  · 어두운 배경(흰 글씨: 인스타·유튜브 다크모드)은 자동 반전 → 검은 글씨/흰 배경
 //    판단은 평균이 아닌 '중앙값' — 캡처 안에 밝은 음식 사진이 섞여 있어도 속지 않는다.
-function preprocess(dataUrl, forceInvert) {
+function preprocess(dataUrl, forceInvert, noCrop) {
   return new Promise((resolve) => {
     const img = new Image()
     img.onload = () => {
       try {
-        const crop = screenshotCrop(img)
+        const crop = noCrop ? { top: 0, height: img.height } : screenshotCrop(img)
         const longSide = Math.max(img.width, crop.height)
         let scale = 1
         if (longSide < 1500) scale = Math.min(3, 1500 / longSide)
@@ -182,7 +182,8 @@ function assembleFromBlocks(data) {
   return lines.join('\n')
 }
 
-export async function ocrImage(image, onProgress) {
+// opts.noCrop: 영수증처럼 폰 캡처가 아닌 사진은 상태바 자르기를 건너뛴다(내용이 잘리니까).
+export async function ocrImage(image, onProgress, opts = {}) {
   // 1) 폰 내장 OCR 먼저 (있으면 훨씬 정확, 언어데이터 다운로드도 없음)
   if (typeof image === 'string') {
     if (onProgress) onProgress(15)
@@ -207,11 +208,11 @@ export async function ocrImage(image, onProgress) {
     }
     if (typeof image !== 'string') return await recognize(image)
 
-    const p1 = await preprocess(image)
+    const p1 = await preprocess(image, undefined, opts.noCrop)
     let text = await recognize(p1.url)
     // 결과가 외계어면 반전을 뒤집어 한 번 더 — 다크모드/혼합 배경 캡처 대비
     if (looksGibberish(text)) {
-      const p2 = await preprocess(image, !p1.inverted)
+      const p2 = await preprocess(image, !p1.inverted, opts.noCrop)
       const t2 = await recognize(p2.url)
       if (goodChars(t2) > goodChars(text)) text = t2
     }
@@ -220,7 +221,7 @@ export async function ocrImage(image, onProgress) {
     _progressCb = null
     // 워커 생성 실패 등 — 편의 함수로 한 번 더 시도
     try {
-      const processed = typeof image === 'string' ? (await preprocess(image)).url : image
+      const processed = typeof image === 'string' ? (await preprocess(image, undefined, opts.noCrop)).url : image
       const res = await Tesseract.recognize(processed, 'kor+eng')
       return (res && res.data && res.data.text) || ''
     } catch {

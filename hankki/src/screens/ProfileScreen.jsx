@@ -3,6 +3,8 @@ import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import TabTips from '../components/TabTips'
+import EmojiPicker from '../components/EmojiPicker'
+import { cropSquare } from '../utils'
 import { Avatar } from './HomeScreen'
 
 export default function ProfileScreen() {
@@ -10,7 +12,24 @@ export default function ProfileScreen() {
   const { profile, setProfile, recipes, clearAll, reset, importAll } = store
   const nav = useNav()
   const [backup, setBackup] = useState(false)
+  const [avatarSheet, setAvatarSheet] = useState(false)
   const fileRef = useRef(null)
+  const avatarFileRef = useRef(null)
+
+  // 아바타 사진 — 정사각으로 잘라 작게 저장
+  const onAvatarPhoto = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const img = await cropSquare(reader.result, 256, 0.85)
+      setProfile({ avatar: { type: 'photo', value: img } })
+      setAvatarSheet(false)
+      nav.showToast('프로필 사진을 바꿨어요 ✨')
+    }
+    reader.readAsDataURL(file)
+  }
 
   const editProfile = () => {
     const name = window.prompt('닉네임', profile.name)
@@ -80,15 +99,56 @@ export default function ProfileScreen() {
       </div>
 
       <div className="pad">
-        {/* 프로필 */}
-        <button className="press" onClick={editProfile} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0 20px', textAlign: 'left' }}>
-          <Avatar name={profile.name} size={56} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{profile.name}</div>
-            <div className="t-sub" style={{ marginTop: 3 }}>{profile.bio}</div>
+        {/* 프로필 — 아바타는 눌러서 이모지·사진으로 바꿀 수 있다 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0 20px' }}>
+          <button className="press" onClick={() => setAvatarSheet(true)} aria-label="프로필 아이콘 바꾸기" style={{ position: 'relative', flex: '0 0 auto' }}>
+            <Avatar name={profile.name} avatar={profile.avatar} size={56} />
+            <span style={{ position: 'absolute', right: -3, bottom: -3, width: 21, height: 21, borderRadius: '50%', background: 'var(--brown)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="camera" size={12} color="#fff" />
+            </span>
+          </button>
+          <button className="press" onClick={editProfile} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{profile.name}</div>
+              <div className="t-sub" style={{ marginTop: 3 }}>{profile.bio}</div>
+            </div>
+            <Icon name="edit" size={20} color="var(--sand)" />
+          </button>
+        </div>
+
+        <input ref={avatarFileRef} type="file" accept="image/*" onChange={onAvatarPhoto} style={{ display: 'none' }} />
+
+        {avatarSheet && (
+          <div className="sheet-mask" onClick={() => setAvatarSheet(false)}>
+            <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 24 }}>
+              <div className="emoji-sheet-head">
+                <span>프로필 아이콘</span>
+                <button className="press" onClick={() => setAvatarSheet(false)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+              </div>
+              <div style={{ padding: '4px 16px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <EmojiPicker
+                    value={profile.avatar?.type === 'emoji' ? profile.avatar.value : '😊'}
+                    size={56}
+                    onChange={(e) => { setProfile({ avatar: { type: 'emoji', value: e } }); setAvatarSheet(false); nav.showToast('프로필 이모지를 바꿨어요 ✨') }}
+                  />
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>이모지로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
+                </div>
+                <button className="press" onClick={() => avatarFileRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0', textAlign: 'left' }}>
+                  <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
+                    <Icon name="camera" size={22} color="var(--brown)" />
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>사진으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 동그랗게 잘라드려요</span></div>
+                </button>
+                {profile.avatar && (
+                  <button className="press" onClick={() => { setProfile({ avatar: null }); setAvatarSheet(false) }} style={{ padding: 10, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600 }}>
+                    기본(이름 첫 글자)으로 돌리기
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
-          <Icon name="edit" size={20} color="var(--sand)" />
-        </button>
+        )}
 
         {/* 통계 */}
         <div className="card" style={{ display: 'flex', padding: '16px 0', background: 'var(--cream)', border: 'none' }}>

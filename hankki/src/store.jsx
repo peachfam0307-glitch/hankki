@@ -264,6 +264,9 @@ function reducer(state, action) {
     case 'clearDoneShopItems': {
       return { ...state, shoppingList: state.shoppingList.filter((i) => !i.done) }
     }
+    case 'clearShopItemsAll': {
+      return { ...state, shoppingList: [] }
+    }
 
     // 냉장고 재료함(재고)
     case 'addPantry': {
@@ -352,6 +355,7 @@ export function StoreProvider({ children }) {
     toggleShopItem: useCallback((id) => dispatch({ type: 'toggleShopItem', id }), []),
     removeShopItem: useCallback((id) => dispatch({ type: 'removeShopItem', id }), []),
     clearDoneShopItems: useCallback(() => dispatch({ type: 'clearDoneShopItems' }), []),
+    clearShopItemsAll: useCallback(() => dispatch({ type: 'clearShopItemsAll' }), []),
     addPantry: useCallback((item) => dispatch({ type: 'addPantry', item }), []),
     updatePantry: useCallback((id, patch) => dispatch({ type: 'updatePantry', id, patch }), []),
     removePantry: useCallback((id) => dispatch({ type: 'removePantry', id }), []),

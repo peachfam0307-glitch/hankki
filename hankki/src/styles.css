@@ -79,6 +79,7 @@ img {
 .screen {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden; /* hscroll(가로 목록)이 삐져나와 화면이 옆으로 밀리던 것 방지 */
   -webkit-overflow-scrolling: touch;
   padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px);
 }
@@ -620,9 +621,9 @@ img {
   transform: scale(0.92);
 }
 
-/* 바텀 시트 */
+/* 바텀 시트 — 화면(뷰포트)에 고정. 내용이 길면 시트 안에서 스크롤. */
 .sheet-mask {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(63, 50, 39, 0.35);
   z-index: 60;
@@ -635,6 +636,9 @@ img {
   background: var(--surface);
   border-radius: 22px 22px 0 0;
   padding: 8px 8px calc(12px + var(--safe-bottom));
+  max-height: calc(100dvh - 52px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   animation: sheetUp 0.26s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 @keyframes sheetUp {
@@ -972,3 +976,37 @@ html, body { overscroll-behavior: none; }
 .ocr-box { text-align: center; color: var(--text); padding: 24px; }
 .ocr-spin { width: 46px; height: 46px; margin: 0 auto; border-radius: 50%; border: 4px solid var(--cream-deep); border-top-color: var(--brown); animation: ocrspin 0.8s linear infinite; }
 @keyframes ocrspin { to { transform: rotate(360deg); } }
+
+/* 요리 친구(쿡버디) — 은은하게 움직이는 냄비·팬. 시선을 뺏지 않는 수준의 생기. */
+.buddy { display: flex; justify-content: center; margin: 4px 0 14px; opacity: 0.9; }
+.buddy-pot .steam { animation: steamRise 2.6s ease-in-out infinite; transform-origin: center bottom; }
+.buddy-pot .steam.s2 { animation-delay: 0.9s; }
+.buddy-pot .steam.s3 { animation-delay: 1.7s; }
+.buddy-pot .lid { animation: lidJiggle 3.2s ease-in-out infinite; transform-origin: center; }
+.buddy-pan { animation: panToss 2.8s ease-in-out infinite; transform-origin: 70% 80%; }
+.buddy-pan .bit { animation: bitHop 2.8s ease-in-out infinite; }
+.buddy-pan .bit.b2 { animation-delay: 0.15s; }
+.buddy-pan .bit.b3 { animation-delay: 0.3s; }
+@keyframes steamRise {
+  0% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  35% { opacity: 0.85; }
+  100% { opacity: 0; transform: translateY(-11px) scale(1.06); }
+}
+@keyframes lidJiggle {
+  0%, 78%, 100% { transform: translateY(0) rotate(0deg); }
+  82% { transform: translateY(-1.6px) rotate(-1.4deg); }
+  86% { transform: translateY(0.4px) rotate(1.1deg); }
+  90% { transform: translateY(-1px) rotate(-0.7deg); }
+  94% { transform: translateY(0) rotate(0deg); }
+}
+@keyframes panToss {
+  0%, 62%, 100% { transform: rotate(0deg) translateY(0); }
+  70% { transform: rotate(-3.4deg) translateY(-2px); }
+  78% { transform: rotate(2deg) translateY(0.5px); }
+  86% { transform: rotate(-1deg) translateY(-0.5px); }
+}
+@keyframes bitHop {
+  0%, 62%, 100% { transform: translateY(0); }
+  71% { transform: translateY(-7px); }
+  80% { transform: translateY(0); }
+}

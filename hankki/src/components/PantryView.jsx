@@ -7,6 +7,7 @@ import Icon from './Icon'
 import Thumb from './Thumb'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import FoodIconPicker from './FoodIconPicker'
+import CropSheet from './CropSheet'
 
 function toYMD(d) {
   const y = d.getFullYear()
@@ -38,26 +39,31 @@ export default function PantryView() {
   const [adding, setAdding] = useState(false)
   const [scanPct, setScanPct] = useState(null) // null | 0~100 — 영수증 읽는 중
   const [found, setFound] = useState(null) // null | [{name, on}] — 영수증에서 찾은 재료 확인
+  const [receiptCrop, setReceiptCrop] = useState(null) // 자르기 단계(품목 부분만)
   const receiptRef = useRef(null)
 
-  // 영수증 캡처/사진 → 식재료만 골라 확인 후 냉장고에 담기
+  // 영수증 캡처/사진 → 품목 부분만 잘라 → 식재료만 골라 확인 후 냉장고에 담기
   const onReceipt = (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
     const reader = new FileReader()
-    reader.onload = async () => {
-      setScanPct(0)
-      const text = await ocrImage(reader.result, (pct) => setScanPct(pct))
-      setScanPct(null)
-      const items = extractReceiptItems(text)
-      if (!items.length) {
-        nav.showToast('영수증에서 식재료를 찾지 못했어요 · 더 또렷하게 찍어보세요')
-        return
-      }
-      setFound(items.map((name) => ({ name, on: true })))
-    }
+    reader.onload = () => setReceiptCrop(reader.result)
     reader.readAsDataURL(file)
+  }
+
+  const scanReceipt = async (img) => {
+    setReceiptCrop(null)
+    setScanPct(0)
+    // noCrop: 영수증은 폰 캡처가 아니니 상태바 자르기(위·아래 5%)를 하지 않는다
+    const text = await ocrImage(img, (pct) => setScanPct(pct), { noCrop: true })
+    setScanPct(null)
+    const items = extractReceiptItems(text)
+    if (!items.length) {
+      nav.showToast('영수증에서 식재료를 찾지 못했어요 · 품목 부분만 잘라서 다시 해보세요')
+      return
+    }
+    setFound(items.map((name) => ({ name, on: true })))
   }
 
   const saveFound = () => {
@@ -104,6 +110,15 @@ export default function PantryView() {
       </div>
 
       <input ref={receiptRef} type="file" accept="image/*" onChange={onReceipt} style={{ display: 'none' }} />
+
+      {receiptCrop && (
+        <CropSheet
+          image={receiptCrop}
+          onDone={scanReceipt}
+          onSkip={() => scanReceipt(receiptCrop)}
+          onCancel={() => setReceiptCrop(null)}
+        />
+      )}
 
       {adding && <PantryAdd onClose={() => setAdding(false)} />}
 
@@ -197,6 +212,28 @@ export default function PantryView() {
                 <div className="date">가진 재료 {n}개</div>
               </button>
             ))}
+          </div>
+        </>
+      )}
+
+      {/* 내 레시피·기본 레시피에서 마땅한 게 없을 때 — 한끼가 추천 */}
+      {pantry.length > 0 && matches.length === 0 && (
+        <>
+          <div className="sec-head"><div className="h-section">한끼 추천 ✨</div></div>
+          <div className="t-sub" style={{ fontSize: 12.5, marginTop: -2, marginBottom: 12 }}>
+            가진 재료로 딱 맞는 레시피가 없네요. 실패 없는 기본 메뉴는 어때요?
+          </div>
+          <div className="grid2">
+            {recipes
+              .filter((r) => String(r.id).startsWith('basic-'))
+              .slice(0, 4)
+              .map((r) => (
+                <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
+                  <Thumb recipe={r} ratio="1/1" radius={16} />
+                  <div className="name">{r.title}</div>
+                  <div className="date">기본 제공</div>
+                </button>
+              ))}
           </div>
         </>
       )}
