@@ -1,7 +1,5 @@
-import QRCode from 'qrcode'
-
 // 레시피를 예쁜 카드 이미지로 그려 공유(Web Share)하거나 내려받는다.
-// 카드에 QR + 브랜드를 넣어 "이 앱 뭐지?" → 스캔해서 한끼로 이어지게 한다.
+// 카드는 레시피를 다 보여주고 '한끼' 브랜딩을 얹는다. (앱 링크는 공유 메시지로 함께 전달)
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath()
@@ -65,9 +63,8 @@ export async function shareRecipeCard({ title, info = [], ingredients = [], icon
   const ingHeadY = dividerY + 60
   const ingTop = ingHeadY + 58
   y = ingTop + shown.length * 55 + (ingredients.length > shown.length ? 50 : 0)
-  const footerTop = y + 46
-  const qr = 188
-  const cardBottom = footerTop + qr + 30
+  const footerTop = y + 40
+  const cardBottom = footerTop + 120
   const H = cardBottom + 72
 
   // ── 그리기 ──
@@ -148,36 +145,28 @@ export async function shareRecipeCard({ title, info = [], ingredients = [], icon
     ctx.fillText(`외 ${ingredients.length - shown.length}가지`, 186, iy)
   }
 
-  // ── 푸터: QR + 앱 안내 ──
+  // ── 푸터: 브랜드 + 슬로건 ──
   ctx.strokeStyle = '#e8e9e4'
+  ctx.lineWidth = 2
   ctx.beginPath()
-  ctx.moveTo(150, footerTop - 24)
-  ctx.lineTo(W - 150, footerTop - 24)
+  ctx.moveTo(150, footerTop - 22)
+  ctx.lineTo(W - 150, footerTop - 22)
   ctx.stroke()
 
-  const url = appUrl || 'https://claude.ai'
-  let qrImg = null
-  try {
-    const qrData = await QRCode.toDataURL(url, { margin: 1, width: qr, color: { dark: '#3d3830', light: '#ffffff' } })
-    qrImg = await loadImage(qrData)
-  } catch { /* noop */ }
-  if (qrImg) ctx.drawImage(qrImg, 150, footerTop, qr, qr)
-
-  const tx = 150 + qr + 40
-  ctx.textAlign = 'left'
-  ctx.fillStyle = '#3d3830'
-  ctx.font = `800 38px ${F}`
-  ctx.fillText('한끼 앱에서 보기', tx, footerTop + 58)
-  ctx.fillStyle = '#8e8f88'
-  ctx.font = `500 30px ${F}`
-  ctx.fillText('카메라로 QR을 스캔하면', tx, footerTop + 104)
-  ctx.fillText('레시피가 여기 담겨요', tx, footerTop + 144)
+  ctx.textAlign = 'center'
+  ctx.fillStyle = '#6b4f3a'
+  ctx.font = `800 50px ${F}`
+  ctx.fillText('한끼', W / 2, footerTop + 44)
+  ctx.fillStyle = '#a29a8d'
+  ctx.font = `600 30px ${F}`
+  ctx.fillText('모으고 · 만들고 · 살림까지', W / 2, footerTop + 92)
 
   // ── 공유/다운로드 ──
+  const url = appUrl || 'https://claude.ai'
   const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'))
   if (!blob) return { ok: false }
   const file = new File([blob], 'hankki-recipe.png', { type: 'image/png' })
-  const payload = { files: [file], title, text: `${title} · 한끼에서 만든 레시피 🍳`, url }
+  const payload = { files: [file], title, text: `『${title}』 레시피 · 한끼 🍳\n한끼 앱에서 더 보기 → ${url}`, url }
 
   try {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
