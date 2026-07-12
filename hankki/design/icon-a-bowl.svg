@@ -1,10 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- 한끼 앱 아이콘 (채택) — 딥차콜 + 골드 프레임 + 한끼 + 금색 그릇(굽) -->
   <defs>
     <radialGradient id="bgv" cx=".5" cy=".4" r=".9">
       <stop offset="0" stop-color="#3c3b36"/><stop offset="1" stop-color="#282723"/>
     </radialGradient>
   </defs>
-  <rect width="512" height="512" rx="104" fill="url(#bgv)"/>
+  <rect width="512" height="512" fill="url(#bgv)"/>
   <rect x="30" y="30" width="452" height="452" rx="94" fill="none" stroke="#c7ac82" stroke-width="3.5" opacity=".72"/>
   <text x="256" y="298" font-size="136" font-weight="800" letter-spacing="-6" fill="#f1ece2" text-anchor="middle" font-family="'Pretendard','Apple SD Gothic Neo',sans-serif">한끼</text>
   <path d="M124 322 a126 56 0 0 0 252 0" fill="none" stroke="#c9a86f" stroke-width="12" stroke-linecap="round"/>

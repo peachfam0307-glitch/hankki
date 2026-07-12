@@ -734,6 +734,68 @@ img {
   border-color: var(--brown);
 }
 
+/* 재료 아이콘 — 글자/이모지 타일 */
+.emoji-tile,
+.emoji-chip {
+  border-radius: 12px;
+  background: linear-gradient(135deg, #efe9dd, #e4d6bd);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  line-height: 1;
+}
+.emoji-chip {
+  border-radius: 14px;
+}
+
+/* 이모지 선택 시트 */
+.emoji-sheet {
+  padding-top: 4px;
+}
+.emoji-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.emoji-scroll {
+  max-height: 48vh;
+  overflow-y: auto;
+  padding: 0 14px 8px;
+}
+.emoji-cat {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-sub);
+  margin: 4px 2px 8px;
+  letter-spacing: -0.01em;
+}
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+.emoji-cell {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream);
+  transition: transform 0.08s ease, background 0.12s ease;
+}
+.emoji-cell.on {
+  background: var(--cream-deep);
+  box-shadow: inset 0 0 0 2px var(--sand);
+}
+.emoji-cell:active {
+  transform: scale(0.88);
+}
+
 /* 토스트 */
 .toast {
   position: fixed;
