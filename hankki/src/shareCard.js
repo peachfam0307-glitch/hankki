@@ -1,5 +1,7 @@
+import QRCode from 'qrcode'
+
 // 레시피를 예쁜 카드 이미지로 그려 공유(Web Share)하거나 내려받는다.
-// 커스텀 아이콘 SVG 문자열을 받아 캔버스에 얹는다.
+// 카드에 QR + 브랜드를 넣어 "이 앱 뭐지?" → 스캔해서 한끼로 이어지게 한다.
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath()
@@ -12,10 +14,9 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 function wrapLines(ctx, text, maxW) {
-  const words = String(text).split('')
   const lines = []
   let line = ''
-  for (const ch of words) {
+  for (const ch of String(text)) {
     if (ctx.measureText(line + ch).width > maxW && line) {
       lines.push(line)
       line = ch
@@ -27,134 +28,172 @@ function wrapLines(ctx, text, maxW) {
   return lines
 }
 
-function loadSvg(svg) {
-  // React가 만든 svg에는 xmlns가 없어 data URL 로 못 불러온다 — 넣어준다.
-  let s = svg
-  if (!/xmlns=/.test(s)) s = s.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
+function loadImage(src) {
   return new Promise((resolve) => {
     const img = new Image()
     img.onload = () => resolve(img)
     img.onerror = () => resolve(null)
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s)
+    img.src = src
   })
 }
 
-export async function shareRecipeCard({ title, info = [], ingredients = [], iconSvg }) {
+function loadSvg(svg) {
+  let s = svg
+  if (!/xmlns=/.test(s)) s = s.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
+  return loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s))
+}
+
+export async function shareRecipeCard({ title, info = [], ingredients = [], iconSvg, appUrl }) {
   const W = 1080
-  const H = 1500
+  const F = "'Pretendard', 'Apple SD Gothic Neo', sans-serif"
+
+  // ── 측정(높이 계산) ──
+  const m = document.createElement('canvas').getContext('2d')
+  m.font = `800 66px ${F}`
+  const titleLines = wrapLines(m, title, 770).slice(0, 2)
+  const shown = ingredients.slice(0, 8)
+
+  const cardTop = 72
+  const tile = 232
+  const brandY = cardTop + 84
+  const tileTop = brandY + 34
+  const titleTop = tileTop + tile + 90
+  let y = titleTop + (titleLines.length - 1) * 82 + 68
+  const infoY = y
+  y += info.length ? 56 : 6
+  const dividerY = y + 34
+  const ingHeadY = dividerY + 60
+  const ingTop = ingHeadY + 58
+  y = ingTop + shown.length * 55 + (ingredients.length > shown.length ? 50 : 0)
+  const footerTop = y + 46
+  const qr = 188
+  const cardBottom = footerTop + qr + 30
+  const H = cardBottom + 72
+
+  // ── 그리기 ──
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')
-  const F = "'Pretendard', 'Apple SD Gothic Neo', sans-serif"
 
-  // 배경
   ctx.fillStyle = '#eef0ec'
   ctx.fillRect(0, 0, W, H)
 
-  // 흰 카드
   ctx.save()
   ctx.shadowColor = 'rgba(107,79,58,0.12)'
   ctx.shadowBlur = 40
   ctx.shadowOffsetY = 16
-  roundRect(ctx, 64, 72, W - 128, H - 144, 56)
+  roundRect(ctx, 64, cardTop, W - 128, H - cardTop - 72, 56)
   ctx.fillStyle = '#ffffff'
   ctx.fill()
   ctx.restore()
 
+  // 브랜드 워드마크
+  ctx.textAlign = 'center'
+  ctx.fillStyle = '#6b4f3a'
+  ctx.font = `800 40px ${F}`
+  ctx.fillText('한끼', W / 2, brandY)
+
   // 아이콘 타일
-  const tileSize = 260
-  const tileX = (W - tileSize) / 2
-  const tileY = 150
-  const grad = ctx.createLinearGradient(tileX, tileY, tileX + tileSize, tileY + tileSize)
-  grad.addColorStop(0, '#edeee9')
-  grad.addColorStop(1, '#dfe2da')
-  roundRect(ctx, tileX, tileY, tileSize, tileSize, 44)
-  ctx.fillStyle = grad
+  const tileX = (W - tile) / 2
+  const g = ctx.createLinearGradient(tileX, tileTop, tileX + tile, tileTop + tile)
+  g.addColorStop(0, '#edeee9')
+  g.addColorStop(1, '#dfe2da')
+  roundRect(ctx, tileX, tileTop, tile, tile, 42)
+  ctx.fillStyle = g
   ctx.fill()
   const icon = iconSvg ? await loadSvg(iconSvg) : null
   if (icon) {
-    const s = tileSize * 0.62
-    ctx.drawImage(icon, tileX + (tileSize - s) / 2, tileY + (tileSize - s) / 2, s, s)
+    const s = tile * 0.62
+    ctx.drawImage(icon, tileX + (tile - s) / 2, tileTop + (tile - s) / 2, s, s)
   }
 
   // 제목
-  ctx.textAlign = 'center'
   ctx.fillStyle = '#3d3830'
-  ctx.font = `800 68px ${F}`
-  const titleLines = wrapLines(ctx, title, W - 260).slice(0, 2)
-  let y = tileY + tileSize + 96
-  titleLines.forEach((ln) => { ctx.fillText(ln, W / 2, y); y += 84 })
+  ctx.font = `800 66px ${F}`
+  let ty = titleTop
+  titleLines.forEach((ln) => { ctx.fillText(ln, W / 2, ty); ty += 82 })
 
-  // 정보 (시간·인분·난이도)
+  // 정보
   if (info.length) {
-    ctx.font = `600 34px ${F}`
+    ctx.font = `600 33px ${F}`
     ctx.fillStyle = '#8e8f88'
-    ctx.fillText(info.join('   ·   '), W / 2, y + 6)
-    y += 60
+    ctx.fillText(info.join('   ·   '), W / 2, infoY)
   }
 
   // 구분선
-  y += 34
   ctx.strokeStyle = '#e8e9e4'
   ctx.lineWidth = 2
   ctx.beginPath()
-  ctx.moveTo(150, y)
-  ctx.lineTo(W - 150, y)
+  ctx.moveTo(150, dividerY)
+  ctx.lineTo(W - 150, dividerY)
   ctx.stroke()
-  y += 66
 
   // 재료
   ctx.textAlign = 'left'
   ctx.fillStyle = '#6b4f3a'
-  ctx.font = `800 38px ${F}`
-  ctx.fillText('재료', 150, y)
-  y += 58
-  ctx.font = `400 36px ${F}`
-  ctx.fillStyle = '#3d3830'
-  const shown = ingredients.slice(0, 8)
+  ctx.font = `800 37px ${F}`
+  ctx.fillText('재료', 150, ingHeadY)
+  ctx.font = `400 35px ${F}`
+  let iy = ingTop
   shown.forEach((ing) => {
     ctx.fillStyle = '#c7ac82'
-    ctx.fillText('•', 150, y)
+    ctx.fillText('•', 150, iy)
     ctx.fillStyle = '#3d3830'
-    const line = wrapLines(ctx, ing, W - 360)[0]
-    ctx.fillText(line, 188, y)
-    y += 56
+    ctx.fillText(wrapLines(ctx, ing, W - 360)[0], 186, iy)
+    iy += 55
   })
   if (ingredients.length > shown.length) {
-    ctx.fillStyle = '#8e8f88'
-    ctx.fillText(`외 ${ingredients.length - shown.length}가지`, 188, y)
+    ctx.fillStyle = '#a9a99f'
+    ctx.fillText(`외 ${ingredients.length - shown.length}가지`, 186, iy)
   }
 
-  // 푸터 브랜딩
-  ctx.textAlign = 'center'
-  ctx.fillStyle = '#6b4f3a'
-  ctx.font = `800 40px ${F}`
-  ctx.fillText('한끼', W / 2, H - 150)
-  ctx.fillStyle = '#a9a99f'
-  ctx.font = `500 30px ${F}`
-  ctx.fillText('흩어진 레시피를, 한곳에', W / 2, H - 108)
+  // ── 푸터: QR + 앱 안내 ──
+  ctx.strokeStyle = '#e8e9e4'
+  ctx.beginPath()
+  ctx.moveTo(150, footerTop - 24)
+  ctx.lineTo(W - 150, footerTop - 24)
+  ctx.stroke()
 
+  const url = appUrl || 'https://claude.ai'
+  let qrImg = null
+  try {
+    const qrData = await QRCode.toDataURL(url, { margin: 1, width: qr, color: { dark: '#3d3830', light: '#ffffff' } })
+    qrImg = await loadImage(qrData)
+  } catch { /* noop */ }
+  if (qrImg) ctx.drawImage(qrImg, 150, footerTop, qr, qr)
+
+  const tx = 150 + qr + 40
+  ctx.textAlign = 'left'
+  ctx.fillStyle = '#3d3830'
+  ctx.font = `800 38px ${F}`
+  ctx.fillText('한끼 앱에서 보기', tx, footerTop + 58)
+  ctx.fillStyle = '#8e8f88'
+  ctx.font = `500 30px ${F}`
+  ctx.fillText('카메라로 QR을 스캔하면', tx, footerTop + 104)
+  ctx.fillText('레시피가 여기 담겨요', tx, footerTop + 144)
+
+  // ── 공유/다운로드 ──
   const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'))
   if (!blob) return { ok: false }
   const file = new File([blob], 'hankki-recipe.png', { type: 'image/png' })
+  const payload = { files: [file], title, text: `${title} · 한끼에서 만든 레시피 🍳`, url }
 
   try {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title })
+      await navigator.share(payload)
       return { ok: true, shared: true }
     }
   } catch (e) {
     if (e && e.name === 'AbortError') return { ok: true, shared: false }
   }
-  // 폴백 — 다운로드
-  const url = URL.createObjectURL(blob)
+  const objUrl = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.href = url
+  a.href = objUrl
   a.download = 'hankki-recipe.png'
   document.body.appendChild(a)
   a.click()
   a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+  setTimeout(() => URL.revokeObjectURL(objUrl), 1000)
   return { ok: true, shared: false }
 }

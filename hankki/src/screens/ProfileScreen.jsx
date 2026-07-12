@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
+import TabTips from '../components/TabTips'
 import { Avatar } from './HomeScreen'
 
 export default function ProfileScreen() {
@@ -71,7 +72,10 @@ export default function ProfileScreen() {
   return (
     <>
       <div className="topbar">
-        <div className="h-title">설정</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div className="h-title">설정</div>
+          <TabTips tab="profile" />
+        </div>
       </div>
 
       <div className="pad">

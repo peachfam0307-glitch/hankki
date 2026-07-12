@@ -61,11 +61,13 @@ export default function RecipeDetailScreen({ id }) {
     setMenu(false)
     nav.showToast('공유 카드 만드는 중…')
     const svg = iconRef.current?.querySelector('svg')?.outerHTML
+    const appUrl = location.origin + (import.meta.env.BASE_URL || '/')
     await shareRecipeCard({
       title: r.title,
       info,
       ingredients: (r.ingredients || []).map((i) => scaleIngredient(i, ratio)),
       iconSvg: svg,
+      appUrl,
     })
   }
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
+import TabTips from '../components/TabTips'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DiaryEntrySheet, { Stars } from '../components/DiaryEntrySheet'
 
@@ -30,7 +31,10 @@ export default function DiaryScreen() {
   return (
     <>
       <div className="topbar">
-        <div className="h-title">요리 일지</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div className="h-title">요리 일지</div>
+          <TabTips tab="diary" />
+        </div>
       </div>
       <div className="pad">
         <div className="t-sub" style={{ marginTop: 2, fontSize: 13.5 }}>만든 요리에 별점·팁·사진을 남겨보세요.</div>

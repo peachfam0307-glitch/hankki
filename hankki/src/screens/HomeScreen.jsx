@@ -4,6 +4,7 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import SourceBadge from '../components/SourceBadge'
+import TabTips from '../components/TabTips'
 import { CATEGORIES } from '../theme'
 import { timeAgo } from '../utils'
 
@@ -53,7 +54,10 @@ export default function HomeScreen() {
   return (
     <>
       <div className="topbar">
-        <div className="h-title">한끼</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div className="h-title">한끼</div>
+          <TabTips tab="home" />
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <button className="icon-btn press" onClick={() => nav.push({ name: 'inbox' })} aria-label="Inbox">
             <Icon name="inbox" size={22} />

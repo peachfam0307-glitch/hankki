@@ -7,6 +7,7 @@ import EmojiPicker from '../components/EmojiPicker'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import FoodIconPicker from '../components/FoodIconPicker'
 import PantryView from '../components/PantryView'
+import TabTips from '../components/TabTips'
 import { ocrImage } from '../ocr'
 import { guessEmoji } from '../emoji'
 
@@ -54,7 +55,10 @@ export default function ShopScreen() {
   return (
     <>
       <div className="topbar">
-        <div className="h-title">장보기</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div className="h-title">장보기</div>
+          <TabTips tab="shop" />
+        </div>
       </div>
 
       <div className="pad">

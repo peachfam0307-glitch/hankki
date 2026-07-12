@@ -14,3 +14,23 @@ createRoot(document.getElementById('root')).render(
     </StoreProvider>
   </React.StrictMode>
 )
+
+// 새 버전 자동 반영 — 새 서비스워커가 활성화되면 페이지를 한 번 새로고침하고,
+// 앱을 다시 열 때마다 업데이트를 확인한다. (앱 껐다 켜면 최신으로)
+if ('serviceWorker' in navigator) {
+  let refreshing = false
+  const hadController = !!navigator.serviceWorker.controller
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing || !hadController) return // 첫 설치 때의 clientsClaim 은 새로고침 안 함
+    refreshing = true
+    window.location.reload()
+  })
+  navigator.serviceWorker.ready.then((reg) => {
+    const check = () => reg.update().catch(() => {})
+    check()
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') check()
+    })
+    setInterval(check, 30 * 60 * 1000)
+  })
+}

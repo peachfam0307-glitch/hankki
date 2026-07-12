@@ -944,3 +944,12 @@ img {
 .today-reason { font-size: 12.5px; color: var(--text-sub); margin-top: 3px; }
 .today-refresh { flex: 0 0 auto; padding: 0 15px; font-size: 11.5px; font-weight: 700; line-height: 1.3; color: var(--brown); border-left: 1px solid rgba(107, 79, 58, 0.12); text-align: center; }
 .today-refresh:active { background: rgba(107, 79, 58, 0.05); }
+
+/* 탭 사용팁 */
+.tip-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--cream); display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; transition: transform 0.08s ease; }
+.tip-btn:active { transform: scale(0.9); }
+.tip-row { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.tip-row:last-child { border-bottom: none; }
+.tip-emoji { font-size: 22px; flex: 0 0 auto; width: 30px; text-align: center; }
+.tip-head { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.tip-body { font-size: 13px; line-height: 1.5; color: var(--text-sub); margin-top: 3px; }

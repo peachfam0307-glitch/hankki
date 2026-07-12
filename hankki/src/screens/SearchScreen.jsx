@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
+import TabTips from '../components/TabTips'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import { POPULAR_SEARCHES, TAG_LIST, INGREDIENT_CHIPS } from '../data/seed'
 
@@ -24,7 +25,10 @@ export default function SearchScreen() {
   return (
     <>
       <div className="topbar">
-        <div className="h-title">검색</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div className="h-title">검색</div>
+          <TabTips tab="search" />
+        </div>
       </div>
       <div className="pad">
         <div className="searchbar" style={{ marginTop: 2 }}>

@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
+import TabTips from '../components/TabTips'
 import { TAG_LIST } from '../data/seed'
 import { dateLabel } from '../utils'
 
@@ -27,7 +28,10 @@ export default function MyRecipesScreen() {
   return (
     <>
       <div className="topbar">
-        <div className="h-title">내 레시피</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div className="h-title">내 레시피</div>
+          <TabTips tab="myrecipes" />
+        </div>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           {view === 'grid' && (
             <button className="t-more press" style={{ marginRight: 4, fontSize: 14 }} onClick={() => setEdit((v) => !v)}>
