@@ -323,7 +323,7 @@ function ShopEdit({ shop, onClose }) {
     url: shop.url || '',
     emoji: shop.emoji || '🛍️',
     icon: shop.icon || 'bag',
-    iconType: shop.iconType || 'emoji',
+    iconType: shop.iconType || 'icon',
   })
 
   const save = () => {

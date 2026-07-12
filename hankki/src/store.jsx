@@ -8,11 +8,11 @@ const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행�
 // 나중에 제휴(어필리에이트) 태그를 이 url/search에 붙이면 그대로 수수료 링크가 됨.
 // iconType: 'emoji' | 'label'(글자 타일). 재료 아이콘과 동일한 방식.
 const DEFAULT_SHOPS = [
-  { id: 'coupang', name: '쿠팡', emoji: '🛒', iconType: 'emoji', url: 'https://www.coupang.com', search: 'https://www.coupang.com/np/search?q={q}' },
-  { id: 'kurly', name: '마켓컬리', emoji: '🥬', iconType: 'emoji', url: 'https://www.kurly.com', search: 'https://www.kurly.com/search?sword={q}' },
-  { id: 'ssg', name: '이마트몰', emoji: '🏬', iconType: 'emoji', url: 'https://emart.ssg.com', search: 'https://emart.ssg.com/search.ssg?query={q}' },
-  { id: 'naver', name: '네이버쇼핑', emoji: '🟢', iconType: 'emoji', url: 'https://shopping.naver.com', search: 'https://search.shopping.naver.com/search/all?query={q}' },
-  { id: 'oasis', name: '오아시스', emoji: '🌿', iconType: 'emoji', url: 'https://www.oasis.co.kr', search: 'https://www.oasis.co.kr/product/search?keyword={q}' },
+  { id: 'coupang', name: '쿠팡', icon: 'box', iconType: 'icon', url: 'https://www.coupang.com', search: 'https://www.coupang.com/np/search?q={q}' },
+  { id: 'kurly', name: '마켓컬리', icon: 'bag', iconType: 'icon', url: 'https://www.kurly.com', search: 'https://www.kurly.com/search?sword={q}' },
+  { id: 'ssg', name: '이마트몰', icon: 'cart', iconType: 'icon', url: 'https://emart.ssg.com', search: 'https://emart.ssg.com/search.ssg?query={q}' },
+  { id: 'naver', name: '네이버쇼핑', icon: 'store', iconType: 'icon', url: 'https://shopping.naver.com', search: 'https://search.shopping.naver.com/search/all?query={q}' },
+  { id: 'oasis', name: '오아시스', icon: 'basket', iconType: 'icon', url: 'https://www.oasis.co.kr', search: 'https://www.oasis.co.kr/product/search?keyword={q}' },
 ]
 
 function migrateShopping() {

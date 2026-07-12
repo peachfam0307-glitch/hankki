@@ -565,6 +565,15 @@ const I = {
       <path d="M24 22v14" stroke="#9c7a4e" strokeWidth="1.6" /><path d="M13 17l11 5 11-5" fill="none" stroke="#9c7a4e" strokeWidth="1.6" />
     </>
   ),
+  basket: (
+    <>
+      <path d="M18 19c0-5 2.5-8 6-8s6 3 6 8" fill="none" stroke="#9c6038" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M11 19h26l-2.6 15a3 3 0 0 1-3 2.5H16.6a3 3 0 0 1-3-2.5z" fill="#c68a52" />
+      <path d="M11 19h26l-.5 3.4H11.5z" fill="#a86b45" />
+      <path d="M18 23.5v12M24 23.5v12.5M30 23.5v12" stroke="#a86b45" strokeWidth="1.3" opacity=".55" />
+      <path d="M13.4 27.5h21.2M14 32h20" stroke="#a86b45" strokeWidth="1.3" opacity=".55" />
+    </>
+  ),
   // 기본
   default: (
     <>
@@ -586,7 +595,7 @@ export const FOOD_ICON_GROUPS = [
   { label: '유제품', items: ['milk', 'cheese', 'butter'] },
   { label: '양념·장', items: ['gochujang', 'doenjang', 'soy', 'soyLong', 'sesameOil', 'oil', 'vinegar', 'fishSauce', 'salt', 'honey', 'jar'] },
   { label: '음료·기타', items: ['coffee', 'water', 'seaweed', 'nuts'] },
-  { label: '쇼핑', items: ['bag', 'cart', 'store', 'box'] },
+  { label: '쇼핑', items: ['bag', 'cart', 'basket', 'store', 'box'] },
 ]
 
 // 이름만 치면 어울리는 아이콘 키를 자동으로. (위에서부터 먼저 매칭 — 구체적 키워드를 앞에)
