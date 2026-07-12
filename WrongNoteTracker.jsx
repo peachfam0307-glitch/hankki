@@ -101,6 +101,25 @@ function daysFromToday(dateObj) {
   return Math.round((d - today) / 86400000);
 }
 
+// 날짜 문자열('2026-07-02' 또는 '2026.07.02')을 Date로
+function parseDate(s) {
+  const p = String(s || "").split(/[.\-/]/).map((x) => parseInt(x, 10));
+  if (p.length < 3 || p.some((n) => isNaN(n))) return null;
+  return new Date(p[0], p[1] - 1, p[2]);
+}
+// 시험 D-day: 오늘 포함 이후 가장 가까운 시험일까지 남은 일수 (0=오늘, null=없음/지남)
+function examDday(exam) {
+  if (!exam || !Array.isArray(exam.days) || !exam.days.length) return null;
+  const ds = exam.days.map((d) => parseDate(d.date)).filter(Boolean).map(daysFromToday).filter((n) => n >= 0).sort((a, b) => a - b);
+  return ds.length ? ds[0] : null;
+}
+function fmtDate(s) {
+  const d = parseDate(s);
+  if (!d) return s || "";
+  const wd = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+  return `${d.getMonth() + 1}/${d.getDate()}(${wd})`;
+}
+
 // 다음 복습 예정 정보 (정복(status 3)은 안내 없음)
 function nextReviewInfo(entry) {
   if (!entry || entry.status >= 3) return null;
@@ -815,6 +834,10 @@ export default function WrongNoteTracker() {
   const [customTags, setCustomTags] = useState([]);
   const [motto, setMotto] = useState(""); // 상단 명언·공부 자극 문구
   const [claudeRoom, setClaudeRoomState] = useState(""); // 오답 질문방 Claude 링크
+  const [study, setStudy] = useState({ lastDate: "", streak: 0, bestStreak: 0 }); // 연속 학습 불꽃
+  const [dailyGoal, setDailyGoal] = useState(3); // 오늘의 목표 개수
+  const [exam, setExam] = useState({ name: "", days: [] }); // 시험 D-day 시간표
+  const [examOpen, setExamOpen] = useState(false); // 시험표 펼치기
   const [dueDismiss, setDueDismiss] = useState(false); // 오늘 복습 안내 배너 닫기
   const [dueModalClosed, setDueModalClosed] = useState(false); // 오늘 복습 팝업 닫기
   const [crownShow, setCrownShow] = useState(false); // 정복 왕관 축하 연출
@@ -951,6 +974,9 @@ export default function WrongNoteTracker() {
           if (Array.isArray(parsed.customTags)) setCustomTags(parsed.customTags);
           if (typeof parsed.motto === "string") setMotto(parsed.motto);
           if (typeof parsed.claudeRoom === "string") { setClaudeRoomState(parsed.claudeRoom); setClaudeRoom(parsed.claudeRoom); }
+          if (parsed.study && typeof parsed.study === "object") setStudy(parsed.study);
+          if (typeof parsed.dailyGoal === "number") setDailyGoal(parsed.dailyGoal);
+          if (parsed.exam && typeof parsed.exam === "object") setExam(parsed.exam);
         }
       } catch (e) {
         // 저장된 데이터가 아직 없는 경우 — 빈 상태로 시작
@@ -1024,12 +1050,18 @@ export default function WrongNoteTracker() {
       customTags: patch.customTags !== undefined ? patch.customTags : customTags,
       motto: patch.motto !== undefined ? patch.motto : motto,
       claudeRoom: patch.claudeRoom !== undefined ? patch.claudeRoom : claudeRoom,
+      study: patch.study !== undefined ? patch.study : study,
+      dailyGoal: patch.dailyGoal !== undefined ? patch.dailyGoal : dailyGoal,
+      exam: patch.exam !== undefined ? patch.exam : exam,
     };
     if (patch.entries !== undefined) setEntries(data.entries);
     if (patch.subjects !== undefined) setSubjects(data.subjects);
     if (patch.customTags !== undefined) setCustomTags(data.customTags);
     if (patch.motto !== undefined) setMotto(data.motto);
     if (patch.claudeRoom !== undefined) { setClaudeRoomState(data.claudeRoom); setClaudeRoom(data.claudeRoom); }
+    if (patch.study !== undefined) setStudy(data.study);
+    if (patch.dailyGoal !== undefined) setDailyGoal(data.dailyGoal);
+    if (patch.exam !== undefined) setExam(data.exam);
     try {
       const res = await window.storage.set(STORAGE_KEY, JSON.stringify(data));
       setSaveError(!res);
@@ -1222,21 +1254,34 @@ export default function WrongNoteTracker() {
       correctStreak: 0,   // 플래시카드 연속 정답 수
       graduated: false,   // 2회 연속 정답 → 졸업(플래시카드에서 숨김)
     };
-    saveData({ entries: [entry, ...entries] });
+    const sp = studyPatchToday();
+    saveData({ entries: [entry, ...entries], ...(sp ? { study: sp } : {}) });
     setForm({ ...emptyForm, subject: form.subject });
     setFormOpen(false);
     clearDraft();
   }
 
+  // 오늘 공부(복습·기록)했음을 표시 → 연속 학습 불꽃 갱신용 patch 반환 (이미 오늘이면 null)
+  function studyPatchToday() {
+    const today = todayStr();
+    if (study.lastDate === today) return null;
+    const yd = new Date(); yd.setDate(yd.getDate() - 1);
+    const yStr = `${yd.getFullYear()}.${String(yd.getMonth() + 1).padStart(2, "0")}.${String(yd.getDate()).padStart(2, "0")}`;
+    const s = study.lastDate === yStr ? (study.streak || 0) + 1 : 1;
+    return { lastDate: today, streak: s, bestStreak: Math.max(study.bestStreak || 0, s) };
+  }
+
   function advanceStatus(id) {
     const target = entries.find((e) => e.id === id);
     const conquering = target && target.status === 2; // 2→3 = 완전 정복!
+    const sp = studyPatchToday();
     saveData({
       entries: entries.map((e) =>
         e.id === id && e.status < 3
           ? { ...e, status: e.status + 1, reviewLog: [...(e.reviewLog || []), todayStr()] }
           : e
       ),
+      ...(sp ? { study: sp } : {}),
     });
     if (conquering) celebrateCrown();
   }
@@ -1949,7 +1994,9 @@ export default function WrongNoteTracker() {
     setTimerOn(false);
     let graduatedNow = false;
     let conqueringNow = false;
+    const sp = studyPatchToday();
     saveData({
+      ...(sp ? { study: sp } : {}),
       entries: entries.map((e) => {
         if (e.id !== entry.id) return e;
         const streak = (e.correctStreak || 0) + 1;
@@ -2181,14 +2228,21 @@ export default function WrongNoteTracker() {
           </h1>
           <span className="wnt-subtitle">틀린 문제는 두 번 안 틀린다</span>
         </div>
-        <input
-          className="wnt-motto"
-          placeholder="✍️ 여기에 나만의 명언·공부 자극 문구를 적어보세요 (자동 저장)"
-          value={motto}
-          onChange={(e) => setMotto(e.target.value)}
-          onBlur={() => saveData({ motto })}
-          maxLength={80}
-        />
+        <div className="wnt-motto-row">
+          <input
+            className="wnt-motto"
+            placeholder="✍️ 여기에 나만의 명언·공부 자극 문구를 적어보세요 (자동 저장)"
+            value={motto}
+            onChange={(e) => setMotto(e.target.value)}
+            onBlur={() => saveData({ motto })}
+            maxLength={80}
+          />
+          {study.streak > 0 && (
+            <span className="wnt-streak" title={`최고 기록 ${study.bestStreak || study.streak}일`}>
+              🔥 {study.streak}일째{(study.bestStreak || 0) > study.streak ? ` · 최고 ${study.bestStreak}` : ""}
+            </span>
+          )}
+        </div>
         <div className="wnt-tabs">
           <button className={tab === "list" ? "wnt-tab on" : "wnt-tab"} onClick={() => setTab("list")}>
             기록 <em>{total}</em>
@@ -2220,13 +2274,16 @@ export default function WrongNoteTracker() {
           <div className="wnt-due-modal-backdrop" onClick={() => setDueModalClosed(true)}>
             <div className="wnt-due-modal" onClick={(ev) => ev.stopPropagation()}>
               <div className="wnt-due-modal-bell">🔔</div>
-              <div className="wnt-due-modal-count">오늘 복습할 문제 <b>{dueList.length}개</b></div>
-              <p className="wnt-due-modal-sub">복습 타이밍이 된 오답이에요. 지금 풀면 기억에 딱 남아요! ✍️</p>
+              {study.streak > 0 && <div className="wnt-due-modal-streak">🔥 {study.streak}일째 연속 · 오늘도 이어가자!</div>}
+              <div className="wnt-due-modal-count">오늘 복습할 오답 <b>{dueList.length}개</b></div>
+              {(() => { const goal = Math.min(dailyGoal || 3, dueList.length); return (
+                <p className="wnt-due-modal-sub">부담 갖지 말고 <b>우선 {goal}개</b>부터 시작하자! 다 풀고 싶으면 쭉 풀어도 돼 ✍️</p>
+              ); })()}
               <ul className="wnt-due-modal-list">
-                {dueList.slice(0, 4).map((e) => (
+                {dueList.slice(0, Math.min(dailyGoal || 3, dueList.length)).map((e) => (
                   <li key={e.id}><span className="wnt-subj sm" style={{ background: subjColor(e.subject) }}>{e.subject}</span> {e.unit}</li>
                 ))}
-                {dueList.length > 4 && <li className="wnt-due-modal-more">외 {dueList.length - 4}개 더</li>}
+                {dueList.length > (dailyGoal || 3) && <li className="wnt-due-modal-more">그 외 {dueList.length - (dailyGoal || 3)}개 더 있어요</li>}
               </ul>
               <div className="wnt-due-modal-btns">
                 <button className="wnt-btn-primary" onClick={() => { setTab("list"); setListView("active"); setFDueOnly(true); setDueModalClosed(true); }}>지금 풀기 →</button>
@@ -2392,6 +2449,60 @@ export default function WrongNoteTracker() {
             </section>
           )}
 
+          {/* 📅 시험 D-day + 시간표 (평소엔 접힘) */}
+          {(() => {
+            const dd = examDday(exam);
+            return (
+              <div className="wnt-exam">
+                <div className="wnt-exam-head" onClick={() => setExamOpen(!examOpen)}>
+                  <span className="wnt-exam-title">
+                    📅 {exam.name || "시험 일정"}
+                    {dd != null && <span className="wnt-dday">{dd === 0 ? "D-DAY!" : "D-" + dd}</span>}
+                  </span>
+                  <button className="wnt-card-toggle">{examOpen ? "▴ 접기" : (dd != null ? "▾ 시험표" : "▾ 설정")}</button>
+                </div>
+                {examOpen && (
+                  <div className="wnt-exam-body">
+                    <input
+                      className="wnt-input"
+                      placeholder="시험 이름 (예: 1학기 기말고사)"
+                      value={exam.name}
+                      onChange={(e) => setExam({ ...exam, name: e.target.value })}
+                      onBlur={() => saveData({ exam })}
+                    />
+                    {(exam.days || []).map((d, i) => (
+                      <div key={i} className="wnt-exam-row">
+                        <input
+                          className="wnt-input wnt-exam-date"
+                          type="date"
+                          value={d.date || ""}
+                          onChange={(e) => { const next = { ...exam, days: exam.days.map((x, idx) => (idx === i ? { ...x, date: e.target.value } : x)) }; saveData({ exam: next }); }}
+                        />
+                        <input
+                          className="wnt-input"
+                          placeholder="과목 (예: 통합사회1, 한국사1)"
+                          value={d.subjects || ""}
+                          onChange={(e) => setExam({ ...exam, days: exam.days.map((x, idx) => (idx === i ? { ...x, subjects: e.target.value } : x)) })}
+                          onBlur={() => saveData({ exam })}
+                        />
+                        <button className="wnt-exam-x" onClick={() => saveData({ exam: { ...exam, days: exam.days.filter((_, idx) => idx !== i) } })} aria-label="삭제">✕</button>
+                      </div>
+                    ))}
+                    <button className="wnt-mini strong" onClick={() => saveData({ exam: { ...exam, days: [...(exam.days || []), { date: "", subjects: "" }] } })}>＋ 시험일 추가</button>
+                    {(exam.days || []).length > 0 && (
+                      <div className="wnt-exam-list">
+                        {[...exam.days].filter((d) => d.date).sort((a, b) => (parseDate(a.date) - parseDate(b.date))).map((d, i) => {
+                          const n = daysFromToday(parseDate(d.date));
+                          return <div key={i} className="wnt-exam-listrow"><b>{fmtDate(d.date)}</b> {d.subjects || "—"} {n >= 0 && <span className="wnt-dday sm">{n === 0 ? "오늘!" : "D-" + n}</span>}</div>;
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* 오늘 복습할 문제 자동 안내 — 앱 켜면 뜸 */}
           {(() => {
             if (dueDismiss || fDueOnly) return null;
@@ -2401,9 +2512,10 @@ export default function WrongNoteTracker() {
               return r && r.due;
             }).length;
             if (dueCount === 0) return null;
+            const goal = Math.min(dailyGoal || 3, dueCount);
             return (
               <div className="wnt-due-banner">
-                <span>📅 오늘 복습할 문제가 <b>{dueCount}개</b> 있어요!</span>
+                <span>📅 오늘 복습할 오답 <b>{dueCount}개</b> — 우선 <b>{goal}개</b>부터 줄게! 🔥</span>
                 <div className="wnt-due-banner-btns">
                   <button className="wnt-mini strong" onClick={() => { setListView("active"); setFDueOnly(true); }}>지금 풀기 →</button>
                   <button className="wnt-due-x" onClick={() => setDueDismiss(true)} aria-label="닫기">✕</button>
@@ -3143,6 +3255,20 @@ export default function WrongNoteTracker() {
           </div>
 
           <div className="wnt-set-section">
+            <h2 className="wnt-h2">🔥 오늘의 목표 <HelpTip text="복습 팝업에서 '우선 몇 개부터' 안내할 개수예요. 상한선이 아니라 부담을 줄이는 추천 개수라, 실제로는 얼마든지 더 풀 수 있어요." /></h2>
+            <p className="wnt-set-desc">복습 팝업에서 "우선 N개부터 줄게"라고 안내할 개수예요 (상한선 아님, 더 풀어도 돼요).</p>
+            <div className="wnt-goal-row">
+              {[3, 5, 10].map((n) => (
+                <button key={n} className={(dailyGoal || 3) === n ? "wnt-mini strong" : "wnt-mini"} onClick={() => saveData({ dailyGoal: n })}>{n}개</button>
+              ))}
+              <input className="wnt-input wnt-goal-input" type="number" min="1" max="99" value={dailyGoal || 3}
+                onChange={(e) => { const v = Math.max(1, Math.min(99, parseInt(e.target.value, 10) || 3)); setDailyGoal(v); }}
+                onBlur={() => saveData({ dailyGoal })} />
+              <span className="wnt-set-desc" style={{ margin: 0 }}>개</span>
+            </div>
+          </div>
+
+          <div className="wnt-set-section">
             <h2 className="wnt-h2">🤖 AI 연결 점검</h2>
             <p className="wnt-set-desc">변형문제·도우미·채점이 안 될 때 이 버튼을 눌러보세요. 성공/실패와 정확한 원인이 표시돼요.</p>
             <button className="wnt-btn-primary" onClick={checkAiConnection} disabled={aiChecking}>{aiChecking ? "점검 중…" : "🔍 지금 점검하기"}</button>
@@ -3565,6 +3691,33 @@ const css = `
   border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; font-size: 14px; color: var(--ink);
 }
 .wnt-due-banner b { color: var(--gold); }
+/* 🔥 연속 학습 불꽃 */
+.wnt-motto-row { display: flex; align-items: center; gap: 8px; }
+.wnt-motto-row .wnt-motto { flex: 1; }
+.wnt-streak {
+  flex: 0 0 auto; white-space: nowrap; font-size: 12.5px; font-weight: 800; color: #C0491E;
+  background: linear-gradient(90deg, #FFEBD0, #FFD9A8); border: 1.5px solid #F0B266;
+  border-radius: 999px; padding: 5px 11px;
+}
+.wnt-due-modal-streak { font-size: 13px; font-weight: 800; color: #C0491E; margin-top: 2px; }
+/* 📅 시험 D-day */
+.wnt-exam { border: 1.5px solid var(--line); border-radius: 12px; background: #fff; margin-bottom: 10px; overflow: hidden; }
+.wnt-exam-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; cursor: pointer; }
+.wnt-exam-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.wnt-dday { background: var(--red); color: #fff; font-size: 12px; font-weight: 800; border-radius: 6px; padding: 2px 8px; }
+.wnt-dday.sm { font-size: 11px; padding: 1px 6px; margin-left: 6px; }
+.wnt-exam-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); }
+.wnt-exam-body .wnt-input { margin-top: 8px; }
+.wnt-exam-row { display: flex; gap: 6px; align-items: center; margin-top: 0; }
+.wnt-exam-row .wnt-input { margin-top: 0; }
+.wnt-exam-date { flex: 0 0 150px; }
+.wnt-exam-x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px 6px; }
+.wnt-exam-x:hover { color: var(--red); }
+.wnt-exam-list { margin-top: 6px; border-top: 1px dashed var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+.wnt-exam-listrow { font-size: 12.5px; color: var(--ink); }
+.wnt-exam-listrow b { color: var(--blue); margin-right: 4px; }
+.wnt-goal-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wnt-goal-input { width: 64px; }
 .wnt-due-banner-btns { display: flex; align-items: center; gap: 6px; }
 .wnt-due-x { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 2px 4px; }
 .wnt-due-modal-backdrop {
