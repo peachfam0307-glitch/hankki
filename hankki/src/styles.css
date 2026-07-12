@@ -1,13 +1,13 @@
 :root {
-  --bg: #fff8f1;
+  --bg: #f5f6f4;
   --surface: #ffffff;
-  --cream: #f3ece2;
-  --cream-deep: #ebdcc6;
-  --sand: #d7c4a8;
+  --cream: #edeee9;
+  --cream-deep: #e0e3dc;
+  --sand: #cdc7bb;
   --brown: #6b4f3a;
-  --text: #3f3227;
-  --text-sub: #9b8b79;
-  --line: #efe7dc;
+  --text: #3d3830;
+  --text-sub: #8e8f88;
+  --line: #e8e9e4;
   --danger: #c2703f;
 
   --r-sm: 10px;
@@ -38,7 +38,7 @@ body {
   margin: 0;
   font-family: 'Pretendard', 'Pretendard Variable', -apple-system,
     BlinkMacSystemFont, 'Apple SD Gothic Neo', system-ui, sans-serif;
-  background: #e9ddce;
+  background: #e4e5e0;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -268,7 +268,7 @@ img {
   bottom: 0;
   height: calc(var(--nav-h) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
-  background: rgba(255, 248, 241, 0.92);
+  background: rgba(245, 246, 244, 0.92);
   backdrop-filter: saturate(1.4) blur(14px);
   -webkit-backdrop-filter: saturate(1.4) blur(14px);
   border-top: 1px solid var(--line);
@@ -592,7 +592,7 @@ img {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: rgba(255, 248, 241, 0.86);
+  background: rgba(245, 246, 244, 0.86);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;

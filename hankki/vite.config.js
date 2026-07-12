@@ -29,7 +29,7 @@ export default defineConfig({
         scope: './',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#FFF8F1',
+        background_color: '#F5F6F4',
         theme_color: '#6B4F3A',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

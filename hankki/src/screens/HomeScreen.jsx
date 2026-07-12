@@ -144,7 +144,7 @@ export function Avatar({ name, size = 32 }) {
         width: size,
         height: size,
         borderRadius: '50%',
-        background: 'linear-gradient(135deg,#e7d3b6,#d7c4a8)',
+        background: 'linear-gradient(135deg,#dcdcd3,#c9c8bd)',
         color: '#6b4f3a',
         display: 'flex',
         alignItems: 'center',

@@ -3,10 +3,10 @@ import { useState } from 'react'
 // 사진이 있으면 사진을, 없거나 로드 실패하면 따뜻한 크림톤 그라데이션 + 이모지 썸네일.
 // PWA 를 오프라인 설치해도 항상 자연스럽게 보이도록 하기 위한 폴백.
 const GRADS = [
-  'linear-gradient(135deg,#f6ecdd,#ecdcc4)',
-  'linear-gradient(135deg,#f3e7d6,#e7d3b6)',
-  'linear-gradient(135deg,#f7efe3,#eaddc8)',
-  'linear-gradient(135deg,#f2e4d0,#e3ceac)',
+  'linear-gradient(135deg,#eef0ec,#e1e5de)',
+  'linear-gradient(135deg,#ecefeb,#dce1db)',
+  'linear-gradient(135deg,#f0f1ee,#e4e7e0)',
+  'linear-gradient(135deg,#e9ece8,#d9ded7)',
 ]
 
 function gradFor(seed = '') {
