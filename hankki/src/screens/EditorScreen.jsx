@@ -31,7 +31,12 @@ export default function EditorScreen({ id, prefill }) {
   const [ocr, setOcr] = useState({ busy: false, pct: 0 })
   const [cropImg, setCropImg] = useState(null) // 글자 읽기 전 '자르기' 단계
   // 위에 고정해 두고 보면서 쓰기 — 'video'(유튜브·인스타) | 'photo'(캡처 원본) | null
-  const [refs, setRefs] = useState(prefill?.refImages || []) // 캡처 원본들(저장 안 됨)
+  // 저장된 레시피를 다시 편집할 때도 사진이 있으면 참고용으로 띄울 수 있게 한다.
+  const [refs, setRefs] = useState(() => {
+    if (prefill?.refImages?.length) return prefill.refImages
+    if (editing?.image) return [editing.image]
+    return []
+  })
   const [pin, setPin] = useState(prefill?.watch ? 'video' : prefill?.refImages?.length ? 'photo' : null)
 
   const [f, setF] = useState(() => {

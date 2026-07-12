@@ -641,6 +641,10 @@ img {
   overscroll-behavior: contain;
   animation: sheetUp 0.26s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
+/* 이모지·아이콘 픽커 시트는 안쪽 목록(.emoji-scroll)이 스크롤 담당 — 이중 스크롤 방지 */
+.sheet.emoji-sheet {
+  overflow-y: hidden;
+}
 @keyframes sheetUp {
   from {
     transform: translateY(100%);

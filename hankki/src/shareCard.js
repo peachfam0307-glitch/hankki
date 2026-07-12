@@ -51,7 +51,12 @@ export async function shareRecipeCard({ title, info = [], ingredients = [], step
   const titleLines = wrapLines(m, title, 770).slice(0, 2)
   const shown = ingredients.slice(0, 8)
   m.font = `400 33px ${F}`
-  const shownSteps = steps.slice(0, 6).map((s) => wrapLines(m, s, W - 420).slice(0, 2))
+  const shownSteps = steps.slice(0, 6).map((s) => {
+    const all = wrapLines(m, s, W - 420)
+    const lines = all.slice(0, 2)
+    if (all.length > 2) lines[1] = lines[1].slice(0, -1) + '…' // 잘리면 말줄임표
+    return lines
+  })
 
   const cardTop = 72
   const tile = 232

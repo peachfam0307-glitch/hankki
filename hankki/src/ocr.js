@@ -30,12 +30,12 @@ function screenshotCrop(img) {
 }
 
 // 폰 내장 OCR (Shape Detection API). 있으면 이걸 먼저 쓴다 — 한국어에 강하다.
-async function detectWithPlatform(dataUrl) {
+async function detectWithPlatform(dataUrl, noCrop) {
   try {
     if (!('TextDetector' in window)) return null
     const img = await loadImg(dataUrl)
     if (!img) return null
-    const crop = screenshotCrop(img)
+    const crop = noCrop ? { top: 0, height: img.height } : screenshotCrop(img)
     const c = document.createElement('canvas')
     c.width = img.width
     c.height = crop.height
@@ -187,7 +187,7 @@ export async function ocrImage(image, onProgress, opts = {}) {
   // 1) 폰 내장 OCR 먼저 (있으면 훨씬 정확, 언어데이터 다운로드도 없음)
   if (typeof image === 'string') {
     if (onProgress) onProgress(15)
-    const platform = await detectWithPlatform(image)
+    const platform = await detectWithPlatform(image, opts.noCrop)
     if (platform && !looksGibberish(platform)) {
       if (onProgress) onProgress(100)
       return platform

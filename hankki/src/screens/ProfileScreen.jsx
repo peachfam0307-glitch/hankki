@@ -4,6 +4,7 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import TabTips from '../components/TabTips'
 import EmojiPicker from '../components/EmojiPicker'
+import FoodIconPicker from '../components/FoodIconPicker'
 import { cropSquare } from '../utils'
 import { Avatar } from './HomeScreen'
 
@@ -119,33 +120,39 @@ export default function ProfileScreen() {
         <input ref={avatarFileRef} type="file" accept="image/*" onChange={onAvatarPhoto} style={{ display: 'none' }} />
 
         {avatarSheet && (
-          <div className="sheet-mask" onClick={() => setAvatarSheet(false)}>
-            <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 24 }}>
-              <div className="emoji-sheet-head">
-                <span>프로필 아이콘</span>
-                <button className="press" onClick={() => setAvatarSheet(false)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+          <div className="card fade" style={{ padding: 16, marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>프로필 아이콘</div>
+              <button className="press" onClick={() => setAvatarSheet(false)} style={{ color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600 }}>닫기</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <EmojiPicker
+                  value={profile.avatar?.type === 'emoji' ? profile.avatar.value : '😊'}
+                  size={56}
+                  onChange={(e) => { setProfile({ avatar: { type: 'emoji', value: e } }); setAvatarSheet(false); nav.showToast('프로필 이모지를 바꿨어요 ✨') }}
+                />
+                <div style={{ fontSize: 14, fontWeight: 600 }}>이모지로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
               </div>
-              <div style={{ padding: '4px 16px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <EmojiPicker
-                    value={profile.avatar?.type === 'emoji' ? profile.avatar.value : '😊'}
-                    size={56}
-                    onChange={(e) => { setProfile({ avatar: { type: 'emoji', value: e } }); setAvatarSheet(false); nav.showToast('프로필 이모지를 바꿨어요 ✨') }}
-                  />
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>이모지로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <FoodIconPicker
+                  value={profile.avatar?.type === 'icon' ? profile.avatar.value : 'rice'}
+                  size={56}
+                  onChange={(k) => { setProfile({ avatar: { type: 'icon', value: k } }); setAvatarSheet(false); nav.showToast('프로필 아이콘을 바꿨어요 ✨') }}
+                />
+                <div style={{ fontSize: 14, fontWeight: 600 }}>한끼 아이콘으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
+              </div>
+              <button className="press" onClick={() => avatarFileRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '4px 0', textAlign: 'left' }}>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
+                  <Icon name="camera" size={22} color="var(--brown)" />
                 </div>
-                <button className="press" onClick={() => avatarFileRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0', textAlign: 'left' }}>
-                  <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
-                    <Icon name="camera" size={22} color="var(--brown)" />
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>사진으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 동그랗게 잘라드려요</span></div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>사진으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 동그랗게 잘라드려요</span></div>
+              </button>
+              {profile.avatar && (
+                <button className="press" onClick={() => { setProfile({ avatar: null }); setAvatarSheet(false) }} style={{ padding: 10, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600 }}>
+                  기본(이름 첫 글자)으로 돌리기
                 </button>
-                {profile.avatar && (
-                  <button className="press" onClick={() => { setProfile({ avatar: null }); setAvatarSheet(false) }} style={{ padding: 10, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600 }}>
-                    기본(이름 첫 글자)으로 돌리기
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           </div>
         )}
