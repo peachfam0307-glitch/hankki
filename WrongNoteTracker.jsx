@@ -119,6 +119,12 @@ function fmtDate(s) {
   const wd = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
   return `${d.getMonth() + 1}/${d.getDate()}(${wd})`;
 }
+// 가장 가까운 다가오는 시험일 {date, subjects, n} (없으면 null)
+function examNext(exam) {
+  if (!exam || !Array.isArray(exam.days)) return null;
+  const up = exam.days.filter((d) => d.date).map((d) => ({ ...d, n: daysFromToday(parseDate(d.date)) })).filter((d) => d.n >= 0).sort((a, b) => a.n - b.n);
+  return up.length ? up[0] : null;
+}
 
 // 다음 복습 예정 정보 (정복(status 3)은 안내 없음)
 function nextReviewInfo(entry) {
@@ -400,6 +406,7 @@ function SolvePad({ gradeFn, bridge, solveFn, problem }) {
   const wrapRef = useRef(null);
   const [tool, setTool] = useState("pen");
   const [color, setColor] = useState("#1E2A3A");
+  const [penWidth, setPenWidth] = useState(2.5); // 펜 두께
   const [notes, setNotes] = useState([]);
   const [grading, setGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState("");
@@ -497,16 +504,25 @@ function SolvePad({ gradeFn, bridge, solveFn, problem }) {
     } catch (e) {}
   }
 
+  function hexA(hex, a) {
+    const h = String(hex).replace("#", "");
+    const r = parseInt(h.slice(0, 2), 16), gg = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r},${gg},${b},${a})`;
+  }
   function applyStroke(g) {
     g.lineCap = "round"; g.lineJoin = "round";
     if (tool === "eraser") {
       g.globalCompositeOperation = "destination-out"; // 투명하게 지움
       g.strokeStyle = "rgba(0,0,0,1)";
       g.lineWidth = 18;
+    } else if (tool === "highlighter") {
+      g.globalCompositeOperation = "source-over";
+      g.strokeStyle = hexA(color, 0.32); // 반투명 형광펜
+      g.lineWidth = penWidth * 6 + 6;
     } else {
       g.globalCompositeOperation = "source-over";
       g.strokeStyle = color;
-      g.lineWidth = 2.5;
+      g.lineWidth = penWidth;
     }
   }
 
@@ -656,25 +672,51 @@ function SolvePad({ gradeFn, bridge, solveFn, problem }) {
     }
   }
 
-  const COLORS = ["#1E2A3A", "#D6453D", "#2B57C6"];
+  const COLORS = ["#1E2A3A", "#D6453D", "#2B57C6", "#2E7D4F", "#E8B21E"];
+  const WIDTHS = [1.6, 2.5, 4]; // 얇게 · 보통 · 굵게
 
   return (
     <div className="pad">
       <div className="pad-bar">
-        {COLORS.map((c) => (
-          <button key={c} className={color === c && tool !== "eraser" ? "pad-color on" : "pad-color"}
-            style={{ background: c }} onClick={() => { setColor(c); if (tool === "eraser") setTool("pen"); }} aria-label="펜 색" />
-        ))}
-        <button className={tool === "pen" ? "wnt-mini strong" : "wnt-mini"} onClick={() => setTool("pen")}>✏️ 펜</button>
-        <button className={tool === "line" ? "wnt-mini strong" : "wnt-mini"} onClick={() => setTool("line")}>📏 직선</button>
-        <button className={tool === "eraser" ? "wnt-mini strong" : "wnt-mini"} onClick={() => setTool("eraser")}>🧽 지우개</button>
-        <button className="wnt-mini" onClick={undo}>↩️ 되돌리기</button>
-        <button className="wnt-mini" onClick={redo}>↪️ 다시하기</button>
-        <button className="wnt-mini" onClick={clearPad}>🗑 전체 지우기</button>
-        <button className="wnt-mini idea" onClick={addNote}>🗒 포스트잇</button>
-        <button className={bgGrid ? "wnt-mini strong" : "wnt-mini"} onClick={() => setBgGrid(!bgGrid)}>▦ {bgGrid ? "모눈" : "기본"}</button>
-        <button className={penOnly ? "wnt-mini strong" : "wnt-mini"} onClick={() => setPenOnly(!penOnly)}>✋ 손바닥 방지 {penOnly ? "켜짐" : "꺼짐"}</button>
-        <HelpTip text="애플펜슬이나 손가락으로 풀이를 쓰세요. ↩️ 되돌리기·↪️ 다시하기로 획을 오갈 수 있어요. ▦ 버튼으로 모눈/기본 배경을 바꿔요 (필기는 안 지워져요). ✋ 손바닥 방지를 켜면 애플펜슬로만 그려져서 손을 대고 써도 돼요. 📏 직선은 그래프 축·점근선 긋기에 좋아요. ✅ AI 채점은 필기와 포스트잇 메모를 읽고 채점해요." />
+        {/* 색 */}
+        <div className="pad-group">
+          {COLORS.map((c) => (
+            <button key={c} className={color === c && tool !== "eraser" ? "pad-color on" : "pad-color"}
+              style={{ background: c }} onClick={() => { setColor(c); if (tool === "eraser") setTool("pen"); }} aria-label="펜 색" title="펜 색" />
+          ))}
+        </div>
+        <span className="pad-div" />
+        {/* 도구 */}
+        <div className="pad-group">
+          <button className={tool === "pen" ? "pad-tool on" : "pad-tool"} onClick={() => setTool("pen")} title="펜">✏️</button>
+          <button className={tool === "highlighter" ? "pad-tool on" : "pad-tool"} onClick={() => setTool("highlighter")} title="형광펜">🖍</button>
+          <button className={tool === "line" ? "pad-tool on" : "pad-tool"} onClick={() => setTool("line")} title="직선(축·점근선)">📏</button>
+          <button className={tool === "eraser" ? "pad-tool on" : "pad-tool"} onClick={() => setTool("eraser")} title="지우개">🧽</button>
+        </div>
+        <span className="pad-div" />
+        {/* 두께 */}
+        <div className="pad-group">
+          {WIDTHS.map((w, i) => (
+            <button key={w} className={penWidth === w ? "pad-w on" : "pad-w"} onClick={() => setPenWidth(w)} title={["얇게", "보통", "굵게"][i]} aria-label={["얇게", "보통", "굵게"][i]}>
+              <span className="pad-w-dot" style={{ width: 4 + i * 4, height: 4 + i * 4 }} />
+            </button>
+          ))}
+        </div>
+        <span className="pad-div" />
+        {/* 실행 */}
+        <div className="pad-group">
+          <button className="pad-tool" onClick={undo} title="되돌리기">↩️</button>
+          <button className="pad-tool" onClick={redo} title="다시하기">↪️</button>
+          <button className="pad-tool" onClick={clearPad} title="전체 지우기">🗑</button>
+        </div>
+        <span className="pad-div" />
+        {/* 옵션 */}
+        <div className="pad-group">
+          <button className={bgGrid ? "pad-tool on" : "pad-tool"} onClick={() => setBgGrid(!bgGrid)} title="모눈/기본 배경">▦</button>
+          <button className={penOnly ? "pad-tool on" : "pad-tool"} onClick={() => setPenOnly(!penOnly)} title="손바닥 방지(펜슬만)">✋</button>
+          <button className="pad-tool" onClick={addNote} title="포스트잇">🗒</button>
+        </div>
+        <HelpTip text="🖍 형광펜은 반투명하게 칠해져요. 색·두께를 고르고 애플펜슬이나 손가락으로 쓰세요. ↩️↪️로 획을 오가고, ▦로 모눈/기본 배경을 바꿔요(필기 유지). ✋ 손바닥 방지를 켜면 펜슬로만 그려져요. 📏 직선은 축·점근선에 좋아요." />
       </div>
       {(() => {
         const padWrap = (
@@ -838,8 +880,6 @@ export default function WrongNoteTracker() {
   const [dailyGoal, setDailyGoal] = useState(3); // 오늘의 목표 개수
   const [exam, setExam] = useState({ name: "", days: [] }); // 시험 D-day 시간표
   const [examOpen, setExamOpen] = useState(false); // 시험 팝오버 열기
-  const [ddaySecOpen, setDdaySecOpen] = useState(true); // 팝오버 내 D-day 섹션
-  const [tableSecOpen, setTableSecOpen] = useState(true); // 팝오버 내 과목 시간표 섹션
   const [dueDismiss, setDueDismiss] = useState(false); // 오늘 복습 안내 배너 닫기
   const [dueModalClosed, setDueModalClosed] = useState(false); // 오늘 복습 팝업 닫기
   const [crownShow, setCrownShow] = useState(false); // 정복 왕관 축하 연출
@@ -977,7 +1017,7 @@ export default function WrongNoteTracker() {
           if (typeof parsed.motto === "string") setMotto(parsed.motto);
           if (typeof parsed.claudeRoom === "string") { setClaudeRoomState(parsed.claudeRoom); setClaudeRoom(parsed.claudeRoom); }
           if (parsed.study && typeof parsed.study === "object") setStudy(parsed.study);
-          if (typeof parsed.dailyGoal === "number") setDailyGoal(parsed.dailyGoal);
+          if (typeof parsed.dailyGoal === "number" || parsed.dailyGoal === "all") setDailyGoal(parsed.dailyGoal);
           if (parsed.exam && typeof parsed.exam === "object") setExam(parsed.exam);
         }
       } catch (e) {
@@ -1073,6 +1113,11 @@ export default function WrongNoteTracker() {
   }
 
   const subjectNames = subjects.map((s) => s.name);
+  const goalIsAll = dailyGoal === "all";
+  function goalCount(total) {
+    const n = typeof dailyGoal === "number" ? dailyGoal : 3;
+    return goalIsAll ? total : Math.min(n, total);
+  }
   function subjColor(name) {
     const s = subjects.find((x) => x.name === name);
     return s ? s.color : "#7B8698";
@@ -2231,11 +2276,17 @@ export default function WrongNoteTracker() {
           <span className="wnt-subtitle">틀린 문제는 두 번 안 틀린다</span>
           {(() => {
             const dd = examDday(exam);
+            const nx = examNext(exam);
             return (
               <div className="wnt-dday-wrap">
                 <button className={examOpen ? "wnt-header-dday on" : "wnt-header-dday"} onClick={() => setExamOpen((o) => !o)}
                   title="시험 일정·시간표">
-                  📅 {dd != null ? <span className="wnt-header-dday-num">D-{dd === 0 ? "DAY" : dd}</span> : "시험 일정"}
+                  📅 {dd != null
+                    ? <>
+                        <span className="wnt-header-dday-num">D-{dd === 0 ? "DAY" : dd}</span>
+                        {nx && nx.subjects && <span className="wnt-header-dday-subj">{nx.subjects}</span>}
+                      </>
+                    : "시험 일정"}
                 </button>
                 {examOpen && (
                   <>
@@ -2243,65 +2294,44 @@ export default function WrongNoteTracker() {
                     <div className="wnt-exam-pop">
                       <div className="wnt-exam-pop-head">
                         📅 {exam.name || "시험 일정"}
+                        {dd != null && <span className="wnt-dday">{dd === 0 ? "D-DAY!" : "D-" + dd}</span>}
                         <button className="wnt-due-x" onClick={() => setExamOpen(false)} aria-label="닫기">✕</button>
                       </div>
-
-                      {/* D-day 섹션 (접기) */}
-                      <div className="wnt-exam-sec">
-                        <button className="wnt-exam-sec-head" onClick={() => setDdaySecOpen((o) => !o)}>
-                          <span>⏳ D-day</span>
-                          {dd != null && <span className="wnt-dday">{dd === 0 ? "D-DAY!" : "D-" + dd}</span>}
-                          <span className="wnt-exam-sec-arrow">{ddaySecOpen ? "▴" : "▾"}</span>
-                        </button>
-                        {ddaySecOpen && (
-                          <div className="wnt-exam-sec-body">
-                            {(exam.days || []).some((d) => d.date) ? (
-                              [...exam.days].filter((d) => d.date).sort((a, b) => (parseDate(a.date) - parseDate(b.date))).map((d, i) => {
-                                const n = daysFromToday(parseDate(d.date));
-                                return <div key={i} className="wnt-exam-listrow"><b>{fmtDate(d.date)}</b> {d.subjects || "—"} {n >= 0 && <span className="wnt-dday sm">{n === 0 ? "오늘!" : "D-" + n}</span>}</div>;
-                              })
-                            ) : <div className="wnt-exam-empty">아래 '과목 시간표'에서 시험일을 추가하세요.</div>}
-                          </div>
-                        )}
+                      <input
+                        className="wnt-input"
+                        placeholder="시험 이름 (예: 1학기 기말고사)"
+                        value={exam.name}
+                        onChange={(e) => setExam({ ...exam, name: e.target.value })}
+                        onBlur={() => saveData({ exam })}
+                      />
+                      <div className="wnt-exam-rows">
+                        {(exam.days || []).map((d, i) => {
+                          const n = d.date ? daysFromToday(parseDate(d.date)) : null;
+                          return (
+                            <div key={i} className="wnt-exam-row">
+                              <input
+                                className="wnt-input wnt-exam-date"
+                                type="date"
+                                value={d.date || ""}
+                                onChange={(e) => { const next = { ...exam, days: exam.days.map((x, idx) => (idx === i ? { ...x, date: e.target.value } : x)) }; saveData({ exam: next }); }}
+                              />
+                              <input
+                                className="wnt-input"
+                                placeholder="과목 (예: 통합사회1, 한국사1)"
+                                value={d.subjects || ""}
+                                onChange={(e) => setExam({ ...exam, days: exam.days.map((x, idx) => (idx === i ? { ...x, subjects: e.target.value } : x)) })}
+                                onBlur={() => saveData({ exam })}
+                              />
+                              {n != null && (n >= 0
+                                ? <span className="wnt-dday sm">{n === 0 ? "오늘" : "D-" + n}</span>
+                                : <span className="wnt-dday sm past">지남</span>)}
+                              <button className="wnt-exam-x" onClick={() => saveData({ exam: { ...exam, days: exam.days.filter((_, idx) => idx !== i) } })} aria-label="삭제">✕</button>
+                            </div>
+                          );
+                        })}
                       </div>
-
-                      {/* 과목 시간표 섹션 (접기) */}
-                      <div className="wnt-exam-sec">
-                        <button className="wnt-exam-sec-head" onClick={() => setTableSecOpen((o) => !o)}>
-                          <span>📚 과목 시간표</span>
-                          <span className="wnt-exam-sec-arrow">{tableSecOpen ? "▴" : "▾"}</span>
-                        </button>
-                        {tableSecOpen && (
-                          <div className="wnt-exam-sec-body">
-                            <input
-                              className="wnt-input"
-                              placeholder="시험 이름 (예: 1학기 기말고사)"
-                              value={exam.name}
-                              onChange={(e) => setExam({ ...exam, name: e.target.value })}
-                              onBlur={() => saveData({ exam })}
-                            />
-                            {(exam.days || []).map((d, i) => (
-                              <div key={i} className="wnt-exam-row">
-                                <input
-                                  className="wnt-input wnt-exam-date"
-                                  type="date"
-                                  value={d.date || ""}
-                                  onChange={(e) => { const next = { ...exam, days: exam.days.map((x, idx) => (idx === i ? { ...x, date: e.target.value } : x)) }; saveData({ exam: next }); }}
-                                />
-                                <input
-                                  className="wnt-input"
-                                  placeholder="과목 (예: 통합사회1, 한국사1)"
-                                  value={d.subjects || ""}
-                                  onChange={(e) => setExam({ ...exam, days: exam.days.map((x, idx) => (idx === i ? { ...x, subjects: e.target.value } : x)) })}
-                                  onBlur={() => saveData({ exam })}
-                                />
-                                <button className="wnt-exam-x" onClick={() => saveData({ exam: { ...exam, days: exam.days.filter((_, idx) => idx !== i) } })} aria-label="삭제">✕</button>
-                              </div>
-                            ))}
-                            <button className="wnt-mini strong" onClick={() => saveData({ exam: { ...exam, days: [...(exam.days || []), { date: "", subjects: "" }] } })}>＋ 시험일 추가</button>
-                          </div>
-                        )}
-                      </div>
+                      <button className="wnt-mini strong" onClick={() => saveData({ exam: { ...exam, days: [...(exam.days || []), { date: "", subjects: "" }] } })}>＋ 시험일 추가</button>
+                      <p className="wnt-exam-tip">시험 4일을 다 넣어두면, 위 <b>D-day</b>는 가장 가까운 시험 하나만 떠요. 그 날이 지나면 자동으로 다음 시험으로 넘어가요. 🗓️</p>
                     </div>
                   </>
                 )}
@@ -2357,14 +2387,16 @@ export default function WrongNoteTracker() {
               <div className="wnt-due-modal-bell">🔔</div>
               {study.streak > 0 && <div className="wnt-due-modal-streak">🔥 {study.streak}일째 연속 · 오늘도 이어가자!</div>}
               <div className="wnt-due-modal-count">오늘 복습할 오답 <b>{dueList.length}개</b></div>
-              {(() => { const goal = Math.min(dailyGoal || 3, dueList.length); return (
-                <p className="wnt-due-modal-sub">부담 갖지 말고 <b>우선 {goal}개</b>부터 시작하자! 다 풀고 싶으면 쭉 풀어도 돼 ✍️</p>
-              ); })()}
+              <p className="wnt-due-modal-sub">
+                {goalIsAll
+                  ? <>오늘은 <b>전부</b> 풀어볼까? 하나씩 차근차근! ✍️</>
+                  : <>부담 갖지 말고 <b>우선 {goalCount(dueList.length)}개</b>부터 시작하자! 다 풀고 싶으면 쭉 풀어도 돼 ✍️</>}
+              </p>
               <ul className="wnt-due-modal-list">
-                {dueList.slice(0, Math.min(dailyGoal || 3, dueList.length)).map((e) => (
+                {dueList.slice(0, goalCount(dueList.length)).map((e) => (
                   <li key={e.id}><span className="wnt-subj sm" style={{ background: subjColor(e.subject) }}>{e.subject}</span> {e.unit}</li>
                 ))}
-                {dueList.length > (dailyGoal || 3) && <li className="wnt-due-modal-more">그 외 {dueList.length - (dailyGoal || 3)}개 더 있어요</li>}
+                {dueList.length > goalCount(dueList.length) && <li className="wnt-due-modal-more">그 외 {dueList.length - goalCount(dueList.length)}개 더 있어요</li>}
               </ul>
               <div className="wnt-due-modal-btns">
                 <button className="wnt-btn-primary" onClick={() => { setTab("list"); setListView("active"); setFDueOnly(true); setDueModalClosed(true); }}>지금 풀기 →</button>
@@ -2539,10 +2571,10 @@ export default function WrongNoteTracker() {
               return r && r.due;
             }).length;
             if (dueCount === 0) return null;
-            const goal = Math.min(dailyGoal || 3, dueCount);
+            const goal = goalCount(dueCount);
             return (
               <div className="wnt-due-banner">
-                <span>📅 오늘 복습할 오답 <b>{dueCount}개</b> — 우선 <b>{goal}개</b>부터 줄게! 🔥</span>
+                <span>📅 오늘 복습할 오답 <b>{dueCount}개</b> — {goalIsAll ? <>오늘 <b>전부</b> 풀어보자! 🔥</> : <>우선 <b>{goal}개</b>부터 줄게! 🔥</>}</span>
                 <div className="wnt-due-banner-btns">
                   <button className="wnt-mini strong" onClick={() => { setListView("active"); setFDueOnly(true); }}>지금 풀기 →</button>
                   <button className="wnt-due-x" onClick={() => setDueDismiss(true)} aria-label="닫기">✕</button>
@@ -3286,11 +3318,13 @@ export default function WrongNoteTracker() {
             <p className="wnt-set-desc">복습 팝업에서 "우선 N개부터 줄게"라고 안내할 개수예요 (상한선 아님, 더 풀어도 돼요).</p>
             <div className="wnt-goal-row">
               {[3, 5, 10].map((n) => (
-                <button key={n} className={(dailyGoal || 3) === n ? "wnt-mini strong" : "wnt-mini"} onClick={() => saveData({ dailyGoal: n })}>{n}개</button>
+                <button key={n} className={dailyGoal === n ? "wnt-mini strong" : "wnt-mini"} onClick={() => saveData({ dailyGoal: n })}>{n}개</button>
               ))}
-              <input className="wnt-input wnt-goal-input" type="number" min="1" max="99" value={dailyGoal || 3}
+              <button className={goalIsAll ? "wnt-mini strong" : "wnt-mini"} onClick={() => saveData({ dailyGoal: "all" })}>전부 다</button>
+              <input className="wnt-input wnt-goal-input" type="number" min="1" max="99" value={typeof dailyGoal === "number" ? dailyGoal : ""}
+                placeholder="직접"
                 onChange={(e) => { const v = Math.max(1, Math.min(99, parseInt(e.target.value, 10) || 3)); setDailyGoal(v); }}
-                onBlur={() => saveData({ dailyGoal })} />
+                onBlur={() => { if (typeof dailyGoal === "number") saveData({ dailyGoal }); }} />
               <span className="wnt-set-desc" style={{ margin: 0 }}>개</span>
             </div>
           </div>
@@ -3486,6 +3520,10 @@ const css = `
 }
 .wnt-header-dday:hover { border-color: var(--ink); box-shadow: 0 2px 8px rgba(30,42,58,0.07); }
 .wnt-header-dday-num { font-weight: 800; color: var(--ink); font-size: 13px; letter-spacing: 0.03em; font-variant-numeric: tabular-nums; }
+.wnt-header-dday-subj {
+  color: var(--muted); font-weight: 600; font-size: 11px; max-width: 140px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-left: 1px solid var(--line); padding-left: 7px;
+}
 .wnt-motto {
   width: 100%; box-sizing: border-box; margin-top: 12px; padding: 9px 13px;
   font-family: inherit; font-size: 13.5px; color: var(--ink); font-style: italic;
@@ -3742,7 +3780,11 @@ const css = `
 .wnt-dday-wrap .wnt-header-dday { margin-left: 0; }
 .wnt-header-dday.on { border-color: var(--ink); }
 .wnt-dday { background: var(--red); color: #fff; font-size: 12px; font-weight: 800; border-radius: 6px; padding: 2px 8px; }
-.wnt-dday.sm { font-size: 11px; padding: 1px 6px; margin-left: 6px; }
+.wnt-dday.sm { font-size: 11px; padding: 1px 6px; margin-left: 0; flex: 0 0 auto; }
+.wnt-dday.sm.past { background: var(--muted); }
+.wnt-exam-rows { display: flex; flex-direction: column; gap: 8px; }
+.wnt-exam-tip { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin: 2px 0 0; }
+.wnt-exam-tip b { color: var(--red); }
 .wnt-dday-overlay { position: fixed; inset: 0; z-index: 40; }
 .wnt-exam-pop {
   position: absolute; top: calc(100% + 8px); right: 0; z-index: 50;
@@ -3760,8 +3802,9 @@ const css = `
 }
 .wnt-exam-sec-arrow { margin-left: auto; color: var(--muted); font-size: 12px; }
 .wnt-exam-sec-body { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 8px; }
-.wnt-exam-row { display: flex; gap: 6px; align-items: center; }
-.wnt-exam-date { flex: 0 0 140px; }
+.wnt-exam-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.wnt-exam-row .wnt-input { min-width: 0; flex: 1; }
+.wnt-exam-date { flex: 0 0 132px; }
 .wnt-exam-x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px 6px; }
 .wnt-exam-x:hover { color: var(--red); }
 .wnt-exam-listrow { font-size: 12.5px; color: var(--ink); line-height: 1.6; }
@@ -4098,12 +4141,32 @@ const css = `
 
 /* ✍️ 풀이 패드 */
 .pad { margin: 10px 0; width: 100%; }
-.pad-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
-.pad-color {
-  width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; cursor: pointer;
-  box-shadow: 0 0 0 1px var(--line); padding: 0;
+.pad-bar {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 7px 9px;
 }
-.pad-color.on { box-shadow: 0 0 0 2.5px var(--red); }
+.pad-group { display: flex; align-items: center; gap: 4px; }
+.pad-div { width: 1px; align-self: stretch; min-height: 22px; background: var(--line); margin: 0 1px; }
+.pad-color {
+  width: 21px; height: 21px; border-radius: 50%; border: 2px solid #fff; cursor: pointer;
+  box-shadow: 0 0 0 1px var(--line); padding: 0; transition: transform .12s;
+}
+.pad-color:hover { transform: scale(1.08); }
+.pad-color.on { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--ink); }
+.pad-tool {
+  width: 34px; height: 32px; border-radius: 8px; border: 1px solid var(--line);
+  background: #fff; cursor: pointer; font-size: 15px; line-height: 1; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center; transition: border-color .12s, background .12s;
+}
+.pad-tool:hover { border-color: var(--ink); }
+.pad-tool.on { background: var(--ink); border-color: var(--ink); box-shadow: 0 2px 6px rgba(30,42,58,0.18); }
+.pad-w {
+  width: 30px; height: 32px; border-radius: 8px; border: 1px solid var(--line);
+  background: #fff; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+}
+.pad-w:hover { border-color: var(--ink); }
+.pad-w.on { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.pad-w-dot { display: block; border-radius: 50%; background: var(--ink); }
 .pad-wrap { position: relative; border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); }
 .pad-wrap.grid {
   background-image:
