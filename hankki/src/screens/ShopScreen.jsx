@@ -34,6 +34,7 @@ export default function ShopScreen() {
   const { shops, wishlist, shoppingList } = store
   const nav = useNav()
   const [editShops, setEditShops] = useState(false)
+  const [shopForm, setShopForm] = useState(null) // null | {} (new) | shop (edit)
   const [adding, setAdding] = useState(false)
 
   const doneCount = shoppingList.filter((i) => i.done).length
@@ -57,10 +58,16 @@ export default function ShopScreen() {
             <div key={s.id} style={{ position: 'relative' }}>
               <button
                 className="shop-chip press"
-                onClick={() => (editShops ? null : openUrl(s.url))}
+                onClick={() => (editShops ? setShopForm(s) : openUrl(s.url))}
               >
-                <span style={{ fontSize: '1.6rem' }}>{s.emoji || '🛍️'}</span>
-                <span className="nm">{s.name}</span>
+                {s.iconType === 'label' ? (
+                  <TextTile text={s.name} size={54} radius={14} />
+                ) : (
+                  <>
+                    <span style={{ fontSize: '1.7rem' }}>{s.emoji || '🛍️'}</span>
+                    <span className="nm">{s.name}</span>
+                  </>
+                )}
               </button>
               {editShops && (
                 <button
@@ -76,21 +83,16 @@ export default function ShopScreen() {
           <button
             className="shop-chip press"
             style={{ borderStyle: 'dashed', color: 'var(--text-sub)' }}
-            onClick={() => {
-              const name = window.prompt('쇼핑몰 이름 (예: 컬리, 알리)')
-              if (!name || !name.trim()) return
-              const url = window.prompt('주소 (예: https://www.kurly.com)')
-              if (!url || !url.trim()) return
-              store.addShop({ id: newId(), name: name.trim(), url: url.trim(), emoji: '🛍️' })
-            }}
+            onClick={() => setShopForm({})}
           >
             <Icon name="plus" size={22} color="var(--text-sub)" />
             <span className="nm">추가</span>
           </button>
         </div>
         <div className="t-sub" style={{ fontSize: 12, marginTop: 6 }}>
-          한 번 로그인해두면 그 브라우저 세션이 유지돼 다시 로그인하지 않아도 돼요.
+          {editShops ? '아이콘을 눌러 이름·주소·아이콘을 바꿀 수 있어요.' : '한 번 로그인해두면 그 브라우저 세션이 유지돼 다시 로그인하지 않아도 돼요.'}
         </div>
+        {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
 
         {/* 2) 사고 싶은 재료 */}
         <div className="sec-head">
@@ -265,6 +267,52 @@ function WishAdd({ onClose }) {
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
         <button className="press" onClick={onClose} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>취소</button>
         <button className="press" onClick={save} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 600, fontSize: 14 }}>담기</button>
+      </div>
+    </div>
+  )
+}
+
+function ShopEdit({ shop, onClose }) {
+  const store = useStore()
+  const isNew = !shop.id
+  const [f, setF] = useState({
+    name: shop.name || '',
+    url: shop.url || '',
+    emoji: shop.emoji || '🛍️',
+    iconType: shop.iconType || 'emoji',
+  })
+
+  const save = () => {
+    if (!f.name.trim() || !f.url.trim()) return
+    const data = { name: f.name.trim(), url: f.url.trim(), emoji: f.emoji, iconType: f.iconType }
+    if (isNew) store.addShop({ id: newId(), search: '', ...data })
+    else store.updateShop(shop.id, data)
+    onClose()
+  }
+
+  return (
+    <div className="card" style={{ padding: 14, marginTop: 4, marginBottom: 8 }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 10, alignItems: 'flex-start' }}>
+        {f.iconType === 'label' ? (
+          <TextTile text={f.name || '쇼핑몰'} size={64} radius={14} />
+        ) : (
+          <EmojiPicker value={f.emoji} size={64} onChange={(e) => setF((p) => ({ ...p, emoji: e }))} />
+        )}
+        <div style={{ flex: 1 }}>
+          <input className="wa-inp" value={f.name} onChange={(e) => setF((p) => ({ ...p, name: e.target.value }))} placeholder="쇼핑몰 이름 (예: 마켓컬리)" autoFocus />
+          <input className="wa-inp" style={{ marginTop: 8 }} value={f.url} onChange={(e) => setF((p) => ({ ...p, url: e.target.value }))} placeholder="주소 (예: https://www.kurly.com)" inputMode="url" />
+        </div>
+      </div>
+      <div className="segment" style={{ margin: '0 0 10px' }}>
+        <button type="button" className={`seg ${f.iconType === 'emoji' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setF((p) => ({ ...p, iconType: 'emoji' }))}>이모지</button>
+        <button type="button" className={`seg ${f.iconType === 'label' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setF((p) => ({ ...p, iconType: 'label' }))}>글자</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        {!isNew && (
+          <button className="press" onClick={() => { store.removeShop(shop.id); onClose() }} style={{ padding: '11px 14px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 14 }}>삭제</button>
+        )}
+        <button className="press" onClick={onClose} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>취소</button>
+        <button className="press" onClick={save} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 600, fontSize: 14 }}>{isNew ? '추가' : '저장'}</button>
       </div>
     </div>
   )

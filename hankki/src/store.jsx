@@ -6,12 +6,13 @@ const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행�
 
 // 장보기 쇼핑몰 바로가기 기본 목록. url = 홈, search = 재료 검색(‘{q}’에 재료명 치환).
 // 나중에 제휴(어필리에이트) 태그를 이 url/search에 붙이면 그대로 수수료 링크가 됨.
+// iconType: 'emoji' | 'label'(글자 타일). 재료 아이콘과 동일한 방식.
 const DEFAULT_SHOPS = [
-  { id: 'coupang', name: '쿠팡', emoji: '🛒', url: 'https://www.coupang.com', search: 'https://www.coupang.com/np/search?q={q}' },
-  { id: 'kurly', name: '마켓컬리', emoji: '🥬', url: 'https://www.kurly.com', search: 'https://www.kurly.com/search?sword={q}' },
-  { id: 'ssg', name: '이마트몰', emoji: '🏬', url: 'https://emart.ssg.com', search: 'https://emart.ssg.com/search.ssg?query={q}' },
-  { id: 'naver', name: '네이버쇼핑', emoji: '🟢', url: 'https://shopping.naver.com', search: 'https://search.shopping.naver.com/search/all?query={q}' },
-  { id: 'oasis', name: '오아시스', emoji: '🌿', url: 'https://www.oasis.co.kr', search: 'https://www.oasis.co.kr/product/search?keyword={q}' },
+  { id: 'coupang', name: '쿠팡', emoji: '🛒', iconType: 'emoji', url: 'https://www.coupang.com', search: 'https://www.coupang.com/np/search?q={q}' },
+  { id: 'kurly', name: '마켓컬리', emoji: '🥬', iconType: 'emoji', url: 'https://www.kurly.com', search: 'https://www.kurly.com/search?sword={q}' },
+  { id: 'ssg', name: '이마트몰', emoji: '🏬', iconType: 'emoji', url: 'https://emart.ssg.com', search: 'https://emart.ssg.com/search.ssg?query={q}' },
+  { id: 'naver', name: '네이버쇼핑', emoji: '🟢', iconType: 'emoji', url: 'https://shopping.naver.com', search: 'https://search.shopping.naver.com/search/all?query={q}' },
+  { id: 'oasis', name: '오아시스', emoji: '🌿', iconType: 'emoji', url: 'https://www.oasis.co.kr', search: 'https://www.oasis.co.kr/product/search?keyword={q}' },
 ]
 
 function migrateShopping() {
@@ -119,6 +120,12 @@ function reducer(state, action) {
       if (!action.shop?.name || !action.shop?.url) return state
       return { ...state, shops: [...state.shops, action.shop] }
     }
+    case 'updateShop': {
+      return {
+        ...state,
+        shops: state.shops.map((s) => (s.id === action.id ? { ...s, ...action.patch } : s)),
+      }
+    }
     case 'removeShop': {
       return { ...state, shops: state.shops.filter((s) => s.id !== action.id) }
     }
@@ -197,6 +204,7 @@ export function StoreProvider({ children }) {
     clearAll: useCallback(() => dispatch({ type: 'clear' }), []),
     reset: useCallback(() => dispatch({ type: 'reset' }), []),
     addShop: useCallback((shop) => dispatch({ type: 'addShop', shop }), []),
+    updateShop: useCallback((id, patch) => dispatch({ type: 'updateShop', id, patch }), []),
     removeShop: useCallback((id) => dispatch({ type: 'removeShop', id }), []),
     addWish: useCallback((item) => dispatch({ type: 'addWish', item }), []),
     updateWish: useCallback((id, patch) => dispatch({ type: 'updateWish', id, patch }), []),

@@ -7,10 +7,18 @@ import { TAG_LIST } from '../data/seed'
 import { dateLabel } from '../utils'
 
 export default function MyRecipesScreen() {
-  const { recipes, folders, addFolder } = useStore()
+  const { recipes, folders, addFolder, removeRecipe } = useStore()
   const nav = useNav()
   const [view, setView] = useState('grid') // grid | folders
   const [folder, setFolder] = useState('전체')
+  const [edit, setEdit] = useState(false)
+
+  const del = (r) => {
+    if (window.confirm(`'${r.title}' 레시피를 삭제할까요?`)) {
+      removeRecipe(r.id)
+      nav.showToast('레시피를 삭제했어요')
+    }
+  }
 
   const sorted = useMemo(() => recipes.filter((r) => r.status === 'sorted').sort((a, b) => b.savedAt - a.savedAt), [recipes])
   const list = folder === '전체' ? sorted : sorted.filter((r) => (r.folder || r.category) === folder)
@@ -20,7 +28,12 @@ export default function MyRecipesScreen() {
     <>
       <div className="topbar">
         <div className="h-title">내 레시피</div>
-        <div style={{ display: 'flex', gap: 4 }}>
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+          {view === 'grid' && (
+            <button className="t-more press" style={{ marginRight: 4, fontSize: 14 }} onClick={() => setEdit((v) => !v)}>
+              {edit ? '완료' : '편집'}
+            </button>
+          )}
           <button className="icon-btn press" onClick={() => nav.go('search')} aria-label="검색"><Icon name="search" size={22} /></button>
         </div>
       </div>
@@ -47,14 +60,21 @@ export default function MyRecipesScreen() {
             ) : (
               <div className="grid2">
                 {list.map((r) => (
-                  <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
-                    <Thumb recipe={r} ratio="1/1" radius={16} />
-                    {r.favorite && (
-                      <div className="fav-dot"><Icon name="bookmark" size={16} color="var(--brown)" style={{ fill: 'var(--brown)' }} /></div>
+                  <div key={r.id} className="grid-card" style={{ position: 'relative' }}>
+                    <button className="press" style={{ textAlign: 'left', width: '100%' }} onClick={() => (edit ? del(r) : nav.push({ name: 'detail', id: r.id }))}>
+                      <Thumb recipe={r} ratio="1/1" radius={16} />
+                      {r.favorite && !edit && (
+                        <div className="fav-dot"><Icon name="bookmark" size={16} color="var(--brown)" style={{ fill: 'var(--brown)' }} /></div>
+                      )}
+                      <div className="name">{r.title}</div>
+                      <div className="date">{dateLabel(r.savedAt)}</div>
+                    </button>
+                    {edit && (
+                      <button className="card-del press" onClick={() => del(r)} aria-label="삭제">
+                        <Icon name="x" size={16} color="#fff" stroke={2.6} />
+                      </button>
                     )}
-                    <div className="name">{r.title}</div>
-                    <div className="date">{dateLabel(r.savedAt)}</div>
-                  </button>
+                  </div>
                 ))}
               </div>
             )}
