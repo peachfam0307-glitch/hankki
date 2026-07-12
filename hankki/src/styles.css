@@ -850,3 +850,70 @@ img {
   max-width: 88%;
   text-align: center;
 }
+
+/* ── 요리 타이머 바 ── */
+.timer-bar {
+  position: absolute; left: 12px; right: 12px; z-index: 40;
+  background: var(--brown); color: #fff;
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 8px 24px rgba(60, 45, 30, 0.28);
+  animation: slideUpBar 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.timer-bar.done { background: #b5502f; animation: slideUpBar 0.28s both, pulseBar 1s ease-in-out infinite; }
+@keyframes pulseBar { 0%, 100% { box-shadow: 0 8px 24px rgba(181, 80, 47, 0.42); } 50% { box-shadow: 0 8px 32px rgba(181, 80, 47, 0.72); } }
+@keyframes slideUpBar { from { transform: translateY(28px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.timer-bar-fill { position: absolute; top: 0; bottom: 0; left: 0; background: rgba(255, 255, 255, 0.15); transition: width 0.3s linear; }
+.timer-bar-in { position: relative; display: flex; align-items: center; gap: 10px; padding: 11px 12px; }
+.tb-emoji { font-size: 22px; flex: 0 0 auto; }
+.tb-label { font-size: 12px; opacity: 0.82; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-time { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.tb-btn { flex: 0 0 auto; background: rgba(255, 255, 255, 0.16); color: #fff; font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 11px; display: flex; align-items: center; justify-content: center; }
+.tb-btn.primary { background: rgba(255, 255, 255, 0.26); }
+
+/* 타이머 세팅 시트 */
+.timer-presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.timer-preset { padding: 14px 0; border-radius: 14px; background: var(--cream); font-size: 15px; font-weight: 700; color: var(--brown); transition: transform 0.08s ease; }
+.timer-preset:active { transform: scale(0.95); }
+.timer-custom { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; }
+.timer-stepper { display: flex; align-items: center; gap: 10px; background: var(--cream); border-radius: 14px; padding: 8px 10px; }
+.timer-stepper button { width: 30px; height: 30px; border-radius: 9px; background: #fff; display: flex; align-items: center; justify-content: center; }
+.ts-val { min-width: 50px; text-align: center; font-size: 14px; color: var(--text); }
+.ts-val b { font-size: 20px; font-weight: 800; }
+
+/* 알림음 칩 */
+.sound-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.sound-chip { display: flex; align-items: center; gap: 6px; padding: 9px 13px; border-radius: 999px; background: var(--cream); font-size: 13px; font-weight: 600; color: var(--text); transition: transform 0.08s ease; }
+.sound-chip.on { background: var(--cream-deep); box-shadow: inset 0 0 0 2px var(--sand); }
+.sound-chip:active { transform: scale(0.94); }
+
+/* 인분 조절 */
+.serv-row { display: flex; align-items: center; gap: 10px; margin: 2px 0 12px; }
+.serv-label { font-size: 13px; color: var(--text-sub); font-weight: 600; }
+.serv-btn { width: 30px; height: 30px; border-radius: 9px; background: var(--cream); display: flex; align-items: center; justify-content: center; transition: transform 0.08s ease; }
+.serv-btn:active { transform: scale(0.9); }
+.serv-val { font-size: 15px; font-weight: 800; color: var(--text); min-width: 54px; text-align: center; }
+.serv-reset { font-size: 12px; color: var(--text-sub); text-decoration: underline; margin-left: 2px; }
+
+/* 고스트 버튼 */
+.btn-ghost { background: var(--cream); color: var(--brown); font-weight: 700; font-size: 15px; border-radius: 14px; padding: 15px 0; transition: transform 0.08s ease; }
+.btn-ghost:active { transform: scale(0.97); }
+
+/* ── 요리 모드 (풀스크린) ── */
+.cook { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; padding-top: var(--safe-top); }
+.cook-top { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+.cook-title { flex: 1; text-align: center; font-size: 15px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cook-ing-btn { flex: 0 0 auto; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 13px; padding: 9px 14px; border-radius: 12px; }
+.cook-progress { display: flex; gap: 5px; padding: 6px 16px 0; }
+.cp-seg { flex: 1; height: 5px; border-radius: 3px; background: var(--cream-deep); transition: background 0.2s ease; }
+.cp-seg.on { background: var(--brown); }
+.cook-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 26px; gap: 24px; }
+.cook-stepno { font-size: 14px; font-weight: 800; color: var(--brown); letter-spacing: 0.04em; }
+.cook-stepno span { color: var(--sand); }
+.cook-steptext { font-size: 24px; line-height: 1.5; font-weight: 600; color: var(--text); word-break: keep-all; }
+.cook-timer { display: inline-flex; align-items: center; gap: 7px; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 14px; padding: 12px 18px; border-radius: 14px; transition: transform 0.08s ease; }
+.cook-timer:active { transform: scale(0.96); }
+.cook-nav { display: flex; gap: 10px; padding: 12px 16px calc(16px + var(--safe-bottom)); }
+.cook-navbtn { flex: 1; padding: 16px 0; border-radius: 15px; font-size: 16px; font-weight: 700; background: var(--cream); color: var(--text); transition: transform 0.08s ease; }
+.cook-navbtn.primary { background: var(--brown); color: #fff; flex: 1.4; }
+.cook-navbtn:disabled { opacity: 0.4; }
+.cook-navbtn:active { transform: scale(0.97); }

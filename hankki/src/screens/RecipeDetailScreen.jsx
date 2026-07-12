@@ -4,13 +4,19 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import SourceBadge from '../components/SourceBadge'
+import TimerSheet from '../components/TimerSheet'
+import { scaleIngredient } from '../scale'
 import { SOURCES } from '../data/seed'
 
 export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems } = useStore()
   const nav = useNav()
   const [menu, setMenu] = useState(false)
+  const [timer, setTimer] = useState(false)
   const r = recipes.find((x) => x.id === id)
+  const baseServings = r?.servings || 0
+  const [servings, setServings] = useState(baseServings || 1)
+  const ratio = baseServings ? servings / baseServings : 1
 
   if (!r) {
     return (
@@ -113,16 +119,25 @@ export default function RecipeDetailScreen({ id }) {
               <button
                 className="mini-buy press"
                 onClick={() => {
-                  addShopItems(r.ingredients)
+                  addShopItems(r.ingredients.map((ing) => scaleIngredient(ing, ratio)))
                   nav.showToast('재료를 장보기 리스트에 담았어요 🛒')
                 }}
               >
-                🛒 장보기 담기
+                장보기 담기
               </button>
             </div>
+            {baseServings > 0 && (
+              <div className="serv-row">
+                <span className="serv-label">인분</span>
+                <button className="serv-btn press" onClick={() => setServings((v) => Math.max(1, v - 1))} aria-label="줄이기"><Icon name="minus" size={16} color="var(--brown)" /></button>
+                <span className="serv-val">{servings}인분</span>
+                <button className="serv-btn press" onClick={() => setServings((v) => Math.min(20, v + 1))} aria-label="늘리기"><Icon name="plus" size={16} color="var(--brown)" /></button>
+                {servings !== baseServings && <button className="serv-reset press" onClick={() => setServings(baseServings)}>기본 {baseServings}인분</button>}
+              </div>
+            )}
             <div>
               {r.ingredients.map((ing, i) => (
-                <div key={i} className="ing">{ing}</div>
+                <div key={i} className="ing">{scaleIngredient(ing, ratio)}</div>
               ))}
             </div>
           </>
@@ -130,7 +145,10 @@ export default function RecipeDetailScreen({ id }) {
 
         {r.steps?.length > 0 && (
           <>
-            <div className="h-section" style={{ marginTop: 26, marginBottom: 6 }}>만드는 법</div>
+            <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
+              <div className="h-section">만드는 법</div>
+              <button className="mini-buy press" onClick={() => setTimer(true)}>⏱ 타이머</button>
+            </div>
             <div>
               {r.steps.map((s, i) => (
                 <div key={i} className="step">
@@ -169,10 +187,23 @@ export default function RecipeDetailScreen({ id }) {
         )}
       </div>
 
-      {/* 하단 만들었어요 */}
-      <div className="action-bar">
-        <button className="btn-primary press" onClick={onCook}>만들었어요! 🎉</button>
+      {/* 하단 액션 — 요리 시작 / 만들었어요 */}
+      <div className="action-bar" style={{ display: 'flex', gap: 10 }}>
+        {r.steps?.length > 0 && (
+          <button className="btn-primary press" style={{ flex: 1 }} onClick={() => nav.push({ name: 'cook', id: r.id })}>
+            요리 시작 →
+          </button>
+        )}
+        <button
+          className={r.steps?.length > 0 ? 'btn-ghost press' : 'btn-primary press'}
+          style={{ flex: r.steps?.length > 0 ? '0 0 auto' : 1, paddingLeft: 18, paddingRight: 18 }}
+          onClick={onCook}
+        >
+          만들었어요 🎉
+        </button>
       </div>
+
+      {timer && <TimerSheet label={r.title} onClose={() => setTimer(false)} />}
 
       {menu && (
         <div className="sheet-mask" onClick={() => setMenu(false)}>

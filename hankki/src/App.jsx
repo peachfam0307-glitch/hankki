@@ -6,6 +6,7 @@ import { ocrImage } from './ocr'
 import { parseRecipeText } from './parseRecipe'
 import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
+import TimerBar from './components/TimerBar'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
@@ -18,6 +19,7 @@ import InboxScreen from './screens/InboxScreen'
 import FavoritesScreen from './screens/FavoritesScreen'
 import CookedScreen from './screens/CookedScreen'
 import ShoppingScreen from './screens/ShoppingScreen'
+import CookScreen from './screens/CookScreen'
 
 const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, shop: ShopScreen, profile: ProfileScreen }
 
@@ -111,6 +113,7 @@ export default function App() {
         ))}
 
         {!top && <BottomNav active={tab} onChange={go} />}
+        <TimerBar bottom={top ? 'calc(84px + var(--safe-bottom))' : 'calc(66px + var(--safe-bottom))'} />
         {toast && <div className="toast">{toast}</div>}
       </div>
     </NavCtx.Provider>
@@ -152,6 +155,8 @@ function renderScreen(s) {
       return <CookedScreen />
     case 'shopping':
       return <ShoppingScreen />
+    case 'cook':
+      return <CookScreen id={s.id} />
     default:
       return null
   }
