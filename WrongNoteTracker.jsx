@@ -66,6 +66,27 @@ const STATUS = [
   { label: "완전 정복", short: "정복" },
 ];
 
+// 복습 진행 트랙: 미복습 → 1차 → 2차 → 완전 정복 (현재 단계 강조)
+function ReviewTrack({ status }) {
+  const conquered = status >= 3;
+  return (
+    <div className="wnt-track">
+      {STATUS.map((s, i) => {
+        const state = conquered
+          ? (i === 3 ? "crown" : "golddone")
+          : (i < status ? "done" : i === status ? "here" : "todo");
+        const mark = state === "done" || state === "golddone" ? "✓" : state === "crown" ? "👑" : "";
+        return (
+          <div key={s.label} className={"wnt-track-node " + state + (i <= status ? " reached" : "")}>
+            <span className="wnt-track-dot">{mark}</span>
+            <span className="wnt-track-label">{s.short}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const STORAGE_KEY = "wrongnote:data:v1";
 
 const TEACHER_PERSONA =
@@ -885,6 +906,7 @@ export default function WrongNoteTracker() {
   const [dueDismiss, setDueDismiss] = useState(false); // 오늘 복습 안내 배너 닫기
   const [dueModalClosed, setDueModalClosed] = useState(false); // 오늘 복습 팝업 닫기
   const [crownShow, setCrownShow] = useState(false); // 정복 왕관 축하 연출
+  const [verdictMsg, setVerdictMsg] = useState({}); // 자기 채점 후 잠깐 뜨는 확인 메시지
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState(false);
   const [tab, setTab] = useState("list"); // list | flash | variant | stats | settings
@@ -1335,6 +1357,24 @@ export default function WrongNoteTracker() {
     if (conquering) celebrateCrown();
   }
 
+  // 오답기록 카드에서 '스스로 채점' — 맞으면 한 단계 위로, 틀리면 '다시 풀기'에 담고 잠깐 확인 메시지
+  function reviewMark(entry, ok) {
+    const id = entry.id;
+    if (ok) {
+      const conquering = entry.status >= 2;
+      advanceStatus(id);
+      flashVerdict(id, conquering ? "👑 완전 정복! 축하해요 소이 😊" : "✨ " + STATUS[Math.min(entry.status + 1, 3)].short + " 복습 완료!");
+    } else {
+      flashWrong(id);
+      flashVerdict(id, "🔁 '다시 풀기'에 담았어요 — 괜찮아, 한 번 더!");
+    }
+  }
+
+  function flashVerdict(id, msg) {
+    setVerdictMsg((m) => ({ ...m, [id]: msg }));
+    setTimeout(() => setVerdictMsg((m) => { const n = { ...m }; delete n[id]; return n; }), 2600);
+  }
+
   function celebrateCrown() {
     setCrownShow(true);
     setTimeout(() => setCrownShow(false), 2400);
@@ -1538,48 +1578,38 @@ export default function WrongNoteTracker() {
     });
   }
 
-  function buildContext(entry, imgCount, mode) {
-    const base =
-      "너는 대한민국 자사고 수준 고등학생의 오답 복습을 돕는 과외 선생님이야. 아래는 학생이 기록한 오답 정보야.\n\n" +
-      `[과목] ${entry.subject}\n` +
-      `[단원·주제] ${entry.unit}\n` +
-      `[출처] ${entry.source || "미기재"}\n` +
-      `[학생이 기록한 틀린 이유] ${(entry.tags || []).join(", ") || "미기재"}\n` +
-      `[학생 메모] ${entry.memo || "없음"}\n` +
-      "\n중요: 문제 원문(사진)은 여기 없어. 위 단원·유형·학생이 적은 실수 정보만으로 도와줘. 문제를 못 봤다며 사진을 요구하지 말고, 이 단원에서 그 실수가 나오는 전형적인 상황을 가정해 접근법·핵심 개념·자주 걸리는 함정을 알려줘. 특정 숫자·조건이 꼭 필요하면 학생에게 짧게 되물어봐.\n" +
-      "공통 규칙: 친근한 존댓말로 간결하게. 확실하지 않은 내용은 추측하지 말고 그렇다고 말해. 수식은 LaTeX 없이 일반 텍스트로 읽기 쉽게 써. 학생이 기록한 틀린 이유와 관련된 함정을 특히 짚어줘.\n\n";
-    if (mode === "direct") {
-      return base + "모드: 학생이 풀이 방향을 먼저 보길 원했어. 이 유형의 표준 풀이 흐름을 단계별로 명확하게 보여주고, 각 단계의 근거를 함께 써. 이후 학생의 추가 질문에 답해.";
-    }
-    return base + "모드: 소크라테스식. 정답이나 전체 풀이를 바로 알려주지 마. 힌트는 한 번에 하나씩만 주고, 학생이 다음 단계를 스스로 생각하도록 짧은 질문으로 유도해. 학생이 '전체 풀이'를 명확히 요청한 경우에만 단계별 풀이를 전부 보여줘.";
-  }
-
-  function chooseAiMode(entry, mode) {
-    setAiMode((m) => ({ ...m, [entry.id]: mode }));
-    // 두 모드 모두 즉시 첫 응답을 보내 '아무 반응 없음'을 없앰
-    if (mode === "direct") sendAi(entry, "이 문제의 전체 풀이를 단계별로 보여주세요", mode);
-    else sendAi(entry, "이 문제를 어디서부터 접근하면 좋을지 힌트 하나만 주세요", mode);
-  }
-
-  // AI 도우미: 사진 문제를 Claude 앱에서 제대로 물어보기 위한 프롬프트
-  function aiBridgePrompt(entry) {
+  // AI 도우미 컨텍스트: 간결한 문제집 해설지 스타일 접근법 힌트 (최종 답은 절대 안 줌)
+  function buildContext(entry) {
     return (
-      "이 문제 풀이를 도와줘 (이 채팅에 문제 사진을 첨부할게).\n" +
-      `[과목] ${entry.subject} / [단원] ${entry.unit}\n` +
-      `[내가 기록한 실수] ${(entry.tags || []).join(", ") || "미기재"}\n` +
-      (entry.memo ? `[메모] ${entry.memo}\n` : "") +
-      "먼저 힌트로 방향을 잡아주고, 내가 '전체 풀이 보여줘'라고 하면 단계별 풀이를 알려줘."
+      "너는 간결하고 정확한 문제집 해설지를 쓰는 자사고 수준 과외 선생님이야. 학생의 오답 복습을 도와.\n\n" +
+      `[과목] ${entry.subject}\n[단원·주제] ${entry.unit}\n` +
+      ((entry.tags || []).length ? `[학생이 기록한 실수] ${entry.tags.join(", ")}\n` : "") +
+      (entry.memo ? `[학생 메모] ${entry.memo}\n` : "") +
+      (entry.problem
+        ? `[문제]\n${entry.problem}\n`
+        : "[참고] 문제 원문(사진)은 여기 없어. 이 단원·유형과 학생 실수를 기준으로 도와줘 (사진을 요구하지 마).\n") +
+      "\n[스타일] 좋은 문제집 해설지처럼 군더더기 없이, '핵심 아이디어 → 접근 순서' 위주로 짧고 정확하게.\n" +
+      "[중요 규칙] ⚠️ 최종 답(숫자·번호·값)은 절대 바로 말하지 마 — 학생이 스스로 풀도록 접근 방향·핵심 개념·조심할 함정만. 확실하지 않으면 솔직히 '이 부분은 확인이 필요해요'라고 하고, 틀린 내용을 자신있게 말하지 마. 친근한 존댓말, 수식은 일반 텍스트."
     );
   }
 
-  function resetAiMode(id) {
-    setAiMode((m) => ({ ...m, [id]: null }));
+  // AI 도우미: 정확한 풀이가 필요할 때 질문방(클로드 앱)으로 넘길 프롬프트
+  function aiBridgePrompt(entry) {
+    return (
+      (entry.problem ? `이 문제 풀이를 도와줘.\n[문제]\n${entry.problem}\n` : "이 문제 풀이를 도와줘 (이 채팅에 문제 사진을 첨부할게).\n") +
+      `[과목] ${entry.subject} / [단원] ${entry.unit}\n` +
+      ((entry.tags || []).length ? `[내가 기록한 실수] ${entry.tags.join(", ")}\n` : "") +
+      (entry.memo ? `[메모] ${entry.memo}\n` : "") +
+      "먼저 접근 방향을 잡아주고, 내가 '전체 풀이 보여줘'라고 하면 검산까지 한 정확한 풀이를 단계별로 알려줘."
+    );
+  }
+
+  function resetAiHelper(id) {
     setAiChats((c) => ({ ...c, [id]: [] }));
   }
 
-  async function sendAi(entry, presetText, modeOverride) {
+  async function sendAi(entry, presetText) {
     const id = entry.id;
-    const mode = modeOverride || aiMode[id] || "socratic";
     const text = (presetText != null ? presetText : aiInput[id] || "").trim();
     if (!text || aiLoading[id]) return;
 
@@ -1593,7 +1623,7 @@ export default function WrongNoteTracker() {
       const messages = newHistory.map((m, idx) => {
         if (idx === 0 && m.role === "user") {
           const blocks = imgBlocks(imgs);
-          blocks.push({ type: "text", text: buildContext(entry, imgs.length, mode) + "\n\n학생: " + m.text });
+          blocks.push({ type: "text", text: buildContext(entry) + "\n\n학생: " + m.text });
           return { role: "user", content: blocks };
         }
         return { role: m.role, content: m.text };
@@ -1604,16 +1634,53 @@ export default function WrongNoteTracker() {
         [id]: [...newHistory, { role: "assistant", text: reply || "응답을 받지 못했어요. 다시 시도해 주세요." }],
       }));
     } catch (err) {
-      const ok = copyText(buildContext(entry, 0, mode) + "\n\n학생: " + text);
+      const ok = copyText(buildContext(entry) + "\n\n학생: " + text);
       setAiChats((c) => ({
         ...c,
         [id]: [...newHistory, { role: "assistant", text: (ok
-          ? "연결이 잠시 원활하지 않아 질문을 복사해뒀어요. 한 번 더 전송해 보고, 계속 안 되면 새 채팅에 붙여넣기 하면 (문제 사진도 함께 첨부) 답을 받을 수 있어요."
+          ? "연결이 잠시 원활하지 않아 질문을 복사해뒀어요. 한 번 더 전송해 보거나, 아래 '📲 질문방'에서 물어보세요."
           : "연결에 실패했어요. 잠시 후 다시 시도해 주세요.") + ((err && (err.detail || err.message)) ? "\n\n[진단] " + (err.detail || err.message) : "") }],
       }));
     } finally {
       setAiLoading((l) => ({ ...l, [id]: false }));
     }
+  }
+
+  // AI 도우미 패널 (오답기록·변형문제 공용): 해설지 스타일 접근법 힌트 + 질문방 넘기기
+  function aiHelperPanel(e) {
+    const chat = aiChats[e.id] || [];
+    return (
+      <div className="wnt-ai">
+        <div className="wnt-panel-head">🧭 접근법 힌트 <span>최종 답은 안 줘요 · 방향만 (참고용)</span></div>
+        <div className="wnt-ai-msgs">
+          {chat.length === 0 && (
+            <div className="wnt-ai-starters">
+              <button className="wnt-mini" onClick={() => sendAi(e, "이 문제를 어디서부터 접근하면 좋을지 방향 힌트 하나만 주세요")}>🧭 접근법 힌트</button>
+              <button className="wnt-mini" onClick={() => sendAi(e, "이 유형에서 자주 걸리는 함정을 짚어주세요")}>⚠️ 함정 짚기</button>
+            </div>
+          )}
+          {chat.map((m, i) => (
+            <div key={i} className={m.role === "user" ? "wnt-msg me" : "wnt-msg ai"}>{m.text}</div>
+          ))}
+          {aiLoading[e.id] && <div className="wnt-msg ai">생각 중…</div>}
+        </div>
+        <div className="wnt-ai-inputrow">
+          <input
+            className="wnt-input"
+            placeholder="내 생각이나 궁금한 걸 입력…"
+            value={aiInput[e.id] || ""}
+            onChange={(ev) => setAiInput((v) => ({ ...v, [e.id]: ev.target.value }))}
+            onKeyDown={(ev) => { if (ev.key === "Enter" && !ev.nativeEvent.isComposing) sendAi(e); }}
+          />
+          <button className="wnt-btn-primary" onClick={() => sendAi(e)} disabled={aiLoading[e.id]}>전송</button>
+        </div>
+        <div className="wnt-ai-tip">
+          정확한 풀이·정답은 →
+          <button className="wnt-mini idea" onClick={() => openInClaudeApp(aiBridgePrompt(e))}>📲 질문방에서 물어보기</button>
+          {chat.length > 0 && <button className="wnt-mini" onClick={() => resetAiHelper(e.id)}>대화 초기화</button>}
+        </div>
+      </div>
+    );
   }
 
   // ---- 발상 카드 ----
@@ -1860,7 +1927,7 @@ export default function WrongNoteTracker() {
         const rawText = humanizeReply(reply) || "응답이 비어 있었어요. 🎯 출제하기를 한 번 더 눌러주세요.";
         setVtProblems(more ? [...vtProblems, { level: "상", question: rawText, hint: "", answer: "" }] : [{ level: "상", question: rawText, hint: "", answer: "" }]);
       }
-      if (!more) { setVtReveal({}); setVtPadOpen({}); }
+      if (!more) { setVtReveal({}); setVtPadOpen({}); setVtCollapsed({}); setVtPadNonce({}); clearVtAi(); }
     } catch (err) {
       let bp = "";
       if (vtEntryId !== "sum") {
@@ -1878,6 +1945,11 @@ export default function WrongNoteTracker() {
     }
   }
 
+  // 변형문제 AI 도우미(vt-*) 대화·열림 상태만 정리 (오답기록 도우미 상태는 유지)
+  function clearVtAi() {
+    const strip = (o) => { const n = {}; for (const k in o) if (!String(k).startsWith("vt-")) n[k] = o[k]; return n; };
+    setAiOpen(strip); setAiChats(strip);
+  }
   // 변형문제: 다시 풀기(풀이 패드 초기화, 정답 숨김) / 치우기(목록에서 제거)
   function retryVariant(i) {
     setVtPadNonce((n) => ({ ...n, [i]: (n[i] || 0) + 1 }));
@@ -1886,7 +1958,7 @@ export default function WrongNoteTracker() {
   }
   function hideVariant(i) {
     setVtProblems((ps) => ps.filter((_, idx) => idx !== i));
-    setVtPadOpen({}); setVtReveal({}); setVtCollapsed({}); setVtPadNonce({});
+    setVtPadOpen({}); setVtReveal({}); setVtCollapsed({}); setVtPadNonce({}); clearVtAi();
   }
 
   // 변형문제 필기 채점 (짧게: ⭕/❌ + 1~2줄)
@@ -2773,21 +2845,16 @@ export default function WrongNoteTracker() {
                           )}
                         </label>
                       )}
-                      {e.hasImage && (
-                        <button className="wnt-mini variant" onClick={() => explainProblem(e)} disabled={explainLoading[e.id]}>
-                          {explainLoading[e.id] ? "풀이 분석 중…" : "📖 문제 풀이"}
-                        </button>
-                      )}
                       <button className="wnt-mini ai" onClick={() => toggleAi(e.id)}>
-                        🤖 AI 도우미{aiOpen[e.id] ? " ▲" : ""}
+                        🧭 접근법 힌트{aiOpen[e.id] ? " ▲" : ""}
                       </button>
-                      <HelpTip text="🤖 AI 도우미: 이 문제를 정확히 도와주려면 사진을 봐야 해서, 눌러서 나오는 버튼으로 골라요 — 📥 문제 사진 저장 후 📲 질문방(클로드 앱)에서 사진 첨부해 물어봐요. 📖 문제 풀이·✍️ 풀이 패드 채점도 같은 방식이에요." />
+                      <HelpTip text="🧭 접근법 힌트: 최종 답은 안 주고 '어떻게 접근하는지' 방향·핵심 개념·함정만 짚어줘요 (참고용). 정확한 풀이·정답이 필요하면 그 안의 📲 질문방 버튼으로 넘겨요. ✍️ 풀이 패드로 직접 풀고 교재 해설과 비교해 자기채점하세요." />
                     </div>
                   )}
 
                   {/* 기록 카드에서 바로 풀기 — 좌우분할 풀이 패드 */}
                   {!selectMode && cardPadOpen[e.id] && (
-                    <SolvePad key={"cardpad-" + e.id} gradeFn={flashGradeFn(e)} solveFn={e.hasImage ? flashSolveFn(e) : null}
+                    <SolvePad key={"cardpad-" + e.id} solveFn={null}
                       problem={e.hasImage ? (
                         <div className="wnt-flash-imgs in-pad">
                           {imageCache[e.id]
@@ -2798,17 +2865,6 @@ export default function WrongNoteTracker() {
                         </div>
                       ) : null}
                       bridge={() => "너는 채점 선생님이야. 첨부한 이미지 중 손글씨가 내 풀이고, 나머지는 문제 사진이야.\n과목: " + e.subject + " / 단원: " + e.unit + "\n먼저 짧게 채점만 해줘: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 내가 '풀이도 짧게 알려줘'라고 하면 3~4줄 간략 풀이를 줘."} />
-                  )}
-
-                  {/* 문제 풀이(AI 해설) 결과 */}
-                  {!selectMode && explainResult[e.id] && (
-                    <div className="wnt-solve-box">
-                      <div className="wnt-panel-head">📖 문제 풀이</div>
-                      <p className="wnt-solve-text">{explainResult[e.id]}</p>
-                      {explainBridge[e.id] && (
-                        <button className="wnt-mini idea" onClick={() => openInClaudeApp(explainBridge[e.id])}>📲 Claude 앱에서 풀이 받기</button>
-                      )}
-                    </div>
                   )}
 
                   {/* 풀이 남기기 폼 */}
@@ -2884,41 +2940,39 @@ export default function WrongNoteTracker() {
                     </div>
                   )}
 
-                  {/* AI 풀이 도우미 */}
-                  {/* AI 도우미 — 버튼으로 선택: 사진 저장 / 질문방(클로드 앱)에서 물어보기 */}
-                  {!selectMode && aiOpen[e.id] && (
-                    <div className="wnt-ai">
-                      <div className="wnt-panel-head">🤖 AI 도우미</div>
-                      <p className="wnt-ai-q">📷 이 문제를 정확히 도와주려면 문제 사진을 봐야 해요. 아래에서 골라요:</p>
-                      <ol className="wnt-ai-steps">
-                        <li><b>📥 문제 사진 저장</b>으로 사진첩에 저장</li>
-                        <li><b>📲 질문방에서 물어보기</b> → 질문이 복사되고 질문방이 열려요</li>
-                        <li>질문방 입력창의 <b>＋</b>로 저장한 사진 첨부 → 전송</li>
-                      </ol>
-                      <div className="wnt-ai-accurate-btns">
-                        <button className="wnt-mini" onClick={() => savePhoto(e.id)} disabled={!e.hasImage || !imageCache[e.id]}>📥 문제 사진 저장</button>
-                        <button className="wnt-mini idea" onClick={() => openInClaudeApp(aiBridgePrompt(e))}>📲 질문방에서 물어보기</button>
-                        <button className="wnt-mini" onClick={() => setAiOpen((o) => ({ ...o, [e.id]: false }))}>닫기</button>
+                  {/* AI 도우미 — 해설지 스타일 접근법 힌트(최종답 X) + 질문방 넘기기 */}
+                  {!selectMode && aiOpen[e.id] && aiHelperPanel(e)}
+
+                  {!selectMode ? (
+                    <div className="wnt-review">
+                      <div className="wnt-review-head">
+                        <span className="wnt-review-title">복습 진행</span>
+                        <HelpTip text="다시 풀어서 맞힐 때마다 미복습 → 1차 → 2차 → 완전 정복으로 한 칸씩 올라가요. 완전 정복하면 왕관 👑! '또 틀렸어요'를 누르면 '🔁 다시 풀기'에 담겨요. 실수로 눌렀으면 '되돌리기'로 한 칸 내려요." />
+                        <div className="wnt-review-mini">
+                          {e.status > 0 && <button className="wnt-mini" onClick={() => revertStatus(e.id)}>되돌리기</button>}
+                          <button className="wnt-mini danger" onClick={() => deleteEntry(e.id)}>삭제</button>
+                        </div>
                       </div>
+                      <ReviewTrack status={e.status} />
+                      {verdictMsg[e.id] ? (
+                        <div className="wnt-verdict msg">{verdictMsg[e.id]}</div>
+                      ) : e.status < 3 ? (
+                        <div className="wnt-verdict">
+                          <span className="wnt-verdict-q">✍️ 다시 풀어봤다면 —</span>
+                          <div className="wnt-verdict-btns">
+                            <button className="wnt-verdict-ok" onClick={() => reviewMark(e, true)}>✅ 맞았어요 <em>→ {STATUS[e.status + 1].short}</em></button>
+                            <button className="wnt-verdict-no" onClick={() => reviewMark(e, false)}>✗ 또 틀렸어요</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="wnt-verdict conquered">👑 완전 정복했어요! 이 문제는 이제 소이님 거예요 😊</div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="wnt-card-bottom">
+                      <ReviewTrack status={e.status} />
                     </div>
                   )}
-
-                  <div className="wnt-card-bottom">
-                    <div className="wnt-steps">
-                      {STATUS.map((s, i) => (
-                        <span key={s.label} className={i <= e.status ? "wnt-step on" : "wnt-step"}>{s.short}</span>
-                      ))}
-                    </div>
-                    {!selectMode && (
-                      <div className="wnt-card-actions">
-                        {e.status > 0 && <button className="wnt-mini" onClick={() => revertStatus(e.id)}>되돌리기</button>}
-                        {e.status < 3 && (
-                          <button className="wnt-mini strong" onClick={() => advanceStatus(e.id)}>다시 풀어서 맞음 ✓</button>
-                        )}
-                        <button className="wnt-mini danger" onClick={() => deleteEntry(e.id)}>삭제</button>
-                      </div>
-                    )}
-                  </div>
                   </>)}
                 </li>
               ))}
@@ -2936,7 +2990,7 @@ export default function WrongNoteTracker() {
             <button className="wnt-mini strong" onClick={buildDeck}>🔀 다시 섞기</button>
             <button className={flashRetryOnly ? "wnt-mini strong" : "wnt-mini"} onClick={() => setFlashRetryOnly(!flashRetryOnly)}>🔁 다시 풀기만</button>
             <button className={flashStarOnly ? "wnt-mini strong" : "wnt-mini"} onClick={() => setFlashStarOnly(!flashStarOnly)}>⭐ 중요만</button>
-            <HelpTip text="사진이 있는 오답이 과목별·랜덤으로 나와요. 스톱워치 또는 3분 타이머(+1분 최대 2회)로 실전처럼 풀고, 시간 초과나 ❌를 누르면 '다시 풀기' 목록에 담겨요. ✍️ 풀이 패드에서 펜슬로 바로 풀고 AI 채점도 받을 수 있어요." />
+            <HelpTip text="사진이 있는 오답이 과목별·랜덤으로 나와요. 스톱워치 또는 3분 타이머(+1분 최대 2회)로 실전처럼 풀고, ✍️ 풀이 패드에서 펜슬로 바로 풀어요. 교재 정답(또는 내가 아는 답)과 비교해 '✅ 맞았어요/✗ 또 틀렸어요'로 스스로 채점하면 단계가 올라가요." />
             {flashDeck.length > 0 && (
               <span className="wnt-flash-count">{flashIdx + 1} / {flashDeck.length}</span>
             )}
@@ -3039,7 +3093,7 @@ export default function WrongNoteTracker() {
                 )}
               </div>
 
-              {flashPadOpen && <SolvePad key={"pad-" + flashEntry.id} gradeFn={flashGradeFn(flashEntry)} solveFn={flashSolveFn(flashEntry)}
+              {flashPadOpen && <SolvePad key={"pad-" + flashEntry.id} solveFn={null}
                 problem={
                   <div className="wnt-flash-imgs in-pad">
                     {imageCache[flashEntry.id]
@@ -3061,26 +3115,37 @@ export default function WrongNoteTracker() {
               )}
               {flashMemo && flashEntry.memo && <p className="wnt-memo">{flashEntry.memo}</p>}
 
-              <div className="wnt-flash-nav">
-                <button className="wnt-mini" onClick={() => flashMove(-1)} disabled={flashIdx === 0}>◀ 이전</button>
-                <div className="wnt-flash-mid">
-                  {flashEntry.status < 3 ? (
-                    <button className="wnt-mini strong" onClick={() => flashCorrect(flashEntry)}>
-                      이번엔 맞음 ✓{timerSec > 0 ? ` (${fmtSec(timerSec)} 기록)` : ""}
-                    </button>
-                  ) : (
-                    <span className="wnt-stamp">👑 정복</span>
-                  )}
-                  <button
-                    className="wnt-mini danger"
-                    onClick={() => {
-                      flashWrong(flashEntry.id);
-                      setTimerOn(false);
-                      if (flashIdx < flashDeck.length - 1) flashMove(1);
-                    }}
-                  >❌ 못 풀었어요</button>
+              <div className="wnt-flash-review">
+                <div className="wnt-flash-review-top">
+                  <span className="wnt-review-title">복습 진행</span>
+                  <HelpTip text="직접 풀고 교재 정답(또는 내가 아는 답)과 비교해요. 맞았으면 '맞았어요'로 한 단계 올라가고(미복습→1차→2차→정복), 틀렸으면 '또 틀렸어요'로 '다시 풀기'에 담겨요. 2번 연속 맞히면 이 문제는 플래시카드에서 졸업해요(기록엔 남아요)." />
                 </div>
-                <button className="wnt-mini" onClick={() => flashMove(1)} disabled={flashIdx >= flashDeck.length - 1}>다음 ▶</button>
+                <ReviewTrack status={flashEntry.status} />
+                {flashEntry.status < 3 ? (
+                  <div className="wnt-verdict">
+                    <span className="wnt-verdict-q">✍️ 직접 풀고 정답과 비교했다면 —</span>
+                    <div className="wnt-verdict-btns">
+                      <button className="wnt-verdict-ok" onClick={() => flashCorrect(flashEntry)}>
+                        ✅ 맞았어요 <em>→ {STATUS[Math.min(flashEntry.status + 1, 3)].short}{timerSec > 0 ? ` · ${fmtSec(timerSec)}` : ""}</em>
+                      </button>
+                      <button
+                        className="wnt-verdict-no"
+                        onClick={() => {
+                          flashWrong(flashEntry.id);
+                          setTimerOn(false);
+                          if (flashIdx < flashDeck.length - 1) flashMove(1);
+                        }}
+                      >✗ 또 틀렸어요</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="wnt-verdict conquered">👑 완전 정복! 잘했어요 소이 😊</div>
+                )}
+              </div>
+
+              <div className="wnt-flash-nav">
+                <button className="wnt-mini" onClick={() => flashMove(-1)} disabled={flashIdx === 0}>◀ 이전 문제</button>
+                <button className="wnt-mini" onClick={() => flashMove(1)} disabled={flashIdx >= flashDeck.length - 1}>다음 문제 ▶</button>
               </div>
             </div>
           )}
@@ -3092,7 +3157,8 @@ export default function WrongNoteTracker() {
             🔥 <strong>포항제철고 내신을 극악하게 내는 20년차 교사</strong>가 소이님의 오답과 실수 패턴을 노려 출제해요.
             특정 문제를 고르거나, 과목의 실수 패턴을 종합해 출제할 수 있어요.
             <strong> ⚠️ 출제된 문제는 앱을 닫으면 사라져요 — 남기고 싶은 문제는 화면을 캡처해 두세요 📸</strong>
-            <HelpTip text="출제 후 각 문제의 ✍️ 풀이 패드를 열면 펜슬로 바로 풀고 AI 채점까지 받을 수 있어요. 3분 타이머(+1분×2)로 실전처럼 시간을 재보세요. 기준 교재는 ⚙️ 설정에서 과목별로 바꿀 수 있어요." />
+            <span className="wnt-vt-note">🧪 변형문제는 <b>연습용</b>이라 미복습·정복 단계에는 안 들어가요. 직접 풀고 <b>✅ 정답 바로 보기</b>로 스스로 채점해요.</span>
+            <HelpTip text="출제 후 ✍️ 풀이 패드를 열면 펜슬로 바로 풀 수 있어요(패드 안 📖 정답·풀이 보기 = 출제 때 만든 정답). 막히면 🧭 접근법 힌트로 방향만 얻고, 정확한 풀이는 📲 질문방에서 물어봐요. 3분 타이머(+1분×2)로 실전처럼 재보세요. 기준 교재는 ⚙️ 설정에서 과목별로 바꿔요." />
           </div>
 
           {entries.length === 0 ? (
@@ -3165,6 +3231,8 @@ export default function WrongNoteTracker() {
 
               {vtProblems.map((v, i) => {
                 const collapsed = vtCollapsed[i];
+                const vAi = "vt-" + i;
+                const vEntry = { id: vAi, subject: vtSubject === "전체" ? (v.subject || "") : vtSubject, unit: "변형문제 (" + v.level + ")", tags: [], memo: "", problem: v.question };
                 return (
                 <div key={i} className="wnt-variant-item big">
                   <div className="wnt-variant-head">
@@ -3195,13 +3263,16 @@ export default function WrongNoteTracker() {
                           {vtReveal[`${i}-a`] ? "정답 접기" : "✅ 정답 바로 보기"}
                         </button>
                       )}
+                      <button className="wnt-mini ai" onClick={() => setAiOpen((o) => ({ ...o, [vAi]: !o[vAi] }))}>
+                        🧭 접근법 힌트{aiOpen[vAi] ? " ▲" : ""}
+                      </button>
                     </div>
                   )}
-                  {vtPadOpen[i] && <SolvePad key={"vtpad-" + i + "-" + (vtPadNonce[i] || 0)} gradeFn={vtGradeFn(v)} solveFn={vtSolveFn(v)}
-                    problem={<p className="wnt-variant-q in-pad">{v.question}</p>}
-                    bridge={() => "너는 채점 선생님이야. 아래 문제에 대한 첨부 이미지(손글씨)가 내 풀이야.\n[문제] " + v.question + (v.answer ? "\n[모범 풀이·정답] " + v.answer : "") + "\n먼저 짧게 채점만: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 '풀이도 짧게'라고 하면 3~4줄 간략 풀이."} />}
+                  {vtPadOpen[i] && <SolvePad key={"vtpad-" + i + "-" + (vtPadNonce[i] || 0)} solveFn={v.answer ? (async () => v.answer) : null}
+                    problem={<p className="wnt-variant-q in-pad">{v.question}</p>} />}
                   {vtReveal[`${i}-h`] && v.hint && <p className="wnt-variant-reveal">💡 {v.hint}</p>}
                   {vtReveal[`${i}-a`] && v.answer && <p className="wnt-variant-reveal ans">{v.answer}</p>}
+                  {aiOpen[vAi] && aiHelperPanel(vEntry)}
                   </>)}
                 </div>
                 );
@@ -3972,6 +4043,66 @@ const css = `
 }
 .wnt-step.on { background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 700; }
 .wnt-card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ===== 복습 진행 모듈 (오답기록·플래시카드 공용) ===== */
+.wnt-review {
+  margin-top: 14px; padding: 14px 14px 12px; border-radius: 12px;
+  background: var(--paper); border: 1px solid var(--line);
+}
+.wnt-review-head { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.wnt-review-title { font-size: 12.5px; font-weight: 800; color: var(--ink); letter-spacing: 0.02em; }
+.wnt-review-mini { margin-left: auto; display: flex; gap: 6px; }
+
+/* 진행 트랙: ●─●─○─○ */
+.wnt-track { display: flex; align-items: flex-start; padding: 0 10px; margin-bottom: 14px; }
+.wnt-track-node { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+.wnt-track-node::before {
+  content: ""; position: absolute; top: 12px; right: 50%; width: 100%; height: 3px;
+  background: var(--line); border-radius: 3px; z-index: 0;
+}
+.wnt-track-node:first-child::before { display: none; }
+.wnt-track-node.reached::before { background: var(--ink); }
+.wnt-track-node.golddone::before, .wnt-track-node.crown::before { background: var(--gold); }
+.wnt-track-dot {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line);
+  background: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: var(--muted); z-index: 1; position: relative;
+  transition: box-shadow 0.15s, background 0.15s;
+}
+.wnt-track-node.done .wnt-track-dot { background: var(--ink); border-color: var(--ink); color: #fff; }
+.wnt-track-node.here .wnt-track-dot { background: var(--red); border-color: var(--red); color: #fff; box-shadow: 0 0 0 4px rgba(214,69,61,0.16); }
+.wnt-track-node.golddone .wnt-track-dot { background: var(--gold); border-color: var(--gold); color: #fff; }
+.wnt-track-node.crown .wnt-track-dot { background: var(--gold); border-color: var(--gold); color: #fff; box-shadow: 0 0 0 4px rgba(232,178,30,0.22); font-size: 14px; }
+.wnt-track-label { font-size: 11px; margin-top: 6px; color: var(--muted); white-space: nowrap; }
+.wnt-track-node.here .wnt-track-label { color: var(--red); font-weight: 800; }
+.wnt-track-node.crown .wnt-track-label { color: #a9800f; font-weight: 800; }
+
+/* 자기 채점 (✅ 맞았어요 / ✗ 또 틀렸어요) */
+.wnt-verdict {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+}
+.wnt-verdict-q { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.wnt-verdict-btns { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.wnt-verdict-ok, .wnt-verdict-no {
+  font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer;
+  border-radius: 9px; padding: 9px 15px; border: 1.5px solid transparent; transition: filter 0.12s, background 0.12s, color 0.12s;
+}
+.wnt-verdict-ok { background: var(--green); color: #fff; }
+.wnt-verdict-ok:hover { filter: brightness(1.07); }
+.wnt-verdict-ok:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.wnt-verdict-ok em { font-style: normal; font-weight: 600; opacity: 0.9; font-size: 11.5px; }
+.wnt-verdict-no { background: #fff; color: var(--red); border-color: rgba(214,69,61,0.45); }
+.wnt-verdict-no:hover { background: var(--red); color: #fff; border-color: var(--red); }
+.wnt-verdict-no:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.wnt-verdict.conquered { justify-content: center; background: rgba(232,178,30,0.12); border-color: rgba(232,178,30,0.45); color: #9a7b12; font-weight: 800; font-size: 13.5px; }
+.wnt-verdict.msg { justify-content: center; background: rgba(46,125,79,0.1); border-color: rgba(46,125,79,0.4); color: var(--green); font-weight: 800; font-size: 13.5px; animation: verdictpop 0.22s ease-out; }
+@keyframes verdictpop { from { transform: scale(0.96); opacity: 0.5; } to { transform: scale(1); opacity: 1; } }
+
+/* 플래시카드용 복습 진행 (구분선 위에) */
+.wnt-flash-review { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.wnt-flash-review-top { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.wnt-vt-note { display: block; margin-top: 8px; font-size: 12px; color: var(--muted); line-height: 1.6; }
 
 .wnt-empty {
   text-align: center; color: var(--muted); font-size: 14px; padding: 44px 16px;
