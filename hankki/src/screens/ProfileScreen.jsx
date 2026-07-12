@@ -40,24 +40,49 @@ export default function ProfileScreen() {
     setProfile({ name: name.trim() || profile.name, bio: bio === null ? profile.bio : bio })
   }
 
-  const exportData = () => {
-    const data = {
-      _app: 'hankki', _v: 2, _at: new Date().toISOString(),
-      recipes: store.recipes, folders: store.folders, profile: store.profile,
-      shops: store.shops, wishlist: store.wishlist, shoppingList: store.shoppingList, pantry: store.pantry,
-      diary: store.diary, seedV: store.seedV, memoCleanV: store.memoCleanV, removedSeedIds: store.removedSeedIds,
-    }
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
+  const buildBackup = () => ({
+    _app: 'hankki', _v: 2, _at: new Date().toISOString(),
+    recipes: store.recipes, folders: store.folders, profile: store.profile,
+    shops: store.shops, wishlist: store.wishlist, shoppingList: store.shoppingList, pantry: store.pantry,
+    diary: store.diary, seedV: store.seedV, memoCleanV: store.memoCleanV, removedSeedIds: store.removedSeedIds,
+  })
+
+  const backupFilename = () => `한끼백업-${new Date().toISOString().slice(0, 10)}.json`
+
+  // 다운로드 폴더로 저장 (데스크톱·폴백)
+  const downloadBackup = () => {
+    const blob = new Blob([JSON.stringify(buildBackup())], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `hankki-backup-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = backupFilename()
     document.body.appendChild(a)
     a.click()
     a.remove()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
     setBackup(false)
-    nav.showToast('백업 파일을 내보냈어요 💾')
+    nav.showToast('백업 파일을 저장했어요 💾 (폰 다운로드 폴더)')
+  }
+
+  // 공유로 보내기 — 카톡 나에게·드라이브·파일 앱 등 안전한 곳에 바로 저장 (모바일)
+  const shareBackup = async () => {
+    const file = new File([JSON.stringify(buildBackup())], backupFilename(), { type: 'application/json' })
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: '한끼 백업',
+          text: '한끼 레시피 백업 파일이에요. 안전한 곳에 보관해 주세요 🍳',
+        })
+        setBackup(false)
+        nav.showToast('백업을 공유했어요 · 카톡 나에게·드라이브에 저장해두세요 ✨')
+        return
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return // 사용자가 공유 취소
+    }
+    // 공유를 지원하지 않으면 다운로드로
+    downloadBackup()
   }
 
   const importData = (e) => {
@@ -250,10 +275,14 @@ export default function ProfileScreen() {
               <button className="press" onClick={() => setBackup(false)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '2px 16px 0' }}>
-              <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.65, marginBottom: 16 }}>
-                레시피 · 냉장고 · 장보기 등 모든 데이터를 파일 하나로 저장해요.{'\n'}폰을 바꾸거나 브라우저를 지우기 전에 내보내두면 안전해요.
+              <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.65, marginBottom: 14 }}>
+                레시피 · 일지 · 냉장고 · 장보기 · 프로필까지 <b>모든 데이터를 파일 하나</b>로 담아요.{'\n'}폰을 바꾸거나 앱을 지워도 이 파일만 있으면 그대로 되살아나요.
               </div>
-              <button className="btn-primary press" onClick={exportData}>💾 백업 파일 내보내기</button>
+              <button className="btn-primary press" onClick={shareBackup}>💌 백업 보내서 저장하기 (추천)</button>
+              <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.55, margin: '8px 2px 14px' }}>
+                누르면 공유 창이 떠요 → <b>카톡 나에게 보내기</b>나 <b>드라이브·파일</b>에 저장하면 제일 안전해요. (폰이 고장나도 클라우드에 남아요)
+              </div>
+              <button className="btn-ghost press" style={{ width: '100%' }} onClick={downloadBackup}>💾 폰에 파일로 저장 (다운로드 폴더)</button>
               <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={() => fileRef.current?.click()}>📂 백업 파일 불러오기</button>
             </div>
           </div>
