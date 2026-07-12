@@ -56,9 +56,12 @@ export default function App() {
       if (cancelled || !data) return
       const link = firstUrl(data.url, data.text)
       const caption = captionFrom(data.text)
+      // 공유된 텍스트(캡션)에 레시피 내용이 있으면 파싱해 재료·순서까지 채운다.
+      const parsed = caption && caption.replace(/\s/g, '').length > 15 ? parseRecipeText(caption) : null
       const source = data.imageDataUrl ? 'photo' : detectSource(link, data.text)
       const title =
         (data.title || '').trim() ||
+        (parsed && parsed.title) ||
         firstLine(caption) ||
         (data.imageDataUrl ? '사진 레시피' : '공유된 레시피')
       const rec = makeInboxRecipe({
@@ -66,8 +69,12 @@ export default function App() {
         title,
         sourceUrl: link,
         image: data.imageDataUrl || null,
-        memo: caption && caption !== title ? caption : '',
+        memo: parsed ? parsed.memo : caption && caption !== title ? caption : '',
       })
+      if (parsed && (parsed.ingredients.length || parsed.steps.length)) {
+        rec.ingredients = parsed.ingredients
+        rec.steps = parsed.steps
+      }
       store.addRecipe(rec)
       setStack([{ name: 'inbox' }])
       showToast(

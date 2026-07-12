@@ -2,11 +2,13 @@ import { useRef, useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import { guessCategory } from '../utils'
+import { parseRecipeText } from '../parseRecipe'
 import Icon from '../components/Icon'
 
 const OPTIONS = [
   { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '인스타그램 게시물 가져오기', color: '#C13584' },
   { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '유튜브 영상 정보 가져오기', color: '#E33' },
+  { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 자동 정리', color: '#B0895E' },
   { key: 'link', icon: 'link', title: '링크 붙여넣기', desc: '웹사이트 주소를 붙여넣기', color: '#9B8B79' },
   { key: 'photo', icon: 'photo', title: '사진으로 가져오기', desc: '레시피 사진을 분석하여 저장', color: '#8AA07A' },
   { key: 'manual', icon: 'pen', title: '직접 작성하기', desc: '직접 레시피를 작성하기', color: '#B98A4E' },
@@ -17,11 +19,20 @@ const OPEN_URL = { instagram: 'https://www.instagram.com', youtube: 'https://www
 export default function ImportScreen() {
   const { addRecipe } = useStore()
   const nav = useNav()
-  const [flow, setFlow] = useState(null) // instagram | youtube | link
+  const [flow, setFlow] = useState(null) // instagram | youtube | link | text
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
+  const [text, setText] = useState('')
   const [help, setHelp] = useState(false)
   const fileRef = useRef(null)
+
+  const saveText = () => {
+    const t = text.trim()
+    if (!t) return
+    const r = parseRecipeText(t)
+    nav.pop()
+    nav.push({ name: 'editor', prefill: { source: 'manual', title: r.title, ingredients: r.ingredients, steps: r.steps, memo: r.memo } })
+  }
 
   const choose = (key) => {
     if (key === 'manual') {
@@ -107,6 +118,27 @@ export default function ImportScreen() {
             <div className="opt-ico" style={{ background: '#fff' }}>
               <Icon name="help" size={22} color="var(--sand)" />
             </div>
+          </button>
+        </div>
+      ) : flow === 'text' ? (
+        <div className="pad fade">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, marginBottom: 4 }}>
+            <div className="opt-ico"><Icon name="edit" size={24} color="#B0895E" stroke={1.7} /></div>
+            <div className="h-title" style={{ fontSize: 22 }}>텍스트 붙여넣기</div>
+          </div>
+          <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 14 }}>
+            인스타 캡션·블로그·메모의 레시피 글을 그대로 붙여넣으면 제목·재료·순서로 자동 정리해요.
+          </div>
+          <textarea
+            className="diary-note"
+            style={{ minHeight: 220 }}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={'여기에 레시피 글을 붙여넣어 주세요.\n\n예)\n된장크림파스타\n스파게티 200g\n된장 1큰술\n생크림 200ml\n1. 면을 삶는다\n2. 팬에 된장을 풀고 생크림을 넣는다'}
+            autoFocus
+          />
+          <button className="btn-primary press" style={{ marginTop: 18 }} onClick={saveText}>
+            자동 정리하기 →
           </button>
         </div>
       ) : (
