@@ -748,11 +748,11 @@ img {
   border-color: var(--brown);
 }
 
-/* 재료 아이콘 — 글자/이모지 타일 */
+/* 재료 아이콘 — 글자/이모지 타일 (앱 쿨톤에 맞춤) */
 .emoji-tile,
 .emoji-chip {
   border-radius: 12px;
-  background: linear-gradient(135deg, #efe9dd, #e4d6bd);
+  background: linear-gradient(135deg, #edeee9, #dfe2da);
   display: flex;
   align-items: center;
   justify-content: center;
