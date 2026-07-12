@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
+import { graphemes } from '../utils'
 
 // 카드 썸네일. recipe.thumb 로 표시 방식을 고른다:
 //   'icon'  — 브랜드 커스텀 아이콘(이름 자동매칭 or 직접 선택)  ← 기본
@@ -50,6 +51,9 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
     inner = <div style={center}><span style={{ fontSize: emojiSize, lineHeight: 1 }}>{recipe.emoji || '🍽️'}</span></div>
   } else if (thumb === 'label') {
     const txt = (recipe.label || recipe.title || '한끼').trim()
+    const chars = graphemes(txt) // 이모지도 1글자로 — 중간에 잘리지 않게
+    const shown = chars.length > 6 ? chars.slice(0, 5).join('') + '…' : txt
+    const n = chars.length > 6 ? 6 : chars.length
     inner = (
       <div style={center}>
         {/* viewBox 안에 그려 컨테이너 크기에 맞춰 자동으로 커지고 작아진다. */}
@@ -64,10 +68,10 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
             fill="#5f5a50"
             fontSize="18"
             letterSpacing="-1"
-            textLength={Math.min(46, [...txt].length * 11)}
+            textLength={Math.min(46, n * 11)}
             lengthAdjust="spacingAndGlyphs"
           >
-            {[...txt].length > 6 ? [...txt].slice(0, 5).join('') + '…' : txt}
+            {shown}
           </text>
         </svg>
       </div>

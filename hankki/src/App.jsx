@@ -116,7 +116,7 @@ export default function App() {
           title: rec.title && rec.title !== '사진 레시피' ? rec.title : r.title || rec.title,
           ingredients: r.ingredients,
           steps: r.steps,
-          memo: r.memo,
+          memo: r.memo || rec.memo, // OCR 메모가 비면 캡션 메모를 지우지 않는다
           category: guessCategory((r.title || '') + ' ' + r.memo),
         })
         showToast('사진에서 글자를 읽어 채웠어요 ✨')

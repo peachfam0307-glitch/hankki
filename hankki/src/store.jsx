@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
 import { seedRecipes } from './data/seed'
+import { basicRecipes, BASICS_VERSION } from './data/basics'
+import { cleanMemo } from './parseRecipe'
 
 const KEY = 'hankki:v1'
 const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행복한 하루 :)' }
@@ -49,12 +51,63 @@ function load() {
   }
 }
 
+// 기존 사용자에게 기본 제공 레시피를 '한 번만' 넣어준다.
+// seedV(버전)와 removedSeedIds(지운 것 기록) 덕분에, 사용자가 지운 기본 레시피는
+// 앞으로 버전이 올라가도 절대 되살아나지 않는다.
+function migrateBasics(saved) {
+  const v = saved.seedV || 0
+  if (v >= BASICS_VERSION) return { recipes: saved.recipes, seedV: v }
+  const have = new Set(saved.recipes.map((r) => r.id))
+  const haveTitles = new Set(saved.recipes.map((r) => (r.title || '').trim()))
+  const dead = new Set(saved.removedSeedIds || [])
+  const add = basicRecipes
+    // 같은 제목의 레시피가 이미 있으면 넣지 않는다 (예전 예시의 김치볶음밥 등과 중복 방지)
+    .filter((r) => !have.has(r.id) && !dead.has(r.id) && !haveTitles.has(r.title))
+    .map((r, i) => ({ ...r, savedAt: Date.now() - i * 60000 }))
+  return { recipes: [...saved.recipes, ...add], seedV: BASICS_VERSION }
+}
+
+// 예전 버전(OCR 필터 이전)에 저장된 레시피의 '외계어 메모'를 한 번만 청소한다.
+// 재료·순서와 겹치는 줄 + 잡음 줄을 걷어낸다. (사용자가 쓴 짧은 메모는 건드리지 않음)
+const MEMO_CLEAN_V = 1
+function migrateMemos(recipes, saved) {
+  if ((saved.memoCleanV || 0) >= MEMO_CLEAN_V) return { recipes, memoCleanV: saved.memoCleanV }
+  const cleaned = recipes.map((r) => {
+    if (!r || !r.memo) return r
+    let memo = cleanMemo(r.memo, r.ingredients || [], r.steps || [])
+    // 사진·인스타에서 온 레시피의 메모는 OCR 잡음일 가능성이 높다 —
+    // 온전한 한글 단어도, 소문자 영어 단어("overcook")도, 이모지도 없는 줄
+    // ("Ta mg TERCERA" 같은 대문자 조각)은 지운다.
+    if (r.source === 'photo' || r.source === 'instagram') {
+      memo = memo
+        .split('\n')
+        .filter(
+          (l) =>
+            !l.trim() ||
+            /[가-힣]{2,}/.test(l) ||
+            /[a-z]{4,}/.test(l) ||
+            /[☀-➿⭐❤\u{1F000}-\u{1FAFF}]/u.test(l) ||
+            l.replace(/\s/g, '').length < 4
+        )
+        .join('\n')
+        .trim()
+    }
+    return memo === r.memo ? r : { ...r, memo }
+  })
+  return { recipes: cleaned, memoCleanV: MEMO_CLEAN_V }
+}
+
 function initialState() {
   const saved = load()
   if (saved) {
+    const mig = migrateBasics(saved)
+    const memoMig = migrateMemos(mig.recipes, saved)
     return {
-      recipes: saved.recipes,
-      folders: saved.folders || defaultFolders(saved.recipes),
+      recipes: memoMig.recipes,
+      seedV: mig.seedV,
+      memoCleanV: memoMig.memoCleanV,
+      removedSeedIds: saved.removedSeedIds || [],
+      folders: saved.folders || defaultFolders(mig.recipes),
       profile: { ...PROFILE_DEFAULT, ...(saved.profile || {}) },
       shops: migrateShops(saved.shops),
       wishlist: saved.wishlist || [],
@@ -65,6 +118,9 @@ function initialState() {
   }
   return {
     recipes: seedRecipes,
+    seedV: BASICS_VERSION,
+    memoCleanV: MEMO_CLEAN_V,
+    removedSeedIds: [],
     folders: ['한식', '양식', '일식', '간식'],
     profile: PROFILE_DEFAULT,
     shops: DEFAULT_SHOPS,
@@ -95,7 +151,11 @@ function reducer(state, action) {
       }
     }
     case 'remove': {
-      return { ...state, recipes: state.recipes.filter((r) => r.id !== action.id) }
+      // 기본 제공 레시피를 지우면 기록해 둔다 — 이후 업데이트에서 되살아나지 않게.
+      const removedSeedIds = String(action.id).startsWith('basic-')
+        ? [...(state.removedSeedIds || []), action.id]
+        : state.removedSeedIds || []
+      return { ...state, removedSeedIds, recipes: state.recipes.filter((r) => r.id !== action.id) }
     }
     case 'toggleFav': {
       return {
@@ -121,13 +181,18 @@ function reducer(state, action) {
       return { ...state, profile: { ...state.profile, ...action.patch } }
     }
     case 'clear': {
-      // 예시(시드) 포함 모든 레시피를 비우고 빈 아카이브로. (장보기·재료함은 유지)
-      return { ...state, recipes: [] }
+      // 기본 제공 포함 모든 레시피를 비우고 빈 아카이브로. (장보기·재료함은 유지)
+      // 기본 레시피도 '지운 것'으로 기록해 이후 업데이트에서 되살아나지 않게 한다.
+      const dead = new Set([...(state.removedSeedIds || []), ...basicRecipes.map((b) => b.id)])
+      return { ...state, recipes: [], removedSeedIds: [...dead] }
     }
     case 'reset': {
+      // 처음 상태로 — 기본 레시피를 다시 채우므로 삭제 기록도 초기화한다.
       return {
         ...state,
         recipes: seedRecipes,
+        seedV: BASICS_VERSION,
+        removedSeedIds: [],
         folders: ['한식', '양식', '일식', '간식'],
         profile: PROFILE_DEFAULT,
       }
@@ -233,6 +298,9 @@ function reducer(state, action) {
       const d = action.data || {}
       if (!Array.isArray(d.recipes)) return state
       return {
+        seedV: Math.max(state.seedV || 0, d.seedV || 0, BASICS_VERSION),
+        memoCleanV: Math.max(state.memoCleanV || 0, d.memoCleanV || 0),
+        removedSeedIds: d.removedSeedIds || state.removedSeedIds || [],
         recipes: d.recipes,
         folders: d.folders || defaultFolders(d.recipes),
         profile: { ...PROFILE_DEFAULT, ...(d.profile || {}) },

@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
+import { ocrImage } from '../ocr'
+import { extractReceiptItems } from '../receipt'
 import Icon from './Icon'
 import Thumb from './Thumb'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
@@ -34,6 +36,42 @@ export default function PantryView() {
   const { pantry, recipes } = store
   const nav = useNav()
   const [adding, setAdding] = useState(false)
+  const [scanPct, setScanPct] = useState(null) // null | 0~100 — 영수증 읽는 중
+  const [found, setFound] = useState(null) // null | [{name, on}] — 영수증에서 찾은 재료 확인
+  const receiptRef = useRef(null)
+
+  // 영수증 캡처/사진 → 식재료만 골라 확인 후 냉장고에 담기
+  const onReceipt = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      setScanPct(0)
+      const text = await ocrImage(reader.result, (pct) => setScanPct(pct))
+      setScanPct(null)
+      const items = extractReceiptItems(text)
+      if (!items.length) {
+        nav.showToast('영수증에서 식재료를 찾지 못했어요 · 더 또렷하게 찍어보세요')
+        return
+      }
+      setFound(items.map((name) => ({ name, on: true })))
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const saveFound = () => {
+    const names = [...new Set((found || []).filter((f) => f.on).map((f) => f.name.trim()).filter(Boolean))]
+    let added = 0
+    names.forEach((nm) => {
+      if (!pantry.some((p) => p.name === nm)) {
+        store.addPantry({ id: newId(), name: nm, icon: guessFoodIcon(nm), expiry: null, addedAt: Date.now() })
+        added++
+      }
+    })
+    setFound(null)
+    nav.showToast(added ? `재료 ${added}개를 냉장고에 넣었어요 🧊` : '이미 냉장고에 다 있어요')
+  }
 
   const sorted = [...pantry].sort((a, b) => {
     const da = daysLeft(a.expiry)
@@ -59,10 +97,68 @@ export default function PantryView() {
     <div className="fade">
       <div className="sec-head" style={{ marginTop: 6 }}>
         <div className="h-section">냉장고 재료함</div>
-        <button className="t-more press" onClick={() => setAdding(true)}>+ 재료</button>
+        <div style={{ display: 'flex', gap: 14 }}>
+          <button className="t-more press" onClick={() => receiptRef.current?.click()}>🧾 영수증</button>
+          <button className="t-more press" onClick={() => setAdding(true)}>+ 재료</button>
+        </div>
       </div>
 
+      <input ref={receiptRef} type="file" accept="image/*" onChange={onReceipt} style={{ display: 'none' }} />
+
       {adding && <PantryAdd onClose={() => setAdding(false)} />}
+
+      {scanPct !== null && (
+        <div className="card" style={{ padding: 16, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="ocr-spin" style={{ width: 26, height: 26, borderWidth: 3, margin: 0 }} />
+          <div style={{ fontSize: 13.5, fontWeight: 600 }}>영수증에서 식재료 찾는 중… {scanPct}%</div>
+        </div>
+      )}
+
+      {found && (
+        <div className="sheet-mask" onClick={() => setFound(null)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
+            <div className="emoji-sheet-head">
+              <span>🧾 영수증에서 찾은 재료</span>
+              <button className="press" onClick={() => setFound(null)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            </div>
+            <div style={{ padding: '2px 16px 0', maxHeight: '48vh', overflowY: 'auto' }}>
+              <div className="t-sub" style={{ fontSize: 12.5, marginBottom: 10 }}>
+                아닌 것은 체크를 풀고, 이름은 눌러서 고칠 수 있어요.
+              </div>
+              {found.map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <button
+                    className="press"
+                    onClick={() => setFound(found.map((x, j) => (j === i ? { ...x, on: !x.on } : x)))}
+                    aria-label="선택"
+                    style={{
+                      width: 26, height: 26, borderRadius: 8, flex: '0 0 auto',
+                      background: f.on ? 'var(--brown)' : 'var(--cream)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    {f.on && <Icon name="check" size={15} color="#fff" stroke={2.6} />}
+                  </button>
+                  <div className="emoji-tile" style={{ width: 38, height: 38, flex: '0 0 auto' }}>
+                    <FoodIcon name={guessFoodIcon(f.name)} size={24} />
+                  </div>
+                  <input
+                    className="wa-inp"
+                    style={{ flex: 1, opacity: f.on ? 1 : 0.45 }}
+                    value={f.name}
+                    onChange={(e) => setFound(found.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
+                  />
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: '12px 16px 0' }}>
+              <button className="btn-primary press" style={{ width: '100%' }} onClick={saveFound} disabled={!found.some((f) => f.on)}>
+                선택한 {found.filter((f) => f.on).length}개 냉장고에 담기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {pantry.length === 0 && !adding && (
         <div className="empty" style={{ padding: '30px 24px' }}>

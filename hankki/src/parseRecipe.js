@@ -49,7 +49,7 @@ function cleanTokens(line) {
 }
 
 // OCR 잡음(외계어) 줄 거르기 — 뜻있는 글자 비율이 낮거나, 온전한 단어가 하나도 없으면 버린다.
-function isGibberish(s) {
+export function isGibberish(s) {
   const compact = s.replace(/\s/g, '')
   if (compact.length < 2) return true
   const good = (compact.match(/[가-힣a-zA-Z0-9]/g) || []).length
@@ -60,9 +60,33 @@ function isGibberish(s) {
   return false
 }
 
+// 사용자가 직접 쓴 티가 나는 줄 — 이모지·기호(🔥★♥)나 온전한 한글 단어가 있으면
+// 잡음 검사를 건너뛴다. (isGibberish 는 이모지를 '나쁜 글자'로 세기 때문)
+const USER_SAFE = /[☀-➿⭐❤\u{1F000}-\u{1FAFF}]|[가-힣]{2}/u
+
+// 메모 최종 청소 — 재료·순서와 겹치는 줄, 잡음 줄을 걷어낸다.
+// 어떤 경로(OCR·공유·직접 입력)로 만들어진 메모든 저장·표시 전에 한 번 거르는 안전망.
+// 짧은 줄(4자 미만)과 이모지·한글 문장은 사용자가 쓴 것일 수 있어 보존한다.
+export function cleanMemo(memo, ingredients = [], steps = []) {
+  const norm = (s) => String(s).replace(/\s+/g, ' ').trim()
+  const taken = new Set([...ingredients, ...steps].map(norm))
+  return String(memo || '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => {
+      if (!l) return false
+      if (taken.has(norm(l))) return false
+      const compact = l.replace(/\s/g, '')
+      if (compact.length < 4) return true
+      if (USER_SAFE.test(l)) return true
+      return !isGibberish(l)
+    })
+    .join('\n')
+}
+
 // 사진(OCR)에서 온 텍스트의 메모 후보 — '깨끗한 문장'만 통과.
 // 분류 안 된 찌꺼기가 메모에 흘러들지 않게 하는 마지막 관문.
-function isCleanMemoLine(s) {
+export function isCleanMemoLine(s) {
   const compact = s.replace(/\s/g, '')
   if (compact.length < 9) return false // 진짜 팁은 문장 — 짧은 조각은 잡음
   const good = (compact.match(/[가-힣a-zA-Z0-9.,!?()%~:]/g) || []).length

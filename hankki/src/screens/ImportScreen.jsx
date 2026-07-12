@@ -4,8 +4,10 @@ import { useNav } from '../App'
 import { guessCategory } from '../utils'
 import { parseRecipeText } from '../parseRecipe'
 import { ocrImage } from '../ocr'
+import { fetchLinkRecipe } from '../linkReader'
 import { guessFoodIcon } from '../components/FoodIcon'
 import Icon from '../components/Icon'
+import CropSheet from '../components/CropSheet'
 
 function readAsDataURL(file) {
   return new Promise((resolve) => {
@@ -36,7 +38,10 @@ export default function ImportScreen() {
   const [text, setText] = useState('')
   const [help, setHelp] = useState(false)
   const [busy, setBusy] = useState(null) // null | { total, cur, pct }
+  const [linkBusy, setLinkBusy] = useState(false)
+  const [cropQ, setCropQ] = useState(null) // null | { images, done, idx } — 장마다 자르기
   const fileRef = useRef(null)
+  const linkCancel = useRef(false)
 
   const saveText = () => {
     const t = text.trim()
@@ -67,14 +72,29 @@ export default function ImportScreen() {
     nav.showToast('Inbox에 저장했어요 · 나중에 정리해요')
   }
 
-  // 사진 한 장이든 여러 장(길어서 나눠 캡처)이든, 다 읽어 하나의 레시피로 정리.
+  // 사진 선택 → 장마다 '글자 부분만 자르기' → 전부 읽어 하나의 레시피로 정리.
   const onFile = async (e) => {
     const files = Array.from(e.target.files || [])
     e.target.value = ''
     if (!files.length) return
     const images = (await Promise.all(files.map(readAsDataURL))).filter(Boolean)
     if (!images.length) return
+    setCropQ({ images, done: [], idx: 0 }) // 자르기부터 — 광고·그림을 빼면 인식이 확 좋아진다
+  }
 
+  const cropNext = (img) => {
+    const q = cropQ
+    if (!q) return
+    const done = [...q.done, img]
+    if (q.idx + 1 < q.images.length) {
+      setCropQ({ ...q, done, idx: q.idx + 1 })
+    } else {
+      setCropQ(null)
+      runOcrBatch(done)
+    }
+  }
+
+  const runOcrBatch = async (images) => {
     setBusy({ total: images.length, cur: 1, pct: 0 })
     let combined = ''
     for (let k = 0; k < images.length; k++) {
@@ -90,6 +110,45 @@ export default function ImportScreen() {
       name: 'editor',
       prefill: { source: 'photo', title: r.title, ingredients: r.ingredients, steps: r.steps, memo: r.memo, autoOcr: false },
     })
+  }
+
+  // 링크 자동 읽기(베타) — 유튜브 설명·블로그 본문을 읽어 재료·순서까지 채운다.
+  // 아무리 오래 걸려도 25초 안에는 결과(또는 실패)를 돌려준다.
+  const readLink = async () => {
+    const u = url.trim()
+    if (!u || linkBusy) return
+    linkCancel.current = false
+    setLinkBusy(true)
+    const r = await Promise.race([
+      fetchLinkRecipe(u).catch(() => null),
+      new Promise((res) => setTimeout(() => res(null), 25000)),
+    ])
+    setLinkBusy(false)
+    if (linkCancel.current) return
+    if (r && r.full) {
+      const parsed = parseRecipeText(r.text, { fromOcr: true })
+      const hasContent = parsed.ingredients.length || parsed.steps.length
+      nav.pop()
+      nav.push({
+        name: 'editor',
+        prefill: {
+          source: flow === 'youtube' ? 'youtube' : 'link',
+          title: title.trim() || parsed.title || r.title || '',
+          ingredients: parsed.ingredients,
+          steps: parsed.steps,
+          memo: parsed.memo,
+          sourceUrl: u,
+        },
+      })
+      nav.showToast(hasContent ? '링크에서 레시피를 읽어왔어요 ✨' : '글을 읽어왔어요 · 내용을 확인해 주세요')
+    } else if (r && r.title) {
+      addRecipe(makeInboxRecipe({ source: flow || 'link', title: r.title, sourceUrl: u }))
+      nav.pop()
+      nav.push({ name: 'inbox' })
+      nav.showToast('본문은 못 읽어서 제목만 채웠어요 · Inbox 저장')
+    } else {
+      nav.showToast('이 링크는 자동으로 읽지 못했어요 · 아래 "링크만 저장"을 이용해 주세요')
+    }
   }
 
   const flowMeta = OPTIONS.find((o) => o.key === flow)
@@ -118,6 +177,34 @@ export default function ImportScreen() {
             </div>
           </div>
         </div>
+      )}
+
+      {linkBusy && (
+        <div className="ocr-overlay">
+          <div className="ocr-box">
+            <div className="ocr-spin" />
+            <div style={{ fontSize: 15, fontWeight: 700, marginTop: 14 }}>링크에서 내용을 읽는 중…</div>
+            <div className="t-sub" style={{ marginTop: 5, fontSize: 13 }}>페이지에 따라 10~25초 걸려요</div>
+            <button
+              className="press"
+              onClick={() => { linkCancel.current = true; setLinkBusy(false) }}
+              style={{ marginTop: 16, padding: '9px 22px', borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600 }}
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      )}
+
+      {cropQ && (
+        <CropSheet
+          image={cropQ.images[cropQ.idx]}
+          index={cropQ.idx}
+          total={cropQ.images.length}
+          onDone={cropNext}
+          onSkip={() => cropNext(cropQ.images[cropQ.idx])}
+          onCancel={() => setCropQ(null)}
+        />
       )}
 
       {!flow ? (
@@ -216,14 +303,24 @@ export default function ImportScreen() {
             </div>
           </button>
 
-          {/* 3순위 — 링크만 저장(북마크) */}
+          {/* 3순위 — 링크 자동 읽기(베타) / 링크만 저장 */}
           <div className="card" style={{ padding: 14, border: 'none' }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 8 }}>🔗 링크만 저장 · 나중에 보기</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 8 }}>🔗 링크로 가져오기</div>
             <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={placeholderFor(flow)} inputMode="url" style={{ marginBottom: 8 }} />
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="제목 (선택 · 비우면 자동)" style={{ marginBottom: 12 }} />
+            {flow === 'youtube' && (
+              <button className="btn-primary press" style={{ width: '100%', marginBottom: 8, opacity: url.trim() ? 1 : 0.5 }} onClick={readLink} disabled={!url.trim() || linkBusy}>
+                {linkBusy ? '읽는 중…' : '✨ 링크에서 자동으로 읽어오기 (베타)'}
+              </button>
+            )}
             <button className="btn-ghost press" style={{ width: '100%' }} onClick={saveLink} disabled={!url.trim()}>
-              링크를 Inbox에 저장
+              링크만 Inbox에 저장
             </button>
+            {flow === 'youtube' && (
+              <div className="t-sub" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.5 }}>
+                자동 읽기는 영상 설명에 레시피를 적어둔 경우에 잘 돼요. (무료 읽기 서비스 이용 · 최대 20초)
+              </div>
+            )}
           </div>
 
           <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.6, marginTop: 14, textAlign: 'center' }}>
@@ -237,7 +334,7 @@ export default function ImportScreen() {
             <div className="h-title" style={{ fontSize: 22 }}>{flowMeta.title}</div>
           </div>
           <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 14 }}>
-            레시피가 있는 웹페이지 주소를 붙여넣어 주세요. 블로그 글은 <b>복사해서 ‘텍스트 붙여넣기’</b>로 가져오면 재료·순서까지 정리돼요.
+            블로그·웹페이지 주소를 붙여넣으면 <b>본문을 자동으로 읽어</b> 재료·순서까지 정리해 드려요. (베타)
           </div>
 
           <div className="field">
@@ -249,16 +346,19 @@ export default function ImportScreen() {
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="비워두면 자동으로 채워요" />
           </div>
 
+          <button className="btn-primary press" style={{ marginBottom: 10, opacity: url.trim() ? 1 : 0.5 }} onClick={readLink} disabled={!url.trim() || linkBusy}>
+            {linkBusy ? '본문 읽는 중…' : '✨ 링크에서 자동으로 읽어오기'}
+          </button>
+          <button className="btn-ghost press" style={{ width: '100%', marginBottom: 16 }} onClick={saveLink} disabled={!url.trim()}>
+            링크만 Inbox에 저장
+          </button>
+
           <div className="card" style={{ padding: 14, background: 'var(--cream)', border: 'none', display: 'flex', gap: 10 }}>
             <Icon name="inbox" size={20} color="var(--brown)" />
             <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--brown)' }}>
-              가져온 레시피는 바로 저장되지 않고 <b>Inbox</b>에 임시 보관돼요. 나중에 제목·태그·폴더를 정리할 수 있어요.
+              자동 읽기가 안 되는 페이지(로그인 필요 등)는 <b>링크만 저장</b>해 두고, 캡처나 텍스트 붙여넣기로 옮겨보세요.
             </div>
           </div>
-
-          <button className="btn-primary press" style={{ marginTop: 22 }} onClick={saveLink}>
-            Inbox에 저장하기
-          </button>
         </div>
       )}
 

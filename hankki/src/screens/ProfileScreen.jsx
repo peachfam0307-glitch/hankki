@@ -21,9 +21,10 @@ export default function ProfileScreen() {
 
   const exportData = () => {
     const data = {
-      _app: 'hankki', _v: 1, _at: new Date().toISOString(),
+      _app: 'hankki', _v: 2, _at: new Date().toISOString(),
       recipes: store.recipes, folders: store.folders, profile: store.profile,
       shops: store.shops, wishlist: store.wishlist, shoppingList: store.shoppingList, pantry: store.pantry,
+      diary: store.diary, seedV: store.seedV, memoCleanV: store.memoCleanV, removedSeedIds: store.removedSeedIds,
     }
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)

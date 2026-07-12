@@ -39,6 +39,21 @@ export function dateLabel(ts) {
   ).padStart(2, '0')}`
 }
 
+// 글자를 '보이는 글자' 단위로 나눈다 — 이모지(👨‍👩‍👧)도 1글자로 세어 중간에 잘리지 않게.
+export function graphemes(s) {
+  const str = String(s)
+  try {
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+      return [...new Intl.Segmenter('ko', { granularity: 'grapheme' }).segment(str)].map((x) => x.segment)
+    }
+  } catch {
+    /* noop */
+  }
+  return [...str]
+}
+
+export const clampGraphemes = (s, n) => graphemes(s).slice(0, n).join('')
+
 // 음식 사진을 아이콘용 정사각형으로 예쁘게 다듬는다.
 // 가운데(세로 사진은 살짝 위쪽 — 접시가 보통 화면 위쪽에 오니까)를 잘라
 // 적당한 크기 JPEG 로 압축 → 카드에 딱 맞고 저장 용량도 가볍다.

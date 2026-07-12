@@ -52,6 +52,7 @@ export default function RecipeDetailScreen({ id }) {
 
   const del = () => {
     setMenu(false)
+    if (!window.confirm(`『${r.title}』 레시피를 삭제할까요?`)) return
     removeRecipe(r.id)
     nav.pop()
     nav.showToast('레시피를 삭제했어요')

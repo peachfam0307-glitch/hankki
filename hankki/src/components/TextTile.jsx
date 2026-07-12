@@ -1,10 +1,13 @@
+import { graphemes } from '../utils'
+
 // '글자 아이콘' — 이름을 그대로 예쁜 타일로. (고추장·간장처럼 이름만 쳐도 썸네일이 됨)
 // SVG textLength 로 타일 폭에 맞춰 글자가 자동으로 줄어들어 절대 넘치지 않는다.
+// 글자 수는 '보이는 글자' 기준 — 조합 이모지(👨‍👩‍👧)도 1글자로 세어 중간에 안 잘린다.
 export default function TextTile({ text = '', size = 46, radius = 12 }) {
   const t = String(text).trim() || '재료'
-  const chars = [...t]
+  const chars = graphemes(t)
   const shown = chars.length > 7 ? chars.slice(0, 6).join('') + '…' : t
-  const n = [...shown].length
+  const n = chars.length > 7 ? 7 : chars.length
   return (
     <div
       style={{

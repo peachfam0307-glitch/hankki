@@ -964,6 +964,8 @@ img {
 html, body { overscroll-behavior: none; }
 .app-frame { overscroll-behavior: none; }
 .screen, .emoji-scroll, .hscroll { overscroll-behavior: contain; }
+/* 내용이 화면에 딱 맞는 화면에서도 살짝 당김(스트레치)이 되게 — '죽은 화면' 느낌 방지 */
+.screen::after { content: ''; display: block; height: 2px; flex-shrink: 0; }
 
 /* OCR 진행 오버레이 */
 .ocr-overlay { position: absolute; inset: 0; z-index: 60; background: rgba(245, 246, 244, 0.86); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; }

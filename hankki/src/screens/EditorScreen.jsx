@@ -5,12 +5,13 @@ import Icon from '../components/Icon'
 import FoodIconPicker from '../components/FoodIconPicker'
 import EmojiPicker from '../components/EmojiPicker'
 import TextTile from '../components/TextTile'
+import CropSheet from '../components/CropSheet'
 import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES, colors } from '../theme'
 import { TAG_LIST } from '../data/seed'
-import { guessCategory, cropSquare } from '../utils'
+import { guessCategory, cropSquare, clampGraphemes } from '../utils'
 import { ocrImage } from '../ocr'
-import { parseRecipeText } from '../parseRecipe'
+import { parseRecipeText, cleanMemo } from '../parseRecipe'
 
 const DIFFS = ['쉬움', '보통', '어려움']
 const THUMB_TYPES = [
@@ -27,6 +28,7 @@ export default function EditorScreen({ id, prefill }) {
   const photoRef = useRef(null) // 썸네일용 사진
   const ocrRef = useRef(null) // 글자 읽기용(썸네일과 별개)
   const [ocr, setOcr] = useState({ busy: false, pct: 0 })
+  const [cropImg, setCropImg] = useState(null) // 글자 읽기 전 '자르기' 단계
 
   const [f, setF] = useState(() => {
     const e = editing
@@ -55,7 +57,7 @@ export default function EditorScreen({ id, prefill }) {
       tags: e?.tags || [],
       folder: e?.folder || e?.category || '한식',
       memo: e?.memo ?? p.memo ?? '',
-      sourceUrl: e?.sourceUrl || '',
+      sourceUrl: e?.sourceUrl || p.sourceUrl || '',
       source: e?.source || p.source || 'manual',
     }
   })
@@ -78,12 +80,12 @@ export default function EditorScreen({ id, prefill }) {
     e.target.value = ''
   }
 
-  // 글자 읽기용 사진 — 재료·순서만 채우고, 썸네일은 건드리지 않는다.
+  // 글자 읽기용 사진 — 자르기(광고·그림 제외)를 거쳐 재료·순서만 채운다. 썸네일은 그대로.
   const onOcrFile = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => runOcr(reader.result)
+    reader.onload = () => setCropImg(reader.result)
     reader.readAsDataURL(file)
     e.target.value = ''
   }
@@ -104,7 +106,8 @@ export default function EditorScreen({ id, prefill }) {
       title: prev.title.trim() || r.title,
       ingredients: prev.ingredients.trim() || r.ingredients.join('\n'),
       steps: prev.steps.trim() || r.steps.join('\n'),
-      memo: prev.memo.trim() || r.memo,
+      // 기존 메모에서 재료·순서와 겹치는 줄과 잡음을 걷어내고, 남은 게 없으면 새 메모로.
+      memo: cleanMemo(prev.memo, r.ingredients, r.steps) || r.memo,
       category:
         prev.category && prev.category !== '한식'
           ? prev.category
@@ -124,22 +127,25 @@ export default function EditorScreen({ id, prefill }) {
   const save = () => {
     if (!canSave) return
     const title = f.title.trim()
+    const ings = splitLines(f.ingredients)
+    const stps = splitLines(f.steps)
     const patch = {
       title,
       thumb: f.thumb,
       icon: f.icon || guessFoodIcon(title), // 비워두면 제목으로 자동 추천된 아이콘 저장
       emoji: f.emoji || '🍽️',
-      label: f.label.trim(),
+      label: clampGraphemes(f.label.trim(), 6),
       image: f.image,
       category: f.category,
       folder: f.folder || f.category,
       time: Number(f.time) || 0,
       servings: Number(f.servings) || 0,
       difficulty: f.difficulty,
-      ingredients: splitLines(f.ingredients),
-      steps: splitLines(f.steps),
+      ingredients: ings,
+      steps: stps,
       tags: f.tags,
-      memo: f.memo.trim(),
+      // 어느 경로로 들어왔든, 재료·순서와 겹치는 메모 줄은 저장 직전에 걸러낸다.
+      memo: cleanMemo(f.memo.trim(), ings, stps),
       sourceUrl: f.sourceUrl.trim(),
       status: 'sorted',
     }
@@ -193,7 +199,8 @@ export default function EditorScreen({ id, prefill }) {
           {f.thumb === 'label' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <TextTile text={f.label || f.title || '한끼'} size={74} radius={16} />
-              <input value={f.label} onChange={(e) => set('label', e.target.value)} placeholder={f.title || '표시할 글자'} maxLength={6} style={{ flex: 1 }} />
+              {/* maxLength 금지 — 한글 조합·이모지 입력이 끊긴다(UTF-16 단위로 세기 때문). 저장할 때 잘라낸다. */}
+              <input value={f.label} onChange={(e) => set('label', e.target.value)} placeholder={f.title || '표시할 글자'} style={{ flex: 1 }} />
             </div>
           )}
           {f.thumb === 'photo' && (
@@ -258,7 +265,8 @@ export default function EditorScreen({ id, prefill }) {
 
         <div className="field">
           <label>제목</label>
-          <input value={f.title} onChange={(e) => set('title', e.target.value)} placeholder="예) 명란 크림 파스타" autoFocus={!editing} />
+          {/* autoFocus 금지 — 화면에 들어오자마자 키보드가 아래 내용을 다 가려버린다. */}
+          <input value={f.title} onChange={(e) => set('title', e.target.value)} placeholder="예) 명란 크림 파스타" />
         </div>
 
         <div className="field">
@@ -344,6 +352,15 @@ export default function EditorScreen({ id, prefill }) {
           {editing ? '정리 완료' : '레시피 저장'}
         </button>
       </div>
+
+      {cropImg && (
+        <CropSheet
+          image={cropImg}
+          onDone={(img) => { setCropImg(null); runOcr(img) }}
+          onSkip={() => { const img = cropImg; setCropImg(null); runOcr(img) }}
+          onCancel={() => setCropImg(null)}
+        />
+      )}
     </div>
   )
 }
