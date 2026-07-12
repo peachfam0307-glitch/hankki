@@ -5,6 +5,7 @@ import Icon from '../components/Icon'
 import TabTips from '../components/TabTips'
 import EmojiPicker from '../components/EmojiPicker'
 import FoodIconPicker from '../components/FoodIconPicker'
+import Buddy, { BUDDY_LIST } from '../components/Buddies'
 import { cropSquare } from '../utils'
 import { Avatar } from './HomeScreen'
 
@@ -126,6 +127,33 @@ export default function ProfileScreen() {
               <button className="press" onClick={() => setAvatarSheet(false)} style={{ color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* 요리사 친구들 — 모자 쓴 동물 캐릭터 */}
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brown)', marginBottom: 8 }}>요리사 친구들 🧑‍🍳</div>
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+                  {BUDDY_LIST.map((bd) => (
+                    <button
+                      key={bd.id}
+                      className="press"
+                      onClick={() => { setProfile({ avatar: { type: 'buddy', value: bd.id } }); setAvatarSheet(false); nav.showToast(`${bd.name}로 바꿨어요 ✨`) }}
+                      aria-label={bd.name}
+                      style={{
+                        flex: '0 0 auto',
+                        width: 56,
+                        height: 56,
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg,#eef0ec,#dfe2da)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: profile.avatar?.type === 'buddy' && profile.avatar.value === bd.id ? '2px solid var(--brown)' : '2px solid transparent',
+                      }}
+                    >
+                      <Buddy id={bd.id} size={46} />
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <EmojiPicker
                   value={profile.avatar?.type === 'emoji' ? profile.avatar.value : '😊'}

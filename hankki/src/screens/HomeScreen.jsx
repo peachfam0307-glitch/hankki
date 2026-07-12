@@ -4,6 +4,7 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import FoodIcon from '../components/FoodIcon'
+import Buddy from '../components/Buddies'
 import SourceBadge from '../components/SourceBadge'
 import TabTips from '../components/TabTips'
 import { CATEGORIES } from '../theme'
@@ -189,8 +190,27 @@ function sourceLabel(s) {
   return { instagram: 'Instagram', youtube: 'YouTube', link: '링크', photo: '사진', manual: '직접 작성' }[s] || '링크'
 }
 
-// 아바타 — 사진·이모지·브랜드 아이콘을 고를 수 있고, 없으면 이름 첫 글자.
+// 아바타 — 요리사 친구·사진·이모지·브랜드 아이콘을 고를 수 있고, 없으면 이름 첫 글자.
 export function Avatar({ name, avatar, size = 32 }) {
+  if (avatar?.type === 'buddy' && avatar.value) {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg,#eef0ec,#dfe2da)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: '0 0 auto',
+          overflow: 'hidden',
+        }}
+      >
+        <Buddy id={avatar.value} size={size * 0.86} />
+      </div>
+    )
+  }
   if (avatar?.type === 'icon' && avatar.value) {
     return (
       <div
