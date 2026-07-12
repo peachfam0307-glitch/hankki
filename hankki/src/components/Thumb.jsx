@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import FoodIcon, { guessFoodIcon } from './FoodIcon'
 
-// 사진이 있으면 사진을, 없거나 로드 실패하면 따뜻한 크림톤 그라데이션 + 이모지 썸네일.
-// PWA 를 오프라인 설치해도 항상 자연스럽게 보이도록 하기 위한 폴백.
+// 사진이 있으면 사진을, 없거나 로드 실패하면 쿨톤 그라데이션 + 브랜드 커스텀 아이콘(이름 자동매칭).
+// PWA 를 오프라인 설치해도 항상 자연스럽고 통일감 있게 보이도록 하기 위한 폴백.
 const GRADS = [
   'linear-gradient(135deg,#eef0ec,#e1e5de)',
   'linear-gradient(135deg,#ecefeb,#dce1db)',
@@ -15,7 +16,7 @@ function gradFor(seed = '') {
   return GRADS[n]
 }
 
-export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize }) {
+export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize, iconSize = '56%' }) {
   const [failed, setFailed] = useState(false)
   const showImg = recipe.image && !failed
   const base = {
@@ -45,11 +46,9 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize }) 
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: emojiSize || '2.4rem',
-            filter: 'saturate(0.9)',
           }}
         >
-          {recipe.emoji || '🍽️'}
+          <FoodIcon name={recipe.icon || guessFoodIcon(recipe.title)} size={iconSize} />
         </div>
       )}
     </div>

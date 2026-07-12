@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
+import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import { POPULAR_SEARCHES, TAG_LIST, INGREDIENT_CHIPS } from '../data/seed'
 
 export default function SearchScreen() {
@@ -78,8 +79,8 @@ export default function SearchScreen() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '18px 8px' }}>
               {INGREDIENT_CHIPS.map((c) => (
                 <button key={c.name} className="press" onClick={() => setQ(c.name)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
-                  <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.7rem' }}>
-                    {c.emoji}
+                  <div className="emoji-tile" style={{ width: 56, height: 56, borderRadius: '50%' }}>
+                    <FoodIcon name={c.icon || guessFoodIcon(c.name)} size={34} />
                   </div>
                   <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text)' }}>{c.name}</span>
                 </button>
