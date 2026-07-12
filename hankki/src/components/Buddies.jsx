@@ -208,8 +208,8 @@ const FaceGrad = ({ id, light, base }) => (
 
 const BlushGrad = ({ id, c = '#ff9d8a' }) => (
   <radialGradient id={id}>
-    <stop offset="0%" stopColor={c} stopOpacity="0.75" />
-    <stop offset="70%" stopColor={c} stopOpacity="0.35" />
+    <stop offset="0%" stopColor={c} stopOpacity="0.85" />
+    <stop offset="70%" stopColor={c} stopOpacity="0.45" />
     <stop offset="100%" stopColor={c} stopOpacity="0" />
   </radialGradient>
 )
@@ -240,21 +240,21 @@ const F = {
   fbear: (
     <g>
       <defs>
-        <FaceGrad id="hk2g" light="#f2c99a" base="#e2a86e" /><BlushGrad id="hk2b" c="#f08a6a" /><FClip id="hk2c" />
-        <radialGradient id="hk2m" cx="50%" cy="34%" r="75%"><stop offset="0%" stopColor="#fff7e6" /><stop offset="100%" stopColor="#f7dcb4" /></radialGradient>
+        <FaceGrad id="hk2g" light="#f9cd8a" base="#ec9f4e" /><BlushGrad id="hk2b" c="#f0764a" /><FClip id="hk2c" />
+        <radialGradient id="hk2m" cx="50%" cy="34%" r="75%"><stop offset="0%" stopColor="#fff8e8" /><stop offset="100%" stopColor="#fbe3ba" /></radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#fbe7cd" />
+      <circle cx="32" cy="32" r="32" fill="#d7e9fa" />
       <g clipPath="url(#hk2c)">
-        <circle cx="11" cy="15" r="9" fill="#d99a5e" /><circle cx="11" cy="15" r="4.8" fill="#f5cf9e" />
-        <circle cx="53" cy="15" r="9" fill="#d99a5e" /><circle cx="53" cy="15" r="4.8" fill="#f5cf9e" />
+        <circle cx="11" cy="15" r="9" fill="#dd8b3d" /><circle cx="11" cy="15" r="4.8" fill="#f9d29a" />
+        <circle cx="53" cy="15" r="9" fill="#dd8b3d" /><circle cx="53" cy="15" r="4.8" fill="#f9d29a" />
         <circle cx="32" cy="40" r="28.5" fill="url(#hk2g)" />
         <FToque tilt={-9} x={32} y={6.5} />
         <FEye x={17.5} y={37.5} /><FEye x={46.5} y={37.5} />
         <ellipse cx="32" cy="47.5" rx="12" ry="9" fill="url(#hk2m)" />
         {/* 코 하나로 끝 — 입은 생략(무심) */}
-        <path d="M28.4 45.2c1.3-1.9 5.9-1.9 7.2 0 .8 1.3 0 3-3.6 3s-4.4-1.7-3.6-3z" fill="#4e372c" />
-        <circle cx="30.6" cy="45.1" r="0.85" fill="#7d6152" />
-        <path d="M32 48.4v1.7" stroke="#4e372c" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M28.4 45.2c1.3-1.9 5.9-1.9 7.2 0 .8 1.3 0 3-3.6 3s-4.4-1.7-3.6-3z" fill="#3f2a1f" />
+        <circle cx="30.6" cy="45.1" r="0.85" fill="#75543f" />
+        <path d="M32 48.4v1.7" stroke="#3f2a1f" strokeWidth="1.2" strokeLinecap="round" />
         <FBlush id="hk2b" x={11} y={45} /><FBlush id="hk2b" x={53} y={45} />
       </g>
     </g>
@@ -262,23 +262,23 @@ const F = {
   frabbit: (
     <g>
       <defs>
-        <FaceGrad id="hk3g" light="#ffffff" base="#fdf4ec" /><BlushGrad id="hk3b" c="#ff92a8" /><FClip id="hk3c" />
+        <FaceGrad id="hk3g" light="#ffffff" base="#fdf2ee" /><BlushGrad id="hk3b" c="#ff7d9d" /><FClip id="hk3c" />
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#ffe1e9" />
+      <circle cx="32" cy="32" r="32" fill="#ffd3e0" />
       <g clipPath="url(#hk3c)">
-        <rect x="13.5" y="-7" width="11.5" height="27" rx="5.7" fill="#fffdf9" stroke="#f3e6da" strokeWidth="0.8" />
-        <rect x="16.4" y="-3" width="5.8" height="19.5" rx="2.9" fill="#ffc3d2" />
+        <rect x="13.5" y="-7" width="11.5" height="27" rx="5.7" fill="#fffdf9" stroke="#f3e0d6" strokeWidth="0.8" />
+        <rect x="16.4" y="-3" width="5.8" height="19.5" rx="2.9" fill="#ff9fb9" />
         <g transform="rotate(40 45 8)">
-          <rect x="39.5" y="-9" width="11.5" height="25" rx="5.7" fill="#fffdf9" stroke="#f3e6da" strokeWidth="0.8" />
-          <rect x="42.4" y="-5" width="5.8" height="17.5" rx="2.9" fill="#ffc3d2" />
+          <rect x="39.5" y="-9" width="11.5" height="25" rx="5.7" fill="#fffdf9" stroke="#f3e0d6" strokeWidth="0.8" />
+          <rect x="42.4" y="-5" width="5.8" height="17.5" rx="2.9" fill="#ff9fb9" />
         </g>
         <circle cx="32" cy="42" r="27.5" fill="url(#hk3g)" />
         <FToque tilt={8} x={36} y={8} />
         <FEye x={17.5} y={40} /><FEye x={46.5} y={40} />
-        <path d="M29.8 45.4c.9-1.3 3.5-1.3 4.4 0 .7 1.1-.3 2.3-2.2 2.3s-2.9-1.2-2.2-2.3z" fill="#f0748f" />
-        <path d="M32 47.7v1.6" stroke="#db8f9c" strokeWidth="1" strokeLinecap="round" />
-        <rect x="27.6" y="49.1" width="4.3" height="6" rx="1.4" fill="#fff" stroke="#e8d9ca" strokeWidth="0.8" />
-        <rect x="32.1" y="49.1" width="4.3" height="6" rx="1.4" fill="#fff" stroke="#e8d9ca" strokeWidth="0.8" />
+        <path d="M29.8 45.4c.9-1.3 3.5-1.3 4.4 0 .7 1.1-.3 2.3-2.2 2.3s-2.9-1.2-2.2-2.3z" fill="#ff6f91" />
+        <path d="M32 47.7v1.6" stroke="#e8879d" strokeWidth="1" strokeLinecap="round" />
+        <rect x="27.6" y="49.1" width="4.3" height="6" rx="1.4" fill="#fff" stroke="#dcc9bc" strokeWidth="0.8" />
+        <rect x="32.1" y="49.1" width="4.3" height="6" rx="1.4" fill="#fff" stroke="#dcc9bc" strokeWidth="0.8" />
         <FBlush id="hk3b" x={10.5} y={47} /><FBlush id="hk3b" x={53.5} y={47} />
       </g>
     </g>
@@ -286,19 +286,19 @@ const F = {
   fcat: (
     <g>
       <defs>
-        <FaceGrad id="hk4g" light="#ffd9a0" base="#f6b96e" /><BlushGrad id="hk4b" c="#f08a5c" /><FClip id="hk4c" />
+        <FaceGrad id="hk4g" light="#ffd089" base="#ff9f3e" /><BlushGrad id="hk4b" c="#f2653a" /><FClip id="hk4c" />
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#e5f0e0" />
+      <circle cx="32" cy="32" r="32" fill="#cfe9c8" />
       <g clipPath="url(#hk4c)">
-        <path d="M8 22 12 3.5l12.5 9z" fill="#f2ab5c" /><path d="M10.8 18 13 8.6l6.8 5z" fill="#ffd4de" />
-        <path d="M56 22 52 3.5 39.5 12.5z" fill="#f2ab5c" /><path d="M53.2 18 51 8.6l-6.8 5z" fill="#ffd4de" />
+        <path d="M8 22 12 3.5l12.5 9z" fill="#f79440" /><path d="M10.8 18 13 8.6l6.8 5z" fill="#ffc3d2" />
+        <path d="M56 22 52 3.5 39.5 12.5z" fill="#f79440" /><path d="M53.2 18 51 8.6l-6.8 5z" fill="#ffc3d2" />
         <circle cx="32" cy="42" r="28" fill="url(#hk4g)" />
-        <path d="M25.6 16.5c1.7 3.5 1.7 5.5 0 8.8M32 15.3c1.3 4 1.3 6.3 0 10.2M38.4 16.5c-1.7 3.5-1.7 5.5 0 8.8" stroke="#dd9440" strokeWidth="2.1" strokeLinecap="round" fill="none" />
+        <path d="M25.6 16.5c1.7 3.5 1.7 5.5 0 8.8M32 15.3c1.3 4 1.3 6.3 0 10.2M38.4 16.5c-1.7 3.5-1.7 5.5 0 8.8" stroke="#d97522" strokeWidth="2.1" strokeLinecap="round" fill="none" />
         <FToque tilt={-11} x={26} y={7} />
         <FEye x={17.5} y={39.5} /><FEye x={46.5} y={39.5} />
         {/* 코 + 짧은 인중만 — w입 삭제(무심) */}
-        <path d="M30 45.6c.8-1.2 3.2-1.2 4 0 .6 1-.3 2.1-2 2.1s-2.6-1.1-2-2.1z" fill="#e06e56" />
-        <path d="M32 47.5v1.4" stroke="#7d4e2e" strokeWidth="1.15" strokeLinecap="round" />
+        <path d="M30 45.6c.8-1.2 3.2-1.2 4 0 .6 1-.3 2.1-2 2.1s-2.6-1.1-2-2.1z" fill="#f2695c" />
+        <path d="M32 47.5v1.4" stroke="#8a4a20" strokeWidth="1.15" strokeLinecap="round" />
         <g fill="#c9853f">
           <circle cx="11.5" cy="42.5" r="0.9" /><circle cx="9.5" cy="46.8" r="0.9" />
           <circle cx="52.5" cy="42.5" r="0.9" /><circle cx="54.5" cy="46.8" r="0.9" />
@@ -310,22 +310,22 @@ const F = {
   fdog: (
     <g>
       <defs>
-        <FaceGrad id="hk5g" light="#fdf3dd" base="#f2ddba" /><BlushGrad id="hk5b" c="#f0937a" /><FClip id="hk5c" />
+        <FaceGrad id="hk5g" light="#fff6e0" base="#f5ddb0" /><BlushGrad id="hk5b" c="#f0774e" /><FClip id="hk5c" />
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#e0eaf6" />
+      <circle cx="32" cy="32" r="32" fill="#e2d7f7" />
       <g clipPath="url(#hk5c)">
-        <path d="M4 18c-2.2 12.5 2 22.8 8.4 24.8 3.1-6.2 3.1-16.6 0-24.8-2.7-4.6-7.3-4.2-8.4 0z" fill="#c08a55" />
-        <path d="M60 18c2.2 12.5-2 22.8-8.4 24.8-3.1-6.2-3.1-16.6 0-24.8 2.7-4.6 7.3-4.2 8.4 0z" fill="#c08a55" />
+        <path d="M4 18c-2.2 12.5 2 22.8 8.4 24.8 3.1-6.2 3.1-16.6 0-24.8-2.7-4.6-7.3-4.2-8.4 0z" fill="#a9713d" />
+        <path d="M60 18c2.2 12.5-2 22.8-8.4 24.8-3.1-6.2-3.1-16.6 0-24.8 2.7-4.6 7.3-4.2 8.4 0z" fill="#a9713d" />
         <circle cx="32" cy="41" r="27.5" fill="url(#hk5g)" />
-        <ellipse cx="46" cy="34" rx="9.4" ry="8" fill="#dcb183" opacity="0.75" />
+        <ellipse cx="46" cy="34" rx="9.4" ry="8" fill="#d8a86b" opacity="0.8" />
         <FToque tilt={9} x={36} y={7.5} />
         <FEye x={17.5} y={39.5} /><FEye x={46.5} y={39.5} />
         {/* 큰 코에서 바로 혀 낼름 — 중간 입 곡선 삭제(무심) */}
-        <ellipse cx="32" cy="47" rx="4.9" ry="3.7" fill="#4f382e" />
-        <circle cx="30.4" cy="45.9" r="1.15" fill="#82655a" />
-        <path d="M28.9 50.2c0 3.4 6.2 3.4 6.2 0v-1.4h-6.2z" fill="#f0748f" />
-        <path d="M32 50v2" stroke="#dd5f7d" strokeWidth="0.9" strokeLinecap="round" />
-        <g fill="#c99e6b"><circle cx="23.5" cy="49" r="0.85" /><circle cx="40.5" cy="49" r="0.85" /></g>
+        <ellipse cx="32" cy="47" rx="4.9" ry="3.7" fill="#3f2c24" />
+        <circle cx="30.4" cy="45.9" r="1.15" fill="#78584a" />
+        <path d="M28.9 50.2c0 3.4 6.2 3.4 6.2 0v-1.4h-6.2z" fill="#ff7d99" />
+        <path d="M32 50v2" stroke="#e85f83" strokeWidth="0.9" strokeLinecap="round" />
+        <g fill="#bd8a4e"><circle cx="23.5" cy="49" r="0.85" /><circle cx="40.5" cy="49" r="0.85" /></g>
         <FBlush id="hk5b" x={11} y={46} /><FBlush id="hk5b" x={53} y={46} />
       </g>
     </g>
@@ -334,7 +334,7 @@ const F = {
     <g>
       <defs>
         <FaceGrad id="hk6g" light="#f9f0d4" base="#efdfb2" /><BlushGrad id="hk6b" c="#f0a86e" /><FClip id="hk6c" />
-        <radialGradient id="hk6i" cx="38%" cy="30%" r="80%"><stop offset="0%" stopColor="#f2c473" /><stop offset="100%" stopColor="#d9973f" /></radialGradient>
+        <radialGradient id="hk6i" cx="38%" cy="30%" r="80%"><stop offset="0%" stopColor="#f7c96a" /><stop offset="100%" stopColor="#dd8f2a" /></radialGradient>
       </defs>
       <circle cx="32" cy="32" r="32" fill="#e2edd8" />
       <g clipPath="url(#hk6c)">
@@ -367,24 +367,24 @@ const F = {
   fhamster: (
     <g>
       <defs>
-        <FaceGrad id="hk7g" light="#fbd9a8" base="#f2bd7e" /><BlushGrad id="hk7b" c="#f08a5c" /><FClip id="hk7c" />
-        <radialGradient id="hk7k" cx="50%" cy="38%" r="75%"><stop offset="0%" stopColor="#fde7c0" /><stop offset="100%" stopColor="#f7d09a" /></radialGradient>
+        <FaceGrad id="hk7g" light="#ffdc94" base="#ffb95e" /><BlushGrad id="hk7b" c="#f2653a" /><FClip id="hk7c" />
+        <radialGradient id="hk7k" cx="50%" cy="38%" r="75%"><stop offset="0%" stopColor="#ffedc4" /><stop offset="100%" stopColor="#ffd694" /></radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#fdeccf" />
+      <circle cx="32" cy="32" r="32" fill="#ffe0bd" />
       <g clipPath="url(#hk7c)">
-        <circle cx="13" cy="13" r="7.4" fill="#e6a866" /><circle cx="13" cy="13" r="3.9" fill="#f7d6a8" />
-        <circle cx="51" cy="13" r="7.4" fill="#e6a866" /><circle cx="51" cy="13" r="3.9" fill="#f7d6a8" />
+        <circle cx="13" cy="13" r="7.4" fill="#ed9840" /><circle cx="13" cy="13" r="3.9" fill="#ffd9a0" />
+        <circle cx="51" cy="13" r="7.4" fill="#ed9840" /><circle cx="51" cy="13" r="3.9" fill="#ffd9a0" />
         <circle cx="32" cy="40" r="27.5" fill="url(#hk7g)" />
         <circle cx="11.5" cy="47" r="13" fill="url(#hk7k)" />
         <circle cx="52.5" cy="47" r="13" fill="url(#hk7k)" />
         <FToque tilt={-10} x={29} y={6.5} />
         <FEye x={19.5} y={37.5} /><FEye x={44.5} y={37.5} />
         {/* 콩코만 — 씨앗 문 게 입 역할(오물오물) */}
-        <path d="M30.3 43.6c.8-1.1 2.6-1.1 3.4 0 .5.9-.2 1.9-1.7 1.9s-2.2-1-1.7-1.9z" fill="#e06e56" />
+        <path d="M30.3 43.6c.8-1.1 2.6-1.1 3.4 0 .5.9-.2 1.9-1.7 1.9s-2.2-1-1.7-1.9z" fill="#f2695c" />
         <g transform="rotate(38 39.5 50)">
           <ellipse cx="39.5" cy="50" rx="2.1" ry="3.4" fill="#7d5a3e" /><ellipse cx="39.5" cy="50" rx="1.2" ry="2.3" fill="#b58a5e" />
         </g>
-        <ellipse cx="36.5" cy="53.8" rx="2.8" ry="2.1" fill="#f2bd7e" /><ellipse cx="27.5" cy="53.8" rx="2.8" ry="2.1" fill="#f2bd7e" />
+        <ellipse cx="36.5" cy="53.8" rx="2.8" ry="2.1" fill="#ffb95e" /><ellipse cx="27.5" cy="53.8" rx="2.8" ry="2.1" fill="#ffb95e" />
         <FBlush id="hk7b" x={10} y={49} r={5.6} /><FBlush id="hk7b" x={54} y={49} r={5.6} />
       </g>
     </g>
