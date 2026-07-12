@@ -129,7 +129,7 @@ export const BUDDY_LIST = [
   { id: 'catpot', name: '냄비 냥이' },
   { id: 'chick', name: '삐약 셰프' },
   { id: 'dog', name: '몽몽 셰프' },
-  { id: 'gecko', name: '크레 셰프' },
+  { id: 'gecko', name: '호두 셰프' }, // 크레스티드 게코 — 사장님네 호두
   { id: 'hamster', name: '햄찌 셰프' },
 ]
 
