@@ -310,15 +310,27 @@ export default function ImportScreen() {
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="제목 (선택 · 비우면 자동)" style={{ marginBottom: 12 }} />
             {flow === 'youtube' && (
               <button className="btn-primary press" style={{ width: '100%', marginBottom: 8, opacity: url.trim() ? 1 : 0.5 }} onClick={readLink} disabled={!url.trim() || linkBusy}>
-                {linkBusy ? '읽는 중…' : '✨ 링크에서 자동으로 읽어오기 (베타)'}
+                {linkBusy ? '읽는 중…' : '✨ 설명란 자동으로 읽어오기 (베타)'}
               </button>
             )}
+            <button
+              className="btn-ghost press"
+              style={{ width: '100%', marginBottom: 8 }}
+              onClick={() => {
+                nav.pop()
+                nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } })
+              }}
+              disabled={!url.trim()}
+            >
+              📺 영상 보면서 직접 적기
+            </button>
             <button className="btn-ghost press" style={{ width: '100%' }} onClick={saveLink} disabled={!url.trim()}>
-              링크만 Inbox에 저장
+              링크만 Inbox에 저장 (바로가기)
             </button>
             {flow === 'youtube' && (
               <div className="t-sub" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.5 }}>
-                자동 읽기는 영상 설명에 레시피를 적어둔 경우에 잘 돼요. (무료 읽기 서비스 이용 · 최대 20초)
+                ⚠️ 자동 읽기는 <b>영상 설명(더보기)에 레시피를 적어둔 영상만</b> 돼요.
+                설명에 없으면 <b>영상 보면서 직접 적기</b>나, 레시피 화면 <b>캡쳐 → 사진으로 가져오기</b>를 이용해 주세요.
               </div>
             )}
           </div>
@@ -334,7 +346,8 @@ export default function ImportScreen() {
             <div className="h-title" style={{ fontSize: 22 }}>{flowMeta.title}</div>
           </div>
           <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 14 }}>
-            블로그·웹페이지 주소를 붙여넣으면 <b>본문을 자동으로 읽어</b> 재료·순서까지 정리해 드려요. (베타)
+            링크는 <b>바로가기(북마크)</b>로 저장하는 기능이에요. 레시피 내용까지 담으려면
+            화면을 <b>캡쳐해서 사진으로 가져오기</b>가 제일 확실해요.
           </div>
 
           <div className="field">
@@ -343,20 +356,21 @@ export default function ImportScreen() {
           </div>
           <div className="field">
             <label>제목 (선택)</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="비워두면 자동으로 채워요" />
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예) 이모네 갈비찜" />
           </div>
 
-          <button className="btn-primary press" style={{ marginBottom: 10, opacity: url.trim() ? 1 : 0.5 }} onClick={readLink} disabled={!url.trim() || linkBusy}>
-            {linkBusy ? '본문 읽는 중…' : '✨ 링크에서 자동으로 읽어오기'}
+          <button className="btn-primary press" style={{ marginBottom: 10, opacity: url.trim() ? 1 : 0.5 }} onClick={saveLink} disabled={!url.trim()}>
+            🔗 링크를 Inbox에 저장 (바로가기)
           </button>
-          <button className="btn-ghost press" style={{ width: '100%', marginBottom: 16 }} onClick={saveLink} disabled={!url.trim()}>
-            링크만 Inbox에 저장
+          <button className="btn-ghost press" style={{ width: '100%', marginBottom: 16 }} onClick={readLink} disabled={!url.trim() || linkBusy}>
+            {linkBusy ? '본문 읽는 중…' : '✨ 본문 자동 읽기 시도 (베타)'}
           </button>
 
           <div className="card" style={{ padding: 14, background: 'var(--cream)', border: 'none', display: 'flex', gap: 10 }}>
             <Icon name="inbox" size={20} color="var(--brown)" />
             <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--brown)' }}>
-              자동 읽기가 안 되는 페이지(로그인 필요 등)는 <b>링크만 저장</b>해 두고, 캡처나 텍스트 붙여넣기로 옮겨보세요.
+              자동 읽기는 블로그에 따라 되기도, 안 되기도 해요(로그인 필요 페이지는 불가).
+              안 되면 링크만 저장해 두고 <b>캡쳐</b>나 <b>텍스트 붙여넣기</b>로 옮겨주세요.
             </div>
           </div>
         </div>

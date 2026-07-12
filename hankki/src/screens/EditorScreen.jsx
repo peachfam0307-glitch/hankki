@@ -12,6 +12,7 @@ import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes } from '../utils'
 import { ocrImage } from '../ocr'
 import { parseRecipeText, cleanMemo } from '../parseRecipe'
+import { embedUrl } from '../embed'
 
 const DIFFS = ['쉬움', '보통', '어려움']
 const THUMB_TYPES = [
@@ -29,6 +30,7 @@ export default function EditorScreen({ id, prefill }) {
   const ocrRef = useRef(null) // 글자 읽기용(썸네일과 별개)
   const [ocr, setOcr] = useState({ busy: false, pct: 0 })
   const [cropImg, setCropImg] = useState(null) // 글자 읽기 전 '자르기' 단계
+  const [watch, setWatch] = useState(!!prefill?.watch) // 📺 영상 보면서 쓰기
 
   const [f, setF] = useState(() => {
     const e = editing
@@ -64,6 +66,7 @@ export default function EditorScreen({ id, prefill }) {
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }))
   const toggleTag = (t) => set('tags', f.tags.includes(t) ? f.tags.filter((x) => x !== t) : [...f.tags, t])
+  const embed = embedUrl(f.sourceUrl) // 유튜브·인스타 링크면 '보면서 쓰기' 가능
 
   // 썸네일용 사진 — 아이콘 크기에 맞춰 정사각으로 예쁘게 잘라 저장한다. (OCR 안 함)
   const onPhoto = (e) => {
@@ -173,6 +176,40 @@ export default function EditorScreen({ id, prefill }) {
 
       <input ref={photoRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
       <input ref={ocrRef} type="file" accept="image/*" onChange={onOcrFile} style={{ display: 'none' }} />
+
+      {/* 📺 영상 보면서 쓰기 — 원본 링크가 유튜브·인스타면 영상을 위에 고정하고 아래에서 적는다 */}
+      {embed && !watch && (
+        <button
+          className="press"
+          onClick={() => setWatch(true)}
+          style={{ margin: '6px 16px 0', padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700 }}
+        >
+          📺 영상 보면서 쓰기
+        </button>
+      )}
+      {embed && watch && (
+        <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#141311' }}>
+          <iframe
+            src={embed.src}
+            title="원본 영상"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+            style={
+              embed.type === 'youtube'
+                ? { display: 'block', width: '100%', aspectRatio: '16/9', border: 0 }
+                : { display: 'block', width: '100%', height: '45vh', border: 0, background: '#fff' }
+            }
+          />
+          <button
+            className="press"
+            onClick={() => setWatch(false)}
+            aria-label="영상 닫기"
+            style={{ position: 'absolute', top: 8, right: 8, padding: '6px 12px', borderRadius: 10, background: 'rgba(20,19,17,0.72)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}
+          >
+            ✕ 닫기
+          </button>
+        </div>
+      )}
 
       <div className="pad" style={{ paddingBottom: 40 }}>
         {/* 썸네일 — 카드에 보이는 아이콘. 기본은 브랜드 아이콘(통일감), 원하면 이모지·글자·사진. */}
