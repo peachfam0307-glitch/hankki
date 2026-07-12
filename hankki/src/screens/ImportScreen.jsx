@@ -83,7 +83,7 @@ export default function ImportScreen() {
     }
     setBusy(null)
 
-    const r = combined ? parseRecipeText(combined) : { title: '', ingredients: [], steps: [], memo: '' }
+    const r = combined ? parseRecipeText(combined, { fromOcr: true }) : { title: '', ingredients: [], steps: [], memo: '' }
     nav.pop()
     // 캡처 사진은 '글자 읽기'용일 뿐 — 썸네일(아이콘)과 분리한다. 그래서 image 는 넘기지 않는다.
     nav.push({

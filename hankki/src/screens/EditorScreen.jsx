@@ -98,7 +98,7 @@ export default function EditorScreen({ id, prefill }) {
       nav.showToast('사진에서 글자를 찾지 못했어요')
       return
     }
-    const r = parseRecipeText(text)
+    const r = parseRecipeText(text, { fromOcr: true })
     setF((prev) => ({
       ...prev,
       title: prev.title.trim() || r.title,

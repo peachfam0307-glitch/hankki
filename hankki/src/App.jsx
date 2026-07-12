@@ -111,7 +111,7 @@ export default function App() {
       if (data.imageDataUrl) {
         const text = await ocrImage(data.imageDataUrl)
         if (cancelled || !text.trim()) return
-        const r = parseRecipeText(text)
+        const r = parseRecipeText(text, { fromOcr: true })
         store.updateRecipe(rec.id, {
           title: rec.title && rec.title !== '사진 레시피' ? rec.title : r.title || rec.title,
           ingredients: r.ingredients,
