@@ -45,6 +45,7 @@ function initialState() {
       shops: saved.shops || DEFAULT_SHOPS,
       wishlist: saved.wishlist || [],
       shoppingList: saved.shoppingList || migrateShopping(),
+      pantry: saved.pantry || [],
     }
   }
   return {
@@ -54,6 +55,7 @@ function initialState() {
     shops: DEFAULT_SHOPS,
     wishlist: [],
     shoppingList: [],
+    pantry: [],
   }
 }
 
@@ -174,6 +176,35 @@ function reducer(state, action) {
       return { ...state, shoppingList: state.shoppingList.filter((i) => !i.done) }
     }
 
+    // 냉장고 재료함(재고)
+    case 'addPantry': {
+      return { ...state, pantry: [action.item, ...state.pantry] }
+    }
+    case 'updatePantry': {
+      return {
+        ...state,
+        pantry: state.pantry.map((p) => (p.id === action.id ? { ...p, ...action.patch } : p)),
+      }
+    }
+    case 'removePantry': {
+      return { ...state, pantry: state.pantry.filter((p) => p.id !== action.id) }
+    }
+
+    // 백업 불러오기 — 저장된 데이터로 전체 교체(기본값과 병합해 누락 방지)
+    case 'importAll': {
+      const d = action.data || {}
+      if (!Array.isArray(d.recipes)) return state
+      return {
+        recipes: d.recipes,
+        folders: d.folders || defaultFolders(d.recipes),
+        profile: { ...PROFILE_DEFAULT, ...(d.profile || {}) },
+        shops: d.shops || DEFAULT_SHOPS,
+        wishlist: d.wishlist || [],
+        shoppingList: d.shoppingList || [],
+        pantry: d.pantry || [],
+      }
+    }
+
     default:
       return state
   }
@@ -214,6 +245,10 @@ export function StoreProvider({ children }) {
     toggleShopItem: useCallback((id) => dispatch({ type: 'toggleShopItem', id }), []),
     removeShopItem: useCallback((id) => dispatch({ type: 'removeShopItem', id }), []),
     clearDoneShopItems: useCallback(() => dispatch({ type: 'clearDoneShopItems' }), []),
+    addPantry: useCallback((item) => dispatch({ type: 'addPantry', item }), []),
+    updatePantry: useCallback((id, patch) => dispatch({ type: 'updatePantry', id, patch }), []),
+    removePantry: useCallback((id) => dispatch({ type: 'removePantry', id }), []),
+    importAll: useCallback((data) => dispatch({ type: 'importAll', data }), []),
   }
 
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>

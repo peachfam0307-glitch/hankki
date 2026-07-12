@@ -1,11 +1,15 @@
+import { useState, useRef } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import { Avatar } from './HomeScreen'
 
 export default function ProfileScreen() {
-  const { profile, setProfile, recipes, clearAll, reset } = useStore()
+  const store = useStore()
+  const { profile, setProfile, recipes, clearAll, reset, importAll } = store
   const nav = useNav()
+  const [backup, setBackup] = useState(false)
+  const fileRef = useRef(null)
 
   const editProfile = () => {
     const name = window.prompt('닉네임', profile.name)
@@ -14,12 +18,52 @@ export default function ProfileScreen() {
     setProfile({ name: name.trim() || profile.name, bio: bio === null ? profile.bio : bio })
   }
 
+  const exportData = () => {
+    const data = {
+      _app: 'hankki', _v: 1, _at: new Date().toISOString(),
+      recipes: store.recipes, folders: store.folders, profile: store.profile,
+      shops: store.shops, wishlist: store.wishlist, shoppingList: store.shoppingList, pantry: store.pantry,
+    }
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `hankki-backup-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    setBackup(false)
+    nav.showToast('백업 파일을 내보냈어요 💾')
+  }
+
+  const importData = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result)
+        if (!Array.isArray(data.recipes)) throw new Error('형식 오류')
+        if (window.confirm(`레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`)) {
+          importAll(data)
+          setBackup(false)
+          nav.showToast('백업을 불러왔어요 ✨')
+        }
+      } catch {
+        nav.showToast('백업 파일을 읽을 수 없어요 😢')
+      }
+      e.target.value = ''
+    }
+    reader.readAsText(file)
+  }
+
   const menu = [
     { icon: 'heart', label: '즐겨찾기', onClick: () => nav.push({ name: 'favorites' }) },
     { icon: 'user', label: '내가 만든 레시피', onClick: () => nav.go('myrecipes') },
     { icon: 'star', label: '만들었어요! 기록', onClick: () => nav.push({ name: 'cooked' }) },
     { icon: 'cart', label: '장보기 · 재료함', onClick: () => nav.go('shop') },
-    { icon: 'cloud', label: '백업 및 동기화', badge: 'NEW', onClick: () => nav.showToast('클라우드 백업은 V2에서 제공될 예정이에요 ☁️') },
+    { icon: 'cloud', label: '백업 · 내보내기', badge: 'NEW', onClick: () => setBackup(true) },
     { icon: 'settings', label: '설정', onClick: editProfile },
     { icon: 'help', label: '도움말 및 문의', onClick: () => nav.showToast('도움이 필요하면 언제든 문의해 주세요 🙂') },
   ]
@@ -95,6 +139,26 @@ export default function ProfileScreen() {
           한끼 · v1.0 — 흩어진 레시피를, 한곳에.
         </div>
       </div>
+
+      <input ref={fileRef} type="file" accept="application/json,.json" onChange={importData} style={{ display: 'none' }} />
+
+      {backup && (
+        <div className="sheet-mask" onClick={() => setBackup(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
+            <div className="emoji-sheet-head">
+              <span>백업 · 내보내기</span>
+              <button className="press" onClick={() => setBackup(false)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            </div>
+            <div style={{ padding: '2px 16px 0' }}>
+              <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.65, marginBottom: 16 }}>
+                레시피 · 냉장고 · 장보기 등 모든 데이터를 파일 하나로 저장해요.{'\n'}폰을 바꾸거나 브라우저를 지우기 전에 내보내두면 안전해요.
+              </div>
+              <button className="btn-primary press" onClick={exportData}>💾 백업 파일 내보내기</button>
+              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={() => fileRef.current?.click()}>📂 백업 파일 불러오기</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

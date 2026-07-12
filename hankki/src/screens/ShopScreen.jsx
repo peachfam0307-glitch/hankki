@@ -6,6 +6,7 @@ import TextTile from '../components/TextTile'
 import EmojiPicker from '../components/EmojiPicker'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import FoodIconPicker from '../components/FoodIconPicker'
+import PantryView from '../components/PantryView'
 import { ocrImage } from '../ocr'
 import { guessEmoji } from '../emoji'
 
@@ -46,6 +47,7 @@ export default function ShopScreen() {
   const [editShops, setEditShops] = useState(false)
   const [shopForm, setShopForm] = useState(null) // null | {} (new) | shop (edit)
   const [adding, setAdding] = useState(false)
+  const [view, setView] = useState('shop') // 'pantry' | 'shop'
 
   const doneCount = shoppingList.filter((i) => i.done).length
 
@@ -56,6 +58,15 @@ export default function ShopScreen() {
       </div>
 
       <div className="pad">
+        <div className="segment" style={{ marginTop: 4 }}>
+          <button type="button" className={`seg ${view === 'pantry' ? 'on' : ''}`} onClick={() => setView('pantry')}>🧊 냉장고</button>
+          <button type="button" className={`seg ${view === 'shop' ? 'on' : ''}`} onClick={() => setView('shop')}>🛒 장보기</button>
+        </div>
+
+        {view === 'pantry' && <PantryView />}
+
+        {view === 'shop' && (
+        <>
         {/* 1) 쇼핑몰 바로가기 */}
         <div className="sec-head" style={{ marginTop: 6 }}>
           <div className="h-section">쇼핑몰 바로가기</div>
@@ -174,6 +185,8 @@ export default function ShopScreen() {
               </button>
             </div>
           ))
+        )}
+        </>
         )}
       </div>
     </>
