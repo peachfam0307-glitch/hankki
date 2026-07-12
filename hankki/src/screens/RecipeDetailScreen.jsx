@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -6,6 +6,8 @@ import Thumb from '../components/Thumb'
 import SourceBadge from '../components/SourceBadge'
 import TimerSheet from '../components/TimerSheet'
 import DiaryEntrySheet, { Stars } from '../components/DiaryEntrySheet'
+import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
+import { shareRecipeCard } from '../shareCard'
 import { scaleIngredient } from '../scale'
 import { SOURCES } from '../data/seed'
 
@@ -15,6 +17,7 @@ export default function RecipeDetailScreen({ id }) {
   const [menu, setMenu] = useState(false)
   const [timer, setTimer] = useState(false)
   const [logEntry, setLogEntry] = useState(null)
+  const iconRef = useRef(null)
   const r = recipes.find((x) => x.id === id)
   const baseServings = r?.servings || 0
   const [servings, setServings] = useState(baseServings || 1)
@@ -54,8 +57,25 @@ export default function RecipeDetailScreen({ id }) {
     nav.showToast('레시피를 삭제했어요')
   }
 
+  const onShare = async () => {
+    setMenu(false)
+    nav.showToast('공유 카드 만드는 중…')
+    const svg = iconRef.current?.querySelector('svg')?.outerHTML
+    await shareRecipeCard({
+      title: r.title,
+      info,
+      ingredients: (r.ingredients || []).map((i) => scaleIngredient(i, ratio)),
+      iconSvg: svg,
+    })
+  }
+
   return (
     <div className="screen fade" style={{ paddingBottom: 0 }}>
+      {/* 공유 카드용 숨은 아이콘 (SVG 직렬화 소스) */}
+      <div ref={iconRef} aria-hidden style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}>
+        <FoodIcon name={r.icon || guessFoodIcon(r.title)} size={240} />
+      </div>
+
       {/* 상단 오버레이 바 */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5, display: 'flex', justifyContent: 'space-between', padding: '10px 12px', paddingTop: 'calc(10px + var(--safe-top))' }}>
         <button className="round-btn press" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
@@ -248,6 +268,10 @@ export default function RecipeDetailScreen({ id }) {
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <button className="sheet-item press" onClick={() => { setMenu(false); nav.push({ name: 'editor', id: r.id }) }}>
               <Icon name="edit" size={20} color="var(--text)" /> 편집하기
+            </button>
+            <hr className="divider" />
+            <button className="sheet-item press" onClick={onShare}>
+              <Icon name="link" size={20} color="var(--text)" /> 이미지로 공유
             </button>
             <hr className="divider" />
             <button className="sheet-item press" onClick={del} style={{ color: 'var(--danger)' }}>
