@@ -443,7 +443,7 @@ function HelpTip({ text }) {
 }
 
 // ---- ✍️ 풀이 패드 (펜슬 필기: 모눈·색깔펜·지우개·직선자·포스트잇, 좌우분할) ----
-function SolvePad({ solveFn, problem }) {
+function SolvePad({ solveFn, problem, onSave }) {
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
   const [tool, setTool] = useState("pen");
@@ -452,6 +452,9 @@ function SolvePad({ solveFn, problem }) {
   const [notes, setNotes] = useState([]);
   const [solving, setSolving] = useState(false);
   const [solveResult, setSolveResult] = useState(""); // 📖 간략 풀이 결과
+  const [saving, setSaving] = useState(false);
+  const [savedMsg, setSavedMsg] = useState(""); // 풀이 기록 저장 후 안내
+  const dirty = useRef(false); // 뭔가 그렸는지(빈 저장 방지)
   const [bgGrid, setBgGrid] = useState(true);    // 모눈 배경 on/off (기본=모눈)
   const [penOnly, setPenOnly] = useState(false); // 손바닥 터치 방지 (애플펜슬만 인식)
   const [leftPct, setLeftPct] = useState(48); // 좌우분할 시 문제(왼쪽) 너비 %
@@ -586,6 +589,7 @@ function SolvePad({ solveFn, problem }) {
     e.preventDefault();
     if (canvasRef.current.setPointerCapture) canvasRef.current.setPointerCapture(e.pointerId);
     drawing.current = true;
+    dirty.current = true;
     start.current = getPos(e);
     pushUndo();
     const g = ctx();
@@ -638,7 +642,7 @@ function SolvePad({ solveFn, problem }) {
     clearCanvas();
   }
 
-  function addNote() { setNotes((n) => [...n, { id: makeId(), x: 16 + n.length * 14, y: 16 + n.length * 14, text: "" }]); }
+  function addNote() { dirty.current = true; setNotes((n) => [...n, { id: makeId(), x: 16 + n.length * 14, y: 16 + n.length * 14, text: "" }]); }
   function delNote(id) { setNotes((n) => n.filter((x) => x.id !== id)); }
   function noteDragStart(e, id) {
     e.preventDefault();
@@ -667,6 +671,83 @@ function SolvePad({ solveFn, problem }) {
       setSolveResult("정답·풀이를 가져오지 못했어요. 잠시 후 다시 눌러주세요." + ((e && (e.detail || e.message)) ? "\n\n[진단] " + (e.detail || e.message) : ""));
     } finally {
       setSolving(false);
+    }
+  }
+
+  // 둥근 사각형 경로 (포스트잇 배경용)
+  function roundRectPath(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  }
+  function wrapLines(g, text, maxW) {
+    const out = [];
+    String(text).split("\n").forEach((para) => {
+      let line = "";
+      for (const ch of para) {
+        if (line && g.measureText(line + ch).width > maxW) { out.push(line); line = ch; }
+        else line += ch;
+      }
+      out.push(line);
+    });
+    return out.slice(0, 8);
+  }
+  // 필기(캔버스)+포스트잇을 한 장의 이미지로 합성 (종이 배경 위에). 선 그림이라 용량이 아주 작음.
+  function exportPad() {
+    const c = canvasRef.current;
+    if (!c) return null;
+    const dpr = window.devicePixelRatio || 1;
+    const tmp = document.createElement("canvas");
+    tmp.width = c.width; tmp.height = c.height;
+    const g = tmp.getContext("2d");
+    g.fillStyle = "#FBFCF9";
+    g.fillRect(0, 0, tmp.width, tmp.height);
+    if (bgGrid) {
+      g.strokeStyle = "rgba(30,42,58,0.05)"; g.lineWidth = 1;
+      const step = 22 * dpr;
+      for (let x = step; x < tmp.width; x += step) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, tmp.height); g.stroke(); }
+      for (let y = step; y < tmp.height; y += step) { g.beginPath(); g.moveTo(0, y); g.lineTo(tmp.width, y); g.stroke(); }
+    }
+    g.drawImage(c, 0, 0);
+    if (notes.length) {
+      g.save();
+      g.scale(dpr, dpr);
+      g.font = "13px -apple-system, BlinkMacSystemFont, sans-serif";
+      g.textBaseline = "top";
+      notes.forEach((n) => {
+        const nw = 148, padX = 9;
+        const lines = wrapLines(g, n.text || "(메모)", nw - padX * 2);
+        const nh = Math.max(30, 14 + lines.length * 16);
+        g.fillStyle = "#FFF3B0"; g.strokeStyle = "#E6CF6A"; g.lineWidth = 1;
+        roundRectPath(g, n.x, n.y, nw, nh, 6); g.fill(); g.stroke();
+        g.fillStyle = "#4A4433";
+        lines.forEach((ln, i) => g.fillText(ln, n.x + padX, n.y + 7 + i * 16));
+      });
+      g.restore();
+    }
+    return tmp.toDataURL("image/jpeg", 0.8);
+  }
+  async function savePad() {
+    if (saving || !onSave) return;
+    if (!dirty.current && notes.length === 0) {
+      setSavedMsg("먼저 펜슬로 풀거나 포스트잇을 붙여보세요 ✍️");
+      setTimeout(() => setSavedMsg(""), 2200);
+      return;
+    }
+    setSaving(true);
+    try {
+      const img = exportPad();
+      const ok = img ? await onSave(img) : false;
+      setSavedMsg(ok ? "✅ ‘풀이 기록’에 저장했어요! 접었다 펴도, 앱을 닫아도 남아요." : "저장을 못 했어요. ⚙️ 설정 › 저장공간 비우기를 해보세요.");
+    } catch (e) {
+      setSavedMsg("저장 중 문제가 생겼어요. 잠시 후 다시 눌러주세요.");
+    } finally {
+      setSaving(false);
+      setTimeout(() => setSavedMsg(""), 3200);
     }
   }
 
@@ -750,15 +831,27 @@ function SolvePad({ solveFn, problem }) {
           </div>
         );
       })()}
-      {solveFn && (
+      {(solveFn || onSave) && (
         <div className="pad-actions">
-          <button className="wnt-btn-primary" onClick={solve} disabled={solving}>
-            {solving ? "정답·풀이 가져오는 중… 🔍" : "📖 정답·풀이 보기"}
-          </button>
+          {onSave && (
+            <button className="pad-save-btn" onClick={savePad} disabled={saving} title="펜슬 필기·포스트잇을 이미지로 풀이 기록에 저장">
+              {saving ? "저장 중…" : "💾 이 풀이 저장"}
+            </button>
+          )}
+          {solveFn && (
+            <button className="wnt-btn-primary" onClick={solve} disabled={solving}>
+              {solving ? "정답·풀이 가져오는 중… 🔍" : "📖 정답·풀이 보기"}
+            </button>
+          )}
         </div>
       )}
+      {savedMsg && <div className="pad-saved">{savedMsg}</div>}
       {solveResult && <div className="pad-result">📖 {solveResult} <span className="pad-ref">· 출제할 때 만든 정답이에요(검산 권장)</span></div>}
-      <p className="pad-selfcheck">✍️ 직접 푼 답을 {solveFn ? <>위 <b>정답·풀이</b></> : <>교재 해설(정답)</>}과 비교해 스스로 채점해요.</p>
+      <p className="pad-selfcheck">
+        {onSave
+          ? <>✍️ 펜슬로 푼 건 <b>임시</b>예요. 남기려면 <b>💾 이 풀이 저장</b>을 눌러 <b>풀이 기록</b>에 보관하세요.</>
+          : <>✍️ 직접 푼 답을 위 <b>정답·풀이</b>와 비교해 스스로 채점해요.</>}
+      </p>
     </div>
   );
 }
@@ -1489,6 +1582,25 @@ export default function WrongNoteTracker() {
     setSolFormOpen((o) => ({ ...o, [entryId]: false }));
     setSolForm({ text: "", photos: [], solved: false });
     setSolOpen((o) => ({ ...o, [entryId]: true }));
+  }
+
+  // 풀이 패드 필기(펜슬+포스트잇 합성 이미지)를 풀이 기록에 저장 — SolvePad의 onSave가 호출. 성공 시 true.
+  // 선 그림이라 사진보다 훨씬 작고, 저장 전에 한 번 더 줄이고 재시도 저장을 써서 용량 걱정이 없다.
+  async function savePadDrawing(entryId, imageDataUrl) {
+    if (!imageDataUrl) return false;
+    if (!entries.some((e) => e.id === entryId)) return false;
+    const sid = makeId();
+    let img = imageDataUrl;
+    try { img = await shrinkDataUrl(imageDataUrl); } catch (e) {}
+    const ok = await storageSet(`wrongnote:sol:${sid}`, JSON.stringify([img]));
+    if (!ok) return false;
+    setSolPhotoCache((c) => ({ ...c, [sid]: [img] }));
+    const rec = { id: sid, date: todayStr(), text: "✍️ 풀이 패드에 푼 풀이", hasPhotos: true };
+    saveData({
+      entries: entries.map((e) => (e.id === entryId ? { ...e, solutions: [...(e.solutions || []), rec] } : e)),
+    });
+    setSolOpen((o) => ({ ...o, [entryId]: true }));
+    return true;
   }
 
   async function toggleSolutions(id) {
@@ -2715,7 +2827,7 @@ export default function WrongNoteTracker() {
 
                   {/* 기록 카드에서 바로 풀기 — 좌우분할 풀이 패드 */}
                   {!selectMode && cardPadOpen[e.id] && (
-                    <SolvePad key={"cardpad-" + e.id} solveFn={null}
+                    <SolvePad key={"cardpad-" + e.id} solveFn={null} onSave={(img) => savePadDrawing(e.id, img)}
                       problem={e.hasImage ? (
                         <div className="wnt-flash-imgs in-pad">
                           {imageCache[e.id]
@@ -2946,7 +3058,7 @@ export default function WrongNoteTracker() {
                 )}
               </div>
 
-              {flashPadOpen && <SolvePad key={"pad-" + flashEntry.id} solveFn={null}
+              {flashPadOpen && <SolvePad key={"pad-" + flashEntry.id} solveFn={null} onSave={(img) => savePadDrawing(flashEntry.id, img)}
                 problem={
                   <div className="wnt-flash-imgs in-pad">
                     {imageCache[flashEntry.id]
@@ -4172,7 +4284,19 @@ const css = `
   font-family: inherit; font-size: 12px; padding: 6px; min-height: 56px; color: #4A4433;
 }
 .pad-note textarea:focus { outline: none; }
-.pad-actions { margin-top: 8px; display: flex; justify-content: flex-end; }
+.pad-actions { margin-top: 8px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.pad-save-btn {
+  font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer;
+  border-radius: 9px; padding: 9px 15px; border: 1.5px solid var(--ink); background: var(--ink); color: #fff;
+  transition: filter 0.12s;
+}
+.pad-save-btn:hover { filter: brightness(1.12); }
+.pad-save-btn:disabled { opacity: 0.5; cursor: wait; }
+.pad-save-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.pad-saved {
+  margin-top: 8px; background: rgba(46,125,79,0.1); border: 1px solid rgba(46,125,79,0.4);
+  border-radius: 8px; padding: 9px 12px; font-size: 12.5px; font-weight: 700; color: var(--green); line-height: 1.6;
+}
 .pad-result {
   margin-top: 8px; background: #F6F8FE; border: 1px solid #C9D4F0; border-radius: 8px;
   padding: 10px 12px; font-size: 13px; line-height: 1.7; white-space: pre-wrap;
