@@ -9,7 +9,7 @@ import BottomNav from './components/BottomNav'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
-import DiaryScreen from './screens/DiaryScreen'
+import ShopScreen from './screens/ShopScreen'
 import ProfileScreen from './screens/ProfileScreen'
 import ImportScreen from './screens/ImportScreen'
 import RecipeDetailScreen from './screens/RecipeDetailScreen'
@@ -19,7 +19,7 @@ import FavoritesScreen from './screens/FavoritesScreen'
 import CookedScreen from './screens/CookedScreen'
 import ShoppingScreen from './screens/ShoppingScreen'
 
-const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, diary: DiaryScreen, profile: ProfileScreen }
+const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, shop: ShopScreen, profile: ProfileScreen }
 
 // --- 아주 가벼운 내비게이션 스택 + 토스트 ---
 const NavCtx = createContext(null)

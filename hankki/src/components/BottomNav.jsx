@@ -4,7 +4,7 @@ const ITEMS = [
   { key: 'home', label: '홈', icon: 'home' },
   { key: 'search', label: '검색', icon: 'search' },
   { key: 'myrecipes', label: '내 레시피', icon: 'bookmark' },
-  { key: 'diary', label: '다이어리', icon: 'diary' },
+  { key: 'shop', label: '장보기', icon: 'cart' },
   { key: 'profile', label: '설정', icon: 'settings' },
 ]
 

@@ -4,6 +4,24 @@ import { seedRecipes } from './data/seed'
 const KEY = 'hankki:v1'
 const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행복한 하루 :)' }
 
+// 장보기 쇼핑몰 바로가기 기본 목록. url = 홈, search = 재료 검색(‘{q}’에 재료명 치환).
+// 나중에 제휴(어필리에이트) 태그를 이 url/search에 붙이면 그대로 수수료 링크가 됨.
+const DEFAULT_SHOPS = [
+  { id: 'coupang', name: '쿠팡', emoji: '🛒', url: 'https://www.coupang.com', search: 'https://www.coupang.com/np/search?q={q}' },
+  { id: 'kurly', name: '마켓컬리', emoji: '🥬', url: 'https://www.kurly.com', search: 'https://www.kurly.com/search?sword={q}' },
+  { id: 'ssg', name: '이마트몰', emoji: '🏬', url: 'https://emart.ssg.com', search: 'https://emart.ssg.com/search.ssg?query={q}' },
+  { id: 'naver', name: '네이버쇼핑', emoji: '🟢', url: 'https://shopping.naver.com', search: 'https://search.shopping.naver.com/search/all?query={q}' },
+  { id: 'oasis', name: '오아시스', emoji: '🌿', url: 'https://www.oasis.co.kr', search: 'https://www.oasis.co.kr/product/search?keyword={q}' },
+]
+
+function migrateShopping() {
+  try {
+    return JSON.parse(localStorage.getItem('hankki:shopping')) || []
+  } catch {
+    return []
+  }
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(KEY)
@@ -23,12 +41,18 @@ function initialState() {
       recipes: saved.recipes,
       folders: saved.folders || defaultFolders(saved.recipes),
       profile: { ...PROFILE_DEFAULT, ...(saved.profile || {}) },
+      shops: saved.shops || DEFAULT_SHOPS,
+      wishlist: saved.wishlist || [],
+      shoppingList: saved.shoppingList || migrateShopping(),
     }
   }
   return {
     recipes: seedRecipes,
     folders: ['한식', '양식', '일식', '간식'],
     profile: PROFILE_DEFAULT,
+    shops: DEFAULT_SHOPS,
+    wishlist: [],
+    shoppingList: [],
   }
 }
 
@@ -78,16 +102,71 @@ function reducer(state, action) {
       return { ...state, profile: { ...state.profile, ...action.patch } }
     }
     case 'clear': {
-      // 예시(시드) 포함 모든 레시피를 비우고 빈 아카이브로.
+      // 예시(시드) 포함 모든 레시피를 비우고 빈 아카이브로. (장보기·재료함은 유지)
       return { ...state, recipes: [] }
     }
     case 'reset': {
       return {
+        ...state,
         recipes: seedRecipes,
         folders: ['한식', '양식', '일식', '간식'],
         profile: PROFILE_DEFAULT,
       }
     }
+
+    // 쇼핑몰 바로가기
+    case 'addShop': {
+      if (!action.shop?.name || !action.shop?.url) return state
+      return { ...state, shops: [...state.shops, action.shop] }
+    }
+    case 'removeShop': {
+      return { ...state, shops: state.shops.filter((s) => s.id !== action.id) }
+    }
+
+    // 사고 싶은 재료(위시리스트)
+    case 'addWish': {
+      return { ...state, wishlist: [action.item, ...state.wishlist] }
+    }
+    case 'updateWish': {
+      return {
+        ...state,
+        wishlist: state.wishlist.map((w) => (w.id === action.id ? { ...w, ...action.patch } : w)),
+      }
+    }
+    case 'toggleWishBought': {
+      return {
+        ...state,
+        wishlist: state.wishlist.map((w) => (w.id === action.id ? { ...w, bought: !w.bought } : w)),
+      }
+    }
+    case 'removeWish': {
+      return { ...state, wishlist: state.wishlist.filter((w) => w.id !== action.id) }
+    }
+
+    // 장보기 체크리스트
+    case 'addShopItems': {
+      const existing = new Set(state.shoppingList.map((i) => i.name))
+      const add = action.names
+        .map((n) => n.trim())
+        .filter((n) => n && !existing.has(n))
+        .map((n) => ({ id: newId(), name: n, done: false }))
+      return { ...state, shoppingList: [...add, ...state.shoppingList] }
+    }
+    case 'toggleShopItem': {
+      return {
+        ...state,
+        shoppingList: state.shoppingList.map((i) =>
+          i.id === action.id ? { ...i, done: !i.done } : i
+        ),
+      }
+    }
+    case 'removeShopItem': {
+      return { ...state, shoppingList: state.shoppingList.filter((i) => i.id !== action.id) }
+    }
+    case 'clearDoneShopItems': {
+      return { ...state, shoppingList: state.shoppingList.filter((i) => !i.done) }
+    }
+
     default:
       return state
   }
@@ -117,6 +196,16 @@ export function StoreProvider({ children }) {
     setProfile: useCallback((patch) => dispatch({ type: 'setProfile', patch }), []),
     clearAll: useCallback(() => dispatch({ type: 'clear' }), []),
     reset: useCallback(() => dispatch({ type: 'reset' }), []),
+    addShop: useCallback((shop) => dispatch({ type: 'addShop', shop }), []),
+    removeShop: useCallback((id) => dispatch({ type: 'removeShop', id }), []),
+    addWish: useCallback((item) => dispatch({ type: 'addWish', item }), []),
+    updateWish: useCallback((id, patch) => dispatch({ type: 'updateWish', id, patch }), []),
+    toggleWishBought: useCallback((id) => dispatch({ type: 'toggleWishBought', id }), []),
+    removeWish: useCallback((id) => dispatch({ type: 'removeWish', id }), []),
+    addShopItems: useCallback((names) => dispatch({ type: 'addShopItems', names }), []),
+    toggleShopItem: useCallback((id) => dispatch({ type: 'toggleShopItem', id }), []),
+    removeShopItem: useCallback((id) => dispatch({ type: 'removeShopItem', id }), []),
+    clearDoneShopItems: useCallback(() => dispatch({ type: 'clearDoneShopItems' }), []),
   }
 
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>

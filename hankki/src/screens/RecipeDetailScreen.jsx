@@ -7,7 +7,7 @@ import SourceBadge from '../components/SourceBadge'
 import { SOURCES } from '../data/seed'
 
 export default function RecipeDetailScreen({ id }) {
-  const { recipes, toggleFavorite, cook, removeRecipe } = useStore()
+  const { recipes, toggleFavorite, cook, removeRecipe, addShopItems } = useStore()
   const nav = useNav()
   const [menu, setMenu] = useState(false)
   const r = recipes.find((x) => x.id === id)
@@ -108,7 +108,18 @@ export default function RecipeDetailScreen({ id }) {
 
         {r.ingredients?.length > 0 && (
           <>
-            <div className="h-section" style={{ marginTop: 26, marginBottom: 6 }}>재료</div>
+            <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
+              <div className="h-section">재료</div>
+              <button
+                className="mini-buy press"
+                onClick={() => {
+                  addShopItems(r.ingredients)
+                  nav.showToast('재료를 장보기 리스트에 담았어요 🛒')
+                }}
+              >
+                🛒 장보기 담기
+              </button>
+            </div>
             <div>
               {r.ingredients.map((ing, i) => (
                 <div key={i} className="ing">{ing}</div>

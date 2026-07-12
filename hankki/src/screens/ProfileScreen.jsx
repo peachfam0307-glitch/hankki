@@ -17,8 +17,8 @@ export default function ProfileScreen() {
   const menu = [
     { icon: 'heart', label: '즐겨찾기', onClick: () => nav.push({ name: 'favorites' }) },
     { icon: 'user', label: '내가 만든 레시피', onClick: () => nav.go('myrecipes') },
-    { icon: 'star', label: '만들었어요! 기록', onClick: () => nav.go('diary') },
-    { icon: 'cart', label: '장보기 리스트', onClick: () => nav.push({ name: 'shopping' }) },
+    { icon: 'star', label: '만들었어요! 기록', onClick: () => nav.push({ name: 'cooked' }) },
+    { icon: 'cart', label: '장보기 · 재료함', onClick: () => nav.go('shop') },
     { icon: 'cloud', label: '백업 및 동기화', badge: 'NEW', onClick: () => nav.showToast('클라우드 백업은 V2에서 제공될 예정이에요 ☁️') },
     { icon: 'settings', label: '설정', onClick: editProfile },
     { icon: 'help', label: '도움말 및 문의', onClick: () => nav.showToast('도움이 필요하면 언제든 문의해 주세요 🙂') },

@@ -646,6 +646,70 @@ img {
   background: var(--cream);
 }
 
+/* 쇼핑몰 바로가기 칩 */
+.shop-chip {
+  width: 74px;
+  height: 82px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.shop-chip .nm {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.chip-del {
+  position: absolute;
+  top: -5px;
+  right: -3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* 사고 싶은 재료 행 */
+.wish-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.mini-buy {
+  flex: 0 0 auto;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--brown);
+  background: var(--cream);
+  padding: 7px 12px;
+  border-radius: var(--r-pill);
+}
+.wa-inp {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  padding: 11px 12px;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+}
+.wa-inp:focus {
+  border-color: var(--sand);
+}
+
 /* 장보기 행 */
 .shop-row {
   display: flex;
