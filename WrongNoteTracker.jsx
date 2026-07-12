@@ -416,6 +416,7 @@ function SolvePad({ gradeFn, bridge, solveFn, problem }) {
   const [bgGrid, setBgGrid] = useState(true);    // 모눈 배경 on/off (기본=모눈)
   const [penOnly, setPenOnly] = useState(false); // 손바닥 터치 방지 (애플펜슬만 인식)
   const [leftPct, setLeftPct] = useState(48); // 좌우분할 시 문제(왼쪽) 너비 %
+  const [probZoom, setProbZoom] = useState(1); // 문제 확대 배율 (풀면서 부분 확대)
   const splitRef = useRef(null);
   const drawing = useRef(false);
   const start = useRef({ x: 0, y: 0 });
@@ -737,8 +738,15 @@ function SolvePad({ gradeFn, bridge, solveFn, problem }) {
         return (
           <div className="pad-split" ref={splitRef}>
             <div className="pad-problem" style={{ width: leftPct + "%" }}>
-              <div className="pad-problem-label">문제</div>
-              {problem}
+              <div className="pad-problem-bar">
+                <span className="pad-problem-label">문제</span>
+                <button className="pad-zoom-btn" onClick={() => setProbZoom((z) => Math.max(1, +(z - 0.25).toFixed(2)))} aria-label="축소">➖</button>
+                <span className="pad-zoom-pct">{Math.round(probZoom * 100)}%</span>
+                <button className="pad-zoom-btn" onClick={() => setProbZoom((z) => Math.min(4, +(z + 0.25).toFixed(2)))} aria-label="확대">➕</button>
+              </div>
+              <div className="pad-problem-scroll">
+                <div className="pad-problem-inner" style={{ width: probZoom * 100 + "%" }}>{problem}</div>
+              </div>
             </div>
             <div className="pad-divider" onPointerDown={dividerDown} role="separator" aria-label="문제·풀이 비율 조정" title="드래그해서 좌우 비율 조정">⋮</div>
             <div className="pad-main" style={{ width: (100 - leftPct) + "%" }}>{padWrap}</div>
@@ -752,8 +760,8 @@ function SolvePad({ gradeFn, bridge, solveFn, problem }) {
           </button>
         </div>
       )}
-      {solveResult && <div className="pad-result">📖 {solveResult}</div>}
-      <p className="pad-selfcheck">✍️ 직접 푼 답을 위 <b>정답·풀이</b>와 비교해 스스로 채점해요. (AI가 손글씨를 판단하지 않아요)</p>
+      {solveResult && <div className="pad-result">📖 {solveResult} <span className="pad-ref">· AI 풀이는 참고용이에요(검산 권장)</span></div>}
+      <p className="pad-selfcheck">✍️ 직접 푼 답을 {solveFn ? <>위 <b>정답·풀이</b></> : <>교재 해설(정답)</>}과 비교해 스스로 채점해요.</p>
     </div>
   );
 }
@@ -4135,15 +4143,23 @@ const css = `
 /* 좌우분할: 문제(왼쪽) | 풀이 패드(오른쪽) */
 .pad-split { display: flex; align-items: stretch; gap: 0; width: 100%; }
 .pad-problem {
-  flex: 0 0 auto; min-width: 0; overflow: auto; max-height: 400px;
+  flex: 0 0 auto; min-width: 0; overflow: hidden; max-height: 400px;
   border: 1.5px solid var(--line); border-radius: 10px; background: var(--paper);
-  padding: 8px; box-sizing: border-box;
+  padding: 8px; box-sizing: border-box; display: flex; flex-direction: column;
 }
+.pad-problem-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .pad-problem-label {
-  font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .04em;
-  margin-bottom: 6px;
+  font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .04em; margin-right: auto;
 }
-.pad-problem .wnt-photo { width: 100%; margin: 0 0 6px; }
+.pad-zoom-btn {
+  width: 26px; height: 24px; border: 1px solid var(--line); background: #fff; border-radius: 6px;
+  cursor: pointer; font-size: 12px; line-height: 1; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+}
+.pad-zoom-btn:hover { border-color: var(--ink); }
+.pad-zoom-pct { font-size: 11px; color: var(--muted); min-width: 38px; text-align: center; font-variant-numeric: tabular-nums; }
+.pad-problem-scroll { overflow: auto; max-height: 356px; -webkit-overflow-scrolling: touch; touch-action: pinch-zoom pan-x pan-y; border-radius: 6px; }
+.pad-problem-inner { transform-origin: top left; }
+.pad-problem .wnt-photo { width: 100%; margin: 0 0 6px; display: block; }
 .pad-problem .wnt-variant-q.in-pad { margin: 0; font-size: 15px; line-height: 1.6; }
 .pad-divider {
   flex: 0 0 16px; align-self: stretch; display: flex; align-items: center; justify-content: center;
