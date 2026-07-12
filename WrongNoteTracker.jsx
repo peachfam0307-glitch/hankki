@@ -2227,6 +2227,15 @@ export default function WrongNoteTracker() {
             오답 끝<span className="wnt-title-mark">✗</span>
           </h1>
           <span className="wnt-subtitle">틀린 문제는 두 번 안 틀린다</span>
+          {(() => {
+            const dd = examDday(exam);
+            return (
+              <button className="wnt-header-dday" onClick={() => { setTab("list"); setExamOpen(true); }}
+                title="시험 일정·시간표 보기">
+                📅 {dd != null ? <><span className="wnt-header-dday-num">D-{dd === 0 ? "DAY" : dd}</span></> : "시험 일정"}
+              </button>
+            );
+          })()}
         </div>
         <div className="wnt-motto-row">
           <input
@@ -3449,6 +3458,16 @@ const css = `
 .wnt-title { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
 .wnt-title-mark { color: var(--red); font-size: 20px; margin-left: 4px; vertical-align: super; }
 .wnt-subtitle { color: var(--muted); font-size: 13px; }
+.wnt-header-dday {
+  margin-left: auto; align-self: center; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  background: #fff; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 9px; padding: 5px 12px;
+  font-size: 11.5px; font-weight: 600; font-family: inherit; letter-spacing: 0.02em;
+  transition: border-color .15s, box-shadow .15s;
+}
+.wnt-header-dday:hover { border-color: var(--ink); box-shadow: 0 2px 8px rgba(30,42,58,0.07); }
+.wnt-header-dday-num { font-weight: 800; color: var(--ink); font-size: 13px; letter-spacing: 0.03em; font-variant-numeric: tabular-nums; }
 .wnt-motto {
   width: 100%; box-sizing: border-box; margin-top: 12px; padding: 9px 13px;
   font-family: inherit; font-size: 13.5px; color: var(--ink); font-style: italic;
@@ -3695,9 +3714,9 @@ const css = `
 .wnt-motto-row { display: flex; align-items: center; gap: 8px; }
 .wnt-motto-row .wnt-motto { flex: 1; }
 .wnt-streak {
-  flex: 0 0 auto; white-space: nowrap; font-size: 12.5px; font-weight: 800; color: #C0491E;
-  background: linear-gradient(90deg, #FFEBD0, #FFD9A8); border: 1.5px solid #F0B266;
-  border-radius: 999px; padding: 5px 11px;
+  flex: 0 0 auto; white-space: nowrap; font-size: 12px; font-weight: 700; color: var(--ink);
+  background: #fff; border: 1px solid var(--line);
+  border-radius: 9px; padding: 5px 11px; letter-spacing: 0.01em;
 }
 .wnt-due-modal-streak { font-size: 13px; font-weight: 800; color: #C0491E; margin-top: 2px; }
 /* 📅 시험 D-day */
