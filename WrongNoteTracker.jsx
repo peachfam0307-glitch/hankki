@@ -2848,7 +2848,8 @@ export default function WrongNoteTracker() {
                       <button className="wnt-mini ai" onClick={() => toggleAi(e.id)}>
                         🧭 접근법 힌트{aiOpen[e.id] ? " ▲" : ""}
                       </button>
-                      <HelpTip text="🧭 접근법 힌트: 최종 답은 안 주고 '어떻게 접근하는지' 방향·핵심 개념·함정만 짚어줘요 (참고용). 정확한 풀이·정답이 필요하면 그 안의 📲 질문방 버튼으로 넘겨요. ✍️ 풀이 패드로 직접 풀고 교재 해설과 비교해 자기채점하세요." />
+                      <button className="wnt-mini idea" onClick={() => openInClaudeApp(aiBridgePrompt(e))}>📲 질문방</button>
+                      <HelpTip text="🧭 접근법 힌트: 최종 답은 안 주고 '어떻게 접근하는지' 방향·핵심 개념·함정만 짚어줘요 (참고용). 📲 질문방: 정확한 풀이·정답이 필요할 때 클로드 앱(오답 질문방)을 열어요 — 질문이 자동 복사되니 붙여넣고 문제 사진을 첨부해 물어보세요. ✍️ 풀이 패드로 직접 풀고 교재 해설과 비교해 자기채점하세요." />
                     </div>
                   )}
 
@@ -3266,6 +3267,7 @@ export default function WrongNoteTracker() {
                       <button className="wnt-mini ai" onClick={() => setAiOpen((o) => ({ ...o, [vAi]: !o[vAi] }))}>
                         🧭 접근법 힌트{aiOpen[vAi] ? " ▲" : ""}
                       </button>
+                      <button className="wnt-mini idea" onClick={() => openInClaudeApp(aiBridgePrompt(vEntry))}>📲 질문방</button>
                     </div>
                   )}
                   {vtPadOpen[i] && <SolvePad key={"vtpad-" + i + "-" + (vtPadNonce[i] || 0)} solveFn={v.answer ? (async () => v.answer) : null}
