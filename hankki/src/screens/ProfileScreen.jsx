@@ -181,7 +181,7 @@ export default function ProfileScreen() {
                           }}
                         >
                           {/* 클로즈업(f~) 세트는 배경까지 갖춘 스티커라 꽉 채워서 */}
-                          <Buddy id={bd.id} size={bd.id.startsWith('f') ? 56 : 44} />
+                          <Buddy id={bd.id} size={bd.id.startsWith('f') ? 56 : 53} />
                         </div>
                         <span style={{ fontSize: 10, fontWeight: on ? 800 : 600, color: on ? 'var(--brown)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{bd.name}</span>
                       </button>

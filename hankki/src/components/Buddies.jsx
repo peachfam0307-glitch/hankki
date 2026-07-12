@@ -179,11 +179,12 @@ const B = {
 
 // ---------- 클로즈업 세트(64 뷰박스) 공용 파츠 ----------
 // 반들반들 점눈: 세로 타원 + 큰 광택 + 아래 잔광
+// 인형 눈: 일부러 콩알만 하게, 낮게 — 무심해야 귀엽다
 const FEye = ({ x, y }) => (
   <>
-    <ellipse cx={x} cy={y} rx="2.7" ry="3.7" fill="#241c17" />
-    <circle cx={x - 0.95} cy={y - 1.35} r="1.15" fill="#fff" />
-    <circle cx={x + 1.05} cy={y + 1.5} r="0.55" fill="#fff" opacity="0.8" />
+    <ellipse cx={x} cy={y} rx="2.35" ry="3.25" fill="#241c17" />
+    <circle cx={x - 0.85} cy={y - 1.2} r="1.0" fill="#fff" />
+    <circle cx={x + 0.95} cy={y + 1.35} r="0.5" fill="#fff" opacity="0.8" />
   </>
 )
 
@@ -227,7 +228,7 @@ const F = {
         <circle cx="32" cy="40" r="30" fill="url(#hk1g)" />
         <path d="M40 12c2.6-3.2 6.6-3.6 8.4-2" stroke="#e8b93e" strokeWidth="1.7" strokeLinecap="round" fill="none" />
         <FToque tilt={-10} x={27} y={7} />
-        <FEye x={16.5} y={37} /><FEye x={47.5} y={37} />
+        <FEye x={16.5} y={38.5} /><FEye x={47.5} y={38.5} />
         <ellipse cx="32" cy="45.5" rx="10" ry="6.6" fill="url(#hk1k)" />
         <path d="M22.8 47.2c3 2.3 15.4 2.3 18.4 0 .9 3.6-2.8 7.4-9.2 7.4s-10.1-3.8-9.2-7.4z" fill="#f57f17" />
         <path d="M23 45.9c3.2 1.7 14.8 1.7 18 0" stroke="#e0740f" strokeWidth="1.1" strokeLinecap="round" fill="none" />
@@ -248,11 +249,12 @@ const F = {
         <circle cx="53" cy="15" r="9" fill="#d99a5e" /><circle cx="53" cy="15" r="4.8" fill="#f5cf9e" />
         <circle cx="32" cy="40" r="28.5" fill="url(#hk2g)" />
         <FToque tilt={-9} x={32} y={6.5} />
-        <FEye x={17.5} y={36} /><FEye x={46.5} y={36} />
+        <FEye x={17.5} y={37.5} /><FEye x={46.5} y={37.5} />
         <ellipse cx="32" cy="47.5" rx="12" ry="9" fill="url(#hk2m)" />
-        <path d="M28.4 44.2c1.3-1.9 5.9-1.9 7.2 0 .8 1.3 0 3-3.6 3s-4.4-1.7-3.6-3z" fill="#4e372c" />
-        <circle cx="30.6" cy="44.1" r="0.85" fill="#7d6152" />
-        <path d="M32 47.4v2.3m0 0c-1.3 1.7-3.6 1.5-4.2-.2m4.2.2c1.3 1.7 3.6 1.5 4.2-.2" stroke="#4e372c" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+        {/* 코 하나로 끝 — 입은 생략(무심) */}
+        <path d="M28.4 45.2c1.3-1.9 5.9-1.9 7.2 0 .8 1.3 0 3-3.6 3s-4.4-1.7-3.6-3z" fill="#4e372c" />
+        <circle cx="30.6" cy="45.1" r="0.85" fill="#7d6152" />
+        <path d="M32 48.4v1.7" stroke="#4e372c" strokeWidth="1.2" strokeLinecap="round" />
         <FBlush id="hk2b" x={11} y={45} /><FBlush id="hk2b" x={53} y={45} />
       </g>
     </g>
@@ -272,7 +274,7 @@ const F = {
         </g>
         <circle cx="32" cy="42" r="27.5" fill="url(#hk3g)" />
         <FToque tilt={8} x={36} y={8} />
-        <FEye x={17.5} y={39} /><FEye x={46.5} y={39} />
+        <FEye x={17.5} y={40} /><FEye x={46.5} y={40} />
         <path d="M29.8 45.4c.9-1.3 3.5-1.3 4.4 0 .7 1.1-.3 2.3-2.2 2.3s-2.9-1.2-2.2-2.3z" fill="#f0748f" />
         <path d="M32 47.7v1.6" stroke="#db8f9c" strokeWidth="1" strokeLinecap="round" />
         <rect x="27.6" y="49.1" width="4.3" height="6" rx="1.4" fill="#fff" stroke="#e8d9ca" strokeWidth="0.8" />
@@ -293,9 +295,10 @@ const F = {
         <circle cx="32" cy="42" r="28" fill="url(#hk4g)" />
         <path d="M25.6 16.5c1.7 3.5 1.7 5.5 0 8.8M32 15.3c1.3 4 1.3 6.3 0 10.2M38.4 16.5c-1.7 3.5-1.7 5.5 0 8.8" stroke="#dd9440" strokeWidth="2.1" strokeLinecap="round" fill="none" />
         <FToque tilt={-11} x={26} y={7} />
-        <FEye x={17.5} y={38} /><FEye x={46.5} y={38} />
-        <path d="M30 44.4c.8-1.2 3.2-1.2 4 0 .6 1-.3 2.1-2 2.1s-2.6-1.1-2-2.1z" fill="#e06e56" />
-        <path d="M32 46.3v1.5m0 0c-1.2 1.6-3.4 1.4-4-.2m4 .2c1.2 1.6 3.4 1.4 4-.2" stroke="#7d4e2e" strokeWidth="1.15" strokeLinecap="round" fill="none" />
+        <FEye x={17.5} y={39.5} /><FEye x={46.5} y={39.5} />
+        {/* 코 + 짧은 인중만 — w입 삭제(무심) */}
+        <path d="M30 45.6c.8-1.2 3.2-1.2 4 0 .6 1-.3 2.1-2 2.1s-2.6-1.1-2-2.1z" fill="#e06e56" />
+        <path d="M32 47.5v1.4" stroke="#7d4e2e" strokeWidth="1.15" strokeLinecap="round" />
         <g fill="#c9853f">
           <circle cx="11.5" cy="42.5" r="0.9" /><circle cx="9.5" cy="46.8" r="0.9" />
           <circle cx="52.5" cy="42.5" r="0.9" /><circle cx="54.5" cy="46.8" r="0.9" />
@@ -316,12 +319,12 @@ const F = {
         <circle cx="32" cy="41" r="27.5" fill="url(#hk5g)" />
         <ellipse cx="46" cy="34" rx="9.4" ry="8" fill="#dcb183" opacity="0.75" />
         <FToque tilt={9} x={36} y={7.5} />
-        <FEye x={17.5} y={38} /><FEye x={46.5} y={38} />
-        <ellipse cx="32" cy="46" rx="4.9" ry="3.7" fill="#4f382e" />
-        <circle cx="30.4" cy="44.9" r="1.15" fill="#82655a" />
-        <path d="M32 49.6v1.5m0 0c-1.6 1.9-4.3 1.6-4.9-.4m4.9.4c1.6 1.9 4.3 1.6 4.9-.4" stroke="#4f382e" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-        <path d="M28.9 52.8c0 3.4 6.2 3.4 6.2 0v-2h-6.2z" fill="#f0748f" />
-        <path d="M32 52.4v2.2" stroke="#dd5f7d" strokeWidth="0.9" strokeLinecap="round" />
+        <FEye x={17.5} y={39.5} /><FEye x={46.5} y={39.5} />
+        {/* 큰 코에서 바로 혀 낼름 — 중간 입 곡선 삭제(무심) */}
+        <ellipse cx="32" cy="47" rx="4.9" ry="3.7" fill="#4f382e" />
+        <circle cx="30.4" cy="45.9" r="1.15" fill="#82655a" />
+        <path d="M28.9 50.2c0 3.4 6.2 3.4 6.2 0v-1.4h-6.2z" fill="#f0748f" />
+        <path d="M32 50v2" stroke="#dd5f7d" strokeWidth="0.9" strokeLinecap="round" />
         <g fill="#c99e6b"><circle cx="23.5" cy="49" r="0.85" /><circle cx="40.5" cy="49" r="0.85" /></g>
         <FBlush id="hk5b" x={11} y={46} /><FBlush id="hk5b" x={53} y={46} />
       </g>
@@ -375,9 +378,9 @@ const F = {
         <circle cx="11.5" cy="47" r="13" fill="url(#hk7k)" />
         <circle cx="52.5" cy="47" r="13" fill="url(#hk7k)" />
         <FToque tilt={-10} x={29} y={6.5} />
-        <FEye x={19.5} y={36} /><FEye x={44.5} y={36} />
-        <path d="M30.3 42.4c.8-1.1 2.6-1.1 3.4 0 .5.9-.2 1.9-1.7 1.9s-2.2-1-1.7-1.9z" fill="#e06e56" />
-        <path d="M32 44.3v1.3m0 0c-1.1 1.5-3.1 1.3-3.6-.2m3.6.2c1.1 1.5 3.1 1.3 3.6-.2" stroke="#7d4e2e" strokeWidth="1.1" strokeLinecap="round" fill="none" />
+        <FEye x={19.5} y={37.5} /><FEye x={44.5} y={37.5} />
+        {/* 콩코만 — 씨앗 문 게 입 역할(오물오물) */}
+        <path d="M30.3 43.6c.8-1.1 2.6-1.1 3.4 0 .5.9-.2 1.9-1.7 1.9s-2.2-1-1.7-1.9z" fill="#e06e56" />
         <g transform="rotate(38 39.5 50)">
           <ellipse cx="39.5" cy="50" rx="2.1" ry="3.4" fill="#7d5a3e" /><ellipse cx="39.5" cy="50" rx="1.2" ry="2.3" fill="#b58a5e" />
         </g>
@@ -418,7 +421,8 @@ export default function Buddy({ id, size = 48 }) {
   const body = B[id] || B.bear
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
-      {body}
+      {/* 전신 세트는 그림 여백이 많아 1.1배 확대해 원을 꽉 채운다 */}
+      <g transform="translate(24 24) scale(1.1) translate(-24 -24)">{body}</g>
     </svg>
   )
 }
