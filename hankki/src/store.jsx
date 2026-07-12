@@ -23,6 +23,17 @@ function migrateShopping() {
   }
 }
 
+// 기존 사용자의 기본 쇼핑몰(예전 알록달록 이모지)을 새 커스텀 아이콘으로 업그레이드.
+const SHOP_ICON_UPGRADE = { coupang: 'box', kurly: 'bag', ssg: 'cart', naver: 'store', oasis: 'basket' }
+function migrateShops(shops) {
+  if (!Array.isArray(shops) || shops.length === 0) return DEFAULT_SHOPS
+  return shops.map((s) =>
+    SHOP_ICON_UPGRADE[s.id] && s.iconType === 'emoji'
+      ? { ...s, iconType: 'icon', icon: SHOP_ICON_UPGRADE[s.id] }
+      : s
+  )
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(KEY)
@@ -42,7 +53,7 @@ function initialState() {
       recipes: saved.recipes,
       folders: saved.folders || defaultFolders(saved.recipes),
       profile: { ...PROFILE_DEFAULT, ...(saved.profile || {}) },
-      shops: saved.shops || DEFAULT_SHOPS,
+      shops: migrateShops(saved.shops),
       wishlist: saved.wishlist || [],
       shoppingList: saved.shoppingList || migrateShopping(),
       pantry: saved.pantry || [],
