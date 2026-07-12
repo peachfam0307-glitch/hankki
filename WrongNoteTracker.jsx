@@ -1163,10 +1163,39 @@ export default function WrongNoteTracker() {
       }
       setSaveError(false);
       setSettingMsg(freed > 0 ? `저장공간을 비웠어요! 안 쓰는 데이터 ${freed}개 삭제 완료. 이제 다시 저장해 보세요.` : "지울 찌꺼기 데이터가 없었어요. 사진이 큰 경우일 수 있어요 — 사진을 1~2장만 넣어보세요.");
+      computeUsage();
     } finally {
       setCleaning(false);
     }
   }
+
+  // 저장공간 사용량 계산 — wrongnote: 키들의 값 길이를 합산 (사진·풀이 그림·텍스트)
+  const [usage, setUsage] = useState(null);
+  const [usageLoading, setUsageLoading] = useState(false);
+  async function computeUsage() {
+    if (usageLoading) return;
+    setUsageLoading(true);
+    try {
+      let keys = [];
+      try { const r = await window.storage.list("wrongnote:"); keys = (r && r.keys) || []; } catch (e) {}
+      let total = 0, imgCount = 0, solCount = 0;
+      for (const k of keys) {
+        let len = 0;
+        try { const v = await window.storage.get(k); len = v && v.value ? v.value.length : 0; } catch (e) {}
+        total += len;
+        if (k.indexOf("wrongnote:img:") === 0) imgCount++;
+        else if (k.indexOf("wrongnote:sol:") === 0) solCount++;
+      }
+      setUsage({ mb: total / (1024 * 1024), imgCount, solCount });
+    } finally {
+      setUsageLoading(false);
+    }
+  }
+  // 설정 탭을 열면 사용량을 자동으로 다시 계산
+  useEffect(() => {
+    if (tab === "settings") computeUsage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
 
   async function saveData(patch) {
     const data = {
@@ -3309,8 +3338,29 @@ export default function WrongNoteTracker() {
           {settingMsg && <div className="wnt-setting-msg">{settingMsg}</div>}
 
           <div className="wnt-set-section">
-            <h2 className="wnt-h2">🧹 저장공간 <HelpTip text="저장에 실패하거나 '공간 부족'이 뜰 때 눌러요. 어떤 오답에도 연결되지 않은 옛 사진·임시저장 찌꺼기를 지워 공간을 되찾아요. 실제 오답 기록은 지우지 않아요." /></h2>
-            <p className="wnt-set-desc">저장이 안 되거나 '공간 부족'이 뜨면 눌러요. 안 쓰는 찌꺼기 데이터만 비워요 (오답 기록은 안 지워져요).</p>
+            <h2 className="wnt-h2">🧹 저장공간 <HelpTip text="지금 얼마나 저장했는지 보여줘요. 문제 사진은 한 장당 ~0.2MB, 풀이 패드 그림은 ~0.02MB(사진의 1/10)로 아주 작아요. 꽉 차가면 '저장공간 비우기'로 안 쓰는 찌꺼기를 지워 되찾을 수 있고, 오답 기록은 안 지워져요." /></h2>
+            <div className="wnt-usage">
+              {usageLoading && !usage ? (
+                <span className="wnt-usage-calc">사용량 계산 중…</span>
+              ) : usage ? (() => {
+                const mb = usage.mb;
+                const level = mb < 2 ? "ok" : mb < 4 ? "mid" : "hi";
+                const status = level === "ok" ? "😊 아주 넉넉해요" : level === "mid" ? "🙂 아직 여유 있어요" : "⚠️ 슬슬 정리하면 좋아요";
+                const pct = Math.max(2, Math.min(100, Math.round((mb / 5) * 100)));
+                return (
+                  <>
+                    <div className="wnt-usage-top">
+                      <span className="wnt-usage-amt">{mb < 0.1 ? "0.1MB 미만" : mb.toFixed(1) + "MB"} 사용 중</span>
+                      <span className={"wnt-usage-status " + level}>{status}</span>
+                      <button className="wnt-mini" onClick={computeUsage} disabled={usageLoading} aria-label="새로고침" title="새로고침">🔄</button>
+                    </div>
+                    <div className="wnt-usage-bar"><span className={"wnt-usage-fill " + level} style={{ width: pct + "%" }} /></div>
+                    <div className="wnt-usage-detail">문제 사진 {usage.imgCount}개 · 풀이(그림·사진) {usage.solCount}개 저장됨</div>
+                  </>
+                );
+              })() : null}
+            </div>
+            <p className="wnt-set-desc">저장이 안 되거나 '공간 부족'이 뜨면 아래 버튼을 눌러요. 안 쓰는 찌꺼기 데이터만 비워요 (오답 기록은 안 지워져요).</p>
             <button className="wnt-btn-primary" onClick={cleanupStorage} disabled={cleaning}>{cleaning ? "비우는 중…" : "🧹 저장공간 비우기"}</button>
           </div>
 
@@ -4139,6 +4189,23 @@ const css = `
 .wnt-set-section.danger { border-color: #F2C9C6; }
 .wnt-set-section .wnt-h2 { margin-top: 0; }
 .wnt-set-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin: 0 0 10px; }
+
+/* 저장공간 사용량 미터 */
+.wnt-usage { margin: 4px 0 12px; }
+.wnt-usage-calc { font-size: 13px; color: var(--muted); }
+.wnt-usage-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 7px; }
+.wnt-usage-amt { font-size: 15px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.wnt-usage-status { font-size: 12.5px; font-weight: 700; }
+.wnt-usage-status.ok { color: var(--green); }
+.wnt-usage-status.mid { color: #B7791F; }
+.wnt-usage-status.hi { color: var(--red); }
+.wnt-usage-top .wnt-mini { margin-left: auto; padding: 4px 8px; }
+.wnt-usage-bar { height: 9px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.wnt-usage-fill { display: block; height: 100%; border-radius: 6px; transition: width 0.3s; }
+.wnt-usage-fill.ok { background: var(--green); }
+.wnt-usage-fill.mid { background: #E8B21E; }
+.wnt-usage-fill.hi { background: var(--red); }
+.wnt-usage-detail { font-size: 12px; color: var(--muted); margin-top: 6px; }
 .wnt-setting-msg {
   background: #EDF5EE; border: 1px solid #BFDCC4; color: #1E5A2C;
   border-radius: 8px; padding: 9px 13px; font-size: 13px;
