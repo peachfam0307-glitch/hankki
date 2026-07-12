@@ -953,3 +953,9 @@ img {
 .tip-emoji { font-size: 22px; flex: 0 0 auto; width: 30px; text-align: center; }
 .tip-head { font-size: 14.5px; font-weight: 700; color: var(--text); }
 .tip-body { font-size: 13px; line-height: 1.5; color: var(--text-sub); margin-top: 3px; }
+
+/* 가져오기 도움말 */
+.imp-tip { padding: 13px 0; border-bottom: 1px solid var(--line); }
+.imp-tip:last-child { border-bottom: none; }
+.imp-tip-h { font-size: 14.5px; font-weight: 700; color: var(--brown); }
+.imp-tip-b { font-size: 13px; line-height: 1.7; color: var(--text); margin-top: 6px; }

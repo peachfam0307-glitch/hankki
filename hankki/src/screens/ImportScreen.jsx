@@ -12,12 +12,15 @@ const OPTIONS = [
   { key: 'manual', icon: 'pen', title: '직접 작성하기', desc: '직접 레시피를 작성하기', color: '#B98A4E' },
 ]
 
+const OPEN_URL = { instagram: 'https://www.instagram.com', youtube: 'https://www.youtube.com' }
+
 export default function ImportScreen() {
   const { addRecipe } = useStore()
   const nav = useNav()
   const [flow, setFlow] = useState(null) // instagram | youtube | link
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
+  const [help, setHelp] = useState(false)
   const fileRef = useRef(null)
 
   const choose = (key) => {
@@ -92,18 +95,19 @@ export default function ImportScreen() {
             ))}
           </div>
 
-          <div
-            className="card"
-            style={{ marginTop: 20, padding: 16, display: 'flex', alignItems: 'center', gap: 12, background: 'var(--cream)', border: 'none' }}
+          <button
+            className="card press"
+            style={{ width: '100%', textAlign: 'left', marginTop: 20, padding: 16, display: 'flex', alignItems: 'center', gap: 12, background: 'var(--cream)', border: 'none' }}
+            onClick={() => setHelp(true)}
           >
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 600 }}>가져오기가 어렵다면?</div>
-              <div className="t-sub" style={{ marginTop: 3 }}>도움말 보기</div>
+              <div className="t-sub" style={{ marginTop: 3 }}>인스타·유튜브에서 한끼로 보내는 법 보기</div>
             </div>
             <div className="opt-ico" style={{ background: '#fff' }}>
               <Icon name="help" size={22} color="var(--sand)" />
             </div>
-          </div>
+          </button>
         </div>
       ) : (
         <div className="pad fade">
@@ -113,9 +117,25 @@ export default function ImportScreen() {
             </div>
             <div className="h-title" style={{ fontSize: 22 }}>{flowMeta.title}</div>
           </div>
-          <div className="t-sub" style={{ marginTop: 6, marginBottom: 22, fontSize: 14 }}>
-            {flow === 'link' ? '레시피가 있는 웹페이지 주소를 붙여넣어 주세요.' : `${flowMeta.title} 주소를 붙여넣어 주세요.`}
+          <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 14 }}>
+            {flow === 'link' ? '레시피가 있는 웹페이지 주소를 붙여넣어 주세요.' : `${flowMeta.title} 링크를 복사해 붙여넣거나, 아래 방법으로 바로 보내세요.`}
           </div>
+
+          {(flow === 'instagram' || flow === 'youtube') && (
+            <div className="card" style={{ padding: 14, marginBottom: 16, background: 'var(--cream)', border: 'none' }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--brown)', marginBottom: 6 }}>💡 복사 없이 더 쉽게</div>
+              <div style={{ fontSize: 12.8, lineHeight: 1.65, color: 'var(--text)' }}>
+                {flowMeta.title} 게시물에서 <b>공유(↗)</b> 아이콘 → 목록에서 <b>‘한끼’</b>를 고르면 복사·붙여넣기 없이 바로 Inbox에 담겨요.
+              </div>
+              <button
+                className="press"
+                onClick={() => window.open(OPEN_URL[flow], '_blank', 'noopener,noreferrer')}
+                style={{ marginTop: 11, padding: '9px 14px', borderRadius: 10, background: '#fff', color: 'var(--brown)', fontWeight: 700, fontSize: 13 }}
+              >
+                {flowMeta.title} 열기 →
+              </button>
+            </div>
+          )}
 
           <div className="field">
             <label>링크 주소</label>
@@ -142,6 +162,42 @@ export default function ImportScreen() {
           <button className="btn-primary press" style={{ marginTop: 22 }} onClick={saveLink}>
             Inbox에 저장하기
           </button>
+        </div>
+      )}
+
+      {help && (
+        <div className="sheet-mask" onClick={() => setHelp(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 24 }}>
+            <div className="emoji-sheet-head">
+              <span>레시피 가져오는 법</span>
+              <button className="press" onClick={() => setHelp(false)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            </div>
+            <div style={{ padding: '2px 16px 0' }}>
+              <div className="imp-tip">
+                <div className="imp-tip-h">📲 제일 편해요 — 앱에서 바로 공유</div>
+                <div className="imp-tip-b">
+                  1. 인스타·유튜브·블로그에서 게시물 열기<br />
+                  2. <b>공유(↗ 종이비행기 / ⋯)</b> 아이콘 탭<br />
+                  3. 목록에서 <b>‘한끼’</b> 선택<br />
+                  → 복사·붙여넣기 없이 자동으로 Inbox에 담겨요! <span className="t-sub" style={{ fontSize: 11.5 }}>(앱을 설치해야 공유 목록에 떠요)</span>
+                </div>
+              </div>
+              <div className="imp-tip">
+                <div className="imp-tip-h">🔗 링크로 가져오기</div>
+                <div className="imp-tip-b">
+                  1. 게시물에서 <b>‘링크 복사’</b><br />
+                  2. 한끼 → 가져오기 → Instagram/링크 → <b>붙여넣기</b>
+                </div>
+              </div>
+              <div className="imp-tip">
+                <div className="imp-tip-h">📷 사진으로 가져오기</div>
+                <div className="imp-tip-b">
+                  레시피가 적힌 사진·캡처를 고르면 글자를 자동으로 읽어 재료·순서를 채워줘요.<br />
+                  <span className="t-sub" style={{ fontSize: 11.5 }}>또렷하고 글자가 큰 사진일수록 정확해요. 화면 캡처가 사진 촬영보다 잘 읽혀요.</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
