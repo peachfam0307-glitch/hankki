@@ -29,10 +29,21 @@ const NavCtx = createContext(null)
 export const useNav = () => useContext(NavCtx)
 
 export default function App() {
-  const [tab, setTab] = useState('home')
+  // 새로고침(앱 업데이트·실수로 당겨서 새로고침 등)이 나도 보던 탭으로 돌아오도록 기억해 둔다.
+  const [tab, setTab] = useState(() => {
+    try { return sessionStorage.getItem('hankki:tab') || 'home' } catch { return 'home' }
+  })
   const [stack, setStack] = useState([]) // 위로 쌓이는 화면들
   const [toast, setToast] = useState(null)
   const toastTimer = useRef(null)
+  const tabRef = useRef(tab)
+  const stackRef = useRef(stack)
+  tabRef.current = tab
+  stackRef.current = stack
+
+  useEffect(() => {
+    try { sessionStorage.setItem('hankki:tab', tab) } catch { /* noop */ }
+  }, [tab])
 
   const push = useCallback((screen) => setStack((s) => [...s, screen]), [])
   const pop = useCallback(() => setStack((s) => s.slice(0, -1)), [])
@@ -40,6 +51,19 @@ export default function App() {
   const go = useCallback((t) => {
     setStack([])
     setTab(t)
+  }, [])
+
+  // 안드로이드 '뒤로가기'가 앱을 바로 종료시키지 않도록: 열린 화면을 닫고,
+  // 탭이면 홈으로. (히스토리 트랩을 유지해 갑작스런 종료 방지)
+  useEffect(() => {
+    try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
+    const onPop = () => {
+      if (stackRef.current.length > 0) setStack((s) => s.slice(0, -1))
+      else if (tabRef.current !== 'home') setTab('home')
+      try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
   }, [])
 
   const showToast = useCallback((msg) => {

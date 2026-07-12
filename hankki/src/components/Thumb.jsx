@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 
-// 사진이 있으면 사진을, 없거나 로드 실패하면 쿨톤 그라데이션 + 브랜드 커스텀 아이콘(이름 자동매칭).
-// PWA 를 오프라인 설치해도 항상 자연스럽고 통일감 있게 보이도록 하기 위한 폴백.
+// 카드 썸네일. recipe.thumb 로 표시 방식을 고른다:
+//   'icon'  — 브랜드 커스텀 아이콘(이름 자동매칭 or 직접 선택)  ← 기본
+//   'emoji' — 이모지
+//   'label' — 글자 타일
+//   'photo' — 사진 (있을 때만)
+// 예전 레시피(thumb 없음)는 이미지가 있으면 사진, 없으면 아이콘으로 자연스럽게 보인다.
 const GRADS = [
   'linear-gradient(135deg,#eef0ec,#e1e5de)',
   'linear-gradient(135deg,#ecefeb,#dce1db)',
@@ -16,9 +20,10 @@ function gradFor(seed = '') {
   return GRADS[n]
 }
 
-export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize, iconSize = '56%' }) {
+export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '2rem', iconSize = '56%' }) {
   const [failed, setFailed] = useState(false)
-  const showImg = recipe.image && !failed
+  const thumb = recipe.thumb || (recipe.image ? 'photo' : 'icon') // 예전 레시피 호환
+  const showImg = thumb === 'photo' && recipe.image && !failed
   const base = {
     position: 'relative',
     width: '100%',
@@ -28,29 +33,48 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize, ic
     ...(ratio ? { aspectRatio: ratio } : {}),
     ...style,
   }
-  return (
-    <div style={base}>
-      {showImg ? (
-        <img
-          src={recipe.image}
-          alt={recipe.title}
-          loading="lazy"
-          onError={() => setFailed(true)}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
-        />
-      ) : (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <FoodIcon name={recipe.icon || guessFoodIcon(recipe.title)} size={iconSize} />
-        </div>
-      )}
-    </div>
-  )
+  const center = { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }
+
+  let inner
+  if (showImg) {
+    inner = (
+      <img
+        src={recipe.image}
+        alt={recipe.title}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+      />
+    )
+  } else if (thumb === 'emoji') {
+    inner = <div style={center}><span style={{ fontSize: emojiSize, lineHeight: 1 }}>{recipe.emoji || '🍽️'}</span></div>
+  } else if (thumb === 'label') {
+    const txt = (recipe.label || recipe.title || '한끼').trim()
+    inner = (
+      <div style={center}>
+        {/* viewBox 안에 그려 컨테이너 크기에 맞춰 자동으로 커지고 작아진다. */}
+        <svg viewBox="0 0 48 48" width="76%" height="76%" preserveAspectRatio="xMidYMid meet" style={{ overflow: 'visible' }}>
+          <text
+            x="24"
+            y="25"
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontFamily="Pretendard, sans-serif"
+            fontWeight="800"
+            fill="#5f5a50"
+            fontSize="18"
+            letterSpacing="-1"
+            textLength={Math.min(46, [...txt].length * 11)}
+            lengthAdjust="spacingAndGlyphs"
+          >
+            {[...txt].length > 6 ? [...txt].slice(0, 5).join('') + '…' : txt}
+          </text>
+        </svg>
+      </div>
+    )
+  } else {
+    inner = <div style={center}><FoodIcon name={recipe.icon || guessFoodIcon(recipe.title)} size={iconSize} /></div>
+  }
+
+  return <div style={base}>{inner}</div>
 }

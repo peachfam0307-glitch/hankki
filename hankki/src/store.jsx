@@ -24,11 +24,14 @@ function migrateShopping() {
 }
 
 // 기존 사용자의 기본 쇼핑몰(예전 알록달록 이모지)을 새 커스텀 아이콘으로 업그레이드.
+// 예전 데이터는 iconType 필드가 아예 없고 emoji 만 있었다({id,name,emoji}). 그래서
+// iconType 이 없거나('emoji' 이하) 인 경우 모두 아이콘으로 올린다. 사용자가 직접
+// '아이콘'/'글자'로 바꾼 것(iconType==='icon'|'label')은 존중해 건드리지 않는다.
 const SHOP_ICON_UPGRADE = { coupang: 'box', kurly: 'bag', ssg: 'cart', naver: 'store', oasis: 'basket' }
 function migrateShops(shops) {
   if (!Array.isArray(shops) || shops.length === 0) return DEFAULT_SHOPS
   return shops.map((s) =>
-    SHOP_ICON_UPGRADE[s.id] && s.iconType === 'emoji'
+    SHOP_ICON_UPGRADE[s.id] && s.iconType !== 'icon' && s.iconType !== 'label'
       ? { ...s, iconType: 'icon', icon: SHOP_ICON_UPGRADE[s.id] }
       : s
   )

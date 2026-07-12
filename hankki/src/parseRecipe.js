@@ -7,6 +7,14 @@ const STEP = /^(\d{1,2}\s*[.)]|[①-⑳❶-❿]|step\s*\d+|스텝\s*\d+|순서\s
 const NOISE =
   /^(재료\s*[:：]?$|ingredients?\s*[:：]?$|만드는\s*법|조리\s*순서|조리법|레시피\b|recipe\b|요리\b|tip\b|팁\b|instagram|youtube|www\.|https?:|좋아요|댓글|팔로우|공유|저장|더\s?보기|답글)/i
 
+// 특수문자·기호(외계어의 원인)를 제거 — 완성형 한글·영문·숫자 + 요리에 흔한 문장부호만 남긴다.
+function sanitize(s) {
+  return String(s)
+    .replace(/[^가-힣a-zA-Z0-9\s.,()/%°~:!+\-]/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
 // OCR 잡음(외계어) 거르기 — 뜻있는 글자(한글·영문·숫자) 비율이 낮으면 버린다.
 function isGibberish(s) {
   const compact = s.replace(/\s/g, '')
@@ -28,7 +36,7 @@ export function parseRecipeText(raw = '') {
 
   const lines = text
     .split('\n')
-    .map((l) => l.trim())
+    .map((l) => sanitize(l))
     .filter((l) => l && l.length > 1 && !isGibberish(l))
 
   let title = ''

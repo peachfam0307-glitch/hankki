@@ -3,6 +3,10 @@ import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
+import FoodIconPicker from '../components/FoodIconPicker'
+import EmojiPicker from '../components/EmojiPicker'
+import TextTile from '../components/TextTile'
+import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES, colors } from '../theme'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory } from '../utils'
@@ -10,12 +14,19 @@ import { ocrImage } from '../ocr'
 import { parseRecipeText } from '../parseRecipe'
 
 const DIFFS = ['쉬움', '보통', '어려움']
+const THUMB_TYPES = [
+  { key: 'icon', label: '아이콘' },
+  { key: 'emoji', label: '이모지' },
+  { key: 'label', label: '글자' },
+  { key: 'photo', label: '사진' },
+]
 
 export default function EditorScreen({ id, prefill }) {
   const { recipes, folders, addRecipe, updateRecipe, addFolder } = useStore()
   const nav = useNav()
   const editing = recipes.find((r) => r.id === id)
-  const fileRef = useRef(null)
+  const photoRef = useRef(null) // 썸네일용 사진
+  const ocrRef = useRef(null) // 글자 읽기용(썸네일과 별개)
   const [ocr, setOcr] = useState({ busy: false, pct: 0 })
 
   const [f, setF] = useState(() => {
@@ -26,6 +37,11 @@ export default function EditorScreen({ id, prefill }) {
     const title = e ? (e.title && e.title !== '새 레시피' ? e.title : e.title || '') : p.title || ''
     return {
       title,
+      // 썸네일 표시 방식: 기본은 아이콘(사진은 '글자 읽기'용으로 분리).
+      // 예전 레시피는 이미지가 있으면 사진 유지.
+      thumb: e?.thumb || (e?.image ? 'photo' : 'icon'),
+      icon: e?.icon || '',
+      label: e?.label || '',
       image: e?.image ?? p.image ?? null,
       emoji: e?.emoji || '🍽️',
       category:
@@ -48,20 +64,31 @@ export default function EditorScreen({ id, prefill }) {
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }))
   const toggleTag = (t) => set('tags', f.tags.includes(t) ? f.tags.filter((x) => x !== t) : [...f.tags, t])
 
+  // 썸네일용 사진 — 사진을 골랐을 때만 카드 이미지가 된다. (OCR 안 함)
   const onPhoto = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
     reader.onload = () => {
       set('image', reader.result)
-      runOcr(reader.result) // 사진 바꾸면 바로 글자 읽기
+      set('thumb', 'photo')
     }
     reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
-  // 사진 속 글자를 읽어 빈 칸을 자동으로 채운다.
-  const runOcr = async (imgArg) => {
-    const img = typeof imgArg === 'string' ? imgArg : f.image
+  // 글자 읽기용 사진 — 재료·순서만 채우고, 썸네일은 건드리지 않는다.
+  const onOcrFile = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => runOcr(reader.result)
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  // 사진 속 글자를 읽어 빈 칸을 자동으로 채운다. (썸네일과 별개)
+  const runOcr = async (img) => {
     if (!img || ocr.busy) return
     setOcr({ busy: true, pct: 0 })
     const text = await ocrImage(img, (pct) => setOcr({ busy: true, pct }))
@@ -85,9 +112,9 @@ export default function EditorScreen({ id, prefill }) {
     nav.showToast('사진에서 글자를 읽어 채웠어요 ✨')
   }
 
-  // 사진으로 가져오기·공유로 들어온 경우: 열자마자 자동 인식
+  // 사진으로 가져오기·공유로 들어온 경우: 열자마자 글자만 자동 인식(썸네일은 아이콘 유지)
   useEffect(() => {
-    if (!editing && prefill?.autoOcr && f.image) runOcr(f.image)
+    if (!editing && prefill?.autoOcr && prefill.image) runOcr(prefill.image)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -95,8 +122,13 @@ export default function EditorScreen({ id, prefill }) {
 
   const save = () => {
     if (!canSave) return
+    const title = f.title.trim()
     const patch = {
-      title: f.title.trim(),
+      title,
+      thumb: f.thumb,
+      icon: f.icon || guessFoodIcon(title), // 비워두면 제목으로 자동 추천된 아이콘 저장
+      emoji: f.emoji || '🍽️',
+      label: f.label.trim(),
       image: f.image,
       category: f.category,
       folder: f.folder || f.category,
@@ -115,7 +147,7 @@ export default function EditorScreen({ id, prefill }) {
       nav.pop()
       nav.showToast('레시피를 정리했어요 ✨')
     } else {
-      const rec = { id: newId(), emoji: '🍽️', source: 'manual', favorite: false, cooked: 0, savedAt: Date.now(), ...patch }
+      const rec = { id: newId(), source: 'manual', favorite: false, cooked: 0, savedAt: Date.now(), ...patch }
       addRecipe(rec)
       nav.pop()
       nav.showToast('레시피를 저장했어요 ✨')
@@ -132,48 +164,74 @@ export default function EditorScreen({ id, prefill }) {
         </button>
       </div>
 
-      <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
+      <input ref={photoRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
+      <input ref={ocrRef} type="file" accept="image/*" onChange={onOcrFile} style={{ display: 'none' }} />
 
       <div className="pad" style={{ paddingBottom: 40 }}>
-        {/* 사진 */}
-        <button className="press" onClick={() => fileRef.current?.click()} style={{ width: '100%', marginTop: 6, marginBottom: 20, position: 'relative' }}>
-          <Thumb recipe={{ image: f.image, emoji: f.emoji, title: f.title }} ratio="16/10" radius={16} emojiSize="2.6rem" />
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, color: f.image ? '#fff' : 'var(--brown)', textShadow: f.image ? '0 1px 4px rgba(0,0,0,0.4)' : 'none' }}>
-            <Icon name="camera" size={26} color={f.image ? '#fff' : 'var(--brown)'} />
-            <span style={{ fontSize: 13, fontWeight: 600 }}>{f.image ? '사진 변경' : '사진 추가'}</span>
+        {/* 썸네일 — 카드에 보이는 아이콘. 기본은 브랜드 아이콘(통일감), 원하면 이모지·글자·사진. */}
+        <div className="field">
+          <label>썸네일 <span style={{ fontWeight: 400, color: 'var(--text-sub)', fontSize: 12 }}>· 목록 카드에 보여요</span></label>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+            {THUMB_TYPES.map((t) => (
+              <button key={t.key} className={`pill press ${f.thumb === t.key ? 'active' : ''}`} onClick={() => set('thumb', t.key)}>{t.label}</button>
+            ))}
           </div>
-        </button>
 
-        {/* 사진 글자 자동 인식(OCR) */}
-        {f.image && (
-          <button
-            className="press"
-            onClick={() => runOcr()}
-            disabled={ocr.busy}
-            style={{
-              width: '100%',
-              marginTop: -8,
-              marginBottom: 18,
-              padding: 13,
-              borderRadius: 'var(--r-md)',
-              background: 'var(--cream)',
-              color: 'var(--brown)',
-              fontSize: 14,
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              opacity: ocr.busy ? 0.85 : 1,
-            }}
-          >
-            {ocr.busy ? (
-              <>사진에서 글자 읽는 중… {ocr.pct}%</>
-            ) : (
-              <>🔤 사진에서 글자 자동 인식</>
-            )}
-          </button>
-        )}
+          {f.thumb === 'icon' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <FoodIconPicker value={f.icon || guessFoodIcon(f.title)} onChange={(k) => set('icon', k)} size={74} />
+              <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.55 }}>탭해서 아이콘을 골라요.<br />제목에 맞춰 자동 추천돼요.</div>
+            </div>
+          )}
+          {f.thumb === 'emoji' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <EmojiPicker value={f.emoji} onChange={(v) => set('emoji', v)} size={74} />
+              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>탭해서 이모지를 골라요.</div>
+            </div>
+          )}
+          {f.thumb === 'label' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <TextTile text={f.label || f.title || '한끼'} size={74} radius={16} />
+              <input value={f.label} onChange={(e) => set('label', e.target.value)} placeholder={f.title || '표시할 글자'} maxLength={6} style={{ flex: 1 }} />
+            </div>
+          )}
+          {f.thumb === 'photo' && (
+            <button className="press" onClick={() => photoRef.current?.click()} style={{ width: '100%', position: 'relative' }}>
+              <Thumb recipe={{ image: f.image, thumb: 'photo', title: f.title }} ratio="16/10" radius={16} />
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, color: f.image ? '#fff' : 'var(--brown)', textShadow: f.image ? '0 1px 4px rgba(0,0,0,0.4)' : 'none' }}>
+                <Icon name="camera" size={26} color={f.image ? '#fff' : 'var(--brown)'} />
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{f.image ? '사진 변경' : '사진 추가'}</span>
+              </div>
+            </button>
+          )}
+        </div>
+
+        {/* 사진에서 글자 읽기 — 썸네일과 별개. 레시피가 적힌 사진을 골라 재료·순서를 자동으로 채운다. */}
+        <button
+          className="press"
+          onClick={() => ocrRef.current?.click()}
+          disabled={ocr.busy}
+          style={{
+            width: '100%',
+            marginBottom: 8,
+            padding: 13,
+            borderRadius: 'var(--r-md)',
+            background: 'var(--cream)',
+            color: 'var(--brown)',
+            fontSize: 14,
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            opacity: ocr.busy ? 0.85 : 1,
+          }}
+        >
+          {ocr.busy ? <>사진에서 글자 읽는 중… {ocr.pct}%</> : <><Icon name="camera" size={18} color="var(--brown)" /> 사진에서 글자 가져오기</>}
+        </button>
+        <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 18, lineHeight: 1.5 }}>
+          레시피가 적힌 사진(캡처)을 고르면 재료·순서를 자동으로 채워요. 썸네일은 바뀌지 않아요.
+        </div>
 
         <div className="field">
           <label>제목</label>

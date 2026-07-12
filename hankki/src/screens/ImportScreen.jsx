@@ -3,18 +3,29 @@ import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import { guessCategory } from '../utils'
 import { parseRecipeText } from '../parseRecipe'
+import { ocrImage } from '../ocr'
+import { guessFoodIcon } from '../components/FoodIcon'
 import Icon from '../components/Icon'
+
+function readAsDataURL(file) {
+  return new Promise((resolve) => {
+    const r = new FileReader()
+    r.onload = () => resolve(r.result)
+    r.onerror = () => resolve(null)
+    r.readAsDataURL(file)
+  })
+}
+
+// 사진 desc 는 아래 OPTIONS 에서 여러 장 안내로 바꾼다.
 
 const OPTIONS = [
   { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '인스타그램 게시물 가져오기', color: '#C13584' },
   { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '유튜브 영상 정보 가져오기', color: '#E33' },
   { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 자동 정리', color: '#B0895E' },
   { key: 'link', icon: 'link', title: '링크 붙여넣기', desc: '웹사이트 주소를 붙여넣기', color: '#9B8B79' },
-  { key: 'photo', icon: 'photo', title: '사진으로 가져오기', desc: '레시피 사진을 분석하여 저장', color: '#8AA07A' },
+  { key: 'photo', icon: 'photo', title: '사진으로 가져오기', desc: '여러 장 캡처도 한 번에 읽어 정리', color: '#8AA07A' },
   { key: 'manual', icon: 'pen', title: '직접 작성하기', desc: '직접 레시피를 작성하기', color: '#B98A4E' },
 ]
-
-const OPEN_URL = { instagram: 'https://www.instagram.com', youtube: 'https://www.youtube.com' }
 
 export default function ImportScreen() {
   const { addRecipe } = useStore()
@@ -24,6 +35,7 @@ export default function ImportScreen() {
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
   const [help, setHelp] = useState(false)
+  const [busy, setBusy] = useState(null) // null | { total, cur, pct }
   const fileRef = useRef(null)
 
   const saveText = () => {
@@ -55,16 +67,29 @@ export default function ImportScreen() {
     nav.showToast('Inbox에 저장했어요 · 나중에 정리해요')
   }
 
-  const onFile = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      // 사진을 넣으면 편집 화면을 열고 바로 글자를 자동 인식(OCR)
-      nav.pop()
-      nav.push({ name: 'editor', prefill: { image: reader.result, source: 'photo', autoOcr: true } })
+  // 사진 한 장이든 여러 장(길어서 나눠 캡처)이든, 다 읽어 하나의 레시피로 정리.
+  const onFile = async (e) => {
+    const files = Array.from(e.target.files || [])
+    e.target.value = ''
+    if (!files.length) return
+    const images = (await Promise.all(files.map(readAsDataURL))).filter(Boolean)
+    if (!images.length) return
+
+    setBusy({ total: images.length, cur: 1, pct: 0 })
+    let combined = ''
+    for (let k = 0; k < images.length; k++) {
+      const t = await ocrImage(images[k], (pct) => setBusy({ total: images.length, cur: k + 1, pct }))
+      if (t && t.trim()) combined += (combined ? '\n' : '') + t.trim()
     }
-    reader.readAsDataURL(file)
+    setBusy(null)
+
+    const r = combined ? parseRecipeText(combined) : { title: '', ingredients: [], steps: [], memo: '' }
+    nav.pop()
+    // 캡처 사진은 '글자 읽기'용일 뿐 — 썸네일(아이콘)과 분리한다. 그래서 image 는 넘기지 않는다.
+    nav.push({
+      name: 'editor',
+      prefill: { source: 'photo', title: r.title, ingredients: r.ingredients, steps: r.steps, memo: r.memo, autoOcr: false },
+    })
   }
 
   const flowMeta = OPTIONS.find((o) => o.key === flow)
@@ -79,7 +104,21 @@ export default function ImportScreen() {
         <div style={{ width: 40 }} />
       </div>
 
-      <input ref={fileRef} type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} />
+      <input ref={fileRef} type="file" accept="image/*" multiple onChange={onFile} style={{ display: 'none' }} />
+
+      {busy && (
+        <div className="ocr-overlay">
+          <div className="ocr-box">
+            <div className="ocr-spin" />
+            <div style={{ fontSize: 15, fontWeight: 700, marginTop: 14 }}>
+              사진에서 글자 읽는 중…
+            </div>
+            <div className="t-sub" style={{ marginTop: 5, fontSize: 13 }}>
+              {busy.total > 1 ? `${busy.total}장 중 ${busy.cur}장째 · ` : ''}{busy.pct}%
+            </div>
+          </div>
+        </div>
+      )}
 
       {!flow ? (
         <div className="pad">
@@ -141,43 +180,69 @@ export default function ImportScreen() {
             자동 정리하기 →
           </button>
         </div>
-      ) : (
+      ) : flow === 'instagram' || flow === 'youtube' ? (
         <div className="pad fade">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, marginBottom: 4 }}>
-            <div className="opt-ico">
-              <Icon name={flowMeta.icon} size={24} color={flowMeta.color} stroke={1.7} />
-            </div>
+            <div className="opt-ico"><Icon name={flowMeta.icon} size={24} color={flowMeta.color} stroke={1.7} /></div>
             <div className="h-title" style={{ fontSize: 22 }}>{flowMeta.title}</div>
           </div>
           <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 14 }}>
-            {flow === 'link' ? '레시피가 있는 웹페이지 주소를 붙여넣어 주세요.' : `${flowMeta.title} 링크를 복사해 붙여넣거나, 아래 방법으로 바로 보내세요.`}
+            {flow === 'instagram'
+              ? '인스타는 캡션 글자를 복사할 수 없어요. 화면을 캡처해서 올리는 게 제일 정확해요.'
+              : '영상엔 글자가 없어요. 설명(더보기)을 붙여넣거나, 화면을 캡처해서 올려주세요.'}
           </div>
 
-          {(flow === 'instagram' || flow === 'youtube') && (
-            <div className="card" style={{ padding: 14, marginBottom: 16, background: 'var(--cream)', border: 'none' }}>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--brown)', marginBottom: 6 }}>💡 복사 없이 더 쉽게</div>
-              <div style={{ fontSize: 12.8, lineHeight: 1.65, color: 'var(--text)' }}>
-                {flowMeta.title} 게시물에서 <b>공유(↗)</b> 아이콘 → 목록에서 <b>‘한끼’</b>를 고르면 복사·붙여넣기 없이 바로 Inbox에 담겨요.
-              </div>
-              <button
-                className="press"
-                onClick={() => window.open(OPEN_URL[flow], '_blank', 'noopener,noreferrer')}
-                style={{ marginTop: 11, padding: '9px 14px', borderRadius: 10, background: '#fff', color: 'var(--brown)', fontWeight: 700, fontSize: 13 }}
-              >
-                {flowMeta.title} 열기 →
-              </button>
+          {/* 1순위 — 캡처해서 사진으로 (어디서나 가장 확실) */}
+          <div className="card" style={{ padding: 15, marginBottom: 12, background: 'var(--cream)', border: 'none' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--brown)', marginBottom: 6 }}>📷 캡처해서 올리기 · 추천</div>
+            <div style={{ fontSize: 12.8, lineHeight: 1.65, color: 'var(--text)', marginBottom: 12 }}>
+              레시피가 보이는 화면을 <b>캡처(스크린샷)</b>한 뒤 올리면, 글자를 자동으로 읽어 재료·순서까지 채워줘요.
+              글이 길면 <b>2~3장 나눠</b> 캡처해도 한 번에 정리돼요.
             </div>
-          )}
+            <button className="btn-primary press" style={{ width: '100%' }} onClick={() => fileRef.current?.click()}>
+              캡처한 사진 올리기
+            </button>
+          </div>
+
+          {/* 2순위 — 글자를 복사할 수 있으면 텍스트로 */}
+          <button
+            className="card press"
+            style={{ width: '100%', textAlign: 'left', padding: 14, marginBottom: 12, background: 'var(--cream)', border: 'none' }}
+            onClick={() => { setFlow('text'); setText('') }}
+          >
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--brown)', marginBottom: 4 }}>✍️ 글자를 복사할 수 있다면</div>
+            <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+              {flow === 'youtube' ? '영상 설명(더보기)' : '레시피 글'}을 복사해 <b>텍스트로 붙여넣기</b> → 더 깔끔해요.
+            </div>
+          </button>
+
+          {/* 3순위 — 링크만 저장(북마크) */}
+          <div className="card" style={{ padding: 14, border: 'none' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 8 }}>🔗 링크만 저장 · 나중에 보기</div>
+            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={placeholderFor(flow)} inputMode="url" style={{ marginBottom: 8 }} />
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="제목 (선택 · 비우면 자동)" style={{ marginBottom: 12 }} />
+            <button className="btn-ghost press" style={{ width: '100%' }} onClick={saveLink} disabled={!url.trim()}>
+              링크를 Inbox에 저장
+            </button>
+          </div>
+
+          <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.6, marginTop: 14, textAlign: 'center' }}>
+            💡 앱을 <b>설치</b>하면 {flowMeta.title} 공유(↗) 목록에 <b>‘한끼’</b>가 떠서 링크를 바로 보낼 수 있어요.
+          </div>
+        </div>
+      ) : (
+        <div className="pad fade">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, marginBottom: 4 }}>
+            <div className="opt-ico"><Icon name={flowMeta.icon} size={24} color={flowMeta.color} stroke={1.7} /></div>
+            <div className="h-title" style={{ fontSize: 22 }}>{flowMeta.title}</div>
+          </div>
+          <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 14 }}>
+            레시피가 있는 웹페이지 주소를 붙여넣어 주세요. 블로그 글은 <b>복사해서 ‘텍스트 붙여넣기’</b>로 가져오면 재료·순서까지 정리돼요.
+          </div>
 
           <div className="field">
             <label>링크 주소</label>
-            <input
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder={placeholderFor(flow)}
-              inputMode="url"
-              autoFocus
-            />
+            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={placeholderFor(flow)} inputMode="url" autoFocus />
           </div>
           <div className="field">
             <label>제목 (선택)</label>
@@ -206,26 +271,26 @@ export default function ImportScreen() {
             </div>
             <div style={{ padding: '2px 16px 0' }}>
               <div className="imp-tip">
-                <div className="imp-tip-h">📲 제일 편해요 — 앱에서 바로 공유</div>
+                <div className="imp-tip-h">📷 인스타그램 — 캡처해서 올리기 (제일 정확)</div>
                 <div className="imp-tip-b">
-                  1. 인스타·유튜브·블로그에서 게시물 열기<br />
-                  2. <b>공유(↗ 종이비행기 / ⋯)</b> 아이콘 탭<br />
-                  3. 목록에서 <b>‘한끼’</b> 선택<br />
-                  → 복사·붙여넣기 없이 자동으로 Inbox에 담겨요! <span className="t-sub" style={{ fontSize: 11.5 }}>(앱을 설치해야 공유 목록에 떠요)</span>
+                  인스타는 캡션 글자를 복사할 수 없어요.<br />
+                  1. 레시피가 보이는 화면을 <b>캡처(스크린샷)</b><br />
+                  2. 한끼 → 가져오기 → <b>사진으로 가져오기</b><br />
+                  → 글자를 자동으로 읽어 재료·순서를 채워줘요. <span className="t-sub" style={{ fontSize: 11.5 }}>길면 2~3장 나눠 캡처해도 한 번에!</span>
                 </div>
               </div>
               <div className="imp-tip">
-                <div className="imp-tip-h">🔗 링크로 가져오기</div>
+                <div className="imp-tip-h">✍️ 유튜브·블로그 — 글자 복사되면 붙여넣기</div>
                 <div className="imp-tip-b">
-                  1. 게시물에서 <b>‘링크 복사’</b><br />
-                  2. 한끼 → 가져오기 → Instagram/링크 → <b>붙여넣기</b>
+                  유튜브 <b>설명(더보기)</b>이나 블로그 글은 대개 복사돼요.<br />
+                  복사 → 가져오기 → <b>텍스트 붙여넣기</b> → 자동 정리! <span className="t-sub" style={{ fontSize: 11.5 }}>복사가 안 되면 캡처해서 사진으로.</span>
                 </div>
               </div>
               <div className="imp-tip">
-                <div className="imp-tip-h">📷 사진으로 가져오기</div>
+                <div className="imp-tip-h">📲 앱 설치하면 — 공유로 바로 담기</div>
                 <div className="imp-tip-b">
-                  레시피가 적힌 사진·캡처를 고르면 글자를 자동으로 읽어 재료·순서를 채워줘요.<br />
-                  <span className="t-sub" style={{ fontSize: 11.5 }}>또렷하고 글자가 큰 사진일수록 정확해요. 화면 캡처가 사진 촬영보다 잘 읽혀요.</span>
+                  앱을 설치하면 인스타·유튜브 <b>공유(↗)</b> 목록에 <b>‘한끼’</b>가 떠요.<br />
+                  <span className="t-sub" style={{ fontSize: 11.5 }}>단, 인스타 공유는 ‘링크’만 보내져요(캡션은 안 와요). 내용까지 담으려면 캡처가 확실해요.</span>
                 </div>
               </div>
             </div>
@@ -246,6 +311,9 @@ export function makeInboxRecipe({ source, title, sourceUrl = '', image = null, c
   return {
     id: newId(),
     title,
+    // 가져온 레시피도 기본 썸네일은 브랜드 아이콘(통일감). 사진은 원하면 편집에서 고른다.
+    thumb: 'icon',
+    icon: guessFoodIcon(title),
     emoji: '🍽️',
     image,
     source,

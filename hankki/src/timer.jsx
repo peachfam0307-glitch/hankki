@@ -61,7 +61,11 @@ function makeBeeper() {
       const c = ensure()
       if (!c) return
       const snd = SOUNDS.find((s) => s.id === id) || SOUNDS[0]
-      snd.play(c, c.currentTime + 0.02)
+      // 알람은 setInterval(사용자 제스처 아님)에서 울리므로 컨텍스트가 잠겨있을 수 있다.
+      // resume 이 끝난 뒤에 예약해야 소리가 실제로 난다.
+      const fireNow = () => snd.play(c, c.currentTime + 0.05)
+      if (c.state === 'suspended') c.resume().then(fireNow).catch(() => {})
+      else fireNow()
     } catch { /* noop */ }
   }
   return {
