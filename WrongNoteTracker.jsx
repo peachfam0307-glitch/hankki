@@ -10,7 +10,7 @@ import { useState, useEffect, useRef } from "react";
   탭: 기록 / 플래시카드 / 변형문제 / 실수 패턴 / 설정
   기능:
   - 오답 기록(사진 최대 5장, 푼 시간, 별표, 과목별 틀린 이유 태그 + 기타 직접 추가)
-  - 풀이 기록 · AI 풀이 도우미(모드 선택) · 발상 카드(메모 아래 접힘)
+  - 복습 진행(미복습→1차→2차→정복 자기 채점) · 풀이 기록 · 🧭 접근법 힌트 + 📲 질문방 · 발상 카드
   - 플래시카드(과목별 · 랜덤 · 스톱워치/3분 타이머 · 다시 풀기 · 삭제)
   - 변형문제 탭(포항제철고 20년차 극악 출제 교사 페르소나 · 문제 기반/실수 패턴 종합 · 기준 교재 반영)
   - 인쇄용 파일 내보내기 · 설정(과목/교재/태그 자체 수정, 선별 삭제, 전체 초기화)
@@ -193,7 +193,7 @@ function messagesToText(messages) {
 
 // AI 호출: ① Claude 앱 안 채널(window.claude.complete)을 우선 사용 — API 키·추가요금 없이
 //          아이패드·공유 링크에서도 작동하고 fetch를 아예 하지 않음.
-//        ② 사진 인식이 꼭 필요하거나(발상카드·필기채점) 위 채널이 없을 때만 직접 API 호출을 시도.
+//        ② 사진 인식이 꼭 필요하거나(발상 카드) 위 채널이 없을 때만 직접 API 호출을 시도.
 // opts.needsVision === true 이면 사진을 반드시 읽어야 하는 기능 → 채널로는 불가, fetch 실패 시 visionRequired 신호.
 async function callClaude(messages, opts) {
   const needsVision = !!(opts && opts.needsVision);
@@ -251,10 +251,7 @@ async function callClaude(messages, opts) {
 }
 
 // 연결 실패 시 질문을 복사해 새 채팅에 붙여넣을 수 있게 하는 안전장치
-function copyText(t) {
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t); return true; }
-  } catch (e) {}
+function fallbackCopy(t) {
   try {
     const ta = document.createElement("textarea");
     ta.value = t;
@@ -267,6 +264,16 @@ function copyText(t) {
     ta.remove();
     return ok;
   } catch (e) { return false; }
+}
+function copyText(t) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      // 비동기 거부(권한 없음 등)를 반드시 잡아서 미처리 예외가 안 뜨게 → 실패 시 폴백
+      navigator.clipboard.writeText(t).catch(() => fallbackCopy(t));
+      return true;
+    }
+  } catch (e) {}
+  return fallbackCopy(t);
 }
 
 // 정복 축하 마스코트 — 왕관 쓴 호두 킹 (실제 사진)
@@ -421,17 +428,14 @@ function HelpTip({ text }) {
   );
 }
 
-// ---- ✍️ 풀이 패드 (펜슬 필기: 모눈·색깔펜·지우개·직선자·포스트잇·AI 채점) ----
-function SolvePad({ gradeFn, bridge, solveFn, problem }) {
+// ---- ✍️ 풀이 패드 (펜슬 필기: 모눈·색깔펜·지우개·직선자·포스트잇, 좌우분할) ----
+function SolvePad({ solveFn, problem }) {
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
   const [tool, setTool] = useState("pen");
   const [color, setColor] = useState("#1E2A3A");
   const [penWidth, setPenWidth] = useState(2.5); // 펜 두께
   const [notes, setNotes] = useState([]);
-  const [grading, setGrading] = useState(false);
-  const [gradeResult, setGradeResult] = useState("");
-  const [bridgeText, setBridgeText] = useState(""); // Claude 앱으로 보낼 채점 질문 (사진 인식 불가 시)
   const [solving, setSolving] = useState(false);
   const [solveResult, setSolveResult] = useState(""); // 📖 간략 풀이 결과
   const [bgGrid, setBgGrid] = useState(true);    // 모눈 배경 on/off (기본=모눈)
@@ -618,20 +622,6 @@ function SolvePad({ gradeFn, bridge, solveFn, problem }) {
   function clearPad() {
     try { undoStack.current.push(canvasRef.current.toDataURL()); redoStack.current = []; } catch (e) {}
     clearCanvas();
-    setGradeResult("");
-    setBridgeText("");
-  }
-
-  // 채점용 내보내기: 투명 캔버스를 흰 종이 위에 합성해야 어두운 글씨가 안 사라짐 (JPEG는 투명→검정)
-  function exportForGrade() {
-    const c = canvasRef.current;
-    const tmp = document.createElement("canvas");
-    tmp.width = c.width; tmp.height = c.height;
-    const tg = tmp.getContext("2d");
-    tg.fillStyle = "#FBFCF9";
-    tg.fillRect(0, 0, tmp.width, tmp.height);
-    tg.drawImage(c, 0, 0);
-    return tmp.toDataURL("image/jpeg", 0.82);
   }
 
   function addNote() { setNotes((n) => [...n, { id: makeId(), x: 16 + n.length * 14, y: 16 + n.length * 14, text: "" }]); }
@@ -652,43 +642,15 @@ function SolvePad({ gradeFn, bridge, solveFn, problem }) {
     window.addEventListener("pointerup", up);
   }
 
-  async function grade() {
-    if (grading) return;
-    setGrading(true);
-    setGradeResult("");
-    setBridgeText("");
-    try {
-      const drawUrl = exportForGrade();
-      const noteText = notes.filter((n) => n.text.trim()).map((n, i) => `메모${i + 1}: ${n.text.trim()}`).join("\n");
-      const result = await gradeFn(drawUrl, noteText);
-      setGradeResult(result || "채점 결과를 받지 못했어요.");
-    } catch (e) {
-      const bp = bridge ? bridge() : "첨부한 손글씨 풀이를 읽고 채점해줘. 정답 여부와 잘한 점·틀린 부분을 알려줘.";
-      copyText(bp);
-      setBridgeText(bp);
-      setGradeResult(
-        (e && e.visionRequired)
-          ? "필기 채점은 손글씨 사진을 읽어야 해서 이 화면에선 바로 못 해요. 채점 질문을 복사해뒀어요 — 아래 버튼으로 Claude 앱을 열고, 붙여넣은 뒤 이 풀이 패드 화면을 캡처해 첨부하면 채점받을 수 있어요."
-          : "연결이 잠시 원활하지 않아 채점 질문을 복사해뒀어요. 아래 버튼으로 Claude 앱에 붙여넣고 이 패드 화면을 캡처해 첨부하세요." + ((e && (e.detail || e.message)) ? "\n\n[진단] " + (e.detail || e.message) : "")
-      );
-    } finally {
-      setGrading(false);
-    }
-  }
-
   async function solve() {
     if (solving || !solveFn) return;
     setSolving(true);
     setSolveResult("");
     try {
       const result = await solveFn();
-      setSolveResult(result || "풀이를 받지 못했어요.");
+      setSolveResult(result || "정답·풀이를 받지 못했어요.");
     } catch (e) {
-      setSolveResult(
-        (e && e.visionRequired)
-          ? "이 문제의 간략 풀이는 문제 사진을 읽어야 해서 이 화면에선 안 나와요. 위 채점을 Claude 앱에서 받을 때 '풀이도 짧게 알려줘'라고 함께 물어보세요."
-          : "풀이를 가져오지 못했어요. 잠시 후 다시 눌러주세요." + ((e && (e.detail || e.message)) ? "\n\n[진단] " + (e.detail || e.message) : "")
-      );
+      setSolveResult("정답·풀이를 가져오지 못했어요. 잠시 후 다시 눌러주세요." + ((e && (e.detail || e.message)) ? "\n\n[진단] " + (e.detail || e.message) : ""));
     } finally {
       setSolving(false);
     }
@@ -781,7 +743,7 @@ function SolvePad({ gradeFn, bridge, solveFn, problem }) {
           </button>
         </div>
       )}
-      {solveResult && <div className="pad-result">📖 {solveResult} <span className="pad-ref">· AI 풀이는 참고용이에요(검산 권장)</span></div>}
+      {solveResult && <div className="pad-result">📖 {solveResult} <span className="pad-ref">· 출제할 때 만든 정답이에요(검산 권장)</span></div>}
       <p className="pad-selfcheck">✍️ 직접 푼 답을 {solveFn ? <>위 <b>정답·풀이</b></> : <>교재 해설(정답)</>}과 비교해 스스로 채점해요.</p>
     </div>
   );
@@ -961,16 +923,6 @@ export default function WrongNoteTracker() {
   const [insightOpen, setInsightOpen] = useState({});
   const [insightMsg, setInsightMsg] = useState({});
   const [insightBridge, setInsightBridge] = useState({}); // id → Claude 앱으로 보낼 발상 요약 질문
-
-  // ---- 문제 풀이(AI 해설) 상태 ----
-  const [explainLoading, setExplainLoading] = useState({});
-  const [explainResult, setExplainResult] = useState({});
-  const [explainBridge, setExplainBridge] = useState({});
-
-  // ---- 내 풀이 채점 상태 (풀이 기록별) ----
-  const [solGradeLoading, setSolGradeLoading] = useState({});
-  const [solGrade, setSolGrade] = useState({});
-  const [solGradeBridge, setSolGradeBridge] = useState({});
 
   // ---- 카드 내 변형문제 상태 ----
   const [variantOpen, setVariantOpen] = useState({});
@@ -1739,69 +1691,6 @@ export default function WrongNoteTracker() {
     saveData({ entries: entries.map((x) => (x.id === id ? { ...x, insight: null } : x)) });
   }
 
-  // ---- 내가 남긴 풀이 채점: 문제 사진 + 내 풀이(글·사진)를 보고 맞았는지 짧게 피드백 ----
-  async function gradeSolution(entry, sol) {
-    const key = sol.id;
-    if (solGradeLoading[key]) return;
-    setSolGradeLoading((l) => ({ ...l, [key]: true }));
-    setSolGrade((m) => ({ ...m, [key]: "" }));
-    setSolGradeBridge((m) => ({ ...m, [key]: "" }));
-    const prompt =
-      "앞의 이미지는 '문제 사진'이고, (있다면) 그다음 이미지와 아래 글은 '학생이 쓴 풀이'야. 학생 풀이가 맞았는지 짧게 채점해줘.\n" +
-      `[과목] ${entry.subject} / [단원] ${entry.unit}\n` +
-      (sol.text ? `[학생 풀이 글]\n${sol.text}\n` : "") +
-      "형식: 첫 줄에 ⭕ 또는 ❌만, 그다음 잘한 점·틀린 부분을 1~2줄. 수식은 일반 텍스트.";
-    const bridge = prompt + "\n(이 채팅에 문제 사진과 내 풀이를 첨부할게)";
-    try {
-      const probImgs = (await loadEntryImages(entry.id)).slice(0, 2);
-      const solImgs = (solPhotoCache[key] || []).slice(0, 2);
-      const reply = await callClaude(
-        [{ role: "user", content: [...imgBlocks(probImgs), ...imgBlocks(solImgs), { type: "text", text: prompt }] }],
-        { needsVision: true }
-      );
-      setSolGrade((m) => ({ ...m, [key]: reply || "채점 결과를 받지 못했어요." }));
-    } catch (err) {
-      copyText(bridge);
-      setSolGradeBridge((m) => ({ ...m, [key]: bridge }));
-      setSolGrade((m) => ({ ...m, [key]: (err && err.visionRequired)
-        ? "이 화면에선 사진을 못 읽어서 채점을 바로 못 해요. 질문을 복사해뒀어요 — 아래 버튼으로 Claude 앱을 열고 문제·풀이 사진을 첨부하면 채점받을 수 있어요."
-        : "연결이 잠시 원활하지 않아 질문을 복사해뒀어요. 아래 버튼으로 Claude 앱에 붙여넣고 사진을 첨부하세요." }));
-    } finally {
-      setSolGradeLoading((l) => ({ ...l, [key]: false }));
-    }
-  }
-
-  // ---- 문제 풀이(AI 해설): 문제 사진을 분석해 정답 해설지처럼 풀이를 알려줌 ----
-  async function explainProblem(entry) {
-    const id = entry.id;
-    if (explainLoading[id]) return;
-    setExplainLoading((l) => ({ ...l, [id]: true }));
-    setExplainResult((m) => ({ ...m, [id]: "" }));
-    setExplainBridge((m) => ({ ...m, [id]: "" }));
-    const tagTxt = (entry.tags || []).join(", ") || "미기재";
-    const prompt =
-      "첨부한 문제 사진을 분석해서 정답 해설지처럼 풀이를 알려줘.\n" +
-      `[과목] ${entry.subject} / [단원] ${entry.unit}\n[학생이 기록한 실수] ${tagTxt}\n` +
-      "형식: 1) 핵심 개념 한 줄 2) 단계별 풀이 3) 최종 답. 학생이 기록한 실수를 특히 조심하라고 짚어줘. 수식은 LaTeX 없이 일반 텍스트로.";
-    const bridge = prompt + "\n(이 채팅에 문제 사진을 첨부해줘)";
-    try {
-      const imgs = await loadEntryImages(id);
-      const reply = await callClaude(
-        [{ role: "user", content: [...imgBlocks(imgs), { type: "text", text: prompt }] }],
-        { needsVision: true }
-      );
-      setExplainResult((m) => ({ ...m, [id]: reply || "풀이를 받지 못했어요. 다시 시도해 주세요." }));
-    } catch (err) {
-      copyText(bridge);
-      setExplainBridge((m) => ({ ...m, [id]: bridge }));
-      setExplainResult((m) => ({ ...m, [id]: (err && err.visionRequired)
-        ? "이 화면에선 문제 사진을 못 읽어서 풀이를 바로 못 만들어요. 질문을 복사해뒀어요 — 아래 버튼으로 Claude 앱을 열고 문제 사진을 첨부하면 풀이를 받을 수 있어요."
-        : "연결이 잠시 원활하지 않아 질문을 복사해뒀어요. 아래 버튼으로 Claude 앱에 붙여넣고 문제 사진을 첨부하세요." }));
-    } finally {
-      setExplainLoading((l) => ({ ...l, [id]: false }));
-    }
-  }
-
   // ---- 변형문제 (공통 프롬프트) ----
   function variantJsonRule() {
     return (
@@ -1959,57 +1848,6 @@ export default function WrongNoteTracker() {
   function hideVariant(i) {
     setVtProblems((ps) => ps.filter((_, idx) => idx !== i));
     setVtPadOpen({}); setVtReveal({}); setVtCollapsed({}); setVtPadNonce({}); clearVtAi();
-  }
-
-  // 변형문제 필기 채점 (짧게: ⭕/❌ + 1~2줄)
-  function vtGradeFn(v) {
-    return async (drawUrl, noteText) => {
-      const prompt =
-        "너는 신중한 채점 선생님이야. 아래 문제에 대한 학생의 손글씨(답/풀이, 첨부 이미지)를 채점해줘.\n\n" +
-        `[문제] ${v.question}\n[모범 풀이·정답] ${v.answer || "미제공 — 네가 직접 정확히 풀고 검산해서 비교해"}\n` +
-        (noteText ? `[학생 포스트잇 메모]\n${noteText}\n` : "") +
-        "\n[채점 절차] 모범 정답(있으면)과 학생 답을 비교하되, 표기 차이엔 관대하게. 학생 손글씨가 안 읽히거나 네 판단에 100% 확신이 없으면 절대 ❌ 하지 말고 첫 줄에 '❓ 확인 필요'라고만 해. 확실히 맞으면 ⭕, 확실히 틀리면 ❌.\n" +
-        "그다음 잘한 점·아쉬운 점을 딱 1~2줄. ⚠️ 정답(최종 답·숫자·식)과 풀이 과정은 절대 쓰지 마 — 맞았는지 여부와 방향만. 정답은 학생이 '📖 간략 풀이'로 따로 봐. '풀이 보기라고 말해줘' 같은 안내도 쓰지 마. 친근한 존댓말, 수식은 일반 텍스트.";
-      return await callClaude([{ role: "user", content: [...imgBlocks([drawUrl]), { type: "text", text: prompt }] }], { needsVision: true });
-    };
-  }
-
-  // 변형문제 간략 풀이 (사진 불필요 → 아이패드에서도 인라인 작동)
-  function vtSolveFn(v) {
-    return async () => {
-      const prompt =
-        "아래 문제를 네가 직접 끝까지 풀어. ⚠️ 반드시 검산해서 최종 답을 확정해. 학생이 자기 답과 비교하도록 간결하게: 첫 줄 '핵심 아이디어', 마지막 줄에 굵게 '✅ 정답: ___'을 명확히 써. 3~4줄 이내. 확신이 없으면 솔직히 말해.\n\n" +
-        `[문제] ${v.question}\n` + (v.answer ? `[출제 시 정답·풀이] ${v.answer}\n(이 정답이 검산 결과와 다르면, 네가 다시 정확히 푼 값을 정답으로 제시해.)` : "");
-      return await callClaude([{ role: "user", content: prompt }]);
-    };
-  }
-
-  // 플래시카드 필기 채점 (짧게: ⭕/❌ + 1~2줄)
-  function flashGradeFn(entry) {
-    return async (drawUrl, noteText) => {
-      const probImgs = (imageCache[entry.id] || []).slice(0, 2);
-      const prompt =
-        "너는 신중한 채점 선생님이야. 앞의 이미지들은 문제 사진이고, 마지막 이미지는 학생의 손글씨(답/풀이)야.\n\n" +
-        `[과목] ${entry.subject} / [단원] ${entry.unit}\n[학생 메모] ${entry.memo || "없음"}\n` +
-        (noteText ? `[학생 포스트잇 메모]\n${noteText}\n` : "") +
-        "\n[채점 절차 — 반드시 지켜]\n" +
-        "1) 문제를 처음부터 끝까지 네가 직접 정확히 풀어. 객관식이면 정답 '번호'를 확정하고, 계산은 반드시 한 번 더 검산해.\n" +
-        "2) 학생이 고르거나 쓴 답을 이미지에서 정확히 읽어 (동그라미 친 번호 등).\n" +
-        "3) 비교: 학생 답 == 네 정답이면 첫 줄에 ⭕. 명백히 다르고 네 계산에 확신이 있으면 ❌. **네 계산에 100% 확신이 없거나 문제가 안 읽히면 절대 ❌ 하지 말고 첫 줄에 '❓ 확인 필요'** 라고만 해.\n" +
-        "그다음 잘한 점·아쉬운 점을 딱 1~2줄. ⚠️ 정답(최종 답·숫자·번호·식)과 풀이 과정은 절대 쓰지 마 — 맞았는지 여부와 방향만. 정답은 학생이 '📖 간략 풀이'로 따로 봐. '풀이 보기라고 말해줘' 같은 안내도 쓰지 마. 친근한 존댓말, 수식은 일반 텍스트.";
-      return await callClaude([{ role: "user", content: [...imgBlocks(probImgs), ...imgBlocks([drawUrl]), { type: "text", text: prompt }] }], { needsVision: true });
-    };
-  }
-
-  // 플래시카드 간략 풀이 (문제 사진 필요 → 아이패드에선 Claude 앱 안내)
-  function flashSolveFn(entry) {
-    return async () => {
-      const probImgs = (imageCache[entry.id] || []).slice(0, 2);
-      const prompt =
-        "첨부한 문제 사진을 정확히 읽고 네가 직접 끝까지 풀어. ⚠️ 반드시 계산을 한 번 더 검산해서 최종 답을 확정해 (특히 객관식은 정답 번호까지). 학생이 자기 답과 비교하도록 간결하게: 첫 줄 '핵심 아이디어', 마지막 줄에 굵게 '✅ 정답: ___'을 명확히 써. 3~4줄 이내. 확신이 없으면 솔직히 '이 부분은 확실치 않아요'라고 말해 — 틀린 답을 자신 있게 주지 마.\n" +
-        `[과목] ${entry.subject} / [단원] ${entry.unit}`;
-      return await callClaude([{ role: "user", content: [...imgBlocks(probImgs), { type: "text", text: prompt }] }], { needsVision: true });
-    };
   }
 
   // ---- 플래시카드 ----
@@ -2210,15 +2048,15 @@ export default function WrongNoteTracker() {
       setAiCheckMsg(
         "✅ AI 연결 정상! 응답: " + (reply || "(빈 응답)").slice(0, 60) +
         (canComplete
-          ? "\n변형문제·도우미(텍스트)는 이 화면에서 바로 작동해요. 발상카드·필기채점처럼 사진을 읽어야 하는 기능은 '📲 Claude 앱에서 열기' 버튼으로 넘어가서 사진을 첨부해 쓰면 돼요. (추가 요금 없이 Claude 계정으로 처리됨)"
-          : "\n변형문제·도우미·채점 모두 쓸 수 있어요.")
+          ? "\n변형문제·접근법 힌트(텍스트)는 이 화면에서 바로 작동해요. 발상 카드처럼 사진을 읽어야 하는 기능은 '📲 질문방' 버튼으로 넘어가서 사진을 첨부해 쓰면 돼요. (추가 요금 없이 Claude 계정으로 처리됨)"
+          : "\n변형문제·접근법 힌트 모두 쓸 수 있어요.")
       );
     } catch (e) {
       const d = e.detail || e.message || "원인 미상";
       if (d.indexOf("네트워크 차단") !== -1) {
         setAiCheckMsg(
           "❌ 이 화면에선 AI 채널을 찾지 못했어요.\n\n" +
-          "✅ 지금 바로 쓰는 법: AI 버튼(변형문제·도우미·채점)을 누르면 질문이 자동 복사돼요 → '📲 Claude 앱에서 열기' 버튼으로 앱을 열고 붙여넣으면 답을 받아요 (사진 기능은 사진도 함께 첨부).\n\n" +
+          "✅ 지금 바로 쓰는 법: AI 버튼(변형문제·접근법 힌트)을 누르면 질문이 자동 복사돼요 → '📲 질문방' 버튼으로 앱을 열고 붙여넣으면 답을 받아요 (사진이 필요하면 함께 첨부).\n\n" +
           "이 오답노트는 Claude 앱/웹 아티팩트로 열면 텍스트 AI가 바로 작동해요."
         );
       } else {
@@ -2864,8 +2702,7 @@ export default function WrongNoteTracker() {
                               ))
                             : <div className="wnt-loading">사진 불러오는 중…</div>}
                         </div>
-                      ) : null}
-                      bridge={() => "너는 채점 선생님이야. 첨부한 이미지 중 손글씨가 내 풀이고, 나머지는 문제 사진이야.\n과목: " + e.subject + " / 단원: " + e.unit + "\n먼저 짧게 채점만 해줘: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 내가 '풀이도 짧게 알려줘'라고 하면 3~4줄 간략 풀이를 줘."} />
+                      ) : null} />
                   )}
 
                   {/* 풀이 남기기 폼 */}
@@ -2929,13 +2766,6 @@ export default function WrongNoteTracker() {
                             solPhotoCache[s.id].map((src, j) => (
                               <img key={j} className="wnt-photo" src={src} alt={`풀이 사진 ${j + 1}`} />
                             ))}
-                          <button className="wnt-mini strong" style={{ marginTop: 6 }} onClick={() => gradeSolution(e, s)} disabled={solGradeLoading[s.id]}>
-                            {solGradeLoading[s.id] ? "채점 중…" : "✅ 이 풀이 채점받기"}
-                          </button>
-                          {solGrade[s.id] && <p className="wnt-sol-grade">{solGrade[s.id]}</p>}
-                          {solGradeBridge[s.id] && (
-                            <button className="wnt-mini idea" style={{ marginTop: 4 }} onClick={() => openInClaudeApp(solGradeBridge[s.id])}>📲 Claude 앱에서 채점받기</button>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -3103,8 +2933,7 @@ export default function WrongNoteTracker() {
                         ))
                       : <div className="wnt-loading">사진 불러오는 중…</div>}
                   </div>
-                }
-                bridge={() => "너는 채점 선생님이야. 첨부한 이미지 중 손글씨가 내 풀이고, 나머지는 문제 사진이야.\n과목: " + flashEntry.subject + " / 단원: " + flashEntry.unit + "\n먼저 짧게 채점만 해줘: ⭕/❌ + 잘한 점·틀린 부분 1~2줄. 그다음 내가 '풀이도 짧게 알려줘'라고 하면 3~4줄 간략 풀이를 줘."} />}
+                } />}
 
               {flashHint && flashEntry.insight && (
                 <div className="wnt-idea">
@@ -3369,7 +3198,7 @@ export default function WrongNoteTracker() {
 
           <div className="wnt-set-section">
             <h2 className="wnt-h2">🤖 AI 연결 점검</h2>
-            <p className="wnt-set-desc">변형문제·도우미·채점이 안 될 때 이 버튼을 눌러보세요. 성공/실패와 정확한 원인이 표시돼요.</p>
+            <p className="wnt-set-desc">변형문제·접근법 힌트가 안 될 때 이 버튼을 눌러보세요. 성공/실패와 정확한 원인이 표시돼요.</p>
             <button className="wnt-btn-primary" onClick={checkAiConnection} disabled={aiChecking}>{aiChecking ? "점검 중…" : "🔍 지금 점검하기"}</button>
             {aiCheckMsg && (
               <p className="wnt-set-desc" style={{ marginTop: 10, whiteSpace: "pre-wrap", color: aiCheckMsg.indexOf("✅") === 0 ? "#1E5A2C" : "#8C2B27", fontWeight: 700 }}>{aiCheckMsg}</p>
@@ -3377,7 +3206,7 @@ export default function WrongNoteTracker() {
           </div>
 
           <div className="wnt-set-section">
-            <h2 className="wnt-h2">📲 오답 질문방 <HelpTip text="사진을 봐야 하는 AI(도우미·채점·풀이)는 클로드 앱에서 정확히 도와줘요. 오답 전용 채팅방을 하나 만들어 그 링크를 여기 넣으면, 앱의 📲 버튼이 항상 그 방을 열어요. 방이 지저분해지지 않고 대화 맥락도 이어져요." /></h2>
+            <h2 className="wnt-h2">📲 오답 질문방 <HelpTip text="정확한 풀이·채점이 필요할 땐 사진을 볼 수 있는 클로드 앱이 제일 정확해요. 오답 전용 채팅방을 하나 만들어 그 링크를 여기 넣으면, 앱의 📲 질문방 버튼이 항상 그 방을 열어요. 방이 지저분해지지 않고 대화 맥락도 이어져요." /></h2>
             <p className="wnt-set-desc">
               클로드 앱/사이트에서 <b>오답 질문 전용 채팅방</b>을 하나 만들고, 그 방의 <b>링크(주소)</b>를 아래에 붙여넣으세요.
               그러면 📲 버튼이 매번 새 채팅이 아니라 <b>그 방</b>을 열어요.
@@ -3501,8 +3330,8 @@ export default function WrongNoteTracker() {
             <h2 className="wnt-h2">📲 AI 기능 사용 안내 (아이패드 포함)</h2>
             <p className="wnt-set-desc">
               이 앱은 <strong>API 키 없이</strong>, 소이님의 Claude 계정으로 AI가 작동해요. <strong>추가 요금은 없어요</strong> (기존 Claude 요금제 사용량으로 처리).<br />
-              • <strong>변형문제·AI 도우미(텍스트)</strong>: 아이패드·공유 링크에서도 화면 안에서 바로 작동해요.<br />
-              • <strong>발상 카드·필기 채점</strong>: 손글씨 <em>사진</em>을 읽어야 하는데, 이 방식은 사진을 못 실어요. 그래서 질문이 자동 복사되고 <strong>「📲 Claude 앱에서 열기」</strong> 버튼이 떠요 — 눌러서 앱에 붙여넣고 사진(또는 풀이 패드 캡처)을 첨부하면 바로 받을 수 있어요.<br />
+              • <strong>변형문제·접근법 힌트(텍스트)</strong>: 아이패드·공유 링크에서도 화면 안에서 바로 작동해요.<br />
+              • <strong>정확한 풀이·채점, 발상 카드</strong>: 문제 <em>사진</em>을 읽어야 하는데, 이 방식은 사진을 못 실어요. 그래서 <strong>📲 질문방</strong> 버튼을 누르면 질문이 자동 복사되고 클로드 앱(질문방)이 열려요 — 붙여넣고 사진(또는 풀이 패드 캡처)을 첨부하면 정확히 받을 수 있어요.<br />
               기록·사진은 이 기기에 자동 저장돼요.
             </p>
           </div>
