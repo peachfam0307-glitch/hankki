@@ -837,7 +837,9 @@ export default function WrongNoteTracker() {
   const [study, setStudy] = useState({ lastDate: "", streak: 0, bestStreak: 0 }); // 연속 학습 불꽃
   const [dailyGoal, setDailyGoal] = useState(3); // 오늘의 목표 개수
   const [exam, setExam] = useState({ name: "", days: [] }); // 시험 D-day 시간표
-  const [examOpen, setExamOpen] = useState(false); // 시험표 펼치기
+  const [examOpen, setExamOpen] = useState(false); // 시험 팝오버 열기
+  const [ddaySecOpen, setDdaySecOpen] = useState(true); // 팝오버 내 D-day 섹션
+  const [tableSecOpen, setTableSecOpen] = useState(true); // 팝오버 내 과목 시간표 섹션
   const [dueDismiss, setDueDismiss] = useState(false); // 오늘 복습 안내 배너 닫기
   const [dueModalClosed, setDueModalClosed] = useState(false); // 오늘 복습 팝업 닫기
   const [crownShow, setCrownShow] = useState(false); // 정복 왕관 축하 연출
@@ -2230,10 +2232,80 @@ export default function WrongNoteTracker() {
           {(() => {
             const dd = examDday(exam);
             return (
-              <button className="wnt-header-dday" onClick={() => { setTab("list"); setExamOpen(true); }}
-                title="시험 일정·시간표 보기">
-                📅 {dd != null ? <><span className="wnt-header-dday-num">D-{dd === 0 ? "DAY" : dd}</span></> : "시험 일정"}
-              </button>
+              <div className="wnt-dday-wrap">
+                <button className={examOpen ? "wnt-header-dday on" : "wnt-header-dday"} onClick={() => setExamOpen((o) => !o)}
+                  title="시험 일정·시간표">
+                  📅 {dd != null ? <span className="wnt-header-dday-num">D-{dd === 0 ? "DAY" : dd}</span> : "시험 일정"}
+                </button>
+                {examOpen && (
+                  <>
+                    <div className="wnt-dday-overlay" onClick={() => setExamOpen(false)} />
+                    <div className="wnt-exam-pop">
+                      <div className="wnt-exam-pop-head">
+                        📅 {exam.name || "시험 일정"}
+                        <button className="wnt-due-x" onClick={() => setExamOpen(false)} aria-label="닫기">✕</button>
+                      </div>
+
+                      {/* D-day 섹션 (접기) */}
+                      <div className="wnt-exam-sec">
+                        <button className="wnt-exam-sec-head" onClick={() => setDdaySecOpen((o) => !o)}>
+                          <span>⏳ D-day</span>
+                          {dd != null && <span className="wnt-dday">{dd === 0 ? "D-DAY!" : "D-" + dd}</span>}
+                          <span className="wnt-exam-sec-arrow">{ddaySecOpen ? "▴" : "▾"}</span>
+                        </button>
+                        {ddaySecOpen && (
+                          <div className="wnt-exam-sec-body">
+                            {(exam.days || []).some((d) => d.date) ? (
+                              [...exam.days].filter((d) => d.date).sort((a, b) => (parseDate(a.date) - parseDate(b.date))).map((d, i) => {
+                                const n = daysFromToday(parseDate(d.date));
+                                return <div key={i} className="wnt-exam-listrow"><b>{fmtDate(d.date)}</b> {d.subjects || "—"} {n >= 0 && <span className="wnt-dday sm">{n === 0 ? "오늘!" : "D-" + n}</span>}</div>;
+                              })
+                            ) : <div className="wnt-exam-empty">아래 '과목 시간표'에서 시험일을 추가하세요.</div>}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 과목 시간표 섹션 (접기) */}
+                      <div className="wnt-exam-sec">
+                        <button className="wnt-exam-sec-head" onClick={() => setTableSecOpen((o) => !o)}>
+                          <span>📚 과목 시간표</span>
+                          <span className="wnt-exam-sec-arrow">{tableSecOpen ? "▴" : "▾"}</span>
+                        </button>
+                        {tableSecOpen && (
+                          <div className="wnt-exam-sec-body">
+                            <input
+                              className="wnt-input"
+                              placeholder="시험 이름 (예: 1학기 기말고사)"
+                              value={exam.name}
+                              onChange={(e) => setExam({ ...exam, name: e.target.value })}
+                              onBlur={() => saveData({ exam })}
+                            />
+                            {(exam.days || []).map((d, i) => (
+                              <div key={i} className="wnt-exam-row">
+                                <input
+                                  className="wnt-input wnt-exam-date"
+                                  type="date"
+                                  value={d.date || ""}
+                                  onChange={(e) => { const next = { ...exam, days: exam.days.map((x, idx) => (idx === i ? { ...x, date: e.target.value } : x)) }; saveData({ exam: next }); }}
+                                />
+                                <input
+                                  className="wnt-input"
+                                  placeholder="과목 (예: 통합사회1, 한국사1)"
+                                  value={d.subjects || ""}
+                                  onChange={(e) => setExam({ ...exam, days: exam.days.map((x, idx) => (idx === i ? { ...x, subjects: e.target.value } : x)) })}
+                                  onBlur={() => saveData({ exam })}
+                                />
+                                <button className="wnt-exam-x" onClick={() => saveData({ exam: { ...exam, days: exam.days.filter((_, idx) => idx !== i) } })} aria-label="삭제">✕</button>
+                              </div>
+                            ))}
+                            <button className="wnt-mini strong" onClick={() => saveData({ exam: { ...exam, days: [...(exam.days || []), { date: "", subjects: "" }] } })}>＋ 시험일 추가</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             );
           })()}
         </div>
@@ -2457,60 +2529,6 @@ export default function WrongNoteTracker() {
               </div>
             </section>
           )}
-
-          {/* 📅 시험 D-day + 시간표 (평소엔 접힘) */}
-          {(() => {
-            const dd = examDday(exam);
-            return (
-              <div className="wnt-exam">
-                <div className="wnt-exam-head" onClick={() => setExamOpen(!examOpen)}>
-                  <span className="wnt-exam-title">
-                    📅 {exam.name || "시험 일정"}
-                    {dd != null && <span className="wnt-dday">{dd === 0 ? "D-DAY!" : "D-" + dd}</span>}
-                  </span>
-                  <button className="wnt-card-toggle">{examOpen ? "▴ 접기" : (dd != null ? "▾ 시험표" : "▾ 설정")}</button>
-                </div>
-                {examOpen && (
-                  <div className="wnt-exam-body">
-                    <input
-                      className="wnt-input"
-                      placeholder="시험 이름 (예: 1학기 기말고사)"
-                      value={exam.name}
-                      onChange={(e) => setExam({ ...exam, name: e.target.value })}
-                      onBlur={() => saveData({ exam })}
-                    />
-                    {(exam.days || []).map((d, i) => (
-                      <div key={i} className="wnt-exam-row">
-                        <input
-                          className="wnt-input wnt-exam-date"
-                          type="date"
-                          value={d.date || ""}
-                          onChange={(e) => { const next = { ...exam, days: exam.days.map((x, idx) => (idx === i ? { ...x, date: e.target.value } : x)) }; saveData({ exam: next }); }}
-                        />
-                        <input
-                          className="wnt-input"
-                          placeholder="과목 (예: 통합사회1, 한국사1)"
-                          value={d.subjects || ""}
-                          onChange={(e) => setExam({ ...exam, days: exam.days.map((x, idx) => (idx === i ? { ...x, subjects: e.target.value } : x)) })}
-                          onBlur={() => saveData({ exam })}
-                        />
-                        <button className="wnt-exam-x" onClick={() => saveData({ exam: { ...exam, days: exam.days.filter((_, idx) => idx !== i) } })} aria-label="삭제">✕</button>
-                      </div>
-                    ))}
-                    <button className="wnt-mini strong" onClick={() => saveData({ exam: { ...exam, days: [...(exam.days || []), { date: "", subjects: "" }] } })}>＋ 시험일 추가</button>
-                    {(exam.days || []).length > 0 && (
-                      <div className="wnt-exam-list">
-                        {[...exam.days].filter((d) => d.date).sort((a, b) => (parseDate(a.date) - parseDate(b.date))).map((d, i) => {
-                          const n = daysFromToday(parseDate(d.date));
-                          return <div key={i} className="wnt-exam-listrow"><b>{fmtDate(d.date)}</b> {d.subjects || "—"} {n >= 0 && <span className="wnt-dday sm">{n === 0 ? "오늘!" : "D-" + n}</span>}</div>;
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
 
           {/* 오늘 복습할 문제 자동 안내 — 앱 켜면 뜸 */}
           {(() => {
@@ -3719,22 +3737,36 @@ const css = `
   border-radius: 9px; padding: 5px 11px; letter-spacing: 0.01em;
 }
 .wnt-due-modal-streak { font-size: 13px; font-weight: 800; color: #C0491E; margin-top: 2px; }
-/* 📅 시험 D-day */
-.wnt-exam { border: 1.5px solid var(--line); border-radius: 12px; background: #fff; margin-bottom: 10px; overflow: hidden; }
-.wnt-exam-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; cursor: pointer; }
-.wnt-exam-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+/* 📅 시험 D-day 팝오버 (헤더 오른쪽에서 펼쳐짐) */
+.wnt-dday-wrap { margin-left: auto; align-self: center; position: relative; }
+.wnt-dday-wrap .wnt-header-dday { margin-left: 0; }
+.wnt-header-dday.on { border-color: var(--ink); }
 .wnt-dday { background: var(--red); color: #fff; font-size: 12px; font-weight: 800; border-radius: 6px; padding: 2px 8px; }
 .wnt-dday.sm { font-size: 11px; padding: 1px 6px; margin-left: 6px; }
-.wnt-exam-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); }
-.wnt-exam-body .wnt-input { margin-top: 8px; }
-.wnt-exam-row { display: flex; gap: 6px; align-items: center; margin-top: 0; }
-.wnt-exam-row .wnt-input { margin-top: 0; }
-.wnt-exam-date { flex: 0 0 150px; }
+.wnt-dday-overlay { position: fixed; inset: 0; z-index: 40; }
+.wnt-exam-pop {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 50;
+  width: 340px; max-width: 88vw; max-height: 70vh; overflow-y: auto;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(30,42,58,0.18); padding: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.wnt-exam-pop-head { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 800; }
+.wnt-exam-sec { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+.wnt-exam-sec-head {
+  width: 100%; display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+  background: none; border: none; cursor: pointer; font-family: inherit;
+  font-size: 13px; font-weight: 700; color: var(--ink);
+}
+.wnt-exam-sec-arrow { margin-left: auto; color: var(--muted); font-size: 12px; }
+.wnt-exam-sec-body { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.wnt-exam-row { display: flex; gap: 6px; align-items: center; }
+.wnt-exam-date { flex: 0 0 140px; }
 .wnt-exam-x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px 6px; }
 .wnt-exam-x:hover { color: var(--red); }
-.wnt-exam-list { margin-top: 6px; border-top: 1px dashed var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; }
-.wnt-exam-listrow { font-size: 12.5px; color: var(--ink); }
+.wnt-exam-listrow { font-size: 12.5px; color: var(--ink); line-height: 1.6; }
 .wnt-exam-listrow b { color: var(--blue); margin-right: 4px; }
+.wnt-exam-empty { font-size: 12px; color: var(--muted); }
 .wnt-goal-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .wnt-goal-input { width: 64px; }
 .wnt-due-banner-btns { display: flex; align-items: center; gap: 6px; }
