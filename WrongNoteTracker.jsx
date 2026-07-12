@@ -745,21 +745,15 @@ function SolvePad({ gradeFn, bridge, solveFn, problem }) {
           </div>
         );
       })()}
-      <div className="pad-actions">
-        {solveFn && (
-          <button className="wnt-mini" onClick={solve} disabled={solving} style={{ marginRight: "auto" }}>
-            {solving ? "풀이 가져오는 중…" : "📖 간략 풀이"}
-          </button>
-        )}
-        <button className="wnt-btn-primary" onClick={grade} disabled={grading}>{grading ? "채점 중… 🔍" : "✅ AI 채점 받기"}</button>
-      </div>
-      {gradeResult && <div className="pad-result">{gradeResult}</div>}
-      {bridgeText && (
+      {solveFn && (
         <div className="pad-actions">
-          <button className="wnt-mini idea" onClick={() => openInClaudeApp(bridgeText)}>📲 Claude 앱에서 채점받기</button>
+          <button className="wnt-btn-primary" onClick={solve} disabled={solving}>
+            {solving ? "정답·풀이 가져오는 중… 🔍" : "📖 정답·풀이 보기"}
+          </button>
         </div>
       )}
       {solveResult && <div className="pad-result">📖 {solveResult}</div>}
+      <p className="pad-selfcheck">✍️ 직접 푼 답을 위 <b>정답·풀이</b>와 비교해 스스로 채점해요. (AI가 손글씨를 판단하지 않아요)</p>
     </div>
   );
 }
@@ -1891,10 +1885,11 @@ export default function WrongNoteTracker() {
   function vtGradeFn(v) {
     return async (drawUrl, noteText) => {
       const prompt =
-        "너는 채점 선생님이야. 아래 문제에 대한 학생의 손글씨 풀이(첨부 이미지)를 채점해줘.\n\n" +
-        `[문제] ${v.question}\n[모범 풀이·정답] ${v.answer || "미제공 — 직접 풀어서 비교해"}\n` +
+        "너는 신중한 채점 선생님이야. 아래 문제에 대한 학생의 손글씨(답/풀이, 첨부 이미지)를 채점해줘.\n\n" +
+        `[문제] ${v.question}\n[모범 풀이·정답] ${v.answer || "미제공 — 네가 직접 정확히 풀고 검산해서 비교해"}\n` +
         (noteText ? `[학생 포스트잇 메모]\n${noteText}\n` : "") +
-        "\n아주 짧게: 첫 줄에 ⭕ 또는 ❌만, 그다음 잘한 점·틀린 부분을 딱 1~2줄. 전체 풀이·해설은 절대 쓰지 마 (학생이 '풀이 보기'로 따로 요청할 거야). 글씨를 못 읽겠으면 그것만 말해. 친근한 존댓말, 수식은 일반 텍스트.";
+        "\n[채점 절차] 모범 정답(있으면)과 학생 답을 비교하되, 표기 차이엔 관대하게. 학생 손글씨가 안 읽히거나 네 판단에 100% 확신이 없으면 절대 ❌ 하지 말고 첫 줄에 '❓ 확인 필요'라고만 해. 확실히 맞으면 ⭕, 확실히 틀리면 ❌.\n" +
+        "그다음 잘한 점·아쉬운 점을 딱 1~2줄. ⚠️ 정답(최종 답·숫자·식)과 풀이 과정은 절대 쓰지 마 — 맞았는지 여부와 방향만. 정답은 학생이 '📖 간략 풀이'로 따로 봐. '풀이 보기라고 말해줘' 같은 안내도 쓰지 마. 친근한 존댓말, 수식은 일반 텍스트.";
       return await callClaude([{ role: "user", content: [...imgBlocks([drawUrl]), { type: "text", text: prompt }] }], { needsVision: true });
     };
   }
@@ -1903,8 +1898,8 @@ export default function WrongNoteTracker() {
   function vtSolveFn(v) {
     return async () => {
       const prompt =
-        "아래 문제의 핵심 풀이를 정답 해설지처럼 아주 간략히 알려줘. 3~4줄 이내, '핵심 아이디어 → 최종 답' 위주로. 잡담·장황한 설명 없이.\n\n" +
-        `[문제] ${v.question}\n` + (v.answer ? `[정답·풀이 요약] ${v.answer}\n` : "");
+        "아래 문제를 네가 직접 끝까지 풀어. ⚠️ 반드시 검산해서 최종 답을 확정해. 학생이 자기 답과 비교하도록 간결하게: 첫 줄 '핵심 아이디어', 마지막 줄에 굵게 '✅ 정답: ___'을 명확히 써. 3~4줄 이내. 확신이 없으면 솔직히 말해.\n\n" +
+        `[문제] ${v.question}\n` + (v.answer ? `[출제 시 정답·풀이] ${v.answer}\n(이 정답이 검산 결과와 다르면, 네가 다시 정확히 푼 값을 정답으로 제시해.)` : "");
       return await callClaude([{ role: "user", content: prompt }]);
     };
   }
@@ -1914,10 +1909,14 @@ export default function WrongNoteTracker() {
     return async (drawUrl, noteText) => {
       const probImgs = (imageCache[entry.id] || []).slice(0, 2);
       const prompt =
-        "너는 채점 선생님이야. 앞의 이미지들은 문제 사진이고, 마지막 이미지는 학생의 손글씨 풀이야.\n\n" +
+        "너는 신중한 채점 선생님이야. 앞의 이미지들은 문제 사진이고, 마지막 이미지는 학생의 손글씨(답/풀이)야.\n\n" +
         `[과목] ${entry.subject} / [단원] ${entry.unit}\n[학생 메모] ${entry.memo || "없음"}\n` +
         (noteText ? `[학생 포스트잇 메모]\n${noteText}\n` : "") +
-        "\n먼저 문제를 직접 풀고 학생 풀이와 비교해서 아주 짧게: 첫 줄에 ⭕ 또는 ❌만, 그다음 잘한 점·틀린 부분을 딱 1~2줄. 전체 풀이·해설은 절대 쓰지 마 (학생이 '풀이 보기'로 따로 요청할 거야). 글씨를 못 읽겠으면 그것만 말해. 친근한 존댓말, 수식은 일반 텍스트.";
+        "\n[채점 절차 — 반드시 지켜]\n" +
+        "1) 문제를 처음부터 끝까지 네가 직접 정확히 풀어. 객관식이면 정답 '번호'를 확정하고, 계산은 반드시 한 번 더 검산해.\n" +
+        "2) 학생이 고르거나 쓴 답을 이미지에서 정확히 읽어 (동그라미 친 번호 등).\n" +
+        "3) 비교: 학생 답 == 네 정답이면 첫 줄에 ⭕. 명백히 다르고 네 계산에 확신이 있으면 ❌. **네 계산에 100% 확신이 없거나 문제가 안 읽히면 절대 ❌ 하지 말고 첫 줄에 '❓ 확인 필요'** 라고만 해.\n" +
+        "그다음 잘한 점·아쉬운 점을 딱 1~2줄. ⚠️ 정답(최종 답·숫자·번호·식)과 풀이 과정은 절대 쓰지 마 — 맞았는지 여부와 방향만. 정답은 학생이 '📖 간략 풀이'로 따로 봐. '풀이 보기라고 말해줘' 같은 안내도 쓰지 마. 친근한 존댓말, 수식은 일반 텍스트.";
       return await callClaude([{ role: "user", content: [...imgBlocks(probImgs), ...imgBlocks([drawUrl]), { type: "text", text: prompt }] }], { needsVision: true });
     };
   }
@@ -1927,7 +1926,7 @@ export default function WrongNoteTracker() {
     return async () => {
       const probImgs = (imageCache[entry.id] || []).slice(0, 2);
       const prompt =
-        "첨부한 문제 사진을 보고, 핵심 풀이를 정답 해설지처럼 아주 간략히 알려줘. 3~4줄 이내, '핵심 아이디어 → 최종 답' 위주로. 장황한 설명 없이.\n" +
+        "첨부한 문제 사진을 정확히 읽고 네가 직접 끝까지 풀어. ⚠️ 반드시 계산을 한 번 더 검산해서 최종 답을 확정해 (특히 객관식은 정답 번호까지). 학생이 자기 답과 비교하도록 간결하게: 첫 줄 '핵심 아이디어', 마지막 줄에 굵게 '✅ 정답: ___'을 명확히 써. 3~4줄 이내. 확신이 없으면 솔직히 '이 부분은 확실치 않아요'라고 말해 — 틀린 답을 자신 있게 주지 마.\n" +
         `[과목] ${entry.subject} / [단원] ${entry.unit}`;
       return await callClaude([{ role: "user", content: [...imgBlocks(probImgs), { type: "text", text: prompt }] }], { needsVision: true });
     };
@@ -2774,7 +2773,7 @@ export default function WrongNoteTracker() {
                       <button className="wnt-mini ai" onClick={() => toggleAi(e.id)}>
                         🤖 AI 도우미{aiOpen[e.id] ? " ▲" : ""}
                       </button>
-                      <HelpTip text="📖 문제 풀이: 문제 사진을 분석해 정답 해설지처럼 풀이를 알려줘요. ✏️ 풀이 남기기: 다시 푼 풀이를 글·사진으로 기록 + 채점. 💡 발상 올리기: 손으로 정리한 발상 사진을 AI가 카드로 요약. 🤖 AI 도우미: 힌트 유도 또는 대화. (변형문제는 위 '변형문제' 탭에서 만들어요.)" />
+                      <HelpTip text="🤖 AI 도우미: 이 문제를 정확히 도와주려면 사진을 봐야 해서, 눌러서 나오는 버튼으로 골라요 — 📥 문제 사진 저장 후 📲 질문방(클로드 앱)에서 사진 첨부해 물어봐요. 📖 문제 풀이·✍️ 풀이 패드 채점도 같은 방식이에요." />
                     </div>
                   )}
 
@@ -2878,63 +2877,21 @@ export default function WrongNoteTracker() {
                   )}
 
                   {/* AI 풀이 도우미 */}
+                  {/* AI 도우미 — 버튼으로 선택: 사진 저장 / 질문방(클로드 앱)에서 물어보기 */}
                   {!selectMode && aiOpen[e.id] && (
                     <div className="wnt-ai">
-                      <div className="wnt-panel-head">🤖 AI 풀이 도우미 <span>대화는 앱을 닫으면 사라져요</span></div>
-                      {e.hasImage ? (
-                        <div className="wnt-ai-accurate">
-                          <p className="wnt-ai-q">📷 이 문제는 사진을 봐야 정확히 도와줄 수 있어요.</p>
-                          <ol className="wnt-ai-steps">
-                            <li>아래 <b>📥 문제 사진 저장</b>으로 사진첩에 저장해요.</li>
-                            <li><b>📲 Claude 앱에서 물어보기</b>를 눌러 새 채팅을 열어요 (질문은 자동 복사돼요).</li>
-                            <li>클로드 앱 입력창의 <b>＋</b>(사진 첨부)로 방금 저장한 문제 사진을 붙이고 전송해요.</li>
-                          </ol>
-                          <div className="wnt-ai-accurate-btns">
-                            <button className="wnt-mini" onClick={() => savePhoto(e.id)} disabled={!imageCache[e.id]}>📥 문제 사진 저장</button>
-                            <button className="wnt-mini idea" onClick={() => openInClaudeApp(aiBridgePrompt(e))}>📲 Claude 앱에서 물어보기</button>
-                          </div>
-                        </div>
-                      ) : !aiMode[e.id] ? (
-                        <div className="wnt-ai-modes">
-                          <p className="wnt-ai-q">어떤 방식으로 도와드릴까요?</p>
-                          <button className="wnt-mode-btn" onClick={() => chooseAiMode(e, "socratic")}>
-                            🧭 방향만 잡아줘
-                            <span>힌트로 사고를 확장하면서 내가 직접 풀어나갈래</span>
-                          </button>
-                          <button className="wnt-mode-btn" onClick={() => chooseAiMode(e, "direct")}>
-                            📖 풀이 먼저 보여줘
-                            <span>풀이 과정을 먼저 보고, 궁금한 걸 물어볼래</span>
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="wnt-ai-msgs">
-                            {(aiChats[e.id] || []).length === 0 && aiMode[e.id] === "socratic" && (
-                              <div className="wnt-ai-starters">
-                                <button className="wnt-mini" onClick={() => sendAi(e, "이 문제를 어디서부터 접근하면 좋을지 힌트 하나만 주세요")}>첫 힌트</button>
-                                <button className="wnt-mini" onClick={() => sendAi(e, "제가 기록한 틀린 이유를 참고해서, 이 문제에서 조심할 함정을 짚어주세요")}>함정 짚어줘</button>
-                              </div>
-                            )}
-                            {(aiChats[e.id] || []).map((m, i) => (
-                              <div key={i} className={m.role === "user" ? "wnt-msg me" : "wnt-msg ai"}>{m.text}</div>
-                            ))}
-                            {aiLoading[e.id] && <div className="wnt-msg ai">생각 중…</div>}
-                          </div>
-                          <div className="wnt-ai-inputrow">
-                            <input
-                              className="wnt-input"
-                              placeholder="질문이나 내 풀이를 입력…"
-                              value={aiInput[e.id] || ""}
-                              onChange={(ev) => setAiInput((v) => ({ ...v, [e.id]: ev.target.value }))}
-                              onKeyDown={(ev) => {
-                                if (ev.key === "Enter" && !ev.nativeEvent.isComposing) sendAi(e);
-                              }}
-                            />
-                            <button className="wnt-btn-primary" onClick={() => sendAi(e)} disabled={aiLoading[e.id]}>전송</button>
-                          </div>
-                          <button className="wnt-modeswitch" onClick={() => resetAiMode(e.id)}>모드 다시 선택 (대화 초기화)</button>
-                        </>
-                      )}
+                      <div className="wnt-panel-head">🤖 AI 도우미</div>
+                      <p className="wnt-ai-q">📷 이 문제를 정확히 도와주려면 문제 사진을 봐야 해요. 아래에서 골라요:</p>
+                      <ol className="wnt-ai-steps">
+                        <li><b>📥 문제 사진 저장</b>으로 사진첩에 저장</li>
+                        <li><b>📲 질문방에서 물어보기</b> → 질문이 복사되고 질문방이 열려요</li>
+                        <li>질문방 입력창의 <b>＋</b>로 저장한 사진 첨부 → 전송</li>
+                      </ol>
+                      <div className="wnt-ai-accurate-btns">
+                        <button className="wnt-mini" onClick={() => savePhoto(e.id)} disabled={!e.hasImage || !imageCache[e.id]}>📥 문제 사진 저장</button>
+                        <button className="wnt-mini idea" onClick={() => openInClaudeApp(aiBridgePrompt(e))}>📲 질문방에서 물어보기</button>
+                        <button className="wnt-mini" onClick={() => setAiOpen((o) => ({ ...o, [e.id]: false }))}>닫기</button>
+                      </div>
                     </div>
                   )}
 
