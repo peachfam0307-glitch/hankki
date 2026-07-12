@@ -84,4 +84,3 @@ export const EMOJI_GROUPS = [
   { label: '표정', items: ['😀', '😊', '🥰', '😋', '😍', '🤤', '😎', '🥳', '🙂', '😆', '🤗', '😇'] },
 ]
 
-export const FOOD_EMOJIS = EMOJI_GROUPS.flatMap((g) => g.items)

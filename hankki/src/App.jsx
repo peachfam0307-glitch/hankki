@@ -19,7 +19,6 @@ import EditorScreen from './screens/EditorScreen'
 import InboxScreen from './screens/InboxScreen'
 import FavoritesScreen from './screens/FavoritesScreen'
 import CookedScreen from './screens/CookedScreen'
-import ShoppingScreen from './screens/ShoppingScreen'
 import CookScreen from './screens/CookScreen'
 
 const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, diary: DiaryScreen, shop: ShopScreen, profile: ProfileScreen }
@@ -184,8 +183,6 @@ function renderScreen(s) {
       return <FavoritesScreen />
     case 'cooked':
       return <CookedScreen />
-    case 'shopping':
-      return <ShoppingScreen />
     case 'cook':
       return <CookScreen id={s.id} />
     default:

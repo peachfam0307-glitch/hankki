@@ -6,6 +6,7 @@ import TabTips from '../components/TabTips'
 import EmojiPicker from '../components/EmojiPicker'
 import FoodIconPicker from '../components/FoodIconPicker'
 import Buddy, { BUDDY_LIST } from '../components/Buddies'
+import Portal from '../components/Portal'
 import { cropSquare } from '../utils'
 import { Avatar } from './HomeScreen'
 
@@ -106,11 +107,10 @@ export default function ProfileScreen() {
     reader.readAsText(file)
   }
 
+  // 하단 탭과 겹치는 항목(내 레시피·장보기)은 뺐다 — 같은 곳으로 가는 문이 두 개면 헷갈린다.
   const menu = [
     { icon: 'heart', label: '즐겨찾기', onClick: () => nav.push({ name: 'favorites' }) },
-    { icon: 'user', label: '내가 만든 레시피', onClick: () => nav.go('myrecipes') },
     { icon: 'star', label: '만들었어요! 기록', onClick: () => nav.push({ name: 'cooked' }) },
-    { icon: 'cart', label: '장보기 · 재료함', onClick: () => nav.go('shop') },
     { icon: 'cloud', label: '백업 · 내보내기', badge: 'NEW', onClick: () => setBackup(true) },
     { icon: 'settings', label: '설정', onClick: editProfile },
     { icon: 'help', label: '도움말 및 문의', onClick: () => nav.showToast('도움이 필요하면 언제든 문의해 주세요 🙂') },
@@ -268,6 +268,7 @@ export default function ProfileScreen() {
       <input ref={fileRef} type="file" accept="application/json,.json" onChange={importData} style={{ display: 'none' }} />
 
       {backup && (
+       <Portal>
         <div className="sheet-mask" onClick={() => setBackup(false)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
             <div className="emoji-sheet-head">
@@ -287,6 +288,7 @@ export default function ProfileScreen() {
             </div>
           </div>
         </div>
+       </Portal>
       )}
     </>
   )

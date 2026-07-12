@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Icon from './Icon'
+import Portal from './Portal'
 
 // 탭마다 '?' 를 눌러 보는 짧은 사용팁. (설정 도움말은 잘 안 보니 각 탭에 인라인으로)
 const TIPS = {
@@ -65,6 +66,7 @@ export default function TabTips({ tab }) {
         <Icon name="help" size={18} color="var(--text-sub)" />
       </button>
       {open && (
+       <Portal>
         <div className="sheet-mask" onClick={() => setOpen(false)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 24 }}>
             <div className="emoji-sheet-head">
@@ -84,6 +86,7 @@ export default function TabTips({ tab }) {
             </div>
           </div>
         </div>
+       </Portal>
       )}
     </>
   )

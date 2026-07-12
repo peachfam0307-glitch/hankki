@@ -6,6 +6,7 @@ import Thumb from '../components/Thumb'
 import SourceBadge from '../components/SourceBadge'
 import TimerSheet from '../components/TimerSheet'
 import DiaryEntrySheet, { Stars } from '../components/DiaryEntrySheet'
+import Portal from '../components/Portal'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import { shareRecipeCard } from '../shareCard'
 import { scaleIngredient } from '../scale'
@@ -43,6 +44,14 @@ export default function RecipeDetailScreen({ id }) {
   const myEntries = diary.filter((d) => d.recipeId === id).sort((a, b) => b.at - a.at)
 
   const onCook = () => {
+    // 오늘 이미 기록이 있으면(요리모드 완료 등) 새로 만들지 않고 그 기록을 이어서 쓴다 — 하루 두 번 집계 방지
+    const today = new Date().toDateString()
+    const existing = myEntries.find((d) => new Date(d.at).toDateString() === today)
+    if (existing) {
+      setLogEntry(existing)
+      nav.showToast('오늘 기록에 이어서 남겨요 ✍️')
+      return
+    }
     const entry = { id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: null }
     addDiary(entry)
     cook(r.id)
@@ -118,12 +127,8 @@ export default function RecipeDetailScreen({ id }) {
           </button>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-          <div className="h-title" style={{ fontSize: 24 }}>{r.title}</div>
-          <button className="icon-btn press" onClick={() => toggleFavorite(r.id)} style={{ marginTop: 2 }}>
-            <Icon name="bookmark" size={24} color={r.favorite ? 'var(--brown)' : 'var(--sand)'} style={{ fill: r.favorite ? 'var(--brown)' : 'none' }} />
-          </button>
-        </div>
+        {/* 즐겨찾기는 상단 오버레이 북마크 하나로 통일 (중복 버튼 정리) */}
+        <div className="h-title" style={{ fontSize: 24 }}>{r.title}</div>
 
         <div style={{ marginTop: 8 }}>
           <SourceBadge source={r.source} size={16} showLabel={false} />
@@ -271,6 +276,7 @@ export default function RecipeDetailScreen({ id }) {
       )}
 
       {menu && (
+       <Portal>
         <div className="sheet-mask" onClick={() => setMenu(false)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <button className="sheet-item press" onClick={() => { setMenu(false); nav.push({ name: 'editor', id: r.id }) }}>
@@ -290,6 +296,7 @@ export default function RecipeDetailScreen({ id }) {
             </button>
           </div>
         </div>
+       </Portal>
       )}
     </div>
   )

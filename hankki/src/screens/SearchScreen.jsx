@@ -10,7 +10,14 @@ import { POPULAR_SEARCHES, TAG_LIST, INGREDIENT_CHIPS } from '../data/seed'
 export default function SearchScreen() {
   const { recipes } = useStore()
   const nav = useNav()
-  const [q, setQ] = useState('')
+  // 다른 화면(내 레시피의 태그 등)에서 넘겨준 검색어가 있으면 그걸로 시작
+  const [q, setQ] = useState(() => {
+    try {
+      const t = sessionStorage.getItem('hankki:searchQ') || ''
+      sessionStorage.removeItem('hankki:searchQ')
+      return t
+    } catch { return '' }
+  })
 
   const query = q.trim()
   const results = useMemo(() => {

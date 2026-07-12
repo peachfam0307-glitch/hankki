@@ -583,7 +583,6 @@ const I = {
   ),
 }
 
-export const FOOD_ICON_KEYS = Object.keys(I).filter((k) => k !== 'default')
 
 // 픽커용 — 카테고리별 아이콘 키
 export const FOOD_ICON_GROUPS = [

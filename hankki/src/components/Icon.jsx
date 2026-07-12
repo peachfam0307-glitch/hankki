@@ -21,12 +21,6 @@ const PATHS = {
       <path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6l1.4 1.4m10 10 1.4 1.4m0-12.8-1.4 1.4M7 17l-1.4 1.4" />
     </>
   ),
-  bell: (
-    <>
-      <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6" />
-      <path d="M10.5 19a1.5 1.5 0 0 0 3 0" />
-    </>
-  ),
   plus: <path d="M12 5v14M5 12h14" />,
   minus: <path d="M5 12h14" />,
   'chevron-right': <path d="m9 6 6 6-6 6" />,
@@ -122,7 +116,6 @@ const PATHS = {
       <path d="m10.5 9.5 4 2.5-4 2.5z" fill="currentColor" stroke="none" />
     </>
   ),
-  filter: <path d="M4 6h16M7 12h10M10 18h4" />,
 }
 
 export default function Icon({ name, size = 22, stroke = 1.6, color = 'currentColor', style, className }) {

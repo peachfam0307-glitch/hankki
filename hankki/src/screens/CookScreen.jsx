@@ -4,11 +4,12 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import TimerSheet from '../components/TimerSheet'
 import CookBuddy from '../components/CookBuddy'
+import Portal from '../components/Portal'
 import { scaleIngredient } from '../scale'
 
 // 요리 모드 — 단계별 풀스크린. 큰 글씨 · 화면 안 꺼짐 · 단계 타이머 · 재료 보기.
 export default function CookScreen({ id }) {
-  const { recipes, cook, addDiary } = useStore()
+  const { recipes, cook, addDiary, diary } = useStore()
   const nav = useNav()
   const r = recipes.find((x) => x.id === id)
   const steps = r?.steps || []
@@ -48,8 +49,13 @@ export default function CookScreen({ id }) {
 
   const last = i >= steps.length - 1
   const finish = () => {
-    addDiary({ id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: null })
-    cook(r.id)
+    // 오늘 이미 이 레시피 기록이 있으면(상세의 '만들었어요' 등) 중복으로 쌓지 않는다
+    const today = new Date().toDateString()
+    const dup = diary.some((d) => d.recipeId === r.id && new Date(d.at).toDateString() === today)
+    if (!dup) {
+      addDiary({ id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: null })
+      cook(r.id)
+    }
     nav.popAll()
     nav.showToast('완성! 일지에 기록했어요 🎉 별점·팁은 일지 탭에서')
   }
@@ -91,6 +97,7 @@ export default function CookScreen({ id }) {
       {showTimer && <TimerSheet label={`${r.title} · STEP ${i + 1}`} onClose={() => setShowTimer(false)} />}
 
       {showIng && (
+       <Portal>
         <div className="sheet-mask" onClick={() => setShowIng(false)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
             <div className="emoji-sheet-head">
@@ -104,6 +111,7 @@ export default function CookScreen({ id }) {
             </div>
           </div>
         </div>
+       </Portal>
       )}
     </div>
   )

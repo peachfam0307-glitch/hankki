@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -126,12 +126,6 @@ export default function EditorScreen({ id, prefill }) {
     nav.showToast('사진에서 글자를 읽어 채웠어요 ✨')
   }
 
-  // 사진으로 가져오기·공유로 들어온 경우: 열자마자 글자만 자동 인식(썸네일은 아이콘 유지)
-  useEffect(() => {
-    if (!editing && prefill?.autoOcr && prefill.image) runOcr(prefill.image)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const canSave = f.title.trim().length > 0
 
   const save = () => {
@@ -157,6 +151,7 @@ export default function EditorScreen({ id, prefill }) {
       // 어느 경로로 들어왔든, 재료·순서와 겹치는 메모 줄은 저장 직전에 걸러낸다.
       memo: cleanMemo(f.memo.trim(), ings, stps),
       sourceUrl: f.sourceUrl.trim(),
+      source: f.source || 'manual', // 가져온 경로(사진·유튜브 등) 배지를 잃지 않게 저장
       status: 'sorted',
     }
     if (editing) {
@@ -164,7 +159,7 @@ export default function EditorScreen({ id, prefill }) {
       nav.pop()
       nav.showToast('레시피를 정리했어요 ✨')
     } else {
-      const rec = { id: newId(), source: 'manual', favorite: false, cooked: 0, savedAt: Date.now(), ...patch }
+      const rec = { id: newId(), favorite: false, cooked: 0, savedAt: Date.now(), ...patch }
       addRecipe(rec)
       nav.pop()
       nav.showToast('레시피를 저장했어요 ✨')

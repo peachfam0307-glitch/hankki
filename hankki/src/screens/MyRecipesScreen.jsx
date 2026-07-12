@@ -113,7 +113,15 @@ export default function MyRecipesScreen() {
           <div className="h-section" style={{ margin: '28px 0 13px' }}>태그</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {TAG_LIST.map((t) => (
-              <button key={t} className="tag press" onClick={() => nav.go('search')}># {t}</button>
+              <button
+                key={t}
+                className="tag press"
+                onClick={() => {
+                  // 태그를 넘겨서 검색 탭이 바로 그 태그로 검색하게 한다.
+                  try { sessionStorage.setItem('hankki:searchQ', t) } catch { /* noop */ }
+                  nav.go('search')
+                }}
+              ># {t}</button>
             ))}
           </div>
         </div>

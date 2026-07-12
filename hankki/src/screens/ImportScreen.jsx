@@ -8,6 +8,7 @@ import { fetchLinkRecipe } from '../linkReader'
 import { guessFoodIcon } from '../components/FoodIcon'
 import Icon from '../components/Icon'
 import CropSheet from '../components/CropSheet'
+import Portal from '../components/Portal'
 
 function readAsDataURL(file) {
   return new Promise((resolve) => {
@@ -378,6 +379,7 @@ export default function ImportScreen() {
       )}
 
       {help && (
+       <Portal>
         <div className="sheet-mask" onClick={() => setHelp(false)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 24 }}>
             <div className="emoji-sheet-head">
@@ -411,6 +413,7 @@ export default function ImportScreen() {
             </div>
           </div>
         </div>
+       </Portal>
       )}
     </div>
   )

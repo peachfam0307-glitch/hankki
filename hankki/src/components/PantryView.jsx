@@ -8,6 +8,7 @@ import Thumb from './Thumb'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import FoodIconPicker from './FoodIconPicker'
 import CropSheet from './CropSheet'
+import Portal from './Portal'
 
 function toYMD(d) {
   const y = d.getFullYear()
@@ -130,6 +131,7 @@ export default function PantryView() {
       )}
 
       {found && (
+       <Portal>
         <div className="sheet-mask" onClick={() => setFound(null)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
             <div className="emoji-sheet-head">
@@ -173,6 +175,7 @@ export default function PantryView() {
             </div>
           </div>
         </div>
+       </Portal>
       )}
 
       {pantry.length === 0 && !adding && (

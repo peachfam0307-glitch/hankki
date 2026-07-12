@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { EMOJI_GROUPS } from '../emoji'
+import Portal from './Portal'
 
 // 이모지 선택기 — 카테고리별 그리드 바텀시트. 사진 없이 통일감 있는 썸네일용.
 export default function EmojiPicker({ value, onChange, size = 56 }) {
@@ -17,6 +18,7 @@ export default function EmojiPicker({ value, onChange, size = 56 }) {
       </button>
 
       {open && (
+       <Portal>
         <div className="sheet-mask" onClick={() => setOpen(false)}>
           <div className="sheet emoji-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="emoji-sheet-head">
@@ -46,6 +48,7 @@ export default function EmojiPicker({ value, onChange, size = 56 }) {
             </div>
           </div>
         </div>
+       </Portal>
       )}
     </>
   )

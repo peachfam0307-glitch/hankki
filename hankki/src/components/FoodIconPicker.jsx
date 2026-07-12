@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import FoodIcon, { FOOD_ICON_GROUPS } from './FoodIcon'
+import Portal from './Portal'
 
 // 커스텀 재료/요리 아이콘 선택기 — 카테고리별 그리드 바텀시트.
 // 이모지 대신 앱 톤과 어울리는 브랜드 아이콘을 고른다.
@@ -18,6 +19,7 @@ export default function FoodIconPicker({ value, onChange, size = 64 }) {
       </button>
 
       {open && (
+       <Portal>
         <div className="sheet-mask" onClick={() => setOpen(false)}>
           <div className="sheet emoji-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="emoji-sheet-head">
@@ -48,6 +50,7 @@ export default function FoodIconPicker({ value, onChange, size = 64 }) {
             </div>
           </div>
         </div>
+       </Portal>
       )}
     </>
   )
