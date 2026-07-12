@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useStore } from '../store'
+import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import TimerSheet from '../components/TimerSheet'
@@ -7,7 +7,7 @@ import { scaleIngredient } from '../scale'
 
 // 요리 모드 — 단계별 풀스크린. 큰 글씨 · 화면 안 꺼짐 · 단계 타이머 · 재료 보기.
 export default function CookScreen({ id }) {
-  const { recipes, cook } = useStore()
+  const { recipes, cook, addDiary } = useStore()
   const nav = useNav()
   const r = recipes.find((x) => x.id === id)
   const steps = r?.steps || []
@@ -47,9 +47,10 @@ export default function CookScreen({ id }) {
 
   const last = i >= steps.length - 1
   const finish = () => {
+    addDiary({ id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: null })
     cook(r.id)
     nav.popAll()
-    nav.showToast('맛있게 드셨나요? 자주 해먹는 요리에 담았어요 🎉')
+    nav.showToast('완성! 일지에 기록했어요 🎉 별점·팁은 일지 탭에서')
   }
 
   return (

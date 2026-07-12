@@ -171,7 +171,7 @@ export default function ShopScreen() {
         ) : (
           shoppingList.map((it) => (
             <div key={it.id} className="shop-row">
-              <button className="check-box press" data-on={it.done} onClick={() => store.toggleShopItem(it.id)}>
+              <button className="check-box press" data-on={it.done} onClick={() => { const was = it.done; store.toggleShopItem(it.id); if (!was) nav.showToast('샀어요! 냉장고에 넣어뒀어요 🧊') }}>
                 {it.done && <Icon name="check" size={15} color="#fff" stroke={2.4} />}
               </button>
               <span style={{ flex: 1, fontSize: 15, textDecoration: it.done ? 'line-through' : 'none', color: it.done ? 'var(--text-sub)' : 'var(--text)' }}>

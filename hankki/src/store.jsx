@@ -46,6 +46,7 @@ function initialState() {
       wishlist: saved.wishlist || [],
       shoppingList: saved.shoppingList || migrateShopping(),
       pantry: saved.pantry || [],
+      diary: saved.diary || [],
     }
   }
   return {
@@ -56,6 +57,7 @@ function initialState() {
     wishlist: [],
     shoppingList: [],
     pantry: [],
+    diary: [],
   }
 }
 
@@ -162,11 +164,19 @@ function reducer(state, action) {
       return { ...state, shoppingList: [...add, ...state.shoppingList] }
     }
     case 'toggleShopItem': {
+      // 체크(=샀어요)하면 냉장고 재료함에 자동으로 넣어준다. (중복 이름은 제외)
+      const item = state.shoppingList.find((i) => i.id === action.id)
+      const nowDone = item && !item.done
+      let pantry = state.pantry
+      if (nowDone && item && !pantry.some((p) => p.name === item.name)) {
+        pantry = [{ id: newId(), name: item.name, icon: null, expiry: null, addedAt: Date.now() }, ...pantry]
+      }
       return {
         ...state,
         shoppingList: state.shoppingList.map((i) =>
           i.id === action.id ? { ...i, done: !i.done } : i
         ),
+        pantry,
       }
     }
     case 'removeShopItem': {
@@ -190,6 +200,20 @@ function reducer(state, action) {
       return { ...state, pantry: state.pantry.filter((p) => p.id !== action.id) }
     }
 
+    // 요리 일지 — 저장한 레시피에 연결된 기록(별점·팁·사진). '만들었어요'가 항목을 만든다.
+    case 'addDiary': {
+      return { ...state, diary: [action.entry, ...state.diary] }
+    }
+    case 'updateDiary': {
+      return {
+        ...state,
+        diary: state.diary.map((d) => (d.id === action.id ? { ...d, ...action.patch } : d)),
+      }
+    }
+    case 'removeDiary': {
+      return { ...state, diary: state.diary.filter((d) => d.id !== action.id) }
+    }
+
     // 백업 불러오기 — 저장된 데이터로 전체 교체(기본값과 병합해 누락 방지)
     case 'importAll': {
       const d = action.data || {}
@@ -202,6 +226,7 @@ function reducer(state, action) {
         wishlist: d.wishlist || [],
         shoppingList: d.shoppingList || [],
         pantry: d.pantry || [],
+        diary: d.diary || [],
       }
     }
 
@@ -248,6 +273,9 @@ export function StoreProvider({ children }) {
     addPantry: useCallback((item) => dispatch({ type: 'addPantry', item }), []),
     updatePantry: useCallback((id, patch) => dispatch({ type: 'updatePantry', id, patch }), []),
     removePantry: useCallback((id) => dispatch({ type: 'removePantry', id }), []),
+    addDiary: useCallback((entry) => dispatch({ type: 'addDiary', entry }), []),
+    updateDiary: useCallback((id, patch) => dispatch({ type: 'updateDiary', id, patch }), []),
+    removeDiary: useCallback((id) => dispatch({ type: 'removeDiary', id }), []),
     importAll: useCallback((data) => dispatch({ type: 'importAll', data }), []),
   }
 

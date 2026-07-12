@@ -8,11 +8,32 @@ import { CATEGORIES } from '../theme'
 import { timeAgo } from '../utils'
 
 export default function HomeScreen() {
-  const { recipes, profile } = useStore()
+  const { recipes, profile, pantry } = useStore()
   const nav = useNav()
   const [cat, setCat] = useState('전체')
+  const [pick, setPick] = useState(0)
 
   const sorted = recipes.filter((r) => r.status === 'sorted')
+
+  // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
+  const today = useMemo(() => {
+    const pool = recipes.filter((r) => r.status !== 'unsorted')
+    const withPantry = pool
+      .map((r) => {
+        const ings = (r.ingredients || []).join(' ')
+        const n = (pantry || []).filter((p) => {
+          const k = (p.name || '').trim().split(/\s+/)[0]
+          return k && ings.includes(k)
+        }).length
+        return { r, n }
+      })
+      .filter((x) => x.n > 0)
+      .sort((a, b) => b.n - a.n)
+    if (withPantry.length) return { list: withPantry.map((x) => x.r), fromFridge: true }
+    const cooked = pool.filter((r) => (r.cooked || 0) > 0)
+    return { list: cooked.length ? cooked : pool, fromFridge: false }
+  }, [recipes, pantry])
+  const todayPick = today.list.length ? today.list[pick % today.list.length] : null
 
   const often = useMemo(
     () => [...recipes].filter((r) => (r.cooked || 0) > 0).sort((a, b) => b.cooked - a.cooked).slice(0, 8),
@@ -53,6 +74,23 @@ export default function HomeScreen() {
           <Icon name="search" size={19} color="var(--text-sub)" />
           <span style={{ fontSize: 14.5 }}>레시피, 재료, 태그를 검색해 보세요.</span>
         </button>
+
+        {/* 오늘 뭐 해먹지? */}
+        {todayPick && (
+          <div className="today-card">
+            <button className="today-main press" onClick={() => open(todayPick.id)}>
+              <Thumb recipe={todayPick} style={{ width: 72, height: 72, flex: '0 0 auto' }} radius={16} />
+              <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                <div className="today-label">오늘 뭐 해먹지?</div>
+                <div className="today-title">{todayPick.title}</div>
+                <div className="today-reason">{today.fromFridge ? '🧊 냉장고 재료로 만들 수 있어요' : '이건 어때요?'}</div>
+              </div>
+            </button>
+            {today.list.length > 1 && (
+              <button className="today-refresh press" onClick={() => setPick((p) => p + 1)}>다른<br />추천</button>
+            )}
+          </div>
+        )}
 
         {/* 2. 자주 해먹는 요리 */}
         {often.length > 0 && (

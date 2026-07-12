@@ -1,18 +1,20 @@
 import { useState } from 'react'
-import { useStore } from '../store'
+import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import SourceBadge from '../components/SourceBadge'
 import TimerSheet from '../components/TimerSheet'
+import DiaryEntrySheet, { Stars } from '../components/DiaryEntrySheet'
 import { scaleIngredient } from '../scale'
 import { SOURCES } from '../data/seed'
 
 export default function RecipeDetailScreen({ id }) {
-  const { recipes, toggleFavorite, cook, removeRecipe, addShopItems } = useStore()
+  const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, diary, addDiary, removeDiary } = useStore()
   const nav = useNav()
   const [menu, setMenu] = useState(false)
   const [timer, setTimer] = useState(false)
+  const [logEntry, setLogEntry] = useState(null)
   const r = recipes.find((x) => x.id === id)
   const baseServings = r?.servings || 0
   const [servings, setServings] = useState(baseServings || 1)
@@ -35,9 +37,14 @@ export default function RecipeDetailScreen({ id }) {
     r.difficulty || null,
   ].filter(Boolean)
 
+  const myEntries = diary.filter((d) => d.recipeId === id).sort((a, b) => b.at - a.at)
+
   const onCook = () => {
+    const entry = { id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: null }
+    addDiary(entry)
     cook(r.id)
-    nav.showToast('맛있게 드셨나요? 자주 해먹는 요리에 담았어요 🎉')
+    setLogEntry(entry)
+    nav.showToast('만들었어요! 일지에 기록했어요 🎉')
   }
 
   const del = () => {
@@ -180,6 +187,29 @@ export default function RecipeDetailScreen({ id }) {
           </>
         )}
 
+        {myEntries.length > 0 && (
+          <>
+            <div className="h-section" style={{ marginTop: 26, marginBottom: 10 }}>요리 기록 · 나만의 팁</div>
+            {myEntries.map((e) => (
+              <button key={e.id} className="card press" onClick={() => setLogEntry(e)} style={{ width: '100%', textAlign: 'left', display: 'flex', gap: 12, padding: 12, marginBottom: 8, alignItems: 'flex-start', background: 'var(--cream)', border: 'none' }}>
+                {e.photo && <img src={e.photo} alt="" style={{ width: 56, height: 56, borderRadius: 12, objectFit: 'cover', flex: '0 0 auto' }} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="t-sub" style={{ fontSize: 12 }}>{new Date(e.at).toLocaleDateString('ko-KR')}</span>
+                    {e.rating > 0 && <Stars value={e.rating} onChange={() => {}} size={13} />}
+                  </div>
+                  {e.note ? (
+                    <div style={{ fontSize: 13.5, lineHeight: 1.55, marginTop: 4, color: 'var(--text)' }}>{e.note}</div>
+                  ) : (
+                    <div className="t-sub" style={{ fontSize: 12.5, marginTop: 4 }}>탭해서 별점·팁·사진을 남겨보세요</div>
+                  )}
+                </div>
+                <Icon name="pen" size={15} color="var(--sand)" />
+              </button>
+            ))}
+          </>
+        )}
+
         {r.cooked > 0 && (
           <div className="t-sub" style={{ marginTop: 22, textAlign: 'center' }}>
             지금까지 {r.cooked}번 만들었어요 🍳
@@ -204,6 +234,14 @@ export default function RecipeDetailScreen({ id }) {
       </div>
 
       {timer && <TimerSheet label={r.title} onClose={() => setTimer(false)} />}
+
+      {logEntry && (
+        <DiaryEntrySheet
+          entry={logEntry}
+          onClose={() => setLogEntry(null)}
+          onDelete={() => { removeDiary(logEntry.id); setLogEntry(null); nav.showToast('기록을 삭제했어요') }}
+        />
+      )}
 
       {menu && (
         <div className="sheet-mask" onClick={() => setMenu(false)}>
