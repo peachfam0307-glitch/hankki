@@ -2,6 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { useStore } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
+import { ocrImage } from './ocr'
+import { parseRecipeText } from './parseRecipe'
+import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
@@ -46,7 +49,7 @@ export default function App() {
   const store = useStore()
   useEffect(() => {
     let cancelled = false
-    consumeSharedIntake().then((data) => {
+    consumeSharedIntake().then(async (data) => {
       if (cancelled || !data) return
       const link = firstUrl(data.url, data.text)
       const caption = captionFrom(data.text)
@@ -55,19 +58,34 @@ export default function App() {
         (data.title || '').trim() ||
         firstLine(caption) ||
         (data.imageDataUrl ? '사진 레시피' : '공유된 레시피')
-      store.addRecipe(
-        makeInboxRecipe({
-          source,
-          title,
-          sourceUrl: link,
-          image: data.imageDataUrl || null,
-          memo: caption && caption !== title ? caption : '',
-        })
-      )
+      const rec = makeInboxRecipe({
+        source,
+        title,
+        sourceUrl: link,
+        image: data.imageDataUrl || null,
+        memo: caption && caption !== title ? caption : '',
+      })
+      store.addRecipe(rec)
       setStack([{ name: 'inbox' }])
-      showToast('공유한 레시피를 Inbox에 담았어요')
+      showToast(
+        data.imageDataUrl ? '사진을 담았어요 · 글자 읽는 중…' : '공유한 레시피를 Inbox에 담았어요'
+      )
       if (typeof history !== 'undefined' && location.search) {
         history.replaceState(null, '', location.pathname)
+      }
+      // 공유된 사진이면 글자를 읽어 재료·순서를 자동으로 채운다.
+      if (data.imageDataUrl) {
+        const text = await ocrImage(data.imageDataUrl)
+        if (cancelled || !text.trim()) return
+        const r = parseRecipeText(text)
+        store.updateRecipe(rec.id, {
+          title: rec.title && rec.title !== '사진 레시피' ? rec.title : r.title || rec.title,
+          ingredients: r.ingredients,
+          steps: r.steps,
+          memo: r.memo,
+          category: guessCategory((r.title || '') + ' ' + r.memo),
+        })
+        showToast('사진에서 글자를 읽어 채웠어요 ✨')
       }
     })
     return () => {

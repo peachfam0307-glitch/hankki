@@ -46,10 +46,9 @@ export default function ImportScreen() {
     if (!file) return
     const reader = new FileReader()
     reader.onload = () => {
-      addRecipe(makeInboxRecipe({ source: 'photo', title: '사진 레시피', image: reader.result }))
+      // 사진을 넣으면 편집 화면을 열고 바로 글자를 자동 인식(OCR)
       nav.pop()
-      nav.push({ name: 'inbox' })
-      nav.showToast('사진을 Inbox에 저장했어요')
+      nav.push({ name: 'editor', prefill: { image: reader.result, source: 'photo', autoOcr: true } })
     }
     reader.readAsDataURL(file)
   }

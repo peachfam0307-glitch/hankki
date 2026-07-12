@@ -32,6 +32,18 @@ registerRoute(
   })
 )
 
+// OCR(tesseract.js) 워커·코어·언어데이터 — 첫 사용 후 오프라인에서도 동작하도록 캐시
+registerRoute(
+  ({ url }) =>
+    url.origin === 'https://tessdata.projectnaptha.com' ||
+    url.origin === 'https://unpkg.com' ||
+    (url.origin === 'https://cdn.jsdelivr.net' && url.pathname.includes('tesseract')),
+  new CacheFirst({
+    cacheName: 'ocr-assets',
+    plugins: [new ExpirationPlugin({ maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 365 })],
+  })
+)
+
 const SHARE_CACHE = 'hankki-shared'
 
 // 공유로 들어온 데이터는 CacheStorage 에 잠깐 넣고, 앱을 열어(리다이렉트) 앱이 꺼내가도록 한다.

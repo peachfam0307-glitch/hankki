@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -6,31 +6,44 @@ import Thumb from '../components/Thumb'
 import { CATEGORIES, colors } from '../theme'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory } from '../utils'
+import { ocrImage } from '../ocr'
+import { parseRecipeText } from '../parseRecipe'
 
 const DIFFS = ['쉬움', '보통', '어려움']
 
-export default function EditorScreen({ id }) {
+export default function EditorScreen({ id, prefill }) {
   const { recipes, folders, addRecipe, updateRecipe, addFolder } = useStore()
   const nav = useNav()
   const editing = recipes.find((r) => r.id === id)
   const fileRef = useRef(null)
+  const [ocr, setOcr] = useState({ busy: false, pct: 0 })
 
-  const [f, setF] = useState(() => ({
-    title: editing?.title && editing.title !== '새 레시피' ? editing.title : editing?.title || '',
-    image: editing?.image || null,
-    emoji: editing?.emoji || '🍽️',
-    category: editing?.category && editing.category !== '전체' ? editing.category : guessCategory(editing?.title || ''),
-    time: editing?.time || '',
-    servings: editing?.servings || '',
-    difficulty: editing?.difficulty || '쉬움',
-    ingredients: (editing?.ingredients || []).join('\n'),
-    steps: (editing?.steps || []).join('\n'),
-    tags: editing?.tags || [],
-    folder: editing?.folder || editing?.category || '한식',
-    memo: editing?.memo || '',
-    sourceUrl: editing?.sourceUrl || '',
-    source: editing?.source || 'manual',
-  }))
+  const [f, setF] = useState(() => {
+    const e = editing
+    const p = !editing && prefill ? prefill : {}
+    const ing = e?.ingredients ?? p.ingredients ?? []
+    const stp = e?.steps ?? p.steps ?? []
+    const title = e ? (e.title && e.title !== '새 레시피' ? e.title : e.title || '') : p.title || ''
+    return {
+      title,
+      image: e?.image ?? p.image ?? null,
+      emoji: e?.emoji || '🍽️',
+      category:
+        e?.category && e.category !== '전체'
+          ? e.category
+          : guessCategory((title || '') + ' ' + (p.memo || '')),
+      time: e?.time || '',
+      servings: e?.servings || '',
+      difficulty: e?.difficulty || '쉬움',
+      ingredients: ing.join('\n'),
+      steps: stp.join('\n'),
+      tags: e?.tags || [],
+      folder: e?.folder || e?.category || '한식',
+      memo: e?.memo ?? p.memo ?? '',
+      sourceUrl: e?.sourceUrl || '',
+      source: e?.source || p.source || 'manual',
+    }
+  })
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }))
   const toggleTag = (t) => set('tags', f.tags.includes(t) ? f.tags.filter((x) => x !== t) : [...f.tags, t])
@@ -39,9 +52,44 @@ export default function EditorScreen({ id }) {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => set('image', reader.result)
+    reader.onload = () => {
+      set('image', reader.result)
+      runOcr(reader.result) // 사진 바꾸면 바로 글자 읽기
+    }
     reader.readAsDataURL(file)
   }
+
+  // 사진 속 글자를 읽어 빈 칸을 자동으로 채운다.
+  const runOcr = async (imgArg) => {
+    const img = typeof imgArg === 'string' ? imgArg : f.image
+    if (!img || ocr.busy) return
+    setOcr({ busy: true, pct: 0 })
+    const text = await ocrImage(img, (pct) => setOcr({ busy: true, pct }))
+    setOcr({ busy: false, pct: 0 })
+    if (!text.trim()) {
+      nav.showToast('사진에서 글자를 찾지 못했어요')
+      return
+    }
+    const r = parseRecipeText(text)
+    setF((prev) => ({
+      ...prev,
+      title: prev.title.trim() || r.title,
+      ingredients: prev.ingredients.trim() || r.ingredients.join('\n'),
+      steps: prev.steps.trim() || r.steps.join('\n'),
+      memo: prev.memo.trim() || r.memo,
+      category:
+        prev.category && prev.category !== '한식'
+          ? prev.category
+          : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
+    }))
+    nav.showToast('사진에서 글자를 읽어 채웠어요 ✨')
+  }
+
+  // 사진으로 가져오기·공유로 들어온 경우: 열자마자 자동 인식
+  useEffect(() => {
+    if (!editing && prefill?.autoOcr && f.image) runOcr(f.image)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const canSave = f.title.trim().length > 0
 
@@ -95,6 +143,37 @@ export default function EditorScreen({ id }) {
             <span style={{ fontSize: 13, fontWeight: 600 }}>{f.image ? '사진 변경' : '사진 추가'}</span>
           </div>
         </button>
+
+        {/* 사진 글자 자동 인식(OCR) */}
+        {f.image && (
+          <button
+            className="press"
+            onClick={() => runOcr()}
+            disabled={ocr.busy}
+            style={{
+              width: '100%',
+              marginTop: -8,
+              marginBottom: 18,
+              padding: 13,
+              borderRadius: 'var(--r-md)',
+              background: 'var(--cream)',
+              color: 'var(--brown)',
+              fontSize: 14,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              opacity: ocr.busy ? 0.85 : 1,
+            }}
+          >
+            {ocr.busy ? (
+              <>사진에서 글자 읽는 중… {ocr.pct}%</>
+            ) : (
+              <>🔤 사진에서 글자 자동 인식</>
+            )}
+          </button>
+        )}
 
         <div className="field">
           <label>제목</label>
