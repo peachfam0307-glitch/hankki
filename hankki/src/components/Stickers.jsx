@@ -14,9 +14,9 @@ const CORAL = '#d47f6c'
 const face = (cx, cy, ex, mw) =>
   `<circle cx="${cx - ex}" cy="${cy}" r="1.9" fill="${EYE}"/><circle cx="${cx + ex}" cy="${cy}" r="1.9" fill="${EYE}"/><path d="M${cx - mw} ${cy + 3.4}q${mw} ${mw} ${mw * 2} 0" fill="none" stroke="${EYE}" stroke-width="1.7" stroke-linecap="round"/><circle cx="${cx - ex - 3.3}" cy="${cy + 2.7}" r="2.1" fill="${BL}" opacity=".55"/><circle cx="${cx + ex + 3.3}" cy="${cy + 2.7}" r="2.1" fill="${BL}" opacity=".55"/>`
 
-// 표정 팩 공통 바탕(부드러운 골드 원 + 도톰한 볼터치)
+// 표정 팩 공통 바탕(부드러운 골드 원 + 도톰한 볼터치 — 볼을 조금 더 크고 발그레하게)
 const fb = (feat) =>
-  `<circle cx="24" cy="24" r="18.5" fill="#f2d684" stroke="${OL}" stroke-width="2"/><circle cx="13.3" cy="28.6" r="3.1" fill="#e79a91" opacity=".6"/><circle cx="34.7" cy="28.6" r="3.1" fill="#e79a91" opacity=".6"/>${feat}`
+  `<circle cx="24" cy="24" r="18.5" fill="#f2d684" stroke="${OL}" stroke-width="2"/><circle cx="13" cy="28.8" r="3.6" fill="#e79a91" opacity=".68"/><circle cx="35" cy="28.8" r="3.6" fill="#e79a91" opacity=".68"/>${feat}`
 
 // viewBox 48×48 기준(맛있어 말풍선만 74×46).
 const ART = {
@@ -29,6 +29,10 @@ const ART = {
   boing: fb(`<circle cx="17.6" cy="22" r="5" fill="#fff" stroke="${EYE}" stroke-width="1.6"/><circle cx="17.6" cy="22" r="2" fill="${EYE}"/><circle cx="30.4" cy="22" r="5" fill="#fff" stroke="${EYE}" stroke-width="1.6"/><circle cx="30.4" cy="22" r="2" fill="${EYE}"/><path d="M21 32h6" stroke="${EYE}" stroke-width="2" stroke-linecap="round"/><path d="M9 15l3 2M39 15l-3 2" stroke="${EYE}" stroke-width="1.8" stroke-linecap="round"/>`),
   cry: fb(`<path d="M13.5 21.5q4 4 8 0" fill="none" stroke="${EYE}" stroke-width="2.2" stroke-linecap="round"/><path d="M26.5 21.5q4 4 8 0" fill="none" stroke="${EYE}" stroke-width="2.2" stroke-linecap="round"/><path d="M16 27c-1.7 2.6-1.7 5 0 5s1.7-2.4 0-5Z" fill="#8fb4d6"/><path d="M32 27c-1.7 2.6-1.7 5 0 5s1.7-2.4 0-5Z" fill="#8fb4d6"/><ellipse cx="24" cy="33" rx="3" ry="2.4" fill="${CORAL}"/>`),
   yumface: fb(`<path d="M14 24q3.6 -4 7.2 0" fill="none" stroke="${EYE}" stroke-width="2.2" stroke-linecap="round"/><path d="M26.8 24q3.6 -4 7.2 0" fill="none" stroke="${EYE}" stroke-width="2.2" stroke-linecap="round"/><path d="M18 29c2 3.5 10 3.5 12 0" fill="none" stroke="${EYE}" stroke-width="2.2" stroke-linecap="round"/><path d="M22 31c0 2.5 4 2.5 4 0Z" fill="${CORAL}"/>`),
+  // 혀날름 — 웃는 눈 + 메롱 혀
+  mlem: fb(`<path d="M14.5 22.6q3.3 -3.8 6.6 0" fill="none" stroke="${EYE}" stroke-width="2.3" stroke-linecap="round"/><path d="M26.9 22.6q3.3 -3.8 6.6 0" fill="none" stroke="${EYE}" stroke-width="2.3" stroke-linecap="round"/><path d="M17.5 28.2c2.4 2.8 10.6 2.8 13 0" fill="none" stroke="${EYE}" stroke-width="2.3" stroke-linecap="round"/><path d="M22.6 29.8c-.2 3.4 1.1 5.4 2.7 5.4 1.6 0 2.9-2 2.7-5.4-1.8.9-3.6.9-5.4 0Z" fill="${CORAL}" stroke="${EYE}" stroke-width="1.3" stroke-linejoin="round"/>`),
+  // 선글라스 — 까만 안경 + 씩 웃는 입
+  cool: fb(`<rect x="11.2" y="18" width="10.8" height="7.8" rx="3.6" fill="${EYE}"/><rect x="26" y="18" width="10.8" height="7.8" rx="3.6" fill="${EYE}"/><path d="M22 21.3h4" stroke="${EYE}" stroke-width="2.2" stroke-linecap="round"/><path d="M11.2 20.8H8M36.8 20.8h3.2" stroke="${EYE}" stroke-width="1.8" stroke-linecap="round"/><path d="M17.5 30.5c2.6 3 10.4 3 13 0" fill="none" stroke="${EYE}" stroke-width="2.4" stroke-linecap="round"/>`),
   // ── 재료 친구들 ──
   tomato: `<path d="M24 12c0-3 3-4 5-3-1 2-1 3 0 4M24 12c0-3-3-4-5-3 1 2 1 3 0 4" fill="#8ca86e" stroke="${OL}" stroke-width="1.5" stroke-linejoin="round"/><circle cx="24" cy="27" r="14" fill="#d47f6c" stroke="${OL}" stroke-width="2"/><path d="M24 13c-2 0-4 1-4 3s2 3 4 3 4-1 4-3-2-3-4-3Z" fill="#8ca86e" stroke="${OL}" stroke-width="1.3"/>${face(24, 28, 4, 2.4)}`,
   egg: `<path d="M14 25c-4-3-1-10 5-10 3 0 3.5 2 6.5 1.5 3.5-.6 4-5 8.5-3.5 4.2 1.4 4 6 2.5 8.5 3.5 1.5 3 7-1 8.5 1.5 3-1 6-5 6.5-3 .4-4.5-1.6-7.5-1-3.5.7-4.5 3.5-8.5 2.6-3.4-.8-3.6-3.8-6.4-4.6-3.5-1-5.4 1-7.5-1.5-1.7-2 .4-5 2-6Z" fill="#faf6ec" stroke="${OL}" stroke-width="2" stroke-linejoin="round"/><circle cx="26" cy="25" r="8.6" fill="#e7c268" stroke="#cfa64f" stroke-width="1.4"/>${face(26, 24, 3.2, 2)}`,
@@ -62,6 +66,8 @@ const ART = {
   fire: `<path d="M25 5c1 6.5-5 9.5-6.8 15.2-1.2 3.6-.5 7.8 2.2 7.8 2 0 2.8-1.5 2.8-2.8 2.8 1.9 4.8 4.7 4.8 8.5 0 5.7-4.7 9.5-10.5 9.5S7 44.7 7 38c0-8.5 7.6-11.5 7.6-19 0-5.7 5.6-10 10.4-14Z" fill="#cd7a4f" stroke="${OL}" stroke-width="2" stroke-linejoin="round"/><path d="M24.5 24.5c1.9 1.9 2.9 3.8 2.9 6.2 0 2.8-1.9 4.7-4.7 4.7s-4.7-1.9-4.7-4.7c0-2.7 3.5-3.3 6.5-6.2Z" fill="#e6b26f"/><circle cx="19.5" cy="31.5" r="1.5" fill="${EYE}"/><circle cx="26" cy="31.5" r="1.5" fill="${EYE}"/><path d="M21.6 34.4q1.4 1.3 2.9 0" stroke="${EYE}" stroke-width="1.4" fill="none" stroke-linecap="round"/>`,
   crown: `<path d="M9 35L7 17l9 7 8-11 8 11 9-7-2 18Z" fill="#d7b15f" stroke="${OL}" stroke-width="2" stroke-linejoin="round"/><rect x="9" y="34" width="30" height="5.5" rx="2.5" fill="#c49f48" stroke="${OL}" stroke-width="1.6"/><circle cx="24" cy="13.5" r="2.2" fill="#d99cad" stroke="${OL}" stroke-width="1.1"/><circle cx="16" cy="24" r="1.6" fill="#8ca86e"/><circle cx="32" cy="24" r="1.6" fill="#8ca86e"/>`,
   thumb: `<path d="M18 23l5-11.5c.6-1.5 3.2-1 3.1.7l-.5 7.3h8.2c2.1 0 3.6 1.9 3.1 3.9l-2.2 9.6c-.4 1.9-2.1 3.2-4 3.2H18Z" fill="#e6c49c" stroke="${OL}" stroke-width="2" stroke-linejoin="round"/><rect x="9" y="23" width="9" height="17.5" rx="3.2" fill="#dab88c" stroke="${OL}" stroke-width="2"/>`,
+  // 브이(✌️) — 손가락 두 개 쫙, 반짝이 포인트
+  vhand: `<g fill="#e6c49c" stroke="${OL}" stroke-width="2" stroke-linejoin="round"><path d="M20.8 26 16.6 14.2a2.4 2.4 0 0 1 4.5-1.6l3.4 9.6"/><path d="M24.3 22.2l3.4-9.6a2.4 2.4 0 0 1 4.5 1.6L28.1 26"/><path d="M15.8 25.4c-2 1.1-3 3.4-2.3 6 1.2 4.5 4.8 7.6 10.6 7.6 5.3 0 8.9-2.8 10-7 .7-2.7-.3-5-2.3-6.1l-3.4-1.9c-2.9-1.6-6.7-1.6-9.6 0Z"/></g><path d="M9.5 8.5l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1Z" fill="#e0b64e" opacity=".85"/><path d="M39 10l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8Z" fill="#e0b64e" opacity=".7"/>`,
   bow: `<path d="M24 24c-4-7-9-9-13-6-3 2.2-3 8 0 10 4 2.6 9 2 13-4Z" fill="#d99cad" stroke="${OL}" stroke-width="2" stroke-linejoin="round"/><path d="M24 24c4-7 9-9 13-6 3 2.2 3 8 0 10-4 2.6-9 2-13-4Z" fill="#d99cad" stroke="${OL}" stroke-width="2" stroke-linejoin="round"/><path d="M24 19v10" stroke="${OL}" stroke-width="2" stroke-linecap="round"/>`,
 }
 
@@ -89,8 +95,8 @@ export const stickerRatio = (id) => (id === 'yum' ? 74 / 46 : 1)
 
 export const STICKER_GROUPS = [
   { key: 'buddies', label: '친구들', items: ['bear', 'rabbit', 'catpot', 'chick', 'dog', 'gecko', 'hamster'] },
-  { key: 'faces', label: '표정', items: ['smile', 'happy', 'hearteyes', 'wink', 'surprised', 'boing', 'cry', 'yumface'] },
-  { key: 'symbols', label: '심볼', items: ['heart', 'star', 'sparkle', 'fire', 'yum', 'crown', 'thumb', 'bow'] },
+  { key: 'faces', label: '표정', items: ['smile', 'happy', 'hearteyes', 'wink', 'mlem', 'cool', 'surprised', 'boing', 'cry', 'yumface'] },
+  { key: 'symbols', label: '심볼', items: ['heart', 'star', 'sparkle', 'fire', 'yum', 'crown', 'thumb', 'vhand', 'bow'] },
   { key: 'ingredients', label: '재료', items: ['tomato', 'egg', 'carrot', 'onion', 'mushroom', 'chili', 'avocado', 'broccoli'] },
   { key: 'tools', label: '도구', items: ['pot', 'pan', 'ladle', 'spatula', 'board', 'cup'] },
   { key: 'sauce', label: '소스', items: ['ketchup', 'soy', 'hotsauce', 'oil'] },
@@ -111,4 +117,10 @@ export const TEXT_COLORS = [
   { key: 'charcoal', color: '#463a2c', stroke: 'rgba(255,255,255,.75)' },
   { key: 'coral', color: '#d67f6c', stroke: 'rgba(255,255,255,.7)' },
   { key: 'mustard', color: '#cc9f45', stroke: 'rgba(60,48,30,.5)' },
+]
+
+// 글자 스티커 글씨체 — 또박체(고운돋움) / 귀염체(개구체). 오프라인이면 다음 폰트로 자연 대체.
+export const TEXT_FONTS = [
+  { key: 'gowun', label: '또박체', family: "'Gowun Dodum','Pretendard',sans-serif", weight: 800 },
+  { key: 'gaegu', label: '귀염체', family: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", weight: 700 },
 ]

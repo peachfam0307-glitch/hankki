@@ -3,7 +3,10 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { StickerArt, STICKER_GROUPS, NOTE_COLORS, TEXT_COLORS } from './Stickers'
+import { StickerArt, STICKER_GROUPS, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS } from './Stickers'
+
+// 표정 스티커는 포인트로 얹는 용도라 기본 크기를 작게 시작한다
+const FACE_KEYS = new Set(STICKER_GROUPS.find((g) => g.key === 'faces')?.items || [])
 
 // ── 표지 꾸미기 에디터 ──
 // 전체 화면 오버레이. 표지(정사각) 위에 스티커·포스트잇을 얹고
@@ -15,6 +18,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const [items, setItems] = useState(() => (recipe.decor || []).map((d) => ({ ...d })))
   const [sel, setSel] = useState(null)
   const [noteEdit, setNoteEdit] = useState(null) // 글 수정 중인 포스트잇 item
+  const [textFont, setTextFont] = useState('gowun') // 글자 스티커 글씨체 (또박/귀염)
 
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로 올라온다
   const select = (id) => {
@@ -29,7 +33,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     const it = {
       id: newDecorId(), type: 'sticker', key,
       x: 0.5 + ((n % 3) - 1) * 0.06, y: 0.42 + ((n % 4) - 1.5) * 0.05,
-      s: key === 'yum' ? 0.34 : 0.2, r: ((n % 5) - 2) * 4,
+      s: key === 'yum' ? 0.34 : FACE_KEYS.has(key) ? 0.14 : 0.2, r: ((n % 5) - 2) * 4,
     }
     setItems((arr) => [...arr, it])
     setSel(it.id)
@@ -43,7 +47,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   }
   const addText = (colorKey) => {
     const n = items.length
-    const it = { id: newDecorId(), type: 'text', color: colorKey, text: '', x: 0.5, y: 0.5 + ((n % 3) - 1) * 0.08, s: 0.5, r: 0 }
+    const it = { id: newDecorId(), type: 'text', color: colorKey, font: textFont, text: '', x: 0.5, y: 0.5 + ((n % 3) - 1) * 0.08, s: 0.5, r: 0 }
     setItems((arr) => [...arr, it])
     setSel(it.id)
     setNoteEdit(it)
@@ -98,14 +102,35 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             ))}
 
             <div className="decor-sec">
-              <div className="decor-sec-label">글자 · 직접 쓰기</div>
+              <div className="decor-sec-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                글자 · 직접 쓰기
+                {/* 글씨체 선택 — 또박체/귀염체 */}
+                <span style={{ display: 'inline-flex', gap: 4, marginLeft: 'auto' }}>
+                  {TEXT_FONTS.map((f) => (
+                    <button
+                      key={f.key}
+                      className="press"
+                      onClick={() => setTextFont(f.key)}
+                      style={{
+                        padding: '4px 10px', borderRadius: 999, fontSize: 11.5, fontWeight: 700,
+                        fontFamily: f.family,
+                        background: textFont === f.key ? 'var(--brown)' : 'var(--cream)',
+                        color: textFont === f.key ? '#fff' : 'var(--text-sub)',
+                      }}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </span>
+              </div>
               <div className="decor-grid">
                 {TEXT_COLORS.map((c) => (
                   <button key={c.key} className="press decor-cell" onClick={() => addText(c.key)} aria-label={`${c.key} 글자`}>
                     <span
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', aspectRatio: '1',
-                        fontFamily: "'Gowun Dodum','Pretendard',sans-serif", fontWeight: 800, fontSize: 24,
+                        fontFamily: (TEXT_FONTS.find((f) => f.key === textFont) || TEXT_FONTS[0]).family,
+                        fontWeight: 800, fontSize: 24,
                         color: c.color, WebkitTextStroke: `1px ${c.stroke}`, textShadow: '0 1px 2px rgba(0,0,0,.28)',
                         borderRadius: 12, background: c.key === 'white' || c.key === 'mustard' ? '#8a8479' : 'transparent',
                       }}

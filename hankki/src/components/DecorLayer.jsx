@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import Icon from './Icon'
-import { StickerArt, stickerRatio, NOTE_COLORS, TEXT_COLORS } from './Stickers'
+import { StickerArt, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -145,12 +145,13 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
 // 글자 크기는 '제 크기(cqw=요소 폭의 1%)'에 비례 — 크기 조절하면 글씨도 정확히 같은 비율로.
 function TextDeco({ it, editable }) {
   const c = TEXT_COLORS.find((t) => t.key === it.color) || TEXT_COLORS[0]
+  const f = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
   const text = it.text || (editable ? '글자' : '')
   return (
     <div
       style={{
-        fontFamily: "'Gowun Dodum','Pretendard',sans-serif",
-        fontWeight: 800,
+        fontFamily: f.family,
+        fontWeight: f.weight,
         fontSize: 'clamp(10px, 22cqw, 120px)', // 요소 폭에 비례
         lineHeight: 1.25,
         color: c.color,
