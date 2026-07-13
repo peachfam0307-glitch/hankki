@@ -7,8 +7,10 @@ import Icon from './Icon'
 import Thumb from './Thumb'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import FoodIconPicker from './FoodIconPicker'
+import EmojiPicker from './EmojiPicker'
 import CropSheet from './CropSheet'
 import Portal from './Portal'
+import { guessEmoji } from '../emoji'
 
 function toYMD(d) {
   const y = d.getFullYear()
@@ -37,7 +39,7 @@ export default function PantryView() {
   const store = useStore()
   const { pantry, recipes } = store
   const nav = useNav()
-  const [adding, setAdding] = useState(false)
+  const [form, setForm] = useState(null) // null | {} (새로 담기) | item (편집)
   const [scanPct, setScanPct] = useState(null) // null | 0~100 — 영수증 읽는 중
   const [found, setFound] = useState(null) // null | [{name, on}] — 영수증에서 찾은 재료 확인
   const [receiptCrop, setReceiptCrop] = useState(null) // 자르기 단계(품목 부분만)
@@ -122,7 +124,7 @@ export default function PantryView() {
         </button>
         <button
           className="press"
-          onClick={() => setAdding(true)}
+          onClick={() => setForm({})}
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
             padding: '13px 16px', borderRadius: 'var(--r-md)',
@@ -152,7 +154,7 @@ export default function PantryView() {
         />
       )}
 
-      {adding && <PantryAdd onClose={() => setAdding(false)} />}
+      {form && <PantryForm item={form} onClose={() => setForm(null)} />}
 
       {scanPct !== null && (
         <div className="card" style={{ padding: 16, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -209,7 +211,7 @@ export default function PantryView() {
        </Portal>
       )}
 
-      {pantry.length === 0 && !adding && (
+      {pantry.length === 0 && !form && (
         <div className="empty" style={{ padding: '30px 24px' }}>
           {'집에 있는 재료를 넣어두세요.\n유통기한도 챙겨주고, 그 재료로 만들 요리도 추천해줘요.'}
         </div>
@@ -217,15 +219,21 @@ export default function PantryView() {
 
       {sorted.map((p) => {
         const chip = expiryChip(daysLeft(p.expiry))
+        const sub = [p.expiry ? `유통기한 ${p.expiry.replace(/-/g, '.')}` : '', p.memo].filter(Boolean).join(' · ')
         return (
           <div key={p.id} className="wish-row">
-            <div className="emoji-tile" style={{ width: 46, height: 46, flex: '0 0 auto' }}>
-              <FoodIcon name={p.icon || guessFoodIcon(p.name)} size={28} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-              {p.expiry && <div className="t-sub" style={{ marginTop: 2 }}>유통기한 {p.expiry.replace(/-/g, '.')}</div>}
-            </div>
+            {/* 재료를 탭하면 편집(수량·유통기한·이모지·메모) */}
+            <button className="press" onClick={() => setForm(p)} style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, textAlign: 'left' }}>
+              <div className="emoji-tile" style={{ width: 46, height: 46, flex: '0 0 auto', fontSize: 26 }}>
+                {p.thumb === 'emoji' && p.emoji ? p.emoji : <FoodIcon name={p.icon || guessFoodIcon(p.name)} size={28} />}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {p.name}{p.qty ? <span style={{ color: 'var(--text-sub)', fontWeight: 500 }}> · {p.qty}</span> : null}
+                </div>
+                {sub && <div className="t-sub" style={{ marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
+              </div>
+            </button>
             {chip && <span className={`exp-chip ${chip.cls}`}>{chip.text}</span>}
             <button className="icon-btn press" onClick={() => store.removePantry(p.id)} aria-label="삭제">
               <Icon name="x" size={17} color="var(--sand)" />
@@ -275,44 +283,93 @@ export default function PantryView() {
   )
 }
 
-function PantryAdd({ onClose }) {
-  const { addPantry } = useStore()
-  const nav = useNav()
-  const [name, setName] = useState('')
-  const [icon, setIcon] = useState('default')
-  const [iconPicked, setIconPicked] = useState(false)
-  const [expiry, setExpiry] = useState('')
+// 냉장고 재료 담기·편집 — 아이콘/이모지(식재료만) · 이름 · 수량 · 유통기한 · 메모.
+// item 에 id 가 있으면 편집, 없으면 새로 담기.
+const FOOD_EMOJI_GROUPS = ['밥·면', '고기·해산물', '채소', '유제품·빵', '양념', '과일', '음료', '디저트']
 
-  const setNm = (v) => { setName(v); if (!iconPicked) setIcon(guessFoodIcon(v)) }
+function PantryForm({ item, onClose }) {
+  const { addPantry, updatePantry, removePantry } = useStore()
+  const nav = useNav()
+  const editing = !!item.id
+  const [name, setName] = useState(item.name || '')
+  const [thumb, setThumb] = useState(item.thumb || 'icon') // 'icon' | 'emoji'
+  const [icon, setIcon] = useState(item.icon || 'default')
+  const [emoji, setEmoji] = useState(item.emoji || '🥬')
+  const [iconPicked, setIconPicked] = useState(!!item.icon)
+  const [qty, setQty] = useState(item.qty || '')
+  const [expiry, setExpiry] = useState(item.expiry || '')
+  const [memo, setMemo] = useState(item.memo || '')
+
+  const setNm = (v) => {
+    setName(v)
+    if (!iconPicked) { setIcon(guessFoodIcon(v)); setEmoji(guessEmoji(v)) }
+  }
   const quick = (days) => { const d = new Date(); d.setDate(d.getDate() + days); setExpiry(toYMD(d)) }
 
   const save = () => {
     const nm = name.trim()
     if (!nm) return
-    addPantry({ id: newId(), name: nm, icon: iconPicked ? icon : guessFoodIcon(nm), expiry: expiry || null, addedAt: Date.now() })
-    nav.showToast('냉장고에 넣었어요 🧊')
+    const data = {
+      name: nm,
+      thumb,
+      icon: iconPicked ? icon : guessFoodIcon(nm),
+      emoji: thumb === 'emoji' ? emoji : (item.emoji || null),
+      qty: qty.trim(),
+      expiry: expiry || null,
+      memo: memo.trim(),
+    }
+    if (editing) { updatePantry(item.id, data); nav.showToast('재료를 수정했어요 ✨') }
+    else { addPantry({ id: newId(), addedAt: Date.now(), ...data }); nav.showToast('냉장고에 넣었어요 🧊') }
     onClose()
   }
 
   return (
-    <div className="card" style={{ padding: 14, marginBottom: 12 }}>
-      <div style={{ display: 'flex', gap: 12, marginBottom: 10, alignItems: 'flex-start' }}>
-        <FoodIconPicker value={icon} size={64} onChange={(k) => { setIcon(k); setIconPicked(true) }} />
-        <div style={{ flex: 1 }}>
-          <input className="wa-inp" value={name} onChange={(e) => setNm(e.target.value)} placeholder="재료 이름 (예: 두부)" autoFocus />
-          <input className="wa-inp" style={{ marginTop: 8, color: expiry ? 'var(--text)' : 'var(--text-sub)' }} type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+   <Portal>
+    <div className="sheet-mask" onClick={onClose}>
+      <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 0 }}>
+        <div className="emoji-sheet-head">
+          <span>{editing ? '재료 편집' : '재료 담기'}</span>
+          <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+        </div>
+        <div style={{ padding: '2px 16px 0' }}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 10, alignItems: 'flex-start' }}>
+            {thumb === 'emoji' ? (
+              <EmojiPicker value={emoji} size={64} only={FOOD_EMOJI_GROUPS} onChange={(e) => { setEmoji(e); setIconPicked(true) }} />
+            ) : (
+              <FoodIconPicker value={icon} size={64} onChange={(k) => { setIcon(k); setIconPicked(true) }} />
+            )}
+            <div style={{ flex: 1 }}>
+              <input className="wa-inp" value={name} onChange={(e) => setNm(e.target.value)} placeholder="재료 이름 (예: 두부)" autoFocus={!editing} />
+              <input className="wa-inp" style={{ marginTop: 8 }} value={qty} onChange={(e) => setQty(e.target.value)} placeholder="수량 (예: 2팩, 500g) · 선택" />
+            </div>
+          </div>
+
+          {/* 썸네일 방식 — 아이콘(재료 그림) / 이모지(식재료만) */}
+          <div className="segment" style={{ margin: '0 0 10px' }}>
+            <button type="button" className={`seg ${thumb === 'icon' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setThumb('icon')}>아이콘</button>
+            <button type="button" className={`seg ${thumb === 'emoji' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setThumb('emoji')}>이모지</button>
+          </div>
+
+          <div className="t-sub" style={{ fontSize: 12, marginBottom: 6 }}>유통기한</div>
+          <input className="wa-inp" style={{ color: expiry ? 'var(--text)' : 'var(--text-sub)' }} type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+          <div style={{ display: 'flex', gap: 6, margin: '8px 0 10px' }}>
+            {[['+3일', 3], ['+7일', 7], ['+2주', 14]].map(([label, d]) => (
+              <button key={label} className="chip-quick press" onClick={() => quick(d)}>{label}</button>
+            ))}
+            <button className="chip-quick press" onClick={() => setExpiry('')}>없음</button>
+          </div>
+
+          <input className="wa-inp" value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="메모 (예: 냉동실 · 개봉함) · 선택" />
+        </div>
+        <div style={{ position: 'sticky', bottom: 0, background: 'var(--surface)', display: 'flex', gap: 8, padding: '10px 16px calc(6px + var(--safe-bottom))' }}>
+          {editing && (
+            <button className="press" onClick={() => { removePantry(item.id); nav.showToast('냉장고에서 뺐어요'); onClose() }} style={{ padding: '13px 15px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 14 }}>삭제</button>
+          )}
+          <button className="press" onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>취소</button>
+          <button className="press" onClick={save} style={{ flex: 1.4, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 14.5 }}>{editing ? '저장' : '넣기'}</button>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-        {[['+3일', 3], ['+7일', 7], ['+2주', 14]].map(([label, d]) => (
-          <button key={label} className="chip-quick press" onClick={() => quick(d)}>{label}</button>
-        ))}
-        <button className="chip-quick press" onClick={() => setExpiry('')}>없음</button>
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button className="press" onClick={onClose} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>취소</button>
-        <button className="press" onClick={save} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 600, fontSize: 14 }}>넣기</button>
-      </div>
     </div>
+   </Portal>
   )
 }
