@@ -105,10 +105,32 @@ export default function PantryView() {
     <div className="fade">
       <div className="sec-head" style={{ marginTop: 6 }}>
         <div className="h-section">냉장고 재료함</div>
-        <div style={{ display: 'flex', gap: 14 }}>
-          <button className="t-more press" onClick={() => receiptRef.current?.click()}>🧾 영수증</button>
-          <button className="t-more press" onClick={() => setAdding(true)}>+ 재료</button>
-        </div>
+      </div>
+      {/* 영수증 스캔 — 핵심 기능이라 크고 진하게. 옆에 직접 담기(+ 재료). */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        <button
+          className="press"
+          onClick={() => receiptRef.current?.click()}
+          style={{
+            flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            padding: '13px 14px', borderRadius: 'var(--r-md)',
+            background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 700,
+            boxShadow: '0 3px 10px rgba(90,70,45,0.18)',
+          }}
+        >
+          <span style={{ fontSize: 18 }}>🧾</span> 영수증으로 담기
+        </button>
+        <button
+          className="press"
+          onClick={() => setAdding(true)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            padding: '13px 16px', borderRadius: 'var(--r-md)',
+            background: 'var(--cream)', color: 'var(--brown)', fontSize: 14.5, fontWeight: 700,
+          }}
+        >
+          <Icon name="plus" size={17} color="var(--brown)" stroke={2.4} /> 재료
+        </button>
       </div>
 
       <input ref={receiptRef} type="file" accept="image/*" onChange={onReceipt} style={{ display: 'none' }} />
