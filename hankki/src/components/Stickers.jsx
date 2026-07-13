@@ -14,9 +14,9 @@ const CORAL = '#d47f6c'
 const face = (cx, cy, ex, mw) =>
   `<circle cx="${cx - ex}" cy="${cy}" r="1.9" fill="${EYE}"/><circle cx="${cx + ex}" cy="${cy}" r="1.9" fill="${EYE}"/><path d="M${cx - mw} ${cy + 3.4}q${mw} ${mw} ${mw * 2} 0" fill="none" stroke="${EYE}" stroke-width="1.7" stroke-linecap="round"/><circle cx="${cx - ex - 3.3}" cy="${cy + 2.7}" r="2.1" fill="${BL}" opacity=".55"/><circle cx="${cx + ex + 3.3}" cy="${cy + 2.7}" r="2.1" fill="${BL}" opacity=".55"/>`
 
-// 표정 팩 공통 바탕(버터색 원 + 볼터치)
+// 표정 팩 공통 바탕(부드러운 골드 원 + 도톰한 볼터치)
 const fb = (feat) =>
-  `<circle cx="24" cy="24" r="18.5" fill="#e6cf8a" stroke="${OL}" stroke-width="2"/><circle cx="13.6" cy="28" r="2.7" fill="${BL}" opacity=".5"/><circle cx="34.4" cy="28" r="2.7" fill="${BL}" opacity=".5"/>${feat}`
+  `<circle cx="24" cy="24" r="18.5" fill="#f2d684" stroke="${OL}" stroke-width="2"/><circle cx="13.3" cy="28.6" r="3.1" fill="#e79a91" opacity=".6"/><circle cx="34.7" cy="28.6" r="3.1" fill="#e79a91" opacity=".6"/>${feat}`
 
 // viewBox 48×48 기준(맛있어 말풍선만 74×46).
 const ART = {
