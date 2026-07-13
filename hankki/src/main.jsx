@@ -3,7 +3,11 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import { StoreProvider } from './store'
 import { TimerProvider } from './timer'
+import { applyTheme, getTheme } from './theme'
 import './styles.css'
+
+// 저장된 테마 적용(인라인 부팅 스크립트와 동일 결과 — 상태바 색까지 확실히 동기화)
+applyTheme(getTheme())
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

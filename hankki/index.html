@@ -8,6 +8,18 @@
     <!-- interactive-widget=resizes-content: 키보드가 올라오면 화면이 줄어들어 입력칸 아래 내용도 스크롤로 볼 수 있게 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#F5F6F4" />
+    <!-- 저장된 테마를 첫 페인트 전에 적용해 깜빡임(FOUC) 방지 -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('hankki-theme') || 'cream'
+          if (t !== 'cream') document.documentElement.setAttribute('data-theme', t)
+          var c = { cream: '#F5F6F4', sage: '#f1f3ee', dark: '#1b201a' }[t]
+          var m = document.querySelector('meta[name="theme-color"]')
+          if (c && m) m.setAttribute('content', c)
+        } catch (e) {}
+      })()
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="한끼" />

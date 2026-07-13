@@ -10,6 +10,7 @@ import Portal from '../components/Portal'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { cropSquare } from '../utils'
+import { THEMES, getTheme, setTheme } from '../theme'
 import { Avatar } from './HomeScreen'
 
 export default function ProfileScreen() {
@@ -20,6 +21,7 @@ export default function ProfileScreen() {
   const [avatarSheet, setAvatarSheet] = useState(false)
   const [editSheet, setEditSheet] = useState(false)
   const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
+  const [theme, setThemeState] = useState(getTheme())
   const fileRef = useRef(null)
   const avatarFileRef = useRef(null)
 
@@ -251,6 +253,36 @@ export default function ProfileScreen() {
               {i < menu.length - 1 && <hr className="divider" style={{ marginLeft: 52 }} />}
             </div>
           ))}
+        </div>
+
+        {/* 테마 — 화면 색(크림·세이지·다크). 다크모드도 여기서 고른다. */}
+        <div className="card" style={{ marginTop: 20, padding: 16 }}>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>테마</div>
+          <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3, marginBottom: 14 }}>앱 화면 색을 골라요 · 다크모드도 여기서 🌙</div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            {THEMES.map((t) => {
+              const on = theme === t.key
+              return (
+                <button
+                  key={t.key}
+                  className="press"
+                  onClick={() => { setTheme(t.key); setThemeState(t.key); nav.showToast(`${t.label} 테마로 바꿨어요 ✨`) }}
+                  aria-label={`${t.label} 테마`}
+                  style={{
+                    flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+                    padding: '13px 6px', borderRadius: 14, background: 'var(--cream)',
+                    border: on ? '2px solid var(--brown)' : '2px solid transparent', boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: t.bg, position: 'relative', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.09)' }}>
+                    <span style={{ position: 'absolute', right: 7, bottom: 7, width: 14, height: 14, borderRadius: '50%', background: t.point, boxShadow: '0 1px 2px rgba(0,0,0,.2)' }} />
+                  </div>
+                  <span style={{ fontSize: 12.5, fontWeight: on ? 800 : 600, color: on ? 'var(--brown)' : 'var(--text)' }}>{t.label}</span>
+                  <span className="t-sub" style={{ fontSize: 10.5 }}>{t.desc}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>

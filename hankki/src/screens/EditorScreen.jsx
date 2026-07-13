@@ -9,7 +9,7 @@ import CropSheet from '../components/CropSheet'
 import Portal from '../components/Portal'
 import PromptSheet from '../components/PromptSheet'
 import { guessFoodIcon } from '../components/FoodIcon'
-import { CATEGORIES, colors } from '../theme'
+import { CATEGORIES } from '../theme'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes } from '../utils'
 import { ocrImage } from '../ocr'
@@ -175,7 +175,7 @@ export default function EditorScreen({ id, prefill }) {
       <div className="topbar-back">
         <button className="icon-btn press" onClick={() => nav.pop()} aria-label="닫기"><Icon name="x" size={24} /></button>
         <div style={{ fontSize: 16, fontWeight: 700 }}>{editing ? '레시피 정리' : '직접 작성하기'}</div>
-        <button className="press" onClick={save} disabled={!canSave} style={{ fontSize: 15, fontWeight: 700, color: canSave ? colors.brown : colors.sand }}>
+        <button className="press" onClick={save} disabled={!canSave} style={{ fontSize: 15, fontWeight: 700, color: canSave ? 'var(--brown)' : 'var(--sand)' }}>
           저장
         </button>
       </div>

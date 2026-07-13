@@ -28,3 +28,40 @@ export const shadow = {
 }
 
 export const CATEGORIES = ['전체', '한식', '양식', '일식', '간식']
+
+// ── 테마(팔레트) ── 설정에서 고를 수 있는 색 조합.
+// bg/point 는 설정 화면 스와치 미리보기용. 실제 색은 styles.css 의 :root[data-theme] 에서.
+export const THEMES = [
+  { key: 'cream', label: '크림', desc: '따뜻한 기본', bg: '#f5f6f4', point: '#6b4f3a', dark: false },
+  { key: 'sage', label: '세이지', desc: '연한 그린', bg: '#f1f3ee', point: '#6f7c63', dark: false },
+  { key: 'dark', label: '다크', desc: '아이콘 톤', bg: '#20261f', point: '#8fa07f', dark: true },
+]
+
+export const THEME_KEY = 'hankki-theme'
+const THEME_COLOR = { cream: '#f5f6f4', sage: '#f1f3ee', dark: '#1b201a' }
+
+export function getTheme() {
+  try {
+    const t = localStorage.getItem(THEME_KEY)
+    return THEMES.some((x) => x.key === t) ? t : 'cream'
+  } catch {
+    return 'cream'
+  }
+}
+
+// data-theme 속성 + 상태바(theme-color) 적용. 렌더 없이 DOM 만 바꾼다.
+export function applyTheme(key) {
+  const t = THEMES.some((x) => x.key === key) ? key : 'cream'
+  document.documentElement.dataset.theme = t
+  const meta = document.querySelector('meta[name="theme-color"]')
+  if (meta) meta.setAttribute('content', THEME_COLOR[t] || THEME_COLOR.cream)
+}
+
+export function setTheme(key) {
+  try {
+    localStorage.setItem(THEME_KEY, key)
+  } catch {
+    /* 저장 실패해도 적용은 한다 */
+  }
+  applyTheme(key)
+}
