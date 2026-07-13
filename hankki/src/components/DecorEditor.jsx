@@ -33,7 +33,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     const it = {
       id: newDecorId(), type: 'sticker', key,
       x: 0.5 + ((n % 3) - 1) * 0.06, y: 0.42 + ((n % 4) - 1.5) * 0.05,
-      s: key === 'yum' ? 0.34 : FACE_KEYS.has(key) ? 0.14 : 0.2, r: ((n % 5) - 2) * 4,
+      s: key === 'yum' ? 0.34 : FACE_KEYS.has(key) ? 0.11 : 0.2, r: ((n % 5) - 2) * 4,
     }
     setItems((arr) => [...arr, it])
     setSel(it.id)
