@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -6,6 +6,7 @@ import TimerSheet from '../components/TimerSheet'
 import CookBuddy from '../components/CookBuddy'
 import Portal from '../components/Portal'
 import { scaleIngredient } from '../scale'
+import { useWakeLock } from '../useWakeLock'
 
 // 요리 모드 — 단계별 풀스크린. 큰 글씨 · 화면 안 꺼짐 · 단계 타이머 · 재료 보기.
 export default function CookScreen({ id }) {
@@ -16,25 +17,7 @@ export default function CookScreen({ id }) {
   const [i, setI] = useState(0)
   const [showTimer, setShowTimer] = useState(false)
   const [showIng, setShowIng] = useState(false)
-  const wakeRef = useRef(null)
-
-  // 화면이 꺼지지 않게 (Wake Lock). 지원 안 하면 조용히 무시.
-  useEffect(() => {
-    let stopped = false
-    const req = async () => {
-      try {
-        if ('wakeLock' in navigator) wakeRef.current = await navigator.wakeLock.request('screen')
-      } catch { /* noop */ }
-    }
-    req()
-    const onVis = () => { if (document.visibilityState === 'visible' && !stopped) req() }
-    document.addEventListener('visibilitychange', onVis)
-    return () => {
-      stopped = true
-      document.removeEventListener('visibilitychange', onVis)
-      try { wakeRef.current?.release() } catch { /* noop */ }
-    }
-  }, [])
+  useWakeLock() // 화면이 꺼지지 않게 (요리 모드)
 
   if (!r || steps.length === 0) {
     return (

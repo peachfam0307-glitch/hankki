@@ -15,10 +15,12 @@ import { shareRecipeCard } from '../shareCard'
 import { scaleIngredient } from '../scale'
 import { dateLabel } from '../utils'
 import { SOURCES } from '../data/seed'
+import { useWakeLock } from '../useWakeLock'
 
 export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, diary, addDiary, removeDiary, updateRecipe } = useStore()
   const nav = useNav()
+  useWakeLock() // 레시피를 보며 요리할 때 화면이 꺼지지 않게
   const [menu, setMenu] = useState(false)
   const [timer, setTimer] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
