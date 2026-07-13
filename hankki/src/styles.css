@@ -668,14 +668,17 @@ img {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: rgba(245, 246, 244, 0.86);
+  /* 표지(사진/그라디언트) 위에 얹히는 버튼이라 테마와 무관하게 밝은 바탕 + 고정 진한 아이콘.
+     (다크모드에서 var(--text)가 흰색이 되어 안 보이던 문제 수정) */
+  background: rgba(250, 250, 248, 0.92);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text);
-  box-shadow: 0 2px 8px rgba(107, 79, 58, 0.12);
+  color: #37322a;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 9px rgba(30, 25, 18, 0.18);
   transition: transform 0.08s ease;
 }
 .round-btn:active {

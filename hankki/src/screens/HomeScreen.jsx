@@ -174,13 +174,8 @@ export default function HomeScreen() {
           ))}
         </div>
         {all.length === 0 && <div className="empty">이 카테고리에 저장된 레시피가 아직 없어요.</div>}
-
-        {/* 5. 가져오기 */}
-        <button className="btn-primary press" style={{ marginTop: 26 }} onClick={() => nav.push({ name: 'import' })}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-            <Icon name="plus" size={20} color="#fff" stroke={2} /> 가져오기
-          </span>
-        </button>
+        {/* 홈 맨 아래 '가져오기' 버튼 제거 — 하단 탭 ⊕ 가져오기와 중복이라 군더더기였음 */}
+        <div style={{ height: 12 }} />
       </div>
     </>
   )

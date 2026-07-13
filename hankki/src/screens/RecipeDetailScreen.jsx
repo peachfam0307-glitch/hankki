@@ -108,7 +108,7 @@ export default function RecipeDetailScreen({ id }) {
             <Icon name="edit" size={19} />
           </button>
           <button className="round-btn press" onClick={() => toggleFavorite(r.id)} aria-label="즐겨찾기">
-            <Icon name="bookmark" size={20} color={r.favorite ? 'var(--brown)' : 'var(--text)'} style={{ fill: r.favorite ? 'var(--brown)' : 'none' }} />
+            <Icon name="bookmark" size={20} color={r.favorite ? '#c2703f' : 'currentColor'} style={{ fill: r.favorite ? '#c2703f' : 'none' }} />
           </button>
           <button className="round-btn press" onClick={() => setMenu(true)} aria-label="더보기"><Icon name="more" size={22} /></button>
         </div>
