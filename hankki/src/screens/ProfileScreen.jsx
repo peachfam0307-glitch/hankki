@@ -22,6 +22,7 @@ export default function ProfileScreen() {
   const [editSheet, setEditSheet] = useState(false)
   const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
   const [theme, setThemeState] = useState(getTheme())
+  const [pasteOpen, setPasteOpen] = useState(false)
   const fileRef = useRef(null)
   const avatarFileRef = useRef(null)
 
@@ -87,9 +88,40 @@ export default function ProfileScreen() {
       }
     } catch (e) {
       if (e && e.name === 'AbortError') return // 사용자가 공유 취소
+      // 그 외 오류(파일 공유 거부 등)는 아래 복사 폴백으로 넘어간다
     }
-    // 공유를 지원하지 않으면 다운로드로
-    downloadBackup()
+    // 설치형(홈 화면) 앱에선 공유가 막히거나 파일 다운로드가 조용히 실패할 수 있어,
+    // 어디서나 되는 '복사'로 대체한다. (카톡 「나에게」에 붙여넣어 보관)
+    copyBackup()
+  }
+
+  // 백업 코드를 클립보드로 복사 — 공유가 안 되는 기기에서도 100% 되는 방법
+  const copyBackup = async () => {
+    const json = JSON.stringify(buildBackup())
+    try {
+      await navigator.clipboard.writeText(json)
+      setBackup(false)
+      nav.showToast('백업 코드를 복사했어요 📋 카톡 「나에게」나 메모에 붙여넣어 보관하세요')
+    } catch {
+      // 클립보드까지 막히면 최후로 파일 저장 시도
+      downloadBackup()
+    }
+  }
+
+  // 붙여넣은 백업 코드로 복원
+  const importFromText = ({ code }) => {
+    try {
+      const data = JSON.parse((code || '').trim())
+      if (!Array.isArray(data.recipes)) throw new Error('형식 오류')
+      setConfirmAsk({
+        title: '백업 불러오기',
+        message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
+        confirmLabel: '불러오기',
+        onConfirm: () => { importAll(data); setBackup(false); nav.showToast('백업을 불러왔어요 ✨') },
+      })
+    } catch {
+      nav.showToast('백업 코드를 읽을 수 없어요 😢 처음부터 끝까지 전체를 붙여넣었는지 확인해 주세요')
+    }
   }
 
   const importData = (e) => {
@@ -115,11 +147,11 @@ export default function ProfileScreen() {
   }
 
   // 하단 탭과 겹치는 항목(내 레시피·장보기)은 뺐다 — 같은 곳으로 가는 문이 두 개면 헷갈린다.
+  // '만들었어요! 기록'은 하단 '일지' 탭과 겹쳐서 뺐고, '설정' 행은 프로필 편집을 여는 잘못된 항목이라 뺐다.
+  // (프로필 편집은 맨 위 프로필 카드를 누르면 열린다)
   const menu = [
     { icon: 'heart', label: '즐겨찾기', onClick: () => nav.push({ name: 'favorites' }) },
-    { icon: 'star', label: '만들었어요! 기록', onClick: () => nav.push({ name: 'cooked' }) },
     { icon: 'cloud', label: '백업 · 내보내기', badge: 'NEW', onClick: () => setBackup(true) },
-    { icon: 'settings', label: '설정', onClick: editProfile },
     { icon: 'help', label: '도움말 및 문의', onClick: () => nav.showToast('도움이 필요하면 언제든 문의해 주세요 🙂') },
   ]
 
@@ -355,15 +387,32 @@ export default function ProfileScreen() {
                 레시피 · 일지 · 냉장고 · 장보기 · 프로필까지 <b>모든 데이터를 파일 하나</b>로 담아요.{'\n'}폰을 바꾸거나 앱을 지워도 이 파일만 있으면 그대로 되살아나요.
               </div>
               <button className="btn-primary press" onClick={shareBackup}>💌 백업 보내서 저장하기 (추천)</button>
-              <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.55, margin: '8px 2px 14px' }}>
-                누르면 공유 창이 떠요 → <b>카톡 나에게 보내기</b>나 <b>드라이브·파일</b>에 저장하면 제일 안전해요. (폰이 고장나도 클라우드에 남아요)
+              <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.55, margin: '8px 2px 12px' }}>
+                누르면 공유 창이 떠요 → <b>카톡 나에게 보내기</b>나 <b>드라이브·파일</b>에 저장하면 제일 안전해요. (폰이 고장나도 클라우드에 남아요){'\n'}공유 창이 안 뜨는 폰이면 자동으로 <b>백업 코드가 복사</b>돼요.
               </div>
-              <button className="btn-ghost press" style={{ width: '100%' }} onClick={downloadBackup}>💾 폰에 파일로 저장 (다운로드 폴더)</button>
-              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={() => fileRef.current?.click()}>📂 백업 파일 불러오기</button>
+              <button className="btn-ghost press" style={{ width: '100%' }} onClick={copyBackup}>📋 백업 코드 복사 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 카톡·메모에 붙여넣기</span></button>
+              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={downloadBackup}>💾 폰에 파일로 저장 (다운로드 폴더)</button>
+
+              <hr className="divider" style={{ margin: '16px 0' }} />
+              <div style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 10 }}>백업에서 되살리기</div>
+              <button className="btn-ghost press" style={{ width: '100%' }} onClick={() => fileRef.current?.click()}>📂 백업 파일 불러오기</button>
+              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={() => setPasteOpen(true)}>📋 코드 붙여넣기로 불러오기</button>
             </div>
           </div>
         </div>
        </Portal>
+      )}
+
+      {pasteOpen && (
+        <PromptSheet
+          title="코드로 불러오기"
+          fields={[
+            { key: 'code', label: '백업 코드 붙여넣기', value: '', placeholder: '복사해 둔 백업 코드를 여기에 붙여넣어 주세요', multiline: true },
+          ]}
+          submitLabel="불러오기"
+          onSubmit={(v) => { setPasteOpen(false); importFromText(v) }}
+          onClose={() => setPasteOpen(false)}
+        />
       )}
     </>
   )
