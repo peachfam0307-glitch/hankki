@@ -531,11 +531,13 @@ export default function Buddy({ id, size = 48 }) {
     )
   }
   if (F[id]) {
-    // 원(아바타)에 넣으면 귀·모자가 모서리에서 잘려서, 배경은 꽉 채우고
-    // 캐릭터(귀·모자 등)만 살짝 안쪽으로 축소해 원 안에 들어오게 한다.
+    // 흰톤 배경 원을 꽉 채우고, 그 위에 캐릭터를 살짝 줄여 얹는다.
+    // → 클로즈업도 라인셋처럼 '흰톤 원 위의 작은 캐릭터'로 보여 세트 톤이 통일된다.
+    //   (얼굴이 원을 꽉 채워 색 배경처럼 보이던 문제 해결)
     return (
       <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">
-        <g transform="translate(32 33.5) scale(0.9) translate(-32 -32)">{F[id]}</g>
+        <circle cx="32" cy="32" r="32" fill={BG} />
+        <g transform="translate(32 33) scale(0.8) translate(-32 -32)">{F[id]}</g>
       </svg>
     )
   }

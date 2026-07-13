@@ -5,6 +5,7 @@ import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
 import PromptSheet from '../components/PromptSheet'
+import ConfirmSheet from '../components/ConfirmSheet'
 import { TAG_LIST } from '../data/seed'
 import { dateLabel } from '../utils'
 
@@ -15,13 +16,9 @@ export default function MyRecipesScreen() {
   const [folder, setFolder] = useState('전체')
   const [edit, setEdit] = useState(false)
   const [newFolder, setNewFolder] = useState(false)
+  const [delTarget, setDelTarget] = useState(null)
 
-  const del = (r) => {
-    if (window.confirm(`'${r.title}' 레시피를 삭제할까요?`)) {
-      removeRecipe(r.id)
-      nav.showToast('레시피를 삭제했어요')
-    }
-  }
+  const del = (r) => setDelTarget(r)
 
   const sorted = useMemo(() => recipes.filter((r) => r.status === 'sorted').sort((a, b) => b.savedAt - a.savedAt), [recipes])
   const list = folder === '전체' ? sorted : sorted.filter((r) => (r.folder || r.category) === folder)
@@ -132,6 +129,17 @@ export default function MyRecipesScreen() {
           fields={[{ key: 'name', label: '폴더 이름', placeholder: '예) 자주 만드는' }]}
           onSubmit={({ name }) => { const nm = name.trim(); if (nm) addFolder(nm) }}
           onClose={() => setNewFolder(false)}
+        />
+      )}
+
+      {delTarget && (
+        <ConfirmSheet
+          title="레시피 삭제"
+          message={`'${delTarget.title}' 레시피를 삭제할까요?`}
+          confirmLabel="삭제하기"
+          danger
+          onConfirm={() => { removeRecipe(delTarget.id); nav.showToast('레시피를 삭제했어요') }}
+          onClose={() => setDelTarget(null)}
         />
       )}
     </>

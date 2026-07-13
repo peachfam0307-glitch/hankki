@@ -57,7 +57,8 @@ export default function PantryView() {
     setReceiptCrop(null)
     setScanPct(0)
     // noCrop: 영수증은 폰 캡처가 아니니 상태바 자르기(위·아래 5%)를 하지 않는다
-    const text = await ocrImage(img, (pct) => setScanPct(pct), { noCrop: true })
+    // receipt: 신뢰도 필터로 품목 줄을 버리지 않게 원문을 쓴다(파서가 노이즈를 거른다)
+    const text = await ocrImage(img, (pct) => setScanPct(pct), { noCrop: true, receipt: true })
     setScanPct(null)
     const items = extractReceiptItems(text)
     if (!items.length) {

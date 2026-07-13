@@ -8,6 +8,7 @@ import FoodIconPicker from '../components/FoodIconPicker'
 import Buddy, { BUDDY_LIST } from '../components/Buddies'
 import Portal from '../components/Portal'
 import PromptSheet from '../components/PromptSheet'
+import ConfirmSheet from '../components/ConfirmSheet'
 import { cropSquare } from '../utils'
 import { Avatar } from './HomeScreen'
 
@@ -18,6 +19,7 @@ export default function ProfileScreen() {
   const [backup, setBackup] = useState(false)
   const [avatarSheet, setAvatarSheet] = useState(false)
   const [editSheet, setEditSheet] = useState(false)
+  const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
   const fileRef = useRef(null)
   const avatarFileRef = useRef(null)
 
@@ -96,11 +98,12 @@ export default function ProfileScreen() {
       try {
         const data = JSON.parse(reader.result)
         if (!Array.isArray(data.recipes)) throw new Error('형식 오류')
-        if (window.confirm(`레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`)) {
-          importAll(data)
-          setBackup(false)
-          nav.showToast('백업을 불러왔어요 ✨')
-        }
+        setConfirmAsk({
+          title: '백업 불러오기',
+          message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
+          confirmLabel: '불러오기',
+          onConfirm: () => { importAll(data); setBackup(false); nav.showToast('백업을 불러왔어요 ✨') },
+        })
       } catch {
         nav.showToast('백업 파일을 읽을 수 없어요 😢')
       }
@@ -249,24 +252,25 @@ export default function ProfileScreen() {
         <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
           <button
             className="press"
-            onClick={() => {
-              if (window.confirm('예시 레시피를 포함해 모든 레시피를 비울까요?\n(내 폴더·태그는 유지돼요)')) {
-                clearAll()
-                nav.showToast('깨끗하게 비웠어요 · 이제 내 레시피만 담아요 ✨')
-              }
-            }}
+            onClick={() => setConfirmAsk({
+              title: '예시 데이터 비우기',
+              message: '예시 레시피를 포함해 모든 레시피를 비울까요?\n(내 폴더·태그는 유지돼요)',
+              confirmLabel: '비우기',
+              danger: true,
+              onConfirm: () => { clearAll(); nav.showToast('깨끗하게 비웠어요 · 이제 내 레시피만 담아요 ✨') },
+            })}
             style={{ flex: 1, color: 'var(--brown)', fontSize: 13, fontWeight: 600, padding: 13, background: 'var(--cream)', borderRadius: 'var(--r-md)' }}
           >
             예시 데이터 비우기
           </button>
           <button
             className="press"
-            onClick={() => {
-              if (window.confirm('예시 레시피를 다시 불러올까요?\n(현재 내용이 초기 예시로 바뀌어요)')) {
-                reset()
-                nav.showToast('초기 예시로 되돌렸어요')
-              }
-            }}
+            onClick={() => setConfirmAsk({
+              title: '예시 되돌리기',
+              message: '예시 레시피를 다시 불러올까요?\n(현재 내용이 초기 예시로 바뀌어요)',
+              confirmLabel: '되돌리기',
+              onConfirm: () => { reset(); nav.showToast('초기 예시로 되돌렸어요') },
+            })}
             style={{ flex: 1, color: 'var(--text-sub)', fontSize: 13, fontWeight: 500, padding: 13, background: 'var(--cream)', borderRadius: 'var(--r-md)' }}
           >
             예시 되돌리기
@@ -288,6 +292,17 @@ export default function ProfileScreen() {
           ]}
           onSubmit={saveProfile}
           onClose={() => setEditSheet(false)}
+        />
+      )}
+
+      {confirmAsk && (
+        <ConfirmSheet
+          title={confirmAsk.title}
+          message={confirmAsk.message}
+          confirmLabel={confirmAsk.confirmLabel}
+          danger={confirmAsk.danger}
+          onConfirm={confirmAsk.onConfirm}
+          onClose={() => setConfirmAsk(null)}
         />
       )}
 

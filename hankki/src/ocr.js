@@ -200,8 +200,11 @@ export async function ocrImage(image, onProgress, opts = {}) {
       _progressCb = onProgress || null
       const { data } = await worker.recognize(src, {}, { blocks: true, text: true })
       _progressCb = null
-      const filtered = assembleFromBlocks(data)
       const raw = (data && data.text) || ''
+      // 영수증은 파서(receipt.js)가 헤더·노이즈를 스스로 거른다 — 신뢰도 필터로
+      // 품목 줄을 잃지 않게 원문(raw)을 그대로 넘긴다. (인식률 저하의 숨은 원인)
+      if (opts.receipt) return raw
+      const filtered = assembleFromBlocks(data)
       // 필터가 과하게 지웠으면(진짜 글자까지) 원문으로 폴백 — 파서가 걸러준다.
       if (filtered && goodChars(filtered) >= Math.min(20, goodChars(raw) * 0.3)) return filtered
       return raw

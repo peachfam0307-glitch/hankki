@@ -7,6 +7,7 @@ import SourceBadge from '../components/SourceBadge'
 import TimerSheet from '../components/TimerSheet'
 import DiaryEntrySheet, { Stars } from '../components/DiaryEntrySheet'
 import Portal from '../components/Portal'
+import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import { shareRecipeCard } from '../shareCard'
 import { scaleIngredient } from '../scale'
@@ -17,6 +18,7 @@ export default function RecipeDetailScreen({ id }) {
   const nav = useNav()
   const [menu, setMenu] = useState(false)
   const [timer, setTimer] = useState(false)
+  const [confirmDel, setConfirmDel] = useState(false)
   const [logEntry, setLogEntry] = useState(null)
   const iconRef = useRef(null)
   const r = recipes.find((x) => x.id === id)
@@ -61,7 +63,9 @@ export default function RecipeDetailScreen({ id }) {
 
   const del = () => {
     setMenu(false)
-    if (!window.confirm(`『${r.title}』 레시피를 삭제할까요?`)) return
+    setConfirmDel(true)
+  }
+  const doDelete = () => {
     removeRecipe(r.id)
     nav.pop()
     nav.showToast('레시피를 삭제했어요')
@@ -266,6 +270,17 @@ export default function RecipeDetailScreen({ id }) {
       </div>
 
       {timer && <TimerSheet label={r.title} onClose={() => setTimer(false)} />}
+
+      {confirmDel && (
+        <ConfirmSheet
+          title="레시피 삭제"
+          message={`『${r.title}』 레시피를 삭제할까요?`}
+          confirmLabel="삭제하기"
+          danger
+          onConfirm={doDelete}
+          onClose={() => setConfirmDel(false)}
+        />
+      )}
 
       {logEntry && (
         <DiaryEntrySheet

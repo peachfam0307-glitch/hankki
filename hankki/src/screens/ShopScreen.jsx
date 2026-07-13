@@ -9,6 +9,7 @@ import FoodIconPicker from '../components/FoodIconPicker'
 import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
 import Portal from '../components/Portal'
+import ConfirmSheet from '../components/ConfirmSheet'
 import { ocrImage } from '../ocr'
 import { guessEmoji } from '../emoji'
 
@@ -50,6 +51,7 @@ export default function ShopScreen() {
   const [shopForm, setShopForm] = useState(null) // null | {} (new) | shop (edit)
   const [adding, setAdding] = useState(false)
   const [view, setView] = useState('shop') // 'pantry' | 'shop'
+  const [clearAsk, setClearAsk] = useState(false)
 
   const doneCount = shoppingList.filter((i) => i.done).length
 
@@ -173,7 +175,7 @@ export default function ShopScreen() {
             {shoppingList.length > 0 && (
               <button
                 className="t-more press"
-                onClick={() => { if (window.confirm('장보기 리스트를 모두 지울까요?')) store.clearShopItemsAll() }}
+                onClick={() => setClearAsk(true)}
               >
                 전체 비우기
               </button>
@@ -204,6 +206,17 @@ export default function ShopScreen() {
         </>
         )}
       </div>
+
+      {clearAsk && (
+        <ConfirmSheet
+          title="장보기 비우기"
+          message="장보기 리스트를 모두 지울까요?"
+          confirmLabel="모두 지우기"
+          danger
+          onConfirm={() => store.clearShopItemsAll()}
+          onClose={() => setClearAsk(false)}
+        />
+      )}
     </>
   )
 }
