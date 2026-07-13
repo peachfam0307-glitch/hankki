@@ -40,6 +40,7 @@ export default function App() {
   const [stack, setStack] = useState([]) // 위로 쌓이는 화면들
   const [toast, setToast] = useState(null)
   const [exitAsk, setExitAsk] = useState(false) // 홈에서 뒤로가기 → 종료 확인 팝업
+  const backHandlers = useRef([]) // 화면들이 등록한 '뒤로가기 먼저 처리' 핸들러
   const toastTimer = useRef(null)
   const tabRef = useRef(tab)
   const stackRef = useRef(stack)
@@ -53,6 +54,11 @@ export default function App() {
   const push = useCallback((screen) => setStack((s) => [...s, screen]), [])
   const pop = useCallback(() => setStack((s) => s.slice(0, -1)), [])
   const popAll = useCallback(() => setStack([]), [])
+  // 화면이 '뒤로가기'를 먼저 가로채도록 등록. 최근 등록(=가장 위 레이어)만 물어본다.
+  const registerBack = useCallback((fn) => {
+    backHandlers.current.push(fn)
+    return () => { backHandlers.current = backHandlers.current.filter((h) => h !== fn) }
+  }, [])
   const go = useCallback((t) => {
     setStack([])
     setTab(t)
@@ -66,9 +72,15 @@ export default function App() {
     if (!hasTrap()) trap() // index.html 이 이미 깔았으면 중복 안 함
     const onPop = () => {
       trap() // 먼저 버퍼를 다시 채워 '경계에서 그냥 종료'되는 일을 막는다
+      // 1) 가장 위 화면이 내부 상태(하위 화면·필터 등)를 먼저 닫는다
+      const hs = backHandlers.current
+      if (hs.length) {
+        try { if (hs[hs.length - 1]()) return } catch { /* noop */ }
+      }
+      // 2) 기본: 열린 화면 닫기 → 다른 탭이면 홈 → 홈이면 종료 확인
       if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); return }
       if (tabRef.current !== 'home') { setTab('home'); return }
-      setExitAsk(true) // 홈 루트에서 뒤로가기 → 바로 나가지 않고 종료 확인 팝업
+      setExitAsk(true)
     }
     // 앱으로 되돌아왔을 때(다른 앱 갔다 오기 등) 트랩이 사라졌으면 다시 깐다
     const onShow = () => { if (stackRef.current.length === 0 && !hasTrap()) trap() }
@@ -152,7 +164,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const nav = { push, pop, popAll, go, showToast, tab, setTab }
+  const nav = { push, pop, popAll, go, showToast, tab, setTab, registerBack }
 
   const TabScreen = TABS[tab]
   const top = stack[stack.length - 1]

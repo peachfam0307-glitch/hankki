@@ -127,7 +127,7 @@ export default function CropSheet({
    <Portal>
     {/* stopPropagation: 시트(닫기 핸들러가 있는 mask) 안에서 열려도 클릭이 새어나가
         부모 시트가 닫히지 않게 한다 — 일지 사진 추가가 조용히 취소되던 버그 방지 */}
-    <div onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(20,19,17,0.96)', display: 'flex', flexDirection: 'column' }}>
+    <div onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(20,19,17,0.96)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '14px 18px calc(6px)', paddingTop: 'calc(14px + var(--safe-top, 0px))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button className="press" onClick={once(onCancel)} style={{ color: '#d8d5cf', fontSize: 14, fontWeight: 600 }}>취소</button>
         <div style={{ color: '#fff', fontSize: 14.5, fontWeight: 700 }}>

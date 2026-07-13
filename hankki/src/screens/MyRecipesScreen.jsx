@@ -10,6 +10,7 @@ import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DiaryEntrySheet, { Stars } from '../components/DiaryEntrySheet'
 import { TAG_LIST } from '../data/seed'
 import { dateLabel } from '../utils'
+import { useBackHandler } from '../useBackHandler'
 
 function fmtLogDate(ts) {
   const d = new Date(ts)
@@ -26,6 +27,13 @@ export default function MyRecipesScreen() {
   const [newFolder, setNewFolder] = useState(false)
   const [delTarget, setDelTarget] = useState(null)
   const [logEditing, setLogEditing] = useState(null)
+
+  // 뒤로가기: 다른 세그먼트(요리 기록·폴더)나 폴더 필터를 먼저 기본(레시피)으로 되돌린다.
+  useBackHandler(() => {
+    if (view !== 'grid') { setView('grid'); return true }
+    if (folder !== '전체') { setFolder('전체'); return true }
+    return false
+  })
 
   const del = (r) => setDelTarget(r)
 

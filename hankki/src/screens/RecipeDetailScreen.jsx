@@ -16,6 +16,7 @@ import { scaleIngredient } from '../scale'
 import { dateLabel } from '../utils'
 import { SOURCES } from '../data/seed'
 import { useWakeLock } from '../useWakeLock'
+import { useBackHandler } from '../useBackHandler'
 
 export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, diary, addDiary, removeDiary, updateRecipe } = useStore()
@@ -26,6 +27,15 @@ export default function RecipeDetailScreen({ id }) {
   const [confirmDel, setConfirmDel] = useState(false)
   const [logEntry, setLogEntry] = useState(null)
   const [decorOpen, setDecorOpen] = useState(false)
+  // 뒤로가기: 열린 꾸미기·시트를 먼저 닫는다(레시피가 통째로 닫히지 않게).
+  useBackHandler(() => {
+    if (decorOpen) { setDecorOpen(false); return true }
+    if (logEntry) { setLogEntry(null); return true }
+    if (timer) { setTimer(false); return true }
+    if (menu) { setMenu(false); return true }
+    if (confirmDel) { setConfirmDel(false); return true }
+    return false
+  })
   const iconRef = useRef(null)
   const r = recipes.find((x) => x.id === id)
   const baseServings = r?.servings || 0

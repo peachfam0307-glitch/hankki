@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
+import { useBackHandler } from '../useBackHandler'
 import { guessCategory } from '../utils'
 import { parseRecipeText } from '../parseRecipe'
 import { ocrImage } from '../ocr'
@@ -43,6 +44,14 @@ export default function ImportScreen() {
   const [cropQ, setCropQ] = useState(null) // null | { images, done, idx } — 장마다 자르기
   const fileRef = useRef(null)
   const linkCancel = useRef(false)
+
+  // 뒤로가기: 열린 시트·하위 흐름을 먼저 닫는다(바로 홈으로 안 나가게).
+  useBackHandler(() => {
+    if (cropQ) { setCropQ(null); return true }
+    if (help) { setHelp(false); return true }
+    if (flow) { setFlow(null); return true }
+    return false
+  })
 
   const saveText = () => {
     const t = text.trim()

@@ -187,8 +187,10 @@ function Note({ it, editable }) {
         style={{
           width: '100%', height: '100%', boxSizing: 'border-box', padding: '9% 10%',
           fontFamily: "'Gowun Dodum','Pretendard',sans-serif",
-          fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.42,
+          fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.4,
           overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+          // 글자를 포스트잇 한가운데에 (위에 붙어 아래가 비던 문제 해결)
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
         }}
       >
         {text}
