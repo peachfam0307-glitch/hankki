@@ -104,3 +104,11 @@ export const NOTE_COLORS = [
   { key: 'sage', bg: '#dbe3ca', fold: '#c6d1b0', text: '#4f5a44' },
   { key: 'sky', bg: '#d5dee7', fold: '#bfccd8', text: '#47545f' },
 ]
+
+// 글자 스티커 색 — 사진 위에서도 읽히도록 반대 톤 외곽선(stroke)을 함께 준다
+export const TEXT_COLORS = [
+  { key: 'white', color: '#ffffff', stroke: 'rgba(55,45,32,.6)' },
+  { key: 'charcoal', color: '#463a2c', stroke: 'rgba(255,255,255,.75)' },
+  { key: 'coral', color: '#d67f6c', stroke: 'rgba(255,255,255,.7)' },
+  { key: 'mustard', color: '#cc9f45', stroke: 'rgba(60,48,30,.5)' },
+]

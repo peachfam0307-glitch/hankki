@@ -48,6 +48,8 @@ export default function RecipeDetailScreen({ id }) {
   ].filter(Boolean)
 
   const myEntries = diary.filter((d) => d.recipeId === id).sort((a, b) => b.at - a.at)
+  const latestEntry = myEntries[0]
+  const cookedN = r?.cooked || myEntries.length
 
   const onCook = () => {
     // 오늘 이미 기록이 있으면(요리모드 완료 등) 새로 만들지 않고 그 기록을 이어서 쓴다 — 하루 두 번 집계 방지
@@ -115,14 +117,12 @@ export default function RecipeDetailScreen({ id }) {
       <div style={{ position: 'relative' }}>
         <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
         <DecorLayer items={r.decor || []} />
-        <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(63,50,39,0.55)', color: '#fff', fontSize: 11.5, fontWeight: 600, padding: '3px 9px', borderRadius: 999 }}>
-          {r.image ? '1 / 1' : r.emoji}
-        </div>
+        {/* 표지 꾸미기 — 솔직한 버튼으로 눈에 띄게(포인트색 채운 알약) */}
         <button
           className="press"
           onClick={() => setDecorOpen(true)}
           aria-label="표지 꾸미기"
-          style={{ position: 'absolute', bottom: 12, left: 12, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(63,50,39,0.55)', color: '#fff', fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 999, backdropFilter: 'blur(6px)' }}
+          style={{ position: 'absolute', bottom: 12, right: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--brown)', color: '#fff', fontSize: 13.5, fontWeight: 800, padding: '9px 15px', borderRadius: 999, boxShadow: '0 4px 14px rgba(0,0,0,.3)' }}
         >
           🎨 꾸미기
         </button>
@@ -168,6 +168,35 @@ export default function RecipeDetailScreen({ id }) {
               <span key={t} className="tag"># {t}</span>
             ))}
           </div>
+        )}
+
+        {/* 내 요리 기록 — 위로 올려 잘 보이게. 별점·만든 횟수·최근 메모 요약, 탭하면 남기기/보기.
+            (‘나만의 팁’은 이제 표지 꾸미기 포스트잇·글자로 — 역할이 겹치지 않게 분리) */}
+        {(myEntries.length > 0 || cookedN > 0) && (
+          <button
+            className="card press"
+            onClick={() => (latestEntry ? setLogEntry(latestEntry) : onCook())}
+            style={{ width: '100%', textAlign: 'left', marginTop: 18, padding: 13, display: 'flex', gap: 12, alignItems: 'center', background: 'var(--cream)', border: 'none' }}
+          >
+            {latestEntry?.photo ? (
+              <img src={latestEntry.photo} alt="" style={{ width: 50, height: 50, borderRadius: 12, objectFit: 'cover', flex: '0 0 auto' }} />
+            ) : (
+              <div style={{ width: 50, height: 50, borderRadius: 12, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', fontSize: 22 }}>✍️</div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <span style={{ fontSize: 14.5, fontWeight: 700 }}>내 요리 기록</span>
+                {latestEntry?.rating > 0 && <Stars value={latestEntry.rating} onChange={() => {}} size={13} />}
+              </div>
+              <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3 }}>
+                {cookedN}번 만들었어요{latestEntry ? ` · ${dateLabel(latestEntry.at)}` : ''}
+              </div>
+              {latestEntry?.note && (
+                <div style={{ fontSize: 13, marginTop: 4, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>“{latestEntry.note}”</div>
+              )}
+            </div>
+            <Icon name="chevron-right" size={18} color="var(--sand)" />
+          </button>
         )}
 
         {r.ingredients?.length > 0 && (
@@ -238,34 +267,6 @@ export default function RecipeDetailScreen({ id }) {
           </>
         )}
 
-        {myEntries.length > 0 && (
-          <>
-            <div className="h-section" style={{ marginTop: 26, marginBottom: 10 }}>요리 기록 · 나만의 팁</div>
-            {myEntries.map((e) => (
-              <button key={e.id} className="card press" onClick={() => setLogEntry(e)} style={{ width: '100%', textAlign: 'left', display: 'flex', gap: 12, padding: 12, marginBottom: 8, alignItems: 'flex-start', background: 'var(--cream)', border: 'none' }}>
-                {e.photo && <img src={e.photo} alt="" style={{ width: 56, height: 56, borderRadius: 12, objectFit: 'cover', flex: '0 0 auto' }} />}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className="t-sub" style={{ fontSize: 12 }}>{new Date(e.at).toLocaleDateString('ko-KR')}</span>
-                    {e.rating > 0 && <Stars value={e.rating} onChange={() => {}} size={13} />}
-                  </div>
-                  {e.note ? (
-                    <div style={{ fontSize: 13.5, lineHeight: 1.55, marginTop: 4, color: 'var(--text)' }}>{e.note}</div>
-                  ) : (
-                    <div className="t-sub" style={{ fontSize: 12.5, marginTop: 4 }}>탭해서 별점·팁·사진을 남겨보세요</div>
-                  )}
-                </div>
-                <Icon name="pen" size={15} color="var(--sand)" />
-              </button>
-            ))}
-          </>
-        )}
-
-        {r.cooked > 0 && (
-          <div className="t-sub" style={{ marginTop: 22, textAlign: 'center' }}>
-            지금까지 {r.cooked}번 만들었어요 🍳
-          </div>
-        )}
       </div>
 
       {/* 하단 액션 — 요리 시작 / 만들었어요 */}

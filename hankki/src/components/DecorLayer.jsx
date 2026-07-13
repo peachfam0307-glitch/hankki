@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon'
-import { StickerArt, stickerRatio, NOTE_COLORS } from './Stickers'
+import { StickerArt, stickerRatio, NOTE_COLORS, TEXT_COLORS } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -72,13 +72,15 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     >
       {items.map((it) => {
         const on = editable && selectedId === it.id
+        const isText = it.type === 'text'
         const ratio = it.type === 'note' ? 1.06 : stickerRatio(it.key)
         const base = {
           position: 'absolute',
           left: `${it.x * 100}%`,
           top: `${it.y * 100}%`,
           width: `${it.s * 100}%`,
-          aspectRatio: `${ratio}`,
+          // 글자는 내용에 따라 높이가 달라지므로 종횡비를 고정하지 않는다
+          ...(isText ? {} : { aspectRatio: `${ratio}` }),
           transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)`,
           touchAction: 'none',
           cursor: editable ? 'grab' : 'default',
@@ -94,6 +96,8 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           >
             {it.type === 'note' ? (
               <Note it={it} w={w} editable={editable} />
+            ) : it.type === 'text' ? (
+              <TextDeco it={it} w={w} editable={editable} />
             ) : (
               <span style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(0 3px 4px rgba(60,50,35,.22))' }}>
                 <StickerArt id={it.key} />
@@ -114,11 +118,11 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                 >
                   <Icon name="x" size={13} color="#fff" stroke={2.6} />
                 </button>
-                {/* 포스트잇 글 수정 */}
-                {it.type === 'note' && (
+                {/* 포스트잇·글자 수정 */}
+                {(it.type === 'note' || it.type === 'text') && (
                   <button
                     className="press"
-                    aria-label="포스트잇 글 수정"
+                    aria-label="글 수정"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); onEditNote?.(it) }}
                     style={{ position: 'absolute', top: -16, left: -16, width: 26, height: 26, borderRadius: '50%', background: 'var(--brown)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,.3)' }}
@@ -142,6 +146,32 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           </div>
         )
       })}
+    </div>
+  )
+}
+
+function TextDeco({ it, w, editable }) {
+  const c = TEXT_COLORS.find((t) => t.key === it.color) || TEXT_COLORS[0]
+  const fs = Math.max(11, it.s * w * 0.16)
+  const text = it.text || (editable ? '글자' : '')
+  return (
+    <div
+      style={{
+        fontFamily: "'Gowun Dodum','Pretendard',sans-serif",
+        fontWeight: 800,
+        fontSize: fs,
+        lineHeight: 1.25,
+        color: c.color,
+        textAlign: 'center',
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
+        // 사진 위에서도 읽히게 반대 톤 외곽선 + 그림자
+        WebkitTextStroke: `${Math.max(0.5, fs * 0.03)}px ${c.stroke}`,
+        textShadow: '0 1px 3px rgba(0,0,0,.35)',
+        userSelect: 'none',
+      }}
+    >
+      {text}
     </div>
   )
 }

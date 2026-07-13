@@ -3,7 +3,7 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { StickerArt, STICKER_GROUPS, NOTE_COLORS } from './Stickers'
+import { StickerArt, STICKER_GROUPS, NOTE_COLORS, TEXT_COLORS } from './Stickers'
 
 // ── 표지 꾸미기 에디터 ──
 // 전체 화면 오버레이. 표지(정사각) 위에 스티커·포스트잇을 얹고
@@ -42,8 +42,15 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     setSel(it.id)
     setNoteEdit(it)
   }
+  const addText = (colorKey) => {
+    const n = items.length
+    const it = { id: newDecorId(), type: 'text', color: colorKey, text: '', x: 0.5, y: 0.5 + ((n % 3) - 1) * 0.08, s: 0.5, r: 0 }
+    setItems((arr) => [...arr, it])
+    setSel(it.id)
+    setNoteEdit(it)
+  }
 
-  const groups = [...STICKER_GROUPS, { key: 'note', label: '포스트잇', items: [] }]
+  const groups = [...STICKER_GROUPS, { key: 'text', label: '글자', items: [] }, { key: 'note', label: '포스트잇', items: [] }]
 
   return (
     <Portal>
@@ -90,6 +97,21 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                     </span>
                   </button>
                 ))
+              : tab === 'text'
+              ? TEXT_COLORS.map((c) => (
+                  <button key={c.key} className="press decor-cell" onClick={() => addText(c.key)} aria-label={`${c.key} 글자`}>
+                    <span
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', aspectRatio: '1',
+                        fontFamily: "'Gowun Dodum','Pretendard',sans-serif", fontWeight: 800, fontSize: 26,
+                        color: c.color, WebkitTextStroke: `1px ${c.stroke}`, textShadow: '0 1px 2px rgba(0,0,0,.28)',
+                        borderRadius: 12, background: c.key === 'white' || c.key === 'mustard' ? '#8a8479' : '#faf8f4',
+                      }}
+                    >
+                      가
+                    </span>
+                  </button>
+                ))
               : (STICKER_GROUPS.find((g) => g.key === tab)?.items || []).map((key) => (
                   <button key={key} className="press decor-cell" onClick={() => addSticker(key)} aria-label={key}>
                     <span style={{ display: 'block', width: key === 'yum' ? '92%' : '76%', aspectRatio: key === 'yum' ? '74/46' : '1' }}>
@@ -102,10 +124,21 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
 
         {noteEdit && (
           <PromptSheet
-            title="포스트잇"
-            fields={[{ key: 'text', label: '나만의 팁 · 메모', value: noteEdit.text || '', placeholder: '예) 설탕 반만! 더 담백해', multiline: true }]}
+            title={noteEdit.type === 'text' ? '글자' : '포스트잇'}
+            fields={[{
+              key: 'text',
+              label: noteEdit.type === 'text' ? '표지에 쓸 글자' : '나만의 팁 · 메모',
+              value: noteEdit.text || '',
+              placeholder: noteEdit.type === 'text' ? '예) 우리집 최고 메뉴 ♡' : '예) 설탕 반만! 더 담백해',
+              multiline: true,
+            }]}
             submitLabel="붙이기"
-            onSubmit={({ text }) => patch(noteEdit.id, { text: (text || '').trim() })}
+            onSubmit={({ text }) => {
+              const t = (text || '').trim()
+              // 글자를 비우면 새로 넣은 빈 아이템은 제거(표지에 유령 글자 안 남게)
+              if (noteEdit.type === 'text' && !t) remove(noteEdit.id)
+              else patch(noteEdit.id, { text: t })
+            }}
             onClose={() => setNoteEdit(null)}
           />
         )}
