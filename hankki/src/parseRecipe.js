@@ -62,6 +62,20 @@ export function isGibberish(s) {
   return false
 }
 
+// ── 재료 줄 단위 오독 교정 ──
+// OCR이 제일 자주 틀리는 T(큰술)·g(그램): 'T'를 7로, 'g'를 9로 읽는다.
+// 재료 줄에서만, 오해 여지가 없는 모양일 때만 되돌린다(문장·날짜는 안 건드림).
+const SEASONING =
+  /간장|설탕|소금|고추장|된장|쌈장|고춧가루|후춧가루|후추|참기름|들기름|식초|맛술|미림|올리고당|물엿|꿀|굴소스|액젓|참치액|마요네즈|케첩|카레|깨|다진\s*마늘|생강|맛소금|다시다|연두|치킨스톡/
+export function fixIngredientUnits(l) {
+  let s = String(l)
+  // 양념 + 한 자리 수 + 7 로 끝나면 → T (설탕 27 → 2T, 굴소스 1/27 → 1/2T)
+  if (SEASONING.test(s)) s = s.replace(/(\d)7(?=\s|$)/g, '$1T')
+  // '끝이 0·5인 수 + 9' 로 끝나면 → g (돼지고기 3009 → 300g, 떡 5009 → 500g)
+  s = s.replace(/(\d{1,3}[05])9(?=\s|$)/g, '$1g')
+  return s
+}
+
 // 사용자가 직접 쓴 티가 나는 줄 — 이모지·기호(🔥★♥)나 온전한 한글 단어가 있으면
 // 잡음 검사를 건너뛴다. (isGibberish 는 이모지를 '나쁜 글자'로 세기 때문)
 const USER_SAFE = /[☀-➿⭐❤\u{1F000}-\u{1FAFF}]|[가-힣]{2}/u
@@ -214,6 +228,6 @@ export function parseRecipeText(raw = '', opts = {}) {
   // 쉬우니 '깨끗한 문장'만 남긴다 — 재료·순서와 중복되거나 잡음이 붙는 일 없게.
   const memoLines = fromOcr ? other.filter(isCleanMemoLine) : other
   const memo = memoLines.join('\n')
-  // 만드는 법 문체 통일 — '~다'(썬다·볶는다)로 읽힌 단계를 부드러운 '~요'체로 다듬는다
-  return { title, ingredients, steps: politeSteps(steps), memo }
+  // 재료 단위 오독 교정(T·g) + 만드는 법 문체 통일('~다' → '~요')
+  return { title, ingredients: ingredients.map(fixIngredientUnits), steps: politeSteps(steps), memo }
 }

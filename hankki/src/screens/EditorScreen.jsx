@@ -27,11 +27,12 @@ function cleanOcrLines(text) {
 }
 
 const DIFFS = ['쉬움', '보통', '어려움']
-// 재료·만드는 법 칸의 '사진에서' 작은 버튼
+// 재료·만드는 법 칸의 '📷 사진에서 채우기' 버튼 — 채워질 칸 바로 옆이 제일 직관적이라 크고 진하게
 const fieldOcrBtn = {
-  display: 'inline-flex', alignItems: 'center', gap: 4,
-  padding: '5px 10px', borderRadius: 999, background: 'var(--cream)',
-  color: 'var(--brown)', fontSize: 12.5, fontWeight: 700,
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  padding: '8px 14px', borderRadius: 999, background: 'var(--brown)',
+  color: '#fff', fontSize: 13, fontWeight: 700,
+  boxShadow: '0 2px 8px rgba(90,70,45,0.18)',
 }
 const THUMB_TYPES = [
   { key: 'icon', label: '아이콘' },
@@ -365,52 +366,7 @@ export default function EditorScreen({ id, prefill }) {
           )}
         </div>
 
-        {/* 사진에서 글자 읽기 — 재료/만드는 법을 각각 올리는 게 기본(인식이 훨씬 정확). */}
-        {ocr.busy ? (
-          <div
-            style={{
-              width: '100%', marginBottom: 8, padding: 13, borderRadius: 'var(--r-md)',
-              background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 600,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}
-          >
-            사진에서 글자 읽는 중… {ocr.pct}%
-          </div>
-        ) : (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-            <button
-              className="press"
-              onClick={() => pickOcr('ingredients')}
-              style={{
-                flex: 1, padding: 13, borderRadius: 'var(--r-md)', background: 'var(--cream)',
-                color: 'var(--brown)', fontSize: 13.5, fontWeight: 700,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              }}
-            >
-              <Icon name="camera" size={16} color="var(--brown)" /> 재료 사진
-            </button>
-            <button
-              className="press"
-              onClick={() => pickOcr('steps')}
-              style={{
-                flex: 1, padding: 13, borderRadius: 'var(--r-md)', background: 'var(--cream)',
-                color: 'var(--brown)', fontSize: 13.5, fontWeight: 700,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              }}
-            >
-              <Icon name="camera" size={16} color="var(--brown)" /> 만드는 법 사진
-            </button>
-          </div>
-        )}
-        <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 18, lineHeight: 1.55 }}>
-          캡처를 올리면 글자를 읽어 그 칸에 채워요. 길면 <b>여러 장 이어서</b> 올려도 돼요. 썸네일은 안 바뀌어요.<br />
-          한 장에 재료·만드는 법이 다 있다면{' '}
-          <button className="press" onClick={() => pickOcr('all')} disabled={ocr.busy} style={{ display: 'inline', padding: 0, background: 'none', color: 'var(--brown)', fontWeight: 700, fontSize: 12, textDecoration: 'underline' }}>
-            한 장으로 자동 분류
-          </button>
-          를 눌러요.
-        </div>
-
+        {/* 사진으로 채우기는 재료·만드는 법 각 칸 옆의 📷 버튼으로 — 썸네일 사진과 헷갈리지 않게 여기엔 두지 않는다 */}
         <div className="field">
           <label>제목</label>
           {/* autoFocus 금지 — 화면에 들어오자마자 키보드가 아래 내용을 다 가려버린다. */}
@@ -446,24 +402,39 @@ export default function EditorScreen({ id, prefill }) {
           </div>
         </div>
 
+        {/* 사진 읽는 중 — 칸 채우기 진행 표시 */}
+        {ocr.busy && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 700, marginBottom: 12 }}>
+            <div className="ocr-spin" style={{ width: 18, height: 18, borderWidth: 2.5, margin: 0 }} />
+            사진에서 글자 읽는 중… {ocr.pct}%
+          </div>
+        )}
+
         <div className="field">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <label style={{ margin: 0 }}>재료 (한 줄에 하나씩)</label>
             <button className="press" onClick={() => pickOcr('ingredients')} disabled={ocr.busy} style={fieldOcrBtn}>
-              <Icon name="camera" size={14} color="var(--brown)" /> 사진에서
+              <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
-          <textarea rows={5} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} placeholder={'재료를 한 줄에 하나씩 적어주세요'} />
+          <textarea rows={5} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n캡처가 있다면 위 📷 버튼 — 여러 장 이어서도 돼요.'} />
         </div>
 
         <div className="field">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <label style={{ margin: 0 }}>만드는 법 (한 줄에 한 단계)</label>
             <button className="press" onClick={() => pickOcr('steps')} disabled={ocr.busy} style={fieldOcrBtn}>
-              <Icon name="camera" size={14} color="var(--brown)" /> 사진에서
+              <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
           <textarea rows={5} value={f.steps} onChange={(e) => set('steps', e.target.value)} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
+          <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 7, lineHeight: 1.5 }}>
+            한 장의 캡처에 재료·만드는 법이 다 있다면{' '}
+            <button className="press" onClick={() => pickOcr('all')} disabled={ocr.busy} style={{ display: 'inline', padding: 0, background: 'none', color: 'var(--brown)', fontWeight: 700, fontSize: 12, textDecoration: 'underline' }}>
+              한 장으로 자동 분류
+            </button>
+            {' '}· 썸네일은 안 바뀌어요
+          </div>
         </div>
 
         <div className="field">

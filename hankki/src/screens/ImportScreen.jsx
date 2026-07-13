@@ -12,11 +12,12 @@ import Portal from '../components/Portal'
 // '사진으로 가져오기'와 '직접 작성하기'는 결국 같은 작성 화면 — 하나로 합쳤다.
 // 캡처는 작성 화면에서 재료/만드는 법 칸별로 읽어 채운다(인식이 훨씬 정확).
 const OPTIONS = [
+  // 제일 많이 쓰는 방법이라 맨 위
+  { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A' },
   { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '인스타그램 게시물 가져오기', color: '#C13584' },
   { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '유튜브 영상 정보 가져오기', color: '#E33' },
   { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 자동 정리', color: '#B0895E' },
   { key: 'link', icon: 'link', title: '링크 붙여넣기', desc: '웹사이트 주소를 붙여넣기', color: '#9B8B79' },
-  { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A' },
 ]
 
 export default function ImportScreen() {
