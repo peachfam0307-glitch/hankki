@@ -21,7 +21,7 @@ const UNIT_TOKENS = new Set(['g', 'kg', 'ml', 'l', 'L', 'cc', 't', 'T', 'ts', 't
 // 특수문자·기호(외계어의 원인)를 제거 — 완성형 한글·영문·숫자 + 요리에 흔한 문장부호만 남긴다.
 function sanitize(s) {
   return String(s)
-    .replace(/[^가-힣a-zA-Z0-9\s.,()/%°~:!+\-]/g, ' ')
+    .replace(/[^가-힣a-zA-Z0-9\s.,()/%°~:!+×\-]/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim()
 }
@@ -99,6 +99,37 @@ export function isCleanMemoLine(s) {
 // 니다(오독 포함)·~요 계열 어미, 또는 마침표·느낌표로 끝나면 문장으로 본다.
 const SENTENCE_END = /(니다|세요|어요|해요|져요|까요|네요|든요|께요|답니다)\s*[.!)~"']*\s*$|[.!…]["')\]]*\s*$/
 
+// --- 재료 / 만드는 법(순서) 구분 ---
+// 재료칸에 조리 문장이 섞이는 게 가장 큰 불편이라, 두 신호로 '순서 문장'을 가려낸다.
+//  1) 조리 동작(활용형) — "볶고/넣어/끓인" 등. 재료명("김치볶음밥")엔 활용형이 없어 안 걸린다.
+//  2) 평서형 종결 — "볶는다·끓인다·푼다·하세요·넣어요" 등.
+const STEP_VERB =
+  /(넣|볶|끓|섞|부어|붓|풀|푼|구우|구워|굽|익히|익혀|튀기|튀겨|삶|데치|데쳐|재우|재워|올려|얹|뿌려|졸이|졸여|우려|뒤집|비벼|담아|따라|헹궈|헹구|불려|불리|절이|절여|조리|조려|볶아|볶고|끓여|썰어|썰고|다지|다져|버무|무쳐|무친|저어|저으|짜서|갈아|갈아서|말아|말고)/
+// 평서형·존댓말 문장 종결 (재료명이 우연히 걸리지 않게 길이로 보강)
+const SENT_END = /(다|요|라|자|죠|함|셈|봐)[.!~)"'\s]*$|[.!…]["')\]]*\s*$/
+// 수량·분량을 나타내는 표현 — 숫자가 없어도 재료로 본다("소금 약간", "애호박 반개")
+const AMOUNT =
+  /(\d|½|⅓|⅔|¼|¾|반\s?개|반\s?컵|반\s?쪽|약간|조금|적당량|적당히|넉넉|한\s?줌|두\s?줌|한\s?꼬집|한\s?스푼|톨|줌|꼬집)/
+
+// 이 줄이 '만드는 법(순서)' 문장인가?
+function looksLikeStep(l) {
+  if (STEP.test(l)) return true // "1. …", "①…", "step 1"
+  const hasVerb = STEP_VERB.test(l)
+  const ends = SENT_END.test(l)
+  if (l.length >= 8 && hasVerb && ends) return true // 짧은 조리 문장 ("밥을 넣고 볶는다")
+  if (l.length >= 16 && (hasVerb || ends)) return true // 긴 설명 문장
+  return false
+}
+
+// 이 줄이 '재료' 항목인가? (분량 표현이 있고, 조리 문장은 아님)
+function looksLikeIngredient(l, bullet) {
+  if (l.length > 40) return false
+  if (QTY.test(l)) return true
+  if (bullet && /[가-힣]{2,}/.test(l)) return true
+  if (AMOUNT.test(l) && /[가-힣]{2,}/.test(l)) return true
+  return false
+}
+
 export function parseRecipeText(raw = '', opts = {}) {
   const { fromOcr = false } = opts
   const text = normalizeNumerals(String(raw))
@@ -111,7 +142,10 @@ export function parseRecipeText(raw = '', opts = {}) {
   for (const rawLine of text.split('\n')) {
     const bullet = /^\s*[-*•·▪◦‣●○]\s*/.test(rawLine)
     const l = cleanTokens(sanitize(rawLine.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•·▪◦‣●○*]/g, ' ')))
-    if (l && l.length > 1 && !isGibberish(l)) items.push({ l, bullet })
+    if (!l) continue
+    // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
+    const isHeader = SEC_ING.test(l) || SEC_STEP.test(l) || SEC_MEMO.test(l)
+    if (isHeader || (l.length > 1 && !isGibberish(l))) items.push({ l, bullet })
   }
 
   let title = ''
@@ -119,6 +153,7 @@ export function parseRecipeText(raw = '', opts = {}) {
   const steps = []
   const other = []
   let mode = null // 'ing' | 'step' | 'memo' — 섹션 헤더를 만나면 바뀐다
+  let sawStep = false // 순서가 한 번 시작되면, 그 뒤 애매한 줄은 순서로 본다(재료는 보통 앞에)
   let lastWasBulletIng = false // 불릿 재료가 줄바꿈으로 이어지는 경우 합치기 위해
 
   // 제목이 될 자격 — 온전한 한글 단어(2자+)나 진짜 영어 단어가 있어야 하고,
@@ -127,48 +162,46 @@ export function parseRecipeText(raw = '', opts = {}) {
   const looksLikeTitle = (l) =>
     (/[가-힣]{2,}/.test(l) || hasRealLatinWord(l, 4)) && !SENTENCE_END.test(l) && !/[,;:)\]}]$/.test(l)
 
+  const pushStep = (l) => { steps.push(STEP.test(l) ? l.replace(STEP, '').trim() : l); sawStep = true; lastWasBulletIng = false }
+  const pushIng = (l, bullet) => { ingredients.push(l); lastWasBulletIng = bullet; }
+
   for (const { l, bullet } of items) {
-    // 섹션 헤더(짧은 줄) — 어느 칸에 담을지 힌트
-    if (l.length <= 14) {
+    // 섹션 헤더(짧은 줄) — 어느 칸에 담을지 힌트. "[재료]", "◆ 만드는 법" 등 장식도 허용.
+    if (l.length <= 16) {
       if (SEC_ING.test(l)) { mode = 'ing'; lastWasBulletIng = false; continue }
-      if (SEC_STEP.test(l)) { mode = 'step'; lastWasBulletIng = false; continue }
+      if (SEC_STEP.test(l)) { mode = 'step'; sawStep = true; lastWasBulletIng = false; continue }
       if (SEC_MEMO.test(l)) { mode = 'memo'; lastWasBulletIng = false; continue }
     }
     if (NOISE.test(l) || NOISE_ANY.test(l)) continue
 
-    if (!title && !bullet && l.length <= 22 && !QTY.test(l) && !STEP.test(l) && looksLikeTitle(l)) {
+    const stepLike = looksLikeStep(l)
+    const ingLike = !stepLike && looksLikeIngredient(l, bullet)
+
+    // 제목 — 조리 문장·수량 줄은 제목이 아니다
+    if (!title && !bullet && !stepLike && l.length <= 22 && !QTY.test(l) && looksLikeTitle(l)) {
       title = l
       continue
     }
 
-    if (STEP.test(l)) {
-      steps.push(l.replace(STEP, '').trim())
-      lastWasBulletIng = false
-    } else if (bullet && mode !== 'step' && l.length <= 80 && (QTY.test(l) || /[가-힣]{2,}/.test(l))) {
-      ingredients.push(l) // 불릿 항목 = 재료 ("* 대패삼겹살 1kg (…)", "* 양파, 대파 등…")
-      lastWasBulletIng = true
-    } else if (lastWasBulletIng && !bullet && l.length <= 60 && /[가-힣]{2,}/.test(l) && mode !== 'step') {
-      // 긴 재료 설명이 다음 줄로 넘어간 경우 — 앞 재료에 이어붙인다
+    // 불릿 재료 설명이 다음 줄로 이어진 경우 — 앞 재료에 붙인다
+    if (lastWasBulletIng && !bullet && !stepLike && l.length <= 60 && /[가-힣]{2,}/.test(l) && mode !== 'step') {
       ingredients[ingredients.length - 1] += ' ' + l
-    } else if (mode === 'ing' && QTY.test(l)) {
-      ingredients.push(l)
-      lastWasBulletIng = false
-    } else if (mode === 'ing' && l.length <= 45 && /[가-힣]{2,}/.test(l) && !SENTENCE_END.test(l)) {
-      ingredients.push(l)
-      lastWasBulletIng = false
-    } else if (mode === 'memo' && l.length >= 8) {
-      other.push(l) // 팁 섹션의 문장은 메모로
-      lastWasBulletIng = false
-    } else if (l.length >= 22) {
-      steps.push(l)
-      lastWasBulletIng = false
-    } else if (QTY.test(l)) {
-      ingredients.push(l)
-      lastWasBulletIng = false
-    } else {
-      other.push(l) // 재료·순서로 분류되지 않은 줄만
-      lastWasBulletIng = false
+      continue
     }
+
+    // 1) 팁·메모 섹션에 들어섰으면 그 뒤는 전부 메모 (조리 문장처럼 보여도 팁으로)
+    if (mode === 'memo') { if (l.length >= 6) other.push(l); lastWasBulletIng = false; continue }
+    // 2) 명백한 조리 문장 → 순서 (섹션 헤더가 없어도 우선 분리)
+    if (stepLike) { pushStep(l); continue }
+    // 3) 재료다움 → 재료 (재료 섹션이거나, 아직 순서가 시작 전이면)
+    if (ingLike && (mode === 'ing' || mode === null || !sawStep)) { pushIng(l, bullet); continue }
+    // 4) 순서가 이미 시작됐으면, 남는 줄은 순서의 연속으로 본다("5분간 그대로 둔다" 등)
+    if (sawStep && mode !== 'ing' && l.length >= 5) { pushStep(l); continue }
+    // 5) 그 밖의 긴 줄은 순서, 수량 줄은 재료, 나머지는 메모 후보
+    if (l.length >= 20) { pushStep(l); continue }
+    if (QTY.test(l)) { pushIng(l, bullet); continue }
+    other.push(l)
+    lastWasBulletIng = false
   }
 
   // 메모: 분류 안 된 줄만. 사진 인식(fromOcr)에서 온 텍스트는 깨진 조각이 섞이기

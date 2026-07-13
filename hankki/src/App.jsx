@@ -66,14 +66,24 @@ export default function App() {
     trap()
     const onPop = () => {
       if (exitingRef.current) return // 종료 진행 중이면 트랩 안 함(밖으로 나가게)
-      if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); trap(); return }
-      if (tabRef.current !== 'home') { setTab('home'); trap(); return }
-      // 홈 루트에서 뒤로가기 → 바로 나가지 않고 종료 확인 팝업
-      setExitAsk(true)
-      trap()
+      trap() // 먼저 버퍼를 다시 채워 '경계에서 그냥 종료'되는 일을 막는다
+      if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); return }
+      if (tabRef.current !== 'home') { setTab('home'); return }
+      setExitAsk(true) // 홈 루트에서 뒤로가기 → 바로 나가지 않고 종료 확인 팝업
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
+  // 새 버전으로 업데이트돼 새로고침된 직후 — 최신임을 한 번 알려준다(캐시 혼란 방지).
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('hankki:updated')) {
+        sessionStorage.removeItem('hankki:updated')
+        setTimeout(() => showToast('✨ 최신 버전으로 업데이트됐어요'), 600)
+      }
+    } catch { /* noop */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const showToast = useCallback((msg) => {

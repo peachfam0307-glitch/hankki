@@ -27,6 +27,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing || !hadController) return // 첫 설치 때의 clientsClaim 은 새로고침 안 함
     refreshing = true
+    try { sessionStorage.setItem('hankki:updated', '1') } catch { /* noop */ } // 새로고침 후 안내 토스트
     window.location.reload()
   })
   navigator.serviceWorker.ready.then((reg) => {

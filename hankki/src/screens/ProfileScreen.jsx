@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
+import { APP_VERSION, APP_TAGLINE } from '../version'
 import Icon from '../components/Icon'
 import TabTips from '../components/TabTips'
 import EmojiPicker from '../components/EmojiPicker'
@@ -345,7 +346,7 @@ export default function ProfileScreen() {
           </button>
         </div>
         <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 12, marginTop: 14 }}>
-          한끼 · v1.0 — 흩어진 레시피를, 한곳에.
+          한끼 · {APP_VERSION} — {APP_TAGLINE}
         </div>
       </div>
 

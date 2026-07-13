@@ -121,8 +121,9 @@ export default function CropSheet({ image, index = 0, total = 1, onDone, onSkip,
         </div>
         <div style={{ width: 40 }} />
       </div>
-      <div style={{ color: '#b8b4ac', fontSize: 12.5, textAlign: 'center', padding: '0 20px 10px', lineHeight: 1.5 }}>
-        모서리를 끌어 광고·사진은 빼고 <b style={{ color: '#f0ede7' }}>레시피 글자 부분만</b> 담아주세요
+      <div style={{ color: '#b8b4ac', fontSize: 12.5, textAlign: 'center', padding: '0 20px 10px', lineHeight: 1.55 }}>
+        모서리를 끌어 광고·사진은 빼고 <b style={{ color: '#f0ede7' }}>재료·만드는 법 글자 부분만</b> 남겨주세요.<br />
+        <span style={{ color: '#8f8b83', fontSize: 11.5 }}>딱 맞게 자를수록 · 사진이 반듯하고 밝을수록 정확해요 ✨</span>
       </div>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '0 10px' }}>
