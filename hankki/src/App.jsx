@@ -62,8 +62,9 @@ export default function App() {
   // 안드로이드 '뒤로가기'가 앱을 바로 종료시키지 않도록: 열린 화면을 닫고,
   // 탭이면 홈으로. (히스토리 트랩을 유지해 갑작스런 종료 방지)
   useEffect(() => {
+    const hasTrap = () => !!(history.state && history.state.hankki)
     const trap = () => { try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ } }
-    trap()
+    if (!hasTrap()) trap() // index.html 이 이미 깔았으면 중복 안 함
     const onPop = () => {
       if (exitingRef.current) return // 종료 진행 중이면 트랩 안 함(밖으로 나가게)
       trap() // 먼저 버퍼를 다시 채워 '경계에서 그냥 종료'되는 일을 막는다
@@ -71,8 +72,14 @@ export default function App() {
       if (tabRef.current !== 'home') { setTab('home'); return }
       setExitAsk(true) // 홈 루트에서 뒤로가기 → 바로 나가지 않고 종료 확인 팝업
     }
+    // 앱으로 되돌아왔을 때(다른 앱 갔다 오기 등) 트랩이 사라졌으면 다시 깐다
+    const onShow = () => { if (!exitingRef.current && stackRef.current.length === 0 && !hasTrap()) trap() }
     window.addEventListener('popstate', onPop)
-    return () => window.removeEventListener('popstate', onPop)
+    window.addEventListener('pageshow', onShow)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      window.removeEventListener('pageshow', onShow)
+    }
   }, [])
 
   // 새 버전으로 업데이트돼 새로고침된 직후 — 최신임을 한 번 알려준다(캐시 혼란 방지).
@@ -172,7 +179,17 @@ export default function App() {
             title="한끼 나가기"
             message="한끼를 나갈까요?"
             confirmLabel="나가기"
-            onConfirm={() => { setExitAsk(false); exitingRef.current = true; try { history.go(-2) } catch { /* noop */ } }}
+            onConfirm={() => {
+              setExitAsk(false)
+              exitingRef.current = true
+              try { history.go(-2) } catch { /* noop */ }
+              // 설치형 PWA처럼 go(-2)로 앱이 안 닫히는 기기에서 exitingRef 가 영구 true 로
+              // 남으면, 이후 뒤로가기가 팝업 없이 그냥 나가버린다 → 잠시 뒤 복구.
+              setTimeout(() => {
+                exitingRef.current = false
+                try { if (!(history.state && history.state.hankki)) history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
+              }, 700)
+            }}
             onClose={() => setExitAsk(false)}
           />
         )}

@@ -20,6 +20,12 @@
         } catch (e) {}
       })()
     </script>
+    <!-- 뒤로가기(안드로이드)로 앱이 곧장 종료되지 않도록, React 로딩 전에 히스토리 버퍼를 깐다 -->
+    <script>
+      (function () {
+        try { if (!(history.state && history.state.hankki)) history.pushState({ hankki: 1 }, '') } catch (e) {}
+      })()
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="한끼" />
