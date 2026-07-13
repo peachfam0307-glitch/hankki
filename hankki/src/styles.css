@@ -1075,3 +1075,37 @@ html, body { overscroll-behavior: none; }
   71% { transform: translateY(-7px); }
   80% { transform: translateY(0); }
 }
+
+/* ── 표지 꾸미기 에디터 ── */
+.decor-editor {
+  position: fixed; inset: 0; z-index: 220;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  padding-top: var(--safe-top);
+  animation: fadeIn 0.18s ease both;
+}
+.decor-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px 10px;
+}
+.decor-stage { padding: 4px 16px 0; }
+.decor-drawer {
+  margin-top: auto;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  border-radius: 22px 22px 0 0;
+  padding: 14px 0 calc(12px + var(--safe-bottom));
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
+}
+.decor-items {
+  display: flex; gap: 8px; overflow-x: auto; padding: 2px 14px;
+  scrollbar-width: none;
+}
+.decor-items::-webkit-scrollbar { display: none; }
+.decor-cell {
+  flex: 0 0 auto; width: 64px; height: 64px; border-radius: 14px;
+  background: var(--cream);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.08s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

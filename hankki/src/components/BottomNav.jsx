@@ -2,11 +2,11 @@ import Icon from './Icon'
 
 // 검색 탭은 뺐다 — 홈 상단 검색창이 검색 화면으로 바로 데려가 준다.
 // 그 자리엔 앱의 핵심 동작인 '가져오기'를 넣고, 채운 원으로 눈에 띄게 강조한다.
+// '일지' 탭은 레시피 탭(요리 기록 세그먼트)으로 합쳤다 — 레시피와 기록이 한 곳에.
 const ITEMS = [
   { key: 'home', label: '홈', icon: 'home' },
   { key: 'import', label: '가져오기', icon: 'plus', action: true },
   { key: 'myrecipes', label: '레시피', icon: 'bookmark' },
-  { key: 'diary', label: '일지', icon: 'diary' },
   { key: 'shop', label: '장보기', icon: 'cart' },
   { key: 'profile', label: '설정', icon: 'settings' },
 ]

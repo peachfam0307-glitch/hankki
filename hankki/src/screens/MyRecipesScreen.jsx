@@ -6,17 +6,26 @@ import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
+import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
+import DiaryEntrySheet, { Stars } from '../components/DiaryEntrySheet'
 import { TAG_LIST } from '../data/seed'
 import { dateLabel } from '../utils'
 
+function fmtLogDate(ts) {
+  const d = new Date(ts)
+  const days = ['일', '월', '화', '수', '목', '금', '토']
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`
+}
+
 export default function MyRecipesScreen() {
-  const { recipes, folders, addFolder, removeRecipe } = useStore()
+  const { recipes, folders, addFolder, removeRecipe, diary, removeDiary } = useStore()
   const nav = useNav()
-  const [view, setView] = useState('grid') // grid | folders
+  const [view, setView] = useState('grid') // grid | log | folders
   const [folder, setFolder] = useState('전체')
   const [edit, setEdit] = useState(false)
   const [newFolder, setNewFolder] = useState(false)
   const [delTarget, setDelTarget] = useState(null)
+  const [logEditing, setLogEditing] = useState(null)
 
   const del = (r) => setDelTarget(r)
 
@@ -24,11 +33,22 @@ export default function MyRecipesScreen() {
   const list = folder === '전체' ? sorted : sorted.filter((r) => (r.folder || r.category) === folder)
   const countIn = (name) => sorted.filter((r) => (r.folder || r.category) === name).length
 
+  // 요리 기록(옛 '일지') — 만든 날짜순 타임라인
+  const entries = useMemo(() => [...diary].sort((a, b) => b.at - a.at), [diary])
+  const now = new Date()
+  const thisMonth = entries.filter((e) => {
+    const d = new Date(e.at)
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+  }).length
+  const openRecipe = (e) => {
+    if (recipes.some((r) => r.id === e.recipeId)) nav.push({ name: 'detail', id: e.recipeId })
+  }
+
   return (
     <>
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div className="h-title">내 레시피</div>
+          <div className="h-title">레시피</div>
           <TabTips tab="myrecipes" />
         </div>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
@@ -41,15 +61,58 @@ export default function MyRecipesScreen() {
         </div>
       </div>
 
-      {/* 세그먼트 */}
+      {/* 세그먼트 — 일지 탭을 '요리 기록'으로 흡수 */}
       <div className="pad">
         <div className="segment">
-          <button className={`seg ${view === 'grid' ? 'on' : ''}`} onClick={() => setView('grid')}>레시피</button>
+          <button className={`seg ${view === 'grid' ? 'on' : ''}`} onClick={() => setView('grid')}>모아보기</button>
+          <button className={`seg ${view === 'log' ? 'on' : ''}`} onClick={() => setView('log')}>요리 기록</button>
           <button className={`seg ${view === 'folders' ? 'on' : ''}`} onClick={() => setView('folders')}>폴더 · 태그</button>
         </div>
       </div>
 
-      {view === 'grid' ? (
+      {view === 'log' && (
+        <div className="pad fade">
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div className="card" style={{ flex: 1, textAlign: 'center', padding: '16px 0', background: 'var(--cream)', border: 'none' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--brown)' }}>{thisMonth}</div>
+              <div className="t-sub" style={{ marginTop: 2 }}>이번 달 요리</div>
+            </div>
+            <div className="card" style={{ flex: 1, textAlign: 'center', padding: '16px 0', background: 'var(--cream)', border: 'none' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--brown)' }}>{entries.length}</div>
+              <div className="t-sub" style={{ marginTop: 2 }}>총 기록</div>
+            </div>
+          </div>
+
+          {entries.length === 0 ? (
+            <div className="empty" style={{ marginTop: 10 }}>{'아직 기록이 없어요.\n레시피에서 "만들었어요"를 누르면 여기에 쌓여요.'}</div>
+          ) : (
+            <div style={{ marginTop: 18 }}>
+              {entries.map((e) => (
+                <div key={e.id} className="diary-row">
+                  <button className="press" onClick={() => openRecipe(e)} style={{ flex: '0 0 auto' }}>
+                    {e.photo ? (
+                      <img src={e.photo} alt="" style={{ width: 58, height: 58, borderRadius: 14, objectFit: 'cover', display: 'block' }} />
+                    ) : (
+                      <div className="emoji-tile" style={{ width: 58, height: 58 }}><FoodIcon name={guessFoodIcon(e.title)} size={36} /></div>
+                    )}
+                  </button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</div>
+                    <div className="t-sub" style={{ fontSize: 12, marginTop: 2 }}>{fmtLogDate(e.at)}</div>
+                    {e.rating > 0 && <div style={{ marginTop: 4 }}><Stars value={e.rating} onChange={() => {}} size={14} /></div>}
+                    {e.note && <div className="diary-note-preview">{e.note}</div>}
+                  </div>
+                  <button className="icon-btn press" onClick={() => setLogEditing(e)} aria-label="기록 편집">
+                    <Icon name="pen" size={17} color="var(--sand)" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {view === 'grid' && (
         <>
           <div className="hscroll" style={{ marginBottom: 8 }}>
             <button className={`pill press ${folder === '전체' ? 'active' : ''}`} onClick={() => setFolder('전체')}>전체 {sorted.length}</button>
@@ -83,7 +146,9 @@ export default function MyRecipesScreen() {
             )}
           </div>
         </>
-      ) : (
+      )}
+
+      {view === 'folders' && (
         <div className="pad fade">
           <div className="h-section" style={{ margin: '10px 0 13px' }}>폴더</div>
           <div className="grid2">
@@ -140,6 +205,14 @@ export default function MyRecipesScreen() {
           danger
           onConfirm={() => { removeRecipe(delTarget.id); nav.showToast('레시피를 삭제했어요') }}
           onClose={() => setDelTarget(null)}
+        />
+      )}
+
+      {logEditing && (
+        <DiaryEntrySheet
+          entry={logEditing}
+          onClose={() => setLogEditing(null)}
+          onDelete={() => { removeDiary(logEditing.id); setLogEditing(null); nav.showToast('기록을 삭제했어요') }}
         />
       )}
     </>

@@ -9,17 +9,21 @@ import DiaryEntrySheet, { Stars } from '../components/DiaryEntrySheet'
 import Portal from '../components/Portal'
 import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
+import DecorLayer from '../components/DecorLayer'
+import DecorEditor from '../components/DecorEditor'
 import { shareRecipeCard } from '../shareCard'
 import { scaleIngredient } from '../scale'
+import { dateLabel } from '../utils'
 import { SOURCES } from '../data/seed'
 
 export default function RecipeDetailScreen({ id }) {
-  const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, diary, addDiary, removeDiary } = useStore()
+  const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, diary, addDiary, removeDiary, updateRecipe } = useStore()
   const nav = useNav()
   const [menu, setMenu] = useState(false)
   const [timer, setTimer] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
   const [logEntry, setLogEntry] = useState(null)
+  const [decorOpen, setDecorOpen] = useState(false)
   const iconRef = useRef(null)
   const r = recipes.find((x) => x.id === id)
   const baseServings = r?.servings || 0
@@ -58,7 +62,7 @@ export default function RecipeDetailScreen({ id }) {
     addDiary(entry)
     cook(r.id)
     setLogEntry(entry)
-    nav.showToast('만들었어요! 일지에 기록했어요 🎉')
+    nav.showToast('만들었어요! 요리 기록에 남겼어요 🎉')
   }
 
   const del = () => {
@@ -107,12 +111,21 @@ export default function RecipeDetailScreen({ id }) {
         </div>
       </div>
 
-      {/* 히어로 이미지 */}
+      {/* 히어로 이미지(표지) — 꾸미기 스티커·포스트잇이 이 위에 얹힌다 */}
       <div style={{ position: 'relative' }}>
         <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
+        <DecorLayer items={r.decor || []} />
         <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(63,50,39,0.55)', color: '#fff', fontSize: 11.5, fontWeight: 600, padding: '3px 9px', borderRadius: 999 }}>
           {r.image ? '1 / 1' : r.emoji}
         </div>
+        <button
+          className="press"
+          onClick={() => setDecorOpen(true)}
+          aria-label="표지 꾸미기"
+          style={{ position: 'absolute', bottom: 12, left: 12, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(63,50,39,0.55)', color: '#fff', fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 999, backdropFilter: 'blur(6px)' }}
+        >
+          🎨 꾸미기
+        </button>
       </div>
 
       <div className="pad" style={{ paddingTop: 18, paddingBottom: 120 }}>
@@ -134,9 +147,11 @@ export default function RecipeDetailScreen({ id }) {
         {/* 즐겨찾기는 상단 오버레이 북마크 하나로 통일 (중복 버튼 정리) */}
         <div className="h-title" style={{ fontSize: 24 }}>{r.title}</div>
 
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
           <SourceBadge source={r.source} size={16} showLabel={false} />
-          <span className="t-sub" style={{ marginLeft: 6 }}>{SOURCES[r.source]?.label || '링크'}에서 가져옴</span>
+          <span className="t-sub" style={{ marginLeft: 2 }}>{SOURCES[r.source]?.label || '링크'}에서 가져옴</span>
+          {/* 저장 날짜 — 자동 기록(savedAt) */}
+          {r.savedAt && <span className="t-sub">· {dateLabel(r.savedAt)} 저장</span>}
         </div>
 
         {info.length > 0 && (
@@ -268,6 +283,18 @@ export default function RecipeDetailScreen({ id }) {
           만들었어요 🎉
         </button>
       </div>
+
+      {decorOpen && (
+        <DecorEditor
+          recipe={r}
+          onSave={(items) => {
+            updateRecipe(r.id, { decor: items })
+            setDecorOpen(false)
+            nav.showToast(items.length ? '표지를 예쁘게 꾸몄어요 🎀' : '꾸미기를 비웠어요')
+          }}
+          onClose={() => setDecorOpen(false)}
+        />
+      )}
 
       {timer && <TimerSheet label={r.title} onClose={() => setTimer(false)} />}
 

@@ -140,7 +140,9 @@ function defaultFolders(recipes) {
 function reducer(state, action) {
   switch (action.type) {
     case 'add': {
-      return { ...state, recipes: [action.recipe, ...state.recipes] }
+      // 저장 날짜 자동 기록 — 상세 화면에 'N월 N일 저장'으로 표시된다.
+      const rec = { savedAt: Date.now(), ...action.recipe }
+      return { ...state, recipes: [rec, ...state.recipes] }
     }
     case 'update': {
       return {

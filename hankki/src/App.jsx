@@ -12,7 +12,6 @@ import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
 import ShopScreen from './screens/ShopScreen'
 import ProfileScreen from './screens/ProfileScreen'
-import DiaryScreen from './screens/DiaryScreen'
 import ImportScreen from './screens/ImportScreen'
 import RecipeDetailScreen from './screens/RecipeDetailScreen'
 import EditorScreen from './screens/EditorScreen'
@@ -21,7 +20,8 @@ import FavoritesScreen from './screens/FavoritesScreen'
 import CookedScreen from './screens/CookedScreen'
 import CookScreen from './screens/CookScreen'
 
-const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, diary: DiaryScreen, shop: ShopScreen, profile: ProfileScreen }
+// '일지'는 레시피 탭의 '요리 기록' 세그먼트로 합쳐졌다.
+const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, shop: ShopScreen, profile: ProfileScreen }
 
 // --- 아주 가벼운 내비게이션 스택 + 토스트 ---
 const NavCtx = createContext(null)
@@ -30,7 +30,11 @@ export const useNav = () => useContext(NavCtx)
 export default function App() {
   // 새로고침(앱 업데이트·실수로 당겨서 새로고침 등)이 나도 보던 탭으로 돌아오도록 기억해 둔다.
   const [tab, setTab] = useState(() => {
-    try { return sessionStorage.getItem('hankki:tab') || 'home' } catch { return 'home' }
+    try {
+      const t = sessionStorage.getItem('hankki:tab') || 'home'
+      if (t === 'diary') return 'myrecipes' // 일지 탭 통합 이전에 저장된 값 호환
+      return TABS[t] ? t : 'home'
+    } catch { return 'home' }
   })
   const [stack, setStack] = useState([]) // 위로 쌓이는 화면들
   const [toast, setToast] = useState(null)
