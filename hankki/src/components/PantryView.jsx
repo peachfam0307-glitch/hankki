@@ -43,7 +43,8 @@ export default function PantryView() {
   const [scanPct, setScanPct] = useState(null) // null | 0~100 — 영수증 읽는 중
   const [found, setFound] = useState(null) // null | [{name, on}] — 영수증에서 찾은 재료 확인
   const [receiptCrop, setReceiptCrop] = useState(null) // 자르기 단계(품목 부분만)
-  const receiptRef = useRef(null)
+  const receiptRef = useRef(null) // 앨범·캡처(저장된 사진)
+  const receiptCamRef = useRef(null) // 바로 촬영(카메라)
 
   // 영수증 캡처/사진 → 품목 부분만 잘라 → 식재료만 골라 확인 후 냉장고에 담기
   const onReceipt = (e) => {
@@ -108,11 +109,11 @@ export default function PantryView() {
       <div className="sec-head" style={{ marginTop: 6 }}>
         <div className="h-section">냉장고 재료함</div>
       </div>
-      {/* 영수증 스캔 — 핵심 기능이라 크고 진하게. 옆에 직접 담기(+ 재료). */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+      {/* 영수증 스캔 — 핵심 기능이라 크고 진하게. 바로 촬영이 기본, 저장된 사진도 선택. */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <button
           className="press"
-          onClick={() => receiptRef.current?.click()}
+          onClick={() => receiptCamRef.current?.click()}
           style={{
             flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
             padding: '13px 14px', borderRadius: 'var(--r-md)',
@@ -120,7 +121,7 @@ export default function PantryView() {
             boxShadow: '0 3px 10px rgba(90,70,45,0.18)',
           }}
         >
-          <span style={{ fontSize: 18 }}>🧾</span> 영수증으로 담기
+          <span style={{ fontSize: 18 }}>📷</span> 영수증 촬영
         </button>
         <button
           className="press"
@@ -134,7 +135,15 @@ export default function PantryView() {
           <Icon name="plus" size={17} color="var(--brown)" stroke={2.4} /> 재료
         </button>
       </div>
+      <button
+        className="press"
+        onClick={() => receiptRef.current?.click()}
+        style={{ display: 'block', margin: '0 auto 14px', padding: '4px 8px', color: 'var(--text-sub)', fontSize: 12.5, fontWeight: 600 }}
+      >
+        🖼 저장된 영수증·주문내역 사진에서
+      </button>
 
+      <input ref={receiptCamRef} type="file" accept="image/*" capture="environment" onChange={onReceipt} style={{ display: 'none' }} />
       <input ref={receiptRef} type="file" accept="image/*" onChange={onReceipt} style={{ display: 'none' }} />
 
       {receiptCrop && (

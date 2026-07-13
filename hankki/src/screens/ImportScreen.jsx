@@ -284,11 +284,24 @@ export default function ImportScreen() {
             <div className="opt-ico"><Icon name={flowMeta.icon} size={24} color={flowMeta.color} stroke={1.7} /></div>
             <div className="h-title" style={{ fontSize: 22 }}>{flowMeta.title}</div>
           </div>
-          <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 14 }}>
+          <div className="t-sub" style={{ marginTop: 6, marginBottom: 12, fontSize: 14 }}>
             {flow === 'instagram'
               ? '인스타는 캡션 글자를 복사할 수 없어요. 화면을 캡처해서 올리는 게 제일 정확해요.'
               : '영상엔 글자가 없어요. 설명(더보기)을 붙여넣거나, 화면을 캡처해서 올려주세요.'}
           </div>
+
+          {/* 앱 바로 열기 — 링크 복사·캡처하러 갈 때 편하게 */}
+          <button
+            className="press"
+            onClick={() => window.open(flow === 'instagram' ? 'https://www.instagram.com/' : 'https://www.youtube.com/', '_blank', 'noopener,noreferrer')}
+            style={{
+              width: '100%', marginBottom: 12, padding: 12, borderRadius: 'var(--r-md)',
+              background: flowMeta.color, color: '#fff', fontSize: 14, fontWeight: 700,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            }}
+          >
+            <Icon name={flowMeta.icon} size={18} color="#fff" stroke={2} /> {flowMeta.title} 열기 ↗
+          </button>
 
           {/* 1순위 — 캡처해서 사진으로 (어디서나 가장 확실) */}
           <div className="card" style={{ padding: 15, marginBottom: 12, background: 'var(--cream)', border: 'none' }}>
