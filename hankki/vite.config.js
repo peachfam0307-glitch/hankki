@@ -16,7 +16,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff,woff2}'],
       },
       includeAssets: ['favicon.svg', 'icons/icon-192-v3.png', 'icons/icon-512-v3.png'],
       manifest: {

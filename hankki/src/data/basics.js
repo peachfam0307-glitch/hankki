@@ -11,7 +11,7 @@ const base = {
   sourceUrl: '',
 }
 
-export const BASICS_VERSION = 4 // 올리면 기존 사용자에게 새 기본 레시피가 추가된다
+export const BASICS_VERSION = 5 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
 
 export const basicRecipes = [
   {
@@ -52,6 +52,8 @@ export const basicRecipes = [
     ...base,
     id: 'basic-doenjangjjigae',
     title: '된장찌개',
+    thumb: 'photo',
+    image: import.meta.env.BASE_URL + 'recipe-photos/doenjangjjigae.webp',
     icon: 'soup',
     category: '한식',
     folder: '한식',
@@ -179,6 +181,8 @@ export const basicRecipes = [
     ...base,
     id: 'basic-tteokbokki',
     title: '국물 떡볶이',
+    thumb: 'photo',
+    image: import.meta.env.BASE_URL + 'recipe-photos/tteokbokki.webp',
     icon: 'tteok',
     category: '간식',
     folder: '간식',

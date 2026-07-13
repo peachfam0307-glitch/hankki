@@ -54,6 +54,10 @@ function load() {
 // 기존 사용자에게 기본 제공 레시피를 '한 번만' 넣어준다.
 // seedV(버전)와 removedSeedIds(지운 것 기록) 덕분에, 사용자가 지운 기본 레시피는
 // 앞으로 버전이 올라가도 절대 되살아나지 않는다.
+// 기본 레시피에 새로 생긴 표지 사진(id → image URL)
+const BASIC_PHOTOS = Object.fromEntries(
+  basicRecipes.filter((r) => r.thumb === 'photo' && r.image).map((r) => [r.id, r.image])
+)
 function migrateBasics(saved) {
   const v = saved.seedV || 0
   if (v >= BASICS_VERSION) return { recipes: saved.recipes, seedV: v }
@@ -64,7 +68,14 @@ function migrateBasics(saved) {
     // 같은 제목의 레시피가 이미 있으면 넣지 않는다 (예전 예시의 김치볶음밥 등과 중복 방지)
     .filter((r) => !have.has(r.id) && !dead.has(r.id) && !haveTitles.has(r.title))
     .map((r, i) => ({ ...r, savedAt: Date.now() - i * 60000 }))
-  return { recipes: [...saved.recipes, ...add], seedV: BASICS_VERSION }
+  // 기존 기본 레시피에 새 표지 사진 입히기 — 아직 사진이 없는(기본 아이콘) 것만.
+  // (사용자가 직접 넣은 사진/커스텀은 건드리지 않는다)
+  const withPhotos = saved.recipes.map((r) =>
+    r && BASIC_PHOTOS[r.id] && r.thumb !== 'photo' && !r.image
+      ? { ...r, thumb: 'photo', image: BASIC_PHOTOS[r.id] }
+      : r
+  )
+  return { recipes: [...withPhotos, ...add], seedV: BASICS_VERSION }
 }
 
 // 예전 버전(OCR 필터 이전)에 저장된 레시피의 '외계어 메모'를 한 번만 청소한다.
