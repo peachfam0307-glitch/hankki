@@ -11,9 +11,9 @@ const base = {
   sourceUrl: '',
 }
 
-export const BASICS_VERSION = 5 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
+export const BASICS_VERSION = 6 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
 
-export const basicRecipes = [
+const RAW_BASICS = [
   {
     ...base,
     id: 'basic-kimchijjigae',
@@ -52,8 +52,6 @@ export const basicRecipes = [
     ...base,
     id: 'basic-doenjangjjigae',
     title: '된장찌개',
-    thumb: 'photo',
-    image: import.meta.env.BASE_URL + 'recipe-photos/doenjangjjigae.webp',
     icon: 'soup',
     category: '한식',
     folder: '한식',
@@ -181,8 +179,6 @@ export const basicRecipes = [
     ...base,
     id: 'basic-tteokbokki',
     title: '국물 떡볶이',
-    thumb: 'photo',
-    image: import.meta.env.BASE_URL + 'recipe-photos/tteokbokki.webp',
     icon: 'tteok',
     category: '간식',
     folder: '간식',
@@ -621,4 +617,54 @@ export const basicRecipes = [
     ],
     memo: '굴소스 몇 방울이면 감칠맛이 확 올라와요. 버터는 가염·무염 아무거나 OK.',
   },
+  {
+    ...base,
+    id: 'basic-cheesesandwich',
+    title: '치즈 샌드위치',
+    icon: 'bread',
+    category: '양식',
+    folder: '양식',
+    tags: ['간단', '브런치', '자취요리'],
+    time: 10,
+    servings: 1,
+    difficulty: '쉬움',
+    ingredients: [
+      '식빵 2장',
+      '슬라이스 치즈 2장 (체다·모차렐라 등)',
+      '버터 1큰술',
+      '달걀 1개 (선택)',
+      '꿀 또는 잼 약간 (선택)',
+    ],
+    steps: [
+      '식빵 바깥쪽 면에 버터를 얇게 바른다. (겉이 노릇하게 구워져요)',
+      '식빵 사이에 치즈 2장을 넣는다. 취향에 달걀프라이를 함께 넣어도 좋아요.',
+      '약불로 달군 팬에 버터 바른 면이 바닥으로 가게 올린다.',
+      '뚜껑을 덮고 2~3분, 아래가 노릇해지면 뒤집어 2분 더 굽는다.',
+      '치즈가 쭉 늘어나면 반으로 잘라 완성.',
+    ],
+    memo: '약불이 포인트 — 센 불이면 겉만 타고 치즈가 안 녹아요. 꿀·잼을 곁들이면 단짠으로 더 맛있어요.',
+  },
 ]
+
+// 표지 사진 매핑 — 사진이 있는 기본 레시피만. (public/recipe-photos/*.webp)
+// 사진 없는 레시피는 그대로 아이콘 표지 — 사진+아이콘이 섞여도 '한끼'다운 개성.
+const RECIPE_PHOTOS = {
+  'basic-kimchijjigae': 'kimchijjigae',
+  'basic-doenjangjjigae': 'doenjangjjigae',
+  'basic-japchae': 'japchae',
+  'basic-curry': 'curry',
+  'basic-tteokbokki': 'tteokbokki',
+  'basic-tteokguk': 'tteokguk',
+  'basic-creampasta': 'creampasta',
+  'basic-rosepasta': 'rosepasta',
+  'basic-padthai': 'padthai',
+  'basic-basquecake': 'basquecake',
+  'basic-tiramisu': 'tiramisu',
+  'basic-cheesesandwich': 'cheesesandwich',
+}
+
+export const basicRecipes = RAW_BASICS.map((r) =>
+  RECIPE_PHOTOS[r.id]
+    ? { ...r, thumb: 'photo', image: import.meta.env.BASE_URL + 'recipe-photos/' + RECIPE_PHOTOS[r.id] + '.webp' }
+    : r
+)
