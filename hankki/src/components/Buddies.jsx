@@ -3,6 +3,9 @@
 //          ② 오리지널 전신(꺅 버전 — 소품 든 아이들). 둘 다 아바타로 고를 수 있다.
 // 호두 셰프 = 사장님네 크레스티드 게코 호두 실물(크림 몸·앰버 눈·미소) 반영.
 
+// 아바타 공통 배경 — 채도 있는 파스텔은 촌스러워서, 캐릭터가 살도록 깔끔한 화이트톤으로 통일.
+const BG = '#f5f3ee'
+
 const Eye = ({ x, y, r = 2.2 }) => (
   <>
     <circle cx={x} cy={y} r={r} fill="#3a332b" />
@@ -63,7 +66,8 @@ const B = {
       <path d="M14 14l5.6 4.8-7 2.7z" fill="#c4a87e" /><path d="M34 14l-5.6 4.8 7 2.7z" fill="#c4a87e" />
       <path d="M15.8 16.2l3.4 2.9-4.3 1.6z" fill="#f7c4ae" /><path d="M32.2 16.2l-3.4 2.9 4.3 1.6z" fill="#f7c4ae" />
       <circle cx="24" cy="24.5" r="11.4" fill="#f0dfbe" />
-      <Happy x={21} y={24.2} /><Happy x={27.4} y={24.2} />
+      {/* 눈만 친구들이랑 동일하게(토끼 간격) — 코·입·수염·볼은 원본 그대로 */}
+      <Eye x={18.4} y={24.4} /><Eye x={29.6} y={24.4} />
       <path d="M22.5 26.9q.75 1 1.5 0 q.75 1 1.5 0" stroke="#5f4632" strokeWidth="1.1" fill="none" strokeLinecap="round" />
       <path d="M24 25.7v1.2" stroke="#5f4632" strokeWidth="1" strokeLinecap="round" />
       <path d="M11.4 24l4.4 1M11.8 26.8l4.2-.2M36.6 24l-4.4 1M36.2 26.8l-4.2-.2" stroke="#c4a87e" strokeWidth="1" strokeLinecap="round" />
@@ -126,7 +130,8 @@ const B = {
   ),
   gecko: (
     <g>
-      <path d="M33.6 39.6c2.9-.5 5 .8 5.2 2.4.2 1.4-1 2.3-2.3 2-1-.2-1.5-1.2-1-1.9.3-.5 1-.6 1.3-.2" fill="none" stroke="#e4d3a4" strokeWidth="2.1" strokeLinecap="round" />
+      {/* 도마뱀 꼬리 — 몸 뒤 오른쪽 아래로 통통하게 말린 컬 */}
+      <path d="M31 34.5c5.6-.4 9.8 2.2 10 6 .16 3-2 5-4.4 4.7-2-.24-3.3-2.2-2.3-3.9.66-1.15 2.2-1.2 3-.1-.35-1.7-2.5-2.3-4-1-1.5 1.5-.8 3.9 1.4 4.3 2.6.5 4.9-1.8 4.5-4.8-.5-3.8-4.7-6-9.2-5.2z" fill="#ecdfb6" stroke="#dcc794" strokeWidth="0.9" strokeLinejoin="round" />
       <path d="M24 39.5c-8.3 0-14-5.4-14-11.9 0-7 5.7-10.9 14-10.9s14 3.9 14 10.9c0 6.5-5.7 11.9-14 11.9z" fill="#f0e4c0" />
       <path d="M10.9 24.4l1.6-3.2 1.6 2.3 1.7-3 1.6 2.5 1.8-2.6 1.1 2.7z" fill="#e6c886" />
       <path d="M37.1 24.4l-1.6-3.2-1.6 2.3-1.7-3-1.6 2.5-1.8-2.6-1.1 2.7z" fill="#e6c886" />
@@ -223,7 +228,7 @@ const F = {
         <FaceGrad id="hk1g" light="#fff3ae" base="#ffdf6e" /><BlushGrad id="hk1b" c="#ff9d5c" /><FClip id="hk1c" />
         <radialGradient id="hk1k" cx="42%" cy="30%" r="80%"><stop offset="0%" stopColor="#ffc25e" /><stop offset="100%" stopColor="#ff9d2e" /></radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#fff2cf" />
+      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk1c)">
         <circle cx="32" cy="40" r="30" fill="url(#hk1g)" />
         <path d="M40 12c2.6-3.2 6.6-3.6 8.4-2" stroke="#e8b93e" strokeWidth="1.7" strokeLinecap="round" fill="none" />
@@ -243,7 +248,7 @@ const F = {
         <FaceGrad id="hk2g" light="#f9cd8a" base="#ec9f4e" /><BlushGrad id="hk2b" c="#f0764a" /><FClip id="hk2c" />
         <radialGradient id="hk2m" cx="50%" cy="34%" r="75%"><stop offset="0%" stopColor="#fff8e8" /><stop offset="100%" stopColor="#fbe3ba" /></radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#d7e9fa" />
+      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk2c)">
         <circle cx="11" cy="15" r="9" fill="#dd8b3d" /><circle cx="11" cy="15" r="4.8" fill="#f9d29a" />
         <circle cx="53" cy="15" r="9" fill="#dd8b3d" /><circle cx="53" cy="15" r="4.8" fill="#f9d29a" />
@@ -264,7 +269,7 @@ const F = {
       <defs>
         <FaceGrad id="hk3g" light="#ffffff" base="#fdf2ee" /><BlushGrad id="hk3b" c="#ff7d9d" /><FClip id="hk3c" />
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#ffd3e0" />
+      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk3c)">
         <rect x="13.5" y="-7" width="11.5" height="27" rx="5.7" fill="#fffdf9" stroke="#f3e0d6" strokeWidth="0.8" />
         <rect x="16.4" y="-3" width="5.8" height="19.5" rx="2.9" fill="#ff9fb9" />
@@ -288,7 +293,7 @@ const F = {
       <defs>
         <FaceGrad id="hk4g" light="#ffd089" base="#ff9f3e" /><BlushGrad id="hk4b" c="#f2653a" /><FClip id="hk4c" />
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#cfe9c8" />
+      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk4c)">
         <path d="M8 22 12 3.5l12.5 9z" fill="#f79440" /><path d="M10.8 18 13 8.6l6.8 5z" fill="#ffc3d2" />
         <path d="M56 22 52 3.5 39.5 12.5z" fill="#f79440" /><path d="M53.2 18 51 8.6l-6.8 5z" fill="#ffc3d2" />
@@ -312,7 +317,7 @@ const F = {
       <defs>
         <FaceGrad id="hk5g" light="#fff6e0" base="#f5ddb0" /><BlushGrad id="hk5b" c="#f0774e" /><FClip id="hk5c" />
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#e2d7f7" />
+      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk5c)">
         <path d="M4 18c-2.2 12.5 2 22.8 8.4 24.8 3.1-6.2 3.1-16.6 0-24.8-2.7-4.6-7.3-4.2-8.4 0z" fill="#a9713d" />
         <path d="M60 18c2.2 12.5-2 22.8-8.4 24.8-3.1-6.2-3.1-16.6 0-24.8 2.7-4.6 7.3-4.2 8.4 0z" fill="#a9713d" />
@@ -336,7 +341,7 @@ const F = {
         <FaceGrad id="hk6g" light="#f9f0d4" base="#efdfb2" /><BlushGrad id="hk6b" c="#f0a86e" /><FClip id="hk6c" />
         <radialGradient id="hk6i" cx="38%" cy="30%" r="80%"><stop offset="0%" stopColor="#f7c96a" /><stop offset="100%" stopColor="#dd8f2a" /></radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#e2edd8" />
+      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk6c)">
         <path d="M3 34C5 16 17 8.5 32 8.5S59 16 61 34c1.6 9-1 24-9 28H12C4 58 1.4 43 3 34z" fill="url(#hk6g)" />
         <g fill="#eccf8e" stroke="#d6b26c" strokeWidth="0.6" strokeLinejoin="round">
@@ -370,7 +375,7 @@ const F = {
         <FaceGrad id="hk7g" light="#ffdc94" base="#ffb95e" /><BlushGrad id="hk7b" c="#f2653a" /><FClip id="hk7c" />
         <radialGradient id="hk7k" cx="50%" cy="38%" r="75%"><stop offset="0%" stopColor="#ffedc4" /><stop offset="100%" stopColor="#ffd694" /></radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="32" fill="#ffe0bd" />
+      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk7c)">
         <circle cx="13" cy="13" r="7.4" fill="#ed9840" /><circle cx="13" cy="13" r="3.9" fill="#ffd9a0" />
         <circle cx="51" cy="13" r="7.4" fill="#ed9840" /><circle cx="51" cy="13" r="3.9" fill="#ffd9a0" />
@@ -391,7 +396,119 @@ const F = {
   ),
 }
 
+// ---------- 라인 세트(64 뷰박스) — 펜 라인 · 미니멀 ----------
+const LN = '#6b4f3a'
+const LHat = ({ x = 32, y = 13 }) => (
+  <>
+    <path d={`M${x - 8} ${y}c-3-1.2-2.6-5.4.8-5.8.5-2.7 4-3.8 5.9-1.9 1.4-2.4 5.3-2.4 6.5.2 3.1-.7 5.3 2.7 2.9 5.2`} fill="none" stroke={LN} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+    <path d={`M${x - 8.2} ${y}h16.4`} stroke={LN} strokeWidth="2" strokeLinecap="round" />
+  </>
+)
+const LEyes = ({ lx = 26, rx = 38, y = 34 }) => (
+  <>
+    <circle cx={lx} cy={y} r="1.9" fill={LN} /><circle cx={rx} cy={y} r="1.9" fill={LN} />
+  </>
+)
+
+const L = {
+  lbear: (
+    <g>
+      <rect width="64" height="64" fill={BG} />
+      <circle cx="19" cy="24" r="4.5" fill="none" stroke={LN} strokeWidth="2" />
+      <circle cx="45" cy="24" r="4.5" fill="none" stroke={LN} strokeWidth="2" />
+      <circle cx="32" cy="35" r="15" fill="none" stroke={LN} strokeWidth="2" />
+      <LHat x={32} y={12} />
+      <LEyes lx={26} rx={38} y={34} />
+      <path d="M29 40q3 2.5 6 0" fill="none" stroke={LN} strokeWidth="2" strokeLinecap="round" />
+      <circle cx="32" cy="38.5" r="1.3" fill={LN} />
+    </g>
+  ),
+  lchick: (
+    <g>
+      <rect width="64" height="64" fill={BG} />
+      <circle cx="32" cy="35" r="15" fill="none" stroke={LN} strokeWidth="2" />
+      <LHat x={28} y={12} />
+      <path d="M45 15c2-1.5 4.5-1.2 5.5.6" fill="none" stroke={LN} strokeWidth="2" strokeLinecap="round" />
+      <LEyes lx={26} rx={38} y={33} />
+      <path d="M29 37.6c1.7-1.4 4.3-1.4 6 0-.3 2.6-1.9 3.8-3 3.8s-2.7-1.2-3-3.8z" fill="none" stroke={LN} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+    </g>
+  ),
+  lcat: (
+    <g>
+      <rect width="64" height="64" fill={BG} />
+      <path d="M17 26l1-9 8 5z" fill="none" stroke={LN} strokeWidth="2" strokeLinejoin="round" />
+      <path d="M47 26l-1-9-8 5z" fill="none" stroke={LN} strokeWidth="2" strokeLinejoin="round" />
+      <circle cx="32" cy="35" r="15" fill="none" stroke={LN} strokeWidth="2" />
+      <LHat x={32} y={11} />
+      <LEyes lx={26} rx={38} y={33} />
+      <path d="M30.6 38c.5-.7 2.3-.7 2.8 0 .3.5-.3 1.1-1.4 1.1s-1.7-.6-1.4-1.1z" fill={LN} />
+      <path d="M32 39.1v.9m0 0q-1 1-2 0m2 0q1 1 2 0" fill="none" stroke={LN} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M14 34h5M14 37h5M45 34h5M45 37h5" stroke={LN} strokeWidth="1.6" strokeLinecap="round" />
+    </g>
+  ),
+  lgecko: (
+    <g>
+      <rect width="64" height="64" fill={BG} />
+      <path d="M47 40c4 1 6.5 3.4 6 6.2-.4 2.4-2.6 3.6-4.3 2.7-1.4-.7-1.7-2.6-.6-3.6.8-.7 2-.5 2.4.3" fill="none" stroke={LN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15 33c0-9 7.5-14 17-14s17 5 17 14-7.5 14-17 14-17-5-17-14z" fill={BG} stroke={LN} strokeWidth="2" />
+      <path d="M15.5 25.5l1.4-2.4 1.4 2M21 22.5l1.3-2.2 1.4 1.9M43 22.5l-1.3-2.2-1.4 1.9M48.5 25.5l-1.4-2.4-1.4 2" fill="none" stroke={LN} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+      <LHat x={32} y={11} />
+      <circle cx="24" cy="32" r="3.4" fill="none" stroke={LN} strokeWidth="2" />
+      <circle cx="40" cy="32" r="3.4" fill="none" stroke={LN} strokeWidth="2" />
+      <circle cx="24" cy="32" r="1.3" fill={LN} /><circle cx="40" cy="32" r="1.3" fill={LN} />
+      <g fill={LN}><circle cx="30" cy="38.4" r="0.7" /><circle cx="34" cy="38.4" r="0.7" /></g>
+      <path d="M26 40q6 4 12 0" fill="none" stroke={LN} strokeWidth="2" strokeLinecap="round" />
+    </g>
+  ),
+  lrabbit: (
+    <g>
+      <rect width="64" height="64" fill={BG} />
+      <ellipse cx="23.5" cy="15" rx="3" ry="8" fill="none" stroke={LN} strokeWidth="2" transform="rotate(-12 23.5 15)" />
+      <ellipse cx="40.5" cy="15" rx="3" ry="8" fill="none" stroke={LN} strokeWidth="2" transform="rotate(12 40.5 15)" />
+      <circle cx="32" cy="36" r="14.5" fill="none" stroke={LN} strokeWidth="2" />
+      <LHat x={32} y={13} />
+      <LEyes lx={26.5} rx={37.5} y={35} />
+      <path d="M30.8 38.4c.5-.7 1.9-.7 2.4 0 .3.45-.25 1-1.2 1s-1.5-.55-1.2-1z" fill={LN} />
+      <path d="M32 39.4v1" stroke={LN} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M30.4 40.4h1.6v2.4M33.6 40.4h-1.6" fill="none" stroke={LN} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+    </g>
+  ),
+  ldog: (
+    <g>
+      <rect width="64" height="64" fill={BG} />
+      <path d="M18.5 30c-3.5-.5-6-4.5-5.5-9.3.3-2.6 2.3-3.2 3.9-1.4 1.7 1.9 2.7 5 2.6 8z" fill="none" stroke={LN} strokeWidth="2" strokeLinejoin="round" />
+      <path d="M45.5 30c3.5-.5 6-4.5 5.5-9.3-.3-2.6-2.3-3.2-3.9-1.4-1.7 1.9-2.7 5-2.6 8z" fill="none" stroke={LN} strokeWidth="2" strokeLinejoin="round" />
+      <circle cx="32" cy="35.5" r="14.3" fill="none" stroke={LN} strokeWidth="2" />
+      <LHat x={32} y={13} />
+      <LEyes lx={26.5} rx={37.5} y={34} />
+      <ellipse cx="32" cy="38.6" rx="2" ry="1.5" fill={LN} />
+      <path d="M32 40.1v1.4m0 0q-1.2 1.1-2.3 0m2.3 0q1.2 1.1 2.3 0" fill="none" stroke={LN} strokeWidth="1.7" strokeLinecap="round" />
+    </g>
+  ),
+  lhamster: (
+    <g>
+      <rect width="64" height="64" fill={BG} />
+      <circle cx="22.5" cy="22.5" r="3.6" fill="none" stroke={LN} strokeWidth="2" />
+      <circle cx="41.5" cy="22.5" r="3.6" fill="none" stroke={LN} strokeWidth="2" />
+      <circle cx="32" cy="36" r="15" fill="none" stroke={LN} strokeWidth="2" />
+      <LHat x={32} y={13} />
+      <LEyes lx={26} rx={38} y={35} />
+      <path d="M30.9 38.8h2.2l-1.1 1.2z" fill={LN} />
+      <path d="M32 40v.9m0 0q-.9.8-1.6 0m1.6 0q.9.8 1.6 0" fill="none" stroke={LN} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M16.5 37c1.6 1.6 3.2 1.6 4.8 0M47.5 37c-1.6 1.6-3.2 1.6-4.8 0" fill="none" stroke={LN} strokeWidth="1.6" strokeLinecap="round" />
+    </g>
+  ),
+}
+
 export const BUDDY_LIST = [
+  // 라인 세트 — 펜 라인 미니멀
+  { id: 'lbear', name: '곰 셰프' },
+  { id: 'lchick', name: '병아리 셰프' },
+  { id: 'lcat', name: '냥이 셰프' },
+  { id: 'lgecko', name: '호두 라인' },
+  { id: 'lrabbit', name: '토끼 셰프' },
+  { id: 'ldog', name: '강아지 셰프' },
+  { id: 'lhamster', name: '햄찌 셰프' },
   // 클로즈업 세트 — 인형 스타일 (밝은 색 · 말랑 광택)
   { id: 'fchick', name: '삐약 셰프' },
   { id: 'fbear', name: '꿀곰 셰프' },
@@ -400,29 +517,33 @@ export const BUDDY_LIST = [
   { id: 'fdog', name: '몽실 셰프' },
   { id: 'fgecko', name: '호두 셰프' }, // 크레스티드 게코 — 사장님네 호두
   { id: 'fhamster', name: '볼통 셰프' },
-  // 오리지널 전신 세트 — 처음 버전도 같이!
-  { id: 'bear', name: '곰곰 셰프' },
-  { id: 'rabbit', name: '토토 셰프' },
-  { id: 'catpot', name: '냄비 냥이' },
-  { id: 'chick', name: '병아리 셰프' },
-  { id: 'dog', name: '몽몽 셰프' },
-  { id: 'gecko', name: '호두 · 전신' },
-  { id: 'hamster', name: '햄찌 셰프' },
 ]
+// 오리지널 전신 세트(B)는 픽커에서 뺐다 — 클로즈업만 사용.
+// (기존에 전신을 골라둔 프로필이 있어도 B 객체는 남아 있어 그대로 렌더된다)
 
 export default function Buddy({ id, size = 48 }) {
-  if (F[id]) {
+  if (L[id]) {
+    // 라인 세트 — 여백이 넉넉해 잘림 없음. 그대로 렌더.
     return (
       <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">
-        {F[id]}
+        {L[id]}
+      </svg>
+    )
+  }
+  if (F[id]) {
+    // 원(아바타)에 넣으면 귀·모자가 모서리에서 잘려서, 배경은 꽉 채우고
+    // 캐릭터(귀·모자 등)만 살짝 안쪽으로 축소해 원 안에 들어오게 한다.
+    return (
+      <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">
+        <g transform="translate(32 33.5) scale(0.9) translate(-32 -32)">{F[id]}</g>
       </svg>
     )
   }
   const body = B[id] || B.bear
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
-      {/* 전신 세트는 그림 여백이 많아 1.1배 확대해 원을 꽉 채운다 */}
-      <g transform="translate(24 24) scale(1.1) translate(-24 -24)">{body}</g>
+      {/* 전신 세트는 그림 여백이 많아 확대해 원을 꽉 채운다 */}
+      <g transform="translate(24 25) scale(1.24) translate(-24 -24)">{body}</g>
     </svg>
   )
 }

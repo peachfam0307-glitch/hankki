@@ -199,7 +199,7 @@ export function Avatar({ name, avatar, size = 32 }) {
           width: size,
           height: size,
           borderRadius: '50%',
-          background: 'linear-gradient(135deg,#eef0ec,#dfe2da)',
+          background: 'linear-gradient(160deg,#f8f6f1,#f1eee7)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -207,7 +207,7 @@ export function Avatar({ name, avatar, size = 32 }) {
           overflow: 'hidden',
         }}
       >
-        <Buddy id={avatar.value} size={String(avatar.value).startsWith('f') ? size : size * 0.96} />
+        <Buddy id={avatar.value} size={/^[fl]/.test(String(avatar.value)) ? size : size * 0.96} />
       </div>
     )
   }

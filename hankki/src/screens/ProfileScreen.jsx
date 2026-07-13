@@ -155,7 +155,7 @@ export default function ProfileScreen() {
               {/* 요리사 친구들 — 모자 쓴 동물 캐릭터 */}
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brown)', marginBottom: 8 }}>요리사 친구들 🧑‍🍳</div>
-                <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, paddingBottom: 4 }}>
                   {BUDDY_LIST.map((bd) => {
                     const on = profile.avatar?.type === 'buddy' && profile.avatar.value === bd.id
                     return (
@@ -172,7 +172,7 @@ export default function ProfileScreen() {
                             height: 56,
                             borderRadius: '50%',
                             overflow: 'hidden',
-                            background: 'linear-gradient(135deg,#eef0ec,#dfe2da)',
+                            background: 'linear-gradient(160deg,#f8f6f1,#f1eee7)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -180,8 +180,8 @@ export default function ProfileScreen() {
                             boxSizing: 'border-box',
                           }}
                         >
-                          {/* 클로즈업(f~) 세트는 배경까지 갖춘 스티커라 꽉 채워서 */}
-                          <Buddy id={bd.id} size={bd.id.startsWith('f') ? 56 : 53} />
+                          {/* 클로즈업·라인 세트 모두 배경까지 갖춘 스티커라 꽉 채워서 */}
+                          <Buddy id={bd.id} size={56} />
                         </div>
                         <span style={{ fontSize: 10, fontWeight: on ? 800 : 600, color: on ? 'var(--brown)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{bd.name}</span>
                       </button>
