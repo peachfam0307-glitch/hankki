@@ -116,6 +116,14 @@ export default function PantryView() {
       {receiptCrop && (
         <CropSheet
           image={receiptCrop}
+          title="영수증에서 품목만 남기기"
+          hint={
+            <>
+              위·아래 매장 정보·합계는 빼고 <b style={{ color: '#f0ede7' }}>상품명·가격이 적힌 부분만</b> 남겨주세요.
+              <br />
+              <span style={{ color: '#8f8b83', fontSize: 11.5 }}>딱 맞게 자를수록 · 반듯하고 밝을수록 정확해요 ✨</span>
+            </>
+          }
           onDone={scanReceipt}
           onSkip={() => scanReceipt(receiptCrop)}
           onCancel={() => setReceiptCrop(null)}

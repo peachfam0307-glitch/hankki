@@ -53,6 +53,9 @@ export function normalizeNumerals(text) {
   s = s.replace(/(\d[a-zA-Z가-힣]{0,3})\s*[-–—~]\s*(\d)/g, '$1~$2')
   // 크기 표기: "2cm x 2cm", "20 * 30" → 곱셈기호(×)로
   s = s.replace(/(\d\s*(?:cm|mm|g|kg)?)\s*[xX*]\s*(\d)/g, '$1×$2')
+  // 작은술 't' 오독: OCR이 t를 '+'로 자주 읽는다 (소금 2+ → 2t, 참치액 1/2+ → 1/2t).
+  // '3T + 물'처럼 더하기로 쓰인 +(앞이 숫자가 아님)는 건드리지 않는다.
+  s = s.replace(/(\d)\s*\+(?!\d)/g, '$1t')
   return s
 }
 

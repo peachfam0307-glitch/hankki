@@ -14,6 +14,7 @@ const FOOD_WORDS = [
   '파프리카', '피망', '고추', '청양고추', '버섯', '팽이버섯', '표고버섯', '새송이', '양송이',
   '느타리', '콩나물', '숙주', '미나리', '샐러리', '아스파라거스', '옥수수', '토마토', '방울토마토',
   '아보카도', '단호박', '연근', '우엉', '도라지', '고사리', '샐러드', '청경채', '얼갈이', '쑥갓',
+  '공심채', '스위트콘', '초당옥수수', '방울양배추', '적양파', '대파채', '깐마늘',
   // 과일
   '사과', '배', '바나나', '딸기', '포도', '샤인머스캣', '귤', '오렌지', '레몬', '라임', '자몽',
   '수박', '참외', '멜론', '복숭아', '자두', '체리', '블루베리', '키위', '망고', '파인애플', '감',
@@ -45,11 +46,11 @@ const FOOD_WORDS = [
 
 // 영수증에서 무시할 줄 (합계·카드·매장·배송·컬럼 헤더 등)
 const SKIP =
-  /합계|소계|총액|총\s*금액|금액|공급가|부가세|과세|면세|물품가|판매|수량|단가|품목|품명|상품명|카드|현금|결제|승인|포인트|적립|누적|잔액|할인|쿠폰|거스름|받을|받은|거래|매출|영수증|매장|지점|점포|전화|사업자|대표|주소|번호|일시|바코드|교환|환불|감사|배송|택배|봉투|무료|반품|회원|고객|계산|영업|가맹|단말|일련|주문|테이블/
+  /합계|소계|총액|총\s*금액|금액|공급가|부가세|과세|면세|물품|판매|수량|단가|품목|품명|상품명|구매|카드|현금|결제|승인|포인트|적립|누적|잔액|할인|행사|증정|사은|쿠폰|거스름|받을|받은|거래|매출|영수증|매장|지점|점포|전화|사업자|대표|주소|번호|일시|바코드|교환|환불|감사|배송|택배|봉투|무료|반품|회원|고객|계산|영업|가맹|단말|일련|주문|테이블/
 
 // 식품 아닌 흔한 생필품(있으면 후보에서 뺀다 — 확인 화면이 지저분해지지 않게)
 const NONFOOD =
-  /비닐|종량제|물티슈|휴지|화장지|기저귀|생리대|세제|세탁|섬유유연|샴푸|린스|바디|비누|치약|칫솔|면도|건전지|배터리|수세미|호일|랩|위생장갑|지퍼백|담배|라이터|양말|건전지|의약|밴드|마스크/
+  /비닐|종량제|종량|봉투|쇼핑백|에코백|장바구니|물티슈|휴지|화장지|기저귀|생리대|세제|세탁|섬유유연|샴푸|린스|바디|비누|치약|칫솔|면도|건전지|배터리|수세미|호일|위생장갑|지퍼백|담배|라이터|양말|의약|밴드|마스크/
 
 // 매장 주소 줄 — "서울시 강남구 …", "역삼로 123" 같은 건 품목이 아니다.
 // (대구·양구 같은 식품/지명 오탐을 막으려 '시+구' 조합이나 '로/길+숫자'만 주소로 본다)
@@ -100,34 +101,51 @@ export function extractReceiptItems(text) {
     found.push(nm)
   }
 
-  for (const line of lines) {
-    if (SKIP.test(line) || NONFOOD.test(line) || ADDR.test(line)) continue
+  // 모바일 영수증은 헤더를 "합 계 · 면 세 물 품"처럼 한 글자씩 띄운다 —
+  // 띄어쓰기를 지운 문자열로도 걸러야 SKIP/NONFOOD 정규식이 먹는다.
+  const isSkippable = (s) => {
+    const compact = s.replace(/\s+/g, '')
+    return SKIP.test(compact) || NONFOOD.test(compact) || ADDR.test(s)
+  }
 
+  // 한 줄(품목명 후보)에서 식재료를 뽑아 담는다. 담았으면 true.
+  const takeFrom = (raw) => {
+    if (isSkippable(raw)) return false
     // 1) 아는 식재료 단어가 있으면 대표 단어로 담는다(레시피 매칭에 유리).
     const matches = FOOD_WORDS.filter((w) => {
-      if (w.length === 1) return new RegExp(`(^|[^가-힣])${w}([^가-힣]|$)`).test(line)
-      return line.includes(w)
+      if (w.length === 1) return new RegExp(`(^|[^가-힣])${w}([^가-힣]|$)`).test(raw)
+      return raw.includes(w)
     })
     if (matches.length) {
       const claimed = []
       for (const w of matches.sort((a, b) => b.length - a.length)) {
-        const i = line.indexOf(w)
+        const i = raw.indexOf(w)
         if (i < 0) continue
         if (claimed.some(([s, e]) => i < e && i + w.length > s)) continue
         claimed.push([i, i + w.length])
         add(w)
       }
-      continue
+      return true
     }
-
-    // 2) 아는 단어가 없어도 '가격 붙은 한글 품목 줄'이면 이름을 정리해 후보로 올린다.
-    if (!hasPrice(line)) continue
-    const name = cleanItemName(line)
-    // 한 글자 오독이면 아는 식재료로 되돌려 대표 단어로 담는다(레시피 매칭에 유리).
+    // 2) 아는 단어가 없어도 이름을 정리해 후보로 올린다.
+    const name = cleanItemName(raw)
+    // 한 글자 오독이면 아는 식재료로 되돌려 대표 단어로 담는다("고주장"→"고추장").
     const snap = name.split(' ').map(snapToFoodWord).find(Boolean)
-    if (snap) { add(snap); continue }
+    if (snap) { add(snap); return true }
     const hangul = (name.match(/[가-힣]/g) || []).length
-    if (hangul >= 2 && name.length <= 14) add(name)
+    if (hangul >= 2 && name.length <= 16) { add(name); return true }
+    return false
+  }
+
+  for (const line of lines) {
+    if (isSkippable(line)) continue
+    // A) 번호로 시작하는 품목 줄("01* 공심채(모닝글로리)")은 가격이 다음 줄(바코드)에
+    //    있어도 이름만으로 담는다 — 모바일/대형마트 영수증의 흔한 2줄 구조 대응.
+    const numbered = line.match(/^\d{1,2}\s*\*?\s+(.+)/)
+    if (numbered) { takeFrom(numbered[1]); continue }
+    // B) 번호가 없으면, 가격이 붙은 한글 품목 줄만 후보로 본다.
+    if (!hasPrice(line)) continue
+    takeFrom(line)
   }
   return found
 }

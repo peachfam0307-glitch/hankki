@@ -109,15 +109,18 @@ const STEP_VERB =
 const SENT_END = /(다|요|라|자|죠|함|셈|봐)[.!~)"'\s]*$|[.!…]["')\]]*\s*$/
 // 수량·분량을 나타내는 표현 — 숫자가 없어도 재료로 본다("소금 약간", "애호박 반개")
 const AMOUNT =
-  /(\d|½|⅓|⅔|¼|¾|반\s?개|반\s?컵|반\s?쪽|약간|조금|적당량|적당히|넉넉|한\s?줌|두\s?줌|한\s?꼬집|한\s?스푼|톨|줌|꼬집)/
+  /(\d|½|⅓|⅔|¼|¾|반\s?개|반\s?컵|반\s?쪽|약간|조금|적당량|적당히|넉넉|한\s?줌|두\s?줌|한\s?꼬집|한\s?스푼|한\s?방울|톨|줌|꼬집|방울)/
 
+// 문장 종결(평서 ~다/~요/~라/~자, 또는 마침표)
+const DECLARATIVE = /(다|요|죠|라|자|셈|봐)[.!~)"'\s]*$|[.!…]["')\]]*\s*$/
 // 이 줄이 '만드는 법(순서)' 문장인가?
 function looksLikeStep(l) {
   if (STEP.test(l)) return true // "1. …", "①…", "step 1"
   const hasVerb = STEP_VERB.test(l)
-  const ends = SENT_END.test(l)
-  if (l.length >= 8 && hasVerb && ends) return true // 짧은 조리 문장 ("밥을 넣고 볶는다")
-  if (l.length >= 16 && (hasVerb || ends)) return true // 긴 설명 문장
+  const ends = DECLARATIVE.test(l)
+  if (hasVerb && ends && l.length >= 6) return true // 짧은 조리 문장 ("밥을 넣고 볶는다")
+  if (ends && l.length >= 8) return true // 종결형 문장이면 대체로 순서 ("오이는 어슷썬다")
+  if ((hasVerb || ends) && l.length >= 16) return true // 긴 설명 문장
   return false
 }
 
@@ -160,7 +163,11 @@ export function parseRecipeText(raw = '', opts = {}) {
   // 문장이거나 쉼표·괄호로 끝나는 조각("해 가제 무스,")은 안 된다.
   // 마땅한 제목이 없으면 비워둔다 — 이상한 제목보다 빈 칸이 낫다.
   const looksLikeTitle = (l) =>
-    (/[가-힣]{2,}/.test(l) || hasRealLatinWord(l, 4)) && !SENTENCE_END.test(l) && !/[,;:)\]}]$/.test(l)
+    (/[가-힣]{2,}/.test(l) || hasRealLatinWord(l, 4)) &&
+    !SENTENCE_END.test(l) &&
+    !/[,;:)\]}]$/.test(l) &&
+    !/\d{2,}$/.test(l) && // 숫자 꼬리로 끝나는 건 OCR 잡음("완성588") — 제목 아님
+    !/완성|끝\s*$/.test(l) // 마지막 순서의 꼬리("…완성")도 제목이 아니다
 
   const pushStep = (l) => { steps.push(STEP.test(l) ? l.replace(STEP, '').trim() : l); sawStep = true; lastWasBulletIng = false }
   const pushIng = (l, bullet) => { ingredients.push(l); lastWasBulletIng = bullet; }

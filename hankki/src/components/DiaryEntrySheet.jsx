@@ -106,6 +106,12 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete }) {
       {cropSrc && (
         <CropSheet
           image={cropSrc}
+          title="사진 자르기"
+          hint={
+            <>
+              모서리를 끌어 <b style={{ color: '#f0ede7' }}>남기고 싶은 부분만</b> 담아주세요.
+            </>
+          }
           onDone={async (img) => { setCropSrc(null); setPhoto(await downscale(img)) }}
           onSkip={async () => { const s = cropSrc; setCropSrc(null); setPhoto(await downscale(s)) }}
           onCancel={() => setCropSrc(null)}

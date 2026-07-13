@@ -5,7 +5,21 @@ import Portal from './Portal'
 // 모서리 4개를 드래그해 영역을 조절하고, 안쪽을 드래그하면 통째로 이동.
 const MIN = 0.12 // 최소 크기(비율)
 
-export default function CropSheet({ image, index = 0, total = 1, onDone, onSkip, onCancel }) {
+export default function CropSheet({
+  image,
+  index = 0,
+  total = 1,
+  onDone,
+  onSkip,
+  onCancel,
+  title = '글자 부분만 남기기',
+  hint = (
+    <>
+      모서리를 끌어 광고·사진은 빼고 <b style={{ color: '#f0ede7' }}>재료·만드는 법 글자 부분만</b> 남겨주세요.<br />
+      <span style={{ color: '#8f8b83', fontSize: 11.5 }}>딱 맞게 자를수록 · 사진이 반듯하고 밝을수록 정확해요 ✨</span>
+    </>
+  ),
+}) {
   const boxRef = useRef(null) // 이미지가 실제로 그려진 영역
   const [rect, setRect] = useState({ x: 0.03, y: 0.03, w: 0.94, h: 0.94 })
   const drag = useRef(null)
@@ -117,13 +131,12 @@ export default function CropSheet({ image, index = 0, total = 1, onDone, onSkip,
       <div style={{ padding: '14px 18px calc(6px)', paddingTop: 'calc(14px + var(--safe-top, 0px))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button className="press" onClick={once(onCancel)} style={{ color: '#d8d5cf', fontSize: 14, fontWeight: 600 }}>취소</button>
         <div style={{ color: '#fff', fontSize: 14.5, fontWeight: 700 }}>
-          글자 부분만 남기기{total > 1 ? ` · ${index + 1}/${total}장` : ''}
+          {title}{total > 1 ? ` · ${index + 1}/${total}장` : ''}
         </div>
         <div style={{ width: 40 }} />
       </div>
       <div style={{ color: '#b8b4ac', fontSize: 12.5, textAlign: 'center', padding: '0 20px 10px', lineHeight: 1.55 }}>
-        모서리를 끌어 광고·사진은 빼고 <b style={{ color: '#f0ede7' }}>재료·만드는 법 글자 부분만</b> 남겨주세요.<br />
-        <span style={{ color: '#8f8b83', fontSize: 11.5 }}>딱 맞게 자를수록 · 사진이 반듯하고 밝을수록 정확해요 ✨</span>
+        {hint}
       </div>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '0 10px' }}>
