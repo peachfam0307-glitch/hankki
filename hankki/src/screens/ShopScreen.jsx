@@ -50,7 +50,15 @@ export default function ShopScreen() {
   const [editShops, setEditShops] = useState(false)
   const [shopForm, setShopForm] = useState(null) // null | {} (new) | shop (edit)
   const [adding, setAdding] = useState(false)
-  const [view, setView] = useState('shop') // 'pantry' | 'shop'
+  // 냉장고/장보기 하위 화면 선택은 기억해 둔다 — 냉장고에서 추천 레시피를 보고
+  // 돌아왔을 때 장보기(영수증) 쪽으로 튕기지 않도록.
+  const [view, setViewState] = useState(() => {
+    try { return sessionStorage.getItem('hankki:shopView') || 'shop' } catch { return 'shop' }
+  })
+  const setView = (v) => {
+    setViewState(v)
+    try { sessionStorage.setItem('hankki:shopView', v) } catch { /* noop */ }
+  }
   const [clearAsk, setClearAsk] = useState(false)
 
   const doneCount = shoppingList.filter((i) => i.done).length

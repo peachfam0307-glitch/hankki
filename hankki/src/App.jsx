@@ -7,6 +7,7 @@ import { parseRecipeText } from './parseRecipe'
 import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
 import TimerBar from './components/TimerBar'
+import ConfirmSheet from './components/ConfirmSheet'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
@@ -38,6 +39,8 @@ export default function App() {
   })
   const [stack, setStack] = useState([]) // 위로 쌓이는 화면들
   const [toast, setToast] = useState(null)
+  const [exitAsk, setExitAsk] = useState(false) // 홈에서 뒤로가기 → 종료 확인 팝업
+  const exitingRef = useRef(false)
   const toastTimer = useRef(null)
   const tabRef = useRef(tab)
   const stackRef = useRef(stack)
@@ -59,11 +62,15 @@ export default function App() {
   // 안드로이드 '뒤로가기'가 앱을 바로 종료시키지 않도록: 열린 화면을 닫고,
   // 탭이면 홈으로. (히스토리 트랩을 유지해 갑작스런 종료 방지)
   useEffect(() => {
-    try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
+    const trap = () => { try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ } }
+    trap()
     const onPop = () => {
-      if (stackRef.current.length > 0) setStack((s) => s.slice(0, -1))
-      else if (tabRef.current !== 'home') setTab('home')
-      try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
+      if (exitingRef.current) return // 종료 진행 중이면 트랩 안 함(밖으로 나가게)
+      if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); trap(); return }
+      if (tabRef.current !== 'home') { setTab('home'); trap(); return }
+      // 홈 루트에서 뒤로가기 → 바로 나가지 않고 종료 확인 팝업
+      setExitAsk(true)
+      trap()
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
@@ -149,6 +156,16 @@ export default function App() {
         {!top && <BottomNav active={tab} onChange={go} onImport={() => push({ name: 'import' })} />}
         <TimerBar bottom={top ? 'calc(84px + var(--safe-bottom))' : 'calc(66px + var(--safe-bottom))'} />
         {toast && <div className="toast">{toast}</div>}
+
+        {exitAsk && (
+          <ConfirmSheet
+            title="한끼 나가기"
+            message="한끼를 나갈까요?"
+            confirmLabel="나가기"
+            onConfirm={() => { setExitAsk(false); exitingRef.current = true; try { history.go(-2) } catch { /* noop */ } }}
+            onClose={() => setExitAsk(false)}
+          />
+        )}
       </div>
     </NavCtx.Provider>
   )
