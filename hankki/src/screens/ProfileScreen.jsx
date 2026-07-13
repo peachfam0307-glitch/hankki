@@ -5,7 +5,7 @@ import Icon from '../components/Icon'
 import TabTips from '../components/TabTips'
 import EmojiPicker from '../components/EmojiPicker'
 import FoodIconPicker from '../components/FoodIconPicker'
-import Buddy, { BUDDY_LIST } from '../components/Buddies'
+import Buddy, { BUDDY_GROUPS } from '../components/Buddies'
 import Portal from '../components/Portal'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
@@ -157,42 +157,46 @@ export default function ProfileScreen() {
               <button className="press" onClick={() => setAvatarSheet(false)} style={{ color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* 요리사 친구들 — 모자 쓴 동물 캐릭터 */}
+              {/* 요리사 친구들 — 모자 쓴 동물 캐릭터. 세 가지 그림체를 섹션으로 나눠 보여준다. */}
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brown)', marginBottom: 8 }}>요리사 친구들 🧑‍🍳</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, paddingBottom: 4 }}>
-                  {BUDDY_LIST.map((bd) => {
-                    const on = profile.avatar?.type === 'buddy' && profile.avatar.value === bd.id
-                    return (
-                      <button
-                        key={bd.id}
-                        className="press"
-                        onClick={() => { setProfile({ avatar: { type: 'buddy', value: bd.id } }); setAvatarSheet(false); nav.showToast(`${bd.name}로 바꿨어요 ✨`) }}
-                        aria-label={bd.name}
-                        style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, width: 60 }}
-                      >
-                        <div
-                          style={{
-                            width: 56,
-                            height: 56,
-                            borderRadius: '50%',
-                            overflow: 'hidden',
-                            background: 'linear-gradient(160deg,#f8f6f1,#f1eee7)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            border: on ? '2.5px solid var(--brown)' : '2.5px solid transparent',
-                            boxSizing: 'border-box',
-                          }}
-                        >
-                          {/* 클로즈업·라인 세트 모두 배경까지 갖춘 스티커라 꽉 채워서 */}
-                          <Buddy id={bd.id} size={56} />
-                        </div>
-                        <span style={{ fontSize: 10, fontWeight: on ? 800 : 600, color: on ? 'var(--brown)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{bd.name}</span>
-                      </button>
-                    )
-                  })}
-                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brown)', marginBottom: 10 }}>요리사 친구들 🧑‍🍳</div>
+                {BUDDY_GROUPS.map((g) => (
+                  <div key={g.key} style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--sand)', margin: '0 2px 8px', letterSpacing: '0.02em' }}>{g.label}</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                      {g.items.map((bd) => {
+                        const on = profile.avatar?.type === 'buddy' && profile.avatar.value === bd.id
+                        return (
+                          <button
+                            key={bd.id}
+                            className="press"
+                            onClick={() => { setProfile({ avatar: { type: 'buddy', value: bd.id } }); setAvatarSheet(false); nav.showToast(`${bd.name}로 바꿨어요 ✨`) }}
+                            aria-label={bd.name}
+                            style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, width: 60 }}
+                          >
+                            <div
+                              style={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: '50%',
+                                overflow: 'hidden',
+                                background: 'linear-gradient(160deg,#f8f6f1,#f1eee7)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: on ? '2.5px solid var(--brown)' : '2.5px solid transparent',
+                                boxSizing: 'border-box',
+                              }}
+                            >
+                              <Buddy id={bd.id} size={56} />
+                            </div>
+                            <span style={{ fontSize: 10, fontWeight: on ? 800 : 600, color: on ? 'var(--brown)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{bd.name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <EmojiPicker

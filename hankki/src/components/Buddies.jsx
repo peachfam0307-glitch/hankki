@@ -66,10 +66,10 @@ const B = {
       <path d="M14 14l5.6 4.8-7 2.7z" fill="#c4a87e" /><path d="M34 14l-5.6 4.8 7 2.7z" fill="#c4a87e" />
       <path d="M15.8 16.2l3.4 2.9-4.3 1.6z" fill="#f7c4ae" /><path d="M32.2 16.2l-3.4 2.9 4.3 1.6z" fill="#f7c4ae" />
       <circle cx="24" cy="24.5" r="11.4" fill="#f0dfbe" />
-      {/* 눈만 친구들이랑 동일하게(토끼 간격) — 코·입·수염·볼은 원본 그대로 */}
+      {/* 눈·코·입 모두 친구들과 통일 — 점눈 + 세모 코 + 방긋 입(토끼·강아지 스타일) */}
       <Eye x={18.4} y={24.4} /><Eye x={29.6} y={24.4} />
-      <path d="M22.5 26.9q.75 1 1.5 0 q.75 1 1.5 0" stroke="#5f4632" strokeWidth="1.1" fill="none" strokeLinecap="round" />
-      <path d="M24 25.7v1.2" stroke="#5f4632" strokeWidth="1" strokeLinecap="round" />
+      <path d="M22.9 26.5h2.2l-1.1 1.3z" fill="#f4a992" />
+      <path d="M24 27.9v.9M24 28.8c-.85.85-1.8.85-2.5.1M24 28.8c.85.85 1.8.85 2.5.1" stroke="#5f4632" strokeWidth="1" fill="none" strokeLinecap="round" />
       <path d="M11.4 24l4.4 1M11.8 26.8l4.2-.2M36.6 24l-4.4 1M36.2 26.8l-4.2-.2" stroke="#c4a87e" strokeWidth="1" strokeLinecap="round" />
       <circle cx="16.8" cy="27.4" r="2.4" fill="#f5b19b" opacity="0.8" /><circle cx="31.2" cy="27.4" r="2.4" fill="#f5b19b" opacity="0.8" />
       <path d="M13 31h22a1 1 0 0 1 1 1.1c-.4 5.8-4.6 9.2-12 9.2s-11.6-3.4-12-9.2a1 1 0 0 1 1-1.1z" fill="#ad713a" />
@@ -500,26 +500,52 @@ const L = {
   ),
 }
 
-export const BUDDY_LIST = [
-  // 라인 세트 — 펜 라인 미니멀
-  { id: 'lbear', name: '곰 셰프' },
-  { id: 'lchick', name: '병아리 셰프' },
-  { id: 'lcat', name: '냥이 셰프' },
-  { id: 'lgecko', name: '호두 라인' },
-  { id: 'lrabbit', name: '토끼 셰프' },
-  { id: 'ldog', name: '강아지 셰프' },
-  { id: 'lhamster', name: '햄찌 셰프' },
-  // 클로즈업 세트 — 인형 스타일 (밝은 색 · 말랑 광택)
-  { id: 'fchick', name: '삐약 셰프' },
-  { id: 'fbear', name: '꿀곰 셰프' },
-  { id: 'frabbit', name: '깡총 셰프' },
-  { id: 'fcat', name: '나비 셰프' },
-  { id: 'fdog', name: '몽실 셰프' },
-  { id: 'fgecko', name: '호두 셰프' }, // 크레스티드 게코 — 사장님네 호두
-  { id: 'fhamster', name: '볼통 셰프' },
+// 세 가지 그림체 세트 — 픽커에서 섹션(오리지널·라인·캔디)으로 나눠 보여준다.
+// 같은 동물이 세트마다 있어서(호두·삐약 등) 섹션 라벨이 있어야 안 헷갈린다.
+export const BUDDY_GROUPS = [
+  {
+    key: 'origin',
+    label: '오리지널',
+    items: [
+      { id: 'bear', name: '곰곰 셰프' },
+      { id: 'rabbit', name: '토토 셰프' },
+      { id: 'catpot', name: '냄비냥이' },
+      { id: 'chick', name: '삐약 셰프' },
+      { id: 'dog', name: '몽몽 셰프' },
+      { id: 'gecko', name: '호두 셰프' }, // 크레스티드 게코 — 사장님네 호두(꼬리 포함)
+      { id: 'hamster', name: '햄찌 셰프' },
+    ],
+  },
+  {
+    key: 'line',
+    label: '라인',
+    items: [
+      { id: 'lbear', name: '곰 셰프' },
+      { id: 'lchick', name: '병아리 셰프' },
+      { id: 'lcat', name: '냥이 셰프' },
+      { id: 'lgecko', name: '호두 셰프' }, // '호두 라인' → 다른 라인 친구들처럼 'OO 셰프'로 통일
+      { id: 'lrabbit', name: '토끼 셰프' },
+      { id: 'ldog', name: '강아지 셰프' },
+      { id: 'lhamster', name: '햄찌 셰프' },
+    ],
+  },
+  {
+    key: 'candy',
+    label: '캔디',
+    items: [
+      { id: 'fchick', name: '삐약 셰프' },
+      { id: 'fbear', name: '꿀곰 셰프' },
+      { id: 'frabbit', name: '깡총 셰프' },
+      { id: 'fcat', name: '나비 셰프' },
+      { id: 'fdog', name: '몽실 셰프' },
+      { id: 'fgecko', name: '호두 셰프' },
+      { id: 'fhamster', name: '볼통 셰프' },
+    ],
+  },
 ]
-// 오리지널 전신 세트(B)는 픽커에서 뺐다 — 클로즈업만 사용.
-// (기존에 전신을 골라둔 프로필이 있어도 B 객체는 남아 있어 그대로 렌더된다)
+
+// 평평한 목록(하위 호환) — 그룹을 펼친 것.
+export const BUDDY_LIST = BUDDY_GROUPS.flatMap((g) => g.items)
 
 export default function Buddy({ id, size = 48 }) {
   if (L[id]) {
@@ -544,8 +570,8 @@ export default function Buddy({ id, size = 48 }) {
   const body = B[id] || B.bear
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
-      {/* 전신 세트는 그림 여백이 많아 확대해 원을 꽉 채운다 */}
-      <g transform="translate(24 25) scale(1.24) translate(-24 -24)">{body}</g>
+      {/* 전신 세트는 그림 여백이 많아 확대해 원을 꽉 채운다(적용 시 작아 보이지 않게) */}
+      <g transform="translate(24 25.5) scale(1.3) translate(-24 -24)">{body}</g>
     </svg>
   )
 }

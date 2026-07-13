@@ -207,7 +207,7 @@ export function Avatar({ name, avatar, size = 32 }) {
           overflow: 'hidden',
         }}
       >
-        <Buddy id={avatar.value} size={/^[fl]/.test(String(avatar.value)) ? size : size * 0.96} />
+        <Buddy id={avatar.value} size={size} />
       </div>
     )
   }
