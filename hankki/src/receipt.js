@@ -112,7 +112,8 @@ export function extractReceiptItems(text) {
   const takeFrom = (raw) => {
     if (isSkippable(raw)) return false
     // 초고가 품목은 식재료가 아니다(가전 등) — 마트 식품은 개당 10만원을 넘지 않는다.
-    const prices = (raw.match(/\d[\d,]{3,}/g) || []).map((n) => parseInt(n.replace(/,/g, ''), 10))
+    // 쉼표로 끊은 '금액'만 본다(바코드 같은 긴 숫자는 가격이 아니므로 제외).
+    const prices = (raw.match(/\d{1,3}(?:,\d{3})+/g) || []).map((n) => parseInt(n.replace(/,/g, ''), 10))
     if (prices.some((p) => p >= 100000)) return false
     // 1) 아는 식재료 단어가 있으면 대표 단어로 담는다(레시피 매칭에 유리).
     const matches = FOOD_WORDS.filter((w) => {
@@ -142,9 +143,10 @@ export function extractReceiptItems(text) {
 
   for (const line of lines) {
     if (isSkippable(line)) continue
-    // A) 번호로 시작하는 품목 줄("01* 공심채(모닝글로리)")은 가격이 다음 줄(바코드)에
-    //    있어도 이름만으로 담는다 — 모바일/대형마트 영수증의 흔한 2줄 구조 대응.
-    const numbered = line.match(/^\d{1,2}\s*\*?\s+(.+)/)
+    // A) 번호로 시작하는 품목 줄("01* 공심채", "1.삼겹살")은 가격이 다음 줄(바코드)에
+    //    있어도 이름만으로 담는다. 구분자(*.))나 공백이 있어야 하므로 순수 바코드 줄
+    //    ("2507281079179…")은 걸리지 않는다.
+    const numbered = line.match(/^\d{1,2}(?:\s*[*.)]+|\s+)\s*(.+)/)
     if (numbered) { takeFrom(numbered[1]); continue }
     // B) 번호가 없으면, 가격이 붙은 한글 품목 줄만 후보로 본다.
     if (!hasPrice(line)) continue

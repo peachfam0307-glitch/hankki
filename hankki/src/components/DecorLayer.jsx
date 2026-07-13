@@ -41,7 +41,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     const cy = rect.top + it.y * rect.height
     const dx = e.clientX - cx
     const dy = e.clientY - cy
-    hRef.current = { id: it.id, cx, cy, d0: Math.hypot(dx, dy) || 1, a0: (Math.atan2(dy, dx) * 180) / Math.PI, s0: it.s, r0: it.r || 0, W: rect.width }
+    hRef.current = { id: it.id, cx, cy, d0: Math.hypot(dx, dy) || 1, a0: (Math.atan2(dy, dx) * 180) / Math.PI, s0: it.s, r0: it.r || 0 }
     e.currentTarget.setPointerCapture?.(e.pointerId)
   }
   const onHandleMove = (e) => {
