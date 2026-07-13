@@ -324,7 +324,7 @@ export default function ImportScreen() {
               }}
               disabled={!url.trim()}
             >
-              📺 영상 보면서 직접 적기
+              {flow === 'youtube' ? '📺 영상 보면서 직접 적기' : '📷 미리보기 띄우고 직접 적기'}
             </button>
             <button className="btn-ghost press" style={{ width: '100%' }} onClick={saveLink} disabled={!url.trim()}>
               링크만 Inbox에 저장 (바로가기)

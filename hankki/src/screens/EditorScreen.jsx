@@ -6,6 +6,8 @@ import FoodIconPicker from '../components/FoodIconPicker'
 import EmojiPicker from '../components/EmojiPicker'
 import TextTile from '../components/TextTile'
 import CropSheet from '../components/CropSheet'
+import Portal from '../components/Portal'
+import PromptSheet from '../components/PromptSheet'
 import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES, colors } from '../theme'
 import { TAG_LIST } from '../data/seed'
@@ -38,6 +40,8 @@ export default function EditorScreen({ id, prefill }) {
     return []
   })
   const [pin, setPin] = useState(prefill?.watch ? 'video' : prefill?.refImages?.length ? 'photo' : null)
+  const [zoom, setZoom] = useState(false) // 캡처 원본 전체화면으로 크게 보기
+  const [newFolder, setNewFolder] = useState(false)
 
   const [f, setF] = useState(() => {
     const e = editing
@@ -184,7 +188,7 @@ export default function EditorScreen({ id, prefill }) {
         <div style={{ display: 'flex', gap: 8, margin: '6px 16px 0' }}>
           {embed && (
             <button className="press" onClick={() => setPin('video')} style={{ flex: 1, padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700 }}>
-              📺 영상 보면서 쓰기
+              {embed.type === 'youtube' ? '📺 영상 보면서 쓰기' : '📷 인스타 미리보기'}
             </button>
           )}
           {refs.length > 0 && (
@@ -201,14 +205,20 @@ export default function EditorScreen({ id, prefill }) {
             title="원본 영상"
             allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
-            /* allow-top-navigation 을 빼서 영상 안을 눌러도 앱(한끼)이 인스타로 넘어가지 않게 막는다 */
-            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox"
+            /* allow-top-navigation·allow-popups 를 모두 빼서, 임베드 안을 눌러도 앱(한끼)이
+               인스타·유튜브 앱으로 튕겨 나가지 않게 막는다. (유튜브 인라인 재생엔 영향 없음) */
+            sandbox="allow-scripts allow-same-origin allow-presentation"
             style={
               embed.type === 'youtube'
                 ? { display: 'block', width: '100%', aspectRatio: '16/9', border: 0 }
-                : { display: 'block', width: '100%', height: '45vh', border: 0, background: '#fff' }
+                : { display: 'block', width: '100%', height: '48vh', border: 0, background: '#fff' }
             }
           />
+          {embed.type === 'instagram' && (
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '7px 12px', background: 'rgba(20,19,17,0.78)', color: 'rgba(255,255,255,0.92)', fontSize: 11.5, fontWeight: 600, textAlign: 'center' }}>
+              인스타 영상은 정책상 앱 안에서 재생되지 않아요 · 캡션·썸네일만 참고할 수 있어요
+            </div>
+          )}
           <button
             className="press"
             onClick={() => setPin(null)}
@@ -221,22 +231,27 @@ export default function EditorScreen({ id, prefill }) {
       )}
       {pin === 'photo' && refs.length > 0 && (
         <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#141311' }}>
-          {/* 캡처 원본 — 인식이 100%가 아니니 보면서 고친다. 좌우로 넘겨 여러 장 확인. */}
-          <div style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', height: '42vh' }}>
+          {/* 캡처 원본 — 인식이 100%가 아니니 보면서 고친다.
+              화면 너비에 꽉 채워 글씨가 크게 보이도록 하고, 길면 세로로 스크롤한다. */}
+          <div style={{ maxHeight: '56vh', overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
             {refs.map((img, k) => (
               <img
                 key={k}
                 src={img}
                 alt={`캡처 ${k + 1}`}
-                style={{ height: '100%', width: 'auto', maxWidth: 'none', flex: '0 0 auto', scrollSnapAlign: 'center', margin: '0 auto' }}
+                onClick={() => setZoom(k)}
+                style={{ display: 'block', width: '100%', height: 'auto', cursor: 'zoom-in' }}
               />
             ))}
           </div>
-          {refs.length > 1 && (
-            <div style={{ position: 'absolute', bottom: 8, left: 0, right: 0, textAlign: 'center', color: '#fff', fontSize: 11.5, fontWeight: 600, textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
-              ← 옆으로 넘겨 {refs.length}장 보기 →
-            </div>
-          )}
+          <button
+            className="press"
+            onClick={() => setZoom(0)}
+            aria-label="캡처 크게 보기"
+            style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', padding: '7px 16px', borderRadius: 999, background: 'rgba(20,19,17,0.78)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}
+          >
+            🔍 크게 보기{refs.length > 1 ? ` · ${refs.length}장` : ''}
+          </button>
           <button
             className="press"
             onClick={() => setPin(null)}
@@ -397,16 +412,7 @@ export default function EditorScreen({ id, prefill }) {
             {folders.map((c) => (
               <button key={c} className={`pill press ${f.folder === c ? 'active' : ''}`} onClick={() => set('folder', c)}>{c}</button>
             ))}
-            <button
-              className="pill press"
-              onClick={() => {
-                const name = window.prompt('새 폴더 이름')
-                if (name && name.trim()) {
-                  addFolder(name.trim())
-                  set('folder', name.trim())
-                }
-              }}
-            >
+            <button className="pill press" onClick={() => setNewFolder(true)}>
               + 새 폴더
             </button>
           </div>
@@ -427,6 +433,18 @@ export default function EditorScreen({ id, prefill }) {
         </button>
       </div>
 
+      {newFolder && (
+        <PromptSheet
+          title="새 폴더"
+          fields={[{ key: 'name', label: '폴더 이름', placeholder: '예) 자주 만드는' }]}
+          onSubmit={({ name }) => {
+            const nm = name.trim()
+            if (nm) { addFolder(nm); set('folder', nm) }
+          }}
+          onClose={() => setNewFolder(false)}
+        />
+      )}
+
       {cropImg && (
         <CropSheet
           image={cropImg}
@@ -434,6 +452,33 @@ export default function EditorScreen({ id, prefill }) {
           onSkip={() => { const img = cropImg; setCropImg(null); setRefs((p) => [...p, img]); setPin('photo'); runOcr(img) }}
           onCancel={() => setCropImg(null)}
         />
+      )}
+
+      {/* 캡처 원본 전체화면 — 손가락으로 확대해 자세히 본다. 아래 편집은 그대로 유지된다. */}
+      {zoom !== false && refs.length > 0 && (
+        <Portal>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(10,9,8,0.96)', overflowY: 'auto', overscrollBehavior: 'contain', touchAction: 'pinch-zoom', WebkitOverflowScrolling: 'touch' }}
+            onClick={() => setZoom(false)}
+          >
+            <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10, padding: '56px 0' }}>
+              {refs.map((img, k) => (
+                <img key={k} src={img} alt={`캡처 ${k + 1}`} style={{ display: 'block', width: '100%', height: 'auto' }} />
+              ))}
+            </div>
+            <button
+              className="press"
+              onClick={(e) => { e.stopPropagation(); setZoom(false) }}
+              aria-label="닫기"
+              style={{ position: 'fixed', top: 'calc(10px + var(--safe-top))', right: 12, padding: '8px 15px', borderRadius: 999, background: 'rgba(255,255,255,0.16)', color: '#fff', fontSize: 13.5, fontWeight: 700, backdropFilter: 'blur(4px)' }}
+            >
+              ✕ 닫기
+            </button>
+            <div style={{ position: 'fixed', bottom: 'calc(14px + var(--safe-bottom))', left: 0, right: 0, textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 600 }}>
+              손가락으로 확대·축소 · 위아래로 넘겨 보기
+            </div>
+          </div>
+        </Portal>
       )}
     </div>
   )

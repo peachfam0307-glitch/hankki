@@ -4,6 +4,7 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
+import PromptSheet from '../components/PromptSheet'
 import { TAG_LIST } from '../data/seed'
 import { dateLabel } from '../utils'
 
@@ -13,6 +14,7 @@ export default function MyRecipesScreen() {
   const [view, setView] = useState('grid') // grid | folders
   const [folder, setFolder] = useState('전체')
   const [edit, setEdit] = useState(false)
+  const [newFolder, setNewFolder] = useState(false)
 
   const del = (r) => {
     if (window.confirm(`'${r.title}' 레시피를 삭제할까요?`)) {
@@ -100,10 +102,7 @@ export default function MyRecipesScreen() {
             <button
               className="card press"
               style={{ padding: 16, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'center', alignItems: 'center', color: 'var(--text-sub)', borderStyle: 'dashed' }}
-              onClick={() => {
-                const name = window.prompt('새 폴더 이름')
-                if (name && name.trim()) addFolder(name.trim())
-              }}
+              onClick={() => setNewFolder(true)}
             >
               <Icon name="plus" size={24} color="var(--text-sub)" />
               <span style={{ fontSize: 13.5, fontWeight: 500 }}>새 폴더</span>
@@ -125,6 +124,15 @@ export default function MyRecipesScreen() {
             ))}
           </div>
         </div>
+      )}
+
+      {newFolder && (
+        <PromptSheet
+          title="새 폴더"
+          fields={[{ key: 'name', label: '폴더 이름', placeholder: '예) 자주 만드는' }]}
+          onSubmit={({ name }) => { const nm = name.trim(); if (nm) addFolder(nm) }}
+          onClose={() => setNewFolder(false)}
+        />
       )}
     </>
   )

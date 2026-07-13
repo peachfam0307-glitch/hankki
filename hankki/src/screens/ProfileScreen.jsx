@@ -7,6 +7,7 @@ import EmojiPicker from '../components/EmojiPicker'
 import FoodIconPicker from '../components/FoodIconPicker'
 import Buddy, { BUDDY_LIST } from '../components/Buddies'
 import Portal from '../components/Portal'
+import PromptSheet from '../components/PromptSheet'
 import { cropSquare } from '../utils'
 import { Avatar } from './HomeScreen'
 
@@ -16,6 +17,7 @@ export default function ProfileScreen() {
   const nav = useNav()
   const [backup, setBackup] = useState(false)
   const [avatarSheet, setAvatarSheet] = useState(false)
+  const [editSheet, setEditSheet] = useState(false)
   const fileRef = useRef(null)
   const avatarFileRef = useRef(null)
 
@@ -34,11 +36,11 @@ export default function ProfileScreen() {
     reader.readAsDataURL(file)
   }
 
-  const editProfile = () => {
-    const name = window.prompt('닉네임', profile.name)
-    if (name === null) return
-    const bio = window.prompt('한 줄 소개', profile.bio)
-    setProfile({ name: name.trim() || profile.name, bio: bio === null ? profile.bio : bio })
+  const editProfile = () => setEditSheet(true)
+
+  const saveProfile = ({ name, bio }) => {
+    setProfile({ name: name.trim() || profile.name, bio: bio.trim() })
+    nav.showToast('프로필을 바꿨어요 ✨')
   }
 
   const buildBackup = () => ({
@@ -276,6 +278,18 @@ export default function ProfileScreen() {
       </div>
 
       <input ref={fileRef} type="file" accept="application/json,.json" onChange={importData} style={{ display: 'none' }} />
+
+      {editSheet && (
+        <PromptSheet
+          title="프로필 수정"
+          fields={[
+            { key: 'name', label: '닉네임', value: profile.name, placeholder: '닉네임' },
+            { key: 'bio', label: '한 줄 소개', value: profile.bio, placeholder: '나를 한 줄로 소개해요', multiline: true },
+          ]}
+          onSubmit={saveProfile}
+          onClose={() => setEditSheet(false)}
+        />
+      )}
 
       {backup && (
        <Portal>
