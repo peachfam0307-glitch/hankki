@@ -13,10 +13,26 @@ import { CATEGORIES } from '../theme'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes } from '../utils'
 import { ocrImage } from '../ocr'
-import { parseRecipeText, cleanMemo } from '../parseRecipe'
+import { parseRecipeText, cleanMemo, isGibberish } from '../parseRecipe'
+import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 
+// 특정 칸(재료/만드는 법)에 넣을 때는 분류하지 않고, 읽은 줄을 그대로 정리만 한다.
+// 사용자가 "이 사진은 재료다/만드는 법이다"라고 이미 지정했으니 다시 쪼개지 않는다.
+function cleanOcrLines(text) {
+  return normalizeNumerals(String(text))
+    .split('\n')
+    .map((l) => l.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/^\d{1,2}\s*[.)]\s*/, '').trim())
+    .filter((l) => l.length > 1 && !isGibberish(l))
+}
+
 const DIFFS = ['쉬움', '보통', '어려움']
+// 재료·만드는 법 칸의 '사진에서' 작은 버튼
+const fieldOcrBtn = {
+  display: 'inline-flex', alignItems: 'center', gap: 4,
+  padding: '5px 10px', borderRadius: 999, background: 'var(--cream)',
+  color: 'var(--brown)', fontSize: 12.5, fontWeight: 700,
+}
 const THUMB_TYPES = [
   { key: 'icon', label: '아이콘' },
   { key: 'emoji', label: '이모지' },
@@ -32,6 +48,7 @@ export default function EditorScreen({ id, prefill }) {
   const ocrRef = useRef(null) // 글자 읽기용(썸네일과 별개)
   const [ocr, setOcr] = useState({ busy: false, pct: 0 })
   const [cropImg, setCropImg] = useState(null) // 글자 읽기 전 '자르기' 단계
+  const ocrTargetRef = useRef('all') // 'all' | 'ingredients' | 'steps' — 어느 칸에 채울지
   // 위에 고정해 두고 보면서 쓰기 — 'video'(유튜브·인스타) | 'photo'(캡처 원본) | null
   // 저장된 레시피를 다시 편집할 때도 사진이 있으면 참고용으로 띄울 수 있게 한다.
   const [refs, setRefs] = useState(() => {
@@ -94,7 +111,12 @@ export default function EditorScreen({ id, prefill }) {
     e.target.value = ''
   }
 
-  // 글자 읽기용 사진 — 자르기(광고·그림 제외)를 거쳐 재료·순서만 채운다. 썸네일은 그대로.
+  // 글자 읽기용 사진 — 자르기(광고·그림 제외)를 거쳐 채운다. 썸네일은 그대로.
+  // target: 'all'(재료·순서 자동 분류) | 'ingredients'(재료만) | 'steps'(만드는 법만)
+  const pickOcr = (target) => {
+    ocrTargetRef.current = target
+    ocrRef.current?.click()
+  }
   const onOcrFile = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -104,9 +126,18 @@ export default function EditorScreen({ id, prefill }) {
     e.target.value = ''
   }
 
-  // 사진 속 글자를 읽어 빈 칸을 자동으로 채운다. (썸네일과 별개)
+  // 한 칸에만 이어붙이기 — 이미 내용이 있으면 아래에 덧붙인다(2단·긴 레시피 대응).
+  const appendLines = (prevText, lines) => {
+    const base = prevText.trim()
+    const add = lines.join('\n').trim()
+    if (!add) return prevText
+    return base ? base + '\n' + add : add
+  }
+
+  // 사진 속 글자를 읽어 칸을 채운다. (썸네일과 별개)
   const runOcr = async (img) => {
     if (!img || ocr.busy) return
+    const target = ocrTargetRef.current || 'all'
     setOcr({ busy: true, pct: 0 })
     const text = await ocrImage(img, (pct) => setOcr({ busy: true, pct }))
     setOcr({ busy: false, pct: 0 })
@@ -114,6 +145,15 @@ export default function EditorScreen({ id, prefill }) {
       nav.showToast('사진에서 글자를 찾지 못했어요')
       return
     }
+    if (target === 'ingredients' || target === 'steps') {
+      // 지정한 칸에만 — 분류하지 않고 읽은 줄을 정리해 이어붙인다.
+      const lines = cleanOcrLines(text)
+      if (!lines.length) { nav.showToast('사진에서 글자를 찾지 못했어요'); return }
+      setF((prev) => ({ ...prev, [target]: appendLines(prev[target], lines) }))
+      nav.showToast(target === 'ingredients' ? '재료 칸에 담았어요 ✨' : '만드는 법 칸에 담았어요 ✨')
+      return
+    }
+    // 자동 분류 — 재료·순서를 함께 채운다(빈 칸만).
     const r = parseRecipeText(text, { fromOcr: true })
     setF((prev) => ({
       ...prev,
@@ -328,7 +368,7 @@ export default function EditorScreen({ id, prefill }) {
         {/* 사진에서 글자 읽기 — 썸네일과 별개. 레시피가 적힌 사진을 골라 재료·순서를 자동으로 채운다. */}
         <button
           className="press"
-          onClick={() => ocrRef.current?.click()}
+          onClick={() => pickOcr('all')}
           disabled={ocr.busy}
           style={{
             width: '100%',
@@ -349,7 +389,8 @@ export default function EditorScreen({ id, prefill }) {
           {ocr.busy ? <>사진에서 글자 읽는 중… {ocr.pct}%</> : <><Icon name="camera" size={18} color="var(--brown)" /> 사진에서 글자 가져오기</>}
         </button>
         <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 18, lineHeight: 1.5 }}>
-          레시피가 적힌 사진(캡처)을 고르면 재료·순서를 자동으로 채워요. 썸네일은 바뀌지 않아요.
+          레시피가 적힌 사진(캡처)을 고르면 재료·순서를 자동으로 채워요. 썸네일은 바뀌지 않아요.<br />
+          두 칸으로 나뉘었거나 긴 레시피는 아래 <b>재료·만드는 법 각 칸의 📷</b>로 따로따로 담으면 더 정확해요.
         </div>
 
         <div className="field">
@@ -388,12 +429,22 @@ export default function EditorScreen({ id, prefill }) {
         </div>
 
         <div className="field">
-          <label>재료 (한 줄에 하나씩)</label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <label style={{ margin: 0 }}>재료 (한 줄에 하나씩)</label>
+            <button className="press" onClick={() => pickOcr('ingredients')} disabled={ocr.busy} style={fieldOcrBtn}>
+              <Icon name="camera" size={14} color="var(--brown)" /> 사진에서
+            </button>
+          </div>
           <textarea rows={5} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} placeholder={'재료를 한 줄에 하나씩 적어주세요'} />
         </div>
 
         <div className="field">
-          <label>만드는 법 (한 줄에 한 단계)</label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <label style={{ margin: 0 }}>만드는 법 (한 줄에 한 단계)</label>
+            <button className="press" onClick={() => pickOcr('steps')} disabled={ocr.busy} style={fieldOcrBtn}>
+              <Icon name="camera" size={14} color="var(--brown)" /> 사진에서
+            </button>
+          </div>
           <textarea rows={5} value={f.steps} onChange={(e) => set('steps', e.target.value)} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
         </div>
 
@@ -448,6 +499,18 @@ export default function EditorScreen({ id, prefill }) {
       {cropImg && (
         <CropSheet
           image={cropImg}
+          title={
+            ocrTargetRef.current === 'ingredients' ? '재료 사진 자르기'
+              : ocrTargetRef.current === 'steps' ? '만드는 법 사진 자르기'
+                : '글자 부분만 남기기'
+          }
+          hint={
+            ocrTargetRef.current === 'ingredients' ? (
+              <>이 사진의 글자는 <b style={{ color: '#f0ede7' }}>재료 칸에만</b> 담겨요. 재료 부분만 남겨주세요.</>
+            ) : ocrTargetRef.current === 'steps' ? (
+              <>이 사진의 글자는 <b style={{ color: '#f0ede7' }}>만드는 법 칸에만</b> 담겨요. 순서 부분만 남겨주세요.</>
+            ) : undefined
+          }
           onDone={(img) => { setCropImg(null); setRefs((p) => [...p, img]); setPin('photo'); runOcr(img) }}
           onSkip={() => { const img = cropImg; setCropImg(null); setRefs((p) => [...p, img]); setPin('photo'); runOcr(img) }}
           onCancel={() => setCropImg(null)}

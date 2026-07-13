@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import Icon from './Icon'
 import { StickerArt, stickerRatio, NOTE_COLORS, TEXT_COLORS } from './Stickers'
 
@@ -12,15 +12,6 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
 export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote }) {
   const boxRef = useRef(null)
-  const [w, setW] = useState(0) // 컨테이너 폭(px) — 포스트잇 글자 크기 계산용
-  useEffect(() => {
-    const el = boxRef.current
-    if (!el) return
-    const ro = new ResizeObserver(() => setW(el.clientWidth))
-    ro.observe(el)
-    setW(el.clientWidth)
-    return () => ro.disconnect()
-  }, [])
 
   // 드래그(이동) — 아이템 몸통
   const dragRef = useRef(null)
@@ -79,8 +70,9 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           left: `${it.x * 100}%`,
           top: `${it.y * 100}%`,
           width: `${it.s * 100}%`,
-          // 글자는 내용에 따라 높이가 달라지므로 종횡비를 고정하지 않는다
-          ...(isText ? {} : { aspectRatio: `${ratio}` }),
+          // 글자·포스트잇 글씨가 '제 크기(cqw)'에 비례하도록 컨테이너로 지정.
+          // 글자는 내용에 따라 높이가 달라지므로 종횡비를 고정하지 않는다.
+          ...(isText ? { containerType: 'inline-size' } : { aspectRatio: `${ratio}` }),
           transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)`,
           touchAction: 'none',
           cursor: editable ? 'grab' : 'default',
@@ -95,9 +87,9 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             onPointerCancel={onItemUp}
           >
             {it.type === 'note' ? (
-              <Note it={it} w={w} editable={editable} />
+              <Note it={it} editable={editable} />
             ) : it.type === 'text' ? (
-              <TextDeco it={it} w={w} editable={editable} />
+              <TextDeco it={it} editable={editable} />
             ) : (
               <span style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(0 3px 4px rgba(60,50,35,.22))' }}>
                 <StickerArt id={it.key} />
@@ -150,23 +142,23 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
   )
 }
 
-function TextDeco({ it, w, editable }) {
+// 글자 크기는 '제 크기(cqw=요소 폭의 1%)'에 비례 — 크기 조절하면 글씨도 정확히 같은 비율로.
+function TextDeco({ it, editable }) {
   const c = TEXT_COLORS.find((t) => t.key === it.color) || TEXT_COLORS[0]
-  const fs = Math.max(11, it.s * w * 0.16)
   const text = it.text || (editable ? '글자' : '')
   return (
     <div
       style={{
         fontFamily: "'Gowun Dodum','Pretendard',sans-serif",
         fontWeight: 800,
-        fontSize: fs,
+        fontSize: 'clamp(10px, 22cqw, 120px)', // 요소 폭에 비례
         lineHeight: 1.25,
         color: c.color,
         textAlign: 'center',
         whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
         // 사진 위에서도 읽히게 반대 톤 외곽선 + 그림자
-        WebkitTextStroke: `${Math.max(0.5, fs * 0.03)}px ${c.stroke}`,
+        WebkitTextStroke: `0.6cqw ${c.stroke}`,
         textShadow: '0 1px 3px rgba(0,0,0,.35)',
         userSelect: 'none',
       }}
@@ -176,27 +168,33 @@ function TextDeco({ it, w, editable }) {
   )
 }
 
-function Note({ it, w, editable }) {
+function Note({ it, editable }) {
   const c = NOTE_COLORS.find((n) => n.key === it.key) || NOTE_COLORS[0]
-  const fs = Math.max(9, it.s * w * 0.115) // 폭에 비례한 글자 크기
   // 플레이스홀더는 편집 중에만 — 저장된 표지에선 빈 포스트잇은 빈 종이로 보인다.
   const text = it.text || (editable ? '탭해서 쓰기' : '')
   return (
     <div
       style={{
         position: 'absolute', inset: 0,
+        containerType: 'size', // 안쪽 글씨가 포스트잇 크기에 비례하도록
         background: c.bg, color: c.text,
         borderRadius: '3% 3% 3% 12%',
         boxShadow: '1.5px 4px 10px rgba(70,60,45,.25)',
-        padding: '8% 9%',
-        fontFamily: "'Gowun Dodum','Pretendard',sans-serif",
-        fontSize: fs, lineHeight: 1.42,
-        overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+        overflow: 'hidden',
       }}
     >
-      {text}
-      {/* 접힌 모서리 */}
-      <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: `0 0 ${fs * 1.15}px ${fs * 1.15}px`, borderColor: `transparent transparent ${c.fold} transparent` }} />
+      <div
+        style={{
+          width: '100%', height: '100%', boxSizing: 'border-box', padding: '9% 10%',
+          fontFamily: "'Gowun Dodum','Pretendard',sans-serif",
+          fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.42,
+          overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+        }}
+      >
+        {text}
+      </div>
+      {/* 접힌 모서리 — 크기도 포스트잇에 비례 */}
+      <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: '0 0 16cqw 16cqw', borderColor: `transparent transparent ${c.fold} transparent` }} />
     </div>
   )
 }
