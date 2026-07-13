@@ -687,7 +687,8 @@ img {
   position: fixed;
   inset: 0;
   background: rgba(63, 50, 39, 0.35);
-  z-index: 60;
+  /* 모달 시트는 항상 최상단 — 표지 꾸미기(z-index 220) 위에서도 글쓰기 시트가 떠야 한다 */
+  z-index: 300;
   display: flex;
   align-items: flex-end;
   animation: fadeUp 0.18s ease both;

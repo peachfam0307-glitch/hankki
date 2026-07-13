@@ -103,8 +103,9 @@ export default function RecipeDetailScreen({ id }) {
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5, display: 'flex', justifyContent: 'space-between', padding: '10px 12px', paddingTop: 'calc(10px + var(--safe-top))' }}>
         <button className="round-btn press" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="round-btn press" onClick={onShare} aria-label="친구와 레시피 나누기" style={{ fontSize: 17 }}>
-            💌
+          {/* 편집을 상단으로 꺼내 잘 보이게 — 표지 사진/이모지/아이콘·제목·재료를 여기서 바꾼다 */}
+          <button className="round-btn press" onClick={() => nav.push({ name: 'editor', id: r.id })} aria-label="편집">
+            <Icon name="edit" size={19} />
           </button>
           <button className="round-btn press" onClick={() => toggleFavorite(r.id)} aria-label="즐겨찾기">
             <Icon name="bookmark" size={20} color={r.favorite ? 'var(--brown)' : 'var(--text)'} style={{ fill: r.favorite ? 'var(--brown)' : 'none' }} />
@@ -322,12 +323,8 @@ export default function RecipeDetailScreen({ id }) {
        <Portal>
         <div className="sheet-mask" onClick={() => setMenu(false)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <button className="sheet-item press" onClick={() => { setMenu(false); nav.push({ name: 'editor', id: r.id }) }}>
-              <Icon name="edit" size={20} color="var(--text)" /> 편집하기
-            </button>
-            <hr className="divider" />
             <button className="sheet-item press" onClick={onShare}>
-              <Icon name="link" size={20} color="var(--text)" /> 친구와 레시피 나누기
+              <Icon name="link" size={20} color="var(--text)" /> 친구와 레시피 나누기 <span className="t-sub" style={{ fontWeight: 400, fontSize: 12.5 }}>· 예쁜 카드로</span>
             </button>
             <hr className="divider" />
             <button className="sheet-item press" onClick={del} style={{ color: 'var(--danger)' }}>
