@@ -365,32 +365,50 @@ export default function EditorScreen({ id, prefill }) {
           )}
         </div>
 
-        {/* 사진에서 글자 읽기 — 썸네일과 별개. 레시피가 적힌 사진을 골라 재료·순서를 자동으로 채운다. */}
-        <button
-          className="press"
-          onClick={() => pickOcr('all')}
-          disabled={ocr.busy}
-          style={{
-            width: '100%',
-            marginBottom: 8,
-            padding: 13,
-            borderRadius: 'var(--r-md)',
-            background: 'var(--cream)',
-            color: 'var(--brown)',
-            fontSize: 14,
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            opacity: ocr.busy ? 0.85 : 1,
-          }}
-        >
-          {ocr.busy ? <>사진에서 글자 읽는 중… {ocr.pct}%</> : <><Icon name="camera" size={18} color="var(--brown)" /> 사진에서 글자 가져오기</>}
-        </button>
-        <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 18, lineHeight: 1.5 }}>
-          레시피가 적힌 사진(캡처)을 고르면 재료·순서를 자동으로 채워요. 썸네일은 바뀌지 않아요.<br />
-          두 칸으로 나뉘었거나 긴 레시피는 아래 <b>재료·만드는 법 각 칸의 📷</b>로 따로따로 담으면 더 정확해요.
+        {/* 사진에서 글자 읽기 — 재료/만드는 법을 각각 올리는 게 기본(인식이 훨씬 정확). */}
+        {ocr.busy ? (
+          <div
+            style={{
+              width: '100%', marginBottom: 8, padding: 13, borderRadius: 'var(--r-md)',
+              background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 600,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}
+          >
+            사진에서 글자 읽는 중… {ocr.pct}%
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <button
+              className="press"
+              onClick={() => pickOcr('ingredients')}
+              style={{
+                flex: 1, padding: 13, borderRadius: 'var(--r-md)', background: 'var(--cream)',
+                color: 'var(--brown)', fontSize: 13.5, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              <Icon name="camera" size={16} color="var(--brown)" /> 재료 사진
+            </button>
+            <button
+              className="press"
+              onClick={() => pickOcr('steps')}
+              style={{
+                flex: 1, padding: 13, borderRadius: 'var(--r-md)', background: 'var(--cream)',
+                color: 'var(--brown)', fontSize: 13.5, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              <Icon name="camera" size={16} color="var(--brown)" /> 만드는 법 사진
+            </button>
+          </div>
+        )}
+        <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 18, lineHeight: 1.55 }}>
+          캡처를 올리면 글자를 읽어 그 칸에 채워요. 길면 <b>여러 장 이어서</b> 올려도 돼요. 썸네일은 안 바뀌어요.<br />
+          한 장에 재료·만드는 법이 다 있다면{' '}
+          <button className="press" onClick={() => pickOcr('all')} disabled={ocr.busy} style={{ display: 'inline', padding: 0, background: 'none', color: 'var(--brown)', fontWeight: 700, fontSize: 12, textDecoration: 'underline' }}>
+            한 장으로 자동 분류
+          </button>
+          를 눌러요.
         </div>
 
         <div className="field">

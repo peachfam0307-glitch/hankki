@@ -4,31 +4,19 @@ import { useNav } from '../App'
 import { useBackHandler } from '../useBackHandler'
 import { guessCategory } from '../utils'
 import { parseRecipeText } from '../parseRecipe'
-import { ocrImage } from '../ocr'
 import { fetchLinkRecipe } from '../linkReader'
 import { guessFoodIcon } from '../components/FoodIcon'
 import Icon from '../components/Icon'
-import CropSheet from '../components/CropSheet'
 import Portal from '../components/Portal'
 
-function readAsDataURL(file) {
-  return new Promise((resolve) => {
-    const r = new FileReader()
-    r.onload = () => resolve(r.result)
-    r.onerror = () => resolve(null)
-    r.readAsDataURL(file)
-  })
-}
-
-// 사진 desc 는 아래 OPTIONS 에서 여러 장 안내로 바꾼다.
-
+// '사진으로 가져오기'와 '직접 작성하기'는 결국 같은 작성 화면 — 하나로 합쳤다.
+// 캡처는 작성 화면에서 재료/만드는 법 칸별로 읽어 채운다(인식이 훨씬 정확).
 const OPTIONS = [
   { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '인스타그램 게시물 가져오기', color: '#C13584' },
   { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '유튜브 영상 정보 가져오기', color: '#E33' },
   { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 자동 정리', color: '#B0895E' },
   { key: 'link', icon: 'link', title: '링크 붙여넣기', desc: '웹사이트 주소를 붙여넣기', color: '#9B8B79' },
-  { key: 'photo', icon: 'photo', title: '사진으로 가져오기', desc: '여러 장 캡처도 한 번에 읽어 정리', color: '#8AA07A' },
-  { key: 'manual', icon: 'pen', title: '직접 작성하기', desc: '직접 레시피를 작성하기', color: '#B98A4E' },
+  { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A' },
 ]
 
 export default function ImportScreen() {
@@ -39,15 +27,11 @@ export default function ImportScreen() {
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
   const [help, setHelp] = useState(false)
-  const [busy, setBusy] = useState(null) // null | { total, cur, pct }
   const [linkBusy, setLinkBusy] = useState(false)
-  const [cropQ, setCropQ] = useState(null) // null | { images, done, idx } — 장마다 자르기
-  const fileRef = useRef(null)
   const linkCancel = useRef(false)
 
   // 뒤로가기: 열린 시트·하위 흐름을 먼저 닫는다(바로 홈으로 안 나가게).
   useBackHandler(() => {
-    if (cropQ) { setCropQ(null); return true }
     if (help) { setHelp(false); return true }
     if (flow) { setFlow(null); return true }
     return false
@@ -63,11 +47,10 @@ export default function ImportScreen() {
   }
 
   const choose = (key) => {
-    if (key === 'manual') {
+    if (key === 'write') {
+      // 사진·직접 작성 — 작성 화면에서 재료/만드는 법 칸별 📷 로 채운다
       nav.pop()
       nav.push({ name: 'editor' })
-    } else if (key === 'photo') {
-      fileRef.current?.click()
     } else {
       setFlow(key)
       setUrl('')
@@ -81,47 +64,6 @@ export default function ImportScreen() {
     nav.pop()
     nav.push({ name: 'inbox' })
     nav.showToast('Inbox에 저장했어요 · 나중에 정리해요')
-  }
-
-  // 사진 선택 → 장마다 '글자 부분만 자르기' → 전부 읽어 하나의 레시피로 정리.
-  const onFile = async (e) => {
-    const files = Array.from(e.target.files || [])
-    e.target.value = ''
-    if (!files.length) return
-    const images = (await Promise.all(files.map(readAsDataURL))).filter(Boolean)
-    if (!images.length) return
-    setCropQ({ images, done: [], idx: 0 }) // 자르기부터 — 광고·그림을 빼면 인식이 확 좋아진다
-  }
-
-  const cropNext = (img) => {
-    const q = cropQ
-    if (!q) return
-    const done = [...q.done, img]
-    if (q.idx + 1 < q.images.length) {
-      setCropQ({ ...q, done, idx: q.idx + 1 })
-    } else {
-      setCropQ(null)
-      runOcrBatch(done)
-    }
-  }
-
-  const runOcrBatch = async (images) => {
-    setBusy({ total: images.length, cur: 1, pct: 0 })
-    let combined = ''
-    for (let k = 0; k < images.length; k++) {
-      const t = await ocrImage(images[k], (pct) => setBusy({ total: images.length, cur: k + 1, pct }))
-      if (t && t.trim()) combined += (combined ? '\n' : '') + t.trim()
-    }
-    setBusy(null)
-
-    const r = combined ? parseRecipeText(combined, { fromOcr: true }) : { title: '', ingredients: [], steps: [], memo: '' }
-    nav.pop()
-    // 캡처 사진은 '글자 읽기'용일 뿐 — 썸네일과 분리. 메모는 직접 입력 전용(자동으로 안 채움).
-    // 잘라낸 캡처들은 refImages 로 넘겨 '캡쳐 보면서 쓰기'에 띄운다. (저장은 안 됨)
-    nav.push({
-      name: 'editor',
-      prefill: { source: 'photo', title: r.title, ingredients: r.ingredients, steps: r.steps, refImages: images, autoOcr: false },
-    })
   }
 
   // 링크 자동 읽기(베타) — 유튜브 설명·블로그 본문을 읽어 재료·순서까지 채운다.
@@ -174,22 +116,6 @@ export default function ImportScreen() {
         <div style={{ width: 40 }} />
       </div>
 
-      <input ref={fileRef} type="file" accept="image/*" multiple onChange={onFile} style={{ display: 'none' }} />
-
-      {busy && (
-        <div className="ocr-overlay">
-          <div className="ocr-box">
-            <div className="ocr-spin" />
-            <div style={{ fontSize: 15, fontWeight: 700, marginTop: 14 }}>
-              사진에서 글자 읽는 중…
-            </div>
-            <div className="t-sub" style={{ marginTop: 5, fontSize: 13 }}>
-              {busy.total > 1 ? `${busy.total}장 중 ${busy.cur}장째 · ` : ''}{busy.pct}%
-            </div>
-          </div>
-        </div>
-      )}
-
       {linkBusy && (
         <div className="ocr-overlay">
           <div className="ocr-box">
@@ -205,17 +131,6 @@ export default function ImportScreen() {
             </button>
           </div>
         </div>
-      )}
-
-      {cropQ && (
-        <CropSheet
-          image={cropQ.images[cropQ.idx]}
-          index={cropQ.idx}
-          total={cropQ.images.length}
-          onDone={cropNext}
-          onSkip={() => cropNext(cropQ.images[cropQ.idx])}
-          onCancel={() => setCropQ(null)}
-        />
       )}
 
       {!flow ? (
@@ -307,11 +222,18 @@ export default function ImportScreen() {
           <div className="card" style={{ padding: 15, marginBottom: 12, background: 'var(--cream)', border: 'none' }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--brown)', marginBottom: 6 }}>📷 캡처해서 올리기 · 추천</div>
             <div style={{ fontSize: 12.8, lineHeight: 1.65, color: 'var(--text)', marginBottom: 12 }}>
-              레시피가 보이는 화면을 <b>캡처(스크린샷)</b>한 뒤 올리면, 글자를 자동으로 읽어 재료·순서까지 채워줘요.
-              글이 길면 <b>2~3장 나눠</b> 캡처해도 한 번에 정리돼요.
+              레시피가 보이는 화면을 <b>캡처(스크린샷)</b>한 뒤, 작성 화면에서
+              <b> 재료 사진·만드는 법 사진</b>을 각각 올리면 훨씬 정확하게 채워져요.
             </div>
-            <button className="btn-primary press" style={{ width: '100%' }} onClick={() => fileRef.current?.click()}>
-              캡처한 사진 올리기
+            <button
+              className="btn-primary press"
+              style={{ width: '100%' }}
+              onClick={() => {
+                nav.pop()
+                nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } })
+              }}
+            >
+              캡처한 사진으로 작성하기 →
             </button>
           </div>
 
@@ -414,8 +336,8 @@ export default function ImportScreen() {
                 <div className="imp-tip-b">
                   인스타는 캡션 글자를 복사할 수 없어요.<br />
                   1. 레시피가 보이는 화면을 <b>캡처(스크린샷)</b><br />
-                  2. 한끼 → 가져오기 → <b>사진으로 가져오기</b><br />
-                  → 글자를 자동으로 읽어 재료·순서를 채워줘요. <span className="t-sub" style={{ fontSize: 11.5 }}>길면 2~3장 나눠 캡처해도 한 번에!</span>
+                  2. 한끼 → 가져오기 → <b>사진·직접 작성하기</b><br />
+                  → 작성 화면에서 <b>재료 사진·만드는 법 사진</b>을 각각 올리면 정확하게 채워져요. <span className="t-sub" style={{ fontSize: 11.5 }}>길면 2~3장 나눠서 이어 붙여도 돼요!</span>
                 </div>
               </div>
               <div className="imp-tip">
