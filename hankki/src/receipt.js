@@ -1,3 +1,5 @@
+import { within1 } from './ocrCorrect'
+
 // 영수증 글자에서 살 거리(품목)만 골라내기 — 냉장고 재료함 자동 채우기용.
 // 예전엔 아는 식재료 단어(화이트리스트)가 들어간 줄만 담아서, 브랜드명·줄임말 품목
 // ("청정원 순창고추장", "하림 닭가슴살")은 통째로 놓쳐 인식률이 바닥이었다.
@@ -75,6 +77,18 @@ function cleanItemName(line) {
   return s
 }
 
+// 한 글자쯤 잘못 읽힌 품목을 아는 식재료로 되돌린다 ("고주장"→"고추장", "달갈"→"달걀").
+// 너무 짧은 단어는 오탐이 많아 3~6자만, 편집거리 1 이내만 스냅한다.
+const SNAPPABLE = FOOD_WORDS.filter((w) => w.length >= 3)
+function snapToFoodWord(tok) {
+  if (tok.length < 3 || tok.length > 6) return null
+  for (const w of SNAPPABLE) {
+    if (Math.abs(w.length - tok.length) > 1) continue
+    if (within1(tok, w)) return w
+  }
+  return null
+}
+
 export function extractReceiptItems(text) {
   const lines = String(text).split('\n').map((s) => s.trim()).filter(Boolean)
   const found = []
@@ -109,6 +123,9 @@ export function extractReceiptItems(text) {
     // 2) 아는 단어가 없어도 '가격 붙은 한글 품목 줄'이면 이름을 정리해 후보로 올린다.
     if (!hasPrice(line)) continue
     const name = cleanItemName(line)
+    // 한 글자 오독이면 아는 식재료로 되돌려 대표 단어로 담는다(레시피 매칭에 유리).
+    const snap = name.split(' ').map(snapToFoodWord).find(Boolean)
+    if (snap) { add(snap); continue }
     const hangul = (name.match(/[가-힣]/g) || []).length
     if (hangul >= 2 && name.length <= 14) add(name)
   }

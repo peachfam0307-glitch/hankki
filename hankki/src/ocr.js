@@ -2,6 +2,7 @@
 // 1순위: 폰 내장 OCR(TextDetector, 안드로이드 크롬) — 한국어 인식이 훨씬 정확
 // 2순위: tesseract.js (어디서나 동작). LSTM 엔진 + 전처리로 정확도를 최대한 끌어올린다.
 import Tesseract, { createWorker } from 'tesseract.js'
+import { normalizeNumerals } from './ocrCorrect'
 
 function loadImg(dataUrl) {
   return new Promise((resolve) => {
@@ -55,21 +56,64 @@ async function detectWithPlatform(dataUrl, noCrop) {
   }
 }
 
+// 국소 적응형 이진화(Bradley–Roth) — OCR 정확도의 진짜 승부처.
+// 이미지 전체에 같은 기준을 쓰는 대신, 각 픽셀 주변 창(window)의 평균과 비교해
+// 글자/배경을 나눈다. 그래서 그림자·구김·불균일 조명(영수증·기울여 찍은 사진)에서도
+// 글자가 뭉개지지 않는다. 적분영상(integral image)으로 O(n) 처리.
+function bradleyThreshold(gray, w, h) {
+  const S = Math.max(16, Math.round(Math.max(w, h) / 20)) // 창 크기 — 글자보다 조금 크게
+  const half = S >> 1
+  const T = 0.15 // 지역 평균 대비 이만큼 어두우면 글자(잉크)로 본다
+  const iw = w + 1
+  const integral = new Float64Array(iw * (h + 1))
+  for (let y = 1; y <= h; y++) {
+    let rowsum = 0
+    const rowOff = (y - 1) * w
+    const curOff = y * iw
+    const upOff = (y - 1) * iw
+    for (let x = 1; x <= w; x++) {
+      rowsum += gray[rowOff + (x - 1)]
+      integral[curOff + x] = integral[upOff + x] + rowsum
+    }
+  }
+  const out = new Uint8ClampedArray(w * h)
+  for (let y = 0; y < h; y++) {
+    const y1 = y - half < 0 ? 0 : y - half
+    const y2 = y + half >= h ? h - 1 : y + half
+    const rowOff = y * w
+    for (let x = 0; x < w; x++) {
+      const x1 = x - half < 0 ? 0 : x - half
+      const x2 = x + half >= w ? w - 1 : x + half
+      const count = (x2 - x1 + 1) * (y2 - y1 + 1)
+      const sum =
+        integral[(y2 + 1) * iw + (x2 + 1)] -
+        integral[y1 * iw + (x2 + 1)] -
+        integral[(y2 + 1) * iw + x1] +
+        integral[y1 * iw + x1]
+      const val = gray[rowOff + x]
+      out[rowOff + x] = val * count <= sum * (1 - T) ? 0 : 255
+    }
+  }
+  return out
+}
+
 // tesseract용 전처리 — 정확도의 핵심.
 //  · 작은 캡처는 키우고(글자 해상도↑), 큰 사진은 적당히 줄여 메모리 부담↓
-//  · 흑백 + 대비 강화
-//  · 어두운 배경(흰 글씨: 인스타·유튜브 다크모드)은 자동 반전 → 검은 글씨/흰 배경
-//    판단은 평균이 아닌 '중앙값' — 캡처 안에 밝은 음식 사진이 섞여 있어도 속지 않는다.
-function preprocess(dataUrl, forceInvert, noCrop) {
+//  · 흑백 + 밝기 중앙값으로 반전 여부 판단(밝은 음식 사진이 섞여도 안 속음)
+//  · mode 'global'  : 반전 + 전역 대비 강화 (오버레이 자막 등 색 배경에 강함)
+//  · mode 'adaptive': 국소 적응형 이진화 (문서·영수증·조명 얼룩에 강함)
+function preprocess(dataUrl, forceInvert, noCrop, mode = 'global') {
   return new Promise((resolve) => {
     const img = new Image()
     img.onload = () => {
       try {
         const crop = noCrop ? { top: 0, height: img.height } : screenshotCrop(img)
         const longSide = Math.max(img.width, crop.height)
+        // 적응형은 적분영상 메모리(Float64)가 커서 상한을 조금 낮춘다(1600px면 글자 충분).
+        const maxDown = mode === 'adaptive' ? 1600 : 2400
         let scale = 1
         if (longSide < 1500) scale = Math.min(3, 1500 / longSide)
-        else if (longSide > 2400) scale = 2400 / longSide
+        else if (longSide > maxDown) scale = maxDown / longSide
         const w = Math.max(1, Math.round(img.width * scale))
         const h = Math.max(1, Math.round(crop.height * scale))
         const c = document.createElement('canvas')
@@ -79,14 +123,15 @@ function preprocess(dataUrl, forceInvert, noCrop) {
         ctx.drawImage(img, 0, crop.top, img.width, crop.height, 0, 0, w, h)
         const im = ctx.getImageData(0, 0, w, h)
         const d = im.data
-        // 1) 그레이스케일 + 밝기 히스토그램
+        // 1) 그레이스케일 + 밝기 히스토그램 (반전 판단용)
+        const total = w * h
+        const gray = new Uint8ClampedArray(total)
         const hist = new Uint32Array(256)
-        for (let i = 0; i < d.length; i += 4) {
+        for (let p = 0, i = 0; p < total; p++, i += 4) {
           const g = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) | 0
-          d[i] = d[i + 1] = d[i + 2] = g
+          gray[p] = g
           hist[g]++
         }
-        const total = d.length / 4
         let acc = 0
         let median = 127
         for (let v = 0; v < 256; v++) {
@@ -94,13 +139,22 @@ function preprocess(dataUrl, forceInvert, noCrop) {
           if (acc >= total / 2) { median = v; break }
         }
         const invert = forceInvert !== undefined ? forceInvert : median < 110
-        // 2) (필요시) 반전 + 대비 강화
-        const contrast = 1.5
-        for (let i = 0; i < d.length; i += 4) {
-          let g = invert ? 255 - d[i] : d[i]
-          g = (g - 128) * contrast + 128
-          g = g < 0 ? 0 : g > 255 ? 255 : g
-          d[i] = d[i + 1] = d[i + 2] = g
+        // 필요하면 먼저 반전해 '검은 글씨 / 흰 배경'으로 통일
+        if (invert) for (let p = 0; p < total; p++) gray[p] = 255 - gray[p]
+
+        if (mode === 'adaptive') {
+          const bin = bradleyThreshold(gray, w, h)
+          for (let p = 0, i = 0; p < total; p++, i += 4) {
+            d[i] = d[i + 1] = d[i + 2] = bin[p]
+          }
+        } else {
+          // 전역 대비 강화
+          const contrast = 1.5
+          for (let p = 0, i = 0; p < total; p++, i += 4) {
+            let g = (gray[p] - 128) * contrast + 128
+            g = g < 0 ? 0 : g > 255 ? 255 : g
+            d[i] = d[i + 1] = d[i + 2] = g
+          }
         }
         ctx.putImageData(im, 0, 0)
         resolve({ url: c.toDataURL('image/png'), inverted: invert })
@@ -144,6 +198,20 @@ function getWorker() {
       })
   }
   return _workerPromise
+}
+
+// 인식 직전에 페이지 분할 모드(PSM)를 바꾼다.
+//  · 6 = 단일 텍스트 블록 (레시피 캡처처럼 문단이 뭉쳐 있을 때)
+//  · 4 = 여러 크기의 단일 컬럼 (영수증처럼 '품목 … 금액'이 줄줄이 있을 때 더 정확)
+let _curPsm = '6'
+async function setPsm(worker, psm) {
+  if (_curPsm === psm) return
+  try {
+    await worker.setParameters({ tessedit_pageseg_mode: psm })
+    _curPsm = psm
+  } catch {
+    /* noop */
+  }
 }
 
 // 뜻있는 글자 수 — 두 인식 결과 중 나은 쪽 고르는 기준
@@ -193,10 +261,12 @@ export async function ocrImage(image, onProgress, opts = {}) {
       return platform
     }
   }
-  // 2) tesseract (전처리 + LSTM 엔진 + 신뢰도 필터)
+  // 2) tesseract (전처리 + LSTM 엔진 + 신뢰도 필터). 숫자 오독은 마지막에 교정.
+  const finish = (t) => normalizeNumerals(t)
   try {
     const worker = await getWorker()
-    const recognize = async (src) => {
+    const recognize = async (src, psm = '6') => {
+      await setPsm(worker, psm)
       _progressCb = onProgress || null
       const { data } = await worker.recognize(src, {}, { blocks: true, text: true })
       _progressCb = null
@@ -209,24 +279,44 @@ export async function ocrImage(image, onProgress, opts = {}) {
       if (filtered && goodChars(filtered) >= Math.min(20, goodChars(raw) * 0.3)) return filtered
       return raw
     }
-    if (typeof image !== 'string') return await recognize(image)
+    if (typeof image !== 'string') return finish(await recognize(image))
 
-    const p1 = await preprocess(image, undefined, opts.noCrop)
-    let text = await recognize(p1.url)
-    // 결과가 외계어면 반전을 뒤집어 한 번 더 — 다크모드/혼합 배경 캡처 대비
+    if (opts.receipt) {
+      // 영수증: 적응형 이진화 + 컬럼(PSM 4)이 1순위 — 그림자·구김·조명 얼룩에 강하다.
+      const a = await preprocess(image, undefined, opts.noCrop, 'adaptive')
+      let text = await recognize(a.url, '4')
+      // 살아난 품목 줄이 적으면 전역 대비(PSM 6)로 한 번 더 — 둘 중 나은 쪽.
+      if (looksGibberish(text) || goodChars(text) < 12) {
+        const g = await preprocess(image, undefined, opts.noCrop, 'global')
+        const t2 = await recognize(g.url, '6')
+        if (goodChars(t2) > goodChars(text)) text = t2
+      }
+      return finish(text)
+    }
+
+    // 레시피(캡처): 전역 대비가 1순위 — 인스타·유튜브 색 배경 자막에 강하다.
+    const p1 = await preprocess(image, undefined, opts.noCrop, 'global')
+    let text = await recognize(p1.url, '6')
+    // 외계어면 적응형(자동 반전)으로 구제 — 조명 얼룩·저대비 캡처 대비.
     if (looksGibberish(text)) {
-      const p2 = await preprocess(image, !p1.inverted, opts.noCrop)
-      const t2 = await recognize(p2.url)
+      const a = await preprocess(image, undefined, opts.noCrop, 'adaptive')
+      const t2 = await recognize(a.url, '6')
       if (goodChars(t2) > goodChars(text)) text = t2
     }
-    return text
+    // 그래도 외계어면 반전을 뒤집어 마지막 시도 — 다크모드 자막 대비.
+    if (looksGibberish(text)) {
+      const p3 = await preprocess(image, !p1.inverted, opts.noCrop, 'global')
+      const t3 = await recognize(p3.url, '6')
+      if (goodChars(t3) > goodChars(text)) text = t3
+    }
+    return finish(text)
   } catch {
     _progressCb = null
     // 워커 생성 실패 등 — 편의 함수로 한 번 더 시도
     try {
       const processed = typeof image === 'string' ? (await preprocess(image, undefined, opts.noCrop)).url : image
       const res = await Tesseract.recognize(processed, 'kor+eng')
-      return (res && res.data && res.data.text) || ''
+      return finish((res && res.data && res.data.text) || '')
     } catch {
       return ''
     }
