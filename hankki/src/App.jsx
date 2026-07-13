@@ -142,7 +142,7 @@ export default function App() {
           <StackLayer key={i}>{renderScreen(s)}</StackLayer>
         ))}
 
-        {!top && <BottomNav active={tab} onChange={go} />}
+        {!top && <BottomNav active={tab} onChange={go} onImport={() => push({ name: 'import' })} />}
         <TimerBar bottom={top ? 'calc(84px + var(--safe-bottom))' : 'calc(66px + var(--safe-bottom))'} />
         {toast && <div className="toast">{toast}</div>}
       </div>

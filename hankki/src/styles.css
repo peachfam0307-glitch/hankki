@@ -330,6 +330,25 @@ img {
   letter-spacing: -0.02em;
   transition: transform 0.08s ease;
 }
+/* '가져오기' 강조 — 채운 포인트색 원 안에 흰 +. 앱의 핵심 동작이라 눈에 띄게. */
+.nav-item-import {
+  gap: 4px;
+}
+.nav-import-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--brown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.2);
+  margin-top: -4px;
+}
+.nav-item-import:active .nav-import-circle {
+  transform: scale(0.9);
+  transition: transform 0.08s ease;
+}
 
 /* 세그먼트 컨트롤 */
 .segment {
