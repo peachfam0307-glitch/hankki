@@ -1,6 +1,7 @@
 // OCR로 읽은 텍스트를 레시피 형태(제목·재료·순서)로 최대한 자동 분리.
 // 완벽하진 않지만(사진 품질·폰트에 따라), 잡음은 단어 단위까지 걷어낸다.
 import { normalizeNumerals } from './ocrCorrect'
+import { politeSteps } from './polish'
 
 const QTY =
   /(\d+\s*(g|kg|ml|l|리터|cc|개|알|쪽|봉지|봉|모|장|대|톨|줄기|컵|큰\s?술|작은\s?술|스푼|티스푼|숟가락|줌|꼬집|줄|캔|팩|조각|인분|마리|공기|스틱|바퀴|T\b|t\b)|약간|조금|적당량|한\s?줌|소량)/i
@@ -213,5 +214,6 @@ export function parseRecipeText(raw = '', opts = {}) {
   // 쉬우니 '깨끗한 문장'만 남긴다 — 재료·순서와 중복되거나 잡음이 붙는 일 없게.
   const memoLines = fromOcr ? other.filter(isCleanMemoLine) : other
   const memo = memoLines.join('\n')
-  return { title, ingredients, steps, memo }
+  // 만드는 법 문체 통일 — '~다'(썬다·볶는다)로 읽힌 단계를 부드러운 '~요'체로 다듬는다
+  return { title, ingredients, steps: politeSteps(steps), memo }
 }

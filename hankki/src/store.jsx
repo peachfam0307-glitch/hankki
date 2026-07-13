@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useReducer, useCallback } from 'r
 import { seedRecipes } from './data/seed'
 import { basicRecipes, BASICS_VERSION } from './data/basics'
 import { cleanMemo } from './parseRecipe'
+import { politeSteps } from './polish'
 
 const KEY = 'hankki:v1'
 const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행복한 하루 :)' }
@@ -75,7 +76,13 @@ function migrateBasics(saved) {
       ? { ...r, thumb: 'photo', image: BASIC_PHOTOS[r.id] }
       : r
   )
-  return { recipes: [...withPhotos, ...add], seedV: BASICS_VERSION }
+  // v7: 기본 레시피 만드는 법 문체를 '~요'체로 통일(사용자 수정 내용은 어미만 다듬어져 보존)
+  const polished = withPhotos.map((r) =>
+    r && String(r.id).startsWith('basic-') && Array.isArray(r.steps)
+      ? { ...r, steps: politeSteps(r.steps) }
+      : r
+  )
+  return { recipes: [...polished, ...add], seedV: BASICS_VERSION }
 }
 
 // 예전 버전(OCR 필터 이전)에 저장된 레시피의 '외계어 메모'를 한 번만 청소한다.

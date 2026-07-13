@@ -1,3 +1,5 @@
+import { politeSteps } from '../polish'
+
 // 기본 제공 레시피 — 설치하자마자 바로 따라 할 수 있는 국민 메뉴 10가지.
 // 예시가 아니라 '기본 서비스': 전부 수정·삭제할 수 있고, 지우면 다시 생기지 않는다.
 // (유명인 레시피를 그대로 싣는 건 저작권 문제가 있어 우리 말로 정리한 정석 버전)
@@ -11,7 +13,7 @@ const base = {
   sourceUrl: '',
 }
 
-export const BASICS_VERSION = 6 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
+export const BASICS_VERSION = 7 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
 
 const RAW_BASICS = [
   {
@@ -663,8 +665,11 @@ const RECIPE_PHOTOS = {
   'basic-cheesesandwich': 'cheesesandwich',
 }
 
-export const basicRecipes = RAW_BASICS.map((r) =>
-  RECIPE_PHOTOS[r.id]
-    ? { ...r, thumb: 'photo', image: import.meta.env.BASE_URL + 'recipe-photos/' + RECIPE_PHOTOS[r.id] + '.webp' }
-    : r
-)
+// 만드는 법 문체는 전부 '~요'체로 통일해 내보낸다 (polish 사전 — 파서와 같은 기준)
+export const basicRecipes = RAW_BASICS.map((r) => ({
+  ...r,
+  steps: politeSteps(r.steps),
+  ...(RECIPE_PHOTOS[r.id]
+    ? { thumb: 'photo', image: import.meta.env.BASE_URL + 'recipe-photos/' + RECIPE_PHOTOS[r.id] + '.webp' }
+    : null),
+}))
