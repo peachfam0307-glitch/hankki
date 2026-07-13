@@ -35,7 +35,7 @@ export function Stars({ value, onChange, size = 30 }) {
   )
 }
 
-export default function DiaryEntrySheet({ entry, onClose, onDelete }) {
+export default function DiaryEntrySheet({ entry, onClose, onDelete, onOpenRecipe }) {
   const { updateDiary } = useStore()
   const [rating, setRating] = useState(entry.rating || 0)
   const [note, setNote] = useState(entry.note || '')
@@ -65,7 +65,14 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete }) {
           <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
         </div>
         <div style={{ padding: '2px 16px 0' }}>
-          <div style={{ fontSize: 15.5, fontWeight: 700 }}>{entry.title}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ fontSize: 15.5, fontWeight: 700, flex: 1, minWidth: 0 }}>{entry.title}</div>
+            {onOpenRecipe && (
+              <button className="press" onClick={onOpenRecipe} style={{ flex: '0 0 auto', padding: '6px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 12.5, fontWeight: 700 }}>
+                레시피 보기 →
+              </button>
+            )}
+          </div>
           <div className="t-sub" style={{ fontSize: 12, marginBottom: 12 }}>{new Date(entry.at).toLocaleDateString('ko-KR')} 요리</div>
 
           <div style={{ display: 'flex', justifyContent: 'center', margin: '2px 0 16px' }}>

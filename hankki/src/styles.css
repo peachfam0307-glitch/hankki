@@ -475,6 +475,145 @@ img {
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
+/* 모아보기 '그리드(작게)' — 3열 촘촘하게 */
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+}
+
+/* ── 요리 기록 앨범(내가 만든 요리 아카이브) ── */
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.album-tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--cream);
+}
+.album-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.album-icon {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.album-star {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(20, 19, 17, 0.55);
+  color: #ffd66b;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.album-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 14px 7px 5px;
+  background: linear-gradient(transparent, rgba(20, 19, 17, 0.62));
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 요리 캘린더 ── */
+.cal-card {
+  padding: 12px 12px 10px;
+  margin-bottom: 12px;
+}
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.cal-title {
+  font-size: 14.5px;
+  font-weight: 800;
+}
+.cal-nav {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--cream);
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-week {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 3px;
+}
+.cal-week span {
+  padding: 2px 0;
+}
+.cal-day {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.cal-day:disabled {
+  color: var(--text-sub);
+  opacity: 0.55;
+}
+.cal-day.today {
+  box-shadow: inset 0 0 0 1.5px var(--sand);
+}
+.cal-day.on {
+  background: var(--brown);
+  color: #fff;
+}
+.cal-dot {
+  position: absolute;
+  bottom: 3px;
+  min-width: 6px;
+  height: 6px;
+  padding: 0 2px;
+  border-radius: 999px;
+  background: var(--brown);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 6px;
+}
+.cal-day.on .cal-dot {
+  background: #fff;
+  color: var(--brown);
+}
 .grid-card .name {
   font-size: 14px;
   font-weight: 600;

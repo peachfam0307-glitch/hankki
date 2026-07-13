@@ -23,6 +23,28 @@ const PATHS = {
   ),
   plus: <path d="M12 5v14M5 12h14" />,
   minus: <path d="M5 12h14" />,
+  // 모아보기 크기 전환 — 큰 카드(2열) / 작은 그리드(3열)
+  'grid-big': (
+    <>
+      <rect x="4" y="4" width="7" height="7" rx="1.5" />
+      <rect x="13" y="4" width="7" height="7" rx="1.5" />
+      <rect x="4" y="13" width="7" height="7" rx="1.5" />
+      <rect x="13" y="13" width="7" height="7" rx="1.5" />
+    </>
+  ),
+  'grid-small': (
+    <>
+      <rect x="3.5" y="3.5" width="4.6" height="4.6" rx="1" />
+      <rect x="9.7" y="3.5" width="4.6" height="4.6" rx="1" />
+      <rect x="15.9" y="3.5" width="4.6" height="4.6" rx="1" />
+      <rect x="3.5" y="9.7" width="4.6" height="4.6" rx="1" />
+      <rect x="9.7" y="9.7" width="4.6" height="4.6" rx="1" />
+      <rect x="15.9" y="9.7" width="4.6" height="4.6" rx="1" />
+      <rect x="3.5" y="15.9" width="4.6" height="4.6" rx="1" />
+      <rect x="9.7" y="15.9" width="4.6" height="4.6" rx="1" />
+      <rect x="15.9" y="15.9" width="4.6" height="4.6" rx="1" />
+    </>
+  ),
   'chevron-right': <path d="m9 6 6 6-6 6" />,
   'chevron-left': <path d="m15 6-6 6 6 6" />,
   x: <path d="M6 6l12 12M18 6 6 18" />,
