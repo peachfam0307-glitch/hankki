@@ -40,7 +40,6 @@ export default function App() {
   const [stack, setStack] = useState([]) // 위로 쌓이는 화면들
   const [toast, setToast] = useState(null)
   const [exitAsk, setExitAsk] = useState(false) // 홈에서 뒤로가기 → 종료 확인 팝업
-  const exitingRef = useRef(false)
   const toastTimer = useRef(null)
   const tabRef = useRef(tab)
   const stackRef = useRef(stack)
@@ -66,16 +65,13 @@ export default function App() {
     const trap = () => { try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ } }
     if (!hasTrap()) trap() // index.html 이 이미 깔았으면 중복 안 함
     const onPop = () => {
-      // [진단용 v1.6] 뒤로가기가 웹(우리 코드)까지 오는지 확인 — 뜨면 코드까지 온 것.
-      try { showToast('⬅︎ 뒤로가기 감지 · ' + tabRef.current + '/' + stackRef.current.length) } catch { /* noop */ }
-      if (exitingRef.current) return // 종료 진행 중이면 트랩 안 함(밖으로 나가게)
       trap() // 먼저 버퍼를 다시 채워 '경계에서 그냥 종료'되는 일을 막는다
       if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); return }
       if (tabRef.current !== 'home') { setTab('home'); return }
       setExitAsk(true) // 홈 루트에서 뒤로가기 → 바로 나가지 않고 종료 확인 팝업
     }
     // 앱으로 되돌아왔을 때(다른 앱 갔다 오기 등) 트랩이 사라졌으면 다시 깐다
-    const onShow = () => { if (!exitingRef.current && stackRef.current.length === 0 && !hasTrap()) trap() }
+    const onShow = () => { if (stackRef.current.length === 0 && !hasTrap()) trap() }
     window.addEventListener('popstate', onPop)
     window.addEventListener('pageshow', onShow)
     return () => {
@@ -183,14 +179,10 @@ export default function App() {
             confirmLabel="나가기"
             onConfirm={() => {
               setExitAsk(false)
-              exitingRef.current = true
-              try { history.go(-2) } catch { /* noop */ }
-              // 설치형 PWA처럼 go(-2)로 앱이 안 닫히는 기기에서 exitingRef 가 영구 true 로
-              // 남으면, 이후 뒤로가기가 팝업 없이 그냥 나가버린다 → 잠시 뒤 복구.
-              setTimeout(() => {
-                exitingRef.current = false
-                try { if (!(history.state && history.state.hankki)) history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
-              }, 700)
+              // 브라우저로 열었으면 창을 닫아준다. 설치형 PWA는 브라우저 정책상
+              // 스스로 못 닫으니(안드로이드), 홈 버튼으로 나가면 된다고 솔직히 알려준다.
+              try { window.close() } catch { /* noop */ }
+              showToast('나가려면 폰 홈 버튼을 눌러주세요 🙂 (앱은 스스로 못 닫아요)')
             }}
             onClose={() => setExitAsk(false)}
           />
