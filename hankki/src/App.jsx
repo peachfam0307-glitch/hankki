@@ -66,6 +66,8 @@ export default function App() {
     const trap = () => { try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ } }
     if (!hasTrap()) trap() // index.html 이 이미 깔았으면 중복 안 함
     const onPop = () => {
+      // [진단용 v1.6] 뒤로가기가 웹(우리 코드)까지 오는지 확인 — 뜨면 코드까지 온 것.
+      try { showToast('⬅︎ 뒤로가기 감지 · ' + tabRef.current + '/' + stackRef.current.length) } catch { /* noop */ }
       if (exitingRef.current) return // 종료 진행 중이면 트랩 안 함(밖으로 나가게)
       trap() // 먼저 버퍼를 다시 채워 '경계에서 그냥 종료'되는 일을 막는다
       if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); return }
