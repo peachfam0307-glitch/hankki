@@ -81,8 +81,10 @@ export function fixIngredientUnits(l) {
 // 앞에 붙어 남는 경우가 많다("삐 선복 1<0", "= 쌀 450", "Vv Eel 토핑용"). 한글/숫자가
 // 나오기 전까지의 '기호 덩어리 · 짧은 라틴 조각(단위 제외) · 대표 오독 한 글자'를 벗겨낸다.
 const JUNK_SYM = /^[삐쁘=|/\\^<>~"'`_·•*■□▶►◆●○]+/
-// 네모/핀 아이콘(■ 📌 ▪)이 오독되는 대표 한 글자들 — 대부분 된소리(ㅃㄲㄸㅆㅉ) 시작.
-const JUNK_TOK_OCR = /^(?:를|르|롤|삐|쁘|뽀|빠|뻐|뿌|쀼|쁠|삑|뺴|ㅂ|ㅃ|ㅉ|ㄲ|VE|Vv|EI|W|w)$/
+// 네모/핀 아이콘(■ 📌 ▪)이 오독되는 대표 글자들. tesseract가 매번 다르게 읽어(삐→뽀→뽀삐)
+// 1~2글자 조합까지 잡는다. 단, '쌀·깨·꿀·짜장' 같은 진짜 재료는 이 집합에 없어 안전.
+const JUNK_SYL = '를르롤삐쁘뽀빠뻐뿌쀼쁠삑뺴쀄삠'
+const JUNK_TOK_OCR = new RegExp(`^(?:[${JUNK_SYL}]{1,2}|ㅂ|ㅃ|ㅉ|ㄲ|VE|Vv|EI|W|w)$`)
 export function stripLeadingOcrJunk(line, fromOcr = false) {
   let s = String(line).trim()
   s = s.replace(JUNK_SYM, '').trim()
