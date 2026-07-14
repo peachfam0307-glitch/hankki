@@ -85,6 +85,10 @@ const JUNK_SYM = /^[삐쁘=|/\\^<>~"'`_·•*■□▶►◆●○]+/
 // 1~2글자 조합까지 잡는다. 단, '쌀·깨·꿀·짜장' 같은 진짜 재료는 이 집합에 없어 안전.
 const JUNK_SYL = '를르롤삐쁘뽀빠뻐뿌쀼쁠삑뺴쀄삠'
 const JUNK_TOK_OCR = new RegExp(`^(?:[${JUNK_SYL}]{1,2}|ㅂ|ㅃ|ㅉ|ㄲ|VE|Vv|EI|W|w)$`)
+// 맨 앞에 홀로 올 수 있는 '진짜' 한 글자 재료·수식어 화이트리스트.
+// OCR에서는 이 목록에 없는 한 글자가 줄 맨앞+뒤에 내용이 있으면 = 아이콘 오독으로 보고 버린다.
+// (아이콘이 어떤 한글로 오독되든 다 걸러짐 — 목록에 없으니까)
+const KEEP_1CHAR = new Set('물쌀깨꿀파콩무밥알면술김엿향잣팥쑥굴게차죽국떡묵밀순청홍생달참들표겨젓초씨쌈멸꿩닭소돼양'.split(''))
 export function stripLeadingOcrJunk(line, fromOcr = false) {
   let s = String(line).trim()
   s = s.replace(JUNK_SYM, '').trim()
@@ -95,7 +99,8 @@ export function stripLeadingOcrJunk(line, fromOcr = false) {
     const junk =
       JUNK_SYM.test(tok) ||
       (/^[A-Za-z]{1,3}$/.test(tok) && !/^(ml|g|kg|cc|ea|oz|l)$/i.test(tok)) ||
-      (fromOcr && JUNK_TOK_OCR.test(tok))
+      (fromOcr && JUNK_TOK_OCR.test(tok)) ||
+      (fromOcr && /^[가-힣]$/.test(tok) && !KEEP_1CHAR.has(tok)) // 화이트리스트에 없는 맨앞 한 글자 = 아이콘 오독
     if (!junk) break
     s = s.slice(m[0].length).replace(JUNK_SYM, '').trim()
   }
