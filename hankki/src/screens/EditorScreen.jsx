@@ -214,7 +214,7 @@ export default function EditorScreen({ id, prefill }) {
       const lines = cleanOcrLines(text)
       if (!lines.length) { nav.showToast('사진에서 글자를 찾지 못했어요'); return }
       setF((prev) => ({ ...prev, [target]: appendLines(prev[target], lines) }))
-      nav.showToast(target === 'ingredients' ? '재료 칸에 담았어요 ✨' : '만드는 법 칸에 담았어요 ✨')
+      nav.showToast(target === 'ingredients' ? '재료 초안을 담았어요 · 다듬어 주세요 ✍️' : '만드는 법 초안을 담았어요 · 다듬어 주세요 ✍️')
       return
     }
     // 자동 분류 — 재료·순서를 함께 채운다(빈 칸만).
@@ -231,7 +231,7 @@ export default function EditorScreen({ id, prefill }) {
           ? prev.category
           : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
     }))
-    nav.showToast('사진에서 글자를 읽어 채웠어요 ✨')
+    nav.showToast('초안을 채웠어요 · 사진 보며 다듬어 주세요 ✍️')
   }
 
   const canSave = f.title.trim().length > 0
@@ -516,6 +516,9 @@ export default function EditorScreen({ id, prefill }) {
               한 장으로 자동 분류
             </button>
             {' '}· 썸네일은 안 바뀌어요
+          </div>
+          <div style={{ marginTop: 8, fontSize: 11.5, color: 'var(--text-sub)', lineHeight: 1.55, background: 'var(--cream)', borderRadius: 8, padding: '8px 10px' }}>
+            💡 아이콘·특수문자가 많은 캡쳐는 글자 인식이 부정확할 수 있어요. 읽은 내용은 <b style={{ color: 'var(--brown)' }}>초안</b>이니 사진을 보며 다듬어 주세요.
           </div>
         </div>
 
