@@ -95,6 +95,12 @@ function migrateBasics(saved) {
       (r) => !(r && r.id === 'basic-aglioolio' && r.source === 'hankki' && !r.favorite && !(r.cooked > 0))
     )
   }
+  // v11: 팟타이를 '아시안' 카테고리로 이동 (사용자가 안 바꾼 경우에만)
+  fixed = fixed.map((r) =>
+    r && r.id === 'basic-padthai' && r.category === '양식'
+      ? { ...r, category: '아시안', folder: r.folder === '양식' ? '아시안' : r.folder }
+      : r
+  )
   return { recipes: [...fixed, ...add], seedV: BASICS_VERSION }
 }
 
@@ -138,7 +144,9 @@ function initialState() {
       seedV: mig.seedV,
       memoCleanV: memoMig.memoCleanV,
       removedSeedIds: saved.removedSeedIds || [],
-      folders: saved.folders || defaultFolders(mig.recipes),
+      folders: saved.folders
+        ? (saved.folders.includes('아시안') ? saved.folders : [...saved.folders, '아시안'])
+        : defaultFolders(mig.recipes),
       profile: { ...PROFILE_DEFAULT, ...(saved.profile || {}) },
       shops: migrateShops(saved.shops),
       wishlist: saved.wishlist || [],
@@ -152,7 +160,7 @@ function initialState() {
     seedV: BASICS_VERSION,
     memoCleanV: MEMO_CLEAN_V,
     removedSeedIds: [],
-    folders: ['한식', '양식', '일식', '간식'],
+    folders: ['한식', '양식', '일식', '간식', '아시안'],
     profile: PROFILE_DEFAULT,
     shops: DEFAULT_SHOPS,
     wishlist: [],
@@ -163,7 +171,7 @@ function initialState() {
 }
 
 function defaultFolders(recipes) {
-  const set = new Set(['한식', '양식', '일식', '간식'])
+  const set = new Set(['한식', '양식', '일식', '간식', '아시안'])
   recipes.forEach((r) => r.folder && set.add(r.folder))
   return [...set]
 }

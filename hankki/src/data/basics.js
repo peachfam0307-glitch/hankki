@@ -13,7 +13,7 @@ const base = {
   sourceUrl: '',
 }
 
-export const BASICS_VERSION = 10 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
+export const BASICS_VERSION = 11 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
 
 const RAW_BASICS = [
   {
@@ -407,8 +407,8 @@ const RAW_BASICS = [
     id: 'basic-padthai',
     title: '팟타이',
     icon: 'noodle',
-    category: '양식',
-    folder: '양식',
+    category: '아시안',
+    folder: '아시안',
     tags: ['간단한 요리'],
     time: 25,
     servings: 2,
