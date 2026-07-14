@@ -13,7 +13,7 @@ const base = {
   sourceUrl: '',
 }
 
-export const BASICS_VERSION = 14 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
+export const BASICS_VERSION = 15 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
 
 const RAW_BASICS = [
   {
@@ -872,7 +872,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-garlic-scape-bibimbap',
-    title: '마늘종 비빔밥',
+    title: '마늘쫑 비빔밥',
     icon: 'bibimbap',
     category: '한식',
     folder: '한식',

@@ -241,13 +241,15 @@ function Curation() {
   const nav = useNav()
   const [open, setOpen] = useState(true)
 
-  // 큐레이션은 첨가물 적은 '특색 재료'가 많아 쿠팡엔 없는 것도 있다(예: 백합된장).
-  // 그래서 사러가기는 무엇이든 잘 찾는 '네이버쇼핑' 통합검색을 우선 사용한다.
-  const searchShop =
-    shops.find((s) => s.id === 'naver') ||
-    { id: 'naver', url: 'https://shopping.naver.com', search: 'https://search.shopping.naver.com/search/all?query={q}' }
-  // 직접 판매 링크(url)가 있으면 그곳으로, 없으면 네이버쇼핑 통합검색으로.
-  const linkFor = (it) => it.url || shopSearchUrl(searchShop, it.q)
+  // '사러가기' 연결: url 이 있으면 그 직접 링크로, mall 이 있으면 그 쇼핑몰 검색으로,
+  // 없으면 무엇이든 잘 찾는 네이버쇼핑 통합검색으로.
+  const MALL_SEARCH = {
+    coupang: 'https://www.coupang.com/np/search?q={q}',
+    oasis: 'https://www.oasis.co.kr/product/search?keyword={q}',
+    naver: 'https://search.shopping.naver.com/search/all?query={q}',
+  }
+  const linkFor = (it) =>
+    it.url || (MALL_SEARCH[it.mall] || MALL_SEARCH.naver).replace('{q}', encodeURIComponent(it.q))
   const buy = (it) => openUrl(linkFor(it))
   const add = (it, emoji) => {
     store.addWish({
