@@ -109,7 +109,9 @@ img {
 .app-frame {
   max-width: 440px;
   margin: 0 auto;
-  height: 100dvh;
+  /* 실제 보이는 화면 높이(JS로 측정한 --app-height)를 우선 사용.
+     지원 안 하는 환경 대비 100dvh 폴백. 모바일 하단 잘림 근본 해결. */
+  height: var(--app-height, 100dvh);
   background: var(--bg);
   position: relative;
   display: flex;
@@ -305,14 +307,11 @@ img {
 
 /* 하단 네비게이션 */
 .bottom-nav {
-  /* 실제 보이는 뷰포트 하단에 고정 — 100dvh와 실제 화면 높이가 어긋나는
-     모바일 상황(주소창 애니메이션 등)에서도 바가 화면 밖으로 밀려 사라지지 않게.
-     앱 프레임(max 440)에 맞춰 가운데 정렬. */
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 440px;
+  /* 앱 프레임 높이가 실제 보이는 높이(--app-height)로 정확히 맞춰지므로,
+     프레임 기준 절대배치로 하단에 딱 붙는다(잘림/사라짐 없음). */
+  position: absolute;
+  left: 0;
+  right: 0;
   bottom: 0;
   height: calc(var(--nav-h) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);

@@ -49,8 +49,8 @@ export default function ImportScreen() {
 
   const choose = (key) => {
     if (key === 'write') {
-      // 사진·직접 작성 — 작성 화면에서 재료/만드는 법 칸별 📷 로 채운다
-      nav.pop()
+      // 사진·직접 작성 — 작성 화면에서 재료/만드는 법 칸별 📷 로 채운다.
+      // pop 하지 않고 그대로 push → 뒤로가기 시 '가져오기' 초기 화면으로 돌아온다.
       nav.push({ name: 'editor' })
     } else {
       setFlow(key)

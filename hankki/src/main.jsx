@@ -9,6 +9,20 @@ import './styles.css'
 // 저장된 테마 적용(인라인 부팅 스크립트와 동일 결과 — 상태바 색까지 확실히 동기화)
 applyTheme(getTheme())
 
+// 실제 '보이는' 화면 높이를 재서 앱 높이(--app-height)로 쓴다.
+// 모바일 주소창·제스처바 때문에 100dvh와 실제 보이는 높이가 어긋나
+// 하단 버튼(하단바·요리시작·가져오기 등)이 화면 밖으로 잘리던 문제의 근본 해결.
+function setAppHeight() {
+  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight
+  document.documentElement.style.setProperty('--app-height', Math.round(h) + 'px')
+}
+setAppHeight()
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', setAppHeight)
+}
+window.addEventListener('resize', setAppHeight)
+window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 200))
+
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <StoreProvider>

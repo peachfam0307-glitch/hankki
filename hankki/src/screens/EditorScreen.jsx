@@ -207,7 +207,9 @@ export default function EditorScreen({ id, prefill }) {
     } else {
       const rec = { id: newId(), favorite: false, cooked: 0, savedAt: Date.now(), ...patch }
       addRecipe(rec)
-      nav.pop()
+      // 새 레시피 저장 후엔 열려있던 화면(가져오기 등)을 모두 닫고 홈/현재 탭으로.
+      // (뒤로가기로 작성 중이던 빈 편집기가 다시 나오지 않게)
+      nav.popAll()
       nav.showToast('레시피를 저장했어요 ✨')
     }
   }
