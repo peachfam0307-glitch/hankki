@@ -17,7 +17,7 @@ import { CATEGORIES } from '../theme'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage } from '../ocr'
-import { parseRecipeText, cleanMemo, isGibberish } from '../parseRecipe'
+import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk } from '../parseRecipe'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 
@@ -27,6 +27,7 @@ function cleanOcrLines(text) {
   return normalizeNumerals(String(text))
     .split('\n')
     .map((l) => l.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/^\d{1,2}\s*[.)]\s*/, '').trim())
+    .map((l) => stripLeadingOcrJunk(l, true)) // 맨앞 아이콘 오독(삐·뽀·0·\·AINE…) 제거 — 자동분류 경로와 동일하게
     .filter((l) => l.length > 1 && !isGibberish(l))
 }
 

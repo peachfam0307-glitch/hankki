@@ -99,6 +99,8 @@ export function stripLeadingOcrJunk(line, fromOcr = false) {
     const junk =
       JUNK_SYM.test(tok) ||
       (/^[A-Za-z]{1,3}$/.test(tok) && !/^(ml|g|kg|cc|ea|oz|l)$/i.test(tok)) ||
+      (fromOcr && /^[A-Za-z]{4}$/.test(tok)) || // 긴 라틴 조각(AINE 등)도 OCR에선 잡음
+      (fromOcr && /^[0OoＯ]$/.test(tok)) ||      // 불릿을 0·O 로 오독
       (fromOcr && JUNK_TOK_OCR.test(tok)) ||
       (fromOcr && /^[가-힣]$/.test(tok) && !KEEP_1CHAR.has(tok)) // 화이트리스트에 없는 맨앞 한 글자 = 아이콘 오독
     if (!junk) break
