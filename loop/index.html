@@ -18,7 +18,7 @@
     --sun:#C56B6B; --sat:#9A8F76; --shadow:0 12px 30px rgba(20,24,32,.12);
     --app-font:'Pretendard';
   }
-  html[data-theme="dark"]{
+  html[data-looptheme="dark"]{
     --bg:#0E1219; --surface:#161B22; --surface2:#1D232C; --ink:#EAEDF2; --ink2:#B4BCC7; --mut:#7E8896;
     --line:#222833; --line2:#2A313C; --accent:#6E88AE; --accent-soft:#25303F; --accent-ink:#9DBBE4;
     --sun:#D08B8B; --sat:#B4A98C; --shadow:0 14px 34px rgba(0,0,0,.5);
@@ -47,7 +47,7 @@
   .seg{ display:inline-flex; gap:2px; background:var(--surface2); border-radius:9px; padding:2px; }
   .seg button{ font-size:11.5px; font-weight:600; color:var(--mut); padding:6px 9px; border-radius:7px; }
   .seg button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(20,24,32,.10); }
-  html[data-theme="dark"] .seg button.on{ background:#2C3542; box-shadow:none; }
+  html[data-looptheme="dark"] .seg button.on{ background:#2C3542; box-shadow:none; }
   .iconbtn{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; color:var(--ink2); }
   .iconbtn:active{ background:var(--surface2); }
   .iconbtn svg{ width:20px; }
@@ -192,7 +192,7 @@
   .miniseg{ display:inline-flex; gap:3px; background:var(--surface2); border-radius:9px; padding:3px; flex-wrap:wrap; }
   .miniseg button{ font-size:11.5px; font-weight:600; color:var(--mut); padding:5px 9px; border-radius:7px; }
   .miniseg button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(20,24,32,.08); }
-  html[data-theme="dark"] .miniseg button.on{ background:#2C3542; box-shadow:none; }
+  html[data-looptheme="dark"] .miniseg button.on{ background:#2C3542; box-shadow:none; }
   .daysel{ display:flex; gap:5px; margin-top:10px; }
   .daysel button{ width:30px; height:30px; border-radius:9px; font-size:11.5px; font-weight:600; background:var(--surface2); color:var(--mut); }
   .daysel button.on{ background:var(--accent); color:#fff; }
@@ -233,7 +233,7 @@
   .fontcard.on .rad::after{ content:''; position:absolute; inset:3px; border-radius:50%; background:var(--accent); }
   .fontcard .fx{ flex:1; } .fontcard .fnm{ font-size:16px; } .fontcard .fpv{ font-size:12px; color:var(--mut); margin-top:3px; }
   .badge{ font-size:9px; font-weight:700; color:var(--accent-ink); background:var(--accent-soft); padding:2px 6px; border-radius:5px; margin-left:6px; font-family:'Pretendard'; }
-  html[data-theme="dark"] .fontcard.on .badge{ background:#31435a; }
+  html[data-looptheme="dark"] .fontcard.on .badge{ background:#31435a; }
   .toast{ position:fixed; left:50%; bottom:calc(90px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(10px); background:var(--ink); color:var(--bg); font-size:13px; font-weight:600; padding:11px 18px; border-radius:12px; z-index:80; opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; white-space:nowrap; }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .del{ text-align:center; color:var(--sun); font-size:13.5px; font-weight:600; padding:16px; margin-top:8px; }
@@ -871,7 +871,7 @@ function renderSettings(){
 function setTheme(t){ db.settings.theme=t; saveDB(); render(); }
 function setFont(f){ db.settings.font=f; saveDB(); render(); toast(f+' 적용'); }
 function applyTheme(){
-  document.documentElement.setAttribute('data-theme', db.settings.theme);
+  document.documentElement.setAttribute('data-looptheme', db.settings.theme);
   document.body.style.setProperty('--app-font', `'${db.settings.font}'`);
   const tc=isDark()?'#0E1219':'#F7F8FA'; const m=document.querySelector('meta[name=theme-color]'); if(m)m.setAttribute('content',tc);
 }
