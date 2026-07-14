@@ -205,7 +205,7 @@
 const DB_KEY = 'loop.db.v1';
 function loadDB(){
   try{ const raw = localStorage.getItem(DB_KEY); if(raw) return JSON.parse(raw); }catch(e){}
-  return { events:[], dayTags:{}, settings:{ theme:'light', font:'Pretendard' } };
+  return { events:[], dayTags:{}, settings:{ theme:'light', font:'Dongle' } };
 }
 function saveDB(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){ toast('저장 공간이 부족해요'); } }
 let db = loadDB();
