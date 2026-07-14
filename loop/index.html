@@ -140,8 +140,9 @@
   .ti::placeholder{ color:var(--mut); font-weight:500; }
   .fr{ display:flex; align-items:center; gap:12px; padding:14px 2px; border-bottom:1px solid var(--line); min-height:52px; }
   .fr .ic{ width:20px; color:var(--mut); flex-shrink:0; } .fr .ic svg{ width:20px; display:block; }
-  .fr .lb{ font-size:13.5px; font-weight:500; flex:1; }
-  .fr .vl{ display:flex; align-items:center; gap:8px; }
+  .fr .lb{ font-size:13.5px; font-weight:500; flex-grow:1; flex-shrink:0; white-space:nowrap; }
+  .fr .vl{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; min-width:0; }
+  .fr input[type=date],.fr input[type=time]{ max-width:100%; }
   .fr input[type=date],.fr input[type=time]{ font-family:inherit; font-size:13px; font-weight:600; color:var(--ink); background:var(--surface2); border:none; border-radius:9px; padding:7px 9px; outline:none; }
   .fr input[type=text].memo{ flex:1; border:none; background:none; text-align:right; font-size:13px; color:var(--ink); outline:none; font-family:inherit; }
   .fr input[type=text].memo::placeholder{ color:var(--mut); }
