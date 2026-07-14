@@ -80,7 +80,7 @@ export function fixIngredientUnits(l) {
 // 불릿·아이콘을 오독한 조각(삐 · = · HE · Vv · Eel · \/^ · 를 …)이 유효한 한글 재료명
 // 앞에 붙어 남는 경우가 많다("삐 선복 1<0", "= 쌀 450", "Vv Eel 토핑용"). 한글/숫자가
 // 나오기 전까지의 '기호 덩어리 · 짧은 라틴 조각(단위 제외) · 대표 오독 한 글자'를 벗겨낸다.
-const JUNK_SYM = /^[삐쁘=|/\\^<>~"'`_·•*■□▶►◆●○@©®№°§①-⑳❶-❿➀-➉⓪]+/
+const JUNK_SYM = /^[삐쁘=|/\\^<>~"'`_·•*■□▶►◆●○@©®№°§✓✔✅☑√✗✘☒▪▫◾◽◇◈✦✱＊①-⑳❶-❿➀-➉⓪]+/
 // 숫자 뒤에 오면 '수량'이라 지우면 안 되는 단위들(번호 불릿과 구분).
 const UNIT_AFTER = /^(?:스푼|큰술|작은술|티스푼|컵|공기|개|알|장|줌|톨|쪽|봉|캔|팩|모|줄|덩이|리터|ml|kg|cc|g)/
 // 네모/핀 아이콘(■ 📌 ▪)이 오독되는 대표 글자들. tesseract가 매번 다르게 읽어(삐→뽀→뽀삐)
@@ -94,6 +94,13 @@ const KEEP_1CHAR = new Set('물쌀깨꿀파콩무밥알면술김엿향잣팥쑥�
 export function stripLeadingOcrJunk(line, fromOcr = false) {
   let s = String(line).trim()
   s = s.replace(JUNK_SYM, '').trim()
+  if (fromOcr) {
+    // 맨 앞 이모지(🍆✨🔥 등)와 변형선택자 제거
+    s = s.replace(/^(?:[\u{1F000}-\u{1FAFF}☀-➿←-⇿⬀-⯿︀-️‍⃣]+\s*)+/u, '').trim()
+    // 체크(✔️)가 한글에 붙어 라틴 조각(V·W 등)으로 오독된 것 제거: "V올리브유" → "올리브유"
+    s = s.replace(/^[A-Za-z]{1,2}(?=[가-힣])/, '').trim()
+    s = s.replace(JUNK_SYM, '').trim()
+  }
   for (let i = 0; i < 3; i++) {
     const m = s.match(/^(\S+)\s+/)
     if (!m) break
