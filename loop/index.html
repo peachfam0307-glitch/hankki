@@ -332,7 +332,7 @@ function render(){
   } else { // list
     html += listView();
   }
-  html += `<button class="fab" onclick="openEditor(null)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>`;
+  html += `<button class="fab" onclick="curDay=null;openEditor(null)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>`;
   app.innerHTML = html;
 }
 function topbar(){
@@ -491,7 +491,7 @@ function pickSticker(k){
     saveDB(); closeSheet(); setTimeout(()=>openDay(curDay),260);
   } else {
     draft.sticker = (draft.sticker===k)?null:k;
-    closeSheet(); setTimeout(()=>openEditor(draft.id||'__draft'),260);
+    closeSheet(); setTimeout(()=>openEditor('__draft'),260);
   }
 }
 
@@ -507,7 +507,7 @@ function openSoundPicker(){
   html+=`<div style="font-size:11.5px;color:var(--mut);padding:14px 4px 0;line-height:1.6">실제 소리는 앱 설치 버전에서 나와요. 지금은 미리듣기(합성음)로 대체.</div></div>`;
   showSheet(html,true);
 }
-function pickSound(s){ draft.sound=s; closeSheet(); setTimeout(()=>openEditor(draft.id||'__draft'),260); }
+function pickSound(s){ draft.sound=s; closeSheet(); setTimeout(()=>openEditor('__draft'),260); }
 let actx=null;
 function beep(name){
   try{
@@ -622,6 +622,7 @@ function toggleDay(i){ const ds=draft.repeat.days||[]; const idx=ds.indexOf(i); 
 function saveEvent(){
   const t=(draft.title||'').trim(); if(!t){ toast('일정 이름을 입력해주세요'); return; }
   draft.title=t;
+  if(draft.repeat.type==='weekly' && (!draft.repeat.days||!draft.repeat.days.length)){ draft.repeat.days=[parseYMD(draft.date).getDay()]; }
   if(draft.id){ const i=db.events.findIndex(e=>e.id===draft.id); db.events[i]=draft; }
   else { draft.id=uid(); db.events.push(draft); }
   saveDB(); scheduleAlarms(); closeSheet();
