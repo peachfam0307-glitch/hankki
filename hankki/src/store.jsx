@@ -82,7 +82,20 @@ function migrateBasics(saved) {
       ? { ...r, steps: politeSteps(r.steps) }
       : r
   )
-  return { recipes: [...polished, ...add], seedV: BASICS_VERSION }
+  // v10: '윤남노 스파게티'를 '알리오 올리오'로 이름 변경하고,
+  // 겹치는 예전 기본 알리오올리오는 사용자가 안 건드린 경우에만 정리한다.
+  let fixed = polished.map((r) =>
+    r && r.id === 'basic-yunnamno-spaghetti' && (r.title || '').trim() === '윤남노 스파게티'
+      ? { ...r, title: '알리오 올리오' }
+      : r
+  )
+  const hasAlioReplacement = fixed.some((r) => r && r.id === 'basic-yunnamno-spaghetti')
+  if (hasAlioReplacement) {
+    fixed = fixed.filter(
+      (r) => !(r && r.id === 'basic-aglioolio' && r.source === 'hankki' && !r.favorite && !(r.cooked > 0))
+    )
+  }
+  return { recipes: [...fixed, ...add], seedV: BASICS_VERSION }
 }
 
 // 예전 버전(OCR 필터 이전)에 저장된 레시피의 '외계어 메모'를 한 번만 청소한다.

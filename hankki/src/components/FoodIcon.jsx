@@ -469,6 +469,49 @@ const I = {
       <circle cx="19" cy="24" r="1.8" fill="#c85a44" /><circle cx="25" cy="26" r="1.6" fill="#8fa96a" /><circle cx="22.5" cy="22" r="1.5" fill="#e0a83a" />
     </>
   ),
+  stirfryspicy: (
+    <>
+      <path d="M15 31c-2-2.5-1.1-5 .1-6.4.5 1.9 1.7 2.3 2.1.8 1 1.7.6 3.9-.8 5.6z" fill="#eaa03a" />
+      <path d="M28.5 31.4c-2.1-2.7-1.1-5.4.2-6.9.5 2 1.9 2.4 2.3.9 1.1 1.9.6 4.2-1 6z" fill="#eaa03a" />
+      <path d="M21.7 32.6c-2.3-2.9-1.2-6 .2-7.5.6 2.3 2 2.7 2.5 1 1.2 2.1.6 4.6-1.1 6.5z" fill="#dc4a2b" />
+      <circle cx="22" cy="24" r="10.4" fill="#57534e" />
+      <circle cx="22" cy="23.2" r="8" fill="#b5472f" />
+      <path d="M32.4 22.8h7.9a1.4 1.4 0 0 1 0 2.8h-7.9" fill="none" stroke="#57534e" strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx="19" cy="23" r="1.4" fill="#e8b24a" /><circle cx="24.6" cy="24" r="1.3" fill="#f0d0a0" />
+      <path d="M20.5 15.6c3-.7 5.2.6 6.6 2.4-2.2.7-4.7.2-6.8-1.1z" fill="#cf3b28" />
+      <path d="M20.2 14.9c.8-.2 1.3.2 1.2 1l-1 .2z" fill="#6f9a4a" />
+    </>
+  ),
+  stirfryveg: (
+    <>
+      <circle cx="21.5" cy="26.5" r="10.2" fill="#57534e" />
+      <circle cx="21.5" cy="25.8" r="7.8" fill="#3f3a34" />
+      <path d="M31.7 25.2h7.9a1.4 1.4 0 0 1 0 2.8h-7.9" fill="none" stroke="#57534e" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M12.5 26c1.4-5.3 4.8-8.1 9-8.1s7.6 2.8 9 8.1z" fill="#6f8a4e" />
+      <circle cx="16.6" cy="22.1" r="2.3" fill="#8fb060" /><circle cx="21.3" cy="19.8" r="2.6" fill="#7ea24a" /><circle cx="26" cy="22.1" r="2.3" fill="#8fb060" />
+      <circle cx="18.8" cy="24.6" r="1.4" fill="#e08a3a" /><circle cx="24" cy="24.8" r="1.3" fill="#d15a44" />
+      <path d="M21.3 18.6c0-2.4 1-4 2.2-4.9" stroke="#7ea24a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    </>
+  ),
+  pot: (
+    <>
+      <path d="M13 24h22l-1 8.5a4 4 0 0 1-4 3.5H18a4 4 0 0 1-4-3.5z" fill="#8a8f93" />
+      <path d="M11 21.4h26v2.2a1.5 1.5 0 0 1-1.5 1.5h-23A1.5 1.5 0 0 1 11 23.6z" fill="#6f757a" />
+      <path d="M11 22.4H7.4a1.6 1.6 0 0 1 0-3.2H11M37 22.4h3.6a1.6 1.6 0 0 0 0-3.2H37" fill="none" stroke="#6f757a" strokeWidth="2.3" strokeLinecap="round" />
+      <ellipse cx="24" cy="19.2" rx="9.5" ry="2.2" fill="#9aa0a4" />
+      <rect x="22.4" y="15.2" width="3.2" height="2.6" rx="1.3" fill="#6f757a" />
+      <path d="M18.5 16.6c-.8 1.6.2 2.7.9 3.6M27.5 16.2c-.8 1.6.2 2.7.9 3.6" stroke="#cdd3ce" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    </>
+  ),
+  spicybowl: (
+    <>
+      <path d="M11 23.5h26c-.4 8-6.4 13.5-13 13.5S11.4 31.5 11 23.5z" fill="#cdd3ce" />
+      <ellipse cx="24" cy="23.5" rx="12.5" ry="4" fill="#c14a30" />
+      <circle cx="19.5" cy="23.2" r="1.3" fill="#e0663f" /><circle cx="27" cy="24" r="1.1" fill="#7f9a5c" /><circle cx="23.5" cy="24.4" r="1.1" fill="#e8b24a" />
+      <path d="M20 15.4c3.1-.7 5.4.7 6.9 2.6-2.3.7-5 .1-7.2-1.3z" fill="#cf3b28" />
+      <path d="M19.7 14.6c.9-.3 1.5.2 1.3 1.1l-1.1.2z" fill="#6f9a4a" />
+    </>
+  ),
   grill: (
     <>
       <path d="M14 18c6-2 14-2 20 0 2 .7 3 2 2.5 3.8l-1.5 6c-.5 2-2 3.2-4 3.4-4.5.5-9.5.5-14 0-2-.2-3.5-1.4-4-3.4l-1.5-6C11 20 12 18.7 14 18z" fill="#a5643f" />
@@ -586,7 +629,7 @@ const I = {
 
 // 픽커용 — 카테고리별 아이콘 키
 export const FOOD_ICON_GROUPS = [
-  { label: '요리', items: ['rice', 'donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'stirfry', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert'] },
+  { label: '요리', items: ['rice', 'donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert'] },
   { label: '밥·면·빵', items: ['rice', 'donburi', 'noodle', 'guksu', 'bread', 'tteok', 'tofu'] },
   { label: '채소', items: ['cabbage', 'kimchi', 'lettuce', 'onion', 'garlic', 'greenOnion', 'sprout', 'potato', 'carrot', 'chili', 'pepper', 'cucumber', 'eggplant', 'corn', 'radish', 'mushroom', 'broccoli', 'beans'] },
   { label: '과일', items: ['tomato', 'apple', 'banana', 'strawberry', 'grape', 'lemon', 'orange', 'avocado'] },
@@ -605,11 +648,15 @@ const ICON_RULES = [
   [['김밥'], 'gimbap'],
   [['초밥', '스시', '유부초밥'], 'sushi'],
   [['샐러드'], 'salad'],
-  [['찌개', '전골', '스튜', '샤브', '나베'], 'stew'],
+  [['전골', '샤브', '나베', '밀푀유'], 'pot'],
+  [['찌개', '스튜'], 'stew'],
+  [['마라탕', '마라', '육개장', '매운탕', '알탕', '동태탕', '감자탕'], 'spicybowl'],
   [['크림수프', '수프', '스프', '포타주', '차우더'], 'soup'],
   [['탕수육', '돈까스', '돈가스', '까스', '텐동', '가라아게', '고로케', '너겟', '튀김', '프라이', '후라이드'], 'fried'],
   [['볶음밥'], 'rice'],
-  [['제육', '마파', '잡채', '볶음', '두루치기'], 'stirfry'],
+  [['제육', '두루치기', '주꾸미', '쭈꾸미', '낙지볶음', '오징어볶음', '매운볶음', '고추장볶음', '불고기볶음'], 'stirfryspicy'],
+  [['야채볶음', '채소볶음', '가지볶음', '버섯볶음', '애호박볶음', '나물볶음', '감자볶음', '어묵볶음', '멸치볶음', '두부조림'], 'stirfryveg'],
+  [['마파', '잡채', '볶음'], 'stirfry'],
   // ── 면·밥·떡·빵 ──
   [['국수', '잔치', '소면'], 'guksu'],
   [['라면', '우동', '냉면', '쫄면', '당면', '짜장', '짬뽕', '소바', '면'], 'noodle'],
