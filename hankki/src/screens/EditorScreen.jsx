@@ -50,6 +50,22 @@ export default function EditorScreen({ id, prefill }) {
   const [ocr, setOcr] = useState({ busy: false, pct: 0 })
   const [cropImg, setCropImg] = useState(null) // 글자 읽기 전 '자르기' 단계
   const ocrTargetRef = useRef('all') // 'all' | 'ingredients' | 'steps' — 어느 칸에 채울지
+  const ingRef = useRef(null) // 재료 입력칸 — 단위 버튼이 커서 위치에 넣을 수 있게
+  // 재료칸 커서 위치에 단위/수량을 넣는다. 영어 키보드 전환 없이 g·t·T 를 톡 넣기 위함.
+  const insertUnit = (u) => {
+    const el = ingRef.current
+    const v = f.ingredients
+    const start = el ? el.selectionStart : v.length
+    const end = el ? el.selectionEnd : start
+    set('ingredients', v.slice(0, start) + u + v.slice(end))
+    requestAnimationFrame(() => {
+      if (!el) return
+      el.focus()
+      const pos = start + u.length
+      try { el.setSelectionRange(pos, pos) } catch { /* noop */ }
+    })
+  }
+  const UNITS = ['g', 'ml', 'T', 't', '큰술', '작은술', '컵', '개', '약간']
   // 위에 고정해 두고 보면서 쓰기 — 'video'(유튜브·인스타) | 'photo'(캡처 원본) | null
   // 저장된 레시피를 다시 편집할 때도 사진이 있으면 참고용으로 띄울 수 있게 한다.
   const [refs, setRefs] = useState(() => {
@@ -420,7 +436,16 @@ export default function EditorScreen({ id, prefill }) {
               <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
-          <textarea rows={5} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n캡처가 있다면 위 📷 버튼 — 여러 장 이어서도 돼요.'} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+            {UNITS.map((u) => (
+              <button key={u} type="button" className="press" onClick={() => insertUnit(u)}
+                style={{ padding: '5px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
+                {u}
+              </button>
+            ))}
+            <span style={{ alignSelf: 'center', fontSize: 11, color: 'var(--text-sub)' }}>T=큰술 · t=작은술</span>
+          </div>
+          <textarea ref={ingRef} rows={5} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n캡처가 있다면 위 📷 버튼 — 여러 장 이어서도 돼요.'} />
         </div>
 
         <div className="field">
