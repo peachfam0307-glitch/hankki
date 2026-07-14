@@ -87,6 +87,45 @@
   .cnt{ font-size:9.5px; font-weight:700; color:var(--accent-ink); background:var(--accent-soft); padding:1px 6px; border-radius:5px; margin-left:2px; }
   .empty{ text-align:center; color:var(--mut); font-size:13px; padding:60px 20px; line-height:1.7; }
 
+  /* ---------- home ---------- */
+  .home{ flex:1; overflow-y:auto; padding:4px 16px calc(96px + env(safe-area-inset-bottom)); }
+  .hgreet{ font-size:20px; font-weight:600; letter-spacing:-.02em; padding:10px 2px 2px; }
+  .hgreet small{ display:block; font-size:12px; color:var(--mut); font-weight:500; margin-top:4px; }
+  .hsec{ font-size:12px; font-weight:700; color:var(--ink2); letter-spacing:.02em; padding:22px 2px 11px; }
+  .hempty{ color:var(--mut); font-size:12.5px; line-height:1.6; padding:2px 2px 4px; }
+  .ccards{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .ccard{ background:var(--surface); border:1px solid var(--line2); border-radius:16px; padding:13px 13px 12px; display:flex; flex-direction:column; gap:9px; }
+  .ccard .top{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .ccard .ci{ width:30px; height:30px; border-radius:10px; display:grid; place-items:center; flex-shrink:0; }
+  .ccard .ci svg{ width:17px; height:17px; }
+  .ccard .cn{ font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ccard .dday{ font-size:23px; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.1; }
+  .ccard .dsub{ font-size:10.5px; color:var(--mut); font-weight:500; margin-top:2px; }
+  .ccard .prog{ height:6px; border-radius:4px; background:var(--surface2); overflow:hidden; }
+  .ccard .prog i{ display:block; height:100%; border-radius:4px; }
+  .ccard .done{ align-self:stretch; text-align:center; font-size:11.5px; font-weight:600; color:var(--accent-ink); background:var(--accent-soft); padding:7px; border-radius:10px; }
+  .ccard .done:active{ opacity:.7; }
+  .grow{ display:flex; flex-direction:column; gap:9px; }
+  .gr{ background:var(--surface); border:1px solid var(--line2); border-radius:14px; padding:12px 14px; }
+  .gr .r1{ display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; }
+  .gr .r1 .ci{ width:22px; height:22px; border-radius:7px; display:inline-grid; place-items:center; flex-shrink:0; }
+  .gr .r1 .ci svg{ width:13px; height:13px; }
+  .gr .r1 .rem{ margin-left:auto; font-size:12px; color:var(--accent-ink); font-weight:700; white-space:nowrap; }
+  .gr .prog{ height:7px; border-radius:4px; background:var(--surface2); margin-top:9px; overflow:hidden; }
+  .gr .prog i{ display:block; height:100%; border-radius:4px; }
+  .gr .gsub{ margin-top:6px; font-size:11px; color:var(--mut); font-weight:500; }
+  .paylist{ background:var(--surface); border:1px solid var(--line2); border-radius:16px; overflow:hidden; }
+  .payrow{ display:flex; align-items:center; gap:10px; padding:12px 14px; border-top:1px solid var(--line); }
+  .payrow:first-child{ border-top:none; }
+  .payrow .pd{ font-size:11px; color:var(--mut); font-weight:600; width:38px; flex-shrink:0; font-variant-numeric:tabular-nums; }
+  .payrow .pn{ font-size:13.5px; font-weight:500; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .payrow .pa{ font-size:13.5px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .paytot{ display:flex; justify-content:space-between; align-items:center; padding:13px 14px; border-top:2px solid var(--line2); }
+  .paytot .s{ color:var(--mut); font-size:12px; font-weight:600; }
+  .paytot b{ font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .htoday .dev{ border-top:1px solid var(--line); }
+  .htoday .dev:first-child{ border-top:none; }
+
   /* ---------- FAB ---------- */
   .fab{ position:absolute; right:18px; bottom:calc(20px + env(safe-area-inset-bottom)); width:50px; height:50px; border-radius:17px; background:var(--ink); color:var(--bg); display:grid; place-items:center; box-shadow:var(--shadow); z-index:20; }
   .fab:active{ transform:scale(.94); }
@@ -157,6 +196,10 @@
   .daysel{ display:flex; gap:5px; margin-top:10px; }
   .daysel button{ width:30px; height:30px; border-radius:9px; font-size:11.5px; font-weight:600; background:var(--surface2); color:var(--mut); }
   .daysel button.on{ background:var(--accent); color:#fff; }
+  .numin{ width:88px; font-family:inherit; font-size:14px; font-weight:600; color:var(--ink); background:var(--surface2); border:none; border-radius:9px; padding:7px 9px; outline:none; text-align:right; -moz-appearance:textfield; }
+  .numin::-webkit-outer-spin-button,.numin::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .stp{ width:30px; height:30px; border-radius:9px; background:var(--surface2); color:var(--ink2); font-size:17px; font-weight:600; display:inline-grid; place-items:center; }
+  .stp:active{ background:var(--line2); }
   .colorrow{ display:flex; gap:11px; }
   .colorrow button{ width:24px; height:24px; border-radius:50%; position:relative; }
   .colorrow button.on::after{ content:''; position:absolute; inset:-4px; border-radius:50%; border:2px solid var(--accent); }
@@ -275,6 +318,15 @@ function occurrences(ev, from, to){
     if(ev.date>=from && ev.date<=to) out.push({date:ev.date,n:1});
     return out;
   }
+  if(rep.type==='cycle'){
+    const interval=intervalDays(rep); if(interval<1) return out;
+    let c=new Date(start); let n=0; const end=parseYMD(to);
+    while(c<=end){
+      if(!until || ymd(c)<=rep.until){ n++; if(ymd(c)>=from) out.push({date:ymd(c),n}); }
+      c=new Date(c); c.setDate(c.getDate()+interval);
+    }
+    return out;
+  }
   // iterate days from max(start,from) to to
   let cursor = parseYMD(from> ev.date? from: ev.date);
   const end = parseYMD(to);
@@ -330,6 +382,8 @@ function render(){
   if(view.mode==='month'){
     html += weekHead();
     html += monthGrid();
+  } else if(view.mode==='home'){
+    html += homeView();
   } else { // list
     html += listView();
   }
@@ -337,15 +391,18 @@ function render(){
   app.innerHTML = html;
 }
 function topbar(){
-  const modes=[['month','월'],['list','목록']];
-  return `<div class="topbar">
-    <div class="mon">${view.m+1}월<span class="yr">${view.y}</span>
+  const modes=[['home','홈'],['month','월'],['list','목록']];
+  const left = view.mode==='home'
+    ? `<div class="mon">loop</div>`
+    : `<div class="mon">${view.m+1}월<span class="yr">${view.y}</span>
       <span class="nav">
         <button onclick="shiftMonth(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
         <button onclick="goToday()" style="width:auto;padding:0 8px;font-size:11px;font-weight:600;color:var(--accent-ink)">오늘</button>
         <button onclick="shiftMonth(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </span>
-    </div>
+    </div>`;
+  return `<div class="topbar">
+    ${left}
     <div class="rgt">
       <div class="seg">${modes.map(([k,l])=>`<button class="${view.mode===k?'on':''}" onclick="setMode('${k}')">${l}</button>`).join('')}</div>
       <button class="iconbtn" onclick="openSettings()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.3-2.5H10.4l-.3 2.5a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.3 2.5h3.2l.3-2.5a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5a7 7 0 0 0 .1-1Z"/></svg></button>
@@ -380,8 +437,8 @@ function cellHTML(d){
   let inner='';
   evs.slice(0,max).forEach(({ev,n})=>{
     const c=col(ev.color);
-    const st= ev.sticker? `<span class="es">${svg(ev.sticker)}</span>`:'';
-    inner+=`<div class="el" style="background:${c.bg};color:${c.fg}">${st}${escapeHtml(ev.title)}</div>`;
+    // month view: text only (no sticker icon) — icons stay in day/list views
+    inner+=`<div class="el" style="background:${c.bg};color:${c.fg}">${escapeHtml(ev.title)}</div>`;
   });
   if(evs.length>max) inner+=`<div class="more">+${evs.length-max}</div>`;
   return `<div class="${cls.join(' ')}" onclick="openDay('${ds}')"><span class="dn">${d.getDate()}</span>${inner}</div>`;
@@ -416,6 +473,81 @@ function listView(){
 
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+/* ============================ home (summary) ============================ */
+function homeView(){
+  const cyc=db.events.filter(e=>e.repeat&&e.repeat.type==='cycle');
+  const goals=db.events.filter(e=>e.countSessions&&(e.goalCount||0)>0&&e.repeat&&['weekly','monthly','daily'].includes(e.repeat.type));
+  const y=new Date().getFullYear(), m=new Date().getMonth();
+  const mFrom=`${y}-${pad(m+1)}-01`, mTo=`${y}-${pad(m+1)}-${pad(new Date(y,m+1,0).getDate())}`;
+  const pays=[];
+  db.events.forEach(ev=>{ if((ev.amount||0)>0){ const occ=occurrences(ev,mFrom,mTo); if(occ.length) pays.push({ev,date:occ[0].date,amount:ev.amount}); } });
+  pays.sort((a,b)=>a.date.localeCompare(b.date));
+  const payTotal=pays.reduce((s,p)=>s+p.amount,0);
+  const todays=eventsOn(todayStr);
+  const now=new Date(), hh=now.getHours();
+  const greet=hh<11?'좋은 아침이에요':hh<18?'오늘도 화이팅이에요':'오늘 하루 수고했어요';
+
+  let html=`<div class="home">
+    <div class="hgreet">${greet}<small>${m+1}월 ${now.getDate()}일 ${WD[now.getDay()]}요일</small></div>`;
+
+  // 다가오는 주기
+  html+=`<div class="hsec">🔁 다가오는 주기</div>`;
+  if(!cyc.length){ html+=`<div class="hempty">아직 주기 항목이 없어요.<br>일정 추가에서 반복을 <b>‘주기’</b>로 하면 여기에 D-day가 떠요 (예: 네일 3주마다).</div>`; }
+  else{
+    html+=`<div class="ccards">`;
+    cyc.forEach(ev=>{
+      const info=cycleInfo(ev), c=col(ev.color), d=info.dToNext;
+      const ddText=d>0?`D-${d}`:d===0?'D-DAY':`D+${-d}`;
+      const ddCol=d<0?'var(--sun)':d===0?c.fg:'var(--ink)';
+      const pct=info.dSince==null?0:Math.max(2,Math.min(100,Math.round(info.dSince/info.interval*100)));
+      html+=`<div class="ccard">
+        <div class="top"><span class="ci" style="background:${c.bg};color:${c.fg}">${svg(ev.sticker||'star')}</span><span class="cn">${escapeHtml(ev.title)}</span></div>
+        <div><div class="dday" style="color:${ddCol}">${ddText}</div>
+        <div class="dsub">${info.last?`마지막 ${info.last.slice(5).replace('-','/')} · ${ev.repeat.n}${unitLabel(ev.repeat.unit)}마다`:`${info.next.slice(5).replace('-','/')} 예정`}</div></div>
+        <div class="prog"><i style="width:${pct}%;background:${c.bar}"></i></div>
+        <div class="done" onclick="markCycleDone('${ev.id}')">오늘 했어요 ✓</div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // 회차 진행
+  if(goals.length){
+    html+=`<div class="hsec">🎯 회차 진행</div><div class="grow">`;
+    goals.forEach(ev=>{
+      const done=occurrences(ev,ev.date,todayStr).length, total=ev.goalCount;
+      const rem=Math.max(0,total-done), pct=Math.min(100,Math.round(done/total*100)), c=col(ev.color);
+      html+=`<div class="gr"><div class="r1"><span class="ci" style="background:${c.bg};color:${c.fg}">${svg(ev.sticker||'book')}</span>${escapeHtml(ev.title)}<span class="rem">${rem>0?`${rem}회 남음`:'완료 🎉'}</span></div>
+        <div class="prog"><i style="width:${pct}%;background:${c.bar}"></i></div>
+        <div class="gsub">${done} / ${total}회</div></div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // 이번 달 납부
+  html+=`<div class="hsec">💰 이번 달 납부</div>`;
+  if(!pays.length){ html+=`<div class="hempty">이번 달 납부 항목이 없어요.<br>일정에 <b>금액</b>을 넣으면 여기 모여서 합계가 나와요.</div>`; }
+  else{
+    html+=`<div class="paylist">`;
+    pays.forEach(p=>{ const dd=parseYMD(p.date); html+=`<div class="payrow"><span class="pd">${dd.getMonth()+1}/${dd.getDate()}</span><span class="pn">${escapeHtml(p.ev.title)}</span><span class="pa">${wonFmt(p.amount)}</span></div>`; });
+    html+=`<div class="paytot"><span class="s">이번 달 합계</span><b>${wonFmt(payTotal)}</b></div></div>`;
+  }
+
+  // 오늘 일정
+  html+=`<div class="hsec">📅 오늘 일정</div>`;
+  if(!todays.length){ html+=`<div class="hempty">오늘은 등록된 일정이 없어요.</div>`; }
+  else{
+    html+=`<div class="htoday">`;
+    todays.forEach(({ev})=>{ const c=col(ev.color); const st=ev.sticker?`<span class="es" style="background:${c.bg};color:${c.fg}">${svg(ev.sticker)}</span>`:'';
+      html+=`<div class="dev" onclick="openEditor('${ev.id}')"><div class="dt"><b>${ev.allDay?'종일':fmtTimeShort(ev.start)}</b></div><div class="bar" style="background:${c.bar}"></div><div class="body"><div class="nm">${st}${escapeHtml(ev.title)}</div></div></div>`;
+    });
+    html+=`</div>`;
+  }
+  html+=`</div>`;
+  return html;
+}
+function markCycleDone(id){ const ev=db.events.find(e=>e.id===id); if(!ev)return; ev.date=todayStr; saveDB(); scheduleAlarms(); render(); toast('완료! 다음 주기로 넘어갔어요'); }
+
 /* ============================ day sheet ============================ */
 let curDay=null;
 function openDay(ds){
@@ -438,11 +570,12 @@ function openDay(ds){
     const tt = ev.allDay? `<b>종일</b>` : `<b>${fmtTimeShort(ev.start)}</b><s>${ev.start<'12:00'?'오전':'오후'}</s>`;
     const rng = ev.allDay? (ev.repeat&&ev.repeat.type!=='none'?repeatLabel(ev.repeat):'하루 종일') : `${fmtTime(ev.start)}${ev.end?' – '+fmtTime(ev.end):''}`;
     const al = (ev.alarm&&ev.alarm.on)?`<span class="chipn">${svg('bell')}${alarmLabel(ev.alarm.minutes)}</span>`:'';
+    const won = (ev.amount>0)?`<span>${wonFmt(ev.amount)}</span>`:'';
     listHTML+=`<div class="dev" onclick="openEditor('${ev.id}')">
       <div class="dt">${tt}</div>
       <div class="bar" style="background:${c.bar}"></div>
       <div class="body"><div class="nm">${st}${escapeHtml(ev.title)}${cnt}</div>
-        <div class="mt"><span>${rng}</span>${al}</div></div>
+        <div class="mt"><span>${rng}</span>${won}${al}</div></div>
     </div>`;
   });
 
@@ -462,6 +595,7 @@ function repeatLabel(rep){
   if(rep.type==='daily') return '매일 반복';
   if(rep.type==='weekly') return '매주 '+(rep.days||[]).sort((a,b)=>a-b).map(x=>WD[x]).join('·');
   if(rep.type==='monthly') return '매달 반복';
+  if(rep.type==='cycle') return `${rep.n}${unitLabel(rep.unit)}마다`;
   return '';
 }
 function removeTag(ds,i){ db.dayTags[ds].splice(i,1); if(!db.dayTags[ds].length) delete db.dayTags[ds]; saveDB(); openDay(ds); }
@@ -528,8 +662,21 @@ let draft=null;
 function blankDraft(){
   return { id:null, title:'', date: curDay||todayStr, allDay:false, start:'10:00', end:'11:00',
     color:'blue', sticker:null, alarm:{on:true,minutes:30}, sound:'물방울',
-    repeat:{type:'none',days:[],until:null}, countSessions:false, memo:'' };
+    repeat:{type:'none',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:0, memo:'' };
 }
+function intervalDays(rep){ const n=rep.n||1; const u=rep.unit||'week'; return n*(u==='week'?7:u==='month'?30:1); }
+const unitLabel = u => u==='week'?'주':u==='month'?'개월':'일';
+// cycle summary relative to today
+function cycleInfo(ev){
+  const interval=intervalDays(ev.repeat)||1;
+  const today=parseYMD(todayStr); const start=parseYMD(ev.date);
+  if(start>today){ const d=Math.round((start-today)/86400000); return {last:null,next:ev.date,dSince:null,dToNext:d,interval}; }
+  let last=new Date(start);
+  while(true){ const nx=new Date(last); nx.setDate(nx.getDate()+interval); if(nx>today) break; last=nx; }
+  const next=new Date(last); next.setDate(next.getDate()+interval);
+  return { last:ymd(last), next:ymd(next), dSince:Math.round((today-last)/86400000), dToNext:Math.round((next-today)/86400000), interval };
+}
+function wonFmt(n){ return '₩'+Number(n||0).toLocaleString('ko-KR'); }
 function openEditor(id){
   if(id==='__draft'){ /* keep current draft */ }
   else if(id){ const ev=db.events.find(e=>e.id===id); draft=JSON.parse(JSON.stringify(ev)); }
@@ -547,7 +694,7 @@ function renderEditor(){
 
       <div class="fr">
         <span class="ic">${iconCal()}</span>
-        <span class="lb">날짜</span>
+        <span class="lb">${rep.type==='cycle'?'마지막 한 날':'날짜'}</span>
         <span class="vl"><input type="date" value="${d.date}" onchange="draft.date=this.value"></span>
       </div>
 
@@ -579,21 +726,40 @@ function renderEditor(){
         <span class="ic">${iconRepeat()}</span>
         <span class="lb">반복</span>
         <span class="vl"><span class="miniseg">
-          ${[['none','안 함'],['daily','매일'],['weekly','매주'],['monthly','매달']].map(([k,l])=>`<button class="${rep.type===k?'on':''}" onclick="setRepeat('${k}')">${l}</button>`).join('')}
+          ${[['none','안 함'],['daily','매일'],['weekly','매주'],['monthly','매달'],['cycle','주기']].map(([k,l])=>`<button class="${rep.type===k?'on':''}" onclick="setRepeat('${k}')">${l}</button>`).join('')}
         </span></span>
         ${rep.type==='weekly'?`<div class="daysel" style="width:100%;padding-left:32px">${WD.map((w,i)=>`<button class="${(rep.days||[]).includes(i)?'on':''}" onclick="toggleDay(${i})">${w}</button>`).join('')}</div>`:''}
+        ${rep.type==='cycle'?`<div style="width:100%;padding-left:32px;margin-top:11px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button class="stp" onclick="cycleN(-1)">−</button>
+          <span style="font-size:16px;font-weight:700;min-width:22px;text-align:center;font-variant-numeric:tabular-nums">${rep.n||1}</span>
+          <button class="stp" onclick="cycleN(1)">＋</button>
+          <span class="miniseg" style="margin-left:4px">${[['day','일'],['week','주'],['month','개월']].map(([u,l])=>`<button class="${(rep.unit||'week')===u?'on':''}" onclick="draft.repeat.unit='${u}';renderEditor()">${l}</button>`).join('')}</span>
+          <span style="font-size:12px;color:var(--mut)">마다</span>
+        </div>`:''}
       </div>
 
-      ${(rep.type!=='none')?`<div class="fr">
+      ${(rep.type!=='none'&&rep.type!=='cycle')?`<div class="fr">
         <span class="ic">${iconHash()}</span>
         <span class="lb">회차 세기 <span style="color:var(--mut);font-weight:500;font-size:11.5px">(N회차 표시)</span></span>
         <span class="tg ${d.countSessions?'on':''}" onclick="draft.countSessions=!draft.countSessions;renderEditor()"></span>
+      </div>`:''}
+
+      ${(rep.type!=='none'&&rep.type!=='cycle'&&d.countSessions)?`<div class="fr">
+        <span class="ic">${iconTarget()}</span>
+        <span class="lb">목표 횟수 <span style="color:var(--mut);font-weight:500;font-size:11.5px">(홈에 진행바)</span></span>
+        <span class="vl"><input class="numin" type="number" inputmode="numeric" min="0" placeholder="0" value="${d.goalCount||''}" oninput="draft.goalCount=parseInt(this.value)||0"><span style="font-size:13px;color:var(--mut)">회</span></span>
       </div>`:''}
 
       <div class="fr">
         <span class="ic">${iconDrop()}</span>
         <span class="lb">색상</span>
         <span class="vl"><span class="colorrow">${COLOR_KEYS.map(k=>{const c=col(k);return `<button class="${d.color===k?'on':''}" style="background:${c.bar}" onclick="draft.color='${k}';renderEditor()"></button>`;}).join('')}</span></span>
+      </div>
+
+      <div class="fr">
+        <span class="ic">${iconWon()}</span>
+        <span class="lb">금액 <span style="color:var(--mut);font-weight:500;font-size:11.5px">(납부·지출)</span></span>
+        <span class="vl"><input class="numin" type="number" inputmode="numeric" min="0" step="1000" placeholder="0" value="${d.amount||''}" oninput="draft.amount=parseInt(this.value)||0"><span style="font-size:13px;color:var(--mut)">원</span></span>
       </div>
 
       <div class="subseg">스티커</div>
@@ -618,7 +784,8 @@ function openAlarmPick(){
     html+=`<div class="opt"><div class="nm" onclick="draft.alarm.minutes=${o.m};closeSheet();setTimeout(()=>openEditor('__draft'),260)">${o.l}</div>${on?`<span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg></span>`:''}</div>`; });
   html+=`</div>`; showSheet(html,true);
 }
-function setRepeat(k){ draft.repeat.type=k; if(k==='weekly'&&(!draft.repeat.days||!draft.repeat.days.length)){ draft.repeat.days=[parseYMD(draft.date).getDay()]; } if(k==='none') draft.countSessions=false; renderEditor(); }
+function setRepeat(k){ draft.repeat.type=k; if(k==='weekly'&&(!draft.repeat.days||!draft.repeat.days.length)){ draft.repeat.days=[parseYMD(draft.date).getDay()]; } if(k==='cycle'){ if(!draft.repeat.n)draft.repeat.n=3; if(!draft.repeat.unit)draft.repeat.unit='week'; draft.countSessions=false; } if(k==='none'||k==='cycle') draft.countSessions=false; renderEditor(); }
+function cycleN(delta){ draft.repeat.n=Math.max(1,(draft.repeat.n||1)+delta); renderEditor(); }
 function toggleDay(i){ const ds=draft.repeat.days||[]; const idx=ds.indexOf(i); if(idx>=0)ds.splice(idx,1); else ds.push(i); draft.repeat.days=ds; renderEditor(); }
 function saveEvent(){
   const t=(draft.title||'').trim(); if(!t){ toast('일정 이름을 입력해주세요'); return; }
@@ -643,6 +810,8 @@ function iconRepeat(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="curr
 function iconHash(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M9 4 7 20M17 4l-2 16M5 9h15M4 15h15"/></svg>`; }
 function iconDrop(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3c3.5 4.5 6 7.5 6 10.5a6 6 0 0 1-12 0C6 10.5 8.5 7.5 12 3Z"/></svg>`; }
 function iconMemo(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>`; }
+function iconTarget(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>`; }
+function iconWon(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l3.2 10L12 8l4.8 9L20 7"/><path d="M3 11.5h18"/></svg>`; }
 
 /* ============================ sheet infra ============================ */
 let sheetEl=null, scrimEl=null;
@@ -745,11 +914,14 @@ function seedIfEmpty(){
   if(db.events.length) return;
   const n=new Date(); const y=n.getFullYear(), m=n.getMonth();
   const D=(day)=>`${y}-${pad(m+1)}-${pad(day)}`;
+  const last=(day)=>{ const dd=new Date(y,m,day); return ymd(dd); };
   db.events=[
-    { id:uid(), title:'수학학원', date:D(1), allDay:false, start:'10:30', end:'12:00', color:'blue', sticker:'book', alarm:{on:true,minutes:30}, sound:'물방울', repeat:{type:'weekly',days:[2,4],until:null}, countSessions:true, memo:'' },
-    { id:uid(), title:'필라테스', date:D(1), allDay:false, start:'19:00', end:'20:00', color:'teal', sticker:'run', alarm:{on:true,minutes:60}, sound:'딩동', repeat:{type:'weekly',days:[1],until:null}, countSessions:false, memo:'' },
-    { id:uid(), title:'학원비 납부', date:D(15), allDay:true, start:'09:00', end:'', color:'rose', sticker:'money', alarm:{on:true,minutes:1440}, sound:'종', repeat:{type:'monthly',days:[],until:null}, countSessions:false, memo:'' },
-    { id:uid(), title:'염색 예정', date:D(Math.min(18,new Date(y,m+1,0).getDate())), allDay:true, start:'09:00', end:'', color:'sage', sticker:'brush', alarm:{on:false,minutes:30}, sound:'물방울', repeat:{type:'none',days:[],until:null}, countSessions:false, memo:'' },
+    { id:uid(), title:'수학학원', date:D(1), allDay:false, start:'10:30', end:'12:00', color:'blue', sticker:'book', alarm:{on:true,minutes:30}, sound:'물방울', repeat:{type:'weekly',days:[2,4],until:null,n:3,unit:'week'}, countSessions:true, goalCount:20, amount:0, memo:'' },
+    { id:uid(), title:'필라테스', date:D(1), allDay:false, start:'19:00', end:'20:00', color:'teal', sticker:'run', alarm:{on:true,minutes:60}, sound:'딩동', repeat:{type:'weekly',days:[1],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:0, memo:'' },
+    { id:uid(), title:'학원비 납부', date:D(15), allDay:true, start:'09:00', end:'', color:'rose', sticker:'money', alarm:{on:true,minutes:1440}, sound:'종', repeat:{type:'monthly',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:350000, memo:'' },
+    { id:uid(), title:'넷플릭스', date:D(22), allDay:true, start:'09:00', end:'', color:'plum', sticker:'movie', alarm:{on:false,minutes:1440}, sound:'기본', repeat:{type:'monthly',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:13500, memo:'' },
+    { id:uid(), title:'네일아트', date:last(2), allDay:true, start:'14:00', end:'', color:'rose', sticker:'heart', alarm:{on:true,minutes:1440}, sound:'방울', repeat:{type:'cycle',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:0, memo:'' },
+    { id:uid(), title:'염색', date:last(1), allDay:true, start:'14:00', end:'', color:'sage', sticker:'brush', alarm:{on:true,minutes:1440}, sound:'물방울', repeat:{type:'cycle',days:[],until:null,n:6,unit:'week'}, countSessions:false, goalCount:0, amount:0, memo:'' },
   ];
   db.dayTags[D(Math.min(new Date().getDate(), new Date(y,m+1,0).getDate()))]=['coffee','heart'];
   saveDB();
