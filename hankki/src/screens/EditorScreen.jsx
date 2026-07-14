@@ -71,15 +71,19 @@ export default function EditorScreen({ id, prefill }) {
     })
   }
   const UNITS = ['g', 'ml', 'T', 't', '큰술', '작은술', '컵', '개', '약간']
-  const UnitBar = ({ inputRef, field }) => (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-      {UNITS.map((u) => (
-        <button key={u} type="button" className="press" onClick={() => insertUnit(u, inputRef, field)}
-          style={{ padding: '5px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
-          {u}
-        </button>
-      ))}
-      <span style={{ alignSelf: 'center', fontSize: 11, color: 'var(--text-sub)' }}>T=큰술 · t=작은술</span>
+  // 재료·순서 입력 중 키보드 바로 위에 뜨는 '계량 버튼 바'. 타이핑하면서도 항상 보인다.
+  // onMouseDown preventDefault: 버튼을 눌러도 입력칸 포커스(커서)를 잃지 않게.
+  const AccessoryBar = () => (
+    <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'var(--kb-inset, 0px)', zIndex: 60, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
+      <div onMouseDown={(e) => e.preventDefault()} style={{ pointerEvents: 'auto', width: '100%', maxWidth: 480, display: 'flex', gap: 6, overflowX: 'auto', padding: '8px 12px', background: 'var(--surface)', borderTop: '1px solid var(--line)', boxShadow: '0 -3px 12px rgba(0,0,0,.07)' }}>
+        {UNITS.map((u) => (
+          <button key={u} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insertUnit(u, focusField === 'steps' ? stepRef : ingRef, focusField || 'ingredients')}
+            style={{ flex: '0 0 auto', padding: '8px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
+            {u}
+          </button>
+        ))}
+        <span style={{ flex: '0 0 auto', alignSelf: 'center', fontSize: 11, color: 'var(--text-sub)', paddingRight: 4, whiteSpace: 'nowrap' }}>T=큰술·t=작은술</span>
+      </div>
     </div>
   )
   // 위에 고정해 두고 보면서 쓰기 — 'video'(유튜브·인스타) | 'photo'(캡처 원본) | null
@@ -137,6 +141,9 @@ export default function EditorScreen({ id, prefill }) {
   })
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }))
+  const [focusField, setFocusField] = useState(null) // 'ingredients'|'steps' — 계량 바를 키보드 위에 띄울 대상
+  const onFieldFocus = (name) => () => setFocusField(name)
+  const onFieldBlur = (name) => () => setTimeout(() => setFocusField((c) => (c === name ? null : c)), 150)
 
   // 작성 중 자동 임시저장 — 텍스트만(사진은 무겁고 텍스트가 핵심). 편집 모드는 제외.
   useEffect(() => {
@@ -270,6 +277,7 @@ export default function EditorScreen({ id, prefill }) {
 
   return (
     <div className="screen fade">
+      {focusField && <AccessoryBar />}
       <div className="topbar-back">
         <button className="icon-btn press" onClick={() => nav.pop()} aria-label="닫기"><Icon name="x" size={24} /></button>
         <div style={{ fontSize: 16, fontWeight: 700 }}>{editing ? '레시피 정리' : '직접 작성하기'}</div>
@@ -474,8 +482,7 @@ export default function EditorScreen({ id, prefill }) {
               <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
-          <UnitBar inputRef={ingRef} field="ingredients" />
-          <textarea ref={ingRef} rows={5} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n캡처가 있다면 위 📷 버튼 — 여러 장 이어서도 돼요.'} />
+          <textarea ref={ingRef} rows={5} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} onFocus={onFieldFocus('ingredients')} onBlur={onFieldBlur('ingredients')} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n계량은 아래 버튼으로 · 캡처가 있다면 위 📷 버튼'} />
         </div>
 
         <div className="field">
@@ -485,8 +492,7 @@ export default function EditorScreen({ id, prefill }) {
               <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
-          <UnitBar inputRef={stepRef} field="steps" />
-          <textarea ref={stepRef} rows={5} value={f.steps} onChange={(e) => set('steps', e.target.value)} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
+          <textarea ref={stepRef} rows={5} value={f.steps} onChange={(e) => set('steps', e.target.value)} onFocus={onFieldFocus('steps')} onBlur={onFieldBlur('steps')} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
           <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 7, lineHeight: 1.5 }}>
             한 장의 캡처에 재료·만드는 법이 다 있다면{' '}
             <button className="press" onClick={() => pickOcr('all')} disabled={ocr.busy} style={{ display: 'inline', padding: 0, background: 'none', color: 'var(--brown)', fontWeight: 700, fontSize: 12, textDecoration: 'underline' }}>

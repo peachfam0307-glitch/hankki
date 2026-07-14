@@ -13,12 +13,17 @@ applyTheme(getTheme())
 // 모바일 주소창·제스처바 때문에 100dvh와 실제 보이는 높이가 어긋나
 // 하단 버튼(하단바·요리시작·가져오기 등)이 화면 밖으로 잘리던 문제의 근본 해결.
 function setAppHeight() {
-  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight
+  const vv = window.visualViewport
+  const h = vv ? vv.height : window.innerHeight
   document.documentElement.style.setProperty('--app-height', Math.round(h) + 'px')
+  // 키보드가 차지한 높이 — 입력칸 위 '계량 버튼 바'를 키보드 바로 위에 띄우는 데 쓴다.
+  const kb = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0
+  document.documentElement.style.setProperty('--kb-inset', Math.round(kb) + 'px')
 }
 setAppHeight()
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', setAppHeight)
+  window.visualViewport.addEventListener('scroll', setAppHeight)
 }
 window.addEventListener('resize', setAppHeight)
 window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 200))
