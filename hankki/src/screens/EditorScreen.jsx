@@ -1,4 +1,8 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
+
+// 새 레시피 작성 중 내용을 자동 임시저장하는 키 — 앱이 껐다 켜져도(인스타 링크 따러 갔다 오는 등)
+// 쓰던 내용이 날아가지 않게 한다. 저장 완료하면 지운다.
+const DRAFT_KEY = 'hankki:editorDraft'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -11,7 +15,7 @@ import PromptSheet from '../components/PromptSheet'
 import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES } from '../theme'
 import { TAG_LIST } from '../data/seed'
-import { guessCategory, cropSquare, clampGraphemes } from '../utils'
+import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish } from '../parseRecipe'
 import { normalizeNumerals } from '../ocrCorrect'
@@ -95,7 +99,7 @@ export default function EditorScreen({ id, prefill }) {
     const ing = e?.ingredients ?? p.ingredients ?? []
     const stp = e?.steps ?? p.steps ?? []
     const title = e ? (e.title && e.title !== '새 레시피' ? e.title : e.title || '') : p.title || ''
-    return {
+    const built = {
       title,
       // 썸네일 표시 방식: 기본은 아이콘(사진은 '글자 읽기'용으로 분리).
       // 예전 레시피는 이미지가 있으면 사진 유지.
@@ -119,9 +123,30 @@ export default function EditorScreen({ id, prefill }) {
       sourceUrl: e?.sourceUrl || p.sourceUrl || '',
       source: e?.source || p.source || 'manual',
     }
+    // 새 레시피 작성 중이었다면(편집·prefill 아님) 최근 임시저장분을 복구한다.
+    if (!editing && !prefill) {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY)
+        if (raw) {
+          const d = JSON.parse(raw)
+          if (d && d.ts && Date.now() - d.ts < 2 * 3600 * 1000 && d.f) return d.f
+        }
+      } catch { /* noop */ }
+    }
+    return built
   })
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }))
+
+  // 작성 중 자동 임시저장 — 텍스트만(사진은 무겁고 텍스트가 핵심). 편집 모드는 제외.
+  useEffect(() => {
+    if (editing) return
+    try {
+      const has = f.title.trim() || f.ingredients.trim() || f.steps.trim() || f.memo.trim() || f.sourceUrl.trim()
+      if (has) localStorage.setItem(DRAFT_KEY, JSON.stringify({ ts: Date.now(), f }))
+      else localStorage.removeItem(DRAFT_KEY)
+    } catch { /* noop */ }
+  }, [f, editing])
   const toggleTag = (t) => set('tags', f.tags.includes(t) ? f.tags.filter((x) => x !== t) : [...f.tags, t])
   const embed = embedUrl(f.sourceUrl) // 유튜브·인스타 링크면 '보면서 쓰기' 가능
 
@@ -235,6 +260,7 @@ export default function EditorScreen({ id, prefill }) {
     } else {
       const rec = { id: newId(), favorite: false, cooked: 0, savedAt: Date.now(), ...patch }
       addRecipe(rec)
+      try { localStorage.removeItem(DRAFT_KEY) } catch { /* noop */ } // 저장 완료 → 임시저장 삭제
       // 새 레시피 저장 후엔 열려있던 화면(가져오기 등)을 모두 닫고 홈/현재 탭으로.
       // (뒤로가기로 작성 중이던 빈 편집기가 다시 나오지 않게)
       nav.popAll()
@@ -494,6 +520,19 @@ export default function EditorScreen({ id, prefill }) {
         <div className="field">
           <label>원본 링크 (선택)</label>
           <input value={f.sourceUrl} onChange={(e) => set('sourceUrl', e.target.value)} placeholder="https://..." inputMode="url" />
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button type="button" className="press" onClick={() => openExternal('https://www.instagram.com/')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 13px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13, fontWeight: 700 }}>
+              <Icon name="instagram" size={16} color="var(--brown)" /> 인스타 열기
+            </button>
+            <button type="button" className="press" onClick={() => openExternal('https://www.youtube.com/')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 13px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13, fontWeight: 700 }}>
+              <Icon name="youtube" size={16} color="var(--brown)" /> 유튜브 열기
+            </button>
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>
+            새 탭으로 열려요 — 링크 복사 후 이 화면으로 돌아오면 쓰던 내용 그대로 있어요.
+          </div>
         </div>
 
         <div className="field">
