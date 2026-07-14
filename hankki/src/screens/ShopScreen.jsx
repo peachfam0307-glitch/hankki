@@ -12,6 +12,7 @@ import Portal from '../components/Portal'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { ocrImage } from '../ocr'
 import { guessEmoji } from '../emoji'
+import { openExternal } from '../utils'
 import { CURATION } from '../data/curation'
 
 // 재료 썸네일 — 사진 > 커스텀아이콘 > 이모지 > 글자 타일 순으로 표시
@@ -33,12 +34,9 @@ function WishThumb({ item, size = 46 }) {
   )
 }
 
-// 외부 쇼핑몰 열기 — 설치된 앱에서도 브라우저(로그인 세션 유지)로 열린다.
-function openUrl(url) {
-  if (!url) return
-  const u = /^https?:\/\//.test(url) ? url : 'https://' + url
-  window.open(u, '_blank', 'noopener,noreferrer')
-}
+// 외부 쇼핑몰 열기 — 정식 새 탭(설치된 앱 있으면 App Link 로 앱)으로 연다.
+// (features 문자열을 주면 팝업 창으로 열려 모바일에서 세로로 깨지고 두 번 열린 듯 보였음)
+const openUrl = openExternal
 function shopSearchUrl(shop, q) {
   if (q && shop.search) return shop.search.replace('{q}', encodeURIComponent(q))
   return shop.url
@@ -240,10 +238,15 @@ function Curation() {
   const nav = useNav()
   const [open, setOpen] = useState(true)
 
-  const buy = (q) => openUrl(shopSearchUrl(shops[0] || { url: '' }, q))
+  // 큐레이션은 첨가물 적은 '특색 재료'가 많아 쿠팡엔 없는 것도 있다(예: 백합된장).
+  // 그래서 사러가기는 무엇이든 잘 찾는 '네이버쇼핑' 통합검색을 우선 사용한다.
+  const searchShop =
+    shops.find((s) => s.id === 'naver') ||
+    { id: 'naver', url: 'https://shopping.naver.com', search: 'https://search.shopping.naver.com/search/all?query={q}' }
+  const buy = (q) => openUrl(shopSearchUrl(searchShop, q))
   const add = (it, emoji) => {
     store.addWish({
-      id: newId(), name: it.name, url: '', memo: it.benefit,
+      id: newId(), name: it.name, url: shopSearchUrl(searchShop, it.q), memo: it.benefit,
       thumb: 'emoji', image: null, emoji, icon: null,
       bought: false, savedAt: Date.now(),
     })

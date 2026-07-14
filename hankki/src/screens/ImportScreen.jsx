@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import { useBackHandler } from '../useBackHandler'
-import { guessCategory } from '../utils'
+import { guessCategory, openExternal } from '../utils'
 import { parseRecipeText } from '../parseRecipe'
 import { fetchLinkRecipe } from '../linkReader'
 import { guessFoodIcon } from '../components/FoodIcon'
@@ -208,7 +208,7 @@ export default function ImportScreen() {
           {/* 앱 바로 열기 — 링크 복사·캡처하러 갈 때 편하게 */}
           <button
             className="press"
-            onClick={() => window.open(flow === 'instagram' ? 'https://www.instagram.com/' : 'https://www.youtube.com/', '_blank', 'noopener,noreferrer')}
+            onClick={() => openExternal(flow === 'instagram' ? 'https://www.instagram.com/' : 'https://www.youtube.com/')}
             style={{
               width: '100%', marginBottom: 12, padding: 12, borderRadius: 'var(--r-md)',
               background: flowMeta.color, color: '#fff', fontSize: 14, fontWeight: 700,

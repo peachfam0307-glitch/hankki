@@ -1,3 +1,20 @@
+// 외부 링크를 '정식 새 탭'으로 연다.
+// 주의: window.open(url, '_blank', 'noopener,noreferrer') 처럼 features(3번째 인자)에
+// 문자열을 주면 브라우저가 '팝업 창'으로 열어 모바일에서 좁게/세로로 깨져 보이고,
+// App Link(쿠팡·컬리 등) 앱 열기와 겹쳐 '두 번 열린 것처럼' 보인다.
+// 앵커 클릭 방식이면 정식 새 탭(설치된 앱이 있으면 그 앱)으로 깔끔하게 열린다.
+export function openExternal(url) {
+  if (!url) return
+  const u = /^https?:\/\//.test(url) ? url : 'https://' + url
+  const a = document.createElement('a')
+  a.href = u
+  a.target = '_blank'
+  a.rel = 'noopener noreferrer'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+}
+
 // "N분 전" 형태의 상대 시간. 브라우저 런타임에서 Date.now 사용.
 export function timeAgo(ts) {
   if (!ts) return ''
