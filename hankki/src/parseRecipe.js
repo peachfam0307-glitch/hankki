@@ -81,7 +81,8 @@ export function fixIngredientUnits(l) {
 // 앞에 붙어 남는 경우가 많다("삐 선복 1<0", "= 쌀 450", "Vv Eel 토핑용"). 한글/숫자가
 // 나오기 전까지의 '기호 덩어리 · 짧은 라틴 조각(단위 제외) · 대표 오독 한 글자'를 벗겨낸다.
 const JUNK_SYM = /^[삐쁘=|/\\^<>~"'`_·•*■□▶►◆●○]+/
-const JUNK_TOK_OCR = /^(?:를|르|롤|뻐|ㅂ|ㅃ|삐|쁘)$/
+// 네모/핀 아이콘(■ 📌 ▪)이 오독되는 대표 한 글자들 — 대부분 된소리(ㅃㄲㄸㅆㅉ) 시작.
+const JUNK_TOK_OCR = /^(?:를|르|롤|삐|쁘|뽀|빠|뻐|뿌|쀼|쁠|삑|뺴|ㅂ|ㅃ|ㅉ|ㄲ|VE|Vv|EI|W|w)$/
 export function stripLeadingOcrJunk(line, fromOcr = false) {
   let s = String(line).trim()
   s = s.replace(JUNK_SYM, '').trim()
