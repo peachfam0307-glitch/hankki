@@ -101,42 +101,34 @@ function HeroFlow() {
   )
 }
 
-// 레시피북 꾸미는 시안 — 아바타 + 이모지 + 글자타일 + 스티커로 꾸민 미니 카드 목업
+// 레시피북 꾸미는 시안 — 실제 레시피(재료)가 보이는 페이지 위에 포스트잇·글자타일·아바타·이모지가 얹힘
 function HeroDecorate() {
   return (
-    <div style={{ position: 'relative', width: 220, height: 186, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {/* 메인 레시피 카드 */}
-      <div style={{
-        width: 132, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 18,
-        boxShadow: 'var(--shadow-card)', overflow: 'hidden', transform: 'rotate(-5deg)',
-      }}>
-        <div style={{
-          height: 78, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38,
-          background: 'linear-gradient(135deg, #f3ede1, #e8e1d2)',
-        }}>🍳</div>
-        <div style={{ padding: '9px 11px 12px' }}>
-          <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--text)' }}>엄마표 김치볶음밥</div>
-          <div style={{ display: 'flex', gap: 4, marginTop: 7 }}>
-            <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream)', borderRadius: 6, padding: '2px 6px' }}>한식</span>
-            <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-sub)', background: 'var(--cream)', borderRadius: 6, padding: '2px 6px' }}>15분</span>
-          </div>
+    <div style={{ position: 'relative', width: 232, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* 뒤에 살짝 겹친 카드(레시피북 느낌) */}
+      <div style={{ position: 'absolute', width: 150, height: 168, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, transform: 'rotate(6deg) translate(10px, 6px)', boxShadow: 'var(--shadow-soft)' }} />
+      {/* 메인 레시피 페이지 */}
+      <div style={{ position: 'relative', width: 150, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, boxShadow: 'var(--shadow-card)', overflow: 'hidden', transform: 'rotate(-3deg)' }}>
+        <div style={{ padding: '12px 13px 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: 'linear-gradient(135deg, #f3ede1, #e8e1d2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19 }}>🍲</div>
+          <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>엄마표<br />김치볶음밥</div>
+        </div>
+        <div style={{ padding: '4px 13px 14px' }}>
+          <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 5 }}>재료</div>
+          {['김치 1컵', '밥 1공기', '삼겹살 100g', '대파 · 참기름'].map((t) => (
+            <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3.5 }}>
+              <span style={{ width: 4, height: 4, borderRadius: 9, background: 'var(--sand)' }} />
+              <span style={{ fontSize: 10, color: 'var(--text-sub)', fontWeight: 600 }}>{t}</span>
+            </div>
+          ))}
         </div>
       </div>
-
-      {/* 아바타 — 카드 왼쪽 아래에서 빼꼼 */}
-      <div style={{ position: 'absolute', left: 6, bottom: 2, transform: 'rotate(-6deg)' }}>
-        <Buddy id="catpot" size={62} />
-      </div>
-
-      {/* 글자 타일 스티커 */}
-      <div style={{ position: 'absolute', top: 6, right: 20, transform: 'rotate(9deg)' }}>
-        <TextTile text="맛집" size={40} radius={11} />
-      </div>
-
-      {/* 귀여운 이모지들 */}
-      <span style={{ position: 'absolute', top: 60, right: 6, fontSize: 26, transform: 'rotate(12deg)' }}>❤️</span>
-      <span style={{ position: 'absolute', bottom: 30, right: 30, fontSize: 22 }}>✨</span>
-      <span style={{ position: 'absolute', top: 0, left: 34, fontSize: 20, transform: 'rotate(-10deg)' }}>🌿</span>
+      {/* 위에 얹힌 꾸미기 */}
+      <div style={{ position: 'absolute', top: -6, right: 14, transform: 'rotate(8deg)' }}><TextTile text="찐맛" size={38} radius={10} /></div>
+      <div style={{ position: 'absolute', left: 0, bottom: -4, transform: 'rotate(-8deg)' }}><Buddy id="rabbit" size={58} /></div>
+      {/* 포스트잇 */}
+      <div style={{ position: 'absolute', right: 2, bottom: 26, width: 52, height: 40, background: '#fff6c9', borderRadius: 4, transform: 'rotate(6deg)', boxShadow: '0 3px 8px rgba(0,0,0,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9.5, fontWeight: 700, color: '#7a6a2a', textAlign: 'center', padding: 4 }}>애들이<br />좋아함💕</div>
+      <span style={{ position: 'absolute', top: 20, left: 8, fontSize: 20, transform: 'rotate(-12deg)' }}>✨</span>
     </div>
   )
 }
