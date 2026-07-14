@@ -200,7 +200,8 @@ export default function EditorScreen({ id, prefill }) {
       status: 'sorted',
     }
     if (editing) {
-      updateRecipe(editing.id, patch)
+      // touched: 사용자가 직접 편집한 레시피 — 이후 기본 레시피 자동 갱신에서 덮어쓰지 않게 표시
+      updateRecipe(editing.id, { ...patch, touched: true })
       nav.pop()
       nav.showToast('레시피를 정리했어요 ✨')
     } else {

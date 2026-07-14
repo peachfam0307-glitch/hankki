@@ -115,6 +115,27 @@ function migrateBasics(saved) {
     }
     return nr
   })
+  // v13: 기본 제공 레시피의 '내용'(제목·재료·순서·메모·태그·아이콘·카테고리·표지 등)을
+  // 최신 큐레이션으로 다시 맞춘다. 단, 사용자가 직접 편집한 레시피(touched)와
+  // 개인 상태(즐겨찾기·요리횟수·꾸미기·직접 넣은 표지사진)는 그대로 보존한다.
+  const seedById = new Map(basicRecipes.map((s) => [s.id, s]))
+  fixed = fixed.map((r) => {
+    if (!r || r.touched || !seedById.has(r.id)) return r
+    const s = seedById.get(r.id)
+    // 사용자가 직접 넣은 표지사진(우리 recipe-photos 폴더가 아닌 것)은 유지
+    const userPhoto = r.thumb === 'photo' && r.image && !String(r.image).includes('/recipe-photos/')
+    const merged = {
+      ...s,
+      favorite: r.favorite,
+      cooked: r.cooked,
+      cookedAt: r.cookedAt,
+      savedAt: r.savedAt,
+      decor: r.decor,
+      status: r.status || s.status,
+    }
+    if (userPhoto) { merged.thumb = r.thumb; merged.image = r.image }
+    return merged
+  })
   return { recipes: [...fixed, ...add], seedV: BASICS_VERSION }
 }
 

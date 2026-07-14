@@ -13,7 +13,7 @@ const base = {
   sourceUrl: '',
 }
 
-export const BASICS_VERSION = 12 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
+export const BASICS_VERSION = 13 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
 
 const RAW_BASICS = [
   {
