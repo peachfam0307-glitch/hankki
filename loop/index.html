@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#F7F8FA">
+<title>loop</title>
+<style>
+  @font-face{ font-family:'Pretendard'; src:url('./fonts/pretendard.woff2') format('woff2'); font-weight:100 900; font-display:swap; }
+  @font-face{ font-family:'GowunDodum'; src:url('./fonts/gowun.woff2') format('woff2'); font-display:swap; }
+  @font-face{ font-family:'Jua'; src:url('./fonts/jua.woff2') format('woff2'); font-display:swap; }
+  @font-face{ font-family:'DoHyeon'; src:url('./fonts/dohyeon.woff2') format('woff2'); font-display:swap; }
+  @font-face{ font-family:'Dongle'; src:url('./fonts/dongle.woff2') format('woff2'); font-display:swap; }
+
+  :root{
+    --bg:#F7F8FA; --surface:#FFFFFF; --surface2:#F3F5F8; --ink:#1B1F27; --ink2:#4A515C; --mut:#9AA0AA;
+    --line:#EEF0F3; --line2:#E4E7EC; --accent:#46618C; --accent-soft:#E9EFF6; --accent-ink:#46618C;
+    --sun:#C56B6B; --sat:#9A8F76; --shadow:0 12px 30px rgba(20,24,32,.12);
+    --app-font:'Pretendard';
+  }
+  html[data-theme="dark"]{
+    --bg:#0E1219; --surface:#161B22; --surface2:#1D232C; --ink:#EAEDF2; --ink2:#B4BCC7; --mut:#7E8896;
+    --line:#222833; --line2:#2A313C; --accent:#6E88AE; --accent-soft:#25303F; --accent-ink:#9DBBE4;
+    --sun:#D08B8B; --sat:#B4A98C; --shadow:0 14px 34px rgba(0,0,0,.5);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; height:100%; }
+  body{
+    font-family:var(--app-font),-apple-system,'Apple SD Gothic Neo',sans-serif;
+    background:var(--bg); color:var(--ink);
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+    font-size:15px;
+  }
+  #app{ height:100dvh; display:flex; flex-direction:column; max-width:520px; margin:0 auto; position:relative; }
+  button{ font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+  .safe-top{ height:env(safe-area-inset-top); flex-shrink:0; }
+
+  /* ---------- top bar ---------- */
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 18px 8px; flex-shrink:0; }
+  .mon{ font-size:22px; font-weight:600; letter-spacing:-.02em; display:flex; align-items:baseline; gap:7px; }
+  .mon .yr{ font-size:13px; color:var(--mut); font-weight:500; }
+  .mon .nav{ display:inline-flex; gap:2px; margin-left:4px; }
+  .mon .nav button{ width:26px; height:26px; border-radius:8px; display:grid; place-items:center; color:var(--mut); }
+  .mon .nav button:active{ background:var(--surface2); }
+  .mon .nav svg{ width:16px; }
+  .rgt{ display:flex; align-items:center; gap:8px; }
+  .seg{ display:inline-flex; gap:2px; background:var(--surface2); border-radius:9px; padding:2px; }
+  .seg button{ font-size:11.5px; font-weight:600; color:var(--mut); padding:6px 9px; border-radius:7px; }
+  .seg button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(20,24,32,.10); }
+  html[data-theme="dark"] .seg button.on{ background:#2C3542; box-shadow:none; }
+  .iconbtn{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; color:var(--ink2); }
+  .iconbtn:active{ background:var(--surface2); }
+  .iconbtn svg{ width:20px; }
+
+  /* ---------- weekday head ---------- */
+  .wk{ display:grid; grid-template-columns:repeat(7,1fr); padding:2px 8px 3px; flex-shrink:0; }
+  .wk span{ text-align:center; font-size:10.5px; letter-spacing:.05em; color:var(--mut); font-weight:600; }
+  .wk .su{ color:var(--sun); } .wk .sa{ color:var(--sat); }
+
+  /* ---------- month grid ---------- */
+  .grid{ flex:1; display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:1fr; padding:0 8px 6px; min-height:0; }
+  .cell{ border-top:1px solid var(--line); padding:4px 3px 2px; overflow:hidden; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .cell:active{ background:var(--surface2); border-radius:8px; }
+  .dn{ font-size:12px; font-weight:500; color:var(--ink); font-variant-numeric:tabular-nums; padding-left:2px; }
+  .cell.oth .dn{ color:var(--mut); opacity:.55; }
+  .cell.su .dn{ color:var(--sun); } .cell.sa .dn{ color:var(--sat); }
+  .cell.today .dn{ background:var(--ink); color:var(--bg); width:19px; height:19px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+  .el{ font-size:10px; line-height:1.2; border-radius:5px; padding:2px 4px; word-break:break-all; overflow-wrap:anywhere; font-weight:500; display:flex; align-items:center; gap:3px; }
+  .el .es{ width:11px; height:11px; flex-shrink:0; opacity:.85; }
+  .el .es svg{ width:11px; height:11px; display:block; }
+  .more{ font-size:9.5px; color:var(--mut); padding-left:3px; font-weight:600; }
+
+  /* ---------- list view ---------- */
+  .listview{ flex:1; overflow-y:auto; padding:4px 16px 90px; }
+  .lday{ display:flex; gap:14px; padding:12px 0; border-bottom:1px solid var(--line); }
+  .lday .ld{ width:44px; flex-shrink:0; text-align:center; }
+  .lday .ld b{ display:block; font-size:19px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .lday .ld s{ display:block; font-size:10.5px; color:var(--mut); font-style:normal; margin-top:1px; }
+  .lday.hastoday .ld b{ color:var(--accent-ink); }
+  .lev{ flex:1; display:flex; flex-direction:column; gap:7px; min-width:0; }
+  .lrow{ display:flex; align-items:center; gap:9px; }
+  .lrow .bar{ width:3px; align-self:stretch; border-radius:3px; flex-shrink:0; }
+  .lrow .lnm{ font-size:13.5px; font-weight:600; display:flex; align-items:center; gap:6px; min-width:0; }
+  .lrow .lnm .es{ width:16px; height:16px; border-radius:6px; display:inline-grid; place-items:center; flex-shrink:0; }
+  .lrow .lnm .es svg{ width:11px; height:11px; }
+  .lrow .lt{ margin-left:auto; font-size:11px; color:var(--mut); font-weight:500; white-space:nowrap; padding-left:8px; }
+  .cnt{ font-size:9.5px; font-weight:700; color:var(--accent-ink); background:var(--accent-soft); padding:1px 6px; border-radius:5px; margin-left:2px; }
+  .empty{ text-align:center; color:var(--mut); font-size:13px; padding:60px 20px; line-height:1.7; }
+
+  /* ---------- FAB ---------- */
+  .fab{ position:absolute; right:18px; bottom:calc(20px + env(safe-area-inset-bottom)); width:50px; height:50px; border-radius:17px; background:var(--ink); color:var(--bg); display:grid; place-items:center; box-shadow:var(--shadow); z-index:20; }
+  .fab:active{ transform:scale(.94); }
+  .fab svg{ width:22px; }
+
+  /* ---------- sheet / modal ---------- */
+  .scrim{ position:fixed; inset:0; background:rgba(10,14,20,.42); z-index:40; opacity:0; pointer-events:none; transition:opacity .22s; }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:fixed; left:0; right:0; bottom:0; max-width:520px; margin:0 auto; background:var(--surface); border-radius:26px 26px 0 0; z-index:50; transform:translateY(100%); transition:transform .28s cubic-bezier(.32,.72,0,1); max-height:92dvh; display:flex; flex-direction:column; box-shadow:0 -10px 40px rgba(0,0,0,.18); }
+  .sheet.show{ transform:translateY(0); }
+  .grab{ width:38px; height:4px; border-radius:3px; background:var(--line2); margin:9px auto 2px; flex-shrink:0; }
+
+  /* day sheet */
+  .dsh-head{ padding:10px 20px 8px; }
+  .dsh-head .row{ display:flex; align-items:flex-start; justify-content:space-between; }
+  .dsh-head .dd{ font-size:25px; font-weight:600; letter-spacing:-.02em; }
+  .dsh-head .dd small{ font-size:13px; color:var(--mut); font-weight:500; margin-left:7px; }
+  .dsh-head .sub{ font-size:11px; color:var(--mut); margin-top:4px; }
+  .tagbtn{ width:32px; height:32px; border-radius:10px; background:var(--surface2); display:grid; place-items:center; color:var(--ink2); }
+  .tagbtn svg{ width:18px; }
+  .tagstrip{ display:flex; gap:7px; flex-wrap:wrap; padding:8px 20px 4px; }
+  .tag{ display:inline-flex; align-items:center; gap:5px; height:27px; padding:0 10px 0 8px; border-radius:8px; font-size:11.5px; font-weight:600; }
+  .tag svg{ width:14px; height:14px; }
+  .tag .rm{ margin-left:2px; opacity:.55; font-size:13px; }
+  .dsh-list{ overflow-y:auto; padding:6px 20px 4px; }
+  .dev{ display:flex; gap:12px; padding:11px 0; border-top:1px solid var(--line); }
+  .dev:first-child{ border-top:none; }
+  .dev .dt{ width:52px; flex-shrink:0; text-align:right; }
+  .dev .dt b{ display:block; font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .dev .dt s{ display:block; font-size:10px; color:var(--mut); font-style:normal; margin-top:1px; }
+  .dev .bar{ width:3px; border-radius:3px; flex-shrink:0; }
+  .dev .body{ flex:1; min-width:0; }
+  .dev .body .nm{ font-size:14px; font-weight:600; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .dev .body .nm .es{ width:18px; height:18px; border-radius:6px; display:inline-grid; place-items:center; flex-shrink:0; }
+  .dev .body .nm .es svg{ width:12px; height:12px; }
+  .dev .body .mt{ display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap; }
+  .dev .body .mt span{ font-size:11px; color:var(--mut); font-weight:500; display:inline-flex; align-items:center; gap:3px; }
+  .dev .body .mt svg{ width:12px; }
+  .chipn{ color:var(--accent-ink)!important; background:var(--accent-soft); padding:2px 7px; border-radius:6px; font-weight:600!important; }
+  .addbar{ margin:8px 16px calc(14px + env(safe-area-inset-bottom)); height:48px; border-radius:15px; background:var(--ink); color:var(--bg); display:flex; align-items:center; justify-content:center; gap:8px; font-size:14px; font-weight:600; flex-shrink:0; }
+  .addbar:active{ opacity:.85; } .addbar svg{ width:18px; }
+
+  /* editor */
+  .ed{ display:flex; flex-direction:column; height:88dvh; }
+  .ed-head{ display:flex; align-items:center; justify-content:space-between; padding:6px 18px 6px; flex-shrink:0; }
+  .ed-head .x,.ed-head .sv{ font-size:14px; font-weight:600; padding:8px 4px; }
+  .ed-head .x{ color:var(--mut); } .ed-head .sv{ color:var(--accent-ink); font-weight:700; }
+  .ed-head .ttl{ font-size:15px; font-weight:600; }
+  .ed-body{ overflow-y:auto; padding:4px 18px calc(20px + env(safe-area-inset-bottom)); }
+  .ti{ width:100%; font-size:20px; font-weight:600; letter-spacing:-.02em; padding:10px 2px 12px; border:none; border-bottom:1px solid var(--line); background:none; color:var(--ink); outline:none; font-family:inherit; }
+  .ti::placeholder{ color:var(--mut); font-weight:500; }
+  .fr{ display:flex; align-items:center; gap:12px; padding:14px 2px; border-bottom:1px solid var(--line); min-height:52px; }
+  .fr .ic{ width:20px; color:var(--mut); flex-shrink:0; } .fr .ic svg{ width:20px; display:block; }
+  .fr .lb{ font-size:13.5px; font-weight:500; flex:1; }
+  .fr .vl{ display:flex; align-items:center; gap:8px; }
+  .fr input[type=date],.fr input[type=time]{ font-family:inherit; font-size:13px; font-weight:600; color:var(--ink); background:var(--surface2); border:none; border-radius:9px; padding:7px 9px; outline:none; }
+  .fr input[type=text].memo{ flex:1; border:none; background:none; text-align:right; font-size:13px; color:var(--ink); outline:none; font-family:inherit; }
+  .fr input[type=text].memo::placeholder{ color:var(--mut); }
+  .tg{ width:44px; height:26px; border-radius:13px; background:var(--line2); position:relative; flex-shrink:0; transition:background .18s; }
+  .tg.on{ background:var(--accent); }
+  .tg::after{ content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:3px; left:3px; transition:left .18s; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+  .tg.on::after{ left:21px; }
+  .miniseg{ display:inline-flex; gap:3px; background:var(--surface2); border-radius:9px; padding:3px; flex-wrap:wrap; }
+  .miniseg button{ font-size:11.5px; font-weight:600; color:var(--mut); padding:5px 9px; border-radius:7px; }
+  .miniseg button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(20,24,32,.08); }
+  html[data-theme="dark"] .miniseg button.on{ background:#2C3542; box-shadow:none; }
+  .daysel{ display:flex; gap:5px; margin-top:10px; }
+  .daysel button{ width:30px; height:30px; border-radius:9px; font-size:11.5px; font-weight:600; background:var(--surface2); color:var(--mut); }
+  .daysel button.on{ background:var(--accent); color:#fff; }
+  .colorrow{ display:flex; gap:11px; }
+  .colorrow button{ width:24px; height:24px; border-radius:50%; position:relative; }
+  .colorrow button.on::after{ content:''; position:absolute; inset:-4px; border-radius:50%; border:2px solid var(--accent); }
+  .stkrow{ display:flex; gap:9px; flex-wrap:wrap; margin-top:4px; }
+  .stkrow button{ width:38px; height:38px; border-radius:12px; background:var(--surface2); display:grid; place-items:center; color:var(--ink2); }
+  .stkrow button svg{ width:20px; height:20px; }
+  .stkrow button.on{ background:var(--accent-soft); color:var(--accent-ink); box-shadow:inset 0 0 0 1.5px var(--accent); }
+  .subseg{ font-size:11px; color:var(--mut); font-weight:600; padding:14px 2px 6px; }
+
+  /* picker sheet (sound / sticker library) */
+  .pkr{ padding:6px 20px calc(20px + env(safe-area-inset-bottom)); overflow-y:auto; }
+  .pkr h3{ font-size:16px; font-weight:600; margin:6px 0 12px; }
+  .pkr .opt{ display:flex; align-items:center; gap:12px; padding:14px 4px; border-bottom:1px solid var(--line); }
+  .pkr .opt .nm{ flex:1; font-size:14px; font-weight:500; }
+  .pkr .opt .ck{ color:var(--accent-ink); } .pkr .opt .ck svg{ width:19px; }
+  .pkr .opt .play{ width:32px; height:32px; border-radius:10px; background:var(--surface2); display:grid; place-items:center; color:var(--ink2); }
+  .pkr .opt .play svg{ width:16px; }
+  .stklib{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; padding:6px 0; }
+  .stklib button{ aspect-ratio:1; border-radius:14px; background:var(--surface2); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:var(--ink2); }
+  .stklib button svg{ width:22px; height:22px; }
+  .stklib button span{ font-size:9px; color:var(--mut); font-weight:600; }
+  .catlabel{ font-size:11px; font-weight:700; letter-spacing:.04em; color:var(--mut); text-transform:uppercase; margin:14px 0 4px; }
+
+  /* settings */
+  .setwrap{ flex:1; overflow-y:auto; padding:6px 18px calc(30px + env(safe-area-inset-bottom)); }
+  .setsec{ font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--mut); text-transform:uppercase; padding:16px 4px 8px; }
+  .fontcard{ display:flex; align-items:center; gap:13px; background:var(--surface); border:1px solid var(--line2); border-radius:15px; padding:14px 15px; margin-bottom:9px; }
+  .fontcard.on{ border-color:var(--accent); background:var(--accent-soft); }
+  .fontcard .rad{ width:19px; height:19px; border-radius:50%; border:2px solid var(--line2); flex-shrink:0; position:relative; }
+  .fontcard.on .rad{ border-color:var(--accent); }
+  .fontcard.on .rad::after{ content:''; position:absolute; inset:3px; border-radius:50%; background:var(--accent); }
+  .fontcard .fx{ flex:1; } .fontcard .fnm{ font-size:16px; } .fontcard .fpv{ font-size:12px; color:var(--mut); margin-top:3px; }
+  .badge{ font-size:9px; font-weight:700; color:var(--accent-ink); background:var(--accent-soft); padding:2px 6px; border-radius:5px; margin-left:6px; font-family:'Pretendard'; }
+  html[data-theme="dark"] .fontcard.on .badge{ background:#31435a; }
+  .toast{ position:fixed; left:50%; bottom:calc(90px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(10px); background:var(--ink); color:var(--bg); font-size:13px; font-weight:600; padding:11px 18px; border-radius:12px; z-index:80; opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; white-space:nowrap; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .del{ text-align:center; color:var(--sun); font-size:13.5px; font-weight:600; padding:16px; margin-top:8px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+
+/* ============================ storage ============================ */
+const DB_KEY = 'loop.db.v1';
+function loadDB(){
+  try{ const raw = localStorage.getItem(DB_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return { events:[], dayTags:{}, settings:{ theme:'light', font:'Pretendard' } };
+}
+function saveDB(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){ toast('저장 공간이 부족해요'); } }
+let db = loadDB();
+
+/* ============================ helpers ============================ */
+const WD = ['일','월','화','수','목','금','토'];
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseYMD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const todayStr = ymd(new Date());
+function addMonths(y,m,delta){ let mm=m+delta, yy=y; while(mm<0){mm+=12;yy--;} while(mm>11){mm-=12;yy++;} return [yy,mm]; }
+function fmtTime(t){ if(!t) return ''; let [h,mi]=t.split(':').map(Number); const ap=h<12?'오전':'오후'; let hh=h%12; if(hh===0)hh=12; return `${ap} ${hh}:${pad(mi)}`; }
+function fmtTimeShort(t){ let [h,mi]=t.split(':').map(Number); return `${pad(h)}:${pad(mi)}`; }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+/* colors: [lightBg,lightFg,darkBg,darkFg,bar] */
+const COLORS = {
+  blue:['#E7EDF5','#42618E','#22303F','#9DBBE4','#6E88AE'],
+  teal:['#E2F0F0','#3C7377','#1E3234','#84C3C6','#5F9296'],
+  rose:['#F6E7ED','#94546F','#3A2530','#E1A7BC','#B06E88'],
+  sage:['#E9F1EA','#597962','#243027','#A6CBB0','#7E9A85'],
+  plum:['#F0EBF2','#6E5A79','#2E2634','#C6ADD1','#927B9C'],
+  slate:['#ECEEF1','#59636F','#262B32','#AEB7C2','#8892A0'],
+};
+const COLOR_KEYS = Object.keys(COLORS);
+function isDark(){ return db.settings.theme==='dark'; }
+function col(k){ const c=COLORS[k]||COLORS.blue; return isDark()?{bg:c[2],fg:c[3],bar:c[4]}:{bg:c[0],fg:c[1],bar:c[4]}; }
+
+/* ============================ sticker icons ============================ */
+const IC = {
+  book:'<path d="M5 20h14M6 20v-6a6 6 0 0 1 12 0v6"/><path d="M12 8V4M9.5 4h5"/>',
+  coffee:'<path d="M5 8h11v4a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V8Z"/><path d="M16 9h2.5a2 2 0 0 1 0 4H16"/><path d="M9 3.5c-.5.7-.5 1.4 0 2.1M12 3.5c-.5.7-.5 1.4 0 2.1"/>',
+  heart:'<path d="M12 20s-7-4.5-7-9.5A3.4 3.4 0 0 1 12 8a3.4 3.4 0 0 1 7 2.5C19 15.5 12 20 12 20Z"/>',
+  money:'<circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 9.5h4a1.6 1.6 0 0 1 0 3.2h-3a1.6 1.6 0 0 0 0 3.2h4"/>',
+  run:'<circle cx="15" cy="5" r="1.6"/><path d="M13 8l-3 2 2 3-2 5M13 8l3 2 3 .5M10 10l-2 4"/>',
+  scissors:'<circle cx="7" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/><path d="M9 8.5 20 17M9 15.5 20 7"/>',
+  brush:'<path d="M4 20c2 0 3-1.5 3-3.5C7 15 9 13 9 13l7-9 2 2-9 7s-2 2-3.5 2C3.5 15 4 18 4 20Z"/>',
+  cake:'<path d="M4 21h16M5 21v-6h14v6M6 15a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0M12 8v4M12 5v.5"/>',
+  party:'<path d="M4 20 8 9l7 7-11 4ZM14 4v2M18 8h2M15.5 5.5l1.2 1.2"/>',
+  movie:'<rect x="4" y="6" width="16" height="12" rx="2"/><path d="M9 6v12M15 6v12M4 10h5M15 10h5M4 14h5M15 14h5"/>',
+  cat:'<path d="M5 9 4 4l4 3h8l4-3-1 5"/><path d="M5 9v4a7 5 0 0 0 14 0V9"/><path d="M9 13h.01M15 13h.01M11 15c.6.5 1.4.5 2 0"/>',
+  pill:'<rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-40 12 12)"/><path d="M9 8.5 15 15.5"/>',
+  plane:'<path d="M10 13 3 11l1-2 6 .5L14 4l2 .5-2 6 5 1.5-.5 2-5-1-2 5-1.5-.5.5-4.5Z"/>',
+  star:'<path d="M12 4l2.3 5 5.2.5-4 3.5 1.3 5.2L12 20l-4.8 2.7 1.3-5.2-4-3.5L9.7 9Z"/>',
+  bell:'<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/>',
+  music:'<path d="M9 18V6l10-2v12"/><circle cx="6" cy="18" r="2.5"/><circle cx="16" cy="16" r="2.5"/>',
+  pencil:'<path d="M4 20h4L19 9a2 2 0 0 0-3-3L5 17v3Z"/><path d="M14 7l3 3"/>',
+  gift:'<rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M4 13h16M12 9v11M8.5 9C6 9 6 5.5 8.5 5.5S12 9 12 9 12 5.5 15.5 5.5 18 9 15.5 9"/>',
+  leaf:'<path d="M5 19C4 12 9 5 19 5c0 10-7 15-14 14ZM5 19c3-4 6-6 10-8"/>',
+};
+const IC_KEYS = Object.keys(IC);
+const IC_LABEL = { book:'공부', coffee:'카페', heart:'중요', money:'돈', run:'운동', scissors:'커트', brush:'염색', cake:'생일', party:'파티', movie:'영화', cat:'반려', pill:'약', plane:'여행', star:'별', bell:'알림', sun:'휴일', music:'음악', pencil:'메모', gift:'선물', leaf:'계절' };
+function svg(name, cls){ return `<svg class="${cls||''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[name]||''}</svg>`; }
+
+const SOUNDS = ['물방울','방울','딩동','새소리','실로폰','팝','종','기본'];
+const ALARM_OPTS = [ {m:0,l:'정시'},{m:5,l:'5분 전'},{m:10,l:'10분 전'},{m:30,l:'30분 전'},{m:60,l:'1시간 전'},{m:1440,l:'하루 전'} ];
+function alarmLabel(m){ const o=ALARM_OPTS.find(x=>x.m===m); return o?o.l:`${m}분 전`; }
+
+/* ============================ recurrence ============================ */
+// return array of {date:'YYYY-MM-DD', n:sessionIndex} occurrences of ev within [from,to] inclusive
+function occurrences(ev, from, to){
+  const out=[]; const start=parseYMD(ev.date);
+  const rep=ev.repeat||{type:'none'};
+  const until = rep.until? parseYMD(rep.until):null;
+  if(rep.type==='none'){
+    if(ev.date>=from && ev.date<=to) out.push({date:ev.date,n:1});
+    return out;
+  }
+  // iterate days from max(start,from) to to
+  let cursor = parseYMD(from> ev.date? from: ev.date);
+  const end = parseYMD(to);
+  // session counter needs to start from series start; count from start to cursor-1 first
+  let n=0;
+  const step=(d)=>{ d.setDate(d.getDate()+1); };
+  // precount sessions before 'from'
+  let pre=parseYMD(ev.date);
+  while(pre < cursor){
+    if(matchRep(ev,pre) && (!until||pre<=until)) n++;
+    step(pre);
+  }
+  let c=parseYMD(ev.date> from? ev.date: from);
+  while(c<=end){
+    if(until && c>until) break;
+    if(matchRep(ev,c) && ymd(c)>=ev.date){ n++; out.push({date:ymd(c),n}); }
+    step(c);
+  }
+  return out;
+}
+function matchRep(ev,d){
+  const rep=ev.repeat;
+  if(rep.type==='weekly'){ return (rep.days||[]).includes(d.getDay()); }
+  if(rep.type==='monthly'){ return d.getDate()===parseYMD(ev.date).getDate(); }
+  if(rep.type==='daily'){ return true; }
+  return false;
+}
+// all events occurring on a specific date, sorted by time
+function eventsOn(dateStr){
+  const list=[];
+  for(const ev of db.events){
+    const occ=occurrences(ev,dateStr,dateStr);
+    if(occ.length){ list.push({ev, n:occ[0].n}); }
+  }
+  list.sort((a,b)=>{
+    const at=a.ev.allDay?'' : (a.ev.start||''); const bt=b.ev.allDay?'':(b.ev.start||'');
+    if(a.ev.allDay!==b.ev.allDay) return a.ev.allDay?-1:1;
+    return at.localeCompare(bt);
+  });
+  return list;
+}
+
+/* ============================ app state ============================ */
+const view = { y:new Date().getFullYear(), m:new Date().getMonth(), mode:'month' };
+const app = document.getElementById('app');
+
+/* ============================ render: main ============================ */
+function render(){
+  applyTheme();
+  if(view.mode==='settings'){ renderSettings(); return; }
+  let html = `<div class="safe-top"></div>`;
+  html += topbar();
+  if(view.mode==='month'){
+    html += weekHead();
+    html += monthGrid();
+  } else { // list
+    html += listView();
+  }
+  html += `<button class="fab" onclick="openEditor(null)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>`;
+  app.innerHTML = html;
+}
+function topbar(){
+  const modes=[['month','월'],['list','목록']];
+  return `<div class="topbar">
+    <div class="mon">${view.m+1}월<span class="yr">${view.y}</span>
+      <span class="nav">
+        <button onclick="shiftMonth(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button onclick="goToday()" style="width:auto;padding:0 8px;font-size:11px;font-weight:600;color:var(--accent-ink)">오늘</button>
+        <button onclick="shiftMonth(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      </span>
+    </div>
+    <div class="rgt">
+      <div class="seg">${modes.map(([k,l])=>`<button class="${view.mode===k?'on':''}" onclick="setMode('${k}')">${l}</button>`).join('')}</div>
+      <button class="iconbtn" onclick="openSettings()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.3-2.5H10.4l-.3 2.5a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.3 2.5h3.2l.3-2.5a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5a7 7 0 0 0 .1-1Z"/></svg></button>
+    </div>
+  </div>`;
+}
+function weekHead(){
+  return `<div class="wk">${WD.map((d,i)=>`<span class="${i===0?'su':i===6?'sa':''}">${d}</span>`).join('')}</div>`;
+}
+function monthGrid(){
+  const first=new Date(view.y,view.m,1);
+  const startDow=first.getDay();
+  const gridStart=new Date(view.y,view.m,1-startDow);
+  // build 6 weeks = 42 cells; trim last row if fully next-month
+  let cells=[];
+  for(let i=0;i<42;i++){ const d=new Date(gridStart); d.setDate(gridStart.getDate()+i); cells.push(d); }
+  // trim to 5 rows if 6th row all next month
+  if(cells[35].getMonth()!==view.m && cells[28].getMonth()!==view.m){} // keep simple; compute needed rows
+  const needed = cells[35].getMonth()===view.m || (cells[35].getMonth()!==view.m && cells[34].getMonth()===view.m) ? 42 : 35;
+  const rows = (cells[35].getMonth()!==view.m && cells[35].getDate()>1 && cells[35].getDate()<=7 && cells[34].getMonth()!==view.m)?35:42;
+  const showCells = cells.slice(0, needsSix(view.y,view.m)?42:35);
+  return `<div class="grid" style="grid-auto-rows:1fr">${showCells.map(d=>cellHTML(d)).join('')}</div>`;
+}
+function needsSix(y,m){ const first=new Date(y,m,1).getDay(); const days=new Date(y,m+1,0).getDate(); return (first+days)>35; }
+function cellHTML(d){
+  const ds=ymd(d);
+  const oth = d.getMonth()!==view.m;
+  const dow=d.getDay();
+  const cls=['cell']; if(oth)cls.push('oth'); if(dow===0)cls.push('su'); if(dow===6)cls.push('sa'); if(ds===todayStr)cls.push('today');
+  const evs=eventsOn(ds);
+  const max=3;
+  let inner='';
+  evs.slice(0,max).forEach(({ev,n})=>{
+    const c=col(ev.color);
+    const st= ev.sticker? `<span class="es">${svg(ev.sticker)}</span>`:'';
+    inner+=`<div class="el" style="background:${c.bg};color:${c.fg}">${st}${escapeHtml(ev.title)}</div>`;
+  });
+  if(evs.length>max) inner+=`<div class="more">+${evs.length-max}</div>`;
+  return `<div class="${cls.join(' ')}" onclick="openDay('${ds}')"><span class="dn">${d.getDate()}</span>${inner}</div>`;
+}
+
+function listView(){
+  // show events for current month, grouped by day, only days that have events
+  const days=new Date(view.y,view.m+1,0).getDate();
+  let html='<div class="listview">'; let any=false;
+  for(let i=1;i<=days;i++){
+    const d=new Date(view.y,view.m,i); const ds=ymd(d);
+    const evs=eventsOn(ds); if(!evs.length) continue; any=true;
+    const dow=d.getDay();
+    html+=`<div class="lday ${ds===todayStr?'hastoday':''}" onclick="openDay('${ds}')">
+      <div class="ld"><b>${i}</b><s class="${dow===0?'su':dow===6?'sa':''}">${WD[dow]}</s></div>
+      <div class="lev">`;
+    evs.forEach(({ev,n})=>{
+      const c=col(ev.color);
+      const st=ev.sticker?`<span class="es" style="background:${c.bg};color:${c.fg}">${svg(ev.sticker)}</span>`:'';
+      const cnt=(ev.countSessions && ev.repeat && ev.repeat.type!=='none')?`<span class="cnt">${n}회차</span>`:'';
+      const tm=ev.allDay?'종일':fmtTime(ev.start);
+      html+=`<div class="lrow"><div class="bar" style="background:${c.bar}"></div>
+        <div class="lnm">${st}${escapeHtml(ev.title)}${cnt}</div>
+        <div class="lt">${tm}</div></div>`;
+    });
+    html+='</div></div>';
+  }
+  if(!any) html+=`<div class="empty">이번 달 일정이 없어요.<br>아래 <b>+</b> 버튼으로 추가해보세요.</div>`;
+  html+='</div>';
+  return html;
+}
+
+function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ============================ day sheet ============================ */
+let curDay=null;
+function openDay(ds){
+  curDay=ds;
+  const d=parseYMD(ds);
+  const evs=eventsOn(ds);
+  const tags=db.dayTags[ds]||[];
+  let tagHTML=tags.map((t,i)=>{
+    const c=col(COLOR_KEYS[i%COLOR_KEYS.length]);
+    return `<span class="tag" style="background:${c.bg};color:${c.fg}">${svg(t)}${IC_LABEL[t]||''}<span class="rm" onclick="event.stopPropagation();removeTag('${ds}',${i})">×</span></span>`;
+  }).join('');
+  tagHTML+=`<span class="tag" style="background:var(--surface2);color:var(--mut)" onclick="openStickerLib('day')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></span>`;
+
+  let listHTML='';
+  if(!evs.length){ listHTML=`<div style="padding:26px 0;text-align:center;color:var(--mut);font-size:13px">등록된 일정이 없어요</div>`; }
+  evs.forEach(({ev,n})=>{
+    const c=col(ev.color);
+    const st=ev.sticker?`<span class="es" style="background:${c.bg};color:${c.fg}">${svg(ev.sticker)}</span>`:'';
+    const cnt=(ev.countSessions && ev.repeat && ev.repeat.type!=='none')?`<span class="cnt">${n}회차</span>`:'';
+    const tt = ev.allDay? `<b>종일</b>` : `<b>${fmtTimeShort(ev.start)}</b><s>${ev.start<'12:00'?'오전':'오후'}</s>`;
+    const rng = ev.allDay? (ev.repeat&&ev.repeat.type!=='none'?repeatLabel(ev.repeat):'하루 종일') : `${fmtTime(ev.start)}${ev.end?' – '+fmtTime(ev.end):''}`;
+    const al = (ev.alarm&&ev.alarm.on)?`<span class="chipn">${svg('bell')}${alarmLabel(ev.alarm.minutes)}</span>`:'';
+    listHTML+=`<div class="dev" onclick="openEditor('${ev.id}')">
+      <div class="dt">${tt}</div>
+      <div class="bar" style="background:${c.bar}"></div>
+      <div class="body"><div class="nm">${st}${escapeHtml(ev.title)}${cnt}</div>
+        <div class="mt"><span>${rng}</span>${al}</div></div>
+    </div>`;
+  });
+
+  const body=`<div class="grab"></div>
+    <div class="dsh-head"><div class="row">
+      <div><div class="dd">${d.getDate()} <small>${WD[d.getDay()]}요일</small></div>
+        <div class="sub">${view.y!==d.getFullYear()?d.getFullYear()+'년 ':''}${d.getMonth()+1}월</div></div>
+      <button class="tagbtn" onclick="openStickerLib('day')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20.5 12a8.5 8.5 0 1 1-8.5-8.5c1 0 1 3 3 3s2-1 3 0 .5 2.5 2.5 4 0 1.5 0 1.5Z"/><circle cx="9" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="10" r="1" fill="currentColor" stroke="none"/><path d="M9.5 14.5c1.2 1 3 1 4 0" stroke-linecap="round"/></svg></button>
+    </div></div>
+    <div class="tagstrip">${tagHTML}</div>
+    <div class="dsh-list">${listHTML}</div>
+    <button class="addbar" onclick="openEditor(null)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg>${d.getMonth()+1}월 ${d.getDate()}일에 일정 추가</button>`;
+  showSheet(body);
+}
+function repeatLabel(rep){
+  if(!rep||rep.type==='none') return '';
+  if(rep.type==='daily') return '매일 반복';
+  if(rep.type==='weekly') return '매주 '+(rep.days||[]).sort((a,b)=>a-b).map(x=>WD[x]).join('·');
+  if(rep.type==='monthly') return '매달 반복';
+  return '';
+}
+function removeTag(ds,i){ db.dayTags[ds].splice(i,1); if(!db.dayTags[ds].length) delete db.dayTags[ds]; saveDB(); openDay(ds); }
+
+/* ============================ sticker library sheet ============================ */
+let stickerTarget='day'; // 'day' or 'event'
+function openStickerLib(target){
+  stickerTarget=target;
+  const cats=[
+    ['자주 쓰는', ['book','coffee','heart','money','bell','star']],
+    ['뷰티·생활', ['scissors','brush','pill','leaf','sun','gift']],
+    ['활동·취미', ['run','movie','music','plane','pencil','cat']],
+    ['기념일', ['cake','party']],
+  ];
+  let html=`<div class="grab"></div><div class="pkr"><h3>스티커 붙이기</h3>`;
+  cats.forEach(([label,keys])=>{
+    html+=`<div class="catlabel">${label}</div><div class="stklib">`;
+    keys.forEach(k=>{ html+=`<button onclick="pickSticker('${k}')">${svg(k)}<span>${IC_LABEL[k]||''}</span></button>`; });
+    html+=`</div>`;
+  });
+  html+=`</div>`;
+  showSheet(html, true);
+}
+function pickSticker(k){
+  if(stickerTarget==='day'){
+    if(!db.dayTags[curDay]) db.dayTags[curDay]=[];
+    if(db.dayTags[curDay].length<8) db.dayTags[curDay].push(k);
+    saveDB(); closeSheet(); setTimeout(()=>openDay(curDay),260);
+  } else {
+    draft.sticker = (draft.sticker===k)?null:k;
+    closeSheet(); setTimeout(()=>openEditor(draft.id||'__draft'),260);
+  }
+}
+
+/* ============================ sound picker ============================ */
+function openSoundPicker(){
+  let html=`<div class="grab"></div><div class="pkr"><h3>알림음</h3>`;
+  SOUNDS.forEach(s=>{
+    const on=draft.sound===s;
+    html+=`<div class="opt"><button class="play" onclick="event.stopPropagation();beep('${s}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 5v14l11-7-11-7Z"/></svg></button>
+      <div class="nm" onclick="pickSound('${s}')">${s}</div>
+      ${on?`<span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg></span>`:''}</div>`;
+  });
+  html+=`<div style="font-size:11.5px;color:var(--mut);padding:14px 4px 0;line-height:1.6">실제 소리는 앱 설치 버전에서 나와요. 지금은 미리듣기(합성음)로 대체.</div></div>`;
+  showSheet(html,true);
+}
+function pickSound(s){ draft.sound=s; closeSheet(); setTimeout(()=>openEditor(draft.id||'__draft'),260); }
+let actx=null;
+function beep(name){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const map={ '물방울':[880,0.12],'방울':[1200,0.1],'딩동':[660,0.2],'새소리':[1500,0.08],'실로폰':[1046,0.15],'팝':[500,0.06],'종':[784,0.4],'기본':[600,0.15] };
+    const [f,dur]=map[name]||[600,0.15];
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.frequency.value=f; o.type='sine'; o.connect(g); g.connect(actx.destination);
+    g.gain.setValueAtTime(0.001,actx.currentTime); g.gain.exponentialRampToValueAtTime(0.3,actx.currentTime+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+dur);
+    o.start(); o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+
+/* ============================ editor ============================ */
+let draft=null;
+function blankDraft(){
+  return { id:null, title:'', date: curDay||todayStr, allDay:false, start:'10:00', end:'11:00',
+    color:'blue', sticker:null, alarm:{on:true,minutes:30}, sound:'물방울',
+    repeat:{type:'none',days:[],until:null}, countSessions:false, memo:'' };
+}
+function openEditor(id){
+  if(id==='__draft'){ /* keep current draft */ }
+  else if(id){ const ev=db.events.find(e=>e.id===id); draft=JSON.parse(JSON.stringify(ev)); }
+  else { draft=blankDraft(); }
+  renderEditor();
+}
+function renderEditor(){
+  const d=draft;
+  const rep=d.repeat;
+  const body=`<div class="grab"></div>
+  <div class="ed">
+    <div class="ed-head"><button class="x" onclick="closeSheet()">취소</button><span class="ttl">${d.id?'일정 편집':'일정 추가'}</span><button class="sv" onclick="saveEvent()">저장</button></div>
+    <div class="ed-body">
+      <input class="ti" id="f-title" placeholder="일정 이름" value="${escapeHtml(d.title)}" oninput="draft.title=this.value">
+
+      <div class="fr">
+        <span class="ic">${iconCal()}</span>
+        <span class="lb">날짜</span>
+        <span class="vl"><input type="date" value="${d.date}" onchange="draft.date=this.value"></span>
+      </div>
+
+      <div class="fr">
+        <span class="ic">${iconClock()}</span>
+        <span class="lb">하루 종일</span>
+        <span class="tg ${d.allDay?'on':''}" onclick="draft.allDay=!draft.allDay;renderEditor()"></span>
+      </div>
+
+      ${d.allDay?'':`<div class="fr">
+        <span class="ic">${iconClock()}</span>
+        <span class="lb">시간</span>
+        <span class="vl"><input type="time" value="${d.start}" onchange="draft.start=this.value"> – <input type="time" value="${d.end}" onchange="draft.end=this.value"></span>
+      </div>`}
+
+      <div class="fr">
+        <span class="ic">${svg('bell')}</span>
+        <span class="lb">알림</span>
+        <span class="vl">${d.alarm.on?`<span class="miniseg"><button class="on" onclick="openAlarmPick()">${alarmLabel(d.alarm.minutes)}</button></span>`:''}<span class="tg ${d.alarm.on?'on':''}" onclick="draft.alarm.on=!draft.alarm.on;renderEditor()"></span></span>
+      </div>
+
+      ${d.alarm.on?`<div class="fr">
+        <span class="ic">${iconSpeaker()}</span>
+        <span class="lb">알림음</span>
+        <span class="vl"><span class="miniseg"><button class="on" onclick="openSoundPicker()">${d.sound}</button></span></span>
+      </div>`:''}
+
+      <div class="fr" style="flex-wrap:wrap">
+        <span class="ic">${iconRepeat()}</span>
+        <span class="lb">반복</span>
+        <span class="vl"><span class="miniseg">
+          ${[['none','안 함'],['daily','매일'],['weekly','매주'],['monthly','매달']].map(([k,l])=>`<button class="${rep.type===k?'on':''}" onclick="setRepeat('${k}')">${l}</button>`).join('')}
+        </span></span>
+        ${rep.type==='weekly'?`<div class="daysel" style="width:100%;padding-left:32px">${WD.map((w,i)=>`<button class="${(rep.days||[]).includes(i)?'on':''}" onclick="toggleDay(${i})">${w}</button>`).join('')}</div>`:''}
+      </div>
+
+      ${(rep.type!=='none')?`<div class="fr">
+        <span class="ic">${iconHash()}</span>
+        <span class="lb">회차 세기 <span style="color:var(--mut);font-weight:500;font-size:11.5px">(N회차 표시)</span></span>
+        <span class="tg ${d.countSessions?'on':''}" onclick="draft.countSessions=!draft.countSessions;renderEditor()"></span>
+      </div>`:''}
+
+      <div class="fr">
+        <span class="ic">${iconDrop()}</span>
+        <span class="lb">색상</span>
+        <span class="vl"><span class="colorrow">${COLOR_KEYS.map(k=>{const c=col(k);return `<button class="${d.color===k?'on':''}" style="background:${c.bar}" onclick="draft.color='${k}';renderEditor()"></button>`;}).join('')}</span></span>
+      </div>
+
+      <div class="subseg">스티커</div>
+      <div class="stkrow">
+        ${['book','coffee','heart','money','scissors','brush','run','movie'].map(k=>`<button class="${d.sticker===k?'on':''}" onclick="draft.sticker=(draft.sticker==='${k}'?null:'${k}');renderEditor()">${svg(k)}</button>`).join('')}
+        <button onclick="openStickerLib('event')" style="color:var(--mut)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg></button>
+      </div>
+
+      <div class="fr" style="margin-top:6px">
+        <span class="ic">${iconMemo()}</span>
+        <input class="memo" type="text" placeholder="메모" value="${escapeHtml(d.memo)}" oninput="draft.memo=this.value">
+      </div>
+
+      ${d.id?`<div class="del" onclick="deleteEvent()">이 일정 삭제</div>`:''}
+    </div>
+  </div>`;
+  showSheet(body,false,true);
+}
+function openAlarmPick(){
+  let html=`<div class="grab"></div><div class="pkr"><h3>알림 시점</h3>`;
+  ALARM_OPTS.forEach(o=>{ const on=draft.alarm.minutes===o.m;
+    html+=`<div class="opt"><div class="nm" onclick="draft.alarm.minutes=${o.m};closeSheet();setTimeout(()=>openEditor('__draft'),260)">${o.l}</div>${on?`<span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg></span>`:''}</div>`; });
+  html+=`</div>`; showSheet(html,true);
+}
+function setRepeat(k){ draft.repeat.type=k; if(k==='weekly'&&(!draft.repeat.days||!draft.repeat.days.length)){ draft.repeat.days=[parseYMD(draft.date).getDay()]; } if(k==='none') draft.countSessions=false; renderEditor(); }
+function toggleDay(i){ const ds=draft.repeat.days||[]; const idx=ds.indexOf(i); if(idx>=0)ds.splice(idx,1); else ds.push(i); draft.repeat.days=ds; renderEditor(); }
+function saveEvent(){
+  const t=(draft.title||'').trim(); if(!t){ toast('일정 이름을 입력해주세요'); return; }
+  draft.title=t;
+  if(draft.id){ const i=db.events.findIndex(e=>e.id===draft.id); db.events[i]=draft; }
+  else { draft.id=uid(); db.events.push(draft); }
+  saveDB(); scheduleAlarms(); closeSheet();
+  const savedDate=draft.date;
+  setTimeout(()=>{ render(); if(curDay){ openDay(savedDate); } toast('저장했어요'); },260);
+}
+function deleteEvent(){
+  db.events=db.events.filter(e=>e.id!==draft.id); saveDB(); closeSheet();
+  setTimeout(()=>{ render(); if(curDay) openDay(curDay); toast('삭제했어요'); },260);
+}
+
+/* small inline icons for editor rows */
+function iconCal(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 9h17M8 3v4M16 3v4" stroke-linecap="round"/></svg>`; }
+function iconClock(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round"/></svg>`; }
+function iconSpeaker(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M17 9c1.2 1.2 1.2 4.8 0 6" stroke-linecap="round"/></svg>`; }
+function iconRepeat(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 8a6 6 0 0 1 10-2l2 2M20 16a6 6 0 0 1-10 2l-2-2"/><path d="M16 4v4h-4M8 20v-4h4"/></svg>`; }
+function iconHash(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M9 4 7 20M17 4l-2 16M5 9h15M4 15h15"/></svg>`; }
+function iconDrop(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3c3.5 4.5 6 7.5 6 10.5a6 6 0 0 1-12 0C6 10.5 8.5 7.5 12 3Z"/></svg>`; }
+function iconMemo(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>`; }
+
+/* ============================ sheet infra ============================ */
+let sheetEl=null, scrimEl=null;
+function ensureSheet(){
+  if(!scrimEl){ scrimEl=document.createElement('div'); scrimEl.className='scrim'; scrimEl.onclick=closeSheet; document.body.appendChild(scrimEl); }
+  if(!sheetEl){ sheetEl=document.createElement('div'); sheetEl.className='sheet'; document.body.appendChild(sheetEl); }
+}
+function showSheet(html, compact, tall){
+  ensureSheet();
+  sheetEl.innerHTML=html;
+  sheetEl.style.maxHeight = tall? '92dvh' : (compact? '80dvh' : '92dvh');
+  requestAnimationFrame(()=>{ scrimEl.classList.add('show'); sheetEl.classList.add('show'); });
+}
+function closeSheet(){ if(sheetEl){ sheetEl.classList.remove('show'); scrimEl.classList.remove('show'); } }
+
+/* ============================ toast ============================ */
+let toastEl=null,toastT=null;
+function toast(msg){
+  if(!toastEl){ toastEl=document.createElement('div'); toastEl.className='toast'; document.body.appendChild(toastEl); }
+  toastEl.textContent=msg; toastEl.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>toastEl.classList.remove('show'),1600);
+}
+
+/* ============================ settings ============================ */
+function openSettings(){ view.mode='settings'; render(); }
+function renderSettings(){
+  const fonts=[
+    ['Jua','주아','애플민트 느낌 ★'],['Dongle','동글',''],['Pretendard','프리텐다드','기본·모던'],
+    ['GowunDodum','고운돋움',''],['DoHyeon','도현',''],
+  ];
+  let html=`<div class="safe-top"></div>
+  <div class="topbar"><div class="mon" style="font-size:18px"><button class="iconbtn" style="margin-left:-8px" onclick="view.mode='month';render()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>설정</div></div>
+  <div class="setwrap">
+    <div class="setsec">테마</div>
+    <div class="seg" style="width:100%">
+      <button class="${!isDark()?'on':''}" style="flex:1;padding:11px" onclick="setTheme('light')">☀︎ 라이트</button>
+      <button class="${isDark()?'on':''}" style="flex:1;padding:11px" onclick="setTheme('dark')">☾ 다크</button>
+    </div>
+    <div class="setsec">글씨체</div>`;
+  fonts.forEach(([fam,name,badge])=>{
+    const on=db.settings.font===fam;
+    html+=`<div class="fontcard ${on?'on':''}" onclick="setFont('${fam}')">
+      <span class="rad"></span>
+      <div class="fx"><div class="fnm" style="font-family:'${fam}'">${name}${badge?`<span class="badge">${badge}</span>`:''}</div>
+      <div class="fpv" style="font-family:'${fam}'">7월 14일 · 수학학원 10시 반</div></div>
+    </div>`;
+  });
+  html+=`<div class="setsec">알림</div>
+    <div class="fr" style="padding:14px 4px"><span class="lb">푸시 알림 권한</span><button class="miniseg" style="padding:0"><span style="padding:7px 12px;font-weight:600;color:var(--accent-ink)" onclick="askNotify()">권한 요청</span></button></div>
+    <div style="font-size:11.5px;color:var(--mut);padding:4px 4px 0;line-height:1.7">앱을 설치(APK)하면 꺼져 있어도 알람이 울려요. 웹 미리보기에선 앱이 열려 있을 때만 동작해요.</div>
+    <div class="setsec">데이터</div>
+    <div class="fr" style="padding:14px 4px" onclick="exportData()"><span class="lb">내보내기 (백업)</span><span style="color:var(--mut)">↗</span></div>
+    <div style="text-align:center;color:var(--mut);font-size:11px;padding:28px 0 10px">loop · v0.1</div>
+  </div>`;
+  app.innerHTML=html;
+}
+function setTheme(t){ db.settings.theme=t; saveDB(); render(); }
+function setFont(f){ db.settings.font=f; saveDB(); render(); toast(f+' 적용'); }
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', db.settings.theme);
+  document.body.style.setProperty('--app-font', `'${db.settings.font}'`);
+  const tc=isDark()?'#0E1219':'#F7F8FA'; const m=document.querySelector('meta[name=theme-color]'); if(m)m.setAttribute('content',tc);
+}
+function exportData(){
+  try{
+    const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='loop-backup.json'; a.click();
+    toast('백업 파일 저장');
+  }catch(e){ toast('내보내기 실패'); }
+}
+
+/* ============================ notifications (web best-effort; swapped in native) ============================ */
+function askNotify(){ if('Notification' in window){ Notification.requestPermission().then(p=>toast(p==='granted'?'알림 허용됨':'알림 거부됨')); } else toast('이 환경은 알림 미지원'); }
+let alarmTimers=[];
+function scheduleAlarms(){
+  alarmTimers.forEach(t=>clearTimeout(t)); alarmTimers=[];
+  if(!('Notification'in window)||Notification.permission!=='granted') return;
+  const now=Date.now(); const horizon=now+ 1000*60*60*24; // next 24h (web keeps app-open only)
+  const from=ymd(new Date()); const to=ymd(new Date(Date.now()+86400000));
+  db.events.forEach(ev=>{
+    if(!ev.alarm||!ev.alarm.on||ev.allDay) return;
+    occurrences(ev,from,to).forEach(o=>{
+      const [h,mi]=(ev.start||'09:00').split(':').map(Number);
+      const dt=parseYMD(o.date); dt.setHours(h,mi,0,0);
+      const fireAt=dt.getTime()-ev.alarm.minutes*60000;
+      if(fireAt>now && fireAt<horizon){
+        alarmTimers.push(setTimeout(()=>{ try{ new Notification('loop · '+ev.title,{body:alarmLabel(ev.alarm.minutes)+' · '+fmtTime(ev.start)}); beep(ev.sound); }catch(e){} }, fireAt-now));
+      }
+    });
+  });
+}
+
+/* ============================ nav ============================ */
+function shiftMonth(delta){ const [y,m]=addMonths(view.y,view.m,delta); view.y=y; view.m=m; render(); }
+function goToday(){ const n=new Date(); view.y=n.getFullYear(); view.m=n.getMonth(); render(); }
+function setMode(k){ view.mode=k; render(); }
+
+/* ============================ seed (first run demo) ============================ */
+function seedIfEmpty(){
+  if(db.events.length) return;
+  const n=new Date(); const y=n.getFullYear(), m=n.getMonth();
+  const D=(day)=>`${y}-${pad(m+1)}-${pad(day)}`;
+  db.events=[
+    { id:uid(), title:'수학학원', date:D(1), allDay:false, start:'10:30', end:'12:00', color:'blue', sticker:'book', alarm:{on:true,minutes:30}, sound:'물방울', repeat:{type:'weekly',days:[2,4],until:null}, countSessions:true, memo:'' },
+    { id:uid(), title:'필라테스', date:D(1), allDay:false, start:'19:00', end:'20:00', color:'teal', sticker:'run', alarm:{on:true,minutes:60}, sound:'딩동', repeat:{type:'weekly',days:[1],until:null}, countSessions:false, memo:'' },
+    { id:uid(), title:'학원비 납부', date:D(15), allDay:true, start:'09:00', end:'', color:'rose', sticker:'money', alarm:{on:true,minutes:1440}, sound:'종', repeat:{type:'monthly',days:[],until:null}, countSessions:false, memo:'' },
+    { id:uid(), title:'염색 예정', date:D(Math.min(18,new Date(y,m+1,0).getDate())), allDay:true, start:'09:00', end:'', color:'sage', sticker:'brush', alarm:{on:false,minutes:30}, sound:'물방울', repeat:{type:'none',days:[],until:null}, countSessions:false, memo:'' },
+  ];
+  db.dayTags[D(Math.min(new Date().getDate(), new Date(y,m+1,0).getDate()))]=['coffee','heart'];
+  saveDB();
+}
+
+/* ============================ boot ============================ */
+seedIfEmpty();
+render();
+if('Notification'in window && Notification.permission==='granted') scheduleAlarms();
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ /* refresh today marker */ } });
+</script>
+</body>
+</html>
