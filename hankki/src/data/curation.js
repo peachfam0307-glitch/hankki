@@ -14,7 +14,7 @@ export const CURATION = [
     cat: '된장', emoji: '🥣',
     items: [
       { name: '죽장연 전통된장', benefit: '국산콩·천일염으로만. 깊고 진한 맛', q: '죽장연 전통된장' },
-      { name: '백합된장', benefit: '수녀원에서 메주·물·소금으로만. 구수해서 찌개·국에 좋아요', q: '백합된장' },
+      { name: '백합된장', benefit: '수녀원에서 메주·물·소금으로만. 구수해서 찌개·국에 좋아요', q: '백합된장', url: 'http://www.spcfood.co.kr/product/product_view.php?ProductSeqNo=8' },
     ],
   },
   {

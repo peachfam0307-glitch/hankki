@@ -42,6 +42,9 @@ function shopSearchUrl(shop, q) {
   return shop.url
 }
 
+// 섹션 헤더의 '편집 / 접기·펼치기' 버튼 — 손가락으로 누르기 쉽게 살짝 키운 알약 버튼.
+const secBtnStyle = { fontSize: 13.5, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream)', padding: '7px 14px', borderRadius: 999 }
+
 export default function ShopScreen() {
   const store = useStore()
   const { shops, wishlist, shoppingList } = store
@@ -84,7 +87,7 @@ export default function ShopScreen() {
         {/* 1) 쇼핑몰 바로가기 */}
         <div className="sec-head" style={{ marginTop: 6 }}>
           <div className="h-section">쇼핑몰 바로가기</div>
-          <button className="t-more press" onClick={() => setEditShops((v) => !v)}>
+          <button className="press" style={secBtnStyle} onClick={() => setEditShops((v) => !v)}>
             {editShops ? '완료' : '편집'}
           </button>
         </div>
@@ -243,10 +246,12 @@ function Curation() {
   const searchShop =
     shops.find((s) => s.id === 'naver') ||
     { id: 'naver', url: 'https://shopping.naver.com', search: 'https://search.shopping.naver.com/search/all?query={q}' }
-  const buy = (q) => openUrl(shopSearchUrl(searchShop, q))
+  // 직접 판매 링크(url)가 있으면 그곳으로, 없으면 네이버쇼핑 통합검색으로.
+  const linkFor = (it) => it.url || shopSearchUrl(searchShop, it.q)
+  const buy = (it) => openUrl(linkFor(it))
   const add = (it, emoji) => {
     store.addWish({
-      id: newId(), name: it.name, url: shopSearchUrl(searchShop, it.q), memo: it.benefit,
+      id: newId(), name: it.name, url: linkFor(it), memo: it.benefit,
       thumb: 'emoji', image: null, emoji, icon: null,
       bought: false, savedAt: Date.now(),
     })
@@ -257,7 +262,7 @@ function Curation() {
     <>
       <div className="sec-head" style={{ marginTop: 14 }}>
         <div className="h-section">🌿 주부의 장바구니</div>
-        <button className="t-more press" onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
+        <button className="press" style={secBtnStyle} onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
       </div>
       <div className="t-sub" style={{ fontSize: 12, marginTop: -2, marginBottom: 8 }}>
         18년차 주부가 엄선한 · 첨가물 적은 건강 식재료
@@ -274,7 +279,7 @@ function Curation() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: '0 0 auto' }}>
                 <button className="press" onClick={() => add(it, g.emoji)} style={{ padding: '6px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 700, fontSize: 12.5 }}>담기</button>
-                <button className="press mini-buy" onClick={() => buy(it.q)}>사러가기</button>
+                <button className="press mini-buy" onClick={() => buy(it)}>사러가기</button>
               </div>
             </div>
           ))}
