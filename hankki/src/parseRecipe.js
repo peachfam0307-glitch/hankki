@@ -80,7 +80,9 @@ export function fixIngredientUnits(l) {
 // 불릿·아이콘을 오독한 조각(삐 · = · HE · Vv · Eel · \/^ · 를 …)이 유효한 한글 재료명
 // 앞에 붙어 남는 경우가 많다("삐 선복 1<0", "= 쌀 450", "Vv Eel 토핑용"). 한글/숫자가
 // 나오기 전까지의 '기호 덩어리 · 짧은 라틴 조각(단위 제외) · 대표 오독 한 글자'를 벗겨낸다.
-const JUNK_SYM = /^[삐쁘=|/\\^<>~"'`_·•*■□▶►◆●○]+/
+const JUNK_SYM = /^[삐쁘=|/\\^<>~"'`_·•*■□▶►◆●○@©®№°§①-⑳❶-❿➀-➉⓪]+/
+// 숫자 뒤에 오면 '수량'이라 지우면 안 되는 단위들(번호 불릿과 구분).
+const UNIT_AFTER = /^(?:스푼|큰술|작은술|티스푼|컵|공기|개|알|장|줌|톨|쪽|봉|캔|팩|모|줄|덩이|리터|ml|kg|cc|g)/
 // 네모/핀 아이콘(■ 📌 ▪)이 오독되는 대표 글자들. tesseract가 매번 다르게 읽어(삐→뽀→뽀삐)
 // 1~2글자 조합까지 잡는다. 단, '쌀·깨·꿀·짜장' 같은 진짜 재료는 이 집합에 없어 안전.
 const JUNK_SYL = '를르롤삐쁘뽀빠뻐뿌쀼쁠삑뺴쀄삠'
@@ -96,11 +98,13 @@ export function stripLeadingOcrJunk(line, fromOcr = false) {
     const m = s.match(/^(\S+)\s+/)
     if (!m) break
     const tok = m[1]
+    const rest = s.slice(m[0].length)
     const junk =
       JUNK_SYM.test(tok) ||
       (/^[A-Za-z]{1,3}$/.test(tok) && !/^(ml|g|kg|cc|ea|oz|l)$/i.test(tok)) ||
       (fromOcr && /^[A-Za-z]{4}$/.test(tok)) || // 긴 라틴 조각(AINE 등)도 OCR에선 잡음
       (fromOcr && /^[0OoＯ]$/.test(tok)) ||      // 불릿을 0·O 로 오독
+      (fromOcr && /^[1-9]\d?$/.test(tok) && /^[가-힣]/.test(rest) && !UNIT_AFTER.test(rest)) || // 번호 불릿(③→3): 뒤가 단위 아닌 '재료명'이면 잡음
       (fromOcr && JUNK_TOK_OCR.test(tok)) ||
       (fromOcr && /^[가-힣]$/.test(tok) && !KEEP_1CHAR.has(tok)) // 화이트리스트에 없는 맨앞 한 글자 = 아이콘 오독
     if (!junk) break
