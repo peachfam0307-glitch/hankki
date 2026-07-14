@@ -385,8 +385,14 @@ export default function ProfileScreen() {
               <button className="press" onClick={() => setBackup(false)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '2px 16px 0' }}>
-              <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.65, marginBottom: 14 }}>
+              <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.65, marginBottom: 12 }}>
                 레시피 · 일지 · 냉장고 · 장보기 · 프로필까지 <b>모든 데이터를 파일 하나</b>로 담아요.{'\n'}폰을 바꾸거나 앱을 지워도 이 파일만 있으면 그대로 되살아나요.
+              </div>
+              <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 14, fontSize: 12.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
+                <b style={{ color: 'var(--brown)' }}>제일 쉬운 방법 (3단계) 👇</b>{'\n'}
+                <b>1.</b> 아래 <b>💌 백업 보내서 저장하기</b> 누르기{'\n'}
+                <b>2.</b> 공유 창이 뜨면 <b>「카톡 나에게 보내기」</b> 선택{'\n'}
+                <b>3.</b> 끝! 나중에 폰을 바꾸면 그 파일을 열어 아래 <b>「불러오기」</b>만 하면 그대로 복원돼요 ✨
               </div>
               <button className="btn-primary press" onClick={shareBackup}>💌 백업 보내서 저장하기 (추천)</button>
               <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.55, margin: '8px 2px 12px' }}>
