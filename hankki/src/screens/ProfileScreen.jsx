@@ -153,6 +153,7 @@ export default function ProfileScreen() {
   const menu = [
     { icon: 'heart', label: '즐겨찾기', onClick: () => nav.push({ name: 'favorites' }) },
     { icon: 'cloud', label: '백업 · 내보내기', badge: 'NEW', onClick: () => setBackup(true) },
+    { icon: 'help', label: '앱 소개 다시 보기', onClick: () => nav.showOnboarding && nav.showOnboarding() },
     { icon: 'help', label: '도움말 및 문의', onClick: () => nav.showToast('도움이 필요하면 언제든 문의해 주세요 🙂') },
   ]
 

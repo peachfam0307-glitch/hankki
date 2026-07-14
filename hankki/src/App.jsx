@@ -8,6 +8,7 @@ import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
 import TimerBar from './components/TimerBar'
 import ConfirmSheet from './components/ConfirmSheet'
+import Onboarding, { needsOnboarding } from './components/Onboarding'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
@@ -40,12 +41,15 @@ export default function App() {
   const [stack, setStack] = useState([]) // 위로 쌓이는 화면들
   const [toast, setToast] = useState(null)
   const [exitAsk, setExitAsk] = useState(false) // 홈에서 뒤로가기 → 종료 확인 팝업
+  const [onboard, setOnboard] = useState(() => needsOnboarding()) // 첫 실행 앱 소개
   const backHandlers = useRef([]) // 화면들이 등록한 '뒤로가기 먼저 처리' 핸들러
   const toastTimer = useRef(null)
   const tabRef = useRef(tab)
   const stackRef = useRef(stack)
+  const onboardRef = useRef(onboard)
   tabRef.current = tab
   stackRef.current = stack
+  onboardRef.current = onboard
 
   useEffect(() => {
     try { sessionStorage.setItem('hankki:tab', tab) } catch { /* noop */ }
@@ -72,6 +76,8 @@ export default function App() {
     if (!hasTrap()) trap() // index.html 이 이미 깔았으면 중복 안 함
     const onPop = () => {
       trap() // 먼저 버퍼를 다시 채워 '경계에서 그냥 종료'되는 일을 막는다
+      // 0) 온보딩(첫 실행 소개)이 떠 있으면 뒤로가기로 종료팝업이 뜨지 않게 가둔다.
+      if (onboardRef.current) return
       // 1) 가장 위 화면이 내부 상태(하위 화면·필터 등)를 먼저 닫는다
       const hs = backHandlers.current
       if (hs.length) {
@@ -164,7 +170,8 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const nav = { push, pop, popAll, go, showToast, tab, setTab, registerBack }
+  const showOnboarding = useCallback(() => setOnboard(true), [])
+  const nav = { push, pop, popAll, go, showToast, tab, setTab, registerBack, showOnboarding }
 
   const TabScreen = TABS[tab]
   const top = stack[stack.length - 1]
@@ -199,6 +206,8 @@ export default function App() {
             onClose={() => setExitAsk(false)}
           />
         )}
+
+        {onboard && <Onboarding onDone={() => setOnboard(false)} />}
       </div>
     </NavCtx.Provider>
   )
