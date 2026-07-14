@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react'
 import Icon from './Icon'
+import Buddy from './Buddies'
+import TextTile from './TextTile'
 
 // 첫 실행 온보딩 — "이게 뭐하는 앱?"을 3초 안에 알려주고, 한끼만의 차별화(통합 살림)를
 // 어필한 뒤, 곧 나올 AI 자동인식을 살짝 흘려 기대감을 준다. 4장 · 건너뛰기 가능.
@@ -99,6 +101,46 @@ function HeroFlow() {
   )
 }
 
+// 레시피북 꾸미는 시안 — 아바타 + 이모지 + 글자타일 + 스티커로 꾸민 미니 카드 목업
+function HeroDecorate() {
+  return (
+    <div style={{ position: 'relative', width: 220, height: 186, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* 메인 레시피 카드 */}
+      <div style={{
+        width: 132, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 18,
+        boxShadow: 'var(--shadow-card)', overflow: 'hidden', transform: 'rotate(-5deg)',
+      }}>
+        <div style={{
+          height: 78, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38,
+          background: 'linear-gradient(135deg, #f3ede1, #e8e1d2)',
+        }}>🍳</div>
+        <div style={{ padding: '9px 11px 12px' }}>
+          <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--text)' }}>엄마표 김치볶음밥</div>
+          <div style={{ display: 'flex', gap: 4, marginTop: 7 }}>
+            <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream)', borderRadius: 6, padding: '2px 6px' }}>한식</span>
+            <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-sub)', background: 'var(--cream)', borderRadius: 6, padding: '2px 6px' }}>15분</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 아바타 — 카드 왼쪽 아래에서 빼꼼 */}
+      <div style={{ position: 'absolute', left: 6, bottom: 2, transform: 'rotate(-6deg)' }}>
+        <Buddy id="catpot" size={62} />
+      </div>
+
+      {/* 글자 타일 스티커 */}
+      <div style={{ position: 'absolute', top: 6, right: 20, transform: 'rotate(9deg)' }}>
+        <TextTile text="맛집" size={40} radius={11} />
+      </div>
+
+      {/* 귀여운 이모지들 */}
+      <span style={{ position: 'absolute', top: 60, right: 6, fontSize: 26, transform: 'rotate(12deg)' }}>❤️</span>
+      <span style={{ position: 'absolute', bottom: 30, right: 30, fontSize: 22 }}>✨</span>
+      <span style={{ position: 'absolute', top: 0, left: 34, fontSize: 20, transform: 'rotate(-10deg)' }}>🌿</span>
+    </div>
+  )
+}
+
 function HeroAI() {
   return (
     <div style={{ position: 'relative', width: 172, height: 172, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -122,6 +164,7 @@ const SLIDES = [
     hero: <HeroWelcome />,
     title: '흩어진 레시피를,\n한곳에.',
     body: '인스타·유튜브·손글씨…\n여기저기 저장해둔 내 레시피를\n한끼 하나로 모아요.',
+    tagline: '장보고 · 레시피 등록하고 · 요리하고 · 꾸미기까지, 한 번에',
   },
   {
     hero: <HeroCollect />,
@@ -132,6 +175,12 @@ const SLIDES = [
     hero: <HeroFlow />,
     title: '냉장고부터 요리까지, 한 번에',
     body: '냉장고 재료로 “오늘 뭐 해먹지” 추천받고,\n부족한 재료는 바로 장보기,\n따라하기 쉬운 요리모드까지.',
+    highlight: true,
+  },
+  {
+    hero: <HeroDecorate />,
+    title: '내맘대로 꾸미는 레시피북',
+    body: '귀여운 아바타와 이모지·글자 타일·스티커로,\n획일화된 음식사진 말고\n나만의 감성으로 채워요.',
     highlight: true,
   },
   {
@@ -202,6 +251,12 @@ export default function Onboarding({ onDone }) {
           margin: '14px auto 0', maxWidth: 320, fontSize: 14.5, lineHeight: 1.7, color: 'var(--text-sub)',
           whiteSpace: 'pre-line', fontWeight: 500,
         }}>{s.body}</p>
+        {s.tagline && (
+          <div style={{
+            margin: '18px auto 0', maxWidth: 320, paddingTop: 14, borderTop: '1px solid var(--line)',
+            fontSize: 12.5, lineHeight: 1.6, color: 'var(--brown)', fontWeight: 700,
+          }}>{s.tagline}</div>
+        )}
       </div>
 
       {/* 하단: 점 + 버튼 */}
