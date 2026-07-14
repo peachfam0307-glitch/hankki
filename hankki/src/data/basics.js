@@ -13,7 +13,7 @@ const base = {
   sourceUrl: '',
 }
 
-export const BASICS_VERSION = 8 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
+export const BASICS_VERSION = 9 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
 
 const RAW_BASICS = [
   {
@@ -1043,6 +1043,11 @@ const RECIPE_PHOTOS = {
   'basic-basquecake': 'basquecake',
   'basic-tiramisu': 'tiramisu',
   'basic-cheesesandwich': 'cheesesandwich',
+  'basic-avocado-banana-smoothie': 'avocadosmoothie',
+  'basic-maeun-galbijjim': 'maeungalbijjim',
+  'basic-dwaeji-bulgogi': 'dwaejibulgogi',
+  'basic-salmon-poke': 'salmonpoke',
+  'basic-veggie-poke': 'veggiepoke',
 }
 
 // 만드는 법 문체는 전부 '~요'체로 통일해 내보낸다 (polish 사전 — 파서와 같은 기준)
