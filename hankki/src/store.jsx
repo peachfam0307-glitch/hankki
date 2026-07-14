@@ -16,6 +16,7 @@ const DEFAULT_SHOPS = [
   { id: 'ssg', name: '이마트몰', icon: 'cart', iconType: 'icon', url: 'https://emart.ssg.com', search: 'https://emart.ssg.com/search.ssg?query={q}' },
   { id: 'naver', name: '네이버쇼핑', icon: 'store', iconType: 'icon', url: 'https://shopping.naver.com', search: 'https://search.shopping.naver.com/search/all?query={q}' },
   { id: 'oasis', name: '오아시스', icon: 'basket', iconType: 'icon', url: 'https://www.oasis.co.kr', search: 'https://www.oasis.co.kr/product/search?keyword={q}' },
+  { id: 'hansalim', name: '한살림', icon: 'sprout', iconType: 'icon', url: 'https://shop.hansalim.or.kr/shopping/spMain.do', search: 'https://shop.hansalim.or.kr/shopping/spMain.do' },
 ]
 
 function migrateShopping() {
@@ -101,6 +102,19 @@ function migrateBasics(saved) {
       ? { ...r, category: '아시안', folder: r.folder === '양식' ? '아시안' : r.folder }
       : r
   )
+  // v12: 기본 레시피의 '한 그릇'/'한그릇' 태그 정리 + 로제파스타 표지사진을 아이콘으로 되돌리기
+  fixed = fixed.map((r) => {
+    if (!r || !String(r.id).startsWith('basic-')) return r
+    let nr = r
+    if (Array.isArray(r.tags) && r.tags.some((t) => t === '한 그릇' || t === '한그릇')) {
+      nr = { ...nr, tags: r.tags.filter((t) => t !== '한 그릇' && t !== '한그릇') }
+    }
+    // 사용자가 직접 넣은 사진이 아니라, 우리가 깔아둔 로제파스타 표지사진만 제거
+    if (r.id === 'basic-rosepasta' && r.thumb === 'photo' && String(r.image || '').includes('rosepasta')) {
+      nr = { ...nr, thumb: 'icon', image: null }
+    }
+    return nr
+  })
   return { recipes: [...fixed, ...add], seedV: BASICS_VERSION }
 }
 

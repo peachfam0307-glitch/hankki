@@ -13,7 +13,7 @@ const base = {
   sourceUrl: '',
 }
 
-export const BASICS_VERSION = 11 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
+export const BASICS_VERSION = 12 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
 
 const RAW_BASICS = [
   {
@@ -535,7 +535,7 @@ const RAW_BASICS = [
     icon: 'donburi',
     category: '한식',
     folder: '한식',
-    tags: ['자취요리', '한 그릇', '혼밥'],
+    tags: ['자취요리', '혼밥'],
     time: 5,
     servings: 1,
     difficulty: '쉬움',
@@ -567,7 +567,7 @@ const RAW_BASICS = [
     icon: 'egg',
     category: '한식',
     folder: '한식',
-    tags: ['자취요리', '한 그릇', '초간단'],
+    tags: ['자취요리', '초간단'],
     time: 5,
     servings: 1,
     difficulty: '쉬움',
@@ -798,7 +798,7 @@ const RAW_BASICS = [
     icon: 'donburi',
     category: '양식',
     folder: '양식',
-    tags: ['포케', '연어', '한그릇'],
+    tags: ['포케', '연어'],
     time: 25,
     servings: 2,
     difficulty: '보통',
@@ -1009,7 +1009,6 @@ const RECIPE_PHOTOS = {
   'basic-tteokbokki': 'tteokbokki',
   'basic-tteokguk': 'tteokguk',
   'basic-creampasta': 'creampasta',
-  'basic-rosepasta': 'rosepasta',
   'basic-padthai': 'padthai',
   'basic-basquecake': 'basquecake',
   'basic-tiramisu': 'tiramisu',
