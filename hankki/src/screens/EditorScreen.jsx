@@ -140,6 +140,12 @@ export default function EditorScreen({ id, prefill }) {
     document.addEventListener('focusout', onOut)
     return () => { document.removeEventListener('focusin', sync); document.removeEventListener('focusout', onOut) }
   }, [])
+  // 사진 자르기(크롭)가 열려 있을 때 뒤로가기 → 편집기를 나가지 말고 크롭만 닫는다.
+  // (사진 잘못 골랐을 때 뒤로가기로 편집 중이던 내용이 통째로 닫히던 문제)
+  useEffect(() => nav.registerBack(() => {
+    if (cropImg) { setCropImg(null); return true }
+    return false
+  }), [cropImg, nav])
 
   // 작성 중 자동 임시저장 — 텍스트만(사진은 무겁고 텍스트가 핵심). 편집 모드는 제외.
   useEffect(() => {

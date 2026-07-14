@@ -76,6 +76,29 @@ export function fixIngredientUnits(l) {
   return s
 }
 
+// ── 앞머리 OCR 잡음 제거 ──
+// 불릿·아이콘을 오독한 조각(삐 · = · HE · Vv · Eel · \/^ · 를 …)이 유효한 한글 재료명
+// 앞에 붙어 남는 경우가 많다("삐 선복 1<0", "= 쌀 450", "Vv Eel 토핑용"). 한글/숫자가
+// 나오기 전까지의 '기호 덩어리 · 짧은 라틴 조각(단위 제외) · 대표 오독 한 글자'를 벗겨낸다.
+const JUNK_SYM = /^[삐쁘=|/\\^<>~"'`_·•*■□▶►◆●○]+/
+const JUNK_TOK_OCR = /^(?:를|르|롤|뻐|ㅂ|ㅃ|삐|쁘)$/
+export function stripLeadingOcrJunk(line, fromOcr = false) {
+  let s = String(line).trim()
+  s = s.replace(JUNK_SYM, '').trim()
+  for (let i = 0; i < 3; i++) {
+    const m = s.match(/^(\S+)\s+/)
+    if (!m) break
+    const tok = m[1]
+    const junk =
+      JUNK_SYM.test(tok) ||
+      (/^[A-Za-z]{1,3}$/.test(tok) && !/^(ml|g|kg|cc|ea|oz|l)$/i.test(tok)) ||
+      (fromOcr && JUNK_TOK_OCR.test(tok))
+    if (!junk) break
+    s = s.slice(m[0].length).replace(JUNK_SYM, '').trim()
+  }
+  return s
+}
+
 // 사용자가 직접 쓴 티가 나는 줄 — 이모지·기호(🔥★♥)나 온전한 한글 단어가 있으면
 // 잡음 검사를 건너뛴다. (isGibberish 는 이모지를 '나쁜 글자'로 세기 때문)
 const USER_SAFE = /[☀-➿⭐❤\u{1F000}-\u{1FAFF}]|[가-힣]{2}/u
@@ -157,7 +180,8 @@ export function parseRecipeText(raw = '', opts = {}) {
   const items = []
   for (const rawLine of text.split('\n')) {
     const bullet = /^\s*[-*•·▪◦‣●○]\s*/.test(rawLine)
-    const l = cleanTokens(sanitize(rawLine.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•·▪◦‣●○*]/g, ' ')))
+    let l = cleanTokens(sanitize(rawLine.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•·▪◦‣●○*]/g, ' ')))
+    l = stripLeadingOcrJunk(l, fromOcr) // 삐/=/HE/Vv Eel 같은 앞머리 잡음 벗기기
     if (!l) continue
     // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
     const isHeader = SEC_ING.test(l) || SEC_STEP.test(l) || SEC_MEMO.test(l)
