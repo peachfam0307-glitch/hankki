@@ -155,6 +155,7 @@ export default function ProfileScreen() {
     { icon: 'cloud', label: '백업 · 내보내기', badge: 'NEW', onClick: () => setBackup(true) },
     { icon: 'help', label: '앱 소개 다시 보기', onClick: () => nav.showOnboarding && nav.showOnboarding() },
     { icon: 'help', label: '도움말 및 문의', onClick: () => nav.showToast('도움이 필요하면 언제든 문의해 주세요 🙂') },
+    { icon: 'settings', label: '개인정보처리방침', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
   ]
 
   return (
