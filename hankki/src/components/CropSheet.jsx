@@ -166,7 +166,10 @@ export default function CropSheet({
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, padding: '14px 16px calc(16px + var(--safe-bottom, 0px))' }}>
+      <div style={{ margin: '0 16px 6px', padding: '9px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.1)', color: '#e7e3db', fontSize: 11.5, lineHeight: 1.5, textAlign: 'center' }}>
+        💡 아이콘·특수문자가 많으면 인식이 부정확할 수 있어요. 읽은 건 <b style={{ color: '#fff' }}>초안</b> — 사진 보며 다듬어 주세요.
+      </div>
+      <div style={{ display: 'flex', gap: 10, padding: '0 16px calc(16px + var(--safe-bottom, 0px))' }}>
         <button className="press" onClick={once(onSkip)} style={{ flex: 1, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.12)', color: '#f0ede7', fontSize: 14.5, fontWeight: 600 }}>
           전체 사용
         </button>
