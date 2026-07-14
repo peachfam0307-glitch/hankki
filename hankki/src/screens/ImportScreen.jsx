@@ -42,7 +42,7 @@ export default function ImportScreen() {
     const t = text.trim()
     if (!t) return
     const r = parseRecipeText(t)
-    nav.pop()
+    // pop 하지 않고 push → 뒤로가기 시 '가져오기'로 복귀. (저장하면 편집기가 popAll로 홈)
     // 메모는 직접 입력 전용 — 분류 안 된 찌꺼기를 메모에 붙이지 않는다
     nav.push({ name: 'editor', prefill: { source: 'manual', title: r.title, ingredients: r.ingredients, steps: r.steps } })
   }
@@ -83,7 +83,6 @@ export default function ImportScreen() {
     if (r && r.full) {
       const parsed = parseRecipeText(r.text, { fromOcr: true })
       const hasContent = parsed.ingredients.length || parsed.steps.length
-      nav.pop()
       nav.push({
         name: 'editor',
         prefill: {
@@ -230,7 +229,6 @@ export default function ImportScreen() {
               className="btn-primary press"
               style={{ width: '100%' }}
               onClick={() => {
-                nav.pop()
                 nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } })
               }}
             >
@@ -264,7 +262,6 @@ export default function ImportScreen() {
               className="btn-ghost press"
               style={{ width: '100%', marginBottom: 8 }}
               onClick={() => {
-                nav.pop()
                 nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } })
               }}
               disabled={!url.trim()}
