@@ -12,6 +12,9 @@ import { TAG_LIST } from '../data/seed'
 import { dateLabel } from '../utils'
 import { useBackHandler } from '../useBackHandler'
 
+// 카테고리와 연결된 기본 폴더 — 삭제 불가(사용자가 만든 폴더만 지울 수 있게)
+const DEFAULT_FOLDERS = new Set(['한식', '양식', '일식', '간식', '아시안'])
+
 const dayKey = (ts) => {
   const d = new Date(ts)
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
@@ -84,7 +87,7 @@ function CookCalendar({ entries, selected, onSelect }) {
 }
 
 export default function MyRecipesScreen() {
-  const { recipes, folders, addFolder, removeRecipe, diary, removeDiary } = useStore()
+  const { recipes, folders, addFolder, removeFolder, removeRecipe, diary, removeDiary } = useStore()
   const nav = useNav()
   const [view, setView] = useState('grid') // grid | log | folders
   const [folder, setFolder] = useState('전체')
@@ -99,6 +102,7 @@ export default function MyRecipesScreen() {
   const [edit, setEdit] = useState(false)
   const [newFolder, setNewFolder] = useState(false)
   const [delTarget, setDelTarget] = useState(null)
+  const [delFolder, setDelFolder] = useState(null) // 삭제할 사용자 폴더 이름
   const [logEditing, setLogEditing] = useState(null)
 
   // 뒤로가기: 다른 세그먼트(요리 기록·폴더)나 폴더 필터를 먼저 기본(레시피)으로 되돌린다.
@@ -257,13 +261,26 @@ export default function MyRecipesScreen() {
           <div className="h-section" style={{ margin: '10px 0 13px' }}>폴더</div>
           <div className="grid2">
             {folders.map((c) => (
-              <button key={c} className="card press" style={{ padding: 16, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 10 }} onClick={() => { setView('grid'); setFolder(c) }}>
-                <Icon name="folder" size={26} color="var(--sand)" />
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 600 }}>{c}</div>
-                  <div className="t-sub" style={{ marginTop: 2 }}>{countIn(c)}개</div>
-                </div>
-              </button>
+              <div key={c} style={{ position: 'relative' }}>
+                <button className="card press" style={{ width: '100%', padding: 16, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 10 }} onClick={() => { setView('grid'); setFolder(c) }}>
+                  <Icon name="folder" size={26} color="var(--sand)" />
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 600 }}>{c}</div>
+                    <div className="t-sub" style={{ marginTop: 2 }}>{countIn(c)}개</div>
+                  </div>
+                </button>
+                {/* 사용자가 만든 폴더만 삭제 가능 (기본 카테고리 폴더는 유지) */}
+                {!DEFAULT_FOLDERS.has(c) && (
+                  <button
+                    className="press"
+                    onClick={(e) => { e.stopPropagation(); setDelFolder(c) }}
+                    aria-label={`${c} 폴더 삭제`}
+                    style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 999, background: 'rgba(120,90,60,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)' }}
+                  >
+                    <Icon name="x" size={15} />
+                  </button>
+                )}
+              </div>
             ))}
             <button
               className="card press"
@@ -309,6 +326,17 @@ export default function MyRecipesScreen() {
           danger
           onConfirm={() => { removeRecipe(delTarget.id); nav.showToast('레시피를 삭제했어요') }}
           onClose={() => setDelTarget(null)}
+        />
+      )}
+
+      {delFolder && (
+        <ConfirmSheet
+          title="폴더 삭제"
+          message={`'${delFolder}' 폴더를 삭제할까요?\n안에 있던 레시피는 지워지지 않고 카테고리로 돌아가요.`}
+          confirmLabel="삭제하기"
+          danger
+          onConfirm={() => { removeFolder(delFolder); nav.showToast('폴더를 삭제했어요') }}
+          onClose={() => setDelFolder(null)}
         />
       )}
 

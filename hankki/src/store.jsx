@@ -232,6 +232,16 @@ function reducer(state, action) {
       if (!action.name || state.folders.includes(action.name)) return state
       return { ...state, folders: [...state.folders, action.name] }
     }
+    case 'removeFolder': {
+      // 폴더만 지운다 — 그 안에 있던 레시피는 카테고리 폴더로 되돌려 유지한다.
+      return {
+        ...state,
+        folders: state.folders.filter((f) => f !== action.name),
+        recipes: state.recipes.map((r) =>
+          r.folder === action.name ? { ...r, folder: r.category || '' } : r
+        ),
+      }
+    }
     case 'setProfile': {
       return { ...state, profile: { ...state.profile, ...action.patch } }
     }
@@ -396,6 +406,7 @@ export function StoreProvider({ children }) {
     toggleFavorite: useCallback((id) => dispatch({ type: 'toggleFav', id }), []),
     cook: useCallback((id) => dispatch({ type: 'cook', id }), []),
     addFolder: useCallback((name) => dispatch({ type: 'addFolder', name }), []),
+    removeFolder: useCallback((name) => dispatch({ type: 'removeFolder', name }), []),
     setProfile: useCallback((patch) => dispatch({ type: 'setProfile', patch }), []),
     clearAll: useCallback(() => dispatch({ type: 'clear' }), []),
     reset: useCallback(() => dispatch({ type: 'reset' }), []),

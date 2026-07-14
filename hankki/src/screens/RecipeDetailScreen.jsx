@@ -115,9 +115,14 @@ export default function RecipeDetailScreen({ id }) {
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5, display: 'flex', justifyContent: 'space-between', padding: '10px 12px', paddingTop: 'calc(10px + var(--safe-top))' }}>
         <button className="round-btn press" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
         <div style={{ display: 'flex', gap: 8 }}>
-          {/* 편집을 상단으로 꺼내 잘 보이게 — 표지 사진/이모지/아이콘·제목·재료를 여기서 바꾼다 */}
-          <button className="round-btn press" onClick={() => nav.push({ name: 'editor', id: r.id })} aria-label="편집">
-            <Icon name="edit" size={19} />
+          {/* 편집 — 연필 아이콘만으론 약해서 글자 라벨 붙인 알약으로 (직관적으로 눈에 띄게) */}
+          <button
+            className="press"
+            onClick={() => nav.push({ name: 'editor', id: r.id })}
+            aria-label="편집"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 38, padding: '0 14px', background: 'rgba(250,250,248,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 800, borderRadius: 999, boxShadow: '0 2px 10px rgba(0,0,0,.18)' }}
+          >
+            <Icon name="edit" size={17} color="var(--brown)" stroke={2.4} /> 편집
           </button>
           <button className="round-btn press" onClick={() => toggleFavorite(r.id)} aria-label="즐겨찾기">
             <Icon name="bookmark" size={20} color={r.favorite ? '#c2703f' : 'currentColor'} style={{ fill: r.favorite ? '#c2703f' : 'none' }} />
