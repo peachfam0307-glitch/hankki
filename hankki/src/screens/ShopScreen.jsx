@@ -12,6 +12,7 @@ import Portal from '../components/Portal'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { ocrImage } from '../ocr'
 import { guessEmoji } from '../emoji'
+import { CURATION } from '../data/curation'
 
 // 재료 썸네일 — 사진 > 커스텀아이콘 > 이모지 > 글자 타일 순으로 표시
 function WishThumb({ item, size = 46 }) {
@@ -137,6 +138,9 @@ export default function ShopScreen() {
         </div>
         {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
 
+        {/* 1.5) 주부의 장바구니 — 건강 식재료 큐레이션 (시그니처) */}
+        <Curation />
+
         {/* 2) 사고 싶은 재료 */}
         <div className="sec-head">
           <div className="h-section">사고 싶은 재료</div>
@@ -225,6 +229,54 @@ export default function ShopScreen() {
           onClose={() => setClearAsk(false)}
         />
       )}
+    </>
+  )
+}
+
+// 주부의 장바구니 — 18년차 주부가 엄선한 건강 식재료. '사러가기'는 선호 쇼핑몰에서 자동검색.
+function Curation() {
+  const store = useStore()
+  const { shops } = store
+  const nav = useNav()
+  const [open, setOpen] = useState(true)
+
+  const buy = (q) => openUrl(shopSearchUrl(shops[0] || { url: '' }, q))
+  const add = (it, emoji) => {
+    store.addWish({
+      id: newId(), name: it.name, url: '', memo: it.benefit,
+      thumb: 'emoji', image: null, emoji, icon: null,
+      bought: false, savedAt: Date.now(),
+    })
+    nav.showToast('사고 싶은 재료에 담았어요 🌿')
+  }
+
+  return (
+    <>
+      <div className="sec-head" style={{ marginTop: 14 }}>
+        <div className="h-section">🌿 주부의 장바구니</div>
+        <button className="t-more press" onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
+      </div>
+      <div className="t-sub" style={{ fontSize: 12, marginTop: -2, marginBottom: 8 }}>
+        18년차 주부가 엄선한 · 첨가물 적은 건강 식재료
+      </div>
+      {open && CURATION.map((g) => (
+        <div key={g.cat}>
+          <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '10px 2px 7px' }}>{g.emoji} {g.cat}</div>
+          {g.items.map((it) => (
+            <div key={it.name} className="card" style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 12px', marginBottom: 8 }}>
+              <div className="emoji-tile" style={{ width: 44, height: 44, fontSize: 22, flex: '0 0 auto' }}>{g.emoji}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{it.name}</div>
+                <div className="t-sub" style={{ fontSize: 12, marginTop: 2, lineHeight: 1.45 }}>{it.benefit}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: '0 0 auto' }}>
+                <button className="press" onClick={() => add(it, g.emoji)} style={{ padding: '6px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 700, fontSize: 12.5 }}>담기</button>
+                <button className="press mini-buy" onClick={() => buy(it.q)}>사러가기</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
     </>
   )
 }
