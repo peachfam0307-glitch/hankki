@@ -5,7 +5,11 @@
 // 앵커 클릭 방식이면 정식 새 탭(설치된 앱이 있으면 그 앱)으로 깔끔하게 열린다.
 export function openExternal(url) {
   if (!url) return
-  const u = /^https?:\/\//.test(url) ? url : 'https://' + url
+  // 이미 스킴이 있으면(https://, intent://, intent:, market: 등) 그대로 쓰고,
+  // 'shop.example.com' 같은 맨 도메인만 https:// 를 붙인다.
+  // (안드로이드 intent 링크로 쇼핑몰 '앱'을 강제로 열 때 https 로 덮어쓰지 않도록)
+  const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(url) || /^intent:/i.test(url)
+  const u = hasScheme ? url : 'https://' + url
   const a = document.createElement('a')
   a.href = u
   a.target = '_blank'
