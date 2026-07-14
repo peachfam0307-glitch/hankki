@@ -136,6 +136,24 @@ function migrateBasics(saved) {
     if (userPhoto) { merged.thumb = r.thumb; merged.image = r.image }
     return merged
   })
+  // v14: '마늘종' → '마늘쫑' 순수 철자 수정 — 사용자가 편집한(touched) 레시피까지 모두 고친다.
+  const fixTypo = (str) => (typeof str === 'string' ? str.replace(/마늘종/g, '마늘쫑') : str)
+  fixed = fixed.map((r) => {
+    if (!r) return r
+    const changed =
+      fixTypo(r.title) !== r.title ||
+      (Array.isArray(r.ingredients) && r.ingredients.some((x) => fixTypo(x) !== x)) ||
+      (Array.isArray(r.steps) && r.steps.some((x) => fixTypo(x) !== x)) ||
+      fixTypo(r.memo) !== r.memo
+    if (!changed) return r
+    return {
+      ...r,
+      title: fixTypo(r.title),
+      ingredients: Array.isArray(r.ingredients) ? r.ingredients.map(fixTypo) : r.ingredients,
+      steps: Array.isArray(r.steps) ? r.steps.map(fixTypo) : r.steps,
+      memo: fixTypo(r.memo),
+    }
+  })
   return { recipes: [...fixed, ...add], seedV: BASICS_VERSION }
 }
 
