@@ -1094,7 +1094,6 @@ const RECIPE_PHOTOS = {
   'basic-kimchijjigae': 'kimchijjigae',
   'basic-doenjangjjigae': 'doenjangjjigae',
   'basic-japchae': 'japchae',
-  'basic-curry': 'curry',
   'basic-tteokbokki': 'tteokbokki',
   'basic-tteokguk': 'tteokguk',
   'basic-creampasta': 'creampasta',
