@@ -499,7 +499,7 @@ export default function EditorScreen({ id, prefill }) {
               <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
-          <textarea ref={ingRef} rows={5} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n계량은 키보드 위 버튼으로 · 캡처가 있다면 위 📷 버튼'} />
+          <textarea ref={ingRef} rows={7} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n계량은 키보드 위 버튼으로 · 캡처가 있다면 위 📷 버튼'} />
         </div>
 
         <div className="field">
@@ -563,7 +563,7 @@ export default function EditorScreen({ id, prefill }) {
 
         <div className="field">
           <label>메모 (선택)</label>
-          <textarea rows={5} value={f.memo} onChange={(e) => set('memo', e.target.value)} placeholder="나만의 팁이나 변형 아이디어" />
+          <textarea rows={3} value={f.memo} onChange={(e) => set('memo', e.target.value)} placeholder="나만의 팁이나 변형 아이디어" />
         </div>
 
         <button className="btn-primary press" onClick={save} disabled={!canSave} style={{ opacity: canSave ? 1 : 0.5 }}>
