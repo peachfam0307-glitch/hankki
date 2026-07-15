@@ -1,38 +1,18 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import TextTile from '../components/TextTile'
 import EmojiPicker from '../components/EmojiPicker'
-import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
+import FoodIcon from '../components/FoodIcon'
 import FoodIconPicker from '../components/FoodIconPicker'
 import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
-import Portal from '../components/Portal'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { ocrImage } from '../ocr'
 import { guessEmoji } from '../emoji'
 import { openExternal } from '../utils'
 import { CURATION } from '../data/curation'
-
-// 재료 썸네일 — 사진 > 커스텀아이콘 > 이모지 > 글자 타일 순으로 표시
-function WishThumb({ item, size = 46 }) {
-  if (item.thumb === 'photo' && item.image) {
-    return <img src={item.image} alt="" style={{ width: size, height: size, borderRadius: 12, objectFit: 'cover', flex: '0 0 auto' }} />
-  }
-  if (item.thumb === 'emoji' && item.emoji) {
-    return <div className="emoji-tile" style={{ width: size, height: size, fontSize: size * 0.5 }}>{item.emoji}</div>
-  }
-  if (item.thumb === 'label') {
-    return <TextTile text={item.name} size={size} />
-  }
-  // 기본: 이름으로 자동 매칭되는 커스텀 아이콘
-  return (
-    <div className="emoji-tile" style={{ width: size, height: size, flex: '0 0 auto' }}>
-      <FoodIcon name={item.icon || guessFoodIcon(item.name)} size={size * 0.62} />
-    </div>
-  )
-}
 
 // 외부 쇼핑몰 열기 — 정식 새 탭(설치된 앱 있으면 App Link 로 앱)으로 연다.
 // (features 문자열을 주면 팝업 창으로 열려 모바일에서 세로로 깨지고 두 번 열린 듯 보였음)
@@ -47,11 +27,10 @@ const secBtnStyle = { fontSize: 13.5, fontWeight: 700, color: 'var(--brown)', ba
 
 export default function ShopScreen() {
   const store = useStore()
-  const { shops, wishlist, shoppingList } = store
+  const { shops, shoppingList } = store
   const nav = useNav()
   const [editShops, setEditShops] = useState(false)
   const [shopForm, setShopForm] = useState(null) // null | {} (new) | shop (edit)
-  const [adding, setAdding] = useState(false)
   // 냉장고/장보기 하위 화면 선택은 기억해 둔다 — 냉장고에서 추천 레시피를 보고
   // 돌아왔을 때 장보기(영수증) 쪽으로 튕기지 않도록.
   const [view, setViewState] = useState(() => {
@@ -142,41 +121,7 @@ export default function ShopScreen() {
         {/* 1.5) 주부의 장바구니 — 건강 식재료 큐레이션 (시그니처) */}
         <Curation />
 
-        {/* 2) 사고 싶은 재료 */}
-        <div className="sec-head">
-          <div className="h-section">사고 싶은 재료</div>
-          <button className="t-more press" onClick={() => setAdding(true)}>
-            + 담기
-          </button>
-        </div>
-        {adding && <WishAdd onClose={() => setAdding(false)} />}
-        {wishlist.length === 0 && !adding && (
-          <div className="empty" style={{ padding: '28px 24px' }}>
-            {'사고 싶은 재료를 모아두세요.\n(간장·고추장처럼 어디서 본 재료를 캡처·링크로)'}
-          </div>
-        )}
-        {wishlist.map((w) => (
-          <div key={w.id} className="wish-row">
-            <button className="check-box press" data-on={w.bought} onClick={() => store.toggleWishBought(w.id)}>
-              {w.bought && <Icon name="check" size={15} color="#fff" stroke={2.4} />}
-            </button>
-            <WishThumb item={w} size={46} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14.5, fontWeight: 600, textDecoration: w.bought ? 'line-through' : 'none', color: w.bought ? 'var(--text-sub)' : 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {w.name}
-              </div>
-              {w.memo && <div className="t-sub" style={{ marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.memo}</div>}
-            </div>
-            <button className="press mini-buy" onClick={() => (w.url ? openUrl(w.url) : openUrl(shopSearchUrl(shops[0] || { url: '' }, w.name)))}>
-              사러가기
-            </button>
-            <button className="icon-btn press" onClick={() => store.removeWish(w.id)} aria-label="삭제">
-              <Icon name="x" size={17} color="var(--sand)" />
-            </button>
-          </div>
-        ))}
-
-        {/* 3) 장보기 리스트 */}
+        {/* 2) 장보기 리스트 (위시=사고 싶은 재료를 여기로 통합) */}
         <div className="sec-head">
           <div className="h-section">장보기 리스트</div>
           <div style={{ display: 'flex', gap: 14 }}>
@@ -207,8 +152,8 @@ export default function ShopScreen() {
               <span style={{ flex: 1, fontSize: 15, textDecoration: it.done ? 'line-through' : 'none', color: it.done ? 'var(--text-sub)' : 'var(--text)' }}>
                 {it.name}
               </span>
-              <button className="press mini-buy" onClick={() => openUrl(shopSearchUrl(shops[0] || { url: '' }, it.name))}>
-                검색
+              <button className="press mini-buy" onClick={() => (it.url ? openUrl(it.url) : openUrl(shopSearchUrl(shops[0] || { url: '' }, it.name)))}>
+                {it.url ? '사러가기' : '검색'}
               </button>
               <button className="icon-btn press" onClick={() => store.removeShopItem(it.id)} aria-label="삭제">
                 <Icon name="x" size={17} color="var(--sand)" />
@@ -253,13 +198,9 @@ function Curation() {
   const linkFor = (it) =>
     it.url || (MALL_SEARCH[it.mall] || MALL_SEARCH.naver).replace('{q}', encodeURIComponent(it.q))
   const buy = (it) => openUrl(linkFor(it))
-  const add = (it, emoji) => {
-    store.addWish({
-      id: newId(), name: it.name, url: linkFor(it), memo: it.benefit,
-      thumb: 'emoji', image: null, emoji, icon: null,
-      bought: false, savedAt: Date.now(),
-    })
-    nav.showToast('사고 싶은 재료에 담았어요 🌿')
+  const add = (it) => {
+    store.addShopItem({ name: it.name, url: linkFor(it) })
+    nav.showToast('장보기 리스트에 담았어요 🛒')
   }
 
   // '사러가기' 버튼에 붙는 구매처 배지 라벨
@@ -333,115 +274,6 @@ function ChecklistAdd() {
         <button className="press" onClick={add} aria-label="추가"><Icon name="plus" size={20} color="var(--brown)" /></button>
       )}
     </div>
-  )
-}
-
-function WishAdd({ onClose }) {
-  const { addWish } = useStore()
-  const nav = useNav()
-  const fileRef = useRef(null)
-  // thumb: 'icon'(커스텀 아이콘) | 'label'(글자) | 'emoji' | 'photo'
-  const [f, setF] = useState({ name: '', url: '', memo: '', image: null, emoji: '🍽️', icon: 'default', thumb: 'icon', emojiPicked: false, iconPicked: false })
-  const [busy, setBusy] = useState(false)
-
-  const setName = (name) =>
-    setF((p) => ({
-      ...p,
-      name,
-      emoji: p.emojiPicked ? p.emoji : guessEmoji(name),
-      icon: p.iconPicked ? p.icon : guessFoodIcon(name),
-    }))
-
-  const onPhoto = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = async () => {
-      setF((p) => ({ ...p, image: reader.result, thumb: 'photo' }))
-      setBusy(true)
-      const text = await ocrImage(reader.result)
-      setBusy(false)
-      const line = (text || '').split('\n').map((s) => s.trim()).find(Boolean)
-      if (line) setF((p) => ({ ...p, name: p.name || line.slice(0, 24), memo: p.memo || (text || '').trim().slice(0, 200) }))
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const save = () => {
-    const name = f.name.trim() || '이름 없는 재료'
-    addWish({
-      id: newId(),
-      name,
-      url: f.url.trim(),
-      memo: f.memo.trim(),
-      thumb: f.thumb,
-      image: f.thumb === 'photo' ? f.image : null,
-      emoji: f.thumb === 'emoji' ? f.emoji : null,
-      icon: f.thumb === 'icon' ? (f.iconPicked ? f.icon : guessFoodIcon(name)) : null,
-      bought: false,
-      savedAt: Date.now(),
-    })
-    nav.showToast('사고 싶은 재료에 담았어요')
-    onClose()
-  }
-
-  const Mode = ({ id, label }) => (
-    <button
-      type="button"
-      className={`seg ${f.thumb === id ? 'on' : ''}`}
-      style={{ flex: 1, padding: 8, fontSize: 12.5 }}
-      onClick={() => (id === 'photo' ? fileRef.current?.click() : setF((p) => ({ ...p, thumb: id })))}
-    >
-      {label}
-    </button>
-  )
-
-  return (
-   <Portal>
-    <div className="sheet-mask" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 0 }}>
-        <div className="emoji-sheet-head">
-          <span>사고 싶은 재료 담기</span>
-          <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
-        </div>
-        <div style={{ padding: '2px 16px 0' }}>
-          <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
-          <div style={{ display: 'flex', gap: 12, marginBottom: 10, alignItems: 'flex-start' }}>
-            {/* 썸네일 미리보기 */}
-            {f.thumb === 'icon' ? (
-              <FoodIconPicker value={f.icon} size={64} onChange={(k) => setF((p) => ({ ...p, icon: k, iconPicked: true }))} />
-            ) : f.thumb === 'emoji' ? (
-              <EmojiPicker value={f.emoji} size={64} onChange={(e) => setF((p) => ({ ...p, emoji: e, emojiPicked: true }))} />
-            ) : f.thumb === 'photo' && f.image ? (
-              <button className="press" onClick={() => fileRef.current?.click()} style={{ width: 64, height: 64, borderRadius: 14, overflow: 'hidden', flex: '0 0 auto' }}>
-                <img src={f.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </button>
-            ) : (
-              <TextTile text={f.name} size={64} radius={14} />
-            )}
-            <div style={{ flex: 1 }}>
-              <input className="wa-inp" value={f.name} onChange={(e) => setName(e.target.value)} placeholder={busy ? '사진에서 이름 읽는 중…' : '재료 이름 (예: 고추장)'} autoFocus />
-              <input className="wa-inp" style={{ marginTop: 8 }} value={f.url} onChange={(e) => setF((p) => ({ ...p, url: e.target.value }))} placeholder="링크 (선택)" inputMode="url" />
-            </div>
-          </div>
-
-          {/* 썸네일 방식 선택 */}
-          <div className="segment" style={{ margin: '0 0 10px' }}>
-            <Mode id="icon" label="아이콘" />
-            <Mode id="label" label="글자" />
-            <Mode id="emoji" label="이모지" />
-            <Mode id="photo" label="사진" />
-          </div>
-
-          <input className="wa-inp" value={f.memo} onChange={(e) => setF((p) => ({ ...p, memo: e.target.value }))} placeholder="메모 (선택)" />
-        </div>
-        <div style={{ position: 'sticky', bottom: 0, background: 'var(--surface)', display: 'flex', gap: 8, padding: '10px 16px calc(6px + var(--safe-bottom))' }}>
-          <button className="press" onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>취소</button>
-          <button className="press" onClick={save} style={{ flex: 1.4, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 14.5 }}>담기</button>
-        </div>
-      </div>
-    </div>
-   </Portal>
   )
 }
 

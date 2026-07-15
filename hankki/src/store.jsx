@@ -27,6 +27,17 @@ function migrateShopping() {
   }
 }
 
+// 위시(사고 싶은 재료)를 장보기 리스트로 흡수 — 두 리스트가 사실상 같은 '살 것' 목록이라
+// 하나로 합친다(1회성). 이름·사러가기 링크·완료여부는 보존, 이름 중복은 건너뛴다.
+function foldWishIntoShopping(wishlist = [], shoppingList = []) {
+  if (!Array.isArray(wishlist) || wishlist.length === 0) return shoppingList
+  const names = new Set(shoppingList.map((i) => i.name))
+  const folded = wishlist
+    .filter((w) => w && w.name && !names.has(w.name))
+    .map((w) => ({ id: w.id || newId(), name: w.name, done: !!w.bought, url: w.url || undefined }))
+  return [...folded, ...shoppingList]
+}
+
 // 기존 사용자의 기본 쇼핑몰(예전 알록달록 이모지)을 새 커스텀 아이콘으로 업그레이드.
 // 예전 데이터는 iconType 필드가 아예 없고 emoji 만 있었다({id,name,emoji}). 그래서
 // iconType 이 없거나('emoji' 이하) 인 경우 모두 아이콘으로 올린다. 사용자가 직접
@@ -202,8 +213,8 @@ function initialState() {
         : defaultFolders(mig.recipes),
       profile: { ...PROFILE_DEFAULT, ...(saved.profile || {}) },
       shops: migrateShops(saved.shops),
-      wishlist: saved.wishlist || [],
-      shoppingList: saved.shoppingList || migrateShopping(),
+      wishlist: [], // 위시는 장보기로 흡수됨 — 더 이상 별도 목록으로 쓰지 않는다
+      shoppingList: foldWishIntoShopping(saved.wishlist, saved.shoppingList || migrateShopping()),
       pantry: saved.pantry || [],
       diary: saved.diary || [],
     }
@@ -346,6 +357,13 @@ function reducer(state, action) {
         .map((n) => ({ id: newId(), name: n, done: false }))
       return { ...state, shoppingList: [...add, ...state.shoppingList] }
     }
+    // 단건 담기 — 사러가기 링크(url)를 함께 저장(주부의 장바구니 '담기' 등). 이름 중복은 무시.
+    case 'addShopItem': {
+      const name = (action.item?.name || '').trim()
+      if (!name || state.shoppingList.some((i) => i.name === name)) return state
+      const item = { id: newId(), name, done: false, url: action.item.url || undefined }
+      return { ...state, shoppingList: [item, ...state.shoppingList] }
+    }
     case 'toggleShopItem': {
       // 체크(=샀어요)하면 냉장고 재료함에 자동으로 넣어준다. (중복 이름은 제외)
       const item = state.shoppingList.find((i) => i.id === action.id)
@@ -412,8 +430,8 @@ function reducer(state, action) {
         folders: d.folders || defaultFolders(d.recipes),
         profile: { ...PROFILE_DEFAULT, ...(d.profile || {}) },
         shops: d.shops || DEFAULT_SHOPS,
-        wishlist: d.wishlist || [],
-        shoppingList: d.shoppingList || [],
+        wishlist: [], // 위시는 장보기로 흡수 — 백업 복원 시에도 합쳐서 불러온다
+        shoppingList: foldWishIntoShopping(d.wishlist, d.shoppingList || []),
         pantry: d.pantry || [],
         diary: d.diary || [],
       }
@@ -457,6 +475,7 @@ export function StoreProvider({ children }) {
     toggleWishBought: useCallback((id) => dispatch({ type: 'toggleWishBought', id }), []),
     removeWish: useCallback((id) => dispatch({ type: 'removeWish', id }), []),
     addShopItems: useCallback((names) => dispatch({ type: 'addShopItems', names }), []),
+    addShopItem: useCallback((item) => dispatch({ type: 'addShopItem', item }), []),
     toggleShopItem: useCallback((id) => dispatch({ type: 'toggleShopItem', id }), []),
     removeShopItem: useCallback((id) => dispatch({ type: 'removeShopItem', id }), []),
     clearDoneShopItems: useCallback(() => dispatch({ type: 'clearDoneShopItems' }), []),
