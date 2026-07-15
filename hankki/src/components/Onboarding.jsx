@@ -53,8 +53,8 @@ function HeroWelcome() {
         background: 'radial-gradient(circle at 50% 42%, #f0ece2, #e6e2d5)',
       }} />
       <div style={{ position: 'relative', textAlign: 'center' }}>
-        <div style={{ fontSize: 46, fontWeight: 900, color: 'var(--brown)', letterSpacing: '-0.02em', lineHeight: 1 }}>한끼</div>
-        <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 700, color: 'var(--text-sub)' }}>HANKKI</div>
+        <div style={{ fontFamily: "'Gowun Dodum','Pretendard',sans-serif", fontSize: 50, fontWeight: 700, color: 'var(--brown)', letterSpacing: '0.01em', lineHeight: 1 }}>한끼</div>
+        <div style={{ marginTop: 9, fontSize: 12.5, fontWeight: 800, color: 'var(--text-sub)', letterSpacing: '0.16em' }}>HANKKI</div>
       </div>
       {/* 흩어진 조각이 모이는 느낌의 점들 */}
       <span style={{ position: 'absolute', top: 14, left: 26, width: 8, height: 8, borderRadius: '50%', background: 'var(--sand)' }} />
@@ -160,7 +160,7 @@ const SLIDES = [
   },
   {
     hero: <HeroCollect />,
-    title: '어디서든 3초 만에 담기',
+    title: '어디서든 손쉽게 담기',
     body: '링크 붙여넣기, 사진 찍기, 직접 쓰기 —\n편한 대로 아무렇게나 담아도\n내 레시피북에 착착.',
   },
   {
