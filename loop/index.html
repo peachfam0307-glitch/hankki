@@ -70,7 +70,7 @@
   .cell.oth .dn{ color:var(--mut); opacity:.55; }
   .cell.su .dn{ color:var(--sun); } .cell.sa .dn{ color:var(--sat); }
   .cell.today .dn{ background:var(--ink); color:var(--bg); width:19px; height:19px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
-  .el{ font-size:var(--el-size,10.5px); line-height:1.2; border-radius:5px; padding:2px 4px; word-break:keep-all; overflow-wrap:anywhere; font-weight:500; display:flex; align-items:center; gap:3px; }
+  .el{ font-size:var(--el-size,14.5px); line-height:1.22; border-radius:5px; padding:2px 4px; word-break:keep-all; overflow-wrap:anywhere; font-weight:500; display:flex; align-items:center; gap:3px; }
   .el .es{ width:11px; height:11px; flex-shrink:0; opacity:.85; }
   .el .es svg{ width:11px; height:11px; display:block; }
   .more{ font-size:9.5px; color:var(--mut); padding-left:3px; font-weight:600; }
@@ -1002,7 +1002,7 @@ function setCellSize(s){ db.settings.cellSize=s; saveDB(); render(); }
 function applyTheme(){
   document.documentElement.setAttribute('data-looptheme', db.settings.theme);
   document.body.style.setProperty('--app-font', `'${db.settings.font}'`);
-  const elSz={ s:'9px', m:'10.5px', l:'12px' }[db.settings.cellSize||'m'];
+  const elSz={ s:'12px', m:'14.5px', l:'17px' }[db.settings.cellSize||'m'];
   document.body.style.setProperty('--el-size', elSz);
   const tc=isDark()?'#0E1219':'#F7F8FA'; const m=document.querySelector('meta[name=theme-color]'); if(m)m.setAttribute('content',tc);
 }
