@@ -7,16 +7,12 @@ import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
 import SourceBadge from '../components/SourceBadge'
 import TabTips from '../components/TabTips'
-import { CATEGORIES } from '../theme'
 import { timeAgo } from '../utils'
 
 export default function HomeScreen() {
   const { recipes, profile, pantry } = useStore()
   const nav = useNav()
-  const [cat, setCat] = useState('전체')
   const [pick, setPick] = useState(0)
-
-  const sorted = recipes.filter((r) => r.status === 'sorted')
 
   // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
   const today = useMemo(() => {
@@ -43,20 +39,9 @@ export default function HomeScreen() {
     [recipes]
   )
   const recent = useMemo(
-    () => [...recipes].sort((a, b) => b.savedAt - a.savedAt).slice(0, 4),
+    () => [...recipes].sort((a, b) => b.savedAt - a.savedAt).slice(0, 5),
     [recipes]
   )
-  const all = useMemo(() => {
-    const base = cat === '전체' ? sorted : sorted.filter((r) => r.category === cat)
-    // 사진/이모지를 자연스럽게 섞는다. 지그재그로 하면 2단 그리드에서 열별로 갈려서(왼쪽 사진·오른쪽 이모지)
-    // id 해시 기반 '고정 랜덤'으로 셔플 — 볼 때마다 순서는 같지만 사진·이모지가 골고루 흩어진다.
-    const hash = (s) => {
-      let h = 2166136261
-      for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) }
-      return h >>> 0
-    }
-    return [...base].sort((a, b) => hash(a.id) - hash(b.id))
-  }, [sorted, cat])
 
   const open = (id) => nav.push({ name: 'detail', id })
 
@@ -160,28 +145,20 @@ export default function HomeScreen() {
           ))}
         </div>
 
-        {/* 4. 전체 레시피 */}
-        <div className="sec-head">
-          <div className="h-section">전체 레시피</div>
-        </div>
-        <div className="hscroll" style={{ paddingBottom: 4 }}>
-          {CATEGORIES.map((c) => (
-            <button key={c} className={`pill press ${cat === c ? 'active' : ''}`} onClick={() => setCat(c)}>
-              {c}
-            </button>
-          ))}
-        </div>
-        <div className="grid2" style={{ marginTop: 14 }}>
-          {all.map((r) => (
-            <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => open(r.id)}>
-              <Thumb recipe={r} ratio="1/1" radius={16} />
-              <div className="name">{r.title}</div>
-              <div className="date">{r.category} · {r.time}분</div>
-            </button>
-          ))}
-        </div>
-        {all.length === 0 && <div className="empty">이 카테고리에 저장된 레시피가 아직 없어요.</div>}
-        {/* 홈 맨 아래 '가져오기' 버튼 제거 — 하단 탭 ⊕ 가져오기와 중복이라 군더더기였음 */}
+        {/* 내 레시피 전체 보기 — 전체 목록은 '레시피' 탭이 담당(홈은 대시보드).
+            예전엔 홈에 전체 그리드를 통째로 얹어 '남의 요리책'처럼 어수선했다. */}
+        <button
+          className="press"
+          onClick={() => nav.go('myrecipes')}
+          style={{
+            width: '100%', marginTop: 22, padding: 15, borderRadius: 'var(--r-md)',
+            background: 'var(--cream)', color: 'var(--brown)', fontSize: 14.5, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          }}
+        >
+          <Icon name="bookmark" size={17} color="var(--brown)" stroke={2.2} />
+          내 레시피 전체 보기
+        </button>
         <div style={{ height: 12 }} />
       </div>
     </>

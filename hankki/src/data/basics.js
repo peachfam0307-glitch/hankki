@@ -13,12 +13,13 @@ const base = {
   sourceUrl: '',
 }
 
-export const BASICS_VERSION = 24 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
+export const BASICS_VERSION = 25 // 올리면 기존 사용자에게 새 기본 레시피/표지 사진이 반영된다
 // v20: 돼지고기 김치찌개 개선(들기름 마무리·마늘/국간장→가루 해물육수·백간장, 실사용 제품 픽) 재동기화
 // v21: 파운더 시그니처 추가 — 공심채 볶음(매일 아침 반찬), 시원한 묵채(여름 별미)
 // v22: 공심채 볶음 상세화(정확한 소스 배합·페퍼론치노/백목이 팁)
 // v23: 공유카드 정리 — 재료는 일반명, 브랜드는 메모에만
 // v24: '초피'는 와촌식품 초피액젓의 제품명 → 재료는 '액젓'으로, 제품명은 메모에만
+// v25: 표지 썸네일 아이콘 통일(스톡 사진 제거) — 목록 정돈감(창업자 피드백)
 
 const RAW_BASICS = [
   {
@@ -1189,8 +1190,10 @@ const RAW_BASICS = [
 
 ]
 
-// 표지 사진 매핑 — 사진이 있는 기본 레시피만. (public/recipe-photos/*.webp)
-// 사진 없는 레시피는 그대로 아이콘 표지 — 사진+아이콘이 섞여도 '한끼'다운 개성.
+// 표지 사진 매핑 — (참고용 보존) 예전엔 일부 기본 레시피에 스톡 사진을 깔았으나,
+// 사진+아이콘이 섞이면 목록이 어수선해 보여(창업자 피드백) 표지를 '아이콘으로 통일'했다.
+// 사진은 이제 유저가 직접 담을 때만. 되살리려면 아래 basicRecipes 매핑에서 다시 적용.
+// eslint-disable-next-line no-unused-vars
 const RECIPE_PHOTOS = {
   'basic-kimchijjigae': 'kimchijjigae',
   'basic-doenjangjjigae': 'doenjangjjigae',
@@ -1215,7 +1218,5 @@ const RECIPE_PHOTOS = {
 export const basicRecipes = RAW_BASICS.map((r) => ({
   ...r,
   steps: politeSteps(r.steps),
-  ...(RECIPE_PHOTOS[r.id]
-    ? { thumb: 'photo', image: import.meta.env.BASE_URL + 'recipe-photos/' + RECIPE_PHOTOS[r.id] + '.webp' }
-    : null),
+  // 표지는 아이콘으로 통일(썸네일 일관성). 예전 스톡 사진 적용은 RECIPE_PHOTOS 참고해 되살릴 수 있음.
 }))
