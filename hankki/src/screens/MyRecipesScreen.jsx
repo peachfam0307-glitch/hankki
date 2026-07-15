@@ -8,7 +8,6 @@ import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DiaryEntrySheet, { Stars } from '../components/DiaryEntrySheet'
-import { TAG_LIST } from '../data/seed'
 import { dateLabel } from '../utils'
 import { useBackHandler } from '../useBackHandler'
 
@@ -115,8 +114,16 @@ export default function MyRecipesScreen() {
   const del = (r) => setDelTarget(r)
 
   const sorted = useMemo(() => recipes.filter((r) => r.status === 'sorted').sort((a, b) => b.savedAt - a.savedAt), [recipes])
-  const list = folder === '전체' ? sorted : sorted.filter((r) => (r.folder || r.category) === folder)
+  // 스마트 폴더 — ★즐겨찾기 / 🍳자주 해먹는. 실제 폴더와 안 겹치게 '__' 접두 키를 쓴다.
+  const favCount = sorted.filter((r) => r.favorite).length
+  const oftenCount = sorted.filter((r) => (r.cooked || 0) > 0).length
+  const list =
+    folder === '전체' ? sorted
+      : folder === '__fav' ? sorted.filter((r) => r.favorite)
+      : folder === '__often' ? sorted.filter((r) => (r.cooked || 0) > 0).sort((a, b) => (b.cooked || 0) - (a.cooked || 0))
+      : sorted.filter((r) => (r.folder || r.category) === folder)
   const countIn = (name) => sorted.filter((r) => (r.folder || r.category) === name).length
+  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__often' && !DEFAULT_FOLDERS.has(folder)
 
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
   const entries = useMemo(() => [...diary].sort((a, b) => b.at - a.at), [diary])
@@ -166,7 +173,6 @@ export default function MyRecipesScreen() {
         <div className="segment">
           <button className={`seg ${view === 'grid' ? 'on' : ''}`} onClick={() => setView('grid')}>모아보기</button>
           <button className={`seg ${view === 'log' ? 'on' : ''}`} onClick={() => setView('log')}>요리 기록</button>
-          <button className={`seg ${view === 'folders' ? 'on' : ''}`} onClick={() => setView('folders')}>폴더 · 태그</button>
         </div>
       </div>
 
@@ -224,11 +230,24 @@ export default function MyRecipesScreen() {
         <>
           <div className="hscroll" style={{ marginBottom: 8 }}>
             <button className={`pill press ${folder === '전체' ? 'active' : ''}`} onClick={() => setFolder('전체')}>전체 {sorted.length}</button>
+            {favCount > 0 && (
+              <button className={`pill press ${folder === '__fav' ? 'active' : ''}`} onClick={() => setFolder('__fav')}>★ 즐겨찾기 {favCount}</button>
+            )}
+            {oftenCount > 0 && (
+              <button className={`pill press ${folder === '__often' ? 'active' : ''}`} onClick={() => setFolder('__often')}>🍳 자주 {oftenCount}</button>
+            )}
             {folders.map((c) => (
               <button key={c} className={`pill press ${folder === c ? 'active' : ''}`} onClick={() => setFolder(c)}>{c} {countIn(c)}</button>
             ))}
+            <button className="pill press" style={{ borderStyle: 'dashed', color: 'var(--text-sub)' }} onClick={() => setNewFolder(true)}>＋ 폴더</button>
           </div>
           <div className="pad">
+            {/* 사용자가 만든 폴더는 여기서 바로 삭제(폴더·태그 탭을 없애 모아보기로 흡수) */}
+            {isUserFolder && (
+              <button className="press" onClick={() => setDelFolder(folder)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 10, padding: '6px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--text-sub)', fontSize: 12.5, fontWeight: 600 }}>
+                <Icon name="x" size={13} color="var(--text-sub)" stroke={2.2} /> ‘{folder}’ 폴더 삭제
+              </button>
+            )}
             {list.length === 0 ? (
               <div className="empty">{'이 폴더에 레시피가 없어요.\n가져오기로 채워보세요.'}</div>
             ) : (
@@ -254,59 +273,6 @@ export default function MyRecipesScreen() {
             )}
           </div>
         </>
-      )}
-
-      {view === 'folders' && (
-        <div className="pad fade">
-          <div className="h-section" style={{ margin: '10px 0 13px' }}>폴더</div>
-          <div className="grid2">
-            {folders.map((c) => (
-              <div key={c} style={{ position: 'relative' }}>
-                <button className="card press" style={{ width: '100%', padding: 16, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 10 }} onClick={() => { setView('grid'); setFolder(c) }}>
-                  <Icon name="folder" size={26} color="var(--sand)" />
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 600 }}>{c}</div>
-                    <div className="t-sub" style={{ marginTop: 2 }}>{countIn(c)}개</div>
-                  </div>
-                </button>
-                {/* 사용자가 만든 폴더만 삭제 가능 (기본 카테고리 폴더는 유지) */}
-                {!DEFAULT_FOLDERS.has(c) && (
-                  <button
-                    className="press"
-                    onClick={(e) => { e.stopPropagation(); setDelFolder(c) }}
-                    aria-label={`${c} 폴더 삭제`}
-                    style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 999, background: 'rgba(120,90,60,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)' }}
-                  >
-                    <Icon name="x" size={15} />
-                  </button>
-                )}
-              </div>
-            ))}
-            <button
-              className="card press"
-              style={{ padding: 16, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'center', alignItems: 'center', color: 'var(--text-sub)', borderStyle: 'dashed' }}
-              onClick={() => setNewFolder(true)}
-            >
-              <Icon name="plus" size={24} color="var(--text-sub)" />
-              <span style={{ fontSize: 13.5, fontWeight: 500 }}>새 폴더</span>
-            </button>
-          </div>
-
-          <div className="h-section" style={{ margin: '28px 0 13px' }}>태그</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {TAG_LIST.map((t) => (
-              <button
-                key={t}
-                className="tag press"
-                onClick={() => {
-                  // 태그를 넘겨서 검색 탭이 바로 그 태그로 검색하게 한다.
-                  try { sessionStorage.setItem('hankki:searchQ', t) } catch { /* noop */ }
-                  nav.go('search')
-                }}
-              ># {t}</button>
-            ))}
-          </div>
-        </div>
       )}
 
       {newFolder && (
