@@ -354,9 +354,9 @@ export default function EditorScreen({ id, prefill }) {
       )}
       {pin === 'photo' && refs.length > 0 && (
         <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#141311' }}>
-          {/* 캡처 원본 — 인식이 100%가 아니니 보면서 고친다.
-              화면 너비에 꽉 채워 글씨가 크게 보이도록 하고, 길면 세로로 스크롤한다. */}
-          <div style={{ maxHeight: '56vh', overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+          {/* 캡처 원본 — 인식이 100%가 아니니 보면서 고친다. 적는 칸이 더 중요하므로
+              높이를 줄여(34vh) 입력칸을 넉넉히 남기고, 사진이 길면 안에서 세로 스크롤한다. */}
+          <div style={{ maxHeight: '34vh', overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
             {refs.map((img, k) => (
               <img
                 key={k}
@@ -499,7 +499,7 @@ export default function EditorScreen({ id, prefill }) {
               <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
-          <textarea ref={ingRef} rows={7} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n계량은 키보드 위 버튼으로 · 캡처가 있다면 위 📷 버튼'} />
+          <textarea ref={ingRef} rows={7} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} style={{ scrollMarginTop: pin ? '38vh' : undefined }} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n계량은 키보드 위 버튼으로 · 캡처가 있다면 위 📷 버튼'} />
         </div>
 
         <div className="field">
@@ -509,7 +509,7 @@ export default function EditorScreen({ id, prefill }) {
               <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
-          <textarea ref={stepRef} rows={7} value={f.steps} onChange={(e) => set('steps', e.target.value)} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
+          <textarea ref={stepRef} rows={7} value={f.steps} onChange={(e) => set('steps', e.target.value)} style={{ scrollMarginTop: pin ? '38vh' : undefined }} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
           <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 7, lineHeight: 1.5 }}>
             한 장의 캡처에 재료·만드는 법이 다 있다면{' '}
             <button className="press" onClick={() => pickOcr('all')} disabled={ocr.busy} style={{ display: 'inline', padding: 0, background: 'none', color: 'var(--brown)', fontWeight: 700, fontSize: 12, textDecoration: 'underline' }}>
