@@ -2,9 +2,10 @@ import { useState, useRef } from 'react'
 import Icon from './Icon'
 import Buddy from './Buddies'
 import TextTile from './TextTile'
+import { NoteShapeDefs } from './Stickers'
 
 // 첫 실행 온보딩 — "이게 뭐하는 앱?"을 3초 안에 알려주고, 한끼만의 차별화(통합 살림)를
-// 어필한 뒤, 곧 나올 AI 자동인식을 살짝 흘려 기대감을 준다. 4장 · 건너뛰기 가능.
+// 어필한 뒤, 곧 나올 AI 자동인식을 살짝 흘려 기대감을 준다. 6장 · 건너뛰기 가능.
 // 표시 여부는 localStorage 'hankki:onboarded' 키 하나로만 관리(스토어와 분리).
 export const ONBOARD_KEY = 'hankki:onboarded'
 export function needsOnboarding() {
@@ -101,10 +102,45 @@ function HeroFlow() {
   )
 }
 
-// 레시피북 꾸미는 시안 — 실제 레시피(재료)가 보이는 페이지 위에 포스트잇·글자타일·아바타·이모지가 얹힘
+// 주부의 장바구니 — 18년차 주부가 엄선한 건강 식재료 + 쇼핑몰 바로 연결(시그니처)
+function HeroBasket() {
+  const items = ['첨가물 적은 소스·양념', '무항생제 훈제오리', '건강 간편식·매생이']
+  const malls = [
+    { name: '쿠팡', color: '#c5292a', tint: '#fbeceb' },
+    { name: '오아시스', color: '#4a8455', tint: '#eef5ea' },
+    { name: '한살림', color: '#3f7a3f', tint: '#eef3ea' },
+  ]
+  return (
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <div style={{ width: 190, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
+        <div style={{ padding: '10px 13px 9px', display: 'flex', alignItems: 'center', gap: 7, borderBottom: '1px solid var(--line)' }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="cart" size={16} color="var(--brown)" /></div>
+          <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--text)' }}>주부의 장바구니</div>
+        </div>
+        <div style={{ padding: '9px 13px 11px' }}>
+          {items.map((t) => (
+            <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5.5 }}>
+              <Icon name="check" size={12} color="var(--sage, #7f9270)" stroke={2.6} />
+              <span style={{ fontSize: 10.5, color: 'var(--text-sub)', fontWeight: 600 }}>{t}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* 쇼핑몰 바로가기 — 진짜 시그니처 */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        {malls.map((m) => (
+          <span key={m.name} style={{ fontSize: 10.5, fontWeight: 800, color: m.color, background: m.tint, border: '1px solid var(--line)', borderRadius: 999, padding: '5px 11px' }}>{m.name}</span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// 레시피북 꾸미는 시안 — 실제 레시피(재료) 페이지 위에 아바타·글자타일·하트 포스트잇(귀염체)이 얹힘
 function HeroDecorate() {
   return (
     <div style={{ position: 'relative', width: 232, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <NoteShapeDefs />
       {/* 뒤에 살짝 겹친 카드(레시피북 느낌) */}
       <div style={{ position: 'absolute', width: 150, height: 168, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, transform: 'rotate(6deg) translate(10px, 6px)', boxShadow: 'var(--shadow-soft)' }} />
       {/* 메인 레시피 페이지 */}
@@ -126,8 +162,12 @@ function HeroDecorate() {
       {/* 위에 얹힌 꾸미기 */}
       <div style={{ position: 'absolute', top: -6, right: 14, transform: 'rotate(8deg)' }}><TextTile text="찐맛" size={38} radius={10} /></div>
       <div style={{ position: 'absolute', left: 0, bottom: -4, transform: 'rotate(-8deg)' }}><Buddy id="rabbit" size={58} /></div>
-      {/* 포스트잇 */}
-      <div style={{ position: 'absolute', right: 2, bottom: 26, width: 52, height: 40, background: '#fff6c9', borderRadius: 4, transform: 'rotate(6deg)', boxShadow: '0 3px 8px rgba(0,0,0,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9.5, fontWeight: 700, color: '#7a6a2a', textAlign: 'center', padding: 4 }}>애들이<br />좋아함💕</div>
+      {/* 하트 포스트잇 — 새 모양 + 귀염체(개구체) 글씨 자랑 */}
+      <div style={{ position: 'absolute', right: -2, bottom: 22, width: 54, height: 50, transform: 'rotate(7deg)', filter: 'drop-shadow(1px 2px 4px rgba(70,60,45,.28))' }}>
+        <div style={{ width: '100%', height: '100%', clipPath: 'url(#hk-note-heart)', WebkitClipPath: 'url(#hk-note-heart)', background: '#efe4bd', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 5, boxSizing: 'border-box' }}>
+          <span style={{ fontFamily: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", fontSize: 13, fontWeight: 700, color: '#5f5647', lineHeight: 1 }}>맛있어</span>
+        </div>
+      </div>
       <span style={{ position: 'absolute', top: 20, left: 8, fontSize: 20, transform: 'rotate(-12deg)' }}>✨</span>
     </div>
   )
@@ -167,6 +207,12 @@ const SLIDES = [
     hero: <HeroFlow />,
     title: '냉장고부터 요리까지, 한 번에',
     body: '“오늘 뭐 해먹지?” 냉장고 재료로 추천받고,\n모자란 건 바로 장보기,\n따라하기 쉬운 요리모드로 뚝딱.',
+    highlight: true,
+  },
+  {
+    hero: <HeroBasket />,
+    title: '18년차 주부의 장바구니',
+    body: '첨가물 적은 건강 식재료를 엄선했어요.\n쿠팡·오아시스·한살림에서\n바로 사러 가기까지 한 번에.',
     highlight: true,
   },
   {
