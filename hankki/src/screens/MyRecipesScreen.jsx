@@ -128,6 +128,7 @@ export default function MyRecipesScreen() {
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
   const entries = useMemo(() => [...diary].sort((a, b) => b.at - a.at), [diary])
   const [dayFilter, setDayFilter] = useState(null) // 'y-m-d' | null — 캘린더에서 고른 날
+  const [showCal, setShowCal] = useState(false) // 요리 달력은 접이식(기본 접힘) — 앨범을 앞세운다
   const now = new Date()
   const thisMonth = entries.filter((e) => {
     const d = new Date(e.at)
@@ -196,7 +197,18 @@ export default function MyRecipesScreen() {
             </div>
           )}
 
+          {/* 요리 달력 — 접이식(기본 접힘). 앨범(사진 기록)이 이 탭의 주인공이고,
+              달력은 기록이 쌓인 사람에게만 의미 있어 필요할 때 펼쳐 본다. */}
           {entries.length > 0 && (
+            <button
+              className="press"
+              onClick={() => setShowCal((v) => !v)}
+              style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: showCal ? 10 : 12, padding: '9px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13, fontWeight: 700 }}
+            >
+              📅 요리 달력 {showCal ? '접기 ▴' : '보기 ▾'}
+            </button>
+          )}
+          {entries.length > 0 && showCal && (
             <CookCalendar entries={entries} selected={dayFilter} onSelect={setDayFilter} />
           )}
 
