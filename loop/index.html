@@ -11,6 +11,8 @@
   @font-face{ font-family:'Jua'; src:url('./fonts/jua.woff2') format('woff2'); font-display:swap; }
   @font-face{ font-family:'DoHyeon'; src:url('./fonts/dohyeon.woff2') format('woff2'); font-display:swap; }
   @font-face{ font-family:'Dongle'; src:url('./fonts/dongle.woff2') format('woff2'); font-display:swap; }
+  @font-face{ font-family:'Sunflower'; src:url('./fonts/sunflower.woff2') format('woff2'); font-display:swap; }
+  @font-face{ font-family:'NanumPen'; src:url('./fonts/nanumpen.woff2') format('woff2'); font-display:swap; }
 
   :root{
     --bg:#F7F8FA; --surface:#FFFFFF; --surface2:#F3F5F8; --ink:#1B1F27; --ink2:#4A515C; --mut:#9AA0AA;
@@ -928,7 +930,8 @@ function toast(msg){
 function openSettings(){ view.mode='settings'; render(); }
 function renderSettings(){
   const fonts=[
-    ['Jua','주아','애플민트 느낌 ★'],['Dongle','동글',''],['Pretendard','프리텐다드','기본·모던'],
+    ['Jua','주아','애플민트 느낌 ★'],['Dongle','동글',''],['Sunflower','선플라워','깔끔·둥근'],
+    ['NanumPen','나눔손글씨 펜','손글씨'],['Pretendard','프리텐다드','기본·모던'],
     ['GowunDodum','고운돋움',''],['DoHyeon','도현',''],
   ];
   let html=`<div class="safe-top"></div>
