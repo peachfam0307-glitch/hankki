@@ -65,7 +65,7 @@
   .cell.oth .dn{ color:var(--mut); opacity:.55; }
   .cell.su .dn{ color:var(--sun); } .cell.sa .dn{ color:var(--sat); }
   .cell.today .dn{ background:var(--ink); color:var(--bg); width:19px; height:19px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
-  .el{ font-size:10px; line-height:1.2; border-radius:5px; padding:2px 4px; word-break:break-all; overflow-wrap:anywhere; font-weight:500; display:flex; align-items:center; gap:3px; }
+  .el{ font-size:var(--el-size,10.5px); line-height:1.2; border-radius:5px; padding:2px 4px; word-break:keep-all; overflow-wrap:anywhere; font-weight:500; display:flex; align-items:center; gap:3px; }
   .el .es{ width:11px; height:11px; flex-shrink:0; opacity:.85; }
   .el .es svg{ width:11px; height:11px; display:block; }
   .more{ font-size:9.5px; color:var(--mut); padding-left:3px; font-weight:600; }
@@ -248,7 +248,7 @@
 const DB_KEY = 'loop.db.v1';
 function loadDB(){
   try{ const raw = localStorage.getItem(DB_KEY); if(raw) return JSON.parse(raw); }catch(e){}
-  return { events:[], dayTags:{}, settings:{ theme:'light', font:'Dongle' } };
+  return { events:[], dayTags:{}, settings:{ theme:'light', font:'Dongle', cellSize:'m' } };
 }
 function saveDB(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){ toast('저장 공간이 부족해요'); } }
 let db = loadDB();
@@ -859,20 +859,29 @@ function renderSettings(){
       <div class="fpv" style="font-family:'${fam}'">7월 14일 · 수학학원 10시 반</div></div>
     </div>`;
   });
+  const csz=db.settings.cellSize||'m';
+  html+=`<div class="setsec">달력 글자 크기</div>
+    <div class="seg" style="width:100%">
+      ${[['s','작게'],['m','보통'],['l','크게']].map(([k,l])=>`<button class="${csz===k?'on':''}" style="flex:1;padding:11px" onclick="setCellSize('${k}')">${l}</button>`).join('')}
+    </div>
+    <div style="font-size:11.5px;color:var(--mut);padding:8px 4px 0;line-height:1.6">월간 달력 칸 안 일정 글자 크기예요.</div>`;
   html+=`<div class="setsec">알림</div>
     <div class="fr" style="padding:14px 4px"><span class="lb">푸시 알림 권한</span><button class="miniseg" style="padding:0"><span style="padding:7px 12px;font-weight:600;color:var(--accent-ink)" onclick="askNotify()">권한 요청</span></button></div>
     <div style="font-size:11.5px;color:var(--mut);padding:4px 4px 0;line-height:1.7">앱을 설치(APK)하면 꺼져 있어도 알람이 울려요. 웹 미리보기에선 앱이 열려 있을 때만 동작해요.</div>
     <div class="setsec">데이터</div>
     <div class="fr" style="padding:14px 4px" onclick="exportData()"><span class="lb">내보내기 (백업)</span><span style="color:var(--mut)">↗</span></div>
-    <div style="text-align:center;color:var(--mut);font-size:11px;padding:28px 0 10px">loop · v0.1</div>
+    <div style="text-align:center;color:var(--mut);font-size:11px;padding:28px 0 10px">loop · v0.3</div>
   </div>`;
   app.innerHTML=html;
 }
 function setTheme(t){ db.settings.theme=t; saveDB(); render(); }
 function setFont(f){ db.settings.font=f; saveDB(); render(); toast(f+' 적용'); }
+function setCellSize(s){ db.settings.cellSize=s; saveDB(); render(); }
 function applyTheme(){
   document.documentElement.setAttribute('data-looptheme', db.settings.theme);
   document.body.style.setProperty('--app-font', `'${db.settings.font}'`);
+  const elSz={ s:'9px', m:'10.5px', l:'12px' }[db.settings.cellSize||'m'];
+  document.body.style.setProperty('--el-size', elSz);
   const tc=isDark()?'#0E1219':'#F7F8FA'; const m=document.querySelector('meta[name=theme-color]'); if(m)m.setAttribute('content',tc);
 }
 function exportData(){
