@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import Icon from './Icon'
-import { StickerArt, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS } from './Stickers'
+import { StickerArt, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, notePatternStyle, noteRadius } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -171,6 +171,9 @@ function TextDeco({ it, editable }) {
 
 function Note({ it, editable }) {
   const c = NOTE_COLORS.find((n) => n.key === it.key) || NOTE_COLORS[0]
+  const shape = it.shape || 'fold'
+  const pattern = it.pattern || 'plain'
+  const pat = notePatternStyle(pattern, c.line || c.fold)
   // 플레이스홀더는 편집 중에만 — 저장된 표지에선 빈 포스트잇은 빈 종이로 보인다.
   const text = it.text || (editable ? '탭해서 쓰기' : '')
   return (
@@ -179,13 +182,23 @@ function Note({ it, editable }) {
         position: 'absolute', inset: 0,
         containerType: 'size', // 안쪽 글씨가 포스트잇 크기에 비례하도록
         background: c.bg, color: c.text,
-        borderRadius: '3% 3% 3% 12%',
+        borderRadius: noteRadius(shape),
         boxShadow: '1.5px 4px 10px rgba(70,60,45,.25)',
-        overflow: 'hidden',
+        overflow: 'visible',
       }}
     >
+      {/* 무늬(모눈·체크·줄노트) 오버레이 — 모서리 라운드 안쪽으로만 */}
+      <div style={{ position: 'absolute', inset: 0, borderRadius: noteRadius(shape), overflow: 'hidden', pointerEvents: 'none' }}>
+        {pat && <span style={{ position: 'absolute', inset: 0, ...pat }} />}
+        {/* 접힌 모서리 — '접기' 모양일 때만 */}
+        {shape === 'fold' && (
+          <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: '0 0 16cqw 16cqw', borderColor: `transparent transparent ${c.fold} transparent` }} />
+        )}
+      </div>
+
       <div
         style={{
+          position: 'relative',
           width: '100%', height: '100%', boxSizing: 'border-box', padding: '9% 10%',
           fontFamily: "'Gowun Dodum','Pretendard',sans-serif",
           fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.4,
@@ -196,8 +209,17 @@ function Note({ it, editable }) {
       >
         {text}
       </div>
-      {/* 접힌 모서리 — 크기도 포스트잇에 비례 */}
-      <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: '0 0 16cqw 16cqw', borderColor: `transparent transparent ${c.fold} transparent` }} />
+
+      {/* 테이프 — 위쪽 가운데 반투명 마스킹테이프 */}
+      {shape === 'tape' && (
+        <span style={{ position: 'absolute', top: '-6cqw', left: '50%', width: '46%', height: '15cqw', transform: 'translateX(-50%) rotate(-3deg)', background: 'rgba(255,255,255,.5)', border: '0.5px solid rgba(120,110,90,.18)', boxShadow: '0 1px 3px rgba(70,60,45,.14)' }} />
+      )}
+      {/* 핀 — 위쪽 가운데 압정 */}
+      {shape === 'pin' && (
+        <span style={{ position: 'absolute', top: '-7cqw', left: '50%', width: '15cqw', height: '15cqw', transform: 'translateX(-50%)', borderRadius: '50%', background: 'radial-gradient(circle at 38% 34%, #e08a7a, #c4614f)', boxShadow: '0 1.5px 3px rgba(60,30,25,.35)' }}>
+          <span style={{ position: 'absolute', top: '22%', left: '26%', width: '26%', height: '26%', borderRadius: '50%', background: 'rgba(255,255,255,.65)' }} />
+        </span>
+      )}
     </div>
   )
 }

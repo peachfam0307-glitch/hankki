@@ -3,7 +3,23 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { StickerArt, STICKER_GROUPS, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS } from './Stickers'
+import { StickerArt, STICKER_GROUPS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, TEXT_COLORS, TEXT_FONTS } from './Stickers'
+
+// 무늬·모양 칩용 미니 포스트잇 미리보기
+function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 28 }) {
+  const pat = notePatternStyle(pattern, color.line || color.fold)
+  const rad = noteRadius(shape)
+  return (
+    <span style={{ position: 'relative', display: 'inline-block', width: size, height: size, background: color.bg, borderRadius: rad, boxShadow: '0 1px 2px rgba(70,60,45,.2)' }}>
+      <span style={{ position: 'absolute', inset: 0, borderRadius: rad, overflow: 'hidden' }}>
+        {pat && <span style={{ position: 'absolute', inset: 0, ...pat }} />}
+        {shape === 'fold' && <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: `0 0 ${size * 0.3}px ${size * 0.3}px`, borderColor: `transparent transparent ${color.fold} transparent` }} />}
+      </span>
+      {shape === 'tape' && <span style={{ position: 'absolute', top: -3, left: '50%', width: '52%', height: 6, transform: 'translateX(-50%) rotate(-4deg)', background: 'rgba(255,255,255,.55)', border: '0.5px solid rgba(120,110,90,.2)' }} />}
+      {shape === 'pin' && <span style={{ position: 'absolute', top: -4, left: '50%', width: 9, height: 9, transform: 'translateX(-50%)', borderRadius: '50%', background: 'radial-gradient(circle at 38% 34%, #e08a7a, #c4614f)', boxShadow: '0 1px 2px rgba(60,30,25,.3)' }} />}
+    </span>
+  )
+}
 
 // 표정 스티커는 포인트로 얹는 용도라 기본 크기를 작게 시작한다
 const FACE_KEYS = new Set(STICKER_GROUPS.find((g) => g.key === 'faces')?.items || [])
@@ -27,6 +43,9 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   }
   const patch = (id, p) => setItems((arr) => arr.map((x) => (x.id === id ? { ...x, ...p } : x)))
   const remove = (id) => { setItems((arr) => arr.filter((x) => x.id !== id)); setSel(null) }
+
+  const selItem = items.find((x) => x.id === sel)
+  const selNoteColor = NOTE_COLORS.find((n) => n.key === selItem?.key) || NOTE_COLORS[0]
 
   const addSticker = (key) => {
     const n = items.length
@@ -86,6 +105,38 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
         <div className="decor-drawer">
           <div className="decor-grab" />
           <div className="decor-scroll">
+            {/* 포스트잇 선택 시 — 무늬·모양 바꾸기 (맨 위에 떠서 바로 보임) */}
+            {selItem?.type === 'note' && (
+              <div className="decor-sec" style={{ background: 'var(--cream)', borderRadius: 14, padding: '11px 12px 12px' }}>
+                <div className="decor-sec-label" style={{ marginBottom: 9 }}>✏️ 선택한 포스트잇 꾸미기</div>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-sub)', margin: '0 0 6px' }}>무늬</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+                  {NOTE_PATTERNS.map((p) => {
+                    const on = (selItem.pattern || 'plain') === p.key
+                    return (
+                      <button key={p.key} className="press" onClick={() => patch(sel, { pattern: p.key })}
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '7px 9px', borderRadius: 12, background: on ? 'var(--surface)' : 'transparent', border: on ? '1.5px solid var(--brown)' : '1.5px solid var(--line)' }}>
+                        <MiniNote color={selNoteColor} pattern={p.key} shape="round" />
+                        <span style={{ fontSize: 11, fontWeight: 700, color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{p.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-sub)', margin: '0 0 6px' }}>모양</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {NOTE_SHAPES.map((s) => {
+                    const on = (selItem.shape || 'fold') === s.key
+                    return (
+                      <button key={s.key} className="press" onClick={() => patch(sel, { shape: s.key })}
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '7px 9px', borderRadius: 12, background: on ? 'var(--surface)' : 'transparent', border: on ? '1.5px solid var(--brown)' : '1.5px solid var(--line)' }}>
+                        <MiniNote color={selNoteColor} pattern="plain" shape={s.key} />
+                        <span style={{ fontSize: 11, fontWeight: 700, color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{s.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
             {STICKER_GROUPS.map((g) => (
               <div key={g.key} className="decor-sec">
                 <div className="decor-sec-label">{g.label}</div>

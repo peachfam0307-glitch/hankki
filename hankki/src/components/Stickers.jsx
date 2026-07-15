@@ -105,13 +105,54 @@ export const STICKER_GROUPS = [
   { key: 'dessert', label: '디저트', items: ['cake', 'coffee', 'icecream', 'cheese'] },
 ]
 
-// 포스트잇 색 팔레트(차분한 종이 톤) — bg / 접힘 / 글자
+// 포스트잇 색 팔레트(차분한 종이 톤) — bg / 접힘 / 글자 / line(무늬 선 색)
 export const NOTE_COLORS = [
-  { key: 'butter', bg: '#efe4bd', fold: '#ddce9a', text: '#5f5647' },
-  { key: 'rose', bg: '#ecd4d1', fold: '#d8bcb8', text: '#6a5350' },
-  { key: 'sage', bg: '#dbe3ca', fold: '#c6d1b0', text: '#4f5a44' },
-  { key: 'sky', bg: '#d5dee7', fold: '#bfccd8', text: '#47545f' },
+  { key: 'butter', bg: '#efe4bd', fold: '#ddce9a', text: '#5f5647', line: '#c9b784' },
+  { key: 'rose', bg: '#ecd4d1', fold: '#d8bcb8', text: '#6a5350', line: '#cba9a3' },
+  { key: 'sage', bg: '#dbe3ca', fold: '#c6d1b0', text: '#4f5a44', line: '#adbd94' },
+  { key: 'sky', bg: '#d5dee7', fold: '#bfccd8', text: '#47545f', line: '#a9bccd' },
 ]
+
+// 포스트잇 무늬(패턴) — 종이 위에 은은하게. 선 색은 각 색의 line 을 쓴다.
+export const NOTE_PATTERNS = [
+  { key: 'plain', label: '민무늬' },
+  { key: 'grid', label: '모눈' },
+  { key: 'check', label: '체크' },
+  { key: 'lined', label: '줄노트' },
+]
+
+// 무늬별 배경 스타일(오버레이 div 에 적용). line = 색상별 선 색.
+export function notePatternStyle(pattern, line) {
+  switch (pattern) {
+    case 'grid':
+      return {
+        backgroundImage: `linear-gradient(${line} 0.8px, transparent 0.8px), linear-gradient(90deg, ${line} 0.8px, transparent 0.8px)`,
+        backgroundSize: '15% 15%', opacity: 0.6,
+      }
+    case 'check':
+      return {
+        backgroundImage: `linear-gradient(${line} 50%, transparent 50%), linear-gradient(90deg, ${line} 50%, transparent 50%)`,
+        backgroundSize: '24% 24%', backgroundBlendMode: 'multiply', opacity: 0.32,
+      }
+    case 'lined':
+      return {
+        backgroundImage: `linear-gradient(180deg, ${line} 0.8px, transparent 0.8px)`,
+        backgroundSize: '100% 20%', backgroundPosition: '0 18%', opacity: 0.6,
+      }
+    default:
+      return null
+  }
+}
+
+// 포스트잇 모양(쉐입) — 접기(기본)·테이프·핀·둥근
+export const NOTE_SHAPES = [
+  { key: 'fold', label: '접기' },
+  { key: 'tape', label: '테이프' },
+  { key: 'pin', label: '핀' },
+  { key: 'round', label: '둥근' },
+]
+
+export const noteRadius = (shape) => (shape === 'round' ? '9%' : shape === 'fold' ? '3% 3% 3% 12%' : '5%')
 
 // 글자 스티커 색 — 사진 위에서도 읽히도록 반대 톤 외곽선(stroke)을 함께 준다
 export const TEXT_COLORS = [
