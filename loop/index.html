@@ -302,6 +302,18 @@ const COLOR_KEYS = Object.keys(COLORS);
 function isDark(){ return db.settings.theme==='dark'; }
 function col(k){ const c=COLORS[k]||COLORS.blue; return isDark()?{bg:c[2],fg:c[3],bar:c[4]}:{bg:c[0],fg:c[1],bar:c[4]}; }
 
+/* spending categories */
+const CATS=[
+  {k:'edu',label:'교육',color:'blue',ic:'book'},
+  {k:'sub',label:'구독',color:'plum',ic:'movie'},
+  {k:'beauty',label:'뷰티',color:'rose',ic:'brush'},
+  {k:'health',label:'건강',color:'teal',ic:'run'},
+  {k:'food',label:'식비',color:'sage',ic:'coffee'},
+  {k:'life',label:'생활',color:'slate',ic:'gift'},
+  {k:'etc',label:'기타',color:'slate',ic:'money'},
+];
+function catOf(ev){ return CATS.find(c=>c.k===ev.category) || CATS[CATS.length-1]; }
+
 /* ============================ sticker icons ============================ */
 const IC = {
   book:'<path d="M5 20h14M6 20v-6a6 6 0 0 1 12 0v6"/><path d="M12 8V4M9.5 4h5"/>',
@@ -400,6 +412,7 @@ const app = document.getElementById('app');
 
 /* ============================ render: main ============================ */
 let spendPeriod='month';
+let spendGroup='item';
 let spendFilter=new Set();
 function render(){
   applyTheme();
@@ -577,8 +590,9 @@ function homeView(){
 function markCycleDone(id){ const ev=db.events.find(e=>e.id===id); if(!ev)return; ev.date=todayStr; saveDB(); scheduleAlarms(); render(); toast('완료! 다음 주기로 넘어갔어요'); }
 
 /* ============================ 지출 모아보기 ============================ */
-function openSpend(){ view.mode='spend'; spendPeriod='month'; spendFilter=new Set(); render(); }
+function openSpend(){ view.mode='spend'; spendPeriod='month'; spendGroup='item'; spendFilter=new Set(); render(); }
 function setSpendPeriod(p){ spendPeriod=p; render(); }
+function setSpendGroup(g){ if(spendGroup===g) return; spendGroup=g; spendFilter=new Set(); render(); }
 function toggleSpendFilter(title){ const t=decodeURIComponent(title); if(spendFilter.has(t)) spendFilter.delete(t); else spendFilter.add(t); render(); }
 function spendData(){
   const now=new Date(); const to=todayStr;
@@ -589,15 +603,18 @@ function spendData(){
   const items={};
   db.events.forEach(ev=>{ if((ev.amount||0)<=0) return;
     const occ=occurrences(ev,from,to); if(!occ.length) return;
-    const k=ev.title;
-    if(!items[k]) items[k]={title:ev.title, sticker:ev.sticker||'money', color:ev.color, count:0, total:0, list:[]};
-    occ.forEach(o=>{ items[k].count++; items[k].total+=ev.amount; items[k].list.push({date:o.date,amount:ev.amount}); });
+    let k, meta;
+    if(spendGroup==='cat'){ const c=catOf(ev); k=c.label; meta={title:c.label, sticker:c.ic, color:c.color}; }
+    else { k=ev.title; meta={title:ev.title, sticker:ev.sticker||'money', color:ev.color}; }
+    if(!items[k]) items[k]={...meta, count:0, total:0, list:[]};
+    occ.forEach(o=>{ items[k].count++; items[k].total+=ev.amount; items[k].list.push({date:o.date,amount:ev.amount,title:ev.title}); });
   });
   return {from,to,items:Object.values(items).sort((a,b)=>b.total-a.total)};
 }
 function renderSpend(){
   const {from,to,items}=spendData();
   const periodLbl={month:'이번 달',year:'올해',all:'전체'}[spendPeriod];
+  const groupLbl = spendGroup==='cat'?'카테고리':'항목';
   const active = spendFilter.size? items.filter(it=>spendFilter.has(it.title)) : items;
   const grand = active.reduce((s,it)=>s+it.total,0);
   const cnt = active.reduce((s,it)=>s+it.count,0);
@@ -609,7 +626,11 @@ function renderSpend(){
     <div class="seg" style="width:100%">
       ${[['month','이번 달'],['year','올해'],['all','전체']].map(([k,l])=>`<button class="${spendPeriod===k?'on':''}" style="flex:1;padding:10px" onclick="setSpendPeriod('${k}')">${l}</button>`).join('')}
     </div>
-    <div class="sptot"><div class="lbl">${periodLbl} ${spendFilter.size?'선택 항목':'전체'} 지출</div>
+    <div style="display:flex;justify-content:center;margin:12px 0 0"><div class="miniseg">
+      <button class="${spendGroup==='item'?'on':''}" onclick="setSpendGroup('item')">항목별</button>
+      <button class="${spendGroup==='cat'?'on':''}" onclick="setSpendGroup('cat')">카테고리별</button>
+    </div></div>
+    <div class="sptot"><div class="lbl">${periodLbl} ${spendFilter.size?('선택 '+groupLbl):'전체'} 지출</div>
       <div class="amt">${wonFmt(grand)}</div>
       <div class="sub">${from.replace(/-/g,'.').slice(2)} ~ 오늘 · ${cnt}건</div></div>`;
 
@@ -618,15 +639,15 @@ function renderSpend(){
     app.innerHTML=html; return;
   }
 
-  // 항목 필터 칩
-  html+=`<div class="hsec">항목 선택</div><div class="chips">
+  // 필터 칩
+  html+=`<div class="hsec">${groupLbl} 선택</div><div class="chips">
     <span class="chip ${spendFilter.size===0?'on':''}" onclick="spendFilter=new Set();render()">전체</span>`;
   items.forEach(it=>{ const c=col(it.color); const on=spendFilter.has(it.title);
     html+=`<span class="chip ${on?'on':''}" onclick="toggleSpendFilter('${encodeURIComponent(it.title)}')" ${on?'':`style="color:${c.fg}"`}>${svg(it.sticker)}${escapeHtml(it.title)}</span>`; });
   html+=`</div>`;
 
-  // 항목별 합계 + 비율 막대
-  html+=`<div class="hsec">항목별 합계</div>`;
+  // 합계 + 비율 막대
+  html+=`<div class="hsec">${groupLbl}별 합계</div>`;
   active.forEach(it=>{ const c=col(it.color); const pct=Math.round(it.total/maxItem*100);
     html+=`<div class="spitem"><div class="r1"><span class="ci" style="background:${c.bg};color:${c.fg}">${svg(it.sticker)}</span>
       <span class="nm">${escapeHtml(it.title)}</span><span class="cnt">${it.count}건</span><span class="amt">${wonFmt(it.total)}</span></div>
@@ -634,7 +655,7 @@ function renderSpend(){
   });
 
   // 상세 내역
-  const details=[]; active.forEach(it=>it.list.forEach(l=>details.push({title:it.title,color:it.color,sticker:it.sticker,date:l.date,amount:l.amount})));
+  const details=[]; active.forEach(it=>it.list.forEach(l=>details.push({title:l.title||it.title,color:it.color,sticker:it.sticker,date:l.date,amount:l.amount})));
   details.sort((a,b)=>b.date.localeCompare(a.date));
   html+=`<div class="hsec">상세 내역</div><div class="paylist">`;
   details.forEach(d=>{ const dd=parseYMD(d.date); html+=`<div class="payrow"><span class="pd">${dd.getMonth()+1}/${dd.getDate()}</span><span class="pn">${escapeHtml(d.title)}</span><span class="pa">${wonFmt(d.amount)}</span></div>`; });
@@ -756,7 +777,7 @@ let draft=null;
 function blankDraft(){
   return { id:null, title:'', date: curDay||todayStr, allDay:false, start:'10:00', end:'11:00',
     color:'blue', sticker:null, alarm:{on:true,minutes:30}, sound:'물방울',
-    repeat:{type:'none',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:0, memo:'' };
+    repeat:{type:'none',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:0, category:'', memo:'' };
 }
 function intervalDays(rep){ const n=rep.n||1; const u=rep.unit||'week'; return n*(u==='week'?7:u==='month'?30:1); }
 const unitLabel = u => u==='week'?'주':u==='month'?'개월':'일';
@@ -854,6 +875,11 @@ function renderEditor(){
         <span class="ic">${iconWon()}</span>
         <span class="lb">금액 <span style="color:var(--mut);font-weight:500;font-size:11.5px">(납부·지출)</span></span>
         <span class="vl"><input class="numin" type="number" inputmode="numeric" min="0" step="1000" placeholder="0" value="${d.amount||''}" oninput="draft.amount=parseInt(this.value)||0"><span style="font-size:13px;color:var(--mut)">원</span></span>
+      </div>
+
+      <div class="subseg">카테고리 <span style="color:var(--mut);font-weight:500">(지출 통계 묶기용)</span></div>
+      <div class="chips" style="padding:2px 0 6px">
+        ${CATS.filter(c=>c.k!=='etc').map(c=>`<span class="chip ${d.category===c.k?'on':''}" onclick="draft.category=(draft.category==='${c.k}'?'':'${c.k}');renderEditor()">${svg(c.ic)}${c.label}</span>`).join('')}
       </div>
 
       <div class="subseg">스티커</div>
@@ -1022,12 +1048,12 @@ function seedIfEmpty(){
   const last=(day)=>{ const dd=new Date(y,m,day); return ymd(dd); };
   const back=(k,day)=>{ let mm=m-k, yy=y; while(mm<0){mm+=12;yy--;} const ld=new Date(yy,mm+1,0).getDate(); return `${yy}-${pad(mm+1)}-${pad(Math.min(day,ld))}`; };
   db.events=[
-    { id:uid(), title:'수학학원', date:D(1), allDay:false, start:'10:30', end:'12:00', color:'blue', sticker:'book', alarm:{on:true,minutes:30}, sound:'물방울', repeat:{type:'weekly',days:[2,4],until:null,n:3,unit:'week'}, countSessions:true, goalCount:20, amount:0, memo:'' },
-    { id:uid(), title:'필라테스', date:D(1), allDay:false, start:'19:00', end:'20:00', color:'teal', sticker:'run', alarm:{on:true,minutes:60}, sound:'딩동', repeat:{type:'weekly',days:[1],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:0, memo:'' },
-    { id:uid(), title:'학원비 납부', date:back(4,15), allDay:true, start:'09:00', end:'', color:'rose', sticker:'money', alarm:{on:true,minutes:1440}, sound:'종', repeat:{type:'monthly',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:350000, memo:'' },
-    { id:uid(), title:'넷플릭스', date:back(5,22), allDay:true, start:'09:00', end:'', color:'plum', sticker:'movie', alarm:{on:false,minutes:1440}, sound:'기본', repeat:{type:'monthly',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:13500, memo:'' },
-    { id:uid(), title:'네일아트', date:last(2), allDay:true, start:'14:00', end:'', color:'rose', sticker:'heart', alarm:{on:true,minutes:1440}, sound:'방울', repeat:{type:'cycle',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:45000, memo:'' },
-    { id:uid(), title:'염색', date:last(1), allDay:true, start:'14:00', end:'', color:'sage', sticker:'brush', alarm:{on:true,minutes:1440}, sound:'물방울', repeat:{type:'cycle',days:[],until:null,n:6,unit:'week'}, countSessions:false, goalCount:0, amount:68000, memo:'' },
+    { id:uid(), title:'수학학원', date:D(1), allDay:false, start:'10:30', end:'12:00', color:'blue', sticker:'book', alarm:{on:true,minutes:30}, sound:'물방울', repeat:{type:'weekly',days:[2,4],until:null,n:3,unit:'week'}, countSessions:true, goalCount:20, amount:0, category:'edu', memo:'' },
+    { id:uid(), title:'필라테스', date:D(1), allDay:false, start:'19:00', end:'20:00', color:'teal', sticker:'run', alarm:{on:true,minutes:60}, sound:'딩동', repeat:{type:'weekly',days:[1],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:0, category:'health', memo:'' },
+    { id:uid(), title:'학원비 납부', date:back(4,15), allDay:true, start:'09:00', end:'', color:'rose', sticker:'money', alarm:{on:true,minutes:1440}, sound:'종', repeat:{type:'monthly',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:350000, category:'edu', memo:'' },
+    { id:uid(), title:'넷플릭스', date:back(5,22), allDay:true, start:'09:00', end:'', color:'plum', sticker:'movie', alarm:{on:false,minutes:1440}, sound:'기본', repeat:{type:'monthly',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:13500, category:'sub', memo:'' },
+    { id:uid(), title:'네일아트', date:last(2), allDay:true, start:'14:00', end:'', color:'rose', sticker:'heart', alarm:{on:true,minutes:1440}, sound:'방울', repeat:{type:'cycle',days:[],until:null,n:3,unit:'week'}, countSessions:false, goalCount:0, amount:45000, category:'beauty', memo:'' },
+    { id:uid(), title:'염색', date:last(1), allDay:true, start:'14:00', end:'', color:'sage', sticker:'brush', alarm:{on:true,minutes:1440}, sound:'물방울', repeat:{type:'cycle',days:[],until:null,n:6,unit:'week'}, countSessions:false, goalCount:0, amount:68000, category:'beauty', memo:'' },
   ];
   db.dayTags[D(Math.min(new Date().getDate(), new Date(y,m+1,0).getDate()))]=['coffee','heart'];
   saveDB();
