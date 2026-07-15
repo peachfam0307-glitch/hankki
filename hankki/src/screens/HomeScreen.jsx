@@ -48,18 +48,14 @@ export default function HomeScreen() {
   )
   const all = useMemo(() => {
     const base = cat === '전체' ? sorted : sorted.filter((r) => r.category === cat)
-    // 사진 레시피가 위에 몰리고 이모지가 아래에 뭉치던 문제 → 비율 맞춰 고르게 섞는다.
-    const ph = base.filter((r) => r.thumb === 'photo')
-    const em = base.filter((r) => r.thumb !== 'photo')
-    if (!ph.length || !em.length) return base
-    const out = []
-    let pi = 0, ei = 0
-    while (pi < ph.length || ei < em.length) {
-      // 두 그룹의 '진행률'을 비교해 덜 나온 쪽을 먼저 — 사진이 전체에 고르게 퍼진다.
-      const takePhoto = ei >= em.length || (pi < ph.length && (pi + 0.5) / ph.length <= (ei + 0.5) / em.length)
-      out.push(takePhoto ? ph[pi++] : em[ei++])
+    // 사진/이모지를 자연스럽게 섞는다. 지그재그로 하면 2단 그리드에서 열별로 갈려서(왼쪽 사진·오른쪽 이모지)
+    // id 해시 기반 '고정 랜덤'으로 셔플 — 볼 때마다 순서는 같지만 사진·이모지가 골고루 흩어진다.
+    const hash = (s) => {
+      let h = 2166136261
+      for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) }
+      return h >>> 0
     }
-    return out
+    return [...base].sort((a, b) => hash(a.id) - hash(b.id))
   }, [sorted, cat])
 
   const open = (id) => nav.push({ name: 'detail', id })
