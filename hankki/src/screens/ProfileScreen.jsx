@@ -24,8 +24,47 @@ export default function ProfileScreen() {
   const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
   const [theme, setThemeState] = useState(getTheme())
   const [pasteOpen, setPasteOpen] = useState(false)
+  const [checking, setChecking] = useState(false)
   const fileRef = useRef(null)
   const avatarFileRef = useRef(null)
+
+  // 최신 버전 확인 — 설치한 앱(standalone)은 '당겨서 새로고침'이 안 돼서 최신 버전을 못 받는 일이 있다.
+  // 이 버튼이 서비스워커 업데이트를 강제로 확인한다. 새 버전이 있으면 SW가 skipWaiting 으로
+  // 바로 활성화 → controllerchange 로 앱이 자동 새로고침(main.jsx). 없으면 '최신' 안내만.
+  const checkUpdate = async () => {
+    if (checking) return
+    if (!('serviceWorker' in navigator)) {
+      nav.showToast('이 환경에선 업데이트 확인이 안 돼요 · 브라우저를 새로고침해 주세요')
+      return
+    }
+    setChecking(true)
+    try {
+      const reg = await navigator.serviceWorker.getRegistration()
+      if (!reg) {
+        setChecking(false)
+        nav.showToast('설치 상태를 확인할 수 없어요 · 브라우저를 새로고침해 주세요')
+        return
+      }
+      let found = false
+      const onFound = () => { found = true }
+      reg.addEventListener('updatefound', onFound)
+      await reg.update()
+      if (reg.installing || reg.waiting) found = true
+      reg.removeEventListener('updatefound', onFound)
+      if (found) {
+        nav.showToast('새 버전을 받았어요 · 곧 새로고침돼요 ✨')
+        if (reg.waiting) { try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }) } catch { /* noop */ } }
+        // 안전망: controllerchange 자동 새로고침이 안 오면 직접 새로고침
+        setTimeout(() => window.location.reload(), 2200)
+      } else {
+        setChecking(false)
+        nav.showToast(`이미 최신 버전이에요 · ${APP_VERSION}`)
+      }
+    } catch {
+      setChecking(false)
+      nav.showToast('업데이트 확인 중 문제가 생겼어요 · 잠시 후 다시 시도해 주세요')
+    }
+  }
 
   // 아바타 사진 — 정사각으로 잘라 작게 저장
   const onAvatarPhoto = (e) => {
@@ -347,7 +386,24 @@ export default function ProfileScreen() {
             예시 되돌리기
           </button>
         </div>
-        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 12, marginTop: 14 }}>
+        <button
+          className="press"
+          onClick={checkUpdate}
+          disabled={checking}
+          style={{
+            width: '100%', marginTop: 22, padding: 13, borderRadius: 'var(--r-md)',
+            background: 'var(--cream)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            opacity: checking ? 0.6 : 1,
+          }}
+        >
+          <Icon name="refresh" size={16} color="var(--brown)" stroke={2} />
+          {checking ? '확인 중…' : '최신 버전 확인'}
+        </button>
+        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 11.5, marginTop: 10, lineHeight: 1.5 }}>
+          설치한 앱이 옛 버전에서 멈췄을 때 눌러요
+        </div>
+        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 12, marginTop: 12 }}>
           한끼 · {APP_VERSION} — {APP_TAGLINE}
         </div>
       </div>
