@@ -18,6 +18,10 @@ import { SOURCES } from '../data/seed'
 import { useWakeLock } from '../useWakeLock'
 import { useBackHandler } from '../useBackHandler'
 
+// 재료 목록에서 '[양념]'·'[소스]'·'[드레싱]'처럼 대괄호만 있는 줄은 소제목(헤더)으로 그린다.
+// (장보기 담기·인분 환산에서 제외) — 전 레시피 양념/소스 표기 통일용.
+const isIngHeader = (s) => /^\[[^\]]+\]$/.test(String(s).trim())
+
 export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, diary, addDiary, removeDiary, updateRecipe } = useStore()
   const nav = useNav()
@@ -226,7 +230,7 @@ export default function RecipeDetailScreen({ id }) {
               <button
                 className="mini-buy press"
                 onClick={() => {
-                  addShopItems(r.ingredients.map((ing) => scaleIngredient(ing, ratio)))
+                  addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => scaleIngredient(ing, ratio)))
                   nav.showToast('재료를 장보기 리스트에 담았어요 🛒')
                 }}
               >
@@ -244,7 +248,9 @@ export default function RecipeDetailScreen({ id }) {
             )}
             <div>
               {r.ingredients.map((ing, i) => (
-                <div key={i} className="ing">{scaleIngredient(ing, ratio)}</div>
+                isIngHeader(ing)
+                  ? <div key={i} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
+                  : <div key={i} className="ing">{scaleIngredient(ing, ratio)}</div>
               ))}
             </div>
           </>

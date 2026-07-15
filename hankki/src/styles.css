@@ -740,6 +740,14 @@ img {
   margin-top: 9px;
   flex: 0 0 auto;
 }
+/* 재료 소제목 — [양념]·[소스]·[드레싱] 그룹 헤더 (불릿 없음) */
+.ing-head {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--brown);
+  margin: 13px 0 2px;
+}
+.ing-head:first-child { margin-top: 2px; }
 .step {
   display: flex;
   gap: 12px;
