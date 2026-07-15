@@ -135,7 +135,7 @@ export default function ShopScreen() {
           </button>
         </div>
         <div className="t-sub" style={{ fontSize: 12, marginTop: 6 }}>
-          {editShops ? '아이콘을 눌러 이름·주소·아이콘을 바꿀 수 있어요.' : '한 번 로그인해두면 그 브라우저 세션이 유지돼 다시 로그인하지 않아도 돼요.'}
+          {editShops ? '아이콘을 눌러 이름·주소·아이콘을 바꿀 수 있어요.' : '쇼핑몰 앱이 깔려 있고 로그인돼 있으면 바로 연결돼요. 한 번 로그인해두면 계속 유지돼 편해요.'}
         </div>
         {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
 
@@ -260,6 +260,19 @@ function Curation() {
     nav.showToast('사고 싶은 재료에 담았어요 🌿')
   }
 
+  // '사러가기' 버튼에 붙는 구매처 배지 라벨
+  const mallLabel = (it) => {
+    if (it.mall === 'coupang') return '쿠팡'
+    if (it.mall === 'oasis') return '오아시스'
+    const u = it.url || ''
+    if (u.includes('hansalim')) return '한살림'
+    if (u.includes('sanjitalk')) return '산지톡'
+    if (u.includes('smartstore.naver')) return '네이버'
+    return ''
+  }
+  const tagStyle = { fontSize: 11, fontWeight: 700, color: '#8a6a3e', background: 'var(--cream)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
+  const mallStyle = { fontSize: 11, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream-deep)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
+
   return (
     <>
       <div className="sec-head" style={{ marginTop: 14 }}>
@@ -271,22 +284,33 @@ function Curation() {
       </div>
       {open && CURATION.map((g) => (
         <div key={g.cat}>
-          <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '10px 2px 7px' }}>{g.emoji} {g.cat}</div>
+          <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>{g.emoji} {g.cat}</div>
           {g.items.map((it) => (
-            <div key={it.name} className="card" style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 12px', marginBottom: 8 }}>
-              <div className="emoji-tile" style={{ width: 44, height: 44, fontSize: 22, flex: '0 0 auto' }}>{g.emoji}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{it.name}</div>
-                <div className="t-sub" style={{ fontSize: 12, marginTop: 2, lineHeight: 1.45 }}>{it.benefit}</div>
+            <div key={it.name} className="card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
+              <div style={{ display: 'flex', gap: 11 }}>
+                <div className="emoji-tile" style={{ width: 46, height: 46, fontSize: 24, flex: '0 0 auto' }}>{g.emoji}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+                    <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
+                    {it.tag && <span style={tagStyle}>{it.tag}</span>}
+                    {mallLabel(it) && <span style={mallStyle}>{mallLabel(it)}</span>}
+                  </div>
+                  <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.58 }}>{it.benefit}</div>
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: '0 0 auto' }}>
-                <button className="press" onClick={() => add(it, g.emoji)} style={{ padding: '6px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 700, fontSize: 12.5 }}>담기</button>
-                <button className="press mini-buy" onClick={() => buy(it)}>사러가기</button>
+              <div style={{ display: 'flex', gap: 8, marginTop: 11 }}>
+                <button className="press" onClick={() => add(it, g.emoji)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 13.5 }}>담기</button>
+                <button className="press" onClick={() => buy(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 13.5 }}>사러가기</button>
               </div>
             </div>
           ))}
         </div>
       ))}
+      {open && (
+        <div className="t-sub" style={{ fontSize: 12.5, fontWeight: 600, textAlign: 'center', background: 'var(--cream)', borderRadius: 12, padding: '13px 12px', margin: '4px 0 2px', lineHeight: 1.5 }}>
+          🌿 18년차 주부가 진짜 쓰는 재료들, 앞으로도 하나씩 계속 올라와요.
+        </div>
+      )}
     </>
   )
 }
