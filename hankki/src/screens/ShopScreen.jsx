@@ -248,18 +248,10 @@ function Curation() {
     oasis: 'https://www.oasis.co.kr/product/search?keyword={q}',
     naver: 'https://search.shopping.naver.com/search/all?query={q}',
   }
-  // 안드로이드에선 쿠팡을 '앱'으로 바로 연다(intent). 앱이 없으면 웹으로 폴백.
-  // iOS·PC 는 intent 를 못 여니 그대로 웹 검색.
-  const isAndroid = typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent || '')
-  const linkFor = (it) => {
-    if (it.url) return it.url
-    const q = encodeURIComponent(it.q)
-    if (it.mall === 'coupang' && isAndroid) {
-      const web = `https://www.coupang.com/np/search?q=${q}`
-      return `intent://www.coupang.com/np/search?q=${q}#Intent;scheme=https;package=com.coupang.mobile;S.browser_fallback_url=${encodeURIComponent(web)};end`
-    }
-    return (MALL_SEARCH[it.mall] || MALL_SEARCH.naver).replace('{q}', q)
-  }
+  // 쇼핑몰 검색으로 연결. (설치 PWA 안에서 외부 '앱' 강제 열기는 브라우저 제어라 불안정 →
+  //  쿠팡 앱 직접 열기는 정식 TWA 출시 때 다시. 지금은 웹 검색이 안정적.)
+  const linkFor = (it) =>
+    it.url || (MALL_SEARCH[it.mall] || MALL_SEARCH.naver).replace('{q}', encodeURIComponent(it.q))
   const buy = (it) => openUrl(linkFor(it))
   const add = (it, emoji) => {
     store.addWish({
