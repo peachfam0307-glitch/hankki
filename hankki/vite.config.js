@@ -23,6 +23,9 @@ export default defineConfig({
         name: '한끼 — 나만의 레시피 아카이브',
         short_name: '한끼',
         description: '흩어진 레시피를, 한곳에. 인스타·유튜브·링크·사진 레시피를 모으고 정리하는 개인 아카이브.',
+        // 앱 고유 id — 스토어/설치 앱이 '같은 앱'으로 인식하게 고정. 상대 경로라 배포 위치와 무관.
+        id: './',
+        categories: ['food', 'lifestyle'],
         lang: 'ko',
         dir: 'ltr',
         start_url: './',
