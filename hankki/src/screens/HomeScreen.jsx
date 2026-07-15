@@ -46,10 +46,21 @@ export default function HomeScreen() {
     () => [...recipes].sort((a, b) => b.savedAt - a.savedAt).slice(0, 4),
     [recipes]
   )
-  const all = useMemo(
-    () => (cat === '전체' ? sorted : sorted.filter((r) => r.category === cat)),
-    [sorted, cat]
-  )
+  const all = useMemo(() => {
+    const base = cat === '전체' ? sorted : sorted.filter((r) => r.category === cat)
+    // 사진 레시피가 위에 몰리고 이모지가 아래에 뭉치던 문제 → 비율 맞춰 고르게 섞는다.
+    const ph = base.filter((r) => r.thumb === 'photo')
+    const em = base.filter((r) => r.thumb !== 'photo')
+    if (!ph.length || !em.length) return base
+    const out = []
+    let pi = 0, ei = 0
+    while (pi < ph.length || ei < em.length) {
+      // 두 그룹의 '진행률'을 비교해 덜 나온 쪽을 먼저 — 사진이 전체에 고르게 퍼진다.
+      const takePhoto = ei >= em.length || (pi < ph.length && (pi + 0.5) / ph.length <= (ei + 0.5) / em.length)
+      out.push(takePhoto ? ph[pi++] : em[ei++])
+    }
+    return out
+  }, [sorted, cat])
 
   const open = (id) => nav.push({ name: 'detail', id })
 
