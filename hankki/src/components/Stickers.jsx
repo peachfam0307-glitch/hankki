@@ -144,15 +144,63 @@ export function notePatternStyle(pattern, line) {
   }
 }
 
-// 포스트잇 모양(쉐입) — 접기(기본)·테이프·핀·둥근
+// 포스트잇 모양(쉐입) — 사각 계열(기본·둥근·테이프·핀) + 실루엣(원·타원·하트·별·구름·꽃·곰)
 export const NOTE_SHAPES = [
-  { key: 'fold', label: '접기' },
+  { key: 'fold', label: '기본' },
+  { key: 'round', label: '둥근' },
+  { key: 'circle', label: '동그라미' },
+  { key: 'oval', label: '타원' },
+  { key: 'heart', label: '하트' },
+  { key: 'star', label: '별' },
+  { key: 'cloud', label: '구름' },
+  { key: 'flower', label: '꽃' },
+  { key: 'bear', label: '곰' },
   { key: 'tape', label: '테이프' },
   { key: 'pin', label: '핀' },
-  { key: 'round', label: '둥근' },
 ]
 
-export const noteRadius = (shape) => (shape === 'round' ? '9%' : shape === 'fold' ? '3% 3% 3% 12%' : '5%')
+// 실루엣(하트·별·구름·꽃·곰)은 clip-path 로 오려낸다.
+// clipPathUnits="objectBoundingBox"(0~1 좌표)라 포스트잇 크기에 맞춰 자동 스케일되고,
+// 여러 도형(타원·사각)을 합집합으로 넣을 수 있어 별·곰·구름도 깔끔하다.
+// (CSS mask 는 일부 렌더 환경에서 동작하지 않아 clip-path 로 통일.)
+export const NOTE_CLIP_SHAPES = ['heart', 'star', 'cloud', 'flower', 'bear']
+export const noteIsClip = (shape) => NOTE_CLIP_SHAPES.includes(shape)
+export const noteClip = (shape) => (noteIsClip(shape) ? `url(#hk-note-${shape})` : null)
+
+// 문서에 한 번 심는 clipPath 정의 — DecorLayer/DecorEditor 가 필요할 때 렌더한다.
+export function NoteShapeDefs() {
+  return (
+    <svg width="0" height="0" style={{ position: 'absolute', pointerEvents: 'none' }} aria-hidden="true">
+      <defs>
+        <clipPath id="hk-note-heart" clipPathUnits="objectBoundingBox">
+          <path d="M0.5 0.88 C0.5 0.88 0.08 0.6 0.08 0.33 C0.08 0.16 0.24 0.08 0.37 0.18 C0.43 0.22 0.5 0.32 0.5 0.32 C0.5 0.32 0.57 0.22 0.63 0.18 C0.76 0.08 0.92 0.16 0.92 0.33 C0.92 0.6 0.5 0.88 0.5 0.88 Z" />
+        </clipPath>
+        <clipPath id="hk-note-star" clipPathUnits="objectBoundingBox">
+          <path d="M0.5 0.05 L0.61 0.37 L0.95 0.38 L0.69 0.58 L0.79 0.91 L0.5 0.71 L0.21 0.91 L0.31 0.58 L0.05 0.38 L0.39 0.37 Z" />
+        </clipPath>
+        <clipPath id="hk-note-cloud" clipPathUnits="objectBoundingBox">
+          <ellipse cx="0.30" cy="0.60" rx="0.20" ry="0.26" /><ellipse cx="0.52" cy="0.44" rx="0.25" ry="0.32" /><ellipse cx="0.73" cy="0.58" rx="0.18" ry="0.24" /><rect x="0.26" y="0.54" width="0.52" height="0.32" rx="0.1" />
+        </clipPath>
+        <clipPath id="hk-note-flower" clipPathUnits="objectBoundingBox">
+          <ellipse cx="0.5" cy="0.26" rx="0.18" ry="0.18" /><ellipse cx="0.75" cy="0.44" rx="0.18" ry="0.18" /><ellipse cx="0.66" cy="0.74" rx="0.18" ry="0.18" /><ellipse cx="0.34" cy="0.74" rx="0.18" ry="0.18" /><ellipse cx="0.25" cy="0.44" rx="0.18" ry="0.18" /><ellipse cx="0.5" cy="0.52" rx="0.22" ry="0.22" />
+        </clipPath>
+        <clipPath id="hk-note-bear" clipPathUnits="objectBoundingBox">
+          <ellipse cx="0.26" cy="0.27" rx="0.16" ry="0.16" /><ellipse cx="0.74" cy="0.27" rx="0.16" ry="0.16" /><ellipse cx="0.5" cy="0.58" rx="0.32" ry="0.35" />
+        </clipPath>
+      </defs>
+    </svg>
+  )
+}
+
+export const noteRadius = (shape) => {
+  switch (shape) {
+    case 'round': return '9%'
+    case 'circle': return '50%'
+    case 'oval': return '50%'
+    case 'fold': return '3% 3% 3% 12%'
+    default: return '5%' // tape, pin, (mask 모양은 radius 무시)
+  }
+}
 
 // 글자 스티커 색 — 사진 위에서도 읽히도록 반대 톤 외곽선(stroke)을 함께 준다
 export const TEXT_COLORS = [

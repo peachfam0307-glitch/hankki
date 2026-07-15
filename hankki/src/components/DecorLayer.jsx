@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import Icon from './Icon'
-import { StickerArt, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, notePatternStyle, noteRadius } from './Stickers'
+import { StickerArt, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -61,10 +61,11 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
       style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: editable ? 'auto' : 'none', touchAction: editable ? 'none' : 'auto' }}
       onPointerDown={editable ? () => onSelect?.(null) : undefined}
     >
+      {(editable || items.some((it) => it.type === 'note' && noteIsClip(it.shape))) && <NoteShapeDefs />}
       {items.map((it) => {
         const on = editable && selectedId === it.id
         const isText = it.type === 'text'
-        const ratio = it.type === 'note' ? 1.06 : stickerRatio(it.key)
+        const ratio = it.type === 'note' ? (it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
         const base = {
           position: 'absolute',
           left: `${it.x * 100}%`,
@@ -174,36 +175,39 @@ function Note({ it, editable }) {
   const shape = it.shape || 'fold'
   const pattern = it.pattern || 'plain'
   const pat = notePatternStyle(pattern, c.line || c.fold)
+  const clip = noteClip(shape)
+  const isClip = noteIsClip(shape)
+  const radius = noteRadius(shape)
   // 플레이스홀더는 편집 중에만 — 저장된 표지에선 빈 포스트잇은 빈 종이로 보인다.
   const text = it.text || (editable ? '탭해서 쓰기' : '')
+
+  // 종이 판(색 + 무늬 + 모양). clip 모양은 그림자를 filter 로(clip 이 box-shadow 를 잘라내므로).
+  const paper = {
+    position: 'absolute', inset: 0, background: c.bg, overflow: 'hidden',
+    ...(isClip
+      ? { clipPath: clip, WebkitClipPath: clip, filter: 'drop-shadow(1.5px 3px 5px rgba(70,60,45,.3))' }
+      : { borderRadius: radius, boxShadow: '1.5px 4px 10px rgba(70,60,45,.25)' }),
+  }
+  // 하트·별·곰 등은 글자가 실루엣 밖으로 안 나가게 안쪽 여백을 넉넉히.
+  const textPad = isClip ? '22% 18%' : '9% 10%'
+
   return (
-    <div
-      style={{
-        position: 'absolute', inset: 0,
-        containerType: 'size', // 안쪽 글씨가 포스트잇 크기에 비례하도록
-        background: c.bg, color: c.text,
-        borderRadius: noteRadius(shape),
-        boxShadow: '1.5px 4px 10px rgba(70,60,45,.25)',
-        overflow: 'visible',
-      }}
-    >
-      {/* 무늬(모눈·체크·줄노트) 오버레이 — 모서리 라운드 안쪽으로만 */}
-      <div style={{ position: 'absolute', inset: 0, borderRadius: noteRadius(shape), overflow: 'hidden', pointerEvents: 'none' }}>
+    <div style={{ position: 'absolute', inset: 0, containerType: 'size', color: c.text }}>
+      {/* 종이 + 무늬 */}
+      <div style={paper}>
         {pat && <span style={{ position: 'absolute', inset: 0, ...pat }} />}
-        {/* 접힌 모서리 — '접기' 모양일 때만 */}
         {shape === 'fold' && (
           <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: '0 0 16cqw 16cqw', borderColor: `transparent transparent ${c.fold} transparent` }} />
         )}
       </div>
 
+      {/* 글자 (마스크 밖 — 실루엣 위에 얹힘) */}
       <div
         style={{
-          position: 'relative',
-          width: '100%', height: '100%', boxSizing: 'border-box', padding: '9% 10%',
+          position: 'absolute', inset: 0, boxSizing: 'border-box', padding: textPad,
           fontFamily: "'Gowun Dodum','Pretendard',sans-serif",
           fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.4,
           overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-          // 글자를 포스트잇 한가운데에 (위에 붙어 아래가 비던 문제 해결)
           display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
         }}
       >

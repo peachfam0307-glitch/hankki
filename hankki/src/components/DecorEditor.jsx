@@ -3,15 +3,21 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { StickerArt, STICKER_GROUPS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, TEXT_COLORS, TEXT_FONTS } from './Stickers'
+import { StickerArt, STICKER_GROUPS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS } from './Stickers'
 
-// 무늬·모양 칩용 미니 포스트잇 미리보기
-function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 28 }) {
+// 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
+function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
   const pat = notePatternStyle(pattern, color.line || color.fold)
+  const isClip = noteIsClip(shape)
+  const clip = noteClip(shape)
   const rad = noteRadius(shape)
+  const paper = isClip
+    ? { clipPath: clip, WebkitClipPath: clip, filter: 'drop-shadow(0 1px 1.5px rgba(70,60,45,.3))' }
+    : { borderRadius: rad, boxShadow: '0 1px 2px rgba(70,60,45,.2)' }
+  const w = shape === 'oval' ? size * 1.4 : shape === 'cloud' ? size * 1.3 : size
   return (
-    <span style={{ position: 'relative', display: 'inline-block', width: size, height: size, background: color.bg, borderRadius: rad, boxShadow: '0 1px 2px rgba(70,60,45,.2)' }}>
-      <span style={{ position: 'absolute', inset: 0, borderRadius: rad, overflow: 'hidden' }}>
+    <span style={{ position: 'relative', display: 'inline-block', width: w, height: size }}>
+      <span style={{ position: 'absolute', inset: 0, background: color.bg, overflow: 'hidden', ...paper }}>
         {pat && <span style={{ position: 'absolute', inset: 0, ...pat }} />}
         {shape === 'fold' && <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: `0 0 ${size * 0.3}px ${size * 0.3}px`, borderColor: `transparent transparent ${color.fold} transparent` }} />}
       </span>
