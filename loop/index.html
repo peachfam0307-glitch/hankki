@@ -13,6 +13,9 @@
   @font-face{ font-family:'Dongle'; src:url('./fonts/dongle.woff2') format('woff2'); font-display:swap; }
   @font-face{ font-family:'Sunflower'; src:url('./fonts/sunflower.woff2') format('woff2'); font-display:swap; }
   @font-face{ font-family:'NanumPen'; src:url('./fonts/nanumpen.woff2') format('woff2'); font-display:swap; }
+  @font-face{ font-family:'Tmoney'; src:url('./fonts/tmoney.woff2') format('woff2'); font-display:swap; }
+  @font-face{ font-family:'SeoulNamsan'; src:url('./fonts/seoulnamsan.woff2') format('woff2'); font-display:swap; }
+  @font-face{ font-family:'Mitmi'; src:url('./fonts/mitmi.woff2') format('woff2'); font-display:swap; }
 
   :root{
     --bg:#F7F8FA; --surface:#FFFFFF; --surface2:#F3F5F8; --ink:#1B1F27; --ink2:#4A515C; --mut:#9AA0AA;
@@ -930,6 +933,7 @@ function toast(msg){
 function openSettings(){ view.mode='settings'; render(); }
 function renderSettings(){
   const fonts=[
+    ['Tmoney','티머니 둥근바람','둥근'],['Mitmi','밑미','손글씨'],['SeoulNamsan','서울남산',''],
     ['Jua','주아','애플민트 느낌 ★'],['Dongle','동글',''],['Sunflower','선플라워','깔끔·둥근'],
     ['NanumPen','나눔손글씨 펜','손글씨'],['Pretendard','프리텐다드','기본·모던'],
     ['GowunDodum','고운돋움',''],['DoHyeon','도현',''],
