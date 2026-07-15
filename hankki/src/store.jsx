@@ -198,13 +198,25 @@ function migrateMemos(recipes, saved) {
   return { recipes: cleaned, memoCleanV: MEMO_CLEAN_V }
 }
 
+// '만든 횟수(cooked)'는 '만들었어요'가 diary 기록과 항상 짝으로 올린다 → 정상 상태에서 cooked == 그 레시피의 diary 수.
+// 예전 버전에서 기록을 지워도 cooked가 안 줄던 버그로 둘이 어긋난 데이터가 남을 수 있어, 로드할 때 diary 수 기준으로 맞춘다.
+function reconcileCooked(recipes, diary) {
+  const counts = {}
+  ;(diary || []).forEach((d) => { if (d && d.recipeId) counts[d.recipeId] = (counts[d.recipeId] || 0) + 1 })
+  return recipes.map((r) => {
+    const n = counts[r.id] || 0
+    return (r.cooked || 0) === n ? r : { ...r, cooked: n }
+  })
+}
+
 function initialState() {
   const saved = load()
   if (saved) {
     const mig = migrateBasics(saved)
     const memoMig = migrateMemos(mig.recipes, saved)
+    const diary = saved.diary || []
     return {
-      recipes: memoMig.recipes,
+      recipes: reconcileCooked(memoMig.recipes, diary),
       seedV: mig.seedV,
       memoCleanV: memoMig.memoCleanV,
       removedSeedIds: saved.removedSeedIds || [],
@@ -415,7 +427,18 @@ function reducer(state, action) {
       }
     }
     case 'removeDiary': {
-      return { ...state, diary: state.diary.filter((d) => d.id !== action.id) }
+      // 기록을 지우면 그 레시피의 '만든 횟수'도 함께 1 줄인다.
+      // (cooked는 '만들었어요'가 diary 항목과 항상 짝으로 올리므로, 지울 때도 짝으로 내려 어긋나지 않게 한다)
+      const gone = state.diary.find((d) => d.id === action.id)
+      return {
+        ...state,
+        diary: state.diary.filter((d) => d.id !== action.id),
+        recipes: gone
+          ? state.recipes.map((r) =>
+              r.id === gone.recipeId ? { ...r, cooked: Math.max(0, (r.cooked || 0) - 1) } : r
+            )
+          : state.recipes,
+      }
     }
 
     // 백업 불러오기 — 저장된 데이터로 전체 교체(기본값과 병합해 누락 방지)

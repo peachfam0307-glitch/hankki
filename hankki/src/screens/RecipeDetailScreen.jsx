@@ -201,7 +201,7 @@ export default function RecipeDetailScreen({ id }) {
         {(myEntries.length > 0 || cookedN > 0) && (
           <button
             className="card press"
-            onClick={() => (latestEntry ? setLogEntry(latestEntry) : onCook())}
+            onClick={() => { if (latestEntry) setLogEntry(latestEntry) }}
             style={{ width: '100%', textAlign: 'left', marginTop: 18, padding: 13, display: 'flex', gap: 12, alignItems: 'center', background: 'var(--cream)', border: 'none' }}
           >
             {latestEntry?.photo ? (
