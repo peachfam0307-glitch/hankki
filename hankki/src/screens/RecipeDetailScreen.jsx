@@ -93,7 +93,9 @@ export default function RecipeDetailScreen({ id }) {
     setMenu(false)
     nav.showToast('공유 카드 만드는 중…')
     const svg = iconRef.current?.querySelector('svg')?.outerHTML
-    const appUrl = location.origin + (import.meta.env.BASE_URL || '/')
+    // 앱 루트 주소 — 상대경로 base('./')라 BASE_URL로는 못 구한다. 현재 페이지 경로의
+    // 디렉터리(마지막 파일명 제거)로 계산해야 /hankki/ 같은 하위경로까지 정확히 잡힌다.
+    const appUrl = location.origin + location.pathname.replace(/[^/]*$/, '')
     await shareRecipeCard({
       title: r.title,
       info,

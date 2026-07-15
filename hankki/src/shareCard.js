@@ -79,7 +79,7 @@ export async function shareRecipeCard({ title, info = [], ingredients = [], step
     if (steps.length > shownSteps.length) y += 44
   }
   const footerTop = y + 40
-  const cardBottom = footerTop + 120
+  const cardBottom = footerTop + 168
   const H = cardBottom + 72
 
   // ── 그리기 ──
@@ -196,6 +196,8 @@ export async function shareRecipeCard({ title, info = [], ingredients = [], step
   ctx.lineTo(W - 150, footerTop - 22)
   ctx.stroke()
 
+  const url = appUrl || 'https://peachfam0307-glitch.github.io/hankki/'
+
   ctx.textAlign = 'center'
   ctx.fillStyle = '#6b4f3a'
   ctx.font = `800 50px ${F}`
@@ -204,8 +206,24 @@ export async function shareRecipeCard({ title, info = [], ingredients = [], step
   ctx.font = `600 30px ${F}`
   ctx.fillText('모으고 · 만들고 · 살림까지', W / 2, footerTop + 92)
 
+  // 앱 주소 — 이미지가 혼자 퍼져도 '어디서 만든 건지' 알 수 있게 (바이럴 루프)
+  const prettyUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '')
+  const pillLabel = '레시피 만들러 가기  ·  ' + prettyUrl
+  const pillW = 700
+  roundRect(ctx, W / 2 - pillW / 2, footerTop + 118, pillW, 58, 29)
+  ctx.fillStyle = '#f3efe6'
+  ctx.fill()
+  ctx.fillStyle = '#8a7a63'
+  // 주소가 길어도 알약 안에 들어오도록 폰트 크기 자동 축소(최소 21px)
+  let pillFont = 27
+  do {
+    ctx.font = `700 ${pillFont}px ${F}`
+    if (ctx.measureText(pillLabel).width <= pillW - 60) break
+    pillFont -= 1
+  } while (pillFont > 21)
+  ctx.fillText(pillLabel, W / 2, footerTop + 155)
+
   // ── 공유/다운로드 ──
-  const url = appUrl || 'https://claude.ai'
   const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'))
   if (!blob) return { ok: false }
   const file = new File([blob], 'hankki-recipe.png', { type: 'image/png' })
