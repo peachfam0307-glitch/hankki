@@ -214,7 +214,7 @@ export default function EditorScreen({ id, prefill }) {
       const lines = cleanOcrLines(text)
       if (!lines.length) { nav.showToast('사진에서 글자를 찾지 못했어요'); return }
       setF((prev) => ({ ...prev, [target]: appendLines(prev[target], lines) }))
-      nav.showToast(target === 'ingredients' ? '재료 초안을 담았어요 · 다듬어 주세요 ✍️' : '만드는 법 초안을 담았어요 · 다듬어 주세요 ✍️')
+      nav.showToast(target === 'ingredients' ? '재료 초안을 담았어요 · 다듬어 주세요 ✍️' : '만드는 법 초안을 담았어요 · 다듬어 주세요 ✍️', 4800)
       return
     }
     // 자동 분류 — 재료·순서를 함께 채운다(빈 칸만).
@@ -231,7 +231,7 @@ export default function EditorScreen({ id, prefill }) {
           ? prev.category
           : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
     }))
-    nav.showToast('초안을 채웠어요 · 사진 보며 다듬어 주세요 ✍️')
+    nav.showToast('초안을 채웠어요 · 사진 보며 다듬어 주세요 ✍️', 4800)
   }
 
   const canSave = f.title.trim().length > 0
@@ -509,7 +509,7 @@ export default function EditorScreen({ id, prefill }) {
               <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
-          <textarea ref={stepRef} rows={5} value={f.steps} onChange={(e) => set('steps', e.target.value)} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
+          <textarea ref={stepRef} rows={7} value={f.steps} onChange={(e) => set('steps', e.target.value)} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
           <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 7, lineHeight: 1.5 }}>
             한 장의 캡처에 재료·만드는 법이 다 있다면{' '}
             <button className="press" onClick={() => pickOcr('all')} disabled={ocr.busy} style={{ display: 'inline', padding: 0, background: 'none', color: 'var(--brown)', fontWeight: 700, fontSize: 12, textDecoration: 'underline' }}>
@@ -517,7 +517,7 @@ export default function EditorScreen({ id, prefill }) {
             </button>
             {' '}· 썸네일은 안 바뀌어요
           </div>
-          <div style={{ marginTop: 8, fontSize: 11.5, color: 'var(--text-sub)', lineHeight: 1.55, background: 'var(--cream)', borderRadius: 8, padding: '8px 10px' }}>
+          <div style={{ marginTop: 8, fontSize: 13.5, color: 'var(--text)', lineHeight: 1.6, background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 10, padding: '11px 13px', fontWeight: 500 }}>
             💡 아이콘·특수문자가 많은 캡쳐는 글자 인식이 부정확할 수 있어요. 읽은 내용은 <b style={{ color: 'var(--brown)' }}>초안</b>이니 사진을 보며 다듬어 주세요.
           </div>
         </div>
@@ -563,7 +563,7 @@ export default function EditorScreen({ id, prefill }) {
 
         <div className="field">
           <label>메모 (선택)</label>
-          <textarea rows={3} value={f.memo} onChange={(e) => set('memo', e.target.value)} placeholder="나만의 팁이나 변형 아이디어" />
+          <textarea rows={5} value={f.memo} onChange={(e) => set('memo', e.target.value)} placeholder="나만의 팁이나 변형 아이디어" />
         </div>
 
         <button className="btn-primary press" onClick={save} disabled={!canSave} style={{ opacity: canSave ? 1 : 0.5 }}>

@@ -109,10 +109,10 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const showToast = useCallback((msg) => {
+  const showToast = useCallback((msg, ms = 1900) => {
     setToast(msg)
     if (toastTimer.current) clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToast(null), 1900)
+    toastTimer.current = setTimeout(() => setToast(null), ms)
   }, [])
 
   // '공유받기' — 인스타/갤러리에서 한끼로 공유된 링크·사진을 앱 시작 시 받아 Inbox 로.

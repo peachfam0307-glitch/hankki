@@ -166,7 +166,7 @@ export default function CropSheet({
         </div>
       </div>
 
-      <div style={{ margin: '0 16px 6px', padding: '9px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.1)', color: '#e7e3db', fontSize: 11.5, lineHeight: 1.5, textAlign: 'center' }}>
+      <div style={{ margin: '0 16px 8px', padding: '11px 13px', borderRadius: 12, background: 'rgba(255,255,255,0.16)', color: '#fbf9f4', fontSize: 13.5, lineHeight: 1.55, textAlign: 'center' }}>
         💡 아이콘·특수문자가 많으면 인식이 부정확할 수 있어요. 읽은 건 <b style={{ color: '#fff' }}>초안</b> — 사진 보며 다듬어 주세요.
       </div>
       <div style={{ display: 'flex', gap: 10, padding: '0 16px calc(16px + var(--safe-bottom, 0px))' }}>

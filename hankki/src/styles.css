@@ -784,7 +784,7 @@ img {
   background: var(--surface);
   border-radius: var(--r-sm);
   padding: 13px 14px;
-  font-size: 14.5px;
+  font-size: 15.5px;
   color: var(--text);
   outline: none;
   transition: border-color 0.15s ease;
@@ -795,7 +795,7 @@ img {
 }
 .field textarea {
   resize: none;
-  line-height: 1.5;
+  line-height: 1.65;
 }
 
 /* 하단 고정 액션 바 */
