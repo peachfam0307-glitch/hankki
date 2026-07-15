@@ -64,8 +64,52 @@ export default function ShopScreen() {
 
         {view === 'shop' && (
         <>
-        {/* 1) 쇼핑몰 바로가기 */}
-        <div className="sec-head" style={{ marginTop: 6 }}>
+        {/* 1) 주부의 장바구니 — 시그니처(해자·수익). '둘러보기 → 담기 → 사러가기' 퍼널의 입구라 맨 위. */}
+        <Curation />
+
+        {/* 2) 장보기 리스트 — 담은 것이 여기로. 큐레이션 바로 아래라 담기 동선이 자연스럽다. */}
+        <div className="sec-head" style={{ marginTop: 20 }}>
+          <div className="h-section">장보기 리스트</div>
+          <div style={{ display: 'flex', gap: 14 }}>
+            {doneCount > 0 && (
+              <button className="t-more press" onClick={() => store.clearDoneShopItems()}>
+                완료 지우기
+              </button>
+            )}
+            {shoppingList.length > 0 && (
+              <button
+                className="t-more press"
+                onClick={() => setClearAsk(true)}
+              >
+                전체 비우기
+              </button>
+            )}
+          </div>
+        </div>
+        <ChecklistAdd />
+        {shoppingList.length === 0 ? (
+          <div className="empty" style={{ padding: '24px' }}>{'필요한 재료를 담아보세요.\n위 주부의 장바구니나 레시피 상세 “재료 담기”로도 담을 수 있어요.'}</div>
+        ) : (
+          shoppingList.map((it) => (
+            <div key={it.id} className="shop-row">
+              <button className="check-box press" data-on={it.done} onClick={() => { const was = it.done; store.toggleShopItem(it.id); if (!was) nav.showToast('샀어요! 냉장고에 넣어뒀어요 🧊') }}>
+                {it.done && <Icon name="check" size={15} color="#fff" stroke={2.4} />}
+              </button>
+              <span style={{ flex: 1, fontSize: 15, textDecoration: it.done ? 'line-through' : 'none', color: it.done ? 'var(--text-sub)' : 'var(--text)' }}>
+                {it.name}
+              </span>
+              <button className="press mini-buy" onClick={() => (it.url ? openUrl(it.url) : openUrl(shopSearchUrl(shops[0] || { url: '' }, it.name)))}>
+                {it.url ? '사러가기' : '검색'}
+              </button>
+              <button className="icon-btn press" onClick={() => store.removeShopItem(it.id)} aria-label="삭제">
+                <Icon name="x" size={17} color="var(--sand)" />
+              </button>
+            </div>
+          ))
+        )}
+
+        {/* 3) 쇼핑몰 바로가기 — 리스트 확인하고 바로 사러 가는 자리(리스트 바로 아래). */}
+        <div className="sec-head" style={{ marginTop: 24 }}>
           <div className="h-section">쇼핑몰 바로가기</div>
           <button className="press" style={secBtnStyle} onClick={() => setEditShops((v) => !v)}>
             {editShops ? '완료' : '편집'}
@@ -118,50 +162,6 @@ export default function ShopScreen() {
           {editShops ? '아이콘을 눌러 이름·주소·아이콘을 바꿀 수 있어요.' : '쇼핑몰 앱이 깔려 있고 로그인돼 있으면 바로 연결돼요. 한 번 로그인해두면 계속 유지돼 편해요.'}
         </div>
         {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
-
-        {/* 1.5) 주부의 장바구니 — 건강 식재료 큐레이션 (시그니처) */}
-        <Curation />
-
-        {/* 2) 장보기 리스트 (위시=사고 싶은 재료를 여기로 통합) */}
-        <div className="sec-head">
-          <div className="h-section">장보기 리스트</div>
-          <div style={{ display: 'flex', gap: 14 }}>
-            {doneCount > 0 && (
-              <button className="t-more press" onClick={() => store.clearDoneShopItems()}>
-                완료 지우기
-              </button>
-            )}
-            {shoppingList.length > 0 && (
-              <button
-                className="t-more press"
-                onClick={() => setClearAsk(true)}
-              >
-                전체 비우기
-              </button>
-            )}
-          </div>
-        </div>
-        <ChecklistAdd />
-        {shoppingList.length === 0 ? (
-          <div className="empty" style={{ padding: '24px' }}>{'필요한 재료를 담아보세요.\n레시피 상세에서 “재료 담기”로도 담을 수 있어요.'}</div>
-        ) : (
-          shoppingList.map((it) => (
-            <div key={it.id} className="shop-row">
-              <button className="check-box press" data-on={it.done} onClick={() => { const was = it.done; store.toggleShopItem(it.id); if (!was) nav.showToast('샀어요! 냉장고에 넣어뒀어요 🧊') }}>
-                {it.done && <Icon name="check" size={15} color="#fff" stroke={2.4} />}
-              </button>
-              <span style={{ flex: 1, fontSize: 15, textDecoration: it.done ? 'line-through' : 'none', color: it.done ? 'var(--text-sub)' : 'var(--text)' }}>
-                {it.name}
-              </span>
-              <button className="press mini-buy" onClick={() => (it.url ? openUrl(it.url) : openUrl(shopSearchUrl(shops[0] || { url: '' }, it.name)))}>
-                {it.url ? '사러가기' : '검색'}
-              </button>
-              <button className="icon-btn press" onClick={() => store.removeShopItem(it.id)} aria-label="삭제">
-                <Icon name="x" size={17} color="var(--sand)" />
-              </button>
-            </div>
-          ))
-        )}
         </>
         )}
       </div>
@@ -186,6 +186,16 @@ function Curation() {
   const { shops } = store
   const nav = useNav()
   const [open, setOpen] = useState(true)
+  // 큐레이션이 맨 위로 오면서, 26장 벽 대신 '이번 주 픽'을 기본으로 보여주고
+  // 카테고리 칩으로 필요한 것만 펼친다. 'pick'(기본) | 카테고리명 | '전체'
+  const [curCat, setCurCat] = useState('pick')
+
+  // 카테고리·이모지를 각 아이템에 붙여 평탄화(칩 필터·픽 렌더용)
+  const flat = CURATION.flatMap((g) => g.items.map((it) => ({ ...it, cat: g.cat, emoji: g.emoji })))
+  const picks = flat.filter((it) => it.pick)
+  const catList = CURATION.map((g) => ({ cat: g.cat, emoji: g.emoji }))
+  const shownItems =
+    curCat === 'pick' ? picks : curCat === '전체' ? flat : flat.filter((it) => it.cat === curCat)
 
   // '사러가기' 연결: url 이 있으면 그 직접 링크로, mall 이 있으면 그 쇼핑몰 검색으로,
   // 없으면 무엇이든 잘 찾는 네이버쇼핑 통합검색으로.
@@ -217,43 +227,65 @@ function Curation() {
   const tagStyle = { fontSize: 11, fontWeight: 700, color: '#8a6a3e', background: 'var(--cream)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
   const mallStyle = { fontSize: 11, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream-deep)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
 
+  const Card = (it) => (
+    <div key={it.name} className="card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
+      <div style={{ display: 'flex', gap: 11 }}>
+        <div className="emoji-tile" style={{ width: 46, height: 46, fontSize: 24, flex: '0 0 auto' }}>{it.emoji}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+            <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
+            {it.tag && <span style={tagStyle}>{it.tag}</span>}
+            {mallLabel(it) && <span style={mallStyle}>{mallLabel(it)}</span>}
+          </div>
+          <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.58 }}>{it.benefit}</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 11 }}>
+        <button className="press" onClick={() => add(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 13.5 }}>담기</button>
+        <button className="press" onClick={() => buy(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 13.5 }}>사러가기</button>
+      </div>
+    </div>
+  )
+  const chip = (key, label) => (
+    <button
+      key={key}
+      className={`pill press ${curCat === key ? 'active' : ''}`}
+      onClick={() => setCurCat(key)}
+    >{label}</button>
+  )
+
   return (
     <>
-      <div className="sec-head" style={{ marginTop: 14 }}>
+      <div className="sec-head" style={{ marginTop: 6 }}>
         <div className="h-section">🌿 주부의 장바구니</div>
         <button className="press" style={secBtnStyle} onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
       </div>
       <div className="t-sub" style={{ fontSize: 12, marginTop: -2, marginBottom: 8 }}>
         18년차 주부가 엄선한 · 첨가물 적은 건강 식재료
       </div>
-      {open && CURATION.map((g) => (
-        <div key={g.cat}>
-          <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>{g.emoji} {g.cat}</div>
-          {g.items.map((it) => (
-            <div key={it.name} className="card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
-              <div style={{ display: 'flex', gap: 11 }}>
-                <div className="emoji-tile" style={{ width: 46, height: 46, fontSize: 24, flex: '0 0 auto' }}>{g.emoji}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
-                    {it.tag && <span style={tagStyle}>{it.tag}</span>}
-                    {mallLabel(it) && <span style={mallStyle}>{mallLabel(it)}</span>}
-                  </div>
-                  <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.58 }}>{it.benefit}</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 11 }}>
-                <button className="press" onClick={() => add(it, g.emoji)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 13.5 }}>담기</button>
-                <button className="press" onClick={() => buy(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 13.5 }}>사러가기</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      ))}
+
       {open && (
-        <div className="t-sub" style={{ fontSize: 12.5, fontWeight: 600, textAlign: 'center', background: 'var(--cream)', borderRadius: 12, padding: '13px 12px', margin: '4px 0 2px', lineHeight: 1.5 }}>
-          🌿 18년차 주부가 진짜 쓰는 재료들, 앞으로도 하나씩 계속 올라와요.
-        </div>
+        <>
+          {/* 카테고리 칩 — 기본은 '이번 주 픽', 필요한 카테고리만 펼쳐 본다 */}
+          <div className="hscroll" style={{ paddingBottom: 4, marginBottom: 4 }}>
+            {chip('pick', '✨ 이번 주 픽')}
+            {chip('전체', '전체')}
+            {catList.map((c) => chip(c.cat, `${c.emoji} ${c.cat}`))}
+          </div>
+
+          {curCat === '전체'
+            ? CURATION.map((g) => (
+                <div key={g.cat}>
+                  <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>{g.emoji} {g.cat}</div>
+                  {g.items.map((it) => Card({ ...it, cat: g.cat, emoji: g.emoji }))}
+                </div>
+              ))
+            : shownItems.map((it) => Card(it))}
+
+          <div className="t-sub" style={{ fontSize: 12.5, fontWeight: 600, textAlign: 'center', background: 'var(--cream)', borderRadius: 12, padding: '13px 12px', margin: '4px 0 2px', lineHeight: 1.5 }}>
+            🌿 18년차 주부가 진짜 쓰는 재료들, 앞으로도 하나씩 계속 올라와요.
+          </div>
+        </>
       )}
     </>
   )
