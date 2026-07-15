@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
-import { APP_VERSION, APP_TAGLINE } from '../version'
+import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL } from '../version'
 import Icon from '../components/Icon'
 import TabTips from '../components/TabTips'
 import EmojiPicker from '../components/EmojiPicker'
@@ -194,6 +194,10 @@ export default function ProfileScreen() {
     { icon: 'cloud', label: '백업 · 내보내기', badge: 'NEW', onClick: () => setBackup(true) },
     { icon: 'help', label: '앱 소개 다시 보기', onClick: () => nav.showOnboarding && nav.showOnboarding() },
     { icon: 'help', label: '도움말 및 문의', onClick: () => { try { const a = document.createElement('a'); a.href = 'mailto:annyeong.hankki@gmail.com'; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com 📧') } },
+    // 익명 의견 — FEEDBACK_URL 이 설정됐을 때만 노출(죽은 버튼 방지)
+    ...(FEEDBACK_URL
+      ? [{ icon: 'edit', label: '의견 보내기', badge: '익명', onClick: () => { const a = document.createElement('a'); a.href = FEEDBACK_URL; a.target = '_blank'; a.rel = 'noopener'; a.click() } }]
+      : []),
     { icon: 'settings', label: '개인정보처리방침', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
   ]
 
