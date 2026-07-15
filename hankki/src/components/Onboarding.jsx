@@ -173,19 +173,30 @@ function HeroDecorate() {
   )
 }
 
+// 캡처·링크 → AI → 레시피 완성 흐름(곧 출시 미리보기)
 function HeroAI() {
   return (
-    <div style={{ position: 'relative', width: 172, height: 172, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{
-        position: 'absolute', inset: 0, borderRadius: '50%',
-        background: 'radial-gradient(circle at 50% 42%, #eef3ea, #e3eadd)',
-      }} />
-      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Chip><Icon name="camera" size={22} color="var(--brown)" /></Chip>
-          <Chip tint="#fdf0f4"><Icon name="instagram" size={22} color="#c2557e" /></Chip>
-        </div>
-        <div style={{ fontSize: 22 }}>✨</div>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+      <div style={{ textAlign: 'center' }}>
+        <Chip tint="#fdf0f4"><Icon name="camera" size={24} color="#c2557e" /></Chip>
+        <div style={{ marginTop: 7, fontSize: 10, fontWeight: 700, color: 'var(--text-sub)' }}>캡처 · 링크</div>
+      </div>
+      <Arrow />
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          width: 62, height: 62, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'radial-gradient(circle at 50% 40%, #eef5ea, #dbe8d1)', border: '1px solid #cfe0c5',
+          fontSize: 28, boxShadow: 'var(--shadow-soft)',
+        }}>✨</div>
+        <div style={{ marginTop: 7, fontSize: 10, fontWeight: 800, color: '#4a7a45' }}>AI 정리</div>
+      </div>
+      <Arrow />
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          width: 58, height: 58, borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: 'var(--shadow-soft)', fontSize: 26,
+        }}>🍲</div>
+        <div style={{ marginTop: 7, fontSize: 10, fontWeight: 700, color: 'var(--text-sub)' }}>레시피 완성</div>
       </div>
     </div>
   )
@@ -223,9 +234,10 @@ const SLIDES = [
   },
   {
     hero: <HeroAI />,
-    title: '곧, AI가 대신 정리해줘요',
-    body: '사진이나 인스타 링크만 쏙 —\nAI가 재료·순서까지 척척 자동정리.\n더 편해질 한끼, 기대해 주세요.',
-    badge: '준비 중',
+    title: '사진 찍으면,\nAI가 레시피로',
+    body: '캡처·인스타·유튜브 링크만 쏙 —\n재료·순서까지 칸칸이 알아서 정리돼요.\n옮겨적을 필요 없이 몇 초면 끝.',
+    badge: '곧 출시',
+    highlight: true,
   },
 ]
 

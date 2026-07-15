@@ -28,11 +28,13 @@ export default function ImportScreen() {
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
   const [help, setHelp] = useState(false)
+  const [aiPreview, setAiPreview] = useState(false) // AI 자동정리 미리보기(곧 출시)
   const [linkBusy, setLinkBusy] = useState(false)
   const linkCancel = useRef(false)
 
   // 뒤로가기: 열린 시트·하위 흐름을 먼저 닫는다(바로 홈으로 안 나가게).
   useBackHandler(() => {
+    if (aiPreview) { setAiPreview(false); return true }
     if (help) { setHelp(false); return true }
     if (flow) { setFlow(null); return true }
     return false
@@ -136,9 +138,37 @@ export default function ImportScreen() {
       {!flow ? (
         <div className="pad">
           <div className="h-title" style={{ marginTop: 6 }}>가져오기</div>
-          <div className="t-sub" style={{ marginTop: 8, marginBottom: 22, fontSize: 14 }}>
+          <div className="t-sub" style={{ marginTop: 8, marginBottom: 18, fontSize: 14 }}>
             레시피를 가져오는 방법을 선택해 주세요.
           </div>
+
+          {/* AI 자동정리 — 곧 출시 미리보기(시그니처) */}
+          <button
+            className="press"
+            onClick={() => setAiPreview(true)}
+            style={{
+              width: '100%', textAlign: 'left', marginBottom: 18, padding: '15px 16px',
+              borderRadius: 18, border: '1px solid #d6e5cd',
+              background: 'linear-gradient(135deg, #f2f8ed, #e8f1df)',
+              display: 'flex', alignItems: 'center', gap: 13,
+            }}
+          >
+            <div style={{
+              width: 46, height: 46, borderRadius: 14, flexShrink: 0, fontSize: 24,
+              background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(90,120,70,.16)',
+            }}>✨</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                <span style={{ fontSize: 14.5, fontWeight: 800, color: '#4a7a45' }}>사진 찍으면 레시피가 돼요</span>
+                <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', background: '#7fa06a', borderRadius: 999, padding: '2px 7px' }}>곧 출시</span>
+              </div>
+              <div style={{ fontSize: 12.3, lineHeight: 1.5, color: 'var(--text-sub)' }}>
+                캡처·링크만 올리면 AI가 재료·순서까지 척척
+              </div>
+            </div>
+            <Icon name="chevron-right" size={18} color="#8aa07a" />
+          </button>
 
           <div className="card" style={{ overflow: 'hidden' }}>
             {OPTIONS.map((o, i) => (
@@ -318,6 +348,49 @@ export default function ImportScreen() {
             </div>
           </div>
         </div>
+      )}
+
+      {aiPreview && (
+       <Portal>
+        <div className="sheet-mask" onClick={() => setAiPreview(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 26 }}>
+            <div className="emoji-sheet-head">
+              <span>✨ AI 자동정리</span>
+              <button className="press" onClick={() => setAiPreview(false)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            </div>
+            <div style={{ padding: '4px 18px 0' }}>
+              {/* 곧 출시 · 헤드라인 */}
+              <div style={{ textAlign: 'center', padding: '8px 0 18px' }}>
+                <span style={{ display: 'inline-block', marginBottom: 12, padding: '4px 12px', borderRadius: 999, background: '#eef5ea', color: '#4a7a45', fontSize: 12, fontWeight: 800 }}>곧 출시 ✨</span>
+                <div style={{ fontSize: 21, fontWeight: 900, color: 'var(--brown)', lineHeight: 1.3, letterSpacing: '-0.02em' }}>사진 찍으면<br />레시피가 돼요</div>
+                <div className="t-sub" style={{ fontSize: 13, marginTop: 9, lineHeight: 1.6 }}>캡처만 올리면 재료·순서를<br />칸칸이 알아서 정리해드려요.</div>
+              </div>
+
+              {/* 장점 */}
+              <div className="card" style={{ padding: '4px 2px', background: 'var(--cream)', border: 'none' }}>
+                {[
+                  ['📷', '캡처 사진 인식', '레시피 화면을 캡처만 하면 재료·순서를 칸칸이 자동으로 채워요.'],
+                  ['🔗', '인스타·유튜브 링크', '링크만 붙여넣어도 내용을 읽어 레시피로 정리해요.'],
+                  ['⏱️', '옮겨적기 끝', '손으로 하나하나 타이핑할 필요 없이 몇 초면 완성.'],
+                  ['✍️', '언제든 손보기', 'AI가 정리한 결과는 마음대로 고치고 다듬을 수 있어요.'],
+                ].map(([emo, t, b]) => (
+                  <div key={t} style={{ display: 'flex', gap: 11, padding: '11px 13px', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: 20, lineHeight: 1.2 }}>{emo}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{t}</div>
+                      <div className="t-sub" style={{ fontSize: 12.3, lineHeight: 1.5 }}>{b}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.65, marginTop: 16, textAlign: 'center', color: 'var(--brown)' }}>
+                지금은 <b>캡처·텍스트·링크</b>로 담을 수 있어요.<br />AI 자동정리가 준비되면 가장 먼저 알려드릴게요 💛
+              </div>
+            </div>
+          </div>
+        </div>
+       </Portal>
       )}
 
       {help && (
