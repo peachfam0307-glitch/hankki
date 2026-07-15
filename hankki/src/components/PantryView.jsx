@@ -109,7 +109,14 @@ export default function PantryView() {
       <div className="sec-head" style={{ marginTop: 6 }}>
         <div className="h-section">냉장고 재료함</div>
       </div>
-      {/* 영수증 스캔 — 핵심 기능이라 크고 진하게. 바로 촬영이 기본, 저장된 사진도 선택. */}
+      {/* 영수증 스캔 — 베타. 영수증마다 인식이 달라 기대치를 낮춰두고(라벨), AI 정리 나오면 정확해질 예정. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
+        <span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>영수증 스캔</span>
+        <span style={{ fontSize: 12.5, fontWeight: 800, color: '#fff', background: '#c79553', borderRadius: 999, padding: '3px 11px', letterSpacing: '0.02em' }}>베타</span>
+      </div>
+      <div style={{ fontSize: 12.8, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 11 }}>
+        영수증에 따라 인식률이 다를 수 있어요. 안 되면 아래 <b style={{ color: 'var(--brown)' }}>＋재료</b>로 직접 담아도 돼요. <span style={{ color: 'var(--brown)', fontWeight: 600 }}>(AI 정리가 나오면 더 정확해질 예정이에요 ✨)</span>
+      </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <button
           className="press"
