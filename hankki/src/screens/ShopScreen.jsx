@@ -54,9 +54,10 @@ export default function ShopScreen() {
       </div>
 
       <div className="pad">
+        {/* 장보기가 주(첫인상), 냉장고는 옆 토글(부). 냉장고 기능은 유지하되 앞으로 안 내세운다. */}
         <div className="segment" style={{ marginTop: 4 }}>
-          <button type="button" className={`seg ${view === 'pantry' ? 'on' : ''}`} onClick={() => setView('pantry')}>🧊 냉장고</button>
           <button type="button" className={`seg ${view === 'shop' ? 'on' : ''}`} onClick={() => setView('shop')}>🛒 장보기</button>
+          <button type="button" className={`seg ${view === 'pantry' ? 'on' : ''}`} onClick={() => setView('pantry')}>🧊 냉장고</button>
         </div>
 
         {view === 'pantry' && <PantryView />}
