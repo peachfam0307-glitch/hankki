@@ -110,7 +110,8 @@ export const CURATION = [
   {
     cat: '두부', emoji: '🧈',
     items: [
-      { name: '한살림 유기농 두부', benefit: '국산 유기농콩으로 만들어 고소하고 담백해요. 부침·찌개 어디에나 잘 어울려요', q: '한살림 유기농 두부', url: HANSALIM_APP },
+      { name: '한살림 마른두부', benefit: '단단해서 부침·조림·볶음에 좋아요. 잘 부서지지 않아 요리하기 편해요', q: '한살림 마른두부', url: HANSALIM_APP },
+      { name: '한살림 몽글이 순두부', benefit: '부드럽고 몽글몽글해서 순두부찌개·국에 딱이에요', q: '한살림 몽글이 순두부', url: HANSALIM_APP },
     ],
   },
   {
