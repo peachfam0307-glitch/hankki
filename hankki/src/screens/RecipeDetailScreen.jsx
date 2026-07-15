@@ -11,6 +11,7 @@ import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
+import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { shareRecipeCard } from '../shareCard'
 import { scaleIngredient } from '../scale'
 import { dateLabel } from '../utils'
@@ -31,6 +32,7 @@ export default function RecipeDetailScreen({ id }) {
   const [confirmDel, setConfirmDel] = useState(false)
   const [logEntry, setLogEntry] = useState(null)
   const [decorOpen, setDecorOpen] = useState(false)
+  const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
   // 뒤로가기: 열린 꾸미기·시트를 먼저 닫는다(레시피가 통째로 닫히지 않게).
   useBackHandler(() => {
     if (decorOpen) { setDecorOpen(false); return true }
@@ -226,7 +228,12 @@ export default function RecipeDetailScreen({ id }) {
         {r.ingredients?.length > 0 && (
           <>
             <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
-              <div className="h-section">재료</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div className="h-section">재료</div>
+                <button className="press" onClick={() => setGuide(true)} aria-label="계량·손질 가이드" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 999, background: 'var(--cream)' }}>
+                  <Icon name="help" size={14} color="var(--brown)" />
+                </button>
+              </div>
               <button
                 className="mini-buy press"
                 onClick={() => {
@@ -343,6 +350,8 @@ export default function RecipeDetailScreen({ id }) {
           onDelete={() => { removeDiary(logEntry.id); setLogEntry(null); nav.showToast('기록을 삭제했어요') }}
         />
       )}
+
+      {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
 
       {menu && (
        <Portal>

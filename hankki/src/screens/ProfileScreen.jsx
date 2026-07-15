@@ -10,6 +10,7 @@ import Buddy, { BUDDY_GROUPS } from '../components/Buddies'
 import Portal from '../components/Portal'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
+import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { cropSquare } from '../utils'
 import { THEMES, getTheme, setTheme } from '../theme'
 import { Avatar } from './HomeScreen'
@@ -25,6 +26,7 @@ export default function ProfileScreen() {
   const [theme, setThemeState] = useState(getTheme())
   const [pasteOpen, setPasteOpen] = useState(false)
   const [checking, setChecking] = useState(false)
+  const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
   const fileRef = useRef(null)
   const avatarFileRef = useRef(null)
 
@@ -192,6 +194,7 @@ export default function ProfileScreen() {
   const menu = [
     { icon: 'heart', label: '즐겨찾기', onClick: () => nav.push({ name: 'favorites' }) },
     { icon: 'cloud', label: '백업 · 내보내기', badge: 'NEW', onClick: () => setBackup(true) },
+    { icon: 'help', label: '요리 가이드', badge: '계량·손질', onClick: () => setGuide(true) },
     { icon: 'help', label: '앱 소개 다시 보기', onClick: () => nav.showOnboarding && nav.showOnboarding() },
     { icon: 'help', label: '도움말 및 문의', onClick: () => { try { const a = document.createElement('a'); a.href = 'mailto:annyeong.hankki@gmail.com'; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com 📧') } },
     // 익명 의견 — FEEDBACK_URL 이 설정됐을 때만 노출(죽은 버튼 방지)
@@ -483,6 +486,8 @@ export default function ProfileScreen() {
           onClose={() => setPasteOpen(false)}
         />
       )}
+
+      {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
     </>
   )
 }
