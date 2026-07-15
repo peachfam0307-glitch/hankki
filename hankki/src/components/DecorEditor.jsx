@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
@@ -52,6 +52,14 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
 
   const selItem = items.find((x) => x.id === sel)
   const selNoteColor = NOTE_COLORS.find((n) => n.key === selItem?.key) || NOTE_COLORS[0]
+
+  // 포스트잇을 선택하면 서랍을 맨 위로 올려 '무늬·모양 꾸미기'가 바로 보이게 한다.
+  const drawerRef = useRef(null)
+  useEffect(() => {
+    const it = items.find((x) => x.id === sel)
+    if (it?.type === 'note' && drawerRef.current) drawerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel])
 
   const addSticker = (key) => {
     const n = items.length
@@ -110,7 +118,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
         {/* 서랍 — 세로 스크롤 그리드(가로 스크롤 제거). 카테고리별로 라벨과 함께 쌓아서 한눈에. */}
         <div className="decor-drawer">
           <div className="decor-grab" />
-          <div className="decor-scroll">
+          <div className="decor-scroll" ref={drawerRef}>
             {/* 포스트잇 선택 시 — 무늬·모양 바꾸기 (맨 위에 떠서 바로 보임) */}
             {selItem?.type === 'note' && (
               <div className="decor-sec" style={{ background: 'var(--cream)', borderRadius: 14, padding: '11px 12px 12px' }}>
