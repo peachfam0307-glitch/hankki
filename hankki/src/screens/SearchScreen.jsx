@@ -32,7 +32,10 @@ export default function SearchScreen() {
   return (
     <>
       <div className="topbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button className="icon-btn press" onClick={() => nav.go('home')} aria-label="뒤로" style={{ marginLeft: -6 }}>
+            <Icon name="chevron-left" size={24} />
+          </button>
           <div className="h-title">검색</div>
           <TabTips tab="search" />
         </div>
