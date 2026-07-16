@@ -10,15 +10,14 @@ import { graphemes } from '../utils'
 //   'label' — 글자 타일
 //   'photo' — 사진 (있을 때만)
 // 예전 레시피(thumb 없음)는 이미지가 있으면 사진, 없으면 아이콘으로 자연스럽게 보인다.
-// 크림 배경과 어울리는 '뮤트 팔레트' 큐레이션 — 웜 크림에 얹어도 안 붕 뜨는
-// 저채도 톤들(크림·테라코타·허니·세이지·더스티로즈·세이지블루). 그냥 회색 아님, 의도된 변주.
+// 레시피 사진(썸네일) 배경은 '하얀색' — 사진·꾸미기가 깨끗하게 얹히도록.
+// 색·개성은 꾸미기(사용자 배경/스티커)가 담당한다. (여기 색 넣으면 꾸미기 의미가 죽음)
+// 순백은 아이콘이 붕 떠서, 웜 화이트에 아주 옅은 결만.
 const GRADS = [
-  'linear-gradient(135deg,#f5efe3,#e9dcc8)', // 크림/베이지
-  'linear-gradient(135deg,#f2e0d3,#e6c7b2)', // 테라코타/클레이
-  'linear-gradient(135deg,#f1e6c9,#e3d0a3)', // 허니
-  'linear-gradient(135deg,#e8ecdc,#d5dcbe)', // 세이지(뮤트)
-  'linear-gradient(135deg,#f1e2e1,#e2ccc9)', // 더스티 로즈
-  'linear-gradient(135deg,#e3eae8,#cdd9d5)', // 세이지블루(뮤트)
+  'linear-gradient(160deg,#ffffff,#faf6ef)',
+  'linear-gradient(160deg,#fffefb,#f7f2ea)',
+  'linear-gradient(160deg,#fffdf9,#f8f3eb)',
+  'linear-gradient(160deg,#ffffff,#f9f4ec)',
 ]
 
 function gradFor(seed = '') {
