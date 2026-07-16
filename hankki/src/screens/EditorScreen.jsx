@@ -497,8 +497,19 @@ export default function EditorScreen({ id, prefill }) {
           style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '15px', marginBottom: 7, borderRadius: 'var(--r-md)', background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 800, boxShadow: 'var(--shadow-soft)', opacity: ocr.busy ? 0.5 : 1 }}>
           <Icon name="camera" size={18} color="#fff" /> 캡처 사진으로 재료·만드는 법 채우기
         </button>
-        <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 14, lineHeight: 1.5, textAlign: 'center' }}>
-          긴 레시피는 <b style={{ color: 'var(--brown)' }}>여러 장을 한꺼번에</b> 골라도 돼요 · 한 장씩 다듬어 이어 채워요
+        {/* 캡처 안내는 여기 한 곳에만 — 잘 보이게(흩어진 안내 통합) */}
+        <div style={{ marginBottom: 14, padding: '13px 16px', borderRadius: 'var(--r-md)', background: 'var(--cream)', border: '1px solid var(--line)' }}>
+          <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>캡처는 이렇게 채워요</div>
+          {[
+            ['긴 레시피는 ', '여러 장을 한꺼번에', ' 골라도 돼요.'],
+            ['재료·순서가 섞이면 각 칸의 ', '사진에서 채우기', '로 그 칸만 다시 채워요.'],
+            ['읽은 내용은 ', '초안', '이니 사진 보며 다듬어 주세요.'],
+          ].map(([a, b, c], k) => (
+            <div key={k} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text)', lineHeight: 1.5, marginTop: k ? 5 : 0 }}>
+              <span style={{ flex: '0 0 auto', width: 5, height: 5, borderRadius: 9, background: 'var(--brown)', marginTop: 7 }} />
+              <span>{a}<b style={{ color: 'var(--brown)', fontWeight: 700 }}>{b}</b>{c}</span>
+            </div>
+          ))}
         </div>
 
         {/* 사진 읽는 중 — 칸 채우기 진행 표시 */}
@@ -516,7 +527,7 @@ export default function EditorScreen({ id, prefill }) {
               <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
-          <textarea ref={ingRef} rows={7} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} style={{ scrollMarginTop: pin ? '38vh' : undefined }} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n계량은 키보드 위 버튼으로 · 캡처가 있다면 위 📷 버튼'} />
+          <textarea ref={ingRef} rows={7} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} style={{ scrollMarginTop: pin ? '38vh' : undefined }} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n계량은 키보드 위 버튼으로.'} />
         </div>
 
         <div className="field">
@@ -527,12 +538,6 @@ export default function EditorScreen({ id, prefill }) {
             </button>
           </div>
           <textarea ref={stepRef} rows={7} value={f.steps} onChange={(e) => set('steps', e.target.value)} style={{ scrollMarginTop: pin ? '38vh' : undefined }} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
-          <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 7, lineHeight: 1.5 }}>
-            재료·만드는 법이 섞여 들어갔다면, 각 칸의 <b style={{ color: 'var(--brown)' }}>📷 사진에서 채우기</b>로 따로 채우면 더 정확해요 · 썸네일은 안 바뀌어요
-          </div>
-          <div style={{ marginTop: 8, fontSize: 13.5, color: 'var(--text)', lineHeight: 1.6, background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 10, padding: '11px 13px', fontWeight: 500 }}>
-            💡 아이콘·특수문자가 많은 캡쳐는 글자 인식이 부정확할 수 있어요. 읽은 내용은 <b style={{ color: 'var(--brown)' }}>초안</b>이니 사진을 보며 다듬어 주세요.
-          </div>
         </div>
 
         {/* 부가 정보 — 캡처는 보통 제목+재료+만드는 법이 붙어 있어, 그걸 먼저 적고 나서 채우게 아래로 뺐다 */}
