@@ -78,8 +78,26 @@ const YUM_BUBBLE = `<rect x="3" y="3" width="68" height="30" rx="15" fill="#faf6
 
 const BUDDY_IDS = new Set(['bear', 'rabbit', 'catpot', 'chick', 'dog', 'gecko', 'hamster'])
 
-// 스티커 렌더러 — 드로잉 아트는 인라인 SVG, 친구들은 Buddy 그대로.
-export function StickerArt({ id, style }) {
+// ── 스티커 색 바꾸기(리컬러) — '곱셈기' ──
+// 단일 몸통색 스티커만 대상. 기본색 → 고른 색으로 문자열 치환(ART 원본은 안 건드림).
+// 눈·볼·외곽선은 유지되고 몸통색만 바뀐다. 대상이 아닌 스티커는 color를 무시.
+export const STICKER_DEFAULT = { heart: '#dd918a', star: '#d7b15f', sparkle: '#d7b15f', bow: '#d99cad', vhand: '#e6c49c' }
+export const RECOLORABLE = new Set(Object.keys(STICKER_DEFAULT))
+// 색 팔레트 — 따뜻한 톤 + 팝 컬러 + 모노(남성·미니멀). '기본'은 color 비우면 원래색.
+export const STICKER_COLORS = [
+  { key: 'coral', color: '#dd918a' },
+  { key: 'rose', color: '#d99cad' },
+  { key: 'red', color: '#cf6f5a' },
+  { key: 'gold', color: '#d7b15f' },
+  { key: 'olive', color: '#8ca86e' },
+  { key: 'sky', color: '#7fa9c9' },
+  { key: 'lilac', color: '#b79ec9' },
+  { key: 'charcoal', color: '#6b6255' },
+  { key: 'cream', color: '#e6dcc7' },
+]
+
+// 스티커 렌더러 — 드로잉 아트는 인라인 SVG, 친구들은 Buddy 그대로. color 주면 몸통색 리컬러.
+export function StickerArt({ id, color, style }) {
   if (BUDDY_IDS.has(id)) {
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
@@ -88,7 +106,9 @@ export function StickerArt({ id, style }) {
     )
   }
   const isBubble = id === 'yum'
-  const svg = `<svg viewBox="${isBubble ? '0 0 74 46' : '0 0 48 48'}" width="100%" height="100%" style="display:block">${isBubble ? YUM_BUBBLE : ART[id] || ''}</svg>`
+  let art = isBubble ? YUM_BUBBLE : ART[id] || ''
+  if (color && STICKER_DEFAULT[id]) art = art.split(STICKER_DEFAULT[id]).join(color)
+  const svg = `<svg viewBox="${isBubble ? '0 0 74 46' : '0 0 48 48'}" width="100%" height="100%" style="display:block">${art}</svg>`
   return <span style={{ display: 'block', width: '100%', height: '100%', ...style }} dangerouslySetInnerHTML={{ __html: svg }} />
 }
 
@@ -214,6 +234,9 @@ export const TEXT_COLORS = [
 export const TEXT_FONTS = [
   { key: 'gowun', label: '또박체', family: "'Gowun Dodum','Pretendard',sans-serif", weight: 800 },
   { key: 'gaegu', label: '귀염체', family: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", weight: 700 },
+  { key: 'nanumpen', label: '펜글씨', family: "'Nanum Pen Script','Gowun Dodum','Pretendard',sans-serif", weight: 400 },
+  { key: 'blackhan', label: '임팩트', family: "'Black Han Sans','Pretendard',sans-serif", weight: 400 },
+  { key: 'dohyeon', label: '라운드', family: "'Do Hyeon','Pretendard',sans-serif", weight: 400 },
 ]
 
 // ── 표지 배경(배경지) ──

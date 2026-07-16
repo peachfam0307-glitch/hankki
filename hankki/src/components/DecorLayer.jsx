@@ -93,7 +93,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
               <TextDeco it={it} editable={editable} />
             ) : (
               <span style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(0 3px 4px rgba(60,50,35,.22))' }}>
-                <StickerArt id={it.key} />
+                <StickerArt id={it.key} color={it.color} />
               </span>
             )}
 

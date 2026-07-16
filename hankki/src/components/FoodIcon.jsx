@@ -262,10 +262,13 @@ const I = {
   ),
   chicken: (
     <>
-      <path d="M21.5 26.5l-6.5 7" stroke="#efe4cf" strokeWidth="4.6" strokeLinecap="round" />
-      <circle cx="14.2" cy="34" r="3" fill="#efe4cf" stroke="#d8c6a4" strokeWidth="1" />
-      <circle cx="17.4" cy="30.8" r="2.4" fill="#efe4cf" stroke="#d8c6a4" strokeWidth="1" />
+      {/* 살코기(도톰한 몸통) */}
       <path d="M31 14.5c3.2 2.8 3.8 7.6 1.4 11.2-1.8 2.7-5 3.8-8 2.9-2.3-.7-4.4.2-5.8 2.1-1.1 1.5-3.3.8-3.2-1.1.2-4.2 2.3-7.8 5.9-9.9 1.7-1 2.7-2.5 3.1-4.5C21.2 12 27 10.6 31 14.5z" fill="#d0a066" />
+      <path d="M30.4 15.6c2.1 1.9 2.7 5.1 1.3 7.7" fill="none" stroke="#deb684" strokeWidth="1.5" strokeLinecap="round" opacity=".7" />
+      {/* 뼈 — 얇은 대 + 끝에 둥근 관절 두 알(신발처럼 안 보이게 끝에 수직으로 몰기) */}
+      <path d="M21.2 27l-6 6.2" stroke="#efe4cf" strokeWidth="3.5" strokeLinecap="round" />
+      <circle cx="16" cy="33" r="2.5" fill="#efe4cf" stroke="#d8c6a4" strokeWidth="1" />
+      <circle cx="13.4" cy="35.4" r="2.5" fill="#efe4cf" stroke="#d8c6a4" strokeWidth="1" />
     </>
   ),
   egg: (

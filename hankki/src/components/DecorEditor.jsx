@@ -3,7 +3,7 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { StickerArt, STICKER_GROUPS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, bgStyle } from './Stickers'
+import { StickerArt, STICKER_GROUPS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, bgStyle, RECOLORABLE, STICKER_COLORS } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -172,6 +172,23 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                 </div>
               </div>
             )}
+            {/* 스티커 선택 시 — 색 바꾸기(리컬러 대상만) */}
+            {selItem?.type === 'sticker' && RECOLORABLE.has(selItem.key) && (
+              <div className="decor-sec" style={{ background: 'var(--cream)', borderRadius: 14, padding: '11px 12px 12px' }}>
+                <div className="decor-sec-label" style={{ marginBottom: 9 }}>🎨 선택한 스티커 색</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button className="press" onClick={() => patch(sel, { color: null })} aria-label="기본색"
+                    style={{ width: 34, height: 34, borderRadius: '50%', border: !selItem.color ? '2.5px solid var(--brown)' : '1.5px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: 'var(--text-sub)', background: 'var(--surface)' }}>기본</button>
+                  {STICKER_COLORS.map((c) => {
+                    const on = selItem.color === c.color
+                    return (
+                      <button key={c.key} className="press" onClick={() => patch(sel, { color: c.color })} aria-label={`색 ${c.key}`}
+                        style={{ width: 34, height: 34, borderRadius: '50%', background: c.color, border: on ? '2.5px solid var(--brown)' : '1.5px solid rgba(0,0,0,.1)', boxShadow: on ? '0 0 0 2px var(--surface) inset' : 'none' }} />
+                    )
+                  })}
+                </div>
+              </div>
+            )}
             {STICKER_GROUPS.map((g) => (
               <div key={g.key} className="decor-sec">
                 <div className="decor-sec-label">{g.label}</div>
@@ -188,26 +205,24 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             ))}
 
             <div className="decor-sec">
-              <div className="decor-sec-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                글자 · 직접 쓰기
-                {/* 글씨체 선택 — 또박체/귀염체 */}
-                <span style={{ display: 'inline-flex', gap: 4, marginLeft: 'auto' }}>
-                  {TEXT_FONTS.map((f) => (
-                    <button
-                      key={f.key}
-                      className="press"
-                      onClick={() => setTextFont(f.key)}
-                      style={{
-                        padding: '4px 10px', borderRadius: 999, fontSize: 11.5, fontWeight: 700,
-                        fontFamily: f.family,
-                        background: textFont === f.key ? 'var(--brown)' : 'var(--cream)',
-                        color: textFont === f.key ? '#fff' : 'var(--text-sub)',
-                      }}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </span>
+              <div className="decor-sec-label">글자 · 직접 쓰기</div>
+              {/* 글씨체 선택 — 또박/귀염/펜글씨/임팩트/라운드 (여러 개라 아래 줄에 감싸서) */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '2px 0 10px' }}>
+                {TEXT_FONTS.map((f) => (
+                  <button
+                    key={f.key}
+                    className="press"
+                    onClick={() => setTextFont(f.key)}
+                    style={{
+                      padding: '5px 12px', borderRadius: 999, fontSize: 13, fontWeight: 700,
+                      fontFamily: f.family,
+                      background: textFont === f.key ? 'var(--brown)' : 'var(--cream)',
+                      color: textFont === f.key ? '#fff' : 'var(--text-sub)',
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                ))}
               </div>
               <div className="decor-grid">
                 {TEXT_COLORS.map((c) => (
