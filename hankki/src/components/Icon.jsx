@@ -174,6 +174,29 @@ const PATHS = {
       <path d="M12 17h.01" />
     </>
   ),
+  // 레시피북(이모지 📖 대체)
+  book: (
+    <>
+      <path d="M6 4.5h11a1.5 1.5 0 0 1 1.5 1.5v13a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V6.5A2 2 0 0 1 6 4.5z" />
+      <path d="M7.6 8.2h7M7.6 11.2h5" />
+    </>
+  ),
+  // 꾸미기(이모지 🎀 대체) — 팔레트
+  palette: (
+    <>
+      <path d="M12 3.6a8.4 8.4 0 1 0 0 16.8c1.4 0 2-.9 2-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.1 0-.9.8-1.6 1.7-1.6H16a4.4 4.4 0 0 0 4.4-4.4C20.4 6.6 16.7 3.6 12 3.6z" />
+      <circle cx="8.2" cy="11.2" r="1.15" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="8.4" r="1.15" fill="currentColor" stroke="none" />
+      <circle cx="15.8" cy="10.4" r="1.15" fill="currentColor" stroke="none" />
+    </>
+  ),
+  // 자랑·나눔(이모지 💬 대체) — 말풍선
+  chat: (
+    <>
+      <path d="M5 6.5A2 2 0 0 1 7 4.5h10A2 2 0 0 1 19 6.5v6A2 2 0 0 1 17 14.5H10l-4 3.3V14.5H7A2 2 0 0 1 5 12.5z" />
+      <circle cx="9" cy="9.6" r="0.95" fill="currentColor" stroke="none" /><circle cx="12" cy="9.6" r="0.95" fill="currentColor" stroke="none" /><circle cx="15" cy="9.6" r="0.95" fill="currentColor" stroke="none" />
+    </>
+  ),
   // 선물(이모지 🎁 대체) — '곧 나올 기능 미리보기'
   gift: (
     <>

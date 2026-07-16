@@ -32,12 +32,12 @@ export const CATEGORIES = ['전체', '한식', '양식', '일식', '간식', '�
 // ── 테마(팔레트) ── 설정에서 고를 수 있는 색 조합.
 // bg/point 는 설정 화면 스와치 미리보기용. 실제 색은 styles.css 의 :root[data-theme] 에서.
 export const THEMES = [
-  { key: 'cream', label: '크림', desc: '부드럽고 화사한 기본', bg: '#fbf8f2', point: '#cd7c50', dark: false },
+  { key: 'cream', label: '크림', desc: '부드럽고 화사한 기본', bg: '#fdfbf7', point: '#cd7c50', dark: false },
   { key: 'dark', label: '다크', desc: '아늑한 밤', bg: '#241e18', point: '#cd8a55', dark: true },
 ]
 
 export const THEME_KEY = 'hankki-theme'
-const THEME_COLOR = { cream: '#fbf8f2', dark: '#241e18' }
+const THEME_COLOR = { cream: '#fdfbf7', dark: '#241e18' }
 
 export function getTheme() {
   try {

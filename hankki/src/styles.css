@@ -1,6 +1,6 @@
 :root {
-  --bg: #fbf8f2; /* 부드럽고 밝은 웜 크림 (화사) */
-  --surface: #fffefc; /* 카드 — 깨끗한 웜 화이트 */
+  --bg: #fdfbf7; /* 거의 화이트 · 아주 옅은 웜기만 (밝고 화사) */
+  --surface: #ffffff; /* 카드 — 깨끗한 화이트(배경보다 살짝 밝게) */
   --cream: #f2ede3; /* 연한 웜크림 (pill, 태그 배경) */
   --cream-deep: #ebe1d1; /* 진한 웜크림 (선택된 pill) */
   --sand: #cdbfa8; /* 웜 샌드 */
@@ -10,7 +10,7 @@
   --line: #efe8dc; /* 아주 얇은 웜 구분선 */
   --danger: #c85a3f; /* 위험 = 포인트(호박)와 구분되게 살짝 붉게 */
   --frame: #efe8db; /* 앱 컬럼 바깥 여백(데스크톱) — 웜 */
-  --nav-bg: rgba(251, 248, 242, 0.92); /* 하단 탭바(반투명) */
+  --nav-bg: rgba(253, 251, 247, 0.92); /* 하단 탭바(반투명) */
   --today-grad: linear-gradient(135deg, #f6f0e5, #efe6d6); /* '오늘 뭐 해먹지' 카드 */
 
   --r-sm: 10px;
