@@ -754,6 +754,8 @@ img {
   font-size: 14.5px;
   color: var(--text);
   align-items: flex-start;
+  word-break: keep-all; /* 한글 단어가 줄 끝에서 중간에 잘리지 않게(띄어쓰기 기준으로만 줄바꿈) */
+  overflow-wrap: anywhere; /* 아주 긴 토큰(URL 등)만 예외적으로 넘길 때 */
 }
 .ing::before {
   content: '';
