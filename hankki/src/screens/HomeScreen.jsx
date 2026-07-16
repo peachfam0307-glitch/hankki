@@ -86,7 +86,7 @@ export default function HomeScreen() {
         {todayPick && (
           <div className="today-card">
             <button className="today-main press" onClick={() => open(todayPick.id)}>
-              <Thumb recipe={todayPick} style={{ width: 72, height: 72, flex: '0 0 auto' }} radius={16} />
+              <Thumb recipe={todayPick} style={{ width: 72, height: 72, flex: '0 0 auto' }} radius={16} showDecor />
               <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                 <div className="today-label">오늘 뭐 해먹지?</div>
                 <div className="today-title">{todayPick.title}</div>
@@ -111,7 +111,7 @@ export default function HomeScreen() {
             <div className="hscroll">
               {often.map((r) => (
                 <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
-                  <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" />
+                  <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
                   <div className="name">{r.title}</div>
                 </button>
               ))}
@@ -130,7 +130,7 @@ export default function HomeScreen() {
           {recent.map((r, i) => (
             <div key={r.id}>
               <button className="list-row press" style={{ width: '100%', textAlign: 'left' }} onClick={() => open(r.id)}>
-                <Thumb recipe={r} style={{ width: 62, height: 62, flex: '0 0 auto' }} radius={14} emojiSize="1.5rem" />
+                <Thumb recipe={r} style={{ width: 62, height: 62, flex: '0 0 auto' }} radius={14} emojiSize="1.5rem" showDecor />
                 <div className="meta">
                   <div className="name">{r.title}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>

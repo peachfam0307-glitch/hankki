@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
+import DecorLayer from './DecorLayer'
 import { graphemes } from '../utils'
 
 // 카드 썸네일. recipe.thumb 로 표시 방식을 고른다:
@@ -21,7 +22,7 @@ function gradFor(seed = '') {
   return GRADS[n]
 }
 
-export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '2rem', iconSize = '56%' }) {
+export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '2rem', iconSize = '56%', showDecor = false }) {
   const [failed, setFailed] = useState(false)
   const thumb = recipe.thumb || (recipe.image ? 'photo' : 'icon') // 예전 레시피 호환
   const showImg = thumb === 'photo' && recipe.image && !failed
@@ -80,5 +81,14 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
     inner = <div style={center}><FoodIcon name={recipe.icon || guessFoodIcon(recipe.title)} size={iconSize} /></div>
   }
 
-  return <div style={base}>{inner}</div>
+  // 꾸민 표지를 목록 썸네일에도 보여준다(showDecor). 꾸민 레시피만 — 안 꾸민 건 깔끔한 아이콘 유지.
+  // DecorLayer는 위치를 비율로 잡아 어느 크기 박스든 그대로 축소된다.
+  const decorated = showDecor && recipe.decor?.length > 0
+
+  return (
+    <div style={base}>
+      {inner}
+      {decorated && <DecorLayer items={recipe.decor} />}
+    </div>
+  )
 }
