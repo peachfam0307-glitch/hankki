@@ -1,16 +1,16 @@
 :root {
-  --bg: #f5f6f4;
-  --surface: #ffffff;
-  --cream: #edeee9;
-  --cream-deep: #e0e3dc;
+  --bg: #f7f4ee; /* 따뜻한 크림 (홍보 세트 톤과 일치 · 기존 쿨그레이 #f5f6f4에서 웜화) */
+  --surface: #fffdf9; /* 카드 — 살짝 웜한 화이트(순백보다 배경과 자연스럽게 이어짐) */
+  --cream: #efeae0; /* 연한 웜크림 (pill, 태그 배경) */
+  --cream-deep: #e7decd; /* 진한 웜크림 (선택된 pill) */
   --sand: #cdc7bb;
   --brown: #6b4f3a;
   --text: #3d3830;
-  --text-sub: #8e8f88;
-  --line: #e8e9e4;
+  --text-sub: #8f887b; /* 보조 텍스트 — 살짝 웜한 뉴트럴 */
+  --line: #ece5da; /* 아주 얇은 웜한 구분선 */
   --danger: #c2703f;
-  --frame: #e4e5e0; /* 앱 컬럼 바깥 여백(데스크톱) */
-  --nav-bg: rgba(245, 246, 244, 0.92); /* 하단 탭바(반투명) */
+  --frame: #eae3d6; /* 앱 컬럼 바깥 여백(데스크톱) — 웜 */
+  --nav-bg: rgba(247, 244, 238, 0.92); /* 하단 탭바(반투명) — 새 크림톤 */
   --today-grad: linear-gradient(135deg, #f0ece2, #e6e2d5); /* '오늘 뭐 해먹지' 카드 */
 
   --r-sm: 10px;

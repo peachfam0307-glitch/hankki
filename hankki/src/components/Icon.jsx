@@ -147,6 +147,41 @@ const PATHS = {
       <path d="m10.5 9.5 4 2.5-4 2.5z" fill="currentColor" stroke="none" />
     </>
   ),
+  // AI·자동정리 브랜드 마크 — 4각 반짝임(이모지 ✨ 대체)
+  sparkle: (
+    <path d="M12 4c.6 6.4 1.6 7.4 8 8-6.4.6-7.4 1.6-8 8-.6-6.4-1.6-7.4-8-8 6.4-.6 7.4-1.6 8-8z" />
+  ),
+  // 팁(이모지 💡 대체)
+  bulb: (
+    <>
+      <path d="M12 3.5a5.5 5.5 0 0 0-3.3 9.9c.5.4.8 1 .8 1.6v.5h5v-.5c0-.6.3-1.2.8-1.6A5.5 5.5 0 0 0 12 3.5z" />
+      <path d="M9.7 18.5h4.6" />
+      <path d="M10.8 20.7h2.4" />
+    </>
+  ),
+  // 영상 재생(이모지 📺 대체)
+  play: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M10 8.5 16 12l-6 3.5z" fill="currentColor" stroke="none" />
+    </>
+  ),
+  // 주의(이모지 ⚠️ 대체)
+  alert: (
+    <>
+      <path d="M12 4.5 20.5 19.5H3.5z" />
+      <path d="M12 10v4" />
+      <path d="M12 17h.01" />
+    </>
+  ),
+  // 공유·앱으로 보내기(이모지 📲 대체)
+  share: (
+    <>
+      <path d="M12 3.5v10.5" />
+      <path d="m8 7.5 4-4 4 4" />
+      <path d="M7.5 11H6a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7a1 1 0 0 0-1-1h-1.5" />
+    </>
+  ),
 }
 
 export default function Icon({ name, size = 22, stroke = 1.6, color = 'currentColor', style, className }) {
