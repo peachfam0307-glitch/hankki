@@ -40,7 +40,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const [items, setItems] = useState(() => (recipe.decor || []).map((d) => ({ ...d })))
   const [sel, setSel] = useState(null)
   const [noteEdit, setNoteEdit] = useState(null) // 글 수정 중인 포스트잇 item
-  const [textFont, setTextFont] = useState('gowun') // 글자 스티커 글씨체 (또박/귀염)
+  const [textFont, setTextFont] = useState('gaegu') // 글자 스티커 글씨체 기본 = 귀염체(손글씨 톤)
   const [bg, setBg] = useState(recipe.decorBg || 'none') // 표지 배경(배경지)
   const [cat, setCat] = useState('bg') // 서랍 카테고리(가로 칩으로 골라 그 카테고리만 표시)
 

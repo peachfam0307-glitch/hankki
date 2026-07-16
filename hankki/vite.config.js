@@ -16,7 +16,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff,woff2}'],
+        // woff2 는 precache 에서 제외한다 — 꾸미기용 내장 글씨체(1.7MB)를 설치 시 미리 받지 않기 위해.
+        // @font-face 는 실제로 그 글씨가 쓰일 때만 다운로드되고, 이후 브라우저 캐시에 남는다.
+        // (앱의 다른 폰트는 전부 CDN 이라 로컬 woff2 는 이 꾸미기 글씨체뿐)
+        globPatterns: ['**/*.{js,css,html,svg,png,webp}'],
       },
       includeAssets: ['favicon.svg', 'icons/icon-192-v4.png', 'icons/icon-512-v4.png'],
       manifest: {

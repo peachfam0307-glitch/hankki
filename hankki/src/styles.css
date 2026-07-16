@@ -1,3 +1,17 @@
+/* 꾸미기 글씨체 — 앱에 내장(vendor)해 CDN 이 안 떠도 항상 예쁘게 렌더된다.
+   (구글폰트 CDN 이 프록시·오프라인에서 막히면 밋밋한 시스템 폰트로 폴백되던 문제 해결)
+   폰트를 번들(src/assets)에 태워 Vite 가 경로를 해시·재작성 → base:'./'(서브패스 배포)에서도 정확히 로드.
+   @font-face 폰트는 실제로 그 글씨가 쓰일 때만 다운로드 → 초기 앱은 가볍고, 꾸미기 열 때 로드·캐시.
+   한글/라틴 서브셋을 unicode-range 없이 글리프 커버리지로 매칭(라틴 face 먼저, 한글 face 뒤). */
+@font-face { font-family: 'Gowun Dodum'; src: url('./assets/fonts/gowun-dodum-latin-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Gowun Dodum'; src: url('./assets/fonts/gowun-dodum-korean-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Gaegu'; src: url('./assets/fonts/gaegu-latin-400.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Gaegu'; src: url('./assets/fonts/gaegu-korean-400.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Nanum Pen Script'; src: url('./assets/fonts/nanumpen-latin-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Nanum Pen Script'; src: url('./assets/fonts/nanumpen-korean-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Jua'; src: url('./assets/fonts/jua-latin-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Jua'; src: url('./assets/fonts/jua-korean-400.woff2') format('woff2'); font-display: swap; }
+
 :root {
   --bg: #fdfbf7; /* 거의 화이트 · 아주 옅은 웜기만 (밝고 화사) */
   --surface: #ffffff; /* 카드 — 깨끗한 화이트(배경보다 살짝 밝게) */
