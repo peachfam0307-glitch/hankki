@@ -215,3 +215,52 @@ export const TEXT_FONTS = [
   { key: 'gowun', label: '또박체', family: "'Gowun Dodum','Pretendard',sans-serif", weight: 800 },
   { key: 'gaegu', label: '귀염체', family: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", weight: 700 },
 ]
+
+// ── 표지 배경(배경지) ──
+// 커버 전체 톤을 바꾼다 = '안 질림' 최고 지렛대. recipe.decorBg 에 key 저장.
+// 패턴은 CSS만으로(이미지 없음), 크기는 %라 큰 커버·작은 썸네일 어디서든 같은 비율로 스케일된다.
+// style 은 Thumb·에디터·칩에 그대로 spread 한다. key:'none' 은 기본(그라데이션 자동).
+export const DECOR_BACKGROUNDS = [
+  { key: 'none', label: '기본', style: null },
+  { key: 'cream', label: '크림', style: { background: '#f4ede0' } },
+  { key: 'peach', label: '피치', style: { background: '#f6e1d6' } },
+  { key: 'butter', label: '버터', style: { background: '#f3ead0' } },
+  { key: 'mint', label: '민트', style: { background: '#dcece1' } },
+  { key: 'sky', label: '하늘', style: { background: '#dde7f1' } },
+  { key: 'lilac', label: '라일락', style: { background: '#e7dfef' } },
+  { key: 'rose', label: '로즈', style: { background: '#efdce0' } },
+  { key: 'kraft', label: '크라프트', style: { background: '#e4d5bc' } },
+  {
+    key: 'grid', label: '모눈',
+    style: {
+      backgroundColor: '#f4efe4',
+      backgroundImage: 'linear-gradient(#dcd3c0 1px, transparent 1px), linear-gradient(90deg, #dcd3c0 1px, transparent 1px)',
+      backgroundSize: '16.66% 16.66%',
+    },
+  },
+  {
+    key: 'dot', label: '도트',
+    style: {
+      backgroundColor: '#f5ece0',
+      backgroundImage: 'radial-gradient(#dcc9a9 15%, transparent 16%)',
+      backgroundSize: '16.66% 16.66%',
+    },
+  },
+  {
+    key: 'stripe', label: '스트라이프',
+    style: {
+      backgroundColor: '#f4ede0',
+      backgroundImage: 'repeating-linear-gradient(45deg, #eadfca 0, #eadfca 6%, transparent 6%, transparent 12%)',
+    },
+  },
+  {
+    key: 'sunset', label: '노을',
+    style: { background: 'linear-gradient(160deg, #f7e2d3 0%, #f0d5da 55%, #e6d3ea 100%)' },
+  },
+  {
+    key: 'sage', label: '세이지',
+    style: { background: 'linear-gradient(160deg, #e2e9dc 0%, #d7e0d2 100%)' },
+  },
+]
+
+export const bgStyle = (key) => (DECOR_BACKGROUNDS.find((b) => b.key === key) || DECOR_BACKGROUNDS[0]).style

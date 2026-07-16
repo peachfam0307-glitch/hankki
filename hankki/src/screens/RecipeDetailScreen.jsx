@@ -321,10 +321,11 @@ export default function RecipeDetailScreen({ id }) {
       {decorOpen && (
         <DecorEditor
           recipe={r}
-          onSave={(items) => {
-            updateRecipe(r.id, { decor: items })
+          onSave={(items, bg) => {
+            updateRecipe(r.id, { decor: items, decorBg: bg || 'none' })
             setDecorOpen(false)
-            nav.showToast(items.length ? '표지를 예쁘게 꾸몄어요 🎀' : '꾸미기를 비웠어요')
+            const dressed = items.length || (bg && bg !== 'none')
+            nav.showToast(dressed ? '표지를 예쁘게 꾸몄어요 🎀' : '꾸미기를 비웠어요')
           }}
           onClose={() => setDecorOpen(false)}
         />

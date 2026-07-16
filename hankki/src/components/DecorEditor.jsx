@@ -3,7 +3,7 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { StickerArt, STICKER_GROUPS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS } from './Stickers'
+import { StickerArt, STICKER_GROUPS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, bgStyle } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -41,6 +41,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const [sel, setSel] = useState(null)
   const [noteEdit, setNoteEdit] = useState(null) // 글 수정 중인 포스트잇 item
   const [textFont, setTextFont] = useState('gowun') // 글자 스티커 글씨체 (또박/귀염)
+  const [bg, setBg] = useState(recipe.decorBg || 'none') // 표지 배경(배경지)
 
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로 올라온다
   const select = (id) => {
@@ -94,13 +95,13 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
         <div className="decor-top">
           <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
           <div style={{ fontSize: 16, fontWeight: 800 }}>표지 꾸미기</div>
-          <button className="press" onClick={() => onSave(items)} style={{ color: 'var(--brown)', fontSize: 15, fontWeight: 800 }}>저장</button>
+          <button className="press" onClick={() => onSave(items, bg)} style={{ color: 'var(--brown)', fontSize: 15, fontWeight: 800 }}>저장</button>
         </div>
 
         {/* 표지 캔버스 */}
         <div className="decor-stage">
           <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', borderRadius: 18, overflow: 'hidden' }}>
-            <Thumb recipe={recipe} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
+            <Thumb recipe={{ ...recipe, decorBg: bg }} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
             <DecorLayer
               items={items}
               editable
@@ -120,6 +121,25 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
         <div className="decor-drawer">
           <div className="decor-grab" />
           <div className="decor-scroll" ref={drawerRef}>
+            {/* 배경(배경지) — 표지 전체 톤을 바꾼다. 포스트잇 편집 중이 아닐 때만 노출. */}
+            {!selItem || selItem.type !== 'note' ? (
+              <div className="decor-sec">
+                <div className="decor-sec-label">배경</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {DECOR_BACKGROUNDS.map((b) => {
+                    const on = bg === b.key
+                    const sw = b.style || { background: 'linear-gradient(135deg,#eef0ec,#e1e5de)' }
+                    return (
+                      <button key={b.key} className="press" onClick={() => setBg(b.key)} aria-label={`배경 ${b.label}`}
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                        <span style={{ width: 38, height: 38, borderRadius: 10, ...sw, border: on ? '2.5px solid var(--brown)' : '1.5px solid var(--line)', boxShadow: on ? '0 0 0 2px var(--surface) inset' : 'none' }} />
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{b.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : null}
             {/* 포스트잇 선택 시 — 무늬·모양 바꾸기 (맨 위에 떠서 바로 보임) */}
             {selItem?.type === 'note' && (
               <div className="decor-sec" style={{ background: 'var(--cream)', borderRadius: 14, padding: '11px 12px 12px' }}>

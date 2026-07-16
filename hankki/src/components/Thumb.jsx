@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
+import { bgStyle } from './Stickers'
 import { graphemes } from '../utils'
 
 // 카드 썸네일. recipe.thumb 로 표시 방식을 고른다:
@@ -26,12 +27,14 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
   const [failed, setFailed] = useState(false)
   const thumb = recipe.thumb || (recipe.image ? 'photo' : 'icon') // 예전 레시피 호환
   const showImg = thumb === 'photo' && recipe.image && !failed
+  // 표지 배경(배경지) — 정하면 기본 그라데이션 대신 그 배경으로. 패턴은 %라 어느 크기든 스케일된다.
+  const bg = recipe.decorBg ? bgStyle(recipe.decorBg) : null
   const base = {
     position: 'relative',
     width: '100%',
     borderRadius: radius,
     overflow: 'hidden',
-    background: gradFor(recipe.title || recipe.id),
+    ...(bg || { background: gradFor(recipe.title || recipe.id) }),
     ...(ratio ? { aspectRatio: ratio } : {}),
     ...style,
   }
