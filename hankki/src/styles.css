@@ -28,6 +28,23 @@
   color-scheme: light;
 }
 
+/* ── 블루 테마 — 더스티 파우더블루(시원한 여름). 배경은 밝게, 포인트 블루가 튀게 ── */
+:root[data-theme='blue'] {
+  --bg: #f4f7fb; /* 거의 화이트 · 블루 기미 (버튼 블루가 튀게) */
+  --surface: #ffffff;
+  --cream: #e8eef6; /* pill·태그 */
+  --cream-deep: #d7e1ee;
+  --sand: #a6b4c6;
+  --brown: #6d8db2; /* 포인트 = 더스티 블루 */
+  --text: #353c47;
+  --text-sub: #7b8493;
+  --line: #e6ecf4;
+  --danger: #c96a55;
+  --frame: #e6ecf4;
+  --nav-bg: rgba(244, 247, 251, 0.92);
+  --today-grad: linear-gradient(135deg, #eef3fa, #e0e8f4);
+}
+
 /* ── 다크 테마 — 웜 에스프레소(브라운 계열, 크림과 한 가족) ── */
 :root[data-theme='dark'] {
   --bg: #241e18; /* 웜 에스프레소 */
