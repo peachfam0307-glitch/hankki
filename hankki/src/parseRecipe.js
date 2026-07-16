@@ -10,10 +10,16 @@ const NOISE =
   /^(ingredients?\s*[:：]?$|recipe\b|요리\b|tip\b|instagram|youtube|www\.|https?:|좋아요|댓글|팔로우|공유|저장|더\s?보기|답글)/i
 // 줄 어디에 있어도 잡음인 것 — SNS UI 텍스트(댓글 입력창 등)
 const NOISE_ANY = /(님에게\s*댓글|댓글\s*달기|reels|릴스|shorts|구독|알림\s*설정)/i
+// 날짜만 있는 줄(캡션 작성일) — 재료·순서 아님. "2025년 3월 11일"(일→익 오독 포함)
+const DATE_ONLY = /^\s*\d{4}\s*[년.\-/]\s*\d{1,2}\s*[월.\-/]\s*\d{1,2}\s*[일익]?\.?\s*$|^\s*\d{1,2}\s*월\s*\d{1,2}\s*[일익]\.?\s*$/
+// 앱/웹 '더 보기' 류 UI 버튼 글자 — 줄 끝에 붙거나 줄 전체. "…끊인다. 간단히 보기"
+const UI_TRAIL = /\s*(?:간단히|간략히|자세히|전체|레시피|원문|더)\s*보기\s*$/
+// 조언·팁 신호가 뚜렷한 줄(순서 아님) — 메모로 보낸다. 조리 명령과 겹치지 않게 좁게 잡음.
+const TIP_CUE = /(초보자|꿀팁|취향껏|입맛에\s*따라|더\s*맛있|생략\s*가능|없어도\s*(?:돼|되|됩니다)|몸에도?\s*좋|건강에\s*좋|맛있게\s*드세요)/
 
 // 섹션 헤더 — 캡션이 "재료 → 양념 → 팁" 구조로 온 걸 알아채면 분류가 훨씬 정확해진다.
 const SEC_ING = /^(재료|양념|소스|양념장|재료\s*준비|필요한\s*재료)/
-const SEC_STEP = /^(만드는\s*법|만들기|만드는\s*방법|조리\s*순서|조리법|레시피|순서)/
+const SEC_STEP = /^(만드는\s*법|만들기|만드는\s*방법|조리\s*순서|요리\s*순서|조리\s*방법|요리\s*방법|조리법|레시피|순서)/
 const SEC_MEMO = /(팁|포인트|tip)/i
 
 // 요리 단위로 흔한 영문 약어 — 토큰 청소에서 살려둔다.
@@ -203,7 +209,8 @@ export function parseRecipeText(raw = '', opts = {}) {
     const bullet = /^\s*[-*•·▪◦‣●○]\s*/.test(rawLine)
     let l = cleanTokens(sanitize(rawLine.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•·▪◦‣●○*]/g, ' ')))
     l = stripLeadingOcrJunk(l, fromOcr) // 삐/=/HE/Vv Eel 같은 앞머리 잡음 벗기기
-    if (!l) continue
+    l = l.replace(UI_TRAIL, '').trim() // "…끊인다. 간단히 보기" → 뒤 UI 글자 떼기
+    if (!l || DATE_ONLY.test(l)) continue // 빈 줄·날짜만 있는 줄(작성일)은 버린다
     // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
     const isHeader = SEC_ING.test(l) || SEC_STEP.test(l) || SEC_MEMO.test(l)
     if (isHeader || (l.length > 1 && !isGibberish(l))) items.push({ l, bullet })
@@ -242,6 +249,14 @@ export function parseRecipeText(raw = '', opts = {}) {
     const stepLike = looksLikeStep(l)
     const ingLike = !stepLike && looksLikeIngredient(l, bullet)
 
+    // 괄호로 감싼 코멘트나 조언(팁) 신호 줄 → 순서 아닌 '메모'로. 재료로 보이면 건드리지 않는다.
+    // OCR·텍스트 붙여넣기 모두 적용. 예) "(저는 중불에서 10분…졸여줬어요)", "…초보자들한텐 좋아요"
+    if (!ingLike && (/^[(（][^()]*[)）]\s*$/.test(l) || TIP_CUE.test(l))) {
+      other.push(l.replace(/^[(（]\s*|\s*[)）]$/g, '').trim())
+      lastWasBulletIng = false
+      continue
+    }
+
     // 제목 — 조리 문장·수량 줄은 제목이 아니다
     if (!title && !bullet && !stepLike && l.length <= 22 && !QTY.test(l) && looksLikeTitle(l)) {
       title = l
@@ -274,5 +289,22 @@ export function parseRecipeText(raw = '', opts = {}) {
   const memoLines = fromOcr ? other.filter(isCleanMemoLine) : other
   const memo = memoLines.join('\n')
   // 재료 단위 오독 교정(T·g) + 만드는 법 문체 통일('~다' → '~요')
-  return { title, ingredients: ingredients.map(fixIngredientUnits), steps: politeSteps(steps), memo }
+  return { title, ingredients: ingredients.map(fixIngredientUnits), steps: politeSteps(mergeStepFragments(steps)), memo }
+}
+
+// 한 동작이 줄바꿈으로 잘려 조각난 순서를 앞 단계에 붙인다.
+// 앞 줄이 문장으로 안 끝났는데(=이어지는 중) 다음 줄이 아주 짧은 꼬리면 합친다. ("…딱 1분 30초" + "익혀주세요.")
+const STEP_ENDING = /(?:니다|세요|어요|아요|해요|져요|까요|네요|든요|께요|을게요|다|요)\s*[.!)~"']*\s*$|[.!…]["')\]]*\s*$/
+function mergeStepFragments(arr) {
+  const out = []
+  for (const s of arr) {
+    const prev = out[out.length - 1]
+    const prevOpen = prev && !STEP_ENDING.test(prev)
+    if (prev && prevOpen && s.replace(/\s/g, '').length <= 7) {
+      out[out.length - 1] = (prev + ' ' + s).trim()
+      continue
+    }
+    out.push(s)
+  }
+  return out
 }
