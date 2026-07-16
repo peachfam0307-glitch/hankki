@@ -15,8 +15,8 @@ export default function CropSheet({
   title = '글자 부분만 남기기',
   hint = (
     <>
-      모서리를 끌어 광고·사진은 빼고 <b style={{ color: '#f0ede7' }}>재료·만드는 법 글자 부분만</b> 남겨주세요.<br />
-      <span style={{ color: '#8f8b83', fontSize: 11.5 }}>딱 맞게 자를수록 · 사진이 반듯하고 밝을수록 정확해요 ✨</span>
+      ✂️ 광고·사진은 빼고 <b style={{ color: '#fff' }}>재료·만드는 법 글자만</b> 남도록 모서리를 끌어 잘라주세요.<br />
+      <span style={{ color: '#d8d4cc', fontSize: 12 }}>✨ 밝고 반듯하게 · 딱 맞게 자를수록 정확해요 · 읽은 건 초안이라 사진 보며 다듬으면 돼요</span>
     </>
   ),
 }) {
@@ -135,13 +135,14 @@ export default function CropSheet({
         </div>
         <div style={{ width: 40 }} />
       </div>
-      <div style={{ color: '#b8b4ac', fontSize: 12.5, textAlign: 'center', padding: '0 20px 10px', lineHeight: 1.55 }}>
+      {/* 안내는 한 곳(위)에만 — 예전엔 위·아래로 쪼개져 이미지 사이에 끼어 한눈에 안 들어왔다. */}
+      <div style={{ margin: '2px 16px 10px', padding: '10px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.13)', color: '#f4f1eb', fontSize: 13, textAlign: 'center', lineHeight: 1.6 }}>
         {hint}
       </div>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '0 10px' }}>
         <div ref={boxRef} style={{ position: 'relative', maxWidth: '100%', maxHeight: '100%', display: 'inline-block', touchAction: 'none' }} onPointerMove={onMove} onPointerUp={endDrag} onPointerCancel={endDrag}>
-          <img src={image} alt="" style={{ display: 'block', maxWidth: '100%', maxHeight: 'calc(100vh - 230px)', objectFit: 'contain' }} draggable={false} />
+          <img src={image} alt="" style={{ display: 'block', maxWidth: '100%', maxHeight: 'calc(100vh - 200px)', objectFit: 'contain' }} draggable={false} />
           {/* 선택 영역 — 바깥은 어둡게 */}
           <div
             onPointerDown={startDrag('move')}
@@ -166,10 +167,7 @@ export default function CropSheet({
         </div>
       </div>
 
-      <div style={{ margin: '0 16px 8px', padding: '11px 13px', borderRadius: 12, background: 'rgba(255,255,255,0.16)', color: '#fbf9f4', fontSize: 13.5, lineHeight: 1.55, textAlign: 'center' }}>
-        💡 아이콘·특수문자가 많으면 인식이 부정확할 수 있어요. 읽은 건 <b style={{ color: '#fff' }}>초안</b> — 사진 보며 다듬어 주세요.
-      </div>
-      <div style={{ display: 'flex', gap: 10, padding: '0 16px calc(16px + var(--safe-bottom, 0px))' }}>
+      <div style={{ display: 'flex', gap: 10, padding: '10px 16px calc(16px + var(--safe-bottom, 0px))' }}>
         <button className="press" onClick={once(onSkip)} style={{ flex: 1, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.12)', color: '#f0ede7', fontSize: 14.5, fontWeight: 600 }}>
           전체 사용
         </button>
