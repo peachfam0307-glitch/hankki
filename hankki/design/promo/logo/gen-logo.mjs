@@ -92,8 +92,16 @@ const out = await p.evaluate(async ({ argBorder, argUp }) => {
   const big = document.createElement('canvas'); big.width = 512 * 2 + 60; big.height = 512; const g = big.getContext('2d'); g.fillStyle = '#8f8f8f'; g.fillRect(0, 0, big.width, big.height); g.drawImage(bl, 20, 0); g.drawImage(bc, 512 + 40, 0)
   return { light, clay, compare: big.toDataURL('image/png') }
 }, { argBorder: ARG_BORDER, argUp: ARG_UP })
-const { writeFileSync } = await import('fs')
-const save = (name, url) => writeFileSync(OUTDIR + name, Buffer.from(url.split(',')[1], 'base64'))
+const { writeFileSync, existsSync } = await import('fs')
+// ⚠️ 덮어쓰기 금지 — 같은 이름이 있으면 -2, -3… 새 이름으로 저장한다.
+//   (확정본 교체는 사람이 결과를 확인한 뒤 명시적으로 cp 하는 것만 허용)
+const unique = (name) => {
+  if (!existsSync(OUTDIR + name)) return name
+  const base = name.replace(/\.png$/, '')
+  let n = 2; while (existsSync(OUTDIR + `${base}-${n}.png`)) n++
+  return `${base}-${n}.png`
+}
+const save = (name, url) => { const f = unique(name); writeFileSync(OUTDIR + f, Buffer.from(url.split(',')[1], 'base64')); console.log('  saved:', f) }
 save('확정-2색.png', out.compare); save('한끼로고-크림-512.png', out.light); save('한끼로고-클레이-512.png', out.clay)
 console.log('saved to', OUTDIR)
 await b.close()
