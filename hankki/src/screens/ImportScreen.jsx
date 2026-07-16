@@ -319,10 +319,23 @@ export default function ImportScreen() {
             <div className="opt-ico"><Icon name={flowMeta.icon} size={24} color={flowMeta.color} stroke={1.7} /></div>
             <div className="h-title" style={{ fontSize: 22 }}>{flowMeta.title}</div>
           </div>
-          <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 14 }}>
-            링크는 <b>바로가기(북마크)</b>로 저장하는 기능이에요. 레시피 내용까지 담으려면
-            화면을 <b>캡쳐해서 사진으로 가져오기</b>가 제일 확실해요.
+          <div className="t-sub" style={{ marginTop: 6, marginBottom: 12, fontSize: 14 }}>
+            링크는 <b>바로가기(북마크)</b>로 저장하는 기능이에요. 레시피 내용까지 담고 싶다면 아래 방법을 추천해요.
           </div>
+
+          {/* 블로그 정직 안내 — 사진이 많아 캡처가 번거로우니 '글 복사 → 텍스트 붙여넣기'를 권한다 */}
+          <button
+            className="press"
+            onClick={() => { setFlow('text'); setText('') }}
+            style={{ width: '100%', textAlign: 'left', marginBottom: 16, padding: '13px 15px', borderRadius: 'var(--r-md)', background: 'var(--cream)', border: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 11 }}
+          >
+            <div className="opt-ico" style={{ background: '#fff', flexShrink: 0 }}><Icon name="edit" size={20} color="var(--brown)" /></div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--brown)', marginBottom: 2 }}>블로그는 글 복사 → 텍스트 붙여넣기 추천</div>
+              <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.5 }}>블로그는 사진이 많아 캡처가 번거로워요. 레시피 글을 <b>복사</b>해서 붙여넣으면 제일 깔끔해요.</div>
+            </div>
+            <Icon name="chevron-right" size={18} color="var(--sand)" />
+          </button>
 
           <div className="field">
             <label>링크 주소</label>
