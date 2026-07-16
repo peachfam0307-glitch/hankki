@@ -4,7 +4,7 @@
   *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
   :root{--bg:#f6f1e8;--ink:#4a4136;--ink2:#94897a;--clay:#c47a58;--card:#fffdf8;--line:#e6ded0}
   body{background:#777;display:flex;gap:40px;padding:40px;flex-wrap:wrap}
-  .screen{position:relative;width:540px;height:1080px;background:radial-gradient(125% 80% at 50% 0%,#fdfaf3,#f2ece0);
+  .screen{position:relative;width:540px;height:1080px;background:radial-gradient(125% 80% at 50% 0%,#fffdf8,#f7f1e7);
     border-radius:52px;overflow:hidden;display:flex;flex-direction:column;padding:34px 40px 42px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
   .skip{align-self:flex-end;font-family:'GowunDodum';font-size:20px;color:var(--ink2)}
   .hero{flex:1;display:flex;align-items:center;justify-content:center}
@@ -62,25 +62,12 @@
   <div class="skip">건너뛰기</div>
   <div class="hero">
     <div class="welcome">
-      <div class="halo"></div>
-      <span class="dot" style="width:14px;height:14px;top:40px;left:60px"></span>
-      <span class="dot" style="width:10px;height:10px;bottom:64px;right:52px;opacity:.35"></span>
-      <span class="dot" style="width:8px;height:8px;top:96px;right:34px;opacity:.4"></span>
-      <div class="wm"><div class="k">한끼</div><div class="e">HANKKI</div></div>
-      <svg class="bear" viewBox="0 0 48 48">
-        <circle cx="14.5" cy="18" r="4.6" fill="#b98a63"/><circle cx="33.5" cy="18" r="4.6" fill="#b98a63"/>
-        <circle cx="14.5" cy="18" r="2.2" fill="#d9b593"/><circle cx="33.5" cy="18" r="2.2" fill="#d9b593"/>
-        <circle cx="24" cy="28" r="13" fill="#b98a63"/>
-        <ellipse cx="24" cy="32.5" rx="6.4" ry="4.6" fill="#ecd9bd"/>
-        <rect x="22.6" y="30" width="2.8" height="2.2" rx="1.1" fill="#5f4632"/>
-        <path d="M24 32.4v1.6M24 34c-.9.9-2 .9-2.8.2M24 34c.9.9 2 .9 2.8.2" stroke="#5f4632" stroke-width="1" fill="none" stroke-linecap="round"/>
-        <circle cx="18.6" cy="27.5" r="1.35" fill="#3d3830"/><circle cx="29.4" cy="27.5" r="1.35" fill="#3d3830"/>
-        <circle cx="15.6" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/><circle cx="32.4" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/>
-        <circle cx="16.8" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
-        <circle cx="24" cy="10.6" r="3.9" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
-        <circle cx="31.2" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
-        <rect x="15.5" y="14.6" width="17" height="3.6" rx="1.8" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
-      </svg>
+      <span class="dot" style="width:14px;height:14px;top:24px;left:34px"></span>
+      <span class="dot" style="width:10px;height:10px;bottom:40px;right:30px;opacity:.35"></span>
+      <span class="dot" style="width:8px;height:8px;top:74px;right:14px;opacity:.4"></span>
+      <!-- 확정 로고(곰=ㅎ 주아 '한끼' + HANKKI) 앱아이콘 타일 -->
+      <img src="../logo/previews/한끼로고-크림-512.png" alt="한끼"
+        style="width:296px;height:296px;border-radius:70px;box-shadow:0 14px 32px rgba(90,65,45,.16);border:1.5px solid var(--line);position:relative;z-index:2">
     </div>
   </div>
   <div class="txt">
@@ -222,7 +209,7 @@
     </div>
   </div>
   <div class="txt">
-    <div class="badge">곧 출시 ✨</div>
+    <div class="badge" style="display:inline-flex;align-items:center;gap:7px"><svg viewBox="0 0 48 48" style="width:19px;height:19px" fill="none" stroke="#c47a58" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 8v10M24 30v10M8 24h10M30 24h10"/><path d="M24 14c0 5.5 4.5 10 10 10-5.5 0-10 4.5-10 10 0-5.5-4.5-10-10-10 5.5 0 10-4.5 10-10z" fill="#c47a58" stroke="none"/></svg>곧 출시</div>
     <div class="title c">사진 찍으면,<br>AI가 레시피로</div>
     <div class="body">캡처·인스타·유튜브 링크만 쏙 —
 재료·순서까지 칸칸이 알아서 정리돼요.
