@@ -1,0 +1,235 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../fonts-embed.css">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+  :root{--bg:#f6f1e8;--ink:#4a4136;--ink2:#94897a;--clay:#c47a58;--card:#fffdf8;--line:#e6ded0}
+  body{background:#777;display:flex;gap:40px;padding:40px;flex-wrap:wrap}
+  .screen{position:relative;width:540px;height:1080px;background:radial-gradient(125% 80% at 50% 0%,#fdfaf3,#f2ece0);
+    border-radius:52px;overflow:hidden;display:flex;flex-direction:column;padding:34px 40px 42px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  .skip{align-self:flex-end;font-family:'GowunDodum';font-size:20px;color:var(--ink2)}
+  .hero{flex:1;display:flex;align-items:center;justify-content:center}
+  .txt{text-align:center}
+  .badge{display:inline-block;margin-bottom:14px;padding:6px 18px;border-radius:999px;background:#f3e7dd;color:var(--clay);font-family:'GowunDodum';font-size:19px}
+  .title{font-family:'Jua';font-size:41px;line-height:1.3;color:var(--ink);letter-spacing:-1px;white-space:pre-line}
+  .title.c{color:var(--clay)}
+  .body{margin:20px auto 0;max-width:450px;font-family:'GowunDodum';font-size:22px;line-height:1.7;color:var(--ink2);white-space:pre-line}
+  .tagline{margin:22px auto 0;max-width:400px;padding-top:18px;border-top:1.5px solid var(--line);font-family:'Gaegu';font-weight:700;font-size:22px;line-height:1.55;color:var(--clay)}
+  .dots{display:flex;justify-content:center;gap:9px;margin:34px 0 22px}
+  .dots span{width:9px;height:9px;border-radius:999px;background:var(--line)}
+  .dots span.on{width:26px;background:var(--clay)}
+  .btn{width:100%;height:74px;border-radius:20px;background:var(--clay);color:#fff;font-family:'Jua';font-size:28px;display:flex;align-items:center;justify-content:center}
+
+  /* 웰컴 히어로 */
+  .welcome{position:relative;width:340px;height:340px;display:flex;align-items:center;justify-content:center}
+  .halo{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 42%,#f5ede0,#ece3d2)}
+  .wm{position:relative;text-align:center;z-index:2}
+  .wm .k{font-family:'Jua';font-size:96px;color:#5f4d3b;letter-spacing:-2px;line-height:1}
+  .wm .e{font-family:'GowunDodum';font-size:22px;letter-spacing:8px;color:var(--ink2);margin-top:10px}
+  .bear{position:absolute;bottom:-6px;right:24px;width:130px;height:130px;z-index:3;filter:drop-shadow(0 8px 14px rgba(90,65,45,.14))}
+  .dot{position:absolute;border-radius:50%;background:var(--clay);opacity:.5}
+
+  /* 공용 칩/행 */
+  .chips{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;max-width:400px}
+  .chip{width:104px;height:104px;border-radius:30px;background:var(--card);border:1.5px solid var(--line);
+    display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(120,95,65,.06)}
+  .chip svg{width:52px;height:52px}
+  .flow{display:flex;align-items:center;gap:10px}
+  .fcol{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .fchip{width:98px;height:98px;border-radius:28px;background:var(--card);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(120,95,65,.06)}
+  .fchip svg{width:48px;height:48px}
+  .flbl{font-family:'GowunDodum';font-size:19px;color:var(--ink2)}
+  .arw{color:#d8c3af;display:flex;align-items:center}
+  .arw svg{width:26px;height:26px}
+  /* 장바구니 카드 */
+  .basket{width:360px;background:var(--card);border:1.5px solid var(--line);border-radius:26px;box-shadow:0 16px 36px rgba(120,95,65,.1);overflow:hidden}
+  .bk-h{padding:20px 24px;display:flex;align-items:center;gap:12px;border-bottom:1.5px solid var(--line)}
+  .bk-h .t{font-family:'Jua';font-size:28px;color:var(--ink)}
+  .bk-b{padding:18px 24px 22px}
+  .bk-li{display:flex;align-items:center;gap:12px;padding:8px 0;font-family:'GowunDodum';font-size:23px;color:var(--ink2)}
+  .malls{display:flex;gap:12px;margin-top:22px;justify-content:center}
+  .mall{font-family:'Jua';font-size:22px;padding:9px 22px;border-radius:999px;border:1.5px solid var(--line);background:var(--card)}
+  /* 꾸민 표지 */
+  .cover-wrap{position:relative;width:300px;filter:drop-shadow(0 20px 34px rgba(90,65,45,.16))}
+  .cover-card{background:var(--card);border-radius:26px;padding:16px}
+  .cover{position:relative;height:250px;border-radius:16px;overflow:hidden;background-color:#f4efe2;
+    background-image:linear-gradient(#e7ddc7 1.3px,transparent 1.3px),linear-gradient(90deg,#e7ddc7 1.3px,transparent 1.3px);background-size:34px 34px}
+  .tape{position:absolute;top:-4px;right:-14px;width:130px;height:32px;background:rgba(214,150,120,.68);transform:rotate(11deg)}
+  .ctitle{position:absolute;top:26px;left:0;right:0;text-align:center;font-family:'Gaegu';font-weight:700;font-size:38px;color:var(--clay);transform:rotate(-3deg)}
+</style></head><body>
+
+<!-- 1. 웰컴 -->
+<div class="screen">
+  <div class="skip">건너뛰기</div>
+  <div class="hero">
+    <div class="welcome">
+      <div class="halo"></div>
+      <span class="dot" style="width:14px;height:14px;top:40px;left:60px"></span>
+      <span class="dot" style="width:10px;height:10px;bottom:64px;right:52px;opacity:.35"></span>
+      <span class="dot" style="width:8px;height:8px;top:96px;right:34px;opacity:.4"></span>
+      <div class="wm"><div class="k">한끼</div><div class="e">HANKKI</div></div>
+      <svg class="bear" viewBox="0 0 48 48">
+        <circle cx="14.5" cy="18" r="4.6" fill="#b98a63"/><circle cx="33.5" cy="18" r="4.6" fill="#b98a63"/>
+        <circle cx="14.5" cy="18" r="2.2" fill="#d9b593"/><circle cx="33.5" cy="18" r="2.2" fill="#d9b593"/>
+        <circle cx="24" cy="28" r="13" fill="#b98a63"/>
+        <ellipse cx="24" cy="32.5" rx="6.4" ry="4.6" fill="#ecd9bd"/>
+        <rect x="22.6" y="30" width="2.8" height="2.2" rx="1.1" fill="#5f4632"/>
+        <path d="M24 32.4v1.6M24 34c-.9.9-2 .9-2.8.2M24 34c.9.9 2 .9 2.8.2" stroke="#5f4632" stroke-width="1" fill="none" stroke-linecap="round"/>
+        <circle cx="18.6" cy="27.5" r="1.35" fill="#3d3830"/><circle cx="29.4" cy="27.5" r="1.35" fill="#3d3830"/>
+        <circle cx="15.6" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/><circle cx="32.4" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/>
+        <circle cx="16.8" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+        <circle cx="24" cy="10.6" r="3.9" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+        <circle cx="31.2" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+        <rect x="15.5" y="14.6" width="17" height="3.6" rx="1.8" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+      </svg>
+    </div>
+  </div>
+  <div class="txt">
+    <div class="title">흩어진 레시피를,<br><span class="c">한곳에.</span></div>
+    <div class="body">인스타에 저장만 해두고 못 찾던 레시피,
+캡처만 쌓인 사진첩…
+이제 한끼 하나에 딱 모아요.</div>
+    <div class="tagline">장보고 · 레시피 등록하고 · 요리하고 · 꾸미기까지, 한 번에</div>
+  </div>
+  <div class="dots"><span class="on"></span><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="btn">다음</div>
+</div>
+
+<!-- 2. 담기 -->
+<div class="screen">
+  <div class="skip">건너뛰기</div>
+  <div class="hero">
+    <div class="chips">
+      <div class="chip"><svg viewBox="0 0 48 48" fill="none" stroke="#c2557e" stroke-width="2.6"><rect x="9" y="9" width="30" height="30" rx="9"/><circle cx="24" cy="24" r="8"/><circle cx="33" cy="15" r="1.8" fill="#c2557e" stroke="none"/></svg></div>
+      <div class="chip"><svg viewBox="0 0 48 48" fill="none" stroke="#c0504a" stroke-width="2.6" stroke-linejoin="round"><rect x="7" y="13" width="34" height="22" rx="7"/><path d="M21 19l9 5-9 5z" fill="#c0504a" stroke="none"/></svg></div>
+      <div class="chip"><svg viewBox="0 0 48 48" fill="none" stroke="#c47a58" stroke-width="2.6" stroke-linejoin="round"><path d="M8 17h6l3-4h10l3 4h6a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V19a2 2 0 0 1 2-2z"/><circle cx="24" cy="27" r="7"/></svg></div>
+      <div class="chip"><svg viewBox="0 0 48 48" fill="none" stroke="#c47a58" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><path d="M32 8l8 8L18 38l-10 2 2-10z"/><path d="M28 12l8 8"/></svg></div>
+    </div>
+  </div>
+  <div class="txt">
+    <div class="title c">어디서든 손쉽게 담기</div>
+    <div class="body">링크 붙여넣기, 사진 찍기, 직접 쓰기 —
+편한 대로 아무렇게나 담아도
+내 레시피북에 착착.</div>
+  </div>
+  <div class="dots"><span></span><span class="on"></span><span></span><span></span><span></span><span></span></div>
+  <div class="btn">다음</div>
+</div>
+
+<!-- 3. 냉장고→요리 -->
+<div class="screen">
+  <div class="skip">건너뛰기</div>
+  <div class="hero">
+    <div class="flow">
+      <div class="fcol"><div class="fchip"><svg viewBox="0 0 48 48" fill="none" stroke="#c47a58" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="5" width="22" height="38" rx="4"/><path d="M13 20h22"/><path d="M18 11v4M18 25v7"/></svg></div><div class="flbl">냉장고</div></div>
+      <div class="arw"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 12l12 12-12 12"/></svg></div>
+      <div class="fcol"><div class="fchip"><svg viewBox="0 0 48 48" fill="none" stroke="#c47a58" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="21" cy="21" r="12"/><path d="M30 30l9 9"/></svg></div><div class="flbl">뭐먹지</div></div>
+      <div class="arw"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 12l12 12-12 12"/></svg></div>
+      <div class="fcol"><div class="fchip"><svg viewBox="0 0 48 48" fill="none" stroke="#c47a58" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 11h4l3.4 17.2a2.6 2.6 0 0 0 2.55 2.1h13.2a2.6 2.6 0 0 0 2.5-1.9L40 17H15"/><circle cx="20.5" cy="38" r="2.4"/><circle cx="33" cy="38" r="2.4"/></svg></div><div class="flbl">장보기</div></div>
+      <div class="arw"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 12l12 12-12 12"/></svg></div>
+      <div class="fcol"><div class="fchip"><svg viewBox="0 0 48 48" fill="none" stroke="#c47a58" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="26" r="15"/><path d="M24 17v9l6 4"/><path d="M18 6h12"/></svg></div><div class="flbl">요리모드</div></div>
+    </div>
+  </div>
+  <div class="txt">
+    <div class="title c">냉장고부터 요리까지,<br>한 번에</div>
+    <div class="body">“오늘 뭐 해먹지?” 냉장고 재료로 추천받고,
+모자란 건 바로 장보기,
+따라하기 쉬운 요리모드로 뚝딱.</div>
+  </div>
+  <div class="dots"><span></span><span></span><span class="on"></span><span></span><span></span><span></span></div>
+  <div class="btn">다음</div>
+</div>
+
+<!-- 4. 주부의 장바구니 -->
+<div class="screen">
+  <div class="skip">건너뛰기</div>
+  <div class="hero">
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="basket">
+        <div class="bk-h">
+          <span style="width:44px;height:44px;border-radius:12px;background:#f4ede0;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 48 48" style="width:26px;height:26px" fill="none" stroke="#c47a58" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 11h4l3.4 17.2a2.6 2.6 0 0 0 2.55 2.1h13.2a2.6 2.6 0 0 0 2.5-1.9L40 17H15"/><circle cx="20.5" cy="38" r="2.4"/><circle cx="33" cy="38" r="2.4"/></svg></span>
+          <span class="t">주부의 장바구니</span>
+        </div>
+        <div class="bk-b">
+          <div class="bk-li"><svg viewBox="0 0 48 48" style="width:24px;height:24px" fill="none" stroke="#7f9270" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 25l8 8 16-18"/></svg>첨가물 적은 소스·양념</div>
+          <div class="bk-li"><svg viewBox="0 0 48 48" style="width:24px;height:24px" fill="none" stroke="#7f9270" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 25l8 8 16-18"/></svg>무항생제 훈제오리</div>
+          <div class="bk-li"><svg viewBox="0 0 48 48" style="width:24px;height:24px" fill="none" stroke="#7f9270" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 25l8 8 16-18"/></svg>건강 간편식·매생이</div>
+        </div>
+      </div>
+      <div class="malls">
+        <span class="mall" style="color:#c5292a">쿠팡</span>
+        <span class="mall" style="color:#4a8455">오아시스</span>
+        <span class="mall" style="color:#3f7a3f">한살림</span>
+      </div>
+    </div>
+  </div>
+  <div class="txt">
+    <div class="title c">18년차 주부의 장바구니</div>
+    <div class="body">첨가물 적은 건강 식재료를 엄선했어요.
+쿠팡·오아시스·한살림에서
+바로 사러 가기까지 한 번에.</div>
+  </div>
+  <div class="dots"><span></span><span></span><span></span><span class="on"></span><span></span><span></span></div>
+  <div class="btn">다음</div>
+</div>
+
+<!-- 5. 꾸미기 -->
+<div class="screen">
+  <div class="skip">건너뛰기</div>
+  <div class="hero">
+    <div class="cover-wrap" style="transform:rotate(-4deg)">
+      <div class="cover-card">
+        <div class="cover">
+          <div class="tape"></div>
+          <div class="ctitle">우리집 김치찌개</div>
+          <div style="position:absolute;left:52%;top:60%;transform:translate(-50%,-50%);width:104px;height:104px"><svg viewBox="0 0 48 48"><ellipse cx="24" cy="30" rx="14" ry="11" fill="#4a4a4e"/><path d="M10 27a14 8 0 0 0 28 0" fill="#3c3c40"/><path d="M11 25h26v3H11z" fill="#5a5a5f"/><circle cx="20" cy="24" r="1.7" fill="#e0a83a"/><circle cx="27" cy="26" r="1.7" fill="#cf6f5a"/><circle cx="23" cy="27" r="1.5" fill="#8ca86e"/><path d="M20 16c-1.5 2 .5 3.2-.5 5M25 15c-1.5 2 .5 3.2-.5 5" stroke="#cfcfcf" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/></svg></div>
+          <div style="position:absolute;left:14px;bottom:12px;width:66px;height:66px"><svg viewBox="0 0 48 48">
+            <circle cx="14.5" cy="18" r="4.6" fill="#b98a63"/><circle cx="33.5" cy="18" r="4.6" fill="#b98a63"/>
+            <circle cx="24" cy="28" r="13" fill="#b98a63"/><ellipse cx="24" cy="32.5" rx="6.4" ry="4.6" fill="#ecd9bd"/>
+            <rect x="22.6" y="30" width="2.8" height="2.2" rx="1.1" fill="#5f4632"/>
+            <path d="M24 32.4v1.6M24 34c-.9.9-2 .9-2.8.2M24 34c.9.9 2 .9 2.8.2" stroke="#5f4632" stroke-width="1" fill="none" stroke-linecap="round"/>
+            <circle cx="18.6" cy="27.5" r="1.35" fill="#3d3830"/><circle cx="29.4" cy="27.5" r="1.35" fill="#3d3830"/>
+            <circle cx="15.6" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/><circle cx="32.4" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/>
+            <rect x="15.5" y="14.6" width="17" height="3.6" rx="1.8" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+            <circle cx="16.8" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/><circle cx="24" cy="10.6" r="3.9" fill="#fff" stroke="#e2ded2" stroke-width="1"/><circle cx="31.2" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+          </svg></div>
+          <div style="position:absolute;right:14px;bottom:20px;width:48px;height:48px"><svg viewBox="0 0 48 48"><path d="M24 41C8 29.5 8.5 16.5 16 13c4.3-2 8 .9 8 4.6 0-3.7 3.7-6.6 8-4.6 7.5 3.5 8 16.5-8 28Z" fill="#dd918a" stroke="#71604b" stroke-width="2" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div style="height:12px;background:#eee7d8;border-radius:6px;margin-top:14px"></div>
+        <div style="height:12px;width:58%;background:#eee7d8;border-radius:6px;margin-top:9px"></div>
+      </div>
+    </div>
+  </div>
+  <div class="txt">
+    <div class="title c">내 맘대로 꾸미는<br>레시피북</div>
+    <div class="body">스티커·마스킹테이프·손글씨까지.
+똑같은 음식 사진 말고,
+나만의 감성으로 채우는 재미.</div>
+  </div>
+  <div class="dots"><span></span><span></span><span></span><span></span><span class="on"></span><span></span></div>
+  <div class="btn">다음</div>
+</div>
+
+<!-- 6. AI 예고 -->
+<div class="screen">
+  <div class="skip"></div>
+  <div class="hero">
+    <div class="flow" style="gap:14px">
+      <div class="fcol"><div class="fchip"><svg viewBox="0 0 48 48" fill="none" stroke="#c2557e" stroke-width="2.6" stroke-linejoin="round"><path d="M8 17h6l3-4h10l3 4h6a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V19a2 2 0 0 1 2-2z"/><circle cx="24" cy="27" r="7"/></svg></div><div class="flbl">캡처·링크</div></div>
+      <div class="arw"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 12l12 12-12 12"/></svg></div>
+      <div class="fcol"><div class="fchip" style="background:radial-gradient(circle at 50% 40%,#eef5ea,#dbe8d1);border-color:#cfe0c5"><svg viewBox="0 0 48 48"><path d="M24 7l3.4 11.6L39 22l-11.6 3.4L24 37l-3.4-11.6L9 22l11.6-3.4z" fill="#6e9c5e"/><circle cx="37" cy="12" r="2.4" fill="#8bb277"/><circle cx="12" cy="34" r="2" fill="#8bb277"/></svg></div><div class="flbl" style="color:#4a7a45;font-weight:700">AI 정리</div></div>
+      <div class="arw"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 12l12 12-12 12"/></svg></div>
+      <div class="fcol"><div class="fchip"><svg viewBox="0 0 48 48"><ellipse cx="24" cy="28" rx="14" ry="11" fill="#4a4a4e"/><path d="M10 25a14 8 0 0 0 28 0" fill="#3c3c40"/><path d="M11 23h26v3H11z" fill="#5a5a5f"/><circle cx="20" cy="22" r="1.7" fill="#e0a83a"/><circle cx="27" cy="24" r="1.7" fill="#cf6f5a"/></svg></div><div class="flbl">레시피 완성</div></div>
+    </div>
+  </div>
+  <div class="txt">
+    <div class="badge">곧 출시 ✨</div>
+    <div class="title c">사진 찍으면,<br>AI가 레시피로</div>
+    <div class="body">캡처·인스타·유튜브 링크만 쏙 —
+재료·순서까지 칸칸이 알아서 정리돼요.
+옮겨적을 필요 없이 몇 초면 끝.</div>
+  </div>
+  <div class="dots"><span></span><span></span><span></span><span></span><span></span><span class="on"></span></div>
+  <div class="btn">한끼 시작하기</div>
+</div>
+
+</body></html>
