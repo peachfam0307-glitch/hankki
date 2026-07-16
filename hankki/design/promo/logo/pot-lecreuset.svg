@@ -1,0 +1,14 @@
+<!-- 르쿠르제풍 냄비 (ㅎ 대체 아이디어용) · 몸통·뚜껑 같은 색, 꼭지만 크림 -->
+<!-- viewBox 0 0 48 48 · 몸통 넓게(가로>세로) · 꼭지=ㅎ 꼭지(ㅗ), 뚜껑=가로획, 몸통=동그라미 -->
+<!-- 색: 몸통/뚜껑 #cc7650 / 손잡이 #b05f3d / 꼭지 크림 #f4e7d0 / 바닥음영 #bd6a44 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="512" height="512">
+  <rect x="4.6" y="27.4" width="5" height="5.6" rx="2.5" fill="#b05f3d"/><rect x="38.4" y="27.4" width="5" height="5.6" rx="2.5" fill="#b05f3d"/>
+  <path d="M8.4 26 L39.6 26 L37.6 38.4 Q36.7 41.2 33 41.2 L15 41.2 Q11.3 41.2 10.4 38.4 Z" fill="#cc7650"/>
+  <path d="M11.4 37.6 Q24 40.6 36.6 37.6 L37.6 38.4 Q36.7 41.2 33 41.2 L15 41.2 Q11.3 41.2 10.4 38.4 Z" fill="#bd6a44"/>
+  <rect x="6.2" y="21.6" width="35.6" height="4.6" rx="2.3" fill="#cc7650"/>
+  <path d="M10.5 21.9 Q24 14.8 37.5 21.9 Z" fill="#cc7650"/>
+  <rect x="9" y="25.1" width="30" height="1.5" rx="0.75" fill="#a1552f" opacity="0.5"/>
+  <rect x="22.7" y="13" width="2.6" height="3" fill="#f4e7d0"/>
+  <rect x="20.9" y="9.2" width="6.2" height="5" rx="2.5" fill="#f4e7d0" stroke="#d9c4a0" stroke-width="0.6"/>
+  <ellipse cx="15.5" cy="31" rx="2.6" ry="3.9" fill="#d9895f" opacity="0.5"/>
+</svg>
