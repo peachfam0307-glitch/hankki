@@ -287,3 +287,26 @@ export const DECOR_BACKGROUNDS = [
 ]
 
 export const bgStyle = (key) => (DECOR_BACKGROUNDS.find((b) => b.key === key) || DECOR_BACKGROUNDS[0]).style
+
+// ── 마스킹테이프(마테) ──
+// 다꾸 시그니처. 반투명 종이 띠 + 패턴. 길이·각도 자유(무한 변형).
+// item: { type:'tape', key(패턴), x, y, s(폭), r } — 폭:높이 ≈ 3.4:1 스트립.
+export const TAPE_PATTERNS = [
+  { key: 'kraft', label: '크라프트', style: { background: 'rgba(214,197,168,0.92)' } },
+  {
+    key: 'check', label: '체크',
+    style: { backgroundColor: 'rgba(228,216,190,0.92)', backgroundImage: 'linear-gradient(rgba(150,128,92,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(150,128,92,.28) 1px, transparent 1px)', backgroundSize: '20% 50%' },
+  },
+  {
+    key: 'stripe', label: '스트라이프',
+    style: { backgroundColor: 'rgba(240,224,205,0.92)', backgroundImage: 'repeating-linear-gradient(45deg, rgba(200,120,95,.4) 0, rgba(200,120,95,.4) 7%, transparent 7%, transparent 14%)' },
+  },
+  {
+    key: 'dot', label: '도트',
+    style: { backgroundColor: 'rgba(236,236,225,0.92)', backgroundImage: 'radial-gradient(rgba(150,128,92,.4) 24%, transparent 26%)', backgroundSize: '18% 42%' },
+  },
+  { key: 'mint', label: '민트', style: { background: 'rgba(200,222,205,0.92)' } },
+  { key: 'rose', label: '로즈', style: { background: 'rgba(232,205,203,0.92)' } },
+  { key: 'sky', label: '하늘', style: { background: 'rgba(203,218,233,0.92)' } },
+]
+export const tapeStyle = (key) => (TAPE_PATTERNS.find((t) => t.key === key) || TAPE_PATTERNS[0]).style

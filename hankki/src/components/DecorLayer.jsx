@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import Icon from './Icon'
-import { StickerArt, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs } from './Stickers'
+import { StickerArt, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -65,7 +65,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
       {items.map((it) => {
         const on = editable && selectedId === it.id
         const isText = it.type === 'text'
-        const ratio = it.type === 'note' ? (it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
+        const ratio = it.type === 'tape' ? 3.4 : it.type === 'note' ? (it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
         const base = {
           position: 'absolute',
           left: `${it.x * 100}%`,
@@ -87,7 +87,9 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             onPointerUp={onItemUp}
             onPointerCancel={onItemUp}
           >
-            {it.type === 'note' ? (
+            {it.type === 'tape' ? (
+              <div style={{ position: 'absolute', inset: 0, ...tapeStyle(it.key), boxShadow: '0 1px 3px rgba(70,60,45,.18)' }} />
+            ) : it.type === 'note' ? (
               <Note it={it} editable={editable} />
             ) : it.type === 'text' ? (
               <TextDeco it={it} editable={editable} />

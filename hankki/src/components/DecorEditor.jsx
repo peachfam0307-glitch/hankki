@@ -3,7 +3,7 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { StickerArt, STICKER_GROUPS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, bgStyle, RECOLORABLE, STICKER_COLORS } from './Stickers'
+import { StickerArt, STICKER_GROUPS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, bgStyle, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -79,6 +79,12 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     setSel(it.id)
     // 텍스트 시트를 강제로 열지 않는다 — 붙이면 바로 무늬·모양 옵션이 보이도록.
     // 글씨는 캔버스의 포스트잇을 탭(연필 버튼)해서 추가한다.
+  }
+  const addTape = (key) => {
+    const n = items.length
+    const it = { id: newDecorId(), type: 'tape', key, x: 0.5, y: 0.28 + (n % 3) * 0.14, s: 0.62, r: ((n % 5) - 2) * 3 }
+    setItems((arr) => [...arr, it])
+    setSel(it.id)
   }
   const addText = (colorKey) => {
     const n = items.length
@@ -203,6 +209,16 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                 </div>
               </div>
             ))}
+
+            <div className="decor-sec">
+              <div className="decor-sec-label">마스킹테이프</div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {TAPE_PATTERNS.map((t) => (
+                  <button key={t.key} className="press" onClick={() => addTape(t.key)} aria-label={`테이프 ${t.label}`}
+                    style={{ width: 74, height: 24, borderRadius: 3, ...t.style, boxShadow: '0 1px 3px rgba(70,60,45,.2)', transform: 'rotate(-3deg)' }} />
+                ))}
+              </div>
+            </div>
 
             <div className="decor-sec">
               <div className="decor-sec-label">글자 · 직접 쓰기</div>
