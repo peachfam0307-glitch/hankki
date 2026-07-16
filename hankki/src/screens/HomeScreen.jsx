@@ -7,12 +7,14 @@ import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
 import SourceBadge from '../components/SourceBadge'
 import TabTips from '../components/TabTips'
+import PreviewSheet from '../components/PreviewSheet'
 import { timeAgo } from '../utils'
 
 export default function HomeScreen() {
   const { recipes, profile, pantry } = useStore()
   const nav = useNav()
   const [pick, setPick] = useState(0)
+  const [preview, setPreview] = useState(false)
 
   // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
   const today = useMemo(() => {
@@ -80,6 +82,20 @@ export default function HomeScreen() {
         >
           <Icon name="search" size={19} color="var(--text-sub)" />
           <span style={{ fontSize: 14.5 }}>레시피, 재료, 태그를 검색해 보세요.</span>
+        </button>
+
+        {/* 업데이트 예고 — 기대감. 강제 팝업 대신 눈에 띄는 슬림 진입점 */}
+        <button
+          className="press"
+          onClick={() => setPreview(true)}
+          style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 14, background: 'linear-gradient(100deg,#f3ece0,#efe7f0)', border: 'none', textAlign: 'left' }}
+        >
+          <span style={{ fontSize: 20, flex: '0 0 auto' }}>🎁</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>곧 나올 기능 미리보기</div>
+            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>AI 정리 · 꾸미기 · 레시피북 PDF …</div>
+          </div>
+          <Icon name="chevron-right" size={18} color="var(--sand)" />
         </button>
 
         {/* 오늘 뭐 해먹지? */}
@@ -161,6 +177,8 @@ export default function HomeScreen() {
         </button>
         <div style={{ height: 12 }} />
       </div>
+
+      {preview && <PreviewSheet onClose={() => setPreview(false)} />}
     </>
   )
 }
