@@ -14,16 +14,30 @@
 import pw from '/opt/node22/lib/node_modules/playwright/index.js'
 const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
 const OUTDIR = process.argv[2] || new URL('./previews/', import.meta.url).pathname
-const FONTS = new URL('../fonts-embed.css', import.meta.url).pathname
+// 워드마크 '한끼' + 'HANKKI' 모두 진짜 Jua(주아체)로.
+// ⚠️ fonts-embed.css('Jua')는 쓰지 않는다: 여러 폰트가 인라인된 스타일시트에서
+//   canvas fillText 가 특정 face 를 안정적으로 못 골라 엉뚱한 폰트(고운돋움/세리프)로 폴백되는
+//   버그가 있었다. 그래서 저장해 둔 진짜 주아 woff2(한글+라틴)를 유니크 패밀리 'JuaWM' 으로
+//   직접 심어 폴백 자체를 불가능하게 한다. (design/promo/fonts/ 의 OFL 폰트 파일 사용)
+const { readFileSync } = await import('fs')
+const juaB64 = (f) => readFileSync(new URL('../fonts/' + f, import.meta.url)).toString('base64')
+const JUA_K = juaB64('jua-korean-400.woff2'), JUA_L = juaB64('jua-latin-400.woff2')
 
 const b = await pw.chromium.launch({ executablePath: CHROME })
 const p = await (await b.newContext({ deviceScaleFactor: 2 })).newPage()
-await p.setContent(`<meta charset=utf-8><link rel=stylesheet href="file://${FONTS}"><canvas></canvas>`, { waitUntil: 'networkidle' })
+await p.setContent(`<meta charset=utf-8>
+<style>
+@font-face{font-family:'JuaWM';src:url(data:font/woff2;base64,${JUA_L}) format('woff2')}
+@font-face{font-family:'JuaWM';src:url(data:font/woff2;base64,${JUA_K}) format('woff2')}
+</style><canvas></canvas>`, { waitUntil: 'networkidle' })
 await p.waitForTimeout(300)
 
 const out = await p.evaluate(async () => {
   await document.fonts.ready
-  const BORDER = 8, UP = 3
+  await document.fonts.load('172px JuaWM', '한끼') // 주아체 실제 로드 보장
+  await document.fonts.load('38px JuaWM', 'HANKKI') // 라틴(HANKKI)도 주아로
+  // BORDER = 곰 얼굴과 ㅎ 링 사이 브라운 테두리 두께(px). UP = 곰을 위로 올리는 보정(0=링 정중앙).
+  const BORDER = 3, UP = 0
   const BEAR = (tone) => {
     const f = tone === 'dark' ? '#cf9f76' : '#b98a63', ei = tone === 'dark' ? '#e6c6a1' : '#d9b593', sn = tone === 'dark' ? '#f2e4cd' : '#ecd9bd', hs = tone === 'dark' ? '#e7d3b5' : '#cdb79a'
     return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='320' height='320'>
@@ -42,10 +56,10 @@ const out = await p.evaluate(async () => {
   const loadImg = (svg) => new Promise(r => { const im = new Image(); im.onload = () => r(im); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) })
   function drawWord(x, bg, fg, en) {
     x.fillStyle = bg; x.fillRect(0, 0, 512, 512)
-    const wf = 172; x.textBaseline = 'alphabetic'; x.fillStyle = fg; x.font = wf + 'px Jua'
+    const wf = 172; x.textBaseline = 'alphabetic'; x.fillStyle = fg; x.font = wf + 'px JuaWM'
     const w = '한끼', tw = x.measureText(w).width, wH = wf * 0.72, eH = 38 * 0.72, top = (512 - (wH + 6 + eH)) / 2, wb = top + wH
     x.fillText(w, (512 - tw) / 2, wb)
-    x.font = '700 38px GowunDodum'; x.fillStyle = en
+    x.font = '40px JuaWM'; x.fillStyle = en
     const t = 'HANKKI', ls = 14; let ew = 0; for (const c of t) ew += x.measureText(c).width + ls; ew -= ls
     let ex = (512 - ew) / 2; const eb = wb + wf * 0.20 + 6 + eH
     for (const c of t) { x.fillText(c, ex, eb); ex += x.measureText(c).width + ls }
