@@ -1,10 +1,8 @@
 import { useState, useRef } from 'react'
 import Icon from './Icon'
-import FoodIcon from './FoodIcon'
 import Buddy from './Buddies'
 import TextTile from './TextTile'
 import { NoteShapeDefs } from './Stickers'
-import logoCream from '../assets/logo-hankki-cream.png'
 
 // 첫 실행 온보딩 — "이게 뭐하는 앱?"을 3초 안에 알려주고, 한끼만의 차별화(통합 살림)를
 // 어필한 뒤, 곧 나올 AI 자동인식을 살짝 흘려 기대감을 준다. 6장 · 건너뛰기 가능.
@@ -49,18 +47,20 @@ function Arrow() {
 
 // ── 슬라이드별 히어로 그림 ──
 function HeroWelcome() {
-  // 확정 로고(곰=ㅎ 주아 '한끼' + HANKKI)를 앱 아이콘 톤으로 보여준다.
   return (
-    <div style={{ position: 'relative', width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <img
-        src={logoCream}
-        alt="한끼"
-        style={{ width: 172, height: 172, borderRadius: 40, boxShadow: 'var(--shadow-card)', border: '1px solid var(--line)' }}
-      />
+    <div style={{ position: 'relative', width: 172, height: 172, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{
+        position: 'absolute', inset: 0, borderRadius: '50%',
+        background: 'radial-gradient(circle at 50% 42%, #f0ece2, #e6e2d5)',
+      }} />
+      <div style={{ position: 'relative', textAlign: 'center' }}>
+        <div style={{ fontFamily: "'Gowun Dodum','Pretendard',sans-serif", fontSize: 50, fontWeight: 700, color: 'var(--brown)', letterSpacing: '0.01em', lineHeight: 1 }}>한끼</div>
+        <div style={{ marginTop: 9, fontSize: 12.5, fontWeight: 800, color: 'var(--text-sub)', letterSpacing: '0.16em' }}>HANKKI</div>
+      </div>
       {/* 흩어진 조각이 모이는 느낌의 점들 */}
-      <span style={{ position: 'absolute', top: 6, left: 10, width: 8, height: 8, borderRadius: '50%', background: 'var(--sand)' }} />
-      <span style={{ position: 'absolute', bottom: 14, right: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--brown-soft, #b79877)' }} />
-      <span style={{ position: 'absolute', top: 34, right: 2, width: 5, height: 5, borderRadius: '50%', background: 'var(--sand)' }} />
+      <span style={{ position: 'absolute', top: 14, left: 26, width: 8, height: 8, borderRadius: '50%', background: 'var(--sand)' }} />
+      <span style={{ position: 'absolute', bottom: 22, right: 20, width: 6, height: 6, borderRadius: '50%', background: 'var(--brown-soft, #b79877)' }} />
+      <span style={{ position: 'absolute', top: 40, right: 12, width: 5, height: 5, borderRadius: '50%', background: 'var(--sand)' }} />
     </div>
   )
 }
@@ -146,7 +146,7 @@ function HeroDecorate() {
       {/* 메인 레시피 페이지 */}
       <div style={{ position: 'relative', width: 150, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, boxShadow: 'var(--shadow-card)', overflow: 'hidden', transform: 'rotate(-3deg)' }}>
         <div style={{ padding: '12px 13px 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: 'linear-gradient(135deg, #f3ede1, #e8e1d2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FoodIcon name="rice" size={22} /></div>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: 'linear-gradient(135deg, #f3ede1, #e8e1d2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19 }}>🍲</div>
           <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>엄마표<br />김치볶음밥</div>
         </div>
         <div style={{ padding: '4px 13px 14px' }}>
@@ -168,7 +168,7 @@ function HeroDecorate() {
           <span style={{ fontFamily: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", fontSize: 13, fontWeight: 700, color: '#5f5647', lineHeight: 1 }}>맛있어</span>
         </div>
       </div>
-      <span style={{ position: 'absolute', top: 20, left: 8, transform: 'rotate(-12deg)' }}><Icon name="sparkle" size={20} color="var(--brown)" /></span>
+      <span style={{ position: 'absolute', top: 20, left: 8, fontSize: 20, transform: 'rotate(-12deg)' }}>✨</span>
     </div>
   )
 }
@@ -185,17 +185,17 @@ function HeroAI() {
       <div style={{ textAlign: 'center' }}>
         <div style={{
           width: 62, height: 62, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'radial-gradient(circle at 50% 40%, #f6ede0, #efdcc7)', border: '1px solid #e6d3ba',
-          boxShadow: 'var(--shadow-soft)',
-        }}><Icon name="sparkle" size={28} color="var(--brown)" /></div>
-        <div style={{ marginTop: 7, fontSize: 10, fontWeight: 800, color: 'var(--brown)' }}>AI 정리</div>
+          background: 'radial-gradient(circle at 50% 40%, #eef5ea, #dbe8d1)', border: '1px solid #cfe0c5',
+          fontSize: 28, boxShadow: 'var(--shadow-soft)',
+        }}>✨</div>
+        <div style={{ marginTop: 7, fontSize: 10, fontWeight: 800, color: '#4a7a45' }}>AI 정리</div>
       </div>
       <Arrow />
       <div style={{ textAlign: 'center' }}>
         <div style={{
           width: 58, height: 58, borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: 'var(--shadow-soft)',
-        }}><FoodIcon name="stew" size={30} /></div>
+          background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: 'var(--shadow-soft)', fontSize: 26,
+        }}>🍲</div>
         <div style={{ marginTop: 7, fontSize: 10, fontWeight: 700, color: 'var(--text-sub)' }}>레시피 완성</div>
       </div>
     </div>
@@ -289,9 +289,9 @@ export default function Onboarding({ onDone }) {
       <div key={'t' + i} className="fade" style={{ padding: '0 30px', textAlign: 'center' }}>
         {s.badge && (
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 12, padding: '4px 12px', borderRadius: 999,
+            display: 'inline-block', marginBottom: 12, padding: '4px 12px', borderRadius: 999,
             background: 'var(--cream)', color: 'var(--brown)', fontSize: 12, fontWeight: 800, letterSpacing: '0.02em',
-          }}><Icon name="sparkle" size={13} color="var(--brown)" />{s.badge}</div>
+          }}>{s.badge} ✨</div>
         )}
         <h2 style={{
           margin: 0, fontSize: 25, fontWeight: 900, lineHeight: 1.28, letterSpacing: '-0.02em',
