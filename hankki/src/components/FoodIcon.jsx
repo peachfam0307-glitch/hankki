@@ -534,6 +534,18 @@ const I = {
       <circle cx="24" cy="15.5" r="2.4" fill="#c8503f" />
     </>
   ),
+  icecream: (
+    <>
+      {/* 요거트 소프트 스월 */}
+      <path d="M15 21.5c0-3 2-4.6 4.5-4.6-.4-2.2 1.6-3.9 4.5-3.9s4.9 1.7 4.5 3.9c2.5 0 4.5 1.6 4.5 4.6z" fill="#f5efe4" />
+      <path d="M18.5 20.4c1-1.2 2.6-1.9 5.5-1.9s4.5.7 5.5 1.9" fill="none" stroke="#e6d7c0" strokeWidth="1.3" strokeLinecap="round" />
+      {/* 토핑 */}
+      <circle cx="24" cy="11.6" r="2.2" fill="#d47f6c" />
+      {/* 컵 */}
+      <path d="M14 21.5h20l-2.1 15c-.25 2-1.95 3.5-3.95 3.5h-7.9c-2 0-3.7-1.5-3.95-3.5z" fill="#e7d9bf" />
+      <path d="M15.2 27h17.6" stroke="#d3c1a0" strokeWidth="1.4" strokeLinecap="round" />
+    </>
+  ),
   seafood: (
     <>
       <ellipse cx="24" cy="31" rx="15" ry="4.5" fill="#d5dbd4" />
@@ -631,7 +643,7 @@ const I = {
 
 // 픽커용 — 카테고리별 아이콘 키
 export const FOOD_ICON_GROUPS = [
-  { label: '요리', items: ['rice', 'donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert'] },
+  { label: '요리', items: ['rice', 'donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert', 'icecream'] },
   { label: '밥·면·빵', items: ['rice', 'donburi', 'noodle', 'guksu', 'bread', 'tteok', 'tofu'] },
   { label: '채소', items: ['cabbage', 'kimchi', 'lettuce', 'onion', 'garlic', 'greenOnion', 'sprout', 'potato', 'carrot', 'chili', 'pepper', 'cucumber', 'eggplant', 'corn', 'radish', 'mushroom', 'broccoli', 'beans'] },
   { label: '과일', items: ['tomato', 'apple', 'banana', 'strawberry', 'grape', 'lemon', 'orange', 'avocado'] },
