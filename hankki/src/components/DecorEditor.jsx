@@ -54,6 +54,16 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const selItem = items.find((x) => x.id === sel)
   const selNoteColor = NOTE_COLORS.find((n) => n.key === selItem?.key) || NOTE_COLORS[0]
 
+  // 선택한 아이템 편집용 '고정 컨텍스트 바' 스타일 — 캔버스 바로 아래 항상 보임(스크롤 왔다갔다 없앰)
+  const ctxLabel = { fontSize: 11.5, fontWeight: 800, color: 'var(--brown)', flex: '0 0 auto', minWidth: 34 }
+  const ctxScroll = { display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 2, flex: 1 }
+  const ctxRow = { display: 'flex', alignItems: 'center', gap: 9 }
+  const ctxDot = { width: 30, height: 30, borderRadius: '50%', flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+  const ctxChip = { flex: '0 0 auto', padding: 4, borderRadius: 10, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+  const selOn = '2.5px solid var(--brown)'
+  const selOff = '1.5px solid var(--line)'
+  const hasCtx = selItem && (selItem.type === 'note' || selItem.type === 'text' || selItem.type === 'tape' || (selItem.type === 'sticker' && RECOLORABLE.has(selItem.key)))
+
   // 포스트잇을 선택하면 서랍을 맨 위로 올려 '무늬·모양 꾸미기'가 바로 보이게 한다.
   const drawerRef = useRef(null)
   useEffect(() => {
@@ -119,82 +129,98 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             />
           </div>
           <div className="t-sub" style={{ fontSize: 12, textAlign: 'center', marginTop: 10 }}>
-            아래에서 골라 붙이고 · 드래그로 이동 · ⟳ 손잡이로 크기/회전
+            {hasCtx ? '탭한 걸 여기서 바로 꾸며요 · 드래그로 이동 · ⟳ 크기/회전' : '아래에서 골라 붙이고 · 드래그로 이동 · ⟳ 손잡이로 크기/회전'}
           </div>
         </div>
 
-        {/* 서랍 — 세로 스크롤 그리드(가로 스크롤 제거). 카테고리별로 라벨과 함께 쌓아서 한눈에. */}
+        {/* 고정 컨텍스트 바 — 선택한 아이템의 색·무늬·모양을 캔버스 바로 아래에서 바로 바꾼다(스크롤 이동 없음) */}
+        {hasCtx && (
+          <div style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '9px 12px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {selItem.type === 'sticker' && RECOLORABLE.has(selItem.key) && (
+              <div style={ctxRow}>
+                <span style={ctxLabel}>🎨 색</span>
+                <div style={ctxScroll}>
+                  <button className="press" onClick={() => patch(sel, { color: null })} aria-label="기본색"
+                    style={{ ...ctxDot, border: !selItem.color ? selOn : selOff, fontSize: 10, fontWeight: 800, color: 'var(--text-sub)', background: 'var(--surface)' }}>기본</button>
+                  {STICKER_COLORS.map((c) => (
+                    <button key={c.key} className="press" onClick={() => patch(sel, { color: c.color })} aria-label={`색 ${c.key}`}
+                      style={{ ...ctxDot, background: c.color, border: selItem.color === c.color ? selOn : '1.5px solid rgba(0,0,0,.1)', boxShadow: selItem.color === c.color ? '0 0 0 2px var(--surface) inset' : 'none' }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            {selItem.type === 'tape' && (
+              <div style={ctxRow}>
+                <span style={ctxLabel}>🎀 무늬</span>
+                <div style={ctxScroll}>
+                  {TAPE_PATTERNS.map((t) => (
+                    <button key={t.key} className="press" onClick={() => patch(sel, { key: t.key })} aria-label={`테이프 ${t.label}`}
+                      style={{ width: 46, height: 22, borderRadius: 3, ...t.style, flex: '0 0 auto', border: selItem.key === t.key ? selOn : '1px solid rgba(0,0,0,.08)' }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            {selItem.type === 'text' && (
+              <div style={ctxRow}>
+                <span style={ctxLabel}>✍️ 글씨</span>
+                <div style={ctxScroll}>
+                  {TEXT_FONTS.map((f) => (
+                    <button key={f.key} className="press" onClick={() => patch(sel, { font: f.key })}
+                      style={{ padding: '4px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, flex: '0 0 auto', fontFamily: f.family, background: selItem.font === f.key ? 'var(--brown)' : 'var(--surface)', color: selItem.font === f.key ? '#fff' : 'var(--text-sub)' }}>{f.label}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {selItem.type === 'note' && (
+              <>
+                <div style={ctxRow}>
+                  <span style={ctxLabel}>무늬</span>
+                  <div style={ctxScroll}>
+                    {NOTE_PATTERNS.map((p) => (
+                      <button key={p.key} className="press" onClick={() => patch(sel, { pattern: p.key })}
+                        style={{ ...ctxChip, border: (selItem.pattern || 'plain') === p.key ? selOn : selOff }}>
+                        <MiniNote color={selNoteColor} pattern={p.key} shape="round" size={22} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={ctxRow}>
+                  <span style={ctxLabel}>모양</span>
+                  <div style={ctxScroll}>
+                    {NOTE_SHAPES.map((s) => (
+                      <button key={s.key} className="press" onClick={() => patch(sel, { shape: s.key })}
+                        style={{ ...ctxChip, border: (selItem.shape || 'fold') === s.key ? selOn : selOff }}>
+                        <MiniNote color={selNoteColor} pattern="plain" shape={s.key} size={22} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* 서랍 — 새로 붙이기 전용(배경·스티커·테이프·글자·포스트잇). 선택 아이템 편집은 위 컨텍스트 바에서. */}
         <div className="decor-drawer">
           <div className="decor-grab" />
           <div className="decor-scroll" ref={drawerRef}>
-            {/* 배경(배경지) — 표지 전체 톤을 바꾼다. 포스트잇 편집 중이 아닐 때만 노출. */}
-            {!selItem || selItem.type !== 'note' ? (
-              <div className="decor-sec">
-                <div className="decor-sec-label">배경</div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {DECOR_BACKGROUNDS.map((b) => {
-                    const on = bg === b.key
-                    const sw = b.style || { background: 'linear-gradient(135deg,#eef0ec,#e1e5de)' }
-                    return (
-                      <button key={b.key} className="press" onClick={() => setBg(b.key)} aria-label={`배경 ${b.label}`}
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                        <span style={{ width: 38, height: 38, borderRadius: 10, ...sw, border: on ? '2.5px solid var(--brown)' : '1.5px solid var(--line)', boxShadow: on ? '0 0 0 2px var(--surface) inset' : 'none' }} />
-                        <span style={{ fontSize: 10.5, fontWeight: 700, color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{b.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
+            {/* 배경(배경지) — 표지 전체 톤. 항상 노출. 아이템 개별 편집은 위 컨텍스트 바에서. */}
+            <div className="decor-sec">
+              <div className="decor-sec-label">배경</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {DECOR_BACKGROUNDS.map((b) => {
+                  const on = bg === b.key
+                  const sw = b.style || { background: 'linear-gradient(135deg,#eef0ec,#e1e5de)' }
+                  return (
+                    <button key={b.key} className="press" onClick={() => setBg(b.key)} aria-label={`배경 ${b.label}`}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                      <span style={{ width: 38, height: 38, borderRadius: 10, ...sw, border: on ? '2.5px solid var(--brown)' : '1.5px solid var(--line)', boxShadow: on ? '0 0 0 2px var(--surface) inset' : 'none' }} />
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{b.label}</span>
+                    </button>
+                  )
+                })}
               </div>
-            ) : null}
-            {/* 포스트잇 선택 시 — 무늬·모양 바꾸기 (맨 위에 떠서 바로 보임) */}
-            {selItem?.type === 'note' && (
-              <div className="decor-sec" style={{ background: 'var(--cream)', borderRadius: 14, padding: '11px 12px 12px' }}>
-                <div className="decor-sec-label" style={{ marginBottom: 9 }}>✏️ 선택한 포스트잇 꾸미기</div>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-sub)', margin: '0 0 6px' }}>무늬</div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-                  {NOTE_PATTERNS.map((p) => {
-                    const on = (selItem.pattern || 'plain') === p.key
-                    return (
-                      <button key={p.key} className="press" onClick={() => patch(sel, { pattern: p.key })}
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '7px 9px', borderRadius: 12, background: on ? 'var(--surface)' : 'transparent', border: on ? '1.5px solid var(--brown)' : '1.5px solid var(--line)' }}>
-                        <MiniNote color={selNoteColor} pattern={p.key} shape="round" />
-                        <span style={{ fontSize: 11, fontWeight: 700, color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{p.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-sub)', margin: '0 0 6px' }}>모양</div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {NOTE_SHAPES.map((s) => {
-                    const on = (selItem.shape || 'fold') === s.key
-                    return (
-                      <button key={s.key} className="press" onClick={() => patch(sel, { shape: s.key })}
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '7px 9px', borderRadius: 12, background: on ? 'var(--surface)' : 'transparent', border: on ? '1.5px solid var(--brown)' : '1.5px solid var(--line)' }}>
-                        <MiniNote color={selNoteColor} pattern="plain" shape={s.key} />
-                        <span style={{ fontSize: 11, fontWeight: 700, color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{s.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-            {/* 스티커 선택 시 — 색 바꾸기(리컬러 대상만) */}
-            {selItem?.type === 'sticker' && RECOLORABLE.has(selItem.key) && (
-              <div className="decor-sec" style={{ background: 'var(--cream)', borderRadius: 14, padding: '11px 12px 12px' }}>
-                <div className="decor-sec-label" style={{ marginBottom: 9 }}>🎨 선택한 스티커 색</div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button className="press" onClick={() => patch(sel, { color: null })} aria-label="기본색"
-                    style={{ width: 34, height: 34, borderRadius: '50%', border: !selItem.color ? '2.5px solid var(--brown)' : '1.5px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: 'var(--text-sub)', background: 'var(--surface)' }}>기본</button>
-                  {STICKER_COLORS.map((c) => {
-                    const on = selItem.color === c.color
-                    return (
-                      <button key={c.key} className="press" onClick={() => patch(sel, { color: c.color })} aria-label={`색 ${c.key}`}
-                        style={{ width: 34, height: 34, borderRadius: '50%', background: c.color, border: on ? '2.5px solid var(--brown)' : '1.5px solid rgba(0,0,0,.1)', boxShadow: on ? '0 0 0 2px var(--surface) inset' : 'none' }} />
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+            </div>
             {STICKER_GROUPS.map((g) => (
               <div key={g.key} className="decor-sec">
                 <div className="decor-sec-label">{g.label}</div>
