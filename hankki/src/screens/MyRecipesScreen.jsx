@@ -7,7 +7,7 @@ import TabTips from '../components/TabTips'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
-import DiaryEntrySheet, { Stars } from '../components/DiaryEntrySheet'
+import DiaryEntrySheet from '../components/DiaryEntrySheet'
 import { dateLabel } from '../utils'
 import { useBackHandler } from '../useBackHandler'
 

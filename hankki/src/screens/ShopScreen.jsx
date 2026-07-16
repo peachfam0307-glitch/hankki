@@ -9,8 +9,6 @@ import FoodIconPicker from '../components/FoodIconPicker'
 import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
 import ConfirmSheet from '../components/ConfirmSheet'
-import { ocrImage } from '../ocr'
-import { guessEmoji } from '../emoji'
 import { openExternal } from '../utils'
 import { CURATION } from '../data/curation'
 
