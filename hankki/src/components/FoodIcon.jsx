@@ -35,7 +35,7 @@ const I = {
       <path d="M11 22.5h26c-.3 9-6.3 15-13 15S11.3 31.5 11 22.5z" fill="#c9b892" />
       <ellipse cx="24" cy="22.5" rx="13" ry="4.3" fill="#f2ead6" />
       <path d="M14 21.5c2.5-2 6-3 10-3s7.5 1 10 3c-2.5 1.8-6 2.8-10 2.8s-7.5-1-10-2.8z" fill="#a5643f" />
-      <circle cx="24" cy="20.8" r="2.8" fill="#f4ead2" /><circle cx="24" cy="20.8" r="1.5" fill="#e0a83a" />
+      <circle cx="24" cy="20.8" r="2.8" fill="#f4ead2" /><circle cx="24" cy="20.8" r="1.5" fill="#c6923f" />
       <path d="M17 19.5c-1-1.5-1.2-2.5-1-3.6M31 19.5c1-1.5 1.2-2.5 1-3.6" stroke="#8fa96a" strokeWidth="1.6" fill="none" strokeLinecap="round" />
     </>
   ),
@@ -45,7 +45,7 @@ const I = {
       <ellipse cx="24" cy="24" rx="12.5" ry="4.2" fill="#ecd9a8" />
       <path d="M14 23.5c3 1.5 4.5-1 7 0s4 1.5 6.5 0 4.5 1 6.5 0" stroke="#cbab6a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
       <path d="M27 23c3.5-4.5 6-8.5 10.5-11.5M30 24.5c3.5-4 6-7 9.5-9" stroke="#a5865c" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M26.5 21.5c2-1.2 4-1 5.5 1" stroke="#e0c07a" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+      <path d="M26.5 21.5c2-1.2 4-1 5.5 1" stroke="#d6b877" strokeWidth="1.6" fill="none" strokeLinecap="round" />
     </>
   ),
   // ── 채소 ──
@@ -163,9 +163,9 @@ const I = {
   sprout: (
     <>
       <path d="M20 36c-2-7-3-13-4-17M24 37c0-7 0-13 0-18M28 36c2-7 3-12 4-16" stroke="#eee6cf" strokeWidth="2.6" fill="none" strokeLinecap="round" />
-      <ellipse cx="15.5" cy="17" rx="3" ry="2.2" transform="rotate(-20 15.5 17)" fill="#e7c95a" />
-      <ellipse cx="24" cy="15" rx="3" ry="2.2" fill="#e7c95a" />
-      <ellipse cx="32.5" cy="18" rx="3" ry="2.2" transform="rotate(20 32.5 18)" fill="#e7c95a" />
+      <ellipse cx="15.5" cy="17" rx="3" ry="2.2" transform="rotate(-20 15.5 17)" fill="#d3b455" />
+      <ellipse cx="24" cy="15" rx="3" ry="2.2" fill="#d3b455" />
+      <ellipse cx="32.5" cy="18" rx="3" ry="2.2" transform="rotate(20 32.5 18)" fill="#d3b455" />
     </>
   ),
   pepper: (
@@ -273,7 +273,7 @@ const I = {
   egg: (
     <>
       <path d="M24 9c6.5 0 11.5 9.5 11.5 17A11.5 11.5 0 1 1 12.5 26C12.5 16.5 17.5 9 24 9z" fill="#f3ead7" stroke="#cbb187" strokeWidth="1.8" />
-      <circle cx="24" cy="27" r="5.5" fill="#e0a83a" /><circle cx="22" cy="25" r="2" fill="#eec269" />
+      <circle cx="24" cy="27" r="5.5" fill="#c6923f" /><circle cx="22" cy="25" r="2" fill="#eec269" />
     </>
   ),
   fish: (
@@ -442,14 +442,14 @@ const I = {
       <path d="M10 24h28" stroke="#c3cabf" strokeWidth="1.4" />
       <path d="M15 22c2-4 5-6 9-6M22 22c2-4 5-6 9-5" stroke="#a7c07e" strokeWidth="2.4" fill="none" strokeLinecap="round" />
       <path d="M14 23c2-3 5-4 8-4 2 0 3 1 3 3" fill="#8fa96a" />
-      <circle cx="19" cy="21.5" r="2.3" fill="#c85a44" /><circle cx="29" cy="22" r="1.9" fill="#e0a83a" />
+      <circle cx="19" cy="21.5" r="2.3" fill="#a5553f" /><circle cx="29" cy="22" r="1.9" fill="#c6923f" />
     </>
   ),
   soup: (
     <>
       <path d="M11 23.5h26c-.4 8-6.4 13.5-13 13.5S11.4 31.5 11 23.5z" fill="#cdd3ce" />
       <ellipse cx="24" cy="23.5" rx="12.5" ry="4" fill="#e5d3ac" />
-      <circle cx="20" cy="23" r="1.2" fill="#8fa96a" /><circle cx="27" cy="24" r="1" fill="#c85a44" />
+      <circle cx="20" cy="23" r="1.2" fill="#8fa96a" /><circle cx="27" cy="24" r="1" fill="#a5553f" />
       <path d="M31 20l6-5" stroke="#b0987a" strokeWidth="2.4" strokeLinecap="round" />
       <path d="M18 14c-1 2 .2 3 1 4M27 13c-1 2 .2 3 1 4" stroke="#cdd3ce" strokeWidth="1.8" fill="none" strokeLinecap="round" />
     </>
@@ -458,8 +458,8 @@ const I = {
     <>
       <path d="M12 22h24l-1.5 11a4 4 0 0 1-4 3.5H17.5a4 4 0 0 1-4-3.5z" fill="#7c5240" />
       <path d="M9 21h30v2.2a1.6 1.6 0 0 1-1.6 1.6H10.6A1.6 1.6 0 0 1 9 23.2z" fill="#684433" />
-      <ellipse cx="24" cy="21.4" rx="12" ry="2.8" fill="#c14a30" />
-      <circle cx="20" cy="21" r="1.5" fill="#da6a41" /><circle cx="27.5" cy="21.6" r="1.2" fill="#da6a41" />
+      <ellipse cx="24" cy="21.4" rx="12" ry="2.8" fill="#984836" />
+      <circle cx="20" cy="21" r="1.5" fill="#ab5c42" /><circle cx="27.5" cy="21.6" r="1.2" fill="#ab5c42" />
       <path d="M19 14c-1 2 .2 3.4 1 4.4M28 13c-1 2 .2 3.4 1 4.4" stroke="#cdd3ce" strokeWidth="1.8" fill="none" strokeLinecap="round" />
     </>
   ),
@@ -468,18 +468,18 @@ const I = {
       <circle cx="22" cy="26" r="12" fill="#57534e" />
       <circle cx="22" cy="25" r="9.3" fill="#7c6a52" />
       <path d="M34 24.5h8.5a1.5 1.5 0 0 1 0 3H34" fill="none" stroke="#57534e" strokeWidth="2.6" strokeLinecap="round" />
-      <circle cx="19" cy="24" r="1.8" fill="#c85a44" /><circle cx="25" cy="26" r="1.6" fill="#8fa96a" /><circle cx="22.5" cy="22" r="1.5" fill="#e0a83a" />
+      <circle cx="19" cy="24" r="1.8" fill="#a5553f" /><circle cx="25" cy="26" r="1.6" fill="#8fa96a" /><circle cx="22.5" cy="22" r="1.5" fill="#c6923f" />
     </>
   ),
   stirfryspicy: (
     <>
-      <path d="M15 31c-2-2.5-1.1-5 .1-6.4.5 1.9 1.7 2.3 2.1.8 1 1.7.6 3.9-.8 5.6z" fill="#eaa03a" />
-      <path d="M28.5 31.4c-2.1-2.7-1.1-5.4.2-6.9.5 2 1.9 2.4 2.3.9 1.1 1.9.6 4.2-1 6z" fill="#eaa03a" />
+      <path d="M15 31c-2-2.5-1.1-5 .1-6.4.5 1.9 1.7 2.3 2.1.8 1 1.7.6 3.9-.8 5.6z" fill="#cb8c3d" />
+      <path d="M28.5 31.4c-2.1-2.7-1.1-5.4.2-6.9.5 2 1.9 2.4 2.3.9 1.1 1.9.6 4.2-1 6z" fill="#cb8c3d" />
       <path d="M21.7 32.6c-2.3-2.9-1.2-6 .2-7.5.6 2.3 2 2.7 2.5 1 1.2 2.1.6 4.6-1.1 6.5z" fill="#dc4a2b" />
       <circle cx="22" cy="24" r="10.4" fill="#57534e" />
       <circle cx="22" cy="23.2" r="8" fill="#b5472f" />
       <path d="M32.4 22.8h7.9a1.4 1.4 0 0 1 0 2.8h-7.9" fill="none" stroke="#57534e" strokeWidth="2.5" strokeLinecap="round" />
-      <circle cx="19" cy="23" r="1.4" fill="#e8b24a" /><circle cx="24.6" cy="24" r="1.3" fill="#f0d0a0" />
+      <circle cx="19" cy="23" r="1.4" fill="#cd9c46" /><circle cx="24.6" cy="24" r="1.3" fill="#f0d0a0" />
       <path d="M20.5 15.6c3-.7 5.2.6 6.6 2.4-2.2.7-4.7.2-6.8-1.1z" fill="#cf3b28" />
       <path d="M20.2 14.9c.8-.2 1.3.2 1.2 1l-1 .2z" fill="#6f9a4a" />
     </>
@@ -508,8 +508,8 @@ const I = {
   spicybowl: (
     <>
       <path d="M11 23.5h26c-.4 8-6.4 13.5-13 13.5S11.4 31.5 11 23.5z" fill="#cdd3ce" />
-      <ellipse cx="24" cy="23.5" rx="12.5" ry="4" fill="#c14a30" />
-      <circle cx="19.5" cy="23.2" r="1.3" fill="#e0663f" /><circle cx="27" cy="24" r="1.1" fill="#7f9a5c" /><circle cx="23.5" cy="24.4" r="1.1" fill="#e8b24a" />
+      <ellipse cx="24" cy="23.5" rx="12.5" ry="4" fill="#984836" />
+      <circle cx="19.5" cy="23.2" r="1.3" fill="#e0663f" /><circle cx="27" cy="24" r="1.1" fill="#7f9a5c" /><circle cx="23.5" cy="24.4" r="1.1" fill="#cd9c46" />
       <path d="M20 15.4c3.1-.7 5.4.7 6.9 2.6-2.3.7-5 .1-7.2-1.3z" fill="#cf3b28" />
       <path d="M19.7 14.6c.9-.3 1.5.2 1.3 1.1l-1.1.2z" fill="#6f9a4a" />
     </>
@@ -560,10 +560,10 @@ const I = {
       <path d="M10 23h28c0 8-6 14-14 14s-14-6-14-14z" fill="#c6ccc5" />
       <ellipse cx="24" cy="23" rx="13" ry="4.6" fill="#f2ead6" />
       <path d="M11.5 24c1.5-2.5 4-3.8 7-4" stroke="#8fa96a" strokeWidth="2.6" fill="none" strokeLinecap="round" />
-      <path d="M15 27.5c2-1.5 5-2 8-1.8" stroke="#c85a44" strokeWidth="2.6" fill="none" strokeLinecap="round" />
-      <path d="M25 26c2.5-.4 5.5 0 8 1.2" stroke="#d8963e" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+      <path d="M15 27.5c2-1.5 5-2 8-1.8" stroke="#a5553f" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+      <path d="M25 26c2.5-.4 5.5 0 8 1.2" stroke="#bf873c" strokeWidth="2.6" fill="none" strokeLinecap="round" />
       <path d="M29 24c2-1 4-1.8 6.5-2" stroke="#8a6a4a" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-      <circle cx="24" cy="24.5" r="3" fill="#f4ead2" /><circle cx="24" cy="24.5" r="1.6" fill="#e0a83a" />
+      <circle cx="24" cy="24.5" r="3" fill="#f4ead2" /><circle cx="24" cy="24.5" r="1.6" fill="#c6923f" />
     </>
   ),
   gimbap: (
@@ -571,11 +571,11 @@ const I = {
       <circle cx="30" cy="26" r="8.5" fill="#3d473a" />
       <circle cx="30" cy="26" r="6.4" fill="#f1e9d5" />
       <circle cx="30" cy="26" r="1.8" fill="#8fa96a" />
-      <circle cx="28" cy="24.5" r="1.2" fill="#c85a44" /><circle cx="32" cy="24.5" r="1.2" fill="#d8963e" /><circle cx="30" cy="28.5" r="1.2" fill="#e0a83a" />
+      <circle cx="28" cy="24.5" r="1.2" fill="#a5553f" /><circle cx="32" cy="24.5" r="1.2" fill="#bf873c" /><circle cx="30" cy="28.5" r="1.2" fill="#c6923f" />
       <circle cx="18" cy="23" r="10" fill="#3d473a" />
       <circle cx="18" cy="23" r="7.6" fill="#f2ead6" />
-      <circle cx="18" cy="23" r="2.3" fill="#e0a83a" />
-      <circle cx="14.8" cy="21" r="1.5" fill="#c85a44" /><circle cx="21.2" cy="21" r="1.5" fill="#8fa96a" /><circle cx="15.5" cy="25.5" r="1.5" fill="#d8963e" /><circle cx="21" cy="25.5" r="1.5" fill="#6b8a4a" />
+      <circle cx="18" cy="23" r="2.3" fill="#c6923f" />
+      <circle cx="14.8" cy="21" r="1.5" fill="#a5553f" /><circle cx="21.2" cy="21" r="1.5" fill="#8fa96a" /><circle cx="15.5" cy="25.5" r="1.5" fill="#bf873c" /><circle cx="21" cy="25.5" r="1.5" fill="#6b8a4a" />
     </>
   ),
   sushi: (
@@ -590,8 +590,8 @@ const I = {
     <>
       <ellipse cx="24" cy="31" rx="16" ry="4.5" fill="#d8ded7" />
       <ellipse cx="24" cy="30" rx="12.5" ry="3.4" fill="#eef1ec" />
-      <path d="M13 28c3-6 8-9 14-9 4 0 7 1 9 3M14 30c2-5 7-8 13-8M16 31.5c2-4 6-6 11-6.5M13 26c1-2 3-4 6-5" stroke="#e0c07a" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <circle cx="27" cy="25.5" r="2.6" fill="#c14a30" />
+      <path d="M13 28c3-6 8-9 14-9 4 0 7 1 9 3M14 30c2-5 7-8 13-8M16 31.5c2-4 6-6 11-6.5M13 26c1-2 3-4 6-5" stroke="#d6b877" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <circle cx="27" cy="25.5" r="2.6" fill="#984836" />
     </>
   ),
   // ── 쇼핑 ──

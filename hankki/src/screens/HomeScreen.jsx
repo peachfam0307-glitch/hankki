@@ -88,9 +88,9 @@ export default function HomeScreen() {
         <button
           className="press"
           onClick={() => setPreview(true)}
-          style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 14, background: 'linear-gradient(100deg,#f3ece0,#efe7f0)', border: 'none', textAlign: 'left' }}
+          style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 14, background: 'linear-gradient(100deg,#f7ead8,#f1dcc6)', border: 'none', textAlign: 'left' }}
         >
-          <span style={{ fontSize: 20, flex: '0 0 auto' }}>🎁</span>
+          <span style={{ flex: '0 0 auto', display: 'inline-flex' }}><Icon name="gift" size={20} color="var(--brown)" stroke={1.7} /></span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>곧 나올 기능 미리보기</div>
             <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>AI 정리 · 꾸미기 · 레시피북 PDF …</div>

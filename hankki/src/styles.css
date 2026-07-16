@@ -1,17 +1,17 @@
 :root {
-  --bg: #f7f4ee; /* 따뜻한 크림 (홍보 세트 톤과 일치 · 기존 쿨그레이 #f5f6f4에서 웜화) */
-  --surface: #fffdf9; /* 카드 — 살짝 웜한 화이트(순백보다 배경과 자연스럽게 이어짐) */
-  --cream: #efeae0; /* 연한 웜크림 (pill, 태그 배경) */
-  --cream-deep: #e7decd; /* 진한 웜크림 (선택된 pill) */
-  --sand: #cdc7bb;
-  --brown: #6b4f3a;
+  --bg: #fbf8f2; /* 부드럽고 밝은 웜 크림 (화사) */
+  --surface: #fffefc; /* 카드 — 깨끗한 웜 화이트 */
+  --cream: #f2ede3; /* 연한 웜크림 (pill, 태그 배경) */
+  --cream-deep: #ebe1d1; /* 진한 웜크림 (선택된 pill) */
+  --sand: #cdbfa8; /* 웜 샌드 */
+  --brown: #cd7c50; /* 포인트 = 호박/테라코타 (버튼·강조) — 화사한 웜 */
   --text: #3d3830;
-  --text-sub: #8f887b; /* 보조 텍스트 — 살짝 웜한 뉴트럴 */
-  --line: #ece5da; /* 아주 얇은 웜한 구분선 */
-  --danger: #c2703f;
-  --frame: #eae3d6; /* 앱 컬럼 바깥 여백(데스크톱) — 웜 */
-  --nav-bg: rgba(247, 244, 238, 0.92); /* 하단 탭바(반투명) — 새 크림톤 */
-  --today-grad: linear-gradient(135deg, #f0ece2, #e6e2d5); /* '오늘 뭐 해먹지' 카드 */
+  --text-sub: #8f887b; /* 보조 텍스트 — 웜 뉴트럴 */
+  --line: #efe8dc; /* 아주 얇은 웜 구분선 */
+  --danger: #c85a3f; /* 위험 = 포인트(호박)와 구분되게 살짝 붉게 */
+  --frame: #efe8db; /* 앱 컬럼 바깥 여백(데스크톱) — 웜 */
+  --nav-bg: rgba(251, 248, 242, 0.92); /* 하단 탭바(반투명) */
+  --today-grad: linear-gradient(135deg, #f6f0e5, #efe6d6); /* '오늘 뭐 해먹지' 카드 */
 
   --r-sm: 10px;
   --r-md: 16px;
@@ -28,37 +28,21 @@
   color-scheme: light;
 }
 
-/* ── 세이지(연한 그린) 테마 — 기존과 같은 밝은 톤, 포인트만 세이지그린 ── */
-:root[data-theme='sage'] {
-  --bg: #f1f3ee;
-  --surface: #ffffff;
-  --cream: #e9ebe3;
-  --cream-deep: #dae0d1;
-  --sand: #b6bda8;
-  --brown: #6f7c63;
-  --text: #363b31;
-  --text-sub: #878b7e;
-  --line: #e5e8df;
-  --frame: #e3e6dd;
-  --nav-bg: rgba(241, 243, 238, 0.92);
-  --today-grad: linear-gradient(135deg, #e9ece2, #dde1d3);
-}
-
-/* ── 다크 테마 — 앱 아이콘의 딥 차콜그린 톤 ── */
+/* ── 다크 테마 — 웜 에스프레소(브라운 계열, 크림과 한 가족) ── */
 :root[data-theme='dark'] {
-  --bg: #1b201a;
-  --surface: #252b23;
-  --cream: #2c332a;
-  --cream-deep: #384031;
-  --sand: #7c866f;
-  --brown: #6f7e60; /* 포인트: 흰 글씨(버튼)도 읽히고 다크 배경 위 강조로도 보이는 중간 세이지 */
-  --text: #e9ece4;
-  --text-sub: #9aa08d;
-  --line: rgba(255, 255, 255, 0.09);
-  --danger: #d98a63;
-  --frame: #0f120d;
-  --nav-bg: rgba(24, 29, 23, 0.9);
-  --today-grad: linear-gradient(135deg, #2d342b, #242a22);
+  --bg: #241e18; /* 웜 에스프레소 */
+  --surface: #2f2820;
+  --cream: #362d24; /* pill·태그 */
+  --cream-deep: #43382c;
+  --sand: #8a7a63;
+  --brown: #cd8a55; /* 포인트 = 따뜻한 호박/앰버 (다크 배경 위 버튼·강조, 흰 글씨 읽힘) */
+  --text: #ede4d7;
+  --text-sub: #a79883;
+  --line: rgba(255, 255, 255, 0.08);
+  --danger: #e0946a;
+  --frame: #1a140f;
+  --nav-bg: rgba(36, 30, 24, 0.92);
+  --today-grad: linear-gradient(135deg, #3a3026, #2c231b);
 
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.32);
