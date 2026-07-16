@@ -14,6 +14,8 @@
 import pw from '/opt/node22/lib/node_modules/playwright/index.js'
 const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
 const OUTDIR = process.argv[2] || new URL('./previews/', import.meta.url).pathname
+// 실행: node gen-logo.mjs [outDir] [border] [up]  — 테두리/위치 실험용 인자 (기본 = 확정 스펙)
+const ARG_BORDER = Number(process.argv[3] ?? NaN), ARG_UP = Number(process.argv[4] ?? NaN)
 // 워드마크 '한끼' + 'HANKKI' 모두 진짜 Jua(주아체)로.
 // ⚠️ fonts-embed.css('Jua')는 쓰지 않는다: 여러 폰트가 인라인된 스타일시트에서
 //   canvas fillText 가 특정 face 를 안정적으로 못 골라 엉뚱한 폰트(고운돋움/세리프)로 폴백되는
@@ -32,12 +34,12 @@ await p.setContent(`<meta charset=utf-8>
 </style><canvas></canvas>`, { waitUntil: 'networkidle' })
 await p.waitForTimeout(300)
 
-const out = await p.evaluate(async () => {
+const out = await p.evaluate(async ({ argBorder, argUp }) => {
   await document.fonts.ready
   await document.fonts.load('172px JuaWM', '한끼') // 주아체 실제 로드 보장
   await document.fonts.load('38px JuaWM', 'HANKKI') // 라틴(HANKKI)도 주아로
   // BORDER = 곰 얼굴과 ㅎ 링 사이 브라운 테두리 두께(px). UP = 곰을 위로 올리는 보정(0=링 정중앙).
-  const BORDER = 3, UP = 0
+  const BORDER = Number.isFinite(argBorder) ? argBorder : 3, UP = Number.isFinite(argUp) ? argUp : 0
   const BEAR = (tone) => {
     const f = tone === 'dark' ? '#cf9f76' : '#b98a63', ei = tone === 'dark' ? '#e6c6a1' : '#d9b593', sn = tone === 'dark' ? '#f2e4cd' : '#ecd9bd', hs = tone === 'dark' ? '#e7d3b5' : '#cdb79a'
     return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='320' height='320'>
@@ -83,7 +85,7 @@ const out = await p.evaluate(async () => {
   const bl = new Image(), bc = new Image(); await new Promise(r => { let n = 0; const done = () => (++n === 2) && r(); bl.onload = done; bc.onload = done; bl.src = light; bc.src = clay })
   const big = document.createElement('canvas'); big.width = 512 * 2 + 60; big.height = 512; const g = big.getContext('2d'); g.fillStyle = '#8f8f8f'; g.fillRect(0, 0, big.width, big.height); g.drawImage(bl, 20, 0); g.drawImage(bc, 512 + 40, 0)
   return { light, clay, compare: big.toDataURL('image/png') }
-})
+}, { argBorder: ARG_BORDER, argUp: ARG_UP })
 const { writeFileSync } = await import('fs')
 const save = (name, url) => writeFileSync(OUTDIR + name, Buffer.from(url.split(',')[1], 'base64'))
 save('확정-2색.png', out.compare); save('한끼로고-크림-512.png', out.light); save('한끼로고-클레이-512.png', out.clay)
