@@ -18,7 +18,7 @@ export default defineConfig({
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff,woff2}'],
       },
-      includeAssets: ['favicon.svg', 'icons/icon-192-v3.png', 'icons/icon-512-v3.png'],
+      includeAssets: ['favicon.svg', 'icons/icon-192-v4.png', 'icons/icon-512-v4.png'],
       manifest: {
         name: '한끼 — 나만의 레시피 아카이브',
         short_name: '한끼',
@@ -32,12 +32,12 @@ export default defineConfig({
         scope: './',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#F5F6F4',
+        background_color: '#FDFBF7',
         theme_color: '#6B4F3A',
         icons: [
-          { src: 'icons/icon-192-v3.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: 'icons/icon-512-v3.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: 'icons/icon-maskable-512-v3.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'icons/icon-192-v4.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-512-v4.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-maskable-512-v4.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
         // 안드로이드 공유 시트에서 '한끼'로 링크/사진을 바로 받기 위한 설정.
         share_target: {
