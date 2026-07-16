@@ -82,6 +82,14 @@ export default function EditorScreen({ id, prefill }) {
   })
   const [pin, setPin] = useState(prefill?.watch ? 'video' : prefill?.refImages?.length ? 'photo' : null)
   const [zoom, setZoom] = useState(false) // 캡처 원본 전체화면으로 크게 보기
+  // 핀 고정 캡처가 34vh 안에서 세로 스크롤되는데 신호가 없어 '잘림/고정'으로 오해 → 더 볼 게 있으면 하단 fade
+  const [photoMore, setPhotoMore] = useState(false)
+  const photoBoxRef = useRef(null)
+  const checkPhotoScroll = () => {
+    const el = photoBoxRef.current
+    if (el) setPhotoMore(el.scrollHeight - el.scrollTop - el.clientHeight > 6)
+  }
+  useEffect(() => { const id = setTimeout(checkPhotoScroll, 80); return () => clearTimeout(id) }, [pin, refs.length])
   const [newFolder, setNewFolder] = useState(false)
 
   const [f, setF] = useState(() => {
@@ -283,10 +291,14 @@ export default function EditorScreen({ id, prefill }) {
       {focusField && (
         <Portal>
           <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'var(--kb-inset, 0px)', zIndex: 3000, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
-            <div onMouseDown={(e) => e.preventDefault()} style={{ pointerEvents: 'auto', width: '100%', maxWidth: 480, display: 'flex', gap: 6, overflowX: 'auto', padding: '8px 12px', background: 'var(--surface)', borderTop: '1px solid var(--line)', boxShadow: '0 -3px 12px rgba(0,0,0,.10)' }}>
+            <div onMouseDown={(e) => e.preventDefault()} style={{ pointerEvents: 'auto', width: '100%', maxWidth: 480, display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', padding: '8px 12px', background: 'var(--surface)', borderTop: '2px solid var(--brown)', boxShadow: '0 -3px 12px rgba(0,0,0,.12)' }}>
+              {/* 왼쪽 고정 안내 — 키보드와 색이 비슷해 놓치기 쉬워, "이 버튼으로 단위 넣는다"를 못박는다 */}
+              <span style={{ flex: '0 0 auto', position: 'sticky', left: 0, zIndex: 1, alignSelf: 'stretch', display: 'flex', alignItems: 'center', gap: 5, paddingRight: 9, background: 'var(--surface)', color: 'var(--brown)', fontSize: 13, fontWeight: 800, whiteSpace: 'nowrap', borderRight: '1px solid var(--line)' }}>
+                <Icon name="chevron-right" size={14} stroke={2.6} color="var(--brown)" />단위 톡
+              </span>
               {UNITS.map((u) => (
                 <button key={u} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insertUnit(u, focusField === 'steps' ? stepRef : ingRef, focusField)}
-                  style={{ flex: '0 0 auto', padding: '8px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
+                  style={{ flex: '0 0 auto', padding: '8px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', border: '1px solid var(--line)', fontSize: 14, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
                   {u}
                 </button>
               ))}
@@ -356,17 +368,22 @@ export default function EditorScreen({ id, prefill }) {
         <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#141311' }}>
           {/* 캡처 원본 — 인식이 100%가 아니니 보면서 고친다. 적는 칸이 더 중요하므로
               높이를 줄여(34vh) 입력칸을 넉넉히 남기고, 사진이 길면 안에서 세로 스크롤한다. */}
-          <div style={{ maxHeight: '34vh', overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+          <div ref={photoBoxRef} onScroll={checkPhotoScroll} style={{ maxHeight: '34vh', overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
             {refs.map((img, k) => (
               <img
                 key={k}
                 src={img}
                 alt={`캡처 ${k + 1}`}
                 onClick={() => setZoom(k)}
+                onLoad={checkPhotoScroll}
                 style={{ display: 'block', width: '100%', height: 'auto', cursor: 'zoom-in' }}
               />
             ))}
           </div>
+          {/* 더 스크롤할 게 있을 때만 하단 fade + 안내 — '잘림/고정' 오해 방지 */}
+          {photoMore && (
+            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 64, pointerEvents: 'none', background: 'linear-gradient(to bottom, rgba(20,19,17,0), rgba(20,19,17,0.72))' }} />
+          )}
           <button
             className="press"
             onClick={() => setZoom(0)}
@@ -375,6 +392,11 @@ export default function EditorScreen({ id, prefill }) {
           >
             🔍 크게 보기{refs.length > 1 ? ` · ${refs.length}장` : ''}
           </button>
+          {photoMore && (
+            <span style={{ position: 'absolute', bottom: 13, right: 12, color: 'rgba(255,255,255,0.92)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3, pointerEvents: 'none' }}>
+              아래 더 있어요 <span style={{ fontSize: 14, lineHeight: 1 }}>↓</span>
+            </span>
+          )}
           <button
             className="press"
             onClick={() => setPin(null)}
@@ -455,34 +477,12 @@ export default function EditorScreen({ id, prefill }) {
           <input value={f.title} onChange={(e) => set('title', e.target.value)} placeholder="예) 명란 크림 파스타" />
         </div>
 
-        <div className="field">
-          <label>카테고리</label>
-          <div className="hscroll" style={{ padding: 0, margin: 0 }}>
-            {CATEGORIES.filter((c) => c !== '전체').map((c) => (
-              <button key={c} className={`pill press ${f.category === c ? 'active' : ''}`} onClick={() => set('category', c)}>{c}</button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div className="field" style={{ flex: 1 }}>
-            <label>조리시간 (분)</label>
-            <input value={f.time} onChange={(e) => set('time', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="예: 20" />
-          </div>
-          <div className="field" style={{ flex: 1 }}>
-            <label>인분</label>
-            <input value={f.servings} onChange={(e) => set('servings', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="예: 2" />
-          </div>
-        </div>
-
-        <div className="field">
-          <label>난이도</label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {DIFFS.map((d) => (
-              <button key={d} className={`pill press ${f.difficulty === d ? 'active' : ''}`} onClick={() => set('difficulty', d)}>{d}</button>
-            ))}
-          </div>
-        </div>
+        {/* 캡처 한 장으로 재료+만드는 법 한 번에 — 사진 두 번 올리는 번거로움 없이(요청 반영).
+            잘못 섞이면 아래 각 칸의 📷로 따로 채워 보정한다(안전망 유지). */}
+        <button className="press" onClick={() => pickOcr('all')} disabled={ocr.busy}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '15px', marginBottom: 14, borderRadius: 'var(--r-md)', background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 800, boxShadow: 'var(--shadow-soft)', opacity: ocr.busy ? 0.5 : 1 }}>
+          <Icon name="camera" size={18} color="#fff" /> 캡처 한 장으로 재료·만드는 법 채우기
+        </button>
 
         {/* 사진 읽는 중 — 칸 채우기 진행 표시 */}
         {ocr.busy && (
@@ -511,14 +511,40 @@ export default function EditorScreen({ id, prefill }) {
           </div>
           <textarea ref={stepRef} rows={7} value={f.steps} onChange={(e) => set('steps', e.target.value)} style={{ scrollMarginTop: pin ? '38vh' : undefined }} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
           <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 7, lineHeight: 1.5 }}>
-            한 장의 캡처에 재료·만드는 법이 다 있다면{' '}
-            <button className="press" onClick={() => pickOcr('all')} disabled={ocr.busy} style={{ display: 'inline', padding: 0, background: 'none', color: 'var(--brown)', fontWeight: 700, fontSize: 12, textDecoration: 'underline' }}>
-              한 장으로 자동 분류
-            </button>
-            {' '}· 썸네일은 안 바뀌어요
+            재료·만드는 법이 섞여 들어갔다면, 각 칸의 <b style={{ color: 'var(--brown)' }}>📷 사진에서 채우기</b>로 따로 채우면 더 정확해요 · 썸네일은 안 바뀌어요
           </div>
           <div style={{ marginTop: 8, fontSize: 13.5, color: 'var(--text)', lineHeight: 1.6, background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 10, padding: '11px 13px', fontWeight: 500 }}>
             💡 아이콘·특수문자가 많은 캡쳐는 글자 인식이 부정확할 수 있어요. 읽은 내용은 <b style={{ color: 'var(--brown)' }}>초안</b>이니 사진을 보며 다듬어 주세요.
+          </div>
+        </div>
+
+        {/* 부가 정보 — 캡처는 보통 제목+재료+만드는 법이 붙어 있어, 그걸 먼저 적고 나서 채우게 아래로 뺐다 */}
+        <div className="field">
+          <label>카테고리</label>
+          <div className="hscroll" style={{ padding: 0, margin: 0 }}>
+            {CATEGORIES.filter((c) => c !== '전체').map((c) => (
+              <button key={c} className={`pill press ${f.category === c ? 'active' : ''}`} onClick={() => set('category', c)}>{c}</button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div className="field" style={{ flex: 1 }}>
+            <label>조리시간 (분)</label>
+            <input value={f.time} onChange={(e) => set('time', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="예: 20" />
+          </div>
+          <div className="field" style={{ flex: 1 }}>
+            <label>인분</label>
+            <input value={f.servings} onChange={(e) => set('servings', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="예: 2" />
+          </div>
+        </div>
+
+        <div className="field">
+          <label>난이도</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {DIFFS.map((d) => (
+              <button key={d} className={`pill press ${f.difficulty === d ? 'active' : ''}`} onClick={() => set('difficulty', d)}>{d}</button>
+            ))}
           </div>
         </div>
 
