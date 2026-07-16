@@ -12,6 +12,9 @@
   --frame: #efe8db; /* 앱 컬럼 바깥 여백(데스크톱) — 웜 */
   --nav-bg: rgba(253, 251, 247, 0.92); /* 하단 탭바(반투명) */
   --today-grad: linear-gradient(135deg, #f6f0e5, #efe6d6); /* '오늘 뭐 해먹지' 카드 */
+  --tease: linear-gradient(100deg, #e9f1f2, #dcebee); /* '곧 나올 기능' 카드 — 웜 크림에 시원한 민트블루 보색 톡 */
+  --tease-ic: #5f9298; /* 위 카드 아이콘/강조 */
+  --thumb: linear-gradient(160deg, #ffffff, #f8f3ea); /* 레시피 사진 배경 — 크림: 웜 화이트 */
 
   --r-sm: 10px;
   --r-md: 16px;
@@ -43,23 +46,29 @@
   --frame: #e6ecf4;
   --nav-bg: rgba(244, 247, 251, 0.92);
   --today-grad: linear-gradient(135deg, #eef3fa, #e0e8f4);
+  --tease: linear-gradient(100deg, #f7ede1, #f1ddc9); /* 시원한 블루에 따뜻한 피치 보색 팝 */
+  --tease-ic: #c08a56;
+  --thumb: linear-gradient(160deg, #ffffff, #eef2f6); /* 레시피 사진 배경 — 블루: 쿨 화이트(노랗지 않게) */
 }
 
 /* ── 다크 테마 — 웜 에스프레소(브라운 계열, 크림과 한 가족) ── */
 :root[data-theme='dark'] {
-  --bg: #241e18; /* 웜 에스프레소 */
-  --surface: #2f2820;
-  --cream: #362d24; /* pill·태그 */
-  --cream-deep: #43382c;
+  --bg: #17120d; /* 깊은 웜 에스프레소 — 진짜 다크 */
+  --surface: #221b14;
+  --cream: #2b2219; /* pill·태그 */
+  --cream-deep: #362b20;
   --sand: #8a7a63;
   --brown: #cd8a55; /* 포인트 = 따뜻한 호박/앰버 (다크 배경 위 버튼·강조, 흰 글씨 읽힘) */
-  --text: #ede4d7;
-  --text-sub: #a79883;
+  --text: #ece3d6;
+  --text-sub: #a2937f;
   --line: rgba(255, 255, 255, 0.08);
   --danger: #e0946a;
-  --frame: #1a140f;
-  --nav-bg: rgba(36, 30, 24, 0.92);
-  --today-grad: linear-gradient(135deg, #3a3026, #2c231b);
+  --frame: #0d0a06;
+  --nav-bg: rgba(23, 18, 13, 0.92);
+  --today-grad: linear-gradient(135deg, #2c2318, #201810);
+  --tease: linear-gradient(100deg, #2e2317, #241a12); /* 다크 — 웜 브라운 팝 */
+  --tease-ic: #d29a63;
+  --thumb: linear-gradient(160deg, #e7e1d6, #d9d1c3); /* 레시피 사진 배경 — 다크: 톤다운 오프화이트(쨍하지 않게) */
 
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.32);

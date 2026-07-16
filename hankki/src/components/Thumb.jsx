@@ -12,19 +12,7 @@ import { graphemes } from '../utils'
 // 예전 레시피(thumb 없음)는 이미지가 있으면 사진, 없으면 아이콘으로 자연스럽게 보인다.
 // 레시피 사진(썸네일) 배경은 '하얀색' — 사진·꾸미기가 깨끗하게 얹히도록.
 // 색·개성은 꾸미기(사용자 배경/스티커)가 담당한다. (여기 색 넣으면 꾸미기 의미가 죽음)
-// 순백은 아이콘이 붕 떠서, 웜 화이트에 아주 옅은 결만.
-const GRADS = [
-  'linear-gradient(160deg,#ffffff,#faf6ef)',
-  'linear-gradient(160deg,#fffefb,#f7f2ea)',
-  'linear-gradient(160deg,#fffdf9,#f8f3eb)',
-  'linear-gradient(160deg,#ffffff,#f9f4ec)',
-]
-
-function gradFor(seed = '') {
-  let n = 0
-  for (let i = 0; i < seed.length; i++) n = (n + seed.charCodeAt(i)) % GRADS.length
-  return GRADS[n]
-}
+// 테마별로 화이트 톤이 달라야 함(크림=웜/블루=쿨/다크=톤다운) → CSS 토큰 --thumb 사용.
 
 export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '2rem', iconSize = '56%', showDecor = false }) {
   const [failed, setFailed] = useState(false)
@@ -37,7 +25,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
     width: '100%',
     borderRadius: radius,
     overflow: 'hidden',
-    ...(bg || { background: gradFor(recipe.title || recipe.id) }),
+    ...(bg || { background: 'var(--thumb)' }),
     ...(ratio ? { aspectRatio: ratio } : {}),
     ...style,
   }

@@ -1,13 +1,15 @@
 import Portal from './Portal'
+import Icon from './Icon'
 
 // 업데이트 예고 — '준비 중인 기능'을 보여줘 기대감을 준다.
 // 정직 원칙: 없는 걸 '됩니다'라 하지 않고 '준비 중/곧'으로만 안내.
+// 아이콘은 이모지 대신 커스텀 라인아이콘(브랜드 통일).
 const UPCOMING = [
-  { emoji: '🤖', title: '사진 한 장이면 AI가 레시피로', desc: '캡처·손글씨도 자동 정리. 옮겨적기 끝.', tag: '곧' },
-  { emoji: '🎀', title: '꾸미기 새 아이템', desc: '도장·컨페티·내 사진 프레임까지.', tag: '준비 중' },
-  { emoji: '📖', title: '내 레시피북, PDF로 소장', desc: '꾸민 표지 그대로 예쁜 책 한 권.', tag: '준비 중' },
-  { emoji: '🍯', title: '주부의 장바구니 확장', desc: '18년 안목의 살림템을 계속 채워가요.', tag: '계속' },
-  { emoji: '💬', title: '내 꾸민 레시피 자랑', desc: '취향 비슷한 사람들과 구경하고 나눠요.', tag: '나중에' },
+  { icon: 'sparkle', title: '사진 한 장이면 AI가 레시피로', desc: '캡처·손글씨도 자동 정리. 옮겨적기 끝.', tag: '곧' },
+  { icon: 'palette', title: '꾸미기 새 아이템', desc: '도장·컨페티·내 사진 프레임까지.', tag: '준비 중' },
+  { icon: 'book', title: '내 레시피북, PDF로 소장', desc: '꾸민 표지 그대로 예쁜 책 한 권.', tag: '준비 중' },
+  { icon: 'cart', title: '주부의 장바구니 확장', desc: '18년 안목의 살림템을 계속 채워가요.', tag: '계속' },
+  { icon: 'chat', title: '내 꾸민 레시피 자랑', desc: '취향 비슷한 사람들과 구경하고 나눠요.', tag: '나중에' },
 ]
 
 export default function PreviewSheet({ onClose }) {
@@ -16,7 +18,7 @@ export default function PreviewSheet({ onClose }) {
       <div className="sheet-mask" onClick={onClose}>
         <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 'calc(18px + var(--safe-bottom))', maxHeight: 'calc(100dvh - 40px)' }}>
           <div className="emoji-sheet-head">
-            <span>🎁 곧 만나요</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><Icon name="gift" size={19} color="var(--tease-ic)" stroke={1.7} /> 곧 만나요</span>
             <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
           </div>
           <div style={{ padding: '2px 16px 0' }}>
@@ -26,7 +28,7 @@ export default function PreviewSheet({ onClose }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {UPCOMING.map((f, i) => (
                 <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--cream)', borderRadius: 14, padding: '12px 13px' }}>
-                  <span style={{ fontSize: 24, lineHeight: 1, flex: '0 0 auto' }}>{f.emoji}</span>
+                  <span style={{ flex: '0 0 auto', width: 26, display: 'inline-flex', justifyContent: 'center', paddingTop: 1 }}><Icon name={f.icon} size={22} color="var(--tease-ic)" stroke={1.7} /></span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 14.5, fontWeight: 800 }}>{f.title}</span>

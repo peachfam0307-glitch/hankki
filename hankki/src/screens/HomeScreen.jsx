@@ -88,9 +88,9 @@ export default function HomeScreen() {
         <button
           className="press"
           onClick={() => setPreview(true)}
-          style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 14, background: 'linear-gradient(100deg,#f7ead8,#f1dcc6)', border: 'none', textAlign: 'left' }}
+          style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 14, background: 'var(--tease)', border: 'none', textAlign: 'left' }}
         >
-          <span style={{ flex: '0 0 auto', display: 'inline-flex' }}><Icon name="gift" size={20} color="var(--brown)" stroke={1.7} /></span>
+          <span style={{ flex: '0 0 auto', display: 'inline-flex' }}><Icon name="gift" size={20} color="var(--tease-ic)" stroke={1.7} /></span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>곧 나올 기능 미리보기</div>
             <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>AI 정리 · 꾸미기 · 레시피북 PDF …</div>
@@ -196,7 +196,7 @@ export function Avatar({ name, avatar, size = 32 }) {
           width: size,
           height: size,
           borderRadius: '50%',
-          background: 'linear-gradient(160deg,#f8f6f1,#f1eee7)',
+          background: 'var(--cream)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -215,7 +215,7 @@ export function Avatar({ name, avatar, size = 32 }) {
           width: size,
           height: size,
           borderRadius: '50%',
-          background: 'linear-gradient(135deg,#eef0ec,#dfe2da)',
+          background: 'var(--cream)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -242,8 +242,8 @@ export function Avatar({ name, avatar, size = 32 }) {
         width: size,
         height: size,
         borderRadius: '50%',
-        background: 'linear-gradient(135deg,#dcdcd3,#c9c8bd)',
-        color: '#6b4f3a',
+        background: 'var(--cream-deep)',
+        color: 'var(--brown)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
