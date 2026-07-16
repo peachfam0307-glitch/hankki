@@ -23,7 +23,7 @@ await p.waitForTimeout(300)
 
 const out = await p.evaluate(async () => {
   await document.fonts.ready
-  const BORDER = 5, UP = 3
+  const BORDER = 8, UP = 3
   const BEAR = (tone) => {
     const f = tone === 'dark' ? '#cf9f76' : '#b98a63', ei = tone === 'dark' ? '#e6c6a1' : '#d9b593', sn = tone === 'dark' ? '#f2e4cd' : '#ecd9bd', hs = tone === 'dark' ? '#e7d3b5' : '#cdb79a'
     return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='320' height='320'>
