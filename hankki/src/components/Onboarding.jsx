@@ -1,8 +1,6 @@
 import { useState, useRef } from 'react'
 import Icon from './Icon'
-import Buddy from './Buddies'
-import TextTile from './TextTile'
-import { NoteShapeDefs } from './Stickers'
+import logoCream from '../assets/logo-hankki-cream.png'
 
 // 첫 실행 온보딩 — "이게 뭐하는 앱?"을 3초 안에 알려주고, 한끼만의 차별화(통합 살림)를
 // 어필한 뒤, 곧 나올 AI 자동인식을 살짝 흘려 기대감을 준다. 6장 · 건너뛰기 가능.
@@ -47,20 +45,15 @@ function Arrow() {
 
 // ── 슬라이드별 히어로 그림 ──
 function HeroWelcome() {
+  // 확정 로고(곰=ㅎ 주아 '한끼' + HANKKI)를 앱아이콘 타일로. 스토어 스샷과 동일.
   return (
-    <div style={{ position: 'relative', width: 172, height: 172, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{
-        position: 'absolute', inset: 0, borderRadius: '50%',
-        background: 'radial-gradient(circle at 50% 42%, #f0ece2, #e6e2d5)',
-      }} />
-      <div style={{ position: 'relative', textAlign: 'center' }}>
-        <div style={{ fontFamily: "'Gowun Dodum','Pretendard',sans-serif", fontSize: 50, fontWeight: 700, color: 'var(--brown)', letterSpacing: '0.01em', lineHeight: 1 }}>한끼</div>
-        <div style={{ marginTop: 9, fontSize: 12.5, fontWeight: 800, color: 'var(--text-sub)', letterSpacing: '0.16em' }}>HANKKI</div>
-      </div>
+    <div style={{ position: 'relative', width: 210, height: 210, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <img src={logoCream} alt="한끼"
+        style={{ width: 180, height: 180, borderRadius: 42, boxShadow: 'var(--shadow-card)', border: '1px solid var(--line)' }} />
       {/* 흩어진 조각이 모이는 느낌의 점들 */}
-      <span style={{ position: 'absolute', top: 14, left: 26, width: 8, height: 8, borderRadius: '50%', background: 'var(--sand)' }} />
-      <span style={{ position: 'absolute', bottom: 22, right: 20, width: 6, height: 6, borderRadius: '50%', background: 'var(--brown-soft, #b79877)' }} />
-      <span style={{ position: 'absolute', top: 40, right: 12, width: 5, height: 5, borderRadius: '50%', background: 'var(--sand)' }} />
+      <span style={{ position: 'absolute', top: 4, left: 8, width: 9, height: 9, borderRadius: '50%', background: 'var(--brown)', opacity: 0.5 }} />
+      <span style={{ position: 'absolute', bottom: 12, right: 4, width: 7, height: 7, borderRadius: '50%', background: 'var(--brown)', opacity: 0.35 }} />
+      <span style={{ position: 'absolute', top: 34, right: 0, width: 6, height: 6, borderRadius: '50%', background: 'var(--brown)', opacity: 0.4 }} />
     </div>
   )
 }
@@ -136,39 +129,48 @@ function HeroBasket() {
   )
 }
 
-// 레시피북 꾸미는 시안 — 실제 레시피(재료) 페이지 위에 아바타·글자타일·하트 포스트잇(귀염체)이 얹힘
+// 꾸민 표지 시안 — 모눈 배경지에 손글씨 제목 + 냄비·곰돌이·하트 스티커. 스토어 스샷과 동일 톤.
 function HeroDecorate() {
   return (
-    <div style={{ position: 'relative', width: 232, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <NoteShapeDefs />
-      {/* 뒤에 살짝 겹친 카드(레시피북 느낌) */}
-      <div style={{ position: 'absolute', width: 150, height: 168, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, transform: 'rotate(6deg) translate(10px, 6px)', boxShadow: 'var(--shadow-soft)' }} />
-      {/* 메인 레시피 페이지 */}
-      <div style={{ position: 'relative', width: 150, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, boxShadow: 'var(--shadow-card)', overflow: 'hidden', transform: 'rotate(-3deg)' }}>
-        <div style={{ padding: '12px 13px 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: 'linear-gradient(135deg, #f3ede1, #e8e1d2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19 }}>🍲</div>
-          <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>엄마표<br />김치볶음밥</div>
+    <div style={{ position: 'relative', width: 210, filter: 'drop-shadow(0 12px 22px rgba(90,65,45,.16))', transform: 'rotate(-4deg)' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 18, padding: 11 }}>
+        {/* 모눈 배경지 표지 */}
+        <div style={{
+          position: 'relative', height: 176, borderRadius: 11, overflow: 'hidden',
+          backgroundColor: '#f4efe2',
+          backgroundImage: 'linear-gradient(#e7ddc7 1.2px, transparent 1.2px), linear-gradient(90deg, #e7ddc7 1.2px, transparent 1.2px)',
+          backgroundSize: '24px 24px',
+        }}>
+          {/* 마스킹테이프 */}
+          <div style={{ position: 'absolute', top: -3, right: -10, width: 92, height: 22, background: 'rgba(214,150,120,.68)', transform: 'rotate(11deg)' }} />
+          {/* 손글씨 제목(귀염체) */}
+          <div style={{ position: 'absolute', top: 18, left: 0, right: 0, textAlign: 'center', fontFamily: "'Gaegu','Gowun Dodum',sans-serif", fontWeight: 700, fontSize: 27, color: 'var(--brown)', transform: 'rotate(-3deg)' }}>우리집 김치찌개</div>
+          {/* 냄비(김 오르는) */}
+          <div style={{ position: 'absolute', left: '52%', top: '60%', transform: 'translate(-50%,-50%)', width: 74, height: 74 }}>
+            <svg viewBox="0 0 48 48"><ellipse cx="24" cy="30" rx="14" ry="11" fill="#4a4a4e" /><path d="M10 27a14 8 0 0 0 28 0" fill="#3c3c40" /><path d="M11 25h26v3H11z" fill="#5a5a5f" /><circle cx="20" cy="24" r="1.7" fill="#e0a83a" /><circle cx="27" cy="26" r="1.7" fill="#cf6f5a" /><circle cx="23" cy="27" r="1.5" fill="#8ca86e" /><path d="M20 16c-1.5 2 .5 3.2-.5 5M25 15c-1.5 2 .5 3.2-.5 5" stroke="#cfcfcf" strokeWidth="2" fill="none" strokeLinecap="round" opacity=".8" /></svg>
+          </div>
+          {/* 곰돌이 스티커 */}
+          <div style={{ position: 'absolute', left: 10, bottom: 9, width: 48, height: 48 }}>
+            <svg viewBox="0 0 48 48">
+              <circle cx="14.5" cy="18" r="4.6" fill="#b98a63" /><circle cx="33.5" cy="18" r="4.6" fill="#b98a63" />
+              <circle cx="24" cy="28" r="13" fill="#b98a63" /><ellipse cx="24" cy="32.5" rx="6.4" ry="4.6" fill="#ecd9bd" />
+              <rect x="22.6" y="30" width="2.8" height="2.2" rx="1.1" fill="#5f4632" />
+              <path d="M24 32.4v1.6M24 34c-.9.9-2 .9-2.8.2M24 34c.9.9 2 .9 2.8.2" stroke="#5f4632" strokeWidth="1" fill="none" strokeLinecap="round" />
+              <circle cx="18.6" cy="27.5" r="1.35" fill="#3d3830" /><circle cx="29.4" cy="27.5" r="1.35" fill="#3d3830" />
+              <circle cx="15.6" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75" /><circle cx="32.4" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75" />
+              <rect x="15.5" y="14.6" width="17" height="3.6" rx="1.8" fill="#fff" stroke="#e2ded2" strokeWidth="1" />
+              <circle cx="16.8" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" strokeWidth="1" /><circle cx="24" cy="10.6" r="3.9" fill="#fff" stroke="#e2ded2" strokeWidth="1" /><circle cx="31.2" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" strokeWidth="1" />
+            </svg>
+          </div>
+          {/* 하트 스티커 */}
+          <div style={{ position: 'absolute', right: 10, bottom: 15, width: 34, height: 34 }}>
+            <svg viewBox="0 0 48 48"><path d="M24 41C8 29.5 8.5 16.5 16 13c4.3-2 8 .9 8 4.6 0-3.7 3.7-6.6 8-4.6 7.5 3.5 8 16.5-8 28Z" fill="#dd918a" stroke="#71604b" strokeWidth="2" strokeLinejoin="round" /></svg>
+          </div>
         </div>
-        <div style={{ padding: '4px 13px 14px' }}>
-          <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 5 }}>재료</div>
-          {['김치 1컵', '밥 1공기', '삼겹살 100g', '대파 · 참기름'].map((t) => (
-            <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3.5 }}>
-              <span style={{ width: 4, height: 4, borderRadius: 9, background: 'var(--sand)' }} />
-              <span style={{ fontSize: 10, color: 'var(--text-sub)', fontWeight: 600 }}>{t}</span>
-            </div>
-          ))}
-        </div>
+        {/* 제목 자리 스켈레톤 */}
+        <div style={{ height: 9, background: '#eee7d8', borderRadius: 5, marginTop: 10 }} />
+        <div style={{ height: 9, width: '58%', background: '#eee7d8', borderRadius: 5, marginTop: 6 }} />
       </div>
-      {/* 위에 얹힌 꾸미기 */}
-      <div style={{ position: 'absolute', top: -6, right: 14, transform: 'rotate(8deg)' }}><TextTile text="찐맛" size={38} radius={10} /></div>
-      <div style={{ position: 'absolute', left: 0, bottom: -4, transform: 'rotate(-8deg)' }}><Buddy id="rabbit" size={58} /></div>
-      {/* 하트 포스트잇 — 새 모양 + 귀염체(개구체) 글씨 자랑 */}
-      <div style={{ position: 'absolute', right: -2, bottom: 22, width: 54, height: 50, transform: 'rotate(7deg)', filter: 'drop-shadow(1px 2px 4px rgba(70,60,45,.28))' }}>
-        <div style={{ width: '100%', height: '100%', clipPath: 'url(#hk-note-heart)', WebkitClipPath: 'url(#hk-note-heart)', background: '#efe4bd', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 5, boxSizing: 'border-box' }}>
-          <span style={{ fontFamily: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", fontSize: 13, fontWeight: 700, color: '#5f5647', lineHeight: 1 }}>맛있어</span>
-        </div>
-      </div>
-      <span style={{ position: 'absolute', top: 20, left: 8, fontSize: 20, transform: 'rotate(-12deg)' }}>✨</span>
     </div>
   )
 }
@@ -186,16 +188,20 @@ function HeroAI() {
         <div style={{
           width: 62, height: 62, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'radial-gradient(circle at 50% 40%, #eef5ea, #dbe8d1)', border: '1px solid #cfe0c5',
-          fontSize: 28, boxShadow: 'var(--shadow-soft)',
-        }}>✨</div>
+          boxShadow: 'var(--shadow-soft)',
+        }}>
+          <svg viewBox="0 0 48 48" style={{ width: 30, height: 30 }}><path d="M24 7l3.4 11.6L39 22l-11.6 3.4L24 37l-3.4-11.6L9 22l11.6-3.4z" fill="#6e9c5e" /><circle cx="37" cy="12" r="2.4" fill="#8bb277" /><circle cx="12" cy="34" r="2" fill="#8bb277" /></svg>
+        </div>
         <div style={{ marginTop: 7, fontSize: 10, fontWeight: 800, color: '#4a7a45' }}>AI 정리</div>
       </div>
       <Arrow />
       <div style={{ textAlign: 'center' }}>
         <div style={{
           width: 58, height: 58, borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: 'var(--shadow-soft)', fontSize: 26,
-        }}>🍲</div>
+          background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: 'var(--shadow-soft)',
+        }}>
+          <svg viewBox="0 0 48 48" style={{ width: 30, height: 30 }}><ellipse cx="24" cy="28" rx="14" ry="11" fill="#4a4a4e" /><path d="M10 25a14 8 0 0 0 28 0" fill="#3c3c40" /><path d="M11 23h26v3H11z" fill="#5a5a5f" /><circle cx="20" cy="22" r="1.7" fill="#e0a83a" /><circle cx="27" cy="24" r="1.7" fill="#cf6f5a" /></svg>
+        </div>
         <div style={{ marginTop: 7, fontSize: 10, fontWeight: 700, color: 'var(--text-sub)' }}>레시피 완성</div>
       </div>
     </div>
@@ -229,7 +235,7 @@ const SLIDES = [
   {
     hero: <HeroDecorate />,
     title: '내 맘대로 꾸미는 레시피북',
-    body: '아바타·이모지·글자 타일·스티커까지.\n똑같은 음식 사진 말고,\n나만의 감성으로 채우는 재미.',
+    body: '스티커·마스킹테이프·손글씨까지.\n똑같은 음식 사진 말고,\n나만의 감성으로 채우는 재미.',
     highlight: true,
   },
   {
@@ -289,9 +295,9 @@ export default function Onboarding({ onDone }) {
       <div key={'t' + i} className="fade" style={{ padding: '0 30px', textAlign: 'center' }}>
         {s.badge && (
           <div style={{
-            display: 'inline-block', marginBottom: 12, padding: '4px 12px', borderRadius: 999,
+            display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 12, padding: '4px 12px', borderRadius: 999,
             background: 'var(--cream)', color: 'var(--brown)', fontSize: 12, fontWeight: 800, letterSpacing: '0.02em',
-          }}>{s.badge} ✨</div>
+          }}><Icon name="sparkle" size={13} color="var(--brown)" />{s.badge}</div>
         )}
         <h2 style={{
           margin: 0, fontSize: 25, fontWeight: 900, lineHeight: 1.28, letterSpacing: '-0.02em',
