@@ -66,8 +66,8 @@
   --frame: #0d0a06;
   --nav-bg: rgba(23, 18, 13, 0.92);
   --today-grad: linear-gradient(135deg, #2c2318, #201810);
-  --tease: linear-gradient(100deg, #2e2317, #241a12); /* 다크 — 웜 브라운 팝 */
-  --tease-ic: #d29a63;
+  --tease: linear-gradient(100deg, #46341f, #38291a); /* 다크 — 배경보다 확실히 밝은 웜 브라운(카드가 튀게) */
+  --tease-ic: #e6b071;
   --thumb: linear-gradient(160deg, #e7e1d6, #d9d1c3); /* 레시피 사진 배경 — 다크: 톤다운 오프화이트(쨍하지 않게) */
 
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.25);
