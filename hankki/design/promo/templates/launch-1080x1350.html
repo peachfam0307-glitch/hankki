@@ -2,11 +2,11 @@
 <link rel="stylesheet" href="../fonts-embed.css">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
-  :root{--bg:#f4efe6;--ink:#4a4136;--ink2:#94897a;--line:#e6ded0;--clay:#c47a58;--card:#fbf8f1}
+  :root{--bg:#f7f4ee;--ink:#4a4136;--ink2:#94897a;--line:#ece5d8;--clay:#c47a58;--card:#fff}
   body{background:#777}
   .card{position:relative;overflow:hidden;width:1080px;height:1350px;background:var(--bg);color:var(--ink);
     padding:104px 96px 92px;display:flex;flex-direction:column}
-  .bg-wash{position:absolute;inset:0;background:radial-gradient(120% 80% at 78% 8%, #f8f2e7 0%, #f2ece1 55%, #eee8dc 100%)}
+  .bg-wash{position:absolute;inset:0;background:radial-gradient(130% 90% at 80% 4%, #fdfcf9 0%, #f7f4ee 58%, #f2eee6 100%)}
   .z{position:relative;z-index:2}
   .word{font-family:'Jua';font-size:66px;color:#5f4d3b;letter-spacing:-1px;line-height:1}
   .now{font-family:'GowunDodum';font-size:23px;letter-spacing:4px;color:var(--ink2);margin-top:16px}
@@ -38,6 +38,28 @@
 </style></head><body>
 <div class="card">
   <div class="bg-wash"></div>
+
+  <!-- 곰곰 셰프 — 표지 뒤에서 빼꼼 (대표 그래픽과 톤 통일) -->
+  <div style="position:absolute;top:566px;left:626px;width:118px;height:118px;border-radius:50%;background:#f6f3ee;box-shadow:0 12px 26px rgba(110,84,58,.16);z-index:1;overflow:hidden">
+    <svg viewBox="0 0 48 48" style="width:100%;height:100%;transform:scale(1.06)">
+      <circle cx="14.5" cy="18" r="4.6" fill="#b98a63"/><circle cx="33.5" cy="18" r="4.6" fill="#b98a63"/>
+      <circle cx="14.5" cy="18" r="2.2" fill="#d9b593"/><circle cx="33.5" cy="18" r="2.2" fill="#d9b593"/>
+      <circle cx="24" cy="28" r="13" fill="#b98a63"/>
+      <ellipse cx="24" cy="32.5" rx="6.4" ry="4.6" fill="#ecd9bd"/>
+      <rect x="22.6" y="30" width="2.8" height="2.2" rx="1.1" fill="#5f4632"/>
+      <path d="M24 32.4v1.6M24 34c-.9.9-2 .9-2.8.2M24 34c.9.9 2 .9 2.8.2" stroke="#5f4632" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <circle cx="18.6" cy="27.5" r="1.35" fill="#3d3830"/><circle cx="29.4" cy="27.5" r="1.35" fill="#3d3830"/>
+      <circle cx="15.6" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/><circle cx="32.4" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/>
+      <circle cx="16.8" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+      <circle cx="24" cy="10.6" r="3.9" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+      <circle cx="31.2" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+      <rect x="15.5" y="14.6" width="17" height="3.6" rx="1.8" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+      <g transform="rotate(14 39.5 30)">
+        <rect x="38.4" y="28" width="2.2" height="7.6" rx="1.1" fill="#f7f3e4" stroke="#d5cbaa" stroke-width="0.6"/>
+        <path d="M39.5 28.2c-.8-1.9-.8-3.8-.1-5.7M38.8 28.1c-1.4-1.2-2.2-2.8-2.5-4.6M40.2 28.1c1.1-1.4 1.7-3 1.8-4.9" stroke="#7fa05a" stroke-width="1.25" fill="none" stroke-linecap="round"/>
+      </g>
+    </svg>
+  </div>
 
   <!-- 꾸미기 맛보기: 작게 꾸민 레시피 표지 하나 (셀링포인트 시각화) -->
   <div style="position:absolute;top:330px;right:70px;width:268px;z-index:1;transform:rotate(-5deg);filter:drop-shadow(0 20px 34px rgba(90,65,45,.17))">
@@ -77,7 +99,7 @@
     </div>
     <div class="row">
       <div class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="#4a4136" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 11H13l3.4 17.2a2.6 2.6 0 0 0 2.55 2.1h13.2a2.6 2.6 0 0 0 2.5-1.9L40.5 17H15"/><circle cx="20.5" cy="37" r="2.5"/><circle cx="33" cy="37" r="2.5"/></svg></div>
-      <div><div class="rt">장보기·냉장고 <span class="c">살림까지</span></div><div class="rd">주부 18년 안목의 살림템 추천은 덤</div></div>
+      <div><div class="rt">장보기부터 <span class="c">살림까지</span></div><div class="rd">주부 18년 안목의 살림템 추천은 덤</div></div>
     </div>
   </div>
 
