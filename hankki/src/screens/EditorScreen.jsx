@@ -55,6 +55,8 @@ export default function EditorScreen({ id, prefill }) {
   const [ocr, setOcr] = useState({ busy: false, pct: 0 })
   const [cropImg, setCropImg] = useState(null) // 글자 읽기 전 '자르기' 단계
   const ocrTargetRef = useRef('all') // 'all' | 'ingredients' | 'steps' — 어느 칸에 채울지
+  const ocrQueue = useRef([]) // 여러 장 선택 시 남은 이미지들(한 장씩 크롭→인식)
+  const ocrAccum = useRef('') // 'all' 자동분류용 — 여러 장의 인식 텍스트를 모아 한 번에 파싱
   const ingRef = useRef(null) // 재료 입력칸
   const stepRef = useRef(null) // 만드는 법 입력칸
   // 해당 칸 커서 위치에 단위/수량을 넣는다. 영어 키보드 전환 없이 g·t·T 를 톡 넣기 위함.
@@ -189,13 +191,18 @@ export default function EditorScreen({ id, prefill }) {
     ocrTargetRef.current = target
     ocrRef.current?.click()
   }
+  // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
   const onOcrFile = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => setCropImg(reader.result)
-    reader.readAsDataURL(file)
+    const files = [...(e.target.files || [])]
+    if (!files.length) return
     e.target.value = ''
+    Promise.all(
+      files.map((f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f) })),
+    ).then((urls) => {
+      ocrAccum.current = ''
+      ocrQueue.current = urls.slice(1) // 첫 장은 지금 크롭, 나머지는 대기열
+      setCropImg(urls[0])
+    })
   }
 
   // 한 칸에만 이어붙이기 — 이미 내용이 있으면 아래에 덧붙인다(2단·긴 레시피 대응).
@@ -213,20 +220,27 @@ export default function EditorScreen({ id, prefill }) {
     setOcr({ busy: true, pct: 0 })
     const text = await ocrImage(img, (pct) => setOcr({ busy: true, pct }))
     setOcr({ busy: false, pct: 0 })
-    if (!text.trim()) {
-      nav.showToast('사진에서 글자를 찾지 못했어요')
-      return
-    }
+
     if (target === 'ingredients' || target === 'steps') {
-      // 지정한 칸에만 — 분류하지 않고 읽은 줄을 정리해 이어붙인다.
+      // 지정한 칸에만 — 읽은 줄을 정리해 이어붙인다(여러 장이면 계속 쌓인다).
       const lines = cleanOcrLines(text)
-      if (!lines.length) { nav.showToast('사진에서 글자를 찾지 못했어요'); return }
-      setF((prev) => ({ ...prev, [target]: appendLines(prev[target], lines) }))
+      if (lines.length) setF((prev) => ({ ...prev, [target]: appendLines(prev[target], lines) }))
+    } else {
+      // 자동 분류 — 여러 장이면 텍스트를 모았다가 마지막에 한 번에 파싱(분류가 더 정확).
+      if (text.trim()) ocrAccum.current = (ocrAccum.current + '\n' + text).trim()
+    }
+
+    // 대기열에 다음 장이 있으면 이어서 크롭 → 인식
+    if (ocrQueue.current.length) { setCropImg(ocrQueue.current.shift()); return }
+
+    // 마지막 장 — 결과 반영
+    if (target === 'ingredients' || target === 'steps') {
       nav.showToast(target === 'ingredients' ? '재료 초안을 담았어요 · 다듬어 주세요 ✍️' : '만드는 법 초안을 담았어요 · 다듬어 주세요 ✍️', 4800)
       return
     }
-    // 자동 분류 — 재료·순서를 함께 채운다(빈 칸만).
-    const r = parseRecipeText(text, { fromOcr: true })
+    const combined = ocrAccum.current
+    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요'); return }
+    const r = parseRecipeText(combined, { fromOcr: true })
     setF((prev) => ({
       ...prev,
       title: prev.title.trim() || r.title,
@@ -316,7 +330,7 @@ export default function EditorScreen({ id, prefill }) {
       </div>
 
       <input ref={photoRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
-      <input ref={ocrRef} type="file" accept="image/*" onChange={onOcrFile} style={{ display: 'none' }} />
+      <input ref={ocrRef} type="file" accept="image/*" multiple onChange={onOcrFile} style={{ display: 'none' }} />
 
       {/* 보면서 쓰기 — 영상(유튜브·인스타)이나 캡처 원본을 위에 고정하고 아래에서 적는다 */}
       {(embed || refs.length > 0) && pin === null && (
@@ -480,9 +494,12 @@ export default function EditorScreen({ id, prefill }) {
         {/* 캡처 한 장으로 재료+만드는 법 한 번에 — 사진 두 번 올리는 번거로움 없이(요청 반영).
             잘못 섞이면 아래 각 칸의 📷로 따로 채워 보정한다(안전망 유지). */}
         <button className="press" onClick={() => pickOcr('all')} disabled={ocr.busy}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '15px', marginBottom: 14, borderRadius: 'var(--r-md)', background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 800, boxShadow: 'var(--shadow-soft)', opacity: ocr.busy ? 0.5 : 1 }}>
-          <Icon name="camera" size={18} color="#fff" /> 캡처 한 장으로 재료·만드는 법 채우기
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '15px', marginBottom: 7, borderRadius: 'var(--r-md)', background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 800, boxShadow: 'var(--shadow-soft)', opacity: ocr.busy ? 0.5 : 1 }}>
+          <Icon name="camera" size={18} color="#fff" /> 캡처 사진으로 재료·만드는 법 채우기
         </button>
+        <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 14, lineHeight: 1.5, textAlign: 'center' }}>
+          긴 레시피는 <b style={{ color: 'var(--brown)' }}>여러 장을 한꺼번에</b> 골라도 돼요 · 한 장씩 다듬어 이어 채워요
+        </div>
 
         {/* 사진 읽는 중 — 칸 채우기 진행 표시 */}
         {ocr.busy && (
