@@ -42,6 +42,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const [noteEdit, setNoteEdit] = useState(null) // 글 수정 중인 포스트잇 item
   const [textFont, setTextFont] = useState('gowun') // 글자 스티커 글씨체 (또박/귀염)
   const [bg, setBg] = useState(recipe.decorBg || 'none') // 표지 배경(배경지)
+  const [cat, setCat] = useState('bg') // 서랍 카테고리(가로 칩으로 골라 그 카테고리만 표시)
 
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로 올라온다
   const select = (id) => {
@@ -63,6 +64,17 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const selOn = '2.5px solid var(--brown)'
   const selOff = '1.5px solid var(--line)'
   const hasCtx = selItem && (selItem.type === 'note' || selItem.type === 'text' || selItem.type === 'tape' || (selItem.type === 'sticker' && RECOLORABLE.has(selItem.key)))
+
+  // 서랍 카테고리(가로 칩) — 세로로 길게 안 내려가게. 칩 누르면 그 카테고리만.
+  const CATS = [
+    // 큰 것 → 작은 것 순: 배경(표지 전체) → 마테 → 메모 → 글자 → 스티커(뒤로)
+    { key: 'bg', label: '🎨 배경' },
+    { key: 'tape', label: '🎀 테이프' },
+    { key: 'note', label: '🗒️ 메모' },
+    { key: 'text', label: '✍️ 글자' },
+    ...STICKER_GROUPS.map((g) => ({ key: 'g:' + g.key, label: g.label })),
+  ]
+  const activeGroup = STICKER_GROUPS.find((g) => cat === 'g:' + g.key)
 
   // 포스트잇을 선택하면 서랍을 맨 위로 올려 '무늬·모양 꾸미기'가 바로 보이게 한다.
   const drawerRef = useRef(null)
@@ -203,29 +215,42 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
         {/* 서랍 — 새로 붙이기 전용(배경·스티커·테이프·글자·포스트잇). 선택 아이템 편집은 위 컨텍스트 바에서. */}
         <div className="decor-drawer">
           <div className="decor-grab" />
+          {/* 카테고리 칩 — 가로로 골라 그 카테고리만(세로 스크롤 최소화) */}
+          <div style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '2px 2px 10px', flex: '0 0 auto' }}>
+            {CATS.map((c) => {
+              const on = cat === c.key
+              return (
+                <button key={c.key} className="press" onClick={() => setCat(c.key)}
+                  style={{ flex: '0 0 auto', padding: '7px 13px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)' }}>
+                  {c.label}
+                </button>
+              )
+            })}
+          </div>
           <div className="decor-scroll" ref={drawerRef}>
-            {/* 배경(배경지) — 표지 전체 톤. 항상 노출. 아이템 개별 편집은 위 컨텍스트 바에서. */}
-            <div className="decor-sec">
-              <div className="decor-sec-label">배경</div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {DECOR_BACKGROUNDS.map((b) => {
-                  const on = bg === b.key
-                  const sw = b.style || { background: 'linear-gradient(135deg,#eef0ec,#e1e5de)' }
-                  return (
-                    <button key={b.key} className="press" onClick={() => setBg(b.key)} aria-label={`배경 ${b.label}`}
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                      <span style={{ width: 38, height: 38, borderRadius: 10, ...sw, border: on ? '2.5px solid var(--brown)' : '1.5px solid var(--line)', boxShadow: on ? '0 0 0 2px var(--surface) inset' : 'none' }} />
-                      <span style={{ fontSize: 10.5, fontWeight: 700, color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{b.label}</span>
-                    </button>
-                  )
-                })}
+            {/* 배경(배경지) */}
+            {cat === 'bg' && (
+              <div className="decor-sec">
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {DECOR_BACKGROUNDS.map((b) => {
+                    const on = bg === b.key
+                    const sw = b.style || { background: 'linear-gradient(135deg,#eef0ec,#e1e5de)' }
+                    return (
+                      <button key={b.key} className="press" onClick={() => setBg(b.key)} aria-label={`배경 ${b.label}`}
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                        <span style={{ width: 42, height: 42, borderRadius: 10, ...sw, border: on ? '2.5px solid var(--brown)' : '1.5px solid var(--line)', boxShadow: on ? '0 0 0 2px var(--surface) inset' : 'none' }} />
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{b.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-            {STICKER_GROUPS.map((g) => (
-              <div key={g.key} className="decor-sec">
-                <div className="decor-sec-label">{g.label}</div>
+            )}
+            {/* 스티커 그룹 */}
+            {activeGroup && (
+              <div className="decor-sec">
                 <div className="decor-grid">
-                  {g.items.map((key) => (
+                  {activeGroup.items.map((key) => (
                     <button key={key} className="press decor-cell" onClick={() => addSticker(key)} aria-label={key}>
                       <span style={{ display: 'block', width: key === 'yum' ? '92%' : '78%', aspectRatio: key === 'yum' ? '74/46' : '1' }}>
                         <StickerArt id={key} />
@@ -234,69 +259,54 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                   ))}
                 </div>
               </div>
-            ))}
-
-            <div className="decor-sec">
-              <div className="decor-sec-label">마스킹테이프</div>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                {TAPE_PATTERNS.map((t) => (
-                  <button key={t.key} className="press" onClick={() => addTape(t.key)} aria-label={`테이프 ${t.label}`}
-                    style={{ width: 74, height: 24, borderRadius: 3, ...t.style, boxShadow: '0 1px 3px rgba(70,60,45,.2)', transform: 'rotate(-3deg)' }} />
-                ))}
+            )}
+            {/* 마스킹테이프 */}
+            {cat === 'tape' && (
+              <div className="decor-sec">
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {TAPE_PATTERNS.map((t) => (
+                    <button key={t.key} className="press" onClick={() => addTape(t.key)} aria-label={`테이프 ${t.label}`}
+                      style={{ width: 74, height: 24, borderRadius: 3, ...t.style, boxShadow: '0 1px 3px rgba(70,60,45,.2)', transform: 'rotate(-3deg)' }} />
+                  ))}
+                </div>
               </div>
-            </div>
-
-            <div className="decor-sec">
-              <div className="decor-sec-label">글자 · 직접 쓰기</div>
-              {/* 글씨체 선택 — 또박/귀염/펜글씨/임팩트/라운드 (여러 개라 아래 줄에 감싸서) */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '2px 0 10px' }}>
-                {TEXT_FONTS.map((f) => (
-                  <button
-                    key={f.key}
-                    className="press"
-                    onClick={() => setTextFont(f.key)}
-                    style={{
-                      padding: '5px 12px', borderRadius: 999, fontSize: 13, fontWeight: 700,
-                      fontFamily: f.family,
-                      background: textFont === f.key ? 'var(--brown)' : 'var(--cream)',
-                      color: textFont === f.key ? '#fff' : 'var(--text-sub)',
-                    }}
-                  >
-                    {f.label}
-                  </button>
-                ))}
+            )}
+            {/* 글자 */}
+            {cat === 'text' && (
+              <div className="decor-sec">
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '0 0 10px' }}>
+                  {TEXT_FONTS.map((f) => (
+                    <button key={f.key} className="press" onClick={() => setTextFont(f.key)}
+                      style={{ padding: '5px 12px', borderRadius: 999, fontSize: 13, fontWeight: 700, fontFamily: f.family, background: textFont === f.key ? 'var(--brown)' : 'var(--cream)', color: textFont === f.key ? '#fff' : 'var(--text-sub)' }}>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="decor-grid">
+                  {TEXT_COLORS.map((c) => (
+                    <button key={c.key} className="press decor-cell" onClick={() => addText(c.key)} aria-label={`${c.key} 글자`}>
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', aspectRatio: '1', fontFamily: (TEXT_FONTS.find((f) => f.key === textFont) || TEXT_FONTS[0]).family, fontWeight: 800, fontSize: 24, color: c.color, WebkitTextStroke: `1px ${c.stroke}`, textShadow: '0 1px 2px rgba(0,0,0,.28)', borderRadius: 12, background: c.key === 'white' || c.key === 'mustard' ? '#8a8479' : 'transparent' }}>
+                        가
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="decor-grid">
-                {TEXT_COLORS.map((c) => (
-                  <button key={c.key} className="press decor-cell" onClick={() => addText(c.key)} aria-label={`${c.key} 글자`}>
-                    <span
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', aspectRatio: '1',
-                        fontFamily: (TEXT_FONTS.find((f) => f.key === textFont) || TEXT_FONTS[0]).family,
-                        fontWeight: 800, fontSize: 24,
-                        color: c.color, WebkitTextStroke: `1px ${c.stroke}`, textShadow: '0 1px 2px rgba(0,0,0,.28)',
-                        borderRadius: 12, background: c.key === 'white' || c.key === 'mustard' ? '#8a8479' : 'transparent',
-                      }}
-                    >
-                      가
-                    </span>
-                  </button>
-                ))}
+            )}
+            {/* 포스트잇 */}
+            {cat === 'note' && (
+              <div className="decor-sec">
+                <div className="decor-grid">
+                  {NOTE_COLORS.map((c) => (
+                    <button key={c.key} className="press decor-cell" onClick={() => addNote(c.key)} aria-label={`${c.key} 포스트잇`}>
+                      <span style={{ display: 'block', width: '80%', aspectRatio: '1.02', background: c.bg, borderRadius: '3px 3px 3px 10px', boxShadow: '1px 3px 7px rgba(70,60,45,.22)', position: 'relative' }}>
+                        <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: '0 0 12px 12px', borderColor: `transparent transparent ${c.fold} transparent` }} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            <div className="decor-sec">
-              <div className="decor-sec-label">포스트잇 · 팁 메모</div>
-              <div className="decor-grid">
-                {NOTE_COLORS.map((c) => (
-                  <button key={c.key} className="press decor-cell" onClick={() => addNote(c.key)} aria-label={`${c.key} 포스트잇`}>
-                    <span style={{ display: 'block', width: '80%', aspectRatio: '1.02', background: c.bg, borderRadius: '3px 3px 3px 10px', boxShadow: '1px 3px 7px rgba(70,60,45,.22)', position: 'relative' }}>
-                      <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: '0 0 12px 12px', borderColor: `transparent transparent ${c.fold} transparent` }} />
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
         </div>
 

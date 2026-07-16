@@ -262,13 +262,13 @@ const I = {
   ),
   chicken: (
     <>
-      {/* 살코기(도톰한 몸통) */}
-      <path d="M31 14.5c3.2 2.8 3.8 7.6 1.4 11.2-1.8 2.7-5 3.8-8 2.9-2.3-.7-4.4.2-5.8 2.1-1.1 1.5-3.3.8-3.2-1.1.2-4.2 2.3-7.8 5.9-9.9 1.7-1 2.7-2.5 3.1-4.5C21.2 12 27 10.6 31 14.5z" fill="#d0a066" />
-      <path d="M30.4 15.6c2.1 1.9 2.7 5.1 1.3 7.7" fill="none" stroke="#deb684" strokeWidth="1.5" strokeLinecap="round" opacity=".7" />
-      {/* 뼈 — 얇은 대 + 끝에 둥근 관절 두 알(신발처럼 안 보이게 끝에 수직으로 몰기) */}
-      <path d="M21.2 27l-6 6.2" stroke="#efe4cf" strokeWidth="3.5" strokeLinecap="round" />
-      <circle cx="16" cy="33" r="2.5" fill="#efe4cf" stroke="#d8c6a4" strokeWidth="1" />
-      <circle cx="13.4" cy="35.4" r="2.5" fill="#efe4cf" stroke="#d8c6a4" strokeWidth="1" />
+      {/* 살코기 — 둥근 덩어리(위) */}
+      <path d="M24 7c7 0 12.5 5.2 12.5 12 0 5.6-3.4 9-6.8 11.4-1.6 1.1-2.4 2.1-2.9 3.7-.3 1.1-1.4 1.9-2.8 1.9s-2.5-.8-2.8-1.9c-.5-1.6-1.3-2.6-2.9-3.7C14.9 28 11.5 24.6 11.5 19 11.5 12.2 17 7 24 7Z" fill="#cb945c" stroke="#a97c46" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M18.5 12.5c-2.2 1.7-3.3 4.3-3 7.2" fill="none" stroke="#e0b787" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+      {/* 뼈 — 아래로 짧은 대 + 끝 둥근 관절 두 알 */}
+      <path d="M24 33.5v3.6" stroke="#efe4cf" strokeWidth="4.2" strokeLinecap="round" />
+      <circle cx="21.6" cy="40.4" r="2.7" fill="#efe4cf" stroke="#d8c6a4" strokeWidth="1" />
+      <circle cx="26.4" cy="40.4" r="2.7" fill="#efe4cf" stroke="#d8c6a4" strokeWidth="1" />
     </>
   ),
   egg: (
