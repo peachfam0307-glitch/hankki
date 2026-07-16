@@ -37,9 +37,9 @@ await p.waitForTimeout(300)
 const out = await p.evaluate(async ({ argBorder, argUp }) => {
   await document.fonts.ready
   await document.fonts.load('172px JuaWM', '한끼') // 주아체 실제 로드 보장
-  await document.fonts.load('38px JuaWM', 'HANKKI') // 라틴(HANKKI)도 주아로
-  // BORDER = 곰 얼굴과 ㅎ 링 사이 브라운 테두리 두께(px). UP = 곰을 위로 올리는 보정(0=링 정중앙).
-  const BORDER = Number.isFinite(argBorder) ? argBorder : 3, UP = Number.isFinite(argUp) ? argUp : 0
+  // BORDER = 곰 얼굴과 ㅎ 링 사이 브라운 테두리 두께(px). UP = 곰을 위로 올리는 보정(px).
+  // 확정 스펙 (2026-07-16): 테두리 5px · 위 3px — 정중앙 대칭·비율 확정.
+  const BORDER = Number.isFinite(argBorder) ? argBorder : 5, UP = Number.isFinite(argUp) ? argUp : 3
   const BEAR = (tone) => {
     const f = tone === 'dark' ? '#cf9f76' : '#b98a63', ei = tone === 'dark' ? '#e6c6a1' : '#d9b593', sn = tone === 'dark' ? '#f2e4cd' : '#ecd9bd', hs = tone === 'dark' ? '#e7d3b5' : '#cdb79a'
     return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='320' height='320'>
@@ -61,7 +61,8 @@ const out = await p.evaluate(async ({ argBorder, argUp }) => {
     const wf = 172; x.textBaseline = 'alphabetic'; x.fillStyle = fg; x.font = wf + 'px JuaWM'
     const w = '한끼', tw = x.measureText(w).width, wH = wf * 0.72, eH = 38 * 0.72, top = (512 - (wH + 6 + eH)) / 2, wb = top + wH
     x.fillText(w, (512 - tw) / 2, wb)
-    x.font = '40px JuaWM'; x.fillStyle = en
+    // HANKKI 는 세리프체(가는 클래식 세리프 + 넓은 자간) — 통통한 주아 한글과 대비되는 확정 룩.
+    x.font = '700 38px serif'; x.fillStyle = en
     const t = 'HANKKI', ls = 14; let ew = 0; for (const c of t) ew += x.measureText(c).width + ls; ew -= ls
     let ex = (512 - ew) / 2; const eb = wb + wf * 0.20 + 6 + eH
     for (const c of t) { x.fillText(c, ex, eb); ex += x.measureText(c).width + ls }
