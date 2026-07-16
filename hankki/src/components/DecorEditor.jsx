@@ -99,8 +99,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     const it = { id: newDecorId(), type: 'note', key: colorKey, text: '', x: 0.62 + ((n % 2) - 0.5) * 0.06, y: 0.68, s: 0.34, r: ((n % 5) - 2) * 3 }
     setItems((arr) => [...arr, it])
     setSel(it.id)
-    // 텍스트 시트를 강제로 열지 않는다 — 붙이면 바로 무늬·모양 옵션이 보이도록.
-    // 글씨는 캔버스의 포스트잇을 탭(연필 버튼)해서 추가한다.
+    setNoteEdit(it) // 붙이면 바로 글씨 쓰기 시트 열기(무늬·모양은 상단 컨텍스트 바에서)
   }
   const addTape = (key) => {
     const n = items.length
@@ -312,6 +311,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
 
         {noteEdit && (
           <PromptSheet
+            compact
             title={noteEdit.type === 'text' ? '글자' : '포스트잇'}
             fields={[{
               key: 'text',

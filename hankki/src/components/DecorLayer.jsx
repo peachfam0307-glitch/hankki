@@ -18,19 +18,26 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
   const onItemDown = (it) => (e) => {
     if (!editable) return
     e.stopPropagation()
+    const wasSel = selectedId === it.id
     onSelect?.(it.id)
     const rect = boxRef.current.getBoundingClientRect()
-    dragRef.current = { id: it.id, x0: it.x, y0: it.y, px: e.clientX, py: e.clientY, rect }
+    dragRef.current = { id: it.id, x0: it.x, y0: it.y, px: e.clientX, py: e.clientY, rect, moved: false, wasSel, it }
     e.currentTarget.setPointerCapture?.(e.pointerId)
   }
   const onItemMove = (e) => {
     const d = dragRef.current
     if (!d) return
+    if (Math.abs(e.clientX - d.px) > 3 || Math.abs(e.clientY - d.py) > 3) d.moved = true
     const nx = clamp(d.x0 + (e.clientX - d.px) / d.rect.width, 0.02, 0.98)
     const ny = clamp(d.y0 + (e.clientY - d.py) / d.rect.height, 0.02, 0.98)
     onChange?.(d.id, { x: nx, y: ny })
   }
-  const onItemUp = () => { dragRef.current = null }
+  const onItemUp = () => {
+    const d = dragRef.current
+    // 이미 선택된 포스트잇·글자를 (드래그 없이) 탭하면 글씨 쓰기 시트를 연다 — '탭해서 쓰기'
+    if (d && !d.moved && d.wasSel && (d.it.type === 'note' || d.it.type === 'text')) onEditNote?.(d.it)
+    dragRef.current = null
+  }
 
   // 핸들(크기+회전) — 선택된 아이템 우하단 손잡이
   const hRef = useRef(null)
