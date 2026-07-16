@@ -7,4 +7,4 @@ export const APP_TAGLINE = '흩어진 레시피를, 한곳에.'
 // 익명 의견 보내기 채널 — 로그인 없이 익명으로 받는 구글 폼(또는 Tally) 링크.
 // 설정 → '의견 보내기'가 이 주소를 연다. 비어 있으면 메뉴에 표시되지 않는다.
 // ⚠️ 구글 폼 설정에서 '이메일 주소 수집 안 함'을 꼭 꺼야 진짜 익명.
-export const FEEDBACK_URL = ''
+export const FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSc4YLa1Po3CTqFTMXD-0bYFEHTG3BLAzfqTzInde4L63lZjcQ/viewform'
