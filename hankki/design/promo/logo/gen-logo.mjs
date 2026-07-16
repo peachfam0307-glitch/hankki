@@ -24,6 +24,7 @@ const ARG_BORDER = Number(process.argv[3] ?? NaN), ARG_UP = Number(process.argv[
 const { readFileSync } = await import('fs')
 const juaB64 = (f) => readFileSync(new URL('../fonts/' + f, import.meta.url)).toString('base64')
 const JUA_K = juaB64('jua-korean-400.woff2'), JUA_L = juaB64('jua-latin-400.woff2')
+const GD_L = juaB64('gowun-dodum-latin-400.woff2') // HANKKI 용 고운돋움(라틴)
 
 const b = await pw.chromium.launch({ executablePath: CHROME })
 const p = await (await b.newContext({ deviceScaleFactor: 2 })).newPage()
@@ -31,12 +32,14 @@ await p.setContent(`<meta charset=utf-8>
 <style>
 @font-face{font-family:'JuaWM';src:url(data:font/woff2;base64,${JUA_L}) format('woff2')}
 @font-face{font-family:'JuaWM';src:url(data:font/woff2;base64,${JUA_K}) format('woff2')}
+@font-face{font-family:'GDWM';src:url(data:font/woff2;base64,${GD_L}) format('woff2')}
 </style><canvas></canvas>`, { waitUntil: 'networkidle' })
 await p.waitForTimeout(300)
 
 const out = await p.evaluate(async ({ argBorder, argUp }) => {
   await document.fonts.ready
   await document.fonts.load('172px JuaWM', '한끼') // 주아체 실제 로드 보장
+  await document.fonts.load('38px GDWM', 'HANKKI') // 고운돋움(라틴) 로드 보장
   // BORDER = 곰 얼굴과 ㅎ 링 사이 브라운 테두리 두께(px). UP = 곰을 위로 올리는 보정(px).
   // 확정 스펙 (2026-07-16): 테두리 5px · 위 3px — 정중앙 대칭·비율 확정.
   const BORDER = Number.isFinite(argBorder) ? argBorder : 5, UP = Number.isFinite(argUp) ? argUp : 3
@@ -61,11 +64,13 @@ const out = await p.evaluate(async ({ argBorder, argUp }) => {
     const wf = 172; x.textBaseline = 'alphabetic'; x.fillStyle = fg; x.font = wf + 'px JuaWM'
     const w = '한끼', tw = x.measureText(w).width, wH = wf * 0.72, eH = 38 * 0.72, top = (512 - (wH + 6 + eH)) / 2, wb = top + wH
     x.fillText(w, (512 - tw) / 2, wb)
-    // HANKKI 는 세리프체(가는 클래식 세리프 + 넓은 자간) — 통통한 주아 한글과 대비되는 확정 룩.
-    x.font = '700 38px serif'; x.fillStyle = en
+    // HANKKI = 고운돋움 38px·자간14·굵기700 (원본 목업 .en 스펙 그대로).
+    // 고운돋움은 400 단일 굵기라 DOM 의 700 은 합성 볼드 — canvas 에선 얇게 나올 수 있어
+    // strokeText 로 살짝 두께를 보태 합성 볼드를 재현한다.
+    x.font = '700 38px GDWM'; x.fillStyle = en; x.strokeStyle = en; x.lineWidth = 0.9; x.lineJoin = 'round'
     const t = 'HANKKI', ls = 14; let ew = 0; for (const c of t) ew += x.measureText(c).width + ls; ew -= ls
     let ex = (512 - ew) / 2; const eb = wb + wf * 0.20 + 6 + eH
-    for (const c of t) { x.fillText(c, ex, eb); ex += x.measureText(c).width + ls }
+    for (const c of t) { x.fillText(c, ex, eb); x.strokeText(c, ex, eb); ex += x.measureText(c).width + ls }
   }
   // ㅎ 링 검출 (밝은 레이아웃 기준 — 색 무관, 좌표 동일)
   const t = document.createElement('canvas'); t.width = 512; t.height = 512; const tx = t.getContext('2d'); drawWord(tx, '#fffdf8', '#6b4f3a', '#b98a63')
