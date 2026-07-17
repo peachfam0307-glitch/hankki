@@ -72,7 +72,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
       {items.map((it) => {
         const on = editable && selectedId === it.id
         const isText = it.type === 'text'
-        const ratio = it.type === 'tape' ? 3.4 : it.type === 'note' ? (it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
+        const ratio = it.type === 'tape' ? (it.ratio || 3.4) : it.type === 'note' ? (it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
         const base = {
           position: 'absolute',
           left: `${it.x * 100}%`,
@@ -116,9 +116,9 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                   aria-label="스티커 삭제"
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => { e.stopPropagation(); onRemove?.(it.id) }}
-                  style={{ position: 'absolute', top: -16, right: -16, width: 26, height: 26, borderRadius: '50%', background: '#3f382e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,.3)' }}
+                  style={{ position: 'absolute', top: -17, right: -17, width: 31, height: 31, borderRadius: '50%', background: '#3f382e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,.3)' }}
                 >
-                  <Icon name="x" size={13} color="#fff" stroke={2.6} />
+                  <Icon name="x" size={15} color="#fff" stroke={2.6} />
                 </button>
                 {/* 포스트잇·글자 수정 */}
                 {(it.type === 'note' || it.type === 'text') && (
@@ -127,9 +127,9 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                     aria-label="글 수정"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); onEditNote?.(it) }}
-                    style={{ position: 'absolute', top: -16, left: -16, width: 26, height: 26, borderRadius: '50%', background: 'var(--brown)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,.3)' }}
+                    style={{ position: 'absolute', top: -17, left: -17, width: 31, height: 31, borderRadius: '50%', background: 'var(--brown)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,.3)' }}
                   >
-                    <Icon name="pen" size={13} color="#fff" />
+                    <Icon name="pen" size={15} color="#fff" />
                   </button>
                 )}
                 {/* 크기·회전 핸들 */}
@@ -139,9 +139,9 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                   onPointerMove={onHandleMove}
                   onPointerUp={onHandleUp}
                   onPointerCancel={onHandleUp}
-                  style={{ position: 'absolute', bottom: -16, right: -16, width: 28, height: 28, borderRadius: '50%', background: '#fff', border: '1.5px solid rgba(0,0,0,.15)', boxShadow: '0 2px 6px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none', cursor: 'nwse-resize' }}
+                  style={{ position: 'absolute', bottom: -19, right: -19, width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1.5px solid rgba(0,0,0,.15)', boxShadow: '0 2px 7px rgba(0,0,0,.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none', cursor: 'nwse-resize' }}
                 >
-                  <svg viewBox="0 0 20 20" width="14" height="14"><path d="M4 12a8 8 0 0 0 8-8M12 4h4v4" fill="none" stroke="#5a5244" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <svg viewBox="0 0 20 20" width="19" height="19"><path d="M4 12a8 8 0 0 0 8-8M12 4h4v4" fill="none" stroke="#5a5244" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </span>
               </>
             )}

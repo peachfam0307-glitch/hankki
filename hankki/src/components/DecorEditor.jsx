@@ -29,6 +29,12 @@ function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
 
 // 표정 스티커는 포인트로 얹는 용도라 기본 크기를 작게 시작한다
 const FACE_KEYS = new Set(STICKER_GROUPS.find((g) => g.key === 'faces')?.items || [])
+// 마스킹테이프 굵기 — 비율(가로/세로)이 클수록 가늘다. 기본 3.4.
+const TAPE_WIDTHS = [
+  { key: 'thin', label: '가늘게', ratio: 5.2 },
+  { key: 'mid', label: '보통', ratio: 3.4 },
+  { key: 'thick', label: '굵게', ratio: 2.3 },
+]
 
 // ── 표지 꾸미기 에디터 ──
 // 전체 화면 오버레이. 표지(정사각) 위에 스티커·포스트잇을 얹고
@@ -161,15 +167,29 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
               </div>
             )}
             {selItem.type === 'tape' && (
-              <div style={ctxRow}>
-                <span style={ctxLabel}>🎀 무늬</span>
-                <div style={ctxScroll}>
-                  {TAPE_PATTERNS.map((t) => (
-                    <button key={t.key} className="press" onClick={() => patch(sel, { key: t.key })} aria-label={`테이프 ${t.label}`}
-                      style={{ width: 46, height: 22, borderRadius: 3, ...t.style, flex: '0 0 auto', border: selItem.key === t.key ? selOn : '1px solid rgba(0,0,0,.08)' }} />
-                  ))}
+              <>
+                <div style={ctxRow}>
+                  <span style={ctxLabel}>🎀 무늬</span>
+                  <div style={ctxScroll}>
+                    {TAPE_PATTERNS.map((t) => (
+                      <button key={t.key} className="press" onClick={() => patch(sel, { key: t.key })} aria-label={`테이프 ${t.label}`}
+                        style={{ width: 46, height: 22, borderRadius: 3, ...t.style, flex: '0 0 auto', border: selItem.key === t.key ? selOn : '1px solid rgba(0,0,0,.08)' }} />
+                    ))}
+                  </div>
                 </div>
-              </div>
+                <div style={ctxRow}>
+                  <span style={ctxLabel}>📏 굵기</span>
+                  <div style={ctxScroll}>
+                    {TAPE_WIDTHS.map((w) => {
+                      const on = (selItem.ratio || 3.4) === w.ratio
+                      return (
+                        <button key={w.key} className="press" onClick={() => patch(sel, { ratio: w.ratio })}
+                          style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{w.label}</button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
             )}
             {selItem.type === 'text' && (
               <div style={ctxRow}>
