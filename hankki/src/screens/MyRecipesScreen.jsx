@@ -99,14 +99,16 @@ export default function MyRecipesScreen() {
     try { localStorage.setItem('hankki:gridSize', v) } catch { /* noop */ }
   }
   const [edit, setEdit] = useState(false)
+  // 편집 모드 다중 선택 — 카드 탭으로 체크하고 아래 바에서 한 번에 삭제(하나씩 지우기 불편 해소)
+  const [sel, setSel] = useState(() => new Set())
+  const [delSelAsk, setDelSelAsk] = useState(false)
+  const toggleSel = (id) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
+  const exitEdit = () => { setEdit(false); setSel(new Set()) }
   const [newFolder, setNewFolder] = useState(false)
-  const [delTarget, setDelTarget] = useState(null)
   const [delFolder, setDelFolder] = useState(null) // 삭제할 사용자 폴더 이름
   const [logEditing, setLogEditing] = useState(null)
 
   // 뒤로가기 처리는 모달(요리기록 시트 등)까지 포함해 아래(상태 선언 뒤)에서 한 번에 등록한다.
-
-  const del = (r) => setDelTarget(r)
 
   const sorted = useMemo(() => recipes.filter((r) => r.status === 'sorted').sort((a, b) => b.savedAt - a.savedAt), [recipes])
   // 스마트 폴더 — ★즐겨찾기 / 🍳자주 해먹는. 실제 폴더와 안 겹치게 '__' 접두 키를 쓴다.
@@ -131,7 +133,7 @@ export default function MyRecipesScreen() {
   useBackHandler(() => {
     if (dayFilter) { setDayFilter(null); return true }
     if (showCal) { setShowCal(false); return true }
-    if (edit) { setEdit(false); return true }
+    if (edit) { exitEdit(); return true }
     if (view !== 'grid') { setView('grid'); return true }
     if (folder !== '전체') { setFolder('전체'); return true }
     return false
@@ -163,7 +165,7 @@ export default function MyRecipesScreen() {
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           {view === 'grid' && (
             <>
-              <button className="t-more press" style={{ marginRight: 2, fontSize: 14 }} onClick={() => setEdit((v) => !v)}>
+              <button className="t-more press" style={{ marginRight: 2, fontSize: 14 }} onClick={() => (edit ? exitEdit() : setEdit(true))}>
                 {edit ? '완료' : '편집'}
               </button>
               {/* 크게 보기(2열) ↔ 그리드(3열) 전환 */}
@@ -271,27 +273,69 @@ export default function MyRecipesScreen() {
               <div className="empty">{'이 폴더에 레시피가 없어요.\n가져오기로 채워보세요.'}</div>
             ) : (
               <div className={gridSize === 'big' ? 'grid2' : 'grid3'}>
-                {list.map((r) => (
-                  <div key={r.id} className="grid-card" style={{ position: 'relative' }}>
-                    <button className="press" style={{ textAlign: 'left', width: '100%' }} onClick={() => (edit ? del(r) : nav.push({ name: 'detail', id: r.id }))}>
-                      <Thumb recipe={r} ratio="1/1" radius={gridSize === 'big' ? 16 : 12} emojiSize={gridSize === 'big' ? undefined : '1.6rem'} showDecor />
-                      {r.favorite && !edit && (
-                        <div className="fav-dot"><Icon name="bookmark" size={gridSize === 'big' ? 16 : 13} color="var(--brown)" style={{ fill: 'var(--brown)' }} /></div>
-                      )}
-                      <div className="name" style={gridSize === 'small' ? { fontSize: 11.5, marginTop: 5 } : undefined}>{r.title}</div>
-                      {gridSize === 'big' && <div className="date">{dateLabel(r.savedAt)}</div>}
-                    </button>
-                    {edit && (
-                      <button className="card-del press" onClick={() => del(r)} aria-label="삭제">
-                        <Icon name="x" size={16} color="#fff" stroke={2.6} />
+                {list.map((r) => {
+                  const on = edit && sel.has(r.id)
+                  return (
+                    <div key={r.id} className="grid-card" style={{ position: 'relative' }}>
+                      {/* 편집 모드: 카드 탭 = 선택 토글(여러 개 골라 한 번에 삭제) */}
+                      <button className="press" style={{ textAlign: 'left', width: '100%', opacity: edit && !on ? 0.75 : 1 }} onClick={() => (edit ? toggleSel(r.id) : nav.push({ name: 'detail', id: r.id }))}>
+                        <div style={on ? { outline: '3px solid var(--brown)', outlineOffset: -3, borderRadius: gridSize === 'big' ? 16 : 12 } : undefined}>
+                          <Thumb recipe={r} ratio="1/1" radius={gridSize === 'big' ? 16 : 12} emojiSize={gridSize === 'big' ? undefined : '1.6rem'} showDecor />
+                        </div>
+                        {r.favorite && !edit && (
+                          <div className="fav-dot"><Icon name="bookmark" size={gridSize === 'big' ? 16 : 13} color="var(--brown)" style={{ fill: 'var(--brown)' }} /></div>
+                        )}
+                        <div className="name" style={gridSize === 'small' ? { fontSize: 11.5, marginTop: 5 } : undefined}>{r.title}</div>
+                        {gridSize === 'big' && <div className="date">{dateLabel(r.savedAt)}</div>}
                       </button>
-                    )}
-                  </div>
-                ))}
+                      {edit && (
+                        <div aria-hidden style={{ position: 'absolute', top: 7, right: 7, width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', background: on ? 'var(--brown)' : 'rgba(255,255,255,0.92)', border: on ? 'none' : '1.8px solid rgba(0,0,0,0.22)', boxShadow: '0 1px 5px rgba(0,0,0,0.22)' }}>
+                          {on && <Icon name="check" size={15} color="#fff" stroke={3} />}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
         </>
+      )}
+
+      {/* 편집 모드 하단 바 — 선택 개수 + 전체선택 + 한 번에 삭제 */}
+      {edit && (
+        <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(var(--nav-h) + 14px + var(--safe-bottom))', zIndex: 40, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
+          <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, padding: '9px 12px 9px 18px', boxShadow: '0 8px 26px rgba(60,45,30,0.22)' }}>
+            <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>
+              {sel.size > 0 ? `${sel.size}개 선택` : '카드를 눌러 선택'}
+            </span>
+            <button className="press" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 8px' }}
+              onClick={() => setSel(sel.size === list.length ? new Set() : new Set(list.map((r) => r.id)))}>
+              {sel.size === list.length && list.length > 0 ? '전체 해제' : '전체 선택'}
+            </button>
+            <button className="press" disabled={sel.size === 0}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 999, background: sel.size ? 'var(--danger)' : 'var(--cream)', color: sel.size ? '#fff' : 'var(--text-sub)', fontSize: 13.5, fontWeight: 800 }}
+              onClick={() => sel.size && setDelSelAsk(true)}>
+              <Icon name="trash" size={15} color={sel.size ? '#fff' : 'var(--text-sub)'} /> 삭제
+            </button>
+          </div>
+        </div>
+      )}
+
+      {delSelAsk && (
+        <ConfirmSheet
+          title="선택한 레시피 삭제"
+          message={`선택한 레시피 ${sel.size}개를 삭제할까요?\n삭제하면 되돌릴 수 없어요.`}
+          confirmLabel={`${sel.size}개 삭제하기`}
+          danger
+          onConfirm={() => {
+            const n = sel.size
+            sel.forEach((id) => removeRecipe(id))
+            setSel(new Set())
+            nav.showToast(`레시피 ${n}개를 삭제했어요`)
+          }}
+          onClose={() => setDelSelAsk(false)}
+        />
       )}
 
       {newFolder && (
@@ -300,17 +344,6 @@ export default function MyRecipesScreen() {
           fields={[{ key: 'name', label: '폴더 이름', placeholder: '예) 자주 만드는' }]}
           onSubmit={({ name }) => { const nm = name.trim(); if (nm) addFolder(nm) }}
           onClose={() => setNewFolder(false)}
-        />
-      )}
-
-      {delTarget && (
-        <ConfirmSheet
-          title="레시피 삭제"
-          message={`'${delTarget.title}' 레시피를 삭제할까요?`}
-          confirmLabel="삭제하기"
-          danger
-          onConfirm={() => { removeRecipe(delTarget.id); nav.showToast('레시피를 삭제했어요') }}
-          onClose={() => setDelTarget(null)}
         />
       )}
 
