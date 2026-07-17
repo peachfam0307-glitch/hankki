@@ -51,27 +51,6 @@ export default function App() {
   const tabRef = useRef(tab)
   const stackRef = useRef(stack)
   const onboardRef = useRef(onboard)
-  // 🔧 임시 진단: 뒤로가기/히스토리 흐름을 화면 하단에 찍는다(문제 폰 원인 파악용). 나중에 제거.
-  const navLog = useRef([])
-  const [, setDbg] = useState(0)
-  const dlog = (m) => {
-    try {
-      const h = (typeof history !== 'undefined' && history.length) || '?'
-      const st = (typeof history !== 'undefined' && history.state) ? (history.state.guard ? 'G' : history.state.hankki ? 'T' : '·') : '∅'
-      navLog.current.push(`${m} [len${h} ${st} stk${stackRef.current.length} mdl${modalLayers.current.length}]`)
-      if (navLog.current.length > 22) navLog.current.shift()
-      try { localStorage.setItem('hankki:navlog', JSON.stringify(navLog.current)) } catch { /* noop */ }
-      setDbg((x) => x + 1)
-    } catch { /* noop */ }
-  }
-  // 앱이 나가져도 이전 로그가 남아, 다시 켜서 스샷할 수 있게 저장분을 불러온다.
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('hankki:navlog') || '[]')
-      if (Array.isArray(saved) && saved.length) { navLog.current = [...saved.slice(-16), '──── 앱 재시작 ────']; setDbg((x) => x + 1) }
-    } catch { /* noop */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
   tabRef.current = tab
   stackRef.current = stack
   onboardRef.current = onboard
@@ -115,11 +94,9 @@ export default function App() {
     const layer = { close, consumed: false }
     try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
     modalLayers.current.push(layer)
-    dlog('OPEN모달')
     return () => {
       const i = modalLayers.current.indexOf(layer)
       if (i >= 0) modalLayers.current.splice(i, 1)
-      dlog(layer.consumed ? 'close(뒤로)' : 'close(버튼)')
       // 뒤로가기가 아니라 닫기 버튼·선택으로 닫혔으면, 쌓아둔 히스토리 칸을 되돌려 소비.
       // 겹친 모달이 같은 틱에 여러 개 닫히면(예: 아바타 시트 안 픽커 선택 → 둘 다 닫힘)
       // history.back() 을 동기로 여러 번 부르면 어긋나므로, 한 틱에 모아 go(-n) 한 번으로 처리.
@@ -149,11 +126,10 @@ export default function App() {
     const trap = () => { try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ } }
     if (!hasTrap()) trap() // index.html 이 이미 깔았으면 중복 안 함
     const onPop = () => {
-      dlog('▼POP')
       // 0) popAll·모달버튼닫기 가 history.go/back 으로 만든 이벤트는 무시(화면은 이미 닫힘)
-      if (suppressPop.current > 0) { suppressPop.current -= 1; dlog('  =suppress'); return }
+      if (suppressPop.current > 0) { suppressPop.current -= 1; return }
       // 1) 온보딩(첫 실행 소개)이 떠 있으면 뒤로가기로 종료팝업이 뜨지 않게 가둔다.
-      if (onboardRef.current) { trap(); dlog('  =onboard'); return }
+      if (onboardRef.current) { trap(); return }
       // 1.5) 모달·오버레이(꾸미기·미리보기·시트·픽커 등)가 열려 있으면 최상위 하나만 닫는다.
       //      이 칸은 열 때 gesture-backed 로 쌓였고 방금 popstate 로 소비됐으니 '다시 채우지 않는다'.
       //      (popstate 안 gesture-less pushState 가 사라져 크롬 intervention 재종료 버그를 근본 제거)
@@ -161,7 +137,6 @@ export default function App() {
         const layer = modalLayers.current.pop()
         layer.consumed = true
         try { layer.close() } catch { /* noop */ }
-        dlog('  =모달닫음')
         return
       }
       // 2) 그 밖의 화면 내부 상태(필터·세그먼트 등)를 위에서부터 처리한다.
@@ -176,11 +151,10 @@ export default function App() {
         try { if (hs[k].fn()) { trap(); return } } catch { /* noop */ }
       }
       // 3) 열린 스택 화면 닫기. (그 화면이 쌓아둔 gesture-backed 칸을 방금 소비함)
-      if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); dlog('  =화면닫음'); return }
+      if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); return }
       // 4) 다른 탭이면 홈으로. (루트 종료 방지는 아래 pointerdown 가드가 담당)
-      if (tabRef.current !== 'home') { setTab('home'); dlog('  =홈으로'); return }
+      if (tabRef.current !== 'home') { setTab('home'); return }
       // 5) 홈에서 뒤로 → 종료 확인.
-      dlog('  =종료확인')
       setExitAsk(true)
     }
     // 앱으로 되돌아왔을 때(다른 앱 갔다 오기 등) 트랩이 사라졌으면 다시 깐다
@@ -193,7 +167,6 @@ export default function App() {
       if (stackRef.current.length === 0 && modalLayers.current.length === 0 &&
           !(history.state && history.state.guard)) {
         try { history.pushState({ hankki: 1, guard: 1 }, '') } catch { /* noop */ }
-        dlog('가드+')
       }
     }
     window.addEventListener('popstate', onPop)
@@ -326,10 +299,6 @@ export default function App() {
         )}
 
         {onboard && <Onboarding onDone={() => setOnboard(false)} />}
-      </div>
-      {/* 🔧 임시 진단 바 — 뒤로가기/히스토리 흐름 표시(문제 폰 원인 파악용). 확인 후 제거. */}
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 99999, background: 'rgba(15,0,0,0.9)', color: '#7CFC00', font: '9px/1.3 monospace', padding: '3px 6px', pointerEvents: 'none', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: '34vh', overflow: 'hidden' }}>
-        {`v4.3 진단 · 아바타 열고→고르고→닫기/뒤로\n`}{navLog.current.join('\n')}
       </div>
     </NavCtx.Provider>
   )
