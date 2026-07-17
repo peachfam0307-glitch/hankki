@@ -21,7 +21,7 @@ export default defineConfig({
         // (앱의 다른 폰트는 전부 CDN 이라 로컬 woff2 는 이 꾸미기 글씨체뿐)
         globPatterns: ['**/*.{js,css,html,svg,png,webp}'],
       },
-      includeAssets: ['favicon.svg', 'icons/icon-192-v4.png', 'icons/icon-512-v4.png'],
+      includeAssets: ['favicon.svg', 'icons/icon-192-v6.png', 'icons/icon-512-v6.png'],
       manifest: {
         name: '한끼 — 나만의 레시피 아카이브',
         short_name: '한끼',
@@ -38,9 +38,9 @@ export default defineConfig({
         background_color: '#FDFBF7',
         theme_color: '#6B4F3A',
         icons: [
-          { src: 'icons/icon-192-v4.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: 'icons/icon-512-v4.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: 'icons/icon-maskable-512-v4.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'icons/icon-192-v6.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-512-v6.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-maskable-512-v6.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
         // 안드로이드 공유 시트에서 '한끼'로 링크/사진을 바로 받기 위한 설정.
         share_target: {

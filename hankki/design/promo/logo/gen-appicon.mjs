@@ -36,14 +36,15 @@ const html = (size, viewBox) => `<!doctype html><html><head><meta charset="utf-8
   <div class="tile"><svg viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet">${BEAR}</svg></div>
 </body></html>`
 
-const FULL = '6 2 36 44'       // 곰 크게
-const MASK = '2 -3 44 54'      // 곰 안전(마스킹)
+const FULL = '6 2 36 44'       // 곰 크게 (v5 — 비교용으로 보존)
+const MASK = '2 -3 44 54'      // 곰 안전·여백 넉넉 ← 창업자 확정(B·네모, 2026-07-17)
 
+// v6 = 확정본: 모든 크기를 B(여백 넉넉) 프레이밍으로 통일
 const jobs = [
-  { file: 'icon-512-v5.png',              size: 512, vb: FULL },
-  { file: 'icon-192-v5.png',              size: 192, vb: FULL },
-  { file: 'apple-touch-icon-180-v5.png',  size: 180, vb: FULL },
-  { file: 'icon-maskable-512-v5.png',     size: 512, vb: MASK },
+  { file: 'icon-512-v6.png',              size: 512, vb: MASK },
+  { file: 'icon-192-v6.png',              size: 192, vb: MASK },
+  { file: 'apple-touch-icon-180-v6.png',  size: 180, vb: MASK },
+  { file: 'icon-maskable-512-v6.png',     size: 512, vb: MASK },
 ]
 
 const b = await chromium.launch({ executablePath: CHROME })
