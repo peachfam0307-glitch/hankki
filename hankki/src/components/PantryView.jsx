@@ -10,7 +10,7 @@ import FoodIconPicker from './FoodIconPicker'
 import EmojiPicker from './EmojiPicker'
 import CropSheet from './CropSheet'
 import Portal from './Portal'
-import { useBackHandler } from '../useBackHandler'
+import { useLayerBack } from '../useBackHandler'
 import { guessEmoji } from '../emoji'
 
 function toYMD(d) {
@@ -44,12 +44,9 @@ export default function PantryView() {
   const [scanPct, setScanPct] = useState(null) // null | 0~100 — 영수증 읽는 중
   const [found, setFound] = useState(null) // null | [{name, on}] — 영수증에서 찾은 재료 확인
   const [receiptCrop, setReceiptCrop] = useState(null) // 자르기 단계(품목 부분만)
-  // 뒤로가기: 열린 팝업(영수증 확인·담기 폼)을 먼저 닫는다. (크롭은 자체 처리)
-  useBackHandler(() => {
-    if (found) { setFound(null); return true }
-    if (form) { setForm(null); return true }
-    return false
-  })
+  // 열린 팝업(영수증 확인·담기 폼) — 뒤로가기로 닫기(크롭은 자체 처리)
+  useLayerBack(!!found, () => setFound(null))
+  useLayerBack(!!form, () => setForm(null))
   const receiptRef = useRef(null) // 앨범·캡처(저장된 사진)
   const receiptCamRef = useRef(null) // 바로 촬영(카메라)
 

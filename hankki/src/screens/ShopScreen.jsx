@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
+import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
 import TextTile from '../components/TextTile'
 import EmojiPicker from '../components/EmojiPicker'
@@ -39,6 +40,9 @@ export default function ShopScreen() {
     try { sessionStorage.setItem('hankki:shopView', v) } catch { /* noop */ }
   }
   const [clearAsk, setClearAsk] = useState(false)
+  // 인라인 시트(쇼핑몰 편집·추가/편집 폼) — 뒤로가기로 닫기(비우기 확인은 ConfirmSheet 자체 처리)
+  useLayerBack(editShops, () => setEditShops(false))
+  useLayerBack(!!shopForm, () => setShopForm(null))
 
   const doneCount = shoppingList.filter((i) => i.done).length
 

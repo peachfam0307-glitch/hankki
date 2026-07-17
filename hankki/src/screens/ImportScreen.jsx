@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
-import { useBackHandler } from '../useBackHandler'
+import { useBackHandler, useLayerBack } from '../useBackHandler'
 import { guessCategory, openExternal } from '../utils'
 import { parseRecipeText } from '../parseRecipe'
 import { fetchLinkRecipe } from '../linkReader'
@@ -32,10 +32,11 @@ export default function ImportScreen() {
   const [linkBusy, setLinkBusy] = useState(false)
   const linkCancel = useRef(false)
 
-  // 뒤로가기: 열린 시트·하위 흐름을 먼저 닫는다(바로 홈으로 안 나가게).
+  // 시트(AI 미리보기·도움말)는 히스토리 칸을 쌓아 뒤로가기로 닫는다.
+  useLayerBack(aiPreview, () => setAiPreview(false))
+  useLayerBack(help, () => setHelp(false))
+  // 하위 흐름(링크·사진 등 선택 단계)은 모달이 아니라 화면 내 단계라 상태만 되돌린다.
   useBackHandler(() => {
-    if (aiPreview) { setAiPreview(false); return true }
-    if (help) { setHelp(false); return true }
     if (flow) { setFlow(null); return true }
     return false
   })

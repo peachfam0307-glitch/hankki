@@ -127,11 +127,8 @@ export default function MyRecipesScreen() {
 
   // 안드로이드 뒤로가기(버튼·제스처): 열린 모달·시트·필터를 먼저 닫는다.
   // (안 닫으면 뒤로가기가 화면을 넘어 '앱 종료'로 샌다.) 나중에 뜬 레이어부터 하나씩.
+  // 비모달 상태(달력·세그먼트·필터)만 처리 — 모달(기록·삭제확인·폴더추가 시트)은 각 시트가 자체 처리.
   useBackHandler(() => {
-    if (logEditing) { setLogEditing(null); return true }
-    if (delTarget) { setDelTarget(null); return true }
-    if (delFolder) { setDelFolder(null); return true }
-    if (newFolder) { setNewFolder(false); return true }
     if (dayFilter) { setDayFilter(null); return true }
     if (showCal) { setShowCal(false); return true }
     if (edit) { setEdit(false); return true }

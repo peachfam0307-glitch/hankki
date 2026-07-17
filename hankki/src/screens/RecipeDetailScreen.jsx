@@ -17,7 +17,7 @@ import { scaleIngredient } from '../scale'
 import { dateLabel } from '../utils'
 import { SOURCES } from '../data/seed'
 import { useWakeLock } from '../useWakeLock'
-import { useBackHandler } from '../useBackHandler'
+import { useLayerBack } from '../useBackHandler'
 
 // 재료 목록에서 '[양념]'·'[소스]'·'[드레싱]'처럼 대괄호만 있는 줄은 소제목(헤더)으로 그린다.
 // (장보기 담기·인분 환산에서 제외) — 전 레시피 양념/소스 표기 통일용.
@@ -33,15 +33,10 @@ export default function RecipeDetailScreen({ id }) {
   const [logEntry, setLogEntry] = useState(null)
   const [decorOpen, setDecorOpen] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
-  // 뒤로가기: 열린 꾸미기·시트를 먼저 닫는다(레시피가 통째로 닫히지 않게).
-  useBackHandler(() => {
-    if (decorOpen) { setDecorOpen(false); return true }
-    if (logEntry) { setLogEntry(null); return true }
-    if (timer) { setTimer(false); return true }
-    if (menu) { setMenu(false); return true }
-    if (confirmDel) { setConfirmDel(false); return true }
-    return false
-  })
+  // 인라인 오버레이(꾸미기·더보기 메뉴) — 뒤로가기로 닫기.
+  // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
+  useLayerBack(decorOpen, () => setDecorOpen(false))
+  useLayerBack(menu, () => setMenu(false))
   const iconRef = useRef(null)
   const r = recipes.find((x) => x.id === id)
   const baseServings = r?.servings || 0

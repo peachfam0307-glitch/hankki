@@ -19,20 +19,30 @@ export function useBackHandler(handler, opts) {
   }, [])
 }
 
-// 모달·시트 전용 — 이 컴포넌트가 떠 있는 동안 안드로이드 뒤로가기(버튼·제스처)를 가로채
-// close() 로 닫는다. 조건부 렌더(마운트=열림)라 마운트 동안만 등록된다.
-// 나중에 뜬 시트가 위 레이어라 먼저 닫힌다(App 의 registerBack 이 최근 등록부터 물어봄).
+// 모달·시트 전용 — 조건부 렌더(마운트=열림)되는 컴포넌트용.
+// 마운트될 때(사용자 터치 직후) 진짜 히스토리 칸을 하나 쌓고(gesture-backed), 뒤로가기는 그 칸을
+// 소비하며 close() 로 닫는다. 닫기 버튼으로 닫히면 쌓아둔 칸을 되돌려 정리한다(App.openModal).
+// → popstate 안에서 gesture-less pushState 를 하지 않아 크롬 intervention 재종료 버그가 사라진다.
 export function useModalBack(close) {
   const nav = useNav()
   const ref = useRef(close)
   ref.current = close
   useEffect(() => {
-    if (!nav?.registerBack) return undefined
-    return nav.registerBack(() => {
-      if (typeof ref.current !== 'function') return false // 닫기 함수 없으면 소비하지 않음(먹통 방지)
-      ref.current()
-      return true
-    })
+    if (!nav?.openModal) return undefined
+    return nav.openModal(() => { if (typeof ref.current === 'function') ref.current() })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+}
+
+// 상태로 여닫는 인라인 오버레이용(컴포넌트는 항상 마운트, isOpen 으로 표시).
+// isOpen 이 true 가 되는 순간(터치 직후)에만 히스토리 칸을 쌓고, false 가 되면 정리한다.
+export function useLayerBack(isOpen, close) {
+  const nav = useNav()
+  const ref = useRef(close)
+  ref.current = close
+  useEffect(() => {
+    if (!isOpen || !nav?.openModal) return undefined
+    return nav.openModal(() => { if (typeof ref.current === 'function') ref.current() })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
 }

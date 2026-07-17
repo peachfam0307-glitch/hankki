@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useBackHandler } from '../useBackHandler'
+import { useLayerBack } from '../useBackHandler'
 import Icon from './Icon'
 import Portal from './Portal'
 
@@ -59,7 +59,7 @@ const TIPS = {
 
 export default function TabTips({ tab }) {
   const [open, setOpen] = useState(false)
-  useBackHandler(() => { if (open) { setOpen(false); return true } return false }) // 뒤로가기 → 팁 닫기
+  useLayerBack(open, () => setOpen(false)) // 뒤로가기 → 닫기
   const tip = TIPS[tab]
   if (!tip) return null
   return (

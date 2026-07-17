@@ -42,8 +42,9 @@ export default function App() {
   const [toast, setToast] = useState(null)
   const [exitAsk, setExitAsk] = useState(false) // 홈에서 뒤로가기 → 종료 확인 팝업
   const [onboard, setOnboard] = useState(() => needsOnboarding()) // 첫 실행 앱 소개
-  const backHandlers = useRef([]) // 화면들이 등록한 '뒤로가기 먼저 처리' 핸들러
-  const suppressPop = useRef(0) // popAll 이 history.go(-n) 로 만든 popstate 무시용
+  const backHandlers = useRef([]) // 화면들이 등록한 '뒤로가기 먼저 처리' 핸들러(비모달 상태·필터용)
+  const modalLayers = useRef([]) // 열려 있는 모달·오버레이(각자 진짜 히스토리 칸 1개 소유)
+  const suppressPop = useRef(0) // popAll·모달버튼닫기 가 만든 popstate 무시용
   const toastTimer = useRef(null)
   const tabRef = useRef(tab)
   const stackRef = useRef(stack)
@@ -68,11 +69,13 @@ export default function App() {
   }, [])
   // 스택 전체 닫기: 쌓아둔 히스토리 칸 수만큼 한 번에 되돌린다(그 popstate 들은 무시).
   const popAll = useCallback(() => {
-    const n = stackRef.current.length
+    // 열려 있던 모달도 함께 정리(각자 히스토리 칸 소유) — 정리자가 back() 을 또 부르지 않게 표시.
+    const modals = modalLayers.current
+    modals.forEach((l) => { l.consumed = true })
+    const n = stackRef.current.length + modals.length
+    modalLayers.current = []
     setStack([])
-    // history.go(-n) 은 (안드로이드 WebView·Chromium 기준) 여러 칸을 한 번에 되돌려도 popstate 를
-    // '딱 한 번'만 쏜다. 예전엔 += n 이라 남은 n-1 이 카운터에 고착 → 이후 뒤로가기가 먹히다가
-    // 앱이 종료되던 버그(요리 완료·새 레시피 저장 후). 그래서 항상 1만 억제한다.
+    // history.go(-n) 은 여러 칸을 한 번에 되돌려도 popstate 를 '딱 한 번'만 쏜다 → 항상 1만 억제.
     if (n > 0) { suppressPop.current += 1; try { history.go(-n) } catch { /* noop */ } }
   }, [])
   // 화면이 '뒤로가기'를 먼저 가로채도록 등록. 최근 등록(=가장 위 레이어)만 물어본다.
@@ -81,6 +84,20 @@ export default function App() {
     const entry = { fn, tab: !!(opts && opts.tabLevel) }
     backHandlers.current.push(entry)
     return () => { backHandlers.current = backHandlers.current.filter((h) => h !== entry) }
+  }, [])
+  // 모달·오버레이 전용: 열 때(사용자 터치 시점) 진짜 히스토리 칸을 쌓는다 → gesture-backed 라
+  // 크롬의 history intervention(터치 없이 만든 pushState 칸을 뒤로가기 때 건너뜀)에 안 걸린다.
+  // 뒤로가기(popstate)는 이 칸을 소비만 하고 '다시 채우지 않는' 게 핵심(재종료 버그 근본 해결).
+  const openModal = useCallback((close) => {
+    const layer = { close, consumed: false }
+    try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
+    modalLayers.current.push(layer)
+    return () => {
+      const i = modalLayers.current.indexOf(layer)
+      if (i >= 0) modalLayers.current.splice(i, 1)
+      // 뒤로가기가 아니라 닫기 버튼·배경 탭으로 닫혔으면, 쌓아둔 히스토리 칸을 되돌려 소비.
+      if (!layer.consumed) { suppressPop.current += 1; try { history.back() } catch { /* noop */ } }
+    }
   }, [])
   const go = useCallback((t) => {
     setStack([])
@@ -94,11 +111,28 @@ export default function App() {
     const trap = () => { try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ } }
     if (!hasTrap()) trap() // index.html 이 이미 깔았으면 중복 안 함
     const onPop = () => {
-      // 0) popAll 이 history.go(-n) 로 만든 이벤트는 무시(화면은 이미 닫힘)
-      if (suppressPop.current > 0) { suppressPop.current -= 1; return }
+      // 0) popAll·모달버튼닫기 가 history.go/back 으로 만든 이벤트는 무시(화면은 이미 닫힘)
+      //    마지막 하나를 소비한 뒤 홈 바닥에 트랩이 없으면 보충(홈 뒤로가기 종료 방지).
+      if (suppressPop.current > 0) {
+        suppressPop.current -= 1
+        if (suppressPop.current === 0 && !hasTrap()) trap()
+        return
+      }
       // 1) 온보딩(첫 실행 소개)이 떠 있으면 뒤로가기로 종료팝업이 뜨지 않게 가둔다.
       if (onboardRef.current) { trap(); return }
-      // 2) 열려 있는 팝업·패널을 위(가장 최근 레이어)부터 차례로 닫는다.
+      // 1.5) 모달·오버레이(꾸미기·미리보기·시트·픽커 등)가 열려 있으면 최상위 하나만 닫는다.
+      //      이 칸은 열 때 gesture-backed 로 쌓였고 방금 popstate 로 소비됐으니 '다시 채우지 않는다'.
+      //      (popstate 안 gesture-less pushState 가 사라져 크롬 intervention 재종료 버그를 근본 제거)
+      if (modalLayers.current.length > 0) {
+        const layer = modalLayers.current.pop()
+        layer.consumed = true
+        try { layer.close() } catch { /* noop */ }
+        // 방금 소비한 칸이 마지막이라 홈 바닥으로 내려왔으면 트랩 보충(홈 뒤로가기 종료 방지).
+        // 이 트랩은 홈 종료 방지용일 뿐 — 모달 칸은 gesture-backed 라 intervention 영향 없음.
+        if (!hasTrap()) trap()
+        return
+      }
+      // 2) 그 밖의 화면 내부 상태(필터·세그먼트 등)를 위에서부터 처리한다.
       //    하나라도 소비하면 버퍼를 다시 채워 다음 뒤로가기가 종료로 새지 않게.
       //    (겹친 시트·픽커가 각자 핸들러를 등록해도 순서대로 조합되도록 전체를 훑는다)
       const hs = backHandlers.current
@@ -109,8 +143,8 @@ export default function App() {
         if (hs[k].tab && underStack) continue
         try { if (hs[k].fn()) { trap(); return } } catch { /* noop */ }
       }
-      // 3) 열린 화면 닫기(그 화면이 쌓아둔 히스토리 한 칸을 방금 소비함 → 재보충 불필요)
-      if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); return }
+      // 3) 열린 스택 화면 닫기. 마지막 화면이라 홈 바닥으로 내려왔으면 트랩 보충(홈 종료 방지).
+      if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); if (!hasTrap()) trap(); return }
       // 4) 다른 탭이면 홈으로(탭은 트랩 1칸 기반) → 트랩 다시 채움
       if (tabRef.current !== 'home') { setTab('home'); trap(); return }
       // 5) 홈에서 뒤로 → 종료 확인(트랩 다시 채워 실제 종료 방지)
@@ -210,7 +244,7 @@ export default function App() {
   }, [])
 
   const showOnboarding = useCallback(() => setOnboard(true), [])
-  const nav = { push, pop, popAll, go, showToast, tab, setTab, registerBack, showOnboarding }
+  const nav = { push, pop, popAll, go, showToast, tab, setTab, registerBack, openModal, showOnboarding }
 
   const TabScreen = TABS[tab]
   const top = stack[stack.length - 1]
