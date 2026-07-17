@@ -258,8 +258,13 @@ function Curation() {
         <div className="h-section">🌿 주부의 장바구니</div>
         <button className="press" style={secBtnStyle} onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
       </div>
-      <div className="t-sub" style={{ fontSize: 12, marginTop: -2, marginBottom: 8 }}>
+      <div className="t-sub" style={{ fontSize: 12, marginTop: -2, marginBottom: 6 }}>
         18년차 주부가 엄선한 · 첨가물 적은 건강 식재료
+      </div>
+      {/* 제휴(어필리에이트) 표시 — 공정위 추천·보증 심사지침. '사러가기'가 제휴 링크로 바뀌면 의무.
+          지금은 직접/검색 링크라 수수료 없지만, 곧 제휴로 전환 예정이라 미리 고지(과다표시는 문제 없음). */}
+      <div style={{ fontSize: 11, color: 'var(--text-sub)', background: 'var(--cream)', borderRadius: 9, padding: '7px 10px', marginBottom: 8, lineHeight: 1.5 }}>
+        ‘사러가기’는 외부 쇼핑몰로 연결돼요. 일부는 제휴 링크로 구매 시 한끼가 소정의 수수료를 받을 수 있어요 · 가격은 그대로, 추가 부담 없어요.
       </div>
 
       {open && (
