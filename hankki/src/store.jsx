@@ -5,6 +5,7 @@ import { cleanMemo } from './parseRecipe'
 import { politeSteps } from './polish'
 
 const KEY = 'hankki:v1'
+let lastFullWarn = 0 // 저장공간 초과 경고 throttle(모듈 스코프)
 const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행복한 하루 :)' }
 
 // 장보기 쇼핑몰 바로가기 기본 목록. url = 홈, search = 재료 검색(‘{q}’에 재료명 치환).
@@ -474,7 +475,13 @@ export function StoreProvider({ children }) {
     try {
       localStorage.setItem(KEY, JSON.stringify(state))
     } catch {
-      /* 저장 공간 초과 등은 조용히 무시 */
+      // 저장 공간 초과(특히 iOS ~5MB) — 조용히 사라지면 안 되므로(핵심 약속: 레시피 보관)
+      // 사용자에게 알린다. 매 변경마다 반복되지 않게 60초에 한 번만.
+      const now = Date.now()
+      if (now - lastFullWarn > 60000) {
+        lastFullWarn = now
+        try { window.dispatchEvent(new CustomEvent('hankki:storagefull')) } catch { /* noop */ }
+      }
     }
   }, [state])
 

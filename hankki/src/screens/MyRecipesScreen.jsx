@@ -138,7 +138,7 @@ export default function MyRecipesScreen() {
     if (view !== 'grid') { setView('grid'); return true }
     if (folder !== '전체') { setFolder('전체'); return true }
     return false
-  })
+  }, { tabLevel: true }) // 탭 화면 — 위에 상세·요리 등 스택 화면이 있으면 이 핸들러는 잠재운다
   const now = new Date()
   const thisMonth = entries.filter((e) => {
     const d = new Date(e.at)

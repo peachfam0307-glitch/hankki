@@ -24,11 +24,12 @@ export default function ProfileScreen() {
   const [avatarSheet, setAvatarSheet] = useState(false)
   const [editSheet, setEditSheet] = useState(false)
   const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
-  // 뒤로가기: 인라인 아바타 시트를 먼저 닫는다. (편집·확인 시트는 자체 처리)
+  // 뒤로가기: 인라인 시트(백업·아바타)를 먼저 닫는다. (편집·붙여넣기·확인 시트는 자체 처리)
   useBackHandler(() => {
+    if (backup) { setBackup(false); return true }
     if (avatarSheet) { setAvatarSheet(false); return true }
     return false
-  })
+  }, { tabLevel: true })
   const [theme, setThemeState] = useState(getTheme())
   const [pasteOpen, setPasteOpen] = useState(false)
   const [checking, setChecking] = useState(false)

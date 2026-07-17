@@ -70,12 +70,17 @@ export default function App() {
   const popAll = useCallback(() => {
     const n = stackRef.current.length
     setStack([])
-    if (n > 0) { suppressPop.current += n; try { history.go(-n) } catch { /* noop */ } }
+    // history.go(-n) 은 (안드로이드 WebView·Chromium 기준) 여러 칸을 한 번에 되돌려도 popstate 를
+    // '딱 한 번'만 쏜다. 예전엔 += n 이라 남은 n-1 이 카운터에 고착 → 이후 뒤로가기가 먹히다가
+    // 앱이 종료되던 버그(요리 완료·새 레시피 저장 후). 그래서 항상 1만 억제한다.
+    if (n > 0) { suppressPop.current += 1; try { history.go(-n) } catch { /* noop */ } }
   }, [])
   // 화면이 '뒤로가기'를 먼저 가로채도록 등록. 최근 등록(=가장 위 레이어)만 물어본다.
-  const registerBack = useCallback((fn) => {
-    backHandlers.current.push(fn)
-    return () => { backHandlers.current = backHandlers.current.filter((h) => h !== fn) }
+  const registerBack = useCallback((fn, opts) => {
+    // tabLevel 핸들러(탭 화면의 내부 상태)는 위에 스택 화면이 있으면 잠재운다 — 아래 onPop 참고.
+    const entry = { fn, tab: !!(opts && opts.tabLevel) }
+    backHandlers.current.push(entry)
+    return () => { backHandlers.current = backHandlers.current.filter((h) => h !== entry) }
   }, [])
   const go = useCallback((t) => {
     setStack([])
@@ -97,8 +102,12 @@ export default function App() {
       //    하나라도 소비하면 버퍼를 다시 채워 다음 뒤로가기가 종료로 새지 않게.
       //    (겹친 시트·픽커가 각자 핸들러를 등록해도 순서대로 조합되도록 전체를 훑는다)
       const hs = backHandlers.current
+      const underStack = stackRef.current.length > 0
       for (let k = hs.length - 1; k >= 0; k -= 1) {
-        try { if (hs[k]()) { trap(); return } } catch { /* noop */ }
+        // 탭 화면 핸들러는 위에 스택 화면(상세·요리 등)이 있으면 건너뛴다.
+        // (그 뒤로가기는 스택 화면 것 → 안 그러면 밑에 깔린 탭이 back 을 가로채 상세가 안 닫힘)
+        if (hs[k].tab && underStack) continue
+        try { if (hs[k].fn()) { trap(); return } } catch { /* noop */ }
       }
       // 3) 열린 화면 닫기(그 화면이 쌓아둔 히스토리 한 칸을 방금 소비함 → 재보충 불필요)
       if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); return }
@@ -135,6 +144,13 @@ export default function App() {
     toastTimer.current = setTimeout(() => setToast(null), ms)
   }, [])
 
+  // 저장 공간이 가득 차서 저장이 실패하면(특히 iOS ~5MB) 조용히 사라지지 않게 알린다.
+  useEffect(() => {
+    const onFull = () => showToast('⚠️ 저장 공간이 가득 찼어요 · 설정에서 백업 후 오래된 사진을 정리해 주세요', 5000)
+    window.addEventListener('hankki:storagefull', onFull)
+    return () => window.removeEventListener('hankki:storagefull', onFull)
+  }, [showToast])
+
   // '공유받기' — 인스타/갤러리에서 한끼로 공유된 링크·사진을 앱 시작 시 받아 Inbox 로.
   const store = useStore()
   useEffect(() => {
@@ -164,11 +180,14 @@ export default function App() {
       }
       store.addRecipe(rec)
       setStack([{ name: 'inbox' }])
+      // inbox 레이어에 해당하는 히스토리 칸(트랩)을 보충 — 없으면 뒤로가기가 base 트랩을 대신
+      // 소비해 다음 back 이 앱 종료로 샜다. (공유로 앱을 처음 열었을 때 경로)
+      try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
       showToast(
         data.imageDataUrl ? '사진을 담았어요 · 글자 읽는 중…' : '공유한 레시피를 Inbox에 담았어요'
       )
       if (typeof history !== 'undefined' && location.search) {
-        history.replaceState(null, '', location.pathname)
+        history.replaceState({ hankki: 1 }, '', location.pathname) // URL 만 정리, 트랩 표식은 유지
       }
       // 공유된 사진이면 글자를 읽어 재료·순서를 자동으로 채운다.
       if (data.imageDataUrl) {
