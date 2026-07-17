@@ -142,9 +142,15 @@ export default function RecipeDetailScreen({ id }) {
           <button className="round-btn press" onClick={() => toggleFavorite(r.id)} aria-label="즐겨찾기">
             <Icon name="bookmark" size={20} color={r.favorite ? '#c2703f' : 'currentColor'} style={{ fill: r.favorite ? '#c2703f' : 'none' }} />
           </button>
-          {/* 공유 — 숨은 ⋮ 메뉴에서 밖으로(잘 쓰는 기능이라 눈에 띄게). ⋮ 엔 삭제만 남김. */}
-          <button className="round-btn press" onClick={onShare} data-coach="share" aria-label="친구와 레시피 공유하기">
-            <Icon name="share" size={20} />
+          {/* 공유 — 숨은 ⋮ 메뉴에서 밖으로. 아이콘만으론 약해서 편집처럼 글자 라벨 알약으로. */}
+          <button
+            className="press"
+            onClick={onShare}
+            data-coach="share"
+            aria-label="친구와 레시피 공유하기"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 38, padding: '0 13px', background: 'rgba(250,250,248,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 800, borderRadius: 999, boxShadow: '0 2px 10px rgba(0,0,0,.18)' }}
+          >
+            <Icon name="share" size={17} color="var(--brown)" stroke={2.2} /> 공유
           </button>
           <button className="round-btn press" onClick={() => setMenu(true)} aria-label="더보기"><Icon name="more" size={22} /></button>
         </div>

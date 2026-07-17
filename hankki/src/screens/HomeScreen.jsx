@@ -8,13 +8,23 @@ import Buddy from '../components/Buddies'
 import SourceBadge from '../components/SourceBadge'
 import TabTips from '../components/TabTips'
 import PreviewSheet from '../components/PreviewSheet'
+import CoachMarks, { needsCoach } from '../components/CoachMarks'
+import { needsOnboarding } from '../components/Onboarding'
 import { timeAgo } from '../utils'
+
+// 홈 첫 방문 코치마크 — '곧 나올 기능 미리보기'가 숨어 있어 안내(창업자 딸 아이디어 ⭐)
+const HOME_COACH_KEY = 'hankki:coach:home'
+const HOME_COACH_STEPS = [
+  { sel: '[data-coach="preview"]', label: '✨ 곧 나올 기능 미리보기', desc: 'AI 정리 · 레시피북 PDF… 뭐가 준비 중인지 구경해요' },
+]
 
 export default function HomeScreen() {
   const { recipes, profile, pantry } = useStore()
   const nav = useNav()
   const [pick, setPick] = useState(0)
   const [preview, setPreview] = useState(false)
+  // 온보딩(첫 실행 소개)이 아직 안 끝났으면 이번엔 쉬고, 다음 실행에서 보여준다(겹침 방지).
+  const [coach, setCoach] = useState(() => needsCoach(HOME_COACH_KEY) && !needsOnboarding())
 
   // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
   const today = useMemo(() => {
@@ -88,6 +98,7 @@ export default function HomeScreen() {
         <button
           className="press"
           onClick={() => setPreview(true)}
+          data-coach="preview"
           style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 14, background: 'var(--tease)', border: 'none', textAlign: 'left' }}
         >
           <span style={{ flex: '0 0 auto', display: 'inline-flex' }}><Icon name="gift" size={20} color="var(--tease-ic)" stroke={1.7} /></span>
@@ -179,6 +190,9 @@ export default function HomeScreen() {
       </div>
 
       {preview && <PreviewSheet onClose={() => setPreview(false)} />}
+
+      {/* 첫 방문 코치마크 — 미리보기 진입점 안내 */}
+      {coach && <CoachMarks storageKey={HOME_COACH_KEY} steps={HOME_COACH_STEPS} onDone={() => setCoach(false)} />}
     </>
   )
 }

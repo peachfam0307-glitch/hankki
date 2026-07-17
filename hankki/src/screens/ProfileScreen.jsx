@@ -12,7 +12,15 @@ import Portal from '../components/Portal'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
+import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { cropSquare } from '../utils'
+
+// 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
+const PROFILE_COACH_KEY = 'hankki:coach:profile'
+const PROFILE_COACH_STEPS = [
+  { sel: '[data-coach="backup"]', label: '💾 백업 · 내보내기', desc: '폰을 바꾸거나 지워도 레시피를 지키는 제일 중요한 버튼!' },
+  { sel: '[data-coach="feedback"]', label: '✍️ 의견 보내기', desc: '익명으로 한 줄이면 돼요 · 불편한 점 뭐든 환영!' },
+]
 import { THEMES, getTheme, setTheme } from '../theme'
 import { Avatar } from './HomeScreen'
 
@@ -27,6 +35,7 @@ export default function ProfileScreen() {
   // 인라인 시트(백업·아바타) — 뒤로가기로 닫기(편집·붙여넣기·확인 시트는 자체 처리)
   useLayerBack(backup, () => setBackup(false))
   useLayerBack(avatarSheet, () => setAvatarSheet(false))
+  const [coach, setCoach] = useState(() => needsCoach(PROFILE_COACH_KEY))
   const [theme, setThemeState] = useState(getTheme())
   const [pasteOpen, setPasteOpen] = useState(false)
   const [checking, setChecking] = useState(false)
@@ -197,13 +206,13 @@ export default function ProfileScreen() {
   // (프로필 편집은 맨 위 프로필 카드를 누르면 열린다)
   const menu = [
     { icon: 'heart', label: '즐겨찾기', onClick: () => nav.push({ name: 'favorites' }) },
-    { icon: 'cloud', label: '백업 · 내보내기', badge: 'NEW', onClick: () => setBackup(true) },
+    { icon: 'cloud', label: '백업 · 내보내기', badge: 'NEW', coach: 'backup', onClick: () => setBackup(true) },
     { icon: 'help', label: '요리 가이드', badge: '계량·손질', onClick: () => setGuide(true) },
     { icon: 'help', label: '앱 소개 다시 보기', onClick: () => nav.showOnboarding && nav.showOnboarding() },
     { icon: 'help', label: '도움말 및 문의', onClick: () => { try { const a = document.createElement('a'); a.href = 'mailto:annyeong.hankki@gmail.com'; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com 📧') } },
     // 익명 의견 — FEEDBACK_URL 이 설정됐을 때만 노출(죽은 버튼 방지)
     ...(FEEDBACK_URL
-      ? [{ icon: 'edit', label: '의견 보내기', badge: '익명', onClick: () => { const a = document.createElement('a'); a.href = FEEDBACK_URL; a.target = '_blank'; a.rel = 'noopener'; a.click() } }]
+      ? [{ icon: 'edit', label: '의견 보내기', badge: '익명', coach: 'feedback', onClick: () => { const a = document.createElement('a'); a.href = FEEDBACK_URL; a.target = '_blank'; a.rel = 'noopener'; a.click() } }]
       : []),
     { icon: 'settings', label: '개인정보처리방침', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
     { icon: 'book', label: '오픈소스 라이선스', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'licenses.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
@@ -330,7 +339,7 @@ export default function ProfileScreen() {
         <div className="card" style={{ marginTop: 20, overflow: 'hidden' }}>
           {menu.map((m, i) => (
             <div key={m.label}>
-              <button className="opt-row press" onClick={m.onClick} style={{ padding: '16px' }}>
+              <button className="opt-row press" onClick={m.onClick} data-coach={m.coach} style={{ padding: '16px' }}>
                 <Icon name={m.icon} size={22} color="var(--brown)" stroke={1.7} />
                 <div className="t" style={{ fontSize: 15, fontWeight: 500 }}>{m.label}</div>
                 {m.badge && <span className="badge badge-sorted" style={{ marginRight: 6 }}>{m.badge}</span>}
@@ -493,6 +502,9 @@ export default function ProfileScreen() {
       )}
 
       {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
+
+      {/* 첫 방문 코치마크 — 백업·의견 보내기 안내 */}
+      {coach && <CoachMarks storageKey={PROFILE_COACH_KEY} steps={PROFILE_COACH_STEPS} onDone={() => setCoach(false)} />}
     </>
   )
 }
