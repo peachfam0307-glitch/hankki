@@ -1260,6 +1260,9 @@ html, body { overscroll-behavior: none; }
 /* ── 표지 꾸미기 에디터 ── */
 .decor-editor {
   position: fixed; inset: 0; z-index: 220;
+  /* 앱 프레임과 같은 폭으로 가운데 정렬 — 넓은 화면(폴드 펼침·태블릿)에서 정사각 캔버스가
+     화면 폭만큼 커져 아래 '꾸미기 서랍(메뉴)'을 화면 밖으로 밀어내던 문제 방지 */
+  max-width: 440px; margin: 0 auto;
   background: var(--bg);
   display: flex; flex-direction: column;
   padding-top: var(--safe-top);
