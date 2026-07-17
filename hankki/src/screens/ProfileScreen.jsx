@@ -202,6 +202,7 @@ export default function ProfileScreen() {
       ? [{ icon: 'edit', label: '의견 보내기', badge: '익명', onClick: () => { const a = document.createElement('a'); a.href = FEEDBACK_URL; a.target = '_blank'; a.rel = 'noopener'; a.click() } }]
       : []),
     { icon: 'settings', label: '개인정보처리방침', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
+    { icon: 'book', label: '오픈소스 라이선스', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'licenses.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
   ]
 
   return (
