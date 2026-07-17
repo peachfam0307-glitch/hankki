@@ -290,7 +290,7 @@ export default function ProfileScreen() {
                 <EmojiPicker
                   value={profile.avatar?.type === 'emoji' ? profile.avatar.value : '😊'}
                   size={56}
-                  onChange={(e) => { setProfile({ avatar: { type: 'emoji', value: e } }); setAvatarSheet(false); nav.showToast('프로필 이모지를 바꿨어요 ✨') }}
+                  onChange={(e) => { setProfile({ avatar: { type: 'emoji', value: e } }); nav.showToast('프로필 이모지를 바꿨어요 ✨') }}
                 />
                 <div style={{ fontSize: 14, fontWeight: 600 }}>이모지로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
               </div>
@@ -298,7 +298,7 @@ export default function ProfileScreen() {
                 <FoodIconPicker
                   value={profile.avatar?.type === 'icon' ? profile.avatar.value : 'rice'}
                   size={56}
-                  onChange={(k) => { setProfile({ avatar: { type: 'icon', value: k } }); setAvatarSheet(false); nav.showToast('프로필 아이콘을 바꿨어요 ✨') }}
+                  onChange={(k) => { setProfile({ avatar: { type: 'icon', value: k } }); nav.showToast('프로필 아이콘을 바꿨어요 ✨') }}
                 />
                 <div style={{ fontSize: 14, fontWeight: 600 }}>한끼 아이콘으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
               </div>
