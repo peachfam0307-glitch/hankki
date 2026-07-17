@@ -42,7 +42,7 @@ export const CURATION = [
   {
     cat: '액젓', emoji: '🐟',
     items: [
-      { name: '와촌식품 초피액젓', benefit: '국물요리 간은 거의 이걸로 해요. 수도 없이 사서 쓰는 템이에요. 감칠맛이 깔끔해서 국·찌개·나물무침 어디에나 잘 맞아요', q: '와촌식품 초피액젓', url: 'https://wachonfood.co.kr/' },
+      { name: '와촌식품 초피액젓', benefit: '국물요리 간은 거의 이걸로 해요. 수도 없이 사서 쓰는 템이에요. 감칠맛이 좋아 국·찌개·나물무침 어디에나 잘 맞아요', q: '와촌식품 초피액젓', url: 'https://wachonfood.co.kr/' },
     ],
   },
   {
