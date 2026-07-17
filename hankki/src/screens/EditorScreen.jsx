@@ -414,10 +414,10 @@ export default function EditorScreen({ id, prefill }) {
           <button
             className="press"
             onClick={() => setPin(null)}
-            aria-label="캡처 닫기"
-            style={{ position: 'absolute', top: 8, right: 8, padding: '6px 12px', borderRadius: 10, background: 'rgba(20,19,17,0.72)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}
+            aria-label="캡처 사진 닫기"
+            style={{ position: 'absolute', top: 8, right: 8, padding: '9px 16px', borderRadius: 999, background: '#ee7f4b', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 3px 12px rgba(0,0,0,0.5)', border: '2px solid rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', gap: 5 }}
           >
-            ✕ 닫기
+            ✕ 다 썼으면 사진 닫기
           </button>
         </div>
       )}
