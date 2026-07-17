@@ -209,6 +209,14 @@ export default function ProfileScreen() {
     { icon: 'cloud', label: '백업 · 내보내기', badge: 'NEW', coach: 'backup', onClick: () => setBackup(true) },
     { icon: 'help', label: '요리 가이드', badge: '계량·손질', onClick: () => setGuide(true) },
     { icon: 'help', label: '앱 소개 다시 보기', onClick: () => nav.showOnboarding && nav.showOnboarding() },
+    {
+      icon: 'sparkle', label: '기능 안내 다시 보기', badge: '반짝 안내',
+      onClick: () => {
+        // 코치마크 본 기록을 지워 각 화면 첫 방문 안내가 다시 나오게 한다(딸 아이디어 ⭐ 후속)
+        try { ['detail', 'shop', 'home', 'profile'].forEach((k) => localStorage.removeItem(`hankki:coach:${k}`)) } catch { /* noop */ }
+        nav.showToast('✨ 각 화면에 들어가면 반짝 안내가 다시 나와요')
+      },
+    },
     { icon: 'help', label: '도움말 및 문의', onClick: () => { try { const a = document.createElement('a'); a.href = 'mailto:annyeong.hankki@gmail.com'; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com 📧') } },
     // 익명 의견 — FEEDBACK_URL 이 설정됐을 때만 노출(죽은 버튼 방지)
     ...(FEEDBACK_URL
