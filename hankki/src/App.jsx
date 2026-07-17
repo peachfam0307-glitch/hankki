@@ -171,11 +171,18 @@ export default function App() {
     }
     window.addEventListener('popstate', onPop)
     window.addEventListener('pageshow', onShow)
-    window.addEventListener('pointerdown', ensureGuard, true)
+    // 터치 기기는 '터치가 끝나는 순간(pointerup)'부터 사용자 제스처로 인정된다(pointerdown 은
+    // 아직 아님 → 일부 폰에서 가드가 무시됨). 그래서 pointerup·click·keydown 에 심는다.
+    // (이미 가드가 있으면 안 심으니 중복 없음)
+    window.addEventListener('pointerup', ensureGuard, true)
+    window.addEventListener('click', ensureGuard, true)
+    window.addEventListener('keydown', ensureGuard, true)
     return () => {
       window.removeEventListener('popstate', onPop)
       window.removeEventListener('pageshow', onShow)
-      window.removeEventListener('pointerdown', ensureGuard, true)
+      window.removeEventListener('pointerup', ensureGuard, true)
+      window.removeEventListener('click', ensureGuard, true)
+      window.removeEventListener('keydown', ensureGuard, true)
     }
   }, [])
 
