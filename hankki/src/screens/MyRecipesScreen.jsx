@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -104,6 +104,26 @@ export default function MyRecipesScreen() {
   const [delSelAsk, setDelSelAsk] = useState(false)
   const toggleSel = (id) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
   const exitEdit = () => { setEdit(false); setSel(new Set()) }
+  // 카드를 꾹(길게) 누르면 바로 선택 모드 진입 — 갤러리 앱과 같은 습관 지원.
+  // 손가락이 12px 이상 움직이면(스크롤) 취소, 발동 후의 클릭은 무시(중복 토글 방지).
+  const lpTimer = useRef(null)
+  const lpFired = useRef(false)
+  const lpStart = useRef({ x: 0, y: 0 })
+  const lpDown = (r) => (e) => {
+    lpFired.current = false
+    lpStart.current = { x: e.clientX, y: e.clientY }
+    clearTimeout(lpTimer.current)
+    lpTimer.current = setTimeout(() => {
+      lpFired.current = true
+      try { if (navigator.vibrate) navigator.vibrate(15) } catch { /* noop */ }
+      setEdit(true)
+      setSel((s) => { const n = new Set(s); n.add(r.id); return n })
+    }, 450)
+  }
+  const lpMove = (e) => {
+    if (Math.hypot(e.clientX - lpStart.current.x, e.clientY - lpStart.current.y) > 12) clearTimeout(lpTimer.current)
+  }
+  const lpEnd = () => clearTimeout(lpTimer.current)
   const [newFolder, setNewFolder] = useState(false)
   const [delFolder, setDelFolder] = useState(null) // 삭제할 사용자 폴더 이름
   const [logEditing, setLogEditing] = useState(null)
@@ -278,7 +298,20 @@ export default function MyRecipesScreen() {
                   return (
                     <div key={r.id} className="grid-card" style={{ position: 'relative' }}>
                       {/* 편집 모드: 카드 탭 = 선택 토글(여러 개 골라 한 번에 삭제) */}
-                      <button className="press" style={{ textAlign: 'left', width: '100%', opacity: edit && !on ? 0.75 : 1 }} onClick={() => (edit ? toggleSel(r.id) : nav.push({ name: 'detail', id: r.id }))}>
+                      <button
+                        className="press"
+                        style={{ textAlign: 'left', width: '100%', opacity: edit && !on ? 0.75 : 1, WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+                        onPointerDown={lpDown(r)}
+                        onPointerMove={lpMove}
+                        onPointerUp={lpEnd}
+                        onPointerCancel={lpEnd}
+                        onContextMenu={(e) => e.preventDefault()}
+                        onClick={() => {
+                          if (lpFired.current) { lpFired.current = false; return } // 꾹 누름 발동 직후 클릭은 무시
+                          if (edit) toggleSel(r.id)
+                          else nav.push({ name: 'detail', id: r.id })
+                        }}
+                      >
                         <div style={on ? { outline: '3px solid var(--brown)', outlineOffset: -3, borderRadius: gridSize === 'big' ? 16 : 12 } : undefined}>
                           <Thumb recipe={r} ratio="1/1" radius={gridSize === 'big' ? 16 : 12} emojiSize={gridSize === 'big' ? undefined : '1.6rem'} showDecor />
                         </div>
