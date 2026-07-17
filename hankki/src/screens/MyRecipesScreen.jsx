@@ -104,22 +104,37 @@ export default function MyRecipesScreen() {
   const [delSelAsk, setDelSelAsk] = useState(false)
   const toggleSel = (id) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
   const exitEdit = () => { setEdit(false); setSel(new Set()) }
+  // 요리 기록도 동일한 다중 선택 삭제 (모아보기와 별도 상태)
+  const [logEdit, setLogEdit] = useState(false)
+  const [logSel, setLogSel] = useState(() => new Set())
+  const [delLogAsk, setDelLogAsk] = useState(false)
+  const toggleLogSel = (id) => setLogSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
+  const exitLogEdit = () => { setLogEdit(false); setLogSel(new Set()) }
   // 카드를 꾹(길게) 누르면 바로 선택 모드 진입 — 갤러리 앱과 같은 습관 지원.
   // 손가락이 12px 이상 움직이면(스크롤) 취소, 발동 후의 클릭은 무시(중복 토글 방지).
+  // hold(onFire) 로 공용화 — 모아보기·요리 기록 둘 다 사용.
   const lpTimer = useRef(null)
   const lpFired = useRef(false)
   const lpStart = useRef({ x: 0, y: 0 })
-  const lpDown = (r) => (e) => {
-    lpFired.current = false
-    lpStart.current = { x: e.clientX, y: e.clientY }
-    clearTimeout(lpTimer.current)
-    lpTimer.current = setTimeout(() => {
-      lpFired.current = true
-      try { if (navigator.vibrate) navigator.vibrate(15) } catch { /* noop */ }
-      setEdit(true)
-      setSel((s) => { const n = new Set(s); n.add(r.id); return n })
-    }, 450)
-  }
+  const hold = (onFire) => ({
+    onPointerDown: (e) => {
+      lpFired.current = false
+      lpStart.current = { x: e.clientX, y: e.clientY }
+      clearTimeout(lpTimer.current)
+      lpTimer.current = setTimeout(() => {
+        lpFired.current = true
+        try { if (navigator.vibrate) navigator.vibrate(15) } catch { /* noop */ }
+        onFire()
+      }, 450)
+    },
+    onPointerMove: (e) => {
+      if (Math.hypot(e.clientX - lpStart.current.x, e.clientY - lpStart.current.y) > 12) clearTimeout(lpTimer.current)
+    },
+    onPointerUp: () => clearTimeout(lpTimer.current),
+    onPointerCancel: () => clearTimeout(lpTimer.current),
+    onContextMenu: (e) => e.preventDefault(),
+  })
+  const lpDown = (r) => hold(() => { setEdit(true); setSel((s) => { const n = new Set(s); n.add(r.id); return n }) }).onPointerDown
   const lpMove = (e) => {
     if (Math.hypot(e.clientX - lpStart.current.x, e.clientY - lpStart.current.y) > 12) clearTimeout(lpTimer.current)
   }
@@ -153,6 +168,7 @@ export default function MyRecipesScreen() {
   useBackHandler(() => {
     if (dayFilter) { setDayFilter(null); return true }
     if (showCal) { setShowCal(false); return true }
+    if (logEdit) { exitLogEdit(); return true }
     if (edit) { exitEdit(); return true }
     if (view !== 'grid') { setView('grid'); return true }
     if (folder !== '전체') { setFolder('전체'); return true }
@@ -193,6 +209,11 @@ export default function MyRecipesScreen() {
                 <Icon name={gridSize === 'big' ? 'grid-small' : 'grid-big'} size={21} color="var(--text-sub)" />
               </button>
             </>
+          )}
+          {view === 'log' && entries.length > 0 && (
+            <button className="t-more press" style={{ marginRight: 2, fontSize: 14 }} onClick={() => (logEdit ? exitLogEdit() : setLogEdit(true))}>
+              {logEdit ? '완료' : '편집'}
+            </button>
           )}
           <button className="icon-btn press" onClick={() => nav.go('search')} aria-label="검색"><Icon name="search" size={22} /></button>
         </div>
@@ -251,17 +272,36 @@ export default function MyRecipesScreen() {
             <div className="empty" style={{ marginTop: 10 }}>{'아직 기록이 없어요.\n레시피에서 "만들었어요!"를 누르면 여기에 쌓여요.'}</div>
           ) : (
             <div className="album-grid">
-              {shown.map((e) => (
-                <button key={e.id} className="album-tile press" onClick={() => setLogEditing(e)} aria-label={`${e.title} 기록 보기`}>
-                  {e.photo ? (
-                    <img src={e.photo} alt="" loading="lazy" />
-                  ) : (
-                    <div className="album-icon"><FoodIcon name={guessFoodIcon(e.title)} size={34} /></div>
-                  )}
-                  {e.rating > 0 && <span className="album-star">★{e.rating}</span>}
-                  <span className="album-cap">{e.title}</span>
-                </button>
-              ))}
+              {shown.map((e) => {
+                const on = logEdit && logSel.has(e.id)
+                return (
+                  <button
+                    key={e.id}
+                    className="album-tile press"
+                    aria-label={`${e.title} 기록 보기`}
+                    style={{ position: 'relative', opacity: logEdit && !on ? 0.75 : 1, outline: on ? '3px solid var(--brown)' : 'none', outlineOffset: -3, WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+                    {...hold(() => { setLogEdit(true); setLogSel((s) => { const n = new Set(s); n.add(e.id); return n }) })}
+                    onClick={() => {
+                      if (lpFired.current) { lpFired.current = false; return } // 꾹 누름 발동 직후 클릭 무시
+                      if (logEdit) toggleLogSel(e.id)
+                      else setLogEditing(e)
+                    }}
+                  >
+                    {e.photo ? (
+                      <img src={e.photo} alt="" loading="lazy" />
+                    ) : (
+                      <div className="album-icon"><FoodIcon name={guessFoodIcon(e.title)} size={34} /></div>
+                    )}
+                    {e.rating > 0 && !logEdit && <span className="album-star">★{e.rating}</span>}
+                    <span className="album-cap">{e.title}</span>
+                    {logEdit && (
+                      <span aria-hidden style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', background: on ? 'var(--brown)' : 'rgba(255,255,255,0.92)', border: on ? 'none' : '1.8px solid rgba(0,0,0,0.22)', boxShadow: '0 1px 5px rgba(0,0,0,0.22)' }}>
+                        {on && <Icon name="check" size={14} color="#fff" stroke={3} />}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -335,8 +375,44 @@ export default function MyRecipesScreen() {
         </>
       )}
 
-      {/* 편집 모드 하단 바 — 선택 개수 + 전체선택 + 한 번에 삭제 */}
-      {edit && (
+      {/* 요리 기록 편집 모드 하단 바 */}
+      {logEdit && view === 'log' && (
+        <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(var(--nav-h) + 14px + var(--safe-bottom))', zIndex: 40, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
+          <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, padding: '9px 12px 9px 18px', boxShadow: '0 8px 26px rgba(60,45,30,0.22)' }}>
+            <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>
+              {logSel.size > 0 ? `${logSel.size}개 선택` : '기록을 눌러 선택'}
+            </span>
+            <button className="press" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 8px' }}
+              onClick={() => setLogSel(logSel.size === shown.length ? new Set() : new Set(shown.map((e) => e.id)))}>
+              {logSel.size === shown.length && shown.length > 0 ? '전체 해제' : '전체 선택'}
+            </button>
+            <button className="press" disabled={logSel.size === 0}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 999, background: logSel.size ? 'var(--danger)' : 'var(--cream)', color: logSel.size ? '#fff' : 'var(--text-sub)', fontSize: 13.5, fontWeight: 800 }}
+              onClick={() => logSel.size && setDelLogAsk(true)}>
+              <Icon name="trash" size={15} color={logSel.size ? '#fff' : 'var(--text-sub)'} /> 삭제
+            </button>
+          </div>
+        </div>
+      )}
+
+      {delLogAsk && (
+        <ConfirmSheet
+          title="선택한 요리 기록 삭제"
+          message={`선택한 요리 기록 ${logSel.size}개를 삭제할까요?\n삭제하면 되돌릴 수 없어요.`}
+          confirmLabel={`${logSel.size}개 삭제하기`}
+          danger
+          onConfirm={() => {
+            const n = logSel.size
+            logSel.forEach((id) => removeDiary(id))
+            setLogSel(new Set())
+            nav.showToast(`요리 기록 ${n}개를 삭제했어요`)
+          }}
+          onClose={() => setDelLogAsk(false)}
+        />
+      )}
+
+      {/* 모아보기 편집 모드 하단 바 */}
+      {edit && view === 'grid' && (
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(var(--nav-h) + 14px + var(--safe-bottom))', zIndex: 40, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
           <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, padding: '9px 12px 9px 18px', boxShadow: '0 8px 26px rgba(60,45,30,0.22)' }}>
             <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>
