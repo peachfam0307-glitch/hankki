@@ -44,6 +44,8 @@ export default function App() {
   const [onboard, setOnboard] = useState(() => needsOnboarding()) // 첫 실행 앱 소개
   const backHandlers = useRef([]) // 화면들이 등록한 '뒤로가기 먼저 처리' 핸들러(비모달 상태·필터용)
   const modalLayers = useRef([]) // 열려 있는 모달·오버레이(각자 진짜 히스토리 칸 1개 소유)
+  const pendingBack = useRef(0) // 같은 틱에 버튼으로 동시에 닫힌 모달 칸 수(한 번에 go(-n))
+  const backScheduled = useRef(false)
   const suppressPop = useRef(0) // popAll·모달버튼닫기 가 만든 popstate 무시용
   const toastTimer = useRef(null)
   const tabRef = useRef(tab)
@@ -95,8 +97,21 @@ export default function App() {
     return () => {
       const i = modalLayers.current.indexOf(layer)
       if (i >= 0) modalLayers.current.splice(i, 1)
-      // 뒤로가기가 아니라 닫기 버튼·배경 탭으로 닫혔으면, 쌓아둔 히스토리 칸을 되돌려 소비.
-      if (!layer.consumed) { suppressPop.current += 1; try { history.back() } catch { /* noop */ } }
+      // 뒤로가기가 아니라 닫기 버튼·선택으로 닫혔으면, 쌓아둔 히스토리 칸을 되돌려 소비.
+      // 겹친 모달이 같은 틱에 여러 개 닫히면(예: 아바타 시트 안 픽커 선택 → 둘 다 닫힘)
+      // history.back() 을 동기로 여러 번 부르면 어긋나므로, 한 틱에 모아 go(-n) 한 번으로 처리.
+      if (!layer.consumed) {
+        pendingBack.current += 1
+        if (!backScheduled.current) {
+          backScheduled.current = true
+          queueMicrotask(() => {
+            const n = pendingBack.current
+            pendingBack.current = 0
+            backScheduled.current = false
+            if (n > 0) { suppressPop.current += 1; try { history.go(-n) } catch { /* noop */ } }
+          })
+        }
+      }
     }
   }, [])
   const go = useCallback((t) => {
