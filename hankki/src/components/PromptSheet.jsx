@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Portal from './Portal'
+import { useModalBack } from '../useBackHandler'
 
 // 앱 안에서 쓰는 입력 시트 — window.prompt 대체.
 // 설치형 PWA에서 window.prompt 는 사이트 주소가 박힌 검은 시스템 창을 띄워서(브라우저 보안 표시)
@@ -8,6 +9,7 @@ import Portal from './Portal'
 export default function PromptSheet({ title, fields, submitLabel = '저장', onSubmit, onClose, compact = false }) {
   const [vals, setVals] = useState(() => Object.fromEntries(fields.map((f) => [f.key, f.value ?? ''])))
   const firstRef = useRef(null)
+  useModalBack(onClose) // 뒤로가기 → 닫기(취소)
 
   useEffect(() => {
     const t = setTimeout(() => firstRef.current?.focus(), 60)

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
+import { useBackHandler } from '../useBackHandler'
 import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL } from '../version'
 import Icon from '../components/Icon'
 import TabTips from '../components/TabTips'
@@ -23,6 +24,11 @@ export default function ProfileScreen() {
   const [avatarSheet, setAvatarSheet] = useState(false)
   const [editSheet, setEditSheet] = useState(false)
   const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
+  // 뒤로가기: 인라인 아바타 시트를 먼저 닫는다. (편집·확인 시트는 자체 처리)
+  useBackHandler(() => {
+    if (avatarSheet) { setAvatarSheet(false); return true }
+    return false
+  })
   const [theme, setThemeState] = useState(getTheme())
   const [pasteOpen, setPasteOpen] = useState(false)
   const [checking, setChecking] = useState(false)

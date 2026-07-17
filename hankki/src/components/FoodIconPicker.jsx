@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useBackHandler } from '../useBackHandler'
 import FoodIcon, { FOOD_ICON_GROUPS } from './FoodIcon'
 import Portal from './Portal'
 
@@ -6,6 +7,7 @@ import Portal from './Portal'
 // 이모지 대신 앱 톤과 어울리는 브랜드 아이콘을 고른다.
 export default function FoodIconPicker({ value, onChange, size = 64 }) {
   const [open, setOpen] = useState(false)
+  useBackHandler(() => { if (open) { setOpen(false); return true } return false }) // 뒤로가기 → 픽커 닫기
   return (
     <>
       <button

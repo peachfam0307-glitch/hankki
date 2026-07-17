@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Portal from './Portal'
+import { useModalBack } from '../useBackHandler'
 
 // 사진 자르기 — OCR 전에 글자 영역만 선택. (블로그 캡처의 광고·그림을 빼고 읽기)
 // 모서리 4개를 드래그해 영역을 조절하고, 안쪽을 드래그하면 통째로 이동.
@@ -20,6 +21,7 @@ export default function CropSheet({
     </>
   ),
 }) {
+  useModalBack(onCancel) // 뒤로가기 → 취소(닫기)
   const boxRef = useRef(null) // 이미지가 실제로 그려진 영역
   const [rect, setRect] = useState({ x: 0.03, y: 0.03, w: 0.94, h: 0.94 })
   const drag = useRef(null)

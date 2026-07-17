@@ -1,5 +1,6 @@
 import Portal from './Portal'
 import Icon from './Icon'
+import { useModalBack } from '../useBackHandler'
 
 // 업데이트 예고 — '준비 중인 기능'을 보여줘 기대감을 준다.
 // 정직 원칙: 없는 걸 '됩니다'라 하지 않고 '준비 중/곧'으로만 안내.
@@ -13,6 +14,7 @@ const UPCOMING = [
 ]
 
 export default function PreviewSheet({ onClose }) {
+  useModalBack(onClose) // 뒤로가기 → 닫기
   return (
     <Portal>
       <div className="sheet-mask" onClick={onClose}>

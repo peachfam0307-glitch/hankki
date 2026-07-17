@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useBackHandler } from '../useBackHandler'
 import { EMOJI_GROUPS } from '../emoji'
 import Portal from './Portal'
 
@@ -6,6 +7,7 @@ import Portal from './Portal'
 // only: 특정 카테고리 라벨 배열만 보이게 (예: 냉장고 재료엔 식재료 그룹만).
 export default function EmojiPicker({ value, onChange, size = 56, only }) {
   const [open, setOpen] = useState(false)
+  useBackHandler(() => { if (open) { setOpen(false); return true } return false }) // 뒤로가기 → 픽커 닫기
   const groups = only ? EMOJI_GROUPS.filter((g) => only.includes(g.label)) : EMOJI_GROUPS
   return (
     <>

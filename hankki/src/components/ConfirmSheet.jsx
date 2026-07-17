@@ -1,9 +1,11 @@
 import Portal from './Portal'
+import { useModalBack } from '../useBackHandler'
 
 // 앱 안에서 쓰는 확인 시트 — window.confirm 대체.
 // window.confirm 도 설치형 PWA에선 사이트 주소가 박힌 검은 시스템 창을 띄운다.
 // 삭제·초기화 같은 되돌리기 어려운 동작 확인에 쓴다(danger=빨강 버튼).
 export default function ConfirmSheet({ title, message, confirmLabel = '확인', danger = false, onConfirm, onClose }) {
+  useModalBack(onClose) // 뒤로가기 → 닫기
   return (
     <Portal>
       <div className="sheet-mask" onClick={onClose}>

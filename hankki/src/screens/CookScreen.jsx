@@ -7,6 +7,7 @@ import CookBuddy from '../components/CookBuddy'
 import Portal from '../components/Portal'
 import { scaleIngredient } from '../scale'
 import { useWakeLock } from '../useWakeLock'
+import { useBackHandler } from '../useBackHandler'
 
 // 요리 모드 — 풀스크린. 큰 글씨 · 화면 안 꺼짐 · 단계 타이머.
 // 흐름: 0단계 = 재료 준비(요리의 시작) → 1~N단계 = 조리 단계.
@@ -19,6 +20,11 @@ export default function CookScreen({ id }) {
   const [i, setI] = useState(0) // 0 = 재료 준비, 1..steps.length = 조리 단계
   const [showTimer, setShowTimer] = useState(false)
   const [showIng, setShowIng] = useState(false)
+  // 뒤로가기: 재료 시트가 열려 있으면 그것만 닫는다(요리모드는 유지). 타이머 시트는 자체 처리.
+  useBackHandler(() => {
+    if (showIng) { setShowIng(false); return true }
+    return false
+  })
   useWakeLock() // 화면이 꺼지지 않게 (요리 모드)
   const prep = i === 0 // 재료 준비 화면인지
 

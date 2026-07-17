@@ -93,11 +93,12 @@ export default function App() {
       if (suppressPop.current > 0) { suppressPop.current -= 1; return }
       // 1) 온보딩(첫 실행 소개)이 떠 있으면 뒤로가기로 종료팝업이 뜨지 않게 가둔다.
       if (onboardRef.current) { trap(); return }
-      // 2) 가장 위 화면이 내부 상태(하위 패널·필터 등)를 먼저 닫는다.
-      //    소비했으면 버퍼를 다시 채워 다음 뒤로가기가 종료로 새지 않게.
+      // 2) 열려 있는 팝업·패널을 위(가장 최근 레이어)부터 차례로 닫는다.
+      //    하나라도 소비하면 버퍼를 다시 채워 다음 뒤로가기가 종료로 새지 않게.
+      //    (겹친 시트·픽커가 각자 핸들러를 등록해도 순서대로 조합되도록 전체를 훑는다)
       const hs = backHandlers.current
-      if (hs.length) {
-        try { if (hs[hs.length - 1]()) { trap(); return } } catch { /* noop */ }
+      for (let k = hs.length - 1; k >= 0; k -= 1) {
+        try { if (hs[k]()) { trap(); return } } catch { /* noop */ }
       }
       // 3) 열린 화면 닫기(그 화면이 쌓아둔 히스토리 한 칸을 방금 소비함 → 재보충 불필요)
       if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); return }

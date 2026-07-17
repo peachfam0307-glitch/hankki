@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTimer, SOUNDS } from '../timer'
 import Icon from './Icon'
 import Portal from './Portal'
+import { useModalBack } from '../useBackHandler'
 
 const PRESETS = [1, 3, 5, 10, 15, 30]
 
@@ -17,6 +18,7 @@ function Stepper({ label, value, setValue, max, step = 1 }) {
 }
 
 export default function TimerSheet({ label = '요리 타이머', onClose }) {
+  useModalBack(onClose) // 뒤로가기 → 닫기
   const { start, soundId, setSound, previewSound } = useTimer()
   const [min, setMin] = useState(5)
   const [sec, setSec] = useState(0)

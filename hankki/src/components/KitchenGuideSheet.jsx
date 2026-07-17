@@ -1,9 +1,11 @@
 import Portal from './Portal'
 import { MEASURE, PREP } from '../data/kitchenGuide'
+import { useModalBack } from '../useBackHandler'
 
 // 요리 가이드 시트 — 계량 지표(고정표) + 재료 손질법(사전). 초보 배려.
 // 레시피 상세 '재료 ?' 와 설정에서 연다. focus='measure'면 계량이 위로 오게 스크롤 힌트.
 export default function KitchenGuideSheet({ onClose }) {
+  useModalBack(onClose) // 뒤로가기 → 닫기
   return (
     <Portal>
       <div className="sheet-mask" onClick={onClose}>

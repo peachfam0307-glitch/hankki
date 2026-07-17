@@ -15,3 +15,21 @@ export function useBackHandler(handler) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 }
+
+// 모달·시트 전용 — 이 컴포넌트가 떠 있는 동안 안드로이드 뒤로가기(버튼·제스처)를 가로채
+// close() 로 닫는다. 조건부 렌더(마운트=열림)라 마운트 동안만 등록된다.
+// 나중에 뜬 시트가 위 레이어라 먼저 닫힌다(App 의 registerBack 이 최근 등록부터 물어봄).
+export function useModalBack(close) {
+  const nav = useNav()
+  const ref = useRef(close)
+  ref.current = close
+  useEffect(() => {
+    if (!nav?.registerBack) return undefined
+    return nav.registerBack(() => {
+      if (typeof ref.current !== 'function') return false // 닫기 함수 없으면 소비하지 않음(먹통 방지)
+      ref.current()
+      return true
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+}

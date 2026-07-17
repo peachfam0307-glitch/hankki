@@ -104,12 +104,7 @@ export default function MyRecipesScreen() {
   const [delFolder, setDelFolder] = useState(null) // 삭제할 사용자 폴더 이름
   const [logEditing, setLogEditing] = useState(null)
 
-  // 뒤로가기: 다른 세그먼트(요리 기록·폴더)나 폴더 필터를 먼저 기본(레시피)으로 되돌린다.
-  useBackHandler(() => {
-    if (view !== 'grid') { setView('grid'); return true }
-    if (folder !== '전체') { setFolder('전체'); return true }
-    return false
-  })
+  // 뒤로가기 처리는 모달(요리기록 시트 등)까지 포함해 아래(상태 선언 뒤)에서 한 번에 등록한다.
 
   const del = (r) => setDelTarget(r)
 
@@ -129,6 +124,21 @@ export default function MyRecipesScreen() {
   const entries = useMemo(() => [...diary].sort((a, b) => b.at - a.at), [diary])
   const [dayFilter, setDayFilter] = useState(null) // 'y-m-d' | null — 캘린더에서 고른 날
   const [showCal, setShowCal] = useState(false) // 요리 달력은 접이식(기본 접힘) — 앨범을 앞세운다
+
+  // 안드로이드 뒤로가기(버튼·제스처): 열린 모달·시트·필터를 먼저 닫는다.
+  // (안 닫으면 뒤로가기가 화면을 넘어 '앱 종료'로 샌다.) 나중에 뜬 레이어부터 하나씩.
+  useBackHandler(() => {
+    if (logEditing) { setLogEditing(null); return true }
+    if (delTarget) { setDelTarget(null); return true }
+    if (delFolder) { setDelFolder(null); return true }
+    if (newFolder) { setNewFolder(false); return true }
+    if (dayFilter) { setDayFilter(null); return true }
+    if (showCal) { setShowCal(false); return true }
+    if (edit) { setEdit(false); return true }
+    if (view !== 'grid') { setView('grid'); return true }
+    if (folder !== '전체') { setFolder('전체'); return true }
+    return false
+  })
   const now = new Date()
   const thisMonth = entries.filter((e) => {
     const d = new Date(e.at)

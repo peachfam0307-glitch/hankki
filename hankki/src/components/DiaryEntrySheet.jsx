@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import Icon from './Icon'
 import CropSheet from './CropSheet'
 import Portal from './Portal'
+import { useModalBack } from '../useBackHandler'
 
 // 사진을 캔버스로 축소해 저장 공간을 아낀다.
 function downscale(dataUrl, max = 900) {
@@ -36,6 +37,7 @@ export function Stars({ value, onChange, size = 30 }) {
 }
 
 export default function DiaryEntrySheet({ entry, onClose, onDelete, onOpenRecipe }) {
+  useModalBack(onClose) // 뒤로가기 → 닫기
   const { updateDiary } = useStore()
   const [rating, setRating] = useState(entry.rating || 0)
   const [note, setNote] = useState(entry.note || '')
