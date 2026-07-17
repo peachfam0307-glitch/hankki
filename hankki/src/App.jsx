@@ -59,10 +59,19 @@ export default function App() {
       const h = (typeof history !== 'undefined' && history.length) || '?'
       const st = (typeof history !== 'undefined' && history.state) ? (history.state.guard ? 'G' : history.state.hankki ? 'T' : '·') : '∅'
       navLog.current.push(`${m} [len${h} ${st} stk${stackRef.current.length} mdl${modalLayers.current.length}]`)
-      if (navLog.current.length > 10) navLog.current.shift()
+      if (navLog.current.length > 22) navLog.current.shift()
+      try { localStorage.setItem('hankki:navlog', JSON.stringify(navLog.current)) } catch { /* noop */ }
       setDbg((x) => x + 1)
     } catch { /* noop */ }
   }
+  // 앱이 나가져도 이전 로그가 남아, 다시 켜서 스샷할 수 있게 저장분을 불러온다.
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('hankki:navlog') || '[]')
+      if (Array.isArray(saved) && saved.length) { navLog.current = [...saved.slice(-16), '──── 앱 재시작 ────']; setDbg((x) => x + 1) }
+    } catch { /* noop */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   tabRef.current = tab
   stackRef.current = stack
   onboardRef.current = onboard
@@ -320,7 +329,7 @@ export default function App() {
       </div>
       {/* 🔧 임시 진단 바 — 뒤로가기/히스토리 흐름 표시(문제 폰 원인 파악용). 확인 후 제거. */}
       <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 99999, background: 'rgba(15,0,0,0.9)', color: '#7CFC00', font: '9px/1.3 monospace', padding: '3px 6px', pointerEvents: 'none', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: '34vh', overflow: 'hidden' }}>
-        {`v4.2 진단 · 아바타 열고→고르고→닫기/뒤로\n`}{navLog.current.join('\n')}
+        {`v4.3 진단 · 아바타 열고→고르고→닫기/뒤로\n`}{navLog.current.join('\n')}
       </div>
     </NavCtx.Provider>
   )
