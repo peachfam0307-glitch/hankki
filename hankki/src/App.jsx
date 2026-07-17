@@ -128,11 +128,7 @@ export default function App() {
     const onPop = () => {
       // 0) popAll·모달버튼닫기 가 history.go/back 으로 만든 이벤트는 무시(화면은 이미 닫힘)
       //    마지막 하나를 소비한 뒤 홈 바닥에 트랩이 없으면 보충(홈 뒤로가기 종료 방지).
-      if (suppressPop.current > 0) {
-        suppressPop.current -= 1
-        if (suppressPop.current === 0 && !hasTrap()) trap()
-        return
-      }
+      if (suppressPop.current > 0) { suppressPop.current -= 1; return }
       // 1) 온보딩(첫 실행 소개)이 떠 있으면 뒤로가기로 종료팝업이 뜨지 않게 가둔다.
       if (onboardRef.current) { trap(); return }
       // 1.5) 모달·오버레이(꾸미기·미리보기·시트·픽커 등)가 열려 있으면 최상위 하나만 닫는다.
@@ -142,9 +138,6 @@ export default function App() {
         const layer = modalLayers.current.pop()
         layer.consumed = true
         try { layer.close() } catch { /* noop */ }
-        // 방금 소비한 칸이 마지막이라 홈 바닥으로 내려왔으면 트랩 보충(홈 뒤로가기 종료 방지).
-        // 이 트랩은 홈 종료 방지용일 뿐 — 모달 칸은 gesture-backed 라 intervention 영향 없음.
-        if (!hasTrap()) trap()
         return
       }
       // 2) 그 밖의 화면 내부 상태(필터·세그먼트 등)를 위에서부터 처리한다.
@@ -158,21 +151,32 @@ export default function App() {
         if (hs[k].tab && underStack) continue
         try { if (hs[k].fn()) { trap(); return } } catch { /* noop */ }
       }
-      // 3) 열린 스택 화면 닫기. 마지막 화면이라 홈 바닥으로 내려왔으면 트랩 보충(홈 종료 방지).
-      if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); if (!hasTrap()) trap(); return }
-      // 4) 다른 탭이면 홈으로(탭은 트랩 1칸 기반) → 트랩 다시 채움
-      if (tabRef.current !== 'home') { setTab('home'); trap(); return }
-      // 5) 홈에서 뒤로 → 종료 확인(트랩 다시 채워 실제 종료 방지)
-      trap()
+      // 3) 열린 스택 화면 닫기. (그 화면이 쌓아둔 gesture-backed 칸을 방금 소비함)
+      if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); return }
+      // 4) 다른 탭이면 홈으로. (루트 종료 방지는 아래 pointerdown 가드가 담당)
+      if (tabRef.current !== 'home') { setTab('home'); return }
+      // 5) 홈에서 뒤로 → 종료 확인.
       setExitAsk(true)
     }
     // 앱으로 되돌아왔을 때(다른 앱 갔다 오기 등) 트랩이 사라졌으면 다시 깐다
     const onShow = () => { if (stackRef.current.length === 0 && !hasTrap()) trap() }
+    // ⭐ 핵심: 루트(홈/탭, 열린 화면·모달 없음)에서 사용자가 화면을 터치할 때마다
+    // '가드' 히스토리 칸을 하나 유지한다. 터치와 함께 만들어져 gesture-backed 라,
+    // 깐깐한 크롬(intervention)도 이 칸을 건너뛰지 않는다 → 홈 뒤로가기가 앱을 바로
+    // 종료시키지 않고 종료 확인/홈 이동으로 이어진다. (터치 없이 심는 트랩의 한계 극복)
+    const ensureGuard = () => {
+      if (stackRef.current.length === 0 && modalLayers.current.length === 0 &&
+          !(history.state && history.state.guard)) {
+        try { history.pushState({ hankki: 1, guard: 1 }, '') } catch { /* noop */ }
+      }
+    }
     window.addEventListener('popstate', onPop)
     window.addEventListener('pageshow', onShow)
+    window.addEventListener('pointerdown', ensureGuard, true)
     return () => {
       window.removeEventListener('popstate', onPop)
       window.removeEventListener('pageshow', onShow)
+      window.removeEventListener('pointerdown', ensureGuard, true)
     }
   }, [])
 
