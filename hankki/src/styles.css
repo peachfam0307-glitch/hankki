@@ -1300,3 +1300,19 @@ html, body { overscroll-behavior: none; }
   transition: transform 0.08s ease;
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* 첫 사용 코치마크 — 대상 버튼 둘레가 반짝반짝 */
+.coach-ring {
+  border: 2.5px solid #ffd98a;
+  box-shadow: 0 0 0 0 rgba(255, 205, 110, 0.75), 0 0 18px rgba(255, 210, 120, 0.55);
+  animation: coachPulse 1.15s ease-out infinite;
+}
+@keyframes coachPulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 205, 110, 0.75), 0 0 18px rgba(255, 210, 120, 0.55); }
+  100% { box-shadow: 0 0 0 14px rgba(255, 205, 110, 0), 0 0 18px rgba(255, 210, 120, 0.55); }
+}
+.coach-spark { font-size: 20px; animation: coachTwinkle 1.15s ease-in-out infinite; }
+@keyframes coachTwinkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.45) rotate(18deg); opacity: 0.75; }
+}

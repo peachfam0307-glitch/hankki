@@ -3,6 +3,14 @@ import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
+import CoachMarks, { needsCoach } from '../components/CoachMarks'
+
+// 장보기 탭 첫 방문 코치마크 — 숨은 기능 안내(창업자 딸 아이디어 ⭐)
+const SHOP_COACH_KEY = 'hankki:coach:shop'
+const SHOP_COACH_STEPS = [
+  { sel: '[data-coach="curation"]', label: '🧺 주부의 장바구니', desc: '18년차 주부가 엄선한 식재료 · 담고 바로 사러 가요' },
+  { sel: '[data-coach="pantry"]', label: '🧊 냉장고', desc: '재료를 넣으면 유통기한 챙기고, 그 재료로 만들 요리도 추천해요' },
+]
 import TextTile from '../components/TextTile'
 import EmojiPicker from '../components/EmojiPicker'
 import FoodIcon from '../components/FoodIcon'
@@ -43,6 +51,7 @@ export default function ShopScreen() {
   // 인라인 시트(쇼핑몰 편집·추가/편집 폼) — 뒤로가기로 닫기(비우기 확인은 ConfirmSheet 자체 처리)
   useLayerBack(editShops, () => setEditShops(false))
   useLayerBack(!!shopForm, () => setShopForm(null))
+  const [coach, setCoach] = useState(() => needsCoach(SHOP_COACH_KEY))
 
   const doneCount = shoppingList.filter((i) => i.done).length
 
@@ -59,7 +68,7 @@ export default function ShopScreen() {
         {/* 장보기가 주(첫인상), 냉장고는 옆 토글(부). 냉장고 기능은 유지하되 앞으로 안 내세운다. */}
         <div className="segment" style={{ marginTop: 4 }}>
           <button type="button" className={`seg ${view === 'shop' ? 'on' : ''}`} onClick={() => setView('shop')}>🛒 장보기</button>
-          <button type="button" className={`seg ${view === 'pantry' ? 'on' : ''}`} onClick={() => setView('pantry')}>🧊 냉장고</button>
+          <button type="button" className={`seg ${view === 'pantry' ? 'on' : ''}`} data-coach="pantry" onClick={() => setView('pantry')}>🧊 냉장고</button>
         </div>
 
         {view === 'pantry' && <PantryView />}
@@ -67,7 +76,7 @@ export default function ShopScreen() {
         {view === 'shop' && (
         <>
         {/* 1) 주부의 장바구니 — 시그니처(해자·수익). '둘러보기 → 담기 → 사러가기' 퍼널의 입구라 맨 위. */}
-        <Curation />
+        <div data-coach="curation"><Curation /></div>
 
         {/* 2) 장보기 리스트 — 담은 것이 여기로. 큐레이션 바로 아래라 담기 동선이 자연스럽다. */}
         <div className="sec-head" style={{ marginTop: 20 }}>
@@ -177,6 +186,11 @@ export default function ShopScreen() {
           onConfirm={() => store.clearShopItemsAll()}
           onClose={() => setClearAsk(false)}
         />
+      )}
+
+      {/* 첫 방문 코치마크 — 화면 어두워지고 중요 기능이 반짝이며 안내 */}
+      {coach && view === 'shop' && (
+        <CoachMarks storageKey={SHOP_COACH_KEY} steps={SHOP_COACH_STEPS} onDone={() => setCoach(false)} />
       )}
     </>
   )

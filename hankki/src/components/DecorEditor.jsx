@@ -127,7 +127,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
         {/* 상단 바 */}
         <div className="decor-top">
           <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
-          <div style={{ fontSize: 16, fontWeight: 800 }}>표지 꾸미기</div>
+          <div style={{ fontSize: 16, fontWeight: 800 }}>레시피 꾸미기</div>
           <button className="press" onClick={() => onSave(items, bg)} style={{ color: 'var(--brown)', fontSize: 15, fontWeight: 800 }}>저장</button>
         </div>
 

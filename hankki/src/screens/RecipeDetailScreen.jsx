@@ -18,6 +18,16 @@ import { dateLabel } from '../utils'
 import { SOURCES } from '../data/seed'
 import { useWakeLock } from '../useWakeLock'
 import { useLayerBack } from '../useBackHandler'
+import CoachMarks, { needsCoach } from '../components/CoachMarks'
+
+// 첫 방문 코치마크 — 숨어 있는 중요 기능을 반짝이며 알려준다(창업자 딸 아이디어 ⭐)
+const COACH_KEY = 'hankki:coach:detail'
+const COACH_STEPS = [
+  { sel: '[data-coach="edit"]', label: '✏️ 편집', desc: '재료·만드는 법, 언제든 고칠 수 있어요' },
+  { sel: '[data-coach="share"]', label: '💌 친구와 레시피 공유하기', desc: '재료·만드는 법이 담긴 예쁜 카드로 보내요' },
+  { sel: '[data-coach="decor"]', label: '🎨 레시피 꾸미기', desc: '스티커·마스킹테이프·손글씨로 나만의 표지!' },
+  { sel: '[data-coach="cook"]', label: '🍳 요리 시작', desc: '큰 글씨 요리모드 · 화면 안 꺼짐 · 단계 타이머' },
+]
 
 // 재료 목록에서 '[양념]'·'[소스]'·'[드레싱]'처럼 대괄호만 있는 줄은 소제목(헤더)으로 그린다.
 // (장보기 담기·인분 환산에서 제외) — 전 레시피 양념/소스 표기 통일용.
@@ -37,6 +47,7 @@ export default function RecipeDetailScreen({ id }) {
   // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
   useLayerBack(decorOpen, () => setDecorOpen(false))
   useLayerBack(menu, () => setMenu(false))
+  const [coach, setCoach] = useState(() => needsCoach(COACH_KEY))
   const iconRef = useRef(null)
   const r = recipes.find((x) => x.id === id)
   const baseServings = r?.servings || 0
@@ -92,7 +103,7 @@ export default function RecipeDetailScreen({ id }) {
 
   const onShare = async () => {
     setMenu(false)
-    nav.showToast('공유 카드 만드는 중…')
+    nav.showToast('💌 친구와 레시피 공유하기 · 예쁜 카드 만드는 중…')
     const svg = iconRef.current?.querySelector('svg')?.outerHTML
     // 앱 루트 주소 — 상대경로 base('./')라 BASE_URL로는 못 구한다. 현재 페이지 경로의
     // 디렉터리(마지막 파일명 제거)로 계산해야 /hankki/ 같은 하위경로까지 정확히 잡힌다.
@@ -122,6 +133,7 @@ export default function RecipeDetailScreen({ id }) {
           <button
             className="press"
             onClick={() => nav.push({ name: 'editor', id: r.id })}
+            data-coach="edit"
             aria-label="편집"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 38, padding: '0 14px', background: 'rgba(250,250,248,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 800, borderRadius: 999, boxShadow: '0 2px 10px rgba(0,0,0,.18)' }}
           >
@@ -129,6 +141,10 @@ export default function RecipeDetailScreen({ id }) {
           </button>
           <button className="round-btn press" onClick={() => toggleFavorite(r.id)} aria-label="즐겨찾기">
             <Icon name="bookmark" size={20} color={r.favorite ? '#c2703f' : 'currentColor'} style={{ fill: r.favorite ? '#c2703f' : 'none' }} />
+          </button>
+          {/* 공유 — 숨은 ⋮ 메뉴에서 밖으로(잘 쓰는 기능이라 눈에 띄게). ⋮ 엔 삭제만 남김. */}
+          <button className="round-btn press" onClick={onShare} data-coach="share" aria-label="친구와 레시피 공유하기">
+            <Icon name="share" size={20} />
           </button>
           <button className="round-btn press" onClick={() => setMenu(true)} aria-label="더보기"><Icon name="more" size={22} /></button>
         </div>
@@ -142,10 +158,11 @@ export default function RecipeDetailScreen({ id }) {
         <button
           className="press"
           onClick={() => setDecorOpen(true)}
-          aria-label="표지 꾸미기"
+          data-coach="decor"
+          aria-label="레시피 꾸미기"
           style={{ position: 'absolute', bottom: 12, right: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--brown)', color: '#fff', fontSize: 13.5, fontWeight: 800, padding: '9px 15px', borderRadius: 999, boxShadow: '0 4px 14px rgba(0,0,0,.3)' }}
         >
-          🎨 꾸미기
+          🎨 레시피 꾸미기
         </button>
       </div>
 
@@ -300,7 +317,7 @@ export default function RecipeDetailScreen({ id }) {
       {/* 하단 액션 — 요리 시작 / 만들었어요 */}
       <div className="action-bar" style={{ display: 'flex', gap: 10 }}>
         {r.steps?.length > 0 && (
-          <button className="btn-primary press" style={{ flex: 1 }} onClick={() => nav.push({ name: 'cook', id: r.id })}>
+          <button className="btn-primary press" data-coach="cook" style={{ flex: 1 }} onClick={() => nav.push({ name: 'cook', id: r.id })}>
             요리 시작 →
           </button>
         )}
@@ -312,6 +329,9 @@ export default function RecipeDetailScreen({ id }) {
           만들었어요 🎉
         </button>
       </div>
+
+      {/* 첫 방문 코치마크 — 화면 어두워지고 중요 버튼이 반짝이며 안내 */}
+      {coach && <CoachMarks storageKey={COACH_KEY} steps={COACH_STEPS} onDone={() => setCoach(false)} />}
 
       {decorOpen && (
         <DecorEditor
@@ -353,10 +373,7 @@ export default function RecipeDetailScreen({ id }) {
        <Portal>
         <div className="sheet-mask" onClick={() => setMenu(false)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <button className="sheet-item press" onClick={onShare}>
-              <Icon name="link" size={20} color="var(--text)" /> 친구와 레시피 나누기 <span className="t-sub" style={{ fontWeight: 400, fontSize: 12.5 }}>· 예쁜 카드로</span>
-            </button>
-            <hr className="divider" />
+            {/* 공유는 상단 공유 아이콘으로 이동 — 여기엔 삭제만(실수 방지로 한 겹 숨김) */}
             <button className="sheet-item press" onClick={del} style={{ color: 'var(--danger)' }}>
               <Icon name="trash" size={20} color="var(--danger)" /> 삭제하기
             </button>
