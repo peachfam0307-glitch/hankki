@@ -12,6 +12,8 @@
   - 앱: https://peachfam0307-glitch.github.io/hankki/
   - 의견 폼(테스터·익명, 안녕한끼 계정): https://docs.google.com/forms/d/e/1FAIpQLSeLsXdCZ-M_m7NW6qC_S4L7TlqHk9Hs7A3O2Iyt15BdQXs0JQ/viewform
   - 의견 응답 확인: forms.google.com → 초록 "한끼"(안녕한끼) 계정 → "한끼 써보고 한마디" → **응답** 탭
+- **운영 링크(관리자용)**: Play Console `play.google.com/console` · PWABuilder `www.pwabuilder.com`(AAB 생성) · GitHub 레포 `github.com/peachfam0307-glitch/hankki`.
+- **고정 메모 아티팩트(폰 홈화면용)**: https://claude.ai/code/artifact/9bd7d82d-8a0b-45d1-a34a-d6ebb578f47e (내용 바뀌면 같은 URL로 갱신).
 - **명령어**: `/명령어` 치면 전체 목록. 자주 쓰는 것 → `/할일`(오늘 할 일) · `/업뎃테스트`(폰 테스트 체크리스트) · `/리스트업` · `/복기` · `/배포확인` · `/메모`(이 고정 메모).
 
 ## 🧭 창업자와 일하는 규칙 (반드시 지킬 것)
