@@ -68,11 +68,48 @@ def slice_grid(rgba, rows, cols, pad=10, min_area=1500):
     return out
 
 
+def cut_lineart(path, rows, cols, pad=12):
+    """선화(라인아트) 전용: 속이 흰색이라 색채움 방식(largest component)이 깨짐.
+    선을 두껍게(dilate) '벽'으로 세워 흰 배경이 안쪽으로 못 새게 막고 실루엣 통째로 보존."""
+    im = Image.open(path).convert('RGB')
+    arr = np.asarray(im).astype(np.int16)
+    mn = arr.min(axis=2)
+    barrier = ndimage.binary_dilation(mn < 205, iterations=5)   # 선=벽
+    cand = (mn >= 232) & ~barrier                                # 배경 후보(벽 아닌 흰색)
+    lbl, n = ndimage.label(cand)
+    border = set(np.unique(lbl[0, :])) | set(np.unique(lbl[-1, :])) \
+           | set(np.unique(lbl[:, 0])) | set(np.unique(lbl[:, -1]))
+    border.discard(0)
+    fg = ndimage.binary_erosion(~np.isin(lbl, list(border)), iterations=2)
+    alpha = np.clip(ndimage.gaussian_filter(np.where(fg, 255.0, 0.0), 0.8), 0, 255).astype(np.uint8)
+    rgba = np.dstack([arr.astype(np.uint8), alpha])
+    H, W, _ = rgba.shape
+    ch, cw = H / rows, W / cols
+    out = []
+    for r in range(rows):
+        for c in range(cols):
+            y0, y1, x0, x1 = int(r*ch), int((r+1)*ch), int(c*cw), int((c+1)*cw)
+            cell = rgba[y0:y1, x0:x1]
+            m = cell[:, :, 3] > 40
+            if m.sum() < 500:
+                out.append(None); continue
+            ys, xs = np.where(m)
+            out.append(cell[max(0, ys.min()-pad):ys.max()+pad, max(0, xs.min()-pad):xs.max()+pad])
+    return out
+
+
 if __name__ == '__main__':
-    path, rows, cols, outdir = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), sys.argv[4]
+    # 사용법: ... <시트> <행> <열> <출력폴더> [--line]
+    #   --line = 선화(속 흰색) 시트일 때. 기본은 색채움 시트.
+    args = [a for a in sys.argv[1:] if a != '--line']
+    lineart = '--line' in sys.argv
+    path, rows, cols, outdir = args[0], int(args[1]), int(args[2]), args[3]
     os.makedirs(outdir, exist_ok=True)
-    rgba = remove_bg(path)
-    cells = slice_grid(rgba, rows, cols)
+    if lineart:
+        cells = cut_lineart(path, rows, cols)
+    else:
+        rgba = remove_bg(path)
+        cells = slice_grid(rgba, rows, cols)
     k = 0
     for i, cell in enumerate(cells, 1):
         if cell is None:
