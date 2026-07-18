@@ -1303,6 +1303,21 @@ html, body { overscroll-behavior: none; }
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+/* 🎁 부엌 식구들 통통(젤리 바운스) — 아래를 딛고 말랑하게 튄다. 살짝만(취향타지 않게). */
+@keyframes hk-tongtong {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  15% { transform: translateY(0) scale(1.05, 0.95); }
+  40% { transform: translateY(-6%) scale(0.97, 1.03); }
+  65% { transform: translateY(0) scale(1.03, 0.97); }
+  80% { transform: translateY(-1%) scale(0.99, 1.01); }
+}
+.hk-tongtong {
+  animation: hk-tongtong 2.4s ease-in-out infinite;
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) { .hk-tongtong { animation: none; } }
+
 /* 첫 사용 코치마크 — 대상 버튼 둘레가 반짝반짝 */
 .coach-ring {
   border: 2.5px solid #ffd98a;

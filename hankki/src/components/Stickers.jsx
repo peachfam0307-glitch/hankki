@@ -82,6 +82,23 @@ const BUDDY_IDS = new Set([
   'fchick', 'fbear', 'frabbit', 'fcat', 'fdog', 'fgecko', 'fhamster',
 ])
 
+// ── 🎁 부엌 식구들 (낱개 투명 PNG 스티커) ──
+// 창업자가 그린 전신 캐릭터를 배경제거(플러드필)한 스티커. SVG가 아니라 PNG라 <img>로 렌더.
+// ratio = 원본 가로/세로(세로가 긴 전신). 통통(젤리 바운스) 모션은 .hk-tongtong 클래스로 얹는다.
+const KF_URLS = import.meta.glob('../assets/stickers/kitchen/*.png', { eager: true, query: '?url', import: 'default' })
+const kfUrl = (name) => KF_URLS[`../assets/stickers/kitchen/${name}.png`]
+export const KITCHEN_FAMILY = {
+  kf_gomgom: { src: kfUrl('gomgom'), ratio: 622 / 834, label: '곰곰' },
+  kf_toto: { src: kfUrl('toto'), ratio: 612 / 923, label: '토토' },
+  kf_nyangi: { src: kfUrl('nyangi'), ratio: 606 / 858, label: '냄비냥이' },
+  kf_ppyak: { src: kfUrl('ppyak'), ratio: 643 / 847, label: '삐약' },
+  kf_mongmong: { src: kfUrl('mongmong'), ratio: 685 / 885, label: '몽몽' },
+  kf_hodu: { src: kfUrl('hodu'), ratio: 607 / 844, label: '호두' },
+  kf_pengpeng: { src: kfUrl('pengpeng'), ratio: 741 / 976, label: '펭펭' },
+  kf_hamzzi: { src: kfUrl('hamzzi'), ratio: 625 / 868, label: '햄찌' },
+}
+export const KITCHEN_IDS = new Set(Object.keys(KITCHEN_FAMILY))
+
 // ── 스티커 색 바꾸기(리컬러) — '곱셈기' ──
 // 단일 몸통색 스티커만 대상. 기본색 → 고른 색으로 문자열 치환(ART 원본은 안 건드림).
 // 눈·볼·외곽선은 유지되고 몸통색만 바뀐다. 대상이 아닌 스티커는 color를 무시.
@@ -102,6 +119,21 @@ export const STICKER_COLORS = [
 
 // 스티커 렌더러 — 드로잉 아트는 인라인 SVG, 친구들은 Buddy 그대로. color 주면 몸통색 리컬러.
 export function StickerArt({ id, color, style }) {
+  const kf = KITCHEN_FAMILY[id]
+  if (kf) {
+    // 🎁 부엌 식구들 — 투명 PNG를 통통(젤리 바운스) 모션으로. 아래를 딛고 튀는 느낌(origin bottom).
+    return (
+      <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
+        <img
+          src={kf.src}
+          alt={kf.label}
+          draggable={false}
+          className="hk-tongtong"
+          style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }}
+        />
+      </span>
+    )
+  }
   if (BUDDY_IDS.has(id)) {
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
@@ -116,10 +148,11 @@ export function StickerArt({ id, color, style }) {
   return <span style={{ display: 'block', width: '100%', height: '100%', ...style }} dangerouslySetInnerHTML={{ __html: svg }} />
 }
 
-// 스티커별 가로:세로 비율(레이아웃용). 말풍선만 넓다.
-export const stickerRatio = (id) => (id === 'yum' ? 74 / 46 : 1)
+// 스티커별 가로:세로 비율(레이아웃용). 말풍선은 넓고, 부엌 식구들은 세로가 길다.
+export const stickerRatio = (id) => (id === 'yum' ? 74 / 46 : KITCHEN_FAMILY[id] ? KITCHEN_FAMILY[id].ratio : 1)
 
 export const STICKER_GROUPS = [
+  { key: 'kitchen', label: '🎁 부엌 식구들', items: Object.keys(KITCHEN_FAMILY) },
   { key: 'buddies', label: '친구들', items: ['bear', 'rabbit', 'catpot', 'chick', 'dog', 'gecko', 'hamster', 'penguin'] },
   { key: 'buddies_line', label: '친구들·라인', items: ['lbear', 'lchick', 'lcat', 'lgecko', 'lrabbit', 'ldog', 'lhamster'] },
   { key: 'buddies_candy', label: '친구들·캔디', items: ['fchick', 'fbear', 'frabbit', 'fcat', 'fdog', 'fgecko', 'fhamster'] },

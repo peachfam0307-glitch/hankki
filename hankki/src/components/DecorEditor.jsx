@@ -3,7 +3,7 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { StickerArt, STICKER_GROUPS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS } from './Stickers'
+import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -79,7 +79,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     { key: 'buddies', label: '🐻 친구들' },
     { key: 'sticker', label: '✨ 스티커' },
   ]
-  const BUDDY_GROUP_KEYS = new Set(['buddies', 'buddies_line', 'buddies_candy'])
+  const BUDDY_GROUP_KEYS = new Set(['kitchen', 'buddies', 'buddies_line', 'buddies_candy'])
   const buddyGroups = STICKER_GROUPS.filter((g) => BUDDY_GROUP_KEYS.has(g.key))
   const stickerGroups = STICKER_GROUPS.filter((g) => !BUDDY_GROUP_KEYS.has(g.key))
 
@@ -96,7 +96,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     const it = {
       id: newDecorId(), type: 'sticker', key,
       x: 0.5 + ((n % 3) - 1) * 0.06, y: 0.42 + ((n % 4) - 1.5) * 0.05,
-      s: key === 'yum' ? 0.34 : FACE_KEYS.has(key) ? 0.11 : 0.2, r: ((n % 5) - 2) * 4,
+      s: key === 'yum' ? 0.34 : FACE_KEYS.has(key) ? 0.11 : KITCHEN_IDS.has(key) ? 0.28 : 0.2, r: ((n % 5) - 2) * 4,
     }
     setItems((arr) => [...arr, it])
     setSel(it.id)
@@ -127,13 +127,16 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     <div className="decor-sec" key={g.key}>
       <div className="decor-sec-label">{g.label}</div>
       <div className="decor-grid">
-        {g.items.map((key) => (
-          <button key={key} className="press decor-cell" onClick={() => addSticker(key)} aria-label={key}>
-            <span style={{ display: 'block', width: key === 'yum' ? '92%' : '78%', aspectRatio: key === 'yum' ? '74/46' : '1' }}>
-              <StickerArt id={key} />
-            </span>
-          </button>
-        ))}
+        {g.items.map((key) => {
+          const isKf = KITCHEN_IDS.has(key)
+          return (
+            <button key={key} className="press decor-cell" onClick={() => addSticker(key)} aria-label={key}>
+              <span style={{ display: 'block', width: key === 'yum' ? '92%' : isKf ? '62%' : '78%', aspectRatio: key === 'yum' ? '74/46' : isKf ? '0.75' : '1' }}>
+                <StickerArt id={key} />
+              </span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )
