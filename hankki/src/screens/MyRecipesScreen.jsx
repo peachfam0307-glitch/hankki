@@ -16,7 +16,7 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 const MYRECIPES_COACH_KEY = 'hankki:coach:myrecipes'
 const MYRECIPES_COACH_STEPS = [
   { sel: '[data-coach="collection"]', label: '🗂️ 모아보기', desc: '저장한 레시피를 한눈에 · 폴더·카테고리로 정리돼요' },
-  { sel: '[data-coach="log"]', label: '📖 요리 기록', desc: '만든 요리를 별점·사진으로 남기는 나만의 요리 일기' },
+  { sel: '[data-coach="log"]', label: '📖 요리 기록', desc: '요리하고 "만들었어요!" 한 번이면 별점·사진·팁이 쌓여요 · 다음엔 "그때 그 맛" 그대로 재현!' },
 ]
 
 // 카테고리와 연결된 기본 폴더 — 삭제 불가(사용자가 만든 폴더만 지울 수 있게)
@@ -240,7 +240,7 @@ export default function MyRecipesScreen() {
         <div className="pad fade">
           {/* 나의 요리 앨범 — 내가 만든 요리 아카이브 */}
           <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 10 }}>
-            📖 <b style={{ color: 'var(--text)' }}>내가 만든 요리 아카이브</b> — 레시피에서 ‘만들었어요!’를 누르면 한 장씩 쌓여요. 사진을 누르면 별점·팁을 남길 수 있어요.
+            📖 <b style={{ color: 'var(--text)' }}>내가 만든 요리 아카이브</b> — 요리할 때마다 별점·사진·나만의 팁을 남겨두면, 다음에 <b style={{ color: 'var(--text)' }}>그때 그 간·불 세기</b>를 그대로 재현해요. 내 요리 실력이 쌓이는 기록이에요.
           </div>
           {entries.length > 0 && (
             <div className="card" style={{ padding: '11px 14px', marginBottom: 12, background: 'var(--cream)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, fontWeight: 600 }}>
@@ -278,7 +278,7 @@ export default function MyRecipesScreen() {
           )}
 
           {entries.length === 0 ? (
-            <div className="empty" style={{ marginTop: 10 }}>{'아직 기록이 없어요.\n레시피에서 "만들었어요!"를 누르면 여기에 쌓여요.'}</div>
+            <div className="empty" style={{ marginTop: 10 }}>{'아직 기록이 없어요.\n요리하고 "만들었어요!"만 눌러도 별점·사진이 한 장씩 쌓여요.\n다음에 "그때 그 맛"을 그대로 재현하는 나만의 요리 일기예요 📸'}</div>
           ) : (
             <div className="album-grid">
               {shown.map((e) => {
