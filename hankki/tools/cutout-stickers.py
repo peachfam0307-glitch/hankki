@@ -34,7 +34,11 @@ def remove_bg(path, thr=234, sat=14):
            | set(np.unique(lbl[:, 0])) | set(np.unique(lbl[:, -1]))
     border.discard(0)
     bg = np.isin(lbl, list(border))              # 테두리와 연결된 것만 진짜 배경
-    alpha = np.where(bg, 0, 255).astype(np.uint8)
+    fg = ~bg
+    # 가장자리 옅은 흰 테 제거(디프린지): 바깥 2px 깎고 살짝 부드럽게 → 어두운 배경서도 깔끔.
+    fg = ndimage.binary_erosion(fg, iterations=2)
+    alpha = ndimage.gaussian_filter(np.where(fg, 255.0, 0.0), 0.8)
+    alpha = np.clip(alpha, 0, 255).astype(np.uint8)
     return np.dstack([arr.astype(np.uint8), alpha])
 
 
