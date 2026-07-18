@@ -64,7 +64,11 @@ export default function HomeScreen() {
     <>
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div className="h-title">한끼</div>
+          {/* 곰곰 셰프 + 한끼 로고락업 — 홈 상단 브랜드 마크 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Buddy id="bear" size={34} />
+            <div className="h-title">한끼</div>
+          </div>
           <TabTips tab="home" />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
