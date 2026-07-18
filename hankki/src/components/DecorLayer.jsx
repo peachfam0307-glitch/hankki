@@ -34,9 +34,10 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
   }
   const onItemUp = () => {
     const d = dragRef.current
-    // 포스트잇·글자를 (드래그 없이) 탭하면 글씨 쓰기 시트를 연다 — '탭해서 쓰기'.
-    // 선택 여부와 무관하게 탭 한 번에 열어 준다(포스트잇의 주목적=쓰기). 색·무늬는 선택 시 상단 컨텍스트 바에서.
-    if (d && !d.moved && (d.it.type === 'note' || d.it.type === 'text')) onEditNote?.(d.it)
+    // 탭 = 선택(꾸미기 바로), 이미 선택된 걸 다시 탭 = 글씨 쓰기 — '두 번 탭' 방식(창업자 선택 2026-07-18).
+    // 새로 붙일 땐 어차피 쓰기창이 자동으로 뜨므로, 탭은 꾸미기(선택)에 주는 게 전체적으로 편하다.
+    // (드래그면 이동만. 쓰기는 다시 탭 또는 연필 버튼.)
+    if (d && !d.moved && d.wasSel && (d.it.type === 'note' || d.it.type === 'text')) onEditNote?.(d.it)
     dragRef.current = null
   }
 
