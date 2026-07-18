@@ -27,15 +27,16 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
   const onItemMove = (e) => {
     const d = dragRef.current
     if (!d) return
-    if (Math.abs(e.clientX - d.px) > 3 || Math.abs(e.clientY - d.py) > 3) d.moved = true
+    if (Math.abs(e.clientX - d.px) > 8 || Math.abs(e.clientY - d.py) > 8) d.moved = true
     const nx = clamp(d.x0 + (e.clientX - d.px) / d.rect.width, 0.02, 0.98)
     const ny = clamp(d.y0 + (e.clientY - d.py) / d.rect.height, 0.02, 0.98)
     onChange?.(d.id, { x: nx, y: ny })
   }
   const onItemUp = () => {
     const d = dragRef.current
-    // 이미 선택된 포스트잇·글자를 (드래그 없이) 탭하면 글씨 쓰기 시트를 연다 — '탭해서 쓰기'
-    if (d && !d.moved && d.wasSel && (d.it.type === 'note' || d.it.type === 'text')) onEditNote?.(d.it)
+    // 포스트잇·글자를 (드래그 없이) 탭하면 글씨 쓰기 시트를 연다 — '탭해서 쓰기'.
+    // 선택 여부와 무관하게 탭 한 번에 열어 준다(포스트잇의 주목적=쓰기). 색·무늬는 선택 시 상단 컨텍스트 바에서.
+    if (d && !d.moved && (d.it.type === 'note' || d.it.type === 'text')) onEditNote?.(d.it)
     dragRef.current = null
   }
 
