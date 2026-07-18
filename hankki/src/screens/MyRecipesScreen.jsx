@@ -16,6 +16,7 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 const MYRECIPES_COACH_KEY = 'hankki:coach:myrecipes'
 const MYRECIPES_COACH_STEPS = [
   { sel: '[data-coach="collection"]', label: '🗂️ 모아보기', desc: '저장한 레시피를 한눈에 · 폴더·카테고리로 정리돼요' },
+  { sel: '[data-coach="gridsize"]', label: '⊞ 보기 바꾸기', desc: '크게 2줄 ↔ 촘촘히 3줄 · 사진 큼직하게 보거나 한눈에 많이 보거나' },
   { sel: '[data-coach="log"]', label: '📖 요리 기록', desc: '요리하고 "만들었어요!" 한 번이면 별점·사진·팁이 쌓여요 · 다음엔 "그때 그 맛" 그대로 재현!' },
 ]
 
@@ -214,7 +215,7 @@ export default function MyRecipesScreen() {
                 {edit ? '완료' : '편집'}
               </button>
               {/* 크게 보기(2열) ↔ 그리드(3열) 전환 */}
-              <button className="icon-btn press" onClick={() => setGridSize(gridSize === 'big' ? 'small' : 'big')} aria-label="보기 방식 전환">
+              <button className="icon-btn press" data-coach="gridsize" onClick={() => setGridSize(gridSize === 'big' ? 'small' : 'big')} aria-label="보기 방식 전환">
                 <Icon name={gridSize === 'big' ? 'grid-small' : 'grid-big'} size={21} color="var(--text-sub)" />
               </button>
             </>
