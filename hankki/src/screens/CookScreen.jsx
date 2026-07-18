@@ -108,7 +108,7 @@ export default function CookScreen({ id }) {
         )}
       </div>
 
-      {showTimer && <TimerSheet label={`${r.title} · STEP ${i + 1}`} onClose={() => setShowTimer(false)} />}
+      {showTimer && <TimerSheet label={`${r.title} · STEP ${i}`} onClose={() => setShowTimer(false)} />}
 
       {showIng && (
        <Portal>

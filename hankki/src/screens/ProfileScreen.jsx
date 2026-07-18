@@ -214,7 +214,7 @@ export default function ProfileScreen() {
       icon: 'sparkle', label: '기능 안내 다시 보기', badge: '반짝 안내',
       onClick: () => {
         // 코치마크 본 기록을 지워 각 화면 첫 방문 안내가 다시 나오게 한다(딸 아이디어 ⭐ 후속)
-        try { ['detail', 'shop', 'home', 'profile'].forEach((k) => localStorage.removeItem(`hankki:coach:${k}`)) } catch { /* noop */ }
+        try { ['detail', 'shop', 'home', 'profile', 'myrecipes'].forEach((k) => localStorage.removeItem(`hankki:coach:${k}`)) } catch { /* noop */ }
         nav.showToast('✨ 각 화면에 들어가면 반짝 안내가 다시 나와요')
       },
     },
