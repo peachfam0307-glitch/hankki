@@ -51,7 +51,7 @@ export default function HomeScreen() {
     [recipes]
   )
   const recent = useMemo(
-    () => [...recipes].sort((a, b) => b.savedAt - a.savedAt).slice(0, 5),
+    () => [...recipes].sort((a, b) => b.savedAt - a.savedAt).slice(0, 4),
     [recipes]
   )
 
@@ -157,7 +157,7 @@ export default function HomeScreen() {
           {recent.map((r, i) => (
             <div key={r.id}>
               <button className="list-row press" style={{ width: '100%', textAlign: 'left' }} onClick={() => open(r.id)}>
-                <Thumb recipe={r} style={{ width: 62, height: 62, flex: '0 0 auto' }} radius={14} emojiSize="1.5rem" showDecor />
+                <Thumb recipe={r} style={{ width: 90, height: 90, flex: '0 0 auto' }} radius={18} emojiSize="2.1rem" showDecor />
                 <div className="meta">
                   <div className="name">{r.title}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
