@@ -76,7 +76,11 @@ const ART = {
 // 말풍선(가로 비율 다름)
 const YUM_BUBBLE = `<rect x="3" y="3" width="68" height="30" rx="15" fill="#faf6ec" stroke="${OL}" stroke-width="2"/><path d="M24 32l-6 10 15-9Z" fill="#faf6ec" stroke="${OL}" stroke-width="2" stroke-linejoin="round"/><text x="37" y="24" text-anchor="middle" font-family="'Gowun Dodum','Pretendard',sans-serif" font-size="16" fill="#c2704a">맛있어</text>`
 
-const BUDDY_IDS = new Set(['bear', 'rabbit', 'catpot', 'chick', 'dog', 'gecko', 'hamster', 'penguin'])
+const BUDDY_IDS = new Set([
+  'bear', 'rabbit', 'catpot', 'chick', 'dog', 'gecko', 'hamster', 'penguin',
+  'lbear', 'lchick', 'lcat', 'lgecko', 'lrabbit', 'ldog', 'lhamster',
+  'fchick', 'fbear', 'frabbit', 'fcat', 'fdog', 'fgecko', 'fhamster',
+])
 
 // ── 스티커 색 바꾸기(리컬러) — '곱셈기' ──
 // 단일 몸통색 스티커만 대상. 기본색 → 고른 색으로 문자열 치환(ART 원본은 안 건드림).
@@ -117,6 +121,8 @@ export const stickerRatio = (id) => (id === 'yum' ? 74 / 46 : 1)
 
 export const STICKER_GROUPS = [
   { key: 'buddies', label: '친구들', items: ['bear', 'rabbit', 'catpot', 'chick', 'dog', 'gecko', 'hamster', 'penguin'] },
+  { key: 'buddies_line', label: '친구들·라인', items: ['lbear', 'lchick', 'lcat', 'lgecko', 'lrabbit', 'ldog', 'lhamster'] },
+  { key: 'buddies_candy', label: '친구들·캔디', items: ['fchick', 'fbear', 'frabbit', 'fcat', 'fdog', 'fgecko', 'fhamster'] },
   { key: 'faces', label: '표정', items: ['smile', 'happy', 'hearteyes', 'wink', 'mlem', 'cool', 'surprised', 'boing', 'cry', 'yumface'] },
   { key: 'symbols', label: '심볼', items: ['heart', 'star', 'sparkle', 'fire', 'yum', 'crown', 'thumb', 'vhand', 'bow'] },
   { key: 'ingredients', label: '재료', items: ['tomato', 'egg', 'carrot', 'onion', 'mushroom', 'chili', 'avocado', 'broccoli'] },

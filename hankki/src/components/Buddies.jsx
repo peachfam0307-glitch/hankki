@@ -582,7 +582,7 @@ export default function Buddy({ id, size = 48 }) {
     return (
       <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">
         <circle cx="32" cy="32" r="32" fill={BG} />
-        <g transform="translate(32 33) scale(0.8) translate(-32 -32)">{F[id]}</g>
+        <g transform="translate(32 33.5) scale(0.72) translate(-32 -32)">{F[id]}</g>
       </svg>
     )
   }
