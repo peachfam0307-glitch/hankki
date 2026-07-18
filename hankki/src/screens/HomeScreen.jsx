@@ -12,10 +12,13 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { needsOnboarding } from '../components/Onboarding'
 import { timeAgo } from '../utils'
 
-// 홈 첫 방문 코치마크 — '곧 나올 기능 미리보기'가 숨어 있어 안내(창업자 딸 아이디어 ⭐)
+// 홈 첫 방문 코치마크 — 진짜 핵심 기능부터 짚어준다(창업자 딸 아이디어 ⭐).
+// 첫 스텝을 '되는 기능'(가져오기·오늘 뭐 해먹지)으로, 곧 출시 미리보기는 맨 뒤에 살짝.
 const HOME_COACH_KEY = 'hankki:coach:home'
 const HOME_COACH_STEPS = [
-  { sel: '[data-coach="preview"]', label: '✨ 곧 나올 기능 미리보기', desc: 'AI 정리 · 레시피북 PDF… 뭐가 준비 중인지 구경해요' },
+  { sel: '[data-coach="import"]', label: '➕ 레시피 가져오기', desc: '사진·인스타·유튜브에서 레시피를 쏙 담아요 · 여기서 시작!' },
+  { sel: '[data-coach="today"]', label: '🍚 오늘 뭐 해먹지?', desc: '냉장고 재료로 만들 수 있는 요리를 추천해요' },
+  { sel: '[data-coach="preview"]', label: '✨ 곧 나올 기능', desc: 'AI 정리 · 레시피북 PDF… 준비 중인 것도 구경해요' },
 ]
 
 export default function HomeScreen() {
@@ -68,6 +71,7 @@ export default function HomeScreen() {
           {/* 가져오기 — 제일 자주 쓰는 기능이라 맨 위에 */}
           <button
             className="press"
+            data-coach="import"
             onClick={() => nav.push({ name: 'import' })}
             aria-label="가져오기"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--brown)', color: '#fff', fontSize: 13, fontWeight: 700, padding: '8px 13px', borderRadius: 999 }}
@@ -111,7 +115,7 @@ export default function HomeScreen() {
 
         {/* 오늘 뭐 해먹지? */}
         {todayPick && (
-          <div className="today-card">
+          <div className="today-card" data-coach="today">
             <button className="today-main press" onClick={() => open(todayPick.id)}>
               <Thumb recipe={todayPick} style={{ width: 72, height: 72, flex: '0 0 auto' }} radius={16} showDecor />
               <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>

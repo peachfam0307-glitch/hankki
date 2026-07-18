@@ -143,36 +143,36 @@ export default function ImportScreen() {
             레시피를 가져오는 방법을 선택해 주세요.
           </div>
 
-          {/* AI 자동정리 — 곧 출시 미리보기(시그니처) */}
+          {/* 제일 많이 쓰는 방법 — 히어로(진짜 동작). 첫 유저가 큰 걸 눌러도 바로 되는 기능. */}
           <button
             className="press"
-            onClick={() => setAiPreview(true)}
+            onClick={() => choose('write')}
             style={{
-              width: '100%', textAlign: 'left', marginBottom: 18, padding: '15px 16px',
-              borderRadius: 18, border: '1px solid #d6e5cd',
-              background: 'linear-gradient(135deg, #f2f8ed, #e8f1df)',
+              width: '100%', textAlign: 'left', marginBottom: 16, padding: '15px 16px',
+              borderRadius: 18, border: '1px solid #ecdccb',
+              background: 'linear-gradient(135deg, #fbf3e9, #f6ead8)',
               display: 'flex', alignItems: 'center', gap: 13,
             }}
           >
             <div style={{
               width: 46, height: 46, borderRadius: 14, flexShrink: 0,
               background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(90,120,70,.16)',
-            }}><Icon name="sparkle" size={25} color="#7fa06a" stroke={1.6} /></div>
+              boxShadow: '0 2px 8px rgba(150,110,70,.16)',
+            }}><Icon name="photo" size={25} color="#8a5a37" stroke={1.7} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#4a7a45', whiteSpace: 'nowrap' }}>사진이 레시피가 돼요</span>
-                <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', background: '#7fa06a', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>곧 출시</span>
+                <span style={{ fontSize: 14.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap' }}>사진 · 직접 작성하기</span>
+                <span style={{ fontSize: 10, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>제일 많이 써요</span>
               </div>
               <div style={{ fontSize: 12.3, lineHeight: 1.5, color: 'var(--text-sub)' }}>
-                캡처·링크만 올리면 AI가 재료·순서까지 척척
+                캡처는 재료·만드는 법 칸별로 읽어 채워요
               </div>
             </div>
-            <Icon name="chevron-right" size={18} color="#8aa07a" />
+            <Icon name="chevron-right" size={18} color="#c0a986" />
           </button>
 
           <div className="card" style={{ overflow: 'hidden' }}>
-            {OPTIONS.map((o, i) => (
+            {OPTIONS.filter((o) => o.key !== 'write').map((o, i, arr) => (
               <div key={o.key}>
                 <button className="opt-row press" onClick={() => choose(o.key)}>
                   <div className="opt-ico">
@@ -184,10 +184,38 @@ export default function ImportScreen() {
                   </div>
                   <Icon name="chevron-right" size={18} color="var(--sand)" />
                 </button>
-                {i < OPTIONS.length - 1 && <hr className="divider" style={{ marginLeft: 74 }} />}
+                {i < arr.length - 1 && <hr className="divider" style={{ marginLeft: 74 }} />}
               </div>
             ))}
           </div>
+
+          {/* AI 자동정리 — 곧 출시 예고(작게). 진짜 동작을 가리지 않게 리스트 아래로. */}
+          <button
+            className="press"
+            onClick={() => setAiPreview(true)}
+            style={{
+              width: '100%', textAlign: 'left', marginTop: 14, padding: '11px 13px',
+              borderRadius: 14, border: '1px solid #d6e5cd',
+              background: 'linear-gradient(135deg, #f2f8ed, #e8f1df)',
+              display: 'flex', alignItems: 'center', gap: 11,
+            }}
+          >
+            <div style={{
+              width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+              background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(90,120,70,.16)',
+            }}><Icon name="sparkle" size={19} color="#7fa06a" stroke={1.6} /></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 12.5, fontWeight: 800, color: '#4a7a45' }}>AI 자동 정리</span>
+                <span style={{ fontSize: 9.5, fontWeight: 800, color: '#fff', background: '#7fa06a', borderRadius: 999, padding: '2px 7px', flexShrink: 0 }}>곧 출시</span>
+              </div>
+              <div style={{ fontSize: 11.6, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2 }}>
+                캡처만 올리면 AI가 척척 — 준비 중이에요
+              </div>
+            </div>
+            <Icon name="chevron-right" size={16} color="#8aa07a" />
+          </button>
 
           <button
             className="card press"
