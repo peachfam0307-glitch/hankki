@@ -9,11 +9,15 @@ import { useModalBack } from '../useBackHandler'
 export default function PromptSheet({ title, fields, submitLabel = '저장', onSubmit, onClose, compact = false }) {
   const [vals, setVals] = useState(() => Object.fromEntries(fields.map((f) => [f.key, f.value ?? ''])))
   const firstRef = useRef(null)
+  // 시트를 '탭'으로 여는 경우(포스트잇 탭해서 쓰기 등), 그 탭의 뒤따라오는 click 이
+  // 방금 뜬 배경(sheet-mask)에 닿아 시트가 열리자마자 닫히는 걸 막는다. 열린 직후 잠깐은 배경 닫기를 무시.
+  const readyRef = useRef(false)
   useModalBack(onClose) // 뒤로가기 → 닫기(취소)
 
   useEffect(() => {
     const t = setTimeout(() => firstRef.current?.focus(), 60)
-    return () => clearTimeout(t)
+    const r = setTimeout(() => { readyRef.current = true }, 320)
+    return () => { clearTimeout(t); clearTimeout(r) }
   }, [])
 
   const submit = () => {
@@ -23,7 +27,7 @@ export default function PromptSheet({ title, fields, submitLabel = '저장', onS
 
   return (
     <Portal>
-      <div className="sheet-mask" onClick={onClose}>
+      <div className="sheet-mask" onClick={() => { if (readyRef.current) onClose() }}>
         <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: compact ? 10 : 22 }}>
           <div className="emoji-sheet-head">
             <span>{title}</span>
