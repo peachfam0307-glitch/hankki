@@ -10,6 +10,14 @@ import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DiaryEntrySheet from '../components/DiaryEntrySheet'
 import { dateLabel } from '../utils'
 import { useBackHandler } from '../useBackHandler'
+import CoachMarks, { needsCoach } from '../components/CoachMarks'
+
+// 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
+const MYRECIPES_COACH_KEY = 'hankki:coach:myrecipes'
+const MYRECIPES_COACH_STEPS = [
+  { sel: '[data-coach="collection"]', label: '🗂️ 모아보기', desc: '저장한 레시피를 한눈에 · 폴더·카테고리로 정리돼요' },
+  { sel: '[data-coach="log"]', label: '📖 요리 기록', desc: '만든 요리를 별점·사진으로 남기는 나만의 요리 일기' },
+]
 
 // 카테고리와 연결된 기본 폴더 — 삭제 불가(사용자가 만든 폴더만 지울 수 있게)
 const DEFAULT_FOLDERS = new Set(['한식', '양식', '일식', '간식', '아시안'])
@@ -89,6 +97,7 @@ export default function MyRecipesScreen() {
   const { recipes, folders, addFolder, removeFolder, removeRecipe, diary, removeDiary } = useStore()
   const nav = useNav()
   const [view, setView] = useState('grid') // grid | log | folders
+  const [coach, setCoach] = useState(() => needsCoach(MYRECIPES_COACH_KEY))
   const [folder, setFolder] = useState('전체')
   // 모아보기 크기 — 'big'(2열·이름 크게) | 'small'(3열 그리드). 선택은 기억된다.
   const [gridSize, setGridSizeState] = useState(() => {
@@ -222,8 +231,8 @@ export default function MyRecipesScreen() {
       {/* 세그먼트 — 일지 탭을 '요리 기록'으로 흡수 */}
       <div className="pad">
         <div className="segment">
-          <button className={`seg ${view === 'grid' ? 'on' : ''}`} onClick={() => setView('grid')}>모아보기</button>
-          <button className={`seg ${view === 'log' ? 'on' : ''}`} onClick={() => setView('log')}>요리 기록</button>
+          <button className={`seg ${view === 'grid' ? 'on' : ''}`} data-coach="collection" onClick={() => setView('grid')}>모아보기</button>
+          <button className={`seg ${view === 'log' ? 'on' : ''}`} data-coach="log" onClick={() => setView('log')}>요리 기록</button>
         </div>
       </div>
 
@@ -475,6 +484,7 @@ export default function MyRecipesScreen() {
           onOpenRecipe={recipes.some((r) => r.id === logEditing.recipeId) ? () => { const e = logEditing; setLogEditing(null); openRecipe(e) } : undefined}
         />
       )}
+      {coach && <CoachMarks storageKey={MYRECIPES_COACH_KEY} steps={MYRECIPES_COACH_STEPS} onDone={() => setCoach(false)} />}
     </>
   )
 }

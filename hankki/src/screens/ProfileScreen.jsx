@@ -19,7 +19,8 @@ import { cropSquare } from '../utils'
 const PROFILE_COACH_KEY = 'hankki:coach:profile'
 const PROFILE_COACH_STEPS = [
   { sel: '[data-coach="backup"]', label: '💾 백업 · 내보내기', desc: '폰을 바꾸거나 지워도 레시피를 지키는 제일 중요한 버튼!' },
-  { sel: '[data-coach="feedback"]', label: '✍️ 의견 보내기', desc: '익명으로 한 줄이면 돼요 · 불편한 점 뭐든 환영!' },
+  { sel: '[data-coach="update"]', label: '🔄 최신 버전 확인', desc: '앱이 옛 버전에서 멈췄을 때 눌러요 · 새 기능·수정이 바로 반영돼요' },
+  { sel: '[data-coach="feedback"]', label: '✍️ 의견 보내기', desc: '여러분 한 줄이 저에겐 진짜 큰 힘이 돼요 🥹 좋았던 것도 불편한 것도, 익명이니까 꼭 한 줄 남겨 주세요!' },
 ]
 import { THEMES, getTheme, setTheme } from '../theme'
 import { Avatar } from './HomeScreen'
@@ -417,6 +418,7 @@ export default function ProfileScreen() {
         </div>
         <button
           className="press"
+          data-coach="update"
           onClick={checkUpdate}
           disabled={checking}
           style={{

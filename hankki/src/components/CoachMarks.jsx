@@ -22,6 +22,8 @@ export default function CoachMarks({ storageKey, steps, onDone }) {
     let t
     const measure = () => {
       const el = document.querySelector(steps[i].sel)
+      // 대상이 화면 밖(아래쪽 버튼 등)이면 보이게 스크롤한 뒤 위치를 잰다.
+      if (el) el.scrollIntoView({ block: 'center', behavior: 'auto' })
       const r = el?.getBoundingClientRect()
       if (r && r.width > 0) setRect({ top: r.top, left: r.left, width: r.width, height: r.height })
       else if (tries++ < 8) t = setTimeout(measure, 120)
