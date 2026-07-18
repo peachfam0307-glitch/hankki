@@ -268,8 +268,9 @@ const F = {
       </defs>
       <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk2c)">
-        <circle cx="11" cy="15" r="9" fill="#dd8b3d" /><circle cx="11" cy="15" r="4.8" fill="#f9d29a" />
-        <circle cx="53" cy="15" r="9" fill="#dd8b3d" /><circle cx="53" cy="15" r="4.8" fill="#f9d29a" />
+        {/* 귀 — 원형 클립(r32) 안에 들어오게 안쪽으로 당기고 살짝 작게(모서리 잘림 방지) */}
+        <circle cx="15" cy="16" r="8" fill="#dd8b3d" /><circle cx="15" cy="16" r="4.3" fill="#f9d29a" />
+        <circle cx="49" cy="16" r="8" fill="#dd8b3d" /><circle cx="49" cy="16" r="4.3" fill="#f9d29a" />
         <circle cx="32" cy="40" r="28.5" fill="url(#hk2g)" />
         <FToque tilt={-9} x={32} y={6.5} />
         <FEye x={17.5} y={37.5} /><FEye x={46.5} y={37.5} />
@@ -395,8 +396,9 @@ const F = {
       </defs>
       <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk7c)">
-        <circle cx="13" cy="13" r="7.4" fill="#ed9840" /><circle cx="13" cy="13" r="3.9" fill="#ffd9a0" />
-        <circle cx="51" cy="13" r="7.4" fill="#ed9840" /><circle cx="51" cy="13" r="3.9" fill="#ffd9a0" />
+        {/* 귀 — 원형 클립 안으로 당겨 모서리 잘림 방지 */}
+        <circle cx="16" cy="14" r="6.8" fill="#ed9840" /><circle cx="16" cy="14" r="3.6" fill="#ffd9a0" />
+        <circle cx="48" cy="14" r="6.8" fill="#ed9840" /><circle cx="48" cy="14" r="3.6" fill="#ffd9a0" />
         <circle cx="32" cy="40" r="27.5" fill="url(#hk7g)" />
         <circle cx="11.5" cy="47" r="13" fill="url(#hk7k)" />
         <circle cx="52.5" cy="47" r="13" fill="url(#hk7k)" />

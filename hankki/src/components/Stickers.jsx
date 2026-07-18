@@ -315,5 +315,31 @@ export const TAPE_PATTERNS = [
   { key: 'mint', label: '민트', style: { background: 'rgba(200,222,205,0.92)' } },
   { key: 'rose', label: '로즈', style: { background: 'rgba(232,205,203,0.92)' } },
   { key: 'sky', label: '하늘', style: { background: 'rgba(203,218,233,0.92)' } },
+  {
+    // 찢은 테이프 — 양쪽 끝이 손으로 뜯긴 듯 지그재그(clip-path)
+    key: 'torn', label: '찢은테이프',
+    style: {
+      background: 'rgba(214,197,168,0.94)',
+      clipPath: 'polygon(0% 0%, 100% 0%, 95% 12%, 100% 25%, 95% 37%, 100% 50%, 95% 62%, 100% 75%, 95% 87%, 100% 100%, 0% 100%, 5% 87%, 0% 75%, 5% 62%, 0% 50%, 5% 37%, 0% 25%, 5% 12%)',
+      WebkitClipPath: 'polygon(0% 0%, 100% 0%, 95% 12%, 100% 25%, 95% 37%, 100% 50%, 95% 62%, 100% 75%, 95% 87%, 100% 100%, 0% 100%, 5% 87%, 0% 75%, 5% 62%, 0% 50%, 5% 37%, 0% 25%, 5% 12%)',
+    },
+  },
+  {
+    // 하트 — 파스텔 로즈 바탕에 작은 하트가 콕콕(SVG 패턴)
+    key: 'heart', label: '하트',
+    style: {
+      backgroundColor: 'rgba(238,214,214,0.94)',
+      backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><path d='M8 13C4.3 9.9 2 8 2 5.4 2 3.7 3.4 2.4 5 2.4c1.1 0 2.2.6 3 1.7.8-1.1 1.9-1.7 3-1.7 1.6 0 3 1.3 3 3C14 8 11.7 9.9 8 13z' fill='%23d98a92' opacity='0.55'/></svg>\")",
+      backgroundSize: '34% 64%',
+    },
+  },
+  {
+    // 깅엄 체크 — 두 방향 반투명 줄이 겹쳐 자연스러운 체크
+    key: 'gingham', label: '깅엄',
+    style: {
+      backgroundColor: 'rgba(245,238,236,0.94)',
+      backgroundImage: 'repeating-linear-gradient(0deg, rgba(206,138,146,.34) 0 7px, transparent 7px 14px), repeating-linear-gradient(90deg, rgba(206,138,146,.34) 0 7px, transparent 7px 14px)',
+    },
+  },
 ]
 export const tapeStyle = (key) => (TAPE_PATTERNS.find((t) => t.key === key) || TAPE_PATTERNS[0]).style
