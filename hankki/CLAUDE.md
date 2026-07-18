@@ -52,6 +52,7 @@
    - 단, 항상 **쉽고 간단하게**(비개발자 눈높이). 장황한 나열 금지, 결론·추천 위주.
 
 ## 🔧 자주 쓰는 사실 (빠른 참조)
+- **⏰ 날짜·시간·디데이는 항상 한국시간(KST, UTC+9) 기준으로 계산·표기.** (창업자 요청 2026-07-18. 서버는 UTC라 `TZ=Asia/Seoul date`로 확인 후 말할 것)
 - 도메인 루트 레포: `peachfam0307-glitch/peachfam0307-glitch.github.io`, 기본 브랜치 **한글 `오답끝`**.
   - 이 레포 파일 편집은 **PC + github.dev(`.`키)** 로만. 일반 연필 편집기는 한글 브랜치에서 에러남. → `docs/assetlinks-고치는법.md`
 - 앱 아이콘: 곰곰 셰프(bear). `public/icons/icon-512-v6.png`(512), 스토어 그래픽 `design/promo/renders/스토어-그래픽-곰돌이.png`(1024×500).
