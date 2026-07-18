@@ -246,7 +246,6 @@ const F = {
         <FaceGrad id="hk1g" light="#fff3ae" base="#ffdf6e" /><BlushGrad id="hk1b" c="#ff9d5c" /><FClip id="hk1c" />
         <radialGradient id="hk1k" cx="42%" cy="30%" r="80%"><stop offset="0%" stopColor="#ffc25e" /><stop offset="100%" stopColor="#ff9d2e" /></radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk1c)">
         <circle cx="32" cy="40" r="30" fill="url(#hk1g)" />
         <path d="M40 12c2.6-3.2 6.6-3.6 8.4-2" stroke="#e8b93e" strokeWidth="1.7" strokeLinecap="round" fill="none" />
@@ -266,7 +265,6 @@ const F = {
         <FaceGrad id="hk2g" light="#f9cd8a" base="#ec9f4e" /><BlushGrad id="hk2b" c="#f0764a" /><FClip id="hk2c" />
         <radialGradient id="hk2m" cx="50%" cy="34%" r="75%"><stop offset="0%" stopColor="#fff8e8" /><stop offset="100%" stopColor="#fbe3ba" /></radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk2c)">
         {/* 귀 — 원형 클립(r32) 안에 들어오게 안쪽으로 당기고 살짝 작게(모서리 잘림 방지) */}
         <circle cx="15" cy="16" r="8" fill="#dd8b3d" /><circle cx="15" cy="16" r="4.3" fill="#f9d29a" />
@@ -288,7 +286,6 @@ const F = {
       <defs>
         <FaceGrad id="hk3g" light="#ffffff" base="#fdf2ee" /><BlushGrad id="hk3b" c="#ff7d9d" /><FClip id="hk3c" />
       </defs>
-      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk3c)">
         <rect x="13.5" y="-7" width="11.5" height="27" rx="5.7" fill="#fffdf9" stroke="#f3e0d6" strokeWidth="0.8" />
         <rect x="16.4" y="-3" width="5.8" height="19.5" rx="2.9" fill="#ff9fb9" />
@@ -312,7 +309,6 @@ const F = {
       <defs>
         <FaceGrad id="hk4g" light="#ffd089" base="#ff9f3e" /><BlushGrad id="hk4b" c="#f2653a" /><FClip id="hk4c" />
       </defs>
-      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk4c)">
         <path d="M8 22 12 3.5l12.5 9z" fill="#f79440" /><path d="M10.8 18 13 8.6l6.8 5z" fill="#ffc3d2" />
         <path d="M56 22 52 3.5 39.5 12.5z" fill="#f79440" /><path d="M53.2 18 51 8.6l-6.8 5z" fill="#ffc3d2" />
@@ -336,7 +332,6 @@ const F = {
       <defs>
         <FaceGrad id="hk5g" light="#fff6e0" base="#f5ddb0" /><BlushGrad id="hk5b" c="#f0774e" /><FClip id="hk5c" />
       </defs>
-      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk5c)">
         <path d="M4 18c-2.2 12.5 2 22.8 8.4 24.8 3.1-6.2 3.1-16.6 0-24.8-2.7-4.6-7.3-4.2-8.4 0z" fill="#a9713d" />
         <path d="M60 18c2.2 12.5-2 22.8-8.4 24.8-3.1-6.2-3.1-16.6 0-24.8 2.7-4.6 7.3-4.2 8.4 0z" fill="#a9713d" />
@@ -360,7 +355,6 @@ const F = {
         <FaceGrad id="hk6g" light="#f9f0d4" base="#efdfb2" /><BlushGrad id="hk6b" c="#f0a86e" /><FClip id="hk6c" />
         <radialGradient id="hk6i" cx="38%" cy="30%" r="80%"><stop offset="0%" stopColor="#f7c96a" /><stop offset="100%" stopColor="#dd8f2a" /></radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk6c)">
         <path d="M3 34C5 16 17 8.5 32 8.5S59 16 61 34c1.6 9-1 24-9 28H12C4 58 1.4 43 3 34z" fill="url(#hk6g)" />
         <g fill="#eccf8e" stroke="#d6b26c" strokeWidth="0.6" strokeLinejoin="round">
@@ -394,7 +388,6 @@ const F = {
         <FaceGrad id="hk7g" light="#ffdc94" base="#ffb95e" /><BlushGrad id="hk7b" c="#f2653a" /><FClip id="hk7c" />
         <radialGradient id="hk7k" cx="50%" cy="38%" r="75%"><stop offset="0%" stopColor="#ffedc4" /><stop offset="100%" stopColor="#ffd694" /></radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="32" fill={BG} />
       <g clipPath="url(#hk7c)">
         {/* 귀 — 원형 클립 안으로 당겨 모서리 잘림 방지 */}
         <circle cx="16" cy="14" r="6.8" fill="#ed9840" /><circle cx="16" cy="14" r="3.6" fill="#ffd9a0" />
@@ -433,7 +426,6 @@ const LEyes = ({ lx = 26, rx = 38, y = 34 }) => (
 const L = {
   lbear: (
     <g>
-      <rect width="64" height="64" fill={BG} />
       <circle cx="19" cy="24" r="4.5" fill="none" stroke={LN} strokeWidth="2" />
       <circle cx="45" cy="24" r="4.5" fill="none" stroke={LN} strokeWidth="2" />
       <circle cx="32" cy="35" r="15" fill="none" stroke={LN} strokeWidth="2" />
@@ -445,7 +437,6 @@ const L = {
   ),
   lchick: (
     <g>
-      <rect width="64" height="64" fill={BG} />
       <circle cx="32" cy="35" r="15" fill="none" stroke={LN} strokeWidth="2" />
       <LHat x={28} y={12} />
       <path d="M45 15c2-1.5 4.5-1.2 5.5.6" fill="none" stroke={LN} strokeWidth="2" strokeLinecap="round" />
@@ -455,7 +446,6 @@ const L = {
   ),
   lcat: (
     <g>
-      <rect width="64" height="64" fill={BG} />
       <path d="M17 26l1-9 8 5z" fill="none" stroke={LN} strokeWidth="2" strokeLinejoin="round" />
       <path d="M47 26l-1-9-8 5z" fill="none" stroke={LN} strokeWidth="2" strokeLinejoin="round" />
       <circle cx="32" cy="35" r="15" fill="none" stroke={LN} strokeWidth="2" />
@@ -468,7 +458,6 @@ const L = {
   ),
   lgecko: (
     <g>
-      <rect width="64" height="64" fill={BG} />
       <path d="M47 40c4 1 6.5 3.4 6 6.2-.4 2.4-2.6 3.6-4.3 2.7-1.4-.7-1.7-2.6-.6-3.6.8-.7 2-.5 2.4.3" fill="none" stroke={LN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M15 33c0-9 7.5-14 17-14s17 5 17 14-7.5 14-17 14-17-5-17-14z" fill={BG} stroke={LN} strokeWidth="2" />
       <path d="M15.5 25.5l1.4-2.4 1.4 2M21 22.5l1.3-2.2 1.4 1.9M43 22.5l-1.3-2.2-1.4 1.9M48.5 25.5l-1.4-2.4-1.4 2" fill="none" stroke={LN} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
@@ -482,7 +471,6 @@ const L = {
   ),
   lrabbit: (
     <g>
-      <rect width="64" height="64" fill={BG} />
       <ellipse cx="23.5" cy="15" rx="3" ry="8" fill="none" stroke={LN} strokeWidth="2" transform="rotate(-12 23.5 15)" />
       <ellipse cx="40.5" cy="15" rx="3" ry="8" fill="none" stroke={LN} strokeWidth="2" transform="rotate(12 40.5 15)" />
       <circle cx="32" cy="36" r="14.5" fill="none" stroke={LN} strokeWidth="2" />
@@ -495,7 +483,6 @@ const L = {
   ),
   ldog: (
     <g>
-      <rect width="64" height="64" fill={BG} />
       <path d="M18.5 30c-3.5-.5-6-4.5-5.5-9.3.3-2.6 2.3-3.2 3.9-1.4 1.7 1.9 2.7 5 2.6 8z" fill="none" stroke={LN} strokeWidth="2" strokeLinejoin="round" />
       <path d="M45.5 30c3.5-.5 6-4.5 5.5-9.3-.3-2.6-2.3-3.2-3.9-1.4-1.7 1.9-2.7 5-2.6 8z" fill="none" stroke={LN} strokeWidth="2" strokeLinejoin="round" />
       <circle cx="32" cy="35.5" r="14.3" fill="none" stroke={LN} strokeWidth="2" />
@@ -507,7 +494,6 @@ const L = {
   ),
   lhamster: (
     <g>
-      <rect width="64" height="64" fill={BG} />
       <circle cx="22.5" cy="22.5" r="3.6" fill="none" stroke={LN} strokeWidth="2" />
       <circle cx="41.5" cy="22.5" r="3.6" fill="none" stroke={LN} strokeWidth="2" />
       <circle cx="32" cy="36" r="15" fill="none" stroke={LN} strokeWidth="2" />
@@ -568,23 +554,27 @@ export const BUDDY_GROUPS = [
 // 평평한 목록(하위 호환) — 그룹을 펼친 것.
 export const BUDDY_LIST = BUDDY_GROUPS.flatMap((g) => g.items)
 
-export default function Buddy({ id, size = 48 }) {
+export default function Buddy({ id, size = 48, plate = true }) {
   if (L[id]) {
-    // 라인 세트 — 여백이 넉넉해 잘림 없음. 그대로 렌더.
+    // 라인 세트 — 아바타/피커엔 흰톤 배경판, 스티커(plate=false)엔 투명.
     return (
       <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">
+        {plate && <rect width="64" height="64" fill={BG} />}
         {L[id]}
       </svg>
     )
   }
   if (F[id]) {
-    // 흰톤 배경 원을 꽉 채우고, 그 위에 캐릭터를 살짝 줄여 얹는다.
-    // → 클로즈업도 라인셋처럼 '흰톤 원 위의 작은 캐릭터'로 보여 세트 톤이 통일된다.
-    //   (얼굴이 원을 꽉 채워 색 배경처럼 보이던 문제 해결)
+    // 아바타/피커: 흰톤 배경 원 + 살짝 줄인 캐릭터(세트 톤 통일, #26).
+    // 스티커(plate=false): 배경 없이 캐릭터만 꽉 차게 → 표지에 투명하게 얹힘.
     return (
       <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">
-        <circle cx="32" cy="32" r="32" fill={BG} />
-        <g transform="translate(32 33.5) scale(0.72) translate(-32 -32)">{F[id]}</g>
+        {plate ? (
+          <>
+            <circle cx="32" cy="32" r="32" fill={BG} />
+            <g transform="translate(32 33.5) scale(0.72) translate(-32 -32)">{F[id]}</g>
+          </>
+        ) : F[id]}
       </svg>
     )
   }

@@ -105,7 +105,7 @@ export function StickerArt({ id, color, style }) {
   if (BUDDY_IDS.has(id)) {
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
-        <Buddy id={id} size="100%" />
+        <Buddy id={id} size="100%" plate={false} />
       </span>
     )
   }
