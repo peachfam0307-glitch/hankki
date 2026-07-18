@@ -156,6 +156,31 @@ const B = {
       </g>
     </g>
   ),
+  // 펭펭 셰프 — 여름 친구. 튜브(코랄 도넛)를 배에 두른 뮤트 슬레이트 펭귄.
+  penguin: (
+    <g>
+      <circle cx="24" cy="28" r="13" fill="#6d8090" />
+      <ellipse cx="24" cy="30.5" rx="8.2" ry="9.8" fill="#f4efe6" />
+      <ellipse cx="12.4" cy="27" rx="2.5" ry="6" fill="#5c6e7d" transform="rotate(16 12.4 27)" />
+      <ellipse cx="35.6" cy="27" rx="2.5" ry="6" fill="#5c6e7d" transform="rotate(-16 35.6 27)" />
+      <circle cx="20.4" cy="24.5" r="1.35" fill="#2e2a25" /><circle cx="27.6" cy="24.5" r="1.35" fill="#2e2a25" />
+      <path d="M22.5 26.8h3l-1.5 2.1z" fill="#eb9a3c" />
+      <circle cx="17.4" cy="27.5" r="2" fill="#f0b9a6" opacity="0.75" /><circle cx="30.6" cy="27.5" r="2" fill="#f0b9a6" opacity="0.75" />
+      {/* 발 — 튜브 아래로 빼꼼 */}
+      <path d="M19 40.6c-.2 1.2-2.4 1.3-3.1.3.5-1 .9-1.6 1.6-2.1z" fill="#eb9a3c" />
+      <path d="M29 40.6c.2 1.2 2.4 1.3 3.1.3-.5-1-.9-1.6-1.6-2.1z" fill="#eb9a3c" />
+      {/* 배에 두른 튜브(코랄 도넛) + 흰 포인트 */}
+      <ellipse cx="24" cy="34.5" rx="11" ry="5.2" fill="#ef9d86" />
+      <ellipse cx="24" cy="34.5" rx="6.6" ry="2.8" fill="#f4efe6" />
+      <ellipse cx="16.5" cy="33.6" rx="1.3" ry="1.9" fill="#f4efe6" transform="rotate(20 16.5 33.6)" />
+      <ellipse cx="31.5" cy="33.6" rx="1.3" ry="1.9" fill="#f4efe6" transform="rotate(-20 31.5 33.6)" />
+      {/* 요리사 모자 */}
+      <circle cx="16.8" cy="12.6" r="3.2" fill="#fff" stroke="#e2ded2" strokeWidth="1" />
+      <circle cx="24" cy="10.8" r="3.7" fill="#fff" stroke="#e2ded2" strokeWidth="1" />
+      <circle cx="31.2" cy="12.6" r="3.2" fill="#fff" stroke="#e2ded2" strokeWidth="1" />
+      <rect x="16" y="14.4" width="16" height="3.5" rx="1.75" fill="#fff" stroke="#e2ded2" strokeWidth="1" />
+    </g>
+  ),
   hamster: (
     <g>
       <circle cx="16" cy="17.5" r="3.6" fill="#e3c8a0" /><circle cx="32" cy="17.5" r="3.6" fill="#e3c8a0" />
@@ -507,6 +532,7 @@ export const BUDDY_GROUPS = [
       { id: 'dog', name: '몽몽 셰프' },
       { id: 'gecko', name: '호두 셰프' }, // 크레스티드 게코 — 꼬리 있음
       { id: 'hamster', name: '햄찌 셰프' },
+      { id: 'penguin', name: '펭펭 셰프' }, // 여름 친구 — 튜브 두른 펭귄
     ],
   },
   {
