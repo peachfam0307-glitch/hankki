@@ -137,11 +137,14 @@ const SVG_HEART = (
     <path d="M12 20.3C4.7 14.4 4.9 8.9 8 7.3c2.1-1.05 3.6.95 4 1.55.4-.6 1.9-2.6 4-1.55 3.1 1.6 3.3 7.1-4 13Z" fill="#dc9aa1" />
   </svg>
 )
-// [x%, y%, delay] — spark/heart 는 머리 위쪽(top 0~30%)에 모으고 작게.
+// 맛있는것들 효과 = 우리가 그린 음식(이모지 대신). 캔디 톤이라 캐릭터랑 딱 맞음.
+const FX_FOOD_URLS = import.meta.glob('../assets/stickers/fx/*.png', { eager: true, query: '?url', import: 'default' })
+const FX_FOOD = ['strawberry', 'burger', 'cupcake', 'cake', 'icecream', 'ramen'].map((n) => FX_FOOD_URLS[`../assets/stickers/fx/${n}.png`])
+// [x%, y%, delay] — spark/heart 는 머리 위쪽에 모으고 작게. food 는 머리 위로 크게 떠다님.
 const FX_DEF = {
   spark: { size: 16, items: [[15, -2, 0], [50, -10, .5], [85, 0, .9], [28, 16, 1.3], [72, 14, .7]], node: SVG_SPARK },
   heart: { size: 16, items: [[25, 0, 0], [63, -10, .8], [45, 12, 1.5]], node: SVG_HEART },
-  food: { size: 19, items: [[14, -10, 0], [84, -14, .9], [30, -22, 1.6], [66, -20, 2.3]], emoji: ['🍔', '🍕', '🍰', '🍜'] },
+  food: { size: 26, items: [[12, -10, 0], [84, -14, .9], [30, -24, 1.6], [66, -22, 2.3]], food: true },
   steam: { size: 11, items: [[42, 6, 0], [52, 2, .9], [47, 10, 1.7]], puff: true },
 }
 export function StickerFx({ kind }) {
@@ -151,8 +154,10 @@ export function StickerFx({ kind }) {
     <span aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}>
       {def.items.map(([x, y, d], i) => (
         <span key={i} className={`hk-fx hk-fx-${kind}`}
-          style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, width: def.size, height: def.size, fontSize: def.emoji ? def.size : undefined, lineHeight: 1, animationDelay: `${d}s` }}>
-          {def.emoji ? def.emoji[i % def.emoji.length] : def.puff ? null : def.node}
+          style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, width: def.size, height: def.size, lineHeight: 1, animationDelay: `${d}s` }}>
+          {def.food
+            ? <img src={FX_FOOD[i % FX_FOOD.length]} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+            : def.puff ? null : def.node}
         </span>
       ))}
     </span>
