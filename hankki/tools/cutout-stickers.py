@@ -68,33 +68,48 @@ def slice_grid(rgba, rows, cols, pad=10, min_area=1500):
     return out
 
 
-def cut_lineart(path, rows, cols, pad=12):
-    """선화(라인아트) 전용: 속이 흰색이라 색채움 방식(largest component)이 깨짐.
-    선을 두껍게(dilate) '벽'으로 세워 흰 배경이 안쪽으로 못 새게 막고 실루엣 통째로 보존."""
+def cut_lineart(path, rows=None, cols=None, pad=16, min_frac=0.004):
+    """선화(라인아트) 전용: 속이 흰색이라 색채움 방식이 깨짐.
+    ① 선을 두껍게(dilate) '벽'으로 세워 흰 배경이 안쪽으로 못 새게 막고
+    ② 새어든 속은 구멍 메우기(fill_holes)로 채우고 (펭귄 얼굴 등 투명방지)
+    ③ 격자 대신 '캐릭터 덩어리(연결요소)'별로 크롭 → 칸 경계에서 소품 잘림 방지.
+    rows/cols는 무시(덩어리 자동 검출). 반환 순서 = 위→아래, 왼→오른."""
     im = Image.open(path).convert('RGB')
     arr = np.asarray(im).astype(np.int16)
     mn = arr.min(axis=2)
-    barrier = ndimage.binary_dilation(mn < 205, iterations=5)   # 선=벽
-    cand = (mn >= 232) & ~barrier                                # 배경 후보(벽 아닌 흰색)
+    barrier = ndimage.binary_dilation(mn < 205, iterations=8)
+    cand = (mn >= 232) & ~barrier
     lbl, n = ndimage.label(cand)
     border = set(np.unique(lbl[0, :])) | set(np.unique(lbl[-1, :])) \
            | set(np.unique(lbl[:, 0])) | set(np.unique(lbl[:, -1]))
     border.discard(0)
-    fg = ndimage.binary_erosion(~np.isin(lbl, list(border)), iterations=2)
+    fg = ndimage.binary_fill_holes(~np.isin(lbl, list(border)))
+    fg = ndimage.binary_erosion(fg, iterations=1)
     alpha = np.clip(ndimage.gaussian_filter(np.where(fg, 255.0, 0.0), 0.8), 0, 255).astype(np.uint8)
     rgba = np.dstack([arr.astype(np.uint8), alpha])
-    H, W, _ = rgba.shape
-    ch, cw = H / rows, W / cols
+    H, W = fg.shape
+    clbl, cn = ndimage.label(ndimage.binary_dilation(fg, iterations=4))
+    boxes = []
+    for i in range(1, cn + 1):
+        ys, xs = np.where(clbl == i)
+        if len(ys) < min_frac * H * W:
+            continue
+        boxes.append((ys.min(), ys.max(), xs.min(), xs.max()))
+    boxes.sort(key=lambda b: b[0] + b[1])
+    rowsg, cur, last = [], [], None
+    for b in boxes:
+        cy = (b[0] + b[1]) // 2
+        if last is None or cy - last < 0.18 * H:
+            cur.append(b)
+        else:
+            rowsg.append(cur); cur = [b]
+        last = cy
+    if cur:
+        rowsg.append(cur)
     out = []
-    for r in range(rows):
-        for c in range(cols):
-            y0, y1, x0, x1 = int(r*ch), int((r+1)*ch), int(c*cw), int((c+1)*cw)
-            cell = rgba[y0:y1, x0:x1]
-            m = cell[:, :, 3] > 40
-            if m.sum() < 500:
-                out.append(None); continue
-            ys, xs = np.where(m)
-            out.append(cell[max(0, ys.min()-pad):ys.max()+pad, max(0, xs.min()-pad):xs.max()+pad])
+    for row in rowsg:
+        for (y0, y1, x0, x1) in sorted(row, key=lambda b: b[2] + b[3]):
+            out.append(rgba[max(0, y0-pad):min(H, y1+pad), max(0, x0-pad):min(W, x1+pad)])
     return out
 
 
