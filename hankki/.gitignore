@@ -4,3 +4,7 @@ dist-ssr
 *.local
 .DS_Store
 .vite
+
+# Python 캐시
+__pycache__/
+*.pyc
