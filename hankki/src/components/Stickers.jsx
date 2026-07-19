@@ -126,20 +126,34 @@ export const FX_KINDS = [
   { key: 'food', label: '맛있는것들 🍔' },
   { key: 'steam', label: '김모락 ♨️' },
 ]
-// 효과 파티클 배치(위치%·지연). 캐릭터 주변~머리 위로 올라간다.
-const FX_PARTICLES = {
-  spark: [['✨', 16, 18, 0], ['⭐', 50, 8, .5], ['✨', 80, 26, .9], ['✨', 30, 50, 1.2]],
-  heart: [['💗', 20, 70, 0], ['🩷', 74, 66, .8], ['💗', 48, 78, 1.5]],
-  food: [['🍅', 18, 74, 0], ['🥕', 76, 70, .8], ['🍔', 46, 80, 1.4], ['🍳', 66, 66, 2]],
-  steam: [['●', 42, 16, 0], ['●', 52, 12, .9], ['●', 47, 20, 1.7]],
+// 효과 파티클 — 이모지 대신 뮤트 톤 커스텀 도형(세련되게), 머리 위쪽에 작게 배치.
+const SVG_SPARK = (
+  <svg viewBox="0 0 24 24" width="100%" height="100%" style={{ display: 'block' }}>
+    <path d="M12 1.5c.85 6.9 3.6 9.65 10.5 10.5C15.6 12.85 12.85 15.6 12 22.5 11.15 15.6 8.4 12.85 1.5 12 8.4 11.15 11.15 8.4 12 1.5Z" fill="#d8b673" />
+  </svg>
+)
+const SVG_HEART = (
+  <svg viewBox="0 0 24 24" width="100%" height="100%" style={{ display: 'block' }}>
+    <path d="M12 20.3C4.7 14.4 4.9 8.9 8 7.3c2.1-1.05 3.6.95 4 1.55.4-.6 1.9-2.6 4-1.55 3.1 1.6 3.3 7.1-4 13Z" fill="#dc9aa1" />
+  </svg>
+)
+// [x%, y%, delay] — spark/heart 는 머리 위쪽(top 0~30%)에 모으고 작게.
+const FX_DEF = {
+  spark: { size: 11, items: [[14, 8, 0], [50, 1, .5], [84, 10, .9], [27, 26, 1.3], [72, 24, .7]], node: SVG_SPARK },
+  heart: { size: 11, items: [[26, 10, 0], [64, 4, .8], [45, 24, 1.5]], node: SVG_HEART },
+  food: { size: 15, items: [[7, 56, 0], [88, 50, .8], [17, 74, 1.4], [80, 70, 2]], emoji: ['🍅', '🥕', '🍔', '🍳'] },
+  steam: { size: 11, items: [[42, 8, 0], [52, 4, .9], [47, 12, 1.7]], puff: true },
 }
 export function StickerFx({ kind }) {
-  const ps = FX_PARTICLES[kind]
-  if (!ps) return null
+  const def = FX_DEF[kind]
+  if (!def) return null
   return (
     <span aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}>
-      {ps.map(([ch, x, y, d], i) => (
-        <span key={i} className={`hk-fx hk-fx-${kind}`} style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, animationDelay: `${d}s` }}>{ch}</span>
+      {def.items.map(([x, y, d], i) => (
+        <span key={i} className={`hk-fx hk-fx-${kind}`}
+          style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, width: def.size, height: def.size, fontSize: def.emoji ? def.size : undefined, lineHeight: 1, animationDelay: `${d}s` }}>
+          {def.emoji ? def.emoji[i % def.emoji.length] : def.puff ? null : def.node}
+        </span>
       ))}
     </span>
   )

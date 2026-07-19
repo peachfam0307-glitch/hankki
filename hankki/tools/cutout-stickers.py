@@ -69,24 +69,22 @@ def slice_grid(rgba, rows, cols, pad=10, min_area=1500):
 
 
 def cut_lineart(path, rows=None, cols=None, pad=16, min_frac=0.004):
-    """선화(라인아트) 전용: 속이 흰색이라 색채움 방식이 깨짐.
-    ① 선을 두껍게(dilate) '벽'으로 세워 흰 배경이 안쪽으로 못 새게 막고
-    ② 새어든 속은 구멍 메우기(fill_holes)로 채우고 (펭귄 얼굴 등 투명방지)
-    ③ 격자 대신 '캐릭터 덩어리(연결요소)'별로 크롭 → 칸 경계에서 소품 잘림 방지.
-    rows/cols는 무시(덩어리 자동 검출). 반환 순서 = 위→아래, 왼→오른."""
+    """선화(라인아트) 전용 — 선만 남기고 속·배경 다 투명.
+    ① 저장 알파 = '선 획'만(어두울수록 진하게, 흰색=투명). 속 안 채움.
+    ② 그룹핑은 '채운 실루엣'(벽 세워 flood + fill_holes)으로 견고하게 → 소품 잘림·조각남 방지.
+    ③ 격자 대신 '캐릭터 덩어리'별로 크롭. rows/cols 무시. 순서 = 위→아래, 왼→오른."""
     im = Image.open(path).convert('RGB')
     arr = np.asarray(im).astype(np.int16)
     mn = arr.min(axis=2)
+    line_a = np.clip((236 - mn) * 3.2, 0, 255).astype(np.uint8)   # 선만(속 투명)
     barrier = ndimage.binary_dilation(mn < 205, iterations=8)
     cand = (mn >= 232) & ~barrier
     lbl, n = ndimage.label(cand)
     border = set(np.unique(lbl[0, :])) | set(np.unique(lbl[-1, :])) \
            | set(np.unique(lbl[:, 0])) | set(np.unique(lbl[:, -1]))
     border.discard(0)
-    fg = ndimage.binary_fill_holes(~np.isin(lbl, list(border)))
-    fg = ndimage.binary_erosion(fg, iterations=1)
-    alpha = np.clip(ndimage.gaussian_filter(np.where(fg, 255.0, 0.0), 0.8), 0, 255).astype(np.uint8)
-    rgba = np.dstack([arr.astype(np.uint8), alpha])
+    fg = ndimage.binary_fill_holes(~np.isin(lbl, list(border)))   # 그룹핑용(채운 실루엣)
+    rgba = np.dstack([arr.astype(np.uint8), line_a])
     H, W = fg.shape
     clbl, cn = ndimage.label(ndimage.binary_dilation(fg, iterations=4))
     boxes = []
