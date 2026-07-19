@@ -139,10 +139,10 @@ const SVG_HEART = (
 )
 // [x%, y%, delay] — spark/heart 는 머리 위쪽(top 0~30%)에 모으고 작게.
 const FX_DEF = {
-  spark: { size: 11, items: [[14, 8, 0], [50, 1, .5], [84, 10, .9], [27, 26, 1.3], [72, 24, .7]], node: SVG_SPARK },
-  heart: { size: 11, items: [[26, 10, 0], [64, 4, .8], [45, 24, 1.5]], node: SVG_HEART },
-  food: { size: 15, items: [[7, 56, 0], [88, 50, .8], [17, 74, 1.4], [80, 70, 2]], emoji: ['🍅', '🥕', '🍔', '🍳'] },
-  steam: { size: 11, items: [[42, 8, 0], [52, 4, .9], [47, 12, 1.7]], puff: true },
+  spark: { size: 16, items: [[15, -2, 0], [50, -10, .5], [85, 0, .9], [28, 16, 1.3], [72, 14, .7]], node: SVG_SPARK },
+  heart: { size: 16, items: [[25, 0, 0], [63, -10, .8], [45, 12, 1.5]], node: SVG_HEART },
+  food: { size: 19, items: [[14, -10, 0], [84, -14, .9], [30, -22, 1.6], [66, -20, 2.3]], emoji: ['🍔', '🍕', '🍰', '🍜'] },
+  steam: { size: 11, items: [[42, 6, 0], [52, 2, .9], [47, 10, 1.7]], puff: true },
 }
 export function StickerFx({ kind }) {
   const def = FX_DEF[kind]

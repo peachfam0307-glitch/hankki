@@ -1326,9 +1326,9 @@ html, body { overscroll-behavior: none; }
 /* 하트 — 머리 위 작게 뜨며 살짝 상승 */
 @keyframes hk-fx-heart { 0% { opacity: 0; transform: translateY(15%) scale(.5); } 25% { opacity: 1; } 60% { opacity: 1; } 100% { opacity: 0; transform: translateY(-85%) scale(1); } }
 .hk-fx-heart { animation: hk-fx-heart 2.6s ease-in infinite; }
-/* 먹을거 — 아래에서 위로 몽글 */
-@keyframes hk-fx-food { 0% { opacity: 0; transform: translateY(20%) scale(.5) rotate(-8deg); } 18% { opacity: 1; } 65% { opacity: 1; } 100% { opacity: 0; transform: translateY(-150%) scale(1.05) rotate(8deg); } }
-.hk-fx-food { animation: hk-fx-food 2.8s ease-in infinite; }
+/* 먹을거 — 머리 위에서 몽글몽글 떠다님(가볍게 상승) */
+@keyframes hk-fx-food { 0% { opacity: 0; transform: translateY(30%) scale(.5) rotate(-8deg); } 22% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; transform: translateY(-60%) scale(1.05) rotate(8deg); } }
+.hk-fx-food { animation: hk-fx-food 3s ease-in-out infinite; }
 /* 김 모락 — 하얀 김(어두운 배경서 잘 보임) */
 .hk-fx-steam { border-radius: 50%; background: rgba(255,255,255,.82); filter: blur(1.6px); }
 @keyframes hk-fx-steam { 0% { opacity: 0; transform: translateY(30%) scale(.5); } 25% { opacity: .85; } 100% { opacity: 0; transform: translateY(-120%) scale(1.6); } }
