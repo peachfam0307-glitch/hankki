@@ -1303,20 +1303,31 @@ html, body { overscroll-behavior: none; }
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* 🎁 부엌 식구들 통통(젤리 바운스) — 아래를 딛고 말랑하게 튄다. 살짝만(취향타지 않게). */
-@keyframes hk-tongtong {
-  0%, 100% { transform: translateY(0) scale(1, 1); }
-  15% { transform: translateY(0) scale(1.05, 0.95); }
-  40% { transform: translateY(-6%) scale(0.97, 1.03); }
-  65% { transform: translateY(0) scale(1.03, 0.97); }
-  80% { transform: translateY(-1%) scale(0.99, 1.01); }
-}
-.hk-tongtong {
-  animation: hk-tongtong 2.4s ease-in-out infinite;
-  transform-origin: 50% 100%;
-  will-change: transform;
-}
-@media (prefers-reduced-motion: reduce) { .hk-tongtong { animation: none; } }
+/* 🎁 부엌 식구들 움직임(모션) — 전부 그림 1장으로. 아래를 딛고 튀는 느낌(origin bottom). */
+[class*="hk-m-"] { transform-origin: 50% 100%; will-change: transform; }
+@keyframes hk-tongtong { 0%,100% { transform: translateY(0) scale(1,1); } 15% { transform: scale(1.05,.95); } 40% { transform: translateY(-6%) scale(.97,1.03); } 65% { transform: scale(1.03,.97); } 80% { transform: translateY(-1%) scale(.99,1.01); } }
+.hk-m-tongtong { animation: hk-tongtong 2.4s ease-in-out infinite; }
+@keyframes hk-kong { 0%,100% { transform: translateY(0); } 45% { transform: translateY(-20%); } }
+.hk-m-kong { animation: hk-kong 1.15s cubic-bezier(.3,.7,.4,1) infinite; }
+@keyframes hk-tilt { 0%,20%,100% { transform: rotate(0); } 45%,70% { transform: rotate(-10deg); } }
+.hk-m-tilt { animation: hk-tilt 2.8s ease-in-out infinite; }
+@keyframes hk-sway { 0%,100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+.hk-m-sway { animation: hk-sway 2.6s ease-in-out infinite; }
+@keyframes hk-float { 0%,100% { transform: translateY(4%); } 50% { transform: translateY(-7%); } }
+.hk-m-float { animation: hk-float 3.4s ease-in-out infinite; transform-origin: 50% 50%; }
+@keyframes hk-drop { 0% { transform: translateY(-45%) scale(1,1); } 18% { transform: translateY(0) scale(1.1,.88); } 30% { transform: translateY(0) scale(.97,1.03); } 42%,100% { transform: translateY(0) scale(1,1); } }
+.hk-m-drop { animation: hk-drop 1.9s ease-in-out infinite; }
+
+/* 💫 효과(양념) 파티클 — 캐릭터 주변~머리 위로 올라간다. */
+.hk-fx { font-size: 1.1em; line-height: 1; pointer-events: none; }
+@keyframes hk-fx-spark { 0%,100% { opacity: .25; transform: scale(.5) rotate(-10deg); } 50% { opacity: 1; transform: scale(1.15) rotate(10deg); } }
+.hk-fx-spark { animation: hk-fx-spark 1.6s ease-in-out infinite; }
+@keyframes hk-fx-rise { 0% { opacity: 0; transform: translateY(10%) scale(.6); } 18% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-260%) scale(1.15); } }
+.hk-fx-heart, .hk-fx-food { animation: hk-fx-rise 2.6s ease-in infinite; }
+@keyframes hk-fx-steam { 0% { opacity: 0; transform: translateY(10%) translateX(0) scale(.5); } 25% { opacity: .85; } 60% { transform: translateY(-90%) translateX(8%) scale(1.05); } 100% { opacity: 0; transform: translateY(-200%) translateX(-6%) scale(1.5); } }
+.hk-fx-steam { color: rgba(255,255,255,.8); filter: blur(1.5px); animation: hk-fx-steam 2.6s ease-in infinite; }
+
+@media (prefers-reduced-motion: reduce) { [class*="hk-m-"], .hk-fx { animation: none !important; } }
 
 /* 첫 사용 코치마크 — 대상 버튼 둘레가 반짝반짝 */
 .coach-ring {

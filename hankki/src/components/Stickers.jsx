@@ -82,22 +82,68 @@ const BUDDY_IDS = new Set([
   'fchick', 'fbear', 'frabbit', 'fcat', 'fdog', 'fgecko', 'fhamster',
 ])
 
-// ── 🎁 부엌 식구들 (낱개 투명 PNG 스티커) ──
+// ── 🎁 부엌 식구들 (낱개 투명 PNG 스티커) — 3세트: 오리지널·캔디·라인 ──
 // 창업자가 그린 전신 캐릭터를 배경제거(플러드필)한 스티커. SVG가 아니라 PNG라 <img>로 렌더.
-// ratio = 원본 가로/세로(세로가 긴 전신). 통통(젤리 바운스) 모션은 .hk-tongtong 클래스로 얹는다.
-const KF_URLS = import.meta.glob('../assets/stickers/kitchen/*.png', { eager: true, query: '?url', import: 'default' })
-const kfUrl = (name) => KF_URLS[`../assets/stickers/kitchen/${name}.png`]
-export const KITCHEN_FAMILY = {
-  kf_gomgom: { src: kfUrl('gomgom'), ratio: 622 / 834, label: '곰곰' },
-  kf_toto: { src: kfUrl('toto'), ratio: 612 / 923, label: '토토' },
-  kf_nyangi: { src: kfUrl('nyangi'), ratio: 606 / 858, label: '냄비냥이' },
-  kf_ppyak: { src: kfUrl('ppyak'), ratio: 643 / 847, label: '삐약' },
-  kf_mongmong: { src: kfUrl('mongmong'), ratio: 685 / 885, label: '몽몽' },
-  kf_hodu: { src: kfUrl('hodu'), ratio: 607 / 844, label: '호두' },
-  kf_pengpeng: { src: kfUrl('pengpeng'), ratio: 741 / 976, label: '펭펭' },
-  kf_hamzzi: { src: kfUrl('hamzzi'), ratio: 625 / 868, label: '햄찌' },
+// id 규칙: kf_<name>(오리지널) · kf_c_<name>(캔디) · kf_l_<name>(라인).
+const KF_URLS = import.meta.glob(
+  ['../assets/stickers/kitchen/*.png', '../assets/stickers/candy/*.png', '../assets/stickers/line/*.png'],
+  { eager: true, query: '?url', import: 'default' },
+)
+const kfU = (folder, name) => KF_URLS[`../assets/stickers/${folder}/${name}.png`]
+const KF_NAMES = [
+  ['gomgom', '곰곰'], ['toto', '토토'], ['nyangi', '냄비냥이'], ['ppyak', '삐약'],
+  ['mongmong', '몽몽'], ['hodu', '호두'], ['pengpeng', '펭펭'], ['hamzzi', '햄찌'],
+]
+const KF_RATIO = {
+  kitchen: { gomgom: 622 / 834, toto: 612 / 923, nyangi: 606 / 858, ppyak: 643 / 847, mongmong: 685 / 885, hodu: 607 / 844, pengpeng: 741 / 976, hamzzi: 625 / 868 },
+  candy: { gomgom: 332 / 426, toto: 308 / 455, nyangi: 278 / 408, ppyak: 349 / 427, mongmong: 305 / 408, hodu: 324 / 405, pengpeng: 275 / 390, hamzzi: 279 / 393 },
+  line: { gomgom: 350 / 486, toto: 330 / 457, nyangi: 318 / 476, ppyak: 357 / 470, mongmong: 364 / 445, hodu: 408 / 453, pengpeng: 311 / 422, hamzzi: 336 / 437 },
+}
+export const KITCHEN_FAMILY = {}
+for (const [folder, prefix] of [['kitchen', 'kf_'], ['candy', 'kf_c_'], ['line', 'kf_l_']]) {
+  for (const [name, label] of KF_NAMES) {
+    KITCHEN_FAMILY[prefix + name] = { src: kfU(folder, name), ratio: KF_RATIO[folder][name], label }
+  }
 }
 export const KITCHEN_IDS = new Set(Object.keys(KITCHEN_FAMILY))
+
+// ── ✨ 캐릭터 움직임(모션) · 효과(양념) — 스티커마다 골라 얹는다 ──
+// 전부 그림 1장으로 되는 CSS 모션. item.motion / item.fx 에 key 저장.
+export const MOTIONS = [
+  { key: 'tongtong', label: '통통' },
+  { key: 'kong', label: '콩콩' },
+  { key: 'tilt', label: '갸웃' },
+  { key: 'sway', label: '살랑' },
+  { key: 'float', label: '둥실' },
+  { key: 'drop', label: '쿵착지' },
+  { key: 'none', label: '가만히' },
+]
+export const motionClass = (m) => (m && m !== 'none' ? `hk-m-${m}` : '')
+export const FX_KINDS = [
+  { key: 'none', label: '없음' },
+  { key: 'spark', label: '반짝이 ✨' },
+  { key: 'heart', label: '하트 💗' },
+  { key: 'food', label: '맛있는것들 🍔' },
+  { key: 'steam', label: '김모락 ♨️' },
+]
+// 효과 파티클 배치(위치%·지연). 캐릭터 주변~머리 위로 올라간다.
+const FX_PARTICLES = {
+  spark: [['✨', 16, 18, 0], ['⭐', 50, 8, .5], ['✨', 80, 26, .9], ['✨', 30, 50, 1.2]],
+  heart: [['💗', 20, 70, 0], ['🩷', 74, 66, .8], ['💗', 48, 78, 1.5]],
+  food: [['🍅', 18, 74, 0], ['🥕', 76, 70, .8], ['🍔', 46, 80, 1.4], ['🍳', 66, 66, 2]],
+  steam: [['●', 42, 16, 0], ['●', 52, 12, .9], ['●', 47, 20, 1.7]],
+}
+export function StickerFx({ kind }) {
+  const ps = FX_PARTICLES[kind]
+  if (!ps) return null
+  return (
+    <span aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}>
+      {ps.map(([ch, x, y, d], i) => (
+        <span key={i} className={`hk-fx hk-fx-${kind}`} style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, animationDelay: `${d}s` }}>{ch}</span>
+      ))}
+    </span>
+  )
+}
 
 // ── 스티커 색 바꾸기(리컬러) — '곱셈기' ──
 // 단일 몸통색 스티커만 대상. 기본색 → 고른 색으로 문자열 치환(ART 원본은 안 건드림).
@@ -118,17 +164,17 @@ export const STICKER_COLORS = [
 ]
 
 // 스티커 렌더러 — 드로잉 아트는 인라인 SVG, 친구들은 Buddy 그대로. color 주면 몸통색 리컬러.
-export function StickerArt({ id, color, style }) {
+export function StickerArt({ id, color, style, motion }) {
   const kf = KITCHEN_FAMILY[id]
   if (kf) {
-    // 🎁 부엌 식구들 — 투명 PNG를 통통(젤리 바운스) 모션으로. 아래를 딛고 튀는 느낌(origin bottom).
+    // 🎁 부엌 식구들 — 투명 PNG. motion 클래스로 움직임(기본 통통). 아래를 딛고 튀는 느낌(origin bottom).
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
         <img
           src={kf.src}
           alt={kf.label}
           draggable={false}
-          className="hk-tongtong"
+          className={motionClass(motion === undefined ? 'tongtong' : motion)}
           style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }}
         />
       </span>
@@ -151,8 +197,11 @@ export function StickerArt({ id, color, style }) {
 // 스티커별 가로:세로 비율(레이아웃용). 말풍선은 넓고, 부엌 식구들은 세로가 길다.
 export const stickerRatio = (id) => (id === 'yum' ? 74 / 46 : KITCHEN_FAMILY[id] ? KITCHEN_FAMILY[id].ratio : 1)
 
+const kfItems = (prefix) => KF_NAMES.map(([n]) => prefix + n)
 export const STICKER_GROUPS = [
-  { key: 'kitchen', label: '🎁 부엌 식구들', items: Object.keys(KITCHEN_FAMILY) },
+  { key: 'kitchen', label: '🎁 부엌 식구들', items: kfItems('kf_') },
+  { key: 'kitchen_candy', label: '🍬 캔디', items: kfItems('kf_c_') },
+  { key: 'kitchen_line', label: '✏️ 라인', items: kfItems('kf_l_') },
   { key: 'buddies', label: '친구들', items: ['bear', 'rabbit', 'catpot', 'chick', 'dog', 'gecko', 'hamster', 'penguin'] },
   { key: 'buddies_line', label: '친구들·라인', items: ['lbear', 'lchick', 'lcat', 'lgecko', 'lrabbit', 'ldog', 'lhamster'] },
   { key: 'buddies_candy', label: '친구들·캔디', items: ['fchick', 'fbear', 'frabbit', 'fcat', 'fdog', 'fgecko', 'fhamster'] },

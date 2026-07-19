@@ -3,7 +3,7 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS } from './Stickers'
+import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, MOTIONS, FX_KINDS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -69,7 +69,8 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const ctxChip = { flex: '0 0 auto', padding: 4, borderRadius: 10, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }
   const selOn = '2.5px solid var(--brown)'
   const selOff = '1.5px solid var(--line)'
-  const hasCtx = selItem && (selItem.type === 'note' || selItem.type === 'text' || selItem.type === 'tape' || (selItem.type === 'sticker' && RECOLORABLE.has(selItem.key)))
+  const selIsKitchen = selItem?.type === 'sticker' && KITCHEN_IDS.has(selItem.key)
+  const hasCtx = selItem && (selItem.type === 'note' || selItem.type === 'text' || selItem.type === 'tape' || selIsKitchen || (selItem.type === 'sticker' && RECOLORABLE.has(selItem.key)))
 
   // 서랍 카테고리 — 성격 비슷한 것끼리 4개 묶음 탭으로(가로 스크롤이 길지 않게).
   // 배경·테이프 / 메모·글자 / 친구들(오리지널·라인·캔디) / 스티커(표정·심볼·재료·도구·소스·디저트).
@@ -79,7 +80,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     { key: 'buddies', label: '🐻 친구들' },
     { key: 'sticker', label: '✨ 스티커' },
   ]
-  const BUDDY_GROUP_KEYS = new Set(['kitchen', 'buddies', 'buddies_line', 'buddies_candy'])
+  const BUDDY_GROUP_KEYS = new Set(['kitchen', 'kitchen_candy', 'kitchen_line', 'buddies', 'buddies_line', 'buddies_candy'])
   const buddyGroups = STICKER_GROUPS.filter((g) => BUDDY_GROUP_KEYS.has(g.key))
   const stickerGroups = STICKER_GROUPS.filter((g) => !BUDDY_GROUP_KEYS.has(g.key))
 
@@ -93,10 +94,12 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
 
   const addSticker = (key) => {
     const n = items.length
+    const isKf = KITCHEN_IDS.has(key)
     const it = {
       id: newDecorId(), type: 'sticker', key,
       x: 0.5 + ((n % 3) - 1) * 0.06, y: 0.42 + ((n % 4) - 1.5) * 0.05,
-      s: key === 'yum' ? 0.34 : FACE_KEYS.has(key) ? 0.11 : KITCHEN_IDS.has(key) ? 0.28 : 0.2, r: ((n % 5) - 2) * 4,
+      s: key === 'yum' ? 0.34 : FACE_KEYS.has(key) ? 0.11 : isKf ? 0.28 : 0.2, r: ((n % 5) - 2) * 4,
+      ...(isKf ? { motion: 'tongtong', fx: 'none' } : {}),
     }
     setItems((arr) => [...arr, it])
     setSel(it.id)
@@ -173,6 +176,34 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
         {/* 고정 컨텍스트 바 — 선택한 아이템의 색·무늬·모양을 캔버스 바로 아래에서 바로 바꾼다(스크롤 이동 없음) */}
         {hasCtx && (
           <div style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '9px 12px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {selIsKitchen && (
+              <>
+                <div style={ctxRow}>
+                  <span style={ctxLabel}>✨ 움직임</span>
+                  <div style={ctxScroll}>
+                    {MOTIONS.map((m) => {
+                      const on = (selItem.motion || 'tongtong') === m.key
+                      return (
+                        <button key={m.key} className="press" onClick={() => patch(sel, { motion: m.key })}
+                          style={{ padding: '5px 13px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{m.label}</button>
+                      )
+                    })}
+                  </div>
+                </div>
+                <div style={ctxRow}>
+                  <span style={ctxLabel}>💫 효과</span>
+                  <div style={ctxScroll}>
+                    {FX_KINDS.map((f) => {
+                      const on = (selItem.fx || 'none') === f.key
+                      return (
+                        <button key={f.key} className="press" onClick={() => patch(sel, { fx: f.key })}
+                          style={{ padding: '5px 13px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{f.label}</button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
             {selItem.type === 'sticker' && RECOLORABLE.has(selItem.key) && (
               <div style={ctxRow}>
                 <span style={ctxLabel}>🎨 색</span>

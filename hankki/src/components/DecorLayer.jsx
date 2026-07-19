@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import Icon from './Icon'
-import { StickerArt, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle } from './Stickers'
+import { StickerArt, StickerFx, KITCHEN_IDS, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -104,7 +104,8 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
               <TextDeco it={it} editable={editable} />
             ) : (
               <span style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(0 3px 4px rgba(60,50,35,.22))' }}>
-                <StickerArt id={it.key} color={it.color} />
+                <StickerArt id={it.key} color={it.color} motion={it.motion} />
+                {KITCHEN_IDS.has(it.key) && <StickerFx kind={it.fx} />}
               </span>
             )}
 
