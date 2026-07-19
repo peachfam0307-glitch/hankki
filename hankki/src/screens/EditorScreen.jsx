@@ -45,6 +45,7 @@ const THUMB_TYPES = [
   { key: 'emoji', label: '이모지' },
   { key: 'label', label: '글자' },
   { key: 'photo', label: '사진' },
+  { key: 'none', label: '없음' },
 ]
 
 export default function EditorScreen({ id, prefill }) {
@@ -434,6 +435,9 @@ export default function EditorScreen({ id, prefill }) {
               <FoodIconPicker value={f.icon || guessFoodIcon(f.title)} onChange={(k) => set('icon', k)} size={74} />
               <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.55 }}>탭해서 아이콘을 골라요.<br />제목에 맞춰 자동 추천돼요.</div>
             </div>
+          )}
+          {f.thumb === 'none' && (
+            <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.55 }}>표지를 비웠어요. 아이콘·이모지 없이 <b>꾸미기</b>로 배경·스티커만 얹어 깔끔하게 만들 수 있어요 🎨</div>
           )}
           {f.thumb === 'emoji' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

@@ -71,6 +71,8 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
         </svg>
       </div>
     )
+  } else if (thumb === 'none') {
+    inner = null // 표지 비우기 — 아이콘·이모지 없이 배경/꾸미기만 보이게
   } else {
     inner = <div style={center}><FoodIcon name={recipe.icon || guessFoodIcon(recipe.title)} size={iconSize} /></div>
   }

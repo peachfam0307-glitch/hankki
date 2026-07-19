@@ -85,7 +85,7 @@ function migrateBasics(saved) {
   // 기존 기본 레시피에 새 표지 사진 입히기 — 아직 사진이 없는(기본 아이콘) 것만.
   // (사용자가 직접 넣은 사진/커스텀은 건드리지 않는다)
   const withPhotos = saved.recipes.map((r) =>
-    r && BASIC_PHOTOS[r.id] && r.thumb !== 'photo' && !r.image
+    r && BASIC_PHOTOS[r.id] && r.thumb !== 'photo' && r.thumb !== 'none' && !r.image
       ? { ...r, thumb: 'photo', image: BASIC_PHOTOS[r.id] }
       : r
   )
