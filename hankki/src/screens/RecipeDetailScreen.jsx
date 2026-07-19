@@ -13,6 +13,7 @@ import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { shareRecipeCard } from '../shareCard'
+import { shareDecoratedCover } from '../shareCover'
 import { scaleIngredient } from '../scale'
 import { dateLabel } from '../utils'
 import { SOURCES } from '../data/seed'
@@ -49,6 +50,7 @@ export default function RecipeDetailScreen({ id }) {
   useLayerBack(menu, () => setMenu(false))
   const [coach, setCoach] = useState(() => needsCoach(COACH_KEY))
   const iconRef = useRef(null)
+  const coverRef = useRef(null) // 꾸민 표지(레꾸) 캡처용
   const r = recipes.find((x) => x.id === id)
   const baseServings = r?.servings || 0
   const [servings, setServings] = useState(baseServings || 1)
@@ -103,11 +105,17 @@ export default function RecipeDetailScreen({ id }) {
 
   const onShare = async () => {
     setMenu(false)
-    nav.showToast('💌 친구와 레시피 공유하기 · 예쁜 카드 만드는 중…')
-    const svg = iconRef.current?.querySelector('svg')?.outerHTML
+    nav.showToast('💌 내가 꾸민 표지로 자랑 카드 만드는 중…')
     // 앱 루트 주소 — 상대경로 base('./')라 BASE_URL로는 못 구한다. 현재 페이지 경로의
     // 디렉터리(마지막 파일명 제거)로 계산해야 /hankki/ 같은 하위경로까지 정확히 잡힌다.
     const appUrl = location.origin + location.pathname.replace(/[^/]*$/, '')
+    // ⭐ 공유 = "내가 꾸민 표지 그대로" (배경지·스티커·포스트잇·글씨 다 담김. 2026-07-19 방향)
+    if (coverRef.current) {
+      const res = await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl })
+      if (res.ok) return
+    }
+    // 표지 캡처가 실패한 경우에만 — 예전 레시피 카드로라도 공유되게 안전망
+    const svg = iconRef.current?.querySelector('svg')?.outerHTML
     await shareRecipeCard({
       title: r.title,
       info,
@@ -156,15 +164,16 @@ export default function RecipeDetailScreen({ id }) {
         </div>
       </div>
 
-      {/* 히어로 이미지(표지) — 꾸미기 스티커·포스트잇이 이 위에 얹힌다 */}
-      <div style={{ position: 'relative' }}>
+      {/* 히어로 이미지(표지) — 꾸미기 스티커·포스트잇이 이 위에 얹힌다. ref로 통째 캡처(자랑 공유) */}
+      <div ref={coverRef} style={{ position: 'relative' }}>
         <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
         <DecorLayer items={r.decor || []} />
-        {/* 표지 꾸미기 — 솔직한 버튼으로 눈에 띄게(포인트색 채운 알약) */}
+        {/* 표지 꾸미기 — 솔직한 버튼으로 눈에 띄게(포인트색 채운 알약). 캡처에선 제외(data-nocapture) */}
         <button
           className="press"
           onClick={() => setDecorOpen(true)}
           data-coach="decor"
+          data-nocapture
           aria-label="레시피 꾸미기"
           style={{ position: 'absolute', bottom: 12, right: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--brown)', color: '#fff', fontSize: 13.5, fontWeight: 800, padding: '9px 15px', borderRadius: 999, boxShadow: '0 4px 14px rgba(0,0,0,.3)' }}
         >

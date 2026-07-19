@@ -28,7 +28,7 @@
   --today-grad: linear-gradient(135deg, #f6f0e5, #efe6d6); /* '오늘 뭐 해먹지' 카드 */
   --tease: linear-gradient(100deg, #e9f1f2, #dcebee); /* '곧 나올 기능' 카드 — 웜 크림에 시원한 민트블루 보색 톡 */
   --tease-ic: #5f9298; /* 위 카드 아이콘/강조 */
-  --thumb: linear-gradient(160deg, #ffffff, #f8f3ea); /* 레시피 사진 배경 — 크림: 웜 화이트 */
+  --thumb: linear-gradient(160deg, #ffffff, #f4f2ee); /* 레시피 사진 배경 — 밝은 중립(웜기 살짝): 곰(웜)·펭(쿨) 둘 다 어울리게. 2026-07-19 확정, 백업 #f3f4f4 */
 
   --r-sm: 10px;
   --r-md: 16px;
