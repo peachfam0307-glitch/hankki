@@ -181,7 +181,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                 <div style={ctxRow}>
                   <span style={ctxLabel}>✨ 움직임</span>
                   <div style={ctxScroll}>
-                    {MOTIONS.map((m) => {
+                    {MOTIONS.filter((m) => m.base).map((m) => {
                       const on = (selItem.motion || 'tongtong') === m.key
                       return (
                         <button key={m.key} className="press" onClick={() => patch(sel, { motion: m.key })}
@@ -193,7 +193,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                 <div style={ctxRow}>
                   <span style={ctxLabel}>💫 효과</span>
                   <div style={ctxScroll}>
-                    {FX_KINDS.map((f) => {
+                    {FX_KINDS.filter((f) => f.base).map((f) => {
                       const on = (selItem.fx || 'none') === f.key
                       return (
                         <button key={f.key} className="press" onClick={() => patch(sel, { fx: f.key })}

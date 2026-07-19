@@ -109,20 +109,21 @@ export const KITCHEN_IDS = new Set(Object.keys(KITCHEN_FAMILY))
 
 // ── ✨ 캐릭터 움직임(모션) · 효과(양념) — 스티커마다 골라 얹는다 ──
 // 전부 그림 1장으로 되는 CSS 모션. item.motion / item.fx 에 key 저장.
+// base:true = 기본(무료) 노출. 나머지는 팩용 예약(코드·CSS는 있고 피커에만 안 뜸).
 export const MOTIONS = [
-  { key: 'tongtong', label: '통통' },
+  { key: 'none', label: '가만히', base: true },
+  { key: 'tongtong', label: '통통', base: true },
+  { key: 'tilt', label: '갸웃', base: true },
   { key: 'kong', label: '콩콩' },
-  { key: 'tilt', label: '갸웃' },
   { key: 'sway', label: '살랑' },
   { key: 'float', label: '둥실' },
   { key: 'drop', label: '쿵착지' },
-  { key: 'none', label: '가만히' },
 ]
 export const motionClass = (m) => (m && m !== 'none' ? `hk-m-${m}` : '')
 export const FX_KINDS = [
-  { key: 'none', label: '없음' },
-  { key: 'spark', label: '반짝이 ✨' },
-  { key: 'heart', label: '하트 💗' },
+  { key: 'none', label: '없음', base: true },
+  { key: 'spark', label: '반짝이 ✨', base: true },
+  { key: 'heart', label: '하트 💗', base: true },
   { key: 'food', label: '맛있는것들 🍔' },
   { key: 'steam', label: '김모락 ♨️' },
 ]
