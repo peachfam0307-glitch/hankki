@@ -299,7 +299,8 @@ export default function RecipeDetailScreen({ id }) {
         {/* 주부의 장바구니 픽 — 이 레시피가 쓴 제품을 바로 사러가기. 재료 바로 밑(잘 보이는 자리)·수익 연결 */}
         {pantryPicks.length > 0 && (
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>🛒 이 레시피, 이걸로 만들었어요</div>
+            <div style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 6 }}>🛒 이 레시피, 이걸로 만들었어요</div>
+            <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 10, lineHeight: 1.55 }}>재료를 <b style={{ color: 'var(--brown)' }}>왜 쓰는지 설명</b>은 <b style={{ color: 'var(--brown)' }}>🌿 장보기 → 주부의 장바구니</b>에 있어요</div>
             {pantryPicks.map((p) => (
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
                 <span style={{ fontSize: 22, flex: '0 0 auto' }}>{p.emoji}</span>
