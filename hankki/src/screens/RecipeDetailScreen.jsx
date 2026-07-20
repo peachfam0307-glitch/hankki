@@ -14,8 +14,9 @@ import DecorEditor from '../components/DecorEditor'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { shareRecipeCard } from '../shareCard'
 import { scaleIngredient } from '../scale'
-import { dateLabel } from '../utils'
+import { dateLabel, openExternal } from '../utils'
 import { SOURCES } from '../data/seed'
+import { picksForIngredients, productLink, productMall } from '../data/curation'
 import { useWakeLock } from '../useWakeLock'
 import { useLayerBack } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
@@ -24,6 +25,8 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 const COACH_KEY = 'hankki:coach:detail'
 const COACH_STEPS = [
   { sel: '[data-coach="edit"]', label: '✏️ 편집', desc: '재료·만드는 법, 언제든 고칠 수 있어요' },
+  { sel: '[data-coach="shop"]', label: '🛒 재료 장보기 담기', desc: '필요한 재료를 한 번에 장보기 리스트에 담아요. 담은 건 장보기 탭에서 체크하며 사면 편해요' },
+  { sel: '[data-coach="pantry"]', label: '🌿 주부의 장바구니', desc: '18년차 주부가 진짜 쓰는 재료예요. 탭하면 바로 사러가기로 연결돼요' },
   { sel: '[data-coach="share"]', label: '💌 친구와 레시피 공유하기', desc: '재료·만드는 법이 담긴 예쁜 카드로 보내요' },
   { sel: '[data-coach="decor"]', label: '🎨 레시피 꾸미기', desc: '스티커·마스킹테이프·손글씨로 나만의 표지!' },
   { sel: '[data-coach="cook"]', label: '🍳 요리 시작', desc: '큰 글씨 요리모드 · 화면 안 꺼짐 · 단계 타이머' },
@@ -34,7 +37,7 @@ const COACH_STEPS = [
 const isIngHeader = (s) => /^\[[^\]]+\]$/.test(String(s).trim())
 
 export default function RecipeDetailScreen({ id }) {
-  const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, diary, addDiary, removeDiary, updateRecipe } = useStore()
+  const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateRecipe } = useStore()
   const nav = useNav()
   useWakeLock() // 레시피를 보며 요리할 때 화면이 꺼지지 않게
   const [menu, setMenu] = useState(false)
@@ -118,6 +121,13 @@ export default function RecipeDetailScreen({ id }) {
       iconSvg: svg,
       appUrl,
     })
+  }
+
+  // 이 레시피가 쓴 '주부의 장바구니' 제품(재료에 제품명이 적혀 있으면 자동 매칭) — 구매 연결
+  const pantryPicks = picksForIngredients(r?.ingredients || [])
+  const addAllPicks = () => {
+    pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p) }))
+    nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요 🛒`)
   }
 
   return (
@@ -257,6 +267,7 @@ export default function RecipeDetailScreen({ id }) {
               </div>
               <button
                 className="mini-buy press"
+                data-coach="shop"
                 onClick={() => {
                   addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => scaleIngredient(ing, ratio)))
                   nav.showToast('재료를 장보기 리스트에 담았어요 🛒')
@@ -282,6 +293,25 @@ export default function RecipeDetailScreen({ id }) {
               ))}
             </div>
           </>
+        )}
+
+        {/* 주부의 장바구니 픽 — 이 레시피가 쓴 제품을 바로 사러가기. 재료 바로 밑(잘 보이는 자리)·수익 연결 */}
+        {pantryPicks.length > 0 && (
+          <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
+            <div style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>🛒 이 레시피, 이걸로 만들었어요</div>
+            {pantryPicks.map((p) => (
+              <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
+                <span style={{ fontSize: 22, flex: '0 0 auto' }}>{p.emoji}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{p.name}</span>
+                  {productMall(p) && <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream-deep)', borderRadius: 5, padding: '1px 6px' }}>{productMall(p)}</span>}
+                </div>
+                <button className="press" onClick={() => openExternal(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>
+              </div>
+            ))}
+            <button className="press" onClick={addAllPicks} style={{ width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 14 }}>🛒 이 재료 다 담기</button>
+            <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>담아두고 장보기에서 체크하며 사면 편해요 · 18년차 주부가 진짜 쓰는 재료예요 🌿</div>
+          </div>
         )}
 
         {r.steps?.length > 0 && (

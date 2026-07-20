@@ -87,15 +87,7 @@ export default function CoachMarks({ storageKey, steps, onDone }) {
               {steps.map((_, k) => (
                 <span key={k} style={{ width: 6, height: 6, borderRadius: 3, background: k === i ? '#c47a58' : '#e3dccd' }} />
               ))}
-              <span style={{ fontSize: 12, color: '#b0a692', marginLeft: 6 }}>탭해서 다음</span>
-              {/* 건너뛰기 — 화면 구석에 두면 안내 대상 버튼을 가릴 수 있어 말풍선 안에 둔다 */}
-              <button
-                className="press"
-                onClick={(e) => { e.stopPropagation(); finish() }}
-                style={{ marginLeft: 10, padding: '3px 10px', borderRadius: 999, background: '#f1ece1', color: '#8b8172', fontSize: 12, fontWeight: 700 }}
-              >
-                건너뛰기
-              </button>
+              <span style={{ fontSize: 12, color: '#b0a692', marginLeft: 6 }}>{i + 1 < steps.length ? '탭해서 다음' : '탭해서 시작'}</span>
             </div>
           </div>
         </div>

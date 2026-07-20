@@ -158,3 +158,34 @@ export const CURATION = [
     ],
   },
 ]
+
+// ── 공용 헬퍼 (ShopScreen · 레시피 상세가 함께 사용) ─────────────────
+// 카테고리 평면화된 전체 제품 목록.
+export const PRODUCTS = CURATION.flatMap((g) => g.items.map((it) => ({ ...it, cat: g.cat, emoji: g.emoji })))
+
+const MALL_SEARCH = {
+  coupang: 'https://www.coupang.com/np/search?q={q}',
+  oasis: 'https://www.oasis.co.kr/product/search?keyword={q}',
+  naver: 'https://search.shopping.naver.com/search/all?query={q}',
+}
+// '사러가기' 링크: url 이 있으면 직접 링크, mall 이 있으면 그 쇼핑몰 검색, 없으면 네이버쇼핑.
+export const productLink = (it) =>
+  it.url || (MALL_SEARCH[it.mall] || MALL_SEARCH.naver).replace('{q}', encodeURIComponent(it.q))
+
+// 구매처 배지 라벨.
+export const productMall = (it) => {
+  if (it.mall === 'coupang') return '쿠팡'
+  if (it.mall === 'oasis') return '오아시스'
+  const u = it.url || ''
+  if (u.includes('hansalim')) return '한살림'
+  if (u.includes('sanjitalk')) return '산지톡'
+  if (u.includes('smartstore.naver') || u.includes('brand.naver')) return '네이버'
+  return ''
+}
+
+// 레시피 재료 문자열들에서 '주부의 장바구니' 제품이 쓰였는지 찾는다.
+// (재료에 제품명을 그대로 적어두면 자동으로 픽 카드에 뜬다. 예: "고춧가루 1큰술 (복이네먹거리 고춧가루)")
+export const picksForIngredients = (ingredients = []) => {
+  const text = (ingredients || []).join('  ')
+  return PRODUCTS.filter((p) => p.name && text.includes(p.name))
+}

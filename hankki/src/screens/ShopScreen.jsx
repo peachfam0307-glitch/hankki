@@ -75,8 +75,8 @@ export default function ShopScreen() {
 
         {view === 'shop' && (
         <>
-        {/* 1) 주부의 장바구니 — 시그니처(해자·수익). '둘러보기 → 담기 → 사러가기' 퍼널의 입구라 맨 위. */}
-        <div data-coach="curation"><Curation /></div>
+        {/* 1) 주부의 장바구니 — 담은 게 없을 땐 맨 위(발견용). 담은 게 있으면 아래로 내려가 장보기 리스트가 위로 온다(창업자 피드백: 긴 큐레이션에 리스트가 묻힘). */}
+        {shoppingList.length === 0 && <div data-coach="curation"><Curation /></div>}
 
         {/* 2) 장보기 리스트 — 담은 것이 여기로. 큐레이션 바로 아래라 담기 동선이 자연스럽다. */}
         <div className="sec-head" style={{ marginTop: 20 }}>
@@ -117,6 +117,11 @@ export default function ShopScreen() {
               </button>
             </div>
           ))
+        )}
+
+        {/* 담은 게 있을 땐 큐레이션을 리스트 아래로 (리스트가 위로 올라와 잘 보이게) */}
+        {shoppingList.length > 0 && (
+          <div data-coach="curation" style={{ marginTop: 26 }}><Curation /></div>
         )}
 
         {/* 3) 쇼핑몰 바로가기 — 리스트 확인하고 바로 사러 가는 자리(리스트 바로 아래). */}
