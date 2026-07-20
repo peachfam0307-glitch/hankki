@@ -48,9 +48,11 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const [noteEdit, setNoteEdit] = useState(null) // 글 수정 중인 포스트잇 item
   const [textFont, setTextFont] = useState('gaegu') // 글자 스티커 글씨체 기본 = 귀염체(손글씨 톤)
   const [bg, setBg] = useState(recipe.decorBg || 'none') // 표지 배경(배경지)
-  // 원래 표지(아이콘/이모지/사진) — 이미 비운('none') 상태로 저장됐어도 되돌리기가 살아있게 실제 표지로 되돌린다
-  const origThumb = (recipe.thumb && recipe.thumb !== 'none') ? recipe.thumb : (recipe.image ? 'photo' : 'icon')
-  const [thumb, setThumb] = useState(origThumb) // 'none'이면 표지 그림 비움 → 깨끗한 배경에 꾸미기
+  // 저장된 표지 상태 그대로 시작한다('none'이면 비운 채로 — 나갔다 와도 유지)
+  const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
+  // 되돌리기용 실제 표지 — 저장값이 'none'이어도 아이콘/사진으로 되살릴 수 있게
+  const origThumb = savedThumb !== 'none' ? savedThumb : (recipe.image ? 'photo' : 'icon')
+  const [thumb, setThumb] = useState(savedThumb) // 'none'이면 표지 그림 비움 → 깨끗한 배경에 꾸미기
   const [cat, setCat] = useState('bgtape') // 서랍 카테고리(4개 묶음 탭 — 가로 스크롤 짧게)
 
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로 올라온다
