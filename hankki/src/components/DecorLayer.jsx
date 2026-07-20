@@ -165,7 +165,7 @@ function TextDeco({ it, editable }) {
       style={{
         fontFamily: f.family,
         fontWeight: f.weight,
-        fontSize: 'clamp(10px, 22cqw, 120px)', // 요소 폭에 비례
+        fontSize: 'clamp(9px, 15cqw, 90px)', // 요소 폭에 비례 — 포스트잇 글씨(15cqw)와 맞춤(길어도 잘 안 넘치게)
         lineHeight: 1.25,
         color: c.color,
         textAlign: 'center',
