@@ -124,7 +124,8 @@ export default function RecipeDetailScreen({ id }) {
   }
 
   // 이 레시피가 쓴 '주부의 장바구니' 제품(재료에 제품명이 적혀 있으면 자동 매칭) — 구매 연결
-  const pantryPicks = picksForIngredients(r?.ingredients || [])
+  // 재료뿐 아니라 메모도 스캔한다. (특화 제품만 재료에 이름 남기고, 나머지 내 제품은 메모로 옮겼기 때문)
+  const pantryPicks = picksForIngredients([...(r?.ingredients || []), r?.memo || ''])
   const addAllPicks = () => {
     pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p) }))
     nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요 🛒`)
@@ -334,7 +335,7 @@ export default function RecipeDetailScreen({ id }) {
         {r.memo && (
           <>
             <div className="h-section" style={{ marginTop: 26, marginBottom: 8 }}>메모</div>
-            <div className="card" style={{ padding: 14, fontSize: 14, lineHeight: 1.6, color: 'var(--text)', background: 'var(--cream)', border: 'none' }}>
+            <div className="card" style={{ padding: 14, fontSize: 14, lineHeight: 1.6, color: 'var(--text)', background: 'var(--cream)', border: 'none', whiteSpace: 'pre-line' }}>
               {r.memo}
             </div>
           </>
@@ -375,10 +376,10 @@ export default function RecipeDetailScreen({ id }) {
       {decorOpen && (
         <DecorEditor
           recipe={r}
-          onSave={(items, bg) => {
-            updateRecipe(r.id, { decor: items, decorBg: bg || 'none' })
+          onSave={(items, bg, thumb) => {
+            updateRecipe(r.id, { decor: items, decorBg: bg || 'none', thumb })
             setDecorOpen(false)
-            const dressed = items.length || (bg && bg !== 'none')
+            const dressed = items.length || (bg && bg !== 'none') || thumb === 'none'
             nav.showToast(dressed ? '표지를 예쁘게 꾸몄어요 🎀' : '꾸미기를 비웠어요')
           }}
           onClose={() => setDecorOpen(false)}

@@ -48,6 +48,9 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const [noteEdit, setNoteEdit] = useState(null) // 글 수정 중인 포스트잇 item
   const [textFont, setTextFont] = useState('gaegu') // 글자 스티커 글씨체 기본 = 귀염체(손글씨 톤)
   const [bg, setBg] = useState(recipe.decorBg || 'none') // 표지 배경(배경지)
+  // 원래 표지(아이콘/이모지/사진) — 이미 비운('none') 상태로 저장됐어도 되돌리기가 살아있게 실제 표지로 되돌린다
+  const origThumb = (recipe.thumb && recipe.thumb !== 'none') ? recipe.thumb : (recipe.image ? 'photo' : 'icon')
+  const [thumb, setThumb] = useState(origThumb) // 'none'이면 표지 그림 비움 → 깨끗한 배경에 꾸미기
   const [cat, setCat] = useState('bgtape') // 서랍 카테고리(4개 묶음 탭 — 가로 스크롤 짧게)
 
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로 올라온다
@@ -106,7 +109,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   }
   const addNote = (colorKey) => {
     const n = items.length
-    const it = { id: newDecorId(), type: 'note', key: colorKey, text: '', x: 0.62 + ((n % 2) - 0.5) * 0.06, y: 0.68, s: 0.34, r: ((n % 5) - 2) * 3 }
+    const it = { id: newDecorId(), type: 'note', key: colorKey, text: '', font: 'gaegu', x: 0.62 + ((n % 2) - 0.5) * 0.06, y: 0.68, s: 0.34, r: ((n % 5) - 2) * 3 }
     setItems((arr) => [...arr, it])
     setSel(it.id)
     setNoteEdit(it) // 붙이면 바로 글씨 쓰기 시트 열기(무늬·모양은 상단 컨텍스트 바에서)
@@ -151,13 +154,13 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
         <div className="decor-top">
           <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
           <div style={{ fontSize: 16, fontWeight: 800 }}>레시피 꾸미기</div>
-          <button className="press" onClick={() => onSave(items, bg)} style={{ color: 'var(--brown)', fontSize: 15, fontWeight: 800 }}>저장</button>
+          <button className="press" onClick={() => onSave(items, bg, thumb)} style={{ color: 'var(--brown)', fontSize: 15, fontWeight: 800 }}>저장</button>
         </div>
 
         {/* 표지 캔버스 */}
         <div className="decor-stage">
           <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', borderRadius: 18, overflow: 'hidden' }}>
-            <Thumb recipe={{ ...recipe, decorBg: bg }} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
+            <Thumb recipe={{ ...recipe, decorBg: bg, thumb }} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
             <DecorLayer
               items={items}
               editable
@@ -256,6 +259,15 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             {selItem.type === 'note' && (
               <>
                 <div style={ctxRow}>
+                  <span style={ctxLabel}>✍️ 글씨</span>
+                  <div style={ctxScroll}>
+                    {TEXT_FONTS.map((f) => (
+                      <button key={f.key} className="press" onClick={() => patch(sel, { font: f.key })}
+                        style={{ padding: '4px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, flex: '0 0 auto', fontFamily: f.family, background: (selItem.font || 'gaegu') === f.key ? 'var(--brown)' : 'var(--surface)', color: (selItem.font || 'gaegu') === f.key ? '#fff' : 'var(--text-sub)' }}>{f.label}</button>
+                    ))}
+                  </div>
+                </div>
+                <div style={ctxRow}>
                   <span style={ctxLabel}>무늬</span>
                   <div style={ctxScroll}>
                     {NOTE_PATTERNS.map((p) => (
@@ -301,6 +313,15 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             {/* 🎨 배경·테이프 */}
             {cat === 'bgtape' && (
               <>
+                <div className="decor-sec">
+                  <div className="decor-sec-label">표지 그림</div>
+                  <button className="press" onClick={() => setThumb(thumb === 'none' ? origThumb : 'none')}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 14px', borderRadius: 12, background: thumb === 'none' ? 'var(--brown)' : 'var(--cream)', color: thumb === 'none' ? '#fff' : 'var(--text)', fontWeight: 800, fontSize: 13.5, textAlign: 'left' }}>
+                    <span style={{ fontSize: 17 }}>{thumb === 'none' ? '🖼️' : '🧽'}</span>
+                    {thumb === 'none' ? '표지 그림 되돌리기' : '표지 그림 지우기 (아이콘·이모지·사진)'}
+                  </button>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>깨끗한 배경에 꾸미고 싶을 때. 원래 그림은 언제든 되돌려요.</div>
+                </div>
                 <div className="decor-sec">
                   <div className="decor-sec-label">배경지</div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

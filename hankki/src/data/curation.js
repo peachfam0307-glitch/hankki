@@ -185,8 +185,9 @@ export const productMall = (it) => {
   return ''
 }
 
-// 레시피 재료 문자열들에서 '주부의 장바구니' 제품이 쓰였는지 찾는다.
-// (재료에 제품명을 그대로 적어두면 자동으로 픽 카드에 뜬다. 예: "고춧가루 1큰술 (복이네먹거리 고춧가루)")
+// 문자열들(재료 + 메모)에서 '주부의 장바구니' 제품이 쓰였는지 찾는다.
+// 재료에 제품명을 그대로 적으면 픽 카드에 뜬다. 특화 제품만 재료에 이름을 남기고
+// 나머지 내 제품은 메모로 옮겼으므로, 호출부에서 메모도 함께 넣어 스캔한다(RecipeDetailScreen).
 export const picksForIngredients = (ingredients = []) => {
   const text = (ingredients || []).join('  ')
   return PRODUCTS.filter((p) => p.name && text.includes(p.name))

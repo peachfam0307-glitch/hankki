@@ -192,6 +192,8 @@ function Note({ it, editable }) {
   const radius = noteRadius(shape)
   // 플레이스홀더는 편집 중에만 — 저장된 표지에선 빈 포스트잇은 빈 종이로 보인다.
   const text = it.text || (editable ? '탭해서 쓰기' : '')
+  // 글씨체 — 글자 도구와 같은 목록에서 고른다(컨텍스트 바). 없으면 귀염체가 기본.
+  const nf = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
 
   // 종이 판(색 + 무늬 + 모양). clip 모양은 그림자를 filter 로(clip 이 box-shadow 를 잘라내므로).
   const paper = {
@@ -217,7 +219,7 @@ function Note({ it, editable }) {
       <div
         style={{
           position: 'absolute', inset: 0, boxSizing: 'border-box', padding: textPad,
-          fontFamily: "'Gowun Dodum','Pretendard',sans-serif",
+          fontFamily: nf.family, fontWeight: nf.weight,
           fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.4,
           overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
           display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
