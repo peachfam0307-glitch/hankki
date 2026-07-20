@@ -24,7 +24,7 @@ export const CURATION = [
     cat: '된장', emoji: '🥣',
     items: [
       { name: '죽장연 전통된장', benefit: '국산콩과 천일염만으로 담가 깊고 진한 맛이 나요. 맛이 조금 진한 편이에요', q: '죽장연 전통된장', mall: 'coupang' },
-      { name: '맥된장', benefit: '국산콩 메주 96%, 천일염 4%로만 만들어 성분이 좋아요. 가격도 합리적이라 손이 자주 가요. 특히 백합된장과 궁합이 좋아 섞어 쓰면 더 맛있어요', q: '맥된장', mall: 'coupang', pick: true },
+      { name: '맥된장', benefit: '국산콩 메주 96%, 천일염 4%로만 만들어 성분이 좋아요. 가격도 합리적이라 손이 자주 가요. 특히 백합된장과 궁합이 좋아 섞어 쓰면 더 맛있어요', q: '맥된장', mall: 'coupang', url: 'https://www.coupang.com/vp/products/160227399?itemId=15032545519&vendorItemId=82255154528', pick: true },
       { name: '백합된장', benefit: '수녀님들이 메주·물·소금만으로 정성껏 만들었어요. 찌개도 좋지만 국을 끓이면 구수한 맛이 확 살아나요. 맥된장과 섞어 쓰면 궁합이 좋아요', q: '백합된장', url: 'http://www.spcfood.co.kr/product/product_view.php?ProductSeqNo=8' },
     ],
   },
