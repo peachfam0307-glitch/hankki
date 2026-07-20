@@ -405,10 +405,6 @@ export const bgStyle = (key) => (DECOR_BACKGROUNDS.find((b) => b.key === key) ||
 export const TAPE_PATTERNS = [
   { key: 'kraft', label: '크라프트', style: { background: 'rgba(214,197,168,0.92)' } },
   {
-    key: 'check', label: '체크',
-    style: { backgroundColor: 'rgba(228,216,190,0.92)', backgroundImage: 'linear-gradient(rgba(150,128,92,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(150,128,92,.28) 1px, transparent 1px)', backgroundSize: '20% 50%' },
-  },
-  {
     key: 'stripe', label: '스트라이프',
     style: { backgroundColor: 'rgba(240,224,205,0.92)', backgroundImage: 'repeating-linear-gradient(45deg, rgba(200,120,95,.4) 0, rgba(200,120,95,.4) 7%, transparent 7%, transparent 14%)' },
   },
@@ -417,9 +413,7 @@ export const TAPE_PATTERNS = [
     key: 'dot', label: '도트',
     style: { backgroundColor: 'rgba(236,236,225,0.92)', backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14'><circle cx='7' cy='7' r='2.7' fill='%23968060' opacity='0.42'/></svg>\")", backgroundSize: 'auto 46%' },
   },
-  { key: 'mint', label: '민트', style: { background: 'rgba(200,222,205,0.92)' } },
   { key: 'rose', label: '로즈', style: { background: 'rgba(232,205,203,0.92)' } },
-  { key: 'sky', label: '하늘', style: { background: 'rgba(203,218,233,0.92)' } },
   {
     // 찢은 테이프 — 양쪽 끝이 손으로 뜯긴 듯 지그재그(clip-path)
     key: 'torn', label: '찢은테이프',
@@ -445,6 +439,33 @@ export const TAPE_PATTERNS = [
     style: {
       backgroundColor: 'rgba(245,238,236,0.94)',
       backgroundImage: 'repeating-linear-gradient(0deg, rgba(206,138,146,.34) 0 7px, transparent 7px 14px), repeating-linear-gradient(90deg, rgba(206,138,146,.34) 0 7px, transparent 7px 14px)',
+    },
+  },
+  {
+    // 🌊 물결(여름) — 파스텔 블루 바탕 + 흰/블루 파도선
+    key: 'wave', label: '물결',
+    style: {
+      backgroundColor: 'rgba(201,224,240,0.94)',
+      backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='16'><path d='M0 5 q7.5 -4.5 15 0 t15 0' stroke='%23ffffff' fill='none' stroke-width='2' opacity='0.9'/><path d='M0 11 q7.5 -4.5 15 0 t15 0' stroke='%236fa6d2' fill='none' stroke-width='1.6' opacity='0.7'/></svg>\")",
+      backgroundSize: 'auto 62%',
+    },
+  },
+  {
+    // 🍉 수박(여름) — 크림 바탕 + 수박 조각
+    key: 'watermelon', label: '수박',
+    style: {
+      backgroundColor: 'rgba(246,239,232,0.95)',
+      backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22'><path d='M4 7 a7 7 0 0 1 14 0 z' fill='%23e98a93'/><path d='M4 7 a7 7 0 0 1 14 0' fill='none' stroke='%237ba85e' stroke-width='1.8' stroke-linecap='round'/><circle cx='8' cy='8.4' r='0.75' fill='%235a4a35'/><circle cx='11.5' cy='9.6' r='0.75' fill='%235a4a35'/><circle cx='15' cy='8.4' r='0.75' fill='%235a4a35'/></svg>\")",
+      backgroundSize: 'auto 76%',
+    },
+  },
+  {
+    // 🍋 레몬(여름) — 옅은 노랑 바탕 + 레몬 슬라이스
+    key: 'lemon', label: '레몬',
+    style: {
+      backgroundColor: 'rgba(249,243,222,0.95)',
+      backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><circle cx='10' cy='10' r='6.2' fill='%23f3d75f' stroke='%23dcbb44' stroke-width='1.2'/><circle cx='10' cy='10' r='3.3' fill='%23f8ecab'/><g stroke='%23e3c455' stroke-width='0.9'><path d='M10 4.2v3'/><path d='M10 15.8v-3'/><path d='M4.2 10h3'/><path d='M15.8 10h-3'/><path d='M6 6l2 2'/><path d='M14 6l-2 2'/><path d='M6 14l2-2'/><path d='M14 14l-2-2'/></g></svg>\")",
+      backgroundSize: 'auto 72%',
     },
   },
 ]

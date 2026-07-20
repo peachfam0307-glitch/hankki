@@ -160,17 +160,20 @@ function TextDeco({ it, editable }) {
   const c = TEXT_COLORS.find((t) => t.key === it.color) || TEXT_COLORS[0]
   const f = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
   const text = it.text || (editable ? '글자' : '')
+  // 글씨 크기를 '가장 긴 줄 글자 수'에 맞춰 자동 축소 → 긴 제목도 한 줄에 딱(두 줄 넘침 방지).
+  // 각 글자 ≈ 1em 폭이라, (줄당 글자수 × cqw) ≤ ~86% 가 되게 cqw를 정한다. 짧으면 15cqw 상한.
+  const maxLine = Math.max(1, ...text.split('\n').map((l) => [...l].length))
+  const cqw = Math.min(15, 86 / maxLine)
   return (
     <div
       style={{
         fontFamily: f.family,
         fontWeight: f.weight,
-        fontSize: 'clamp(9px, 15cqw, 90px)', // 요소 폭에 비례 — 포스트잇 글씨(15cqw)와 맞춤(길어도 잘 안 넘치게)
-        lineHeight: 1.25,
+        fontSize: `clamp(8px, ${cqw}cqw, 90px)`,
+        lineHeight: 1.22,
         color: c.color,
         textAlign: 'center',
-        whiteSpace: 'pre-wrap',
-        wordBreak: 'break-word',
+        whiteSpace: 'pre', // \n만 줄바꿈, 자동 줄바꿈 없음(폰트가 폭에 맞춰 줄어듦)
         // 사진 위에서도 읽히게 반대 톤 외곽선 + 그림자
         WebkitTextStroke: `0.6cqw ${c.stroke}`,
         textShadow: '0 1px 3px rgba(0,0,0,.35)',

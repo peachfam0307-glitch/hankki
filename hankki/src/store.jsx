@@ -166,6 +166,14 @@ function migrateBasics(saved) {
       memo: fixTypo(r.memo),
     }
   })
+  // v31: 편집(touched)한 '기본 레시피'도 양념 표기 재정리(제품명→일반명 + 내 제품은 메모)만큼은
+  //      최신 시드에 맞춘다. 재료·메모만 교체(제목·순서·꾸미기·개인상태는 그대로) → 픽카드도 정상 작동.
+  //      ※ 재료·메모를 직접 고친 경우엔 그 편집이 시드본으로 덮이지만, 전역 양념 표기 통일을 우선한다.
+  fixed = fixed.map((r) => {
+    if (!r || !r.touched || !seedById.has(r.id)) return r
+    const s = seedById.get(r.id)
+    return { ...r, ingredients: s.ingredients, memo: s.memo }
+  })
   return { recipes: [...fixed, ...add], seedV: BASICS_VERSION }
 }
 
