@@ -96,7 +96,7 @@ const KF_NAMES = [
 ]
 const KF_RATIO = {
   kitchen: { gomgom: 622 / 834, toto: 612 / 923, nyangi: 606 / 858, ppyak: 643 / 847, mongmong: 685 / 885, hodu: 607 / 844, pengpeng: 741 / 976, hamzzi: 625 / 868 },
-  candy: { gomgom: 332 / 426, toto: 308 / 455, nyangi: 278 / 408, ppyak: 349 / 427, mongmong: 305 / 408, hodu: 324 / 405, pengpeng: 275 / 390, hamzzi: 279 / 393 },
+  candy: { gomgom: 384 / 462, toto: 334 / 494, nyangi: 302 / 449, ppyak: 376 / 461, mongmong: 368 / 432, hodu: 383 / 430, pengpeng: 339 / 415, hamzzi: 303 / 418 }, // 2026-07-20 원본 시트에서 전체 재컷(소품·꼬리 잘림 수정)
   line: { gomgom: 350 / 486, toto: 330 / 457, nyangi: 318 / 476, ppyak: 357 / 470, mongmong: 364 / 445, hodu: 408 / 453, pengpeng: 311 / 422, hamzzi: 336 / 437 },
 }
 export const KITCHEN_FAMILY = {}
@@ -434,7 +434,8 @@ export const TAPE_PATTERNS = [
     style: {
       backgroundColor: 'rgba(238,214,214,0.94)',
       backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><path d='M8 13C4.3 9.9 2 8 2 5.4 2 3.7 3.4 2.4 5 2.4c1.1 0 2.2.6 3 1.7.8-1.1 1.9-1.7 3-1.7 1.6 0 3 1.3 3 3C14 8 11.7 9.9 8 13z' fill='%23d98a92' opacity='0.55'/></svg>\")",
-      backgroundSize: '34% 64%',
+      // 하트가 안 찌그러지게 — 높이만 지정(auto=폭은 1:1 유지). %폭×%높이는 3.4:1 띠에서 하트를 옆으로 늘림.
+      backgroundSize: 'auto 80%',
     },
   },
   {
