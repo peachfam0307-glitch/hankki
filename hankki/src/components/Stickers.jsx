@@ -336,7 +336,7 @@ export const noteRadius = (shape) => {
 export const TEXT_COLORS = [
   { key: 'white', color: '#ffffff', stroke: 'rgba(55,45,32,.6)' },
   { key: 'charcoal', color: '#463a2c', stroke: 'rgba(255,255,255,.75)' },
-  { key: 'coral', color: '#d67f6c', stroke: 'rgba(255,255,255,.7)' },
+  { key: 'coral', color: '#c85a45', stroke: 'rgba(255,255,255,.55)' }, // 연한 코랄→진한 코랄레드(밝은 배경서도 잘 보이게)
   { key: 'mustard', color: '#cc9f45', stroke: 'rgba(60,48,30,.5)' },
 ]
 
@@ -413,8 +413,9 @@ export const TAPE_PATTERNS = [
     style: { backgroundColor: 'rgba(240,224,205,0.92)', backgroundImage: 'repeating-linear-gradient(45deg, rgba(200,120,95,.4) 0, rgba(200,120,95,.4) 7%, transparent 7%, transparent 14%)' },
   },
   {
+    // 도트 — %폭×%높이(radial)는 3.4:1 띠에서 타원으로 늘어남 → SVG 원 + auto높이로 항상 동그랗게
     key: 'dot', label: '도트',
-    style: { backgroundColor: 'rgba(236,236,225,0.92)', backgroundImage: 'radial-gradient(rgba(150,128,92,.4) 24%, transparent 26%)', backgroundSize: '18% 42%' },
+    style: { backgroundColor: 'rgba(236,236,225,0.92)', backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14'><circle cx='7' cy='7' r='2.7' fill='%23968060' opacity='0.42'/></svg>\")", backgroundSize: 'auto 46%' },
   },
   { key: 'mint', label: '민트', style: { background: 'rgba(200,222,205,0.92)' } },
   { key: 'rose', label: '로즈', style: { background: 'rgba(232,205,203,0.92)' } },
