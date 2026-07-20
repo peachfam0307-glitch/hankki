@@ -156,12 +156,12 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
 }
 
 // 글자 크기는 '제 크기(cqw=요소 폭의 1%)'에 비례 — 크기 조절하면 글씨도 정확히 같은 비율로.
+// 줄바꿈은 사용자가 엔터로 직접(자동 분할 안 함 — "돼지고기가지볶음"처럼 붙은 글자가 이상하게 안 잘리게).
 function TextDeco({ it, editable }) {
   const c = TEXT_COLORS.find((t) => t.key === it.color) || TEXT_COLORS[0]
   const f = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
   const text = it.text || (editable ? '글자' : '')
-  // 글씨 크기를 '가장 긴 줄 글자 수'에 맞춰 자동 축소 → 긴 제목도 한 줄에 딱(두 줄 넘침 방지).
-  // 각 글자 ≈ 1em 폭이라, (줄당 글자수 × cqw) ≤ ~86% 가 되게 cqw를 정한다. 짧으면 15cqw 상한.
+  // 글씨 크기를 '가장 긴 줄 글자 수'에 맞춰 자동 축소. \n(엔터)로 나눈 줄만큼 각 줄이 짧아져 글씨가 커진다.
   const maxLine = Math.max(1, ...text.split('\n').map((l) => [...l].length))
   const cqw = Math.min(15, 86 / maxLine)
   return (
@@ -194,7 +194,7 @@ function Note({ it, editable }) {
   const isClip = noteIsClip(shape)
   const radius = noteRadius(shape)
   // 플레이스홀더는 편집 중에만 — 저장된 표지에선 빈 포스트잇은 빈 종이로 보인다.
-  const text = it.text || (editable ? '탭해서 쓰기' : '')
+  const text = it.text || '' // 빈 포스트잇 = 글자 없이 노트만(안내문구 없이 그대로 빈 채로). 편집은 탭·연필로.
   // 글씨체 — 글자 도구와 같은 목록에서 고른다(컨텍스트 바). 없으면 귀염체가 기본.
   const nf = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
 
@@ -224,7 +224,7 @@ function Note({ it, editable }) {
           position: 'absolute', inset: 0, boxSizing: 'border-box', padding: textPad,
           fontFamily: nf.family, fontWeight: nf.weight,
           fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.4,
-          overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+          overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
           display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
         }}
       >

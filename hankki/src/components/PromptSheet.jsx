@@ -35,15 +35,27 @@ export default function PromptSheet({ title, fields, submitLabel = '저장', onS
           </div>
           {compact ? (
             // 컴팩트: 라벨 없이 한 줄 입력 + '붙이기'를 옆에 붙여 시트를 낮게 → 표지(배경)가 위로 더 보인다
-            <div style={{ padding: '2px 14px 0', display: 'flex', gap: 8, alignItems: 'stretch' }}>
-              <input
-                ref={firstRef}
-                style={{ flex: 1, minWidth: 0 }}
-                value={vals[fields[0].key]}
-                placeholder={fields[0].placeholder || ''}
-                onChange={(e) => setVals((v) => ({ ...v, [fields[0].key]: e.target.value }))}
-                onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
-              />
+            <div style={{ padding: '2px 14px 0', display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+              {fields[0].multiline ? (
+                // 여러 줄 입력(글자·메모): 엔터 = 줄바꿈, '붙이기'로 완성. 2줄·3줄 자유롭게.
+                <textarea
+                  ref={firstRef}
+                  rows={2}
+                  style={{ flex: 1, minWidth: 0, resize: 'none' }}
+                  value={vals[fields[0].key]}
+                  placeholder={fields[0].placeholder || ''}
+                  onChange={(e) => setVals((v) => ({ ...v, [fields[0].key]: e.target.value }))}
+                />
+              ) : (
+                <input
+                  ref={firstRef}
+                  style={{ flex: 1, minWidth: 0 }}
+                  value={vals[fields[0].key]}
+                  placeholder={fields[0].placeholder || ''}
+                  onChange={(e) => setVals((v) => ({ ...v, [fields[0].key]: e.target.value }))}
+                  onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
+                />
+              )}
               <button className="btn-primary press" style={{ flex: '0 0 auto', width: 'auto', padding: '0 22px', margin: 0, whiteSpace: 'nowrap' }} onClick={submit}>{submitLabel}</button>
             </div>
           ) : (
