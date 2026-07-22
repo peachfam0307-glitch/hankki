@@ -137,11 +137,16 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
       <div className="decor-grid">
         {g.items.map((key) => {
           const isKf = KITCHEN_IDS.has(key)
+          const colorable = RECOLORABLE.has(key)
           return (
-            <button key={key} className="press decor-cell" onClick={() => addSticker(key)} aria-label={key}>
+            <button key={key} className="press decor-cell" onClick={() => addSticker(key)} aria-label={colorable ? `${key} · 색 바꾸기 가능` : key} style={{ position: 'relative' }}>
               <span style={{ display: 'block', width: key === 'yum' ? '92%' : isKf ? '62%' : '78%', aspectRatio: key === 'yum' ? '74/46' : isKf ? '0.75' : '1' }}>
                 <StickerArt id={key} />
               </span>
+              {/* 🎨 '색 바꿀 수 있음' 표시 — 코치 대신 스티커에 박아 발견성↑ ("왜 표시돼있지?" → 눌러봄). 뮤트 9색 미니 팔레트 점. */}
+              {colorable && (
+                <span aria-hidden="true" style={{ position: 'absolute', top: 3, right: 3, width: 15, height: 15, borderRadius: '50%', background: 'conic-gradient(from 210deg, #d68f88, #ccaa6d, #94a37e, #93aabd, #b2a3c1, #d68f88)', border: '1.6px solid var(--surface)', boxShadow: '0 1px 2.5px rgba(70,60,45,.35)' }} />
+              )}
             </button>
           )
         })}
