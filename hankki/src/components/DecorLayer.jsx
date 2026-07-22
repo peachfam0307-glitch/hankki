@@ -50,7 +50,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     const cy = rect.top + it.y * rect.height
     const dx = e.clientX - cx
     const dy = e.clientY - cy
-    hRef.current = { id: it.id, cx, cy, d0: Math.hypot(dx, dy) || 1, a0: (Math.atan2(dy, dx) * 180) / Math.PI, s0: it.s, r0: it.r || 0 }
+    hRef.current = { id: it.id, cx, cy, d0: Math.hypot(dx, dy) || 1, a0: (Math.atan2(dy, dx) * 180) / Math.PI, s0: it.s, r0: it.r || 0, isText: it.type === 'text' }
     e.currentTarget.setPointerCapture?.(e.pointerId)
   }
   const onHandleMove = (e) => {
@@ -58,7 +58,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     if (!h) return
     const dx = e.clientX - h.cx
     const dy = e.clientY - h.cy
-    const s = clamp(h.s0 * (Math.hypot(dx, dy) / h.d0), 0.07, 0.9)
+    const s = clamp(h.s0 * (Math.hypot(dx, dy) / h.d0), 0.07, h.isText ? 1.6 : 0.9) // 글자는 커버를 꽉 채울 만큼 더 크게
     const r = h.r0 + (Math.atan2(dy, dx) * 180) / Math.PI - h.a0
     onChange?.(h.id, { s, r })
   }
@@ -169,7 +169,7 @@ function TextDeco({ it, editable }) {
       style={{
         fontFamily: f.family,
         fontWeight: f.weight,
-        fontSize: `clamp(8px, ${cqw}cqw, 90px)`,
+        fontSize: `clamp(8px, ${cqw}cqw, 150px)`,
         lineHeight: 1.22,
         color: c.color,
         textAlign: 'center',
