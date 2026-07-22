@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
-import { bgStyle } from './Stickers'
+import { bgStyle, bgIsDark } from './Stickers'
 import { graphemes } from '../utils'
 
 // 카드 썸네일. recipe.thumb 로 표시 방식을 고른다:
@@ -20,6 +20,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
   const showImg = thumb === 'photo' && recipe.image && !failed
   // 표지 배경(배경지) — 정하면 기본 그라데이션 대신 그 배경으로. 패턴은 %라 어느 크기든 스케일된다.
   const bg = recipe.decorBg ? bgStyle(recipe.decorBg) : null
+  const dark = recipe.decorBg ? bgIsDark(recipe.decorBg) : false // 딥 배경 = 글자·아이콘 밝게
   const base = {
     position: 'relative',
     width: '100%',
@@ -60,7 +61,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
             dominantBaseline="central"
             fontFamily="Pretendard, sans-serif"
             fontWeight="800"
-            fill="#5f5a50"
+            fill={dark ? '#f1e8d8' : '#5f5a50'}
             fontSize="18"
             letterSpacing="-1"
             textLength={Math.min(46, n * 11)}
@@ -74,7 +75,13 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
   } else if (thumb === 'none') {
     inner = null // 표지 비우기 — 아이콘·이모지 없이 배경/꾸미기만 보이게
   } else {
-    inner = <div style={center}><FoodIcon name={recipe.icon || guessFoodIcon(recipe.title)} size={iconSize} /></div>
+    inner = (
+      <div style={center}>
+        {/* 딥 배경에선 컬러 아이콘이 묻히니 은은한 밝은 원(스포트)을 뒤에 깔아 또렷하게 */}
+        {dark && <span aria-hidden="true" style={{ position: 'absolute', inset: '17%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(248,243,235,.92) 58%, rgba(248,243,235,0) 100%)' }} />}
+        <FoodIcon name={recipe.icon || guessFoodIcon(recipe.title)} size={iconSize} />
+      </div>
+    )
   }
 
   // 꾸민 표지를 목록 썸네일에도 보여준다(showDecor). 꾸민 레시피만 — 안 꾸민 건 깔끔한 아이콘 유지.

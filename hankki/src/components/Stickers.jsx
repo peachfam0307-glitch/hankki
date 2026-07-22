@@ -172,13 +172,13 @@ export const STICKER_DEFAULT = { heart: '#dd918a', star: '#d7b15f', sparkle: '#d
 export const RECOLORABLE = new Set(Object.keys(STICKER_DEFAULT))
 // 색 팔레트 — 따뜻한 톤 + 팝 컬러 + 모노(남성·미니멀). '기본'은 color 비우면 원래색.
 export const STICKER_COLORS = [
-  { key: 'coral', color: '#dd918a' },
-  { key: 'rose', color: '#d99cad' },
-  { key: 'red', color: '#cf6f5a' },
-  { key: 'gold', color: '#d7b15f' },
-  { key: 'olive', color: '#8ca86e' },
-  { key: 'sky', color: '#7fa9c9' },
-  { key: 'lilac', color: '#b79ec9' },
+  { key: 'coral', color: '#d68f88' },
+  { key: 'rose', color: '#cf9fae' },
+  { key: 'red', color: '#c37a68' },
+  { key: 'gold', color: '#ccaa6d' },
+  { key: 'olive', color: '#94a37e' },
+  { key: 'sky', color: '#93aabd' },
+  { key: 'lilac', color: '#b2a3c1' },
   { key: 'charcoal', color: '#6b6255' },
   { key: 'cream', color: '#e6dcc7' },
 ]
@@ -356,14 +356,14 @@ export const TEXT_FONTS = [
 // style 은 Thumb·에디터·칩에 그대로 spread 한다. key:'none' 은 기본(그라데이션 자동).
 export const DECOR_BACKGROUNDS = [
   { key: 'none', label: '기본', style: null },
-  { key: 'cream', label: '크림', style: { background: '#f4ede0' } },
-  { key: 'peach', label: '피치', style: { background: '#f6e1d6' } },
-  { key: 'butter', label: '버터', style: { background: '#f3ead0' } },
-  { key: 'mint', label: '민트', style: { background: '#dcece1' } },
-  { key: 'sky', label: '하늘', style: { background: '#dde7f1' } },
-  { key: 'lilac', label: '라일락', style: { background: '#e7dfef' } },
-  { key: 'rose', label: '로즈', style: { background: '#efdce0' } },
-  { key: 'kraft', label: '크라프트', style: { background: '#e4d5bc' } },
+  { key: 'cream', label: '크림', style: { background: '#f9f4ec' } },
+  { key: 'peach', label: '피치', style: { background: '#faeae1' } },
+  { key: 'butter', label: '버터', style: { background: '#f9f2e1' } },
+  { key: 'mint', label: '민트', style: { background: '#e8f2ea' } },
+  { key: 'sky', label: '하늘', style: { background: '#e9f0f7' } },
+  { key: 'lilac', label: '라일락', style: { background: '#f1ebf5' } },
+  { key: 'rose', label: '로즈', style: { background: '#f7eaed' } },
+  { key: 'kraft', label: '크라프트', style: { background: '#eee2d0' } },
   {
     key: 'grid', label: '모눈',
     style: {
@@ -395,9 +395,14 @@ export const DECOR_BACKGROUNDS = [
     key: 'sage', label: '세이지',
     style: { background: 'linear-gradient(160deg, #e2e9dc 0%, #d7e0d2 100%)' },
   },
+  // 🌙 딥(어두운) 배경지 — 반짝임·홀로·별이 사는 "밤하늘 다꾸" (창업자 픽: 딥플럼·미드나잇)
+  { key: 'plum', label: '딥플럼', dark: true, style: { background: '#3e3442' } },
+  { key: 'midnight', label: '미드나잇', dark: true, style: { background: '#2d3340' } },
 ]
 
 export const bgStyle = (key) => (DECOR_BACKGROUNDS.find((b) => b.key === key) || DECOR_BACKGROUNDS[0]).style
+// 딥(어두운) 배경지 여부 — 표지 글자·아이콘을 밝게 자동전환할 때 쓴다.
+export const bgIsDark = (key) => !!DECOR_BACKGROUNDS.find((b) => b.key === key)?.dark
 
 // ── 마스킹테이프(마테) ──
 // 다꾸 시그니처. 반투명 종이 띠 + 패턴. 길이·각도 자유(무한 변형).
