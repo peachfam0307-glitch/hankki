@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
 import { StickerArt, StickerFx, KITCHEN_IDS, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle } from './Stickers'
 
@@ -12,6 +12,17 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
 export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote }) {
   const boxRef = useRef(null)
+  // 커버 실제 폭(px) — 글자 상자를 글자에 딱 맞추면서(max-content) 글자 크기는 '커버 폭 기준'으로 px 계산하려고.
+  const [coverW, setCoverW] = useState(0)
+  useEffect(() => {
+    const el = boxRef.current
+    if (!el) return
+    const update = () => setCoverW(el.clientWidth)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   // 드래그(이동) — 아이템 몸통
   const dragRef = useRef(null)
@@ -79,10 +90,11 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           position: 'absolute',
           left: `${it.x * 100}%`,
           top: `${it.y * 100}%`,
-          width: `${it.s * 100}%`,
-          // 글자·포스트잇 글씨가 '제 크기(cqw)'에 비례하도록 컨테이너로 지정.
-          // 글자는 내용에 따라 높이가 달라지므로 종횡비를 고정하지 않는다.
-          ...(isText ? { containerType: 'inline-size' } : { aspectRatio: `${ratio}` }),
+          // 글자: 상자를 글자에 딱 맞게(max-content) — 점선칸이 글자 폭만큼만. 크기는 TextDeco가 커버폭 px로.
+          // 나머지(스티커·테이프·포스트잇): 폭=it.s + 종횡비 고정.
+          ...(isText
+            ? { width: 'max-content', maxWidth: '150%' }
+            : { width: `${it.s * 100}%`, aspectRatio: `${ratio}` }),
           transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)`,
           touchAction: 'none',
           cursor: editable ? 'grab' : 'default',
@@ -101,7 +113,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             ) : it.type === 'note' ? (
               <Note it={it} editable={editable} />
             ) : it.type === 'text' ? (
-              <TextDeco it={it} editable={editable} />
+              <TextDeco it={it} editable={editable} coverW={coverW} />
             ) : (
               <span style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(0 3px 4px rgba(60,50,35,.22))' }}>
                 <StickerArt id={it.key} color={it.color} motion={it.motion} />
@@ -155,27 +167,28 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
   )
 }
 
-// 글자 크기는 '제 크기(cqw=요소 폭의 1%)'에 비례 — 크기 조절하면 글씨도 정확히 같은 비율로.
+// 글자 크기 = it.s × 커버 폭(px). 길이와 무관하게 '한 글자 크기'가 일정 → 상자는 글자에 딱 맞음(max-content).
 // 줄바꿈은 사용자가 엔터로 직접(자동 분할 안 함 — "돼지고기가지볶음"처럼 붙은 글자가 이상하게 안 잘리게).
-function TextDeco({ it, editable }) {
+function TextDeco({ it, editable, coverW = 0 }) {
   const c = TEXT_COLORS.find((t) => t.key === it.color) || TEXT_COLORS[0]
   const f = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
   const text = it.text || (editable ? '글자' : '')
-  // 글씨 크기를 '가장 긴 줄 글자 수'에 맞춰 자동 축소. \n(엔터)로 나눈 줄만큼 각 줄이 짧아져 글씨가 커진다.
-  const maxLine = Math.max(1, ...text.split('\n').map((l) => [...l].length))
-  const cqw = Math.min(15, 86 / maxLine)
+  // it.s(사용자 조절)만으로 크기 결정 → 크기/회전 핸들 로직 그대로, 상자만 글자에 맞게 줄어듦.
+  const cw = coverW || 320
+  const fontPx = Math.max(8, Math.min(220, it.s * 0.15 * cw))
+  const strokePx = Math.max(0.4, fontPx * 0.03)
   return (
     <div
       style={{
         fontFamily: f.family,
         fontWeight: f.weight,
-        fontSize: `clamp(8px, ${cqw}cqw, 150px)`,
+        fontSize: `${fontPx}px`,
         lineHeight: 1.22,
         color: c.color,
         textAlign: 'center',
-        whiteSpace: 'pre', // \n만 줄바꿈, 자동 줄바꿈 없음(폰트가 폭에 맞춰 줄어듦)
+        whiteSpace: 'pre', // \n만 줄바꿈, 자동 줄바꿈 없음
         // 사진 위에서도 읽히게 반대 톤 외곽선 + 그림자
-        WebkitTextStroke: `0.6cqw ${c.stroke}`,
+        WebkitTextStroke: `${strokePx}px ${c.stroke}`,
         textShadow: '0 1px 3px rgba(0,0,0,.35)',
         userSelect: 'none',
       }}
