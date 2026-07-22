@@ -105,6 +105,21 @@ for (const [folder, prefix] of [['kitchen', 'kf_'], ['candy', 'kf_c_'], ['line',
     KITCHEN_FAMILY[prefix + name] = { src: kfU(folder, name), ratio: KF_RATIO[folder][name], label }
   }
 }
+
+// 🍬 캔디 친구들 표정·포즈 확장(2026-07-22) — 대표 8포즈는 위 kf_c_(고화질) 그대로 쓰고, 여기 캐릭터당 1포즈씩 더한다.
+// (다꾸본 낱개컷: docs/stickers/낱개/캔디-표정 → src/assets/stickers/candy2. 나머지 포즈는 다음 업뎃 때 추가.)
+const CC_URLS = import.meta.glob('../assets/stickers/candy2/*.png', { eager: true, query: '?url', import: 'default' })
+const CC_RATIO = {
+  cc17: 1.0779, cc42: 0.9669, cc11: 0.7771, cc20: 0.9818,
+  cc13: 0.9939, cc30: 0.9679, cc47: 0.7937, cc40: 0.9295,
+}
+const CC_LABEL = {
+  cc17: '곰곰', cc42: '삐약', cc11: '토토', cc20: '냄비냥이',
+  cc13: '몽몽', cc30: '호두', cc47: '햄찌', cc40: '펭펭',
+}
+for (const key of Object.keys(CC_RATIO)) {
+  KITCHEN_FAMILY[key] = { src: CC_URLS[`../assets/stickers/candy2/${key}.png`], ratio: CC_RATIO[key], label: CC_LABEL[key] }
+}
 export const KITCHEN_IDS = new Set(Object.keys(KITCHEN_FAMILY))
 
 // ── ✨ 캐릭터 움직임(모션) · 효과(양념) — 스티커마다 골라 얹는다 ──
@@ -220,11 +235,22 @@ export const stickerRatio = (id) => (id === 'yum' ? 74 / 46 : KITCHEN_FAMILY[id]
 const kfItems = (prefix) => KF_NAMES.map(([n]) => prefix + n)
 export const STICKER_GROUPS = [
   { key: 'kitchen', label: '🎁 부엌 식구들', items: kfItems('kf_') },
-  { key: 'kitchen_candy', label: '🍬 캔디', items: kfItems('kf_c_') },
+  // 🍬 캔디 친구들 — 8마리 × 2포즈(대표1 고화질 + 표정·포즈1). 나머지 포즈는 다음 업뎃 때.
+  {
+    key: 'kitchen_candy', label: '🍬 캔디 친구들', items: [
+      'kf_c_gomgom', 'cc17',
+      'kf_c_ppyak', 'cc42',
+      'kf_c_toto', 'cc11',
+      'kf_c_nyangi', 'cc20',
+      'kf_c_mongmong', 'cc13',
+      'kf_c_hodu', 'cc30',
+      'kf_c_hamzzi', 'cc47',
+      'kf_c_pengpeng', 'cc40',
+    ],
+  },
   { key: 'kitchen_line', label: '✏️ 라인', items: kfItems('kf_l_') },
+  // 친구들(오리지널)만 유지 — '머리만 있는' 아바타(라인·캔디 클로즈업)는 꾸미기 피커에서 뺌(프로필 아바타로는 남음).
   { key: 'buddies', label: '친구들', items: ['bear', 'rabbit', 'catpot', 'chick', 'dog', 'gecko', 'hamster', 'penguin'] },
-  { key: 'buddies_line', label: '친구들·라인', items: ['lbear', 'lchick', 'lcat', 'lgecko', 'lrabbit', 'ldog', 'lhamster'] },
-  { key: 'buddies_candy', label: '친구들·캔디', items: ['fchick', 'fbear', 'frabbit', 'fcat', 'fdog', 'fgecko', 'fhamster'] },
   { key: 'faces', label: '표정', items: ['smile', 'happy', 'hearteyes', 'wink', 'mlem', 'cool', 'surprised', 'boing', 'cry', 'yumface'] },
   { key: 'symbols', label: '심볼', items: ['heart', 'star', 'sparkle', 'fire', 'yum', 'crown', 'thumb', 'vhand', 'bow'] },
   { key: 'ingredients', label: '재료', items: ['tomato', 'egg', 'carrot', 'onion', 'mushroom', 'chili', 'avocado', 'broccoli'] },
