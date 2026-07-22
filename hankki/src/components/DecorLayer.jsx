@@ -67,7 +67,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
   return (
     <div
       ref={boxRef}
-      style={{ position: 'absolute', inset: 0, overflow: 'hidden', containerType: 'inline-size', pointerEvents: editable ? 'auto' : 'none', touchAction: editable ? 'none' : 'auto' }}
+      style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: editable ? 'auto' : 'none', touchAction: editable ? 'none' : 'auto' }}
       onPointerDown={editable ? () => onSelect?.(null) : undefined}
     >
       {(editable || items.some((it) => it.type === 'note' && noteIsClip(it.shape))) && <NoteShapeDefs />}
@@ -79,12 +79,10 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           position: 'absolute',
           left: `${it.x * 100}%`,
           top: `${it.y * 100}%`,
-          // 글자: 상자를 '글자 길이에 딱 맞게'(max-content) — 짧으면 좁고 길면 넓게. 폭 고정 X.
-          //       크기는 TextDeco가 it.s(커버 폭 기준 cqw)로 정하고, 한 줄이 커버(92%) 넘으면 자동 축소.
-          // 나머지(스티커·테이프·포스트잇): 종전대로 폭=it.s + 종횡비 고정.
-          ...(isText
-            ? { width: 'max-content', maxWidth: '92cqw' }
-            : { width: `${it.s * 100}%`, aspectRatio: `${ratio}` }),
+          width: `${it.s * 100}%`,
+          // 글자·포스트잇 글씨가 '제 크기(cqw)'에 비례하도록 컨테이너로 지정.
+          // 글자는 내용에 따라 높이가 달라지므로 종횡비를 고정하지 않는다.
+          ...(isText ? { containerType: 'inline-size' } : { aspectRatio: `${ratio}` }),
           transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)`,
           touchAction: 'none',
           cursor: editable ? 'grab' : 'default',
@@ -163,23 +161,21 @@ function TextDeco({ it, editable }) {
   const c = TEXT_COLORS.find((t) => t.key === it.color) || TEXT_COLORS[0]
   const f = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
   const text = it.text || (editable ? '글자' : '')
+  // 글씨 크기를 '가장 긴 줄 글자 수'에 맞춰 자동 축소. \n(엔터)로 나눈 줄만큼 각 줄이 짧아져 글씨가 커진다.
   const maxLine = Math.max(1, ...text.split('\n').map((l) => [...l].length))
-  // 글씨 크기 = 사용자가 정한 크기(it.s). 단위 cqw = 커버 폭(부모 컨테이너 기준).
-  // 상자가 글자에 맞게 줄어드므로(max-content), 한 줄이 커버(92%)를 넘지 않게 크기에 상한만 둔다.
-  const cqw = Math.min((it.s || 0.5) * 15, 92 / maxLine)
-  const stroke = Math.max(0.25, cqw * 0.05)
+  const cqw = Math.min(15, 86 / maxLine)
   return (
     <div
       style={{
         fontFamily: f.family,
         fontWeight: f.weight,
-        fontSize: `clamp(8px, ${cqw}cqw, 130px)`,
+        fontSize: `clamp(8px, ${cqw}cqw, 90px)`,
         lineHeight: 1.22,
         color: c.color,
         textAlign: 'center',
-        whiteSpace: 'pre', // \n만 줄바꿈, 자동 줄바꿈 없음
+        whiteSpace: 'pre', // \n만 줄바꿈, 자동 줄바꿈 없음(폰트가 폭에 맞춰 줄어듦)
         // 사진 위에서도 읽히게 반대 톤 외곽선 + 그림자
-        WebkitTextStroke: `${stroke}cqw ${c.stroke}`,
+        WebkitTextStroke: `0.6cqw ${c.stroke}`,
         textShadow: '0 1px 3px rgba(0,0,0,.35)',
         userSelect: 'none',
       }}
