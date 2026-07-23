@@ -1,5 +1,7 @@
 // 한끼 브랜드 재료 아이콘 세트 — 앱 쿨톤과 어울리는 채도 낮은 컬러 듀오톤.
 // 이름으로 자동 매칭(guessFoodIcon)되거나, 픽커에서 직접 고를 수 있다.
+import { PHOTO_FAMILY } from './Stickers' // 🍱 뉴 음식 이모지(다꾸본 완성요리 PNG)도 레시피 아이콘으로 쓸 수 있게
+
 const I = {
   // ── 곡물·면 ──
   rice: (
@@ -643,7 +645,14 @@ const I = {
 
 // 픽커용 — 카테고리별 아이콘 키
 export const FOOD_ICON_GROUPS = [
-  { label: '요리', items: ['rice', 'donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert', 'icecream'] },
+  // 🍱 뉴 음식 이모지(다꾸본 완성요리 사진) — 레시피 대표 이미지로. 사진 없을 때 이걸로 예쁘게.
+  { label: '🍚 한식', items: ['fh_hnc03', 'fh_htj13', 'fh_hnc04', 'fh_hnb01', 'fh_htj01', 'fh_hnc01', 'fh_hnc10', 'fh_hnc06', 'fh_hnb08', 'fh_htj05'] },
+  { label: '🥟 분식', items: ['fb_bun03', 'fb_bun08', 'fb_bun05', 'fb_bun04', 'fb_bun02', 'fb_bun11'] },
+  { label: '🍝 양식', items: ['fy_yng01', 'fy_yng02', 'fy_yng05', 'fy_yng07', 'fy_yng09', 'fy_yng12'] },
+  { label: '🥢 중식', items: ['fj_jsk03', 'fj_jsk01', 'fj_jsk04', 'fj_jsk05', 'fj_jsk02', 'fj_jsk15'] },
+  { label: '🍣 일식', items: ['fi_isk03', 'fi_isk05', 'fi_isk02', 'fi_isk07', 'fi_isk06', 'fi_isk13'] },
+  { label: '🍰 디저트·음료', items: ['fd_des05', 'fd_des08', 'fd_des12', 'fd_des02', 'fd_des06', 'fd_des13', 'fd_des14', 'fd_des15'] },
+  { label: '요리 아이콘', items: ['rice', 'donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert', 'icecream'] },
   { label: '밥·면·빵', items: ['rice', 'donburi', 'noodle', 'guksu', 'bread', 'tteok', 'tofu'] },
   { label: '채소', items: ['cabbage', 'kimchi', 'lettuce', 'onion', 'garlic', 'greenOnion', 'sprout', 'potato', 'carrot', 'chili', 'pepper', 'cucumber', 'eggplant', 'corn', 'radish', 'mushroom', 'broccoli', 'beans'] },
   { label: '과일', items: ['tomato', 'apple', 'banana', 'strawberry', 'grape', 'lemon', 'orange', 'avocado'] },
@@ -755,6 +764,11 @@ export function guessFoodIcon(name = '') {
 }
 
 export default function FoodIcon({ name = 'default', size = 40 }) {
+  // 🍱 뉴 음식 이모지(PNG) — 완성요리 사진을 아이콘으로. 없으면 SVG 브랜드 아이콘.
+  const pf = PHOTO_FAMILY[name]
+  if (pf && pf.src) {
+    return <img src={pf.src} alt="" draggable={false} width={size} height={size} style={{ display: 'block', objectFit: 'contain' }} />
+  }
   const content = I[name] || I.default
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" style={{ display: 'block' }} aria-hidden="true">
