@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import Buddy from './Buddies'
 
 // ── 꾸미기 스티커 라이브러리 ──
@@ -210,7 +211,13 @@ export function StickerFx({ kind }) {
 // 단일 몸통색 스티커만 대상. 기본색 → 고른 색으로 문자열 치환(ART 원본은 안 건드림).
 // 눈·볼·외곽선은 유지되고 몸통색만 바뀐다. 대상이 아닌 스티커는 color를 무시.
 export const STICKER_DEFAULT = { heart: '#dd918a', star: '#d7b15f', sparkle: '#d7b15f', bow: '#d99cad', vhand: '#e6c49c' }
-export const RECOLORABLE = new Set(Object.keys(STICKER_DEFAULT))
+// 🎨 PNG 데코 리컬러 대상 — 크레용 외곽선 + 단일 포인트 컬러 손그림(하트·별·리본·튤립·달·음표 등).
+// 캔버스로 '채도 있는 포인트 픽셀'의 색조(hue)만 팔레트 색으로 치환 → 검정 외곽선·흰색은 그대로 유지.
+export const RECOLOR_PNG = new Set([
+  'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14',
+  'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07',
+])
+export const RECOLORABLE = new Set([...Object.keys(STICKER_DEFAULT), ...RECOLOR_PNG])
 // 색 팔레트 — 따뜻한 톤 + 팝 컬러 + 모노(남성·미니멀). '기본'은 color 비우면 원래색.
 export const STICKER_COLORS = [
   { key: 'coral', color: '#d68f88' },
@@ -223,6 +230,76 @@ export const STICKER_COLORS = [
   { key: 'charcoal', color: '#6b6255' },
   { key: 'cream', color: '#e6dcc7' },
 ]
+
+// ── PNG 리컬러 (캔버스 색조 치환) ──
+// HSL 변환(colorsys HLS와 동일). 채도 있는 포인트 픽셀만 목표 색조로, 밝기(음영)는 보존.
+function rgbToHls(r, g, b) {
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2
+  let h = 0, s = 0
+  if (mx !== mn) {
+    const d = mx - mn
+    s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn)
+    if (mx === r) h = (g - b) / d + (g < b ? 6 : 0)
+    else if (mx === g) h = (b - r) / d + 2
+    else h = (r - g) / d + 4
+    h /= 6
+  }
+  return [h, l, s]
+}
+function hue2rgb(p, q, t) { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p }
+function hlsToRgb(h, l, s) {
+  if (s === 0) return [l, l, l]
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+  const p = 2 * l - q
+  return [hue2rgb(p, q, h + 1 / 3), hue2rgb(p, q, h), hue2rgb(p, q, h - 1 / 3)]
+}
+function hexToHls(hex) {
+  return rgbToHls(parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255)
+}
+const RECOLOR_CACHE = new Map() // `${src}|${color}` → dataURL (한 번만 계산)
+function recolorToDataURL(img, hex) {
+  const th = hexToHls(hex)[0], ts = hexToHls(hex)[2]
+  const cv = document.createElement('canvas')
+  cv.width = img.naturalWidth; cv.height = img.naturalHeight
+  const ctx = cv.getContext('2d')
+  ctx.drawImage(img, 0, 0)
+  const idata = ctx.getImageData(0, 0, cv.width, cv.height)
+  const d = idata.data
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] < 20) continue
+    const hls = rgbToHls(d[i] / 255, d[i + 1] / 255, d[i + 2] / 255)
+    const l = hls[1], s = hls[2]
+    if (s > 0.16 && l > 0.16 && l < 0.93) { // 포인트 컬러만(검정 외곽선·흰색 제외)
+      const ns = Math.min(0.9, Math.max(ts * 0.9, s * 0.55))
+      const rgb = hlsToRgb(th, l, ns)
+      d[i] = rgb[0] * 255; d[i + 1] = rgb[1] * 255; d[i + 2] = rgb[2] * 255
+    }
+  }
+  ctx.putImageData(idata, 0, 0)
+  return cv.toDataURL('image/png')
+}
+// color 있으면 캔버스로 리컬러(캐시), 없으면 원본. 계산 전엔 원본을 잠깐 보여줌.
+function RecolorImg({ src, color, className }) {
+  const [out, setOut] = useState(() => (color ? (RECOLOR_CACHE.get(src + '|' + color) || src) : src))
+  useEffect(() => {
+    if (!color) { setOut(src); return }
+    const key = src + '|' + color
+    const hit = RECOLOR_CACHE.get(key)
+    if (hit) { setOut(hit); return }
+    let alive = true
+    const img = new Image()
+    img.onload = () => {
+      let url
+      try { url = recolorToDataURL(img, color) } catch (e) { url = src }
+      RECOLOR_CACHE.set(key, url)
+      if (alive) setOut(url)
+    }
+    img.onerror = () => { if (alive) setOut(src) }
+    img.src = src
+    return () => { alive = false }
+  }, [src, color])
+  return <img src={out} alt="" draggable={false} className={className} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }} />
+}
 
 // 스티커 렌더러 — 드로잉 아트는 인라인 SVG, 친구들은 Buddy 그대로. color 주면 몸통색 리컬러.
 export function StickerArt({ id, color, style, motion }) {
@@ -244,9 +321,13 @@ export function StickerArt({ id, color, style, motion }) {
   const pf = PHOTO_FAMILY[id]
   if (pf) {
     // 🍱 음식·재료·데코·라이프 = 정적 / 🐻🐧 곰펭(gp_) = 모션 적용. 음식류는 motion 미설정→motionClass '' 자동 정적.
+    // 🎨 데코 PNG(RECOLOR_PNG)는 color 주면 캔버스로 포인트색만 팔레트 색조로 치환.
+    const cls = motionClass(motion)
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
-        <img src={pf.src} alt="" draggable={false} className={motionClass(motion)} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }} />
+        {color && RECOLOR_PNG.has(id)
+          ? <RecolorImg src={pf.src} color={color} className={cls} />
+          : <img src={pf.src} alt="" draggable={false} className={cls} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }} />}
       </span>
     )
   }
