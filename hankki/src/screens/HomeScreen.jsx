@@ -5,6 +5,7 @@ import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
+import gomHeader from '../assets/gom-header.png' // 🐻 뉴 물결 곰(인사) — 홈 상단 브랜드 마스코트
 import SourceBadge from '../components/SourceBadge'
 import TabTips from '../components/TabTips'
 import PreviewSheet from '../components/PreviewSheet'
@@ -64,9 +65,9 @@ export default function HomeScreen() {
     <>
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          {/* 곰곰 셰프 + 한끼 로고락업 — 홈 상단 브랜드 마크 */}
+          {/* 뉴 물결 곰(인사) + 한끼 로고락업 — 홈 상단 브랜드 마크. 살랑(sway) 모션=레꾸 피커엔 없는 모션. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Buddy id="bear" size={34} />
+            <img src={gomHeader} alt="한끼 곰" width={38} height={38} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center' }} />
             <div className="h-title">한끼</div>
           </div>
           <TabTips tab="home" />
