@@ -130,6 +130,13 @@ export const KITCHEN_IDS = new Set(Object.keys(KITCHEN_FAMILY))
 const PHOTO_URLS = import.meta.glob('../assets/stickers/photo/*.png', { eager: true, query: '?url', import: 'default' })
 const PHOTO_RATIO = {
   fh_hnc03: 1.0867, fh_htj13: 1.1181, fh_hnc04: 1.1256, fh_hnb01: 1.0252, fh_htj01: 1.0218, fh_hnc01: 1.1092, fh_hnc10: 1.2081, fh_hnc06: 1.3209, fh_hnb08: 1.2864, fh_htj05: 1.1992,
+  // 🍚 한식 완성요리 뉴세트(2026-07-23·37종, 진짜 음식같은 아이콘 → 레시피 썸네일 자동매칭용). docs/stickers/음식아이콘-2507
+  fh_k01: 1.2341, fh_k02: 1.2724, fh_k03: 0.902, fh_k04: 1.0, fh_k05: 0.9118, fh_k06: 1.3662,
+  fh_k07: 0.9871, fh_k08: 0.9899, fh_k09: 0.9868, fh_k10: 1.0296, fh_k11: 0.9624, fh_k12: 0.8187,
+  fh_k13: 1.3009, fh_k14: 1.0432, fh_k15: 1.0066, fh_k16: 1.0, fh_k17: 0.9508, fh_k18: 1.4422,
+  fh_k19: 0.9461, fh_k20: 0.8469, fh_k21: 0.8469, fh_k22: 1.2008, fh_k23: 1.252, fh_k24: 1.2236,
+  fh_k25: 1.0906, fh_k26: 1.0971, fh_k27: 1.2411, fh_k28: 1.236, fh_k29: 0.9902, fh_k30: 1.0229,
+  fh_k31: 0.8469, fh_k32: 0.9831, fh_k33: 0.9513, fh_k34: 1.1648, fh_k35: 0.963, fh_k36: 1.3744, fh_k37: 1.0101,
   fb_bun03: 1.4272, fb_bun08: 1.3436, fb_bun05: 1.1297, fb_bun04: 1.4844, fb_bun02: 0.9498, fb_bun11: 1.351,
   fy_yng01: 1.335, fy_yng02: 1.3465, fy_yng05: 0.9915, fy_yng07: 1.3614, fy_yng09: 1.2161, fy_yng12: 1.3594,
   fj_jsk03: 1.1511, fj_jsk01: 1.0866, fj_jsk04: 1.3317, fj_jsk05: 1.1705, fj_jsk02: 1.0714, fj_jsk15: 1.3058,
