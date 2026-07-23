@@ -429,11 +429,8 @@ export const DECOR_BACKGROUNDS = [
   { key: 'none', label: '기본', style: null },
   { key: 'cream', label: '크림', style: { background: '#f9f4ec' } },
   { key: 'peach', label: '피치', style: { background: '#faeae1' } },
-  { key: 'butter', label: '버터', style: { background: '#f9f2e1' } },
-  { key: 'mint', label: '민트', style: { background: '#e8f2ea' } },
   { key: 'sky', label: '하늘', style: { background: '#e9f0f7' } },
   { key: 'lilac', label: '라일락', style: { background: '#f1ebf5' } },
-  { key: 'rose', label: '로즈', style: { background: '#f7eaed' } },
   { key: 'kraft', label: '크라프트', style: { background: '#eee2d0' } },
   {
     key: 'grid', label: '모눈',
@@ -464,8 +461,15 @@ export const DECOR_BACKGROUNDS = [
   },
   {
     key: 'sage', label: '세이지',
-    style: { background: 'linear-gradient(160deg, #e2e9dc 0%, #d7e0d2 100%)' },
+    style: { background: 'linear-gradient(160deg, #dfe9d8 0%, #d1e0d5 50%, #dae5e4 100%)' },
   },
+  // 🍃 조금 진한 뮤트(중간톤·다크 아님) — 곰(웜)·펭(쿨) 둘 다 맞는 뉴트럴/브릿지 우선 + 웜·쿨 포인트 하나씩. (창업자 요청 2026-07-23, 클로드 셀렉)
+  { key: 'msage', label: '딥세이지', style: { background: '#9aab9c' } },   // 그린 브릿지 — 둘 다 최고
+  { key: 'mtaupe', label: '웜토프', style: { background: '#b5a695' } },    // 웜뉴트럴 브릿지 — 둘 다 부드럽게
+  { key: 'mclay', label: '클레이', style: { background: '#c2a288' } },     // 웜 포인트 — 곰 감싸고 펭 톡
+  { key: 'mrose', label: '더스티로즈', style: { background: '#c6a5a9' } }, // 로즈 — 둘 다 OK
+  { key: 'mlav', label: '라벤더', style: { background: '#aca4bb' } },      // 퍼플 — 둘 다 OK
+  { key: 'mblue', label: '스모키블루', style: { background: '#a2b0bc' } }, // 쿨 포인트 — 펭 톡 곰 대비
   // 🌙 딥(어두운) 배경지 — 반짝임·홀로·별이 사는 "밤하늘 다꾸" (창업자 픽: 딥플럼·미드나잇)
   { key: 'plum', label: '딥플럼', dark: true, style: { background: '#3e3442' } },
   { key: 'midnight', label: '미드나잇', dark: true, style: { background: '#2d3340' } },
