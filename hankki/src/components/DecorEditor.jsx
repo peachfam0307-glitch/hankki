@@ -42,17 +42,27 @@ const TAPE_WIDTHS = [
 let seq = 0
 const newDecorId = () => `d${Date.now().toString(36)}${(seq++ % 1296).toString(36)}`
 
+// 🛟 자동저장 초안 — 꾸미는 중 계속 localStorage 에 저장, 앱이 죽거나 실수로 닫혀도 다시 열면 복구.
+// (창업자 데이터 손실 방지. 저장 누르면 초안 비움.)
+const draftKey = (id) => `hankki:decorDraft:${id}`
+function loadDraft(id) {
+  try { return JSON.parse(localStorage.getItem(draftKey(id)) || 'null') } catch { return null }
+}
+
 export default function DecorEditor({ recipe, onSave, onClose }) {
-  const [items, setItems] = useState(() => (recipe.decor || []).map((d) => ({ ...d })))
+  const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
+  // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
+  const draft = loadDraft(recipe.id)
+  const [items, setItems] = useState(() => (draft?.items || recipe.decor || []).map((d) => ({ ...d })))
   const [sel, setSel] = useState(null)
   const [noteEdit, setNoteEdit] = useState(null) // 글 수정 중인 포스트잇 item
   const [textFont, setTextFont] = useState('gaegu') // 글자 스티커 글씨체 기본 = 귀염체(손글씨 톤)
-  const [bg, setBg] = useState(recipe.decorBg || 'none') // 표지 배경(배경지)
-  // 저장된 표지 상태 그대로 시작한다('none'이면 비운 채로 — 나갔다 와도 유지)
-  const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
+  const [bg, setBg] = useState(draft?.bg ?? recipe.decorBg ?? 'none') // 표지 배경(배경지)
   // 되돌리기용 실제 표지 — 저장값이 'none'이어도 아이콘/사진으로 되살릴 수 있게
   const origThumb = savedThumb !== 'none' ? savedThumb : (recipe.image ? 'photo' : 'icon')
-  const [thumb, setThumb] = useState(savedThumb) // 'none'이면 표지 그림 비움 → 깨끗한 배경에 꾸미기
+  const [thumb, setThumb] = useState(draft?.thumb ?? savedThumb) // 'none'이면 표지 그림 비움 → 깨끗한 배경에 꾸미기
+  const [exitAsk, setExitAsk] = useState(false) // 취소 시 "저장 안 함?" 확인
+  const restoredRef = useRef(!!draft) // 초안에서 복구했는지(안내 토스트용)
   const [cat, setCat] = useState('bgtape') // 서랍 탭(배경부터 시작 — 배경·글자·친구들·음식·데코·라이프)
   const [foodChip, setFoodChip] = useState('f_han') // 음식 탭 요리별 서브칩(한식 기본)
 
@@ -63,6 +73,23 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   }
   const patch = (id, p) => setItems((arr) => arr.map((x) => (x.id === id ? { ...x, ...p } : x)))
   const remove = (id) => { setItems((arr) => arr.filter((x) => x.id !== id)); setSel(null) }
+
+  // 🛟 자동저장 — 편집할 때마다 초안을 localStorage 에 저장(디바운스). 앱이 죽거나 실수로 닫혀도 안 날아감.
+  const exitedRef = useRef(false) // 저장/나가기 후엔 초안 재생성 안 되게(대기중 디바운스 무효화)
+  useEffect(() => {
+    if (exitedRef.current) return
+    const t = setTimeout(() => {
+      try { localStorage.setItem(draftKey(recipe.id), JSON.stringify({ items, bg, thumb, at: Date.now() })) } catch { /* 용량 초과 등 무시 */ }
+    }, 350)
+    return () => clearTimeout(t)
+  }, [items, bg, thumb, recipe.id])
+  const clearDraft = () => { exitedRef.current = true; try { localStorage.removeItem(draftKey(recipe.id)) } catch { /* noop */ } }
+  // 저장 안 한 변경이 있나(취소 시 확인용)
+  const isDirty = () => JSON.stringify(items) !== JSON.stringify(recipe.decor || []) ||
+    (bg || 'none') !== (recipe.decorBg || 'none') || thumb !== savedThumb
+  const doSave = () => { clearDraft(); onSave(items, bg, thumb) }
+  const doExit = () => { clearDraft(); onClose() }
+  const handleCancel = () => { if (isDirty()) setExitAsk(true); else doExit() }
 
   const selItem = items.find((x) => x.id === sel)
   const selNoteColor = NOTE_COLORS.find((n) => n.key === selItem?.key) || NOTE_COLORS[0]
@@ -165,10 +192,15 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
       <div className="decor-editor">
         {/* 상단 바 */}
         <div className="decor-top">
-          <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
+          <button className="press" onClick={handleCancel} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
           <div style={{ fontSize: 16, fontWeight: 800 }}>레시피 꾸미기</div>
-          <button className="press" onClick={() => onSave(items, bg, thumb)} style={{ color: 'var(--brown)', fontSize: 15, fontWeight: 800 }}>저장</button>
+          <button className="press" onClick={doSave} style={{ color: 'var(--brown)', fontSize: 15, fontWeight: 800 }}>저장</button>
         </div>
+        {restoredRef.current && (
+          <div style={{ flex: '0 0 auto', background: '#eef3e8', color: '#4f5a44', fontSize: 12.5, fontWeight: 700, textAlign: 'center', padding: '6px 10px' }}>
+            🛟 저장 안 하고 나갔던 꾸미기를 이어서 불러왔어요
+          </div>
+        )}
 
         {/* 표지 캔버스 */}
         <div className="decor-stage">
@@ -445,6 +477,21 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             }}
             onClose={() => setNoteEdit(null)}
           />
+        )}
+
+        {/* 취소 확인 — 저장 안 한 변경이 있을 때만(실수로 날아가는 것 방지) */}
+        {exitAsk && (
+          <div onClick={() => setExitAsk(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(40,34,28,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 24 }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 18, padding: '22px 20px 16px', width: '100%', maxWidth: 320, boxShadow: '0 8px 30px rgba(0,0,0,.3)', textAlign: 'center' }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', marginBottom: 6 }}>저장하지 않고 나갈까요?</div>
+              <div style={{ fontSize: 13.5, color: 'var(--text-sub)', lineHeight: 1.5, marginBottom: 18 }}>지금까지 꾸민 게 사라져요.<br />저장하면 그대로 남아요.</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <button className="press" onClick={() => { setExitAsk(false); doSave() }} style={{ padding: '12px', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontSize: 14.5, fontWeight: 800, border: 'none' }}>저장하고 나가기</button>
+                <button className="press" onClick={() => { setExitAsk(false); doExit() }} style={{ padding: '11px', borderRadius: 12, background: 'transparent', color: '#c0574a', fontSize: 14, fontWeight: 700, border: 'none' }}>저장 안 하고 나가기</button>
+                <button className="press" onClick={() => setExitAsk(false)} style={{ padding: '9px', borderRadius: 12, background: 'transparent', color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600, border: 'none' }}>계속 꾸미기</button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </Portal>
