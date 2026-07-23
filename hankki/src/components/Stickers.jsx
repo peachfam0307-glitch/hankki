@@ -331,7 +331,8 @@ export function StickerArt({ id, color, style, motion }) {
   if (pf) {
     // 🍱 음식·재료·데코·라이프 = 정적 / 🐻🐧 곰펭(gp_) = 모션 적용. 음식류는 motion 미설정→motionClass '' 자동 정적.
     // 🎨 데코 PNG(RECOLOR_PNG)는 color 주면 캔버스로 포인트색만 팔레트 색조로 치환.
-    const cls = motionClass(motion)
+    // 🐻🐧 곰펭(gp_)은 부엌식구처럼 motion 미지정 시 기본 '통통'(드로어 프리뷰도 움직이게). 음식·데코는 정적.
+    const cls = motionClass(motion === undefined && id.startsWith('gp_') ? 'tongtong' : motion)
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
         {color && RECOLOR_PNG.has(id)
@@ -538,8 +539,9 @@ export const DECOR_BACKGROUNDS = [
     key: 'dot', label: '도트',
     style: {
       backgroundColor: '#f5ece0',
-      backgroundImage: 'radial-gradient(#dcc9a9 15%, transparent 16%)',
-      backgroundSize: '16.66% 16.66%',
+      // 도트 작게 + circle 로 동그랗게(비정사각 셀에서도 타원 안 되게)
+      backgroundImage: 'radial-gradient(circle, #dcc9a9 26%, transparent 28%)',
+      backgroundSize: '9% 9%',
     },
   },
   {
@@ -625,12 +627,14 @@ export const TAPE_PATTERNS = [
     },
   },
   {
-    // 🍉 수박(여름) — 크림 바탕 + 수박 조각
+    // 🍉 수박(여름) — 크림 바탕 + 수박 조각. 세로 타일링으로 잘리던 것 → 가로 한 줄(repeat-x)·세로 가운데.
     key: 'watermelon', label: '수박',
     style: {
       backgroundColor: 'rgba(246,239,232,0.95)',
-      backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22'><path d='M4 7 a7 7 0 0 1 14 0 z' fill='%23e98a93'/><path d='M4 7 a7 7 0 0 1 14 0' fill='none' stroke='%237ba85e' stroke-width='1.8' stroke-linecap='round'/><circle cx='8' cy='8.4' r='0.75' fill='%235a4a35'/><circle cx='11.5' cy='9.6' r='0.75' fill='%235a4a35'/><circle cx='15' cy='8.4' r='0.75' fill='%235a4a35'/></svg>\")",
-      backgroundSize: 'auto 76%',
+      backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><path d='M5 8.6 A 7.3 7 0 0 0 19 8.6 Z' fill='%23e98a93'/><path d='M4.4 8.7 A 8 7.6 0 0 0 19.6 8.7' fill='none' stroke='%236f9d54' stroke-width='2.2' stroke-linecap='round'/><g fill='%234a3d2c'><circle cx='9.6' cy='11' r='0.8'/><circle cx='12' cy='12.4' r='0.8'/><circle cx='14.4' cy='11' r='0.8'/></g></svg>\")",
+      backgroundRepeat: 'repeat-x',
+      backgroundPosition: 'center',
+      backgroundSize: 'auto 58%',
     },
   },
   {
