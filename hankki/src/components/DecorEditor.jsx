@@ -53,7 +53,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   // 되돌리기용 실제 표지 — 저장값이 'none'이어도 아이콘/사진으로 되살릴 수 있게
   const origThumb = savedThumb !== 'none' ? savedThumb : (recipe.image ? 'photo' : 'icon')
   const [thumb, setThumb] = useState(savedThumb) // 'none'이면 표지 그림 비움 → 깨끗한 배경에 꾸미기
-  const [cat, setCat] = useState('buddies') // 서랍 탭(6개: 친구들·음식·데코·라이프·글자·배경)
+  const [cat, setCat] = useState('bgtape') // 서랍 탭(배경부터 시작 — 배경·글자·친구들·음식·데코·라이프)
   const [foodChip, setFoodChip] = useState('f_han') // 음식 탭 요리별 서브칩(한식 기본)
 
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로 올라온다
@@ -78,14 +78,14 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const selIsKitchen = selItem?.type === 'sticker' && KITCHEN_IDS.has(selItem.key)
   const hasCtx = selItem && (selItem.type === 'note' || selItem.type === 'text' || selItem.type === 'tape' || selIsKitchen || (selItem.type === 'sticker' && RECOLORABLE.has(selItem.key)))
 
-  // 서랍 탭 — 다꾸 리서치 기반 6탭(편하고 직관적으로, 안 늘어지게). 음식만 요리별 서브칩(2단계).
+  // 서랍 탭 — 배경부터 시작(꾸미는 순서: 배경→글자→친구들→음식·데코·라이프). 음식만 요리별 서브칩(2단계).
   const CATS = [
+    { key: 'bgtape', label: '🎨 배경' },
+    { key: 'notetext', label: '🗒️ 글자' },
     { key: 'buddies', label: '🐻 친구들' },
     { key: 'food', label: '🍱 음식' },
     { key: 'deco', label: '✨ 데코' },
     { key: 'life', label: '💪 라이프' },
-    { key: 'notetext', label: '🗒️ 글자' },
-    { key: 'bgtape', label: '🎨 배경' },
   ]
   const groupsByTab = (t) => STICKER_GROUPS.filter((g) => g.tab === t)
   const foodGroups = groupsByTab('food') // 각 그룹 = 요리별 서브칩(한식·양식·중식·일식·분식·디저트·재료)
@@ -105,7 +105,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     const it = {
       id: newDecorId(), type: 'sticker', key,
       x: 0.5 + ((n % 3) - 1) * 0.06, y: 0.42 + ((n % 4) - 1.5) * 0.05,
-      s: key === 'yum' ? 0.34 : isKf ? 0.28 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.17 : 0.26) : FACE_KEYS.has(key) ? 0.11 : 0.2, r: ((n % 5) - 2) * 4,
+      s: key === 'yum' ? 0.34 : isKf ? 0.28 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2, r: ((n % 5) - 2) * 4,
       ...(isKf ? { motion: 'tongtong', fx: 'none' } : {}),
     }
     setItems((arr) => [...arr, it])
@@ -138,9 +138,10 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     const isPhoto = PHOTO_IDS.has(key)
     const isDeco = key.startsWith('dc_') // 데코 조각(하트·별·리본…)은 위 SVG 색바꾸기 줄과 같은 크기로 작게
     const colorable = RECOLORABLE.has(key)
+    // 사진 스티커는 '정사각 박스에 contain' → 넓적·길쭉이 다 같은 크기로 보인다(크기 통일). 음식·라이프는 조금 작게.
     return (
       <button key={key} className="press decor-cell" onClick={() => addSticker(key)} aria-label={colorable ? `${key} · 색 바꾸기 가능` : key} style={{ position: 'relative' }}>
-        <span style={{ display: 'block', width: key === 'yum' ? '92%' : isKf ? '62%' : isDeco ? '58%' : isPhoto ? '84%' : '78%', aspectRatio: key === 'yum' ? '74/46' : isKf ? '0.75' : isPhoto ? `${stickerRatio(key)}` : '1' }}>
+        <span style={{ display: 'block', width: key === 'yum' ? '92%' : isKf ? '62%' : isDeco ? '56%' : isPhoto ? '70%' : '78%', aspectRatio: key === 'yum' ? '74/46' : isKf ? '0.75' : isPhoto ? '1' : '1' }}>
           <StickerArt id={key} />
         </span>
         {/* 🎨 '색 바꿀 수 있음' 표시 — 스티커에 박아 발견성↑. 뮤트 미니 팔레트 점. */}
