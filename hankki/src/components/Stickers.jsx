@@ -122,6 +122,29 @@ for (const key of Object.keys(CC_RATIO)) {
 }
 export const KITCHEN_IDS = new Set(Object.keys(KITCHEN_FAMILY))
 
+// ── 🍱 음식·재료·데코·라이프 사진스티커 (2026-07-22 요리별 대량, blob 깨끗컷) ──
+// 정적 투명 PNG(모션·효과 없음). docs/stickers/음식라이프-이모티콘-2507/낱개 → src/assets/stickers/photo.
+// key 접두어 = 그룹(fh한식·fb분식·fy양식·fj중식·fi일식·fd디저트·ig재료·dc데코·ch응원·lf라이프·cp곰펭). 요리 탭 서브칩으로 씀.
+const PHOTO_URLS = import.meta.glob('../assets/stickers/photo/*.png', { eager: true, query: '?url', import: 'default' })
+const PHOTO_RATIO = {
+  fh_hnc03: 1.0867, fh_htj13: 1.1181, fh_hnc04: 1.1256, fh_hnb01: 1.0252, fh_htj01: 1.0218, fh_hnc01: 1.1092, fh_hnc10: 1.2081, fh_hnc06: 1.3209, fh_hnb08: 1.2864, fh_htj05: 1.1992,
+  fb_bun03: 1.4272, fb_bun08: 1.3436, fb_bun05: 1.1297, fb_bun04: 1.4844, fb_bun02: 0.9498, fb_bun11: 1.351,
+  fy_yng01: 1.335, fy_yng02: 1.3465, fy_yng05: 0.9915, fy_yng07: 1.3614, fy_yng09: 1.2161, fy_yng12: 1.3594,
+  fj_jsk03: 1.1511, fj_jsk01: 1.0866, fj_jsk04: 1.3317, fj_jsk05: 1.1705, fj_jsk02: 1.0714, fj_jsk15: 1.3058,
+  fi_isk03: 1.3454, fi_isk05: 1.0705, fi_isk02: 1.1087, fi_isk07: 1.2735, fi_isk06: 1.0921, fi_isk13: 1.0338,
+  fd_des05: 0.9848, fd_des08: 1.0604, fd_des12: 1.0706, fd_des02: 1.2529, fd_des06: 0.8844, fd_des13: 0.6426, fd_des14: 0.7722, fd_des15: 0.7143,
+  ig_jae06: 0.9892, ig_jae08: 1.1215, ig_jae10: 1.0221, ig_jae19: 1.3432, ig_jae20: 1.024, ig_jae07: 1.1017, ig_jae09: 1.1304, ig_jae03: 1.2457, ig_jae12: 1.2778, ig_frb01: 1.0508, ig_frb03: 0.9623, ig_frb07: 0.8879, ig_frb13: 0.9945, ig_ggi03: 1.0711, ig_ggi16: 1.2129, ig_hsm01: 1.1898,
+  dc_dhb04: 1.0957, dc_dhb01: 0.9561, dc_dsy04: 0.8326, dc_dhb10: 1.1893, dc_dhb06: 0.8061, dc_dhb09: 1.1214, dc_dhb14: 1.0, dc_dhb05: 1.3728, dc_dsy16: 1.3971, dc_dsy13: 1.1591, dc_dhb13: 1.0158, dc_dmn02: 0.9219, dc_dmn06: 1.0207, dc_dmn07: 1.1012,
+  ch_che01: 0.7928, ch_che04: 1.4278, ch_che06: 1.0683, ch_che08: 1.3098, ch_che05: 0.9231,
+  lf_fit12: 1.6056, lf_fit11: 1.487, lf_fit08: 1.2486, lf_fit07: 1.2056, lf_fit02: 1.089, lf_fit13: 0.6872, lf_fit14: 1.1852, lf_fit06: 0.662,
+  cp_cpf01: 0.8659, cp_cpf02: 0.9215, cp_cpf03: 0.8136, cp_cpf04: 0.8604, cp_cpf05: 0.9968, cp_cpf06: 1.0358, cp_cpf07: 0.9139, cp_cpf08: 0.8815,
+}
+export const PHOTO_FAMILY = {}
+for (const key of Object.keys(PHOTO_RATIO)) {
+  PHOTO_FAMILY[key] = { src: PHOTO_URLS[`../assets/stickers/photo/${key}.png`], ratio: PHOTO_RATIO[key] }
+}
+export const PHOTO_IDS = new Set(Object.keys(PHOTO_FAMILY))
+
 // ── ✨ 캐릭터 움직임(모션) · 효과(양념) — 스티커마다 골라 얹는다 ──
 // 전부 그림 1장으로 되는 CSS 모션. item.motion / item.fx 에 key 저장.
 // base:true = 기본(무료) 노출. 나머지는 팩용 예약(코드·CSS는 있고 피커에만 안 뜸).
@@ -215,6 +238,15 @@ export function StickerArt({ id, color, style, motion }) {
       </span>
     )
   }
+  const pf = PHOTO_FAMILY[id]
+  if (pf) {
+    // 🍱 음식·재료·데코·라이프 — 정적 투명 PNG(모션·효과 없음).
+    return (
+      <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
+        <img src={pf.src} alt="" draggable={false} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }} />
+      </span>
+    )
+  }
   if (BUDDY_IDS.has(id)) {
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
@@ -230,33 +262,37 @@ export function StickerArt({ id, color, style, motion }) {
 }
 
 // 스티커별 가로:세로 비율(레이아웃용). 말풍선은 넓고, 부엌 식구들은 세로가 길다.
-export const stickerRatio = (id) => (id === 'yum' ? 74 / 46 : KITCHEN_FAMILY[id] ? KITCHEN_FAMILY[id].ratio : 1)
+export const stickerRatio = (id) => (id === 'yum' ? 74 / 46 : KITCHEN_FAMILY[id] ? KITCHEN_FAMILY[id].ratio : PHOTO_FAMILY[id] ? PHOTO_FAMILY[id].ratio : 1)
 
 const kfItems = (prefix) => KF_NAMES.map(([n]) => prefix + n)
+// ── 스티커 피커 그룹 (2026-07-22 재편) — 다꾸 리서치 기반 6탭 IA + 음식 서브칩 ──
+// tab: 'buddies'(친구들)·'food'(음식,서브칩)·'deco'(데코)·'life'(라이프). notetext/bgtape는 에디터에서 별도.
+// chip: 음식 탭의 요리별 서브칩 라벨. 옛 약한 SVG(표정·재료·도구·소스·디저트)는 피커에서 제외(코드는 남아 저장표지 호환).
 export const STICKER_GROUPS = [
-  { key: 'kitchen', label: '🎁 부엌 식구들', items: kfItems('kf_') },
-  // 🍬 캔디 친구들 — 8마리 × 2포즈(대표1 고화질 + 표정·포즈1). 나머지 포즈는 다음 업뎃 때.
+  // 🐻 친구들
   {
-    key: 'kitchen_candy', label: '🍬 캔디 친구들', items: [
-      'kf_c_gomgom', 'cc17',
-      'kf_c_ppyak', 'cc42',
-      'kf_c_toto', 'cc11',
-      'kf_c_nyangi', 'cc20',
-      'kf_c_mongmong', 'cc13',
-      'kf_c_hodu', 'cc30',
-      'kf_c_hamzzi', 'cc47',
-      'kf_c_pengpeng', 'cc40',
+    key: 'kitchen_candy', tab: 'buddies', label: '🍬 캔디 친구들', items: [
+      'kf_c_gomgom', 'cc17', 'kf_c_ppyak', 'cc42', 'kf_c_toto', 'cc11', 'kf_c_nyangi', 'cc20',
+      'kf_c_mongmong', 'cc13', 'kf_c_hodu', 'cc30', 'kf_c_hamzzi', 'cc47', 'kf_c_pengpeng', 'cc40',
     ],
   },
-  { key: 'kitchen_line', label: '✏️ 라인', items: kfItems('kf_l_') },
-  // 친구들(오리지널)만 유지 — '머리만 있는' 아바타(라인·캔디 클로즈업)는 꾸미기 피커에서 뺌(프로필 아바타로는 남음).
-  { key: 'buddies', label: '친구들', items: ['bear', 'rabbit', 'catpot', 'chick', 'dog', 'gecko', 'hamster', 'penguin'] },
-  { key: 'faces', label: '표정', items: ['smile', 'happy', 'hearteyes', 'wink', 'mlem', 'cool', 'surprised', 'boing', 'cry', 'yumface'] },
-  { key: 'symbols', label: '심볼', items: ['heart', 'star', 'sparkle', 'fire', 'yum', 'crown', 'thumb', 'vhand', 'bow'] },
-  { key: 'ingredients', label: '재료', items: ['tomato', 'egg', 'carrot', 'onion', 'mushroom', 'chili', 'avocado', 'broccoli'] },
-  { key: 'tools', label: '도구', items: ['pot', 'pan', 'ladle', 'spatula', 'board', 'cup'] },
-  { key: 'sauce', label: '소스', items: ['ketchup', 'soy', 'hotsauce', 'oil'] },
-  { key: 'dessert', label: '디저트', items: ['cake', 'coffee', 'icecream', 'cheese'] },
+  { key: 'combo', tab: 'buddies', label: '💪 곰펭 파이팅', items: ['cp_cpf01', 'cp_cpf02', 'cp_cpf03', 'cp_cpf04', 'cp_cpf05', 'cp_cpf06', 'cp_cpf07', 'cp_cpf08'] },
+  { key: 'kitchen', tab: 'buddies', label: '🎁 부엌 식구들', items: kfItems('kf_') },
+  { key: 'kitchen_line', tab: 'buddies', label: '✏️ 라인', items: kfItems('kf_l_') },
+  // 🍱 음식 (요리별 서브칩)
+  { key: 'f_han', tab: 'food', chip: '한식', items: ['fh_hnc03', 'fh_htj13', 'fh_hnc04', 'fh_hnb01', 'fh_htj01', 'fh_hnc01', 'fh_hnc10', 'fh_hnc06', 'fh_hnb08', 'fh_htj05'] },
+  { key: 'f_bun', tab: 'food', chip: '분식', items: ['fb_bun03', 'fb_bun08', 'fb_bun05', 'fb_bun04', 'fb_bun02', 'fb_bun11'] },
+  { key: 'f_yang', tab: 'food', chip: '양식', items: ['fy_yng01', 'fy_yng02', 'fy_yng05', 'fy_yng07', 'fy_yng09', 'fy_yng12'] },
+  { key: 'f_jung', tab: 'food', chip: '중식', items: ['fj_jsk03', 'fj_jsk01', 'fj_jsk04', 'fj_jsk05', 'fj_jsk02', 'fj_jsk15'] },
+  { key: 'f_il', tab: 'food', chip: '일식', items: ['fi_isk03', 'fi_isk05', 'fi_isk02', 'fi_isk07', 'fi_isk06', 'fi_isk13'] },
+  { key: 'f_dess', tab: 'food', chip: '디저트', items: ['fd_des05', 'fd_des08', 'fd_des12', 'fd_des02', 'fd_des06', 'fd_des13', 'fd_des14', 'fd_des15'] },
+  { key: 'f_ing', tab: 'food', chip: '재료', items: ['ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae03', 'ig_jae12', 'ig_frb01', 'ig_frb03', 'ig_frb07', 'ig_frb13', 'ig_ggi03', 'ig_ggi16', 'ig_hsm01'] },
+  // ✨ 데코 (색 바꾸는 SVG 심볼 유지 + 새 데코 PNG + 응원)
+  { key: 'deco_recolor', tab: 'deco', label: '🎨 색 바꾸기', items: ['heart', 'star', 'sparkle', 'bow', 'vhand'] },
+  { key: 'deco_png', tab: 'deco', label: '✨ 데코', items: ['dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
+  { key: 'deco_cheer', tab: 'deco', label: '💬 응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
+  // 💪 라이프
+  { key: 'life', tab: 'life', label: '💪 운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },
 ]
 
 // 포스트잇 색 팔레트(차분한 종이 톤) — bg / 접힘 / 글자 / line(무늬 선 색)

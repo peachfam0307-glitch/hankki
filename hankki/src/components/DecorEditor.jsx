@@ -3,7 +3,7 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, MOTIONS, FX_KINDS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS } from './Stickers'
+import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, PHOTO_IDS, stickerRatio, MOTIONS, FX_KINDS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -53,7 +53,8 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   // 되돌리기용 실제 표지 — 저장값이 'none'이어도 아이콘/사진으로 되살릴 수 있게
   const origThumb = savedThumb !== 'none' ? savedThumb : (recipe.image ? 'photo' : 'icon')
   const [thumb, setThumb] = useState(savedThumb) // 'none'이면 표지 그림 비움 → 깨끗한 배경에 꾸미기
-  const [cat, setCat] = useState('bgtape') // 서랍 카테고리(4개 묶음 탭 — 가로 스크롤 짧게)
+  const [cat, setCat] = useState('buddies') // 서랍 탭(6개: 친구들·음식·데코·라이프·글자·배경)
+  const [foodChip, setFoodChip] = useState('f_han') // 음식 탭 요리별 서브칩(한식 기본)
 
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로 올라온다
   const select = (id) => {
@@ -77,17 +78,18 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const selIsKitchen = selItem?.type === 'sticker' && KITCHEN_IDS.has(selItem.key)
   const hasCtx = selItem && (selItem.type === 'note' || selItem.type === 'text' || selItem.type === 'tape' || selIsKitchen || (selItem.type === 'sticker' && RECOLORABLE.has(selItem.key)))
 
-  // 서랍 카테고리 — 성격 비슷한 것끼리 4개 묶음 탭으로(가로 스크롤이 길지 않게).
-  // 배경·테이프 / 메모·글자 / 친구들(오리지널·라인·캔디) / 스티커(표정·심볼·재료·도구·소스·디저트).
+  // 서랍 탭 — 다꾸 리서치 기반 6탭(편하고 직관적으로, 안 늘어지게). 음식만 요리별 서브칩(2단계).
   const CATS = [
-    { key: 'bgtape', label: '🎨 배경·테이프' },
-    { key: 'notetext', label: '🗒️ 메모·글자' },
     { key: 'buddies', label: '🐻 친구들' },
-    { key: 'sticker', label: '✨ 스티커' },
+    { key: 'food', label: '🍱 음식' },
+    { key: 'deco', label: '✨ 데코' },
+    { key: 'life', label: '💪 라이프' },
+    { key: 'notetext', label: '🗒️ 글자' },
+    { key: 'bgtape', label: '🎨 배경' },
   ]
-  const BUDDY_GROUP_KEYS = new Set(['kitchen', 'kitchen_candy', 'kitchen_line', 'buddies', 'buddies_line', 'buddies_candy'])
-  const buddyGroups = STICKER_GROUPS.filter((g) => BUDDY_GROUP_KEYS.has(g.key))
-  const stickerGroups = STICKER_GROUPS.filter((g) => !BUDDY_GROUP_KEYS.has(g.key))
+  const groupsByTab = (t) => STICKER_GROUPS.filter((g) => g.tab === t)
+  const foodGroups = groupsByTab('food') // 각 그룹 = 요리별 서브칩(한식·양식·중식·일식·분식·디저트·재료)
+  const foodGroup = foodGroups.find((g) => g.key === foodChip) || foodGroups[0]
 
   // 포스트잇을 선택하면 서랍을 맨 위로 올려 '무늬·모양 꾸미기'가 바로 보이게 한다.
   const drawerRef = useRef(null)
@@ -103,7 +105,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     const it = {
       id: newDecorId(), type: 'sticker', key,
       x: 0.5 + ((n % 3) - 1) * 0.06, y: 0.42 + ((n % 4) - 1.5) * 0.05,
-      s: key === 'yum' ? 0.34 : FACE_KEYS.has(key) ? 0.11 : isKf ? 0.28 : 0.2, r: ((n % 5) - 2) * 4,
+      s: key === 'yum' ? 0.34 : isKf ? 0.28 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.17 : 0.26) : FACE_KEYS.has(key) ? 0.11 : 0.2, r: ((n % 5) - 2) * 4,
       ...(isKf ? { motion: 'tongtong', fx: 'none' } : {}),
     }
     setItems((arr) => [...arr, it])
@@ -130,27 +132,29 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     setNoteEdit(it)
   }
 
-  // 스티커 그룹 한 덩어리(소제목 + 그리드) — 친구들/스티커 탭에서 재사용
+  // 스티커 셀 한 칸 — 종류별 크기(부엌식구들 세로길쭉 / 음식·데코 사진은 제 비율 / SVG 정사각)
+  const renderCell = (key) => {
+    const isKf = KITCHEN_IDS.has(key)
+    const isPhoto = PHOTO_IDS.has(key)
+    const isDeco = key.startsWith('dc_') // 데코 조각(하트·별·리본…)은 위 SVG 색바꾸기 줄과 같은 크기로 작게
+    const colorable = RECOLORABLE.has(key)
+    return (
+      <button key={key} className="press decor-cell" onClick={() => addSticker(key)} aria-label={colorable ? `${key} · 색 바꾸기 가능` : key} style={{ position: 'relative' }}>
+        <span style={{ display: 'block', width: key === 'yum' ? '92%' : isKf ? '62%' : isDeco ? '58%' : isPhoto ? '84%' : '78%', aspectRatio: key === 'yum' ? '74/46' : isKf ? '0.75' : isPhoto ? `${stickerRatio(key)}` : '1' }}>
+          <StickerArt id={key} />
+        </span>
+        {/* 🎨 '색 바꿀 수 있음' 표시 — 스티커에 박아 발견성↑. 뮤트 미니 팔레트 점. */}
+        {colorable && (
+          <span aria-hidden="true" style={{ position: 'absolute', top: 3, right: 3, width: 15, height: 15, borderRadius: '50%', background: 'conic-gradient(from 210deg, #d68f88, #ccaa6d, #94a37e, #93aabd, #b2a3c1, #d68f88)', border: '1.6px solid var(--surface)', boxShadow: '0 1px 2.5px rgba(70,60,45,.35)' }} />
+        )}
+      </button>
+    )
+  }
+  // 스티커 그룹 한 덩어리(소제목 + 그리드)
   const renderStickerGroup = (g) => (
     <div className="decor-sec" key={g.key}>
-      <div className="decor-sec-label">{g.label}</div>
-      <div className="decor-grid">
-        {g.items.map((key) => {
-          const isKf = KITCHEN_IDS.has(key)
-          const colorable = RECOLORABLE.has(key)
-          return (
-            <button key={key} className="press decor-cell" onClick={() => addSticker(key)} aria-label={colorable ? `${key} · 색 바꾸기 가능` : key} style={{ position: 'relative' }}>
-              <span style={{ display: 'block', width: key === 'yum' ? '92%' : isKf ? '62%' : '78%', aspectRatio: key === 'yum' ? '74/46' : isKf ? '0.75' : '1' }}>
-                <StickerArt id={key} />
-              </span>
-              {/* 🎨 '색 바꿀 수 있음' 표시 — 코치 대신 스티커에 박아 발견성↑ ("왜 표시돼있지?" → 눌러봄). 뮤트 9색 미니 팔레트 점. */}
-              {colorable && (
-                <span aria-hidden="true" style={{ position: 'absolute', top: 3, right: 3, width: 15, height: 15, borderRadius: '50%', background: 'conic-gradient(from 210deg, #d68f88, #ccaa6d, #94a37e, #93aabd, #b2a3c1, #d68f88)', border: '1.6px solid var(--surface)', boxShadow: '0 1px 2.5px rgba(70,60,45,.35)' }} />
-              )}
-            </button>
-          )
-        })}
-      </div>
+      {g.label && <div className="decor-sec-label">{g.label}</div>}
+      <div className="decor-grid">{g.items.map(renderCell)}</div>
     </div>
   )
 
@@ -393,10 +397,29 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                 </div>
               </>
             )}
-            {/* 🐻 친구들(오리지널·라인·캔디) */}
-            {cat === 'buddies' && buddyGroups.map(renderStickerGroup)}
-            {/* ✨ 스티커(표정·심볼·재료·도구·소스·디저트) */}
-            {cat === 'sticker' && stickerGroups.map(renderStickerGroup)}
+            {/* 🐻 친구들 */}
+            {cat === 'buddies' && groupsByTab('buddies').map(renderStickerGroup)}
+            {/* 🍱 음식 — 요리별 서브칩 + 고른 칩만 (2단계, 안 늘어지게) */}
+            {cat === 'food' && (
+              <>
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 2px 10px', flex: '0 0 auto' }}>
+                  {foodGroups.map((g) => {
+                    const on = foodChip === g.key
+                    return (
+                      <button key={g.key} className="press" onClick={() => setFoodChip(g.key)}
+                        style={{ flex: '0 0 auto', padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)' }}>
+                        {g.chip}
+                      </button>
+                    )
+                  })}
+                </div>
+                {foodGroup && <div className="decor-grid">{foodGroup.items.map(renderCell)}</div>}
+              </>
+            )}
+            {/* ✨ 데코 (색 바꾸는 심볼 + 데코 + 응원) */}
+            {cat === 'deco' && groupsByTab('deco').map(renderStickerGroup)}
+            {/* 💪 라이프 */}
+            {cat === 'life' && groupsByTab('life').map(renderStickerGroup)}
           </div>
         </div>
 
