@@ -176,7 +176,7 @@ function TextDeco({ it, editable, coverW = 0 }) {
   // it.s(사용자 조절)만으로 크기 결정 → 크기/회전 핸들 로직 그대로, 상자만 글자에 맞게 줄어듦.
   const cw = coverW || 320
   const fontPx = Math.max(8, Math.min(220, it.s * 0.15 * cw))
-  const strokePx = Math.max(0.4, fontPx * 0.03)
+  const strokePx = Math.max(0.6, fontPx * 0.045) // 화려한 배경에서도 읽히게 외곽선 굵힘(얇은 글씨 대비↑)
   return (
     <div
       style={{
@@ -189,7 +189,7 @@ function TextDeco({ it, editable, coverW = 0 }) {
         whiteSpace: 'pre', // \n만 줄바꿈, 자동 줄바꿈 없음
         // 사진 위에서도 읽히게 반대 톤 외곽선 + 그림자
         WebkitTextStroke: `${strokePx}px ${c.stroke}`,
-        textShadow: '0 1px 3px rgba(0,0,0,.35)',
+        textShadow: '0 1px 2px rgba(0,0,0,.45), 0 0 6px rgba(0,0,0,.22)',
         userSelect: 'none',
       }}
     >
@@ -235,6 +235,7 @@ function Note({ it, editable }) {
       <div
         style={{
           position: 'absolute', inset: 0, boxSizing: 'border-box', padding: textPad,
+          // 포스트잇 글자 = 웜브라운 본연의 부드러움(밝은 종이라 외곽선 없어도 잘 읽힘). 동색 외곽선은 글자를 무겁게(검정처럼) 만들어 뺌.
           fontFamily: nf.family, fontWeight: nf.weight,
           fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.4,
           overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
