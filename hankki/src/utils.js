@@ -79,27 +79,36 @@ export const clampGraphemes = (s, n) => graphemes(s).slice(0, n).join('')
 // 음식 사진을 아이콘용 정사각형으로 예쁘게 다듬는다.
 // 가운데(세로 사진은 살짝 위쪽 — 접시가 보통 화면 위쪽에 오니까)를 잘라
 // 적당한 크기 JPEG 로 압축 → 카드에 딱 맞고 저장 용량도 가볍다.
-export function cropSquare(dataUrl, out = 800, quality = 0.85) {
-  return new Promise((resolve) => {
+// 사진을 정사각 썸네일로 다듬는다. (레시피 대표사진·프로필 아바타)
+// ⚠️ 2026-07-23 두 버그 고침:
+//  1) 검정 썸네일 — 새 canvas 는 '투명'이라, 기기(WebView)에서 onload 직후 곧바로
+//     drawImage 가 헛돌면 투명인 채 남고 → JPEG 로 저장하면 투명=검정이 된다(데스크톱은
+//     항상 성공해 재현 안 됨). → ① 흰색으로 먼저 칠하고(안전망) ② img.decode() 로
+//     비트맵이 실제 준비될 때까지 기다린 뒤 그린다.
+//  2) 세로 스샷 반만 잘림 — 예전엔 위쪽(0.38)을 잘라 화면 상단 여백만 담겼다.
+//     → '가운데'를 잘라 음식이 중앙에 오게 한다.
+export async function cropSquare(dataUrl, out = 800, quality = 0.85) {
+  try {
     const img = new Image()
-    img.onload = () => {
-      try {
-        const s = Math.min(img.width, img.height)
-        const sx = (img.width - s) / 2
-        const sy = img.height > img.width ? (img.height - s) * 0.38 : (img.height - s) / 2
-        const size = Math.min(out, s)
-        const c = document.createElement('canvas')
-        c.width = size
-        c.height = size
-        const ctx = c.getContext('2d')
-        ctx.imageSmoothingQuality = 'high'
-        ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size)
-        resolve(c.toDataURL('image/jpeg', quality))
-      } catch {
-        resolve(dataUrl)
-      }
-    }
-    img.onerror = () => resolve(dataUrl)
-    img.src = dataUrl
-  })
+    await new Promise((res) => { img.onload = res; img.onerror = res; img.src = dataUrl })
+    if (img.decode) { try { await img.decode() } catch {} } // 비트맵 준비 보장(검정 방지)
+    const w = img.naturalWidth || img.width
+    const h = img.naturalHeight || img.height
+    if (!w || !h) return dataUrl
+    const s = Math.min(w, h)
+    const sx = (w - s) / 2
+    const sy = (h - s) / 2 // 가운데 크롭
+    const size = Math.min(out, s)
+    const c = document.createElement('canvas')
+    c.width = size
+    c.height = size
+    const ctx = c.getContext('2d')
+    ctx.fillStyle = '#fff' // 안전망: drawImage 가 실패해도 검정 대신 흰색
+    ctx.fillRect(0, 0, size, size)
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size)
+    return c.toDataURL('image/jpeg', quality)
+  } catch {
+    return dataUrl
+  }
 }
