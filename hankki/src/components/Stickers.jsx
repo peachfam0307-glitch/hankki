@@ -138,8 +138,9 @@ const PHOTO_RATIO = {
   ch_che01: 0.7928, ch_che04: 1.4278, ch_che06: 1.0683, ch_che08: 1.3098, ch_che05: 0.9231,
   lf_fit12: 1.6056, lf_fit11: 1.487, lf_fit08: 1.2486, lf_fit07: 1.2056, lf_fit02: 1.089, lf_fit13: 0.6872, lf_fit14: 1.1852, lf_fit06: 0.662,
   cp_cpf01: 0.8659, cp_cpf02: 0.9215, cp_cpf03: 0.8136, cp_cpf04: 0.8604, cp_cpf05: 0.9968, cp_cpf06: 1.0358, cp_cpf07: 0.9139, cp_cpf08: 0.8815,
-  // 🐻🐧 뉴 물결 곰펭(2026-07-23·정본) — 곰4·펭5·콤비4. cp_cpf(옛 파이팅)는 저장표지 호환용으로만 남김.
-  gp_gomft: 0.9563, gp_gomtb: 0.8818, gp_gomv: 0.922, gp_gomhi: 0.9018, gp_pengft: 1.0205, gp_pengtb: 0.8299, gp_pengv: 0.8605, gp_penghi: 0.8922, gp_pengym: 0.8131, gp_duohi: 1.0835, gp_duoht: 1.0961, gp_duoh5: 1.2202, gp_duotb: 1.1836,
+  // 🐻🐧 뉴 물결 곰펭(2026-07-23·정본) — 곰4·펭5·콤비4. 띠부씰(흰 다이컷 테두리·2026-07-23) 반영 → 비율 갱신.
+  // (plain 원본은 docs/stickers/곰펭-물결-신규-2507/낱개/ 아카이브. cp_cpf 옛 파이팅은 저장표지 호환용으로만 남김.)
+  gp_gomft: 0.8171, gp_gomtb: 0.8312, gp_gomv: 0.8265, gp_gomhi: 0.8891, gp_pengft: 0.7982, gp_pengtb: 0.7902, gp_pengv: 0.8336, gp_penghi: 0.82, gp_pengym: 0.7945, gp_duohi: 1.0608, gp_duoht: 1.0253, gp_duoh5: 1.1873, gp_duotb: 1.1303,
 }
 export const PHOTO_FAMILY = {}
 for (const key of Object.keys(PHOTO_RATIO)) {
