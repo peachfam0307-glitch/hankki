@@ -551,5 +551,23 @@ export const TAPE_PATTERNS = [
       backgroundSize: 'auto 72%',
     },
   },
+  {
+    // 🟩 초록 깅엄 — 세이지 그린 깅엄 체크. 수박 마테가 밝은 배경에서 안 보여 '초록 들어간' 마테 추가.
+    // 뮤트 올리브그린 반투명(검정 X → 안 촌스럽게). 크림~딥세이지 배경 어디서든 잘 보임.
+    key: 'ggingham', label: '초록깅엄',
+    style: {
+      backgroundColor: 'rgba(200,214,188,0.94)',
+      backgroundImage: 'repeating-linear-gradient(0deg, rgba(122,145,99,.32) 0 7px, transparent 7px 14px), repeating-linear-gradient(90deg, rgba(122,145,99,.32) 0 7px, transparent 7px 14px)',
+    },
+  },
+  {
+    // 🌿 허브 — 통통한 새싹 스프리그(요리앱 감성). 뮤트 올리브그린 모티브.
+    key: 'herb', label: '허브',
+    style: {
+      backgroundColor: 'rgba(196,208,182,0.94)',
+      backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='27' height='27'><path d='M13.5 6 V22' stroke='%237a9163' stroke-width='1.5' fill='none' stroke-linecap='round'/><g fill='%237a9163'><ellipse cx='13.5' cy='5' rx='2.6' ry='3.4'/><ellipse cx='8.5' cy='10' rx='3.6' ry='2.7' transform='rotate(-28 8.5 10)'/><ellipse cx='18.5' cy='12.5' rx='3.6' ry='2.7' transform='rotate(28 18.5 12.5)'/><ellipse cx='8.5' cy='16.5' rx='3.6' ry='2.7' transform='rotate(-28 8.5 16.5)'/></g></svg>\")",
+      backgroundSize: 'auto 84%',
+    },
+  },
 ]
 export const tapeStyle = (key) => (TAPE_PATTERNS.find((t) => t.key === key) || TAPE_PATTERNS[0]).style
