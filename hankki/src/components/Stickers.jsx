@@ -166,6 +166,7 @@ export const FX_KINDS = [
   { key: 'none', label: '없음', base: true },
   { key: 'spark', label: '반짝이 ✨', base: true },
   { key: 'heart', label: '하트 💗', base: true },
+  { key: 'bubble', label: '뽀글 🫧', base: true },
   { key: 'food', label: '맛있는것들 🍔' },
   { key: 'steam', label: '김모락 ♨️' },
 ]
@@ -180,6 +181,13 @@ const SVG_HEART = (
     <path d="M12 20.3C4.7 14.4 4.9 8.9 8 7.3c2.1-1.05 3.6.95 4 1.55.4-.6 1.9-2.6 4-1.55 3.1 1.6 3.3 7.1-4 13Z" fill="#dc9aa1" />
   </svg>
 )
+// 🫧 뽀글 — 크림/화이트 반투명 방울(골드·핑크와 안 겹치고 뮤트 배경서도 톡 뜸). 흰 하이라이트로 몽글.
+const SVG_BUBBLE = (
+  <svg viewBox="0 0 24 24" width="100%" height="100%" style={{ display: 'block' }}>
+    <circle cx="12" cy="12" r="8.5" fill="rgba(255,255,255,.5)" stroke="#f1e8d6" strokeWidth="2.4" />
+    <circle cx="9" cy="9" r="2" fill="#ffffff" />
+  </svg>
+)
 // 맛있는것들 효과 = 우리가 그린 음식(이모지 대신). 캔디 톤이라 캐릭터랑 딱 맞음.
 const FX_FOOD_URLS = import.meta.glob('../assets/stickers/fx/*.png', { eager: true, query: '?url', import: 'default' })
 const FX_FOOD = ['strawberry', 'burger', 'cupcake', 'cake', 'icecream', 'ramen'].map((n) => FX_FOOD_URLS[`../assets/stickers/fx/${n}.png`])
@@ -187,6 +195,7 @@ const FX_FOOD = ['strawberry', 'burger', 'cupcake', 'cake', 'icecream', 'ramen']
 const FX_DEF = {
   spark: { size: 16, items: [[15, -2, 0], [50, -10, .5], [85, 0, .9], [28, 16, 1.3], [72, 14, .7]], node: SVG_SPARK },
   heart: { size: 16, items: [[25, 0, 0], [63, -10, .8], [45, 12, 1.5]], node: SVG_HEART },
+  bubble: { size: 15, items: [[15, 2, 0], [48, -10, .9], [80, -1, .5], [32, 15, 1.7], [66, 12, 1.2]], node: SVG_BUBBLE },
   food: { size: 26, items: [[12, -10, 0], [84, -14, .9], [30, -24, 1.6], [66, -22, 2.3]], food: true },
   steam: { size: 11, items: [[42, 6, 0], [52, 2, .9], [47, 10, 1.7]], puff: true },
 }
