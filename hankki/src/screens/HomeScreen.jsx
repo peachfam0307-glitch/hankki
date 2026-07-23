@@ -67,7 +67,7 @@ export default function HomeScreen() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           {/* 뉴 물결 곰(인사) + 한끼 로고락업 — 홈 상단 브랜드 마크. 살랑(sway) 모션=레꾸 피커엔 없는 모션. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <img src={gomHeader} alt="한끼 곰" width={38} height={38} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center' }} />
+            <img src={gomHeader} alt="한끼 곰" width={46} height={46} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-4px 0' }} />
             <div className="h-title">한끼</div>
           </div>
           <TabTips tab="home" />

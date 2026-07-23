@@ -501,10 +501,11 @@ export const noteRadius = (shape) => {
 
 // 글자 스티커 색 — 사진 위에서도 읽히도록 반대 톤 외곽선(stroke)을 함께 준다
 export const TEXT_COLORS = [
+  // 자유글자 색 — 한 톤씩 진하게(창업자: 레꾸 글자색이 좀 밝음). 흰색은 딥 배경용이라 유지.
   { key: 'white', color: '#ffffff', stroke: 'rgba(55,45,32,.6)' },
-  { key: 'charcoal', color: '#463a2c', stroke: 'rgba(255,255,255,.75)' },
-  { key: 'coral', color: '#c85a45', stroke: 'rgba(255,255,255,.55)' }, // 연한 코랄→진한 코랄레드(밝은 배경서도 잘 보이게)
-  { key: 'mustard', color: '#cc9f45', stroke: 'rgba(60,48,30,.5)' },
+  { key: 'charcoal', color: '#382d21', stroke: 'rgba(255,255,255,.68)' }, // 차콜 한 톤 딥
+  { key: 'coral', color: '#b34a37', stroke: 'rgba(255,255,255,.5)' },    // 코랄레드 한 톤 딥
+  { key: 'mustard', color: '#b78a30', stroke: 'rgba(60,48,30,.5)' },     // 머스타드 한 톤 딥
 ]
 
 // 글자 스티커 글씨체 — 또박체(고운돋움) / 귀염체(개구체). 오프라인이면 다음 폰트로 자연 대체.
@@ -635,7 +636,7 @@ export const TAPE_PATTERNS = [
       backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><path d='M5 8.6 A 7.3 7 0 0 0 19 8.6 Z' fill='%23e98a93'/><path d='M4.4 8.7 A 8 7.6 0 0 0 19.6 8.7' fill='none' stroke='%236f9d54' stroke-width='2.2' stroke-linecap='round'/><g fill='%234a3d2c'><circle cx='9.6' cy='11' r='0.8'/><circle cx='12' cy='12.4' r='0.8'/><circle cx='14.4' cy='11' r='0.8'/></g></svg>\")",
       backgroundRepeat: 'repeat-x',
       backgroundPosition: 'center',
-      backgroundSize: 'auto 58%',
+      backgroundSize: 'auto 85%', // 수박 더 통통하게
     },
   },
   {
