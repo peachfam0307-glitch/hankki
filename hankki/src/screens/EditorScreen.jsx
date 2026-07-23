@@ -8,7 +8,6 @@ import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
 import FoodIconPicker from '../components/FoodIconPicker'
-import EmojiPicker from '../components/EmojiPicker'
 import TextTile from '../components/TextTile'
 import CropSheet from '../components/CropSheet'
 import Portal from '../components/Portal'
@@ -42,7 +41,6 @@ const fieldOcrBtn = {
 }
 const THUMB_TYPES = [
   { key: 'icon', label: '아이콘' },
-  { key: 'emoji', label: '이모지' },
   { key: 'label', label: '글자' },
   { key: 'photo', label: '사진' },
   { key: 'none', label: '없음' },
@@ -421,7 +419,7 @@ export default function EditorScreen({ id, prefill }) {
       )}
 
       <div className="pad" style={{ paddingBottom: 40 }}>
-        {/* 썸네일 — 카드에 보이는 아이콘. 기본은 브랜드 아이콘(통일감), 원하면 이모지·글자·사진. */}
+        {/* 썸네일 — 카드에 보이는 아이콘. 기본은 브랜드 아이콘(통일감), 원하면 글자·사진. */}
         <div className="field">
           <label>썸네일 <span style={{ fontWeight: 400, color: 'var(--text-sub)', fontSize: 12 }}>· 목록 카드에 보여요</span></label>
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
@@ -437,13 +435,7 @@ export default function EditorScreen({ id, prefill }) {
             </div>
           )}
           {f.thumb === 'none' && (
-            <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.55 }}>표지를 비웠어요. 아이콘·이모지 없이 <b>꾸미기</b>로 배경·스티커만 얹어 깔끔하게 만들 수 있어요 🎨</div>
-          )}
-          {f.thumb === 'emoji' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <EmojiPicker value={f.emoji} onChange={(v) => set('emoji', v)} size={74} />
-              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>탭해서 이모지를 골라요.</div>
-            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.55 }}>표지를 비웠어요. 아이콘 없이 <b>꾸미기</b>로 배경·스티커만 얹어 깔끔하게 만들 수 있어요 🎨</div>
           )}
           {f.thumb === 'label' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
