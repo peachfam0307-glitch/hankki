@@ -138,6 +138,8 @@ const PHOTO_RATIO = {
   ch_che01: 0.7928, ch_che04: 1.4278, ch_che06: 1.0683, ch_che08: 1.3098, ch_che05: 0.9231,
   lf_fit12: 1.6056, lf_fit11: 1.487, lf_fit08: 1.2486, lf_fit07: 1.2056, lf_fit02: 1.089, lf_fit13: 0.6872, lf_fit14: 1.1852, lf_fit06: 0.662,
   cp_cpf01: 0.8659, cp_cpf02: 0.9215, cp_cpf03: 0.8136, cp_cpf04: 0.8604, cp_cpf05: 0.9968, cp_cpf06: 1.0358, cp_cpf07: 0.9139, cp_cpf08: 0.8815,
+  // 🐻🐧 뉴 물결 곰펭(2026-07-23·정본) — 곰4·펭5·콤비4. cp_cpf(옛 파이팅)는 저장표지 호환용으로만 남김.
+  gp_gomft: 0.9563, gp_gomtb: 0.8818, gp_gomv: 0.922, gp_gomhi: 0.9018, gp_pengft: 1.0205, gp_pengtb: 0.8299, gp_pengv: 0.8605, gp_penghi: 0.8922, gp_pengym: 0.8131, gp_duohi: 1.0835, gp_duoht: 1.0961, gp_duoh5: 1.2202, gp_duotb: 1.1836,
 }
 export const PHOTO_FAMILY = {}
 for (const key of Object.keys(PHOTO_RATIO)) {
@@ -269,14 +271,21 @@ const kfItems = (prefix) => KF_NAMES.map(([n]) => prefix + n)
 // tab: 'buddies'(친구들)·'food'(음식,서브칩)·'deco'(데코)·'life'(라이프). notetext/bgtape는 에디터에서 별도.
 // chip: 음식 탭의 요리별 서브칩 라벨. 옛 약한 SVG(표정·재료·도구·소스·디저트)는 피커에서 제외(코드는 남아 저장표지 호환).
 export const STICKER_GROUPS = [
-  // 🐻 친구들
+  // 🐻🐧 꼬르곰·펭펭 (물결 정본·2026-07-23) — 친구들 탭 맨 위 = 우리 애기들이 메인. 곰4·펭5·콤비4.
+  {
+    key: 'gompeng', tab: 'buddies', label: '🐻🐧 꼬르곰·펭펭', items: [
+      'gp_gomft', 'gp_gomtb', 'gp_gomv', 'gp_gomhi',
+      'gp_pengft', 'gp_pengtb', 'gp_pengv', 'gp_penghi', 'gp_pengym',
+      'gp_duohi', 'gp_duoht', 'gp_duoh5', 'gp_duotb',
+    ],
+  },
+  // 🍬 옛날 친구들 (곰펭 아래로)
   {
     key: 'kitchen_candy', tab: 'buddies', label: '🍬 캔디 친구들', items: [
       'kf_c_gomgom', 'cc17', 'kf_c_ppyak', 'cc42', 'kf_c_toto', 'cc11', 'kf_c_nyangi', 'cc20',
       'kf_c_mongmong', 'cc13', 'kf_c_hodu', 'cc30', 'kf_c_hamzzi', 'cc47', 'kf_c_pengpeng', 'cc40',
     ],
   },
-  { key: 'combo', tab: 'buddies', label: '💪 곰펭 파이팅', items: ['cp_cpf01', 'cp_cpf02', 'cp_cpf03', 'cp_cpf04', 'cp_cpf05', 'cp_cpf06', 'cp_cpf07', 'cp_cpf08'] },
   { key: 'kitchen', tab: 'buddies', label: '🎁 부엌 식구들', items: kfItems('kf_') },
   { key: 'kitchen_line', tab: 'buddies', label: '✏️ 라인', items: kfItems('kf_l_') },
   // 🍱 음식 (요리별 서브칩)
