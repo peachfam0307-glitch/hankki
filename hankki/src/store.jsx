@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
 import { seedRecipes } from './data/seed'
 import { basicRecipes, BASICS_VERSION } from './data/basics'
+import { guessFoodIcon } from './components/FoodIcon'
 import { cleanMemo } from './parseRecipe'
 import { politeSteps } from './polish'
 
@@ -173,6 +174,18 @@ function migrateBasics(saved) {
     if (!r || !r.touched || !seedById.has(r.id)) return r
     const s = seedById.get(r.id)
     return { ...r, ingredients: s.ingredients, memo: s.memo }
+  })
+  // v34: 사용자가 직접 만든 레시피(시드 아님)의 아이콘을 새 완성요리 PNG로 업그레이드.
+  //      제목에 딱 맞는 PNG가 생긴 경우에만 교체(없으면 기존 아이콘 유지 → 회귀 없음).
+  //      사진·이모지·글자 표지, 이미 PNG로 고른 것, 시드(위 v13에서 큐레이션됨)는 건드리지 않는다.
+  const isFoodPng = (k) => /^(fh_k|fy_y|fj_c|fi_j|fb_b)/.test(k || '')
+  fixed = fixed.map((r) => {
+    if (!r || seedById.has(r.id)) return r
+    if (r.thumb && r.thumb !== 'icon') return r
+    if (r.image && r.thumb !== 'icon') return r
+    if (isFoodPng(r.icon)) return r
+    const g = guessFoodIcon(r.title || '')
+    return isFoodPng(g) ? { ...r, icon: g } : r
   })
   return { recipes: [...fixed, ...add], seedV: BASICS_VERSION }
 }
