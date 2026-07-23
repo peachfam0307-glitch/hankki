@@ -305,11 +305,14 @@ export const STICKER_GROUPS = [
 ]
 
 // 포스트잇 색 팔레트(차분한 종이 톤) — bg / 접힘 / 글자 / line(무늬 선 색)
+// 포스트잇 색 — 새 배경 뮤트 팔레트에 맞춰 통일(쨍하지 않게). 키는 유지(저장표지 호환), 색만 뮤트로. + 라벤더·클레이 추가.
 export const NOTE_COLORS = [
-  { key: 'butter', bg: '#efe4bd', fold: '#ddce9a', text: '#5f5647', line: '#c9b784' },
-  { key: 'rose', bg: '#ecd4d1', fold: '#d8bcb8', text: '#6a5350', line: '#cba9a3' },
-  { key: 'sage', bg: '#dbe3ca', fold: '#c6d1b0', text: '#4f5a44', line: '#adbd94' },
-  { key: 'sky', bg: '#d5dee7', fold: '#bfccd8', text: '#47545f', line: '#a9bccd' },
+  { key: 'butter', bg: '#f0e8d5', fold: '#ddceb0', text: '#5f5647', line: '#cdbd97' }, // 크림(웜)
+  { key: 'rose', bg: '#f1dcd3', fold: '#ddc2b7', text: '#6a5350', line: '#d0afa5' },   // 피치
+  { key: 'sage', bg: '#dde5cf', fold: '#c8d3b4', text: '#4f5a44', line: '#b0bf97' },   // 세이지
+  { key: 'sky', bg: '#d9e2eb', fold: '#c2cfdb', text: '#47545f', line: '#acbdcf' },    // 하늘
+  { key: 'lavender', bg: '#e5dcea', fold: '#d1c6da', text: '#574f60', line: '#bbafc8' }, // 라벤더(신규)
+  { key: 'clay', bg: '#e9ddc9', fold: '#d5c5a9', text: '#5f5343', line: '#c8b48f' },   // 클레이(신규·웜뉴트럴)
 ]
 
 // 포스트잇 무늬(패턴) — 종이 위에 은은하게. 선 색은 각 색의 line 을 쓴다.
