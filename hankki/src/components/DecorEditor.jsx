@@ -76,7 +76,8 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const selOn = '2.5px solid var(--brown)'
   const selOff = '1.5px solid var(--line)'
   const selIsKitchen = selItem?.type === 'sticker' && KITCHEN_IDS.has(selItem.key)
-  const hasCtx = selItem && (selItem.type === 'note' || selItem.type === 'text' || selItem.type === 'tape' || selIsKitchen || (selItem.type === 'sticker' && RECOLORABLE.has(selItem.key)))
+  const selIsGompeng = selItem?.type === 'sticker' && selItem.key?.startsWith('gp_') // 곰펭도 모션·효과 컨텍스트바
+  const hasCtx = selItem && (selItem.type === 'note' || selItem.type === 'text' || selItem.type === 'tape' || selIsKitchen || selIsGompeng || (selItem.type === 'sticker' && RECOLORABLE.has(selItem.key)))
 
   // 서랍 탭 — 배경부터 시작(꾸미는 순서: 배경→글자→친구들→음식·데코·라이프). 음식만 요리별 서브칩(2단계).
   const CATS = [
@@ -106,7 +107,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
       id: newDecorId(), type: 'sticker', key,
       x: 0.5 + ((n % 3) - 1) * 0.06, y: 0.42 + ((n % 4) - 1.5) * 0.05,
       s: key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2, r: ((n % 5) - 2) * 4,
-      ...(isKf ? { motion: 'tongtong', fx: 'none' } : {}),
+      ...(isKf || key.startsWith('gp_') ? { motion: 'tongtong', fx: 'none' } : {}),
     }
     setItems((arr) => [...arr, it])
     setSel(it.id)
@@ -191,7 +192,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
         {/* 고정 컨텍스트 바 — 선택한 아이템의 색·무늬·모양을 캔버스 바로 아래에서 바로 바꾼다(스크롤 이동 없음) */}
         {hasCtx && (
           <div style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '9px 12px', display: 'flex', flexDirection: 'column', gap: 7 }}>
-            {selIsKitchen && (
+            {(selIsKitchen || selIsGompeng) && (
               <>
                 <div style={ctxRow}>
                   <span style={ctxLabel}>✨ 움직임</span>

@@ -117,7 +117,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             ) : (
               <span style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(0 3px 4px rgba(60,50,35,.22))' }}>
                 <StickerArt id={it.key} color={it.color} motion={it.motion} />
-                {KITCHEN_IDS.has(it.key) && <StickerFx kind={it.fx} />}
+                {(KITCHEN_IDS.has(it.key) || it.key?.startsWith('gp_')) && <StickerFx kind={it.fx} />}
               </span>
             )}
 

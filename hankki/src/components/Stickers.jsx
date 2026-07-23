@@ -242,10 +242,10 @@ export function StickerArt({ id, color, style, motion }) {
   }
   const pf = PHOTO_FAMILY[id]
   if (pf) {
-    // 🍱 음식·재료·데코·라이프 — 정적 투명 PNG(모션·효과 없음).
+    // 🍱 음식·재료·데코·라이프 = 정적 / 🐻🐧 곰펭(gp_) = 모션 적용. 음식류는 motion 미설정→motionClass '' 자동 정적.
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
-        <img src={pf.src} alt="" draggable={false} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }} />
+        <img src={pf.src} alt="" draggable={false} className={motionClass(motion)} style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }} />
       </span>
     )
   }
