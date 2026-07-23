@@ -111,8 +111,9 @@ for (const [folder, prefix] of [['kitchen', 'kf_'], ['candy', 'kf_c_'], ['line',
 // (다꾸본 낱개컷: docs/stickers/낱개/캔디-표정 → src/assets/stickers/candy2. 나머지 포즈는 다음 업뎃 때 추가.)
 const CC_URLS = import.meta.glob('../assets/stickers/candy2/*.png', { eager: true, query: '?url', import: 'default' })
 const CC_RATIO = {
-  cc17: 1.0779, cc42: 0.9669, cc11: 0.7771, cc20: 0.9818,
-  cc13: 0.9939, cc30: 0.9679, cc47: 0.7937, cc40: 0.9295,
+  // cc17(곰)·cc20(고양이) = 모자 잘린 컷 → 온전한 컷으로 교체(2026-07-23), cc40(펭) = 하단 흰조각 제거. 비율 갱신.
+  cc17: 0.9035, cc42: 0.9669, cc11: 0.7771, cc20: 0.9077,
+  cc13: 0.9939, cc30: 0.9679, cc47: 0.7937, cc40: 0.8632,
 }
 const CC_LABEL = {
   cc17: '곰곰', cc42: '삐약', cc11: '토토', cc20: '냄비냥이',
