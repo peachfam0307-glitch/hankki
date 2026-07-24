@@ -23,9 +23,9 @@ export default defineConfig({
       },
       includeAssets: ['favicon.svg', 'icons/icon-192-v7.png', 'icons/icon-512-v7.png'],
       manifest: {
-        name: '한끼 — 나만의 레시피 아카이브',
+        name: '한끼 — 나만의 레시피, 레꾸해요',
         short_name: '한끼',
-        description: '흩어진 레시피를, 한곳에. 인스타·유튜브·링크·사진 레시피를 모으고 정리하는 개인 아카이브.',
+        description: '나만의 레시피를 예쁜 카드로 레꾸(레시피 꾸미기)! 꼬르곰·펭펭과 꾸미고, 친구랑 나누는 감정 레시피북.',
         // 앱 고유 id — 스토어/설치 앱이 '같은 앱'으로 인식하게 고정. 상대 경로라 배포 위치와 무관.
         id: './',
         categories: ['food', 'lifestyle'],
