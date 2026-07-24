@@ -646,9 +646,9 @@ const I = {
 // 픽커용 — 카테고리별 아이콘 키
 export const FOOD_ICON_GROUPS = [
   // 🍱 뉴 음식 이모지(다꾸본 완성요리 사진) — 레시피 대표 이미지로. 사진 없을 때 이걸로 예쁘게.
-  { label: '🍚 한식', items: ['fe_16', 'fe_18', 'fe_20', 'fe_22', 'fe_23', 'fh_k01', 'fh_k02', 'fh_k03', 'fh_k04', 'fh_k05', 'fh_k06', 'fh_k11', 'fh_k13', 'fh_k14', 'fh_k16', 'fh_k17', 'fh_k18', 'fh_k22', 'fh_k23', 'fh_k27', 'fh_k29', 'fh_k30', 'fh_k32'] },
+  { label: '🍚 한식', items: ['fe_16', 'fe_18', 'fe_20', 'fe_25', 'fe_22', 'fe_23', 'fh_k01', 'fh_k02', 'fh_k03', 'fh_k04', 'fh_k05', 'fh_k06', 'fh_k11', 'fh_k13', 'fh_k14', 'fh_k16', 'fh_k17', 'fh_k18', 'fh_k22', 'fh_k23', 'fh_k27', 'fh_k29', 'fh_k30', 'fh_k32'] },
   { label: '🥟 분식·간식', items: ['fe_21', 'fe_17', 'fe_19', 'fh_k27', 'fh_k22', 'fb_b01', 'fb_b02', 'fh_k31', 'fb_b05', 'fh_k23', 'fh_k37', 'fb_b03', 'fb_b04', 'fb_b06', 'fb_b07'] },
-  { label: '🍝 양식', items: ['fy_y01', 'fy_y02', 'fy_y03', 'fy_y04', 'fy_y05', 'fy_y06', 'fy_y07', 'fy_y08', 'fy_y09', 'fy_y10', 'fy_y11', 'fy_y13'] },
+  { label: '🍝 양식', items: ['fe_24', 'fe_27', 'fe_26', 'fy_y01', 'fy_y02', 'fy_y03', 'fy_y04', 'fy_y05', 'fy_y06', 'fy_y07', 'fy_y08', 'fy_y09', 'fy_y10', 'fy_y11', 'fy_y13'] },
   { label: '🥢 중식', items: ['fj_c01', 'fj_c02', 'fj_c03', 'fj_c04', 'fj_c05', 'fj_c06', 'fj_c09', 'fj_c10', 'fj_c11', 'fj_c13', 'fj_c14'] },
   { label: '🍣 일식', items: ['fi_j01', 'fi_j02', 'fi_j03', 'fi_j04', 'fi_j06', 'fi_j07', 'fi_j09', 'fi_j10', 'fi_j11', 'fi_j13', 'fi_j14'] },
   { label: '요리 아이콘', items: ['rice', 'donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert', 'icecream'] },
@@ -690,6 +690,11 @@ const ICON_RULES = [
   // 예시 보충 3차 — 생고기(대구뭉티기·육회). '소고기/고기' 범용보다 먼저.
   [['대구뭉티기', '뭉티기', '뭉티기회'], 'fe_22'],
   [['육회'], 'fe_23'],
+  // 예시 보충 4차 — 파스타·볶음·샌드위치. '파스타=스파게티' 같은 뜻으로 함께 묶음. 범용 파스타(fy_y03)보다 먼저.
+  [['새우크림파스타', '새우크림스파게티', '새우 크림 파스타', '새우로제', '갈릭새우파스타'], 'fe_24'],
+  [['로제파스타', '로제스파게티', '로제 파스타', '로제크림파스타'], 'fe_27'],
+  [['양배추돼지고기볶음', '양배추돼지고기', '양배추제육', '양배추 돼지'], 'fe_25'],
+  [['치즈샌드위치', '치즈 샌드위치', '햄치즈샌드위치'], 'fe_26'],
   // ── 🍚 한식 완성요리 PNG(진짜 음식같은 아이콘) — 제목에 뜨면 자동. SVG보다 먼저, 구체어 우선. ──
   [['돌솥비빔밥', '비빔밥'], 'fh_k01'],
   [['김치찌개'], 'fh_k02'],
