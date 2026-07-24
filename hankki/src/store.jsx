@@ -187,6 +187,18 @@ function migrateBasics(saved) {
     const g = guessFoodIcon(r.title || '')
     return isFoodPng(g) ? { ...r, icon: g } : r
   })
+  // v38: 예시 요리 4종을 전용 아이콘으로 '강제' 반영 — 제목으로 매칭, 시드/내레시피/편집(touched) 무관.
+  //      (v37에서 basics.js 아이콘을 바꿨지만, 편집했거나 이미 다른 PNG였던 레시피는
+  //       위 v13/v34 패스가 건너뛰어 반영이 안 됐다. 표지가 '아이콘'일 때만 교체 — 사진 표지는 보존.)
+  const ICON_FORCE_V38 = { '김치볶음밥': 'fe_20', '요거트 아이스크림': 'fe_19', '크루키': 'fe_17', '불닭냉면': 'fe_18' }
+  fixed = fixed.map((r) => {
+    if (!r) return r
+    const want = ICON_FORCE_V38[(r.title || '').trim()]
+    if (!want) return r
+    if (r.thumb && r.thumb !== 'icon') return r // 직접 넣은 사진/글자 표지는 안 건드림
+    if (r.image && r.thumb !== 'icon') return r
+    return r.icon === want ? r : { ...r, icon: want }
+  })
   return { recipes: [...fixed, ...add], seedV: BASICS_VERSION }
 }
 
