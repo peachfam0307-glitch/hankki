@@ -99,7 +99,7 @@
 - 도메인 루트 레포: `peachfam0307-glitch/peachfam0307-glitch.github.io`, 기본 브랜치 **한글 `오답끝`**.
   - 이 레포 파일 편집은 **PC + github.dev(`.`키)** 로만. 일반 연필 편집기는 한글 브랜치에서 에러남. → `docs/assetlinks-고치는법.md`
 - 앱 아이콘: **뉴 물결곰 얼굴(v7)**, `public/icons/icon-512-v7.png`(512·배경 `#5d3410`) + 마스커블·애플터치. 스토어 피처그래픽 `design/promo/renders/스토어-그래픽-곰ㅎ로고-2507.png`(1024×500·static).
-- **🎬 스토어 "움직이는 화면" = 프로모 영상(YouTube 링크)만.** 피처그래픽·스크린샷은 **static PNG/JPEG**(애니GIF·영상파일 업로드 불가). 영상 붙이면 스크린샷보다 먼저 뜨고 **피처그래픽 위에 재생버튼** 오버레이(→가운데 비워야). 곧 = 레꾸 과정 화면녹화 영상[#24](스토어+인스타 겸용). (2026 서치·`docs/작업복기-2026-07-23-로고확정-아이콘-크롭-상표카드.md`)
+- **🎬 스토어 "움직이는 화면" = 프로모 영상(YouTube 링크)만.** 피처그래픽·스크린샷은 **static PNG/JPEG**(애니GIF·영상파일 업로드 불가). 영상 붙이면 스크린샷보다 먼저 뜨고 **피처그래픽 위에 재생버튼** 오버레이(→가운데 비워야). **✅ 프로모 영상 완성(2026-07-24·창업자 승인) = `design/promo/프로모영상-2507/한끼-프로모-2507.mp4`** (세로 9:16·~30.5초·무음·스토어+인스타 겸용[#24]). 6장면=훅(드라마틱 변신)→꾸미기(연어포케볼·곰펭 콩콩)→공유(폰스토리 감바스)→큐레이션 담고사기→감정→로고 곰펭 안녕인사. **곰펭 모션=앱 실제(hk-kong 콩콩·hk-sway 인사)**. 재생성=`scripts/`(promo_build+render, ffmpeg-static 필요). **남은 건 창업자가 유튜브(비공개) 업로드→Play 동영상칸 링크 / 인스타 릴스(음원)**. (2026 서치·`design/promo/프로모영상-2507/README.md`)
 - 패키지: `io.github.peachfam0307_glitch.twa`. Play 비공개 테스트 12명 / 14일(2026-07-17 시작 → 7-31).
 - 커밋 규칙: `git config user.email noreply@anthropic.com`, `user.name Claude`, 커밋 후 `--amend --no-edit --reset-author`. 모델 ID는 커밋/PR에 절대 넣지 않음.
 - 개발 브랜치: `claude/chatgpt-conversation-link-kvn5ph`.
