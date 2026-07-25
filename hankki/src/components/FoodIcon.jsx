@@ -648,7 +648,7 @@ export const FOOD_ICON_GROUPS = [
   // 🍱 뉴 음식 이모지(다꾸본 완성요리 사진) — 레시피 대표 이미지로. 사진 없을 때 이걸로 예쁘게.
   { label: '🍚 한식', items: ['fe_16', 'fe_18', 'fe_20', 'fe_25', 'fe_22', 'fe_23', 'fe_28', 'fe_29', 'fe_30', 'fe_31', 'fe_32', 'fe_33', 'fe_34', 'fe_35', 'fe_36', 'fe_37', 'fe_38', 'fh_k01', 'fh_k02', 'fh_k03', 'fh_k04', 'fh_k05', 'fh_k06', 'fh_k11', 'fh_k13', 'fh_k14', 'fh_k16', 'fh_k17', 'fh_k18', 'fh_k22', 'fh_k23', 'fh_k27', 'fh_k29', 'fh_k30', 'fh_k32'] },
   { label: '🥟 분식·간식', items: ['fe_21', 'fe_17', 'fe_19', 'fe_39', 'fe_40', 'fe_41', 'fe_48', 'fe_49', 'fe_50', 'fe_51', 'fh_k27', 'fh_k22', 'fb_b01', 'fb_b02', 'fh_k31', 'fb_b05', 'fh_k23', 'fh_k37', 'fb_b03', 'fb_b04', 'fb_b06', 'fb_b07'] },
-  { label: '🍝 양식', items: ['fe_24', 'fe_27', 'fe_26', 'fe_42', 'fe_43', 'fe_44', 'fy_y01', 'fy_y02', 'fy_y03', 'fy_y04', 'fy_y05', 'fy_y06', 'fy_y07', 'fy_y08', 'fy_y09', 'fy_y10', 'fy_y11', 'fy_y13'] },
+  { label: '🍝 양식', items: ['fe_24', 'fe_27', 'fe_26', 'fe_42', 'fe_43', 'fe_44', 'fe_52', 'fe_53', 'fy_y01', 'fy_y02', 'fy_y03', 'fy_y04', 'fy_y05', 'fy_y06', 'fy_y07', 'fy_y08', 'fy_y09', 'fy_y10', 'fy_y11', 'fy_y13'] },
   { label: '🥢 중식', items: ['fe_47', 'fj_c01', 'fj_c02', 'fj_c03', 'fj_c04', 'fj_c05', 'fj_c06', 'fj_c09', 'fj_c10', 'fj_c11', 'fj_c13', 'fj_c14'] },
   { label: '🍣 일식', items: ['fe_45', 'fe_46', 'fi_j01', 'fi_j02', 'fi_j03', 'fi_j04', 'fi_j06', 'fi_j07', 'fi_j09', 'fi_j10', 'fi_j11', 'fi_j13', 'fi_j14'] },
   { label: '요리 아이콘', items: ['rice', 'donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert', 'icecream'] },
@@ -720,6 +720,9 @@ const ICON_RULES = [
   [['티라미수'], 'fe_49'],
   [['팥빙수', '빙수', '눈꽃빙수', '인절미빙수'], 'fe_50'],
   [['도넛', '도너츠', '도나쓰'], 'fe_51'],
+  // 예시 보충 6차 — 묵은지/김치 파스타, 베이컨 크림파스타(얼굴 있는 새 버전). 범용 파스타(fy_y03)보다 먼저.
+  [['묵은지파스타', '묵은지 파스타', '묵은지들기름파스타', '묵은지 들기름 파스타', '김치파스타', '김치 파스타', '김치스파게티'], 'fe_52'],
+  [['베이컨크림파스타', '베이컨 크림 파스타', '베이컨크림스파게티', '까르보나라', '카르보나라', '카보나라', '크림파스타', '크림 파스타'], 'fe_53'],
   // ── 🍚 한식 완성요리 PNG(진짜 음식같은 아이콘) — 제목에 뜨면 자동. SVG보다 먼저, 구체어 우선. ──
   [['돌솥비빔밥', '비빔밥'], 'fh_k01'],
   [['김치찌개'], 'fh_k02'],
