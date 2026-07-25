@@ -136,7 +136,7 @@ S.push(['9-brand', page('radial-gradient(circle at 50% 30%,#f6b49e,#ee9a80 70%,#
   `<div style="position:absolute;top:520px;left:50%;transform:translateX(-50%);text-align:center;width:900px">
      <img src="${F('gp_duotb')}" style="width:560px;filter:drop-shadow(0 18px 26px rgba(120,50,30,.35))"/>
      <div style="margin-top:36px;background:#fffdf8;border-radius:40px;padding:44px 40px;box-shadow:0 20px 40px rgba(150,70,45,.28)">
-       <img src="${logo}" style="width:300px"/><div style="margin-top:14px;font-size:38px;color:#7a5238">흩어진 내 레시피, 곰펭이랑 예쁘게</div></div>
+       <img src="${F('gp_duohi')}" style="width:300px"/><div style="margin-top:14px;font-size:38px;color:#7a5238">내 레시피를 예쁘게, 레꾸해요</div></div>
   </div><div class="foot"><span class="pill" style="background:#5d3410;color:#fffdf8">지금 한끼 시작하기 🐻🐧</span></div>`)])
 
 const br = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })

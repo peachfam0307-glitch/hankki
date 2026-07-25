@@ -185,7 +185,7 @@ const S5 = `<div class="scene" id="s5" style="background:radial-gradient(circle 
     <div class="anim dn" data-t="s5duo" style="display:inline-block;width:560px"><img class="hk-m-sway" src="${duohi}" style="width:100%;filter:drop-shadow(0 18px 26px rgba(120,50,30,.35))"/></div>
     <div class="anim up" data-t="s5card" style="margin-top:30px;background:#fffdf8;border-radius:46px;padding:52px 44px;box-shadow:0 22px 44px rgba(150,70,45,.3);display:inline-block">
       <img src="${logo}" style="width:340px"/>
-      <div style="margin-top:18px;font-size:44px;color:#7a5238">흩어진 내 레시피, 곰펭이랑 예쁘게</div>
+      <div style="margin-top:18px;font-size:44px;color:#7a5238">내 레시피를 예쁘게, 레꾸해요</div>
     </div>
   </div>
   <div class="foot" style="bottom:300px"><span class="pill anim pop" data-t="s5cta" style="background:#5d3410;color:#fffdf8;font-size:52px">지금 무료로 시작하기 🐻🐧</span></div>
