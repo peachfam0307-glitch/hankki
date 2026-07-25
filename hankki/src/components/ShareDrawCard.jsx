@@ -162,10 +162,13 @@ export default function ShareDrawCard({ recipe, onClose }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(40,32,24,.72)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        {/* 미리보기 (스케일) */}
+        {/* 미리보기(스케일) — 캡처 ref는 스케일 안 된 원본 1080×1350 카드에 둔다.
+            (스케일된 요소를 캡처하면 축소본이 큰 투명 캔버스 왼쪽 위에 작게 박혀 카톡에서 흰 여백으로 옴) */}
         <div style={{ width: 1080 * scale, height: 1350 * scale, position: 'relative', borderRadius: 18, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,.4)' }}>
-          <div ref={cardRef} style={{ position: 'absolute', top: 0, left: 0, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-            <Card {...draw} title={title} tags={tags} popBg={popBg} />
+          <div style={{ position: 'absolute', top: 0, left: 0, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+            <div ref={cardRef}>
+              <Card {...draw} title={title} tags={tags} popBg={popBg} />
+            </div>
           </div>
         </div>
         {/* 버튼 */}
