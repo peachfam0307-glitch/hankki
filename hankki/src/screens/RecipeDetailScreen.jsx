@@ -49,6 +49,7 @@ export default function RecipeDetailScreen({ id }) {
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
   const [drawOpen, setDrawOpen] = useState(false) // 🎴 공유 뽑기카드
   const [shareSheet, setShareSheet] = useState(false) // 공유 두 갈래 시트
+  const [coverBusy, setCoverBusy] = useState(false) // 🎨 꾸민 표지 이미지 만드는 중(로딩)
   // 인라인 오버레이(꾸미기·더보기 메뉴) — 뒤로가기로 닫기.
   // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
   useLayerBack(decorOpen, () => setDecorOpen(false))
@@ -115,11 +116,16 @@ export default function RecipeDetailScreen({ id }) {
   const isDecorated = (r.decor && r.decor.length) || (r.decorBg && r.decorBg !== 'none') || r.thumb === 'none'
   const hasRecipe = !!((r.ingredients || []).length || (r.steps || []).length)
   const doShareCover = async () => {
+    setCoverBusy(true) // 로딩 오버레이 + 숨은 레시피카드 마운트 유지
     setShareSheet(false)
-    nav.showToast('🎨 내가 꾸민 표지 그대로 공유 · 이미지 만드는 중…')
     const appUrl = location.origin + location.pathname.replace(/[^/]*$/, '')
-    // 꾸민 표지 + 재료·만드는 법(레시피카드) 2장 함께 — 친구가 진짜 해먹게(랜덤 카드와 동일)
-    await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe ? recipeCardRef.current : null })
+    await new Promise((res) => setTimeout(res, 60)) // 레시피카드 마운트 시간
+    try {
+      // 꾸민 표지 + 재료·만드는 법(레시피카드) 2장 함께 — 친구가 진짜 해먹게(랜덤 카드와 동일)
+      await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe ? recipeCardRef.current : null })
+    } finally {
+      setCoverBusy(false)
+    }
   }
 
   // 이 레시피가 쓴 '주부의 장바구니' 제품(재료에 제품명이 적혀 있으면 자동 매칭) — 구매 연결
@@ -136,11 +142,21 @@ export default function RecipeDetailScreen({ id }) {
       <div ref={iconRef} aria-hidden style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}>
         <FoodIcon name={r.icon || guessFoodIcon(r.title)} size={240} />
       </div>
-      {/* 꾸민 표지 공유 시 2장째로 함께 갈 레시피카드(재료·만드는 법) — 시트 열렸을 때만 렌더 */}
-      {shareSheet && hasRecipe && (
+      {/* 꾸민 표지 공유 시 2장째로 함께 갈 레시피카드(재료·만드는 법) — 시트 열렸거나 캡처 중일 때 렌더 */}
+      {(shareSheet || coverBusy) && hasRecipe && (
         <div aria-hidden style={{ position: 'fixed', left: -99999, top: 0, opacity: 0, pointerEvents: 'none' }}>
           <div ref={recipeCardRef}><RecipeCard recipe={r} /></div>
         </div>
+      )}
+      {/* 🎨 꾸민 표지 이미지 만드는 중 — 로딩 오버레이(먹통처럼 안 보이게) */}
+      {coverBusy && (
+        <Portal>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(30,26,22,.55)', backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+            <div className="ocr-spin" />
+            <div style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>예쁜 카드 만드는 중…</div>
+            <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5 }}>표지 + 레시피 2장 준비 중이에요</div>
+          </div>
+        </Portal>
       )}
 
       {/* 상단 오버레이 바 */}

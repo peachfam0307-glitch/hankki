@@ -22,6 +22,7 @@ export default function BragScreen() {
   const nav = useNav()
   const [pick, setPick] = useState(null) // 탭한 레시피 → 선택 시트
   const [share, setShare] = useState(null) // 랜덤 카드 모달로 보낼 레시피
+  const [busy, setBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩 표시)
   const [coach, setCoach] = useState(() => needsCoach(BRAG_COACH_KEY))
   const coverRef = useRef(null) // 꾸민 표지 캡처용(화면 밖 숨은 레이어)
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
@@ -44,13 +45,14 @@ export default function BragScreen() {
       nav.showToast('먼저 표지를 예쁘게 꾸며볼까요? 🎨')
       return
     }
-    nav.showToast('🎨 내가 꾸민 표지 그대로 · 이미지 만드는 중…')
+    setBusy(true) // 로딩 오버레이(먹통처럼 안 보이게)
     const info = [r.time ? `${r.time}분` : null, r.servings ? `${r.servings}인분` : null, r.difficulty || null].filter(Boolean)
     await new Promise((res) => setTimeout(res, 60)) // 숨은 표지 레이아웃(글자 크기 기준 폭)이 잡힐 시간
     try {
       // 재료·만드는 법이 있으면 레시피카드도 2장째로 함께(친구가 진짜 해먹게)
       await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe(r) ? recipeCardRef.current : null })
     } finally {
+      setBusy(false)
       setPick(null)
     }
   }
@@ -61,7 +63,7 @@ export default function BragScreen() {
   return (
     <>
       <div className="topbar">
-        <div className="h-title">카드자랑</div>
+        <div className="h-title">레꾸자랑</div>
       </div>
       <div className="pad">
         <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 16 }}>
@@ -89,8 +91,8 @@ export default function BragScreen() {
         )}
       </div>
 
-      {/* 레시피 탭 → 선택 시트: 🎨 내 꾸민 표지(주인공) / 🎴 랜덤 카드(옵션) */}
-      {pick && (
+      {/* 레시피 탭 → 선택 시트: 🎨 내 꾸민 표지(주인공) / 🎴 랜덤 카드(옵션) · 캡처 중(busy)엔 숨기고 로딩만 */}
+      {pick && !busy && (
         <Portal>
           <div className="sheet-mask" onClick={() => setPick(null)}>
             <div className="sheet" onClick={(e) => e.stopPropagation()}>
@@ -123,6 +125,17 @@ export default function BragScreen() {
             onClose={() => setShare(null)}
             onSaveCover={(img) => { updateRecipe(share.id, { thumb: 'photo', image: img }); nav.showToast('카드를 표지로 저장했어요 ✨') }}
           />
+        </Portal>
+      )}
+
+      {/* 이미지 만드는 중 로딩 오버레이 — 캡처(표지+레시피)에 몇 초 걸려도 먹통처럼 안 보이게 */}
+      {busy && (
+        <Portal>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(30,26,22,.55)', backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+            <div className="ocr-spin" />
+            <div style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>예쁜 카드 만드는 중…</div>
+            <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5 }}>표지 + 레시피 2장 준비 중이에요</div>
+          </div>
         </Portal>
       )}
 

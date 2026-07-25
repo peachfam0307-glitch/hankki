@@ -38,6 +38,16 @@ async function ensureFonts() {
 export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, recipeEl = null }) {
   await ensureFonts()
 
+  // 2장째(레시피카드) 캡처를 표지 캡처와 '동시에' 시작한다 — 전체 대기시간을 줄여
+  // 폰의 공유 허용 시간(user activation) 안에 navigator.share가 뜨게 한다.
+  const recipeFilePromise = recipeEl
+    ? toPng(recipeEl, { pixelRatio: 1.6, cacheBust: true })
+        .then((u) => fetch(u))
+        .then((r) => r.blob())
+        .then((b) => new File([b], 'hankki-recipe.png', { type: 'image/png' }))
+        .catch(() => null)
+    : null
+
   // ── 1) 화면의 표지를 그대로 사진으로 (버튼 등 data-nocapture는 제외) ──
   const rect = coverEl.getBoundingClientRect()
   const scale = Math.min(3, 1080 / Math.max(1, rect.width)) // 1080px급 고해상도
@@ -120,18 +130,12 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
   do { ctx.font = `${pf}px ${BODY}`; if (ctx.measureText(pillLabel).width <= pillW - 60) break; pf -= 1 } while (pf > 22)
   ctx.fillText(pillLabel, W / 2, footerTop + 72)
 
-  // ── 3) 2장째: 실제 레시피카드(재료·만드는 법) — 친구가 진짜 해먹을 수 있게(랜덤 카드와 동일) ──
+  // ── 3) 2장째(레시피카드)를 함께 — 친구가 진짜 해먹을 수 있게(랜덤 카드와 동일) ──
   const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'))
   if (!blob) return { ok: false }
   const file = new File([blob], 'hankki-cover.png', { type: 'image/png' })
-  const files = [file]
-  if (recipeEl) {
-    try {
-      const ru = await toPng(recipeEl, { pixelRatio: 2, cacheBust: true })
-      const rb = await (await fetch(ru)).blob()
-      files.push(new File([rb], 'hankki-recipe.png', { type: 'image/png' }))
-    } catch (e) { /* 레시피카드 실패해도 표지 1장은 보낸다 */ }
-  }
+  const recipeFile = recipeFilePromise ? await recipeFilePromise : null // 이미 병렬로 뜨는 중 → 거의 즉시
+  const files = recipeFile ? [file, recipeFile] : [file]
 
   // ── 4) 공유 / 다운로드 ──
   const has2 = files.length > 1
@@ -148,13 +152,15 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
   } catch (e) {
     if (e && e.name === 'AbortError') return { ok: true, shared: false }
   }
-  const objUrl = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = objUrl
-  a.download = 'hankki-cover.png'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(objUrl), 1000)
+  // 폴백(공유 불가·시간초과) — 표지+레시피 둘 다 저장(레시피가 빠지지 않게)
+  const dl = (b, name) => {
+    const u = URL.createObjectURL(b)
+    const a = document.createElement('a')
+    a.href = u; a.download = name
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(() => URL.revokeObjectURL(u), 1500)
+  }
+  dl(blob, 'hankki-cover.png')
+  if (recipeFile) setTimeout(() => dl(recipeFile, 'hankki-recipe.png'), 400)
   return { ok: true, shared: false }
 }
