@@ -65,28 +65,68 @@
   --thumb: linear-gradient(160deg, #ffffff, #eef2f6); /* 레시피 사진 배경 — 블루: 쿨 화이트(노랗지 않게) */
 }
 
-/* ── 다크 테마 — 웜 에스프레소(브라운 계열, 크림과 한 가족) ── */
+/* ── 다크 테마 — 세련된 웜 차콜(near-black). 갈색 에스프레소 폐기, "밤의 자기돌봄" 무드 ── */
 :root[data-theme='dark'] {
-  --bg: #17120d; /* 깊은 웜 에스프레소 — 진짜 다크 */
-  --surface: #221b14;
-  --cream: #2b2219; /* pill·태그 */
-  --cream-deep: #362b20;
-  --sand: #8a7a63;
-  --brown: #cd8a55; /* 포인트 = 따뜻한 호박/앰버 (다크 배경 위 버튼·강조, 흰 글씨 읽힘) */
-  --text: #ece3d6;
-  --text-sub: #a2937f;
+  --bg: #17171b; /* 웜 차콜(near-black) — 갈색 아님, 살짝 온기만 */
+  --surface: #1f1f25; /* 카드 — 배경보다 한 톤 밝게 */
+  --cream: #2a2a31; /* pill·태그 */
+  --cream-deep: #34343d;
+  --sand: #7d7b84;
+  --brown: #63997b; /* 포인트 = 세이지(청록빛 뉴트럴) — 주황 남용 탈피, 차콜 위 곰펭 웜톤과 웜+쿨 조화 */
+  --text: #ecebf1; /* 웜 뉴트럴 오프화이트 */
+  --text-sub: #9a97a2;
   --line: rgba(255, 255, 255, 0.08);
   --danger: #e0946a;
-  --frame: #0d0a06;
-  --nav-bg: rgba(23, 18, 13, 0.92);
-  --today-grad: linear-gradient(135deg, #2c2318, #201810);
-  --tease: linear-gradient(100deg, #46341f, #38291a); /* 다크 — 배경보다 확실히 밝은 웜 브라운(카드가 튀게) */
-  --tease-ic: #e6b071;
+  --frame: #0e0e12;
+  --nav-bg: rgba(23, 23, 27, 0.92);
+  --today-grad: linear-gradient(135deg, #26262e, #1c1c22);
+  --tease: linear-gradient(100deg, #2a3340, #232a35); /* 쿨 슬레이트 카드 — 차콜 위 살짝 색감(곧 나올 기능) */
+  --tease-ic: #8bb0cf;
   --thumb: linear-gradient(160deg, #e7e1d6, #d9d1c3); /* 레시피 사진 배경 — 다크: 톤다운 오프화이트(쨍하지 않게) */
 
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.32);
   color-scheme: dark;
+}
+
+/* ── 뮤트로 — 배경은 밝게 그대로, 포인트만 차분한 클레이(로지 테라코타). "밝고 화사" 유지하면서 레트로 무드만 ── */
+:root[data-theme='mutro'] {
+  --bg: #fbf8f2; /* 현재만큼 밝게 · 노란기만 살짝 뺌 */
+  --surface: #ffffff; /* 카드는 밝은 화이트 그대로 */
+  --cream: #efe8dc; /* pill·태그 — 살짝 뮤트 */
+  --cream-deep: #e5dbc9;
+  --sand: #cdbfa8;
+  --brown: #b6785e; /* 포인트 = 차분한 클레이(로지 레트로) — 쨍한 주황을 뮤트 */
+  --text: #3d3830;
+  --text-sub: #8f887b;
+  --line: #ece4d7;
+  --danger: #bd5a44;
+  --frame: #efe8db;
+  --nav-bg: rgba(251, 248, 242, 0.92);
+  --today-grad: linear-gradient(135deg, #f5efe4, #ede3d3);
+  --tease: linear-gradient(100deg, #e9f1f2, #dcebee); /* 시원한 민트블루 보색 톡(유지) */
+  --tease-ic: #5f9298;
+  --thumb: linear-gradient(160deg, #ffffff, #f4f0e9);
+}
+
+/* ── 뮤트로 그레이지 — 배경까지 살짝 오트밀 그레이지(더스티 레트로). 실제 폰에서 무드 확인용 ── */
+:root[data-theme='greige'] {
+  --bg: #eeebe3; /* 오트밀 그레이지(노란기 확실히 뺌) */
+  --surface: #f7f3ec; /* 순백 대신 웜 오프화이트 */
+  --cream: #e6e0d4;
+  --cream-deep: #d9d1c2;
+  --sand: #c2b298;
+  --brown: #c07a54; /* 포인트 = 뮤트 테라코타 */
+  --text: #3a352e;
+  --text-sub: #877e70;
+  --line: #e2dacd;
+  --danger: #bd5a44;
+  --frame: #e7dfd2;
+  --nav-bg: rgba(238, 235, 227, 0.92);
+  --today-grad: linear-gradient(135deg, #efe9dc, #e6ddcc);
+  --tease: linear-gradient(100deg, #e6eef0, #d9e8ea);
+  --tease-ic: #5f9298;
+  --thumb: linear-gradient(160deg, #f7f3ec, #e9e3d7);
 }
 
 * {

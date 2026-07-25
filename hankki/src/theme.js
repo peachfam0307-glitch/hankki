@@ -33,12 +33,14 @@ export const CATEGORIES = ['전체', '한식', '양식', '일식', '간식', '�
 // bg/point 는 설정 화면 스와치 미리보기용. 실제 색은 styles.css 의 :root[data-theme] 에서.
 export const THEMES = [
   { key: 'cream', label: '크림', desc: '부드럽고 화사한 기본', bg: '#fdfbf7', point: '#cd7c50', dark: false },
+  { key: 'mutro', label: '뮤트로', desc: '차분한 클레이 포인트', bg: '#fbf8f2', point: '#b6785e', dark: false },
+  { key: 'greige', label: '뮤트로 그레이지', desc: '오트밀 그레이지', bg: '#eeebe3', point: '#c07a54', dark: false },
   { key: 'blue', label: '블루', desc: '시원한 여름', bg: '#f4f7fb', point: '#6d8db2', dark: false },
-  { key: 'dark', label: '다크', desc: '아늑한 밤', bg: '#241e18', point: '#cd8a55', dark: true },
+  { key: 'dark', label: '다크', desc: '세련된 차콜 밤', bg: '#17171b', point: '#63997b', dark: true },
 ]
 
 export const THEME_KEY = 'hankki-theme'
-const THEME_COLOR = { cream: '#fdfbf7', blue: '#f4f7fb', dark: '#241e18' }
+const THEME_COLOR = { cream: '#fdfbf7', mutro: '#fbf8f2', greige: '#eeebe3', blue: '#f4f7fb', dark: '#17171b' }
 
 export function getTheme() {
   try {
