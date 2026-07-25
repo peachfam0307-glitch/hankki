@@ -16,7 +16,7 @@ import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES } from '../theme'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
-import { ocrImage } from '../ocr'
+import { ocrImage, getOcrNote } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk } from '../parseRecipe'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
@@ -229,13 +229,23 @@ export default function EditorScreen({ id, prefill }) {
     // 대기열에 다음 장이 있으면 이어서 크롭 → 인식
     if (ocrQueue.current.length) { setCropImg(ocrQueue.current.shift()); return }
 
+    // (마지막 장) 프록시 한도 안내 — 무료 소진 등이면 "기본 인식으로 진행됐어요" 꼬리를 붙인다.
+    const note = getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
+    const quotaTail =
+      note === 'user_quota'
+        ? ' · 이번 달 무료 스캔 5회를 다 써서 기본 인식이에요'
+        : note === 'global_quota' || note === 'rate_limited'
+          ? ' · 지금 이용이 많아 기본 인식이에요'
+          : ''
+
     // 마지막 장 — 결과 반영
     if (target === 'ingredients' || target === 'steps') {
-      nav.showToast(target === 'ingredients' ? '재료 초안을 담았어요 · 다듬어 주세요 ✍️' : '만드는 법 초안을 담았어요 · 다듬어 주세요 ✍️', 4800)
+      const base = target === 'ingredients' ? '재료 초안을 담았어요' : '만드는 법 초안을 담았어요'
+      nav.showToast(base + (quotaTail || ' · 다듬어 주세요 ✍️'), quotaTail ? 6500 : 4800)
       return
     }
     const combined = ocrAccum.current
-    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요'); return }
+    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + quotaTail, quotaTail ? 6000 : 3200); return }
     const r = parseRecipeText(combined, { fromOcr: true })
     setF((prev) => ({
       ...prev,
@@ -249,7 +259,10 @@ export default function EditorScreen({ id, prefill }) {
           ? prev.category
           : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
     }))
-    nav.showToast('초안을 채웠어요 · 사진 보며 다듬어 주세요 ✍️', 4800)
+    nav.showToast(
+      quotaTail ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요 ✍️' : '초안을 채웠어요 · 사진 보며 다듬어 주세요 ✍️',
+      quotaTail ? 6500 : 4800,
+    )
   }
 
   const canSave = f.title.trim().length > 0

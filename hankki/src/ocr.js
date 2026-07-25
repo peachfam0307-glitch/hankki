@@ -12,6 +12,15 @@ import { normalizeNumerals } from './ocrCorrect'
 const OCR_PROXY_URL = 'https://hankki-ocr.annyeong-hankki.workers.dev'
 const OCR_APP_TOKEN = '0VRNDSjHBhwniTzIDAbnRaJygyfGJ2K2'
 
+// 마지막 프록시 호출의 안내 신호 — 'user_quota'(내 월 무료 소진)·'global_quota'·'rate_limited'.
+// 앱(EditorScreen)이 읽어 "무료 다 써서 기본 인식이에요" 안내를 띄운다. 읽으면 소비(초기화).
+let _ocrNote = null
+export function getOcrNote() {
+  const n = _ocrNote
+  _ocrNote = null
+  return n
+}
+
 // 기기 식별자 — 유저당 월 무료 횟수 카운트용. 개인정보 아님(임의 난수), 이 브라우저에만 저장.
 function deviceId() {
   try {
@@ -30,16 +39,31 @@ function deviceId() {
 
 // 프록시로 OCR 시도 → 성공 시 텍스트, 실패 시 예외를 던져 폴백을 유도.
 async function ocrViaProxy(dataUrl, onProgress) {
+  _ocrNote = null
   if (typeof dataUrl !== 'string' || !/^data:image\//.test(dataUrl)) throw new Error('not_dataurl')
   if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new Error('offline')
   if (onProgress) onProgress(35)
+  const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+  // 운영자 무제한 모드(이 기기가 ?founder=…로 진입해 둔 경우)면 무제한 헤더를 실어 보낸다.
+  try {
+    const f = localStorage.getItem('hankki:founder')
+    if (f) headers['x-hankki-founder'] = f
+  } catch {
+    /* noop */
+  }
   const resp = await fetch(OCR_PROXY_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN },
+    headers,
     body: JSON.stringify({ image: dataUrl, uid: deviceId() }),
   })
-  // 429(월·일·유저 한도)·403·502(vision오류) 등은 전부 폴백으로 넘긴다 — 앱은 늘 동작해야 하니까.
-  if (!resp.ok) throw new Error('proxy_http_' + resp.status)
+  if (!resp.ok) {
+    // 429(한도 초과) → 어느 한도인지 기록(앱이 "무료 다 썼어요" 안내). 전부 폴백으로 넘긴다 — 앱은 늘 동작해야 하니까.
+    if (resp.status === 429) {
+      const d = await resp.json().catch(() => null)
+      _ocrNote = (d && d.error) || 'quota'
+    }
+    throw new Error('proxy_http_' + resp.status)
+  }
   const data = await resp.json().catch(() => null)
   if (onProgress) onProgress(92)
   return (data && data.text) || ''

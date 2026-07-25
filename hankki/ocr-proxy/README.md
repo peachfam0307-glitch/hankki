@@ -13,7 +13,14 @@
 - **코드**: `worker.js` (이 폴더) — 대시보드 Edit code에 붙여넣고 Deploy.
 - **Secret** `VISION_KEY` = Google API 키(AIza…, Vision 전용 제한). *브라우저·채팅·git에 절대 노출 금지.*
 - **Secret** `APP_TOKEN` = 앱과 공유하는 토큰. **`src/ocr.js`의 `OCR_APP_TOKEN`과 반드시 동일**해야 함.
+- **Secret** `FOUNDER_SECRET` = 🔓 운영자(창업자) 무제한 통로 비밀키. (아래 참고)
 - **KV 바인딩** `OCR_KV` → 네임스페이스 `hankki-ocr-kv` (사용량 카운터 저장).
+
+## 🔓 운영자 무제한 모드 (창업자 본인용)
+창업자는 개인 한도(월 5회)를 우회해 사실상 무제한으로 쓴다. 유저는 5회 그대로.
+- **켜는 법**: 폰 브라우저에서 앱 주소에 `?founder=<FOUNDER_SECRET>` 붙여 1회 접속 → 이 기기에 저장(주소에선 비밀키 자동 삭제). 이후 이 기기만 무제한.
+- **동작**: 앱이 `x-hankki-founder` 헤더로 비밀키 전송 → worker가 일치하면 **개인 한도(IP·유저)만 우회**. **전역 상한 900은 운영자도 존중** → 비밀키가 새더라도 비용은 여전히 $0(전역에서 막힘). 새면 Cloudflare에서 `FOUNDER_SECRET` 교체로 즉시 차단.
+- ⚠️ 그 `?founder=` 주소는 남한테 공유 금지(공유하면 상대도 무제한 — 단, 비용은 여전히 전역 900으로 보호됨).
 
 ## 🔒 6중 방어벽 (결제사고 방지)
 `worker.js`의 `LIMITS`:

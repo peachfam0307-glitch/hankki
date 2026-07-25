@@ -49,6 +49,10 @@ export default {
       return json({ error: 'unauthorized' }, 401, cors)
     }
 
+    // 🔓 운영자(창업자) 무제한 통로 — 비밀키(FOUNDER_SECRET) 일치 시 모든 한도 우회(카운트도 안 함).
+    // 앱은 이 기기가 운영자 모드일 때만 x-hankki-founder 헤더를 보낸다(URL ?founder=…로 1회 진입).
+    const founder = !!(env.FOUNDER_SECRET && request.headers.get('x-hankki-founder') === env.FOUNDER_SECRET)
+
     // 본문 파싱: { image: dataURL, uid: 기기식별자 }
     let body
     try { body = await request.json() } catch { return json({ error: 'bad_json' }, 400, cors) }
@@ -64,6 +68,8 @@ export default {
     const minute = now.toISOString().slice(0, 16)    // 2026-07-25T09:31
 
     // ── 방어벽 검사(막혔으면 Vision 호출 없이 즉시 반려) ──
+    // 운영자(founder)는 '개인 한도'(IP·유저)만 우회하고, '전역 상한'(비용 $0 보장)은 그대로 존중한다.
+    // → 비밀키가 새더라도 전역 900에서 막혀 비용은 여전히 $0. (모든 한도 우회보다 이게 안전)
     if (kv) {
       const [ipC, dayC, monC, userC] = await Promise.all([
         num(kv, `ip:${ip}:${minute}`),
@@ -71,13 +77,14 @@ export default {
         num(kv, `m:${ym}`),
         num(kv, `u:${uid}:${ym}`),
       ])
-      if (ipC >= LIMITS.PER_IP_PER_MIN) return json({ error: 'rate_limited' }, 429, cors)      // ④
-      if (monC >= LIMITS.MONTHLY_GLOBAL) return json({ error: 'global_quota' }, 429, cors)     // ①
-      if (dayC >= LIMITS.DAILY_GLOBAL) return json({ error: 'global_quota' }, 429, cors)       // ②
-      if (userC >= LIMITS.PER_USER_MONTHLY) return json({ error: 'user_quota' }, 429, cors)    // ③
+      if (!founder && ipC >= LIMITS.PER_IP_PER_MIN) return json({ error: 'rate_limited' }, 429, cors)   // ④
+      if (monC >= LIMITS.MONTHLY_GLOBAL) return json({ error: 'global_quota' }, 429, cors)              // ① 운영자도 존중
+      if (dayC >= LIMITS.DAILY_GLOBAL) return json({ error: 'global_quota' }, 429, cors)                // ② 운영자도 존중
+      if (!founder && userC >= LIMITS.PER_USER_MONTHLY) return json({ error: 'user_quota' }, 429, cors) // ③
     }
 
     // ── Vision 호출 직전에 카운터 증가(먼저 올려 폭주 시 초과 방지) ──
+    // 운영자도 전역 카운트엔 포함(전역 상한이 비용을 지키니까). 유저별 카운트는 무의미하지만 함께 올려도 무방.
     if (kv) {
       await Promise.all([
         inc(kv, `ip:${ip}:${minute}`, 120),          // 2분 뒤 만료

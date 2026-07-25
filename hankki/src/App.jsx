@@ -29,6 +29,21 @@ const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScree
 const NavCtx = createContext(null)
 export const useNav = () => useContext(NavCtx)
 
+// 🔓 운영자(창업자) 무제한 모드 진입 — 주소창에 ?founder=<비밀키> 로 한 번 열면 이 기기에 저장.
+// 이후 OCR이 무제한(월 5회 제한 우회). 저장 뒤엔 주소에서 파라미터를 지워 비밀키가 새지 않게 한다.
+try {
+  const _p = new URLSearchParams(location.search)
+  const _f = _p.get('founder')
+  if (_f) {
+    localStorage.setItem('hankki:founder', _f)
+    _p.delete('founder')
+    const _q = _p.toString()
+    history.replaceState(null, '', location.pathname + (_q ? '?' + _q : '') + location.hash)
+  }
+} catch {
+  /* noop */
+}
+
 export default function App() {
   // 새로고침(앱 업데이트·실수로 당겨서 새로고침 등)이 나도 보던 탭으로 돌아오도록 기억해 둔다.
   const [tab, setTab] = useState(() => {
