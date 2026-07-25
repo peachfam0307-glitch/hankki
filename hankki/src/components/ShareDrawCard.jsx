@@ -42,13 +42,12 @@ const POP_BGS = [
 // ── 1080×1350 카드 (캡처 대상) ──
 function Card({ style, char, no, title, tags, popBg }) {
   const pill = { display: 'inline-block', padding: '11px 28px', borderRadius: 40, fontSize: 31, margin: '0 4px' }
-  const foot = (color) => (
-    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 66, textAlign: 'center', color }}>
-      <div style={{ fontSize: 29, opacity: 0.85 }}>전체 레시피는 한끼 앱에서 →</div>
+  // 🔍 CTA — 바이럴 핵심. 크고 채운 알약으로 확 띄게 + 정사각 안전영역(bottom 150) 안에.
+  //   (인스타는 4:5를 1:1로 크롭해서 맨 위/아래를 잘라냄 → 중요한 건 가운데 정사각 안에 둔다)
+  const cta = (opt) => (
+    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 150, textAlign: 'center' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '21px 46px', borderRadius: 999, background: opt.bg, color: opt.color, fontSize: 42, fontWeight: 800, boxShadow: opt.shadow }}>🔍 Play스토어 ‘한끼’ 검색</span>
     </div>
-  )
-  const urlPill = (bg, color) => (
-    <div style={{ display: 'inline-block', marginTop: 12, padding: '11px 32px', borderRadius: 34, fontSize: 27, fontFamily: 'Gaegu, sans-serif', background: bg, color }}>나도 꾸미러 가기 · {PRETTY_URL}</div>
   )
   const img = (extra) => <img src={char.url} alt="" crossOrigin="anonymous" style={{ maxHeight: '100%', maxWidth: '86%', objectFit: 'contain', filter: DIE, ...extra }} />
   const slot = (s) => ({ position: 'absolute', left: 0, right: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', ...s })
@@ -57,17 +56,17 @@ function Card({ style, char, no, title, tags, popBg }) {
     return (
       <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 32%,#343b4a,#2d3340 74%,#252a35)' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.12) 6px,transparent 7px)', backgroundSize: '96px 96px' }} />
-        <div style={{ position: 'absolute', top: 56, left: 60, fontSize: 42, color: '#f3e9dd' }}>한끼 ☾</div>
-        <div style={{ position: 'absolute', top: 52, right: 56, width: 140, height: 140, borderRadius: '50%', border: '3px dashed rgba(255,220,140,.9)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#ffe4a0', fontSize: 30, lineHeight: 1.15 }}>No.{String(no).padStart(2, '0')}<br /><span style={{ fontSize: 20 }}>✨레어</span></div>
+        <div style={{ position: 'absolute', top: 152, left: 60, fontSize: 42, color: '#f3e9dd' }}>한끼 ☾</div>
+        <div style={{ position: 'absolute', top: 150, right: 56, width: 140, height: 140, borderRadius: '50%', border: '3px dashed rgba(255,220,140,.9)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#ffe4a0', fontSize: 30, lineHeight: 1.15 }}>No.{String(no).padStart(2, '0')}<br /><span style={{ fontSize: 20 }}>✨레어</span></div>
         <div style={{ position: 'absolute', top: 320, left: 150, fontSize: 54 }}>✨</div><div style={{ position: 'absolute', top: 430, right: 150, fontSize: 58 }}>💛</div>
-        <div style={{ position: 'absolute', top: 280, left: '50%', transform: 'translateX(-50%)', width: 560, height: 560, borderRadius: '50%', background: 'conic-gradient(from 20deg,#ff9aa2,#ffdac1,#e2f0cb,#b5ead7,#c7ceea,#f7c6ff,#ffabe0,#ff9aa2)', opacity: 0.3, filter: 'blur(3px)' }} />
-        <div style={slot({ top: 270, height: 590 })}>{img()}</div>
-        <div style={{ position: 'absolute', top: 900, left: 0, right: 0, textAlign: 'center', color: '#f6ede0', padding: '0 50px' }}>
+        <div style={{ position: 'absolute', top: 235, left: '50%', transform: 'translateX(-50%)', width: 510, height: 510, borderRadius: '50%', background: 'conic-gradient(from 20deg,#ff9aa2,#ffdac1,#e2f0cb,#b5ead7,#c7ceea,#f7c6ff,#ffabe0,#ff9aa2)', opacity: 0.3, filter: 'blur(3px)' }} />
+        <div style={slot({ top: 230, height: 500 })}>{img()}</div>
+        <div style={{ position: 'absolute', top: 775, left: 0, right: 0, textAlign: 'center', color: '#f6ede0', padding: '0 50px' }}>
           <div style={{ fontSize: 34, opacity: 0.85, marginBottom: 8 }}>오늘의 한 끼 ✨</div>
           <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: titleFont(title), background: 'linear-gradient(90deg,#ffd98a,#ffb0c4,#c7b3f0)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{title}</div>
           <div style={{ marginTop: 16 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: 'rgba(255,255,255,.14)', color: '#ffe4a0' }}>{x}</span>)}</div>
         </div>
-        {foot('#e9dccb')}<div style={{ position: 'absolute', left: 0, right: 0, bottom: 66, textAlign: 'center' }}>{urlPill('rgba(255,255,255,.12)', '#f3e9dd')}</div>
+        {cta({ bg: '#ffe0a0', color: '#3a2a12', shadow: '0 8px 24px rgba(0,0,0,.4)' })}
       </div>
     )
   }
@@ -75,16 +74,16 @@ function Card({ style, char, no, title, tags, popBg }) {
     return (
       <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: popBg }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.28) 8px,transparent 9px)', backgroundSize: '92px 92px' }} />
-        <div style={{ position: 'absolute', top: 56, left: 60, fontSize: 42, color: '#fffdf8' }}>한끼 🧡</div>
-        <div style={{ position: 'absolute', top: 52, right: 56, width: 140, height: 140, borderRadius: '50%', border: '3px dashed rgba(255,255,255,.9)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 29, lineHeight: 1.2 }}>오늘의<br />한 끼</div>
+        <div style={{ position: 'absolute', top: 152, left: 60, fontSize: 42, color: '#fffdf8' }}>한끼 🧡</div>
+        <div style={{ position: 'absolute', top: 150, right: 56, width: 140, height: 140, borderRadius: '50%', border: '3px dashed rgba(255,255,255,.9)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 29, lineHeight: 1.2 }}>오늘의<br />한 끼</div>
         <div style={{ position: 'absolute', top: 250, left: 150, fontSize: 60 }}>✨</div><div style={{ position: 'absolute', top: 470, right: 150, fontSize: 46 }}>✨</div>
-        <div style={slot({ top: 250, height: 600 })}>{img()}</div>
-        <div style={{ position: 'absolute', top: 905, left: 0, right: 0, textAlign: 'center', color: '#fffdf8', padding: '0 50px' }}>
+        <div style={slot({ top: 230, height: 505 })}>{img()}</div>
+        <div style={{ position: 'absolute', top: 775, left: 0, right: 0, textAlign: 'center', color: '#fffdf8', padding: '0 50px' }}>
           <div style={{ fontSize: 36, opacity: 0.95, marginBottom: 8 }}>오늘도 한 끼 해냈다</div>
           <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: titleFont(title), textShadow: '0 4px 0 rgba(150,55,30,.3)' }}>{title}</div>
           <div style={{ marginTop: 16 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: 'rgba(255,253,248,.92)', color: '#c85535' }}>{x}</span>)}</div>
         </div>
-        {foot('#fffdf8')}<div style={{ position: 'absolute', left: 0, right: 0, bottom: 66, textAlign: 'center' }}>{urlPill('rgba(90,35,20,.32)', '#fffdf8')}</div>
+        {cta({ bg: '#fffdf8', color: '#b0472a', shadow: '0 10px 22px rgba(90,35,20,.35)' })}
       </div>
     )
   }
@@ -92,20 +91,20 @@ function Card({ style, char, no, title, tags, popBg }) {
     return (
       <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'linear-gradient(160deg,#dfe9d8,#d1e0d5 55%,#dae5e4)' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(120,140,120,.13) 6px,transparent 7px)', backgroundSize: '90px 90px' }} />
-        <div style={{ position: 'absolute', top: 56, left: 60, fontSize: 42, color: '#5c7256' }}>한끼 ♡</div>
-        <div style={{ position: 'absolute', top: 210, left: '50%', transform: 'translateX(-50%) rotate(-3deg)', width: 660, background: '#fffef9', borderRadius: 14, padding: '32px 32px 0', boxShadow: '0 26px 50px rgba(80,95,80,.28)' }}>
+        <div style={{ position: 'absolute', top: 152, left: 60, fontSize: 42, color: '#5c7256' }}>한끼 ♡</div>
+        <div style={{ position: 'absolute', top: 200, left: '50%', transform: 'translateX(-50%) rotate(-3deg)', width: 640, background: '#fffef9', borderRadius: 14, padding: '30px 30px 0', boxShadow: '0 26px 50px rgba(80,95,80,.28)' }}>
           <div style={{ position: 'absolute', top: -18, left: 120, width: 190, height: 48, background: 'rgba(200,180,140,.55)', border: '2px dashed rgba(150,130,90,.4)', transform: 'rotate(-5deg)' }} />
-          <div style={{ width: '100%', height: 600, borderRadius: 8, position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 40%,#f6f2ea,#e4ece0)' }}>
+          <div style={{ width: '100%', height: 500, borderRadius: 8, position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 40%,#f6f2ea,#e4ece0)' }}>
             <div style={{ position: 'absolute', top: 40, left: 52, fontSize: 48 }}>✨</div>
             <div style={slot({ inset: 0, top: 'auto', bottom: 0, height: '96%' })}>{img({ maxWidth: '70%', filter: 'drop-shadow(0 8px 12px rgba(60,40,25,.2))' })}</div>
           </div>
           <div style={{ fontFamily: 'Gaegu, sans-serif', fontSize: 44, color: '#5c7256', textAlign: 'center', padding: '20px 0 24px' }}>오늘의 {String(title).length > 7 ? String(title).slice(0, 6) + '…' : title} ♡</div>
         </div>
-        <div style={{ position: 'absolute', top: 1000, left: 0, right: 0, textAlign: 'center', color: '#3f4a3c', padding: '0 50px' }}>
+        <div style={{ position: 'absolute', top: 880, left: 0, right: 0, textAlign: 'center', color: '#3f4a3c', padding: '0 50px' }}>
           <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: Math.min(88, titleFont(title)) }}>{title}</div>
           <div style={{ marginTop: 12 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: '#fffef9', color: '#5c7256' }}>{x}</span>)}</div>
         </div>
-        {foot('#5c7256')}<div style={{ position: 'absolute', left: 0, right: 0, bottom: 66, textAlign: 'center' }}>{urlPill('rgba(255,255,255,.7)', '#5c7256')}</div>
+        {cta({ bg: '#5c7256', color: '#fffef9', shadow: '0 10px 22px rgba(70,90,70,.32)' })}
       </div>
     )
   }
@@ -121,10 +120,9 @@ function Card({ style, char, no, title, tags, popBg }) {
       <div style={{ position: 'absolute', top: 430, left: 150, fontSize: 56, transform: 'rotate(-12deg)' }}>✏️</div>
       <div style={{ position: 'absolute', top: 560, right: 150, fontSize: 48, color: '#e6a4a0' }}>♡</div>
       <div style={{ position: 'absolute', top: 820, left: 180, fontSize: 40, color: '#e8b74d' }}>✿</div>
-      <div style={{ position: 'absolute', bottom: 250, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', background: '#fff5c8', padding: '22px 34px', borderRadius: 6, boxShadow: '0 8px 16px rgba(150,120,40,.2)', fontFamily: 'Gaegu, sans-serif', fontSize: 38, color: '#7a6533' }}>{tags.join('  ·  ')}</div>
-      <div style={{ position: 'absolute', bottom: 110, left: 0, right: 0, textAlign: 'center', color: '#9a8a72' }}>
-        <div style={{ fontSize: 30, fontFamily: 'Gaegu, sans-serif' }}>전체 레시피는 한끼 앱에서 →</div>
-        <div style={{ display: 'inline-block', marginTop: 12, padding: '10px 30px', borderRadius: 30, background: '#eae0cf', fontFamily: 'Gaegu, sans-serif', fontSize: 27, color: '#8a7a62' }}>나도 꾸미러 가기 · {PRETTY_URL}</div>
+      <div style={{ position: 'absolute', bottom: 300, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', background: '#fff5c8', padding: '22px 34px', borderRadius: 6, boxShadow: '0 8px 16px rgba(150,120,40,.2)', fontFamily: 'Gaegu, sans-serif', fontSize: 38, color: '#7a6533' }}>{tags.join('  ·  ')}</div>
+      <div style={{ position: 'absolute', bottom: 150, left: 0, right: 0, textAlign: 'center' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '21px 46px', borderRadius: 999, background: '#8a6a3a', color: '#fff8ea', fontSize: 42, fontWeight: 800, boxShadow: '0 10px 22px rgba(120,90,40,.32)' }}>🔍 Play스토어 ‘한끼’ 검색</span>
       </div>
     </div>
   )
