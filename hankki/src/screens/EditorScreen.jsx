@@ -130,7 +130,9 @@ export default function EditorScreen({ id, prefill }) {
         const raw = localStorage.getItem(DRAFT_KEY)
         if (raw) {
           const d = JSON.parse(raw)
-          if (d && d.ts && Date.now() - d.ts < 2 * 3600 * 1000 && d.f) return d.f
+          // 초안 복구는 '작성 중이던 글(제목·재료·순서·메모)'만 되살린다. 출처·링크는 물려주지 않음
+          // — 예전에 인스타 링크 넣고 나간 초안이 새 사진 레시피에 'Instagram에서 가져옴'으로 새던 버그 방지.
+          if (d && d.ts && Date.now() - d.ts < 2 * 3600 * 1000 && d.f) return { ...d.f, sourceUrl: '', source: 'manual' }
         }
       } catch { /* noop */ }
     }
