@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
-import { toPng } from 'html-to-image'
+import { toPng, toJpeg } from 'html-to-image'
 import Icon from './Icon'
 
 // 🎴 공유 "뽑기카드" — 레시피마다 스타일×곰펭 랜덤. 🔄로 다시뽑기(가챠), 공유는 Web Share.
@@ -23,12 +23,14 @@ function tagsOf(recipe) {
   return (t.length ? t : ['오늘의 한끼']).slice(0, 2)
 }
 
-// 스타일별 카테고리 규칙(적재적소): 콤비는 넓은 스타일(홀로·팝)에만.
+// 스타일별 카테고리 규칙(적재적소): 콤비는 넓은 스타일(홀로·팝·여름)에만.
 function drawState() {
-  const style = rnd(['holo', 'pop', 'pop', 'pola', 'diary'])
+  const m = new Date().getMonth() + 1
+  const isSummer = m >= 6 && m <= 8 // 여름 시즌카드는 6~8월에만 뽑기 풀에 등장(한정 수집감). 그 외 계절 미노출.
+  const style = rnd(isSummer ? ['holo', 'pop', 'summer', 'pola', 'diary', 'summer'] : ['holo', 'pop', 'pop', 'pola', 'diary'])
   let cat
   if (style === 'holo') cat = DUO.length ? DUO : GOM
-  else if (style === 'pop') { const r = Math.random(); cat = r < 0.6 ? GOM : r < 0.82 ? PENG : (DUO.length ? DUO : GOM) }
+  else if (style === 'pop' || style === 'summer') { const r = Math.random(); cat = r < 0.6 ? GOM : r < 0.82 ? PENG : (DUO.length ? DUO : GOM) }
   else { const r = Math.random(); cat = r < 0.72 ? GOM : (PENG.length ? PENG : GOM) } // pola·diary = 솔로
   return { style, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46) }
 }
@@ -40,11 +42,12 @@ const POP_BGS = [
 ]
 
 // ── 1080×1350 카드 (캡처 대상) ──
-function Card({ style, char, no, title, tags, popBg }) {
+function Card({ style, char, no, title, tags, popBg, cover }) {
   const pill = { display: 'inline-block', padding: '11px 28px', borderRadius: 40, fontSize: 31, margin: '0 4px' }
   // 🔍 CTA — 바이럴 핵심. 크고 채운 알약으로 확 띄게 + 정사각 안전영역(bottom 150) 안에.
   //   (인스타는 4:5를 1:1로 크롭해서 맨 위/아래를 잘라냄 → 중요한 건 가운데 정사각 안에 둔다)
-  const cta = (opt) => (
+  //   cover 모드(표지 저장용)에선 CTA를 숨긴다 — 공유가 아니라 내 레시피 표지라서.
+  const cta = (opt) => cover ? null : (
     <div style={{ position: 'absolute', left: 0, right: 0, bottom: 150, textAlign: 'center' }}>
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '21px 46px', borderRadius: 999, background: opt.bg, color: opt.color, fontSize: 42, fontWeight: 800, boxShadow: opt.shadow }}>🔍 Play스토어 ‘한끼’ 검색</span>
     </div>
@@ -87,6 +90,55 @@ function Card({ style, char, no, title, tags, popBg }) {
       </div>
     )
   }
+  if (style === 'summer') {
+    // 🏖 여름 한정 시즌카드 — 쿨톤 그라데 + 물결 + 버블 + 해 + Y2K반짝 + "여름 SEASON" 수집도장 + 띠부씰 다이컷
+    const sHero = { maxHeight: '100%', maxWidth: '82%', objectFit: 'contain', filter: 'drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 18px 20px rgba(20,90,110,.42))' }
+    const star = (fill) => <svg viewBox="0 0 100 100"><path d="M50 0 C54 34 66 46 100 50 C66 54 54 66 50 100 C46 66 34 54 0 50 C34 46 46 34 50 0Z" fill={fill} /></svg>
+    return (
+      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'linear-gradient(165deg,#d6f1f2 0%,#aee0ec 52%,#bfe9dd 100%)' }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(60,140,150,.06) 1px,transparent 1px)', backgroundSize: '7px 7px' }} />
+        {/* 해 */}
+        <div style={{ position: 'absolute', top: -70, right: -60, width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle at 50% 50%,rgba(255,246,205,.95),rgba(255,238,170,.5) 46%,transparent 70%)' }} />
+        {/* 물방울 */}
+        {[[80, 360, 70], [150, 470, 42], [900, 300, 54], [830, 410, 30]].map((b, i) => (
+          <div key={i} style={{ position: 'absolute', left: b[0], top: b[1], width: b[2], height: b[2], borderRadius: '50%', background: 'radial-gradient(circle at 34% 30%,rgba(255,255,255,.9),rgba(255,255,255,.16) 60%,transparent)', boxShadow: 'inset 0 0 8px rgba(255,255,255,.5)' }} />
+        ))}
+        {/* 물결 */}
+        <svg viewBox="0 0 1080 300" preserveAspectRatio="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: 300 }}>
+          <path d="M0 120 C160 80 260 160 420 140 C600 118 700 60 900 96 C990 112 1040 120 1080 112 L1080 300 L0 300Z" fill="#8ad8de" opacity=".55" />
+          <path d="M0 170 C180 132 300 200 480 184 C680 166 780 120 980 150 C1030 158 1060 162 1080 158 L1080 300 L0 300Z" fill="#59bccd" opacity=".7" />
+          <path d="M0 224 C200 196 320 250 520 238 C720 226 820 196 1080 220 L1080 300 L0 300Z" fill="#ffffff" opacity=".5" />
+        </svg>
+        {/* 브랜드 */}
+        <div style={{ position: 'absolute', top: 56, left: 0, right: 0, textAlign: 'center', fontSize: 44, color: '#2b7f8c' }}>한끼 <span style={{ color: '#ff8f9c' }}>♡</span></div>
+        {/* 여름 한정 리본 */}
+        <div style={{ position: 'absolute', top: 152, left: 62, transform: 'rotate(-8deg)', fontSize: 31, color: '#fff', background: 'linear-gradient(180deg,#ff9fae,#ff7f92)', padding: '12px 26px', borderRadius: 16, boxShadow: '0 8px 16px -6px rgba(220,90,110,.6),inset 0 2px 0 rgba(255,255,255,.4)' }}>☀️ 여름 한정</div>
+        {/* 여름 SEASON 도장 */}
+        <div style={{ position: 'absolute', top: 250, right: 78, width: 158, height: 158, transform: 'rotate(12deg)' }}>
+          <svg viewBox="0 0 100 100" style={{ position: 'absolute', inset: 0 }}><path d="M50 4 L60 12 L73 9 L77 22 L90 27 L86 40 L95 51 L85 62 L88 75 L74 77 L67 89 L54 84 L44 93 L35 82 L22 83 L21 70 L10 62 L18 50 L11 38 L23 31 L24 18 L38 18 L46 7 Z" fill="none" stroke="#fff" strokeWidth="3.2" opacity=".96" /></svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', lineHeight: 1.02, textShadow: '0 1px 2px rgba(20,90,110,.4)' }}><b style={{ fontSize: 34 }}>여름</b><span style={{ fontSize: 18, letterSpacing: 2 }}>SEASON</span></div>
+        </div>
+        {/* 쿨 패널 */}
+        <div style={{ position: 'absolute', left: 46, right: 46, top: 286, height: 496, borderRadius: 60, background: 'linear-gradient(160deg,#7fd0dd,#4fb6cb 58%,#3a9fc0)', boxShadow: '0 34px 60px -24px rgba(30,110,130,.55),inset 0 3px 0 rgba(255,255,255,.4)', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.13) 5px,transparent 6px)', backgroundSize: '64px 64px', backgroundPosition: '20px 20px' }} />
+          <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '52%', background: 'linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,0))' }} />
+        </div>
+        {/* Y2K 반짝 */}
+        <div style={{ position: 'absolute', top: 420, right: 210, width: 62, height: 62 }}>{star('#fff')}</div>
+        <div style={{ position: 'absolute', top: 600, left: 150, width: 42, height: 42 }}>{star('#fff8c8')}</div>
+        <div style={{ position: 'absolute', top: 330, left: 250, width: 32, height: 32 }}>{star('#fff')}</div>
+        {/* 히어로(물결 곰펭 다이컷) */}
+        <div style={slot({ top: 276, height: 490 })}><img src={char.url} alt="" crossOrigin="anonymous" style={sHero} /></div>
+        {/* 제목 — 태그와 CTA가 겹치지 않게 위로 올림 */}
+        <div style={{ position: 'absolute', top: 806, left: 0, right: 0, textAlign: 'center', padding: '0 50px' }}>
+          <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 36, color: '#2f96a6' }}>시원하게, 여름 한 끼 ☀</div>
+          <div style={{ fontSize: titleFont(title), color: '#144e5c', lineHeight: 1.02, marginTop: 6, wordBreak: 'keep-all' }}>{title}</div>
+          <div style={{ marginTop: 16 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: 'rgba(255,255,255,.82)', color: '#2b7f8c' }}>{x}</span>)}</div>
+        </div>
+        {cta({ bg: '#fffdf8', color: '#2b7f8c', shadow: '0 10px 22px rgba(30,110,130,.35)' })}
+      </div>
+    )
+  }
   if (style === 'pola') {
     return (
       <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'linear-gradient(160deg,#dfe9d8,#d1e0d5 55%,#dae5e4)' }}>
@@ -121,9 +173,11 @@ function Card({ style, char, no, title, tags, popBg }) {
       <div style={{ position: 'absolute', top: 560, right: 150, fontSize: 48, color: '#e6a4a0' }}>♡</div>
       <div style={{ position: 'absolute', top: 820, left: 180, fontSize: 40, color: '#e8b74d' }}>✿</div>
       <div style={{ position: 'absolute', bottom: 300, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', background: '#fff5c8', padding: '22px 34px', borderRadius: 6, boxShadow: '0 8px 16px rgba(150,120,40,.2)', fontFamily: 'Gaegu, sans-serif', fontSize: 38, color: '#7a6533' }}>{tags.join('  ·  ')}</div>
-      <div style={{ position: 'absolute', bottom: 150, left: 0, right: 0, textAlign: 'center' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '21px 46px', borderRadius: 999, background: '#8a6a3a', color: '#fff8ea', fontSize: 42, fontWeight: 800, boxShadow: '0 10px 22px rgba(120,90,40,.32)' }}>🔍 Play스토어 ‘한끼’ 검색</span>
-      </div>
+      {!cover && (
+        <div style={{ position: 'absolute', bottom: 150, left: 0, right: 0, textAlign: 'center' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '21px 46px', borderRadius: 999, background: '#8a6a3a', color: '#fff8ea', fontSize: 42, fontWeight: 800, boxShadow: '0 10px 22px rgba(120,90,40,.32)' }}>🔍 Play스토어 ‘한끼’ 검색</span>
+        </div>
+      )}
     </div>
   )
 }
@@ -171,7 +225,7 @@ function RecipeCard({ recipe }) {
   )
 }
 
-export default function ShareDrawCard({ recipe, onClose }) {
+export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   const title = recipe?.title || '오늘의 한 끼'
   const tags = useMemo(() => tagsOf(recipe), [recipe])
   const [draw, setDraw] = useState(drawState)
@@ -179,6 +233,7 @@ export default function ShareDrawCard({ recipe, onClose }) {
   const [busy, setBusy] = useState(false)
   const cardRef = useRef(null)
   const card2Ref = useRef(null)
+  const coverRef = useRef(null) // 표지 저장용(CTA 없는 cover 카드)
   const [page, setPage] = useState(1)
   const [scale, setScale] = useState(0.3)
   // 레시피 내용(재료·단계)이 있어야 2장째(레시피카드)를 붙인다. 없으면 1장만.
@@ -206,6 +261,21 @@ export default function ShareDrawCard({ recipe, onClose }) {
     setBusy(false)
   }, [busy, title, hasRecipe])
 
+  // 🖼 이 카드를 레시피 표지로 저장 — CTA 없는 cover 카드를 이미지로 캡처해 부모(레시피 화면)에 넘긴다.
+  const saveCover = useCallback(async () => {
+    if (!coverRef.current || busy) return
+    setBusy(true)
+    try {
+      const opt = { pixelRatio: 1.5, quality: 0.86, cacheBust: true, backgroundColor: '#ffffff' }
+      // 폰트 임베드 단계에서 외부 stylesheet fetch가 막히면(드묾) skipFonts로 폴백 — 표지 저장이 끊기지 않게.
+      let url
+      try { url = await toJpeg(coverRef.current, opt) } catch { url = await toJpeg(coverRef.current, { ...opt, skipFonts: true }) }
+      await onSaveCover?.(url)
+      onClose?.()
+    } catch (e) { /* noop */ }
+    setBusy(false)
+  }, [busy, onSaveCover, onClose])
+
   const layer = { position: 'absolute', top: 0, left: 0 }
   const tabBtn = (on) => ({ padding: '7px 18px', borderRadius: 999, fontSize: 13.5, fontWeight: 800, border: 'none', background: on ? '#fffdf8' : 'rgba(255,255,255,.22)', color: on ? '#5d3410' : '#fff' })
 
@@ -217,6 +287,8 @@ export default function ShareDrawCard({ recipe, onClose }) {
           <div style={{ position: 'absolute', top: 0, left: 0, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
             <div style={{ ...layer, opacity: page === 1 ? 1 : 0 }}><div ref={cardRef}><Card {...draw} title={title} tags={tags} popBg={popBg} /></div></div>
             <div style={{ ...layer, opacity: page === 2 ? 1 : 0 }}><div ref={card2Ref}><RecipeCard recipe={recipe} /></div></div>
+            {/* 표지 저장용 숨은 카드(CTA 없음). 화면엔 안 보이고 캡처만. */}
+            <div style={{ ...layer, opacity: 0, pointerEvents: 'none' }}><div ref={coverRef}><Card {...draw} title={title} tags={tags} popBg={popBg} cover /></div></div>
           </div>
         </div>
         {/* 페이지 토글 (레시피 있을 때만 2장) */}
@@ -232,6 +304,9 @@ export default function ShareDrawCard({ recipe, onClose }) {
           <button className="press" onClick={redraw} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '13px 22px', borderRadius: 999, background: '#fffdf8', color: '#5d3410', fontWeight: 800, fontSize: 15.5, border: 'none' }}>🔄 다시 뽑기</button>
           <button className="press" onClick={share} disabled={busy} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '13px 26px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontWeight: 800, fontSize: 15.5, border: 'none', opacity: busy ? 0.6 : 1 }}>{busy ? '만드는 중…' : '💌 공유하기'}</button>
         </div>
+        {onSaveCover && (
+          <button className="press" onClick={saveCover} disabled={busy} style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 999, background: 'rgba(255,255,255,.14)', color: '#fffdf8', fontWeight: 700, fontSize: 13.5, border: '1px solid rgba(255,255,255,.34)', opacity: busy ? 0.6 : 1 }}>🖼 이 카드를 내 레시피 표지로</button>
+        )}
         <button className="press" onClick={onClose} style={{ marginTop: 12, padding: '8px 18px', background: 'transparent', color: 'rgba(255,255,255,.8)', fontSize: 14, fontWeight: 700, border: 'none' }}>닫기</button>
       </div>
     </div>

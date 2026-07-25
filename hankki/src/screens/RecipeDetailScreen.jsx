@@ -427,7 +427,7 @@ export default function RecipeDetailScreen({ id }) {
         </Portal>
       )}
 
-      {drawOpen && <Portal><ShareDrawCard recipe={r} onClose={() => setDrawOpen(false)} /></Portal>}
+      {drawOpen && <Portal><ShareDrawCard recipe={r} onClose={() => setDrawOpen(false)} onSaveCover={(img) => { updateRecipe(r.id, { thumb: 'photo', image: img }); nav.showToast('카드를 표지로 저장했어요 ✨') }} /></Portal>}
 
       {menu && (
        <Portal>
