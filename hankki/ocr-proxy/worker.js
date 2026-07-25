@@ -14,9 +14,10 @@
 //  → 어느 하나 뚫려도 ①이 900에서 막아서 청구 자체가 불가능.
 //
 // 필요한 것(대시보드에서 설정):
-//   Secret  VISION_KEY = Google API 키(AIza...)
-//   Secret  APP_TOKEN  = 앱과 공유하는 임의 비밀(내가 만들어 줌)
-//   KV 바인딩 OCR_KV   = 사용량 카운터 저장소(내가 만드는 법 안내)
+//   Secret  VISION_KEY     = Google API 키(AIza...)
+//   Secret  APP_TOKEN      = 앱과 공유하는 임의 비밀
+//   Secret  FOUNDER_SECRET = 🔓 운영자 무제한 통로 비밀키(개인한도만 우회, 전역은 존중)
+//   KV 바인딩 OCR_KV       = 사용량 카운터 저장소
 // ═══════════════════════════════════════════════════════════════
 
 const ALLOWED_ORIGINS = [
@@ -49,7 +50,7 @@ export default {
       return json({ error: 'unauthorized' }, 401, cors)
     }
 
-    // 🔓 운영자(창업자) 무제한 통로 — 비밀키(FOUNDER_SECRET) 일치 시 모든 한도 우회(카운트도 안 함).
+    // 🔓 운영자(창업자) 통로 — 비밀키(FOUNDER_SECRET) 일치 시 '개인 한도'(IP·유저)만 우회(전역 900은 존중).
     // 앱은 이 기기가 운영자 모드일 때만 x-hankki-founder 헤더를 보낸다(URL ?founder=…로 1회 진입).
     const founder = !!(env.FOUNDER_SECRET && request.headers.get('x-hankki-founder') === env.FOUNDER_SECRET)
 
@@ -137,7 +138,7 @@ function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-hankki-token',
+    'Access-Control-Allow-Headers': 'Content-Type, x-hankki-token, x-hankki-founder',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
   }
