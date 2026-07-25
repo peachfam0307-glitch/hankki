@@ -198,6 +198,44 @@ function looksLikeIngredient(l, bullet) {
   return false
 }
 
+// ── 줄바꿈으로 잘린 문장 병합 (분류 전, 원문 줄 단위) ──
+// 인스타 캡션 등은 한 문장이 여러 줄로 잘린다("…팬에" / "노릇노릇 굽는다").
+// 앞줄이 '이어지는 중'(종결어미·문장부호로 안 끝나거나 괄호 안 닫힘·쉼표로 끝남)이고
+// 뒷줄이 새 항목(불릿·번호·헤더)이 아니면 합쳐 원래 문장을 되살린다 → 재료/순서 분류가 정확해짐.
+const WRAP_ENDPUNCT = /[.!?…]["'’)\]]*\s*$/
+const WRAP_CONNECT = /(에|에서|에게|을|를|와|과|로|으로|의|도|만|고|며|서|여|게|면|지|랑|이랑|보다|처럼|든|거나|아서|어서|아|어)\s*$/
+const WRAP_NEWITEM = /^\s*([-*•·▪◦‣●○✅✔☑✓]|[1-9]\d?\s*[.)]|[①-⑳❶-❿]|step\s*\d|스텝\s*\d)/i
+function isWrappedOpen(s) {
+  const t = String(s).trim()
+  if (!t) return false
+  if (WRAP_ENDPUNCT.test(t) || SENTENCE_END.test(t)) return false // 문장으로 끝남 → 완결
+  const opens = (t.match(/[(（]/g) || []).length
+  const closes = (t.match(/[)）]/g) || []).length
+  if (opens > closes) return true // 괄호 안 닫힘 → 확실히 이어짐
+  if (/,\s*$/.test(t)) return true // 끝이 쉼표 → 목록/문장 계속
+  return WRAP_CONNECT.test(t) // 연결어미·조사로 끝남
+}
+function mergeWrappedLines(lines) {
+  const out = []
+  for (const raw of lines) {
+    const prev = out.length ? out[out.length - 1] : null
+    const bare = String(raw).replace(/^\s*[-*•·▪◦‣●○✅✔☑✓]\s*/, '')
+    if (
+      prev != null &&
+      isWrappedOpen(prev) &&
+      !WRAP_NEWITEM.test(raw) &&
+      !SEC_ING.test(bare) &&
+      !SEC_STEP.test(bare) &&
+      (prev + ' ' + raw).replace(/\s+/g, ' ').length <= 160
+    ) {
+      out[out.length - 1] = (prev + ' ' + raw).replace(/\s+/g, ' ').trim()
+      continue
+    }
+    out.push(raw)
+  }
+  return out
+}
+
 export function parseRecipeText(raw = '', opts = {}) {
   const { fromOcr = false } = opts
   const text = normalizeNumerals(String(raw))
@@ -205,17 +243,23 @@ export function parseRecipeText(raw = '', opts = {}) {
     .replace(/(\d)\s*<\s*9/g, '$1kg') // OCR 단골 오독: "1kg" → "1<9"
     .trim()
 
+  // ⭐ 줄바꿈으로 잘린 문장을 먼저 합친다(인스타 캡션은 한 문장이 여러 줄로 잘림) → 분류 정확도↑
+  const rawLines = mergeWrappedLines(text.split('\n'))
+
   // 불릿(* · - 등)으로 시작하는 줄 = 목록 항목(대부분 재료). 지우기 전에 기억해 둔다.
   const items = []
-  for (const rawLine of text.split('\n')) {
-    const bullet = /^\s*[-*•·▪◦‣●○]\s*/.test(rawLine)
+  for (const rawLine of rawLines) {
+    // 불릿: - * • 등 + 체크표시(✔️☑ — 인스타 재료 목록에 흔함). ✅(초록)은 순서/팁에도 써서 제외.
+    const bullet = /^\s*[-*•·▪◦‣●○✔☑]\s*/.test(rawLine)
+    // 맨 앞 장식 이모지(🍆📌🍷 등) — 첫 줄이면 제목 후보 신호로 쓴다.
+    const emojiHead = /^\s*[-*•·▪◦‣●○✅✔☑]*\s*[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}❤]/u.test(rawLine)
     let l = cleanTokens(sanitize(rawLine.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•·▪◦‣●○*]/g, ' ')))
     l = stripLeadingOcrJunk(l, fromOcr) // 삐/=/HE/Vv Eel 같은 앞머리 잡음 벗기기
     l = l.replace(UI_TRAIL, '').trim() // "…끊인다. 간단히 보기" → 뒤 UI 글자 떼기
     if (!l || DATE_ONLY.test(l)) continue // 빈 줄·날짜만 있는 줄(작성일)은 버린다
     // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
     const isHeader = SEC_ING.test(l) || SEC_STEP.test(l) || SEC_MEMO.test(l)
-    if (isHeader || (l.length > 1 && !isGibberish(l))) items.push({ l, bullet })
+    if (isHeader || (l.length > 1 && !isGibberish(l))) items.push({ l, bullet, emojiHead })
   }
 
   let title = ''
@@ -239,7 +283,20 @@ export function parseRecipeText(raw = '', opts = {}) {
   const pushStep = (l) => { steps.push(STEP.test(l) ? l.replace(STEP, '').trim() : l); sawStep = true; lastWasBulletIng = false }
   const pushIng = (l, bullet) => { ingredients.push(l); lastWasBulletIng = bullet; }
 
-  for (const { l, bullet } of items) {
+  for (let idx = 0; idx < items.length; idx++) {
+    const { l, bullet, emojiHead } = items[idx]
+
+    // 첫 줄 제목 — 이모지 붙은 짧은 이름("🍷 양념장")이나 "X 만드는 법/레시피" 배너면 제목으로.
+    // 섹션명(양념장)과 겹쳐도 제목을 우선한다. "재료"처럼 신호 없는 헤더는 안 가로챈다.
+    if (idx === 0 && !title && /[가-힣]/.test(l) && l.length <= 24 && !bullet && !QTY.test(l)) {
+      const asTitle = l.replace(/\s*(만드는\s*법|만드는\s*방법|만들기|레시피)\s*[!！~]*\s*$/, '').trim()
+      const isBanner = /(만드는\s*법|만들기|레시피)\s*[!！~]*$/.test(l)
+      if ((emojiHead || isBanner) && asTitle.length >= 2 && !SENTENCE_END.test(asTitle)) {
+        title = asTitle
+        continue
+      }
+    }
+
     // 섹션 헤더(짧은 줄) — 어느 칸에 담을지 힌트. "[재료]", "◆ 만드는 법" 등 장식도 허용.
     if (l.length <= 16) {
       if (SEC_ING.test(l)) { mode = 'ing'; lastWasBulletIng = false; continue }
@@ -262,9 +319,9 @@ export function parseRecipeText(raw = '', opts = {}) {
       lastWasBulletIng = false
       continue
     }
-    // 조언·팁 문구 → 메모. 단, 진짜 계량 재료(QTY)·불릿·조리문장은 건드리지 않는다.
-    // ("15일 숙성시키면 더 맛있으니까"처럼 기간 숫자만 있는 팁이 재료로 새던 것 방지)
-    if (!stepLike && !bullet && !QTY.test(l) && TIP_CUE.test(l)) {
+    // 조언·팁 문구 → 메모. 단, 진짜 계량 재료(QTY)·불릿·조리문장·"이름+숫자"(올리고당2)는 건드리지 않는다.
+    // ("15일 숙성시키면 더 맛있으니까"=기간숫자 팁→메모 / "올리고당2 (…더 맛있음)"=재료는 보존)
+    if (!stepLike && !bullet && !QTY.test(l) && !/^[가-힣]{2,}\d/.test(l) && TIP_CUE.test(l)) {
       other.push(l)
       lastWasBulletIng = false
       continue
