@@ -80,14 +80,14 @@ export default function CoachMarks({ storageKey, steps, onDone }) {
             display: 'flex', justifyContent: 'center', pointerEvents: 'none',
           }}
         >
-          <div style={{ maxWidth: 340, background: '#fffdf8', borderRadius: 18, padding: '14px 18px', boxShadow: '0 10px 30px rgba(0,0,0,.35)', textAlign: 'center', pointerEvents: 'auto' }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: '#4a4136' }}>{s.label}</div>
-            {s.desc && <div style={{ fontSize: 13, color: '#8b8172', marginTop: 4, lineHeight: 1.5 }}>{s.desc}</div>}
-            <div style={{ marginTop: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <div style={{ maxWidth: 360, background: '#fffdf8', borderRadius: 20, padding: '17px 21px', boxShadow: '0 10px 30px rgba(0,0,0,.35)', textAlign: 'center', pointerEvents: 'auto' }}>
+            <div style={{ fontSize: 18.5, fontWeight: 800, color: '#4a4136' }}>{s.label}</div>
+            {s.desc && <div style={{ fontSize: 15, color: '#8b8172', marginTop: 6, lineHeight: 1.55 }}>{s.desc}</div>}
+            <div style={{ marginTop: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               {steps.map((_, k) => (
                 <span key={k} style={{ width: 6, height: 6, borderRadius: 3, background: k === i ? '#c47a58' : '#e3dccd' }} />
               ))}
-              <span style={{ fontSize: 12, color: '#b0a692', marginLeft: 6 }}>{i + 1 < steps.length ? '탭해서 다음' : '탭해서 시작'}</span>
+              <span style={{ fontSize: 13, color: '#b0a692', marginLeft: 6 }}>{i + 1 < steps.length ? '탭해서 다음' : '탭해서 시작'}</span>
             </div>
           </div>
         </div>

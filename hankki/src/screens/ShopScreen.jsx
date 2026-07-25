@@ -284,7 +284,7 @@ function Curation() {
         <button className="press" style={secBtnStyle} onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
       </div>
       <div className="t-sub" style={{ fontSize: 12, marginTop: -2, marginBottom: 6 }}>
-        18년차 주부가 엄선한 · 첨가물 적은 건강 식재료
+        써보고 좋은 건 꼭 나누는 18년차 주부의 · 첨가물 적은 건강 식재료
       </div>
       {/* 제휴(어필리에이트) 표시 — 공정위 추천·보증 심사지침. 현재는 제휴 미운영(수수료 없음)임을 정확히 고지.
           제휴 전환 시에도 구매자는 정가 그대로이고 수수료는 쇼핑몰이 부담한다는 점을 명확히(오해 방지). */}
@@ -319,7 +319,7 @@ function Curation() {
             : shownItems.map((it) => Card(it))}
 
           <div className="t-sub" style={{ fontSize: 12.5, fontWeight: 600, textAlign: 'center', background: 'var(--cream)', borderRadius: 12, padding: '13px 12px', margin: '4px 0 2px', lineHeight: 1.5 }}>
-            🌿 18년차 주부가 진짜 쓰는 재료들, 앞으로도 하나씩 계속 올라와요.
+            🌿 써보고 좋았던 것만 골라 나눠요 · 진짜 쓰는 재료, 앞으로도 하나씩 계속 올라와요.
           </div>
         </>
       )}
