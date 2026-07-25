@@ -14,6 +14,7 @@ import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
 import ShopScreen from './screens/ShopScreen'
 import ProfileScreen from './screens/ProfileScreen'
+import BragScreen from './screens/BragScreen'
 import ImportScreen from './screens/ImportScreen'
 import RecipeDetailScreen from './screens/RecipeDetailScreen'
 import EditorScreen from './screens/EditorScreen'
@@ -23,7 +24,7 @@ import CookedScreen from './screens/CookedScreen'
 import CookScreen from './screens/CookScreen'
 
 // '일지'는 레시피 탭의 '요리 기록' 세그먼트로 합쳐졌다.
-const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, shop: ShopScreen, profile: ProfileScreen }
+const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, shop: ShopScreen, brag: BragScreen, profile: ProfileScreen }
 
 // --- 아주 가벼운 내비게이션 스택 + 토스트 ---
 const NavCtx = createContext(null)

@@ -86,8 +86,12 @@ export default function HomeScreen() {
           <button className="icon-btn press" onClick={() => nav.push({ name: 'inbox' })} aria-label="Inbox">
             <Icon name="inbox" size={22} />
           </button>
-          <button className="icon-btn press" onClick={() => nav.go('profile')} aria-label="프로필">
+          <button className="icon-btn press" onClick={() => nav.go('profile')} aria-label="설정·프로필" style={{ position: 'relative' }}>
             <Avatar name={profile.name} avatar={profile.avatar} />
+            {/* 하단 탭에서 설정을 뺐으니, 아바타가 설정 입구임을 톱니로 알린다 */}
+            <span aria-hidden style={{ position: 'absolute', right: -2, bottom: -2, width: 15, height: 15, borderRadius: '50%', background: 'var(--surface)', border: '1.5px solid var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.18)' }}>
+              <Icon name="settings" size={9} color="var(--text-sub)" stroke={2.2} />
+            </span>
           </button>
         </div>
       </div>
