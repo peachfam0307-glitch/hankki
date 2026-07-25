@@ -3,13 +3,14 @@ import Icon from './Icon'
 // 검색 탭은 뺐다 — 홈 상단 검색창이 검색 화면으로 바로 데려가 준다.
 // 그 자리엔 앱의 핵심 동작인 '가져오기'를 넣고, 채운 원으로 눈에 띄게 강조한다.
 // '일지' 탭은 레시피 탭(요리 기록 세그먼트)으로 합쳤다 — 레시피와 기록이 한 곳에.
-// '설정'은 하단 탭에서 뺐다 — 홈 우측 아바타가 이미 설정으로 감(중복). 그 자리에 바이럴 핵심인 '자랑'을 넣는다.
+// '설정'은 하단 탭에서 뺐다 — 홈 상단 톱니(예전 Inbox 자리)가 설정으로 감. 그 자리에 바이럴 핵심인 '카드자랑'을 넣는다.
+// 이름 '카드자랑' = 예쁜 카드로 자랑(SNS 플렉스 감성) + '레시피' 탭과 안 겹침(창업자 확정).
 const ITEMS = [
   { key: 'home', label: '홈', icon: 'home' },
   { key: 'import', label: '가져오기', icon: 'plus', action: true },
   { key: 'myrecipes', label: '레시피', icon: 'bookmark' },
   { key: 'shop', label: '장보기', icon: 'cart' },
-  { key: 'brag', label: '자랑', icon: 'share' },
+  { key: 'brag', label: '카드자랑', icon: 'share' },
 ]
 
 export default function BottomNav({ active, onChange, onImport }) {

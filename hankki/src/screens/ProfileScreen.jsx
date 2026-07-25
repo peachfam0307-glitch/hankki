@@ -341,7 +341,8 @@ export default function ProfileScreen() {
           <div style={{ width: 1, background: 'var(--line)' }} />
           <Stat n={recipes.filter((r) => r.favorite).length} label="즐겨찾기" />
           <div style={{ width: 1, background: 'var(--line)' }} />
-          <Stat n={recipes.filter((r) => r.status === 'unsorted').length} label="Inbox" />
+          {/* 예전 'Inbox' — 홈에서 뺀 대신 여기 통계에서 연다. 아직 편집 안 끝난(미정리) 레시피 개수, 탭하면 목록 */}
+          <Stat n={recipes.filter((r) => r.status === 'unsorted').length} label="미정리" onClick={() => nav.push({ name: 'inbox' })} />
         </div>
 
         {/* 메뉴 */}
@@ -519,11 +520,17 @@ export default function ProfileScreen() {
   )
 }
 
-function Stat({ n, label }) {
-  return (
-    <div style={{ flex: 1, textAlign: 'center' }}>
+function Stat({ n, label, onClick }) {
+  const inner = (
+    <>
       <div style={{ fontSize: 20, fontWeight: 700 }}>{n}</div>
       <div className="t-sub" style={{ marginTop: 2 }}>{label}</div>
-    </div>
+    </>
+  )
+  if (!onClick) return <div style={{ flex: 1, textAlign: 'center' }}>{inner}</div>
+  return (
+    <button className="press" onClick={onClick} style={{ flex: 1, textAlign: 'center', background: 'none', border: 'none', padding: 0 }}>
+      {inner}
+    </button>
   )
 }

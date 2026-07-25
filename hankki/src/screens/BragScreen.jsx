@@ -28,7 +28,7 @@ export default function BragScreen() {
   return (
     <>
       <div className="topbar">
-        <div className="h-title">자랑</div>
+        <div className="h-title">카드자랑</div>
       </div>
       <div className="pad">
         <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 12 }}>

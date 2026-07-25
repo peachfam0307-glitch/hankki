@@ -6,12 +6,10 @@ import Thumb from '../components/Thumb'
 import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
 import gomHeader from '../assets/gom-header.png' // 🐻 뉴 물결 곰(인사) — 홈 상단 브랜드 마스코트
-import SourceBadge from '../components/SourceBadge'
 import TabTips from '../components/TabTips'
 import PreviewSheet from '../components/PreviewSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { needsOnboarding } from '../components/Onboarding'
-import { timeAgo } from '../utils'
 
 // 홈 첫 방문 코치마크 — 진짜 핵심 기능부터 짚어준다(창업자 딸 아이디어 ⭐).
 // 첫 스텝을 '되는 기능'(가져오기·오늘 뭐 해먹지)으로, 곧 출시 미리보기는 맨 뒤에 살짝.
@@ -83,15 +81,13 @@ export default function HomeScreen() {
           >
             <Icon name="plus" size={16} color="#fff" stroke={2.4} /> 가져오기
           </button>
-          <button className="icon-btn press" onClick={() => nav.push({ name: 'inbox' })} aria-label="Inbox">
-            <Icon name="inbox" size={22} />
+          {/* 설정 — 예전 Inbox(받은 함) 자리. Inbox는 '레시피' 탭과 겹쳐 거의 안 쓰여 뺐고,
+              대신 설정을 톱니로 또렷하게 올렸다(아바타 위 작은 힌트보다 명확). Inbox 기능은 설정의 '미정리' 통계에서 계속 연다. */}
+          <button className="icon-btn press" onClick={() => nav.go('profile')} aria-label="설정">
+            <Icon name="settings" size={22} />
           </button>
-          <button className="icon-btn press" onClick={() => nav.go('profile')} aria-label="설정·프로필" style={{ position: 'relative' }}>
+          <button className="icon-btn press" onClick={() => nav.go('profile')} aria-label="프로필">
             <Avatar name={profile.name} avatar={profile.avatar} />
-            {/* 하단 탭에서 설정을 뺐으니, 아바타가 설정 입구임을 톱니로 알린다 */}
-            <span aria-hidden style={{ position: 'absolute', right: -2, bottom: -2, width: 15, height: 15, borderRadius: '50%', background: 'var(--surface)', border: '1.5px solid var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.18)' }}>
-              <Icon name="settings" size={9} color="var(--text-sub)" stroke={2.2} />
-            </span>
           </button>
         </div>
       </div>
@@ -166,21 +162,15 @@ export default function HomeScreen() {
             더보기 <Icon name="chevron-right" size={14} color="var(--text-sub)" />
           </button>
         </div>
-        <div>
-          {recent.map((r, i) => (
-            <div key={r.id}>
-              <button className="list-row press" style={{ width: '100%', textAlign: 'left' }} onClick={() => open(r.id)}>
-                <Thumb recipe={r} style={{ width: 90, height: 90, flex: '0 0 auto' }} radius={18} emojiSize="2.1rem" showDecor />
-                <div className="meta">
-                  <div className="name">{r.title}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    <SourceBadge source={r.source} showLabel={false} size={14} />
-                    <span className="t-sub">{r.source === 'hankki' ? '한끼 기본 레시피' : `${sourceLabel(r.source)}에서 가져옴`} · {timeAgo(r.savedAt)}</span>
-                  </div>
-                </div>
-                <Icon name="chevron-right" size={18} color="var(--sand)" />
+        {/* 2×2 그리드 — 곰펭 표지를 크게 보여줘 목록보다 화사하고, 레시피·자랑 탭과 통일감.
+            출처·시간 메타는 홈 대시보드엔 군더더기라 뺐다(상세에서 확인). */}
+        <div className="grid2">
+          {recent.map((r) => (
+            <div key={r.id} className="grid-card">
+              <button className="press" style={{ textAlign: 'left', width: '100%' }} onClick={() => open(r.id)}>
+                <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
+                <div className="name">{r.title}</div>
               </button>
-              {i < recent.length - 1 && <hr className="divider" />}
             </div>
           ))}
         </div>
@@ -208,10 +198,6 @@ export default function HomeScreen() {
       {coach && <CoachMarks storageKey={HOME_COACH_KEY} steps={HOME_COACH_STEPS} onDone={() => setCoach(false)} />}
     </>
   )
-}
-
-function sourceLabel(s) {
-  return { instagram: 'Instagram', youtube: 'YouTube', link: '링크', photo: '사진', manual: '직접 작성' }[s] || '링크'
 }
 
 // 아바타 — 요리사 친구·사진·이모지·브랜드 아이콘을 고를 수 있고, 없으면 이름 첫 글자.
