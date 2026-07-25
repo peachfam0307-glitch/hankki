@@ -205,6 +205,8 @@ function looksLikeIngredient(l, bullet) {
 const WRAP_ENDPUNCT = /[.!?…]["'’)\]]*\s*$/
 const WRAP_CONNECT = /(에|에서|에게|을|를|와|과|로|으로|의|도|만|고|며|서|여|게|면|지|랑|이랑|보다|처럼|든|거나|아서|어서|아|어)\s*$/
 const WRAP_NEWITEM = /^\s*([-*•·▪◦‣●○✅✔☑✓]|[1-9]\d?\s*[.)]|[①-⑳❶-❿]|step\s*\d|스텝\s*\d)/i
+// 다음 줄이 "3큰술"처럼 수량으로 시작 = 앞줄 재료(참기름)가 줄바꿈으로 잘린 것 → 이어붙임 신호.
+const WRAP_STARTQTY = /^\s*\d+(?:[.,]\d+)?\s*(큰술|작은술|스푼|컵|공기|줌|톨|알|장|개|쪽|봉|모|g|kg|ml|리터|l|T|t|cc|꼬집)/i
 function isWrappedOpen(s) {
   const t = String(s).trim()
   if (!t) return false
@@ -220,9 +222,10 @@ function mergeWrappedLines(lines) {
   for (const raw of lines) {
     const prev = out.length ? out[out.length - 1] : null
     const bare = String(raw).replace(/^\s*[-*•·▪◦‣●○✅✔☑✓]\s*/, '')
+    const contQty = WRAP_STARTQTY.test(raw) && !WRAP_ENDPUNCT.test(String(prev || '')) && !SENTENCE_END.test(String(prev || ''))
     if (
       prev != null &&
-      isWrappedOpen(prev) &&
+      (isWrappedOpen(prev) || contQty) &&
       !WRAP_NEWITEM.test(raw) &&
       !SEC_ING.test(bare) &&
       !SEC_STEP.test(bare) &&
@@ -253,6 +256,8 @@ export function parseRecipeText(raw = '', opts = {}) {
     const bullet = /^\s*[-*•·▪◦‣●○✔☑]\s*/.test(rawLine)
     // 맨 앞 장식 이모지(🍆📌🍷 등) — 첫 줄이면 제목 후보 신호로 쓴다.
     const emojiHead = /^\s*[-*•·▪◦‣●○✅✔☑]*\s*[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}❤]/u.test(rawLine)
+    // 해시태그 줄(#육회 #육회깻잎무침 #묵은지김밥 …)은 재료도 순서도 아님 → 버린다.
+    if (/^\s*#\S/.test(rawLine) || (String(rawLine).match(/#[^\s#]+/g) || []).length >= 2) continue
     let l = cleanTokens(sanitize(rawLine.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•·▪◦‣●○*]/g, ' ')))
     l = stripLeadingOcrJunk(l, fromOcr) // 삐/=/HE/Vv Eel 같은 앞머리 잡음 벗기기
     l = l.replace(UI_TRAIL, '').trim() // "…끊인다. 간단히 보기" → 뒤 UI 글자 떼기
@@ -288,10 +293,11 @@ export function parseRecipeText(raw = '', opts = {}) {
 
     // 첫 줄 제목 — 이모지 붙은 짧은 이름("🍷 양념장")이나 "X 만드는 법/레시피" 배너면 제목으로.
     // 섹션명(양념장)과 겹쳐도 제목을 우선한다. "재료"처럼 신호 없는 헤더는 안 가로챈다.
-    if (idx === 0 && !title && /[가-힣]/.test(l) && l.length <= 24 && !bullet && !QTY.test(l)) {
-      const asTitle = l.replace(/\s*(만드는\s*법|만드는\s*방법|만들기|레시피)\s*[!！~]*\s*$/, '').trim()
-      const isBanner = /(만드는\s*법|만들기|레시피)\s*[!！~]*$/.test(l)
-      if ((emojiHead || isBanner) && asTitle.length >= 2 && !SENTENCE_END.test(asTitle)) {
+    if (idx === 0 && !title && /[가-힣]/.test(l) && l.length <= 24 && !bullet) {
+      const core0 = l.replace(/\s*[(（][^()（）]*[)）]\s*$/, '').trim() // 뒤 괄호(300g 기준·2인분) 떼고 판단
+      const asTitle = core0.replace(/\s*(만드는\s*법|만드는\s*방법|만들기|레시피)\s*[!！~]*\s*$/, '').trim()
+      const isBanner = /(만드는\s*법|만들기|레시피)\s*[!！~]*$/.test(core0)
+      if ((emojiHead || isBanner) && !QTY.test(asTitle) && asTitle.length >= 2 && !SENTENCE_END.test(asTitle)) {
         title = asTitle
         continue
       }
