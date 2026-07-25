@@ -19,7 +19,7 @@ import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { openExternal } from '../utils'
-import { CURATION } from '../data/curation'
+import { CURATION, curIcon } from '../data/curation'
 
 // 외부 쇼핑몰 열기 — 정식 새 탭(설치된 앱 있으면 App Link 로 앱)으로 연다.
 // (features 문자열을 주면 팝업 창으로 열려 모바일에서 세로로 깨지고 두 번 열린 듯 보였음)
@@ -212,9 +212,9 @@ function Curation() {
   const [curCat, setCurCat] = useState('pick')
 
   // 카테고리·이모지를 각 아이템에 붙여 평탄화(칩 필터·픽 렌더용)
-  const flat = CURATION.flatMap((g) => g.items.map((it) => ({ ...it, cat: g.cat, emoji: g.emoji })))
+  const flat = CURATION.flatMap((g) => g.items.map((it) => ({ ...it, cat: g.cat, emoji: g.emoji, icon: it.icon || g.icon })))
   const picks = flat.filter((it) => it.pick)
-  const catList = CURATION.map((g) => ({ cat: g.cat, emoji: g.emoji }))
+  const catList = CURATION.map((g) => ({ cat: g.cat, emoji: g.emoji, icon: g.icon }))
   const shownItems =
     curCat === 'pick' ? picks : curCat === '전체' ? flat : flat.filter((it) => it.cat === curCat)
 
@@ -251,7 +251,9 @@ function Curation() {
   const Card = (it) => (
     <div key={it.name} className="card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
       <div style={{ display: 'flex', gap: 11 }}>
-        <div className="emoji-tile" style={{ width: 46, height: 46, fontSize: 24, flex: '0 0 auto' }}>{it.emoji}</div>
+        <div className="emoji-tile" style={{ width: 46, height: 46, fontSize: 24, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain' }} /> : it.emoji}
+        </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
@@ -296,14 +298,22 @@ function Curation() {
           <div className="hscroll" style={{ paddingBottom: 4, marginBottom: 4 }}>
             {chip('pick', '✨ 이번 주 픽')}
             {chip('전체', '전체')}
-            {catList.map((c) => chip(c.cat, `${c.emoji} ${c.cat}`))}
+            {catList.map((c) => chip(c.cat, (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                {curIcon(c.icon) ? <img src={curIcon(c.icon)} alt="" draggable={false} style={{ width: 19, height: 19, objectFit: 'contain' }} /> : <span>{c.emoji}</span>}
+                {c.cat}
+              </span>
+            )))}
           </div>
 
           {curCat === '전체'
             ? CURATION.map((g) => (
                 <div key={g.cat}>
-                  <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>{g.emoji} {g.cat}</div>
-                  {g.items.map((it) => Card({ ...it, cat: g.cat, emoji: g.emoji }))}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>
+                    {curIcon(g.icon) ? <img src={curIcon(g.icon)} alt="" draggable={false} style={{ width: 22, height: 22, objectFit: 'contain' }} /> : <span>{g.emoji}</span>}
+                    {g.cat}
+                  </div>
+                  {g.items.map((it) => Card({ ...it, cat: g.cat, emoji: g.emoji, icon: it.icon || g.icon }))}
                 </div>
               ))
             : shownItems.map((it) => Card(it))}
