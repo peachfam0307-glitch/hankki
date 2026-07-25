@@ -144,9 +144,18 @@ function migrateBasics(saved) {
       cookedAt: r.cookedAt,
       savedAt: r.savedAt,
       decor: r.decor,
+      decorBg: r.decorBg, // 꾸미기 배경 보존 (예전엔 안 챙겨서 업데이트 때 배경이 사라졌음)
       status: r.status || s.status,
     }
     if (userPhoto) { merged.thumb = r.thumb; merged.image = r.image }
+    // 사용자가 꾸민 표지(배경 지우고 꾸미기 얹은 것 = thumb:'none' 또는 스티커·배경 있음)는
+    // 시드로 되돌리지 않는다. 안 그러면 BASICS_VERSION 올릴 때마다 꾸민 표지가 날아가고
+    // 시드 아이콘이 다시 나타난다. (공심채볶음 등 — 창업자 2026-07-25 제보)
+    const decorated =
+      r.thumb === 'none' ||
+      (Array.isArray(r.decor) && r.decor.length > 0) ||
+      (r.decorBg && r.decorBg !== 'none')
+    if (decorated && !userPhoto) { merged.thumb = r.thumb }
     return merged
   })
   // v14: '마늘종' → '마늘쫑' 순수 철자 수정 — 사용자가 편집한(touched) 레시피까지 모두 고친다.
