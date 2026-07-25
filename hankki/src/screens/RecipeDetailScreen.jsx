@@ -12,7 +12,7 @@ import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
-import { shareRecipeCard } from '../shareCard'
+import { shareDecoratedCover } from '../shareCover'
 import { scaleIngredient } from '../scale'
 import { dateLabel, openExternal } from '../utils'
 import { SOURCES } from '../data/seed'
@@ -20,6 +20,7 @@ import { picksForIngredients, productLink, productMall } from '../data/curation'
 import { useWakeLock } from '../useWakeLock'
 import { useLayerBack } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
+import ShareDrawCard from '../components/ShareDrawCard'
 
 // 첫 방문 코치마크 — 숨어 있는 중요 기능을 반짝이며 알려준다(창업자 딸 아이디어 ⭐)
 const COACH_KEY = 'hankki:coach:detail'
@@ -46,6 +47,8 @@ export default function RecipeDetailScreen({ id }) {
   const [logEntry, setLogEntry] = useState(null)
   const [decorOpen, setDecorOpen] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
+  const [drawOpen, setDrawOpen] = useState(false) // 🎴 공유 뽑기카드
+  const [shareSheet, setShareSheet] = useState(false) // 공유 두 갈래 시트
   // 인라인 오버레이(꾸미기·더보기 메뉴) — 뒤로가기로 닫기.
   // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
   useLayerBack(decorOpen, () => setDecorOpen(false))
@@ -105,22 +108,15 @@ export default function RecipeDetailScreen({ id }) {
     nav.showToast('레시피를 삭제했어요')
   }
 
-  const onShare = async () => {
-    setMenu(false)
-    nav.showToast('💌 친구와 레시피 공유하기 · 예쁜 카드 만드는 중…')
-    // 앱 루트 주소 — 상대경로 base('./')라 BASE_URL로는 못 구한다. 현재 페이지 경로의
-    // 디렉터리(마지막 파일명 제거)로 계산해야 /hankki/ 같은 하위경로까지 정확히 잡힌다.
+  // 💌 공유 = 두 갈래 시트: 🎴 랜덤 뽑기카드(정적) / 🎨 내 꾸민 표지(효과 보이게 캡처)
+  const onShare = () => { setMenu(false); setShareSheet(true) }
+  // 꾸민 표지가 있나(배경·스티커·데코 중 하나라도) → 있으면 "내 꾸민 표지로" 옵션 노출
+  const isDecorated = (r.decor && r.decor.length) || (r.decorBg && r.decorBg !== 'none') || r.thumb === 'none'
+  const doShareCover = async () => {
+    setShareSheet(false)
+    nav.showToast('🎨 내가 꾸민 표지 그대로 공유 · 이미지 만드는 중…')
     const appUrl = location.origin + location.pathname.replace(/[^/]*$/, '')
-    // (보류) "꾸민 표지 그대로" 공유 프로토타입은 shareCover.js에 보관 — 창업자 "아니야 이거"(2026-07-19)로 미연결.
-    const svg = iconRef.current?.querySelector('svg')?.outerHTML
-    await shareRecipeCard({
-      title: r.title,
-      info,
-      ingredients: (r.ingredients || []).map((i) => scaleIngredient(i, ratio)),
-      steps: r.steps || [],
-      iconSvg: svg,
-      appUrl,
-    })
+    await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl })
   }
 
   // 이 레시피가 쓴 '주부의 장바구니' 제품(재료에 제품명이 적혀 있으면 자동 매칭) — 구매 연결
@@ -155,15 +151,15 @@ export default function RecipeDetailScreen({ id }) {
           <button className="round-btn press" onClick={() => toggleFavorite(r.id)} aria-label="즐겨찾기">
             <Icon name="bookmark" size={20} color={r.favorite ? '#c2703f' : 'currentColor'} style={{ fill: r.favorite ? '#c2703f' : 'none' }} />
           </button>
-          {/* 공유 — 숨은 ⋮ 메뉴에서 밖으로. 아이콘만으론 약해서 편집처럼 글자 라벨 알약으로. */}
+          {/* 공유 — 눈에 띄게 채움색(포인트 브라운) 알약. 바이럴 진입점이라 강조. */}
           <button
             className="press"
             onClick={onShare}
             data-coach="share"
             aria-label="친구와 레시피 공유하기"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 38, padding: '0 13px', background: 'rgba(250,250,248,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 800, borderRadius: 999, boxShadow: '0 2px 10px rgba(0,0,0,.18)' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 38, padding: '0 16px', background: 'var(--brown)', color: '#fffdf8', fontSize: 13.5, fontWeight: 800, borderRadius: 999, boxShadow: '0 3px 12px rgba(120,70,40,.32)', border: 'none' }}
           >
-            <Icon name="share" size={17} color="var(--brown)" stroke={2.2} /> 공유
+            <Icon name="share" size={17} color="#fffdf8" stroke={2.3} /> 공유
           </button>
           <button className="round-btn press" onClick={() => setMenu(true)} aria-label="더보기"><Icon name="more" size={22} /></button>
         </div>
@@ -409,6 +405,29 @@ export default function RecipeDetailScreen({ id }) {
       )}
 
       {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
+
+      {shareSheet && (
+        <Portal>
+          <div className="sheet-mask" onClick={() => setShareSheet(false)}>
+            <div className="sheet" onClick={(e) => e.stopPropagation()}>
+              <div style={{ fontSize: 16.5, fontWeight: 800, textAlign: 'center', color: 'var(--text)' }}>친구랑 공유하기 💌</div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-sub)', textAlign: 'center', margin: '4px 0 16px' }}>예쁜 카드로 카톡·인스타에 톡 보내요</div>
+              <button className="press" onClick={() => { setShareSheet(false); setDrawOpen(true) }}
+                style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--cream)', border: 'none', marginBottom: 10, textAlign: 'left' }}>
+                <span style={{ fontSize: 30 }}>🎴</span>
+                <span><span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>랜덤 카드 뽑기</span><br /><span style={{ fontSize: 12.5, color: 'var(--text-sub)' }}>곰펭이 매번 다르게 · 안 꾸며도 예쁘게</span></span>
+              </button>
+              <button className="press" onClick={isDecorated ? doShareCover : () => { setShareSheet(false); setDecorOpen(true) }}
+                style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--cream)', border: 'none', textAlign: 'left' }}>
+                <span style={{ fontSize: 30 }}>🎨</span>
+                <span><span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>내가 꾸민 표지로</span><br /><span style={{ fontSize: 12.5, color: 'var(--text-sub)' }}>{isDecorated ? '배경·스티커·효과 그대로 캡처' : '먼저 예쁘게 꾸며볼까요 →'}</span></span>
+              </button>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {drawOpen && <Portal><ShareDrawCard recipe={r} onClose={() => setDrawOpen(false)} /></Portal>}
 
       {menu && (
        <Portal>
