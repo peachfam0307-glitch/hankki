@@ -1,8 +1,49 @@
 // 사진에서 글자 읽기 (OCR)
-// 1순위: 폰 내장 OCR(TextDetector, 안드로이드 크롬) — 한국어 인식이 훨씬 정확
-// 2순위: tesseract.js (어디서나 동작). LSTM 엔진 + 전처리로 정확도를 최대한 끌어올린다.
+// 1순위: Google Vision OCR 프록시(Cloudflare Worker) — 한국어 인식 최상. 키는 서버에만 숨김.
+// 2순위: 폰 내장 OCR(TextDetector) — 있으면 사용(요즘 크롬은 기본 비활성이라 대개 건너뜀).
+// 3순위: tesseract.js (어디서나 동작·오프라인). LSTM 엔진 + 전처리.
 import Tesseract, { createWorker } from 'tesseract.js'
 import { normalizeNumerals } from './ocrCorrect'
+
+// ── Google Vision OCR 프록시 ──────────────────────────────────
+// 서버(Cloudflare Worker)가 API 키를 숨기고 Vision을 호출해 '텍스트'만 돌려준다.
+// 프록시엔 6중 방어벽(월 900건 상한 등)이 있어 비용 $0을 물리적으로 보장한다.
+// 실패(오프라인·한도초과·오류)하면 아래 폰내장/tesseract로 '조용히' 폴백 → OCR은 늘 동작.
+const OCR_PROXY_URL = 'https://hankki-ocr.annyeong-hankki.workers.dev'
+const OCR_APP_TOKEN = '0VRNDSjHBhwniTzIDAbnRaJygyfGJ2K2'
+
+// 기기 식별자 — 유저당 월 무료 횟수 카운트용. 개인정보 아님(임의 난수), 이 브라우저에만 저장.
+function deviceId() {
+  try {
+    let id = localStorage.getItem('hankki:did')
+    if (!id) {
+      id = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2) + Date.now().toString(36)
+      localStorage.setItem('hankki:did', id)
+    }
+    return id
+  } catch {
+    return 'anon'
+  }
+}
+
+// 프록시로 OCR 시도 → 성공 시 텍스트, 실패 시 예외를 던져 폴백을 유도.
+async function ocrViaProxy(dataUrl, onProgress) {
+  if (typeof dataUrl !== 'string' || !/^data:image\//.test(dataUrl)) throw new Error('not_dataurl')
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new Error('offline')
+  if (onProgress) onProgress(35)
+  const resp = await fetch(OCR_PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN },
+    body: JSON.stringify({ image: dataUrl, uid: deviceId() }),
+  })
+  // 429(월·일·유저 한도)·403·502(vision오류) 등은 전부 폴백으로 넘긴다 — 앱은 늘 동작해야 하니까.
+  if (!resp.ok) throw new Error('proxy_http_' + resp.status)
+  const data = await resp.json().catch(() => null)
+  if (onProgress) onProgress(92)
+  return (data && data.text) || ''
+}
 
 function loadImg(dataUrl) {
   return new Promise((resolve) => {
@@ -252,7 +293,19 @@ function assembleFromBlocks(data) {
 
 // opts.noCrop: 영수증처럼 폰 캡처가 아닌 사진은 상태바 자르기를 건너뛴다(내용이 잘리니까).
 export async function ocrImage(image, onProgress, opts = {}) {
-  // 1) 폰 내장 OCR 먼저 (있으면 훨씬 정확, 언어데이터 다운로드도 없음)
+  // 0) Google Vision 프록시 우선 — 한국어 인식 최상. 실패하면 폰내장→tesseract로 폴백.
+  if (typeof image === 'string') {
+    try {
+      const t = await ocrViaProxy(image, onProgress)
+      if (t && !looksGibberish(t)) {
+        if (onProgress) onProgress(100)
+        return normalizeNumerals(t)
+      }
+    } catch {
+      /* 폴백 계속 (오프라인·한도·오류) */
+    }
+  }
+  // 1) 폰 내장 OCR (있으면 정확, 요즘 크롬은 기본 비활성이라 대개 건너뜀)
   if (typeof image === 'string') {
     if (onProgress) onProgress(15)
     const platform = await detectWithPlatform(image, opts.noCrop)
