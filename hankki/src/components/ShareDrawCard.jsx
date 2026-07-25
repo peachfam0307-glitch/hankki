@@ -182,7 +182,8 @@ function Card({ style, char, no, title, tags, popBg, cover }) {
 }
 
 // ── 2장째: 실제 레시피카드 (재료·만드는 법) — 친구가 진짜 해먹을 수 있게 ──
-function RecipeCard({ recipe }) {
+// export: 꾸민 표지 공유(shareDecoratedCover)에서도 이 레시피카드를 2장째로 함께 보낸다.
+export function RecipeCard({ recipe }) {
   const title = recipe?.title || '오늘의 한 끼'
   const ings = (recipe?.ingredients || []).filter(Boolean)
   const steps = (recipe?.steps || []).filter(Boolean)

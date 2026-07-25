@@ -35,7 +35,7 @@ async function ensureFonts() {
   } catch (e) { /* 실패해도 기본 글씨로 그린다 */ }
 }
 
-export async function shareDecoratedCover({ coverEl, title, info = [], appUrl }) {
+export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, recipeEl = null }) {
   await ensureFonts()
 
   // ── 1) 화면의 표지를 그대로 사진으로 (버튼 등 data-nocapture는 제외) ──
@@ -120,14 +120,29 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl })
   do { ctx.font = `${pf}px ${BODY}`; if (ctx.measureText(pillLabel).width <= pillW - 60) break; pf -= 1 } while (pf > 22)
   ctx.fillText(pillLabel, W / 2, footerTop + 72)
 
-  // ── 3) 공유 / 다운로드 ──
+  // ── 3) 2장째: 실제 레시피카드(재료·만드는 법) — 친구가 진짜 해먹을 수 있게(랜덤 카드와 동일) ──
   const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'))
   if (!blob) return { ok: false }
   const file = new File([blob], 'hankki-cover.png', { type: 'image/png' })
-  const payload = { files: [file], title, text: `『${title}』 · 내가 꾸민 레시피 🧡 한끼\n나도 만들기 → ${url}`, url }
+  const files = [file]
+  if (recipeEl) {
+    try {
+      const ru = await toPng(recipeEl, { pixelRatio: 2, cacheBust: true })
+      const rb = await (await fetch(ru)).blob()
+      files.push(new File([rb], 'hankki-recipe.png', { type: 'image/png' }))
+    } catch (e) { /* 레시피카드 실패해도 표지 1장은 보낸다 */ }
+  }
+
+  // ── 4) 공유 / 다운로드 ──
+  const has2 = files.length > 1
+  const payload = { files, title, text: `『${title}』 · 내가 꾸민 레시피 🧡 한끼${has2 ? ' · 재료·레시피 같이!' : ''}\n나도 만들기 → ${url}`, url }
   try {
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (navigator.canShare && navigator.canShare({ files })) {
       await navigator.share(payload)
+      return { ok: true, shared: true }
+    }
+    if (has2 && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ ...payload, files: [file] })
       return { ok: true, shared: true }
     }
   } catch (e) {

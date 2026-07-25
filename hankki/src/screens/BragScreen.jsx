@@ -3,7 +3,7 @@ import { useStore } from '../store'
 import { useNav } from '../App'
 import Thumb from '../components/Thumb'
 import DecorLayer from '../components/DecorLayer'
-import ShareDrawCard from '../components/ShareDrawCard'
+import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 import Portal from '../components/Portal'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { shareDecoratedCover } from '../shareCover'
@@ -24,12 +24,14 @@ export default function BragScreen() {
   const [share, setShare] = useState(null) // 랜덤 카드 모달로 보낼 레시피
   const [coach, setCoach] = useState(() => needsCoach(BRAG_COACH_KEY))
   const coverRef = useRef(null) // 꾸민 표지 캡처용(화면 밖 숨은 레이어)
+  const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
   const list = useMemo(
     () => recipes.filter((r) => r.status === 'sorted').sort((a, b) => b.savedAt - a.savedAt),
     [recipes],
   )
   const appUrl = location.origin + location.pathname.replace(/[^/]*$/, '')
   const isDecorated = (r) => !!((r?.decor && r.decor.length) || (r?.decorBg && r.decorBg !== 'none') || r?.thumb === 'none')
+  const hasRecipe = (r) => !!((r?.ingredients || []).length || (r?.steps || []).length)
 
   // 🎨 내가 꾸민 표지 그대로 보내기 (상세 화면의 doShareCover와 같은 방식 — 화면 밖 표지를 캡처)
   const sendCover = async () => {
@@ -46,7 +48,8 @@ export default function BragScreen() {
     const info = [r.time ? `${r.time}분` : null, r.servings ? `${r.servings}인분` : null, r.difficulty || null].filter(Boolean)
     await new Promise((res) => setTimeout(res, 60)) // 숨은 표지 레이아웃(글자 크기 기준 폭)이 잡힐 시간
     try {
-      await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl })
+      // 재료·만드는 법이 있으면 레시피카드도 2장째로 함께(친구가 진짜 해먹게)
+      await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe(r) ? recipeCardRef.current : null })
     } finally {
       setPick(null)
     }
@@ -123,13 +126,14 @@ export default function BragScreen() {
         </Portal>
       )}
 
-      {/* 꾸민 표지 캡처용 숨은 레이어(화면 밖) — 상세 화면 coverRef와 동일 구성 */}
+      {/* 캡처용 숨은 레이어(화면 밖) — ①꾸민 표지(상세 coverRef와 동일 구성) ②레시피카드(2장째) */}
       {pick && isDecorated(pick) && (
-        <div aria-hidden style={{ position: 'fixed', left: -99999, top: 0, width: 380, opacity: 0, pointerEvents: 'none' }}>
+        <div aria-hidden style={{ position: 'fixed', left: -99999, top: 0, opacity: 0, pointerEvents: 'none' }}>
           <div ref={coverRef} style={{ position: 'relative', width: 380 }}>
             <Thumb recipe={pick} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
             <DecorLayer items={pick.decor || []} />
           </div>
+          {hasRecipe(pick) && <div ref={recipeCardRef}><RecipeCard recipe={pick} /></div>}
         </div>
       )}
 

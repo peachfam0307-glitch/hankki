@@ -20,7 +20,7 @@ import { picksForIngredients, productLink, productMall } from '../data/curation'
 import { useWakeLock } from '../useWakeLock'
 import { useLayerBack } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
-import ShareDrawCard from '../components/ShareDrawCard'
+import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 
 // 첫 방문 코치마크 — 숨어 있는 중요 기능을 반짝이며 알려준다(창업자 딸 아이디어 ⭐)
 const COACH_KEY = 'hankki:coach:detail'
@@ -56,6 +56,7 @@ export default function RecipeDetailScreen({ id }) {
   const [coach, setCoach] = useState(() => needsCoach(COACH_KEY))
   const iconRef = useRef(null)
   const coverRef = useRef(null) // 꾸민 표지(레꾸) 캡처용
+  const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
   const r = recipes.find((x) => x.id === id)
   const baseServings = r?.servings || 0
   const [servings, setServings] = useState(baseServings || 1)
@@ -112,11 +113,13 @@ export default function RecipeDetailScreen({ id }) {
   const onShare = () => { setMenu(false); setShareSheet(true) }
   // 꾸민 표지가 있나(배경·스티커·데코 중 하나라도) → 있으면 "내 꾸민 표지로" 옵션 노출
   const isDecorated = (r.decor && r.decor.length) || (r.decorBg && r.decorBg !== 'none') || r.thumb === 'none'
+  const hasRecipe = !!((r.ingredients || []).length || (r.steps || []).length)
   const doShareCover = async () => {
     setShareSheet(false)
     nav.showToast('🎨 내가 꾸민 표지 그대로 공유 · 이미지 만드는 중…')
     const appUrl = location.origin + location.pathname.replace(/[^/]*$/, '')
-    await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl })
+    // 꾸민 표지 + 재료·만드는 법(레시피카드) 2장 함께 — 친구가 진짜 해먹게(랜덤 카드와 동일)
+    await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe ? recipeCardRef.current : null })
   }
 
   // 이 레시피가 쓴 '주부의 장바구니' 제품(재료에 제품명이 적혀 있으면 자동 매칭) — 구매 연결
@@ -133,6 +136,12 @@ export default function RecipeDetailScreen({ id }) {
       <div ref={iconRef} aria-hidden style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}>
         <FoodIcon name={r.icon || guessFoodIcon(r.title)} size={240} />
       </div>
+      {/* 꾸민 표지 공유 시 2장째로 함께 갈 레시피카드(재료·만드는 법) — 시트 열렸을 때만 렌더 */}
+      {shareSheet && hasRecipe && (
+        <div aria-hidden style={{ position: 'fixed', left: -99999, top: 0, opacity: 0, pointerEvents: 'none' }}>
+          <div ref={recipeCardRef}><RecipeCard recipe={r} /></div>
+        </div>
+      )}
 
       {/* 상단 오버레이 바 */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5, display: 'flex', justifyContent: 'space-between', padding: '10px 12px', paddingTop: 'calc(10px + var(--safe-top))' }}>
