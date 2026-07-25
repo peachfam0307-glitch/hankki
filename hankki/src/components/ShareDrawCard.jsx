@@ -128,6 +128,49 @@ function Card({ style, char, no, title, tags, popBg }) {
   )
 }
 
+// ── 2장째: 실제 레시피카드 (재료·만드는 법) — 친구가 진짜 해먹을 수 있게 ──
+function RecipeCard({ recipe }) {
+  const title = recipe?.title || '오늘의 한 끼'
+  const ings = (recipe?.ingredients || []).filter(Boolean)
+  const steps = (recipe?.steps || []).filter(Boolean)
+  const meta = [recipe?.time && `⏱ ${recipe.time}분`, recipe?.servings && `${recipe.servings}인분`, recipe?.difficulty].filter(Boolean)
+  const isHead = (s) => /^\[.*\]$/.test(String(s).trim())
+  const half = Math.ceil(ings.length / 2)
+  const cols = [ings.slice(0, half), ings.slice(half)]
+  const ingFont = ings.length > 16 ? 25 : ings.length > 11 ? 27 : 30
+  const stepFont = steps.length > 7 ? 26 : steps.join('').length > 380 ? 27 : 30
+  const shown = steps.slice(0, 7)
+  const renderIng = (arr) => arr.map((x, i) => isHead(x)
+    ? <div key={i} style={{ fontWeight: 800, color: '#c2703f', marginTop: 8, fontSize: ingFont }}>{String(x).replace(/[[\]]/g, '')}</div>
+    : <div key={i} style={{ fontSize: ingFont, color: '#4a4136', lineHeight: 1.48, display: 'flex', gap: 7 }}><span style={{ color: '#d2a97f' }}>·</span><span>{x}</span></div>)
+  return (
+    <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: '#fbf6ec' }}>
+      <div style={{ padding: '64px 70px 0', textAlign: 'center' }}>
+        <div style={{ fontSize: 30, color: '#c2703f', letterSpacing: 2 }}>🍳 오늘의 레시피</div>
+        <div style={{ fontSize: title.length > 9 ? 60 : 72, color: '#3d3830', marginTop: 6, lineHeight: 1.1, wordBreak: 'keep-all' }}>{title}</div>
+        {meta.length > 0 && <div style={{ marginTop: 14, display: 'flex', justifyContent: 'center', gap: 10 }}>{meta.map((m, i) => <span key={i} style={{ fontSize: 26, color: '#8a7d68', background: '#f0e7d8', padding: '7px 20px', borderRadius: 999 }}>{m}</span>)}</div>}
+      </div>
+      <div style={{ margin: '34px 58px 0', background: '#fffdf8', borderRadius: 24, padding: '24px 32px', boxShadow: '0 6px 16px rgba(120,90,50,.1)' }}>
+        <div style={{ fontSize: 33, color: '#c2703f', marginBottom: 12 }}>🥕 재료</div>
+        <div style={{ display: 'flex', gap: 28 }}>{cols.map((c, i) => <div key={i} style={{ flex: 1 }}>{renderIng(c)}</div>)}</div>
+      </div>
+      <div style={{ margin: '22px 58px 0' }}>
+        <div style={{ fontSize: 33, color: '#c2703f', marginBottom: 10, paddingLeft: 6 }}>👩‍🍳 만드는 법</div>
+        {shown.map((s, i) => (
+          <div key={i} style={{ display: 'flex', gap: 13, marginBottom: 11, alignItems: 'flex-start' }}>
+            <span style={{ flex: '0 0 auto', width: 40, height: 40, borderRadius: '50%', background: '#e8916a', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 23 }}>{i + 1}</span>
+            <span style={{ fontSize: stepFont, color: '#4a4136', lineHeight: 1.42, paddingTop: 4 }}>{s}</span>
+          </div>
+        ))}
+        {steps.length > 7 && <div style={{ fontSize: 26, color: '#a8987e', paddingLeft: 53, marginTop: 2 }}>… 전체 {steps.length}단계는 한끼 앱에서 →</div>}
+      </div>
+      <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '18px 42px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontSize: 38, fontWeight: 800 }}>🔍 Play스토어 ‘한끼’ 검색</span>
+      </div>
+    </div>
+  )
+}
+
 export default function ShareDrawCard({ recipe, onClose }) {
   const title = recipe?.title || '오늘의 한 끼'
   const tags = useMemo(() => tagsOf(recipe), [recipe])
@@ -135,11 +178,15 @@ export default function ShareDrawCard({ recipe, onClose }) {
   const [popBg, setPopBg] = useState(() => rnd(POP_BGS))
   const [busy, setBusy] = useState(false)
   const cardRef = useRef(null)
+  const card2Ref = useRef(null)
+  const [page, setPage] = useState(1)
   const [scale, setScale] = useState(0.3)
+  // 레시피 내용(재료·단계)이 있어야 2장째(레시피카드)를 붙인다. 없으면 1장만.
+  const hasRecipe = !!((recipe?.ingredients || []).length || (recipe?.steps || []).length)
 
   const redraw = useCallback(() => { setDraw(drawState()); setPopBg(rnd(POP_BGS)) }, [])
   useEffect(() => {
-    const fit = () => setScale(Math.min((window.innerWidth - 40) / 1080, (window.innerHeight * 0.66) / 1350))
+    const fit = () => setScale(Math.min((window.innerWidth - 40) / 1080, (window.innerHeight * 0.6) / 1350))
     fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit)
   }, [])
 
@@ -147,34 +194,45 @@ export default function ShareDrawCard({ recipe, onClose }) {
     if (!cardRef.current || busy) return
     setBusy(true)
     try {
-      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: true })
-      const blob = await (await fetch(dataUrl)).blob()
-      const file = new File([blob], 'hankki-card.png', { type: 'image/png' })
-      const payload = { files: [file], title, text: `『${title}』 오늘의 한 끼 🧡 한끼\n나도 만들기 → ${APP_URL}`, url: APP_URL }
-      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share(payload) }
-      else { const a = document.createElement('a'); a.href = dataUrl; a.download = 'hankki-card.png'; a.click() }
+      const toFile = async (el, name) => { const u = await toPng(el, { pixelRatio: 2, cacheBust: true }); const b = await (await fetch(u)).blob(); return new File([b], name, { type: 'image/png' }) }
+      const f1 = await toFile(cardRef.current, 'hankki-1.png')
+      const files = [f1]
+      if (hasRecipe && card2Ref.current) { try { files.push(await toFile(card2Ref.current, 'hankki-2-recipe.png')) } catch { /* 레시피카드 실패해도 1장은 보냄 */ } }
+      const text = `『${title}』 오늘의 한 끼 🧡${files.length > 1 ? ' · 재료·레시피 같이!' : ''}\nPlay스토어에서 '한끼' 검색 🔍`
+      if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files, title, text, url: APP_URL }) }
+      else if (navigator.canShare && navigator.canShare({ files: [f1] })) { await navigator.share({ files: [f1], title, text, url: APP_URL }) }
+      else { const u = await toPng(cardRef.current, { pixelRatio: 2 }); const a = document.createElement('a'); a.href = u; a.download = 'hankki-card.png'; a.click() }
     } catch (e) { if (!(e && e.name === 'AbortError')) { /* noop */ } }
     setBusy(false)
-  }, [busy, title])
+  }, [busy, title, hasRecipe])
+
+  const layer = { position: 'absolute', top: 0, left: 0 }
+  const tabBtn = (on) => ({ padding: '7px 18px', borderRadius: 999, fontSize: 13.5, fontWeight: 800, border: 'none', background: on ? '#fffdf8' : 'rgba(255,255,255,.22)', color: on ? '#5d3410' : '#fff' })
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(40,32,24,.72)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        {/* 미리보기(스케일) — 캡처 ref는 스케일 안 된 원본 1080×1350 카드에 둔다.
-            (스케일된 요소를 캡처하면 축소본이 큰 투명 캔버스 왼쪽 위에 작게 박혀 카톡에서 흰 여백으로 옴) */}
+        {/* 미리보기(스케일). 두 장 다 렌더(캡처용) — 안 보는 장은 opacity 0(랩퍼에만). 캡처 ref는 원본 카드에. */}
         <div style={{ width: 1080 * scale, height: 1350 * scale, position: 'relative', borderRadius: 18, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,.4)' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-            <div ref={cardRef}>
-              <Card {...draw} title={title} tags={tags} popBg={popBg} />
-            </div>
+            <div style={{ ...layer, opacity: page === 1 ? 1 : 0 }}><div ref={cardRef}><Card {...draw} title={title} tags={tags} popBg={popBg} /></div></div>
+            <div style={{ ...layer, opacity: page === 2 ? 1 : 0 }}><div ref={card2Ref}><RecipeCard recipe={recipe} /></div></div>
           </div>
         </div>
+        {/* 페이지 토글 (레시피 있을 때만 2장) */}
+        {hasRecipe && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <button className="press" onClick={() => setPage(1)} style={tabBtn(page === 1)}>① 카드</button>
+            <button className="press" onClick={() => setPage(2)} style={tabBtn(page === 2)}>② 레시피</button>
+          </div>
+        )}
+        <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.82)', marginTop: 9, textAlign: 'center' }}>{hasRecipe ? '공유하면 2장(카드+레시피)이 함께 가요 🐻🐧' : '🔄 다시 뽑기로 마음에 들 때까지'}</div>
         {/* 버튼 */}
-        <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+        <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
           <button className="press" onClick={redraw} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '13px 22px', borderRadius: 999, background: '#fffdf8', color: '#5d3410', fontWeight: 800, fontSize: 15.5, border: 'none' }}>🔄 다시 뽑기</button>
           <button className="press" onClick={share} disabled={busy} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '13px 26px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontWeight: 800, fontSize: 15.5, border: 'none', opacity: busy ? 0.6 : 1 }}>{busy ? '만드는 중…' : '💌 공유하기'}</button>
         </div>
-        <button className="press" onClick={onClose} style={{ marginTop: 14, padding: '8px 18px', background: 'transparent', color: 'rgba(255,255,255,.8)', fontSize: 14, fontWeight: 700, border: 'none' }}>닫기</button>
+        <button className="press" onClick={onClose} style={{ marginTop: 12, padding: '8px 18px', background: 'transparent', color: 'rgba(255,255,255,.8)', fontSize: 14, fontWeight: 700, border: 'none' }}>닫기</button>
       </div>
     </div>
   )
