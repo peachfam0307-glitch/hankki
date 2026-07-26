@@ -206,6 +206,7 @@ export default function RecipeDetailScreen({ id }) {
           aria-label="레시피 꾸미기"
           style={{ position: 'absolute', bottom: 12, right: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--brown)', color: '#fff', fontSize: 13.5, fontWeight: 800, padding: '9px 15px', borderRadius: 999, boxShadow: '0 4px 14px rgba(0,0,0,.3)' }}
         >
+          <Icon name="palette" size={15} />
           레시피 꾸미기
         </button>
       </div>
@@ -292,12 +293,14 @@ export default function RecipeDetailScreen({ id }) {
               </div>
               <button
                 className="mini-buy press"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
                 data-coach="shop"
                 onClick={() => {
                   addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => scaleIngredient(ing, ratio)))
                   nav.showToast('재료를 장보기 리스트에 담았어요')
                 }}
               >
+                <Icon name="cart" size={13} />
                 장보기 담기
               </button>
             </div>
@@ -335,7 +338,7 @@ export default function RecipeDetailScreen({ id }) {
                 <button className="press" onClick={() => openExternal(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>
               </div>
             ))}
-            <button className="press" onClick={addAllPicks} style={{ width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 14 }}>이 재료 다 담기</button>
+            <button className="press" onClick={addAllPicks} style={{ width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Icon name="cart" size={15} />이 재료 다 담기</button>
             <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>담아두고 장보기에서 체크하며 사면 편해요 · 18년차 주부가 진짜 쓰는 재료예요</div>
           </div>
         )}
@@ -382,15 +385,17 @@ export default function RecipeDetailScreen({ id }) {
       {/* 하단 액션 — 요리 시작 / 만들었어요 */}
       <div className="action-bar" style={{ display: 'flex', gap: 10 }}>
         {r.steps?.length > 0 && (
-          <button className="btn-primary press" data-coach="cook" style={{ flex: 1 }} onClick={() => nav.push({ name: 'cook', id: r.id })}>
-            요리 시작 →
+          <button className="btn-primary press" data-coach="cook" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }} onClick={() => nav.push({ name: 'cook', id: r.id })}>
+            <Icon name="play" size={16} />
+            요리 시작
           </button>
         )}
         <button
           className={r.steps?.length > 0 ? 'btn-ghost press' : 'btn-primary press'}
-          style={{ flex: r.steps?.length > 0 ? '0 0 auto' : 1, paddingLeft: 18, paddingRight: 18 }}
+          style={{ flex: r.steps?.length > 0 ? '0 0 auto' : 1, paddingLeft: 18, paddingRight: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
           onClick={onCook}
         >
+          <Icon name="check" size={16} />
           만들었어요
         </button>
       </div>

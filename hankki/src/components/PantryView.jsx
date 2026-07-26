@@ -132,6 +132,7 @@ export default function PantryView() {
             boxShadow: '0 3px 10px rgba(90,70,45,0.18)',
           }}
         >
+          <Icon name="camera" size={17} />
           영수증 촬영
         </button>
         <button

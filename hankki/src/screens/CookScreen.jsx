@@ -102,7 +102,7 @@ export default function CookScreen({ id }) {
         {prep ? (
           <button className="cook-navbtn primary press" onClick={() => setI(1)} disabled={steps.length === 0}>재료 준비 완료 · 시작 →</button>
         ) : last ? (
-          <button className="cook-navbtn primary press" onClick={finish}>다 만들었어요</button>
+          <button className="cook-navbtn primary press" onClick={finish} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}><Icon name="check" size={17} />다 만들었어요</button>
         ) : (
           <button className="cook-navbtn primary press" onClick={() => setI((v) => v + 1)}>다음 →</button>
         )}
