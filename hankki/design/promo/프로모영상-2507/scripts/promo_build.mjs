@@ -90,7 +90,7 @@ const S0 = `<div class="scene" id="s0" style="background:radial-gradient(circle 
 // S1 꾸미기 — 큰 카드 + 곰펭 콩콩 점프 + 스티커 하나씩 크게
 const S1 = `<div class="scene" id="s1" style="background:linear-gradient(160deg,#d3e3c8,#eaf2e2)">
   <div class="dots" style="background-image:radial-gradient(rgba(255,255,255,.22) 9px,transparent 10px)"></div>
-  <div class="cap"><h1 style="color:#4a6b42">내 레시피,<br>예쁘게 꾸며요</h1><div class="sub" style="color:#5f7a54">스티커 톡 붙이고, 곰펭이 콩콩 — 레꾸 ✨</div></div>
+  <div class="cap"><h1 style="color:#4a6b42">내 레시피,<br>예쁘게 꾸며요</h1><div class="sub" style="color:#5f7a54">스티커 톡 붙이고, 꼬르곰·펭펭과 레꾸 ✨</div></div>
   <div style="position:absolute;top:512px;left:50%;transform:translateX(-50%) rotate(-3deg)">
     <div class="card" style="width:700px">
       <div class="cover" id="s1cover" style="height:660px;background:#eef3ea;transition:background .55s ease">
@@ -155,7 +155,7 @@ const S3 = `<div class="scene" id="s3" style="background:linear-gradient(160deg,
   <div style="position:absolute;top:560px;left:50%;transform:translateX(-50%);width:720px">
     ${rows.map(([n,c,e],i)=>`<div class="anim rt" data-t="s3r${i}" style="background:#fffdf8;border-radius:34px;padding:26px 30px;margin-bottom:26px;display:flex;align-items:center;gap:26px;box-shadow:0 16px 30px rgba(90,90,40,.16);position:relative">
       <div style="width:104px;height:104px;border-radius:26px;background:${c};display:flex;align-items:center;justify-content:center;font-size:52px;color:#fff;flex-shrink:0">${e}</div>
-      <div style="flex:1"><div style="font-size:40px;color:#33302b">${n}</div><div style="font-size:28px;color:#8a8570;font-family:'Gaegu'">⭐ 곰펭 PICK</div></div>
+      <div style="flex:1"><div style="font-size:40px;color:#33302b">${n}</div><div style="font-size:28px;color:#8a8570;font-family:'Gaegu'">⭐ 꼬르곰·펭펭 PICK</div></div>
       <div class="s3add" style="background:#5f6a30;color:#fff;font-size:34px;padding:16px 30px;border-radius:26px">담기</div>
     </div>`).join('')}
   </div>
