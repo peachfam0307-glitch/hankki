@@ -5,8 +5,8 @@ import { useModalBack } from '../useBackHandler'
 // 업데이트 예고 — '준비 중인 기능'을 보여줘 기대감을 준다.
 // 정직 원칙: 없는 걸 '됩니다'라 하지 않고 '준비 중/곧'으로만 안내.
 // 아이콘은 이모지 대신 커스텀 라인아이콘(브랜드 통일).
+// 'AI가 사진→레시피'는 이제 실제 동작(가져오기의 캡처 OCR·링크 읽기) → 예고 목록에서 뺐다.
 const UPCOMING = [
-  { icon: 'sparkle', title: '사진 한 장이면 AI가 레시피로', desc: '캡처·손글씨도 자동 정리. 옮겨적기 끝.', tag: '곧' },
   { icon: 'palette', title: '꾸미기 새 아이템', desc: '도장·컨페티·내 사진 프레임까지.', tag: '준비 중' },
   { icon: 'book', title: '내 레시피북, PDF로 소장', desc: '꾸민 표지 그대로 예쁜 책 한 권.', tag: '준비 중' },
   { icon: 'cart', title: '주부의 장바구니 확장', desc: '18년 안목의 살림템을 계속 채워가요.', tag: '계속' },

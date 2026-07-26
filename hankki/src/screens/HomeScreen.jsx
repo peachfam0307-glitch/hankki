@@ -25,7 +25,7 @@ const HOME_COACH_STEPS = [
   { sel: '[data-coach="today"]', img: uiGomThumb, label: '오늘 뭐 해먹지?', desc: '냉장고 재료로 만들 수 있는 요리를 추천해요' },
   { sel: '[data-coach="nav-shop"]', img: uiGomShop, label: '장보기 · 쇼핑몰', desc: '18년차 주부가 엄선한 식재료를 담아 바로 사러 가고 · 냉장고 유통기한도 챙겨요' },
   { sel: '[data-coach="nav-brag"]', img: uiGomHeart, label: '레꾸자랑', desc: '내가 꾸민 레시피를 예쁜 카드로 친구한테 자랑! 카톡·인스타로 쏙' },
-  { sel: '[data-coach="preview"]', img: uiGomClap, label: '곧 나올 기능', desc: 'AI 정리 · 레시피북 PDF… 준비 중인 것도 구경해요' },
+  { sel: '[data-coach="preview"]', img: uiGomClap, label: '곧 나올 기능', desc: '레시피북 PDF · 꾸미기 새 아이템… 준비 중인 것도 구경해요' },
 ]
 
 export default function HomeScreen() {
@@ -121,7 +121,7 @@ export default function HomeScreen() {
           <span style={{ flex: '0 0 auto', display: 'inline-flex' }}><Icon name="gift" size={20} color="var(--tease-ic)" stroke={1.7} /></span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>곧 나올 기능 미리보기</div>
-            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>AI 정리 · 꾸미기 · 레시피북 PDF …</div>
+            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>레시피북 PDF · 꾸미기 새 아이템 …</div>
           </div>
           <Icon name="chevron-right" size={18} color="var(--sand)" />
         </button>

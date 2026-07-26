@@ -28,7 +28,7 @@ export default function ImportScreen() {
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
   const [help, setHelp] = useState(false)
-  const [aiPreview, setAiPreview] = useState(false) // AI 자동정리 미리보기(곧 출시)
+  const [aiPreview, setAiPreview] = useState(false) // AI 자동정리 '이렇게 돼요' 안내 시트
   const [linkBusy, setLinkBusy] = useState(false)
   const linkCancel = useRef(false)
 
@@ -189,7 +189,7 @@ export default function ImportScreen() {
             ))}
           </div>
 
-          {/* AI 자동정리 — 곧 출시 예고(작게). 진짜 동작을 가리지 않게 리스트 아래로. */}
+          {/* AI 자동정리 — 이미 되는 기능(캡처 OCR·링크 읽기·텍스트). '이렇게 돼요' 안내로. */}
           <button
             className="press"
             onClick={() => setAiPreview(true)}
@@ -208,10 +208,10 @@ export default function ImportScreen() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 800, color: '#4a7a45' }}>AI 자동 정리</span>
-                <span style={{ fontSize: 9.5, fontWeight: 800, color: '#fff', background: '#7fa06a', borderRadius: 999, padding: '2px 7px', flexShrink: 0 }}>곧 출시</span>
+                <span style={{ fontSize: 9.5, fontWeight: 800, color: '#fff', background: '#7fa06a', borderRadius: 999, padding: '2px 7px', flexShrink: 0 }}>이미 돼요</span>
               </div>
               <div style={{ fontSize: 11.6, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2 }}>
-                캡처만 올리면 AI가 척척 — 준비 중이에요
+                캡처·링크 올리면 재료·순서를 자동으로 채워요
               </div>
             </div>
             <Icon name="chevron-right" size={16} color="#8aa07a" />
@@ -409,9 +409,9 @@ export default function ImportScreen() {
               <button className="press" onClick={() => setAiPreview(false)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '4px 18px 0' }}>
-              {/* 곧 출시 · 헤드라인 */}
+              {/* 이미 되는 기능 · 헤드라인 */}
               <div style={{ textAlign: 'center', padding: '8px 0 18px' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 12, padding: '4px 12px', borderRadius: 999, background: '#eef5ea', color: '#4a7a45', fontSize: 12, fontWeight: 800 }}>곧 출시 <Icon name="sparkle" size={12} color="#4a7a45" /></span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 12, padding: '4px 12px', borderRadius: 999, background: '#eef5ea', color: '#4a7a45', fontSize: 12, fontWeight: 800 }}>이미 돼요 <Icon name="sparkle" size={12} color="#4a7a45" /></span>
                 <div style={{ fontSize: 21, fontWeight: 900, color: 'var(--brown)', lineHeight: 1.3, letterSpacing: '-0.02em' }}>사진 찍으면<br />레시피가 돼요</div>
                 <div className="t-sub" style={{ fontSize: 13, marginTop: 9, lineHeight: 1.6 }}>캡처만 올리면 재료·순서를<br />칸칸이 알아서 정리해드려요.</div>
               </div>
@@ -420,7 +420,7 @@ export default function ImportScreen() {
               <div className="card" style={{ padding: '4px 2px', background: 'var(--cream)', border: 'none' }}>
                 {[
                   ['camera', '캡처 사진 인식', '레시피 화면을 캡처만 하면 재료·순서를 칸칸이 자동으로 채워요.'],
-                  ['link', '인스타·유튜브 링크', '링크만 붙여넣어도 내용을 읽어 레시피로 정리해요.'],
+                  ['link', '유튜브·블로그 링크 (베타)', '링크를 붙여넣으면 글·설명을 읽어 정리해요. 공개된 글만 돼요.'],
                   ['clock', '옮겨적기 끝', '손으로 하나하나 타이핑할 필요 없이 몇 초면 완성.'],
                   ['pen', '언제든 손보기', 'AI가 정리한 결과는 마음대로 고치고 다듬을 수 있어요.'],
                 ].map(([ic, t, b]) => (
@@ -437,8 +437,15 @@ export default function ImportScreen() {
               </div>
 
               <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.65, marginTop: 16, textAlign: 'center', color: 'var(--brown)' }}>
-                지금은 <b>캡처·텍스트·링크</b>로 담을 수 있어요.<br />AI 자동정리가 준비되면 가장 먼저 알려드릴게요.
+                지금 바로 돼요 — <b>캡처·텍스트</b>는 확실하게,<br /><b>링크</b>는 되는 페이지만(베타)이에요.
               </div>
+              <button
+                className="btn-primary press"
+                onClick={() => { setAiPreview(false); choose('write') }}
+                style={{ width: '100%', marginTop: 15, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              >
+                <Icon name="camera" size={17} color="#fff" /> 사진으로 시작하기
+              </button>
             </div>
           </div>
         </div>
