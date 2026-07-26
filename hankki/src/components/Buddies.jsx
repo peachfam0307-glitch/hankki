@@ -6,17 +6,7 @@
 // 아바타 공통 배경 — 채도 있는 파스텔은 촌스러워서, 캐릭터가 살도록 깔끔한 화이트톤으로 통일.
 const BG = '#f5f3ee'
 
-const Eye = ({ x, y, r = 2.2 }) => (
-  <>
-    <circle cx={x} cy={y} r={r} fill="#3a332b" />
-    <circle cx={x + r * 0.38} cy={y - r * 0.42} r={r * 0.45} fill="#fff" />
-    <circle cx={x - r * 0.45} cy={y + r * 0.35} r={r * 0.2} fill="#fff" opacity="0.9" />
-  </>
-)
-
-const Happy = ({ x, y, w = 3.6 }) => (
-  <path d={`M${x - w / 2} ${y}q${w / 2} -${w * 0.62} ${w} 0`} stroke="#3a332b" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-)
+// (Eye·Happy SVG 헬퍼는 어디서도 안 써서 제거 — 2026-07 청소.)
 
 // ---------- 오리지널 세트(48 뷰박스) — 최초 원본(9fe14fe) 그대로 복원 ----------
 // 까만콩 눈(r 1.35, 반짝이 없음) · 발 없음 · 호두만 왕눈.
@@ -550,9 +540,6 @@ export const BUDDY_GROUPS = [
     ],
   },
 ]
-
-// 평평한 목록(하위 호환) — 그룹을 펼친 것.
-export const BUDDY_LIST = BUDDY_GROUPS.flatMap((g) => g.items)
 
 export default function Buddy({ id, size = 48, plate = true }) {
   if (L[id]) {

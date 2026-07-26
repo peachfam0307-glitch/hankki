@@ -1,31 +1,5 @@
-// 한끼 디자인 토큰 — 미니멀 · 따뜻함 · 고급스러움
-// 컬러 팔레트는 시안 하단의 '컬러 & 타이포'에서 그대로 가져옴.
-export const colors = {
-  bg: '#F7F4EE', // 따뜻한 크림 배경 (홍보 세트 톤과 일치)
-  surface: '#FFFDF9', // 카드 표면 — 살짝 웜한 화이트
-  cream: '#EFEAE0', // 연한 웜크림 (pill, 태그 배경)
-  creamDeep: '#E7DECD', // 진한 웜크림 (선택된 pill)
-  sand: '#CDC7BB', // 샌드 (아이콘, 보조)
-  brown: '#6B4F3A', // 딥 브라운 (텍스트, 강조, 버튼) — 따뜻한 포인트
-  text: '#3D3830', // 본문 텍스트
-  textSub: '#8F887B', // 보조 텍스트 (웜 뉴트럴)
-  line: '#ECE5DA', // 아주 얇은 웜한 구분선
-  danger: '#C2703F',
-}
-
-export const radius = {
-  sm: '10px',
-  md: '16px',
-  lg: '22px',
-  pill: '999px',
-}
-
-// 카드 그림자는 '거의 없음' — 아주 미세하게만.
-export const shadow = {
-  none: 'none',
-  soft: '0 1px 2px rgba(107, 79, 58, 0.04)',
-  card: '0 6px 20px rgba(107, 79, 58, 0.06)',
-}
+// 한끼 디자인 토큰 — 실제 색·라운드·그림자는 styles.css 의 CSS 변수(:root[data-theme])에서 관리.
+// (예전 JS colors/radius/shadow 토큰은 어디서도 안 써서 제거 — 2026-07 청소.)
 
 export const CATEGORIES = ['전체', '한식', '양식', '일식', '간식', '아시안']
 

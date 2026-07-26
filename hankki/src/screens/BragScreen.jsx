@@ -10,7 +10,6 @@ import { shareDecoratedCover } from '../shareCover'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomThumb from '../assets/ui/gom_thumbsup.png'
-import uiGomLaugh from '../assets/ui/gom_laugh.png'
 import uiHandPoint from '../assets/ui/hand_point.png'
 
 // 🎴 카드자랑 탭 — 바이럴 진입점. 내 레시피를 골라 자랑한다.

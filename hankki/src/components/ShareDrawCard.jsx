@@ -11,7 +11,6 @@ const PENG = ENTRIES.filter((e) => /^(peng_|pn_|gp_peng)/.test(e.name))
 const DUO = ENTRIES.filter((e) => /^(duo_|gp_duo)/.test(e.name))
 
 const APP_URL = 'https://peachfam0307-glitch.github.io/hankki/'
-const PRETTY_URL = 'peachfam0307-glitch.github.io/hankki'
 const rnd = (a) => a[Math.floor(Math.random() * a.length)]
 const titleFont = (t) => { const n = String(t).replace(/\s/g, '').length; return n <= 5 ? 104 : n <= 7 ? 88 : n <= 9 ? 74 : 62 }
 
