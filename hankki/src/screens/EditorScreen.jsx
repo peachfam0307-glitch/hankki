@@ -279,7 +279,7 @@ export default function EditorScreen({ id, prefill }) {
       thumb: f.thumb,
       // 아이콘: 제목이 바뀌면 새 제목으로 다시 자동 추천(창업자 제보 — "제목 육회로 바꿔도 아이콘 안 바뀜").
       // 제목 그대로면 기존 아이콘(직접 고른 것 포함) 유지. 아이콘 비었으면 제목으로 추천.
-      icon: (f.icon && title === (e?.title || '')) ? f.icon : guessFoodIcon(title),
+      icon: (f.icon && title === (editing?.title || '')) ? f.icon : guessFoodIcon(title),
       emoji: f.emoji || '🍽️',
       label: clampGraphemes(f.label.trim(), 6),
       image: f.image,
