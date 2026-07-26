@@ -167,6 +167,11 @@ const PHOTO_RATIO = {
   fi_isk03: 1.3454, fi_isk05: 1.0705, fi_isk02: 1.1087, fi_isk07: 1.2735, fi_isk06: 1.0921, fi_isk13: 1.0338,
   ig_jae06: 0.9892, ig_jae08: 1.1215, ig_jae10: 1.0221, ig_jae19: 1.3432, ig_jae20: 1.024, ig_jae07: 1.1017, ig_jae09: 1.1304, ig_jae03: 1.2457, ig_jae12: 1.2778, ig_frb01: 1.0508, ig_frb03: 0.9623, ig_frb07: 0.8879, ig_frb13: 0.9945, ig_ggi03: 1.0711, ig_ggi16: 1.2129, ig_hsm01: 1.1898,
   dc_dhb04: 1.0957, dc_dhb01: 0.9561, dc_dsy04: 0.8326, dc_dhb10: 1.1893, dc_dhb06: 0.8061, dc_dhb09: 1.1214, dc_dhb14: 1.0, dc_dhb05: 1.3728, dc_dsy16: 1.3971, dc_dsy13: 1.1591, dc_dhb13: 1.0158, dc_dmn02: 0.9219, dc_dmn06: 1.0207, dc_dmn07: 1.1012,
+  // 🎀 꾸미기 소품(데코) 보강 (2026-07-26, 창업자 "꾸미기 재료 늘리자" · 적당히 — 나머지 하트·심볼·미니는 다음 업뎃용으로 라이브러리 보존) — 프레임·메모(dma) 10 + 여름 제철 귀여운 식재료(꾸미기용) 5
+  dc_dma01: 0.9635, dc_dma03: 1.0362, dc_dma05: 1.1588, dc_dma06: 1.0841, dc_dma07: 1.1805, dc_dma10: 1.0047, dc_dma11: 1.5723, dc_dma13: 1.0795, dc_dma14: 1.2406, dc_dma16: 0.9613,
+  ig_frb02: 0.8451, ig_frb04: 1.0149, ig_frb08: 0.4769, ig_jcb19: 0.9741, ig_jae16: 1.4359,
+  // 🌈 귀여운 컬러 소품 4 (창업자 픽: 무지개·꽃다발·풍선 + 케이크) — 범용·화사
+  dc_nd08: 1.3063, dc_nd01: 0.7226, dc_nd05: 0.6505, dc_nd16: 1.1921,
   ch_che01: 0.7928, ch_che04: 1.4278, ch_che06: 1.0683, ch_che08: 1.3098, ch_che05: 0.9231,
   lf_fit12: 1.6056, lf_fit11: 1.487, lf_fit08: 1.2486, lf_fit07: 1.2056, lf_fit02: 1.089, lf_fit13: 0.6872, lf_fit14: 1.1852, lf_fit06: 0.662,
   cp_cpf01: 0.8659, cp_cpf02: 0.9215, cp_cpf03: 0.8136, cp_cpf04: 0.8604, cp_cpf05: 0.9968, cp_cpf06: 1.0358, cp_cpf07: 0.9139, cp_cpf08: 0.8815,
@@ -257,18 +262,45 @@ export const RECOLOR_PNG = new Set([
   'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14',
   'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07',
 ])
-export const RECOLORABLE = new Set([...Object.keys(STICKER_DEFAULT), ...RECOLOR_PNG])
-// 색 팔레트 — 따뜻한 톤 + 팝 컬러 + 모노(남성·미니멀). '기본'은 color 비우면 원래색.
+// 🖼 벡터 프레임 — 곰펭 넣고 꾸미는 범용 액자틀(창업자 item③). SVG라 무한 확대해도 안 깨짐(PNG 프레임은 크게 키우면 흐려져서 벡터로 만듦). def 색만 리컬러(SVG hex 치환), 카드·창·그림자는 뉴트럴 고정. 프레임 먼저 놓고 위에 곰펭 얹으면 '액자 속 곰펭'.
+const FR_C = '#c98f7f' // 프레임 기본색(= 리컬러 대상 hex)
+export const FRAMES = {
+  fr_pola: { vb: '0 0 88 104', ratio: 88 / 104, def: FR_C, art:
+    '<rect x="11" y="12" width="68" height="84" rx="4" fill="#00000010"/>'
+    + '<rect x="8" y="8" width="70" height="86" rx="4.5" fill="#fffdf9" stroke="#e7e1d5" stroke-width="1.3"/>'
+    + '<rect x="15" y="16" width="56" height="56" rx="2.5" fill="#f3efe6"/>'
+    + `<g transform="rotate(-7 44 9)"><rect x="28" y="3" width="32" height="11" rx="1.5" fill="${FR_C}" opacity="0.82"/></g>` },
+  fr_scallop: { vb: '0 0 100 100', ratio: 1, def: FR_C, art:
+    `<path d="M89.0,50.0 Q92.7,60.5 84.5,68.1 Q82.9,79.2 72.2,82.1 Q65.6,91.1 54.7,88.7 Q44.7,93.7 36.2,86.5 Q25.0,86.2 20.8,75.9 Q11.0,70.4 12.1,59.3 Q6.0,50.0 12.1,40.7 Q11.0,29.6 20.8,24.1 Q25.0,13.8 36.2,13.5 Q44.7,6.3 54.7,11.3 Q65.6,8.9 72.2,17.9 Q82.9,20.8 84.5,31.9 Q92.7,39.5 89.0,50.0 Z" fill="${FR_C}"/>`
+    + '<circle cx="50" cy="50" r="37" fill="#fffdf9"/>'
+    + `<circle cx="50" cy="50" r="37" fill="none" stroke="${FR_C}" stroke-width="2" stroke-dasharray="1.5 4" stroke-linecap="round" opacity="0.7"/>` },
+  fr_round: { vb: '0 0 100 90', ratio: 100 / 90, def: FR_C, art:
+    '<rect x="7" y="7" width="86" height="76" rx="13" fill="#fffdf9"/>'
+    + `<rect x="7" y="7" width="86" height="76" rx="13" fill="none" stroke="${FR_C}" stroke-width="3"/>`
+    + `<rect x="12.5" y="12.5" width="75" height="65" rx="9" fill="none" stroke="${FR_C}" stroke-width="1.3" opacity="0.6"/>`
+    + `<path d="M50 3.2c1.4-2 4.6-1 4.6 1.4 0 1.8-2.6 3.6-4.6 5-2-1.4-4.6-3.2-4.6-5 0-2.4 3.2-3.4 4.6-1.4z" fill="${FR_C}"/>` },
+  fr_arch: { vb: '0 0 84 104', ratio: 84 / 104, def: FR_C, art:
+    '<path d="M10,82 L10,40.0 A32.0,32.0 0 0 1 74,40.0 L74,82 Q74,96 60,96 L24,96 Q10,96 10,82 Z" fill="#fffdf9"/>'
+    + `<path d="M10,82 L10,40.0 A32.0,32.0 0 0 1 74,40.0 L74,82 Q74,96 60,96 L24,96 Q10,96 10,82 Z" fill="none" stroke="${FR_C}" stroke-width="3"/>`
+    + `<path d="M15,81 L15,40.0 A27.0,27.0 0 0 1 69,40.0 L69,81 Q69,91 59,91 L25,91 Q15,91 15,81 Z" fill="none" stroke="${FR_C}" stroke-width="1.2" opacity="0.55"/>` },
+}
+export const RECOLORABLE = new Set([...Object.keys(STICKER_DEFAULT), ...RECOLOR_PNG, ...Object.keys(FRAMES)])
+// 색 팔레트 — 뮤트 톤 전 스펙트럼(라이트→미드→진한). 2026-07-26 정리+보강(창업자 "색이 다 비슷비슷" → 겹치는 웜핑크 3개 정리, 청록·테라코타 미드 + 파인·네이비·와인 진한 뮤트 추가). '기본'은 color 비우면 원래색.
+// ⚠️ 진한 색(밝기<0.5)은 recolorToDataURL이 채움 밝기를 목표 쪽으로 끌어내려(음영 유지) '진한 뮤트'로 렌더. SVG 스티커는 hex 그대로 채움.
 export const STICKER_COLORS = [
-  { key: 'coral', color: '#d68f88' },
-  { key: 'rose', color: '#cf9fae' },
-  { key: 'red', color: '#c37a68' },
-  { key: 'gold', color: '#ccaa6d' },
-  { key: 'olive', color: '#94a37e' },
-  { key: 'sky', color: '#93aabd' },
-  { key: 'lilac', color: '#b2a3c1' },
-  { key: 'charcoal', color: '#6b6255' },
-  { key: 'cream', color: '#e6dcc7' },
+  { key: 'coral', color: '#d78e86' },   // 코랄(라이트 웜핑크)
+  { key: 'rose', color: '#cc7d96' },    // 로즈(선명한 핑크 — coral과 구분)
+  { key: 'gold', color: '#c9a250' },    // 머스타드 골드
+  { key: 'olive', color: '#8a9a63' },   // 올리브
+  { key: 'teal', color: '#4f948c' },    // 청록(미드·신규)
+  { key: 'sky', color: '#7b9ac6' },     // 하늘
+  { key: 'lilac', color: '#a98cc4' },   // 라일락
+  { key: 'brown', color: '#a9754f' },   // 테라코타 브라운(미드·신규)
+  { key: 'pine', color: '#3f6b4e' },    // 파인그린(진한·신규)
+  { key: 'navy', color: '#3f5878' },    // 네이비(진한·신규)
+  { key: 'wine', color: '#83495d' },    // 와인(진한·신규)
+  { key: 'charcoal', color: '#514840' },// 차콜(진한 뉴트럴)
+  { key: 'cream', color: '#e6dcc7' },   // 크림(라이트 뉴트럴)
 ]
 
 // ── PNG 리컬러 (캔버스 색조 치환) ──
@@ -298,7 +330,7 @@ function hexToHls(hex) {
 }
 const RECOLOR_CACHE = new Map() // `${src}|${color}` → dataURL (한 번만 계산)
 function recolorToDataURL(img, hex) {
-  const th = hexToHls(hex)[0], ts = hexToHls(hex)[2]
+  const thl = hexToHls(hex), th = thl[0], tl = thl[1], ts = thl[2]
   const cv = document.createElement('canvas')
   cv.width = img.naturalWidth; cv.height = img.naturalHeight
   const ctx = cv.getContext('2d')
@@ -311,7 +343,9 @@ function recolorToDataURL(img, hex) {
     const l = hls[1], s = hls[2]
     if (s > 0.16 && l > 0.16 && l < 0.93) { // 포인트 컬러만(검정 외곽선·흰색 제외)
       const ns = Math.min(0.9, Math.max(ts * 0.9, s * 0.55))
-      const rgb = hlsToRgb(th, l, ns)
+      // 진한 뮤트 색(목표 밝기<0.5)은 채움 밝기를 목표 쪽으로 끌어내려 '진한' 느낌 — 내부 음영(명암 차)은 유지, 밝게는 안 함. 라이트 색은 기존 그대로(밝기 보존).
+      const nl = tl < 0.5 ? Math.max(0.12, Math.min(l, tl + (l - 0.72) * 0.55)) : l
+      const rgb = hlsToRgb(th, nl, ns)
       d[i] = rgb[0] * 255; d[i + 1] = rgb[1] * 255; d[i + 2] = rgb[2] * 255
     }
   }
@@ -372,6 +406,14 @@ export function StickerArt({ id, color, style, motion }) {
       </span>
     )
   }
+  const fr = FRAMES[id]
+  if (fr) {
+    // 🖼 벡터 프레임 — def 색만 리컬러(hex 치환). preserveAspectRatio 기본(meet)이라 어떤 칸에도 비율 유지.
+    let art = fr.art
+    if (color) art = art.split(fr.def).join(color)
+    const svg = `<svg viewBox="${fr.vb}" width="100%" height="100%" style="display:block">${art}</svg>`
+    return <span style={{ display: 'block', width: '100%', height: '100%', ...style }} dangerouslySetInnerHTML={{ __html: svg }} />
+  }
   if (BUDDY_IDS.has(id)) {
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
@@ -387,7 +429,7 @@ export function StickerArt({ id, color, style, motion }) {
 }
 
 // 스티커별 가로:세로 비율(레이아웃용). 말풍선은 넓고, 부엌 식구들은 세로가 길다.
-export const stickerRatio = (id) => (id === 'yum' ? 74 / 46 : KITCHEN_FAMILY[id] ? KITCHEN_FAMILY[id].ratio : PHOTO_FAMILY[id] ? PHOTO_FAMILY[id].ratio : 1)
+export const stickerRatio = (id) => (id === 'yum' ? 74 / 46 : FRAMES[id] ? FRAMES[id].ratio : KITCHEN_FAMILY[id] ? KITCHEN_FAMILY[id].ratio : PHOTO_FAMILY[id] ? PHOTO_FAMILY[id].ratio : 1)
 
 const kfItems = (prefix) => KF_NAMES.map(([n]) => prefix + n)
 // ── 스티커 피커 그룹 (2026-07-22 재편) — 다꾸 리서치 기반 6탭 IA + 음식 서브칩 ──
@@ -417,10 +459,15 @@ export const STICKER_GROUPS = [
   { key: 'f_yang', tab: 'food', chip: '양식', items: ['fy_yng01', 'fy_yng02', 'fy_yng05', 'fy_yng07', 'fy_yng09', 'fy_yng12'] },
   { key: 'f_jung', tab: 'food', chip: '중식', items: ['fj_jsk03', 'fj_jsk01', 'fj_jsk04', 'fj_jsk05', 'fj_jsk02', 'fj_jsk15'] },
   { key: 'f_il', tab: 'food', chip: '일식', items: ['fi_isk03', 'fi_isk05', 'fi_isk02', 'fi_isk07', 'fi_isk06', 'fi_isk13'] },
-  { key: 'f_ing', tab: 'food', chip: '재료', items: ['ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae03', 'ig_jae12', 'ig_frb01', 'ig_frb03', 'ig_frb07', 'ig_frb13', 'ig_ggi03', 'ig_ggi16', 'ig_hsm01'] },
+  // 🥕 재료 — 여름 제철 귀여운 식재료(꾸미기용) 몇 개 추가(복숭아·수박·체리·옥수수·가지). 분기별 제철로 교체 예정(사계절용은 픽스).
+  { key: 'f_ing', tab: 'food', chip: '재료', items: ['ig_frb02', 'ig_frb04', 'ig_frb08', 'ig_jcb19', 'ig_jae16', 'ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae03', 'ig_jae12', 'ig_frb01', 'ig_frb03', 'ig_frb07', 'ig_frb13', 'ig_ggi03', 'ig_ggi16', 'ig_hsm01'] },
   // ✨ 데코 (색 바꾸는 SVG 심볼 유지 + 새 데코 PNG + 응원)
+  // 📷 벡터 프레임 (2026-07-26 신규 · item③) — 곰펭 얹어 꾸미는 액자틀. SVG라 크게 키워도 안 깨짐 + 🎨색 바꾸기(배경색과 맞추기). 배경 바로 옆(데코 맨 위)에 둠 — 프레임 먼저 놓고 위에 곰펭.
+  { key: 'deco_vframe', tab: 'deco', label: '📷 프레임(곰펭 넣기)', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
   { key: 'deco_recolor', tab: 'deco', label: '🎨 색 바꾸기', items: ['heart', 'star', 'sparkle', 'bow', 'vhand'] },
-  { key: 'deco_png', tab: 'deco', label: '✨ 데코', items: ['dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
+  // 📝 메모·라벨 (2026-07-26 신규) — 다꾸 감성 손그림 메모지·라벨. 글씨 얹어 꾸미기 좋음(작게~중간 크기용, 크게 키우면 흐려짐).
+  { key: 'deco_frame', tab: 'deco', label: '📝 메모·라벨', items: ['dc_dma01', 'dc_dma03', 'dc_dma06', 'dc_dma05', 'dc_dma10', 'dc_dma14', 'dc_dma16', 'dc_dma07', 'dc_dma13', 'dc_dma11'] },
+  { key: 'deco_png', tab: 'deco', label: '✨ 데코', items: ['dc_nd08', 'dc_nd01', 'dc_nd05', 'dc_nd16', 'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
   { key: 'deco_cheer', tab: 'deco', label: '💬 응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
   // 💪 라이프
   { key: 'life', tab: 'life', label: '💪 운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },

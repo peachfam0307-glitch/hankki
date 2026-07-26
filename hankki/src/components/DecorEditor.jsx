@@ -106,13 +106,13 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const selIsGompeng = selItem?.type === 'sticker' && selItem.key?.startsWith('gp_') // 곰펭도 모션·효과 컨텍스트바
   const hasCtx = selItem && (selItem.type === 'note' || selItem.type === 'text' || selItem.type === 'tape' || selIsKitchen || selIsGompeng || (selItem.type === 'sticker' && RECOLORABLE.has(selItem.key)))
 
-  // 서랍 탭 — 배경부터 시작(꾸미는 순서: 배경→글자→친구들→음식·데코·라이프). 음식만 요리별 서브칩(2단계).
+  // 서랍 탭 — 배경 다음 데코(창업자 2026-07-26: 곰펭 넣는 큰 프레임이 배경색이랑 맞춰봐야 해서 배경 옆에). 배경→데코(프레임 먼저)→글자→친구들→음식→라이프. 음식만 요리별 서브칩(2단계).
   const CATS = [
     { key: 'bgtape', label: '🎨 배경' },
+    { key: 'deco', label: '✨ 데코' },
     { key: 'notetext', label: '🗒️ 글자' },
     { key: 'buddies', label: '🐻 친구들' },
     { key: 'food', label: '🍱 음식' },
-    { key: 'deco', label: '✨ 데코' },
     { key: 'life', label: '💪 라이프' },
   ]
   const groupsByTab = (t) => STICKER_GROUPS.filter((g) => g.tab === t)
