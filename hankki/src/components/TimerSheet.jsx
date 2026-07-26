@@ -31,7 +31,7 @@ export default function TimerSheet({ label = '요리 타이머', onClose }) {
     <div className="sheet-mask" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
         <div className="emoji-sheet-head">
-          <span>⏱ 타이머 맞추기</span>
+          <span>타이머 맞추기</span>
           <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
         </div>
         <div style={{ padding: '2px 16px 0' }}>
