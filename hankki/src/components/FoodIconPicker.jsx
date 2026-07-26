@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLayerBack } from '../useBackHandler'
-import FoodIcon, { FOOD_ICON_GROUPS } from './FoodIcon'
+import FoodIcon, { FOOD_ICON_GROUPS, FOOD_NAMES } from './FoodIcon'
 import Portal from './Portal'
 
 // 커스텀 재료/요리 아이콘 선택기 — 카테고리별 그리드 바텀시트.
@@ -41,9 +41,10 @@ export default function FoodIconPicker({ value, onChange, size = 64 }) {
                           onChange(k)
                           setOpen(false)
                         }}
-                        aria-label={k}
+                        aria-label={FOOD_NAMES[k] || k}
                       >
-                        <FoodIcon name={k} size={34} />
+                        <FoodIcon name={k} size={36} />
+                        <span className="ficon-name">{FOOD_NAMES[k] || ''}</span>
                       </button>
                     ))}
                   </div>

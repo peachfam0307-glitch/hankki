@@ -7,14 +7,19 @@ import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 import Portal from '../components/Portal'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { shareDecoratedCover } from '../shareCover'
+// 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
+import uiGomHeart from '../assets/ui/gom_heart.png'
+import uiGomThumb from '../assets/ui/gom_thumbsup.png'
+import uiGomLaugh from '../assets/ui/gom_laugh.png'
+import uiHandPoint from '../assets/ui/hand_point.png'
 
 // 🎴 카드자랑 탭 — 바이럴 진입점. 내 레시피를 골라 자랑한다.
 // ⭐ 창업자 방향: 주인공은 '내가 꾸민 표지', 랜덤 카드는 옵션(메인 아님).
 //    → 큰 랜덤 히어로 버튼 없음. 레시피를 탭하면 [🎨 내 꾸민 표지 / 🎴 랜덤 카드] 둘 중 고른다.
 const BRAG_COACH_KEY = 'hankki:coach:brag'
 const BRAG_COACH_STEPS = [
-  { sel: '[data-coach="brag-list"]', label: '🎴 자랑할 레시피 고르기', desc: '레시피를 탭하면 → 🎨 내가 꾸민 표지 그대로 or 🎴 랜덤 카드로 골라 카톡·인스타에 보내요' },
-  { sel: '[data-coach="brag-list"]', label: '🖼 내 레시피 표지로 저장', desc: '랜덤 카드가 마음에 들면 그 자리에서 “표지로 저장”도 돼요' },
+  { sel: '[data-coach="brag-list"]', img: uiGomHeart, label: '자랑할 레시피 고르기', desc: '레시피를 탭하면 → 내가 꾸민 표지 그대로 or 랜덤 카드로 골라 카톡·인스타에 보내요' },
+  { sel: '[data-coach="brag-list"]', img: uiGomThumb, label: '내 레시피 표지로 저장', desc: '랜덤 카드가 마음에 들면 그 자리에서 “표지로 저장”도 돼요' },
 ]
 
 export default function BragScreen() {
@@ -67,16 +72,17 @@ export default function BragScreen() {
       </div>
       <div className="pad">
         <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 16 }}>
-          🎴 내 레시피를 <b style={{ color: 'var(--text)' }}>내가 꾸민 표지</b>나 <b style={{ color: 'var(--text)' }}>예쁜 랜덤 카드</b>로 친구한테 자랑하고, 표지로도 저장해요.
+          내 레시피를 <b style={{ color: 'var(--text)' }}>내가 꾸민 표지</b>나 <b style={{ color: 'var(--text)' }}>예쁜 랜덤 카드</b>로 친구한테 자랑하고, 표지로도 저장해요.
         </div>
 
         {/* 안내 — 자랑할 레시피를 눌러주세요(창업자 요청) */}
-        <div style={{ fontSize: 14.5, fontWeight: 800, color: 'var(--text)', margin: '2px 2px 11px' }}>
-          👇 자랑할 레시피를 눌러주세요
+        <div style={{ fontSize: 14.5, fontWeight: 800, color: 'var(--text)', margin: '2px 2px 11px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <img src={uiHandPoint} alt="" draggable={false} style={{ width: 22, height: 22, objectFit: 'contain', flex: '0 0 auto' }} />
+          자랑할 레시피를 눌러주세요
         </div>
 
         {list.length === 0 ? (
-          <div className="empty">{'아직 레시피가 없어요.\n가져오기로 담으면 여기서 예쁜 카드로 자랑할 수 있어요 🎴'}</div>
+          <div className="empty">{'아직 레시피가 없어요.\n가져오기로 담으면 여기서 예쁜 카드로 자랑할 수 있어요'}</div>
         ) : (
           <div className="grid2" data-coach="brag-list">
             {list.map((r) => (
@@ -96,20 +102,20 @@ export default function BragScreen() {
         <Portal>
           <div className="sheet-mask" onClick={() => setPick(null)}>
             <div className="sheet" onClick={(e) => e.stopPropagation()}>
-              <div style={{ fontSize: 16.5, fontWeight: 800, textAlign: 'center', color: 'var(--text)' }}>{pick.title} 자랑하기 💌</div>
+              <div style={{ fontSize: 16.5, fontWeight: 800, textAlign: 'center', color: 'var(--text)' }}>{pick.title} 자랑하기</div>
               <div style={{ fontSize: 12.5, color: 'var(--text-sub)', textAlign: 'center', margin: '4px 0 16px' }}>어떻게 보낼까요?</div>
 
-              {/* 🎨 내가 꾸민 표지 — 주인공(먼저·강조) */}
+              {/* 내가 꾸민 표지 — 주인공(먼저·강조) */}
               <button className="press" onClick={sendCover}
                 style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--brown)', border: 'none', marginBottom: 10, textAlign: 'left' }}>
-                <span style={{ fontSize: 30 }}>🎨</span>
+                <img src={uiGomHeart} alt="" draggable={false} style={{ width: 44, height: 44, objectFit: 'contain', flex: '0 0 auto' }} />
                 <span><span style={{ fontSize: 15.5, fontWeight: 800, color: '#fff' }}>내가 꾸민 표지 그대로</span><br /><span style={{ fontSize: 12.5, color: 'rgba(255,255,255,.9)' }}>{isDecorated(pick) ? '배경·스티커·효과 그대로 보내요' : '먼저 예쁘게 꾸며볼까요 →'}</span></span>
               </button>
 
-              {/* 🎴 랜덤 카드 — 옵션 */}
+              {/* 랜덤 카드 — 옵션 */}
               <button className="press" onClick={drawRandom}
                 style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--cream)', border: 'none', textAlign: 'left' }}>
-                <span style={{ fontSize: 30 }}>🎴</span>
+                <img src={uiGomThumb} alt="" draggable={false} style={{ width: 44, height: 44, objectFit: 'contain', flex: '0 0 auto' }} />
                 <span><span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>랜덤 카드로 뽑기</span><br /><span style={{ fontSize: 12.5, color: 'var(--text-sub)' }}>꼬르곰·펭펭이 매번 다르게 · 안 꾸며도 예쁘게 · 다시 뽑기</span></span>
               </button>
             </div>

@@ -21,6 +21,9 @@ import { useWakeLock } from '../useWakeLock'
 import { useLayerBack } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
+// 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
+import uiGomHeart from '../assets/ui/gom_heart.png'
+import uiGomThumb from '../assets/ui/gom_thumbsup.png'
 
 // 첫 방문 코치마크 — 숨어 있는 중요 기능을 반짝이며 알려준다(창업자 딸 아이디어 ⭐)
 const COACH_KEY = 'hankki:coach:detail'
@@ -435,16 +438,16 @@ export default function RecipeDetailScreen({ id }) {
         <Portal>
           <div className="sheet-mask" onClick={() => setShareSheet(false)}>
             <div className="sheet" onClick={(e) => e.stopPropagation()}>
-              <div style={{ fontSize: 16.5, fontWeight: 800, textAlign: 'center', color: 'var(--text)' }}>친구랑 공유하기 💌</div>
+              <div style={{ fontSize: 16.5, fontWeight: 800, textAlign: 'center', color: 'var(--text)' }}>친구랑 공유하기</div>
               <div style={{ fontSize: 12.5, color: 'var(--text-sub)', textAlign: 'center', margin: '4px 0 16px' }}>예쁜 카드로 카톡·인스타에 톡 보내요</div>
               <button className="press" onClick={() => { setShareSheet(false); setDrawOpen(true) }}
                 style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--cream)', border: 'none', marginBottom: 10, textAlign: 'left' }}>
-                <span style={{ fontSize: 30 }}>🎴</span>
+                <img src={uiGomThumb} alt="" draggable={false} style={{ width: 44, height: 44, objectFit: 'contain', flex: '0 0 auto' }} />
                 <span><span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>랜덤 카드 뽑기</span><br /><span style={{ fontSize: 12.5, color: 'var(--text-sub)' }}>꼬르곰·펭펭이 매번 다르게 · 안 꾸며도 예쁘게</span></span>
               </button>
               <button className="press" onClick={isDecorated ? doShareCover : () => { setShareSheet(false); setDecorOpen(true) }}
                 style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--cream)', border: 'none', textAlign: 'left' }}>
-                <span style={{ fontSize: 30 }}>🎨</span>
+                <img src={uiGomHeart} alt="" draggable={false} style={{ width: 44, height: 44, objectFit: 'contain', flex: '0 0 auto' }} />
                 <span><span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>내가 꾸민 표지로</span><br /><span style={{ fontSize: 12.5, color: 'var(--text-sub)' }}>{isDecorated ? '배경·스티커·효과 그대로 캡처' : '먼저 예쁘게 꾸며볼까요 →'}</span></span>
               </button>
             </div>

@@ -37,6 +37,7 @@ export default function BottomNav({ active, onChange, onImport }) {
           <button
             key={it.key}
             className="nav-item press"
+            data-coach={it.key === 'shop' ? 'nav-shop' : it.key === 'brag' ? 'nav-brag' : undefined}
             onClick={() => onChange(it.key)}
             aria-current={on ? 'page' : undefined}
           >

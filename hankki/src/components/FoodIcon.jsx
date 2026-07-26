@@ -651,6 +651,8 @@ export const FOOD_ICON_GROUPS = [
   { label: '🍝 양식', items: ['fe_24', 'fe_27', 'fe_26', 'fe_42', 'fe_43', 'fe_44', 'fe_52', 'fe_53', 'fy_y01', 'fy_y02', 'fy_y03', 'fy_y04', 'fy_y05', 'fy_y06', 'fy_y07', 'fy_y08', 'fy_y09', 'fy_y10', 'fy_y11', 'fy_y13'] },
   { label: '🥢 중식', items: ['fe_47', 'fj_c01', 'fj_c02', 'fj_c03', 'fj_c04', 'fj_c05', 'fj_c06', 'fj_c09', 'fj_c10', 'fj_c11', 'fj_c13', 'fj_c14'] },
   { label: '🍣 일식', items: ['fe_45', 'fe_46', 'fi_j01', 'fi_j02', 'fi_j03', 'fi_j04', 'fi_j06', 'fi_j07', 'fi_j09', 'fi_j10', 'fi_j11', 'fi_j13', 'fi_j14'] },
+  // 🌏 태국·베트남 (2026-07-26 창업자 제공, item④) — 팟타이(기존 fe_09) + 신규 9
+  { label: '🌏 태국·베트남', items: ['fe_09', 'fe_54', 'fe_56', 'fe_55', 'fe_60', 'fe_57', 'fe_59', 'fe_58', 'fe_61', 'fe_62'] },
   { label: '요리 아이콘', items: ['rice', 'donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert', 'icecream'] },
   { label: '밥·면·빵', items: ['rice', 'donburi', 'noodle', 'guksu', 'bread', 'tteok', 'tofu'] },
   { label: '채소', items: ['cabbage', 'kimchi', 'lettuce', 'onion', 'garlic', 'greenOnion', 'sprout', 'potato', 'carrot', 'chili', 'pepper', 'cucumber', 'eggplant', 'corn', 'radish', 'mushroom', 'broccoli', 'beans'] },
@@ -673,7 +675,17 @@ const ICON_RULES = [
   [['야채포케', '야채 포케', '채소포케', '베지포케'], 'fe_07'],
   [['포케볼', '포케 볼', '포케'], 'fe_06'],
   [['감바스'], 'fe_08'],
-  [['팟타이'], 'fe_09'],
+  [['팟타이', '팟타이면', '패드타이'], 'fe_09'],
+  // 🌏 태국·베트남 9종 (2026-07-26 창업자 제공, item④) — 구체 요리명이라 국수·샐러드 등 범용 규칙보다 먼저.
+  [['쌀국수', '소고기쌀국수', '차돌쌀국수', '베트남쌀국수', '양지쌀국수', '월남국수'], 'fe_54'],
+  [['뿌팟퐁커리', '뿌팟퐁', '푸팟퐁커리', '게살커리', '크랩커리', '게커리'], 'fe_55'],
+  [['분짜'], 'fe_56'],
+  [['월남쌈', '월남 쌈', '라이스페이퍼', '고이꾸온', '생춘권', '라이스페이퍼롤'], 'fe_57'],
+  [['분보싸오', '분보사오', '분보싸우', '분보'], 'fe_58'],
+  [['스프링롤', '스프링 롤', '짜조', '베트남춘권', '월남튀김만두', '프라이드스프링롤'], 'fe_59'],
+  [['쏨땀', '쏨탐', '파파야샐러드', '그린파파야샐러드', '쏨땀무'], 'fe_60'],
+  [['반미', '바인미', '반미샌드위치', '베트남샌드위치'], 'fe_61'],
+  [['반쎄오', '바인쎄오', '반세오', '베트남부침개', '반쌔오'], 'fe_62'],
   [['불고기'], 'fe_10'],
   [['상추겉절이', '상추 겉절이'], 'fe_11'],
   [['공심채'], 'fe_12'],
@@ -914,6 +926,13 @@ export function guessFoodIcon(name = '') {
   }
   return 'default'
 }
+
+// 🏷 아이콘 식별용 이름 — 픽커에서 아이콘 아래 라벨로(창업자 2026-07-26 "음식 아래 이름 달아 식별되게"). ICON_RULES 첫 키워드=대표 이름(구체 규칙이 위라 정확). 규칙 없는 몇 개만 보충.
+export const FOOD_NAMES = (() => {
+  const m = {}
+  for (const [keys, key] of ICON_RULES) if (!m[key]) m[key] = keys[0]
+  return { seafood: '해산물', dessert: '디저트', icecream: '아이스크림', bag: '장바구니', basket: '바구니', box: '박스', ...m }
+})()
 
 export default function FoodIcon({ name = 'default', size = 40 }) {
   // 🍱 뉴 음식 이모지(PNG) — 완성요리 사진을 아이콘으로. 없으면 SVG 브랜드 아이콘.

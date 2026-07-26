@@ -1064,20 +1064,39 @@ img {
 /* 커스텀 아이콘 그리드 (재료·요리) */
 .ficon-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 .ficon-cell {
-  aspect-ratio: 1;
   border-radius: 14px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 3px;
+  padding: 9px 4px 7px;
   background: linear-gradient(135deg, #edeee9, #dfe2da);
   transition: transform 0.08s ease, box-shadow 0.12s ease;
 }
+/* 🏷 아이콘 식별용 이름 라벨(창업자 "음식 아래 이름 달아 식별되게") — 이미지엔 안 박고 글자로 */
+.ficon-name {
+  font-size: 10.5px;
+  line-height: 1.15;
+  color: var(--text-sub);
+  text-align: center;
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: keep-all;
+}
 .ficon-cell.on {
   box-shadow: inset 0 0 0 2px var(--sand);
+}
+.ficon-cell.on .ficon-name {
+  color: var(--brown);
+  font-weight: 700;
 }
 .ficon-cell:active {
   transform: scale(0.9);
