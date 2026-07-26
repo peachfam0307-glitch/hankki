@@ -119,12 +119,12 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
 
   // 서랍 탭 — 배경 다음 데코(창업자 2026-07-26: 꼬르곰·펭펭 넣는 큰 프레임이 배경색이랑 맞춰봐야 해서 배경 옆에). 배경→데코(프레임 먼저)→글자→친구들→음식→라이프. 음식만 요리별 서브칩(2단계).
   const CATS = [
-    { key: 'bgtape', label: '🎨 배경' },
-    { key: 'deco', label: '✨ 데코' },
-    { key: 'notetext', label: '🗒️ 글자' },
-    { key: 'buddies', label: '🐻 친구들' },
-    { key: 'food', label: '🍱 음식' },
-    { key: 'life', label: '💪 라이프' },
+    { key: 'bgtape', label: '배경' },
+    { key: 'deco', label: '데코' },
+    { key: 'notetext', label: '글자' },
+    { key: 'buddies', label: '친구들' },
+    { key: 'food', label: '음식' },
+    { key: 'life', label: '라이프' },
   ]
   const groupsByTab = (t) => STICKER_GROUPS.filter((g) => g.tab === t)
   const foodGroups = groupsByTab('food') // 각 그룹 = 요리별 서브칩(한식·양식·중식·일식·분식·디저트·재료)
@@ -212,7 +212,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
         </div>
         {restoredRef.current && (
           <div style={{ flex: '0 0 auto', background: '#eef3e8', color: '#4f5a44', fontSize: 12.5, fontWeight: 700, textAlign: 'center', padding: '6px 10px' }}>
-            🛟 저장 안 하고 나갔던 꾸미기를 이어서 불러왔어요
+            저장 안 하고 나갔던 꾸미기를 이어서 불러왔어요
           </div>
         )}
 
@@ -240,16 +240,16 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
           <div style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '9px 12px', display: 'flex', flexDirection: 'column', gap: 7 }}>
             {/* 🧷 순서 — 어떤 아이템이든 맨 뒤/맨 앞으로. 프레임·포스트잇에 스티커가 가려도 다 꺼낼 필요 없이 여기서 정리. */}
             <div style={ctxRow}>
-              <span style={ctxLabel}>🧷 순서</span>
+              <span style={ctxLabel}>순서</span>
               <div style={{ display: 'flex', gap: 7, flex: 1 }}>
-                <button className="press" onClick={() => sendToBack(sel)} style={layerBtn}>⬇ 맨 뒤로</button>
-                <button className="press" onClick={() => bringToFront(sel)} style={layerBtn}>⬆ 맨 앞으로</button>
+                <button className="press" onClick={() => sendToBack(sel)} style={layerBtn}>맨 뒤로</button>
+                <button className="press" onClick={() => bringToFront(sel)} style={layerBtn}>맨 앞으로</button>
               </div>
             </div>
             {(selIsKitchen || selIsGompeng) && (
               <>
                 <div style={ctxRow}>
-                  <span style={ctxLabel}>✨ 움직임</span>
+                  <span style={ctxLabel}>움직임</span>
                   <div style={ctxScroll}>
                     {MOTIONS.filter((m) => m.base).map((m) => {
                       const on = (selItem.motion || 'tongtong') === m.key
@@ -261,7 +261,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                   </div>
                 </div>
                 <div style={ctxRow}>
-                  <span style={ctxLabel}>💫 효과</span>
+                  <span style={ctxLabel}>효과</span>
                   <div style={ctxScroll}>
                     {FX_KINDS.filter((f) => f.base).map((f) => {
                       const on = (selItem.fx || 'none') === f.key
@@ -276,7 +276,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             )}
             {selItem.type === 'sticker' && RECOLORABLE.has(selItem.key) && (
               <div style={ctxRow}>
-                <span style={ctxLabel}>🎨 색</span>
+                <span style={ctxLabel}>색</span>
                 <div style={ctxScroll}>
                   <button className="press" onClick={() => patch(sel, { color: null })} aria-label="기본색"
                     style={{ ...ctxDot, border: !selItem.color ? selOn : selOff, fontSize: 10, fontWeight: 800, color: 'var(--text-sub)', background: 'var(--surface)' }}>기본</button>
@@ -290,7 +290,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             {selItem.type === 'tape' && (
               <>
                 <div style={ctxRow}>
-                  <span style={ctxLabel}>🎀 무늬</span>
+                  <span style={ctxLabel}>무늬</span>
                   <div style={ctxScroll}>
                     {TAPE_PATTERNS.map((t) => (
                       <button key={t.key} className="press" onClick={() => patch(sel, { key: t.key })} aria-label={`테이프 ${t.label}`}
@@ -299,7 +299,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                   </div>
                 </div>
                 <div style={ctxRow}>
-                  <span style={ctxLabel}>📏 굵기</span>
+                  <span style={ctxLabel}>굵기</span>
                   <div style={ctxScroll}>
                     {TAPE_WIDTHS.map((w) => {
                       const on = (selItem.ratio || 3.4) === w.ratio
@@ -314,7 +314,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             )}
             {selItem.type === 'text' && (
               <div style={ctxRow}>
-                <span style={ctxLabel}>✍️ 글씨</span>
+                <span style={ctxLabel}>글씨</span>
                 <div style={ctxScroll}>
                   {TEXT_FONTS.map((f) => (
                     <button key={f.key} className="press" onClick={() => patch(sel, { font: f.key })}
@@ -326,7 +326,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             {selItem.type === 'note' && (
               <>
                 <div style={ctxRow}>
-                  <span style={ctxLabel}>✍️ 글씨</span>
+                  <span style={ctxLabel}>글씨</span>
                   <div style={ctxScroll}>
                     {TEXT_FONTS.map((f) => (
                       <button key={f.key} className="press" onClick={() => patch(sel, { font: f.key })}
@@ -384,7 +384,6 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                   <div className="decor-sec-label">표지 그림</div>
                   <button className="press" onClick={() => setThumb(thumb === 'none' ? origThumb : 'none')}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 14px', borderRadius: 12, background: thumb === 'none' ? 'var(--brown)' : 'var(--cream)', color: thumb === 'none' ? '#fff' : 'var(--text)', fontWeight: 800, fontSize: 13.5, textAlign: 'left' }}>
-                    <span style={{ fontSize: 17 }}>{thumb === 'none' ? '🖼️' : '🧽'}</span>
                     {thumb === 'none' ? '표지 그림 되돌리기' : '표지 그림 지우기 (아이콘·이모지·사진)'}
                   </button>
                   <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>깨끗한 배경에 꾸미고 싶을 때. 원래 그림은 언제든 되돌려요.</div>
@@ -487,7 +486,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
               key: 'text',
               label: noteEdit.type === 'text' ? '표지에 쓸 글자' : '나만의 팁 · 메모',
               value: noteEdit.text || '',
-              placeholder: noteEdit.type === 'text' ? '예) 우리집 최고 메뉴 ♡' : '예) 설탕 반만! 더 담백해',
+              placeholder: noteEdit.type === 'text' ? '예) 우리집 최고 메뉴' : '예) 설탕 반만! 더 담백해',
               multiline: true,
             }]}
             submitLabel="붙이기"

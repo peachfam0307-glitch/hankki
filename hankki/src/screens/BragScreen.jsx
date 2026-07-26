@@ -46,7 +46,7 @@ export default function BragScreen() {
       // 안 꾸민 레시피 → 상세를 열어 꾸미기로 유도
       setPick(null)
       nav.push({ name: 'detail', id: r.id })
-      nav.showToast('먼저 표지를 예쁘게 꾸며볼까요? 🎨')
+      nav.showToast('먼저 표지를 예쁘게 꾸며볼까요?')
       return
     }
     setBusy(true) // 로딩 오버레이(먹통처럼 안 보이게)
@@ -128,7 +128,7 @@ export default function BragScreen() {
           <ShareDrawCard
             recipe={share}
             onClose={() => setShare(null)}
-            onSaveCover={(img) => { updateRecipe(share.id, { thumb: 'photo', image: img }); nav.showToast('카드를 표지로 저장했어요 ✨') }}
+            onSaveCover={(img) => { updateRecipe(share.id, { thumb: 'photo', image: img }); nav.showToast('카드를 표지로 저장했어요') }}
           />
         </Portal>
       )}

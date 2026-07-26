@@ -46,7 +46,7 @@ export default function InboxScreen() {
         {list.length === 0 && (
           <div className="empty">
             {filter === 'unsorted'
-              ? '정리할 레시피가 없어요. 깔끔하네요! ✨'
+              ? '정리할 레시피가 없어요. 깔끔하네요!'
               : 'Inbox가 비어 있어요.\n가져오기로 레시피를 모아보세요.'}
           </div>
         )}

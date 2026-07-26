@@ -202,11 +202,11 @@ export const MOTIONS = [
 export const motionClass = (m) => (m && m !== 'none' ? `hk-m-${m}` : '')
 export const FX_KINDS = [
   { key: 'none', label: '없음', base: true },
-  { key: 'spark', label: '반짝이 ✨', base: true },
-  { key: 'heart', label: '하트 💗', base: true },
-  { key: 'bubble', label: '뽀글 🫧', base: true },
-  { key: 'food', label: '맛있는것들 🍔' },
-  { key: 'steam', label: '김모락 ♨️' },
+  { key: 'spark', label: '반짝이', base: true },
+  { key: 'heart', label: '하트', base: true },
+  { key: 'bubble', label: '뽀글', base: true },
+  { key: 'food', label: '맛있는것들' },
+  { key: 'steam', label: '김모락' },
 ]
 // 효과 파티클 — 이모지 대신 뮤트 톤 커스텀 도형(세련되게), 머리 위쪽에 작게 배치.
 const SVG_SPARK = (
@@ -440,7 +440,7 @@ const kfItems = (prefix) => KF_NAMES.map(([n]) => prefix + n)
 export const STICKER_GROUPS = [
   // 🐻🐧 꼬르곰·펭펭 (물결 정본·2026-07-23) — 친구들 탭 맨 위 = 우리 애기들이 메인. 곰4·펭5·콤비4.
   {
-    key: 'gompeng', tab: 'buddies', label: '🐻🐧 꼬르곰·펭펭', items: [
+    key: 'gompeng', tab: 'buddies', label: '꼬르곰·펭펭', items: [
       'gp_gomft', 'gp_gomtb', 'gp_gomv', 'gp_gomhi',
       'gp_pengft', 'gp_pengtb', 'gp_pengv', 'gp_penghi', 'gp_pengym',
       'gp_duohi', 'gp_duoht', 'gp_duoh5', 'gp_duotb',
@@ -448,13 +448,13 @@ export const STICKER_GROUPS = [
   },
   // 🍬 옛날 친구들 (곰펭 아래로)
   {
-    key: 'kitchen_candy', tab: 'buddies', label: '🍬 캔디 친구들', items: [
+    key: 'kitchen_candy', tab: 'buddies', label: '캔디 친구들', items: [
       'kf_c_gomgom', 'cc17', 'kf_c_ppyak', 'cc42', 'kf_c_toto', 'cc11', 'kf_c_nyangi', 'cc20',
       'kf_c_mongmong', 'cc13', 'kf_c_hodu', 'cc30', 'kf_c_hamzzi', 'cc47', 'kf_c_pengpeng', 'cc40',
     ],
   },
-  { key: 'kitchen', tab: 'buddies', label: '🎁 부엌 식구들', items: kfItems('kf_') },
-  { key: 'kitchen_line', tab: 'buddies', label: '✏️ 라인', items: kfItems('kf_l_') },
+  { key: 'kitchen', tab: 'buddies', label: '부엌 식구들', items: kfItems('kf_') },
+  { key: 'kitchen_line', tab: 'buddies', label: '라인', items: kfItems('kf_l_') },
   // 🍱 음식 (요리별 서브칩)
   { key: 'f_han', tab: 'food', chip: '한식', items: ['fh_hnc03', 'fh_htj13', 'fh_hnc04', 'fh_hnb01', 'fh_htj01', 'fh_hnc01', 'fh_hnc10', 'fh_hnc06', 'fh_hnb08', 'fh_htj05'] },
   { key: 'f_bun', tab: 'food', chip: '분식', items: ['fb_bun03', 'fb_bun08', 'fb_bun05', 'fb_bun04', 'fb_bun02', 'fb_bun11'] },
@@ -465,14 +465,14 @@ export const STICKER_GROUPS = [
   { key: 'f_ing', tab: 'food', chip: '재료', items: ['ig_frb02', 'ig_frb04', 'ig_frb08', 'ig_jcb19', 'ig_jae16', 'ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae03', 'ig_jae12', 'ig_frb01', 'ig_frb03', 'ig_frb07', 'ig_frb13', 'ig_ggi03', 'ig_ggi16', 'ig_hsm01'] },
   // ✨ 데코 (색 바꾸는 SVG 심볼 유지 + 새 데코 PNG + 응원)
   // 📷 벡터 프레임 (2026-07-26 신규 · item③) — 꼬르곰·펭펭 얹어 꾸미는 액자틀. SVG라 크게 키워도 안 깨짐 + 🎨색 바꾸기(배경색과 맞추기). 배경 바로 옆(데코 맨 위)에 둠 — 프레임 먼저 놓고 위에 꼬르곰·펭펭. (⚠️캐릭터명 = 꼬르곰·펭펭 풀네임, '곰펭' 금지)
-  { key: 'deco_vframe', tab: 'deco', label: '📷 프레임(꼬르곰·펭펭 넣기)', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
-  { key: 'deco_recolor', tab: 'deco', label: '🎨 색 바꾸기', items: ['heart', 'star', 'sparkle', 'bow', 'vhand'] },
+  { key: 'deco_vframe', tab: 'deco', label: '프레임(꼬르곰·펭펭 넣기)', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
+  { key: 'deco_recolor', tab: 'deco', label: '색 바꾸기', items: ['heart', 'star', 'sparkle', 'bow', 'vhand'] },
   // 📝 메모·라벨 (2026-07-26 신규) — 다꾸 감성 손그림 메모지·라벨. 글씨 얹어 꾸미기 좋음(작게~중간 크기용, 크게 키우면 흐려짐).
-  { key: 'deco_frame', tab: 'deco', label: '📝 메모·라벨', items: ['dc_dma01', 'dc_dma03', 'dc_dma06', 'dc_dma05', 'dc_dma10', 'dc_dma14', 'dc_dma16', 'dc_dma07', 'dc_dma13', 'dc_dma11'] },
-  { key: 'deco_png', tab: 'deco', label: '✨ 데코', items: ['dc_nd08', 'dc_nd01', 'dc_nd05', 'dc_nd16', 'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
-  { key: 'deco_cheer', tab: 'deco', label: '💬 응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
+  { key: 'deco_frame', tab: 'deco', label: '메모·라벨', items: ['dc_dma01', 'dc_dma03', 'dc_dma06', 'dc_dma05', 'dc_dma10', 'dc_dma14', 'dc_dma16', 'dc_dma07', 'dc_dma13', 'dc_dma11'] },
+  { key: 'deco_png', tab: 'deco', label: '데코', items: ['dc_nd08', 'dc_nd01', 'dc_nd05', 'dc_nd16', 'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
+  { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
   // 💪 라이프
-  { key: 'life', tab: 'life', label: '💪 운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },
+  { key: 'life', tab: 'life', label: '운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },
 ]
 
 // 포스트잇 색 팔레트(차분한 종이 톤) — bg / 접힘 / 글자 / line(무늬 선 색)

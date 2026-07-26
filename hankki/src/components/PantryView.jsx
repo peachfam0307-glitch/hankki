@@ -85,7 +85,7 @@ export default function PantryView() {
       }
     })
     setFound(null)
-    nav.showToast(added ? `재료 ${added}개를 냉장고에 넣었어요 🧊` : '이미 냉장고에 다 있어요')
+    nav.showToast(added ? `재료 ${added}개를 냉장고에 넣었어요` : '이미 냉장고에 다 있어요')
   }
 
   const sorted = [...pantry].sort((a, b) => {
@@ -132,7 +132,7 @@ export default function PantryView() {
             boxShadow: '0 3px 10px rgba(90,70,45,0.18)',
           }}
         >
-          <span style={{ fontSize: 18 }}>📷</span> 영수증 촬영
+          영수증 촬영
         </button>
         <button
           className="press"
@@ -151,7 +151,7 @@ export default function PantryView() {
         onClick={() => receiptRef.current?.click()}
         style={{ display: 'block', margin: '0 auto 14px', padding: '4px 8px', color: 'var(--text-sub)', fontSize: 12.5, fontWeight: 600 }}
       >
-        🖼 저장된 영수증·주문내역 사진에서
+        저장된 영수증·주문내역 사진에서
       </button>
 
       <input ref={receiptCamRef} type="file" accept="image/*" capture="environment" onChange={onReceipt} style={{ display: 'none' }} />
@@ -165,7 +165,7 @@ export default function PantryView() {
             <>
               위·아래 매장 정보·합계는 빼고 <b style={{ color: '#f0ede7' }}>상품명·가격이 적힌 부분만</b> 남겨주세요.
               <br />
-              <span style={{ color: '#8f8b83', fontSize: 11.5 }}>딱 맞게 자를수록 · 반듯하고 밝을수록 정확해요 ✨</span>
+              <span style={{ color: '#8f8b83', fontSize: 11.5 }}>딱 맞게 자를수록 · 반듯하고 밝을수록 정확해요</span>
             </>
           }
           onDone={scanReceipt}
@@ -188,7 +188,7 @@ export default function PantryView() {
         <div className="sheet-mask" onClick={() => setFound(null)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
             <div className="emoji-sheet-head">
-              <span>🧾 영수증에서 찾은 재료</span>
+              <span>영수증에서 찾은 재료</span>
               <button className="press" onClick={() => setFound(null)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '2px 16px 0', maxHeight: '48vh', overflowY: 'auto' }}>
@@ -264,7 +264,7 @@ export default function PantryView() {
 
       {matches.length > 0 && (
         <>
-          <div className="sec-head"><div className="h-section">냉장고 파먹기 🍳</div></div>
+          <div className="sec-head"><div className="h-section">냉장고 파먹기</div></div>
           <div className="t-sub" style={{ fontSize: 12.5, marginTop: -2, marginBottom: 12 }}>지금 가진 재료로 만들 수 있어요.</div>
           <div className="grid2">
             {matches.map(({ r, n }) => (
@@ -281,7 +281,7 @@ export default function PantryView() {
       {/* 내 레시피·기본 레시피에서 마땅한 게 없을 때 — 한끼가 추천 */}
       {pantry.length > 0 && matches.length === 0 && (
         <>
-          <div className="sec-head"><div className="h-section">한끼 추천 ✨</div></div>
+          <div className="sec-head"><div className="h-section">한끼 추천</div></div>
           <div className="t-sub" style={{ fontSize: 12.5, marginTop: -2, marginBottom: 12 }}>
             가진 재료로 딱 맞는 레시피가 없네요. 실패 없는 기본 메뉴는 어때요?
           </div>
@@ -338,8 +338,8 @@ function PantryForm({ item, onClose }) {
       expiry: expiry || null,
       memo: memo.trim(),
     }
-    if (editing) { updatePantry(item.id, data); nav.showToast('재료를 수정했어요 ✨') }
-    else { addPantry({ id: newId(), addedAt: Date.now(), ...data }); nav.showToast('냉장고에 넣었어요 🧊') }
+    if (editing) { updatePantry(item.id, data); nav.showToast('재료를 수정했어요') }
+    else { addPantry({ id: newId(), addedAt: Date.now(), ...data }); nav.showToast('냉장고에 넣었어요') }
     onClose()
   }
 

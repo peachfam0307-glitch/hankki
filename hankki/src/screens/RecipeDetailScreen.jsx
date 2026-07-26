@@ -28,12 +28,12 @@ import uiGomThumb from '../assets/ui/gom_thumbsup.png'
 // 첫 방문 코치마크 — 숨어 있는 중요 기능을 반짝이며 알려준다(창업자 딸 아이디어 ⭐)
 const COACH_KEY = 'hankki:coach:detail'
 const COACH_STEPS = [
-  { sel: '[data-coach="edit"]', label: '✏️ 편집', desc: '재료·만드는 법, 언제든 고칠 수 있어요' },
-  { sel: '[data-coach="shop"]', label: '🛒 재료 장보기 담기', desc: '필요한 재료를 한 번에 장보기 리스트에 담아요. 담은 건 장보기 탭에서 체크하며 사면 편해요' },
-  { sel: '[data-coach="pantry"]', label: '🌿 주부의 장바구니', desc: '18년차 주부가 진짜 쓰는 재료예요. 탭하면 바로 사러가기로 연결돼요' },
-  { sel: '[data-coach="share"]', label: '💌 친구와 레시피 공유하기', desc: '재료·만드는 법이 담긴 예쁜 카드로 보내요' },
-  { sel: '[data-coach="decor"]', label: '🎨 레시피 꾸미기', desc: '스티커·마스킹테이프·손글씨로 나만의 표지!' },
-  { sel: '[data-coach="cook"]', label: '🍳 요리 시작', desc: '큰 글씨 요리모드 · 화면 안 꺼짐 · 단계 타이머' },
+  { sel: '[data-coach="edit"]', label: '편집', desc: '재료·만드는 법, 언제든 고칠 수 있어요' },
+  { sel: '[data-coach="shop"]', label: '재료 장보기 담기', desc: '필요한 재료를 한 번에 장보기 리스트에 담아요. 담은 건 장보기 탭에서 체크하며 사면 편해요' },
+  { sel: '[data-coach="pantry"]', label: '주부의 장바구니', desc: '18년차 주부가 진짜 쓰는 재료예요. 탭하면 바로 사러가기로 연결돼요' },
+  { sel: '[data-coach="share"]', label: '친구와 레시피 공유하기', desc: '재료·만드는 법이 담긴 예쁜 카드로 보내요' },
+  { sel: '[data-coach="decor"]', label: '레시피 꾸미기', desc: '스티커·마스킹테이프·손글씨로 나만의 표지!' },
+  { sel: '[data-coach="cook"]', label: '요리 시작', desc: '큰 글씨 요리모드 · 화면 안 꺼짐 · 단계 타이머' },
 ]
 
 // 재료 목록에서 '[양념]'·'[소스]'·'[드레싱]'처럼 대괄호만 있는 줄은 소제목(헤더)으로 그린다.
@@ -50,9 +50,9 @@ export default function RecipeDetailScreen({ id }) {
   const [logEntry, setLogEntry] = useState(null)
   const [decorOpen, setDecorOpen] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
-  const [drawOpen, setDrawOpen] = useState(false) // 🎴 공유 뽑기카드
+  const [drawOpen, setDrawOpen] = useState(false) // 공유 뽑기카드
   const [shareSheet, setShareSheet] = useState(false) // 공유 두 갈래 시트
-  const [coverBusy, setCoverBusy] = useState(false) // 🎨 꾸민 표지 이미지 만드는 중(로딩)
+  const [coverBusy, setCoverBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩)
   // 인라인 오버레이(꾸미기·더보기 메뉴) — 뒤로가기로 닫기.
   // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
   useLayerBack(decorOpen, () => setDecorOpen(false))
@@ -93,14 +93,14 @@ export default function RecipeDetailScreen({ id }) {
     const existing = myEntries.find((d) => new Date(d.at).toDateString() === today)
     if (existing) {
       setLogEntry(existing)
-      nav.showToast('오늘 기록에 이어서 남겨요 ✍️')
+      nav.showToast('오늘 기록에 이어서 남겨요')
       return
     }
     const entry = { id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: null }
     addDiary(entry)
     cook(r.id)
     setLogEntry(entry)
-    nav.showToast('만들었어요! 요리 기록에 남겼어요 🎉')
+    nav.showToast('만들었어요! 요리 기록에 남겼어요')
   }
 
   const del = () => {
@@ -136,7 +136,7 @@ export default function RecipeDetailScreen({ id }) {
   const pantryPicks = picksForIngredients([...(r?.ingredients || []), r?.memo || ''])
   const addAllPicks = () => {
     pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p) }))
-    nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요 🛒`)
+    nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요`)
   }
 
   return (
@@ -206,7 +206,7 @@ export default function RecipeDetailScreen({ id }) {
           aria-label="레시피 꾸미기"
           style={{ position: 'absolute', bottom: 12, right: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--brown)', color: '#fff', fontSize: 13.5, fontWeight: 800, padding: '9px 15px', borderRadius: 999, boxShadow: '0 4px 14px rgba(0,0,0,.3)' }}
         >
-          🎨 레시피 꾸미기
+          레시피 꾸미기
         </button>
       </div>
 
@@ -263,7 +263,7 @@ export default function RecipeDetailScreen({ id }) {
             {latestEntry?.photo ? (
               <img src={latestEntry.photo} alt="" style={{ width: 50, height: 50, borderRadius: 12, objectFit: 'cover', flex: '0 0 auto' }} />
             ) : (
-              <div style={{ width: 50, height: 50, borderRadius: 12, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', fontSize: 22 }}>✍️</div>
+              <div style={{ width: 50, height: 50, borderRadius: 12, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', fontSize: 22 }}></div>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -295,7 +295,7 @@ export default function RecipeDetailScreen({ id }) {
                 data-coach="shop"
                 onClick={() => {
                   addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => scaleIngredient(ing, ratio)))
-                  nav.showToast('재료를 장보기 리스트에 담았어요 🛒')
+                  nav.showToast('재료를 장보기 리스트에 담았어요')
                 }}
               >
                 장보기 담기
@@ -323,8 +323,8 @@ export default function RecipeDetailScreen({ id }) {
         {/* 주부의 장바구니 픽 — 이 레시피가 쓴 제품을 바로 사러가기. 재료 바로 밑(잘 보이는 자리)·수익 연결 */}
         {pantryPicks.length > 0 && (
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 6 }}>🛒 이 레시피, 이걸로 만들었어요</div>
-            <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 10, lineHeight: 1.55 }}>재료를 <b style={{ color: 'var(--brown)' }}>왜 쓰는지 설명</b>은 <b style={{ color: 'var(--brown)' }}>🌿 장보기 → 주부의 장바구니</b>에 있어요</div>
+            <div style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 6 }}>이 레시피, 이걸로 만들었어요</div>
+            <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 10, lineHeight: 1.55 }}>재료를 <b style={{ color: 'var(--brown)' }}>왜 쓰는지 설명</b>은 <b style={{ color: 'var(--brown)' }}>장보기 → 주부의 장바구니</b>에 있어요</div>
             {pantryPicks.map((p) => (
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
                 <span style={{ fontSize: 22, flex: '0 0 auto' }}>{p.emoji}</span>
@@ -335,8 +335,8 @@ export default function RecipeDetailScreen({ id }) {
                 <button className="press" onClick={() => openExternal(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>
               </div>
             ))}
-            <button className="press" onClick={addAllPicks} style={{ width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 14 }}>🛒 이 재료 다 담기</button>
-            <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>담아두고 장보기에서 체크하며 사면 편해요 · 18년차 주부가 진짜 쓰는 재료예요 🌿</div>
+            <button className="press" onClick={addAllPicks} style={{ width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 14 }}>이 재료 다 담기</button>
+            <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>담아두고 장보기에서 체크하며 사면 편해요 · 18년차 주부가 진짜 쓰는 재료예요</div>
           </div>
         )}
 
@@ -344,7 +344,7 @@ export default function RecipeDetailScreen({ id }) {
           <>
             <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
               <div className="h-section">만드는 법</div>
-              <button className="mini-buy press" onClick={() => setTimer(true)}>⏱ 타이머</button>
+              <button className="mini-buy press" onClick={() => setTimer(true)}>타이머</button>
             </div>
             <div>
               {r.steps.map((s, i) => (
@@ -391,7 +391,7 @@ export default function RecipeDetailScreen({ id }) {
           style={{ flex: r.steps?.length > 0 ? '0 0 auto' : 1, paddingLeft: 18, paddingRight: 18 }}
           onClick={onCook}
         >
-          만들었어요 🎉
+          만들었어요
         </button>
       </div>
 
@@ -405,7 +405,7 @@ export default function RecipeDetailScreen({ id }) {
             updateRecipe(r.id, { decor: items, decorBg: bg || 'none', thumb })
             setDecorOpen(false)
             const dressed = items.length || (bg && bg !== 'none') || thumb === 'none'
-            nav.showToast(dressed ? '표지를 예쁘게 꾸몄어요 🎀' : '꾸미기를 비웠어요')
+            nav.showToast(dressed ? '표지를 예쁘게 꾸몄어요' : '꾸미기를 비웠어요')
           }}
           onClose={() => setDecorOpen(false)}
         />
@@ -455,7 +455,7 @@ export default function RecipeDetailScreen({ id }) {
         </Portal>
       )}
 
-      {drawOpen && <Portal><ShareDrawCard recipe={r} onClose={() => setDrawOpen(false)} onSaveCover={(img) => { updateRecipe(r.id, { thumb: 'photo', image: img }); nav.showToast('카드를 표지로 저장했어요 ✨') }} /></Portal>}
+      {drawOpen && <Portal><ShareDrawCard recipe={r} onClose={() => setDrawOpen(false)} onSaveCover={(img) => { updateRecipe(r.id, { thumb: 'photo', image: img }); nav.showToast('카드를 표지로 저장했어요') }} /></Portal>}
 
       {menu && (
        <Portal>

@@ -177,7 +177,7 @@ export default function EditorScreen({ id, prefill }) {
       const cropped = await cropSquare(reader.result, 800)
       set('image', cropped)
       set('thumb', 'photo')
-      nav.showToast('사진을 아이콘 크기로 다듬었어요 ✨')
+      nav.showToast('사진을 아이콘 크기로 다듬었어요')
     }
     reader.readAsDataURL(file)
     e.target.value = ''
@@ -243,7 +243,7 @@ export default function EditorScreen({ id, prefill }) {
     // 마지막 장 — 결과 반영
     if (target === 'ingredients' || target === 'steps') {
       const base = target === 'ingredients' ? '재료 초안을 담았어요' : '만드는 법 초안을 담았어요'
-      nav.showToast(base + (quotaTail || ' · 다듬어 주세요 ✍️'), quotaTail ? 6500 : 4800)
+      nav.showToast(base + (quotaTail || ' · 다듬어 주세요'), quotaTail ? 6500 : 4800)
       return
     }
     const combined = ocrAccum.current
@@ -262,7 +262,7 @@ export default function EditorScreen({ id, prefill }) {
           : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
     }))
     nav.showToast(
-      quotaTail ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요 ✍️' : '초안을 채웠어요 · 사진 보며 다듬어 주세요 ✍️',
+      quotaTail ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요' : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
       quotaTail ? 6500 : 4800,
     )
   }
@@ -301,7 +301,7 @@ export default function EditorScreen({ id, prefill }) {
       // touched: 사용자가 직접 편집한 레시피 — 이후 기본 레시피 자동 갱신에서 덮어쓰지 않게 표시
       updateRecipe(editing.id, { ...patch, touched: true })
       nav.pop()
-      nav.showToast('레시피를 정리했어요 ✨')
+      nav.showToast('레시피를 정리했어요')
     } else {
       const rec = { id: newId(), favorite: false, cooked: 0, savedAt: Date.now(), ...patch }
       addRecipe(rec)
@@ -309,7 +309,7 @@ export default function EditorScreen({ id, prefill }) {
       // 새 레시피 저장 후엔 열려있던 화면(가져오기 등)을 모두 닫고 홈/현재 탭으로.
       // (뒤로가기로 작성 중이던 빈 편집기가 다시 나오지 않게)
       nav.popAll()
-      nav.showToast('레시피를 저장했어요 ✨')
+      nav.showToast('레시피를 저장했어요')
     }
   }
 
@@ -350,12 +350,12 @@ export default function EditorScreen({ id, prefill }) {
         <div style={{ display: 'flex', gap: 8, margin: '6px 16px 0' }}>
           {embed && (
             <button className="press" onClick={() => setPin('video')} style={{ flex: 1, padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700 }}>
-              {embed.type === 'youtube' ? '📺 영상 보면서 쓰기' : '📷 인스타 미리보기'}
+              {embed.type === 'youtube' ? '영상 보면서 쓰기' : '인스타 미리보기'}
             </button>
           )}
           {refs.length > 0 && (
             <button className="press" onClick={() => setPin('photo')} style={{ flex: 1, padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700 }}>
-              📷 캡쳐 보면서 쓰기
+              캡쳐 보면서 쓰기
             </button>
           )}
         </div>
@@ -417,7 +417,7 @@ export default function EditorScreen({ id, prefill }) {
             aria-label="캡처 크게 보기"
             style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', padding: '7px 16px', borderRadius: 999, background: 'rgba(20,19,17,0.78)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}
           >
-            🔍 크게 보기{refs.length > 1 ? ` · ${refs.length}장` : ''}
+            크게 보기{refs.length > 1 ? ` · ${refs.length}장` : ''}
           </button>
           {photoMore && (
             <span style={{ position: 'absolute', bottom: 13, right: 12, color: 'rgba(255,255,255,0.92)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3, pointerEvents: 'none' }}>
@@ -452,7 +452,7 @@ export default function EditorScreen({ id, prefill }) {
             </div>
           )}
           {f.thumb === 'none' && (
-            <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.55 }}>표지를 비웠어요. 아이콘 없이 <b>꾸미기</b>로 배경·스티커만 얹어 깔끔하게 만들 수 있어요 🎨</div>
+            <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.55 }}>표지를 비웠어요. 아이콘 없이 <b>꾸미기</b>로 배경·스티커만 얹어 깔끔하게 만들 수 있어요</div>
           )}
           {f.thumb === 'label' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

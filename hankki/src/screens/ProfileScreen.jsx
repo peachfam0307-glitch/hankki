@@ -18,9 +18,9 @@ import { cropSquare } from '../utils'
 // 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
 const PROFILE_COACH_KEY = 'hankki:coach:profile'
 const PROFILE_COACH_STEPS = [
-  { sel: '[data-coach="backup"]', label: '💾 백업 · 내보내기', desc: '폰을 바꾸거나 지워도 레시피를 지키는 제일 중요한 버튼!' },
-  { sel: '[data-coach="update"]', label: '🔄 최신 버전 확인', desc: '앱이 옛 버전에서 멈췄을 때 눌러요 · 새 기능·수정이 바로 반영돼요' },
-  { sel: '[data-coach="feedback"]', label: '✍️ 의견 보내기', desc: '여러분 한 줄이 저에겐 진짜 큰 힘이 돼요 🥹 좋았던 것도 불편한 것도, 익명이니까 꼭 한 줄 남겨 주세요!' },
+  { sel: '[data-coach="backup"]', label: '백업 · 내보내기', desc: '폰을 바꾸거나 지워도 레시피를 지키는 제일 중요한 버튼!' },
+  { sel: '[data-coach="update"]', label: '최신 버전 확인', desc: '앱이 옛 버전에서 멈췄을 때 눌러요 · 새 기능·수정이 바로 반영돼요' },
+  { sel: '[data-coach="feedback"]', label: '의견 보내기', desc: '여러분 한 줄이 저에겐 진짜 큰 힘이 돼요 좋았던 것도 불편한 것도, 익명이니까 꼭 한 줄 남겨 주세요!' },
 ]
 import { THEMES, getTheme, setTheme } from '../theme'
 import { Avatar } from './HomeScreen'
@@ -68,7 +68,7 @@ export default function ProfileScreen() {
       if (reg.installing || reg.waiting) found = true
       reg.removeEventListener('updatefound', onFound)
       if (found) {
-        nav.showToast('새 버전을 받았어요 · 곧 새로고침돼요 ✨')
+        nav.showToast('새 버전을 받았어요 · 곧 새로고침돼요')
         if (reg.waiting) { try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }) } catch { /* noop */ } }
         // 안전망: controllerchange 자동 새로고침이 안 오면 직접 새로고침
         setTimeout(() => window.location.reload(), 2200)
@@ -92,7 +92,7 @@ export default function ProfileScreen() {
       const img = await cropSquare(reader.result, 256, 0.85)
       setProfile({ avatar: { type: 'photo', value: img } })
       setAvatarSheet(false)
-      nav.showToast('프로필 사진을 바꿨어요 ✨')
+      nav.showToast('프로필 사진을 바꿨어요')
     }
     reader.readAsDataURL(file)
   }
@@ -101,7 +101,7 @@ export default function ProfileScreen() {
 
   const saveProfile = ({ name, bio }) => {
     setProfile({ name: name.trim() || profile.name, bio: bio.trim() })
-    nav.showToast('프로필을 바꿨어요 ✨')
+    nav.showToast('프로필을 바꿨어요')
   }
 
   const buildBackup = () => ({
@@ -125,7 +125,7 @@ export default function ProfileScreen() {
     a.remove()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
     setBackup(false)
-    nav.showToast('백업 파일을 저장했어요 💾 (폰 다운로드 폴더)')
+    nav.showToast('백업 파일을 저장했어요 (폰 다운로드 폴더)')
   }
 
   // 공유로 보내기 — 카톡 나에게·드라이브·파일 앱 등 안전한 곳에 바로 저장 (모바일)
@@ -136,10 +136,10 @@ export default function ProfileScreen() {
         await navigator.share({
           files: [file],
           title: '한끼 백업',
-          text: '한끼 레시피 백업 파일이에요. 안전한 곳에 보관해 주세요 🍳',
+          text: '한끼 레시피 백업 파일이에요. 안전한 곳에 보관해 주세요',
         })
         setBackup(false)
-        nav.showToast('백업을 공유했어요 · 카톡 나에게·드라이브에 저장해두세요 ✨')
+        nav.showToast('백업을 공유했어요 · 카톡 나에게·드라이브에 저장해두세요')
         return
       }
     } catch (e) {
@@ -157,7 +157,7 @@ export default function ProfileScreen() {
     try {
       await navigator.clipboard.writeText(json)
       setBackup(false)
-      nav.showToast('백업 코드를 복사했어요 📋 카톡 「나에게」나 메모에 붙여넣어 보관하세요')
+      nav.showToast('백업 코드를 복사했어요 카톡 「나에게」나 메모에 붙여넣어 보관하세요')
     } catch {
       // 클립보드까지 막히면 최후로 파일 저장 시도
       downloadBackup()
@@ -173,10 +173,10 @@ export default function ProfileScreen() {
         title: '백업 불러오기',
         message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
         confirmLabel: '불러오기',
-        onConfirm: () => { importAll(data); setBackup(false); nav.showToast('백업을 불러왔어요 ✨') },
+        onConfirm: () => { importAll(data); setBackup(false); nav.showToast('백업을 불러왔어요') },
       })
     } catch {
-      nav.showToast('백업 코드를 읽을 수 없어요 😢 처음부터 끝까지 전체를 붙여넣었는지 확인해 주세요')
+      nav.showToast('백업 코드를 읽을 수 없어요 처음부터 끝까지 전체를 붙여넣었는지 확인해 주세요')
     }
   }
 
@@ -192,10 +192,10 @@ export default function ProfileScreen() {
           title: '백업 불러오기',
           message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
           confirmLabel: '불러오기',
-          onConfirm: () => { importAll(data); setBackup(false); nav.showToast('백업을 불러왔어요 ✨') },
+          onConfirm: () => { importAll(data); setBackup(false); nav.showToast('백업을 불러왔어요') },
         })
       } catch {
-        nav.showToast('백업 파일을 읽을 수 없어요 😢')
+        nav.showToast('백업 파일을 읽을 수 없어요')
       }
       e.target.value = ''
     }
@@ -215,10 +215,10 @@ export default function ProfileScreen() {
       onClick: () => {
         // 코치마크 본 기록을 지워 각 화면 첫 방문 안내가 다시 나오게 한다(딸 아이디어 ⭐ 후속)
         try { ['detail', 'shop', 'home', 'profile', 'myrecipes'].forEach((k) => localStorage.removeItem(`hankki:coach:${k}`)) } catch { /* noop */ }
-        nav.showToast('✨ 각 화면에 들어가면 반짝 안내가 다시 나와요')
+        nav.showToast('각 화면에 들어가면 반짝 안내가 다시 나와요')
       },
     },
-    { icon: 'help', label: '도움말 및 문의', onClick: () => { try { const a = document.createElement('a'); a.href = 'mailto:annyeong.hankki@gmail.com'; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com 📧') } },
+    { icon: 'help', label: '도움말 및 문의', onClick: () => { try { const a = document.createElement('a'); a.href = 'mailto:annyeong.hankki@gmail.com'; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com') } },
     // 익명 의견 — FEEDBACK_URL 이 설정됐을 때만 노출(죽은 버튼 방지)
     ...(FEEDBACK_URL
       ? [{ icon: 'edit', label: '의견 보내기', badge: '익명', coach: 'feedback', onClick: () => { const a = document.createElement('a'); a.href = FEEDBACK_URL; a.target = '_blank'; a.rel = 'noopener'; a.click() } }]
@@ -265,7 +265,7 @@ export default function ProfileScreen() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {/* 요리사 친구들 — 모자 쓴 동물 캐릭터. 세 가지 그림체를 섹션으로 나눠 보여준다. */}
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brown)', marginBottom: 10 }}>요리사 친구들 🧑‍🍳</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brown)', marginBottom: 10 }}>요리사 친구들</div>
                 {BUDDY_GROUPS.map((g) => (
                   <div key={g.key} style={{ marginBottom: 14 }}>
                     <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--sand)', margin: '0 2px 8px', letterSpacing: '0.02em' }}>{g.label}</div>
@@ -276,7 +276,7 @@ export default function ProfileScreen() {
                           <button
                             key={bd.id}
                             className="press"
-                            onClick={() => { setProfile({ avatar: { type: 'buddy', value: bd.id } }); setAvatarSheet(false); nav.showToast(`${bd.name}로 바꿨어요 ✨`) }}
+                            onClick={() => { setProfile({ avatar: { type: 'buddy', value: bd.id } }); setAvatarSheet(false); nav.showToast(`${bd.name}로 바꿨어요`) }}
                             aria-label={bd.name}
                             style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, width: 60 }}
                           >
@@ -308,7 +308,7 @@ export default function ProfileScreen() {
                 <EmojiPicker
                   value={profile.avatar?.type === 'emoji' ? profile.avatar.value : '😊'}
                   size={56}
-                  onChange={(e) => { setProfile({ avatar: { type: 'emoji', value: e } }); nav.showToast('프로필 이모지를 바꿨어요 ✨') }}
+                  onChange={(e) => { setProfile({ avatar: { type: 'emoji', value: e } }); nav.showToast('프로필 이모지를 바꿨어요') }}
                 />
                 <div style={{ fontSize: 14, fontWeight: 600 }}>이모지로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
               </div>
@@ -316,7 +316,7 @@ export default function ProfileScreen() {
                 <FoodIconPicker
                   value={profile.avatar?.type === 'icon' ? profile.avatar.value : 'rice'}
                   size={56}
-                  onChange={(k) => { setProfile({ avatar: { type: 'icon', value: k } }); nav.showToast('프로필 아이콘을 바꿨어요 ✨') }}
+                  onChange={(k) => { setProfile({ avatar: { type: 'icon', value: k } }); nav.showToast('프로필 아이콘을 바꿨어요') }}
                 />
                 <div style={{ fontSize: 14, fontWeight: 600 }}>한끼 아이콘으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
               </div>
@@ -363,7 +363,7 @@ export default function ProfileScreen() {
         {/* 테마 — 화면 색(크림·세이지·다크). 다크모드도 여기서 고른다. */}
         <div className="card" style={{ marginTop: 20, padding: 16 }}>
           <div style={{ fontSize: 15, fontWeight: 700 }}>테마</div>
-          <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3, marginBottom: 14 }}>앱 화면 색을 골라요 · 다크모드도 여기서 🌙</div>
+          <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3, marginBottom: 14 }}>앱 화면 색을 골라요 · 다크모드도 여기서</div>
           <div style={{ display: 'flex', gap: 10 }}>
             {THEMES.map((t) => {
               const on = theme === t.key
@@ -371,7 +371,7 @@ export default function ProfileScreen() {
                 <button
                   key={t.key}
                   className="press"
-                  onClick={() => { setTheme(t.key); setThemeState(t.key); nav.showToast(`${t.label} 테마로 바꿨어요 ✨`) }}
+                  onClick={() => { setTheme(t.key); setThemeState(t.key); nav.showToast(`${t.label} 테마로 바꿨어요`) }}
                   aria-label={`${t.label} 테마`}
                   style={{
                     flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
@@ -398,7 +398,7 @@ export default function ProfileScreen() {
               message: '예시 레시피를 포함해 모든 레시피를 비울까요?\n(내 폴더·태그는 유지돼요)',
               confirmLabel: '비우기',
               danger: true,
-              onConfirm: () => { clearAll(); nav.showToast('깨끗하게 비웠어요 · 이제 내 레시피만 담아요 ✨') },
+              onConfirm: () => { clearAll(); nav.showToast('깨끗하게 비웠어요 · 이제 내 레시피만 담아요') },
             })}
             style={{ flex: 1, color: 'var(--brown)', fontSize: 13, fontWeight: 600, padding: 13, background: 'var(--cream)', borderRadius: 'var(--r-md)' }}
           >
@@ -478,22 +478,22 @@ export default function ProfileScreen() {
                 레시피 · 일지 · 냉장고 · 장보기 · 프로필까지 <b>모든 데이터를 파일 하나</b>로 담아요.{'\n'}폰을 바꾸거나 앱을 지워도 이 파일만 있으면 그대로 되살아나요.
               </div>
               <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 14, fontSize: 12.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
-                <b style={{ color: 'var(--brown)' }}>제일 쉬운 방법 (3단계) 👇</b>{'\n'}
-                <b>1.</b> 아래 <b>💌 백업 보내서 저장하기</b> 누르기{'\n'}
+                <b style={{ color: 'var(--brown)' }}>제일 쉬운 방법 (3단계)</b>{'\n'}
+                <b>1.</b> 아래 <b>백업 보내서 저장하기</b> 누르기{'\n'}
                 <b>2.</b> 공유 창이 뜨면 <b>「카톡 나에게 보내기」</b> 선택{'\n'}
-                <b>3.</b> 끝! 나중에 폰을 바꾸면 그 파일을 열어 아래 <b>「불러오기」</b>만 하면 그대로 복원돼요 ✨
+                <b>3.</b> 끝! 나중에 폰을 바꾸면 그 파일을 열어 아래 <b>「불러오기」</b>만 하면 그대로 복원돼요
               </div>
-              <button className="btn-primary press" onClick={shareBackup}>💌 백업 보내서 저장하기 (추천)</button>
+              <button className="btn-primary press" onClick={shareBackup}>백업 보내서 저장하기 (추천)</button>
               <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.55, margin: '8px 2px 12px' }}>
                 누르면 공유 창이 떠요 → <b>카톡 나에게 보내기</b>나 <b>드라이브·파일</b>에 저장하면 제일 안전해요. (폰이 고장나도 클라우드에 남아요){'\n'}공유 창이 안 뜨는 폰이면 자동으로 <b>백업 코드가 복사</b>돼요.
               </div>
-              <button className="btn-ghost press" style={{ width: '100%' }} onClick={copyBackup}>📋 백업 코드 복사 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 카톡·메모에 붙여넣기</span></button>
-              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={downloadBackup}>💾 폰에 파일로 저장 (다운로드 폴더)</button>
+              <button className="btn-ghost press" style={{ width: '100%' }} onClick={copyBackup}>백업 코드 복사 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 카톡·메모에 붙여넣기</span></button>
+              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={downloadBackup}>폰에 파일로 저장 (다운로드 폴더)</button>
 
               <hr className="divider" style={{ margin: '16px 0' }} />
               <div style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 10 }}>백업에서 되살리기</div>
-              <button className="btn-ghost press" style={{ width: '100%' }} onClick={() => fileRef.current?.click()}>📂 백업 파일 불러오기</button>
-              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={() => setPasteOpen(true)}>📋 코드 붙여넣기로 불러오기</button>
+              <button className="btn-ghost press" style={{ width: '100%' }} onClick={() => fileRef.current?.click()}>백업 파일 불러오기</button>
+              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={() => setPasteOpen(true)}>코드 붙여넣기로 불러오기</button>
             </div>
           </div>
         </div>

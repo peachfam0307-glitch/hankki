@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Portal from './Portal'
+import Icon from './Icon'
 
 // 첫 사용 코치마크 — 화면을 어둡게 하고 중요한 버튼만 반짝이며 하나씩 알려준다.
 // (기능이 많고 숨어 있어 처음엔 뭐가 있는지 모른다는 피드백 → 창업자 딸 아이디어 ⭐)
@@ -69,7 +70,7 @@ export default function CoachMarks({ storageKey, steps, onDone }) {
             pointerEvents: 'none',
           }}
         />
-        <div className="coach-spark" style={{ position: 'absolute', top: rect.top - pad - 14, left: rect.left + rect.width + pad - 4, pointerEvents: 'none' }}>✨</div>
+        <div className="coach-spark" style={{ position: 'absolute', top: rect.top - pad - 14, left: rect.left + rect.width + pad - 4, pointerEvents: 'none' }}><Icon name="sparkle" size={17} color="#efc14e" /></div>
 
         {/* 말풍선 */}
         <div

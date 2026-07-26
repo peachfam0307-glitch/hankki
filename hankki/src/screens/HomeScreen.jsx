@@ -5,7 +5,7 @@ import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
-import gomHeader from '../assets/gom-header.png' // 🐻 뉴 물결 곰(인사) — 홈 상단 브랜드 마스코트
+import gomHeader from '../assets/gom-header.png' // 뉴 물결 곰(인사) — 홈 상단 브랜드 마스코트
 import TabTips from '../components/TabTips'
 import PreviewSheet from '../components/PreviewSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
@@ -134,7 +134,7 @@ export default function HomeScreen() {
               <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                 <div className="today-label">오늘 뭐 해먹지?</div>
                 <div className="today-title">{todayPick.title}</div>
-                <div className="today-reason">{today.fromFridge ? '🧊 냉장고 재료로 만들 수 있어요' : '이건 어때요?'}</div>
+                <div className="today-reason">{today.fromFridge ? '냉장고 재료로 만들 수 있어요' : '이건 어때요?'}</div>
               </div>
             </button>
             {today.list.length > 1 && (

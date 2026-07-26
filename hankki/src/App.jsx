@@ -207,7 +207,7 @@ export default function App() {
     try {
       if (sessionStorage.getItem('hankki:updated')) {
         sessionStorage.removeItem('hankki:updated')
-        setTimeout(() => showToast('✨ 최신 버전으로 업데이트됐어요'), 600)
+        setTimeout(() => showToast('최신 버전으로 업데이트됐어요'), 600)
       }
     } catch { /* noop */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -221,7 +221,7 @@ export default function App() {
 
   // 저장 공간이 가득 차서 저장이 실패하면(특히 iOS ~5MB) 조용히 사라지지 않게 알린다.
   useEffect(() => {
-    const onFull = () => showToast('⚠️ 저장 공간이 가득 찼어요 · 설정에서 백업 후 오래된 사진을 정리해 주세요', 5000)
+    const onFull = () => showToast('저장 공간이 가득 찼어요 · 설정에서 백업 후 오래된 사진을 정리해 주세요', 5000)
     window.addEventListener('hankki:storagefull', onFull)
     return () => window.removeEventListener('hankki:storagefull', onFull)
   }, [showToast])
@@ -275,7 +275,7 @@ export default function App() {
           steps: r.steps, // 메모는 건드리지 않는다 — 직접 입력 전용
           category: guessCategory((r.title || '') + ' ' + r.memo),
         })
-        showToast('사진에서 글자를 읽어 채웠어요 ✨')
+        showToast('사진에서 글자를 읽어 채웠어요')
       }
     })
     return () => {
@@ -315,7 +315,7 @@ export default function App() {
               // 브라우저로 열었으면 창을 닫아준다. 설치형 PWA는 브라우저 정책상
               // 스스로 못 닫으니(안드로이드), 홈 버튼으로 나가면 된다고 솔직히 알려준다.
               try { window.close() } catch { /* noop */ }
-              showToast('나가려면 폰 홈 버튼을 눌러주세요 🙂 (앱은 스스로 못 닫아요)')
+              showToast('나가려면 폰 홈 버튼을 눌러주세요 (앱은 스스로 못 닫아요)')
             }}
             onClose={() => setExitAsk(false)}
           />

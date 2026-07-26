@@ -15,9 +15,9 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 // 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
 const MYRECIPES_COACH_KEY = 'hankki:coach:myrecipes'
 const MYRECIPES_COACH_STEPS = [
-  { sel: '[data-coach="collection"]', label: '🗂️ 모아보기', desc: '저장한 레시피를 한눈에 · 폴더·카테고리로 정리돼요' },
+  { sel: '[data-coach="collection"]', label: '모아보기', desc: '저장한 레시피를 한눈에 · 폴더·카테고리로 정리돼요' },
   { sel: '[data-coach="gridsize"]', label: '⊞ 보기 바꾸기', desc: '크게 2줄 ↔ 촘촘히 3줄 · 사진 큼직하게 보거나 한눈에 많이 보거나' },
-  { sel: '[data-coach="log"]', label: '📖 요리 기록', desc: '요리하고 "만들었어요!" 한 번이면 별점·사진·팁이 쌓여요 · 다음엔 "그때 그 맛" 그대로 재현!' },
+  { sel: '[data-coach="log"]', label: '요리 기록', desc: '요리하고 "만들었어요!" 한 번이면 별점·사진·팁이 쌓여요 · 다음엔 "그때 그 맛" 그대로 재현!' },
 ]
 
 // 카테고리와 연결된 기본 폴더 — 삭제 불가(사용자가 만든 폴더만 지울 수 있게)
@@ -62,7 +62,7 @@ function CookCalendar({ entries, selected, onSelect }) {
     <div className="card cal-card">
       <div className="cal-head">
         <button className="press cal-nav" onClick={() => move(-1)} aria-label="이전 달"><Icon name="chevron-left" size={18} color="var(--text-sub)" /></button>
-        <div className="cal-title">{ym.y}년 {ym.m + 1}월 <span className="t-sub" style={{ fontSize: 12, fontWeight: 600 }}>· 🍳 {monthCount}번</span></div>
+        <div className="cal-title">{ym.y}년 {ym.m + 1}월 <span className="t-sub" style={{ fontSize: 12, fontWeight: 600 }}>· {monthCount}번</span></div>
         <button className="press cal-nav" onClick={() => move(1)} aria-label="다음 달"><Icon name="chevron-right" size={18} color="var(--text-sub)" /></button>
       </div>
       <div className="cal-grid cal-week">
@@ -241,17 +241,17 @@ export default function MyRecipesScreen() {
         <div className="pad fade">
           {/* 나의 요리 앨범 — 내가 만든 요리 아카이브 */}
           <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 10 }}>
-            📖 <b style={{ color: 'var(--text)' }}>내가 만든 요리 아카이브</b> — 요리할 때마다 별점·사진·나만의 팁을 남겨두면, 다음에 <b style={{ color: 'var(--text)' }}>그때 그 간·불 세기</b>를 그대로 재현해요. 내 요리 실력이 쌓이는 기록이에요.
+            <b style={{ color: 'var(--text)' }}>내가 만든 요리 아카이브</b> — 요리할 때마다 별점·사진·나만의 팁을 남겨두면, 다음에 <b style={{ color: 'var(--text)' }}>그때 그 간·불 세기</b>를 그대로 재현해요. 내 요리 실력이 쌓이는 기록이에요.
           </div>
           {entries.length > 0 && (
             <div className="card" style={{ padding: '11px 14px', marginBottom: 12, background: 'var(--cream)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, fontWeight: 600 }}>
-              <span>이번 달 🍳 <b style={{ color: 'var(--brown)' }}>{thisMonth}</b>번</span>
+              <span>이번 달 <b style={{ color: 'var(--brown)' }}>{thisMonth}</b>번</span>
               <span style={{ color: 'var(--sand)' }}>·</span>
               <span>총 <b style={{ color: 'var(--brown)' }}>{entries.length}</b>개</span>
               {topDish && (
                 <>
                   <span style={{ color: 'var(--sand)' }}>·</span>
-                  <span>최애 🥇 <b style={{ color: 'var(--brown)' }}>{topDish}</b></span>
+                  <span>최애 <b style={{ color: 'var(--brown)' }}>{topDish}</b></span>
                 </>
               )}
             </div>
@@ -265,7 +265,7 @@ export default function MyRecipesScreen() {
               onClick={() => setShowCal((v) => !v)}
               style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: showCal ? 10 : 12, padding: '9px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13, fontWeight: 700 }}
             >
-              📅 요리 달력 {showCal ? '접기 ▴' : '보기 ▾'}
+              요리 달력 {showCal ? '접기 ▴' : '보기 ▾'}
             </button>
           )}
           {entries.length > 0 && showCal && (
@@ -279,7 +279,7 @@ export default function MyRecipesScreen() {
           )}
 
           {entries.length === 0 ? (
-            <div className="empty" style={{ marginTop: 10 }}>{'아직 기록이 없어요.\n요리하고 "만들었어요!"만 눌러도 별점·사진이 한 장씩 쌓여요.\n다음에 "그때 그 맛"을 그대로 재현하는 나만의 요리 일기예요 📸'}</div>
+            <div className="empty" style={{ marginTop: 10 }}>{'아직 기록이 없어요.\n요리하고 "만들었어요!"만 눌러도 별점·사진이 한 장씩 쌓여요.\n다음에 "그때 그 맛"을 그대로 재현하는 나만의 요리 일기예요'}</div>
           ) : (
             <div className="album-grid">
               {shown.map((e) => {
@@ -325,7 +325,7 @@ export default function MyRecipesScreen() {
               <button className={`pill press ${folder === '__fav' ? 'active' : ''}`} onClick={() => setFolder('__fav')}>★ 즐겨찾기 {favCount}</button>
             )}
             {oftenCount > 0 && (
-              <button className={`pill press ${folder === '__often' ? 'active' : ''}`} onClick={() => setFolder('__often')}>🍳 자주 {oftenCount}</button>
+              <button className={`pill press ${folder === '__often' ? 'active' : ''}`} onClick={() => setFolder('__often')}>자주 {oftenCount}</button>
             )}
             {folders.map((c) => (
               <button key={c} className={`pill press ${folder === c ? 'active' : ''}`} onClick={() => setFolder(c)}>{c} {countIn(c)}</button>

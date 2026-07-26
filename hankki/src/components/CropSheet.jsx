@@ -16,8 +16,8 @@ export default function CropSheet({
   title = '글자 부분만 남기기',
   hint = (
     <>
-      ✂️ 광고·사진은 빼고 <b style={{ color: '#fff' }}>재료·만드는 법 글자만</b> 남도록 모서리를 끌어 잘라주세요.<br />
-      <span style={{ color: '#d8d4cc', fontSize: 12 }}>✨ 밝고 반듯하게 · 딱 맞게 자를수록 정확해요 · 읽은 건 초안이라 사진 보며 다듬으면 돼요</span>
+      광고·사진은 빼고 <b style={{ color: '#fff' }}>재료·만드는 법 글자만</b> 남도록 모서리를 끌어 잘라주세요.<br />
+      <span style={{ color: '#d8d4cc', fontSize: 12 }}>밝고 반듯하게 · 딱 맞게 자를수록 정확해요 · 읽은 건 초안이라 사진 보며 다듬으면 돼요</span>
     </>
   ),
 }) {
@@ -174,7 +174,7 @@ export default function CropSheet({
           전체 사용
         </button>
         <button className="press" onClick={confirm} style={{ flex: 1.6, padding: 14, borderRadius: 14, background: 'var(--brown)', color: '#fff', fontSize: 14.5, fontWeight: 700 }}>
-          ✂️ 이 부분만 읽기
+          이 부분만 읽기
         </button>
       </div>
     </div>

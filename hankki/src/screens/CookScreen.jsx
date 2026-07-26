@@ -46,7 +46,7 @@ export default function CookScreen({ id }) {
       cook(r.id)
     }
     nav.popAll()
-    nav.showToast('완성! 요리 기록에 담았어요 🎉 별점·팁은 레시피 화면에서')
+    nav.showToast('완성! 요리 기록에 담았어요 별점·팁은 레시피 화면에서')
   }
 
   return (
@@ -102,7 +102,7 @@ export default function CookScreen({ id }) {
         {prep ? (
           <button className="cook-navbtn primary press" onClick={() => setI(1)} disabled={steps.length === 0}>재료 준비 완료 · 시작 →</button>
         ) : last ? (
-          <button className="cook-navbtn primary press" onClick={finish}>다 만들었어요 🎉</button>
+          <button className="cook-navbtn primary press" onClick={finish}>다 만들었어요</button>
         ) : (
           <button className="cook-navbtn primary press" onClick={() => setI((v) => v + 1)}>다음 →</button>
         )}

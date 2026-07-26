@@ -8,8 +8,8 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 // 장보기 탭 첫 방문 코치마크 — 숨은 기능 안내(창업자 딸 아이디어 ⭐)
 const SHOP_COACH_KEY = 'hankki:coach:shop'
 const SHOP_COACH_STEPS = [
-  { sel: '[data-coach="curation"]', label: '🧺 주부의 장바구니', desc: '18년차 주부가 엄선한 식재료 · 담고 바로 사러 가요' },
-  { sel: '[data-coach="pantry"]', label: '🧊 냉장고', desc: '재료를 넣으면 유통기한 챙기고, 그 재료로 만들 요리도 추천해요' },
+  { sel: '[data-coach="curation"]', label: '주부의 장바구니', desc: '18년차 주부가 엄선한 식재료 · 담고 바로 사러 가요' },
+  { sel: '[data-coach="pantry"]', label: '냉장고', desc: '재료를 넣으면 유통기한 챙기고, 그 재료로 만들 요리도 추천해요' },
 ]
 import TextTile from '../components/TextTile'
 import EmojiPicker from '../components/EmojiPicker'
@@ -67,8 +67,8 @@ export default function ShopScreen() {
       <div className="pad">
         {/* 장보기가 주(첫인상), 냉장고는 옆 토글(부). 냉장고 기능은 유지하되 앞으로 안 내세운다. */}
         <div className="segment" style={{ marginTop: 4 }}>
-          <button type="button" className={`seg ${view === 'shop' ? 'on' : ''}`} onClick={() => setView('shop')}>🛒 장보기</button>
-          <button type="button" className={`seg ${view === 'pantry' ? 'on' : ''}`} data-coach="pantry" onClick={() => setView('pantry')}>🧊 냉장고</button>
+          <button type="button" className={`seg ${view === 'shop' ? 'on' : ''}`} onClick={() => setView('shop')}>장보기</button>
+          <button type="button" className={`seg ${view === 'pantry' ? 'on' : ''}`} data-coach="pantry" onClick={() => setView('pantry')}>냉장고</button>
         </div>
 
         {view === 'pantry' && <PantryView />}
@@ -103,7 +103,7 @@ export default function ShopScreen() {
         ) : (
           shoppingList.map((it) => (
             <div key={it.id} className="shop-row">
-              <button className="check-box press" data-on={it.done} onClick={() => { const was = it.done; store.toggleShopItem(it.id); if (!was) nav.showToast('샀어요! 냉장고에 넣어뒀어요 🧊') }}>
+              <button className="check-box press" data-on={it.done} onClick={() => { const was = it.done; store.toggleShopItem(it.id); if (!was) nav.showToast('샀어요! 냉장고에 넣어뒀어요') }}>
                 {it.done && <Icon name="check" size={15} color="#fff" stroke={2.4} />}
               </button>
               <span style={{ flex: 1, fontSize: 15, textDecoration: it.done ? 'line-through' : 'none', color: it.done ? 'var(--text-sub)' : 'var(--text)' }}>
@@ -232,7 +232,7 @@ function Curation() {
   const buy = (it) => openUrl(linkFor(it))
   const add = (it) => {
     store.addShopItem({ name: it.name, url: linkFor(it) })
-    nav.showToast('장보기 리스트에 담았어요 🛒')
+    nav.showToast('장보기 리스트에 담았어요')
   }
 
   // '사러가기' 버튼에 붙는 구매처 배지 라벨
@@ -280,7 +280,7 @@ function Curation() {
   return (
     <>
       <div className="sec-head" style={{ marginTop: 6 }}>
-        <div className="h-section">🌿 주부의 장바구니</div>
+        <div className="h-section">주부의 장바구니</div>
         <button className="press" style={secBtnStyle} onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
       </div>
       <div className="t-sub" style={{ fontSize: 12, marginTop: -2, marginBottom: 6 }}>
@@ -296,7 +296,7 @@ function Curation() {
         <>
           {/* 카테고리 칩 — 기본은 '이번 주 픽', 필요한 카테고리만 펼쳐 본다 */}
           <div className="hscroll" style={{ paddingBottom: 4, marginBottom: 4 }}>
-            {chip('pick', '✨ 이번 주 픽')}
+            {chip('pick', '이번 주 픽')}
             {chip('전체', '전체')}
             {catList.map((c) => chip(c.cat, (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
@@ -319,7 +319,7 @@ function Curation() {
             : shownItems.map((it) => Card(it))}
 
           <div className="t-sub" style={{ fontSize: 12.5, fontWeight: 600, textAlign: 'center', background: 'var(--cream)', borderRadius: 12, padding: '13px 12px', margin: '4px 0 2px', lineHeight: 1.5 }}>
-            🌿 써보고 좋았던 것만 골라 나눠요 · 진짜 쓰는 재료, 앞으로도 하나씩 계속 올라와요.
+            써보고 좋았던 것만 골라 나눠요 · 진짜 쓰는 재료, 앞으로도 하나씩 계속 올라와요.
           </div>
         </>
       )}
