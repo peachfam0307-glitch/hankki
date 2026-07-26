@@ -34,6 +34,18 @@ jobs:
           cache-dependency-path: hankki/package-lock.json
       - run: npm ci
       - run: npm run build
+      # ── 배포 전 스모크 테스트 — 실제 브라우저로 '저장' 등 핵심 흐름을 눌러보고
+      #    런타임 크래시(pageerror)가 나면 build 를 실패시켜 배포를 막는다.
+      #    (v8.58~8.66 저장 먹통이 자동점검 부재로 8판 배포된 사건 재발 방지) ──
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('hankki/package-lock.json') }}
+      - name: Install Chromium (smoke)
+        run: npx playwright install --with-deps chromium
+      - name: Smoke test — 저장·핵심 흐름 (실패 시 배포 차단)
+        run: npm run smoke
       - uses: actions/upload-pages-artifact@v3
         with:
           path: hankki/dist
