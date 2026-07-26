@@ -12,26 +12,21 @@
 // CI:    npx playwright install --with-deps chromium && node scripts/smoke.mjs
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
-import net from 'node:net'
 
 const PORT = Number(process.env.SMOKE_PORT || 4173)
-const BASE = `http://localhost:${PORT}/`
+const HOST = '127.0.0.1'
+const BASE = `http://${HOST}:${PORT}/`
 const CHROMIUM = process.env.SMOKE_CHROMIUM || undefined // 샌드박스=직접경로, CI=기본
 
-function waitPort(port, timeout = 40000) {
+let previewOut = '' // preview 서버 stdout/stderr — 안 뜰 때 원인 진단용
+// 실제 HTTP 응답이 올 때까지 대기(단순 포트 오픈보다 확실). node18+ 전역 fetch 사용.
+async function waitHttp(url, timeout = 45000) {
   const start = Date.now()
-  return new Promise((resolve, reject) => {
-    const tryOnce = () => {
-      const sock = net.connect(port, '127.0.0.1')
-      sock.once('connect', () => { sock.destroy(); resolve() })
-      sock.once('error', () => {
-        sock.destroy()
-        if (Date.now() - start > timeout) reject(new Error(`preview 포트 ${port} 안 열림(${timeout}ms)`))
-        else setTimeout(tryOnce, 400)
-      })
-    }
-    tryOnce()
-  })
+  while (Date.now() - start < timeout) {
+    try { const r = await fetch(url); if (r.status < 500) return } catch { /* 아직 안 뜸 */ }
+    await new Promise((r) => setTimeout(r, 400))
+  }
+  throw new Error(`preview 준비 안 됨(${timeout}ms)\n── preview 출력 ──\n${previewOut.slice(-1000) || '(출력 없음)'}`)
 }
 
 const log = (...a) => console.log('[smoke]', ...a)
@@ -56,10 +51,12 @@ async function tour(name, fn) {
 
 try {
   log('preview 서버 기동…')
-  server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], {
-    cwd: process.cwd(), stdio: 'ignore', env: process.env,
+  server = spawn('npx', ['vite', 'preview', '--host', HOST, '--port', String(PORT), '--strictPort'], {
+    cwd: process.cwd(), env: process.env,
   })
-  await waitPort(PORT)
+  server.stdout?.on('data', (d) => { previewOut += d })
+  server.stderr?.on('data', (d) => { previewOut += d })
+  await waitHttp(BASE)
   log('preview 준비됨:', BASE)
 
   browser = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
