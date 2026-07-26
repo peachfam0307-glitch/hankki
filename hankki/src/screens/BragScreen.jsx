@@ -110,7 +110,7 @@ export default function BragScreen() {
               <button className="press" onClick={drawRandom}
                 style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--cream)', border: 'none', textAlign: 'left' }}>
                 <span style={{ fontSize: 30 }}>🎴</span>
-                <span><span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>랜덤 카드로 뽑기</span><br /><span style={{ fontSize: 12.5, color: 'var(--text-sub)' }}>곰펭이 매번 다르게 · 안 꾸며도 예쁘게 · 다시 뽑기</span></span>
+                <span><span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>랜덤 카드로 뽑기</span><br /><span style={{ fontSize: 12.5, color: 'var(--text-sub)' }}>꼬르곰·펭펭이 매번 다르게 · 안 꾸며도 예쁘게 · 다시 뽑기</span></span>
               </button>
             </div>
           </div>

@@ -262,7 +262,7 @@ export const RECOLOR_PNG = new Set([
   'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14',
   'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07',
 ])
-// 🖼 벡터 프레임 — 곰펭 넣고 꾸미는 범용 액자틀(창업자 item③). SVG라 무한 확대해도 안 깨짐(PNG 프레임은 크게 키우면 흐려져서 벡터로 만듦). def 색만 리컬러(SVG hex 치환), 카드·창·그림자는 뉴트럴 고정. 프레임 먼저 놓고 위에 곰펭 얹으면 '액자 속 곰펭'.
+// 🖼 벡터 프레임 — 꼬르곰·펭펭 넣고 꾸미는 범용 액자틀(창업자 item③). SVG라 무한 확대해도 안 깨짐(PNG 프레임은 크게 키우면 흐려져서 벡터로 만듦). def 색만 리컬러(SVG hex 치환), 카드·창·그림자는 뉴트럴 고정. 프레임 먼저 놓고 위에 꼬르곰·펭펭 얹으면 '액자 속 캐릭터'.
 const FR_C = '#c98f7f' // 프레임 기본색(= 리컬러 대상 hex)
 export const FRAMES = {
   fr_pola: { vb: '0 0 88 104', ratio: 88 / 104, def: FR_C, art:
@@ -462,8 +462,8 @@ export const STICKER_GROUPS = [
   // 🥕 재료 — 여름 제철 귀여운 식재료(꾸미기용) 몇 개 추가(복숭아·수박·체리·옥수수·가지). 분기별 제철로 교체 예정(사계절용은 픽스).
   { key: 'f_ing', tab: 'food', chip: '재료', items: ['ig_frb02', 'ig_frb04', 'ig_frb08', 'ig_jcb19', 'ig_jae16', 'ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae03', 'ig_jae12', 'ig_frb01', 'ig_frb03', 'ig_frb07', 'ig_frb13', 'ig_ggi03', 'ig_ggi16', 'ig_hsm01'] },
   // ✨ 데코 (색 바꾸는 SVG 심볼 유지 + 새 데코 PNG + 응원)
-  // 📷 벡터 프레임 (2026-07-26 신규 · item③) — 곰펭 얹어 꾸미는 액자틀. SVG라 크게 키워도 안 깨짐 + 🎨색 바꾸기(배경색과 맞추기). 배경 바로 옆(데코 맨 위)에 둠 — 프레임 먼저 놓고 위에 곰펭.
-  { key: 'deco_vframe', tab: 'deco', label: '📷 프레임(곰펭 넣기)', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
+  // 📷 벡터 프레임 (2026-07-26 신규 · item③) — 꼬르곰·펭펭 얹어 꾸미는 액자틀. SVG라 크게 키워도 안 깨짐 + 🎨색 바꾸기(배경색과 맞추기). 배경 바로 옆(데코 맨 위)에 둠 — 프레임 먼저 놓고 위에 꼬르곰·펭펭. (⚠️캐릭터명 = 꼬르곰·펭펭 풀네임, '곰펭' 금지)
+  { key: 'deco_vframe', tab: 'deco', label: '📷 프레임(꼬르곰·펭펭 넣기)', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
   { key: 'deco_recolor', tab: 'deco', label: '🎨 색 바꾸기', items: ['heart', 'star', 'sparkle', 'bow', 'vhand'] },
   // 📝 메모·라벨 (2026-07-26 신규) — 다꾸 감성 손그림 메모지·라벨. 글씨 얹어 꾸미기 좋음(작게~중간 크기용, 크게 키우면 흐려짐).
   { key: 'deco_frame', tab: 'deco', label: '📝 메모·라벨', items: ['dc_dma01', 'dc_dma03', 'dc_dma06', 'dc_dma05', 'dc_dma10', 'dc_dma14', 'dc_dma16', 'dc_dma07', 'dc_dma13', 'dc_dma11'] },

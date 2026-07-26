@@ -3,7 +3,7 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, PHOTO_IDS, MOTIONS, FX_KINDS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS } from './Stickers'
+import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, PHOTO_IDS, MOTIONS, FX_KINDS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -66,11 +66,20 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const [cat, setCat] = useState('bgtape') // 서랍 탭(배경부터 시작 — 배경·글자·친구들·음식·데코·라이프)
   const [foodChip, setFoodChip] = useState('f_han') // 음식 탭 요리별 서브칩(한식 기본)
 
-  // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로 올라온다
+  // 🧷 배경격(액자 프레임·포스트잇·메모라벨) = 그 위에 스티커·글자를 얹는 밑판. 이건 탭해도 맨 앞으로 안 올린다(안 그러면 눌렀을 때 애써 꾸민 작은 스티커·글자가 다 뒤로 숨어버림 — 창업자 제보 2026-07-26).
+  const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || (it.type === 'sticker' && typeof it.key === 'string' && it.key.startsWith('dc_dma')))
+  // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로. 단 배경격은 제자리 유지.
   const select = (id) => {
     setSel(id)
-    if (id) setItems((arr) => { const i = arr.findIndex((x) => x.id === id); return i < 0 ? arr : [...arr.slice(0, i), ...arr.slice(i + 1), arr[i]] })
+    if (id) setItems((arr) => {
+      const i = arr.findIndex((x) => x.id === id)
+      if (i < 0 || isBacking(arr[i])) return arr
+      return [...arr.slice(0, i), ...arr.slice(i + 1), arr[i]]
+    })
   }
+  // 순서 수동 조절 — 다 꺼내 다시 배열 안 해도 되게. 맨 뒤=배열 앞, 맨 앞=배열 끝.
+  const sendToBack = (id) => setItems((arr) => { const i = arr.findIndex((x) => x.id === id); return i <= 0 ? arr : [arr[i], ...arr.slice(0, i), ...arr.slice(i + 1)] })
+  const bringToFront = (id) => setItems((arr) => { const i = arr.findIndex((x) => x.id === id); return (i < 0 || i === arr.length - 1) ? arr : [...arr.slice(0, i), ...arr.slice(i + 1), arr[i]] })
   const patch = (id, p) => setItems((arr) => arr.map((x) => (x.id === id ? { ...x, ...p } : x)))
   const remove = (id) => { setItems((arr) => arr.filter((x) => x.id !== id)); setSel(null) }
 
@@ -103,10 +112,12 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const selOn = '2.5px solid var(--brown)'
   const selOff = '1.5px solid var(--line)'
   const selIsKitchen = selItem?.type === 'sticker' && KITCHEN_IDS.has(selItem.key)
-  const selIsGompeng = selItem?.type === 'sticker' && selItem.key?.startsWith('gp_') // 곰펭도 모션·효과 컨텍스트바
-  const hasCtx = selItem && (selItem.type === 'note' || selItem.type === 'text' || selItem.type === 'tape' || selIsKitchen || selIsGompeng || (selItem.type === 'sticker' && RECOLORABLE.has(selItem.key)))
+  const selIsGompeng = selItem?.type === 'sticker' && selItem.key?.startsWith('gp_') // 꼬르곰·펭펭도 모션·효과 컨텍스트바
+  // 뭐든 선택하면 컨텍스트 바를 띄운다 — 최소한 '순서(맨 뒤/맨 앞)'는 항상 조절 가능하게(창업자 레이어 제보). 색·움직임 등은 그 아래 종류별로.
+  const hasCtx = !!selItem
+  const layerBtn = { padding: '6px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: 'var(--surface)', color: 'var(--text-sub)', border: '1px solid var(--line)' }
 
-  // 서랍 탭 — 배경 다음 데코(창업자 2026-07-26: 곰펭 넣는 큰 프레임이 배경색이랑 맞춰봐야 해서 배경 옆에). 배경→데코(프레임 먼저)→글자→친구들→음식→라이프. 음식만 요리별 서브칩(2단계).
+  // 서랍 탭 — 배경 다음 데코(창업자 2026-07-26: 꼬르곰·펭펭 넣는 큰 프레임이 배경색이랑 맞춰봐야 해서 배경 옆에). 배경→데코(프레임 먼저)→글자→친구들→음식→라이프. 음식만 요리별 서브칩(2단계).
   const CATS = [
     { key: 'bgtape', label: '🎨 배경' },
     { key: 'deco', label: '✨ 데코' },
@@ -130,13 +141,16 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const addSticker = (key) => {
     const n = items.length
     const isKf = KITCHEN_IDS.has(key)
+    const isFrame = !!FRAMES[key]
     const it = {
       id: newDecorId(), type: 'sticker', key,
-      x: 0.5 + ((n % 3) - 1) * 0.06, y: 0.42 + ((n % 4) - 1.5) * 0.05,
-      s: key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2, r: ((n % 5) - 2) * 4,
+      x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.46 : 0.42 + ((n % 4) - 1.5) * 0.05,
+      s: isFrame ? 0.58 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
+      r: isFrame ? 0 : ((n % 5) - 2) * 4,
       ...(isKf || key.startsWith('gp_') ? { motion: 'tongtong', fx: 'none' } : {}),
     }
-    setItems((arr) => [...arr, it])
+    // 🖼 프레임(액자)은 밑판이라 맨 뒤(배열 앞)로 — 이미 꾸며둔 스티커·글자가 프레임 위로 자연스럽게 얹힌다. 나머지는 맨 앞(위).
+    setItems((arr) => isFrame ? [it, ...arr] : [...arr, it])
     setSel(it.id)
   }
   const addNote = (colorKey) => {
@@ -224,6 +238,14 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
         {/* 고정 컨텍스트 바 — 선택한 아이템의 색·무늬·모양을 캔버스 바로 아래에서 바로 바꾼다(스크롤 이동 없음) */}
         {hasCtx && (
           <div style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '9px 12px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {/* 🧷 순서 — 어떤 아이템이든 맨 뒤/맨 앞으로. 프레임·포스트잇에 스티커가 가려도 다 꺼낼 필요 없이 여기서 정리. */}
+            <div style={ctxRow}>
+              <span style={ctxLabel}>🧷 순서</span>
+              <div style={{ display: 'flex', gap: 7, flex: 1 }}>
+                <button className="press" onClick={() => sendToBack(sel)} style={layerBtn}>⬇ 맨 뒤로</button>
+                <button className="press" onClick={() => bringToFront(sel)} style={layerBtn}>⬆ 맨 앞으로</button>
+              </div>
+            </div>
             {(selIsKitchen || selIsGompeng) && (
               <>
                 <div style={ctxRow}>
