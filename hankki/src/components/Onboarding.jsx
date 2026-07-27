@@ -80,7 +80,7 @@ function Card({ food, foodW = 380, cover, title, date = '2026.07.25', rot = -4, 
 // ── 1. 히어로 ──
 const Slide1 = () => (
   <Stage bg="radial-gradient(circle at 30% 16%,#f0c79b,#e3aa73 55%,#d99a5f)">
-    <Cap><H1 style={{ color: '#fffdf8', textShadow: '0 4px 0 rgba(150,95,40,.28)' }}>한 끼를 해낸다면,<br />레꾸하세요.</H1><Sub style={{ color: '#5d3410', opacity: 0.9 }}>꼬르곰·펭펭과 레꾸 — 저 카드, 나도 만들래</Sub></Cap>
+    <Cap top={210}><H1 style={{ color: '#fffdf8', textShadow: '0 4px 0 rgba(150,95,40,.28)' }}>한 끼를 해낸다면,<br />레꾸하세요.</H1><Sub style={{ color: '#5d3410', opacity: 0.9 }}>꼬르곰·펭펭과 레꾸 — 저 카드, 나도 만들래</Sub></Cap>
     <div style={{ position: 'absolute', top: 560, left: '50%', transform: 'translateX(-50%)' }}>
       <Card food="fh_k22" cover="linear-gradient(150deg,#e9f2e6,#fbe9d6)" title="엄마표 김밥"
         deco={<><Spark x={480} y={30} size={56} /><Heart x={44} y={150} size={48} delay={0.7} /></>}
@@ -95,7 +95,7 @@ const Slide1 = () => (
 const Chip = ({ k }) => <div style={{ width: 120, height: 120, borderRadius: 26, background: '#fff', boxShadow: '0 8px 18px rgba(90,60,30,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}><img src={F(k)} alt="" style={{ width: '80%' }} /></div>
 const Slide2 = () => (
   <Stage bg="linear-gradient(160deg,#d3e3c8,#eaf2e2)">
-    <Cap><H1 style={{ color: '#4a6b42' }}>레시피 정리?<br />우린 레시피 레꾸해요</H1><Sub style={{ color: '#5f7a54' }}>레꾸하면, 한 끼가 추억이 된다</Sub></Cap>
+    <Cap top={210}><H1 style={{ color: '#4a6b42' }}>레시피 정리?<br />우린 레시피 레꾸해요</H1><Sub style={{ color: '#5f7a54' }}>레꾸하면, 한 끼가 추억이 된다</Sub></Cap>
     <div style={{ position: 'absolute', top: 556, left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
       <Card food="fe_06" foodW={346} cover="linear-gradient(150deg,#fbf5e8,#f2ecda)" title="연어 포케볼" rot={-3}
         deco={<><Img k="dc_dhb14" style={{ left: 38, top: 46, width: 70, transform: 'rotate(-10deg)' }} /><Img k="dc_dhb10" style={{ right: 42, top: 52, width: 74, transform: 'rotate(10deg)' }} /><Img k="dc_dhb04" style={{ left: 34, top: 262, width: 54, transform: 'rotate(-8deg)' }} /><Img k="dc_dsy04" style={{ right: 50, top: 280, width: 60, transform: 'rotate(8deg)' }} /><Spark x={150} y={140} size={40} /></>}
@@ -114,7 +114,7 @@ const Slide2 = () => (
 const Bub = ({ children, style }) => <div style={{ position: 'absolute', background: '#fff', fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 38, color: '#3a2f2a', boxShadow: '0 10px 22px rgba(150,50,80,.24)', zIndex: 5, ...style }}>{children}</div>
 const Slide3 = () => (
   <Stage bg="radial-gradient(circle at 50% 26%,#f7bccb,#f2a0b4 66%,#ec8ea6)">
-    <Cap top={92}>
+    <Cap top={210}>
       <H1 style={{ fontSize: 82, color: '#fffdf8', textShadow: '0 3px 0 rgba(180,70,100,.32)' }}>예쁜 카드 한 장으로,<br />센스있게 레시피 공유</H1>
       <Sub style={{ fontSize: 38, color: '#7a3550' }}>내 한끼를 친구들과 나눠요</Sub>
       <div style={{ marginTop: 22, display: 'flex', gap: 16, justifyContent: 'center' }}>
@@ -162,7 +162,7 @@ const Pick = ({ n, d, c, e }) => (
 )
 const Slide6 = () => (
   <Stage bg="linear-gradient(160deg,#cdd2a0,#e4e7c6)">
-    <Cap><H1 style={{ color: '#5f6a30' }}>아무거나 말고,<br />써본 것만 나눠요</H1><Sub style={{ color: '#72803a' }}>18년차 주부가 직접 쓰고 좋았던 살림템만 ⭐</Sub></Cap>
+    <Cap top={210}><H1 style={{ color: '#5f6a30' }}>아무거나 말고,<br />써본 것만 나눠요</H1><Sub style={{ color: '#72803a' }}>18년차 주부가 직접 쓰고 좋았던 살림템만 ⭐</Sub></Cap>
     <div style={{ position: 'absolute', top: 600, left: '50%', transform: 'translateX(-50%)', width: 740, display: 'flex', flexDirection: 'column', gap: 28 }}>
       <Pick n="든든한 보리면" d="쫄깃하고 속 편한, 든든한 한 끼" c="#c9a84e" e="🍜" />
       <Pick n="만능 대파소금" d="이거 하나면 간이 딱 맞아요" c="#7a9b56" e="🧂" />
@@ -176,7 +176,7 @@ const Slide6 = () => (
 // ── 7. 감정 ──
 const Slide7 = () => (
   <Stage bg="radial-gradient(circle at 50% 42%,#8a6a4c,#6f5238 70%,#5f4630)">
-    <Cap><H1 style={{ color: '#fff6ea' }}>레시피를 넘기면,<br />그날의 내가 보입니다</H1><Sub style={{ color: '#e8d3bd' }}>오늘도 한 끼, 해냈어요</Sub></Cap>
+    <Cap top={210}><H1 style={{ color: '#fff6ea' }}>레시피를 넘기면,<br />그날의 내가 보입니다</H1><Sub style={{ color: '#e8d3bd' }}>오늘도 한 끼, 해냈어요</Sub></Cap>
     <div style={{ position: 'absolute', top: 640, left: '50%', transform: 'translateX(-50%)', width: 760, height: 720, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ position: 'absolute', width: 640, height: 640, borderRadius: '50%', background: 'radial-gradient(circle,rgba(255,244,230,.5),rgba(255,244,230,0) 68%)' }} />
       <Img k="gp_gomtb" cls="hk-m-float" style={{ position: 'relative', width: 520, filter: 'drop-shadow(0 20px 30px rgba(40,25,10,.4))' }} />
@@ -189,7 +189,7 @@ const Slide7 = () => (
 // ── 8. 브랜드 (CTA) ──
 const Slide8 = () => (
   <Stage bg="radial-gradient(circle at 50% 30%,#f6b49e,#ee9a80 70%,#e5896d)">
-    <Cap><H1 style={{ color: '#fffdf8', textShadow: '0 4px 0 rgba(160,80,55,.3)' }}>꼬르곰·펭펭과<br />감정 레시피북</H1></Cap>
+    <Cap top={210}><H1 style={{ color: '#fffdf8', textShadow: '0 4px 0 rgba(160,80,55,.3)' }}>꼬르곰·펭펭과<br />감정 레시피북</H1></Cap>
     <div style={{ position: 'absolute', top: 520, left: '50%', transform: 'translateX(-50%)', width: 900, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Img k="gp_duohi" cls="hk-m-sway" style={{ position: 'relative', width: 560, transformOrigin: 'bottom center', filter: 'drop-shadow(0 18px 26px rgba(120,50,30,.35))' }} />
       <div style={{ marginTop: 36, alignSelf: 'stretch', background: '#fffdf8', borderRadius: 40, padding: '44px 40px', boxShadow: '0 20px 40px rgba(150,70,45,.28)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
