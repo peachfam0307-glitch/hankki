@@ -3,6 +3,7 @@ import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
+import uiGomShop from '../assets/ui/gom_shop.png' // 🐻 장보기 꼬르곰(주부의 장바구니 헤더)
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 
 // 장보기 탭 첫 방문 코치마크 — 숨은 기능 안내(창업자 딸 아이디어 ⭐)
@@ -80,7 +81,7 @@ export default function ShopScreen() {
 
         {/* 2) 장보기 리스트 — 담은 것이 여기로. 큐레이션 바로 아래라 담기 동선이 자연스럽다. */}
         <div className="sec-head" style={{ marginTop: 20 }}>
-          <div className="h-section">장보기 리스트</div>
+          <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="cart" size={18} color="var(--brown)" stroke={1.9} />장보기 리스트</div>
           <div style={{ display: 'flex', gap: 14 }}>
             {doneCount > 0 && (
               <button className="t-more press" onClick={() => store.clearDoneShopItems()}>
@@ -126,7 +127,7 @@ export default function ShopScreen() {
 
         {/* 3) 쇼핑몰 바로가기 — 리스트 확인하고 바로 사러 가는 자리(리스트 바로 아래). */}
         <div className="sec-head" style={{ marginTop: 24 }}>
-          <div className="h-section">쇼핑몰 바로가기</div>
+          <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="tag" size={18} color="var(--brown)" stroke={1.9} />쇼핑몰 바로가기</div>
           <button className="press" style={secBtnStyle} onClick={() => setEditShops((v) => !v)}>
             {editShops ? '완료' : '편집'}
           </button>
@@ -280,7 +281,7 @@ function Curation() {
   return (
     <>
       <div className="sec-head" style={{ marginTop: 6 }}>
-        <div className="h-section">주부의 장바구니</div>
+        <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><img src={uiGomShop} alt="" draggable={false} style={{ width: 24, height: 24, objectFit: 'contain', flex: '0 0 auto' }} />주부의 장바구니</div>
         <button className="press" style={secBtnStyle} onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
       </div>
       <div className="t-sub" style={{ fontSize: 12, marginTop: -2, marginBottom: 6 }}>
