@@ -25,7 +25,7 @@ export default defineConfig({
       manifest: {
         name: '한끼 — 나만의 레시피, 레꾸해요',
         short_name: '한끼',
-        description: '레시피를 예쁜 카드로 레꾸(레시피 꾸미기)! 꼬르곰·펭펭과 꾸미고, 친구랑 나누는 감정 레시피북.',
+        description: '한 끼를 만든 마음까지 저장하세요. 레시피를 예쁜 카드로 레꾸(레시피 꾸미기)! 꼬르곰·펭펭과 꾸미고, 친구랑 나누는 감정 레시피북.',
         // 앱 고유 id — 스토어/설치 앱이 '같은 앱'으로 인식하게 고정. 상대 경로라 배포 위치와 무관.
         id: './',
         categories: ['food', 'lifestyle'],

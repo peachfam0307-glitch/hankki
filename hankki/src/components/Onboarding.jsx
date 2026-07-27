@@ -80,7 +80,7 @@ function Card({ food, foodW = 380, cover, title, date = '2026.07.25', rot = -4, 
 // ── 1. 히어로 ──
 const Slide1 = () => (
   <Stage bg="radial-gradient(circle at 30% 16%,#f0c79b,#e3aa73 55%,#d99a5f)">
-    <Cap><H1 style={{ color: '#fffdf8', textShadow: '0 4px 0 rgba(150,95,40,.28)' }}>내 레시피,<br />예쁘게 꾸며요</H1><Sub style={{ color: '#5d3410', opacity: 0.9 }}>꼬르곰·펭펭과 레꾸 — 저 카드, 나도 만들래</Sub></Cap>
+    <Cap><H1 style={{ color: '#fffdf8', textShadow: '0 4px 0 rgba(150,95,40,.28)' }}>한 끼를 해낸다면,<br />레꾸하세요.</H1><Sub style={{ color: '#5d3410', opacity: 0.9 }}>꼬르곰·펭펭과 레꾸 — 저 카드, 나도 만들래</Sub></Cap>
     <div style={{ position: 'absolute', top: 560, left: '50%', transform: 'translateX(-50%)' }}>
       <Card food="fh_k22" cover="linear-gradient(150deg,#e9f2e6,#fbe9d6)" title="엄마표 김밥"
         deco={<><Spark x={480} y={30} size={56} /><Heart x={44} y={150} size={48} delay={0.7} /></>}
@@ -95,7 +95,7 @@ const Slide1 = () => (
 const Chip = ({ k }) => <div style={{ width: 120, height: 120, borderRadius: 26, background: '#fff', boxShadow: '0 8px 18px rgba(90,60,30,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}><img src={F(k)} alt="" style={{ width: '80%' }} /></div>
 const Slide2 = () => (
   <Stage bg="linear-gradient(160deg,#d3e3c8,#eaf2e2)">
-    <Cap><H1 style={{ color: '#4a6b42' }}>레시피 정리?<br />우린 레시피 레꾸해요</H1><Sub style={{ color: '#5f7a54' }}>레시피 꾸미기 = 레꾸! 꼬르곰·펭펭과 톡톡 꾸며요</Sub></Cap>
+    <Cap><H1 style={{ color: '#4a6b42' }}>레시피 정리?<br />우린 레시피 레꾸해요</H1><Sub style={{ color: '#5f7a54' }}>레꾸하면, 한 끼가 추억이 된다</Sub></Cap>
     <div style={{ position: 'absolute', top: 556, left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
       <Card food="fe_06" foodW={346} cover="linear-gradient(150deg,#fbf5e8,#f2ecda)" title="연어 포케볼" rot={-3}
         deco={<><Img k="dc_dhb14" style={{ left: 38, top: 46, width: 70, transform: 'rotate(-10deg)' }} /><Img k="dc_dhb10" style={{ right: 42, top: 52, width: 74, transform: 'rotate(10deg)' }} /><Img k="dc_dhb04" style={{ left: 34, top: 262, width: 54, transform: 'rotate(-8deg)' }} /><Img k="dc_dsy04" style={{ right: 50, top: 280, width: 60, transform: 'rotate(8deg)' }} /><Spark x={150} y={140} size={40} /></>}
@@ -176,7 +176,7 @@ const Slide6 = () => (
 // ── 7. 감정 ──
 const Slide7 = () => (
   <Stage bg="radial-gradient(circle at 50% 42%,#8a6a4c,#6f5238 70%,#5f4630)">
-    <Cap><H1 style={{ color: '#fff6ea' }}>오늘도 한 끼,<br />해냈어요</H1><Sub style={{ color: '#e8d3bd' }}>요리하는 나를 위한 작은 위로</Sub></Cap>
+    <Cap><H1 style={{ color: '#fff6ea' }}>레시피를 넘기면,<br />그날의 내가 보입니다</H1><Sub style={{ color: '#e8d3bd' }}>오늘도 한 끼, 해냈어요</Sub></Cap>
     <div style={{ position: 'absolute', top: 640, left: '50%', transform: 'translateX(-50%)', width: 760, height: 720, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ position: 'absolute', width: 640, height: 640, borderRadius: '50%', background: 'radial-gradient(circle,rgba(255,244,230,.5),rgba(255,244,230,0) 68%)' }} />
       <Img k="gp_gomtb" cls="hk-m-float" style={{ position: 'relative', width: 520, filter: 'drop-shadow(0 20px 30px rgba(40,25,10,.4))' }} />
