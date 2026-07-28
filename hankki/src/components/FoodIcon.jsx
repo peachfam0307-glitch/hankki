@@ -973,11 +973,33 @@ export function guessFoodIcon(name = '') {
   return 'default'
 }
 
-// 🏷 아이콘 식별용 이름 — 픽커에서 아이콘 아래 라벨로(창업자 2026-07-26 "음식 아래 이름 달아 식별되게"). ICON_RULES 첫 키워드=대표 이름(구체 규칙이 위라 정확). 규칙 없는 몇 개만 보충.
+// 🏷 아이콘 식별용 이름 — 픽커에서 아이콘 아래 라벨로(창업자 2026-07-26 "음식 아래 이름 달아 식별되게"). ICON_RULES 첫 키워드=대표 이름(구체 규칙이 위라 정확). 규칙 없는 건 아래 EXTRA로 보충.
+// ⚠️ 이름 없는 아이콘 = 픽커에서 라벨이 빈칸으로 보인다(창업자 2026-07-28 제보 "음식에 이름 없는 거 있어").
+//    → 새 아이콘을 픽커에 넣을 땐 ICON_RULES에 규칙이 없으면 반드시 여기에 이름을 적을 것.
+const EXTRA_NAMES = {
+  // 한식(hnc·htj·hnb 시리즈) — 2026-07-28 그림 직접 확인해 이름 부여
+  fh_hnc01: '돌솥비빔밥', fh_hnc03: '흰쌀밥', fh_hnc04: '순두부찌개', fh_hnc06: '잡채', fh_hnc10: '불고기',
+  fh_htj01: '삼계탕', fh_htj05: '갈비탕', fh_htj13: '닭볶음탕', fh_hnb01: '미역국', fh_hnb08: '계란말이',
+  // 분식(bun 시리즈)
+  fb_bun02: '어묵탕', fb_bun03: '떡볶이', fb_bun04: '순대', fb_bun05: '라면', fb_bun08: '김밥', fb_bun11: '만두튀김',
+  // 양식(yng 시리즈)
+  fy_yng01: '마르게리타피자', fy_yng02: '토마토파스타', fy_yng05: '햄버거', fy_yng07: '스테이크',
+  fy_yng09: '샌드위치', fy_yng12: '오므라이스',
+  // 중식(jsk 시리즈)
+  fj_jsk01: '해물짬뽕', fj_jsk02: '샤오롱바오', fj_jsk03: '짜장면', fj_jsk04: '볶음밥',
+  fj_jsk05: '마파두부', fj_jsk15: '군만두',
+  // 일식(isk 시리즈)
+  fi_isk02: '우동', fi_isk03: '연어초밥', fi_isk05: '라멘', fi_isk06: '장어덮밥',
+  fi_isk07: '타코야키', fi_isk13: '미소국',
+  // 신규 추가분 중 규칙 키워드와 라벨이 다른 것
+  fe_85: '케이크', fe_89: '리조또', fe_91: '탕수육',
+  // 기타
+  soyLong: '진간장',
+}
 export const FOOD_NAMES = (() => {
   const m = {}
   for (const [keys, key] of ICON_RULES) if (!m[key]) m[key] = keys[0]
-  return { seafood: '해산물', dessert: '디저트', icecream: '아이스크림', bag: '장바구니', basket: '바구니', box: '박스', ...m }
+  return { seafood: '해산물', dessert: '디저트', icecream: '아이스크림', bag: '장바구니', basket: '바구니', box: '박스', ...EXTRA_NAMES, ...m }
 })()
 
 export default function FoodIcon({ name = 'default', size = 40 }) {
