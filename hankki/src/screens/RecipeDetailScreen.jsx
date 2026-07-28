@@ -14,7 +14,8 @@ import DecorEditor from '../components/DecorEditor'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { shareDecoratedCover } from '../shareCover'
 import { scaleIngredient } from '../scale'
-import { dateLabel, openExternal, cropSquare } from '../utils'
+import { FoodIconSheet } from '../components/FoodIconPicker'
+import { dateLabel, openExternal } from '../utils'
 import { SOURCES } from '../data/seed'
 import { picksForIngredients, productLink, productMall } from '../data/curation'
 import { useWakeLock } from '../useWakeLock'
@@ -57,7 +58,7 @@ export default function RecipeDetailScreen({ id }) {
   useLayerBack(decorOpen, () => setDecorOpen(false))
   const [coach, setCoach] = useState(() => needsCoach(COACH_KEY))
   const iconRef = useRef(null)
-  const photoRef = useRef(null) // 표지 사진 바꾸기 — 상세에서 바로(편집 안 들어가고)
+  const [iconSheet, setIconSheet] = useState(false) // 표지 아이콘 바꾸기 — 상세에서 바로(편집 안 들어가고)
   const coverRef = useRef(null) // 꾸민 표지(레꾸) 캡처용
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
   const r = recipes.find((x) => x.id === id)
@@ -104,19 +105,12 @@ export default function RecipeDetailScreen({ id }) {
 
   const del = () => setConfirmDel(true)
 
-  // 📷 표지 사진 바꾸기 — 예전엔 편집 진입 → 썸네일 '사진' 탭 → 고르기 → 맨 아래 저장까지 가야 했다
-  // (창업자 "레시피 음식사진 변경이 불편해"). 이제 상세에서 표지 한 번 누르면 바로 고르고 즉시 저장된다.
-  const onCoverPhoto = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = async () => {
-      const cropped = await cropSquare(reader.result, 800)
-      updateRecipe(r.id, { thumb: 'photo', image: cropped, touched: true })
-      nav.showToast('표지 사진을 바꿨어요')
-    }
-    reader.readAsDataURL(file)
-    e.target.value = ''
+  // 🍱 표지 아이콘 바꾸기 — 예전엔 편집 진입 → 썸네일 탭 → 고르기 → 맨 아래 저장까지 가야 했다
+  // (창업자 "레시피 음식사진 변경이 불편해"). 이제 상세 표지에서 한 번 눌러 고르면 즉시 저장된다.
+  // 갤러리 사진이 아니라 우리 음식 아이콘으로 연결(창업자 지적) — 사진 쓰고 싶으면 편집 화면에서.
+  const pickIcon = (k) => {
+    updateRecipe(r.id, { thumb: 'icon', icon: k, touched: true })
+    nav.showToast('표지 아이콘을 바꿨어요')
   }
   const doDelete = () => {
     removeRecipe(r.id)
@@ -173,37 +167,35 @@ export default function RecipeDetailScreen({ id }) {
         </Portal>
       )}
 
-      {/* 상단 오버레이 바 */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5, display: 'flex', justifyContent: 'space-between', padding: '10px 12px', paddingTop: 'calc(10px + var(--safe-top))' }}>
-        <button className="round-btn press" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {/* 편집 — 연필 아이콘만으론 약해서 글자 라벨 붙인 알약으로 (직관적으로 눈에 띄게) */}
-          <button
-            className="press"
-            onClick={() => nav.push({ name: 'editor', id: r.id })}
-            data-coach="edit"
-            aria-label="편집"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 38, padding: '0 14px', background: 'rgba(250,250,248,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 800, borderRadius: 999, boxShadow: '0 2px 10px rgba(0,0,0,.18)' }}
-          >
-            <Icon name="edit" size={17} color="var(--brown)" stroke={2.4} /> 편집
+      {/* 상단 바 — 표지 위에 얹지 않고 사진 밖 별도 바로 뺐다(창업자 2026-07-28
+          "버튼이 7개야 그림 속에 · 간섭이 심해"). 표지에는 표지용 버튼 2개만 남는다.
+          sticky라 스크롤해도 뒤로·공유는 계속 닿는다. */}
+      <div className="detail-bar">
+        <button className="bar-btn" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* 보조 동작(편집·즐겨찾기·삭제)은 같은 납작한 원형으로 리듬 통일.
+              주 동작(공유)만 채움 알약으로 강조해 위계를 만든다. */}
+          <button className="bar-btn" onClick={() => nav.push({ name: 'editor', id: r.id })} data-coach="edit" aria-label="편집">
+            <Icon name="edit" size={19} stroke={2.2} />
           </button>
-          <button className="round-btn press" onClick={() => toggleFavorite(r.id)} aria-label="즐겨찾기">
+          <button className="bar-btn" onClick={() => toggleFavorite(r.id)} aria-label="즐겨찾기">
             <Icon name="bookmark" size={20} color={r.favorite ? '#c2703f' : 'currentColor'} style={{ fill: r.favorite ? '#c2703f' : 'none' }} />
           </button>
+          {/* 삭제 — 예전엔 '⋯ 더보기' 뒤에 숨겨뒀는데 메뉴 안에 삭제 하나뿐이라
+              유저는 "삭제가 어디 있는지 모르겠다"만 됐다(창업자 제보 "점세개 안에 있어 불편").
+              휴지통 아이콘으로 바로 보여주고, 확인 시트는 그대로라 실수 방지도 유지된다(탭 3→2회). */}
+          <button className="bar-btn" onClick={del} aria-label="레시피 삭제"><Icon name="trash" size={20} /></button>
           {/* 공유 — 눈에 띄게 채움색(포인트 브라운) 알약. 바이럴 진입점이라 강조. */}
           <button
             className="press"
             onClick={onShare}
             data-coach="share"
             aria-label="친구와 레시피 공유하기"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 38, padding: '0 16px', background: 'var(--brown)', color: '#fffdf8', fontSize: 13.5, fontWeight: 800, borderRadius: 999, boxShadow: '0 3px 12px rgba(120,70,40,.32)', border: 'none' }}
+            // 삭제 바로 옆이라 오탭 안 나게 간격을 벌려둔다(삭제엔 확인 시트도 그대로 있음)
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 36, marginLeft: 10, padding: '0 15px', background: 'var(--brown)', color: '#fffdf8', fontSize: 13.5, fontWeight: 800, borderRadius: 999, border: 'none' }}
           >
             <Icon name="share" size={17} color="#fffdf8" stroke={2.3} /> 공유
           </button>
-          {/* 삭제 — 예전엔 '⋯ 더보기' 뒤에 숨겨뒀는데 메뉴 안에 삭제 하나뿐이라
-              유저는 "삭제가 어디 있는지 모르겠다"만 됐다(창업자 제보 "점세개 안에 있어 불편").
-              휴지통 아이콘으로 바로 보여주고, 확인 시트는 그대로라 실수 방지도 유지된다(탭 3→2회). */}
-          <button className="round-btn press" onClick={del} aria-label="레시피 삭제"><Icon name="trash" size={20} /></button>
         </div>
       </div>
 
@@ -211,16 +203,16 @@ export default function RecipeDetailScreen({ id }) {
       <div ref={coverRef} style={{ position: 'relative' }}>
         <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
         <DecorLayer items={r.decor || []} />
-        {/* 표지 사진 바꾸기 — 편집 안 들어가고 여기서 바로. 꾸미기 버튼과 나란히(왼쪽=사진, 오른쪽=꾸미기) */}
+        {/* 표지 아이콘 바꾸기 — 작은 원형 하나로(레꾸가 주인공이라 표지를 최대한 안 가린다·창업자 2026-07-28).
+            ⚠️ 갤러리 사진이 아니라 우리 음식 아이콘 픽커로 연결한다(창업자 지적). */}
         <button
           className="press"
-          onClick={() => photoRef.current?.click()}
+          onClick={() => setIconSheet(true)}
           data-nocapture
-          aria-label="표지 사진 바꾸기"
-          style={{ position: 'absolute', bottom: 12, left: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(250,250,248,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 800, padding: '9px 15px', borderRadius: 999, boxShadow: '0 4px 14px rgba(0,0,0,.22)' }}
+          aria-label="표지 아이콘 바꾸기"
+          style={{ position: 'absolute', bottom: 12, left: 12, width: 34, height: 34, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(250,250,248,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--brown)', borderRadius: 999, boxShadow: '0 3px 10px rgba(0,0,0,.18)' }}
         >
-          <Icon name="camera" size={15} color="var(--brown)" />
-          사진 바꾸기
+          <Icon name="photo" size={17} color="var(--brown)" stroke={2.2} />
         </button>
         {/* 표지 꾸미기 — 솔직한 버튼으로 눈에 띄게(포인트색 채운 알약). 캡처에선 제외(data-nocapture) */}
         <button
@@ -229,13 +221,16 @@ export default function RecipeDetailScreen({ id }) {
           data-coach="decor"
           data-nocapture
           aria-label="레시피 꾸미기"
-          style={{ position: 'absolute', bottom: 12, right: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--brown)', color: '#fff', fontSize: 13.5, fontWeight: 800, padding: '9px 15px', borderRadius: 999, boxShadow: '0 4px 14px rgba(0,0,0,.3)' }}
+          // 표지를 덜 가리게 한 단계 줄였다(창업자 2026-07-28). 왼쪽 표지 아이콘 버튼과 높이(34)를 맞춰 한 줄로 떨어지게.
+          style={{ position: 'absolute', bottom: 12, right: 12, display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--brown)', color: '#fff', fontSize: 12.5, fontWeight: 800, padding: '0 13px', borderRadius: 999, boxShadow: '0 4px 14px rgba(0,0,0,.3)' }}
         >
-          <Icon name="palette" size={15} />
+          <Icon name="palette" size={14} />
           레시피 꾸미기
         </button>
       </div>
-      <input ref={photoRef} type="file" accept="image/*" onChange={onCoverPhoto} style={{ display: 'none' }} />
+      {iconSheet && (
+        <FoodIconSheet value={r.icon || guessFoodIcon(r.title)} onChange={pickIcon} onClose={() => setIconSheet(false)} />
+      )}
 
       <div className="pad" style={{ paddingTop: 18, paddingBottom: 120 }}>
         {r.status === 'unsorted' && (

@@ -863,6 +863,39 @@ img {
   transform: scale(0.92);
 }
 
+/* 상세 상단 바 — 버튼을 표지 사진 "위"가 아니라 사진 "밖"에 둔다.
+   예전엔 뒤로·편집·북마크·공유·삭제 5개가 표지에 얹히고 표지 아이콘·레꾸까지 더해져
+   그림 속에 버튼이 7개였다(창업자 2026-07-28 "간섭이 심해"). 바로 빼서 표지를 비운다. */
+.detail-bar {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px 10px;
+  padding-top: calc(8px + var(--safe-top));
+  background: var(--bg);
+}
+/* 바 위 버튼 — 종이 바탕이라 유리·그림자 없이 납작하게. 테마색 그대로 따라간다. */
+.bar-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  transition: transform 0.08s ease, background 0.12s ease;
+}
+.bar-btn:active {
+  transform: scale(0.92);
+  background: var(--cream);
+}
+
 /* 바텀 시트 — 화면(뷰포트)에 고정. 내용이 길면 시트 안에서 스크롤. */
 .sheet-mask {
   position: fixed;
