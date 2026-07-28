@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import logoCream from '../assets/logo-hankki-cream.png'
+import uiGomHeart from '../assets/ui/gom_heart.png'
 
 // 첫 실행 온보딩 — 스토어 스샷과 똑같은 레꾸 카드+곰펭 디자인을 앱 안에서 라이브로.
 // 곰펭은 앱 실제 모션(콩콩·살랑·둥실…), 꾸미기 슬라이드엔 반짝·하트 효과. 문구=꼬르곰·펭펭/레꾸(옛 '흩어진'·'곰펭이' 없음).
@@ -17,7 +18,10 @@ const PHOTO = import.meta.glob('../assets/stickers/photo/*.png', { eager: true, 
 const F = (k) => PHOTO[`../assets/stickers/photo/${k}.png`]
 const Img = ({ k, style, cls }) => <img src={F(k)} alt="" draggable={false} className={cls} style={{ position: 'absolute', ...style }} />
 
-// ── 1080×1920 스테이지를 화면에 맞춰 통째로 스케일 (스샷 디자인 픽셀 그대로) ──
+// ── 1080×1920 스테이지를 화면에 맞춰 통째로 축소 (스샷 디자인 픽셀 그대로) ──
+// ⚠️ 축소는 `zoom`으로 한다(`transform: scale` 아님). transform은 1080×1920으로 한 번 래스터화한
+// 레이어를 축소해 붙이는 방식이라 글자·이미지가 전부 뿌옇게 뭉갠다(창업자 폰 제보 "화질 떨어짐").
+// zoom은 브라우저가 축소된 크기 기준으로 레이아웃·래스터를 다시 하므로 폰트도 이미지도 선명하다.
 function Stage({ bg, children }) {
   const [scale, setScale] = useState(0.34)
   useEffect(() => {
@@ -26,7 +30,7 @@ function Stage({ bg, children }) {
   }, [])
   return (
     <div style={{ width: 1080 * scale, height: 1920 * scale, position: 'relative' }}>
-      <div style={{ width: 1080, height: 1920, position: 'absolute', top: 0, left: 0, transformOrigin: 'top left', transform: `scale(${scale})`, background: bg, overflow: 'hidden', fontFamily: "'Jua', sans-serif" }}>
+      <div style={{ width: 1080, height: 1920, position: 'absolute', top: 0, left: 0, zoom: scale, background: bg, overflow: 'hidden', fontFamily: "'Jua', sans-serif" }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.32) 9px, transparent 10px)', backgroundSize: '100px 100px' }} />
         {children}
       </div>
@@ -176,10 +180,10 @@ const Slide6 = () => (
 // ── 7. 감정 ──
 const Slide7 = () => (
   <Stage bg="radial-gradient(circle at 50% 42%,#8a6a4c,#6f5238 70%,#5f4630)">
-    <Cap top={210}><H1 style={{ color: '#fff6ea' }}>레시피를 넘기면,<br />그날의 내가 보입니다</H1><Sub style={{ color: '#e8d3bd' }}>오늘도 한 끼, 해냈어요</Sub></Cap>
+    <Cap top={210}><H1 style={{ color: '#fff6ea' }}>레시피를 넘기면,<br />그날의 내가 보여요</H1><Sub style={{ color: '#e8d3bd' }}>오늘도 한 끼, 해냈어요</Sub></Cap>
     <div style={{ position: 'absolute', top: 640, left: '50%', transform: 'translateX(-50%)', width: 760, height: 720, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ position: 'absolute', width: 640, height: 640, borderRadius: '50%', background: 'radial-gradient(circle,rgba(255,244,230,.5),rgba(255,244,230,0) 68%)' }} />
-      <Img k="gp_gomtb" cls="hk-m-float" style={{ position: 'relative', width: 520, filter: 'drop-shadow(0 20px 30px rgba(40,25,10,.4))' }} />
+      <img src={uiGomHeart} alt="" draggable={false} className="hk-m-float" style={{ position: 'relative', width: 520, filter: 'drop-shadow(0 20px 30px rgba(40,25,10,.4))' }} />
       <RiseHeart x={110} y={120} size={52} delay={0} /><RiseHeart x={560} y={220} size={44} color="#ffd0a0" delay={1.1} /><RiseHeart x={210} y={520} size={40} delay={0.6} />
     </div>
     <Foot style={{ background: '#fff6ea', color: '#6f5238' }}>감정 레시피북 · 한끼</Foot>
