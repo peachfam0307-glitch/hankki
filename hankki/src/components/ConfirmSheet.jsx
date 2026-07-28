@@ -4,7 +4,9 @@ import { useModalBack } from '../useBackHandler'
 // 앱 안에서 쓰는 확인 시트 — window.confirm 대체.
 // window.confirm 도 설치형 PWA에선 사이트 주소가 박힌 검은 시스템 창을 띄운다.
 // 삭제·초기화 같은 되돌리기 어려운 동작 확인에 쓴다(danger=빨강 버튼).
-export default function ConfirmSheet({ title, message, confirmLabel = '확인', danger = false, onConfirm, onClose }) {
+// secondaryLabel/onSecondary = 선택 사항인 "제3의 길"(예: 버리기 vs 그냥 닫기 vs 계속 쓰기).
+// 안 넘기면 기존처럼 확인/취소 2지선다 그대로다.
+export default function ConfirmSheet({ title, message, confirmLabel = '확인', danger = false, onConfirm, onClose, secondaryLabel, onSecondary }) {
   useModalBack(onClose) // 뒤로가기 → 닫기
   return (
     <Portal>
@@ -25,6 +27,11 @@ export default function ConfirmSheet({ title, message, confirmLabel = '확인', 
             >
               {confirmLabel}
             </button>
+            {secondaryLabel && (
+              <button className="btn-ghost press" style={{ width: '100%', marginBottom: 8 }} onClick={() => { onSecondary && onSecondary(); onClose() }}>
+                {secondaryLabel}
+              </button>
+            )}
             <button className="btn-ghost press" style={{ width: '100%' }} onClick={onClose}>취소</button>
           </div>
         </div>

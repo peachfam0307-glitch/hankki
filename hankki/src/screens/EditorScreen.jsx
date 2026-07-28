@@ -12,6 +12,7 @@ import TextTile from '../components/TextTile'
 import CropSheet from '../components/CropSheet'
 import Portal from '../components/Portal'
 import PromptSheet from '../components/PromptSheet'
+import ConfirmSheet from '../components/ConfirmSheet'
 import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES } from '../theme'
 import { TAG_LIST } from '../data/seed'
@@ -59,6 +60,7 @@ export default function EditorScreen({ id, prefill }) {
   const ocrAccum = useRef('') // 'all' 자동분류용 — 여러 장의 인식 텍스트를 모아 한 번에 파싱
   const ingRef = useRef(null) // 재료 입력칸
   const stepRef = useRef(null) // 만드는 법 입력칸
+  const titleRef = useRef(null) // 제목 입력칸 — 제목 없이 저장 누르면 여기로 데려간다
   // 해당 칸 커서 위치에 단위/수량을 넣는다. 영어 키보드 전환 없이 g·t·T 를 톡 넣기 위함.
   const insertUnit = (u, ref, field) => {
     const el = ref.current
@@ -93,6 +95,7 @@ export default function EditorScreen({ id, prefill }) {
   }
   useEffect(() => { const id = setTimeout(checkPhotoScroll, 80); return () => clearTimeout(id) }, [pin, refs.length])
   const [newFolder, setNewFolder] = useState(false)
+  const [discardAsk, setDiscardAsk] = useState(false) // 작성 중 나가기 = 버릴지 물어본다
 
   const [f, setF] = useState(() => {
     const e = editing
@@ -156,15 +159,17 @@ export default function EditorScreen({ id, prefill }) {
   // 전체보기(zoom) 오버레이 — 뒤로가기로 닫기. (크롭 시트는 CropSheet 가 자체 처리)
   useLayerBack(zoom !== false, () => setZoom(false))
 
+  // 쓰던 내용이 있나 — 자동 임시저장과 '버릴까요?' 확인이 같은 기준을 쓰게 한 곳에서 판단한다.
+  const hasDraftContent = !!(f.title.trim() || f.ingredients.trim() || f.steps.trim() || f.memo.trim() || f.sourceUrl.trim())
+
   // 작성 중 자동 임시저장 — 텍스트만(사진은 무겁고 텍스트가 핵심). 편집 모드는 제외.
   useEffect(() => {
     if (editing) return
     try {
-      const has = f.title.trim() || f.ingredients.trim() || f.steps.trim() || f.memo.trim() || f.sourceUrl.trim()
-      if (has) localStorage.setItem(DRAFT_KEY, JSON.stringify({ ts: Date.now(), f }))
+      if (hasDraftContent) localStorage.setItem(DRAFT_KEY, JSON.stringify({ ts: Date.now(), f }))
       else localStorage.removeItem(DRAFT_KEY)
     } catch { /* noop */ }
-  }, [f, editing])
+  }, [f, editing, hasDraftContent])
   const toggleTag = (t) => set('tags', f.tags.includes(t) ? f.tags.filter((x) => x !== t) : [...f.tags, t])
   const embed = embedUrl(f.sourceUrl) // 유튜브·인스타 링크면 '보면서 쓰기' 가능
 
@@ -270,7 +275,15 @@ export default function EditorScreen({ id, prefill }) {
   const canSave = f.title.trim().length > 0
 
   const save = () => {
-    if (!canSave) return
+    // 제목이 없으면 그냥 무시하지 않는다 — 예전엔 버튼을 disabled로 막아서
+    // "눌러도 아무 반응 없음 = 저장 먹통"으로 보였다(창업자 제보).
+    // 이제는 왜 안 되는지 말해주고 제목 칸으로 직접 데려간다.
+    if (!canSave) {
+      nav.showToast('제목을 먼저 적어주세요')
+      const el = titleRef.current
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => el.focus(), 300) }
+      return
+    }
     const title = f.title.trim()
     const ings = splitLines(f.ingredients)
     const stps = splitLines(f.steps)
@@ -335,9 +348,12 @@ export default function EditorScreen({ id, prefill }) {
         </Portal>
       )}
       <div className="topbar-back">
-        <button className="icon-btn press" onClick={() => nav.pop()} aria-label="닫기"><Icon name="x" size={24} /></button>
+        {/* 닫기 — 새로 쓰던 내용이 있으면 "이어쓸지 버릴지" 물어본다.
+            예전엔 확인 없이 그냥 닫혀서, 버리려면 초안이 계속 되살아나 답답했다(창업자 "작성중 삭제 불편"). */}
+        <button className="icon-btn press" onClick={() => (!editing && hasDraftContent ? setDiscardAsk(true) : nav.pop())} aria-label="닫기"><Icon name="x" size={24} /></button>
         <div style={{ fontSize: 16, fontWeight: 700 }}>{editing ? '레시피 정리' : '직접 작성하기'}</div>
-        <button className="press" onClick={save} disabled={!canSave} style={{ fontSize: 15, fontWeight: 700, color: canSave ? 'var(--brown)' : 'var(--sand)' }}>
+        {/* disabled 금지 — 눌러도 무반응이면 "먹통"으로 보인다. 색만 흐리게 두고, 누르면 save()가 안내한다. */}
+        <button className="press" onClick={save} style={{ fontSize: 15, fontWeight: 700, color: canSave ? 'var(--brown)' : 'var(--sand)' }}>
           저장
         </button>
       </div>
@@ -498,7 +514,7 @@ export default function EditorScreen({ id, prefill }) {
         <div className="field">
           <label>제목</label>
           {/* autoFocus 금지 — 화면에 들어오자마자 키보드가 아래 내용을 다 가려버린다. */}
-          <input value={f.title} onChange={(e) => set('title', e.target.value)} placeholder="예) 명란 크림 파스타" />
+          <input ref={titleRef} value={f.title} onChange={(e) => set('title', e.target.value)} placeholder="예) 명란 크림 파스타" />
         </div>
 
         {/* 캡처 한 장으로 재료+만드는 법 한 번에 — 사진 두 번 올리는 번거로움 없이(요청 반영).
@@ -624,10 +640,29 @@ export default function EditorScreen({ id, prefill }) {
           <textarea rows={3} value={f.memo} onChange={(e) => set('memo', e.target.value)} placeholder="나만의 팁이나 변형 아이디어" />
         </div>
 
-        <button className="btn-primary press" onClick={save} disabled={!canSave} style={{ opacity: canSave ? 1 : 0.5 }}>
+        {/* disabled 금지 — 위 상단 저장 버튼과 같은 이유(무반응=먹통으로 보임). 누르면 save()가 안내한다. */}
+        <button className="btn-primary press" onClick={save} style={{ opacity: canSave ? 1 : 0.5 }}>
           {editing ? '정리 완료' : '레시피 저장'}
         </button>
       </div>
+
+      {/* 작성 중 나가기 — 이어쓰기(그냥 닫기) vs 버리기(임시저장까지 삭제) */}
+      {discardAsk && (
+        <ConfirmSheet
+          title="쓰던 내용, 어떻게 할까요?"
+          message={'그냥 닫으면 다음에 이어서 쓸 수 있어요.\n버리면 지금 쓴 내용이 사라져요.'}
+          confirmLabel="버리기"
+          danger
+          onConfirm={() => {
+            try { localStorage.removeItem(DRAFT_KEY) } catch { /* noop */ }
+            nav.pop()
+            nav.showToast('쓰던 내용을 버렸어요')
+          }}
+          secondaryLabel="그냥 닫기 (이어서 쓸래요)"
+          onSecondary={() => nav.pop()}
+          onClose={() => setDiscardAsk(false)}
+        />
+      )}
 
       {newFolder && (
         <PromptSheet

@@ -4,12 +4,15 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import SourceBadge from '../components/SourceBadge'
+import ConfirmSheet from '../components/ConfirmSheet'
 import { timeAgo } from '../utils'
 
 export default function InboxScreen() {
-  const { recipes } = useStore()
+  const { recipes, removeRecipe } = useStore()
   const nav = useNav()
   const [filter, setFilter] = useState('all') // all | unsorted | sorted
+  // 미정리함은 "버릴 것"이 쌓이는 곳 — 상세까지 안 들어가고 여기서 바로 지운다(창업자 요청).
+  const [delAsk, setDelAsk] = useState(null)
 
   const inbox = useMemo(() => [...recipes].sort((a, b) => b.savedAt - a.savedAt), [recipes])
   const unsorted = inbox.filter((r) => r.status === 'unsorted')
@@ -52,26 +55,42 @@ export default function InboxScreen() {
         )}
         {list.map((r, i) => (
           <div key={r.id}>
-            <button className="inbox-row press" style={{ width: '100%', textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
-              <Thumb recipe={r} style={{ width: 60, height: 60, flex: '0 0 auto' }} radius={14} emojiSize="1.5rem" />
-              <div className="meta" style={{ flex: 1, minWidth: 0 }}>
-                <SourceBadge source={r.source} />
-                <div className="name" style={{ fontSize: 15, fontWeight: 600, margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {r.title}
+            {/* 행 전체=열기, 오른쪽 휴지통=바로 삭제(상세 ⋯메뉴까지 안 가게) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <button className="inbox-row press" style={{ flex: 1, minWidth: 0, textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
+                <Thumb recipe={r} style={{ width: 60, height: 60, flex: '0 0 auto' }} radius={14} emojiSize="1.5rem" />
+                <div className="meta" style={{ flex: 1, minWidth: 0 }}>
+                  <SourceBadge source={r.source} />
+                  <div className="name" style={{ fontSize: 15, fontWeight: 600, margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {r.title}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="t-sub">{timeAgo(r.savedAt)}</span>
+                    <span className={`badge ${r.status === 'sorted' ? 'badge-sorted' : 'badge-unsorted'}`}>
+                      {r.status === 'sorted' ? '정리됨' : '미정리'}
+                    </span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="t-sub">{timeAgo(r.savedAt)}</span>
-                  <span className={`badge ${r.status === 'sorted' ? 'badge-sorted' : 'badge-unsorted'}`}>
-                    {r.status === 'sorted' ? '정리됨' : '미정리'}
-                  </span>
-                </div>
-              </div>
-              <Icon name="chevron-right" size={18} color="var(--sand)" />
-            </button>
+              </button>
+              <button className="icon-btn press" aria-label={`${r.title} 삭제`} onClick={() => setDelAsk(r)} style={{ flex: '0 0 auto' }}>
+                <Icon name="trash" size={18} color="var(--text-sub)" />
+              </button>
+            </div>
             {i < list.length - 1 && <hr className="divider" />}
           </div>
         ))}
       </div>
+
+      {delAsk && (
+        <ConfirmSheet
+          title="레시피 삭제"
+          message={`『${delAsk.title}』 레시피를 삭제할까요?\n삭제하면 되돌릴 수 없어요.`}
+          confirmLabel="삭제하기"
+          danger
+          onConfirm={() => { removeRecipe(delAsk.id); nav.showToast('레시피를 삭제했어요') }}
+          onClose={() => setDelAsk(null)}
+        />
+      )}
     </div>
   )
 }

@@ -44,7 +44,6 @@ export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateRecipe } = useStore()
   const nav = useNav()
   useWakeLock() // 레시피를 보며 요리할 때 화면이 꺼지지 않게
-  const [menu, setMenu] = useState(false)
   const [timer, setTimer] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
   const [logEntry, setLogEntry] = useState(null)
@@ -53,10 +52,9 @@ export default function RecipeDetailScreen({ id }) {
   const [drawOpen, setDrawOpen] = useState(false) // 공유 뽑기카드
   const [shareSheet, setShareSheet] = useState(false) // 공유 두 갈래 시트
   const [coverBusy, setCoverBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩)
-  // 인라인 오버레이(꾸미기·더보기 메뉴) — 뒤로가기로 닫기.
+  // 인라인 오버레이(꾸미기) — 뒤로가기로 닫기.
   // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
   useLayerBack(decorOpen, () => setDecorOpen(false))
-  useLayerBack(menu, () => setMenu(false))
   const [coach, setCoach] = useState(() => needsCoach(COACH_KEY))
   const iconRef = useRef(null)
   const coverRef = useRef(null) // 꾸민 표지(레꾸) 캡처용
@@ -103,10 +101,7 @@ export default function RecipeDetailScreen({ id }) {
     nav.showToast('만들었어요! 요리 기록에 남겼어요')
   }
 
-  const del = () => {
-    setMenu(false)
-    setConfirmDel(true)
-  }
+  const del = () => setConfirmDel(true)
   const doDelete = () => {
     removeRecipe(r.id)
     nav.pop()
@@ -114,7 +109,7 @@ export default function RecipeDetailScreen({ id }) {
   }
 
   // 💌 공유 = 두 갈래 시트: 🎴 랜덤 뽑기카드(정적) / 🎨 내 꾸민 표지(효과 보이게 캡처)
-  const onShare = () => { setMenu(false); setShareSheet(true) }
+  const onShare = () => setShareSheet(true)
   // 꾸민 표지가 있나(배경·스티커·데코 중 하나라도) → 있으면 "내 꾸민 표지로" 옵션 노출
   const isDecorated = (r.decor && r.decor.length) || (r.decorBg && r.decorBg !== 'none') || r.thumb === 'none'
   const hasRecipe = !!((r.ingredients || []).length || (r.steps || []).length)
@@ -189,7 +184,10 @@ export default function RecipeDetailScreen({ id }) {
           >
             <Icon name="share" size={17} color="#fffdf8" stroke={2.3} /> 공유
           </button>
-          <button className="round-btn press" onClick={() => setMenu(true)} aria-label="더보기"><Icon name="more" size={22} /></button>
+          {/* 삭제 — 예전엔 '⋯ 더보기' 뒤에 숨겨뒀는데 메뉴 안에 삭제 하나뿐이라
+              유저는 "삭제가 어디 있는지 모르겠다"만 됐다(창업자 제보 "점세개 안에 있어 불편").
+              휴지통 아이콘으로 바로 보여주고, 확인 시트는 그대로라 실수 방지도 유지된다(탭 3→2회). */}
+          <button className="round-btn press" onClick={del} aria-label="레시피 삭제"><Icon name="trash" size={20} /></button>
         </div>
       </div>
 
@@ -462,22 +460,6 @@ export default function RecipeDetailScreen({ id }) {
 
       {drawOpen && <Portal><ShareDrawCard recipe={r} onClose={() => setDrawOpen(false)} onSaveCover={(img) => { updateRecipe(r.id, { thumb: 'photo', image: img }); nav.showToast('카드를 표지로 저장했어요') }} /></Portal>}
 
-      {menu && (
-       <Portal>
-        <div className="sheet-mask" onClick={() => setMenu(false)}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            {/* 공유는 상단 공유 아이콘으로 이동 — 여기엔 삭제만(실수 방지로 한 겹 숨김) */}
-            <button className="sheet-item press" onClick={del} style={{ color: 'var(--danger)' }}>
-              <Icon name="trash" size={20} color="var(--danger)" /> 삭제하기
-            </button>
-            <hr className="divider" />
-            <button className="sheet-item press" onClick={() => setMenu(false)} style={{ justifyContent: 'center', color: 'var(--text-sub)' }}>
-              닫기
-            </button>
-          </div>
-        </div>
-       </Portal>
-      )}
     </div>
   )
 }

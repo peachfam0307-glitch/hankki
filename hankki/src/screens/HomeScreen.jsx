@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -9,6 +9,7 @@ import gomHeader from '../assets/gom-header.png' // 뉴 물결 곰(인사) — �
 import TabTips from '../components/TabTips'
 import PreviewSheet from '../components/PreviewSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
+import ConfirmSheet from '../components/ConfirmSheet'
 // 🐻 코치 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지 규칙)
 import uiHandPoint from '../assets/ui/hand_point.png'
 import uiGomThumb from '../assets/ui/gom_thumbsup.png'
@@ -29,10 +30,20 @@ const HOME_COACH_STEPS = [
 ]
 
 export default function HomeScreen() {
-  const { recipes, profile, pantry } = useStore()
+  const { recipes, profile, pantry, removeRecipe } = useStore()
   const nav = useNav()
   const [pick, setPick] = useState(0)
   const [preview, setPreview] = useState(false)
+  // 최근 저장 카드 길게 눌러 삭제 — 지우려고 상세까지 들어가 ⋯메뉴를 여는 게 번거롭다(창업자 요청).
+  const [delAsk, setDelAsk] = useState(null) // 삭제 확인 중인 레시피
+  const pressTimer = useRef(null)
+  const longFired = useRef(false)
+  const startPress = (r) => {
+    longFired.current = false
+    clearTimeout(pressTimer.current)
+    pressTimer.current = setTimeout(() => { longFired.current = true; setDelAsk(r) }, 550)
+  }
+  const endPress = () => clearTimeout(pressTimer.current)
   // 온보딩(첫 실행 소개)이 아직 안 끝났으면 이번엔 쉬고, 다음 실행에서 보여준다(겹침 방지).
   const [coach, setCoach] = useState(() => needsCoach(HOME_COACH_KEY) && !needsOnboarding())
 
@@ -175,7 +186,15 @@ export default function HomeScreen() {
         <div className="grid2">
           {recent.map((r) => (
             <div key={r.id} className="grid-card">
-              <button className="press" style={{ textAlign: 'left', width: '100%' }} onClick={() => open(r.id)}>
+              {/* 탭=열기 / 길게 누르기=삭제 확인. 길게 눌러 뜬 경우엔 탭 동작(열기)을 막는다. */}
+              <button
+                className="press" style={{ textAlign: 'left', width: '100%' }}
+                onClick={() => { if (!longFired.current) open(r.id) }}
+                onPointerDown={() => startPress(r)}
+                onPointerUp={endPress}
+                onPointerLeave={endPress}
+                onContextMenu={(e) => e.preventDefault()}
+              >
                 <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                 <div className="name">{r.title}</div>
               </button>
@@ -201,6 +220,18 @@ export default function HomeScreen() {
       </div>
 
       {preview && <PreviewSheet onClose={() => setPreview(false)} />}
+
+      {/* 최근 저장 카드 길게 눌러 삭제 */}
+      {delAsk && (
+        <ConfirmSheet
+          title="레시피 삭제"
+          message={`『${delAsk.title}』 레시피를 삭제할까요?\n삭제하면 되돌릴 수 없어요.`}
+          confirmLabel="삭제하기"
+          danger
+          onConfirm={() => { removeRecipe(delAsk.id); nav.showToast('레시피를 삭제했어요') }}
+          onClose={() => setDelAsk(null)}
+        />
+      )}
 
       {/* 첫 방문 코치마크 — 미리보기 진입점 안내 */}
       {coach && <CoachMarks storageKey={HOME_COACH_KEY} steps={HOME_COACH_STEPS} onDone={() => setCoach(false)} />}
