@@ -14,7 +14,7 @@ import DecorEditor from '../components/DecorEditor'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { shareDecoratedCover } from '../shareCover'
 import { scaleIngredient } from '../scale'
-import { dateLabel, openExternal } from '../utils'
+import { dateLabel, openExternal, cropSquare } from '../utils'
 import { SOURCES } from '../data/seed'
 import { picksForIngredients, productLink, productMall } from '../data/curation'
 import { useWakeLock } from '../useWakeLock'
@@ -57,6 +57,7 @@ export default function RecipeDetailScreen({ id }) {
   useLayerBack(decorOpen, () => setDecorOpen(false))
   const [coach, setCoach] = useState(() => needsCoach(COACH_KEY))
   const iconRef = useRef(null)
+  const photoRef = useRef(null) // 표지 사진 바꾸기 — 상세에서 바로(편집 안 들어가고)
   const coverRef = useRef(null) // 꾸민 표지(레꾸) 캡처용
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
   const r = recipes.find((x) => x.id === id)
@@ -102,6 +103,21 @@ export default function RecipeDetailScreen({ id }) {
   }
 
   const del = () => setConfirmDel(true)
+
+  // 📷 표지 사진 바꾸기 — 예전엔 편집 진입 → 썸네일 '사진' 탭 → 고르기 → 맨 아래 저장까지 가야 했다
+  // (창업자 "레시피 음식사진 변경이 불편해"). 이제 상세에서 표지 한 번 누르면 바로 고르고 즉시 저장된다.
+  const onCoverPhoto = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const cropped = await cropSquare(reader.result, 800)
+      updateRecipe(r.id, { thumb: 'photo', image: cropped, touched: true })
+      nav.showToast('표지 사진을 바꿨어요')
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
   const doDelete = () => {
     removeRecipe(r.id)
     nav.pop()
@@ -195,6 +211,17 @@ export default function RecipeDetailScreen({ id }) {
       <div ref={coverRef} style={{ position: 'relative' }}>
         <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
         <DecorLayer items={r.decor || []} />
+        {/* 표지 사진 바꾸기 — 편집 안 들어가고 여기서 바로. 꾸미기 버튼과 나란히(왼쪽=사진, 오른쪽=꾸미기) */}
+        <button
+          className="press"
+          onClick={() => photoRef.current?.click()}
+          data-nocapture
+          aria-label="표지 사진 바꾸기"
+          style={{ position: 'absolute', bottom: 12, left: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(250,250,248,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 800, padding: '9px 15px', borderRadius: 999, boxShadow: '0 4px 14px rgba(0,0,0,.22)' }}
+        >
+          <Icon name="camera" size={15} color="var(--brown)" />
+          사진 바꾸기
+        </button>
         {/* 표지 꾸미기 — 솔직한 버튼으로 눈에 띄게(포인트색 채운 알약). 캡처에선 제외(data-nocapture) */}
         <button
           className="press"
@@ -208,6 +235,7 @@ export default function RecipeDetailScreen({ id }) {
           레시피 꾸미기
         </button>
       </div>
+      <input ref={photoRef} type="file" accept="image/*" onChange={onCoverPhoto} style={{ display: 'none' }} />
 
       <div className="pad" style={{ paddingTop: 18, paddingBottom: 120 }}>
         {r.status === 'unsorted' && (
