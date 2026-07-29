@@ -208,6 +208,23 @@ const PHOTO_RATIO = {
   // 🐻🐧 뉴 물결 곰펭(2026-07-23·정본) — 곰4·펭5·콤비4. 띠부씰(흰 다이컷 테두리·2026-07-23) 반영 → 비율 갱신.
   // (plain 원본은 docs/stickers/곰펭-물결-신규-2507/낱개/ 아카이브. cp_cpf 옛 파이팅은 저장표지 호환용으로만 남김.)
   gp_gomft: 0.8171, gp_gomtb: 0.8312, gp_gomv: 0.8265, gp_gomhi: 0.8891, gp_pengft: 0.7982, gp_pengtb: 0.7902, gp_pengv: 0.8336, gp_penghi: 0.82, gp_pengym: 0.7945, gp_duohi: 1.0608, gp_duoht: 1.0253, gp_duoh5: 1.1873, gp_duotb: 1.1303,
+  // ✏️ 글자 스티커 (2026-07-29) — 다꾸의 절반이 글자인데 앱엔 응원 문구 6개뿐이고
+  //    숫자·요일은 0개였다. 창업자가 스타일별로 18장 뽑아준 것 중 **우리 마감과 같은 4장**만 채택
+  //    (진갈색 굵은 외곽선 + 파스텔 채움 + 흰 다이컷). 라인 계열은 톤도 다르고 자동 오림도
+  //    안 돼서(속 흰색이 배경과 이어짐) 심플 다꾸 세트로 미룸. → docs/stickers/글자-창업자-2507/
+  tw_haenaem: 1.2683, tw_night: 1.2686, tw_first: 1.1859, tw_5min: 1.3789, tw_again: 1.4286,
+  tw_wow: 1.3384, tw_salty: 1.2747, tw_better: 1.3665, tw_really: 1.5054, tw_daebak: 1.1381,
+  tw_today: 1.1008, tw_success: 1.2969, tw_more: 1.1255, tw_tasty: 1.3571, tw_welldone: 0.9597,
+  tw_fav: 1.0923, tw_honey: 1.0894, tw_easy: 1.1358, tw_hearty: 1.3762, tw_mom: 1.1472,
+  tw_nexttime: 0.9755, tw_fail: 1.5283, tw_yummy: 1.2615, tw_best: 1.068, tw_ourhankki: 1.3762,
+  tw_goodday: 1.4591,
+  tn_1: 0.9915, tn_2: 1.017, tn_3: 0.9957, tn_4: 1.0043, tn_5: 0.9915,
+  tn_6: 0.987, tn_7: 0.9914, tn_8: 0.9871, tn_9: 0.9828, tn_10: 0.9915,
+  tn_mon: 1.0227, tn_tue: 1.0274, tn_wed: 1.032, tn_thu: 1.0182, tn_fri: 1.0411,
+  tn_sat: 1.0043, tn_sun: 1.0043, tn_cal: 1.113, tn_ribbon: 1.9451, tn_circle: 0.98,
+  ta_right: 1.9118, ta_left: 1.845, ta_up: 0.6372, ta_down: 0.7062, ta_curve: 1.6712,
+  ta_loop: 2.1587, ta_dash: 6.7674, ta_wave: 5.2712, ta_leaf: 3.2124, ta_check: 1.0412,
+  ta_checkc: 1.0288, ta_star: 1.0321,
 }
 export const PHOTO_FAMILY = {}
 for (const key of Object.keys(PHOTO_RATIO)) {
@@ -517,6 +534,13 @@ export const STICKER_GROUPS = [
   //   요리앱 표지를 꾸미는데 아령이 나왔다. 요리 도구를 맨 위로 올린다.
   { key: 'kitchen_tools', tab: 'life', label: '요리 도구', items: ['tk_apron', 'tk_hat', 'tk_pot_pink', 'tk_pot_green', 'tk_bowl', 'tk_batter', 'tk_board_knife', 'tk_board', 'tk_cup', 'tk_scale', 'tk_mitt', 'tk_mitt_purple', 'tk_book', 'tk_clip', 'tk_bag', 'tk_basket', 'tk_salt', 'tk_sugar'] },
   { key: 'life', tab: 'life', label: '운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },
+  // ✏️ 글자 (2026-07-29) — '글자' 탭엔 직접 쓰는 것만 있어서, 손글씨 문구 스티커가 없었다.
+  //   맨 위 '한끼 문구' = 창업자가 직접 뽑은 우리만의 말들(다른 다꾸 앱엔 없는 것).
+  { key: 'text_hankki', tab: 'notetext', label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night'] },
+  { key: 'text_word', tab: 'notetext', label: '문구', items: ['tw_today', 'tw_success', 'tw_welldone', 'tw_tasty', 'tw_more', 'tw_fav', 'tw_honey', 'tw_hearty', 'tw_easy', 'tw_mom', 'tw_nexttime', 'tw_fail', 'tw_yummy', 'tw_best', 'tw_ourhankki', 'tw_goodday'] },
+  // 🔢 숫자는 레시피 순서 표시용, 요일은 식단 기록용. 빈 라벨 3종은 직접 글씨 얹으라고 둔다.
+  { key: 'text_num', tab: 'notetext', label: '숫자 · 요일', items: ['tn_1', 'tn_2', 'tn_3', 'tn_4', 'tn_5', 'tn_6', 'tn_7', 'tn_8', 'tn_9', 'tn_10', 'tn_mon', 'tn_tue', 'tn_wed', 'tn_thu', 'tn_fri', 'tn_sat', 'tn_sun', 'tn_cal', 'tn_ribbon', 'tn_circle'] },
+  { key: 'text_arrow', tab: 'notetext', label: '화살표 · 구분선', items: ['ta_right', 'ta_left', 'ta_up', 'ta_down', 'ta_curve', 'ta_loop', 'ta_dash', 'ta_wave', 'ta_leaf', 'ta_check', 'ta_checkc', 'ta_star'] },
 ]
 
 // 포스트잇 색 팔레트(차분한 종이 톤) — bg / 접힘 / 글자 / line(무늬 선 색)

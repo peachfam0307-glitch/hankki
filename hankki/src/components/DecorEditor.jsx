@@ -431,6 +431,9 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             {/* 🗒️ 메모·글자 */}
             {cat === 'notetext' && (
               <>
+                {/* ✏️ 손글씨 문구 스티커를 맨 위로 — 글자를 넣으려고 이 탭에 들어오는데
+                    예전엔 '직접 쓰기'뿐이라 한 번에 예뻐지는 길이 없었다(2026-07-29). */}
+                {groupsByTab('notetext').map(renderStickerGroup)}
                 <div className="decor-sec">
                   <div className="decor-sec-label">포스트잇</div>
                   <div className="decor-grid">
