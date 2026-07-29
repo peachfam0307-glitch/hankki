@@ -1064,6 +1064,29 @@ img {
   overflow-y: auto;
   padding: 0 14px 8px;
 }
+
+/* 🔎 아이콘 찾기 칸 — 시트 위에 고정(스크롤 밖). 300개를 스크롤로 찾던 걸 대체한다. */
+.ficon-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 14px 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: var(--cream);
+}
+.ficon-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 14px;
+  color: var(--text);
+}
+.ficon-search input:focus {
+  outline: none;
+}
 .emoji-cat {
   font-size: 12px;
   font-weight: 700;

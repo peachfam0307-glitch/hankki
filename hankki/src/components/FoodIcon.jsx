@@ -1002,6 +1002,58 @@ export const FOOD_NAMES = (() => {
   return { seafood: '해산물', dessert: '디저트', icecream: '아이스크림', bag: '장바구니', basket: '바구니', box: '박스', ...EXTRA_NAMES, ...m }
 })()
 
+// 🔎 아이콘 찾기 — 299개나 되어 스크롤로는 못 찾는다(창업자 2026-07-29).
+// 이름표(FOOD_NAMES) + 매칭 규칙의 별칭 낱말(ICON_RULES, 834개)을 같이 색인해서
+// "제육"으로도 "두루치기"로도 찾히게 한다. 초성(ㄱㅊㅉㄱ→김치찌개)도 받는다.
+const CHO = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ']
+// 한글 낱자 → 첫소리(초성)만 뽑기. 한글이 아니면 그대로 둔다.
+export function chosungOf(str = '') {
+  let out = ''
+  for (const ch of String(str)) {
+    const c = ch.charCodeAt(0)
+    if (c >= 0xac00 && c <= 0xd7a3) out += CHO[Math.floor((c - 0xac00) / 588)]
+    else out += ch
+  }
+  return out
+}
+const isChosungQuery = (q) => q.length > 0 && [...q].every((c) => CHO.includes(c))
+
+// 아이콘별 검색어 뭉치 { key: '이름 별칭1 별칭2 …' }
+const SEARCH_INDEX = (() => {
+  const m = {}
+  const add = (k, w) => { if (!k || !w) return; m[k] = m[k] ? m[k] + ' ' + w : w }
+  for (const [keys, key] of ICON_RULES) for (const w of keys) add(key, w)
+  for (const [key, nm] of Object.entries(FOOD_NAMES)) add(key, nm)
+  return m
+})()
+
+// 그룹 안에서 이름 가나다순으로 정렬해 둔 목록 — 넣은 순서라 규칙이 없던 걸 예측 가능하게.
+// (창업자 2026-07-29 "양이 많아져서 ㄱㄴㄷ순으로 정렬하자")
+export const FOOD_ICON_GROUPS_SORTED = FOOD_ICON_GROUPS.map((g) => ({
+  ...g,
+  items: [...g.items].sort((a, b) =>
+    (FOOD_NAMES[a] || a).localeCompare(FOOD_NAMES[b] || b, 'ko')
+  ),
+}))
+
+// 검색어에 맞는 아이콘 키 목록. 빈 검색어면 null(=검색 안 함).
+export function searchFoodIcons(query = '') {
+  const q = String(query).trim().toLowerCase().replace(/\s+/g, '')
+  if (!q) return null
+  const byChosung = isChosungQuery(q)
+  const seen = new Set()
+  const hit = []
+  for (const g of FOOD_ICON_GROUPS_SORTED) {
+    for (const k of g.items) {
+      if (seen.has(k)) continue
+      const hay = (SEARCH_INDEX[k] || k).toLowerCase()
+      const ok = byChosung ? chosungOf(hay).includes(q) : hay.replace(/\s+/g, '').includes(q)
+      if (ok) { seen.add(k); hit.push(k) }
+    }
+  }
+  return hit
+}
+
 export default function FoodIcon({ name = 'default', size = 40 }) {
   // 🍱 뉴 음식 이모지(PNG) — 완성요리 사진을 아이콘으로. 없으면 SVG 브랜드 아이콘.
   const pf = PHOTO_FAMILY[name]
