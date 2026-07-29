@@ -396,7 +396,11 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   const title = recipe?.title || '오늘의 한 끼'
   const tags = useMemo(() => tagsOf(recipe), [recipe])
   const [draw, setDraw] = useState(drawState)
-  const [busy, setBusy] = useState(false)
+  // busy = null 이거나 '지금 뭘 만들고 있는지' 한 줄. 문자열도 참이라 disabled·opacity 판정은 그대로 돈다.
+  // ⚠️ 예전엔 버튼 글자만 '만드는 중…'으로 바뀌어서, 캡처가 오래 걸리면 먹통처럼 보였다
+  //    (창업자 제보 2026-07-30 "레꾸자랑 공유하기 만들때 기다려달라는 멘트 안 떠").
+  //    레꾸자랑의 '꾸민 표지' 경로엔 전체 오버레이가 있었는데 이 랜덤 카드 경로엔 없었다.
+  const [busy, setBusy] = useState(null)
   const cardRef = useRef(null)
   const card2Ref = useRef(null)
   const coverRef = useRef(null) // 표지 저장용(CTA 없는 cover 카드)
@@ -413,7 +417,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
 
   const share = useCallback(async () => {
     if (!cardRef.current || busy) return
-    setBusy(true)
+    setBusy(hasRecipe ? '카드 + 레시피 2장 준비 중이에요' : '카드를 그리고 있어요')
     try {
       const toFile = async (el, name) => { const u = await toPng(el, { pixelRatio: 2, cacheBust: true }); const b = await (await fetch(u)).blob(); return new File([b], name, { type: 'image/png' }) }
       const f1 = await toFile(cardRef.current, 'hankki-1.png')
@@ -424,13 +428,13 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
       else if (navigator.canShare && navigator.canShare({ files: [f1] })) { await navigator.share({ files: [f1], title, text, url: APP_URL }) }
       else { const u = await toPng(cardRef.current, { pixelRatio: 2 }); const a = document.createElement('a'); a.href = u; a.download = 'hankki-card.png'; a.click() }
     } catch (e) { if (!(e && e.name === 'AbortError')) { /* noop */ } }
-    setBusy(false)
+    setBusy(null)
   }, [busy, title, hasRecipe])
 
   // 🖼 이 카드를 레시피 표지로 저장 — CTA 없는 cover 카드를 이미지로 캡처해 부모(레시피 화면)에 넘긴다.
   const saveCover = useCallback(async () => {
     if (!coverRef.current || busy) return
-    setBusy(true)
+    setBusy('레시피 표지로 저장하는 중이에요')
     try {
       const opt = { pixelRatio: 1.5, quality: 0.86, cacheBust: true, backgroundColor: '#ffffff' }
       // 폰트 임베드 단계에서 외부 stylesheet fetch가 막히면(드묾) skipFonts로 폴백 — 표지 저장이 끊기지 않게.
@@ -439,7 +443,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
       await onSaveCover?.(url)
       onClose?.()
     } catch (e) { /* noop */ }
-    setBusy(false)
+    setBusy(null)
   }, [busy, onSaveCover, onClose])
 
   const layer = { position: 'absolute', top: 0, left: 0 }
@@ -447,6 +451,19 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(40,32,24,.72)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={onClose}>
+      {/* 만드는 중 로딩 오버레이 — 레꾸자랑 '꾸민 표지' 경로와 같은 모양·같은 문구 톤.
+          캡처(카드+레시피 2장)에 몇 초 걸려도 먹통처럼 안 보이게. 이 모달 위(zIndex 310)에 덮는다. */}
+      {busy && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{ position: 'fixed', inset: 0, zIndex: 310, background: 'rgba(30,26,22,.62)', backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}
+        >
+          <div className="ocr-spin" />
+          <div style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>예쁜 카드 만드는 중…</div>
+          <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5 }}>{busy}</div>
+          <div style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5 }}>잠깐만 기다려 주세요</div>
+        </div>
+      )}
       <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {/* 미리보기(스케일). 두 장 다 렌더(캡처용) — 안 보는 장은 opacity 0(랩퍼에만). 캡처 ref는 원본 카드에. */}
         <div style={{ width: 1080 * scale, height: 1350 * scale, position: 'relative', borderRadius: 18, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,.4)' }}>
