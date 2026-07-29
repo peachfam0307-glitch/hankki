@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import logoCream from '../assets/logo-hankki-cream.png'
 import uiGomHeart from '../assets/ui/gom_heart.png'
+import uiGomThumb from '../assets/ui/gom_thumbsup.png'
+import uiHandPoint from '../assets/ui/hand_point.png'
+// 🛒 큐레이션 제품 일러 — 온보딩 '주부 PICK' 카드에 쓴다.
+//    예전엔 🍜🧂🍶 유니코드였는데, **쇼핑 화면에서 이미 쓰는 진짜 제품 그림**이 있어서 그걸 쓴다(2026-07-29).
+import cuNoodle from '../assets/curation/cu_noodle.png'
+import cuSalt from '../assets/curation/cu_salt.png'
+import cuTsuyu from '../assets/curation/cu_stock_tsuyu.png'
 
 // 첫 실행 온보딩 — 스토어 스샷과 똑같은 레꾸 카드+곰펭 디자인을 앱 안에서 라이브로.
 // 곰펭은 앱 실제 모션(콩콩·살랑·둥실…), 꾸미기 슬라이드엔 반짝·하트 효과. 문구=꼬르곰·펭펭/레꾸(옛 '흩어진'·'곰펭이' 없음).
@@ -109,7 +116,7 @@ const Slide2 = () => (
         <Chip k="gp_gomhi" /><Chip k="gp_penghi" /><Chip k="fh_k27" /><Chip k="fe_15" />
         <div style={{ width: 120, height: 120, borderRadius: 26, background: '#5d3410', color: '#fff', fontSize: 54, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>＋</div>
       </div>
-      <div style={{ marginTop: 24, fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 40, color: '#4a6b42' }}>👆 톡 눌러 붙이기만 하면 끝!</div>
+      <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 40, color: '#4a6b42' }}><img src={uiHandPoint} alt="" draggable={false} style={{ width: 52, height: 52, objectFit: 'contain' }} />톡 눌러 붙이기만 하면 끝!</div>
     </div>
   </Stage>
 )
@@ -135,45 +142,47 @@ const Slide3 = () => (
           </div>
           <div style={{ position: 'relative', height: 600, background: 'linear-gradient(150deg,#fdf3e8,#f5ead9)' }}>
             <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(150,120,80,.14) 5px, transparent 6px)', backgroundSize: '52px 52px' }} />
-            <div style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', padding: '10px 34px', background: '#f0b7c6', backgroundImage: 'repeating-linear-gradient(0deg,rgba(255,255,255,.5) 0 10px,transparent 10px 20px),repeating-linear-gradient(90deg,rgba(255,255,255,.5) 0 10px,transparent 10px 20px)', borderRadius: 4, boxShadow: '0 6px 13px rgba(150,90,90,.22)', fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 38, color: '#7a4a52', whiteSpace: 'nowrap' }}>감바스 알 아히요 🍤</div>
+            <div style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', padding: '10px 34px', background: '#f0b7c6', backgroundImage: 'repeating-linear-gradient(0deg,rgba(255,255,255,.5) 0 10px,transparent 10px 20px),repeating-linear-gradient(90deg,rgba(255,255,255,.5) 0 10px,transparent 10px 20px)', borderRadius: 4, boxShadow: '0 6px 13px rgba(150,90,90,.22)', fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 38, color: '#7a4a52', whiteSpace: 'nowrap' }}>감바스 알 아히요</div>
             <Img k="dc_dhb10" style={{ left: 22, top: 98, width: 64, transform: 'rotate(-12deg)' }} /><Img k="dc_dhb01" style={{ right: 26, top: 104, width: 58, transform: 'rotate(10deg)' }} /><Img k="dc_dhb04" style={{ left: 26, top: 270, width: 48, transform: 'rotate(-8deg)' }} />
             <Spark x={150} y={175} size={44} />
             <Img k="fe_08" style={{ top: '49%', left: '50%', transform: 'translate(-50%,-50%)', width: 296, filter: 'drop-shadow(0 10px 16px rgba(90,60,30,.2))' }} />
             <Img k="gp_duoht" cls="hk-m-tilt" style={{ right: -4, bottom: -4, width: 252, transformOrigin: 'bottom center' }} />
-            <Postit style={{ left: 24, bottom: 34, background: '#fff6b8', transform: 'rotate(-4deg)', fontSize: 32, color: '#6b5330' }}>오늘 저녁<br />성공! 🍤</Postit>
+            <Postit style={{ left: 24, bottom: 34, background: '#fff6b8', transform: 'rotate(-4deg)', fontSize: 32, color: '#6b5330' }}>오늘 저녁<br />성공!</Postit>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '22px 26px' }}>
             <div style={{ flex: 1, border: '3px solid #eee', borderRadius: 40, padding: '12px 24px', fontSize: 28, color: '#bbb' }}>메시지 보내기…</div>
-            <span style={{ fontSize: 44 }}>🤍</span><span style={{ fontSize: 44 }}>📤</span>
+            {/* 남의 앱 UI를 흉내내는 자리 — 유니코드 대신 우리 라인 아이콘으로 그린다. */}
+            <svg viewBox="0 0 24 24" width={44} height={44} fill="none" stroke="#bbb" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20s-7-4.6-7-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.6C19 15.4 12 20 12 20z" /></svg>
+            <svg viewBox="0 0 24 24" width={44} height={44} fill="none" stroke="#bbb" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15" /></svg>
           </div>
         </div>
       </div>
-      <Bub style={{ left: -70, top: 220, borderRadius: '30px 30px 30px 6px', padding: '15px 26px', transform: 'rotate(-5deg)' }}>우와 맛있겠다 😍</Bub>
-      <Bub style={{ right: -64, top: 450, borderRadius: '30px 30px 6px 30px', padding: '15px 26px', transform: 'rotate(5deg)' }}>레시피 공유해줘 🙏</Bub>
-      <Bub style={{ left: -46, bottom: 58, borderRadius: '30px 30px 30px 6px', padding: '15px 28px', transform: 'rotate(-3deg)', background: '#5d3410', color: '#fff' }}>같이 해먹자! 🥰</Bub>
+      <Bub style={{ left: -70, top: 220, borderRadius: '30px 30px 30px 6px', padding: '15px 26px', transform: 'rotate(-5deg)' }}>우와 맛있겠다</Bub>
+      <Bub style={{ right: -64, top: 450, borderRadius: '30px 30px 6px 30px', padding: '15px 26px', transform: 'rotate(5deg)' }}>레시피 공유해줘</Bub>
+      <Bub style={{ left: -46, bottom: 58, borderRadius: '30px 30px 30px 6px', padding: '15px 28px', transform: 'rotate(-3deg)', background: '#5d3410', color: '#fff' }}>같이 해먹자!</Bub>
     </div>
-    <Foot style={{ background: '#fffdf8', color: '#c04a68' }}>센스있는 레시피 한 장, 친구에게 톡 💕</Foot>
+    <Foot style={{ background: '#fffdf8', color: '#c04a68' }}>센스있는 레시피 한 장, 친구에게 톡</Foot>
   </Stage>
 )
 
 // ── 6. 큐레이션 ──
 const Pick = ({ n, d, c, e }) => (
   <div style={{ background: '#fffdf8', borderRadius: 40, boxShadow: '0 26px 54px rgba(60,70,90,.24)', padding: '30px 32px', display: 'flex', alignItems: 'center', gap: 26, position: 'relative' }}>
-    <div style={{ width: 110, height: 110, borderRadius: 26, background: c, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56, color: '#fff', flexShrink: 0 }}>{e}</div>
+    <div style={{ width: 110, height: 110, borderRadius: 26, background: c, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}><img src={e} alt="" draggable={false} style={{ width: '78%', height: '78%', objectFit: 'contain' }} /></div>
     <div style={{ flex: 1 }}><div style={{ fontSize: 42, color: '#33302b' }}>{n}</div><div style={{ fontSize: 32, color: '#8a8570', fontFamily: "'Gaegu', cursive", fontWeight: 700, marginTop: 4 }}>{d}</div></div>
-    <div style={{ position: 'absolute', top: -16, right: 24, background: '#ffcf3f', color: '#6a4a10', fontSize: 26, padding: '8px 20px', borderRadius: 24, boxShadow: '0 6px 12px rgba(150,110,20,.25)' }}>⭐ 꼬르곰·펭펭 PICK</div>
+    <div style={{ position: 'absolute', top: -16, right: 24, background: '#ffcf3f', color: '#6a4a10', fontSize: 26, padding: '8px 20px', borderRadius: 24, boxShadow: '0 6px 12px rgba(150,110,20,.25)' }}><svg viewBox="0 0 24 24" width={26} height={26} style={{ verticalAlign: '-4px', marginRight: 4 }}><path d="M12 2.5c.5 4 1.5 5 5.5 5.5-4 .5-5 1.5-5.5 5.5-.5-4-1.5-5-5.5-5.5 4-.5 5-1.5 5.5-5.5z" fill="#6a4a10" /></svg>꼬르곰·펭펭 PICK</div>
   </div>
 )
 const Slide6 = () => (
   <Stage bg="linear-gradient(160deg,#cdd2a0,#e4e7c6)">
-    <Cap top={210}><H1 style={{ color: '#5f6a30' }}>아무거나 말고,<br />써본 것만 나눠요</H1><Sub style={{ color: '#72803a' }}>18년차 주부가 직접 쓰고 좋았던 살림템만 ⭐</Sub></Cap>
+    <Cap top={210}><H1 style={{ color: '#5f6a30' }}>아무거나 말고,<br />써본 것만 나눠요</H1><Sub style={{ color: '#72803a' }}>18년차 주부가 직접 쓰고 좋았던 살림템만</Sub></Cap>
     <div style={{ position: 'absolute', top: 600, left: '50%', transform: 'translateX(-50%)', width: 740, display: 'flex', flexDirection: 'column', gap: 28 }}>
-      <Pick n="든든한 보리면" d="쫄깃하고 속 편한, 든든한 한 끼" c="#c9a84e" e="🍜" />
-      <Pick n="만능 대파소금" d="이거 하나면 간이 딱 맞아요" c="#7a9b56" e="🧂" />
-      <Pick n="간편 쯔유 스톡" d="물만 부으면 국물요리 뚝딱" c="#8b6f4a" e="🍶" />
+      <Pick n="든든한 보리면" d="쫄깃하고 속 편한, 든든한 한 끼" c="#c9a84e" e={cuNoodle} />
+      <Pick n="만능 대파소금" d="이거 하나면 간이 딱 맞아요" c="#7a9b56" e={cuSalt} />
+      <Pick n="간편 쯔유 스톡" d="물만 부으면 국물요리 뚝딱" c="#8b6f4a" e={cuTsuyu} />
     </div>
     <Img k="ob_naeng" cls="hk-m-sway" style={{ left: '50%', bottom: 200, transform: 'translateX(-50%)', width: 498, transformOrigin: 'bottom center', filter: 'drop-shadow(0 14px 22px rgba(70,80,40,.3))' }} />
-    <Foot style={{ background: '#5f6a30', color: '#fff' }}>믿고 사는 살림템 🐻👍</Foot>
+    <Foot style={{ background: '#5f6a30', color: '#fff' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>믿고 사는 살림템<img src={uiGomThumb} alt="" draggable={false} style={{ width: 54, height: 54, objectFit: 'contain' }} /></span></Foot>
   </Stage>
 )
 
