@@ -8,6 +8,12 @@ import uiHandPoint from '../assets/ui/hand_point.png'
 import cuNoodle from '../assets/curation/cu_noodle.png'
 import cuSalt from '../assets/curation/cu_salt.png'
 import cuTsuyu from '../assets/curation/cu_stock_tsuyu.png'
+// 🐻🐧🦫🦊🦎 다섯 친구 상반신 — 키는 종(種) 기준이라 이름이 바뀌어도 파일을 다시 안 만든다
+import castGom from '../assets/cast/bu_gom.png'
+import castPeng from '../assets/cast/bu_peng.png'
+import castCapy from '../assets/cast/bu_capy.png'
+import castFox from '../assets/cast/bu_fox.png'
+import castGecko from '../assets/cast/bu_gecko.png'
 
 // 첫 실행 온보딩 — 스토어 스샷과 똑같은 레꾸 카드+곰펭 디자인을 앱 안에서 라이브로.
 // 곰펭은 앱 실제 모션(콩콩·살랑·둥실…), 꾸미기 슬라이드엔 반짝·하트 효과. 문구=꼬르곰·펭펭/레꾸(옛 '흩어진'·'곰펭이' 없음).
@@ -111,7 +117,11 @@ const Slide2 = () => (
       <Card food="fe_06" foodW={346} cover="linear-gradient(150deg,#fbf5e8,#f2ecda)" title="연어 포케볼" rot={-3}
         deco={<><Img k="dc_dhb14" style={{ left: 38, top: 46, width: 70, transform: 'rotate(-10deg)' }} /><Img k="dc_dhb10" style={{ right: 42, top: 52, width: 74, transform: 'rotate(10deg)' }} /><Img k="dc_dhb04" style={{ left: 34, top: 262, width: 54, transform: 'rotate(-8deg)' }} /><Img k="dc_dsy04" style={{ right: 50, top: 280, width: 60, transform: 'rotate(8deg)' }} /><Spark x={150} y={140} size={40} /></>}
         char={<Img k="gp_pengv" cls="hk-m-kong" style={{ left: -6, bottom: -8, width: 198, transformOrigin: 'bottom center', filter: 'drop-shadow(0 8px 12px rgba(90,60,30,.22))' }} />}
-        postit={<Postit style={{ right: 28, bottom: 36, background: '#dde5cf', transform: 'rotate(4deg)', fontSize: 36, color: '#4f5a44' }}>내 최애 ♡</Postit>} />
+        postit={<Postit style={{ right: 28, bottom: 36, background: '#dde5cf', transform: 'rotate(4deg)', fontSize: 36, color: '#4f5a44', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          {/* ⛔ 유니코드 ♡ 였던 것 — 우리 라인 하트 SVG로. UI에 유니코드 이모지 금지(CLAUDE.md) */}
+          내 최애
+          <svg viewBox="0 0 48 48" width={30} height={30} aria-hidden="true"><path d="M24 41C8 29.5 8.5 16.5 16 13c4.3-2 8 .9 8 4.6 0-3.7 3.7-6.6 8-4.6 7.5 3.5 8 16.5-8 28Z" fill="none" stroke="#7d8a6e" strokeWidth="3.4" strokeLinejoin="round" /></svg>
+        </Postit>} />
       <div style={{ marginTop: 34, background: '#fff', borderRadius: 36, padding: '28px 24px', boxShadow: '0 16px 34px rgba(70,90,60,.2)', width: 640, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Chip k="gp_gomhi" /><Chip k="gp_penghi" /><Chip k="fh_k27" /><Chip k="fe_15" />
         <div style={{ width: 120, height: 120, borderRadius: 26, background: '#5d3410', color: '#fff', fontSize: 54, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>＋</div>
@@ -199,6 +209,46 @@ const Slide7 = () => (
   </Stage>
 )
 
+// ── 7-B. 다섯 친구 소개 (#70) ──
+// 창업자 요청 "레시피 온보드 첫장에 우리애들 소개" + 특허청 상담(2026-07-27)
+// *"저작권은 판례가 없어 곰펭 보호 가능 → **다양한 캐릭터를 먼저 앱에 노출하는 게 유리**"*.
+// ⚠️ **자리는 CTA 바로 앞**이다 — 앞쪽은 값어치(레꾸·공유·큐레이션)를 먼저 보여줘야 하고,
+//    캐릭터는 매력이라 마무리에서 만나는 게 낫다. 다음 장(브랜드)이 "꼬르곰·펭펭과…"로 이어진다.
+// ⚠️ **이름·설명은 코드 글자로.** 글자가 박힌 이미지(`설명판-이름오타있음.png`)는 쓰지 않는다 —
+//    이름이 바뀌면 한 줄만 고치면 되고, 확대해도 안 뭉갠다.
+// 키는 종(種) 기준(`bu_fox`)이라 이름이 바뀌어도 파일을 다시 안 만든다.
+const CAST = [
+  // 키 비율은 브랜드바이블 스펙(꼬르곰=100 · 카롱 78~84 · 뾰미 72~78 · 펭펭 65~70 · 꼬비 28~35)을
+  // 화면에서 알아볼 수 있게 살짝 눌러 쓴다. 꼬비를 스펙대로 30%로 하면 너무 작아 못 알아본다.
+  // ⚠️ 꼬비 소스가 204px뿐이라 여기서 더 키우면 확대가 된다 — 160이 축소로 남는 상한이다.
+  { img: castGom, name: '꼬르곰', h: 325 },
+  { img: castCapy, name: '카롱', h: 265 },
+  { img: castFox, name: '뾰미', h: 252 },
+  { img: castPeng, name: '펭펭', h: 238 },
+  { img: castGecko, name: '꼬비', h: 160 },
+]
+const Slide7B = () => (
+  <Stage bg="linear-gradient(165deg,#f7e6ca,#f2d6b0 58%,#e8c495)">
+    <Cap top={210}><H1 style={{ color: '#6b4526' }}>한끼엔 다섯 친구가<br />살고 있어요</H1><Sub style={{ color: '#8a6440' }}>꼬르곰이 요리하고, 펭펭이 수습해요</Sub></Cap>
+    {/* 바닥을 맞춰 한 줄로 세운다 — 키 차이가 그대로 캐스트 소개가 된다(꼬르곰이 제일 큼, 꼬비가 제일 작음) */}
+    <div style={{ position: 'absolute', top: 760, left: 0, right: 0, height: 580, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 14, padding: '0 30px' }}>
+      {CAST.map((c) => (
+        <div key={c.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+          <img
+            src={c.img}
+            alt=""
+            draggable={false}
+            className="hk-m-tongtong"
+            style={{ height: c.h, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 12px 18px rgba(120,80,40,.22))' }}
+          />
+          <div style={{ fontSize: 38, fontWeight: 800, color: '#6b4526', whiteSpace: 'nowrap' }}>{c.name}</div>
+        </div>
+      ))}
+    </div>
+    <Foot style={{ background: '#6b4526', color: '#fff7ea' }}>오늘부터 같이 한 끼</Foot>
+  </Stage>
+)
+
 // ── 8. 브랜드 (CTA) ──
 const Slide8 = () => (
   <Stage bg="radial-gradient(circle at 50% 30%,#f6b49e,#ee9a80 70%,#e5896d)">
@@ -214,7 +264,7 @@ const Slide8 = () => (
   </Stage>
 )
 
-const SLIDES = [Slide1, Slide2, Slide3, Slide6, Slide7, Slide8]
+const SLIDES = [Slide1, Slide2, Slide3, Slide6, Slide7, Slide7B, Slide8]
 
 export default function Onboarding({ onDone }) {
   const N = SLIDES.length
