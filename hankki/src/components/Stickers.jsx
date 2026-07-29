@@ -180,6 +180,11 @@ const PHOTO_RATIO = {
   ig_frb02: 0.8451, ig_frb04: 1.0149, ig_frb08: 0.4769, ig_jcb19: 0.9741, ig_jae16: 1.4359,
   // 🌈 귀여운 컬러 소품 4 (창업자 픽: 무지개·꽃다발·풍선 + 케이크) — 범용·화사
   dc_nd08: 1.3063, dc_nd01: 0.7226, dc_nd05: 0.6505, dc_nd16: 1.1921,
+  // 🎀 창업자 시트 신규 반영 (2026-07-29) — 데코 10·프레임 5·워시테이프 4
+  dn_ribbon: 1.0988, dn_cherry: 0.94, dn_peach: 0.9522, dn_star: 1.2455, dn_sparkle: 1.1803,
+  dn_shoot: 1.2453, dn_coffee: 0.9728, dn_plant: 0.6443, dn_bunting: 1.7778, dn_sachet: 0.8829,
+  fn_speech: 1.2303, fn_daisy: 0.9889, fn_bow: 0.9414, fn_night: 1.0327, fn_gingham: 1.0419,
+  ws_pinkdot: 1.3596, ws_greendot: 1.731, ws_bluedot: 1.4091, ws_pinkstripe: 1.8105,
   ch_che01: 0.7928, ch_che04: 1.4278, ch_che06: 1.0683, ch_che08: 1.3098, ch_che05: 0.9231,
   lf_fit12: 1.6056, lf_fit11: 1.487, lf_fit08: 1.2486, lf_fit07: 1.2056, lf_fit02: 1.089, lf_fit13: 0.6872, lf_fit14: 1.1852, lf_fit06: 0.662,
   cp_cpf01: 0.8659, cp_cpf02: 0.9215, cp_cpf03: 0.8136, cp_cpf04: 0.8604, cp_cpf05: 0.9968, cp_cpf06: 1.0358, cp_cpf07: 0.9139, cp_cpf08: 0.8815,
@@ -475,7 +480,12 @@ export const STICKER_GROUPS = [
   { key: 'deco_recolor', tab: 'deco', label: '색 바꾸기', items: ['heart', 'star', 'sparkle', 'bow', 'vhand'] },
   // 📝 메모·라벨 (2026-07-26 신규) — 다꾸 감성 손그림 메모지·라벨. 글씨 얹어 꾸미기 좋음(작게~중간 크기용, 크게 키우면 흐려짐).
   { key: 'deco_frame', tab: 'deco', label: '메모·라벨', items: ['dc_dma01', 'dc_dma03', 'dc_dma06', 'dc_dma05', 'dc_dma10', 'dc_dma14', 'dc_dma16', 'dc_dma07', 'dc_dma13', 'dc_dma11'] },
-  { key: 'deco_png', tab: 'deco', label: '데코', items: ['dc_nd08', 'dc_nd01', 'dc_nd05', 'dc_nd16', 'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
+  { key: 'deco_png', tab: 'deco', label: '데코', items: ['dn_ribbon', 'dn_cherry', 'dn_peach', 'dn_star', 'dn_sparkle', 'dn_shoot', 'dn_coffee', 'dn_plant', 'dn_bunting', 'dn_sachet', 'dc_nd08', 'dc_nd01', 'dc_nd05', 'dc_nd16', 'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
+  // 🎗 워시테이프 (2026-07-29) — 창업자 시트의 진짜 손그림 워시. 배경·테이프 탭의 CSS 마테와 달리
+  //   갈색 외곽선 + 양끝 톱니가 있는 '스티커 워시'라 다꾸 감성이 그대로 산다.
+  { key: 'deco_washi', tab: 'deco', label: '워시테이프', items: ['ws_pinkdot', 'ws_greendot', 'ws_bluedot', 'ws_pinkstripe'] },
+  // 🖼 프레임 (2026-07-29) — 글씨 얹기 좋은 손그림 프레임. 메모·라벨 그룹과 별개로 큼직한 것들.
+  { key: 'deco_frame2', tab: 'deco', label: '프레임', items: ['fn_speech', 'fn_bow', 'fn_daisy', 'fn_gingham', 'fn_night'] },
   { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
   // 💪 라이프
   { key: 'life', tab: 'life', label: '운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },
@@ -748,6 +758,17 @@ export const TAPE_PATTERNS = [
       backgroundColor: 'rgba(196,208,182,0.94)',
       backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='27' height='27'><path d='M13.5 6 V22' stroke='%237a9163' stroke-width='1.5' fill='none' stroke-linecap='round'/><g fill='%237a9163'><ellipse cx='13.5' cy='5' rx='2.6' ry='3.4'/><ellipse cx='8.5' cy='10' rx='3.6' ry='2.7' transform='rotate(-28 8.5 10)'/><ellipse cx='18.5' cy='12.5' rx='3.6' ry='2.7' transform='rotate(28 18.5 12.5)'/><ellipse cx='8.5' cy='16.5' rx='3.6' ry='2.7' transform='rotate(-28 8.5 16.5)'/></g></svg>\")",
       backgroundSize: 'auto 84%',
+    },
+  },
+  {
+    // 💜 라벤더 — 보라톤 + 흰 데이지(창업자 2026-07-29 "마테 보라톤, 흰색 디자인 들어간 거 하나").
+    // 기존 마테는 크림·로즈·블루·그린뿐이라 보라 계열이 통째로 비어 있었다.
+    // 앱 톤에 맞춰 채도를 낮춘 뮤트 라벤더 + 흰 꽃이라 크림·딥 배경 어디에 붙여도 뜬다.
+    key: 'lavender', label: '라벤더',
+    style: {
+      backgroundColor: 'rgba(206,196,226,0.94)',
+      backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26'><g fill='%23ffffff' opacity='0.92'><ellipse cx='13' cy='7.6' rx='2.5' ry='3.6'/><ellipse cx='13' cy='18.4' rx='2.5' ry='3.6'/><ellipse cx='7.6' cy='13' rx='3.6' ry='2.5'/><ellipse cx='18.4' cy='13' rx='3.6' ry='2.5'/><ellipse cx='9.2' cy='9.2' rx='3.3' ry='2.3' transform='rotate(-45 9.2 9.2)'/><ellipse cx='16.8' cy='16.8' rx='3.3' ry='2.3' transform='rotate(-45 16.8 16.8)'/><ellipse cx='16.8' cy='9.2' rx='3.3' ry='2.3' transform='rotate(45 16.8 9.2)'/><ellipse cx='9.2' cy='16.8' rx='3.3' ry='2.3' transform='rotate(45 9.2 16.8)'/></g><circle cx='13' cy='13' r='2.6' fill='%23f4e3a8'/></svg>\")",
+      backgroundSize: 'auto 78%',
     },
   },
 ]
