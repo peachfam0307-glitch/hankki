@@ -192,8 +192,9 @@ const PHOTO_RATIO = {
   wt_watermelon: 2.9045, wt_daisy_lavender: 3.2357, wt_daisy_yellow: 3.9115, wt_ribbon_lavender: 3.9727,
   wt_heart_cream: 2.859, wt_grid_white: 3.3333, wt_sparkle: 3.1079,
   // 🏖 여름 한정 (2026-07-29) — 곰펭 여름 씬 6 + 여름 마테 6
-  sm_bingsu: 1.0102, sm_naengmyeon: 1.0154, sm_watermelon: 1.0631, sm_watergun: 1.1129,
-  sm_walk: 1.2263, sm_rain: 1.087,
+  sm_gom_beach: 0.733, sm_gom_tube: 0.8545, sm_gom_bbq: 0.7842, sm_gom_chair: 0.9671,
+  sm_peng_beach: 0.9866, sm_peng_tube: 0.9893, sm_peng_shop: 0.7049, sm_peng_night: 0.894,
+  sm_duo_watergun: 1.2209, sm_duo_tube: 1.1469, sm_duo_watermelon: 0.9643, sm_duo_icecream: 1.0781,
   wt_wave: 3.8983, wt_shell: 3.9914, wt_palm: 2.7711, wt_stripe_blue: 2.9548,
   wt_starfish: 3.3333, wt_wave_mint: 3.2857,
   ch_che01: 0.7928, ch_che04: 1.4278, ch_che06: 1.0683, ch_che08: 1.3098, ch_che05: 0.9231,
@@ -487,9 +488,10 @@ export const STICKER_GROUPS = [
   { key: 'f_ing', tab: 'food', chip: '재료', items: ['ig_frb02', 'ig_frb04', 'ig_frb08', 'ig_jcb19', 'ig_jae16', 'ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae03', 'ig_jae12', 'ig_frb01', 'ig_frb03', 'ig_frb07', 'ig_frb13', 'ig_ggi03', 'ig_ggi16', 'ig_hsm01'] },
   // ✨ 데코 (색 바꾸는 SVG 심볼 유지 + 새 데코 PNG + 응원)
   // 📷 벡터 프레임 (2026-07-26 신규 · item③) — 꼬르곰·펭펭 얹어 꾸미는 액자틀. SVG라 크게 키워도 안 깨짐 + 🎨색 바꾸기(배경색과 맞추기). 배경 바로 옆(데코 맨 위)에 둠 — 프레임 먼저 놓고 위에 꼬르곰·펭펭. (⚠️캐릭터명 = 꼬르곰·펭펭 풀네임, '곰펭' 금지)
-  // 🏖 꼬르곰·펭펭의 여름 (2026-07-29) — 빙수·냉면·수박·물총놀이·여름산책·비.
-  //   에피소드 컷이 앱에 하나도 안 들어가 있었다. 우리 캐릭터 여름 콘텐츠라 값어치가 제일 크다.
-  { key: 'buddies_summer', tab: 'buddies', season: 'summer', label: '꼬르곰·펭펭의 여름', items: ['sm_watergun', 'sm_watermelon', 'sm_bingsu', 'sm_naengmyeon', 'sm_walk', 'sm_rain'] },
+  // 🏖 꼬르곰·펭펭의 여름 (2026-07-29) — 콤비 4(물총·튜브·수박·아이스크림) + 곰 솔로 4 + 펭 솔로 4.
+  //   ⚠️ 처음엔 에피소드 씬컷을 넣었는데 **배경(하늘·바다·모래)이 통째로 붙어 있어** 표지에
+  //      작게 붙이면 네모 배경째 올라갔다. 창업자가 **흰 배경으로 다시 뽑아** 줘서 전부 교체했다.
+  { key: 'buddies_summer', tab: 'buddies', season: 'summer', label: '꼬르곰·펭펭의 여름', items: ['sm_duo_watergun', 'sm_duo_tube', 'sm_duo_watermelon', 'sm_duo_icecream', 'sm_gom_tube', 'sm_gom_beach', 'sm_gom_bbq', 'sm_gom_chair', 'sm_peng_tube', 'sm_peng_beach', 'sm_peng_shop', 'sm_peng_night'] },
   { key: 'deco_vframe', tab: 'deco', label: '프레임(꼬르곰·펭펭 넣기)', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
   { key: 'deco_recolor', tab: 'deco', label: '색 바꾸기', items: ['heart', 'star', 'sparkle', 'bow', 'vhand'] },
   // 📝 메모·라벨 (2026-07-26 신규) — 다꾸 감성 손그림 메모지·라벨. 글씨 얹어 꾸미기 좋음(작게~중간 크기용, 크게 키우면 흐려짐).

@@ -42,8 +42,13 @@ def remove_bg(path, thr=234, sat=14):
     return np.dstack([arr.astype(np.uint8), alpha])
 
 
-def slice_grid(rgba, rows, cols, pad=10, min_area=1500):
-    """격자로 나누고 셀마다 가장 큰 덩어리(캐릭터)만 크롭. 번호·자막은 자동 제외."""
+def slice_grid(rgba, rows, cols, pad=10, min_area=1500, keep_frac=0.12):
+    """격자로 나누고 셀마다 캐릭터만 크롭. 번호·자막은 자동 제외.
+
+    ⚠️ keep_frac: 제일 큰 덩어리의 이 비율 이상인 덩어리는 **같이 남긴다**.
+       예전엔 '제일 큰 덩어리 하나'만 남겨서, 곰과 펭이 떨어져 있는 콤비 컷에서
+       **작은 쪽(펭)이 통째로 사라졌다**(2026-07-29 여름 콤비 시트에서 실제 발생).
+       0 으로 주면 예전처럼 하나만 남긴다."""
     H, W, _ = rgba.shape
     ch, cw = H / rows, W / cols
     fg = rgba[:, :, 3] > 40
@@ -58,7 +63,10 @@ def slice_grid(rgba, rows, cols, pad=10, min_area=1500):
             big = int(np.argmax(sizes)) + 1
             if sizes[big-1] < min_area:
                 out.append(None); continue
-            mask = (lbl == big)
+            # 큰 덩어리 + 그에 견줄 만한 덩어리들(콤비의 펭·소품)을 함께 남긴다
+            thr = max(min_area, sizes[big-1] * keep_frac)
+            keep = [i + 1 for i in range(n) if sizes[i] >= thr]
+            mask = np.isin(lbl, keep)
             ys, xs = np.where(mask)
             cell = rgba[y0:y1, x0:x1].copy()
             cell[~mask, 3] = 0                    # 캐릭터 외 나머지 덩어리 투명 처리
