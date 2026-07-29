@@ -5,7 +5,6 @@ import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
-import gomHeader from '../assets/gom-header.png' // 뉴 물결 곰(인사) — 홈 상단 브랜드 마스코트
 import TabTips from '../components/TabTips'
 import PreviewSheet from '../components/PreviewSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
@@ -85,9 +84,12 @@ export default function HomeScreen() {
     <>
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          {/* 뉴 물결 곰(인사) + 한끼 로고락업 — 홈 상단 브랜드 마크. 살랑(sway) 모션=레꾸 피커엔 없는 모션. */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <img src={gomHeader} alt="한끼 곰" width={46} height={46} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-4px 0' }} />
+          {/* 곰 자리에 내 아바타를 넣었다(창업자 2026-07-29). 인사하는 곰은 '레시피' 탭으로 옮김.
+              오른쪽에 아바타·톱니가 나란히 있어 눌러야 할 게 둘로 보이던 것도 정리된다. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className="press" onClick={() => nav.go('profile')} aria-label="프로필" style={{ display: 'flex', flex: '0 0 auto' }}>
+              <Avatar name={profile.name} avatar={profile.avatar} size={38} />
+            </button>
             <div className="h-title">한끼</div>
           </div>
           <TabTips tab="home" />
@@ -103,13 +105,10 @@ export default function HomeScreen() {
           >
             <Icon name="plus" size={16} color="#fff" stroke={2.4} /> 가져오기
           </button>
-          {/* 설정 — 예전 Inbox(받은 함) 자리. Inbox는 '레시피' 탭과 겹쳐 거의 안 쓰여 뺐고,
-              대신 설정을 톱니로 또렷하게 올렸다(아바타 위 작은 힌트보다 명확). Inbox 기능은 설정의 '미정리' 통계에서 계속 연다. */}
+          {/* 설정 — 맨 오른쪽 끝(창업자 2026-07-29). 아바타는 왼쪽 브랜드 자리로 옮겼다.
+              미정리 레시피는 설정의 '미정리' 통계로도 계속 열린다. */}
           <button className="icon-btn press" onClick={() => nav.go('profile')} aria-label="설정">
             <Icon name="settings" size={22} />
-          </button>
-          <button className="icon-btn press" onClick={() => nav.go('profile')} aria-label="프로필">
-            <Avatar name={profile.name} avatar={profile.avatar} />
           </button>
         </div>
       </div>

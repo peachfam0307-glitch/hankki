@@ -11,6 +11,7 @@ import DiaryEntrySheet from '../components/DiaryEntrySheet'
 import { dateLabel } from '../utils'
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
+import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
 
 // 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
 const MYRECIPES_COACH_KEY = 'hankki:coach:myrecipes'
@@ -205,7 +206,12 @@ export default function MyRecipesScreen() {
     <>
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div className="h-title">레시피</div>
+          {/* 인사하는 꼬르곰 — 홈 상단에 있던 걸 이리로 옮겼다(창업자 2026-07-29).
+              장보기·레꾸자랑엔 이미 곰이 있어 겹치고, 설정은 잘 안 가서 여기로. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <img src={gomHeader} alt="" draggable={false} width={42} height={42} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-4px 0' }} />
+            <div className="h-title">레시피</div>
+          </div>
           <TabTips tab="myrecipes" />
         </div>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
