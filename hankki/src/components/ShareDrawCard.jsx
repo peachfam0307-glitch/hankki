@@ -25,7 +25,9 @@ const St = ({ k, w, style }) => {
   const src = S(k)
   if (!src) return null
   const r = PHOTO_FAMILY[k]?.ratio || 1
-  return <img src={src} alt="" crossOrigin="anonymous" style={{ position: 'absolute', width: w, height: w / r, objectFit: 'contain', ...style }} />
+  // ⚠️ styles.css 의 전역 `img { max-width: 100% }` 때문에, 폭 0인 뭉치 상자 안에서
+  //    스티커가 8px 로 찌그러졌다(2026-07-29 실제 발생). 폭을 직접 정하므로 상한을 푼다.
+  return <img src={src} alt="" crossOrigin="anonymous" style={{ position: 'absolute', width: w, height: w / r, maxWidth: 'none', objectFit: 'contain', ...style }} />
 }
 // 🎨 팔레트 — **배경색과 소품 색을 세트로** 묶는다(창업자 "배경색이랑 잘 어울리게").
 //    예전엔 마테·데코를 각각 따로 랜덤으로 뽑아서, 초록 배경에 핑크 리본 + 노란 별 + 무지개가
@@ -33,17 +35,28 @@ const St = ({ k, w, style }) => {
 //    다시 뽑기 = 팔레트가 통째로 바뀜(가챠 맛은 그대로).
 const PALETTES = [
   { key: 'sage', bg: 'linear-gradient(160deg,#e3ecdb,#d4e2d7 55%,#dce7e5)', line: 'rgba(120,140,115,.10)', ink: '#5c7256', sub: '#3f4a3c', cta: '#5c7256', shadow: 'rgba(70,90,70,.32)',
-    washi: ['wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow'], decos: ['dn_plant', 'dn_sparkle', 'dn_star', 'dn_coffee'] },
+    washi: ['wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow'], decos: ['dn_plant', 'dn_sparkle', 'dn_star', 'dn_coffee'],
+    words: ['tw_daebak', 'tw_fav', 'tw_hearty', 'tw_ourhankki', 'tw_nexttime'] },
   { key: 'butter', bg: 'linear-gradient(160deg,#f7efdc,#f2e6cd 55%,#efe6d6)', line: 'rgba(160,135,85,.11)', ink: '#a3803f', sub: '#5b4a2c', cta: '#a3803f', shadow: 'rgba(120,95,45,.32)',
-    washi: ['wt_daisy_yellow', 'wt_grid_white', 'wt_heart_cream'], decos: ['dn_star', 'dn_sparkle', 'dn_coffee', 'dn_bunting'] },
+    washi: ['wt_daisy_yellow', 'wt_grid_white', 'wt_heart_cream'], decos: ['dn_star', 'dn_sparkle', 'dn_coffee', 'dn_bunting'],
+    words: ['tw_honey', 'tw_tasty', 'tw_best', 'tw_wow', 'tw_5min'] },
   { key: 'rose', bg: 'linear-gradient(160deg,#f7e6e3,#f2dbd8 55%,#f0e2dd)', line: 'rgba(180,120,115,.10)', ink: '#c4746e', sub: '#6b4a45', cta: '#c4746e', shadow: 'rgba(150,80,75,.3)',
-    washi: ['wt_ribbon_pink', 'wt_gingham', 'wt_cherry'], decos: ['dn_cherry', 'dn_ribbon', 'dn_peach', 'dc_nd05'] },
+    washi: ['wt_ribbon_pink', 'wt_gingham', 'wt_cherry'], decos: ['dn_cherry', 'dn_ribbon', 'dn_peach', 'dc_nd05'],
+    words: ['tw_success', 'tw_welldone', 'tw_yummy', 'tw_first', 'tw_better'] },
   { key: 'lavender', bg: 'linear-gradient(160deg,#eae5f3,#e2dcef 55%,#e6e3f0)', line: 'rgba(130,115,170,.10)', ink: '#7d6bab', sub: '#4d4266', cta: '#7d6bab', shadow: 'rgba(90,75,140,.3)',
-    washi: ['wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender'], decos: ['dn_sachet', 'dn_sparkle', 'dn_star', 'dc_nd01'] },
+    washi: ['wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender'], decos: ['dn_sachet', 'dn_sparkle', 'dn_star', 'dc_nd01'],
+    words: ['tw_more', 'tw_goodday', 'tw_again', 'tw_mom'] },
   { key: 'sky', bg: 'linear-gradient(160deg,#e0eef3,#d3e7f0 55%,#dceeea)', line: 'rgba(90,140,165,.10)', ink: '#4a90a8', sub: '#2f5666', cta: '#4a90a8', shadow: 'rgba(45,100,125,.3)',
-    washi: ['wt_stripe_blue', 'wt_cloud', 'wt_grid_white'], decos: ['dn_shoot', 'dn_star', 'dn_sparkle', 'dc_nd08'] },
+    washi: ['wt_stripe_blue', 'wt_cloud', 'wt_grid_white'], decos: ['dn_shoot', 'dn_star', 'dn_sparkle', 'dc_nd08'],
+    words: ['tw_fail', 'tw_salty', 'tw_night'] },
+  // 🏖 여름 팔레트 — 6~8월에만 뽑기 풀에 들어간다(아래 PALETTES_OF 참고).
+  //    여름 마테(파도·조개·불가사리·야자·수박)가 여기서만 나와서 '여름 한정' 느낌을 준다.
+  { key: 'summer', bg: 'linear-gradient(160deg,#dcf1f2,#bfe6ee 55%,#cdeee4)', line: 'rgba(60,140,160,.11)', ink: '#2f96a6', sub: '#144e5c', cta: '#2b7f8c', shadow: 'rgba(30,110,130,.35)',
+    washi: ['wt_wave', 'wt_stripe_blue', 'wt_shell'], decos: ['dn_star', 'dn_sparkle', 'dn_shoot', 'dn_peach'],
+    words: ['tw_salty', 'tw_fail', 'tw_tasty'] },
 ]
-const WORDS = ['tw_today', 'tw_success', 'tw_tasty', 'tw_honey', 'tw_welldone', 'tw_haenaem', 'tw_more', 'tw_fav']
+// 제철 팔레트만 섞는다 — 여름 톤이 8월까지만 등장해 '한정' 감각이 살아난다.
+const PALETTES_OF = (month) => (month >= 6 && month <= 8 ? PALETTES : PALETTES.filter((p) => p.key !== 'summer'))
 const titleFont = (t) => { const n = String(t).replace(/\s/g, '').length; return n <= 5 ? 104 : n <= 7 ? 88 : n <= 9 ? 74 : 62 }
 
 // 레시피 태그: 실제 데이터(카테고리·태그)에서. 없으면 담백한 기본.
@@ -68,9 +81,9 @@ function forced() {
 
 function drawState() {
   const f = forced()
-  const pal = f?.pal || rnd(PALETTES)          // 🎨 팔레트 먼저 — 배경과 소품이 한 세트
-  const wi = Math.floor(Math.random() * pal.decos.length)
   const m = new Date().getMonth() + 1
+  const pal = f?.pal || rnd(PALETTES_OF(m))    // 🎨 팔레트 먼저 — 배경과 소품이 한 세트
+  const wi = Math.floor(Math.random() * pal.decos.length)
   const isSummer = m >= 6 && m <= 8 // 여름 시즌카드는 6~8월에만 뽑기 풀에 등장(한정 수집감). 그 외 계절 미노출.
   const style = f?.style || rnd(isSummer ? ['holo', 'pop', 'summer', 'pola', 'diary', 'summer'] : ['holo', 'pop', 'pop', 'pola', 'diary'])
   let cat
@@ -79,7 +92,7 @@ function drawState() {
   else { const r = Math.random(); cat = r < 0.72 ? GOM : (PENG.length ? PENG : GOM) } // pola·diary = 솔로
   return {
     style, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46),
-    pal, washi: pal.washi[0], washi2: pal.washi[1], deco: pal.decos[wi % pal.decos.length], deco2: pal.decos[(wi + 1) % pal.decos.length], word: rnd(WORDS),
+    pal, washi: pal.washi[0], washi2: pal.washi[1], deco: pal.decos[wi % pal.decos.length], deco2: pal.decos[(wi + 1) % pal.decos.length], word: rnd(pal.words),
   }
 }
 
@@ -90,6 +103,32 @@ const POP_BGS = [
 ]
 
 // ── 1080×1350 카드 (캡처 대상) ──
+//
+// 📐 5장 공통 뼈대 — 예전엔 카드마다 제목 위치·여백이 제각각이라 "미감이 없다"는 판정을 받았다.
+//    이제 다섯 장이 같은 격자를 쓴다:
+//      브랜드 150 · 소품뭉치A(우상) · 주인공+요리 250~830 · 소품뭉치B(좌하)
+//      · 제목 880 · 태그 · CTA(bottom 150)
+//
+// 🎯 소품은 '뭉쳐서' 놓는다 — 다꾸의 기본(리서치: docs/다꾸-리서치-2026-07-29.md 규칙 3).
+//    예전엔 사방에 하나씩 균등하게 뿌려서 허전했다. 이제 한 자리에 2~3개를 겹쳐 쌓고,
+//    크기에 위계를 준다(큰 것 1 · 중간 1 · 작은 1) → 리듬이 생긴다.
+const CL = [
+  { w: 1.0, dx: 0, dy: 0, r: -9 },
+  { w: 0.62, dx: 0.72, dy: 0.52, r: 11 },
+  { w: 0.44, dx: -0.3, dy: 0.74, r: -16 },
+]
+function Cluster({ keys, x, y, size = 150, flip = false }) {
+  return (
+    <div style={{ position: 'absolute', left: x, top: y, width: 0, height: 0, zIndex: 4 }}>
+      {keys.slice(0, 3).map((k, i) => {
+        const c = CL[i]
+        return <St key={i} k={k} w={size * c.w}
+          style={{ left: (flip ? -1 : 1) * c.dx * size, top: c.dy * size, transform: `rotate(${c.r}deg)` }} />
+      })}
+    </div>
+  )
+}
+
 function Card({ style, char, no, title, tags, popBg, cover, washi, washi2, deco, deco2, word, foodIcon, pal }) {
   const pill = { display: 'inline-block', padding: '11px 28px', borderRadius: 40, fontSize: 31, margin: '0 4px' }
   // 🔍 CTA — 바이럴 핵심. 크고 채운 알약으로 확 띄게 + 정사각 안전영역(bottom 150) 안에.
@@ -97,156 +136,146 @@ function Card({ style, char, no, title, tags, popBg, cover, washi, washi2, deco,
   //   cover 모드(표지 저장용)에선 CTA를 숨긴다 — 공유가 아니라 내 레시피 표지라서.
   const cta = (opt) => cover ? null : (
     <div style={{ position: 'absolute', left: 0, right: 0, bottom: 150, textAlign: 'center' }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '21px 46px', borderRadius: 999, background: opt.bg, color: opt.color, fontSize: 42, fontWeight: 800, boxShadow: opt.shadow }}>🔍 Play스토어 ‘한끼’ 검색</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '21px 46px', borderRadius: 999, background: opt.bg, color: opt.color, fontSize: 42, fontWeight: 800, boxShadow: opt.shadow }}>Play스토어 ‘한끼’ 검색</span>
     </div>
   )
-  const img = (extra) => <img src={char.url} alt="" crossOrigin="anonymous" style={{ maxHeight: '100%', maxWidth: '86%', objectFit: 'contain', filter: DIE, ...extra }} />
-  const slot = (s) => ({ position: 'absolute', left: 0, right: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', ...s })
+  // 주인공은 크게 — 카드의 절반을 차지해야 눈이 먼저 간다(예전엔 1/3이라 허전했다).
+  const hero = (extra) => (
+    <div style={{ position: 'absolute', left: 0, right: 0, top: 262, height: 560, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <img src={char.url} alt="" crossOrigin="anonymous" style={{ maxHeight: '100%', maxWidth: '66%', objectFit: 'contain', filter: DIE, ...extra }} />
+    </div>
+  )
+  // 요리 아이콘은 주인공 오른쪽 발치에 — 캐릭터가 '그 요리를 옆에 두고 있는' 구도
+  const dish = (extra) => foodIcon && S(foodIcon) ? (
+    <img src={S(foodIcon)} alt="" crossOrigin="anonymous"
+      style={{ position: 'absolute', right: 74, top: 604, width: 268, objectFit: 'contain', transform: 'rotate(4deg)', filter: DIE, ...extra }} />
+  ) : null
+  // 제목 묶음 — 다섯 장 모두 같은 높이에서 시작한다
+  const titleBlock = (col, tagBg, tagCol) => (
+    <div style={{ position: 'absolute', top: cover ? 966 : 872, left: 0, right: 0, textAlign: 'center', color: col, padding: '0 64px' }}>
+      <div style={{ lineHeight: 1.04, wordBreak: 'keep-all', fontSize: Math.min(88, titleFont(title)) }}>{title}</div>
+      <div style={{ marginTop: 14 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: tagBg, color: tagCol }}>{x}</span>)}</div>
+    </div>
+  )
+  const brand = (col) => <div style={{ position: 'absolute', top: 150, left: 62, fontSize: 42, color: col }}>한끼</div>
+  // 문구 스티커 = 작은 포인트. 제목 왼쪽 빈자리에 살짝 기울여 붙인다.
+  const wordSticker = () => <St k={word} w={186} style={{ top: 236, right: 214, transform: 'rotate(7deg)', zIndex: 4 }} />
 
   if (style === 'holo') {
+    // 🌙 홀로(밤) — 어두운 배경은 '희귀 수집카드' 정체성이라 유지.
+    //    ⛔ 글자 스티커는 안 붙인다: 파스텔 칭찬 라벨과 홀로그램 톤은 정반대라 서로 싸운다(창업자 지적).
     return (
-      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 32%,#343b4a,#2d3340 74%,#252a35)' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.12) 6px,transparent 7px)', backgroundSize: '96px 96px' }} />
-        <div style={{ position: 'absolute', top: 152, left: 60, fontSize: 42, color: '#f3e9dd' }}>한끼 ☾</div>
-        <div style={{ position: 'absolute', top: 150, right: 56, width: 140, height: 140, borderRadius: '50%', border: '3px dashed rgba(255,220,140,.9)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#ffe4a0', fontSize: 30, lineHeight: 1.15 }}>No.{String(no).padStart(2, '0')}<br /><span style={{ fontSize: 20 }}>✨레어</span></div>
-        <div style={{ position: 'absolute', top: 320, left: 150, fontSize: 54 }}>✨</div><div style={{ position: 'absolute', top: 430, right: 150, fontSize: 58 }}>💛</div>
-        <div style={{ position: 'absolute', top: 235, left: '50%', transform: 'translateX(-50%)', width: 510, height: 510, borderRadius: '50%', background: 'conic-gradient(from 20deg,#ff9aa2,#ffdac1,#e2f0cb,#b5ead7,#c7ceea,#f7c6ff,#ffabe0,#ff9aa2)', opacity: 0.3, filter: 'blur(3px)' }} />
-        <div style={slot({ top: cover ? 300 : 230, height: 500 })}>{img()}</div>
-        <div style={{ position: 'absolute', top: cover ? 945 : 775, left: 0, right: 0, textAlign: 'center', color: '#f6ede0', padding: '0 50px' }}>
-          <div style={{ fontSize: 34, opacity: 0.85, marginBottom: 8 }}>오늘의 한 끼 ✨</div>
-          <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: titleFont(title), background: 'linear-gradient(90deg,#ffd98a,#ffb0c4,#c7b3f0)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{title}</div>
-          <div style={{ marginTop: 16 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: 'rgba(255,255,255,.14)', color: '#ffe4a0' }}>{x}</span>)}</div>
+      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 34%,#3a4152,#2d3340 72%,#242833)' }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.10) 5px,transparent 6px)', backgroundSize: '104px 104px' }} />
+        <div style={{ position: 'absolute', top: 250, left: '50%', transform: 'translateX(-50%)', width: 560, height: 560, borderRadius: '50%', background: 'conic-gradient(from 20deg,#ff9aa2,#ffdac1,#e2f0cb,#b5ead7,#c7ceea,#f7c6ff,#ffabe0,#ff9aa2)', opacity: 0.28, filter: 'blur(4px)' }} />
+        {brand('#f3e9dd')}
+        <div style={{ position: 'absolute', top: 148, right: 58, width: 144, height: 144, borderRadius: '50%', border: '3px dashed rgba(255,220,140,.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#ffe4a0', fontSize: 30, lineHeight: 1.15 }}>No.{String(no).padStart(2, '0')}<br /><span style={{ fontSize: 20 }}>레어</span></div>
+        <Cluster keys={['dn_sparkle', 'dn_star', 'dn_shoot']} x={92} y={372} size={168} />
+        {hero()}
+        {/* 어두운 배경에 어두운 그릇이 묻혀 칙칙했다 → 홀로 후광을 깔아 띄운다 */}
+        {foodIcon && S(foodIcon) && (
+          <div style={{ position: 'absolute', right: 78, top: 596, width: 296, height: 296 }}>
+            <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 42% 38%,rgba(255,242,205,.62),rgba(200,180,255,.3) 56%,transparent 72%)', filter: 'blur(2px)' }} />
+            <img src={S(foodIcon)} alt="" crossOrigin="anonymous" style={{ position: 'absolute', left: '9%', top: '9%', width: '82%', height: '82%', objectFit: 'contain', transform: 'rotate(4deg)', filter: DIE }} />
+          </div>
+        )}
+        <div style={{ position: 'absolute', top: cover ? 966 : 872, left: 0, right: 0, textAlign: 'center', padding: '0 64px' }}>
+          <div style={{ lineHeight: 1.04, wordBreak: 'keep-all', fontSize: Math.min(88, titleFont(title)), background: 'linear-gradient(90deg,#ffd98a,#ffb0c4,#c7b3f0)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{title}</div>
+          <div style={{ marginTop: 14 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: 'rgba(255,255,255,.14)', color: '#ffe4a0' }}>{x}</span>)}</div>
         </div>
         {cta({ bg: '#ffe0a0', color: '#3a2a12', shadow: '0 8px 24px rgba(0,0,0,.4)' })}
       </div>
     )
   }
+
   if (style === 'pop') {
+    // 🍊 컬러팝 — 쨍한 단색이 정체성이라 배경은 그대로. 소품 뭉치로 채운다.
+    //    우리 스티커는 전부 흰 다이컷이 있어 진한 배경에서도 또렷하다.
     return (
       <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: popBg }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.28) 8px,transparent 9px)', backgroundSize: '92px 92px' }} />
-        <div style={{ position: 'absolute', top: 152, left: 60, fontSize: 42, color: '#fffdf8' }}>한끼 🧡</div>
-        <div style={{ position: 'absolute', top: 150, right: 56, width: 140, height: 140, borderRadius: '50%', border: '3px dashed rgba(255,255,255,.9)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 29, lineHeight: 1.2 }}>오늘의<br />한 끼</div>
-        <div style={{ position: 'absolute', top: 250, left: 150, fontSize: 60 }}>✨</div><div style={{ position: 'absolute', top: 470, right: 150, fontSize: 46 }}>✨</div>
-        <div style={slot({ top: cover ? 300 : 230, height: 505 })}>{img()}</div>
-        <div style={{ position: 'absolute', top: cover ? 945 : 775, left: 0, right: 0, textAlign: 'center', color: '#fffdf8', padding: '0 50px' }}>
-          <div style={{ fontSize: 36, opacity: 0.95, marginBottom: 8 }}>오늘도 한 끼 해냈다</div>
-          <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: titleFont(title), textShadow: '0 4px 0 rgba(150,55,30,.3)' }}>{title}</div>
-          <div style={{ marginTop: 16 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: 'rgba(255,253,248,.92)', color: '#c85535' }}>{x}</span>)}</div>
-        </div>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.26) 7px,transparent 8px)', backgroundSize: '96px 96px' }} />
+        {brand('#fffdf8')}
+        <St k={washi} w={264} style={{ top: 74, left: 214, transform: 'rotate(-7deg)' }} />
+        <div style={{ position: 'absolute', top: 148, right: 58, width: 144, height: 144, borderRadius: '50%', border: '3px dashed rgba(255,255,255,.9)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 29, lineHeight: 1.2 }}>오늘의<br />한 끼</div>
+        <Cluster keys={[deco, pal.decos[1], deco2]} x={92} y={330} size={166} />
+        {hero()}
+        {dish()}
+        {wordSticker()}
+        {titleBlock('#fffdf8', 'rgba(255,253,248,.94)', '#c85535')}
         {cta({ bg: '#fffdf8', color: '#b0472a', shadow: '0 10px 22px rgba(90,35,20,.35)' })}
       </div>
     )
   }
+
   if (style === 'summer') {
-    // 🏖 여름 한정 시즌카드 — 쿨톤 그라데 + 물결 + 버블 + 해 + Y2K반짝 + "여름 SEASON" 수집도장 + 띠부씰 다이컷
-    const sHero = { maxHeight: '100%', maxWidth: '82%', objectFit: 'contain', filter: 'drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 18px 20px rgba(20,90,110,.42))' }
-    const star = (fill) => <svg viewBox="0 0 100 100"><path d="M50 0 C54 34 66 46 100 50 C66 54 54 66 50 100 C46 66 34 54 0 50 C34 46 46 34 50 0Z" fill={fill} /></svg>
+    // 🏖 여름 한정 — 배경(하늘·바다·물결·해)은 그대로 두고, 곰펭을 바다 위에 바로 세운다.
+    //    예전엔 하늘색 둥근 판을 깔고 그 위에 얹어서 '카드 속 카드'처럼 겉돌았다(창업자 지적).
+    const sHero = { maxHeight: '100%', maxWidth: '64%', objectFit: 'contain', filter: 'drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 18px 20px rgba(20,90,110,.42))' }
     return (
-      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'linear-gradient(165deg,#d6f1f2 0%,#aee0ec 52%,#bfe9dd 100%)' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(60,140,150,.06) 1px,transparent 1px)', backgroundSize: '7px 7px' }} />
-        {/* 해 */}
-        <div style={{ position: 'absolute', top: -70, right: -60, width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle at 50% 50%,rgba(255,246,205,.95),rgba(255,238,170,.5) 46%,transparent 70%)' }} />
-        {/* 물방울 */}
-        {[[80, 360, 70], [150, 470, 42], [900, 300, 54], [830, 410, 30]].map((b, i) => (
-          <div key={i} style={{ position: 'absolute', left: b[0], top: b[1], width: b[2], height: b[2], borderRadius: '50%', background: 'radial-gradient(circle at 34% 30%,rgba(255,255,255,.9),rgba(255,255,255,.16) 60%,transparent)', boxShadow: 'inset 0 0 8px rgba(255,255,255,.5)' }} />
-        ))}
-        {/* 물결 */}
+      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'linear-gradient(165deg,#dcf2f3,#b3e2ee 52%,#c4ebdf)' }}>
+        <div style={{ position: 'absolute', top: -80, right: -70, width: 360, height: 360, borderRadius: '50%', background: 'radial-gradient(circle at 50% 50%,rgba(255,247,208,.95),rgba(255,238,170,.45) 46%,transparent 70%)' }} />
         <svg viewBox="0 0 1080 300" preserveAspectRatio="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: 300 }}>
-          <path d="M0 120 C160 80 260 160 420 140 C600 118 700 60 900 96 C990 112 1040 120 1080 112 L1080 300 L0 300Z" fill="#8ad8de" opacity=".55" />
-          <path d="M0 170 C180 132 300 200 480 184 C680 166 780 120 980 150 C1030 158 1060 162 1080 158 L1080 300 L0 300Z" fill="#59bccd" opacity=".7" />
-          <path d="M0 224 C200 196 320 250 520 238 C720 226 820 196 1080 220 L1080 300 L0 300Z" fill="#ffffff" opacity=".5" />
+          <path d="M0 120 C160 80 260 160 420 140 C600 118 700 60 900 96 C990 112 1040 120 1080 112 L1080 300 L0 300Z" fill="#8ad8de" opacity=".5" />
+          <path d="M0 170 C180 132 300 200 480 184 C680 166 780 120 980 150 C1030 158 1060 162 1080 158 L1080 300 L0 300Z" fill="#59bccd" opacity=".62" />
+          <path d="M0 224 C200 196 320 250 520 238 C720 226 820 196 1080 220 L1080 300 L0 300Z" fill="#ffffff" opacity=".45" />
         </svg>
-        {/* 브랜드 */}
-        <div style={{ position: 'absolute', top: 56, left: 0, right: 0, textAlign: 'center', fontSize: 44, color: '#2b7f8c' }}>한끼 <span style={{ color: '#ff8f9c' }}>♡</span></div>
-        {/* 여름 한정 리본 */}
-        <div style={{ position: 'absolute', top: 152, left: 62, transform: 'rotate(-8deg)', fontSize: 31, color: '#fff', background: 'linear-gradient(180deg,#ff9fae,#ff7f92)', padding: '12px 26px', borderRadius: 16, boxShadow: '0 8px 16px -6px rgba(220,90,110,.6),inset 0 2px 0 rgba(255,255,255,.4)' }}>☀️ 여름 한정</div>
-        {/* 여름 SEASON 도장 */}
-        <div style={{ position: 'absolute', top: 250, right: 78, width: 158, height: 158, transform: 'rotate(12deg)' }}>
-          <svg viewBox="0 0 100 100" style={{ position: 'absolute', inset: 0 }}><path d="M50 4 L60 12 L73 9 L77 22 L90 27 L86 40 L95 51 L85 62 L88 75 L74 77 L67 89 L54 84 L44 93 L35 82 L22 83 L21 70 L10 62 L18 50 L11 38 L23 31 L24 18 L38 18 L46 7 Z" fill="none" stroke="#fff" strokeWidth="3.2" opacity=".96" /></svg>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', lineHeight: 1.02, textShadow: '0 1px 2px rgba(20,90,110,.4)' }}><b style={{ fontSize: 34 }}>여름</b><span style={{ fontSize: 18, letterSpacing: 2 }}>SEASON</span></div>
+        {brand('#2b7f8c')}
+        <div style={{ position: 'absolute', top: 146, right: 56, transform: 'rotate(7deg)', fontSize: 30, color: '#fff', background: 'linear-gradient(180deg,#ff9fae,#ff7f92)', padding: '12px 26px', borderRadius: 16, boxShadow: '0 8px 16px -6px rgba(220,90,110,.6),inset 0 2px 0 rgba(255,255,255,.4)' }}>여름 한정</div>
+        <St k={washi} w={272} style={{ top: 82, left: 210, transform: 'rotate(-6deg)' }} />
+        <Cluster keys={[deco, pal.decos[1], deco2]} x={92} y={342} size={166} />
+        <div style={{ position: 'absolute', left: 0, right: 0, top: 262, height: 560, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <img src={char.url} alt="" crossOrigin="anonymous" style={sHero} />
         </div>
-        {/* 쿨 패널 */}
-        <div style={{ position: 'absolute', left: 46, right: 46, top: 286, height: 496, borderRadius: 60, background: 'linear-gradient(160deg,#7fd0dd,#4fb6cb 58%,#3a9fc0)', boxShadow: '0 34px 60px -24px rgba(30,110,130,.55),inset 0 3px 0 rgba(255,255,255,.4)', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.13) 5px,transparent 6px)', backgroundSize: '64px 64px', backgroundPosition: '20px 20px' }} />
-          <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '52%', background: 'linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,0))' }} />
-        </div>
-        {/* Y2K 반짝 */}
-        <div style={{ position: 'absolute', top: 420, right: 210, width: 62, height: 62 }}>{star('#fff')}</div>
-        <div style={{ position: 'absolute', top: 600, left: 150, width: 42, height: 42 }}>{star('#fff8c8')}</div>
-        <div style={{ position: 'absolute', top: 330, left: 250, width: 32, height: 32 }}>{star('#fff')}</div>
-        {/* 히어로(물결 곰펭 다이컷) */}
-        <div style={slot({ top: 276, height: 490 })}><img src={char.url} alt="" crossOrigin="anonymous" style={sHero} /></div>
-        {/* 제목 — 태그와 CTA가 겹치지 않게 위로 올림 */}
-        <div style={{ position: 'absolute', top: 806, left: 0, right: 0, textAlign: 'center', padding: '0 50px' }}>
-          <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 36, color: '#2f96a6' }}>시원하게, 여름 한 끼 ☀</div>
-          <div style={{ fontSize: titleFont(title), color: '#144e5c', lineHeight: 1.02, marginTop: 6, wordBreak: 'keep-all' }}>{title}</div>
-          <div style={{ marginTop: 16 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: 'rgba(255,255,255,.82)', color: '#2b7f8c' }}>{x}</span>)}</div>
-        </div>
+        {dish()}
+        {wordSticker()}
+        {titleBlock('#144e5c', 'rgba(255,255,255,.86)', '#2b7f8c')}
         {cta({ bg: '#fffdf8', color: '#2b7f8c', shadow: '0 10px 22px rgba(30,110,130,.35)' })}
       </div>
     )
   }
+
   if (style === 'pola') {
-    // 📸 폴꾸 — 흰 폴라로이드에 진짜 마테를 붙이고, 사진칸엔 꼬르곰·펭펭 + **그 요리 아이콘**을 같이.
-    //    (예전엔 캐릭터만 있고 무슨 음식인지 그림이 없어 허전했다. 캡션도 6자에서 잘렸다.)
+    // 📸 폴꾸 — 폴라로이드에 마테를 걸치고, 사진칸에 꼬르곰·펭펭 + 그 요리.
     const cap = String(title)
     return (
       <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: pal.bg }}>
-        {/* 종이 격자 — 도트만 있던 밋밋한 배경에 다꾸 종이 느낌 */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(${pal.line} 1.5px,transparent 1.5px),linear-gradient(90deg,${pal.line} 1.5px,transparent 1.5px)`, backgroundSize: '58px 58px' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `radial-gradient(${pal.line} 5px,transparent 6px)`, backgroundSize: '116px 116px' }} />
-        <div style={{ position: 'absolute', top: 150, left: 62, fontSize: 42, color: pal.ink }}>한끼</div>
-        <St k={deco2} w={78} style={{ top: 138, left: 176 }} />
-
-        {/* 폴라로이드 */}
-        <div style={{ position: 'absolute', top: 214, left: '50%', transform: 'translateX(-50%) rotate(-3deg)', width: 648, background: '#fffef9', borderRadius: 14, padding: '30px 30px 0', boxShadow: '0 26px 50px rgba(80,95,80,.3)' }}>
-          <div style={{ width: '100%', height: 496, borderRadius: 8, position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 40%,#f7f3ec,#e5ede1)' }}>
-            <St k={pal.decos[1]} w={86} style={{ top: 24, left: 26, zIndex: 2 }} />
-            <div style={slot({ inset: 0, top: 'auto', bottom: 0, height: '95%' })}>{img({ maxWidth: '64%', filter: 'drop-shadow(0 8px 12px rgba(60,40,25,.2))' })}</div>
-            {/* 그 요리 아이콘 — 카드가 '무슨 음식'인지 그림으로 말해준다 */}
+        {brand(pal.ink)}
+        <div style={{ position: 'absolute', top: 236, left: '50%', transform: 'translateX(-50%) rotate(-3deg)', width: 654, background: '#fffef9', borderRadius: 14, padding: '30px 30px 0', boxShadow: '0 26px 50px rgba(80,95,80,.3)' }}>
+          <div style={{ width: '100%', height: 486, borderRadius: 8, position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 40%,#f8f5ef,#ebefe8)' }}>
+            <div style={{ position: 'absolute', inset: 0, top: 'auto', bottom: 0, height: '96%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+              <img src={char.url} alt="" crossOrigin="anonymous" style={{ maxHeight: '100%', maxWidth: '62%', objectFit: 'contain', filter: 'drop-shadow(0 8px 12px rgba(60,40,25,.2))' }} />
+            </div>
             {foodIcon && S(foodIcon) && (
               <img src={S(foodIcon)} alt="" crossOrigin="anonymous"
-                style={{ position: 'absolute', right: 18, bottom: 12, width: 216, objectFit: 'contain', filter: 'drop-shadow(0 8px 14px rgba(60,40,25,.26))' }} />
+                style={{ position: 'absolute', right: 16, bottom: 10, width: 224, objectFit: 'contain', filter: 'drop-shadow(0 8px 14px rgba(60,40,25,.26))' }} />
             )}
           </div>
           <div style={{ fontFamily: 'Gaegu, sans-serif', fontSize: cap.length > 11 ? 34 : cap.length > 8 ? 39 : 44, color: pal.ink, textAlign: 'center', padding: '20px 0 24px', whiteSpace: 'nowrap' }}>오늘의 {cap}</div>
-          {/* 마테는 폴라로이드 '위'에 붙는 것 — 자식 맨 뒤에 둬서 사진 위로 올라오게 */}
-          <St k={washi} w={286} style={{ top: -34, left: 96, transform: 'rotate(-6deg)', zIndex: 3 }} />
-          <St k={washi2} w={218} style={{ top: -26, right: -52, transform: 'rotate(14deg)', zIndex: 3 }} />
+          {/* 마테는 프레임 밖으로 삐져나오게(폴꾸 기법) */}
+          <St k={washi} w={290} style={{ top: -34, left: 92, transform: 'rotate(-6deg)', zIndex: 3 }} />
+          <St k={washi2} w={216} style={{ top: -28, right: -54, transform: 'rotate(14deg)', zIndex: 3 }} />
         </div>
-
-        {/* 모서리 소품 — 여백이 허전하던 자리 */}
-        <St k={deco} w={104} style={{ top: 300, right: 44, transform: 'rotate(9deg)' }} />
-        <St k={deco2} w={88} style={{ top: 690, left: 36, transform: 'rotate(-11deg)' }} />
-        <St k={word} w={238} style={{ top: cover ? 906 : 812, left: 24, transform: 'rotate(-7deg)', zIndex: 2 }} />
-
-        <div style={{ position: 'absolute', top: cover ? 985 : 900, left: 0, right: 0, textAlign: 'center', color: pal.sub, padding: '0 50px' }}>
-          <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: Math.min(84, titleFont(title)) }}>{title}</div>
-          <div style={{ marginTop: 12 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: '#fffef9', color: pal.ink }}>{x}</span>)}</div>
-        </div>
+        <Cluster keys={[deco, pal.decos[1], deco2]} x={78} y={534} size={142} />
+        {wordSticker()}
+        {titleBlock(pal.sub, '#fffef9', pal.ink)}
         {cta({ bg: pal.cta, color: '#fffef9', shadow: `0 10px 22px ${pal.shadow}` })}
       </div>
     )
   }
-  // diary (다꾸)
-  const tape = (s) => <div style={{ position: 'absolute', background: 'rgba(210,224,205,.62)', border: '1.5px dashed rgba(120,140,110,.4)', ...s }} />
+
+  // 📔 diary (다꾸) — 격자 노트에 마테로 붙인 다이어리 한 장.
   return (
-    <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: '#f6f1e8', backgroundImage: 'linear-gradient(#e7ded0 1.5px,transparent 1.5px),linear-gradient(90deg,#e7ded0 1.5px,transparent 1.5px)', backgroundSize: '56px 56px' }}>
-      {tape({ top: 60, left: 150, width: 230, height: 56, transform: 'rotate(-6deg)' })}
-      {tape({ top: 52, right: 130, width: 190, height: 52, transform: 'rotate(5deg)', background: 'rgba(240,210,175,.6)', borderColor: 'rgba(180,140,95,.4)' })}
-      <div style={{ position: 'absolute', top: 150, left: 0, right: 0, textAlign: 'center', fontFamily: 'Gaegu, sans-serif', fontSize: 40, color: '#b1937a' }}>♡ 오늘의 한 끼 ♡</div>
-      <div style={{ position: 'absolute', top: 210, left: 0, right: 0, textAlign: 'center', fontSize: titleFont(title), color: '#4a3f33', lineHeight: 1.05 }}>{title}</div>
-      <div style={{ position: 'absolute', top: 370, left: '50%', transform: 'translateX(-50%) rotate(-3deg)', width: 500, display: 'flex', justifyContent: 'center' }}><img src={char.url} alt="" crossOrigin="anonymous" style={{ width: '100%', filter: DIE }} /></div>
-      <div style={{ position: 'absolute', top: 430, left: 150, fontSize: 56, transform: 'rotate(-12deg)' }}>✏️</div>
-      <div style={{ position: 'absolute', top: 560, right: 150, fontSize: 48, color: '#e6a4a0' }}>♡</div>
-      <div style={{ position: 'absolute', top: 820, left: 180, fontSize: 40, color: '#e8b74d' }}>✿</div>
-      <div style={{ position: 'absolute', bottom: 300, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', background: '#fff5c8', padding: '22px 34px', borderRadius: 6, boxShadow: '0 8px 16px rgba(150,120,40,.2)', fontFamily: 'Gaegu, sans-serif', fontSize: 38, color: '#7a6533' }}>{tags.join('  ·  ')}</div>
-      {!cover && (
-        <div style={{ position: 'absolute', bottom: 150, left: 0, right: 0, textAlign: 'center' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '21px 46px', borderRadius: 999, background: '#8a6a3a', color: '#fff8ea', fontSize: 42, fontWeight: 800, boxShadow: '0 10px 22px rgba(120,90,40,.32)' }}>🔍 Play스토어 ‘한끼’ 검색</span>
-        </div>
-      )}
+    <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: '#f7f2e9', backgroundImage: `linear-gradient(${pal.line} 1.5px,transparent 1.5px),linear-gradient(90deg,${pal.line} 1.5px,transparent 1.5px)`, backgroundSize: '56px 56px' }}>
+      {brand(pal.ink)}
+      <St k={washi} w={286} style={{ top: 78, left: 212, transform: 'rotate(-6deg)' }} />
+      <St k={washi2} w={228} style={{ top: 128, right: 62, transform: 'rotate(8deg)' }} />
+      <Cluster keys={[deco, pal.decos[1], deco2]} x={92} y={342} size={166} />
+      {hero()}
+      {dish()}
+      {wordSticker()}
+      {titleBlock(pal.sub, '#fffef9', pal.ink)}
+      {cta({ bg: '#8a6a3a', color: '#fff8ea', shadow: '0 10px 22px rgba(120,90,40,.32)' })}
     </div>
   )
 }
