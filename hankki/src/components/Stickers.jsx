@@ -185,6 +185,11 @@ const PHOTO_RATIO = {
   dn_shoot: 1.2453, dn_coffee: 0.9728, dn_plant: 0.6443, dn_bunting: 1.7778, dn_sachet: 0.8829,
   fn_speech: 1.2303, fn_daisy: 0.9889, fn_bow: 0.9414, fn_night: 1.0327, fn_gingham: 1.0419,
   ws_pinkdot: 1.3596, ws_greendot: 1.731, ws_bluedot: 1.4091, ws_pinkstripe: 1.8105,
+  // 🍳 주방도구 (2026-07-29) — 라이프 탭이 운동용품뿐이라 요리앱과 안 맞았다.
+  tk_apron: 0.8407, tk_hat: 0.9762, tk_pot_pink: 1.3333, tk_pot_green: 1.2639, tk_bowl: 0.9556,
+  tk_batter: 1.0119, tk_board_knife: 0.9924, tk_board: 0.848, tk_cup: 1.0566, tk_scale: 0.8356,
+  tk_mitt: 0.7814, tk_mitt_purple: 0.8537, tk_book: 1.2, tk_bag: 0.8034, tk_basket: 0.9283,
+  tk_salt: 1.2769, tk_sugar: 0.8476, tk_clip: 1.0335,
   // 🎗 창업자 직접 제작 마스킹테이프 (2026-07-29, 시트 3장 36종 중 17종 반영)
   //   A=얇은 외곽선·아기자기 / B=굵은 외곽선·여름 / C=외곽선 없음·깔끔
   wt_ribbon_pink: 2.9241, wt_dot_lavender: 2.931, wt_tulip: 2.4911, wt_ribbon_red: 2.4941, wt_cherry: 2.5181,
@@ -508,6 +513,9 @@ export const STICKER_GROUPS = [
   { key: 'deco_summer', tab: 'deco', season: 'summer', label: '여름 한정', items: ['wt_wave', 'wt_wave_mint', 'wt_shell', 'wt_starfish', 'wt_palm', 'wt_stripe_blue', 'wt_watermelon', 'wt_lemon', 'wt_cloud', 'wt_gingham'] },
   { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
   // 💪 라이프
+  // 🍳 주방도구 (2026-07-29) — 라이프 탭이 통째로 운동용품(아령·줄넘기·복싱)이라
+  //   요리앱 표지를 꾸미는데 아령이 나왔다. 요리 도구를 맨 위로 올린다.
+  { key: 'kitchen_tools', tab: 'life', label: '요리 도구', items: ['tk_apron', 'tk_hat', 'tk_pot_pink', 'tk_pot_green', 'tk_bowl', 'tk_batter', 'tk_board_knife', 'tk_board', 'tk_cup', 'tk_scale', 'tk_mitt', 'tk_mitt_purple', 'tk_book', 'tk_clip', 'tk_bag', 'tk_basket', 'tk_salt', 'tk_sugar'] },
   { key: 'life', tab: 'life', label: '운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },
 ]
 
