@@ -16,6 +16,7 @@ import uiGomShop from '../assets/ui/gom_shop.png'
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomClap from '../assets/ui/gom_clap.png'
 import { needsOnboarding } from '../components/Onboarding'
+import { backupNudgeStep, dismissBackupNudge, askOpenBackup } from '../nudges'
 
 // 홈 첫 방문 코치마크 — 진짜 핵심 기능부터 짚어준다(창업자 딸 아이디어 ⭐).
 // 첫 스텝을 '되는 기능'(가져오기·오늘 뭐 해먹지)으로, 곧 출시 미리보기는 맨 뒤에 살짝.
@@ -48,6 +49,9 @@ export default function HomeScreen() {
 
   // 가져오기·공유로 담기만 하고 아직 편집 안 한 레시피 수
   const unsortedN = recipes.filter((r) => r.status === 'unsorted').length
+  // 백업 유도 — 레시피가 5개·15개 쌓였을 때 딱 두 번. 화면 그릴 때 한 번만 판정한다
+  // (닫으면 0이 되어 사라지고, 다음 문턱에서 한 번 더 뜬다).
+  const [bkStep, setBkStep] = useState(() => backupNudgeStep(recipes.length))
 
   // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
   const today = useMemo(() => {
@@ -136,6 +140,28 @@ export default function HomeScreen() {
             <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700 }}>정리 안 한 레시피 {unsortedN}개</span>
             <Icon name="chevron-right" size={17} color="var(--sand)" />
           </button>
+        )}
+
+        {/* 백업 유도 — 레시피는 이 기기에만 저장된다(방침 그대로). 앱을 지우면 다 사라지므로
+            쌓였을 때 한 번씩 조용히 권한다. ⛔겁주지 않는다 — 쌓였다는 사실 + 다음 행동만.
+            강제 팝업이 아니라 닫을 수 있는 한 줄이고, 닫으면 그 문턱은 다시 안 뜬다.
+            설계원칙 = docs/리텐션-설계원칙-2026-07-30.md */}
+        {bkStep > 0 && (
+          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, padding: '11px 12px 11px 14px', borderRadius: 14, background: 'var(--cream)' }}>
+            {/* 설정의 '백업 · 내보내기' 줄과 같은 아이콘(cloud)으로 — 눌러 도착한 곳과 그림이 맞아야 헷갈리지 않는다 */}
+            <Icon name="cloud" size={18} color="var(--brown)" stroke={1.9} />
+            <button
+              className="press"
+              onClick={() => { askOpenBackup(); setBkStep(0); nav.go('profile') }}
+              style={{ flex: 1, textAlign: 'left', minWidth: 0 }}
+            >
+              <div style={{ fontSize: 13.5, fontWeight: 700 }}>레시피 {recipes.length}개가 쌓였어요</div>
+              <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>폰을 바꿔도 안 잃게 한 번 저장해둘까요?</div>
+            </button>
+            <button className="press" onClick={() => { dismissBackupNudge(bkStep); setBkStep(0) }} aria-label="닫기" style={{ flex: '0 0 auto', padding: 6 }}>
+              <Icon name="x" size={16} color="var(--sand)" />
+            </button>
+          </div>
         )}
 
         {/* 업데이트 예고 — 기대감. 강제 팝업 대신 눈에 띄는 슬림 진입점 */}

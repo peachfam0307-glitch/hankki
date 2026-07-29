@@ -14,6 +14,7 @@ import ConfirmSheet from '../components/ConfirmSheet'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { cropSquare } from '../utils'
+import { takeOpenBackup, backupDone } from '../nudges'
 
 // 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
 const PROFILE_COACH_KEY = 'hankki:coach:profile'
@@ -29,7 +30,9 @@ export default function ProfileScreen() {
   const store = useStore()
   const { profile, setProfile, recipes, clearAll, reset, importAll } = store
   const nav = useNav()
-  const [backup, setBackup] = useState(false)
+  // 홈의 백업 안내로 들어왔으면 도착하자마자 백업 시트를 연다
+  // (탭 이동은 인자를 못 넘겨서 nudges.js 쪽지로 받는다. 읽는 순간 지워져 한 번만 열린다.)
+  const [backup, setBackup] = useState(() => takeOpenBackup())
   const [avatarSheet, setAvatarSheet] = useState(false)
   const [editSheet, setEditSheet] = useState(false)
   const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
@@ -125,6 +128,7 @@ export default function ProfileScreen() {
     a.remove()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
     setBackup(false)
+    backupDone() // 이미 백업한 사람에게 홈에서 또 권하지 않는다
     nav.showToast('백업 파일을 저장했어요 (폰 다운로드 폴더)')
   }
 
@@ -139,6 +143,7 @@ export default function ProfileScreen() {
           text: '한끼 레시피 백업 파일이에요. 안전한 곳에 보관해 주세요',
         })
         setBackup(false)
+        backupDone()
         nav.showToast('백업을 공유했어요 · 카톡 나에게·드라이브에 저장해두세요')
         return
       }
@@ -157,6 +162,7 @@ export default function ProfileScreen() {
     try {
       await navigator.clipboard.writeText(json)
       setBackup(false)
+      backupDone()
       nav.showToast('백업 코드를 복사했어요 카톡 「나에게」나 메모에 붙여넣어 보관하세요')
     } catch {
       // 클립보드까지 막히면 최후로 파일 저장 시도

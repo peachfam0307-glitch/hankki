@@ -16,6 +16,8 @@ import { shareDecoratedCover } from '../shareCover'
 import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
 import { dateLabel, openExternal } from '../utils'
+import { shouldAskReview } from '../nudges'
+import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
 import { picksForIngredients, productLink, productMall } from '../data/curation'
 import { useWakeLock } from '../useWakeLock'
@@ -53,6 +55,7 @@ export default function RecipeDetailScreen({ id }) {
   const [drawOpen, setDrawOpen] = useState(false) // 공유 뽑기카드
   const [shareSheet, setShareSheet] = useState(false) // 공유 두 갈래 시트
   const [coverBusy, setCoverBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩)
+  const [askReview, setAskReview] = useState(false) // 세 번째 요리 기록 직후 한 번만
   // 인라인 오버레이(꾸미기) — 뒤로가기로 닫기.
   // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
   useLayerBack(decorOpen, () => setDecorOpen(false))
@@ -101,6 +104,10 @@ export default function RecipeDetailScreen({ id }) {
     cook(r.id)
     setLogEntry(entry)
     nav.showToast('만들었어요! 요리 기록에 남겼어요')
+    // 세 번째 요리 기록이면 한 번만 한마디를 청한다 — 세 번 해먹은 사람은 진짜 쓰는 사람이고,
+    // 요리를 막 끝낸 순간이 가장 기분 좋은 자리다. 거절하면 다시 묻지 않는다.
+    // (기록 시트를 먼저 쓰게 두고, 그 시트를 닫을 때 뜬다 — 흐름을 끊지 않으려고.)
+    if (shouldAskReview(diary.length + 1)) setAskReview(true)
   }
 
   const del = () => setConfirmDel(true)
@@ -438,6 +445,10 @@ export default function RecipeDetailScreen({ id }) {
       )}
 
       {timer && <TimerSheet label={r.title} onClose={() => setTimer(false)} />}
+
+      {/* 한마디 청하기 — 기록 시트를 먼저 쓰게 두고 그게 닫힌 뒤에 뜬다(흐름을 끊지 않으려고).
+          시트가 스스로 '물어봤음'을 남겨서 어떻게 닫아도 다시 안 묻는다. */}
+      {askReview && !logEntry && <ReviewAskSheet onClose={() => setAskReview(false)} />}
 
       {confirmDel && (
         <ConfirmSheet
