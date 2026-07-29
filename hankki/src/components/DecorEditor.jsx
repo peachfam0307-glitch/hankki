@@ -67,7 +67,9 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const [foodChip, setFoodChip] = useState('f_han') // 음식 탭 요리별 서브칩(한식 기본)
 
   // 🧷 배경격(액자 프레임·포스트잇·메모라벨) = 그 위에 스티커·글자를 얹는 밑판. 이건 탭해도 맨 앞으로 안 올린다(안 그러면 눌렀을 때 애써 꾸민 작은 스티커·글자가 다 뒤로 숨어버림 — 창업자 제보 2026-07-26).
-  const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || (it.type === 'sticker' && typeof it.key === 'string' && it.key.startsWith('dc_dma')))
+  // 🧷 '밑판'격 아이템 — 탭해도 맨 앞으로 올리지 않는다(올리면 위에 붙인 작은 스티커·글자가 다 숨는다).
+  //    `pf_` = PNG 손그림 프레임(2026-07-29 추가). 벡터 `FRAMES`와 똑같이 밑판으로 다뤄야 한다.
+  const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || (it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('dc_dma') || it.key.startsWith('pf_'))))
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로. 단 배경격은 제자리 유지.
   const select = (id) => {
     setSel(id)
@@ -154,7 +156,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const addSticker = (key) => {
     const n = items.length
     const isKf = KITCHEN_IDS.has(key)
-    const isFrame = !!FRAMES[key]
+    const isFrame = !!FRAMES[key] || (typeof key === 'string' && key.startsWith('pf_'))   // 벡터·PNG 프레임 둘 다
     const it = {
       id: newDecorId(), type: 'sticker', key,
       x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.46 : 0.42 + ((n % 4) - 1.5) * 0.05,
