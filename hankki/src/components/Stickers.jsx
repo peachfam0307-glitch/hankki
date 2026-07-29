@@ -469,15 +469,13 @@ export const STICKER_GROUPS = [
       'gp_duohi', 'gp_duoht', 'gp_duoh5', 'gp_duotb',
     ],
   },
-  // 🍬 옛날 친구들 (곰펭 아래로)
-  {
-    key: 'kitchen_candy', tab: 'buddies', label: '캔디 친구들', items: [
-      'kf_c_gomgom', 'cc17', 'kf_c_ppyak', 'cc42', 'kf_c_toto', 'cc11', 'kf_c_nyangi', 'cc20',
-      'kf_c_mongmong', 'cc13', 'kf_c_hodu', 'cc30', 'kf_c_hamzzi', 'cc47', 'kf_c_pengpeng', 'cc40',
-    ],
-  },
   { key: 'kitchen', tab: 'buddies', label: '부엌 식구들', items: kfItems('kf_') },
-  { key: 'kitchen_line', tab: 'buddies', label: '라인', items: kfItems('kf_l_') },
+  // ⚠️ 캔디(kf_c_)·라인(kf_l_)은 **부엌 식구들과 같은 8캐릭터를 색·선만 바꾼 것**이라
+  //    셋을 다 두면 친구들 탭 41종 중 24종이 같은 애들이었다(창업자 2026-07-29 "넣을 거
+  //    넣고 뺄 거 빼자"). 오리지널만 남긴다. 자산·PHOTO 매핑은 그대로라 **저장된 표지는
+  //    계속 정상 렌더**되고, 나중에 업데이트 소재로 되살릴 수 있다(피커 등록만 하면 됨).
+  //    📅 **라인(kf_l_) = '심플 다꾸' 세트로 나중에 함께 출시**(창업자 2026-07-29 확정).
+  //       선만 있는 그림체라 무선 파스텔 자산(`파스텔무선-창업자-2507`)과 묶으면 한 세트가 된다.
   // 🍱 음식 (요리별 서브칩)
   { key: 'f_han', tab: 'food', chip: '한식', items: ['fh_hnc03', 'fh_htj13', 'fh_hnc04', 'fh_hnb01', 'fh_htj01', 'fh_hnc01', 'fh_hnc10', 'fh_hnc06', 'fh_hnb08', 'fh_htj05'] },
   { key: 'f_bun', tab: 'food', chip: '분식', items: ['fb_bun03', 'fb_bun08', 'fb_bun05', 'fb_bun04', 'fb_bun02', 'fb_bun11'] },
