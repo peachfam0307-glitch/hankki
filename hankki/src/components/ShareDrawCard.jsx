@@ -105,22 +105,25 @@ const GRAIN = 'radial-gradient(rgba(150,120,80,.06) 1px,transparent 1px)'
 const STAR_D = 'M50 3 L61 13 L75 9 L79 24 L93 30 L88 45 L96 58 L84 66 L85 81 L70 82 L61 94 L50 86 L39 94 L30 82 L15 81 L16 66 L4 58 L12 45 L7 30 L21 24 L25 9 L39 13 Z'
 
 // 제목 2줄 나누기 — 이 시스템은 2줄 볼드 타이포가 기본
+// ⛔ **낱말 중간은 절대 자르지 않는다.** 예전엔 띄어쓰기가 없으면 글자 수를 반으로 잘랐는데,
+//    창업자가 추가한 "교촌허니콤보"가 **"교촌허 / 니콤보"** 로 나왔다(2026-07-29 폰 제보).
+//    한글은 어디가 낱말 경계인지 코드가 알 수 없다 → **띄어쓰기가 없으면 한 줄로 두고**,
+//    대신 `headSize`가 칸 너비에 맞춰 글자를 줄인다.
 function splitTitle(t) {
   const s = String(t || '오늘의 한 끼').trim()
   const sp = [...s.matchAll(/\s/g)].map((m) => m.index)
-  if (sp.length) {
-    const mid = s.length / 2
-    const at = sp.reduce((a, b) => (Math.abs(b - mid) < Math.abs(a - mid) ? b : a))
-    return [s.slice(0, at), s.slice(at + 1)]
-  }
-  if (s.length <= 5) return [s, '']
-  const at = Math.ceil(s.length / 2)
-  return [s.slice(0, at), s.slice(at)]
+  if (!sp.length) return [s, '']                    // 띄어쓰기 없음 → 안 쪼갠다
+  const mid = s.length / 2                          // 있으면 가장 균형 잡힌 곳에서
+  const at = sp.reduce((a, b) => (Math.abs(b - mid) < Math.abs(a - mid) ? b : a))
+  return [s.slice(0, at), s.slice(at + 1)]
 }
-const headSize = (a, b, base = 150) => {
-  const n = Math.max(a.length, b.length)
+// `lines` = **실제로 렌더되는 줄들.** 2줄 레이아웃은 `[l1, l2]`, 한 줄 레이아웃은 `['l1 l2']` 를 넘긴다.
+// `avail` = 그 칸에서 쓸 수 있는 가로 px. 큰 타이포가 이 시스템의 심장이라 기본은 크게 두되,
+//           **칸을 넘기면 그만큼 줄인다**(Jua 한글은 글자폭 ≈ 글자크기, letterSpacing -3 보정).
+const headSize = (lines, base = 150, avail = 1080 - PAD * 2) => {
+  const n = Math.max(1, ...lines.map((x) => String(x || '').length))
   const f = n <= 4 ? 1 : n <= 5 ? 0.92 : n <= 6 ? 0.8 : n <= 7 ? 0.7 : n <= 9 ? 0.59 : 0.5
-  return Math.round(base * f)
+  return Math.min(Math.round(base * f), Math.floor(avail / n) + 3)
 }
 function metaOf(recipe, tags) {
   const c = []
@@ -172,7 +175,7 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
 
   // ═══ ① 웜 blob — 좌상단 볼드 타이포 + 우하단 색 덩어리가 화면 밖으로 ═══
   if (K.key === 'warm') {
-    const hs = headSize(l1, l2)
+    const hs = headSize([l1, l2], 150, 1080 - PAD - 340)   // 좌상단 2줄(우측 340은 도장·blob 자리)
     return shell('#f4f0e8', <>
       {grain}
       <div style={{ position: 'absolute', left: -150, top: -150, width: 360, height: 360, borderRadius: '50%', border: '26px solid #efd9b0', opacity: 0.62 }} />
@@ -196,7 +199,7 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
 
   // ═══ ② 컬러 패널 — 위 둥근 패널 안에 캐릭터, 아래는 가운데 정렬 ═══
   if (K.key === 'panel') {
-    const hs = headSize(l1, l2, 128)
+    const hs = headSize([`${l1} ${l2}`.trim()], 128)   // 한 줄로 렌더된다
     return shell('#f6f1e6', <>
       {grain}
       <div style={{ position: 'absolute', left: PAD, top: 132, right: PAD, height: 660, borderRadius: 72, background: 'radial-gradient(120% 130% at 30% 22%,#8fd3b6,#5cbb94 58%,#48a17c)', boxShadow: '0 34px 64px -28px rgba(40,110,85,.5)', overflow: 'hidden' }}>
@@ -219,7 +222,7 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
 
   // ═══ ③ 폴꾸 — 폴라로이드를 마테로 벽에 붙이고 손글씨 캡션 ═══
   if (K.key === 'pola') {
-    const hs = headSize(l1, l2, 112)
+    const hs = headSize([`${l1} ${l2}`.trim()], 112)   // 한 줄
     const tape = (st) => <div style={{ position: 'absolute', width: 190, height: 52, background: 'rgba(226,196,168,.72)', boxShadow: '0 5px 12px rgba(90,55,70,.16)', zIndex: 9, ...st }}>
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(255,255,255,.34),transparent 45%)' }} />
     </div>
@@ -251,7 +254,7 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
 
   // ═══ ④ 매거진 — EST 2026 · MARKET ISSUE · 바코드 ═══
   if (K.key === 'mag') {
-    const hs = headSize(l1, l2, 116)
+    const hs = headSize([`${l1} ${l2}`.trim()], 116)   // 한 줄
     return shell('#eef1ea', <>
       {grain}
       <div style={{ position: 'absolute', left: 0, right: 0, top: 78, textAlign: 'center', zIndex: 6 }}>
@@ -285,7 +288,7 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
 
   // ═══ ⑤ 여름 한정 — 해·바다·물결. 6~8월에만 등장 ═══
   if (K.key === 'summer') {
-    const hs = headSize(l1, l2, 138)
+    const hs = headSize([l1, l2], 138, 1080 - PAD - 330)   // 좌상단 2줄
     return shell('linear-gradient(168deg,#e8f5f6,#cfeaf1 56%,#dcf0e9)', <>
       <div style={{ position: 'absolute', right: -78, top: -86, width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle at 50% 50%,rgba(255,246,196,.98),rgba(255,232,148,.5) 44%,transparent 70%)' }} />
       {/* 물결은 캐릭터 발밑에서 끝나야 한다 — 높으면 캐릭터가 물에 잠긴 것처럼 보인다. */}
@@ -312,7 +315,7 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
   }
 
   // ═══ ⑥ 홀로그램 밤 — 수집카드. 큰 넘버링 + 홀로 창 ═══
-  const hs = headSize(l1, l2, 124)
+  const hs = headSize([`${l1} ${l2}`.trim()], 124)   // 한 줄
   return shell('radial-gradient(circle at 26% 16%,#343c52,#262b3b 60%,#1c2029)', <>
     <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
       {[[120, 236, 5], [306, 172, 3], [872, 202, 4], [718, 116, 3], [176, 452, 3], [986, 372, 4], [430, 288, 3], [92, 640, 3], [960, 700, 4]].map((s, i) => (
