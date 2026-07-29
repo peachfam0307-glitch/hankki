@@ -1,5 +1,9 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toPng, toJpeg } from 'html-to-image'
+import Icon from './Icon'
+// ⛔ UI엔 유니코드 이모지를 쓰지 않는다 — 우리 아이콘·스티커만(CLAUDE.md 핀).
+//    v8.63에서 앱 전체를 정리할 때 이 시트는 '보류'로 빠져 🔄💌🖼🐻🐧가 남아 있었다(2026-07-29 정리).
+import uiDuoHi from '../assets/stickers/photo/gp_duohi.png'
 
 // 🎴 공유 "뽑기카드" — 레시피마다 스타일×곰펭 랜덤. 🔄로 다시뽑기(가챠), 공유는 Web Share.
 // ⭐ 곰펭 풀 = src/assets/sharepool 폴더 전체를 glob → "폴더에 넣기만 하면 자동으로 다 쓰임"
@@ -349,7 +353,8 @@ export function RecipeCard({ recipe }) {
   const title = recipe?.title || '오늘의 한 끼'
   const ings = (recipe?.ingredients || []).filter(Boolean)
   const steps = (recipe?.steps || []).filter(Boolean)
-  const meta = [recipe?.time && `⏱ ${recipe.time}분`, recipe?.servings && `${recipe.servings}인분`, recipe?.difficulty].filter(Boolean)
+  // ⛔ 시계 이모지를 붙이지 않는다 — '분'이 이미 시간이라는 뜻이고, 이 글자는 **공유 이미지에 그대로 박힌다.**
+  const meta = [recipe?.time && `${recipe.time}분`, recipe?.servings && `${recipe.servings}인분`, recipe?.difficulty].filter(Boolean)
   const isHead = (s) => /^\[.*\]$/.test(String(s).trim())
   const half = Math.ceil(ings.length / 2)
   const cols = [ings.slice(0, half), ings.slice(half)]
@@ -459,14 +464,18 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
             <button className="press" onClick={() => setPage(2)} style={tabBtn(page === 2)}>② 레시피</button>
           </div>
         )}
-        <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.82)', marginTop: 9, textAlign: 'center' }}>{hasRecipe ? '공유하면 2장(카드+레시피)이 함께 가요 🐻🐧' : '🔄 다시 뽑기로 마음에 들 때까지'}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 12.5, color: 'rgba(255,255,255,.82)', marginTop: 9 }}>
+          {hasRecipe
+            ? <>공유하면 2장(카드+레시피)이 함께 가요<img src={uiDuoHi} alt="" draggable={false} style={{ width: 24, height: 24, objectFit: 'contain' }} /></>
+            : <><Icon name="refresh" size={14} stroke={2} />다시 뽑기로 마음에 들 때까지</>}
+        </div>
         {/* 버튼 */}
         <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-          <button className="press" onClick={redraw} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '13px 22px', borderRadius: 999, background: '#fffdf8', color: '#5d3410', fontWeight: 800, fontSize: 15.5, border: 'none' }}>🔄 다시 뽑기</button>
-          <button className="press" onClick={share} disabled={busy} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '13px 26px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontWeight: 800, fontSize: 15.5, border: 'none', opacity: busy ? 0.6 : 1 }}>{busy ? '만드는 중…' : '💌 공유하기'}</button>
+          <button className="press" onClick={redraw} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '13px 22px', borderRadius: 999, background: '#fffdf8', color: '#5d3410', fontWeight: 800, fontSize: 15.5, border: 'none' }}><Icon name="refresh" size={17} stroke={2.2} />다시 뽑기</button>
+          <button className="press" onClick={share} disabled={busy} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '13px 26px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontWeight: 800, fontSize: 15.5, border: 'none', opacity: busy ? 0.6 : 1 }}>{busy ? '만드는 중…' : <><Icon name="share" size={17} stroke={2.2} />공유하기</>}</button>
         </div>
         {onSaveCover && (
-          <button className="press" onClick={saveCover} disabled={busy} style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 999, background: 'rgba(255,255,255,.14)', color: '#fffdf8', fontWeight: 700, fontSize: 13.5, border: '1px solid rgba(255,255,255,.34)', opacity: busy ? 0.6 : 1 }}>🖼 이 카드를 내 레시피 표지로</button>
+          <button className="press" onClick={saveCover} disabled={busy} style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 999, background: 'rgba(255,255,255,.14)', color: '#fffdf8', fontWeight: 700, fontSize: 13.5, border: '1px solid rgba(255,255,255,.34)', opacity: busy ? 0.6 : 1 }}><Icon name="photo" size={15} stroke={2} />이 카드를 내 레시피 표지로</button>
         )}
         <button className="press" onClick={onClose} style={{ marginTop: 12, padding: '8px 18px', background: 'transparent', color: 'rgba(255,255,255,.8)', fontSize: 14, fontWeight: 700, border: 'none' }}>닫기</button>
       </div>

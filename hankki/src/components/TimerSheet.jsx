@@ -55,7 +55,8 @@ export default function TimerSheet({ label = '요리 타이머', onClose }) {
                 className={`sound-chip press ${soundId === s.id ? 'on' : ''}`}
                 onClick={() => { setSound(s.id); previewSound(s.id) }}
               >
-                <span style={{ fontSize: 21 }}>{s.emoji}</span>
+                {/* ⛔ 유니코드 이모지를 쓰지 않는다. 딱 맞는 우리 아이콘이 없고(삐약삐약·마림바·종소리),
+                    이름 자체가 소리 설명이라 **아이콘 열을 통째로 뺐다**(v8.63 '사용팁'과 같은 방식). */}
                 <span>{s.name}</span>
               </button>
             ))}

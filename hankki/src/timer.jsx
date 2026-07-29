@@ -24,25 +24,26 @@ function note(c, freq, t0, dur, { type = 'sine', vol = 0.4, glide } = {}) {
 }
 
 // 귀여운 알람음 모음. play(c, t0) 로 스케줄한다.
+// ⛔ 예전엔 `emoji` 필드가 있었는데 UI에 유니코드 이모지가 찍혀서 뺐다(2026-07-29). 이름이 곧 소리 설명이다.
 export const SOUNDS = [
   {
-    id: 'ding', name: '딩동', emoji: '🔔',
+    id: 'ding', name: '딩동',
     play: (c, t) => { for (let k = 0; k < 2; k++) { const b = t + k * 0.85; note(c, 784, b, 0.45, { type: 'triangle', vol: 0.4 }); note(c, 523, b + 0.42, 0.5, { type: 'triangle', vol: 0.42 }) } },
   },
   {
-    id: 'sparkle', name: '뾰로롱', emoji: '✨',
+    id: 'sparkle', name: '뾰로롱',
     play: (c, t) => { const s = [523, 659, 784, 1047, 784, 1047]; for (let k = 0; k < 2; k++) s.forEach((f, i) => note(c, f, t + k * 0.9 + i * 0.1, 0.16, { type: 'sine', vol: 0.34 })) },
   },
   {
-    id: 'chick', name: '삐약삐약', emoji: '🐤',
+    id: 'chick', name: '삐약삐약',
     play: (c, t) => { const s = [1320, 1500, 1320, 1500, 1180, 1500]; for (let k = 0; k < 2; k++) s.forEach((f, i) => note(c, f, t + k * 0.95 + i * 0.12, 0.08, { type: 'sine', vol: 0.3, glide: f * 1.15 })) },
   },
   {
-    id: 'marimba', name: '마림바', emoji: '🎐',
+    id: 'marimba', name: '마림바',
     play: (c, t) => { const s = [523, 659, 784, 1047]; for (let k = 0; k < 2; k++) s.forEach((f, i) => note(c, f, t + k * 0.75 + i * 0.13, 0.4, { type: 'triangle', vol: 0.36 })) },
   },
   {
-    id: 'bell', name: '종소리', emoji: '🎶',
+    id: 'bell', name: '종소리',
     play: (c, t) => { for (let k = 0; k < 3; k++) { const b = t + k * 0.6; note(c, 988, b, 0.7, { type: 'sine', vol: 0.34 }); note(c, 1976, b, 0.5, { type: 'sine', vol: 0.12 }) } },
   },
 ]
