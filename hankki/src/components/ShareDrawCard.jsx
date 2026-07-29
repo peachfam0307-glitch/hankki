@@ -27,9 +27,22 @@ const St = ({ k, w, style }) => {
   const r = PHOTO_FAMILY[k]?.ratio || 1
   return <img src={src} alt="" crossOrigin="anonymous" style={{ position: 'absolute', width: w, height: w / r, objectFit: 'contain', ...style }} />
 }
-// 뽑기마다 달라지는 소품 — 다시 뽑으면 데코도 바뀌어야 '가챠' 맛이 난다.
-const WASHI = ['wt_ribbon_pink', 'wt_dot_lavender', 'wt_daisy_yellow', 'wt_gingham', 'wt_heart_cream', 'wt_cherry', 'wt_grid_white', 'wt_flower_mauve']
-const DECOS = ['dn_ribbon', 'dn_cherry', 'dn_star', 'dn_sparkle', 'dn_shoot', 'dn_peach', 'dn_coffee', 'dn_sachet']
+// 🎨 팔레트 — **배경색과 소품 색을 세트로** 묶는다(창업자 "배경색이랑 잘 어울리게").
+//    예전엔 마테·데코를 각각 따로 랜덤으로 뽑아서, 초록 배경에 핑크 리본 + 노란 별 + 무지개가
+//    따로 노는 일이 생겼다. 이제 한 팔레트 안에서만 고른다 → 뭘 뽑아도 톤이 맞는다.
+//    다시 뽑기 = 팔레트가 통째로 바뀜(가챠 맛은 그대로).
+const PALETTES = [
+  { key: 'sage', bg: 'linear-gradient(160deg,#e3ecdb,#d4e2d7 55%,#dce7e5)', line: 'rgba(120,140,115,.10)', ink: '#5c7256', sub: '#3f4a3c', cta: '#5c7256', shadow: 'rgba(70,90,70,.32)',
+    washi: ['wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow'], decos: ['dn_plant', 'dn_sparkle', 'dn_star', 'dn_coffee'] },
+  { key: 'butter', bg: 'linear-gradient(160deg,#f7efdc,#f2e6cd 55%,#efe6d6)', line: 'rgba(160,135,85,.11)', ink: '#a3803f', sub: '#5b4a2c', cta: '#a3803f', shadow: 'rgba(120,95,45,.32)',
+    washi: ['wt_daisy_yellow', 'wt_grid_white', 'wt_heart_cream'], decos: ['dn_star', 'dn_sparkle', 'dn_coffee', 'dn_bunting'] },
+  { key: 'rose', bg: 'linear-gradient(160deg,#f7e6e3,#f2dbd8 55%,#f0e2dd)', line: 'rgba(180,120,115,.10)', ink: '#c4746e', sub: '#6b4a45', cta: '#c4746e', shadow: 'rgba(150,80,75,.3)',
+    washi: ['wt_ribbon_pink', 'wt_gingham', 'wt_cherry'], decos: ['dn_cherry', 'dn_ribbon', 'dn_peach', 'dc_nd05'] },
+  { key: 'lavender', bg: 'linear-gradient(160deg,#eae5f3,#e2dcef 55%,#e6e3f0)', line: 'rgba(130,115,170,.10)', ink: '#7d6bab', sub: '#4d4266', cta: '#7d6bab', shadow: 'rgba(90,75,140,.3)',
+    washi: ['wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender'], decos: ['dn_sachet', 'dn_sparkle', 'dn_star', 'dc_nd01'] },
+  { key: 'sky', bg: 'linear-gradient(160deg,#e0eef3,#d3e7f0 55%,#dceeea)', line: 'rgba(90,140,165,.10)', ink: '#4a90a8', sub: '#2f5666', cta: '#4a90a8', shadow: 'rgba(45,100,125,.3)',
+    washi: ['wt_stripe_blue', 'wt_cloud', 'wt_grid_white'], decos: ['dn_shoot', 'dn_star', 'dn_sparkle', 'dc_nd08'] },
+]
 const WORDS = ['tw_today', 'tw_success', 'tw_tasty', 'tw_honey', 'tw_welldone', 'tw_haenaem', 'tw_more', 'tw_fav']
 const titleFont = (t) => { const n = String(t).replace(/\s/g, '').length; return n <= 5 ? 104 : n <= 7 ? 88 : n <= 9 ? 74 : 62 }
 
@@ -41,20 +54,32 @@ function tagsOf(recipe) {
 }
 
 // 스타일별 카테고리 규칙(적재적소): 콤비는 넓은 스타일(홀로·팝·여름)에만.
+// 🔧 카드 확인용 스위치 — 주소에 `?card=pola:rose` 를 붙이면 그 스타일·팔레트로 고정된다.
+//    (랜덤이라 원하는 조합을 뽑기까지 계속 다시 뽑아야 해서 시안 비교·검수가 사실상 불가능했다.)
+//    파라미터가 없으면 아무 일도 안 한다 = 실사용엔 영향 없음.
+function forced() {
+  try {
+    const v = new URLSearchParams(location.search).get('card')
+    if (!v) return null
+    const [style, palKey] = v.split(':')
+    return { style: style || null, pal: PALETTES.find((p) => p.key === palKey) || null }
+  } catch { return null }
+}
+
 function drawState() {
+  const f = forced()
+  const pal = f?.pal || rnd(PALETTES)          // 🎨 팔레트 먼저 — 배경과 소품이 한 세트
+  const wi = Math.floor(Math.random() * pal.decos.length)
   const m = new Date().getMonth() + 1
   const isSummer = m >= 6 && m <= 8 // 여름 시즌카드는 6~8월에만 뽑기 풀에 등장(한정 수집감). 그 외 계절 미노출.
-  const style = rnd(isSummer ? ['holo', 'pop', 'summer', 'pola', 'diary', 'summer'] : ['holo', 'pop', 'pop', 'pola', 'diary'])
+  const style = f?.style || rnd(isSummer ? ['holo', 'pop', 'summer', 'pola', 'diary', 'summer'] : ['holo', 'pop', 'pop', 'pola', 'diary'])
   let cat
   if (style === 'holo') cat = DUO.length ? DUO : GOM
   else if (style === 'pop' || style === 'summer') { const r = Math.random(); cat = r < 0.6 ? GOM : r < 0.82 ? PENG : (DUO.length ? DUO : GOM) }
   else { const r = Math.random(); cat = r < 0.72 ? GOM : (PENG.length ? PENG : GOM) } // pola·diary = 솔로
   return {
     style, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46),
-    ...(() => {
-      const washi = rnd(WASHI), deco = rnd(DECOS)
-      return { washi, washi2: rnd(WASHI.filter((x) => x !== washi)), deco, deco2: rnd(DECOS.filter((x) => x !== deco)), word: rnd(WORDS) }
-    })(),
+    pal, washi: pal.washi[0], washi2: pal.washi[1], deco: pal.decos[wi % pal.decos.length], deco2: pal.decos[(wi + 1) % pal.decos.length], word: rnd(WORDS),
   }
 }
 
@@ -65,7 +90,7 @@ const POP_BGS = [
 ]
 
 // ── 1080×1350 카드 (캡처 대상) ──
-function Card({ style, char, no, title, tags, popBg, cover, washi, washi2, deco, deco2, word, foodIcon }) {
+function Card({ style, char, no, title, tags, popBg, cover, washi, washi2, deco, deco2, word, foodIcon, pal }) {
   const pill = { display: 'inline-block', padding: '11px 28px', borderRadius: 40, fontSize: 31, margin: '0 4px' }
   // 🔍 CTA — 바이럴 핵심. 크고 채운 알약으로 확 띄게 + 정사각 안전영역(bottom 150) 안에.
   //   (인스타는 4:5를 1:1로 크롭해서 맨 위/아래를 잘라냄 → 중요한 건 가운데 정사각 안에 둔다)
@@ -167,17 +192,17 @@ function Card({ style, char, no, title, tags, popBg, cover, washi, washi2, deco,
     //    (예전엔 캐릭터만 있고 무슨 음식인지 그림이 없어 허전했다. 캡션도 6자에서 잘렸다.)
     const cap = String(title)
     return (
-      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'linear-gradient(160deg,#e3ecdb,#d4e2d7 55%,#dce7e5)' }}>
+      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: pal.bg }}>
         {/* 종이 격자 — 도트만 있던 밋밋한 배경에 다꾸 종이 느낌 */}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(120,140,115,.10) 1.5px,transparent 1.5px),linear-gradient(90deg,rgba(120,140,115,.10) 1.5px,transparent 1.5px)', backgroundSize: '58px 58px' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(120,140,120,.10) 5px,transparent 6px)', backgroundSize: '116px 116px' }} />
-        <div style={{ position: 'absolute', top: 150, left: 62, fontSize: 42, color: '#5c7256' }}>한끼</div>
-        <St k="dn_ribbon" w={78} style={{ top: 140, left: 176 }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(${pal.line} 1.5px,transparent 1.5px),linear-gradient(90deg,${pal.line} 1.5px,transparent 1.5px)`, backgroundSize: '58px 58px' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `radial-gradient(${pal.line} 5px,transparent 6px)`, backgroundSize: '116px 116px' }} />
+        <div style={{ position: 'absolute', top: 150, left: 62, fontSize: 42, color: pal.ink }}>한끼</div>
+        <St k={deco2} w={78} style={{ top: 138, left: 176 }} />
 
         {/* 폴라로이드 */}
         <div style={{ position: 'absolute', top: 214, left: '50%', transform: 'translateX(-50%) rotate(-3deg)', width: 648, background: '#fffef9', borderRadius: 14, padding: '30px 30px 0', boxShadow: '0 26px 50px rgba(80,95,80,.3)' }}>
           <div style={{ width: '100%', height: 496, borderRadius: 8, position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 40%,#f7f3ec,#e5ede1)' }}>
-            <St k="dn_sparkle" w={86} style={{ top: 24, left: 26, zIndex: 2 }} />
+            <St k={pal.decos[1]} w={86} style={{ top: 24, left: 26, zIndex: 2 }} />
             <div style={slot({ inset: 0, top: 'auto', bottom: 0, height: '95%' })}>{img({ maxWidth: '64%', filter: 'drop-shadow(0 8px 12px rgba(60,40,25,.2))' })}</div>
             {/* 그 요리 아이콘 — 카드가 '무슨 음식'인지 그림으로 말해준다 */}
             {foodIcon && S(foodIcon) && (
@@ -185,7 +210,7 @@ function Card({ style, char, no, title, tags, popBg, cover, washi, washi2, deco,
                 style={{ position: 'absolute', right: 18, bottom: 12, width: 216, objectFit: 'contain', filter: 'drop-shadow(0 8px 14px rgba(60,40,25,.26))' }} />
             )}
           </div>
-          <div style={{ fontFamily: 'Gaegu, sans-serif', fontSize: cap.length > 11 ? 34 : cap.length > 8 ? 39 : 44, color: '#5c7256', textAlign: 'center', padding: '20px 0 24px', whiteSpace: 'nowrap' }}>오늘의 {cap}</div>
+          <div style={{ fontFamily: 'Gaegu, sans-serif', fontSize: cap.length > 11 ? 34 : cap.length > 8 ? 39 : 44, color: pal.ink, textAlign: 'center', padding: '20px 0 24px', whiteSpace: 'nowrap' }}>오늘의 {cap}</div>
           {/* 마테는 폴라로이드 '위'에 붙는 것 — 자식 맨 뒤에 둬서 사진 위로 올라오게 */}
           <St k={washi} w={286} style={{ top: -34, left: 96, transform: 'rotate(-6deg)', zIndex: 3 }} />
           <St k={washi2} w={218} style={{ top: -26, right: -52, transform: 'rotate(14deg)', zIndex: 3 }} />
@@ -196,11 +221,11 @@ function Card({ style, char, no, title, tags, popBg, cover, washi, washi2, deco,
         <St k={deco2} w={88} style={{ top: 690, left: 36, transform: 'rotate(-11deg)' }} />
         <St k={word} w={238} style={{ top: cover ? 906 : 812, left: 24, transform: 'rotate(-7deg)', zIndex: 2 }} />
 
-        <div style={{ position: 'absolute', top: cover ? 985 : 900, left: 0, right: 0, textAlign: 'center', color: '#3f4a3c', padding: '0 50px' }}>
+        <div style={{ position: 'absolute', top: cover ? 985 : 900, left: 0, right: 0, textAlign: 'center', color: pal.sub, padding: '0 50px' }}>
           <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: Math.min(84, titleFont(title)) }}>{title}</div>
-          <div style={{ marginTop: 12 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: '#fffef9', color: '#5c7256' }}>{x}</span>)}</div>
+          <div style={{ marginTop: 12 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: '#fffef9', color: pal.ink }}>{x}</span>)}</div>
         </div>
-        {cta({ bg: '#5c7256', color: '#fffef9', shadow: '0 10px 22px rgba(70,90,70,.32)' })}
+        {cta({ bg: pal.cta, color: '#fffef9', shadow: `0 10px 22px ${pal.shadow}` })}
       </div>
     )
   }
