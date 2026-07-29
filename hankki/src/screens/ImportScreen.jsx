@@ -30,6 +30,7 @@ export default function ImportScreen() {
   const [help, setHelp] = useState(false)
   const [aiPreview, setAiPreview] = useState(false) // AI 자동정리 '이렇게 돼요' 안내 시트
   const [linkBusy, setLinkBusy] = useState(false)
+  const [linkOpen, setLinkOpen] = useState(false) // '링크만 저장'은 접어둔다(화면을 조용하게)
   const linkCancel = useRef(false)
 
   // 시트(AI 미리보기·도움말)는 히스토리 칸을 쌓아 뒤로가기로 닫는다.
@@ -59,6 +60,7 @@ export default function ImportScreen() {
       setFlow(key)
       setUrl('')
       setTitle('')
+      setLinkOpen(false)
     }
   }
 
@@ -259,97 +261,63 @@ export default function ImportScreen() {
             <div className="opt-ico"><Icon name={flowMeta.icon} size={24} color={flowMeta.color} stroke={1.7} /></div>
             <div className="h-title" style={{ fontSize: 22 }}>{flowMeta.title}</div>
           </div>
-          <div className="t-sub" style={{ marginTop: 6, marginBottom: 12, fontSize: 14 }}>
-            {flow === 'instagram'
-              ? '인스타는 캡션 글자를 복사할 수 없어요. 화면을 캡처해서 올리는 게 제일 정확해요.'
-              : '영상엔 글자가 없어요. 설명(더보기)을 복사해 붙여넣거나, 화면을 캡처해서 올려주세요.'}
+          <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 13.5 }}>
+            {flow === 'instagram' ? '인스타 레시피를 한끼로 옮기는 방법이에요.' : '영상 레시피를 한끼로 옮기는 방법이에요.'}
           </div>
 
-          {/* 앱 바로 열기 — 링크 복사·캡처하러 갈 때 편하게 */}
-          <button
-            className="press"
-            onClick={() => openExternal(flow === 'instagram' ? 'https://www.instagram.com/' : 'https://www.youtube.com/')}
-            style={{
-              width: '100%', marginBottom: 12, padding: 12, borderRadius: 'var(--r-md)',
-              background: flowMeta.color, color: '#fff', fontSize: 14, fontWeight: 700,
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-            }}
-          >
-            <Icon name={flowMeta.icon} size={18} color="#fff" stroke={2} /> {flowMeta.title} 열기 ↗
-          </button>
-
-          {/* 1순위 — 캡처해서 사진으로 (어디서나 가장 확실) */}
-          <div className="card" style={{ padding: 15, marginBottom: 12, background: 'var(--cream)', border: 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: 'var(--brown)', marginBottom: 6 }}>
-              <Icon name="camera" size={17} color="var(--brown)" stroke={1.8} /> 캡처해서 올리기 · 추천
-            </div>
-            <div style={{ fontSize: 12.8, lineHeight: 1.65, color: 'var(--text)', marginBottom: 12 }}>
-              레시피가 보이는 화면을 <b>캡처(스크린샷)</b>한 뒤, 작성 화면에서
-              <b> 재료 사진·만드는 법 사진</b>을 각각 올리면 훨씬 정확하게 채워져요.
-            </div>
-            <button
-              className="btn-primary press"
-              style={{ width: '100%' }}
-              onClick={() => {
-                nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } })
-              }}
-            >
-              캡처한 사진으로 작성하기 →
-            </button>
-          </div>
-
-          {/* 2순위 — 글자를 복사할 수 있으면 텍스트로 */}
-          <button
-            className="card press"
-            style={{ width: '100%', textAlign: 'left', padding: 14, marginBottom: 12, background: 'var(--cream)', border: 'none' }}
-            onClick={() => { setFlow('text'); setText('') }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 700, color: 'var(--brown)', marginBottom: 4 }}>
-              <Icon name="pen" size={16} color="var(--brown)" stroke={1.8} /> 글자를 복사할 수 있다면
-            </div>
-            <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.5 }}>
-              {flow === 'youtube' ? '영상 설명(더보기)' : '레시피 글'}을 복사해 <b>텍스트로 붙여넣기</b> → 더 깔끔해요.
-            </div>
-          </button>
-
-          {/* 3순위 — 링크. 유튜브·인스타는 링크에서 레시피를 못 읽는다(둘 다 로그인·동의 벽).
-              예전엔 '자동으로 읽어오기' 버튼을 뒀다가 영어 안내문이 재료칸에 박혔다.
-              안 되는 걸 된다고 적으면 눌러보고 실망만 하니, 준비 중이라고 솔직히 적는다.
-              (창업자 2026-07-29 "제목만 가져오는 건 아무 의미가 없어") */}
-          <div className="card" style={{ padding: 14, border: 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 700, marginBottom: 8 }}>
-              <Icon name="link" size={16} color="var(--text)" stroke={1.8} /> 링크 저장
-              <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', background: 'var(--cream)', padding: '3px 9px', borderRadius: 999 }}>
-                자동 정리 준비 중
+          {/* 방법을 카드 몇 장으로 길게 설명하던 걸 '한 줄짜리 선택지'로 바꿨다.
+              (창업자 2026-07-29 "설명이 너무 복잡하고 정신없어") 고를 것만 보이게 한다. */}
+          {(flow === 'youtube'
+            ? [
+                ['camera', '캡처해서 올리기', '캡처만 하면 재료·순서 자동으로', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } })],
+                ['pen', '설명(더보기) 붙여넣기', '글 복사해 오면 알아서 정리해요', false, () => { setFlow('text'); setText('') }],
+                ['play', '영상 보면서 적기', '영상 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } })],
+              ]
+            : [
+                ['camera', '캡처해서 올리기', '인스타는 글자 복사가 안 돼요', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } })],
+                ['pen', '글을 복사했다면 붙여넣기', '복사한 글을 넣으면 알아서 정리해요', false, () => { setFlow('text'); setText('') }],
+                ['photo', '미리보기 띄우고 적기', '게시물 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } })],
+              ]
+          ).map(([ic, t, d, best, go]) => (
+            <button key={t} className="card press" onClick={go}
+              style={{ width: '100%', textAlign: 'left', padding: '14px 15px', marginBottom: 10, border: 'none', background: best ? 'var(--cream)' : 'var(--surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span className="opt-ico" style={{ flexShrink: 0, background: best ? '#fff' : 'var(--cream)' }}>
+                <Icon name={ic} size={21} color="var(--brown)" stroke={1.8} />
               </span>
-            </div>
-            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={placeholderFor(flow)} inputMode="url" style={{ width: '100%', marginBottom: 8 }} />
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="제목 (선택)" style={{ width: '100%', marginBottom: 12 }} />
-            <button
-              className="btn-ghost press"
-              style={{ width: '100%', marginBottom: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-              onClick={() => {
-                nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } })
-              }}
-              disabled={!url.trim()}
-            >
-              {flow === 'youtube'
-                ? <><Icon name="play" size={16} /> 영상 보면서 직접 적기</>
-                : <><Icon name="camera" size={16} /> 미리보기 띄우고 직접 적기</>}
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 14.5, fontWeight: 800 }}>{t}</span>
+                  {best && <span style={{ fontSize: 10, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px' }}>추천</span>}
+                </span>
+                <span className="t-sub" style={{ display: 'block', fontSize: 12.3, lineHeight: 1.45, marginTop: 3 }}>{d}</span>
+              </span>
+              <Icon name="chevron-right" size={17} color="var(--sand)" />
             </button>
-            <button className="btn-ghost press" style={{ width: '100%' }} onClick={saveLink} disabled={!url.trim()}>
-              링크만 Inbox에 저장 (바로가기)
-            </button>
-            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.55 }}>
-              <Icon name="alert" size={13} color="var(--sand)" style={{ verticalAlign: '-2px', marginRight: 3 }} />
-              {flow === 'youtube' ? '유튜브(영상·숏츠)' : '인스타'} 링크에서 <b>재료·순서를 자동으로 가져오는 기능은 준비 중</b>이에요.
-              지금은 링크가 <b>바로가기(북마크)</b>로만 저장돼요. 내용까지 담으려면 위의 <b>캡처</b>나 <b>붙여넣기</b>를 써주세요.
-            </div>
-          </div>
+          ))}
 
-          <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.6, marginTop: 14, textAlign: 'center' }}>
-            <Icon name="bulb" size={13} color="var(--sand)" style={{ verticalAlign: '-2px', marginRight: 3 }} />앱을 <b>설치</b>하면 {flowMeta.title} 공유(↗) 목록에 <b>‘한끼’</b>가 떠서 링크를 바로 보낼 수 있어요.
-          </div>
+          {/* 링크는 '바로가기 저장'뿐이라 접어둔다 — 펼쳐야 보이게. */}
+          <button className="press" onClick={() => setLinkOpen((v) => !v)}
+            style={{ width: '100%', marginTop: 6, padding: '11px 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--text-sub)', background: 'transparent', border: 'none' }}>
+            <Icon name="link" size={15} color="var(--text-sub)" stroke={1.8} /> 링크만 저장해두기
+            {/* 위/아래 화살표 아이콘이 없어서 오른쪽 꺾쇠를 돌려 쓴다 */}
+            <Icon name="chevron-right" size={15} color="var(--sand)" style={{ transform: linkOpen ? 'rotate(-90deg)' : 'rotate(90deg)', transition: 'transform .15s' }} />
+          </button>
+          {linkOpen && (
+            <div className="card fade" style={{ padding: 14, border: 'none' }}>
+              <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={placeholderFor(flow)} inputMode="url" style={{ width: '100%', marginBottom: 10 }} />
+              <button className="btn-ghost press" style={{ width: '100%' }} onClick={saveLink} disabled={!url.trim()}>
+                바로가기로 저장
+              </button>
+              <div className="t-sub" style={{ fontSize: 11.5, marginTop: 9, lineHeight: 1.55 }}>
+                링크에서 <b>재료·순서를 자동으로 가져오는 기능은 준비 중</b>이에요. 지금은 주소만 담아둬요.
+              </div>
+            </div>
+          )}
+
+          <button className="press" onClick={() => openExternal(flow === 'instagram' ? 'https://www.instagram.com/' : 'https://www.youtube.com/')}
+            style={{ width: '100%', marginTop: 14, padding: '10px 4px', fontSize: 13, fontWeight: 700, color: flowMeta.color, background: 'transparent', border: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <Icon name={flowMeta.icon} size={16} color={flowMeta.color} stroke={2} /> {flowMeta.title} 열러 가기 ↗
+          </button>
         </div>
       ) : (
         <div className="pad fade">

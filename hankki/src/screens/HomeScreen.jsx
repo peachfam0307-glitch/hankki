@@ -47,6 +47,9 @@ export default function HomeScreen() {
   // 온보딩(첫 실행 소개)이 아직 안 끝났으면 이번엔 쉬고, 다음 실행에서 보여준다(겹침 방지).
   const [coach, setCoach] = useState(() => needsCoach(HOME_COACH_KEY) && !needsOnboarding())
 
+  // 가져오기·공유로 담기만 하고 아직 편집 안 한 레시피 수
+  const unsortedN = recipes.filter((r) => r.status === 'unsorted').length
+
   // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
   const today = useMemo(() => {
     const pool = recipes.filter((r) => r.status !== 'unsorted')
@@ -121,6 +124,20 @@ export default function HomeScreen() {
           <Icon name="search" size={19} color="var(--text-sub)" />
           <span style={{ fontSize: 14.5 }}>레시피, 재료, 태그를 검색해 보세요.</span>
         </button>
+
+        {/* 아직 정리 안 한 레시피(예전 'Inbox') — 홈·레시피 탭 목록엔 안 뜨는 것들이라
+            입구가 없으면 "저장했는데 사라졌다"가 된다. 0개면 아예 안 보이니 평소 화면은 그대로. */}
+        {unsortedN > 0 && (
+          <button
+            className="press"
+            onClick={() => nav.push({ name: 'inbox' })}
+            style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderRadius: 14, background: 'var(--cream)', border: 'none', textAlign: 'left' }}
+          >
+            <Icon name="edit" size={18} color="var(--brown)" stroke={1.9} />
+            <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700 }}>정리 안 한 레시피 {unsortedN}개</span>
+            <Icon name="chevron-right" size={17} color="var(--sand)" />
+          </button>
+        )}
 
         {/* 업데이트 예고 — 기대감. 강제 팝업 대신 눈에 띄는 슬림 진입점 */}
         <button
