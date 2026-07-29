@@ -496,9 +496,27 @@ const L = {
   ),
 }
 
-// 세 가지 그림체 세트 — 오리지널(요리사친구들) · 라인 · 캔디.
+// ⭐ 우리 캐릭터 5인 — 얼굴 컷 PNG. 아바타는 32~56px 동그라미라 전신은 얼굴이 12px밖에 안 된다.
+// 그래서 정본 얼굴 시트(⭐정본-5인-얼굴.png)를 외접원 기준으로 잘라 원 안에 꽉 차게 했다.
+const OURS = Object.fromEntries(
+  Object.entries(import.meta.glob('../assets/avatars/*.png', { eager: true, query: '?url', import: 'default' }))
+    .map(([k, url]) => [k.split('/').pop().replace('.png', ''), url]),
+)
+
+// 네 가지 세트 — ⭐우리 애들(정본 5인) · 오리지널(요리사친구들) · 라인 · 캔디.
 // 같은 동물이 세트마다 있어 섹션 라벨로 구분한다.
 export const BUDDY_GROUPS = [
+  {
+    key: 'ours',
+    label: '우리 애들',
+    items: [
+      { id: 'av_gom', name: '꼬르곰' },
+      { id: 'av_peng', name: '펭펭' },
+      { id: 'av_capy', name: '카롱' },
+      { id: 'av_fox', name: '모아' },
+      { id: 'av_gecko', name: '꼬비' },
+    ],
+  },
   {
     key: 'origin',
     label: '오리지널',
@@ -542,6 +560,19 @@ export const BUDDY_GROUPS = [
 ]
 
 export default function Buddy({ id, size = 48, plate = true }) {
+  if (OURS[id]) {
+    // 우리 5인 — 이미 원 안에 딱 맞게 잘라둔 얼굴이라 그대로 꽉 채운다.
+    return (
+      <img
+        src={OURS[id]}
+        alt=""
+        aria-hidden="true"
+        width={size}
+        height={size}
+        style={{ width: size, height: size, objectFit: 'contain', display: 'block', background: plate ? BG : 'transparent' }}
+      />
+    )
+  }
   if (L[id]) {
     // 라인 세트 — 아바타/피커엔 흰톤 배경판, 스티커(plate=false)엔 투명.
     return (
