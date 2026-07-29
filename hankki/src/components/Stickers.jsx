@@ -191,6 +191,11 @@ const PHOTO_RATIO = {
   wt_flower_mauve: 2.7097, wt_grid_black: 2.6879, wt_lemon: 3.8319, wt_gingham: 2.8323, wt_cloud: 2.8086,
   wt_watermelon: 2.9045, wt_daisy_lavender: 3.2357, wt_daisy_yellow: 3.9115, wt_ribbon_lavender: 3.9727,
   wt_heart_cream: 2.859, wt_grid_white: 3.3333, wt_sparkle: 3.1079,
+  // 🏖 여름 한정 (2026-07-29) — 곰펭 여름 씬 6 + 여름 마테 6
+  sm_bingsu: 1.0102, sm_naengmyeon: 1.0154, sm_watermelon: 1.0631, sm_watergun: 1.1129,
+  sm_walk: 1.2263, sm_rain: 1.087,
+  wt_wave: 3.8983, wt_shell: 3.9914, wt_palm: 2.7711, wt_stripe_blue: 2.9548,
+  wt_starfish: 3.3333, wt_wave_mint: 3.2857,
   ch_che01: 0.7928, ch_che04: 1.4278, ch_che06: 1.0683, ch_che08: 1.3098, ch_che05: 0.9231,
   lf_fit12: 1.6056, lf_fit11: 1.487, lf_fit08: 1.2486, lf_fit07: 1.2056, lf_fit02: 1.089, lf_fit13: 0.6872, lf_fit14: 1.1852, lf_fit06: 0.662,
   cp_cpf01: 0.8659, cp_cpf02: 0.9215, cp_cpf03: 0.8136, cp_cpf04: 0.8604, cp_cpf05: 0.9968, cp_cpf06: 1.0358, cp_cpf07: 0.9139, cp_cpf08: 0.8815,
@@ -482,6 +487,9 @@ export const STICKER_GROUPS = [
   { key: 'f_ing', tab: 'food', chip: '재료', items: ['ig_frb02', 'ig_frb04', 'ig_frb08', 'ig_jcb19', 'ig_jae16', 'ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae03', 'ig_jae12', 'ig_frb01', 'ig_frb03', 'ig_frb07', 'ig_frb13', 'ig_ggi03', 'ig_ggi16', 'ig_hsm01'] },
   // ✨ 데코 (색 바꾸는 SVG 심볼 유지 + 새 데코 PNG + 응원)
   // 📷 벡터 프레임 (2026-07-26 신규 · item③) — 꼬르곰·펭펭 얹어 꾸미는 액자틀. SVG라 크게 키워도 안 깨짐 + 🎨색 바꾸기(배경색과 맞추기). 배경 바로 옆(데코 맨 위)에 둠 — 프레임 먼저 놓고 위에 꼬르곰·펭펭. (⚠️캐릭터명 = 꼬르곰·펭펭 풀네임, '곰펭' 금지)
+  // 🏖 꼬르곰·펭펭의 여름 (2026-07-29) — 빙수·냉면·수박·물총놀이·여름산책·비.
+  //   에피소드 컷이 앱에 하나도 안 들어가 있었다. 우리 캐릭터 여름 콘텐츠라 값어치가 제일 크다.
+  { key: 'buddies_summer', tab: 'buddies', season: 'summer', label: '꼬르곰·펭펭의 여름', items: ['sm_watergun', 'sm_watermelon', 'sm_bingsu', 'sm_naengmyeon', 'sm_walk', 'sm_rain'] },
   { key: 'deco_vframe', tab: 'deco', label: '프레임(꼬르곰·펭펭 넣기)', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
   { key: 'deco_recolor', tab: 'deco', label: '색 바꾸기', items: ['heart', 'star', 'sparkle', 'bow', 'vhand'] },
   // 📝 메모·라벨 (2026-07-26 신규) — 다꾸 감성 손그림 메모지·라벨. 글씨 얹어 꾸미기 좋음(작게~중간 크기용, 크게 키우면 흐려짐).
@@ -489,10 +497,15 @@ export const STICKER_GROUPS = [
   { key: 'deco_png', tab: 'deco', label: '데코', items: ['dn_ribbon', 'dn_cherry', 'dn_peach', 'dn_star', 'dn_sparkle', 'dn_shoot', 'dn_coffee', 'dn_plant', 'dn_bunting', 'dn_sachet', 'dc_nd08', 'dc_nd01', 'dc_nd05', 'dc_nd16', 'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
   // 🎗 워시테이프 (2026-07-29) — 창업자 시트의 진짜 손그림 워시. 배경·테이프 탭의 CSS 마테와 달리
   //   갈색 외곽선 + 양끝 톱니가 있는 '스티커 워시'라 다꾸 감성이 그대로 산다.
-  // 🎗 마스킹테이프 — 창업자 직접 제작(2026-07-29). 앞쪽 17종이 새 시트, 뒤 4종은 데코시트에서 온 것.
-  { key: 'deco_washi', tab: 'deco', label: '마스킹테이프', items: ['wt_ribbon_pink', 'wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender', 'wt_flower_mauve', 'wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow', 'wt_sparkle', 'wt_tulip', 'wt_cherry', 'wt_ribbon_red', 'wt_gingham', 'wt_cloud', 'wt_lemon', 'wt_watermelon', 'wt_grid_black', 'ws_pinkdot', 'ws_greendot', 'ws_bluedot', 'ws_pinkstripe'] },
+  // 🎗 마스킹테이프 — 창업자 직접 제작(2026-07-29). **사철 쓰는 것만 12종 엄선**(창업자 "엄선해서 12개").
+  //   여름 무늬(레몬·수박·구름·파도·조개…)는 아래 '여름 한정' 그룹으로 뺐다.
+  { key: 'deco_washi', tab: 'deco', label: '마스킹테이프', items: ['wt_ribbon_pink', 'wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender', 'wt_flower_mauve', 'wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow', 'wt_sparkle', 'wt_cherry', 'wt_ribbon_red', 'wt_grid_black'] },
   // 🖼 프레임 (2026-07-29) — 글씨 얹기 좋은 손그림 프레임. 메모·라벨 그룹과 별개로 큼직한 것들.
   { key: 'deco_frame2', tab: 'deco', label: '프레임', items: ['fn_speech', 'fn_bow', 'fn_daisy', 'fn_gingham', 'fn_night'] },
+  // 🏖 여름 한정 (2026-07-29) — 창업자 "여름은 8월까지 쓰면 끝이니까 여름꺼를 많이 넣자".
+  //   season 이 붙은 그룹은 제철(6~8월)이면 탭 맨 위로 올라간다. 철 지나도 숨기지는 않는다
+  //   — 유저가 쓰던 걸 못 찾게 되는 게 더 나쁘다.
+  { key: 'deco_summer', tab: 'deco', season: 'summer', label: '여름 한정', items: ['wt_wave', 'wt_wave_mint', 'wt_shell', 'wt_starfish', 'wt_palm', 'wt_stripe_blue', 'wt_watermelon', 'wt_lemon', 'wt_cloud', 'wt_gingham'] },
   { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
   // 💪 라이프
   { key: 'life', tab: 'life', label: '운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },

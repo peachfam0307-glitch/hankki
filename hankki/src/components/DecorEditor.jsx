@@ -126,7 +126,20 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
     { key: 'food', label: '음식' },
     { key: 'life', label: '라이프' },
   ]
-  const groupsByTab = (t) => STICKER_GROUPS.filter((g) => g.tab === t)
+  // 🏖 제철 그룹은 맨 위로 — 여름(6~8월)엔 여름 아이템이 먼저 보인다(창업자 2026-07-29
+  //    "시즌별로 아이템을 많이 넣음 좋겠어"). 철이 지나도 **숨기지는 않는다** — 쓰던 걸
+  //    못 찾게 되는 게 더 나쁘다. 순서만 뒤로 밀린다.
+  const inSeason = (() => {
+    const m = new Date().getMonth() + 1
+    if (m >= 6 && m <= 8) return 'summer'
+    if (m >= 9 && m <= 11) return 'autumn'
+    if (m === 12 || m <= 2) return 'winter'
+    return 'spring'
+  })()
+  const groupsByTab = (t) => {
+    const g = STICKER_GROUPS.filter((x) => x.tab === t)
+    return [...g.filter((x) => x.season === inSeason), ...g.filter((x) => x.season !== inSeason)]
+  }
   const foodGroups = groupsByTab('food') // 각 그룹 = 요리별 서브칩(한식·양식·중식·일식·분식·디저트·재료)
   const foodGroup = foodGroups.find((g) => g.key === foodChip) || foodGroups[0]
 
