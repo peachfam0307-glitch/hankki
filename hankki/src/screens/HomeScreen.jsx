@@ -22,7 +22,7 @@ import { needsOnboarding } from '../components/Onboarding'
 // 첫 스텝을 '되는 기능'(가져오기·오늘 뭐 해먹지)으로, 곧 출시 미리보기는 맨 뒤에 살짝.
 const HOME_COACH_KEY = 'hankki:coach:home2' // 2026-07-26: 장보기·레꾸자랑 탭 안내 추가하며 키 올림(기존 테스터도 개선된 가이드 1회 노출)
 const HOME_COACH_STEPS = [
-  { sel: '[data-coach="import"]', img: uiHandPoint, label: '레시피 가져오기', desc: '사진·인스타·유튜브에서 레시피를 쏙 담아요 · 여기서 시작!' },
+  { sel: '[data-coach="import"]', img: uiHandPoint, label: '레시피 가져오기', desc: '캡처·붙여넣기로 레시피를 쏙 담아요 · 여기서 시작!' },
   { sel: '[data-coach="today"]', img: uiGomThumb, label: '오늘 뭐 해먹지?', desc: '냉장고 재료로 만들 수 있는 요리를 추천해요' },
   { sel: '[data-coach="nav-shop"]', img: uiGomShop, label: '장보기 · 쇼핑몰', desc: '18년차 주부가 엄선한 식재료를 담아 바로 사러 가고 · 냉장고 유통기한도 챙겨요' },
   { sel: '[data-coach="nav-brag"]', img: uiGomHeart, label: '레꾸자랑', desc: '내가 꾸민 레시피를 예쁜 카드로 친구한테 자랑! 카톡·인스타로 쏙' },

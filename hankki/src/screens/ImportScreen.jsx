@@ -14,10 +14,10 @@ import Portal from '../components/Portal'
 const OPTIONS = [
   // 제일 많이 쓰는 방법이라 맨 위
   { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A' },
-  { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '인스타그램 게시물 가져오기', color: '#C13584' },
-  { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '유튜브 영상 정보 가져오기', color: '#E33' },
+  { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '캡처해서 담기 (제일 정확)', color: '#C13584' },
+  { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '캡처·설명 붙여넣기로 담기', color: '#E33' },
   { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 자동 정리', color: '#B0895E' },
-  { key: 'link', icon: 'link', title: '링크 붙여넣기', desc: '웹사이트 주소를 붙여넣기', color: '#9B8B79' },
+  { key: 'link', icon: 'link', title: '링크 붙여넣기', desc: '블로그 글 읽어오기 · 바로가기 저장', color: '#9B8B79' },
 ]
 
 export default function ImportScreen() {
@@ -70,7 +70,8 @@ export default function ImportScreen() {
     nav.showToast('Inbox에 저장했어요 · 나중에 정리해요')
   }
 
-  // 링크 자동 읽기(베타) — 유튜브 설명·블로그 본문을 읽어 재료·순서까지 채운다.
+  // 링크 자동 읽기(베타) — 공개된 블로그 본문을 읽어 재료·순서까지 채운다.
+  // 유튜브·인스타는 읽지 않는다(로그인·동의 벽 → linkReader 에서 바로 null).
   // 아무리 오래 걸려도 25초 안에는 결과(또는 실패)를 돌려준다.
   const readLink = async () => {
     const u = url.trim()
@@ -224,7 +225,7 @@ export default function ImportScreen() {
           >
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 600 }}>가져오기가 어렵다면?</div>
-              <div className="t-sub" style={{ marginTop: 3 }}>인스타·유튜브에서 한끼로 보내는 법 보기</div>
+              <div className="t-sub" style={{ marginTop: 3 }}>인스타·유튜브 레시피를 한끼로 옮기는 법 보기</div>
             </div>
             <div className="opt-ico" style={{ background: '#fff' }}>
               <Icon name="help" size={22} color="var(--sand)" />
@@ -261,7 +262,7 @@ export default function ImportScreen() {
           <div className="t-sub" style={{ marginTop: 6, marginBottom: 12, fontSize: 14 }}>
             {flow === 'instagram'
               ? '인스타는 캡션 글자를 복사할 수 없어요. 화면을 캡처해서 올리는 게 제일 정확해요.'
-              : '영상엔 글자가 없어요. 설명(더보기)을 붙여넣거나, 화면을 캡처해서 올려주세요.'}
+              : '영상엔 글자가 없어요. 설명(더보기)을 복사해 붙여넣거나, 화면을 캡처해서 올려주세요.'}
           </div>
 
           {/* 앱 바로 열기 — 링크 복사·캡처하러 갈 때 편하게 */}
@@ -311,18 +312,19 @@ export default function ImportScreen() {
             </div>
           </button>
 
-          {/* 3순위 — 링크 자동 읽기(베타) / 링크만 저장 */}
+          {/* 3순위 — 링크. 유튜브·인스타는 링크에서 레시피를 못 읽는다(둘 다 로그인·동의 벽).
+              예전엔 '자동으로 읽어오기' 버튼을 뒀다가 영어 안내문이 재료칸에 박혔다.
+              안 되는 걸 된다고 적으면 눌러보고 실망만 하니, 준비 중이라고 솔직히 적는다.
+              (창업자 2026-07-29 "제목만 가져오는 건 아무 의미가 없어") */}
           <div className="card" style={{ padding: 14, border: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 700, marginBottom: 8 }}>
-              <Icon name="link" size={16} color="var(--text)" stroke={1.8} /> 링크로 가져오기
+              <Icon name="link" size={16} color="var(--text)" stroke={1.8} /> 링크 저장
+              <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', background: 'var(--cream)', padding: '3px 9px', borderRadius: 999 }}>
+                자동 정리 준비 중
+              </span>
             </div>
-            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={placeholderFor(flow)} inputMode="url" style={{ marginBottom: 8 }} />
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="제목 (선택 · 비우면 자동)" style={{ marginBottom: 12 }} />
-            {flow === 'youtube' && (
-              <button className="btn-primary press" style={{ width: '100%', marginBottom: 8, opacity: url.trim() ? 1 : 0.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={readLink} disabled={!url.trim() || linkBusy}>
-                {linkBusy ? '읽는 중…' : <><Icon name="sparkle" size={16} color="#fff" /> 설명란 자동으로 읽어오기 (베타)</>}
-              </button>
-            )}
+            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={placeholderFor(flow)} inputMode="url" style={{ width: '100%', marginBottom: 8 }} />
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="제목 (선택)" style={{ width: '100%', marginBottom: 12 }} />
             <button
               className="btn-ghost press"
               style={{ width: '100%', marginBottom: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
@@ -338,12 +340,11 @@ export default function ImportScreen() {
             <button className="btn-ghost press" style={{ width: '100%' }} onClick={saveLink} disabled={!url.trim()}>
               링크만 Inbox에 저장 (바로가기)
             </button>
-            {flow === 'youtube' && (
-              <div className="t-sub" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.5 }}>
-                <Icon name="alert" size={13} color="var(--sand)" style={{ verticalAlign: '-2px', marginRight: 3 }} />자동 읽기는 <b>영상 설명(더보기)에 레시피를 적어둔 영상만</b> 돼요.
-                설명에 없으면 <b>영상 보면서 직접 적기</b>나, 레시피 화면 <b>캡쳐 → 사진으로 가져오기</b>를 이용해 주세요.
-              </div>
-            )}
+            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.55 }}>
+              <Icon name="alert" size={13} color="var(--sand)" style={{ verticalAlign: '-2px', marginRight: 3 }} />
+              {flow === 'youtube' ? '유튜브(영상·숏츠)' : '인스타'} 링크에서 <b>재료·순서를 자동으로 가져오는 기능은 준비 중</b>이에요.
+              지금은 링크가 <b>바로가기(북마크)</b>로만 저장돼요. 내용까지 담으려면 위의 <b>캡처</b>나 <b>붙여넣기</b>를 써주세요.
+            </div>
           </div>
 
           <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.6, marginTop: 14, textAlign: 'center' }}>
@@ -420,7 +421,7 @@ export default function ImportScreen() {
               <div className="card" style={{ padding: '4px 2px', background: 'var(--cream)', border: 'none' }}>
                 {[
                   ['camera', '캡처 사진 인식', '레시피 화면을 캡처만 하면 재료·순서를 칸칸이 자동으로 채워요.'],
-                  ['link', '유튜브·블로그 링크 (베타)', '링크를 붙여넣으면 글·설명을 읽어 정리해요. 공개된 글만 돼요.'],
+                  ['link', '블로그 링크 (베타)', '공개된 블로그 글은 붙여넣으면 읽어서 정리해요. 유튜브·인스타는 준비 중이에요.'],
                   ['clock', '옮겨적기 끝', '손으로 하나하나 타이핑할 필요 없이 몇 초면 완성.'],
                   ['pen', '언제든 손보기', 'AI가 정리한 결과는 마음대로 고치고 다듬을 수 있어요.'],
                 ].map(([ic, t, b]) => (

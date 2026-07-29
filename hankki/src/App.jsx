@@ -4,6 +4,7 @@ import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } f
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage } from './ocr'
 import { parseRecipeText } from './parseRecipe'
+import { fetchLinkRecipe } from './linkReader'
 import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
 import TimerBar from './components/TimerBar'
@@ -259,7 +260,11 @@ export default function App() {
       // 소비해 다음 back 이 앱 종료로 샜다. (공유로 앱을 처음 열었을 때 경로)
       try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
       showToast(
-        data.imageDataUrl ? '사진을 담았어요 · 글자 읽는 중…' : '공유한 레시피를 Inbox에 담았어요'
+        data.imageDataUrl
+          ? '사진을 담았어요 · 글자 읽는 중…'
+          : link && source !== 'youtube' && source !== 'instagram'
+            ? '공유한 링크를 담았어요 · 읽는 중…'
+            : '공유한 레시피를 Inbox에 담았어요'
       )
       if (typeof history !== 'undefined' && location.search) {
         history.replaceState({ hankki: 1 }, '', location.pathname) // URL 만 정리, 트랩 표식은 유지
@@ -276,7 +281,43 @@ export default function App() {
           category: guessCategory((r.title || '') + ' ' + r.memo),
         })
         showToast('사진에서 글자를 읽어 채웠어요')
+        return
       }
+
+      // 공유로 들어온 링크는 예전엔 주소만 Inbox에 눕혀두고 끝이었다
+      // (창업자 제보 "유튜브 → 링크공유 → 한끼, INBOX 저장만 됨").
+      // 이제 붙여넣기 흐름과 똑같이 읽어서 제목·재료·순서까지 채운다.
+      // 유튜브·인스타는 읽어봐야 안 되는 게 확실하니(로그인·동의 벽) 기다리게 하지 않는다 —
+      // 링크는 바로가기로 담기고 끝. 자동 정리는 '준비 중'으로 안내한다.
+      if (!link || source === 'youtube' || source === 'instagram') return
+      if (parsed && (parsed.ingredients.length || parsed.steps.length)) return
+      const read = await Promise.race([
+        fetchLinkRecipe(link).catch(() => null),
+        new Promise((res) => setTimeout(() => res(null), 25000)),
+      ])
+      if (cancelled || !read) {
+        showToast('링크는 담았어요 · 내용은 자동으로 읽지 못했어요')
+        return
+      }
+      const patch = {}
+      // 읽어온 제목을 우선한다. 이 레코드는 방금 자동으로 만들어진 것이라 사용자가 앱 안에서
+      // 적은 글자가 없다 — 임시 제목은 공유 문구 첫 줄("이거 봐봐" 같은 인사말)일 때가 많아서
+      // 영상·글의 실제 제목이 훨씬 낫다. 쓰레기 제목은 linkReader 쪽에서 이미 걸러져 온다.
+      if (read.title) patch.title = read.title
+      if (read.full && read.text) {
+        const p = parseRecipeText(read.text, { fromOcr: true })
+        if (p.ingredients.length) patch.ingredients = p.ingredients
+        if (p.steps.length) patch.steps = p.steps
+        if (!patch.title && p.title) patch.title = p.title
+      }
+      if (patch.title === title) delete patch.title
+      if (!Object.keys(patch).length) return
+      store.updateRecipe(rec.id, patch)
+      showToast(
+        patch.ingredients || patch.steps
+          ? '링크에서 레시피를 읽어 채웠어요'
+          : '영상 제목을 채웠어요 · 설명은 붙여넣어 주세요'
+      )
     })
     return () => {
       cancelled = true
