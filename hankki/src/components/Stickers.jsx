@@ -218,8 +218,6 @@ const PHOTO_RATIO = {
   tw_fav: 1.0923, tw_honey: 1.0894, tw_easy: 1.1358, tw_hearty: 1.3762, tw_mom: 1.1472,
   tw_nexttime: 0.9755, tw_fail: 1.5283, tw_yummy: 1.2615, tw_best: 1.068, tw_ourhankki: 1.3762,
   tw_goodday: 1.4591,
-  tn_1: 0.9915, tn_2: 1.017, tn_3: 0.9957, tn_4: 1.0043, tn_5: 0.9915,
-  tn_6: 0.987, tn_7: 0.9914, tn_8: 0.9871, tn_9: 0.9828, tn_10: 0.9915,
   tn_mon: 1.0227, tn_tue: 1.0274, tn_wed: 1.032, tn_thu: 1.0182, tn_fri: 1.0411,
   tn_sat: 1.0043, tn_sun: 1.0043, tn_cal: 1.113, tn_ribbon: 1.9451, tn_circle: 0.98,
   ta_right: 1.9118, ta_left: 1.845, ta_up: 0.6372, ta_down: 0.7062, ta_curve: 1.6712,
@@ -538,8 +536,11 @@ export const STICKER_GROUPS = [
   //   맨 위 '한끼 문구' = 창업자가 직접 뽑은 우리만의 말들(다른 다꾸 앱엔 없는 것).
   { key: 'text_hankki', tab: 'notetext', label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night'] },
   { key: 'text_word', tab: 'notetext', label: '문구', items: ['tw_today', 'tw_success', 'tw_welldone', 'tw_tasty', 'tw_more', 'tw_fav', 'tw_honey', 'tw_hearty', 'tw_easy', 'tw_mom', 'tw_nexttime', 'tw_fail', 'tw_yummy', 'tw_best', 'tw_ourhankki', 'tw_goodday'] },
-  // 🔢 숫자는 레시피 순서 표시용, 요일은 식단 기록용. 빈 라벨 3종은 직접 글씨 얹으라고 둔다.
-  { key: 'text_num', tab: 'notetext', label: '숫자 · 요일', items: ['tn_1', 'tn_2', 'tn_3', 'tn_4', 'tn_5', 'tn_6', 'tn_7', 'tn_8', 'tn_9', 'tn_10', 'tn_mon', 'tn_tue', 'tn_wed', 'tn_thu', 'tn_fri', 'tn_sat', 'tn_sun', 'tn_cal', 'tn_ribbon', 'tn_circle'] },
+  // 📅 요일 = 무슨 요일에 해먹었는지 기록용. 빈 라벨 3종은 직접 글씨 얹으라고 둔다.
+  //   ⚠️ 숫자 1~10 은 뺐다(창업자 2026-07-29) — 넣을 땐 '레시피 순서 매기기'를 생각했는데
+  //      우리 레꾸는 **표지 한 장**이라 순서를 매길 자리가 없고(순서는 상세 화면에 이미 번호로 있음),
+  //      날짜로 쓰기엔 10까지뿐이라 반쪽이었다. 파일(`tn_1`~`tn_10`)은 지우지 않고 남겨둠.
+  { key: 'text_num', tab: 'notetext', label: '요일 · 라벨', items: ['tn_mon', 'tn_tue', 'tn_wed', 'tn_thu', 'tn_fri', 'tn_sat', 'tn_sun', 'tn_cal', 'tn_ribbon', 'tn_circle'] },
   { key: 'text_arrow', tab: 'notetext', label: '화살표 · 구분선', items: ['ta_right', 'ta_left', 'ta_up', 'ta_down', 'ta_curve', 'ta_loop', 'ta_dash', 'ta_wave', 'ta_leaf', 'ta_check', 'ta_checkc', 'ta_star'] },
 ]
 
