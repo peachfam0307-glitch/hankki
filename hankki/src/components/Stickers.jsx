@@ -131,12 +131,12 @@ const PHOTO_URLS = import.meta.glob('../assets/stickers/photo/*.png', { eager: t
 const PHOTO_RATIO = {
   fh_hnc03: 1.0867, fh_htj13: 1.1181, fh_hnc04: 1.1256, fh_hnb01: 1.0252, fh_htj01: 1.0218, fh_hnc01: 1.1092, fh_hnc10: 1.2081, fh_hnc06: 1.3209, fh_hnb08: 1.2864, fh_htj05: 1.1992,
   // 🍚 한식 완성요리 뉴세트(2026-07-23·37종, 진짜 음식같은 아이콘 → 레시피 썸네일 자동매칭용). docs/stickers/음식아이콘-2507
-  fh_k01: 1.2341, fh_k02: 1.2724, fh_k03: 0.902, fh_k04: 1.0, fh_k05: 0.9118, fh_k06: 1.3662,
-  fh_k07: 0.9871, fh_k08: 0.9899, fh_k09: 0.9868, fh_k10: 1.0296, fh_k11: 0.9624, fh_k12: 0.8187,
-  fh_k13: 1.3009, fh_k14: 1.0432, fh_k15: 1.0066, fh_k16: 1.0, fh_k17: 0.9508, fh_k18: 1.4422,
-  fh_k19: 0.9461, fh_k20: 0.8469, fh_k21: 0.8469, fh_k22: 1.2083, fh_k23: 1.252, fh_k24: 1.2236,
-  fh_k25: 1.0906, fh_k26: 1.0971, fh_k27: 1.2411, fh_k28: 1.236, fh_k29: 0.9902, fh_k30: 1.0229,
-  fh_k31: 0.8469, fh_k32: 0.9831, fh_k33: 0.9513, fh_k34: 1.1648, fh_k35: 0.963, fh_k36: 1.3744, fh_k37: 1.0101,
+  fh_k01: 1.0883, fh_k02: 1.0958, fh_k03: 1.0226, fh_k04: 1.1515, fh_k05: 1.0338, fh_k06: 1.1154,
+  fh_k07: 1.1579, fh_k08: 1.0068, fh_k09: 0.9868, fh_k10: 0.9667, fh_k11: 1.0616, fh_k12: 1.1014,
+  fh_k13: 1.2678, fh_k14: 1.2983, fh_k15: 1.2282, fh_k16: 1.1719, fh_k17: 1.2075, fh_k18: 1.3575,
+  fh_k19: 1.2076, fh_k20: 1.12, fh_k21: 1.081, fh_k22: 1.2083, fh_k23: 1.0573, fh_k24: 1.125,
+  fh_k25: 0.9708, fh_k26: 0.9903, fh_k27: 1.0448, fh_k28: 1.1984, fh_k29: 1.2222, fh_k30: 1.1858,
+  fh_k31: 1.1295, fh_k32: 1.1714, fh_k33: 1.1942, fh_k34: 1.1079, fh_k35: 1.2179, fh_k36: 1.0281, fh_k37: 1.2418,
   // 🍝🥢🍣🥟 양식·중식·일식·분식 완성요리 뉴세트(2026-07-23·51종, blob 깨끗컷 → 레시피 썸네일 자동매칭용). docs/stickers/음식아이콘-2507
   fy_y01: 1.2961, fy_y02: 1.3017, fy_y03: 1.3047, fy_y04: 1.3289, fy_y05: 1.2026, fy_y06: 0.9962, fy_y07: 1.309,
   fy_y08: 1.3229, fy_y09: 1.1826, fy_y10: 1.3094, fy_y11: 1.1717, fy_y12: 1.348, fy_y13: 1.3519, fy_y14: 1.2465,
@@ -162,7 +162,7 @@ const PHOTO_RATIO = {
   // 🍱 예시 보충 6차(2026-07-25·2종, 창업자 생성). 묵은지파스타·베이컨크림파스타(얼굴 있는 새 버전 — 옛 faceless fy_y03 대체).
   fe_52: 1.4213, fe_53: 1.393,
   // 🌏 태국·베트남 음식 9종 (2026-07-26 창업자 제공, item④) — 쌀국수·뿌팟퐁커리·분짜·월남쌈·분보싸오·스프링롤·쏨땀·반미·반쎄오 (팟타이는 기존 fe_09)
-  fe_54: 1.1221, fe_55: 1.5164, fe_56: 1.1712, fe_57: 1.249, fe_58: 1.1245, fe_59: 1.4219, fe_60: 1.2276, fe_61: 1.381, fe_62: 1.4308,
+  fe_54: 1.0986, fe_55: 1.3114, fe_56: 1.1702, fe_57: 1.227, fe_58: 1.0825, fe_59: 1.1957, fe_60: 1.2737, fe_61: 1.3118, fe_62: 1.3311,
   // 🍱 추가 32종 (2026-07-28 창업자 제공) — 인식 안 되던 것 대응(덮밥·조림·치킨·전복·볶음) + 범용 조리법(무침·국·장류) + 양식·중식·빵·음료
   fe_63: 1.1307, fe_64: 1.2319, fe_65: 1.1559, fe_66: 1.1271, fe_67: 1.0831, fe_68: 1.096, fe_69: 1.1221, fe_70: 1.1151,
   fe_71: 1.2179, fe_72: 1.1358, fe_73: 1.2628, fe_74: 1.0994, fe_75: 1.1875, fe_76: 1.1869, fe_77: 1.1903, fe_78: 1.1626,
@@ -182,26 +182,26 @@ const PHOTO_RATIO = {
   dc_nd08: 1.3063, dc_nd01: 0.7226, dc_nd05: 0.6505, dc_nd16: 1.1921,
   // 🎀 창업자 시트 신규 반영 (2026-07-29) — 데코 10·프레임 5·워시테이프 4
   dn_ribbon: 1.0988, dn_cherry: 0.94, dn_peach: 0.9522, dn_star: 1.2455, dn_sparkle: 1.1803,
-  dn_shoot: 1.2453, dn_coffee: 0.9728, dn_plant: 0.6443, dn_bunting: 1.7778, dn_sachet: 0.8829,
-  fn_speech: 1.2303, fn_daisy: 0.9889, fn_bow: 0.9414, fn_night: 1.0327, fn_gingham: 1.0419,
+  dn_shoot: 1.2453, dn_coffee: 0.9728, dn_plant: 0.6419, dn_bunting: 1.7484, dn_sachet: 0.8829,
+  fn_speech: 1.2273, fn_daisy: 0.9889, fn_bow: 0.9414, fn_night: 1.0327, fn_gingham: 1.0419,
   ws_pinkdot: 1.3596, ws_greendot: 1.731, ws_bluedot: 1.4091, ws_pinkstripe: 1.8105,
   // 🍳 주방도구 (2026-07-29) — 라이프 탭이 운동용품뿐이라 요리앱과 안 맞았다.
-  tk_apron: 0.8407, tk_hat: 0.9762, tk_pot_pink: 1.3333, tk_pot_green: 1.2639, tk_bowl: 0.9556,
-  tk_batter: 1.0119, tk_board_knife: 0.9924, tk_board: 0.848, tk_cup: 1.0566, tk_scale: 0.8356,
-  tk_mitt: 0.7814, tk_mitt_purple: 0.8537, tk_book: 1.2, tk_bag: 0.8034, tk_basket: 0.9283,
-  tk_salt: 1.2769, tk_sugar: 0.8476, tk_clip: 1.0335,
+  tk_apron: 0.8407, tk_hat: 0.9762, tk_pot_pink: 1.3318, tk_pot_green: 1.2639, tk_bowl: 0.9553,
+  tk_batter: 1.0119, tk_board_knife: 0.9924, tk_board: 0.8468, tk_cup: 1.057, tk_scale: 0.8356,
+  tk_mitt: 0.7828, tk_mitt_purple: 0.8537, tk_book: 1.2, tk_bag: 0.8034, tk_basket: 0.9278,
+  tk_salt: 1.2769, tk_sugar: 0.8462, tk_clip: 1.0339,
   // 🎗 창업자 직접 제작 마스킹테이프 (2026-07-29, 시트 3장 36종 중 17종 반영)
   //   A=얇은 외곽선·아기자기 / B=굵은 외곽선·여름 / C=외곽선 없음·깔끔
-  wt_ribbon_pink: 2.9241, wt_dot_lavender: 2.931, wt_tulip: 2.4911, wt_ribbon_red: 2.4941, wt_cherry: 2.5181,
-  wt_flower_mauve: 2.7097, wt_grid_black: 2.6879, wt_lemon: 3.8319, wt_gingham: 2.8323, wt_cloud: 2.8086,
-  wt_watermelon: 2.9045, wt_daisy_lavender: 3.2357, wt_daisy_yellow: 3.9115, wt_ribbon_lavender: 3.9727,
-  wt_heart_cream: 2.859, wt_grid_white: 3.3333, wt_sparkle: 3.1079,
+  wt_ribbon_pink: 2.5758, wt_dot_lavender: 2.4624, wt_tulip: 2.4824, wt_ribbon_red: 2.4854, wt_cherry: 2.509,
+  wt_flower_mauve: 2.4477, wt_grid_black: 2.4737, wt_lemon: 2.7927, wt_gingham: 2.821, wt_cloud: 2.7975,
+  wt_watermelon: 2.8924, wt_daisy_lavender: 2.7515, wt_daisy_yellow: 2.7862, wt_ribbon_lavender: 2.8442,
+  wt_heart_cream: 2.8291, wt_grid_white: 3.3119, wt_sparkle: 3.0929,
   // 🏖 여름 한정 (2026-07-29) — 곰펭 여름 씬 6 + 여름 마테 6
-  sm_gom_beach: 0.733, sm_gom_tube: 0.8545, sm_gom_bbq: 0.7842, sm_gom_chair: 0.9671,
+  sm_gom_beach: 0.733, sm_gom_tube: 0.8545, sm_gom_bbq: 0.7644, sm_gom_chair: 0.9671,
   sm_peng_beach: 0.9866, sm_peng_tube: 0.9893, sm_peng_shop: 0.7049, sm_peng_night: 0.894,
   sm_duo_watergun: 1.2209, sm_duo_tube: 1.1469, sm_duo_watermelon: 0.9643, sm_duo_icecream: 1.0781,
-  wt_wave: 3.8983, wt_shell: 3.9914, wt_palm: 2.7711, wt_stripe_blue: 2.9548,
-  wt_starfish: 3.3333, wt_wave_mint: 3.2857,
+  wt_wave: 2.7939, wt_shell: 2.8182, wt_palm: 2.7605, wt_stripe_blue: 2.9423,
+  wt_starfish: 2.8457, wt_wave_mint: 2.8282,
   ch_che01: 0.7928, ch_che04: 1.4278, ch_che06: 1.0683, ch_che08: 1.3098, ch_che05: 0.9231,
   lf_fit12: 1.6056, lf_fit11: 1.487, lf_fit08: 1.2486, lf_fit07: 1.2056, lf_fit02: 1.089, lf_fit13: 0.6872, lf_fit14: 1.1852, lf_fit06: 0.662,
   cp_cpf01: 0.8659, cp_cpf02: 0.9215, cp_cpf03: 0.8136, cp_cpf04: 0.8604, cp_cpf05: 0.9968, cp_cpf06: 1.0358, cp_cpf07: 0.9139, cp_cpf08: 0.8815,

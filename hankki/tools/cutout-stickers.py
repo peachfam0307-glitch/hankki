@@ -45,34 +45,59 @@ def remove_bg(path, thr=234, sat=14):
 def slice_grid(rgba, rows, cols, pad=10, min_area=1500, keep_frac=0.12):
     """격자로 나누고 셀마다 캐릭터만 크롭. 번호·자막은 자동 제외.
 
-    ⚠️ keep_frac: 제일 큰 덩어리의 이 비율 이상인 덩어리는 **같이 남긴다**.
-       예전엔 '제일 큰 덩어리 하나'만 남겨서, 곰과 펭이 떨어져 있는 콤비 컷에서
-       **작은 쪽(펭)이 통째로 사라졌다**(2026-07-29 여름 콤비 시트에서 실제 발생).
-       0 으로 주면 예전처럼 하나만 남긴다."""
+    ⚠️ **이미지 전체에서 덩어리를 찾은 뒤** 무게중심으로 셀에 배정한다.
+       예전엔 셀을 잘라내고 그 안에서만 덩어리를 찾아서, 스티커가 격자선을 살짝
+       넘으면 **넘은 부분이 통째로 잘렸다**(2026-07-29 마테 12개·곰 바베큐 1개에서
+       실제 발생 — 창업자 "마테 잘린 부분 있던데"). 이제 전역 좌표로 크롭해
+       여백(pad)도 옆 칸에서 가져온다.
+
+    keep_frac: 그 셀에서 제일 큰 덩어리의 이 비율 이상이면 **함께 남긴다.**
+       곰과 펭이 떨어져 있는 콤비 컷에서 작은 쪽이 사라지던 것 방지. 0이면 하나만.
+
+    ⚠️ **위성 조각(반짝임·하트·김·컨페티)은 여기서 버려진다.** 다이컷 흰 테두리가
+       배경으로 지워지면서 본체와 끊겨 별개 덩어리가 되기 때문(2026-07-29 계량컵 하트·
+       냄비 김에서 실제 발생). 그래서 버린 조각을 `slice_grid.dropped`에 남기고
+       실행 시 경고로 찍는다 — 뜨면 그 컷만 눈으로 확인하고 손으로 챙길 것.
+    """
     H, W, _ = rgba.shape
     ch, cw = H / rows, W / cols
     fg = rgba[:, :, 3] > 40
+    lbl, n = ndimage.label(fg)                      # ⭐ 전체 이미지에서 한 번에
+    if n == 0:
+        slice_grid.dropped = []
+        return [None] * (rows * cols)
+    sizes = ndimage.sum(np.ones_like(lbl), lbl, range(1, n + 1))
+    cy_, cx_ = np.array(ndimage.center_of_mass(fg, lbl, range(1, n + 1))).T
+
+    buckets, dropped = {}, []
+    for i in range(n):
+        r = min(rows - 1, max(0, int(cy_[i] // ch)))  # 무게중심이 속한 셀
+        c = min(cols - 1, max(0, int(cx_[i] // cw)))
+        if sizes[i] < min_area:
+            if sizes[i] >= 200:                       # 부스러기 말고 '조각'만 알린다
+                dropped.append((r * cols + c + 1, int(sizes[i]), int(cx_[i]), int(cy_[i])))
+            continue
+        buckets.setdefault((r, c), []).append(i + 1)
+    slice_grid.dropped = dropped
+
     out = []
     for r in range(rows):
         for c in range(cols):
-            y0, y1, x0, x1 = int(r*ch), int((r+1)*ch), int(c*cw), int((c+1)*cw)
-            lbl, n = ndimage.label(fg[y0:y1, x0:x1])
-            if n == 0:
+            ids = buckets.get((r, c))
+            if not ids:
                 out.append(None); continue
-            sizes = ndimage.sum(np.ones_like(lbl), lbl, range(1, n+1))
-            big = int(np.argmax(sizes)) + 1
-            if sizes[big-1] < min_area:
-                out.append(None); continue
-            # 큰 덩어리 + 그에 견줄 만한 덩어리들(콤비의 펭·소품)을 함께 남긴다
-            thr = max(min_area, sizes[big-1] * keep_frac)
-            keep = [i + 1 for i in range(n) if sizes[i] >= thr]
+            biggest = max(sizes[i - 1] for i in ids)
+            keep = [i for i in ids if sizes[i - 1] >= max(min_area, biggest * keep_frac)]
+            for i in ids:                             # keep_frac 에 걸려 버려진 조각도 알린다
+                if i not in keep:
+                    dropped.append((r * cols + c + 1, int(sizes[i - 1]), int(cx_[i - 1]), int(cy_[i - 1])))
             mask = np.isin(lbl, keep)
             ys, xs = np.where(mask)
-            cell = rgba[y0:y1, x0:x1].copy()
-            cell[~mask, 3] = 0                    # 캐릭터 외 나머지 덩어리 투명 처리
-            crop = cell[max(0, ys.min()-pad):ys.max()+pad,
-                        max(0, xs.min()-pad):xs.max()+pad]
-            out.append(crop)
+            cut = rgba.copy()
+            cut[~mask, 3] = 0                        # 고른 덩어리 외 전부 투명
+            y0 = max(0, ys.min() - pad); y1 = min(H, ys.max() + 1 + pad)
+            x0 = max(0, xs.min() - pad); x1 = min(W, xs.max() + 1 + pad)
+            out.append(cut[y0:y1, x0:x1])
     return out
 
 
@@ -138,3 +163,6 @@ if __name__ == '__main__':
         Image.fromarray(cell).save(os.path.join(outdir, f'{i:02d}.png'))
         k += 1
     print(f'saved {k} stickers to {outdir}')
+    # 버려진 위성 조각 알림 — 뜨면 그 셀 컷을 눈으로 확인할 것(반짝임·하트·김이 빠졌을 수 있음)
+    for cell_no, area, x, y in getattr(slice_grid, 'dropped', []):
+        print(f'  ⚠️ 셀{cell_no:02d} 근처 작은 조각 {area}px 버림 (중심 {x},{y}) — 확인 필요')
