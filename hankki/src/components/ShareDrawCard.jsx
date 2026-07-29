@@ -1,5 +1,8 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toPng, toJpeg } from 'html-to-image'
+import { PHOTO_FAMILY } from './Stickers'   // 🍱 요리 아이콘을 카드에도 쓴다
+import { guessFoodIcon } from './FoodIcon'
+const S = (k) => PHOTO_FAMILY[k]?.src
 
 // 🎴 공유 "뽑기카드" — 레시피마다 스타일×곰펭 랜덤. 🔄로 다시뽑기(가챠), 공유는 Web Share.
 // ⭐ 곰펭 풀 = src/assets/sharepool 폴더 전체를 glob → "폴더에 넣기만 하면 자동으로 다 쓰임"
@@ -24,158 +27,210 @@ function tagsOf(recipe) {
 // 스타일별 카테고리 규칙(적재적소): 콤비는 넓은 스타일(홀로·팝·여름)에만.
 function drawState() {
   const m = new Date().getMonth() + 1
-  const isSummer = m >= 6 && m <= 8 // 여름 시즌카드는 6~8월에만 뽑기 풀에 등장(한정 수집감). 그 외 계절 미노출.
-  const style = rnd(isSummer ? ['holo', 'pop', 'summer', 'pola', 'diary', 'summer'] : ['holo', 'pop', 'pop', 'pola', 'diary'])
-  let cat
-  if (style === 'holo') cat = DUO.length ? DUO : GOM
-  else if (style === 'pop' || style === 'summer') { const r = Math.random(); cat = r < 0.6 ? GOM : r < 0.82 ? PENG : (DUO.length ? DUO : GOM) }
-  else { const r = Math.random(); cat = r < 0.72 ? GOM : (PENG.length ? PENG : GOM) } // pola·diary = 솔로
-  return { style, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46) }
+  const isSummer = m >= 6 && m <= 8   // 여름 스킨은 6~8월에만 등장(한정 수집감)
+  const pool = isSummer
+    ? ['warm', 'plum', 'sky', 'mustard', 'summer', 'night', 'summer']
+    : ['warm', 'plum', 'sky', 'mustard', 'night', 'warm']
+  const key = (() => {
+    try { const v = new URLSearchParams(location.search).get('card'); if (v && SKINS[v]) return v } catch { /* noop */ }
+    return rnd(pool)
+  })()
+  const skin = SKINS[key]
+  // 밤·여름은 콤비도 잘 어울리고, 나머지는 솔로 위주(캐릭터가 크게 들어가서)
+  const r = Math.random()
+  const cat = (key === 'night' || key === 'summer')
+    ? (r < 0.5 ? GOM : r < 0.78 ? PENG : (DUO.length ? DUO : GOM))
+    : (r < 0.68 ? GOM : (PENG.length ? PENG : GOM))
+  return { skin, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46) }
 }
 
 const DIE = 'drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 16px 22px rgba(60,40,25,.26))'
-const POP_BGS = [
-  'radial-gradient(circle at 50% 30%,#ffa579,#f4794f 68%,#e8623c)', 'radial-gradient(circle at 50% 30%,#ffd07a,#f6b23e 68%,#e89a2a)',
-  'radial-gradient(circle at 50% 30%,#8fd0b0,#5fb88f 68%,#4aa079)', 'radial-gradient(circle at 50% 30%,#f79bc0,#ef7aa8 68%,#e5638f)',
-]
+// 🎨 스킨 — 뼈대는 같고 **색과 연출만** 바뀐다(2026-07-19 시안의 변주 방식).
+//    여름·홀로그램밤 2장은 창업자 요청으로 같은 문법에 맞춰 새로 만든 것.
+const wave = (
+  <svg viewBox="0 0 1080 300" preserveAspectRatio="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: 280, zIndex: 1 }}>
+    <path d="M0 150 C170 108 280 186 440 166 C620 144 720 88 920 122 C1000 136 1046 144 1080 138 L1080 300 L0 300Z" fill="#8ad8de" opacity=".42" />
+    <path d="M0 200 C190 162 310 228 490 212 C690 194 790 150 990 178 C1036 186 1062 190 1080 186 L1080 300 L0 300Z" fill="#5cbdcd" opacity=".5" />
+    <path d="M0 252 C210 224 330 276 530 264 C730 252 830 224 1080 246 L1080 300 L0 300Z" fill="#ffffff" opacity=".42" />
+  </svg>
+)
+const sun = <div style={{ position: 'absolute', right: -70, top: -80, width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle at 50% 50%,rgba(255,246,198,.95),rgba(255,235,155,.42) 46%,transparent 70%)', zIndex: 1 }} />
+const stars = (
+  <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+    {[[130, 250, 5], [300, 180, 3], [860, 210, 4], [720, 120, 3], [180, 470, 3], [980, 380, 4], [420, 300, 3]].map((s, i) => (
+      <div key={i} style={{ position: 'absolute', left: s[0], top: s[1], width: s[2] * 2, height: s[2] * 2, borderRadius: '50%', background: '#fff5d0', opacity: 0.75, boxShadow: `0 0 ${s[2] * 4}px rgba(255,240,190,.9)` }} />
+    ))}
+  </div>
+)
+
+const SKINS = {
+  // ☀️ 웜 오렌지 (시안 c1b)
+  warm: {
+    key: 'warm', bg: '#f4f0e8', arc: '#efd9b0', blob: 'radial-gradient(120% 120% at 34% 30%,#f2a074,#e6875a 55%,#d9724a)', blobShadow: 'rgba(160,80,50,.5)',
+    brand: '#7a5a3f', stamp: '#c47a58', kick: '#c47a58', kick_: '오늘도, 한 끼', head: '#3a3128', point: '#d9724a', mark: 'rgba(217,114,74,.22)',
+    chipRing: 'rgba(216,150,110,.25)', chipText: '#8a5f3c', die: '#fffdf8', foot: '#a8916f',
+    stampTop: <b style={{ fontSize: 31 }}>오늘의</b>, stampBottom: '한 끼',
+  },
+  // 🍇 플럼 (시안 c2b)
+  plum: {
+    key: 'plum', bg: '#f2eef0', arc: '#dcc6d4', blob: 'radial-gradient(120% 120% at 34% 30%,#b98aa4,#9b6a86 55%,#84577a)', blobShadow: 'rgba(90,50,75,.5)',
+    brand: '#7a5a6a', stamp: '#9b6a86', kick: '#9b6a86', kick_: '오늘도 수고했어,', head: '#3a2f36', point: '#9b6a86', mark: 'rgba(155,106,134,.2)',
+    chipRing: 'rgba(180,140,165,.25)', chipText: '#7d5a6d', die: '#fffdf8', foot: '#a892a0',
+    stampTop: <b style={{ fontSize: 31 }}>오늘의</b>, stampBottom: '한 끼',
+  },
+  // 🩵 스카이 (시안 c4b)
+  sky: {
+    key: 'sky', bg: '#eef2f4', arc: '#cbe1ee', blob: 'radial-gradient(120% 120% at 34% 30%,#9ccbe6,#6fb2d6 55%,#5a9ec6)', blobShadow: 'rgba(50,90,120,.5)',
+    brand: '#4b6f88', stamp: '#5a9ec6', kick: '#5a9ec6', kick_: '오늘도 무사히,', head: '#2f4459', point: '#4f9ec8', mark: 'rgba(79,158,200,.2)',
+    chipRing: 'rgba(120,170,205,.25)', chipText: '#4b7a96', die: '#fffdf8', foot: '#93a8b6',
+    stampTop: <b style={{ fontSize: 31 }}>오늘의</b>, stampBottom: '한 끼',
+  },
+  // 🌾 머스터드 (시안 c5a)
+  mustard: {
+    key: 'mustard', bg: '#f6f1e3', arc: '#eddcae', blob: 'radial-gradient(120% 120% at 34% 30%,#f0c368,#e0a93f 55%,#cd9530)', blobShadow: 'rgba(150,110,35,.5)',
+    brand: '#7d6330', stamp: '#c98f2e', kick: '#c98f2e', kick_: '같이 먹어야 맛있지,', head: '#3d3520', point: '#c98f2e', mark: 'rgba(201,143,46,.22)',
+    chipRing: 'rgba(205,165,80,.28)', chipText: '#8a6a2c', die: '#fffdf8', foot: '#ab9866',
+    stampTop: <b style={{ fontSize: 31 }}>오늘의</b>, stampBottom: '한 끼',
+  },
+  // 🏖 여름 한정 (신규) — 바다 blob + 해 + 물결. 6~8월에만 뽑기 풀에 등장.
+  summer: {
+    key: 'summer', bg: 'linear-gradient(168deg,#e6f4f5,#d3ecf2 60%,#dff1ea)', arc: '#ffe6a8',
+    blob: 'radial-gradient(120% 120% at 34% 30%,#7fd4dd,#4fb6cb 55%,#3a9cbd)', blobShadow: 'rgba(30,110,135,.5)',
+    brand: '#2b7f8c', stamp: '#2f96a6', kick: '#2f96a6', kick_: '시원하게, 여름 한 끼', head: '#14424f', point: '#2f96a6', mark: 'rgba(47,150,166,.2)',
+    chipRing: 'rgba(110,190,205,.3)', chipText: '#2b7f8c', die: '#ffffff', foot: '#1d6472',
+    stampTop: <b style={{ fontSize: 30 }}>여름</b>, stampBottom: 'SEASON',
+    overlay: <>{sun}{wave}</>,
+  },
+  // 🌙 홀로그램 밤 (신규) — 어두운 바탕에 홀로 덩어리. 수집카드 넘버링.
+  night: {
+    key: 'night', bg: 'radial-gradient(circle at 26% 18%,#333a4d,#262b3a 62%,#1e2230)', arc: 'rgba(255,222,150,.35)',
+    blob: 'conic-gradient(from 20deg,#ff9aa2,#ffdac1,#e2f0cb,#b5ead7,#c7ceea,#f7c6ff,#ffabe0,#ff9aa2)', blobShadow: 'rgba(0,0,0,.55)',
+    brand: '#e8dcc9', stamp: '#ffe4a0', kick: '#ffcf8a', kick_: '오늘 밤은, 이걸로', head: '#f6ede0', point: '#ffd98a', mark: 'rgba(255,217,138,.22)',
+    chipRing: 'rgba(255,220,150,.3)', chipText: '#8a6a3a', die: '#fffdf8', foot: '#c3b49a',
+    stampTop: <b style={{ fontSize: 27 }}>NO.</b>, stampBottom: '',
+    blobExtra: <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 40% 34%,rgba(20,22,32,.12),rgba(20,22,32,.62) 74%)' }} />,
+    overlay: stars, numbered: true,
+  },
+}
 
 // ── 1080×1350 카드 (캡처 대상) ──
-function Card({ style, char, no, title, tags, popBg, cover }) {
-  const pill = { display: 'inline-block', padding: '11px 28px', borderRadius: 40, fontSize: 31, margin: '0 4px' }
-  // 🔍 CTA — 바이럴 핵심. 크고 채운 알약으로 확 띄게 + 정사각 안전영역(bottom 150) 안에.
-  //   (인스타는 4:5를 1:1로 크롭해서 맨 위/아래를 잘라냄 → 중요한 건 가운데 정사각 안에 둔다)
-  //   cover 모드(표지 저장용)에선 CTA를 숨긴다 — 공유가 아니라 내 레시피 표지라서.
-  const cta = (opt) => cover ? null : (
-    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 150, textAlign: 'center' }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '21px 46px', borderRadius: 999, background: opt.bg, color: opt.color, fontSize: 42, fontWeight: 800, boxShadow: opt.shadow }}>🔍 Play스토어 ‘한끼’ 검색</span>
+//
+// 📐 2026-07-19 시안(`docs/카드-시안-2507/`)의 문법을 그대로 옮긴 것.
+//    창업자 판정: "예전 시안이 훨씬 예쁘다." 규칙 정리 = docs/카드-디자인시스템-정리-2026-07-29.md
+//
+//    ⭐ 이 시스템의 심장은 **아주 큰 타이포와 큰 색면**이다.
+//       · 제목 **142~150px** (예전 내 카드는 62~88px 이었고 그게 밋밋함의 주범)
+//       · 우하단으로 **920px 색 덩어리(blob)** 가 화면 밖까지 삐져나간다
+//       · 좌상단으로 **아치(테두리 26px)** 가 삐져나간다
+//       · 캐릭터 **560~600px**, 흰 다이컷
+//    ⚠️ 제목 크기를 줄이지 말 것. 줄이는 순간 이 카드는 평범해진다.
+
+const PAD = 64
+const GRAIN = 'radial-gradient(rgba(150,120,80,.06) 1px,transparent 1px)'
+
+// 제목을 두 줄로 — 이 시스템은 2줄 볼드 타이포가 기본이다.
+function splitTitle(t) {
+  const s = String(t || '오늘의 한 끼').trim()
+  const sp = [...s.matchAll(/\s/g)].map((m) => m.index)
+  if (sp.length) {                                  // 띄어쓰기가 있으면 가장 균형 잡힌 곳에서
+    const mid = s.length / 2
+    const at = sp.reduce((a, b) => (Math.abs(b - mid) < Math.abs(a - mid) ? b : a))
+    return [s.slice(0, at), s.slice(at + 1)]
+  }
+  if (s.length <= 5) return [s, '']
+  const at = Math.ceil(s.length / 2)
+  return [s.slice(0, at), s.slice(at)]
+}
+const headSize = (a, b) => {
+  const n = Math.max(a.length, b.length)
+  return n <= 4 ? 150 : n <= 5 ? 138 : n <= 6 ? 120 : n <= 7 ? 104 : n <= 9 ? 88 : 74
+}
+
+// 레시피 메타 → 흰 알약 칩 3개
+function chipsOf(recipe, tags) {
+  const c = []
+  if (recipe?.time) c.push(`${recipe.time}분`)
+  if (recipe?.servings) c.push(`${recipe.servings}인분`)
+  tags.forEach((t) => c.length < 3 && c.push(t))
+  return c.slice(0, 3)
+}
+
+function Card({ style, char, no, title, tags, cover, recipe, foodIcon, skin }) {
+  const [l1, l2] = splitTitle(title)
+  const hs = headSize(l1, l2)
+  const chips = chipsOf(recipe, tags)
+  const S_ = skin
+
+  const grain = <div style={{ position: 'absolute', inset: 0, backgroundImage: GRAIN, backgroundSize: '7px 7px', pointerEvents: 'none' }} />
+  const arc = <div style={{ position: 'absolute', left: -150, top: -150, width: 360, height: 360, borderRadius: '50%', border: `26px solid ${S_.arc}`, opacity: 0.62 }} />
+  const blob = (
+    <div style={{ position: 'absolute', right: -160, bottom: -160, width: 920, height: 920, borderRadius: '50%', background: S_.blob, boxShadow: `0 30px 60px -30px ${S_.blobShadow}` }}>
+      <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', backgroundImage: 'radial-gradient(rgba(255,255,255,.14) 5px,transparent 6px)', backgroundSize: '60px 60px' }} />
+      {S_.blobExtra}
     </div>
   )
-  const img = (extra) => <img src={char.url} alt="" crossOrigin="anonymous" style={{ maxHeight: '100%', maxWidth: '86%', objectFit: 'contain', filter: DIE, ...extra }} />
-  const slot = (s) => ({ position: 'absolute', left: 0, right: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', ...s })
-
-  if (style === 'holo') {
-    return (
-      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 32%,#343b4a,#2d3340 74%,#252a35)' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.12) 6px,transparent 7px)', backgroundSize: '96px 96px' }} />
-        <div style={{ position: 'absolute', top: 152, left: 60, fontSize: 42, color: '#f3e9dd' }}>한끼 ☾</div>
-        <div style={{ position: 'absolute', top: 150, right: 56, width: 140, height: 140, borderRadius: '50%', border: '3px dashed rgba(255,220,140,.9)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#ffe4a0', fontSize: 30, lineHeight: 1.15 }}>No.{String(no).padStart(2, '0')}<br /><span style={{ fontSize: 20 }}>✨레어</span></div>
-        <div style={{ position: 'absolute', top: 320, left: 150, fontSize: 54 }}>✨</div><div style={{ position: 'absolute', top: 430, right: 150, fontSize: 58 }}>💛</div>
-        <div style={{ position: 'absolute', top: 235, left: '50%', transform: 'translateX(-50%)', width: 510, height: 510, borderRadius: '50%', background: 'conic-gradient(from 20deg,#ff9aa2,#ffdac1,#e2f0cb,#b5ead7,#c7ceea,#f7c6ff,#ffabe0,#ff9aa2)', opacity: 0.3, filter: 'blur(3px)' }} />
-        <div style={slot({ top: cover ? 300 : 230, height: 500 })}>{img()}</div>
-        <div style={{ position: 'absolute', top: cover ? 945 : 775, left: 0, right: 0, textAlign: 'center', color: '#f6ede0', padding: '0 50px' }}>
-          <div style={{ fontSize: 34, opacity: 0.85, marginBottom: 8 }}>오늘의 한 끼 ✨</div>
-          <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: titleFont(title), background: 'linear-gradient(90deg,#ffd98a,#ffb0c4,#c7b3f0)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{title}</div>
-          <div style={{ marginTop: 16 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: 'rgba(255,255,255,.14)', color: '#ffe4a0' }}>{x}</span>)}</div>
-        </div>
-        {cta({ bg: '#ffe0a0', color: '#3a2a12', shadow: '0 8px 24px rgba(0,0,0,.4)' })}
+  const brand = <div style={{ position: 'absolute', top: PAD - 4, left: PAD, fontFamily: 'Jua, sans-serif', fontSize: 34, color: S_.brand, letterSpacing: 1, zIndex: 5 }}>한끼</div>
+  const stamp = (
+    <div style={{ position: 'absolute', top: 70, right: PAD, width: 138, height: 138, transform: 'rotate(11deg)', zIndex: 6 }}>
+      <svg viewBox="0 0 100 100" style={{ position: 'absolute', inset: 0 }}>
+        <path d="M50 3 L61 13 L75 9 L79 24 L93 30 L88 45 L96 58 L84 66 L85 81 L70 82 L61 94 L50 86 L39 94 L30 82 L15 81 L16 66 L4 58 L12 45 L7 30 L21 24 L25 9 L39 13 Z" fill="none" stroke={S_.stamp} strokeWidth="3.2" />
+      </svg>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Jua, sans-serif', color: S_.stamp, lineHeight: 1.05, textAlign: 'center' }}>
+        {S_.stampTop}<span style={{ fontSize: 18, letterSpacing: 3, marginTop: 3 }}>{S_.stampBottom}</span>
       </div>
-    )
-  }
-  if (style === 'pop') {
-    return (
-      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: popBg }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.28) 8px,transparent 9px)', backgroundSize: '92px 92px' }} />
-        <div style={{ position: 'absolute', top: 152, left: 60, fontSize: 42, color: '#fffdf8' }}>한끼 🧡</div>
-        <div style={{ position: 'absolute', top: 150, right: 56, width: 140, height: 140, borderRadius: '50%', border: '3px dashed rgba(255,255,255,.9)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 29, lineHeight: 1.2 }}>오늘의<br />한 끼</div>
-        <div style={{ position: 'absolute', top: 250, left: 150, fontSize: 60 }}>✨</div><div style={{ position: 'absolute', top: 470, right: 150, fontSize: 46 }}>✨</div>
-        <div style={slot({ top: cover ? 300 : 230, height: 505 })}>{img()}</div>
-        <div style={{ position: 'absolute', top: cover ? 945 : 775, left: 0, right: 0, textAlign: 'center', color: '#fffdf8', padding: '0 50px' }}>
-          <div style={{ fontSize: 36, opacity: 0.95, marginBottom: 8 }}>오늘도 한 끼 해냈다</div>
-          <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: titleFont(title), textShadow: '0 4px 0 rgba(150,55,30,.3)' }}>{title}</div>
-          <div style={{ marginTop: 16 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: 'rgba(255,253,248,.92)', color: '#c85535' }}>{x}</span>)}</div>
-        </div>
-        {cta({ bg: '#fffdf8', color: '#b0472a', shadow: '0 10px 22px rgba(90,35,20,.35)' })}
+    </div>
+  )
+  const headBlock = (
+    <div style={{ position: 'absolute', left: PAD, top: 150, right: 360, zIndex: 5 }}>
+      <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 42, color: S_.kick }}>{S_.kick_}</div>
+      <div style={{ marginTop: 2, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.98, letterSpacing: -3, color: S_.head, wordBreak: 'keep-all' }}>
+        {l1}
+        {l2 && (
+          <><br />
+            <span style={{ position: 'relative', display: 'inline-block', color: S_.point }}>
+              <span style={{ position: 'absolute', left: -4, right: -4, bottom: 6, height: 20, background: S_.mark, borderRadius: 6 }} />
+              <span style={{ position: 'relative' }}>{l2}</span>
+            </span>
+          </>
+        )}
       </div>
-    )
-  }
-  if (style === 'summer') {
-    // 🏖 여름 한정 시즌카드 — 쿨톤 그라데 + 물결 + 버블 + 해 + Y2K반짝 + "여름 SEASON" 수집도장 + 띠부씰 다이컷
-    const sHero = { maxHeight: '100%', maxWidth: '82%', objectFit: 'contain', filter: 'drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 18px 20px rgba(20,90,110,.42))' }
-    const star = (fill) => <svg viewBox="0 0 100 100"><path d="M50 0 C54 34 66 46 100 50 C66 54 54 66 50 100 C46 66 34 54 0 50 C34 46 46 34 50 0Z" fill={fill} /></svg>
-    return (
-      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'linear-gradient(165deg,#d6f1f2 0%,#aee0ec 52%,#bfe9dd 100%)' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(60,140,150,.06) 1px,transparent 1px)', backgroundSize: '7px 7px' }} />
-        {/* 해 */}
-        <div style={{ position: 'absolute', top: -70, right: -60, width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle at 50% 50%,rgba(255,246,205,.95),rgba(255,238,170,.5) 46%,transparent 70%)' }} />
-        {/* 물방울 */}
-        {[[80, 360, 70], [150, 470, 42], [900, 300, 54], [830, 410, 30]].map((b, i) => (
-          <div key={i} style={{ position: 'absolute', left: b[0], top: b[1], width: b[2], height: b[2], borderRadius: '50%', background: 'radial-gradient(circle at 34% 30%,rgba(255,255,255,.9),rgba(255,255,255,.16) 60%,transparent)', boxShadow: 'inset 0 0 8px rgba(255,255,255,.5)' }} />
+      <div style={{ marginTop: 30, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        {chips.map((c, i) => (
+          <span key={i} style={{ padding: '11px 24px', borderRadius: 999, background: '#fffdf8', boxShadow: `0 8px 20px -12px rgba(120,80,50,.5), inset 0 0 0 2px ${S_.chipRing}`, fontFamily: 'Jua, sans-serif', fontSize: 28, color: S_.chipText }}>{c}</span>
         ))}
-        {/* 물결 */}
-        <svg viewBox="0 0 1080 300" preserveAspectRatio="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: 300 }}>
-          <path d="M0 120 C160 80 260 160 420 140 C600 118 700 60 900 96 C990 112 1040 120 1080 112 L1080 300 L0 300Z" fill="#8ad8de" opacity=".55" />
-          <path d="M0 170 C180 132 300 200 480 184 C680 166 780 120 980 150 C1030 158 1060 162 1080 158 L1080 300 L0 300Z" fill="#59bccd" opacity=".7" />
-          <path d="M0 224 C200 196 320 250 520 238 C720 226 820 196 1080 220 L1080 300 L0 300Z" fill="#ffffff" opacity=".5" />
-        </svg>
-        {/* 브랜드 */}
-        <div style={{ position: 'absolute', top: 56, left: 0, right: 0, textAlign: 'center', fontSize: 44, color: '#2b7f8c' }}>한끼 <span style={{ color: '#ff8f9c' }}>♡</span></div>
-        {/* 여름 한정 리본 */}
-        <div style={{ position: 'absolute', top: 152, left: 62, transform: 'rotate(-8deg)', fontSize: 31, color: '#fff', background: 'linear-gradient(180deg,#ff9fae,#ff7f92)', padding: '12px 26px', borderRadius: 16, boxShadow: '0 8px 16px -6px rgba(220,90,110,.6),inset 0 2px 0 rgba(255,255,255,.4)' }}>☀️ 여름 한정</div>
-        {/* 여름 SEASON 도장 */}
-        <div style={{ position: 'absolute', top: 250, right: 78, width: 158, height: 158, transform: 'rotate(12deg)' }}>
-          <svg viewBox="0 0 100 100" style={{ position: 'absolute', inset: 0 }}><path d="M50 4 L60 12 L73 9 L77 22 L90 27 L86 40 L95 51 L85 62 L88 75 L74 77 L67 89 L54 84 L44 93 L35 82 L22 83 L21 70 L10 62 L18 50 L11 38 L23 31 L24 18 L38 18 L46 7 Z" fill="none" stroke="#fff" strokeWidth="3.2" opacity=".96" /></svg>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', lineHeight: 1.02, textShadow: '0 1px 2px rgba(20,90,110,.4)' }}><b style={{ fontSize: 34 }}>여름</b><span style={{ fontSize: 18, letterSpacing: 2 }}>SEASON</span></div>
-        </div>
-        {/* 쿨 패널 */}
-        <div style={{ position: 'absolute', left: 46, right: 46, top: 286, height: 496, borderRadius: 60, background: 'linear-gradient(160deg,#7fd0dd,#4fb6cb 58%,#3a9fc0)', boxShadow: '0 34px 60px -24px rgba(30,110,130,.55),inset 0 3px 0 rgba(255,255,255,.4)', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.13) 5px,transparent 6px)', backgroundSize: '64px 64px', backgroundPosition: '20px 20px' }} />
-          <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '52%', background: 'linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,0))' }} />
-        </div>
-        {/* Y2K 반짝 */}
-        <div style={{ position: 'absolute', top: 420, right: 210, width: 62, height: 62 }}>{star('#fff')}</div>
-        <div style={{ position: 'absolute', top: 600, left: 150, width: 42, height: 42 }}>{star('#fff8c8')}</div>
-        <div style={{ position: 'absolute', top: 330, left: 250, width: 32, height: 32 }}>{star('#fff')}</div>
-        {/* 히어로(물결 곰펭 다이컷) */}
-        <div style={slot({ top: 276, height: 490 })}><img src={char.url} alt="" crossOrigin="anonymous" style={sHero} /></div>
-        {/* 제목 — 태그와 CTA가 겹치지 않게 위로 올림 */}
-        <div style={{ position: 'absolute', top: 806, left: 0, right: 0, textAlign: 'center', padding: '0 50px' }}>
-          <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 36, color: '#2f96a6' }}>시원하게, 여름 한 끼 ☀</div>
-          <div style={{ fontSize: titleFont(title), color: '#144e5c', lineHeight: 1.02, marginTop: 6, wordBreak: 'keep-all' }}>{title}</div>
-          <div style={{ marginTop: 16 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: 'rgba(255,255,255,.82)', color: '#2b7f8c' }}>{x}</span>)}</div>
-        </div>
-        {cta({ bg: '#fffdf8', color: '#2b7f8c', shadow: '0 10px 22px rgba(30,110,130,.35)' })}
       </div>
-    )
-  }
-  if (style === 'pola') {
-    return (
-      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'linear-gradient(160deg,#dfe9d8,#d1e0d5 55%,#dae5e4)' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(120,140,120,.13) 6px,transparent 7px)', backgroundSize: '90px 90px' }} />
-        <div style={{ position: 'absolute', top: 152, left: 60, fontSize: 42, color: '#5c7256' }}>한끼 ♡</div>
-        <div style={{ position: 'absolute', top: 200, left: '50%', transform: 'translateX(-50%) rotate(-3deg)', width: 640, background: '#fffef9', borderRadius: 14, padding: '30px 30px 0', boxShadow: '0 26px 50px rgba(80,95,80,.28)' }}>
-          <div style={{ position: 'absolute', top: -18, left: 120, width: 190, height: 48, background: 'rgba(200,180,140,.55)', border: '2px dashed rgba(150,130,90,.4)', transform: 'rotate(-5deg)' }} />
-          <div style={{ width: '100%', height: 500, borderRadius: 8, position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 40%,#f6f2ea,#e4ece0)' }}>
-            <div style={{ position: 'absolute', top: 40, left: 52, fontSize: 48 }}>✨</div>
-            <div style={slot({ inset: 0, top: 'auto', bottom: 0, height: '96%' })}>{img({ maxWidth: '70%', filter: 'drop-shadow(0 8px 12px rgba(60,40,25,.2))' })}</div>
-          </div>
-          <div style={{ fontFamily: 'Gaegu, sans-serif', fontSize: 44, color: '#5c7256', textAlign: 'center', padding: '20px 0 24px' }}>오늘의 {String(title).length > 7 ? String(title).slice(0, 6) + '…' : title} ♡</div>
-        </div>
-        <div style={{ position: 'absolute', top: cover ? 985 : 880, left: 0, right: 0, textAlign: 'center', color: '#3f4a3c', padding: '0 50px' }}>
-          <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: Math.min(88, titleFont(title)) }}>{title}</div>
-          <div style={{ marginTop: 12 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: '#fffef9', color: '#5c7256' }}>{x}</span>)}</div>
-        </div>
-        {cta({ bg: '#5c7256', color: '#fffef9', shadow: '0 10px 22px rgba(70,90,70,.32)' })}
-      </div>
-    )
-  }
-  // diary (다꾸)
-  const tape = (s) => <div style={{ position: 'absolute', background: 'rgba(210,224,205,.62)', border: '1.5px dashed rgba(120,140,110,.4)', ...s }} />
+    </div>
+  )
+  const DIE8 = `drop-shadow(3px 0 0 ${S_.die}) drop-shadow(-3px 0 0 ${S_.die}) drop-shadow(0 3px 0 ${S_.die}) drop-shadow(0 -3px 0 ${S_.die}) drop-shadow(3px 3px 0 ${S_.die}) drop-shadow(-3px 3px 0 ${S_.die}) drop-shadow(3px -3px 0 ${S_.die}) drop-shadow(-3px -3px 0 ${S_.die}) drop-shadow(0 22px 20px rgba(60,40,25,.34))`
+  const hero = (
+    <img src={char.url} alt="" crossOrigin="anonymous"
+      style={{ position: 'absolute', right: 6, bottom: 148, height: 560, maxWidth: 'none', objectFit: 'contain', zIndex: 7, filter: DIE8 }} />
+  )
+  // 요리는 캐릭터 옆, **색 덩어리 위**에 놓는다 — 색면이 바탕이 돼줘서 허공에 안 뜬다.
+  const dish = foodIcon && S(foodIcon) ? (
+    <img src={S(foodIcon)} alt="" crossOrigin="anonymous"
+      style={{ position: 'absolute', right: 452, bottom: 172, width: 264, maxWidth: 'none', objectFit: 'contain', zIndex: 7, filter: DIE8 }} />
+  ) : null
+  const more = !cover && (
+    <div style={{ position: 'absolute', left: PAD, bottom: 152, zIndex: 6, fontFamily: 'Jua, sans-serif', fontSize: 34, color: S_.head }}>
+      레시피 보러가기
+      <span style={{ display: 'block', fontFamily: 'GowunDodum, sans-serif', fontSize: 24, color: S_.kick, fontWeight: 700, marginTop: 8 }}>한끼 앱에서 →</span>
+    </div>
+  )
+  const foot = (
+    <div style={{ position: 'absolute', left: PAD, bottom: 56, zIndex: 6 }}>
+      <div style={{ fontFamily: 'Jua, sans-serif', fontSize: 26, color: S_.brand }}>한끼</div>
+      <div style={{ marginTop: 7, fontSize: 19, color: S_.foot, fontFamily: 'GowunDodum, sans-serif' }}>Play스토어 ‘한끼’ 검색</div>
+    </div>
+  )
+
   return (
-    <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: '#f6f1e8', backgroundImage: 'linear-gradient(#e7ded0 1.5px,transparent 1.5px),linear-gradient(90deg,#e7ded0 1.5px,transparent 1.5px)', backgroundSize: '56px 56px' }}>
-      {tape({ top: 60, left: 150, width: 230, height: 56, transform: 'rotate(-6deg)' })}
-      {tape({ top: 52, right: 130, width: 190, height: 52, transform: 'rotate(5deg)', background: 'rgba(240,210,175,.6)', borderColor: 'rgba(180,140,95,.4)' })}
-      <div style={{ position: 'absolute', top: 150, left: 0, right: 0, textAlign: 'center', fontFamily: 'Gaegu, sans-serif', fontSize: 40, color: '#b1937a' }}>♡ 오늘의 한 끼 ♡</div>
-      <div style={{ position: 'absolute', top: 210, left: 0, right: 0, textAlign: 'center', fontSize: titleFont(title), color: '#4a3f33', lineHeight: 1.05 }}>{title}</div>
-      <div style={{ position: 'absolute', top: 370, left: '50%', transform: 'translateX(-50%) rotate(-3deg)', width: 500, display: 'flex', justifyContent: 'center' }}><img src={char.url} alt="" crossOrigin="anonymous" style={{ width: '100%', filter: DIE }} /></div>
-      <div style={{ position: 'absolute', top: 430, left: 150, fontSize: 56, transform: 'rotate(-12deg)' }}>✏️</div>
-      <div style={{ position: 'absolute', top: 560, right: 150, fontSize: 48, color: '#e6a4a0' }}>♡</div>
-      <div style={{ position: 'absolute', top: 820, left: 180, fontSize: 40, color: '#e8b74d' }}>✿</div>
-      <div style={{ position: 'absolute', bottom: 300, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', background: '#fff5c8', padding: '22px 34px', borderRadius: 6, boxShadow: '0 8px 16px rgba(150,120,40,.2)', fontFamily: 'Gaegu, sans-serif', fontSize: 38, color: '#7a6533' }}>{tags.join('  ·  ')}</div>
-      {!cover && (
-        <div style={{ position: 'absolute', bottom: 150, left: 0, right: 0, textAlign: 'center' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '21px 46px', borderRadius: 999, background: '#8a6a3a', color: '#fff8ea', fontSize: 42, fontWeight: 800, boxShadow: '0 10px 22px rgba(120,90,40,.32)' }}>🔍 Play스토어 ‘한끼’ 검색</span>
-        </div>
-      )}
+    <div style={{ width: 1080, height: 1350, fontFamily: 'GowunDodum, sans-serif', position: 'relative', overflow: 'hidden', background: S_.bg, color: S_.head }}>
+      {grain}{arc}{blob}
+      {S_.overlay}
+      {brand}{stamp}{headBlock}
+      {dish}{hero}
+      {more}{foot}
     </div>
   )
 }
@@ -227,8 +282,8 @@ export function RecipeCard({ recipe }) {
 export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   const title = recipe?.title || '오늘의 한 끼'
   const tags = useMemo(() => tagsOf(recipe), [recipe])
+  const foodIcon = useMemo(() => recipe?.icon || guessFoodIcon(recipe?.title || ''), [recipe])
   const [draw, setDraw] = useState(drawState)
-  const [popBg, setPopBg] = useState(() => rnd(POP_BGS))
   const [busy, setBusy] = useState(false)
   const cardRef = useRef(null)
   const card2Ref = useRef(null)
@@ -238,7 +293,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   // 레시피 내용(재료·단계)이 있어야 2장째(레시피카드)를 붙인다. 없으면 1장만.
   const hasRecipe = !!((recipe?.ingredients || []).length || (recipe?.steps || []).length)
 
-  const redraw = useCallback(() => { setDraw(drawState()); setPopBg(rnd(POP_BGS)) }, [])
+  const redraw = useCallback(() => setDraw(drawState()), [])
   useEffect(() => {
     const fit = () => setScale(Math.min((window.innerWidth - 40) / 1080, (window.innerHeight * 0.6) / 1350))
     fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit)
@@ -284,10 +339,10 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
         {/* 미리보기(스케일). 두 장 다 렌더(캡처용) — 안 보는 장은 opacity 0(랩퍼에만). 캡처 ref는 원본 카드에. */}
         <div style={{ width: 1080 * scale, height: 1350 * scale, position: 'relative', borderRadius: 18, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,.4)' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-            <div style={{ ...layer, opacity: page === 1 ? 1 : 0 }}><div ref={cardRef}><Card {...draw} title={title} tags={tags} popBg={popBg} /></div></div>
+            <div style={{ ...layer, opacity: page === 1 ? 1 : 0 }}><div ref={cardRef}><Card {...draw} title={title} tags={tags} recipe={recipe} foodIcon={foodIcon} /></div></div>
             <div style={{ ...layer, opacity: page === 2 ? 1 : 0 }}><div ref={card2Ref}><RecipeCard recipe={recipe} /></div></div>
             {/* 표지 저장용 숨은 카드(CTA 없음). 화면엔 안 보이고 캡처만. */}
-            <div style={{ ...layer, opacity: 0, pointerEvents: 'none' }}><div ref={coverRef}><Card {...draw} title={title} tags={tags} popBg={popBg} cover /></div></div>
+            <div style={{ ...layer, opacity: 0, pointerEvents: 'none' }}><div ref={coverRef}><Card {...draw} title={title} tags={tags} recipe={recipe} foodIcon={foodIcon} cover /></div></div>
           </div>
         </div>
         {/* 페이지 토글 (레시피 있을 때만 2장) */}
