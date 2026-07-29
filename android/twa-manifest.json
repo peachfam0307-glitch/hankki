@@ -1,0 +1,51 @@
+{
+  "packageId": "io.github.peachfam0307_glitch.twa",
+  "host": "peachfam0307-glitch.github.io",
+  "name": "한끼 - 흩어진 레시피를 한곳에",
+  "launcherName": "한끼ㅤ",
+  "display": "standalone",
+  "themeColor": "#6B4F3A",
+  "themeColorDark": "#17171B",
+  "navigationColor": "#6B4F3A",
+  "navigationColorDark": "#17171B",
+  "navigationDividerColor": "#6B4F3A",
+  "navigationDividerColorDark": "#17171B",
+  "backgroundColor": "#FDFBF7",
+  "enableNotifications": false,
+  "startUrl": "/hankki/",
+  "iconUrl": "https://peachfam0307-glitch.github.io/hankki/icons/icon-512-v7.png",
+  "maskableIconUrl": "https://peachfam0307-glitch.github.io/hankki/icons/icon-maskable-512-v7.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./signing.keystore",
+    "alias": "my-key-alias"
+  },
+  "appVersionName": "8.83",
+  "appVersionCode": 6,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://peachfam0307-glitch.github.io/hankki/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://peachfam0307-glitch.github.io/hankki/",
+  "minSdkVersion": 23,
+  "orientation": "portrait",
+  "shareTarget": {
+    "action": "https://peachfam0307-glitch.github.io/hankki/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [{ "name": "image", "accept": ["image/*"] }]
+    }
+  },
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "appVersion": "8.83"
+}
