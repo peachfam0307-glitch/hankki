@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test:link": "node scripts/test-linkrules.mjs",
     "test:parser": "node scripts/test-parser.mjs",
-    "smoke": "node scripts/test-linkrules.mjs && node scripts/test-parser.mjs && node scripts/smoke.mjs"
+    "smoke": "node scripts/check-sticker-res.mjs && node scripts/test-linkrules.mjs && node scripts/test-parser.mjs && node scripts/smoke.mjs",
+    "test:res": "node scripts/check-sticker-res.mjs"
   },
   "dependencies": {
     "html-to-image": "^1.11.13",
