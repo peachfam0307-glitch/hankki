@@ -146,7 +146,7 @@ const B = {
       </g>
     </g>
   ),
-  // 펭펭 셰프 — 여름 친구. 튜브(코랄 도넛)를 배에 두른 뮤트 슬레이트 펭귄.
+  // 펭귄 셰프 — 여름 친구. 튜브(코랄 도넛)를 배에 두른 뮤트 슬레이트 펭귄.
   penguin: (
     <g>
       <circle cx="24" cy="28" r="13" fill="#6d8090" />
@@ -513,7 +513,7 @@ export const BUDDY_GROUPS = [
       { id: 'av_gom', name: '꼬르곰' },
       { id: 'av_peng', name: '펭펭' },
       { id: 'av_capy', name: '카롱' },
-      { id: 'av_fox', name: '모아' },
+      { id: 'av_fox', name: '뾰미' },
       { id: 'av_gecko', name: '꼬비' },
     ],
   },
@@ -521,14 +521,16 @@ export const BUDDY_GROUPS = [
     key: 'origin',
     label: '오리지널',
     items: [
-      { id: 'bear', name: '곰곰 셰프' },
+      // ⚠️ 우리 5인(위 'ours')과 이름이 겹치면 안 된다 — 옛 '곰곰 셰프'·'펭펭 셰프'는
+      //    진짜 꼬르곰·펭펭이 바로 위에 붙으면서 같은 화면에 이름이 두 번 나왔다(창업자 결정 2026-07-29).
+      { id: 'bear', name: '곰돌이 셰프' },
       { id: 'rabbit', name: '토토 셰프' }, // 당근을 든다
       { id: 'catpot', name: '냄비 냥이' }, // 까만콩 눈 + 예쁜 냄비
       { id: 'chick', name: '삐약 셰프' },
       { id: 'dog', name: '몽몽 셰프' },
       { id: 'gecko', name: '호두 셰프' }, // 크레스티드 게코 — 꼬리 있음
       { id: 'hamster', name: '햄찌 셰프' },
-      { id: 'penguin', name: '펭펭 셰프' }, // 여름 친구 — 튜브 두른 펭귄
+      { id: 'penguin', name: '펭귄 셰프' }, // 여름 친구 — 튜브 두른 펭귄
     ],
   },
   {

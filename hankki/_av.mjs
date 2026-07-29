@@ -21,13 +21,14 @@ await p.waitForTimeout(900)
 await p.getByLabel('프로필 아이콘 바꾸기').click()
 await p.waitForTimeout(700)
 
-const label = await p.getByText('⭐ 우리 애들').isVisible().catch(() => false)
-const names = ['꼬르곰', '펭펭', '카롱', '모아', '꼬비']
+const label = await p.getByText('우리 애들').isVisible().catch(() => false)
+const names = // 우리 5인 + 이름 겹침 없애려고 바꾼 옛 세트 2개
+   ['꼬르곰', '펭펭', '카롱', '뾰미', '꼬비', '곰돌이 셰프', '펭귄 셰프']
 const shown = []
 for (const n of names) shown.push([n, await p.getByRole('button', { name: n, exact: true }).first().isVisible().catch(() => false)])
 // 깨진 이미지 확인
-const broken = await p.evaluate(() => [...document.images].filter((i) => i.currentSrc.includes('/avatars/') && i.naturalWidth === 0).length)
-const found = await p.evaluate(() => [...document.images].filter((i) => i.currentSrc.includes('/avatars/')).length)
+const broken = await p.evaluate(() => [...document.images].filter((i) => /\/av_(gom|peng|capy|fox|gecko)/.test(i.currentSrc) && i.naturalWidth === 0).length)
+const found = await p.evaluate(() => [...document.images].filter((i) => /\/av_(gom|peng|capy|fox|gecko)/.test(i.currentSrc)).length)
 console.log(`그룹 라벨 노출 = ${label}`)
 console.log(`이름표: ${shown.map(([n, v]) => `${n}=${v ? 'O' : 'X'}`).join(' ')}`)
 console.log(`아바타 이미지 ${found}개 · 깨짐 ${broken}개`)
