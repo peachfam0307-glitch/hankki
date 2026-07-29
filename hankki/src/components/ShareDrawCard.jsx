@@ -1,5 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toPng, toJpeg } from 'html-to-image'
+import { PHOTO_FAMILY } from './Stickers' // 🎗 우리 스티커(마테·데코·글자·음식)를 카드에도 쓴다
+import { guessFoodIcon } from './FoodIcon'
 
 // 🎴 공유 "뽑기카드" — 레시피마다 스타일×곰펭 랜덤. 🔄로 다시뽑기(가챠), 공유는 Web Share.
 // ⭐ 곰펭 풀 = src/assets/sharepool 폴더 전체를 glob → "폴더에 넣기만 하면 자동으로 다 쓰임"
@@ -12,6 +14,23 @@ const DUO = ENTRIES.filter((e) => /^(duo_|gp_duo)/.test(e.name))
 
 const APP_URL = 'https://peachfam0307-glitch.github.io/hankki/'
 const rnd = (a) => a[Math.floor(Math.random() * a.length)]
+
+// 🎗 카드에 우리 스티커를 얹는 도구.
+//   ⚠️ 예전 카드가 심심했던 진짜 이유 = **CSS 도형과 유니코드 글자로만** 만들어서다.
+//      마스킹테이프 22종·데코·글자 스티커·음식 아이콘 218종을 하나도 안 썼다
+//      (테이프는 `점선 네모`, 반짝임은 `✨` 글자). 앱 안에서 유저가 꾸민 것보다
+//      공유 카드가 못생긴 상태였음 → 이제 진짜 스티커를 붙인다.
+const S = (key) => PHOTO_FAMILY[key]?.src
+const St = ({ k, w, style }) => {
+  const src = S(k)
+  if (!src) return null
+  const r = PHOTO_FAMILY[k]?.ratio || 1
+  return <img src={src} alt="" crossOrigin="anonymous" style={{ position: 'absolute', width: w, height: w / r, objectFit: 'contain', ...style }} />
+}
+// 뽑기마다 달라지는 소품 — 다시 뽑으면 데코도 바뀌어야 '가챠' 맛이 난다.
+const WASHI = ['wt_ribbon_pink', 'wt_dot_lavender', 'wt_daisy_yellow', 'wt_gingham', 'wt_heart_cream', 'wt_cherry', 'wt_grid_white', 'wt_flower_mauve']
+const DECOS = ['dn_ribbon', 'dn_cherry', 'dn_star', 'dn_sparkle', 'dn_shoot', 'dn_peach', 'dn_coffee', 'dn_sachet']
+const WORDS = ['tw_today', 'tw_success', 'tw_tasty', 'tw_honey', 'tw_welldone', 'tw_haenaem', 'tw_more', 'tw_fav']
 const titleFont = (t) => { const n = String(t).replace(/\s/g, '').length; return n <= 5 ? 104 : n <= 7 ? 88 : n <= 9 ? 74 : 62 }
 
 // 레시피 태그: 실제 데이터(카테고리·태그)에서. 없으면 담백한 기본.
@@ -30,7 +49,13 @@ function drawState() {
   if (style === 'holo') cat = DUO.length ? DUO : GOM
   else if (style === 'pop' || style === 'summer') { const r = Math.random(); cat = r < 0.6 ? GOM : r < 0.82 ? PENG : (DUO.length ? DUO : GOM) }
   else { const r = Math.random(); cat = r < 0.72 ? GOM : (PENG.length ? PENG : GOM) } // pola·diary = 솔로
-  return { style, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46) }
+  return {
+    style, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46),
+    ...(() => {
+      const washi = rnd(WASHI), deco = rnd(DECOS)
+      return { washi, washi2: rnd(WASHI.filter((x) => x !== washi)), deco, deco2: rnd(DECOS.filter((x) => x !== deco)), word: rnd(WORDS) }
+    })(),
+  }
 }
 
 const DIE = 'drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 16px 22px rgba(60,40,25,.26))'
@@ -40,7 +65,7 @@ const POP_BGS = [
 ]
 
 // ── 1080×1350 카드 (캡처 대상) ──
-function Card({ style, char, no, title, tags, popBg, cover }) {
+function Card({ style, char, no, title, tags, popBg, cover, washi, washi2, deco, deco2, word, foodIcon }) {
   const pill = { display: 'inline-block', padding: '11px 28px', borderRadius: 40, fontSize: 31, margin: '0 4px' }
   // 🔍 CTA — 바이럴 핵심. 크고 채운 알약으로 확 띄게 + 정사각 안전영역(bottom 150) 안에.
   //   (인스타는 4:5를 1:1로 크롭해서 맨 위/아래를 잘라냄 → 중요한 건 가운데 정사각 안에 둔다)
@@ -138,20 +163,41 @@ function Card({ style, char, no, title, tags, popBg, cover }) {
     )
   }
   if (style === 'pola') {
+    // 📸 폴꾸 — 흰 폴라로이드에 진짜 마테를 붙이고, 사진칸엔 꼬르곰·펭펭 + **그 요리 아이콘**을 같이.
+    //    (예전엔 캐릭터만 있고 무슨 음식인지 그림이 없어 허전했다. 캡션도 6자에서 잘렸다.)
+    const cap = String(title)
     return (
-      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'linear-gradient(160deg,#dfe9d8,#d1e0d5 55%,#dae5e4)' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(120,140,120,.13) 6px,transparent 7px)', backgroundSize: '90px 90px' }} />
-        <div style={{ position: 'absolute', top: 152, left: 60, fontSize: 42, color: '#5c7256' }}>한끼 ♡</div>
-        <div style={{ position: 'absolute', top: 200, left: '50%', transform: 'translateX(-50%) rotate(-3deg)', width: 640, background: '#fffef9', borderRadius: 14, padding: '30px 30px 0', boxShadow: '0 26px 50px rgba(80,95,80,.28)' }}>
-          <div style={{ position: 'absolute', top: -18, left: 120, width: 190, height: 48, background: 'rgba(200,180,140,.55)', border: '2px dashed rgba(150,130,90,.4)', transform: 'rotate(-5deg)' }} />
-          <div style={{ width: '100%', height: 500, borderRadius: 8, position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 40%,#f6f2ea,#e4ece0)' }}>
-            <div style={{ position: 'absolute', top: 40, left: 52, fontSize: 48 }}>✨</div>
-            <div style={slot({ inset: 0, top: 'auto', bottom: 0, height: '96%' })}>{img({ maxWidth: '70%', filter: 'drop-shadow(0 8px 12px rgba(60,40,25,.2))' })}</div>
+      <div style={{ width: 1080, height: 1350, fontFamily: 'Jua, sans-serif', position: 'relative', overflow: 'hidden', background: 'linear-gradient(160deg,#e3ecdb,#d4e2d7 55%,#dce7e5)' }}>
+        {/* 종이 격자 — 도트만 있던 밋밋한 배경에 다꾸 종이 느낌 */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(120,140,115,.10) 1.5px,transparent 1.5px),linear-gradient(90deg,rgba(120,140,115,.10) 1.5px,transparent 1.5px)', backgroundSize: '58px 58px' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(120,140,120,.10) 5px,transparent 6px)', backgroundSize: '116px 116px' }} />
+        <div style={{ position: 'absolute', top: 150, left: 62, fontSize: 42, color: '#5c7256' }}>한끼</div>
+        <St k="dn_ribbon" w={78} style={{ top: 140, left: 176 }} />
+
+        {/* 폴라로이드 */}
+        <div style={{ position: 'absolute', top: 214, left: '50%', transform: 'translateX(-50%) rotate(-3deg)', width: 648, background: '#fffef9', borderRadius: 14, padding: '30px 30px 0', boxShadow: '0 26px 50px rgba(80,95,80,.3)' }}>
+          <div style={{ width: '100%', height: 496, borderRadius: 8, position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 50% 40%,#f7f3ec,#e5ede1)' }}>
+            <St k="dn_sparkle" w={86} style={{ top: 24, left: 26, zIndex: 2 }} />
+            <div style={slot({ inset: 0, top: 'auto', bottom: 0, height: '95%' })}>{img({ maxWidth: '64%', filter: 'drop-shadow(0 8px 12px rgba(60,40,25,.2))' })}</div>
+            {/* 그 요리 아이콘 — 카드가 '무슨 음식'인지 그림으로 말해준다 */}
+            {foodIcon && S(foodIcon) && (
+              <img src={S(foodIcon)} alt="" crossOrigin="anonymous"
+                style={{ position: 'absolute', right: 18, bottom: 12, width: 216, objectFit: 'contain', filter: 'drop-shadow(0 8px 14px rgba(60,40,25,.26))' }} />
+            )}
           </div>
-          <div style={{ fontFamily: 'Gaegu, sans-serif', fontSize: 44, color: '#5c7256', textAlign: 'center', padding: '20px 0 24px' }}>오늘의 {String(title).length > 7 ? String(title).slice(0, 6) + '…' : title} ♡</div>
+          <div style={{ fontFamily: 'Gaegu, sans-serif', fontSize: cap.length > 11 ? 34 : cap.length > 8 ? 39 : 44, color: '#5c7256', textAlign: 'center', padding: '20px 0 24px', whiteSpace: 'nowrap' }}>오늘의 {cap}</div>
+          {/* 마테는 폴라로이드 '위'에 붙는 것 — 자식 맨 뒤에 둬서 사진 위로 올라오게 */}
+          <St k={washi} w={286} style={{ top: -34, left: 96, transform: 'rotate(-6deg)', zIndex: 3 }} />
+          <St k={washi2} w={218} style={{ top: -26, right: -52, transform: 'rotate(14deg)', zIndex: 3 }} />
         </div>
-        <div style={{ position: 'absolute', top: cover ? 985 : 880, left: 0, right: 0, textAlign: 'center', color: '#3f4a3c', padding: '0 50px' }}>
-          <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: Math.min(88, titleFont(title)) }}>{title}</div>
+
+        {/* 모서리 소품 — 여백이 허전하던 자리 */}
+        <St k={deco} w={104} style={{ top: 300, right: 44, transform: 'rotate(9deg)' }} />
+        <St k={deco2} w={88} style={{ top: 690, left: 36, transform: 'rotate(-11deg)' }} />
+        <St k={word} w={238} style={{ top: cover ? 906 : 812, left: 24, transform: 'rotate(-7deg)', zIndex: 2 }} />
+
+        <div style={{ position: 'absolute', top: cover ? 985 : 900, left: 0, right: 0, textAlign: 'center', color: '#3f4a3c', padding: '0 50px' }}>
+          <div style={{ lineHeight: 1.05, wordBreak: 'keep-all', fontSize: Math.min(84, titleFont(title)) }}>{title}</div>
           <div style={{ marginTop: 12 }}>{tags.map((x, i) => <span key={i} style={{ ...pill, background: '#fffef9', color: '#5c7256' }}>{x}</span>)}</div>
         </div>
         {cta({ bg: '#5c7256', color: '#fffef9', shadow: '0 10px 22px rgba(70,90,70,.32)' })}
@@ -227,6 +273,8 @@ export function RecipeCard({ recipe }) {
 export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   const title = recipe?.title || '오늘의 한 끼'
   const tags = useMemo(() => tagsOf(recipe), [recipe])
+  // 🍱 그 레시피의 요리 아이콘 — 카드가 '무슨 음식'인지 그림으로 말해준다(예전엔 제목 글자뿐이었다)
+  const foodIcon = useMemo(() => recipe?.icon || guessFoodIcon(recipe?.title || ''), [recipe])
   const [draw, setDraw] = useState(drawState)
   const [popBg, setPopBg] = useState(() => rnd(POP_BGS))
   const [busy, setBusy] = useState(false)
@@ -284,10 +332,10 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
         {/* 미리보기(스케일). 두 장 다 렌더(캡처용) — 안 보는 장은 opacity 0(랩퍼에만). 캡처 ref는 원본 카드에. */}
         <div style={{ width: 1080 * scale, height: 1350 * scale, position: 'relative', borderRadius: 18, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,.4)' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-            <div style={{ ...layer, opacity: page === 1 ? 1 : 0 }}><div ref={cardRef}><Card {...draw} title={title} tags={tags} popBg={popBg} /></div></div>
+            <div style={{ ...layer, opacity: page === 1 ? 1 : 0 }}><div ref={cardRef}><Card {...draw} title={title} tags={tags} popBg={popBg} foodIcon={foodIcon} /></div></div>
             <div style={{ ...layer, opacity: page === 2 ? 1 : 0 }}><div ref={card2Ref}><RecipeCard recipe={recipe} /></div></div>
             {/* 표지 저장용 숨은 카드(CTA 없음). 화면엔 안 보이고 캡처만. */}
-            <div style={{ ...layer, opacity: 0, pointerEvents: 'none' }}><div ref={coverRef}><Card {...draw} title={title} tags={tags} popBg={popBg} cover /></div></div>
+            <div style={{ ...layer, opacity: 0, pointerEvents: 'none' }}><div ref={coverRef}><Card {...draw} title={title} tags={tags} popBg={popBg} foodIcon={foodIcon} cover /></div></div>
           </div>
         </div>
         {/* 페이지 토글 (레시피 있을 때만 2장) */}
