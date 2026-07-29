@@ -4,6 +4,9 @@ import { PHOTO_FAMILY } from './Stickers' // 🍱 뉴 음식 이모지(다꾸본
 
 const I = {
   // ── 곡물·면 ──
+  // 🍚 rice(공기밥) = **픽커·자동매칭에서 뺐다**(창업자 2026-07-29 "공기밥은 빼자").
+  //    레시피 표지에 흰밥 한 공기가 붙으면 '요리'로 안 보인다.
+  //    ⚠️ 그림 정의는 남겨둔다 — 예전에 이 아이콘으로 저장된 레시피·프로필이 깨지면 안 되니까.
   rice: (
     <>
       <path d="M12 24h24a1 1 0 0 1 1 1c0 8-6 14-13 14s-13-6-13-14a1 1 0 0 1 1-1z" fill="#cdbe9a" />
@@ -648,7 +651,7 @@ export const FOOD_ICON_GROUPS = [
   // 🍱 뉴 음식 이모지(다꾸본 완성요리 사진) — 레시피 대표 이미지로. 사진 없을 때 이걸로 예쁘게.
   // 🍳 조리법 그룹 — "가지덮밥·목살조림"처럼 딱 맞는 요리 아이콘이 없을 때 고르는 범용(2026-07-28 추가)
   { label: '조리법', items: ['fe_63', 'fe_66', 'fe_64', 'fe_71', 'fe_79', 'fe_80'] },
-  { label: '한식', items: ['fe_16', 'fe_18', 'fe_20', 'fe_25', 'fe_22', 'fe_23', 'fe_28', 'fe_29', 'fe_30', 'fe_31', 'fe_32', 'fe_33', 'fe_34', 'fe_35', 'fe_36', 'fe_37', 'fe_38', 'fe_67', 'fe_69', 'fe_70', 'fe_74', 'fe_75', 'fe_81', 'fe_01', 'fe_02', 'fe_03', 'fe_04', 'fe_10', 'fe_13', 'fh_k01', 'fh_k02', 'fh_k03', 'fh_k04', 'fh_k05', 'fh_k06', 'fh_k07', 'fh_k08', 'fh_k09', 'fh_k10', 'fh_k11', 'fh_k12', 'fh_k13', 'fh_k14', 'fh_k15', 'fh_k16', 'fh_k17', 'fh_k18', 'fh_k19', 'fh_k20', 'fh_k21', 'fh_k22', 'fh_k23', 'fh_k24', 'fh_k25', 'fh_k26', 'fh_k27', 'fh_k28', 'fh_k29', 'fh_k30', 'fh_k32', 'fh_k36', 'fh_hnc01', 'fh_hnc03', 'fh_hnc04', 'fh_hnc06', 'fh_hnc10'] },
+  { label: '한식', items: ['fe_16', 'fe_18', 'fe_20', 'fe_25', 'fe_22', 'fe_23', 'fe_28', 'fe_29', 'fe_30', 'fe_31', 'fe_32', 'fe_33', 'fe_34', 'fe_35', 'fe_36', 'fe_37', 'fe_38', 'fe_67', 'fe_69', 'fe_70', 'fe_74', 'fe_75', 'fe_81', 'fe_01', 'fe_02', 'fe_03', 'fe_04', 'fe_10', 'fe_13', 'fh_k01', 'fh_k02', 'fh_k03', 'fh_k04', 'fh_k05', 'fh_k06', 'fh_k07', 'fh_k08', 'fh_k09', 'fh_k10', 'fh_k11', 'fh_k12', 'fh_k13', 'fh_k14', 'fh_k15', 'fh_k16', 'fh_k17', 'fh_k18', 'fh_k19', 'fh_k20', 'fh_k21', 'fh_k22', 'fh_k23', 'fh_k24', 'fh_k25', 'fh_k26', 'fh_k27', 'fh_k28', 'fh_k29', 'fh_k30', 'fh_k32', 'fh_k36', 'fh_hnc01', 'fh_hnc04', 'fh_hnc06', 'fh_hnc10'] },
   // 🦞 해산물·장류 (2026-07-28) — 전복·게장·새우장·연어장·회
   { label: '해산물·장', items: ['fe_68', 'fe_74', 'fe_76', 'fe_77', 'fe_78', 'fe_72', 'fe_75', 'fh_k36', 'fi_j08', 'fy_y12', 'fy_y14'] },
   // 🥗 밑반찬·나물 (2026-07-28) — 장아찌 신규 2종 + 그동안 픽커에 없던 반찬류
@@ -660,8 +663,8 @@ export const FOOD_ICON_GROUPS = [
   { label: '일식', items: ['fe_45', 'fe_46', 'fi_j01', 'fi_j02', 'fi_j03', 'fi_j04', 'fi_j05', 'fi_j06', 'fi_j07', 'fi_j08', 'fi_j09', 'fi_j10', 'fi_j11', 'fi_j12', 'fi_j13', 'fi_j14', 'fi_isk02', 'fi_isk03', 'fi_isk05', 'fi_isk06', 'fi_isk07', 'fi_isk13'] },
   // 🌏 태국·베트남 (2026-07-26 창업자 제공, item④) — 팟타이(기존 fe_09) + 신규 9
   { label: '태국·베트남', items: ['fe_09', 'fe_54', 'fe_56', 'fe_55', 'fe_60', 'fe_57', 'fe_59', 'fe_58', 'fe_61', 'fe_62'] },
-  { label: '요리 아이콘', items: ['rice', 'donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert', 'icecream'] },
-  { label: '밥·면·빵', items: ['rice', 'donburi', 'noodle', 'guksu', 'bread', 'tteok', 'tofu'] },
+  { label: '요리 아이콘', items: ['donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert', 'icecream'] },
+  { label: '밥·면·빵', items: ['donburi', 'noodle', 'guksu', 'bread', 'tteok', 'tofu'] },
   { label: '채소', items: ['cabbage', 'kimchi', 'lettuce', 'onion', 'garlic', 'greenOnion', 'sprout', 'potato', 'carrot', 'chili', 'pepper', 'cucumber', 'eggplant', 'corn', 'radish', 'mushroom', 'broccoli', 'beans'] },
   { label: '과일', items: ['tomato', 'apple', 'banana', 'strawberry', 'grape', 'lemon', 'orange', 'avocado'] },
   { label: '고기·해산물', items: ['beef', 'pork', 'chicken', 'egg', 'fish', 'shrimp', 'squid', 'clam'] },
@@ -878,7 +881,6 @@ const ICON_RULES = [
   [['마라탕', '마라', '육개장', '매운탕', '알탕', '동태탕', '감자탕'], 'spicybowl'],
   [['크림수프', '수프', '스프', '포타주', '차우더'], 'soup'],
   [['탕수육', '돈까스', '돈가스', '까스', '텐동', '가라아게', '고로케', '너겟', '튀김', '프라이', '후라이드'], 'fried'],
-  [['볶음밥'], 'rice'],
   // ── 🍳 범용 조리법(2026-07-28) — 구체 요리에 하나도 안 걸렸을 때 잡아주는 안전망.
   //    창업자 제보 "가지덮밥·목살조림·묵은지볶음이 아이콘 없음". 아래 SVG(stirfry·donburi…)보다 위에 둬서
   //    밋밋한 도형 대신 얼굴 있는 예쁜 컷이 붙게 한다. ⚠️ 더 위로는 올리지 말 것 — 위의 구체 규칙들이 가려진다.
@@ -893,7 +895,11 @@ const ICON_RULES = [
   [['국수', '잔치', '소면'], 'guksu'],
   [['라면', '우동', '냉면', '쫄면', '당면', '짜장', '짬뽕', '소바', '면'], 'noodle'],
   [['덮밥', '규동'], 'donburi'],
-  [['주먹밥', '리조또', '필라프', '현미', '누룽지', '쌀', '밥', '죽'], 'rice'],
+  // 🍚 공기밥(맨밥) 아이콘은 뺐다(창업자 2026-07-29) — 레시피 표지에 흰밥 한 공기가
+  //    붙으면 '요리'로 안 보인다. 여기로 떨어지던 말들은 예쁜 컷으로 돌린다.
+  [['필라프'], 'fj_c03'],                       // 볶음밥 계열
+  [['죽'], 'fh_k36'],                           // 위에서 안 걸린 죽(전복죽·호박죽 등은 이미 잡힘)
+  [['현미', '쌀', '밥'], 'fe_04'],               // 남은 '밥'은 솥밥으로(맨밥 대신)
   [['떡볶이', '가래떡', '떡'], 'tteok'],
   [['식빵', '토스트', '크루아상', '베이글', '바게트', '샌드위치', '빵'], 'bread'],
   // ── 채소 ──
@@ -978,7 +984,7 @@ export function guessFoodIcon(name = '') {
 //    → 새 아이콘을 픽커에 넣을 땐 ICON_RULES에 규칙이 없으면 반드시 여기에 이름을 적을 것.
 const EXTRA_NAMES = {
   // 한식(hnc·htj·hnb 시리즈) — 2026-07-28 그림 직접 확인해 이름 부여
-  fh_hnc01: '돌솥비빔밥', fh_hnc03: '흰쌀밥', fh_hnc04: '순두부찌개', fh_hnc06: '잡채', fh_hnc10: '불고기',
+  fh_hnc01: '돌솥비빔밥', fh_hnc04: '순두부찌개', fh_hnc06: '잡채', fh_hnc10: '불고기',
   fh_htj01: '삼계탕', fh_htj05: '갈비탕', fh_htj13: '닭볶음탕', fh_hnb01: '미역국', fh_hnb08: '계란말이',
   // 분식(bun 시리즈)
   fb_bun02: '어묵탕', fb_bun03: '떡볶이', fb_bun04: '순대', fb_bun05: '라면', fb_bun08: '김밥', fb_bun11: '만두튀김',

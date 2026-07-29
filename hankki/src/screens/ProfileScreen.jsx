@@ -314,7 +314,7 @@ export default function ProfileScreen() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <FoodIconPicker
-                  value={profile.avatar?.type === 'icon' ? profile.avatar.value : 'rice'}
+                  value={profile.avatar?.type === 'icon' ? profile.avatar.value : 'fe_04'}
                   size={56}
                   onChange={(k) => { setProfile({ avatar: { type: 'icon', value: k } }); nav.showToast('프로필 아이콘을 바꿨어요') }}
                 />

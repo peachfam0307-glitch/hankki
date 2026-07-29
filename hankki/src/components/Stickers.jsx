@@ -497,7 +497,7 @@ export const STICKER_GROUPS = [
   //    📅 **라인(kf_l_) = '심플 다꾸' 세트로 나중에 함께 출시**(창업자 2026-07-29 확정).
   //       선만 있는 그림체라 무선 파스텔 자산(`파스텔무선-창업자-2507`)과 묶으면 한 세트가 된다.
   // 🍱 음식 (요리별 서브칩)
-  { key: 'f_han', tab: 'food', chip: '한식', items: ['fh_hnc03', 'fh_htj13', 'fh_hnc04', 'fh_hnb01', 'fh_htj01', 'fh_hnc01', 'fh_hnc10', 'fh_hnc06', 'fh_hnb08', 'fh_htj05'] },
+  { key: 'f_han', tab: 'food', chip: '한식', items: ['fh_htj13', 'fh_hnc04', 'fh_hnb01', 'fh_htj01', 'fh_hnc01', 'fh_hnc10', 'fh_hnc06', 'fh_hnb08', 'fh_htj05'] },
   { key: 'f_bun', tab: 'food', chip: '분식', items: ['fb_bun03', 'fb_bun08', 'fb_bun05', 'fb_bun04', 'fb_bun02', 'fb_bun11'] },
   { key: 'f_yang', tab: 'food', chip: '양식', items: ['fy_yng01', 'fy_yng02', 'fy_yng05', 'fy_yng07', 'fy_yng09', 'fy_yng12'] },
   { key: 'f_jung', tab: 'food', chip: '중식', items: ['fj_jsk03', 'fj_jsk01', 'fj_jsk04', 'fj_jsk05', 'fj_jsk02', 'fj_jsk15'] },
