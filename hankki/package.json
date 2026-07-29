@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:link": "node scripts/test-linkrules.mjs",
-    "smoke": "node scripts/test-linkrules.mjs && node scripts/smoke.mjs"
+    "test:parser": "node scripts/test-parser.mjs",
+    "smoke": "node scripts/test-linkrules.mjs && node scripts/test-parser.mjs && node scripts/smoke.mjs"
   },
   "dependencies": {
     "html-to-image": "^1.11.13",

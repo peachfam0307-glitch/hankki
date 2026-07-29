@@ -1,7 +1,7 @@
 // OCR로 읽은 텍스트를 레시피 형태(제목·재료·순서)로 최대한 자동 분리.
 // 완벽하진 않지만(사진 품질·폰트에 따라), 잡음은 단어 단위까지 걷어낸다.
-import { normalizeNumerals } from './ocrCorrect'
-import { politeSteps } from './polish'
+import { normalizeNumerals } from './ocrCorrect.js'
+import { politeSteps } from './polish.js'
 
 const QTY =
   /(\d+\s*(g|kg|ml|l|리터|cc|개|알|쪽|봉지|봉|모|장|대|톨|줄기|컵|큰\s?술|작은\s?술|스푼|티스푼|숟가락|줌|꼬집|줄|캔|팩|조각|인분|마리|공기|스틱|바퀴|T\b|t\b)|약간|조금|적당량|한\s?줌|소량)/i
@@ -256,6 +256,8 @@ export function parseRecipeText(raw = '', opts = {}) {
     const bullet = /^\s*[-*•·▪◦‣●○✔☑]\s*/.test(rawLine)
     // 맨 앞 장식 이모지(🍆📌🍷 등) — 첫 줄이면 제목 후보 신호로 쓴다.
     const emojiHead = /^\s*[-*•·▪◦‣●○✅✔☑]*\s*[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}❤]/u.test(rawLine)
+    // 번호·동그라미 번호가 붙은 줄인지 원문에서 미리 본다 — sanitize가 ①~⑳을 지워버리기 때문.
+    const stepMarked = STEP.test(String(rawLine).replace(/^\s*[-*•·▪◦‣●○✔☑]\s*/, '').trim())
     // 해시태그 줄(#육회 #육회깻잎무침 #묵은지김밥 …)은 재료도 순서도 아님 → 버린다.
     if (/^\s*#\S/.test(rawLine) || (String(rawLine).match(/#[^\s#]+/g) || []).length >= 2) continue
     let l = cleanTokens(sanitize(rawLine.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•·▪◦‣●○*]/g, ' ')))
@@ -264,7 +266,7 @@ export function parseRecipeText(raw = '', opts = {}) {
     if (!l || DATE_ONLY.test(l)) continue // 빈 줄·날짜만 있는 줄(작성일)은 버린다
     // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
     const isHeader = SEC_ING.test(l) || SEC_STEP.test(l) || SEC_MEMO.test(l)
-    if (isHeader || (l.length > 1 && !isGibberish(l))) items.push({ l, bullet, emojiHead })
+    if (isHeader || (l.length > 1 && !isGibberish(l))) items.push({ l, bullet, emojiHead, stepMarked })
   }
 
   let title = ''
@@ -289,14 +291,17 @@ export function parseRecipeText(raw = '', opts = {}) {
   const pushIng = (l, bullet) => { ingredients.push(l); lastWasBulletIng = bullet; }
 
   for (let idx = 0; idx < items.length; idx++) {
-    const { l, bullet, emojiHead } = items[idx]
+    const { l, bullet, emojiHead, stepMarked } = items[idx]
 
     // 첫 줄 제목 — 이모지 붙은 짧은 이름("🍷 양념장")이나 "X 만드는 법/레시피" 배너면 제목으로.
     // 섹션명(양념장)과 겹쳐도 제목을 우선한다. "재료"처럼 신호 없는 헤더는 안 가로챈다.
     if (idx === 0 && !title && /[가-힣]/.test(l) && l.length <= 24 && !bullet) {
       const core0 = l.replace(/\s*[(（][^()（）]*[)）]\s*$/, '').trim() // 뒤 괄호(300g 기준·2인분) 떼고 판단
-      const asTitle = core0.replace(/\s*(만드는\s*법|만드는\s*방법|만들기|레시피)\s*[!！~]*\s*$/, '').trim()
-      const isBanner = /(만드는\s*법|만들기|레시피)\s*[!！~]*$/.test(core0)
+      // ⚠️ 낱말 경계를 지킨다 — 예전엔 "소고기 미역국 황금레시피"가 "…황금"으로 잘렸다.
+      //    앞에 공백이 있거나 줄 전체일 때만 뗀다("김치찌개 레시피"→"김치찌개", "황금레시피"→그대로).
+      const TAIL = /(?:^|\s)(만드는\s*법|만드는\s*방법|만들기|레시피)\s*[!！~]*\s*$/
+      const asTitle = core0.replace(TAIL, '').trim() || core0
+      const isBanner = TAIL.test(core0)
       if ((emojiHead || isBanner) && !QTY.test(asTitle) && asTitle.length >= 2 && !SENTENCE_END.test(asTitle)) {
         title = asTitle
         continue
@@ -304,14 +309,19 @@ export function parseRecipeText(raw = '', opts = {}) {
     }
 
     // 섹션 헤더(짧은 줄) — 어느 칸에 담을지 힌트. "[재료]", "◆ 만드는 법" 등 장식도 허용.
-    if (l.length <= 16) {
+    // ⚠️ 번호가 붙었거나(①·1.) 서술형으로 끝나면 헤더가 아니다. 예전엔 "① 양념장 재료를 모두 섞어둔다"가
+    //    sanitize에서 ①이 지워진 뒤 '양념장'으로 시작해 헤더로 잡혀 **줄이 통째로 사라졌다**.
+    //    STEP_VERB로 거르면 '조리 순서'·'조리법' 같은 진짜 헤더까지 깨진다('조리'가 동사 목록에 있음).
+    if (l.length <= 16 && !stepMarked && !DECLARATIVE.test(l)) {
       if (SEC_ING.test(l)) { mode = 'ing'; lastWasBulletIng = false; continue }
       if (SEC_STEP.test(l)) { mode = 'step'; sawStep = true; lastWasBulletIng = false; continue }
       if (SEC_MEMO.test(l)) { mode = 'memo'; lastWasBulletIng = false; continue }
     }
     if (NOISE.test(l) || NOISE_ANY.test(l)) continue
-    // 장식용 배너("맛보장 양념 레시피!" 등) — 재료도 순서도 아님. 짧고 '레시피'로 끝나면 건너뜀.
-    if (l.length <= 18 && /레시피\s*[!！~]*$/.test(l) && !QTY.test(l)) continue
+    // 장식용 배너("맛보장 양념 레시피!" 등) — 재료도 순서도 아님.
+    // ⚠️ 무조건 버리면 "소고기 미역국 황금레시피" 같은 진짜 요리 이름까지 날아간다(제목이 빈칸이 됨).
+    //    제목을 이미 잡았거나, 느낌표·물결이 붙어 배너 티가 날 때만 버린다.
+    if ((title || /레시피\s*[!！~]+$/.test(l)) && l.length <= 18 && /레시피\s*[!！~]*$/.test(l) && !QTY.test(l)) continue
 
     // 끝에 붙은 괄호 코멘트는 분류에서 제외하고 '핵심'으로 판단한다.
     // ("멸치액젓 2스푼 (저는…꿀팁!)"의 핵심은 '멸치액젓 2스푼'=재료 — 괄호가 !로 끝나도 순서 오인 안 함)
@@ -345,12 +355,30 @@ export function parseRecipeText(raw = '', opts = {}) {
       continue
     }
 
+    // 0) 줄글형은 재료를 한 줄에 쉼표로 나열한다("스파게티면 200g, 토마토홀 1캔, 마늘 5알, …").
+    //    예전엔 통째로 순서에 들어가 재료 칸이 비었다 → 쉼표로 나눠 각각 재료로 담는다.
+    //    (조리 문장에도 쉼표는 있으므로 '대부분 조각에 분량이 붙어 있을 때'만)
+    if (!stepLike && !sawStep && mode !== 'step') {
+      const parts = l.split(/\s*,\s*/).map((x) => x.trim()).filter(Boolean)
+      const withQty = parts.filter((x) => QTY.test(x) || AMOUNT.test(x)).length
+      if (parts.length >= 3 && withQty >= Math.ceil(parts.length * 0.6) && parts.every((x) => x.length <= 24)) {
+        parts.forEach((x) => pushIng(x, false))
+        continue
+      }
+    }
     // 1) 팁·메모 섹션에 들어섰으면 그 뒤는 전부 메모 (조리 문장처럼 보여도 팁으로)
     if (mode === 'memo') { if (l.length >= 6) other.push(l); lastWasBulletIng = false; continue }
     // 2) 명백한 조리 문장 → 순서 (섹션 헤더가 없어도 우선 분리)
     if (stepLike) { pushStep(l); continue }
     // 3) 재료다움 → 재료 (재료 섹션이거나, 아직 순서가 시작 전이면)
     if (ingLike && (mode === 'ing' || mode === null || !sawStep)) { pushIng(l, bullet); continue }
+    // 3-2) 분량이 안 적힌 재료("다진마늘", "대파")도 재료로 담는다 — 재료를 줄줄이 적던 중이고
+    //      아직 순서가 시작 전이며, 서술형이 아닌 순한글 낱말 줄일 때만.
+    //      예전엔 메모로 새서 장보기 목록에서 통째로 빠졌다(창업자 2026-07-29 파서 점검).
+    if (!stepLike && !sawStep && mode !== 'step' && ingredients.length > 0 &&
+        l.length <= 20 && /^[가-힣][가-힣\s]*$/.test(l) && !DECLARATIVE.test(l)) {
+      pushIng(l, bullet); continue
+    }
     // 4) 순서가 이미 시작됐으면, 남는 줄은 순서의 연속으로 본다("5분간 그대로 둔다" 등)
     if (sawStep && mode !== 'ing' && l.length >= 5) { pushStep(l); continue }
     // 5) 그 밖의 긴 줄은 순서, 수량 줄은 재료, 나머지는 메모 후보
@@ -365,7 +393,37 @@ export function parseRecipeText(raw = '', opts = {}) {
   const memoLines = fromOcr ? other.filter(isCleanMemoLine) : other
   const memo = memoLines.join('\n')
   // 재료 단위 오독 교정(T·g) + 만드는 법 문체 통일('~다' → '~요')
-  return { title, ingredients: ingredients.map(fixIngredientUnits), steps: politeSteps(mergeStepFragments(steps)), memo }
+  return {
+    title: cleanTitleTail(title),
+    ingredients: ingredients.map(fixIngredientUnits),
+    steps: politeSteps(splitParagraphSteps(mergeStepFragments(steps))),
+    memo,
+  }
+}
+
+// 제목 꼬리 정리 — "… 레시피"·"…황금레시피"·"… 만드는 법"은 요리 이름이 아니다.
+// 낱말 경계를 지켜 "황금레시피"만 통째로 떼고, 붙여 쓴 다른 말은 건드리지 않는다.
+function cleanTitleTail(t) {
+  const s = String(t || '').trim()
+  if (!s) return s
+  const cut = s
+    .replace(/\s*황금\s*레시피\s*[!！~]*$/, '')
+    .replace(/(?:^|\s)(만드는\s*법|만드는\s*방법|만들기|레시피)\s*[!！~]*$/, '')
+    .trim()
+  return cut.length >= 2 ? cut : s
+}
+
+// 줄글로 쓴 만드는 법("…삶아주세요. 팬에 …졸입니다. …버무리면 끝이에요.")은 한 줄에 여러
+// 동작이 들어 있다. 단계가 거의 없고 줄이 길면 문장 단위로 잘라 따라 하기 좋게 나눈다.
+function splitParagraphSteps(arr) {
+  if (arr.length > 2) return arr
+  const out = []
+  for (const s of arr) {
+    const parts = (String(s).match(/[^.!?…]+[.!?…]*/g) || []).map((x) => x.trim()).filter((x) => x.length >= 4)
+    if (String(s).length >= 60 && parts.length >= 2) out.push(...parts)
+    else out.push(s)
+  }
+  return out
 }
 
 // 한 동작이 줄바꿈으로 잘려 조각난 순서를 앞 단계에 붙인다.

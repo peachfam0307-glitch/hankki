@@ -1,4 +1,4 @@
-import { within1 } from './ocrCorrect'
+import { within1 } from './ocrCorrect.js'
 
 // 영수증 글자에서 살 거리(품목)만 골라내기 — 냉장고 재료함 자동 채우기용.
 // 예전엔 아는 식재료 단어(화이트리스트)가 들어간 줄만 담아서, 브랜드명·줄임말 품목
