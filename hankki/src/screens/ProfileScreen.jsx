@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
-import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL } from '../version'
+import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL, LAB_SURVEY_URL, LAB_BUG_URL } from '../version'
 import Icon from '../components/Icon'
 import TabTips from '../components/TabTips'
 import EmojiPicker from '../components/EmojiPicker'
@@ -12,6 +12,7 @@ import Portal from '../components/Portal'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
+import LabSheet from '../components/LabSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { cropSquare } from '../utils'
 import { takeOpenBackup, backupDone } from '../nudges'
@@ -21,7 +22,7 @@ const PROFILE_COACH_KEY = 'hankki:coach:profile'
 const PROFILE_COACH_STEPS = [
   { sel: '[data-coach="backup"]', label: '백업 · 내보내기', desc: '폰을 바꾸거나 지워도 레시피를 지키는 제일 중요한 버튼!' },
   { sel: '[data-coach="update"]', label: '최신 버전 확인', desc: '앱이 옛 버전에서 멈췄을 때 눌러요 · 새 기능·수정이 바로 반영돼요' },
-  { sel: '[data-coach="feedback"]', label: '의견 보내기', desc: '여러분 한 줄이 저에겐 진짜 큰 힘이 돼요 좋았던 것도 불편한 것도, 익명이니까 꼭 한 줄 남겨 주세요!' },
+  { sel: '[data-coach="lab"]', label: '한끼연구소', desc: '의견·설문·안 되는 것을 받는 방이에요 여러분 한 줄이 저에겐 진짜 큰 힘이 돼요. 익명이니까 편하게 남겨 주세요!' },
 ]
 import { THEMES, getTheme, setTheme } from '../theme'
 import { Avatar } from './HomeScreen'
@@ -44,6 +45,7 @@ export default function ProfileScreen() {
   const [pasteOpen, setPasteOpen] = useState(false)
   const [checking, setChecking] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
+  const [lab, setLab] = useState(false) // 한끼연구소(의견·설문·오류) 시트
   const fileRef = useRef(null)
   const avatarFileRef = useRef(null)
 
@@ -225,9 +227,11 @@ export default function ProfileScreen() {
       },
     },
     { icon: 'help', label: '도움말 및 문의', onClick: () => { try { const a = document.createElement('a'); a.href = 'mailto:annyeong.hankki@gmail.com'; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com') } },
-    // 익명 의견 — FEEDBACK_URL 이 설정됐을 때만 노출(죽은 버튼 방지)
-    ...(FEEDBACK_URL
-      ? [{ icon: 'edit', label: '의견 보내기', badge: '익명', coach: 'feedback', onClick: () => { const a = document.createElement('a'); a.href = FEEDBACK_URL; a.target = '_blank'; a.rel = 'noopener'; a.click() } }]
+    // 🔬 한끼연구소 — 옛 '의견 보내기' 자리를 승격시켰다(창업자 아이디어 2026-07-30).
+    // "의견 보내기"는 민원 창구처럼 읽히는데, 연구소는 유저를 연구원으로 만든다 → 참여 동기가 다르다.
+    // 창구 셋(의견·설문·오류) 중 주소가 하나라도 있을 때만 노출(전부 비면 빈 방이 된다).
+    ...(FEEDBACK_URL || LAB_SURVEY_URL || LAB_BUG_URL
+      ? [{ icon: 'bulb', label: '한끼연구소', badge: '의견·설문', coach: 'lab', onClick: () => setLab(true) }]
       : []),
     { icon: 'settings', label: '개인정보처리방침', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
     { icon: 'book', label: '오픈소스 라이선스', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'licenses.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
@@ -519,6 +523,7 @@ export default function ProfileScreen() {
       )}
 
       {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
+      {lab && <LabSheet onClose={() => setLab(false)} />}
 
       {/* 첫 방문 코치마크 — 백업·의견 보내기 안내 */}
       {coach && <CoachMarks storageKey={PROFILE_COACH_KEY} steps={PROFILE_COACH_STEPS} onDone={() => setCoach(false)} />}
