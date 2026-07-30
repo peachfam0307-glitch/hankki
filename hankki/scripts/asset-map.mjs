@@ -1,0 +1,271 @@
+// 🗂 꾸미기 자산 현황 — **코드와 파일을 직접 세어서** 한 장으로 보여준다.
+//
+// 왜 만들었나 (창업자 2026-07-30):
+//   *"나는 네가 재고나 우리꾸미기 들어간 현황을 다 파악하고 있으면 좋겠어. 지금 뭔가 정리가 안된 느낌이야."*
+//   맞는 지적이다. 그동안 개수를 **손으로 세고 문서에 적어뒀는데**, 자산이 바뀔 때마다 그 숫자가 낡았다.
+//   → 사람이 세지 않는다. **이 스크립트가 그때그때 진짜 상태를 읽는다.**
+//
+// 무엇을 읽나
+//   ① `src/components/Stickers.jsx` STICKER_GROUPS  = 앱 서랍에 실제로 실린 그룹·컷·자물쇠
+//   ② `src/assets/stickers/**`                       = 앱이 들고 있는 실제 파일
+//   ③ `docs/stickers/**/낱개*`                       = 아직 안 넣은 재고
+//
+// 무엇을 잡아내나 (이게 핵심)
+//   ⚠️ **깨진 참조** — 서랍엔 있는데 파일이 없는 것 (앱에서 빈칸으로 뜬다)
+//   📦 **미등록 재고** — 파일은 있는데 서랍엔 없는 것 (유료팩이거나, 그냥 잊힌 것)
+//
+// 쓰기:  npm run assets        (표만)
+//        npm run assets -- --md > docs/자산현황.md   (문서로 저장)
+import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs'
+import { join } from 'node:path'
+
+const ROOT = process.cwd()
+const MD = process.argv.includes('--md')
+
+// ── ① 서랍(코드)에 실린 그룹 ──────────────────────────────────────────────
+const src = readFileSync(join(ROOT, 'src/components/Stickers.jsx'), 'utf8')
+// ⚠️ 필드를 한 덩어리 정규식으로 잡으면 안 된다 — 실제로 그렇게 짰다가 **음식 탭 6그룹과
+//    `부엌 식구들`을 통째로 놓쳤다.** 음식 그룹은 `label` 없이 `chip` 만 쓰고,
+//    `부엌 식구들`은 `items: kfItems('kf_')` 라 배열 리터럴이 아니다.
+//    → 줄을 먼저 고르고 **필드를 하나씩** 뽑는다.
+const KF_NAMES = (src.match(/const KF_NAMES = \[([\s\S]*?)\n\]/) || [, ''])[1]
+  .match(/\['([a-z0-9_]+)'/g)?.map((s) => s.slice(2, -1)) || []
+const groups = []
+for (const line of src.split('\n')) {
+  if (!/^\s*\{ key: '/.test(line) || !/\btab: '/.test(line)) continue
+  const f = (re) => (line.match(re) || [, ''])[1]
+  const key = f(/key: '([^']+)'/)
+  const rawItems = (line.match(/items: (\[[^\]]*\]|\w+\([^)]*\))/) || [, ''])[1]
+  let items
+  const call = rawItems.match(/^kfItems\('([^']*)'\)/)
+  if (call) items = KF_NAMES.map((n) => call[1] + n)
+  else items = (rawItems.match(/'([^']+)'/g) || []).map((s) => s.slice(1, -1))
+  groups.push({
+    key, tab: f(/tab: '([^']+)'/), season: f(/season: '([^']+)'/), from: f(/from: '([^']+)'/),
+    label: f(/label: '([^']+)'/) || f(/chip: '([^']+)'/) || key, items,
+  })
+}
+if (!groups.some((g) => g.tab === 'food')) { console.error('❌ 음식 탭을 못 읽었다 — 파서가 코드 변화를 못 따라감'); process.exit(1) }
+const usedIds = new Set(groups.flatMap((g) => g.items))
+
+// ── ② 앱이 들고 있는 파일 ────────────────────────────────────────────────
+const ASSET_DIR = join(ROOT, 'src/assets/stickers')
+const assetFiles = {} // 폴더 → [id]
+for (const d of readdirSync(ASSET_DIR)) {
+  const p = join(ASSET_DIR, d)
+  if (!statSync(p).isDirectory()) continue
+  assetFiles[d] = readdirSync(p).filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, ''))
+}
+const photoIds = new Set(assetFiles.photo || [])
+
+// ── ③ 재고(문서 폴더) ────────────────────────────────────────────────────
+const DOC_DIR = join(ROOT, 'docs/stickers')
+const stock = []
+const walkStock = (dir, top) => {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name)
+    if (e.isDirectory()) { walkStock(p, top || e.name); continue }
+    if (!e.name.endsWith('.png')) continue
+    const rel = p.slice(DOC_DIR.length + 1)
+    // '원본시트'는 낱개로 자르기 전 원본이라 재고 수량에서 뺀다(중복 집계 방지)
+    if (rel.includes('원본시트')) continue
+    stock.push(rel)
+  }
+}
+for (const e of readdirSync(DOC_DIR, { withFileTypes: true })) {
+  if (e.isDirectory()) walkStock(join(DOC_DIR, e.name), e.name)
+}
+const stockByTop = {}
+for (const rel of stock) {
+  const top = rel.split('/')[0]
+  ;(stockByTop[top] = stockByTop[top] || []).push(rel)
+}
+
+// ── 계산 ─────────────────────────────────────────────────────────────────
+const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
+const ymd = (d) => d.toISOString().slice(0, 10)
+const locked = (g) => g.from && g.from > ymd(today)
+
+const byTab = {}
+for (const g of groups) (byTab[g.tab] = byTab[g.tab] || []).push(g)
+
+// ⚠️ 깨진 참조 = 서랍이 부르는데 파일도 없고 벡터도 아닌 것
+//    벡터·CSS 스티커(하트·별·마테 등)는 PNG 가 없는 게 정상이라, 코드 어딘가에 이름이 있으면 통과시킨다.
+const codeAll = src
+// ⚠️ **아이디와 파일 이름이 다른 경우가 있다** — `부엌 식구들`은 id 가 `kf_gomgom` 인데
+//    파일은 `kitchen/gomgom.png` 다(폴더가 접두어 역할). 그래서 앞 토큰을 떼고도 찾아본다.
+const hasFile = (id) => {
+  const cands = [id, id.replace(/^[a-z]+_/, ''), id.replace(/^[a-z]+_[a-z]_/, '')]
+  for (const d of Object.keys(assetFiles)) for (const c of cands) if (assetFiles[d].includes(c)) return true
+  return false
+}
+const broken = [...usedIds].filter((id) => {
+  if (photoIds.has(id) || hasFile(id)) return false
+  // 벡터/CSS 스티커는 PNG 가 없는 게 정상 — 코드에 정의가 있으면 통과.
+  //   ① 객체 키로 정의  ② `id === 'yum'` 처럼 특수 분기로 그려지는 것
+  return !new RegExp(`['"\`]?\\b${id}\\b['"\`]?\\s*:`).test(codeAll)
+    && !new RegExp(`===\\s*'${id}'`).test(codeAll)
+})
+
+// 📦 미등록 = photo 파일은 있는데 어떤 그룹도 안 부르는 것
+// ⚠️ 단, **서랍에 없어도 쓰이는 곳이 있다** — 공유카드 뽑기 풀(`ShareDrawCard.jsx`)이 캐릭터 컷을
+//    직접 참조한다. 그걸 '안 쓰는 재고'로 세면 숫자가 거짓말이 된다 → src 전체를 훑어 갈라낸다.
+const SRC_ALL = readdirSync(join(ROOT, 'src'), { recursive: true })
+  .filter((f) => typeof f === 'string' && /\.(jsx?|mjs)$/.test(f))
+  .map((f) => readFileSync(join(ROOT, 'src', f), 'utf8')).join('\n')
+const usedElsewhere = new Set()
+const unregistered = []
+for (const id of [...photoIds].sort()) {
+  if (usedIds.has(id)) continue
+  if (SRC_ALL.includes(`'${id}'`) || SRC_ALL.includes(`"${id}"`)) usedElsewhere.add(id)
+  else unregistered.push(id)
+}
+// 접두어(첫 `_` 앞)로 묶어서 보여준다 — 낱개로 수백 개 나열하면 못 읽는다
+const prefixOf = (id) => id.split('_')[0].replace(/\d+$/, '')
+const unregByPrefix = {}
+for (const id of unregistered) (unregByPrefix[prefixOf(id)] = unregByPrefix[prefixOf(id)] || []).push(id)
+
+// ── 출력 ─────────────────────────────────────────────────────────────────
+const out = []
+const p = (s = '') => out.push(s)
+const TABNAME = { deco: '데코', buddies: '친구들', food: '음식', life: '라이프', notetext: '메모·글자' }
+
+p(`# 🗂 꾸미기 자산 현황 (${ymd(today)} KST · 자동 집계)`)
+p()
+p('> ⚠️ 이 문서는 **`npm run assets` 로 다시 뽑는다.** 손으로 고치지 말 것 — 코드·파일을 직접 센 값이다.')
+p()
+
+const shown = groups.filter((g) => !locked(g)).reduce((a, g) => a + g.items.length, 0)
+const lockedCuts = groups.filter((g) => locked(g)).reduce((a, g) => a + g.items.length, 0)
+p('## 📊 한 줄')
+p()
+p(`**지금 서랍에 보이는 컷 = ${shown}개** (그룹 ${groups.filter((g) => !locked(g)).length}개)`)
+p(`· 자물쇠로 잠긴 컷 ${lockedCuts}개 · 파일은 있는데 안 넣은 것 **${unregistered.length}개**`)
+p()
+
+p('## 🎨 앱 서랍 (탭별)')
+p()
+for (const tab of Object.keys(byTab)) {
+  const gs = byTab[tab]
+  const tot = gs.reduce((a, g) => a + g.items.length, 0)
+  p(`### ${TABNAME[tab] || tab} 탭 — 그룹 ${gs.length}개 · ${tot}컷`)
+  p()
+  p('| 컷 | 그룹 | 계절 | 언제부터 |')
+  p('|---:|---|---|---|')
+  for (const g of gs) {
+    p(`| ${g.items.length} | ${g.label} | ${g.season || '사철'} | ${g.from ? (locked(g) ? `🔒 ${g.from}` : g.from) : '지금'} |`)
+  }
+  p()
+}
+
+p('## 📦 파일은 있는데 서랍엔 없는 것 (재고 · 유료팩)')
+p()
+p('| 컷 | 접두어 | 무엇 |')
+p('|---:|---|---|')
+const KNOWN = {
+  // 💰 유료팩 — **서랍에 없는 게 정상.** 결제 붙기 전엔 안 넣는다(팔 수 없는데 보이면 안 됨).
+  cs: '💰추석 한복 캐릭터·소품', ci: '💰추석 소품', cp: '💰추석 종이·라벨',
+  cf: '💰추석 프레임', cm: '💰추석 메모지', ct: '💰추석 마테',
+  hw: '💰핼러윈 캐릭터', hp: '💰핼러윈 종이·라벨', hs: '💰핼러윈 띠부씰',
+  hf: '💰핼러윈 프레임', ht: '💰핼러윈 마테',
+  pp: '💰가을 다꾸 종이', pi: '💰가을 다꾸 소품', pt: '💰가을 다꾸 마테',
+  wm: '💰수채화 마테·씰', wc: '💰수채화 추석 음식', wh: '💰수채화 가을 수확', ws: '💰수채화 가을 소품',
+  xm: '💰크리스마스 — ⚠️**4컷뿐이라 팩이 안 된다**',
+  // 🍂 무료인데 아직 안 넣은 것
+  nai: '🍂가을 기본 소품 (무료 · 등록 대기)', naf: '🍂가을 기본 프레임 (무료 · 등록 대기)',
+  nat: '🍂가을 기본 마테 (무료 · 등록 대기)', nsf: '🏖여름 프레임 재제작 (기존 흐린 것 교체용)',
+  au: '🍂가을 기본 (일부만 등록됨)',
+  // ⛔ 해상도 미달로 되돌린 것 — **다시 넣지 말 것** (v8.95 당일 롤백)
+  mn: '⛔미니아이콘 94px — 캔버스 238px라 뭉갠다',
+  ps: '⛔파스텔무선 141px — 뭉갠다 (📅 심플 다꾸 세트로 언젠가)',
+  sd: '⛔여름다꾸 85px — 뭉갠다',
+  // 그 밖
+  fh: '음식 아이콘 라이브러리 (칩에 일부만 실림)', fb: '음식 아이콘 라이브러리', fy: '음식 아이콘 라이브러리',
+  fj: '음식 아이콘 라이브러리', fi: '음식 아이콘 라이브러리', fe: '음식 아이콘 라이브러리', ig: '재료 아이콘 라이브러리',
+  wt: '마스킹테이프 (일부만 실림)',
+}
+for (const [pre, ids] of Object.entries(unregByPrefix).sort((a, b) => b[1].length - a[1].length)) {
+  p(`| ${ids.length} | \`${pre}\` | ${KNOWN[pre] || '❓ **분류 안 됨 — 확인 필요**'} |`)
+}
+p()
+
+// ── ⭐ 정원(定員) 대조 ─────────────────────────────────────────────────────
+// 창업자 2026-07-30: *"기준이 없이 일을 하고있어 … 딱 들어갈 아이템 종류별로 몇개 이렇게
+//   정했으면 좋겠다고"* · *"매달 이걸 어떻게 계속 정하고 또 물어보고 해…"*
+// → **한 번 정하고 다시 안 묻는다.** 아래 표가 그 기준이고, 이 대조표가 매번 자동으로 확인한다.
+const CAT = (g) => {
+  if (g.tab === 'buddies') return 'char'
+  const l = g.label
+  if (l.includes('마스킹테이프')) return 'tape'
+  if (l.includes('프레임')) return 'frame'
+  if (/메모|씰|라벨/.test(l)) return 'paper'
+  if (/소품|데코/.test(l)) return 'item'
+  return 'etc'
+}
+const CATNAME = { frame: '프레임', item: '소품', paper: '메모·씰·라벨', tape: '마스킹테이프', char: '캐릭터', etc: '그 밖' }
+const QUOTA = { frame: 12, item: 24, paper: 8, tape: 6, char: 12 } // 한 계절 세트의 정원 (3파로 나눠 푼다)
+const seasons = [...new Set(groups.map((g) => g.season).filter(Boolean))]
+
+p('## ⭐ 계절 세트 정원 대조 (기준 = 아래 표)')
+p()
+p('**한 계절에 넣는 양을 종류별로 고정했다.** 이제 매달 다시 정하지 않는다 — 이 숫자에 맞춰 꺼내 쓰면 된다.')
+p('3개월에 걸쳐 **세 번에 나눠** 푸니까, 한 번에 나가는 건 정원의 ⅓ 쯤이다.')
+p()
+p('| 종류 | 한 계절 정원 | 한 파(달) | ' + seasons.map((s) => `${s} 지금`).join(' | ') + ' |')
+p('|---|---:|---:|' + seasons.map(() => '---:|').join(''))
+let over = []
+for (const c of Object.keys(QUOTA)) {
+  const cells = seasons.map((s) => {
+    const n = groups.filter((g) => g.season === s && CAT(g) === c).reduce((a, g) => a + g.items.length, 0)
+    if (n > QUOTA[c]) { over.push(`${s} ${CATNAME[c]} ${n}/${QUOTA[c]}`); return `**${n}** ⚠️` }
+    return n < QUOTA[c] ? `${n} ↓` : `${n} ✅`
+  })
+  p(`| ${CATNAME[c]} | ${QUOTA[c]} | ${Math.round(QUOTA[c] / 3)} | ${cells.join(' | ')} |`)
+}
+const qtot = Object.values(QUOTA).reduce((a, b) => a + b, 0)
+p(`| **합계** | **${qtot}** | **${Math.round(qtot / 3)}** | ` + seasons.map((s) =>
+  `**${groups.filter((g) => g.season === s).reduce((a, g) => a + g.items.length, 0)}**`).join(' | ') + ' |')
+p()
+p('⚠️ 정원을 넘은 것: ' + (over.length ? over.join(' · ') : '없음'))
+p()
+p('⛔ **넘었다고 빼지는 않는다** — *"한 번 준 것은 빼앗지 않는다."* 이미 유저 서랍에 있는 건 그대로 둔다.')
+p('**정원은 「앞으로 새로 넣을 때」의 기준**이다. 넘은 계절은 다음 시즌에 자연스럽게 정원으로 수렴시킨다.')
+p()
+p('> 사철(계절 없는) 기본은 정원 밖이다 — 이미 깔린 바탕이고, 계절 세트가 그 위에 얹히는 구조다.')
+p()
+
+p('## 🎴 서랍엔 없지만 **카드 뽑기에서 쓰는 것**')
+p()
+p(`**${usedElsewhere.size}컷.** 유료팩 자산이 여기 많다 — 서랍엔 안 넣되(못 파니까) **카드에는 나오게** 해서`)
+p('팩을 미리 보여주는 홍보 효과를 노린 것. (`docs/꾸미기팩-출시계획-한눈에-2026-07-30.md`)')
+p()
+const elseByPrefix = {}
+for (const id of usedElsewhere) (elseByPrefix[prefixOf(id)] = elseByPrefix[prefixOf(id)] || []).push(id)
+p('| 컷 | 접두어 | 무엇 |')
+p('|---:|---|---|')
+for (const [pre, ids] of Object.entries(elseByPrefix).sort((a, b) => b[1].length - a[1].length)) {
+  p(`| ${ids.length} | \`${pre}\` | ${KNOWN[pre] || '—'} |`)
+}
+p()
+
+p('## 🗃 문서 폴더 재고 (아직 앱에 안 들어간 낱개)')
+p()
+p('| 컷 | 폴더 |')
+p('|---:|---|')
+for (const [top, list] of Object.entries(stockByTop).sort((a, b) => b[1].length - a[1].length)) {
+  p(`| ${list.length} | \`${top}\` |`)
+}
+p()
+
+if (broken.length) {
+  p('## ⚠️ 깨진 참조 — 서랍이 부르는데 그림이 없다')
+  p()
+  broken.forEach((id) => p(`- \`${id}\``))
+  p()
+} else {
+  p('## ✅ 깨진 참조 없음 — 서랍이 부르는 그림이 전부 있다')
+  p()
+}
+
+console.log(out.join('\n'))
+if (broken.length && !MD) process.exit(1)

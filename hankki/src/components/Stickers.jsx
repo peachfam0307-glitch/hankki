@@ -553,39 +553,57 @@ export const STICKER_GROUPS = [
   // 🥕 재료 — 여름 제철 귀여운 식재료(꾸미기용) 몇 개 추가(복숭아·수박·체리·옥수수·가지). 분기별 제철로 교체 예정(사계절용은 픽스).
   { key: 'f_ing', tab: 'food', chip: '재료', items: ['ig_frb02', 'ig_frb04', 'ig_frb08', 'ig_jcb19', 'ig_jae16', 'ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae03', 'ig_jae12', 'ig_frb01', 'ig_frb03', 'ig_frb07', 'ig_frb13', 'ig_ggi03', 'ig_ggi16', 'ig_hsm01'] },
   // ✨ 데코 (색 바꾸는 SVG 심볼 유지 + 새 데코 PNG + 응원)
-  // 📷 벡터 프레임 (2026-07-26 신규 · item③) — 꼬르곰·펭펭 얹어 꾸미는 액자틀. SVG라 크게 키워도 안 깨짐 + 🎨색 바꾸기(배경색과 맞추기). 배경 바로 옆(데코 맨 위)에 둠 — 프레임 먼저 놓고 위에 꼬르곰·펭펭. (⚠️캐릭터명 = 꼬르곰·펭펭 풀네임, '곰펭' 금지)
   // 🏖 꼬르곰·펭펭의 여름 (2026-07-29) — 콤비 4(물총·튜브·수박·아이스크림) + 곰 솔로 4 + 펭 솔로 4.
   //   ⚠️ 처음엔 에피소드 씬컷을 넣었는데 **배경(하늘·바다·모래)이 통째로 붙어 있어** 표지에
   //      작게 붙이면 네모 배경째 올라갔다. 창업자가 **흰 배경으로 다시 뽑아** 줘서 전부 교체했다.
   { key: 'buddies_summer', tab: 'buddies', season: 'summer', label: '꼬르곰·펭펭의 여름', items: ['sm_duo_watergun', 'sm_duo_tube', 'sm_duo_watermelon', 'sm_duo_icecream', 'sm_gom_tube', 'sm_gom_beach', 'sm_gom_bbq', 'sm_gom_chair', 'sm_peng_tube', 'sm_peng_beach', 'sm_peng_shop', 'sm_peng_night'] },
-  { key: 'deco_vframe', tab: 'deco', label: '프레임(꼬르곰·펭펭 넣기)', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🧹 데코 탭 정리 (2026-07-30) — 창업자 *"걍 이미 넣어놓은거 넘 많으니까 정리해서 무료출시하자"*
+  //
+  // 정리 전 = 그룹 18개·201컷이 **종류가 아니라 들어온 순서**로 쌓여 있었다. 실제 문제 3개:
+  //   ① **프레임이 7그룹에 흩어짐**(73컷) — 프레임 하나 찾으려고 서랍 7군데를 뒤져야 했다.
+  //      게다가 이름이 제각각이라 같은 종류로 안 보였다(`프레임(꼬르곰·펭펭 넣기)` · `여름 프레임`).
+  //   ② **`여름 한정` 10컷은 사실 마스킹테이프**(`wt_`) — 이름만 보면 뭔지 알 수 없었다.
+  //   ③ **`데코` 28컷** — 탭 이름과 똑같아서 이름이 아무 정보를 주지 않았다.
+  //
+  // → **이름을 「종류 · 갈래」로 통일하고, 종류끼리 붙여 놓았다.** 자산은 하나도 안 늘리고 안 뺐다.
+  //   ⚠️ `key` 는 바꾸지 않았다 — 코치마크·스크롤 위치가 참조한다(꾸민 결과물은 아이템 id 로 저장돼 무관).
+  //   ⚠️ 배열 순서는 **같은 계절 안에서만** 의미가 있다. 제철 그룹은 `seasonRank` 로 위로 올라간다(안정 정렬).
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── 사철 ──
+  // 🎨 색 바꾸기 = 맨 위 고정. 색을 바꿀 수 있다는 걸 여기서 알아채야 나머지도 눌러본다(발견성).
   { key: 'deco_recolor', tab: 'deco', label: '색 바꾸기', items: ['heart', 'star', 'sparkle', 'bow', 'vhand'] },
-  // 📝 메모·라벨 (2026-07-26 신규) — 다꾸 감성 손그림 메모지·라벨. 글씨 얹어 꾸미기 좋음(작게~중간 크기용, 크게 키우면 흐려짐).
-  { key: 'deco_frame', tab: 'deco', label: '메모·라벨', items: ['dc_dma01', 'dc_dma03', 'dc_dma06', 'dc_dma05', 'dc_dma10', 'dc_dma14', 'dc_dma16', 'dc_dma07', 'dc_dma13', 'dc_dma11'] },
-  { key: 'deco_png', tab: 'deco', label: '데코', items: ['dn_ribbon', 'dn_cherry', 'dn_peach', 'dn_star', 'dn_sparkle', 'dn_shoot', 'dn_coffee', 'dn_plant', 'dn_bunting', 'dn_sachet', 'dc_nd08', 'dc_nd01', 'dc_nd05', 'dc_nd16', 'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
-  // 🎗 워시테이프 (2026-07-29) — 창업자 시트의 진짜 손그림 워시. 배경·테이프 탭의 CSS 마테와 달리
-  //   갈색 외곽선 + 양끝 톱니가 있는 '스티커 워시'라 다꾸 감성이 그대로 산다.
-  // 🎗 마스킹테이프 — 창업자 직접 제작(2026-07-29). **사철 쓰는 것만 12종 엄선**(창업자 "엄선해서 12개").
-  //   여름 무늬(레몬·수박·구름·파도·조개…)는 아래 '여름 한정' 그룹으로 뺐다.
-  { key: 'deco_washi', tab: 'deco', label: '마스킹테이프', items: ['wt_ribbon_pink', 'wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender', 'wt_flower_mauve', 'wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow', 'wt_sparkle', 'wt_cherry', 'wt_ribbon_red', 'wt_grid_black'] },
-  // 🖼 프레임 (2026-07-29) — 글씨 얹기 좋은 손그림 프레임. 메모·라벨 그룹과 별개로 큼직한 것들.
-  { key: 'deco_frame2', tab: 'deco', label: '프레임 · 말풍선·격자', items: ['fn_speech', 'fn_bow', 'fn_daisy', 'fn_gingham', 'fn_night'] },
-  // 🖼 손그림 프레임 48종 (창업자 시트 14장 → 낱개 110 중 6세트 선별, 2026-07-29).
+  // 🖼 프레임 — 손그림 프레임 48종 (창업자 시트 14장 → 낱개 110 중 6세트 선별, 2026-07-29).
   //   선별 기준 = **캔버스에 얹었을 때 실제로 보이는가.** 연한 선(B·C·E·J·D)은 배경에 묻혀 안 보였고,
   //   K는 F와 픽셀 단위로 완전 같았다(평균차 0.0). 여름B는 상단 글자가 깨져 있고 다른 IP 펭귄이 섞여 제외.
   //   ⚠️ 순서 = 진한 것 먼저. 첫 그룹이 제일 또렷해야 "프레임 = 예쁜 것"으로 읽힌다.
   { key: 'deco_pf_bold', tab: 'deco', label: '프레임 · 진한 선', items: ['pf_f01', 'pf_f02', 'pf_f03', 'pf_f04', 'pf_f05', 'pf_f06', 'pf_f07', 'pf_f08', 'pf_a01', 'pf_a02', 'pf_a03', 'pf_a04', 'pf_a05', 'pf_a06', 'pf_a07', 'pf_a08'] },
   { key: 'deco_pf_soft', tab: 'deco', label: '프레임 · 소품·꽃', items: ['pf_h01', 'pf_h02', 'pf_h03', 'pf_h04', 'pf_h05', 'pf_h06', 'pf_h07', 'pf_h08', 'pf_g01', 'pf_g02', 'pf_g03', 'pf_g04', 'pf_g05', 'pf_g06', 'pf_g07', 'pf_g08'] },
   { key: 'deco_pf_write', tab: 'deco', label: '프레임 · 글씨 쓰기', items: ['pf_i01', 'pf_i02', 'pf_i03', 'pf_i04', 'pf_i05', 'pf_i06', 'pf_i07', 'pf_i08'] },
+  // 🖼 글씨 얹기 좋은 손그림 프레임 (2026-07-29) — 위 48종과 별개로 큼직한 것들.
+  { key: 'deco_frame2', tab: 'deco', label: '프레임 · 말풍선·격자', items: ['fn_speech', 'fn_bow', 'fn_daisy', 'fn_gingham', 'fn_night'] },
+  // 📷 벡터 프레임 (2026-07-26 · item③) — 꼬르곰·펭펭 얹어 꾸미는 액자틀. SVG라 크게 키워도 안 깨짐 + 🎨색 바꾸기.
+  //   (⚠️캐릭터명 = 꼬르곰·펭펭 풀네임, '곰펭' 금지)
+  { key: 'deco_vframe', tab: 'deco', label: '프레임 · 꼬르곰·펭펭 넣기', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
+  // 🎀 소품 — 리본·체리·별·커피 등 얹는 작은 것들. (옛 이름 `데코` = 탭 이름과 겹쳐서 정보가 0이었다)
+  { key: 'deco_png', tab: 'deco', label: '소품', items: ['dn_ribbon', 'dn_cherry', 'dn_peach', 'dn_star', 'dn_sparkle', 'dn_shoot', 'dn_coffee', 'dn_plant', 'dn_bunting', 'dn_sachet', 'dc_nd08', 'dc_nd01', 'dc_nd05', 'dc_nd16', 'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
+  // 📝 메모·라벨 (2026-07-26) — 다꾸 감성 손그림 메모지·라벨. 글씨 얹어 꾸미기 좋음(작게~중간 크기용, 크게 키우면 흐려짐).
+  { key: 'deco_frame', tab: 'deco', label: '메모·라벨', items: ['dc_dma01', 'dc_dma03', 'dc_dma06', 'dc_dma05', 'dc_dma10', 'dc_dma14', 'dc_dma16', 'dc_dma07', 'dc_dma13', 'dc_dma11'] },
+  { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
+  // 🎗 마스킹테이프 — 창업자 직접 제작(2026-07-29). 배경·테이프 탭의 CSS 마테와 달리 갈색 외곽선 +
+  //   양끝 톱니가 있는 '스티커 워시'라 다꾸 감성이 그대로 산다. **사철 쓰는 것만 12종 엄선**("엄선해서 12개").
+  //   여름 무늬(레몬·수박·구름·파도·조개…)는 아래 `마스킹테이프 · 여름` 으로 뺐다.
+  { key: 'deco_washi', tab: 'deco', label: '마스킹테이프', items: ['wt_ribbon_pink', 'wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender', 'wt_flower_mauve', 'wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow', 'wt_sparkle', 'wt_cherry', 'wt_ribbon_red', 'wt_grid_black'] },
+
+  // ── 여름 (2026-07-29 재제작) ── 제철(6~8월)이면 데코 탭 맨 위로 올라간다.
+  //   ⚠️ 철이 지나도 **숨기지 않는다** — 순서만 밀린다. 유저가 쓰던 걸 못 찾게 되는 게 더 나쁘다.
+  { key: 'deco_sf', tab: 'deco', season: 'summer', label: '프레임 · 여름', items: ['sf_01', 'sf_02', 'sf_03', 'sf_04', 'sf_05', 'sf_06', 'sf_07', 'sf_08', 'sf_09', 'sf_10', 'sf_11', 'sf_12', 'sf_13', 'sf_14', 'sf_15', 'sf_16'] },
   { key: 'deco_pf_summer', tab: 'deco', season: 'summer', label: '프레임 · 여름 폴라로이드', items: ['pf_s01', 'pf_s02', 'pf_s03', 'pf_s04', 'pf_s05', 'pf_s06', 'pf_s07', 'pf_s08'] },
-  // 🏖 여름 세트 (2026-07-29 재제작) — 6~8월엔 데코 탭 맨 위로 올라간다.
-  { key: 'deco_sf', tab: 'deco', season: 'summer', label: '여름 프레임', items: ['sf_01', 'sf_02', 'sf_03', 'sf_04', 'sf_05', 'sf_06', 'sf_07', 'sf_08', 'sf_09', 'sf_10', 'sf_11', 'sf_12', 'sf_13', 'sf_14', 'sf_15', 'sf_16'] },
-  { key: 'deco_sk', tab: 'deco', season: 'summer', label: '여름 소품', items: ['sk_01', 'sk_02', 'sk_03', 'sk_04', 'sk_05', 'sk_06', 'sk_07', 'sk_08', 'sk_09', 'sk_10', 'sk_11', 'sk_12', 'sk_13', 'sk_14', 'sk_15', 'sk_16'] },
-  { key: 'deco_st', tab: 'deco', season: 'summer', label: '여름 씰·메모', items: ['st_01', 'st_02', 'st_03', 'st_04', 'st_05', 'st_06', 'st_07', 'st_08', 'st_09', 'st_10', 'st_11'] },
-  // 🏖 여름 한정 (2026-07-29) — 창업자 "여름은 8월까지 쓰면 끝이니까 여름꺼를 많이 넣자".
-  //   season 이 붙은 그룹은 제철(6~8월)이면 탭 맨 위로 올라간다. 철 지나도 숨기지는 않는다
-  //   — 유저가 쓰던 걸 못 찾게 되는 게 더 나쁘다.
-  { key: 'deco_summer', tab: 'deco', season: 'summer', label: '여름 한정', items: ['wt_wave', 'wt_wave_mint', 'wt_shell', 'wt_starfish', 'wt_palm', 'wt_stripe_blue', 'wt_watermelon', 'wt_lemon', 'wt_cloud', 'wt_gingham'] },
+  { key: 'deco_sk', tab: 'deco', season: 'summer', label: '소품 · 여름', items: ['sk_01', 'sk_02', 'sk_03', 'sk_04', 'sk_05', 'sk_06', 'sk_07', 'sk_08', 'sk_09', 'sk_10', 'sk_11', 'sk_12', 'sk_13', 'sk_14', 'sk_15', 'sk_16'] },
+  { key: 'deco_st', tab: 'deco', season: 'summer', label: '메모·씰 · 여름', items: ['st_01', 'st_02', 'st_03', 'st_04', 'st_05', 'st_06', 'st_07', 'st_08', 'st_09', 'st_10', 'st_11'] },
+  // ⚠️ 옛 이름은 `여름 한정` 이었는데 **내용은 전부 마스킹테이프**(`wt_`)라 이름이 내용을 안 알려줬다.
+  { key: 'deco_summer', tab: 'deco', season: 'summer', label: '마스킹테이프 · 여름', items: ['wt_wave', 'wt_wave_mint', 'wt_shell', 'wt_starfish', 'wt_palm', 'wt_stripe_blue', 'wt_watermelon', 'wt_lemon', 'wt_cloud', 'wt_gingham'] },
   // 🍂 가을 = **계절 기본이라 무료.** 48컷을 **9월·10월·11월 세 번에 나눠** 넣는다.
   //
   // ⭐ 창업자 확정 2026-07-30:
@@ -605,7 +623,6 @@ export const STICKER_GROUPS = [
   { key: 'buddies_autumn_b', tab: 'buddies', season: 'autumn', from: '2026-10-01', label: '꼬르곰·펭펭의 가을 나들이', items: ['au_b02', 'au_b03', 'au_b04', 'au_b10', 'au_b11', 'au_b12'] },
   { key: 'deco_autumn_c', tab: 'deco', season: 'autumn', from: '2026-11-01', label: '늦가을 소품', items: ['au_i10', 'au_i11', 'au_i13', 'au_i14', 'au_i17', 'au_i20', 'au_t01', 'au_t05', 'au_s03', 'au_s04'] },
   { key: 'buddies_autumn_c', tab: 'buddies', season: 'autumn', from: '2026-11-01', label: '꼬르곰·펭펭의 늦가을', items: ['au_b06', 'au_b07', 'au_b08', 'au_b15', 'au_b16', 'au_b17'] },
-  { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
   // 💪 라이프
   // 🍳 주방도구 (2026-07-29) — 라이프 탭이 통째로 운동용품(아령·줄넘기·복싱)이라
   //   요리앱 표지를 꾸미는데 아령이 나왔다. 요리 도구를 맨 위로 올린다.
