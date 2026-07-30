@@ -1029,8 +1029,15 @@ export const DECOR_BACKGROUNDS = [
   { key: 'sky', label: '하늘', style: { background: '#e9f0f7' } },
   { key: 'lilac', label: '라일락', style: { background: '#f1ebf5' } },
   { key: 'kraft', label: '크라프트', style: { background: '#eee2d0' } },
+  // ⛔ **모눈·도트·스트라이프는 피커에서 뺐다** (창업자 2026-07-30:
+  //    *"색·그라데이션 이거 넣으려면 우리 기본배경에 있는거 빼야해. 지금 레꾸에 있는 모눈 도트
+  //      스프라이트 다 겹쳐. 기본배경에는 색깔만 있는 배경 줘야할 듯"*)
+  //    왜 = **마스킹테이프에 이미 모눈·도트·스트라이프가 있다.** 배경에도 있으면 표지가 무늬 천지가 된다.
+  //    → 기본 배경은 **색(단색·그라데이션)만.** 무늬 배경은 유료 팩 쪽으로 돌린다.
+  //    ⚠️ `hidden: true` 는 **피커에서만 안 보이게** 하는 것이다. `bgStyle()` 은 그대로 찾아 주므로
+  //       **이 배경으로 이미 저장한 표지는 계속 정상으로 보인다**(한 번 준 것은 빼앗지 않는다).
   {
-    key: 'grid', label: '모눈',
+    key: 'grid', label: '모눈', hidden: true,
     style: {
       backgroundColor: '#f4efe4',
       backgroundImage: 'linear-gradient(#dcd3c0 1px, transparent 1px), linear-gradient(90deg, #dcd3c0 1px, transparent 1px)',
@@ -1038,7 +1045,7 @@ export const DECOR_BACKGROUNDS = [
     },
   },
   {
-    key: 'dot', label: '도트',
+    key: 'dot', label: '도트', hidden: true,
     style: {
       backgroundColor: '#f5ece0',
       // 도트 작게 + circle 로 동그랗게(비정사각 셀에서도 타원 안 되게)
@@ -1047,20 +1054,32 @@ export const DECOR_BACKGROUNDS = [
     },
   },
   {
-    key: 'stripe', label: '스트라이프',
+    key: 'stripe', label: '스트라이프', hidden: true,
     style: {
       backgroundColor: '#f4ede0',
       backgroundImage: 'repeating-linear-gradient(45deg, #eadfca 0, #eadfca 6%, transparent 6%, transparent 12%)',
     },
   },
-  {
-    key: 'sunset', label: '노을',
-    style: { background: 'linear-gradient(160deg, #f7e2d3 0%, #f0d5da 55%, #e6d3ea 100%)' },
-  },
-  {
-    key: 'sage', label: '세이지',
-    style: { background: 'linear-gradient(160deg, #dfe9d8 0%, #d1e0d5 50%, #dae5e4 100%)' },
-  },
+  // 🎨 그라데이션 = **유료 배경 팩 재고**라 기본에 안 넣는다.
+  //    창업자 2026-07-30: *"유료 배경효과에 그라 넣으려면 우리 기본으로 준 노을, 세이지 빼야한단 뜻이야"*
+  //    ⭐ **팔 것을 먼저 공짜로 주면 안 된다.** 이미 준 걸 나중에 회수하는 건 더 안 되니까,
+  //       **정식 출시 전인 지금이 정리할 마지막 타이밍**이다(출시 후엔 못 뺀다).
+  //    → 코드·CSS 는 만들어 두고 `pack: 'bg'` 로 잠가 둔다. 배경 팩을 팔 때 `ownedPacks()` 로 열린다.
+  { key: 'gwarm', label: '웜크림', pack: 'bg', hidden: true,
+    style: { background: 'linear-gradient(160deg, #fcf2e3 0%, #f2e0cb 100%)' } },
+  { key: 'gmint', label: '민트', pack: 'bg', hidden: true,
+    style: { background: 'linear-gradient(150deg, #e6f5f0 0%, #cbe7ee 100%)' } },
+  { key: 'grainbow', label: '파스텔', pack: 'bg', hidden: true,
+    style: { background: 'linear-gradient(135deg, #fde3e6 0%, #fdf0d9 28%, #ddf0e4 56%, #dde7f5 80%, #e9dff3 100%)' } },
+  // ⛔ **노을·세이지도 기본에서 뺀다** — 이 둘이 그라데이션이라서다.
+  //    창업자 2026-07-30: *"유료 배경효과에 그라 넣으려면 우리 기본으로 준 노을, 세이지 빼야한단 뜻이야"*
+  //    ⭐ 기본 배경 = **단색만.** 그라데이션·질감·빛·계절은 전부 유료 배경 팩 몫이다.
+  //    ⚠️ 지우는 게 아니라 **숨김**이라 이걸로 저장한 표지는 그대로 보인다.
+  //       (그리고 이건 **정식 출시 전이라 가능한 정리**다 — 출시 후엔 쓰던 사람이 생겨서 못 뺀다)
+  { key: 'sunset', label: '노을', hidden: true,
+    style: { background: 'linear-gradient(160deg, #f7e2d3 0%, #f0d5da 55%, #e6d3ea 100%)' } },
+  { key: 'sage', label: '세이지', hidden: true,
+    style: { background: 'linear-gradient(160deg, #dfe9d8 0%, #d1e0d5 50%, #dae5e4 100%)' } },
   // 🍃 조금 진한 뮤트(중간톤·다크 아님) — 곰(웜)·펭(쿨) 둘 다 맞는 뉴트럴/브릿지 우선 + 웜·쿨 포인트 하나씩. (창업자 요청 2026-07-23, 클로드 셀렉)
   { key: 'msage', label: '딥세이지', style: { background: '#9aab9c' } },   // 그린 브릿지 — 둘 다 최고
   { key: 'mtaupe', label: '웜토프', style: { background: '#b5a695' } },    // 웜뉴트럴 브릿지 — 둘 다 부드럽게
@@ -1083,12 +1102,12 @@ export const bgIsDark = (key) => !!DECOR_BACKGROUNDS.find((b) => b.key === key)?
 export const TAPE_PATTERNS = [
   { key: 'kraft', label: '크라프트', style: { background: 'rgba(214,197,168,0.92)' } },
   {
-    key: 'stripe', label: '스트라이프',
+    key: 'stripe', label: '스트라이프', hidden: true,
     style: { backgroundColor: 'rgba(240,224,205,0.92)', backgroundImage: 'repeating-linear-gradient(45deg, rgba(200,120,95,.4) 0, rgba(200,120,95,.4) 7%, transparent 7%, transparent 14%)' },
   },
   {
     // 도트 — %폭×%높이(radial)는 3.4:1 띠에서 타원으로 늘어남 → SVG 원 + auto높이로 항상 동그랗게
-    key: 'dot', label: '도트',
+    key: 'dot', label: '도트', hidden: true,
     style: { backgroundColor: 'rgba(236,236,225,0.92)', backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14'><circle cx='7' cy='7' r='2.7' fill='%23968060' opacity='0.42'/></svg>\")", backgroundSize: 'auto 46%' },
   },
   { key: 'rose', label: '로즈', style: { background: 'rgba(232,205,203,0.92)' } },

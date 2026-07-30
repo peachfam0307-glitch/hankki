@@ -456,7 +456,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
                 <div className="decor-sec">
                   <div className="decor-sec-label">배경지</div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {DECOR_BACKGROUNDS.map((b) => {
+                    {/* ⛔ hidden = 피커에만 안 뜬다(모눈·도트·스트라이프 — 마테와 겹쳐서 뺌).
+    저장된 표지는 bgStyle() 이 계속 찾아 주므로 그대로 보인다. */}
+                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden).map((b) => {
                       const on = bg === b.key
                       const sw = b.style || { background: 'linear-gradient(135deg,#eef0ec,#e1e5de)' }
                       return (
