@@ -8,12 +8,17 @@ import uiHandPoint from '../assets/ui/hand_point.png'
 import cuNoodle from '../assets/curation/cu_noodle.png'
 import cuSalt from '../assets/curation/cu_salt.png'
 import cuTsuyu from '../assets/curation/cu_stock_tsuyu.png'
-// 🐻🐧🦫🦊🦎 다섯 친구 상반신 — 키는 종(種) 기준이라 이름이 바뀌어도 파일을 다시 안 만든다
-import castGom from '../assets/cast/bu_gom.png'
-import castPeng from '../assets/cast/bu_peng.png'
-import castCapy from '../assets/cast/bu_capy.png'
-import castFox from '../assets/cast/bu_fox.png'
-import castGecko from '../assets/cast/bu_gecko.png'
+// 🖼 5인 전신 정본 — `docs/stickers/README.md` A0-7 이 "온보딩엔 이걸 쓴다"고 지정한 그림.
+//    (창업자 2026-07-30: *"저럴거면 전신을 하지 왜 상반신을해?"* — 낱개 상반신을 바닥에 세우면
+//     허리 절단면이 그대로 보인다. 정본은 처음부터 전신 단체 구도로 그려진 그림이다.)
+//    배경이 #F9F9F9 단색이라 같은 색 카드에 얹으면 이어붙인 자리가 안 보인다(투명 처리 불필요).
+import lineup5 from '../assets/cast/lineup5.png'
+// 얼굴 컷 — 이름·성격 줄 앞에 붙여 "누가 누구인지" 짝지어준다(단체 그림만으론 못 짚는다)
+import avGom from '../assets/avatars/av_gom.png'
+import avPeng from '../assets/avatars/av_peng.png'
+import avCapy from '../assets/avatars/av_capy.png'
+import avFox from '../assets/avatars/av_fox.png'
+import avGecko from '../assets/avatars/av_gecko.png'
 
 // 첫 실행 온보딩 — 스토어 스샷과 똑같은 레꾸 카드+곰펭 디자인을 앱 안에서 라이브로.
 // 곰펭은 앱 실제 모션(콩콩·살랑·둥실…), 꾸미기 슬라이드엔 반짝·하트 효과. 문구=꼬르곰·펭펭/레꾸(옛 '흩어진'·'곰펭이' 없음).
@@ -217,35 +222,70 @@ const Slide7 = () => (
 // ⚠️ **이름·설명은 코드 글자로.** 글자가 박힌 이미지(`설명판-이름오타있음.png`)는 쓰지 않는다 —
 //    이름이 바뀌면 한 줄만 고치면 되고, 확대해도 안 뭉갠다.
 // 키는 종(種) 기준(`bu_fox`)이라 이름이 바뀌어도 파일을 다시 안 만든다.
-const CAST = [
-  // 키 비율은 브랜드바이블 스펙(꼬르곰=100 · 카롱 78~84 · 뾰미 72~78 · 펭펭 65~70 · 꼬비 28~35)을
-  // 화면에서 알아볼 수 있게 살짝 눌러 쓴다. 꼬비를 스펙대로 30%로 하면 너무 작아 못 알아본다.
-  // ⚠️ 꼬비 소스가 204px뿐이라 여기서 더 키우면 확대가 된다 — 160이 축소로 남는 상한이다.
-  { img: castGom, name: '꼬르곰', h: 325 },
-  { img: castCapy, name: '카롱', h: 265 },
-  { img: castFox, name: '뾰미', h: 252 },
-  { img: castPeng, name: '펭펭', h: 238 },
-  { img: castGecko, name: '꼬비', h: 160 },
-]
+// ── 7B. 왜 만들었나 + 꼬르곰·펭펭의 의미 ──
+//
+// ⭐ 창업자 2026-07-30: *"내가 왜 이앱을 만들었고 꼬르곰 펭펭의 의미"* 가 들어가야 한다.
+// ⚠️ 문구는 **전부 우리 문서 원문에서 가져왔다 — 지어낸 문장이 하나도 없다.**
+//    · 만든 계기 = `docs/기획-노트.md` "왜 만들었나(창업자의 진짜 불편함)" 원문 요약
+//      ("캡처 사진만 수백 장 쌓였는데 … 결국 못 찾는다. 그래서 만들었다")
+//    · 꼬르곰 = 저작자 자신(엄마) · 펭펭 = 저작자의 사춘기 딸 · 콤비 = 티격태격이 곧 사랑
+//      = `docs/저작권-창작기록-꼬르곰펭펭-2026-07-21.md` §2
+//    · "18년차 주부" = 이미 Slide6 에서 쓰는 표현과 동일
 const Slide7B = () => (
+  <Stage bg="linear-gradient(168deg,#fdeedd,#f8dcc0 58%,#eec8a2)">
+    <Cap top={200}><H1 style={{ color: '#7a4a22' }}>꼬르곰은 저예요</H1><Sub style={{ color: '#96613a' }}>펭펭은 제 사춘기 딸이고요</Sub></Cap>
+    {/* ⚠️ 가운데 맞추기를 `left:50% + translateX(-50%)` 로 하면 안 된다 — 모션 클래스(hk-m-*)가
+        transform 을 애니메이션해서 translateX 가 덮어써지고 그림이 오른쪽으로 잘린다(2026-07-30 실제로 잘림).
+        스테이지 폭이 1080 고정이므로 left 를 직접 계산해 둔다((1080-620)/2 = 230). */}
+    <Img k="gp_duoht" cls="hk-m-sway" style={{ top: 470, left: 230, width: 620, transformOrigin: 'bottom center', filter: 'drop-shadow(0 18px 26px rgba(130,80,40,.28))' }} />
+    {/* 만든 계기 — 창업자 1인칭. 기능 자랑이 아니라 "나도 그랬다" 는 공감이 첫 줄이다 */}
+    <div style={{ position: 'absolute', top: 1060, left: 70, right: 70, background: '#fffdf8', borderRadius: 40, padding: '44px 46px', boxShadow: '0 18px 36px rgba(150,95,50,.22)' }}>
+      <div style={{ fontSize: 44, lineHeight: 1.5, color: '#5f3c1c' }}>
+        저장만 해둔 레시피 캡처가 수백 장.<br />
+        정작 해먹고 싶을 땐 못 찾았어요.<br />
+        <span style={{ color: '#c2703f' }}>그래서 한끼를 만들었어요.</span>
+      </div>
+      <div style={{ marginTop: 26, paddingTop: 24, borderTop: '3px dashed #ecd9bf', fontSize: 38, lineHeight: 1.45, color: '#8a6440' }}>
+        티격태격이 곧 사랑이라서,<br />두 캐릭터가 앱 곳곳에 살아요.
+      </div>
+    </div>
+    <Foot style={{ background: '#7a4a22', color: '#fff7ea' }}>18년차 주부가 만든 앱</Foot>
+  </Stage>
+)
+
+// ── 7C. 다섯 친구 (성격 한 줄 + 친구들 = 앞으로 함께할 한끼 유저) ──
+//
+// ⭐ 창업자 2026-07-30: *"애들 성격이 짧게라도 들어가야지"* · *"친구들은 앞으로 한끼를
+//    함께한 한끼유저들"*. 이름표만 붙인 첫 판을 두고 *"소개도 없이 덜렁 저게 끝이야???"*.
+// ⚠️ '한 줄' 은 `docs/stickers/README.md` A0-7 캐스트 표의 **「한 줄」 행 그대로** — 새로 안 지었다.
+const CAST = [
+  { face: avGom, name: '꼬르곰', line: '허당 셰프, 감정 부자' },
+  { face: avPeng, name: '펭펭', line: '무표정이 매력인 해결사' },
+  { face: avCapy, name: '카롱', line: '여유로운 체력왕' },
+  { face: avFox, name: '뾰미', line: '트렌드에 민감한 멋쟁이' },
+  { face: avGecko, name: '꼬비', line: '어디에나 숨는 행운의 요정' },
+]
+const Slide7C = () => (
   <Stage bg="linear-gradient(165deg,#f7e6ca,#f2d6b0 58%,#e8c495)">
-    <Cap top={210}><H1 style={{ color: '#6b4526' }}>한끼엔 다섯 친구가<br />살고 있어요</H1><Sub style={{ color: '#8a6440' }}>꼬르곰이 요리하고, 펭펭이 수습해요</Sub></Cap>
-    {/* 바닥을 맞춰 한 줄로 세운다 — 키 차이가 그대로 캐스트 소개가 된다(꼬르곰이 제일 큼, 꼬비가 제일 작음) */}
-    <div style={{ position: 'absolute', top: 760, left: 0, right: 0, height: 580, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 14, padding: '0 30px' }}>
+    <Cap top={150}><H1 style={{ color: '#6b4526' }}>다섯 친구가<br />함께 살아요</H1></Cap>
+    {/* 단체 정본 — 배경과 같은 #F9F9F9 카드에 얹어 경계가 안 보이게 */}
+    <div style={{ position: 'absolute', top: 430, left: 64, right: 64, background: '#f9f9f9', borderRadius: 40, padding: '10px 0 0', boxShadow: '0 16px 32px rgba(140,95,50,.2)', overflow: 'hidden' }}>
+      <img src={lineup5} alt="" draggable={false} style={{ display: 'block', width: '100%', height: 'auto' }} />
+    </div>
+    {/* 이름 + 성격 한 줄 — 얼굴 컷을 앞에 붙여 누가 누군지 짚어준다 */}
+    <div style={{ position: 'absolute', top: 1200, left: 74, right: 74, display: 'flex', flexDirection: 'column', gap: 12 }}>
       {CAST.map((c) => (
-        <div key={c.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+        <div key={c.name} style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <img
-            src={c.img}
-            alt=""
-            draggable={false}
-            className="hk-m-tongtong"
-            style={{ height: c.h, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 12px 18px rgba(120,80,40,.22))' }}
+            src={c.face} alt="" draggable={false}
+            style={{ width: 74, height: 74, borderRadius: '50%', objectFit: 'contain', background: '#fffdf8', border: '3px solid #e6cfae', flex: '0 0 auto' }}
           />
-          <div style={{ fontSize: 38, fontWeight: 800, color: '#6b4526', whiteSpace: 'nowrap' }}>{c.name}</div>
+          <div style={{ fontSize: 40, fontWeight: 800, color: '#6b4526', width: 190, flex: '0 0 auto' }}>{c.name}</div>
+          <div style={{ fontSize: 36, color: '#8a6440', lineHeight: 1.3 }}>{c.line}</div>
         </div>
       ))}
     </div>
-    <Foot style={{ background: '#6b4526', color: '#fff7ea' }}>오늘부터 같이 한 끼</Foot>
+    <Foot style={{ background: '#6b4526', color: '#fff7ea' }}>여섯 번째 친구는 여러분이에요</Foot>
   </Stage>
 )
 
@@ -264,7 +304,7 @@ const Slide8 = () => (
   </Stage>
 )
 
-const SLIDES = [Slide1, Slide2, Slide3, Slide6, Slide7, Slide7B, Slide8]
+const SLIDES = [Slide1, Slide2, Slide3, Slide6, Slide7, Slide7B, Slide7C, Slide8]
 
 export default function Onboarding({ onDone }) {
   const N = SLIDES.length
