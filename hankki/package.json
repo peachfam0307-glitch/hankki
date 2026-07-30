@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test:link": "node scripts/test-linkrules.mjs",
     "test:parser": "node scripts/test-parser.mjs",
-    "smoke": "node scripts/check-sticker-res.mjs && node scripts/test-cardtitle.mjs && node scripts/test-linkrules.mjs && node scripts/test-parser.mjs && node scripts/smoke.mjs",
+    "smoke": "node scripts/check-sticker-res.mjs && node scripts/test-season.mjs && node scripts/test-cardtitle.mjs && node scripts/test-linkrules.mjs && node scripts/test-parser.mjs && node scripts/smoke.mjs",
     "test:res": "node scripts/check-sticker-res.mjs",
     "test:title": "node scripts/test-cardtitle.mjs"
   },

@@ -1,3 +1,4 @@
+import { isSeason } from '../season'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toPng, toJpeg } from 'html-to-image'
 import Icon from './Icon'
@@ -60,8 +61,10 @@ function tagsOf(recipe) {
 
 // 스타일별 카테고리 규칙(적재적소): 콤비는 넓은 스타일(홀로·팝·여름)에만.
 function drawState() {
-  const m = new Date().getMonth() + 1
-  const isSummer = m >= 6 && m <= 8   // 여름 스킨은 6~8월에만 등장(한정 수집감)
+  // ⚠️ 스티커는 철이 지나도 순서만 밀리지만, **카드 스킨은 뽑기 풀에서 아예 빠진다**(한정 수집감).
+  //    그래서 전환기 겹침이 여기서 특히 크다 — 9월 첫 2주까지는 여름 스킨이 계속 나온다.
+  //    (`src/season.js` — 창업자 2026-07-30 "여름에 준비한 아이템들은 며칠 못하고…")
+  const isSummer = isSeason('summer')
   const pool = isSummer
     ? ['warm', 'panel', 'pola', 'mag', 'summer', 'night', 'summer']
     : ['warm', 'panel', 'pola', 'mag', 'night', 'warm']

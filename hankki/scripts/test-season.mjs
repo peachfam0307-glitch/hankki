@@ -1,0 +1,51 @@
+// 🍂 제철·전환기 테스트
+//
+// 왜 생겼나(2026-07-30): 창업자 — *"8월중순이면 여름에 준비한 아이템들은 정말 며칠 못하고
+// 내년을 기약해야겠다..ㅠ"*. 8/31 자정에 여름이 뚝 끊기던 걸 **새 계절 첫 2주는 지난 계절도
+// 함께 제철**로 바꿨다. 달력 경계는 눈으로 못 보고 지나가는 버그가 나는 자리라 값을 박아둔다.
+//
+// ⚠️ 특히 12월↔1월 넘어가는 자리(겨울이 두 해에 걸침)와 **2월→3월**(겨울 뒤 봄) 을 꼭 본다.
+import { SEASON_AT, seasonsNow, isSeason, seasonRank, OVERLAP_DAYS } from '../src/season.js'
+
+let bad = 0
+const D = (y, m, d) => new Date(y, m - 1, d)
+const eq = (label, got, want) => {
+  const g = JSON.stringify(got); const w = JSON.stringify(want)
+  if (g === w) { console.log(`  ok  ${label} → ${g}`) } else { console.log(`  ✗   ${label} → ${g}  (원하는 값 ${w})`); bad++ }
+}
+
+console.log('── 월 → 계절 ──')
+;[[1, 'winter'], [2, 'winter'], [3, 'spring'], [5, 'spring'], [6, 'summer'], [8, 'summer'],
+  [9, 'autumn'], [11, 'autumn'], [12, 'winter']].forEach(([m, s]) => eq(`${m}월`, SEASON_AT(m), s))
+
+console.log('\n── 계절 한복판 = 그 계절만 ──')
+eq('7/15 (여름 한복판)', seasonsNow(D(2026, 7, 15)), ['summer'])
+eq('8/31 (여름 마지막 날)', seasonsNow(D(2026, 8, 31)), ['summer'])
+eq('10/1 (가을 둘째 달 1일 — 전환기 아님)', seasonsNow(D(2026, 10, 1)), ['autumn'])
+eq('7/1 (여름 둘째 달 1일 — 전환기 아님)', seasonsNow(D(2026, 7, 1)), ['summer'])
+
+console.log('\n── ⭐ 전환기 = 새 계절 첫 2주엔 지난 계절도 ──')
+eq('9/1  (여름→가을 첫날)', seasonsNow(D(2026, 9, 1)), ['autumn', 'summer'])
+eq(`9/${OVERLAP_DAYS} (전환기 마지막 날)`, seasonsNow(D(2026, 9, OVERLAP_DAYS)), ['autumn', 'summer'])
+eq(`9/${OVERLAP_DAYS + 1} (전환기 끝난 다음 날)`, seasonsNow(D(2026, 9, OVERLAP_DAYS + 1)), ['autumn'])
+eq('12/5 (가을→겨울)', seasonsNow(D(2026, 12, 5)), ['winter', 'autumn'])
+eq('3/5  (겨울→봄)', seasonsNow(D(2027, 3, 5)), ['spring', 'winter'])
+eq('6/5  (봄→여름)', seasonsNow(D(2027, 6, 5)), ['summer', 'spring'])
+
+console.log('\n── 해를 넘기는 겨울(12↔1) — 1월은 12월과 같은 겨울이라 전환기가 아니어야 한다 ──')
+eq('1/5  (겨울 계속)', seasonsNow(D(2027, 1, 5)), ['winter'])
+eq('2/5  (겨울 계속)', seasonsNow(D(2027, 2, 5)), ['winter'])
+
+console.log('\n── 여름 카드 스킨이 실제로 며칠 살아있나 (뽑기 풀에서 빠지는 판정) ──')
+;[[8, 20, true], [8, 31, true], [9, 1, true], [9, 14, true], [9, 15, false], [10, 1, false]]
+  .forEach(([m, d, want]) => eq(`${m}/${d} 여름 스킨`, isSeason('summer', D(2026, m, d)), want))
+
+console.log('\n── 서랍 정렬 순위 (낮을수록 위) ──')
+eq('9/5 가을', seasonRank('autumn', D(2026, 9, 5)), 0)
+eq('9/5 여름', seasonRank('summer', D(2026, 9, 5)), 1)
+eq('9/5 겨울', seasonRank('winter', D(2026, 9, 5)), 2)
+eq('9/5 계절없음', seasonRank(undefined, D(2026, 9, 5)), 2)
+eq('9/20 여름 (전환기 끝 — 계절없음과 같은 뒤쪽)', seasonRank('summer', D(2026, 9, 20)), 1)
+
+if (bad) { console.log(`\n❌ ${bad}건 실패`); process.exit(1) }
+console.log('\n✅ 제철·전환기 전부 통과')
