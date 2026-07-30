@@ -1071,7 +1071,10 @@ export const DECOR_BACKGROUNDS = [
   //    ⭐ **팔 것을 먼저 공짜로 주면 안 된다.** 이미 준 걸 나중에 회수하는 건 더 안 되니까,
   //       **정식 출시 전인 지금이 정리할 마지막 타이밍**이다(출시 후엔 못 뺀다).
   //    → 코드·CSS 는 만들어 두고 `pack: 'bg'` 로 잠가 둔다. 배경 팩을 팔 때 `ownedPacks()` 로 열린다.
-  { key: 'gwarm', label: '웜크림', pack: 'bg', hidden: true,
+  // ✅ 그라데이션 중 **하나만 무료**(창업자 2026-07-30 *"모눈이랑 그라 한개는 주자"*).
+  //    웜크림을 고른 이유 = **제일 중립적**이라 어떤 스티커를 얹어도 안 싸우고,
+  //    눈에 띄는 것들(파스텔·노을·민트·세이지)은 **팔 것으로 남겨야** 하기 때문.
+  { key: 'gwarm', label: '웜크림',
     style: { background: 'linear-gradient(160deg, #fcf2e3 0%, #f2e0cb 100%)' } },
   { key: 'gmint', label: '민트', pack: 'bg', hidden: true,
     style: { background: 'linear-gradient(150deg, #e6f5f0 0%, #cbe7ee 100%)' } },
