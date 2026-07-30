@@ -76,15 +76,8 @@ def fx_html(kind):
         out.append(f'<span class="hk-fx hk-fx-{kind}{cls}" style="{st}">{inner}</span>')
     return ''.join(out)
 
-SPLIT = {'deulssuk', 'kkeudeok'}
-SPLIT_TOP, SPLIT_BOT = 60, 50   # 10% 겹쳐서 이음새 틈을 덮는다(앱과 동일)
 def stage(char, motion='', fx=''):
-    # 🙆 상하체 분리 모션은 같은 그림을 두 겹으로 깔고 위/아래를 각각 잘라 낸다(앱과 같은 방식)
-    if motion in SPLIT:
-        inner = (f'<div class="ch c-{char} hk-m-{motion}-bot" style="clip-path:inset({SPLIT_BOT}% 0 0 0)"></div>'
-                 f'<div class="ch c-{char} hk-m-{motion}-top" style="clip-path:inset(0 0 {100-SPLIT_TOP}% 0)"></div>')
-    else:
-        inner = f'<div class="ch c-{char}{f" hk-m-{motion}" if motion else ""}"></div>'
+    inner = f'<div class="ch c-{char}{f" hk-m-{motion}" if motion else ""}"></div>'
     return (f'<div class="stage"><div class="pic">'
             f'<div class="holder" style="aspect-ratio:{RATIO[char]}">'
             f'{inner}{fx_html(fx) if fx else ""}</div></div></div>')
@@ -110,20 +103,16 @@ MOTION_AXES = [
    ('찰랑','wave','sm_gom_tube','물 위에 부유 · 2.8초','free')]),
  ('좌우로 걸어간다 🆕', '<b>자리를 옮긴다.</b> 위아래로 뛰는 애들과 인상이 완전히 다르다.', [
    ('아장아장','ajang','sm_duo_watermelon','걸어갔다 온다 · 3.2초','pack')]),
- ('한 바퀴 돈다 🆕', '대부분 멈춰 있다가 가끔 휙. 계속 돌면 어지럽다.', [
-   ('빙글','bingle','gp_pengv','휙 한 바퀴 · 3.6초','pack')]),
+ ('한 바퀴 돈다 🆕', '처음엔 <b>가끔만</b> 돌게 했더니 보고 있어도 아무 일이 안 일어났다. 자주 돌게 고쳤다.', [
+   ('빙글','bingle','gp_pengv','휙 한 바퀴 · 2.4초','pack')]),
  ('부르르 떤다 🆕', '<b>빠르고 작다.</b> 통통(느리고 큼)과 정반대라 절대 안 겹친다.', [
    ('부르르','bureu','gp_gomhi','짧게 떨림 · 2.8초','pack')]),
  ('크기만 변한다 🆕', '자리 이동이 <b>0</b>이라 통통과 확실히 갈린다. 두 박자라야 심장으로 읽힌다.', [
    ('콩닥','kongdak','gp_penghi','쿵-닥 두 박자 · 1.9초','pack')]),
- ('좌우로 돌아본다 🆕', '그림 한 장으로 "돌아본다"를 만드는 유일한 방법(좌우 반전).', [
-   ('두리번','durib','gp_gomv','뒤집으며 살핌 · 4.2초','pack')]),
+ ('좌우로 돌아본다 🆕', '그림 한 장으로 "돌아본다"를 만드는 유일한 방법(좌우 반전). 이것도 더 자주 뒤집게 고쳤다.', [
+   ('두리번','durib','gp_gomv','뒤집으며 살핌 · 2.8초','pack')]),
  ('종이가 들린다', '왼쪽 끝이 붙어 있고 오른쪽이 들린다.', [
    ('펄럭','flutter','gp_gomhi','바람에 들림 · 2.2초','pack')]),
- ('🙆 상체만 따로 움직인다 🆕', '<b>그림 한 장을 허리에서 둘로 잘라</b> 위만 움직인다. '
-  '통짜로 흔드는 것과 결이 완전히 다르다 — 훨씬 살아 있어 보인다. <b>그림은 한 장도 더 안 든다.</b>', [
-   ('들썩','deulssuk','gp_gomhi','상체만 좌우로 · 2.3초','spare'),
-   ('끄덕','kkeudeok','gp_penghi','상체만 숙였다 폄 · 2.6초','spare')]),
 ]
 
 # ══ 효과 = **방향(어디로 가는가)** 으로 묶는다 ══
@@ -197,6 +186,7 @@ body = f'''<title>한끼 · 움직임과 효과 표본집</title>
 
 <section>
   <h2>움직임 <span class="cnt">축 9가지 · 14개</span></h2>
+  <p class="note">⚠️ <b>새로고침해서 보세요.</b> 「들썩·끄덕」은 뺐고(허리 무늬가 어긋나서), 「빙글·두리번」은 <b>더 자주 움직이게</b> 고쳤어요.</p>
   {''.join(block(t, w, r, False) for t, w, r in MOTION_AXES)}
 </section>
 

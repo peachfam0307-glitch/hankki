@@ -1422,8 +1422,12 @@ html, body { overscroll-behavior: none; }
 .hk-m-ajang { animation: hk-ajang 3.2s ease-in-out infinite; }
 
 /* 🌀 빙글 — **한 바퀴 돈다.** 대부분 멈춰 있다가 가끔 휙 돈다(계속 돌면 어지럽다). */
-@keyframes hk-bingle { 0%,58% { transform: rotate(0); } 88%,100% { transform: rotate(360deg); } }
-.hk-m-bingle { animation: hk-bingle 3.6s cubic-bezier(.5,0,.25,1) infinite; transform-origin: 50% 58%; }
+/* ⚠️ 처음엔 3.6초에 한 번, 그것도 마지막 30% 에서만 돌게 했다(어지러울까 봐).
+   창업자: *"빙글 두리번은 안보여서 못봤어"* — **보고 있어도 아무 일이 안 일어났다.**
+   📌 교훈: **가끔만 움직이는 모션은 「안 움직이는 것」과 구별이 안 된다.**
+      주기를 짧게(2.4초) 하고 도는 구간을 넓혀(45%) 자주 보이게 한다. */
+@keyframes hk-bingle { 0%,40% { transform: rotate(0); } 85%,100% { transform: rotate(360deg); } }
+.hk-m-bingle { animation: hk-bingle 2.4s cubic-bezier(.45,0,.3,1) infinite; transform-origin: 50% 58%; }
 
 /* 🥶 부르르 — **빠르고 작은 진동.** 통통(느리고 큼)과 정반대라 절대 안 겹친다.
    추울 때·설렐 때. 대부분 가만히 있다가 끝에서 짧게 떤다. */
@@ -1451,14 +1455,16 @@ html, body { overscroll-behavior: none; }
 
 /* 👀 두리번 — **좌우로 몸을 뒤집는다.** 그림 1장으로 '돌아본다'를 만드는 유일한 방법.
    ⚠️ 뒤집기 전에 잠깐 멈추고, 기울였다가 뒤집어야 '두리번'이 된다(바로 뒤집으면 깜빡임처럼 보임). */
+/* ⚠️ 여기도 같은 이유로 4.2초 → 2.8초, 멈춰 있는 구간을 없앴다.
+   뒤집기 직전 살짝 기울이는 건 남긴다 — 바로 뒤집으면 '깜빡임'이지 '돌아본다'가 아니다. */
 @keyframes hk-durib {
-  0%,12% { transform: scaleX(1) rotate(0); }
-  24% { transform: scaleX(1) rotate(-5deg); }
-  38%,52% { transform: scaleX(-1) rotate(0); }
-  64% { transform: scaleX(-1) rotate(-5deg); }
-  78%,100% { transform: scaleX(1) rotate(0); }
+  0% { transform: scaleX(1) rotate(0); }
+  18% { transform: scaleX(1) rotate(-6deg); }
+  32%,50% { transform: scaleX(-1) rotate(0); }
+  68% { transform: scaleX(-1) rotate(-6deg); }
+  82%,100% { transform: scaleX(1) rotate(0); }
 }
-.hk-m-durib { animation: hk-durib 4.2s ease-in-out infinite; }
+.hk-m-durib { animation: hk-durib 2.8s ease-in-out infinite; }
 
 /* 💫 효과(양념) 파티클 — 뮤트 톤, 머리 위쪽 위주.
    ⚠️⚠️ **이동 거리(`--rise`·`--fy`·`--sx`·`--dx`·`--r`·`--go`)는 전부 CSS 변수로 뺐다.**
@@ -1497,30 +1503,6 @@ html, body { overscroll-behavior: none; }
 .hk-fx-snow { animation: hk-fx-snow 4.6s linear infinite; }
 .hk-fx-petal { animation: hk-fx-fall 3.8s ease-in-out infinite; }
 .hk-fx-leaf { animation: hk-fx-fall 3.2s ease-in-out infinite; }
-
-/* ══════ 🙆 상하체 분리 모션 — **그림 한 장으로 몸을 나눠 따로 움직인다** ══════
-   창업자 2026-07-30: *"좀 더 액티브한거 넣는건 어렵다고 했지? 네 기술로는"*
-   ⚠️ 정확히는 **얼굴(눈 깜빡·입)이 안 되는 것**이지, 몸은 된다.
-   같은 그림을 **두 번 그려서 위/아래를 각각 잘라 내면**(clip-path) 상체와 하체가 따로 움직인다.
-   자산은 **한 장도 더 안 든다.** 통짜로 흔드는 것보다 훨씬 살아 있어 보인다.
-   ⚠️ 자르는 선에서 어긋나 보이지 않으려면 **회전축을 정확히 그 선에 둬야** 한다(transform-origin).
-   ⚠️ 각도를 키우면 허리에서 종이 접힌 자국처럼 보인다 — **±5도까지.** */
-@keyframes hk-deulssuk-top {
-  0%,100% { transform: rotate(-3.6deg) translateY(0); }
-  50% { transform: rotate(3.6deg) translateY(-1.2%); }
-}
-.hk-m-deulssuk-top { animation: hk-deulssuk-top 2.3s ease-in-out infinite; transform-origin: 50% 60%; }
-@keyframes hk-deulssuk-bot { 0%,100% { transform: scaleX(1); } 50% { transform: scaleX(1.02); } }
-.hk-m-deulssuk-bot { animation: hk-deulssuk-bot 2.3s ease-in-out infinite; transform-origin: 50% 100%; }
-
-/* 🕺 들썩보다 큰 것 — 상체를 앞뒤로 숙였다 편다(끄덕끄덕). 인사·맞장구. */
-@keyframes hk-kkeudeok-top {
-  0%,55%,100% { transform: rotate(0) translateY(0); }
-  70% { transform: rotate(0) translateY(3.5%) scaleY(.96); }
-  85% { transform: rotate(0) translateY(0) scaleY(1); }
-}
-.hk-m-kkeudeok-top { animation: hk-kkeudeok-top 2.6s ease-in-out infinite; transform-origin: 50% 60%; }
-.hk-m-kkeudeok-bot { animation: none; }
 
 /* ══════ 🆕 움직이는 방향이 다른 효과 4종 (창업자 2026-07-30) ══════
    창업자: *"효과들은 다 거기서 거기 ㅠㅠ"* — 맞았다. 9개 중 **위로 뜨는 게 4개**(하트·뽀글·김모락·맛있는것들),

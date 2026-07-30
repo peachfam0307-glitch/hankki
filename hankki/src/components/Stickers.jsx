@@ -321,9 +321,6 @@ export const MOTIONS = [
   { key: 'bureu', label: '부르르', axis: '미세 진동', pack: 'winter2027', sheet: 'B Flow ⑥ Wiggle' },  // 27-01 겨울
   { key: 'kongdak', label: '콩닥', axis: '크기만(심장)', pack: 'spring2027', sheet: 'D-06③ 좋아요 팝' }, // 27-03 봄
   { key: 'flutter', label: '펄럭', axis: '종이 3D', pack: 'simple2027', sheet: 'B-05③ 메모지 펄럭' },   // 27-04 심플 다꾸
-  // 🙆 **상하체 분리** — 그림 한 장을 둘로 잘라 따로 움직인다. 통짜 모션과 결이 완전히 다르다(훨씬 액티브).
-  { key: 'deulssuk', label: '들썩', axis: '상체만 흔들림', sheet: '(새로 만듦)' },
-  { key: 'kkeudeok', label: '끄덕', axis: '상체만 숙임', sheet: 'E-1 숨 쉬듯 움직임' },
   // 🅿️ 예비 — **축이 위(통통·기울기)와 겹쳐서** 팩에 안 넣는다. 코드·CSS는 그대로 두고
   //    저장된 표지도 계속 정상 동작한다. 나중에 축을 바꿔 살리거나 다른 데 쓸 수 있다.
   { key: 'kong', label: '콩콩', axis: '위아래', sheet: 'B-10 인터랙션' },
@@ -333,14 +330,14 @@ export const MOTIONS = [
   { key: 'sway', label: '살랑', axis: '기울기', sheet: 'B-05② 식물 흔들림' },
 ]
 export const motionClass = (m) => (m && m !== 'none' ? `hk-m-${m}` : '')
-// 🙆 **상하체를 나눠 따로 움직이는 모션.** 같은 그림을 두 번 그려 위/아래를 잘라 낸다(clip-path).
-//   창업자 2026-07-30 *"좀 더 액티브한거 넣는건 어렵다고 했지?"* → **얼굴은 안 되지만 몸은 된다.**
-//   자산이 한 장도 더 안 든다. 통짜로 흔드는 것보다 훨씬 살아 있어 보인다.
-//   ⚠️ **위·아래를 딱 맞춰 자르면 이음새에 틈이 벌어진다.** 위쪽이 기울면 자른 선도 같이 기울기 때문.
-//      그래서 **아래쪽을 조금 더 위까지(SPLIT_BOT) 그려서** 그 틈을 덮는다. 위쪽이 항상 앞에 오니 겹쳐도 안 지저분하다.
-export const SPLIT_MOTIONS = new Set(['deulssuk', 'kkeudeok'])
-const SPLIT_TOP = 60   // 위 조각이 덮는 범위(0~60%)
-const SPLIT_BOT = 50   // 아래 조각이 덮는 범위(50~100%) — 10%가 겹쳐서 틈을 메운다
+// 🙅 **상하체 분리 모션은 만들었다가 뺐다** (2026-07-30)
+//   같은 그림을 두 겹으로 깔고 clip-path 로 허리에서 잘라 상체만 움직이는 방식이었다.
+//   자산이 안 늘고 훨씬 액티브해서 좋아 보였는데 창업자가 바로 잡았다:
+//   *"들썩 끄덕 너무 잘라서 붙인거 티나"*
+//   ⛔ **원인은 이음새 틈이 아니라 「무늬」였다.** 아래 조각을 겹쳐 그려 틈은 메웠지만,
+//      꼬르곰은 **앞치마 로고가 딱 허리에 걸쳐 있다.** 위쪽만 기울면 그 무늬가 어긋난다.
+//      그림은 휘지 않고 통째로 도니까 **무늬 어긋남은 겹쳐 덮어도 못 가린다.**
+//   📌 교훈: 이 방식은 **자르는 선에 무늬가 없는 캐릭터**에만 쓸 수 있다. 우리 캐릭터엔 안 맞는다.
 // ⚠️⚠️ **효과는 '방향'으로 관리한다 — 그림만 바꾸면 다 비슷해 보인다.**
 //    창업자 2026-07-30: *"효과들은 다 거기서 거기 ㅠㅠ"* — 맞았다.
 //    9개 중 **위로 뜨는 게 4개**(하트·뽀글·김모락·맛있는것들), **아래로 떨어지는 게 4개**(눈·꽃잎·낙엽·물방울).
@@ -642,19 +639,6 @@ export function StickerArt({ id, color, style, motion }) {
     //    접두어로 들어와도 **친구들 탭에 넣기만 하면** 자동으로 움직인다.
     //    📌 교훈: **이름 규칙(접두어)으로 분류하지 말고, 이미 있는 분류(탭)를 쓴다.**
     const cls = motionClass(motion === undefined && FRIEND_IDS.has(id) ? 'tongtong' : motion)
-    // 🙆 상하체 분리 — 같은 그림을 두 장 겹쳐 위/아래를 각각 잘라 낸다. 자산은 안 늘어난다.
-    //    ⚠️ 리컬러와는 같이 못 쓴다(캔버스로 다시 그리는 것이라 두 번 하면 느리다) — 캐릭터는 리컬러 대상이 아니라 괜찮다.
-    if (SPLIT_MOTIONS.has(motion)) {
-      const half = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }
-      return (
-        <span style={{ display: 'block', width: '100%', height: '100%', position: 'relative', ...style }}>
-          <img src={pf.src} alt="" draggable={false} className={`hk-m-${motion}-bot`}
-            style={{ ...half, clipPath: `inset(${SPLIT_BOT}% 0 0 0)` }} />
-          <img src={pf.src} alt="" draggable={false} className={`hk-m-${motion}-top`}
-            style={{ ...half, clipPath: `inset(0 0 ${100 - SPLIT_TOP}% 0)` }} />
-        </span>
-      )
-    }
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
         {color && RECOLOR_PNG.has(id)
