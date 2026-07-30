@@ -246,7 +246,10 @@ const Slide7B = () => (
         <span style={{ color: '#c2703f' }}>그래서 한끼를 만들었어요.</span>
       </div>
       <div style={{ marginTop: 26, paddingTop: 24, borderTop: '3px dashed #ecd9bf', fontSize: 38, lineHeight: 1.45, color: '#8a6440' }}>
-        티격태격이 곧 사랑이라서,<br />두 캐릭터가 앱 곳곳에 살아요.
+        {/* ⚠️ 앞줄(관계)에서 뒷줄(기능)로 튀면 두서가 안 맞는다 — 창업자 지적 2026-07-30.
+            관계 → 보편성 으로 이어야 말이 붙는다. 문장은 설정집 원문 그대로:
+            "티격태격이 곧 사랑. 우리 집 이야기이자 세상 모든 평범한 엄마와 아이의 이야기." */}
+        티격태격하지만 그게 곧 사랑이에요.<br />우리 집 이야기이자, 여느 집 이야기죠.
       </div>
     </div>
     <Foot style={{ background: '#7a4a22', color: '#fff7ea' }}>18년차 주부가 만든 앱</Foot>
