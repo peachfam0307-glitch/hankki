@@ -4,6 +4,20 @@
 2) 남은 불투명 영역을 dilation으로 (아이템+반짝이·하트) 묶어 라벨링
 3) 큰 덩어리만 bbox+여백으로 크롭 → 투명 PNG
 """
+# ⛔⛔ 이 도구는 **더 이상 쓰지 않는다** (2026-07-30 표준화)
+#   창업자: *"자르기할때 이 규칙을 최우선으로 적용해."*
+#   → 표준 도구 하나로 합쳤다: **`python3 tools/cut.py`**
+#   이 파일은 **과거 기록용**으로만 남긴다. 실수로 실행하면 여기서 멈춘다.
+#   전문 = `docs/스티커-자르기-표준-2026-07-30.md`
+import sys as _sys
+if '--force-legacy' not in _sys.argv:
+    print('⛔ 옛 컷 도구입니다. 표준 도구를 쓰세요:')
+    print('   python3 tools/cut.py <시트.png> <폴더> <접두어> [--frame]')
+    print('   (왜 바꿨는지 = docs/스티커-자르기-표준-2026-07-30.md)')
+    print('   정말 이걸 써야 하면 --force-legacy 를 붙이세요.')
+    _sys.exit(2)
+
+
 import sys, os
 import numpy as np
 from PIL import Image
