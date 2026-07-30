@@ -1033,11 +1033,17 @@ export const DECOR_BACKGROUNDS = [
   //    *"색·그라데이션 이거 넣으려면 우리 기본배경에 있는거 빼야해. 지금 레꾸에 있는 모눈 도트
   //      스프라이트 다 겹쳐. 기본배경에는 색깔만 있는 배경 줘야할 듯"*)
   //    왜 = **마스킹테이프에 이미 모눈·도트·스트라이프가 있다.** 배경에도 있으면 표지가 무늬 천지가 된다.
-  //    → 기본 배경은 **색(단색·그라데이션)만.** 무늬 배경은 유료 팩 쪽으로 돌린다.
+  //    → 기본 배경은 **단색만.** 무늬 배경은 **종이 질감 팩**으로 돌린다(창업자 확정: "b가 좋아").
+  //    ⭐ 단 **모눈은 예외로 무료**다 — 이건 장식이 아니라 **「노트」**이기 때문.
+  //       우리는 레시피를 **적는** 앱이라 모눈종이는 기본 도구에 가깝다. 이걸 팔면 쪼잔해 보인다.
+  //    📌 기준: **무료로 줄지는 「아까운가」가 아니라 「없으면 앱을 못 쓰나」로 정한다.**
+  //       모눈 = 없으면 노트 느낌이 안 남 → 준다 / 도트·스트라이프 = 없어도 됨 → 판다
+  //    📌 그리고 **무료가 초라하면 유료도 안 팔린다.** 단색만 14개면 "다 그냥 색이네"가 되고,
+  //       그 인상이면 팩을 살 마음이 안 생긴다. 모눈 한 장이 그 인상을 바꾼다.
   //    ⚠️ `hidden: true` 는 **피커에서만 안 보이게** 하는 것이다. `bgStyle()` 은 그대로 찾아 주므로
   //       **이 배경으로 이미 저장한 표지는 계속 정상으로 보인다**(한 번 준 것은 빼앗지 않는다).
   {
-    key: 'grid', label: '모눈', hidden: true,
+    key: 'grid', label: '모눈',
     style: {
       backgroundColor: '#f4efe4',
       backgroundImage: 'linear-gradient(#dcd3c0 1px, transparent 1px), linear-gradient(90deg, #dcd3c0 1px, transparent 1px)',
@@ -1045,7 +1051,7 @@ export const DECOR_BACKGROUNDS = [
     },
   },
   {
-    key: 'dot', label: '도트', hidden: true,
+    key: 'dot', label: '도트', pack: 'bgpaper', hidden: true,
     style: {
       backgroundColor: '#f5ece0',
       // 도트 작게 + circle 로 동그랗게(비정사각 셀에서도 타원 안 되게)
@@ -1054,7 +1060,7 @@ export const DECOR_BACKGROUNDS = [
     },
   },
   {
-    key: 'stripe', label: '스트라이프', hidden: true,
+    key: 'stripe', label: '스트라이프', pack: 'bgpaper', hidden: true,
     style: {
       backgroundColor: '#f4ede0',
       backgroundImage: 'repeating-linear-gradient(45deg, #eadfca 0, #eadfca 6%, transparent 6%, transparent 12%)',
@@ -1076,9 +1082,9 @@ export const DECOR_BACKGROUNDS = [
   //    ⭐ 기본 배경 = **단색만.** 그라데이션·질감·빛·계절은 전부 유료 배경 팩 몫이다.
   //    ⚠️ 지우는 게 아니라 **숨김**이라 이걸로 저장한 표지는 그대로 보인다.
   //       (그리고 이건 **정식 출시 전이라 가능한 정리**다 — 출시 후엔 쓰던 사람이 생겨서 못 뺀다)
-  { key: 'sunset', label: '노을', hidden: true,
+  { key: 'sunset', label: '노을', pack: 'bg', hidden: true,
     style: { background: 'linear-gradient(160deg, #f7e2d3 0%, #f0d5da 55%, #e6d3ea 100%)' } },
-  { key: 'sage', label: '세이지', hidden: true,
+  { key: 'sage', label: '세이지', pack: 'bg', hidden: true,
     style: { background: 'linear-gradient(160deg, #dfe9d8 0%, #d1e0d5 50%, #dae5e4 100%)' } },
   // 🍃 조금 진한 뮤트(중간톤·다크 아님) — 곰(웜)·펭(쿨) 둘 다 맞는 뉴트럴/브릿지 우선 + 웜·쿨 포인트 하나씩. (창업자 요청 2026-07-23, 클로드 셀렉)
   { key: 'msage', label: '딥세이지', style: { background: '#9aab9c' } },   // 그린 브릿지 — 둘 다 최고
@@ -1102,12 +1108,12 @@ export const bgIsDark = (key) => !!DECOR_BACKGROUNDS.find((b) => b.key === key)?
 export const TAPE_PATTERNS = [
   { key: 'kraft', label: '크라프트', style: { background: 'rgba(214,197,168,0.92)' } },
   {
-    key: 'stripe', label: '스트라이프', hidden: true,
+    key: 'stripe', label: '스트라이프', pack: 'bgpaper', hidden: true,
     style: { backgroundColor: 'rgba(240,224,205,0.92)', backgroundImage: 'repeating-linear-gradient(45deg, rgba(200,120,95,.4) 0, rgba(200,120,95,.4) 7%, transparent 7%, transparent 14%)' },
   },
   {
     // 도트 — %폭×%높이(radial)는 3.4:1 띠에서 타원으로 늘어남 → SVG 원 + auto높이로 항상 동그랗게
-    key: 'dot', label: '도트', hidden: true,
+    key: 'dot', label: '도트', pack: 'bgpaper', hidden: true,
     style: { backgroundColor: 'rgba(236,236,225,0.92)', backgroundImage: "url(\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14'><circle cx='7' cy='7' r='2.7' fill='%23968060' opacity='0.42'/></svg>\")", backgroundSize: 'auto 46%' },
   },
   { key: 'rose', label: '로즈', style: { background: 'rgba(232,205,203,0.92)' } },
