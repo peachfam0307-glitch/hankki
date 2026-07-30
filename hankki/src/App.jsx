@@ -8,7 +8,6 @@ import { fetchLinkRecipe } from './linkReader'
 import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
 import TimerBar from './components/TimerBar'
-import ConfirmSheet from './components/ConfirmSheet'
 import Onboarding, { needsOnboarding } from './components/Onboarding'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
@@ -26,6 +25,9 @@ import CookScreen from './screens/CookScreen'
 
 // '일지'는 레시피 탭의 '요리 기록' 세그먼트로 합쳐졌다.
 const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, shop: ShopScreen, brag: BragScreen, profile: ProfileScreen }
+
+// 홈에서 뒤로가기를 두 번 눌러 나가는 창(ms). 안드로이드 앱들이 쓰는 그 방식.
+const EXIT_WINDOW_MS = 2000
 
 // --- 아주 가벼운 내비게이션 스택 + 토스트 ---
 const NavCtx = createContext(null)
@@ -57,7 +59,11 @@ export default function App() {
   })
   const [stack, setStack] = useState([]) // 위로 쌓이는 화면들
   const [toast, setToast] = useState(null)
-  const [exitAsk, setExitAsk] = useState(false) // 홈에서 뒤로가기 → 종료 확인 팝업
+  // 홈에서 뒤로가기 → '한 번 더 누르면 나가요'. 이 시각(ms)까지가 두 번째를 기다리는 창.
+  // ⚠️ 예전엔 팝업 + window.close() 였는데 설치형 앱에선 브라우저가 close 를 막아 아무 일도
+  // 안 일어났다("그냥 홈 버튼으로 끄세요" 안내만 떴다). 자바스크립트로 앱을 닫는 방법은 없고,
+  // TWA 는 '히스토리가 다 떨어진 상태에서 시스템 뒤로가기'라야 종료된다 → 아래 exitArm 참고.
+  const exitArm = useRef(0)
   const [onboard, setOnboard] = useState(() => needsOnboarding()) // 첫 실행 앱 소개
   const backHandlers = useRef([]) // 화면들이 등록한 '뒤로가기 먼저 처리' 핸들러(비모달 상태·필터용)
   const modalLayers = useRef([]) // 열려 있는 모달·오버레이(각자 진짜 히스토리 칸 1개 소유)
@@ -65,6 +71,7 @@ export default function App() {
   const backScheduled = useRef(false)
   const suppressPop = useRef(0) // popAll·모달버튼닫기 가 만든 popstate 무시용
   const toastTimer = useRef(null)
+  const showToastRef = useRef(null) // 뒤로가기 핸들러(위에서 만들어짐)가 아래 showToast 를 쓰기 위한 통로
   const tabRef = useRef(tab)
   const stackRef = useRef(stack)
   const onboardRef = useRef(onboard)
@@ -169,18 +176,36 @@ export default function App() {
       }
       // 3) 열린 스택 화면 닫기. (그 화면이 쌓아둔 gesture-backed 칸을 방금 소비함)
       if (stackRef.current.length > 0) { setStack((s) => s.slice(0, -1)); return }
-      // 4) 다른 탭이면 홈으로. (루트 종료 방지는 아래 pointerdown 가드가 담당)
-      if (tabRef.current !== 'home') { setTab('home'); return }
-      // 5) 홈에서 뒤로 → 종료 확인.
-      setExitAsk(true)
+      // 4) 다른 탭이면 홈으로. 이때 보호 칸을 다시 깔아야 한다 —
+      //    안 깔면 히스토리가 이미 바닥이라 '탭 → 뒤로(홈) → 뒤로' 가 안내도 없이 앱을 꺼버린다.
+      //    (2번 경로도 같은 이유로 trap() 한다. 다음 터치의 ensureGuard 만 믿으면 그 사이가 뚫린다)
+      if (tabRef.current !== 'home') { setTab('home'); trap(); return }
+      // 5) 홈에서 뒤로 → '한 번 더 누르면 나가요'.
+      //    ⭐ 여기서 히스토리를 남김없이 비워야 다음 뒤로가기가 진짜로 앱을 닫는다.
+      //    (TWA 는 히스토리가 떨어져야 액티비티를 종료한다. JS 로는 못 닫는다.)
+      //    우리가 심어둔 칸(state.hankki)이 아직 남아 있으면 하나 되돌려 맨 처음 칸으로 간다.
+      //    ⚠️ 여기서 pushState 로 다시 채우면 안 된다 — 크롬 intervention 재종료 버그의 원인.
+      if (history.state && history.state.hankki) {
+        suppressPop.current += 1
+        try { history.go(-1) } catch { /* noop */ }
+      }
+      exitArm.current = Date.now() + EXIT_WINDOW_MS // 이 동안은 가드를 다시 안 심는다
+      showToastRef.current?.('한 번 더 누르면 나가요', EXIT_WINDOW_MS)
     }
     // 앱으로 되돌아왔을 때(다른 앱 갔다 오기 등) 트랩이 사라졌으면 다시 깐다
-    const onShow = () => { if (stackRef.current.length === 0 && !hasTrap()) trap() }
+    // (나가기 대기 중이면 안 깐다 — 깔면 두 번째 뒤로가기가 또 막혀서 영영 못 나간다)
+    const onShow = () => {
+      if (Date.now() < exitArm.current) return
+      if (stackRef.current.length === 0 && !hasTrap()) trap()
+    }
     // ⭐ 핵심: 루트(홈/탭, 열린 화면·모달 없음)에서 사용자가 화면을 터치할 때마다
     // '가드' 히스토리 칸을 하나 유지한다. 터치와 함께 만들어져 gesture-backed 라,
     // 깐깐한 크롬(intervention)도 이 칸을 건너뛰지 않는다 → 홈 뒤로가기가 앱을 바로
     // 종료시키지 않고 종료 확인/홈 이동으로 이어진다. (터치 없이 심는 트랩의 한계 극복)
     const ensureGuard = () => {
+      // '한 번 더 누르면 나가요' 대기 중엔 심지 않는다 — 심으면 두 번째 뒤로가기가 이 칸을
+      // 먹어버려서 앱이 안 닫힌다. (창이 지나면 다음 터치에서 자동으로 다시 깔린다 = 취소)
+      if (Date.now() < exitArm.current) return
       if (stackRef.current.length === 0 && modalLayers.current.length === 0 &&
           !(history.state && history.state.guard)) {
         try { history.pushState({ hankki: 1, guard: 1 }, '') } catch { /* noop */ }
@@ -219,6 +244,7 @@ export default function App() {
     if (toastTimer.current) clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(null), ms)
   }, [])
+  showToastRef.current = showToast
 
   // 저장 공간이 가득 차서 저장이 실패하면(특히 iOS ~5MB) 조용히 사라지지 않게 알린다.
   useEffect(() => {
@@ -345,22 +371,6 @@ export default function App() {
         {!top && <BottomNav active={tab} onChange={go} onImport={() => push({ name: 'import' })} />}
         <TimerBar bottom={top ? 'calc(84px + var(--safe-bottom))' : 'calc(66px + var(--safe-bottom))'} />
         {toast && <div className="toast">{toast}</div>}
-
-        {exitAsk && (
-          <ConfirmSheet
-            title="한끼 나가기"
-            message="한끼를 나갈까요?"
-            confirmLabel="나가기"
-            onConfirm={() => {
-              setExitAsk(false)
-              // 브라우저로 열었으면 창을 닫아준다. 설치형 PWA는 브라우저 정책상
-              // 스스로 못 닫으니(안드로이드), 홈 버튼으로 나가면 된다고 솔직히 알려준다.
-              try { window.close() } catch { /* noop */ }
-              showToast('나가려면 폰 홈 버튼을 눌러주세요 (앱은 스스로 못 닫아요)')
-            }}
-            onClose={() => setExitAsk(false)}
-          />
-        )}
 
         {onboard && <Onboarding onDone={() => setOnboard(false)} />}
       </div>
