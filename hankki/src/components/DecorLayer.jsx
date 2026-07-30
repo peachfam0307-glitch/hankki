@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
-import { StickerArt, StickerFx, KITCHEN_IDS, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle } from './Stickers'
+import { StickerArt, StickerFx, KITCHEN_IDS, FRIEND_IDS, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -117,7 +117,9 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             ) : (
               <span style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(0 3px 4px rgba(60,50,35,.22))' }}>
                 <StickerArt id={it.key} color={it.color} motion={it.motion} />
-                {(KITCHEN_IDS.has(it.key) || it.key?.startsWith('gp_')) && <StickerFx kind={it.fx} />}
+                {/* 🐻🐧 효과는 **친구들 탭 전부**에 붙는다 — 전엔 `gp_` 접두어만 봐서
+                    여름 곰펭(`sm_`)·가을 곰펭(`au_b`)은 효과를 골라도 화면에 안 나왔다. */}
+                {FRIEND_IDS.has(it.key) && <StickerFx kind={it.fx} />}
               </span>
             )}
 

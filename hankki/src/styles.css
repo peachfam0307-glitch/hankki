@@ -1392,6 +1392,17 @@ html, body { overscroll-behavior: none; }
 .hk-m-float { animation: hk-float 3.4s ease-in-out infinite; transform-origin: 50% 50%; }
 @keyframes hk-drop { 0% { transform: translateY(-45%) scale(1,1); } 18% { transform: translateY(0) scale(1.1,.88); } 30% { transform: translateY(0) scale(.97,1.03); } 42%,100% { transform: translateY(0) scale(1,1); } }
 .hk-m-drop { animation: hk-drop 1.9s ease-in-out infinite; }
+/* 🏖 찰랑 — 물 위에 떠서 좌우로 기울며 오르내림(출시기념 여름팩). 튜브·물총 곰펭에 딱.
+   ⚠️ 다른 모션은 발바닥(50% 100%)을 축으로 쓰는데 이건 **물에 잠긴 허리쯤**이 축이라야
+      "떠 있다" 로 보인다. 발이 고정된 채 기울면 미끄러지는 느낌이 난다. */
+@keyframes hk-wave { 0%,100% { transform: translateY(2%) rotate(-4deg); } 50% { transform: translateY(-4.5%) rotate(4deg); } }
+.hk-m-wave { animation: hk-wave 2.8s ease-in-out infinite; transform-origin: 50% 62%; }
+/* 😋 냠냠 — 오물오물 씹는 느낌(추석팩). 위아래 폭이 작아야 '먹는다'로 보인다(크면 그냥 점프). */
+@keyframes hk-nyam { 0%,100% { transform: translateY(0) scale(1,1); } 25% { transform: translateY(1%) scale(1.04,.94); } 55% { transform: translateY(-3%) scale(.98,1.05); } }
+.hk-m-nyam { animation: hk-nyam 1.6s ease-in-out infinite; }
+/* 📄 펄럭 — 종이가 바람에 들리는 느낌(심플 다꾸팩). 왼쪽 끝이 붙어 있고 오른쪽이 들린다. */
+@keyframes hk-flutter { 0%,100% { transform: perspective(320px) rotateY(0) skewY(0deg); } 32% { transform: perspective(320px) rotateY(13deg) skewY(-1.2deg); } 68% { transform: perspective(320px) rotateY(-9deg) skewY(.9deg); } }
+.hk-m-flutter { animation: hk-flutter 2.2s ease-in-out infinite; transform-origin: 2% 50%; }
 
 /* 💫 효과(양념) 파티클 — 뮤트 톤, 작게, 머리 위쪽 위주. */
 .hk-fx { line-height: 1; pointer-events: none; }
@@ -1411,6 +1422,19 @@ html, body { overscroll-behavior: none; }
 .hk-fx-steam { border-radius: 50%; background: rgba(255,255,255,.82); filter: blur(1.6px); }
 @keyframes hk-fx-steam { 0% { opacity: 0; transform: translateY(30%) scale(.5); } 25% { opacity: .85; } 100% { opacity: 0; transform: translateY(-120%) scale(1.6); } }
 .hk-fx-steam { animation: hk-fx-steam 2.6s ease-in infinite; }
+
+/* ⬇️ 떨어지는 효과 4종 (물방울·낙엽·눈·꽃잎) — 스티커 위에서 시작해 아래로 지나간다.
+   ⚠️ 낙하는 **반드시 흔들려야 한다.** 똑바로 내려오면 비 오는 CSS 예제처럼 기계적으로 보인다.
+      그래서 x 로도 조금씩 밀고 각도를 돌린다. 속도는 무게 순서(물방울<눈<꽃잎<낙엽)로 다르게. */
+@keyframes hk-fx-fall { 0% { opacity: 0; transform: translate(0,-25%) rotate(-12deg); } 14% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; transform: translate(16%,105%) rotate(28deg); } }
+/* 물방울 — 무거워서 제일 빨리, 거의 안 흔들리고 곧게 */
+@keyframes hk-fx-water { 0% { opacity: 0; transform: translate(0,-20%) scale(.7); } 18% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(3%,110%) scale(1); } }
+.hk-fx-water { animation: hk-fx-water 2.2s ease-in infinite; }
+/* 눈 — 가벼워서 천천히, 좌우로 크게 */
+@keyframes hk-fx-snow { 0% { opacity: 0; transform: translate(0,-25%); } 15% { opacity: .95; } 50% { transform: translate(-14%,40%); } 80% { opacity: .9; } 100% { opacity: 0; transform: translate(10%,108%); } }
+.hk-fx-snow { animation: hk-fx-snow 4.6s linear infinite; }
+.hk-fx-petal { animation: hk-fx-fall 3.8s ease-in-out infinite; }
+.hk-fx-leaf { animation: hk-fx-fall 3.2s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) { [class*="hk-m-"], .hk-fx { animation: none !important; } }
 

@@ -283,15 +283,30 @@ export const PHOTO_IDS = new Set(Object.keys(PHOTO_FAMILY))
 
 // ── ✨ 캐릭터 움직임(모션) · 효과(양념) — 스티커마다 골라 얹는다 ──
 // 전부 그림 1장으로 되는 CSS 모션. item.motion / item.fx 에 key 저장.
-// base:true = 기본(무료) 노출. 나머지는 팩용 예약(코드·CSS는 있고 피커에만 안 뜸).
+//
+// ⭐ **팩당 모션 1개 + 효과 1개** (창업자 확정 2026-07-30:
+//    *"우리 이모지팩에 새모션1개 넣자. 모션이랑 효과는 유료팩당 1개씩 넣자 그래야 골고루 사지"*)
+//    → 팩을 사는 이유가 **그림 몇 장**이 아니라 **그 팩에만 있는 움직임**이 되게 한다.
+//      그림은 다른 팩과 비슷해 보일 수 있어도 움직임은 눈에 확 띄고, 한 번 쓰면 계속 쓰게 된다.
+//    ⚠️ 그래서 **모션·효과를 한 팩에 몰아 넣지 않는다.** 한 팩에 3개 주면 그 팩만 팔린다.
+//    📋 어느 팩이 뭘 받는지 = `docs/모션-효과-설계.md` 배분표. **거기와 여기가 항상 같아야 한다.**
+//
+// 필드
+//   base: true  = 무료(지금 피커에 보임)
+//   pack: '키'  = 그 팩을 가진 사람만 보임. 결제 붙기 전까진 CSS·코드만 있고 피커엔 안 뜬다.
+//   sheet       = 창업자 시안(2026-07-30) 어느 항목에서 왔는지 — 시안과 코드를 대조할 때 쓴다.
 export const MOTIONS = [
   { key: 'none', label: '가만히', base: true },
   { key: 'tongtong', label: '통통', base: true },
   { key: 'tilt', label: '갸웃', base: true },
-  { key: 'kong', label: '콩콩' },
-  { key: 'sway', label: '살랑' },
-  { key: 'float', label: '둥실' },
-  { key: 'drop', label: '쿵착지' },
+  // 🏖 출시기념 여름팩 = **무료**라 base:true. "새 모션 1개 넣자"(창업자)의 그 한 개.
+  { key: 'wave', label: '찰랑', base: true, pack: 'summer2026', sheet: '02 떠다니기 / 03 액체' },
+  { key: 'kong', label: '콩콩', pack: 'spring2027', sheet: '10 인터랙션' },
+  { key: 'sway', label: '살랑', pack: 'autumn2026', sheet: '05 바람 ②식물 흔들림' },
+  { key: 'float', label: '둥실', pack: 'winter2026', sheet: '02 떠다니기 ①구름 둥실' },
+  { key: 'drop', label: '쿵착지', pack: 'cafe', sheet: '06 붙이는 느낌 ③착 붙기' },
+  { key: 'nyam', label: '냠냠', pack: 'chuseok2026', sheet: '08 캐릭터 ③냠냠 먹기' },
+  { key: 'flutter', label: '펄럭', pack: 'simple', sheet: '05 바람 ③메모지 펄럭' },
 ]
 export const motionClass = (m) => (m && m !== 'none' ? `hk-m-${m}` : '')
 export const FX_KINDS = [
@@ -299,9 +314,18 @@ export const FX_KINDS = [
   { key: 'spark', label: '반짝이', base: true },
   { key: 'heart', label: '하트', base: true },
   { key: 'bubble', label: '뽀글', base: true },
-  { key: 'food', label: '맛있는것들' },
-  { key: 'steam', label: '김모락' },
+  { key: 'water', label: '물방울', base: true, pack: 'summer2026', sheet: '03 액체 ①물방울 맺힘' },
+  { key: 'leaf', label: '낙엽', pack: 'autumn2026', sheet: '04 계절 ②낙엽 떨어짐' },
+  { key: 'snow', label: '눈', pack: 'winter2026', sheet: '04 계절 ③눈 내리는 효과' },
+  { key: 'petal', label: '꽃잎', pack: 'spring2027', sheet: '04 계절 ①꽃잎 흩날림' },
+  { key: 'steam', label: '김모락', pack: 'cafe', sheet: '08 캐릭터 ④김이 모락모락' },
+  { key: 'food', label: '맛있는것들', pack: 'chuseok2026', sheet: '08 캐릭터 ③냠냠 먹기' },
 ]
+// 🔓 지금 열려 있는 팩 = 없다(결제 미구현 · #54). 팩을 팔기 시작하면 **여기 한 줄만** 채우면
+//    피커에 바로 뜬다. 소유 판정을 여기저기 흩뿌리지 않으려고 한 곳에 모아 둔다.
+export const ownedPacks = () => new Set()
+export const pickableMotions = (owned = ownedPacks()) => MOTIONS.filter((m) => m.base || owned.has(m.pack))
+export const pickableFx = (owned = ownedPacks()) => FX_KINDS.filter((f) => f.base || owned.has(f.pack))
 // 효과 파티클 — 이모지 대신 뮤트 톤 커스텀 도형(세련되게), 머리 위쪽에 작게 배치.
 const SVG_SPARK = (
   <svg viewBox="0 0 24 24" width="100%" height="100%" style={{ display: 'block' }}>
@@ -320,6 +344,32 @@ const SVG_BUBBLE = (
     <circle cx="9" cy="9" r="2" fill="#ffffff" />
   </svg>
 )
+// 💧 물방울 — 여름팩. 물방울 모양(위 뾰족·아래 둥근) + 흰 하이라이트.
+const SVG_WATER = (
+  <svg viewBox="0 0 24 24" width="100%" height="100%" style={{ display: 'block' }}>
+    <path d="M12 2.5c4.2 5.4 6.5 8.5 6.5 11.4A6.5 6.5 0 0 1 5.5 13.9C5.5 11 7.8 7.9 12 2.5Z" fill="#a9c6d4" opacity=".9" />
+    <ellipse cx="9.6" cy="13.4" rx="1.5" ry="2.1" fill="#ffffff" opacity=".75" />
+  </svg>
+)
+// 🍁 낙엽 — 가을팩. 잎맥 한 줄만(작게 줄면 뭉개져서 디테일은 최소로).
+const SVG_LEAF = (
+  <svg viewBox="0 0 24 24" width="100%" height="100%" style={{ display: 'block' }}>
+    <path d="M20 4c0 8.8-5.2 15-11 16-2.6-6 1.4-14.2 11-16Z" fill="#d69a63" />
+    <path d="M19 5C14 9 11 13.5 9.4 19.4" stroke="#b57c49" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+  </svg>
+)
+// ❄️ 눈 — 겨울팩. 흰 배경 카드에서도 보이게 **연회색 테두리**를 준다(흰 위 흰색은 안 보인다).
+const SVG_SNOW = (
+  <svg viewBox="0 0 24 24" width="100%" height="100%" style={{ display: 'block' }}>
+    <circle cx="12" cy="12" r="7" fill="#ffffff" stroke="#d8e3ea" strokeWidth="2" />
+  </svg>
+)
+// 🌸 꽃잎 — 봄팩. 한쪽으로 휜 타원(꽃잎 한 장).
+const SVG_PETAL = (
+  <svg viewBox="0 0 24 24" width="100%" height="100%" style={{ display: 'block' }}>
+    <path d="M12 2.5c6 3.4 8 8.6 5.4 13.2-2.6 4.6-8 5.4-11.4 2.6C2.6 15.4 5 6.6 12 2.5Z" fill="#f0c3ce" />
+  </svg>
+)
 // 맛있는것들 효과 = 우리가 그린 음식(이모지 대신). 캔디 톤이라 캐릭터랑 딱 맞음.
 const FX_FOOD_URLS = import.meta.glob('../assets/stickers/fx/*.png', { eager: true, query: '?url', import: 'default' })
 const FX_FOOD = ['strawberry', 'burger', 'cupcake', 'cake', 'icecream', 'ramen'].map((n) => FX_FOOD_URLS[`../assets/stickers/fx/${n}.png`])
@@ -330,6 +380,14 @@ const FX_DEF = {
   bubble: { size: 15, items: [[15, 2, 0], [48, -10, .9], [80, -1, .5], [32, 15, 1.7], [66, 12, 1.2]], node: SVG_BUBBLE },
   food: { size: 26, items: [[12, -10, 0], [84, -14, .9], [30, -24, 1.6], [66, -22, 2.3]], food: true },
   steam: { size: 11, items: [[42, 6, 0], [52, 2, .9], [47, 10, 1.7]], puff: true },
+  // ⬇️ 아래 넷은 **떨어지는** 효과 — 스티커 위쪽에서 출발해 아래로 지나간다.
+  //    그래서 y 를 음수(머리 위)로 두고, 낙하는 CSS(`hk-fx-<kind>`)가 맡는다.
+  //    ⚠️ 화면 전체에 뿌리지 않는다 — 스티커 한 장 크기 안에서만. 표지 전체에 눈을 뿌리면
+  //       스티커가 아니라 '앱 효과'가 되고, 여러 장 붙였을 때 서로 겹쳐 지저분해진다.
+  water: { size: 13, items: [[22, -14, 0], [58, -22, .8], [80, -10, 1.6], [40, -6, 2.2]], node: SVG_WATER },
+  leaf: { size: 18, items: [[18, -20, 0], [55, -28, 1.1], [82, -16, 2.1]], node: SVG_LEAF },
+  snow: { size: 12, items: [[14, -18, 0], [42, -26, .7], [68, -14, 1.4], [88, -24, 2.1]], node: SVG_SNOW },
+  petal: { size: 15, items: [[20, -18, 0], [52, -26, .9], [78, -12, 1.8]], node: SVG_PETAL },
 }
 export function StickerFx({ kind }) {
   const def = FX_DEF[kind]
@@ -490,10 +548,14 @@ export function StickerArt({ id, color, style, motion }) {
   }
   const pf = PHOTO_FAMILY[id]
   if (pf) {
-    // 🍱 음식·재료·데코·라이프 = 정적 / 🐻🐧 곰펭(gp_) = 모션 적용. 음식류는 motion 미설정→motionClass '' 자동 정적.
+    // 🍱 음식·재료·데코 = 정적 / 🐻🐧 **친구들 탭 전부** = 모션 적용. 음식류는 motion 미설정→motionClass '' 자동 정적.
     // 🎨 데코 PNG(RECOLOR_PNG)는 color 주면 캔버스로 포인트색만 팔레트 색조로 치환.
-    // 🐻🐧 곰펭(gp_)은 부엌식구처럼 motion 미지정 시 기본 '통통'(드로어 프리뷰도 움직이게). 음식·데코는 정적.
-    const cls = motionClass(motion === undefined && id.startsWith('gp_') ? 'tongtong' : motion)
+    // ⚠️ **`gp_` 접두어로 판정하던 걸 그룹(친구들 탭)으로 바꿨다** (창업자 2026-07-30
+    //    *"여름의꼬르곰펭펭(모션,효과 없어)"*). 여름 곰펭은 `sm_`, 가을 곰펭은 `au_b` 라서
+    //    접두어 검사에 안 걸려 **캐릭터인데 안 움직였다.** 앞으로 새 계절 곰펭이 또 다른
+    //    접두어로 들어와도 **친구들 탭에 넣기만 하면** 자동으로 움직인다.
+    //    📌 교훈: **이름 규칙(접두어)으로 분류하지 말고, 이미 있는 분류(탭)를 쓴다.**
+    const cls = motionClass(motion === undefined && FRIEND_IDS.has(id) ? 'tongtong' : motion)
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
         {color && RECOLOR_PNG.has(id)
@@ -611,7 +673,11 @@ export const STICKER_GROUPS = [
   { key: 'deco_frame2', tab: 'frame', label: '말풍선·격자', items: ['fn_speech', 'fn_bow', 'fn_daisy', 'fn_gingham', 'fn_night'] },
   // 📷 벡터 프레임 (2026-07-26 · item③) — 꼬르곰·펭펭 얹어 꾸미는 액자틀. SVG라 크게 키워도 안 깨짐 + 🎨색 바꾸기.
   //   (⚠️캐릭터명 = 꼬르곰·펭펭 풀네임, '곰펭' 금지)
-  { key: 'deco_vframe', tab: 'frame', recolor: true, label: '리컬러 프레임', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
+  // 🏷 라벨은 **데코 탭의 `색 바꾸기` 그룹과 같은 이름**이어야 한다 (창업자 2026-07-30
+  //    *"프레임에서 리컬러프레임->색바꾸기로 바꿔줘 (데코랑 이름 같아야지)"*).
+  //    같은 기능인데 탭마다 다른 이름이면 **같은 기능인 줄 모른다.** '리컬러'는 우리끼리 쓰는 말이고,
+  //    유저가 보는 글자는 `색 바꾸기` 하나로 통일한다.
+  { key: 'deco_vframe', tab: 'frame', recolor: true, label: '색 바꾸기', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
   // 🎀 소품 — 리본·체리·별·커피 등 얹는 작은 것들. (옛 이름 `데코` = 탭 이름과 겹쳐서 정보가 0이었다)
   // 🎀 사철 소품 = **26컷.** 28컷에서 **딱 2컷만** 뺐다.
   //   ⛔ 뺀 2컷 (창업자 2026-07-30 *"암것도 없는 말풍선이랑 별에 무지개달린거만 뺄까?"*):
@@ -697,6 +763,15 @@ export const STICKER_GROUPS = [
   { key: 'text_num', tab: 'notetext', label: '요일 · 라벨', items: ['tn_mon', 'tn_tue', 'tn_wed', 'tn_thu', 'tn_fri', 'tn_sat', 'tn_sun', 'tn_cal', 'tn_ribbon', 'tn_circle'] },
   { key: 'text_arrow', tab: 'notetext', label: '화살표 · 구분선', items: ['ta_right', 'ta_left', 'ta_up', 'ta_down', 'ta_curve', 'ta_loop', 'ta_dash', 'ta_wave', 'ta_leaf', 'ta_check', 'ta_checkc', 'ta_star'] },
 ]
+
+// 🐻🐧 **모션·효과를 쓸 수 있는 스티커 = 친구들 탭에 든 것 전부.**
+//   창업자 2026-07-30 *"여름의꼬르곰펭펭(모션,효과 없어)"* — 여름(`sm_`)·가을(`au_b`) 곰펭이
+//   `gp_` 접두어가 아니라서 **캐릭터인데 안 움직였다.** 접두어 대신 **그룹(탭)** 으로 판정한다.
+//   → 새 계절 곰펭을 어떤 이름으로 넣든 **친구들 탭에만 넣으면** 모션·효과가 자동으로 붙는다.
+//   (부엌 식구들 `kf_` 도 친구들 탭이라 여기 포함된다 — 예전 `KITCHEN_IDS` 검사를 이게 대체한다)
+export const FRIEND_IDS = new Set(
+  STICKER_GROUPS.filter((g) => g.tab === 'buddies').flatMap((g) => g.items),
+)
 
 // 포스트잇 색 팔레트(차분한 종이 톤) — bg / 접힘 / 글자 / line(무늬 선 색)
 // 포스트잇 색 — 새 배경 뮤트 팔레트에 맞춰 통일(쨍하지 않게). 키는 유지(저장표지 호환), 색만 뮤트로. + 라벤더·클레이 추가.

@@ -4,7 +4,7 @@ import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
 import { seasonRank, isReleased } from '../season'
-import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, PHOTO_IDS, MOTIONS, FX_KINDS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
+import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -118,8 +118,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
   const ctxChip = { flex: '0 0 auto', padding: 4, borderRadius: 10, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }
   const selOn = '2.5px solid var(--brown)'
   const selOff = '1.5px solid var(--line)'
-  const selIsKitchen = selItem?.type === 'sticker' && KITCHEN_IDS.has(selItem.key)
-  const selIsGompeng = selItem?.type === 'sticker' && selItem.key?.startsWith('gp_') // 꼬르곰·펭펭도 모션·효과 컨텍스트바
+  // 🐻🐧 모션·효과 바를 띄울 대상 = **친구들 탭 스티커 전부**(부엌 식구들 포함).
+  //   ⚠️ 전엔 `KITCHEN_IDS` 와 `gp_` 접두어 둘로 판정했는데, 여름 곰펭(`sm_`)·가을 곰펭(`au_b`)이
+  //      어느 쪽에도 안 걸려 **모션·효과 바가 아예 안 떴다**(창업자 2026-07-30 제보).
+  //      이름 규칙 대신 이미 있는 분류(친구들 탭)를 쓴다 → 새 계절 곰펭도 자동으로 된다.
+  const selIsBuddy = selItem?.type === 'sticker' && FRIEND_IDS.has(selItem.key)
   // 뭐든 선택하면 컨텍스트 바를 띄운다 — 최소한 '순서(맨 뒤/맨 앞)'는 항상 조절 가능하게(창업자 레이어 제보). 색·움직임 등은 그 아래 종류별로.
   const hasCtx = !!selItem
   const layerBtn = { padding: '6px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: 'var(--surface)', color: 'var(--text-sub)', border: '1px solid var(--line)' }
@@ -182,7 +185,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
       x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.46 : 0.42 + ((n % 4) - 1.5) * 0.05,
       s: isFrame ? 0.58 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
       r: isFrame ? 0 : ((n % 5) - 2) * 4,
-      ...(isKf || key.startsWith('gp_') ? { motion: 'tongtong', fx: 'none' } : {}),
+      // 🐻🐧 친구들(캐릭터)은 붙자마자 통통 움직인다 — 소품·음식은 가만히.
+      //    ⚠️ 여기도 `gp_` 접두어로 골랐었다 → 여름·가을 곰펭은 붙여도 모션이 안 박혔다.
+      ...(FRIEND_IDS.has(key) ? { motion: 'tongtong', fx: 'none' } : {}),
     }
     // 🖼 프레임(액자)은 밑판이라 맨 뒤(배열 앞)로 — 이미 꾸며둔 스티커·글자가 프레임 위로 자연스럽게 얹힌다. 나머지는 맨 앞(위).
     setItems((arr) => isFrame ? [it, ...arr] : [...arr, it])
@@ -281,12 +286,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
                 <button className="press" onClick={() => bringToFront(sel)} style={layerBtn}>맨 앞으로</button>
               </div>
             </div>
-            {(selIsKitchen || selIsGompeng) && (
+            {selIsBuddy && (
               <>
                 <div style={ctxRow}>
                   <span style={ctxLabel}>움직임</span>
                   <div style={ctxScroll}>
-                    {MOTIONS.filter((m) => m.base).map((m) => {
+                    {pickableMotions().map((m) => {
                       const on = (selItem.motion || 'tongtong') === m.key
                       return (
                         <button key={m.key} className="press" onClick={() => patch(sel, { motion: m.key })}
@@ -298,7 +303,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
                 <div style={ctxRow}>
                   <span style={ctxLabel}>효과</span>
                   <div style={ctxScroll}>
-                    {FX_KINDS.filter((f) => f.base).map((f) => {
+                    {pickableFx().map((f) => {
                       const on = (selItem.fx || 'none') === f.key
                       return (
                         <button key={f.key} className="press" onClick={() => patch(sel, { fx: f.key })}
