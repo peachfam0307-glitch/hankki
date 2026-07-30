@@ -16,7 +16,7 @@
 //
 // 쓰기:  npm run assets        (표만)
 //        npm run assets -- --md > docs/자산현황.md   (문서로 저장)
-import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs'
+import { readFileSync, readdirSync, existsSync, statSync, writeFileSync } from 'node:fs'
 import { inflateSync } from 'node:zlib'
 import { join } from 'node:path'
 
@@ -368,4 +368,13 @@ if (broken.length) {
 }
 
 console.log(out.join('\n'))
+
+// 📝 문서로도 남긴다.
+// ⚠️ 2026-07-31에 잡은 사고 — 예전엔 **화면에만 찍고 파일은 안 썼다.** 그래서
+//    `docs/자산현황-자동집계.md` 가 조용히 낡았고(그룹 이름을 `색 바꾸기` 로 바꾼 뒤에도
+//    문서엔 옛 이름 `리컬러 프레임` 이 그대로 남아 있었다), 하필 그 문서가
+//    "손으로 세지 말고 이걸 믿어라" 고 못 박아 둔 문서였다.
+//    📌 자동 집계라고 적어 놓은 문서는 **실제로 자동으로 써져야 한다.**
+writeFileSync(join(ROOT, 'docs/자산현황-자동집계.md'), out.join('\n') + '\n')
+
 if (broken.length && !MD) process.exit(1)
