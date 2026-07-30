@@ -12,7 +12,7 @@ await p.goto(BASE, { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(22
 
 const N = 8
 // ⚠️ 캐러셀이 8장을 한 트랙에 다 렌더한다 — 화면 안에 든 것만 골라야 지금 장의 그림을 센다
-const shots = { 5: '/tmp/ob_why.png', 6: '/tmp/ob_cast.png' }
+const shots = { 0: '/tmp/ob_why.png', 1: '/tmp/ob_cast.png' }  // 캐스트 소개가 1·2번째로 옮겨졌다(창업자 확정)
 for (let i = 0; i < N; i++) {
   const t = await p.evaluate(() => document.body.innerText.replace(/\n+/g, ' / ').slice(0, 78))
   console.log(`장${i + 1}: ${t}`)

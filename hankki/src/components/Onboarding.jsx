@@ -249,7 +249,7 @@ const Slide7B = () => (
         {/* ⚠️ 앞줄(관계)에서 뒷줄(기능)로 튀면 두서가 안 맞는다 — 창업자 지적 2026-07-30.
             관계 → 보편성 으로 이어야 말이 붙는다. 문장은 설정집 원문 그대로:
             "티격태격이 곧 사랑. 우리 집 이야기이자 세상 모든 평범한 엄마와 아이의 이야기." */}
-        티격태격하지만 그게 곧 사랑이에요.<br />우리 집 이야기이자, 여느 집 이야기죠.
+        꼬르곰과 펭펭, 티격태격하지만<br />그게 곧 사랑이에요.<br />우리 집 이야기이자, 여느 집 이야기죠.
       </div>
     </div>
     <Foot style={{ background: '#7a4a22', color: '#fff7ea' }}>18년차 주부가 만든 앱</Foot>
@@ -261,6 +261,13 @@ const Slide7B = () => (
 // ⭐ 창업자 2026-07-30: *"애들 성격이 짧게라도 들어가야지"* · *"친구들은 앞으로 한끼를
 //    함께한 한끼유저들"*. 이름표만 붙인 첫 판을 두고 *"소개도 없이 덜렁 저게 끝이야???"*.
 // ⚠️ '한 줄' 은 `docs/stickers/README.md` A0-7 캐스트 표의 **「한 줄」 행 그대로** — 새로 안 지었다.
+// ⚠️⚠️ 친구가 늘어날 때 글자를 고치러 다니지 않게 만들어 뒀다 (창업자 질문 2026-07-30:
+//    *"근데 나중에 6번째 친구 나오면 어떻게해??"*).
+//    ① 제목의 "다섯" 은 **`CAST.length` 로 센다** — 여기 한 줄만 추가하면 "여섯 친구" 로 저절로 바뀐다.
+//    ② 꼬리말에선 **순서(몇 번째)를 아예 쓰지 않는다** — "여섯 번째 친구는 여러분" 이라고 박으면
+//       친구가 늘어난 순간 거짓이 된다. 우리 원칙과 같다(설문 문구의 "넷 중에" 도 같은 이유로 뺐다).
+//    ⚠️ 단체 그림(`lineup5.png`)은 자동으로 안 바뀐다 — 친구를 추가하면 **정본을 다시 뽑아야 한다.**
+const KO_NUM = ['', '한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉', '열']
 const CAST = [
   { face: avGom, name: '꼬르곰', line: '허당 셰프, 감정 부자' },
   { face: avPeng, name: '펭펭', line: '무표정이 매력인 해결사' },
@@ -270,25 +277,32 @@ const CAST = [
 ]
 const Slide7C = () => (
   <Stage bg="linear-gradient(165deg,#f7e6ca,#f2d6b0 58%,#e8c495)">
-    <Cap top={150}><H1 style={{ color: '#6b4526' }}>다섯 친구가<br />함께 살아요</H1></Cap>
+    <Cap top={150}><H1 style={{ color: '#6b4526' }}>{KO_NUM[CAST.length] || CAST.length} 친구가<br />함께 살아요</H1></Cap>
     {/* 단체 정본 — 배경과 같은 #F9F9F9 카드에 얹어 경계가 안 보이게 */}
     <div style={{ position: 'absolute', top: 430, left: 64, right: 64, background: '#f9f9f9', borderRadius: 40, padding: '10px 0 0', boxShadow: '0 16px 32px rgba(140,95,50,.2)', overflow: 'hidden' }}>
       <img src={lineup5} alt="" draggable={false} style={{ display: 'block', width: '100%', height: 'auto' }} />
     </div>
-    {/* 이름 + 성격 한 줄 — 얼굴 컷을 앞에 붙여 누가 누군지 짚어준다 */}
-    <div style={{ position: 'absolute', top: 1200, left: 74, right: 74, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {CAST.map((c) => (
-        <div key={c.name} style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <img
-            src={c.face} alt="" draggable={false}
-            style={{ width: 74, height: 74, borderRadius: '50%', objectFit: 'contain', background: '#fffdf8', border: '3px solid #e6cfae', flex: '0 0 auto' }}
-          />
-          <div style={{ fontSize: 40, fontWeight: 800, color: '#6b4526', width: 190, flex: '0 0 auto' }}>{c.name}</div>
-          <div style={{ fontSize: 36, color: '#8a6440', lineHeight: 1.3 }}>{c.line}</div>
-        </div>
-      ))}
+    {/* 이름 + 성격 한 줄 — 얼굴 컷을 앞에 붙여 누가 누군지 짚어준다.
+        ⚠️ 줄 높이를 **인원수로 나눠** 정한다 — 친구가 늘어도 꼬리말을 밀어내거나 넘치지 않는다.
+           (고정 86px 로 두면 7명부터 꼬리말과 겹친다) */}
+    <div style={{ position: 'absolute', top: 1190, left: 74, right: 74, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+      {CAST.map((c) => {
+        const rowH = Math.min(88, 470 / CAST.length)   // 쓸 수 있는 높이 470 = 1190 → 1660(꼬리말 위)
+        const face = Math.round(rowH - 14)
+        return (
+          <div key={c.name} style={{ height: rowH, display: 'flex', alignItems: 'center', gap: 20 }}>
+            <img
+              src={c.face} alt="" draggable={false}
+              style={{ width: face, height: face, borderRadius: '50%', objectFit: 'contain', background: '#fffdf8', border: '3px solid #e6cfae', flex: '0 0 auto' }}
+            />
+            <div style={{ fontSize: Math.min(40, face * 0.55), fontWeight: 800, color: '#6b4526', width: 190, flex: '0 0 auto' }}>{c.name}</div>
+            <div style={{ fontSize: Math.min(36, face * 0.5), color: '#8a6440', lineHeight: 1.3 }}>{c.line}</div>
+          </div>
+        )
+      })}
     </div>
-    <Foot style={{ background: '#6b4526', color: '#fff7ea' }}>여섯 번째 친구는 여러분이에요</Foot>
+    {/* ⛔ "여섯 번째" 처럼 순서를 박지 않는다 — 위 CAST 주석 참고 */}
+    <Foot style={{ background: '#6b4526', color: '#fff7ea' }}>그리고 여러분도 한 식구예요</Foot>
   </Stage>
 )
 
@@ -307,7 +321,11 @@ const Slide8 = () => (
   </Stage>
 )
 
-const SLIDES = [Slide1, Slide2, Slide3, Slide6, Slide7, Slide7B, Slide7C, Slide8]
+// ⭐ 순서 = 창업자 확정 2026-07-30 *"꼬르곰은 저에요1. 친구들2번. 그다음 순서대로"*
+//    **사람 소개 → 친구들 → 기능 → 브랜드 CTA.** 기능부터 늘어놓으면 "또 하나의 앱" 이지만,
+//    *"꼬르곰은 저예요"* 로 시작하면 첫 화면부터 다른 앱이 복사할 수 없는 얘기가 된다.
+//    (근거 = `docs/기획-노트.md` "창업자 스토리 = 그 자체로 콘텐츠")
+const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, Slide3, Slide6, Slide7, Slide8]
 
 export default function Onboarding({ onDone }) {
   const N = SLIDES.length
