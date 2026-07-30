@@ -134,3 +134,13 @@ if __name__ == '__main__':
     cut(args[0], args[1], args[2],
         is_frame='--frame' in sys.argv,
         min_px=int(sys.argv[mn_i]) if mn_i else 8000)
+
+    # 🔍 자른 뒤 **자동으로 3단계 검수**를 부른다 (창업자 2026-07-31 *"2번 검수하는거 코드에 박아둬"*).
+    # ⚠️ 왜 자동인가 = 검수는 **잊으면 안 하는 일**이다. 2026-07-30에 프레임 6컷만 고치고
+    #    끝낸 줄 알았다가 창업자가 앱 전체에서 같은 문제를 다시 잡아냈다.
+    #    **자르기와 검수를 한 명령으로 묶으면 「깜빡」이 구조적으로 불가능해진다.**
+    # ⛔ 끄고 싶으면 `--no-check` — 다만 앱에 넣기 전엔 반드시 한 번은 돌릴 것.
+    if '--no-check' not in sys.argv:
+        import subprocess
+        here = os.path.dirname(os.path.abspath(__file__))
+        subprocess.run([sys.executable, os.path.join(here, 'cut-check.py'), args[1]], check=False)
