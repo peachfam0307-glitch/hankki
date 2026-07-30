@@ -263,7 +263,10 @@ const CATNAME = { frame: '프레임', item: '소품', paper: '메모·씰·라�
 // ⭐ 두 층으로 나눠 본다 (창업자 2026-07-30 *"우선 기본제공(4계절)할 것부터 정리를 해야 계절을 올릴수가 있어"*)
 //   **기본(사철)** = 사계절 내내 깔려 있는 바탕. 여기가 뚱뚱하면 계절을 얹을 자리가 없다.
 //   **계절 세트**  = 그 위에 3개월씩 얹혔다 밀려나는 것.
-const BASE_QUOTA = { frame: 24, item: 24, paper: 12, tape: 12, char: 8 }
+// ⭐ **종류마다 정원이 다른 이유** (창업자 2026-07-30 *"스티커는 꾸미기라 사실 많아도..
+//    여기저기 붙이기 좋아서"*): **프레임은 한 장에 하나만 깐다** → 많으면 고르기가 힘들다.
+//    **소품은 여러 개를 여기저기 붙인다** → 가짓수가 많을수록 좋다. 그래서 소품 정원이 제일 크다.
+const BASE_QUOTA = { frame: 24, item: 32, paper: 12, tape: 12, char: 8 }
 const QUOTA = { frame: 12, item: 24, paper: 8, tape: 6, char: 12 } // 한 계절 세트 (3파로 나눠 푼다)
 const seasons = [...new Set(groups.map((g) => g.season).filter(Boolean))]
 const SEASONKO = { summer: '여름', autumn: '가을', winter: '겨울', spring: '봄' }
