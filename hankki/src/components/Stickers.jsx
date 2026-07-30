@@ -249,7 +249,7 @@ const PHOTO_RATIO = {
   cs_b07: 0.9407, cs_b08: 0.8027, cs_b09: 0.9789, cs_b10: 0.8294, cs_b11: 0.7709, cs_b12: 0.8497,
   cs_b13: 1.0018, cs_b14: 0.6364, cs_b15: 0.7516, cs_b16: 0.9019, cs_b17: 0.8607, cs_b18: 0.8946,
   cs_b19: 0.9607, cs_b20: 0.7699, cs_b21: 1.0101, cs_b22: 0.8168, cs_b23: 0.9734, cs_b24: 1.1759,
-  cs_b25: 0.7581, cs_b26: 0.4731, cs_b27: 0.6821, cs_b28: 0.5478, cs_b29: 0.9071,
+  cs_b25: 0.7581, cs_b26: 0.6821, cs_b27: 0.5478, cs_b28: 0.9071, cs_b29: 0.9071,
   cs_i01: 1.0079, cs_i02: 0.8263, cs_i03: 1.0514, cs_i04: 1.0497, cs_i05: 0.9754, cs_i06: 0.6035,
   cs_i07: 1.1254, cs_i08: 1.7105, cs_i09: 0.7287, cs_i10: 1.5, cs_i11: 1.3492, cs_i12: 1.2412,
   cs_i13: 0.7673, cs_i14: 0.9775, cs_i15: 0.612,
@@ -599,13 +599,13 @@ export const STICKER_GROUPS = [
   //    **가을·추석 9/1 · 핼러윈 10/1 · 크리스마스 12/1** 에 저절로 등장한다. 사람이 그때 손댈 일 없다.
   // ⚠️ 한 번 공개되면 영구히 남는다(철이 지나도 순서만 밀린다) — 그래서 월이 아니라 절대 날짜다.
   { key: 'buddies_autumn', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 가을', items: ['au_b01', 'au_b02', 'au_b03', 'au_b04', 'au_b05', 'au_b06', 'au_b07', 'au_b08', 'au_b09', 'au_b10', 'au_b11', 'au_b12', 'au_b13', 'au_b14', 'au_b15', 'au_b16', 'au_b17', 'au_b18'] },
-  { key: 'buddies_chuseok', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 추석', items: ['cs_b01', 'cs_b02', 'cs_b03', 'cs_b04', 'cs_b05', 'cs_b06', 'cs_b07', 'cs_b08', 'cs_b09', 'cs_b10', 'cs_b11', 'cs_b12', 'cs_b13', 'cs_b14', 'cs_b15', 'cs_b16', 'cs_b17', 'cs_b18', 'cs_b19', 'cs_b20', 'cs_b21', 'cs_b22', 'cs_b23', 'cs_b24', 'cs_b25', 'cs_b26', 'cs_b27', 'cs_b28', 'cs_b29'] },
+  { key: 'buddies_chuseok', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 추석', items: ['cs_b01', 'cs_b02', 'cs_b03', 'cs_b04', 'cs_b05', 'cs_b06', 'cs_b07', 'cs_b08', 'cs_b09', 'cs_b10', 'cs_b11', 'cs_b12', 'cs_b13', 'cs_b14', 'cs_b15', 'cs_b16', 'cs_b17', 'cs_b18', 'cs_b19', 'cs_b20', 'cs_b21', 'cs_b22', 'cs_b23', 'cs_b24', 'cs_b25', 'cs_b26', 'cs_b27', 'cs_b28'] },
   { key: 'buddies_halloween', tab: 'buddies', season: 'autumn', from: '2026-10-01', label: '꼬르곰·펭펭의 핼러윈', items: ['hw_01', 'hw_02', 'hw_03', 'hw_04', 'hw_05', 'hw_06', 'hw_07', 'hw_08', 'hw_09', 'hw_10', 'hw_11', 'hw_12', 'hw_13', 'hw_14', 'hw_15', 'hw_16'] },
   { key: 'buddies_xmas', tab: 'buddies', season: 'winter', from: '2026-12-01', label: '꼬르곰·펭펭의 크리스마스', items: ['xm_01', 'xm_02', 'xm_03', 'xm_04'] },
   { key: 'deco_autumn_item', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 소품·열매', items: ['au_i01', 'au_i02', 'au_i03', 'au_i04', 'au_i05', 'au_i06', 'au_i07', 'au_i08', 'au_i09', 'au_i10', 'au_i11', 'au_i12', 'au_i13', 'au_i14', 'au_i15', 'au_i16', 'au_i17', 'au_i18', 'au_i19', 'au_i20'] },
   { key: 'deco_autumn_scene', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 원형 씬', items: ['au_s01', 'au_s02', 'au_s03', 'au_s04'] },
   { key: 'deco_autumn_tape', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 마스킹테이프', items: ['au_t01', 'au_t02', 'au_t03', 'au_t04', 'au_t05', 'au_t06'] },
-  { key: 'deco_chuseok', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '추석 음식·소품', items: ['cs_i01', 'cs_i02', 'cs_i03', 'cs_i04', 'cs_i05', 'cs_i06', 'cs_i07', 'cs_i08', 'cs_i09', 'cs_i10', 'cs_i11', 'cs_i12', 'cs_i13', 'cs_i14', 'cs_i15'] },
+  { key: 'deco_chuseok', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '추석 음식·소품', items: ['cs_i01', 'cs_i02', 'cs_i03', 'cs_i04', 'cs_i05', 'cs_i06', 'cs_i07', 'cs_i08', 'cs_i09', 'cs_i10', 'cs_i11', 'cs_i12', 'cs_i13', 'cs_i14', 'cs_i15', 'cs_i16'] },
   { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
   // 💪 라이프
   // 🍳 주방도구 (2026-07-29) — 라이프 탭이 통째로 운동용품(아령·줄넘기·복싱)이라

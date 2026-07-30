@@ -56,3 +56,17 @@ export function isReleased(from, now = new Date()) {
   const [y, m, d] = String(from).split('-').map(Number)
   return now.getTime() >= new Date(y, m - 1, d).getTime()
 }
+
+// 🗓 되풀이 창 — **해마다 같은 날짜에 다시 열린다.**
+//
+// ⚠️ 왜 `MM-DD` 인가: `to: '2026-11-30'` 처럼 절대 날짜로 닫으면 **2027년 9월엔 안 열린다.**
+//    첫 공개는 절대 날짜(`isReleased`)로, 여닫는 창은 월-일로 — 두 가지가 필요하다.
+// ⚠️ 연말을 넘는 창도 된다(설날처럼 `['12-15','01-10']`) — `open > close` 면 넘어가는 것으로 본다.
+export function inWindow([open, close], now = new Date()) {
+  const md = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  return open <= close ? md >= open && md <= close : md >= open || md <= close
+}
+
+// 계절·이벤트 컷을 **지금 뽑기 풀에 넣어도 되나** — 첫 공개일이 지났고 + 창 안에 있을 때만.
+// (스티커는 철이 지나도 안 숨기지만 **카드는 창 밖이면 빠진다** — 한정 수집감. 성질이 다르다.)
+export const inCardWindow = (set, now) => isReleased(set.from, now) && inWindow(set.win, now)

@@ -5,7 +5,7 @@
 // 함께 제철**로 바꿨다. 달력 경계는 눈으로 못 보고 지나가는 버그가 나는 자리라 값을 박아둔다.
 //
 // ⚠️ 특히 12월↔1월 넘어가는 자리(겨울이 두 해에 걸침)와 **2월→3월**(겨울 뒤 봄) 을 꼭 본다.
-import { SEASON_AT, seasonsNow, isSeason, seasonRank, OVERLAP_DAYS, isReleased } from '../src/season.js'
+import { SEASON_AT, seasonsNow, isSeason, seasonRank, OVERLAP_DAYS, isReleased, inWindow, inCardWindow } from '../src/season.js'
 
 let bad = 0
 const D = (y, m, d) => new Date(y, m - 1, d)
@@ -67,6 +67,33 @@ const SETS = [{ n: '가을', from: '2026-09-01', s: 'autumn' }, { n: '추석', f
   const line = SETS.map((x) => `${x.n}=${!isReleased(x.from, now) ? '숨김' : '순위' + seasonRank(x.s, now)}`).join(' · ')
   console.log(`  ${m}/${dd}  ${line}   (제철 ${JSON.stringify(seasonsNow(now))})`)
 })
+
+console.log('\n── 🗓 되풀이 창 (해마다 같은 날짜에 다시 열린다) ──')
+eq('가을창 09-01~11-30 · 2026-09-05', inWindow(['09-01', '11-30'], D(2026, 9, 5)), true)
+eq('가을창 · 2026-08-31 (아직)', inWindow(['09-01', '11-30'], D(2026, 8, 31)), false)
+eq('가을창 · 2026-12-01 (닫힘)', inWindow(['09-01', '11-30'], D(2026, 12, 1)), false)
+eq('⭐가을창 · 2027-09-05 (이듬해에도 열림)', inWindow(['09-01', '11-30'], D(2027, 9, 5)), true)
+eq('핼러윈창 10-01~11-02 · 10/31', inWindow(['10-01', '11-02'], D(2026, 10, 31)), true)
+eq('핼러윈창 · 11/03 (닫힘)', inWindow(['10-01', '11-02'], D(2026, 11, 3)), false)
+console.log('  연말을 넘는 창(설날처럼) 도 되나')
+eq('12-15~01-10 · 12/20', inWindow(['12-15', '01-10'], D(2026, 12, 20)), true)
+eq('12-15~01-10 · 1/5 (해 넘어서)', inWindow(['12-15', '01-10'], D(2027, 1, 5)), true)
+eq('12-15~01-10 · 2/1 (닫힘)', inWindow(['12-15', '01-10'], D(2027, 2, 1)), false)
+
+console.log('\n── 🎴 카드 풀에 계절 컷이 들어가는 시점 (첫 공개일 + 창 둘 다) ──')
+const CARD = [{ n: '가을', from: '2026-09-01', win: ['09-01', '11-30'] },
+  { n: '추석', from: '2026-09-01', win: ['09-01', '10-15'] },
+  { n: '핼러윈', from: '2026-10-01', win: ['10-01', '11-02'] },
+  { n: '크리스마스', from: '2026-12-01', win: ['12-01', '12-27'] }]
+const onAt = (now) => CARD.filter((s) => inCardWindow(s, now)).map((s) => s.n)
+eq('7/30 (출시 전)', onAt(D(2026, 7, 30)), [])
+eq('9/5', onAt(D(2026, 9, 5)), ['가을', '추석'])
+eq('10/5', onAt(D(2026, 10, 5)), ['가을', '추석', '핼러윈'])
+eq('10/20 (추석창 닫힘)', onAt(D(2026, 10, 20)), ['가을', '핼러윈'])
+eq('11/20 (가을만)', onAt(D(2026, 11, 20)), ['가을'])
+eq('12/20', onAt(D(2026, 12, 20)), ['크리스마스'])
+eq('1/5 (다 닫힘)', onAt(D(2027, 1, 5)), [])
+eq('⭐2027-09-05 (이듬해에도 가을·추석 열림)', onAt(D(2027, 9, 5)), ['가을', '추석'])
 
 if (bad) { console.log(`\n❌ ${bad}건 실패`); process.exit(1) }
 console.log('\n✅ 제철·전환기 전부 통과')

@@ -1,4 +1,4 @@
-import { isSeason } from '../season'
+import { isSeason, inCardWindow } from '../season'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toPng, toJpeg } from 'html-to-image'
 import Icon from './Icon'
@@ -39,6 +39,50 @@ const SCENES = Object.entries(import.meta.glob('../assets/scenepool/*.png', { ea
 const GOM = pickPool(/^gom_/)
 const PENG = pickPool(/^(peng_|pn_)/)
 const DUO = pickPool(/^duo_/)
+
+// 🍂 계절·이벤트 캐릭터 컷 — **창이 열렸을 때만** 기본 스킨 풀에 얹는다.
+//
+// ⭐ 왜 이게 스킨보다 먼저인가 = **"카드는 그릇, 스티커가 내용"**
+//    (`docs/시즌-업데이트-전략-2026-07-29.md` §8) — 카드는 캐릭터 풀에서 뽑아 채우므로
+//    **스킨을 새로 안 만들어도 가을 컷이 들어오는 순간 카드가 새로워진다.**
+//    그래서 계절마다 스킨은 1~2장이면 충분하고, 개수를 늘리면 오히려 뽑기 확률이 묽어진다.
+//
+// ⚠️ **꾸미기 서랍 자산(`stickers/photo`)을 그대로 재사용한다 — 파일을 두 벌 두지 않는다.**
+//    처음엔 `sharepool/`에 `sc_*`로 57개를 복사했는데, **Vite가 내용이 같은 파일을 하나로 합쳐**
+//    출력은 같았지만 저장소에 같은 PNG가 두 벌씩(≈20MB) 쌓였다. 그래서 목록으로만 가리킨다.
+//    (그때 테스트가 "계절 컷 0종"이라고 나온 것도 이 합쳐짐 때문 — 코드가 아니라 이름 문제였다)
+// ⚠️ 두 가지가 다 필요하다 — `from`(첫 공개 절대 날짜) + `win`(**해마다 되풀이되는 월-일 창**).
+//    절대 날짜로만 닫으면 이듬해엔 안 열린다(`src/season.js` 주석 참고).
+// ⚠️⚠️ **추석·설날은 음력이라 양력 날짜가 해마다 바뀐다.** 그래서 창을 넉넉히 두었다.
+//    이벤트 스킨을 만들 땐 **그 해 달력을 확인해** 좁힐 것. ⛔날짜를 추측해서 박지 말 것.
+// ⚠️ 카드 히어로는 520~660px로 크게 쓴다 → **긴변 400px 미만 컷 9개는 카드에서 뺐다**
+//    (뭉개진다 = v8.95 사고와 같은 패턴). 그 컷들은 서랍(238px)엔 그대로 있다.
+//    빠진 것 = au_b14·au_b18·cs_b02·cs_b06·cs_b28·hw_05·hw_08·xm_02·xm_04 (305~387px)
+const SEASON_CUTS = [
+  { key: 'au', from: '2026-09-01', win: ['09-01', '11-30'],   // 가을 = 계절 전체
+    gom: ['au_b01', 'au_b02', 'au_b03', 'au_b04', 'au_b09', 'au_b10', 'au_b11', 'au_b12', 'au_b13', 'au_b17'],
+    peng: ['au_b05', 'au_b06', 'au_b07', 'au_b08'], duo: ['au_b15', 'au_b16'] },
+  { key: 'cs', from: '2026-09-01', win: ['09-01', '10-15'],   // 추석 한복 (음력 → 넉넉히)
+    gom: ['cs_b01', 'cs_b05', 'cs_b11', 'cs_b12', 'cs_b13', 'cs_b14', 'cs_b15', 'cs_b16', 'cs_b17', 'cs_b18', 'cs_b25', 'cs_b26'],
+    peng: ['cs_b07', 'cs_b08', 'cs_b09', 'cs_b10', 'cs_b19', 'cs_b20', 'cs_b21', 'cs_b22', 'cs_b27'],
+    duo: ['cs_b03', 'cs_b04', 'cs_b23', 'cs_b24'] },
+  { key: 'hw', from: '2026-10-01', win: ['10-01', '11-02'],   // 핼러윈 10/31 = 양력 고정
+    gom: ['hw_04', 'hw_07', 'hw_13', 'hw_14', 'hw_15', 'hw_16'],
+    peng: ['hw_09', 'hw_10', 'hw_11', 'hw_12'], duo: ['hw_01', 'hw_02', 'hw_03', 'hw_06'] },
+  { key: 'xm', from: '2026-12-01', win: ['12-01', '12-27'],   // 크리스마스 12/25 = 양력 고정
+    gom: ['xm_01', 'xm_03'], peng: [], duo: [] },
+]
+const DECOR = import.meta.glob('../assets/stickers/photo/*.png', { eager: true, query: '?url', import: 'default' })
+const decorUrl = (k) => DECOR[`../assets/stickers/photo/${k}.png`]
+// ⚠️ 함수로 둔다(상수 아님) — 모듈은 한 번만 읽히므로 상수로 굳히면 앱을 켜둔 채 날짜가
+//    넘어갈 때 안 바뀐다. 뽑을 때마다 계산한다.
+const seasonCuts = (kind) => SEASON_CUTS
+  .filter((s) => inCardWindow(s))
+  .flatMap((s) => s[kind].map((k) => ({ name: k + '.png', url: decorUrl(k) })))
+  .filter((e) => e.url)
+const gomPool = () => [...GOM, ...seasonCuts('gom')]
+const pengPool = () => [...PENG, ...seasonCuts('peng')]
+const duoPool = () => [...DUO, ...seasonCuts('duo')]
 // 여름 스킨은 **여름 컷만** — 요리 컷이 섞이면 바다·물결 배경에 여름 느낌이 죽는다.
 const summerOnly = (re) => {
   const hit = ENTRIES.filter((e) => re.test(e.name) && SUMMER.test(e.name))
@@ -76,7 +120,7 @@ function drawState() {
   // 밤·여름은 콤비도 잘 어울리고, 나머지는 솔로 위주(캐릭터가 크게 들어가서)
   // 여름 스킨만 여름 컷(수박·빙수·바비큐)까지 포함한 풀에서 뽑는다.
   const r = Math.random()
-  const [g, p, d] = key === 'summer' ? [S_GOM, S_PENG, S_DUO] : [GOM, PENG, DUO]
+  const [g, p, d] = key === 'summer' ? [S_GOM, S_PENG, S_DUO] : [gomPool(), pengPool(), duoPool()]
   const cat = key === 'pola' && SCENES.length && r < 0.65 ? SCENES     // 폴라로이드는 씬 사진 위주
     : (key === 'night' || key === 'summer')
       ? (r < 0.5 ? g : r < 0.78 ? p : (d.length ? d : g))
