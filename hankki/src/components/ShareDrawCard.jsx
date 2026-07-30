@@ -92,6 +92,18 @@ const S_GOM = summerOnly(/^(gom_|sm_gom_)/)
 const S_PENG = summerOnly(/^(peng_|pn_|sm_peng_)/)
 const S_DUO = summerOnly(/^(duo_|sm_duo_)/)
 
+// 🍂 가을 스킨 전용 풀 — 여름과 같은 이유로 **가을 컷만** 쓴다(단풍 아치에 요리 앞치마 곰이 섞이면
+//    계절감이 죽는다). ⛔추석 한복(`cs_`)은 안 섞는다 — 그건 나중 **추석 이벤트 스킨** 몫이고,
+//    한복의 원색이 단풍 아치와 부딪힌다(§8의 "계절 ≠ 이벤트" 구분).
+// ⚠️⚠️ **폴백이 반드시 필요하다.** 12월 첫 2주는 전환기라 `isSeason('autumn')`이 아직 참인데
+//    가을 창은 **11/30에 닫혀** 컷이 0이 된다 → 그때는 평소 풀로 돌아간다(빈 카드 방지).
+const AU = SEASON_CUTS.find((s) => s.key === 'au')
+const autumnPool = (kind, base) => {
+  if (!inCardWindow(AU)) return base
+  const hit = AU[kind].map((k) => ({ name: k + '.png', url: decorUrl(k) })).filter((e) => e.url)
+  return hit.length ? hit : base
+}
+
 const APP_URL = 'https://peachfam0307-glitch.github.io/hankki/'
 const rnd = (a) => a[Math.floor(Math.random() * a.length)]
 const titleFont = (t) => { const n = String(t).replace(/\s/g, '').length; return n <= 5 ? 104 : n <= 7 ? 88 : n <= 9 ? 74 : 62 }
@@ -109,9 +121,14 @@ function drawState() {
   //    그래서 전환기 겹침이 여기서 특히 크다 — 9월 첫 2주까지는 여름 스킨이 계속 나온다.
   //    (`src/season.js` — 창업자 2026-07-30 "여름에 준비한 아이템들은 며칠 못하고…")
   const isSummer = isSeason('summer')
+  const isAutumn = isSeason('autumn')
+  // ⚠️ 전환기(9월 첫 2주)엔 여름·가을이 **둘 다** 제철이라 여기 둘 다 걸린다. 그게 의도다 —
+  //    여름 스킨이 갑자기 끊기지 않고 가을이 서서히 섞여 들어온다. (여름을 먼저 본다)
   const pool = isSummer
-    ? ['warm', 'panel', 'pola', 'mag', 'summer', 'night', 'summer']
-    : ['warm', 'panel', 'pola', 'mag', 'night', 'warm']
+    ? ['warm', 'panel', 'pola', 'mag', 'summer', 'night', 'summer', ...(isAutumn ? ['autumn'] : [])]
+    : isAutumn
+      ? ['warm', 'panel', 'pola', 'mag', 'night', 'autumn', 'autumn']
+      : ['warm', 'panel', 'pola', 'mag', 'night', 'warm']
   const key = (() => {
     try { const v = new URLSearchParams(location.search).get('card'); if (v && SKINS[v]) return v } catch { /* noop */ }
     return rnd(pool)
@@ -120,21 +137,25 @@ function drawState() {
   // 밤·여름은 콤비도 잘 어울리고, 나머지는 솔로 위주(캐릭터가 크게 들어가서)
   // 여름 스킨만 여름 컷(수박·빙수·바비큐)까지 포함한 풀에서 뽑는다.
   const r = Math.random()
-  const [g, p, d] = key === 'summer' ? [S_GOM, S_PENG, S_DUO] : [gomPool(), pengPool(), duoPool()]
+  const [g, p, d] = key === 'summer' ? [S_GOM, S_PENG, S_DUO]
+    : key === 'autumn' ? [autumnPool('gom', gomPool()), autumnPool('peng', pengPool()), autumnPool('duo', duoPool())]
+      : [gomPool(), pengPool(), duoPool()]
   const cat = key === 'pola' && SCENES.length && r < 0.65 ? SCENES     // 폴라로이드는 씬 사진 위주
-    : (key === 'night' || key === 'summer')
+    : (key === 'night' || key === 'summer' || key === 'autumn')
       ? (r < 0.5 ? g : r < 0.78 ? p : (d.length ? d : g))
       : (r < 0.68 ? g : (p.length ? p : g))
   return { skin, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46) }
 }
 
 const DIE = 'drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 16px 22px rgba(60,40,25,.26))'
-// 🎴 카드 6종 — **색이 아니라 구조가 다르다**(창업자 "다 똑같이 할 거야?" 2026-07-29).
+// 🎴 카드 7종 — **색이 아니라 구조가 다르다**(창업자 "다 똑같이 할 거야?" 2026-07-29).
 //    warm=좌상단 볼드타이포+blob · panel=위 컬러패널+센터제목 · pola=폴라로이드+마테
 //    mag=매거진(EST·바코드) · summer=해·바다·물결 · night=수집카드 넘버링+홀로 창
+//    autumn=아치 창틀 + 아래 왼쪽정렬 타이포 (9~11월만)
 const SKINS = {
   warm: { key: 'warm' }, panel: { key: 'panel' }, pola: { key: 'pola' },
   mag: { key: 'mag' }, summer: { key: 'summer' }, night: { key: 'night' },
+  autumn: { key: 'autumn' },
 }
 
 // ── 1080×1350 카드 (캡처 대상) ──
@@ -154,6 +175,20 @@ const SKINS = {
 const PAD = 64
 const GRAIN = 'radial-gradient(rgba(150,120,80,.06) 1px,transparent 1px)'
 const STAR_D = 'M50 3 L61 13 L75 9 L79 24 L93 30 L88 45 L96 58 L84 66 L85 81 L70 82 L61 94 L50 86 L39 94 L30 82 L15 81 L16 66 L4 58 L12 45 L7 30 L21 24 L25 9 L39 13 Z'
+// 🍂 낙엽 — 가을 카드 배경 장식. ⛔별(STAR_D)과 헷갈리지 않게 **잎맥이 있는 잎사귀 실루엣**으로 그린다.
+//    ⚠️ 개수를 늘리지 말 것 — "소품을 많이 붙여 채우려 한 게 실수였다"(카드 디자인시스템 §0).
+//    밤 카드의 별처럼 **배경 텍스처**로만 쓴다(작게·연하게·4개).
+const LEAF_D = 'M50 6 C74 24 86 50 77 70 C70 86 59 94 50 94 C41 94 30 86 23 70 C14 50 26 24 50 6 Z'
+const LEAF_VEIN = 'M50 92 L50 32 M50 56 L31 42 M50 56 L69 42 M50 74 L35 62 M50 74 L65 62'
+// 🧶 가을 체크(플란넬·타탄) — 창업자 2026-07-30 *"체크(가을느낌) 레이스, 부드러운 천 느낌"*.
+//    타탄은 **굵은 띠 + 그 위에 가는 선**이 겹쳐야 천처럼 보인다. 한 방향만 깔면 그냥 줄무늬다.
+//    ⚠️ 알파를 낮게(.03~.08) — 이건 배경 '결'이지 무늬 자랑이 아니다(소품 과다 금지, 디자인시스템 §0).
+const PLAID = (a = 1) => [
+  `repeating-linear-gradient(90deg,rgba(150,74,40,${0.075 * a}) 0 30px,transparent 30px 66px)`,
+  `repeating-linear-gradient(0deg,rgba(150,74,40,${0.075 * a}) 0 30px,transparent 30px 66px)`,
+  `repeating-linear-gradient(90deg,rgba(122,96,38,${0.055 * a}) 0 7px,transparent 7px 66px)`,
+  `repeating-linear-gradient(0deg,rgba(122,96,38,${0.055 * a}) 0 7px,transparent 7px 66px)`,
+].join(',')
 
 // 제목 2줄 나누기 — 이 시스템은 2줄 볼드 타이포가 기본
 // ⛔ **낱말 중간은 절대 자르지 않는다.** 예전엔 띄어쓰기가 없으면 글자 수를 반으로 잘랐는데,
@@ -362,6 +397,68 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
       </div>
       {hero({ right: 20, bottom: 232, height: 560, filter: die8('#ffffff') })}
       {more('#12404d', '#2f96a6')}{foot('#1d6472', '#2b7f8c')}
+    </>)
+  }
+
+  // ═══ ⑦ 가을 한정 — 아치 창틀 + 아래 왼쪽정렬 타이포. 9~11월에만 등장 ═══
+  //
+  // ⭐ **구조로 차별화한다**(색만 바꾼 6장이 "다 똑같다" 판정을 받은 이력 — 2026-07-29).
+  //    · 다른 카드의 큰 색면은 전부 **원**(warm blob·mag 원판·night 홀로판)이거나 **둥근 사각**(panel).
+  //      가을만 **아치**(위는 반원, 아래는 각진 창틀) → 실루엣이 한눈에 다르다.
+  //    · 캐릭터가 아치 **바닥선 아래로 삐져나온다** → 창밖에서 이쪽으로 넘어오는 입체감.
+  //    · 제목은 **아래 + 왼쪽 정렬.** panel·mag·pola·night은 전부 가운데 정렬이라 여기서 갈린다.
+  // ⚠️ warm 도 웜오렌지 계열이라 색이 겹칠 뻔했다 → 가을은 **더 깊은 적갈(단풍 끝물)** 로 내렸다.
+  //    warm blob `#f2a074→#d9724a` vs 가을 아치 `#d98b4a→#8c3520`.
+  if (K.key === 'autumn') {
+    const hs = headSize([l1, l2], 140)   // 아래 2줄 — 이 시스템의 심장(120~150px). 줄이지 말 것
+    const leaf = (i, x, y, s, rot, op, col) => (
+      <svg key={i} viewBox="0 0 100 100" style={{ position: 'absolute', left: x, top: y, width: s, height: s, transform: `rotate(${rot}deg)`, opacity: op, zIndex: 1 }}>
+        <path d={LEAF_D} fill={col} />
+        <path d={LEAF_VEIN} stroke="rgba(255,253,248,.55)" strokeWidth="3.4" fill="none" strokeLinecap="round" />
+      </svg>
+    )
+    // ⭐ **이 카드가 맡은 질감은 「체크」 하나다.** (창업자 2026-07-30)
+    //    창업자가 체크·레이스·부드러운 천을 한 번에 말했길래 다 넣었다가 지적받았다 —
+    //    *"여기에 다 넣으라는 게 아니야"* / *"이거 그대로 하나 하고 다음 거에 그런 느낌 하나씩 하자고"*.
+    //    → **질감 하나 = 카드 하나.** 레이스·니트·코듀로이는 다음 스킨들이 하나씩 가져간다.
+    //    (재고 목록 = `docs/시즌-업데이트-전략-2026-07-29.md` §8 「질감 아이디어」)
+    // 🗑 뺀 것: 아치 바닥 레이스 띠 — 캐릭터가 바닥선에 서 있어 가운데가 가려지고
+    //    **좌우에 흰 동그라미 부스러기만** 남았다(렌더로 확인). 레이스를 쓸 땐 테두리를 따라 둘러야 한다.
+    const AW = 620
+    return shell('linear-gradient(170deg,#fbf5e6,#f3e6cc 58%,#ecdab9)', <>
+      {/* 🧶 배경 = 아주 옅은 플란넬 체크. 이 카드의 '천' 느낌은 여기서 시작한다. */}
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: PLAID(1), zIndex: 0 }} />
+      {/* 낙엽은 아치(x 230~850 · y 92~644)와 제목(y 694~)을 피해 좌우 바깥에만. 체크가 깔려 있어 2개로 줄였다 */}
+      {[[92, 232, 62, -18, 0.34, '#c2632f'], [948, 566, 56, 26, 0.3, '#b8823a']].map((v, i) => leaf(i, ...v))}
+      {/* 아치 = 창틀. overflow 를 막지 않는다 — 캐릭터가 바닥선 아래로 나와야 한다.
+          inset 그림자로 가장자리를 눌러 **도톰한 천**처럼 보이게 한다(평평한 색면 → 패브릭). */}
+      <div style={{ position: 'absolute', left: '50%', marginLeft: -AW / 2, top: 92, width: AW, height: 552, borderRadius: '310px 310px 36px 36px', background: 'radial-gradient(120% 120% at 34% 24%,#e0a24e,#c2632f 48%,#8f3a26)', boxShadow: '0 34px 64px -30px rgba(120,50,30,.55), inset 0 -22px 40px -20px rgba(80,26,12,.55), inset 0 14px 26px -14px rgba(255,226,180,.5)', zIndex: 2 }}>
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', backgroundImage: PLAID(2.6) }} />
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', backgroundImage: 'radial-gradient(rgba(255,255,255,.13) 5px,transparent 6px)', backgroundSize: '62px 62px' }} />
+        <div style={{ position: 'absolute', left: '50%', top: '-16%', width: 540, height: 540, marginLeft: -270, borderRadius: '50%', background: 'radial-gradient(circle,rgba(255,240,210,.28),transparent 62%)' }} />
+      </div>
+      {lace}
+      {grain}
+      {brand('#7a4326')}
+      <div style={{ position: 'absolute', top: 74, right: PAD, transform: 'rotate(8deg)', fontFamily: 'Jua, sans-serif', fontSize: 31, color: '#fffdf8', background: 'linear-gradient(180deg,#e0913f,#c2632f)', padding: '13px 28px', borderRadius: 18, boxShadow: '0 10px 18px -6px rgba(150,70,30,.6), inset 0 2px 0 rgba(255,255,255,.35)', zIndex: 9 }}>가을 한정</div>
+      {hero({ left: '50%', transform: 'translateX(-50%)', top: 152, height: 524, filter: die8('#fffdf8') })}
+      <div style={{ position: 'absolute', left: PAD, right: 330, top: 694, zIndex: 8 }}>
+        <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 42, color: '#a8532c' }}>바람 불면, 가을 한 끼</div>
+        <div style={{ marginTop: 2, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.98, letterSpacing: -3, color: '#3b2a1f', wordBreak: 'keep-all' }}>
+          {l1}{l2 && <><br /><span style={{ color: '#b8532c' }}>{l2}</span></>}
+        </div>
+        <div style={{ marginTop: 28 }}>{chips('rgba(200,130,80,.3)', '#8c4a24')}</div>
+      </div>
+      {/* ⚠️ `more` 를 **오른쪽**에 둔다(다른 카드는 전부 왼쪽) — 이 레이아웃만 캐릭터가 위쪽 아치에 있어서
+          왼쪽 아래가 통째로 글자 칸이 된다. 공용 `more` 를 그대로 쓰니 kick·제목·칩·CTA·워터마크가
+          **왼쪽에 5단으로 쌓여** 답답했다(첫 렌더에서 확인). 좌=제목 / 우=CTA 로 갈라 균형을 잡는다. */}
+      {!cover && (
+        <div style={{ position: 'absolute', right: PAD, bottom: 150, zIndex: 8, textAlign: 'right', fontFamily: 'Jua, sans-serif', fontSize: 34, color: '#3b2a1f' }}>
+          레시피 보러가기
+          <span style={{ display: 'block', fontFamily: 'GowunDodum, sans-serif', fontSize: 24, color: '#a8532c', fontWeight: 700, marginTop: 8 }}>한끼 앱에서 →</span>
+        </div>
+      )}
+      {foot('#7a4326', '#ad8b6c')}
     </>)
   }
 
