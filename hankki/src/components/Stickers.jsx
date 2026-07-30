@@ -847,13 +847,17 @@ export const TEXT_WEIGHTS = [
 //   → 글씨체마다 기준 두께를 달리 줘서 **'보통'일 때 다 비슷하게 보이도록** 맞춘다.
 //   `ls` = 자간 보정(비워두면 기본).
 export const TEXT_FONTS = [
-  { key: 'gaegu', label: '귀염체', family: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", weight: 700, bw: 0.9 },
-  // ⚠️ 펜글씨는 획이 제일 얇고 글자끼리 붙는다(창업자 *"펜글씨 자간이 너무 가까워"*) → 굵기↑·자간↑
-  { key: 'nanumpen', label: '펜글씨', family: "'Nanum Pen Script','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 2, ls: '0.08em' },
-  { key: 'jua', label: '통통체', family: "'Jua','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 0.9 },
-  { key: 'gowun', label: '또박체', family: "'Gowun Dodum','Pretendard',sans-serif", weight: 800, bw: 1.5, ls: '0.01em' },
-  { key: 'blackhan', label: '임팩트', family: "'Black Han Sans','Pretendard',sans-serif", weight: 400, bw: 0.55 },
-  { key: 'dohyeon', label: '라운드', family: "'Do Hyeon','Pretendard',sans-serif", weight: 400, bw: 1.1 },
+  // `bw` = **가독 테두리** 보정(얇은 글씨일수록 크게) · `fw` = **굵기(살)** 보정 · `ls` = 자간
+  // ⚠️⚠️ 처음엔 둘을 **하나(`bw`)로 같이** 썼다가 사고가 났다 — 창업자 *"굵게하면 저 글씨체만 이상하고"*.
+  //   펜글씨는 얇아서 `bw`를 2로 줬는데 그 값이 살에도 곱해져 **획이 서로 붙어 초록 덩어리**가 됐다.
+  //   → **얇다고 살을 많이 붙이면 안 된다.** 획 간격이 좁은 글씨(펜글씨)는 오히려 **적게** 붙여야 한다.
+  { key: 'gaegu', label: '귀염체', family: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", weight: 700, bw: 0.9, fw: 0.85 },
+  // ⚠️ 펜글씨 = 획이 제일 얇고 글자끼리 붙는다 → 테두리는 두껍게(bw), **살은 얇게**(fw), 자간은 넓게
+  { key: 'nanumpen', label: '펜글씨', family: "'Nanum Pen Script','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 2, fw: 0.5, ls: '0.1em' },
+  { key: 'jua', label: '통통체', family: "'Jua','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 0.9, fw: 0.8 },
+  { key: 'gowun', label: '또박체', family: "'Gowun Dodum','Pretendard',sans-serif", weight: 800, bw: 1.5, fw: 1, ls: '0.01em' },
+  { key: 'blackhan', label: '임팩트', family: "'Black Han Sans','Pretendard',sans-serif", weight: 400, bw: 0.55, fw: 0.45 },
+  { key: 'dohyeon', label: '라운드', family: "'Do Hyeon','Pretendard',sans-serif", weight: 400, bw: 1.1, fw: 0.9 },
 ]
 
 // ── 표지 배경(배경지) ──

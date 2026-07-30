@@ -123,7 +123,6 @@ for (const id of [...ids].sort()) {
     let main = 0
     for (let i = 1; i < bs.length; i += 1) if (bs[i].n > bs[main].n) main = i
     const M = bs[main]
-    const MIN_DIM = Math.max(4, Math.round(Math.min(w, h) * 0.03))
 
     // ① 잘림 — 본체가 가장자리에 닿음
     const edgeN = Math.max(2, Math.round(Math.min(w, h) * 0.02))
@@ -139,9 +138,12 @@ for (const id of [...ids].sort()) {
       if (i === main) continue
       const b = bs[i]
       if (b.n < 12 || b.n > M.n * 0.10) continue
+      // ⚠️ **'가늘다'는 게이트에서 빼야 한다** — 점선 프레임의 점·물방울 같은 **디자인 요소**가
+      //    전부 걸려 40개씩 잡혔다. 게이트가 시끄러우면 아무도 안 본다.
+      //    확실한 신호만 남긴다 = **떨어진 조각이 이미지 가장자리에 닿았다**(= 잘려 들어온 것).
+      //    ('가늘다' 기준은 `tools/find-fragments.py` 에 남겨 내가 손으로 훑을 때 쓴다)
       const touches = b.y0 === 0 || b.y1 === h - 1 || b.x0 === 0 || b.x1 === w - 1
-      const thin = Math.min(b.x1 - b.x0, b.y1 - b.y0) + 1 <= MIN_DIM
-      if (touches || thin) frag += 1
+      if (touches) frag += 1
     }
     if (frag) why.push(`잡조각 ${frag}개`)
   }

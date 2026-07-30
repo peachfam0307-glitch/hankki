@@ -182,7 +182,7 @@ function TextDeco({ it, editable, coverW = 0 }) {
   //    `paintOrder: stroke fill` 이라 선이 글자 뒤에 깔려 **획을 안 갉고 바깥으로만** 두꺼워진다.
   const wt = TEXT_WEIGHTS.find((t) => t.key === it.w) || TEXT_WEIGHTS[1]
   // 살(굵기) = 글자와 **같은 색**으로 두르기 → 진짜로 굵어 보인다. 글씨체별 원래 굵기로 보정.
-  const fatPx = fontPx * wt.fat * (f.bw || 1)
+  const fatPx = fontPx * wt.fat * (f.fw ?? 1)
   // 가독용 대비 테두리는 그림자로 따로 — 굵기를 바꿔도 이건 일정하게(글자만 굵어지게)
   const outPx = Math.max(0.8, fontPx * 0.028)
   return (
@@ -191,7 +191,8 @@ function TextDeco({ it, editable, coverW = 0 }) {
         fontFamily: f.family,
         fontWeight: f.weight,
         fontSize: `${fontPx}px`,
-        letterSpacing: f.ls || 'normal',
+        // 굵게 하면 글자끼리 닿는다 → 살이 붙는 만큼 자간도 벌린다(펜글씨가 특히 심했다)
+        letterSpacing: `calc(${f.ls || '0em'} + ${(wt.fat * 1.6).toFixed(3)}em)`,
         lineHeight: 1.22,
         color: c.color,
         textAlign: 'center',
