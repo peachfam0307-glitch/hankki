@@ -606,7 +606,7 @@ export const STICKER_GROUPS = [
   { key: 'deco_frame2', tab: 'frame', label: '말풍선·격자', items: ['fn_speech', 'fn_bow', 'fn_daisy', 'fn_gingham', 'fn_night'] },
   // 📷 벡터 프레임 (2026-07-26 · item③) — 꼬르곰·펭펭 얹어 꾸미는 액자틀. SVG라 크게 키워도 안 깨짐 + 🎨색 바꾸기.
   //   (⚠️캐릭터명 = 꼬르곰·펭펭 풀네임, '곰펭' 금지)
-  { key: 'deco_vframe', tab: 'frame', recolor: true, label: '꼬르곰·펭펭 넣기', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
+  { key: 'deco_vframe', tab: 'frame', recolor: true, label: '리컬러 프레임', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
   // 🎀 소품 — 리본·체리·별·커피 등 얹는 작은 것들. (옛 이름 `데코` = 탭 이름과 겹쳐서 정보가 0이었다)
   // 🎀 사철 소품 = **26컷.** 28컷에서 **딱 2컷만** 뺐다.
   //   ⛔ 뺀 2컷 (창업자 2026-07-30 *"암것도 없는 말풍선이랑 별에 무지개달린거만 뺄까?"*):
@@ -796,22 +796,55 @@ export const noteRadius = (shape) => {
 }
 
 // 글자 스티커 색 — 사진 위에서도 읽히도록 반대 톤 외곽선(stroke)을 함께 준다
+// 🎨 **자유글자 색 = 리컬러 팔레트와 같은 색** (창업자 2026-07-30 *"글자를 리컬러로 하면 좋겠는데"*)
+//   예전엔 흰·차콜·코랄·머스타드 **4색뿐**이라 *"글씨가 별로 안예뻐서 사실 쓸게 별로 없긴해..ㅠ"* 였다.
+//   → 스티커 리컬러 13색을 **한 톤 진하게** 옮겨 담고 흰·차콜을 더해 **15색.**
+//   ⚠️ 글자는 사진 위에 얹히니 **반대 톤 외곽선이 필수** — 색마다 손으로 정하지 않고
+//      밝기(휘도)로 자동 판단한다(밝은 글자엔 어두운 선, 어두운 글자엔 밝은 선).
+//   ⚠️ 앞의 4색 키(white·charcoal·coral·mustard)는 **그대로 둔다** — 이미 그 색으로 저장한 표지가 있다.
+const deepen = (hex, f = 0.72) => {
+  const n = parseInt(hex.slice(1), 16)
+  const r = Math.round(((n >> 16) & 255) * f), g = Math.round(((n >> 8) & 255) * f), b = Math.round((n & 255) * f)
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
+}
+const strokeFor = (hex) => {
+  const n = parseInt(hex.slice(1), 16)
+  const lum = (((n >> 16) & 255) * 0.299 + ((n >> 8) & 255) * 0.587 + (n & 255) * 0.114) / 255
+  return lum > 0.6 ? 'rgba(55,45,32,.6)' : 'rgba(255,255,255,.6)'
+}
 export const TEXT_COLORS = [
-  // 자유글자 색 — 한 톤씩 진하게(창업자: 레꾸 글자색이 좀 밝음). 흰색은 딥 배경용이라 유지.
   { key: 'white', color: '#ffffff', stroke: 'rgba(55,45,32,.6)' },
-  { key: 'charcoal', color: '#382d21', stroke: 'rgba(255,255,255,.68)' }, // 차콜 한 톤 딥
-  { key: 'coral', color: '#b34a37', stroke: 'rgba(255,255,255,.5)' },    // 코랄레드 한 톤 딥
-  { key: 'mustard', color: '#b78a30', stroke: 'rgba(60,48,30,.5)' },     // 머스타드 한 톤 딥
+  { key: 'charcoal', color: '#382d21', stroke: 'rgba(255,255,255,.68)' },
+  { key: 'coral', color: '#b34a37', stroke: 'rgba(255,255,255,.5)' },    // 옛 4색 — 저장 호환
+  { key: 'mustard', color: '#b78a30', stroke: 'rgba(60,48,30,.5)' },
+  ...STICKER_COLORS.filter((c) => !['coral', 'charcoal'].includes(c.key))
+    .map((c) => ({ key: `t_${c.key}`, color: deepen(c.color), stroke: strokeFor(deepen(c.color)) })),
+]
+
+// ✒️ 글자 굵기 — ⚠️**`font-weight` 로는 안 된다.** 우리 글씨체는 전부 **400 한 종류만** 담은
+//   웹폰트라(`styles.css`) 굵게 하면 브라우저가 가짜 볼드를 그리고, 그 모양이 폰트마다 들쭉날쭉하다.
+//   → **외곽선 두께**로 살찌운다. `paint-order: stroke fill` 로 선을 글자 뒤에 깔아
+//      **획을 갉아먹지 않고 바깥으로만** 두꺼워지게 한다.
+export const TEXT_WEIGHTS = [
+  { key: 'thin', label: '얇게', mul: 0.45 },
+  { key: 'mid', label: '보통', mul: 1 },
+  { key: 'bold', label: '굵게', mul: 2.4 },
 ]
 
 // 글자 스티커 글씨체 — 또박체(고운돋움) / 귀염체(개구체). 오프라인이면 다음 폰트로 자연 대체.
+// ✏️ 글씨체 — `bw` = **굵기 보정.** 창업자 2026-07-30 *"글씨체자체가 두꺼운 애들도 있는데
+//   얇은 애들도 있어서 안맞아서 더 그런 듯"* → **맞는 진단.** 임팩트는 원래 아주 굵고 펜글씨는
+//   아주 얇아서, 같은 외곽선 두께를 주면 하나는 뭉치고 하나는 사라진다.
+//   → 글씨체마다 기준 두께를 달리 줘서 **'보통'일 때 다 비슷하게 보이도록** 맞춘다.
+//   `ls` = 자간 보정(비워두면 기본).
 export const TEXT_FONTS = [
-  { key: 'gaegu', label: '귀염체', family: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", weight: 700 },
-  { key: 'nanumpen', label: '펜글씨', family: "'Nanum Pen Script','Gowun Dodum','Pretendard',sans-serif", weight: 400 },
-  { key: 'jua', label: '통통체', family: "'Jua','Gowun Dodum','Pretendard',sans-serif", weight: 400 },
-  { key: 'gowun', label: '또박체', family: "'Gowun Dodum','Pretendard',sans-serif", weight: 800 },
-  { key: 'blackhan', label: '임팩트', family: "'Black Han Sans','Pretendard',sans-serif", weight: 400 },
-  { key: 'dohyeon', label: '라운드', family: "'Do Hyeon','Pretendard',sans-serif", weight: 400 },
+  { key: 'gaegu', label: '귀염체', family: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", weight: 700, bw: 0.9 },
+  // ⚠️ 펜글씨는 획이 제일 얇고 글자끼리 붙는다(창업자 *"펜글씨 자간이 너무 가까워"*) → 굵기↑·자간↑
+  { key: 'nanumpen', label: '펜글씨', family: "'Nanum Pen Script','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 2, ls: '0.08em' },
+  { key: 'jua', label: '통통체', family: "'Jua','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 0.9 },
+  { key: 'gowun', label: '또박체', family: "'Gowun Dodum','Pretendard',sans-serif", weight: 800, bw: 1.5, ls: '0.01em' },
+  { key: 'blackhan', label: '임팩트', family: "'Black Han Sans','Pretendard',sans-serif", weight: 400, bw: 0.55 },
+  { key: 'dohyeon', label: '라운드', family: "'Do Hyeon','Pretendard',sans-serif", weight: 400, bw: 1.1 },
 ]
 
 // ── 표지 배경(배경지) ──

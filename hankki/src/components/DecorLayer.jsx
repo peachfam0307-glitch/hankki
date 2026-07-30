@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
-import { StickerArt, StickerFx, KITCHEN_IDS, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle } from './Stickers'
+import { StickerArt, StickerFx, KITCHEN_IDS, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -178,19 +178,24 @@ function TextDeco({ it, editable, coverW = 0 }) {
   // it.s(사용자 조절)만으로 크기 결정 → 크기/회전 핸들 로직 그대로, 상자만 글자에 맞게 줄어듦.
   const cw = coverW || 320
   const fontPx = Math.max(8, Math.min(220, it.s * 0.15 * cw))
-  const strokePx = Math.max(0.6, fontPx * 0.045) // 화려한 배경에서도 읽히게 외곽선 굵힘(얇은 글씨 대비↑)
+  // ✒️ 굵기 = 외곽선 두께로 낸다(글씨체가 400 한 종류뿐이라 font-weight 로는 안 굵어진다).
+  //    `paintOrder: stroke fill` 이라 선이 글자 뒤에 깔려 **획을 안 갉고 바깥으로만** 두꺼워진다.
+  const wt = TEXT_WEIGHTS.find((t) => t.key === it.w) || TEXT_WEIGHTS[1]
+  const strokePx = Math.max(0.6, fontPx * 0.045 * (f.bw || 1) * wt.mul) // 글씨체별 보정 × 사용자 굵기
   return (
     <div
       style={{
         fontFamily: f.family,
         fontWeight: f.weight,
         fontSize: `${fontPx}px`,
+        letterSpacing: f.ls || 'normal',
         lineHeight: 1.22,
         color: c.color,
         textAlign: 'center',
         whiteSpace: 'pre', // \n만 줄바꿈, 자동 줄바꿈 없음
         // 사진 위에서도 읽히게 반대 톤 외곽선 + 그림자
         WebkitTextStroke: `${strokePx}px ${c.stroke}`,
+        paintOrder: 'stroke fill',
         textShadow: '0 1px 2px rgba(0,0,0,.45), 0 0 6px rgba(0,0,0,.22)',
         userSelect: 'none',
       }}
@@ -239,7 +244,7 @@ function Note({ it, editable }) {
           position: 'absolute', inset: 0, boxSizing: 'border-box', padding: textPad,
           // 포스트잇 글자 = 웜브라운 본연의 부드러움(밝은 종이라 외곽선 없어도 잘 읽힘).
           // 단, 얇은 손글씨(귀염체·펜글씨)만 동색 얇은 외곽선(0.4px)으로 살짝 두껍게(창업자 요청). 색은 그대로.
-          fontFamily: nf.family, fontWeight: nf.weight,
+          fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
           ...((it.font === 'gaegu' || it.font === 'nanumpen') ? { WebkitTextStroke: `0.4px ${c.text}`, paintOrder: 'stroke fill' } : {}),
           fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.4,
           overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',

@@ -4,7 +4,7 @@ import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
 import { seasonRank, isReleased } from '../season'
-import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, PHOTO_IDS, MOTIONS, FX_KINDS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
+import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, PHOTO_IDS, MOTIONS, FX_KINDS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -345,6 +345,18 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
               </>
             )}
             {selItem.type === 'text' && (
+              <>
+              <div style={ctxRow}>
+                <span style={ctxLabel}>굵기</span>
+                <div style={ctxScroll}>
+                  {TEXT_WEIGHTS.map((w) => (
+                    <button key={w.key} className="press" onClick={() => patch(sel, { w: w.key })}
+                      style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: (selItem.w || 'mid') === w.key ? 'var(--brown)' : 'var(--surface)', color: (selItem.w || 'mid') === w.key ? '#fff' : 'var(--text-sub)', border: 'none' }}>
+                      {w.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div style={ctxRow}>
                 <span style={ctxLabel}>글씨</span>
                 <div style={ctxScroll}>
@@ -354,6 +366,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                   ))}
                 </div>
               </div>
+              </>
             )}
             {selItem.type === 'note' && (
               <>
