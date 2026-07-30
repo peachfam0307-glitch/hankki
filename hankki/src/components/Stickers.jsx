@@ -218,7 +218,7 @@ const PHOTO_RATIO = {
   st_01: 0.9018, st_02: 0.8929, st_03: 0.8899, st_04: 0.8988, st_05: 1.0365, st_06: 0.897, st_07: 1.0132, st_08: 0.9381,
   st_09: 0.9967, st_10: 1.0466, st_11: 1.1154,
   // 🏖 여름 프레임 재제작 12컷 (2026-07-30) — 옛 `sf_` 16컷을 대체한다. 아래 그룹 주석 참고.
-  pf_sm01: 0.9155, pf_sm02: 0.9627, pf_sm03: 1.0416, pf_sm04: 1.0389, pf_sm05: 0.977, pf_sm06: 0.9789,
+  pf_sm01: 0.9155, pf_sm02: 0.9627, pf_sm03: 1.0416, pf_sm04: 0.9157, pf_sm05: 1.0327, pf_sm06: 0.9789,
   pf_sm07: 0.965, pf_sm08: 0.9337, pf_sm09: 1.027, pf_sm10: 1.0432, pf_sm11: 0.8318, pf_sm12: 0.9849,
   // ⛔ **여기 있던 여름다꾸 37(`sd_`)·미니아이콘 92(`mn_`)·파스텔 43(`ps_`)은 도로 뺐다** (2026-07-29 당일 롤백).
   //    창업자 폰 제보: "우리 꾸미기에 추가한 데코에 여름 스티커들 다 깨져."
@@ -581,14 +581,14 @@ export const STICKER_GROUPS = [
   //   선별 기준 = **캔버스에 얹었을 때 실제로 보이는가.** 연한 선(B·C·E·J·D)은 배경에 묻혀 안 보였고,
   //   K는 F와 픽셀 단위로 완전 같았다(평균차 0.0). 여름B는 상단 글자가 깨져 있고 다른 IP 펭귄이 섞여 제외.
   //   ⚠️ 순서 = 진한 것 먼저. 첫 그룹이 제일 또렷해야 "프레임 = 예쁜 것"으로 읽힌다.
-  { key: 'deco_pf_bold', tab: 'deco', label: '프레임 · 진한 선', items: ['pf_f01', 'pf_f02', 'pf_f03', 'pf_f04', 'pf_f05', 'pf_f06', 'pf_f07', 'pf_f08', 'pf_a01', 'pf_a02', 'pf_a03', 'pf_a04', 'pf_a05', 'pf_a06', 'pf_a07', 'pf_a08'] },
-  { key: 'deco_pf_soft', tab: 'deco', label: '프레임 · 소품·꽃', items: ['pf_h01', 'pf_h02', 'pf_h03', 'pf_h04', 'pf_h05', 'pf_h06', 'pf_h07', 'pf_h08', 'pf_g01', 'pf_g02', 'pf_g03', 'pf_g04', 'pf_g05', 'pf_g06', 'pf_g07', 'pf_g08'] },
-  { key: 'deco_pf_write', tab: 'deco', label: '프레임 · 글씨 쓰기', items: ['pf_i01', 'pf_i02', 'pf_i03', 'pf_i04', 'pf_i05', 'pf_i06', 'pf_i07', 'pf_i08'] },
+  { key: 'deco_pf_bold', tab: 'frame', label: '진한 선', items: ['pf_f01', 'pf_f02', 'pf_f03', 'pf_f04', 'pf_f05', 'pf_f06', 'pf_f07', 'pf_f08', 'pf_a01', 'pf_a02', 'pf_a03', 'pf_a04', 'pf_a05', 'pf_a06', 'pf_a07', 'pf_a08'] },
+  { key: 'deco_pf_soft', tab: 'frame', label: '소품·꽃', items: ['pf_h01', 'pf_h02', 'pf_h03', 'pf_h04', 'pf_h05', 'pf_h06', 'pf_h07', 'pf_h08', 'pf_g01', 'pf_g02', 'pf_g03', 'pf_g04', 'pf_g05', 'pf_g06', 'pf_g07', 'pf_g08'] },
+  { key: 'deco_pf_write', tab: 'frame', label: '글씨 쓰기', items: ['pf_i01', 'pf_i02', 'pf_i03', 'pf_i04', 'pf_i05', 'pf_i06', 'pf_i07', 'pf_i08'] },
   // 🖼 글씨 얹기 좋은 손그림 프레임 (2026-07-29) — 위 48종과 별개로 큼직한 것들.
-  { key: 'deco_frame2', tab: 'deco', label: '프레임 · 말풍선·격자', items: ['fn_speech', 'fn_bow', 'fn_daisy', 'fn_gingham', 'fn_night'] },
+  { key: 'deco_frame2', tab: 'frame', label: '말풍선·격자', items: ['fn_speech', 'fn_bow', 'fn_daisy', 'fn_gingham', 'fn_night'] },
   // 📷 벡터 프레임 (2026-07-26 · item③) — 꼬르곰·펭펭 얹어 꾸미는 액자틀. SVG라 크게 키워도 안 깨짐 + 🎨색 바꾸기.
   //   (⚠️캐릭터명 = 꼬르곰·펭펭 풀네임, '곰펭' 금지)
-  { key: 'deco_vframe', tab: 'deco', label: '프레임 · 꼬르곰·펭펭 넣기', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
+  { key: 'deco_vframe', tab: 'frame', label: '꼬르곰·펭펭 넣기', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
   // 🎀 소품 — 리본·체리·별·커피 등 얹는 작은 것들. (옛 이름 `데코` = 탭 이름과 겹쳐서 정보가 0이었다)
   { key: 'deco_png', tab: 'deco', label: '소품', items: ['dn_ribbon', 'dn_cherry', 'dn_peach', 'dn_star', 'dn_sparkle', 'dn_shoot', 'dn_coffee', 'dn_plant', 'dn_bunting', 'dn_sachet', 'dc_nd08', 'dc_nd01', 'dc_nd05', 'dc_nd16', 'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
   // 📝 메모·라벨 (2026-07-26) — 다꾸 감성 손그림 메모지·라벨. 글씨 얹어 꾸미기 좋음(작게~중간 크기용, 크게 키우면 흐려짐).
@@ -612,7 +612,7 @@ export const STICKER_GROUPS = [
   //      노랑이 겹치는 선글라스를 뺐다. 남은 12 = 초록2·핑크2·하늘3·노랑1·베이지2·보라1 + 아치·조개로 모양도 갈림.
   //   ⚠️ **뺀 컷의 파일과 비율은 그대로 둔다** — 이미 그걸로 꾸며 저장한 표지가 계속 정상 렌더돼야 한다.
   //      (서랍에서만 안 보이는 것 · `kf_c_`·`kf_l_` 때와 같은 방식)
-  { key: 'deco_sf', tab: 'deco', season: 'summer', label: '프레임 · 여름', items: ['pf_sm01', 'pf_sm02', 'pf_sm03', 'pf_sm04', 'pf_sm05', 'pf_sm06', 'pf_sm07', 'pf_sm08', 'pf_sm09', 'pf_sm10', 'pf_sm11', 'pf_sm12'] },
+  { key: 'deco_sf', tab: 'frame', season: 'summer', label: '여름', items: ['pf_sm01', 'pf_sm02', 'pf_sm03', 'pf_sm04', 'pf_sm05', 'pf_sm06', 'pf_sm07', 'pf_sm08', 'pf_sm09', 'pf_sm10', 'pf_sm11', 'pf_sm12'] },
   { key: 'deco_sk', tab: 'deco', season: 'summer', label: '소품 · 여름', items: ['sk_01', 'sk_02', 'sk_03', 'sk_04', 'sk_05', 'sk_06', 'sk_07', 'sk_08', 'sk_09', 'sk_10', 'sk_11', 'sk_12', 'sk_13', 'sk_14', 'sk_15', 'sk_16'] },
   { key: 'deco_st', tab: 'deco', season: 'summer', label: '메모·씰 · 여름', items: ['st_01', 'st_02', 'st_03', 'st_04', 'st_05', 'st_06', 'st_07', 'st_08', 'st_09', 'st_10', 'st_11'] },
   // ⚠️ 옛 이름은 `여름 한정` 이었는데 **내용은 전부 마스킹테이프**(`wt_`)라 이름이 내용을 안 알려줬다.

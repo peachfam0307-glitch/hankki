@@ -122,9 +122,15 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const hasCtx = !!selItem
   const layerBtn = { padding: '6px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: 'var(--surface)', color: 'var(--text-sub)', border: '1px solid var(--line)' }
 
-  // 서랍 탭 — 배경 다음 데코(창업자 2026-07-26: 꼬르곰·펭펭 넣는 큰 프레임이 배경색이랑 맞춰봐야 해서 배경 옆에). 배경→데코(프레임 먼저)→글자→친구들→음식→라이프. 음식만 요리별 서브칩(2단계).
+  // 서랍 탭 — 배경 → **프레임** → 데코 → 글자 → 친구들 → 음식 → 라이프. 음식만 요리별 서브칩(2단계).
+  // 🖼 **프레임을 독립 탭으로 뺐다** (창업자 2026-07-30 *"프레임은 프레임만 모아놓는 탭을 만들어야겠어"*)
+  //   왜 = 프레임이 **61컷**(사철 49 + 여름 12)인데 데코 탭에 섞여 있어서, 데코 탭 하나가 201컷이 됐다.
+  //   프레임 하나 찾으려고 소품·마테·메모를 다 지나쳐야 했다. 프레임은 **맨 밑에 까는 판**이라
+  //   쓰는 순서도 제일 먼저다 → 배경 바로 다음이 제자리.
+  //   (배경 옆에 두는 건 2026-07-26 결정 그대로 — 꼬르곰·펭펭 넣는 큰 프레임은 배경색과 맞춰봐야 한다)
   const CATS = [
     { key: 'bgtape', label: '배경' },
+    { key: 'frame', label: '프레임' },
     { key: 'deco', label: '데코' },
     { key: 'notetext', label: '글자' },
     { key: 'buddies', label: '친구들' },
@@ -490,6 +496,7 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
               </>
             )}
             {/* ✨ 데코 (색 바꾸는 심볼 + 데코 + 응원) */}
+            {cat === 'frame' && groupsByTab('frame').map(renderStickerGroup)}
             {cat === 'deco' && groupsByTab('deco').map(renderStickerGroup)}
             {/* 💪 라이프 */}
             {cat === 'life' && groupsByTab('life').map(renderStickerGroup)}

@@ -17,7 +17,61 @@
 // 쓰기:  npm run assets        (표만)
 //        npm run assets -- --md > docs/자산현황.md   (문서로 저장)
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs'
+import { inflateSync } from 'node:zlib'
 import { join } from 'node:path'
+
+// PNG 알파 채널만 필요해서 최소 디코더를 직접 짰다(의존성 없이 CI에서도 돌게).
+// 우리 스티커는 전부 8비트 RGBA(color type 6) — 그 외 형식이면 조용히 건너뛴다.
+// 반환 = 그림이 닿은 가장자리 목록. 닿았으면 시트에서 자를 때 잘렸거나 옆 컷이 붙어 들어온 것.
+const edgeTouch = (file) => {
+  let buf
+  try { buf = readFileSync(file) } catch { return null }
+  let w = 0, h = 0, depth = 0, ctype = 0, idat = []
+  for (let o = 8; o + 8 <= buf.length; ) {
+    const len = buf.readUInt32BE(o)
+    const type = buf.toString('latin1', o + 4, o + 8)
+    const data = buf.subarray(o + 8, o + 8 + len)
+    if (type === 'IHDR') { w = data.readUInt32BE(0); h = data.readUInt32BE(4); depth = data[8]; ctype = data[9] }
+    else if (type === 'IDAT') idat.push(data)
+    else if (type === 'IEND') break
+    o += 12 + len
+  }
+  if (ctype !== 6 || depth !== 8 || !w || !h) return null    // 알파 없는 형식은 검사 대상 아님
+  let raw
+  try { raw = inflateSync(Buffer.concat(idat)) } catch { return null }
+  const BPP = 4, stride = w * BPP
+  const cur = Buffer.alloc(stride), prev = Buffer.alloc(stride)
+  const A = 24                                               // 이 값 이하 알파는 '없는 것'으로 본다
+  let top = false, bottom = false, left = false, right = false
+  const MIN = Math.max(2, Math.round(Math.min(w, h) * 0.02)) // 점 하나로 오탐하지 않게
+  let topN = 0, botN = 0, leftN = 0, rightN = 0
+  for (let y = 0; y < h; y += 1) {
+    const off = y * (stride + 1)
+    if (off + stride >= raw.length + 1) break
+    const filter = raw[off]
+    raw.copy(cur, 0, off + 1, off + 1 + stride)
+    for (let i = 0; i < stride; i += 1) {                    // PNG 스캔라인 필터 되돌리기
+      const a = i >= BPP ? cur[i - BPP] : 0, b = prev[i], c = i >= BPP ? prev[i - BPP] : 0
+      if (filter === 1) cur[i] = (cur[i] + a) & 255
+      else if (filter === 2) cur[i] = (cur[i] + b) & 255
+      else if (filter === 3) cur[i] = (cur[i] + ((a + b) >> 1)) & 255
+      else if (filter === 4) {
+        const pp = a + b - c, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - c)
+        cur[i] = (cur[i] + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c)) & 255
+      }
+    }
+    if (cur[3] > A) leftN += 1
+    if (cur[stride - 1] > A) rightN += 1
+    if (y === 0 || y === h - 1) {
+      let n = 0
+      for (let x = 0; x < w; x += 1) if (cur[x * BPP + 3] > A) n += 1
+      if (y === 0) topN = n; else botN = n
+    }
+    cur.copy(prev)
+  }
+  top = topN >= MIN; bottom = botN >= MIN; left = leftN >= MIN; right = rightN >= MIN
+  return [top && '위', bottom && '아래', left && '왼', right && '오른'].filter(Boolean)
+}
 
 const ROOT = process.cwd()
 const MD = process.argv.includes('--md')
@@ -194,6 +248,9 @@ p()
 //   정했으면 좋겠다고"* · *"매달 이걸 어떻게 계속 정하고 또 물어보고 해…"*
 // → **한 번 정하고 다시 안 묻는다.** 아래 표가 그 기준이고, 이 대조표가 매번 자동으로 확인한다.
 const CAT = (g) => {
+  // ⚠️ **탭으로 먼저 판단한다.** 라벨로만 보다가 프레임 탭을 만들면서 라벨에서 '프레임 ·' 접두어를
+  //    떼자, `소품·꽃` 같은 프레임이 '소품'으로 잡혀 숫자가 통째로 틀어졌다(기본 프레임 0 · 소품 44).
+  if (g.tab === 'frame') return 'frame'
   if (g.tab === 'buddies') return 'char'
   const l = g.label
   if (l.includes('마스킹테이프')) return 'tape'
@@ -210,7 +267,7 @@ const BASE_QUOTA = { frame: 24, item: 24, paper: 12, tape: 12, char: 8 }
 const QUOTA = { frame: 12, item: 24, paper: 8, tape: 6, char: 12 } // 한 계절 세트 (3파로 나눠 푼다)
 const seasons = [...new Set(groups.map((g) => g.season).filter(Boolean))]
 const SEASONKO = { summer: '여름', autumn: '가을', winter: '겨울', spring: '봄' }
-const DECO_TABS = new Set(['deco', 'buddies']) // 음식·라이프·글자 탭은 성격이 달라 정원 밖
+const DECO_TABS = new Set(['deco', 'frame', 'buddies']) // 음식·라이프·글자 탭은 성격이 달라 정원 밖
 
 p('## ⭐ 정원 대조 — 기준표')
 p()
@@ -268,6 +325,29 @@ for (const [top, list] of Object.entries(stockByTop).sort((a, b) => b[1].length 
   p(`| ${list.length} | \`${top}\` |`)
 }
 p()
+
+// ── ✂️ 잘림 검사 ─────────────────────────────────────────────────────────
+// 창업자가 시안을 보고 *"아래보니까 잘못잘린것들도 보인다"* 라고 잡아냈다(2026-07-30, 맞았다).
+// **눈으로 잡아야 하는 검사는 언젠가 놓친다** → 픽셀로 못 박는다.
+// 그림이 이미지 가장자리에 닿아 있으면 = 시트에서 자를 때 잘렸거나 옆 컷 조각이 붙어 들어온 것.
+// ⚠️ 마스킹테이프(`wt_`)는 **양끝이 잘린 게 정상**(길게 이어 붙이는 테이프) → 뺀다.
+const clipped = []
+for (const id of [...usedIds].sort()) {
+  if (!photoIds.has(id) || id.startsWith('wt_')) continue
+  const sides = edgeTouch(join(ASSET_DIR, 'photo', `${id}.png`))
+  if (sides && sides.length) clipped.push({ id, sides })
+}
+if (clipped.length) {
+  p('## ✂️ 가장자리에 닿은 컷 — **잘렸거나 옆 컷 조각이 붙었을 가능성**')
+  p()
+  p('| 컷 | 닿은 쪽 |')
+  p('|---|---|')
+  clipped.forEach(({ id, sides }) => p(`| \`${id}\` | ${sides.join('·')} |`))
+  p()
+} else {
+  p('## ✅ 잘린 컷 없음 — 등록된 사진 스티커가 가장자리에 닿지 않는다')
+  p()
+}
 
 if (broken.length) {
   p('## ⚠️ 깨진 참조 — 서랍이 부르는데 그림이 없다')
