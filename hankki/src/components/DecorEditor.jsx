@@ -346,6 +346,18 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
             )}
             {selItem.type === 'text' && (
               <>
+              {/* 🎨 **놓은 뒤에도 색을 바꾼다.** 예전엔 색이 '추가할 때'만 있어서
+                  색을 바꾸려면 **지우고 다시 넣어야** 했다(창업자 2026-07-30
+                  *"글자 리컬러 안돼…"* · *"이렇게 색깔고르는게 되게 불편하네... 한개씩 눌러서 아니면 지우고.."*). */}
+              <div style={ctxRow}>
+                <span style={ctxLabel}>색</span>
+                <div style={ctxScroll}>
+                  {TEXT_COLORS.map((c) => (
+                    <button key={c.key} className="press" onClick={() => patch(sel, { color: c.key })} aria-label={`글자색 ${c.key}`}
+                      style={{ ...ctxDot, background: c.color, border: (selItem.color || 'white') === c.key ? selOn : '1.5px solid rgba(0,0,0,.14)', boxShadow: (selItem.color || 'white') === c.key ? '0 0 0 2px var(--cream)' : 'none' }} />
+                  ))}
+                </div>
+              </div>
               <div style={ctxRow}>
                 <span style={ctxLabel}>굵기</span>
                 <div style={ctxScroll}>
@@ -482,15 +494,13 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                       </button>
                     ))}
                   </div>
-                  <div className="decor-grid">
-                    {TEXT_COLORS.map((c) => (
-                      <button key={c.key} className="press decor-cell" onClick={() => addText(c.key)} aria-label={`${c.key} 글자`}>
-                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', aspectRatio: '1', fontFamily: (TEXT_FONTS.find((f) => f.key === textFont) || TEXT_FONTS[0]).family, fontWeight: 800, fontSize: 24, color: c.color, WebkitTextStroke: `1px ${c.stroke}`, textShadow: '0 1px 2px rgba(0,0,0,.28)', borderRadius: 12, background: c.key === 'white' || c.key === 'mustard' ? '#8a8479' : 'transparent' }}>
-                          가
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                  {/* ⭐ 색 15칸을 다 늘어놓지 않는다 — 예전엔 색마다 칸이 있어서 **고른 색으로 바로 추가**됐고,
+                      바꾸려면 지웠다 다시 넣어야 했다. 이제 **넣고 나서 편집 바에서 색·굵기**를 바꾼다. */}
+                  <button className="press" onClick={() => addText('white')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '13px 14px', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 800, border: 'none', fontFamily: (TEXT_FONTS.find((f) => f.key === textFont) || TEXT_FONTS[0]).family }}>
+                    글자 넣기
+                  </button>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>넣은 뒤 톡 하면 색·굵기·글씨체를 바꿀 수 있어요</div>
                 </div>
                 <div className="decor-sec">
                   <div className="decor-sec-label">포스트잇</div>
