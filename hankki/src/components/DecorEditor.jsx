@@ -50,7 +50,7 @@ function loadDraft(id) {
   try { return JSON.parse(localStorage.getItem(draftKey(id)) || 'null') } catch { return null }
 }
 
-export default function DecorEditor({ recipe, onSave, onClose }) {
+export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
   const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
   // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
   const draft = loadDraft(recipe.id)
@@ -103,6 +103,9 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const doSave = () => { clearDraft(); onSave(items, bg, thumb) }
   const doExit = () => { clearDraft(); onClose() }
   const handleCancel = () => { if (isDirty()) setExitAsk(true); else doExit() }
+  // 🔙 안드로이드 뒤로가기도 **취소 버튼과 똑같이** 동작하게 — 부모(상세화면)가 이걸 부른다.
+  //    (뒤로가기가 곧장 닫아버려서 "저장하지 않고 나갈까요?" 를 건너뛰던 것 수정)
+  if (closeRef) closeRef.current = handleCancel
 
   const selItem = items.find((x) => x.id === sel)
   const selNoteColor = NOTE_COLORS.find((n) => n.key === selItem?.key) || NOTE_COLORS[0]

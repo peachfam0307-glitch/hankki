@@ -181,7 +181,10 @@ function TextDeco({ it, editable, coverW = 0 }) {
   // ✒️ 굵기 = 외곽선 두께로 낸다(글씨체가 400 한 종류뿐이라 font-weight 로는 안 굵어진다).
   //    `paintOrder: stroke fill` 이라 선이 글자 뒤에 깔려 **획을 안 갉고 바깥으로만** 두꺼워진다.
   const wt = TEXT_WEIGHTS.find((t) => t.key === it.w) || TEXT_WEIGHTS[1]
-  const strokePx = Math.max(0.6, fontPx * 0.045 * (f.bw || 1) * wt.mul) // 글씨체별 보정 × 사용자 굵기
+  // 살(굵기) = 글자와 **같은 색**으로 두르기 → 진짜로 굵어 보인다. 글씨체별 원래 굵기로 보정.
+  const fatPx = fontPx * wt.fat * (f.bw || 1)
+  // 가독용 대비 테두리는 그림자로 따로 — 굵기를 바꿔도 이건 일정하게(글자만 굵어지게)
+  const outPx = Math.max(0.8, fontPx * 0.028)
   return (
     <div
       style={{
@@ -194,9 +197,13 @@ function TextDeco({ it, editable, coverW = 0 }) {
         textAlign: 'center',
         whiteSpace: 'pre', // \n만 줄바꿈, 자동 줄바꿈 없음
         // 사진 위에서도 읽히게 반대 톤 외곽선 + 그림자
-        WebkitTextStroke: `${strokePx}px ${c.stroke}`,
+        WebkitTextStroke: fatPx > 0.2 ? `${fatPx}px ${c.color}` : undefined,
         paintOrder: 'stroke fill',
-        textShadow: '0 1px 2px rgba(0,0,0,.45), 0 0 6px rgba(0,0,0,.22)',
+        // 사방 대비선(외곽선 역할) + 살짝 그림자 — 사진 위에서도 읽히게
+        textShadow: [`${outPx}px 0 0 ${c.stroke}`, `-${outPx}px 0 0 ${c.stroke}`, `0 ${outPx}px 0 ${c.stroke}`, `0 -${outPx}px 0 ${c.stroke}`,
+          `${outPx * 0.7}px ${outPx * 0.7}px 0 ${c.stroke}`, `-${outPx * 0.7}px ${outPx * 0.7}px 0 ${c.stroke}`,
+          `${outPx * 0.7}px -${outPx * 0.7}px 0 ${c.stroke}`, `-${outPx * 0.7}px -${outPx * 0.7}px 0 ${c.stroke}`,
+          '0 1px 3px rgba(0,0,0,.35)'].join(','),
         userSelect: 'none',
       }}
     >
