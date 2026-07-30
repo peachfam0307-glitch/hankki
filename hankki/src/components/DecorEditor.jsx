@@ -65,7 +65,6 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   const [exitAsk, setExitAsk] = useState(false) // 취소 시 "저장 안 함?" 확인
   const restoredRef = useRef(!!draft) // 초안에서 복구했는지(안내 토스트용)
   const [cat, setCat] = useState('bgtape') // 서랍 탭(배경부터 시작 — 배경·글자·친구들·음식·데코·라이프)
-  const [foodChip, setFoodChip] = useState('f_han') // 음식 탭 요리별 서브칩(한식 기본)
 
   // 🧷 배경격(액자 프레임·포스트잇·메모라벨) = 그 위에 스티커·글자를 얹는 밑판. 이건 탭해도 맨 앞으로 안 올린다(안 그러면 눌렀을 때 애써 꾸민 작은 스티커·글자가 다 뒤로 숨어버림 — 창업자 제보 2026-07-26).
   // 🧷 '밑판'격 아이템 — 탭해도 맨 앞으로 올리지 않는다(올리면 위에 붙인 작은 스티커·글자가 다 숨는다).
@@ -128,14 +127,23 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   //   프레임 하나 찾으려고 소품·마테·메모를 다 지나쳐야 했다. 프레임은 **맨 밑에 까는 판**이라
   //   쓰는 순서도 제일 먼저다 → 배경 바로 다음이 제자리.
   //   (배경 옆에 두는 건 2026-07-26 결정 그대로 — 꼬르곰·펭펭 넣는 큰 프레임은 배경색과 맞춰봐야 한다)
+  // 🧹 **탭 재편 (2026-07-30)** — 창업자 *"꾸미기탭도 정리가 필요해. 배경, 포스트잇, 글자(직접쓰는거)
+  //    글자(스티커) 마테, 프레임, 데코, 친구들, 음식, 라이프 다 섞여있어. 거기에 리컬러도."*
+  //    ⚠️ 실제로 **마테가 세 군데**에 흩어져 있었다(배경 탭의 CSS 마테 · 데코 탭의 스티커 마테 · 여름 마테).
+  //    → **한 종류는 한 탭에.** 배경엔 배경만, 마테는 마테 탭으로.
+  //    ⚠️ **요리도구가 운동용품과 같은 탭('라이프')에 있었다** — 요리 앱인데 아령 옆에 냄비가 있었다.
+  //    → 요리도구를 **재료 탭**으로 옮기고 라이프 탭은 없앴다(운동 8컷은 데코로).
+  //    ⚠️ **음식 = 레시피마다 사진이 이미 붙는데 같은 음식 이모지를 또 고를 이유가 없다**(창업자).
+  //    → 요리 음식 33컷(한식·분식·양식·중식·일식)을 빼고 **재료 위주**로. 탭 이름도 `재료`.
+  //       ⭐ 이건 **꾸미기 서랍만**이다 — 레시피 표지 아이콘은 `FoodIcon.jsx`가 따로 218종을 계속 준다.
   const CATS = [
     { key: 'bgtape', label: '배경' },
     { key: 'frame', label: '프레임' },
+    { key: 'tape', label: '마테' },
     { key: 'deco', label: '데코' },
     { key: 'notetext', label: '글자' },
     { key: 'buddies', label: '친구들' },
-    { key: 'food', label: '음식' },
-    { key: 'life', label: '라이프' },
+    { key: 'food', label: '재료' },
   ]
   // 🏖 제철 그룹은 맨 위로 — 여름(6~8월)엔 여름 아이템이 먼저 보인다(창업자 2026-07-29
   //    "시즌별로 아이템을 많이 넣음 좋겠어"). 철이 지나도 **숨기지는 않는다** — 쓰던 걸
@@ -145,11 +153,14 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   // ⚠️ sort 는 안정 정렬(ES2019+)이라 같은 순위끼리는 원래 순서가 유지된다.
   // ⏳ 아직 공개일이 안 된 세트는 목록에서 아예 뺀다(핼러윈·산타가 7월 서랍에 보이면 이상하다).
   //    한 번 공개된 뒤엔 계속 남는다 — 그 뒤론 순서만 밀린다.
+  // ⭐ **그룹 배치 순서 = 한정판(제철) → 리컬러 → 사철** (창업자 확정 2026-07-30
+  //    *"순서는 한정판이 젤 위 그다음 리컬러 그다음 4계절용 순이어야해"* ·
+  //    *"각 탭별로 리컬러는 한정판 아래 배치하라는 뜻이야"*).
+  //    → 귀한 것부터 보인다: 한정판은 지금 아니면 못 쓰고, 리컬러는 색을 맞출 수 있어 활용도가 높다.
+  //    ⚠️ sort 는 안정 정렬이라 같은 순위끼리는 배열에 적은 순서가 그대로 유지된다.
   const groupsByTab = (t) => STICKER_GROUPS
     .filter((x) => x.tab === t && isReleased(x.from))
-    .sort((a, b) => seasonRank(a.season) - seasonRank(b.season))
-  const foodGroups = groupsByTab('food') // 각 그룹 = 요리별 서브칩(한식·양식·중식·일식·분식·디저트·재료)
-  const foodGroup = foodGroups.find((g) => g.key === foodChip) || foodGroups[0]
+    .sort((a, b) => (seasonRank(a.season) - seasonRank(b.season)) || ((b.recolor ? 1 : 0) - (a.recolor ? 1 : 0)))
 
   // 포스트잇을 선택하면 서랍을 맨 위로 올려 '무늬·모양 꾸미기'가 바로 보이게 한다.
   const drawerRef = useRef(null)
@@ -425,8 +436,14 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                     })}
                   </div>
                 </div>
+              </>
+            )}
+            {/* 🎗 마테 — **세 군데에 흩어져 있던 것을 한 탭으로** (창업자 2026-07-30).
+                무늬 테이프(CSS)는 길이를 늘일 수 있어 먼저, 손그림 워시 스티커가 그다음. */}
+            {cat === 'tape' && (
+              <>
                 <div className="decor-sec">
-                  <div className="decor-sec-label">마스킹테이프</div>
+                  <div className="decor-sec-label">무늬 테이프 (길이 조절돼요)</div>
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     {TAPE_PATTERNS.map((t) => (
                       <button key={t.key} className="press" onClick={() => addTape(t.key)} aria-label={`테이프 ${t.label}`}
@@ -434,26 +451,14 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                     ))}
                   </div>
                 </div>
+                {groupsByTab('tape').map(renderStickerGroup)}
               </>
             )}
             {/* 🗒️ 메모·글자 */}
+            {/* 🗒️ 글자 — **직접 쓰기 → 포스트잇 → 글자 스티커** 순서 (창업자 2026-07-30).
+                글자를 넣으려고 들어오는 탭이라 **직접 쓰기가 맨 위**. 포스트잇은 글씨 받침이라 그다음. */}
             {cat === 'notetext' && (
               <>
-                {/* ✏️ 손글씨 문구 스티커를 맨 위로 — 글자를 넣으려고 이 탭에 들어오는데
-                    예전엔 '직접 쓰기'뿐이라 한 번에 예뻐지는 길이 없었다(2026-07-29). */}
-                {groupsByTab('notetext').map(renderStickerGroup)}
-                <div className="decor-sec">
-                  <div className="decor-sec-label">포스트잇</div>
-                  <div className="decor-grid">
-                    {NOTE_COLORS.map((c) => (
-                      <button key={c.key} className="press decor-cell" onClick={() => addNote(c.key)} aria-label={`${c.key} 포스트잇`}>
-                        <span style={{ display: 'block', width: '80%', aspectRatio: '1.02', background: c.bg, borderRadius: '3px 3px 3px 10px', boxShadow: '1px 3px 7px rgba(70,60,45,.22)', position: 'relative' }}>
-                          <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: '0 0 12px 12px', borderColor: `transparent transparent ${c.fold} transparent` }} />
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 <div className="decor-sec">
                   <div className="decor-sec-label">글자</div>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '0 0 10px' }}>
@@ -474,32 +479,28 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
                     ))}
                   </div>
                 </div>
+                <div className="decor-sec">
+                  <div className="decor-sec-label">포스트잇</div>
+                  <div className="decor-grid">
+                    {NOTE_COLORS.map((c) => (
+                      <button key={c.key} className="press decor-cell" onClick={() => addNote(c.key)} aria-label={`${c.key} 포스트잇`}>
+                        <span style={{ display: 'block', width: '80%', aspectRatio: '1.02', background: c.bg, borderRadius: '3px 3px 3px 10px', boxShadow: '1px 3px 7px rgba(70,60,45,.22)', position: 'relative' }}>
+                          <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: '0 0 12px 12px', borderColor: `transparent transparent ${c.fold} transparent` }} />
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {groupsByTab('notetext').map(renderStickerGroup)}
               </>
             )}
             {/* 🐻 친구들 */}
             {cat === 'buddies' && groupsByTab('buddies').map(renderStickerGroup)}
-            {/* 🍱 음식 — 요리별 서브칩 + 고른 칩만 (2단계, 안 늘어지게) */}
-            {cat === 'food' && (
-              <>
-                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 2px 10px', flex: '0 0 auto' }}>
-                  {foodGroups.map((g) => {
-                    const on = foodChip === g.key
-                    return (
-                      <button key={g.key} className="press" onClick={() => setFoodChip(g.key)}
-                        style={{ flex: '0 0 auto', padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)' }}>
-                        {g.chip}
-                      </button>
-                    )
-                  })}
-                </div>
-                {foodGroup && <div className="decor-grid">{foodGroup.items.map(renderCell)}</div>}
-              </>
-            )}
+            {/* 🥕 재료 — 재료 + 요리도구. 요리 음식 33컷은 뺐다(레시피에 이미 사진이 붙는다). */}
+            {cat === 'food' && groupsByTab('food').map(renderStickerGroup)}
             {/* ✨ 데코 (색 바꾸는 심볼 + 데코 + 응원) */}
             {cat === 'frame' && groupsByTab('frame').map(renderStickerGroup)}
             {cat === 'deco' && groupsByTab('deco').map(renderStickerGroup)}
-            {/* 💪 라이프 */}
-            {cat === 'life' && groupsByTab('life').map(renderStickerGroup)}
           </div>
         </div>
 

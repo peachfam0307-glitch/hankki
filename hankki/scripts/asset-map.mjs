@@ -85,8 +85,12 @@ const src = readFileSync(join(ROOT, 'src/components/Stickers.jsx'), 'utf8')
 const KF_NAMES = (src.match(/const KF_NAMES = \[([\s\S]*?)\n\]/) || [, ''])[1]
   .match(/\['([a-z0-9_]+)'/g)?.map((s) => s.slice(2, -1)) || []
 const groups = []
-for (const line of src.split('\n')) {
-  if (!/^\s*\{ key: '/.test(line) || !/\btab: '/.test(line)) continue
+// ⚠️ **여러 줄에 걸쳐 쓴 그룹도 있다** — `꼬르곰·펭펭`(`gompeng`)은 items 가 4줄로 나뉘어 있어서
+//    "한 줄 = 한 그룹" 으로 읽다가 **통째로 놓쳤다**(창업자가 앱에서 그 그룹을 보고 발견).
+//    → 줄바꿈을 지우고 `{ key:` 단위로 잘라 읽는다.
+const FLAT = src.replace(/\n\s*/g, ' ')
+for (const line of FLAT.split(/(?=\{ key: ')/)) {
+  if (!/^\{ key: '[^']+', tab: '/.test(line)) continue   // key 바로 뒤 tab — 색상표 등이 섞이지 않게
   const f = (re) => (line.match(re) || [, ''])[1]
   const key = f(/key: '([^']+)'/)
   const rawItems = (line.match(/items: (\[[^\]]*\]|\w+\([^)]*\))/) || [, ''])[1]
@@ -182,7 +186,7 @@ for (const id of unregistered) (unregByPrefix[prefixOf(id)] = unregByPrefix[pref
 // ── 출력 ─────────────────────────────────────────────────────────────────
 const out = []
 const p = (s = '') => out.push(s)
-const TABNAME = { deco: '데코', buddies: '친구들', food: '음식', life: '라이프', notetext: '메모·글자' }
+const TABNAME = { bgtape: '배경', frame: '프레임', tape: '마테', deco: '데코', notetext: '글자', buddies: '친구들', food: '재료' }
 
 p(`# 🗂 꾸미기 자산 현황 (${ymd(today)} KST · 자동 집계)`)
 p()
@@ -251,6 +255,7 @@ const CAT = (g) => {
   // ⚠️ **탭으로 먼저 판단한다.** 라벨로만 보다가 프레임 탭을 만들면서 라벨에서 '프레임 ·' 접두어를
   //    떼자, `소품·꽃` 같은 프레임이 '소품'으로 잡혀 숫자가 통째로 틀어졌다(기본 프레임 0 · 소품 44).
   if (g.tab === 'frame') return 'frame'
+  if (g.tab === 'tape') return 'tape'
   if (g.tab === 'buddies') return 'char'
   const l = g.label
   if (l.includes('마스킹테이프')) return 'tape'
@@ -266,11 +271,11 @@ const CATNAME = { frame: '프레임', item: '소품', paper: '메모·씰·라�
 // ⭐ **종류마다 정원이 다른 이유** (창업자 2026-07-30 *"스티커는 꾸미기라 사실 많아도..
 //    여기저기 붙이기 좋아서"*): **프레임은 한 장에 하나만 깐다** → 많으면 고르기가 힘들다.
 //    **소품은 여러 개를 여기저기 붙인다** → 가짓수가 많을수록 좋다. 그래서 소품 정원이 제일 크다.
-const BASE_QUOTA = { frame: 24, item: 32, paper: 12, tape: 12, char: 8 }
+const BASE_QUOTA = { frame: 24, item: 32, paper: 12, tape: 12, char: 24 } // 캐릭터는 우리 핵심 자산이라 넉넉히
 const QUOTA = { frame: 12, item: 24, paper: 8, tape: 6, char: 12 } // 한 계절 세트 (3파로 나눠 푼다)
 const seasons = [...new Set(groups.map((g) => g.season).filter(Boolean))]
 const SEASONKO = { summer: '여름', autumn: '가을', winter: '겨울', spring: '봄' }
-const DECO_TABS = new Set(['deco', 'frame', 'buddies']) // 음식·라이프·글자 탭은 성격이 달라 정원 밖
+const DECO_TABS = new Set(['deco', 'frame', 'tape', 'buddies']) // 음식·라이프·글자 탭은 성격이 달라 정원 밖
 
 p('## ⭐ 정원 대조 — 기준표')
 p()
