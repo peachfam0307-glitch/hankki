@@ -61,7 +61,19 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     const cy = rect.top + it.y * rect.height
     const dx = e.clientX - cx
     const dy = e.clientY - cy
-    hRef.current = { id: it.id, cx, cy, d0: Math.hypot(dx, dy) || 1, a0: (Math.atan2(dy, dx) * 180) / Math.PI, s0: it.s, r0: it.r || 0, isText: it.type === 'text' }
+    // 🔍 이 스티커를 얼마나 키울 수 있나 = **그림 원본이 몇 px인가**로 정한다.
+    //   ⚠️ 2026-07-31 창업자 폰 제보(마늘·셰프모자를 크게 키운 화면) — *"어두운색 테두리 있는 애들이 거의 이래"*
+    //   재보니 **파일은 멀쩡했다.** 원인은 찌꺼기가 아니라 **확대**였다:
+    //   재료·도구 39컷 소스가 171~250px인데 손잡이 상한이 0.9(=972px)라 **최대 4~5배**까지 늘어난다.
+    //   확대하면 없던 정보가 생기는 게 아니라 가장자리가 뭉개져서 **테두리가 지저분해 보인다.**
+    //   ⭐ `check-sticker-res.mjs` 게이트가 못 잡은 이유 = 그건 **기본 크기**만 재는데 **유저는 키운다.**
+    //   → 스티커마다 **소스 긴변 × 1.7배**(게이트와 같은 기준)까지만 커지게 막는다.
+    //     0.22 밑으로는 안 내린다 — 기본 크기까지는 어떤 컷이든 쓸 수 있어야 한다.
+    //   📌 막는 게 참는 것보다 낫다: 못 키우면 아쉬울 뿐이지만, 키워서 뭉개지면 **앱이 싸구려로 보인다.**
+    const img = e.currentTarget.parentElement?.querySelector('img')
+    const srcPx = img && img.naturalWidth ? Math.max(img.naturalWidth, img.naturalHeight) : 0
+    const maxS = srcPx ? clamp((srcPx * 1.7) / 1080, 0.22, 0.9) : 0.9
+    hRef.current = { id: it.id, cx, cy, d0: Math.hypot(dx, dy) || 1, a0: (Math.atan2(dy, dx) * 180) / Math.PI, s0: it.s, r0: it.r || 0, isText: it.type === 'text', maxS }
     e.currentTarget.setPointerCapture?.(e.pointerId)
   }
   const onHandleMove = (e) => {
@@ -69,7 +81,8 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     if (!h) return
     const dx = e.clientX - h.cx
     const dy = e.clientY - h.cy
-    const s = clamp(h.s0 * (Math.hypot(dx, dy) / h.d0), 0.07, h.isText ? 1.6 : 0.9) // 글자는 커버를 꽉 채울 만큼 더 크게
+    // 글자는 커버를 꽉 채울 만큼 더 크게 · 그림은 원본 해상도가 허락하는 만큼만(h.maxS)
+    const s = clamp(h.s0 * (Math.hypot(dx, dy) / h.d0), 0.07, h.isText ? 1.6 : (h.maxS || 0.9))
     const r = h.r0 + (Math.atan2(dy, dx) * 180) / Math.PI - h.a0
     onChange?.(h.id, { s, r })
   }

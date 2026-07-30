@@ -71,3 +71,31 @@ if (bad.length) {
   process.exit(1)
 }
 console.log(`✅ 스티커 해상도 OK — 등록된 사진 스티커 ${registered.size}개 중 1.7배 넘게 확대되는 것 없음`)
+
+// ── 📏 「키울 수 있는 여유」 — 위 검사가 못 잡는 것 (2026-07-31 추가) ─────────────
+// ⚠️ 위 검사는 **기본 크기**만 잰다. 그런데 유저는 손잡이로 **키운다.**
+//    창업자가 마늘·셰프모자를 크게 키운 화면에서 *"테두리가 지저분해"* 라고 잡아냈는데,
+//    파일은 멀쩡했고 원인은 **확대**였다. 소스가 200px인 컷을 700px로 늘리면 당연히 뭉갠다.
+// ✅ 앱 쪽은 `DecorLayer` 손잡이가 **소스 긴변 × 1.7배**까지만 커지게 막아 뒀다(뭉개짐 자체는 안 생긴다).
+//    여기서는 **"얼마나 못 키우는지"** 를 보여준다 — 너무 작으면 유저가 답답하다 = 다시 뽑을 후보.
+// ⛔ 실패시키지 않는다(경고만) — 시끄러운 게이트는 아무도 안 본다.
+const CANVAS_HALF = 540                          // 표지의 절반쯤 = 사람들이 흔히 키우는 크기
+const tight = []
+for (const key of registered) {
+  const f = path.join(PHOTO_DIR, `${key}.png`)
+  if (!fs.existsSync(f)) continue
+  const { w, h } = pngSize(f)
+  const long = Math.max(w, h)
+  const canGrowTo = Math.round(long * 1.7)       // 손잡이 상한과 같은 기준
+  if (canGrowTo < CANVAS_HALF) tight.push({ key, long, canGrowTo })
+}
+if (tight.length) {
+  tight.sort((a, b) => a.long - b.long)
+  console.log(`\n📏 크게 못 키우는 컷 ${tight.length}개 — 표지 절반(${CANVAS_HALF}px)까지 못 간다`)
+  console.log('   (지금 화질은 정상이다. 다음에 시트를 다시 뽑을 때 크게 받으면 좋은 목록)')
+  for (const t of tight.slice(0, 12)) {
+    console.log(`   ${t.key.padEnd(16)} 소스 ${String(t.long).padStart(4)}px → 최대 ${t.canGrowTo}px 까지`)
+  }
+  if (tight.length > 12) console.log(`   … 외 ${tight.length - 12}개`)
+  console.log('   📐 다시 뽑을 때 = 시트 한 장에 4~9컷, 컷당 600px 이상\n')
+}
