@@ -284,42 +284,86 @@ export const PHOTO_IDS = new Set(Object.keys(PHOTO_FAMILY))
 // ── ✨ 캐릭터 움직임(모션) · 효과(양념) — 스티커마다 골라 얹는다 ──
 // 전부 그림 1장으로 되는 CSS 모션. item.motion / item.fx 에 key 저장.
 //
-// ⭐ **팩당 모션 1개 + 효과 1개** (창업자 확정 2026-07-30:
-//    *"우리 이모지팩에 새모션1개 넣자. 모션이랑 효과는 유료팩당 1개씩 넣자 그래야 골고루 사지"*)
-//    → 팩을 사는 이유가 **그림 몇 장**이 아니라 **그 팩에만 있는 움직임**이 되게 한다.
-//      그림은 다른 팩과 비슷해 보일 수 있어도 움직임은 눈에 확 띄고, 한 번 쓰면 계속 쓰게 된다.
-//    ⚠️ 그래서 **모션·효과를 한 팩에 몰아 넣지 않는다.** 한 팩에 3개 주면 그 팩만 팔린다.
-//    📋 어느 팩이 뭘 받는지 = `docs/모션-효과-설계.md` 배분표. **거기와 여기가 항상 같아야 한다.**
+// ⭐⭐ **팩 하나당 딱 하나 — 모션이거나 효과이거나** (창업자 확정 2026-07-30)
+//    처음엔 "팩당 모션 1 + 효과 1"로 잡았는데 창업자가 바로 잡아 줬다:
+//    *"유료팩당 효과나 모션 1개. 각각 1개 총 2개가 아니라 그냥 1개씩.
+//      왜냐면 **매달 나오는건데** 모션이나 효과가 부족해. 가을유료팩에 모션 1 / 핼러윈에 효과 1 이런식으로"*
+//    → 팩은 **매달** 나온다. 1+1로 주면 재고가 **두 배로 빨리** 바닥난다.
+//      지금 만들어 둔 모션 7 + 효과 6 = 13개 → 팩당 1개면 **딱 1년치**가 나온다(1+1이면 6개월).
+//    → 그리고 **모션인 달 / 효과인 달을 번갈아** 둔다. 매달 결이 달라 보여서 덜 질린다.
+//
+//    팩을 사는 이유가 **그림 몇 장**이면 하나 사고 만다. 그림은 다음 팩과 비슷해 보여도
+//    **움직임은 눈에 확 띄고 한 번 쓰면 계속 쓴다.** 그래서 팩마다 그 팩에만 있는 걸 하나 넣는다.
+//
+//    ⛔ 한 팩에 두 개 넣지 말 것(그 팩만 팔린다) · ⛔ 이미 무료로 준 걸 팩에 다시 넣지 말 것
+//    📋 어느 달에 뭐가 나가는지 = `docs/모션-효과-설계.md` 배분표(12개월).
+//       **거기와 여기가 항상 같아야 한다** — `scripts/test-motion.mjs` 가 팩당 1개를 강제한다.
 //
 // 필드
 //   base: true  = 무료(지금 피커에 보임)
 //   pack: '키'  = 그 팩을 가진 사람만 보임. 결제 붙기 전까진 CSS·코드만 있고 피커엔 안 뜬다.
 //   sheet       = 창업자 시안(2026-07-30) 어느 항목에서 왔는지 — 시안과 코드를 대조할 때 쓴다.
+// ⚠️⚠️ **모션은 '축'으로 관리한다 — 속도로 늘리면 다 비슷해 보인다.**
+//    창업자 2026-07-30: *"냠냠도 둥실도 콩콩도 통통이랑 비슷. 살랑 갸웃 비슷."*
+//    세어 보니 맞았다 — 9개 중 **5개가 '위아래'**(통통·콩콩·냠냠·둥실·쿵착지), **2개가 '기울기'**(갸웃·살랑).
+//    **축이 3가지뿐인데 시간만 달라서** 늘려도 늘어난 것처럼 안 보였다.
+//    → 팩에 넣는 모션은 **축이 서로 겹치지 않게** 고른다. `axis` 가 그 축이다.
+//    → 겹치는 것들은 지우지 않고 **예비(pack 없음)** 로 둔다 — 저장된 표지가 계속 쓰고 있다.
 export const MOTIONS = [
-  { key: 'none', label: '가만히', base: true },
-  { key: 'tongtong', label: '통통', base: true },
-  { key: 'tilt', label: '갸웃', base: true },
-  // 🏖 출시기념 여름팩 = **무료**라 base:true. "새 모션 1개 넣자"(창업자)의 그 한 개.
-  { key: 'wave', label: '찰랑', base: true, pack: 'summer2026', sheet: '02 떠다니기 / 03 액체' },
-  { key: 'kong', label: '콩콩', pack: 'spring2027', sheet: '10 인터랙션' },
-  { key: 'sway', label: '살랑', pack: 'autumn2026', sheet: '05 바람 ②식물 흔들림' },
-  { key: 'float', label: '둥실', pack: 'winter2026', sheet: '02 떠다니기 ①구름 둥실' },
-  { key: 'drop', label: '쿵착지', pack: 'cafe', sheet: '06 붙이는 느낌 ③착 붙기' },
-  { key: 'nyam', label: '냠냠', pack: 'chuseok2026', sheet: '08 캐릭터 ③냠냠 먹기' },
-  { key: 'flutter', label: '펄럭', pack: 'simple', sheet: '05 바람 ③메모지 펄럭' },
+  { key: 'none', label: '가만히', axis: '없음', base: true },
+  { key: 'tongtong', label: '통통', axis: '위아래', base: true },
+  { key: 'tilt', label: '갸웃', axis: '기울기', base: true },
+  // 🏖 출시기념 여름팩 = **무료 선물**이라 base:true. "새 모션 1개 넣자"(창업자)의 그 한 개.
+  { key: 'wave', label: '찰랑', axis: '물 위 부유', base: true, pack: 'summer2026', sheet: 'B-03③ 잔물결' },
+  { key: 'ajang', label: '아장아장', axis: '좌우 이동', pack: 'chuseok2026', sheet: '(새로 만듦)' },   // 26-09 추석
+  { key: 'durib', label: '두리번', axis: '좌우 반전', pack: 'watercolor2026', sheet: '(새로 만듦)' },  // 26-10 가을 수채화
+  { key: 'bingle', label: '빙글', axis: '한 바퀴 회전', pack: 'halloween2026', sheet: 'D-02⑧ 나뭇잎 회전' }, // 26-10 핼러윈
+  { key: 'bureu', label: '부르르', axis: '미세 진동', pack: 'winter2027', sheet: 'B Flow ⑥ Wiggle' },  // 27-01 겨울
+  { key: 'kongdak', label: '콩닥', axis: '크기만(심장)', pack: 'spring2027', sheet: 'D-06③ 좋아요 팝' }, // 27-03 봄
+  { key: 'flutter', label: '펄럭', axis: '종이 3D', pack: 'simple2027', sheet: 'B-05③ 메모지 펄럭' },   // 27-04 심플 다꾸
+  // 🙆 **상하체 분리** — 그림 한 장을 둘로 잘라 따로 움직인다. 통짜 모션과 결이 완전히 다르다(훨씬 액티브).
+  { key: 'deulssuk', label: '들썩', axis: '상체만 흔들림', sheet: '(새로 만듦)' },
+  { key: 'kkeudeok', label: '끄덕', axis: '상체만 숙임', sheet: 'E-1 숨 쉬듯 움직임' },
+  // 🅿️ 예비 — **축이 위(통통·기울기)와 겹쳐서** 팩에 안 넣는다. 코드·CSS는 그대로 두고
+  //    저장된 표지도 계속 정상 동작한다. 나중에 축을 바꿔 살리거나 다른 데 쓸 수 있다.
+  { key: 'kong', label: '콩콩', axis: '위아래', sheet: 'B-10 인터랙션' },
+  { key: 'nyam', label: '냠냠', axis: '위아래', sheet: 'B-08③ 냠냠 먹기' },
+  { key: 'float', label: '둥실', axis: '위아래', sheet: 'B-02① 구름 둥실' },
+  { key: 'drop', label: '쿵착지', axis: '위아래', sheet: 'B-06③ 착 붙기' },
+  { key: 'sway', label: '살랑', axis: '기울기', sheet: 'B-05② 식물 흔들림' },
 ]
 export const motionClass = (m) => (m && m !== 'none' ? `hk-m-${m}` : '')
+// 🙆 **상하체를 나눠 따로 움직이는 모션.** 같은 그림을 두 번 그려 위/아래를 잘라 낸다(clip-path).
+//   창업자 2026-07-30 *"좀 더 액티브한거 넣는건 어렵다고 했지?"* → **얼굴은 안 되지만 몸은 된다.**
+//   자산이 한 장도 더 안 든다. 통짜로 흔드는 것보다 훨씬 살아 있어 보인다.
+//   ⚠️ **위·아래를 딱 맞춰 자르면 이음새에 틈이 벌어진다.** 위쪽이 기울면 자른 선도 같이 기울기 때문.
+//      그래서 **아래쪽을 조금 더 위까지(SPLIT_BOT) 그려서** 그 틈을 덮는다. 위쪽이 항상 앞에 오니 겹쳐도 안 지저분하다.
+export const SPLIT_MOTIONS = new Set(['deulssuk', 'kkeudeok'])
+const SPLIT_TOP = 60   // 위 조각이 덮는 범위(0~60%)
+const SPLIT_BOT = 50   // 아래 조각이 덮는 범위(50~100%) — 10%가 겹쳐서 틈을 메운다
+// ⚠️⚠️ **효과는 '방향'으로 관리한다 — 그림만 바꾸면 다 비슷해 보인다.**
+//    창업자 2026-07-30: *"효과들은 다 거기서 거기 ㅠㅠ"* — 맞았다.
+//    9개 중 **위로 뜨는 게 4개**(하트·뽀글·김모락·맛있는것들), **아래로 떨어지는 게 4개**(눈·꽃잎·낙엽·물방울).
+//    **방향이 3가지뿐**이라 그림(하트냐 꽃잎이냐)만 다르고 인상이 같았다.
+//    → 팩에 넣는 효과는 **방향이 겹치지 않게** 고른다. `dir` 이 그 방향이다.
+//    📌 계절 낙하(눈·낙엽·꽃잎)는 셋이 서로 닮을 수밖에 없다 — **떨어져야 눈이고 낙엽이다.**
+//       그래서 이건 스티커 효과 슬롯을 쓰지 말고 **배경 한 겹**으로 돌리는 게 낫다(→ 문서 4️⃣ 후보 2).
 export const FX_KINDS = [
-  { key: 'none', label: '없음', base: true },
-  { key: 'spark', label: '반짝이', base: true },
-  { key: 'heart', label: '하트', base: true },
-  { key: 'bubble', label: '뽀글', base: true },
-  { key: 'water', label: '물방울', base: true, pack: 'summer2026', sheet: '03 액체 ①물방울 맺힘' },
-  { key: 'leaf', label: '낙엽', pack: 'autumn2026', sheet: '04 계절 ②낙엽 떨어짐' },
-  { key: 'snow', label: '눈', pack: 'winter2026', sheet: '04 계절 ③눈 내리는 효과' },
-  { key: 'petal', label: '꽃잎', pack: 'spring2027', sheet: '04 계절 ①꽃잎 흩날림' },
-  { key: 'steam', label: '김모락', pack: 'cafe', sheet: '08 캐릭터 ④김이 모락모락' },
-  { key: 'food', label: '맛있는것들', pack: 'chuseok2026', sheet: '08 캐릭터 ③냠냠 먹기' },
+  { key: 'none', label: '없음', dir: '없음', base: true },
+  { key: 'spark', label: '반짝이', dir: '제자리 깜빡', base: true },
+  { key: 'heart', label: '하트', dir: '위로 뜸', base: true },
+  { key: 'bubble', label: '뽀글', dir: '위로 뜸', base: true },
+  { key: 'zoom', label: '슝', dir: '가로지름', pack: 'autumn2026', sheet: '(새로 만듦) D-02 바람' },   // 26-10 가을 다꾸
+  { key: 'pop', label: '팡!', dir: '바깥으로 터짐', pack: 'xmas2026', sheet: 'D-08② 폭죽' },           // 26-12 크리스마스
+  { key: 'halo', label: '후광', dir: '뒤에 깔림', pack: 'cafe2027', sheet: 'D-09③ 소프트 글로우' },    // 27-02 카페
+  { key: 'orbit', label: '빙빙', dir: '머리 둘레 궤도', pack: 'picnic2027', sheet: '(새로 만듦)' },     // 27-05 소풍
+  { key: 'water', label: '물방울', dir: '아래로 낙하', pack: 'summer2027', sheet: 'B-03① 물방울 맺힘' }, // 27-06 여름
+  // 🅿️ 예비 — 방향이 위(뜸/낙하)와 겹쳐서 팩에 안 넣는다. 배경 효과로 돌릴 후보들.
+  { key: 'steam', label: '김모락', dir: '위로 뜸', sheet: 'B-08④ 김이 모락모락' },
+  { key: 'food', label: '맛있는것들', dir: '위로 뜸', sheet: 'B-08③ 냠냠 먹기' },
+  { key: 'snow', label: '눈', dir: '아래로 낙하', sheet: 'B-04③ 눈 내리는 효과' },
+  { key: 'leaf', label: '낙엽', dir: '아래로 낙하', sheet: 'B-04② 낙엽 떨어짐' },
+  { key: 'petal', label: '꽃잎', dir: '아래로 낙하', sheet: 'B-04① 꽃잎 흩날림' },
 ]
 // 🔓 지금 열려 있는 팩 = 없다(결제 미구현 · #54). 팩을 팔기 시작하면 **여기 한 줄만** 채우면
 //    피커에 바로 뜬다. 소유 판정을 여기저기 흩뿌리지 않으려고 한 곳에 모아 둔다.
@@ -370,33 +414,75 @@ const SVG_PETAL = (
     <path d="M12 2.5c6 3.4 8 8.6 5.4 13.2-2.6 4.6-8 5.4-11.4 2.6C2.6 15.4 5 6.6 12 2.5Z" fill="#f0c3ce" />
   </svg>
 )
+// 🎊 색종이 — '팡!' 용. 반짝이(별)와 달리 **모서리 둥근 네모**라 터질 때 종이 조각처럼 보인다.
+//   두 겹(살짝 어긋나게)이라 돌아갈 때 두께가 있는 것처럼 느껴진다.
+const SVG_CONFETTI = (
+  <svg viewBox="0 0 24 24" width="100%" height="100%" style={{ display: 'block' }}>
+    <rect x="4" y="7" width="16" height="9" rx="3" fill="#dc9aa1" transform="rotate(-14 12 12)" />
+    <rect x="7" y="9" width="11" height="6" rx="2.4" fill="#e8bfa2" transform="rotate(10 12 12)" opacity=".9" />
+  </svg>
+)
 // 맛있는것들 효과 = 우리가 그린 음식(이모지 대신). 캔디 톤이라 캐릭터랑 딱 맞음.
 const FX_FOOD_URLS = import.meta.glob('../assets/stickers/fx/*.png', { eager: true, query: '?url', import: 'default' })
 const FX_FOOD = ['strawberry', 'burger', 'cupcake', 'cake', 'icecream', 'ramen'].map((n) => FX_FOOD_URLS[`../assets/stickers/fx/${n}.png`])
-// [x%, y%, delay] — spark/heart 는 머리 위쪽에 모으고 작게. food 는 머리 위로 크게 떠다님.
+// ⚠️⚠️ **조각이 얼마나 움직이는지는 `rel()` 로 계산한다. 손으로 % 를 쓰지 말 것.**
+//   창업자 2026-07-30: *"효과가 좀 작아 살짝 움직이는 애들을 조금만 더 크게... 잘 안보여"*
+//   *"바깥으로 터진다 / 머리둘레를 돈다 / 뒤에깔려서 숨쉰다 먹통"*
+//   원인은 **하나**였다 — transform 의 `%` 는 **제 몸 크기 기준**이다.
+//   16px 짜리 하트에 `translateY(-85%)` 를 주면 13.6px 뜬다 = **238px 스티커의 5.7%.**
+//   그래서 "떠오른다"가 아니라 "제자리에서 깜빡"으로 보였다. 떨어지는 것들도 전부 같았다.
+//   → `rel(조각크기, 스티커기준%)` 이 필요한 % 를 계산해 CSS 변수로 넣는다.
+//     **조각 크기를 바꿔도 이동 거리가 안 변한다.** (전엔 크기를 키우면 거리도 같이 커져 버렸다)
+const STICKER_PX = 238            // 캔버스에 붙는 스티커 기본 폭(= defaultScale 0.22 기준)
+const rel = (size, pct) => `${Math.round(pct / (size / STICKER_PX))}%`
+
+// [x%, y%, delay, 조각별 CSS변수] — spark/heart 는 머리 위쪽에. food 는 머리 위로 크게 떠다님.
+// 📏 조각 크기는 창업자 요청으로 **약 1.5배** 키웠다 (작아서 티가 안 났다).
+const RISE = (size, pct) => ({ '--rise': rel(size, -pct) })          // 위로 뜨는 거리
+const FALL = (size, down, side) => ({ '--fy': rel(size, down), '--sx': rel(size, side) })
 const FX_DEF = {
-  spark: { size: 16, items: [[15, -2, 0], [50, -10, .5], [85, 0, .9], [28, 16, 1.3], [72, 14, .7]], node: SVG_SPARK },
-  heart: { size: 16, items: [[25, 0, 0], [63, -10, .8], [45, 12, 1.5]], node: SVG_HEART },
-  bubble: { size: 15, items: [[15, 2, 0], [48, -10, .9], [80, -1, .5], [32, 15, 1.7], [66, 12, 1.2]], node: SVG_BUBBLE },
-  food: { size: 26, items: [[12, -10, 0], [84, -14, .9], [30, -24, 1.6], [66, -22, 2.3]], food: true },
-  steam: { size: 11, items: [[42, 6, 0], [52, 2, .9], [47, 10, 1.7]], puff: true },
+  spark: { size: 23, items: [[15, -2, 0], [50, -12, .5], [85, 0, .9], [28, 16, 1.3], [72, 14, .7]], node: SVG_SPARK },
+  heart: { size: 23, items: [[25, 0, 0, RISE(23, 70)], [63, -12, .8, RISE(23, 70)], [45, 12, 1.5, RISE(23, 70)]], node: SVG_HEART },
+  bubble: { size: 22, items: [[15, 2, 0], [48, -12, .9], [80, -1, .5], [32, 15, 1.7], [66, 12, 1.2]].map((it) => [...it.slice(0, 3), RISE(22, 78)]), node: SVG_BUBBLE },
+  food: { size: 32, items: [[12, -10, 0], [84, -16, .9], [30, -26, 1.6], [66, -24, 2.3]].map((it) => [...it, RISE(32, 55)]), food: true },
+  steam: { size: 17, items: [[42, 6, 0], [52, 2, .9], [47, 10, 1.7]].map((it) => [...it, RISE(17, 85)]), puff: true },
   // ⬇️ 아래 넷은 **떨어지는** 효과 — 스티커 위쪽에서 출발해 아래로 지나간다.
-  //    그래서 y 를 음수(머리 위)로 두고, 낙하는 CSS(`hk-fx-<kind>`)가 맡는다.
+  //    그래서 y 를 음수(머리 위)로 두고, 낙하 거리는 `FALL()` 이 스티커 기준으로 계산한다.
   //    ⚠️ 화면 전체에 뿌리지 않는다 — 스티커 한 장 크기 안에서만. 표지 전체에 눈을 뿌리면
   //       스티커가 아니라 '앱 효과'가 되고, 여러 장 붙였을 때 서로 겹쳐 지저분해진다.
-  water: { size: 13, items: [[22, -14, 0], [58, -22, .8], [80, -10, 1.6], [40, -6, 2.2]], node: SVG_WATER },
-  leaf: { size: 18, items: [[18, -20, 0], [55, -28, 1.1], [82, -16, 2.1]], node: SVG_LEAF },
-  snow: { size: 12, items: [[14, -18, 0], [42, -26, .7], [68, -14, 1.4], [88, -24, 2.1]], node: SVG_SNOW },
-  petal: { size: 15, items: [[20, -18, 0], [52, -26, .9], [78, -12, 1.8]], node: SVG_PETAL },
+  //       (표지 전체 연출은 **배경 레이어**로 따로 한다 → `docs/모션-효과-설계.md` 배경 항목)
+  water: { size: 19, items: [[22, -16, 0], [58, -26, .8], [80, -12, 1.6], [40, -8, 2.2]].map((it) => [...it, FALL(19, 120, 4)]), node: SVG_WATER },
+  leaf: { size: 26, items: [[18, -22, 0], [55, -32, 1.1], [82, -18, 2.1]].map((it) => [...it, FALL(26, 118, 16)]), node: SVG_LEAF },
+  snow: { size: 18, items: [[14, -20, 0], [42, -30, .7], [68, -16, 1.4], [88, -28, 2.1]].map((it) => [...it, FALL(18, 120, 10)]), node: SVG_SNOW },
+  petal: { size: 22, items: [[20, -20, 0], [52, -30, .9], [78, -14, 1.8]].map((it) => [...it, FALL(22, 118, 18)]), node: SVG_PETAL },
+  // ── 🆕 뜨지도 떨어지지도 않는 것들 (창업자 "효과들은 다 거기서 거기") ──
+  // 💥 팡 — 전부 같은 자리(가운데)에서 시작해 **제각각 다른 방향**으로 날아간다.
+  // ⚠️ 값이 세 자리인 이유 = `rel()` 이 「스티커 기준 %」를 「조각 제 몸 기준 %」로 바꿔 주기 때문.
+  //    조각이 스티커의 9%밖에 안 되니, 스티커 폭의 58%를 가려면 조각 기준으론 658% 다.
+  pop: { size: 21, node: SVG_CONFETTI, items: [
+    [-58, -48, -140], [55, -53, 160], [-71, 9, -80], [69, 5, 110], [-16, -76, 60], [23, -72, -120],
+  ].map(([x, y, spin], i) => [50, 34, i * 0.03,
+    { '--dx': rel(21, x), '--dy': rel(21, y), '--spin': `${spin}deg` }]) },
+  // 🪐 빙빙 — 셋 다 가운데에 두고 **딜레이를 음수로** 줘서 처음부터 궤도 위 다른 자리에 있게 한다.
+  orbit: { size: 19, node: SVG_SPARK, items: [0, -1.47, -2.93].map((d) => [50, 34, d, { '--r': rel(19, 55) }]) },
+  // 💨 슝 — 왼쪽 밖에서 들어와 오른쪽 밖으로 나간다(스티커 폭의 1.4배를 건넌다).
+  zoom: { size: 22, node: SVG_SPARK, items: [[0, 12, 0], [0, 40, .9], [0, -12, 1.7]].map((it) => [...it, { '--go': rel(22, 140) }]) },
+  // 🌕 후광 — 조각이 아니라 **뒤에 깔리는 큰 원 하나.**
+  //    ⚠️ 처음에 132px(스티커의 55%)로 만들었다가 **그림 뒤에 완전히 가려져 안 보였다.**
+  //       후광은 반드시 **그림보다 커야** 한다. 340px ≒ 스티커의 1.43배.
+  halo: { size: 340, items: [[50, 46, 0]] },
 }
 export function StickerFx({ kind }) {
   const def = FX_DEF[kind]
   if (!def) return null
   return (
     <span aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}>
-      {def.items.map(([x, y, d], i) => (
+      {/* 4번째 값(vars) = 조각마다 다른 CSS 변수. 터지는 방향(--dx/--dy)·궤도 반지름(--r)·
+          가로 이동 거리(--go) 처럼 **조각마다 달라야 하는 것**을 여기서 준다.
+          (하나로 고정하면 '터졌다'가 아니라 '커졌다'로 보인다) */}
+      {def.items.map(([x, y, d, vars], i) => (
         <span key={i} className={`hk-fx hk-fx-${kind}`}
-          style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, width: def.size, height: def.size, lineHeight: 1, animationDelay: `${d}s` }}>
+          style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, width: def.size, height: def.size, lineHeight: 1, animationDelay: `${d}s`, ...(vars || {}) }}>
           {def.food
             ? <img src={FX_FOOD[i % FX_FOOD.length]} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
             : def.puff ? null : def.node}
@@ -556,6 +642,19 @@ export function StickerArt({ id, color, style, motion }) {
     //    접두어로 들어와도 **친구들 탭에 넣기만 하면** 자동으로 움직인다.
     //    📌 교훈: **이름 규칙(접두어)으로 분류하지 말고, 이미 있는 분류(탭)를 쓴다.**
     const cls = motionClass(motion === undefined && FRIEND_IDS.has(id) ? 'tongtong' : motion)
+    // 🙆 상하체 분리 — 같은 그림을 두 장 겹쳐 위/아래를 각각 잘라 낸다. 자산은 안 늘어난다.
+    //    ⚠️ 리컬러와는 같이 못 쓴다(캔버스로 다시 그리는 것이라 두 번 하면 느리다) — 캐릭터는 리컬러 대상이 아니라 괜찮다.
+    if (SPLIT_MOTIONS.has(motion)) {
+      const half = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }
+      return (
+        <span style={{ display: 'block', width: '100%', height: '100%', position: 'relative', ...style }}>
+          <img src={pf.src} alt="" draggable={false} className={`hk-m-${motion}-bot`}
+            style={{ ...half, clipPath: `inset(${SPLIT_BOT}% 0 0 0)` }} />
+          <img src={pf.src} alt="" draggable={false} className={`hk-m-${motion}-top`}
+            style={{ ...half, clipPath: `inset(0 0 ${100 - SPLIT_TOP}% 0)` }} />
+        </span>
+      )
+    }
     return (
       <span style={{ display: 'block', width: '100%', height: '100%', ...style }}>
         {color && RECOLOR_PNG.has(id)

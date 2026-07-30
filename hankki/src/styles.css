@@ -1404,37 +1404,169 @@ html, body { overscroll-behavior: none; }
 @keyframes hk-flutter { 0%,100% { transform: perspective(320px) rotateY(0) skewY(0deg); } 32% { transform: perspective(320px) rotateY(13deg) skewY(-1.2deg); } 68% { transform: perspective(320px) rotateY(-9deg) skewY(.9deg); } }
 .hk-m-flutter { animation: hk-flutter 2.2s ease-in-out infinite; transform-origin: 2% 50%; }
 
-/* 💫 효과(양념) 파티클 — 뮤트 톤, 작게, 머리 위쪽 위주. */
+/* ══════ 🆕 축이 다른 모션 5종 (창업자 2026-07-30) ══════
+   창업자: *"냠냠도 둥실도 콩콩도 통통이랑 비슷. 살랑 갸웃 비슷. 효과들은 다 거기서 거기 ㅠㅠ"*
+   ⚠️ 맞는 지적이었다. 세어 보니 **9개 중 5개가 '위아래로 움직인다'**(통통·콩콩·냠냠·둥실·쿵착지)였고
+      갸웃·살랑은 둘 다 '기울기'였다. **축이 3가지뿐**이라 속도만 다른 것처럼 보였다.
+   📌 교훈: 모션을 늘릴 땐 **시간(속도)을 바꾸지 말고 축(무엇이 변하는가)을 바꾼다.**
+      위아래·기울기 말고도 → 좌우 이동 · 한 바퀴 회전 · 미세 진동 · 순수 크기 · 좌우 반전이 있다. */
+
+/* 🚶 아장아장 — **좌우로 이동**한다. 위아래로 뛰는 애들과 축이 완전히 다르다.
+   몸이 진행 방향으로 기울고 중간에 살짝 뜨면서 '걸어간다'로 읽힌다. */
+@keyframes hk-ajang {
+  0%,100% { transform: translateX(-13%) rotate(-3.5deg); }
+  25% { transform: translate(-6%,-3%) rotate(2deg); }
+  50% { transform: translateX(13%) rotate(3.5deg); }
+  75% { transform: translate(6%,-3%) rotate(-2deg); }
+}
+.hk-m-ajang { animation: hk-ajang 3.2s ease-in-out infinite; }
+
+/* 🌀 빙글 — **한 바퀴 돈다.** 대부분 멈춰 있다가 가끔 휙 돈다(계속 돌면 어지럽다). */
+@keyframes hk-bingle { 0%,58% { transform: rotate(0); } 88%,100% { transform: rotate(360deg); } }
+.hk-m-bingle { animation: hk-bingle 3.6s cubic-bezier(.5,0,.25,1) infinite; transform-origin: 50% 58%; }
+
+/* 🥶 부르르 — **빠르고 작은 진동.** 통통(느리고 큼)과 정반대라 절대 안 겹친다.
+   추울 때·설렐 때. 대부분 가만히 있다가 끝에서 짧게 떤다. */
+@keyframes hk-bureu {
+  0%,70%,100% { transform: translateX(0) rotate(0); }
+  74% { transform: translateX(-1.8%) rotate(-1.8deg); }
+  78% { transform: translateX(1.8%) rotate(1.8deg); }
+  82% { transform: translateX(-1.5%) rotate(-1.5deg); }
+  86% { transform: translateX(1.2%) rotate(1.2deg); }
+  90% { transform: translateX(-.8%) rotate(-.8deg); }
+  94% { transform: translateX(.4%) rotate(.4deg); }
+}
+.hk-m-bureu { animation: hk-bureu 2.8s linear infinite; }
+
+/* 💗 콩닥 — **자리 이동 0, 크기만.** 위아래로 안 움직여서 통통과 확실히 다르다.
+   두 박자(쿵-닥)로 넣어야 '심장'으로 읽힌다. 한 박자면 그냥 커졌다 작아지는 것. */
+@keyframes hk-kongdak {
+  0%,100% { transform: scale(1); }
+  10% { transform: scale(1.09); }
+  22% { transform: scale(1); }
+  32% { transform: scale(1.05); }
+  46% { transform: scale(1); }
+}
+.hk-m-kongdak { animation: hk-kongdak 1.9s ease-out infinite; transform-origin: 50% 62%; }
+
+/* 👀 두리번 — **좌우로 몸을 뒤집는다.** 그림 1장으로 '돌아본다'를 만드는 유일한 방법.
+   ⚠️ 뒤집기 전에 잠깐 멈추고, 기울였다가 뒤집어야 '두리번'이 된다(바로 뒤집으면 깜빡임처럼 보임). */
+@keyframes hk-durib {
+  0%,12% { transform: scaleX(1) rotate(0); }
+  24% { transform: scaleX(1) rotate(-5deg); }
+  38%,52% { transform: scaleX(-1) rotate(0); }
+  64% { transform: scaleX(-1) rotate(-5deg); }
+  78%,100% { transform: scaleX(1) rotate(0); }
+}
+.hk-m-durib { animation: hk-durib 4.2s ease-in-out infinite; }
+
+/* 💫 효과(양념) 파티클 — 뮤트 톤, 머리 위쪽 위주.
+   ⚠️⚠️ **이동 거리(`--rise`·`--fy`·`--sx`·`--dx`·`--r`·`--go`)는 전부 CSS 변수로 뺐다.**
+   왜 = transform 의 `%` 는 **제 몸 크기 기준**이라, 조각이 작으면 아무리 큰 %를 써도 조금밖에 안 간다.
+        실제로 `translateY(-85%)` 인 하트가 **스티커 높이의 5.7%** 만 떠올라서
+        창업자가 *"효과가 좀 작아... 잘 안보여"* 라고 잡아 줬다(팡·빙빙·후광은 아예 "먹통"이었다).
+   → 이제 `Stickers.jsx` 의 `rel(size, 스티커기준%)` 이 계산해서 넣는다.
+     **조각 크기를 바꿔도 이동 거리는 그대로다.** 여기 기본값은 안전장치일 뿐. */
 .hk-fx { line-height: 1; pointer-events: none; }
 /* 반짝이 — 제자리 트윙클 */
 @keyframes hk-fx-spark { 0%,100% { opacity: .2; transform: scale(.45) rotate(-8deg); } 50% { opacity: 1; transform: scale(1) rotate(8deg); } }
 .hk-fx-spark { animation: hk-fx-spark 1.7s ease-in-out infinite; }
 /* 하트 — 머리 위 작게 뜨며 살짝 상승 */
-@keyframes hk-fx-heart { 0% { opacity: 0; transform: translateY(15%) scale(.5); } 25% { opacity: 1; } 60% { opacity: 1; } 100% { opacity: 0; transform: translateY(-85%) scale(1); } }
+@keyframes hk-fx-heart { 0% { opacity: 0; transform: translateY(15%) scale(.5); } 25% { opacity: 1; } 60% { opacity: 1; } 100% { opacity: 0; transform: translateY(var(--rise,-85%)) scale(1); } }
 .hk-fx-heart { animation: hk-fx-heart 2.6s ease-in infinite; }
 /* 뽀글 — 크림 방울이 몽글몽글 떠오르며 사라짐(연한 배경서도 보이게 은은한 그림자) */
-@keyframes hk-fx-bubble { 0% { opacity: 0; transform: translateY(22%) scale(.4); } 25% { opacity: 1; } 68% { opacity: .95; } 100% { opacity: 0; transform: translateY(-90%) scale(1.05); } }
+@keyframes hk-fx-bubble { 0% { opacity: 0; transform: translateY(22%) scale(.4); } 25% { opacity: 1; } 68% { opacity: .95; } 100% { opacity: 0; transform: translateY(var(--rise,-90%)) scale(1.05); } }
 .hk-fx-bubble { animation: hk-fx-bubble 2.9s ease-in-out infinite; filter: drop-shadow(0 1px 1.2px rgba(85,70,52,.35)); }
 /* 먹을거 — 머리 위에서 몽글몽글 떠다님(가볍게 상승) */
-@keyframes hk-fx-food { 0% { opacity: 0; transform: translateY(30%) scale(.5) rotate(-8deg); } 22% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; transform: translateY(-60%) scale(1.05) rotate(8deg); } }
+@keyframes hk-fx-food { 0% { opacity: 0; transform: translateY(30%) scale(.5) rotate(-8deg); } 22% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; transform: translateY(var(--rise,-60%)) scale(1.05) rotate(8deg); } }
 .hk-fx-food { animation: hk-fx-food 3s ease-in-out infinite; }
 /* 김 모락 — 하얀 김(어두운 배경서 잘 보임) */
 .hk-fx-steam { border-radius: 50%; background: rgba(255,255,255,.82); filter: blur(1.6px); }
-@keyframes hk-fx-steam { 0% { opacity: 0; transform: translateY(30%) scale(.5); } 25% { opacity: .85; } 100% { opacity: 0; transform: translateY(-120%) scale(1.6); } }
+@keyframes hk-fx-steam { 0% { opacity: 0; transform: translateY(30%) scale(.5); } 25% { opacity: .85; } 100% { opacity: 0; transform: translateY(var(--rise,-120%)) scale(1.6); } }
 .hk-fx-steam { animation: hk-fx-steam 2.6s ease-in infinite; }
 
 /* ⬇️ 떨어지는 효과 4종 (물방울·낙엽·눈·꽃잎) — 스티커 위에서 시작해 아래로 지나간다.
    ⚠️ 낙하는 **반드시 흔들려야 한다.** 똑바로 내려오면 비 오는 CSS 예제처럼 기계적으로 보인다.
       그래서 x 로도 조금씩 밀고 각도를 돌린다. 속도는 무게 순서(물방울<눈<꽃잎<낙엽)로 다르게. */
-@keyframes hk-fx-fall { 0% { opacity: 0; transform: translate(0,-25%) rotate(-12deg); } 14% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; transform: translate(16%,105%) rotate(28deg); } }
+@keyframes hk-fx-fall { 0% { opacity: 0; transform: translate(0,-25%) rotate(-12deg); } 14% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--sx,16%),var(--fy,105%)) rotate(28deg); } }
 /* 물방울 — 무거워서 제일 빨리, 거의 안 흔들리고 곧게 */
-@keyframes hk-fx-water { 0% { opacity: 0; transform: translate(0,-20%) scale(.7); } 18% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(3%,110%) scale(1); } }
+@keyframes hk-fx-water { 0% { opacity: 0; transform: translate(0,-20%) scale(.7); } 18% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--sx,3%),var(--fy,110%)) scale(1); } }
 .hk-fx-water { animation: hk-fx-water 2.2s ease-in infinite; }
 /* 눈 — 가벼워서 천천히, 좌우로 크게 */
-@keyframes hk-fx-snow { 0% { opacity: 0; transform: translate(0,-25%); } 15% { opacity: .95; } 50% { transform: translate(-14%,40%); } 80% { opacity: .9; } 100% { opacity: 0; transform: translate(10%,108%); } }
+@keyframes hk-fx-snow { 0% { opacity: 0; transform: translate(0,-25%); } 15% { opacity: .95; } 50% { transform: translate(calc(var(--sx,10%) * -1.4),calc(var(--fy,108%) * .37)); } 80% { opacity: .9; } 100% { opacity: 0; transform: translate(var(--sx,10%),var(--fy,108%)); } }
 .hk-fx-snow { animation: hk-fx-snow 4.6s linear infinite; }
 .hk-fx-petal { animation: hk-fx-fall 3.8s ease-in-out infinite; }
 .hk-fx-leaf { animation: hk-fx-fall 3.2s ease-in-out infinite; }
+
+/* ══════ 🙆 상하체 분리 모션 — **그림 한 장으로 몸을 나눠 따로 움직인다** ══════
+   창업자 2026-07-30: *"좀 더 액티브한거 넣는건 어렵다고 했지? 네 기술로는"*
+   ⚠️ 정확히는 **얼굴(눈 깜빡·입)이 안 되는 것**이지, 몸은 된다.
+   같은 그림을 **두 번 그려서 위/아래를 각각 잘라 내면**(clip-path) 상체와 하체가 따로 움직인다.
+   자산은 **한 장도 더 안 든다.** 통짜로 흔드는 것보다 훨씬 살아 있어 보인다.
+   ⚠️ 자르는 선에서 어긋나 보이지 않으려면 **회전축을 정확히 그 선에 둬야** 한다(transform-origin).
+   ⚠️ 각도를 키우면 허리에서 종이 접힌 자국처럼 보인다 — **±5도까지.** */
+@keyframes hk-deulssuk-top {
+  0%,100% { transform: rotate(-3.6deg) translateY(0); }
+  50% { transform: rotate(3.6deg) translateY(-1.2%); }
+}
+.hk-m-deulssuk-top { animation: hk-deulssuk-top 2.3s ease-in-out infinite; transform-origin: 50% 60%; }
+@keyframes hk-deulssuk-bot { 0%,100% { transform: scaleX(1); } 50% { transform: scaleX(1.02); } }
+.hk-m-deulssuk-bot { animation: hk-deulssuk-bot 2.3s ease-in-out infinite; transform-origin: 50% 100%; }
+
+/* 🕺 들썩보다 큰 것 — 상체를 앞뒤로 숙였다 편다(끄덕끄덕). 인사·맞장구. */
+@keyframes hk-kkeudeok-top {
+  0%,55%,100% { transform: rotate(0) translateY(0); }
+  70% { transform: rotate(0) translateY(3.5%) scaleY(.96); }
+  85% { transform: rotate(0) translateY(0) scaleY(1); }
+}
+.hk-m-kkeudeok-top { animation: hk-kkeudeok-top 2.6s ease-in-out infinite; transform-origin: 50% 60%; }
+.hk-m-kkeudeok-bot { animation: none; }
+
+/* ══════ 🆕 움직이는 방향이 다른 효과 4종 (창업자 2026-07-30) ══════
+   창업자: *"효과들은 다 거기서 거기 ㅠㅠ"* — 맞았다. 9개 중 **위로 뜨는 게 4개**(하트·뽀글·김모락·맛있는것들),
+   **아래로 떨어지는 게 4개**(눈·꽃잎·낙엽·물방울), 제자리 깜빡 1개. **방향이 3가지뿐**이었다.
+   계절 효과가 다 '떨어지는' 건 어쩔 수 없다(낙엽은 떨어져야 낙엽이다). 그래서 **뜨지도 떨어지지도 않는**
+   방향을 새로 만든다 — 퍼짐 · 궤도 · 가로지름 · 뒤에 깔림.
+   📌 교훈: 효과를 늘릴 땐 **그림(무엇이)을 바꾸지 말고 방향(어디로 가는가)을 바꾼다.** */
+
+/* 💥 팡! — **가운데에서 바깥으로 터진다.** 뜨지도 떨어지지도 않는 유일한 방향.
+   조각마다 날아가는 방향(--dx/--dy)이 달라야 '터졌다'로 보인다(다 같으면 그냥 커지는 것). */
+@keyframes hk-fx-pop {
+  0% { opacity: 0; transform: translate(-50%,-50%) scale(.25) rotate(0); }
+  12% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx,0%)), calc(-50% + var(--dy,0%))) scale(1.05) rotate(var(--spin,90deg)); }
+}
+.hk-fx-pop { animation: hk-fx-pop 1.5s cubic-bezier(.15,.75,.3,1) infinite; }
+
+/* 🪐 빙빙 — **머리 둘레를 돈다.** 제자리도 아니고 지나가지도 않는다.
+   바깥 rotate 로 궤도를 돌고 안쪽 rotate 로 되돌려 **그림 자체는 안 돌게** 한다(같이 돌면 어지럽다). */
+@keyframes hk-fx-orbit {
+  from { transform: translate(-50%,-50%) rotate(0) translateX(var(--r,110%)) rotate(0); }
+  to { transform: translate(-50%,-50%) rotate(360deg) translateX(var(--r,110%)) rotate(-360deg); }
+}
+.hk-fx-orbit { animation: hk-fx-orbit 4.4s linear infinite; }
+
+/* 💨 슝 — **가로로 지나간다.** 세로로만 오가던 것들과 축이 90도 다르다. 바람·유성.
+   --go 는 **조각 제 몸 폭 기준**이라 값이 크다(조각이 작을수록 커야 화면을 다 건넌다). */
+@keyframes hk-fx-zoom {
+  0% { opacity: 0; transform: translateX(-120%) scale(.5); }
+  12% { opacity: 1; }
+  76% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(var(--go,1600%)) scale(1); }
+}
+.hk-fx-zoom { animation: hk-fx-zoom 2.4s cubic-bezier(.35,.1,.3,1) infinite; }
+
+/* 🌕 후광 — **그림 뒤에 깔려서 숨쉰다.** 앞에 뜨는 조각이 아니라 **뒤**라서 인상이 완전히 다르다.
+   ⚠️ z-index:-1 이 먹으려면 부모에 쌓임 맥락이 있어야 한다 — DecorLayer 의 감싸는 span 이
+      `filter: drop-shadow` 를 갖고 있어서 이미 만들어져 있다. */
+.hk-fx-halo { border-radius: 50%; z-index: -1; filter: blur(3px);
+  background: radial-gradient(circle, rgba(255,231,183,.9) 0%, rgba(255,231,183,.38) 45%, rgba(255,231,183,0) 70%);
+  animation: hk-fx-halo 3.2s ease-in-out infinite; }
+@keyframes hk-fx-halo {
+  0%,100% { opacity: .3; transform: translate(-50%,-50%) scale(.86); }
+  50% { opacity: .85; transform: translate(-50%,-50%) scale(1.12); }
+}
 
 @media (prefers-reduced-motion: reduce) { [class*="hk-m-"], .hk-fx { animation: none !important; } }
 

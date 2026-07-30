@@ -1,18 +1,19 @@
-// ✨ 모션·효과 게이트 — **팩당 1+1 규칙**과 **친구들 전원 모션** 을 지킨다.
+// ✨ 모션·효과 게이트 — **팩당 딱 1개 규칙**과 **친구들 전원 모션** 을 지킨다.
 //
 // 왜 만들었나 (창업자 2026-07-30)
 //   ① *"여름의꼬르곰펭펭(모션,효과 없어)"* — 여름 곰펭(`sm_`)·가을 곰펭(`au_b`)이
 //      `gp_` **접두어 검사**에 안 걸려서 **캐릭터인데 모션·효과가 통째로 안 붙었다.**
 //      게다가 같은 접두어 검사가 **세 파일에 복사**돼 있어 셋 다 동시에 빠졌다.
 //      → 눈으로는 못 잡는다(서랍엔 멀쩡히 보이고, 붙여서 눌러봐야 안다). 그래서 게이트로 만든다.
-//   ② *"모션이랑 효과는 유료팩당 1개씩 넣자 그래야 골고루 사지"* — **돈이 걸린 규칙**이다.
+//   ② *"유료팩당 효과나 모션 1개. 각각 1개 총 2개가 아니라 그냥 1개씩. 왜냐면 **매달 나오는건데**
+//      모션이나 효과가 부족해"* — **돈이 걸린 규칙**이다. 1+1로 주면 재고가 두 배로 빨리 바닥나고,
 //      한 팩에 두 개가 몰리면 그 팩만 팔린다. 배분표(`docs/모션-효과-설계.md`)와 코드가
 //      어긋난 채로 굳으면, 팩을 팔 때 **뭐가 딸려 가는지 아무도 모르게 된다.**
 //
 // 보는 것
 //   1. 친구들 탭 스티커는 **전부** `FRIEND_IDS` 에 들어간다 (여름·가을 곰펭 포함)
 //   2. 모션·효과를 `gp_` 같은 **이름 접두어로 판정하는 코드가 남아 있지 않다**
-//   3. 팩 하나당 **모션 최대 1 · 효과 최대 1**
+//   3. 팩 하나당 **모션이거나 효과이거나 딱 1개** (모션+효과 합쳐서 셈)
 //   4. 팩용 모션·효과는 **CSS 클래스가 실제로 있다** (정의만 하고 안 만든 것 = 팔면 사고)
 //   5. 모든 모션·효과 클래스가 **`hk-m-`/`hk-fx-` 접두어** 다 (움직임 끄기에 같이 걸리게)
 import { readFileSync } from 'node:fs'
@@ -83,18 +84,20 @@ for (const f of ['src/components/Stickers.jsx', 'src/components/DecorEditor.jsx'
 }
 if (!fails.some((f) => f.includes('gp_'))) ok("모션·효과 대상을 이름 접두어로 고르는 코드 없음")
 
-// ── 3. 팩당 모션 1 · 효과 1 (⭐ 돈이 걸린 규칙) ──
-const perPack = (list, what) => {
-  const cnt = {}
-  for (const r of list) if (r.pack) cnt[r.pack] = (cnt[r.pack] || 0) + 1
-  for (const [p, n] of Object.entries(cnt)) {
-    if (n > 1) fails.push(`팩 '${p}' 에 ${what}이 ${n}개 — 팩당 1개 규칙 위반 (docs/모션-효과-설계.md)`)
+// ── 3. 팩 하나당 딱 하나 — 모션이거나 효과이거나 (⭐ 돈이 걸린 규칙) ──
+// 창업자 2026-07-30 *"유료팩당 효과나 모션 1개. 각각 1개 총 2개가 아니라 그냥 1개씩.
+//   왜냐면 매달 나오는건데 모션이나 효과가 부족해."*
+// → **모션과 효과를 합쳐서** 센다. 한 팩에 모션 1 + 효과 1 이어도 **위반**이다.
+const cnt = {}
+for (const r of [...motions, ...fx]) if (r.pack) (cnt[r.pack] ||= []).push(r.key)
+for (const [p, keys] of Object.entries(cnt)) {
+  if (keys.length > 1) {
+    fails.push(`팩 '${p}' 에 ${keys.length}개(${keys.join('·')}) — **팩당 딱 1개**여야 한다 (docs/모션-효과-설계.md)`)
   }
-  return cnt
 }
-const mp = perPack(motions, '모션')
-const fp = perPack(fx, '효과')
-ok(`팩당 1+1 지켜짐 — 모션이 걸린 팩 ${Object.keys(mp).length}개 · 효과가 걸린 팩 ${Object.keys(fp).length}개`)
+const packN = Object.keys(cnt).length
+if (packN < 8) fails.push(`팩에 붙은 모션·효과가 ${packN}개뿐 — 매달 하나씩이면 ${packN}개월치밖에 안 된다`)
+else ok(`팩당 1개 지켜짐 — ${packN}개 팩에 배정(＝${packN}개월치) · 미배정 예비 ${[...motions, ...fx].filter((r) => !r.base && !r.pack).length}개`)
 
 // ── 4. 정의만 하고 CSS 를 안 만든 모션·효과가 없나 (팔면 사고) ──
 for (const m of motions) {
@@ -119,4 +122,4 @@ if (fails.length) {
   console.error('\n배분표·규칙: docs/모션-효과-설계.md')
   process.exit(1)
 }
-console.log(`✅ 모션·효과 통과 — 친구들 ${buddyIds.size}컷 전원 모션 가능 · 팩당 1+1 지켜짐`)
+console.log(`✅ 모션·효과 통과 — 친구들 ${buddyIds.size}컷 전원 모션 가능 · 팩당 1개(${packN}개월치)`)
