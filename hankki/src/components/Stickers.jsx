@@ -610,7 +610,17 @@ export const STICKER_GROUPS = [
   //   (⚠️캐릭터명 = 꼬르곰·펭펭 풀네임, '곰펭' 금지)
   { key: 'deco_vframe', tab: 'frame', label: '꼬르곰·펭펭 넣기', items: ['fr_pola', 'fr_scallop', 'fr_round', 'fr_arch'] },
   // 🎀 소품 — 리본·체리·별·커피 등 얹는 작은 것들. (옛 이름 `데코` = 탭 이름과 겹쳐서 정보가 0이었다)
-  { key: 'deco_png', tab: 'deco', label: '소품', items: ['dn_ribbon', 'dn_cherry', 'dn_peach', 'dn_star', 'dn_sparkle', 'dn_shoot', 'dn_coffee', 'dn_plant', 'dn_bunting', 'dn_sachet', 'dc_nd08', 'dc_nd01', 'dc_nd05', 'dc_nd16', 'dc_dhb04', 'dc_dhb01', 'dc_dsy04', 'dc_dhb10', 'dc_dhb06', 'dc_dhb09', 'dc_dhb14', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06', 'dc_dmn07'] },
+  // 🎀 사철 소품 — **28컷 → 21컷** (프레임과 같은 기준: 봄느낌은 봄으로, 겹치는 건 보관)
+  //   ⛔ 겹쳐서 뺀 3컷: 반짝이가 둘(`dn_sparkle` 3개짜리 · `dc_dsy04` 1개짜리) → 화려한 쪽만 /
+  //      리본이 둘(`dn_ribbon` 큰 것 · `dc_dhb10` 작은 것) → 큰 쪽만 /
+  //      말풍선이 둘(`dc_dhb09` 빈 것 · `dc_dmn07` 하트 든 것) → **글씨 넣을 수 있는 빈 쪽만.**
+  //   🌸 봄으로 옮긴 4컷은 아래 `소품 · 봄` 참고.
+  //   ⚠️ 뺀 것도 파일·비율은 남긴다 — 이미 그걸로 꾸며 저장한 표지가 깨지면 안 된다.
+  { key: 'deco_png', tab: 'deco', label: '소품', items: ['dn_ribbon', 'dn_cherry', 'dn_peach', 'dn_star', 'dn_sparkle', 'dn_shoot', 'dn_coffee', 'dn_bunting', 'dn_sachet', 'dc_nd08', 'dc_nd05', 'dc_nd16', 'dc_dhb04', 'dc_dhb01', 'dc_dhb09', 'dc_dhb05', 'dc_dsy16', 'dc_dsy13', 'dc_dhb13', 'dc_dmn02', 'dc_dmn06'] },
+  // 🌸 소품 · 봄 — 화분·튤립꽃다발·튤립·네잎클로버. **꽃과 새싹은 봄에 몰아준다**(창업자
+  //    *"전체에서 봄느낌 나는거 다빼고"* · *"식물이나 예쁜것들은 봄에 레이스랑 같이 하면 예쁠 듯"*).
+  //    ⚠️ 지금이니까 뺄 수 있다 — 아직 공개 전(테스터 12명)이라 일반 유저는 본 적이 없다.
+  { key: 'deco_png_spring', tab: 'deco', season: 'spring', from: '2027-03-01', label: '소품 · 봄', items: ['dn_plant', 'dc_nd01', 'dc_dhb06', 'dc_dhb14'] },
   // 📝 메모·라벨 (2026-07-26) — 다꾸 감성 손그림 메모지·라벨. 글씨 얹어 꾸미기 좋음(작게~중간 크기용, 크게 키우면 흐려짐).
   { key: 'deco_frame', tab: 'deco', label: '메모·라벨', items: ['dc_dma01', 'dc_dma03', 'dc_dma06', 'dc_dma05', 'dc_dma10', 'dc_dma14', 'dc_dma16', 'dc_dma07', 'dc_dma13', 'dc_dma11'] },
   { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
