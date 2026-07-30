@@ -3,7 +3,7 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { seasonRank } from '../season'
+import { seasonRank, isReleased } from '../season'
 import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, PHOTO_IDS, MOTIONS, FX_KINDS, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
@@ -137,8 +137,10 @@ export default function DecorEditor({ recipe, onSave, onClose }) {
   // ⭐ 달력 계산은 `src/season.js` 한 곳에서 한다(예전엔 여기와 ShareDrawCard 에 따로 있었다).
   //    새 계절 첫 2주는 **지난 계절도 함께 제철** — 9/1에 여름이 뚝 끊기지 않는다.
   // ⚠️ sort 는 안정 정렬(ES2019+)이라 같은 순위끼리는 원래 순서가 유지된다.
+  // ⏳ 아직 공개일이 안 된 세트는 목록에서 아예 뺀다(핼러윈·산타가 7월 서랍에 보이면 이상하다).
+  //    한 번 공개된 뒤엔 계속 남는다 — 그 뒤론 순서만 밀린다.
   const groupsByTab = (t) => STICKER_GROUPS
-    .filter((x) => x.tab === t)
+    .filter((x) => x.tab === t && isReleased(x.from))
     .sort((a, b) => seasonRank(a.season) - seasonRank(b.season))
   const foodGroups = groupsByTab('food') // 각 그룹 = 요리별 서브칩(한식·양식·중식·일식·분식·디저트·재료)
   const foodGroup = foodGroups.find((g) => g.key === foodChip) || foodGroups[0]

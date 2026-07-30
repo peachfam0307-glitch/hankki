@@ -43,3 +43,16 @@ export function seasonRank(s, now) {
   const i = list.indexOf(s)
   return i < 0 ? list.length : i
 }
+
+// ⏳ 공개 시작일 — 그날이 되기 전엔 서랍에 **아예 안 나온다.**
+//
+// ⚠️ 이건 "철 지난 것을 숨기는 것"과 **다르다.** 철 지난 스티커는 절대 숨기지 않는다(순서만 밀린다 —
+//    쓰던 걸 못 찾게 되는 게 더 나쁘다). 반면 **아직 공개 안 한 것은 유저가 쓴 적이 없으니 감춰도 잃는 게 없고**,
+//    7월 서랍에 핼러윈·산타가 보이면 이상하다(창업자 2026-07-30 *"가을을 벌써 앱에 넣게??"*).
+// ⭐ **한 번 공개되면 영구히 남는다** — 그래서 '월'이 아니라 **절대 날짜**로 쓴다.
+//    (`from: 12` 처럼 월로 두면 이듬해 1월에 크리스마스가 다시 숨어버린다)
+export function isReleased(from, now = new Date()) {
+  if (!from) return true
+  const [y, m, d] = String(from).split('-').map(Number)
+  return now.getTime() >= new Date(y, m - 1, d).getTime()
+}

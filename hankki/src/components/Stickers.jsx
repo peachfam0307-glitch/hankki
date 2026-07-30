@@ -235,6 +235,28 @@ const PHOTO_RATIO = {
   sm_duo_watergun: 1.2209, sm_duo_tube: 1.1469, sm_duo_watermelon: 0.9643, sm_duo_icecream: 1.0781,
   wt_wave: 2.7939, wt_shell: 2.8182, wt_palm: 2.7605, wt_stripe_blue: 2.9423,
   wt_starfish: 2.8457, wt_wave_mint: 2.8282,
+  // 🍂 가을·추석·핼러윈·크리스마스 (창업자 2026-07-30 제공 112컷) — 실제 PNG 크기로 계산
+  au_b01: 0.8667, au_b02: 0.8985, au_b03: 0.8163, au_b04: 0.9513, au_b05: 0.9532, au_b06: 0.8279,
+  au_b07: 0.8417, au_b08: 0.8285, au_b09: 0.8825, au_b10: 0.8296, au_b11: 0.9242, au_b12: 0.8576,
+  au_b13: 0.6927, au_b14: 0.5966, au_b15: 0.8915, au_b16: 0.9555, au_b17: 0.7652, au_b18: 0.6462,
+  au_t01: 2.9949, au_t02: 3.0573, au_t03: 3.0515, au_t04: 3.0306, au_t05: 2.9746, au_t06: 2.955,
+  au_s01: 0.9938, au_s02: 0.9752, au_s03: 0.9753, au_s04: 1.0,
+  au_i01: 1.3945, au_i02: 1.0703, au_i03: 0.9415, au_i04: 0.9015, au_i05: 1.2535, au_i06: 1.2308,
+  au_i07: 1.2521, au_i08: 1.0912, au_i09: 1.3051, au_i10: 1.137, au_i11: 0.9398, au_i12: 0.983,
+  au_i13: 0.6944, au_i14: 1.1274, au_i15: 0.7067, au_i16: 0.5123, au_i17: 0.8148, au_i18: 0.9199,
+  au_i19: 0.9713, au_i20: 0.82,
+  cs_b01: 0.7309, cs_b02: 0.7152, cs_b03: 1.0491, cs_b04: 1.0589, cs_b05: 1.0344, cs_b06: 0.7305,
+  cs_b07: 0.9407, cs_b08: 0.8027, cs_b09: 0.9789, cs_b10: 0.8294, cs_b11: 0.7709, cs_b12: 0.8497,
+  cs_b13: 1.0018, cs_b14: 0.6364, cs_b15: 0.7516, cs_b16: 0.9019, cs_b17: 0.8607, cs_b18: 0.8946,
+  cs_b19: 0.9607, cs_b20: 0.7699, cs_b21: 1.0101, cs_b22: 0.8168, cs_b23: 0.9734, cs_b24: 1.1759,
+  cs_b25: 0.7581, cs_b26: 0.4731, cs_b27: 0.6821, cs_b28: 0.5478, cs_b29: 0.9071,
+  cs_i01: 1.0079, cs_i02: 0.8263, cs_i03: 1.0514, cs_i04: 1.0497, cs_i05: 0.9754, cs_i06: 0.6035,
+  cs_i07: 1.1254, cs_i08: 1.7105, cs_i09: 0.7287, cs_i10: 1.5, cs_i11: 1.3492, cs_i12: 1.2412,
+  cs_i13: 0.7673, cs_i14: 0.9775, cs_i15: 0.612,
+  hw_01: 1.1072, hw_02: 1.1913, hw_03: 1.0252, hw_04: 0.9547, hw_05: 0.7607, hw_06: 1.2945,
+  hw_07: 0.6871, hw_08: 0.7654, hw_09: 0.8632, hw_10: 0.89, hw_11: 0.8939, hw_12: 0.9258,
+  hw_13: 0.9522, hw_14: 0.7741, hw_15: 0.9382, hw_16: 0.9266,
+  xm_01: 0.7759, xm_02: 0.718, xm_03: 0.9472, xm_04: 0.615,
   ch_che01: 0.7928, ch_che04: 1.4278, ch_che06: 1.0683, ch_che08: 1.3098, ch_che05: 0.9231,
   lf_fit12: 1.6056, lf_fit11: 1.487, lf_fit08: 1.2486, lf_fit07: 1.2056, lf_fit02: 1.089, lf_fit13: 0.6872, lf_fit14: 1.1852, lf_fit06: 0.662,
   cp_cpf01: 0.8659, cp_cpf02: 0.9215, cp_cpf03: 0.8136, cp_cpf04: 0.8604, cp_cpf05: 0.9968, cp_cpf06: 1.0358, cp_cpf07: 0.9139, cp_cpf08: 0.8815,
@@ -571,6 +593,19 @@ export const STICKER_GROUPS = [
   //   season 이 붙은 그룹은 제철(6~8월)이면 탭 맨 위로 올라간다. 철 지나도 숨기지는 않는다
   //   — 유저가 쓰던 걸 못 찾게 되는 게 더 나쁘다.
   { key: 'deco_summer', tab: 'deco', season: 'summer', label: '여름 한정', items: ['wt_wave', 'wt_wave_mint', 'wt_shell', 'wt_starfish', 'wt_palm', 'wt_stripe_blue', 'wt_watermelon', 'wt_lemon', 'wt_cloud', 'wt_gingham'] },
+  // 🍂🌕🎃🎄 가을·추석·핼러윈·크리스마스 (창업자 2026-07-30 제공 · 낱개 112컷)
+  // ⏳ `from` = **공개 시작일.** 그날 전엔 서랍에 아예 안 나온다(`src/season.js` `isReleased`).
+  //    7월 서랍에 핼러윈·산타가 보이면 이상하다(창업자 *"가을을 벌써 앱에 넣게??"*) →
+  //    **가을·추석 9/1 · 핼러윈 10/1 · 크리스마스 12/1** 에 저절로 등장한다. 사람이 그때 손댈 일 없다.
+  // ⚠️ 한 번 공개되면 영구히 남는다(철이 지나도 순서만 밀린다) — 그래서 월이 아니라 절대 날짜다.
+  { key: 'buddies_autumn', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 가을', items: ['au_b01', 'au_b02', 'au_b03', 'au_b04', 'au_b05', 'au_b06', 'au_b07', 'au_b08', 'au_b09', 'au_b10', 'au_b11', 'au_b12', 'au_b13', 'au_b14', 'au_b15', 'au_b16', 'au_b17', 'au_b18'] },
+  { key: 'buddies_chuseok', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 추석', items: ['cs_b01', 'cs_b02', 'cs_b03', 'cs_b04', 'cs_b05', 'cs_b06', 'cs_b07', 'cs_b08', 'cs_b09', 'cs_b10', 'cs_b11', 'cs_b12', 'cs_b13', 'cs_b14', 'cs_b15', 'cs_b16', 'cs_b17', 'cs_b18', 'cs_b19', 'cs_b20', 'cs_b21', 'cs_b22', 'cs_b23', 'cs_b24', 'cs_b25', 'cs_b26', 'cs_b27', 'cs_b28', 'cs_b29'] },
+  { key: 'buddies_halloween', tab: 'buddies', season: 'autumn', from: '2026-10-01', label: '꼬르곰·펭펭의 핼러윈', items: ['hw_01', 'hw_02', 'hw_03', 'hw_04', 'hw_05', 'hw_06', 'hw_07', 'hw_08', 'hw_09', 'hw_10', 'hw_11', 'hw_12', 'hw_13', 'hw_14', 'hw_15', 'hw_16'] },
+  { key: 'buddies_xmas', tab: 'buddies', season: 'winter', from: '2026-12-01', label: '꼬르곰·펭펭의 크리스마스', items: ['xm_01', 'xm_02', 'xm_03', 'xm_04'] },
+  { key: 'deco_autumn_item', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 소품·열매', items: ['au_i01', 'au_i02', 'au_i03', 'au_i04', 'au_i05', 'au_i06', 'au_i07', 'au_i08', 'au_i09', 'au_i10', 'au_i11', 'au_i12', 'au_i13', 'au_i14', 'au_i15', 'au_i16', 'au_i17', 'au_i18', 'au_i19', 'au_i20'] },
+  { key: 'deco_autumn_scene', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 원형 씬', items: ['au_s01', 'au_s02', 'au_s03', 'au_s04'] },
+  { key: 'deco_autumn_tape', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 마스킹테이프', items: ['au_t01', 'au_t02', 'au_t03', 'au_t04', 'au_t05', 'au_t06'] },
+  { key: 'deco_chuseok', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '추석 음식·소품', items: ['cs_i01', 'cs_i02', 'cs_i03', 'cs_i04', 'cs_i05', 'cs_i06', 'cs_i07', 'cs_i08', 'cs_i09', 'cs_i10', 'cs_i11', 'cs_i12', 'cs_i13', 'cs_i14', 'cs_i15'] },
   { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
   // 💪 라이프
   // 🍳 주방도구 (2026-07-29) — 라이프 탭이 통째로 운동용품(아령·줄넘기·복싱)이라

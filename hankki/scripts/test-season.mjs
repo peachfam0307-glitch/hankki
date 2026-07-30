@@ -5,7 +5,7 @@
 // 함께 제철**로 바꿨다. 달력 경계는 눈으로 못 보고 지나가는 버그가 나는 자리라 값을 박아둔다.
 //
 // ⚠️ 특히 12월↔1월 넘어가는 자리(겨울이 두 해에 걸침)와 **2월→3월**(겨울 뒤 봄) 을 꼭 본다.
-import { SEASON_AT, seasonsNow, isSeason, seasonRank, OVERLAP_DAYS } from '../src/season.js'
+import { SEASON_AT, seasonsNow, isSeason, seasonRank, OVERLAP_DAYS, isReleased } from '../src/season.js'
 
 let bad = 0
 const D = (y, m, d) => new Date(y, m - 1, d)
@@ -46,6 +46,27 @@ eq('9/5 여름', seasonRank('summer', D(2026, 9, 5)), 1)
 eq('9/5 겨울', seasonRank('winter', D(2026, 9, 5)), 2)
 eq('9/5 계절없음', seasonRank(undefined, D(2026, 9, 5)), 2)
 eq('9/20 여름 (전환기 끝 — 계절없음과 같은 뒤쪽)', seasonRank('summer', D(2026, 9, 20)), 1)
+
+console.log('\n── ⏳ 공개 시작일 (그날 전엔 서랍에 아예 안 나온다) ──')
+;[['가을·추석 9/1', '2026-09-01'], ['핼러윈 10/1', '2026-10-01'], ['크리스마스 12/1', '2026-12-01']]
+  .forEach(([label, from]) => {
+    eq(`${label} — 7/30 (아직)`, isReleased(from, D(2026, 7, 30)), false)
+    eq(`${label} — 공개 당일`, isReleased(from, new Date(from + 'T00:00:00')), true)
+  })
+eq('공개일 없으면 항상 보임', isReleased(undefined, D(2026, 7, 30)), true)
+console.log('  ⭐ 한 번 공개되면 영구히 — 해가 바뀌어도 안 숨는다')
+eq('핼러윈 — 이듬해 3월', isReleased('2026-10-01', D(2027, 3, 5)), true)
+eq('크리스마스 — 이듬해 1월', isReleased('2026-12-01', D(2027, 1, 5)), true)
+eq('크리스마스 — 이듬해 7월', isReleased('2026-12-01', D(2027, 7, 5)), true)
+
+console.log('\n── 🍂 가을 세트가 실제로 언제 뜨고 어디에 놓이나 ──')
+const SETS = [{ n: '가을', from: '2026-09-01', s: 'autumn' }, { n: '추석', from: '2026-09-01', s: 'autumn' },
+  { n: '핼러윈', from: '2026-10-01', s: 'autumn' }, { n: '크리스마스', from: '2026-12-01', s: 'winter' }]
+;[[2026, 7, 30], [2026, 9, 5], [2026, 10, 5], [2026, 12, 5]].forEach(([y, m, dd]) => {
+  const now = D(y, m, dd)
+  const line = SETS.map((x) => `${x.n}=${!isReleased(x.from, now) ? '숨김' : '순위' + seasonRank(x.s, now)}`).join(' · ')
+  console.log(`  ${m}/${dd}  ${line}   (제철 ${JSON.stringify(seasonsNow(now))})`)
+})
 
 if (bad) { console.log(`\n❌ ${bad}건 실패`); process.exit(1) }
 console.log('\n✅ 제철·전환기 전부 통과')
