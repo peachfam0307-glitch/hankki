@@ -203,35 +203,47 @@ const CAT = (g) => {
   return 'etc'
 }
 const CATNAME = { frame: '프레임', item: '소품', paper: '메모·씰·라벨', tape: '마스킹테이프', char: '캐릭터', etc: '그 밖' }
-const QUOTA = { frame: 12, item: 24, paper: 8, tape: 6, char: 12 } // 한 계절 세트의 정원 (3파로 나눠 푼다)
+// ⭐ 두 층으로 나눠 본다 (창업자 2026-07-30 *"우선 기본제공(4계절)할 것부터 정리를 해야 계절을 올릴수가 있어"*)
+//   **기본(사철)** = 사계절 내내 깔려 있는 바탕. 여기가 뚱뚱하면 계절을 얹을 자리가 없다.
+//   **계절 세트**  = 그 위에 3개월씩 얹혔다 밀려나는 것.
+const BASE_QUOTA = { frame: 24, item: 24, paper: 12, tape: 12, char: 8 }
+const QUOTA = { frame: 12, item: 24, paper: 8, tape: 6, char: 12 } // 한 계절 세트 (3파로 나눠 푼다)
 const seasons = [...new Set(groups.map((g) => g.season).filter(Boolean))]
+const SEASONKO = { summer: '여름', autumn: '가을', winter: '겨울', spring: '봄' }
+const DECO_TABS = new Set(['deco', 'buddies']) // 음식·라이프·글자 탭은 성격이 달라 정원 밖
 
-p('## ⭐ 계절 세트 정원 대조 (기준 = 아래 표)')
+p('## ⭐ 정원 대조 — 기준표')
 p()
-p('**한 계절에 넣는 양을 종류별로 고정했다.** 이제 매달 다시 정하지 않는다 — 이 숫자에 맞춰 꺼내 쓰면 된다.')
-p('3개월에 걸쳐 **세 번에 나눠** 푸니까, 한 번에 나가는 건 정원의 ⅓ 쯤이다.')
+p('**두 층이다.** 기본(사철)은 사계절 내내 깔린 바탕이고, 계절 세트가 그 위에 3개월씩 얹혔다 밀려난다.')
+p('👉 **기본이 뚱뚱하면 계절을 얹을 자리가 없다** — 그래서 기본부터 정원을 잡는다.')
 p()
-p('| 종류 | 한 계절 정원 | 한 파(달) | ' + seasons.map((s) => `${s} 지금`).join(' | ') + ' |')
-p('|---|---:|---:|' + seasons.map(() => '---:|').join(''))
-let over = []
+const cell = (n, q) => (n > q ? `**${n}** ⚠️` : n < q ? `${n} ↓` : `${n} ✅`)
+const sum = (f) => groups.filter((g) => DECO_TABS.has(g.tab) && f(g)).reduce((a, g) => a + g.items.length, 0)
+const over = []
+p('| 종류 | 🧱기본 정원 | 기본 지금 | 🍃계절 정원 | 한 파(달) | ' + seasons.map((s) => `${SEASONKO[s] || s} 지금`).join(' | ') + ' |')
+p('|---|---:|---:|---:|---:|' + seasons.map(() => '---:|').join(''))
 for (const c of Object.keys(QUOTA)) {
+  const base = sum((g) => !g.season && CAT(g) === c)
+  if (base > BASE_QUOTA[c]) over.push(`기본 ${CATNAME[c]} ${base}/${BASE_QUOTA[c]}`)
   const cells = seasons.map((s) => {
-    const n = groups.filter((g) => g.season === s && CAT(g) === c).reduce((a, g) => a + g.items.length, 0)
-    if (n > QUOTA[c]) { over.push(`${s} ${CATNAME[c]} ${n}/${QUOTA[c]}`); return `**${n}** ⚠️` }
-    return n < QUOTA[c] ? `${n} ↓` : `${n} ✅`
+    const n = sum((g) => g.season === s && CAT(g) === c)
+    if (n > QUOTA[c]) over.push(`${SEASONKO[s] || s} ${CATNAME[c]} ${n}/${QUOTA[c]}`)
+    return cell(n, QUOTA[c])
   })
-  p(`| ${CATNAME[c]} | ${QUOTA[c]} | ${Math.round(QUOTA[c] / 3)} | ${cells.join(' | ')} |`)
+  p(`| ${CATNAME[c]} | ${BASE_QUOTA[c]} | ${cell(base, BASE_QUOTA[c])} | ${QUOTA[c]} | ${Math.round(QUOTA[c] / 3)} | ${cells.join(' | ')} |`)
 }
+const bq = Object.values(BASE_QUOTA).reduce((a, b) => a + b, 0)
 const qtot = Object.values(QUOTA).reduce((a, b) => a + b, 0)
-p(`| **합계** | **${qtot}** | **${Math.round(qtot / 3)}** | ` + seasons.map((s) =>
-  `**${groups.filter((g) => g.season === s).reduce((a, g) => a + g.items.length, 0)}**`).join(' | ') + ' |')
+p(`| **합계** | **${bq}** | **${sum((g) => !g.season)}** | **${qtot}** | **${Math.round(qtot / 3)}** | `
+  + seasons.map((s) => `**${sum((g) => g.season === s)}**`).join(' | ') + ' |')
 p()
 p('⚠️ 정원을 넘은 것: ' + (over.length ? over.join(' · ') : '없음'))
 p()
-p('⛔ **넘었다고 빼지는 않는다** — *"한 번 준 것은 빼앗지 않는다."* 이미 유저 서랍에 있는 건 그대로 둔다.')
-p('**정원은 「앞으로 새로 넣을 때」의 기준**이다. 넘은 계절은 다음 시즌에 자연스럽게 정원으로 수렴시킨다.')
+p('⛔ **넘었다고 무조건 빼지는 않는다** — *"한 번 준 것은 빼앗지 않는다."*')
+p('**정원은 「앞으로 새로 넣을 때」의 기준.** 다만 창업자가 *"정리하자"* 라고 하면 그때 줄인다')
+p('(여름 프레임 24→12 처럼). ⚠️뺄 때도 **파일과 비율은 남긴다** — 이미 그걸로 꾸며 저장한 표지가 깨지면 안 된다.')
 p()
-p('> 사철(계절 없는) 기본은 정원 밖이다 — 이미 깔린 바탕이고, 계절 세트가 그 위에 얹히는 구조다.')
+p('> 음식·라이프·메모글자 탭은 정원 밖이다 — 꾸미기 재료가 아니라 **레시피를 나타내는 아이콘**이라 성격이 다르다.')
 p()
 
 p('## 🎴 서랍엔 없지만 **카드 뽑기에서 쓰는 것**')
