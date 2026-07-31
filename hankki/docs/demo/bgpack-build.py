@@ -47,10 +47,17 @@ CHUSEOK = [
   "radial-gradient(rgba(150,120,80,.09) 1px,transparent 1.6px) 0 0/13px 13px,"
   "repeating-linear-gradient(92deg,rgba(150,120,80,.05) 0 1px,transparent 1px 7px),"
   "linear-gradient(165deg,#faf2e3,#f0e3ca)", 0),
- ('② 보름달', '오른쪽 위에 달 하나. <b>가운데를 비워</b> 스티커 놓을 자리를 남겼다.',
-  "radial-gradient(circle at 78% 20%,#fdf3d8 0 11%,rgba(253,243,216,.55) 11% 15%,rgba(253,243,216,0) 26%),"
-  "radial-gradient(120% 80% at 50% 120%,rgba(190,160,110,.16),transparent 60%),"
-  "linear-gradient(170deg,#f6ead4,#eadcbe)", 0),
+ # 🧵 조각보 (창업자 2026-07-31: *"아예 다른 걸로 하나씩 하자. 체크 패턴이나 비오는 날? 단풍길?"*)
+ #   ⭐ 그냥 «체크»면 다꾸 배경과 겹친다 → **조각보**(색천 이어붙인 보자기)로 갔다. 추석 정서에 맞고
+ #      체크의 결도 산다. ⚠️ 칸이 세면 스티커와 싸우니 **채도를 확 낮추고 선만 남겼다.**
+ ('② 조각보', '색천을 이어붙인 보자기. <b>추석 정서 + 체크의 결</b> — 칸은 크게, 색은 최대한 죽였다.',
+  "repeating-linear-gradient(90deg,rgba(150,120,80,.16) 0 1.5px,transparent 1.5px 25%),"
+  "repeating-linear-gradient(0deg,rgba(150,120,80,.16) 0 1.5px,transparent 1.5px 25%),"
+  "linear-gradient(90deg,rgba(196,138,110,.10) 0 25%,transparent 25% 50%,"
+  "rgba(140,158,120,.10) 50% 75%,transparent 75%),"
+  "linear-gradient(0deg,transparent 0 25%,rgba(203,170,104,.10) 25% 50%,transparent 50% 75%,"
+  "rgba(150,140,168,.09) 75%),"
+  "linear-gradient(165deg,#f8f1e2,#efe4cd)", 0),
  ('③ 달빛 밤', '어두운 안. <b>쨍한 스티커가 제일 튄다</b> — 다만 글자는 밝은 색을 써야 한다.',
   "radial-gradient(circle at 74% 18%,#fbf0cf 0 9%,rgba(251,240,207,.4) 9% 14%,rgba(251,240,207,0) 24%),"
   "radial-gradient(90% 60% at 50% 108%,rgba(120,100,70,.35),transparent 62%),"
@@ -61,11 +68,20 @@ AUTUMN = [
  ('① 크라프트', '누런 종이결. 낙엽·단풍 스티커랑 <b>같은 계열</b>이라 자연스럽게 붙는다.',
   "radial-gradient(rgba(140,100,55,.13) 1px,transparent 1.5px) 0 0/10px 10px,"
   "linear-gradient(165deg,#f2e2c6,#e4cfa9)", 0),
- ('② 창문 가을빛', '오후 창빛이 비스듬히. <b>사진을 올려도 예쁘다</b>(빛이 사진과 겹쳐 보임).',
-  "linear-gradient(102deg,transparent 0 20%,rgba(150,110,60,.13) 20% 22.5%,transparent 22.5% 49%,"
-  "rgba(150,110,60,.13) 49% 51.5%,transparent 51.5%),"
-  "radial-gradient(95% 65% at 82% 4%,rgba(255,214,150,.6),transparent 62%),"
-  "linear-gradient(168deg,#fdf2df,#f2e0c4)", 0),
+ # 🌧 비 오는 창 (창업자 2026-07-31)
+ #   ⭐ 「창문 빛」이 안 읽혔던 이유 = 빛은 «형태»가 없어서다. **비는 형태가 있다** —
+ #      빗줄기·물방울·김서림. 같은 「창문」인데 이쪽이 훨씬 확실하게 읽힌다.
+ #   ⚠️ 그래도 조용해야 한다 → 빗줄기는 **아주 가늘고 옅게**, 물방울은 몇 개만.
+ ('② 비 오는 창', '창밖에 가을비. <b>빗줄기·물방울·김서림</b> — 조용해서 스티커랑 안 싸운다.',
+  "radial-gradient(circle at 22% 18%,rgba(255,255,255,.55) 0 1.1%,transparent 1.6%),"
+  "radial-gradient(circle at 71% 12%,rgba(255,255,255,.45) 0 .8%,transparent 1.3%),"
+  "radial-gradient(circle at 84% 44%,rgba(255,255,255,.5) 0 1.3%,transparent 1.8%),"
+  "radial-gradient(circle at 13% 61%,rgba(255,255,255,.42) 0 .9%,transparent 1.4%),"
+  "radial-gradient(circle at 46% 79%,rgba(255,255,255,.38) 0 1%,transparent 1.5%),"
+  "repeating-linear-gradient(99deg,rgba(255,255,255,.30) 0 1px,transparent 1px 17px),"
+  "repeating-linear-gradient(97deg,rgba(120,140,150,.10) 0 1px,transparent 1px 29px),"
+  "radial-gradient(70% 50% at 30% 22%,rgba(255,255,255,.42),transparent 66%),"
+  "linear-gradient(168deg,#e6e6de,#d3d6cd)", 0),
  ('③ 낙엽 내림', '단풍·은행이 천천히. <b>이 팩의 얼굴</b>이 될 안 — 대신 배경색은 더 죽였다.',
   "radial-gradient(90% 60% at 76% 6%,rgba(255,226,183,.55),transparent 62%),"
   "linear-gradient(170deg,#fbf1e2,#efdfc6)", 1),
