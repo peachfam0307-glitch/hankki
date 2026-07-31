@@ -98,7 +98,7 @@ def main():
             rows.append((os.path.basename(f)[:-4], *m))
 
     guarded = [r for r in rows if r[4] > 0.20]                      # 흰 다이컷 테두리가 지켜준 컷
-    bare = [r for r in rows if r[4] <= 0.45]                        # 맨몸 — 파먹힐 수 있는 컷
+    bare = [r for r in rows if r[4] <= 0.20]                        # 맨몸 — 파먹힐 수 있는 컷
     broken = [r for r in bare if 0.15 <= r[1] <= 0.62 and r[2] > 0.45]
     solid = [r for r in bare if r[1] > 0.62]
     noline = [r for r in bare if r[1] < 0.15]
