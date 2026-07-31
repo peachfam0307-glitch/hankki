@@ -174,5 +174,12 @@ def sub(src, out):
 FONTS = (f"@font-face{{font-family:'HankkiDisp';src:url({sub(ROOT+'/src/assets/fonts/jua-korean-400.woff2','/tmp/_pd.woff2')}) format('woff2');font-display:swap}}"
          f"@font-face{{font-family:'HankkiBody';src:url({sub(ROOT+'/src/assets/fonts/gowun-dodum-korean-400.woff2','/tmp/_pb.woff2')}) format('woff2');font-display:swap}}")
 
-open(OUT, 'w').write(f'<style>{FONTS}{CSS}{IMGCSS}</style>\n{body}\n<script>{JS}</script>\n')
+# ⚠️ `<meta charset>` 이 꼭 있어야 한다 — 없으면 브라우저가 UTF-8 을 다른 걸로 읽어
+#    **한글이 전부 깨진다**(2026-07-31 창업자 폰에서 실제로 그랬다: *"가을샘플 한글 다깨지고"*).
+#    이 파일은 원래 «감싸주는 틀에 넣을 조각»으로 만들어져서 head 가 없었다.
+#    파일로 그냥 열 수도 있어야 하니 여기서 최소한의 머리를 붙인다.
+HEAD = '<!doctype html><html lang="ko"><head><meta charset="utf-8">' \
+       '<meta name="viewport" content="width=device-width,initial-scale=1"></head><body>'
+open(OUT, 'w', encoding='utf-8').write(
+    f'{HEAD}\n<style>{FONTS}{CSS}{IMGCSS}</style>\n{body}\n<script>{JS}</script>\n</body></html>\n')
 print(f'{OUT}  {os.path.getsize(OUT)//1024} KB · 추석 3안 + 가을다꾸 3안')
