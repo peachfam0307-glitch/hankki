@@ -159,23 +159,27 @@ S.push(['04-음식아이콘', page('linear-gradient(160deg,#f4e2a4,#f9edc2)',
   <div class="foot"><span class="pill" style="background:#5d3410;color:#fffdf8">한식·양식·중식·일식·분식</span></div>`)])
 
 // ───────────────────────────────────────────────────────── ⑤ 장보기
-const malls = [['쿠팡', '#e63946', '#fff'], ['마켓컬리', '#5f259f', '#fff'], ['이마트몰', '#ffce00', '#333'], ['네이버', '#03c75a', '#fff'], ['오아시스', '#8bc34a', '#fff'], ['한살림', '#4a8b3a', '#fff']]
+// ⛔ 마트·제품 «브랜드명» 안 쓴다 (창업자 2026-07-31 *"큐레이션 브랜드명 안쓰기로했어"* · *"장보기도.."*)
+//   우리 레시피 표기 원칙과 같다(v8.23~31: 재료는 일반명, 제품명은 메모에만).
+//   ⚠️ 스토어 스크린샷은 «남의 상표»를 우리 홍보물에 박는 자리라 제일 조심할 곳이다.
+//   ⭐ 예전 최종본도 이렇게 «종류»로 돼 있었다 — 내가 옛 스크립트에서 브랜드판을 가져온 게 실수.
+const malls = [['새벽배송', '#5f8fb0', '#fff'], ['대형몰', '#7a8a99', '#fff'], ['친환경마켓', '#7aa05a', '#fff'], ['오픈마켓', '#c08a5a', '#fff'], ['동네마트', '#9a7fb0', '#fff']]
 S.push(['05-장보기', page('linear-gradient(160deg,#a9cadd,#d0e3ee)',
   `<div class="cap"><h1 style="color:#2f6a8c">재료, 한 번에<br>사러가기 <span style="font-size:.9em">${ICart('#2f6a8c', 2.2)}</span></h1>
-   <div class="sub" style="color:#3f7d9e">레시피 재료 그대로 톡 — 6개 마트 연결</div></div>`,
+   <div class="sub" style="color:#3f7d9e">레시피 재료 그대로 톡 — 원하는 곳으로 바로</div></div>`,
   `<div style="position:absolute;top:560px;left:50%;transform:translateX(-50%);width:720px">
     <div class="panel" style="padding:44px 40px">
       <div style="display:flex;align-items:center;gap:18px;border-bottom:3px dashed #e6e0d4;padding-bottom:22px;margin-bottom:12px">
         <div style="width:96px;height:96px;border-radius:22px;background:linear-gradient(135deg,#fffdf8,#f0ece0);display:flex;align-items:center;justify-content:center"><img src="${F('fh_k02')}" style="width:80%"/></div>
         <div><div style="font-size:46px;color:#33302b">김치찌개 재료</div><div style="font-size:30px;color:#a99">돼지고기·두부·대파·김치…</div></div>
       </div>
-      ${[['돼지고기 앞다리', '쿠팡', '#e63946'], ['두부 한 모', '오아시스', '#8bc34a'], ['대파 한 단', '마켓컬리', '#5f259f']].map(([n, m, c]) =>
+      ${[['돼지고기 앞다리'], ['두부 한 모'], ['대파 한 단']].map(([n]) =>
         `<div style="display:flex;align-items:center;justify-content:space-between;padding:20px 6px;border-bottom:2px solid #f2ede2">
            <div style="font-size:40px;color:#4a4438">・ ${n}</div>
-           <div style="background:${c};color:#fff;font-size:30px;padding:12px 28px;border-radius:30px">${m}</div></div>`).join('')}
+           <div style="background:#5f8fb0;color:#fff;font-size:30px;padding:12px 30px;border-radius:30px;display:inline-flex;align-items:center;gap:10px">담기 ${ICart('#fff', 2.4)}</div></div>`).join('')}
     </div>
     <div class="panel" style="margin-top:30px;padding:30px 34px;text-align:center">
-      <div style="font-size:34px;color:#6a7a86;margin-bottom:20px">내 단골 마트로 바로가기</div>
+      <div style="font-size:34px;color:#6a7a86;margin-bottom:20px">내가 자주 쓰는 곳으로 바로</div>
       <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center">
         ${malls.map(([n, c, t]) => `<span style="background:${c};color:${t};font-size:30px;padding:12px 26px;border-radius:28px">${n}</span>`).join('')}
       </div>
@@ -191,9 +195,9 @@ S.push(['06-큐레이션', page('linear-gradient(160deg,#cdd2a0,#e4e7c6)',
   `<div class="cap"><h1 style="color:#5f6a30">아무거나 말고,<br>써본 것만 나눠요</h1>
    <div class="sub" style="color:#72803a">18년차 주부가 직접 쓰고 좋았던 살림템만</div></div>`,
   `<div style="position:absolute;top:600px;left:50%;transform:translateX(-50%);width:740px;display:flex;flex-direction:column;gap:28px">
-     ${[['보보리쿡시 보리면', '쫄깃하고 속 편한, 든든한 보리면', '#e8dfc2', 'cu_noodle'],
-        ['모에솔트 대파소금', '이거 하나면 간이 딱 맞아요', '#dce8cf', 'cu_salt'],
-        ['위드잇 쯔유스톡', '물만 부으면 국물요리 뚝딱', '#e3d8c7', 'cu_stock_tsuyu']].map(([n, d, c, k]) =>
+     ${[['든든한 보리면', '쫄깃하고 속 편한, 든든한 한 끼', '#e8dfc2', 'cu_noodle'],
+        ['만능 대파소금', '이거 하나면 간이 딱 맞아요', '#dce8cf', 'cu_salt'],
+        ['간편 쯔유 스톡', '물만 부으면 국물요리 뚝딱', '#e3d8c7', 'cu_stock_tsuyu']].map(([n, d, c, k]) =>
        `<div class="panel" style="padding:30px 32px;display:flex;align-items:center;gap:26px;position:relative">
           <div style="width:118px;height:118px;border-radius:26px;background:#fff;border:3px solid ${c};display:flex;align-items:center;justify-content:center;flex-shrink:0"><img src="${C(k)}" style="width:88%"/></div>
           <div style="flex:1"><div style="font-size:42px;color:#33302b">${n}</div><div style="font-size:32px;color:#8a8570;font-family:'Gaegu';margin-top:4px">${d}</div></div>
@@ -255,8 +259,8 @@ for (const [name, html] of S) {
 }
 // 모아보기
 const imgs = S.map(([n]) => b(`${OUT}/${n}.png`))
-const cs = `<!doctype html><html><head><meta charset="utf-8"><style>*{margin:0;box-sizing:border-box;font-family:sans-serif}body{background:#e8e6e2;padding:30px;width:2160px}h2{color:#5d3410;margin-bottom:20px;font-size:38px}.g{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}img{width:100%;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,.18)}.l{text-align:center;font-size:26px;color:#444;margin-top:10px;font-weight:700}</style></head><body><h2>한끼 스토어 스크린샷 v3 — 2160×3840 (순서대로)</h2><div class="g">${S.map(([n], i) => `<div><img src="${imgs[i]}"/><div class="l">${n}</div></div>`).join('')}</div></body></html>`
-const p = await br.newPage({ viewport: { width: 2160, height: 1200 } })
+const cs = `<!doctype html><html><head><meta charset="utf-8"><style>*{margin:0;box-sizing:border-box;font-family:sans-serif}body{background:#e8e6e2;padding:34px;width:2280px}h2{color:#5d3410;margin-bottom:20px;font-size:38px}.g{display:grid;grid-template-columns:repeat(2,1fr);gap:30px}img{width:100%;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,.18)}.l{text-align:center;font-size:26px;color:#444;margin-top:10px;font-weight:700}</style></head><body><h2>한끼 스토어 스크린샷 v3 — 2160×3840 (순서대로)</h2><div class="g">${S.map(([n], i) => `<div><img src="${imgs[i]}"/><div class="l">${n}</div></div>`).join('')}</div></body></html>`
+const p = await br.newPage({ viewport: { width: 2280, height: 1200 } })
 await p.setContent(cs, { waitUntil: 'networkidle' }); await p.waitForTimeout(300)
 await p.screenshot({ path: `${OUT}/_모아보기.png`, fullPage: true })
 await br.close()
