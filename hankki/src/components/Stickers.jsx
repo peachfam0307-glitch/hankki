@@ -263,8 +263,8 @@ const PHOTO_RATIO = {
   //    숫자·요일은 0개였다. 창업자가 스타일별로 18장 뽑아준 것 중 **우리 마감과 같은 4장**만 채택
   //    (진갈색 굵은 외곽선 + 파스텔 채움 + 흰 다이컷). 라인 계열은 톤도 다르고 자동 오림도
   //    안 돼서(속 흰색이 배경과 이어짐) 심플 다꾸 세트로 미룸. → docs/stickers/글자-창업자-2507/
-  tw_haenaem: 1.1592, tw_night: 1.1522, tw_first: 1.1565, tw_5min: 1.3318, tw_again: 1.4104,
-  tw_wow: 1.3045, tw_salty: 1.2578, tw_better: 1.3153, tw_really: 1.4857, tw_daebak: 1.2327,
+  tw_haenaem: 1.1566, tw_night: 1.1496, tw_first: 1.1538, tw_5min: 1.3259, tw_again: 1.4028,
+  tw_wow: 1.2991, tw_salty: 1.2533, tw_better: 1.3097, tw_really: 1.4766, tw_daebak: 1.2304,
   tw_today: 1.1, tw_success: 1.2739, tw_more: 1.1199, tw_tasty: 1.3453, tw_welldone: 0.9582,
   tw_fav: 1.1074, tw_honey: 0.9929, tw_easy: 1.124, tw_hearty: 1.2652, tw_mom: 1.1347,
   tw_nexttime: 0.9883, tw_fail: 1.3548, tw_yummy: 1.2424, tw_best: 1.1221, tw_ourhankki: 1.3498,

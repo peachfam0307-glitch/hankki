@@ -36,8 +36,9 @@
 쓰기:
   python3 tools/cut.py <시트.png> <내보낼폴더> <접두어> [--frame] [--min 8000]
      --frame  프레임이면 켠다(가운데 창 뚫기)
-     --diecut N|auto  🏷흰 테두리를 **바깥쪽만** 두른다 (안쪽 창은 투명 그대로)
-                      auto = 긴변의 0.7% (얇은 보호막·기본) · 숫자 = 그 px (두꺼운 띠부씰 팩용)
+     --diecut N|auto|keep  🏷흰 테두리를 **바깥쪽만** 두른다 (안쪽 창은 투명 그대로)
+                      auto = 긴변의 1.2%(기본) · 숫자 = 그 px(두꺼운 띠부씰 팩)
+                      keep = **그림에 이미 그려진 흰 테두리의 두께를 실측해서** 그대로 (두 겹 방지)
      --min    이 픽셀 수보다 작은 덩어리는 먼지로 보고 버린다
      --join N 떨어진 조각을 한 덩어리로 묶는 거리(기본 5). 쪼리처럼 두 짝이면 키운다
      --drop R 본체 대비 이 비율보다 작고 떨어진 조각(하트·반짝)은 뗀다(기본 0.12 · 0이면 끔)
@@ -108,7 +109,7 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
         #   `PAD 12` 에 띠부씰 8px 을 두르니 여백이 3px밖에 안 남아 `pf_sm07` 이 **가장자리에 닿았다**
         #   (`check-cutouts.mjs` 가 배포를 막았다. 게이트가 제 일을 했다.)
         long0 = max(ys.max() - ys.min(), xs.max() - xs.min()) + 1 + 2 * PAD
-        d0 = round(long0 * 0.007) if diecut == 'auto' else (int(diecut) if diecut else 0)
+        d0 = round(long0 * 0.014) if diecut in ('auto', 'keep') else (int(diecut) if diecut else 0)
         pad = PAD + max(0, d0) + 4
         y0, y1 = max(ys.min() - pad, 0), min(ys.max() + pad + 1, m.shape[0])
         x0, x1 = max(xs.min() - pad, 0), min(xs.max() + pad + 1, m.shape[1])
@@ -266,7 +267,7 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
             #      덮으라고 만든 흰 테가 **잔재를 못 덮고 회색 실밥처럼** 보였다.
             #      → **1.2%로 올리고 바닥을 3px**로 뒀다. 창업자가 예쁘다고 한 여름 프레임이
             #        실측 **1.14%**(609px에 6.7px)였다 — **그 숫자에 맞춘 것**이다.
-            d = round(max(reg.shape) * 0.012) if diecut == 'auto' else int(diecut)
+            d = round(max(reg.shape) * 0.012) if diecut in ('auto', 'keep') else int(diecut)
             d = max(3, min(d, pad - 3))                        # 크롭 여백 밖으로는 못 두른다
             # ⭐⭐⭐ **칼선은 「그림」에서 재야 한다 — 「그림자」에서 재면 너덜너덜해진다.**
             #   (창업자 2026-07-31 재검수 *"매끈하게 안된애들도 있고"*)
@@ -297,6 +298,18 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
             #      실루엣이 너덜너덜**해졌다. 뭉개야 할 요철의 크기는 **그림 해상도**가 정하지
             #      테두리 두께와는 상관이 없다. → 둘을 갈랐다.
             dist = ndimage.distance_transform_edt(~solid)
+            # ⭐⭐ **`--diecut keep` = 「그림에 이미 그려진 흰 테두리」를 그대로 살린다.** (창업자 2026-07-31
+            #   *"오늘도해냄 첫 줄라인 10개 아직도 이상한데"*)
+            #   ⚠️ 보너스문구 10컷은 **시트에 흰 다이컷이 이미 그려져 있다.** 거기에 `auto`(1.2%)를 또 두르면
+            #      **테두리가 두 겹**이 되고, 별·빗금 같은 작은 조각까지 각자 흰 테를 얻어 어색해진다.
+            #   → 그렇다고 `--diecut` 을 끄면 **그려진 흰 테 바깥의 옅은 그림자**까지 실루엣이라
+            #      가장자리가 너덜너덜해진다(그래서 처음에 각지게 잘렸다).
+            #   ⭐ **답 = 두께를 그림에서 «재서» 쓴다.** 그려진 흰 테가 그림에서 몇 px 떨어져 있는지
+            #      실측(90퍼센타일)해 그 값을 `d` 로 삼는다. → 두께는 원본 그대로, 윤곽만 매끈해진다.
+            if diecut == 'keep':
+                drawn = reg & ~solid
+                if drawn.sum() > 50:
+                    d = int(max(2, min(round(float(np.percentile(dist[drawn], 90))), pad - 3)))
             dist = ndimage.gaussian_filter(dist, sigma=max(1.8, max(reg.shape) * 0.007))
             cut_a = np.clip((d + 0.6 - dist) / 1.4, 0.0, 1.0)  # 칼선 안쪽=1 · 바깥=0 · 경계는 부드럽게
             out_rgb[band] = sub[band]                          # 색도 원래대로 — 속살색으로 덮으면 테두리와 경계가 진다
@@ -353,7 +366,7 @@ if __name__ == '__main__':
     cut(args[0], args[1], args[2],
         is_frame='--frame' in sys.argv,
         min_px=int(sys.argv[mn_i]) if mn_i else 8000,
-        diecut=(sys.argv[dc_i] if sys.argv[dc_i] == 'auto' else int(sys.argv[dc_i])) if dc_i else 0,
+        diecut=(sys.argv[dc_i] if sys.argv[dc_i] in ('auto', 'keep') else int(sys.argv[dc_i])) if dc_i else 0,
         join=int(sys.argv[jn_i]) if jn_i else 5,
         drop=float(sys.argv[dr_i]) if dr_i else 0.12,
         grid=tuple(int(x) for x in sys.argv[gd_i].lower().split('x')) if gd_i else None,
