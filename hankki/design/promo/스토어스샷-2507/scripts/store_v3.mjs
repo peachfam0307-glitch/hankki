@@ -88,7 +88,7 @@ const card = (opt) => {
 // 🐛 포스트잇의 `🍳` 가 돋보기로 깨져 스토어에 올라가 있었다 → 글자만 남긴다.
 S.push(['01-히어로', page('radial-gradient(circle at 30% 16%,#f0c79b,#e3aa73 55%,#d99a5f)',
   `<div class="cap"><h1 style="color:#fffdf8;text-shadow:0 4px 0 rgba(150,95,40,.28)">한 끼를 해낸다면,<br>레꾸하세요.</h1>
-   <div class="sub" style="color:#5d3410;opacity:.85">꼬르곰·펭펭과 레꾸 — 저 카드, 나도 만들래</div></div>`,
+   <div class="sub" style="color:#5d3410;opacity:.85">꼬르곰·펭펭이랑 레꾸 — 저 카드, 나도 만들래</div></div>`,
   `<div style="position:absolute;top:560px;left:50%;transform:translateX(-50%)">${card({
      food: 'fh_k22', cover: 'linear-gradient(150deg,#e9f2e6,#fbe9d6)', title: '엄마표 김밥',
      charHtml: `<img src="${F('gp_gomft')}" style="position:absolute;right:-8px;bottom:-6px;width:232px;transform:rotate(4deg);filter:drop-shadow(0 8px 12px rgba(90,60,30,.25))"/>`,
@@ -103,11 +103,11 @@ S.push(['02-레꾸', page('linear-gradient(160deg,#d3e3c8,#eaf2e2)',
   `<div class="cap"><h1 style="color:#4a6b42">레시피 정리?<br>우린 레시피 레꾸해요</h1>
    <div class="sub" style="color:#5f7a54">레꾸하면, 한 끼가 추억이 된다</div></div>`,
   `<div style="position:absolute;top:560px;left:50%;transform:translateX(-50%);text-align:center">
-     ${card({ food: 'fy_y10', cover: 'linear-gradient(150deg,#fde8ef,#eaf0fb)', title: '폭신 오므라이스', rot: -3,
-       patternCss: 'background-image:repeating-linear-gradient(48deg,rgba(255,255,255,.5) 0 14px,transparent 14px 38px)',
+     ${card({ food: 'fe_06', cover: 'linear-gradient(150deg,#fbf5e8,#f2ecda)', title: '연어 포케볼', rot: -3, tape: 0,
+       
        charHtml: `<img src="${F('gp_pengv')}" style="position:absolute;left:-6px;bottom:-8px;width:198px;transform:rotate(-5deg);filter:drop-shadow(0 8px 12px rgba(90,60,30,.22))"/>`,
        decoHtml: star('top:30px;right:36px;width:80px') + spark('bottom:150px;right:48px;width:64px') + spark('top:146px;left:44px;width:56px'),
-       postit: `<div class="postit" style="right:28px;bottom:36px;background:#c9e8ff;transform:rotate(4deg);font-size:36px;color:#3a6a86">내 최애 ♡</div>` })}
+       postit: `<div class="postit" style="right:26px;bottom:38px;background:#dbe8d4;transform:rotate(3deg);font-size:36px;color:#4a6b42">내 최애 ♡</div>` })}
      <div style="margin-top:34px;background:#fff;border-radius:36px;padding:28px 24px;box-shadow:0 16px 34px rgba(70,90,60,.2);width:640px;display:flex;justify-content:space-between;align-items:center">
        ${['gp_gomhi', 'gp_penghi', 'fh_k27', 'fe_15'].map(k => `<div class="chip" style="width:120px;height:120px"><img src="${F(k)}" style="width:80%"/></div>`).join('')}
        <div class="chip" style="width:120px;height:120px;font-size:54px;background:#5d3410;color:#fff">＋</div>
@@ -120,20 +120,27 @@ S.push(['02-레꾸', page('linear-gradient(160deg,#d3e3c8,#eaf2e2)',
 // ⛔ 📲🤍📤😍🍲 전부 제거 — 인스타 UI 흉내 자리는 우리 라인 아이콘으로(온보딩과 같은 방식)
 S.push(['03-인스타공유', page('radial-gradient(circle at 50% 28%,#f7bccb,#f2a0b4 68%,#ec8ea6)',
   `<div class="cap"><h1 style="color:#fffdf8;text-shadow:0 3px 0 rgba(180,70,100,.32);font-size:80px">예쁜 카드 한 장으로,<br>센스있게 레시피 공유</h1>
-   <div class="sub" style="color:#7a3550">내 한 끼를 친구들과 나눠요</div></div>`,
-  `<div style="position:absolute;top:530px;left:50%;transform:translateX(-50%);width:560px">
+   <div class="sub" style="color:#7a3550">내 한끼를 친구들과 나눠요</div>
+   <div style="margin-top:26px;display:flex;gap:18px;justify-content:center">
+     ${[['인스타 스토리', 'conic-gradient(from 30deg,#f9a825,#f06292,#ab47bc,#f9a825)'], ['카카오톡', '#ffe812']].map(([t, bg]) =>
+       `<span style="background:#fffdf8;border-radius:38px;padding:12px 28px;font-size:32px;color:#7a3550;display:inline-flex;align-items:center;gap:12px;box-shadow:0 8px 18px rgba(150,50,80,.2)"><span style="width:38px;height:38px;border-radius:11px;background:${bg}"></span>${t}</span>`).join('')}
+   </div></div>`,
+  `<div style="position:absolute;top:620px;left:50%;transform:translateX(-50%);width:560px">
      <div style="border-radius:56px;padding:8px;background:conic-gradient(from 30deg,#f9a825,#f06292,#ab47bc,#f9a825);box-shadow:0 30px 60px rgba(150,50,80,.35)">
        <div style="background:#fff;border-radius:50px;overflow:hidden;position:relative">
          <div style="display:flex;align-items:center;gap:14px;padding:22px 26px">
            <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#f6c79b,#e3aa73);display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="${F('gp_gomtb')}" style="width:112%"/></div>
-           <div style="font-size:34px;color:#333">지현맘</div><div style="font-size:28px;color:#aaa">· 스토리</div>
+           <div style="font-size:34px;color:#333">꼬르곰맘</div><div style="font-size:28px;color:#aaa">· 스토리</div>
          </div>
-         <div style="position:relative;height:600px;background:linear-gradient(150deg,#fde8ef,#eaf0fb)">
+         <div style="position:relative;height:640px;background:linear-gradient(150deg,#fdf3e8,#f7ecdf)">
            <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(150,120,80,.14) 5px,transparent 6px);background-size:52px 52px"></div>
-           <img src="${F('fj_c05')}" style="position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);width:330px"/>
-           <img src="${F('gp_duoht')}" style="position:absolute;right:-8px;bottom:-8px;width:282px"/>
-           ${spark('top:26px;right:40px;width:66px')}
-           <div style="position:absolute;left:28px;bottom:36px;padding:14px 20px;background:#fff6b8;border-radius:9px;transform:rotate(-4deg);font-family:'Gaegu';font-size:34px;color:#6b5330">오늘 저녁 성공!</div>
+           <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%) rotate(-2deg);padding:10px 30px;background:#f0b7c6;background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.5) 0 10px,transparent 10px 20px),repeating-linear-gradient(90deg,rgba(255,255,255,.5) 0 10px,transparent 10px 20px);border-radius:4px;box-shadow:0 6px 13px rgba(150,90,90,.22);font-family:'Gaegu';font-size:38px;color:#7a4a52;white-space:nowrap">감바스 알 아히요</div>
+           <img src="${F('fe_08')}" style="position:absolute;top:52%;left:50%;transform:translate(-50%,-50%);width:340px"/>
+           <img src="${F('gp_duoht')}" style="position:absolute;right:-6px;bottom:-6px;width:270px"/>
+           <img src="${F('dn_star')}" style="position:absolute;top:150px;right:34px;width:74px"/>
+           <img src="${F('ch_che04')}" style="position:absolute;top:330px;left:26px;width:72px"/>
+           ${spark('top:250px;left:150px;width:52px')}
+           <div style="position:absolute;left:26px;bottom:44px;padding:14px 20px;background:#fff6b8;border-radius:9px;transform:rotate(-4deg);font-family:'Gaegu';font-size:34px;color:#6b5330;line-height:1.15">오늘 저녁<br>성공!</div>
          </div>
          <div style="display:flex;align-items:center;gap:18px;padding:22px 26px;color:#555">
            <div style="flex:1;border:3px solid #eee;border-radius:40px;padding:12px 24px;font-size:28px;color:#bbb">메시지 보내기…</div>
@@ -141,11 +148,11 @@ S.push(['03-인스타공유', page('radial-gradient(circle at 50% 28%,#f7bccb,#f
          </div>
        </div>
      </div>
-     <div style="position:absolute;left:-84px;top:200px;background:#fff;border-radius:30px 30px 30px 6px;padding:16px 26px;font-family:'Gaegu';font-size:38px;color:#333;box-shadow:0 10px 22px rgba(150,50,80,.22)">우와 맛있겠다</div>
-     <div style="position:absolute;right:-70px;top:440px;background:#fff;border-radius:30px 30px 6px 30px;padding:16px 26px;font-family:'Gaegu';font-size:38px;color:#333;box-shadow:0 10px 22px rgba(150,50,80,.22)">레시피 공유해줘</div>
-     <div style="position:absolute;left:-56px;bottom:40px;background:#5d3410;color:#fff;border-radius:30px 30px 30px 6px;padding:14px 26px;font-family:'Gaegu';font-size:40px;box-shadow:0 10px 22px rgba(150,50,80,.28);display:flex;align-items:center;gap:12px"><img src="${F('gp_gomhi')}" style="height:52px"/>같이 해먹자!</div>
+     <div style="position:absolute;left:-96px;top:250px;background:#fff;border-radius:30px 30px 30px 6px;padding:16px 26px;font-family:'Gaegu';font-size:38px;color:#333;box-shadow:0 10px 22px rgba(150,50,80,.22)">우와 맛있겠다</div>
+     <div style="position:absolute;right:-88px;top:520px;background:#fff;border-radius:30px 30px 6px 30px;padding:16px 26px;font-family:'Gaegu';font-size:38px;color:#333;box-shadow:0 10px 22px rgba(150,50,80,.22)">레시피 공유해줘</div>
+     <div style="position:absolute;left:-64px;bottom:96px;background:#5d3410;color:#fff;border-radius:30px 30px 30px 6px;padding:14px 28px;font-family:'Gaegu';font-size:40px;box-shadow:0 10px 22px rgba(150,50,80,.28)">같이 해먹자!</div>
   </div>
-  <div class="foot"><span class="pill" style="background:#fffdf8;color:#c04a68">센스있게 레시피 한 장, 친구에게 톡</span></div>`)])
+  <div class="foot"><span class="pill" style="background:#fffdf8;color:#c04a68">센스있는 레시피 한 장, 친구에게 톡</span></div>`)])
 
 // ───────────────────────────────────────────────────────── ④ 음식 아이콘
 // ⚠️ 「88종」이 낡았다 → 218종. 앱에서 부르는 이름도 '이모지'가 아니라 '음식 아이콘'이다.
@@ -166,7 +173,7 @@ S.push(['04-음식아이콘', page('linear-gradient(160deg,#f4e2a4,#f9edc2)',
 const malls = [['새벽배송', '#5f8fb0', '#fff'], ['대형몰', '#7a8a99', '#fff'], ['친환경마켓', '#7aa05a', '#fff'], ['오픈마켓', '#c08a5a', '#fff'], ['동네마트', '#9a7fb0', '#fff']]
 S.push(['05-장보기', page('linear-gradient(160deg,#a9cadd,#d0e3ee)',
   `<div class="cap"><h1 style="color:#2f6a8c">재료, 한 번에<br>사러가기 <span style="font-size:.9em">${ICart('#2f6a8c', 2.2)}</span></h1>
-   <div class="sub" style="color:#3f7d9e">레시피 재료 그대로 톡 — 원하는 곳으로 바로</div></div>`,
+   <div class="sub" style="color:#3f7d9e">레시피 재료 그대로 톡 — 여러 마트로 바로</div></div>`,
   `<div style="position:absolute;top:560px;left:50%;transform:translateX(-50%);width:720px">
     <div class="panel" style="padding:44px 40px">
       <div style="display:flex;align-items:center;gap:18px;border-bottom:3px dashed #e6e0d4;padding-bottom:22px;margin-bottom:12px">
@@ -179,12 +186,13 @@ S.push(['05-장보기', page('linear-gradient(160deg,#a9cadd,#d0e3ee)',
            <div style="background:#5f8fb0;color:#fff;font-size:30px;padding:12px 30px;border-radius:30px;display:inline-flex;align-items:center;gap:10px">담기 ${ICart('#fff', 2.4)}</div></div>`).join('')}
     </div>
     <div class="panel" style="margin-top:30px;padding:30px 34px;text-align:center">
-      <div style="font-size:34px;color:#6a7a86;margin-bottom:20px">내가 자주 쓰는 곳으로 바로</div>
+      <div style="font-size:36px;color:#2f6a8c;display:flex;align-items:center;justify-content:center;gap:12px">내가 자주 쓰는 마트로 바로 ${ICart('#2f6a8c', 2.2)}</div>
+      <div style="font-size:28px;color:#8a97a2;margin:8px 0 20px">원하는 곳으로 톡 — 장바구니째 이동</div>
       <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center">
         ${malls.map(([n, c, t]) => `<span style="background:${c};color:${t};font-size:30px;padding:12px 26px;border-radius:28px">${n}</span>`).join('')}
       </div>
     </div>
-    <img src="${U('gom_shop')}" style="position:absolute;right:-40px;bottom:-160px;width:230px;transform:rotate(6deg);filter:drop-shadow(0 8px 14px rgba(40,60,80,.25))"/>
+    <img src="${b(`${H}/src/assets/sharepool/duo_cart.png`)}" style="position:absolute;left:50%;transform:translateX(-50%);bottom:-190px;width:330px;filter:drop-shadow(0 10px 16px rgba(40,60,80,.25))"/>
   </div>
   <div class="foot"><span class="pill" style="background:#2f6a8c;color:#fff">장 볼 거 까먹을 일 없이 ${ICart('#fff', 2.2)}</span></div>`)])
 
@@ -203,8 +211,7 @@ S.push(['06-큐레이션', page('linear-gradient(160deg,#cdd2a0,#e4e7c6)',
           <div style="flex:1"><div style="font-size:42px;color:#33302b">${n}</div><div style="font-size:32px;color:#8a8570;font-family:'Gaegu';margin-top:4px">${d}</div></div>
           <div style="position:absolute;top:-16px;right:20px;background:#ffcf3f;color:#6a4a10;font-size:25px;padding:8px 20px;border-radius:24px;box-shadow:0 6px 12px rgba(150,110,20,.25);display:inline-flex;align-items:center;gap:8px"><img src="${F('dn_star')}" style="height:32px"/>꼬르곰·펭펭 PICK</div>
         </div>`).join('')}
-     <img src="${F('gp_pengym')}" style="position:absolute;left:-50px;bottom:-140px;width:180px;transform:rotate(-6deg)"/>
-     <img src="${F('gp_gomtb')}" style="position:absolute;right:-46px;bottom:-150px;width:210px;transform:rotate(6deg)"/>
+     <img src="${b(`${H}/src/assets/sharepool/duo_naengmyeon.png`)}" style="position:absolute;left:50%;transform:translateX(-50%);bottom:-330px;width:400px;filter:drop-shadow(0 10px 16px rgba(70,90,40,.22))"/>
   </div>
   <div class="foot"><span class="pill" style="background:#5f6a30;color:#fff"><img src="${U('gom_thumbsup')}"/>믿고 사는 살림템</span></div>`)])
 
@@ -224,7 +231,7 @@ S.push(['07-감정', page('radial-gradient(circle at 50% 42%,#8a6a4c,#6f5238 70%
 S.push(['08-브랜드', page('radial-gradient(circle at 50% 30%,#f6b49e,#ee9a80 70%,#e5896d)',
   `<div class="cap"><h1 style="color:#fffdf8;text-shadow:0 4px 0 rgba(160,80,55,.3)">꼬르곰·펭펭과,<br>감정 레시피북</h1></div>`,
   `<div style="position:absolute;top:520px;left:50%;transform:translateX(-50%);text-align:center;width:900px">
-     <img src="${F('gp_duotb')}" style="width:560px;filter:drop-shadow(0 18px 26px rgba(120,50,30,.35))"/>
+     <img src="${F('gp_duohi')}" style="width:520px;filter:drop-shadow(0 18px 26px rgba(120,50,30,.35))"/>
      <div style="margin-top:36px;background:#fffdf8;border-radius:40px;padding:44px 40px;box-shadow:0 20px 40px rgba(150,70,45,.28)">
        <img src="${logo}" style="width:300px"/><div style="margin-top:14px;font-size:38px;color:#7a5238">꼬르곰·펭펭과 레꾸해요</div></div>
   </div><div class="foot"><span class="pill" style="background:#5d3410;color:#fffdf8"><img src="${F('gp_duohi')}"/>지금 한끼 시작하기</span></div>`)])
