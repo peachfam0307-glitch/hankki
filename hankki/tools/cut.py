@@ -44,6 +44,7 @@
      --drop R 본체 대비 이 비율보다 작고 떨어진 조각(하트·반짝)은 뗀다(기본 0.12 · 0이면 끔)
      --punch R 그림 «안»에 갇힌 순백(≥252) 구멍이 컷 넓이의 R 이상이면 투명하게 뚫는다
               (바구니 손잡이 안쪽처럼 `binary_fill_holes` 가 메워버린 배경. 0.004 권장)
+     --smooth K 가장자리 흐림 배수(기본 1). **시트를 늘려서 자를 땐 그 배율만큼** 키운다
      --grid RxC 씬 컷용 — 격자는 «나누는 데만» 쓰고 한 칸의 덩어리를 한 컷으로 묶는다
                 (곰 + 떨어진 그릴·선풍기처럼 소품이 흩어진 시트. ⛔칼이 그림을 안 자른다)
 """
@@ -59,7 +60,7 @@ WHITE = 246          # 이보다 밝고 채도 낮으면 '배경 후보'
 CORE_ERODE = 7       # 속살 = 안쪽 이만큼 들어간 곳
 
 
-def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, drop=0.12, grid=None, punch=0.0):
+def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, drop=0.12, grid=None, punch=0.0, smooth=1.0):
     rgb = np.array(Image.open(sheet).convert('RGB')).astype(float)
     mn = rgb.min(axis=2)
     art = mn < WHITE
@@ -310,7 +311,13 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
                 drawn = reg & ~solid
                 if drawn.sum() > 50:
                     d = int(max(2, min(round(float(np.percentile(dist[drawn], 90))), pad - 3)))
-            dist = ndimage.gaussian_filter(dist, sigma=max(1.8, max(reg.shape) * 0.007))
+            # ⭐⭐⭐ **흐림은 「그림의 요철 크기」를 따라야 한다 — 그런데 «늘린 그림»은 요철도 늘어난다.**
+            #   (창업자 2026-07-31 *"왜 같은 도구로 똑같은 규칙으로 자르는데 결과물이 이러는 거지?"* — 정확한 질문이었다)
+            #   여름 프레임만 유독 톱니였던 이유 = **그 시트만 2배로 늘려서 잘랐다.**
+            #   (원본 한 컷이 272px인데 앱에선 626px로 쓴다 → 크게 만들려고 시트를 2배 확대)
+            #   늘리면 **가장자리 요철도 2배로 굵어지는데** 흐림은 `긴변×0.007` 그대로라 **못 뭉갠다.**
+            #   → `--smooth K` 로 배율만큼 키운다. 늘려서 자른 시트는 그 배율을 그대로 넣으면 된다.
+            dist = ndimage.gaussian_filter(dist, sigma=max(1.8, max(reg.shape) * 0.007) * smooth)
             cut_a = np.clip((d + 0.6 - dist) / 1.4, 0.0, 1.0)  # 칼선 안쪽=1 · 바깥=0 · 경계는 부드럽게
             out_rgb[band] = sub[band]                          # 색도 원래대로 — 속살색으로 덮으면 테두리와 경계가 진다
             # ⭐ **실루엣을 통째로 다시 짠다** — 그림자가 만든 너덜한 가장자리를 매끈한 칼선으로 갈아끼운다.
@@ -322,12 +329,35 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
                 #   *"여름프레임은 내부투명도 띠부씰모드로 라인따야할듯해"*)
                 #   전엔 «바깥쪽만» 둘렀다. 그러니 프레임 바깥은 흰 띠부씰 선인데
                 #   **창 가장자리만 맨살**이라 한 장에 두 가지 마감이 섞여 어색했다.
-                #   → 창 «안쪽»으로 d 만큼 흰 선을 넣는다. 가운데는 그대로 투명해서 사진이 비친다.
-                inner = ndimage.distance_transform_edt(win_mask)
-                inner = ndimage.gaussian_filter(inner, sigma=max(1.8, max(reg.shape) * 0.007))
-                ring = np.clip((d + 0.6 - inner) / 1.4, 0.0, 1.0)
-                alpha[win_mask] = ring[win_mask]
-                out_rgb[win_mask & (ring > 0)] = 255.0
+                #   → 창 «안쪽»으로도 d 만큼 흰 선. 가운데는 그대로 투명해서 사진이 비친다.
+                # ⚠️⚠️ **창 안쪽 거리를 「창 마스크」에서 재면 안 된다.** (창업자 2026-07-31
+                #   *"이 프레임이 어려운거야? 아님 문제가 뭘까.."* — 물결 프레임 안쪽 라인이 톱니처럼 우글거렸다)
+                #   처음엔 `distance_transform_edt(win_mask)` 로 **창 경계에서부터** 쟀다. 그런데
+                #   `win` 은 흰색 전파＋부풀리기로 만든 마스크라 **경계 자체가 이미 울퉁불퉁**하다.
+                #   그 요철을 그대로 물려받아 **안쪽만 너덜너덜**해졌다(바깥은 매끈한데).
+                #   → **바깥과 똑같이 `cut_a`(그림에서 잰 흐린 거리밭)를 쓴다.** 창 안쪽에서도
+                #     «프레임 선에서 d 이내»가 흰 선이 되므로, 안팎이 **같은 매끈한 등고선**이 된다.
+                # ⚠️ **창 «안»은 바깥보다 얇게.** (창업자 2026-07-31 *"안쪽 좀 더 얇아야해 흰색부분"*)
+                #   같은 두께로 두르면 창이 좁아 보이고 프레임이 통통해진다. 바깥의 절반쯤이 적당하다.
+                d_in = max(2, round(d * 0.5))
+                cut_in = np.clip((d_in + 0.6 - dist) / 1.4, 0.0, 1.0)
+                alpha[win_mask] = cut_in[win_mask]
+                out_rgb[win_mask & (cut_in > 0)] = 255.0
+        # ⭐ **마지막에 «떨어진 잔챙이»를 한 번 더 턴다.** (창업자 2026-07-31 *"안쪽 물방울도 없어야 하고"*)
+        #   ⚠️ 앞의 `--drop` 은 «실루엣을 짤 때» 걸러서, 창을 뚫은 뒤에 홀로 남는 조각은 못 잡는다.
+        #     (물결 프레임의 창 «안» 물방울이 그랬다 — 실루엣 단계에선 파도와 이어져 있었다)
+        #   → 다 만든 뒤 알파에서 덩어리를 다시 세어, 본체 대비 `drop` 보다 작고 **떨어져 있는** 것만 지운다.
+        if drop > 0:
+            # ⚠️ 문턱을 0.5로 잡으면 **반투명 가장자리가 남아 흐린 자국**이 된다(물방울 자리에 실제로 남았다).
+            #   낮게(0.05) 잡아 조각을 통째로 세고, 지울 땐 3px 부풀려 **가장자리까지** 없앤다.
+            solidA = alpha > 0.05
+            albl, an = ndimage.label(solidA)
+            if an > 1:
+                asz = ndimage.sum(solidA, albl, range(1, an + 1))
+                amax = asz.max()
+                for ai in range(1, an + 1):
+                    if asz[ai - 1] < amax * drop:
+                        alpha[ndimage.binary_dilation(albl == ai, np.ones((3, 3)), iterations=3)] = 0
         out = np.dstack([out_rgb.astype(np.uint8), (alpha * 255).astype(np.uint8)])
 
         # ⚠️ **가장자리에 닿으면 투명 여백을 덧댄다.** 2026-07-31 게이트가 잡아낸 것 —
@@ -363,6 +393,7 @@ if __name__ == '__main__':
     dr_i = sys.argv.index('--drop') + 1 if '--drop' in sys.argv else None
     gd_i = sys.argv.index('--grid') + 1 if '--grid' in sys.argv else None
     pu_i = sys.argv.index('--punch') + 1 if '--punch' in sys.argv else None
+    sm_i = sys.argv.index('--smooth') + 1 if '--smooth' in sys.argv else None
     cut(args[0], args[1], args[2],
         is_frame='--frame' in sys.argv,
         min_px=int(sys.argv[mn_i]) if mn_i else 8000,
@@ -370,7 +401,8 @@ if __name__ == '__main__':
         join=int(sys.argv[jn_i]) if jn_i else 5,
         drop=float(sys.argv[dr_i]) if dr_i else 0.12,
         grid=tuple(int(x) for x in sys.argv[gd_i].lower().split('x')) if gd_i else None,
-        punch=float(sys.argv[pu_i]) if pu_i else 0.0)
+        punch=float(sys.argv[pu_i]) if pu_i else 0.0,
+        smooth=float(sys.argv[sm_i]) if sm_i else 1.0)
 
     # 🔍 자른 뒤 **자동으로 3단계 검수**를 부른다 (창업자 2026-07-31 *"2번 검수하는거 코드에 박아둬"*).
     # ⚠️ 왜 자동인가 = 검수는 **잊으면 안 하는 일**이다. 2026-07-30에 프레임 6컷만 고치고

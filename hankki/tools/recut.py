@@ -67,7 +67,7 @@ def main():
     # ⚠️ **옵션의 「값」을 시트로 오해하면 안 된다.** 2026-07-31 실제로 겪었다 —
     #   `--panel out.png` 의 `out.png` 가 `.png` 로 끝나고 `--` 로 시작하지 않아
     #   **시트 목록에 끼어들어 그 확인표까지 잘랐다.**(보고서에 없는 `s1r01` 이 튀어나온 이유)
-    VALUED = {'--diecut', '--min', '--join', '--drop', '--grid', '--pair', '--panel', '--only', '--near', '--punch'}
+    VALUED = {'--diecut', '--min', '--join', '--drop', '--grid', '--pair', '--panel', '--only', '--near', '--punch', '--smooth'}
     skip = {i + 1 for i, a in enumerate(argv) if a in VALUED}
     sheets = [a for i, a in enumerate(argv)
               if i not in skip and not a.startswith('--') and a.endswith('.png')]
@@ -78,6 +78,7 @@ def main():
         return argv[argv.index(name) + 1] if name in argv and argv.index(name) + 1 < len(argv) else dflt
     diecut, minpx, is_frame, join, drop, grid = opt('--diecut'), opt('--min'), '--frame' in argv, opt('--join'), opt('--drop'), opt('--grid')
     punch = opt('--punch')
+    smooth = opt('--smooth')
 
     # ① 앱 컷 지문
     app_names, app_fp = [], []
@@ -102,6 +103,7 @@ def main():
         if drop: cmd += ['--drop', drop]
         if grid: cmd += ['--grid', grid]
         if punch: cmd += ['--punch', punch]
+        if smooth: cmd += ['--smooth', smooth]
         if is_frame: cmd += ['--frame']
         subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL)
 

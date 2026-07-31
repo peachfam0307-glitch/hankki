@@ -218,8 +218,8 @@ const PHOTO_RATIO = {
   st_01: 0.9054, st_02: 0.8997, st_03: 0.8973, st_04: 0.9027, st_05: 1.0388, st_06: 0.9099, st_07: 1.0119, st_08: 0.9469,
   st_09: 0.994, st_10: 1.0385, st_11: 1.1024,
   // 🏖 여름 프레임 재제작 12컷 (2026-07-30) — 옛 `sf_` 16컷을 대체한다. 아래 그룹 주석 참고.
-  pf_sm01: 0.8423, pf_sm02: 0.7831, pf_sm03: 0.9537, pf_sm04: 0.8271, pf_sm05: 1.0103, pf_sm06: 0.8528,
-  pf_sm07: 0.933, pf_sm08: 0.9251, pf_sm09: 1.0055, pf_sm10: 0.9533, pf_sm11: 0.7803, pf_sm12: 0.9842,
+  pf_sm01: 0.8447, pf_sm02: 0.786, pf_sm03: 0.9544, pf_sm04: 0.8294, pf_sm05: 1.0101, pf_sm06: 0.8548,
+  pf_sm07: 0.9339, pf_sm08: 0.9262, pf_sm09: 1.0054, pf_sm10: 0.954, pf_sm11: 0.7832, pf_sm12: 0.9842,
   // ⛔ **여기 있던 여름다꾸 37(`sd_`)·미니아이콘 92(`mn_`)·파스텔 43(`ps_`)은 도로 뺐다** (2026-07-29 당일 롤백).
   //    창업자 폰 제보: "우리 꾸미기에 추가한 데코에 여름 스티커들 다 깨져."
   //    **원인 = 소스 해상도 부족.** 원본 시트(1254px) 한 장에 아이템이 90~100개라 하나당 긴변이
@@ -846,7 +846,13 @@ export const STICKER_GROUPS = [
   { key: 'life', tab: 'deco', label: '운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },
   // ✏️ 글자 (2026-07-29) — '글자' 탭엔 직접 쓰는 것만 있어서, 손글씨 문구 스티커가 없었다.
   //   맨 위 '한끼 문구' = 창업자가 직접 뽑은 우리만의 말들(다른 다꾸 앱엔 없는 것).
-  { key: 'text_hankki', tab: 'notetext', label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night'] },
+  // ⏸ **'한끼 문구' 10컷은 잠깐 뺐다** (창업자 2026-07-31 *"이건 내가 다시 뽑아볼게 글자10개는 우선 빼자"*)
+  //   왜 = 이 시트(`보너스문구10-B-흰다이컷`)는 **그림에 흰 다이컷이 이미 그려져 있어서**
+  //        우리가 흰 테를 두르면 두 겹이 되고, 안 두르면 그려진 흰 테 바깥의 옅은 그림자까지
+  //        실루엣이라 가장자리가 너덜너덜해진다. 자르기로 풀 문제가 아니라 **시트를 다시 뽑는 게 답**이다.
+  //   ⛔ **PNG 와 `PHOTO_RATIO` 는 지우지 않는다** — 이미 이 스티커로 꾸며 저장한 레꾸가 있으면 깨진다.
+  //      피커에서만 안 보이게 그룹을 빼 둔 것. 새 시트가 오면 이 줄을 되살리면 된다.
+  //{ key: 'text_hankki', tab: 'notetext', label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night'] },
   { key: 'text_word', tab: 'notetext', label: '문구', items: ['tw_today', 'tw_success', 'tw_welldone', 'tw_tasty', 'tw_more', 'tw_fav', 'tw_honey', 'tw_hearty', 'tw_easy', 'tw_mom', 'tw_nexttime', 'tw_fail', 'tw_yummy', 'tw_best', 'tw_ourhankki', 'tw_goodday'] },
   // 📅 요일 = 무슨 요일에 해먹었는지 기록용. 빈 라벨 3종은 직접 글씨 얹으라고 둔다.
   //   ⚠️ 숫자 1~10 은 뺐다(창업자 2026-07-29) — 넣을 땐 '레시피 순서 매기기'를 생각했는데
