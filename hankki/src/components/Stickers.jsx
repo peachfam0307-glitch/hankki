@@ -174,16 +174,16 @@ const PHOTO_RATIO = {
   fj_jsk03: 1.1511, fj_jsk01: 1.0866, fj_jsk04: 1.3317, fj_jsk05: 1.1705, fj_jsk02: 1.0714, fj_jsk15: 1.3058,
   fi_isk03: 1.3454, fi_isk05: 1.0705, fi_isk02: 1.1087, fi_isk07: 1.2735, fi_isk06: 1.0921, fi_isk13: 1.0338,
   ig_jae06: 0.9892, ig_jae08: 1.1215, ig_jae10: 1.0221, ig_jae19: 1.3432, ig_jae20: 1.024, ig_jae07: 1.1017, ig_jae09: 1.1304, ig_jae03: 1.2457, ig_jae12: 1.2778, ig_frb01: 1.0508, ig_frb03: 0.9623, ig_frb07: 0.8879, ig_frb13: 0.9945, ig_ggi03: 1.0711, ig_ggi16: 1.2129, ig_hsm01: 1.1898,
-  dc_dhb04: 1.0957, dc_dhb01: 0.9561, dc_dsy04: 0.8326, dc_dhb10: 1.1893, dc_dhb06: 0.8061, dc_dhb09: 1.1214, dc_dhb14: 1.0, dc_dhb05: 1.3728, dc_dsy16: 1.3971, dc_dsy13: 1.1591, dc_dhb13: 1.0158, dc_dmn02: 0.9219, dc_dmn06: 1.0207, dc_dmn07: 1.1012,
+  dc_dhb04: 1.0887, dc_dhb01: 0.9545, dc_dsy04: 0.8439, dc_dhb10: 1.1667, dc_dhb06: 0.8208, dc_dhb09: 1.1047, dc_dhb14: 0.9951, dc_dhb05: 1.3441, dc_dsy16: 1.3618, dc_dsy13: 1.1571, dc_dhb13: 1.0243, dc_dmn02: 0.9204, dc_dmn06: 1.0154, dc_dmn07: 1.1019,
   // 🎀 꾸미기 소품(데코) 보강 (2026-07-26, 창업자 "꾸미기 재료 늘리자" · 적당히 — 나머지 하트·심볼·미니는 다음 업뎃용으로 라이브러리 보존) — 프레임·메모(dma) 10 + 여름 제철 귀여운 식재료(꾸미기용) 5
-  dc_dma01: 0.9635, dc_dma03: 1.0362, dc_dma05: 1.1588, dc_dma06: 1.0841, dc_dma07: 1.1805, dc_dma10: 1.0047, dc_dma11: 1.5723, dc_dma13: 1.0795, dc_dma14: 1.2406, dc_dma16: 0.9613,
+  dc_dma01: 0.9692, dc_dma03: 1.0251, dc_dma05: 1.1474, dc_dma06: 1.0861, dc_dma07: 1.1689, dc_dma10: 0.9871, dc_dma11: 1.5288, dc_dma13: 1.1135, dc_dma14: 1.2251, dc_dma16: 0.9598,
   ig_frb02: 0.8451, ig_frb04: 1.0149, ig_frb08: 0.4769, ig_jcb19: 0.9741, ig_jae16: 1.4359,
   // 🌈 귀여운 컬러 소품 4 (창업자 픽: 무지개·꽃다발·풍선 + 케이크) — 범용·화사
-  dc_nd08: 1.3063, dc_nd01: 0.7226, dc_nd05: 0.6505, dc_nd16: 1.1921,
+  dc_nd08: 1.2941, dc_nd01: 0.737, dc_nd05: 0.6689, dc_nd16: 1.1796,
   // 🎀 창업자 시트 신규 반영 (2026-07-29) — 데코 10·프레임 5·워시테이프 4
-  dn_ribbon: 1.0988, dn_cherry: 0.94, dn_peach: 0.9522, dn_star: 1.2455, dn_sparkle: 1.1803,
-  dn_shoot: 1.2453, dn_coffee: 0.9728, dn_plant: 0.6419, dn_bunting: 1.7484, dn_sachet: 0.8829,
-  fn_speech: 1.2273, fn_daisy: 0.9889, fn_bow: 0.9414, fn_night: 1.0327, fn_gingham: 1.0419,
+  dn_ribbon: 1.0881, dn_cherry: 0.9474, dn_peach: 0.959, dn_star: 1.2282, dn_sparkle: 1.0236,
+  dn_shoot: 1.2453, dn_coffee: 0.9742, dn_plant: 0.6928, dn_bunting: 1.5667, dn_sachet: 0.8861,
+  fn_speech: 1.1762, fn_daisy: 0.9861, fn_bow: 0.9443, fn_night: 1.0305, fn_gingham: 1.0517,
   ws_pinkdot: 1.3596, ws_greendot: 1.731, ws_bluedot: 1.4091, ws_pinkstripe: 1.8105,
   // 🍳 주방도구 (2026-07-29) — 라이프 탭이 운동용품뿐이라 요리앱과 안 맞았다.
   tk_apron: 0.8407, tk_hat: 0.9762, tk_pot_pink: 1.3318, tk_pot_green: 1.2639, tk_bowl: 0.9553,
@@ -253,8 +253,8 @@ const PHOTO_RATIO = {
   hw_01: 1.1072, hw_04: 0.9547, hw_09: 0.8632,
   hw_13: 0.9522,
   xm_01: 0.7759, xm_02: 0.718, xm_03: 0.9472, xm_04: 0.615,
-  ch_che01: 0.7928, ch_che04: 1.4278, ch_che06: 1.0683, ch_che08: 1.3098, ch_che05: 0.9231,
-  lf_fit12: 1.6056, lf_fit11: 1.487, lf_fit08: 1.2486, lf_fit07: 1.2056, lf_fit02: 1.089, lf_fit13: 0.6872, lf_fit14: 1.1852, lf_fit06: 0.662,
+  ch_che01: 0.806, ch_che04: 1.399, ch_che06: 1.0724, ch_che08: 1.285, ch_che05: 0.9354,
+  lf_fit12: 1.5443, lf_fit11: 1.436, lf_fit08: 1.2205, lf_fit07: 1.1709, lf_fit02: 1.0825, lf_fit13: 0.7045, lf_fit14: 1.1691, lf_fit06: 0.697,
   cp_cpf01: 0.8659, cp_cpf02: 0.9215, cp_cpf03: 0.8136, cp_cpf04: 0.8604, cp_cpf05: 0.9968, cp_cpf06: 1.0358, cp_cpf07: 0.9139, cp_cpf08: 0.8815,
   // 🐻🐧 뉴 물결 곰펭(2026-07-23·정본) — 곰4·펭5·콤비4. 띠부씰(흰 다이컷 테두리·2026-07-23) 반영 → 비율 갱신.
   // (plain 원본은 docs/stickers/곰펭-물결-신규-2507/낱개/ 아카이브. cp_cpf 옛 파이팅은 저장표지 호환용으로만 남김.)
