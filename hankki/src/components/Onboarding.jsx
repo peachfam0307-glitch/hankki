@@ -278,28 +278,31 @@ const CAST = [
 const Slide7C = () => (
   <Stage bg="linear-gradient(165deg,#f7e6ca,#f2d6b0 58%,#e8c495)">
     <Cap top={150}><H1 style={{ color: '#6b4526' }}>{KO_NUM[CAST.length] || CAST.length} 친구가<br />함께 살아요</H1></Cap>
-    {/* 단체 정본 — 배경과 같은 #F9F9F9 카드에 얹어 경계가 안 보이게 */}
-    <div style={{ position: 'absolute', top: 430, left: 64, right: 64, background: '#f9f9f9', borderRadius: 40, padding: '10px 0 0', boxShadow: '0 16px 32px rgba(140,95,50,.2)', overflow: 'hidden' }}>
-      <img src={lineup5} alt="" draggable={false} style={{ display: 'block', width: '100%', height: 'auto' }} />
-    </div>
-    {/* 이름 + 성격 한 줄 — 얼굴 컷을 앞에 붙여 누가 누군지 짚어준다.
-        ⚠️ 줄 높이를 **인원수로 나눠** 정한다 — 친구가 늘어도 꼬리말을 밀어내거나 넘치지 않는다.
-           (고정 86px 로 두면 7명부터 꼬리말과 겹친다) */}
-    <div style={{ position: 'absolute', top: 1190, left: 74, right: 74, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-      {CAST.map((c) => {
-        const rowH = Math.min(88, 470 / CAST.length)   // 쓸 수 있는 높이 470 = 1190 → 1660(꼬리말 위)
-        const face = Math.round(rowH - 14)
-        return (
-          <div key={c.name} style={{ height: rowH, display: 'flex', alignItems: 'center', gap: 20 }}>
+    {/* ⭐ 그림 칸과 이름줄을 **한 세로 흐름**에 넣는다 — 좌표로 따로 놓으면 겹친다.
+        (2026-07-31 창업자 지적 *"꼬르곰 글자 너무 위에있어"* — 새 정본이 조금 더 세로로 길어져
+         비율이 1.25→1.22 로 바뀌자 이름줄 첫 칸이 그림 칸 아래에 물렸다.)
+        📌 숫자를 다시 맞추는 건 **그림이 또 바뀌면 또 어긋난다.** 그림 높이가 얼마든
+           이름줄은 «남은 자리»를 나눠 쓰므로 구조적으로 겹칠 수가 없다. */}
+    <div style={{ position: 'absolute', top: 420, left: 64, right: 64, bottom: 210, display: 'flex', flexDirection: 'column', gap: 22 }}>
+      {/* 단체 정본 — 배경과 같은 #F9F9F9 카드에 얹어 경계가 안 보이게 */}
+      <div style={{ flex: '0 0 auto', background: '#f9f9f9', borderRadius: 40, padding: '10px 0 0', boxShadow: '0 16px 32px rgba(140,95,50,.2)', overflow: 'hidden' }}>
+        <img src={lineup5} alt="" draggable={false} style={{ display: 'block', width: '100%', height: 'auto' }} />
+      </div>
+      {/* 이름 + 성격 한 줄 — 얼굴 컷을 앞에 붙여 누가 누군지 짚어준다.
+          ⚠️ 줄은 **남은 높이를 똑같이 나눠 가진다**(`flex:1 1 0`) — 친구가 늘어도, 그림이 커져도
+             꼬리말을 밀어내거나 넘치지 않는다. 얼굴 크기도 줄 높이의 %라 같이 줄고 는다. */}
+      <div style={{ flex: '1 1 0', minHeight: 0, display: 'flex', flexDirection: 'column', padding: '0 10px' }}>
+        {CAST.map((c) => (
+          <div key={c.name} style={{ flex: '1 1 0', minHeight: 0, display: 'flex', alignItems: 'center', gap: 20 }}>
             <img
               src={c.face} alt="" draggable={false}
-              style={{ width: face, height: face, borderRadius: '50%', objectFit: 'contain', background: '#fffdf8', border: '3px solid #e6cfae', flex: '0 0 auto' }}
+              style={{ height: '74%', aspectRatio: '1', borderRadius: '50%', objectFit: 'contain', background: '#fffdf8', border: '3px solid #e6cfae', flex: '0 0 auto' }}
             />
-            <div style={{ fontSize: Math.min(40, face * 0.55), fontWeight: 800, color: '#6b4526', width: 190, flex: '0 0 auto' }}>{c.name}</div>
-            <div style={{ fontSize: Math.min(36, face * 0.5), color: '#8a6440', lineHeight: 1.3 }}>{c.line}</div>
+            <div style={{ fontSize: 40, fontWeight: 800, color: '#6b4526', width: 190, flex: '0 0 auto' }}>{c.name}</div>
+            <div style={{ fontSize: 36, color: '#8a6440', lineHeight: 1.3 }}>{c.line}</div>
           </div>
-        )
-      })}
+        ))}
+      </div>
     </div>
     {/* ⛔ "여섯 번째" 처럼 순서를 박지 않는다 — 위 CAST 주석 참고 */}
     <Foot style={{ background: '#6b4526', color: '#fff7ea' }}>그리고 여러분도 한 식구예요</Foot>

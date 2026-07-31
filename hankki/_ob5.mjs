@@ -26,6 +26,21 @@ for (let i = 0; i < N; i++) {
         shown: Math.round(x.getBoundingClientRect().height),
       })))
     imgs.forEach((c) => console.log(`      ${c.n} 소스 ${c.src} → 화면 ${c.shown}px (DPR3 → ${c.shown * 3} device px)`))
+    // 🐛 «단체 그림이 이름줄을 덮는다» — 눈으로 보고 넘기지 말고 좌표로 잡는다.
+    //    창업자 지적 2026-07-31 *"꼬르곰 글자 너무 위에있어"*.
+    //    정본을 새로 뽑으면 세로 비율이 달라져 또 어긋난다 → 그림이 바뀔 때마다 여기서 걸린다.
+    if (i === 1) {
+      const lap = await p.evaluate(() => {
+        const img = [...document.images].find((x) => /lineup5/.test(x.currentSrc))
+        const rows = [...document.images].filter((x) => /av_/.test(x.currentSrc))
+        if (!img || !rows.length) return '자리를 못 찾음(선택자 확인)'
+        const c = img.getBoundingClientRect(), f = rows[0].getBoundingClientRect()
+        const gap = Math.round(f.top - c.bottom)
+        return gap < 0 ? `그림이 첫 이름줄을 ${-gap}px 덮음` : `그림 밑 ↔ 첫 이름줄 ${gap}px 띔 ✅`
+      })
+      console.log('      겹침검사:', lap)
+      if (String(lap).includes('덮음')) errs.push(`레이아웃: ${lap}`)
+    }
     await p.screenshot({ path: shots[i] })
   }
   const nx = p.getByRole('button', { name: /다음|시작하기/ }).first()
