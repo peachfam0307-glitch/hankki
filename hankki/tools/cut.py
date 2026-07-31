@@ -39,6 +39,7 @@
      --diecut N|auto  🏷흰 테두리를 **바깥쪽만** 두른다 (안쪽 창은 투명 그대로)
                       auto = 긴변의 0.7% (얇은 보호막·기본) · 숫자 = 그 px (두꺼운 띠부씰 팩용)
      --min    이 픽셀 수보다 작은 덩어리는 먼지로 보고 버린다
+     --join N 떨어진 조각을 한 덩어리로 묶는 거리(기본 5). 쪼리처럼 두 짝이면 키운다
 """
 import os
 import sys
@@ -52,13 +53,17 @@ WHITE = 246          # 이보다 밝고 채도 낮으면 '배경 후보'
 CORE_ERODE = 7       # 속살 = 안쪽 이만큼 들어간 곳
 
 
-def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0):
+def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5):
     rgb = np.array(Image.open(sheet).convert('RGB')).astype(float)
     mn = rgb.min(axis=2)
     art = mn < WHITE
 
     # ① 덩어리로 나눈다 (격자 금지)
-    filled = ndimage.binary_fill_holes(ndimage.binary_closing(art, np.ones((5, 5))))
+    # ⚠️ `join` = **떨어진 조각을 한 덩어리로 묶는 거리.** 기본 5px.
+    #   2026-07-31 여름 쪼리가 **두 짝인데 한 짝만** 잘렸다 — 두 짝 사이가 5px보다 벌어져
+    #   별개 덩어리로 잡혔기 때문. `--join 25` 처럼 키우면 한 컷으로 붙는다.
+    #   ⛔ 너무 키우면 **옆 그림까지 딸려 온다.** 안 붙을 때만 조금씩 올릴 것.
+    filled = ndimage.binary_fill_holes(ndimage.binary_closing(art, np.ones((join, join))))
     lab, n = ndimage.label(filled)
     sizes = ndimage.sum(filled, lab, range(1, n + 1))
     keep = [i for i in range(1, n + 1) if sizes[i - 1] >= min_px]
@@ -210,10 +215,12 @@ if __name__ == '__main__':
         sys.exit(1)
     mn_i = sys.argv.index('--min') + 1 if '--min' in sys.argv else None
     dc_i = sys.argv.index('--diecut') + 1 if '--diecut' in sys.argv else None
+    jn_i = sys.argv.index('--join') + 1 if '--join' in sys.argv else None
     cut(args[0], args[1], args[2],
         is_frame='--frame' in sys.argv,
         min_px=int(sys.argv[mn_i]) if mn_i else 8000,
-        diecut=(sys.argv[dc_i] if sys.argv[dc_i] == 'auto' else int(sys.argv[dc_i])) if dc_i else 0)
+        diecut=(sys.argv[dc_i] if sys.argv[dc_i] == 'auto' else int(sys.argv[dc_i])) if dc_i else 0,
+        join=int(sys.argv[jn_i]) if jn_i else 5)
 
     # 🔍 자른 뒤 **자동으로 3단계 검수**를 부른다 (창업자 2026-07-31 *"2번 검수하는거 코드에 박아둬"*).
     # ⚠️ 왜 자동인가 = 검수는 **잊으면 안 하는 일**이다. 2026-07-30에 프레임 6컷만 고치고
