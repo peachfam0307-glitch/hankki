@@ -36,7 +36,8 @@
 쓰기:
   python3 tools/cut.py <시트.png> <내보낼폴더> <접두어> [--frame] [--min 8000]
      --frame  프레임이면 켠다(가운데 창 뚫기)
-     --diecut N  🏷띠부씰 마감 — **바깥쪽만** 흰 테두리 N px (안쪽 창은 투명 그대로)
+     --diecut N|auto  🏷흰 테두리를 **바깥쪽만** 두른다 (안쪽 창은 투명 그대로)
+                      auto = 긴변의 0.7% (얇은 보호막·기본) · 숫자 = 그 px (두꺼운 띠부씰 팩용)
      --min    이 픽셀 수보다 작은 덩어리는 먼지로 보고 버린다
 """
 import os
@@ -141,8 +142,14 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0):
             # ⭐⭐ **두께는 「그림 크기에 비례」해야 한다.** (2026-07-31 여름 소품에서 발견)
             #   프레임은 긴변 600px인데 소품은 250px이다. **같은 8px을 두르면 소품에선 두 배로 두껍게 보이고,
             #   히비스커스 꽃잎과 잎사귀 사이 오목한 틈이 흰색으로 메워졌다.**
-            #   → `--diecut auto` = 긴변의 1.4% (600px→8px · 250px→4px). 한 규칙이 둘 다 맞는다.
-            d = round(max(reg.shape) * 0.014) if diecut == 'auto' else int(diecut)
+            #   → `--diecut auto` = **긴변의 0.7%** (600px→4px · 250px→2px).
+            #   ⚠️⚠️ **얇아야 한다.** 창업자 2026-07-31:
+            #      *"두껍게 하면 모든스티커가 다 띠부씰같자나..."* — **맞다.**
+            #      이 흰 테는 **「스타일」이 아니라 「보호막」**이다. 흰 배경에서 자를 때 외곽선이
+            #      파먹히는 걸 막는 게 목적이지, 띠부씰처럼 **보이려는** 게 아니다.
+            #      두꺼우면 그림마다 흰 테가 눈에 띄어 **전부 같은 스티커처럼 보인다.**
+            #      📌 진짜 띠부씰 느낌이 필요한 팩은 그때 값을 크게 준다(`--diecut 10`).
+            d = round(max(reg.shape) * 0.007) if diecut == 'auto' else int(diecut)
             d = max(2, min(d, PAD - 3))                        # 크롭 여백(PAD) 밖으로는 못 두른다
             # ⭐⭐ **칼선은 「부풀리기」가 아니라 「거리밭」으로 만든다.** (창업자 2026-07-31
             #   *"띠부실모드 테두리 부드럽게 잘 커팅해야해"*)
@@ -151,8 +158,13 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0):
             #   → ⒜그림에서 얼마나 떨어졌는지(거리)를 재고 ⒝그 거리밭을 **흐린다**(요철이 뭉개짐)
             #     ⒞`거리 ≤ d` 인 곳이 테두리. 흐린 거리밭의 등고선이라 **저절로 매끈하고 둥글다.**
             #   ⒟경계에서 1.4px에 걸쳐 알파를 0으로 떨구니 **계단도 없다**(따로 처리 불필요).
+            #   ⚠️⚠️ **부드러움은 「두께」가 아니라 「그림 크기」를 따라간다.** (창업자 2026-07-31
+            #      *"대신 부드럽게 잘 잘라줘야해"*)
+            #      처음엔 흐림 정도를 두께 d 에 비례시켰는데, **얇게 하라니까 흐림까지 같이 약해져
+            #      실루엣이 너덜너덜**해졌다. 뭉개야 할 요철의 크기는 **그림 해상도**가 정하지
+            #      테두리 두께와는 상관이 없다. → 둘을 갈랐다.
             dist = ndimage.distance_transform_edt(~reg)
-            dist = ndimage.gaussian_filter(dist, sigma=max(1.6, d * 0.55))
+            dist = ndimage.gaussian_filter(dist, sigma=max(1.8, max(reg.shape) * 0.007))
             cut_a = np.clip((d + 0.6 - dist) / 1.4, 0.0, 1.0)  # 칼선 안쪽=1 · 바깥=0 · 경계는 부드럽게
             alpha[band] = 1.0                                  # 바깥 띠의 흰색 되돌리기는 그만둔다(흰 테가 덮으니까)
             out_rgb[band] = sub[band]                          # 색도 원래대로 — 속살색으로 덮으면 테두리와 경계가 진다
@@ -182,7 +194,7 @@ if __name__ == '__main__':
     cut(args[0], args[1], args[2],
         is_frame='--frame' in sys.argv,
         min_px=int(sys.argv[mn_i]) if mn_i else 8000,
-        diecut=int(sys.argv[dc_i]) if dc_i else 0)
+        diecut=(sys.argv[dc_i] if sys.argv[dc_i] == 'auto' else int(sys.argv[dc_i])) if dc_i else 0)
 
     # 🔍 자른 뒤 **자동으로 3단계 검수**를 부른다 (창업자 2026-07-31 *"2번 검수하는거 코드에 박아둬"*).
     # ⚠️ 왜 자동인가 = 검수는 **잊으면 안 하는 일**이다. 2026-07-30에 프레임 6컷만 고치고
