@@ -158,7 +158,7 @@ S.push(['03-인스타공유', page('radial-gradient(circle at 50% 28%,#f7bccb,#f
 // ⚠️ 「88종」이 낡았다 → 218종. 앱에서 부르는 이름도 '이모지'가 아니라 '음식 아이콘'이다.
 const grid = ['fh_k01', 'fh_k22', 'fy_y03', 'fi_j01', 'fh_k27', 'fj_c05', 'fy_y06', 'fy_y10', 'fe_08', 'fe_09', 'fi_j04', 'fh_k02']
 S.push(['04-음식아이콘', page('linear-gradient(160deg,#f4e2a4,#f9edc2)',
-  `<div class="cap"><h1 style="color:#9a7b1e">요리 이름만 쓰면,<br>아이콘이 착!</h1>
+  `<div class="cap"><h1 style="color:#9a7b1e">요리 이름만 쓰면,<br>이모지가 착!</h1>
    <div class="sub" style="color:#8a7326">사진 없어도 예쁘게 — 218종 자동으로</div></div>`,
   `<div style="position:absolute;top:600px;left:50%;transform:translateX(-50%);width:860px;display:grid;grid-template-columns:repeat(3,1fr);gap:32px">
      ${grid.map(k => `<div style="aspect-ratio:1;background:linear-gradient(135deg,#fffdf8,#f3ecd8);border-radius:34px;box-shadow:0 12px 24px rgba(150,120,40,.16);display:flex;align-items:center;justify-content:center"><img src="${F(k)}" style="width:72%"/></div>`).join('')}
@@ -192,7 +192,7 @@ S.push(['05-장보기', page('linear-gradient(160deg,#a9cadd,#d0e3ee)',
         ${malls.map(([n, c, t]) => `<span style="background:${c};color:${t};font-size:30px;padding:12px 26px;border-radius:28px">${n}</span>`).join('')}
       </div>
     </div>
-    <img src="${b(`${H}/src/assets/sharepool/duo_cart.png`)}" style="position:absolute;left:50%;transform:translateX(-50%);bottom:-190px;width:330px;filter:drop-shadow(0 10px 16px rgba(40,60,80,.25))"/>
+    <img class="char" src="${b(`${H}/src/assets/sharepool/duo_cart.png`)}" style="position:absolute;left:50%;transform:translateX(-50%);bottom:-295px;width:270px;filter:drop-shadow(0 10px 16px rgba(40,60,80,.25))"/>
   </div>
   <div class="foot"><span class="pill" style="background:#2f6a8c;color:#fff">장 볼 거 까먹을 일 없이 ${ICart('#fff', 2.2)}</span></div>`)])
 
@@ -211,7 +211,7 @@ S.push(['06-큐레이션', page('linear-gradient(160deg,#cdd2a0,#e4e7c6)',
           <div style="flex:1"><div style="font-size:42px;color:#33302b">${n}</div><div style="font-size:32px;color:#8a8570;font-family:'Gaegu';margin-top:4px">${d}</div></div>
           <div style="position:absolute;top:-16px;right:20px;background:#ffcf3f;color:#6a4a10;font-size:25px;padding:8px 20px;border-radius:24px;box-shadow:0 6px 12px rgba(150,110,20,.25);display:inline-flex;align-items:center;gap:8px"><img src="${F('dn_star')}" style="height:32px"/>꼬르곰·펭펭 PICK</div>
         </div>`).join('')}
-     <img src="${b(`${H}/src/assets/sharepool/duo_naengmyeon.png`)}" style="position:absolute;left:50%;transform:translateX(-50%);bottom:-330px;width:400px;filter:drop-shadow(0 10px 16px rgba(70,90,40,.22))"/>
+     <img class="char" src="${b(`${H}/src/assets/sharepool/duo_naengmyeon.png`)}" style="position:absolute;left:50%;transform:translateX(-50%);bottom:-468px;width:380px;filter:drop-shadow(0 10px 16px rgba(70,90,40,.22))"/>
   </div>
   <div class="foot"><span class="pill" style="background:#5f6a30;color:#fff"><img src="${U('gom_thumbsup')}"/>믿고 사는 살림템</span></div>`)])
 
@@ -229,7 +229,7 @@ S.push(['07-감정', page('radial-gradient(circle at 50% 42%,#8a6a4c,#6f5238 70%
 // ⛔ 「흩어진 내 레시피, 곰펭이랑 예쁘게」 = v8.28~29에 폐기한 옛 문구 + 「곰펭」
 //    → APP_TAGLINE 그대로: 꼬르곰·펭펭과 레꾸해요
 S.push(['08-브랜드', page('radial-gradient(circle at 50% 30%,#f6b49e,#ee9a80 70%,#e5896d)',
-  `<div class="cap"><h1 style="color:#fffdf8;text-shadow:0 4px 0 rgba(160,80,55,.3)">꼬르곰·펭펭과,<br>감정 레시피북</h1></div>`,
+  `<div class="cap"><h1 style="color:#fffdf8;text-shadow:0 4px 0 rgba(160,80,55,.3)">꼬르곰·펭펭과<br>감정 레시피북</h1></div>`,
   `<div style="position:absolute;top:520px;left:50%;transform:translateX(-50%);text-align:center;width:900px">
      <img src="${F('gp_duohi')}" style="width:520px;filter:drop-shadow(0 18px 26px rgba(120,50,30,.35))"/>
      <div style="margin-top:36px;background:#fffdf8;border-radius:40px;padding:44px 40px;box-shadow:0 20px 40px rgba(150,70,45,.28)">
@@ -261,6 +261,25 @@ for (const [name, html] of S) {
   // 그림이 하나라도 안 뜨면 조용히 빈칸으로 나간다 → 그것도 잡는다
   const broken = await p.evaluate(() => [...document.images].filter((i) => !i.naturalWidth).length)
   if (broken) bad.push([name, [`깨진 이미지 ${broken}개`]])
+  // 🐛 «캐릭터가 글자를 가린다» — 눈으로 보고 넘기지 말고 좌표로 잡는다.
+  //    창업자 지적 2026-07-31 *"큐레이션 장보기->애들 좀내려야해 글자 가림"*.
+  //    ⚠️ 처음엔 꼬리말 알약만 쟀는데 «안 걸렸다» — 실제로 가려진 건 위쪽 흰 패널의 칩이었다.
+  //       (⑤ 곰 모자가 「동네마트」 칩을, ⑥ 모자가 「간편 쯔유 스톡」 카드를 덮었다)
+  //       📌 교훈 = 검사를 만들면 «옛 값으로 진짜 걸리는지» 먼저 돌려볼 것. 안 걸리면 가정이 틀린 거다.
+  //    두 그림 다 알파 여백이 8px뿐이라(재봤다) 사각형 그대로 비교해도 된다.
+  const lap = await p.evaluate(() => {
+    const boxes = [...document.querySelectorAll('.panel, .foot .pill')]
+    return [...document.querySelectorAll('.char')].flatMap((c) => {
+      const r = c.getBoundingClientRect()
+      return boxes.map((el) => {
+        const f = el.getBoundingClientRect()
+        const ov = Math.min(r.bottom, f.bottom) - Math.max(r.top, f.top)
+        const oh = Math.min(r.right, f.right) - Math.max(r.left, f.left)
+        return ov > 2 && oh > 2 ? `그림이 «${(el.innerText || '').trim().split('\n')[0].slice(0, 14)}» 칸을 ${Math.round(ov)}px 덮음(그림 위 ${Math.round(r.top)} / 칸 밑 ${Math.round(f.bottom)})` : ''
+      }).filter(Boolean)
+    })
+  })
+  if (lap.length) bad.push([name, lap])
   await p.screenshot({ path: `${OUT}/${name}.png` }); await p.close()
 }
 // 모아보기
