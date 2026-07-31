@@ -694,7 +694,14 @@ export const STICKER_GROUPS = [
   //       선만 있는 그림체라 무선 파스텔 자산(`파스텔무선-창업자-2507`)과 묶으면 한 세트가 된다.
   // 🍱 음식 (요리별 서브칩)
   // 🥕 재료 — 여름 제철 귀여운 식재료(꾸미기용) 몇 개 추가(복숭아·수박·체리·옥수수·가지). 분기별 제철로 교체 예정(사계절용은 픽스).
-  { key: 'f_ing', tab: 'food', label: '재료', items: ['ig_frb02', 'ig_frb04', 'ig_frb08', 'ig_jcb19', 'ig_jae16', 'ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae03', 'ig_jae12', 'ig_frb01', 'ig_frb03', 'ig_frb07', 'ig_frb13', 'ig_ggi03', 'ig_ggi16', 'ig_hsm01'] },
+  // ⏸ **흰 테가 두껍게 뭉친 4컷은 피커에서 뺐다** (창업자 2026-07-31 *"4개는 빼자 그냥 없어도 되자나"*)
+  //   `ig_hsm01`(새우) · `ig_jae03`(계란후라이) · `tk_bag`(장바구니 봉투) · `tk_basket`(장바구니)
+  //   왜 = 이 넷은 **그림 자체에 흰 부분이 많아**(장바구니 천·계란 흰자·새우 배)
+  //        「어디까지가 그림이냐」 판정이 헐거워지고, 거기에 흰 테를 두르니 **두 겹**이 됐다.
+  //        여름 프레임과 같은 뿌리 — 흰 그림에 흰 테를 두르면 경계가 사라진다.
+  //   ⛔ **PNG 와 `PHOTO_RATIO` 는 지우지 않는다** — 이미 이걸로 꾸며 저장한 레꾸가 깨진다.
+  //      나중에 시트를 다시 뽑거나 흰 테 없이 자르면 이 줄들에 도로 넣으면 된다.
+  { key: 'f_ing', tab: 'food', label: '재료', items: ['ig_frb02', 'ig_frb04', 'ig_frb08', 'ig_jcb19', 'ig_jae16', 'ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae12', 'ig_frb01', 'ig_frb03', 'ig_frb07', 'ig_frb13', 'ig_ggi03', 'ig_ggi16'] },
   // ✨ 데코 (색 바꾸는 SVG 심볼 유지 + 새 데코 PNG + 응원)
   // 🏖 꼬르곰·펭펭의 여름 (2026-07-29) — 콤비 4(물총·튜브·수박·아이스크림) + 곰 솔로 4 + 펭 솔로 4.
   //   ⚠️ 처음엔 에피소드 씬컷을 넣었는데 **배경(하늘·바다·모래)이 통째로 붙어 있어** 표지에
@@ -842,7 +849,7 @@ export const STICKER_GROUPS = [
   // 💪 라이프
   // 🍳 주방도구 (2026-07-29) — 라이프 탭이 통째로 운동용품(아령·줄넘기·복싱)이라
   //   요리앱 표지를 꾸미는데 아령이 나왔다. 요리 도구를 맨 위로 올린다.
-  { key: 'kitchen_tools', tab: 'food', label: '요리 도구', items: ['tk_apron', 'tk_hat', 'tk_pot_pink', 'tk_pot_green', 'tk_bowl', 'tk_batter', 'tk_board_knife', 'tk_board', 'tk_cup', 'tk_scale', 'tk_mitt', 'tk_mitt_purple', 'tk_book', 'tk_clip', 'tk_bag', 'tk_basket', 'tk_salt', 'tk_sugar'] },
+  { key: 'kitchen_tools', tab: 'food', label: '요리 도구', items: ['tk_apron', 'tk_hat', 'tk_pot_pink', 'tk_pot_green', 'tk_bowl', 'tk_batter', 'tk_board_knife', 'tk_board', 'tk_cup', 'tk_scale', 'tk_mitt', 'tk_mitt_purple', 'tk_book', 'tk_clip', 'tk_salt', 'tk_sugar'] },
   { key: 'life', tab: 'deco', label: '운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },
   // ✏️ 글자 (2026-07-29) — '글자' 탭엔 직접 쓰는 것만 있어서, 손글씨 문구 스티커가 없었다.
   //   맨 위 '한끼 문구' = 창업자가 직접 뽑은 우리만의 말들(다른 다꾸 앱엔 없는 것).
