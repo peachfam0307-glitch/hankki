@@ -264,15 +264,17 @@ const PHOTO_RATIO = {
   wt_wave: 2.7939, wt_shell: 2.8182, wt_palm: 2.7605, wt_stripe_blue: 2.9423,
   wt_starfish: 2.8457, wt_wave_mint: 2.8282,
   // 🍂 가을·추석·핼러윈·크리스마스 (창업자 2026-07-30 제공 112컷) — 실제 PNG 크기로 계산
-  au_b01: 0.8654, au_b02: 0.8985, au_b03: 0.7329, au_b04: 0.9581, au_b05: 0.9532, au_b06: 0.8279,
-  au_b07: 0.8417, au_b08: 0.8317, au_b09: 0.8825, au_b10: 0.8296, au_b11: 0.9242, au_b12: 0.8576,
+  au_b01: 0.8654, au_b02: 0.8985, au_b03: 0.7329, au_b04: 0.9581, au_b05: 0.8163, au_b06: 0.913,
+  au_b07: 0.9887, au_b08: 0.7875, au_b09: 0.8825, au_b10: 0.8296, au_b11: 0.9242, au_b12: 0.8576,
   au_b13: 0.6927, au_b14: 0.5966, au_b15: 0.8954, au_b16: 0.9555, au_b17: 0.7652, au_b18: 0.6462,
   au_t01: 2.8194, au_t02: 2.8774, au_t03: 2.8645, au_t04: 2.8341, au_t05: 2.7926, au_t06: 2.7909,
   au_s01: 0.9938, au_s02: 0.9752, au_s03: 0.9753, au_s04: 1.0,
   au_i01: 1.3945, au_i02: 1.0682, au_i03: 0.9429, au_i04: 0.9072, au_i05: 1.2409, au_i06: 1.2265,
   au_i07: 1.248, au_i08: 1.0925, au_i09: 1.2857, au_i10: 1.0867, au_i11: 0.9421, au_i12: 0.9862,
   au_i13: 0.7011, au_i14: 1.1185, au_i15: 0.7067, au_i16: 0.5123, au_i17: 0.8249, au_i18: 0.9167,
-  au_i19: 0.9698, au_i20: 0.8324,
+  au_i19: 0.9698, au_i20: 0.8324, au_i21: 0.9659,
+  // 🐧 2026-07-31 창업자 재생성 — 옛 펭펭은 트렌치가 «흰색»이라 다시 뽑았다(au_b05~08은 덮어씀)
+  au_b19: 0.9676, au_b20: 0.8307, au_b21: 1.1627, au_b22: 0.9625,
   cs_b01: 0.7309, cs_b02: 0.7152, cs_b03: 1.0491, cs_b23: 0.9778, cs_b29: 0.9071,
   cs_i01: 1.0077, cs_i08: 1.7105, cs_i14: 0.9775,
   hw_01: 1.1072, hw_04: 0.9547, hw_09: 0.8685,
@@ -874,12 +876,12 @@ export const STICKER_GROUPS = [
   //    ⛔ 맛보기도 지금은 안 넣는다 — **팩을 아직 팔 수 없어서**(결제 미구현) 유도할 목적지가 없다.
   //       팩을 실제로 낼 때 맛보기를 같이 켜는 게 맞는 순서다.
   // ⚠️ 라벨에 '9월분'처럼 달을 쓰지 않는다 — 유저는 달을 알 필요가 없고, 내용으로 갈라야 자연스럽다.
-  { key: 'deco_autumn_a', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 단풍·낙엽', items: ['au_i03', 'au_i04', 'au_i12', 'au_i15', 'au_i16', 'au_i19', 'au_i01', 'au_t06', 'au_t02', 'au_s02'] },
-  { key: 'buddies_autumn_a', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 가을', items: ['au_b01', 'au_b05', 'au_b09', 'au_b13', 'au_b14', 'au_b18'] },
+  { key: 'deco_autumn_a', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 단풍·낙엽', items: ['au_i03', 'au_i04', 'au_i12', 'au_i15', 'au_i16', 'au_i19', 'au_i21', 'au_i01', 'au_t06', 'au_t02', 'au_s02'] },
+  { key: 'buddies_autumn_a', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 가을', items: ['au_b01', 'au_b05', 'au_b20', 'au_b09', 'au_b13', 'au_b14', 'au_b18'] },
   { key: 'deco_autumn_b', tab: 'deco', season: 'autumn', from: '2026-10-01', label: '가을 열매·수확', items: ['au_i02', 'au_i05', 'au_i06', 'au_i07', 'au_i08', 'au_i09', 'au_i18', 'au_t03', 'au_t04', 'au_s01'] },
-  { key: 'buddies_autumn_b', tab: 'buddies', season: 'autumn', from: '2026-10-01', label: '꼬르곰·펭펭의 가을 나들이', items: ['au_b02', 'au_b03', 'au_b04', 'au_b10', 'au_b11', 'au_b12'] },
+  { key: 'buddies_autumn_b', tab: 'buddies', season: 'autumn', from: '2026-10-01', label: '꼬르곰·펭펭의 가을 나들이', items: ['au_b02', 'au_b03', 'au_b04', 'au_b19', 'au_b21', 'au_b10', 'au_b11', 'au_b12'] },
   { key: 'deco_autumn_c', tab: 'deco', season: 'autumn', from: '2026-11-01', label: '늦가을 소품', items: ['au_i10', 'au_i11', 'au_i13', 'au_i14', 'au_i17', 'au_i20', 'au_t01', 'au_t05', 'au_s03', 'au_s04'] },
-  { key: 'buddies_autumn_c', tab: 'buddies', season: 'autumn', from: '2026-11-01', label: '꼬르곰·펭펭의 늦가을', items: ['au_b06', 'au_b07', 'au_b08', 'au_b15', 'au_b16', 'au_b17'] },
+  { key: 'buddies_autumn_c', tab: 'buddies', season: 'autumn', from: '2026-11-01', label: '꼬르곰·펭펭의 늦가을', items: ['au_b06', 'au_b07', 'au_b08', 'au_b22', 'au_b15', 'au_b16', 'au_b17'] },
   // 💪 라이프
   // 🍳 주방도구 (2026-07-29) — 라이프 탭이 통째로 운동용품(아령·줄넘기·복싱)이라
   //   요리앱 표지를 꾸미는데 아령이 나왔다. 요리 도구를 맨 위로 올린다.
