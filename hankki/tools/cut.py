@@ -60,8 +60,66 @@ WHITE = 246          # 이보다 밝고 채도 낮으면 '배경 후보'
 CORE_ERODE = 7       # 속살 = 안쪽 이만큼 들어간 곳
 
 
+def _cut_alpha(a, outdir, prefix, min_px, join, drop, grid):
+    """이미 투명한 시트 — **알파를 손대지 않고** 덩어리별로 떼어내기만 한다."""
+    al = a[..., 3] > 25
+    filled = ndimage.binary_fill_holes(ndimage.binary_closing(al, np.ones((join, join))))
+    lab, n = ndimage.label(filled)
+    sizes = ndimage.sum(filled, lab, range(1, n + 1))
+    keep = [i for i in range(1, n + 1) if sizes[i - 1] >= min_px]
+    cents = ndimage.center_of_mass(filled, lab, keep)
+    if grid:
+        gr, gc = grid
+        ch, cw = a.shape[0] / gr, a.shape[1] / gc
+        cell = {}
+        for b, (cy, cx) in zip(keep, cents):
+            cell.setdefault((min(int(cy // ch), gr - 1), min(int(cx // cw), gc - 1)), []).append(b)
+        groups = [cell[k] for k in sorted(cell)]
+    else:
+        rowh = a.shape[0] / 4
+        groups = [[b] for b, _ in sorted(zip(keep, cents), key=lambda t: (round(t[1][0] / rowh), t[1][1]))]
+
+    os.makedirs(outdir, exist_ok=True)
+    made = []
+    for idx, blobs in enumerate(groups, 1):
+        m = np.isin(lab, blobs)
+        # 곁다리 조각 떼기 — 알파 시트에서는 «떨어진 덩어리»를 그대로 세면 된다
+        if drop > 0:
+            plab, pn = ndimage.label(al & m)
+            if pn > 1:
+                psz = ndimage.sum(al & m, plab, range(1, pn + 1))
+                for pi in range(1, pn + 1):
+                    if psz[pi - 1] < psz.max() * drop:
+                        m = m & ~(plab == pi)
+        ys, xs = np.where(m & al)
+        if len(ys) < 50:
+            continue
+        y0, y1 = max(ys.min() - PAD, 0), min(ys.max() + PAD + 1, a.shape[0])
+        x0, x1 = max(xs.min() - PAD, 0), min(xs.max() + PAD + 1, a.shape[1])
+        out = a[y0:y1, x0:x1].copy()
+        out[..., 3] = np.where(m[y0:y1, x0:x1], out[..., 3], 0)   # 이 덩어리 밖은 비운다
+        name = f'{prefix}{idx:02d}.png'
+        Image.fromarray(out).save(os.path.join(outdir, name))
+        made.append((name, out.shape[1], out.shape[0]))
+    print(f'{os.path.basename(str(outdir))} ← 투명 시트 그대로 떼어냄 → {len(made)}컷')
+    for nm, w, h in made:
+        print(f'   {nm}  {w}x{h}')
+    return made
+
 def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, drop=0.12, grid=None, punch=0.0, smooth=1.0):
-    rgb = np.array(Image.open(sheet).convert('RGB')).astype(float)
+    # ⭐⭐ **이미 «투명»으로 온 시트는 알파를 그대로 쓴다 — 픽셀을 다시 만들지 않는다.**
+    #   (창업자 2026-07-31 — 프레임을 직접 잘라서 투명 PNG로 줬다)
+    #   ⚠️ 이 도구의 본업은 «흰 배경을 알파로 되돌리는 것»이다. 그런데 이미 알파가 있으면
+    #     되돌릴 게 없다. 그걸 또 계산하면 **창업자가 만든 매끈한 가장자리를 내가 망친다.**
+    #   → 진짜 알파가 있으면 **떼어내고 자르기만** 한다(색·알파 무손실).
+    #   ⛔ 「이름에 투명이 있으면」이 아니라 **알파가 실제로 반투명/투명을 담고 있나**로 판단한다
+    #      (가짜 투명 격자 사고 = 이름만 투명이고 알파가 아예 없었다).
+    _im = Image.open(sheet)
+    _a = np.array(_im.convert('RGBA'))
+    has_alpha = (_a[..., 3] < 250).mean() > 0.05
+    if has_alpha:
+        return _cut_alpha(_a, outdir, prefix, min_px, join, drop, grid)
+    rgb = np.array(_im.convert('RGB')).astype(float)
     mn = rgb.min(axis=2)
     art = mn < WHITE
 
