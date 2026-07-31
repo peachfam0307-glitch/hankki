@@ -70,7 +70,7 @@ def main():
         return 1
     def opt(name, dflt=None):
         return argv[argv.index(name) + 1] if name in argv and argv.index(name) + 1 < len(argv) else dflt
-    diecut, minpx, is_frame, join = opt('--diecut'), opt('--min'), '--frame' in argv, opt('--join')
+    diecut, minpx, is_frame, join, drop = opt('--diecut'), opt('--min'), '--frame' in argv, opt('--join'), opt('--drop')
 
     # ① 앱 컷 지문
     app_names, app_fp = [], []
@@ -90,6 +90,7 @@ def main():
         if diecut: cmd += ['--diecut', diecut]
         if minpx: cmd += ['--min', minpx]
         if join: cmd += ['--join', join]
+        if drop: cmd += ['--drop', drop]
         if is_frame: cmd += ['--frame']
         subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL)
 

@@ -40,6 +40,7 @@
                       auto = 긴변의 0.7% (얇은 보호막·기본) · 숫자 = 그 px (두꺼운 띠부씰 팩용)
      --min    이 픽셀 수보다 작은 덩어리는 먼지로 보고 버린다
      --join N 떨어진 조각을 한 덩어리로 묶는 거리(기본 5). 쪼리처럼 두 짝이면 키운다
+     --drop R 본체 대비 이 비율보다 작고 떨어진 조각(하트·반짝)은 뗀다(기본 0.12 · 0이면 끔)
 """
 import os
 import sys
@@ -53,7 +54,7 @@ WHITE = 246          # 이보다 밝고 채도 낮으면 '배경 후보'
 CORE_ERODE = 7       # 속살 = 안쪽 이만큼 들어간 곳
 
 
-def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5):
+def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, drop=0.12):
     rgb = np.array(Image.open(sheet).convert('RGB')).astype(float)
     mn = rgb.min(axis=2)
     art = mn < WHITE
@@ -88,6 +89,41 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5):
         reg = m[y0:y1, x0:x1]
         sub = rgb[y0:y1, x0:x1]
         h, w = reg.shape
+
+        # ⭐⭐ **곁다리 조각(하트·반짝)은 뗀다.** (창업자 2026-07-31
+        #   *"옆에 하트나 그런거 달린거는 떼고 쓰자. 흰색이 연결되어 보이니까 이상해."*)
+        #   ⚠️ 왜 생기나 = `--join` 으로 떨어진 조각을 붙이면 **쪼리 두 짝**처럼 붙어야 할 것도 붙지만
+        #      **갈매기 옆 하트·선글라스 옆 반짝**까지 한 덩어리가 된다. 그러면 띠부씰 흰 테가
+        #      본체와 하트를 **이어버려서** 물갈퀴처럼 보인다.
+        #   → 본체 대비 `drop`(기본 12%)보다 작고 **떨어져 있는** 조각은 지운다.
+        #     쪼리 두 짝은 크기가 비슷해(50%대) 살아남고, 하트·반짝(2~5%)만 떨어진다.
+        #   ⛔ 붙어 있는 건 안 건드린다 — 눈·부리·리본은 본체와 한 덩어리다.
+        if drop > 0:
+            # ⚠️⚠️ **시트 배경은 순백이 아니다.** 2026-07-31 실측 — 여름 소품 시트의 배경 중
+            #   **1.7%가 240~245**였다. `WHITE(246)` 문턱으로는 그 얼룩이 「그림」으로 잡혀
+            #   **히비스커스 뒤에 흰 네모 판**이 깔렸다(진한 판에서 확 드러났다).
+            #   → 조각을 셀 때만 **문턱을 10 더 엄하게**(236) 준다. 얼룩은 빠지고 그림은 남는다.
+            #     실루엣 가장자리가 조금 안으로 들어와도 **띠부씰 흰 테두리가 그 자리를 덮는다.**
+            piece = reg & (sub.min(axis=2) < WHITE - 10)
+            plab, pn = ndimage.label(ndimage.binary_closing(piece, np.ones((3, 3))))
+            if pn > 1:
+                psz = ndimage.sum(piece, plab, range(1, pn + 1))
+                big = psz.max()
+                kill = np.zeros_like(reg)
+                for pi in range(1, pn + 1):
+                    if psz[pi - 1] < big * drop:
+                        kill |= (plab == pi)
+                if kill.any():
+                    # ⚠️⚠️ **조각만 지우면 「이어주던 다리」가 남아 흰 얼룩이 된다.** 2026-07-31 실제로 그랬다 —
+                    #   `--join 25` 가 하트와 본체 사이를 메워 다리를 만들어 뒀는데, 하트만 빼니
+                    #   그 **다리(원본이 흰 배경인 자리)** 가 실루엣에 남아 흰 네모로 보였다.
+                    #   → 조각을 빼는 게 아니라 **살아남은 조각만으로 실루엣을 다시 짠다.**
+                    #     이때 closing 은 작게(5px) — 다시 다리를 만들면 안 되니까.
+                    #     쪼리 두 짝처럼 살아남은 것끼리는 **각자 테두리를 두르면 되고, 그게 자연스럽다.**
+                    keep_pieces = piece & ~kill
+                    reg = ndimage.binary_fill_holes(ndimage.binary_closing(keep_pieces, np.ones((5, 5))))
+                    if reg.sum() < 50:
+                        continue
 
         # ② 알파 = 흰 배경에 섞인 만큼 되돌리기 · ③ 색 = 속살 색
         core = ndimage.binary_erosion(reg & (sub.min(axis=2) < WHITE - 12), np.ones((CORE_ERODE, CORE_ERODE)))
@@ -216,11 +252,13 @@ if __name__ == '__main__':
     mn_i = sys.argv.index('--min') + 1 if '--min' in sys.argv else None
     dc_i = sys.argv.index('--diecut') + 1 if '--diecut' in sys.argv else None
     jn_i = sys.argv.index('--join') + 1 if '--join' in sys.argv else None
+    dr_i = sys.argv.index('--drop') + 1 if '--drop' in sys.argv else None
     cut(args[0], args[1], args[2],
         is_frame='--frame' in sys.argv,
         min_px=int(sys.argv[mn_i]) if mn_i else 8000,
         diecut=(sys.argv[dc_i] if sys.argv[dc_i] == 'auto' else int(sys.argv[dc_i])) if dc_i else 0,
-        join=int(sys.argv[jn_i]) if jn_i else 5)
+        join=int(sys.argv[jn_i]) if jn_i else 5,
+        drop=float(sys.argv[dr_i]) if dr_i else 0.12)
 
     # 🔍 자른 뒤 **자동으로 3단계 검수**를 부른다 (창업자 2026-07-31 *"2번 검수하는거 코드에 박아둬"*).
     # ⚠️ 왜 자동인가 = 검수는 **잊으면 안 하는 일**이다. 2026-07-30에 프레임 6컷만 고치고
