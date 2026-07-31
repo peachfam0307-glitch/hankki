@@ -4,3 +4,8 @@ _v*.png
 _letter_tab.png
 _deco.png
 _ob*.png
+
+# 표본집 «생성물» — 스크립트로 언제든 다시 만든다. 1.2MB라 커밋하지 않기로 했다
+#   (근거 = hankki/docs/demo/README.md — "생성물은 커밋 안 함")
+#   만드는 법: python3 hankki/docs/demo/bgpack-build.py
+hankki/docs/demo/bgpack-catalog.html
