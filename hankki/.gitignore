@@ -10,4 +10,4 @@ __pycache__/
 *.pyc
 
 # 검수 시트(자동 생성 — 볼 때만 만들고 저장소엔 안 넣는다)
-src/assets/stickers/_검수/
+_검수/
