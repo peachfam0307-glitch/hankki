@@ -820,7 +820,7 @@ export const STICKER_GROUPS = [
   { key: 'deco_frame', tab: 'deco', label: '메모·라벨', items: ['dc_dma01', 'dc_dma03', 'dc_dma06', 'dc_dma05', 'dc_dma10', 'dc_dma14', 'dc_dma16', 'dc_dma07', 'dc_dma13', 'dc_dma11'] },
   // 🆕 2026-07-31 창업자 시트 데코 — 굵은 진갈색 외곽선 + 파스텔 채움(우리 마감과 한 세트).
   //   ⛔ 크리스마스 스노글로브 2컷은 겨울에 낸다. 선이 끊겨 속이 안 채워진 구름 말풍선은 버렸다.
-  { key: 'deco_new_prop', tab: 'deco', label: '소품 · 새로 나온', items: ['dp_12', 'dp_16', 'dp_22', 'dp_24', 'dp_26', 'dp_27', 'dp_28', 'dp_20', 'dp_07', 'dp_25'] },
+  { key: 'deco_new_prop', tab: 'deco', label: '소품 · 새로 나온', items: ['dp_12', 'dp_16', 'dp_13', 'dp_24', 'dp_26', 'dp_27', 'dp_28', 'dp_20', 'dp_07', 'dp_25'] },
   // 🍳 요리 도구·재료 — 그동안 라이프 탭이 운동용품뿐이었고 재료·도구 컷은 흰 테가 뭉쳐 빼둔 상태였다.
   { key: 'deco_kitchen', tab: 'food', label: '요리 도구·재료', items: ['kt_01', 'kt_02', 'kt_03', 'kt_04', 'kt_05', 'kt_06', 'kt_07', 'kt_08', 'kt_09', 'kt_10', 'kt_11', 'kt_12', 'kt_13', 'kt_14', 'kt_15', 'kt_16', 'kt_17', 'kt_18', 'kt_19', 'kt_20', 'kt_21', 'kt_22', 'kt_23', 'kt_24', 'kt_25', 'kt_26', 'kt_27', 'kt_28', 'kt_29', 'kt_30', 'kt_31', 'kt_32', 'kt_33'] },
   { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
