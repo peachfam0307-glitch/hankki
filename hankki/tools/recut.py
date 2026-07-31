@@ -64,13 +64,20 @@ def fp(path):
 def main():
     argv = sys.argv[1:]
     apply = '--apply' in argv
-    sheets = [a for a in argv if not a.startswith('--') and a.endswith('.png')]
+    # ⚠️ **옵션의 「값」을 시트로 오해하면 안 된다.** 2026-07-31 실제로 겪었다 —
+    #   `--panel out.png` 의 `out.png` 가 `.png` 로 끝나고 `--` 로 시작하지 않아
+    #   **시트 목록에 끼어들어 그 확인표까지 잘랐다.**(보고서에 없는 `s1r01` 이 튀어나온 이유)
+    VALUED = {'--diecut', '--min', '--join', '--drop', '--grid', '--pair', '--panel', '--only', '--near', '--punch'}
+    skip = {i + 1 for i, a in enumerate(argv) if a in VALUED}
+    sheets = [a for i, a in enumerate(argv)
+              if i not in skip and not a.startswith('--') and a.endswith('.png')]
     if not sheets:
         print(__doc__)
         return 1
     def opt(name, dflt=None):
         return argv[argv.index(name) + 1] if name in argv and argv.index(name) + 1 < len(argv) else dflt
-    diecut, minpx, is_frame, join, drop = opt('--diecut'), opt('--min'), '--frame' in argv, opt('--join'), opt('--drop')
+    diecut, minpx, is_frame, join, drop, grid = opt('--diecut'), opt('--min'), '--frame' in argv, opt('--join'), opt('--drop'), opt('--grid')
+    punch = opt('--punch')
 
     # ① 앱 컷 지문
     app_names, app_fp = [], []
@@ -86,11 +93,15 @@ def main():
     tmp = tempfile.mkdtemp(prefix='recut-')
     here = os.path.dirname(os.path.abspath(__file__))
     for i, sh in enumerate(sheets):
-        cmd = [sys.executable, os.path.join(here, 'cut.py'), sh, os.path.join(tmp, f's{i}'), 'r', '--no-check']
+        # ⚠️ 시트마다 접두어를 다르게 준다 — 같은 `r01` 이 여러 시트에서 나오면
+        #   보고서도 `--pair` 지정도 헷갈린다(실제로 겪었다).
+        cmd = [sys.executable, os.path.join(here, 'cut.py'), sh, os.path.join(tmp, f's{i}'), f's{i}r', '--no-check']
         if diecut: cmd += ['--diecut', diecut]
         if minpx: cmd += ['--min', minpx]
         if join: cmd += ['--join', join]
         if drop: cmd += ['--drop', drop]
+        if grid: cmd += ['--grid', grid]
+        if punch: cmd += ['--punch', punch]
         if is_frame: cmd += ['--frame']
         subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL)
 
@@ -110,21 +121,47 @@ def main():
     D = np.array([[float(np.linalg.norm(A[j] - v)) for j in range(len(A))] for _p, v in fps])
 
     def prefix_of(name):
+        """⚠️ **숫자 앞까지로 자르면 안 된다.** 2026-07-31 — 글자 스티커는 `tw_haenaem`·`tw_today`
+        처럼 **이름에 숫자가 없어서** 통째로 접두어가 됐고, 좁히기가 통째로 망가졌다.
+        → **첫 `_` 까지**를 무리로 본다(`tw_haenaem`→`tw` · `sk_11`→`sk` · `fh_k22`→`fh`).
+        `_` 가 없으면 그때만 숫자 앞까지."""
+        if '_' in name:
+            return name.split('_', 1)[0]
         m = _re.match(r'^(.*?)(?=\d)', name)
-        return (m.group(1) if m and m.group(1) else name).rstrip('_')
+        return (m.group(1) if m and m.group(1) else name)
 
     rough = [app_names[int(D[i].argmin())] for i in range(len(fps))]
     from collections import Counter
-    top = Counter(prefix_of(n) for n in rough).most_common(1)
-    allow = None
-    if top and top[0][1] >= max(3, len(fps) // 2):
-        allow = top[0][0]
-        print(f'   🔎 이 시트는 «{allow}» 무리로 보인다 — 후보를 거기로 좁힌다')
+    cnt = Counter(prefix_of(n) for n in rough)
+    # ⚠️⚠️ **접두어를 하나로 좁히면 안 된다.** 2026-07-31 — 보너스 도구 시트를 돌렸더니
+    #   1차 매칭 최빈이 `mn` 하나로 잡혀 **같은 시트에 있는 `tk_`(도구)·`ig_jae`(재료)가
+    #   후보에서 통째로 빠졌다.** 한 시트에 여러 무리가 섞이는 건 흔하다.
+    #   → **전체의 10% 이상인 접두어는 전부 허용**한다. 좁히는 목적(엉뚱한 데로 안 가게)은
+    #     그대로 지켜지면서, 섞인 시트도 제대로 잡힌다.
+    allow = {p for p, c in cnt.items() if c >= max(2, len(fps) * 0.10)}
+    # 🖐 **후보 무리를 손으로 못 박는다** — `--only tw,tn,ta`
+    #   ⚠️ 자동 추론이 틀릴 때가 있다. 2026-07-31 글자 시트에서 실제로:
+    #      시트엔 **숫자 1~10** 이 있는데 앱에선 그걸 뺐다(창업자 결정). 짝 없는 숫자들이
+    #      **`ps_`(파스텔 재고)와 심지어 `tw_haenaem`("오늘도 해냄")까지 차지**했다.
+    #      확인표를 눈으로 안 봤으면 앱에 숫자 8이 "오늘도 해냄" 자리에 떴을 것이다.
+    #   ⛔ 문턱을 조이는 것보다 **후보를 못 박는 게 안전하다.**
+    only = opt('--only')
+    if only:
+        allow = {x.strip() for x in only.split(',') if x.strip()}
+        print(f'   🖐 후보를 «{" · ".join(sorted(allow))}» 로 못 박았다')
+    elif allow:
+        print(f'   🔎 이 시트는 «{" · ".join(sorted(allow))}» 무리로 보인다 — 후보를 거기로 좁힌다')
 
     # 접두어로 좁히면 엉뚱한 데로 갈 위험이 확 줄어드니 **문턱을 넉넉히** 준다.
     #   (좁히기 전엔 0.22로 조여야 했지만, 좁힌 뒤엔 레몬·쪼리처럼 구도가 조금 달라진 컷도 잡아야 한다.)
-    near = 0.36 if allow else NEAR
-    cand = [j for j in range(len(A)) if allow is None or prefix_of(app_names[j]) == allow]
+    # 🎚 **닮음 문턱** — `--near 0.25` 처럼 손으로 조인다.
+    #   2026-07-31 글자 시트에서 닮음 **0.72 / 0.68** 짜리가 `tw_haenaem`("오늘도 해냄")·
+    #   `tw_night`("밤티ㅠ") 자리에 **숫자 8 / 숫자 3** 을 밀어 넣었다.
+    #   0.25(=닮음 0.75 이상)로 조이면 그 둘은 빠지고 `ta_curve`(0.81) 는 살아남는다.
+    #   ⚠️ 너무 조이면 여름 소품처럼 구도가 조금 달라진 컷(0.67)이 빠지니 **시트마다 다르다.**
+    #      → 기본은 넉넉히 두고, 확인표를 보고 **필요할 때만** 조인다.
+    near = float(opt('--near') or (0.36 if allow else NEAR))
+    cand = [j for j in range(len(A)) if not allow or prefix_of(app_names[j]) in allow]
     order = sorted(((D[i][j], i, j) for i in range(len(fps)) for j in cand), key=lambda t: t[0])
     takenI, takenJ, pairs = set(), set(), []
     for dist, i, j in order:

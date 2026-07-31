@@ -41,6 +41,10 @@
      --min    이 픽셀 수보다 작은 덩어리는 먼지로 보고 버린다
      --join N 떨어진 조각을 한 덩어리로 묶는 거리(기본 5). 쪼리처럼 두 짝이면 키운다
      --drop R 본체 대비 이 비율보다 작고 떨어진 조각(하트·반짝)은 뗀다(기본 0.12 · 0이면 끔)
+     --punch R 그림 «안»에 갇힌 순백(≥252) 구멍이 컷 넓이의 R 이상이면 투명하게 뚫는다
+              (바구니 손잡이 안쪽처럼 `binary_fill_holes` 가 메워버린 배경. 0.004 권장)
+     --grid RxC 씬 컷용 — 격자는 «나누는 데만» 쓰고 한 칸의 덩어리를 한 컷으로 묶는다
+                (곰 + 떨어진 그릴·선풍기처럼 소품이 흩어진 시트. ⛔칼이 그림을 안 자른다)
 """
 import os
 import sys
@@ -54,7 +58,7 @@ WHITE = 246          # 이보다 밝고 채도 낮으면 '배경 후보'
 CORE_ERODE = 7       # 속살 = 안쪽 이만큼 들어간 곳
 
 
-def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, drop=0.12):
+def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, drop=0.12, grid=None, punch=0.0):
     rgb = np.array(Image.open(sheet).convert('RGB')).astype(float)
     mn = rgb.min(axis=2)
     art = mn < WHITE
@@ -68,15 +72,37 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
     lab, n = ndimage.label(filled)
     sizes = ndimage.sum(filled, lab, range(1, n + 1))
     keep = [i for i in range(1, n + 1) if sizes[i - 1] >= min_px]
-    # 사람이 보는 순서(위→아래, 왼→오른)로 번호를 매긴다
     cents = ndimage.center_of_mass(filled, lab, keep)
-    rowh = rgb.shape[0] / 4
-    order = sorted(zip(keep, cents), key=lambda t: (round(t[1][0] / rowh), t[1][1]))
+
+    # ⭐⭐ **`--grid RxC` = 씬 컷(캐릭터 + 떨어진 소품)을 위한 모드.** (2026-07-31)
+    #   여름 곰 시트는 한 칸 안에 **곰 + 떨어진 그릴·선풍기·빙수·음료**가 흩어져 있다.
+    #   덩어리로만 자르면 **소품이 각각 딴 컷**이 되고, `--join` 을 키우면
+    #   **칸 안 조각 간격보다 칸 사이 간격이 좁아** 옆 칸까지 붙어버린다(실측: 60에서 이미 3컷).
+    #   → **격자는 「나누는 데만」 쓴다.** 덩어리를 다 찾은 뒤 **무게중심이 어느 칸인지**로 배정하고,
+    #     같은 칸의 덩어리를 **한 컷으로 묶는다.** 크롭은 그 덩어리들의 전역 bbox.
+    #   ⛔ **칼이 그림 위를 지나가지 않는다** — 그래서 «격자 금지» 원칙과 어긋나지 않는다.
+    #     (금지한 건 «격자선으로 픽셀을 자르는 것»이지 «칸으로 묶는 것»이 아니다.)
+    groups = []
+    if grid:
+        gr, gc = grid
+        ch, cw = rgb.shape[0] / gr, rgb.shape[1] / gc
+        cell_of = {}
+        for b, (cy, cx) in zip(keep, cents):
+            r, c = min(int(cy // ch), gr - 1), min(int(cx // cw), gc - 1)
+            cell_of.setdefault((r, c), []).append(b)
+        for (r, c) in sorted(cell_of):
+            groups.append(cell_of[(r, c)])
+        print(f'   ▦ 격자 {gr}×{gc} → {len(groups)}칸에 덩어리 {len(keep)}개 배정')
+    else:
+        # 사람이 보는 순서(위→아래, 왼→오른)로 번호를 매긴다
+        rowh = rgb.shape[0] / 4
+        order = sorted(zip(keep, cents), key=lambda t: (round(t[1][0] / rowh), t[1][1]))
+        groups = [[b] for b, _ in order]
 
     os.makedirs(outdir, exist_ok=True)
     made = []
-    for idx, (blob, _) in enumerate(order, 1):
-        m = lab == blob
+    for idx, blobs in enumerate(groups, 1):
+        m = np.isin(lab, blobs)
         ys, xs = np.where(m)
         # ⚠️ **테두리를 두를 거면 여백을 그만큼 더 준다.** 2026-07-31 게이트가 잡아냈다 —
         #   `PAD 12` 에 띠부씰 8px 을 두르니 여백이 3px밖에 안 남아 `pf_sm07` 이 **가장자리에 닿았다**
@@ -164,7 +190,17 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
                 win = ndimage.binary_propagation(seed, mask=white & reg, structure=CROSS)
                 # 문턱을 올린 대가 = 창 가장자리에 흰 띠가 조금 남는다.
                 # **번지지 말고 2px만 부풀린다** — 부풀리기는 거리가 정해져 있어 틈으로 도망 못 간다.
+                # ⭐⭐ **창 안에 「알맹이」가 있으면 그건 창이 아니다.** (2026-07-31 조개 진주)
+                #   `pf_sm12` 조개 프레임은 창 한가운데에 **흰 진주**가 앉아 있다.
+                #   부풀리기(2px)가 진주 가장자리를 덮고, 진주 자체가 거의 순백이라
+                #   **진주가 통째로 사라졌다.**
+                #   → 번진 창(`win`)의 **구멍을 메워** 보면 그 차이가 곧 «창 안의 알맹이»다.
+                #     그걸 창에서 빼면 진주는 살고 창은 그대로 뚫린다.
+                #   ⛔ 「진한 선 안쪽을 전부 뺀다」로 하면 안 된다 — 프레임 테두리도 닫힌 선이라
+                #     **창 전체가 알맹이로 잡혀 아예 안 뚫린다**(실제로 그랬다).
+                island = ndimage.binary_fill_holes(win) & ~win
                 win = ndimage.binary_dilation(win, np.ones((3, 3)), iterations=2) & (sub.min(axis=2) >= LOOSE) & reg
+                win &= ~island
                 frac = win.sum() / (h * w)
                 # 안전장치 — 너무 작거나 크거나 테두리에 닿으면 안 뚫는다(선 틈으로 샌 것)
                 if 0.06 < frac < 0.92 and not (win[0].any() or win[-1].any() or win[:, 0].any() or win[:, -1].any()):
@@ -173,6 +209,34 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
                     # 창 경계도 계단 안 지게 — 창 바로 바깥 1px은 반투명으로
                     edge = ndimage.binary_dilation(win, np.ones((3, 3))) & ~win & reg
                     alpha[edge] = np.minimum(alpha[edge], 0.55)
+
+        # ④-2 🕳 **--punch : 그림 안에 갇힌 흰 구멍을 전부 뚫는다.** (2026-07-31 가을 세트에서 발견)
+        #   ⚠️ 왜 필요한가 = 덩어리를 만들 때 `binary_fill_holes` 가 **둘러싸인 배경까지 그림으로** 만든다.
+        #      바구니 «손잡이 안쪽»·나뭇가지 «사이»가 그렇다. 좁은 구멍은 바깥 띠 규칙(7px)이 알아서
+        #      투명하게 만들지만, **띠보다 넓은 구멍은 가운데가 흰 판으로 남는다.**
+        #      밝은 배경에선 안 보이다가 **어두운 꾸미기 배경에서 흰 판이 그대로 드러난다.**
+        #   ⛔ `--frame` 은 **가운데 한 곳**만 뚫는다(프레임 창). 손잡이 구멍은 가운데가 아니라 못 잡는다.
+        #   ⚠️ 문턱을 **252**로 아주 엄하게 준다 — 그림의 흰 부분(레이스·보자기·크림)은 음영이 있어
+        #      252를 못 넘는다. 순백에 가까운 «종이»만 뚫린다.
+        #   ⚠️ 크롭 테두리에 닿는 흰색은 «갇힌 게 아니라 바깥»이라 건드리지 않는다(이미 잘려 있다).
+        if punch:
+            STRICT2, LOOSE2, CROSS2 = 252, 236, np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]], bool)
+            inner = (sub.min(axis=2) >= STRICT2) & reg
+            hlab, hn = ndimage.label(inner, structure=CROSS2)
+            hole = np.zeros_like(reg)
+            for hi in range(1, hn + 1):
+                comp = hlab == hi
+                if comp.sum() < punch * h * w:
+                    continue
+                if comp[0].any() or comp[-1].any() or comp[:, 0].any() or comp[:, -1].any():
+                    continue
+                hole |= comp
+            if hole.any():
+                hole = ndimage.binary_dilation(hole, np.ones((3, 3)), iterations=2) & (sub.min(axis=2) >= LOOSE2) & reg
+                win_mask = hole if win_mask is None else (win_mask | hole)
+                alpha[hole] = 0
+                edge = ndimage.binary_dilation(hole, np.ones((3, 3))) & ~hole & reg
+                alpha[edge] = np.minimum(alpha[edge], 0.55)
 
         # ⚠️ **색도 테두리 띠에서만 바꾼다.** 처음엔 전부 '속살 색'으로 덮었다가
         #   **돛·레몬 속살·갈매기 배가 딴 색으로 칠해졌다.** 안쪽은 원래 색 그대로 둔다.
@@ -196,8 +260,30 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
             #      파먹히는 걸 막는 게 목적이지, 띠부씰처럼 **보이려는** 게 아니다.
             #      두꺼우면 그림마다 흰 테가 눈에 띄어 **전부 같은 스티커처럼 보인다.**
             #      📌 진짜 띠부씰 느낌이 필요한 팩은 그때 값을 크게 준다(`--diecut 10`).
-            d = round(max(reg.shape) * 0.007) if diecut == 'auto' else int(diecut)
-            d = max(2, min(d, pad - 3))                        # 크롭 여백 밖으로는 못 두른다
+            #   ⚠️⚠️ **그런데 0.7%는 너무 얇았다.** (창업자 2026-07-31 재검수
+            #      *"테두리가 넘 얇아서 지저분해보이는 것들도 있어"*)
+            #      실측하니 재료·글자는 **1.0~1.4px**밖에 안 됐다. 앱 표시 크기로 줄이면 **1px 미만** —
+            #      덮으라고 만든 흰 테가 **잔재를 못 덮고 회색 실밥처럼** 보였다.
+            #      → **1.2%로 올리고 바닥을 3px**로 뒀다. 창업자가 예쁘다고 한 여름 프레임이
+            #        실측 **1.14%**(609px에 6.7px)였다 — **그 숫자에 맞춘 것**이다.
+            d = round(max(reg.shape) * 0.012) if diecut == 'auto' else int(diecut)
+            d = max(3, min(d, pad - 3))                        # 크롭 여백 밖으로는 못 두른다
+            # ⭐⭐⭐ **칼선은 「그림」에서 재야 한다 — 「그림자」에서 재면 너덜너덜해진다.**
+            #   (창업자 2026-07-31 재검수 *"매끈하게 안된애들도 있고"*)
+            #   ⚠️ 시트에는 그림 둘레에 **연한 회색 그림자**가 칠해져 있다. 배경 문턱(246)은
+            #      그 그림자까지 「그림」으로 잡는다. 그림자는 **번지듯 불규칙**해서
+            #      그걸 기준으로 칼선을 뽑으면 **셰프모자·앞치마·새우처럼 솜뭉치 테두리**가 된다.
+            #   → 칼선은 **`solid`(진짜 그림)** 에서 잰다:
+            #      ⒜**진한 선(<200)으로 둘러싸인 안쪽 전부** — 셰프모자처럼 «흰 그림»도 이걸로 살아난다
+            #      ⒝＋**확실히 그림인 픽셀(<236)** — 외곽선이 없는 수채·파스텔용
+            #      그림자(240~245)는 둘 다에 안 걸려 **빠진다.**
+            ink = ndimage.binary_fill_holes(ndimage.binary_closing(sub.min(axis=2) < 200, np.ones((7, 7))))
+            solid = (ink | (sub.min(axis=2) < WHITE - 10)) & reg
+            solid = ndimage.binary_fill_holes(ndimage.binary_closing(solid, np.ones((5, 5))))
+            if solid.sum() < 50:
+                solid = reg                                    # 못 찾으면 원래대로(안전)
+            if win_mask is not None:
+                solid &= ~win_mask
             # ⭐⭐ **칼선은 「부풀리기」가 아니라 「거리밭」으로 만든다.** (창업자 2026-07-31
             #   *"띠부실모드 테두리 부드럽게 잘 커팅해야해"*)
             #   부풀리기(dilation)는 그림의 자잘한 요철을 **그대로 따라가서 너덜너덜**해진다.
@@ -210,16 +296,25 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
             #      처음엔 흐림 정도를 두께 d 에 비례시켰는데, **얇게 하라니까 흐림까지 같이 약해져
             #      실루엣이 너덜너덜**해졌다. 뭉개야 할 요철의 크기는 **그림 해상도**가 정하지
             #      테두리 두께와는 상관이 없다. → 둘을 갈랐다.
-            dist = ndimage.distance_transform_edt(~reg)
+            dist = ndimage.distance_transform_edt(~solid)
             dist = ndimage.gaussian_filter(dist, sigma=max(1.8, max(reg.shape) * 0.007))
             cut_a = np.clip((d + 0.6 - dist) / 1.4, 0.0, 1.0)  # 칼선 안쪽=1 · 바깥=0 · 경계는 부드럽게
-            alpha[band] = 1.0                                  # 바깥 띠의 흰색 되돌리기는 그만둔다(흰 테가 덮으니까)
             out_rgb[band] = sub[band]                          # 색도 원래대로 — 속살색으로 덮으면 테두리와 경계가 진다
-            outside = ~reg                                     # 그림 바깥 = 여기만 흰 테두리를 칠한다
-            alpha[outside] = np.maximum(alpha[outside], cut_a[outside])
-            out_rgb[outside & (cut_a > 0)] = 255.0
-            if win_mask is not None:                           # ⛔창은 다시 확실히 비운다(테두리는 바깥에만)
-                alpha[win_mask] = 0
+            # ⭐ **실루엣을 통째로 다시 짠다** — 그림자가 만든 너덜한 가장자리를 매끈한 칼선으로 갈아끼운다.
+            #   (그림 안쪽은 그대로 불투명, 바깥은 칼선까지만 흰색)
+            alpha = np.where(solid, 1.0, cut_a)
+            out_rgb[~solid & (cut_a > 0)] = 255.0
+            if win_mask is not None:
+                # ⭐⭐ **창 안쪽에도 칼선을 두른다.** (창업자 2026-07-31
+                #   *"여름프레임은 내부투명도 띠부씰모드로 라인따야할듯해"*)
+                #   전엔 «바깥쪽만» 둘렀다. 그러니 프레임 바깥은 흰 띠부씰 선인데
+                #   **창 가장자리만 맨살**이라 한 장에 두 가지 마감이 섞여 어색했다.
+                #   → 창 «안쪽»으로 d 만큼 흰 선을 넣는다. 가운데는 그대로 투명해서 사진이 비친다.
+                inner = ndimage.distance_transform_edt(win_mask)
+                inner = ndimage.gaussian_filter(inner, sigma=max(1.8, max(reg.shape) * 0.007))
+                ring = np.clip((d + 0.6 - inner) / 1.4, 0.0, 1.0)
+                alpha[win_mask] = ring[win_mask]
+                out_rgb[win_mask & (ring > 0)] = 255.0
         out = np.dstack([out_rgb.astype(np.uint8), (alpha * 255).astype(np.uint8)])
 
         # ⚠️ **가장자리에 닿으면 투명 여백을 덧댄다.** 2026-07-31 게이트가 잡아낸 것 —
@@ -253,12 +348,16 @@ if __name__ == '__main__':
     dc_i = sys.argv.index('--diecut') + 1 if '--diecut' in sys.argv else None
     jn_i = sys.argv.index('--join') + 1 if '--join' in sys.argv else None
     dr_i = sys.argv.index('--drop') + 1 if '--drop' in sys.argv else None
+    gd_i = sys.argv.index('--grid') + 1 if '--grid' in sys.argv else None
+    pu_i = sys.argv.index('--punch') + 1 if '--punch' in sys.argv else None
     cut(args[0], args[1], args[2],
         is_frame='--frame' in sys.argv,
         min_px=int(sys.argv[mn_i]) if mn_i else 8000,
         diecut=(sys.argv[dc_i] if sys.argv[dc_i] == 'auto' else int(sys.argv[dc_i])) if dc_i else 0,
         join=int(sys.argv[jn_i]) if jn_i else 5,
-        drop=float(sys.argv[dr_i]) if dr_i else 0.12)
+        drop=float(sys.argv[dr_i]) if dr_i else 0.12,
+        grid=tuple(int(x) for x in sys.argv[gd_i].lower().split('x')) if gd_i else None,
+        punch=float(sys.argv[pu_i]) if pu_i else 0.0)
 
     # 🔍 자른 뒤 **자동으로 3단계 검수**를 부른다 (창업자 2026-07-31 *"2번 검수하는거 코드에 박아둬"*).
     # ⚠️ 왜 자동인가 = 검수는 **잊으면 안 하는 일**이다. 2026-07-30에 프레임 6컷만 고치고
