@@ -9,3 +9,7 @@ _ob*.png
 #   (근거 = hankki/docs/demo/README.md — "생성물은 커밋 안 함")
 #   만드는 법: python3 hankki/docs/demo/bgpack-build.py
 hankki/docs/demo/bgpack-catalog.html
+
+# 코드로 만드는 배경 «생성물» — tools/make-bg.py 로 언제든 다시 만든다
+#   앱에 넣기로 확정된 것만 src/assets/ 로 옮긴다
+hankki/design/promo/배경-코드생성/
