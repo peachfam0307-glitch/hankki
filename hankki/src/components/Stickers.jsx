@@ -187,8 +187,7 @@ const PHOTO_RATIO = {
   ni_01: 1.0825, ni_02: 1.027, ni_03: 1.1446, ni_04: 1.1524, ni_05: 1.0188, ni_06: 1.296, ni_07: 1.0619, ni_08: 1.1421,
   ni_09: 0.973, ni_10: 1.2767, ni_11: 1.1379, ni_12: 1.2132, ni_13: 0.6247, ni_14: 0.6853, ni_15: 0.7017, ni_16: 0.772,
   ni_17: 0.9029, ni_18: 0.6846, ni_19: 0.7513, ni_20: 0.8586, ni_21: 0.7535, ni_22: 1.2081, ni_23: 1.0381, ni_24: 1.0809,
-  ni_25: 0.8729, ni_26: 0.9278,
-  // 🆕 2026-07-31 창업자 시트 — 데코 소품/메모라벨/마테 + 요리 도구·재료 (컷 289~371px)
+    // 🆕 2026-07-31 창업자 시트 — 데코 소품/메모라벨/마테 + 요리 도구·재료 (컷 289~371px)
   dp_01: 1.0976, dp_02: 1.0808, dp_03: 0.7182, dp_04: 1.3571, dp_05: 1.2618, dp_06: 0.6284,
   dp_07: 0.7091, dp_08: 0.9789, dp_09: 1.4627, dp_10: 1.16, dp_11: 1.0229, dp_12: 0.9427,
   dp_13: 1.0161, dp_14: 0.9145, dp_15: 0.9229, dp_16: 0.7911, dp_17: 0.8737, dp_18: 0.8808,
@@ -729,7 +728,7 @@ export const STICKER_GROUPS = [
   //        여름 프레임과 같은 뿌리 — 흰 그림에 흰 테를 두르면 경계가 사라진다.
   //   ⛔ **PNG 와 `PHOTO_RATIO` 는 지우지 않는다** — 이미 이걸로 꾸며 저장한 레꾸가 깨진다.
   //      나중에 시트를 다시 뽑거나 흰 테 없이 자르면 이 줄들에 도로 넣으면 된다.
-  { key: 'f_ing', tab: 'food', label: '재료', items: ['ig_frb02', 'ig_frb04', 'ig_frb08', 'ig_jcb19', 'ig_jae16', 'ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae12', 'ig_frb01', 'ig_frb03', 'ig_frb07', 'ig_frb13', 'ig_ggi03', 'ig_ggi16'] },
+  { key: 'f_ing', tab: 'food', label: '재료', items: ['ig_jcb19', 'ig_jae06', 'ig_jae08', 'ig_jae10', 'ig_jae19', 'ig_jae20', 'ig_jae07', 'ig_jae09', 'ig_jae12'] },
   // ✨ 데코 (색 바꾸는 SVG 심볼 유지 + 새 데코 PNG + 응원)
   // 🏖 꼬르곰·펭펭의 여름 (2026-07-29) — 콤비 4(물총·튜브·수박·아이스크림) + 곰 솔로 4 + 펭 솔로 4.
   //   ⚠️ 처음엔 에피소드 씬컷을 넣었는데 **배경(하늘·바다·모래)이 통째로 붙어 있어** 표지에
@@ -822,7 +821,9 @@ export const STICKER_GROUPS = [
   //   ⛔ 크리스마스 스노글로브 2컷은 겨울에 낸다. 선이 끊겨 속이 안 채워진 구름 말풍선은 버렸다.
   { key: 'deco_new_prop', tab: 'deco', label: '소품 · 새로 나온', items: ['dp_12', 'dp_16', 'dp_11', 'dp_02', 'dp_24', 'dp_26', 'dp_27', 'dp_28', 'dp_07', 'dp_25'] },
   // 🍳 요리 도구·재료 — 그동안 라이프 탭이 운동용품뿐이었고 재료·도구 컷은 흰 테가 뭉쳐 빼둔 상태였다.
-  { key: 'deco_kitchen', tab: 'food', label: '요리 도구·재료', items: ['kt_01', 'kt_02', 'kt_03', 'kt_04', 'kt_05', 'kt_06', 'kt_07', 'kt_08', 'kt_09', 'kt_10', 'kt_11', 'kt_12', 'kt_13', 'kt_14', 'kt_15', 'kt_16', 'kt_17', 'kt_18', 'kt_19', 'kt_20', 'kt_21', 'kt_22', 'kt_23', 'kt_24', 'kt_25', 'kt_26', 'kt_27', 'kt_28', 'kt_29', 'kt_30', 'kt_31', 'kt_32', 'kt_33'] },
+  { key: 'f_sauce', tab: 'food', label: '양념', items: ['kt_28', 'kt_29', 'kt_30', 'kt_31', 'kt_11'] },
+  // ⛔ 마늘(kt_32)·양파(kt_33)는 「재료」에 이미 있어서 안 넣는다(ig_jae08·ig_jae06).
+  { key: 'deco_kitchen', tab: 'food', label: '요리 도구 · 새로 나온', items: ['kt_01', 'kt_02', 'kt_03', 'kt_04', 'kt_05', 'kt_06', 'kt_07', 'kt_08', 'kt_09', 'kt_10', 'kt_12', 'kt_13', 'kt_14', 'kt_15', 'kt_16', 'kt_17', 'kt_18', 'kt_19', 'kt_20', 'kt_21', 'kt_22', 'kt_23', 'kt_24', 'kt_25', 'kt_26', 'kt_27'] },
   { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
   // 🎗 마스킹테이프 — 창업자 직접 제작(2026-07-29). 배경·테이프 탭의 CSS 마테와 달리 갈색 외곽선 +
   //   양끝 톱니가 있는 '스티커 워시'라 다꾸 감성이 그대로 산다. **사철 쓰는 것만 12종 엄선**("엄선해서 12개").
@@ -888,10 +889,9 @@ export const STICKER_GROUPS = [
   { key: 'f_meat', tab: 'food', label: '고기', items: ['ni_01', 'ni_02', 'ni_03', 'ni_04'] },
   { key: 'f_sea', tab: 'food', label: '해산물', items: ['ni_05', 'ni_06', 'ni_07', 'ni_08'] },
   { key: 'f_veg', tab: 'food', label: '채소', items: ['ni_17', 'ni_18', 'ni_19', 'ni_20'] },
-  { key: 'f_fruit', tab: 'food', label: '과일', items: ['ni_21', 'ni_22', 'ni_23', 'ni_24', 'dp_20'] },
+  { key: 'f_fruit', tab: 'food', label: '과일', items: ['ni_21', 'ni_22', 'ni_23', 'ni_24', 'ig_frb03', 'ig_frb13'] },
   { key: 'f_bakery', tab: 'food', label: '빵', items: ['ni_09', 'ni_10', 'ni_11', 'ni_12'] },
   { key: 'f_drink', tab: 'food', label: '음료', items: ['ni_13', 'ni_14', 'ni_15', 'ni_16'] },
-  { key: 'f_etc', tab: 'food', label: '달걀·두부', items: ['ni_25', 'ni_26'] },
   { key: 'kitchen_tools', tab: 'food', label: '요리 도구', items: ['tk_apron', 'tk_hat', 'tk_pot_pink', 'tk_pot_green', 'tk_bowl', 'tk_batter', 'tk_board_knife', 'tk_board', 'tk_cup', 'tk_scale', 'tk_mitt', 'tk_mitt_purple', 'tk_book', 'tk_clip', 'tk_salt', 'tk_sugar'] },
   { key: 'life', tab: 'deco', label: '운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },
   // ✏️ 글자 (2026-07-29) — '글자' 탭엔 직접 쓰는 것만 있어서, 손글씨 문구 스티커가 없었다.
