@@ -36,6 +36,7 @@
 쓰기:
   python3 tools/cut.py <시트.png> <내보낼폴더> <접두어> [--frame] [--min 8000]
      --frame  프레임이면 켠다(가운데 창 뚫기)
+     --diecut N  🏷띠부씰 마감 — **바깥쪽만** 흰 테두리 N px (안쪽 창은 투명 그대로)
      --min    이 픽셀 수보다 작은 덩어리는 먼지로 보고 버린다
 """
 import os
@@ -50,7 +51,7 @@ WHITE = 246          # 이보다 밝고 채도 낮으면 '배경 후보'
 CORE_ERODE = 7       # 속살 = 안쪽 이만큼 들어간 곳
 
 
-def cut(sheet, outdir, prefix, is_frame=False, min_px=8000):
+def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0):
     rgb = np.array(Image.open(sheet).convert('RGB')).astype(float)
     mn = rgb.min(axis=2)
     art = mn < WHITE
@@ -99,21 +100,62 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000):
         alpha[~reg] = 0                                # 이 덩어리 밖(옆 그림)은 무조건 잘라낸다
 
         # ④ 프레임이면 가운데에서 흰색만 번지게 해 창을 뚫는다
+        win_mask = None
         if is_frame:
-            white = sub.min(axis=2) >= WHITE - 2
+            # ⚠️⚠️ **문턱을 244로 두면 얇은 선을 관통한다.** 2026-07-31 창업자 발견 —
+            #   진주 조개·불가사리 아치의 **안쪽 창 윤곽선만 점선처럼 끊겨** 있었다.
+            #   (바깥 윤곽선은 멀쩡했다 = 같은 그림에서 선이 어디는 이어지고 어디는 끊기면 **잘린 것**이다.)
+            #   원인 = 얇은 선의 안티에일리어싱된 옅은 픽셀이 244를 넘어 **배경으로 판정** → 그 틈으로 물이 새서
+            #   선을 안쪽에서부터 갉아먹었다. 나는 이걸 "점선 디자인"으로 잘못 읽었다.
+            #   → ⒜문턱을 **252**로 올려 옅은 선도 벽이 되게 하고 ⒝**4-연결**로 번지게 해 대각선 틈도 막는다.
+            STRICT, LOOSE, CROSS = 252, 236, np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]], bool)
+            white = sub.min(axis=2) >= STRICT
             seed = np.zeros_like(white)
             seed[h // 2, w // 2] = True
             if white[h // 2, w // 2]:
-                win = ndimage.binary_propagation(seed, mask=white & reg)
+                win = ndimage.binary_propagation(seed, mask=white & reg, structure=CROSS)
+                # 문턱을 올린 대가 = 창 가장자리에 흰 띠가 조금 남는다.
+                # **번지지 말고 2px만 부풀린다** — 부풀리기는 거리가 정해져 있어 틈으로 도망 못 간다.
+                win = ndimage.binary_dilation(win, np.ones((3, 3)), iterations=2) & (sub.min(axis=2) >= LOOSE) & reg
                 frac = win.sum() / (h * w)
                 # 안전장치 — 너무 작거나 크거나 테두리에 닿으면 안 뚫는다(선 틈으로 샌 것)
                 if 0.06 < frac < 0.92 and not (win[0].any() or win[-1].any() or win[:, 0].any() or win[:, -1].any()):
+                    win_mask = win
                     alpha[win] = 0
+                    # 창 경계도 계단 안 지게 — 창 바로 바깥 1px은 반투명으로
+                    edge = ndimage.binary_dilation(win, np.ones((3, 3))) & ~win & reg
+                    alpha[edge] = np.minimum(alpha[edge], 0.55)
 
         # ⚠️ **색도 테두리 띠에서만 바꾼다.** 처음엔 전부 '속살 색'으로 덮었다가
         #   **돛·레몬 속살·갈매기 배가 딴 색으로 칠해졌다.** 안쪽은 원래 색 그대로 둔다.
         out_rgb = sub.copy()
         out_rgb[band] = base[band]                     # 띠에 남은 흰 기운만 속살 색으로
+
+        # ⑤ 🏷 띠부씰 마감 (--diecut N) — 창업자 제안 2026-07-31
+        #   *"아예 띠부씰처럼 흰색을 조금 남기고 자를래?(바깥쪽만) 안쪽은 투명으로 잘라내고"*
+        #   ⭐ 왜 이게 통째로 해결책인가 = 바깥 가장자리의 **흰 잔재가 「잔재」가 아니라 「테두리」가 된다.**
+        #      진한 판에서 흰 점점이가 보이던 건 흰 배경이 덜 지워진 것인데, 어차피 흰 테두리를 두를 거면
+        #      그건 지울 대상이 아니라 **테두리의 일부**다. 지우려고 애쓸수록 그림을 파먹었다.
+        #   ⛔ **바깥쪽만.** 창(win) 안쪽으로는 절대 안 두른다 — 프레임 창은 투명해야 사진이 비친다.
+        if diecut:
+            d = min(diecut, PAD - 3)                           # 크롭 여백(PAD) 밖으로는 못 두른다
+            # ⭐⭐ **칼선은 「부풀리기」가 아니라 「거리밭」으로 만든다.** (창업자 2026-07-31
+            #   *"띠부실모드 테두리 부드럽게 잘 커팅해야해"*)
+            #   부풀리기(dilation)는 그림의 자잘한 요철을 **그대로 따라가서 너덜너덜**해진다.
+            #   진짜 띠부씰은 칼이 한 번에 지나가 **매끈한 곡선**이다.
+            #   → ⒜그림에서 얼마나 떨어졌는지(거리)를 재고 ⒝그 거리밭을 **흐린다**(요철이 뭉개짐)
+            #     ⒞`거리 ≤ d` 인 곳이 테두리. 흐린 거리밭의 등고선이라 **저절로 매끈하고 둥글다.**
+            #   ⒟경계에서 1.4px에 걸쳐 알파를 0으로 떨구니 **계단도 없다**(따로 처리 불필요).
+            dist = ndimage.distance_transform_edt(~reg)
+            dist = ndimage.gaussian_filter(dist, sigma=max(1.6, d * 0.55))
+            cut_a = np.clip((d + 0.6 - dist) / 1.4, 0.0, 1.0)  # 칼선 안쪽=1 · 바깥=0 · 경계는 부드럽게
+            alpha[band] = 1.0                                  # 바깥 띠의 흰색 되돌리기는 그만둔다(흰 테가 덮으니까)
+            out_rgb[band] = sub[band]                          # 색도 원래대로 — 속살색으로 덮으면 테두리와 경계가 진다
+            outside = ~reg                                     # 그림 바깥 = 여기만 흰 테두리를 칠한다
+            alpha[outside] = np.maximum(alpha[outside], cut_a[outside])
+            out_rgb[outside & (cut_a > 0)] = 255.0
+            if win_mask is not None:                           # ⛔창은 다시 확실히 비운다(테두리는 바깥에만)
+                alpha[win_mask] = 0
         out = np.dstack([out_rgb.astype(np.uint8), (alpha * 255).astype(np.uint8)])
         name = f'{prefix}{idx:02d}.png'
         Image.fromarray(out).save(os.path.join(outdir, name))
@@ -131,9 +173,11 @@ if __name__ == '__main__':
         print(__doc__)
         sys.exit(1)
     mn_i = sys.argv.index('--min') + 1 if '--min' in sys.argv else None
+    dc_i = sys.argv.index('--diecut') + 1 if '--diecut' in sys.argv else None
     cut(args[0], args[1], args[2],
         is_frame='--frame' in sys.argv,
-        min_px=int(sys.argv[mn_i]) if mn_i else 8000)
+        min_px=int(sys.argv[mn_i]) if mn_i else 8000,
+        diecut=int(sys.argv[dc_i]) if dc_i else 0)
 
     # 🔍 자른 뒤 **자동으로 3단계 검수**를 부른다 (창업자 2026-07-31 *"2번 검수하는거 코드에 박아둬"*).
     # ⚠️ 왜 자동인가 = 검수는 **잊으면 안 하는 일**이다. 2026-07-30에 프레임 6컷만 고치고
