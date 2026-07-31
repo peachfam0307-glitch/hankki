@@ -33,7 +33,7 @@ on:
       versionName:
         description: "버전 이름 — src/version.js 의 값 (예: 8.83)"
         required: true
-        default: '8.83'
+        default: '9.33'
       targetSdk:
         description: '타겟 SDK (Google Play 요구치. 2026-08-31부터 36)'
         required: true

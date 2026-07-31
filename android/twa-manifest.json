@@ -1,7 +1,7 @@
 {
   "packageId": "io.github.peachfam0307_glitch.twa",
   "host": "peachfam0307-glitch.github.io",
-  "name": "한끼 - 흩어진 레시피를 한곳에",
+  "name": "한끼 — 나만의 레시피, 레꾸해요",
   "launcherName": "ㅤ한끼ㅤ",
   "display": "standalone",
   "themeColor": "#6B4F3A",
@@ -20,14 +20,16 @@
     "path": "./signing.keystore",
     "alias": "my-key-alias"
   },
-  "appVersionName": "8.83",
+  "appVersionName": "9.33",
   "appVersionCode": 6,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://peachfam0307-glitch.github.io/hankki/manifest.webmanifest",
   "fallbackType": "customtabs",
   "features": {},
-  "alphaDependencies": { "enabled": false },
+  "alphaDependencies": {
+    "enabled": false
+  },
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
@@ -42,10 +44,17 @@
       "title": "title",
       "text": "text",
       "url": "url",
-      "files": [{ "name": "image", "accept": ["image/*"] }]
+      "files": [
+        {
+          "name": "image",
+          "accept": [
+            "image/*"
+          ]
+        }
+      ]
     }
   },
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
-  "appVersion": "8.83"
+  "appVersion": "9.33"
 }
