@@ -263,17 +263,17 @@ const PHOTO_RATIO = {
   //    숫자·요일은 0개였다. 창업자가 스타일별로 18장 뽑아준 것 중 **우리 마감과 같은 4장**만 채택
   //    (진갈색 굵은 외곽선 + 파스텔 채움 + 흰 다이컷). 라인 계열은 톤도 다르고 자동 오림도
   //    안 돼서(속 흰색이 배경과 이어짐) 심플 다꾸 세트로 미룸. → docs/stickers/글자-창업자-2507/
-  tw_haenaem: 1.2683, tw_night: 1.2686, tw_first: 1.1859, tw_5min: 1.3789, tw_again: 1.4286,
-  tw_wow: 1.3384, tw_salty: 1.2747, tw_better: 1.3665, tw_really: 1.5054, tw_daebak: 1.1381,
-  tw_today: 1.1008, tw_success: 1.2969, tw_more: 1.1255, tw_tasty: 1.3571, tw_welldone: 0.9597,
-  tw_fav: 1.0923, tw_honey: 1.0894, tw_easy: 1.1358, tw_hearty: 1.3762, tw_mom: 1.1472,
-  tw_nexttime: 0.9755, tw_fail: 1.5283, tw_yummy: 1.2615, tw_best: 1.068, tw_ourhankki: 1.3762,
-  tw_goodday: 1.4591,
-  tn_mon: 1.0227, tn_tue: 1.0274, tn_wed: 1.032, tn_thu: 1.0182, tn_fri: 1.0411,
-  tn_sat: 1.0043, tn_sun: 1.0043, tn_cal: 1.113, tn_ribbon: 1.9451, tn_circle: 0.98,
-  ta_right: 1.9118, ta_left: 1.845, ta_up: 0.6372, ta_down: 0.7062, ta_curve: 1.6712,
-  ta_loop: 2.1587, ta_dash: 6.7674, ta_wave: 5.2712, ta_leaf: 3.2124, ta_check: 1.0412,
-  ta_checkc: 1.0288, ta_star: 1.0321,
+  tw_haenaem: 1.0286, tw_night: 1.1549, tw_first: 1.1593, tw_5min: 1.338, tw_again: 1.4183,
+  tw_wow: 1.3384, tw_salty: 1.2624, tw_better: 1.3211, tw_really: 1.4951, tw_daebak: 1.2374,
+  tw_today: 1.1, tw_success: 1.2739, tw_more: 1.3102, tw_tasty: 1.3453, tw_welldone: 1.1618,
+  tw_fav: 1.1074, tw_honey: 1.0898, tw_easy: 1.124, tw_hearty: 1.3349, tw_mom: 1.1347,
+  tw_nexttime: 0.9883, tw_fail: 1.4867, tw_yummy: 1.2424, tw_best: 1.0725, tw_ourhankki: 1.3498,
+  tw_goodday: 1.4292,
+  tn_mon: 1.0433, tn_tue: 1.0165, tn_wed: 1.0306, tn_thu: 1.0216, tn_fri: 1.0306,
+  tn_sat: 1.0041, tn_sun: 1.0261, tn_cal: 1.1084, tn_ribbon: 1.8966, tn_circle: 0.9808,
+  ta_right: 1.8367, ta_left: 1.7857, ta_up: 0.6562, ta_down: 0.7171, ta_curve: 1.6369,
+  ta_loop: 2.1587, ta_dash: 6.7674, ta_wave: 5.2712, ta_leaf: 3.2124, ta_check: 1.0389,
+  ta_checkc: 1.0324, ta_star: 1.0366,
 }
 export const PHOTO_FAMILY = {}
 for (const key of Object.keys(PHOTO_RATIO)) {
