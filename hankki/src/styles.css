@@ -1557,9 +1557,15 @@ html, body { overscroll-behavior: none; }
    ⛔ 느리게. 배경이 눈에 띄면 주인공(레꾸)이 죽는다. */
 @keyframes hk-bg-wave {
   from { background-position: 0 0, 0 0, 0 0, 0 0; }
-  to   { background-position: -26% 0, -38% 0, -55% 0, 0 0; }
+  /* ⚠️⚠️ **`background-position` 의 %는 「타일 폭」이 아니라 「컨테이너 − 타일」 기준이다.**
+     2026-07-31 창업자 *"물결은 안움직여"* — 배선은 멀쩡했고 **이동량이 너무 작았다.**
+     `-26%` 라고 쓰면 실제로는 `0.26 × (1−0.26) = 19%` 밖에 안 간다. 18초에 19% = 안 보인다.
+     → **한 바퀴에 타일 하나만큼** 가려면  p = s / (1 − s)  로 줘야 한다.
+        26% → 35.1%   ·   38% → 61.3%   ·   55% → 122.2%
+     ⭐ 그래야 눈에도 보이고 **이음매도 딱 맞아** 한 바퀴 돌 때 안 튄다. */
+  to   { background-position: -35.1% 0, -61.3% 0, -122.2% 0, 0 0; }
 }
-.hk-bg-wave { animation: hk-bg-wave 18s linear infinite; }
+.hk-bg-wave { animation: hk-bg-wave 14s linear infinite; }
 
 @media (prefers-reduced-motion: reduce) { [class*="hk-m-"], .hk-fx, .hk-bg-wave { animation: none !important; } }
 
