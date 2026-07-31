@@ -263,8 +263,8 @@ const PHOTO_RATIO = {
   //    숫자·요일은 0개였다. 창업자가 스타일별로 18장 뽑아준 것 중 **우리 마감과 같은 4장**만 채택
   //    (진갈색 굵은 외곽선 + 파스텔 채움 + 흰 다이컷). 라인 계열은 톤도 다르고 자동 오림도
   //    안 돼서(속 흰색이 배경과 이어짐) 심플 다꾸 세트로 미룸. → docs/stickers/글자-창업자-2507/
-  tw_haenaem: 1.1566, tw_night: 1.1496, tw_first: 1.1538, tw_5min: 1.3259, tw_again: 1.4028,
-  tw_wow: 1.2991, tw_salty: 1.2533, tw_better: 1.3097, tw_really: 1.4766, tw_daebak: 1.2304,
+  tw_haenaem: 1.1838, tw_night: 1.1641, tw_first: 1.2218, tw_5min: 1.3668, tw_again: 1.4059,
+  tw_wow: 1.1411, tw_salty: 1.0695, tw_better: 1.3389, tw_really: 1.4009, tw_daebak: 1.1982,
   tw_today: 1.1, tw_success: 1.2739, tw_more: 1.1199, tw_tasty: 1.3453, tw_welldone: 0.9582,
   tw_fav: 1.1074, tw_honey: 0.9929, tw_easy: 1.124, tw_hearty: 1.2652, tw_mom: 1.1347,
   tw_nexttime: 0.9883, tw_fail: 1.3548, tw_yummy: 1.2424, tw_best: 1.1221, tw_ourhankki: 1.3498,
@@ -274,6 +274,8 @@ const PHOTO_RATIO = {
   ta_right: 1.8101, ta_left: 1.6918, ta_up: 0.6718, ta_down: 0.7962, ta_curve: 1.4158,
   ta_loop: 1.7158, ta_dash: 5.5455, ta_wave: 1.2442, ta_leaf: 2.9841, ta_check: 1.1043,
   ta_checkc: 0.9958, ta_star: 1.2197,
+  // ✏️ 창업자 문구 시트 2026-07-31 신규 6종
+  tw_itsme: 1.4038, tw_bland: 1.2773, tw_funfun: 1.5385, tw_kidpick: 1.4194, tw_hubbypick: 1.4324, tw_admit: 1.551,
 }
 export const PHOTO_FAMILY = {}
 for (const key of Object.keys(PHOTO_RATIO)) {
@@ -853,13 +855,12 @@ export const STICKER_GROUPS = [
   { key: 'life', tab: 'deco', label: '운동·라이프', items: ['lf_fit12', 'lf_fit11', 'lf_fit08', 'lf_fit07', 'lf_fit02', 'lf_fit13', 'lf_fit14', 'lf_fit06'] },
   // ✏️ 글자 (2026-07-29) — '글자' 탭엔 직접 쓰는 것만 있어서, 손글씨 문구 스티커가 없었다.
   //   맨 위 '한끼 문구' = 창업자가 직접 뽑은 우리만의 말들(다른 다꾸 앱엔 없는 것).
-  // ⏸ **'한끼 문구' 10컷은 잠깐 뺐다** (창업자 2026-07-31 *"이건 내가 다시 뽑아볼게 글자10개는 우선 빼자"*)
-  //   왜 = 이 시트(`보너스문구10-B-흰다이컷`)는 **그림에 흰 다이컷이 이미 그려져 있어서**
-  //        우리가 흰 테를 두르면 두 겹이 되고, 안 두르면 그려진 흰 테 바깥의 옅은 그림자까지
-  //        실루엣이라 가장자리가 너덜너덜해진다. 자르기로 풀 문제가 아니라 **시트를 다시 뽑는 게 답**이다.
-  //   ⛔ **PNG 와 `PHOTO_RATIO` 는 지우지 않는다** — 이미 이 스티커로 꾸며 저장한 레꾸가 있으면 깨진다.
-  //      피커에서만 안 보이게 그룹을 빼 둔 것. 새 시트가 오면 이 줄을 되살리면 된다.
-  //{ key: 'text_hankki', tab: 'notetext', label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night'] },
+  // ✏️ 2026-07-31 **시트를 새로 받아 16종으로 되살렸다.** 전에 10컷을 잠깐 뺐던 이유 =
+  //   옛 시트에 흰 다이컷이 그려져 있는데 `--diecut auto` 를 또 둘러 **테두리가 두 겹**이었다.
+  //   → 새 시트는 `--diecut keep`(그려진 흰 테 두께를 실측해 그대로)로 잘랐다. 두 겹도 지글거림도 없다.
+  //   ⭐ 새로 6종 — It's me · 싱거워.. · 레꾸 재밌어 · 아이 원픽! · 남편 원픽! · 이건 인정!
+  //     「아이 원픽!」「남편 원픽!」 = 가족 반응 기록 — 우리 앱 성격에 딱 맞는 말.
+  { key: 'text_hankki', tab: 'notetext', label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night', 'tw_kidpick', 'tw_hubbypick', 'tw_admit', 'tw_funfun', 'tw_itsme', 'tw_bland'] },
   { key: 'text_word', tab: 'notetext', label: '문구', items: ['tw_today', 'tw_success', 'tw_welldone', 'tw_tasty', 'tw_more', 'tw_fav', 'tw_honey', 'tw_hearty', 'tw_easy', 'tw_mom', 'tw_nexttime', 'tw_fail', 'tw_yummy', 'tw_best', 'tw_ourhankki', 'tw_goodday'] },
   // 📅 요일 = 무슨 요일에 해먹었는지 기록용. 빈 라벨 3종은 직접 글씨 얹으라고 둔다.
   //   ⚠️ 숫자 1~10 은 뺐다(창업자 2026-07-29) — 넣을 땐 '레시피 순서 매기기'를 생각했는데
