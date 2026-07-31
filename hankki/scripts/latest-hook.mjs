@@ -43,6 +43,11 @@ const ev = hook.hook_event_name || ''
 try {
   // ── ① 창업자가 말할 때마다 — 그 주제의 최신을 들이민다 ──────────
   if (ev === 'UserPromptSubmit') {
+    // ⏰ **지금 몇 시인지 먼저 박아준다.** 컨테이너는 UTC라 머릿속으로 +9 하면 반드시 틀린다.
+    //    (2026-07-31 밤 실제로 계속 틀렸다 — 창업자: *"여기 12시 46분이야 한국시간이라 했잖아"*
+    //     · *"저장좀해둬.. 매번 플려"*)
+    //    규칙은 CLAUDE.md 에 있었는데도 틀렸다 → **읽는 규칙이 아니라 보이는 값**으로 바꾼다.
+    console.log(`⏰ 지금 ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'full', timeStyle: 'short' })} (KST) — 날짜·시각은 무조건 이 값 기준`)
     const text = hook.prompt || ''
     const hits = topicsIn(text)
     const pins = readPins()
