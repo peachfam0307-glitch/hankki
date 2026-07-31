@@ -181,6 +181,25 @@ const PHOTO_RATIO = {
   // 🌈 귀여운 컬러 소품 4 (창업자 픽: 무지개·꽃다발·풍선 + 케이크) — 범용·화사
   dc_nd08: 1.2941, dc_nd01: 0.737, dc_nd05: 0.6689, dc_nd16: 1.1796,
   // 🎀 창업자 시트 신규 반영 (2026-07-29) — 데코 10·프레임 5·워시테이프 4
+  // 🆕 2026-07-31 창업자 시트 — 데코 소품/메모라벨/마테 + 요리 도구·재료 (컷 289~371px)
+  dp_01: 1.0976, dp_02: 1.0808, dp_03: 0.7182, dp_04: 1.3571, dp_05: 1.2618, dp_06: 0.6284,
+  dp_07: 0.7091, dp_08: 0.9789, dp_09: 1.4627, dp_10: 1.16, dp_11: 1.0229, dp_12: 0.9427,
+  dp_13: 1.0161, dp_14: 0.9145, dp_15: 0.9229, dp_16: 0.7911, dp_17: 0.8737, dp_18: 0.8808,
+  dp_19: 1.0138, dp_20: 0.9687, dp_21: 1.1429, dp_22: 0.9872, dp_23: 0.8291, dp_24: 0.9919,
+  dp_25: 1.0154, dp_26: 1.0377, dp_27: 2.4965, dp_28: 1.2022, dp_29: 0.674, dp_30: 0.9476,
+  dp_31: 1.0343,
+  dl_01: 1.3531, dl_02: 1.0111, dl_03: 1.1433, dl_04: 0.8987, dl_05: 1.4749, dl_06: 1.0511,
+  dl_07: 1.0088, dl_08: 1.2145, dl_09: 1.0183, dl_10: 1.4419, dl_11: 1.0101, dl_12: 1.1133,
+  dl_13: 1.0601, dl_14: 0.9504, dl_15: 1.1661, dl_16: 0.9699, dl_17: 1.3147, dl_18: 1.0063,
+  dl_19: 0.9335, dl_20: 1.2838, dl_21: 1.061, dl_22: 1.1312, dl_23: 1.1741, dl_24: 0.983,
+  dl_25: 1.2305,
+  wtn_01: 1.4098, wtn_02: 1.3477, wtn_03: 1.2857,
+  kt_01: 0.925, kt_02: 1.2031, kt_03: 0.8915, kt_04: 1.1283, kt_05: 0.8384, kt_06: 0.9378,
+  kt_07: 0.8135, kt_08: 0.8477, kt_09: 0.862, kt_10: 0.8617, kt_11: 0.8383, kt_12: 1.3684,
+  kt_13: 1.3344, kt_14: 1.2297, kt_15: 0.789, kt_16: 1.0521, kt_17: 0.9918, kt_18: 0.7165,
+  kt_19: 0.7413, kt_20: 0.7907, kt_21: 0.801, kt_22: 0.8514, kt_23: 1.0212, kt_24: 1.3082,
+  kt_25: 1.0171, kt_26: 0.8293, kt_27: 0.9659, kt_28: 0.6704, kt_29: 0.6759, kt_30: 0.9407,
+  kt_31: 1.0495, kt_32: 1.016, kt_33: 0.9433,
   dn_ribbon: 1.0881, dn_cherry: 0.9474, dn_peach: 0.959, dn_star: 1.2282, dn_sparkle: 1.0236,
   dn_shoot: 1.2453, dn_coffee: 0.9742, dn_plant: 0.6928, dn_bunting: 1.5667, dn_sachet: 0.8861,
   fn_speech: 1.1762, fn_daisy: 0.9861, fn_bow: 0.9443, fn_night: 1.0305, fn_gingham: 1.0517,
@@ -792,11 +811,17 @@ export const STICKER_GROUPS = [
   { key: 'deco_png', tab: 'deco', label: '소품', items: ['dn_ribbon', 'dn_cherry', 'dn_peach', 'dn_star', 'dn_sparkle', 'dn_coffee', 'dn_plant', 'dn_bunting', 'dn_sachet', 'dc_nd08', 'dc_nd01', 'dc_nd05', 'dc_nd16'] },
   // 📝 메모·라벨 (2026-07-26) — 다꾸 감성 손그림 메모지·라벨. 글씨 얹어 꾸미기 좋음(작게~중간 크기용, 크게 키우면 흐려짐).
   { key: 'deco_frame', tab: 'deco', label: '메모·라벨', items: ['dc_dma01', 'dc_dma03', 'dc_dma06', 'dc_dma05', 'dc_dma10', 'dc_dma14', 'dc_dma16', 'dc_dma07', 'dc_dma13', 'dc_dma11'] },
+  // 🆕 2026-07-31 창업자 시트 데코 — 굵은 진갈색 외곽선 + 파스텔 채움(우리 마감과 한 세트).
+  //   ⛔ 크리스마스 스노글로브 2컷은 겨울에 낸다. 선이 끊겨 속이 안 채워진 구름 말풍선은 버렸다.
+  { key: 'deco_new_prop', tab: 'deco', label: '소품 · 새로 나온', items: ['dp_01', 'dp_02', 'dp_03', 'dp_04', 'dp_05', 'dp_06', 'dp_07', 'dp_08', 'dp_09', 'dp_10', 'dp_11', 'dp_12', 'dp_13', 'dp_14', 'dp_15', 'dp_16', 'dp_17', 'dp_18', 'dp_19', 'dp_20', 'dp_21', 'dp_22', 'dp_23', 'dp_24', 'dp_25', 'dp_26', 'dp_27', 'dp_28', 'dp_29', 'dp_30', 'dp_31'] },
+  { key: 'deco_new_label', tab: 'deco', label: '메모·라벨 · 새로 나온', items: ['dl_01', 'dl_02', 'dl_03', 'dl_04', 'dl_05', 'dl_06', 'dl_07', 'dl_08', 'dl_09', 'dl_10', 'dl_11', 'dl_12', 'dl_13', 'dl_14', 'dl_15', 'dl_16', 'dl_17', 'dl_18', 'dl_19', 'dl_20', 'dl_21', 'dl_22', 'dl_23', 'dl_24', 'dl_25'] },
+  // 🍳 요리 도구·재료 — 그동안 라이프 탭이 운동용품뿐이었고 재료·도구 컷은 흰 테가 뭉쳐 빼둔 상태였다.
+  { key: 'deco_kitchen', tab: 'deco', label: '요리 도구·재료', items: ['kt_01', 'kt_02', 'kt_03', 'kt_04', 'kt_05', 'kt_06', 'kt_07', 'kt_08', 'kt_09', 'kt_10', 'kt_11', 'kt_12', 'kt_13', 'kt_14', 'kt_15', 'kt_16', 'kt_17', 'kt_18', 'kt_19', 'kt_20', 'kt_21', 'kt_22', 'kt_23', 'kt_24', 'kt_25', 'kt_26', 'kt_27', 'kt_28', 'kt_29', 'kt_30', 'kt_31', 'kt_32', 'kt_33'] },
   { key: 'deco_cheer', tab: 'deco', label: '응원·말풍선', items: ['ch_che06', 'ch_che08', 'ch_che01', 'ch_che04', 'ch_che05', 'yum'] },
   // 🎗 마스킹테이프 — 창업자 직접 제작(2026-07-29). 배경·테이프 탭의 CSS 마테와 달리 갈색 외곽선 +
   //   양끝 톱니가 있는 '스티커 워시'라 다꾸 감성이 그대로 산다. **사철 쓰는 것만 12종 엄선**("엄선해서 12개").
   //   여름 무늬(레몬·수박·구름·파도·조개…)는 아래 `마스킹테이프 · 여름` 으로 뺐다.
-  { key: 'deco_washi', tab: 'tape', label: '마스킹테이프', items: ['wt_ribbon_pink', 'wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender', 'wt_flower_mauve', 'wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow', 'wt_sparkle', 'wt_cherry', 'wt_ribbon_red', 'wt_grid_black'] },
+  { key: 'deco_washi', tab: 'tape', label: '마스킹테이프', items: ['wt_ribbon_pink', 'wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender', 'wt_flower_mauve', 'wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow', 'wt_sparkle', 'wt_cherry', 'wt_ribbon_red', 'wt_grid_black', 'wtn_01', 'wtn_02', 'wtn_03'] },
 
   // ── 여름 (2026-07-29 재제작) ── 제철(6~8월)이면 데코 탭 맨 위로 올라간다.
   //   ⚠️ 철이 지나도 **숨기지 않는다** — 순서만 밀린다. 유저가 쓰던 걸 못 찾게 되는 게 더 나쁘다.
