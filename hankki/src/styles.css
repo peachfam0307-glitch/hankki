@@ -1550,7 +1550,18 @@ html, body { overscroll-behavior: none; }
   50% { opacity: .85; transform: translate(-50%,-50%) scale(1.12); }
 }
 
-@media (prefers-reduced-motion: reduce) { [class*="hk-m-"], .hk-fx { animation: none !important; } }
+
+/* 🌊 여름 물결 배경 — 세 겹이 «다른 속도»로 흘러 앞뒤 깊이가 생긴다(패럴랙스).
+   ⚠️ 한 바퀴가 각 겹의 타일 폭(26%·38%·55%)과 정확히 같아야 이음매가 안 보인다.
+   ⚠️ 진폭이 아니라 «위치»만 움직이므로 표지를 저장해도 그림이 어긋나지 않는다.
+   ⛔ 느리게. 배경이 눈에 띄면 주인공(레꾸)이 죽는다. */
+@keyframes hk-bg-wave {
+  from { background-position: 0 0, 0 0, 0 0, 0 0; }
+  to   { background-position: -26% 0, -38% 0, -55% 0, 0 0; }
+}
+.hk-bg-wave { animation: hk-bg-wave 18s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) { [class*="hk-m-"], .hk-fx, .hk-bg-wave { animation: none !important; } }
 
 /* 첫 사용 코치마크 — 대상 버튼 둘레가 반짝반짝 */
 .coach-ring {

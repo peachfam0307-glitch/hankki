@@ -72,8 +72,14 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0):
     for idx, (blob, _) in enumerate(order, 1):
         m = lab == blob
         ys, xs = np.where(m)
-        y0, y1 = max(ys.min() - PAD, 0), min(ys.max() + PAD + 1, m.shape[0])
-        x0, x1 = max(xs.min() - PAD, 0), min(xs.max() + PAD + 1, m.shape[1])
+        # ⚠️ **테두리를 두를 거면 여백을 그만큼 더 준다.** 2026-07-31 게이트가 잡아냈다 —
+        #   `PAD 12` 에 띠부씰 8px 을 두르니 여백이 3px밖에 안 남아 `pf_sm07` 이 **가장자리에 닿았다**
+        #   (`check-cutouts.mjs` 가 배포를 막았다. 게이트가 제 일을 했다.)
+        long0 = max(ys.max() - ys.min(), xs.max() - xs.min()) + 1 + 2 * PAD
+        d0 = round(long0 * 0.007) if diecut == 'auto' else (int(diecut) if diecut else 0)
+        pad = PAD + max(0, d0) + 4
+        y0, y1 = max(ys.min() - pad, 0), min(ys.max() + pad + 1, m.shape[0])
+        x0, x1 = max(xs.min() - pad, 0), min(xs.max() + pad + 1, m.shape[1])
         reg = m[y0:y1, x0:x1]
         sub = rgb[y0:y1, x0:x1]
         h, w = reg.shape
@@ -150,7 +156,7 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0):
             #      두꺼우면 그림마다 흰 테가 눈에 띄어 **전부 같은 스티커처럼 보인다.**
             #      📌 진짜 띠부씰 느낌이 필요한 팩은 그때 값을 크게 준다(`--diecut 10`).
             d = round(max(reg.shape) * 0.007) if diecut == 'auto' else int(diecut)
-            d = max(2, min(d, PAD - 3))                        # 크롭 여백(PAD) 밖으로는 못 두른다
+            d = max(2, min(d, pad - 3))                        # 크롭 여백 밖으로는 못 두른다
             # ⭐⭐ **칼선은 「부풀리기」가 아니라 「거리밭」으로 만든다.** (창업자 2026-07-31
             #   *"띠부실모드 테두리 부드럽게 잘 커팅해야해"*)
             #   부풀리기(dilation)는 그림의 자잘한 요철을 **그대로 따라가서 너덜너덜**해진다.
@@ -174,9 +180,22 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0):
             if win_mask is not None:                           # ⛔창은 다시 확실히 비운다(테두리는 바깥에만)
                 alpha[win_mask] = 0
         out = np.dstack([out_rgb.astype(np.uint8), (alpha * 255).astype(np.uint8)])
+
+        # ⚠️ **가장자리에 닿으면 투명 여백을 덧댄다.** 2026-07-31 게이트가 잡아낸 것 —
+        #   그림이 시트 왼쪽 끝 가까이 있으면 **테두리를 두를 자리가 시트 밖**이라 크롭이 0에서 잘린다.
+        #   원본 그림 자체는 안 잘렸으니(시트 0열엔 그림이 없다) **캔버스만 넓히면 된다.**
+        #   ⛔ 그림을 건드리지 않는다 — 진짜 잘린 컷을 이걸로 덮어 감추면 게이트가 무의미해진다.
+        need = 0
+        for side in (out[0, :, 3], out[-1, :, 3], out[:, 0, 3], out[:, -1, 3]):
+            if side.max() > 25:
+                need = PAD
+        if need:
+            out = np.pad(out, ((need, need), (need, need), (0, 0)), constant_values=0)
+            print(f'   ↳ 가장자리에 닿아 투명 여백 {need}px 덧댐')
+
         name = f'{prefix}{idx:02d}.png'
         Image.fromarray(out).save(os.path.join(outdir, name))
-        made.append((name, w, h))
+        made.append((name, out.shape[1], out.shape[0]))
 
     print(f'{os.path.basename(sheet)} → {len(made)}컷')
     for nm, w, h in made:

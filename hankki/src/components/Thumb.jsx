@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
-import { bgStyle, bgIsDark } from './Stickers'
+import { bgStyle, bgIsDark, bgAnim } from './Stickers'
 import { graphemes } from '../utils'
 
 // 카드 썸네일. recipe.thumb 로 표시 방식을 고른다:
@@ -21,6 +21,10 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
   // 표지 배경(배경지) — 정하면 기본 그라데이션 대신 그 배경으로. 패턴은 %라 어느 크기든 스케일된다.
   const bg = recipe.decorBg ? bgStyle(recipe.decorBg) : null
   const dark = recipe.decorBg ? bgIsDark(recipe.decorBg) : false // 딥 배경 = 글자·아이콘 밝게
+  // 🌊 움직이는 배경(여름 물결). ⚠️`hk-` 접두어라 「움직임 줄이기」 설정에 같이 걸린다.
+  //   ⭐ 저장 이미지는 걱정 없다 — 배경은 **위치만** 바뀌지 모양이 안 바뀐다
+  //      (스티커 모션은 기울기가 바뀌어 «제일 기울어진 순간»이 찍힐 수 있는 것과 다르다).
+  const anim = recipe.decorBg ? bgAnim(recipe.decorBg) : ''
   const base = {
     position: 'relative',
     width: '100%',
@@ -89,7 +93,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
   const decorated = showDecor && recipe.decor?.length > 0
 
   return (
-    <div style={base}>
+    <div className={anim} style={base}>
       {inner}
       {decorated && <DecorLayer items={recipe.decor} />}
     </div>
