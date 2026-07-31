@@ -119,8 +119,8 @@ S.push(['02-레꾸', page('linear-gradient(160deg,#d3e3c8,#eaf2e2)',
 // ───────────────────────────────────────────────────────── ③ 인스타 공유
 // ⛔ 📲🤍📤😍🍲 전부 제거 — 인스타 UI 흉내 자리는 우리 라인 아이콘으로(온보딩과 같은 방식)
 S.push(['03-인스타공유', page('radial-gradient(circle at 50% 28%,#f7bccb,#f2a0b4 68%,#ec8ea6)',
-  `<div class="cap"><h1 style="color:#fffdf8;text-shadow:0 3px 0 rgba(180,70,100,.32);font-size:80px">친구가 올린 저 카드,<br>나도 만들래</h1>
-   <div class="sub" style="color:#7a3550">예쁘게 꾸며 인스타·카톡에 톡 — 소문은 저절로</div></div>`,
+  `<div class="cap"><h1 style="color:#fffdf8;text-shadow:0 3px 0 rgba(180,70,100,.32);font-size:80px">예쁜 카드 한 장으로,<br>센스있게 레시피 공유</h1>
+   <div class="sub" style="color:#7a3550">내 한 끼를 친구들과 나눠요</div></div>`,
   `<div style="position:absolute;top:530px;left:50%;transform:translateX(-50%);width:560px">
      <div style="border-radius:56px;padding:8px;background:conic-gradient(from 30deg,#f9a825,#f06292,#ab47bc,#f9a825);box-shadow:0 30px 60px rgba(150,50,80,.35)">
        <div style="background:#fff;border-radius:50px;overflow:hidden;position:relative">
@@ -141,11 +141,11 @@ S.push(['03-인스타공유', page('radial-gradient(circle at 50% 28%,#f7bccb,#f
          </div>
        </div>
      </div>
-     <div style="position:absolute;left:-84px;top:200px;background:#fff;border-radius:30px 30px 30px 6px;padding:16px 26px;font-family:'Gaegu';font-size:38px;color:#333;box-shadow:0 10px 22px rgba(150,50,80,.22)">헐 이거 뭐야</div>
-     <div style="position:absolute;right:-70px;top:440px;background:#fff;border-radius:30px 30px 6px 30px;padding:16px 26px;font-family:'Gaegu';font-size:38px;color:#333;box-shadow:0 10px 22px rgba(150,50,80,.22)">어플 뭐야??</div>
-     <div style="position:absolute;left:-56px;bottom:40px;background:#5d3410;color:#fff;border-radius:30px 30px 30px 6px;padding:14px 26px;font-family:'Gaegu';font-size:40px;box-shadow:0 10px 22px rgba(150,50,80,.28);display:flex;align-items:center;gap:12px"><img src="${F('gp_gomhi')}" style="height:52px"/>나도 깔래!</div>
+     <div style="position:absolute;left:-84px;top:200px;background:#fff;border-radius:30px 30px 30px 6px;padding:16px 26px;font-family:'Gaegu';font-size:38px;color:#333;box-shadow:0 10px 22px rgba(150,50,80,.22)">우와 맛있겠다</div>
+     <div style="position:absolute;right:-70px;top:440px;background:#fff;border-radius:30px 30px 6px 30px;padding:16px 26px;font-family:'Gaegu';font-size:38px;color:#333;box-shadow:0 10px 22px rgba(150,50,80,.22)">레시피 공유해줘</div>
+     <div style="position:absolute;left:-56px;bottom:40px;background:#5d3410;color:#fff;border-radius:30px 30px 30px 6px;padding:14px 26px;font-family:'Gaegu';font-size:40px;box-shadow:0 10px 22px rgba(150,50,80,.28);display:flex;align-items:center;gap:12px"><img src="${F('gp_gomhi')}" style="height:52px"/>같이 해먹자!</div>
   </div>
-  <div class="foot"><span class="pill" style="background:#fffdf8;color:#c04a68">카드가 곧 광고 — 친구가 따라 와요</span></div>`)])
+  <div class="foot"><span class="pill" style="background:#fffdf8;color:#c04a68">센스있게 레시피 한 장, 친구에게 톡</span></div>`)])
 
 // ───────────────────────────────────────────────────────── ④ 음식 아이콘
 // ⚠️ 「88종」이 낡았다 → 218종. 앱에서 부르는 이름도 '이모지'가 아니라 '음식 아이콘'이다.
@@ -214,9 +214,8 @@ S.push(['07-감정', page('radial-gradient(circle at 50% 42%,#8a6a4c,#6f5238 70%
   `<div class="cap"><h1 style="color:#fff6ea;font-size:80px">레시피를 넘기면,<br>그날의 내가 보여요</h1>
    <div class="sub" style="color:#e8d3bd">오늘도 한 끼, 해냈어요</div></div>`,
   `<div style="position:absolute;top:640px;left:50%;transform:translateX(-50%);width:760px;height:720px;display:flex;align-items:center;justify-content:center">
-     <div style="position:absolute;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,rgba(255,244,230,.5),rgba(255,244,230,0) 68%)"></div>
+     <div style="position:absolute;width:760px;height:760px;border-radius:50%;background:radial-gradient(circle,rgba(255,246,234,.62),rgba(255,246,234,.24) 42%,rgba(255,246,234,0) 72%)"></div>
      <img src="${U('gom_heart')}" style="width:520px;filter:drop-shadow(0 20px 30px rgba(40,25,10,.4))"/>
-     ${spark('top:70px;left:86px;width:78px')}${spark('bottom:120px;right:96px;width:64px')}
   </div><div class="foot"><span class="pill" style="background:#fff6ea;color:#6f5238">감정 레시피북 · 한끼</span></div>`)])
 
 // ───────────────────────────────────────────────────────── ⑧ 브랜드
