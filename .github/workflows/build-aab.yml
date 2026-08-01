@@ -102,8 +102,22 @@ jobs:
           fi
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > build/signing.keystore
 
+      # 🤖🤖 **bubblewrap 은 JDK·Android SDK 가 없으면 «대화형 질문»을 던진다.**
+      #   CI 에는 사람이 없어서 그 자리에서 멈춘다 — 2026-08-01 첫 연습 실행이 정확히 여기서 죽었다:
+      #     `? Do you want Bubblewrap to install the JDK (recommended)? (Y/n)` → exit 130
+      #   ⭐ 답 = **미리 깔고 설정 파일을 써둔다.** 그러면 물어볼 게 없어진다.
+      #   ⚠️ 옛 주석에 *"bubblewrap 이 알아서 내려받는다"* 고 적어뒀는데 **틀렸다** —
+      #      내려받기 «전에» 물어본다. 사람이 있어야 한다는 뜻이었다.
+      - name: Android SDK 준비
+        uses: android-actions/setup-android@v3
+
+      - name: bubblewrap 설정 미리 써두기 (질문이 안 나오게)
+        run: |
+          mkdir -p ~/.bubblewrap
+          printf '{ "jdkPath": "%s", "androidSdkPath": "%s" }\n' "$JAVA_HOME" "$ANDROID_HOME" > ~/.bubblewrap/config.json
+          echo "── bubblewrap 설정 ──"; cat ~/.bubblewrap/config.json
+
       # twa-manifest.json 을 바탕으로 안드로이드 프로젝트를 새로 만든다.
-      # (JDK·Android SDK 는 bubblewrap 이 알아서 내려받는다 — 러너는 인터넷이 되므로 가능)
       - name: 안드로이드 프로젝트 생성
         working-directory: build
         run: bubblewrap update --skipVersionUpgrade
