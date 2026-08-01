@@ -4,7 +4,7 @@ import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
 import { seasonRank, isReleased } from '../season'
-import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
+import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -458,13 +458,22 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {/* ⛔ hidden = 피커에만 안 뜬다(모눈·도트·스트라이프 — 마테와 겹쳐서 뺌).
     저장된 표지는 bgStyle() 이 계속 찾아 주므로 그대로 보인다. */}
-                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden).map((b) => {
+                    {/* ⭐⭐ **움직이는 배경은 「표식」이 아니라 «여기서 진짜 움직여서» 알린다.** (창업자 2026-08-01)
+    · 리컬러는 **정지 그림으로 색을 못 보여주니** 뱃지가 필요했다. 움직임은 **그 자리에서 보여줄 수 있다** —
+      「움직여요」라고 써주는 것보다 정직하고, 유저가 고르기 전에 뭘 사는지 안다.
+    · ⛔ **뱃지는 안 된다** — 스와치가 42px뿐이라 뭘 얹으면 **그림을 가린다.** 그림이 곧 상품이다.
+    · 그리고 **맨 위로 모은다** — 배경이 23개라 흩어지면 못 찾는다(개수는 더 늘어난다).
+    ⚠️ `hk-` 클래스라 **「움직임 줄이기」 설정에 같이 걸린다**(`prefers-reduced-motion`). */}
+                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden)
+                      .map((b, i) => ({ b, i }))
+                      .sort((x, y) => (y.b.anim ? 1 : 0) - (x.b.anim ? 1 : 0) || x.i - y.i)   // 안정 정렬
+                      .map(({ b }) => {
                       const on = bg === b.key
-                      const sw = b.style || { background: 'linear-gradient(135deg,#eef0ec,#e1e5de)' }
+                      const sw = { ...(b.style || { background: 'linear-gradient(135deg,#eef0ec,#e1e5de)' }), ...(b.swatch || {}) }
                       return (
-                        <button key={b.key} className="press" onClick={() => setBg(b.key)} aria-label={`배경 ${b.label}`}
+                        <button key={b.key} className="press" onClick={() => setBg(b.key)} aria-label={`배경 ${b.label}${b.anim ? ' (움직임)' : ''}`}
                           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                          <span style={{ width: 42, height: 42, borderRadius: 10, ...sw, border: on ? '2.5px solid var(--brown)' : '1.5px solid var(--line)', boxShadow: on ? '0 0 0 2px var(--surface) inset' : 'none' }} />
+                          <span className={bgAnim(b.key)} style={{ width: 42, height: 42, borderRadius: 10, ...sw, border: on ? '2.5px solid var(--brown)' : '1.5px solid var(--line)', boxShadow: on ? '0 0 0 2px var(--surface) inset' : 'none' }} />
                           <span style={{ fontSize: 10.5, fontWeight: 700, color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{b.label}</span>
                         </button>
                       )
