@@ -62,10 +62,12 @@ for (const m of flat.matchAll(/\{\s*key:\s*'[^']+',\s*tab:\s*'buddies'[^}]*?item
 if (buddyIds.size < 30) fails.push(`친구들 탭 아이디를 ${buddyIds.size}개밖에 못 읽었다 — 파서가 깨졌다`)
 else ok(`친구들 탭 ${buddyIds.size}컷 읽음 (부엌 식구들 kf_ 8종은 함수로 만들어져 여기선 제외)`)
 
-for (const need of ['sm_duo_watergun', 'sm_gom_tube', 'sm_peng_beach', 'au_b01', 'gp_gomft']) {
+// ⚠️ 표본 키는 «서랍에 살아 있는 것»으로 둔다 — 겹쳐서 내린 컷을 표본으로 두면 가짜로 터진다
+//    (2026-08-01: au_b01 을 겹침으로 내렸더니 이 검사가 실패했다 → au_b20 으로 교체)
+for (const need of ['sm_duo_watergun', 'sm_gom_tube', 'sm_peng_beach', 'au_b20', 'gp_gomft']) {
   if (!buddyIds.has(need)) fails.push(`${need} 가 친구들 탭에 없다 — 모션·효과가 안 붙는다`)
 }
-if (buddyIds.has('sm_duo_watergun') && buddyIds.has('au_b01')) ok('여름·가을 꼬르곰·펭펭도 친구들 탭에 있다')
+if (buddyIds.has('sm_duo_watergun') && buddyIds.has('au_b20')) ok('여름·가을 꼬르곰·펭펭도 친구들 탭에 있다')
 
 const friendDecl = /export const FRIEND_IDS = new Set\(\s*STICKER_GROUPS\.filter\(\(g\) => g\.tab === 'buddies'\)/
 if (!friendDecl.test(stickers)) fails.push('FRIEND_IDS 가 친구들 탭에서 만들어지지 않는다')
