@@ -88,7 +88,7 @@ try {
   // 홈 보장(신규 저장 후 popAll → 홈이지만, 실패했을 수도 있으니 명시적으로)
   await tour('홈 복귀', async () => {
     const back = page.getByRole('button', { name: '뒤로' }).first()
-    if (await back.isVisible().catch(() => false)) { await back.click(); await page.waitForTimeout(500) }
+    if (await back.isVisible().catch(() => false)) { await back.click({ timeout: 2500 }).catch(() => {}); await page.waitForTimeout(500) }
   })
 
   // ── 핵심 A) 레시피 편집 → 저장  (v8.58 저장 먹통이 터지던 바로 그 경로) ──
@@ -108,6 +108,11 @@ try {
       await openFirstRecipe(); await page.waitForTimeout(700)
     }
     await page.getByText('레시피 꾸미기').first().click(); await page.waitForTimeout(1200)
+    // 🎁 서랍을 처음 열면 «출시기념 팩 안내»가 먼저 뜬다(한 번만). 유저와 같은 순서로 먼저 닫는다.
+    //    ⚠️ 안 닫으면 그 아래 탭·「취소」 클릭이 시트 마스크에 먹혀 에디터가 안 닫히고,
+    //       그 여파가 다음 투어(하단 탭)까지 번진다. 2026-08-01에 실제로 그랬다.
+    await page.getByRole('button', { name: '나중에' }).first().click({ timeout: 2500 }).catch(() => {})
+    await page.waitForTimeout(400)
     for (const t of ['데코', '글자', '친구들', '음식', '라이프']) {
       await page.getByText(t, { exact: true }).first().click({ timeout: 2500 }).catch(() => {}); await page.waitForTimeout(300)
     }
@@ -119,9 +124,12 @@ try {
   })
 
   // ── 커버리지 D) 하단 탭 순회 (각 화면 렌더 크래시 점검) ──
+  // ⚠️ 투어 안의 `back.click()` 두 곳은 원래 `.catch()` 가 없어서, 앞 단계가 조금만 어긋나도
+  //    투어가 통째로 죽었다(2026-08-01 안내 시트 추가 때 실제로 터짐).
+  //    투어는 «오탐으로 배포를 막지 않는 자리»다 — 다른 클릭들과 똑같이 흘려보낸다.
   await tour('하단 탭 순회', async () => {
     const back = page.getByRole('button', { name: '뒤로' }).first()
-    if (await back.isVisible().catch(() => false)) { await back.click(); await page.waitForTimeout(500) }
+    if (await back.isVisible().catch(() => false)) { await back.click({ timeout: 2500 }).catch(() => {}); await page.waitForTimeout(500) }
     for (const t of ['장보기', '레시피', '자랑', '홈']) {
       await page.getByText(t, { exact: true }).last().click({ timeout: 2500 }).catch(() => {}); await page.waitForTimeout(600)
     }

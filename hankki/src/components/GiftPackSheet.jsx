@@ -1,7 +1,7 @@
 import Portal from './Portal'
 import { useModalBack } from '../useBackHandler'
 import { markGiftPackSeen } from '../nudges'
-import { StickerArt } from './Stickers'
+import { StickerArt, bgStyle, bgAnim } from './Stickers'
 
 // 🎁 출시기념 팩 안내 — 꾸미기 서랍을 처음 열 때 딱 한 번.
 //
@@ -15,6 +15,16 @@ import { StickerArt } from './Stickers'
 //
 // ⚠️ 유니코드 이모지 금지(창업자 2026-07-26) → 그림은 전부 우리 컷(`StickerArt`).
 const PEEK = ['ce_manse', 'ce_pokjuk', 'ce_cheers'] // 만세 · 폭죽 · 주스 건배
+
+// 🌊 **배경도 선물이다** (창업자 2026-08-01 *"우리 배경도 선물이잖아 (움직이는 배경)"* — 맞는 지적).
+//    「여름 물결」은 우리 배경 23개 중 **유일하게 움직이는 하나**인데 글로만 적으면 그게 안 전해진다.
+//    → 축하 컷을 **그 배경 위에 얹어** 시트 안에서 실제로 물결이 흐르게 한다.
+//      (이 시트의 원칙 그대로 — 「움직여요」라고 쓰는 것보다 움직이는 걸 보여주는 게 빠르다)
+//
+// ⚠️ **타일 크기는 판 크기에 맞춰 다시 준다.** 기본값(26/38/55%)은 표지 1080px 기준이라
+//    이 판(≈300px)에선 타일이 78px로 줄어 물결이 「잔털」로 뭉친다 — 피커 스와치(42px)에서 겪은 것과 같은 문제.
+//    두 배 가까이 키워 물결선이 두세 가닥으로 읽히게 한다.
+const SEA_TILE = { backgroundSize: '48% auto,68% auto,96% auto,cover' }
 
 export default function GiftPackSheet({ onClose, onGo }) {
   useModalBack(onClose)
@@ -31,8 +41,15 @@ export default function GiftPackSheet({ onClose, onGo }) {
           </div>
 
           <div style={{ padding: '2px 16px 0' }}>
-            {/* 컷을 먼저 — 글보다 그림이 빠르다 */}
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'flex-end', margin: '4px 0 14px' }}>
+            {/* 컷을 먼저 — 글보다 그림이 빠르다. 판은 선물로 주는 「여름 물결」 배경 그대로 흐른다. */}
+            <div
+              className={bgAnim('sea')}
+              style={{
+                ...bgStyle('sea'), ...SEA_TILE,
+                borderRadius: 16, padding: '12px 8px 8px',
+                display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'flex-end',
+                margin: '4px 0 14px',
+              }}>
               {PEEK.map((id) => (
                 <span key={id} style={{ width: 76, height: 76, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
                   <StickerArt id={id} size={76} />
@@ -42,7 +59,9 @@ export default function GiftPackSheet({ onClose, onGo }) {
 
             <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.7, marginBottom: 16, textAlign: 'center' }}>
               한끼가 정식으로 나왔어요.<br />
-              <b style={{ color: 'var(--text)' }}>여름 프레임 12개와 축하 스티커 3개</b>를 넣어뒀어요.
+              <b style={{ color: 'var(--text)' }}>여름 프레임 12개 · 축하 스티커 3개</b><br />
+              <b style={{ color: 'var(--text)' }}>움직이는 여름 물결 배경 · 찰랑 움직임</b><br />
+              이만큼 넣어뒀어요.
             </div>
 
             <button className="btn-primary press" style={{ marginBottom: 8 }} onClick={go}>구경하기</button>
