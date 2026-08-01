@@ -60,6 +60,7 @@
   - 의견 폼(테스터·익명, 안녕한끼 계정): https://docs.google.com/forms/d/e/1FAIpQLSeLsXdCZ-M_m7NW6qC_S4L7TlqHk9Hs7A3O2Iyt15BdQXs0JQ/viewform
   - 의견 응답 확인: forms.google.com → 초록 "한끼"(안녕한끼) 계정 → "한끼 써보고 한마디" → **응답** 탭
 - **운영 링크(관리자용)**: Play Console `play.google.com/console` · PWABuilder `www.pwabuilder.com`(AAB 생성) · GitHub 레포 `github.com/peachfam0307-glitch/hankki`.
+- **📅 공개 달력 아티팩트(창업자용·폰)**: https://claude.ai/code/artifact/8cf8ba80-cb03-4300-b510-d1f70d831257 — **언제 뭐가 올라가나**(저절로 열리는 것 ↔ 손으로 올리는 것) ＋ 업뎃 주기 규칙. 값은 `scripts/release-calendar.mjs` 로 다시 뽑아 갱신(같은 URL).
 - **고정 메모 아티팩트(폰 홈화면용)**: https://claude.ai/code/artifact/9bd7d82d-8a0b-45d1-a34a-d6ebb578f47e (내용 바뀌면 같은 URL로 갱신).
 - **이모티콘 프롬프트 아티팩트(곰곰·펭펭 복붙용)**: https://claude.ai/code/artifact/d38164ba-7240-4457-a728-85223aa81139 (곰/펭/콤비 프롬프트 + 32컷 + 복사 버튼).
 - **🛟 대화 죽었을 때 이어하기 = `docs/이어하기-보험.md`** (새 대화 3단계 복구법. 기억=저장소 문서).
@@ -197,6 +198,16 @@
      git checkout -b hold/검수대기 && git add <파일> && git commit && git push -u origin hold/검수대기
      git checkout claude/chatgpt-conversation-link-kvn5ph      # 배포 브랜치는 깨끗하게
      ```
+   - 📅📅 **[절대원칙] 배포 통로는 «두 개»다 — 「날짜가 저절로 여는 문」도 전날 검수한다.** (창업자 2026-08-01)
+     *"딸려들어갈까봐 물어본거야. 자동으로 올라간다하니까."* · *"자동으로 올라가기 전날에 꼭 검수하고 내보내자. **이건 절대원칙.**"*
+     ① `git push` → 즉시 배포 (규칙 9·13이 막는다) ② **날짜 게이트** — **이미 올라가 있는데 그날이 되면 저절로 열린다.**
+     ⛔ ②는 **내가 아무것도 안 해도 열린다.** 그래서 잊으면 그대로 나간다 — **아무도 안 막고 있던 통로였다.**
+     🛠 **`node hankki/scripts/release-calendar.mjs`** — 손으로 적은 목록은 반드시 낡으므로 **코드에서 직접 읽는다**
+     (`Stickers.jsx` `STICKER_GROUPS.from` · `ShareDrawCard.jsx` `SEASON_CUTS.from/win`).
+     `--brief`(가장 가까운 문) · `--check`(D-7 이내면 크게) · `--on <날짜>`(그날 열릴 컷 «키 목록» → 검수판 재료).
+     📌 **다음 자동 공개 = 2026-09-01 · 56컷**(서랍 가을 18 ＋ 카드 가을 16·추석 22) → **8/31에 고화질 전수 검수.**
+     그 뒤 10/1(32컷) · 11/1(17컷) · 12/1(2컷) · 2027-03-01(23컷).
+     ⚠️ **추석·설날은 음력이라 창을 넉넉히 잡아뒀다**(`cs` = 9/1~10/15) — **그 해 달력을 보고 좁힐 것. ⛔추측 금지.**
    - ⭐ **이 규칙이 바로 오늘 값을 했다** — 창업자가 *"내가 자른거 다 검수안해도돼? 고화질로?"* 라고
      물어서 실제로 100%로 펼쳐보니 **11컷 중 2컷만 흰 테두리가 있고 9컷은 없었다.**
      자동 3단계 검수는 **전부 통과**시켰다. 3단계가 보는 건 「잔재·잘림·크기」이지 **「세트가 서로 같은가」가 아니다.**
