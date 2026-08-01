@@ -4,6 +4,8 @@ import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
 import { seasonRank, isReleased } from '../season'
+import GiftPackSheet from './GiftPackSheet'
+import { needsGiftPack } from '../nudges'
 import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
@@ -65,6 +67,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
   const [exitAsk, setExitAsk] = useState(false) // 취소 시 "저장 안 함?" 확인
   const restoredRef = useRef(!!draft) // 초안에서 복구했는지(안내 토스트용)
   const [cat, setCat] = useState('bgtape') // 서랍 탭(배경부터 시작 — 배경·글자·친구들·음식·데코·라이프)
+  // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
+  //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
+  const [gift, setGift] = useState(() => needsGiftPack())
 
   // 🧷 배경격(액자 프레임·포스트잇·메모라벨) = 그 위에 스티커·글자를 얹는 밑판. 이건 탭해도 맨 앞으로 안 올린다(안 그러면 눌렀을 때 애써 꾸민 작은 스티커·글자가 다 뒤로 숨어버림 — 창업자 제보 2026-07-26).
   // 🧷 '밑판'격 아이템 — 탭해도 맨 앞으로 올리지 않는다(올리면 위에 붙인 작은 스티커·글자가 다 숨는다).
@@ -581,6 +586,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
               </div>
             </div>
           </div>
+        )}
+
+        {/* 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번. 「구경하기」는 프레임 탭으로 데려간다. */}
+        {gift && (
+          <GiftPackSheet onClose={() => setGift(false)} onGo={() => setCat('frame')} />
         )}
       </div>
     </Portal>

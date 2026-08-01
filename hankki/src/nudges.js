@@ -63,3 +63,21 @@ export const markReviewAsked = () => write(K_REVIEW, '1')
 
 // 스토어 리뷰 주소 — 패키지명은 `CLAUDE.md` 고정 메모 기준.
 export const STORE_URL = 'https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa'
+
+// ─────────────────────────────────────────────────────────────
+// 🎁 출시기념 팩 안내 — 꾸미기 서랍을 열면 «딱 한 번».
+//
+// 왜 여기냐: 팩은 꾸미기 서랍 안에 있다. **선물은 받는 자리에서 알려줘야** 바로 써본다.
+// (홈에 띄우면 "그게 어디 있는데?"가 되고, 찾다 지치면 안 쓴다)
+//
+// ⛔ 설계원칙(`docs/리텐션-설계원칙-2026-07-30.md`)
+//    · 「축하합니다!」·뱃지·트로피 없음 — 우리는 게임이 아니라 다이어리 문법
+//    · 닫으면 다시 안 뜬다 (재촉하지 않는다)
+//    · 캐릭터는 한 마디만
+// ─────────────────────────────────────────────────────────────
+const K_GIFT = 'hankki:nudge:giftpack' // '1' = 한 번 보여줬음(닫기·구경하기 둘 다 포함)
+
+/** 출시기념 팩 안내를 아직 안 봤나? */
+export const needsGiftPack = () => read(K_GIFT) !== '1'
+/** 봤음으로 표시 — 어떻게 닫아도 다시 안 뜬다. */
+export const markGiftPackSeen = () => write(K_GIFT, '1')
