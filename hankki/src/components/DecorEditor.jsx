@@ -590,7 +590,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
 
         {/* 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번. 「구경하기」는 프레임 탭으로 데려간다. */}
         {gift && (
-          <GiftPackSheet onClose={() => setGift(false)} onGo={() => setCat('frame')} />
+          <GiftPackSheet onClose={() => setGift(false)} onGo={(cat) => setCat(cat || 'frame')} />
         )}
       </div>
     </Portal>
