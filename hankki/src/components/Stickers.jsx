@@ -247,6 +247,24 @@ const PHOTO_RATIO = {
   pf_sm07: 0.9854, pf_sm08: 1.0125, pf_sm09: 1.0281, pf_sm10: 1.0263, pf_sm11: 0.8223, pf_sm12: 0.9649,
   // 🎉 출시기념 축하 3컷 (2026-08-01) — 원본 `여름-창업자-2507/낱개-콤비축하`.
   //    ⛔ 같은 시트의 `04`(맥주 건배)는 **안 쓴다** — 콘텐츠 등급이 전체 이용가다.
+  // 🦫🐧 카롱 × 펭펭 «부녀 케미» 9컷 (창업자 2026-08-01 *"얘들은 부녀케미가 있네"*)
+  //    ⭐ 2026-08-01 확정한 「가을 = 펭펭 × 카롱」의 그 짝이다.
+  //    카롱 = 코랄 트레이닝복＋머리띠(체력왕) · 펭펭 = 베이지 트렌치＋베레모.
+  //    ⛔ 배경이 통째로 그려진 3컷(나무 밑·러닝머신·청소기)은 스티커가 아니라
+  //       **카드 사진 자리**(`assets/scenepool/scene_kp_*`)로 갔다 — 스티커로 쓰면 판이 겉돈다.
+  kp_leaf: 1.1204, kp_sweetpotato: 1.2028, kp_market: 1.1466, kp_lift: 0.5757,
+  kp_stretch: 1.3256, kp_cheer: 0.9321, kp_prep: 1.1894, kp_icebath: 1.1173,
+  kp_cook: 1.1748,
+  // 🍱 2026-08-01 창업자 시트 8장 → 새 음식 37컷 (`docs/stickers/음식-창업자-2608/`)
+  //    ⭐ 그중 4컷은 **기존이 「SVG 도형」이라 그림이 아니던 자리**(무생채·스튜·소스)와
+  //       **제목이 엉뚱한 아이콘에 걸리던 자리**(두루치기·깍두기·김치전)를 메운다.
+  fe_97: 1.0491, fe_98: 1.0281, fe_99: 1.0581, fe_100: 1.2100, fe_101: 1.2159, fe_102: 0.9467,
+  fe_103: 1.1019, fe_104: 1.0850, fe_105: 1.1197, fe_106: 1.3010, fe_107: 1.2699, fe_108: 1.0369,
+  fe_109: 0.9399, fe_110: 1.0435, fe_111: 1.1708, fe_112: 1.1975, fe_113: 1.1914, fe_114: 1.1437,
+  fe_115: 1.2744, fe_116: 1.1693, fe_117: 1.1348, fe_118: 1.1277, fe_119: 1.1651, fe_120: 1.1222,
+  fe_121: 1.1250, fe_122: 1.1234, fe_123: 1.1433, fe_124: 1.2632, fe_125: 1.1306, fe_126: 1.0623,
+  fe_127: 1.2283, fe_128: 1.0979, fe_129: 1.2351, fe_130: 1.0403, fe_131: 1.1742, fe_132: 1.2107,
+  fe_133: 1.1131,
   ce_manse: 0.7471, ce_pokjuk: 0.5848, ce_cheers: 1.0923,
   // ⛔ **여기 있던 여름다꾸 37(`sd_`)·미니아이콘 92(`mn_`)·파스텔 43(`ps_`)은 도로 뺐다** (2026-07-29 당일 롤백).
   //    창업자 폰 제보: "우리 꾸미기에 추가한 데코에 여름 스티커들 다 깨져."
@@ -886,6 +904,10 @@ export const STICKER_GROUPS = [
   { key: 'deco_autumn_a', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 단풍·낙엽', items: ['au_i03', 'au_i04', 'au_i12', 'au_i15', 'au_i16', 'au_i19', 'au_i21', 'au_i01', 'au_t06', 'au_t02', 'au_s02'] },
   { key: 'buddies_autumn_a', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 가을', items: ['au_b01', 'au_b05', 'au_b20', 'au_b09', 'au_b13', 'au_b14', 'au_b18'] },
   { key: 'deco_autumn_b', tab: 'deco', season: 'autumn', from: '2026-10-01', label: '가을 열매·수확', items: ['au_i02', 'au_i05', 'au_i06', 'au_i07', 'au_i08', 'au_i09', 'au_i18', 'au_t03', 'au_t04', 'au_s01'] },
+  // 🦫🐧 **친구 데뷔 ①** — 가을은 카롱이다(꼬르곰은 겨울·봄 친구와 짝을 짓는다).
+  //    창업자 *"둘이 덩치가 있어서 케미가 별루야… 카롱이랑 꼬르곰둘은 별로 안어울림"* → 짝을 펭펭으로 바꿨다.
+  //    ⛔ 5명을 한꺼번에 안 내보낸다 — 「새 친구 등장」은 한 번밖에 못 쓰는 카드라 셋으로 쪼갠다.
+  { key: 'buddies_karong', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '카롱과 펭펭', items: ['kp_leaf', 'kp_sweetpotato', 'kp_market', 'kp_lift', 'kp_stretch', 'kp_cheer', 'kp_prep', 'kp_icebath', 'kp_cook'] },
   { key: 'buddies_autumn_b', tab: 'buddies', season: 'autumn', from: '2026-10-01', label: '꼬르곰·펭펭의 가을 나들이', items: ['au_b02', 'au_b03', 'au_b04', 'au_b19', 'au_b21', 'au_b10', 'au_b11', 'au_b12'] },
   { key: 'deco_autumn_c', tab: 'deco', season: 'autumn', from: '2026-11-01', label: '늦가을 소품', items: ['au_i10', 'au_i11', 'au_i13', 'au_i14', 'au_i17', 'au_i20', 'au_t01', 'au_t05', 'au_s03', 'au_s04'] },
   { key: 'buddies_autumn_c', tab: 'buddies', season: 'autumn', from: '2026-11-01', label: '꼬르곰·펭펭의 늦가을', items: ['au_b06', 'au_b07', 'au_b08', 'au_b22', 'au_b15', 'au_b16', 'au_b17'] },
