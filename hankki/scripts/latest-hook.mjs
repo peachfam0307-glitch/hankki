@@ -75,6 +75,27 @@ try {
     console.log('📌 주제별 «최신» 문서 (옛 문서로 판단하는 게 반복된 사고다 — 이걸 먼저 읽는다):')
     rows.forEach(([k, v]) => console.log(`   ${k} → ${v[0].path}${v.length > 1 ? ` (옛 ${v.length - 1})` : ''}`))
     console.log('   전체는 `node hankki/scripts/latest-map.mjs` · 지도는 hankki/docs/최신-지도.md')
+    // 📅 날짜가 «저절로» 여는 문 — 푸시 안 해도 열린다 (창업자 2026-08-01 절대원칙)
+    try {
+      const { nextGate, todayKST } = await import('./release-calendar.mjs')
+      const nx = nextGate()
+      if (nx.length) {
+        const d = Math.round((Date.parse(nx[0].date) - Date.parse(todayKST())) / 86400000)
+        const n = nx.reduce((s, g) => s + g.keys.length, 0)
+        console.log(`\n${d <= 7 ? '🚨' : '📅'} ${nx[0].date}(D-${d}) 에 **저절로** 열린다 — ${n}컷`)
+        if (d <= 7) console.log('   ⛔ 전날에 «고화질 전수 검수». 안 하면 그대로 유저 앞에 나간다.')
+      }
+    } catch { /* 없으면 조용히 */ }
+    // 🧭 「대기」라고 적혀 있는데 **파일은 이미 있는** 줄 (2026-08-01 클레이 가을밤 사고)
+    try {
+      const { stale, recentDocs } = await import('./doc-guard.mjs')
+      const st = stale(recentDocs())
+      if (st.length) {
+        console.log(`\n🧭 요즘 문서에 「대기·예정」인데 **파일은 이미 있는** 줄 ${st.length}개 — 끝난 걸 대기로 두면 또 안 한다`)
+        st.slice(0, 3).forEach((h) => console.log(`   ${h.file}:${h.line}  「${h.name}」 → ${h.found}`))
+        console.log('   전체 = `node hankki/scripts/doc-guard.mjs --stale --recent`')
+      }
+    } catch { /* 없으면 조용히 */ }
     process.exit(0)
   }
 
@@ -101,6 +122,35 @@ try {
       console.error('\n👉 `_구판/` 은 «지금 쓰지 않는 것»만 모아둔 곳이다. 현행부터 찾을 것 — hankki/docs/최신-지도.md')
     }
     process.exit(2)
+  }
+
+  // ── ⓷-b 📚 **한 문서 «안»의 세대** — 2026-08-01 사고 ────────────
+  //   `latest-map` 은 «파일 사이» 세대만 본다. 그런데 한 파일에
+  //     `# 2026-07-31 …` … `# 2026-08-01 확정 …` 이 쌓여 있으면 **위쪽만 읽고 틀린다.**
+  //   실제로 배경 배정을 「추석＝조각보·달밤억새」로 썼는데 확정은 **같은 문서 201줄**에
+  //   「추석＝클레이 가을밤 1개」로 있었다. 창업자: *"우리가 정한거는 그때그때 반영 좀 해."*
+  //   ⭐ **부분 읽기(offset)가 맨 아래 세대를 안 덮으면 막는다.** 전체 읽기는 그냥 통과.
+  if (path.endsWith('.md') && (hook.tool_name === 'Read')) {
+    try {
+      const abs = [join(APP, path), join(ROOT, path)].find((p) => existsSync(p))
+      if (abs) {
+        const { generations } = await import('./doc-guard.mjs')
+        const g = generations(abs)
+        const off = Number(hook.tool_input?.offset || 0)
+        const lim = Number(hook.tool_input?.limit || 0)
+        if (g.length >= 2 && off > 0) {
+          const top = g[g.length - 1]
+          const end = lim ? off + lim : Infinity
+          if (top.line < off || top.line > end) {
+            console.error(`⛔ 이 문서엔 «세대»가 ${g.length}개 쌓여 있는데, 지금 읽는 범위(${off}~${lim ? off + lim : '끝'})가 «현행»을 안 덮는다.`)
+            console.error(`\n⭐ 현행 = ${top.line}줄  ${top.date}  ${top.title}`)
+            console.error('\n👉 맨 아래 세대부터 읽어라. 위쪽은 «지나간 판단»이다.')
+            console.error(`   전체 목록 = node hankki/scripts/doc-guard.mjs --gen ${path}`)
+            process.exit(2)
+          }
+        }
+      }
+    } catch { /* 훅은 절대 세션을 깨지 않는다 */ }
   }
 
   // 같은 주제의 더 옛 문서

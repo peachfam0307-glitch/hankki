@@ -79,8 +79,12 @@ export const nextGate = (from = todayKST()) => {
   return up.length ? up.filter((g) => g.date === up[0].date) : []
 }
 
+// ⚠️ 훅이 `import` 할 때 아래 출력이 딸려 나오면 안 된다 — 직접 실행일 때만 돈다.
+//    (2026-08-01 실제로 세션 브리핑에 달력 전체가 두 번 찍혔다)
+const isMain = (process.argv[1] || '').endsWith('release-calendar.mjs')
 const mode = process.argv[2] || ''
 const arg = process.argv[3] || ''
+if (isMain) {
 
 if (mode === '--on') {
   const g = gates().filter((x) => x.date === arg)
@@ -114,3 +118,4 @@ for (const g of gates()) {
 }
 console.log(`\n오늘(KST) = ${todayKST()}`)
 console.log('⛔ 절대원칙 = **자동 공개 전날에 고화질 전수 검수하고 내보낸다** (창업자 2026-08-01)')
+}

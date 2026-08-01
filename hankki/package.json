@@ -15,7 +15,9 @@
     "cuts": "node scripts/check-cutouts.mjs",
     "test:res": "node scripts/check-sticker-res.mjs",
     "test:title": "node scripts/test-cardtitle.mjs",
-    "최신": "node scripts/latest-map.mjs"
+    "최신": "node scripts/latest-map.mjs",
+    "docguard": "node scripts/doc-guard.mjs",
+    "calendar": "node scripts/release-calendar.mjs"
   },
   "dependencies": {
     "html-to-image": "^1.11.13",
