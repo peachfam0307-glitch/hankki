@@ -17,3 +17,4 @@ hankki/design/promo/배경-코드생성/
 # 🔬 일회용 검증 스크립트 — 루트에 만들고 커밋엔 안 딸려가게 (2026-08-01 청소)
 #   여러 번 돌릴 것만 hankki/scripts/검증/ 으로 옮긴다(거기 README 에 한 줄 적기)
 hankki/_*.mjs
+hankki/_*.py
