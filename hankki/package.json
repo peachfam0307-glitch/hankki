@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test:link": "node scripts/test-linkrules.mjs",
     "test:parser": "node scripts/test-parser.mjs",
-    "smoke": "node scripts/latest-map.mjs --check && node scripts/check-launcher.mjs && node scripts/check-sticker-res.mjs && node scripts/check-cutouts.mjs && node scripts/test-season.mjs && node scripts/test-cardtitle.mjs && node scripts/test-linkrules.mjs && node scripts/test-parser.mjs && node scripts/test-exit.mjs && node scripts/test-motion.mjs && node scripts/asset-map.mjs > /dev/null && node scripts/smoke.mjs",
+    "smoke": "node scripts/latest-map.mjs --check && node scripts/check-launcher.mjs && node scripts/check-foodtab.mjs && node scripts/check-sticker-res.mjs && node scripts/check-cutouts.mjs && node scripts/test-season.mjs && node scripts/test-cardtitle.mjs && node scripts/test-linkrules.mjs && node scripts/test-parser.mjs && node scripts/test-exit.mjs && node scripts/test-motion.mjs && node scripts/asset-map.mjs > /dev/null && node scripts/smoke.mjs",
     "assets": "node scripts/asset-map.mjs",
     "cuts": "node scripts/check-cutouts.mjs",
     "test:res": "node scripts/check-sticker-res.mjs",
@@ -18,7 +18,8 @@
     "최신": "node scripts/latest-map.mjs",
     "docguard": "node scripts/doc-guard.mjs",
     "calendar": "node scripts/release-calendar.mjs",
-    "launcher": "node scripts/check-launcher.mjs"
+    "launcher": "node scripts/check-launcher.mjs",
+    "foodtab": "node scripts/check-foodtab.mjs"
   },
   "dependencies": {
     "html-to-image": "^1.11.13",
