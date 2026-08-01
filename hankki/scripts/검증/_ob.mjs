@@ -13,7 +13,7 @@ p.on('pageerror', (e) => errs.push(String(e)))
 await p.goto(BASE, { waitUntil: 'domcontentloaded' })   // onboarded 키를 안 심어야 온보딩이 뜬다
 await p.waitForTimeout(2600)
 for (let i = 1; i <= 8; i++) {
-  await p.screenshot({ path: `../_ob${i}.png` })
+  await p.screenshot({ path: `../../_ob${i}.png` })
   const next = p.getByRole('button', { name: /다음|시작/ }).first()
   if (!(await next.count())) break
   await next.click(); await p.waitForTimeout(900)

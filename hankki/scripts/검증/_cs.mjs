@@ -27,8 +27,8 @@ for (const k of SHOTS) {
   await p.waitForTimeout(3200)
   // 카드 요소만 찍는다(폰 화면 크롭이면 위아래가 잘린다)
   const card = p.locator('div[style*="width: 1080px"][style*="height: 1350px"]').first()
-  if (await card.count()) await card.screenshot({ path: `../_k_${k}.png` })
-  else await p.screenshot({ path: `../_k_${k}.png` })
+  if (await card.count()) await card.screenshot({ path: `../../_k_${k}.png` })
+  else await p.screenshot({ path: `../../_k_${k}.png` })
   await ctx.close()
   console.log('찍음:', k)
 }

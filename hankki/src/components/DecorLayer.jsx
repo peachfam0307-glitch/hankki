@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
-import { StickerArt, StickerFx, KITCHEN_IDS, FRIEND_IDS, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle } from './Stickers'
+import { StickerArt, StickerFx, FRIEND_IDS, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
