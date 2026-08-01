@@ -20,8 +20,8 @@
     "path": "./signing.keystore",
     "alias": "my-key-alias"
   },
-  "appVersionName": "9.33",
-  "appVersionCode": 6,
+  "appVersionName": "9.35",
+  "appVersionCode": 7,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://peachfam0307-glitch.github.io/hankki/manifest.webmanifest",
@@ -56,5 +56,5 @@
   },
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
-  "appVersion": "9.33"
+  "appVersion": "9.35"
 }

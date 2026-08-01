@@ -27,9 +27,9 @@ on:
   workflow_dispatch:
     inputs:
       versionCode:
-        description: '버전코드 — 콘솔에 올라간 최신 번호보다 커야 함 (2026-07-29 기준 5까지 올라감)'
+        description: '버전코드 — 콘솔에 올라간 최신보다 커야 함. ✅2026-08-01 확인: Play 최신 = 5 (8.83, 7/29 게시)'
         required: true
-        default: '6'
+        default: '7'
       versionName:
         description: '버전 이름 — 비워두면 hankki/src/version.js 에서 자동으로 읽는다'
         required: false
