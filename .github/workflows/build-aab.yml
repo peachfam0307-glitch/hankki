@@ -31,13 +31,17 @@ on:
         required: true
         default: '6'
       versionName:
-        description: "버전 이름 — src/version.js 의 값 (예: 8.83)"
-        required: true
-        default: '9.33'
+        description: '버전 이름 — 비워두면 hankki/src/version.js 에서 자동으로 읽는다'
+        required: false
+        default: ''
       targetSdk:
         description: '타겟 SDK (Google Play 요구치. 2026-08-31부터 36)'
         required: true
         default: '36'
+      dryRun:
+        description: '연습 실행 — 서명키 없이 프로젝트 생성·targetSdk 확인까지만 (첫 실행 권장)'
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -58,6 +62,11 @@ jobs:
       - name: bubblewrap 설치
         run: npm i -g @bubblewrap/cli
 
+      # 🏷 런처명이 «앞뒤 대칭 4글자»인지 먼저 본다 — 틀린 채로 뽑으면 폰에서 이름이 쏠린다.
+      #    (안 보이는 글자는 눈으로 못 세지만 코드는 센다 — 2026-08-01 게이트)
+      - name: 런처명 검사
+        run: node hankki/scripts/check-launcher.mjs
+
       - name: twa-manifest 준비 (버전 주입)
         run: |
           mkdir -p build && cp android/twa-manifest.json build/twa-manifest.json
@@ -65,18 +74,33 @@ jobs:
           node -e "
             const fs = require('fs')
             const m = JSON.parse(fs.readFileSync('twa-manifest.json', 'utf8'))
+            // ⭐ 버전 이름은 **손으로 옮겨적지 않는다** — 비워두면 앱이 쓰는 값을 그대로 읽는다.
+            //   (사람이 옮겨적는 자리는 반드시 언젠가 낡는다. 실제로 기본값이 9.33에서 안 바뀌어 있었다)
+            const inName = '${{ inputs.versionName }}'.trim()
+            const auto = (fs.readFileSync('../hankki/src/version.js','utf8').match(/APP_VERSION\s*=\s*'v?([0-9.]+)'/) || [])[1]
+            const name = inName || auto
+            if (!name) throw new Error('버전 이름을 못 정했다 — src/version.js 를 못 읽음')
             m.appVersionCode = Number('${{ inputs.versionCode }}')
-            m.appVersionName = '${{ inputs.versionName }}'
-            m.appVersion = '${{ inputs.versionName }}'
+            m.appVersionName = name
+            m.appVersion = name
             m.signingKey = { path: './signing.keystore', alias: process.env.ALIAS }
             fs.writeFileSync('twa-manifest.json', JSON.stringify(m, null, 2))
-            console.log('버전코드', m.appVersionCode, '/ 버전이름', m.appVersionName)
+            console.log('버전코드', m.appVersionCode, '/ 버전이름', m.appVersionName, inName ? '(직접 입력)' : '(version.js 에서 읽음)')
+            console.log('런처명 글자수', [...m.launcherName].length)
           "
         env:
           ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
 
       - name: 서명키 복원
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > build/signing.keystore
+        if: ${{ !inputs.dryRun }}
+        run: |
+          if [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "⛔ 서명키 Secret 이 비어 있다. 저장소 Settings → Secrets and variables → Actions 에"
+            echo "   ANDROID_KEYSTORE_BASE64 · ANDROID_KEYSTORE_PASSWORD · ANDROID_KEY_PASSWORD · ANDROID_KEY_ALIAS 를 넣을 것."
+            echo "   (연습만 해보려면 dryRun 을 켜고 다시 돌리면 된다)"
+            exit 1
+          fi
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > build/signing.keystore
 
       # twa-manifest.json 을 바탕으로 안드로이드 프로젝트를 새로 만든다.
       # (JDK·Android SDK 는 bubblewrap 이 알아서 내려받는다 — 러너는 인터넷이 되므로 가능)
@@ -93,7 +117,14 @@ jobs:
           echo "── 확인 ──"
           grep -nE "compileSdkVersion|targetSdkVersion|versionCode|versionName" app/build.gradle
 
+      - name: 연습 실행이면 여기서 끝
+        if: ${{ inputs.dryRun }}
+        run: |
+          echo "✅ 연습 실행 통과 — 프로젝트 생성과 targetSdk 상향까지 확인됐다."
+          echo "   이제 Secret 4개를 넣고 dryRun 을 끄고 다시 돌리면 AAB 가 나온다."
+
       - name: AAB 빌드
+        if: ${{ !inputs.dryRun }}
         working-directory: build
         run: bubblewrap build --skipPwaValidation
         env:
@@ -101,6 +132,7 @@ jobs:
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - name: 결과물 올리기
+        if: ${{ !inputs.dryRun }}
         uses: actions/upload-artifact@v4
         with:
           name: hankki-aab-${{ inputs.versionName }}-${{ inputs.versionCode }}
