@@ -96,6 +96,17 @@ try {
         console.log('   전체 = `node hankki/scripts/doc-guard.mjs --stale --recent`')
       }
     } catch { /* 없으면 조용히 */ }
+    // 🙈 「모른다」고 적어놓고 «그 위에서 추천»한 곳 (2026-08-03 네이버 커넥트 사고)
+    try {
+      const { execFileSync } = await import('node:child_process')
+      const out = execFileSync(process.execPath, [new URL('./check-claims.mjs', import.meta.url).pathname],
+        { encoding: 'utf8', timeout: 8000 })
+      if (out.includes('⚠️')) {
+        console.log(`\n🙈 「모른다」고 적어놓고 «추천»한 곳이 있다 — 창업자가 읽는 건 표와 추천이다`)
+        out.split('\n').filter((l) => l.includes('«모른다»')).slice(0, 3).forEach((l) => console.log(`  ${l.trim()}`))
+        console.log('   전체 = `npm run claims`')
+      }
+    } catch { /* 없으면 조용히 */ }
     process.exit(0)
   }
 
