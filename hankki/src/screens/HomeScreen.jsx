@@ -17,6 +17,7 @@ import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomClap from '../assets/ui/gom_clap.png'
 import { needsOnboarding } from '../components/Onboarding'
 import { backupNudgeStep, dismissBackupNudge, askOpenBackup } from '../nudges'
+import { weeklyNow } from '../data/weekly'
 
 // 홈 첫 방문 코치마크 — 진짜 핵심 기능부터 짚어준다(창업자 딸 아이디어 ⭐).
 // 첫 스텝을 '되는 기능'(가져오기·오늘 뭐 해먹지)으로, 곧 출시 미리보기는 맨 뒤에 살짝.
@@ -52,6 +53,10 @@ export default function HomeScreen() {
   // 백업 유도 — 레시피가 5개·15개 쌓였을 때 딱 두 번. 화면 그릴 때 한 번만 판정한다
   // (닫으면 0이 되어 사라지고, 다음 문턱에서 한 번 더 뜬다).
   const [bkStep, setBkStep] = useState(() => backupNudgeStep(recipes.length))
+
+  // 🗓 이번 주 레시피 — 달력이 여는 줄. ⛔재고가 없으면 `null` 이라 **줄을 아예 안 그린다**
+  //    (빈 「이번 주」 자리를 남기지 않는다 · `LAB_*_URL` 이 비면 그 칸을 안 그리는 것과 같은 방식).
+  const weekly = useMemo(() => weeklyNow(recipes), [recipes])
 
   // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
   const today = useMemo(() => {
@@ -178,6 +183,33 @@ export default function HomeScreen() {
           </div>
           <Icon name="chevron-right" size={18} color="var(--sand)" />
         </button>
+
+        {/* 🗓 이번 주 레시피 — 「왜 이게 올라왔는지」를 말해주는 자리.
+            창업자 2026-08-03: *"뭐라도 안내를 하고 올려야지 않나? 올린 이유를?
+            제철이라 ○○이 맛있다던가 매주마다 레시피 하나씩 올리는데 이번주는 이거라던가."*
+            → 8/2 에 레시피 12편을 «안내 없이» 부어서 유저 눈엔 그냥 목록이 늘어난 것이었다.
+            ⛔ 재고가 없으면 `weekly` 가 null 이라 이 줄이 통째로 안 그려진다(빈 자리 금지).
+            ⛔ 「이번 주」는 **추천이지 잠금이 아니다** — 지난 주 것도 레시피 탭에 그대로 있다. */}
+        {weekly && (
+          <div style={{ marginTop: 14, padding: '13px 14px 12px', borderRadius: 16, background: 'var(--cream)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {/* ⚠️ `calendar` 아이콘은 우리 세트에 «없다» — 이름을 추측해 넣으면 화면에 아무것도 안 나온다.
+                  있는 것 중 「새로 왔어요」에 가장 가까운 `sparkle`. (전체 목록 = `src/components/Icon.jsx`) */}
+              <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />
+              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--brown)', letterSpacing: '0.02em' }}>이번 주 제철</div>
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 800, marginTop: 5 }}>{weekly.title}</div>
+            <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3, lineHeight: 1.5 }}>{weekly.why}</div>
+            <div className="hscroll" style={{ marginTop: 11 }}>
+              {weekly.items.map((r) => (
+                <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
+                  <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
+                  <div className="name">{r.title}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 오늘 뭐 해먹지? */}
         {todayPick && (
