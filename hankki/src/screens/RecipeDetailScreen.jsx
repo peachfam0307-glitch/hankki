@@ -152,6 +152,12 @@ export default function RecipeDetailScreen({ id }) {
   // 이 레시피가 쓴 '주부의 장바구니' 제품(재료에 제품명이 적혀 있으면 자동 매칭) — 구매 연결
   // 재료뿐 아니라 메모도 스캔한다. (특화 제품만 재료에 이름 남기고, 나머지 내 제품은 메모로 옮겼기 때문)
   const pantryPicks = picksForIngredients([...(r?.ingredients || []), r?.memo || ''])
+  // ⭐ 픽은 «네 개까지만» 보이고 나머지는 접는다. 큐레이션 제품은 계속 늘어나는데
+  //    다 펼치면 목록이 재료 수만큼 길어져 아래의 「이 재료 다 담기」(수익 버튼)가 화면 밖으로 밀린다.
+  //    앞자리는 창업자가 직접 적은 제품이 차지한다(`picksForIngredients` 가 그 순서로 준다).
+  const PICK_MAX = 4
+  const [picksOpen, setPicksOpen] = useState(false)
+  const shownPicks = picksOpen ? pantryPicks : pantryPicks.slice(0, PICK_MAX)
   const addAllPicks = () => {
     pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p) }))
     nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요`)
@@ -362,7 +368,7 @@ export default function RecipeDetailScreen({ id }) {
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
             <div style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 6 }}>이 레시피, 이걸로 만들었어요</div>
             <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 10, lineHeight: 1.55 }}>재료를 <b style={{ color: 'var(--brown)' }}>왜 쓰는지 설명</b>은 <b style={{ color: 'var(--brown)' }}>장보기 → 주부의 장바구니</b>에 있어요</div>
-            {pantryPicks.map((p) => (
+            {shownPicks.map((p) => (
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
                 <span style={{ fontSize: 22, flex: '0 0 auto' }}>{p.emoji}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -372,6 +378,11 @@ export default function RecipeDetailScreen({ id }) {
                 <button className="press" onClick={() => openExternal(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>
               </div>
             ))}
+            {pantryPicks.length > PICK_MAX && !picksOpen && (
+              <button className="press" onClick={() => setPicksOpen(true)} style={{ width: '100%', marginTop: 9, padding: '8px 0', borderRadius: 10, background: 'transparent', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>
+                ＋{pantryPicks.length - PICK_MAX}개 더 보기
+              </button>
+            )}
             <button className="press" onClick={addAllPicks} style={{ width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Icon name="cart" size={15} />이 재료 다 담기</button>
             <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>담아두고 장보기에서 체크하며 사면 편해요 · 18년차 주부가 진짜 쓰는 재료예요</div>
           </div>
