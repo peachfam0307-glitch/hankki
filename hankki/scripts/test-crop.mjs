@@ -11,7 +11,16 @@
 // ⭐ 눈으로는 절대 못 잡는다 — 몇 %씩 밀리는 거라 화면만 보면 멀쩡해 보인다.
 //    그래서 원본 네 귀퉁이에 색 표식을 찍어 두고 «잘린 결과의 픽셀»을 직접 읽는다.
 //
-// 로컬:  SMOKE_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node scripts/test-crop.mjs
+// ⛔⛔ 이 게이트는 «CI 체인에 넣지 않는다» (2026-08-02)
+//    붙인 첫날 CI 스모크 단계가 18분·27분을 넘겨 배포가 두 번 통째로 막혔다.
+//    비교값 = v9.41 때 같은 단계가 «40초». 즉 이것 하나가 체인을 죽였다.
+//    180초 워치독을 달았는데도 CI 에선 안 끊겼다 — 원인은 CI 안이라 여기서 못 본다.
+//    📌 «모든 배포를 막는 게이트»는 «없는 게이트»보다 나쁘다. 그래서 로컬 명령으로 뺀다.
+//    ✅ 배포 전에 손으로 돌린다:  npm run test:crop
+//    🔜 CI 로 다시 넣으려면 먼저 «CI 에서 왜 안 끝나는지»를 로그로 확인할 것.
+//       (preview 서버를 두 개 띄우는 구조가 제일 의심된다 — smoke.mjs 와 합치는 쪽이 낫다)
+//
+// 로컬:  SMOKE_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome npm run test:crop
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 
