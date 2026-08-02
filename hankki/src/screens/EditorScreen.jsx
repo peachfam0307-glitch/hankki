@@ -58,6 +58,7 @@ export default function EditorScreen({ id, prefill }) {
   const ocrTargetRef = useRef('all') // 'all' | 'ingredients' | 'steps' — 어느 칸에 채울지
   const ocrQueue = useRef([]) // 여러 장 선택 시 남은 이미지들(한 장씩 크롭→인식)
   const ocrAccum = useRef('') // 'all' 자동분류용 — 여러 장의 인식 텍스트를 모아 한 번에 파싱
+  const ocrBusy = useRef(false) // 지금 읽는 중인가 — 화면 표시는 ocr.busy, «판단»은 이 ref 로
   const ingRef = useRef(null) // 재료 입력칸
   const stepRef = useRef(null) // 만드는 법 입력칸
   const titleRef = useRef(null) // 제목 입력칸 — 제목 없이 저장 누르면 여기로 데려간다
@@ -218,11 +219,23 @@ export default function EditorScreen({ id, prefill }) {
 
   // 사진 속 글자를 읽어 칸을 채운다. (썸네일과 별개)
   const runOcr = async (img) => {
-    if (!img || ocr.busy) return
+    // ⭐ 중복 방지는 state 가 아니라 ref 로 본다 — state 는 이 함수가 «만들어질 때»의 값이라
+    //   여러 장을 이어 읽을 때 옛 값을 붙들고 조용히 리턴할 수 있다(2장째가 안 들어오는 길).
+    if (!img || ocrBusy.current) return
     const target = ocrTargetRef.current || 'all'
+    ocrBusy.current = true
     setOcr({ busy: true, pct: 0 })
-    const text = await ocrImage(img, (pct) => setOcr({ busy: true, pct }))
-    setOcr({ busy: false, pct: 0 })
+    let text = ''
+    try {
+      text = await ocrImage(img, (pct) => setOcr({ busy: true, pct }))
+    } catch {
+      // ⛔ 한 장이 실패해도 «대기열은 계속 간다». 예전엔 여기서 터지면 busy 가 true 로 굳어
+      //    남은 장이 영영 안 들어오고 버튼도 계속 흐렸다.
+      text = ''
+    } finally {
+      ocrBusy.current = false
+      setOcr({ busy: false, pct: 0 })
+    }
 
     if (target === 'ingredients' || target === 'steps') {
       // 지정한 칸에만 — 읽은 줄을 정리해 이어붙인다(여러 장이면 계속 쌓인다).
@@ -401,7 +414,8 @@ export default function EditorScreen({ id, prefill }) {
             className="press"
             onClick={() => setPin(null)}
             aria-label="영상 닫기"
-            style={{ position: 'absolute', top: 8, right: 8, padding: '6px 12px', borderRadius: 10, background: 'rgba(20,19,17,0.72)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}
+            /* 캡처 닫기와 같은 이유로 안전영역만큼 내린다(sticky top:0 = 상태표시줄 자리) */
+            style={{ position: 'absolute', top: 'calc(8px + var(--safe-top, 0px))', right: 8, padding: '6px 12px', borderRadius: 10, background: 'rgba(20,19,17,0.72)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}
           >
             ✕ 닫기
           </button>
@@ -444,7 +458,12 @@ export default function EditorScreen({ id, prefill }) {
             className="press"
             onClick={() => setPin(null)}
             aria-label="캡처 사진 닫기"
-            style={{ position: 'absolute', top: 8, right: 8, padding: '9px 16px', borderRadius: 999, background: '#ee7f4b', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 3px 12px rgba(0,0,0,0.5)', border: '2px solid rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', gap: 5 }}
+            /* ⭐ top 에 안전영역(--safe-top)을 더한다 — 이 패널은 sticky top:0 이라
+               스크롤하면 «화면 맨 위»에 붙는데, 폰은 그 자리가 상태표시줄(시계·배터리)이다.
+               8px 만 주면 버튼이 통째로 상태표시줄 밑으로 들어가 «눌러도 안 눌린다».
+               창업자 제보: "사진 닫기가 가끔 레시피를 가리는데 치울 방법이 없어."
+               (「가끔」 = 스크롤해서 패널이 위에 붙었을 때만 그렇다) */
+            style={{ position: 'absolute', top: 'calc(8px + var(--safe-top, 0px))', right: 8, padding: '9px 16px', borderRadius: 999, background: '#ee7f4b', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 3px 12px rgba(0,0,0,0.5)', border: '2px solid rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', gap: 5 }}
           >
             ✕ 다 썼으면 사진 닫기
           </button>

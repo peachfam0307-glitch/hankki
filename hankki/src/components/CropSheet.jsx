@@ -5,6 +5,7 @@ import { useModalBack } from '../useBackHandler'
 // 사진 자르기 — OCR 전에 글자 영역만 선택. (블로그 캡처의 광고·그림을 빼고 읽기)
 // 모서리 4개를 드래그해 영역을 조절하고, 안쪽을 드래그하면 통째로 이동.
 const MIN = 0.12 // 최소 크기(비율)
+const AREA_PAD = 10 // 이미지 자리의 좌우 여백(px) — 아래 style 과 «반드시» 같은 값
 
 export default function CropSheet({
   image,
@@ -23,14 +24,52 @@ export default function CropSheet({
 }) {
   useModalBack(onCancel) // 뒤로가기 → 취소(닫기)
   const boxRef = useRef(null) // 이미지가 실제로 그려진 영역
+  const areaRef = useRef(null) // 이미지가 들어갈 «빈 자리»(패딩 포함)
+  const imgRef = useRef(null)
+  const [fit, setFit] = useState(null) // 실제로 그릴 크기 {w,h}
   const [rect, setRect] = useState({ x: 0.03, y: 0.03, w: 0.94, h: 0.94 })
   const drag = useRef(null)
   const fired = useRef(false) // 두 번 눌러도 한 번만 진행(중복 OCR·화면 이동 방지)
 
+  // ⭐ 박스 크기를 «내가» 정한다 — 여기가 크롭 정확도의 심장이다.
+  //   예전엔 이미지에 maxHeight: calc(100vh - 200px) 를 주고 박스엔 maxHeight: 100% 를 줬는데,
+  //   그 200px 은 위아래 여백을 «어림잡은» 값이라 실제 자리 높이와 안 맞았다.
+  //   실측(390×844) = 이미지 644px · 박스 616.8px 로 27px 어긋났고, 폰은 안전영역 때문에 더 벌어진다.
+  //   비율은 박스 기준으로 재는데(toLocal) 실제 그림은 그보다 크니 → 손가락으로 짚은 곳보다
+  //   «아래쪽»이 잘려 나갔다(창업자: "내가 자른 것보다 더 작게 잘려").
+  //   → 빈 자리를 직접 재서 object-fit: contain 과 같은 계산을 하고, 박스를 그 크기로 못 박는다.
+  //     그러면 박스 = 그려진 이미지라 「보이는 것」과 「자르는 것」이 같아진다.
+  // ⚠️ 원본 크기는 «상태에 담아두지 않고» 그때그때 img 에서 읽는다.
+  //    담아뒀더니 「사진 바뀜」 초기화 effect 가 onLoad 보다 늦게 돌아 방금 잰 값을 지워버렸다
+  //    (실제로 그래서 크기가 안 잡힌 채 넘어갔다). 살아 있는 값을 읽으면 순서 싸움이 아예 없다.
+  const measure = () => {
+    const area = areaRef.current
+    const img = imgRef.current
+    if (!area || !img || !img.naturalWidth || !img.naturalHeight) return
+    const availW = Math.max(1, area.clientWidth - AREA_PAD * 2)
+    const availH = Math.max(1, area.clientHeight)
+    const k = Math.min(availW / img.naturalWidth, availH / img.naturalHeight)
+    setFit({ w: Math.max(1, Math.round(img.naturalWidth * k)), h: Math.max(1, Math.round(img.naturalHeight * k)) })
+  }
+
   useEffect(() => {
     setRect({ x: 0.03, y: 0.03, w: 0.94, h: 0.94 })
     fired.current = false
+    setFit(null)
+    measure() // 이미 받아둔 사진이면 여기서 바로 잡힌다(onLoad 를 안 기다린다)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [image])
+
+  useEffect(() => {
+    const area = areaRef.current
+    if (!area) return undefined
+    // 화면 회전·키보드로 자리가 바뀌면 다시 잰다
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => measure()) : null
+    ro?.observe(area)
+    window.addEventListener('resize', measure)
+    return () => { ro?.disconnect(); window.removeEventListener('resize', measure) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const once = (fn) => (...args) => {
     if (fired.current) return
@@ -142,9 +181,17 @@ export default function CropSheet({
         {hint}
       </div>
 
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '0 10px' }}>
-        <div ref={boxRef} style={{ position: 'relative', maxWidth: '100%', maxHeight: '100%', display: 'inline-block', touchAction: 'none' }} onPointerMove={onMove} onPointerUp={endDrag} onPointerCancel={endDrag}>
-          <img src={image} alt="" style={{ display: 'block', maxWidth: '100%', maxHeight: 'calc(100vh - 200px)', objectFit: 'contain' }} draggable={false} />
+      <div ref={areaRef} style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: `0 ${AREA_PAD}px` }}>
+        {/* 박스 크기 = 위 measure() 가 잰 값. 이미지가 이 박스를 «딱» 채우므로 여백(레터박스)이 0이다. */}
+        <div ref={boxRef} style={{ position: 'relative', width: fit ? fit.w : '100%', height: fit ? fit.h : '100%', touchAction: 'none', visibility: fit ? 'visible' : 'hidden' }} onPointerMove={onMove} onPointerUp={endDrag} onPointerCancel={endDrag}>
+          <img
+            ref={imgRef}
+            src={image}
+            alt=""
+            onLoad={measure}
+            style={{ display: 'block', width: '100%', height: '100%' }}
+            draggable={false}
+          />
           {/* 선택 영역 — 바깥은 어둡게 */}
           <div
             onPointerDown={startDrag('move')}
