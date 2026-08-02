@@ -23,7 +23,8 @@
     "test:crop": "node scripts/test-crop.mjs",
     "steps": "node scripts/check-steps.mjs",
     "text": "node scripts/check-text.mjs",
-    "claims": "node scripts/check-claims.mjs"
+    "claims": "node scripts/check-claims.mjs",
+    "근거": "node scripts/evidence.mjs"
   },
   "dependencies": {
     "html-to-image": "^1.11.13",
