@@ -53,12 +53,13 @@ export default function EditorScreen({ id, prefill }) {
   const editing = recipes.find((r) => r.id === id)
   const photoRef = useRef(null) // 썸네일용 사진
   const ocrRef = useRef(null) // 글자 읽기용(썸네일과 별개)
-  const [ocr, setOcr] = useState({ busy: false, pct: 0 })
+  const [ocr, setOcr] = useState({ busy: false, pct: 0, page: 1, total: 1 })
   const [cropImg, setCropImg] = useState(null) // 글자 읽기 전 '자르기' 단계
   const ocrTargetRef = useRef('all') // 'all' | 'ingredients' | 'steps' — 어느 칸에 채울지
   const ocrQueue = useRef([]) // 여러 장 선택 시 남은 이미지들(한 장씩 크롭→인식)
   const ocrAccum = useRef('') // 'all' 자동분류용 — 여러 장의 인식 텍스트를 모아 한 번에 파싱
   const ocrBusy = useRef(false) // 지금 읽는 중인가 — 화면 표시는 ocr.busy, «판단»은 이 ref 로
+  const ocrTotal = useRef(1) // 이번에 고른 장 수 — 「2장 중 1장째」를 알려주려고(창업자: "시간은 좀 걸림")
   const ingRef = useRef(null) // 재료 입력칸
   const stepRef = useRef(null) // 만드는 법 입력칸
   const titleRef = useRef(null) // 제목 입력칸 — 제목 없이 저장 누르면 여기로 데려간다
@@ -210,6 +211,7 @@ export default function EditorScreen({ id, prefill }) {
       files.map((f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f) })),
     ).then((urls) => {
       ocrAccum.current = ''
+      ocrTotal.current = urls.length
       ocrQueue.current = urls.slice(1) // 첫 장은 지금 크롭, 나머지는 대기열
       setCropImg(urls[0])
     })
@@ -229,18 +231,21 @@ export default function EditorScreen({ id, prefill }) {
     //   여러 장을 이어 읽을 때 옛 값을 붙들고 조용히 리턴할 수 있다(2장째가 안 들어오는 길).
     if (!img || ocrBusy.current) return
     const target = ocrTargetRef.current || 'all'
+    // 여러 장이면 「2장 중 1장째」를 보여준다 — 얼마나 남았는지 모르면 기다림이 두 배로 길게 느껴진다
+    const total = ocrTotal.current
+    const page = Math.max(1, total - ocrQueue.current.length)
     ocrBusy.current = true
-    setOcr({ busy: true, pct: 0 })
+    setOcr({ busy: true, pct: 0, page, total })
     let text = ''
     try {
-      text = await ocrImage(img, (pct) => setOcr({ busy: true, pct }))
+      text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }))
     } catch {
       // ⛔ 한 장이 실패해도 «대기열은 계속 간다». 예전엔 여기서 터지면 busy 가 true 로 굳어
       //    남은 장이 영영 안 들어오고 버튼도 계속 흐렸다.
       text = ''
     } finally {
       ocrBusy.current = false
-      setOcr({ busy: false, pct: 0 })
+      setOcr({ busy: false, pct: 0, page, total })
     }
 
     if (target === 'ingredients' || target === 'steps') {
@@ -455,7 +460,8 @@ export default function EditorScreen({ id, prefill }) {
                     className="press"
                     onClick={() => { setShot(k); if (photoBoxRef.current) photoBoxRef.current.scrollTop = 0 }}
                     aria-label={`${k + 1}번째 캡처 보기`}
-                    style={{ flex: '0 0 auto', minWidth: 30, padding: '5px 9px', borderRadius: 999, background: k === shotIdx ? '#fff' : 'rgba(255,255,255,0.16)', color: k === shotIdx ? '#20211f' : '#fff', fontSize: 12.5, fontWeight: 800 }}
+                    /* 지금 보는 장 = 주황. 흰색은 «흰 종이 캡처» 위에서 통째로 묻힌다(창업자 폰 2026-08-02) */
+                    style={{ flex: '0 0 auto', minWidth: 32, padding: '5px 10px', borderRadius: 999, background: k === shotIdx ? '#ee7f4b' : 'rgba(255,255,255,0.16)', color: '#fff', fontSize: 12.5, fontWeight: 800, border: k === shotIdx ? '1.5px solid rgba(255,255,255,0.9)' : '1px solid rgba(255,255,255,0.28)' }}
                   >
                     {k + 1}
                   </button>
@@ -602,7 +608,7 @@ export default function EditorScreen({ id, prefill }) {
         {ocr.busy && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 700, marginBottom: 12 }}>
             <div className="ocr-spin" style={{ width: 18, height: 18, borderWidth: 2.5, margin: 0 }} />
-            사진에서 글자 읽는 중… {ocr.pct}%
+            사진에서 글자 읽는 중… {ocr.pct}%{ocr.total > 1 ? ` · ${ocr.total}장 중 ${ocr.page}장째` : ''}
           </div>
         )}
 
@@ -771,28 +777,38 @@ export default function EditorScreen({ id, prefill }) {
               className="press"
               onClick={(e) => { e.stopPropagation(); setZoom(false) }}
               aria-label="닫기"
-              style={{ position: 'fixed', top: 'calc(10px + var(--safe-top))', right: 12, padding: '8px 15px', borderRadius: 999, background: 'rgba(255,255,255,0.16)', color: '#fff', fontSize: 13.5, fontWeight: 700, backdropFilter: 'blur(4px)' }}
+              /* 캡처가 «흰 종이»면 반투명 흰 버튼은 안 보인다 → 어두운 알약으로 */
+              style={{ position: 'fixed', top: 'calc(10px + var(--safe-top))', right: 12, padding: '8px 15px', borderRadius: 999, background: 'rgba(18,17,16,0.82)', color: '#fff', fontSize: 13.5, fontWeight: 700, backdropFilter: 'blur(4px)' }}
             >
               ✕ 닫기
             </button>
-            <div style={{ position: 'fixed', bottom: 'calc(14px + var(--safe-bottom))', left: 0, right: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            {/* ⭐ 바닥 조작줄엔 «자기 배경»이 있어야 한다 (창업자 폰 2026-08-02)
+                예전엔 배경 없이 글자·번호만 띄웠는데, 레시피 캡처는 대개 «흰 종이»라
+                흰 번호(지금 보는 장)는 통째로 안 보이고 검은 번호만 «글 속에 떠 있는 2»처럼 보였다.
+                뒤에 무엇이 오든 읽히게 어두운 띠를 깐다. */}
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '12px 12px calc(14px + var(--safe-bottom))', background: 'linear-gradient(to bottom, rgba(16,15,14,0), rgba(16,15,14,0.9) 34%, rgba(16,15,14,0.95))', backdropFilter: 'blur(6px)' }}>
               {refs.length > 1 && (
                 <div style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
-                  {refs.map((_, k) => (
-                    <button
-                      key={k}
-                      className="press"
-                      onClick={(e) => { e.stopPropagation(); setZoom(k) }}
-                      aria-label={`${k + 1}번째 캡처 크게 보기`}
-                      style={{ minWidth: 34, padding: '7px 11px', borderRadius: 999, background: k === Math.min(zoom, refs.length - 1) ? '#fff' : 'rgba(255,255,255,0.18)', color: k === Math.min(zoom, refs.length - 1) ? '#20211f' : '#fff', fontSize: 13, fontWeight: 800 }}
-                    >
-                      {k + 1}
-                    </button>
-                  ))}
+                  {refs.map((_, k) => {
+                    const on = k === Math.min(zoom, refs.length - 1)
+                    return (
+                      <button
+                        key={k}
+                        className="press"
+                        onClick={(e) => { e.stopPropagation(); setZoom(k) }}
+                        aria-label={`${k + 1}번째 캡처 크게 보기`}
+                        style={{ minWidth: 46, padding: '9px 14px', borderRadius: 999, background: on ? '#ee7f4b' : 'rgba(255,255,255,0.18)', color: '#fff', fontSize: 14, fontWeight: 800, border: on ? '2px solid rgba(255,255,255,0.92)' : '1px solid rgba(255,255,255,0.3)', boxShadow: on ? '0 2px 12px rgba(238,127,75,0.55)' : 'none' }}
+                      >
+                        {k + 1}
+                      </button>
+                    )
+                  })}
                 </div>
               )}
-              <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 600 }}>
-                손가락으로 확대·축소{refs.length > 1 ? ' · 번호를 눌러 다른 장' : ''}
+              <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 12, fontWeight: 600 }}>
+                {refs.length > 1
+                  ? `${Math.min(zoom, refs.length - 1) + 1} / ${refs.length}장 · 번호를 눌러 다른 장`
+                  : '손가락으로 확대·축소'}
               </span>
             </div>
           </div>
