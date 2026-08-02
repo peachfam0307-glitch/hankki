@@ -10,6 +10,16 @@ const NOISE =
   /^(ingredients?\s*[:：]?$|recipe\b|요리\b|tip\b|instagram|youtube|www\.|https?:|좋아요|댓글|팔로우|공유|저장|더\s?보기|답글)/i
 // 줄 어디에 있어도 잡음인 것 — SNS UI 텍스트(댓글 입력창 등)
 const NOISE_ANY = /(님에게\s*댓글|댓글\s*달기|reels|릴스|shorts|구독|알림\s*설정)/i
+// 📣 협찬·공동구매 홍보 줄 — 레시피가 아니라 «광고»다. 재료도 순서도 아니니 버린다.
+//    2026-08-02 창업자 폰 사고: `티리난지 피렌체 웍 최저가 공구중!` 이 «만드는 법 1번»으로 들어갔다.
+//    ⚠️ 좁게 잡는다 — 「공구중·최저가·할인코드」처럼 광고에만 쓰는 말만.
+//    「할인」 단독은 안 넣는다(레시피 본문에 나올 일은 없지만 굳이 위험을 만들지 않는다).
+const NOISE_AD = /(공구\s*중|공동\s*구매|최저가|할인\s*코드|링크\s*[인is]n\s*bio|프로필\s*링크|협찬|광고\s*문의|판매\s*중)/i
+// 👤 인스타 계정명이 붙은 첫 줄 — `emily.at_home 시아버지가…` 처럼 아이디가 앞에 붙는다.
+//    ⚠️ 줄을 버리지 않고 «아이디만» 떼어낸다. 뒤에 붙은 게 대개 그 레시피의 «제목»이라서.
+// ⚠️ OCR 은 `_` 를 공백으로 읽는다 — `emily.at_home` → `emily.at home`.
+//    그래서 «점이나 밑줄이 든 영문 토큰»을 아이디로 보고, 뒤따르는 영문 조각도 한 번 더 떼어낸다.
+const IG_HANDLE = /^[a-z0-9]+[._][a-z0-9._]{1,28}(\s+[a-z0-9._]{1,15})?\s+(?=[가-힣📌🍆✨])/i
 // 날짜만 있는 줄(캡션 작성일) — 재료·순서 아님. "2025년 3월 11일"(일→익 오독 포함)
 const DATE_ONLY = /^\s*\d{4}\s*[년.\-/]\s*\d{1,2}\s*[월.\-/]\s*\d{1,2}\s*[일익]?\.?\s*$|^\s*\d{1,2}\s*월\s*\d{1,2}\s*[일익]\.?\s*$/
 // 앱/웹 '더 보기' 류 UI 버튼 글자 — 줄 끝에 붙거나 줄 전체. "…끊인다. 간단히 보기"
@@ -20,6 +30,12 @@ const TIP_CUE = /(초보자|꿀팁|취향껏|입맛에\s*따라|더\s*맛있|생
 // 섹션 헤더 — 캡션이 "재료 → 양념 → 팁" 구조로 온 걸 알아채면 분류가 훨씬 정확해진다.
 const SEC_ING = /^(재료|양념|소스|양념장|재료\s*준비|필요한\s*재료)/
 const SEC_STEP = /^(만드는\s*법|만들기|만드는\s*방법|조리\s*순서|요리\s*순서|조리\s*방법|요리\s*방법|조리법|레시피|순서)/
+// ⚠️⚠️ 「레시피 (3-4인분 기준)」은 «분량 안내»지 「만드는 법」 헤더가 아니다.
+//    2026-08-02 창업자 폰 사고 — 인스타 캡션 첫머리의 `✨레시피 (3-4인분 기준)✨` 가
+//    SEC_STEP 에 걸려 **그 줄부터 순서 구역이 열렸고, 재료 14줄이 통째로 「만드는 법」으로 갔다**
+//    (재료 칸엔 「.」 하나만 남았다). 인스타 레시피가 거의 다 이 꼴로 시작한다.
+// ⛔ 「레시피」를 SEC_STEP 에서 빼면 진짜 헤더(`레시피` 단독)를 놓친다 → **뒤에 분량이 붙은 것만** 뺀다.
+const SEC_STEP_PORTION = /^레시피\s*[(（]?\s*[\d]+\s*[~\-–]?\s*[\d]*\s*(인분|인|人分|기준)/
 const SEC_MEMO = /(팁|포인트|tip)/i
 
 // 요리 단위로 흔한 영문 약어 — 토큰 청소에서 살려둔다.
@@ -262,6 +278,9 @@ export function parseRecipeText(raw = '', opts = {}) {
     if (/^\s*#\S/.test(rawLine) || (String(rawLine).match(/#[^\s#]+/g) || []).length >= 2) continue
     let l = cleanTokens(sanitize(rawLine.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•·▪◦‣●○*]/g, ' ')))
     l = stripLeadingOcrJunk(l, fromOcr) // 삐/=/HE/Vv Eel 같은 앞머리 잡음 벗기기
+    // 👤 첫 줄에만 — 인스타 아이디를 떼면 그 뒤가 대개 «제목»이다(`emily.at_home 홍콩식 가지볶음`).
+    //    ⛔줄을 버리지 않는다. 버리면 제목까지 같이 날아간다.
+    if (items.length === 0) l = l.replace(IG_HANDLE, '').trim() || l
     l = l.replace(UI_TRAIL, '').trim() // "…끊인다. 간단히 보기" → 뒤 UI 글자 떼기
     if (!l || DATE_ONLY.test(l)) continue // 빈 줄·날짜만 있는 줄(작성일)은 버린다
     // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
@@ -295,14 +314,21 @@ export function parseRecipeText(raw = '', opts = {}) {
 
     // 첫 줄 제목 — 이모지 붙은 짧은 이름("🍷 양념장")이나 "X 만드는 법/레시피" 배너면 제목으로.
     // 섹션명(양념장)과 겹쳐도 제목을 우선한다. "재료"처럼 신호 없는 헤더는 안 가로챈다.
-    if (idx === 0 && !title && /[가-힣]/.test(l) && l.length <= 24 && !bullet) {
+    // ⚠️ 24자는 「시아버지가 전수해준 홍콩식 가지 볶음」(25자) 같은 실제 인스타 제목을 놓친다 → 32자까지.
+    if (idx === 0 && !title && /[가-힣]/.test(l) && l.length <= 32 && !bullet) {
       const core0 = l.replace(/\s*[(（][^()（）]*[)）]\s*$/, '').trim() // 뒤 괄호(300g 기준·2인분) 떼고 판단
       // ⚠️ 낱말 경계를 지킨다 — 예전엔 "소고기 미역국 황금레시피"가 "…황금"으로 잘렸다.
       //    앞에 공백이 있거나 줄 전체일 때만 뗀다("김치찌개 레시피"→"김치찌개", "황금레시피"→그대로).
       const TAIL = /(?:^|\s)(만드는\s*법|만드는\s*방법|만들기|레시피)\s*[!！~]*\s*$/
       const asTitle = core0.replace(TAIL, '').trim() || core0
       const isBanner = TAIL.test(core0)
-      if ((emojiHead || isBanner) && !QTY.test(asTitle) && asTitle.length >= 2 && !SENTENCE_END.test(asTitle)) {
+      // ⭐ 2026-08-02 — 인스타 캡션 첫 줄은 «아이디 + 요리 이름» 인 경우가 제일 흔한데,
+      //    이모지도 「만드는 법」 배너도 없으면 제목을 못 잡아 그 줄이 «순서 1번»으로 갔다.
+      //    → 신호가 없어도 «분량도 조리 문장도 아닌 짧은 이름»이면 제목으로 본다.
+      //    ⚠️ looksLikeStep 으로 거르면 안 된다 — 「가지 볶음」·「제육 볶음」처럼
+      //       요리 «이름»에 조리 동사가 들어가는 게 오히려 흔하다. 문장 종결(SENTENCE_END)만 배제하면 충분.
+      const plainName = !QTY.test(asTitle) && /[가-힣]{2,}/.test(asTitle) && asTitle.length <= 32
+      if ((emojiHead || isBanner || plainName) && !QTY.test(asTitle) && asTitle.length >= 2 && !SENTENCE_END.test(asTitle)) {
         title = asTitle
         continue
       }
@@ -313,11 +339,12 @@ export function parseRecipeText(raw = '', opts = {}) {
     //    sanitize에서 ①이 지워진 뒤 '양념장'으로 시작해 헤더로 잡혀 **줄이 통째로 사라졌다**.
     //    STEP_VERB로 거르면 '조리 순서'·'조리법' 같은 진짜 헤더까지 깨진다('조리'가 동사 목록에 있음).
     if (l.length <= 16 && !stepMarked && !DECLARATIVE.test(l)) {
-      if (SEC_ING.test(l)) { mode = 'ing'; lastWasBulletIng = false; continue }
-      if (SEC_STEP.test(l)) { mode = 'step'; sawStep = true; lastWasBulletIng = false; continue }
+      // 「돼지고기 양념 재료:」 처럼 앞에 수식어가 붙은 재료 헤더도 받는다(끝이 재료/양념).
+      if (SEC_ING.test(l) || /(재료|양념)\s*[:：]?$/.test(l)) { mode = 'ing'; lastWasBulletIng = false; continue }
+      if (SEC_STEP.test(l) && !SEC_STEP_PORTION.test(l)) { mode = 'step'; sawStep = true; lastWasBulletIng = false; continue }
       if (SEC_MEMO.test(l)) { mode = 'memo'; lastWasBulletIng = false; continue }
     }
-    if (NOISE.test(l) || NOISE_ANY.test(l)) continue
+    if (NOISE.test(l) || NOISE_ANY.test(l) || NOISE_AD.test(l) || SEC_STEP_PORTION.test(l)) continue
     // 장식용 배너("맛보장 양념 레시피!" 등) — 재료도 순서도 아님.
     // ⚠️ 무조건 버리면 "소고기 미역국 황금레시피" 같은 진짜 요리 이름까지 날아간다(제목이 빈칸이 됨).
     //    제목을 이미 잡았거나, 느낌표·물결이 붙어 배너 티가 날 때만 버린다.

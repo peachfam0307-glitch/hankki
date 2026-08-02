@@ -137,5 +137,38 @@ console.log('\n── ⑧ 영수증 오독 교정 ──')
   chk(items.some((x) => x.includes('고추장')), '"고주장" → 고추장으로 되돌림', items.join(' / '))
 }
 
+console.log('\n── ⑨ 인스타 캡션 통짜 (2026-08-02 창업자 폰 사고) ──')
+{
+  // 실제로 앱에 저장된 결과가 «재료 칸에 「.」 하나 · 만드는 법에 재료 14줄» 이었다.
+  // 뿌리 = `✨레시피 (3-4인분 기준)✨` 가 SEC_STEP(「레시피」로 시작)에 걸려
+  //        그 줄부터 «순서 구역»이 열렸고 그 뒤 재료가 전부 순서로 갔다.
+  const r = parseRecipeText(`emily.at_home 📌시아버지가 전수해준 홍콩식 가지 볶음
+
+✨레시피 (3-4인분 기준)✨
+🇮🇹티리난지 피렌체 웍 최저가 공구중! (영상 속 웍은 24cm)
+
+가지 적당히 큰걸로 5개
+돼지고기 다짐육 250g
+물 100ml
+다진마늘 2큰술
+두반장 2큰술
+식초 1큰술
+
+돼지고기 양념 재료:
+
+간장 1작은술
+후추 약간
+
+1. 가지 3등분 후 다시 6등분 해서 커팅해 주고
+2. 다진 돼지고기에 양념 모두 넣고 잠시 재워두세요.`, { fromOcr: true })
+  chk(r.ingredients.length >= 6, `재료가 살아 있다 (${r.ingredients.length}줄)`, r.ingredients.slice(0, 4).join(' / '))
+  chk(r.ingredients.some((x) => x.includes('간장')), '「돼지고기 양념 재료:」 뒤 줄도 재료로', r.ingredients.join(' / '))
+  chk(!r.steps.some((x) => /공구|최저가/.test(x)), '광고 줄(공구중·최저가)은 순서에 안 들어간다')
+  chk(!r.steps.some((x) => /^레시피\s*[(（]/.test(x)), '「레시피 (3-4인분 기준)」은 순서가 아니다')
+  chk(!r.steps.some((x) => /emily/i.test(x)), '인스타 아이디는 떨어져 나간다')
+  chk(/가지/.test(r.title || ''), `제목을 잡는다 — 「${r.title}」`)
+  chk(r.steps.length <= 4, `순서엔 진짜 조리 단계만 (${r.steps.length}줄)`, r.steps.join(' / '))
+}
+
 console.log(fail ? `\n❌ 실패 ${fail}건` : '\n✅ 전부 통과')
 process.exit(fail ? 1 : 0)
