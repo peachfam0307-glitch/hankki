@@ -39,16 +39,17 @@ export const WEEKLY = [
     ids: ['basic-kkaennip-jangajji', 'basic-kkaennip-jeon', 'basic-hunje-ori-kkaennip'],
   },
   {
-    // ⭐ 34↔35 를 바꿨다 (창업자 2026-08-03 *"34주랑 바꾸자"*).
-    //    「여름 시원한 것」은 슬러시 한 편뿐이라 재고가 찰 때까지 뒤로 미뤘다.
-    from: '2026-08-17', title: '토마토',
-    why: '노지 토마토가 제철이라 이때가 제일 달아요. 볶고 무치고 끓이는 세 가지로.',
-    ids: ['basic-tomato-gyeran-bokkeum', 'basic-tomato-salad', 'basic-haejang-pasta'],
+    // ⭐ 한때 34↔35 를 바꿨다가 «되돌렸다» — 창업자가 *"34주 아보카도스무디랑 묵채하자.
+    //    우리있는거중에"* 로 **이미 있는 레시피**를 붙여줘서 세 편이 찼기 때문이다.
+    //    📌 새로 쓰는 것보다 **있는 걸 제 자리에 놓는 게** 먼저다 — 나는 「두 편 더 쓰자」부터 떠올렸다.
+    from: '2026-08-17', title: '여름 시원한 것',
+    why: '늦더위가 제일 지치는 때예요. 불 안 켜고 만드는 것들로 골랐어요.',
+    ids: ['basic-seulleoshi', 'basic-avocado-banana-smoothie', 'basic-siwon-mukchae'],
   },
   {
-    from: '2026-08-24', title: '여름 시원한 것',
-    why: '늦더위가 제일 지치는 때예요. 불 안 켜고 만드는 것들로.',
-    ids: ['basic-seulleoshi'],
+    from: '2026-08-24', title: '토마토',
+    why: '노지 토마토가 제철이라 이때가 제일 달아요. 볶고 무치고 끓이는 세 가지로.',
+    ids: ['basic-tomato-gyeran-bokkeum', 'basic-tomato-salad', 'basic-haejang-pasta'],
   },
   // ⏳ 36주(8/31~) 부터는 아직 비어 있다 → **그 주가 오면 홈에 줄이 안 그려진다.**
   //    ⛔ 빈 자리를 남기지 않는 게 규칙이라 그게 맞는 동작이지만,
