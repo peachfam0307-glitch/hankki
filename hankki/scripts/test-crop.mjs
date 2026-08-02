@@ -25,6 +25,24 @@ const fails = []
 const ok = (m) => console.log('[crop] ✓', m)
 const bad = (m) => { fails.push(m); console.log('[crop] ✗', m) }
 
+// ⏱⏱ 하드 워치독 — ⛔«매달리는 게이트»는 없는 게이트보다 나쁘다.
+//    2026-08-02: 이 게이트를 CI 에 붙인 첫날, 스모크 단계가 27분을 넘겨 배포가 통째로 막혔다.
+//    로컬에선 60~90초에 끝난다. 원인이 무엇이든 «시간 안에 안 끝나면 끊는다».
+const LIMIT = Number(process.env.CROP_TIMEOUT || 180000)
+let mark = '시작 전'
+const at = (m) => { mark = m }
+const watchdog = setTimeout(() => {
+  console.error(`\n⛔ 캡처 자르기 게이트가 ${LIMIT / 1000}초를 넘겼다 — 「${mark}」에서 멈춰 있다.`)
+  console.error('   로컬에선 60~90초면 끝난다. 매달리느니 끊는다.')
+  process.exit(1)
+}, LIMIT)
+
+// 원본 promise 는 timeout 이 없다 — img.onload 가 안 오면 영영 기다린다. 그래서 감싼다.
+const within = (p, ms, what) => Promise.race([
+  p,
+  new Promise((_, rej) => setTimeout(() => rej(new Error(`${what} 가 ${ms / 1000}초를 넘겼다`)), ms)),
+])
+
 async function waitHttp(url, t = 45000) {
   const s = Date.now()
   while (Date.now() - s < t) {
@@ -38,8 +56,9 @@ let server, browser
 try {
   server = spawn('npx', ['vite', 'preview', '--host', '127.0.0.1', '--port', String(PORT), '--strictPort'], { cwd: process.cwd(), env: process.env })
   await waitHttp(BASE)
-  browser = await chromium.launch({ executablePath: CHROMIUM, args: ['--no-sandbox'] })
+  browser = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
+  page.setDefaultTimeout(30000)
   const errs = []
   page.on('pageerror', (e) => errs.push(String(e.message || e)))
 
@@ -53,6 +72,7 @@ try {
     addEventListener('DOMContentLoaded', () => document.documentElement.style.setProperty('--safe-top', safe + 'px'))
   }, SAFE_TOP)
 
+  at('앱 열기')
   await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 30000 })
   await page.waitForTimeout(900)
   await page.getByRole('button', { name: '가져오기' }).first().click()
@@ -60,6 +80,7 @@ try {
   await page.getByText('직접 작성', { exact: false }).first().click()
   await page.waitForTimeout(900)
 
+  at('캡처 두 장 넣기')
   // 캡처 «두 장» — ①은 네 귀퉁이 색 표식(자르기 정확도용) · ②는 한가운데 청록 판(2장째 확인용)
   await page.evaluate(async (nat) => {
     const make = async (second) => {
@@ -74,7 +95,7 @@ try {
         g.fillStyle = '#0000ff'; g.fillRect(0, nat.h - 120, 120, 120)
         g.fillStyle = '#ff00ff'; g.fillRect(nat.w - 120, nat.h - 120, 120, 120)
       }
-      return new Promise((r) => c.toBlob(r, 'image/png'))
+      return new Promise((r) => { setTimeout(() => r(null), 15000); c.toBlob(r, 'image/png') })
     }
     const dt = new DataTransfer()
     dt.items.add(new File([await make(false)], 'cap1.png', { type: 'image/png' }))
@@ -87,6 +108,7 @@ try {
 
   if (!(await page.getByText('이 부분만 읽기').isVisible().catch(() => false))) throw new Error('자르기 화면이 안 열림')
 
+  at('박스 크기 재기')
   // ── ① 박스 = 실제로 그려진 이미지여야 한다 (여기가 어긋나면 아래가 다 어긋난다) ──
   const geom = await page.evaluate(() => {
     const img = [...document.querySelectorAll('img')].find((i) => {
@@ -104,15 +126,15 @@ try {
 
   // ── ② 손잡이를 25%~75% 로 끌면 원본의 «딱 절반»이 잘려야 한다 ──
   const g = geom.img
-  const at = (fx, fy) => ({ x: g.x + fx * g.w, y: g.y + fy * g.h })
+  const at2 = (fx, fy) => ({ x: g.x + fx * g.w, y: g.y + fy * g.h })
   const drag = async (from, to) => {
     await page.mouse.move(from.x, from.y); await page.mouse.down()
     await page.mouse.move((from.x + to.x) / 2, (from.y + to.y) / 2, { steps: 6 })
     await page.mouse.move(to.x, to.y, { steps: 6 }); await page.mouse.up()
     await page.waitForTimeout(120)
   }
-  await drag(at(0.03, 0.03), at(0.25, 0.25))
-  await drag(at(0.97, 0.97), at(0.75, 0.75))
+  await drag(at2(0.03, 0.03), at2(0.25, 0.25))
+  await drag(at2(0.97, 0.97), at2(0.75, 0.75))
   await page.getByText('이 부분만 읽기').click()
   await page.waitForTimeout(2500)
 
@@ -123,7 +145,8 @@ try {
     await page.waitForTimeout(2500)
   } else bad('2장째 자르기 화면이 안 떴다 — 두 번째 캡처가 사라진다')
 
-  const cut = await page.evaluate(() => new Promise((res) => {
+  at('잘린 사진 픽셀 읽기')
+  const cut = await within(page.evaluate(() => new Promise((res) => {
     const im = [...document.querySelectorAll('img')].find((i) => i.alt === '캡처 1')
     if (!im) return res(null)
     const t = new Image()
@@ -138,8 +161,9 @@ try {
       })
     }
     t.onerror = () => res(null)
+    setTimeout(() => res(null), 15000) // 안 뜨면 포기 — 매달리지 않는다
     t.src = im.src
-  }))
+  })), 25000, '잘린 사진 읽기').catch((e) => { bad(String(e.message)); return null })
   if (!cut) bad('잘린 사진을 못 읽음')
   else {
     const ew = Math.round(NAT.w * 0.5), eh = Math.round(NAT.h * 0.5)
@@ -153,6 +177,7 @@ try {
     else bad(`자른 자리가 밀렸다 — 귀퉁이에 원본 표식이 ${stain.length}개 남음 ${JSON.stringify(stain)}`)
   }
 
+  at('사진 닫기 확인')
   // ── ③ 「사진 닫기」가 상태표시줄 밑에 깔리면 안 된다 ──
   //     이 패널은 sticky top:0 이라 스크롤하면 화면 맨 위 = 상태표시줄 자리에 붙는다.
   await page.evaluate(() => { document.querySelectorAll('textarea')[0]?.scrollIntoView({ block: 'center' }) })
@@ -168,6 +193,7 @@ try {
   else if (btn.top >= SAFE_TOP && btn.canTap) ok(`「사진 닫기」가 상태표시줄(${SAFE_TOP}px) 아래에 있고 눌린다 — top ${btn.top.toFixed(0)}px`)
   else bad(`「사진 닫기」를 못 누른다 — top ${btn.top.toFixed(0)}px (상태표시줄 ${SAFE_TOP}px) · 눌림 ${btn.canTap}`)
 
+  at('접기 확인')
   // ── ④ 「사진 접기」로 가려진 입력칸이 드러나야 한다 ──
   //    창업자: *"캡쳐 보면서 비교할 때 사진이 고정되어 있으니 레시피가 안 보일 때 방법이 없다"*
   //    사진이 화면 위를 차지한 채 고정이라, 그 밑에 깔린 칸을 보려면 통째로 닫는 수밖에 없었다.
@@ -195,6 +221,7 @@ try {
     }
   }
 
+  at('2장째 확인')
   // ── ⑤ 두 장 넣었으면 «둘째 장으로 갈 수 있어야» 한다 ──
   //     창업자 2026-08-02: *"2장 중에 보고 쓸 때는 1장만 보여."*
   //     예전엔 세로로 쌓아둬서, 2340px 짜리 1장째를 다 넘겨야 2장째가 나왔다(사실상 못 감).
@@ -202,7 +229,8 @@ try {
   if (!(await pick2.isVisible().catch(() => false))) bad('「2번째 장」으로 가는 버튼이 없다 — 둘째 캡처를 못 본다')
   else {
     await pick2.click(); await page.waitForTimeout(500)
-    const shown = await page.evaluate(() => new Promise((res) => {
+    at('2장째 픽셀 읽기')
+    const shown = await within(page.evaluate(() => new Promise((res) => {
       const im = [...document.querySelectorAll('img')].find((i) => i.alt?.startsWith('캡처'))
       if (!im) return res(null)
       const t = new Image()
@@ -213,8 +241,9 @@ try {
         res({ alt: im.alt, rgb: [d[0], d[1], d[2]] })
       }
       t.onerror = () => res(null)
+      setTimeout(() => res(null), 15000)
       t.src = im.src
-    }))
+    })), 25000, '2장째 읽기').catch((e) => { bad(String(e.message)); return null })
     // 2장째는 통째로 청록(#00b8b8) — 1장째(흰 바탕)와 확실히 갈린다
     const teal = shown && shown.rgb[0] < 90 && shown.rgb[1] > 140 && shown.rgb[2] > 140
     if (teal) ok(`2번째 장을 눌러 실제로 그 사진이 보인다 (${shown.alt})`)
@@ -228,6 +257,8 @@ try {
   try { if (browser) await browser.close() } catch { /* noop */ }
   try { if (server && !server.killed) server.kill('SIGTERM') } catch { /* noop */ }
 }
+
+clearTimeout(watchdog)
 
 if (fails.length) {
   console.error('\n⛔ 캡처 자르기 게이트 실패\n' + fails.map((f) => '  · ' + f).join('\n'))
