@@ -87,6 +87,12 @@ export default function EditorScreen({ id, prefill }) {
   })
   const [pin, setPin] = useState(prefill?.watch ? 'video' : prefill?.refImages?.length ? 'photo' : null)
   const [zoom, setZoom] = useState(false) // 캡처 원본 전체화면으로 크게 보기
+  const [photoFold, setPhotoFold] = useState(false) // 사진만 접기 — 손잡이 줄은 남는다(가려진 입력칸 보기)
+  // ⭐ 여러 장일 때 «몇 번째 장을 보고 있나». 예전엔 두 장을 세로로 쌓아놨는데,
+  //    폰 캡처는 2340px 이라 34vh(≈290px) 창에서 둘째 장은 850px 아래 = 사실상 못 찾는다.
+  //    창업자 2026-08-02: *"2장 중에 보고 쓸 때는 1장만 보여."* — 없어진 게 아니라 «못 가는» 것이었다.
+  const [shot, setShot] = useState(0)
+  const shotIdx = Math.min(shot, Math.max(0, refs.length - 1))
   // 핀 고정 캡처가 34vh 안에서 세로 스크롤되는데 신호가 없어 '잘림/고정'으로 오해 → 더 볼 게 있으면 하단 fade
   const [photoMore, setPhotoMore] = useState(false)
   const photoBoxRef = useRef(null)
@@ -94,7 +100,7 @@ export default function EditorScreen({ id, prefill }) {
     const el = photoBoxRef.current
     if (el) setPhotoMore(el.scrollHeight - el.scrollTop - el.clientHeight > 6)
   }
-  useEffect(() => { const id = setTimeout(checkPhotoScroll, 80); return () => clearTimeout(id) }, [pin, refs.length])
+  useEffect(() => { const id = setTimeout(checkPhotoScroll, 80); return () => clearTimeout(id) }, [pin, refs.length, photoFold])
   const [newFolder, setNewFolder] = useState(false)
   const [discardAsk, setDiscardAsk] = useState(false) // 작성 중 나가기 = 버릴지 물어본다
 
@@ -374,9 +380,11 @@ export default function EditorScreen({ id, prefill }) {
       <input ref={photoRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
       <input ref={ocrRef} type="file" accept="image/*" multiple onChange={onOcrFile} style={{ display: 'none' }} />
 
-      {/* 보면서 쓰기 — 영상(유튜브·인스타)이나 캡처 원본을 위에 고정하고 아래에서 적는다 */}
+      {/* 보면서 쓰기 — 영상(유튜브·인스타)이나 캡처 원본을 위에 고정하고 아래에서 적는다.
+          ⭐ sticky 로 둔다 — 예전엔 그냥 흘러가서, 사진을 닫고 아래로 내려가면
+             다시 켜려고 «맨 위까지» 올라와야 했다(막다른 길). */}
       {(embed || refs.length > 0) && pin === null && (
-        <div style={{ display: 'flex', gap: 8, margin: '6px 16px 0' }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 19, background: 'var(--bg)', display: 'flex', gap: 8, padding: '6px 16px 6px' }}>
           {embed && (
             <button className="press" onClick={() => setPin('video')} style={{ flex: 1, padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700 }}>
               {embed.type === 'youtube' ? '영상 보면서 쓰기' : '인스타 미리보기'}
@@ -423,50 +431,83 @@ export default function EditorScreen({ id, prefill }) {
       )}
       {pin === 'photo' && refs.length > 0 && (
         <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#141311' }}>
+          {/* ⭐⭐ 손잡이 바 — 사진을 접었다 폈다 하는 곳. «접어도 이 줄은 남는다.»
+              창업자 2026-08-02: *"캡쳐한거 보면서 비교할 때 사진 닫기가 고정되어 있으니
+              레시피가 안 보일 때 방법이 없단 뜻이었어."* → 맞는 지적이고 내가 처음에 잘못 읽었다.
+              사진은 화면 위 34vh 를 «고정»으로 차지하는데, 그 밑에 가려진 입력칸을 보려면
+              사진을 통째로 닫는 수밖에 없었다. 그리고 한 번 닫으면 다시 켜려고 맨 위까지 올라와야 했다.
+              → 한 번 톡 = 사진만 접히고 «줄은 남는다» → 레시피가 다 보이고, 다시 톡 하면 그 자리에서 돌아온다. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', paddingTop: 'calc(7px + var(--safe-top, 0px))' }}>
+            <button
+              className="press"
+              onClick={() => setPhotoFold((v) => !v)}
+              aria-label={photoFold ? '캡처 사진 펼치기' : '캡처 사진 접기'}
+              style={{ padding: '7px 14px', borderRadius: 999, background: photoFold ? '#ee7f4b' : 'rgba(255,255,255,0.16)', color: '#fff', fontSize: 13.5, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}
+            >
+              {photoFold ? '사진 펼치기 ▼' : '사진 접기 ▲'}
+            </button>
+            {/* 장 고르기 — 두 장 이상이면 «번호»로 넘긴다. 세로로 쌓아두면 둘째 장을 못 찾는다. */}
+            {!photoFold && refs.length > 1 ? (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 5, overflowX: 'auto' }}>
+                {refs.map((_, k) => (
+                  <button
+                    key={k}
+                    className="press"
+                    onClick={() => { setShot(k); if (photoBoxRef.current) photoBoxRef.current.scrollTop = 0 }}
+                    aria-label={`${k + 1}번째 캡처 보기`}
+                    style={{ flex: '0 0 auto', minWidth: 30, padding: '5px 9px', borderRadius: 999, background: k === shotIdx ? '#fff' : 'rgba(255,255,255,0.16)', color: k === shotIdx ? '#20211f' : '#fff', fontSize: 12.5, fontWeight: 800 }}
+                  >
+                    {k + 1}
+                  </button>
+                ))}
+                <span style={{ flex: '0 0 auto', color: 'rgba(255,255,255,0.55)', fontSize: 11.5, fontWeight: 600, marginLeft: 2 }}>번째 장</span>
+              </div>
+            ) : (
+              <span style={{ flex: 1, color: 'rgba(255,255,255,0.62)', fontSize: 12, fontWeight: 600 }}>
+                {photoFold ? '가려진 부분을 보고 있어요' : `캡처 ${refs.length}장`}
+              </span>
+            )}
+            <button
+              className="press"
+              onClick={() => setPin(null)}
+              aria-label="캡처 사진 닫기"
+              style={{ padding: '7px 12px', borderRadius: 999, background: 'rgba(255,255,255,0.16)', color: '#fff', fontSize: 13, fontWeight: 700 }}
+            >
+              ✕ 닫기
+            </button>
+          </div>
           {/* 캡처 원본 — 인식이 100%가 아니니 보면서 고친다. 적는 칸이 더 중요하므로
               높이를 줄여(34vh) 입력칸을 넉넉히 남기고, 사진이 길면 안에서 세로 스크롤한다. */}
-          <div ref={photoBoxRef} onScroll={checkPhotoScroll} style={{ maxHeight: '34vh', overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
-            {refs.map((img, k) => (
-              <img
-                key={k}
-                src={img}
-                alt={`캡처 ${k + 1}`}
-                onClick={() => setZoom(k)}
-                onLoad={checkPhotoScroll}
-                style={{ display: 'block', width: '100%', height: 'auto', cursor: 'zoom-in' }}
-              />
-            ))}
+          <div ref={photoBoxRef} onScroll={checkPhotoScroll} style={{ maxHeight: photoFold ? 0 : '34vh', overflowY: photoFold ? 'hidden' : 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+            {/* 한 번에 «한 장»만 — 쌓아두면 둘째 장이 850px 아래로 밀려 못 찾는다(위 shot 주석) */}
+            <img
+              key={shotIdx}
+              src={refs[shotIdx]}
+              alt={`캡처 ${shotIdx + 1}`}
+              onClick={() => setZoom(shotIdx)}
+              onLoad={checkPhotoScroll}
+              style={{ display: 'block', width: '100%', height: 'auto', cursor: 'zoom-in' }}
+            />
           </div>
           {/* 더 스크롤할 게 있을 때만 하단 fade + 안내 — '잘림/고정' 오해 방지 */}
-          {photoMore && (
+          {!photoFold && photoMore && (
             <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 64, pointerEvents: 'none', background: 'linear-gradient(to bottom, rgba(20,19,17,0), rgba(20,19,17,0.72))' }} />
           )}
-          <button
-            className="press"
-            onClick={() => setZoom(0)}
-            aria-label="캡처 크게 보기"
-            style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', padding: '7px 16px', borderRadius: 999, background: 'rgba(20,19,17,0.78)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}
-          >
-            크게 보기{refs.length > 1 ? ` · ${refs.length}장` : ''}
-          </button>
-          {photoMore && (
+          {!photoFold && (
+            <button
+              className="press"
+              onClick={() => setZoom(shotIdx)}
+              aria-label="캡처 크게 보기"
+              style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', padding: '7px 16px', borderRadius: 999, background: 'rgba(20,19,17,0.78)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}
+            >
+              크게 보기{refs.length > 1 ? ` · ${shotIdx + 1}/${refs.length}장` : ''}
+            </button>
+          )}
+          {!photoFold && photoMore && (
             <span style={{ position: 'absolute', bottom: 13, right: 12, color: 'rgba(255,255,255,0.92)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3, pointerEvents: 'none' }}>
               아래 더 있어요 <span style={{ fontSize: 14, lineHeight: 1 }}>↓</span>
             </span>
           )}
-          <button
-            className="press"
-            onClick={() => setPin(null)}
-            aria-label="캡처 사진 닫기"
-            /* ⭐ top 에 안전영역(--safe-top)을 더한다 — 이 패널은 sticky top:0 이라
-               스크롤하면 «화면 맨 위»에 붙는데, 폰은 그 자리가 상태표시줄(시계·배터리)이다.
-               8px 만 주면 버튼이 통째로 상태표시줄 밑으로 들어가 «눌러도 안 눌린다».
-               창업자 제보: "사진 닫기가 가끔 레시피를 가리는데 치울 방법이 없어."
-               (「가끔」 = 스크롤해서 패널이 위에 붙었을 때만 그렇다) */
-            style={{ position: 'absolute', top: 'calc(8px + var(--safe-top, 0px))', right: 8, padding: '9px 16px', borderRadius: 999, background: '#ee7f4b', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 3px 12px rgba(0,0,0,0.5)', border: '2px solid rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', gap: 5 }}
-          >
-            ✕ 다 썼으면 사진 닫기
-          </button>
         </div>
       )}
 
@@ -572,7 +613,7 @@ export default function EditorScreen({ id, prefill }) {
               <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
-          <textarea ref={ingRef} rows={7} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} style={{ scrollMarginTop: pin ? '38vh' : undefined }} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n계량은 키보드 위 버튼으로.'} />
+          <textarea ref={ingRef} rows={7} value={f.ingredients} onChange={(e) => set('ingredients', e.target.value)} style={{ scrollMarginTop: pin === 'photo' && photoFold ? 64 : pin ? '38vh' : undefined }} placeholder={'재료를 한 줄에 하나씩 적어주세요.\n계량은 키보드 위 버튼으로.'} />
         </div>
 
         <div className="field">
@@ -582,7 +623,7 @@ export default function EditorScreen({ id, prefill }) {
               <Icon name="camera" size={15} color="#fff" /> 사진에서 채우기
             </button>
           </div>
-          <textarea ref={stepRef} rows={7} value={f.steps} onChange={(e) => set('steps', e.target.value)} style={{ scrollMarginTop: pin ? '38vh' : undefined }} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
+          <textarea ref={stepRef} rows={7} value={f.steps} onChange={(e) => set('steps', e.target.value)} style={{ scrollMarginTop: pin === 'photo' && photoFold ? 64 : pin ? '38vh' : undefined }} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
         </div>
 
         {/* 부가 정보 — 캡처는 보통 제목+재료+만드는 법이 붙어 있어, 그걸 먼저 적고 나서 채우게 아래로 뺐다 */}
@@ -724,9 +765,7 @@ export default function EditorScreen({ id, prefill }) {
             onClick={() => setZoom(false)}
           >
             <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10, padding: '56px 0' }}>
-              {refs.map((img, k) => (
-                <img key={k} src={img} alt={`캡처 ${k + 1}`} style={{ display: 'block', width: '100%', height: 'auto' }} />
-              ))}
+              <img src={refs[Math.min(zoom, refs.length - 1)]} alt={`캡처 ${Math.min(zoom, refs.length - 1) + 1}`} style={{ display: 'block', width: '100%', height: 'auto' }} />
             </div>
             <button
               className="press"
@@ -736,8 +775,25 @@ export default function EditorScreen({ id, prefill }) {
             >
               ✕ 닫기
             </button>
-            <div style={{ position: 'fixed', bottom: 'calc(14px + var(--safe-bottom))', left: 0, right: 0, textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 600 }}>
-              손가락으로 확대·축소 · 위아래로 넘겨 보기
+            <div style={{ position: 'fixed', bottom: 'calc(14px + var(--safe-bottom))', left: 0, right: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              {refs.length > 1 && (
+                <div style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                  {refs.map((_, k) => (
+                    <button
+                      key={k}
+                      className="press"
+                      onClick={(e) => { e.stopPropagation(); setZoom(k) }}
+                      aria-label={`${k + 1}번째 캡처 크게 보기`}
+                      style={{ minWidth: 34, padding: '7px 11px', borderRadius: 999, background: k === Math.min(zoom, refs.length - 1) ? '#fff' : 'rgba(255,255,255,0.18)', color: k === Math.min(zoom, refs.length - 1) ? '#20211f' : '#fff', fontSize: 13, fontWeight: 800 }}
+                    >
+                      {k + 1}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 600 }}>
+                손가락으로 확대·축소{refs.length > 1 ? ' · 번호를 눌러 다른 장' : ''}
+              </span>
             </div>
           </div>
         </Portal>

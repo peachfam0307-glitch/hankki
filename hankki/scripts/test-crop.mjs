@@ -60,19 +60,25 @@ try {
   await page.getByText('직접 작성', { exact: false }).first().click()
   await page.waitForTimeout(900)
 
-  // 네 귀퉁이에 색 표식을 찍은 세로 캡처 한 장을 만들어 넣는다
+  // 캡처 «두 장» — ①은 네 귀퉁이 색 표식(자르기 정확도용) · ②는 한가운데 청록 판(2장째 확인용)
   await page.evaluate(async (nat) => {
-    const c = document.createElement('canvas')
-    c.width = nat.w; c.height = nat.h
-    const g = c.getContext('2d')
-    g.fillStyle = '#fff'; g.fillRect(0, 0, nat.w, nat.h)
-    g.fillStyle = '#ff0000'; g.fillRect(0, 0, 120, 120)
-    g.fillStyle = '#00a000'; g.fillRect(nat.w - 120, 0, 120, 120)
-    g.fillStyle = '#0000ff'; g.fillRect(0, nat.h - 120, 120, 120)
-    g.fillStyle = '#ff00ff'; g.fillRect(nat.w - 120, nat.h - 120, 120, 120)
-    const blob = await new Promise((r) => c.toBlob(r, 'image/png'))
+    const make = async (second) => {
+      const c = document.createElement('canvas')
+      c.width = nat.w; c.height = nat.h
+      const g = c.getContext('2d')
+      g.fillStyle = '#fff'; g.fillRect(0, 0, nat.w, nat.h)
+      if (second) { g.fillStyle = '#00b8b8'; g.fillRect(0, 0, nat.w, nat.h) } // 2장째는 통째로 청록
+      else {
+        g.fillStyle = '#ff0000'; g.fillRect(0, 0, 120, 120)
+        g.fillStyle = '#00a000'; g.fillRect(nat.w - 120, 0, 120, 120)
+        g.fillStyle = '#0000ff'; g.fillRect(0, nat.h - 120, 120, 120)
+        g.fillStyle = '#ff00ff'; g.fillRect(nat.w - 120, nat.h - 120, 120, 120)
+      }
+      return new Promise((r) => c.toBlob(r, 'image/png'))
+    }
     const dt = new DataTransfer()
-    dt.items.add(new File([blob], 'capture.png', { type: 'image/png' }))
+    dt.items.add(new File([await make(false)], 'cap1.png', { type: 'image/png' }))
+    dt.items.add(new File([await make(true)], 'cap2.png', { type: 'image/png' }))
     const inp = document.querySelector('input[type=file][multiple]')
     inp.files = dt.files
     inp.dispatchEvent(new Event('change', { bubbles: true }))
@@ -110,8 +116,15 @@ try {
   await page.getByText('이 부분만 읽기').click()
   await page.waitForTimeout(2500)
 
+  // 2장째 자르기 화면 — 여기서 안 뜨면 두 번째 장이 통째로 사라진 것이다
+  if (await page.getByText('이 부분만 읽기').isVisible().catch(() => false)) {
+    ok('2장째 자르기 화면이 떴다')
+    await page.getByText('전체 사용').click()
+    await page.waitForTimeout(2500)
+  } else bad('2장째 자르기 화면이 안 떴다 — 두 번째 캡처가 사라진다')
+
   const cut = await page.evaluate(() => new Promise((res) => {
-    const im = [...document.querySelectorAll('img')].find((i) => i.alt?.startsWith('캡처'))
+    const im = [...document.querySelectorAll('img')].find((i) => i.alt === '캡처 1')
     if (!im) return res(null)
     const t = new Image()
     t.onload = () => {
@@ -154,6 +167,59 @@ try {
   if (!btn) bad('「사진 닫기」 버튼이 없다 — 사진을 치울 방법이 사라진다')
   else if (btn.top >= SAFE_TOP && btn.canTap) ok(`「사진 닫기」가 상태표시줄(${SAFE_TOP}px) 아래에 있고 눌린다 — top ${btn.top.toFixed(0)}px`)
   else bad(`「사진 닫기」를 못 누른다 — top ${btn.top.toFixed(0)}px (상태표시줄 ${SAFE_TOP}px) · 눌림 ${btn.canTap}`)
+
+  // ── ④ 「사진 접기」로 가려진 입력칸이 드러나야 한다 ──
+  //    창업자: *"캡쳐 보면서 비교할 때 사진이 고정되어 있으니 레시피가 안 보일 때 방법이 없다"*
+  //    사진이 화면 위를 차지한 채 고정이라, 그 밑에 깔린 칸을 보려면 통째로 닫는 수밖에 없었다.
+  const panelH = () => page.evaluate(() => {
+    const btn = [...document.querySelectorAll('button')].find((x) => x.getAttribute('aria-label') === '캡처 사진 닫기')
+    const panel = btn?.closest('div[style*="sticky"]')
+    return panel ? +panel.getBoundingClientRect().height.toFixed(0) : null
+  })
+  const before = await panelH()
+  const fold = page.getByRole('button', { name: '캡처 사진 접기' })
+  if (!(await fold.isVisible().catch(() => false))) bad('「사진 접기」가 없다 — 가려진 칸을 볼 방법이 없다')
+  else {
+    await fold.click(); await page.waitForTimeout(400)
+    const after = await panelH()
+    // 접으면 손잡이 줄만 남아야 한다(대략 안전영역＋한 줄)
+    if (after !== null && before !== null && after <= SAFE_TOP + 60 && after < before / 2) ok(`접으면 ${before}px → ${after}px 로 줄어 레시피가 드러난다`)
+    else bad(`접었는데 안 줄었다 — ${before}px → ${after}px`)
+    const back = page.getByRole('button', { name: '캡처 사진 펼치기' })
+    if (!(await back.isVisible().catch(() => false))) bad('펼치기 버튼이 없다 — 접으면 사진을 다시 못 켠다')
+    else {
+      await back.click(); await page.waitForTimeout(400)
+      const again = await panelH()
+      if (again !== null && before !== null && Math.abs(again - before) <= 8) ok(`다시 펼치면 그 자리에서 ${again}px 로 돌아온다`)
+      else bad(`펼쳤는데 안 돌아왔다 — ${before}px 였는데 ${again}px`)
+    }
+  }
+
+  // ── ⑤ 두 장 넣었으면 «둘째 장으로 갈 수 있어야» 한다 ──
+  //     창업자 2026-08-02: *"2장 중에 보고 쓸 때는 1장만 보여."*
+  //     예전엔 세로로 쌓아둬서, 2340px 짜리 1장째를 다 넘겨야 2장째가 나왔다(사실상 못 감).
+  const pick2 = page.getByRole('button', { name: '2번째 캡처 보기' })
+  if (!(await pick2.isVisible().catch(() => false))) bad('「2번째 장」으로 가는 버튼이 없다 — 둘째 캡처를 못 본다')
+  else {
+    await pick2.click(); await page.waitForTimeout(500)
+    const shown = await page.evaluate(() => new Promise((res) => {
+      const im = [...document.querySelectorAll('img')].find((i) => i.alt?.startsWith('캡처'))
+      if (!im) return res(null)
+      const t = new Image()
+      t.onload = () => {
+        const c = document.createElement('canvas'); c.width = 8; c.height = 8
+        const x = c.getContext('2d'); x.drawImage(t, 0, 0, 8, 8)
+        const d = x.getImageData(4, 4, 1, 1).data
+        res({ alt: im.alt, rgb: [d[0], d[1], d[2]] })
+      }
+      t.onerror = () => res(null)
+      t.src = im.src
+    }))
+    // 2장째는 통째로 청록(#00b8b8) — 1장째(흰 바탕)와 확실히 갈린다
+    const teal = shown && shown.rgb[0] < 90 && shown.rgb[1] > 140 && shown.rgb[2] > 140
+    if (teal) ok(`2번째 장을 눌러 실제로 그 사진이 보인다 (${shown.alt})`)
+    else bad(`2번째 장을 눌렀는데 다른 사진이 보인다 — ${JSON.stringify(shown)}`)
+  }
 
   if (errs.length) bad(`런타임 에러 ${errs.length}건 — ${errs[0]}`)
 } catch (e) {
