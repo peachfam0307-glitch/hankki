@@ -3,6 +3,7 @@ import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
 import { whatsNew } from '../data/whatsnew'
+import { StickerArt } from './Stickers'
 
 // 📣 한끼 소식 — «방금 열렸어요» · «곧 열려요» · «그다음엔».
 //
@@ -35,6 +36,26 @@ const UPCOMING = [
 // ⚠️ 우리 세트에 없는 이름을 쓰면 아무것도 안 그려진다 → 전체 목록 = `Icon.jsx`.
 const KIND_ICON = { '이번 주 레시피': 'diary', '꾸미기': 'palette', '레꾸자랑 카드': 'star' }
 
+// 🖼 미리보기 한 줄 — ⭐**글자만 있으면 광고가 안 된다** (창업자 2026-08-03 *"가을 이모지팩도 광고해야하지 않아?"*).
+//    ⛔ `StickerArt` 는 우리 그림을 그린다(유니코드 이모지 아님).
+export function Peek({ keys = [], size = 46 }) {
+  if (!keys.length) return null
+  return (
+    <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+      {keys.map((k) => (
+        <span key={k} style={{
+          width: size, height: size, borderRadius: 11, background: 'var(--surface)',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+        }}>
+          <span style={{ width: size - 10, height: size - 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <StickerArt id={k} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+          </span>
+        </span>
+      ))}
+    </div>
+  )
+}
+
 function NewsRow({ it, tone }) {
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--cream)', borderRadius: 14, padding: '12px 13px' }}>
@@ -49,6 +70,7 @@ function NewsRow({ it, tone }) {
           </span>
         </div>
         {it.why && <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3, lineHeight: 1.4 }}>{it.why}</div>}
+        <Peek keys={it.peek} />
       </div>
     </div>
   )

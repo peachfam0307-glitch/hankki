@@ -7,6 +7,7 @@ import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
 import TabTips from '../components/TabTips'
 import PreviewSheet from '../components/PreviewSheet'
+import NewsPopup, { needsNewsPopup, markNewsSeen } from '../components/NewsPopup'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import ConfirmSheet from '../components/ConfirmSheet'
 // 🐻 코치 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지 규칙)
@@ -77,6 +78,14 @@ export default function HomeScreen() {
     }
     return '레시피북 PDF · 꾸미기 새 아이템 …'
   }, [news])
+
+  // 🎉 새로 열린 날 «딱 한 번» — ⛔온보딩·코치마크와 겹치면 안 뜬다(한 화면에 둘이 겹치면 둘 다 못 읽는다).
+  //    ⛔ 주간 레시피만 바뀐 주엔 안 뜬다 — 그건 홈 뱃지로 충분하다(매주 팝업 = 재촉).
+  const [newsPop, setNewsPop] = useState(
+    () => needsNewsPopup(news) && !needsOnboarding() && !needsCoach(HOME_COACH_KEY)
+  )
+  // ⚠️ 어떻게 닫든 «봤음»으로 친다 — 안 그러면 뒤로가기로 닫은 사람에게 매번 뜬다.
+  const closeNews = () => { markNewsSeen(news); setNewsPop(false) }
 
   // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
   const today = useMemo(() => {
@@ -327,6 +336,14 @@ export default function HomeScreen() {
       </div>
 
       {preview && <PreviewSheet onClose={() => setPreview(false)} />}
+      {/* 🎉 새로 열린 날 딱 한 번. 「구경하기」는 소식 시트를 연다 — 팝업이 목적지가 아니다 */}
+      {newsPop && (
+        <NewsPopup
+          news={news}
+          onClose={closeNews}
+          onOpenNews={() => { closeNews(); setPreview(true) }}
+        />
+      )}
 
       {/* 최근 저장 카드 길게 눌러 삭제 */}
       {delAsk && (

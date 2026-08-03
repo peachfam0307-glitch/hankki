@@ -94,6 +94,7 @@
   - 의견 응답 확인: forms.google.com → 초록 "한끼"(안녕한끼) 계정 → "한끼 써보고 한마디" → **응답** 탭
 - **운영 링크(관리자용)**: Play Console `play.google.com/console` · PWABuilder `www.pwabuilder.com`(AAB 생성) · GitHub 레포 `github.com/peachfam0307-glitch/hankki`.
 - **🗓 52주 제철 표 아티팩트(창업자 검수용·폰)**: https://claude.ai/code/artifact/f9dcef46-89db-437b-a407-c540d7db6998 — 주간 레시피의 바닥. 월 바로가기 + 계절 색띠 + 해수부·장바구니 배지. 값이 바뀌면 `docs/52주-제철표-2026-08-01.md` 고치고 **같은 URL로 갱신**. ⚠️창업자는 저장소 `.md` 를 폰에서 못 본다 — **검수받을 게 있으면 아티팩트로 뽑을 것.**
+- **🗓🗓 주차별 업데이트 계획서 아티팩트(창업자용·폰)**: https://claude.ai/code/artifact/e17bc79d-2e4d-4343-9240-0982ae52d656 — **언제까지 뭘 채워둬야 하나** (8월~12월 주차별 · 「저절로 열림」 ↔ 「손으로 할 일」 ↔ 「마감」). 값은 `weekly.js`·`basics.js`의 `from`·`release-calendar.mjs` 에서 읽었다. ⚠️**제일 급한 칸 = 8/24**(9월 재고) 와 **매달 말일**(검수). 값이 바뀌면 같은 URL 로 갱신.
 - **📅 공개 달력 아티팩트(창업자용·폰)**: https://claude.ai/code/artifact/8cf8ba80-cb03-4300-b510-d1f70d831257 — **언제 뭐가 올라가나**(저절로 열리는 것 ↔ 손으로 올리는 것) ＋ 업뎃 주기 규칙. 값은 `scripts/release-calendar.mjs` 로 다시 뽑아 갱신(같은 URL).
 - **고정 메모 아티팩트(폰 홈화면용)**: https://claude.ai/code/artifact/9bd7d82d-8a0b-45d1-a34a-d6ebb578f47e (내용 바뀌면 같은 URL로 갱신).
 - **이모티콘 프롬프트 아티팩트(곰곰·펭펭 복붙용)**: https://claude.ai/code/artifact/d38164ba-7240-4457-a728-85223aa81139 (곰/펭/콤비 프롬프트 + 32컷 + 복사 버튼).
