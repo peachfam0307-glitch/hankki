@@ -242,7 +242,8 @@ export default function HomeScreen() {
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, marginTop: 5 }}>{weekly.title}</div>
             <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3, lineHeight: 1.5 }}>{weekly.why}</div>
-            <div className="hscroll" style={{ marginTop: 11 }}>
+            {/* 🧷 `inset` = 카드 «안» 이라 화면 가장자리로 안 삐져나간다 (2026-08-03 오징어 상자 사고) */}
+            <div className="hscroll inset" style={{ marginTop: 11 }}>
               {weekly.items.map((r) => (
                 <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
                   <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
