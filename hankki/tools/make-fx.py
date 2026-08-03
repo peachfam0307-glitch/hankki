@@ -214,35 +214,62 @@ def fireworks(bg, F=72, seed=5):
 #    📌 배경은 창업자가 골라 뽑은 그림이다 — **효과가 그림을 덮으면 그 효과는 틀린 것이다.**
 #    → 진하기를 절반 아래로(.10~.13) · 띠를 더 아래로(0.62) · **덩어리를 가로로 늘렸다**
 #      (안개는 가로로 퍼진다. 동그란 덩어리는 안개가 아니라 얼룩으로 보인다).
-FOG_LAYERS = [(3.0, .10, 1.0), (2.0, .13, 1.7), (1.3, .11, 2.6)]   # (덩어리 크기, 진하기, 속도)
+#
+# ⛔⛔⛔ **두 번 틀렸다. 둘 다 보내고 나서 창업자가 잡았다** (2026-08-03)
+#  ①진하기 — .22~.30 으로 얹었더니 호박·집이 뿌옇게 덮여 배경이 통째로 회색이 됐다.
+#    📌 **배경은 창업자가 골라 뽑은 그림이다 — 효과가 그림을 덮으면 그 효과는 틀린 것이다.**
+#  ②모양 — 창업자 *"연기가 아니라 화면이 고장난거 같애"*. **맞았다.**
+#    ⛔ **뿌리 = 이음매.** 랜덤 노이즈를 늘려 만든 무늬는 «왼쪽 끝과 오른쪽 끝이 안 맞물린다».
+#       그걸 `np.roll` 로 옆으로 굴리니 **세로 경계선이 화면을 쓸고 지나갔다** = 화면 찢어짐.
+#       (`rain` 은 타일을 경계 너머까지 그려서 맞물리게 해뒀는데 여기선 그 처리를 안 했다.)
+#    ⛔ 게다가 **너무 빨랐다** — 3초에 화면을 한두 번 지나간다. 그건 안개가 아니라 깜빡임이다.
+#
+# ✅ 그래서 **무늬를 「굴리지」 않고 「정수 주파수 물결의 합」으로 만든다.**
+#    `sin(kx·(x+s) + ky·y + ph)` 에서 kx·ky 가 정수면 **가로도 세로도 저절로 주기적**이라
+#    이음매가 «원천적으로» 없다. 흐름은 `s` 를 키워서 만들고, `s` 가 2π 면 딱 한 바퀴라 루프도 매끈하다.
+#    ⭐ 가로 주파수를 작게(1~2) 세로를 조금 크게(0~4) 두면 **가로로 길쭉한 덩어리** = 안개 모양.
+# ⚠️ 진하기는 두 번 덴 값이라 중간(.16~.20)에서 시작한다.
+#
+# ⛔ **세 번째 지적 — 셋 다 맞았다** (창업자 2026-08-03
+#    *"너무아래에 빠르게 다다다닥 지나가 연기처럼 안보이고 번쩍이는것처럼보여"*)
+#  ⓐ **너무 아래** — 아래 38% 에만 깔아서 땅바닥 띠가 됐다 → 아래 **70%** 로 올리고 위로 길게 사라지게.
+#  ⓑ **너무 빠름** — 한 바퀴가 3초였다 → **15초**. 안개는 「지나가는 것」이 아니라 「머무는 것」이다.
+#  ⓒ **번쩍임** — 덩어리 «대비»가 문제였다. 진한 덩어리가 휙 지나가면 눈엔 섬광으로 읽힌다
+#     → 문턱을 넓게(.30~1.0) 펴서 **경계 없는 그라데이션**으로. ＋각 물결의 세기를 느리게 «숨쉬게» 해서
+#       흐르기만 하는 게 아니라 **모양이 서서히 변한다**(뭉게뭉게). 이게 없으면 무늬가 통째로 미끄러진다.
+FOG_LAYERS = [(.15, 1, 5), (.17, 1, 4), (.10, 2, 3)]   # (진하기, 한 판에 도는 바퀴, 물결 개수)
 FOG_COL = (226, 220, 236)
 
 
-def fog(bg, F=30, seed=7):
-    """안개 — 아래쪽에 깔려 옆으로 흐른다."""
+def fog(bg, F=60, seed=7):
+    """안개 — 아래쪽에 깔려 옆으로 «아주 천천히» 흐르고 모양이 변한다. 이음매 없음."""
     SZ = bg.size[0]
     rng = np.random.default_rng(seed)
-    # 위로 갈수록 0 이 되는 띠 — 아래 38% 만 쓴다(하늘까지 뿌예지면 배경이 죽는다)
-    yy = np.linspace(0, 1, SZ)[:, None]
-    band = np.clip((yy - .62) / .38, 0, 1) ** 1.4
+    t = np.arange(SZ) / SZ * 2 * np.pi
+    X, Y = np.meshgrid(t, t)
+    # 위로 갈수록 0 이 되는 띠 — 아래 70%. ⚠️ 제곱을 크게(1.9) 줘야 «경계선» 없이 스며든다
+    band = np.clip((np.linspace(0, 1, SZ)[:, None] - .30) / .70, 0, 1) ** 1.9
 
-    tiles = []
-    for (scale, amp, _sp) in FOG_LAYERS:
-        n = max(6, int(SZ / (28 * scale)))
-        small = rng.random((max(3, n // 3), n))     # ⭐세로를 성기게 = 가로로 늘어난 덩어리
-        t = Image.fromarray((small * 255).astype('uint8')).resize((SZ, SZ), Image.BICUBIC)
-        t = _grain_free_blur(t, SZ / (n * 2.2))
-        a = np.asarray(t).astype(float) / 255
-        a = np.clip((a - .48) / .34, 0, 1)          # 성긴 덩어리만 남긴다(고르면 뿌연 막이 된다)
-        tiles.append(a * band * amp)
+    layers = []
+    for (amp, sp, nw) in FOG_LAYERS:
+        waves = [(int(rng.integers(1, 3)), int(rng.integers(0, 5)),
+                  float(rng.uniform(0, 2 * np.pi)), float(rng.uniform(.6, 1.4)),
+                  float(rng.uniform(0, 2 * np.pi))) for _ in range(nw)]   # 마지막 = 숨쉬는 위상
+        layers.append((amp, sp, waves, sum(w for *_x, w, _b in waves)))
 
     base = np.asarray(bg).astype(float)
     col = np.array(FOG_COL, dtype=float)
     out = []
     for f in range(F):
+        u = 2 * np.pi * f / F
         acc = np.zeros((SZ, SZ))
-        for a, (_s, _am, sp) in zip(tiles, FOG_LAYERS):
-            acc = acc + np.roll(a, int(SZ * sp * f / F), axis=1)
+        for (amp, sp, waves, wsum) in layers:
+            v = np.zeros((SZ, SZ))
+            for (kx, ky, ph, w, bph) in waves:
+                # ⭐ 세기가 느리게 숨쉰다 → 흐르면서 «모양도» 바뀐다. 한 판에 정확히 한 번이라 루프가 매끈.
+                v = v + w * (.55 + .45 * np.sin(u + bph)) * np.sin(kx * (X + sp * u) + ky * Y + ph)
+            v = (v / wsum + 1) * .5                      # 0~1 · ⛔프레임마다 정규화하면 깜빡인다
+            acc = acc + np.clip((v - .30) / .70, 0, 1) * band * amp
         m = np.clip(acc, 0, 1)[:, :, None]
         out.append(Image.fromarray(np.clip(base * (1 - m) + col * m, 0, 255).astype('uint8')))
     return out
