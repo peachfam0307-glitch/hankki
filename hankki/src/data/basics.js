@@ -631,7 +631,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-avocado-banana-smoothie',
-    title: '아보카도 바나나 스무디',
+    title: '아보카도 바나나 스무디', from: '2026-08-17',
     icon: 'fe_15',
     category: '간식',
     folder: '간식',
@@ -1232,7 +1232,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-siwon-mukchae',
-    title: '시원한 묵채',
+    title: '시원한 묵채', from: '2026-08-17',
     icon: 'fe_14',
     category: '한식',
     folder: '한식',
@@ -1467,7 +1467,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-kkaennip-jangajji',
-    title: '깻잎장아찌',
+    title: '깻잎장아찌', from: '2026-08-10',
     icon: 'fe_95',
     category: '한식',
     folder: '한식',
@@ -1501,7 +1501,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-kkaennip-jeon',
-    title: '깻잎전',
+    title: '깻잎전', from: '2026-08-10',
     icon: 'fe_137',
     category: '한식',
     folder: '한식',
@@ -1537,7 +1537,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-hunje-ori-kkaennip',
-    title: '훈제오리 깻잎볶음',
+    title: '훈제오리 깻잎볶음', from: '2026-08-10',
     icon: 'fe_134',
     category: '한식',
     folder: '한식',
@@ -1562,7 +1562,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-seulleoshi',
-    title: '슬러시',
+    title: '슬러시', from: '2026-08-17',
     icon: 'fb_b09',
     category: '간식',
     folder: '간식',
@@ -1588,7 +1588,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-tomato-gyeran-bokkeum',
-    title: '토마토달걀볶음',
+    title: '토마토달걀볶음', from: '2026-08-24',
     icon: 'fe_135',
     category: '아시안',
     folder: '중식',
@@ -1621,7 +1621,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-tomato-salad',
-    title: '토마토샐러드',
+    title: '토마토샐러드', from: '2026-08-24',
     icon: 'fy_y05',
     category: '양식',
     folder: '양식',
@@ -1654,7 +1654,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-haejang-pasta',
-    title: '해장 파스타',
+    title: '해장 파스타', from: '2026-08-24',
     icon: 'fy_y02',
     category: '양식',
     folder: '양식',
@@ -1722,7 +1722,24 @@ const RECIPE_PHOTOS = {
 }
 
 // 만드는 법 문체는 전부 '~요'체로 통일해 내보낸다 (polish 사전 — 파서와 같은 기준)
-export const basicRecipes = RAW_BASICS.map((r) => ({
+// 📅📅 주간 레시피는 «그 주가 와야» 목록에 나온다 (창업자 2026-08-03
+//   *"8월은 원래 우리 주차별로 넣기로 했잖아"* · *"주차별로 넣자 이번주꺼만 빼고 나머지는 잠금"*).
+//
+// ⛔ 8/02 에 12편을 한꺼번에 부어서 유저 눈엔 «갑자기 레시피 14개가 생긴 것»으로 보였다.
+//    어제 만든 `weekly.js` 는 «홈 안내 한 줄»만 주마다 바꿨을 뿐, 레시피 자체는 다 열려 있었다 — 반쪽이었다.
+//
+// ⭐ 여기서 걸러내면 나머지가 저절로 맞는다:
+//    · 레시피 탭 목록 · 홈 최근저장 · `weeklyNow`(없는 id 는 알아서 걸러진다) · 시드 · 마이그레이션 추가
+// ⚠️ `from` 이 없는 레시피는 «처음부터 열려 있는 것» — 지금까지 있던 것은 하나도 안 잠긴다.
+//    (원칙 = 한 번 준 것은 빼앗지 않는다)
+const today = new Date(Date.now() + (9 * 60 + new Date().getTimezoneOffset()) * 60000)
+  .toISOString().slice(0, 10)   // ⏰ KST — 컨테이너가 UTC 라 그냥 쓰면 하루 어긋난다
+
+// 🔎 «잠긴 것까지 전부» — 앱은 이걸 안 쓴다. 검사 도구(`check-weekly`)가
+//    「그 주가 오면 레시피가 있나」를 보려면 날짜로 거르기 «전» 목록이 필요하다.
+export const allBasicRecipes = RAW_BASICS.map((r) => ({ ...r, steps: politeSteps(r.steps) }))
+
+export const basicRecipes = RAW_BASICS.filter((r) => !r.from || r.from <= today).map((r) => ({
   ...r,
   steps: politeSteps(r.steps),
   // 표지는 아이콘으로 통일(썸네일 일관성). 예전 스톡 사진 적용은 RECIPE_PHOTOS 참고해 되살릴 수 있음.

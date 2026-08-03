@@ -75,10 +75,19 @@ const BASIC_PHOTOS = Object.fromEntries(
 )
 function migrateBasics(saved) {
   const v = saved.seedV || 0
-  if (v >= BASICS_VERSION) return { recipes: saved.recipes, seedV: v }
   const have = new Set(saved.recipes.map((r) => r.id))
   const haveTitles = new Set(saved.recipes.map((r) => (r.title || '').trim()))
   const dead = new Set(saved.removedSeedIds || [])
+  // 📅📅 «날짜가 돼서 새로 열린» 주간 레시피는 seedV 가 최신이어도 들어와야 한다.
+  //   `basics.js` 가 `from` 이 지난 것만 내주므로, 그 주가 오면 여기 목록이 늘어난다.
+  //   ⛔ 이 줄이 없으면 8/10 이 돼도 깻잎 세 편이 «영영» 안 들어온다 —
+  //      아래 early return 이 그 전에 걸리기 때문이다. (2026-08-03 주차 잠금 넣으며 잡은 함정)
+  const opened = basicRecipes.filter((r) => !have.has(r.id) && !dead.has(r.id) && !haveTitles.has(r.title))
+  if (v >= BASICS_VERSION) {
+    return opened.length
+      ? { recipes: [...saved.recipes, ...opened.map((r, i) => ({ ...r, savedAt: Date.now() - i * 60000 }))], seedV: v }
+      : { recipes: saved.recipes, seedV: v }
+  }
   const add = basicRecipes
     // 같은 제목의 레시피가 이미 있으면 넣지 않는다 (예전 예시의 김치볶음밥 등과 중복 방지)
     .filter((r) => !have.has(r.id) && !dead.has(r.id) && !haveTitles.has(r.title))

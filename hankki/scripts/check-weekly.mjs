@@ -8,7 +8,9 @@
 // ⛔ 시끄러운 게이트는 죽은 게이트다 → **재고가 3주 밑일 때만** 실패시킨다.
 //   그 위로는 조용히 통과. (지금 몇 주 남았는지는 `npm run weekly` 로 언제든 본다)
 import { WEEKLY, weeklyNow, weeksLeft, todayKST } from '../src/data/weekly.js'
-import { basicRecipes } from '../src/data/basics.js'
+// ⚠️ 「잠긴 것까지 전부」를 봐야 한다 — 주간 레시피는 그 주가 와야 열리므로
+//    (오늘 열린 것)로 보면 다음 주 것을 「없는 id」로 잘못 잡는다.
+import { allBasicRecipes as basicRecipes } from '../src/data/basics.js'
 
 const MIN_WEEKS = 3   // 이 밑으로 내려가면 배포를 막는다(= 채울 시간을 강제로 만든다)
 
