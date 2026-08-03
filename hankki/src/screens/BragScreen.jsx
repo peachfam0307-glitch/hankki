@@ -54,7 +54,12 @@ export default function BragScreen() {
     await new Promise((res) => setTimeout(res, 60)) // 숨은 표지 레이아웃(글자 크기 기준 폭)이 잡힐 시간
     try {
       // 재료·만드는 법이 있으면 레시피카드도 2장째로 함께(친구가 진짜 해먹게)
-      await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe(r) ? recipeCardRef.current : null })
+      const res = await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe(r) ? recipeCardRef.current : null })
+      // ⛔ 공유가 «저장»으로 떨어지면 그 이유를 말해준다 — 창업자 2026-08-03
+      //    *"내 레시피꾸민거 보내려고하면 다운로드하라고 뜨고"*. 갑자기 다운로드 창이 뜨면
+      //    유저는 «고장»으로 읽는다. 저장된 것 자체는 정상 동작이니 **한 줄만 붙이면 오해가 안 생긴다.**
+      if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
+      else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
     } finally {
       setBusy(false)
       setPick(null)

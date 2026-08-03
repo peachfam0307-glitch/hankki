@@ -758,21 +758,108 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
     fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit)
   }, [])
 
+  // 🖼 카드 한 장을 파일로.
+  //   ⚠️ `pixelRatio` 는 **1.6** — 표지 공유(`shareCover.js`)와 맞춘다. 2 면 2160×2700 이라 너무 무겁다.
+  //   ⛔⛔ **`cacheBust` 를 껐다.** 켜면 카드 안 그림마다 `?t=…` 를 붙여 **전부 다시 내려받는다** —
+  //      우리 카드엔 배경·캐릭터·소품 PNG 가 여러 장이라 캡처가 몇 배로 느려진다.
+  //      우리 그림은 전부 **같은 출처**라 캐시를 그대로 써도 안전하다(CORS 문제가 안 생긴다).
+  const toFile = useCallback(async (el, name) => {
+    const u = await toPng(el, { pixelRatio: 1.6 })
+    const b = await (await fetch(u)).blob()
+    return new File([b], name, { type: 'image/png' })
+  }, [])
+
+  // 🚀🚀 **미리 캡처** — 카드가 정해지면 «백그라운드로» 파일을 만들어 둔다.
+  //   ⛔⛔ 이게 2026-08-03 「자랑카드 먹통」의 뿌리다. 창업자 *"로딩은 돌아가. 그다음이 안돼"*
+  //      폰의 Web Share 는 **사용자가 누른 «직후»에만** 허용된다(user activation).
+  //      그런데 우리는 누른 «뒤에» 캡처를 시작했고, 캡처가 몇 초 걸리는 사이 허가가 만료돼
+  //      `navigator.share` 가 통째로 거절됐다. **로딩(캡처)은 정상이고 그 «다음»이 죽는다** — 증상 그대로.
+  //   ✅ 미리 만들어 두면 누른 순간 «기다림 없이» 공유창이 뜬다. (`docs` v8.57 에 *"다음엔 미리 캡처"* 라고
+  //      적어두고 미뤄뒀던 그 처방이다 — 오늘 그 값을 치렀다.)
+  //   ⚠️ 「다시 뽑기」로 카드가 바뀌면 다시 만든다(`draw`·`page` 가 바뀌면 useEffect 가 다시 돈다).
+  const readyRef = useRef(null)
+  useEffect(() => {
+    let alive = true
+    readyRef.current = null
+    const t = setTimeout(async () => {
+      if (!cardRef.current) return
+      try {
+        // ⭐ 두 장을 «동시에» — 순차로 하면 대기가 두 배다
+        const [f1, f2] = await Promise.all([
+          toFile(cardRef.current, 'hankki-1.png'),
+          hasRecipe && card2Ref.current ? toFile(card2Ref.current, 'hankki-2-recipe.png').catch(() => null) : null,
+        ])
+        if (alive) readyRef.current = f2 ? [f1, f2] : [f1]
+      } catch { /* 실패하면 누를 때 만든다 */ }
+    }, 500)   // 카드 그림·글꼴이 자리잡을 틈
+    return () => { alive = false; clearTimeout(t) }
+  }, [draw, page, hasRecipe, toFile])
+
+  // 💾 공유가 안 될 때 «저장»으로 떨어뜨린다.
+  //   ⛔⛔ 예전 코드는 `document.createElement('a')` 를 만들고 **DOM 에 붙이지 않은 채** `.click()` 했다.
+  //      떠 있지 않은 `<a>` 의 click 은 브라우저가 무시한다 → **아무 일도 안 일어난다.**
+  //      (표지 공유 쪽 `shareCover.js` 는 `appendChild` 를 해서 «다운로드 팝업»이 떴다 —
+  //       같은 원인인데 증상이 갈린 이유가 이것이다.)
+  const saveFile = (f) => {
+    const u = URL.createObjectURL(f)
+    const a = document.createElement('a')
+    a.href = u; a.download = f.name
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(() => URL.revokeObjectURL(u), 1500)
+  }
+
   const share = useCallback(async () => {
     if (!cardRef.current || busy) return
+    const text = (n) => `『${title}』 오늘의 한 끼 🧡${n > 1 ? ' · 재료·레시피 같이!' : ''}\nPlay스토어에서 '한끼' 검색 🔍`
+    // ⭐ 준비돼 있으면 **await 없이 곧바로** 공유창을 연다 — 사이에 기다림을 두면 허가가 깨진다.
+    const go = (files) => {
+      if (!(navigator.canShare && navigator.share)) return null
+      if (navigator.canShare({ files })) return navigator.share({ files, title, text: text(files.length), url: APP_URL })
+      if (files.length > 1 && navigator.canShare({ files: [files[0]] })) return navigator.share({ files: [files[0]], title, text: text(1), url: APP_URL })
+      return null
+    }
+    const pre = readyRef.current
+    if (pre) {
+      const t = go(pre)
+      if (t) { try { await t; return } catch (e) { if (e && e.name === 'AbortError') return } }
+      // 여기까지 왔으면 이 폰은 파일 공유를 못 한다 → 저장으로
+      pre.forEach((f, i) => setTimeout(() => saveFile(f), i * 400))
+      setBusy('공유가 안 되는 폰이라 사진으로 저장했어요')
+      setTimeout(() => setBusy(null), 2400)
+      return
+    }
+    // 아직 준비 전(막 열자마자 누름) — 만들어서 시도한다. 이땐 허가가 만료될 수 있어 저장으로 갈 수 있다.
     setBusy(hasRecipe ? '카드 + 레시피 2장 준비 중이에요' : '카드를 그리고 있어요')
     try {
-      const toFile = async (el, name) => { const u = await toPng(el, { pixelRatio: 2, cacheBust: true }); const b = await (await fetch(u)).blob(); return new File([b], name, { type: 'image/png' }) }
-      const f1 = await toFile(cardRef.current, 'hankki-1.png')
-      const files = [f1]
-      if (hasRecipe && card2Ref.current) { try { files.push(await toFile(card2Ref.current, 'hankki-2-recipe.png')) } catch { /* 레시피카드 실패해도 1장은 보냄 */ } }
-      const text = `『${title}』 오늘의 한 끼 🧡${files.length > 1 ? ' · 재료·레시피 같이!' : ''}\nPlay스토어에서 '한끼' 검색 🔍`
-      if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files, title, text, url: APP_URL }) }
-      else if (navigator.canShare && navigator.canShare({ files: [f1] })) { await navigator.share({ files: [f1], title, text, url: APP_URL }) }
-      else { const u = await toPng(cardRef.current, { pixelRatio: 2 }); const a = document.createElement('a'); a.href = u; a.download = 'hankki-card.png'; a.click() }
-    } catch (e) { if (!(e && e.name === 'AbortError')) { /* noop */ } }
-    setBusy(null)
-  }, [busy, title, hasRecipe])
+      // ⏱⏱ **12초 제한** — 캡처가 안 끝나면 «로딩만 도는» 상태가 되고, 그게 유저에겐 먹통이다.
+      //   ⛔ 2026-08-03 창업자가 겪은 것이 정확히 이 모양이었다: *"로딩은 돌아가. 그다음이 안돼"*.
+      //   ⭐ 끝나든 못 끝나든 **말은 한다.** 조용히 멈춰 있는 것보다 «안 됐다」고 말하는 게 낫다.
+      const cap = Promise.all([
+        toFile(cardRef.current, 'hankki-1.png'),
+        hasRecipe && card2Ref.current ? toFile(card2Ref.current, 'hankki-2-recipe.png').catch(() => null) : null,
+      ])
+      const [a1, a2] = await Promise.race([
+        cap,
+        new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('capture timeout'), { name: 'TimeoutError' })), 12000)),
+      ])
+      const files = a2 ? [a1, a2] : [a1]
+      readyRef.current = files
+      const t = go(files)
+      if (t) { await t; setBusy(null); return }
+      files.forEach((f, i) => setTimeout(() => saveFile(f), i * 400))
+      setBusy('공유가 안 되는 폰이라 사진으로 저장했어요')
+      setTimeout(() => setBusy(null), 2400)
+      return
+    } catch (e) {
+      if (e && e.name === 'AbortError') { setBusy(null); return }
+      // ⛔ 여기서 조용히 끝내면 «먹통»이 된다. 준비된 게 있으면 저장이라도 해준다.
+      const f = readyRef.current
+      if (f) { f.forEach((x, i) => setTimeout(() => saveFile(x), i * 400)); setBusy('공유가 안 돼서 사진으로 저장했어요') }
+      else if (e && e.name === 'TimeoutError') setBusy('카드 만들기가 오래 걸려요. 잠시 뒤 다시 눌러주세요')
+      else setBusy('공유가 안 됐어요. 잠시 뒤 다시 눌러주세요')
+      setTimeout(() => setBusy(null), 2800)
+    }
+  }, [busy, title, hasRecipe, toFile])
 
   // 🖼 이 카드를 레시피 표지로 저장 — CTA 없는 cover 카드를 이미지로 캡처해 부모(레시피 화면)에 넘긴다.
   const saveCover = useCallback(async () => {

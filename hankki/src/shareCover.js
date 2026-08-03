@@ -53,10 +53,15 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
   const scale = Math.min(3, 1080 / Math.max(1, rect.width)) // 1080px급 고해상도
   let coverUrl
   try {
-    coverUrl = await toPng(coverEl, {
-      pixelRatio: scale,
-      filter: (node) => !(node.dataset && 'nocapture' in node.dataset),
-    })
+    // ⏱ **12초 제한** — 캡처가 안 끝나면 로딩만 돌고 아무 말이 없다. 그게 유저에겐 먹통이다
+    //    (창업자 2026-08-03 *"로딩은 돌아가. 그다음이 안돼"*). 끝나든 못 끝나든 **말은 한다.**
+    coverUrl = await Promise.race([
+      toPng(coverEl, {
+        pixelRatio: scale,
+        filter: (node) => !(node.dataset && 'nocapture' in node.dataset),
+      }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('capture timeout')), 12000)),
+    ])
   } catch (e) {
     return { ok: false, error: 'capture' }
   }
