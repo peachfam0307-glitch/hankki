@@ -100,14 +100,6 @@ export function byTopic() {
   return t
 }
 
-// 이 문서보다 **더 새 문서가 같은 주제에 있으면** 그걸 돌려준다(없으면 null).
-export function newerThan(relPath) {
-  const me = scanDocs().find((d) => d.path === relPath)
-  if (!me || !me.date) return null
-  const group = byTopic().get(me.topic) || []
-  const top = group[0]
-  return top && top.path !== relPath && top.date > me.date ? top : null
-}
 
 // 말에서 주제 뽑기 — 핀 키워드 + 주제 이름이 그대로 들어있는지만 본다(가볍게).
 export function topicsIn(text) {
