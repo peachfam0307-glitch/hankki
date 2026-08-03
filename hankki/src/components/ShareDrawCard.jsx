@@ -32,9 +32,23 @@ const SUMMER = /^(sm_|duo_(bingsu|naengmyeon|watermelon))/
 //   ⚠️ JPEG 다 — PNG(2.15MB)는 서비스워커 미리받기 한도 2MB를 넘어 **빌드가 막혔다.**
 //      투명이 필요 없는 사진이라 JPEG 로 굽는다(품질 90 · 크로마 서브샘플링 끔 = 글자·선이 안 뭉갠다)
 import HW_FELT from '../assets/cardbg/hw_felt.jpg'
+// 🎃 펠트 소품 — 창업자 2026-08-03 *"필요하면 써 자랑카드꾸밀때"* (3×3 로 다시 뽑아준 시트)
+//   ⭐ 배경과 **같은 펠트 소재**라 카드 위에서 결이 안 싸운다.
+//   ⚠️ hwf_04(검은고양이)는 유료팩 `hs_04` 와 «소재»가 겹치지만 **그대로 쓴다** —
+//      창업자 2026-08-03 *"똑같은 거 안주면 되지 **아이템까지 다 안겹치게 갈순없어**"*
+//      ⭐ 기준은 «같은 그림인가»지 «같은 소재인가»가 아니다. 펠트 자수 ↔ PET 필름은 마감이 완전히 다르다.
+//      📌 클로드가 과하게 뺐다가 되돌린 것 — 원칙을 넓게 적용하면 쓸 게 없어진다.
+//   ⚠️ 배경 그림에 이미 호박·유령의집·거미줄·박쥐가 있다 → **세 개만** 얹는다. 더 붙이면 복잡해진다.
+const HWF = Object.values(import.meta.glob('../assets/cardbg/hwf/*.png', { eager: true, query: '?url', import: 'default' }))
 // 🎃 핼러윈 스킨엔 **핼러윈 애들만** 올린다 (창업자 *"거기에는 딱 할로윈애들만 넣을 수있게"*)
 //   여름 스킨이 여름 컷만 쓰는 것과 같은 규칙 — 배경이 세니까 아무 컷이나 얹으면 결이 죽는다.
 const HALLOWEEN = /^hw_/
+// 🏮 추석 카드 배경 — 창업자 2026-08-03 *"이쁘게 만들어줘 카드 추석자랑카드에 조각보넣던가.."*
+//   ⭐ 조각보는 **무료 드립 배경**이라 유료팩 누수 걱정이 없다(배경 README 배정표).
+//      핼러윈이 펠트면 추석은 조각보 — 둘 다 «천 소재»라 계절 카드끼리 결이 맞는다.
+//   가운데 얼룩 7.4(추석 팩 배경 14.2보다 깨끗) · 밝기 187.6 → 글자는 크림 판 위에 올린다.
+import CS_JOGAKBO from '../assets/cardbg/cs_jogakbo.jpg'
+const HANBOK = /^(cs_|hb)/   // 한복 = 추석 카드에서만
 const pickPool = (re, withSummer) => {
   const ok = (n) => COOK.test(n) || (withSummer && SUMMER.test(n))
   const hit = ENTRIES.filter((e) => re.test(e.name) && ok(e.name))
@@ -81,7 +95,9 @@ const seasonCuts = (kind) => SEASON_CUTS
 //      그동안 한복 곰과 해골 펭펭이 «같은 뽑기 풀»에 들어가 warm·panel 같은 사철 카드에 뒤섞인다.
 //   ⭐ 한복(cs_·hb)은 추석 창에만 열리니 저절로 「추석에는 한복」이 되고,
 //      코스튬은 여기서 걸러 **펠트 배경 핼러윈 카드에서만** 나오게 한다.
-const notHw = (a) => a.filter((e) => !HALLOWEEN.test(e.name))
+// ⛔ 계절 «옷»(한복·코스튬)은 사철 카드로 안 나간다 — 각자 전용 카드에서만.
+//   안 막으면 추석 창(9/1~10/15)과 핼러윈 창(10/1~11/2)이 15일 겹쳐 한복과 해골이 뒤섞인다.
+const notHw = (a) => a.filter((e) => !HALLOWEEN.test(e.name) && !HANBOK.test(e.name))
 const gomPool = () => [...GOM, ...notHw(seasonCuts('gom'))]
 const pengPool = () => [...PENG, ...notHw(seasonCuts('peng'))]
 const duoPool = () => [...DUO, ...notHw(seasonCuts('duo'))]
@@ -96,6 +112,8 @@ const S_DUO = summerOnly(/^(duo_|sm_duo_)/)
 // 🎃 핼러윈 전용 풀 — `seasonCuts()` 가 창이 열렸을 때만 넣어주므로 그 안에서 hw_ 만 걸러낸다.
 //   ⛔ 상수로 굳히지 말 것(창이 열리고 닫힌다) → 함수다.
 const hwOnly = (kind) => seasonCuts(kind).filter((e) => HALLOWEEN.test(e.name))
+// 🏮 추석 전용 풀 — 창업자 *"추석에는 한복, 할로윈은 코스튬복장애들만 붙게 만들어줘"*
+const csOnly = (kind) => seasonCuts(kind).filter((e) => HANBOK.test(e.name))
 
 // 📌 계절 캐릭터 컷은 `seasonCuts()` 가 **창이 열렸을 때만** 넣어주므로 스킨별로 따로 거를 필요가 없다.
 //    (아치 스킨은 이제 가을 전용이 아니라 **사철 뼈대**다 — 옷만 계절마다 갈아입는다)
@@ -123,9 +141,11 @@ function drawState() {
   //    → **여름에만 한 장 더 얹는 이벤트 카드**로 둔다(여름엔 7장).
   // 🎃 핼러윈도 여름과 같은 «한정 한 장» — 창이 열린 동안만 뽑기 풀에 얹는다.
   //    창은 `cardSeasons.js` 의 hw(10-01~11-02)를 그대로 쓴다 ⛔날짜를 여기 또 적지 말 것(어긋난다)
-  const hwOpen = SEASON_CUTS.some((s) => s.key === 'hw' && inCardWindow(s))
+  const seasonOpen = (k) => SEASON_CUTS.some((s) => s.key === k && inCardWindow(s))
+  const hwOpen = seasonOpen('hw'), csOpen = seasonOpen('cs')
   const pool = ['warm', 'panel', 'pola', 'mag', 'arch', 'night',
-    ...(isSeason('summer') ? ['summer'] : []), ...(hwOpen ? ['halloween'] : [])]
+    ...(isSeason('summer') ? ['summer'] : []),
+    ...(hwOpen ? ['halloween'] : []), ...(csOpen ? ['chuseok'] : [])]
   const key = (() => {
     try { const v = new URLSearchParams(location.search).get('card'); if (v && SKINS[v]) return v } catch { /* noop */ }
     return rnd(pool)
@@ -137,11 +157,12 @@ function drawState() {
   const r = Math.random()
   const [g, p, d] = key === 'summer' ? [S_GOM, S_PENG, S_DUO]
     : key === 'halloween' ? [hwOnly('gom'), hwOnly('peng'), hwOnly('duo')]
+      : key === 'chuseok' ? [csOnly('gom'), csOnly('peng'), csOnly('duo')]
       : [gomPool(), pengPool(), duoPool()]
   const cat = key === 'pola' && SCENES.length && r < 0.65 ? SCENES     // 폴라로이드는 씬 사진 위주
     : (key === 'night' || key === 'summer' || key === 'arch')
       ? (r < 0.5 ? g : r < 0.78 ? p : (d.length ? d : g))
-      : key === 'halloween'
+      : (key === 'halloween' || key === 'chuseok')
         ? (r < 0.4 ? g : r < 0.75 ? p : (d.length ? d : g))   // 곰·펭·콤비 골고루
       : (r < 0.68 ? g : (p.length ? p : g))
   return { skin, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46) }
@@ -157,6 +178,7 @@ const SKINS = {
   mag: { key: 'mag' }, arch: { key: 'arch' }, night: { key: 'night' },
   summer: { key: 'summer' },
   halloween: { key: 'halloween' },   // 🎃 10/01~11/02 에만 얹는 한 장 (펠트 배경 ＋ 핼러윈 애들만)
+  chuseok: { key: 'chuseok' },       // 🏮 09/01~10/15 에만 얹는 한 장 (조각보 배경 ＋ 한복만)
 }
 
 // ── 1080×1350 카드 (캡처 대상) ──
@@ -331,6 +353,14 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
       <span style={{ display: 'block', fontFamily: 'GowunDodum, sans-serif', fontSize: 24, color: sub, fontWeight: 700, marginTop: 8 }}>한끼 앱에서 →</span>
     </div>
   )
+  // 🩹 사진 배경 카드(핼러윈·추석) 전용 — 아래쪽에 «위로 사라지는» 크림 베일을 깐다.
+  //    ⛔ 안 깔면 `more`·`foot` 글자가 배경 그림에 통째로 묻힌다(핼러윈 보라 언덕·추석 조각보).
+  //       실제로 렌더해 보니 「Play스토어 '한끼' 검색」이 거의 안 읽혔다 — 이건 설치 유도 글자라 제일 아깝다.
+  //    ⭐ 판을 덮지 않고 «그라데이션»인 이유 = 배경 그림(호박·고양이·조각보 결)이 비쳐 보여야 계절감이 산다.
+  //    ⚠️ zIndex 5 = 크림 판(6)·캐릭터(7)·소품(8)보다 뒤. 캐릭터가 베일 위에 선 것처럼 보인다.
+  const veil = (rgb) => (
+    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 360, zIndex: 5, pointerEvents: 'none', background: `linear-gradient(180deg, rgba(${rgb},0) 0%, rgba(${rgb},.62) 38%, rgba(${rgb},.93) 78%, rgba(${rgb},.97) 100%)` }} />
+  )
   const hero = (st) => <img src={char.url} alt="" crossOrigin="anonymous" style={{ position: 'absolute', maxWidth: 'none', objectFit: 'contain', zIndex: 7, ...st }} />
   const shell = (bg, kids) => <div style={{ width: 1080, height: 1350, fontFamily: 'GowunDodum, sans-serif', position: 'relative', overflow: 'hidden', background: bg }}>{kids}</div>
 
@@ -496,7 +526,7 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
     const hs = headSize([l1, l2], 132, 1080 - PAD * 2 - 40)
     return shell('#f3ede1', <>
       <img src={HW_FELT} alt="" crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: 1080, height: 1350, objectFit: 'cover' }} />
-      {brand('#5b4a6e')}
+      {brand('#4a3568', { textShadow: '0 2px 10px rgba(255,253,248,.95), 0 0 24px rgba(255,253,248,.8)' })}
       <div style={{ position: 'absolute', top: 84, right: PAD, transform: 'rotate(-7deg)', fontFamily: 'Jua, sans-serif', fontSize: 31, color: '#fff', background: 'linear-gradient(180deg,#8d6bb0,#6e4e94)', padding: '13px 28px', borderRadius: 18, boxShadow: '0 10px 18px -6px rgba(80,50,120,.55), inset 0 2px 0 rgba(255,255,255,.35)', zIndex: 9 }}>핼러윈 한정</div>
       {/* 가운데 크림 판 — 배경이 복잡해 글자를 여기 올린다 */}
       <div style={{ position: 'absolute', left: PAD - 6, right: PAD - 6, top: 300, padding: '34px 38px 40px', borderRadius: 34, background: 'rgba(253,250,244,.93)', boxShadow: '0 18px 40px -18px rgba(70,45,100,.45)', zIndex: 6 }}>
@@ -505,13 +535,59 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
           {l1}{l2 && <><br />{l2}</>}
         </div>
         <div style={{ marginTop: 26 }}>{chips('rgba(140,110,180,.3)', '#6e4e94')}</div>
+        {/* 🎃 펠트 소품 둘 — 크림 판 «바깥» 모서리에 붙인 것처럼 걸친다(스티커 느낌).
+            ⭐⭐ **판의 자식으로 둔다** — 화면 좌표로 박아두면 제목이 두 줄이 되는 순간 판이 길어져
+               소품이 「15분」 칩을 물어버린다(실제로 그랬다). 판에 붙여두면 판이 자라도 같이 내려간다.
+            ⚠️ 뽑을 때마다 다른 둘이 오게 셔플한다 — 같은 소품이 늘 같은 자리면 카드가 똑같아 보인다.
+            ⛔ **셋에서 둘로 줄였다** — 배경 그림에 이미 달·별·가랜드·집·나무·호박이 잔뜩 들어 있어
+               셋은 지저분했고, 왼쪽 «위» 자리는 판 안쪽 글자를 가렸다(「오늘 밤은」의 앞 두 글자).
+               📌 판 위쪽엔 글자가 붙어 있다 — 걸치려면 «아래쪽·오른쪽» 모서리라야 안전하다.
+            ⚠️ 아래 왼쪽 바닥은 이제 CTA(`more`·`foot`) 자리라 비워 둔다. */}
+        {(() => {
+          const pick = [...HWF].sort(() => Math.random() - 0.5).slice(0, 2)
+          const spot = [
+            { left: -64, bottom: -54, size: 150, rot: -14 },   // 판 왼쪽 «아래» 모서리 밖
+            { right: -40, top: -50, size: 128, rot: 12 },      // 판 오른쪽 «위» 모서리 밖
+          ]
+          return pick.map((u, i) => {
+            const s = spot[i]
+            return <img key={i} src={u} alt="" crossOrigin="anonymous" style={{ position: 'absolute', ...s, width: s.size, height: s.size, objectFit: 'contain', transform: 'rotate(' + s.rot + 'deg)', filter: 'drop-shadow(0 10px 14px rgba(60,40,90,.3))' }} />
+          })
+        })()}
       </div>
       {hero({ right: 24, bottom: 210, height: 540, filter: die8('#ffffff') })}
-      {more('#33254a', '#7a5a9e')}{foot('#4a3568', '#7a5a9e')}
+      {veil('250,246,238')}
+      {more('#33254a', '#6e4e94')}{foot('#4a3568', '#6e4e94')}
     </>)
   }
 
-  // ═══ ⑦ 가을 한정 — 아치 창틀 + 아래 왼쪽정렬 타이포. 9~11월에만 등장 ═══
+  // ═══ ⑦ 추석 한정 — 조각보 배경 사진 한 장. 9/1~10/15 에만 등장 ═══
+  //
+  // ⭐ 핼러윈 카드와 «짝»이다 — 둘 다 천 소재 사진 배경에 계절 옷 입은 애들만 올린다.
+  //    조각보는 **무료 드립 배경**이라 유료팩 누수 걱정이 없다(배경 README 배정표).
+  // ⚠️ 배경이 알록달록해서 글자는 크림 판 위에. 판 색은 조각보의 «가장 옅은 결」에 맞춘 미색.
+  if (K.key === 'chuseok') {
+    const hs = headSize([l1, l2], 132, 1080 - PAD * 2 - 40)
+    return shell('#f6efe2', <>
+      <img src={CS_JOGAKBO} alt="" crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: 1080, height: 1350, objectFit: 'cover' }} />
+      {brand('#8a5a3c', { textShadow: '0 2px 10px rgba(255,253,244,.95), 0 0 24px rgba(255,253,244,.8)' })}
+      <div style={{ position: 'absolute', top: 84, right: PAD, transform: 'rotate(-6deg)', fontFamily: 'Jua, sans-serif', fontSize: 31, color: '#fff', background: 'linear-gradient(180deg,#d98a52,#b9633a)', padding: '13px 28px', borderRadius: 18, boxShadow: '0 10px 18px -6px rgba(150,80,45,.55), inset 0 2px 0 rgba(255,255,255,.35)', zIndex: 9 }}>추석 한정</div>
+      <div style={{ position: 'absolute', left: PAD - 6, right: PAD - 6, top: 300, padding: '34px 38px 40px', borderRadius: 34, background: 'rgba(253,249,240,.94)', boxShadow: '0 18px 40px -18px rgba(120,80,45,.45)', zIndex: 6 }}>
+        <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 44, color: '#b9633a' }}>둥근 달 아래, 한 끼</div>
+        <div style={{ marginTop: 4, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.99, letterSpacing: -3, color: '#3d2a1c', wordBreak: 'keep-all' }}>
+          {l1}{l2 && <><br />{l2}</>}
+        </div>
+        <div style={{ marginTop: 26 }}>{chips('rgba(190,130,80,.3)', '#a15a33')}</div>
+      </div>
+      {/* ⚠️ 핼러윈(540)보다 크게 잡는다 — 추석 컷엔 복주머니·족자처럼 «캐릭터 위에 매달린 장식»이
+          한 그림으로 들어 있어서, 같은 높이로 두면 정작 애가 절반만 차지해 아래가 텅 빈다(실제로 그랬다). */}
+      {hero({ right: 10, bottom: 196, height: 648, filter: die8('#ffffff') })}
+      {veil('250,244,232')}
+      {more('#3d2a1c', '#a15a33')}{foot('#6b4326', '#a15a33')}
+    </>)
+  }
+
+  // ═══ ⑧ 가을 한정 — 아치 창틀 + 아래 왼쪽정렬 타이포. 9~11월에만 등장 ═══
   //
   // ⭐ **구조로 차별화한다**(색만 바꾼 6장이 "다 똑같다" 판정을 받은 이력 — 2026-07-29).
   //    · 다른 카드의 큰 색면은 전부 **원**(warm blob·mag 원판·night 홀로판)이거나 **둥근 사각**(panel).
