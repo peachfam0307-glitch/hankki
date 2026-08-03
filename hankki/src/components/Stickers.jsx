@@ -777,7 +777,7 @@ export const STICKER_GROUPS = [
   // 🎉 출시기념 축하 3컷 — 출시기념 팩(#65)의 나머지 반쪽. 프레임 12 + 이 3 = 15컷.
   //    ⛔ 같은 시트의 맥주 건배 컷은 **안 넣는다**(전체 이용가) → 주스 건배로 대체돼 있다.
   //    계절을 안 붙였다 = 사철. 「출시 기념」은 여름이 지나도 남는 이야기다.
-  { key: 'buddies_celebrate', tab: 'buddies', label: '출시 축하', items: ['ce_manse', 'ce_pokjuk', 'ce_cheers'] },
+  { key: 'buddies_celebrate', tab: 'buddies', gift: true, label: '출시 축하', items: ['ce_manse', 'ce_pokjuk', 'ce_cheers'] },
   // ═══════════════════════════════════════════════════════════════════════════
   // 🧹 데코 탭 정리 (2026-07-30) — 창업자 *"걍 이미 넣어놓은거 넘 많으니까 정리해서 무료출시하자"*
   //
@@ -872,7 +872,13 @@ export const STICKER_GROUPS = [
   // 🎗 마스킹테이프 — 창업자 직접 제작(2026-07-29). 배경·테이프 탭의 CSS 마테와 달리 갈색 외곽선 +
   //   양끝 톱니가 있는 '스티커 워시'라 다꾸 감성이 그대로 산다. **사철 쓰는 것만 12종 엄선**("엄선해서 12개").
   //   여름 무늬(레몬·수박·구름·파도·조개…)는 아래 `마스킹테이프 · 여름` 으로 뺐다.
-  { key: 'deco_washi', tab: 'tape', label: '마스킹테이프', items: ['wt_ribbon_pink', 'wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender', 'wt_flower_mauve', 'wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow', 'wt_sparkle', 'wt_cherry', 'wt_ribbon_red', 'wt_grid_black', 'wtn_01', 'wtn_02', 'wtn_03'] },
+  // 🎀 **`wtn_03` 을 서랍에서 내렸다** — 창업자 2026-08-03 *"마스킹테이프 젤 아래 핑크 중복임.(하나 삭제)"*
+  //    🔎 픽셀로 확인: `wtn_02` ↔ `wtn_03` 은 **분홍 바탕＋흰 물방울로 사실상 같은 그림**이다
+  //       (차이 = 02 에만 종이 잔무늬가 있고 03 은 매끈 · 물방울이 조금 더 큼).
+  //    ⭐ **02 를 남긴 이유** = 잔무늬가 있어 종이 질감이 산다(우리 톤이 수채·크래프트).
+  //    ⛔ 파일과 `PHOTO_RATIO` 는 **안 지운다** — 이미 `wtn_03` 으로 꾸며 저장한 표지가 깨지면 안 된다
+  //       (`kf_c_`·`sf_` 때와 같은 방식 · 서랍에서만 안 보인다).
+  { key: 'deco_washi', tab: 'tape', label: '마스킹테이프', items: ['wt_ribbon_pink', 'wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender', 'wt_flower_mauve', 'wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow', 'wt_sparkle', 'wt_cherry', 'wt_ribbon_red', 'wt_grid_black', 'wtn_01', 'wtn_02'] },
 
   // ── 여름 (2026-07-29 재제작) ── 제철(6~8월)이면 데코 탭 맨 위로 올라간다.
   //   ⚠️ 철이 지나도 **숨기지 않는다** — 순서만 밀린다. 유저가 쓰던 걸 못 찾게 되는 게 더 나쁘다.
@@ -900,7 +906,12 @@ export const STICKER_GROUPS = [
   //      프레임은 모양이 복잡하고 해상도까지 모자라 같은 수술이 안 통한다. **증상이 같아도 처방이 다르다.**
   //   ⚠️ 파일과 `PHOTO_RATIO` 는 그대로 둔다 — 이걸로 꾸며 저장한 표지가 계속 정상 렌더돼야 한다.
   //   🎁 그래서 **출시기념 팩이 지금 비어 있다.** 새 컷 받으면 이 줄을 되살리면 된다.
-  { key: 'deco_sf', tab: 'frame', season: 'summer', label: '출시기념 여름', items: ['pf_sm01', 'pf_sm02', 'pf_sm03', 'pf_sm04', 'pf_sm05', 'pf_sm06', 'pf_sm07', 'pf_sm08', 'pf_sm09', 'pf_sm10', 'pf_sm11', 'pf_sm12'] },
+  // 🎁🎁 `gift: true` = **서랍에 「선물」 택이 붙고 그 탭 맨 위로 올라간다.** (창업자 2026-08-03)
+  //   *"여름출시기념팩 표시없으니까 뭔지 모름. 스티커나, 컬러택이라도 붙이고… 친구들 제일 아래있어 잘 모름"*
+  //   ⛔ 전엔 안내가 **서랍을 처음 열 때 한 번 뜨는 시트**뿐이었다 — 닫고 나면 다시는 안 보이고,
+  //      서랍 어디에도 「이게 선물이다」가 안 적혀 있었다. **한 번 스치는 안내는 없는 것과 같다.**
+  //   ⭐ 그래서 «물건 옆»에 표시를 박는다. 시트는 상단 줄에서 언제든 다시 열 수 있다.
+  { key: 'deco_sf', tab: 'frame', season: 'summer', gift: true, label: '출시기념 여름', items: ['pf_sm01', 'pf_sm02', 'pf_sm03', 'pf_sm04', 'pf_sm05', 'pf_sm06', 'pf_sm07', 'pf_sm08', 'pf_sm09', 'pf_sm10', 'pf_sm11', 'pf_sm12'] },
   { key: 'deco_sk', tab: 'deco', season: 'summer', label: '소품 · 여름', items: ['sk_01', 'sk_02', 'sk_03', 'sk_04', 'sk_05', 'sk_06', 'sk_07', 'sk_08', 'sk_09', 'sk_10', 'sk_11', 'sk_12', 'sk_13', 'sk_14', 'sk_15', 'sk_16'] },
   { key: 'deco_st', tab: 'deco', season: 'summer', label: '메모·씰 · 여름', items: ['st_01', 'st_02', 'st_03', 'st_04', 'st_05', 'st_06', 'st_07', 'st_08', 'st_09', 'st_10', 'st_11'] },
   // ⚠️ 옛 이름은 `여름 한정` 이었는데 **내용은 전부 마스킹테이프**(`wt_`)라 이름이 내용을 안 알려줬다.

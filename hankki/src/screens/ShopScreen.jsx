@@ -240,6 +240,33 @@ function Curation() {
   const shownGroups =
     curCat === '전체' ? CURATION : CURATION.filter((g) => g.group === curCat)
 
+  // 📏📏 「전체」는 큰 칸마다 **3개까지만** 보이고 나머지는 「더보기」로 접는다 — 창업자 2026-08-03
+  //   *"3개까지 보이고 그 아래는 더보기로 정리? 아래로 너무 김."*
+  //   🔎 실제로 재보니 「전체」를 누르면 **카드 40장**이 세로로 쭉 늘어선다(양념만 13장).
+  //   ⭐ 뿌리는 칸 개수가 아니라 **「전체」가 재고를 전부 펼친다**는 것 — 큐레이션은 계속 늘어나므로
+  //      (창업자 *"앞으로 큐레이션 계속 올릴거니까"*) 손대지 않으면 **화면이 영영 길어진다.**
+  //      3개씩 접으면 제품이 100개가 돼도 「전체」 길이는 그대로다(6칸 × 3 = 18장).
+  //   ⛔ **큰 칸을 «직접 고른» 경우엔 접지 않는다** — 그건 「그걸 보려고」 고른 화면이다.
+  //      「전체」= 훑는 화면 / 큰 칸 = 고른 화면. 목적이 다르므로 같이 다루지 않는다.
+  const FOLD = 3
+  const [openG, setOpenG] = useState({})   // 큰 칸별 «펼쳤나»
+  // 큰 칸으로 다시 묶는다 — ⚠️ 소제목(작은 칸)은 그대로 살린다. 접히는 건 «개수»뿐이다.
+  const byGroup = [...new Set(shownGroups.map((g) => g.group))].map((name) => ({
+    name,
+    cats: shownGroups.filter((g) => g.group === name),
+  }))
+  // 소제목 구조를 지키며 앞에서 n개만 — 첫 소칸이 3개면 그 소칸만, 1개면 다음 소칸까지 이어 센다
+  const take = (cats, n) => {
+    const out = []
+    let left = n
+    for (const c of cats) {
+      if (left <= 0) break
+      out.push({ ...c, items: c.items.slice(0, left) })
+      left -= Math.min(left, c.items.length)
+    }
+    return out
+  }
+
   // '사러가기' 연결: url 이 있으면 그 직접 링크로, mall 이 있으면 그 쇼핑몰 검색으로,
   // 없으면 무엇이든 잘 찾는 네이버쇼핑 통합검색으로.
   const MALL_SEARCH = {
@@ -355,15 +382,34 @@ function Curation() {
               큰 칸을 고르면 그 안에서 간장·된장·맛술… 로 갈려 보인다. */}
           {curCat === 'pick'
             ? picks.map((it) => Card(it))
-            : shownGroups.map((g) => (
-                <div key={g.cat}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>
-                    {curIcon(g.icon) ? <img src={curIcon(g.icon)} alt="" draggable={false} style={{ width: 22, height: 22, objectFit: 'contain' }} /> : <span>{g.emoji}</span>}
-                    {g.cat}
+            : byGroup.map((G) => {
+                const total = G.cats.reduce((s, c) => s + c.items.length, 0)
+                // 큰 칸을 직접 고른 화면(`curCat !== '전체'`)은 접지 않는다 — 보려고 고른 것이다
+                const on = curCat !== '전체' || openG[G.name] || total <= FOLD
+                const cats = on ? G.cats : take(G.cats, FOLD)
+                return (
+                  <div key={G.name}>
+                    {cats.map((g) => (
+                      <div key={g.cat}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>
+                          {curIcon(g.icon) ? <img src={curIcon(g.icon)} alt="" draggable={false} style={{ width: 22, height: 22, objectFit: 'contain' }} /> : <span>{g.emoji}</span>}
+                          {g.cat}
+                        </div>
+                        {g.items.map((it) => Card({ ...it, cat: g.cat, emoji: g.emoji, icon: it.icon || g.icon }))}
+                      </div>
+                    ))}
+                    {/* ⭐ 「몇 개가 더 있는지」를 숫자로 적는다 — 「더보기」만 있으면 누를지 말지 못 정한다 */}
+                    {curCat === '전체' && total > FOLD && (
+                      <button
+                        className="press"
+                        onClick={() => setOpenG((s) => ({ ...s, [G.name]: !s[G.name] }))}
+                        style={{ width: '100%', padding: '9px 0', marginBottom: 4, borderRadius: 11, background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--brown)', fontWeight: 800, fontSize: 13 }}>
+                        {openG[G.name] ? `${G.name} 접기` : `${G.name} ${total - FOLD}개 더보기`}
+                      </button>
+                    )}
                   </div>
-                  {g.items.map((it) => Card({ ...it, cat: g.cat, emoji: g.emoji, icon: it.icon || g.icon }))}
-                </div>
-              ))}
+                )
+              })}
 
           {/* ⛔ 아래 안내판을 뺐다 (창업자 2026-08-03 *"아래위로 좀 지저분해보여"*).
               「앞으로도 하나씩 계속 올라와요」는 **맨 위 부제로 옮겨 살렸다** — 창업자가 콕 집어 남기라 했다. */}

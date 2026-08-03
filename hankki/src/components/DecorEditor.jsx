@@ -169,9 +169,14 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
   //    *"각 탭별로 리컬러는 한정판 아래 배치하라는 뜻이야"*).
   //    → 귀한 것부터 보인다: 한정판은 지금 아니면 못 쓰고, 리컬러는 색을 맞출 수 있어 활용도가 높다.
   //    ⚠️ sort 는 안정 정렬이라 같은 순위끼리는 배열에 적은 순서가 그대로 유지된다.
+  // 🎁 **선물(`gift`)은 무조건 맨 위** — 창업자 2026-08-03 *"친구들 제일 아래있어 잘 모름"*.
+  //    한정판보다도 위다: 한정판은 「지금 아니면 못 쓴다」이고 선물은 **「있는 줄도 모른다」**라
+  //    못 찾는 쪽이 더 나쁘다. (축하 3컷은 친구들 탭 맨 아래라 아무도 못 봤다)
   const groupsByTab = (t) => STICKER_GROUPS
     .filter((x) => x.tab === t && isReleased(x.from))
-    .sort((a, b) => (seasonRank(a.season) - seasonRank(b.season)) || ((b.recolor ? 1 : 0) - (a.recolor ? 1 : 0)))
+    .sort((a, b) => ((b.gift ? 1 : 0) - (a.gift ? 1 : 0))
+      || (seasonRank(a.season) - seasonRank(b.season))
+      || ((b.recolor ? 1 : 0) - (a.recolor ? 1 : 0)))
 
   // 포스트잇을 선택하면 서랍을 맨 위로 올려 '무늬·모양 꾸미기'가 바로 보이게 한다.
   const drawerRef = useRef(null)
@@ -238,10 +243,18 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
       </button>
     )
   }
+  // 🎁 「선물」 택 — 출시기념으로 준 것에 붙는다. ⛔유니코드 이모지 금지라 글자＋색으로만.
+  //    ⚠️ 「한정」이라고 쓰지 않는다 — 빼앗을 계획이 없다(*"한 번 준 것은 빼앗지 않는다"*).
+  const GiftTag = () => (
+    <span style={{
+      marginLeft: 6, padding: '1.5px 7px', borderRadius: 999, fontSize: 11, fontWeight: 800,
+      background: 'var(--brown)', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
+    }}>선물</span>
+  )
   // 스티커 그룹 한 덩어리(소제목 + 그리드)
   const renderStickerGroup = (g) => (
     <div className="decor-sec" key={g.key}>
-      {g.label && <div className="decor-sec-label">{g.label}</div>}
+      {g.label && <div className="decor-sec-label">{g.label}{g.gift && <GiftTag />}</div>}
       <div className="decor-grid">{g.items.map(renderCell)}</div>
     </div>
   )
@@ -447,6 +460,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
             })}
           </div>
           <div className="decor-scroll" ref={drawerRef}>
+            {/* 🎁🎁 **출시 기념 선물 — 상시 한 줄** (창업자 2026-08-03 *"꾸미기 상단에 넣기"*)
+                ⛔ 전엔 안내가 **서랍 첫 방문에 딱 한 번 뜨는 시트**뿐이었다. 닫으면 끝이라
+                   *"배경이랑 캐릭터, 프레임외에 뭐 더 주는지 모름"* 이 됐다 — 맞는 지적이다.
+                ⭐ **몰라서 못 쓰는 선물은 안 준 것과 같다.** 그래서 늘 보이는 자리에 둔다.
+                ⚠️ 탭을 바꿔도 계속 보인다 — 선물이 **네 탭에 흩어져 있어서**(프레임·친구들·배경·모션)
+                   한 탭에만 두면 나머지 셋을 또 못 찾는다. */}
+            <button className="press" onClick={() => setGift(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px', marginBottom: 10,
+                borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>
+              <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 800, background: 'var(--brown)', color: '#fff', flex: '0 0 auto' }}>선물</span>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>출시 기념으로 네 가지를 넣어뒀어요</span>
+              <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
+            </button>
             {/* 🎨 배경·테이프 */}
             {cat === 'bgtape' && (
               <>
