@@ -22,7 +22,7 @@
 //   node scripts/latest-map.mjs --brief    세션 시작 훅용(짧게)
 //   node scripts/latest-map.mjs --for "…"  그 말에 걸리는 주제의 최신 문서만 (프롬프트 훅용)
 //   node scripts/latest-map.mjs --check    게이트(`npm run smoke`) — 핀이 낡았거나 옛 세대가 되살아나면 실패
-import { readdirSync, readFileSync, existsSync } from 'node:fs'
+import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs'
 import { join, dirname, relative } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { pathToFileURL } from 'node:url'
@@ -96,8 +96,18 @@ export function byTopic() {
     if (!t.has(d.topic)) t.set(d.topic, [])
     t.get(d.topic).push(d)
   }
-  for (const [, v] of t) v.sort((a, b) => b.date.localeCompare(a.date))
+  // ⚠️⚠️ **날짜만 비교하면 «같은 날 여러 판»에서 최신이 뒤집힌다** (2026-08-03 실제로 그랬다).
+  //    그날 작업복기가 셋이었는데 «스캔 순서»가 그대로 남아 **밤에 쓴 최신본이 아니라 낮 것**을 가리켰다.
+  //    ⛔ 그건 규칙 12 가 막으려던 바로 그 사고다 — 「옛 문서를 보고 판단」.
+  //    ✅ 날짜가 같으면 **파일을 마지막으로 손댄 시각**으로 가른다. 그것도 같으면 파일명 역순(결정적).
+  for (const [, v] of t) {
+    v.sort((a, b) => b.date.localeCompare(a.date) || (mtime(b) - mtime(a)) || b.path.localeCompare(a.path))
+  }
   return t
+}
+// 파일 수정 시각(초). 못 읽으면 0 — 그럼 파일명으로 갈린다.
+function mtime(d) {
+  try { return statSync(join(APP, d.path)).mtimeMs } catch { return 0 }
 }
 
 
