@@ -54,22 +54,30 @@ function drawer() {
 // ── ② 레꾸자랑 카드 뽑기 풀 — `SEASON_CUTS` 의 `from:` ──────────────
 //    그날이 오면 **뽑기에 그 컷들이 섞이기 시작한다.**
 //    ⚠️ `win`(해마다 되풀이되는 월-일 창)도 같이 봐야 «언제 닫히는지»를 안다.
+// ⚠️⚠️ 2026-08-03 — 목록이 `src/data/cardSeasons.js` 로 옮겨 갔다(안내 페이지가 같이 읽으려고).
+//    ⛔ 옛 코드는 `ShareDrawCard.jsx` 에서 글자로 긁었는데, 옮긴 걸 모르면 `indexOf` 가 −1 을 내고
+//       **조용히 「카드 0개」가 된다** — 검사가 안 터지고 그냥 «없는 것처럼» 보인다. 그게 제일 나쁘다.
+//    ✅ 그래서 못 찾으면 «던진다». 파일을 또 옮기면 여기서 바로 걸린다.
 function cards() {
-  const src = read('src/components/ShareDrawCard.jsx')
-  const blk = src.slice(src.indexOf('const SEASON_CUTS'), src.indexOf('const DECOR'))
+  const src = read('src/data/cardSeasons.js')
+  const at = src.indexOf('export const SEASON_CUTS')
+  if (at < 0) throw new Error('⛔ SEASON_CUTS 를 못 찾았다 — src/data/cardSeasons.js 를 옮겼거나 이름이 바뀌었다')
+  const blk = src.slice(at)
   const out = []
   for (const e of blk.split(/\n\s*\{\s*key:/).slice(1)) {
     const key = e.match(/^\s*'([^']+)'/)
     const from = e.match(/from:\s*'(\d{4}-\d{2}-\d{2})'/)
     if (!key || !from) continue
     const win = e.match(/win:\s*\['([^']+)',\s*'([^']+)'\]/)
+    const label = e.match(/label:\s*'([^']+)'/)
     const grab = (n) => { const m = e.match(new RegExp(`${n}:\\s*\\[([^\\]]*)\\]`)); return m ? items(m[1]) : [] }
     const keys = [...grab('gom'), ...grab('peng'), ...grab('duo')]
     out.push({
       date: from[1], where: '레꾸자랑 카드 뽑기',
-      what: `${key[1]} 세트${win ? ` (${win[1]} ~ ${win[2]})` : ''}`, keys,
+      what: `${label ? label[1] : key[1]} 세트${win ? ` (${win[1]} ~ ${win[2]})` : ''}`, keys,
     })
   }
+  if (!out.length) throw new Error('⛔ 카드 세트를 하나도 못 읽었다 — cardSeasons.js 모양이 바뀌었다')
   return out
 }
 

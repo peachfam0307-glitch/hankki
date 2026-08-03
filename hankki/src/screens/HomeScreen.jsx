@@ -18,6 +18,7 @@ import uiGomClap from '../assets/ui/gom_clap.png'
 import { needsOnboarding } from '../components/Onboarding'
 import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount } from '../nudges'
 import { weeklyNow } from '../data/weekly'
+import { whatsNew } from '../data/whatsnew'
 
 // 홈 첫 방문 코치마크 — 진짜 핵심 기능부터 짚어준다(창업자 딸 아이디어 ⭐).
 // 첫 스텝을 '되는 기능'(가져오기·오늘 뭐 해먹지)으로, 곧 출시 미리보기는 맨 뒤에 살짝.
@@ -27,7 +28,7 @@ const HOME_COACH_STEPS = [
   { sel: '[data-coach="today"]', img: uiGomThumb, label: '오늘 뭐 해먹지?', desc: '냉장고 재료로 만들 수 있는 요리를 추천해요' },
   { sel: '[data-coach="nav-shop"]', img: uiGomShop, label: '장보기 · 쇼핑몰', desc: '18년차 주부가 엄선한 식재료를 담아 바로 사러 가고 · 냉장고 유통기한도 챙겨요' },
   { sel: '[data-coach="nav-brag"]', img: uiGomHeart, label: '레꾸자랑', desc: '내가 꾸민 레시피를 예쁜 카드로 친구한테 자랑! 카톡·인스타로 쏙' },
-  { sel: '[data-coach="preview"]', img: uiGomClap, label: '곧 나올 기능', desc: '레시피북 PDF · 꾸미기 새 아이템… 준비 중인 것도 구경해요' },
+  { sel: '[data-coach="preview"]', img: uiGomClap, label: '한끼 소식', desc: '새로 열린 레시피·꾸미기와 곧 나올 것을 여기서 알려드려요' },
 ]
 
 export default function HomeScreen() {
@@ -59,6 +60,23 @@ export default function HomeScreen() {
   // 🗓 이번 주 레시피 — 달력이 여는 줄. ⛔재고가 없으면 `null` 이라 **줄을 아예 안 그린다**
   //    (빈 「이번 주」 자리를 남기지 않는다 · `LAB_*_URL` 이 비면 그 칸을 안 그리는 것과 같은 방식).
   const weekly = useMemo(() => weeklyNow(recipes), [recipes])
+
+  // 📣 소식 한 줄 — ⛔손으로 적지 않는다. 날짜 게이트와 «같은 데이터»를 세어 만든다.
+  //    새로 열린 게 있으면 그걸 먼저 말하고, 없으면 다음에 열릴 것을, 그것도 없으면 예고 목록을 말한다.
+  const news = useMemo(() => whatsNew(), [])
+  const newsLine = useMemo(() => {
+    const o = news.opened
+    if (o.length) {
+      const head = `${o[0].title} ${o[0].count}개 새로 열렸어요`
+      return o.length > 1 ? `${head} 외 ${o.length - 1}건` : head
+    }
+    if (news.upcoming) {
+      const u = news.upcoming
+      const when = u.dday === 0 ? '오늘' : u.dday === 1 ? '내일' : `${u.dday}일 뒤`
+      return `${when} ${u.items[0].title}${u.items.length > 1 ? ` 외 ${u.items.length - 1}건` : ''}`
+    }
+    return '레시피북 PDF · 꾸미기 새 아이템 …'
+  }, [news])
 
   // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
   const today = useMemo(() => {
@@ -175,7 +193,11 @@ export default function HomeScreen() {
           </div>
         )}
 
-        {/* 업데이트 예고 — 기대감. 강제 팝업 대신 눈에 띄는 슬림 진입점 */}
+        {/* 📣 한끼 소식 — 기대감. 강제 팝업 대신 눈에 띄는 슬림 진입점.
+            ⭐⭐ 창업자 2026-08-03 *"새로 열릴때 꼭 안내페이지에 올라오도록 해."*
+               우리 업데이트는 «날짜가 저절로» 여는데 앱이 아무 말도 안 했다.
+               ⛔ 부제를 손으로 적어두면 낡는다 → `whatsNew()` 가 실제로 열린 것을 세어 말한다.
+            ⛔ 뱃지는 «새로 열린 게 있을 때만» 뜬다 — 늘 떠 있으면 아무도 안 본다. */}
         <button
           className="press"
           onClick={() => setPreview(true)}
@@ -184,8 +206,13 @@ export default function HomeScreen() {
         >
           <span style={{ flex: '0 0 auto', display: 'inline-flex' }}><Icon name="gift" size={20} color="var(--tease-ic)" stroke={1.7} /></span>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>곧 나올 기능 미리보기</div>
-            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>레시피북 PDF · 꾸미기 새 아이템 …</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>한끼 소식</span>
+              {news.opened.length > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
+              )}
+            </div>
+            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{newsLine}</div>
           </div>
           <Icon name="chevron-right" size={18} color="var(--sand)" />
         </button>
