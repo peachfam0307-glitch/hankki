@@ -1,0 +1,104 @@
+// 💰 유료팩이 «공짜로 새는지» 검사 — 어기면 배포 차단.
+//
+// ⭐⭐ 왜 (창업자 2026-08-03)
+//   *"할로윈은 저거 너무 귀여운데 저렇게 많이주면 유료팩에는 뭐넣어?"*
+//   *"무료팩에는 할로윈 안나가야 하는거지? **그래야 유료를 사지 주면 누가사.**"*
+//   *"**이거도 시스템 구축해 아주 중요한 부분이잖아**"*
+//
+// 🔎 실제로 새고 있었다 — 핼러윈 캐릭터 **16컷 중 14컷**이 무료 공유 카드로 나가고 있었다.
+//   추석은 25컷 중 8컷만 내보내기로 2026-08-01 에 정했는데 **핼러윈엔 그 규칙을 안 적용했다.**
+//   📌 규칙을 문서에 적어두면 다음에 또 «반만» 지킨다. 그래서 코드가 센다.
+//
+// 무엇을 보나 — «무료로 닿는 자리» 두 곳
+//   ⒜ 꾸미기 서랍  `src/components/Stickers.jsx` 의 `STICKER_GROUPS[].items`
+//   ⒝ 레꾸자랑 공유 카드 뽑기  `src/data/cardSeasons.js` 의 `gom`·`peng`·`duo`
+//   ⚠️ ⒝도 「구경만」이 아니다 — 카드는 **레시피 표지로 저장**할 수 있다(v8.50).
+//
+// 판정 = `src/data/paidPacks.js`
+//   · `sellable: false` (아직 못 파는 팩) → 무료 노출 **0컷**이어야 한다
+//   · `sellable: true`  → `taste` 에 «적어둔 키»만 나갈 수 있다 (⛔통째로 열기 금지)
+//
+// ⛔ 새 유료팩을 앱에 넣을 땐 `paidPacks.js` 에 **접두어를 먼저 적는다.**
+//    안 적으면 이 검사가 못 잡는다 — 그게 이번 사고의 모양이었다.
+import { readFileSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const APP = join(dirname(fileURLToPath(import.meta.url)), '..')
+const read = (p) => readFileSync(join(APP, p), 'utf8')
+
+// paidPacks.js 는 순수 데이터라 노드로 그대로 읽는다(Vite 전용 문법 없음).
+const { PAID_PACKS, paidPackOf, freeOk } = await import(join(APP, 'src/data/paidPacks.js'))
+
+let bad = 0
+const fail = (m) => { console.log(`  ✗ ${m}`); bad++ }
+const ok = (m) => console.log(`  ok  ${m}`)
+
+console.log('\n── 유료팩이 공짜로 새는지 ──')
+
+if (!PAID_PACKS.length) fail('⛔ 유료팩 목록이 비었다 — paidPacks.js 를 확인할 것')
+
+// 키를 뽑는다 — 큰 배열 안의 '따옴표 낱말'을 전부 본다(넉넉하게 보고 접두어로 거른다).
+const keysIn = (src, from, to) => {
+  const a = src.indexOf(from)
+  if (a < 0) throw new Error(`⛔ ${from} 를 못 찾았다 — 파일이 바뀌었다`)
+  const blk = to ? src.slice(a, src.indexOf(to, a)) : src.slice(a)
+  return [...new Set([...blk.matchAll(/'([a-z0-9_]+)'/gi)].map((m) => m[1]))]
+}
+
+// ⒜ 꾸미기 서랍 ─────────────────────────────────────────────
+const drawer = keysIn(read('src/components/Stickers.jsx'), 'export const STICKER_GROUPS')
+const drawerLeak = drawer.filter((k) => paidPackOf(k) && !freeOk(k))
+if (drawerLeak.length) {
+  fail(`⛔⛔ **꾸미기 서랍에 유료팩 컷 ${drawerLeak.length}개가 무료로 들어 있다** — ${drawerLeak.slice(0, 8).join(' ')}`)
+  console.log('     👉 파는 물건을 그냥 주고 있다. 서랍에서 내리거나 paidPacks 의 taste 에 적을 것.')
+} else ok('꾸미기 서랍 — 유료팩 컷 0개')
+
+// ⒝ 레꾸자랑 공유 카드 ───────────────────────────────────────
+const cardSrc = read('src/data/cardSeasons.js')
+const cards = keysIn(cardSrc, 'export const SEASON_CUTS')
+const cardLeak = cards.filter((k) => paidPackOf(k) && !freeOk(k))
+if (cardLeak.length) {
+  const byPack = {}
+  for (const k of cardLeak) { const p = paidPackOf(k); (byPack[p.label] ||= []).push(k) }
+  for (const [label, ks] of Object.entries(byPack)) {
+    const pack = PAID_PACKS.find((p) => p.label === label)
+    fail(`⛔ **${label} 팩 컷 ${ks.length}개가 공유 카드로 무료로 나간다** (팩 ${pack.total}컷 · 판매 ${pack.sellable ? '가능' : '⛔아직 불가'})`)
+    console.log(`     ${ks.slice(0, 10).join(' ')}${ks.length > 10 ? ' …' : ''}`)
+  }
+  console.log('     👉 못 파는 팩은 «한 컷도» 안 나간다. 팔 수 있게 되면 sellable:true ＋ taste 에 한 줄씩.')
+} else ok('공유 카드 뽑기 — 못 파는 팩 컷 0개')
+
+// 팩별 요약 ──────────────────────────────────────────────────
+for (const p of PAID_PACKS) {
+  if (!p.prefixes.length) { console.log(`  ⚠️  ${p.label} — 접두어가 안 적혀 있다(앱에 넣기 전에 적을 것)`); continue }
+  const free = [...drawer, ...cards].filter((k) => p.prefixes.some((pre) => k.startsWith(pre)))
+  const pct = p.total ? Math.round((free.length / p.total) * 100) : 0
+  console.log(`  · ${p.label} ${p.total}컷 — 무료로 나가는 것 ${free.length}컷 (${pct}%) · 판매 ${p.sellable ? '가능' : '아직'}`)
+}
+
+// 📐 정원 대조 — ⚠️ **정원은 이미 정해져 있다**(창업자 2026-07-30 · `asset-map.mjs` QUOTA).
+//    계절 세트 캐릭터 = **12컷**(한 파 4) · 기본(사철) = 24컷.
+//    ⛔ 2026-08-03 에 클로드가 *"유료팩 캐릭터 정원은 정한 적 없다"* 고 말했는데 **틀렸다.**
+//       `docs/자산현황-자동집계.md` §정원 대조에 표로 있고 도구가 이미
+//       *"⚠️ 가을 캐릭터 27/12"* 라고 경고까지 띄우고 있었다. **내가 안 봤을 뿐이다.**
+//    📌 그래서 여기서 «숫자로» 다시 짚는다 — 문서를 안 보면 또 같은 말을 한다.
+const CHAR_QUOTA = 12
+for (const p of PAID_PACKS) {
+  if (!p.chars) continue
+  if (p.chars > CHAR_QUOTA) {
+    console.log(`  ⚠️  ${p.label} 팩 캐릭터 ${p.chars}컷 — 계절 정원 ${CHAR_QUOTA}컷의 ${(p.chars / CHAR_QUOTA).toFixed(1)}배`)
+    console.log('     👉 넘었다고 무조건 빼진 않는다(한 번 준 것은 안 뺏는다). 다음 확장판으로 나눌지 창업자 판단.')
+  } else ok(`${p.label} 팩 캐릭터 ${p.chars}컷 — 정원 ${CHAR_QUOTA} 안`)
+}
+
+// ⛔ 「맛보기 몇 컷까지」 같은 상한은 «없다» — 파는 컷은 0컷이 규칙이다.
+//    2026-08-01 엔 「대표 8컷」이었는데 2026-08-03 에 창업자가 스스로 더 조였다:
+//    *"돈주고 내가 산건데 카드에서라도 공유되면 별로지 한정판이 아니자나 그건"*
+//    ⭐ 그러니 `taste` 같은 예외 구멍을 «만들지 말 것». 구멍이 있으면 언젠가 샌다.
+if (PAID_PACKS.some((p) => Array.isArray(p.taste) && p.taste.length)) {
+  fail('⛔ `taste`(맛보기 예외)가 되살아났다 — 파는 컷은 무료 경로에 0컷이 규칙이다')
+}
+
+if (bad) { console.log(`\n❌ 유료팩 검사 실패 ${bad}건 — 배포 차단\n`); process.exit(1) }
+console.log('\n✅ 유료팩 통과 — 파는 물건이 공짜로 안 샌다\n')
