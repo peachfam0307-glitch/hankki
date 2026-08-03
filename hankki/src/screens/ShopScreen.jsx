@@ -178,19 +178,15 @@ export default function ShopScreen() {
         <div className="t-sub" style={{ fontSize: 12, marginTop: 6 }}>
           {editShops ? '아이콘을 눌러 이름·주소·아이콘을 바꿀 수 있어요.' : '쇼핑몰 앱이 깔려 있고 로그인돼 있으면 바로 연결돼요. 한 번 로그인해두면 계속 유지돼 편해요.'}
         </div>
-        {/* 🌱 생협 안내 — 창업자 2026-08-03 *"조합원이 아니면 온라인몰 이용어려우니까 그거 안내해야 할 것
-            같은데. 자연드림은 일반소비자도 가능하다고 적어주고."*
-            ⚠️ 밖으로 나가는 글이라 **공식 안내를 먼저 확인하고 썼다**(규칙 16):
+        {/* 🌱 생협 안내 — **긴 안내문을 뺐다.** 창업자 2026-08-03 *"너무 복잡한가..."*
+            ⭐ 대신 「사러가기」 배지에 네 글자만 넣었다 → `mallLabel()` 의 **「한살림 · 조합원만」**.
+               누른 «뒤»에 알리는 것보다 누르기 «전»에 보이는 게 낫다 — 헛걸음이 아예 없고
+               시트·기억·버튼 같은 새 장치가 하나도 안 생긴다.
+            📌 확인한 사실(공식 안내 · 2026-08-03) — 고칠 땐 그날 공식 페이지를 다시 볼 것:
               · 한살림 = *"온라인 물품구입은 조합원만 이용 가능"* · 가입비 3천원 ＋ 출자금 3만원(탈퇴 시 환불)
                         · 비조합원은 «매장»에서 10% 비싼 값으로만
               · 자연드림(아이쿱) = 일반가·조합원가가 따로 있다 = **비조합원도 온라인 구매 가능**
-            ⛔ 값·조건은 바뀔 수 있다 — 고칠 땐 **그날 공식 페이지를 다시 보고** 고칠 것. */}
-        {!editShops && shops.some((s) => s.id === 'hansalim' || s.id === 'naturedream') && (
-          <div className="t-sub" style={{ fontSize: 11.5, marginTop: 5, lineHeight: 1.55 }}>
-            <b style={{ color: 'var(--brown)' }}>한살림</b>은 온라인 장보기가 <b style={{ color: 'var(--brown)' }}>조합원만</b> 돼요(가입비 3천원＋출자금 3만원, 탈퇴하면 돌려받아요). 조합원이 아니면 매장에서 살 수 있어요.
-            {' '}<b style={{ color: 'var(--brown)' }}>자연드림</b>은 조합원이 아니어도 온라인에서 살 수 있어요.
-          </div>
-        )}
+                        → 그래서 자연드림엔 아무 표시도 안 붙인다(그게 기본이다). */}
         {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
         </>
         )}
@@ -228,9 +224,21 @@ function Curation() {
   // 카테고리·이모지를 각 아이템에 붙여 평탄화(칩 필터·픽 렌더용)
   const flat = CURATION.flatMap((g) => g.items.map((it) => ({ ...it, cat: g.cat, emoji: g.emoji, icon: it.icon || g.icon })))
   const picks = flat.filter((it) => it.pick)
-  const catList = CURATION.map((g) => ({ cat: g.cat, emoji: g.emoji, icon: g.icon }))
-  const shownItems =
-    curCat === 'pick' ? picks : curCat === '전체' ? flat : flat.filter((it) => it.cat === curCat)
+  // 🗂🗂 칩은 «큰 칸»만 보여준다 — 창업자 2026-08-03
+  //   *"장바구니 종류탭이 너무 길어지네... 지금 종류가 더 늘텐데 옆으로 계속 길어지면 불편할 것 같아."*
+  //   🔎 재보니 카테고리 23개 · 칩 줄 길이 ≈2,227px = **화면 폭의 5.7배**(다섯 번 넘게 밀어야 끝).
+  //   ⭐ 뿌리는 「칩이 길다」가 아니라 **「칸이 너무 잘게 쪼개져 있다」** —
+  //      23칸에 제품이 40개뿐이라 **칸당 1.7개**다(훈제오리·누룽지·콩국물처럼 제품 하나짜리 칸).
+  //      제품 하나 올릴 때마다 칩이 하나 느는 구조라 **손대지 않으면 영원히 길어진다.**
+  //   ✅ 그래서 **큰 칸 6개**로 묶었다(`curation.js` 의 `group`). 제품이 아무리 늘어도 칩은 그대로다.
+  //      잘게 나눈 종류는 **없애지 않았다** — 큰 칸을 고르면 그 안에서 «소제목»으로 갈려 나온다.
+  //   ⏳ 창업자 *"일단 이렇게 해두고 또 많아지면 검색이나 그런걸 추가하자."*
+  //      → 다음 단계는 검색(초성 포함) · 근거 = `docs/서랍-감당되나-2026-08-01.md`(같은 모양의 문제)
+  const groupList = [...new Set(CURATION.map((g) => g.group))]
+    .map((name) => ({ name, icon: CURATION.find((g) => g.group === name)?.icon }))
+  // 지금 칩으로 보여줄 «묶음 목록» — pick 이면 안 쓰고, 전체면 전부, 아니면 그 큰 칸만
+  const shownGroups =
+    curCat === '전체' ? CURATION : CURATION.filter((g) => g.group === curCat)
 
   // '사러가기' 연결: url 이 있으면 그 직접 링크로, mall 이 있으면 그 쇼핑몰 검색으로,
   // 없으면 무엇이든 잘 찾는 네이버쇼핑 통합검색으로.
@@ -254,13 +262,28 @@ function Curation() {
     if (it.mall === 'coupang') return '쿠팡'
     if (it.mall === 'oasis') return '오아시스'
     const u = it.url || ''
-    if (u.includes('hansalim')) return '한살림'
+    // ⭐ 한살림만 「조합원만」을 덧붙인다 — 창업자 2026-08-03
+    //   *"한살림템을 사러가기 누르면 안내해주는건 어때?"* → *"너무 복잡한가..."*
+    //   ⭐ **누른 뒤 시트로 알리는 것보다 누르기 «전»에 배지로 보이는 게 낫다** — 헛걸음이 아예 없고
+    //      시트·기억·버튼 같은 새 장치가 하나도 안 생긴다. 창업자 원래 걱정(*"조합원이 아니면
+    //      온라인몰 이용어려우니까"*)은 이 네 글자로 다 해결된다.
+    //   ⚠️ 한살림 온라인 장보기는 **조합원만**(가입비 3천원＋출자금 3만원·탈퇴 시 환불 · 공식 안내 확인)
+    if (u.includes('hansalim')) return '한살림 · 조합원만'
     if (u.includes('sanjitalk')) return '산지톡'
     if (u.includes('smartstore.naver')) return '네이버'
     return ''
   }
   const tagStyle = { fontSize: 11, fontWeight: 700, color: '#8a6a3e', background: 'var(--cream)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
   const mallStyle = { fontSize: 11, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream-deep)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
+  // 🔴 「조합원만」은 **확 튀게** — 창업자 2026-08-03 *"색깔 확튀게 올려줘."*
+  //   다른 배지(구매처)는 그냥 «어디서 사나»인데 이건 **못 살 수도 있다는 주의**라 무게가 다르다.
+  //   ⚠️ 우리 톤은 뮤트라 형광색은 안 쓴다 → **진한 테라코타에 흰 글씨**(채운 배지)로 대비를 준다.
+  //      옅은 배경＋갈색 글씨(다른 배지)와 나란히 놓으면 이것만 눈에 들어온다.
+  const WARN = '#a8543a'
+  const mallStyleFor = (label) =>
+    label.includes('조합원')
+      ? { ...mallStyle, color: '#fff', background: WARN, fontWeight: 800, letterSpacing: '-0.01em' }
+      : mallStyle
 
   const Card = (it) => (
     <div key={it.name} className="card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
@@ -272,7 +295,7 @@ function Curation() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
             <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
             {it.tag && <span style={tagStyle}>{it.tag}</span>}
-            {mallLabel(it) && <span style={mallStyle}>{mallLabel(it)}</span>}
+            {mallLabel(it) && <span style={mallStyleFor(mallLabel(it))}>{mallLabel(it)}</span>}
           </div>
           <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.58 }}>{it.benefit}</div>
         </div>
@@ -320,16 +343,19 @@ function Curation() {
           <div className="hscroll" style={{ paddingBottom: 4, marginBottom: 4 }}>
             {chip('pick', '이번 주 픽')}
             {chip('전체', '전체')}
-            {catList.map((c) => chip(c.cat, (
+            {groupList.map((c) => chip(c.name, (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                {curIcon(c.icon) ? <img src={curIcon(c.icon)} alt="" draggable={false} style={{ width: 19, height: 19, objectFit: 'contain' }} /> : <span>{c.emoji}</span>}
-                {c.cat}
+                {curIcon(c.icon) && <img src={curIcon(c.icon)} alt="" draggable={false} style={{ width: 19, height: 19, objectFit: 'contain' }} />}
+                {c.name}
               </span>
             )))}
           </div>
 
-          {curCat === '전체'
-            ? CURATION.map((g) => (
+          {/* ⭐ 잘게 나눈 종류는 «칩»에서 «소제목»으로 자리를 옮겼을 뿐 하나도 안 없어졌다.
+              큰 칸을 고르면 그 안에서 간장·된장·맛술… 로 갈려 보인다. */}
+          {curCat === 'pick'
+            ? picks.map((it) => Card(it))
+            : shownGroups.map((g) => (
                 <div key={g.cat}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>
                     {curIcon(g.icon) ? <img src={curIcon(g.icon)} alt="" draggable={false} style={{ width: 22, height: 22, objectFit: 'contain' }} /> : <span>{g.emoji}</span>}
@@ -337,8 +363,7 @@ function Curation() {
                   </div>
                   {g.items.map((it) => Card({ ...it, cat: g.cat, emoji: g.emoji, icon: it.icon || g.icon }))}
                 </div>
-              ))
-            : shownItems.map((it) => Card(it))}
+              ))}
 
           {/* ⛔ 아래 안내판을 뺐다 (창업자 2026-08-03 *"아래위로 좀 지저분해보여"*).
               「앞으로도 하나씩 계속 올라와요」는 **맨 위 부제로 옮겨 살렸다** — 창업자가 콕 집어 남기라 했다. */}

@@ -349,6 +349,20 @@ img {
   padding: 2px 0;
   margin: 0;
 }
+/* 🗓 홈 「이번 주 제철」 요리 줄 — **밀지 않고 한눈에 딱 맞게** (2026-08-03)
+   창업자: *"배경안에서 움직이긴 하는데 잘려보여(첫인상이) 아예 각각 레시피 액자사이즈를 줄여서 딱 맞게 하자."*
+   ⭐ 한 주에 요리가 **딱 3개**라 옆으로 밀 이유가 없다 — 밀어야 보이는 건 「없는 것」이나 마찬가지다.
+   ⛔ `repeat(3, 1fr)` 로 박지 않는다 — 나중에 2개·4개인 주가 생기면 깨진다.
+      `auto-fill + minmax` 라 **몇 개든 알아서 줄바꿈**되고 절대 안 잘린다.
+   ⚠️ `.mini-card` 의 `width:108px` 를 풀어야 칸 폭에 맞춰 준다. */
+.weekly-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(94px, 1fr));
+  gap: 10px;
+}
+.weekly-row .mini-card {
+  width: auto;
+}
 
 /* 빈 상태 */
 .empty {

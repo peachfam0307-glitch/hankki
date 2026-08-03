@@ -18,7 +18,7 @@ export const curIcon = (key) => (key ? CUR_ICONS[`../assets/curation/${key}.png`
 
 export const CURATION = [
   {
-    cat: '간장', emoji: '🫗', icon: 'cu_soy',
+    cat: '간장', group: '양념', emoji: '🫗', icon: 'cu_soy',
     items: [
       { name: '성가정 우리콩 진간장', matches: ['진간장'], tag: '진간장', benefit: '국산 우리콩으로 담가 뒷맛이 깔끔해요. 색과 맛이 진해 조림·볶음·불고기처럼 오래 끓이거나 색 내는 요리에 두루 좋아요', q: '성가정 우리콩 진간장', mall: 'coupang' },
       { name: '쌀누룩 맛간장', matches: ['맛간장'], tag: '맛간장', benefit: '100% 국산콩에 무방부제·무첨가물, 원당과 과일로 건강한 단맛과 감칠맛을 냈어요. 무침·비빔·계란간장밥처럼 바로 먹는 요리에 딱. 통째로 구비해두는 저의 주문템이에요', q: '쌀누룩 맛간장', url: 'https://smartstore.naver.com/thebat/products/5788851801' },
@@ -26,7 +26,7 @@ export const CURATION = [
     ],
   },
   {
-    cat: '된장', emoji: '🥣', icon: 'cu_doenjang',
+    cat: '된장', group: '양념', emoji: '🥣', icon: 'cu_doenjang',
     items: [
       { name: '죽장연 전통된장', benefit: '국산콩과 천일염만으로 담가 깊고 진한 맛이 나요. 맛이 조금 진한 편이에요', q: '죽장연 전통된장', mall: 'coupang' },
       { name: '맥된장', benefit: '국산콩 메주 96%, 천일염 4%로만 만들어 성분이 좋아요. 가격도 합리적이라 손이 자주 가요. 특히 백합된장과 궁합이 좋아 섞어 쓰면 더 맛있어요', q: '맥된장', mall: 'coupang', url: 'https://www.coupang.com/vp/products/160227399?itemId=15032545519&vendorItemId=82255154528', pick: true },
@@ -34,37 +34,37 @@ export const CURATION = [
     ],
   },
   {
-    cat: '맛술', emoji: '🍶', icon: 'cu_matsul',
+    cat: '맛술', group: '양념', emoji: '🍶', icon: 'cu_matsul',
     items: [
       { name: '요리맛샘 맛술', matches: ['맛술'], benefit: '성분이 깔끔한 맛술이에요. 살짝 산미가 있지만 잡내를 잡고 감칠맛을 더하는 데 어느 요리에나 잘 맞아요', q: '요리맛샘 맛술', mall: 'coupang' },
     ],
   },
   {
-    cat: '굴소스', emoji: '🦪', icon: 'cu_gulsauce',
+    cat: '굴소스', group: '양념', emoji: '🦪', icon: 'cu_gulsauce',
     items: [
       { name: '요리맛샘 굴소스', matches: ['굴소스'], benefit: '첨가물 없이 국산 재료로 만들었어요. 감칠맛이 깔끔하고 짜지 않아 아이들 볶음요리에도 좋아요. 저는 떨어지면 바로 다시 주문해요', q: '요리맛샘 굴소스', mall: 'coupang', pick: true },
     ],
   },
   {
-    cat: '액젓', emoji: '🐟', icon: 'cu_aekjeot',
+    cat: '액젓', group: '양념', emoji: '🐟', icon: 'cu_aekjeot',
     items: [
       { name: '와촌식품 초피액젓', benefit: '국물요리 간은 거의 이걸로 해요. 수도 없이 사서 쓰는 템이에요. 감칠맛이 좋아 국·찌개·나물무침 어디에나 잘 맞아요', q: '와촌식품 초피액젓', url: 'https://wachonfood.co.kr/' },
     ],
   },
   {
-    cat: '소금', emoji: '🧂', icon: 'cu_salt',
+    cat: '소금', group: '양념', emoji: '🧂', icon: 'cu_salt',
     items: [
       { name: '모에솔트 대파소금', matches: ['대파소금'], benefit: '대파소금이 유행이라지만 직접 갈아 섞는 건 엄두가 안 났는데 딱 나와줬어요. 국내산 대파 50%에 염도 낮은 소금만으로 만들어 열자마자 대파향이 솔솔. 고기구이·계란후라이·국에 살짝 감칠맛 낼 때 좋아요', q: '모에솔트 대파소금', mall: 'coupang' },
     ],
   },
   {
-    cat: '설탕', emoji: '🍬', icon: 'cu_sugar',
+    cat: '설탕', group: '양념', emoji: '🍬', icon: 'cu_sugar',
     items: [
       { name: '아우노슈가', benefit: '성분 좋은 설탕이에요. 많이 달지 않아서 일반 설탕보다 조금 넉넉히 넣어도 부담 없어요. 저는 요리에 두루 이걸 써요', q: '아우노슈가', mall: 'coupang' },
     ],
   },
   {
-    cat: '스톡·육수', emoji: '🍲', icon: 'cu_stock_seafood',
+    cat: '스톡·육수', group: '기름·육수', emoji: '🍲', icon: 'cu_stock_seafood',
     items: [
       { name: '위드잇 쯔유스톡', matches: ['쯔유'], icon: 'cu_stock_tsuyu', benefit: '성분 좋은 육수 베이스예요. 한 포씩 개별포장이라 필요한 만큼만 쓰기 편하고 유통기한도 넉넉해 구비해두기 좋아요', q: '위드잇 쯔유스톡', mall: 'coupang' },
       { name: '위드잇 치킨스톡', matches: ['치킨스톡'], icon: 'cu_stock_chicken', benefit: '한 포씩 톡 넣으면 국물요리가 간편해져요. 성분 좋고 유통기한도 넉넉해 구비해두기 좋아요', q: '위드잇 치킨스톡', mall: 'coupang' },
@@ -73,19 +73,19 @@ export const CURATION = [
     ],
   },
   {
-    cat: '소스', emoji: '🍯', icon: 'cu_sauce',
+    cat: '소스', group: '양념', emoji: '🍯', icon: 'cu_sauce',
     items: [
       { name: '이로운 데리야끼소스', matches: ['데리야끼'], benefit: '첨가물 없이 점도가 좋아 요리에 착 감겨요. 맛이 깔끔해서 덮밥·조림에 두루 좋아요. (유리병이 불편하면 소스용기에 덜어 쓰면 편해요)', q: '이로운 데리야끼소스', mall: 'oasis' },
     ],
   },
   {
-    cat: '고춧가루', emoji: '🌶️', icon: 'cu_gochugaru',
+    cat: '고춧가루', group: '양념', emoji: '🌶️', icon: 'cu_gochugaru',
     items: [
       { name: '복이네먹거리 고춧가루', matches: ['고춧가루'], benefit: '국내산 고추로 만들어요. 순한맛·보통매운맛에 용량·입자 크기까지 골라 살 수 있어 내 요리에 딱 맞춰 쓰기 좋아요', q: '복이네먹거리 고춧가루', mall: 'coupang' },
     ],
   },
   {
-    cat: '올리브오일', emoji: '🫒', icon: 'cu_oliveoil',
+    cat: '올리브오일', group: '기름·육수', emoji: '🫒', icon: 'cu_oliveoil',
     items: [
       { name: '아이레스 데 크리스탈 하엔 1L', matches: ['올리브유', '올리브오일'], benefit: '산도가 낮고 가성비가 괜찮아요. 볶음요리할 때 넉넉히 써도 아깝지 않은 만만한 제품이에요', q: '아이레스 데 크리스탈 하엔 올리브오일', mall: 'coupang' },
       // ⛔ `matches` 를 뺐다 — 창업자 2026-08-03 *"광고에 올리브유는 1리터짜리만 넣어"*.
@@ -95,40 +95,40 @@ export const CURATION = [
     ],
   },
   {
-    cat: '햄·소시지', emoji: '🌭', icon: 'cu_ham_slice',
+    cat: '햄·소시지', group: '고기·해산물', emoji: '🌭', icon: 'cu_ham_slice',
     items: [
       { name: '문어 비엔나', matches: ['비엔나', '소시지'], icon: 'cu_ham_vienna', benefit: '햄·소시지는 첨가물이 많아 쉽게 손이 안 가는데, 이건 성분이 괜찮아 오아시스 장볼 때마다 하나씩 꼭 담는 단골템이에요. 살짝 데쳐 그냥 먹어도 맛있고 모양도 귀여워 아이들이 좋아해요', q: '문어 비엔나', mall: 'oasis' },
       { name: '위드잇 슬라이스햄 슬림', matches: ['슬라이스햄'], icon: 'cu_ham_slice', benefit: "첨가물 없는 '착한 스팸' 컨셉이에요. (스팸의 찐한 맛을 기대하면 조금 아쉬울 수 있어요) 데리야끼소스에 살짝 구워 무스비에 넣으면 아이 간편식으로 좋아요. 저희 애는 2주 동안 하루 한 개씩 무스비로 먹었어요", q: '위드잇 슬라이스햄 슬림', mall: 'coupang' },
     ],
   },
   {
-    cat: '훈제오리', emoji: '🦆', icon: 'cu_duck',
+    cat: '훈제오리', group: '고기·해산물', emoji: '🦆', icon: 'cu_duck',
     items: [
       { name: '자연누리 훈제오리', matches: ['훈제오리'], benefit: '저는 수년째 먹는 재료예요. 소분해 냉동해두면 바쁜 아침에 깻잎이랑 휘리릭 볶아 반찬으로 딱. 처음엔 생소해도 한번 사면 계속 사게 될 거예요', q: '자연누리 훈제오리', mall: 'coupang' },
       { name: '무무덕 훈제오리', matches: ['훈제오리'], benefit: '나온 지 얼마 안 된 신상이에요. 첨가물 없이 깔끔하고 샤브 야채 위에 올려 찜해 먹으면 고소한 다이어트 건강식이 돼요. 자연누리와 또 다른 느낌이라 번갈아 구비해둬요', q: '무무덕 훈제오리', url: 'https://sanjitalk.com/article/161' },
     ],
   },
   {
-    cat: '돼지고기', emoji: '🥩', icon: 'cu_pork',
+    cat: '돼지고기', group: '고기·해산물', emoji: '🥩', icon: 'cu_pork',
     items: [
       { name: '선진포크 한돈 생 대패목심', matches: ['대패목심'], benefit: '대패삼겹살보다 기름이 적어 깔끔해요. 소분해 냉동해두면 바쁜 아침에도 금방 구워 낼 수 있어요. 고기 좋아해서 아침에도 고기 찾는 아이 있는 집에 좋아요', q: '선진포크 한돈 생 대패목심', mall: 'coupang' },
     ],
   },
   {
-    cat: '국수·면', emoji: '🍜', icon: 'cu_noodle',
+    cat: '국수·면', group: '면·밥', emoji: '🍜', icon: 'cu_noodle',
     items: [
       { name: '오월햇살 우리밀 유기농국수', matches: ['소면', '국수'], benefit: '성분 좋고 쫄깃해서 잔치국수·비빔국수 어디든 편하게 써요. 급할 땐 삶아서 냉면육수만 부어도 시원한 한 그릇 완성!', q: '오월햇살 우리밀 유기농 국수', mall: 'coupang' },
       { name: '보보리쿡시 보리면', matches: ['보리면'], benefit: '밀가루 0%라 속이 편해요. 삶지 않고 익혀내는 방식이라 쫄깃하고 씹을수록 향이 올라와요. 쯔유와 특히 잘 어울려요', q: '보보리쿡시 보리면' },
     ],
   },
   {
-    cat: '누룽지', emoji: '🍚', icon: 'cu_nurungji',
+    cat: '누룽지', group: '면·밥', emoji: '🍚', icon: 'cu_nurungji',
     items: [
       { name: '자연다음 현미누룽지', matches: ['누룽지'], benefit: '쌀눈 살아있는 국내산 현미누룽지예요. 개별 소포장이라 눅눅해질 걱정 없이 쓰기 편하고, 얇아서 금방 익어 밥하기 귀찮은 날·아침에 밥 없을 때 구원템이에요', q: '자연다음 현미누룽지', mall: 'coupang' },
     ],
   },
   {
-    cat: '두유', emoji: '🥛', icon: 'cu_soymilk',
+    cat: '두유', group: '두부·콩', emoji: '🥛', icon: 'cu_soymilk',
     items: [
       { name: '연세 국산콩두유 약콩', matches: ['두유'], benefit: '국산콩으로 만들어 적당한 단맛에 고소하고 느끼하지 않아요. 출출할 때나 아이 간식으로 챙겨주기 좋은, 제 최애 두유예요', q: '연세 국산콩두유 약콩', url: 'https://brand.naver.com/yonseidairy/products/8785157847' },
     ],
@@ -136,7 +136,7 @@ export const CURATION = [
   {
     // 🫘 콩국물 — 창업자가 직접 쓴 카피(2026-08-02). 여름 콩국수의 바닥이라 두유와 따로 둔다
     //    (두유는 마시는 것, 콩국물은 요리 재료다).
-    cat: '콩국물', emoji: '🫘', icon: 'cu_soymilk',
+    cat: '콩국물', group: '두부·콩', emoji: '🫘', icon: 'cu_soymilk',
     items: [
       { name: '무농약콩으로 만든 콩국물', matches: ['콩국물'], benefit: '남편이 콩국수를 좋아해서 여름에 자주 사는 아이템이에요. 국산 대두＋정제수가 끝이에요. 가격도 저렴하고 양도 적어서 한 끼에 딱 끝나요. 간이 안 되어 있어서 소금은 먹기 직전에 취향껏 넣으면 돼요', q: '한살림 무농약콩으로 만든 콩국물', url: HANSALIM_APP },
       { name: '풀무원 특등급 국산콩물', matches: ['콩국물'], benefit: '한살림이 근처에 없을 때 쿠팡에서 바로 받을 수 있어요. 이건 소금간이 되어 있어서 그냥 부어 먹어도 되고, 맛을 보고 싱거우면 소금만 조금 더하면 돼요', q: '풀무원 특등급 국산콩물', mall: 'coupang',
@@ -148,7 +148,7 @@ export const CURATION = [
     ],
   },
   {
-    cat: '두부', emoji: '🧈', icon: 'cu_tofu',
+    cat: '두부', group: '두부·콩', emoji: '🧈', icon: 'cu_tofu',
     items: [
       { name: '한살림 마른두부', matches: ['마른두부', '포두부'], benefit: '"두부는 한살림"이라는 말, 써보면 알아요. 물기를 쫙 빼 쫄깃해서 구이·조림에 좋아요. (부드러운 두부 좋아하면 이건 비추)', q: '한살림 마른두부', url: HANSALIM_APP },
       { name: '한살림 몽글이 순두부', matches: ['순두부'], benefit: '작은 냄비에 파르르 끓여 양념장만 넣으면 3분 컷. 바쁜 아침 남편 식사대용으로, 저녁에 출출할 때 야식으로도 좋아요', q: '한살림 몽글이 순두부', url: HANSALIM_APP },
@@ -157,27 +157,27 @@ export const CURATION = [
     ],
   },
   {
-    cat: '카레', emoji: '🍛', icon: 'cu_curry',
+    cat: '카레', group: '간편식·간식', emoji: '🍛', icon: 'cu_curry',
     items: [
       { name: '채담카레', matches: ['카레'], benefit: '건더기가 없어서 야채 싫어하는 아이도 잘 먹어요. 알고 보면 새싹채소·양파로 만든 건데 말이죠. 몰래 건강 챙기기 좋은 순한 카레예요', q: '채담카레', mall: 'coupang' },
       { name: '상하농원 버터치킨카레', matches: ['카레'], benefit: '대기업 맛인데 성분이 착해요. 풍미가 부드럽고, 급할 땐 중탕해서 돈까스랑 곁들이면 든든한 한 끼가 돼요. 저는 구비해두는 카레예요', q: '상하농원 버터치킨카레', mall: 'coupang' },
     ],
   },
   {
-    cat: '어묵', emoji: '🍢', icon: 'cu_eomuk',
+    cat: '어묵', group: '고기·해산물', emoji: '🍢', icon: 'cu_eomuk',
     items: [
       { name: '명태살 가득 참 어묵', matches: ['어묵'], benefit: '명태살이 가득해 성분 좋은 어묵이에요. 종류별로 사서 오븐에 구운 뒤 냉동해두면, 가루육수 넣어 남편이 좋아하는 어묵탕 5분 컷', q: '한살림 명태살가득참어묵', url: HANSALIM_APP },
       { name: '새로미 바른어묵', matches: ['어묵'], benefit: '성분 좋고 맛있는 어묵이에요. 짜지 않아 아이 반찬으로도 안심. 한살림이 집 근처에 없다면 이걸로 대용해도 좋아요. 구우면 겉이 쫄깃해져 더 맛있어요', q: '새로미 바른어묵', mall: 'coupang' },
     ],
   },
   {
-    cat: '매생이·해조', emoji: '🍃', icon: 'cu_maesaengi',
+    cat: '매생이·해조', group: '고기·해산물', emoji: '🍃', icon: 'cu_maesaengi',
     items: [
       { name: '갯푸른 간편 매생이 블럭', matches: ['매생이'], benefit: '하나씩 개별포장이라 필요한 만큼 쏙 꺼내 쓰기 편해요. 국·전으로 겨울 제철 맛을 간편하게 즐겨요', q: '갯푸른 간편 매생이 블럭', mall: 'coupang' },
     ],
   },
   {
-    cat: '간식', emoji: '🍡', icon: 'cu_pizza',
+    cat: '간식', group: '간편식·간식', emoji: '🍡', icon: 'cu_pizza',
     items: [
       { name: '초당옥수수피자', icon: 'cu_pizza', benefit: '아이 방학 간식 구원템이에요. 달달 고소한 옥수수랑 피자치즈로 재료가 심플하고 성분도 괜찮아요. 스팀오븐에 조리하면 도우가 말랑해서 간식으로 딱. 사이즈가 크지 않아 한 끼 대용으로도 좋아요', q: '한살림 초당옥수수피자', url: HANSALIM_APP },
       { name: '고구마부리또', icon: 'cu_burrito', benefit: '달달하고 고소해서 제가 아끼는 간식템이에요. 또띠아에 고구마·모짜렐라 치즈로 재료가 심플하고 전자레인지로 데우기만 하면 돼 편해요. 어르신 간식으로도 좋고 저희 집 냉동실에도 구비해두는 거예요', q: '한살림 고구마부리또', url: HANSALIM_APP },
