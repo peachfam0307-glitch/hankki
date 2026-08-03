@@ -1,6 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import ErrorBoundary from './ErrorBoundary'
 import { StoreProvider } from './store'
 import { TimerProvider } from './timer'
 import { applyTheme, getTheme } from './theme'
@@ -30,11 +31,14 @@ window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 200)
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <StoreProvider>
-      <TimerProvider>
-        <App />
-      </TimerProvider>
-    </StoreProvider>
+    {/* 🛟 울타리는 «맨 바깥»에 — 저장소(StoreProvider)보다 밖이라야 그 안에서 뭐가 터져도 잡는다 */}
+    <ErrorBoundary>
+      <StoreProvider>
+        <TimerProvider>
+          <App />
+        </TimerProvider>
+      </StoreProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 )
 

@@ -74,6 +74,11 @@ export default function RecipeDetailScreen({ id }) {
   const baseServings = r?.servings || 0
   const [servings, setServings] = useState(baseServings || 1)
   const ratio = baseServings ? servings / baseServings : 1
+  // ⛔⛔ 훅은 «전부» 아래 `if (!r)` 보다 위에 있어야 한다 — 밑에 두면 레시피를 지우는 순간
+  //    early return 이 걸려 훅 개수가 줄고 React 가 트리째 죽는다(빈 화면).
+  //    2026-08-03 창업자 제보 *"홍콩식가지볶음 지웠더니 먹통됨"* 의 정체가 이거였다.
+  //    (`picksOpen` 이 뒤쪽 158줄에 있었다 — 큐레이션 픽 4개 상한을 넣으며 8/2 에 들어왔다)
+  const [picksOpen, setPicksOpen] = useState(false)
 
   if (!r) {
     return (
@@ -155,8 +160,8 @@ export default function RecipeDetailScreen({ id }) {
   // ⭐ 픽은 «네 개까지만» 보이고 나머지는 접는다. 큐레이션 제품은 계속 늘어나는데
   //    다 펼치면 목록이 재료 수만큼 길어져 아래의 「이 재료 다 담기」(수익 버튼)가 화면 밖으로 밀린다.
   //    앞자리는 창업자가 직접 적은 제품이 차지한다(`picksForIngredients` 가 그 순서로 준다).
+  //    ⚠️ `picksOpen` 은 여기 있으면 안 된다 — 위 `if (!r)` 보다 아래라서 훅이 사라진다. 맨 위로 올렸다.
   const PICK_MAX = 4
-  const [picksOpen, setPicksOpen] = useState(false)
   const shownPicks = picksOpen ? pantryPicks : pantryPicks.slice(0, PICK_MAX)
   const addAllPicks = () => {
     pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p) }))
