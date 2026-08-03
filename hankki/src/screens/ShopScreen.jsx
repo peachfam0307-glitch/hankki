@@ -178,6 +178,19 @@ export default function ShopScreen() {
         <div className="t-sub" style={{ fontSize: 12, marginTop: 6 }}>
           {editShops ? '아이콘을 눌러 이름·주소·아이콘을 바꿀 수 있어요.' : '쇼핑몰 앱이 깔려 있고 로그인돼 있으면 바로 연결돼요. 한 번 로그인해두면 계속 유지돼 편해요.'}
         </div>
+        {/* 🌱 생협 안내 — 창업자 2026-08-03 *"조합원이 아니면 온라인몰 이용어려우니까 그거 안내해야 할 것
+            같은데. 자연드림은 일반소비자도 가능하다고 적어주고."*
+            ⚠️ 밖으로 나가는 글이라 **공식 안내를 먼저 확인하고 썼다**(규칙 16):
+              · 한살림 = *"온라인 물품구입은 조합원만 이용 가능"* · 가입비 3천원 ＋ 출자금 3만원(탈퇴 시 환불)
+                        · 비조합원은 «매장»에서 10% 비싼 값으로만
+              · 자연드림(아이쿱) = 일반가·조합원가가 따로 있다 = **비조합원도 온라인 구매 가능**
+            ⛔ 값·조건은 바뀔 수 있다 — 고칠 땐 **그날 공식 페이지를 다시 보고** 고칠 것. */}
+        {!editShops && shops.some((s) => s.id === 'hansalim' || s.id === 'naturedream') && (
+          <div className="t-sub" style={{ fontSize: 11.5, marginTop: 5, lineHeight: 1.55 }}>
+            <b style={{ color: 'var(--brown)' }}>한살림</b>은 온라인 장보기가 <b style={{ color: 'var(--brown)' }}>조합원만</b> 돼요(가입비 3천원＋출자금 3만원, 탈퇴하면 돌려받아요). 조합원이 아니면 매장에서 살 수 있어요.
+            {' '}<b style={{ color: 'var(--brown)' }}>자연드림</b>은 조합원이 아니어도 온라인에서 살 수 있어요.
+          </div>
+        )}
         {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
         </>
         )}
@@ -284,14 +297,19 @@ function Curation() {
         <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><img src={uiGomShop} alt="" draggable={false} style={{ width: 24, height: 24, objectFit: 'contain', flex: '0 0 auto' }} />주부의 장바구니</div>
         <button className="press" style={secBtnStyle} onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
       </div>
+      {/* ⭐ 「계속 올라와요」를 여기로 올렸다 — 창업자 2026-08-03 *"주부의 장바구니옆에 계속 올라오다는
+          문구 적어줘. (원래 지워지는 아래안내판에 있었음)"*. 아래 안내판을 빼면서 그 말만 살렸다.
+          ⛔ 이 말은 지우지 말 것 — **재고가 계속 는다는 신호**라 다음에 또 들어올 이유가 된다. */}
       <div className="t-sub" style={{ fontSize: 12, marginTop: -2, marginBottom: 6 }}>
-        써보고 좋은 건 꼭 나누는 18년차 주부의 · 첨가물 적은 건강 식재료
+        써보고 좋은 건 꼭 나누는 18년차 주부의 · 첨가물 적은 건강 식재료 · <b style={{ color: 'var(--brown)' }}>앞으로도 하나씩 계속 올라와요</b>
       </div>
-      {/* 제휴(어필리에이트) 표시 — 공정위 추천·보증 심사지침. 현재는 제휴 미운영(수수료 없음)임을 정확히 고지.
-          제휴 전환 시에도 구매자는 정가 그대로이고 수수료는 쇼핑몰이 부담한다는 점을 명확히(오해 방지). */}
-      <div style={{ fontSize: 11, color: 'var(--text-sub)', background: 'var(--cream)', borderRadius: 9, padding: '7px 10px', marginBottom: 8, lineHeight: 1.5 }}>
-        ‘사러가기’는 외부 쇼핑몰로 연결돼요. <b style={{ color: 'var(--brown)' }}>현재 한끼는 제휴 서비스를 운영하지 않아 어떤 수수료도 받지 않아요.</b> 나중에 제휴가 생겨도 여러분은 <b style={{ color: 'var(--brown)' }}>늘 정가 그대로</b> 구매하고 — 가격 인상·추가 부담은 전혀 없어요. (그때 수수료는 구매자가 아니라 쇼핑몰이 한끼에 주는 거예요.)
-      </div>
+      {/* ⛔⛔ 제휴(대가성) 고지판을 «뺐다» — 창업자 2026-08-03 *"주부의 장바구니 아래 안내판은 없애도
+          될 것같아 아래위로 좀 지저분해보여"*. 지금은 **제휴를 하나도 안 하고 있어서** 고지 의무가 없다.
+          ⚠️⚠️ **쿠팡 파트너스에 가입하는 순간 다시 넣어야 한다** — 공정위 추천·보증 심사지침상 «법적 의무»고,
+             쿠팡 심사가 그 문구가 보이는 스크린샷을 요구한다(`docs/제휴프로그램-확인-2026-08-03.md`).
+          ⭐ 사람이 기억할 일로 두지 않았다 — `scripts/check-affiliate.mjs` 가 큐레이션 주소에서
+             제휴 꼬리표(`link.coupang.com`·`lptag`·`subId` 등)를 찾으면 **이 고지가 없을 때 배포를 막는다.**
+          📌 되살릴 문구는 그 검사 파일 맨 위에 통째로 적어뒀다(지워지지 않게). */}
 
       {open && (
         <>
@@ -319,9 +337,8 @@ function Curation() {
               ))
             : shownItems.map((it) => Card(it))}
 
-          <div className="t-sub" style={{ fontSize: 12.5, fontWeight: 600, textAlign: 'center', background: 'var(--cream)', borderRadius: 12, padding: '13px 12px', margin: '4px 0 2px', lineHeight: 1.5 }}>
-            써보고 좋았던 것만 골라 나눠요 · 진짜 쓰는 재료, 앞으로도 하나씩 계속 올라와요.
-          </div>
+          {/* ⛔ 아래 안내판을 뺐다 (창업자 2026-08-03 *"아래위로 좀 지저분해보여"*).
+              「앞으로도 하나씩 계속 올라와요」는 **맨 위 부제로 옮겨 살렸다** — 창업자가 콕 집어 남기라 했다. */}
         </>
       )}
     </>

@@ -18,7 +18,12 @@ const DEFAULT_SHOPS = [
   { id: 'ssg', name: '이마트몰', icon: 'cart', iconType: 'icon', url: 'https://emart.ssg.com', search: 'https://emart.ssg.com/search.ssg?query={q}' },
   { id: 'naver', name: '네이버쇼핑', icon: 'store', iconType: 'icon', url: 'https://shopping.naver.com', search: 'https://search.shopping.naver.com/search/all?query={q}' },
   { id: 'oasis', name: '오아시스', icon: 'basket', iconType: 'icon', url: 'https://www.oasis.co.kr', search: 'https://www.oasis.co.kr/product/search?keyword={q}' },
-  { id: 'hansalim', name: '한살림', icon: 'sprout', iconType: 'icon', url: 'https://shop.hansalim.or.kr/shopping/spMain.do', search: 'https://shop.hansalim.or.kr/shopping/spMain.do' },
+  // ⚠️ 한살림 온라인 장보기는 **조합원만** 산다 — 가입비 3천원 ＋ 출자금 3만원(탈퇴 때 돌려받음).
+  //    비조합원은 «매장에서만» 살 수 있고 값이 10% 비싸다. (한살림 공식 안내 · 2026-08-03 확인)
+  { id: 'hansalim', name: '한살림', icon: 'sprout', iconType: 'icon', note: '조합원 전용', url: 'https://shop.hansalim.or.kr/shopping/spMain.do', search: 'https://shop.hansalim.or.kr/shopping/spMain.do' },
+  // ⭐ 자연드림(아이쿱)은 **조합원이 아니어도 온라인에서 산다**(일반가). 조합원이면 할인가.
+  //    창업자 2026-08-03: *"자연드림은 일반소비자도 가능하다고 적어주고."*
+  { id: 'naturedream', name: '자연드림', icon: 'basket', iconType: 'icon', url: 'https://www.icoop.or.kr', search: 'https://www.icoop.or.kr' },
 ]
 
 function migrateShopping() {
@@ -47,11 +52,22 @@ function foldWishIntoShopping(wishlist = [], shoppingList = []) {
 const SHOP_ICON_UPGRADE = { coupang: 'box', kurly: 'bag', ssg: 'cart', naver: 'store', oasis: 'basket' }
 function migrateShops(shops) {
   if (!Array.isArray(shops) || shops.length === 0) return DEFAULT_SHOPS
-  return shops.map((s) =>
+  const up = shops.map((s) =>
     SHOP_ICON_UPGRADE[s.id] && s.iconType !== 'icon' && s.iconType !== 'label'
       ? { ...s, iconType: 'icon', icon: SHOP_ICON_UPGRADE[s.id] }
       : s
   )
+  // ⭐ 「자연드림」을 «한 번만» 뒤에 붙인다 (2026-08-03 신설).
+  //    ⚠️ 기존 유저는 자기 목록이 저장돼 있어서 `DEFAULT_SHOPS` 를 안 읽는다 — 안 붙이면 **새 유저만** 본다.
+  //    ⛔ 유저가 지웠으면 다시 안 붙인다 → 그래서 「붙인 적 있음」 표시를 남긴다(한 번만 시도).
+  const ADDED = 'hankki:shops:naturedream'
+  try {
+    if (!up.some((s) => s.id === 'naturedream') && !localStorage.getItem(ADDED)) {
+      localStorage.setItem(ADDED, '1')
+      return [...up, DEFAULT_SHOPS.find((s) => s.id === 'naturedream')]
+    }
+  } catch { /* 저장 못 하면 그냥 넘어간다 — 다음에 또 시도해도 해롭지 않다 */ }
+  return up
 }
 
 function load() {

@@ -19,7 +19,7 @@ import { dateLabel, openExternal } from '../utils'
 import { shouldAskReview } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
-import { picksForIngredients, productLink, productMall } from '../data/curation'
+
 import { useWakeLock } from '../useWakeLock'
 import { useLayerBack } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
@@ -33,7 +33,8 @@ const COACH_KEY = 'hankki:coach:detail'
 const COACH_STEPS = [
   { sel: '[data-coach="edit"]', label: '편집', desc: '재료·만드는 법, 언제든 고칠 수 있어요' },
   { sel: '[data-coach="shop"]', label: '재료 장보기 담기', desc: '필요한 재료를 한 번에 장보기 리스트에 담아요. 담은 건 장보기 탭에서 체크하며 사면 편해요' },
-  { sel: '[data-coach="pantry"]', label: '주부의 장바구니', desc: '18년차 주부가 진짜 쓰는 재료예요. 탭하면 바로 사러가기로 연결돼요' },
+  // ⛔ 「주부의 장바구니」 코치 한 칸을 뺐다 — 그 자리(제품 사러가기)를 2026-08-03 에 레시피에서 뺐다.
+  //    ⚠️ 없는 자리를 짚는 코치는 **오버레이만 뜨고 아무것도 안 가리킨다**(빈 화면 반짝임).
   { sel: '[data-coach="share"]', label: '친구와 레시피 공유하기', desc: '재료·만드는 법이 담긴 예쁜 카드로 보내요' },
   { sel: '[data-coach="decor"]', label: '레시피 꾸미기', desc: '스티커·마스킹테이프·손글씨로 나만의 표지!' },
   { sel: '[data-coach="cook"]', label: '요리 시작', desc: '큰 글씨 요리모드 · 화면 안 꺼짐 · 단계 타이머' },
@@ -78,7 +79,7 @@ export default function RecipeDetailScreen({ id }) {
   //    early return 이 걸려 훅 개수가 줄고 React 가 트리째 죽는다(빈 화면).
   //    2026-08-03 창업자 제보 *"홍콩식가지볶음 지웠더니 먹통됨"* 의 정체가 이거였다.
   //    (`picksOpen` 이 뒤쪽 158줄에 있었다 — 큐레이션 픽 4개 상한을 넣으며 8/2 에 들어왔다)
-  const [picksOpen, setPicksOpen] = useState(false)
+
 
   if (!r) {
     return (
@@ -154,19 +155,8 @@ export default function RecipeDetailScreen({ id }) {
     }
   }
 
-  // 이 레시피가 쓴 '주부의 장바구니' 제품(재료에 제품명이 적혀 있으면 자동 매칭) — 구매 연결
-  // 재료뿐 아니라 메모도 스캔한다. (특화 제품만 재료에 이름 남기고, 나머지 내 제품은 메모로 옮겼기 때문)
-  const pantryPicks = picksForIngredients([...(r?.ingredients || []), r?.memo || ''])
-  // ⭐ 픽은 «네 개까지만» 보이고 나머지는 접는다. 큐레이션 제품은 계속 늘어나는데
-  //    다 펼치면 목록이 재료 수만큼 길어져 아래의 「이 재료 다 담기」(수익 버튼)가 화면 밖으로 밀린다.
-  //    앞자리는 창업자가 직접 적은 제품이 차지한다(`picksForIngredients` 가 그 순서로 준다).
-  //    ⚠️ `picksOpen` 은 여기 있으면 안 된다 — 위 `if (!r)` 보다 아래라서 훅이 사라진다. 맨 위로 올렸다.
-  const PICK_MAX = 4
-  const shownPicks = picksOpen ? pantryPicks : pantryPicks.slice(0, PICK_MAX)
-  const addAllPicks = () => {
-    pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p) }))
-    nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요`)
-  }
+  // ⛔ 「주부의 장바구니 픽」(제품 사러가기)은 2026-08-03 에 레시피에서 뺐다 — 아래 §광고 주석 참고.
+  //    `picksForIngredients`·`productLink`·`productMall` 은 **장보기 화면이 계속 쓴다**(지우지 말 것).
 
   return (
     <div className="screen fade" style={{ paddingBottom: 0 }}>
@@ -368,30 +358,14 @@ export default function RecipeDetailScreen({ id }) {
           </>
         )}
 
-        {/* 주부의 장바구니 픽 — 이 레시피가 쓴 제품을 바로 사러가기. 재료 바로 밑(잘 보이는 자리)·수익 연결 */}
-        {pantryPicks.length > 0 && (
-          <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 6 }}>이 레시피, 이걸로 만들었어요</div>
-            <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 10, lineHeight: 1.55 }}>재료를 <b style={{ color: 'var(--brown)' }}>왜 쓰는지 설명</b>은 <b style={{ color: 'var(--brown)' }}>장보기 → 주부의 장바구니</b>에 있어요</div>
-            {shownPicks.map((p) => (
-              <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
-                <span style={{ fontSize: 22, flex: '0 0 auto' }}>{p.emoji}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{p.name}</span>
-                  {productMall(p) && <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream-deep)', borderRadius: 5, padding: '1px 6px' }}>{productMall(p)}</span>}
-                </div>
-                <button className="press" onClick={() => openExternal(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>
-              </div>
-            ))}
-            {pantryPicks.length > PICK_MAX && !picksOpen && (
-              <button className="press" onClick={() => setPicksOpen(true)} style={{ width: '100%', marginTop: 9, padding: '8px 0', borderRadius: 10, background: 'transparent', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>
-                ＋{pantryPicks.length - PICK_MAX}개 더 보기
-              </button>
-            )}
-            <button className="press" onClick={addAllPicks} style={{ width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Icon name="cart" size={15} />이 재료 다 담기</button>
-            <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>담아두고 장보기에서 체크하며 사면 편해요 · 18년차 주부가 진짜 쓰는 재료예요</div>
-          </div>
-        )}
+        {/* ⛔⛔ **레시피 안의 「사러가기」 광고를 뺐다** — 창업자 2026-08-03 *"큐레이션엔 그냥 두고,
+            **레시피에 광고만 빼자**"*. 앞선 맥락 = *"우리 레시피에서 한살림꺼는 다 빼야할 듯.
+            **사러가기나 담기되잖아**"* — 한살림 온라인몰은 **조합원만** 살 수 있어서(가입비 3천원＋출자금 3만원)
+            비조합원이 누르면 **막다른 길**이 된다.
+            ⭐ 그래서 「제품을 고르러 오는 자리(장보기 → 주부의 장바구니)」에만 남기고,
+               「내 레시피를 보는 자리」에서는 뺐다. **레시피는 광고판이 아니다.**
+            ✅ 담는 기능은 안 없어졌다 — 재료 절의 **「장보기 담기」** 버튼이 그대로 있다.
+            ⛔ 되살릴 땐 창업자에게 먼저 물을 것(수익 연결이라 자동 복구 대상이 아니다). */}
 
         {r.steps?.length > 0 && (
           <>
