@@ -381,9 +381,11 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
       </span>
     </div>
   )
+  // ⚠️ bottom 148 → 178 (2026-08-04) — 아래 `foot` 이 알약을 달면서 세로로 30 쯤 자랐다.
+  //    `night` 처럼 둘 다 왼쪽에 오는 뼈대에선 20px 밖에 안 남아 빽빽했다.
+  // ⛔ 이 주석을 아래 `(` 안에 `{/* */}` 로 넣었다가 **빌드가 깨졌다** —
+  //    JSX 주석은 «자식» 자리에서만 되고 표현식이 열리는 자리엔 못 온다(객체로 파싱된다).
   const more = (col, sub) => !cover && (
-    {/* ⚠️ 148 → 178 (2026-08-04) — 아래 `foot` 이 알약을 달면서 세로로 30 쯤 자랐다.
-        `night` 처럼 둘 다 왼쪽에 오는 뼈대에선 20px 밖에 안 남아 빽빽했다. */}
     <div style={{ position: 'absolute', left: PAD, bottom: 178, zIndex: 8, fontFamily: 'Jua, sans-serif', fontSize: 34, color: col }}>
       레시피 보러가기
       <span style={{ display: 'block', fontFamily: 'GowunDodum, sans-serif', fontSize: 24, color: sub, fontWeight: 700, marginTop: 8 }}>한끼 앱에서 →</span>
