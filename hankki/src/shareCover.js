@@ -119,18 +119,26 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
     ctx.fillText(info.join('  ·  '), W / 2, infoY)
   }
 
-  // 푸터: 슬로건 + 링크 알약 (이미지 혼자 퍼져도 어디서 왔는지 알게 — 바이럴 루프)
+  // 푸터: 슬로건 + 설치 유도 알약 (이미지 혼자 퍼져도 어디서 왔는지 알게 — 바이럴 루프)
+  //
+  // ⛔⛔ **2026-08-04 고침 — 여기 «깃허브 주소»가 그대로 찍히고 있었다.**
+  //    창업자 *"내레시피자랑 아래주소 깃허브"*. `appUrl` 은 지금 앱이 떠 있는 주소라
+  //    `peachfam0307-glitch.github.io/hankki` 가 카드에 박혔다 — **받는 사람이 읽을 주소가 아니다**
+  //    (개발자 계정 아이디가 그대로 노출되고, 앱을 깔라는 말로도 안 읽힌다).
+  //    ⭐ **랜덤 카드는 이미 v8.41 에 「Play스토어 '한끼' 검색」으로 바꿨는데 이쪽만 안 바꿨다.**
+  //       📌 같은 성격의 자리는 **두 곳을 같이 고쳐야 한다** — 한쪽만 고치면 이렇게 오래 남는다.
+  //    ⚠️ `url` 자체는 그대로 둔다 — 공유 payload 의 `url` 로 쓰이고, 웹으로 여는 사람에겐 유효하다.
+  //       **카드에 «찍는 글자»만** 스토어 안내로 바꾼다.
   const url = appUrl || 'https://peachfam0307-glitch.github.io/hankki/'
   ctx.fillStyle = '#a89c88'
   ctx.font = `29px ${BODY}`
   ctx.fillText('오늘도 한 끼 해냈다 🧡', W / 2, footerTop)
-  const prettyUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '')
-  const pillLabel = '나도 꾸미러 가기  ·  ' + prettyUrl
+  const pillLabel = '나도 꾸미러 가기  ·  Play스토어 ‘한끼’ 검색'
   const pillW = 720
   roundRect(ctx, W / 2 - pillW / 2, footerTop + 34, pillW, 58, 29)
-  ctx.fillStyle = '#eae6de'
+  ctx.fillStyle = '#5d3410'          // ⭐ 채운 알약 — 연한 판＋갈색 글자는 카드 배경에 묻혔다
   ctx.fill()
-  ctx.fillStyle = '#8a7a63'
+  ctx.fillStyle = '#fffdf8'
   let pf = 28
   do { ctx.font = `${pf}px ${BODY}`; if (ctx.measureText(pillLabel).width <= pillW - 60) break; pf -= 1 } while (pf > 22)
   ctx.fillText(pillLabel, W / 2, footerTop + 72)

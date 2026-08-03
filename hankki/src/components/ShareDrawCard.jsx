@@ -171,6 +171,16 @@ function drawState() {
   return { skin, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46) }
 }
 
+// 🔆 이 색 «위»에 글자를 얹을 때 흰 글자가 나을까 검은 글자가 나을까.
+//    표준 상대 밝기(sRGB 가중치)로 재고 0.6 을 기준으로 가른다.
+const onColor = (hex) => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim())
+  if (!m) return '#fffdf8'
+  const n = parseInt(m[1], 16)
+  const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
+  return lum > 0.6 ? '#2b2118' : '#fffdf8'
+}
+
 const DIE = 'drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 16px 22px rgba(60,40,25,.26))'
 // 🎴 뼈대 6종 + 여름 1 — **색이 아니라 구조가 다르다**(창업자 "다 똑같이 할 거야?" 2026-07-29).
 //    warm=좌상단 볼드타이포+blob · panel=위 컬러패널+센터제목 · pola=폴라로이드+마테
@@ -298,7 +308,14 @@ const BASE_WEAR = {
   panel: { blob: '#8fd3b6,#5cbb94 58%,#48a17c', pt: '#48a17c', ink: '#2f4a3f', kick: '따뜻한 집밥 한 그릇', sub: '#4f9b7c', brand: '#3f7a63', metaInk: '#5f7d70', metaDot: '#a8c8b8', footWm: '#3f7a63', footUrl: '#93ab9f', bg: '#f6f1e6' },
   pola: { pt: '#c4708a', ink: '#4a3038', sub: '#9a5468', brand: '#9a5468', tape1: 'rgba(226,196,168,.72)', tape2: 'rgba(232,182,190,.7)', metaInk: '#8a6270', metaDot: '#dcb6c0', footWm: '#9a5468', footUrl: '#bb96a2', bg: '#f8eef0', grid: 'rgba(190,150,160,.12)', cap: '#9a5468', photoBg: 'radial-gradient(circle at 50% 38%,#fdf7f4,#f2e6e6)' },
   mag: { blob: '#cfe0c4,#b6cfa8 58%,#a3c194', pt: '#6f9a58', ink: '#2c3a27', brand: '#33422e', sub: '#7e8b74', metaInk: '#67775e', footWm: '#4d5c45', footUrl: '#8b9a82', bg: '#eef1ea', side: '#5d6b55', sideB: '#33422e' },
-  arch: { blob: '#e0a24e,#c2632f 48%,#8f3a26', pt: '#b8532c', ink: '#3b2a1f', kick: '바람 불면, 가을 한 끼', sub: '#a8532c', brand: '#7a4326', badge: '#e0913f,#c2632f', chipRing: 'rgba(200,130,80,.3)', chipInk: '#8c4a24', footWm: '#7a4326', footUrl: '#ad8b6c', bg: 'linear-gradient(170deg,#fbf5e6,#f3e6cc 58%,#ecdab9)', tex: 'plaid', texC: '150,74,40', leaf: ['#c2632f', '#b8823a'] },
+  // 🪟 **아치 = 창틀.** 기본 옷은 «창밖 하늘» 톤(더스티 블루) — 앱 포인트색과 같은 계열이다.
+  //   ⛔⛔ **2026-08-04 고침 — 여기 기본 옷이 통째로 «가을»이었다.** (창업자 *"자랑카드 여름가을같이돌아감"*)
+  //      `kick: '바람 불면, 가을 한 끼'` · 주황 · 체크(`plaid`) · **낙엽**(`leaf`)까지 박혀 있었고,
+  //      정작 `WARDROBE.autumn` 엔 `arch` 가 **없었다** — 기본이 이미 가을이라 안 넣은 것이다.
+  //      그래서 **가을엔 맞고 여름·겨울·봄엔 틀렸다.** 8/4 에 뽑힌 카드가 「바람 불면, 가을 한 끼」였다.
+  //   📌 **기본 옷은 «사철 중립»이라야 한다.** 계절 옷은 반드시 `WARDROBE` 에 넣는다 —
+  //      기본을 물들이면 나머지 세 계절이 조용히 틀어지고, 그 계절이 와야 드러난다.
+  arch: { blob: '#8fa8c4,#5878a0 52%,#3d5a80', pt: '#5878a0', ink: '#2b3646', kick: '창가에 앉아, 한 끼', sub: '#6d87a8', brand: '#3d5a80', badge: '#8fa8c4,#5878a0', chipRing: 'rgba(110,140,180,.3)', chipInk: '#456a90', footWm: '#3d5a80', footUrl: '#8ea3ba', bg: 'linear-gradient(170deg,#f9f7f1,#eef2f7 58%,#e3eaf1)' },
   night: { pt: '#ffd98a', ink: '#f0e4d0', kick: '오늘 밤은, 이걸로', sub: '#ffcf8a', brand: '#f0e4d0', metaInk: '#cbbfa8', footWm: '#e8dcc9', footUrl: '#a99d88', bg: 'radial-gradient(circle at 26% 16%,#343c52,#262b3b 60%,#1c2029)' },
 }
 const WARDROBE = {
@@ -313,6 +330,10 @@ const WARDROBE = {
     //    창업자 *"배경이나 포인트를 명확하게. 그래야 뽑는 맛이 나"* → 원판을 확 진한 밤색으로 내렸다.
     mag: { blob: '#b98f63,#96703f 55%,#6d4c26', pt: '#8a5a2a', ink: '#2e2418', brand: '#3d3227', sub: '#8a7558', metaInk: '#6d5e49', footWm: '#544738', footUrl: '#988975', bg: '#f0e7d3', side: '#665849', sideB: '#3d3227', tex: 'linen', texC: '116,88,52' },
     night: { pt: '#ffcf8a', ink: '#f4e6dc', kick: '깊어가는 가을밤', sub: '#f0b0d0', brand: '#f4e6dc', metaInk: '#d5c2b8', footWm: '#eedcd0', footUrl: '#ab9a92', bg: 'radial-gradient(circle at 26% 16%,#4a3050,#33223c 60%,#231825)', tex: 'holo' },
+    // 🍁 **원래 `BASE_WEAR.arch` 에 있던 가을 옷을 그대로 옮겨 왔다** (2026-08-04).
+    //    ⭐ 색·문구·체크무늬·낙엽 하나도 안 바꿨다 — **가을엔 지금까지와 똑같이 보인다.**
+    //       달라지는 건 여름·겨울·봄뿐이다(그때는 이제 중립 하늘색 아치가 나온다).
+    arch: { blob: '#e0a24e,#c2632f 48%,#8f3a26', pt: '#b8532c', ink: '#3b2a1f', kick: '바람 불면, 가을 한 끼', sub: '#a8532c', brand: '#7a4326', badge: '#e0913f,#c2632f', chipRing: 'rgba(200,130,80,.3)', chipInk: '#8c4a24', footWm: '#7a4326', footUrl: '#ad8b6c', bg: 'linear-gradient(170deg,#fbf5e6,#f3e6cc 58%,#ecdab9)', tex: 'plaid', texC: '150,74,40', leaf: ['#c2632f', '#b8823a'] },
   },
 }
 // 뼈대 하나가 지금 입을 옷. 계절 옷이 없으면 기본 옷 그대로.
@@ -344,14 +365,26 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
       {meta.map((c, i) => <span key={i} style={{ padding: '11px 24px', borderRadius: 999, background: '#fffdf8', boxShadow: `0 8px 20px -12px rgba(120,80,50,.5), inset 0 0 0 2px ${ring}`, fontFamily: 'Jua, sans-serif', fontSize: 28, color: text }}>{c}</span>)}
     </div>
   )
-  const foot = (wm, url) => (
+  // 🔍🔍 **「Play스토어 '한끼' 검색」 = 설치 유도 글자.** 이 카드에서 제일 아까운 한 줄이다.
+  //   ⛔⛔ **2026-08-04 고침 — 창업자 *"랜덤자랑 아래 구글플레이스토어한끼 잘안보임"*.**
+  //      19px 에 `footUrl`(연한 색)이라 배경에 묻혔다. ⚠️**바로 아래 주석에 *"실제로 렌더해 보니
+  //      거의 안 읽혔다"* 고 이미 적혀 있었다** — 적어두고 안 고쳤다. 📌 적어두는 건 고친 게 아니다.
+  //   ✅ 알약으로 감싼다 — 배경이 밝든 어둡든 «판»이 생겨서 글자가 항상 읽힌다
+  //      (색만 진하게 하면 `night` 처럼 어두운 스킨에서 또 묻힌다).
+  const foot = (wm) => (
     <div style={{ position: 'absolute', left: PAD, bottom: 52, zIndex: 8 }}>
       <div style={{ fontFamily: 'Jua, sans-serif', fontSize: 26, color: wm }}>한끼</div>
-      <div style={{ marginTop: 6, fontSize: 19, color: url, fontFamily: 'GowunDodum, sans-serif' }}>Play스토어 ‘한끼’ 검색</div>
+      {/* ⚠️ 글자색은 알약 «배경 밝기»로 정한다 — `night` 처럼 어두운 스킨은 `footWm` 이
+          밝은 크림이라, 흰 글자로 굳혀 두면 거기서 또 안 읽힌다(고치려던 바로 그 증상이 재발). */}
+      <span style={{ display: 'inline-flex', alignItems: 'center', marginTop: 10, padding: '9px 20px', borderRadius: 999, background: wm, color: onColor(wm), fontFamily: 'Jua, sans-serif', fontSize: 22, letterSpacing: '-0.01em' }}>
+        Play스토어 ‘한끼’ 검색
+      </span>
     </div>
   )
   const more = (col, sub) => !cover && (
-    <div style={{ position: 'absolute', left: PAD, bottom: 148, zIndex: 8, fontFamily: 'Jua, sans-serif', fontSize: 34, color: col }}>
+    {/* ⚠️ 148 → 178 (2026-08-04) — 아래 `foot` 이 알약을 달면서 세로로 30 쯤 자랐다.
+        `night` 처럼 둘 다 왼쪽에 오는 뼈대에선 20px 밖에 안 남아 빽빽했다. */}
+    <div style={{ position: 'absolute', left: PAD, bottom: 178, zIndex: 8, fontFamily: 'Jua, sans-serif', fontSize: 34, color: col }}>
       레시피 보러가기
       <span style={{ display: 'block', fontFamily: 'GowunDodum, sans-serif', fontSize: 24, color: sub, fontWeight: 700, marginTop: 8 }}>한끼 앱에서 →</span>
     </div>
