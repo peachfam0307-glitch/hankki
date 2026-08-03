@@ -26,6 +26,27 @@ const drop = (k) => { try { localStorage.removeItem(k) } catch { /* noop */ } }
 // ─────────────────────────────────────────────────────────────
 export const BACKUP_STEPS = [5, 15]
 
+// ⭐⭐ 「내 것」만 센다 — 기본 레시피는 빼고. (창업자 제보 2026-08-03)
+//   *"설치한 사람 사진인데 «레시피 50개가 쌓였어요»는 뭐지?ㅡㅡ"*
+//   기본 레시피 50편이 통째로 세어져서 **깔자마자 문턱 15를 넘겨** 백업하라고 떴다.
+//   ⛔ 두 가지가 다 틀렸다 — ①아직 백업할 게 없다 ②「50개 쌓였어요」는 사실이 아니다(우리가 넣은 것).
+//   ✅ 백업은 «잃으면 아까운 것»이 있을 때 권한다 =
+//      ⒜내가 가져온 레시피 ⒝기본이라도 내가 «꾸민» 것 ⒞내가 «고친» 것.
+//      기본 레시피는 앱을 다시 깔면 그대로 돌아오니 아깝지 않다.
+//   📌 세는 곳이 둘이면 «문구의 숫자»와 «뜨는 문턱»이 어긋난다 → 여기 한 곳에서만 센다.
+//   ⚠️ 「우리가 꾸며서 준 것」은 빼야 한다 — 레꾸 샘플 나시고랭(`basic-nasigoreng`)은
+//      처음부터 표지가 꾸며진 채로 온다. 안 빼면 갓 깐 사람 화면에도 1 이 세어진다.
+const SEED_DECORATED = new Set(['basic-nasigoreng'])
+
+export const myRecipeCount = (recipes = []) =>
+  recipes.filter((r) => {
+    if (!r) return false
+    if (!String(r.id || '').startsWith('basic-')) return true      // 내가 가져오거나 직접 쓴 것
+    if (r.touched) return true                                      // 기본인데 내가 고친 것
+    if (SEED_DECORATED.has(r.id)) return false                      // 우리가 꾸며서 준 것
+    return (Array.isArray(r.decor) && r.decor.length > 0) || (r.decorBg && r.decorBg !== 'none')
+  }).length
+
 /** 지금 띄울 문턱을 돌려준다. 0 이면 띄우지 않는다. */
 export function backupNudgeStep(recipeN) {
   const done = Number(read(K_BACKUP) || 0)

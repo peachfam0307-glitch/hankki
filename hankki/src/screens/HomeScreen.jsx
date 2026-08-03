@@ -16,7 +16,7 @@ import uiGomShop from '../assets/ui/gom_shop.png'
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomClap from '../assets/ui/gom_clap.png'
 import { needsOnboarding } from '../components/Onboarding'
-import { backupNudgeStep, dismissBackupNudge, askOpenBackup } from '../nudges'
+import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount } from '../nudges'
 import { weeklyNow } from '../data/weekly'
 
 // 홈 첫 방문 코치마크 — 진짜 핵심 기능부터 짚어준다(창업자 딸 아이디어 ⭐).
@@ -52,7 +52,9 @@ export default function HomeScreen() {
   const unsortedN = recipes.filter((r) => r.status === 'unsorted').length
   // 백업 유도 — 레시피가 5개·15개 쌓였을 때 딱 두 번. 화면 그릴 때 한 번만 판정한다
   // (닫으면 0이 되어 사라지고, 다음 문턱에서 한 번 더 뜬다).
-  const [bkStep, setBkStep] = useState(() => backupNudgeStep(recipes.length))
+  // ⚠️ 「내 것」 개수로 센다 — 기본 레시피 50편을 세면 깔자마자 백업하라고 뜬다(2026-08-03 창업자 제보)
+  const myN = myRecipeCount(recipes)
+  const [bkStep, setBkStep] = useState(() => backupNudgeStep(myRecipeCount(recipes)))
 
   // 🗓 이번 주 레시피 — 달력이 여는 줄. ⛔재고가 없으면 `null` 이라 **줄을 아예 안 그린다**
   //    (빈 「이번 주」 자리를 남기지 않는다 · `LAB_*_URL` 이 비면 그 칸을 안 그리는 것과 같은 방식).
@@ -164,7 +166,7 @@ export default function HomeScreen() {
               onClick={() => { askOpenBackup(); setBkStep(0); nav.go('profile') }}
               style={{ flex: 1, textAlign: 'left', minWidth: 0 }}
             >
-              <div style={{ fontSize: 13.5, fontWeight: 700 }}>레시피 {recipes.length}개가 쌓였어요</div>
+              <div style={{ fontSize: 13.5, fontWeight: 700 }}>내 레시피가 {myN}개 쌓였어요</div>
               <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>폰을 바꿔도 안 잃게 한 번 저장해둘까요?</div>
             </button>
             <button className="press" onClick={() => { dismissBackupNudge(bkStep); setBkStep(0) }} aria-label="닫기" style={{ flex: '0 0 auto', padding: 6 }}>
