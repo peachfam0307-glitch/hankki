@@ -296,6 +296,15 @@ const PHOTO_RATIO = {
   au_i07: 1.248, au_i08: 1.0925, au_i09: 1.2857, au_i10: 1.0867, au_i11: 0.9421, au_i12: 0.9862,
   au_i13: 0.7011, au_i14: 1.1185, au_i15: 0.7067, au_i16: 0.5123, au_i17: 0.8249, au_i18: 0.9167,
   au_i19: 0.9698, au_i20: 0.8324, au_i21: 0.9659,
+  // 🍁 2026-08-03 창업자 보충 21컷 — **유료팩에 뺏긴 16컷 자리를 다시 채운 것**
+  //   ⭐ 다꾸 톤(굵은 갈색 선)으로 뽑았다 — 수채 톤은 유료팩이 가져갔으니 겹치지 않는다.
+  //   ✅ `tools/dupart.py` 로 유료팩·앱 전체와 대조 = 겹침 0
+  //      (앱과 닮았다고 뜬 5컷은 전부 헛것이었다 — 솔방울↔토마토·단풍잎↔잡채. 눈으로 확인)
+  //   ⛔ 시트끼리 겹친 6컷은 뺐다 = ax_02·04·11 · ay_04·05·11 (열매가지·도토리·편지·머그·노트·은행잎)
+  au_i22: 0.8453, au_i23: 0.9754, au_i24: 1.1757, au_i25: 1.0112, au_i26: 1.1597, au_i27: 0.8946,
+  au_i28: 1.0391, au_i29: 0.9439, au_i30: 0.7937, au_i31: 1.48, au_i32: 1.0971, au_i33: 1.148,
+  au_i34: 1.1402, au_i35: 1.4059, au_i36: 1.1231, au_i37: 1.2462, au_i38: 0.9628, au_i39: 1.5528,
+  au_i40: 0.6912, au_i41: 1.0159, au_i42: 1.3405,
   // 🐧 2026-07-31 창업자 재생성 — 옛 펭펭은 트렌치가 «흰색»이라 다시 뽑았다(au_b05~08은 덮어씀)
   au_b19: 0.9676, au_b20: 0.8307, au_b21: 1.1627, au_b22: 0.9625,
   cs_b01: 0.7309, cs_b02: 0.7152, cs_b03: 1.0491, cs_b29: 0.9071,
@@ -916,7 +925,7 @@ export const STICKER_GROUPS = [
   //   ⛔ 파일은 안 지운다. 서랍 목록에서만 내린다.
   //   ⚠️ 되돌리려면 `src/data/paidPacks.js` 의 가을 팩 `alias` 를 «먼저» 지워야 한다 — 안 그러면 검사가 막는다.
   //   내린 것 = au_i02·03·04·05·06·07·09·10·11·12·13·14·17·18·19·20 (16컷)
-  { key: 'deco_autumn_a', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 단풍·낙엽', items: ['au_i15', 'au_i16', 'au_i21', 'au_i01', 'au_t06', 'au_t02', 'au_s02'] },
+  { key: 'deco_autumn_a', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 단풍·낙엽', items: ['au_i15', 'au_i16', 'au_i21', 'au_i01', 'au_i24', 'au_i28', 'au_i38', 'au_i39', 'au_i29', 'au_i30', 'au_i42', 'au_t06', 'au_t02', 'au_s02'] },
   // 🍂 **겹치는 컷 4개를 서랍에서 내렸다** (창업자 2026-08-01 눈으로 잡음 — *"펭펭, 꼬르곰 겹쳐. 단풍 들고 있는 거"*)
   //    내린 것 = `au_b01`·`au_b05`(9/1) · `au_b04`(10/1) · `au_b06`(11/1)
   //    ⭐ 픽셀로도 확인했다 — `au_b05`↔`au_b20` 이 13.74 로 압도적으로 닮았고(다음이 33) 나머지는
@@ -926,14 +935,14 @@ export const STICKER_GROUPS = [
   //    ⛔ 파일은 안 지운다. 서랍에서만 내린다(이미 그걸로 꾸민 표지가 깨지면 안 된다).
   { key: 'buddies_autumn_a', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 가을', items: ['au_b20', 'au_b09', 'au_b13', 'au_b14', 'au_b18'] },
   // 🍁 유료팩과 겹치는 6컷(au_i02·05·06·07·09·18)을 내렸다 → 10 → 4컷 (위 2026-08-03 주석 참고)
-  { key: 'deco_autumn_b', tab: 'deco', season: 'autumn', from: '2026-10-01', label: '가을 열매·수확', items: ['au_i08', 'au_t03', 'au_t04', 'au_s01'] },
+  { key: 'deco_autumn_b', tab: 'deco', season: 'autumn', from: '2026-10-01', label: '가을 열매·수확', items: ['au_i08', 'au_i26', 'au_i32', 'au_i23', 'au_i35', 'au_i36', 'au_i37', 'au_i33', 'au_t03', 'au_t04', 'au_s01'] },
   // 🦫🐧 **친구 데뷔 ①** — 가을은 카롱이다(꼬르곰은 겨울·봄 친구와 짝을 짓는다).
   //    창업자 *"둘이 덩치가 있어서 케미가 별루야… 카롱이랑 꼬르곰둘은 별로 안어울림"* → 짝을 펭펭으로 바꿨다.
   //    ⛔ 5명을 한꺼번에 안 내보낸다 — 「새 친구 등장」은 한 번밖에 못 쓰는 카드라 셋으로 쪼갠다.
   { key: 'buddies_karong', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '카롱과 펭펭', items: ['kp_leaf', 'kp_sweetpotato', 'kp_market', 'kp_lift', 'kp_stretch', 'kp_cheer', 'kp_prep', 'kp_icebath', 'kp_cook'] },
   { key: 'buddies_autumn_b', tab: 'buddies', season: 'autumn', from: '2026-10-01', label: '꼬르곰·펭펭의 가을 나들이', items: ['au_b02', 'au_b03', 'au_b19', 'au_b21', 'au_b10', 'au_b11', 'au_b12'] },
   // 🍁 유료팩과 겹치는 6컷(au_i10·11·13·14·17·20)을 내렸다 → 10 → 4컷 (위 2026-08-03 주석 참고)
-  { key: 'deco_autumn_c', tab: 'deco', season: 'autumn', from: '2026-11-01', label: '늦가을 소품', items: ['au_t01', 'au_t05', 'au_s03', 'au_s04'] },
+  { key: 'deco_autumn_c', tab: 'deco', season: 'autumn', from: '2026-11-01', label: '늦가을 소품', items: ['au_i22', 'au_i25', 'au_i27', 'au_i31', 'au_i34', 'au_i40', 'au_i41', 'au_t01', 'au_t05', 'au_s03', 'au_s04'] },
   { key: 'buddies_autumn_c', tab: 'buddies', season: 'autumn', from: '2026-11-01', label: '꼬르곰·펭펭의 늦가을', items: ['au_b07', 'au_b08', 'au_b22', 'au_b15', 'au_b16', 'au_b17'] },
   // 💪 라이프
   // 🍳 주방도구 (2026-07-29) — 라이프 탭이 통째로 운동용품(아령·줄넘기·복싱)이라
