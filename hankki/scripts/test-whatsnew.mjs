@@ -48,7 +48,10 @@ else ok('손으로 적은 목록 0')
 const drawerDates = [...read('src/components/Stickers.jsx').matchAll(/from:\s*'(\d{4}-\d{2}-\d{2})'/g)].map((m) => m[1])
 const cardDates = [...read('src/data/cardSeasons.js').matchAll(/from:\s*'(\d{4}-\d{2}-\d{2})'/g)].map((m) => m[1])
 const mine = [...new Set([...drawerDates, ...cardDates])].sort()
-const theirs = [...new Set(calendarGates().map((g) => g.date))].sort()
+// ⚠️ 달력엔 «우리 할 일»(`paidPacks.recheck` → `todo: true`)도 같이 실린다 — 잊지 않으려고 한 데 모은 것.
+//    ⛔ 그건 «유저에게 새로 열리는 것»이 아니라 안내 페이지엔 안 나간다. 여기선 빼고 센다.
+//    (2026-08-03 실제로 이 검사가 막았다 — 9/30 「효과 다시 보기」 약속을 넣자마자 걸렸다. 옳게 걸린 것.)
+const theirs = [...new Set(calendarGates().filter((g) => !g.todo).map((g) => g.date))].sort()
 if (mine.join() === theirs.join()) ok(`여는 날짜가 달력과 같다 — ${theirs.length}개 (${theirs.join(' · ')})`)
 else fail(`⛔ 안내 ${mine.join(' · ')} ≠ 달력 ${theirs.join(' · ')}`)
 
