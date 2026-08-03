@@ -214,10 +214,17 @@ export const picksForIngredients = (ingredients = []) => {
   //   ② `matches` 의 낱말이 있으면 = 재료 이름만 적어도 붙는 안전망(`순두부 1팩` → 한살림 몽글이 순두부).
   // ⚠️ `matches` 는 «좁게» 준다. '간장'·'설탕'처럼 거의 모든 레시피에 있는 말을 넣으면
   //    모든 레시피에 광고가 도배된다. 재료 줄에 실제로 쓰는 «그 재료 이름»만.
+  // ⛔⛔ `matches` 는 «낱말 시작»으로만 맞춘다 — 낱말 한가운데서 걸리면 안 된다.
+  //   2026-08-03 창업자 제보: 재료가 `노두유 1/2작은술` 인데 「연세 국산콩두유」가 붙었다.
+  //   **노두유(老抽)는 중국 진간장이지 두유가 아니다.** 「노두유」 속에 「두유」가 들어 있어서 걸렸다.
+  //   같은 꼴이 얼마든지 있다 — 「간장게장」↔간장 · 「참치액」↔참치 · 「고추장아찌」↔고추장.
+  //   ⭐ 한국어는 조사가 «뒤»에 붙으니 «앞»을 기준으로 본다: `두유를`·`두유 200ml` ✅ / `노두유` ⛔
+  const tokens = (ingredients || []).flatMap((i) => String(i).split(/[\s,()·/]+/)).filter(Boolean)
+  const startsWithAny = (w) => tokens.some((t) => t.startsWith(w))
   const direct = [], byWord = []
   for (const p of PRODUCTS) {
     if (p.name && text.includes(p.name)) direct.push(p)
-    else if ((p.matches || []).some((w) => w && text.includes(w))) byWord.push(p)
+    else if ((p.matches || []).some((w) => w && startsWithAny(w))) byWord.push(p)
   }
   return [...direct, ...byWord]
 }
