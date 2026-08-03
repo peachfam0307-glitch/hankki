@@ -12,6 +12,43 @@
 // CI:    npx playwright install --with-deps chromium && node scripts/smoke.mjs
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
+import { statSync, readdirSync, existsSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+// 🛑🛑 **「빌드가 깨졌는데 스모크만 통과」를 구조로 막는다.** (2026-08-04 실제로 당했다)
+//   ⛔ `vite preview` 는 **빌드를 안 한다** — 이미 있는 `dist/` 를 그냥 띄운다.
+//      그래서 소스가 깨져도 «옛 dist» 로 스모크가 멀쩡히 통과하고, 배포에서야 죽는다.
+//      그날 빌드 출력 줄을 세다가(`grep -c "✓ built"` → 2 여야 하는데 1) 실패를 놓쳤고,
+//      스모크 통과만 믿고 올려 **GitHub Actions 가 빌드에서 실패**했다.
+//   ✅ `dist` 가 `src` 보다 오래됐으면 **여기서 죽는다.** 「빌드부터 하라」고 말해 준다.
+//   📌 CI 는 build → smoke 순이라 항상 최신이다. 이 검사는 «로컬»을 지킨다.
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+function newestMtime(dir) {
+  let t = 0
+  for (const f of readdirSync(dir, { withFileTypes: true })) {
+    if (f.name.startsWith('.')) continue
+    const p = path.join(dir, f.name)
+    t = Math.max(t, f.isDirectory() ? newestMtime(p) : statSync(p).mtimeMs)
+  }
+  return t
+}
+{
+  const idx = path.join(ROOT, 'dist/index.html')
+  if (!existsSync(idx)) {
+    console.error('\n⛔ `dist/` 가 없다 — 스모크는 빌드 결과를 띄운다. 먼저 `npm run build`.\n')
+    process.exit(1)
+  }
+  const dist = statSync(idx).mtimeMs
+  const src = newestMtime(path.join(ROOT, 'src'))
+  if (src > dist) {
+    const min = Math.round((src - dist) / 60000)
+    console.error(`\n⛔⛔ **dist 가 src 보다 ${min}분 낡았다 — 지금 스모크는 «옛 화면»을 보고 있다.**`)
+    console.error('   빌드가 깨져서 dist 가 안 바뀐 것일 수도 있다(그게 2026-08-04 사고였다).')
+    console.error('   👉 `npm run build` 를 «exit code 0» 으로 통과시킨 뒤 다시 돌릴 것.\n')
+    process.exit(1)
+  }
+}
 
 const PORT = Number(process.env.SMOKE_PORT || 4173)
 const HOST = '127.0.0.1'
