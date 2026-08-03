@@ -903,7 +903,20 @@ export const STICKER_GROUPS = [
   //    ⛔ 맛보기도 지금은 안 넣는다 — **팩을 아직 팔 수 없어서**(결제 미구현) 유도할 목적지가 없다.
   //       팩을 실제로 낼 때 맛보기를 같이 켜는 게 맞는 순서다.
   // ⚠️ 라벨에 '9월분'처럼 달을 쓰지 않는다 — 유저는 달을 알 필요가 없고, 내용으로 갈라야 자연스럽다.
-  { key: 'deco_autumn_a', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 단풍·낙엽', items: ['au_i03', 'au_i04', 'au_i12', 'au_i15', 'au_i16', 'au_i19', 'au_i21', 'au_i01', 'au_t06', 'au_t02', 'au_s02'] },
+  // 🍁🍁 **2026-08-03 — 무료 가을 데코에서 16컷을 내렸다. 「파는 그림」이라서다.**
+  //   ⛔⛔ 사고의 모양 — `au_i*`(무료 계절 자산) 과 `wh_*`·`ws_*`(가을 유료팩 후보)가
+  //      **같은 그림인데 이름만 달랐다.** 그림이 두 벌 들어왔기 때문이다:
+  //        `docs/stickers/가을-창업자-2507/`      → 앱에 무료로 등록 (au_i)
+  //        `docs/stickers/신규-2607-수채화팩/`    → 유료팩 후보로 보관 (wh·ws)
+  //      누수 검사(`check-packmix.mjs`)는 **이름으로만** 보니까 *"✅ 안 샌다"* 고 통과시켰다.
+  //      그대로 뒀으면 **990원에 파는 그림 16컷이 9/1·10/1·11/1 에 저절로 공짜로 열렸다.**
+  //   🔎 찾은 법 = `python3 tools/leak-art.py` — **이름 말고 픽셀로** 맞대본다.
+  //   ⭐ 창업자 판정 2026-08-03: *"큰일날뻔했네"* → **ⓐ 무료에서 뺀다(유료팩을 지킨다).**
+  //      근거 = *"그래야 유료를 사지 주면 누가사"* (8/3) — 같은 그림이면 안 팔린다.
+  //   ⛔ 파일은 안 지운다. 서랍 목록에서만 내린다.
+  //   ⚠️ 되돌리려면 `src/data/paidPacks.js` 의 가을 팩 `alias` 를 «먼저» 지워야 한다 — 안 그러면 검사가 막는다.
+  //   내린 것 = au_i02·03·04·05·06·07·09·10·11·12·13·14·17·18·19·20 (16컷)
+  { key: 'deco_autumn_a', tab: 'deco', season: 'autumn', from: '2026-09-01', label: '가을 단풍·낙엽', items: ['au_i15', 'au_i16', 'au_i21', 'au_i01', 'au_t06', 'au_t02', 'au_s02'] },
   // 🍂 **겹치는 컷 4개를 서랍에서 내렸다** (창업자 2026-08-01 눈으로 잡음 — *"펭펭, 꼬르곰 겹쳐. 단풍 들고 있는 거"*)
   //    내린 것 = `au_b01`·`au_b05`(9/1) · `au_b04`(10/1) · `au_b06`(11/1)
   //    ⭐ 픽셀로도 확인했다 — `au_b05`↔`au_b20` 이 13.74 로 압도적으로 닮았고(다음이 33) 나머지는
@@ -912,13 +925,15 @@ export const STICKER_GROUPS = [
   //       내 지표는 13.74 하나만 집었는데 창업자 눈은 넷을 잡았다.
   //    ⛔ 파일은 안 지운다. 서랍에서만 내린다(이미 그걸로 꾸민 표지가 깨지면 안 된다).
   { key: 'buddies_autumn_a', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 가을', items: ['au_b20', 'au_b09', 'au_b13', 'au_b14', 'au_b18'] },
-  { key: 'deco_autumn_b', tab: 'deco', season: 'autumn', from: '2026-10-01', label: '가을 열매·수확', items: ['au_i02', 'au_i05', 'au_i06', 'au_i07', 'au_i08', 'au_i09', 'au_i18', 'au_t03', 'au_t04', 'au_s01'] },
+  // 🍁 유료팩과 겹치는 6컷(au_i02·05·06·07·09·18)을 내렸다 → 10 → 4컷 (위 2026-08-03 주석 참고)
+  { key: 'deco_autumn_b', tab: 'deco', season: 'autumn', from: '2026-10-01', label: '가을 열매·수확', items: ['au_i08', 'au_t03', 'au_t04', 'au_s01'] },
   // 🦫🐧 **친구 데뷔 ①** — 가을은 카롱이다(꼬르곰은 겨울·봄 친구와 짝을 짓는다).
   //    창업자 *"둘이 덩치가 있어서 케미가 별루야… 카롱이랑 꼬르곰둘은 별로 안어울림"* → 짝을 펭펭으로 바꿨다.
   //    ⛔ 5명을 한꺼번에 안 내보낸다 — 「새 친구 등장」은 한 번밖에 못 쓰는 카드라 셋으로 쪼갠다.
   { key: 'buddies_karong', tab: 'buddies', season: 'autumn', from: '2026-09-01', label: '카롱과 펭펭', items: ['kp_leaf', 'kp_sweetpotato', 'kp_market', 'kp_lift', 'kp_stretch', 'kp_cheer', 'kp_prep', 'kp_icebath', 'kp_cook'] },
   { key: 'buddies_autumn_b', tab: 'buddies', season: 'autumn', from: '2026-10-01', label: '꼬르곰·펭펭의 가을 나들이', items: ['au_b02', 'au_b03', 'au_b19', 'au_b21', 'au_b10', 'au_b11', 'au_b12'] },
-  { key: 'deco_autumn_c', tab: 'deco', season: 'autumn', from: '2026-11-01', label: '늦가을 소품', items: ['au_i10', 'au_i11', 'au_i13', 'au_i14', 'au_i17', 'au_i20', 'au_t01', 'au_t05', 'au_s03', 'au_s04'] },
+  // 🍁 유료팩과 겹치는 6컷(au_i10·11·13·14·17·20)을 내렸다 → 10 → 4컷 (위 2026-08-03 주석 참고)
+  { key: 'deco_autumn_c', tab: 'deco', season: 'autumn', from: '2026-11-01', label: '늦가을 소품', items: ['au_t01', 'au_t05', 'au_s03', 'au_s04'] },
   { key: 'buddies_autumn_c', tab: 'buddies', season: 'autumn', from: '2026-11-01', label: '꼬르곰·펭펭의 늦가을', items: ['au_b07', 'au_b08', 'au_b22', 'au_b15', 'au_b16', 'au_b17'] },
   // 💪 라이프
   // 🍳 주방도구 (2026-07-29) — 라이프 탭이 통째로 운동용품(아령·줄넘기·복싱)이라
