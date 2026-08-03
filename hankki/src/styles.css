@@ -176,6 +176,22 @@ img {
   font-size: 13px;
   letter-spacing: -0.01em;
 }
+/* ♿ 손가락이 닿는 자리 44px 보장 — «보이는 크기는 그대로», 눌리는 범위만 넓힌다.
+   구글 사전 출시 보고서의 접근성 항목 「터치 대상 크기」(안드로이드 권장 48dp)를 위해서고,
+   실제로 작은 버튼은 누르기도 어렵다. 2026-08-03 실측: 더보기 55×23 · 사용법 26×38 · 아바타 38×38.
+   ⭐ 그림·글자 크기는 손대지 않는다 — 창업자 미감을 안 건드리는 게 조건이었다.
+   ⚠️ `::after` 로 넓히면 «레이아웃이 1px 도 안 밀린다». padding 으로 하면 옆 요소가 밀린다. */
+   ⛔⛔ `::after` 로 투명하게 넓히는 방법은 **쓰지 않는다** — 손가락엔 통하지만
+      «자동 검사가 못 잡는다»(가짜 요소라 요소 크기가 안 바뀐다). 2026-08-03 실측으로 확인했다.
+      → 버튼 «자체»를 44 로 키우고, 안에 든 그림은 원래 크기 그대로 가운데 둔다. */
+.tap-ok {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .t-more {
   color: var(--text-sub);
   font-size: 13px;
@@ -183,6 +199,9 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  /* 세로 23px 이라 누르기 어려웠다. 위아래로 넓히고 같은 값만큼 빼서 «자리는 그대로». */
+  padding: 13px 4px;
+  margin: -13px -4px;
 }
 
 /* ---- pill / 태그 ---- */
@@ -417,8 +436,10 @@ img {
   padding-top: calc(10px + var(--safe-top));
 }
 .icon-btn {
-  width: 40px;
-  height: 40px;
+  /* ♿ 40 → 44 (안드로이드 권장 48dp 에 가깝게). 안에 든 아이콘 크기는 그대로라
+     평소엔 차이가 안 보이고, 눌렀을 때 배경 원만 아주 살짝 커진다. */
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1272,7 +1293,12 @@ img {
 .today-refresh:active { background: rgba(107, 79, 58, 0.05); }
 
 /* 탭 사용팁 */
-.tip-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--cream); display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; transition: transform 0.08s ease; }
+/* ♿ 버튼 «자체»를 44px 로 키우고, 보이는 크림색 원은 ::before 가 26px 로 그린다.
+   ⛔ ::after 로 넓히는 방법은 «자동 검사가 못 잡는다» — 가짜 요소라 요소 크기가 안 바뀐다.
+      손가락엔 효과가 있어도 구글 사전 출시 보고서 점수는 그대로다(2026-08-03 실측으로 확인). */
+.tip-btn { position: relative; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; transition: transform 0.08s ease; }
+.tip-btn::before { content: ''; position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: var(--cream); }
+.tip-btn > * { position: relative; }
 .tip-btn:active { transform: scale(0.9); }
 .tip-row { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .tip-row:last-child { border-bottom: none; }

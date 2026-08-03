@@ -96,7 +96,11 @@ export default function HomeScreen() {
           {/* 곰 자리에 내 아바타를 넣었다(창업자 2026-07-29). 인사하는 곰은 '레시피' 탭으로 옮김.
               오른쪽에 아바타·톱니가 나란히 있어 눌러야 할 게 둘로 보이던 것도 정리된다. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button className="press" onClick={() => nav.go('profile')} aria-label="프로필" style={{ display: 'flex', flex: '0 0 auto' }}>
+            {/* ♿ 아바타 그림은 38px 그대로, «손가락 닿는 자리»만 44px (2026-08-03 접근성).
+                ⚠️ `.tap-ok` 클래스로 했을 땐 브라우저가 min-width 를 `auto` 로 계산해 안 먹었다
+                   (CSS 는 분명히 들어가 있는데 — 이유는 못 밝혔다). 인라인은 확실히 먹는다. */}
+            <button className="press" onClick={() => nav.go('profile')} aria-label="프로필"
+              style={{ display: 'flex', flex: '0 0 auto', minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
               <Avatar name={profile.name} avatar={profile.avatar} size={38} />
             </button>
             <div className="h-title">한끼</div>
