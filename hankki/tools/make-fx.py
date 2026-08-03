@@ -201,7 +201,90 @@ def fireworks(bg, F=72, seed=5):
     return out
 
 
-FX = {'rain': (rain, 24, 95), 'stars': (stars, 30, 95), 'fireworks': (fireworks, 72, 95)}
+# ═══════════════════════════════════════════ 🌫 안개 (핼러윈 후보 ⓐ)
+# ⭐ **방향으로 고른 것이다.** 이미 쓰는 효과가 터짐(폭죽)·낙하(비)·깜빡(별)·가로출렁(물결) 넷이라
+#    핼러윈이 그중 하나를 또 쓰면 *"효과들은 다 거기서 거기"*(창업자 2026-07-30) 로 돌아간다.
+#    안개는 **옆으로 천천히 흐르는** 유일한 방향이다.
+# ⚠️ 물결에서 배운 것 그대로 — **한 겹이면 벽지가 된다.** 세 겹이 서로 다른 속도로 흘러야 깊이가 산다.
+# ⚠️ **위로 갈수록 사라지게** 한다. 안개는 땅에 깔리는 것이라 하늘까지 뿌예지면 배경이 죽는다.
+# ⚠️ 색은 순백이 아니라 **연보라 섞은 흰색** — 순백이면 보라 밤과 싸우고 김(steam)처럼 보인다.
+#
+# ⛔⛔ **처음 만든 건 폭죽 사고와 같은 모양이었다** (2026-08-03, 보내기 전에 잡음).
+#    진하기 .22~.30 으로 얹었더니 **호박·집이 뿌옇게 덮여 색이 죽고 배경이 통째로 회색**이 됐다.
+#    📌 배경은 창업자가 골라 뽑은 그림이다 — **효과가 그림을 덮으면 그 효과는 틀린 것이다.**
+#    → 진하기를 절반 아래로(.10~.13) · 띠를 더 아래로(0.62) · **덩어리를 가로로 늘렸다**
+#      (안개는 가로로 퍼진다. 동그란 덩어리는 안개가 아니라 얼룩으로 보인다).
+FOG_LAYERS = [(3.0, .10, 1.0), (2.0, .13, 1.7), (1.3, .11, 2.6)]   # (덩어리 크기, 진하기, 속도)
+FOG_COL = (226, 220, 236)
+
+
+def fog(bg, F=30, seed=7):
+    """안개 — 아래쪽에 깔려 옆으로 흐른다."""
+    SZ = bg.size[0]
+    rng = np.random.default_rng(seed)
+    # 위로 갈수록 0 이 되는 띠 — 아래 38% 만 쓴다(하늘까지 뿌예지면 배경이 죽는다)
+    yy = np.linspace(0, 1, SZ)[:, None]
+    band = np.clip((yy - .62) / .38, 0, 1) ** 1.4
+
+    tiles = []
+    for (scale, amp, _sp) in FOG_LAYERS:
+        n = max(6, int(SZ / (28 * scale)))
+        small = rng.random((max(3, n // 3), n))     # ⭐세로를 성기게 = 가로로 늘어난 덩어리
+        t = Image.fromarray((small * 255).astype('uint8')).resize((SZ, SZ), Image.BICUBIC)
+        t = _grain_free_blur(t, SZ / (n * 2.2))
+        a = np.asarray(t).astype(float) / 255
+        a = np.clip((a - .48) / .34, 0, 1)          # 성긴 덩어리만 남긴다(고르면 뿌연 막이 된다)
+        tiles.append(a * band * amp)
+
+    base = np.asarray(bg).astype(float)
+    col = np.array(FOG_COL, dtype=float)
+    out = []
+    for f in range(F):
+        acc = np.zeros((SZ, SZ))
+        for a, (_s, _am, sp) in zip(tiles, FOG_LAYERS):
+            acc = acc + np.roll(a, int(SZ * sp * f / F), axis=1)
+        m = np.clip(acc, 0, 1)[:, :, None]
+        out.append(Image.fromarray(np.clip(base * (1 - m) + col * m, 0, 255).astype('uint8')))
+    return out
+
+
+# ═══════════════════════════════════════════ 🕯 등불 (핼러윈 후보 ⓑ)
+# ⭐ **배경 위에 뭘 얹지 않는다 — 배경에 «이미 그려진» 불에 빛을 붙인다.**
+#    클레이 핼러윈밤엔 집 창문·호박 얼굴·달·별이 이미 노랗게 칠해져 있다. 거기만 밝아졌다 어두워진다.
+#    그래서 이 효과는 **이 배경에서만 성립한다** — 다른 배경에 붙이면 아무 데도 안 밝아진다.
+# ⚠️ 「깜빡이」(stars)와 방향이 같아 보이지만 **인상이 다르다** — 별은 «점이 켜졌다 꺼지고»
+#    이건 «면이 은은하게 숨 쉰다». 방향 규칙의 취지(다 비슷해 보이지 않게)엔 맞는다.
+# ⚠️⚠️ **크게 얹지 말 것** — 2026-08-03 폭죽 사고가 정확히 이거였다(섬광이 화면 절반 회색 원반이 돼 달을 덮었다).
+#    번짐은 짧게(긴변의 1.4%), 세기는 원래 밝기에 «곱해서» 얹는다(더하면 하얗게 타버린다).
+# ⚠️ 촛불은 서로 안 맞춰 흔들린다 — 자리마다 **위상을 어긋나게** 준다. 다 같이 깜빡이면 기계 같다.
+LANTERN = dict(warm=42, bright=118, blur=.014, gain=.55, cycle=2)
+
+
+def lantern(bg, F=30, seed=3):
+    """등불 — 배경에 그려진 노란·주황 불빛이 은은하게 숨 쉰다."""
+    SZ = bg.size[0]
+    a = np.asarray(bg).astype(float)
+    # 「따뜻하고 밝은 곳」 = 빨강이 파랑보다 충분히 크고, 자체가 밝은 곳
+    warm = np.clip((a[:, :, 0] - a[:, :, 2] - LANTERN['warm']) / 60, 0, 1)
+    lit = np.clip((a[:, :, 0] - LANTERN['bright']) / 90, 0, 1)
+    m = warm * lit
+    # 자리마다 다른 위상 — 가로세로로 느리게 도는 무늬를 곱해 «같이» 안 깜빡이게
+    ph = np.stack(np.meshgrid(np.linspace(0, 1, SZ), np.linspace(0, 1, SZ)), -1)
+    phase = (np.sin(ph[:, :, 0] * 7.3 + seed) + np.cos(ph[:, :, 1] * 5.1)) * .5
+
+    halo = np.asarray(_grain_free_blur(
+        Image.fromarray((m * 255).astype('uint8')), SZ * LANTERN['blur'])).astype(float) / 255
+    out = []
+    for f in range(F):
+        t = 2 * np.pi * LANTERN['cycle'] * f / F
+        puls = (np.sin(t + phase * np.pi) * .5 + .5)          # 0~1, 자리마다 어긋남
+        k = 1 + halo * puls * LANTERN['gain']                 # ⭐더하지 말고 «곱한다»
+        out.append(Image.fromarray(np.clip(a * k[:, :, None], 0, 255).astype('uint8')))
+    return out
+
+
+FX = {'rain': (rain, 24, 95), 'stars': (stars, 30, 95), 'fireworks': (fireworks, 72, 95),
+      'fog': (fog, 30, 95), 'lantern': (lantern, 30, 95)}
 
 if __name__ == '__main__':
     src = sys.argv[1] if len(sys.argv) > 1 else 'docs/stickers/배경-창업자-2026-07-31/원본/달밤억새.png'
