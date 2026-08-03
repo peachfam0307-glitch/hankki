@@ -20,14 +20,22 @@
 //   ⒞ **맨 끝 `return (` 은 「일찍」이 아니다** — 그 아래엔 코드가 없다.
 //
 // ⛔ 실패하면 배포가 막힌다(`npm run smoke` 체인) — 화면이 통째로 죽는 버그라서.
-import { readFileSync, globSync } from 'node:fs'
+// ⚠️ `globSync` 를 쓰면 안 된다 — **CI 는 Node 20 이고 거기엔 없다**(Node 22+ 전용).
+//    2026-08-03: 내 로컬은 22 라 통과했는데 **배포가 세 번 연속 죽었다.**
+//    📌 검사를 새로 만들 땐 「내 노드에서 되는 것」이 아니라 「CI 노드에서 되는 것」으로 쓴다.
+import { readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
+
+const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+  e.isDirectory() ? walk(join(dir, e.name)) : e.name.endsWith('.jsx') ? [join(dir, e.name)] : []
+)
 
 const HOOK = /(?:^|[\s=({[,])(use[A-Z]\w*)\s*\(/            // useState( · useMemo( · useBackHandler( …
 // 들여쓰기 0에서 시작하는 «컴포넌트 or 커스텀 훅» 선언
 const FN_TOP = /^(?:export\s+)?(?:default\s+)?(?:function\s+([A-Z]\w*|use[A-Z]\w*)|const\s+([A-Z]\w*|use[A-Z]\w*)\s*=\s*(?:\([^)]*\)|\w+)\s*=>)/
 
 const bad = []
-const files = globSync('src/**/*.jsx').sort()
+const files = walk('src').sort()
 
 for (const f of files) {
   const lines = readFileSync(f, 'utf8').split('\n')
