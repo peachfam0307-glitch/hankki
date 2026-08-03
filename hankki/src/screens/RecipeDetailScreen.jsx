@@ -277,7 +277,7 @@ export default function RecipeDetailScreen({ id }) {
 
         <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
           <SourceBadge source={r.source} size={16} showLabel={false} />
-          <span className="t-sub" style={{ marginLeft: 2 }}>{SOURCES[r.source]?.label || '링크'}에서 가져옴</span>
+          <span className="t-sub" style={{ marginLeft: 2 }}>{SOURCES[r.source]?.line || '링크에서 가져옴'}</span>
           {/* 저장 날짜 — 자동 기록(savedAt) */}
           {r.savedAt && <span className="t-sub">· {dateLabel(r.savedAt)} 저장</span>}
         </div>

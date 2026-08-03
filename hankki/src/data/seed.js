@@ -2,13 +2,18 @@
 // 전부 수정·삭제 가능. 지우면 다시 생기지 않는다.
 import { basicRecipes } from './basics'
 
+// ⚠️ `line` = 상세 화면에 «그대로» 나갈 한 줄. (창업자 제보 2026-08-03)
+//   예전엔 `label` 뒤에 「에서 가져옴」을 기계적으로 붙였는데 그러면
+//   **「직접 작성에서 가져옴」·「기본 제공에서 가져옴」** 처럼 말이 안 되는 줄이 나온다.
+//   가져온 곳이 있는 것만 「~에서 가져옴」이고, 직접 쓴 건 가져온 게 아니다.
+//   📌 라벨을 붙여 문장을 만들지 말 것 — 문장을 통째로 적어둔다.
 export const SOURCES = {
-  instagram: { label: 'Instagram', icon: 'instagram' },
-  youtube: { label: 'YouTube', icon: 'youtube' },
-  link: { label: '링크', icon: 'link' },
-  photo: { label: '사진', icon: 'photo' },
-  manual: { label: '직접 작성', icon: 'pen' },
-  hankki: { label: '기본 제공', icon: 'pen' },
+  instagram: { label: 'Instagram', line: 'Instagram에서 가져옴', icon: 'instagram' },
+  youtube: { label: 'YouTube', line: 'YouTube에서 가져옴', icon: 'youtube' },
+  link: { label: '링크', line: '링크에서 가져옴', icon: 'link' },
+  photo: { label: '사진', line: '사진에서 가져옴', icon: 'photo' },
+  manual: { label: '직접 작성', line: '직접 쓴 레시피', icon: 'pen' },
+  hankki: { label: '기본 제공', line: '한끼 기본 레시피', icon: 'pen' },
 }
 
 export const seedRecipes = basicRecipes.map((r, i) => ({
