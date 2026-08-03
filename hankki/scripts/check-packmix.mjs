@@ -70,11 +70,18 @@ if (cardLeak.length) {
 } else ok('공유 카드 뽑기 — 못 파는 팩 컷 0개')
 
 // 팩별 요약 ──────────────────────────────────────────────────
+//   ⭐ 「팩에 넣은 것(packed)」과 「남은 것」을 갈라서 보여준다 (창업자 2026-08-03
+//     *"파는 팩에 캐릭터가 16개면 나머지 자산은 공유카드에 넣자. 그럼 안 겹치잖아"*).
 for (const p of PAID_PACKS) {
   if (!p.prefixes.length) { console.log(`  ⚠️  ${p.label} — 접두어가 안 적혀 있다(앱에 넣기 전에 적을 것)`); continue }
-  const free = [...drawer, ...cards].filter((k) => p.prefixes.some((pre) => k.startsWith(pre)))
-  const pct = p.total ? Math.round((free.length / p.total) * 100) : 0
-  console.log(`  · ${p.label} ${p.total}컷 — 무료로 나가는 것 ${free.length}컷 (${pct}%) · 판매 ${p.sellable ? '가능' : '아직'}`)
+  const mine = [...drawer, ...cards].filter((k) => p.prefixes.some((pre) => k.startsWith(pre)))
+  const packed = p.packed?.length || 0
+  const inCard = mine.filter((k) => cards.includes(k)).length
+  if (packed) {
+    console.log(`  · ${p.label} ${p.total}컷 — 팩에 넣은 캐릭터 ${packed} · 카드에 쓰는 «나머지» ${inCard}컷 · 판매 ${p.sellable ? '가능' : '아직'}`)
+  } else {
+    console.log(`  · ${p.label} ${p.total}컷 — ⏳팩 명단 미정(접두어 전부 막는 중) · 무료 노출 ${mine.length}컷 · 판매 ${p.sellable ? '가능' : '아직'}`)
+  }
 }
 
 // 📐 정원 대조 — ⚠️ **정원은 이미 정해져 있다**(창업자 2026-07-30 · `asset-map.mjs` QUOTA).
