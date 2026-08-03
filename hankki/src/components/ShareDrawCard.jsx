@@ -163,7 +163,10 @@ function drawState() {
     : (key === 'night' || key === 'summer' || key === 'arch')
       ? (r < 0.5 ? g : r < 0.78 ? p : (d.length ? d : g))
       : (key === 'halloween' || key === 'chuseok')
-        ? (r < 0.4 ? g : r < 0.75 ? p : (d.length ? d : g))   // 곰·펭·콤비 골고루
+        // 곰·펭·콤비 골고루 — ⚠️ **콤비가 없으면 그 몫을 곰에게 몰지 말고 반반으로 나눈다.**
+        //   안 그러면 곰 65% · 펭 35% 가 된다(추석은 콤비가 없어서 실제로 5판 중 4판이 곰이었다).
+        //   📌 「명단이 2:2니까 반반이겠지」는 «명단»이지 «확률»이 아니다. 뽑아 보고 세야 안다.
+        ? (d.length ? (r < 0.4 ? g : r < 0.75 ? p : d) : (r < 0.5 ? g : p))
       : (r < 0.68 ? g : (p.length ? p : g))
   return { skin, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46) }
 }
