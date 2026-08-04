@@ -162,13 +162,22 @@ function migrateBasics(saved) {
     const s = seedById.get(r.id)
     // 사용자가 직접 넣은 표지사진(우리 recipe-photos 폴더가 아닌 것)은 유지
     const userPhoto = r.thumb === 'photo' && r.image && !String(r.image).includes('/recipe-photos/')
-    // 사용자가 꾸민 표지(배경 지우고 꾸미기 얹은 것 = thumb:'none' 또는 스티커·배경 있음)는
-    // 시드로 되돌리지 않는다. 안 그러면 BASICS_VERSION 올릴 때마다 꾸민 표지가 날아가고
-    // 시드 아이콘이 다시 나타난다. (공심채볶음 등 — 창업자 2026-07-25 제보)
-    const decorated =
-      r.thumb === 'none' ||
-      (Array.isArray(r.decor) && r.decor.length > 0) ||
-      (r.decorBg && r.decorBg !== 'none')
+    // 사용자가 꾸민 표지(배경 지우고 꾸미기 얹은 것)는 시드로 되돌리지 않는다.
+    // 안 그러면 BASICS_VERSION 올릴 때마다 꾸민 표지가 날아가고 시드 아이콘이 다시 나타난다.
+    // (공심채볶음 등 — 창업자 2026-07-25 제보)
+    //
+    // 🐛🐛 2026-08-04 두 번째 — **`thumb:'none'` 하나만으로 「꾸몄다」고 보면 안 된다.**
+    //   v9.59 가 폰에 «thumb:'none' ＋ 꾸미기 없음» 을 저장해버렸는데, v9.60 이 그걸 보고
+    //   **「유저가 직접 꾸민 것」으로 오해**해서 시드 꾸미기를 또 안 넣었다 → 표지가 계속 빈 칸.
+    //   📌 창업자 *"콩국물은 바뀌었어"* 가 결정적 단서였다 — 재료는 갱신됐는데 표지만 안 됐다면
+    //      **캐시가 아니라 이 판정이 범인**이다.
+    //   ✅ 「실제로 꾸민 게 있나」로 본다. `thumb:'none'` 만 있는 건
+    //      ⒜배경만 지운 유저이거나 ⒝우리가 남긴 빈 껍데기인데, **시드가 꾸미기를 들고 오면 ⒝**다.
+    const userHasDecor =
+      (Array.isArray(r.decor) && r.decor.length > 0) || (r.decorBg && r.decorBg !== 'none')
+    const seedHasDecor =
+      (Array.isArray(s.decor) && s.decor.length > 0) || (s.decorBg && s.decorBg !== 'none')
+    const decorated = userHasDecor || (r.thumb === 'none' && !seedHasDecor)
     const merged = {
       ...s,
       favorite: r.favorite,

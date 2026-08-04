@@ -46,3 +46,33 @@ if (bad.length) {
 
 const decorated = allBasicRecipes.filter((r) => r.thumb === 'none').map((r) => r.title)
 console.log(`✅ 표지 통과 — 꾸민 시드 ${decorated.length}편(${decorated.join('·') || '없음'}), 빈 표지 0`)
+
+// ③ ⭐ «이미 깔린 폰» 시뮬레이션 — 이게 없어서 v9.60 이 헛수고가 됐다.
+//    v9.59 가 폰에 「thumb:'none' ＋ 꾸미기 없음」을 저장했는데 v9.60 이 그걸
+//    「유저가 직접 꾸민 것」으로 오해해 시드 꾸미기를 또 안 넣었다 → 표지가 계속 빈 칸.
+//    📌 창업자 *"콩국물은 바뀌었어"* 가 단서였다 — 재료는 갱신됐는데 표지만 안 되면 판정이 범인이다.
+const sim = []
+for (const s of allBasicRecipes) {
+  const seedHasDecor = (Array.isArray(s.decor) && s.decor.length > 0) || (s.decorBg && s.decorBg !== 'none')
+  if (!seedHasDecor) continue
+  // 「빈 껍데기를 들고 있는 폰」이 업뎃받으면 시드 꾸미기가 들어와야 한다
+  const r = { thumb: 'none' }
+  const userHasDecor = (Array.isArray(r.decor) && r.decor.length > 0) || (r.decorBg && r.decorBg !== 'none')
+  const decorated = userHasDecor || (r.thumb === 'none' && !seedHasDecor)
+  const decor = decorated ? r.decor : s.decor
+  const bg = decorated ? r.decorBg : s.decorBg
+  const 보인다 = (Array.isArray(decor) && decor.length > 0) || (bg && bg !== 'none')
+  if (!보인다) sim.push(`「${s.title}」 — 빈 껍데기를 든 폰이 업뎃받아도 표지가 여전히 빈 칸이다`)
+  // 진짜 꾸민 유저 것은 지켜져야 한다
+  const mine = { thumb: 'none', decor: [{ id: 'mine' }], decorBg: 'dot' }
+  const myDecorated = (mine.decor.length > 0) || (mine.decorBg && mine.decorBg !== 'none')
+  if (!myDecorated) sim.push(`「${s.title}」 — 유저가 꾸민 표지가 시드로 덮인다`)
+}
+if (sim.length) {
+  console.error(`\n⛔ 이미 깔린 폰이 안 고쳐진다 — ${sim.length}건\n`)
+  for (const m of sim) console.error(`   · ${m}`)
+  console.error(`\n📌 2026-08-04 에 이걸 안 봐서 v9.60 을 내고도 표지가 그대로 빈 칸이었다.`)
+  console.error(`   ⭐ 시드를 고칠 땐 «이미 깔린 폰은 어떻게 되나»를 반드시 같이 본다.\n`)
+  process.exit(1)
+}
+console.log(`   ✅ 이미 깔린 폰 시뮬 통과 — 빈 껍데기도 시드 꾸미기로 채워진다`)
