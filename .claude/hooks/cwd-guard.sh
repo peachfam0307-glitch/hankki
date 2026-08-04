@@ -26,7 +26,7 @@ CMD=$(printf '%s' "$IN" | python3 -c 'import sys,json;d=json.load(sys.stdin);pri
 # 명령 안에 `cd` 가 이미 있으면 스스로 뿌리를 정한 것 → 통과
 case "$CMD" in *"cd "*) exit 0 ;; esac
 
-python3 - "$CMD" <<'PY'
+python3 - "$CMD" >&2 <<'PY'
 import os, re, sys
 cmd = sys.argv[1] if len(sys.argv) > 1 else ''
 cwd = os.getcwd()
