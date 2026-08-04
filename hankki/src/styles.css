@@ -1279,13 +1279,22 @@ img {
 .cook-progress { display: flex; gap: 5px; padding: 6px 16px 0; }
 .cp-seg { flex: 1; height: 5px; border-radius: 3px; background: var(--cream-deep); transition: background 0.2s ease; }
 .cp-seg.on { background: var(--brown); }
-.cook-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 26px; gap: 24px; }
+/* 🐛🐛 **재료가 길면 「다음」 버튼이 화면 밖으로 밀리던 것** (테스터 제보 2026-08-04 · 제육볶음 재료 14줄)
+   ⛔ flex 아이템은 기본이 `min-height: auto` 라 **`flex:1` 이어도 내용보다 작아지지 않는다.**
+      `.cook` 은 `position:absolute; inset:0` 로 높이가 «고정»이니, 본문이 커진 만큼
+      아래 `.cook-nav`(이전/다음)가 그대로 «밖»으로 밀려났다. 게다가 overflow 가 없어 **스크롤도 안 됐다.**
+      → 재현 실측: nav 아래 끝 **913px**(뷰포트 844) = 69px 밖. 유저는 영영 못 누른다.
+   ✅ `min-height:0` 으로 줄어들 수 있게 + `overflow-y:auto` 로 본문 «안에서» 스크롤.
+   ⚠️ `justify-content:center` 만 두면 넘칠 때 **위쪽이 잘려 스크롤로도 못 본다**(flexbox 함정) →
+      `safe center` 를 덧대 넘칠 땐 시작 정렬로 떨어지게. (모르는 브라우저는 이 줄만 무시하고 위가 남는다) */
+.cook-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; justify-content: safe center; text-align: center; padding: 20px 26px; gap: 24px; }
 .cook-stepno { font-size: 14px; font-weight: 800; color: var(--brown); letter-spacing: 0.04em; }
 .cook-stepno span { color: var(--sand); }
 .cook-steptext { font-size: 24px; line-height: 1.5; font-weight: 600; color: var(--text); word-break: keep-all; }
 .cook-timer { display: inline-flex; align-items: center; gap: 7px; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 14px; padding: 12px 18px; border-radius: 14px; transition: transform 0.08s ease; }
 .cook-timer:active { transform: scale(0.96); }
-.cook-nav { display: flex; gap: 10px; padding: 12px 16px calc(16px + var(--safe-bottom)); }
+/* ⛔ `flex-shrink` 기본값이 1이라 자리가 모자라면 이 줄부터 눌린다 — 버튼 줄은 절대 안 줄어들게 못 박는다 */
+.cook-nav { flex: 0 0 auto; display: flex; gap: 10px; padding: 12px 16px calc(16px + var(--safe-bottom)); }
 .cook-navbtn { flex: 1; padding: 16px 0; border-radius: 15px; font-size: 16px; font-weight: 700; background: var(--cream); color: var(--text); transition: transform 0.08s ease; }
 .cook-navbtn.primary { background: var(--brown); color: #fff; flex: 1.4; }
 .cook-navbtn:disabled { opacity: 0.4; }
