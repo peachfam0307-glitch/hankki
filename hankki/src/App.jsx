@@ -9,6 +9,7 @@ import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
 import TimerBar from './components/TimerBar'
 import Onboarding, { needsOnboarding } from './components/Onboarding'
+import { warmFontCSS } from './fontEmbed'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
@@ -82,6 +83,18 @@ export default function App() {
   useEffect(() => {
     try { sessionStorage.setItem('hankki:tab', tab) } catch { /* noop */ }
   }, [tab])
+
+  // 🔤 카드·표지를 사진으로 뽑을 때 쓰는 «글꼴 꾸러미»를 앱이 한가할 때 미리 만들어 둔다.
+  //   ⛔⛔ 안 데워두면 유저가 「공유하기」를 누른 «뒤에» 글꼴 8개·1.7MB 를 만들기 시작해
+  //      십수 초가 걸리고, 그 사이 폰의 공유 허가가 만료돼 저장으로 밀리거나 아예 먹통이 됐다
+  //      (2026-08-03·08-05 「자랑카드 먹통」). 실측 = 글꼴 포함 15.3초 vs 빼면 1.4초.
+  //   ⭐ 홈이 다 그려진 «뒤» 한가한 틈에만 한다 — 첫 화면 뜨는 속도는 건드리지 않는다.
+  useEffect(() => {
+    const go = () => warmFontCSS()
+    const idle = window.requestIdleCallback
+    const t = setTimeout(() => (idle ? idle(go, { timeout: 4000 }) : go()), 2500)
+    return () => clearTimeout(t)
+  }, [])
 
   // 화면을 열 때마다 브라우저 히스토리에도 한 칸 쌓는다 → 제스처(스와이프) 뒤로가기가
   // 트랩 한 칸을 넘어 '앱 종료'로 새는 걸 막는다. (버튼·스와이프 모두 popstate 한 곳에서 처리)

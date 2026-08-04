@@ -3,6 +3,7 @@
 // (클로드가 따로 그린 카드 ❌ — 유저가 꾸민 그 모습이 주인공. 2026-07-19 창업자 방향)
 
 import { toPng } from 'html-to-image'
+import { fontCSS } from './fontEmbed'
 
 const DISPLAY = "'Jua', 'Apple SD Gothic Neo', sans-serif" // 통통 귀여운 브랜드/제목
 const BODY = "'Gowun Dodum', 'Apple SD Gothic Neo', sans-serif" // 부드러운 본문
@@ -37,11 +38,17 @@ async function ensureFonts() {
 
 export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, recipeEl = null }) {
   await ensureFonts()
+  // 🔤 글꼴 꾸러미 — 안 넘기면 캡처마다 글꼴 8개·1.7MB 를 처음부터 다시 만든다.
+  //   ⛔⛔ 그게 창업자 *"내가 꾸민 건 다운로드로 떨어진다"* 의 뿌리였다: 캡처가 너무 느려
+  //      폰의 공유 허가(user activation)가 그 사이 만료되고 → 저장으로 밀렸다.
+  //   실측 2026-08-05 = 글꼴 포함 15.3초 vs 빼면 1.4초. → `src/fontEmbed.js`
+  const fontEmbedCSS = await fontCSS()
 
   // 2장째(레시피카드) 캡처를 표지 캡처와 '동시에' 시작한다 — 전체 대기시간을 줄여
   // 폰의 공유 허용 시간(user activation) 안에 navigator.share가 뜨게 한다.
+  //   ⛔ `cacheBust` 를 껐다 — 켜면 카드 안 그림을 «전부 다시» 내려받는다(같은 출처라 안전).
   const recipeFilePromise = recipeEl
-    ? toPng(recipeEl, { pixelRatio: 1.6, cacheBust: true })
+    ? toPng(recipeEl, { pixelRatio: 1.6, fontEmbedCSS })
         .then((u) => fetch(u))
         .then((r) => r.blob())
         .then((b) => new File([b], 'hankki-recipe.png', { type: 'image/png' }))
@@ -58,6 +65,7 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
     coverUrl = await Promise.race([
       toPng(coverEl, {
         pixelRatio: scale,
+        fontEmbedCSS,
         filter: (node) => !(node.dataset && 'nocapture' in node.dataset),
       }),
       new Promise((_, rej) => setTimeout(() => rej(new Error('capture timeout')), 12000)),

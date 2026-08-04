@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -13,6 +13,7 @@ import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { shareDecoratedCover } from '../shareCover'
+import { warmFontCSS } from '../fontEmbed'
 import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
 import { dateLabel, openExternal } from '../utils'
@@ -48,6 +49,8 @@ export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateRecipe } = useStore()
   const nav = useNav()
   useWakeLock() // 레시피를 보며 요리할 때 화면이 꺼지지 않게
+  // 🔤 여기서 「꾸민 표지 그대로 보내기」를 쓴다 → 글꼴 꾸러미를 미리 만들어 둔다 (src/fontEmbed.js)
+  useEffect(() => { warmFontCSS() }, [])
   const [timer, setTimer] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
   const [logEntry, setLogEntry] = useState(null)

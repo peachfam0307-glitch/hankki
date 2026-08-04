@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Thumb from '../components/Thumb'
@@ -7,6 +7,7 @@ import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 import Portal from '../components/Portal'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { shareDecoratedCover } from '../shareCover'
+import { warmFontCSS } from '../fontEmbed'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomThumb from '../assets/ui/gom_thumbsup.png'
@@ -28,6 +29,10 @@ export default function BragScreen() {
   const [share, setShare] = useState(null) // 랜덤 카드 모달로 보낼 레시피
   const [busy, setBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩 표시)
   const [coach, setCoach] = useState(() => needsCoach(BRAG_COACH_KEY))
+  // 🔤 이 화면에 들어오면 «글꼴 꾸러미»를 조용히 미리 만들어 둔다.
+  //   ⛔ 안 데워두면 카드를 뽑고 공유를 누른 뒤에야 만들기 시작해 십수 초가 걸린다
+  //      — 그게 2026-08-03·05 「자랑카드 먹통」이었다. 레시피를 고르는 동안 준비된다.
+  useEffect(() => { warmFontCSS() }, [])
   const coverRef = useRef(null) // 꾸민 표지 캡처용(화면 밖 숨은 레이어)
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
   const list = useMemo(

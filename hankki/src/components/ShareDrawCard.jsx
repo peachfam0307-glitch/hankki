@@ -1,7 +1,8 @@
 import { isSeason, inCardWindow, seasonsNow } from '../season'
 import { SEASON_CUTS } from '../data/cardSeasons'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
-import { toPng, toJpeg } from 'html-to-image'
+import { toJpeg } from 'html-to-image'
+import { fontCSS } from '../fontEmbed'
 import Icon from './Icon'
 // ⛔ UI엔 유니코드 이모지를 쓰지 않는다 — 우리 아이콘·스티커만(CLAUDE.md 핀).
 //    v8.63에서 앱 전체를 정리할 때 이 시트는 '보류'로 빠져 🔄💌🖼🐻🐧가 남아 있었다(2026-07-29 정리).
@@ -798,10 +799,15 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   //   ⛔⛔ **`cacheBust` 를 껐다.** 켜면 카드 안 그림마다 `?t=…` 를 붙여 **전부 다시 내려받는다** —
   //      우리 카드엔 배경·캐릭터·소품 PNG 가 여러 장이라 캡처가 몇 배로 느려진다.
   //      우리 그림은 전부 **같은 출처**라 캐시를 그대로 써도 안전하다(CORS 문제가 안 생긴다).
+  //   ⛔⛔ **PNG 를 JPEG 로 바꿨다.** 카드는 «그림»이라 무손실로 뽑을 이유가 없었는데
+  //      PNG 한 장이 **4.4MB** 였다(실측 2026-08-05). JPEG 는 **713KB** — 6배 가볍다.
+  //   ⛔⛔ **글꼴 꾸러미(`fontCSS`)를 넘긴다.** 안 넘기면 캡처마다 글꼴 8개·1.7MB 를
+  //      처음부터 다시 만든다 — 그것만으로 한 장에 15~24초였다. → `src/fontEmbed.js`
   const toFile = useCallback(async (el, name) => {
-    const u = await toPng(el, { pixelRatio: 1.6 })
+    const fontEmbedCSS = await fontCSS()
+    const u = await toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff', fontEmbedCSS })
     const b = await (await fetch(u)).blob()
-    return new File([b], name, { type: 'image/png' })
+    return new File([b], name.replace(/\.png$/, '.jpg'), { type: 'image/jpeg' })
   }, [])
 
   // 🚀🚀 **미리 캡처** — 카드가 정해지면 «백그라운드로» 파일을 만들어 둔다.
@@ -812,23 +818,39 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   //   ✅ 미리 만들어 두면 누른 순간 «기다림 없이» 공유창이 뜬다. (`docs` v8.57 에 *"다음엔 미리 캡처"* 라고
   //      적어두고 미뤄뒀던 그 처방이다 — 오늘 그 값을 치렀다.)
   //   ⚠️ 「다시 뽑기」로 카드가 바뀌면 다시 만든다(`draw`·`page` 가 바뀌면 useEffect 가 다시 돈다).
-  const readyRef = useRef(null)
+  //   ⛔⛔ 2026-08-05 — **두 벌이 동시에 돌고 있었다.** 미리 캡처가 아직 도는데 유저가 누르면
+  //      아래 `share` 가 «또» 캡처를 시작해 넷이 서로 잡아먹었다. 이제 도는 일을 «기다린다».
+  //   ⛔ `page`(①카드/②레시피 탭)는 의존성에서 뺐다 — 두 장 다 늘 렌더돼 있어 캡처 결과가
+  //      같은데, 탭을 누를 때마다 처음부터 다시 만들고 있었다.
+  const readyRef = useRef(null) // 다 만든 결과 File[]
+  const jobRef = useRef(null) // 지금 도는 일 Promise<File[]>
+  const capture = useCallback(() => {
+    if (jobRef.current) return jobRef.current // 이미 돌고 있으면 그걸 쓴다
+    const p = Promise.all([
+      toFile(cardRef.current, 'hankki-1.png'),
+      hasRecipe && card2Ref.current ? toFile(card2Ref.current, 'hankki-2-recipe.png').catch(() => null) : null,
+    ])
+      .then(([f1, f2]) => {
+        const files = f2 ? [f1, f2] : [f1]
+        readyRef.current = files
+        jobRef.current = null
+        return files
+      })
+      .catch((e) => { jobRef.current = null; throw e })
+    jobRef.current = p
+    return p
+  }, [hasRecipe, toFile])
+
   useEffect(() => {
     let alive = true
     readyRef.current = null
-    const t = setTimeout(async () => {
-      if (!cardRef.current) return
-      try {
-        // ⭐ 두 장을 «동시에» — 순차로 하면 대기가 두 배다
-        const [f1, f2] = await Promise.all([
-          toFile(cardRef.current, 'hankki-1.png'),
-          hasRecipe && card2Ref.current ? toFile(card2Ref.current, 'hankki-2-recipe.png').catch(() => null) : null,
-        ])
-        if (alive) readyRef.current = f2 ? [f1, f2] : [f1]
-      } catch { /* 실패하면 누를 때 만든다 */ }
+    jobRef.current = null
+    const t = setTimeout(() => {
+      if (!cardRef.current || !alive) return
+      capture().catch(() => { /* 실패하면 누를 때 다시 만든다 */ })
     }, 500)   // 카드 그림·글꼴이 자리잡을 틈
     return () => { alive = false; clearTimeout(t) }
-  }, [draw, page, hasRecipe, toFile])
+  }, [draw, capture])
 
   // 💾 공유가 안 될 때 «저장»으로 떨어뜨린다.
   //   ⛔⛔ 예전 코드는 `document.createElement('a')` 를 만들고 **DOM 에 붙이지 않은 채** `.click()` 했다.
@@ -866,19 +888,15 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
     // 아직 준비 전(막 열자마자 누름) — 만들어서 시도한다. 이땐 허가가 만료될 수 있어 저장으로 갈 수 있다.
     setBusy(hasRecipe ? '카드 + 레시피 2장 준비 중이에요' : '카드를 그리고 있어요')
     try {
-      // ⏱⏱ **12초 제한** — 캡처가 안 끝나면 «로딩만 도는» 상태가 되고, 그게 유저에겐 먹통이다.
+      // ⏱⏱ **25초 제한** — 캡처가 안 끝나면 «로딩만 도는» 상태가 되고, 그게 유저에겐 먹통이다.
       //   ⛔ 2026-08-03 창업자가 겪은 것이 정확히 이 모양이었다: *"로딩은 돌아가. 그다음이 안돼"*.
       //   ⭐ 끝나든 못 끝나든 **말은 한다.** 조용히 멈춰 있는 것보다 «안 됐다」고 말하는 게 낫다.
-      const cap = Promise.all([
-        toFile(cardRef.current, 'hankki-1.png'),
-        hasRecipe && card2Ref.current ? toFile(card2Ref.current, 'hankki-2-recipe.png').catch(() => null) : null,
+      //   ⛔ 2026-08-05 — 여기서 «새로» 캡처를 시작하던 것을 고쳤다. 미리 캡처가 이미 돌고 있으면
+      //      그 일을 그대로 기다린다(`capture()` 가 도는 약속을 돌려준다). 예전엔 넷이 겹쳤다.
+      const files = await Promise.race([
+        capture(),
+        new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('capture timeout'), { name: 'TimeoutError' })), 25000)),
       ])
-      const [a1, a2] = await Promise.race([
-        cap,
-        new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('capture timeout'), { name: 'TimeoutError' })), 12000)),
-      ])
-      const files = a2 ? [a1, a2] : [a1]
-      readyRef.current = files
       const t = go(files)
       if (t) { await t; setBusy(null); return }
       files.forEach((f, i) => setTimeout(() => saveFile(f), i * 400))
@@ -894,14 +912,15 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
       else setBusy('공유가 안 됐어요. 잠시 뒤 다시 눌러주세요')
       setTimeout(() => setBusy(null), 2800)
     }
-  }, [busy, title, hasRecipe, toFile])
+  }, [busy, title, hasRecipe, capture])
 
   // 🖼 이 카드를 레시피 표지로 저장 — CTA 없는 cover 카드를 이미지로 캡처해 부모(레시피 화면)에 넘긴다.
   const saveCover = useCallback(async () => {
     if (!coverRef.current || busy) return
     setBusy('레시피 표지로 저장하는 중이에요')
     try {
-      const opt = { pixelRatio: 1.5, quality: 0.86, cacheBust: true, backgroundColor: '#ffffff' }
+      // ⛔ `cacheBust` 를 껐다 — 켜면 카드 안 그림을 «전부 다시» 내려받는다. 우리 그림은 같은 출처라 안전하다.
+      const opt = { pixelRatio: 1.5, quality: 0.86, backgroundColor: '#ffffff', fontEmbedCSS: await fontCSS() }
       // 폰트 임베드 단계에서 외부 stylesheet fetch가 막히면(드묾) skipFonts로 폴백 — 표지 저장이 끊기지 않게.
       let url
       try { url = await toJpeg(coverRef.current, opt) } catch { url = await toJpeg(coverRef.current, { ...opt, skipFonts: true }) }
