@@ -162,17 +162,6 @@ function migrateBasics(saved) {
     const s = seedById.get(r.id)
     // 사용자가 직접 넣은 표지사진(우리 recipe-photos 폴더가 아닌 것)은 유지
     const userPhoto = r.thumb === 'photo' && r.image && !String(r.image).includes('/recipe-photos/')
-    const merged = {
-      ...s,
-      favorite: r.favorite,
-      cooked: r.cooked,
-      cookedAt: r.cookedAt,
-      savedAt: r.savedAt,
-      decor: r.decor,
-      decorBg: r.decorBg, // 꾸미기 배경 보존 (예전엔 안 챙겨서 업데이트 때 배경이 사라졌음)
-      status: r.status || s.status,
-    }
-    if (userPhoto) { merged.thumb = r.thumb; merged.image = r.image }
     // 사용자가 꾸민 표지(배경 지우고 꾸미기 얹은 것 = thumb:'none' 또는 스티커·배경 있음)는
     // 시드로 되돌리지 않는다. 안 그러면 BASICS_VERSION 올릴 때마다 꾸민 표지가 날아가고
     // 시드 아이콘이 다시 나타난다. (공심채볶음 등 — 창업자 2026-07-25 제보)
@@ -180,6 +169,24 @@ function migrateBasics(saved) {
       r.thumb === 'none' ||
       (Array.isArray(r.decor) && r.decor.length > 0) ||
       (r.decorBg && r.decorBg !== 'none')
+    const merged = {
+      ...s,
+      favorite: r.favorite,
+      cooked: r.cooked,
+      cookedAt: r.cookedAt,
+      savedAt: r.savedAt,
+      // 🐛🐛 2026-08-04 — 여기서 «빈 표지» 사고가 났다 (창업자 폰 캡처).
+      //   예전엔 `decor: r.decor` 로 **무조건** 유저 값을 얹었다. 유저가 안 꾸민 레시피는
+      //   `r.decor` 가 없으니 시드가 들고 온 꾸미기가 **덮여서 사라지고**,
+      //   `thumb` 은 시드의 `'none'`(표지 안 그림)이 그대로 남아 **아무것도 없는 칸**이 됐다.
+      //   → 레꾸 샘플을 콩국수로 옮긴 v9.59 에서 기존 사용자 전원이 빈 표지를 봤다.
+      //   ✅ 유저가 «꾸민 흔적이 있을 때만» 유저 것을 지킨다. 없으면 시드가 들고 온 걸 그대로 쓴다.
+      //   ⛔ 「보존」과 「덮어쓰기」는 다르다 — 없는 값으로 덮으면 그건 지우는 것이다.
+      decor: decorated ? r.decor : s.decor,
+      decorBg: decorated ? r.decorBg : s.decorBg,
+      status: r.status || s.status,
+    }
+    if (userPhoto) { merged.thumb = r.thumb; merged.image = r.image }
     if (decorated && !userPhoto) { merged.thumb = r.thumb }
     return merged
   })
