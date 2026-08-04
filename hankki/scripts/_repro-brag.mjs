@@ -6,7 +6,7 @@
 //   ⛔ 데스크톱 크롬엔 Web Share 가 없어 그냥 두면 «저장»만 나온다 — 폰과 갈림길이 달라진다.
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 
 const OUT = process.env.OUT || '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad'
 const THROTTLE = Number(process.env.THROTTLE || 4)   // 1=데스크톱 · 4=중급폰 · 6=저가폰
@@ -65,6 +65,7 @@ await page.addInitScript(() => {
     if (typeof u === 'string' && u.startsWith('data:image/')) {
       const ms = window.__t0 ? Math.round(performance.now() - window.__t0) : -1
       window.__log.push(`🖼 캡처 1장 끝 — 카드 뜬 지 ${ms}ms · ${Math.round(u.length / 1024)}KB`)
+      ;(window.__imgs = window.__imgs || []).push(u)
     }
     return of.call(this, u, ...a)
   }
@@ -140,5 +141,15 @@ const toast = await page.evaluate(() => {
 if (toast.length) console.log(`\n💬 화면 문구: ${toast.join(' / ')}`)
 if (errs.length) console.log(`\n⛔ 런타임 오류: ${errs.slice(0, 3).join(' / ')}`)
 console.log(`\n📂 캡처 → ${OUT}/brag-sheet.png · brag-card.png · brag-after.png`)
+// 🖼 뽑힌 카드를 실제 파일로 남긴다 — 화질을 «눈으로» 확인하려고
+const imgs = await page.evaluate(() => window.__imgs || [])
+for (let i = 0; i < imgs.length; i++) {
+  const [, b64] = imgs[i].split(',')
+  const ext = imgs[i].startsWith('data:image/jpeg') ? 'jpg' : 'png'
+  const f = `${OUT}/card-out-${i + 1}.${ext}`
+  writeFileSync(f, Buffer.from(b64, 'base64'))
+  console.log(`   💾 ${f}`)
+}
+
 await browser.close()
 stop()

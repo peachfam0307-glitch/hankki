@@ -377,7 +377,10 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
       <div style={{ fontFamily: 'Jua, sans-serif', fontSize: 26, color: wm }}>한끼</div>
       {/* ⚠️ 글자색은 알약 «배경 밝기»로 정한다 — `night` 처럼 어두운 스킨은 `footWm` 이
           밝은 크림이라, 흰 글자로 굳혀 두면 거기서 또 안 읽힌다(고치려던 바로 그 증상이 재발). */}
-      <span style={{ display: 'inline-flex', alignItems: 'center', marginTop: 10, padding: '9px 20px', borderRadius: 999, background: wm, color: onColor(wm), fontFamily: 'Jua, sans-serif', fontSize: 22, letterSpacing: '-0.01em' }}>
+      {/* ⛔ 2026-08-05 — 줄바꿈 금지를 넣었다. 없으면 mag(매거진)처럼 자리가 빠듯한 뼈대에서
+          「Play스토어 ‘한끼’ / 검색」 으로 «두 줄»이 되어 알약 밖으로 삐져나왔다.
+          ⭐ 뽑힌 사진에서만 보였다 — 화면에선 한 줄이라 눈으로는 절대 못 잡는다. */}
+      <span style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', marginTop: 10, padding: '9px 20px', borderRadius: 999, background: wm, color: onColor(wm), fontFamily: 'Jua, sans-serif', fontSize: 22, letterSpacing: '-0.01em' }}>
         Play스토어 ‘한끼’ 검색
       </span>
     </div>
@@ -805,7 +808,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   //      처음부터 다시 만든다 — 그것만으로 한 장에 15~24초였다. → `src/fontEmbed.js`
   const toFile = useCallback(async (el, name) => {
     const fontEmbedCSS = await fontCSS()
-    const u = await toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff', fontEmbedCSS })
+    const u = await toJpeg(el, { pixelRatio: 1, quality: 0.92, backgroundColor: '#ffffff', fontEmbedCSS })
     const b = await (await fetch(u)).blob()
     return new File([b], name.replace(/\.png$/, '.jpg'), { type: 'image/jpeg' })
   }, [])
