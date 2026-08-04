@@ -270,7 +270,7 @@ export default function PantryView() {
           <div className="grid2">
             {matches.map(({ r, n }) => (
               <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
-                <Thumb recipe={r} ratio="1/1" radius={16} />
+                <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                 <div className="name">{r.title}</div>
                 <div className="date">가진 재료 {n}개</div>
               </button>
@@ -292,7 +292,7 @@ export default function PantryView() {
               .slice(0, 4)
               .map((r) => (
                 <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
-                  <Thumb recipe={r} ratio="1/1" radius={16} />
+                  <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                   <div className="name">{r.title}</div>
                   <div className="date">기본 제공</div>
                 </button>

@@ -58,7 +58,7 @@ export default function InboxScreen() {
             {/* 행 전체=열기, 오른쪽 휴지통=바로 삭제(상세 ⋯메뉴까지 안 가게) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <button className="inbox-row press" style={{ flex: 1, minWidth: 0, textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
-                <Thumb recipe={r} style={{ width: 60, height: 60, flex: '0 0 auto' }} radius={14} emojiSize="1.5rem" />
+                <Thumb recipe={r} style={{ width: 60, height: 60, flex: '0 0 auto' }} radius={14} emojiSize="1.5rem" showDecor />
                 <div className="meta" style={{ flex: 1, minWidth: 0 }}>
                   <SourceBadge source={r.source} />
                   <div className="name" style={{ fontSize: 15, fontWeight: 600, margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

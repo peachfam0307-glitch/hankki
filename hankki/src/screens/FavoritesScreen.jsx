@@ -19,7 +19,7 @@ export default function FavoritesScreen() {
           <div className="grid2" style={{ marginTop: 8 }}>
             {favs.map((r) => (
               <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
-                <Thumb recipe={r} ratio="1/1" radius={16} />
+                <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                 <div className="fav-dot"><Icon name="bookmark" size={16} color="var(--brown)" style={{ fill: 'var(--brown)' }} /></div>
                 <div className="name">{r.title}</div>
                 <div className="date">{r.category} · {r.time}분</div>

@@ -62,7 +62,7 @@ export default function SearchScreen() {
               <div className="grid2">
                 {results.map((r) => (
                   <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
-                    <Thumb recipe={r} ratio="1/1" radius={16} />
+                    <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                     <div className="name">{r.title}</div>
                     <div className="date">{r.category} · {r.time}분</div>
                   </button>

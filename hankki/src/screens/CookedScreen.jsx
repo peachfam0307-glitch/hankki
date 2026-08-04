@@ -18,7 +18,7 @@ export default function CookedScreen() {
           cooked.map((r, i) => (
             <div key={r.id}>
               <button className="list-row press" style={{ width: '100%', textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
-                <Thumb recipe={r} style={{ width: 54, height: 54, flex: '0 0 auto' }} radius={12} emojiSize="1.4rem" />
+                <Thumb recipe={r} style={{ width: 54, height: 54, flex: '0 0 auto' }} radius={12} emojiSize="1.4rem" showDecor />
                 <div className="meta">
                   <div className="name">{r.title}</div>
                   <div className="t-sub" style={{ marginTop: 3 }}>{r.category}</div>
