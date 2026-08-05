@@ -2,6 +2,7 @@ import { isSeason, inCardWindow, seasonsNow } from '../season'
 import { SEASON_CUTS } from '../data/cardSeasons'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toJpeg } from 'html-to-image'
+import { fontCSS, fontOptFrom } from '../fontEmbed'
 import Icon from './Icon'
 // ⛔ UI엔 유니코드 이모지를 쓰지 않는다 — 우리 아이콘·스티커만(CLAUDE.md 핀).
 //    v8.63에서 앱 전체를 정리할 때 이 시트는 '보류'로 빠져 🔄💌🖼🐻🐧가 남아 있었다(2026-07-29 정리).
@@ -810,13 +811,16 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   //      PNG 한 장이 **4.4MB** 였다(실측 2026-08-05). JPEG 는 **713KB** — 6배 가볍다.
   //   ⛔ 글꼴 꾸러미는 아래 주석대로 «다시 뺐다» — 정확성이 먼저다.
   const toFile = useCallback(async (el, name) => {
-    // ⛔⛔ **글꼴 꾸러미를 다시 뺐다 (2026-08-05 오전).**
-    //   미리 만들어 둔 꾸러미를 넘겼더니 글꼴이 «일부만» 실려 글자 폭이 어긋났다 —
-    //   창업자 캡처: 「한끼」가 두 줄, 「15분」이 「15/분」, 「레시피 보러가기」가 두 줄.
-    //   ⭐ 느린 건 미리 캡처로 감출 수 있지만, **친구한테 깨진 카드가 나가는 건 못 되돌린다.**
-    //   ⚠️ pixelRatio 도 1.6 으로 되돌렸다 — 1 로 낮추면 반올림 때문에 폭이 미세하게 달라진다.
-    //   ✅ 남는 이득 = PNG→JPEG (4.4MB→180KB) · 미리 캡처 · 중복 캡처 제거
-    const u = await toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff' })
+    // 🔤 **글꼴 꾸러미를 다시 켰다 (2026-08-05 오후 · v9.73).**
+    //   ⛔ 오전에 뺐던 이유 = 꾸러미에 글꼴이 «일부만» 실려 글자 폭이 어긋났다 —
+    //      창업자 캡처: 「한끼」가 두 줄, 「15분」이 「15/분」, 「레시피 보러가기」가 두 줄.
+    //   ⭐ 오후에 «왜 일부만 실렸나»를 찾았다 — 라이브러리는 «꾸러미를 만들 때 쓴 조각이
+    //      실제로 쓰는 글꼴»만 담는다. 옛 코드는 홈 화면으로 만들어 **Jua 가 통째로 빠졌고**,
+    //      위에 깨진 글자 셋이 전부 Jua 다. 근거·실측 = `src/fontEmbed.js` 머리말
+    //   🔒 4종이 다 안 들어 있으면 `fontEmbed.js` 가 «안 쓴다» → 느려도 정확한 옛 길로 돌아간다.
+    //   ⚠️ pixelRatio 는 1.6 유지 — 1 로 낮추면 반올림 때문에 폭이 미세하게 달라진다.
+    const fontOpt = fontOptFrom(await fontCSS())
+    const u = await toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff', ...fontOpt })
     const b = await (await fetch(u)).blob()
     return new File([b], name.replace(/\.png$/, '.jpg'), { type: 'image/jpeg' })
   }, [])

@@ -257,8 +257,10 @@ function Curation() {
   //      3개씩 접으면 제품이 100개가 돼도 「전체」 길이는 그대로다(6칸 × 3 = 18장).
   //   ⛔ **큰 칸을 «직접 고른» 경우엔 접지 않는다** — 그건 「그걸 보려고」 고른 화면이다.
   //      「전체」= 훑는 화면 / 큰 칸 = 고른 화면. 목적이 다르므로 같이 다루지 않는다.
-  const FOLD = 3
-  const [openG, setOpenG] = useState({})   // 큰 칸별 «펼쳤나»
+  // ⛔⛔ 2026-08-05 — 3 → **2**. 창업자 *"전체탭에서는 2개씩만 보여주고 더보기 넣고,
+  //   간장, 된장 등등 2개씩만 넣고 더보기 넣자."*
+  const FOLD = 2
+  const [openG, setOpenG] = useState({})   // 펼쳤나 — 열쇠는 `g:큰칸` · `c:소칸` (이름이 겹쳐도 안 섞이게)
   const [openCard, setOpenCard] = useState({}) // 카드별 «설명을 펼쳤나»
   // 큰 칸으로 다시 묶는다 — ⚠️ 소제목(작은 칸)은 그대로 살린다. 접히는 건 «개수»뿐이다.
   const byGroup = [...new Set(shownGroups.map((g) => g.group))].map((name) => ({
@@ -442,31 +444,45 @@ function Curation() {
                 // ⛔⛔ 2026-08-05 — 예전엔 큰 칸을 «직접 고르면» 안 접었다(«보려고 고른 것»이라 봤다).
                 //   창업자: *"근데 목록이 늘어나면 이것도 제일 좋은 방법은 아니야"* — 맞는 지적이다.
                 //   ⭐ 칸에 제품이 13개면 **그 칸도 훑는 화면이다.** 안 접으면 제품을 올릴수록 영영 길어진다.
-                //   → 어느 화면이든 **개수에 상한**을 둔다. 「더보기」로 늘리는 건 «유저가 원해서» 늘린 것.
-                //     훑는 화면(전체)은 3개 · 고른 칸은 5개까지.
-                const LIMIT = curCat === '전체' ? FOLD : 5
-                const on = openG[G.name] || total <= LIMIT
-                const cats = on ? G.cats : take(G.cats, LIMIT)
+                //
+                // ⛔⛔⛔ **그런데 내가 v9.71 에서 «자르기만 하고 더보기를 안 달았다».**
+                //   창업자 2026-08-05: *"올리브오일 250ml짜리는 목록에서 사라졌어."* — 사라진 게 아니라
+                //   큰 칸을 고른 화면에서 5개로 잘렸는데 **더보기 버튼이 「전체」에서만 그려져** 볼 길이 없었다.
+                //   📌 **자르는 코드와 더보기 코드가 서로 다른 조건을 봤다.** 자를 땐 반드시 꺼낼 길을 같이 단다.
+                //
+                // ⭐ 이제 층을 나눈다 (창업자 *"전체탭에서는 2개씩 … 간장, 된장 등등 2개씩만 넣고 더보기"*)
+                //   ·「전체」  = 훑는 화면 → **큰 칸 통째로 2개** ＋ 큰 칸 더보기
+                //   · 큰 칸  = 고른 화면 → **소칸(간장·된장)마다 2개** ＋ 소칸마다 더보기
+                //   두 화면에서 「2개」의 «단위»가 다르다 — 전체에서 소칸마다 2개면 23칸 × 2 = 오히려 길어진다.
+                const whole = curCat === '전체'
+                const gOn = openG[`g:${G.name}`] || total <= FOLD
+                const cats = whole && !gOn ? take(G.cats, FOLD) : G.cats
+                const more = (label, n, key) => (
+                  // ⭐ 「몇 개가 더 있는지」를 숫자로 적는다 — 「더보기」만 있으면 누를지 말지 못 정한다
+                  <button
+                    className="press"
+                    onClick={() => setOpenG((s) => ({ ...s, [key]: !s[key] }))}
+                    style={{ width: '100%', padding: '9px 0', marginBottom: 4, borderRadius: 11, background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--brown)', fontWeight: 800, fontSize: 13 }}>
+                    {openG[key] ? `${label} 접기` : `${label} ${n}개 더보기`}
+                  </button>
+                )
                 return (
                   <div key={G.name}>
-                    {cats.map((g) => (
-                      <div key={g.cat}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>
-                          {curIcon(g.icon) ? <img src={curIcon(g.icon)} alt="" draggable={false} style={{ width: 22, height: 22, objectFit: 'contain' }} /> : <span>{g.emoji}</span>}
-                          {g.cat}
+                    {cats.map((g) => {
+                      const cOn = openG[`c:${G.name}·${g.cat}`]
+                      const items = whole || cOn ? g.items : g.items.slice(0, FOLD)
+                      return (
+                        <div key={g.cat}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>
+                            {curIcon(g.icon) ? <img src={curIcon(g.icon)} alt="" draggable={false} style={{ width: 22, height: 22, objectFit: 'contain' }} /> : <span>{g.emoji}</span>}
+                            {g.cat}
+                          </div>
+                          {items.map((it) => Card({ ...it, cat: g.cat, emoji: g.emoji, icon: it.icon || g.icon }))}
+                          {!whole && g.items.length > FOLD && more(g.cat, g.items.length - FOLD, `c:${G.name}·${g.cat}`)}
                         </div>
-                        {g.items.map((it) => Card({ ...it, cat: g.cat, emoji: g.emoji, icon: it.icon || g.icon }))}
-                      </div>
-                    ))}
-                    {/* ⭐ 「몇 개가 더 있는지」를 숫자로 적는다 — 「더보기」만 있으면 누를지 말지 못 정한다 */}
-                    {curCat === '전체' && total > FOLD && (
-                      <button
-                        className="press"
-                        onClick={() => setOpenG((s) => ({ ...s, [G.name]: !s[G.name] }))}
-                        style={{ width: '100%', padding: '9px 0', marginBottom: 4, borderRadius: 11, background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--brown)', fontWeight: 800, fontSize: 13 }}>
-                        {openG[G.name] ? `${G.name} 접기` : `${G.name} ${total - FOLD}개 더보기`}
-                      </button>
-                    )}
+                      )
+                    })}
+                    {whole && total > FOLD && more(G.name, total - FOLD, `g:${G.name}`)}
                   </div>
                 )
               })}

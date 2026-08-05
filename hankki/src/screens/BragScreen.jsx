@@ -7,6 +7,7 @@ import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 import Portal from '../components/Portal'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
+import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
@@ -45,6 +46,9 @@ export default function BragScreen() {
   //   ⛔ 왜 = 폰 공유는 «누른 직후»에만 열리는데 표지 그리기가 20초 넘게 걸린다.
   //      다 그릴 때쯤엔 허가가 끊겨 「지금 보내기」를 한 번 더 눌러야 했다(창업자 2026-08-05).
   //   ⭐ 고르는 «동안» 그려두면 누른 순간엔 이미 다 돼 있다 — 랜덤 카드가 v9.63부터 쓰던 검증된 처방.
+  // 🔤 글꼴 꾸러미 미리 데우기 — 캡처보다 «먼저» 끝나 있어야 캡처가 빨라진다(fontEmbed.js)
+  useEffect(() => { warmFontCSS() }, [])
+
   const prepRef = useRef(null)
   useEffect(() => {
     prepRef.current = null

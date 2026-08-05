@@ -1,58 +1,86 @@
 // 🔤 캡처용 «글꼴 꾸러미» — 한 번만 만들어 두고 계속 쓴다.
 //
-// ⛔⛔ 2026-08-05 「자랑카드 먹통」의 진짜 뿌리가 여기였다.
-//   `html-to-image` 는 화면을 그림으로 뽑을 때 **글꼴 파일을 통째로 카드 안에 밀어 넣는다**
-//   (SVG 안에서는 바깥 글꼴을 못 쓰기 때문이다). 우리 글꼴은 **8개·1.7MB** 라
-//   그 준비만으로 캡처 한 장이 **15~24초** 걸렸다. 그런데 그걸 **캡처할 때마다 다시** 했다.
-//   ⭐ 실측(2026-08-05 · 중급 폰 흉내):
-//        글꼴 포함 15.3초  →  글꼴 빼면 1.4초   (11배)
-//   ⭐ 글꼴을 뺄 수는 없다(카드 글씨가 죽는다) → **한 번만 만들고 돌려쓴다.**
+// ⛔⛔ 이 파일은 v9.63 에 들어왔다가 v9.66 에 **쓰기를 그만뒀다**(카드 글자가 깨져서).
+//    2026-08-05 에 «왜 깨졌는지»를 코드와 실측으로 잡고 다시 켠다. 아래 두 문단이 그 기록이다.
 //
-// 📌 쓰는 법
-//   ① 화면에 들어갈 때 `warmFontCSS()` — 조용히 미리 만들어 둔다
-//   ② 캡처할 때 `await fontCSS()` 를 `toJpeg/toPng` 의 `fontEmbedCSS` 로 넘긴다
+// ⓐ **옛 실패** — 실패하면 `done = ''` 로 **빈 값을 «영구» 캐시**했고, 빈 값을 `fontEmbedCSS` 로
+//    넘기면 `html-to-image` 는 **「글꼴을 심지 말라」**로 읽는다 → 손글씨가 기본 고딕으로 떨어지고
+//    글자 폭이 달라져 레이아웃이 통째로 깨진다(창업자 캡처 *"꾸미기 글씨체바뀌고 레시피깨짐"*).
+//
+// ⓑ **빈 값을 막아도 여전히 깨졌다 — 그 뿌리를 이제 찾았다.**
+//    📖 `html-to-image/lib/embed-webfonts.js`
+//       · 238~253줄 `getUsedFonts(node)` = 그 노드와 자식들이 «지금 쓰는» font-family 만 모은다
+//       · 263~266줄 = @font-face 를 그 목록에 있는 것만 남기고 **나머지는 버린다**
+//       → 꾸러미 내용은 «어떤 조각으로 만들었나»에 통째로 달려 있다.
+//    🔬 실측 (`scripts/_measure-fontembed.mjs`) — 앱이 선언한 것 = @font-face 8줄 · 글꼴 4종
+//       · 앱 켠 직후 `document.body` → **2종만**(Jua 빠짐)   ← 옛 코드가 한 방식
+//       · 꾸민 표지 하나로  → Gowun Dodum · Gaegu
+//       · 레시피카드 하나로 → Jua
+//    ⭐⭐ **두 장이 서로 다른 글꼴을 쓴다.** 한쪽으로 만든 꾸러미로 둘 다 덮으면 반드시 한쪽이 깨진다.
+//    ⭐⭐ 그리고 옛 코드는 **Jua 가 빠진** 꾸러미를 만들었다 — 「한끼」·「15분」·「레시피 보러가기」가
+//         전부 Jua 다. 창업자 캡처에서 깨진 글자 셋과 정확히 일치한다.
+//
+// ⭐ 답 = **4종을 «전부» 쓰는 표본 조각**으로 만든다. 그러면 라이브러리 자기 코드가 4종을 다 담는다.
+// 🔒 안전장치 = 4종이 다 안 들어 있으면 **아예 안 쓴다**(느려도 정확한 옛 길로 돌아간다).
+//    느린 건 고칠 수 있어도 친구한테 깨진 카드가 나가는 건 못 되돌린다.
+//
+// 📌 쓰는 법 = ①공유가 있는 화면에 들어갈 때 `warmFontCSS()` ②캡처할 때 `fontOptFrom(await fontCSS())`
 import { getFontEmbedCSS } from 'html-to-image'
 
-let pending = null // 만드는 중인 약속
-let done = null // 다 만든 결과(문자열). 실패해도 '' 로 채워 다시 안 돈다.
+// ⚠️ `styles.css` 의 @font-face 와 «같아야» 한다. 글꼴을 더하면 여기도 더할 것.
+//    (안 더하면 그 글꼴이 빠진 꾸러미가 되고, 안전장치가 통째로 버려 예전 속도로 돌아간다)
+const FAMILIES = ['Jua', 'Gowun Dodum', 'Gaegu', 'Nanum Pen Script']
 
-// 준비돼 있으면 «기다림 없이» 곧바로 준다 — 공유는 누른 «직후»에만 허용되므로
-// 여기서 await 하면 그 허가가 깨진다.
+let done = null // 다 만든 꾸러미. ⛔ 못 만들었으면 계속 null — '' 로 굳히지 말 것(위 ⓐ)
+let pending = null
+
+// 준비돼 있으면 «기다림 없이» 곧바로 준다 — 공유는 누른 «직후»에만 열리므로 거기서 await 하면 허가가 깨진다.
 export const fontCSSNow = () => done
 
-// ⛔⛔⛔ 2026-08-05 — **여기서 회귀를 냈다.** 창업자 캡처: 카드 글씨가 통째로 기본 고딕이 되고
-//   「15분」이 「15 / 분」으로 쪼개졌다(*"꾸미기 글씨체바뀌고 레시피깨짐"*).
-//   뿌리 둘 —
-//   ⓐ 실패하면 `done = ''` 로 **빈 값을 «영구» 캐시**했다.
-//   ⓑ 그 빈 값을 `fontEmbedCSS` 로 넘겼는데, `html-to-image` 는 그걸
-//      **「글꼴을 심지 말라」**는 뜻으로 읽는다 → 손글씨가 전부 기본 글꼴로 떨어지고
-//      글자 폭이 달라져 **레이아웃이 통째로 깨진다.**
-//   ⭐ 그래서 이제 **「덜 만들어졌으면 아예 안 쓴다」** — 안 넘기면 원래대로
-//      `html-to-image` 가 스스로 심는다(느리지만 «정확»하다). 느린 건 고칠 수 있어도
-//      친구한테 깨진 카드가 나가는 건 못 되돌린다.
-//
-// 「쓸 수 있는 꾸러미인가」 — ⛔**눈대중으로 짜지 말 것.**
-//   처음엔 `url(data:` 를 셌는데 html-to-image 는 `url("data:` 로 넣는다 → 늘 «못 쓴다»가 나와
-//   캡처가 다시 27초로 늦어졌다. 📌 **글꼴이 실제로 담겼으면 CSS 가 «수백 KB»다** — 길이가 제일 튼튼하다.
-const isUsable = (css) => !!css && css.length > 50000 && /url\(\s*["']?data:/.test(css)
+// 4종을 «전부» 쓰는 표본 조각. 화면 밖에 잠깐 붙였다 뗀다.
+function makeProbe() {
+  const box = document.createElement('div')
+  box.setAttribute('aria-hidden', 'true')
+  box.style.cssText = 'position:fixed;left:-99999px;top:0;opacity:0;pointer-events:none'
+  for (const f of FAMILIES) {
+    const s = document.createElement('span')
+    s.style.fontFamily = `'${f}'`
+    s.textContent = '한끼' // 글자가 있어야 그 글꼴을 «쓴다»고 잡힌다
+    box.appendChild(s)
+  }
+  document.body.appendChild(box)
+  return box
+}
+
+// 쓸 수 있는 꾸러미인가 — ⛔**눈대중으로 짜지 말 것.**
+//   처음엔 `url(data:` 를 셌는데 라이브러리는 `url("data:` 로 넣는다 → 늘 «못 쓴다»가 나왔다.
+//   ⭐ 이제는 **4종이 다 있나**를 본다(진짜 문제였던 것) ＋ 글꼴이 실렸으면 CSS 가 수백 KB다.
+const isUsable = (css) =>
+  !!css && css.length > 50000 && /url\(\s*["']?data:/.test(css) && FAMILIES.every((f) => css.includes(f))
 
 export function fontCSS() {
-  if (done) return Promise.resolve(done) // ⚠️ 빈 값은 캐시로 안 친다 — 다음에 다시 만든다
+  if (done) return Promise.resolve(done)
   if (!pending) {
     // ⭐ 글꼴이 «다 뜬 뒤에» 만든다. 로드 전에 만들면 반쪽짜리가 나온다.
     pending = (document.fonts ? document.fonts.ready : Promise.resolve())
-      .then(() => getFontEmbedCSS(document.body))
+      .then(() => {
+        const box = makeProbe()
+        return getFontEmbedCSS(box).finally(() => box.remove())
+      })
       .then((css) => {
         pending = null
-        done = isUsable(css) ? css : null // 덜 만들어졌으면 «안 쓴다»
-        return done || ''
+        done = isUsable(css) ? css : null
+        return done
       })
-      .catch(() => { pending = null; return '' })
+      .catch(() => { pending = null; return null })
   }
   return pending
 }
 
-// 미리 데워두기 — 결과를 안 기다린다. 화면 열 때 한 번 부르면 된다.
+// 캡처 옵션에 그대로 펼쳐 넣는 꼴. 꾸러미가 없으면 «빈 객체» — 옵션 자체를 안 넘겨야 한다(위 ⓐ).
+export const fontOptFrom = (css) => (css ? { fontEmbedCSS: css } : {})
+
+// 미리 데워두기 — 결과를 안 기다린다. 공유가 있는 화면에 들어갈 때 한 번 부른다.
 export function warmFontCSS() {
   if (!done) fontCSS()
 }

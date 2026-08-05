@@ -13,6 +13,7 @@ import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
+import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
 import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
@@ -87,6 +88,9 @@ export default function RecipeDetailScreen({ id }) {
   //      다 그릴 때쯤엔 허가가 끊겨 「지금 보내기」를 한 번 더 눌러야 했다(창업자 2026-08-05).
   //   ⭐ 고르는 «동안» 그려두면, 누른 순간엔 이미 다 돼 있어서 공유창이 바로 열린다.
   //      랜덤 카드(ShareDrawCard)가 v9.63부터 쓰던 방식 — 검증된 처방을 표지에도 붙인다.
+  // 🔤 글꼴 꾸러미 미리 데우기 — 캡처보다 «먼저» 끝나 있어야 캡처가 빨라진다(fontEmbed.js)
+  useEffect(() => { warmFontCSS() }, [])
+
   const prepRef = useRef(null)
   useEffect(() => {
     prepRef.current = null
