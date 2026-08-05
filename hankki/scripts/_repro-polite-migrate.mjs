@@ -17,11 +17,11 @@ const now = Date.now()
 const state = {
   seedV: BASICS_VERSION,      // 시드 이관은 안 끼어들게
   memoCleanV: 1,
-  // politeV 를 «일부러 안 넣는다» — 어제까지 저장된 폰이 이 모양이다
+  politeV: 1,   // ⭐ v1 까지 돌았는데도 «안 바뀐 채» 남은 폰 — 창업자가 겪은 그 상태
   recipes: [
     {
       id: 'u-gungchae', title: '궁채 들깨볶음', category: '한식', time: 20, thumb: 'icon',
-      source: 'link', status: 'sorted', savedAt: now,
+      source: 'manual', status: 'sorted', savedAt: now,   // ⛔ 가져왔는데도 'manual' 로 저장돼 있다(EditorScreen 기본값)
       ingredients: ['궁채 50g', '순두부 1/2모'],
       steps: [
         '궁채는 흐르는 물에 2~3번 씻은 뒤, 물에 담가 1시간 동안 불려줍니다.',
@@ -60,7 +60,7 @@ const after = await page.evaluate(() => {
 
 const ok = (b, msg) => console.log(`  ${b ? '✅' : '⛔'} ${msg}`)
 console.log(`\n🗣 politeV = ${after.politeV}`)
-console.log('\n📥 가져온 레시피 (source: link)')
+console.log('\n📥 가져온 레시피 — source 가 manual 로 저장된 «실제» 모양')
 for (const s of after.got || []) console.log(`   ${/요[.!~]*$/.test(s.trim()) ? '✅' : '⛔'} ${s}`)
 console.log('\n✍️ 직접 쓴 레시피 (source: manual) — ⛔여긴 «안» 바뀌어야 한다')
 for (const s of after.mine || []) console.log(`   ${s}`)
@@ -71,7 +71,7 @@ const mineKept = (after.mine || []).join('|') === '대충 휘저어서 부친다
 console.log('')
 ok(gotOk, '가져온 레시피가 전부 해요체가 됐다'); if (!gotOk) bad++
 ok(mineKept, '직접 쓴 레시피는 말투가 그대로다'); if (!mineKept) bad++
-ok(after.politeV === 1, 'politeV 가 저장돼 다음 실행엔 다시 안 돈다'); if (after.politeV !== 1) bad++
+ok(after.politeV === 2, 'politeV 가 저장돼 다음 실행엔 다시 안 돈다'); if (after.politeV !== 2) bad++
 
 await browser.close()
 stop()

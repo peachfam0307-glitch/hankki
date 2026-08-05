@@ -3,7 +3,7 @@ import { seedRecipes } from './data/seed'
 import { basicRecipes, BASICS_VERSION } from './data/basics'
 import { guessFoodIcon } from './components/FoodIcon'
 import { cleanMemo } from './parseRecipe'
-import { politeSteps } from './polish'
+import { politeSteps, politeFormalSteps } from './polish'
 
 const KEY = 'hankki:v1'
 let lastFullWarn = 0 // 저장공간 초과 경고 throttle(모듈 스코프)
@@ -306,14 +306,16 @@ function reconcileCooked(recipes, diary) {
 //   ⚠️ **직접 타이핑한 레시피(`manual`)와 기본 레시피(`hankki`)는 건드리지 않는다** —
 //      창업자 지시: *"가져온 것만 다듬기"*. 내가 쓴 말투는 내 것이다.
 //   ⚠️ `source` 가 없는 옛 레시피도 그대로 둔다 — 어디서 왔는지 모르면 손대지 않는다.
-const POLITE_V = 1
-const KEEP_VOICE = new Set(['manual', 'hankki']) // 직접 쓴 것 · 기본 제공
+// v2 ⛔ v1 은 `source !== 'manual'` 로 「가져온 것」을 골랐는데 **그게 틀린 신호였다** —
+//    `EditorScreen:136` 이 출처를 모르면 `manual` 을 넣는다(= 기본값). 창업자의 세 편이 통째로
+//    건너뛰어졌다(*"3개다 해요체로 안바뀌었어"*). → 이제 **말투로 가른다**(`politeFormalSteps`):
+//    「~니다」만 고치고 「~다」는 그대로 둔다. 그래서 `source` 를 아예 안 본다.
+const POLITE_V = 2
 function migratePolite(recipes, saved) {
   if ((saved.politeV || 0) >= POLITE_V) return { recipes, politeV: saved.politeV }
   const out = recipes.map((r) => {
     if (!r || !Array.isArray(r.steps) || !r.steps.length) return r
-    if (!r.source || KEEP_VOICE.has(r.source)) return r
-    const steps = politeSteps(r.steps)
+    const steps = politeFormalSteps(r.steps)
     return steps.some((s, i) => s !== r.steps[i]) ? { ...r, steps } : r
   })
   return { recipes: out, politeV: POLITE_V }

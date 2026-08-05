@@ -178,3 +178,27 @@ export function politeLine(line) {
 export function politeSteps(steps) {
   return (steps || []).map(politeLine)
 }
+
+// ── 🕊 «약하게» 다듬기 — 합쇼체(~ㅂ니다/습니다)만 고친다 ──
+//
+// ⛔⛔ 2026-08-05 — **`source` 로 「직접 쓴 것」을 가리려다 틀렸다.**
+//   `EditorScreen:136` 이 `source: … || 'manual'` 이라 **출처를 모르면 전부 `manual`** 이 된다.
+//   즉 `manual` 은 「내가 타이핑했다」가 아니라 **그냥 기본값**이었다. 그걸 「직접 쓴 것」으로 읽어
+//   창업자가 가져온 세 편을 통째로 건너뛰었다(창업자 *"3개다 해요체로 안바뀌었어"*).
+//
+// ⭐ 그래서 «누가 썼나»가 아니라 «어떤 말투인가»로 가른다 —
+//   · 「~습니다/~ㅂ니다」 = 블로그·영상 자막 말투 → 다듬는다
+//   · 「~다」(한다체)      = 내가 적어 둔 말투     → **그대로 둔다**
+//   📌 창업자가 바란 건 `source` 가 아니라 **「내 말투 보존」** 이었다. 이쪽이 그 뜻에 더 맞는다.
+const SOFT_RULES = [...FORMAL, ...TAIL].map(([from, to]) => [new RegExp(from + END, 'g'), to])
+
+export function politeFormalLine(line) {
+  let s = String(line)
+  s = s.replace(IPNIDA, (m, ch) => (isHangul(ch) && jong(ch) ? ch + '이에요' : ch + '예요'))
+  for (const [re, to] of SOFT_RULES) s = s.replace(re, to)
+  return s
+}
+
+export function politeFormalSteps(steps) {
+  return (steps || []).map(politeFormalLine)
+}
