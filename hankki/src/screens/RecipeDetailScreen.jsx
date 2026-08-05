@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -12,7 +12,7 @@ import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
-import { shareDecoratedCover } from '../shareCover'
+import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
 import SendNowSheet from '../components/SendNowSheet'
 import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
@@ -82,6 +82,33 @@ export default function RecipeDetailScreen({ id }) {
   //    2026-08-03 창업자 제보 *"홍콩식가지볶음 지웠더니 먹통됨"* 의 정체가 이거였다.
   //    (`picksOpen` 이 뒤쪽 158줄에 있었다 — 큐레이션 픽 4개 상한을 넣으며 8/2 에 들어왔다)
 
+  // ⭐⭐ 미리 캡처 — 공유 두 갈래 시트가 «뜨는 순간» 표지를 백그라운드로 그리기 시작한다.
+  //   ⛔ 왜 필요한가 = 폰 공유는 «누른 직후»에만 열리는데 표지 그리기가 20초 넘게 걸린다.
+  //      다 그릴 때쯤엔 허가가 끊겨 「지금 보내기」를 한 번 더 눌러야 했다(창업자 2026-08-05).
+  //   ⭐ 고르는 «동안» 그려두면, 누른 순간엔 이미 다 돼 있어서 공유창이 바로 열린다.
+  //      랜덤 카드(ShareDrawCard)가 v9.63부터 쓰던 방식 — 검증된 처방을 표지에도 붙인다.
+  const prepRef = useRef(null)
+  useEffect(() => {
+    prepRef.current = null
+    if (!shareSheet || !r) return
+    const decorated = (r.decor && r.decor.length) || (r.decorBg && r.decorBg !== 'none') || r.thumb === 'none'
+    if (!decorated) return
+    const withRecipe = !!((r.ingredients || []).length || (r.steps || []).length)
+    let alive = true
+    const t = setTimeout(() => {
+      if (!alive || !coverRef.current) return
+      const p = buildCoverPayload({
+        coverEl: coverRef.current,
+        title: r.title,
+        info: [r.time ? `${r.time}분` : null, r.servings ? `${r.servings}인분` : null, r.difficulty || null].filter(Boolean),
+        appUrl: location.origin + location.pathname.replace(/[^/]*$/, ''),
+        recipeEl: withRecipe ? recipeCardRef.current : null,
+      })
+      p.catch(() => { /* 실패하면 누를 때 다시 만든다 */ })
+      prepRef.current = p
+    }, 80) // 숨은 레시피카드가 붙을 시간
+    return () => { alive = false; clearTimeout(t) }
+  }, [shareSheet, r])
 
   if (!r) {
     return (
@@ -145,13 +172,16 @@ export default function RecipeDetailScreen({ id }) {
   const isDecorated = (r.decor && r.decor.length) || (r.decorBg && r.decorBg !== 'none') || r.thumb === 'none'
   const hasRecipe = !!((r.ingredients || []).length || (r.steps || []).length)
   const doShareCover = async () => {
+    // ⛔ 시트를 닫기 «전에» 미리 캡처를 손에 쥔다 — 닫으면 useEffect 정리가 prepRef 를 비운다
+    const prepared = prepRef.current
     setCoverBusy(true) // 로딩 오버레이 + 숨은 레시피카드 마운트 유지
     setShareSheet(false)
     const appUrl = location.origin + location.pathname.replace(/[^/]*$/, '')
     await new Promise((res) => setTimeout(res, 60)) // 레시피카드 마운트 시간
     try {
       // 꾸민 표지 + 재료·만드는 법(레시피카드) 2장 함께 — 친구가 진짜 해먹게(랜덤 카드와 동일)
-      const res = await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe ? recipeCardRef.current : null })
+      // ⭐ 시트가 뜰 때 시작한 「미리 캡처」가 있으면 그걸 쓴다 — 다 돼 있으면 즉시 공유창이 열린다
+      const res = await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe ? recipeCardRef.current : null, prepared })
       // ⛔ 공유가 «저장»으로 떨어졌으면 이유를 말한다 (BragScreen 과 같은 처리 — 창업자 2026-08-03)
       if (res && res.pending) setPending(res.pending)   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
       else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')

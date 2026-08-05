@@ -35,7 +35,13 @@ async function ensureFonts() {
   } catch (e) { /* 실패해도 기본 글씨로 그린다 */ }
 }
 
-export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, recipeEl = null }) {
+// 🖼🖼 **표지를 사진으로 떠서 「보낼 꾸러미」까지 만든다 — 보내진 않는다.**
+//   ⭐ 이걸 따로 뗀 이유 = **미리 캡처**. 유저가 「꾸민 표지 / 랜덤 카드」를 고르는 «동안»
+//      백그라운드로 미리 그려두면, 고를 때쯤엔 다 돼 있어서 «누른 직후»에 바로 공유창이 열린다.
+//      (랜덤 카드는 v9.63부터 이렇게 하고 있었는데 꾸민 표지에만 없었다 — 창업자 2026-08-05)
+//   ⛔ 여기서 navigator.share 를 부르지 말 것. 공유는 «사용자가 누른 순간»에만 열린다.
+export async function buildCoverPayload({ coverEl, title, info = [], appUrl, recipeEl = null }) {
+  if (!coverEl) return null
   await ensureFonts()
   // 🔤 글꼴 꾸러미 — 안 넘기면 캡처마다 글꼴 8개·1.7MB 를 처음부터 다시 만든다.
   //   ⛔⛔ 그게 창업자 *"내가 꾸민 건 다운로드로 떨어진다"* 의 뿌리였다: 캡처가 너무 느려
@@ -74,10 +80,10 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
       new Promise((_, rej) => setTimeout(() => rej(new Error('capture timeout')), 40000)),
     ])
   } catch (e) {
-    return { ok: false, error: 'capture' }
+    return null
   }
   const coverImg = await loadImage(coverUrl)
-  if (!coverImg) return { ok: false, error: 'capture' }
+  if (!coverImg) return null
 
   // ── 2) 따뜻한 액자에 얹기 (레꾸가 주인공 — 크게, 글은 최소) ──
   const W = 1080
@@ -157,14 +163,28 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
   // ── 3) 2장째(레시피카드)를 함께 — 친구가 진짜 해먹을 수 있게(랜덤 카드와 동일) ──
   // 🚀 PNG → JPEG. 표지는 «그림»이라 무손실일 이유가 없는데 1.38MB 였다(창업자 캡처).
   const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.92))
-  if (!blob) return { ok: false }
+  if (!blob) return null
   const file = new File([blob], 'hankki-cover.jpg', { type: 'image/jpeg' })
   const recipeFile = recipeFilePromise ? await recipeFilePromise : null // 이미 병렬로 뜨는 중 → 거의 즉시
   const files = recipeFile ? [file, recipeFile] : [file]
-
-  // ── 4) 공유 / 「지금 보내기」 ──
   const has2 = files.length > 1
-  const payload = { files, title, text: `『${title}』 · 내가 꾸민 레시피 🧡 한끼${has2 ? ' · 재료·레시피 같이!' : ''}\n나도 만들기 → ${url}`, url }
+  return { files, title, text: `『${title}』 · 내가 꾸민 레시피 🧡 한끼${has2 ? ' · 재료·레시피 같이!' : ''}\n나도 만들기 → ${url}`, url }
+}
+
+// 📤 「내가 꾸민 표지 그대로」 보내기.
+//   `prepared` = 미리 캡처가 돌려준 약속(Promise). 있으면 그걸 기다린다 — 이미 끝나 있으면 «즉시» 공유창이 열린다.
+export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, recipeEl = null, prepared = null }) {
+  let payload = null
+  try {
+    payload = prepared ? await prepared : null
+  } catch (e) {
+    payload = null // 미리 캡처가 실패했으면 아래에서 지금 다시 만든다
+  }
+  if (!payload) payload = await buildCoverPayload({ coverEl, title, info, appUrl, recipeEl })
+  if (!payload) return { ok: false, error: 'capture' }
+  const { files, url } = payload
+  const file = files[0]
+  const has2 = files.length > 1
   try {
     if (navigator.canShare && navigator.canShare({ files })) {
       await navigator.share(payload)
