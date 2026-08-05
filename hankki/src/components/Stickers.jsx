@@ -382,10 +382,19 @@ export const MOTIONS = [
   { key: 'tilt', label: '갸웃', axis: '기울기', base: true },
   // 🏖 출시기념 여름팩 = **무료 선물**이라 base:true. "새 모션 1개 넣자"(창업자)의 그 한 개.
   { key: 'wave', label: '찰랑', axis: '물 위 부유', base: true, pack: 'summer2026', sheet: 'B-03③ 잔물결' },
-  { key: 'ajang', label: '아장아장', axis: '좌우 이동', pack: 'chuseok2026', sheet: '(새로 만듦)' },   // 26-09 추석
-  { key: 'durib', label: '두리번', axis: '좌우 반전', pack: 'watercolor2026', sheet: '(새로 만듦)' },  // 26-10 가을 수채화
-  { key: 'bingle', label: '빙글', axis: '한 바퀴 회전', pack: 'halloween2026', sheet: 'D-02⑧ 나뭇잎 회전' }, // 26-10 핼러윈
-  { key: 'bureu', label: '부르르', axis: '미세 진동', pack: 'winter2027', sheet: 'B Flow ⑥ Wiggle' },  // 27-01 겨울
+  // ✅✅ **배분 = 창업자가 2026-08-05 에 직접 고른 것** (그 전까지는 «내 초안»이었다)
+  //   *"추석은 아장아장, 할로윈은 빙글, 가을은 슝, 크리스마스는 부르르, 겨울은 물방울(눈으로 바꿔서)"*
+  //   ⛔⛔ 그 전엔 `docs/모션-효과-설계.md` 에 **「⏳창업자 최종 확정 대기」** 라고 적혀 있는데도
+  //      내가 초안을 코드에 넣어뒀고, 나중에 그 코드를 보고 *"이미 정해져 있었다"* 며 확정으로 굳혔다.
+  //      창업자: *"추석에 아장아장은 처음들어. 할로윈 빙글도.."* → **처음 듣는 게 맞았다.**
+  //   📌 «대기»인 것을 코드에 먼저 넣지 않는다. 넣어야 하면 `pack` 없이 예비로.
+  { key: 'ajang', label: '아장아장', axis: '좌우 이동', pack: 'chuseok2026', sheet: '(새로 만듦)' },   // 26-09 추석 ✅확정
+  { key: 'bingle', label: '빙글', axis: '한 바퀴 회전', pack: 'halloween2026', sheet: 'D-02⑧ 나뭇잎 회전' }, // 26-10 핼러윈 ✅확정
+  { key: 'bureu', label: '부르르', axis: '미세 진동', pack: 'xmas2026', sheet: 'B Flow ⑥ Wiggle' },    // 26-12 크리스마스 ✅확정
+  // 🅿️ 두리번 — 팩에서 내렸다. 잠겨 있던 `watercolor2026`(가을 수채화)이 **가을 팩에 통합돼 영영 안 나온다.**
+  //    ⛔ 그대로 뒀으면 「돈 내도 안 열리는 모션」이 된다(`check-packmeta.mjs` 가 잡았다).
+  //    가을 팩엔 이미 효과 「슝」이 있어 여기 넣으면 «팩당 하나» 규칙을 깬다 → **예비로 아껴 둔다.**
+  { key: 'durib', label: '두리번', axis: '좌우 반전', sheet: '(새로 만듦)' },
   { key: 'kongdak', label: '콩닥', axis: '크기만(심장)', pack: 'spring2027', sheet: 'D-06③ 좋아요 팝' }, // 27-03 봄
   { key: 'flutter', label: '펄럭', axis: '종이 3D', pack: 'simple2027', sheet: 'B-05③ 메모지 펄럭' },   // 27-04 심플 다꾸
   // 🅿️ 예비 — **축이 위(통통·기울기)와 겹쳐서** 팩에 안 넣는다. 코드·CSS는 그대로 두고
@@ -418,14 +427,20 @@ export const FX_KINDS = [
   { key: 'heart', label: '하트', dir: '위로 뜸', base: true },
   { key: 'bubble', label: '뽀글', dir: '위로 뜸', base: true },
   { key: 'zoom', label: '슝', dir: '가로지름', pack: 'autumn2026', sheet: '(새로 만듦) D-02 바람' },   // 26-10 가을 다꾸
-  { key: 'pop', label: '팡!', dir: '바깥으로 터짐', pack: 'xmas2026', sheet: 'D-08② 폭죽' },           // 26-12 크리스마스
+  // 🅿️ 팡! — 크리스마스가 **모션 「부르르」**로 확정돼서(창업자 2026-08-05) 여기서 내렸다.
+  //    ⭐ 버리는 게 아니다 — **설날 팩**에 딱이다(같은 「터짐」 축에 복주머니·엽전 조각만 새로 그리면 된다).
+  { key: 'pop', label: '팡!', dir: '바깥으로 터짐', sheet: 'D-08② 폭죽' },
   { key: 'halo', label: '후광', dir: '뒤에 깔림', pack: 'cafe2027', sheet: 'D-09③ 소프트 글로우' },    // 27-02 카페
   { key: 'orbit', label: '빙빙', dir: '머리 둘레 궤도', pack: 'picnic2027', sheet: '(새로 만듦)' },     // 27-05 소풍
   { key: 'water', label: '물방울', dir: '아래로 낙하', pack: 'summer2027', sheet: 'B-03① 물방울 맺힘' }, // 27-06 여름
   // 🅿️ 예비 — 방향이 위(뜸/낙하)와 겹쳐서 팩에 안 넣는다. 배경 효과로 돌릴 후보들.
   { key: 'steam', label: '김모락', dir: '위로 뜸', sheet: 'B-08④ 김이 모락모락' },
   { key: 'food', label: '맛있는것들', dir: '위로 뜸', sheet: 'B-08③ 냠냠 먹기' },
-  { key: 'snow', label: '눈', dir: '아래로 낙하', sheet: 'B-04③ 눈 내리는 효과' },
+  // ❄️ 눈 — 겨울 팩 확정(창업자 2026-08-05 *"겨울은 물방울(눈으로 바꿔서)"*).
+  //   ⭐⭐ 이게 우리 «재고 해법»의 첫 사례다 — **같은 축(낙하)에 그림만 바꾸면 새 효과가 된다.**
+  //      물방울 코드를 그대로 두고 조각만 눈으로. 새로 만들 게 없다. (`docs/모션-효과-설계.md` 답②)
+  //   ⚠️ 물방울(여름 27년 6월)과 축이 같지만 **계절이 반대**라 한 철에 같이 안 나온다.
+  { key: 'snow', label: '눈', dir: '아래로 낙하', pack: 'winter2027', sheet: 'B-04③ 눈 내리는 효과' },
   { key: 'leaf', label: '낙엽', dir: '아래로 낙하', sheet: 'B-04② 낙엽 떨어짐' },
   { key: 'petal', label: '꽃잎', dir: '아래로 낙하', sheet: 'B-04① 꽃잎 흩날림' },
 ]
