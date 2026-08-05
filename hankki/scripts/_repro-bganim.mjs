@@ -53,16 +53,30 @@ const slow = info.filter((x) => parseFloat(x.dur) > 8)
 if (slow.length) console.log('⚠️ 주기 8초 초과', slow.length, '개 — 판정 판에선 못 알아본다:', slow.map((x) => x.cls.replace('fx ', '')).join(' '))
 console.log(info.slice(0, 4).map((x) => `  ${x.cls} → ${x.name} / ${x.dur} / ${x.play}`).join('\n'))
 
-// ⒝ ⭐ 진짜 판정 — 같은 칸을 1.4초 간격으로 두 번 찍어 픽셀을 센다
-const el = await page.$(sel)
-if (!el) { console.error(`⛔ ${sel} 를 못 찾았다`); await browser.close(); process.exit(1) }
-const a = await el.screenshot()
+// ⒝ ⭐⭐ 진짜 판정 — **하나하나** 1.4초 간격으로 두 번 찍어 픽셀을 센다.
+//    ⛔ 첫 칸만 재면 나머지 19개가 죽어 있어도 통과한다(2026-08-05 실제로 그랬다).
+const cards = await page.$$(sel)
+if (!cards.length) { console.error(`⛔ ${sel} 를 못 찾았다`); await browser.close(); process.exit(1) }
+const names = await page.$$eval(sel, (els) =>
+  els.map((el) => {
+    const fx = el.querySelector('.fx')
+    return fx ? fx.className.replace('fx ', '') : '(효과없음)'
+  }))
+const before = []
+for (const c of cards) before.push(await c.screenshot())
 await page.waitForTimeout(1400)
-const b = await el.screenshot()
-let diff = 0
-for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) diff++
-console.log(`${sel} 1.4초 차이:`, diff, 'byte', diff > 200 ? '→ ✅ 움직인다' : '→ ⛔ 안 움직인다')
+const dead = []
+for (let n = 0; n < cards.length; n++) {
+  const b2 = await cards[n].screenshot()
+  const a2 = before[n]
+  let d = 0
+  for (let i = 0; i < Math.min(a2.length, b2.length); i++) if (a2[i] !== b2[i]) d++
+  if (d < 400) dead.push(`${names[n]} (${d}byte)`)
+}
+console.log(`\n${cards.length}칸 각각 1.4초 비교 →`,
+  dead.length ? `⛔ 거의 안 변하는 것 ${dead.length}개` : '✅ 전부 움직인다')
+if (dead.length) console.log('  ' + dead.join('\n  '))
 console.log('pageerror', errs.length, errs.slice(0, 2).join(' | '))
 
 await browser.close()
-process.exit(diff > 200 && errs.length === 0 ? 0 : 1)
+process.exit(dead.length === 0 && errs.length === 0 ? 0 : 1)
