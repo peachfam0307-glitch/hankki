@@ -371,15 +371,19 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
   //      거의 안 읽혔다"* 고 이미 적혀 있었다** — 적어두고 안 고쳤다. 📌 적어두는 건 고친 게 아니다.
   //   ✅ 알약으로 감싼다 — 배경이 밝든 어둡든 «판»이 생겨서 글자가 항상 읽힌다
   //      (색만 진하게 하면 `night` 처럼 어두운 스킨에서 또 묻힌다).
+  // ⛔ 2026-08-05 — 알약 «위»에 있던 「한끼」 한 줄을 뺐다. 창업자: *"한끼 한끼앱에서 한끼구글
+  //    너무 많은데 … 가운데 한끼만빼면될듯"*. 한 카드에 「한끼 앱에서 →」·「한끼」·「Play스토어
+  //    '한끼' 검색」이 세 겹으로 있었다. 브랜드는 알약 하나로 충분하다(설치 유도까지 같이 붙는다).
+  // ⛔⛔ 이 주석을 아래 `(` «안»에 `{/* */}` 로 넣었다가 **빌드가 깨졌다** — 바로 위 `more` 에
+  //    똑같은 경고가 적혀 있는데 또 밟았다. JSX 주석은 «자식» 자리에서만 된다.
   const foot = (wm) => (
     <div style={{ position: 'absolute', left: PAD, bottom: 52, zIndex: 8 }}>
-      <div style={{ fontFamily: 'Jua, sans-serif', fontSize: 26, color: wm }}>한끼</div>
       {/* ⚠️ 글자색은 알약 «배경 밝기»로 정한다 — `night` 처럼 어두운 스킨은 `footWm` 이
           밝은 크림이라, 흰 글자로 굳혀 두면 거기서 또 안 읽힌다(고치려던 바로 그 증상이 재발). */}
       {/* ⛔ 2026-08-05 — 줄바꿈 금지를 넣었다. 없으면 mag(매거진)처럼 자리가 빠듯한 뼈대에서
           「Play스토어 ‘한끼’ / 검색」 으로 «두 줄»이 되어 알약 밖으로 삐져나왔다.
           ⭐ 뽑힌 사진에서만 보였다 — 화면에선 한 줄이라 눈으로는 절대 못 잡는다. */}
-      <span style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', marginTop: 10, padding: '9px 20px', borderRadius: 999, background: wm, color: onColor(wm), fontFamily: 'Jua, sans-serif', fontSize: 22, letterSpacing: '-0.01em' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', padding: '9px 20px', borderRadius: 999, background: wm, color: onColor(wm), fontFamily: 'Jua, sans-serif', fontSize: 22, letterSpacing: '-0.01em' }}>
         Play스토어 ‘한끼’ 검색
       </span>
     </div>
