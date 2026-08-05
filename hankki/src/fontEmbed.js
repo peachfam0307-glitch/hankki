@@ -20,17 +20,39 @@ let done = null // 다 만든 결과(문자열). 실패해도 '' 로 채워 다�
 // 여기서 await 하면 그 허가가 깨진다.
 export const fontCSSNow = () => done
 
+// ⛔⛔⛔ 2026-08-05 — **여기서 회귀를 냈다.** 창업자 캡처: 카드 글씨가 통째로 기본 고딕이 되고
+//   「15분」이 「15 / 분」으로 쪼개졌다(*"꾸미기 글씨체바뀌고 레시피깨짐"*).
+//   뿌리 둘 —
+//   ⓐ 실패하면 `done = ''` 로 **빈 값을 «영구» 캐시**했다.
+//   ⓑ 그 빈 값을 `fontEmbedCSS` 로 넘겼는데, `html-to-image` 는 그걸
+//      **「글꼴을 심지 말라」**는 뜻으로 읽는다 → 손글씨가 전부 기본 글꼴로 떨어지고
+//      글자 폭이 달라져 **레이아웃이 통째로 깨진다.**
+//   ⭐ 그래서 이제 **「덜 만들어졌으면 아예 안 쓴다」** — 안 넘기면 원래대로
+//      `html-to-image` 가 스스로 심는다(느리지만 «정확»하다). 느린 건 고칠 수 있어도
+//      친구한테 깨진 카드가 나가는 건 못 되돌린다.
+//
+// 「쓸 수 있는 꾸러미인가」 — ⛔**눈대중으로 짜지 말 것.**
+//   처음엔 `url(data:` 를 셌는데 html-to-image 는 `url("data:` 로 넣는다 → 늘 «못 쓴다»가 나와
+//   캡처가 다시 27초로 늦어졌다. 📌 **글꼴이 실제로 담겼으면 CSS 가 «수백 KB»다** — 길이가 제일 튼튼하다.
+const isUsable = (css) => !!css && css.length > 50000 && /url\(\s*["']?data:/.test(css)
+
 export function fontCSS() {
-  if (done !== null) return Promise.resolve(done)
+  if (done) return Promise.resolve(done) // ⚠️ 빈 값은 캐시로 안 친다 — 다음에 다시 만든다
   if (!pending) {
-    pending = getFontEmbedCSS(document.body)
-      .then((css) => { done = css; return css })
-      .catch(() => { done = ''; return '' }) // 못 만들어도 캡처는 되게(글씨만 기본 글꼴)
+    // ⭐ 글꼴이 «다 뜬 뒤에» 만든다. 로드 전에 만들면 반쪽짜리가 나온다.
+    pending = (document.fonts ? document.fonts.ready : Promise.resolve())
+      .then(() => getFontEmbedCSS(document.body))
+      .then((css) => {
+        pending = null
+        done = isUsable(css) ? css : null // 덜 만들어졌으면 «안 쓴다»
+        return done || ''
+      })
+      .catch(() => { pending = null; return '' })
   }
   return pending
 }
 
 // 미리 데워두기 — 결과를 안 기다린다. 화면 열 때 한 번 부르면 된다.
 export function warmFontCSS() {
-  if (done === null) fontCSS()
+  if (!done) fontCSS()
 }

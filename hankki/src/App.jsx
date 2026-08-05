@@ -90,7 +90,7 @@ export default function App() {
   //      (2026-08-03·08-05 「자랑카드 먹통」). 실측 = 글꼴 포함 15.3초 vs 빼면 1.4초.
   //   ⭐ 홈이 다 그려진 «뒤» 한가한 틈에만 한다 — 첫 화면 뜨는 속도는 건드리지 않는다.
   useEffect(() => {
-    const go = () => warmFontCSS()
+    const go = () => { /* 지금은 안 데운다 — 미리 만든 글꼴 꾸러미는 일부만 실려 카드를 깨뜨렸다 */ }
     const idle = window.requestIdleCallback
     const t = setTimeout(() => (idle ? idle(go, { timeout: 4000 }) : go()), 2500)
     return () => clearTimeout(t)

@@ -2,7 +2,6 @@ import { isSeason, inCardWindow, seasonsNow } from '../season'
 import { SEASON_CUTS } from '../data/cardSeasons'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toJpeg } from 'html-to-image'
-import { fontCSS } from '../fontEmbed'
 import Icon from './Icon'
 // ⛔ UI엔 유니코드 이모지를 쓰지 않는다 — 우리 아이콘·스티커만(CLAUDE.md 핀).
 //    v8.63에서 앱 전체를 정리할 때 이 시트는 '보류'로 빠져 🔄💌🖼🐻🐧가 남아 있었다(2026-07-29 정리).
@@ -804,11 +803,15 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   //      우리 그림은 전부 **같은 출처**라 캐시를 그대로 써도 안전하다(CORS 문제가 안 생긴다).
   //   ⛔⛔ **PNG 를 JPEG 로 바꿨다.** 카드는 «그림»이라 무손실로 뽑을 이유가 없었는데
   //      PNG 한 장이 **4.4MB** 였다(실측 2026-08-05). JPEG 는 **713KB** — 6배 가볍다.
-  //   ⛔⛔ **글꼴 꾸러미(`fontCSS`)를 넘긴다.** 안 넘기면 캡처마다 글꼴 8개·1.7MB 를
-  //      처음부터 다시 만든다 — 그것만으로 한 장에 15~24초였다. → `src/fontEmbed.js`
+  //   ⛔ 글꼴 꾸러미는 아래 주석대로 «다시 뺐다» — 정확성이 먼저다.
   const toFile = useCallback(async (el, name) => {
-    const fontEmbedCSS = await fontCSS()
-    const u = await toJpeg(el, { pixelRatio: 1, quality: 0.92, backgroundColor: '#ffffff', fontEmbedCSS })
+    // ⛔⛔ **글꼴 꾸러미를 다시 뺐다 (2026-08-05 오전).**
+    //   미리 만들어 둔 꾸러미를 넘겼더니 글꼴이 «일부만» 실려 글자 폭이 어긋났다 —
+    //   창업자 캡처: 「한끼」가 두 줄, 「15분」이 「15/분」, 「레시피 보러가기」가 두 줄.
+    //   ⭐ 느린 건 미리 캡처로 감출 수 있지만, **친구한테 깨진 카드가 나가는 건 못 되돌린다.**
+    //   ⚠️ pixelRatio 도 1.6 으로 되돌렸다 — 1 로 낮추면 반올림 때문에 폭이 미세하게 달라진다.
+    //   ✅ 남는 이득 = PNG→JPEG (4.4MB→180KB) · 미리 캡처 · 중복 캡처 제거
+    const u = await toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff' })
     const b = await (await fetch(u)).blob()
     return new File([b], name.replace(/\.png$/, '.jpg'), { type: 'image/jpeg' })
   }, [])
@@ -891,14 +894,14 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
     // 아직 준비 전(막 열자마자 누름) — 만들어서 시도한다. 이땐 허가가 만료될 수 있어 저장으로 갈 수 있다.
     setBusy(hasRecipe ? '카드 + 레시피 2장 준비 중이에요' : '카드를 그리고 있어요')
     try {
-      // ⏱⏱ **25초 제한** — 캡처가 안 끝나면 «로딩만 도는» 상태가 되고, 그게 유저에겐 먹통이다.
+      // ⏱⏱ **35초 제한** — 캡처가 안 끝나면 «로딩만 도는» 상태가 되고, 그게 유저에겐 먹통이다.
       //   ⛔ 2026-08-03 창업자가 겪은 것이 정확히 이 모양이었다: *"로딩은 돌아가. 그다음이 안돼"*.
       //   ⭐ 끝나든 못 끝나든 **말은 한다.** 조용히 멈춰 있는 것보다 «안 됐다」고 말하는 게 낫다.
       //   ⛔ 2026-08-05 — 여기서 «새로» 캡처를 시작하던 것을 고쳤다. 미리 캡처가 이미 돌고 있으면
       //      그 일을 그대로 기다린다(`capture()` 가 도는 약속을 돌려준다). 예전엔 넷이 겹쳤다.
       const files = await Promise.race([
         capture(),
-        new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('capture timeout'), { name: 'TimeoutError' })), 25000)),
+        new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('capture timeout'), { name: 'TimeoutError' })), 35000)),
       ])
       const t = go(files)
       if (t) { await t; setBusy(null); return }
@@ -923,7 +926,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
     setBusy('레시피 표지로 저장하는 중이에요')
     try {
       // ⛔ `cacheBust` 를 껐다 — 켜면 카드 안 그림을 «전부 다시» 내려받는다. 우리 그림은 같은 출처라 안전하다.
-      const opt = { pixelRatio: 1.5, quality: 0.86, backgroundColor: '#ffffff', fontEmbedCSS: await fontCSS() }
+      const opt = { pixelRatio: 1.5, quality: 0.86, backgroundColor: '#ffffff' }
       // 폰트 임베드 단계에서 외부 stylesheet fetch가 막히면(드묾) skipFonts로 폴백 — 표지 저장이 끊기지 않게.
       let url
       try { url = await toJpeg(coverRef.current, opt) } catch { url = await toJpeg(coverRef.current, { ...opt, skipFonts: true }) }
