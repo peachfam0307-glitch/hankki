@@ -80,7 +80,10 @@ try {
     const before = await diaryN()
 
     await page.locator('.action-bar button').last().click()
-    await page.waitForTimeout(900)
+    await page.waitForTimeout(700)
+    // 📸 창업자 검수판 — 「눌렀을 때 화면이 어떻게 되나」 한 장 (SHOT 을 주면 찍는다)
+    if (process.env.SHOT && i === 0) await page.screenshot({ path: process.env.SHOT })
+    await page.waitForTimeout(300)
 
     const sheet = await seen(LOG_SHEET)
     const review = await seen(REVIEW_SHEET)
