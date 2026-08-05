@@ -34,7 +34,9 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
     ...(ratio ? { aspectRatio: ratio } : {}),
     ...style,
   }
-  const center = { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }
+  // ⚠️ `isolation:isolate` = 「여기부터 층을 따로 센다」. 이게 있어야 아래 스포트 원의 zIndex:-1 이
+  //    «아이콘 뒤 · 배경 앞» 자리에 앉는다. 없으면 배경보다도 뒤로 가서 아예 안 보인다.
+  const center = { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', isolation: 'isolate' }
 
   let inner
   if (showImg) {
@@ -82,7 +84,12 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
     inner = (
       <div style={center}>
         {/* 딥 배경에선 컬러 아이콘이 묻히니 은은한 밝은 원(스포트)을 뒤에 깔아 또렷하게 */}
-        {dark && <span aria-hidden="true" style={{ position: 'absolute', inset: '17%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(248,243,235,.92) 58%, rgba(248,243,235,0) 100%)' }} />}
+        {/* ⛔⛔ 2026-08-05 창업자 제보 「어두운 배경에서 음식아이콘이 하얗게 변함」 — 이 원이 «위»에 깔려 있었다.
+            📌 CSS 는 «자리를 잡은(position≠static) 것»을 «흐름 속 그림»보다 «나중에» 칠한다.
+               FoodIcon 은 그냥 <img> 라 자리를 안 잡아서, 뒤에 두려고 쓴 원이 92% 흰 장막이 되어 아이콘을 덮었다.
+               (실측 — 같은 아이콘이 밝은 판에선 채도 52%인데 딥플럼 위에선 8%까지 죽었다)
+            ✅ 아이콘도 자리를 잡게 하고 층(zIndex)을 못 박는다. ⛔둘 중 하나만 고치면 또 뒤집힌다. */}
+        {dark && <span aria-hidden="true" style={{ position: 'absolute', inset: '17%', zIndex: -1, borderRadius: '50%', background: 'radial-gradient(circle, rgba(248,243,235,.92) 58%, rgba(248,243,235,0) 100%)' }} />}
         <FoodIcon name={recipe.icon || guessFoodIcon(recipe.title)} size={iconSize} />
       </div>
     )
