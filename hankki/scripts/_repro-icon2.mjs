@@ -148,8 +148,8 @@ console.log(`     밝은판  가운데 rgb(${l.r},${l.g},${l.b}) · 밝기 ${l.b
 if (d.bright >= 235 && d.sat <= Math.max(4, Math.round(l.sat / 2))) bad(`아이콘이 흰 장막에 덮였다 (채도 ${l.sat}% → ${d.sat}%)`)
 else ok(`아이콘 색이 살아 있다 (밝은판 ${l.sat}% · 딥플럼 ${d.sat}%)`)
 
-// ⭐ 스포트(밝은 원)가 «없어지지도» 않아야 한다 — 층을 -1 로 내리다 배경 뒤로 사라지면 딥 배경에서 아이콘이 묻힌다.
-//   판정 = 딥플럼 카드의 «모서리»(스포트 바깥)와 «아이콘 옆»(스포트 안쪽·그림 없는 곳)의 밝기 차이.
+// ⭐ 밝은 원(스포트)이 «없어야» 한다 — 창업자 판정 2026-08-05 «어두운배경에만 원 생기는 거 별로야».
+//   판정 = 딥플럼 카드의 «모서리»(배경)와 «아이콘 위쪽»(원이 있었다면 밝았을 자리)의 밝기 차이.
 const at = (img, fx, fy) => {
   const x = Math.round(img.w * fx), y = Math.round(img.h * fy)
   const i = (y * img.w + x) * 3
@@ -158,8 +158,8 @@ const at = (img, fx, fy) => {
 const corner = at(darkImg, 0.05, 0.05)   // 배경만 (딥플럼)
 const ring = at(darkImg, 0.5, 0.22)      // 스포트 안쪽 위 — 아이콘보다 위쪽
 console.log(`     모서리 밝기 ${corner} · 스포트 자리 밝기 ${ring}`)
-if (ring - corner < 25) bad(`스포트가 사라졌다 (모서리 ${corner} ≈ 스포트 ${ring}) — 딥 배경에서 아이콘이 묻힌다`)
-else ok(`스포트가 아이콘 «뒤»에 살아 있다 (${corner} → ${ring})`)
+if (ring - corner > 25) bad(`밝은 원이 아직 있다 (모서리 ${corner} → 원 자리 ${ring}) — 창업자가 빼기로 정했다`)
+else ok(`밝은 원이 없다 — 배경이 그대로다 (모서리 ${corner} · 원 자리 ${ring})`)
 
 // ⭐ 아이콘 크기가 안 변했나 — 딥플럼과 밝은판이 같은 크기라야 한다
 const bd = await iconBox('콩나물무침'), bl = await iconBox('콩나물볶음')

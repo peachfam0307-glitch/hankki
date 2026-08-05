@@ -6,9 +6,10 @@
 //      📌 **CSS 는 「자리를 잡은 것(position≠static)」을 「흐름 속 그림」보다 나중에 칠한다.**
 //         `FoodIcon` 은 그냥 `<img>` 라 자리를 안 잡는다 → 뒤에 두려던 원이 **92% 흰 장막**이 됐다.
 //         실측 = 같은 아이콘이 밝은 판에선 채도 52%, 딥플럼 위에선 **8%**(밝기 244).
-//      ✅ 고침 = 스포트 `zIndex:-1` ＋ 감싸는 칸 `isolation:isolate`.
-//         ⛔ **둘 중 하나만 있으면 안 된다** — `isolation` 이 없으면 `-1` 이 배경보다도 뒤로 가서 스포트가 아예 사라지고,
-//            `zIndex:-1` 이 없으면 원래대로 아이콘을 덮는다.
+//      ✅✅ **고침 = 원을 통째로 뺐다** (창업자 판정 *"어두운배경에만 원 생기는 거 별로야"* · *"빼서 만들어줘. 원래대로"*).
+//         ⭐ 층(zIndex)을 고쳐 「뒤에 깔리게」도 만들어 봤지만, 창업자가 보고 **원 자체가 별로**라고 정했다.
+//         📌 그 원은 v8.5(2026-07-22)에 내가 딥 배경 넣으며 같이 넣은 것이고 **창업자 판정을 받은 적이 없었다.**
+//            ⛔ 「내가 좋다고 생각해 넣은 것」이 판정 없이 굳으면, 나중에 그게 버그의 뿌리가 된다.
 //      ⚠️ 아이콘을 `<span>` 으로 감싸 층을 올리는 방법도 있었지만 **크기(%)가 흔들려** 안 쓴다
 //         (`iconSize` 가 `'56%'` 라 감싸면 기준 상자가 바뀐다).
 //
@@ -32,16 +33,14 @@ const thumb = read('src/components/Thumb.jsx')
 const editor = read('src/screens/EditorScreen.jsx')
 const detail = read('src/screens/RecipeDetailScreen.jsx')
 
-// ① 스포트가 아이콘 «뒤»에 있나 — 층 두 개가 짝이라 둘 다 본다
-const spotLine = thumb.split('\n').find((l) => l.includes('radial-gradient') && l.includes('borderRadius'))
-if (!spotLine) bad.push("Thumb.jsx — 딥 배경 스포트(밝은 원)를 못 찾았다. 지웠다면 이 검사도 같이 정리할 것")
-else if (!/zIndex:\s*-1/.test(spotLine)) bad.push("Thumb.jsx — 스포트에 `zIndex: -1` 이 없다 → 아이콘을 «덮는다»(창업자 제보 2026-08-05)")
-if (!/const center = \{[^\n]*isolation:\s*'isolate'/.test(thumb)) {
-  bad.push("Thumb.jsx — `center` 에 `isolation: 'isolate'` 가 없다 → 스포트가 배경 뒤로 가서 «아예 안 보인다»")
-}
+// ① 어두운 배경에 「밝은 원」이 다시 들어오지 않았나 — 창업자가 «빼기»로 정한 것
+//    ⛔ 코드 주석은 봐준다(왜 뺐는지 남겨둬야 하니까). 실제로 그리는 줄만 잡는다.
+const drawn = thumb.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+const spotLine = drawn.find((l) => l.includes('radial-gradient') && l.includes('borderRadius'))
+if (spotLine) bad.push('Thumb.jsx — 어두운 배경의 「밝은 원(스포트)」이 다시 들어왔다. ⛔창업자가 빼기로 정했다(2026-08-05)')
 // ⚠️ 아이콘 크기는 %다 — 감싸면 기준 상자가 바뀌어 크기가 흔들린다
-if (/<span[^>]*zIndex:\s*1[^>]*>\s*<FoodIcon/.test(thumb)) {
-  bad.push('Thumb.jsx — FoodIcon 을 층 올리려고 감쌌다. `iconSize` 가 %라 크기가 흔들린다(zIndex:-1 쪽으로)')
+if (/<span[^>]*zIndex[^>]*>\s*<FoodIcon/.test(thumb)) {
+  bad.push('Thumb.jsx — FoodIcon 을 층 올리려고 감쌌다. `iconSize` 가 %라 크기가 흔들린다')
 }
 
 // ② 직접 고른 아이콘이 지켜지나 — 「표를 남기는 곳」과 「그 표를 읽는 곳」이 둘 다 있어야 한다
@@ -59,6 +58,6 @@ if (bad.length) {
   console.error('   👉 재현판 = node scripts/_repro-icon2.mjs (픽셀·저장값으로 판정)')
   process.exit(1)
 }
-console.log('  ✅ 딥 배경 스포트가 아이콘 «뒤»에 있다 (zIndex:-1 ＋ isolation)')
+console.log('  ✅ 어두운 배경에 「밝은 원」이 없다 (창업자 판정 2026-08-05)')
 console.log('  ✅ 직접 고른 아이콘이 제목 변경에도 지켜진다 (iconPicked · 남기는 곳 3 · 읽는 곳 2)')
 console.log('\n✅ 표지 아이콘 게이트 통과\n')
