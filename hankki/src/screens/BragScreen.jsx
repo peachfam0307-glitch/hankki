@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Thumb from '../components/Thumb'
@@ -7,7 +7,7 @@ import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 import Portal from '../components/Portal'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { shareDecoratedCover } from '../shareCover'
-import { warmFontCSS } from '../fontEmbed'
+import SendNowSheet from '../components/SendNowSheet'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomThumb from '../assets/ui/gom_thumbsup.png'
@@ -28,11 +28,8 @@ export default function BragScreen() {
   const [pick, setPick] = useState(null) // 탭한 레시피 → 선택 시트
   const [share, setShare] = useState(null) // 랜덤 카드 모달로 보낼 레시피
   const [busy, setBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩 표시)
+  const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
   const [coach, setCoach] = useState(() => needsCoach(BRAG_COACH_KEY))
-  // 🔤 이 화면에 들어오면 «글꼴 꾸러미»를 조용히 미리 만들어 둔다.
-  //   ⛔ 안 데워두면 카드를 뽑고 공유를 누른 뒤에야 만들기 시작해 십수 초가 걸린다
-  //      — 그게 2026-08-03·05 「자랑카드 먹통」이었다. 레시피를 고르는 동안 준비된다.
-  useEffect(() => { warmFontCSS() }, [])
   const coverRef = useRef(null) // 꾸민 표지 캡처용(화면 밖 숨은 레이어)
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
   const list = useMemo(
@@ -63,7 +60,8 @@ export default function BragScreen() {
       // ⛔ 공유가 «저장»으로 떨어지면 그 이유를 말해준다 — 창업자 2026-08-03
       //    *"내 레시피꾸민거 보내려고하면 다운로드하라고 뜨고"*. 갑자기 다운로드 창이 뜨면
       //    유저는 «고장»으로 읽는다. 저장된 것 자체는 정상 동작이니 **한 줄만 붙이면 오해가 안 생긴다.**
-      if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
+      if (res && res.pending) setPending(res.pending)   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
+      else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
     } finally {
       setBusy(false)
@@ -131,6 +129,9 @@ export default function BragScreen() {
           </div>
         </Portal>
       )}
+
+      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다 */}
+      <SendNowSheet pending={pending} onClose={() => setPending(null)} />
 
       {/* 랜덤 카드 모달 — 공유(💌) + 표지로 저장(🖼) */}
       {share && (

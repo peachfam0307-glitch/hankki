@@ -2,7 +2,7 @@
 // 통째로 사진으로 떠서, 따뜻한 액자(브랜드·제목·링크)에 얹어 Web Share로 내보낸다.
 // (클로드가 따로 그린 카드 ❌ — 유저가 꾸민 그 모습이 주인공. 2026-07-19 창업자 방향)
 
-import { toPng } from 'html-to-image'
+import { toPng, toJpeg } from 'html-to-image'
 
 const DISPLAY = "'Jua', 'Apple SD Gothic Neo', sans-serif" // 통통 귀여운 브랜드/제목
 const BODY = "'Gowun Dodum', 'Apple SD Gothic Neo', sans-serif" // 부드러운 본문
@@ -49,16 +49,18 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
   // 폰의 공유 허용 시간(user activation) 안에 navigator.share가 뜨게 한다.
   //   ⛔ `cacheBust` 를 껐다 — 켜면 카드 안 그림을 «전부 다시» 내려받는다(같은 출처라 안전).
   const recipeFilePromise = recipeEl
-    ? toPng(recipeEl, { pixelRatio: 1.6, ...fontOpt })
+    ? toJpeg(recipeEl, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff', ...fontOpt })
         .then((u) => fetch(u))
         .then((r) => r.blob())
-        .then((b) => new File([b], 'hankki-recipe.png', { type: 'image/png' }))
+        .then((b) => new File([b], 'hankki-recipe.jpg', { type: 'image/jpeg' }))
         .catch(() => null)
     : null
 
   // ── 1) 화면의 표지를 그대로 사진으로 (버튼 등 data-nocapture는 제외) ──
   const rect = coverEl.getBoundingClientRect()
-  const scale = Math.min(3, 1080 / Math.max(1, rect.width)) // 1080px급 고해상도
+  // ⚠️ 예전엔 3배까지 키웠다 — 폭 360px 화면이면 픽셀이 «9배»가 되어 캡처가 하염없이 느렸다.
+  //    2 로 낮춰도 액자 안에서 1080px 폭을 채운다(창업자 *"너무 느려졌어 한참기다려야해"*).
+  const scale = Math.min(2, 1080 / Math.max(1, rect.width))
   let coverUrl
   try {
     // ⏱ **12초 제한** — 캡처가 안 끝나면 로딩만 돌고 아무 말이 없다. 그게 유저에겐 먹통이다
@@ -69,7 +71,7 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
         ...fontOpt,
         filter: (node) => !(node.dataset && 'nocapture' in node.dataset),
       }),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('capture timeout')), 12000)),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('capture timeout')), 40000)),
     ])
   } catch (e) {
     return { ok: false, error: 'capture' }
@@ -153,13 +155,14 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
   ctx.fillText(pillLabel, W / 2, footerTop + 72)
 
   // ── 3) 2장째(레시피카드)를 함께 — 친구가 진짜 해먹을 수 있게(랜덤 카드와 동일) ──
-  const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'))
+  // 🚀 PNG → JPEG. 표지는 «그림»이라 무손실일 이유가 없는데 1.38MB 였다(창업자 캡처).
+  const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.92))
   if (!blob) return { ok: false }
-  const file = new File([blob], 'hankki-cover.png', { type: 'image/png' })
+  const file = new File([blob], 'hankki-cover.jpg', { type: 'image/jpeg' })
   const recipeFile = recipeFilePromise ? await recipeFilePromise : null // 이미 병렬로 뜨는 중 → 거의 즉시
   const files = recipeFile ? [file, recipeFile] : [file]
 
-  // ── 4) 공유 / 다운로드 ──
+  // ── 4) 공유 / 「지금 보내기」 ──
   const has2 = files.length > 1
   const payload = { files, title, text: `『${title}』 · 내가 꾸민 레시피 🧡 한끼${has2 ? ' · 재료·레시피 같이!' : ''}\n나도 만들기 → ${url}`, url }
   try {
@@ -173,16 +176,35 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
     }
   } catch (e) {
     if (e && e.name === 'AbortError') return { ok: true, shared: false }
+    // 📮📮 **허가가 끊긴 것이다 — 저장으로 밀지 않는다.** (창업자 2026-08-05 *"내가만든표지는안돼"*)
+    //   폰 공유는 «누른 직후»에만 열리는데 표지 캡처가 십수 초 걸려 그 사이 허가가 만료된다.
+    //   ⭐ 만든 파일을 그대로 돌려주면, 화면이 「지금 보내기」 버튼을 띄운다 —
+    //      그 버튼은 «새 터치»라 허가가 살아 있어 공유창이 반드시 열린다.
+    return { ok: true, shared: false, pending: payload }
   }
-  // 폴백(공유 불가·시간초과) — 표지+레시피 둘 다 저장(레시피가 빠지지 않게)
-  const dl = (b, name) => {
-    const u = URL.createObjectURL(b)
-    const a = document.createElement('a')
-    a.href = u; a.download = name
-    document.body.appendChild(a); a.click(); a.remove()
-    setTimeout(() => URL.revokeObjectURL(u), 1500)
-  }
-  dl(blob, 'hankki-cover.png')
-  if (recipeFile) setTimeout(() => dl(recipeFile, 'hankki-recipe.png'), 400)
+  // 이 폰은 파일 공유 자체가 안 된다 → 저장 (표지＋레시피 둘 다)
+  saveShareFiles(files)
   return { ok: true, shared: false }
+}
+
+// 📮 다 만들어 둔 파일을 «지금» 보낸다 — 반드시 «사용자가 누른 순간»에 부를 것.
+export function sharePendingNow(payload) {
+  const { files } = payload
+  if (!(navigator.canShare && navigator.share)) return null
+  if (navigator.canShare({ files })) return navigator.share(payload)
+  if (files.length > 1 && navigator.canShare({ files: [files[0]] })) return navigator.share({ ...payload, files: [files[0]] })
+  return null
+}
+
+// 💾 저장 — ⛔ `<a>` 를 DOM 에 «붙여야» click 이 먹는다(안 붙이면 아무 일도 안 일어난다).
+export function saveShareFiles(files) {
+  files.forEach((f, i) =>
+    setTimeout(() => {
+      const u = URL.createObjectURL(f)
+      const a = document.createElement('a')
+      a.href = u; a.download = f.name
+      document.body.appendChild(a); a.click(); a.remove()
+      setTimeout(() => URL.revokeObjectURL(u), 1500)
+    }, i * 400)
+  )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -13,7 +13,7 @@ import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { shareDecoratedCover } from '../shareCover'
-import { warmFontCSS } from '../fontEmbed'
+import SendNowSheet from '../components/SendNowSheet'
 import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
 import { dateLabel, openExternal } from '../utils'
@@ -49,8 +49,7 @@ export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateRecipe } = useStore()
   const nav = useNav()
   useWakeLock() // 레시피를 보며 요리할 때 화면이 꺼지지 않게
-  // 🔤 여기서 「꾸민 표지 그대로 보내기」를 쓴다 → 글꼴 꾸러미를 미리 만들어 둔다 (src/fontEmbed.js)
-  useEffect(() => { warmFontCSS() }, [])
+  const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
   const [timer, setTimer] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
   const [logEntry, setLogEntry] = useState(null)
@@ -154,7 +153,8 @@ export default function RecipeDetailScreen({ id }) {
       // 꾸민 표지 + 재료·만드는 법(레시피카드) 2장 함께 — 친구가 진짜 해먹게(랜덤 카드와 동일)
       const res = await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe ? recipeCardRef.current : null })
       // ⛔ 공유가 «저장»으로 떨어졌으면 이유를 말한다 (BragScreen 과 같은 처리 — 창업자 2026-08-03)
-      if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
+      if (res && res.pending) setPending(res.pending)   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
+      else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
     } finally {
       setCoverBusy(false)
@@ -177,6 +177,9 @@ export default function RecipeDetailScreen({ id }) {
         </div>
       )}
       {/* 🎨 꾸민 표지 이미지 만드는 중 — 로딩 오버레이(먹통처럼 안 보이게) */}
+      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다 */}
+      <SendNowSheet pending={pending} onClose={() => setPending(null)} />
+
       {coverBusy && (
         <Portal>
           <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(30,26,22,.55)', backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
