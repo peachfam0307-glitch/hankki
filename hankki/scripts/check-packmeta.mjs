@@ -113,5 +113,40 @@ if (orphan.length) {
 const planned = [...MOTIONS, ...FX].filter((x) => x.pack && PLANNED.has(x.pack) && !x.base)
 if (planned.length) console.log(`  ℹ️ 아직 안 파는 팩에 예약된 것 ${planned.length}개 — ${planned.map((x) => x.label).join(' ')}`)
 
+// ── Ⓓ 팩 배경이 앱에 «실제로» 있나 ───────────────────────
+//   ⛔⛔ **2026-08-05 에 이 검사가 없어서 놓친 것** — 창업자 *"배경이랑 효과도 있어?"* 로 잡혔다.
+//      Ⓑ가 motion·fx 만 보고 **bg 는 안 봤다.** 세어 보니 **다섯 팩 배경이 전부 앱에 없었다**
+//      (클레이-가을밤 · 클레이-핼러윈밤 · 비 오는 창 · 크림 유칼립투스 · 흰 눈·파란 트리).
+//      창업자 원문이 *"**배경부터** 싹 다 보여줘야한다고"* 였는데 그 배경이 통째로 비어 있었다.
+//   📌 배운 것 = **검사를 만들 때 «항목을 다 세었나»를 확인한다.** 반만 만든 검사는 「통과」라고 거짓말한다.
+//   ⚠️ 파는 팩(sellable)은 **막고**, 아직 안 파는 팩은 **경고만** 한다 — 배경은 팔기 직전에 채워도 된다.
+console.log('\n🖼 팩 배경이 앱에 있나')
+const bgLabels = new Set([...jsx.slice(jsx.indexOf('DECOR_BACKGROUNDS = [')).matchAll(/label: '([^']+)'/g)].map((m) => m[1]))
+let bgMiss = 0
+for (const p of PACKS) {
+  if (!p.bg) continue
+  if (bgLabels.has(p.bg)) { ok(`${p.label} 배경 '${p.bg}' 있다`); continue }
+  bgMiss++
+  if (p.sellable) bad(`${p.label} 배경 '${p.bg}' — 앱에 «없다». 파는 팩인데 배경이 비었다`)
+  else console.log(`  ⏳ ${p.label} 배경 '${p.bg}' — 아직 앱에 없다 (안 파는 팩이라 경고만)`)
+}
+if (!bgMiss) ok('배경 전부 있다')
+
+// ── Ⓔ 유료팩 배경이 «진짜로» 잠기나 ─────────────────────
+//   ⛔⛔ **2026-08-05, AAB 굽기 직전에 잡은 구멍.**
+//      「비 오는 창」(가을 유료팩 배경)에 `pack: 'autumn2026'` 을 붙여 놓고
+//      **거르는 곳을 안 만들었다.** 배경 피커는 `!b.hidden` 만 보고 있었다.
+//      → 그대로 나갔으면 **파는 배경이 무료로 풀렸다.**
+//      📌 절대원칙 = *"파는건 공유카드로도 안내보내는게 맞지"* (창업자 2026-08-03)
+//      📌 배운 것 = **꼬리표를 붙이는 것과 그 꼬리표를 «읽는 것»은 다른 일이다.**
+//         꼬리표만 붙이면 코드는 «아무 말 없이» 통과시킨다.
+console.log('\n🔒 유료팩 배경이 잠기나')
+const dec = readFileSync(join(SRC, 'components', 'DecorEditor.jsx'), 'utf8')
+const packedBg = [...jsx.slice(jsx.indexOf('DECOR_BACKGROUNDS = [')).matchAll(/label: '([^']+)'[^}]*?pack: '(\w+)'|pack: '(\w+)'[^}]*?label: '([^']+)'/g)]
+if (!packedBg.length) ok('pack 이 붙은 배경이 아직 없다')
+// ⚠️ `[^)]*` 로 쓰면 `(b) =>` 의 닫는 괄호에서 멈춰 b.pack 에 못 닿는다(2026-08-05 실제로 그랬다)
+else if (/DECOR_BACKGROUNDS\.filter\([\s\S]{0,120}?b\.pack/.test(dec)) ok('pack 붙은 배경을 피커가 거른다')   // ⚠️개수는 정규식이 겹쳐 잡아 부정확하다 — 「있나 없나」만 본다
+else bad('배경 피커가 b.pack 을 «안 본다» — 유료팩 배경이 무료로 풀린다.\n     👉 DecorEditor.jsx 의 DECOR_BACKGROUNDS.filter 에 (!b.pack || ownedPacks().has(b.pack)) 를 넣을 것')
+
 console.log(fail ? `\n❌ 팩 배분표 검사 실패 ${fail}건\n` : '\n✅ 팩 배분표 통과\n')
 process.exit(fail ? 1 : 0)

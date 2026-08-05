@@ -1638,7 +1638,7 @@ html, body { overscroll-behavior: none; }
    아직 주인공(레꾸)을 안 잡아먹는다. */
 .hk-bg-wave { animation: hk-bg-wave 7s linear infinite; }
 
-@media (prefers-reduced-motion: reduce) { [class*="hk-m-"], .hk-fx, .hk-bg-wave { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { [class*="hk-m-"], .hk-fx, .hk-bg-wave, .hk-bg-rain { animation: none !important; } }
 
 /* 첫 사용 코치마크 — 대상 버튼 둘레가 반짝반짝 */
 .coach-ring {
@@ -1655,3 +1655,20 @@ html, body { overscroll-behavior: none; }
   0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
   50% { transform: scale(1.45) rotate(18deg); opacity: 0.75; }
 }
+
+/* 🌧 비 오는 창 — 가을 유료팩 배경. 사진 위에 빗줄기 두 겹이 흐른다.
+   ⚠️⚠️ **세로는 px 로 준다.** `background-position` 의 %는 「컨테이너 − 타일」 기준이라
+      타일 높이가 auto·px 인 경우 계산이 안 선다(여름 물결의 *"물결은 안움직여"* 사고가 이것이었다).
+   ⚠️ **가로는 안 움직인다.** 옮기려면 타일 폭의 정수배를 맞춰야 하는데 그러면 비가 너무 눕는다.
+      → 선 자체를 기울여 그리고 아래로만 흘린다. 「바람에 날리는 비」로 읽힌다.
+   ⭐ 뒤는 한 주기에 **1타일(180px)**, 앞은 **2타일(520px)** — 같은 시간에 다른 거리 = 앞뒤 깊이.
+   ⭐ 사진(세 번째 겹)은 **안 움직인다.** 배경까지 흐르면 멀미가 난다.
+   ⛔ 정확히 «1주기»를 linear infinite 로 — 정수배가 아니면 매 바퀴 이음매가 튄다. */
+@keyframes hk-bg-rain {
+  from { background-position: 0 0,      0 0,      center; }
+  to   { background-position: 0 180px,  0 520px,  center; }
+}
+/* ⛔ 너무 빠르면 「소나기」가 되어 주인공(레꾸)을 잡아먹는다.
+   ⏱ **2초 확정** (창업자 2026-08-05). 1.6초 → *"비가 너무 빨리 떨어져"* → 2초·4초를 나란히 보고 골랐다.
+      ⭐ 4초는 «비가 아니라 흐르는 물»로 보였다 — 비는 어느 정도 속도가 있어야 비로 읽힌다. */
+.hk-bg-rain { animation: hk-bg-rain 2s linear infinite; }

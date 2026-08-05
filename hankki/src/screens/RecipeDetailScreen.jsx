@@ -161,7 +161,9 @@ export default function RecipeDetailScreen({ id }) {
   // (창업자 "레시피 음식사진 변경이 불편해"). 이제 상세 표지에서 한 번 눌러 고르면 즉시 저장된다.
   // 갤러리 사진이 아니라 우리 음식 아이콘으로 연결(창업자 지적) — 사진 쓰고 싶으면 편집 화면에서.
   const pickIcon = (k) => {
-    updateRecipe(r.id, { thumb: 'icon', icon: k, touched: true })
+    // ⭐ iconPicked = 「사람이 직접 골랐다」 — 나중에 제목을 손봐도 이 아이콘을 안 덮는다.
+    //   (EditorScreen 의 자동 재추천이 직접 고른 것까지 덮던 것 · 창업자 제보 2026-08-05)
+    updateRecipe(r.id, { thumb: 'icon', icon: k, iconPicked: true, touched: true })
     nav.showToast('표지 아이콘을 바꿨어요')
   }
   const doDelete = () => {

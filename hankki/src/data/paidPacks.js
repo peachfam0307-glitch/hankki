@@ -50,6 +50,14 @@
 //      그러면 팩에 «안 든» 18컷까지 같이 막혀서 카드에 못 넣는다.
 //      → **`packed` = 팩에 실제로 넣은 컷 명단.** 이 명단에 «있는 것»만 막는다.
 //   ⚠️ `packed` 가 비어 있으면 아직 안 골랐다는 뜻 → 그 팩 접두어를 **전부** 막는다(안전한 쪽).
+// 📅 파는 창(제철) 판정에 쓴다 — 달력 계산은 season.js 한 곳에서만 한다.
+//   ⛔⛔ 2026-08-05: `inWindow` 를 «쓰면서 import 를 빼먹었다».
+//      sellable 이 전부 false 라 그 줄에 안 닿아 **빌드가 멀쩡히 통과했다** —
+//      결제를 켜는 날 처음 죽었을 코드다. 📌 「빌드 통과」는 「안 죽는다」가 아니다.
+//   ⚠️ 확장자(.js)를 «반드시» 붙인다 — 검사 스크립트가 순수 Node 로 이 파일을 읽는데
+//      Node 는 Vite 와 달리 확장자를 안 붙여준다. 빼면 검사가 통째로 못 돈다.
+import { inWindow } from '../season.js'
+
 export const PAID_PACKS = [
   // ⚠️ 숫자는 `docs/꾸미기팩-출시계획-한눈에-2026-07-30.md` **252줄 이하(2026-08-01 확정)** 기준.
   //    ⛔ 그 위쪽(추석 87 · 가을 다꾸/수채 따로)은 **옛 세대**다. 상한 70컷 · 가을 두 팩 통합이 현행.
@@ -315,4 +323,104 @@ export const isPacked = (key) => {
 export const freeOk = (key) => {
   const p = paidPackOf(key)
   return !p || (p.freed || []).includes(String(key))
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 🔒 **서랍 자물쇠** — 「사면 이게 다 열려요」를 서랍에서 보여주는 층
+//
+// ⭐ 창업자 2026-08-03
+//   *"결제붙는날 전체를 다 보여줘야지. 이런게 있으니 사라고 (**배경부터 싹 다 보여줘야한다고**)"*
+//   → 카드 뽑기보다 이게 광고가 세다. 카드는 랜덤이라 «그 팩이 있는 줄»도 모르지만,
+//     자물쇠는 **「사면 이게 다 열린다」가 한눈에 보인다.**
+//   ⚠️ 자물쇠는 **못 쓰는 상태로 보여주는 것**이라 「무료로 나간 것」이 아니다.
+//
+// 🧭 **안 샀을 때와 산 뒤가 다르다** — 이게 설계의 핵심이다
+//   · 안 샀을 때 = **팩 하나가 그룹 하나.** 62컷이 통째로 한 덩어리로 보인다(＝ 사고 싶어진다)
+//   · 산 뒤     = **종류별로 흩어져** 각 탭에 들어간다(＝ 쓰기 편하다)
+//   같은 컷인데 목적이 반대라 담는 모양도 반대다.
+//
+// ⛔ `sellable` 이 false 인 팩은 **아예 안 나온다.** 재심사(8/16) 전엔 결제를 안 켠다.
+//    ⚠️ 「살 수 없는데 자물쇠만 보이는」 상태가 제일 나쁘다 — 사고 싶은데 못 사게 된다.
+
+// 접두어 → 서랍 어느 탭에 담나. **위에서부터 맞는 첫 줄**을 쓰고, 아무 데도 안 맞으면 마지막(소품).
+//   ⚠️ `pf_` 는 «무료» 앱 프레임과 접두어를 나눠 쓰지만, 여기 오는 건 `packed` 명단 안의 컷뿐이라 안전하다.
+export const PACK_TABS = [
+  { tab: 'buddies', kind: '캐릭터', prefixes: ['cs_b', 'hb', 'hd', 'hw_'] },
+  { tab: 'frame', kind: '프레임', prefixes: ['cf2_', 'hf_', 'pf_', 'wf_'] },
+  { tab: 'tape', kind: '마스킹테이프', prefixes: ['ct_', 'cm_', 'ht_', 'pt_', 'wm_'] },
+  { tab: 'deco', kind: '소품·종이', prefixes: [] },   // ← 나머지 전부
+]
+const tabOf = (key) =>
+  PACK_TABS.find((t) => t.prefixes.some((p) => String(key).startsWith(p))) || PACK_TABS[PACK_TABS.length - 1]
+
+// 팩 컷을 종류별로 나눈다 — [{tab, kind, items}]
+export const packSplit = (pack) => {
+  const by = new Map()
+  for (const k of pack.packed || []) {
+    const t = tabOf(k)
+    if (!by.has(t.kind)) by.set(t.kind, { tab: t.tab, kind: t.kind, items: [] })
+    by.get(t.kind).items.push(k)
+  }
+  // PACK_TABS 순서대로 (캐릭터 → 프레임 → 마테 → 소품)
+  return PACK_TABS.map((t) => by.get(t.kind)).filter(Boolean)
+}
+
+// 📅 **파는 창 — 제철에만 서랍에 뜬다** (창업자 2026-08-05 *"기간동안 열리는 것만 보여주자"*)
+//
+//   ⛔ 처음엔 `sellable` 만 보고 켰더니 **8월 서랍에 추석·핼러윈·가을이 한꺼번에** 떴다.
+//      창업자 *"저거 990원 한꺼번에 다 3개가 저렇게 대기하고 있는건 아니지??"* 로 잡혔다.
+//   ✅ `season.js` 의 `inWindow` 를 그대로 쓴다 — **해마다 같은 날짜에 다시 열리는 창**이다.
+//      (절대 날짜로 닫으면 이듬해엔 안 열린다 — 그래서 월-일로 쓴다)
+//   ⚠️ 창을 벗어나도 **산 사람은 그대로 쓴다.** 창은 «서랍에 광고가 뜨는 기간»일 뿐이다.
+//   ⏳ 날짜는 **창업자 확인 대기** — 아래는 계절에 맞춘 첫 제안이다.
+export const SELL_WINDOW = {
+  chuseok: ['09-01', '10-10'],    // 2026 추석 = 9/25
+  halloween: ['10-01', '11-07'],  // 10/31
+  autumn: ['09-01', '11-30'],
+  xmas: ['11-15', '12-31'],
+  winter: ['12-01', '02-28'],     // 연말을 넘는 창 — inWindow 가 처리한다
+}
+
+// 서랍에 올릴 그룹 목록.
+//   owned = 산 팩 키들의 Set (`Stickers.jsx` 의 `ownedPacks()` 가 준다)
+//   ⛔ `sellable` 이 아니면 그 팩은 통째로 빠진다.
+//   ⛔ 산 사람에겐 창을 안 따진다 — 산 물건을 철 지났다고 감추면 안 된다.
+export const packDrawerGroups = (owned = new Set(), now = new Date()) => {
+  const out = []
+  for (const p of PAID_PACKS) {
+    if (!p.sellable || !(p.packed || []).length) continue
+    const mine = owned.has(p.key)
+    if (!mine && SELL_WINDOW[p.key] && !inWindow(SELL_WINDOW[p.key], now)) continue
+    if (mine) {
+      // 🔓 산 뒤 — 종류별로 흩어 각 탭에 넣는다(쓰기 편하게)
+      for (const s of packSplit(p)) {
+        out.push({ key: `pack_${p.key}_${s.tab}`, tab: s.tab, label: `${p.label} · ${s.kind}`, items: s.items, pack: p.key, owned: true })
+      }
+    } else {
+      // 🔒 안 샀을 때 — **고르던 자리에서 만나게** 한다
+      //
+      //   ⛔ 처음엔 ⑴서랍에 62컷을 통째로 폈다가 데코 탭이 192컷으로 밀렸고,
+      //      ⑵그다음엔 배너 한 줄로 줄였는데 이번엔 **「공지」지 「유혹」이 아니었다.**
+      //      마테를 고르는 사람에게 **추석 마테를 안 보여주면서** 팩을 팔 수는 없다.
+      //   ✅ 그래서 **탭마다 그 종류의 맛보기 4컷**을 줄 하나로 둔다.
+      //      마테 탭 → 「추석 팩 · 마스킹테이프 8」 ＋ 마테 4컷 · 친구들 탭 → 캐릭터 4컷.
+      //      리서치에서 말하는 **contextual paywall**(막힌 것에 «닿았을 때» 보여주기)이 이것이다.
+      //      온보딩이나 배너처럼 «맥락 없는 자리»보다 자연스럽다.
+      //   ⚠️ 자물쇠는 **못 쓰는 상태로 보여주는 것**이라 「무료로 나간 것」이 아니다
+      //      (창업자가 폐기한 건 «무료로 나가는 대표 8컷»이지 자물쇠가 아니다).
+      //   ⭐ 전체 62컷은 **팩 창**이 보여준다 — `all` 로 같이 실어 보낸다.
+      const split = packSplit(p)
+      const meta = split.map((s) => ({ kind: s.kind, n: s.items.length }))
+      for (const s of split) {
+        out.push({
+          key: `pack_${p.key}_${s.tab}`, tab: s.tab,
+          label: p.label, kind: s.kind,
+          items: s.items.slice(0, 4),    // 서랍에 보일 맛보기
+          all: p.packed,                 // 팩 창이 쓸 전체
+          pack: p.key, owned: false, locked: true, price: p.price, total: p.total, split: meta,
+        })
+      }
+    }
+  }
+  return out
 }

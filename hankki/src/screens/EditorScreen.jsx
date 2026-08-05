@@ -63,6 +63,13 @@ export default function EditorScreen({ id, prefill }) {
   const ingRef = useRef(null) // 재료 입력칸
   const stepRef = useRef(null) // 만드는 법 입력칸
   const titleRef = useRef(null) // 제목 입력칸 — 제목 없이 저장 누르면 여기로 데려간다
+  // 🖐 이 아이콘을 «사람이 직접 골랐나» — 골랐으면 제목이 바뀌어도 지킨다.
+  //   ⛔ 2026-08-05 창업자 제보: 「새로운 음식으로 직접 바꾸고 저장하면 안 바뀜.
+  //      다시 들어가서 또 누르면 바뀜」 → 제목까지 손보는 날엔 직접 고른 게 통째로 버려졌다.
+  //      (v8.58 의 「제목 바꾸면 아이콘 재추천」이 «직접 고른 것»까지 덮고 있었다.
+  //       두 번째엔 제목이 이미 고쳐져 있어 그대로 남는다 — 그래서 「한 번엔 안 바뀐다」로 보였다.)
+  //   📌 자동 추천분만 다시 추천하고, 손으로 고른 것은 안 건드린다.
+  const [iconPicked, setIconPicked] = useState(() => !!editing?.iconPicked)
   // 해당 칸 커서 위치에 단위/수량을 넣는다. 영어 키보드 전환 없이 g·t·T 를 톡 넣기 위함.
   const insertUnit = (u, ref, field) => {
     const el = ref.current
@@ -311,12 +318,16 @@ export default function EditorScreen({ id, prefill }) {
     const title = f.title.trim()
     const ings = splitLines(f.ingredients)
     const stps = splitLines(f.steps)
+    // 아이콘을 그대로 둘 것인가 = 직접 골랐거나 · 제목이 그대로거나
+    const keepIcon = !!f.icon && (iconPicked || title === (editing?.title || ''))
     const patch = {
       title,
       thumb: f.thumb,
       // 아이콘: 제목이 바뀌면 새 제목으로 다시 자동 추천(창업자 제보 — "제목 육회로 바꿔도 아이콘 안 바뀜").
-      // 제목 그대로면 기존 아이콘(직접 고른 것 포함) 유지. 아이콘 비었으면 제목으로 추천.
-      icon: (f.icon && title === (editing?.title || '')) ? f.icon : guessFoodIcon(title),
+      // ⭐ 단 «직접 고른 것»은 제목이 바뀌어도 지킨다(iconPicked · 창업자 제보 2026-08-05).
+      //    자동 추천분만 다시 추천한다 — 그래야 위 두 제보가 둘 다 산다.
+      icon: keepIcon ? f.icon : guessFoodIcon(title),
+      iconPicked: keepIcon ? iconPicked : false, // 다시 추천된 것은 「자동」으로 되돌린다
       emoji: f.emoji || '🍽️',
       label: clampGraphemes(f.label.trim(), 6),
       image: f.image,
@@ -529,7 +540,8 @@ export default function EditorScreen({ id, prefill }) {
 
           {f.thumb === 'icon' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <FoodIconPicker value={f.icon || guessFoodIcon(f.title)} onChange={(k) => set('icon', k)} size={74} />
+              {/* ⭐ 「직접 골랐다」를 같이 남긴다 — 이게 없으면 제목을 손보는 순간 고른 게 버려진다 */}
+              <FoodIconPicker value={f.icon || guessFoodIcon(f.title)} onChange={(k) => { set('icon', k); setIconPicked(true) }} size={74} />
               <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.55 }}>탭해서 아이콘을 골라요.<br />제목에 맞춰 자동 추천돼요.</div>
             </div>
           )}

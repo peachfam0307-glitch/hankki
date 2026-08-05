@@ -81,8 +81,13 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
   } else {
     inner = (
       <div style={center}>
-        {/* 딥 배경에선 컬러 아이콘이 묻히니 은은한 밝은 원(스포트)을 뒤에 깔아 또렷하게 */}
-        {dark && <span aria-hidden="true" style={{ position: 'absolute', inset: '17%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(248,243,235,.92) 58%, rgba(248,243,235,0) 100%)' }} />}
+        {/* ⛔⛔ 「어두운 배경엔 밝은 원(스포트)」은 «없다». 다시 넣지 말 것. (창업자 2026-08-05 *"어두운배경에만 원 생기는 거 별로야"* · *"빼서 만들어줘. 원래대로"*)
+            v8.5(2026-07-22)에 내가 딥 배경 넣으며 같이 넣은 것이고 창업자 판정을 받은 적이 없었다.
+            게다가 그 원이 «아이콘 위»에 칠해져 아이콘을 하얗게 덮고 있었다(창업자 폰 제보 2026-08-05).
+            📌 배운 것 = CSS 는 «자리를 잡은(position≠static) 것»을 «흐름 속 그림»보다 «나중에» 칠한다.
+               FoodIcon 은 그냥 <img> 라 자리를 안 잡아서, 「뒤에 깐다」고 쓴 원이 92% 흰 장막이 됐다
+               (실측 — 같은 아이콘이 밝은 판에선 채도 52%인데 딥플럼 위에선 8%·밝기 244까지 죽었다).
+               ⭐ 그래서 층을 고칠 게 아니라 **원 자체가 없는 게 답이었다.** 🔒 `check-thumb.mjs` 가 다시 들어오는 걸 막는다. */}
         <FoodIcon name={recipe.icon || guessFoodIcon(recipe.title)} size={iconSize} />
       </div>
     )

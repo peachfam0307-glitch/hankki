@@ -5,8 +5,9 @@ import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
 import { seasonRank, isReleased } from '../season'
 import GiftPackSheet from './GiftPackSheet'
+import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
-import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
+import { StickerArt, STICKER_GROUPS, drawerGroups, ownedPacks, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -70,6 +71,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
   const [gift, setGift] = useState(() => needsGiftPack())
+  // 💰 자물쇠를 누르면 열리는 「사기」 시트. null 이면 안 떠 있다.
+  //    ⛔ sellable 이 false 인 동안엔 자물쇠 자체가 안 나오므로 이 값은 영영 null 이다.
+  const [buyPack, setBuyPack] = useState(null)
 
   // 🧷 배경격(액자 프레임·포스트잇·메모라벨) = 그 위에 스티커·글자를 얹는 밑판. 이건 탭해도 맨 앞으로 안 올린다(안 그러면 눌렀을 때 애써 꾸민 작은 스티커·글자가 다 뒤로 숨어버림 — 창업자 제보 2026-07-26).
   // 🧷 '밑판'격 아이템 — 탭해도 맨 앞으로 올리지 않는다(올리면 위에 붙인 작은 스티커·글자가 다 숨는다).
@@ -172,9 +176,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
   // 🎁 **선물(`gift`)은 무조건 맨 위** — 창업자 2026-08-03 *"친구들 제일 아래있어 잘 모름"*.
   //    한정판보다도 위다: 한정판은 「지금 아니면 못 쓴다」이고 선물은 **「있는 줄도 모른다」**라
   //    못 찾는 쪽이 더 나쁘다. (축하 3컷은 친구들 탭 맨 아래라 아무도 못 봤다)
-  const groupsByTab = (t) => STICKER_GROUPS
+  // 🔒 **유료팩(자물쇠)은 선물 바로 다음** — 광고라서 눈에 띄어야 팔린다.
+  //    한정판(제철)보다 위인 이유 = 한정판은 「지금 아니면 못 쓴다」이고
+  //    자물쇠는 **「이런 게 있는 줄도 모른다」**라 못 보는 쪽이 더 나쁘다(선물과 같은 이유).
+  //    ⛔ 산 뒤엔 자물쇠가 아니라 «내 것»이므로 이 새치기를 안 한다(locked 일 때만).
+  //    ⚠️ `STICKER_GROUPS` 가 아니라 `drawerGroups()` 를 쓴다 — 직접 쓰면 유료팩이 조용히 빠진다.
+  const groupsByTab = (t) => drawerGroups()
     .filter((x) => x.tab === t && isReleased(x.from))
     .sort((a, b) => ((b.gift ? 1 : 0) - (a.gift ? 1 : 0))
+      || ((b.locked ? 1 : 0) - (a.locked ? 1 : 0))
       || (seasonRank(a.season) - seasonRank(b.season))
       || ((b.recolor ? 1 : 0) - (a.recolor ? 1 : 0)))
 
@@ -251,13 +261,54 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
       background: 'var(--brown)', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
     }}>선물</span>
   )
-  // 스티커 그룹 한 덩어리(소제목 + 그리드)
-  const renderStickerGroup = (g) => (
-    <div className="decor-sec" key={g.key}>
-      {g.label && <div className="decor-sec-label">{g.label}{g.gift && <GiftTag />}</div>}
-      <div className="decor-grid">{g.items.map(renderCell)}</div>
-    </div>
+  // 🔒 자물쇠 — ⛔유니코드 이모지 금지라 SVG 로 그린다
+  const LockIcon = ({ size = 13 }) => (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ verticalAlign: '-1.5px' }}>
+      <path d="M7.5 10.5V7a4.5 4.5 0 019 0v3.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+      <rect x="4.6" y="10" width="14.8" height="10.8" rx="3.1" fill="currentColor" />
+    </svg>
   )
+  // 스티커 그룹 한 덩어리(소제목 + 그리드)
+  //
+  // 🔒 **잠긴 유료팩은 「팩 전체를 펼쳐」 보여준다** (창업자 2026-08-03
+  //    *"결제붙는날 전체를 다 보여줘야지. 이런게 있으니 사라고 배경부터 싹 다"*)
+  //    ⚠️ 몇 컷만 맛보기로 보여주지 않는다 — 그러면 «있는 줄»을 모른다.
+  //    ⚠️ 흐리게만 하고 **그림은 다 보인다.** 못 쓰게 막는 것이지 감추는 게 아니다.
+  const renderStickerGroup = (g) => {
+    // 🔒 **잠긴 팩은 서랍에 「한 줄」로만 둔다 — 격자는 안 편다** (창업자 2026-08-05
+    //    *"이런 방식말고 따로 안내팝업이나 창을 만들어서 보여주면 안돼?"*)
+    //
+    //   ⛔ 처음엔 서랍에 62컷을 통째로 폈다. 실물을 찍어 보니 **데코 탭에 192컷**(추석62＋핼러윈64＋가을66)이
+    //      쌓여 «무료 스티커를 쓰려면 192칸을 지나 내려가야» 했다. 서랍은 작업하는 자리인데 광고가 그걸 밀었다.
+    //   ✅ 그래서 서랍엔 **배너 한 줄**만 두고, 팩 전체는 **따로 열리는 창**에서 보여준다.
+    //      *"전체를 다 보여줘야지"* 는 그 창이 지킨다 — 서랍이 아니라 창에서.
+    //   ⭐ 배너 모양은 위 「선물」 배너와 같게 맞춘다. 같은 자리·같은 문법이라 배울 게 없다.
+    if (g.locked) {
+      return (
+        <button
+          key={g.key} className="press" onClick={() => setBuyPack(g)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px', marginBottom: 10,
+            borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left',
+          }}
+        >
+          <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 800, background: '#b5714a', color: '#fff', flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <LockIcon size={11} />{g.price.toLocaleString()}원
+          </span>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
+            {g.label} 꾸미기 팩 · {g.items.length}컷
+          </span>
+          <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
+        </button>
+      )
+    }
+    return (
+      <div className="decor-sec" key={g.key}>
+        {g.label && <div className="decor-sec-label">{g.label}{g.gift && <GiftTag />}</div>}
+        <div className="decor-grid">{g.items.map(renderCell)}</div>
+      </div>
+    )
+  }
 
   return (
     <Portal>
@@ -495,7 +546,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
     · ⛔ **뱃지는 안 된다** — 스와치가 42px뿐이라 뭘 얹으면 **그림을 가린다.** 그림이 곧 상품이다.
     · 그리고 **맨 위로 모은다** — 배경이 23개라 흩어지면 못 찾는다(개수는 더 늘어난다).
     ⚠️ `hk-` 클래스라 **「움직임 줄이기」 설정에 같이 걸린다**(`prefers-reduced-motion`). */}
-                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden)
+                    {/* ⛔⛔ **유료팩 배경은 «산 사람에게만»** — 2026-08-05 에 이 줄이 `hidden` 만 보고 있어서
+                        「비 오는 창」(가을 유료팩 배경)이 **무료로 그대로 뜰 뻔했다.**
+                        `pack` 을 붙여만 놓고 «거르는 곳»을 안 만든 것이다. AAB 굽기 직전에 잡았다.
+                        📌 절대원칙 = *"파는건 공유카드로도 안내보내는게 맞지"* (창업자 2026-08-03)
+                        📌 배운 것 = **꼬리표를 붙이는 것과 그 꼬리표를 «읽는 것»은 다른 일이다.** */}
+                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden && (!b.pack || ownedPacks().has(b.pack)))
                       .map((b, i) => ({ b, i }))
                       .sort((x, y) => (y.b.anim ? 1 : 0) - (x.b.anim ? 1 : 0) || x.i - y.i)   // 안정 정렬
                       .map(({ b }) => {
@@ -617,6 +673,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
         {/* 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번. 「구경하기」는 프레임 탭으로 데려간다. */}
         {gift && (
           <GiftPackSheet onClose={() => setGift(false)} onGo={(cat) => setCat(cat || 'frame')} />
+        )}
+        {/* 💰 꾸미기 팩 사기 — 서랍 자물쇠를 누르면 열린다.
+            ⛔ sellable 이 false 인 동안엔 자물쇠가 아예 안 나오므로 이 시트도 안 뜬다. */}
+        {buyPack && (
+          <PackBuySheet pack={buyPack} onClose={() => setBuyPack(null)} onBought={() => { /* ⏳ 소유 반영은 다음 단계(앱 시작 때 ownedPackKeys 로 읽는다) */ }} />
         )}
       </div>
     </Portal>
