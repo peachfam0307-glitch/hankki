@@ -31,7 +31,13 @@ await page.addInitScript(() => {
   navigator.share = () => {
     const age = Math.round(performance.now() - lastTap)
     if (age > 1500) { window.__log.push(`⛔ NotAllowedError · 누른 지 ${age}ms`); return Promise.reject(Object.assign(new Error('x'), { name: 'NotAllowedError' })) }
-    window.__log.push(`✅ 공유창 열림 · 누른 지 ${age}ms`)
+    window.__log.push(`✅ 공유창 열림 · 누른 지 ${age}ms · 파일 ${d.files.length}장`)
+    window.__out = []
+    for (const f of d.files) {
+      const fr = new FileReader()
+      fr.onload = () => window.__out.push({ name: f.name, url: fr.result })
+      fr.readAsDataURL(f)
+    }
     return Promise.resolve()
   }
   const oc = HTMLAnchorElement.prototype.click
@@ -73,6 +79,13 @@ const log = await page.evaluate(() => window.__log)
 console.log('\n📜 무슨 일이 있었나')
 if (!log.length) console.log('   ⛔⛔ 아무 일도 안 일어났다')
 for (const l of log) console.log('   ' + l)
-await page.screenshot({ path: '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/cover-send.png' })
+await page.waitForTimeout(1500)
+const out = await page.evaluate(() => window.__out || [])
+const { writeFileSync } = await import('node:fs')
+for (const o of out) {
+  const f = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/cover-' + o.name
+  writeFileSync(f, Buffer.from(o.url.split(',')[1], 'base64'))
+  console.log('   💾 ' + f)
+}
 await browser.close()
 process.exit(log.some((l) => l.startsWith('✅')) ? 0 : 1)
