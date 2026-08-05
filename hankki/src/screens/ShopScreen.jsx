@@ -260,6 +260,8 @@ function Curation() {
   // ⛔⛔ 2026-08-05 — 3 → **2**. 창업자 *"전체탭에서는 2개씩만 보여주고 더보기 넣고,
   //   간장, 된장 등등 2개씩만 넣고 더보기 넣자."*
   const FOLD = 2
+  // 🧾 큰 칸을 골랐을 때 «소칸(줄)» 몇 개까지 — 창업자 *"양념류가 9줄이야. 3개정도만 보이고 아래 더보기"*
+  const CATFOLD = 3
   const [openG, setOpenG] = useState({})   // 펼쳤나 — 열쇠는 `g:큰칸` · `c:소칸` (이름이 겹쳐도 안 섞이게)
   const [openCard, setOpenCard] = useState({}) // 카드별 «설명을 펼쳤나»
   // 큰 칸으로 다시 묶는다 — ⚠️ 소제목(작은 칸)은 그대로 살린다. 접히는 건 «개수»뿐이다.
@@ -454,9 +456,17 @@ function Curation() {
                 //   ·「전체」  = 훑는 화면 → **큰 칸 통째로 2개** ＋ 큰 칸 더보기
                 //   · 큰 칸  = 고른 화면 → **소칸(간장·된장)마다 2개** ＋ 소칸마다 더보기
                 //   두 화면에서 「2개」의 «단위»가 다르다 — 전체에서 소칸마다 2개면 23칸 × 2 = 오히려 길어진다.
+                //
+                // ⛔ 그래도 아직 길었다 — 창업자 *"양념류가 9줄이야. 양념류도 3개정도만 보이고 아래 더보기로
+                //    정리(나머지 기름육수 고기등등..)다 이렇게 가자."* **9줄 = 소칸 9개**가 맞다
+                //    (간장·된장·맛술·굴소스·액젓·소금·설탕·소스·고춧가루).
+                //    📌 **제품을 줄여도 «칸 이름»이 줄줄이 남으면 화면은 그대로 길다.** 줄 단위로도 상한을 둔다.
+                //    → 큰 칸을 골라도 **소칸 3개까지** ＋ 「양념 6개 더보기」.
                 const whole = curCat === '전체'
-                const gOn = openG[`g:${G.name}`] || total <= FOLD
-                const cats = whole && !gOn ? take(G.cats, FOLD) : G.cats
+                const gOn = openG[`g:${G.name}`]
+                const cats = whole
+                  ? (gOn || total <= FOLD ? G.cats : take(G.cats, FOLD))
+                  : (gOn || G.cats.length <= CATFOLD ? G.cats : G.cats.slice(0, CATFOLD))
                 const more = (label, n, key) => (
                   // ⭐ 「몇 개가 더 있는지」를 숫자로 적는다 — 「더보기」만 있으면 누를지 말지 못 정한다
                   <button
@@ -482,7 +492,9 @@ function Curation() {
                         </div>
                       )
                     })}
-                    {whole && total > FOLD && more(G.name, total - FOLD, `g:${G.name}`)}
+                    {whole
+                      ? total > FOLD && more(G.name, total - FOLD, `g:${G.name}`)
+                      : G.cats.length > CATFOLD && more(G.name, G.cats.length - CATFOLD, `g:${G.name}`)}
                   </div>
                 )
               })}

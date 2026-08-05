@@ -65,6 +65,37 @@ else {
   if (!seen) bad++
 }
 
+// 🧾 창업자 *"양념류가 9줄이야. 3개정도만 보이고 아래 더보기"* — «줄(소칸)» 개수에도 상한이 있나
+console.log('\n🧾 큰 칸 「양념」 — 줄(소칸)이 몇 개 보이나')
+const CATS = ['간장', '된장', '맛술', '굴소스', '액젓', '소금', '설탕', '소스', '고춧가루']
+const rows = () => page.evaluate((cats) => {
+  // 소칸 이름표만 센다 — 제품 이름에 같은 글자가 있어도 안 걸리게 «머리글 칸»만 본다
+  const heads = [...document.querySelectorAll('div')].filter((d) => {
+    const t = (d.textContent || '').trim()
+    return d.children.length <= 1 && cats.includes(t)
+  })
+  return [...new Set(heads.map((d) => d.textContent.trim()))]
+}, CATS)
+const chip2 = page.getByRole('button', { name: /^양념$/ }).first()
+if (!(await chip2.count())) { console.log('  ⛔ 양념 칩을 못 찾았다'); bad++ }
+else {
+  await chip2.click()
+  await page.waitForTimeout(700)
+  const before = await rows()
+  console.log(`  펼치기 전 줄 = ${before.length}개 — ${before.join(' · ')}`)
+  if (before.length > 3) { console.log('  ⛔ 3줄을 넘는다'); bad++ }
+  const gMore = page.getByText(/^양념 \d+개 더보기$/)
+  if (!(await gMore.count())) { console.log('  ⛔ 「양념 N개 더보기」가 없다 — 나머지를 꺼낼 길이 없다'); bad++ }
+  else {
+    await gMore.first().click()
+    await page.waitForTimeout(500)
+    const after = await rows()
+    console.log(`  더보기 누른 뒤 줄 = ${after.length}개`)
+    if (after.length !== CATS.length) { console.log(`  ⛔ 9줄이 다 안 나온다`); bad++ }
+    else console.log('  ✅ 3줄 → 더보기 → 9줄 다 나온다')
+  }
+}
+
 await page.screenshot({ path: '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/shop-hidden.png', fullPage: true })
 await browser.close()
 console.log(bad ? `\n⛔ 통과 못 함 (${bad}건)` : '\n✅ 통과 — 자른 것에 꺼낼 길이 다 있다')
