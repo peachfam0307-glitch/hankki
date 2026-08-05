@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Thumb from '../components/Thumb'
@@ -6,7 +6,7 @@ import DecorLayer from '../components/DecorLayer'
 import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 import Portal from '../components/Portal'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
-import { shareDecoratedCover } from '../shareCover'
+import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
 import SendNowSheet from '../components/SendNowSheet'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
@@ -39,6 +39,32 @@ export default function BragScreen() {
   const appUrl = location.origin + location.pathname.replace(/[^/]*$/, '')
   const isDecorated = (r) => !!((r?.decor && r.decor.length) || (r?.decorBg && r.decorBg !== 'none') || r?.thumb === 'none')
   const hasRecipe = (r) => !!((r?.ingredients || []).length || (r?.steps || []).length)
+  const infoOf = (r) => [r.time ? `${r.time}분` : null, r.servings ? `${r.servings}인분` : null, r.difficulty || null].filter(Boolean)
+
+  // ⭐⭐ 미리 캡처 — 선택 시트(「꾸민 표지 / 랜덤 카드」)가 «뜨는 순간» 표지를 백그라운드로 그린다.
+  //   ⛔ 왜 = 폰 공유는 «누른 직후»에만 열리는데 표지 그리기가 20초 넘게 걸린다.
+  //      다 그릴 때쯤엔 허가가 끊겨 「지금 보내기」를 한 번 더 눌러야 했다(창업자 2026-08-05).
+  //   ⭐ 고르는 «동안» 그려두면 누른 순간엔 이미 다 돼 있다 — 랜덤 카드가 v9.63부터 쓰던 검증된 처방.
+  const prepRef = useRef(null)
+  useEffect(() => {
+    prepRef.current = null
+    if (!pick || !isDecorated(pick)) return
+    let alive = true
+    const t = setTimeout(() => {
+      if (!alive || !coverRef.current) return
+      const p = buildCoverPayload({
+        coverEl: coverRef.current,
+        title: pick.title,
+        info: infoOf(pick),
+        appUrl,
+        recipeEl: hasRecipe(pick) ? recipeCardRef.current : null,
+      })
+      p.catch(() => { /* 실패하면 누를 때 다시 만든다 */ })
+      prepRef.current = p
+    }, 80) // 숨은 표지·레시피카드가 붙고 레이아웃이 잡힐 시간
+    return () => { alive = false; clearTimeout(t) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pick])
 
   // 🎨 내가 꾸민 표지 그대로 보내기 (상세 화면의 doShareCover와 같은 방식 — 화면 밖 표지를 캡처)
   const sendCover = async () => {
@@ -51,12 +77,14 @@ export default function BragScreen() {
       nav.showToast('먼저 표지를 예쁘게 꾸며볼까요?')
       return
     }
+    const prepared = prepRef.current // ⛔ 시트가 뜰 때 시작한 미리 캡처를 손에 쥔다
     setBusy(true) // 로딩 오버레이(먹통처럼 안 보이게)
-    const info = [r.time ? `${r.time}분` : null, r.servings ? `${r.servings}인분` : null, r.difficulty || null].filter(Boolean)
+    const info = infoOf(r)
     await new Promise((res) => setTimeout(res, 60)) // 숨은 표지 레이아웃(글자 크기 기준 폭)이 잡힐 시간
     try {
       // 재료·만드는 법이 있으면 레시피카드도 2장째로 함께(친구가 진짜 해먹게)
-      const res = await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe(r) ? recipeCardRef.current : null })
+      // ⭐ 미리 캡처가 다 됐으면 여기서 «기다림 없이» 공유창이 열린다
+      const res = await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe(r) ? recipeCardRef.current : null, prepared })
       // ⛔ 공유가 «저장»으로 떨어지면 그 이유를 말해준다 — 창업자 2026-08-03
       //    *"내 레시피꾸민거 보내려고하면 다운로드하라고 뜨고"*. 갑자기 다운로드 창이 뜨면
       //    유저는 «고장»으로 읽는다. 저장된 것 자체는 정상 동작이니 **한 줄만 붙이면 오해가 안 생긴다.**
