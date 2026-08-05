@@ -456,14 +456,41 @@ function splitParagraphSteps(arr) {
 // 한 동작이 줄바꿈으로 잘려 조각난 순서를 앞 단계에 붙인다.
 // 앞 줄이 문장으로 안 끝났는데(=이어지는 중) 다음 줄이 아주 짧은 꼬리면 합친다. ("…딱 1분 30초" + "익혀주세요.")
 const STEP_ENDING = /(?:니다|세요|어요|아요|해요|져요|까요|네요|든요|께요|을게요|다|요)\s*[.!)~"']*\s*$|[.!…]["')\]]*\s*$/
+// ⛔⛔ 2026-08-05 — **창업자 캡처 세 장 중 «두 장»에서 문장이 반 토막 났다.**
+//   ①「…물에 담가 1시간」 / 「동안 불려줍니다.」   → 9단계가 10단계로 늘어났다
+//   ②「…다진마늘 (매운 고추 넣으셔도 OK!)」 / 「넣고 맛소금과 설탕, 순후추로 간을 합니다」
+//   ③「(간장을 넣으시면 … 해 보세요!」 / 「굴 국물이 … 맛있어요!)」  ← 괄호가 두 줄에 걸쳤다
+//
+//   뿌리 셋 —
+//   ⓐ **7자 제한**: 「동안 불려줍니다.」는 공백 빼고 8자라 «한 글자 차이»로 안 붙었다
+//   ⓑ **괄호에 속았다**: 「…OK!)」 로 끝나 문장이 끝난 «것처럼» 보였다(안은 곁말인데)
+//   ⓒ **괄호가 두 줄에 걸치면** 열린 채로 끊긴다
+const OPENERS = '([{（'
+const CLOSERS = ')]}）'
+// 괄호가 아직 안 닫혔나 — 닫힐 때까지는 무조건 한 문장이다
+function hasOpenBracket(s) {
+  let n = 0
+  for (const ch of s) { if (OPENERS.includes(ch)) n++; else if (CLOSERS.includes(ch)) n-- }
+  return n > 0
+}
+// 괄호 «안»은 곁말이라 문장의 끝을 판단할 때 빼고 본다
+const stripParens = (s) => s.replace(/[([{（][^)\]}）]*[)\]}）]/g, ' ').trim()
+// 앞 문장에 «붙는 말»로 시작하면 길이와 상관없이 붙인다 — 홀로 설 수 없는 말들
+const GLUE_HEAD = /^(?:동안|후에|후|뒤에|뒤|정도|가량|쯤|까지|부터|만큼|째|간|경|이내|이상|이하|남짓|씩)\b/
 function mergeStepFragments(arr) {
   const out = []
   for (const s of arr) {
     const prev = out[out.length - 1]
-    const prevOpen = prev && !STEP_ENDING.test(prev)
-    if (prev && prevOpen && s.replace(/\s/g, '').length <= 7) {
-      out[out.length - 1] = (prev + ' ' + s).trim()
-      continue
+    if (prev) {
+      const bare = stripParens(prev) || prev
+      const prevOpen = !STEP_ENDING.test(bare)
+      const glue = GLUE_HEAD.test(s.trim())
+      // 7 → 25자. ⚠️ 앞줄이 «미완성일 때만» 늘렸다 — 멀쩡히 끝난 문장엔 아무것도 안 붙는다.
+      const short = s.replace(/\s/g, '').length <= 25
+      if (hasOpenBracket(prev) || (prevOpen && (glue || short))) {
+        out[out.length - 1] = (prev + ' ' + s).trim()
+        continue
+      }
     }
     out.push(s)
   }

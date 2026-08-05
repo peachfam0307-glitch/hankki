@@ -299,16 +299,38 @@ function reconcileCooked(recipes, diary) {
   })
 }
 
+// 🗣 **이미 저장된 「가져온 레시피」의 말끝을 한 번만 해요체로 다듬는다.** (창업자 결정 2026-08-05)
+//   ⛔⛔ 뿌리 = 우리는 «가져오는 순간»에만 다듬었다. 그래서 어제 저장한 세 편이
+//      「~줍니다 · ~합니다 · ~냅니다」 로 그대로 남았다(창업자 캡처 3장 · 08:42~43).
+//      ⭐ 어제 「이미 깔린 폰을 안 봤다」로 세 번 터진 것과 **같은 모양**이다.
+//   ⚠️ **직접 타이핑한 레시피(`manual`)와 기본 레시피(`hankki`)는 건드리지 않는다** —
+//      창업자 지시: *"가져온 것만 다듬기"*. 내가 쓴 말투는 내 것이다.
+//   ⚠️ `source` 가 없는 옛 레시피도 그대로 둔다 — 어디서 왔는지 모르면 손대지 않는다.
+const POLITE_V = 1
+const KEEP_VOICE = new Set(['manual', 'hankki']) // 직접 쓴 것 · 기본 제공
+function migratePolite(recipes, saved) {
+  if ((saved.politeV || 0) >= POLITE_V) return { recipes, politeV: saved.politeV }
+  const out = recipes.map((r) => {
+    if (!r || !Array.isArray(r.steps) || !r.steps.length) return r
+    if (!r.source || KEEP_VOICE.has(r.source)) return r
+    const steps = politeSteps(r.steps)
+    return steps.some((s, i) => s !== r.steps[i]) ? { ...r, steps } : r
+  })
+  return { recipes: out, politeV: POLITE_V }
+}
+
 function initialState() {
   const saved = load()
   if (saved) {
     const mig = migrateBasics(saved)
     const memoMig = migrateMemos(mig.recipes, saved)
+    const politeMig = migratePolite(memoMig.recipes, saved)
     const diary = saved.diary || []
     return {
-      recipes: reconcileCooked(memoMig.recipes, diary),
+      recipes: reconcileCooked(politeMig.recipes, diary),
       seedV: mig.seedV,
       memoCleanV: memoMig.memoCleanV,
+      politeV: politeMig.politeV,
       removedSeedIds: saved.removedSeedIds || [],
       folders: saved.folders
         ? (saved.folders.includes('아시안') ? saved.folders : [...saved.folders, '아시안'])
@@ -325,6 +347,7 @@ function initialState() {
     recipes: seedRecipes,
     seedV: BASICS_VERSION,
     memoCleanV: MEMO_CLEAN_V,
+    politeV: POLITE_V,
     removedSeedIds: [],
     folders: ['한식', '양식', '일식', '간식', '아시안'],
     profile: PROFILE_DEFAULT,

@@ -111,13 +111,66 @@ const ENDINGS = [
   ['준다', '줘요'], // 일반 규칙 — '넣어준다→넣어줘요' 등 (맨 마지막에)
 ]
 
+// ── 🈁 한글 낱자 다루기 (합쇼체를 «만들어내기» 위한 최소 도구) ──
+const HAN = 0xac00
+const isHangul = (ch) => { const c = ch.charCodeAt(0) - HAN; return c >= 0 && c < 11172 }
+const jong = (ch) => (ch.charCodeAt(0) - HAN) % 28 // 받침 번호 (0=없음, 4=ㄴ, 17=ㅂ)
+const setJong = (ch, j) => String.fromCharCode(HAN + Math.floor((ch.charCodeAt(0) - HAN) / 28) * 28 + j)
+
+// ⛔⛔ 2026-08-05 — **창업자가 실제로 가져온 레시피 세 편이 통째로 안 바뀌었다.**
+//   창업자 *"니다로 끝나는게 많음. 다른건 대부분해요체. 완성입니다.로 된것도 한두개있고"*
+//   실물(08:42~08:43 캡처) = 「끓여줍니다 · 넣어줍니다 · 내어줍니다 · 만들어 줍니다 · 썰어줍니다 ·
+//   볶아줍니다 · 불려줍니다 · 간을 합니다 · 완성합니다 · 끌어냅니다 · 만듭니다」
+//   ⭐ 블로그 레시피는 «합쇼체(~ㅂ니다/습니다)»가 기본이다. 우리 사전엔 «한다체»만 있었다.
+//
+// ⭐⭐ **새 동사를 늘리지 않는다 — 위 사전에서 «합쇼체를 만들어» 쓴다.**
+//   「준다→줘요」 가 있으면 「줍니다→줘요」 도 저절로 생긴다. 92개가 그대로 두 배가 된다.
+//   ⚠️ 그래서 **틀리게 바꿀 위험이 안 늘어난다** — 이미 검증된 짝에서만 파생된다.
+//
+//   만드는 법 (한국어 활용 그대로):
+//     · 「볶는다」 → 「는다」를 떼면 어간 「볶」 → **「볶습니다」**
+//     · 「끓인다」 → 받침 ㄴ 을 떼면 어간 「끓이」 → ㅂ 받침을 붙여 **「끓입니다」**
+//       (「썬다」→「써」→**「썹니다」** · 「만든다」→「만드」→**「만듭니다」** — ㄹ 탈락도 그대로 맞는다)
+//   ⛔ 「볶기」 같은 «이름씨꼴»은 만들지 않는다 — 「밥 짓기」처럼 진짜 이름씨인 말이 망가진다.
+//      (실물 세 편에도 그렇게 끝나는 줄은 없었다. 필요하면 위 사전에 한 줄씩 넣는다.)
+function politeFromFormal(from) {
+  if (from.endsWith('는다')) return from.slice(0, -2) + '습니다' // 볶는다 → 볶습니다
+  // 「~ㄴ다」 — 받침 ㄴ 은 «맨 뒤 「다」 앞» 글자에 있다(「준다」의 「준」).
+  const stem = from[from.length - 2]
+  if (from.length >= 2 && isHangul(stem) && jong(stem) === 4) {
+    return from.slice(0, -2) + setJong(stem, 17) + '니다' // 준다→줍니다 · 끓인다→끓입니다 · 썬다→썹니다
+  }
+  return null // 「곱다」·명사형(「완성」·「볶아주기」)은 만들지 않는다
+}
+
+// 사전에서 자동으로 불어난 합쇼체 짝
+const FORMAL = ENDINGS.map(([from, to]) => {
+  const f = from.endsWith('다') ? politeFromFormal(from) : null
+  return f ? [f, to] : null
+}).filter(Boolean)
+
+// 사전으로 못 만드는 것 — 「~입니다」·「~됩니다」 는 동사가 아니라 붙는 말이라 따로 둔다.
+//   ⭐ 창업자 *"완성입니다.로 된것도 한두개있고"* → 「완성입니다」 → 「완성이에요」
+//   받침이 있으면 「이에요」, 없으면 「예요」 (한끼입니다→한끼예요 · 완성입니다→완성이에요)
+const TAIL = [
+  ['됩니다', '돼요'],
+  ['있습니다', '있어요'],
+  ['없습니다', '없어요'],
+]
+
 // 미리 컴파일 — 문장 끝(마침표·느낌표·물음표 앞 또는 줄 끝)에서만 바꾼다.
 // 한 줄에 문장이 두 개("…끓인다. 간을 맞춘다.")여도 각각 다듬어진다.
-const RULES = ENDINGS.map(([from, to]) => [new RegExp(`${from}(?=\\s*[.!?~)"']|\\s*$)`, 'g'), to])
+// ⚠️ 순서 = 합쇼체 먼저. 「합니다」가 「한다」 규칙에 안 걸리게(어차피 안 걸리지만 뜻이 분명하게).
+const END = String.raw`(?=\s*[.!?~)"']|\s*$)`
+const RULES = [...FORMAL, ...TAIL, ...ENDINGS].map(([from, to]) => [new RegExp(from + END, 'g'), to])
+
+// 「…입니다」 — 앞말의 받침을 봐야 해서 규칙 하나로 못 쓴다.
+const IPNIDA = new RegExp(String.raw`(.)입니다` + END, 'g')
 
 // 한 단계(줄)의 '~다' 종결을 해요체로. 문장부호·이미 존댓말인 문장은 보존.
 export function politeLine(line) {
   let s = String(line)
+  s = s.replace(IPNIDA, (m, ch) => (isHangul(ch) && jong(ch) ? ch + '이에요' : ch + '예요'))
   for (const [re, to] of RULES) s = s.replace(re, to)
   return s
 }
