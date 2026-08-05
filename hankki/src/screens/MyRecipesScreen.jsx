@@ -109,6 +109,9 @@ export default function MyRecipesScreen() {
     setGridSizeState(v)
     try { localStorage.setItem('hankki:gridSize', v) } catch { /* noop */ }
   }
+  // 🔍 탭 안에서 찾기 — 우상단 돋보기로 열고 닫는다(화면을 안 떠난다)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [q, setQ] = useState('')
   const [edit, setEdit] = useState(false)
   // 편집 모드 다중 선택 — 카드 탭으로 체크하고 아래 바에서 한 번에 삭제(하나씩 지우기 불편 해소)
   const [sel, setSel] = useState(() => new Set())
@@ -160,8 +163,18 @@ export default function MyRecipesScreen() {
   // 스마트 폴더 — ★즐겨찾기 / 🍳자주 해먹는. 실제 폴더와 안 겹치게 '__' 접두 키를 쓴다.
   const favCount = sorted.filter((r) => r.favorite).length
   const oftenCount = sorted.filter((r) => (r.cooked || 0) > 0).length
-  const list =
-    folder === '전체' ? sorted
+  // 🔍 레시피 탭 «안에서» 찾기 (창업자 요청 2026-08-05 — *"레시피탭에 검색기능 있으면 좋겠어"*)
+  //   ⛔ 예전엔 우상단 돋보기가 «탭을 떠나» 전체 검색 화면으로 튕겨 나갔다.
+  //      내가 담아둔 것에서 찾고 싶은데 기본 레시피까지 섞여 나오고, 돌아오려면 뒤로가기를 눌러야 했다.
+  //   ⭐ 이제 그 자리에서 열리고, 치는 대로 걸러진다. 전체(기본 레시피 포함) 검색은 홈 상단 검색창이 맡는다.
+  //   ⚠️ 찾는 중엔 폴더를 무시한다 — 어느 폴더에 넣었는지 기억나면 안 찾는다.
+  const query = q.trim().toLowerCase()
+  const hit = (r) =>
+    [r.title, r.category, r.folder, ...(r.tags || []), ...(r.ingredients || [])]
+      .filter(Boolean).join(' ').toLowerCase().includes(query)
+  const list = query
+    ? sorted.filter(hit)
+    : folder === '전체' ? sorted
       : folder === '__fav' ? sorted.filter((r) => r.favorite)
       : folder === '__often' ? sorted.filter((r) => (r.cooked || 0) > 0).sort((a, b) => (b.cooked || 0) - (a.cooked || 0))
       : sorted.filter((r) => (r.folder || r.category) === folder)
@@ -231,7 +244,13 @@ export default function MyRecipesScreen() {
               {logEdit ? '완료' : '편집'}
             </button>
           )}
-          <button className="icon-btn press" onClick={() => nav.go('search')} aria-label="검색"><Icon name="search" size={22} /></button>
+          <button
+            className="icon-btn press"
+            onClick={() => { setView('grid'); setSearchOpen((v) => { if (v) setQ(''); return !v }) }}
+            aria-label={searchOpen ? '찾기 닫기' : '내 레시피에서 찾기'}
+          >
+            <Icon name={searchOpen ? 'x' : 'search'} size={22} />
+          </button>
         </div>
       </div>
 
@@ -323,9 +342,36 @@ export default function MyRecipesScreen() {
         </div>
       )}
 
+      {view === 'grid' && searchOpen && (
+        <div className="pad fade" style={{ marginBottom: 10 }}>
+          <div className="searchbar">
+            <Icon name="search" size={19} color="var(--text-sub)" />
+            {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="내 레시피에서 찾기 · 제목 · 재료 · 태그"
+              autoComplete="off"
+              autoFocus
+            />
+            {q && (
+              <button className="press" onClick={() => setQ('')} aria-label="지우기">
+                <Icon name="x" size={18} color="var(--text-sub)" />
+              </button>
+            )}
+          </div>
+          {query && (
+            <div className="t-sub" style={{ margin: '10px 2px 0', fontSize: 12.5 }}>
+              ‘{q.trim()}’ — 내 레시피 {list.length}개
+            </div>
+          )}
+        </div>
+      )}
+
       {view === 'grid' && (
         <>
-          <div className="hscroll" style={{ marginBottom: 8 }}>
+          {/* 찾는 중엔 폴더 칩을 감춘다 — 어느 폴더에 넣었는지 기억나면 애초에 안 찾는다 */}
+          <div className="hscroll" style={{ marginBottom: 8, display: query ? 'none' : undefined }}>
             <button className={`pill press ${folder === '전체' ? 'active' : ''}`} onClick={() => setFolder('전체')}>전체 {sorted.length}</button>
             {favCount > 0 && (
               <button className={`pill press ${folder === '__fav' ? 'active' : ''}`} onClick={() => setFolder('__fav')}>★ 즐겨찾기 {favCount}</button>
@@ -346,7 +392,11 @@ export default function MyRecipesScreen() {
               </button>
             )}
             {list.length === 0 ? (
-              <div className="empty">{'이 폴더에 레시피가 없어요.\n가져오기로 채워보세요.'}</div>
+              <div className="empty">
+                {query
+                  ? '찾는 레시피가 없어요.\n제목·재료·태그 중 아무 낱말로 찾아보세요.'
+                  : '이 폴더에 레시피가 없어요.\n가져오기로 채워보세요.'}
+              </div>
             ) : (
               <div className={gridSize === 'big' ? 'grid2' : 'grid3'}>
                 {list.map((r) => {

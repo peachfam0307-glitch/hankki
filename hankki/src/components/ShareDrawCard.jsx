@@ -791,6 +791,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   const coverRef = useRef(null) // 표지 저장용(CTA 없는 cover 카드)
   const [page, setPage] = useState(1)
   const [scale, setScale] = useState(0.3)
+  const [ready, setReady] = useState(null) // 📮 다 만들었는데 허가가 끊긴 카드 — 「지금 보내기」 버튼용
   // 레시피 내용(재료·단계)이 있어야 2장째(레시피카드)를 붙인다. 없으면 1장만.
   const hasRecipe = !!((recipe?.ingredients || []).length || (recipe?.steps || []).length)
 
@@ -875,16 +876,35 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
     setTimeout(() => URL.revokeObjectURL(u), 1500)
   }
 
+  // ⭐ 준비돼 있으면 **await 없이 곧바로** 공유창을 연다 — 사이에 기다림을 두면 허가가 깨진다.
+  const go = useCallback((files) => {
+    const text = (n) => `『${title}』 오늘의 한 끼 🧡${n > 1 ? ' · 재료·레시피 같이!' : ''}\nPlay스토어에서 '한끼' 검색 🔍`
+    if (!(navigator.canShare && navigator.share)) return null
+    if (navigator.canShare({ files })) return navigator.share({ files, title, text: text(files.length), url: APP_URL })
+    if (files.length > 1 && navigator.canShare({ files: [files[0]] })) return navigator.share({ files: [files[0]], title, text: text(1), url: APP_URL })
+    return null
+  }, [title])
+
+  // 📮📮 **「지금 보내기」 — 2026-08-05 창업자 제보의 답.**
+  //   창업자 *"이번엔 둘다 (다운로드로 떨어진다)"* · *"너무오래걸려서 저렇게뜨는거같애"* — 맞다.
+  //   ⛔ 폰의 Web Share 는 **누른 «직후»에만** 열린다(user activation). 카드 만들기가 20~30초
+  //      걸리면 그 사이 허가가 끊겨, 다 만들어 놓고도 «저장»으로 밀려났다.
+  //   ⭐ 그래서 **다 만든 뒤 「지금 보내기」 버튼을 띄운다** — 그걸 누르는 건 «새 터치»라
+  //      허가가 살아 있어 공유창이 반드시 열린다. 기다림을 없애는 대신 **한 번 더 누르게** 한다.
+  const sendNow = useCallback(() => {
+    const files = ready
+    if (!files) return
+    const t = go(files)
+    if (t) {
+      t.then(() => setReady(null)).catch((e) => { if (e && e.name === 'AbortError') setReady(null) })
+      return
+    }
+    files.forEach((f, i) => setTimeout(() => saveFile(f), i * 400)) // 이 폰은 파일 공유 자체가 안 된다
+    setReady(null)
+  }, [ready, go])
+
   const share = useCallback(async () => {
     if (!cardRef.current || busy) return
-    const text = (n) => `『${title}』 오늘의 한 끼 🧡${n > 1 ? ' · 재료·레시피 같이!' : ''}\nPlay스토어에서 '한끼' 검색 🔍`
-    // ⭐ 준비돼 있으면 **await 없이 곧바로** 공유창을 연다 — 사이에 기다림을 두면 허가가 깨진다.
-    const go = (files) => {
-      if (!(navigator.canShare && navigator.share)) return null
-      if (navigator.canShare({ files })) return navigator.share({ files, title, text: text(files.length), url: APP_URL })
-      if (files.length > 1 && navigator.canShare({ files: [files[0]] })) return navigator.share({ files: [files[0]], title, text: text(1), url: APP_URL })
-      return null
-    }
     const pre = readyRef.current
     if (pre) {
       const t = go(pre)
@@ -908,16 +928,25 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
         new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('capture timeout'), { name: 'TimeoutError' })), 35000)),
       ])
       const t = go(files)
-      if (t) { await t; setBusy(null); return }
-      files.forEach((f, i) => setTimeout(() => saveFile(f), i * 400))
+      if (t) {
+        try { await t; setBusy(null); return }
+        catch (e) {
+          if (e && e.name === 'AbortError') { setBusy(null); return }
+          // ⭐ 여기까지 오면 «허가가 끊긴 것»이다(카드는 다 만들어졌다).
+          //   ⛔ 예전엔 곧바로 저장으로 밀었다 — 그게 창업자가 본 「다운로드 팝업」이다.
+          //   → 저장하지 말고 **「지금 보내기」 버튼**을 띄운다. 한 번 더 누르면 진짜로 나간다.
+          setBusy(null); setReady(files); return
+        }
+      }
+      files.forEach((f, i) => setTimeout(() => saveFile(f), i * 400)) // 이 폰은 파일 공유 자체가 안 된다
       setBusy('공유가 안 되는 폰이라 사진으로 저장했어요')
       setTimeout(() => setBusy(null), 2400)
       return
     } catch (e) {
       if (e && e.name === 'AbortError') { setBusy(null); return }
-      // ⛔ 여기서 조용히 끝내면 «먹통»이 된다. 준비된 게 있으면 저장이라도 해준다.
+      // ⛔ 여기서 조용히 끝내면 «먹통»이 된다. 준비된 게 있으면 「지금 보내기」로 넘긴다.
       const f = readyRef.current
-      if (f) { f.forEach((x, i) => setTimeout(() => saveFile(x), i * 400)); setBusy('공유가 안 돼서 사진으로 저장했어요') }
+      if (f) { setBusy(null); setReady(f); return }
       else if (e && e.name === 'TimeoutError') setBusy('카드 만들기가 오래 걸려요. 잠시 뒤 다시 눌러주세요')
       else setBusy('공유가 안 됐어요. 잠시 뒤 다시 눌러주세요')
       setTimeout(() => setBusy(null), 2800)
@@ -956,6 +985,29 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
           <div style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>예쁜 카드 만드는 중…</div>
           <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5 }}>{busy}</div>
           <div style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5 }}>잠깐만 기다려 주세요</div>
+        </div>
+      )}
+      {/* 📮 다 만들었는데 «허가가 끊긴» 경우 — 저장으로 밀지 않고 한 번 더 누를 기회를 준다.
+          ⭐ 이 버튼을 누르는 건 «새 터치»라 폰이 공유창을 반드시 열어 준다. */}
+      {ready && !busy && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{ position: 'fixed', inset: 0, zIndex: 310, background: 'rgba(30,26,22,.62)', backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24 }}
+        >
+          <img src={uiDuoHi} alt="" draggable={false} style={{ width: 64, height: 64, objectFit: 'contain' }} />
+          <div style={{ color: '#fff', fontSize: 16.5, fontWeight: 800 }}>카드가 다 됐어요</div>
+          <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, textAlign: 'center', lineHeight: 1.5 }}>
+            그리는 데 시간이 걸려서 한 번 더 눌러야 해요.<br />아래를 누르면 바로 보내집니다.
+          </div>
+          <button className="press" onClick={sendNow}
+            style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, padding: '15px 34px', borderRadius: 999, background: '#fffdf8', color: '#5d3410', fontWeight: 800, fontSize: 16, border: 'none' }}>
+            <Icon name="share" size={18} stroke={2.2} />지금 보내기
+          </button>
+          <button className="press"
+            onClick={() => { ready.forEach((f, i) => setTimeout(() => saveFile(f), i * 400)); setReady(null) }}
+            style={{ padding: '9px 18px', background: 'transparent', color: 'rgba(255,255,255,.85)', fontSize: 13.5, fontWeight: 700, border: 'none' }}>
+            사진으로 저장할게요
+          </button>
         </div>
       )}
       <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

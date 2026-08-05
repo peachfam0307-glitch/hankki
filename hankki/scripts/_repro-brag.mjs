@@ -112,6 +112,16 @@ else {
   // 로딩 오버레이가 뜨나 = 미리 캡처가 «안 끝났다»는 뜻
   await page.waitForTimeout(300)
   const spinning = await page.getByText('예쁜 카드 만드는 중…').count()
+  // 📮 「지금 보내기」가 뜨면 눌러본다 — 이게 뜨는 것 자체가 «허가 만료»를 잡았다는 뜻이다
+  for (let k = 0; k < 80; k++) {
+    if (await page.getByText('지금 보내기').count()) {
+      console.log('   📮 「지금 보내기」 버튼이 떴다 — 누른다')
+      await page.getByText('지금 보내기').click()
+      break
+    }
+    if ((await page.evaluate(() => (window.__log || []).some((l) => l.startsWith('✅') || l.startsWith('💾')))) ) break
+    await page.waitForTimeout(500)
+  }
   console.log(spinning ? `⏳ 로딩이 떴다 → 미리 캡처가 «아직 안 끝남»` : `⚡ 로딩 없음 → 미리 캡처가 «이미 끝나 있었다»`)
   // 결말까지 기다린다(최대 40초) — 화면 문구가 바뀌는 순간을 놓치지 않게 0.5초마다 본다
   let last = ''
