@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import Buddy from './Buddies'
 import { packDrawerGroups } from '../data/paidPacks'
+// 🌧 가을 유료팩 배경 — 우리 배경 중 «첫 사진». 표지가 1:1 이라 미리 1:1 로 잘라 뒀다.
+import RAIN_STREET from '../assets/decorbg/rain-street.webp'
 
 // ── 꾸미기 스티커 라이브러리 ──
 // 전부 오리지널 아트(저작권 안전). 아바타 '요리사 친구들'과 같은 결:
@@ -1343,6 +1345,25 @@ export const DECOR_BACKGROUNDS = [
     //   → 물결이 **잔털처럼** 뭉쳐 「이게 물결인지」 안 읽힌다. 스와치에서만 타일을 키워 **선이 3~4가닥**만 보이게.
     //   ⚠️ 이 크기에선 한 바퀴가 이음매 없이 안 맞지만, 42px에선 그 어긋남이 안 보인다.
     swatch: { backgroundSize: '150% auto,220% auto,320% auto,cover' } },
+  // 🌧 **비 오는 창 — 가을 유료팩 배경** (창업자 그림 · 2026-08-05 창업자가 ①번으로 확정)
+  //   ⭐ 우리 배경 중 **첫 사진 배경**이다. 나머지는 전부 CSS(그라데이션·SVG)다.
+  //      표지가 1:1 이라 **미리 1:1 로 잘라** 넣었다 — `cover` 로 맡기면 기기마다 다르게 잘린다.
+  //   🌧 창업자 *"비내리는 효과 넣어줘"* → 사진 위에 **빗줄기 두 겹**을 얹어 흘린다.
+  //   ⚠️⚠️ **이동은 «세로만»** 한다. 가로로도 옮기려면 타일 폭의 정수배를 맞춰야 하는데
+  //      그러면 비가 너무 눕는다 → **선 자체를 기울여 그리고 아래로만** 흘린다.
+  //   ⚠️ 세로는 **px** 로 준다 — %는 「컨테이너 − 타일」 기준이라 타일 높이가 auto 면 계산이 안 선다
+  //      (여름 물결에서 *"물결은 안움직여"* 사고가 정확히 이것이었다).
+  //   ⭐ 뒤는 한 주기에 1타일(180px), 앞은 2타일(520px) → **같은 시간에 다른 거리 = 앞뒤 깊이.**
+  { key: 'rainstreet', label: '비 오는 창', anim: 'hk-bg-rain', pack: 'autumn2026',
+    style: {
+      backgroundImage: 'url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27140%27%20height%3D%27180%27%20viewBox%3D%270%200%20140%20180%27%3E%3Cpath%20d%3D%27M45%2023%20l-4%2026%20M91%2011%20l-4%2026%20M75%2056%20l-4%2026%20M8%2078%20l-4%2026%20M5%2067%20l-4%2026%20M10%2014%20l-4%2026%20M59%20127%20l-4%2026%20M17%2034%20l-4%2026%20M88%20146%20l-4%2026%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.2%29%27%20stroke-width%3D%271.1%27%20stroke-linecap%3D%27round%27%2F%3E%3C%2Fsvg%3E"),url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27200%27%20height%3D%27260%27%20viewBox%3D%270%200%20200%20260%27%3E%3Cpath%20d%3D%27M52%20151%20l-7%2040%20M137%20187%20l-7%2040%20M37%2051%20l-7%2040%20M29%2050%20l-7%2040%20M147%2029%20l-7%2040%20M106%2047%20l-7%2040%20M59%2095%20l-7%2040%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.34%29%27%20stroke-width%3D%271.7%27%20stroke-linecap%3D%27round%27%2F%3E%3C%2Fsvg%3E"),url(' + RAIN_STREET + ')',
+      backgroundSize: '140px 180px,200px 260px,cover',
+      backgroundRepeat: 'repeat,repeat,no-repeat',
+      backgroundPosition: '0 0,0 0,center',
+    },
+    // 🔎 42px 스와치에선 빗줄기가 «먼지»로 뭉친다 → 타일을 키워 몇 가닥만 보이게
+    swatch: { backgroundSize: '70px 90px,100px 130px,cover' } },
+
   // 🌙 딥(어두운) 배경지 — 반짝임·홀로·별이 사는 "밤하늘 다꾸" (창업자 픽: 딥플럼·미드나잇)
   { key: 'plum', label: '딥플럼', dark: true, style: { background: '#3e3442' } },
   { key: 'midnight', label: '미드나잇', dark: true, style: { background: '#2d3340' } },

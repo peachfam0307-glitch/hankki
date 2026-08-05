@@ -113,5 +113,24 @@ if (orphan.length) {
 const planned = [...MOTIONS, ...FX].filter((x) => x.pack && PLANNED.has(x.pack) && !x.base)
 if (planned.length) console.log(`  ℹ️ 아직 안 파는 팩에 예약된 것 ${planned.length}개 — ${planned.map((x) => x.label).join(' ')}`)
 
+// ── Ⓓ 팩 배경이 앱에 «실제로» 있나 ───────────────────────
+//   ⛔⛔ **2026-08-05 에 이 검사가 없어서 놓친 것** — 창업자 *"배경이랑 효과도 있어?"* 로 잡혔다.
+//      Ⓑ가 motion·fx 만 보고 **bg 는 안 봤다.** 세어 보니 **다섯 팩 배경이 전부 앱에 없었다**
+//      (클레이-가을밤 · 클레이-핼러윈밤 · 비 오는 창 · 크림 유칼립투스 · 흰 눈·파란 트리).
+//      창업자 원문이 *"**배경부터** 싹 다 보여줘야한다고"* 였는데 그 배경이 통째로 비어 있었다.
+//   📌 배운 것 = **검사를 만들 때 «항목을 다 세었나»를 확인한다.** 반만 만든 검사는 「통과」라고 거짓말한다.
+//   ⚠️ 파는 팩(sellable)은 **막고**, 아직 안 파는 팩은 **경고만** 한다 — 배경은 팔기 직전에 채워도 된다.
+console.log('\n🖼 팩 배경이 앱에 있나')
+const bgLabels = new Set([...jsx.slice(jsx.indexOf('DECOR_BACKGROUNDS = [')).matchAll(/label: '([^']+)'/g)].map((m) => m[1]))
+let bgMiss = 0
+for (const p of PACKS) {
+  if (!p.bg) continue
+  if (bgLabels.has(p.bg)) { ok(`${p.label} 배경 '${p.bg}' 있다`); continue }
+  bgMiss++
+  if (p.sellable) bad(`${p.label} 배경 '${p.bg}' — 앱에 «없다». 파는 팩인데 배경이 비었다`)
+  else console.log(`  ⏳ ${p.label} 배경 '${p.bg}' — 아직 앱에 없다 (안 파는 팩이라 경고만)`)
+}
+if (!bgMiss) ok('배경 전부 있다')
+
 console.log(fail ? `\n❌ 팩 배분표 검사 실패 ${fail}건\n` : '\n✅ 팩 배분표 통과\n')
 process.exit(fail ? 1 : 0)

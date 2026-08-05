@@ -55,9 +55,6 @@ export default function PackBuySheet({ pack, onClose, onBought }) {
     setMsg(REASON[r.reason] || REASON.fail)
   }
 
-  // 미리보기 6컷 — 팩 앞머리에서. ⚠️ 서랍에서 이미 전체를 봤으니 여기선 «맛보기»면 된다.
-  const preview = (pack.items || []).slice(0, 6)
-
   return (
     <Portal>
       <div className="sheet-mask" onClick={onClose}>
@@ -68,20 +65,30 @@ export default function PackBuySheet({ pack, onClose, onBought }) {
           </div>
 
           <div style={{ padding: '4px 16px 0' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 7, margin: '6px 0 12px' }}>
-              {preview.map((k) => (
-                <span key={k} style={{ display: 'block', aspectRatio: '1', background: 'var(--cream)', borderRadius: 10, padding: 5 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 3 }}>
+              {pack.items.length}컷이 한 번에 열려요
+            </div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 9 }}>
+              {pack.split.map((s) => `${s.kind} ${s.n}`).join(' · ')}
+            </div>
+
+            {/* 🎁 **팩 전체를 여기서 다 보여준다** (창업자 2026-08-03 *"배경부터 싹 다 보여줘야한다고"*)
+                ⭐ 흐리게 하지 않는다 — 사고 싶어야 사니까 **선명하게** 보여준다.
+                   못 쓰게 막는 건 「아직 서랍에 없다」로 이미 충분하다.
+                ⚠️ 62~66컷이라 시트 안에서만 스크롤한다 — 시트 자체가 길어지면 닫기 버튼이 밀린다. */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 7,
+              maxHeight: '38vh', overflowY: 'auto', overscrollBehavior: 'contain',
+              padding: 8, background: 'var(--cream)', borderRadius: 13, marginBottom: 11,
+            }}>
+              {(pack.items || []).map((k) => (
+                <span key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', aspectRatio: '1', background: 'var(--surface)', borderRadius: 9, padding: 4 }}>
                   <StickerArt id={k} />
                 </span>
               ))}
             </div>
 
-            <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>
-              {pack.items.length}컷이 한 번에 열려요
-            </div>
-            <div style={{ fontSize: 12.5, color: 'var(--text-sub)', lineHeight: 1.6, marginBottom: 12 }}>
-              {pack.split.map((s) => `${s.kind} ${s.n}`).join(' · ')}
-              <br />
+            <div style={{ fontSize: 12.5, color: 'var(--text-sub)', lineHeight: 1.6, marginBottom: 11 }}>
               한 번 사면 계속 쓸 수 있어요. 폰을 바꿔도 같은 구글 계정이면 그대로 있어요.
             </div>
 

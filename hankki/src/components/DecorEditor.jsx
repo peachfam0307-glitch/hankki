@@ -268,14 +268,6 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
       <rect x="4.6" y="10" width="14.8" height="10.8" rx="3.1" fill="currentColor" />
     </svg>
   )
-  // 💰 가격 택 — 「선물」 택과 같은 모양, 색만 다르다
-  const PriceTag = ({ price }) => (
-    <span style={{
-      marginLeft: 6, padding: '1.5px 7px', borderRadius: 999, fontSize: 11, fontWeight: 800,
-      background: '#b5714a', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
-    }}>{price.toLocaleString()}원</span>
-  )
-
   // 스티커 그룹 한 덩어리(소제목 + 그리드)
   //
   // 🔒 **잠긴 유료팩은 「팩 전체를 펼쳐」 보여준다** (창업자 2026-08-03
@@ -283,40 +275,31 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
   //    ⚠️ 몇 컷만 맛보기로 보여주지 않는다 — 그러면 «있는 줄»을 모른다.
   //    ⚠️ 흐리게만 하고 **그림은 다 보인다.** 못 쓰게 막는 것이지 감추는 게 아니다.
   const renderStickerGroup = (g) => {
+    // 🔒 **잠긴 팩은 서랍에 「한 줄」로만 둔다 — 격자는 안 편다** (창업자 2026-08-05
+    //    *"이런 방식말고 따로 안내팝업이나 창을 만들어서 보여주면 안돼?"*)
+    //
+    //   ⛔ 처음엔 서랍에 62컷을 통째로 폈다. 실물을 찍어 보니 **데코 탭에 192컷**(추석62＋핼러윈64＋가을66)이
+    //      쌓여 «무료 스티커를 쓰려면 192칸을 지나 내려가야» 했다. 서랍은 작업하는 자리인데 광고가 그걸 밀었다.
+    //   ✅ 그래서 서랍엔 **배너 한 줄**만 두고, 팩 전체는 **따로 열리는 창**에서 보여준다.
+    //      *"전체를 다 보여줘야지"* 는 그 창이 지킨다 — 서랍이 아니라 창에서.
+    //   ⭐ 배너 모양은 위 「선물」 배너와 같게 맞춘다. 같은 자리·같은 문법이라 배울 게 없다.
     if (g.locked) {
       return (
-        <div className="decor-sec" key={g.key}>
-          <div className="decor-sec-label" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ color: '#b5714a', display: 'inline-flex' }}><LockIcon /></span>
-            <span>{g.label}</span>
-            <PriceTag price={g.price} />
-          </div>
-          {/* 무엇이 몇 개 들었나 — 「사면 이게 다」가 숫자로 한눈에 */}
-          <div style={{ fontSize: 11.5, color: 'var(--text-sub)', margin: '-2px 0 7px', letterSpacing: '-0.01em' }}>
-            {g.split.map((s) => `${s.kind} ${s.n}`).join(' · ')}
-          </div>
-          <div className="decor-grid" style={{ opacity: 0.62, filter: 'saturate(0.72)' }} aria-label={`${g.label} 팩 · 잠김`}>
-            {g.items.map((k) => (
-              <button key={k} className="press decor-cell" onClick={() => setBuyPack(g)} aria-label={`${g.label} 팩 · 잠김 · 눌러서 열기`} style={{ position: 'relative', cursor: 'pointer' }}>
-                <span style={{ display: 'block', width: PHOTO_IDS.has(k) ? '70%' : '78%', aspectRatio: '1' }}>
-                  <StickerArt id={k} />
-                </span>
-              </button>
-            ))}
-          </div>
-          <button
-            className="press"
-            onClick={() => setBuyPack(g)}
-            style={{
-              width: '100%', marginTop: 9, padding: '11px 12px', borderRadius: 13, border: 'none',
-              background: '#b5714a', color: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}
-          >
-            <LockIcon size={14} />
-            {g.items.length}컷 전부 열기 · {g.price.toLocaleString()}원
-          </button>
-        </div>
+        <button
+          key={g.key} className="press" onClick={() => setBuyPack(g)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px', marginBottom: 10,
+            borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left',
+          }}
+        >
+          <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 800, background: '#b5714a', color: '#fff', flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <LockIcon size={11} />{g.price.toLocaleString()}원
+          </span>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
+            {g.label} 꾸미기 팩 · {g.items.length}컷
+          </span>
+          <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
+        </button>
       )
     }
     return (
