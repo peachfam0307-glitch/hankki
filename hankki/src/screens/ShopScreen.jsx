@@ -259,6 +259,7 @@ function Curation() {
   //      「전체」= 훑는 화면 / 큰 칸 = 고른 화면. 목적이 다르므로 같이 다루지 않는다.
   const FOLD = 3
   const [openG, setOpenG] = useState({})   // 큰 칸별 «펼쳤나»
+  const [openCard, setOpenCard] = useState({}) // 카드별 «설명을 펼쳤나»
   // 큰 칸으로 다시 묶는다 — ⚠️ 소제목(작은 칸)은 그대로 살린다. 접히는 건 «개수»뿐이다.
   const byGroup = [...new Set(shownGroups.map((g) => g.group))].map((name) => ({
     name,
@@ -333,7 +334,32 @@ function Curation() {
             {it.tag && <span style={tagStyle}>{it.tag}</span>}
             {mallLabel(it) && <span style={mallStyleFor(mallLabel(it))}>{mallLabel(it)}</span>}
           </div>
-          <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.58 }}>{it.benefit}</div>
+          {/* 📏 설명은 «첫 줄만» 보이고 누르면 펼쳐진다 — 창업자 2026-08-05
+              *"지금 6-7개까지 아래로 쭉 늘어나는게 좀 불편하지 않을까"*
+              ⛔ 자르지 «않는다». 39개를 재보니 **가장 짧은 설명도 41자**(가운데 74 · 최장 127)라
+                 한 줄에 들어가는 게 하나도 없고, 이 설명이 바로 큐레이션의 값어치다
+                 (*"남편이 콩국수를 좋아해서…"*). 잘라내면 그냥 상품 목록이 된다.
+              ⭐ 그래서 «접어만» 둔다 — 훑을 땐 짧고, 궁금하면 눌러서 한 글자도 안 빠진 전문을 본다. */}
+          <button
+            className="press"
+            onClick={() => setOpenCard((s) => ({ ...s, [it.name]: !s[it.name] }))}
+            style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0 }}
+          >
+            <span
+              className="t-sub"
+              style={{
+                display: openCard[it.name] ? 'block' : '-webkit-box',
+                WebkitLineClamp: openCard[it.name] ? 'none' : 1,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                fontSize: 13,
+                lineHeight: 1.58,
+              }}
+            >
+              {it.benefit}
+            </span>
+            {!openCard[it.name] && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brown)' }}>더보기</span>}
+          </button>
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 11 }}>
@@ -413,9 +439,14 @@ function Curation() {
             ? picks.map((it) => Card(it))
             : byGroup.map((G) => {
                 const total = G.cats.reduce((s, c) => s + c.items.length, 0)
-                // 큰 칸을 직접 고른 화면(`curCat !== '전체'`)은 접지 않는다 — 보려고 고른 것이다
-                const on = curCat !== '전체' || openG[G.name] || total <= FOLD
-                const cats = on ? G.cats : take(G.cats, FOLD)
+                // ⛔⛔ 2026-08-05 — 예전엔 큰 칸을 «직접 고르면» 안 접었다(«보려고 고른 것»이라 봤다).
+                //   창업자: *"근데 목록이 늘어나면 이것도 제일 좋은 방법은 아니야"* — 맞는 지적이다.
+                //   ⭐ 칸에 제품이 13개면 **그 칸도 훑는 화면이다.** 안 접으면 제품을 올릴수록 영영 길어진다.
+                //   → 어느 화면이든 **개수에 상한**을 둔다. 「더보기」로 늘리는 건 «유저가 원해서» 늘린 것.
+                //     훑는 화면(전체)은 3개 · 고른 칸은 5개까지.
+                const LIMIT = curCat === '전체' ? FOLD : 5
+                const on = openG[G.name] || total <= LIMIT
+                const cats = on ? G.cats : take(G.cats, LIMIT)
                 return (
                   <div key={G.name}>
                     {cats.map((g) => (
