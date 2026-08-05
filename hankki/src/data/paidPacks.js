@@ -316,3 +316,72 @@ export const freeOk = (key) => {
   const p = paidPackOf(key)
   return !p || (p.freed || []).includes(String(key))
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 🔒 **서랍 자물쇠** — 「사면 이게 다 열려요」를 서랍에서 보여주는 층
+//
+// ⭐ 창업자 2026-08-03
+//   *"결제붙는날 전체를 다 보여줘야지. 이런게 있으니 사라고 (**배경부터 싹 다 보여줘야한다고**)"*
+//   → 카드 뽑기보다 이게 광고가 세다. 카드는 랜덤이라 «그 팩이 있는 줄»도 모르지만,
+//     자물쇠는 **「사면 이게 다 열린다」가 한눈에 보인다.**
+//   ⚠️ 자물쇠는 **못 쓰는 상태로 보여주는 것**이라 「무료로 나간 것」이 아니다.
+//
+// 🧭 **안 샀을 때와 산 뒤가 다르다** — 이게 설계의 핵심이다
+//   · 안 샀을 때 = **팩 하나가 그룹 하나.** 62컷이 통째로 한 덩어리로 보인다(＝ 사고 싶어진다)
+//   · 산 뒤     = **종류별로 흩어져** 각 탭에 들어간다(＝ 쓰기 편하다)
+//   같은 컷인데 목적이 반대라 담는 모양도 반대다.
+//
+// ⛔ `sellable` 이 false 인 팩은 **아예 안 나온다.** 재심사(8/16) 전엔 결제를 안 켠다.
+//    ⚠️ 「살 수 없는데 자물쇠만 보이는」 상태가 제일 나쁘다 — 사고 싶은데 못 사게 된다.
+
+// 접두어 → 서랍 어느 탭에 담나. **위에서부터 맞는 첫 줄**을 쓰고, 아무 데도 안 맞으면 마지막(소품).
+//   ⚠️ `pf_` 는 «무료» 앱 프레임과 접두어를 나눠 쓰지만, 여기 오는 건 `packed` 명단 안의 컷뿐이라 안전하다.
+export const PACK_TABS = [
+  { tab: 'buddies', kind: '캐릭터', prefixes: ['cs_b', 'hb', 'hd', 'hw_'] },
+  { tab: 'frame', kind: '프레임', prefixes: ['cf2_', 'hf_', 'pf_', 'wf_'] },
+  { tab: 'tape', kind: '마스킹테이프', prefixes: ['ct_', 'cm_', 'ht_', 'pt_', 'wm_'] },
+  { tab: 'deco', kind: '소품·종이', prefixes: [] },   // ← 나머지 전부
+]
+const tabOf = (key) =>
+  PACK_TABS.find((t) => t.prefixes.some((p) => String(key).startsWith(p))) || PACK_TABS[PACK_TABS.length - 1]
+
+// 팩 컷을 종류별로 나눈다 — [{tab, kind, items}]
+export const packSplit = (pack) => {
+  const by = new Map()
+  for (const k of pack.packed || []) {
+    const t = tabOf(k)
+    if (!by.has(t.kind)) by.set(t.kind, { tab: t.tab, kind: t.kind, items: [] })
+    by.get(t.kind).items.push(k)
+  }
+  // PACK_TABS 순서대로 (캐릭터 → 프레임 → 마테 → 소품)
+  return PACK_TABS.map((t) => by.get(t.kind)).filter(Boolean)
+}
+
+// 서랍에 올릴 그룹 목록.
+//   owned = 산 팩 키들의 Set (`Stickers.jsx` 의 `ownedPacks()` 가 준다)
+//   ⛔ `sellable` 이 아니면 그 팩은 통째로 빠진다.
+export const packDrawerGroups = (owned = new Set()) => {
+  const out = []
+  for (const p of PAID_PACKS) {
+    if (!p.sellable || !(p.packed || []).length) continue
+    const mine = owned.has(p.key)
+    if (mine) {
+      // 🔓 산 뒤 — 종류별로 흩어 각 탭에 넣는다(쓰기 편하게)
+      for (const s of packSplit(p)) {
+        out.push({ key: `pack_${p.key}_${s.tab}`, tab: s.tab, label: `${p.label} · ${s.kind}`, items: s.items, pack: p.key, owned: true })
+      }
+    } else {
+      // 🔒 안 샀을 때 — 팩 하나를 한 덩어리로. 「사면 이게 다 열려요」
+      //   ⚠️ 담는 탭 = 그 팩에서 **컷이 제일 많은 종류**의 탭. 팩의 성격이 거기 있다.
+      //      (추석·핼러윈은 소품·종이가 제일 많고, 캐릭터 팩이면 친구들 탭으로 간다)
+      const split = packSplit(p)
+      const main = split.reduce((a, b) => (b.items.length > a.items.length ? b : a), split[0])
+      out.push({
+        key: `pack_${p.key}`, tab: main.tab, label: p.label, items: p.packed,
+        pack: p.key, owned: false, locked: true, price: p.price, total: p.total,
+        split: split.map((s) => ({ kind: s.kind, n: s.items.length })),
+      })
+    }
+  }
+  return out
+}

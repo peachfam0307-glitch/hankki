@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import Buddy from './Buddies'
+import { packDrawerGroups } from '../data/paidPacks'
 
 // ── 꾸미기 스티커 라이브러리 ──
 // 전부 오리지널 아트(저작권 안전). 아바타 '요리사 친구들'과 같은 결:
@@ -509,6 +510,10 @@ export const FX_KINDS = [
 export const ownedPacks = () => new Set()
 export const pickableMotions = (owned = ownedPacks()) => MOTIONS.filter((m) => m.base || owned.has(m.pack))
 export const pickableFx = (owned = ownedPacks()) => FX_KINDS.filter((f) => f.base || owned.has(f.pack))
+// 🔒 서랍에 실제로 그릴 그룹 = 무료 그룹 ＋ 유료팩 그룹(자물쇠거나 열린 것)
+//   ⛔ `sellable` 이 false 인 팩은 `packDrawerGroups` 가 아예 안 준다 → **지금은 화면이 안 바뀐다.**
+//   ⚠️ `STICKER_GROUPS` 를 직접 쓰지 말고 이걸 쓴다 — 직접 쓰면 유료팩이 조용히 빠진다.
+export const drawerGroups = (owned = ownedPacks()) => [...STICKER_GROUPS, ...packDrawerGroups(owned)]
 // 효과 파티클 — 이모지 대신 뮤트 톤 커스텀 도형(세련되게), 머리 위쪽에 작게 배치.
 const SVG_SPARK = (
   <svg viewBox="0 0 24 24" width="100%" height="100%" style={{ display: 'block' }}>

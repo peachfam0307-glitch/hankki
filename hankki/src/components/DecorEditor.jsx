@@ -5,8 +5,9 @@ import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
 import { seasonRank, isReleased } from '../season'
 import GiftPackSheet from './GiftPackSheet'
+import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
-import { StickerArt, STICKER_GROUPS, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
+import { StickerArt, STICKER_GROUPS, drawerGroups, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -70,6 +71,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
   const [gift, setGift] = useState(() => needsGiftPack())
+  // 💰 자물쇠를 누르면 열리는 「사기」 시트. null 이면 안 떠 있다.
+  //    ⛔ sellable 이 false 인 동안엔 자물쇠 자체가 안 나오므로 이 값은 영영 null 이다.
+  const [buyPack, setBuyPack] = useState(null)
 
   // 🧷 배경격(액자 프레임·포스트잇·메모라벨) = 그 위에 스티커·글자를 얹는 밑판. 이건 탭해도 맨 앞으로 안 올린다(안 그러면 눌렀을 때 애써 꾸민 작은 스티커·글자가 다 뒤로 숨어버림 — 창업자 제보 2026-07-26).
   // 🧷 '밑판'격 아이템 — 탭해도 맨 앞으로 올리지 않는다(올리면 위에 붙인 작은 스티커·글자가 다 숨는다).
@@ -172,9 +176,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
   // 🎁 **선물(`gift`)은 무조건 맨 위** — 창업자 2026-08-03 *"친구들 제일 아래있어 잘 모름"*.
   //    한정판보다도 위다: 한정판은 「지금 아니면 못 쓴다」이고 선물은 **「있는 줄도 모른다」**라
   //    못 찾는 쪽이 더 나쁘다. (축하 3컷은 친구들 탭 맨 아래라 아무도 못 봤다)
-  const groupsByTab = (t) => STICKER_GROUPS
+  // 🔒 **유료팩(자물쇠)은 선물 바로 다음** — 광고라서 눈에 띄어야 팔린다.
+  //    한정판(제철)보다 위인 이유 = 한정판은 「지금 아니면 못 쓴다」이고
+  //    자물쇠는 **「이런 게 있는 줄도 모른다」**라 못 보는 쪽이 더 나쁘다(선물과 같은 이유).
+  //    ⛔ 산 뒤엔 자물쇠가 아니라 «내 것»이므로 이 새치기를 안 한다(locked 일 때만).
+  //    ⚠️ `STICKER_GROUPS` 가 아니라 `drawerGroups()` 를 쓴다 — 직접 쓰면 유료팩이 조용히 빠진다.
+  const groupsByTab = (t) => drawerGroups()
     .filter((x) => x.tab === t && isReleased(x.from))
     .sort((a, b) => ((b.gift ? 1 : 0) - (a.gift ? 1 : 0))
+      || ((b.locked ? 1 : 0) - (a.locked ? 1 : 0))
       || (seasonRank(a.season) - seasonRank(b.season))
       || ((b.recolor ? 1 : 0) - (a.recolor ? 1 : 0)))
 
@@ -251,13 +261,71 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
       background: 'var(--brown)', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
     }}>선물</span>
   )
-  // 스티커 그룹 한 덩어리(소제목 + 그리드)
-  const renderStickerGroup = (g) => (
-    <div className="decor-sec" key={g.key}>
-      {g.label && <div className="decor-sec-label">{g.label}{g.gift && <GiftTag />}</div>}
-      <div className="decor-grid">{g.items.map(renderCell)}</div>
-    </div>
+  // 🔒 자물쇠 — ⛔유니코드 이모지 금지라 SVG 로 그린다
+  const LockIcon = ({ size = 13 }) => (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" style={{ verticalAlign: '-1.5px' }}>
+      <path d="M7.5 10.5V7a4.5 4.5 0 019 0v3.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+      <rect x="4.6" y="10" width="14.8" height="10.8" rx="3.1" fill="currentColor" />
+    </svg>
   )
+  // 💰 가격 택 — 「선물」 택과 같은 모양, 색만 다르다
+  const PriceTag = ({ price }) => (
+    <span style={{
+      marginLeft: 6, padding: '1.5px 7px', borderRadius: 999, fontSize: 11, fontWeight: 800,
+      background: '#b5714a', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
+    }}>{price.toLocaleString()}원</span>
+  )
+
+  // 스티커 그룹 한 덩어리(소제목 + 그리드)
+  //
+  // 🔒 **잠긴 유료팩은 「팩 전체를 펼쳐」 보여준다** (창업자 2026-08-03
+  //    *"결제붙는날 전체를 다 보여줘야지. 이런게 있으니 사라고 배경부터 싹 다"*)
+  //    ⚠️ 몇 컷만 맛보기로 보여주지 않는다 — 그러면 «있는 줄»을 모른다.
+  //    ⚠️ 흐리게만 하고 **그림은 다 보인다.** 못 쓰게 막는 것이지 감추는 게 아니다.
+  const renderStickerGroup = (g) => {
+    if (g.locked) {
+      return (
+        <div className="decor-sec" key={g.key}>
+          <div className="decor-sec-label" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ color: '#b5714a', display: 'inline-flex' }}><LockIcon /></span>
+            <span>{g.label}</span>
+            <PriceTag price={g.price} />
+          </div>
+          {/* 무엇이 몇 개 들었나 — 「사면 이게 다」가 숫자로 한눈에 */}
+          <div style={{ fontSize: 11.5, color: 'var(--text-sub)', margin: '-2px 0 7px', letterSpacing: '-0.01em' }}>
+            {g.split.map((s) => `${s.kind} ${s.n}`).join(' · ')}
+          </div>
+          <div className="decor-grid" style={{ opacity: 0.62, filter: 'saturate(0.72)' }} aria-label={`${g.label} 팩 · 잠김`}>
+            {g.items.map((k) => (
+              <button key={k} className="press decor-cell" onClick={() => setBuyPack(g)} aria-label={`${g.label} 팩 · 잠김 · 눌러서 열기`} style={{ position: 'relative', cursor: 'pointer' }}>
+                <span style={{ display: 'block', width: PHOTO_IDS.has(k) ? '70%' : '78%', aspectRatio: '1' }}>
+                  <StickerArt id={k} />
+                </span>
+              </button>
+            ))}
+          </div>
+          <button
+            className="press"
+            onClick={() => setBuyPack(g)}
+            style={{
+              width: '100%', marginTop: 9, padding: '11px 12px', borderRadius: 13, border: 'none',
+              background: '#b5714a', color: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}
+          >
+            <LockIcon size={14} />
+            {g.items.length}컷 전부 열기 · {g.price.toLocaleString()}원
+          </button>
+        </div>
+      )
+    }
+    return (
+      <div className="decor-sec" key={g.key}>
+        {g.label && <div className="decor-sec-label">{g.label}{g.gift && <GiftTag />}</div>}
+        <div className="decor-grid">{g.items.map(renderCell)}</div>
+      </div>
+    )
+  }
 
   return (
     <Portal>
@@ -617,6 +685,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
         {/* 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번. 「구경하기」는 프레임 탭으로 데려간다. */}
         {gift && (
           <GiftPackSheet onClose={() => setGift(false)} onGo={(cat) => setCat(cat || 'frame')} />
+        )}
+        {/* 💰 꾸미기 팩 사기 — 서랍 자물쇠를 누르면 열린다.
+            ⛔ sellable 이 false 인 동안엔 자물쇠가 아예 안 나오므로 이 시트도 안 뜬다. */}
+        {buyPack && (
+          <PackBuySheet pack={buyPack} onClose={() => setBuyPack(null)} onBought={() => { /* ⏳ 소유 반영은 다음 단계(앱 시작 때 ownedPackKeys 로 읽는다) */ }} />
         )}
       </div>
     </Portal>
