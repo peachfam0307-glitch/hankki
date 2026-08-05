@@ -105,10 +105,9 @@ const each = await page.evaluate(() => {
   const box = [...document.querySelectorAll('div[aria-hidden]')].find((d) => (d.getAttribute('style') || '').includes('-99999'))
   if (!box) return null
   return [...box.children].map((el, i) => {
-    const b = window.__bundle(null) // 자리 표시용(아래에서 덮어씀)
     const used = window.__usedFonts(el)
     const all = [...new Set(window.__faces())]
-    return { 이름: `자식${i + 1} (${el.getBoundingClientRect().width | 0}px)`, 담긴다: all.filter((f) => used.has(f)), 빠진다: all.filter((f) => !used.has(f)), _: b && 0 }
+    return { 이름: `자식${i + 1} (${el.getBoundingClientRect().width | 0}px)`, 담긴다: all.filter((f) => used.has(f)), 빠진다: all.filter((f) => !used.has(f)) }
   })
 })
 if (!each) console.log('  숨은 캡처 레이어를 못 찾았다')
