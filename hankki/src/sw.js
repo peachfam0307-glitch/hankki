@@ -14,6 +14,26 @@ precacheAndRoute(self.__WB_MANIFEST || [])
 self.skipWaiting()
 clientsClaim()
 
+// 🖼🖼 **우리 그림(스티커·배경·아이콘) — 「미리 다 받기」가 아니라 「본 것만 갖고 있기」**
+//
+// ⛔ 2026-08-05 이전엔 이 그림들이 전부 precache 에 있었다.
+//    앱을 처음 켜면 **1418장 · 212MB** 를 먼저 내려받고 나서야 화면이 떴다.
+//    쓰지도 않을 계절 스티커까지 전부. (`vite.config.js` 의 globIgnores 주석에 자세히)
+//
+// ✅ 지금은 여기서 받는다 — **CacheFirst** 라 한 번 받은 그림은 캐시에서 바로 나온다.
+//    ⭐ 오프라인도 산다: 한 번이라도 본 그림은 계속 뜬다. 안 본 그림만 못 뜬다.
+//    ⚠️ maxEntries 는 지금 스티커 수(약 1420)보다 넉넉히 잡는다 — 모자라면
+//       오래된 것부터 지워져서 «봤던 그림이 다시 사라진다».
+//    ⚠️ purgeOnQuotaError = 저장공간이 꽉 차면 이 캐시부터 비운다. 안 넣으면
+//       브라우저가 «앱 데이터 전체»를 날릴 수 있다(저장한 레시피까지).
+registerRoute(
+  ({ request, url }) => url.origin === self.location.origin && request.destination === 'image',
+  new CacheFirst({
+    cacheName: 'hankki-art',
+    plugins: [new ExpirationPlugin({ maxEntries: 2000, maxAgeSeconds: 60 * 60 * 24 * 365, purgeOnQuotaError: true })],
+  })
+)
+
 // Pretendard 폰트
 registerRoute(
   ({ url }) => url.origin === 'https://cdn.jsdelivr.net',

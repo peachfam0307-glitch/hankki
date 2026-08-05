@@ -20,6 +20,23 @@ export default defineConfig({
         // @font-face 는 실제로 그 글씨가 쓰일 때만 다운로드되고, 이후 브라우저 캐시에 남는다.
         // (앱의 다른 폰트는 전부 CDN 이라 로컬 woff2 는 이 꾸미기 글씨체뿐)
         globPatterns: ['**/*.{js,css,html,svg,png,webp}'],
+        // ⛔⛔ **스티커 그림은 precache 에서 뺀다** (2026-08-05)
+        //
+        //   앱을 처음 켤 때 서비스워커가 precache 목록을 «통째로» 내려받는다.
+        //   `dist/sw.js` 를 뜯어 세어 보니 **1444개 · 215MB** 였고
+        //   그중 **스티커 PNG 가 1418개 · 212MB(98.6%)** — 앱 코드는 1MB 뿐이었다.
+        //   ⇒ 앱을 깔면 **쓰지도 않을 그림 212MB 를 먼저 받고 있었다.**
+        //      데이터 요금·저장공간·첫 실행 대기 — 셋 다 나쁘다.
+        //      ⚠️ 반려 사유 ①이 「테스터가 참여하지 않았습니다」였는데 이게 원인일 수 있다.
+        //
+        //   ✅ 대신 `src/sw.js` 에서 **CacheFirst 런타임 캐시**로 받는다 —
+        //      «쓸 때» 받고, 한 번 받은 그림은 캐시에 남아 그 뒤론 오프라인에서도 뜬다.
+        //      바뀌는 것 = 「미리 다 받기」 → 「본 것만 갖고 있기」.
+        //
+        //   ⚠️ `icons/`(앱 아이콘 16장)·`recipe-photos/`(기본 레시피 사진 17장)는 **남긴다** —
+        //      아이콘은 매니페스트가 참조하고, 레시피 사진은 홈 첫 화면에 바로 뜬다. 둘 다 작다.
+        //   🔒 다시 커지면 `scripts/check-precache.mjs` 가 배포를 막는다.
+        globIgnores: ['assets/**/*.png', 'assets/**/*.webp'],
       },
       includeAssets: ['favicon.svg', 'icons/icon-192-v7.png', 'icons/icon-512-v7.png'],
       manifest: {
