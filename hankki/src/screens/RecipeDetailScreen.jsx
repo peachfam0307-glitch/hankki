@@ -59,7 +59,7 @@ export default function RecipeDetailScreen({ id }) {
   const [drawOpen, setDrawOpen] = useState(false) // 공유 뽑기카드
   const [shareSheet, setShareSheet] = useState(false) // 공유 두 갈래 시트
   const [coverBusy, setCoverBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩)
-  const [askReview, setAskReview] = useState(false) // 세 번째 요리 기록 직후 한 번만
+  const [askReview, setAskReview] = useState(false) // 기록 시트를 직접 열었다 닫을 때 한 번만
   // 인라인 오버레이(꾸미기) — 뒤로가기로 닫기.
   // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
   // 🔙 꾸미다가 뒤로가기 → **바로 닫지 않고 물어본다** (창업자 2026-07-30
@@ -135,24 +135,25 @@ export default function RecipeDetailScreen({ id }) {
   const latestEntry = myEntries[0]
   const cookedN = r?.cooked || myEntries.length
 
+  // ⭐⭐ 「만들었어요」는 누르면 «끝»이다 — 토스트만 뜨고 아무 폼도 안 연다. (창업자 확정 2026-08-06)
+  //    `docs/요리기록-다이어리-방향-2026-08-05.md` 9️⃣ 순서표 ① = *"「만들었어요」 → 토스트만, 시트 안 뜬다"*
+  //
+  // ⛔ 예전엔 `addDiary` 로 저장이 «이미 끝났는데» 곧바로 기록 시트가 따라 떴다.
+  //    저장이 안 된 것도 아닌데 별점·메모·사진을 묻는 폼이 앞을 막아서, 그게 요리 기록 탭이
+  //    죽은 이유 중 하나였다(마찰). 남기고 싶은 사람은 아래 「내 요리 기록」이나
+  //    요리 기록 탭에서 «자기가 원할 때» 연다.
   const onCook = () => {
-    // 오늘 이미 기록이 있으면(요리모드 완료 등) 새로 만들지 않고 그 기록을 이어서 쓴다 — 하루 두 번 집계 방지
+    // 오늘 이미 기록이 있으면(요리모드 완료 등) 새로 만들지 않는다 — 하루 두 번 집계 방지
     const today = new Date().toDateString()
     const existing = myEntries.find((d) => new Date(d.at).toDateString() === today)
     if (existing) {
-      setLogEntry(existing)
-      nav.showToast('오늘 기록에 이어서 남겨요')
+      nav.showToast('오늘은 이미 요리 기록에 있어요')
       return
     }
     const entry = { id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: null }
     addDiary(entry)
     cook(r.id)
-    setLogEntry(entry)
     nav.showToast('만들었어요! 요리 기록에 남겼어요')
-    // 세 번째 요리 기록이면 한 번만 한마디를 청한다 — 세 번 해먹은 사람은 진짜 쓰는 사람이고,
-    // 요리를 막 끝낸 순간이 가장 기분 좋은 자리다. 거절하면 다시 묻지 않는다.
-    // (기록 시트를 먼저 쓰게 두고, 그 시트를 닫을 때 뜬다 — 흐름을 끊지 않으려고.)
-    if (shouldAskReview(diary.length + 1)) setAskReview(true)
   }
 
   const del = () => setConfirmDel(true)
@@ -488,7 +489,11 @@ export default function RecipeDetailScreen({ id }) {
 
       {timer && <TimerSheet label={r.title} onClose={() => setTimer(false)} />}
 
-      {/* 한마디 청하기 — 기록 시트를 먼저 쓰게 두고 그게 닫힌 뒤에 뜬다(흐름을 끊지 않으려고).
+      {/* 한마디 청하기 — 기록을 «직접 열었다 닫는» 순간에만 뜬다.
+          ⛔ 요리 직후로 두면 안 된다 — 「만들었어요」를 토스트만으로 만든 순간(2026-08-06),
+             이 시트가 그 자리를 그대로 물려받아 마찰이 하나도 안 줄어든다.
+          ⭐ v9.02 의 원래 의도(*"기록을 막 남긴 뒤, 흐름을 끊지 않는 자리"*)는 그대로다.
+             달라진 건 그 자리를 «앱이 정하지 않고 유저가 연다»는 것뿐.
           시트가 스스로 '물어봤음'을 남겨서 어떻게 닫아도 다시 안 묻는다. */}
       {askReview && !logEntry && <ReviewAskSheet onClose={() => setAskReview(false)} />}
 
@@ -506,7 +511,9 @@ export default function RecipeDetailScreen({ id }) {
       {logEntry && (
         <DiaryEntrySheet
           entry={logEntry}
-          onClose={() => setLogEntry(null)}
+          // 닫는 순간 = 기록을 막 남긴 뒤 = 한마디를 청하기 제일 좋은 자리.
+          // ⛔ onDelete 는 여기를 안 탄다 — 지우고 나서 리뷰를 청하면 실례다.
+          onClose={() => { setLogEntry(null); if (shouldAskReview(diary.length)) setAskReview(true) }}
           onDelete={() => { removeDiary(logEntry.id); setLogEntry(null); nav.showToast('기록을 삭제했어요') }}
         />
       )}

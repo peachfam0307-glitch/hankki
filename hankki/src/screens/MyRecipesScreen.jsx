@@ -8,6 +8,8 @@ import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DiaryEntrySheet from '../components/DiaryEntrySheet'
+import ReviewAskSheet from '../components/ReviewAskSheet'
+import { shouldAskReview } from '../nudges'
 import { dateLabel } from '../utils'
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
@@ -156,6 +158,9 @@ export default function MyRecipesScreen() {
   const [newFolder, setNewFolder] = useState(false)
   const [delFolder, setDelFolder] = useState(null) // 삭제할 사용자 폴더 이름
   const [logEditing, setLogEditing] = useState(null)
+  // 한마디 청하기 — 기록 시트를 닫는 순간. 상세 화면과 «같은 자리»다.
+  // ⭐ 기록을 제일 많이 여닫는 곳이 여기라, 상세에만 걸면 사실상 아무한테도 안 물어보게 된다.
+  const [askReview, setAskReview] = useState(false)
 
   // 뒤로가기 처리는 모달(요리기록 시트 등)까지 포함해 아래(상태 선언 뒤)에서 한 번에 등록한다.
 
@@ -536,11 +541,14 @@ export default function MyRecipesScreen() {
       {logEditing && (
         <DiaryEntrySheet
           entry={logEditing}
-          onClose={() => setLogEditing(null)}
+          // ⛔ 삭제·레시피로 이동은 여기를 안 탄다 — 지운 직후나 화면을 옮기는 길에 물으면 실례다.
+          onClose={() => { setLogEditing(null); if (shouldAskReview(diary.length)) setAskReview(true) }}
           onDelete={() => { removeDiary(logEditing.id); setLogEditing(null); nav.showToast('기록을 삭제했어요') }}
           onOpenRecipe={recipes.some((r) => r.id === logEditing.recipeId) ? () => { const e = logEditing; setLogEditing(null); openRecipe(e) } : undefined}
         />
       )}
+      {/* 한마디 청하기 — 기록 시트가 닫힌 뒤에만(겹쳐 뜨지 않게). 시트가 스스로 '물어봤음'을 남긴다. */}
+      {askReview && !logEditing && <ReviewAskSheet onClose={() => setAskReview(false)} />}
       {coach && <CoachMarks storageKey={MYRECIPES_COACH_KEY} steps={MYRECIPES_COACH_STEPS} onDone={() => setCoach(false)} />}
     </>
   )
