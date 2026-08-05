@@ -49,9 +49,13 @@ for (const [n, key] of NEW) {
   console.log(`  ${broke ? '❌' : '✅'} 「${n}」 → ${key} 있음${broke ? ' (그림 깨짐)' : ''}`)
   if (broke) miss += 1
 }
-// 찾기 비우고 그림 시트 캡처
+// 찾기 비우고 «탭 순서»를 화면에서 읽는다 — 순서는 코드로 세도 눈으로 한 번 봐야 안다
 await page.locator('.emoji-sheet input').first().fill('')
-await page.waitForTimeout(500)
+await page.waitForTimeout(600)
+const labels = await page.locator('.emoji-sheet .chip, .emoji-sheet .pill, .emoji-sheet button').evaluateAll(
+  (bs) => bs.map((b) => (b.textContent || '').trim()).filter((t) => t && t.length < 12))
+console.log('\n화면에 보이는 탭 순서:')
+console.log('  ' + labels.join(' › '))
 await page.locator('.emoji-sheet').screenshot({ path: join(OUT, '픽커.png') })
 console.log(errs.length ? `❌ pageerror ${errs.length}` : '✅ pageerror 0')
 await b.close(); srv.close()

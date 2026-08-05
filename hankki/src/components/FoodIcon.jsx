@@ -668,17 +668,23 @@ export const FOOD_ICON_GROUPS = [
   { label: '국·탕·찌개', items: ['fe_141', 'fe_148', 'fe_150', 'fe_151', 'fe_152', 'fe_114', 'fe_123', 'fe_133', 'fh_k02', 'fh_k04', 'fh_k05', 'fh_k06', 'fh_k07', 'fh_k08', 'fh_k09', 'fh_k10', 'fe_28', 'fe_29', 'fe_30', 'fe_31', 'fe_13', 'fe_79', 'fe_80', 'fb_b02'] },
   { label: '면', items: ['fe_155', 'fe_122', 'fh_k25', 'fh_k26', 'fh_k23', 'fe_18', 'fe_37', 'fe_38', 'fe_81', 'fh_k16'] },
   { label: '구이·튀김', items: ['fe_137', 'fe_100', 'fe_101', 'fe_107', 'fe_119', 'fe_131', 'fh_k14', 'fh_k15', 'fh_k18', 'fh_k20', 'fh_k29', 'fe_69', 'fe_65', 'fh_k21'] },
+  // 🥄 소스·양념장은 «볶음·조림 맨 끝»에 (창업자 2026-08-05 *"볶음 마지막에 소스넣자"*).
+  //    ⭐ 소스는 그 자체가 요리가 아니라 «볶고 조릴 때 쓰는 것»이라 그 옆이 손이 간다.
+  //    ⛔ 재료 축의 「양념·장」(gochujang·soy…)과 다르다 — 저건 병에 든 재료, 이건 만들어 담은 것.
+  { label: '볶음·조림', items: ['fe_140', 'fe_144', 'fe_134', 'fe_135', 'fe_138', 'fe_139', 'fe_117', 'fe_118', 'fe_129', 'fh_k11', 'fh_k12', 'fh_k13', 'fh_k19', 'fh_k34', 'fh_htj13', 'fe_25', 'fe_75', 'fe_34', 'fe_35', 'fe_10', 'fe_70', 'fe_64', 'fe_66', 'fe_142', 'fe_102', 'fe_149', 'fe_128'] },
+  { label: '반찬·나물·김치', items: ['fe_143', 'fe_145', 'fe_146', 'fe_147', 'fe_153', 'fe_154', 'fe_104', 'fe_105', 'fe_108', 'fe_110', 'fe_111', 'fe_112', 'fe_113', 'fe_116', 'fe_120', 'fe_124', 'fe_130', 'fh_k32', 'fh_k33', 'fh_k35', 'fh_k17', 'fe_11', 'fe_12', 'fe_14', 'fe_36', 'fe_71', 'fe_95', 'fe_96', 'fe_76', 'fe_77', 'fe_78', 'fe_68'] },
   // ⭐ 2026-08-02 신설 — v9.38 에 조리법 축을 세울 때 «날것»과 «삶음»이 빠져 있었다.
   //    그래서 회·육회·대구뭉티기·수육이 「구이·튀김」에 얹혀 있었다(창업자 지적).
+  //    ⚠️ 2026-08-05 창업자가 순서를 다시 잡으며 「회」를 두 번 적었는데(반찬 뒤·일식 뒤)
+  //       *"일식뒤에 회빼고"* 로 확정 — **한식 묶음 맨 끝 한 곳**이다.
   { label: '회·수육', items: ['fe_72', 'fe_136', 'fe_23', 'fe_22', 'fe_125'] },
-  { label: '볶음·조림', items: ['fe_140', 'fe_144', 'fe_134', 'fe_135', 'fe_138', 'fe_139', 'fe_117', 'fe_118', 'fe_129', 'fh_k11', 'fh_k12', 'fh_k13', 'fh_k19', 'fh_k34', 'fh_htj13', 'fe_25', 'fe_75', 'fe_34', 'fe_35', 'fe_10', 'fe_70', 'fe_64', 'fe_66'] },
-  { label: '반찬·나물·김치', items: ['fe_142', 'fe_143', 'fe_145', 'fe_146', 'fe_147', 'fe_149', 'fe_153', 'fe_154', 'fe_102', 'fe_104', 'fe_105', 'fe_108', 'fe_110', 'fe_111', 'fe_112', 'fe_113', 'fe_116', 'fe_120', 'fe_124', 'fe_128', 'fe_130', 'fh_k32', 'fh_k33', 'fh_k35', 'fh_k17', 'fe_11', 'fe_12', 'fe_14', 'fe_36', 'fe_71', 'fe_95', 'fe_96', 'fe_76', 'fe_77', 'fe_78', 'fe_68'] },
-  { label: '분식', items: ['fh_k22', 'fh_k27', 'fh_k31', 'fh_k37', 'fe_92', 'fb_b01', 'fb_b03', 'fb_b04', 'fb_b05', 'fb_b07', 'fb_bun11'] },
   // ── 🌍 외국 음식은 나라로 ──
   { label: '양식', items: ['fe_127', 'fe_24', 'fe_26', 'fe_27', 'fe_42', 'fe_43', 'fe_52', 'fe_53', 'fe_73', 'fe_86', 'fe_87', 'fe_88', 'fe_08', 'fe_05', 'fy_y02', 'fy_y03', 'fy_y04', 'fy_y05', 'fy_y06', 'fy_y07', 'fy_y08', 'fy_y09', 'fy_y10', 'fy_y11', 'fy_y12', 'fy_y14', 'fy_yng02'] },
   { label: '중식', items: ['fe_47', 'fe_90', 'fe_91', 'fj_c01', 'fj_c02', 'fj_c03', 'fj_c04', 'fj_c05', 'fj_c06', 'fj_c07', 'fj_c08', 'fj_c09', 'fj_c10', 'fj_c11', 'fj_c12', 'fj_c13', 'fj_c14', 'fj_jsk02', 'fj_jsk15'] },
   { label: '일식', items: ['fe_98', 'fe_103', 'fe_106', 'fe_121', 'fe_45', 'fe_46', 'fi_j01', 'fi_j02', 'fi_j03', 'fi_j04', 'fi_j05', 'fi_j06', 'fi_j07', 'fi_j08', 'fi_j09', 'fi_j10', 'fi_j11', 'fi_j12', 'fi_j13', 'fi_j14', 'fi_isk03'] },
   { label: '동남아', items: ['fe_115', 'fe_09', 'fe_54', 'fe_55', 'fe_56', 'fe_57', 'fe_58', 'fe_59', 'fe_60', 'fe_61', 'fe_62'] },
+  // 🍢 분식·빵디저트는 «맨 뒤로» (창업자 2026-08-05 순서 확정). 끼니가 앞, 군것질이 뒤다.
+  { label: '분식', items: ['fh_k22', 'fh_k27', 'fh_k31', 'fh_k37', 'fe_92', 'fb_b01', 'fb_b03', 'fb_b04', 'fb_b05', 'fb_b07', 'fb_bun11'] },
   { label: '빵·디저트·음료', items: ['fe_82', 'fe_83', 'fe_84', 'fe_85', 'fe_49', 'fe_50', 'fe_51', 'fe_39', 'fe_40', 'fe_41', 'fe_17', 'fe_19', 'fe_93', 'fe_94', 'fe_15', 'fb_b09', 'fy_y13'] },
   // ── 🥕 아래는 «요리 사진»이 아니라 재료·도구 SVG 아이콘. 성격이 달라서 따로 둔다. ──
   { label: '요리 아이콘', items: ['donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert', 'icecream'] },
@@ -1145,12 +1151,26 @@ const SEARCH_INDEX = (() => {
 
 // 그룹 안에서 이름 가나다순으로 정렬해 둔 목록 — 넣은 순서라 규칙이 없던 걸 예측 가능하게.
 // (창업자 2026-07-29 "양이 많아져서 ㄱㄴㄷ순으로 정렬하자")
-export const FOOD_ICON_GROUPS_SORTED = FOOD_ICON_GROUPS.map((g) => ({
-  ...g,
-  items: [...g.items].sort((a, b) =>
-    (FOOD_NAMES[a] || a).localeCompare(FOOD_NAMES[b] || b, 'ko')
-  ),
-}))
+// 🥄 «맨 뒤에 붙일 것» — 가나다순에 섞이면 안 되는 컷.
+//   ⛔⛔ 2026-08-05: 창업자 *"볶음 마지막에 소스넣자"* 대로 소스를 볶음 그룹 «배열 끝»에 넣었는데,
+//      화면엔 「샐러드드레싱 › 소스 › … › 양념장」으로 **가나다순에 섞여 나왔다.**
+//      여기서 그룹 안을 다시 정렬하기 때문이다(v8.81 · 아이콘 300개라 찾기 편하라고).
+//   📌 **배열에 넣은 순서 ≠ 화면 순서.** 코드로 넣었다고 그렇게 보이는 게 아니다 — 실물이 잡았다(규칙 18).
+//   ✅ 그래서 이 목록에 있는 키는 정렬에서 빼고 **맨 뒤에 그대로** 붙인다.
+//      소스는 요리가 아니라 «볶고 조릴 때 쓰는 것»이라 끝에 모여 있어야 눈에 걸린다.
+const TAIL_KEYS = ['fe_142', 'fe_102', 'fe_149', 'fe_128'] // 양념장·달래양념장·샐러드드레싱·소스
+
+export const FOOD_ICON_GROUPS_SORTED = FOOD_ICON_GROUPS.map((g) => {
+  const tail = g.items.filter((k) => TAIL_KEYS.includes(k))
+  const head = g.items.filter((k) => !TAIL_KEYS.includes(k))
+  return {
+    ...g,
+    items: [
+      ...head.sort((a, b) => (FOOD_NAMES[a] || a).localeCompare(FOOD_NAMES[b] || b, 'ko')),
+      ...tail, // ⛔ 정렬하지 않는다 — 배열에 적은 차례 그대로 맨 뒤
+    ],
+  }
+})
 
 // 검색어에 맞는 아이콘 키 목록. 빈 검색어면 null(=검색 안 함).
 export function searchFoodIcons(query = '') {
