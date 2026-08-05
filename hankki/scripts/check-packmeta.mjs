@@ -132,5 +132,21 @@ for (const p of PACKS) {
 }
 if (!bgMiss) ok('배경 전부 있다')
 
+// ── Ⓔ 유료팩 배경이 «진짜로» 잠기나 ─────────────────────
+//   ⛔⛔ **2026-08-05, AAB 굽기 직전에 잡은 구멍.**
+//      「비 오는 창」(가을 유료팩 배경)에 `pack: 'autumn2026'` 을 붙여 놓고
+//      **거르는 곳을 안 만들었다.** 배경 피커는 `!b.hidden` 만 보고 있었다.
+//      → 그대로 나갔으면 **파는 배경이 무료로 풀렸다.**
+//      📌 절대원칙 = *"파는건 공유카드로도 안내보내는게 맞지"* (창업자 2026-08-03)
+//      📌 배운 것 = **꼬리표를 붙이는 것과 그 꼬리표를 «읽는 것»은 다른 일이다.**
+//         꼬리표만 붙이면 코드는 «아무 말 없이» 통과시킨다.
+console.log('\n🔒 유료팩 배경이 잠기나')
+const dec = readFileSync(join(SRC, 'components', 'DecorEditor.jsx'), 'utf8')
+const packedBg = [...jsx.slice(jsx.indexOf('DECOR_BACKGROUNDS = [')).matchAll(/label: '([^']+)'[^}]*?pack: '(\w+)'|pack: '(\w+)'[^}]*?label: '([^']+)'/g)]
+if (!packedBg.length) ok('pack 이 붙은 배경이 아직 없다')
+// ⚠️ `[^)]*` 로 쓰면 `(b) =>` 의 닫는 괄호에서 멈춰 b.pack 에 못 닿는다(2026-08-05 실제로 그랬다)
+else if (/DECOR_BACKGROUNDS\.filter\([\s\S]{0,120}?b\.pack/.test(dec)) ok('pack 붙은 배경을 피커가 거른다')   // ⚠️개수는 정규식이 겹쳐 잡아 부정확하다 — 「있나 없나」만 본다
+else bad('배경 피커가 b.pack 을 «안 본다» — 유료팩 배경이 무료로 풀린다.\n     👉 DecorEditor.jsx 의 DECOR_BACKGROUNDS.filter 에 (!b.pack || ownedPacks().has(b.pack)) 를 넣을 것')
+
 console.log(fail ? `\n❌ 팩 배분표 검사 실패 ${fail}건\n` : '\n✅ 팩 배분표 통과\n')
 process.exit(fail ? 1 : 0)
