@@ -112,3 +112,29 @@ export async function cropSquare(dataUrl, out = 800, quality = 0.85) {
     return dataUrl
   }
 }
+
+// 🔍 한글 «초성» 찾기 — 「ㄱㅈ」으로 「간장」이 걸리게.
+//
+// ⭐ 창업자가 미리 짚어 둔 다음 단계다 — 2026-08-03
+//   *"일단 이렇게 해두고 또 많아지면 검색이나 그런걸 추가하자."* (ShopScreen 주석에 남아 있다)
+//   폰에서 「고추장」을 다 치는 것보다 「ㄱㅊㅈ」이 빠르다. 초성은 한국 앱의 기본 습관이다.
+const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'
+export function chosungOf(s) {
+  let out = ''
+  for (const ch of String(s || '')) {
+    const c = ch.charCodeAt(0) - 0xac00
+    out += c >= 0 && c < 11172 ? CHO[Math.floor(c / 588)] : ch
+  }
+  return out
+}
+
+// 글자로도 찾고, «초성만» 쳤으면 초성으로도 찾는다.
+// ⚠️ 초성 판정은 «검색어가 전부 자음일 때»만 — 「간ㅈ」처럼 섞여 있으면 글자 그대로 본다
+//    (한글 입력 중간 상태가 자꾸 초성으로 새면 엉뚱한 게 걸린다).
+export function matchKo(text, query) {
+  const q = String(query || '').trim().toLowerCase()
+  if (!q) return true
+  const t = String(text || '').toLowerCase()
+  if (t.includes(q)) return true
+  return /^[ㄱ-ㅎ]+$/.test(q) ? chosungOf(t).includes(q) : false
+}

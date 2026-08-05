@@ -19,7 +19,7 @@ import FoodIconPicker from '../components/FoodIconPicker'
 import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
 import ConfirmSheet from '../components/ConfirmSheet'
-import { openExternal } from '../utils'
+import { openExternal, matchKo } from '../utils'
 import { CURATION, curIcon } from '../data/curation'
 
 // 외부 쇼핑몰 열기 — 정식 새 탭(설치된 앱 있으면 App Link 로 앱)으로 연다.
@@ -222,7 +222,16 @@ function Curation() {
   const [curCat, setCurCat] = useState('pick')
 
   // 카테고리·이모지를 각 아이템에 붙여 평탄화(칩 필터·픽 렌더용)
-  const flat = CURATION.flatMap((g) => g.items.map((it) => ({ ...it, cat: g.cat, emoji: g.emoji, icon: it.icon || g.icon })))
+  const flat = CURATION.flatMap((g) => g.items.map((it) => ({ ...it, cat: g.cat, group: g.group, emoji: g.emoji, icon: it.icon || g.icon })))
+  // 🔍 찾기 — 창업자가 미리 짚어 둔 다음 단계(*"또 많아지면 검색이나 그런걸 추가하자"*).
+  //   ⭐ 칩을 6칸으로 줄이고 「전체」를 3개씩 접어도 **제품이 늘면 결국 또 길어진다** —
+  //      찾기는 개수가 아무리 늘어도 «길이가 안 늘어나는» 유일한 길이다.
+  //   ⚠️ 초성으로도 찾는다(「ㄱㅈ」→간장) — 폰에서 다 치는 것보다 빠르다. → utils.matchKo
+  const [curQ, setCurQ] = useState('')
+  const curQuery = curQ.trim()
+  const found = curQuery
+    ? flat.filter((it) => matchKo(it.name, curQuery) || matchKo(it.cat, curQuery) || matchKo(it.group, curQuery))
+    : []
   const picks = flat.filter((it) => it.pick)
   // 🗂🗂 칩은 «큰 칸»만 보여준다 — 창업자 2026-08-03
   //   *"장바구니 종류탭이 너무 길어지네... 지금 종류가 더 늘텐데 옆으로 계속 길어지면 불편할 것 같아."*
@@ -366,8 +375,19 @@ function Curation() {
 
       {open && (
         <>
-          {/* 카테고리 칩 — 기본은 '이번 주 픽', 필요한 카테고리만 펼쳐 본다 */}
-          <div className="hscroll" style={{ paddingBottom: 4, marginBottom: 4 }}>
+          {/* 🔍 찾기 — 제품이 늘어도 «길이가 안 느는» 유일한 길. 초성도 된다(ㄱㅈ→간장) */}
+          <div className="searchbar" style={{ marginBottom: 10 }}>
+            <Icon name="search" size={18} color="var(--text-sub)" />
+            <input value={curQ} onChange={(e) => setCurQ(e.target.value)} placeholder="찾기 · 이름이나 초성(ㄱㅈ)" autoComplete="off" />
+            {curQ && (
+              <button className="press" onClick={() => setCurQ('')} aria-label="지우기">
+                <Icon name="x" size={17} color="var(--text-sub)" />
+              </button>
+            )}
+          </div>
+
+          {/* 카테고리 칩 — 기본은 '이번 주 픽', 필요한 카테고리만 펼쳐 본다 (찾는 중엔 감춘다) */}
+          <div className="hscroll" style={{ paddingBottom: 4, marginBottom: 4, display: curQuery ? 'none' : undefined }}>
             {chip('pick', '이번 주 픽')}
             {chip('전체', '전체')}
             {groupList.map((c) => chip(c.name, (
@@ -380,7 +400,16 @@ function Curation() {
 
           {/* ⭐ 잘게 나눈 종류는 «칩»에서 «소제목»으로 자리를 옮겼을 뿐 하나도 안 없어졌다.
               큰 칸을 고르면 그 안에서 간장·된장·맛술… 로 갈려 보인다. */}
-          {curCat === 'pick'
+          {curQuery ? (
+            found.length ? (
+              <>
+                <div className="t-sub" style={{ fontSize: 12.5, margin: '0 2px 10px' }}>‘{curQuery}’ — {found.length}개</div>
+                {found.map((it) => Card(it))}
+              </>
+            ) : (
+              <div className="empty">{'찾는 재료가 없어요.\n이름이나 초성(ㄱㅈ)으로 찾아보세요.'}</div>
+            )
+          ) : curCat === 'pick'
             ? picks.map((it) => Card(it))
             : byGroup.map((G) => {
                 const total = G.cats.reduce((s, c) => s + c.items.length, 0)
