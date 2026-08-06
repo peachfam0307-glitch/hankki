@@ -210,6 +210,23 @@ const PHOTO_RATIO = {
   //   전문 = docs/stickers/한끼일기-기본템-2026-08-06/README.md
   wt_dg01: 2.3978,
   wt_dg02: 2.5581,
+  // 🎂 기념일 태그 12 (2026-08-06 · 창업자 시트) — 케이크·선물·액자·하트·화환·반지·태그
+  //    ·풍경엽서·티켓＋나침반·머그둘·테이블·하트둘
+  //    ⭐ 창업자 *"그냥 넣자 **일기로 쓰고싶은사람도 있을지도. 딱 요리에 맞춰야하나?**"* → 넣는다.
+  //       우리 컨셉이 「요리하는 나를 위한 **감정·기록 공간**」이고, 요리는 «계기»지 «전부»가 아니다.
+  //       ⚠️ 단 **자산은 넓게, 정체성은 요리에** — 홈·탭·앱 설명까지 범용 다이어리로 가지 않는다.
+  dga01: 0.9444,
+  dga02: 0.8991,
+  dga03: 0.7666,
+  dga04: 0.9650,
+  dga05: 1.0287,
+  dga06: 0.9740,
+  dga07: 0.6149,
+  dga08: 0.9932,
+  dga09: 1.0860,
+  dga10: 1.1146,
+  dga11: 1.0116,
+  dga12: 1.2022,
   dgc01: 1.9212,
   dgc02: 1.1409,
   dgc03: 0.9920,
@@ -1103,6 +1120,7 @@ export const STICKER_GROUPS = [
   { key: 'dg_note', tab: 'deco', diary: true, only: 'diary', label: '한끼 일기 · 메모지', items: ['dgn01','dgn02','dgn03','dgn04','dgn05','dgn06','dgn07','dgn08','dgn09','dgn10','dgn11','dgn12'] },
   { key: 'dg_corner', tab: 'deco', diary: true, only: 'diary', label: '한끼 일기 · 코너', items: ['dgc01','dgc02','dgc03','dgc04','dgc05','dgc06'] },
   { key: 'dg_line', tab: 'deco', diary: true, only: 'diary', label: '한끼 일기 · 구분선', items: ['dgl01','dgl02','dgl03','dgl04'] },
+  { key: 'dg_day', tab: 'deco', diary: true, only: 'diary', label: '한끼 일기 · 기념일', items: ['dga01','dga02','dga03','dga04','dga05','dga06','dga07','dga08','dga09','dga10','dga11','dga12'] },
   { key: 'dg_tape', tab: 'tape', diary: true, only: 'diary', label: '한끼 일기 · 기본', items: ['wt_dg01','wt_dg02'] },
   // 🎗 마스킹테이프 — 창업자 직접 제작(2026-07-29). 배경·테이프 탭의 CSS 마테와 달리 갈색 외곽선 +
   //   양끝 톱니가 있는 '스티커 워시'라 다꾸 감성이 그대로 산다. **사철 쓰는 것만 12종 엄선**("엄선해서 12개").
