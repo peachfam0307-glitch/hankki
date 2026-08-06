@@ -21,8 +21,7 @@
 //    ⚠️ `assets/**` 은 첫 다운로드(precache)에서 이미 빠져 있다(2026-08-05) → **쓸 때 받는다.**
 import dpPhoto from '../assets/paper/dp_photo.webp'
 import dpCard from '../assets/paper/dp_card.webp'
-import dpDotBlue from '../assets/paper/dp_dot_blue.webp'
-import dpDotWarm from '../assets/paper/dp_dot_warm.webp'
+import dpFrameBlue from '../assets/paper/dp_frame_blue.webp'
 
 /** ⑴ 선 — 무지가 기본. 「양식을 안 정한다」는 확정 그대로 빈 종이에서 시작한다. */
 export const PAPER_RULES = [
@@ -32,11 +31,19 @@ export const PAPER_RULES = [
   { key: 'dots', label: '도트', cls: 'dots' },
 ]
 
-/** ⑵ 스킨 — 종이색·선색. CSS 변수라 그림이 안 는다. */
+/** ⑵ 스킨 — 종이색·선색. CSS 변수라 그림이 안 는다.
+ *
+ * 🎨 **넷을 확실히 벌렸다** (창업자 2026-08-06 *"속지 색깔이 기본 린넨 그레이지가 다 비슷해보임"*)
+ *   실측이 창업자 말과 같았다 — 아이보리 `#fbf7ef` · 리넨 `#f7f3ea` · 그레이지 `#f0ece3` 는
+ *   **밝기가 4~11 밖에 안 벌어져** 나란히 놓으면 같은 종이로 보인다. 「고를 게 넷」이 아니라 하나였다.
+ *   ⭐ 이제 **웜(아이보리·크라프트) ↔ 쿨(하늘) ↔ 분홍** 으로 «결»을 가른다. 밝기가 아니라 색이 다르다.
+ *   ⚠️ 옛 키(`linen`·`greige`)는 **CSS 에 그대로 남겨 뒀다** — 그걸로 써 둔 다이어리가 안 바뀌게.
+ *      피커에서만 내린다(스티커를 내릴 때와 같은 방식).
+ */
 export const PAPER_SKINS = [
   { key: 'ivory', label: '아이보리', cls: '' },
-  { key: 'linen', label: '리넨', cls: 'linen' },
-  { key: 'greige', label: '그레이지', cls: 'greige' },
+  { key: 'sky', label: '하늘', cls: 'sky' },
+  { key: 'blush', label: '분홍', cls: 'blush' },
   { key: 'kraft', label: '크라프트', cls: 'kraft' },
 ]
 
@@ -61,7 +68,12 @@ export const PAPER_ARTS = [
   {
     key: 'none', label: '없음', src: null,
     // 틀이 없으면 종이 전체가 쓰는 칸. 줄은 종이 전체에 그어진다(지금까지와 같다).
-    fields: { rule: 'paper', write: { top: 2 * LINE_H * 0.75, left: 9, right: 9, bottom: 7 } },
+    // 🏷 제목은 **첫 줄**, 본문은 둘째 줄부터 — 줄노트에 손으로 쓸 때와 같은 순서다.
+    fields: {
+      rule: 'paper',
+      title: { top: LINE_H * 0.75, left: 9, right: 9 },
+      write: { top: 2 * LINE_H * 0.75, left: 9, right: 9, bottom: 7 },
+    },
   },
   {
     key: 'photo', label: '사진일기', src: dpPhoto, note: '사진 한 장 ＋ 날짜·날씨 ＋ 줄',
@@ -69,6 +81,11 @@ export const PAPER_ARTS = [
     //    글줄은 인쇄된 줄에 «정확히» 앉게 top 을 역산했다: 첫 줄 밑 = 70.5% → top = 70.5 − 4.34
     fields: {
       rule: 'none',
+      // 🏷 제목 — **사진칸 «위», 나뭇잎 옆** (창업자 2026-08-06 *"저 맨위에 (사진틀위에)
+      //    나뭇잎옆에 제목 쓸 칸 만들어주면 좋겠어. 요리일지랑 다른 속지틀에도"*)
+      //    📐 실측 = 그 띠(y 3~13.1%)에 모서리 장식 x 3~7.5·92.3~97% · **나뭇잎 x 23.8~27.5%**
+      //       → 나뭇잎 오른쪽 x 29% 부터가 빈 자리다.
+      title: { top: 3.8, left: 29, right: 10 },
       // 📷 사진칸 — 그림에 «창»이 그려져 있는데 넣을 길이 없었다(창업자 2026-08-06
       //    *"사진틀에 사진올리기가없어"*). 실측 가로선 13.1·57.4% · 세로선 8.8·91.2%
       //    → 선 «안쪽»으로 1%쯤 넣는다(사진이 선을 덮으면 틀이 아니라 얼룩이 된다).
@@ -104,6 +121,9 @@ export const PAPER_ARTS = [
     //    · 맨 아래(77~84%) = 밑줄 하나 ＋ 「오늘의 한 줄」
     //    ⚠️ 85.8% 아래는 그림의 꽃·마테가 있다 → 한 줄 칸을 그보다 위에 둔다
     fields: {
+      // 🏷 제목 — 실측 = 위 띠(y 4.5~16.3%)에 왼쪽 잎 x 6.6~15.3% · 오른쪽 장식 x 86.6~94.2%
+      //    → 가운데 x 29~84% 가 빈 자리. 사진칸(y 17.3%)보다 위다.
+      title: { top: 6.5, left: 29, right: 16 },
       rule: 'write', // 줄은 «쓰는 칸 안에만» — 사진칸·빈 자리에 줄이 지나가면 안 된다
       photo: { top: 17.3, bottom: 61, left: 11.2, right: 44.5 }, // 실측 x10~56.7% · y16.4~39.8% 의 안쪽
       date: { top: 18.4, left: 60, right: 8 },
@@ -111,9 +131,33 @@ export const PAPER_ARTS = [
       line: { top: 77, left: 15.5, right: 8, label: '오늘의 한 줄' },
     },
   },
-  // ⭐ 이 둘이 «구조 × 스킨»의 실제 예다 — 같은 도트 종이인데 테두리 색만 다르다
-  { key: 'dotblue', label: '도트 · 파랑', src: dpDotBlue, dots: true, fields: { rule: 'paper', write: { top: 8.7, left: 9.5, right: 9.5, bottom: 8 } } },
-  { key: 'dotwarm', label: '도트 · 갈색', src: dpDotWarm, dots: true, fields: { rule: 'paper', write: { top: 8.7, left: 9.5, right: 9.5, bottom: 8 } } },
+  // 🌼 들꽃 테두리 — 파란 테두리 ＋ 잎·꽃·반짝임. 안은 통째로 비워 두고 **선은 「선」 탭이 긋는다.**
+  //
+  // 🐛🐛 **여기서 큰 걸 하나 잡았다 (2026-08-06 · 창업자 폰 캡처 → 픽셀로 확인)**
+  //   원래 이름이 「도트 · 파랑」이었고 도트가 **그림에 인쇄돼** 있었는데,
+  //   그 도트가 **종이의 왼쪽 절반(48.5%)에만** 찍혀 있었다 — 오른쪽은 잉크 **0.00%**.
+  //   ⛔ 우리가 WebP 로 줄이면서 깨진 게 아니다. **받아온 원본 PNG 부터 반쪽**이었다(둘 다 48.3%).
+  //      AI 가 그렇게 그렸고, 그림이라 코드로는 안 보였다.
+  //   ✅ 처방 = **그림에서 도트를 지우고**(작고 연한 덩어리 299개 · 테두리·꽃 16개는 남김)
+  //      **도트는 CSS 로 긋는다.** 그러면 ⑴종이 전체에 고르게 ⑵무한 확대해도 안 깨지고
+  //      ⑶「선」 탭의 무지·줄·모눈·도트가 **이 틀에서도 다 살아난다**(전에는 도트를 고르면 CSS 를 껐다).
+  //   📌 배운 것 = **그림 속 규칙은 코드가 검사해 주지 않는다.** 눈으로도 안 보였다 —
+  //      창업자 폰 캡처를 «픽셀로 재서» 나왔다.
+  //   ⛔ 갈색판(`dp_dot_warm`)은 내렸다 (창업자 2026-08-06 *"속지 도트파랑만 쓰자"*).
+  //      파일은 `docs/stickers/다이어리속지-2026-08-06/원본/` 에 그대로 둔다.
+  //   ⚠️ 키(`dotblue`)는 **일부러 안 바꿨다** — 이 틀로 이미 써 둔 다이어리가 있으면 그대로 이어져야 한다.
+  //   ⭐ **이름은 「도트 · 파랑」 그대로 둔다** — 창업자가 그렇게 부르는 틀이다(2026-08-06).
+  //      대신 `pickRule` 로 **이 틀을 고르면 선도 「도트」로 같이 바뀐다** → 화면은 전과 «똑같이» 보이고,
+  //      도트만 그림이 아니라 CSS 라 **종이 전체에 고르게** 찍힌다.
+  //   🏷 제목 = 실측 위 띠(y 2~12%)에 왼쪽 잎 x 6~13.7% · 오른쪽 반짝임 x 86.7~92.7% → 가운데가 빈다.
+  {
+    key: 'dotblue', label: '도트 · 파랑', src: dpFrameBlue, pickRule: 'dots',
+    fields: {
+      rule: 'paper',
+      title: { top: 3.4, left: 17, right: 16 },
+      write: { top: 8.7, left: 9.5, right: 9.5, bottom: 8 },
+    },
+  },
 ]
 
 /** 줄 간격(cqw) — 글자 크기·줄 간격·CSS 줄이 전부 이 하나에 묶인다. */

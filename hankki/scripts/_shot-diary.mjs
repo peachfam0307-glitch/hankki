@@ -57,7 +57,7 @@ const openDecor = async () => {
   await page.getByRole('button', { name: '나중에' }).first().click({ timeout: 1200 }).catch(() => {})
   await page.waitForTimeout(300)
 }
-const paperTab = () => page.locator('.decor-drawer').getByRole('button', { name: '속지', exact: true })
+const paperTab = () => page.locator('.decor-drawer').getByRole('button', { name: '속지 고르기', exact: true })
 /** 속지를 고르고 저장까지 — 여러 개 주면 차례로 고른다(선·종이·틀은 같이 쓴다) */
 const pickPaper = async (...labels) => {
   await openDecor()
@@ -72,7 +72,7 @@ const pickPaper = async (...labels) => {
 }
 
 await page.getByText('레시피', { exact: true }).last().click(); await page.waitForTimeout(700)
-await page.locator('.seg', { hasText: '요리 기록' }).first().click(); await page.waitForTimeout(700)
+await page.locator('.seg', { hasText: /요리 (기록|일지)/ }).first().click(); await page.waitForTimeout(700)
 await page.screenshot({ path: join(OUT, 'diary-a-입구.png') })
 const btn = page.getByRole('button', { name: /다이어리 쓰기/ }).first()
 if (await btn.isVisible().catch(() => false)) ok('요리 기록 탭에 「다이어리 쓰기」가 있다')
@@ -203,17 +203,29 @@ else no(`꾸미기 판이 3:4 가 아니다 (${stage ? Math.round(stage.width) +
 if ((await page.locator('.decor-stage').first().innerText()).includes(BODY)) ok('꾸미기 판에도 쓴 글이 같이 보인다')
 else no('꾸미기 판엔 글이 안 보인다 — 모르고 그 위를 덮게 된다')
 
-// ⓓ-2 📔 **속지 탭이 서랍 «안»에 있고, 고르면 그 자리에서 판이 바뀐다**
-if ((await paperTab().count()) === 1) ok('다이어리 꾸미기 서랍에 「속지」 탭이 있다')
-else no('「속지」 탭이 없다 — 그럼 종이를 아예 못 고른다')
+// ⓓ-2 📔 **서랍이 큰 두 칸으로 갈렸나** (창업자 2026-08-06 *"반으로 갈라서 왼쪽은 속지 고르기 오른쪽은 꾸미기"*)
+if ((await paperTab().count()) === 1) ok('서랍 왼쪽 칸에 「속지 고르기」가 있다')
+else no('「속지 고르기」 칸이 없다 — 그럼 종이를 아예 못 고른다')
+if ((await page.locator('.decor-drawer').getByRole('button', { name: '꾸미기', exact: true }).count()) === 1) ok('서랍 오른쪽 칸에 「꾸미기」가 있다')
+else no('「꾸미기」 칸이 없다')
+// 📐 종이가 화면을 다 먹지 않나 (창업자 *"꾸미기눌렀을때 창이너무 작음"*)
+const stageBox = await page.locator('.decor-stage .paper').first().boundingBox()
+if (stageBox && stageBox.height <= 880 * 0.44) ok(`꾸미는 종이 높이 ${Math.round(stageBox.height)}px = 화면의 ${(stageBox.height / 880 * 100).toFixed(0)}%`)
+else no(`종이가 너무 크다 — ${stageBox ? Math.round(stageBox.height) : '?'}px (화면 880 의 44% 넘음)`)
+const drawerBox = await page.locator('.decor-drawer').first().boundingBox()
+if (drawerBox && drawerBox.height >= 880 * 0.36) ok(`서랍 높이 ${Math.round(drawerBox.height)}px = 화면의 ${(drawerBox.height / 880 * 100).toFixed(0)}%`)
+else no(`서랍이 너무 좁다 — ${drawerBox ? Math.round(drawerBox.height) : '?'}px`)
 await paperTab().first().click(); await page.waitForTimeout(300)
+// ⛔ 속지 쪽엔 꾸미기 것이 안 섞인다 — 두 일을 가른 게 이 개편의 뜻이다
+if ((await page.getByRole('button', { name: '내 사진 넣기' }).count()) === 0) ok('「속지 고르기」 쪽엔 스티커·사진 줄이 안 섞인다')
+else no('속지 쪽에 꾸미기 줄이 그대로 있다 — 가른 게 아니다')
 for (const [label, sel] of [['선', '선'], ['종이', '종이'], ['틀', '틀']]) {
   if ((await page.locator('.decor-drawer .decor-sec-label', { hasText: new RegExp(`^${sel}$`) }).count()) === 1) ok(`속지 탭에 「${label}」 절이 있다`)
   else no(`속지 탭에 「${label}」 절이 없다`)
 }
-await page.getByRole('button', { name: '속지 그레이지', exact: true }).first().click(); await page.waitForTimeout(500)
+await page.getByRole('button', { name: '속지 하늘', exact: true }).first().click(); await page.waitForTimeout(500)
 const stageCls = await page.locator('.decor-stage .paper').first().getAttribute('class')
-if ((stageCls || '').includes('greige')) ok(`속지를 고르면 꾸미는 판이 바로 바뀐다 (${stageCls})`)
+if ((stageCls || '').includes('sky')) ok(`속지를 고르면 꾸미는 판이 바로 바뀐다 (${stageCls})`)
 else no(`속지를 골라도 판이 안 바뀐다 (${stageCls})`)
 await page.screenshot({ path: join(OUT, 'diary-d2-속지탭.png') })
 

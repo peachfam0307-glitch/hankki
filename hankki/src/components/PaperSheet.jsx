@@ -85,6 +85,31 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
         </div>
       )}
 
+      {/* 🏷 제목 — 틀마다 «장식을 피한 빈 자리»에 한 줄 (창업자 2026-08-06
+          *"저 맨위에 (사진틀위에) 나뭇잎옆에 제목 쓸 칸 만들어주면 좋겠어. 요리일지랑 다른 속지틀에도"*)
+          ⭐ 자리는 눈대중이 아니라 **그림을 픽셀로 재서** 잡았다(`papers.js` 의 `title` 주석에 근거).
+          ⭐ 본문보다 조금 크고 가운데 정렬 — 한 줄만 쓰는 칸이라 «표제»로 읽혀야 한다. */}
+      {fields.title && (
+        <div style={{ ...box(fields.title), ...overSticker, ...noTouch }}>
+          {ro ? (
+            <div style={{ ...hand, fontSize: `${PAPER_LINE_H * 0.95}cqw`, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden' }}>{value.title || ''}</div>
+          ) : (
+            <input
+              value={value.title || ''}
+              onChange={set('title')}
+              aria-label="제목"
+              placeholder="제목"
+              maxLength={24}
+              style={{
+                ...hand, fontSize: `${PAPER_LINE_H * 0.95}cqw`, textAlign: 'center',
+                width: '100%', height: `${PAPER_LINE_H * 1.25}cqw`, display: 'block',
+                background: 'none', border: 'none', outline: 'none', padding: 0, margin: 0, borderRadius: 0,
+              }}
+            />
+          )}
+        </div>
+      )}
+
       {/* 📅 날짜 — 그림의 날짜 칸에 «값만» 얹는다(사진일기엔 달력 아이콘·밑줄이 이미 인쇄돼 있다) */}
       {fields.date && dateLabel && (
         <div style={{ ...box(fields.date), ...hand, ...overSticker, fontSize: `${PAPER_LINE_H * (fields.date.fit || 0.68)}cqw`, pointerEvents: 'none', whiteSpace: 'nowrap' }}>

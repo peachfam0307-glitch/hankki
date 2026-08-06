@@ -1793,6 +1793,10 @@ html, body { overscroll-behavior: none; }
       우리는 종이를 CSS 로 그리니 **스킨이 변수 두 줄**이다 — 그림이 한 장도 안 는다.
    ⛔ 통짜 그림이었으면 스킨마다 속지를 전부 다시 뽑아야 했다. */
 .paper.kraft  { --paper: #e8d9bd; --rule: #c9ab7d; }   /* 크라프트 — 누런 재생지 */
+/* 🎨 넷을 «색»으로 가른다 (창업자 2026-08-06 *"기본 린넨 그레이지가 다 비슷해보임"* — 실측도 그랬다).
+   웜(아이보리·크라프트) ↔ 쿨(하늘) ↔ 분홍. 밝기만 다르면 나란히 놓을 때 같은 종이로 보인다. */
+.paper.sky    { --paper: #eef3f8; --rule: #c6d6e4; }   /* 하늘 — 앱 포인트색(더스티 블루)과 같은 결 */
+.paper.blush  { --paper: #fbf0f0; --rule: #e6cbcb; }   /* 분홍 — 다꾸 종이의 기본 파스텔 */
 .paper.greige { --paper: #f0ece3; --rule: #d6cfbf; }   /* 그레이지 — 앱 기본 테마와 같은 결 */
 .paper.linen  { --paper: #f7f3ea; --rule: #ddd2bc; }   /* 리넨 — 아이보리보다 한 톤 차분하게 */
 

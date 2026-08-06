@@ -47,10 +47,14 @@ const TAPE_WIDTHS = [
 // 📔 다이어리 속지 세 층(선·종이·틀) — 「틀 고르기」가 화면에 따로 있던 것을 **서랍 안으로 들였다**.
 //   창업자 2026-08-06 *"지금 꾸미기 틀이랑 꾸미기로 나눠져있는게 조금 불편해"*
 //   ⭐ 값은 `data/papers.js` 그대로 쓴다 — 여기서 목록을 다시 만들면 두 곳이 어긋난다.
+// ⭐⭐ **「틀」이 맨 위다** (창업자 2026-08-06 *"틀 다 어디갔어??"* — 실제로는 있었는데 **못 찾았다**)
+//   ⛔ 처음엔 선 → 종이 → 틀 순서였다. 「틀」이 셋째라 **스크롤해야 나왔고, 그건 없는 것과 같다.**
+//   ⭐ 그리고 순서가 뜻으로도 맞다 — **틀이 종이의 «모양»을 정한다**(사진칸·날짜칸·글칸이 다 틀에서 나온다).
+//      선·종이는 그 위에 얹는 결이다. 큰 것부터 고른다.
 const PAPER_AXES = [
-  { key: 'rule', label: '선', list: PAPER_RULES },
-  { key: 'skin', label: '종이', list: PAPER_SKINS },
   { key: 'art', label: '틀', list: PAPER_ARTS },
+  { key: 'skin', label: '종이', list: PAPER_SKINS },
+  { key: 'rule', label: '선', list: PAPER_RULES },
 ]
 
 // 🕗 「최근 쓴 것」을 띄우는 탭 — 스티커를 «고르는» 탭만.
@@ -107,9 +111,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // 📔 속지 탭을 띄울 수 있나 = 다이어리이면서 부모가 「고르는 길」을 줬나.
   const canPickPaper = isDiary && !!paperPick && !!onPaperPick
   // 서랍 탭 — 표지는 배경부터, 다이어리는 프레임부터(다이어리엔 배경 탭 자체가 없다. 아래 CATS 참고)
-  // 📔 **빈 다이어리를 처음 열면 「속지」부터** — 종이를 고르고 꾸미는 게 순서다.
-  //    ⭐ 이미 꾸며둔 걸 다시 열면 곧장 「프레임」으로 간다 — 종이는 이미 골랐고 이제 꾸미러 온 것이다.
-  const [cat, setCat] = useState(canPickPaper && items.length === 0 ? 'paper' : isDiary ? 'frame' : 'bgtape')
+  const [cat, setCat] = useState(isDiary ? 'frame' : 'bgtape')
+  // 🧭🧭 **서랍을 큰 두 칸으로 가른다 — 「속지 고르기」와 「꾸미기」**
+  //   창업자 2026-08-06 *"꾸미기를 반으로 갈라서 왼쪽은 속지 고르기 오른쪽은 꾸미기로 나누자"*
+  //   ⛔ 처음엔 속지를 탭 «일곱 중 하나»로 넣었는데, 그러면 **종이 고르는 일이 스티커 고르는 일과 같은 급**이 된다.
+  //      실제로는 순서가 있는 두 단계다 — 종이를 깔고, 그 위에 꾸민다.
+  //   ⭐ 빈 다이어리를 처음 열면 「속지 고르기」부터. 이미 꾸며둔 걸 다시 열면 「꾸미기」로 간다.
+  const [mode, setMode] = useState(canPickPaper && items.length === 0 ? 'paper' : 'decor')
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
   const [gift, setGift] = useState(() => needsGiftPack())
@@ -204,12 +212,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⛔ 눌러도 아무 변화가 없는 버튼은 **고장으로 읽힌다.**
   //   ⚠️ 창업자가 같은 종류를 방금 잡아냈다 — *"레시피꾸미기 아니고 요리다이어리"*.
   //      **표지용 UI 가 다이어리에 그대로 딸려온 것**이 뿌리다(제목도, 이 탭도).
-  // 📔📔 **「속지」가 맨 앞** (창업자 2026-08-06 *"지금 꾸미기 틀이랑 꾸미기로 나눠져있는게 조금 불편해"*)
-  //   전엔 다이어리 화면에 「선·종이·틀」 줄이 따로 있고, 꾸미기는 또 다른 버튼이었다 —
-  //   **한 장을 만드는데 손이 두 군데**였다. 종이를 고르는 건 «꾸미기의 첫 단계»지 딴 일이 아니다.
-  //   ⭐ 자리는 표지의 「배경」과 같다 — 배경도 속지도 **맨 밑에 까는 판**이라 순서가 제일 먼저다.
+  // 📔 속지는 여기 없다 — **큰 두 칸(「속지 고르기」/「꾸미기」) 중 왼쪽**으로 올라갔다(위 `mode` 참고).
+  //   전엔 다이어리 화면에 「선·종이·틀」 줄이 따로 있고 꾸미기는 또 다른 버튼이었다 —
+  //   **한 장을 만드는데 손이 두 군데**였다(창업자 *"나눠져있는게 조금 불편해"*).
   const CATS = [
-    ...(canPickPaper ? [{ key: 'paper', label: '속지' }] : []),
     ...(isDiary ? [] : [{ key: 'bgtape', label: '배경' }]),
     { key: 'frame', label: '프레임' },
     { key: 'tape', label: '마테' },
@@ -405,7 +411,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         <div className="decor-top">
           <button className="press" onClick={handleCancel} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
           <div style={{ fontSize: 16, fontWeight: 800 }}>{title}</div>
-          <button className="press" onClick={doSave} style={{ color: 'var(--brown)', fontSize: 15, fontWeight: 800 }}>저장</button>
+          {/* 💾 **글자가 아니라 «누를 것»으로 보이게** (창업자 2026-08-06
+              *"어떻게 꾸미기 탭을 닫아야 글씨를 쓸 수 있는지 모르겠어"*).
+              ⛔ 파란 글자 하나는 「제목 옆에 적힌 말」로 읽힌다 — 닫는 길이 안 보였다. */}
+          <button className="press" onClick={doSave}
+            style={{ background: 'var(--brown)', color: '#fff', fontSize: 14, fontWeight: 800, padding: '7px 17px', borderRadius: 999, border: 'none' }}>저장</button>
         </div>
         {restoredRef.current && (
           <div style={{ flex: '0 0 auto', background: '#eef3e8', color: '#4f5a44', fontSize: 12.5, fontWeight: 700, textAlign: 'center', padding: '6px 10px' }}>
@@ -431,11 +441,18 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             //    `PaperBox` 로 감싸야 글자·줄이 폭 기준(cqw)으로 제자리에 앉는다.
             if (paper) {
               return (
-                <PaperBox skin={paper} ratio={ratio} style={{ borderRadius: 18 }}>
-                  {/* ⚠️ 사진이 «먼저» — 그래야 스티커를 사진 위에 붙일 수 있다(글자는 zIndex 1) */}
-                  {paperOverlay}
-                  {layer}
-                </PaperBox>
+                // 📐 **종이 높이를 42vh 로 묶는다** (창업자 2026-08-06 *"꾸미기눌렀을때 창이너무 작음"*)
+                //   ⭐ 다이어리 종이는 3:4 세로라 폭을 꽉 채우면 **화면의 절반을 먹고** 서랍이 한 줄로 눌린다
+                //      (표지는 1:1 이라 이 문제가 없었다 — 판 모양이 바뀌었는데 자리는 안 바꿨다).
+                //   📏 3:4 이므로 폭을 31.5vh 로 묶으면 높이가 42vh 다. 나머지는 서랍이 가져간다.
+                //   ⚠️ 폭이 줄어도 글자·줄은 `cqw` 라 «비율 그대로» 따라 줄어든다.
+                <div style={{ width: 'min(100%, 31.5vh)', margin: '0 auto' }}>
+                  <PaperBox skin={paper} ratio={ratio} style={{ borderRadius: 18 }}>
+                    {/* ⚠️ 사진이 «먼저» — 그래야 스티커를 사진 위에 붙일 수 있다(글자는 zIndex 1) */}
+                    {paperOverlay}
+                    {layer}
+                  </PaperBox>
+                </div>
               )
             }
             return (
@@ -445,8 +462,16 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               </div>
             )
           })()}
-          <div className="t-sub" style={{ fontSize: 12, textAlign: 'center', marginTop: 10 }}>
-            {hasCtx ? '탭한 걸 여기서 바로 꾸며요 · 드래그로 이동 · ⟳ 크기/회전' : '아래에서 골라 붙이고 · 드래그로 이동 · ⟳ 손잡이로 크기/회전'}
+          {/* 🚪 **나가는 길을 여기서 말해 준다** (창업자 2026-08-06 *"어떻게 꾸미기 탭을 닫아야
+              글씨를 쓸 수 있는지 모르겠어"*). ⛔ 「골라 붙이고 드래그」만 알려주면 «들어온 뒤»만 안내한 것이다.
+              ⭐ 다이어리는 **닫아야 글을 쓴다** — 그 사실을 여기서 한 줄로 말한다. */}
+          {/* ⚠️ `keep-all` — 한국어는 낱말 중간에서 끊으면 「저 / 장」처럼 읽힌다(실물 캡처로 잡음) */}
+          <div className="t-sub" style={{ fontSize: 12, textAlign: 'center', marginTop: 10, lineHeight: 1.5, wordBreak: 'keep-all' }}>
+            {hasCtx
+              ? '탭한 걸 여기서 바로 꾸며요 · 드래그로 이동 · ⟳ 크기/회전'
+              : isDiary
+                ? '붙이고 옮기고 · 다 되면 오른쪽 위 저장'
+                : '아래에서 골라 붙이고 · 드래그로 이동 · ⟳ 손잡이로 크기/회전'}
           </div>
         </div>
 
@@ -604,7 +629,16 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         {/* 서랍 — 새로 붙이기 전용(배경·스티커·테이프·글자·포스트잇). 선택 아이템 편집은 위 컨텍스트 바에서. */}
         <div className="decor-drawer">
           <div className="decor-grab" />
+          {/* 🧭 큰 두 칸 — 왼쪽 「속지 고르기」 · 오른쪽 「꾸미기」 (창업자 2026-08-06)
+              ⭐ 앱에 이미 있는 `.segment` 를 쓴다 — 「모아보기 / 요리 기록」과 같은 문법이라 배울 게 없다. */}
+          {canPickPaper && (
+            <div className="segment" style={{ margin: '2px 2px 9px' }}>
+              <button className={`seg ${mode === 'paper' ? 'on' : ''}`} onClick={() => setMode('paper')}>속지 고르기</button>
+              <button className={`seg ${mode === 'decor' ? 'on' : ''}`} onClick={() => setMode('decor')}>꾸미기</button>
+            </div>
+          )}
           {/* 카테고리 칩 — 가로로 골라 그 카테고리만(세로 스크롤 최소화) */}
+          {mode === 'decor' && (
           <div style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '2px 2px 10px', flex: '0 0 auto' }}>
             {CATS.map((c) => {
               const on = cat === c.key
@@ -616,7 +650,45 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               )
             })}
           </div>
+          )}
           <div className="decor-scroll" ref={drawerRef}>
+            {/* 📔 속지 쪽 — 이 안엔 종이 얘기만 둔다(사진·선물·스티커는 「꾸미기」 쪽) */}
+            {mode === 'paper' && canPickPaper && PAPER_AXES.map((ax) => (
+              <div className="decor-sec" key={ax.key}>
+                <div className="decor-sec-label">{ax.label}</div>
+                {/* ⚠️ 줄이 «인쇄된» 틀에선 선을 골라도 화면이 안 바뀐다 — 그냥 두면 고장으로 읽힌다.
+                    ⛔ 칸을 숨기지는 않는다. 틀을 「없음」으로 바꾸면 바로 살아나는 값이라 감추면 못 찾는다. */}
+                {ax.key === 'rule' && paperStyle(paperPick).ruleWhere === 'none' && (
+                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)', margin: '-2px 0 8px', lineHeight: 1.5 }}>
+                    지금 고른 틀엔 줄이 이미 그려져 있어요 · 틀을 바꾸면 여기서 고른 선이 보여요
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
+                  {ax.list.map((o) => {
+                    // ⭐ 틀이 「이 선과 짝」이라고 말하면(`pickRule`) 선도 같이 바꿔 준다 —
+                    //    도트 틀을 골랐는데 줄이 그어져 있으면 «내가 고른 그 종이»가 아니다.
+                    const next = { ...paperPick, [ax.key]: o.key, ...(ax.key === 'art' && o.pickRule ? { rule: o.pickRule } : {}) }
+                    const on = paperPick[ax.key] === o.key
+                    // ⭐⭐ 미리보기는 **그 층만** 보여준다 — 틀 그림을 얹으면 그림이 선·종이색을 덮어
+                    //    무지·줄·모눈·도트 넷이 «똑같아 보인다»(실물 캡처로 잡음 2026-08-06).
+                    //    「틀」 절만 그림 그대로 — 거기선 그림 자체가 고르는 대상이다.
+                    const mini = paperStyle(ax.key === 'art' ? next : { ...next, art: 'none' })
+                    return (
+                      <button key={o.key} className="press" onClick={() => onPaperPick(next)} aria-label={`속지 ${o.label}`}
+                        style={{ flex: '0 0 auto', border: 'none', background: 'none', padding: 0, width: 60 }}>
+                        {/* 📏 줄 간격 — CSS 기본값(28px)은 작은 스와치에 두 줄만 그어져 「줄노트」로 안 읽힌다 */}
+                        <div className={mini.className}
+                          style={{ width: 60, aspectRatio: '3/4', borderRadius: 8, '--rule-gap': '8px', boxShadow: on ? '0 0 0 2.5px var(--brown)' : '0 1px 4px rgba(70,60,45,.18)', ...(mini.style || {}) }} />
+                        <div style={{ fontSize: 10.5, fontWeight: 700, marginTop: 4, textAlign: 'center', color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{o.label}</div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+            {/* 🎨 꾸미기 쪽 — 사진·선물·최근·스티커. 속지 쪽엔 이게 하나도 안 보인다
+                (종이 고르는 자리에 스티커 광고가 있으면 그게 곧 두 일이 섞인 것이다) */}
+            {mode === 'decor' && (<>
             {/* 🎁🎁 **출시 기념 선물 — 상시 한 줄** (창업자 2026-08-03 *"꾸미기 상단에 넣기"*)
                 ⛔ 전엔 안내가 **서랍 첫 방문에 딱 한 번 뜨는 시트**뿐이었다. 닫으면 끝이라
                    *"배경이랑 캐릭터, 프레임외에 뭐 더 주는지 모름"* 이 됐다 — 맞는 지적이다.
@@ -658,40 +730,6 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 </div>
               )
             })()}
-            {/* 📔 속지 — 선·종이·틀 세 층. 「각각 혹은 같이」 고른다
-                (창업자 2026-08-06 *"저렇게 각각 혹은 같이 사용하는거 아이디어야"*).
-                ⚠️ 고르는 순간 «위 판»이 바뀐다 — 저장을 눌러야 보이는 게 아니다. */}
-            {cat === 'paper' && canPickPaper && PAPER_AXES.map((ax) => (
-              <div className="decor-sec" key={ax.key}>
-                <div className="decor-sec-label">{ax.label}</div>
-                {/* ⚠️ 줄이 «인쇄된» 틀에선 선을 골라도 화면이 안 바뀐다 — 그냥 두면 고장으로 읽힌다.
-                    ⛔ 칸을 숨기지는 않는다. 틀을 「없음」으로 바꾸면 바로 살아나는 값이라 감추면 못 찾는다. */}
-                {ax.key === 'rule' && paperStyle(paperPick).ruleWhere === 'none' && (
-                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)', margin: '-2px 0 8px', lineHeight: 1.5 }}>
-                    지금 고른 틀엔 줄이 이미 그려져 있어요 · 틀을 바꾸면 여기서 고른 선이 보여요
-                  </div>
-                )}
-                <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
-                  {ax.list.map((o) => {
-                    const next = { ...paperPick, [ax.key]: o.key }
-                    const on = paperPick[ax.key] === o.key
-                    // ⭐⭐ 미리보기는 **그 층만** 보여준다 — 틀 그림을 얹으면 그림이 선·종이색을 덮어
-                    //    무지·줄·모눈·도트 넷이 «똑같아 보인다»(실물 캡처로 잡음 2026-08-06).
-                    //    「틀」 절만 그림 그대로 — 거기선 그림 자체가 고르는 대상이다.
-                    const mini = paperStyle(ax.key === 'art' ? next : { ...next, art: 'none' })
-                    return (
-                      <button key={o.key} className="press" onClick={() => onPaperPick(next)} aria-label={`속지 ${o.label}`}
-                        style={{ flex: '0 0 auto', border: 'none', background: 'none', padding: 0, width: 54 }}>
-                        {/* 📏 줄 간격 — CSS 기본값(28px)은 54px 스와치에 두 줄만 그어져 「줄노트」로 안 읽힌다 */}
-                        <div className={mini.className}
-                          style={{ width: 54, aspectRatio: '3/4', borderRadius: 8, '--rule-gap': '8px', boxShadow: on ? '0 0 0 2.5px var(--brown)' : '0 1px 4px rgba(70,60,45,.18)', ...(mini.style || {}) }} />
-                        <div style={{ fontSize: 10.5, fontWeight: 700, marginTop: 4, textAlign: 'center', color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{o.label}</div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
             {/* 🎨 배경·테이프 */}
             {cat === 'bgtape' && (
               <>
@@ -798,6 +836,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             {/* ✨ 데코 (색 바꾸는 심볼 + 데코 + 응원) */}
             {cat === 'frame' && groupsByTab('frame').map(renderStickerGroup)}
             {cat === 'deco' && groupsByTab('deco').map(renderStickerGroup)}
+            </>)}
           </div>
         </div>
 
