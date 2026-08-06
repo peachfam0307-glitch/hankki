@@ -180,9 +180,25 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
         )
       }))}
 
+      {/* 📏📏 줄·모눈·도트는 «틀 그림 아래»에 따로 깐다 — 글자와 같은 층에 두면 안 된다.
+          ⛔ 처음엔 글상자 배경으로 줬는데(`zIndex:1`) 그러면 줄이 **틀 그림보다 위**에 그려져
+             메모칸에 인쇄된 꽃·마테·도장 «위로 줄이 지나갔다»(캡처로 잡았다).
+          ⭐ 층을 안 주면 `::after`(틀 그림)가 나중에 칠해진다 — pseudo 는 «마지막 자식»이라.
+             그래서 줄은 빈 종이에서만 보이고 인쇄된 장식 뒤로는 숨는다. **종이가 원래 그렇다.** */}
+      {fields.write && bg && (
+        <div
+          aria-hidden
+          style={{
+            ...box(fields.write), pointerEvents: 'none',
+            backgroundImage: bg,
+            backgroundSize: rule === 'dots' ? 'var(--rule-gap) var(--rule-gap)' : undefined,
+          }}
+        />
+      )}
+
       {/* ✍️ 본문 — 종이의 줄 위에 바로. 배경·테두리 0 */}
       {fields.write && (
-        <div style={{ ...box(fields.write), ...overSticker, ...noTouch, ...(bg ? { backgroundImage: bg, backgroundSize: rule === 'dots' ? 'var(--rule-gap) var(--rule-gap)' : undefined } : {}) }}>
+        <div style={{ ...box(fields.write), ...overSticker, ...noTouch }}>
           {ro ? (
             <div style={{ ...hand, whiteSpace: 'pre-wrap', wordBreak: 'break-word', height: '100%', overflow: 'hidden' }}>{value.note || ''}</div>
           ) : (
