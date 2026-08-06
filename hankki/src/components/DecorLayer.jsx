@@ -32,7 +32,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     const wasSel = selectedId === it.id
     onSelect?.(it.id)
     const rect = boxRef.current.getBoundingClientRect()
-    dragRef.current = { id: it.id, x0: it.x, y0: it.y, px: e.clientX, py: e.clientY, rect, moved: false, wasSel, it }
+    dragRef.current = { id: it.id, x0: it.x, y0: it.y, px: e.clientX, py: e.clientY, rect, moved: false, wasSel, it, marked: false }
     e.currentTarget.setPointerCapture?.(e.pointerId)
   }
   const onItemMove = (e) => {
@@ -41,7 +41,11 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     if (Math.abs(e.clientX - d.px) > 8 || Math.abs(e.clientY - d.py) > 8) d.moved = true
     const nx = clamp(d.x0 + (e.clientX - d.px) / d.rect.width, 0.02, 0.98)
     const ny = clamp(d.y0 + (e.clientY - d.py) / d.rect.height, 0.02, 0.98)
-    onChange?.(d.id, { x: nx, y: ny })
+    // ↩ **드래그 한 번 = 되돌리기 한 칸.** 손가락이 움직일 때마다 값이 바뀌는데
+    //   그걸 다 기록하면 「실행 취소」를 백 번 눌러야 제자리로 온다.
+    //   → **맨 처음 한 번만** 세 번째 인자 true(=여기서 기록해라)를 보내고 그 뒤론 안 보낸다.
+    if (!d.marked) { d.marked = true; onChange?.(d.id, { x: nx, y: ny }, true) }
+    else onChange?.(d.id, { x: nx, y: ny })
   }
   const onItemUp = () => {
     const d = dragRef.current
@@ -54,6 +58,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
 
   // 핸들(크기+회전) — 선택된 아이템 우하단 손잡이
   const hRef = useRef(null)
+  // ↩ 크기·회전 손잡이도 같다 — 끄는 동안 한 칸만 기록한다
   const onHandleDown = (it) => (e) => {
     e.stopPropagation()
     const rect = boxRef.current.getBoundingClientRect()
@@ -73,7 +78,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     const img = e.currentTarget.parentElement?.querySelector('img')
     const srcPx = img && img.naturalWidth ? Math.max(img.naturalWidth, img.naturalHeight) : 0
     const maxS = srcPx ? clamp((srcPx * 1.7) / 1080, 0.22, 0.9) : 0.9
-    hRef.current = { id: it.id, cx, cy, d0: Math.hypot(dx, dy) || 1, a0: (Math.atan2(dy, dx) * 180) / Math.PI, s0: it.s, r0: it.r || 0, isText: it.type === 'text', maxS }
+    hRef.current = { id: it.id, cx, cy, d0: Math.hypot(dx, dy) || 1, a0: (Math.atan2(dy, dx) * 180) / Math.PI, s0: it.s, r0: it.r || 0, isText: it.type === 'text', maxS, marked: false }
     e.currentTarget.setPointerCapture?.(e.pointerId)
   }
   const onHandleMove = (e) => {
@@ -84,7 +89,8 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     // 글자는 커버를 꽉 채울 만큼 더 크게 · 그림은 원본 해상도가 허락하는 만큼만(h.maxS)
     const s = clamp(h.s0 * (Math.hypot(dx, dy) / h.d0), 0.07, h.isText ? 1.6 : (h.maxS || 0.9))
     const r = h.r0 + (Math.atan2(dy, dx) * 180) / Math.PI - h.a0
-    onChange?.(h.id, { s, r })
+    if (!h.marked) { h.marked = true; onChange?.(h.id, { s, r }, true) }
+    else onChange?.(h.id, { s, r })
   }
   const onHandleUp = () => { hRef.current = null }
 

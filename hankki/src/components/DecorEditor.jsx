@@ -96,7 +96,29 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
   // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
   const draft = loadDraft(recipe.id)
-  const [items, setItems] = useState(() => (draft?.items || recipe.decor || []).map((d) => ({ ...d })))
+  const [items, setItemsRaw] = useState(() => (draft?.items || recipe.decor || []).map((d) => ({ ...d })))
+  // ↩↩ **실행 취소** (창업자 2026-08-06 — 남들이 «무료 기본»에 두는 것)
+  //   ⭐ 왜 필요한가 = 창업자 *"x버튼 있지 않아? 그거랑 다른건가?"* → **다르다.**
+  //      X = 그 스티커를 «없앤다»(되살릴 길 0). 실행 취소 = 방금 한 짓을 «무른다».
+  //      · 옮기다 손이 미끄러졌다 → X 로는 지워질 뿐 제자리로 안 온다
+  //      · 실수로 X 를 눌렀다 → 서랍에서 다시 찾아 크기·각도를 처음부터 맞춰야 한다
+  //      · 너무 키웠다 → 원래 크기를 기억 못 한다
+  //      📌 꾸미기는 «막 해보다 아니면 무르는» 놀이다. 무를 수 없으면 조심하게 되고 재미가 없다.
+  //   ⚠️ **드래그는 한 칸으로 묶는다** — 손가락이 움직일 때마다 기록하면 백 번 눌러야 제자리다.
+  //      DecorLayer 가 «끌기 시작할 때 한 번만» 세 번째 인자로 true 를 준다.
+  //   ⚠️ 30칸까지만 쌓는다 — 무한히 쌓으면 사진 스티커 때문에 메모리가 는다.
+  const [past, setPast] = useState([])
+  const setItems = (fn) => setItemsRaw((arr) => (typeof fn === 'function' ? fn(arr) : fn))
+  // 되돌릴 «자리»를 찍는다. 값을 바꾸기 «전»에 부른다.
+  const mark = () => setItemsRaw((arr) => { setPast((p) => [...p.slice(-29), arr]); return arr })
+  const undo = () => {
+    setPast((p) => {
+      if (!p.length) return p
+      setItemsRaw(p[p.length - 1])
+      setSel(null)
+      return p.slice(0, -1)
+    })
+  }
   const [sel, setSel] = useState(null)
   const [noteEdit, setNoteEdit] = useState(null) // 글 수정 중인 포스트잇 item
   const [textFont, setTextFont] = useState('gaegu') // 글자 스티커 글씨체 기본 = 귀염체(손글씨 톤)
@@ -171,9 +193,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     })
   }
   // 순서 수동 조절 — 다 꺼내 다시 배열 안 해도 되게. 맨 뒤=배열 앞, 맨 앞=배열 끝.
-  const sendToBack = (id) => setItems((arr) => { const i = arr.findIndex((x) => x.id === id); return i <= 0 ? arr : [arr[i], ...arr.slice(0, i), ...arr.slice(i + 1)] })
-  const bringToFront = (id) => setItems((arr) => { const i = arr.findIndex((x) => x.id === id); return (i < 0 || i === arr.length - 1) ? arr : [...arr.slice(0, i), ...arr.slice(i + 1), arr[i]] })
-  const patch = (id, p) => setItems((arr) => arr.map((x) => (x.id === id ? { ...x, ...p } : x)))
+  // ↩ 아래 넷은 «값을 바꾸기 전»에 mark() 로 자리를 찍는다. 하나라도 빠지면 그 동작만 안 무러진다.
+  const sendToBack = (id) => { mark(); setItems((arr) => { const i = arr.findIndex((x) => x.id === id); return i <= 0 ? arr : [arr[i], ...arr.slice(0, i), ...arr.slice(i + 1)] }) }
+  const bringToFront = (id) => { mark(); setItems((arr) => { const i = arr.findIndex((x) => x.id === id); return (i < 0 || i === arr.length - 1) ? arr : [...arr.slice(0, i), ...arr.slice(i + 1), arr[i]] }) }
+  // ⚠️ `rec` = 드래그가 «시작될 때만» true. 안 그러면 손가락 움직임마다 한 칸씩 쌓인다.
+  const patch = (id, p, rec) => { if (rec) mark(); setItems((arr) => arr.map((x) => (x.id === id ? { ...x, ...p } : x))) }
+  // 버튼(색·무늬·모양·글씨체·모션·효과·뒤집기)에서 부를 때는 «항상» 기록한다
+  const patchRec = (id, p) => patch(id, p, true)
   // ↔↔ **좌우 뒤집어도 되는 것인가** (창업자 2026-08-06 *"캐릭터좌우반전돼?"*)
   //   ✅ 캐릭터·프레임·코너·소품·음식 = 뒤집어도 자연스럽다(실물로 뒤집어 확인했다).
   //      ⭐ 특히 **코너 장식은 왼쪽 위 모양 하나뿐**이라 뒤집기가 곧 «새 컷»이다(6 → 24).
@@ -184,7 +210,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const NO_FLIP = ['tw_', 'tn_']   // 글자가 그려진 컷 (tw_ 문구 · tn_ 요일·라벨)
   const canFlip = (it) => !!it && it.type !== 'text' && it.type !== 'note'
     && !(typeof it.key === 'string' && NO_FLIP.some((p) => it.key.startsWith(p)))
-  const remove = (id) => { setItems((arr) => arr.filter((x) => x.id !== id)); setSel(null) }
+  // ↩ **X 로 지운 것도 되살아난다** — 창업자가 물었던 「X 버튼이랑 뭐가 다르냐」의 답이 여기다.
+  const remove = (id) => { mark(); setItems((arr) => arr.filter((x) => x.id !== id)); setSel(null) }
 
   // 🛟 자동저장 — 편집할 때마다 초안을 localStorage 에 저장(디바운스). 앱이 죽거나 실수로 닫혀도 안 날아감.
   const exitedRef = useRef(false) // 저장/나가기 후엔 초안 재생성 안 되게(대기중 디바운스 무효화)
@@ -329,6 +356,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       ...(FRIEND_IDS.has(key) ? { motion: 'tongtong', fx: 'none' } : {}),
     }
     // 🖼 프레임(액자)은 밑판이라 맨 뒤(배열 앞)로 — 이미 꾸며둔 스티커·글자가 프레임 위로 자연스럽게 얹힌다. 나머지는 맨 앞(위).
+    mark()
     setItems((arr) => isFrame ? [it, ...arr] : [...arr, it])
     setSel(it.id)
     pushRecentSticker(key) // 🕗 다음에 열 때 맨 위에 놓아 준다(이번 서랍은 안 흔든다)
@@ -336,7 +364,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const addNote = (colorKey) => {
     const n = items.length
     const it = { id: newDecorId(), type: 'note', key: colorKey, text: '', font: 'gaegu', x: 0.62 + ((n % 2) - 0.5) * 0.06, y: 0.68, s: 0.34, r: ((n % 5) - 2) * 3 }
-    setItems((arr) => [...arr, it])
+    mark(); setItems((arr) => [...arr, it])
     setSel(it.id)
     setNoteEdit(it) // 붙이면 바로 글씨 쓰기 시트 열기(무늬·모양은 상단 컨텍스트 바에서)
   }
@@ -381,6 +409,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       const shot = await cropRatio(src, par, 700, 0.8)
       const it = { id: newDecorId(), type: 'photo', src: shot, ratio: par, x: f.x + dx, y: f.y + dy, s: pw, r: f.r || 0 }
       // ⭐ 프레임 «바로 앞»에 꽂는다(배열에서 프레임보다 앞 = 화면에선 뒤).
+    mark()
       setItems((arr) => { const i = arr.findIndex((x) => x.id === f.id); return i < 0 ? [it, ...arr] : [...arr.slice(0, i), it, ...arr.slice(i)] })
       setSel(it.id)
       // ⛔ 토스트는 안 띄운다 — 이 화면엔 토스트 장치가 없고, 버튼 이름이
@@ -390,19 +419,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const small = await cropSquare(src, 700, 0.8)
     const n = items.length
     const it = { id: newDecorId(), type: 'photo', src: small, x: 0.5, y: 0.44, s: 0.44, r: ((n % 5) - 2) * 3 }
-    setItems((arr) => [...arr, it])
+    mark(); setItems((arr) => [...arr, it])
     setSel(it.id)
   }
   const addTape = (key) => {
     const n = items.length
     const it = { id: newDecorId(), type: 'tape', key, x: 0.5, y: 0.28 + (n % 3) * 0.14, s: 0.62, r: ((n % 5) - 2) * 3 }
-    setItems((arr) => [...arr, it])
+    mark(); setItems((arr) => [...arr, it])
     setSel(it.id)
   }
   const addText = (colorKey) => {
     const n = items.length
     const it = { id: newDecorId(), type: 'text', color: colorKey, font: textFont, text: '', x: 0.5, y: 0.5 + ((n % 3) - 1) * 0.08, s: 0.5, r: 0 }
-    setItems((arr) => [...arr, it])
+    mark(); setItems((arr) => [...arr, it])
     setSel(it.id)
     setNoteEdit(it)
   }
@@ -605,7 +634,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               <div style={ctxRow}>
                 <span style={ctxLabel}>뒤집기</span>
                 <div style={{ display: 'flex', gap: 7, flex: 1 }}>
-                  <button className="press" onClick={() => patch(sel, { flip: !selItem.flip })}
+                  <button className="press" onClick={() => patchRec(sel, { flip: !selItem.flip })}
                     style={{ ...layerBtn, background: selItem.flip ? 'var(--brown)' : undefined, color: selItem.flip ? '#fff' : undefined }}>
                     좌우 뒤집기
                   </button>
@@ -620,7 +649,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     {pickableMotions().map((m) => {
                       const on = (selItem.motion || 'tongtong') === m.key
                       return (
-                        <button key={m.key} className="press" onClick={() => patch(sel, { motion: m.key })}
+                        <button key={m.key} className="press" onClick={() => patchRec(sel, { motion: m.key })}
                           style={{ padding: '5px 13px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{m.label}</button>
                       )
                     })}
@@ -632,7 +661,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     {pickableFx().map((f) => {
                       const on = (selItem.fx || 'none') === f.key
                       return (
-                        <button key={f.key} className="press" onClick={() => patch(sel, { fx: f.key })}
+                        <button key={f.key} className="press" onClick={() => patchRec(sel, { fx: f.key })}
                           style={{ padding: '5px 13px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{f.label}</button>
                       )
                     })}
@@ -644,10 +673,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               <div style={ctxRow}>
                 <span style={ctxLabel}>색</span>
                 <div style={ctxScroll}>
-                  <button className="press" onClick={() => patch(sel, { color: null })} aria-label="기본색"
+                  <button className="press" onClick={() => patchRec(sel, { color: null })} aria-label="기본색"
                     style={{ ...ctxDot, border: !selItem.color ? selOn : selOff, fontSize: 10, fontWeight: 800, color: 'var(--text-sub)', background: 'var(--surface)' }}>기본</button>
                   {STICKER_COLORS.map((c) => (
-                    <button key={c.key} className="press" onClick={() => patch(sel, { color: c.color })} aria-label={`색 ${c.key}`}
+                    <button key={c.key} className="press" onClick={() => patchRec(sel, { color: c.color })} aria-label={`색 ${c.key}`}
                       style={{ ...ctxDot, background: c.color, border: selItem.color === c.color ? selOn : '1.5px solid rgba(0,0,0,.1)', boxShadow: selItem.color === c.color ? '0 0 0 2px var(--surface) inset' : 'none' }} />
                   ))}
                 </div>
@@ -659,7 +688,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   <span style={ctxLabel}>무늬</span>
                   <div style={ctxScroll}>
                     {TAPE_PATTERNS.map((t) => (
-                      <button key={t.key} className="press" onClick={() => patch(sel, { key: t.key })} aria-label={`테이프 ${t.label}`}
+                      <button key={t.key} className="press" onClick={() => patchRec(sel, { key: t.key })} aria-label={`테이프 ${t.label}`}
                         style={{ width: 46, height: 22, borderRadius: 3, ...t.style, flex: '0 0 auto', border: selItem.key === t.key ? selOn : '1px solid rgba(0,0,0,.08)' }} />
                     ))}
                   </div>
@@ -670,7 +699,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     {TAPE_WIDTHS.map((w) => {
                       const on = (selItem.ratio || 3.4) === w.ratio
                       return (
-                        <button key={w.key} className="press" onClick={() => patch(sel, { ratio: w.ratio })}
+                        <button key={w.key} className="press" onClick={() => patchRec(sel, { ratio: w.ratio })}
                           style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{w.label}</button>
                       )
                     })}
@@ -687,7 +716,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 <span style={ctxLabel}>색</span>
                 <div style={ctxScroll}>
                   {TEXT_COLORS.map((c) => (
-                    <button key={c.key} className="press" onClick={() => patch(sel, { color: c.key })} aria-label={`글자색 ${c.key}`}
+                    <button key={c.key} className="press" onClick={() => patchRec(sel, { color: c.key })} aria-label={`글자색 ${c.key}`}
                       style={{ ...ctxDot, background: c.color, border: (selItem.color || 'white') === c.key ? selOn : '1.5px solid rgba(0,0,0,.14)', boxShadow: (selItem.color || 'white') === c.key ? '0 0 0 2px var(--cream)' : 'none' }} />
                   ))}
                 </div>
@@ -696,7 +725,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 <span style={ctxLabel}>굵기</span>
                 <div style={ctxScroll}>
                   {TEXT_WEIGHTS.map((w) => (
-                    <button key={w.key} className="press" onClick={() => patch(sel, { w: w.key })}
+                    <button key={w.key} className="press" onClick={() => patchRec(sel, { w: w.key })}
                       style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: (selItem.w || 'mid') === w.key ? 'var(--brown)' : 'var(--surface)', color: (selItem.w || 'mid') === w.key ? '#fff' : 'var(--text-sub)', border: 'none' }}>
                       {w.label}
                     </button>
@@ -707,7 +736,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 <span style={ctxLabel}>글씨</span>
                 <div style={ctxScroll}>
                   {TEXT_FONTS.map((f) => (
-                    <button key={f.key} className="press" onClick={() => patch(sel, { font: f.key })}
+                    <button key={f.key} className="press" onClick={() => patchRec(sel, { font: f.key })}
                       style={{ padding: '4px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, flex: '0 0 auto', fontFamily: f.family, background: selItem.font === f.key ? 'var(--brown)' : 'var(--surface)', color: selItem.font === f.key ? '#fff' : 'var(--text-sub)' }}>{f.label}</button>
                   ))}
                 </div>
@@ -720,7 +749,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   <span style={ctxLabel}>글씨</span>
                   <div style={ctxScroll}>
                     {TEXT_FONTS.map((f) => (
-                      <button key={f.key} className="press" onClick={() => patch(sel, { font: f.key })}
+                      <button key={f.key} className="press" onClick={() => patchRec(sel, { font: f.key })}
                         style={{ padding: '4px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, flex: '0 0 auto', fontFamily: f.family, background: (selItem.font || 'gaegu') === f.key ? 'var(--brown)' : 'var(--surface)', color: (selItem.font || 'gaegu') === f.key ? '#fff' : 'var(--text-sub)' }}>{f.label}</button>
                     ))}
                   </div>
@@ -729,7 +758,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   <span style={ctxLabel}>무늬</span>
                   <div style={ctxScroll}>
                     {NOTE_PATTERNS.map((p) => (
-                      <button key={p.key} className="press" onClick={() => patch(sel, { pattern: p.key })}
+                      <button key={p.key} className="press" onClick={() => patchRec(sel, { pattern: p.key })}
                         style={{ ...ctxChip, border: (selItem.pattern || 'plain') === p.key ? selOn : selOff }}>
                         <MiniNote color={selNoteColor} pattern={p.key} shape="round" size={22} />
                       </button>
@@ -740,7 +769,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   <span style={ctxLabel}>모양</span>
                   <div style={ctxScroll}>
                     {NOTE_SHAPES.map((s) => (
-                      <button key={s.key} className="press" onClick={() => patch(sel, { shape: s.key })}
+                      <button key={s.key} className="press" onClick={() => patchRec(sel, { shape: s.key })}
                         style={{ ...ctxChip, border: (selItem.shape || 'fold') === s.key ? selOn : selOff }}>
                         <MiniNote color={selNoteColor} pattern="plain" shape={s.key} size={22} />
                       </button>
@@ -773,6 +802,20 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ) : (
                 <button className={`seg ${mode === 'decor' ? 'on' : ''}`} onClick={() => setMode('decor')}>꾸미기</button>
               )}
+            </div>
+          )}
+          {/* ↩↩ **되돌리기** — 되돌릴 게 «있을 때만» 보인다(빈 버튼은 죽은 버튼이다).
+              ⭐ 서랍 맨 위, 큰 칸 바로 밑 = 어느 탭에 있든 손이 닿는 자리.
+              ⛔ 아이템을 골라야만 보이는 컨텍스트 바에 두면 «지운 뒤»엔 못 누른다
+                 (지우면 선택이 풀리니까). 지운 걸 되살리는 게 이 버튼의 제일 큰 쓸모다. */}
+          {mode === 'decor' && past.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 2px 8px', flex: '0 0 auto' }}>
+              <button className="press" onClick={undo}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 999,
+                  fontSize: 12.5, fontWeight: 700, background: 'var(--cream)', border: '1px solid var(--line)', color: 'var(--brown)' }}>
+                <Icon name="undo" size={15} color="var(--brown)" />
+                되돌리기
+              </button>
             </div>
           )}
           {/* 카테고리 칩 — 가로로 골라 그 카테고리만(세로 스크롤 최소화) */}
