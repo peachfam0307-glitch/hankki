@@ -80,13 +80,25 @@ await page.locator('.segment .seg').nth(1).click(); await page.waitForTimeout(60
 await page.getByRole('button', { name: /일기 (쓰기|보기)/ }).first().click(); await page.waitForTimeout(1000)
 await page.getByRole('button', { name: '꾸미기 열기' }).first().click(); await page.waitForTimeout(900)
 
-// ── ① 「글자」 탭에 형광펜 칸이 있다 ────────────────────
-await page.getByRole('button', { name: '레꾸', exact: true }).last().click(); await page.waitForTimeout(500)
-await page.getByRole('button', { name: '글자', exact: true }).first().click(); await page.waitForTimeout(700)
-const pens = page.locator('.decor-drawer button[aria-label^="형광펜 "]')
-const nPen = await pens.count()
-if (nPen >= 6) ok(`「글자」 탭에 형광펜 ${nPen}색이 있다`)
-else no(`형광펜 칸이 모자라다 (${nPen}색)`)
+// ── ① ⭐ **일꾸·레꾸 «둘 다»** 「글자」 탭에 형광펜이 있다 ──────
+//   창업자 2026-08-06 *"일꾸 레꾸다되는거지?"* → 처음엔 **일꾸에 「글자」 탭이 아예 없었다.**
+//   탭은 「그 탭에 스티커 그룹이 있나」로 띄우는데 일기 세트는 데코·프레임·마테뿐이라
+//   글자 탭이 통째로 사라졌고, 그 안의 «글자 넣기·형광펜·포스트잇»까지 같이 없어졌다.
+//   ⛔ 한쪽만 재고 넘어가면 또 샌다 — 여기서 «양쪽»을 못 박는다.
+const openWord = async (shelf) => {
+  await page.getByRole('button', { name: shelf, exact: true }).last().click(); await page.waitForTimeout(600)
+  const tabs = (await page.locator('.decor-cats button').allInnerTexts()).map((t) => t.trim())
+  if (!tabs.includes('글자')) { no(`${shelf} 에 「글자」 탭이 없다 (탭: ${tabs.join('·')})`); return 0 }
+  await page.getByRole('button', { name: '글자', exact: true }).first().click(); await page.waitForTimeout(700)
+  return await page.locator('.decor-scroll button[aria-label^="형광펜 "]').count()
+}
+for (const shelf of ['일꾸', '레꾸']) {
+  const n = await openWord(shelf)
+  if (n >= 6) ok(`${shelf} 「글자」 탭에 형광펜 ${n}색이 있다`)
+  else if (n > 0) no(`${shelf} 형광펜 칸이 모자라다 (${n}색)`)
+}
+// 아래 검사는 레꾸에서 이어 간다(방금 연 자리 그대로)
+const pens = page.locator('.decor-scroll button[aria-label^="형광펜 "]')
 
 const stage = await page.locator('.decor-stage').first().boundingBox()
 // 🔖 판 위의 형광펜을 «표식»으로 찾는다 — 자리와 blend 선언을 같이 돌려준다
@@ -137,15 +149,19 @@ const tap = async (label, name) => {
   ok(`${label} 바꿨다 (${name})`)
   return true
 }
-await tap('색', '형광펜 하늘')
+// ⭐ 색 «이름»을 박아두지 않는다 — 창업자가 팔레트를 갈면 검사가 통째로 깨진다.
+//    서랍의 세 번째 칸이 무엇이든 그 이름표를 읽어서 누른다.
+const before3 = await page.evaluate(() => document.querySelector('.decor-stage [data-hl]')?.getAttribute('data-hl'))
+const third = await pens.nth(2).getAttribute('aria-label')
+await tap('색', third)
 await tap('굵기', '굵게')
 await tap('진하기', '진하게')
 const changed = await page.evaluate(() => {
   const el = document.querySelector('.decor-stage [data-hl]')
   return el ? { key: el.getAttribute('data-hl'), o: getComputedStyle(el).opacity } : null
 })
-if (changed?.key === 'sky') ok('바꾼 색이 판에 반영됐다 (하늘)')
-else no(`색이 판에 반영이 안 됐다 (${changed?.key})`)
+if (changed?.key && changed.key !== before3) ok(`바꾼 색이 판에 반영됐다 (${before3} → ${changed.key})`)
+else no(`색이 판에 반영이 안 됐다 (${before3} → ${changed?.key})`)
 
 // ── ⑤ 되돌리기 한 칸 ──────────────────────────────────
 // 방금 「진하게(0.72)」로 바꿨으니, 한 번 무르면 그 «앞» 값(0.5)으로 돌아와야 한다

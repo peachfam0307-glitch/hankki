@@ -90,9 +90,19 @@ const wantOpen = OPEN.map((d) => d.label)
 for (const l of wantOpen) {
   if (seen.includes(l)) ok(`일기 칸에 「${l}」 있다`); else no(`일기 칸에 「${l}」 없다`)
 }
-const strays = seen.filter((l) => !wantOpen.includes(l))
-if (!strays.length) ok(`일기 칸엔 일기 세트«만» 있다 (${seen.length}그룹)`)
+// 🛠 **「도구」는 세트가 아니다** (2026-08-06 형광펜 넣으며 갈라냈다)
+//   「글자 넣기 · 형광펜 · 포스트잇」은 «스티커 세트»가 아니라 **글을 다루는 도구**다.
+//   ⭐ 일기는 «글 쓰는 화면»이라 이 셋은 일꾸에도 있어야 한다 — 일꾸/레꾸 가르기의 대상이 아니다.
+//   ⛔ 그래서 이 셋만 빼고 «세트»를 센다. 목록을 늘릴 땐 «정말 도구인가»를 먼저 물을 것 —
+//      여기에 스티커 세트 이름을 넣기 시작하면 이 검사는 그날로 죽는다.
+const TOOLS = ['글자', '형광펜', '포스트잇']
+const strays = seen.filter((l) => !wantOpen.includes(l) && !TOOLS.includes(l))
+if (!strays.length) ok(`일기 칸엔 일기 세트«만» 있다 (세트 ${seen.length - seen.filter((l) => TOOLS.includes(l)).length}그룹 ＋ 도구 ${TOOLS.length})`)
 else no(`일기 칸에 남의 그룹 ${strays.length}개가 섞였다 — ${strays.slice(0, 6).join(' / ')}`)
+// ⭐ 도구 셋이 «빠지지도» 않았나 — 있으면 안 되는 것만 보면 없어진 걸 못 잡는다(규칙 18 ⓘ)
+const lostTools = TOOLS.filter((t) => !seen.includes(t))
+if (!lostTools.length) ok('일기 칸에 글 도구 셋(글자·형광펜·포스트잇)이 다 있다 — 일기는 글 쓰는 화면이다')
+else no(`일기 칸에서 글 도구가 빠졌다 — ${lostTools.join(' / ')}`)
 if (LATER.length) console.log(`   ⏳ 아직 안 열린 일기 세트 ${LATER.length}그룹 (${LATER[0].from}~) — 지금 안 보이는 게 정상`)
 await page.screenshot({ path: join(OUT, 'shelf-1-일기칸.png') })
 
