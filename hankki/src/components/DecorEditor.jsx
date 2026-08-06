@@ -3,7 +3,7 @@ import Portal from './Portal'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import PaperNote from './PaperNote'
+import { PaperBox } from './PaperSheet'
 import { seasonRank, isReleased } from '../season'
 import GiftPackSheet from './GiftPackSheet'
 import PackBuySheet from './PackBuySheet'
@@ -64,9 +64,10 @@ function loadDraft(id) {
 // 🏷 `title` = 에디터 머리글. ⛔박아두면 안 된다 — 다이어리를 꾸미는데 「레시피 꾸미기」라고 떴다
 //   (창업자 2026-08-06 *"레시피꾸미기 아니고 요리다이어리 나 다른이름하자"*).
 //   📌 우리 원칙 = 「같은 기능은 같은 이름」이지 「다른 것에 같은 이름」이 아니다.
-// 📝 `paperNote` = 다이어리의 「오늘의 한 줄」. 여기선 **읽기만** 한다 —
-//   고치는 곳은 다이어리 화면 한 곳이다(같은 글을 두 곳에서 고치면 반드시 어긋난다).
-export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, paperNote = '', title = '레시피 꾸미기' }) {
+// ✍️ `paperOverlay` = 다이어리에 쓴 글·날짜를 그대로 그린 조각(읽기 전용 `PaperSheet`).
+//   ⭐ **여기가 글의 내용을 몰라야 한다** — 다이어리 화면이 만들어서 통째로 넘긴다.
+//      같은 글을 두 곳에서 그리면 자리가 반드시 어긋난다.
+export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, paperOverlay = null, title = '레시피 꾸미기' }) {
   const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
   // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
   const draft = loadDraft(recipe.id)
@@ -356,21 +357,35 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
 
         {/* 꾸미는 판 — 표지면 정사각, 다이어리면 세로 종이 */}
         <div className="decor-stage">
-          <div style={{ position: 'relative', width: '100%', aspectRatio: ratio, borderRadius: 18, overflow: 'hidden' }}>
-            {paper
-              ? <div className={paper.className} style={{ position: 'absolute', inset: 0, ...(paper.style || {}) }} />
-              : <Thumb recipe={{ ...recipe, decorBg: bg, thumb }} ratio={ratio} radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />}
-            <DecorLayer
-              items={items}
-              editable
-              selectedId={sel}
-              onSelect={select}
-              onChange={patch}
-              onRemove={remove}
-              onEditNote={(it) => setNoteEdit(it)}
-            />
-            <PaperNote text={paperNote} />
-          </div>
+          {(() => {
+            const layer = (
+              <DecorLayer
+                items={items}
+                editable
+                selectedId={sel}
+                onSelect={select}
+                onChange={patch}
+                onRemove={remove}
+                onEditNote={(it) => setNoteEdit(it)}
+              />
+            )
+            // 📔 다이어리 — 종이 ＋ 쓴 글이 «화면과 똑같이» 보여야 한다.
+            //    `PaperBox` 로 감싸야 글자·줄이 폭 기준(cqw)으로 제자리에 앉는다.
+            if (paper) {
+              return (
+                <PaperBox skin={paper} ratio={ratio} style={{ borderRadius: 18 }}>
+                  {layer}
+                  {paperOverlay}
+                </PaperBox>
+              )
+            }
+            return (
+              <div style={{ position: 'relative', width: '100%', aspectRatio: ratio, borderRadius: 18, overflow: 'hidden' }}>
+                <Thumb recipe={{ ...recipe, decorBg: bg, thumb }} ratio={ratio} radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
+                {layer}
+              </div>
+            )
+          })()}
           <div className="t-sub" style={{ fontSize: 12, textAlign: 'center', marginTop: 10 }}>
             {hasCtx ? '탭한 걸 여기서 바로 꾸며요 · 드래그로 이동 · ⟳ 크기/회전' : '아래에서 골라 붙이고 · 드래그로 이동 · ⟳ 손잡이로 크기/회전'}
           </div>

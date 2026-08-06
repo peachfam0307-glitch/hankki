@@ -67,32 +67,55 @@ else {
 if (await page.getByText('이 날 만든 요리').first().isVisible().catch(() => false)) ok('그날 만든 요리가 아래에 뜬다')
 else no('그날 만든 요리가 안 뜬다')
 
-// ⓑ-2 📝 「오늘의 한 줄」 — 치면 종이에 얹히고, 앱을 다시 켜도 남아 있어야 한다
-const LINE = '들기름 조금 더 넣으니 훨씬 고소했다'
-const noteBox = page.getByLabel('오늘의 한 줄')
-if (await noteBox.isVisible().catch(() => false)) ok('다이어리에 「오늘의 한 줄」 칸이 있다')
-else no('「오늘의 한 줄」 칸이 없다 — 글 쓸 자리가 없다')
-await noteBox.fill(LINE)
+// ⓑ-2 ✍️ **종이 «위»에 바로 써진다** (창업자 2026-08-06 *"줄노트 자체에 바로 써지게 해야지"*)
+//   ⛔ 종이 밖 입력칸에 쓰고 종이엔 반영만 되는 방식은 죽었다 — *"불편해서 안써"*
+const BODY = '들기름 조금 더 넣으니 훨씬 고소했다'
+const body = page.getByLabel('다이어리 본문')
+const inPaper = (await page.locator('.paper').first().locator('[aria-label="다이어리 본문"]').count()) > 0
+if (inPaper) ok('글 쓰는 칸이 «종이 안»에 있다')
+else no('글 쓰는 칸이 종이 밖에 있다 — 그럼 안 쓴다')
+await body.fill(BODY)
 await page.waitForTimeout(700) // 저장 뜸(350ms)보다 넉넉히
-const onPaper = await page.locator('.paper').first().innerText()
-if (onPaper.includes(LINE)) ok('쓴 한 줄이 종이 위에 얹힌다')
-else no(`종이에 안 얹힌다 — "${onPaper.replace(/\s+/g, ' ').slice(0, 40)}"`)
-// ⭐ 저장까지 갔나 — 화면에만 있고 저장이 안 되면 내일 사라진다.
-//   ⛔ `page.reload()` 로는 못 잰다 — `addInitScript` 가 «되돌아올 때마다» 처음 상태를 다시 심는다
-//      (내가 여기서 한 번 속았다: 코드가 아니라 검사가 틀렸다).
-//   → 저장소를 직접 읽는다.
 const inStore = await page.evaluate(() => {
   const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
   return (s.diary || []).filter((d) => d.kind === 'diary').map((d) => d.note)
 })
-if (inStore.includes(LINE)) ok('한 줄이 저장소에 들어갔다')
+// ⭐ 저장까지 갔나 — 화면에만 있고 저장이 안 되면 내일 사라진다.
+//   ⛔ `page.reload()` 로는 못 잰다 — `addInitScript` 가 «되돌아올 때마다» 처음 상태를 다시 심는다
+//      (내가 여기서 한 번 속았다: 코드가 아니라 «검사»가 저장을 지우고 있었다).
+if (inStore.includes(BODY)) ok('쓴 글이 저장소에 들어갔다')
 else no(`저장이 안 된다 — 저장소의 다이어리 note = ${JSON.stringify(inStore)}`)
-// 화면을 떠났다 돌아와도 그 날 것이 그대로 뜨나
 await page.locator('.bar-btn[aria-label="뒤로"]').first().click(); await page.waitForTimeout(600)
 await page.getByRole('button', { name: /다이어리 (쓰기|보기)/ }).first().click(); await page.waitForTimeout(800)
-if ((await page.getByLabel('오늘의 한 줄').inputValue()) === LINE) ok('나갔다 들어와도 한 줄이 그대로')
-else no('나갔다 들어오니 한 줄이 비었다')
-await page.screenshot({ path: join(OUT, 'diary-b2-한줄.png') })
+if ((await page.getByLabel('다이어리 본문').inputValue()) === BODY) ok('나갔다 들어와도 글이 그대로')
+else no('나갔다 들어오니 글이 비었다')
+await page.screenshot({ path: join(OUT, 'diary-b2-글쓰기.png') })
+
+// ⓑ-3 📔 「레시피 기록」 틀 — 사진 옆 날짜·줄 ＋ 맨 아래 「오늘의 한 줄」
+//   창업자 2026-08-06 = *"사진 옆에 줄 긋고 날짜랑 그건 똑같이 하고. 아래는 남겨주고
+//   제일 아래 줄긋고 오늘의 한줄"*
+await page.locator('.seg', { hasText: '틀' }).first().click(); await page.waitForTimeout(400)
+await page.getByRole('button', { name: '레시피 기록' }).first().click(); await page.waitForTimeout(600)
+const LINE = '엄마가 좋아하던 맛'
+const lineBox = page.getByLabel('오늘의 한 줄')
+if (await lineBox.isVisible().catch(() => false)) ok('레시피 기록 틀에 「오늘의 한 줄」 칸이 뜬다')
+else no('「오늘의 한 줄」 칸이 없다')
+await lineBox.fill(LINE); await page.waitForTimeout(700)
+const paperTxt = (await page.locator('.paper').first().innerText()).replace(/\s+/g, ' ')
+if (/\d+월 \d+일 .요일/.test(paperTxt)) ok(`날짜가 종이에 찍힌다 — "${paperTxt.slice(0, 20)}…"`)
+else no(`날짜가 안 찍힌다 — "${paperTxt.slice(0, 40)}"`)
+const savedLine = await page.evaluate(() => {
+  const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+  return (s.diary || []).filter((d) => d.kind === 'diary').map((d) => d.line)
+})
+if (savedLine.includes(LINE)) ok('오늘의 한 줄이 저장된다')
+else no(`오늘의 한 줄이 저장 안 된다 — ${JSON.stringify(savedLine)}`)
+// ⭐ 「없음」 틀엔 한 줄 칸이 없어야 한다 — 그 칸은 «레시피 기록» 속지의 것이다
+await page.getByRole('button', { name: '없음' }).first().click(); await page.waitForTimeout(500)
+if ((await page.getByLabel('오늘의 한 줄').count()) === 0) ok('틀이 없으면 「오늘의 한 줄」 칸도 없다')
+else no('틀이 없는데 「오늘의 한 줄」 칸이 뜬다 — 그 칸은 레시피 기록 속지 것이다')
+await page.getByRole('button', { name: '레시피 기록' }).first().click(); await page.waitForTimeout(500)
+await page.screenshot({ path: join(OUT, 'diary-b3-레시피기록.png') })
 
 // ⓒ 속지 갈아끼우기 — 「종이」 탭에서 크라프트, 「틀」 탭에서 사진일기
 await page.locator('.seg', { hasText: '종이' }).first().click(); await page.waitForTimeout(400)
@@ -113,8 +136,8 @@ const stage = await page.locator('.decor-stage > div').first().boundingBox()
 if (stage && Math.abs(stage.height - stage.width * 4 / 3) <= 2) ok(`꾸미기 판도 3:4 (${Math.round(stage.width)}x${Math.round(stage.height)})`)
 else no(`꾸미기 판이 3:4 가 아니다 (${stage ? Math.round(stage.width) + 'x' + Math.round(stage.height) : '없음'})`)
 // 📝 꾸미는 동안에도 한 줄이 보여야 한다 — 안 보이면 그 위에 스티커를 놓는다
-if ((await page.locator('.decor-stage').first().innerText()).includes(LINE)) ok('꾸미기 판에도 한 줄이 같이 보인다')
-else no('꾸미기 판엔 한 줄이 안 보인다 — 모르고 그 위를 덮게 된다')
+if ((await page.locator('.decor-stage').first().innerText()).includes(BODY)) ok('꾸미기 판에도 쓴 글이 같이 보인다')
+else no('꾸미기 판엔 글이 안 보인다 — 모르고 그 위를 덮게 된다')
 
 // ⓔ 📔 **표지 전용 UI 가 다이어리에 딸려오면 안 된다** (2026-08-06)
 //   다이어리 캔버스는 `Thumb` 을 아예 안 그린다 → 「표지 그림 되돌리기」·「배경지」는 눌러도 아무 일이 없다.

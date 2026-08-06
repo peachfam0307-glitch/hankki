@@ -5,7 +5,7 @@ import Icon from '../components/Icon'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
-import PaperNote from '../components/PaperNote'
+import PaperSheet, { PaperBox } from '../components/PaperSheet'
 import { PAPER_RULES, PAPER_SKINS, PAPER_ARTS, paperStyle } from '../data/papers'
 import { useLayerBack } from '../useBackHandler'
 
@@ -44,7 +44,10 @@ export default function DiaryScreen({ day }) {
   )
   const iconOf = (e) => (recipes.find((r) => r.id === e.recipeId) || {}).icon || guessFoodIcon(e.title)
 
-  const [pick, setPick] = useState(() => entry?.paper || { rule: 'plain', skin: 'ivory', art: 'none' })
+  // ⭐ 기본이 «줄»이다 (2026-08-06) — 종이 위에 바로 쓰는 판이라 줄이 있어야 글씨가 정돈된다.
+  //   창업자 *"줄눈을 그어주는게 좋을까...? 그건 잘 모르겠네"* → **우리가 정하지 않는다.**
+  //   기본을 줄로 두고, 「선」 탭에서 무지·모눈·도트로 언제든 바꾼다. 판정은 실물로.
+  const [pick, setPick] = useState(() => entry?.paper || { rule: 'lined', skin: 'ivory', art: 'none' })
   const [tab, setTab] = useState('rule') // rule | skin | art
   const [open, setOpen] = useState(false)
   const closeRef = useRef(null)
@@ -59,18 +62,20 @@ export default function DiaryScreen({ day }) {
   }
   const choose = (next) => { setPick(next); save({ paper: next }) }
 
-  // 📝 「오늘의 한 줄」 — 치는 대로 종이에 얹히고, 잠깐 멈추면 저장된다.
+  // ✍️ 글 — **종이 위에서 바로 쓴다.** 치는 대로 보이고, 잠깐 멈추면 저장된다.
+  //   ⛔ 종이 밖에 입력칸을 두면 안 쓴다 (창업자 2026-08-06 *"불편해서 안써"*).
   //   ⛔ 한 글자마다 저장하면 localStorage 를 매 타건마다 쓴다 → 꾸미기 자동저장과 같은 350ms 뜸.
-  //   ⚠️ 저장한 뒤 다시 열면 `entry.note` 로 시작해야 한다 — 날짜를 옮겨도 그 날 것이 뜨게.
-  const [note, setNote] = useState(() => entry?.note || '')
-  useEffect(() => { setNote(entry?.note || '') }, [day]) // eslint-disable-line react-hooks/exhaustive-deps
-  const savedNote = entry?.note || ''
+  //   `note` = 본문 · `line` = 오늘의 한 줄(레시피 기록 속지의 맨 아래 칸)
+  const [text, setText] = useState(() => ({ note: entry?.note || '', line: entry?.line || '' }))
+  useEffect(() => { setText({ note: entry?.note || '', line: entry?.line || '' }) }, [day]) // eslint-disable-line react-hooks/exhaustive-deps
+  const dirty = text.note !== (entry?.note || '') || text.line !== (entry?.line || '')
   useEffect(() => {
-    if (note === savedNote) return // 처음 열었을 때 «빈 다이어리»를 만들어 버리지 않게
-    const t = setTimeout(() => save({ note }), 350)
+    if (!dirty) return // 처음 열었을 때 «빈 다이어리»를 만들어 버리지 않게
+    const t = setTimeout(() => save({ note: text.note, line: text.line }), 350)
     return () => clearTimeout(t)
-  }, [note]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text.note, text.line]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const dateLabel = `${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEK[date.getDay()]}요일`
   const TABS = [['rule', '선'], ['skin', '종이'], ['art', '틀']]
   const LIST = tab === 'rule' ? PAPER_RULES : tab === 'skin' ? PAPER_SKINS : PAPER_ARTS
 
@@ -89,42 +94,29 @@ export default function DiaryScreen({ day }) {
       </div>
 
       <div className="pad" style={{ paddingTop: 14, paddingBottom: 40 }}>
-        {/* 종이 — 3:4. 누르면 바로 꾸미기로 들어간다(버튼을 따로 두면 한 번 더 눌러야 한다) */}
+        {/* 📄 종이 — 3:4. **여기다 바로 쓴다.** 줄 위에 손글씨로 얹힌다.
+            ⛔ 예전엔 종이 전체가 「꾸미기」 버튼이었는데, 이제 종이는 «쓰는 곳»이라
+               꾸미기는 아래 버튼으로 갈랐다. */}
+        <PaperBox skin={skin} style={{ borderRadius: 14, boxShadow: '0 3px 14px rgba(70,60,45,.14)' }}>
+          <DecorLayer items={decor} />
+          <PaperSheet
+            fields={skin.fields}
+            rule={skin.rule}
+            value={text}
+            onChange={setText}
+            dateLabel={dateLabel}
+          />
+        </PaperBox>
+
         <button
           className="press"
           onClick={() => setOpen(true)}
           aria-label="다이어리 꾸미기"
-          style={{ display: 'block', width: '100%', padding: 0, border: 'none', background: 'none' }}
+          style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, padding: '10px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13, fontWeight: 800, border: 'none' }}
         >
-          <div className={skin.className} style={{ position: 'relative', width: '100%', aspectRatio: '3/4', borderRadius: 14, overflow: 'hidden', boxShadow: '0 3px 14px rgba(70,60,45,.14)', ...(skin.style || {}) }}>
-            <DecorLayer items={decor} />
-            <PaperNote text={note} />
-            {!decor.length && !note && (
-              <span className="t-sub" style={{ position: 'absolute', left: 0, right: 0, bottom: 18, textAlign: 'center', fontSize: 12.5 }}>
-                눌러서 꾸며요
-              </span>
-            )}
-          </div>
+          <Icon name="palette" size={15} />
+          꾸미기
         </button>
-
-        {/* 📝 오늘의 한 줄 — 종이 «바로 밑». 열고 → 쓰고 → 끝.
-            ⭐ 창업자 2026-08-06 *"평가빼고 오늘의 한 줄 정도로?"* — 별점 자리를 이게 물려받았다.
-            ⛔ 꾸미기 서랍의 「글자」로도 쓸 수 있지만 그건 서랍 열고·탭 찾고·넣고·끌어야 한다.
-               **매일 쓰게 하려면 길이 짧아야 한다.** 여긴 칸 하나뿐이다. */}
-        <div style={{ marginTop: 13 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-            <Icon name="pen" size={13} color="var(--text-sub)" />
-            <span className="t-sub" style={{ fontSize: 12, fontWeight: 700 }}>오늘의 한 줄</span>
-          </div>
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="오늘 어땠어요? 한 줄이면 충분해요"
-            maxLength={40}
-            aria-label="오늘의 한 줄"
-            style={{ width: '100%' }}
-          />
-        </div>
 
         {/* 속지 고르기 — 선·종이·틀을 «각각 혹은 같이» (창업자 2026-08-06 *"각각 혹은 같이 사용하는거 아이디어야"*) */}
         <div className="segment" style={{ marginTop: 16 }}>
@@ -176,8 +168,9 @@ export default function DiaryScreen({ day }) {
           closeRef={closeRef}
           ratio="3/4"
           paper={skin}
-          // 📝 꾸미는 동안에도 한 줄이 «같은 자리»에 보여야 한다 — 안 보이면 그 위에 스티커를 놓는다
-          paperNote={note}
+          // ✍️ 꾸미는 동안에도 쓴 글이 «같은 자리»에 보여야 한다 — 안 보이면 그 위에 스티커를 놓는다.
+          //    ⭐ 에디터가 글을 «모르게» 조각째 넘긴다 — 두 곳에서 그리면 자리가 어긋난다.
+          paperOverlay={<PaperSheet fields={skin.fields} rule={skin.rule} value={text} dateLabel={dateLabel} />}
           // ⭐ 에디터에 들어가면 날짜가 안 보인다 → 머리글이 «지금 어느 날을 꾸미는 중인지»를 말한다
           title={`${date.getMonth() + 1}월 ${date.getDate()}일 다이어리`}
           recipe={{ id: `diary-${day}`, title: '', decor, decorBg: 'none', thumb: 'none' }}
