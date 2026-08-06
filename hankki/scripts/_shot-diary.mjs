@@ -210,6 +210,19 @@ for (const [name, re] of [['배경 탭', /^배경$/], ['표지 그림', /표지 
 }
 await page.screenshot({ path: join(OUT, 'diary-e-표지꾸미기.png') })
 
+// ⓕ 📷 **내 사진을 스티커로** — 종이 종류를 안 가리고 붙는 유일한 길
+//   창업자 2026-08-06 *"무지나 도트도 사진 넣고싶을수있지않아? 그럼 어떻게 사진넣어?"*
+//   (지금 열려 있는 판 = 표지 꾸미기 → 여기에도 있어야 한다. 같은 에디터니까)
+if ((await page.getByRole('button', { name: '내 사진 넣기' }).count()) === 1) ok('꾸미기 서랍에 「내 사진 넣기」가 있다')
+else no('「내 사진 넣기」가 없다 — 무지·도트엔 사진 넣을 길이 없어진다')
+await page.setInputFiles('.decor-drawer input[type=file]', {
+  name: 'b.png', mimeType: 'image/png',
+  buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'),
+})
+await page.waitForTimeout(900)
+if ((await page.locator('.decor-stage img').count()) > 0) ok('고른 사진이 판에 붙는다')
+else no('사진이 판에 안 붙는다')
+
 if (errors.length) errors.forEach((e) => no(`pageerror — ${e}`))
 else ok('pageerror 0')
 await b.close(); srv.close()

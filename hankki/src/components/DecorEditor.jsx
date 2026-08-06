@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Portal from './Portal'
+import Icon from './Icon'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
@@ -8,6 +9,7 @@ import { seasonRank, isReleased } from '../season'
 import GiftPackSheet from './GiftPackSheet'
 import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
+import { cropSquare } from '../utils'
 import { StickerArt, STICKER_GROUPS, drawerGroups, ownedPacks, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
@@ -249,6 +251,30 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     setItems((arr) => [...arr, it])
     setSel(it.id)
     setNoteEdit(it) // 붙이면 바로 글씨 쓰기 시트 열기(무늬·모양은 상단 컨텍스트 바에서)
+  }
+  // 📷 내 사진을 «스티커»로 붙인다 (창업자 2026-08-06 *"무지나 도트도 사진 넣고싶을수있지않아?"*)
+  //   ⭐ 틀의 사진칸은 「창에 끼우는 것」이라 창이 그려진 속지에서만 된다.
+  //      이건 「사진을 얹는 것」이라 **무지·도트·표지 어디서든** 되고, 여러 장도 된다.
+  //   ⭐ 그리고 이건 다이어리만의 것이 아니다 — 같은 에디터라 **레꾸(표지 꾸미기)에도 그대로 생긴다.**
+  //   ⚠️ 700px·q0.8 로 줄인다 — 한 장이 100KB 넘으면 localStorage(≈5MB)가 금방 찬다.
+  //      표지 사진(900)보다 작게 두는 이유 = 스티커는 **여러 장** 붙는다.
+  const photoRef = useRef(null)
+  const onPhotoFile = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const src = await new Promise((res) => {
+      const r = new FileReader()
+      r.onload = () => res(r.result)
+      r.onerror = () => res(null)
+      r.readAsDataURL(file)
+    })
+    if (!src) return
+    const small = await cropSquare(src, 700, 0.8)
+    const n = items.length
+    const it = { id: newDecorId(), type: 'photo', src: small, x: 0.5, y: 0.44, s: 0.44, r: ((n % 5) - 2) * 3 }
+    setItems((arr) => [...arr, it])
+    setSel(it.id)
   }
   const addTape = (key) => {
     const n = items.length
@@ -565,6 +591,16 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ⭐ **몰라서 못 쓰는 선물은 안 준 것과 같다.** 그래서 늘 보이는 자리에 둔다.
                 ⚠️ 탭을 바꿔도 계속 보인다 — 선물이 **네 탭에 흩어져 있어서**(프레임·친구들·배경·모션)
                    한 탭에만 두면 나머지 셋을 또 못 찾는다. */}
+            {/* 📷 내 사진 — **탭과 상관없이 늘 보인다.** 종이 종류를 안 가리고 붙는 유일한 길이라
+                한 탭에 숨기면 못 찾는다(선물 줄과 같은 이유). */}
+            <button className="press" onClick={() => photoRef.current?.click()}
+              style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px', marginBottom: 8,
+                borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>
+              <Icon name="photo" size={17} color="var(--brown)" />
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>내 사진 넣기</span>
+              <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
+            </button>
+            <input ref={photoRef} type="file" accept="image/*" onChange={onPhotoFile} style={{ display: 'none' }} />
             <button className="press" onClick={() => setGift(true)}
               style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px', marginBottom: 10,
                 borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>

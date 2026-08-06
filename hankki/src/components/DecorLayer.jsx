@@ -98,7 +98,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
       {items.map((it) => {
         const on = editable && selectedId === it.id
         const isText = it.type === 'text'
-        const ratio = it.type === 'tape' ? (it.ratio || 3.4) : it.type === 'note' ? (it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
+        const ratio = it.type === 'photo' ? (it.ratio || 1) : it.type === 'tape' ? (it.ratio || 3.4) : it.type === 'note' ? (it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
         const base = {
           position: 'absolute',
           left: `${it.x * 100}%`,
@@ -127,6 +127,14 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
               <Note it={it} editable={editable} />
             ) : it.type === 'text' ? (
               <TextDeco it={it} editable={editable} coverW={coverW} />
+            ) : it.type === 'photo' ? (
+              // 📷 내 사진 — 종이 «종류와 상관없이» 붙는다 (창업자 2026-08-06
+              //    *"무지나 도트도 사진 넣고싶을수있지않아? 그럼 어떻게 사진넣어?"*)
+              //    ⭐ 틀의 사진칸은 「창에 끼우는 것」이고, 이건 「사진을 붙이는 것」이다 — 둘 다 있어야 한다.
+              //    흰 테 ＋ 그림자 = 인화한 사진을 얹은 느낌(다꾸의 기본 문법).
+              <span style={{ position: 'absolute', inset: 0, borderRadius: '2%', overflow: 'hidden', background: '#fff', padding: '3.5%', boxShadow: '0 3px 7px rgba(60,50,35,.28)' }}>
+                <img src={it.src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </span>
             ) : (
               <span style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(0 3px 4px rgba(60,50,35,.22))' }}>
                 <StickerArt id={it.key} color={it.color} motion={it.motion} />
