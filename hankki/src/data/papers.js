@@ -44,6 +44,8 @@ export const PAPER_SKINS = [
   { key: 'ivory', label: '아이보리', cls: '' },
   { key: 'sky', label: '하늘', cls: 'sky' },
   { key: 'blush', label: '분홍', cls: 'blush' },
+  // 🌿 세이지 — 창업자가 색을 콕 집어 줬다 (2026-08-06 *"소프트 세이지 #F3F5ED"*)
+  { key: 'sage', label: '세이지', cls: 'sage' },
   { key: 'kraft', label: '크라프트', cls: 'kraft' },
 ]
 

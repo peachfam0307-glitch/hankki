@@ -663,7 +663,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     지금 고른 틀엔 줄이 이미 그려져 있어요 · 틀을 바꾸면 여기서 고른 선이 보여요
                   </div>
                 )}
-                <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
+                {/* 📐 **개수가 늘어도 안 깨지게 «자동 배치»** — 폭을 60px 로 박았더니
+                    종이색이 넷에서 다섯이 되자마자 다섯째가 다음 줄로 밀렸다(창업자 세이지 추가 2026-08-06).
+                    ⭐ `auto-fill` 은 폭에 맞춰 칸 수를 정하고 남는 폭을 나눠 갖는다 —
+                       다섯이면 한 줄, 더 늘면 알아서 두 줄. 다시 손댈 일이 없다. */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(54px, 1fr))', gap: 8 }}>
                   {ax.list.map((o) => {
                     // ⭐ 틀이 「이 선과 짝」이라고 말하면(`pickRule`) 선도 같이 바꿔 준다 —
                     //    도트 틀을 골랐는데 줄이 그어져 있으면 «내가 고른 그 종이»가 아니다.
@@ -675,10 +679,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     const mini = paperStyle(ax.key === 'art' ? next : { ...next, art: 'none' })
                     return (
                       <button key={o.key} className="press" onClick={() => onPaperPick(next)} aria-label={`속지 ${o.label}`}
-                        style={{ flex: '0 0 auto', border: 'none', background: 'none', padding: 0, width: 60 }}>
+                        style={{ border: 'none', background: 'none', padding: 0, width: '100%' }}>
                         {/* 📏 줄 간격 — CSS 기본값(28px)은 작은 스와치에 두 줄만 그어져 「줄노트」로 안 읽힌다 */}
                         <div className={mini.className}
-                          style={{ width: 60, aspectRatio: '3/4', borderRadius: 8, '--rule-gap': '8px', boxShadow: on ? '0 0 0 2.5px var(--brown)' : '0 1px 4px rgba(70,60,45,.18)', ...(mini.style || {}) }} />
+                          style={{ width: '100%', aspectRatio: '3/4', borderRadius: 8, '--rule-gap': '8px', boxShadow: on ? '0 0 0 2.5px var(--brown)' : '0 1px 4px rgba(70,60,45,.18)', ...(mini.style || {}) }} />
                         <div style={{ fontSize: 10.5, fontWeight: 700, marginTop: 4, textAlign: 'center', color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{o.label}</div>
                       </button>
                     )

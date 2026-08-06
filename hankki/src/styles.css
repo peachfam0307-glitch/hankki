@@ -1797,6 +1797,9 @@ html, body { overscroll-behavior: none; }
    웜(아이보리·크라프트) ↔ 쿨(하늘) ↔ 분홍. 밝기만 다르면 나란히 놓을 때 같은 종이로 보인다. */
 .paper.sky    { --paper: #eef3f8; --rule: #c6d6e4; }   /* 하늘 — 앱 포인트색(더스티 블루)과 같은 결 */
 .paper.blush  { --paper: #fbf0f0; --rule: #e6cbcb; }   /* 분홍 — 다꾸 종이의 기본 파스텔 */
+/* 🌿 세이지 — 창업자가 색을 지정했다(#F3F5ED). 선 색은 **다른 종이와 진하기를 맞춰** 골랐다:
+   기존 선 밝기 ivory 217 · sky 211 · blush 211 → 이 값 209. 혼자 진하거나 흐리면 눈에 걸린다. */
+.paper.sage   { --paper: #f3f5ed; --rule: #cbd7c0; }
 .paper.greige { --paper: #f0ece3; --rule: #d6cfbf; }   /* 그레이지 — 앱 기본 테마와 같은 결 */
 .paper.linen  { --paper: #f7f3ea; --rule: #ddd2bc; }   /* 리넨 — 아이보리보다 한 톤 차분하게 */
 
