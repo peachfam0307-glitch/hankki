@@ -263,16 +263,24 @@ export default function RecipeDetailScreen({ id }) {
       <div ref={coverRef} style={{ position: 'relative' }}>
         <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
         <DecorLayer items={r.decor || []} />
-        {/* 표지 아이콘 바꾸기 — 작은 원형 하나로(레꾸가 주인공이라 표지를 최대한 안 가린다·창업자 2026-07-28).
-            ⚠️ 갤러리 사진이 아니라 우리 음식 아이콘 픽커로 연결한다(창업자 지적). */}
+        {/* 🍱 표지 아이콘 바꾸기 — 창업자 판정 2026-08-06 *"음식아이콘 갤러리라 잘 안 보여서 바꾸기로 했어"*
+            ⛔ 여태 셋이 어긋나 있었다:
+              ① 그림이 딴 말을 했다 — **갤러리(사진 액자) 글리프**인데 눌리는 건 «음식 아이콘 픽커»
+                 (2026-07-28 에 «연결»만 바꾸고 그림·라벨·무게는 그대로 뒀다. 바로 위 옛 주석이 그 흔적이었다)
+              ② 라벨이 없었다 — 오른쪽 「레시피 꾸미기」엔 글자가 있는데 왼쪽만 `aria-label` 뿐
+              ③ 무게가 달랐다 — 34px 반투명 회색 원 vs 채운 알약. 눈이 오른쪽만 갔다
+            ✅ 고침 = **그 레시피의 음식 아이콘을 그대로 미니로** 보여준다(＝"이 그림을 바꾼다"가 그림으로 설명된다)
+               ＋ **오른쪽과 같은 알약·같은 높이(34)** 로 짝을 맞추고 글자를 붙였다.
+            ⚠️ 채움색은 안 준다 — 주 동작은 어디까지나 「레시피 꾸미기」다(위계 유지). */}
         <button
           className="press"
           onClick={() => setIconSheet(true)}
           data-nocapture
           aria-label="표지 아이콘 바꾸기"
-          style={{ position: 'absolute', bottom: 12, left: 12, width: 34, height: 34, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(250,250,248,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--brown)', borderRadius: 999, boxShadow: '0 3px 10px rgba(0,0,0,.18)' }}
+          style={{ position: 'absolute', bottom: 12, left: 12, display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'rgba(250,250,248,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--brown)', fontSize: 12.5, fontWeight: 800, padding: '0 12px 0 8px', borderRadius: 999, boxShadow: '0 3px 10px rgba(0,0,0,.18)' }}
         >
-          <Icon name="photo" size={17} color="var(--brown)" stroke={2.2} />
+          <FoodIcon name={r.icon || guessFoodIcon(r.title)} size={21} />
+          아이콘 바꾸기
         </button>
         {/* 표지 꾸미기 — 솔직한 버튼으로 눈에 띄게(포인트색 채운 알약). 캡처에선 제외(data-nocapture) */}
         <button
