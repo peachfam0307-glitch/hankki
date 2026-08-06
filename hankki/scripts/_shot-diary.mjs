@@ -117,6 +117,32 @@ else no('틀이 없는데 「오늘의 한 줄」 칸이 뜬다 — 그 칸은 �
 await page.getByRole('button', { name: '레시피 기록' }).first().click(); await page.waitForTimeout(500)
 await page.screenshot({ path: join(OUT, 'diary-b3-레시피기록.png') })
 
+// ⓑ-4 📷 사진칸 — 틀에 그려진 «창»에 사진을 끼울 수 있어야 한다
+//   창업자 2026-08-06 *"사진틀에 사진올리기가없어"* — 틀만 있고 넣을 길이 없었다
+const shot = page.getByRole('button', { name: '사진 넣기' })
+if (await shot.first().isVisible().catch(() => false)) ok('레시피 기록 틀에 「사진 넣기」 자리가 있다')
+else no('사진칸을 눌러도 사진을 못 넣는다')
+// 진짜 파일을 물려 넣어 본다(1×1 붉은 PNG)
+await page.setInputFiles('input[type=file]', {
+  name: 'a.png', mimeType: 'image/png',
+  buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'),
+})
+await page.waitForTimeout(900)
+const gotPhoto = await page.evaluate(() => {
+  const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+  return (s.diary || []).filter((d) => d.kind === 'diary').some((d) => (d.photo || '').startsWith('data:image'))
+})
+if (gotPhoto) ok('고른 사진이 저장된다')
+else no('사진이 저장 안 된다')
+if ((await page.locator('.paper img').count()) > 0) ok('사진이 종이의 창에 끼워진다')
+else no('사진이 종이에 안 보인다')
+// ⚠️ 「틀 없음」엔 사진칸이 없다 — 창이 안 그려진 종이에 사진을 얹으면 그냥 얼룩이다
+await page.getByRole('button', { name: '없음' }).first().click(); await page.waitForTimeout(500)
+if ((await page.getByRole('button', { name: /^사진 (넣기|바꾸기)$/ }).count()) === 0) ok('틀이 없으면 사진칸도 없다')
+else no('창이 없는 종이에 사진칸이 뜬다')
+await page.getByRole('button', { name: '레시피 기록' }).first().click(); await page.waitForTimeout(500)
+await page.screenshot({ path: join(OUT, 'diary-b4-사진.png') })
+
 // ⓒ 속지 갈아끼우기 — 「종이」 탭에서 크라프트, 「틀」 탭에서 사진일기
 await page.locator('.seg', { hasText: '종이' }).first().click(); await page.waitForTimeout(400)
 await page.getByRole('button', { name: '크라프트' }).first().click(); await page.waitForTimeout(400)

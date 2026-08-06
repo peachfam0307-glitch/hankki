@@ -8,6 +8,7 @@ import DecorEditor from '../components/DecorEditor'
 import PaperSheet, { PaperBox } from '../components/PaperSheet'
 import { PAPER_RULES, PAPER_SKINS, PAPER_ARTS, paperStyle } from '../data/papers'
 import { useLayerBack } from '../useBackHandler'
+import { cropSquare } from '../utils'
 
 // 📔📔 다이어리 — 「그날」 한 장. (창업자 확정 2026-08-06)
 //
@@ -66,17 +67,34 @@ export default function DiaryScreen({ day }) {
   //   ⛔ 종이 밖에 입력칸을 두면 안 쓴다 (창업자 2026-08-06 *"불편해서 안써"*).
   //   ⛔ 한 글자마다 저장하면 localStorage 를 매 타건마다 쓴다 → 꾸미기 자동저장과 같은 350ms 뜸.
   //   `note` = 본문 · `line` = 오늘의 한 줄(레시피 기록 속지의 맨 아래 칸)
-  const blank = { note: '', line: '', weather: '' }
-  const of = (e) => ({ note: e?.note || '', line: e?.line || '', weather: e?.weather || '' })
+  const blank = { note: '', line: '', weather: '', photo: '' }
+  const of = (e) => ({ note: e?.note || '', line: e?.line || '', weather: e?.weather || '', photo: e?.photo || '' })
   const [text, setText] = useState(() => of(entry))
   useEffect(() => { setText(of(entry)) }, [day]) // eslint-disable-line react-hooks/exhaustive-deps
   const saved = of(entry)
   const dirty = Object.keys(blank).some((k) => text[k] !== saved[k])
   useEffect(() => {
     if (!dirty) return // 처음 열었을 때 «빈 다이어리»를 만들어 버리지 않게
-    const t = setTimeout(() => save({ note: text.note, line: text.line, weather: text.weather }), 350)
+    const t = setTimeout(() => save({ note: text.note, line: text.line, weather: text.weather, photo: text.photo }), 350)
     return () => clearTimeout(t)
-  }, [text.note, text.line, text.weather]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text.note, text.line, text.weather, text.photo]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 📷 사진 — 틀에 그려진 «창»에 끼운다 (창업자 2026-08-06 *"사진틀에 사진올리기가없어"*)
+  //   ⭐ `cropSquare` 를 그대로 쓴다 — 레시피 표지·요리 기록·아바타가 다 쓰는, 이미 검증된 길이다
+  //      (검정 썸네일·세로 반토막 두 사고를 이미 여기서 다 잡았다).
+  //   ⚠️ 창은 정사각이 아니라 가로로 길다 → `object-fit: cover` 가 화면에서 맞춰 자른다.
+  const photoRef = useRef(null)
+  const onPhotoFile = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const src = await cropSquare(reader.result, 900)
+      setText((t) => ({ ...t, photo: src }))
+    }
+    reader.readAsDataURL(file)
+  }
 
   const dateLabel = `${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEK[date.getDay()]}요일`
   const TABS = [['rule', '선'], ['skin', '종이'], ['art', '틀']]
@@ -101,15 +119,19 @@ export default function DiaryScreen({ day }) {
             ⛔ 예전엔 종이 전체가 「꾸미기」 버튼이었는데, 이제 종이는 «쓰는 곳»이라
                꾸미기는 아래 버튼으로 갈랐다. */}
         <PaperBox skin={skin} style={{ borderRadius: 14, boxShadow: '0 3px 14px rgba(70,60,45,.14)' }}>
-          <DecorLayer items={decor} />
+          {/* ⚠️ 순서가 뜻을 갖는다 — 사진이 «먼저» 칠해져야 스티커가 그 위에 얹힌다.
+              (글자는 zIndex 1 이라 늘 맨 위다) */}
           <PaperSheet
             fields={skin.fields}
             rule={skin.rule}
             value={text}
             onChange={setText}
+            onPickPhoto={() => photoRef.current?.click()}
             dateLabel={dateLabel}
           />
+          <DecorLayer items={decor} />
         </PaperBox>
+        <input ref={photoRef} type="file" accept="image/*" onChange={onPhotoFile} style={{ display: 'none' }} />
 
         <button
           className="press"

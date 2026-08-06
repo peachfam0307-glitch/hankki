@@ -374,8 +374,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             if (paper) {
               return (
                 <PaperBox skin={paper} ratio={ratio} style={{ borderRadius: 18 }}>
-                  {layer}
+                  {/* ⚠️ 사진이 «먼저» — 그래야 스티커를 사진 위에 붙일 수 있다(글자는 zIndex 1) */}
                   {paperOverlay}
+                  {layer}
                 </PaperBox>
               )
             }

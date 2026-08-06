@@ -46,16 +46,48 @@ const hand = {
  * 종이 위의 «쓰는 칸» 전부. `onChange` 가 없으면 읽기 전용(꾸미기 판·미리보기).
  * `value` = { note: 본문, line: 오늘의 한 줄 }
  */
-export default function PaperSheet({ fields, value = {}, onChange, dateLabel = '', rule = '' }) {
+export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, dateLabel = '', rule = '' }) {
   const ro = !onChange
   const set = (k) => (e) => onChange({ ...value, [k]: e.target.value })
   const bg = ruleBg(rule)
+  // ⛔ 읽기 전용(꾸미기 판)에선 아무것도 손가락을 먹으면 안 된다 — 그 위에서 스티커를 끌어야 한다
+  const noTouch = ro ? { pointerEvents: 'none' } : {}
+  // 🧷 글자는 스티커·틀 그림보다 «위». 글은 가려지면 안 된다.
+  //    ⚠️ 사진은 반대다 — 아래(`zIndex` 없음)라야 틀 선이 사진 위에 그려져 «창»이 된다.
+  const overSticker = { zIndex: 1 }
 
   return (
     <>
+      {/* 📷 사진 — 틀에 그려진 «창»에 끼운다 (창업자 2026-08-06 *"사진틀에 사진올리기가없어"*)
+          ⭐ 일부러 층을 «아래»에 둔다 — 틀 그림(`.paper.art::after`)이 나중에 칠해져서
+             사진 가장자리를 선이 덮는다. 그래야 붙인 게 아니라 «끼운» 것으로 보인다. */}
+      {fields.photo && (
+        <div style={{ ...box(fields.photo), overflow: 'hidden' }}>
+          {value.photo
+            ? (ro
+              ? <img src={value.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : (
+                <button type="button" className="press" onClick={onPickPhoto} aria-label="사진 바꾸기"
+                  style={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'none', display: 'block' }}>
+                  <img src={value.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                </button>
+              ))
+            : (!ro && (
+              <button type="button" className="press" onClick={onPickPhoto} aria-label="사진 넣기"
+                style={{
+                  width: '100%', height: '100%', padding: 0, border: 'none', background: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.4cqw',
+                  fontFamily: HAND, fontWeight: 700, fontSize: `${PAPER_LINE_H * 0.62}cqw`, color: INK, opacity: 0.4,
+                }}>
+                사진 넣기
+              </button>
+            ))}
+        </div>
+      )}
+
       {/* 📅 날짜 — 그림의 날짜 칸에 «값만» 얹는다(사진일기엔 달력 아이콘·밑줄이 이미 인쇄돼 있다) */}
       {fields.date && dateLabel && (
-        <div style={{ ...box(fields.date), ...hand, fontSize: `${PAPER_LINE_H * (fields.date.fit || 0.68)}cqw`, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+        <div style={{ ...box(fields.date), ...hand, ...overSticker, fontSize: `${PAPER_LINE_H * (fields.date.fit || 0.68)}cqw`, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
           {dateLabel}
         </div>
       )}
@@ -79,7 +111,7 @@ export default function PaperSheet({ fields, value = {}, onChange, dateLabel = '
         const pos = {
           position: 'absolute', left: `${w.x}%`, top: `${fields.weather.y}%`,
           width: `${fields.weather.size * 1.28}cqw`, height: `${fields.weather.size * 1.28}cqw`,
-          transform: 'translate(-50%,-50%)',
+          transform: 'translate(-50%,-50%)', ...overSticker, ...noTouch,
         }
         if (ro) return <span key={w.key} style={pos}>{on && ring}</span>
         return (
@@ -99,7 +131,7 @@ export default function PaperSheet({ fields, value = {}, onChange, dateLabel = '
 
       {/* ✍️ 본문 — 종이의 줄 위에 바로. 배경·테두리 0 */}
       {fields.write && (
-        <div style={{ ...box(fields.write), ...(bg ? { backgroundImage: bg, backgroundSize: rule === 'dots' ? 'var(--rule-gap) var(--rule-gap)' : undefined } : {}) }}>
+        <div style={{ ...box(fields.write), ...overSticker, ...noTouch, ...(bg ? { backgroundImage: bg, backgroundSize: rule === 'dots' ? 'var(--rule-gap) var(--rule-gap)' : undefined } : {}) }}>
           {ro ? (
             <div style={{ ...hand, whiteSpace: 'pre-wrap', wordBreak: 'break-word', height: '100%', overflow: 'hidden' }}>{value.note || ''}</div>
           ) : (
@@ -120,7 +152,7 @@ export default function PaperSheet({ fields, value = {}, onChange, dateLabel = '
       {/* 📝 오늘의 한 줄 — 밑줄 하나 ＋ 라벨. 「레시피 기록」 속지의 맨 아래 칸이다
           (창업자 확정: *"평가빼고 오늘의 한 줄 정도로?"* → 별 다섯을 뺀 자리) */}
       {fields.line && (
-        <div style={{ ...box(fields.line) }}>
+        <div style={{ ...box(fields.line), ...overSticker, ...noTouch }}>
           {/* 라벨은 «인쇄된 글자»처럼 — 손글씨보다 작고 연하게. 내가 쓴 글과 안 헷갈리게 */}
           <div style={{ fontFamily: HAND, fontWeight: 700, fontSize: `${PAPER_LINE_H * 0.54}cqw`, color: INK, opacity: 0.42, letterSpacing: '0.04em', lineHeight: 1.25, marginBottom: '0.6cqw' }}>
             {fields.line.label}
