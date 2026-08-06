@@ -6,7 +6,7 @@ import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
 import PaperSheet, { PaperBox } from '../components/PaperSheet'
-import { PAPER_RULES, PAPER_SKINS, PAPER_ARTS, paperStyle } from '../data/papers'
+import { paperStyle } from '../data/papers'
 import { useLayerBack } from '../useBackHandler'
 import { cropSquare } from '../utils'
 
@@ -49,7 +49,6 @@ export default function DiaryScreen({ day }) {
   //   창업자 *"줄눈을 그어주는게 좋을까...? 그건 잘 모르겠네"* → **우리가 정하지 않는다.**
   //   기본을 줄로 두고, 「선」 탭에서 무지·모눈·도트로 언제든 바꾼다. 판정은 실물로.
   const [pick, setPick] = useState(() => entry?.paper || { rule: 'lined', skin: 'ivory', art: 'none' })
-  const [tab, setTab] = useState('rule') // rule | skin | art
   const [open, setOpen] = useState(false)
   const closeRef = useRef(null)
   useLayerBack(open, () => { if (closeRef.current) closeRef.current(); else setOpen(false) })
@@ -97,8 +96,6 @@ export default function DiaryScreen({ day }) {
   }
 
   const dateLabel = `${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEK[date.getDay()]}요일`
-  const TABS = [['rule', '선'], ['skin', '종이'], ['art', '틀']]
-  const LIST = tab === 'rule' ? PAPER_RULES : tab === 'skin' ? PAPER_SKINS : PAPER_ARTS
 
   return (
     <div className="screen fade" style={{ paddingBottom: 0 }}>
@@ -142,34 +139,10 @@ export default function DiaryScreen({ day }) {
           <Icon name="palette" size={15} />
           꾸미기
         </button>
-
-        {/* 속지 고르기 — 선·종이·틀을 «각각 혹은 같이» (창업자 2026-08-06 *"각각 혹은 같이 사용하는거 아이디어야"*) */}
-        <div className="segment" style={{ marginTop: 16 }}>
-          {TABS.map(([k, label]) => (
-            <button key={k} className={`seg ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{label}</button>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '10px 0 2px' }}>
-          {LIST.map((o) => {
-            const next = { ...pick, [tab]: o.key }
-            const on = pick[tab] === o.key
-            const mini = paperStyle(next)
-            return (
-              <button
-                key={o.key}
-                className="press"
-                onClick={() => choose(next)}
-                aria-label={o.label}
-                style={{ flex: '0 0 auto', border: 'none', background: 'none', padding: 0, width: 54 }}
-              >
-                <div
-                  className={mini.className}
-                  style={{ width: 54, aspectRatio: '3/4', borderRadius: 8, boxShadow: on ? '0 0 0 2.5px var(--brown)' : '0 1px 4px rgba(70,60,45,.18)', ...(mini.style || {}) }}
-                />
-                <div style={{ fontSize: 10.5, fontWeight: 700, marginTop: 4, color: on ? 'var(--brown)' : 'var(--text-sub)', textAlign: 'center' }}>{o.label}</div>
-              </button>
-            )
-          })}
+        {/* 📔 속지가 꾸미기 «안»으로 들어갔다 → 어디로 갔는지 한 줄로 알려준다.
+            ⛔ 아무 말 없이 옮기면 「없어졌다」로 읽힌다 — 있던 자리에서 사라진 기능이라 더 그렇다. */}
+        <div className="t-sub" style={{ fontSize: 11.5, textAlign: 'center', marginTop: 6, lineHeight: 1.5 }}>
+          속지(선·종이·틀)도 꾸미기 안에서 골라요
         </div>
 
         {/* 그날 만든 요리 — ⛔자동으로 안 얹는다. 「있다」만 알려주고 붙일지는 본인이 정한다 */}
@@ -196,13 +169,19 @@ export default function DiaryScreen({ day }) {
           // ✍️ 꾸미는 동안에도 쓴 글이 «같은 자리»에 보여야 한다 — 안 보이면 그 위에 스티커를 놓는다.
           //    ⭐ 에디터가 글을 «모르게» 조각째 넘긴다 — 두 곳에서 그리면 자리가 어긋난다.
           paperOverlay={<PaperSheet fields={skin.fields} rule={skin.rule} value={text} dateLabel={dateLabel} />}
+          // 📔 속지 고르기 = 꾸미기 첫 탭. 고르면 «그 자리에서» 판이 바뀐다(저장을 눌러야 보이는 게 아니다)
+          paperPick={pick}
+          onPaperPick={choose}
           // ⭐ 에디터에 들어가면 날짜가 안 보인다 → 머리글이 «지금 어느 날을 꾸미는 중인지»를 말한다
           title={`${date.getMonth() + 1}월 ${date.getDate()}일 다이어리`}
           recipe={{ id: `diary-${day}`, title: '', decor, decorBg: 'none', thumb: 'none' }}
           onSave={(items) => {
+            // ⚠️ 「비웠어요」는 **꾸민 게 있다가 없어졌을 때만** — 속지만 고르고 저장해도
+            //    「비웠어요」가 뜨면 방금 고른 종이가 지워진 줄 안다.
+            const had = (entry?.decor || []).length
             save({ decor: items, paper: pick })
             setOpen(false)
-            nav.showToast(items.length ? '다이어리에 저장했어요' : '다이어리를 비웠어요')
+            nav.showToast(!items.length && had ? '꾸민 걸 비웠어요' : '다이어리에 저장했어요')
           }}
           onClose={() => setOpen(false)}
         />

@@ -48,6 +48,29 @@ await page.addInitScript((s) => {
 await page.goto('http://127.0.0.1:4346/hankki/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(1200)
 
+// 📔📔 속지 고르기는 **꾸미기 서랍 안**에 있다 (2026-08-06 합침 · 창업자
+//   *"지금 꾸미기 틀이랑 꾸미기로 나눠져있는게 조금 불편해"*).
+//   ⛔ 예전처럼 화면의 `.seg` 를 누르면 안 된다 — 그 줄은 이제 없다.
+const openDecor = async () => {
+  await page.locator('[aria-label="다이어리 꾸미기"]').first().click()
+  await page.waitForTimeout(1300)
+  await page.getByRole('button', { name: '나중에' }).first().click({ timeout: 1200 }).catch(() => {})
+  await page.waitForTimeout(300)
+}
+const paperTab = () => page.locator('.decor-drawer').getByRole('button', { name: '속지', exact: true })
+/** 속지를 고르고 저장까지 — 여러 개 주면 차례로 고른다(선·종이·틀은 같이 쓴다) */
+const pickPaper = async (...labels) => {
+  await openDecor()
+  await paperTab().first().click()
+  await page.waitForTimeout(300)
+  for (const l of labels) {
+    await page.getByRole('button', { name: `속지 ${l}`, exact: true }).first().click()
+    await page.waitForTimeout(350)
+  }
+  await page.getByRole('button', { name: '저장', exact: true }).first().click()
+  await page.waitForTimeout(900)
+}
+
 await page.getByText('레시피', { exact: true }).last().click(); await page.waitForTimeout(700)
 await page.locator('.seg', { hasText: '요리 기록' }).first().click(); await page.waitForTimeout(700)
 await page.screenshot({ path: join(OUT, 'diary-a-입구.png') })
@@ -94,8 +117,10 @@ await page.screenshot({ path: join(OUT, 'diary-b2-글쓰기.png') })
 // ⓑ-3 📔 「레시피 기록」 틀 — 사진 옆 날짜·줄 ＋ 맨 아래 「오늘의 한 줄」
 //   창업자 2026-08-06 = *"사진 옆에 줄 긋고 날짜랑 그건 똑같이 하고. 아래는 남겨주고
 //   제일 아래 줄긋고 오늘의 한줄"*
-await page.locator('.seg', { hasText: '틀' }).first().click(); await page.waitForTimeout(400)
-await page.getByRole('button', { name: '레시피 기록' }).first().click(); await page.waitForTimeout(600)
+// ⭐ 합치기 확인 — 다이어리 화면엔 속지 줄이 «따로» 있으면 안 된다(손이 두 군데였다)
+if ((await page.getByRole('button', { name: /^속지 / }).count()) === 0) ok('다이어리 화면에 속지 줄이 따로 없다 — 꾸미기로 합쳤다')
+else no('속지 줄이 아직 화면에 따로 있다 — 합친 게 아니다')
+await pickPaper('레시피 기록')
 const LINE = '엄마가 좋아하던 맛'
 const lineBox = page.getByLabel('오늘의 한 줄')
 if (await lineBox.isVisible().catch(() => false)) ok('레시피 기록 틀에 「오늘의 한 줄」 칸이 뜬다')
@@ -111,10 +136,10 @@ const savedLine = await page.evaluate(() => {
 if (savedLine.includes(LINE)) ok('오늘의 한 줄이 저장된다')
 else no(`오늘의 한 줄이 저장 안 된다 — ${JSON.stringify(savedLine)}`)
 // ⭐ 「없음」 틀엔 한 줄 칸이 없어야 한다 — 그 칸은 «레시피 기록» 속지의 것이다
-await page.getByRole('button', { name: '없음' }).first().click(); await page.waitForTimeout(500)
+await pickPaper('없음')
 if ((await page.getByLabel('오늘의 한 줄').count()) === 0) ok('틀이 없으면 「오늘의 한 줄」 칸도 없다')
 else no('틀이 없는데 「오늘의 한 줄」 칸이 뜬다 — 그 칸은 레시피 기록 속지 것이다')
-await page.getByRole('button', { name: '레시피 기록' }).first().click(); await page.waitForTimeout(500)
+await pickPaper('레시피 기록')
 await page.screenshot({ path: join(OUT, 'diary-b3-레시피기록.png') })
 
 // ⓑ-4 📷 사진칸 — 틀에 그려진 «창»에 사진을 끼울 수 있어야 한다
@@ -137,17 +162,14 @@ else no('사진이 저장 안 된다')
 if ((await page.locator('.paper img').count()) > 0) ok('사진이 종이의 창에 끼워진다')
 else no('사진이 종이에 안 보인다')
 // ⚠️ 「틀 없음」엔 사진칸이 없다 — 창이 안 그려진 종이에 사진을 얹으면 그냥 얼룩이다
-await page.getByRole('button', { name: '없음' }).first().click(); await page.waitForTimeout(500)
+await pickPaper('없음')
 if ((await page.getByRole('button', { name: /^사진 (넣기|바꾸기)$/ }).count()) === 0) ok('틀이 없으면 사진칸도 없다')
 else no('창이 없는 종이에 사진칸이 뜬다')
-await page.getByRole('button', { name: '레시피 기록' }).first().click(); await page.waitForTimeout(500)
+await pickPaper('레시피 기록')
 await page.screenshot({ path: join(OUT, 'diary-b4-사진.png') })
 
-// ⓒ 속지 갈아끼우기 — 「종이」 탭에서 크라프트, 「틀」 탭에서 사진일기
-await page.locator('.seg', { hasText: '종이' }).first().click(); await page.waitForTimeout(400)
-await page.getByRole('button', { name: '크라프트' }).first().click(); await page.waitForTimeout(400)
-await page.locator('.seg', { hasText: '틀' }).first().click(); await page.waitForTimeout(400)
-await page.getByRole('button', { name: '사진일기' }).first().click(); await page.waitForTimeout(600)
+// ⓒ 속지 갈아끼우기 — 종이 크라프트 ＋ 틀 사진일기를 «한 서랍에서» 이어서 고른다
+await pickPaper('크라프트', '사진일기')
 // ☀️ 날씨 — **그림에 인쇄된 아이콘 넷**을 고를 수 있어야 한다(전엔 눌러도 아무 일이 없었다)
 const wBtns = page.getByRole('button', { name: /^날씨 / })
 if ((await wBtns.count()) === 4) ok('사진일기에 날씨 넷을 고를 수 있다')
@@ -172,9 +194,7 @@ if (cls.includes('kraft') && cls.includes('art')) ok(`속지가 바뀐다 (${cls
 else no(`속지가 안 바뀐다 (${cls})`)
 
 // ⓓ 꾸미기 — 판만 3:4 인 같은 에디터
-await page.locator('[aria-label="다이어리 꾸미기"]').first().click(); await page.waitForTimeout(1400)
-await page.getByRole('button', { name: '나중에' }).first().click({ timeout: 1500 }).catch(() => {})
-await page.waitForTimeout(500)
+await openDecor()
 await page.screenshot({ path: join(OUT, 'diary-d-꾸미기.png') })
 const stage = await page.locator('.decor-stage > div').first().boundingBox()
 if (stage && Math.abs(stage.height - stage.width * 4 / 3) <= 2) ok(`꾸미기 판도 3:4 (${Math.round(stage.width)}x${Math.round(stage.height)})`)
@@ -182,6 +202,20 @@ else no(`꾸미기 판이 3:4 가 아니다 (${stage ? Math.round(stage.width) +
 // 📝 꾸미는 동안에도 한 줄이 보여야 한다 — 안 보이면 그 위에 스티커를 놓는다
 if ((await page.locator('.decor-stage').first().innerText()).includes(BODY)) ok('꾸미기 판에도 쓴 글이 같이 보인다')
 else no('꾸미기 판엔 글이 안 보인다 — 모르고 그 위를 덮게 된다')
+
+// ⓓ-2 📔 **속지 탭이 서랍 «안»에 있고, 고르면 그 자리에서 판이 바뀐다**
+if ((await paperTab().count()) === 1) ok('다이어리 꾸미기 서랍에 「속지」 탭이 있다')
+else no('「속지」 탭이 없다 — 그럼 종이를 아예 못 고른다')
+await paperTab().first().click(); await page.waitForTimeout(300)
+for (const [label, sel] of [['선', '선'], ['종이', '종이'], ['틀', '틀']]) {
+  if ((await page.locator('.decor-drawer .decor-sec-label', { hasText: new RegExp(`^${sel}$`) }).count()) === 1) ok(`속지 탭에 「${label}」 절이 있다`)
+  else no(`속지 탭에 「${label}」 절이 없다`)
+}
+await page.getByRole('button', { name: '속지 그레이지', exact: true }).first().click(); await page.waitForTimeout(500)
+const stageCls = await page.locator('.decor-stage .paper').first().getAttribute('class')
+if ((stageCls || '').includes('greige')) ok(`속지를 고르면 꾸미는 판이 바로 바뀐다 (${stageCls})`)
+else no(`속지를 골라도 판이 안 바뀐다 (${stageCls})`)
+await page.screenshot({ path: join(OUT, 'diary-d2-속지탭.png') })
 
 // ⓔ 📔 **표지 전용 UI 가 다이어리에 딸려오면 안 된다** (2026-08-06)
 //   다이어리 캔버스는 `Thumb` 을 아예 안 그린다 → 「표지 그림 되돌리기」·「배경지」는 눌러도 아무 일이 없다.
@@ -208,6 +242,9 @@ for (const [name, re] of [['배경 탭', /^배경$/], ['표지 그림', /표지 
   if (await page.getByText(re).count() > 0) ok(`표지 꾸미기엔 「${name}」 그대로 있다`)
   else no(`표지 꾸미기에서 「${name}」이 사라졌다 — 표지 쪽을 깨뜨렸다`)
 }
+// 📔 그리고 **다이어리 속지는 레꾸로 새면 안 된다** — 표지엔 깔 종이가 없다(창업자 질문 2026-08-06)
+if ((await paperTab().count()) === 0) ok('표지 꾸미기엔 「속지」 탭이 없다')
+else no('표지 꾸미기에 다이어리 속지 탭이 딸려왔다 — 표지엔 종이가 없다')
 await page.screenshot({ path: join(OUT, 'diary-e-표지꾸미기.png') })
 
 // ⓕ 📷 **내 사진을 스티커로** — 종이 종류를 안 가리고 붙는 유일한 길

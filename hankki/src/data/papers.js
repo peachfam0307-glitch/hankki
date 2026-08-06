@@ -142,6 +142,9 @@ export function paperStyle({ rule = 'plain', skin = 'ivory', art = 'none' } = {}
     style: a.src ? { '--art': `url(${a.src})` } : undefined,
     // 쓰는 칸이 직접 그어야 할 때만 값이 있다
     rule: where === 'write' ? drawRule : '',
+    // ⭐ 「선을 어디에 긋나」를 밖으로도 알려준다 — `none` 이면 **선을 골라도 화면이 안 바뀐다**.
+    //    서랍이 그걸 모르면 «눌러도 아무 일 없는 칸»이 되고, 그건 고장으로 읽힌다.
+    ruleWhere: where,
     fields: a.fields || PAPER_ARTS[0].fields,
   }
 }
