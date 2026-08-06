@@ -37,7 +37,10 @@ const dayKey = (ts) => {
 //    점은 「했다/안 했다」만 말한다. 달력을 다시 열어보게 만드는 건 «무엇을 해먹었나»다.
 //    우리는 음식 아이콘을 236컷 갖고 있다 — 그게 여기서 값을 한다.
 //    ⛔ 두 번 해먹어도 점이 두 개가 아니었다(점 «안»에 숫자가 들어갔다) → 구석에 `+N`.
-function CookCalendar({ entries, selected, onSelect, iconFor }) {
+// 📔 `diaryDays` = 다이어리를 쓴 날(`'y-m-d'` Set). 요리와 «따로» 받는다 —
+//    다이어리는 요리가 아니라서 음식 아이콘 자리에 못 들어가고, 「N번」에도 안 세어진다.
+//    ⭐ 대신 칸 왼쪽 위에 작은 펜 표시. **요리를 안 한 날에도 눌러서 다이어리로 갈 수 있다.**
+function CookCalendar({ entries, diaryDays, selected, onSelect, iconFor }) {
   const [ym, setYm] = useState(() => {
     const n = new Date()
     return { y: n.getFullYear(), m: n.getMonth() }
@@ -90,14 +93,16 @@ function CookCalendar({ entries, selected, onSelect, iconFor }) {
           const n = list ? list.length : 0
           const top = list && list[0]
           const on = selected === k
+          const hasDiary = diaryDays.has(k)
           return (
             <button
               key={d}
               className={`press cal-day ${on ? 'on' : ''} ${isToday(d) ? 'today' : ''}`}
-              onClick={() => n && onSelect(on ? null : k)}
-              disabled={!n}
+              onClick={() => (n || hasDiary) && onSelect(on ? null : k)}
+              disabled={!n && !hasDiary}
             >
               <span className="cal-num">{d}</span>
+              {hasDiary && <span className="cal-diary" aria-label="다이어리 쓴 날"><Icon name="pen" size={9} /></span>}
               {top && (
                 // 사진을 남겼으면 사진이, 아니면 그날 만든 음식 아이콘이 칸에 뜬다.
                 <span className="cal-food">
@@ -205,7 +210,13 @@ export default function MyRecipesScreen() {
   const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__often' && !DEFAULT_FOLDERS.has(folder)
 
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
-  const entries = useMemo(() => [...diary].sort((a, b) => b.at - a.at), [diary])
+  // 📔📔 **요리 기록과 다이어리를 가른다** — 둘 다 `diary` 배열에 살고 `kind` 로만 구분된다.
+  //   ⛔ 안 가르면 다이어리 한 장이 **「이번 달 N번」에 세어지고**(요리를 안 했는데)
+  //      앨범엔 **제목 없는 빈 칸**으로 뜨며 최애 요리 집계까지 오염된다.
+  //   ⚠️ `kind` 가 없는 옛 기록은 전부 요리다 — 그래야 이미 깔린 폰이 안 깨진다.
+  const entries = useMemo(() => diary.filter((d) => d.kind !== 'diary').sort((a, b) => b.at - a.at), [diary])
+  // 다이어리는 «날짜»만 쓴다(달력 표시용). 내용은 다이어리 화면이 보여준다.
+  const diaryDays = useMemo(() => new Set(diary.filter((d) => d.kind === 'diary').map((d) => dayKey(d.at))), [diary])
   const [dayFilter, setDayFilter] = useState(null) // 'y-m-d' | null — 캘린더에서 고른 날
 
   // 🐛🐛 기록의 아이콘은 레시피에 «저장된» 값을 먼저 본다.
@@ -301,9 +312,30 @@ export default function MyRecipesScreen() {
               ⛔ 예전엔 `useState(false)` 로 **기본이 접힘**이었고, 「요리 달력 보기 ▾」를 눌러야 나왔다.
                  그래서 만든 사람(창업자)조차 안 썼다 — 이 탭이 죽은 이유의 하나가 **기능이 모자란 게
                  아니라 자리를 잘못 준 것**이었다. 접기 버튼도 같이 없앴다(가릴 이유가 없어졌다). */}
-          {entries.length > 0 && (
-            <CookCalendar entries={entries} selected={dayFilter} onSelect={setDayFilter} iconFor={iconFor} />
+          {(entries.length > 0 || diaryDays.size > 0) && (
+            <CookCalendar entries={entries} diaryDays={diaryDays} selected={dayFilter} onSelect={setDayFilter} iconFor={iconFor} />
           )}
+
+          {/* 📔 다이어리 쓰기 — 창업자 2026-08-06 *"따로 아이콘을 하나 파서 다이어리 쓰기
+              (날짜 넣고 쓰면 달력에 저장되도록)"*
+              ⭐ 요리를 «안 한 날»에도 쓸 수 있어야 한다 — 그래서 「만들었어요」와 별개 입구다.
+              ⚠️ 날짜를 고르는 UI 를 새로 만들지 않았다 — **달력이 바로 위에 있다.**
+                 날짜를 골라 두고 누르면 그날, 안 고르면 오늘. (새 UI 0개) */}
+          <button
+            className="press"
+            onClick={() => nav.push({ name: 'diary', day: dayFilter || dayKey(Date.now()) })}
+            style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 12, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontSize: 13.5, fontWeight: 800, border: 'none' }}
+          >
+            <Icon name="pen" size={16} color="#fff" />
+            {/* ⛔ 이미 쓴 날에 「쓰기」라고 하면 «새로 쓴다»로 읽혀 덮어쓸까 봐 안 누른다. */}
+            {(() => {
+              const day = dayFilter || dayKey(Date.now())
+              const verb = diaryDays.has(day) ? '다이어리 보기' : '다이어리 쓰기'
+              return dayFilter
+                ? `${Number(dayFilter.split('-')[1]) + 1}월 ${dayFilter.split('-')[2]}일 ${verb}`
+                : `오늘 ${verb}`
+            })()}
+          </button>
 
           {entries.length > 0 && (
             <div className="card" style={{ padding: '11px 14px', marginBottom: 12, background: 'var(--cream)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, fontWeight: 600 }}>

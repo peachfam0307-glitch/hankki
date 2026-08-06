@@ -716,6 +716,25 @@ img {
   background: #fff;
   color: var(--brown);
 }
+/* 📔 다이어리 쓴 날 — 왼쪽 위 작은 펜.
+   ⛔ 음식 아이콘 자리를 쓰면 안 된다. 다이어리는 요리가 아니라서
+      「무엇을 해먹었나」 자리에 끼면 그 자리가 거짓말이 된다. */
+.cal-diary {
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--brown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cal-day.on .cal-diary {
+  background: #fff;
+}
 .grid-card .name {
   font-size: 14px;
   font-weight: 600;
@@ -1699,3 +1718,96 @@ html, body { overscroll-behavior: none; }
    ⏱ **2초 확정** (창업자 2026-08-05). 1.6초 → *"비가 너무 빨리 떨어져"* → 2초·4초를 나란히 보고 골랐다.
       ⭐ 4초는 «비가 아니라 흐르는 물»로 보였다 — 비는 어느 정도 속도가 있어야 비로 읽힌다. */
 .hk-bg-rain { animation: hk-bg-rain 2s linear infinite; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   📔 다이어리 속지 (2026-08-06 창업자 확정)
+   ══════════════════════════════════════════════════════════════════════════
+   ⭐ 창업자 걱정 = *"줄은 있어야 할 것 같은데.. **줄이 있으면 꾸미기가 안 예쁘려나**"*
+      → 그 걱정이 맞다. **그래서 아무도 종이에 줄을 «박아» 두지 않는다.**
+      다욜 10종 · 자꾸다꾸 스토어 · 영어권 5종(narrow/wide lined·dotted·grid·blank)
+      세 경로가 다 같은 말을 했다 — **줄은 «박는» 게 아니라 «고르는» 것.**
+
+   ⭐⭐ 전부 CSS 다 — **파일 0KB · 무한 확대해도 안 깨짐 · 색도 바꿀 수 있다.**
+      벡터 프레임(v8.58)과 같은 방법. ⛔그림(PNG)으로 받으면 타일 «이음매»가 보이고
+      크게 키우면 흐려진다. 그리고 첫 다운로드 4.1MB/8MB 칸을 또 먹는다.
+      📌 **선은 코드, 질감은 그림** — 종이 결·모서리처럼 그림이 이기는 건 따로 받는다.
+
+   ⛔ 표지 배경 탭(`DECOR_BACKGROUNDS`)과 «다른 물건»이다.
+      2026-07-30 창업자 결정 = *"기본배경에는 색깔만"* (마테에 이미 무늬가 있어 표지가 무늬 천지가 된다).
+      그건 **표지** 기준이고, 다이어리 종이는 **글 쓰는 판**이라 줄·모눈이 장식이 아니라 «도구»다.
+      → 표지 배경 탭·유료팩(`bgpaper`)은 **그대로 둔다.**
+   ────────────────────────────────────────────────────────────────────────── */
+.paper {
+  /* ⚠️ 순백(#fff)이 아니다 — 순백은 화면에서 «종이»가 아니라 «빈 칸»으로 읽힌다 */
+  --paper: #fbf7ef;
+  /* ⚠️ 줄은 아주 연하게. 진하면 «글씨보다 줄이 먼저» 보이고 그 순간 투박해진다 */
+  --rule: #e2d8c6;
+  --rule-gap: 28px;  /* 손글씨 한 줄 — 종이 다이어리 8mm 에 해당 */
+  position: relative;
+  background-color: var(--paper);
+  /* 종이의 결 — 위에서 아래로 아주 옅게. 「하얀 네모」가 아니라 종이로 보이게 한다 */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -22px 34px -30px rgba(90, 70, 45, 0.16);
+}
+/* 줄 — 밑줄이 칸의 «아래»에 오게(글씨는 줄 위에 앉는다) */
+.paper.lined {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--rule-gap) - 1px),
+    var(--rule) calc(var(--rule-gap) - 1px),
+    var(--rule) var(--rule-gap)
+  );
+}
+/* 모눈 — 줄보다 촘촘하고 더 연하게(가로세로 둘 다라 같은 색이면 두 배로 진해 보인다) */
+.paper.grid {
+  --rule-gap: 22px;
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--rule-gap) - 1px), var(--rule) calc(var(--rule-gap) - 1px), var(--rule) var(--rule-gap)),
+    repeating-linear-gradient(to right, transparent 0, transparent calc(var(--rule-gap) - 1px), var(--rule) calc(var(--rule-gap) - 1px), var(--rule) var(--rule-gap));
+  opacity: 1;
+}
+.paper.grid::before {
+  /* 모눈은 선이 두 겹이라 그대로 두면 진하다 — 종이색을 살짝 덮어 톤을 낮춘다 */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  opacity: 0.34;
+  pointer-events: none;
+}
+/* 도트 — 점은 «작고 촘촘»해야 종이로 읽힌다. 크면 무늬가 된다 */
+.paper.dots {
+  --rule-gap: 20px;
+  background-image: radial-gradient(circle, var(--rule) 1.2px, transparent 1.4px);
+  background-size: var(--rule-gap) var(--rule-gap);
+}
+
+/* ── 🎨 속지 «스킨» — 종이색·선색만 갈아끼운다 (2026-08-06 창업자 *"크라프트 등등도 넣자"*)
+   ⭐⭐ 창업자 조사 결론 = *"구조 12개를 «여러 감성 스킨으로»"*.
+      우리는 종이를 CSS 로 그리니 **스킨이 변수 두 줄**이다 — 그림이 한 장도 안 는다.
+   ⛔ 통짜 그림이었으면 스킨마다 속지를 전부 다시 뽑아야 했다. */
+.paper.kraft  { --paper: #e8d9bd; --rule: #c9ab7d; }   /* 크라프트 — 누런 재생지 */
+.paper.greige { --paper: #f0ece3; --rule: #d6cfbf; }   /* 그레이지 — 앱 기본 테마와 같은 결 */
+.paper.linen  { --paper: #f7f3ea; --rule: #ddd2bc; }   /* 리넨 — 아이보리보다 한 톤 차분하게 */
+
+/* 📄 그림 속지 — 창업자가 GPT 로 뽑아 온 틀(테두리·칸·장식).
+   ⛔⛔ **`background-image` 로 얹으면 안 된다** — 줄·모눈·도트도 `background-image` 라 **덮어버린다.**
+      (한 속성에 둘을 쓰면 나중 규칙이 이긴다. 처음에 그렇게 썼다가 줄이 사라졌다)
+   ✅ 층을 나눈다 — 종이색(background-color) → 선(background-image) → **틀(::after)**.
+   ⚠️ `::before` 는 모눈이 톤 낮추는 데 이미 쓰고 있다 → 틀은 `::after`. */
+.paper.art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--art);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  pointer-events: none;
+  /* ⭐⭐ 이 한 줄이 «스킨»을 살린다 — 틀 그림은 **흰 배경 위 선그림**이라 그냥 얹으면
+     아래의 종이색(크라프트)도, 줄·모눈도 통째로 덮는다(실제로 덮었다).
+     곱하기로 얹으면 **흰색은 사라지고 선만 남는다** — 종이에 «인쇄된» 것처럼 된다.
+     ⚠️ 색 장식(잎·마테)은 종이색과 섞여 살짝 물든다 — 크라프트에선 오히려 자연스럽다.
+     ⛔ 투명 PNG 로 다시 뽑을 필요가 없어진다(그 작업이 통째로 없어졌다). */
+  mix-blend-mode: multiply;
+}
