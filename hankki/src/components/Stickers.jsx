@@ -342,6 +342,16 @@ const PHOTO_RATIO = {
   //    숫자·요일은 0개였다. 창업자가 스타일별로 18장 뽑아준 것 중 **우리 마감과 같은 4장**만 채택
   //    (진갈색 굵은 외곽선 + 파스텔 채움 + 흰 다이컷). 라인 계열은 톤도 다르고 자동 오림도
   //    안 돼서(속 흰색이 배경과 이어짐) 심플 다꾸 세트로 미룸. → docs/stickers/글자-창업자-2507/
+  // 📔 다이어리 꾸미기 (2026-08-06 · 창업자 9시트 → 낱개 84 중 80컷)
+  //   ⚠️ 마테 두 시트가 절반 겹쳐서 창업자 판정으로 4컷을 내렸다(빨강·X자·파랑접힘·초록체크).
+  //   ⚠️ `wt_dy10` 은 «없다» — 내린 컷 자리라 번호가 하나 빈다. 빈 게 정상이다.
+  pf_dy01: 0.7224, pf_dy02: 1.1053, pf_dy03: 1.2893, pf_dy04: 0.9909, pf_dy05: 0.673, pf_dy06: 0.6492, pf_dy07: 1.2055, pf_dy08: 0.7785, pf_dy09: 1.0899, pf_dy10: 1.0247, pf_dy11: 1.6812, pf_dy12: 0.9662,
+  dyf01: 0.8179, dyf02: 0.9369, dyf03: 0.6534, dyf04: 0.9744, dyf05: 0.8148, dyf06: 0.8431, dyf07: 0.9839, dyf08: 0.8975, dyf09: 0.9902, dyf10: 1.0102, dyf11: 2.1637, dyf12: 0.8191,
+  wt_dy01: 2.0833, wt_dy02: 1.9554, wt_dy03: 2.6825, wt_dy04: 1.9427, wt_dy05: 3.3304, wt_dy06: 2.0263, wt_dy07: 1.4854, wt_dy08: 1.4362, wt_dy09: 3.0067,
+  wt_dy11: 3.0156, wt_dy12: 2.38, wt_dy13: 5.0403, wt_dy14: 2.4276, wt_dy15: 3.8095, wt_dy16: 2.8923, wt_dy17: 2.4923, wt_dy18: 1.0389, wt_dy19: 1.2008, wt_dy20: 1.5347, wt_dy21: 5.9167,
+  dys01: 1.8439, dys02: 2.1507, dys03: 1.0, dys04: 0.9892, dys05: 0.7559, dys06: 0.8098, dys07: 1.4798, dys08: 2.2589, dys09: 1.486, dys10: 1.5769, dys11: 0.8232, dys12: 1.0704,
+  dyl01: 1.8042, dyl02: 2.7037, dyl03: 1.366, dyl04: 3.25, dyl05: 1.223, dyl06: 2.8404, dyl07: 1.9889, dyl08: 1.4812, dyl09: 1.6599, dyl10: 1.3047, dyl11: 1.7807, dyl12: 0.5952,
+  dyh01: 1.2945, dyh02: 2.2167, dyh03: 1.3102, dyh04: 2.6703, dyh05: 3.2959, dyh06: 1.7509, dyh07: 0.9677, dyh08: 1.1484, dyh09: 0.9744, dyh10: 1.7097, dyh11: 2.0938, dyh12: 2.7112,
   tw_haenaem: 1.1838, tw_night: 1.1641, tw_first: 1.2218, tw_5min: 1.3668, tw_again: 1.4059,
   tw_wow: 1.1411, tw_salty: 1.0695, tw_better: 1.3389, tw_really: 1.4009, tw_daebak: 1.1982,
   tw_today: 1.1, tw_success: 1.2739, tw_more: 1.1199, tw_tasty: 1.3453, tw_welldone: 0.9582,
@@ -972,6 +982,49 @@ export const STICKER_GROUPS = [
   //    ⛔ 파일과 `PHOTO_RATIO` 는 **안 지운다** — 이미 `wtn_03` 으로 꾸며 저장한 표지가 깨지면 안 된다
   //       (`kf_c_`·`sf_` 때와 같은 방식 · 서랍에서만 안 보인다).
   { key: 'deco_washi', tab: 'tape', label: '마스킹테이프', items: ['wt_ribbon_pink', 'wt_dot_lavender', 'wt_daisy_lavender', 'wt_ribbon_lavender', 'wt_flower_mauve', 'wt_grid_white', 'wt_heart_cream', 'wt_daisy_yellow', 'wt_sparkle', 'wt_cherry', 'wt_ribbon_red', 'wt_grid_black', 'wtn_01', 'wtn_02'] },
+
+  // ── 📔 다이어리 꾸미기 (2026-08-06 · 창업자 9시트 → 80컷) ────────────────────
+  //
+  // ⭐ 창업자 원문 = *"새다이어리꾸미기야. **3달치**라서 **한달에 종류별로 4개씩** 넣으면 될것같아"*
+  //
+  // ⚠️ **계절이 없다.** 단풍·수박처럼 철 타는 그림이 아니라 «사철 쓰는 다이어리 기본»이다
+  //    → `season` 을 안 붙인다(붙이면 철 지나면 순서가 뒤로 밀린다).
+  // ⚠️ **라벨에 「9월분」처럼 달을 쓰지 않는다** — 유저는 달을 알 필요가 없다.
+  //    가을 세트(`deco_autumn_a/b`)와 같은 방식으로 **내용으로** 가른다.
+  // 📅 9/1·10/1·11/1 = **이미 열려 있는 문**이다(가을 세트와 같은 날) — 새 습관을 안 만든다.
+  //    ⛔ 자동 공개 전날 검수는 절대원칙 → `node scripts/release-calendar.mjs --on 2026-09-01`
+  //
+  // ⚠️⚠️ 마테 두 시트가 **절반 겹쳐서** 왔다(픽셀 대조 ＋ 눈으로 확인).
+  //    창업자 판정으로 4컷을 내렸다 — *"2번째줄 빨강 엑스자 파랑접힌거 3번째줄초록체크빼자"*
+  //    → 24 → **20컷.** 아직 겹치는 4쌍(노랑무지·파랑도트·흰종이·크라프트종이)은 **다른 달로 갈랐다** —
+  //      같은 달에 나란히 놓이면 «같은 게 두 개»로 보이지만 달이 다르면 «새로 나온 것»으로 읽힌다.
+  //    ⚠️ `wt_dy10` 은 **없다**(내린 컷 자리). 번호가 비는 게 정상이다.
+  //
+  // 🖼 프레임은 `pf_` 로 시작해야 한다 — `DecorEditor.isBacking` 이 접두어로 «밑판»을 가른다.
+  //    안 그러면 탭할 때 맨 앞으로 튀어나와 안에 꾸민 스티커를 다 덮는다(v8.59·v9.01 사고).
+  { key: 'deco_dy_frame_a', tab: 'frame', from: '2026-09-01', label: '폴라로이드·리본', items: ['pf_dy01', 'pf_dy09', 'pf_dy10', 'pf_dy02'] },
+  { key: 'deco_dy_frame_b', tab: 'frame', from: '2026-10-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
+  { key: 'deco_dy_frame_c', tab: 'frame', from: '2026-11-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
+
+  { key: 'deco_dy_flower_a', tab: 'deco', from: '2026-09-01', label: '꽃다발', items: ['dyf01', 'dyf02', 'dyf03', 'dyf07'] },
+  { key: 'deco_dy_flower_b', tab: 'deco', from: '2026-10-01', label: '들꽃', items: ['dyf04', 'dyf05', 'dyf06', 'dyf11'] },
+  { key: 'deco_dy_flower_c', tab: 'deco', from: '2026-11-01', label: '화분·잎', items: ['dyf08', 'dyf09', 'dyf10', 'dyf12'] },
+
+  { key: 'deco_dy_stamp_a', tab: 'deco', from: '2026-09-01', label: '도장·씰', items: ['dys03', 'dys04', 'dys05', 'dys11'] },
+  { key: 'deco_dy_stamp_b', tab: 'deco', from: '2026-10-01', label: '선·화살표', items: ['dys01', 'dys02', 'dys07', 'dys08'] },
+  { key: 'deco_dy_stamp_c', tab: 'deco', from: '2026-11-01', label: '붓칠·햇살', items: ['dys06', 'dys09', 'dys10', 'dys12'] },
+
+  { key: 'deco_dy_label_a', tab: 'deco', from: '2026-09-01', label: '메모지', items: ['dyl01', 'dyl05', 'dyl06', 'dyl10'] },
+  { key: 'deco_dy_label_b', tab: 'deco', from: '2026-10-01', label: '이름표·태그', items: ['dyl03', 'dyl09', 'dyl11', 'dyl08'] },
+  { key: 'deco_dy_label_c', tab: 'deco', from: '2026-11-01', label: '띠·배너', items: ['dyl02', 'dyl04', 'dyl07', 'dyl12'] },
+
+  { key: 'deco_dy_hand_a', tab: 'deco', from: '2026-09-01', label: '강조 표시', items: ['dyh01', 'dyh03', 'dyh12', 'dyh06'] },
+  { key: 'deco_dy_hand_b', tab: 'deco', from: '2026-10-01', label: '손그림 도장', items: ['dyh07', 'dyh08', 'dyh09', 'dyh05'] },
+  { key: 'deco_dy_hand_c', tab: 'deco', from: '2026-11-01', label: '점·붓칠', items: ['dyh02', 'dyh04', 'dyh10', 'dyh11'] },
+
+  { key: 'deco_dy_tape_a', tab: 'tape', from: '2026-09-01', label: '무늬 테이프', items: ['wt_dy02', 'wt_dy04', 'wt_dy03', 'wt_dy05', 'wt_dy06', 'wt_dy09', 'wt_dy21'] },
+  { key: 'deco_dy_tape_b', tab: 'tape', from: '2026-10-01', label: '민무늬·종이', items: ['wt_dy01', 'wt_dy11', 'wt_dy14', 'wt_dy18', 'wt_dy07', 'wt_dy08', 'wt_dy16'] },
+  { key: 'deco_dy_tape_c', tab: 'tape', from: '2026-11-01', label: '격자·도트·겹침', items: ['wt_dy12', 'wt_dy13', 'wt_dy15', 'wt_dy17', 'wt_dy19', 'wt_dy20'] },
 
   // ── 여름 (2026-07-29 재제작) ── 제철(6~8월)이면 데코 탭 맨 위로 올라간다.
   //   ⚠️ 철이 지나도 **숨기지 않는다** — 순서만 밀린다. 유저가 쓰던 걸 못 찾게 되는 게 더 나쁘다.
