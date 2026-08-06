@@ -6,6 +6,7 @@
 //    (줄이 진하면 «글씨보다 줄이 먼저» 보인다 — 그게 투박함의 정체다)
 //
 // 실행: cd /home/user/hankki/hankki && SMOKE_CHROMIUM=/opt/pw-browsers/chromium node scripts/_shot-paper.mjs
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'

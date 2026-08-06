@@ -1,5 +1,6 @@
 // 👀 새 아이콘 16컷이 «앱 안에서» 제대로 뜨나 — 픽커 실물로 확인
 //   📌 v9.31 교훈: 「고른 것」이 아니라 «들어간 것»을 본다(컨택트시트 번호만 보고 식빵을 계란으로 넣었다).
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'

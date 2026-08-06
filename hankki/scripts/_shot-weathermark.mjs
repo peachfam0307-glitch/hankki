@@ -4,6 +4,7 @@
 // ⛔ 제약 = **아이콘 넷이 틀 «그림»에 인쇄돼 있다.** 개별로 흐리게·색칠 못 한다.
 //    → 「안 고른 걸 흐리게」 같은 방법은 아예 불가능. **위에 얹는 것** 중에서만 고른다.
 // ⭐ 그래서 후보는 넷 — 지금(동그라미) · 형광펜 · 밑줄 · 아래 점.
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'

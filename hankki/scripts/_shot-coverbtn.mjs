@@ -9,6 +9,7 @@
 //    (글꼴·표지·아이콘이 전부 진짜여야 판정이 된다)
 //
 // 실행: cd /home/user/hankki/hankki && SMOKE_CHROMIUM=/opt/pw-browsers/chromium node scripts/_shot-coverbtn.mjs
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'

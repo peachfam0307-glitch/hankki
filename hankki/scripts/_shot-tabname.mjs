@@ -1,6 +1,7 @@
 // 🏷 탭 이름 후보 — 창업자 판정용 (2026-08-06)
 //   창업자 *"다이어리할까 일지할까.. 감정다이어리? 우리 감정레시피북이니까."*
 //   ⭐ 이름은 «글자로 고르는 게 아니라 화면에서 고르는 것»이다 — 폭·무게가 실물에서만 보인다.
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'

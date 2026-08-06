@@ -112,6 +112,21 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const canPickPaper = isDiary && !!paperPick && !!onPaperPick
   // 서랍 탭 — 표지는 배경부터, 다이어리는 프레임부터(다이어리엔 배경 탭 자체가 없다. 아래 CATS 참고)
   const [cat, setCat] = useState(isDiary ? 'frame' : 'bgtape')
+  // 📔📔 **일기를 꾸밀 땐 선반이 둘 — 「일기 아이템」 / 「레시피 꾸미기」**
+  //   창업자 2026-08-06 *"다이어리 쓰기 버튼을 누르면 버튼이 2개 나오게 한다는거야. 하나는 다이어리용 꾸미기창.
+  //   오른쪽은 레시피꾸미기아이템창 **두가지를 다쓰되, 각각 탭에서 쓸수있는거지**"*
+  //   ⛔ **막는 게 아니라 나누는 것이다** — 오른쪽 칸에 전부 그대로 있다(「한 번 준 건 안 빼앗는다」).
+  //   ⭐ 왜 나누나 = 창업자 *"각각의 아이템이 너무 많아 정신이 없다"*. 데코 탭 하나에 27그룹이 쏟아졌다.
+  //      일기 선반은 지금 5그룹 24컷이지만 **9/1·10/1·11/1 에 「다이어리 꾸미기」 80컷이 얹혀 23그룹 104컷**이 된다.
+  //   ⛔ 라벨 글자로 가르지 말 것 — 그룹의 `diary` 필드로만 판단한다(CLAUDE.md 「분류 원칙」·v9.07 사고).
+  //   ⭐⭐ **줄을 새로 만들지 않는다 — 맨 위 「꾸미기」 한 칸을 두 칸으로 쪼갠다.**
+  //      창업자 *"**두번에 걸쳐서 들어가게 하는게 아니라 버튼한번만 눌러서** 되게끔"* ·
+  //      *"다이어리 쓰기 버튼을 누르면 **버튼이 2개** 나오게"*
+  //      → 「속지 · 글쓰기 · **일기 꾸미기** · **레꾸 꾸미기**」 = 어느 칸이든 **한 번만 누르면** 간다.
+  //      ⛔ 선반 고르는 줄을 따로 얹으면 서랍 26vh 에 조작 줄이 셋이 되고, 무엇보다 **탭이 두 겹**이 된다.
+  //   ⭐ 기본은 **「일기 꾸미기」** — 일기 쓰러 들어왔으니 일기 세트부터 보인다(고르는 단계가 안 생긴다).
+  //   ⛔ 표지 꾸미기(`isDiary === false`)엔 안 쪼갠다 — 거긴 선반이 하나(「꾸미기」 한 칸).
+  const [shelf, setShelf] = useState('diary')
   // 🧭🧭 **서랍을 큰 두 칸으로 가른다 — 「속지 고르기」와 「꾸미기」**
   //   창업자 2026-08-06 *"꾸미기를 반으로 갈라서 왼쪽은 속지 고르기 오른쪽은 꾸미기로 나누자"*
   //   ⛔ 처음엔 속지를 탭 «일곱 중 하나»로 넣었는데, 그러면 **종이 고르는 일이 스티커 고르는 일과 같은 급**이 된다.
@@ -256,13 +271,27 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⛔ 지금 `only` 가 붙은 그룹은 **하나도 없다** — 전부 둘 다에서 쓴다(서랍 394컷이 통째로 재사용된다).
   //   ⭐ 가르고 싶어지면 `STICKER_GROUPS` 에 `only: 'diary'` **한 줄**만 붙이면 된다.
   //      (창업자 질문 2026-08-06 *"다이어리 전용틀,속지,꾸미기는 레꾸에서 사용안되게 할 수 있어??"* → 된다)
+  // 📔 **선반 가르기** — 일기를 꾸밀 때만. 왼쪽 칸이면 `diary` 붙은 것만, 오른쪽 칸이면 나머지 전부.
+  //    표지 꾸미기(`isDiary === false`)는 선반이 하나라 **아무것도 안 거른다**(일기 세트도 그대로 보인다).
   const where = isDiary ? 'diary' : 'cover'
+  const onShelf = (x) => !isDiary || (shelf === 'diary' ? !!x.diary : !x.diary)
   const groupsByTab = (t) => drawerGroups()
-    .filter((x) => x.tab === t && isReleased(x.from) && (!x.only || x.only === where))
+    .filter((x) => x.tab === t && isReleased(x.from) && (!x.only || x.only === where) && onShelf(x))
     .sort((a, b) => ((b.gift ? 1 : 0) - (a.gift ? 1 : 0))
       || ((b.locked ? 1 : 0) - (a.locked ? 1 : 0))
       || (seasonRank(a.season) - seasonRank(b.season))
       || ((b.recolor ? 1 : 0) - (a.recolor ? 1 : 0)))
+
+  // 🧭 **빈 탭은 안 그린다** — 일기 선반엔 「글자·친구들·재료」가 없다(그 세트엔 그런 컷이 없다).
+  //    ⛔ 빈 탭을 남겨두면 눌러보고 아무것도 없어서 «고장 난 줄» 안다.
+  //    ⚠️ `CATS` 는 위에서 만들어지고 `groupsByTab` 은 여기 있다 — 순서 때문에 «여기서» 거른다.
+  const visCats = CATS.filter((c) => c.key === 'bgtape' || groupsByTab(c.key).length > 0
+    || (c.key === 'tape' && (!isDiary || shelf === 'all')))
+  // 고른 탭이 이 선반엔 없으면 첫 탭으로 옮긴다(안 그러면 빈 화면이 뜬다)
+  useEffect(() => {
+    if (visCats.length && !visCats.some((c) => c.key === cat)) setCat(visCats[0].key)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shelf])
 
   // 포스트잇을 선택하면 서랍을 맨 위로 올려 '무늬·모양 꾸미기'가 바로 보이게 한다.
   const drawerRef = useRef(null)
@@ -488,11 +517,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           {/* ⚠️ `keep-all` — 한국어는 낱말 중간에서 끊으면 「저 / 장」처럼 읽힌다(실물 캡처로 잡음) */}
           <div className="t-sub" style={{ fontSize: 12, textAlign: 'center', marginTop: 10, lineHeight: 1.5, wordBreak: 'keep-all' }}>
             {writing
-              ? '종이에 바로 써요 · 꾸미려면 아래 「꾸미기」'
+              ? '종이에 바로 써요 · 꾸미려면 아래 「일꾸」'
               : hasCtx
                 ? '탭한 걸 여기서 바로 꾸며요 · 드래그로 이동 · ⟳ 크기/회전'
                 : isDiary
-                  ? '붙이고 옮기고 · 글칸을 누르면 바로 써져요'
+                  ? (shelf === 'diary'
+                    // 🔤 「일꾸」는 «우리가 만든 말»이라 처음 보면 갸웃한다 → 그 자리에서 한 줄로 푼다.
+                    //    (「레꾸」는 이미 「레꾸자랑」 탭에 있어 유저가 안다 — 그래서 안 푼다.)
+                    ? '일꾸 = 일기 꾸미기 · 더 많은 아이템은 「레꾸」에'
+                    : '레꾸 = 레시피 꾸미기 · 일기에도 그대로 붙어요')
                   : '아래에서 골라 붙이고 · 드래그로 이동 · ⟳ 손잡이로 크기/회전'}
           </div>
         </div>
@@ -657,15 +690,24 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                  ⛔ 예전엔 셋째 단계가 「저장하고 나가기」였다. 그게 창업자가 말한 불편이다. */}
           {(canPickPaper || paperEdit) && (
             <div className="segment" style={{ margin: '2px 2px 9px' }}>
-              {canPickPaper && <button className={`seg ${mode === 'paper' ? 'on' : ''}`} onClick={() => setMode('paper')}>속지 고르기</button>}
+              {canPickPaper && <button className={`seg ${mode === 'paper' ? 'on' : ''}`} onClick={() => setMode('paper')}>{isDiary ? '속지' : '속지 고르기'}</button>}
               {paperEdit && <button className={`seg ${writing ? 'on' : ''}`} onClick={() => setMode('write')}>글쓰기</button>}
-              <button className={`seg ${mode === 'decor' ? 'on' : ''}`} onClick={() => setMode('decor')}>꾸미기</button>
+              {isDiary ? (
+                <>
+                  <button className={`seg ${mode === 'decor' && shelf === 'diary' ? 'on' : ''}`}
+                    onClick={() => { setMode('decor'); setShelf('diary') }}>일꾸</button>
+                  <button className={`seg ${mode === 'decor' && shelf === 'all' ? 'on' : ''}`}
+                    onClick={() => { setMode('decor'); setShelf('all') }}>레꾸</button>
+                </>
+              ) : (
+                <button className={`seg ${mode === 'decor' ? 'on' : ''}`} onClick={() => setMode('decor')}>꾸미기</button>
+              )}
             </div>
           )}
           {/* 카테고리 칩 — 가로로 골라 그 카테고리만(세로 스크롤 최소화) */}
           {mode === 'decor' && (
-          <div style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '2px 2px 10px', flex: '0 0 auto' }}>
-            {CATS.map((c) => {
+          <div className="decor-cats" style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '2px 2px 10px', flex: '0 0 auto' }}>
+            {visCats.map((c) => {
               const on = cat === c.key
               return (
                 <button key={c.key} className="press" onClick={() => setCat(c.key)}
@@ -811,6 +853,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 무늬 테이프(CSS)는 길이를 늘일 수 있어 먼저, 손그림 워시 스티커가 그다음. */}
             {cat === 'tape' && (
               <>
+                {/* 🎗 CSS 띠는 «공용 기본»이라 일기 선반엔 안 그린다 — 거긴 일기 세트만 있어야 한다.
+                    ⛔ 없애는 게 아니다. 「레꾸 꾸미기」 칸에 그대로 있다. */}
+                {(!isDiary || shelf === 'all') && (
                 <div className="decor-sec">
                   <div className="decor-sec-label">무늬 테이프 (길이 조절돼요)</div>
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -820,6 +865,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     ))}
                   </div>
                 </div>
+                )}
                 {groupsByTab('tape').map(renderStickerGroup)}
               </>
             )}
@@ -909,9 +955,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           </div>
         )}
 
-        {/* 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번. 「구경하기」는 프레임 탭으로 데려간다. */}
+        {/* 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번. 「구경하기」는 프레임 탭으로 데려간다.
+            📔 선물은 «레꾸 세트»(여름 프레임·축하 컷)라 «일기 칸엔 그 탭이 없다» →
+               누르면 **레꾸 칸으로 옮겨서** 그 탭을 연다. ⛔ 안 그러면 빈 화면이 뜬다.
+            ⛔⛔ 이 주석을 아래 `{gift && (` «안»에 넣지 말 것 — 표현식 자리라 빌드가 죽는다
+               (2026-08-04·08-06 두 번 밟았다. CLAUDE.md 「JSX 주석」 함정). */}
         {gift && (
-          <GiftPackSheet onClose={() => setGift(false)} onGo={(cat) => setCat(cat || 'frame')} />
+          <GiftPackSheet onClose={() => setGift(false)} onGo={(cat) => { setShelf('all'); setCat(cat || 'frame') }} />
         )}
         {/* 💰 꾸미기 팩 사기 — 서랍 자물쇠를 누르면 열린다.
             ⛔ sellable 이 false 인 동안엔 자물쇠가 아예 안 나오므로 이 시트도 안 뜬다. */}

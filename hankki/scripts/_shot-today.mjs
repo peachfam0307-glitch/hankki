@@ -1,5 +1,6 @@
 // 🍚 「오늘의 한끼」 속지 실물 — 창업자 판정용 (2026-08-06)
 //   좌표가 «그림의 칸»에 정확히 앉았나를 눈으로 본다. 숫자로 통과해도 반 픽셀씩 어긋나면 티가 난다.
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'

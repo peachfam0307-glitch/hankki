@@ -1,5 +1,6 @@
 // 📮 재현 — 「내가 꾸민 표지」 공유가 허가 만료로 «다운로드»로 밀리던 것 (창업자 2026-08-05 *"내가만든표지는안돼"*)
 //   판정 = 허가가 끊기면 **「지금 보내기」 버튼**이 뜨고, 그걸 누르면 공유창이 열린다.
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 

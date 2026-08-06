@@ -2,6 +2,7 @@
 //   ⛔ 사라진 게 아니라 **v9.71 이 잘라놓고 「더보기」를 안 달아서 꺼낼 길이 없었다.**
 //      자를 땐 반드시 «꺼낼 길»을 같이 단다 — 이 스크립트가 그걸 못 박는다.
 //   판정 = ①큰 칸을 골랐을 때 250ml 가 «보이거나 더보기를 누르면» 나온다 ②세로 길이가 안 늘었다
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 

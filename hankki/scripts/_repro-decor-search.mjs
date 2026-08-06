@@ -4,6 +4,7 @@
 //    ①홈 ②검색결과 ③즐겨찾기 를 각각 찍어 «같은 레시피»가 어디선 꾸며지고 어디선 빈 칸인지 본다.
 // 판정 = 카드 썸네일(.grid-card > div) 안에 꾸미기 레이어(DecorLayer div)가 붙어 있나.
 //   ⛔ 눈으로만 보지 않는다 — DOM 으로도 센다(캡처가 실패해도 판정은 남게).
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 import { mkdirSync } from 'node:fs'

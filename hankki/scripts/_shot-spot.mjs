@@ -2,6 +2,7 @@
 //   창업자 질문 2026-08-05 *"근데 원이 꼭 들어가야해?"*
 //   ⛔ 내 말로 답하지 않는다. 같은 화면에 나란히 놓고 «눈으로» 고른다.
 //   원은 v8.5(2026-07-22) 딥 배경 넣을 때 내가 넣은 것이고 창업자 판정을 받은 적이 없다.
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { mkdirSync, readFileSync } from 'node:fs'
 import { createServer } from 'node:http'

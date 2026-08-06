@@ -2,6 +2,7 @@
 //   창업자 원문 = *"처음에 일기쓰기 클릭하면 다 왼쪽껄로 고르게 해줘. 없음이랑 아이보리..
 //     지금은 도트랑 막 중구난방으로 골라져있어."*
 //   ⛔ 「고쳤다」고 말하기 전에 **무엇이 골라져 있는지부터** 눈이 아니라 코드로 읽는다.
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'

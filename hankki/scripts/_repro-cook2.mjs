@@ -3,6 +3,7 @@
 // ⭐ 서버를 안 띄운다 — 앱의 `src/styles.css` 를 «그대로» 물린 재현판을 로컬 파일로 연다.
 //    CookScreen.jsx 의 DOM 구조(.cook > .cook-top/.cook-progress/.cook-body/.cook-nav)를 그대로 옮겼다.
 // 판정 = 「재료 준비 완료 · 시작 →」 줄(.cook-nav)의 아래 끝이 뷰포트(844) 안에 있나.
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, writeFileSync } from 'node:fs'
 

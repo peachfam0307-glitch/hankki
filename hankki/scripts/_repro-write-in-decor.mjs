@@ -5,6 +5,7 @@
 //
 // ⭐ 그래서 **옛 코드로 먼저 돌려 진짜 걸리는지** 본다(규칙 12) — 아래 ①이 그 검사다.
 //    옛 판에선 꾸미기 안에 글칸이 «아예 없어서» ①이 실패해야 한다.
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'
@@ -54,10 +55,13 @@ await page.locator('.segment .seg').nth(1).click(); await page.waitForTimeout(60
 await page.getByRole('button', { name: /일기 (쓰기|보기)/ }).first().click(); await page.waitForTimeout(1000)
 await page.getByRole('button', { name: /꾸미기/ }).first().click(); await page.waitForTimeout(900)
 
-// ① 서랍에 칸이 셋인가 — 속지 고르기 · 글쓰기 · 꾸미기
+// ① 서랍에 칸이 넷인가 — 속지 · 글쓰기 · 일꾸 · 레꾸
+//   📔 셋 → 넷 (창업자 2026-08-06 *"버튼이 2개 나오게 … 두가지를 다쓰되"*).
+//      「꾸미기」 한 칸을 둘로 쪼갠 것이다 — 속지·글쓰기는 그대로 한 칸씩.
+const WANT = '속지|글쓰기|일꾸|레꾸'
 const segs = await page.locator('.decor-editor .segment .seg').allInnerTexts()
-if (segs.join('|') === '속지 고르기|글쓰기|꾸미기') ok(`서랍 칸 셋 (${segs.join(' · ')})`)
-else no(`서랍 칸이 「${segs.join(' · ')}」 — 기대: 속지 고르기 · 글쓰기 · 꾸미기`)
+if (segs.join('|') === WANT) ok(`서랍 칸 넷 (${segs.join(' · ')})`)
+else no(`서랍 칸이 「${segs.join(' · ')}」 — 기대: ${WANT.replace(/\|/g, ' · ')}`)
 
 // ② 「꾸미기」 상태에선 글칸이 손가락을 안 먹는다(스티커를 끌어야 하니까)
 await page.locator('.decor-editor .segment .seg').last().click(); await page.waitForTimeout(400)

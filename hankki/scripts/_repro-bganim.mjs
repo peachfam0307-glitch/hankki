@@ -18,6 +18,7 @@
 //    `::before`/`::after` 가 대신 움직이는 효과(구름빛·노을)는 부모에 애니메이션이 없다.
 //    그래서 ⒝(픽셀 비교)가 진짜 판정이다.
 
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
 

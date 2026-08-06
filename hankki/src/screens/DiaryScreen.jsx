@@ -148,7 +148,7 @@ export default function DiaryScreen({ day }) {
         <button
           className="press"
           onClick={() => setOpen(true)}
-          aria-label="일기 꾸미기"
+          aria-label="꾸미기 열기"
           style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, padding: '10px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13, fontWeight: 800, border: 'none' }}
         >
           <Icon name="palette" size={15} />

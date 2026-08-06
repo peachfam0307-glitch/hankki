@@ -15,6 +15,7 @@
 //   ④ 같은 날 또 누르면 **기록이 두 번 안 쌓인다**
 //
 // 실행: cd /home/user/hankki/hankki && SMOKE_CHROMIUM=/opt/pw-browsers/chromium node scripts/_repro-cook-toast.mjs
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 

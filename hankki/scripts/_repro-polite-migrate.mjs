@@ -2,6 +2,7 @@
 //   ⛔⛔ 어제(8/4) 세 번 터진 것과 같은 모양이다: 원문만 고치고 «저장된 값»은 안 봤다.
 //   창업자 캡처(08:42~43)의 줄을 그대로 심어 두고 앱을 열어, 실제로 바뀌는지 화면에서 읽는다.
 //   판정 = ① 가져온 것은 해요체가 된다  ② 직접 쓴 것(`manual`)은 «그대로 남는다»
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 

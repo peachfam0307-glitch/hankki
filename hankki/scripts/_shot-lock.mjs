@@ -1,6 +1,7 @@
 // 📸 서랍 자물쇠 실물 스샷 (임시 · 창업자 판정용)
 //   ⚠️ `sellable` 을 «임시로» true 로 켠 빌드에서만 의미가 있다. 찍고 나면 되돌린다.
 import { spawn } from 'node:child_process'
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 
 const HOST = '127.0.0.1', PORT = 4183, BASE = `http://${HOST}:${PORT}/`

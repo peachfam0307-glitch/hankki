@@ -4,6 +4,7 @@
 //
 // ⭐ 검사가 진짜 걸리는지 보려면 «옛 상태»부터 확인해야 한다 —
 //    ①처음엔 없다 → ②붙이고 다시 열면 있다 → ③최신이 먼저 → ④탭을 안 넘는다.
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'

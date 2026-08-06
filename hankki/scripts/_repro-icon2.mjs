@@ -6,6 +6,7 @@
 // ⛔ 눈으로만 보지 않는다 — ⓐ는 «픽셀»로, ⓑ는 «저장된 값»으로 판정한다.
 //
 // 쓰기: node scripts/_repro-icon2.mjs      (앱 디렉토리에서 · 먼저 npm run build)
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { mkdirSync, readFileSync } from 'node:fs'
 import { createServer } from 'node:http'

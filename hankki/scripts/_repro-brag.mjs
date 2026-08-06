@@ -4,6 +4,7 @@
 // ⭐ 재는 것 = **미리 캡처가 몇 초 걸리나**. 그게 안 끝난 채 누르면 12초 로딩 = 「먹통」이다.
 //   폰 흉내 → CPU 를 느리게(throttle) 돌리고 `navigator.share` 를 심는다.
 //   ⛔ 데스크톱 크롬엔 Web Share 가 없어 그냥 두면 «저장»만 나온다 — 폰과 갈림길이 달라진다.
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'

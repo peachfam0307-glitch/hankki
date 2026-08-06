@@ -9,6 +9,7 @@
 //        ⓐ 앨범 타일 ⓑ 달력 칸  둘 다 **fe_154** 를 그리나. (버그면 fe_75 오징어볶음이 뜬다)
 //
 // 실행: cd /home/user/hankki/hankki && SMOKE_CHROMIUM=/opt/pw-browsers/chromium node scripts/_repro-diaryicon.mjs
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'

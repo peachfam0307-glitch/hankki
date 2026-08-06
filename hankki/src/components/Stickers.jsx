@@ -1012,11 +1012,26 @@ export const STICKER_GROUPS = [
   //
   // 🏷 이름 = `dc_td*`. **`dy` 는 이미 다이어리 꾸미기 팩이 쓰고 있다**(`pf_dy`·`wt_dy`·`dyf`·`dys`…)
   //    → 겹치면 어느 팩 것인지 못 가른다. `td` = today(오늘의 한끼).
-  { key: 'deco_td_stamp', tab: 'deco', label: '우표 · 해와 달', items: ['dc_td01', 'dc_td02', 'dc_td03', 'dc_td04', 'dc_td05', 'dc_td06'] },
-  { key: 'deco_td_sky', tab: 'deco', label: '날씨', items: ['dc_td07', 'dc_td08', 'dc_td09', 'dc_td10'] },
-  { key: 'deco_td_heart', tab: 'deco', label: '하트 · 바느질', items: ['dc_td11', 'dc_td12', 'dc_td13', 'dc_td14'] },
-  { key: 'deco_td_label', tab: 'deco', label: '일기 라벨 · 소품', items: ['dc_td15', 'dc_td16', 'dc_td17', 'dc_td18', 'dc_td19', 'dc_td20', 'dc_td21'] },
-  { key: 'deco_td_tape', tab: 'tape', label: '일기 · 점·격자·도트', items: ['wt_td01', 'wt_td02', 'wt_td03'] },
+  // 🏷 **이름 앞에 「한끼 일기」를 붙인다** (창업자 2026-08-06
+  //    *"데코아래 (한끼일기다이어리용은 따로 이름 붙여주자) 한끼일기- 우표 이런 식으로."*)
+  //    ⭐ 서랍에 그룹이 40개가 넘어서 **어느 게 한 세트인지**가 안 보인다 — 앞에 붙이면 줄줄이 모여 읽힌다.
+  //    ⚠️ 이름은 «출처»를 말하는 것이지 **제한이 아니다** — 표지 꾸미기에서도 그대로 쓴다
+  //       (계절 세트가 「소품 · 여름」인데 겨울에도 쓰는 것과 같다).
+  //    ⚠️ 탭 이름과 같은 「한끼 일기」(띄어쓰기 있음)로 쓴다 — 화면 말은 하나여야 한다.
+  // 📔 `diary: true` = **일기를 꾸밀 땐 이 세트가 맨 위로 올라온다**(창업자 2026-08-06
+  //    *"다이어리꾸밀때는 다이어리용 꾸미기 먼저 보이게 하면 안되나?"*).
+  //    ⛔ `only: 'diary'` 가 **아니다** — 표지 꾸미기에서도 그대로 쓴다. 순서만 바뀐다.
+  //    ⛔ 라벨(「한끼 일기 ·」)로 가르지 말 것 — **표시용 글자를 분류 기준으로 쓰면 라벨을 다듬는 순간 깨진다**
+  //       (v9.07 에 `CAT()` 이 라벨로 분류하다 표가 통째로 틀어진 전례).
+  //    📌 창업자가 「일기용 / 레꾸용」 버튼 두 개로 가르는 것도 물었는데(2026-08-06),
+  //       지금은 62 그룹 중 일기 전용이 5개뿐이라 왼쪽 칸이 텅 빈다 → **순서만 바꾼다.**
+  //       세트가 쌓여 20~30개가 되면 그때 가른다(그 장치가 위 `only` 다).
+  { key: 'deco_td_stamp', tab: 'deco', diary: true, label: '한끼 일기 · 우표', items: ['dc_td01', 'dc_td02', 'dc_td03', 'dc_td04', 'dc_td05', 'dc_td06'] },
+  { key: 'deco_td_sky', tab: 'deco', diary: true, label: '한끼 일기 · 날씨', items: ['dc_td07', 'dc_td08', 'dc_td09', 'dc_td10'] },
+  { key: 'deco_td_heart', tab: 'deco', diary: true, label: '한끼 일기 · 하트', items: ['dc_td11', 'dc_td12', 'dc_td13', 'dc_td14'] },
+  { key: 'deco_td_label', tab: 'deco', diary: true, label: '한끼 일기 · 라벨·소품', items: ['dc_td15', 'dc_td16', 'dc_td17', 'dc_td18', 'dc_td19', 'dc_td20', 'dc_td21'] },
+  // 🎗 마테 탭 안이라 종류는 안 적는다 — 「한끼 일기」만으로 어느 세트인지 안다
+  { key: 'deco_td_tape', tab: 'tape', diary: true, label: '한끼 일기', items: ['wt_td01', 'wt_td02', 'wt_td03'] },
   // 🎗 마스킹테이프 — 창업자 직접 제작(2026-07-29). 배경·테이프 탭의 CSS 마테와 달리 갈색 외곽선 +
   //   양끝 톱니가 있는 '스티커 워시'라 다꾸 감성이 그대로 산다. **사철 쓰는 것만 12종 엄선**("엄선해서 12개").
   //   여름 무늬(레몬·수박·구름·파도·조개…)는 아래 `마스킹테이프 · 여름` 으로 뺐다.
@@ -1047,29 +1062,31 @@ export const STICKER_GROUPS = [
   //
   // 🖼 프레임은 `pf_` 로 시작해야 한다 — `DecorEditor.isBacking` 이 접두어로 «밑판»을 가른다.
   //    안 그러면 탭할 때 맨 앞으로 튀어나와 안에 꾸민 스티커를 다 덮는다(v8.59·v9.01 사고).
-  { key: 'deco_dy_frame_a', tab: 'frame', from: '2026-09-01', label: '폴라로이드·리본', items: ['pf_dy01', 'pf_dy09', 'pf_dy10', 'pf_dy02'] },
-  { key: 'deco_dy_frame_b', tab: 'frame', from: '2026-10-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
-  { key: 'deco_dy_frame_c', tab: 'frame', from: '2026-11-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
+  // 📔 `diary: true` = **일기 꾸미기 서랍의 「일기 아이템」 칸**에 들어간다(아래 「한끼 일기」 세트와 한 선반).
+  //    ⛔ 표지 꾸미기에서 «못 쓰게» 막는 게 아니다 — 거긴 전부 다 나온다. **선반만 따로** 있는 것이다.
+  { key: 'deco_dy_frame_a', tab: 'frame', diary: true, from: '2026-09-01', label: '폴라로이드·리본', items: ['pf_dy01', 'pf_dy09', 'pf_dy10', 'pf_dy02'] },
+  { key: 'deco_dy_frame_b', tab: 'frame', diary: true, from: '2026-10-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
+  { key: 'deco_dy_frame_c', tab: 'frame', diary: true, from: '2026-11-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
 
-  { key: 'deco_dy_flower_a', tab: 'deco', from: '2026-09-01', label: '꽃다발', items: ['dyf01', 'dyf02', 'dyf03', 'dyf07'] },
-  { key: 'deco_dy_flower_b', tab: 'deco', from: '2026-10-01', label: '들꽃', items: ['dyf04', 'dyf05', 'dyf06', 'dyf11'] },
-  { key: 'deco_dy_flower_c', tab: 'deco', from: '2026-11-01', label: '화분·잎', items: ['dyf08', 'dyf09', 'dyf10', 'dyf12'] },
+  { key: 'deco_dy_flower_a', tab: 'deco', diary: true, from: '2026-09-01', label: '꽃다발', items: ['dyf01', 'dyf02', 'dyf03', 'dyf07'] },
+  { key: 'deco_dy_flower_b', tab: 'deco', diary: true, from: '2026-10-01', label: '들꽃', items: ['dyf04', 'dyf05', 'dyf06', 'dyf11'] },
+  { key: 'deco_dy_flower_c', tab: 'deco', diary: true, from: '2026-11-01', label: '화분·잎', items: ['dyf08', 'dyf09', 'dyf10', 'dyf12'] },
 
-  { key: 'deco_dy_stamp_a', tab: 'deco', from: '2026-09-01', label: '도장·씰', items: ['dys03', 'dys04', 'dys05', 'dys11'] },
-  { key: 'deco_dy_stamp_b', tab: 'deco', from: '2026-10-01', label: '선·화살표', items: ['dys01', 'dys02', 'dys07', 'dys08'] },
-  { key: 'deco_dy_stamp_c', tab: 'deco', from: '2026-11-01', label: '붓칠·햇살', items: ['dys06', 'dys09', 'dys10', 'dys12'] },
+  { key: 'deco_dy_stamp_a', tab: 'deco', diary: true, from: '2026-09-01', label: '도장·씰', items: ['dys03', 'dys04', 'dys05', 'dys11'] },
+  { key: 'deco_dy_stamp_b', tab: 'deco', diary: true, from: '2026-10-01', label: '선·화살표', items: ['dys01', 'dys02', 'dys07', 'dys08'] },
+  { key: 'deco_dy_stamp_c', tab: 'deco', diary: true, from: '2026-11-01', label: '붓칠·햇살', items: ['dys06', 'dys09', 'dys10', 'dys12'] },
 
-  { key: 'deco_dy_label_a', tab: 'deco', from: '2026-09-01', label: '메모지', items: ['dyl01', 'dyl05', 'dyl06', 'dyl10'] },
-  { key: 'deco_dy_label_b', tab: 'deco', from: '2026-10-01', label: '이름표·태그', items: ['dyl03', 'dyl09', 'dyl11', 'dyl08'] },
-  { key: 'deco_dy_label_c', tab: 'deco', from: '2026-11-01', label: '띠·배너', items: ['dyl02', 'dyl04', 'dyl07', 'dyl12'] },
+  { key: 'deco_dy_label_a', tab: 'deco', diary: true, from: '2026-09-01', label: '메모지', items: ['dyl01', 'dyl05', 'dyl06', 'dyl10'] },
+  { key: 'deco_dy_label_b', tab: 'deco', diary: true, from: '2026-10-01', label: '이름표·태그', items: ['dyl03', 'dyl09', 'dyl11', 'dyl08'] },
+  { key: 'deco_dy_label_c', tab: 'deco', diary: true, from: '2026-11-01', label: '띠·배너', items: ['dyl02', 'dyl04', 'dyl07', 'dyl12'] },
 
-  { key: 'deco_dy_hand_a', tab: 'deco', from: '2026-09-01', label: '강조 표시', items: ['dyh01', 'dyh03', 'dyh12', 'dyh06'] },
-  { key: 'deco_dy_hand_b', tab: 'deco', from: '2026-10-01', label: '손그림 도장', items: ['dyh07', 'dyh08', 'dyh09', 'dyh05'] },
-  { key: 'deco_dy_hand_c', tab: 'deco', from: '2026-11-01', label: '점·붓칠', items: ['dyh02', 'dyh04', 'dyh10', 'dyh11'] },
+  { key: 'deco_dy_hand_a', tab: 'deco', diary: true, from: '2026-09-01', label: '강조 표시', items: ['dyh01', 'dyh03', 'dyh12', 'dyh06'] },
+  { key: 'deco_dy_hand_b', tab: 'deco', diary: true, from: '2026-10-01', label: '손그림 도장', items: ['dyh07', 'dyh08', 'dyh09', 'dyh05'] },
+  { key: 'deco_dy_hand_c', tab: 'deco', diary: true, from: '2026-11-01', label: '점·붓칠', items: ['dyh02', 'dyh04', 'dyh10', 'dyh11'] },
 
-  { key: 'deco_dy_tape_a', tab: 'tape', from: '2026-09-01', label: '무늬 테이프', items: ['wt_dy02', 'wt_dy04', 'wt_dy03', 'wt_dy05', 'wt_dy06', 'wt_dy09', 'wt_dy21'] },
-  { key: 'deco_dy_tape_b', tab: 'tape', from: '2026-10-01', label: '민무늬·종이', items: ['wt_dy01', 'wt_dy11', 'wt_dy14', 'wt_dy18', 'wt_dy07', 'wt_dy08', 'wt_dy16'] },
-  { key: 'deco_dy_tape_c', tab: 'tape', from: '2026-11-01', label: '격자·도트·겹침', items: ['wt_dy12', 'wt_dy13', 'wt_dy15', 'wt_dy17', 'wt_dy19', 'wt_dy20'] },
+  { key: 'deco_dy_tape_a', tab: 'tape', diary: true, from: '2026-09-01', label: '무늬 테이프', items: ['wt_dy02', 'wt_dy04', 'wt_dy03', 'wt_dy05', 'wt_dy06', 'wt_dy09', 'wt_dy21'] },
+  { key: 'deco_dy_tape_b', tab: 'tape', diary: true, from: '2026-10-01', label: '민무늬·종이', items: ['wt_dy01', 'wt_dy11', 'wt_dy14', 'wt_dy18', 'wt_dy07', 'wt_dy08', 'wt_dy16'] },
+  { key: 'deco_dy_tape_c', tab: 'tape', diary: true, from: '2026-11-01', label: '격자·도트·겹침', items: ['wt_dy12', 'wt_dy13', 'wt_dy15', 'wt_dy17', 'wt_dy19', 'wt_dy20'] },
 
   // ── 여름 (2026-07-29 재제작) ── 제철(6~8월)이면 데코 탭 맨 위로 올라간다.
   //   ⚠️ 철이 지나도 **숨기지 않는다** — 순서만 밀린다. 유저가 쓰던 걸 못 찾게 되는 게 더 나쁘다.

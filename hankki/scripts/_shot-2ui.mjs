@@ -1,6 +1,7 @@
 // 👀 창업자 제보 둘 — 실물을 본다
 //   ⓐ 레꾸 표지 아이콘 바꾸기 버튼 (지금 갤러리 이모지라 안 눌러본다)
 //   ⓑ 요리 기록 달력 + 메모 (다이어리 느낌이 안 난다)
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'

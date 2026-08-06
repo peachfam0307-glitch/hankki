@@ -1,5 +1,6 @@
 // 📄 속지 네 틀을 «한 장씩» 찍는다 — 줄 층을 바꿨을 때 나머지가 안 깨졌나 보려고 (2026-08-06)
 //   ⛔ 검사가 초록불이어도 «무엇을 보는지»를 봐야 한다(규칙 18 ⓘ) — 여긴 눈으로 볼 판을 만드는 게 일이다.
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'

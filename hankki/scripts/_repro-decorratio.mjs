@@ -13,6 +13,7 @@
 //   ⓓ 스티커 «크기»가 판 모양 때문에 안 찌그러지나 (가로세로 비가 유지되나)
 //
 // 실행: cd /home/user/hankki/hankki && SMOKE_CHROMIUM=/opt/pw-browsers/chromium node scripts/_repro-decorratio.mjs
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'

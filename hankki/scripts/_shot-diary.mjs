@@ -3,6 +3,7 @@
 //   ⓑ 다이어리 화면 (종이 3:4 ＋ 선·종이·틀 고르기 ＋ 그날 만든 요리)
 //   ⓒ 속지를 갈아끼운 모습
 //   ⓓ 꾸미기(같은 에디터, 판만 3:4)
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'

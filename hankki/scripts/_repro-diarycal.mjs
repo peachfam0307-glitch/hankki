@@ -7,6 +7,7 @@
 //
 // ⭐ 「있으면 안 되는 것」만 보지 않는다 — **요리 쪽이 그대로인지도 같이 본다**(규칙 18 ⓘ).
 // 실행: cd /home/user/hankki/hankki && SMOKE_CHROMIUM=/opt/pw-browsers/chromium node scripts/_repro-diarycal.mjs
+import './_fresh.mjs' // 🛑 옛 dist 로 «거짓 통과» 하는 것을 막는다 (2026-08-06)
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'
