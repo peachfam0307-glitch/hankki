@@ -60,6 +60,43 @@ export default function PaperSheet({ fields, value = {}, onChange, dateLabel = '
         </div>
       )}
 
+      {/* ☀️ 날씨 — 그림에 «이미 인쇄된» 아이콘 위에 투명 버튼을 얹는다.
+          고르면 손으로 친 듯한 동그라미. 같은 걸 다시 누르면 지워진다.
+          ⛔ 아이콘을 새로 그리지 않는다 — 종이에 있는 그림이 그대로 보여야 한다. */}
+      {fields.weather && fields.weather.items.map((w) => {
+        const on = value.weather === w.key
+        const ring = (
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute', left: '50%', top: '50%', width: `${fields.weather.size}cqw`, height: `${fields.weather.size}cqw`,
+              // 살짝 기울인 타원 = 손으로 그린 동그라미. 정원은 «인쇄»처럼 보인다
+              transform: 'translate(-50%,-50%) rotate(-7deg) scaleX(1.08)',
+              border: `${fields.weather.size * 0.045}cqw solid ${INK}`, borderRadius: '50%', opacity: 0.62,
+            }}
+          />
+        )
+        const pos = {
+          position: 'absolute', left: `${w.x}%`, top: `${fields.weather.y}%`,
+          width: `${fields.weather.size * 1.28}cqw`, height: `${fields.weather.size * 1.28}cqw`,
+          transform: 'translate(-50%,-50%)',
+        }
+        if (ro) return <span key={w.key} style={pos}>{on && ring}</span>
+        return (
+          <button
+            key={w.key}
+            type="button"
+            className="press"
+            aria-label={`날씨 ${w.label}`}
+            aria-pressed={on}
+            onClick={() => onChange({ ...value, weather: on ? '' : w.key })}
+            style={{ ...pos, background: 'none', border: 'none', padding: 0 }}
+          >
+            {on && ring}
+          </button>
+        )
+      })}
+
       {/* ✍️ 본문 — 종이의 줄 위에 바로. 배경·테두리 0 */}
       {fields.write && (
         <div style={{ ...box(fields.write), ...(bg ? { backgroundImage: bg, backgroundSize: rule === 'dots' ? 'var(--rule-gap) var(--rule-gap)' : undefined } : {}) }}>

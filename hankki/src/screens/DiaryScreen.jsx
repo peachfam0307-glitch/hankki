@@ -66,14 +66,17 @@ export default function DiaryScreen({ day }) {
   //   ⛔ 종이 밖에 입력칸을 두면 안 쓴다 (창업자 2026-08-06 *"불편해서 안써"*).
   //   ⛔ 한 글자마다 저장하면 localStorage 를 매 타건마다 쓴다 → 꾸미기 자동저장과 같은 350ms 뜸.
   //   `note` = 본문 · `line` = 오늘의 한 줄(레시피 기록 속지의 맨 아래 칸)
-  const [text, setText] = useState(() => ({ note: entry?.note || '', line: entry?.line || '' }))
-  useEffect(() => { setText({ note: entry?.note || '', line: entry?.line || '' }) }, [day]) // eslint-disable-line react-hooks/exhaustive-deps
-  const dirty = text.note !== (entry?.note || '') || text.line !== (entry?.line || '')
+  const blank = { note: '', line: '', weather: '' }
+  const of = (e) => ({ note: e?.note || '', line: e?.line || '', weather: e?.weather || '' })
+  const [text, setText] = useState(() => of(entry))
+  useEffect(() => { setText(of(entry)) }, [day]) // eslint-disable-line react-hooks/exhaustive-deps
+  const saved = of(entry)
+  const dirty = Object.keys(blank).some((k) => text[k] !== saved[k])
   useEffect(() => {
     if (!dirty) return // 처음 열었을 때 «빈 다이어리»를 만들어 버리지 않게
-    const t = setTimeout(() => save({ note: text.note, line: text.line }), 350)
+    const t = setTimeout(() => save({ note: text.note, line: text.line, weather: text.weather }), 350)
     return () => clearTimeout(t)
-  }, [text.note, text.line]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text.note, text.line, text.weather]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const dateLabel = `${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEK[date.getDay()]}요일`
   const TABS = [['rule', '선'], ['skin', '종이'], ['art', '틀']]
