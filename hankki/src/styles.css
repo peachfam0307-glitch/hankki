@@ -716,6 +716,25 @@ img {
   background: #fff;
   color: var(--brown);
 }
+/* 📔 다이어리 쓴 날 — 왼쪽 위 작은 펜.
+   ⛔ 음식 아이콘 자리를 쓰면 안 된다. 다이어리는 요리가 아니라서
+      「무엇을 해먹었나」 자리에 끼면 그 자리가 거짓말이 된다. */
+.cal-diary {
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--brown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cal-day.on .cal-diary {
+  background: #fff;
+}
 .grid-card .name {
   font-size: 14px;
   font-weight: 600;
