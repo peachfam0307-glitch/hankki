@@ -174,6 +174,16 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const sendToBack = (id) => setItems((arr) => { const i = arr.findIndex((x) => x.id === id); return i <= 0 ? arr : [arr[i], ...arr.slice(0, i), ...arr.slice(i + 1)] })
   const bringToFront = (id) => setItems((arr) => { const i = arr.findIndex((x) => x.id === id); return (i < 0 || i === arr.length - 1) ? arr : [...arr.slice(0, i), ...arr.slice(i + 1), arr[i]] })
   const patch = (id, p) => setItems((arr) => arr.map((x) => (x.id === id ? { ...x, ...p } : x)))
+  // ↔↔ **좌우 뒤집어도 되는 것인가** (창업자 2026-08-06 *"캐릭터좌우반전돼?"*)
+  //   ✅ 캐릭터·프레임·코너·소품·음식 = 뒤집어도 자연스럽다(실물로 뒤집어 확인했다).
+  //      ⭐ 특히 **코너 장식은 왼쪽 위 모양 하나뿐**이라 뒤집기가 곧 «새 컷»이다(6 → 24).
+  //   ⛔ **글자가 «그려진» 스티커는 거울 글자가 된다** — 한끼 문구·문구·요일 라벨 = 42컷.
+  //   ⛔ 직접 쓴 글자(type 'text')·포스트잇도 막는다 — 유저가 친 글씨가 뒤집힌다.
+  //   ⭐ 화살표(ta_)는 안 막는다 — 뒤집으면 → 가 ← 가 되어 오히려 쓸모가 는다.
+  //   📌 **접두어로 판단한다.** 라벨로 가르면 라벨을 다듬는 순간 깨진다(v9.07 사고).
+  const NO_FLIP = ['tw_', 'tn_']   // 글자가 그려진 컷 (tw_ 문구 · tn_ 요일·라벨)
+  const canFlip = (it) => !!it && it.type !== 'text' && it.type !== 'note'
+    && !(typeof it.key === 'string' && NO_FLIP.some((p) => it.key.startsWith(p)))
   const remove = (id) => { setItems((arr) => arr.filter((x) => x.id !== id)); setSel(null) }
 
   // 🛟 자동저장 — 편집할 때마다 초안을 localStorage 에 저장(디바운스). 앱이 죽거나 실수로 닫혀도 안 날아감.
@@ -582,6 +592,26 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 <button className="press" onClick={() => bringToFront(sel)} style={layerBtn}>맨 앞으로</button>
               </div>
             </div>
+            {/* ↔↔ **좌우 뒤집기** (창업자 2026-08-06 *"캐릭터좌우반전돼?"*)
+                ⭐ 왜 값어치가 큰가 = **코너 장식이 왼쪽 위 모양 하나뿐**이라 오른쪽엔 못 놨다.
+                   뒤집기 하나면 **6컷이 24컷**이 된다 — 자산을 늘리는 가장 싼 방법.
+                ⛔⛔ **글자가 «그려진» 스티커엔 안 보인다** — 뒤집으면 거울 글자가 된다.
+                   (한끼 문구 16·문구 16·요일 라벨 10 = 42컷. 2026-08-01 에 「추섴」 오타 하나로
+                    유료팩 컷을 뺀 적이 있다 — 거울 글자는 그보다 눈에 더 띈다.)
+                ⭐ 화살표(ta_)는 오히려 뒤집는 게 쓸모 있어 막지 않는다(→ 가 ← 가 된다).
+                ⛔ 「직접 쓴 글자」(type 'text')·포스트잇도 막는다 — 유저가 친 글씨가 거울이 된다.
+                📌 판단은 **접두어**로 한다. 라벨로 가르지 않는다(CLAUDE.md 분류 원칙). */}
+            {selItem && canFlip(selItem) && (
+              <div style={ctxRow}>
+                <span style={ctxLabel}>뒤집기</span>
+                <div style={{ display: 'flex', gap: 7, flex: 1 }}>
+                  <button className="press" onClick={() => patch(sel, { flip: !selItem.flip })}
+                    style={{ ...layerBtn, background: selItem.flip ? 'var(--brown)' : undefined, color: selItem.flip ? '#fff' : undefined }}>
+                    좌우 뒤집기
+                  </button>
+                </div>
+              </div>
+            )}
             {selIsBuddy && (
               <>
                 <div style={ctxRow}>

@@ -119,7 +119,11 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           ...(isText
             ? { width: 'max-content', maxWidth: '150%' }
             : { width: `${it.s * 100}%`, aspectRatio: `${ratio}` }),
-          transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)`,
+          // ↔ **좌우 뒤집기**(창업자 2026-08-06 *"캐릭터좌우반전돼?"* → 된다).
+          //   ⭐ `rotate` «뒤»에 `scaleX` 를 둔다 — 순서를 바꾸면 뒤집은 뒤 회전이라
+          //      기울기가 반대로 돌아 손잡이가 엉뚱하게 움직인다.
+          //   ⛔ 손잡이·지우기 단추는 이 상자 «안»에 있어서 같이 뒤집힌다 → 아래에서 되돌린다.
+          transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)${it.flip ? ' scaleX(-1)' : ''}`,
           touchAction: 'none',
           cursor: editable ? 'grab' : 'default',
         }
@@ -158,7 +162,9 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             {on && (
               // 핸들 프레임 — 최소 58px(작은 스티커여도 핸들이 몸통 바깥에 놓이게). 프레임은 클릭 통과(pointerEvents none),
               // 핸들 버튼만 auto → 작은 별도 몸통 중앙은 그대로 드래그, 삭제/확대가 잘못 안 눌림.
-              <div style={{ position: 'absolute', left: '50%', top: '50%', width: 'max(100%, 64px)', height: 'max(100%, 64px)', transform: 'translate(-50%,-50%)', pointerEvents: 'none' }}>
+              // ↔ 뒤집힌 아이템이면 «손잡이 판만» 다시 뒤집어 되돌린다 — 안 그러면
+              //   지우기 단추가 왼쪽으로 가고 ⟳ 아이콘이 거울이 된다(조작이 헷갈린다).
+              <div style={{ position: 'absolute', left: '50%', top: '50%', width: 'max(100%, 64px)', height: 'max(100%, 64px)', transform: `translate(-50%,-50%)${it.flip ? ' scaleX(-1)' : ''}`, pointerEvents: 'none' }}>
                 {/* 선택 테두리 */}
                 <span style={{ position: 'absolute', inset: -6, border: '1.6px dashed rgba(255,255,255,.9)', borderRadius: 10, boxShadow: '0 0 0 1px rgba(0,0,0,.25)', pointerEvents: 'none' }} />
                 {/* 삭제 */}
