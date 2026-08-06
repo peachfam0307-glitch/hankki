@@ -143,6 +143,8 @@ export default function DiaryScreen({ day }) {
           closeRef={closeRef}
           ratio="3/4"
           paper={skin}
+          // ⭐ 에디터에 들어가면 날짜가 안 보인다 → 머리글이 «지금 어느 날을 꾸미는 중인지»를 말한다
+          title={`${date.getMonth() + 1}월 ${date.getDate()}일 다이어리`}
           recipe={{ id: `diary-${day}`, title: '', decor, decorBg: 'none', thumb: 'none' }}
           onSave={(items) => {
             save({ decor: items, paper: pick })

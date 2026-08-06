@@ -60,7 +60,10 @@ function loadDraft(id) {
 //   ⛔ px 로 박으면 안 된다 — 여름 물결 배경이 세로 %를 못 써서 안 움직이던 것과 같은 함정.
 // 📔 `paper` = 다이어리 속지({className, style}). 주면 표지(Thumb) 대신 «종이»를 깐다.
 //   ⭐ 표지 꾸미기와 다이어리 꾸미기가 **같은 에디터**를 쓴다 — 서랍 394컷·모션·효과가 통째로 재사용된다.
-export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null }) {
+// 🏷 `title` = 에디터 머리글. ⛔박아두면 안 된다 — 다이어리를 꾸미는데 「레시피 꾸미기」라고 떴다
+//   (창업자 2026-08-06 *"레시피꾸미기 아니고 요리다이어리 나 다른이름하자"*).
+//   📌 우리 원칙 = 「같은 기능은 같은 이름」이지 「다른 것에 같은 이름」이 아니다.
+export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, title = '레시피 꾸미기' }) {
   const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
   // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
   const draft = loadDraft(recipe.id)
@@ -74,7 +77,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const [thumb, setThumb] = useState(draft?.thumb ?? savedThumb) // 'none'이면 표지 그림 비움 → 깨끗한 배경에 꾸미기
   const [exitAsk, setExitAsk] = useState(false) // 취소 시 "저장 안 함?" 확인
   const restoredRef = useRef(!!draft) // 초안에서 복구했는지(안내 토스트용)
-  const [cat, setCat] = useState('bgtape') // 서랍 탭(배경부터 시작 — 배경·글자·친구들·음식·데코·라이프)
+  // 📔 여기가 다이어리인가 = `paper` 를 받았나. 아래 「어느 판에서 보이나」를 가르는 기준.
+  //   ⭐ 새 값을 안 만든다 — 판을 종이로 바꾸는 그 인자가 곧 「다이어리다」라는 뜻이다.
+  const isDiary = !!paper
+  // 서랍 탭 — 표지는 배경부터, 다이어리는 프레임부터(다이어리엔 배경 탭 자체가 없다. 아래 CATS 참고)
+  const [cat, setCat] = useState(isDiary ? 'frame' : 'bgtape')
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
   const [gift, setGift] = useState(() => needsGiftPack())
@@ -158,8 +165,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    ⚠️ **음식 = 레시피마다 사진이 이미 붙는데 같은 음식 이모지를 또 고를 이유가 없다**(창업자).
   //    → 요리 음식 33컷(한식·분식·양식·중식·일식)을 빼고 **재료 위주**로. 탭 이름도 `재료`.
   //       ⭐ 이건 **꾸미기 서랍만**이다 — 레시피 표지 아이콘은 `FoodIcon.jsx`가 따로 218종을 계속 준다.
+  // 📔📔 **배경 탭은 다이어리에 안 뜬다** (2026-08-06)
+  //   그 탭에 든 둘이 다이어리에선 **아무 일도 안 한다** — 위 캔버스가 `paper` 면
+  //   `Thumb` 를 아예 안 그리므로 ⑴「표지 그림 되돌리기」가 되돌릴 표지가 없고
+  //   ⑵「배경지」를 골라도 그릴 자리가 없다(속지가 그 자리다).
+  //   ⛔ 눌러도 아무 변화가 없는 버튼은 **고장으로 읽힌다.**
+  //   ⚠️ 창업자가 같은 종류를 방금 잡아냈다 — *"레시피꾸미기 아니고 요리다이어리"*.
+  //      **표지용 UI 가 다이어리에 그대로 딸려온 것**이 뿌리다(제목도, 이 탭도).
   const CATS = [
-    { key: 'bgtape', label: '배경' },
+    ...(isDiary ? [] : [{ key: 'bgtape', label: '배경' }]),
     { key: 'frame', label: '프레임' },
     { key: 'tape', label: '마테' },
     { key: 'deco', label: '데코' },
@@ -188,8 +202,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    자물쇠는 **「이런 게 있는 줄도 모른다」**라 못 보는 쪽이 더 나쁘다(선물과 같은 이유).
   //    ⛔ 산 뒤엔 자물쇠가 아니라 «내 것»이므로 이 새치기를 안 한다(locked 일 때만).
   //    ⚠️ `STICKER_GROUPS` 가 아니라 `drawerGroups()` 를 쓴다 — 직접 쓰면 유료팩이 조용히 빠진다.
+  // 📔 `only` = 그 그룹이 **어느 판에서만** 보이나. `'diary'` 면 다이어리에만, `'cover'` 면 표지에만.
+  //   ⛔ 지금 `only` 가 붙은 그룹은 **하나도 없다** — 전부 둘 다에서 쓴다(서랍 394컷이 통째로 재사용된다).
+  //   ⭐ 가르고 싶어지면 `STICKER_GROUPS` 에 `only: 'diary'` **한 줄**만 붙이면 된다.
+  //      (창업자 질문 2026-08-06 *"다이어리 전용틀,속지,꾸미기는 레꾸에서 사용안되게 할 수 있어??"* → 된다)
+  const where = isDiary ? 'diary' : 'cover'
   const groupsByTab = (t) => drawerGroups()
-    .filter((x) => x.tab === t && isReleased(x.from))
+    .filter((x) => x.tab === t && isReleased(x.from) && (!x.only || x.only === where))
     .sort((a, b) => ((b.gift ? 1 : 0) - (a.gift ? 1 : 0))
       || ((b.locked ? 1 : 0) - (a.locked ? 1 : 0))
       || (seasonRank(a.season) - seasonRank(b.season))
@@ -323,7 +342,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         {/* 상단 바 */}
         <div className="decor-top">
           <button className="press" onClick={handleCancel} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
-          <div style={{ fontSize: 16, fontWeight: 800 }}>레시피 꾸미기</div>
+          <div style={{ fontSize: 16, fontWeight: 800 }}>{title}</div>
           <button className="press" onClick={doSave} style={{ color: 'var(--brown)', fontSize: 15, fontWeight: 800 }}>저장</button>
         </div>
         {restoredRef.current && (

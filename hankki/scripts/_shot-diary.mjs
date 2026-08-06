@@ -86,6 +86,33 @@ const stage = await page.locator('.decor-stage > div').first().boundingBox()
 if (stage && Math.abs(stage.height - stage.width * 4 / 3) <= 2) ok(`꾸미기 판도 3:4 (${Math.round(stage.width)}x${Math.round(stage.height)})`)
 else no(`꾸미기 판이 3:4 가 아니다 (${stage ? Math.round(stage.width) + 'x' + Math.round(stage.height) : '없음'})`)
 
+// ⓔ 📔 **표지 전용 UI 가 다이어리에 딸려오면 안 된다** (2026-08-06)
+//   다이어리 캔버스는 `Thumb` 을 아예 안 그린다 → 「표지 그림 되돌리기」·「배경지」는 눌러도 아무 일이 없다.
+//   ⛔ 아무 일도 안 하는 버튼은 고장으로 읽힌다.
+const gone = async (name, re) => {
+  const n = await page.getByText(re).count()
+  if (n === 0) ok(`다이어리 꾸미기에 「${name}」 없음`)
+  else no(`다이어리 꾸미기에 「${name}」이 그대로 딸려왔다 (${n}곳)`)
+}
+await gone('배경 탭', /^배경$/)
+await gone('표지 그림', /표지 그림/)
+await gone('배경지', /^배경지$/)
+
+// ⭐ 반대쪽도 본다 — **표지 꾸미기엔 그대로 있어야 한다.**
+//   (규칙 18 ⓘ = 「있으면 안 되는 것」만 보면, 셋 다 통째로 사라져도 통과한다)
+await page.getByRole('button', { name: '취소' }).first().click(); await page.waitForTimeout(600)
+await page.locator('.bar-btn[aria-label="뒤로"]').first().click(); await page.waitForTimeout(600)
+await page.getByText('홈', { exact: true }).last().click(); await page.waitForTimeout(700)
+await page.getByText('들깨나물무침', { exact: true }).first().click(); await page.waitForTimeout(800)
+await page.locator('[aria-label="레시피 꾸미기"]').first().click(); await page.waitForTimeout(1400)
+await page.getByRole('button', { name: '나중에' }).first().click({ timeout: 1500 }).catch(() => {})
+await page.waitForTimeout(500)
+for (const [name, re] of [['배경 탭', /^배경$/], ['표지 그림', /표지 그림/], ['배경지', /^배경지$/]]) {
+  if (await page.getByText(re).count() > 0) ok(`표지 꾸미기엔 「${name}」 그대로 있다`)
+  else no(`표지 꾸미기에서 「${name}」이 사라졌다 — 표지 쪽을 깨뜨렸다`)
+}
+await page.screenshot({ path: join(OUT, 'diary-e-표지꾸미기.png') })
+
 if (errors.length) errors.forEach((e) => no(`pageerror — ${e}`))
 else ok('pageerror 0')
 await b.close(); srv.close()
