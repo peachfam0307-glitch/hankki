@@ -1762,3 +1762,33 @@ html, body { overscroll-behavior: none; }
   background-image: radial-gradient(circle, var(--rule) 1.2px, transparent 1.4px);
   background-size: var(--rule-gap) var(--rule-gap);
 }
+
+/* ── 🎨 속지 «스킨» — 종이색·선색만 갈아끼운다 (2026-08-06 창업자 *"크라프트 등등도 넣자"*)
+   ⭐⭐ 창업자 조사 결론 = *"구조 12개를 «여러 감성 스킨으로»"*.
+      우리는 종이를 CSS 로 그리니 **스킨이 변수 두 줄**이다 — 그림이 한 장도 안 는다.
+   ⛔ 통짜 그림이었으면 스킨마다 속지를 전부 다시 뽑아야 했다. */
+.paper.kraft  { --paper: #e8d9bd; --rule: #c9ab7d; }   /* 크라프트 — 누런 재생지 */
+.paper.greige { --paper: #f0ece3; --rule: #d6cfbf; }   /* 그레이지 — 앱 기본 테마와 같은 결 */
+.paper.linen  { --paper: #f7f3ea; --rule: #ddd2bc; }   /* 리넨 — 아이보리보다 한 톤 차분하게 */
+
+/* 📄 그림 속지 — 창업자가 GPT 로 뽑아 온 틀(테두리·칸·장식).
+   ⛔⛔ **`background-image` 로 얹으면 안 된다** — 줄·모눈·도트도 `background-image` 라 **덮어버린다.**
+      (한 속성에 둘을 쓰면 나중 규칙이 이긴다. 처음에 그렇게 썼다가 줄이 사라졌다)
+   ✅ 층을 나눈다 — 종이색(background-color) → 선(background-image) → **틀(::after)**.
+   ⚠️ `::before` 는 모눈이 톤 낮추는 데 이미 쓰고 있다 → 틀은 `::after`. */
+.paper.art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--art);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  pointer-events: none;
+  /* ⭐⭐ 이 한 줄이 «스킨»을 살린다 — 틀 그림은 **흰 배경 위 선그림**이라 그냥 얹으면
+     아래의 종이색(크라프트)도, 줄·모눈도 통째로 덮는다(실제로 덮었다).
+     곱하기로 얹으면 **흰색은 사라지고 선만 남는다** — 종이에 «인쇄된» 것처럼 된다.
+     ⚠️ 색 장식(잎·마테)은 종이색과 섞여 살짝 물든다 — 크라프트에선 오히려 자연스럽다.
+     ⛔ 투명 PNG 로 다시 뽑을 필요가 없어진다(그 작업이 통째로 없어졌다). */
+  mix-blend-mode: multiply;
+}
