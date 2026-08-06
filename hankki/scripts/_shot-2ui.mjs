@@ -26,6 +26,9 @@ const mine = [{ id: 'u1', title: '들깨나물무침', category: '한식', time:
 // 달력에 점이 찍히게 요리 기록 몇 개
 const diary = [
   { id: 'd1', recipeId: 'u1', title: '들깨나물무침', at: now, rating: 5, note: '들기름 조금 더 넣으니 훨씬 고소했다', photo: null },
+  // ⭐ 같은 날 두 번 — 칸 구석에 `+1` 이 뜨는지 보려고(예전엔 점 «안»에 숫자가 들어갔다)
+  // ⚠️ 「1시간 전」으로 뒀더니 컨테이너 시계가 UTC라 «어제»로 갈라졌다 → 몇 초 전으로.
+  { id: 'd4', recipeId: 'u2', title: '오징어볶음', at: now - 5e3, rating: 4, note: '', photo: null },
   { id: 'd2', recipeId: 'u1', title: '들깨나물무침', at: now - day * 2, rating: 4, note: '', photo: null },
   { id: 'd3', recipeId: 'u1', title: '들깨나물무침', at: now - day * 5, rating: 5, note: '아이가 잘 먹음', photo: null },
 ]

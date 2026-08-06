@@ -31,17 +31,25 @@ const dayKey = (ts) => {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
 }
 
-// 월간 요리 캘린더 — 요리한 날에 점이 찍힌다. 날짜를 누르면 그날 기록만 모아본다.
-function CookCalendar({ entries, selected, onSelect }) {
+// 🗓 월간 요리 달력 — 요리한 날에 «그날 만든 음식»이 뜬다. 날짜를 누르면 그날 기록만 모아본다.
+//
+// ⭐⭐ 2026-08-06 창업자 확정 ② — 예전엔 **점 하나**였다(높이 6px).
+//    점은 「했다/안 했다」만 말한다. 달력을 다시 열어보게 만드는 건 «무엇을 해먹었나»다.
+//    우리는 음식 아이콘을 236컷 갖고 있다 — 그게 여기서 값을 한다.
+//    ⛔ 두 번 해먹어도 점이 두 개가 아니었다(점 «안»에 숫자가 들어갔다) → 구석에 `+N`.
+function CookCalendar({ entries, selected, onSelect, iconFor }) {
   const [ym, setYm] = useState(() => {
     const n = new Date()
     return { y: n.getFullYear(), m: n.getMonth() }
   })
-  const counts = useMemo(() => {
+  // 날짜별로 «기록 자체»를 모아둔다 — 개수만 세면 무엇을 만들었는지 못 그린다.
+  // entries 는 최신순이라 [0] 이 그날 마지막에 남긴 기록이다.
+  const byDay = useMemo(() => {
     const map = {}
     for (const e of entries) {
       const k = dayKey(e.at)
-      map[k] = (map[k] || 0) + 1
+      map[k] = map[k] || []
+      map[k].push(e)
     }
     return map
   }, [entries])
@@ -78,7 +86,9 @@ function CookCalendar({ entries, selected, onSelect }) {
         {Array.from({ length: daysInMonth }, (_, i) => {
           const d = i + 1
           const k = `${ym.y}-${ym.m}-${d}`
-          const n = counts[k] || 0
+          const list = byDay[k]
+          const n = list ? list.length : 0
+          const top = list && list[0]
           const on = selected === k
           return (
             <button
@@ -87,8 +97,16 @@ function CookCalendar({ entries, selected, onSelect }) {
               onClick={() => n && onSelect(on ? null : k)}
               disabled={!n}
             >
-              <span>{d}</span>
-              {n > 0 && <span className="cal-dot">{n > 1 ? n : ''}</span>}
+              <span className="cal-num">{d}</span>
+              {top && (
+                // 사진을 남겼으면 사진이, 아니면 그날 만든 음식 아이콘이 칸에 뜬다.
+                <span className="cal-food">
+                  {top.photo
+                    ? <img src={top.photo} alt="" loading="lazy" />
+                    : <FoodIcon name={iconFor(top)} size={24} />}
+                </span>
+              )}
+              {n > 1 && <span className="cal-more">+{n - 1}</span>}
             </button>
           )
         })}
@@ -189,14 +207,24 @@ export default function MyRecipesScreen() {
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
   const entries = useMemo(() => [...diary].sort((a, b) => b.at - a.at), [diary])
   const [dayFilter, setDayFilter] = useState(null) // 'y-m-d' | null — 캘린더에서 고른 날
-  const [showCal, setShowCal] = useState(false) // 요리 달력은 접이식(기본 접힘) — 앨범을 앞세운다
+
+  // 🐛🐛 기록의 아이콘은 레시피에 «저장된» 값을 먼저 본다.
+  //   여태 제목으로 다시 추측해서(`guessFoodIcon(e.title)`), 사람이 직접 고른 아이콘이
+  //   앨범에서 무시됐다. **v9.77 에서 표지에 고친 것(`iconPicked`)과 똑같은 버그**다.
+  //   달력 칸에 음식을 띄우려면 어차피 이 값이 필요해서 한 번에 고친다.
+  //   ⚠️ 레시피를 지웠으면 기록만 남으므로 제목 추측으로 되돌아간다(그림이 아예 없는 것보단 낫다).
+  const iconById = useMemo(() => {
+    const m = {}
+    for (const r of recipes) if (r.icon) m[r.id] = r.icon
+    return m
+  }, [recipes])
+  const iconFor = (e) => iconById[e.recipeId] || guessFoodIcon(e.title)
 
   // 안드로이드 뒤로가기(버튼·제스처): 열린 모달·시트·필터를 먼저 닫는다.
   // (안 닫으면 뒤로가기가 화면을 넘어 '앱 종료'로 샌다.) 나중에 뜬 레이어부터 하나씩.
   // 비모달 상태(달력·세그먼트·필터)만 처리 — 모달(기록·삭제확인·폴더추가 시트)은 각 시트가 자체 처리.
   useBackHandler(() => {
     if (dayFilter) { setDayFilter(null); return true }
-    if (showCal) { setShowCal(false); return true }
     if (logEdit) { exitLogEdit(); return true }
     if (edit) { exitEdit(); return true }
     if (view !== 'grid') { setView('grid'); return true }
@@ -269,10 +297,14 @@ export default function MyRecipesScreen() {
 
       {view === 'log' && (
         <div className="pad fade">
-          {/* 나의 요리 앨범 — 내가 만든 요리 아카이브 */}
-          <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 10 }}>
-            <b style={{ color: 'var(--text)' }}>내가 만든 요리 아카이브</b> — 요리할 때마다 별점·사진·나만의 팁을 남겨두면, 다음에 <b style={{ color: 'var(--text)' }}>그때 그 간·불 세기</b>를 그대로 재현해요. 내 요리 실력이 쌓이는 기록이에요.
-          </div>
+          {/* 🗓 요리 달력 — **맨 위 · 항상 펼쳐 둔다.** (창업자 확정 2026-08-06 ②)
+              ⛔ 예전엔 `useState(false)` 로 **기본이 접힘**이었고, 「요리 달력 보기 ▾」를 눌러야 나왔다.
+                 그래서 만든 사람(창업자)조차 안 썼다 — 이 탭이 죽은 이유의 하나가 **기능이 모자란 게
+                 아니라 자리를 잘못 준 것**이었다. 접기 버튼도 같이 없앴다(가릴 이유가 없어졌다). */}
+          {entries.length > 0 && (
+            <CookCalendar entries={entries} selected={dayFilter} onSelect={setDayFilter} iconFor={iconFor} />
+          )}
+
           {entries.length > 0 && (
             <div className="card" style={{ padding: '11px 14px', marginBottom: 12, background: 'var(--cream)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, fontWeight: 600 }}>
               <span>이번 달 <b style={{ color: 'var(--brown)' }}>{thisMonth}</b>번</span>
@@ -287,20 +319,10 @@ export default function MyRecipesScreen() {
             </div>
           )}
 
-          {/* 요리 달력 — 접이식(기본 접힘). 앨범(사진 기록)이 이 탭의 주인공이고,
-              달력은 기록이 쌓인 사람에게만 의미 있어 필요할 때 펼쳐 본다. */}
-          {entries.length > 0 && (
-            <button
-              className="press"
-              onClick={() => setShowCal((v) => !v)}
-              style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: showCal ? 10 : 12, padding: '9px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13, fontWeight: 700 }}
-            >
-              요리 달력 {showCal ? '접기 ▴' : '보기 ▾'}
-            </button>
-          )}
-          {entries.length > 0 && showCal && (
-            <CookCalendar entries={entries} selected={dayFilter} onSelect={setDayFilter} />
-          )}
+          {/* 나의 요리 앨범 — 설명은 앨범 «바로 위»로 내렸다. 달력이 먼저 보여야 해서. */}
+          <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 10 }}>
+            <b style={{ color: 'var(--text)' }}>내가 만든 요리 아카이브</b> — 요리할 때마다 별점·사진·나만의 팁을 남겨두면, 다음에 <b style={{ color: 'var(--text)' }}>그때 그 간·불 세기</b>를 그대로 재현해요. 내 요리 실력이 쌓이는 기록이에요.
+          </div>
 
           {dayFilter && (
             <button className="press" onClick={() => setDayFilter(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, margin: '2px 0 10px', padding: '6px 12px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}>
@@ -330,7 +352,7 @@ export default function MyRecipesScreen() {
                     {e.photo ? (
                       <img src={e.photo} alt="" loading="lazy" />
                     ) : (
-                      <div className="album-icon"><FoodIcon name={guessFoodIcon(e.title)} size={34} /></div>
+                      <div className="album-icon"><FoodIcon name={iconFor(e)} size={34} /></div>
                     )}
                     {e.rating > 0 && !logEdit && <span className="album-star">★{e.rating}</span>}
                     <span className="album-cap">{e.title}</span>
