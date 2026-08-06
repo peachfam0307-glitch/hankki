@@ -183,7 +183,10 @@ export default function DiaryScreen({ day }) {
           paper={skin}
           // ✍️ 꾸미는 동안에도 쓴 글이 «같은 자리»에 보여야 한다 — 안 보이면 그 위에 스티커를 놓는다.
           //    ⭐ 에디터가 글을 «모르게» 조각째 넘긴다 — 두 곳에서 그리면 자리가 어긋난다.
-          paperOverlay={<PaperSheet fields={skin.fields} rule={skin.rule} value={text} dateLabel={dateLabel} />}
+          // ⭐ `onPick` = **고르는 칸만** 살린다(창업자 폰 제보 2026-08-07). 글칸은 그대로 읽기 전용이라
+          //    그 위에서 스티커를 끌 수 있고, 함께·장소·날씨·기분·시간·만족도는 **꾸미는 중에도 눌린다.**
+          //    ⛔ 전엔 `onChange` 하나가 전부를 갈라서 이 칸들이 **만든 날부터 한 번도 안 눌렸다.**
+          paperOverlay={<PaperSheet fields={skin.fields} rule={skin.rule} value={text} onPick={setText} dateLabel={dateLabel} />}
           // ✍️✍️ **꾸미기 안에서 «바로 쓴다»** (창업자 2026-08-06
           //    *"속지고르고 꾸미고 저장해야 글을 쓸수있어서 불편한데.. 속지 고른상태에서
           //      속지 화면 줄 클릭하면 글쓰고(꾸미기칸자동내려감) … 다시 꾸미기버튼 누르면 꾸미고"*)

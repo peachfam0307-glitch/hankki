@@ -46,8 +46,18 @@ const hand = {
  * 종이 위의 «쓰는 칸» 전부. `onChange` 가 없으면 읽기 전용(꾸미기 판·미리보기).
  * `value` = { note: 본문, line: 오늘의 한 줄 }
  */
-export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, dateLabel = '', rule = '' }) {
+// 🖊 `onPick` = **「고르는 칸」만 살리는 문**(창업자 폰 제보 2026-08-07)
+//   ⛔ 전엔 `ro = !onChange` 하나가 **전부**를 갈랐다 — 꾸미기 판(`paperOverlay`)은
+//      `onChange` 를 안 받으므로 글칸뿐 아니라 **함께·장소·날씨·기분·시간·만족도까지 통째로 죽었다.**
+//      → 서랍이 열려 있는 동안 그 칸들을 **하나도 못 골랐다**(만든 날부터 그랬다).
+//   ⭐ 둘은 성격이 다르다 — 글칸은 누르면 **키보드가 떠서** 꾸미기를 방해하지만,
+//      축은 **탭 한 번**이라 꾸미는 중에 눌러도 아무것도 안 가린다.
+//   📌 그래서 「글칸은 읽기 전용, 축은 살아 있음」을 **한 칸으로** 만든다.
+export default function PaperSheet({ fields, value = {}, onChange, onPick, onPickPhoto, dateLabel = '', rule = '' }) {
   const ro = !onChange
+  // ✅ 축을 고를 수 있나 — 쓰기 판(`onChange`)이거나, 고르기만 열어 준 판(`onPick`)이면 된다
+  const write = onChange || onPick
+  const canPick = !!write
   const set = (k) => (e) => onChange({ ...value, [k]: e.target.value })
   const bg = ruleBg(rule)
   // ⛔ 읽기 전용(꾸미기 판)에선 아무것도 손가락을 먹으면 안 된다 — 그 위에서 스티커를 끌어야 한다
@@ -130,10 +140,16 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
         // 🗃 값을 어디에 넣나 — 날씨는 **옛 자리(`value.weather`)** 에 그대로.
         //    ⛔ 새 자리로 옮기면 이미 쓴 일기의 날씨가 통째로 사라진다(규칙 18 ⓙ).
         const cur = row.axis === 'weather' ? (value.weather || '') : ((value.picks || {})[row.axis] || '')
+        // ⭐ 쓰기 판이면 `onChange`, 꾸미기 판이면 `onPick` — 어느 쪽이든 «값을 돌려주는 곳»은 하나다
         const put = (v) => (row.axis === 'weather'
-          ? onChange({ ...value, weather: v })
-          : onChange({ ...value, picks: { ...(value.picks || {}), [row.axis]: v } }))
-        const on = cur === w.key
+          ? write({ ...value, weather: v })
+          : write({ ...value, picks: { ...(value.picks || {}), [row.axis]: v } }))
+        // ⭐ `fill` 축(만족도)은 **별점처럼 차오른다** — 3을 고르면 1·2·3 이 다 칠해진다.
+        //   ⛔ 다른 축은 「그것 하나」를 표시하는 것이라 고른 것만 칠한다.
+        //   📌 자리(`items` 차례)로 견준다 — 키가 '1'~'5' 라고 가정하지 않는다(다른 속지는 다를 수 있다).
+        const on = row.fill
+          ? (cur !== '' && row.items.findIndex((x) => x.key === w.key) <= row.items.findIndex((x) => x.key === cur))
+          : cur === w.key
         // 🖍🖍 **형광펜으로 칠한 표시** (창업자 확정 2026-08-06 — 후보 여섯을 실물로 찍어 골랐다)
         //
         // ⛔ 전엔 «갈색 동그라미»였는데 창업자 *"그 동그라미 너무 별로야"* · *"아이콘에 비해 너무 커"*.
@@ -160,10 +176,11 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
         const pos = {
           position: 'absolute', left: `${w.x}%`, top: `${row.y}%`,
           width: `${row.size * 1.28}cqw`, height: `${row.size * 1.28}cqw`,
-          transform: 'translate(-50%,-50%)', ...overSticker, ...noTouch,
+          // ⭐ 축은 «고를 수 있으면» 손가락을 받는다 — 글칸의 읽기 전용(ro)과 따로 논다
+          transform: 'translate(-50%,-50%)', ...overSticker, ...(canPick ? {} : { pointerEvents: 'none' }),
         }
         const id = `${row.axis}-${w.key}`
-        if (ro) return <span key={id} style={pos}>{on && ring}</span>
+        if (!canPick) return <span key={id} style={pos}>{on && ring}</span>
         return (
           <button
             key={id}
