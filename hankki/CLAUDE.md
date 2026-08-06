@@ -647,6 +647,12 @@
   그동안 v9.48·v9.49 가 유저에게 안 나갔다(창업자 폰은 v9.47 그대로였다).
   📌 **`npm run smoke` 가 로컬에서 통과해도 배포가 됐는지는 «Actions 초록불»로 확인한다.**
   ⛔ 「푸시했다 = 배포됐다」로 말하지 말 것. 실제로 그렇게 말했다가 틀렸다.
+  ⛔⛔ **그렇다고 «사이트를 열어» 확인하려 들지 말 것 — 이 환경은 `peachfam0307-glitch.github.io` 를 못 연다.**
+  프록시가 **CONNECT 에 403**(정책 차단)을 준다 → `curl` 이 `000` 을 뱉는다. 2026-08-06 에 이걸 모르고
+  「번들에 v9.84 가 뜰 때까지」 8분을 헛돌린 뒤 **「배포가 안 됐다」고 잘못 말할 뻔했다**(배포는 성공해 있었다).
+  📌 **배포 확인 = Actions 결론 하나뿐이다.** `actions_list` → 그 run 의 **`id`**(⚠️`run_number` 아님) →
+  `actions_get(get_workflow_run, id)` 의 `status: completed` ＋ `conclusion: success` ＋ `head_sha` 대조.
+  ⭐ 규칙 18 그대로 — **「없다」가 아니라 «내 확인 방식이 안 되는 것»일 수 있다.** 실패하면 확인 방식부터 의심한다.
 - 커밋 규칙: `git config user.email noreply@anthropic.com`, `user.name Claude`, 커밋 후 `--amend --no-edit --reset-author`. 모델 ID는 커밋/PR에 절대 넣지 않음.
 - 개발 브랜치: `claude/chatgpt-conversation-link-kvn5ph`.
 
