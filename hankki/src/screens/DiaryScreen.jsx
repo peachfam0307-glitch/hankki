@@ -105,7 +105,7 @@ export default function DiaryScreen({ day }) {
           {date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 13, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span>
         </div>
         {entry ? (
-          <button className="bar-btn" aria-label="다이어리 삭제" onClick={() => { removeDiary(entry.id); nav.showToast('다이어리를 지웠어요') }}>
+          <button className="bar-btn" aria-label="일기 삭제" onClick={() => { removeDiary(entry.id); nav.showToast('일기를 지웠어요') }}>
             <Icon name="trash" size={19} />
           </button>
         ) : <span style={{ width: 36 }} />}
@@ -133,7 +133,7 @@ export default function DiaryScreen({ day }) {
         <button
           className="press"
           onClick={() => setOpen(true)}
-          aria-label="다이어리 꾸미기"
+          aria-label="일기 꾸미기"
           style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, padding: '10px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13, fontWeight: 800, border: 'none' }}
         >
           <Icon name="palette" size={15} />
@@ -173,7 +173,7 @@ export default function DiaryScreen({ day }) {
           paperPick={pick}
           onPaperPick={choose}
           // ⭐ 에디터에 들어가면 날짜가 안 보인다 → 머리글이 «지금 어느 날을 꾸미는 중인지»를 말한다
-          title={`${date.getMonth() + 1}월 ${date.getDate()}일 다이어리`}
+          title={`${date.getMonth() + 1}월 ${date.getDate()}일 일기`}
           recipe={{ id: `diary-${day}`, title: '', decor, decorBg: 'none', thumb: 'none' }}
           onSave={(items) => {
             // ⚠️ 「비웠어요」는 **꾸민 게 있다가 없어졌을 때만** — 속지만 고르고 저장해도
@@ -181,7 +181,7 @@ export default function DiaryScreen({ day }) {
             const had = (entry?.decor || []).length
             save({ decor: items, paper: pick })
             setOpen(false)
-            nav.showToast(!items.length && had ? '꾸민 걸 비웠어요' : '다이어리에 저장했어요')
+            nav.showToast(!items.length && had ? '꾸민 걸 비웠어요' : '일기에 저장했어요')
           }}
           onClose={() => setOpen(false)}
         />

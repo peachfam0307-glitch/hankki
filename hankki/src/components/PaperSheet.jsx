@@ -163,7 +163,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
             <textarea
               value={value.note || ''}
               onChange={set('note')}
-              aria-label="다이어리 본문"
+              aria-label="일기 본문"
               placeholder="여기에 써요"
               style={{
                 ...hand, width: '100%', height: '100%', display: 'block',

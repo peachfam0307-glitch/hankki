@@ -52,7 +52,7 @@ await page.waitForTimeout(1200)
 //   *"지금 꾸미기 틀이랑 꾸미기로 나눠져있는게 조금 불편해"*).
 //   ⛔ 예전처럼 화면의 `.seg` 를 누르면 안 된다 — 그 줄은 이제 없다.
 const openDecor = async () => {
-  await page.locator('[aria-label="다이어리 꾸미기"]').first().click()
+  await page.locator('[aria-label="일기 꾸미기"]').first().click()
   await page.waitForTimeout(1300)
   await page.getByRole('button', { name: '나중에' }).first().click({ timeout: 1200 }).catch(() => {})
   await page.waitForTimeout(300)
@@ -76,7 +76,7 @@ await page.getByText('레시피', { exact: true }).last().click(); await page.wa
 //    «둘째 칸»이라는 자리는 안 바뀐다.
 await page.locator('.segment .seg').nth(1).click(); await page.waitForTimeout(700)
 await page.screenshot({ path: join(OUT, 'diary-a-입구.png') })
-const btn = page.getByRole('button', { name: /다이어리 쓰기/ }).first()
+const btn = page.getByRole('button', { name: /일기 쓰기/ }).first()
 if (await btn.isVisible().catch(() => false)) ok('요리 기록 탭에 「다이어리 쓰기」가 있다')
 else no('「다이어리 쓰기」 버튼이 없다')
 
@@ -95,8 +95,8 @@ else no('그날 만든 요리가 안 뜬다')
 // ⓑ-2 ✍️ **종이 «위»에 바로 써진다** (창업자 2026-08-06 *"줄노트 자체에 바로 써지게 해야지"*)
 //   ⛔ 종이 밖 입력칸에 쓰고 종이엔 반영만 되는 방식은 죽었다 — *"불편해서 안써"*
 const BODY = '들기름 조금 더 넣으니 훨씬 고소했다'
-const body = page.getByLabel('다이어리 본문')
-const inPaper = (await page.locator('.paper').first().locator('[aria-label="다이어리 본문"]').count()) > 0
+const body = page.getByLabel('일기 본문')
+const inPaper = (await page.locator('.paper').first().locator('[aria-label="일기 본문"]').count()) > 0
 if (inPaper) ok('글 쓰는 칸이 «종이 안»에 있다')
 else no('글 쓰는 칸이 종이 밖에 있다 — 그럼 안 쓴다')
 await body.fill(BODY)
@@ -111,8 +111,8 @@ const inStore = await page.evaluate(() => {
 if (inStore.includes(BODY)) ok('쓴 글이 저장소에 들어갔다')
 else no(`저장이 안 된다 — 저장소의 다이어리 note = ${JSON.stringify(inStore)}`)
 await page.locator('.bar-btn[aria-label="뒤로"]').first().click(); await page.waitForTimeout(600)
-await page.getByRole('button', { name: /다이어리 (쓰기|보기)/ }).first().click(); await page.waitForTimeout(800)
-if ((await page.getByLabel('다이어리 본문').inputValue()) === BODY) ok('나갔다 들어와도 글이 그대로')
+await page.getByRole('button', { name: /일기 (쓰기|보기)/ }).first().click(); await page.waitForTimeout(800)
+if ((await page.getByLabel('일기 본문').inputValue()) === BODY) ok('나갔다 들어와도 글이 그대로')
 else no('나갔다 들어오니 글이 비었다')
 await page.screenshot({ path: join(OUT, 'diary-b2-글쓰기.png') })
 

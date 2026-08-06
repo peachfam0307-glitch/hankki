@@ -102,7 +102,7 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, iconFor }) {
               disabled={!n && !hasDiary}
             >
               <span className="cal-num">{d}</span>
-              {hasDiary && <span className="cal-diary" aria-label="다이어리 쓴 날"><Icon name="pen" size={9} /></span>}
+              {hasDiary && <span className="cal-diary" aria-label="일기 쓴 날"><Icon name="pen" size={9} /></span>}
               {top && (
                 // 사진을 남겼으면 사진이, 아니면 그날 만든 음식 아이콘이 칸에 뜬다.
                 <span className="cal-food">
@@ -334,7 +334,7 @@ export default function MyRecipesScreen() {
             {/* ⛔ 이미 쓴 날에 「쓰기」라고 하면 «새로 쓴다»로 읽혀 덮어쓸까 봐 안 누른다. */}
             {(() => {
               const day = dayFilter || dayKey(Date.now())
-              const verb = diaryDays.has(day) ? '다이어리 보기' : '다이어리 쓰기'
+              const verb = diaryDays.has(day) ? '일기 보기' : '일기 쓰기'
               return dayFilter
                 ? `${Number(dayFilter.split('-')[1]) + 1}월 ${dayFilter.split('-')[2]}일 ${verb}`
                 : `오늘 ${verb}`
@@ -345,7 +345,7 @@ export default function MyRecipesScreen() {
               ⛔ 바로 아래 설명은 **요리 아카이브**(별점·사진·팁) 얘기라, 다이어리 버튼을 누르기 전에
                  읽히는 글이 딴 기능 설명이었다. 버튼과 설명이 어긋나면 안 누른다. */}
           <div className="t-sub" style={{ fontSize: 12.5, textAlign: 'center', marginBottom: 14, lineHeight: 1.55 }}>
-            속지를 고르고 · 일지를 쓰고 · 예쁘게 꾸며요
+            속지를 고르고 · 일기를 쓰고 · 예쁘게 꾸며요
           </div>
 
           {entries.length > 0 && (
