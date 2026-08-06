@@ -114,10 +114,6 @@ export const PAPER_ARTS = [
 /** 줄 간격(cqw) — 글자 크기·줄 간격·CSS 줄이 전부 이 하나에 묶인다. */
 export const PAPER_LINE_H = LINE_H
 
-/** 그 틀이 어떤 칸을 갖고 있나. 모르는 키면 「없음」의 것을 준다. */
-export const paperFields = (art) =>
-  (PAPER_ARTS.find((x) => x.key === art) || PAPER_ARTS[0]).fields
-
 /**
  * 고른 값들을 `.paper` 클래스와 배경 그림으로 바꾼다.
  * ⚠️ 틀 그림에 도트가 «이미 그려져» 있으면 CSS 도트를 끈다 — 안 그러면 점이 두 겹으로 찍힌다.
