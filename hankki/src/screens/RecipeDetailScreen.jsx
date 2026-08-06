@@ -263,34 +263,36 @@ export default function RecipeDetailScreen({ id }) {
       <div ref={coverRef} style={{ position: 'relative' }}>
         <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
         <DecorLayer items={r.decor || []} />
-        {/* 🍱 표지 아이콘 바꾸기 — 창업자 판정 2026-08-06 *"음식아이콘 갤러리라 잘 안 보여서 바꾸기로 했어"*
-            ⛔ 여태 셋이 어긋나 있었다:
-              ① 그림이 딴 말을 했다 — **갤러리(사진 액자) 글리프**인데 눌리는 건 «음식 아이콘 픽커»
-                 (2026-07-28 에 «연결»만 바꾸고 그림·라벨·무게는 그대로 뒀다. 바로 위 옛 주석이 그 흔적이었다)
-              ② 라벨이 없었다 — 오른쪽 「레시피 꾸미기」엔 글자가 있는데 왼쪽만 `aria-label` 뿐
-              ③ 무게가 달랐다 — 34px 반투명 회색 원 vs 채운 알약. 눈이 오른쪽만 갔다
-            ✅ 고침 = **그 레시피의 음식 아이콘을 그대로 미니로** 보여준다(＝"이 그림을 바꾼다"가 그림으로 설명된다)
-               ＋ **오른쪽과 같은 알약·같은 높이(34)** 로 짝을 맞추고 글자를 붙였다.
-            ⚠️ 채움색은 안 준다 — 주 동작은 어디까지나 「레시피 꾸미기」다(위계 유지). */}
+      </div>
+
+      {/* 🍱🎨 표지 버튼 둘 — 표지 «밖», 바로 아래 한 줄. (창업자 확정 2026-08-06 「E」)
+          ⭐⭐ 왜 밖인가 = **표지는 공유 카드로 찍혀 나가는 그림**이다. 버튼이 그 위에 있는 한
+             크게 만들든 작게 만들든 «계속 가린다». 밖으로 빼면 가릴 일 자체가 없어진다.
+             창업자가 2026-07-28 부터 계속 말한 원칙이 이것이다 —
+             *"버튼이 7개야 그림 속에 · 간섭이 심해"* · 「레꾸가 주인공이라 표지를 최대한 안 가린다」
+             오늘 아침 알약을 표지 «안»에 두 개 두었다가 *"너무 큰 알약 2개가 간섭되는거 아닐까?"* 를 들었다.
+          ⛔ 이 안(표지 밖)을 어제 내가 「찾기 어려워진다」며 **내 판단으로 미리 쳐냈다.**
+             그러면 안 된다 — 후보로 올려 창업자 판정을 받는다.
+          ⭐ 왼쪽 그림 = **그 레시피의 음식 아이콘 미니.** "이 그림을 바꾼다"가 그림으로 설명된다
+             (여태 갤러리 글리프였다 — 2026-07-28 에 «연결»만 픽커로 바꾸고 그림은 안 바꾼 흔적).
+          ⚠️ 채움색은 오른쪽만 — 주 동작은 어디까지나 「레시피 꾸미기」다(위계 유지).
+          ✅ 캡처 제외 표시(`data-nocapture`)가 필요 없어졌다 — 캡처는 위 `coverRef` 안만 찍는다. */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '12px 20px 0' }}>
         <button
           className="press"
           onClick={() => setIconSheet(true)}
-          data-nocapture
           aria-label="표지 아이콘 바꾸기"
-          style={{ position: 'absolute', bottom: 12, left: 12, display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'rgba(250,250,248,0.92)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--brown)', fontSize: 12.5, fontWeight: 800, padding: '0 12px 0 8px', borderRadius: 999, boxShadow: '0 3px 10px rgba(0,0,0,.18)' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--cream)', color: 'var(--brown)', fontSize: 12.5, fontWeight: 800, padding: '0 13px 0 9px', borderRadius: 999, border: 'none' }}
         >
-          <FoodIcon name={r.icon || guessFoodIcon(r.title)} size={21} />
+          <FoodIcon name={r.icon || guessFoodIcon(r.title)} size={20} />
           아이콘 바꾸기
         </button>
-        {/* 표지 꾸미기 — 솔직한 버튼으로 눈에 띄게(포인트색 채운 알약). 캡처에선 제외(data-nocapture) */}
         <button
           className="press"
           onClick={() => setDecorOpen(true)}
           data-coach="decor"
-          data-nocapture
           aria-label="레시피 꾸미기"
-          // 표지를 덜 가리게 한 단계 줄였다(창업자 2026-07-28). 왼쪽 표지 아이콘 버튼과 높이(34)를 맞춰 한 줄로 떨어지게.
-          style={{ position: 'absolute', bottom: 12, right: 12, display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--brown)', color: '#fff', fontSize: 12.5, fontWeight: 800, padding: '0 13px', borderRadius: 999, boxShadow: '0 4px 14px rgba(0,0,0,.3)' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--brown)', color: '#fff', fontSize: 12.5, fontWeight: 800, padding: '0 13px', borderRadius: 999, border: 'none' }}
         >
           <Icon name="palette" size={14} />
           레시피 꾸미기
