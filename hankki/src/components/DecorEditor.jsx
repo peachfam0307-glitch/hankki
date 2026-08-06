@@ -10,8 +10,9 @@ import { seasonRank, isReleased } from '../season'
 import GiftPackSheet from './GiftPackSheet'
 import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
-import { cropSquare } from '../utils'
-import { StickerArt, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
+import { cropSquare, cropRatio } from '../utils'
+import { FRAME_WINDOW } from '../data/frameWindows'
+import { StickerArt, stickerRatio, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -110,6 +111,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const isDiary = !!paper
   // 📔 속지 탭을 띄울 수 있나 = 다이어리이면서 부모가 「고르는 길」을 줬나.
   const canPickPaper = isDiary && !!paperPick && !!onPaperPick
+  // 📷 지금 고른 «틀»에 사진칸이 있나 — 없으면 속지 화면에서 한 줄로 알려준다.
+  //    ⛔ 라벨(「없음」)로 판단하지 않는다. 그 틀에 사진칸(fields.photo)이 «있느냐»로 본다(분류 원칙).
+  const paperArtHasPhoto = !!PAPER_ARTS.find((a) => a.key === (paperPick?.art ?? 'none'))?.fields?.photo
   // 서랍 탭 — 표지는 배경부터, 다이어리는 프레임부터(다이어리엔 배경 탭 자체가 없다. 아래 CATS 참고)
   const [cat, setCat] = useState(isDiary ? 'frame' : 'bgtape')
   // 📔📔 **일기를 꾸밀 땐 선반이 둘 — 「일기 아이템」 / 「레시피 꾸미기」**
@@ -333,6 +337,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⚠️ 700px·q0.8 로 줄인다 — 한 장이 100KB 넘으면 localStorage(≈5MB)가 금방 찬다.
   //      표지 사진(900)보다 작게 두는 이유 = 스티커는 **여러 장** 붙는다.
   const photoRef = useRef(null)
+  // 🖼🖼 **프레임을 고른 채로 누르면 그 «창»에 딱 맞게 끼운다** (창업자 2026-08-06
+  //    *"프레임 꾸미기에 넣어서 프레임잡으려면 사진 넣을수(스티커처럼) 있으면 좋겠어"*)
+  //    ⭐ 사진은 프레임 «뒤»로 들어간다 — 프레임 그림엔 창이 뚫려 있어서 뒤에 깔아야
+  //       창으로 사진이 비치고 테두리가 위에 얹힌다. 앞에 두면 **사진이 프레임을 덮는다.**
+  //    📐 창 위치·크기는 짐작이 아니라 «실측표»(FRAME_WINDOW)를 쓴다.
+  //       다시 뽑기 = scripts/frame-windows.mjs · 실측 = 프레임 75개 중 창을 찾은 것 54개
+  //       창을 못 잰 프레임(테두리가 열려 있어 바깥과 이어진 것)은 평균값으로 넣고 손잡이로 맞추게 한다.
+  const frameOf = (it) => (it && it.type === 'sticker' && (FRAMES[it.key] || (typeof it.key === 'string' && it.key.startsWith('pf_'))) ? it : null)
+  const selFrame = frameOf(items.find((x) => x.id === sel))
   const onPhotoFile = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -344,6 +357,26 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       r.readAsDataURL(file)
     })
     if (!src) return
+    const f = selFrame
+    if (f) {
+      const win = FRAME_WINDOW[f.key] || { cx: 0.5, cy: 0.5, w: 0.76, h: 0.74 } // 평균 = 실측 54개
+      const fr = stickerRatio(f.key) || 1                       // 프레임 자체의 가로÷세로
+      const box = (() => { const [a, b] = String(ratio).split('/').map(Number); return (a > 0 && b > 0) ? a / b : 1 })()
+      const pw = f.s * win.w                                    // 사진 폭 = 판 폭의 몇 %
+      const par = (win.w / win.h) * fr                           // 창의 가로÷세로 = 사진을 자를 모양
+      // 창 «가운데»가 프레임 가운데에서 얼마나 떨어졌나 → 판 좌표로 옮긴다
+      //   가로는 판 «폭», 세로는 판 «높이» 기준이라 (판의 가로÷세로)를 곱해 단위를 맞춘다
+      const dx = (win.cx - 0.5) * f.s
+      const dy = (win.cy - 0.5) * (f.s / fr) * box
+      const shot = await cropRatio(src, par, 700, 0.8)
+      const it = { id: newDecorId(), type: 'photo', src: shot, ratio: par, x: f.x + dx, y: f.y + dy, s: pw, r: f.r || 0 }
+      // ⭐ 프레임 «바로 앞»에 꽂는다(배열에서 프레임보다 앞 = 화면에선 뒤).
+      setItems((arr) => { const i = arr.findIndex((x) => x.id === f.id); return i < 0 ? [it, ...arr] : [...arr.slice(0, i), it, ...arr.slice(i)] })
+      setSel(it.id)
+      // ⛔ 토스트는 안 띄운다 — 이 화면엔 토스트 장치가 없고, 버튼 이름이
+      //    「이 프레임에 사진 넣기」라 무슨 일이 일어날지 «누르기 전에» 이미 안다.
+      return
+    }
     const small = await cropSquare(src, 700, 0.8)
     const n = items.length
     const it = { id: newDecorId(), type: 'photo', src: small, x: 0.5, y: 0.44, s: 0.44, r: ((n % 5) - 2) * 3 }
@@ -518,15 +551,23 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           <div className="t-sub" style={{ fontSize: 12, textAlign: 'center', marginTop: 10, lineHeight: 1.5, wordBreak: 'keep-all' }}>
             {writing
               ? '종이에 바로 써요 · 꾸미려면 아래 「일꾸」'
-              : hasCtx
-                ? '탭한 걸 여기서 바로 꾸며요 · 드래그로 이동 · ⟳ 크기/회전'
-                : isDiary
+              : selFrame
+                // 🖼 프레임을 고른 순간 «사진을 끼울 수 있다»는 걸 그 자리에서 말한다.
+                //    ⛔ 「내 사진 넣기」가 서랍 맨 위에 있어도 프레임이랑 이어질 줄은 아무도 모른다.
+                ? '이 프레임에 사진을 끼울 수 있어요 · 서랍 맨 위'
+                : hasCtx
+                  ? '탭한 걸 여기서 바로 꾸며요 · 드래그로 이동 · ⟳ 크기/회전'
+                  : (isDiary && mode === 'paper' && !paperArtHasPhoto)
+                    // 📷 틀에 사진칸이 «없는» 속지(없음·도트) — 사진을 못 넣는 게 아니라 «아무 데나» 넣는다.
+                    //    창업자 2026-08-06 *"무지에는 사진 넣는거 없어??"* → 있는데 «있는 줄을 몰랐다».
+                    ? '이 틀엔 사진칸이 없어요 · 사진은 꾸미기에서 아무 데나'
+                    : isDiary
                   ? (shelf === 'diary'
                     // 🔤 「일꾸」는 «우리가 만든 말»이라 처음 보면 갸웃한다 → 그 자리에서 한 줄로 푼다.
                     //    (「레꾸」는 이미 「레꾸자랑」 탭에 있어 유저가 안다 — 그래서 안 푼다.)
-                    ? '일꾸 = 일기 꾸미기 · 더 많은 아이템은 「레꾸」에'
-                    : '레꾸 = 레시피 꾸미기 · 일기에도 그대로 붙어요')
-                  : '아래에서 골라 붙이고 · 드래그로 이동 · ⟳ 손잡이로 크기/회전'}
+                      ? '일꾸 = 일기 꾸미기 · 더 많은 아이템은 「레꾸」에'
+                      : '레꾸 = 레시피 꾸미기 · 일기에도 그대로 붙어요')
+                    : '아래에서 골라 붙이고 · 드래그로 이동 · ⟳ 손잡이로 크기/회전'}
           </div>
         </div>
 
@@ -775,7 +816,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px', marginBottom: 8,
                 borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>
               <Icon name="photo" size={17} color="var(--brown)" />
-              <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>내 사진 넣기</span>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{selFrame ? '이 프레임에 사진 넣기' : '내 사진 넣기'}</span>
               <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
             </button>
             <input ref={photoRef} type="file" accept="image/*" onChange={onPhotoFile} style={{ display: 'none' }} />

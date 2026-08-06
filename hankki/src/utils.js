@@ -138,3 +138,39 @@ export function matchKo(text, query) {
   if (t.includes(q)) return true
   return /^[ㄱ-ㅎ]+$/.test(q) ? chosungOf(t).includes(q) : false
 }
+
+// 🖼 사진을 «주어진 모양»으로 가운데 자르기 — 프레임 창에 딱 맞게 끼울 때 쓴다.
+//   창업자 2026-08-06 *"프레임 꾸미기에 넣어서 프레임잡으려면 사진 넣을수(스티커처럼) 있으면 좋겠어"*
+//   ⭐ `cropSquare` 는 정사각 전용이라 세로 폴라로이드·가로 액자에 끼우면 창이 남거나 넘친다.
+//      `ar` = 가로÷세로. 1 을 주면 `cropSquare` 와 같은 결과.
+//   ⚠️ 위 `cropSquare` 의 두 안전망을 그대로 쓴다 — ①흰색 먼저 칠하고 ②`decode()` 로 비트맵을 기다린다
+//      (안 그러면 폰에서 «검정 사진»이 나온다. 2026-07-23 사고).
+export async function cropRatio(dataUrl, ar = 1, outW = 800, quality = 0.85) {
+  try {
+    if (!(ar > 0)) ar = 1
+    const img = new Image()
+    await new Promise((res) => { img.onload = res; img.onerror = res; img.src = dataUrl })
+    if (img.decode) { try { await img.decode() } catch {} }
+    const w = img.naturalWidth || img.width
+    const h = img.naturalHeight || img.height
+    if (!w || !h) return dataUrl
+    // 원본에서 «ar 모양의 가장 큰 사각형»을 가운데로 오려낸다
+    let sw = w, sh = w / ar
+    if (sh > h) { sh = h; sw = h * ar }
+    const sx = (w - sw) / 2
+    const sy = (h - sh) / 2
+    const cw = Math.max(1, Math.round(Math.min(outW, sw)))
+    const ch = Math.max(1, Math.round(cw / ar))
+    const c = document.createElement('canvas')
+    c.width = cw
+    c.height = ch
+    const ctx = c.getContext('2d')
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, cw, ch)
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch)
+    return c.toDataURL('image/jpeg', quality)
+  } catch {
+    return dataUrl
+  }
+}
