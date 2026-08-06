@@ -122,14 +122,26 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
           ⛔ 아이콘을 새로 그리지 않는다 — 종이에 있는 그림이 그대로 보여야 한다. */}
       {fields.weather && fields.weather.items.map((w) => {
         const on = value.weather === w.key
+        // 🖍🖍 **형광펜으로 칠한 표시** (창업자 확정 2026-08-06 — 후보 여섯을 실물로 찍어 골랐다)
+        //
+        // ⛔ 전엔 «갈색 동그라미»였는데 창업자 *"그 동그라미 너무 별로야"* · *"아이콘에 비해 너무 커"*.
+        //    📐 재보니 **맞았다** — 동그라미가 `10.5cqw` 인데 그림의 아이콘은 폭 **4.0~4.6%**(papers.js 실측).
+        //       **2.3배**라 아이콘이 원 안에 «갇힌» 것처럼 보였다.
+        // ⭐ 형광펜이 이긴 이유 = **선이 아니라 «색»이라 그림의 선과 안 싸운다.**
+        //    갈색 원은 아이콘 선(같은 갈색) 위에 또 선을 얹는 꼴이었다.
+        // ⭐ `multiply` 라 아이콘이 **그대로 비쳐 보인다** — 덮는 게 아니라 칠하는 것이다.
+        // ⭐⭐ 그리고 이 문법은 **날씨 말고도 그대로 쓴다** — 새 속지의 기분·장소·동행·시간대·만족도가
+        //    다 「인쇄된 아이콘 중 하나 고르기」라 표시를 또 고민할 일이 없다.
         const ring = (
           <span
             aria-hidden
             style={{
-              position: 'absolute', left: '50%', top: '50%', width: `${fields.weather.size}cqw`, height: `${fields.weather.size}cqw`,
-              // 살짝 기울인 타원 = 손으로 그린 동그라미. 정원은 «인쇄»처럼 보인다
-              transform: 'translate(-50%,-50%) rotate(-7deg) scaleX(1.08)',
-              border: `${fields.weather.size * 0.045}cqw solid ${INK}`, borderRadius: '50%', opacity: 0.62,
+              // 크기는 «버튼 기준 %» — 버튼이 아이콘에 맞춰져 있어 아이콘을 딱 감싼다
+              position: 'absolute', left: '50%', top: '52%', width: '52%', height: '46%',
+              transform: 'translate(-50%,-50%) rotate(-4deg)',
+              // 손으로 칠한 자국이라 정원이 아니다 — 네 모서리를 조금씩 다르게
+              borderRadius: '48% 52% 50% 50%/50%',
+              background: '#f0d98a', opacity: 0.5, mixBlendMode: 'multiply',
             }}
           />
         )
