@@ -5,6 +5,7 @@ import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
 import { PaperBox } from './PaperSheet'
+import { PAPER_RULES, PAPER_SKINS, PAPER_ARTS, paperStyle } from '../data/papers'
 import { seasonRank, isReleased } from '../season'
 import GiftPackSheet from './GiftPackSheet'
 import PackBuySheet from './PackBuySheet'
@@ -43,6 +44,15 @@ const TAPE_WIDTHS = [
   { key: 'thick', label: '굵게', ratio: 2.3 },
 ]
 
+// 📔 다이어리 속지 세 층(선·종이·틀) — 「틀 고르기」가 화면에 따로 있던 것을 **서랍 안으로 들였다**.
+//   창업자 2026-08-06 *"지금 꾸미기 틀이랑 꾸미기로 나눠져있는게 조금 불편해"*
+//   ⭐ 값은 `data/papers.js` 그대로 쓴다 — 여기서 목록을 다시 만들면 두 곳이 어긋난다.
+const PAPER_AXES = [
+  { key: 'rule', label: '선', list: PAPER_RULES },
+  { key: 'skin', label: '종이', list: PAPER_SKINS },
+  { key: 'art', label: '틀', list: PAPER_ARTS },
+]
+
 // ── 표지 꾸미기 에디터 ──
 // 전체 화면 오버레이. 표지(정사각) 위에 스티커·포스트잇을 얹고
 // 드래그로 이동, 우하단 핸들로 크기·회전, ×로 삭제. 저장하면 recipe.decor 로 영구 저장.
@@ -69,7 +79,10 @@ function loadDraft(id) {
 // ✍️ `paperOverlay` = 다이어리에 쓴 글·날짜를 그대로 그린 조각(읽기 전용 `PaperSheet`).
 //   ⭐ **여기가 글의 내용을 몰라야 한다** — 다이어리 화면이 만들어서 통째로 넘긴다.
 //      같은 글을 두 곳에서 그리면 자리가 반드시 어긋난다.
-export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, paperOverlay = null, title = '레시피 꾸미기' }) {
+// 📔 `paperPick`·`onPaperPick` = 다이어리 속지 고르기를 **이 서랍 안에서** 하게 하는 두 짝.
+//   ⭐ 값은 부모(다이어리 화면)가 쥔다 — 고르는 순간 부모의 `paper`·`paperOverlay` 가 다시 내려와
+//      **위 판이 그 자리에서 바뀐다.** 여기서 따로 들고 있으면 판과 글자 자리가 어긋난다.
+export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, paperOverlay = null, title = '레시피 꾸미기', paperPick = null, onPaperPick = null }) {
   const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
   // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
   const draft = loadDraft(recipe.id)
@@ -86,8 +99,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // 📔 여기가 다이어리인가 = `paper` 를 받았나. 아래 「어느 판에서 보이나」를 가르는 기준.
   //   ⭐ 새 값을 안 만든다 — 판을 종이로 바꾸는 그 인자가 곧 「다이어리다」라는 뜻이다.
   const isDiary = !!paper
+  // 📔 속지 탭을 띄울 수 있나 = 다이어리이면서 부모가 「고르는 길」을 줬나.
+  const canPickPaper = isDiary && !!paperPick && !!onPaperPick
   // 서랍 탭 — 표지는 배경부터, 다이어리는 프레임부터(다이어리엔 배경 탭 자체가 없다. 아래 CATS 참고)
-  const [cat, setCat] = useState(isDiary ? 'frame' : 'bgtape')
+  // 📔 **빈 다이어리를 처음 열면 「속지」부터** — 종이를 고르고 꾸미는 게 순서다.
+  //    ⭐ 이미 꾸며둔 걸 다시 열면 곧장 「프레임」으로 간다 — 종이는 이미 골랐고 이제 꾸미러 온 것이다.
+  const [cat, setCat] = useState(canPickPaper && items.length === 0 ? 'paper' : isDiary ? 'frame' : 'bgtape')
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
   const [gift, setGift] = useState(() => needsGiftPack())
@@ -178,7 +195,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⛔ 눌러도 아무 변화가 없는 버튼은 **고장으로 읽힌다.**
   //   ⚠️ 창업자가 같은 종류를 방금 잡아냈다 — *"레시피꾸미기 아니고 요리다이어리"*.
   //      **표지용 UI 가 다이어리에 그대로 딸려온 것**이 뿌리다(제목도, 이 탭도).
+  // 📔📔 **「속지」가 맨 앞** (창업자 2026-08-06 *"지금 꾸미기 틀이랑 꾸미기로 나눠져있는게 조금 불편해"*)
+  //   전엔 다이어리 화면에 「선·종이·틀」 줄이 따로 있고, 꾸미기는 또 다른 버튼이었다 —
+  //   **한 장을 만드는데 손이 두 군데**였다. 종이를 고르는 건 «꾸미기의 첫 단계»지 딴 일이 아니다.
+  //   ⭐ 자리는 표지의 「배경」과 같다 — 배경도 속지도 **맨 밑에 까는 판**이라 순서가 제일 먼저다.
   const CATS = [
+    ...(canPickPaper ? [{ key: 'paper', label: '속지' }] : []),
     ...(isDiary ? [] : [{ key: 'bgtape', label: '배경' }]),
     { key: 'frame', label: '프레임' },
     { key: 'tape', label: '마테' },
@@ -608,6 +630,40 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>출시 기념으로 네 가지를 넣어뒀어요</span>
               <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
             </button>
+            {/* 📔 속지 — 선·종이·틀 세 층. 「각각 혹은 같이」 고른다
+                (창업자 2026-08-06 *"저렇게 각각 혹은 같이 사용하는거 아이디어야"*).
+                ⚠️ 고르는 순간 «위 판»이 바뀐다 — 저장을 눌러야 보이는 게 아니다. */}
+            {cat === 'paper' && canPickPaper && PAPER_AXES.map((ax) => (
+              <div className="decor-sec" key={ax.key}>
+                <div className="decor-sec-label">{ax.label}</div>
+                {/* ⚠️ 줄이 «인쇄된» 틀에선 선을 골라도 화면이 안 바뀐다 — 그냥 두면 고장으로 읽힌다.
+                    ⛔ 칸을 숨기지는 않는다. 틀을 「없음」으로 바꾸면 바로 살아나는 값이라 감추면 못 찾는다. */}
+                {ax.key === 'rule' && paperStyle(paperPick).ruleWhere === 'none' && (
+                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)', margin: '-2px 0 8px', lineHeight: 1.5 }}>
+                    지금 고른 틀엔 줄이 이미 그려져 있어요 · 틀을 바꾸면 여기서 고른 선이 보여요
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
+                  {ax.list.map((o) => {
+                    const next = { ...paperPick, [ax.key]: o.key }
+                    const on = paperPick[ax.key] === o.key
+                    // ⭐⭐ 미리보기는 **그 층만** 보여준다 — 틀 그림을 얹으면 그림이 선·종이색을 덮어
+                    //    무지·줄·모눈·도트 넷이 «똑같아 보인다»(실물 캡처로 잡음 2026-08-06).
+                    //    「틀」 절만 그림 그대로 — 거기선 그림 자체가 고르는 대상이다.
+                    const mini = paperStyle(ax.key === 'art' ? next : { ...next, art: 'none' })
+                    return (
+                      <button key={o.key} className="press" onClick={() => onPaperPick(next)} aria-label={`속지 ${o.label}`}
+                        style={{ flex: '0 0 auto', border: 'none', background: 'none', padding: 0, width: 54 }}>
+                        {/* 📏 줄 간격 — CSS 기본값(28px)은 54px 스와치에 두 줄만 그어져 「줄노트」로 안 읽힌다 */}
+                        <div className={mini.className}
+                          style={{ width: 54, aspectRatio: '3/4', borderRadius: 8, '--rule-gap': '8px', boxShadow: on ? '0 0 0 2.5px var(--brown)' : '0 1px 4px rgba(70,60,45,.18)', ...(mini.style || {}) }} />
+                        <div style={{ fontSize: 10.5, fontWeight: 700, marginTop: 4, textAlign: 'center', color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{o.label}</div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
             {/* 🎨 배경·테이프 */}
             {cat === 'bgtape' && (
               <>
