@@ -23,6 +23,7 @@ import InboxScreen from './screens/InboxScreen'
 import FavoritesScreen from './screens/FavoritesScreen'
 import CookedScreen from './screens/CookedScreen'
 import CookScreen from './screens/CookScreen'
+import DiaryScreen from './screens/DiaryScreen'
 
 // '일지'는 레시피 탭의 '요리 기록' 세그먼트로 합쳐졌다.
 const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, shop: ShopScreen, brag: BragScreen, profile: ProfileScreen }
@@ -426,6 +427,9 @@ function renderScreen(s) {
       return <CookedScreen />
     case 'cook':
       return <CookScreen id={s.id} />
+    // 📔 다이어리 = 레시피가 아니라 «날짜»에 묶인다 (창업자 2026-08-06)
+    case 'diary':
+      return <DiaryScreen day={s.day} />
     default:
       return null
   }

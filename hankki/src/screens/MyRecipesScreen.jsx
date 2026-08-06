@@ -305,6 +305,22 @@ export default function MyRecipesScreen() {
             <CookCalendar entries={entries} selected={dayFilter} onSelect={setDayFilter} iconFor={iconFor} />
           )}
 
+          {/* 📔 다이어리 쓰기 — 창업자 2026-08-06 *"따로 아이콘을 하나 파서 다이어리 쓰기
+              (날짜 넣고 쓰면 달력에 저장되도록)"*
+              ⭐ 요리를 «안 한 날»에도 쓸 수 있어야 한다 — 그래서 「만들었어요」와 별개 입구다.
+              ⚠️ 날짜를 고르는 UI 를 새로 만들지 않았다 — **달력이 바로 위에 있다.**
+                 날짜를 골라 두고 누르면 그날, 안 고르면 오늘. (새 UI 0개) */}
+          <button
+            className="press"
+            onClick={() => nav.push({ name: 'diary', day: dayFilter || dayKey(Date.now()) })}
+            style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 12, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontSize: 13.5, fontWeight: 800, border: 'none' }}
+          >
+            <Icon name="pen" size={16} color="#fff" />
+            {dayFilter
+              ? `${Number(dayFilter.split('-')[1]) + 1}월 ${dayFilter.split('-')[2]}일 다이어리 쓰기`
+              : '오늘 다이어리 쓰기'}
+          </button>
+
           {entries.length > 0 && (
             <div className="card" style={{ padding: '11px 14px', marginBottom: 12, background: 'var(--cream)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, fontWeight: 600 }}>
               <span>이번 달 <b style={{ color: 'var(--brown)' }}>{thisMonth}</b>번</span>
