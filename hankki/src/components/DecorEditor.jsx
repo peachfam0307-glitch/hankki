@@ -53,7 +53,12 @@ function loadDraft(id) {
   try { return JSON.parse(localStorage.getItem(draftKey(id)) || 'null') } catch { return null }
 }
 
-export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
+// 📐 `ratio` = 꾸미는 판의 «모양». 표지는 정사각(1/1), 다이어리는 세로 종이(3/4).
+//   ⭐ 같은 에디터를 둘 다 쓴다 — 서랍·모션·효과·컨텍스트바가 통째로 재사용된다.
+//   ✅ 되는 근거 = 스티커 좌표가 **%** 라 판 모양이 바뀌어도 그대로 따라온다.
+//      (레꾸자랑에서 화면 밖 아무 크기로 렌더해 캡처해도 정상이던 그 성질)
+//   ⛔ px 로 박으면 안 된다 — 여름 물결 배경이 세로 %를 못 써서 안 움직이던 것과 같은 함정.
+export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1' }) {
   const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
   // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
   const draft = loadDraft(recipe.id)
@@ -325,10 +330,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef }) {
           </div>
         )}
 
-        {/* 표지 캔버스 */}
+        {/* 꾸미는 판 — 표지면 정사각, 다이어리면 세로 종이 */}
         <div className="decor-stage">
-          <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', borderRadius: 18, overflow: 'hidden' }}>
-            <Thumb recipe={{ ...recipe, decorBg: bg, thumb }} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
+          <div style={{ position: 'relative', width: '100%', aspectRatio: ratio, borderRadius: 18, overflow: 'hidden' }}>
+            <Thumb recipe={{ ...recipe, decorBg: bg, thumb }} ratio={ratio} radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
             <DecorLayer
               items={items}
               editable
