@@ -91,7 +91,7 @@ function loadDraft(id) {
 // 📔 `paperPick`·`onPaperPick` = 다이어리 속지 고르기를 **이 서랍 안에서** 하게 하는 두 짝.
 //   ⭐ 값은 부모(다이어리 화면)가 쥔다 — 고르는 순간 부모의 `paper`·`paperOverlay` 가 다시 내려와
 //      **위 판이 그 자리에서 바뀐다.** 여기서 따로 들고 있으면 판과 글자 자리가 어긋난다.
-export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, paperOverlay = null, title = '레시피 꾸미기', paperPick = null, onPaperPick = null }) {
+export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, paperOverlay = null, paperEdit = null, title = '레시피 꾸미기', paperPick = null, onPaperPick = null }) {
   const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
   // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
   const draft = loadDraft(recipe.id)
@@ -117,7 +117,14 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⛔ 처음엔 속지를 탭 «일곱 중 하나»로 넣었는데, 그러면 **종이 고르는 일이 스티커 고르는 일과 같은 급**이 된다.
   //      실제로는 순서가 있는 두 단계다 — 종이를 깔고, 그 위에 꾸민다.
   //   ⭐ 빈 다이어리를 처음 열면 「속지 고르기」부터. 이미 꾸며둔 걸 다시 열면 「꾸미기」로 간다.
+  //   ✍️ **셋째 칸 = 「글쓰기」** (창업자 2026-08-06 *"속지고르고 꾸미고 저장해야 글을 쓸수있어서 불편한데.."*)
+  //      ⛔ 전엔 «저장하고 나가야» 글이 써졌다 — 속지를 고른 채로 한 줄 쓰려면 매번 나갔다 들어와야 했다.
+  //      ⭐ 종이는 그대로 두고 **누가 그 종이를 만지나**만 바꾼다:
+  //         · 꾸미기·속지 = 스티커 층이 손가락을 먹는다(글칸은 `pointerEvents:none`)
+  //         · 글쓰기     = 스티커 층을 «통과»시키고 글칸이 받는다(`editable={false}` → `pointerEvents:none`)
+  //      ⚠️ 그래서 새 화면을 안 만들었다. 같은 판에서 «층 하나»가 바뀔 뿐이다.
   const [mode, setMode] = useState(canPickPaper && items.length === 0 ? 'paper' : 'decor')
+  const writing = mode === 'write' && !!paperEdit
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
   const [gift, setGift] = useState(() => needsGiftPack())
@@ -424,17 +431,27 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         )}
 
         {/* 꾸미는 판 — 표지면 정사각, 다이어리면 세로 종이 */}
-        <div className="decor-stage">
+        <div className={`decor-stage${writing ? ' writing' : ''}`}>
           {(() => {
             const layer = (
               <DecorLayer
                 items={items}
-                editable
+                // ✍️ 글쓰기 모드에선 스티커 층이 **손가락을 통과시킨다**(`editable=false` → `pointerEvents:none`).
+                //    그래야 아래 글칸이 탭을 받는다. 스티커는 그대로 보이고 못 움직일 뿐이다.
+                editable={!writing}
                 selectedId={sel}
                 onSelect={select}
                 onChange={patch}
                 onRemove={remove}
                 onEditNote={(it) => setNoteEdit(it)}
+                // 📍 빈 종이의 «글칸»을 탭하면 글쓰기로 (창업자 *"속지 화면 줄 클릭하면 글쓰고"*)
+                //    ⚠️ 스티커를 탭한 건 여기로 안 온다 — `DecorLayer` 가 걸러서 준다.
+                onEmptyTap={paperEdit && paper?.fields?.write ? (x, y) => {
+                  const w = paper.fields.write
+                  const top = w.top ?? 0
+                  const bottom = 100 - (w.bottom ?? 0)
+                  if (x >= w.left && x <= 100 - w.right && y >= top && y <= bottom) setMode('write')
+                } : undefined}
               />
             )
             // 📔 다이어리 — 종이 ＋ 쓴 글이 «화면과 똑같이» 보여야 한다.
@@ -446,10 +463,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 //      (표지는 1:1 이라 이 문제가 없었다 — 판 모양이 바뀌었는데 자리는 안 바꿨다).
                 //   📏 3:4 이므로 폭을 31.5vh 로 묶으면 높이가 42vh 다. 나머지는 서랍이 가져간다.
                 //   ⚠️ 폭이 줄어도 글자·줄은 `cqw` 라 «비율 그대로» 따라 줄어든다.
-                <div style={{ width: 'min(100%, 31.5vh)', margin: '0 auto' }}>
+                //   ✍️ **글쓰기 땐 종이를 키운다** — 서랍이 한 줄로 접히니 그만큼 종이가 가져간다.
+                //      42vh 는 손글씨 칸이 너무 작아 「쓰는 판」으로 안 읽힌다.
+                <div style={{ width: writing ? 'min(100%, 40vh)' : 'min(100%, 31.5vh)', margin: '0 auto' }}>
                   <PaperBox skin={paper} ratio={ratio} style={{ borderRadius: 18 }}>
-                    {/* ⚠️ 사진이 «먼저» — 그래야 스티커를 사진 위에 붙일 수 있다(글자는 zIndex 1) */}
-                    {paperOverlay}
+                    {/* ⚠️ 사진이 «먼저» — 그래야 스티커를 사진 위에 붙일 수 있다(글자는 zIndex 1)
+                        ✍️ 글쓰기 땐 «쓸 수 있는 판»으로 갈아끼운다 — 자리는 똑같고 손이 닿을 뿐이다 */}
+                    {writing ? paperEdit : paperOverlay}
                     {layer}
                   </PaperBox>
                 </div>
@@ -467,11 +487,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ⭐ 다이어리는 **닫아야 글을 쓴다** — 그 사실을 여기서 한 줄로 말한다. */}
           {/* ⚠️ `keep-all` — 한국어는 낱말 중간에서 끊으면 「저 / 장」처럼 읽힌다(실물 캡처로 잡음) */}
           <div className="t-sub" style={{ fontSize: 12, textAlign: 'center', marginTop: 10, lineHeight: 1.5, wordBreak: 'keep-all' }}>
-            {hasCtx
-              ? '탭한 걸 여기서 바로 꾸며요 · 드래그로 이동 · ⟳ 크기/회전'
-              : isDiary
-                ? '붙이고 옮기고 · 다 되면 오른쪽 위 저장'
-                : '아래에서 골라 붙이고 · 드래그로 이동 · ⟳ 손잡이로 크기/회전'}
+            {writing
+              ? '종이에 바로 써요 · 꾸미려면 아래 「꾸미기」'
+              : hasCtx
+                ? '탭한 걸 여기서 바로 꾸며요 · 드래그로 이동 · ⟳ 크기/회전'
+                : isDiary
+                  ? '붙이고 옮기고 · 글칸을 누르면 바로 써져요'
+                  : '아래에서 골라 붙이고 · 드래그로 이동 · ⟳ 손잡이로 크기/회전'}
           </div>
         </div>
 
@@ -627,13 +649,16 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         )}
 
         {/* 서랍 — 새로 붙이기 전용(배경·스티커·테이프·글자·포스트잇). 선택 아이템 편집은 위 컨텍스트 바에서. */}
-        <div className="decor-drawer">
+        <div className={`decor-drawer${writing ? ' writing' : ''}`}>
           <div className="decor-grab" />
-          {/* 🧭 큰 두 칸 — 왼쪽 「속지 고르기」 · 오른쪽 「꾸미기」 (창업자 2026-08-06)
-              ⭐ 앱에 이미 있는 `.segment` 를 쓴다 — 「모아보기 / 요리 기록」과 같은 문법이라 배울 게 없다. */}
-          {canPickPaper && (
+          {/* 🧭 큰 칸들 — 「속지 고르기 · 글쓰기 · 꾸미기」 (창업자 2026-08-06)
+              ⭐ 앱에 이미 있는 `.segment` 를 쓴다 — 「모아보기 / 요리 기록」과 같은 문법이라 배울 게 없다.
+              ✍️ 「글쓰기」는 **한 장을 만드는 세 단계 그대로**다 — 종이를 깔고 · 쓰고 · 꾸민다.
+                 ⛔ 예전엔 셋째 단계가 「저장하고 나가기」였다. 그게 창업자가 말한 불편이다. */}
+          {(canPickPaper || paperEdit) && (
             <div className="segment" style={{ margin: '2px 2px 9px' }}>
-              <button className={`seg ${mode === 'paper' ? 'on' : ''}`} onClick={() => setMode('paper')}>속지 고르기</button>
+              {canPickPaper && <button className={`seg ${mode === 'paper' ? 'on' : ''}`} onClick={() => setMode('paper')}>속지 고르기</button>}
+              {paperEdit && <button className={`seg ${writing ? 'on' : ''}`} onClick={() => setMode('write')}>글쓰기</button>}
               <button className={`seg ${mode === 'decor' ? 'on' : ''}`} onClick={() => setMode('decor')}>꾸미기</button>
             </div>
           )}
@@ -652,6 +677,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           </div>
           )}
           <div className="decor-scroll" ref={drawerRef}>
+            {/* ✍️ 글쓰기 — 서랍엔 **아무것도 안 둔다.** 칸이 비어야 서랍이 접히고 종이가 커진다.
+                ⛔ 여기에 뭘 넣으면 「글 쓰는데 서랍이 반을 먹는」 지금 문제가 그대로 남는다.
+                ⛔ 안내도 여기 두지 않는다 — 종이 밑에 이미 한 줄 있어서 **같은 말이 두 번** 나온다. */}
             {/* 📔 속지 쪽 — 이 안엔 종이 얘기만 둔다(사진·선물·스티커는 「꾸미기」 쪽) */}
             {mode === 'paper' && canPickPaper && PAPER_AXES.map((ax) => (
               <div className="decor-sec" key={ax.key}>

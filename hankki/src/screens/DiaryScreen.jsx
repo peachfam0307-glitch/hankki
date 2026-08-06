@@ -45,10 +45,19 @@ export default function DiaryScreen({ day }) {
   )
   const iconOf = (e) => (recipes.find((r) => r.id === e.recipeId) || {}).icon || guessFoodIcon(e.title)
 
-  // ⭐ 기본이 «줄»이다 (2026-08-06) — 종이 위에 바로 쓰는 판이라 줄이 있어야 글씨가 정돈된다.
-  //   창업자 *"줄눈을 그어주는게 좋을까...? 그건 잘 모르겠네"* → **우리가 정하지 않는다.**
-  //   기본을 줄로 두고, 「선」 탭에서 무지·모눈·도트로 언제든 바꾼다. 판정은 실물로.
-  const [pick, setPick] = useState(() => entry?.paper || { rule: 'lined', skin: 'ivory', art: 'none' })
+  // 📄📄 **처음 열면 전부 「맨 왼쪽」** (창업자 2026-08-06
+  //   *"처음에 일기쓰기 클릭하면 다 왼쪽껄로 고르게 해줘. 없음이랑 아이보리.."*)
+  //   틀 = 없음 · 종이 = 아이보리 · 선 = **무지**. 서랍에 보이는 순서 그대로 첫 칸이다.
+  //   ⛔ 전엔 선만 「줄」이었다 — 내가 *"쓰는 판이라 줄이 있어야 정돈된다"* 며 «둘째»를 기본으로 뒀다.
+  //      창업자가 *"줄눈을 그어주는게 좋을까...? 그건 잘 모르겠네"* 라 했을 때 **우리가 정하지 않기로** 해놓고
+  //      내 판단으로 정해버린 것이다. 골라 쓰는 건 한 번 누르면 된다.
+  const FIRST = { rule: 'plain', skin: 'ivory', art: 'none' }
+  const [pick, setPick] = useState(() => entry?.paper || FIRST)
+  // ⚠️⚠️ **날이 바뀌면 고른 속지도 따라가야 한다** — 이게 창업자가 본 *"막 중구난방으로 골라져있어"* 다.
+  //   `useState` 초기값은 **한 번만** 읽는다. 화면이 안 갈리고 `day` 만 바뀌면(달력에서 옆날로)
+  //   `pick` 이 **앞 날의 속지 그대로** 남아, 아무것도 안 쓴 날을 열었는데 도트·크라프트가 골라져 있다.
+  //   ⭐ 바로 아래 `text` 는 이미 같은 이유로 `day` 마다 되돌리고 있었다 — **`pick` 만 빠져 있었다.**
+  useEffect(() => { setPick(entry?.paper || FIRST) }, [day]) // eslint-disable-line react-hooks/exhaustive-deps
   const [open, setOpen] = useState(false)
   const closeRef = useRef(null)
   useLayerBack(open, () => { if (closeRef.current) closeRef.current(); else setOpen(false) })
@@ -175,6 +184,21 @@ export default function DiaryScreen({ day }) {
           // ✍️ 꾸미는 동안에도 쓴 글이 «같은 자리»에 보여야 한다 — 안 보이면 그 위에 스티커를 놓는다.
           //    ⭐ 에디터가 글을 «모르게» 조각째 넘긴다 — 두 곳에서 그리면 자리가 어긋난다.
           paperOverlay={<PaperSheet fields={skin.fields} rule={skin.rule} value={text} dateLabel={dateLabel} />}
+          // ✍️✍️ **꾸미기 안에서 «바로 쓴다»** (창업자 2026-08-06
+          //    *"속지고르고 꾸미고 저장해야 글을 쓸수있어서 불편한데.. 속지 고른상태에서
+          //      속지 화면 줄 클릭하면 글쓰고(꾸미기칸자동내려감) … 다시 꾸미기버튼 누르면 꾸미고"*)
+          //    ⭐ 위 `paperOverlay` 와 **같은 조각에 `onChange` 만 붙인 것**이다 — 자리가 어긋날 수 없다.
+          //    ⚠️ 사진 고르기(`photoRef`)는 이 화면에 그대로 살아 있다 — 에디터는 Portal 이라 형제다.
+          paperEdit={(
+            <PaperSheet
+              fields={skin.fields}
+              rule={skin.rule}
+              value={text}
+              onChange={setText}
+              onPickPhoto={() => photoRef.current?.click()}
+              dateLabel={dateLabel}
+            />
+          )}
           // 📔 속지 고르기 = 꾸미기 첫 탭. 고르면 «그 자리에서» 판이 바뀐다(저장을 눌러야 보이는 게 아니다)
           paperPick={pick}
           onPaperPick={choose}

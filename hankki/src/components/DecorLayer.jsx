@@ -10,7 +10,7 @@ import { StickerArt, StickerFx, FRIEND_IDS, stickerRatio, NOTE_COLORS, TEXT_COLO
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
-export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote }) {
+export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote, onEmptyTap }) {
   const boxRef = useRef(null)
   // 커버 실제 폭(px) — 글자 상자를 글자에 딱 맞추면서(max-content) 글자 크기는 '커버 폭 기준'으로 px 계산하려고.
   const [coverW, setCoverW] = useState(0)
@@ -88,11 +88,22 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
   }
   const onHandleUp = () => { hRef.current = null }
 
+  // 📍 빈 종이를 탭했을 때 «어디를» 탭했는지 비율로 알려준다 (2026-08-06)
+  //    창업자 *"속지 화면 줄 클릭하면 글쓰고"* — 글칸을 탭하면 글쓰기로 넘어가려고.
+  //    ⚠️ `currentTarget === target` 이라야 «빈 종이»다 — 스티커를 탭한 건 여기로 안 온다.
+  //    ⛔ 주석을 태그 «안»에 두지 않는다 — 표현식 자리에서 죽는다(2026-08-04 빌드 사고).
+  const onBoxDown = (e) => {
+    onSelect?.(null)
+    if (!onEmptyTap || e.currentTarget !== e.target) return
+    const b = e.currentTarget.getBoundingClientRect()
+    if (b.width && b.height) onEmptyTap(((e.clientX - b.left) / b.width) * 100, ((e.clientY - b.top) / b.height) * 100)
+  }
+
   return (
     <div
       ref={boxRef}
       style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: editable ? 'auto' : 'none', touchAction: editable ? 'none' : 'auto' }}
-      onPointerDown={editable ? () => onSelect?.(null) : undefined}
+      onPointerDown={editable ? onBoxDown : undefined}
     >
       {(editable || items.some((it) => it.type === 'note' && noteIsClip(it.shape))) && <NoteShapeDefs />}
       {items.map((it) => {

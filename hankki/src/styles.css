@@ -1462,6 +1462,17 @@ html, body { overscroll-behavior: none; }
   padding: 14px 18px 10px;
 }
 .decor-stage { padding: 4px 16px 0; flex: 0 0 auto; }
+/* ✍️ 글쓰기 모드 — 종이가 커지고 «스크롤이 된다».
+   ⚠️ 폰에서 자판이 올라오면 화면 아래 절반이 덮인다. 판이 고정이면 메모칸이 자판 뒤로 숨는다
+      → 스크롤을 열어 «올려서» 쓸 수 있게. (에디터가 position:fixed 라 페이지 스크롤이 없다) */
+.decor-stage.writing {
+  flex: 1 1 auto; overflow-y: auto; min-height: 0;
+  /* 종이를 «가운데»로 — 위에 붙이면 아래가 통째로 빈 칸이라 안 끝난 화면처럼 보인다(캡처로 잡음).
+     ⚠️ `safe` 가 핵심이다. 자판이 올라와 판이 넘칠 때 그냥 `center` 면 **위쪽이 잘려 못 올라간다.** */
+  display: flex; flex-direction: column; justify-content: safe center;
+}
+/* 서랍은 칸 줄만 남기고 접힌다 — 그만큼 종이가 가져간다 */
+.decor-drawer.writing { max-height: 26vh; }
 .decor-drawer {
   margin-top: auto;
   background: var(--surface);
