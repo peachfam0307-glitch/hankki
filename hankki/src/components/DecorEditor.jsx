@@ -10,7 +10,7 @@ import { seasonRank, isReleased } from '../season'
 import GiftPackSheet from './GiftPackSheet'
 import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
-import { cropSquare, cropRatio } from '../utils'
+import { cropRatio, imageRatio } from '../utils'
 import { FRAME_WINDOW } from '../data/frameWindows'
 import { StickerArt, stickerRatio, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
 
@@ -441,9 +441,18 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       //    「이 프레임에 사진 넣기」라 무슨 일이 일어날지 «누르기 전에» 이미 안다.
       return
     }
-    const small = await cropSquare(src, 700, 0.8)
+    // 📷📷 **자르지 않고 «통째로»** 붙인다 (창업자 폰 제보 2026-08-07 *"무지 내사진넣기에서 크롭기능있으면"*)
+    //   ⛔ 전엔 `cropSquare` 라 **무조건 정사각**이었다 — 세로로 찍은 사진은 위아래가 잘려 나갔고,
+    //      잘린 부분은 **되찾을 길이 없었다**(원본을 안 남긴다).
+    //   ⭐ 원본 비율 그대로 붙이면 **아무것도 안 잘린다.** 크기·각도는 손잡이로 맞추면 되고,
+    //      정사각으로 쓰고 싶으면 프레임에 끼우면 된다(그건 창 모양대로 자른다).
+    //   📌 「크롭 기능」의 반은 이걸로 풀린다 — 사람들이 크롭을 찾는 이유가 대개 **「잘리는 게 싫어서」**다.
+    //      ⏳ 「내가 고른 부분만 보이게」(끌어서 맞추기)는 다음 판에.
+    //   ⚠️ 긴 변 기준 700px — 세로 사진이 «폭» 700 이면 높이가 1200 을 넘어 무거워진다.
+    const ar = await imageRatio(src)
+    const small = await cropRatio(src, ar, 700, 0.8)
     const n = items.length
-    const it = { id: newDecorId(), type: 'photo', src: small, x: 0.5, y: 0.44, s: 0.44, r: ((n % 5) - 2) * 3 }
+    const it = { id: newDecorId(), type: 'photo', src: small, ratio: ar, x: 0.5, y: 0.44, s: ar >= 1 ? 0.5 : 0.38, r: ((n % 5) - 2) * 3 }
     mark(); setItems((arr) => [...arr, it])
     setSel(it.id)
   }
@@ -989,7 +998,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px', marginBottom: 8,
                 borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>
               <Icon name="photo" size={17} color="var(--brown)" />
-              <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{selFrame ? '이 프레임에 사진 넣기' : '내 사진 넣기'}</span>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{selFrame ? '이 프레임에 사진 넣기' : '사진 스티커로 붙이기'}</span>
               <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
             </button>
             <input ref={photoRef} type="file" accept="image/*" onChange={onPhotoFile} style={{ display: 'none' }} />

@@ -85,6 +85,23 @@ for (const [label, got] of hit) {
   else no(`「${label}」이 안 눌린다 — ${got} 가 덮고 있다`)
 }
 
+// ── ①-B 📷 「속지」 탭에서 «틀의 사진칸»이 눌린다 ────────
+//   ⭐ 창업자 제보 *"사진은 일꾸 글쓰기는 글쓰기 각탭에서 수정해야해서 번거로움"* →
+//      **고르는 일(축·사진)을 「속지」 탭 한 곳에** 모았다. 전엔 사진칸이 «글쓰기» 탭에서만 눌렸다.
+//   ⚠️ 일꾸 탭에선 안 눌리는 게 «맞다» — 거기선 스티커 판이 종이를 덮어야 스티커를 끌 수 있다.
+//      (축은 zIndex 1 이라 위에 있고, 사진칸은 «틀 선이 사진 위에 그려져 창이 되도록» 일부러 아래에 둔다)
+await page.getByRole('button', { name: '속지', exact: true }).first().click(); await page.waitForTimeout(900)
+const shot = await page.evaluate(() => {
+  const el = document.querySelector('.decor-stage [aria-label="사진 넣기"], .decor-stage [aria-label="사진 바꾸기"]')
+  if (!el) return '없음'
+  const r = el.getBoundingClientRect()
+  const top = document.elementsFromPoint(r.x + r.width / 2, r.y + r.height / 2)[0]
+  return top === el ? 'ok' : (top?.tagName || '?') + '[' + (top?.className || '무') + ']'
+})
+if (shot === 'ok') ok('⭐ 「속지」 탭에서 틀의 사진칸이 눌린다 — 탭을 옮겨다닐 일이 없다')
+else no()
+await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); await page.waitForTimeout(700)
+
 // ── ② 만족도는 별점처럼 차오른다 ────────────────────────
 const three = inStage('만족도 3')
 if (await three.count() === 0) no('「만족도 3」이 서랍 판에 없다')
@@ -130,6 +147,40 @@ const scrollable = await page.evaluate(() => {
 if (scrollable) ok('넘치는 만큼은 스크롤로 볼 수 있다')
 else no('스크롤이 안 된다 — 종이가 화면 밖으로 잘린다')
 await page.screenshot({ path: join(OUT, '속지고르기-확인.png') })
+
+// ── ⑤ 📷 사진 스티커는 «안 잘린다» — 원본 비율 그대로 ─────
+//   창업자 폰 제보 *"무지 내사진넣기에서 크롭기능있으면"*
+//   ⛔ 전엔 무조건 정사각(`cropSquare`)이라 세로 사진의 위아래가 잘려 나갔고 되찾을 길이 없었다.
+//   ⭐ 세로로 긴 그림(1:3)을 넣어 «비율이 살아 있나»를 잰다.
+await page.setViewportSize({ width: 360, height: 880 }); await page.waitForTimeout(500)
+await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); await page.waitForTimeout(700)
+const TW = 300, TH = 900
+const b64 = await page.evaluate(([w, h]) => {
+  const c = document.createElement('canvas'); c.width = w; c.height = h
+  const x = c.getContext('2d'); x.fillStyle = '#cc8866'; x.fillRect(0, 0, w, h)
+  return c.toDataURL('image/png').split(',')[1]
+}, [TW, TH])
+const fileInput = page.locator('.decor-drawer input[type=file]').first()
+if (await fileInput.count() === 0) no('서랍에 사진 고르는 칸이 없다')
+else {
+  await fileInput.setInputFiles({ name: 'tall.png', mimeType: 'image/png', buffer: Buffer.from(b64, 'base64') })
+  await page.waitForTimeout(1600)
+  const box = await page.evaluate(() => {
+    const imgs = [...document.querySelectorAll('.decor-stage img')].filter((i) => (i.currentSrc || i.src).startsWith('data:'))
+    const el = imgs[imgs.length - 1]
+    if (!el) return null
+    const p = el.closest('[style*="translate(-50%"]') || el.parentElement
+    const r = p.getBoundingClientRect()
+    return { w: r.width, h: r.height }
+  })
+  if (!box) no('붙인 사진을 판에서 못 찾았다')
+  else {
+    const got = box.w / box.h
+    const want = TW / TH
+    if (Math.abs(got - want) < 0.08) ok(`⭐ 세로 사진이 «안 잘렸다» — 판 위 비율 ${got.toFixed(2)} (원본 ${want.toFixed(2)})`)
+    else no(`사진이 잘렸다 — 판 위 ${got.toFixed(2)} vs 원본 ${want.toFixed(2)} (정사각이면 1.00)`)
+  }
+}
 
 if (errors.length) errors.forEach((e) => no(`pageerror — ${e}`))
 else ok('pageerror 0')

@@ -145,6 +145,20 @@ export function matchKo(text, query) {
 //      `ar` = 가로÷세로. 1 을 주면 `cropSquare` 와 같은 결과.
 //   ⚠️ 위 `cropSquare` 의 두 안전망을 그대로 쓴다 — ①흰색 먼저 칠하고 ②`decode()` 로 비트맵을 기다린다
 //      (안 그러면 폰에서 «검정 사진»이 나온다. 2026-07-23 사고).
+// 📐 사진의 «원래» 가로÷세로. 자르지 않고 통째로 붙일 때 쓴다
+//   (창업자 폰 제보 2026-08-07 *"무지 내사진넣기에서 크롭기능있으면"* — 세로 사진이 정사각으로 잘렸다).
+//   ⚠️ 못 읽으면 1(정사각)로 — 값이 없다고 화면이 깨지면 안 된다.
+export async function imageRatio(dataUrl) {
+  try {
+    const img = new Image()
+    await new Promise((res) => { img.onload = res; img.onerror = res; img.src = dataUrl })
+    if (img.decode) { try { await img.decode() } catch {} }
+    const w = img.naturalWidth || img.width
+    const h = img.naturalHeight || img.height
+    return (w > 0 && h > 0) ? w / h : 1
+  } catch { return 1 }
+}
+
 export async function cropRatio(dataUrl, ar = 1, outW = 800, quality = 0.85) {
   try {
     if (!(ar > 0)) ar = 1

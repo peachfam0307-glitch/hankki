@@ -58,6 +58,14 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
   // ✅ 축을 고를 수 있나 — 쓰기 판(`onChange`)이거나, 고르기만 열어 준 판(`onPick`)이면 된다
   const write = onChange || onPick
   const canPick = !!write
+  // 📷 **틀의 사진칸도 「탭 한 번」이다** (창업자 폰 제보 2026-08-07
+  //    *"사진은 일꾸 글쓰기는 글쓰기 각탭에서 수정해야해서 번거로움"*)
+  //   ⛔ 전엔 `!ro` 라 **글쓰기 탭에서만** 눌렸다 → 사진 넣으러 글쓰기로 갔다가
+  //      꾸미러 일꾸로 돌아오는 «왕복»이 생겼다.
+  //   ⭐ 사진 고르기는 글쓰기가 아니라 **고르는 일**이다(키보드가 안 뜬다) — 축과 같은 부류다.
+  //      그래서 「속지」 탭에서도 눌리게 해서 **고르는 일을 한자리에** 모은다.
+  //   ⚠️ 누를 «곳»(`onPickPhoto`)이 없으면 못 누른다 — 판마다 넘겨줘야 한다.
+  const canShot = canPick && !!onPickPhoto
   const set = (k) => (e) => onChange({ ...value, [k]: e.target.value })
   const bg = ruleBg(rule)
   // ⛔ 읽기 전용(꾸미기 판)에선 아무것도 손가락을 먹으면 안 된다 — 그 위에서 스티커를 끌어야 한다
@@ -74,7 +82,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
       {fields.photo && (
         <div style={{ ...box(fields.photo), overflow: 'hidden' }}>
           {value.photo
-            ? (ro
+            ? (!canShot
               ? <img src={value.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               : (
                 <button type="button" className="press" onClick={onPickPhoto} aria-label="사진 바꾸기"
@@ -82,7 +90,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
                   <img src={value.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </button>
               ))
-            : (!ro && (
+            : (canShot && (
               <button type="button" className="press" onClick={onPickPhoto} aria-label="사진 넣기"
                 style={{
                   width: '100%', height: '100%', padding: 0, border: 'none', background: 'none',
