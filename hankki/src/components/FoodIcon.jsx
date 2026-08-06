@@ -698,6 +698,42 @@ export const FOOD_ICON_GROUPS = [
   { label: '쇼핑', items: ['bag', 'cart', 'basket', 'store', 'box'] },
 ]
 
+// ── 📊 「이번 달 뭘 해먹었나」 분류 (2026-08-06 ③) ───────────────────────────
+//
+// ⭐ 새 분류를 만들지 않는다 — 창업자가 2026-08-05 에 확정한 **픽커 탭 순서 그대로** 쓴다.
+//    (한 화면에서 고른 이름이 다른 화면에서 달라지면 그게 제일 헷갈린다)
+//
+// ⛔⛔ **「FOOD_ICON_GROUPS 13칸」을 그대로 세면 안 된다.** 위 배열은 13칸이 아니라 **20칸**이고,
+//    「요리 아이콘」부터 아래는 **요리가 아니라 재료·도구 SVG**다(채소·과일·양념·쇼핑…).
+//    그대로 세면 화면에 **「채소 3번」**이 뜬다. 경계는 사람 눈이 아니라 **이 상수**가 정한다.
+const DISH_GROUP_N = 13 // 밥 … 빵·디저트·음료 (그 뒤는 재료·도구)
+
+// 범용 도형(SVG)으로 저장된 레시피도 어딘가에 세어져야 한다.
+// ⛔ 안 세면 「이번 달 5번」인데 분류 합이 3이 되어 **숫자가 서로 어긋난다** — 그 순간 통계는 안 믿긴다.
+// ⚠️ 어느 칸에 넣을지는 위 13칸 기준을 그대로 적용한 것이지 새로 정한 게 아니다.
+const SHAPE_GROUP = {
+  donburi: '밥', bibimbap: '밥', gimbap: '밥',
+  noodle: '면', guksu: '면', pasta: '면',
+  soup: '국·탕·찌개', stew: '국·탕·찌개', spicybowl: '국·탕·찌개', pot: '국·탕·찌개',
+  stirfry: '볶음·조림', stirfryspicy: '볶음·조림', stirfryveg: '볶음·조림',
+  grill: '구이·튀김', fried: '구이·튀김',
+  salad: '반찬·나물·김치',
+  seafood: '회·수육', sushi: '일식',
+  dessert: '빵·디저트·음료', icecream: '빵·디저트·음료',
+}
+
+const GROUP_OF = (() => {
+  const m = {}
+  FOOD_ICON_GROUPS.slice(0, DISH_GROUP_N).forEach((g) => { for (const k of g.items) m[k] = g.label })
+  for (const k in SHAPE_GROUP) if (!m[k]) m[k] = SHAPE_GROUP[k]
+  return m
+})()
+
+/** 아이콘 키 → 요리 분류 이름. 어디에도 안 걸리면 `null`(＝화면에선 「그 밖」으로 묶는다). */
+export const dishGroupOf = (key) => GROUP_OF[key] || null
+/** 화면에 그릴 순서 — 픽커 탭 순서 그대로. */
+export const DISH_GROUPS = FOOD_ICON_GROUPS.slice(0, DISH_GROUP_N).map((g) => g.label)
+
 // 이름만 치면 어울리는 아이콘 키를 자동으로. (위에서부터 먼저 매칭 — 구체적 키워드를 앞에)
 const ICON_RULES = [
   // 🍱🍱 2026-08-05 창업자 시트 6장 → 16컷. **구체 요리명이라 맨 위에 둔다.**

@@ -6,7 +6,7 @@ import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
-import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
+import FoodIcon, { guessFoodIcon, dishGroupOf, DISH_GROUPS } from '../components/FoodIcon'
 import DiaryEntrySheet from '../components/DiaryEntrySheet'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { shouldAskReview } from '../nudges'
@@ -243,6 +243,44 @@ export default function MyRecipesScreen() {
     const best = Object.entries(c).sort((a, b) => b[1] - a[1])[0]
     return best && best[1] >= 2 ? best[0] : null
   }, [entries])
+
+  // ── 📊 이번 달 뭘 해먹었나 (2026-08-06 ③ · 창업자 아이디어) ──────────────
+  //
+  // ⭐ 이게 «누를 이유»다 — 「만들었어요」는 안 눌러도 손해가 없어서, 눌러서 쌓이는 게
+  //    보여야 다음에도 누른다(`docs/요리기록-다이어리-방향-2026-08-05.md` 9️⃣).
+  // ⛔ 설계원칙(`docs/리텐션-설계원칙-2026-07-30.md`) — **평가하지 않는다.**
+  //    「지난달보다 3번 적어요」 같은 건 안 만든다. 사실만 늘어놓는다.
+  // ⭐ 분류는 새로 만들지 않았다 — 음식 아이콘 픽커 탭 순서 그대로(`dishGroupOf`).
+  const monthStats = useMemo(() => {
+    const y = now.getFullYear(), m = now.getMonth()
+    const inMonth = (ts) => { const d = new Date(ts); return d.getFullYear() === y && d.getMonth() === m }
+    const mine = entries.filter((e) => inMonth(e.at))
+
+    // 분류별 횟수 ＋ 그 칸에 그릴 그림(내가 실제로 만든 것 중 최근 것)
+    const bag = {}
+    for (const e of mine) {
+      const g = dishGroupOf(iconFor(e)) || '그 밖'
+      if (!bag[g]) bag[g] = { label: g, n: 0, icon: iconFor(e) } // entries 가 최신순이라 첫 번째가 최근
+      bag[g].n += 1
+    }
+    // 픽커 탭 순서대로. 「그 밖」은 있으면 맨 끝.
+    const order = [...DISH_GROUPS, '그 밖']
+    const rows = order.map((l) => bag[l]).filter(Boolean)
+    // ⚠️ 막대 길이 기준은 «제일 많은 칸»이다. rows[0] 을 쓰면 안 된다 —
+    //    rows 는 «탭 순서»라 첫 칸이 제일 많은 칸이 아니고, 그러면 막대가 100%를 넘는다.
+    const max = rows.reduce((a, r) => Math.max(a, r.n), 0)
+
+    // 「이번 달 처음 만든 요리」 — 그 메뉴의 «첫» 기록이 이번 달인 것
+    const firstAt = {}
+    for (const e of entries) if (!(e.title in firstAt) || e.at < firstAt[e.title]) firstAt[e.title] = e.at
+    const newOnes = Object.keys(firstAt)
+      .filter((t) => inMonth(firstAt[t]))
+      .sort((a, b) => firstAt[b] - firstAt[a])
+      .slice(0, 4)
+
+    return { rows, max, newOnes, n: mine.length }
+    // ⚠️ `now` 는 렌더마다 새 객체라 의존성에 그대로 넣으면 memo 가 매번 다시 돈다 → 숫자로.
+  }, [entries, iconById, now.getFullYear(), now.getMonth()])
   const shown = dayFilter ? entries.filter((e) => dayKey(e.at) === dayFilter) : entries
   const openRecipe = (e) => {
     if (recipes.some((r) => r.id === e.recipeId)) nav.push({ name: 'detail', id: e.recipeId })
@@ -315,6 +353,38 @@ export default function MyRecipesScreen() {
                   <span style={{ color: 'var(--sand)' }}>·</span>
                   <span>최애 <b style={{ color: 'var(--brown)' }}>{topDish}</b></span>
                 </>
+              )}
+            </div>
+          )}
+
+          {/* 📊 이번 달 뭘 해먹었나 — 분류별. ⛔평가 없음(지난달 비교·달성률 금지) */}
+          {monthStats.rows.length > 0 && (
+            <div className="card" style={{ padding: '13px 14px 11px', marginBottom: 12, border: 'none' }}>
+              <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 9 }}>
+                {now.getMonth() + 1}월엔 뭘 해먹었나 <span className="t-sub" style={{ fontSize: 12, fontWeight: 600 }}>· {monthStats.n}번</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {monthStats.rows.map((r) => (
+                  <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <FoodIcon name={r.icon} size={22} />
+                    <span style={{ fontSize: 12.5, fontWeight: 700, flex: '0 0 88px' }}>{r.label}</span>
+                    {/* 길이는 「제일 많이 한 것」 기준 — 목표치가 아니라 서로의 비율이다 */}
+                    <span style={{ flex: 1, height: 7, borderRadius: 999, background: 'var(--cream)', overflow: 'hidden' }}>
+                      <span style={{ display: 'block', height: '100%', width: `${Math.round((r.n / monthStats.max) * 100)}%`, background: 'var(--brown)', borderRadius: 999 }} />
+                    </span>
+                    <b style={{ fontSize: 12.5, color: 'var(--brown)', flex: '0 0 auto', minWidth: 16, textAlign: 'right' }}>{r.n}</b>
+                  </div>
+                ))}
+              </div>
+              {monthStats.newOnes.length > 0 && (
+                <div style={{ marginTop: 11, paddingTop: 10, borderTop: '1px solid var(--cream)' }}>
+                  <div className="t-sub" style={{ fontSize: 12, fontWeight: 700, marginBottom: 5 }}>이번 달 처음 만든 요리</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {monthStats.newOnes.map((t) => (
+                      <span key={t} style={{ fontSize: 12, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream)', borderRadius: 999, padding: '4px 10px' }}>{t}</span>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           )}
