@@ -66,17 +66,23 @@ export default function DiaryScreen({ day }) {
   //   ⛔ 종이 밖에 입력칸을 두면 안 쓴다 (창업자 2026-08-06 *"불편해서 안써"*).
   //   ⛔ 한 글자마다 저장하면 localStorage 를 매 타건마다 쓴다 → 꾸미기 자동저장과 같은 350ms 뜸.
   //   `note` = 본문 · `line` = 오늘의 한 줄(레시피 기록 속지의 맨 아래 칸)
-  const blank = { title: '', note: '', line: '', weather: '', photo: '' }
-  const of = (e) => ({ title: e?.title || '', note: e?.note || '', line: e?.line || '', weather: e?.weather || '', photo: e?.photo || '' })
+  //   🔀 `picks` = 「인쇄된 아이콘 중 고른 것」 여러 축(기분·장소·동행·시간대…). **객체**다.
+  //      ⚠️ 그래서 «바뀌었나»를 `!==` 로 재면 안 된다 — 객체는 참조 비교라 늘 다르다고 나와
+  //         매 렌더마다 저장이 돌게 된다. 아래 `same()` 이 그걸 막는다.
+  const blank = { title: '', note: '', line: '', weather: '', photo: '', picks: {} }
+  const of = (e) => ({ title: e?.title || '', note: e?.note || '', line: e?.line || '', weather: e?.weather || '', photo: e?.photo || '', picks: e?.picks || {} })
+  const same = (a, b) => (a && typeof a === 'object') || (b && typeof b === 'object')
+    ? JSON.stringify(a || {}) === JSON.stringify(b || {})
+    : a === b
   const [text, setText] = useState(() => of(entry))
   useEffect(() => { setText(of(entry)) }, [day]) // eslint-disable-line react-hooks/exhaustive-deps
   const saved = of(entry)
-  const dirty = Object.keys(blank).some((k) => text[k] !== saved[k])
+  const dirty = Object.keys(blank).some((k) => !same(text[k], saved[k]))
   useEffect(() => {
     if (!dirty) return // 처음 열었을 때 «빈 다이어리»를 만들어 버리지 않게
-    const t = setTimeout(() => save({ title: text.title, note: text.note, line: text.line, weather: text.weather, photo: text.photo }), 350)
+    const t = setTimeout(() => save({ title: text.title, note: text.note, line: text.line, weather: text.weather, photo: text.photo, picks: text.picks }), 350)
     return () => clearTimeout(t)
-  }, [text.title, text.note, text.line, text.weather, text.photo]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text.title, text.note, text.line, text.weather, text.photo, JSON.stringify(text.picks)]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 📷 사진 — 틀에 그려진 «창»에 끼운다 (창업자 2026-08-06 *"사진틀에 사진올리기가없어"*)
   //   ⭐ `cropSquare` 를 그대로 쓴다 — 레시피 표지·요리 기록·아바타가 다 쓰는, 이미 검증된 길이다

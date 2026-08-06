@@ -117,11 +117,23 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
         </div>
       )}
 
-      {/* ☀️ 날씨 — 그림에 «이미 인쇄된» 아이콘 위에 투명 버튼을 얹는다.
-          고르면 손으로 친 듯한 동그라미. 같은 걸 다시 누르면 지워진다.
-          ⛔ 아이콘을 새로 그리지 않는다 — 종이에 있는 그림이 그대로 보여야 한다. */}
-      {fields.weather && fields.weather.items.map((w) => {
-        const on = value.weather === w.key
+      {/* ☀️ 「인쇄된 아이콘 중 하나 고르기」 — 그림에 이미 있는 아이콘 위에 투명 버튼을 얹는다.
+          고르면 형광펜으로 칠한 자국. 같은 걸 다시 누르면 지워진다.
+          ⛔ 아이콘을 새로 그리지 않는다 — 종이에 있는 그림이 그대로 보여야 한다.
+
+          🔀🔀 **한 줄이 아니라 «여러 줄»을 받는다** (2026-08-06)
+            새 속지 「오늘의 한끼」가 **사람·장소·날씨·기분·낮·밤 여섯**을 한 줄에 요구한다.
+            ⭐ 전부 같은 일이다 — 「인쇄된 것 중 하나 고르기」. 그래서 **한 코드로 전부** 된다.
+            ⛔ 축마다 따로 만들면 속지가 늘 때마다 코드가 는다.
+          ⚠️ 옛 `fields.weather` 는 그대로 받는다 — 이미 쓴 일기가 안 깨지게 «한 줄짜리 picks»로 바꿔 읽는다. */}
+      {(fields.picks || (fields.weather ? [{ axis: 'weather', label: '날씨', ...fields.weather }] : [])).map((row) => row.items.map((w) => {
+        // 🗃 값을 어디에 넣나 — 날씨는 **옛 자리(`value.weather`)** 에 그대로.
+        //    ⛔ 새 자리로 옮기면 이미 쓴 일기의 날씨가 통째로 사라진다(규칙 18 ⓙ).
+        const cur = row.axis === 'weather' ? (value.weather || '') : ((value.picks || {})[row.axis] || '')
+        const put = (v) => (row.axis === 'weather'
+          ? onChange({ ...value, weather: v })
+          : onChange({ ...value, picks: { ...(value.picks || {}), [row.axis]: v } }))
+        const on = cur === w.key
         // 🖍🖍 **형광펜으로 칠한 표시** (창업자 확정 2026-08-06 — 후보 여섯을 실물로 찍어 골랐다)
         //
         // ⛔ 전엔 «갈색 동그라미»였는데 창업자 *"그 동그라미 너무 별로야"* · *"아이콘에 비해 너무 커"*.
@@ -146,25 +158,27 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
           />
         )
         const pos = {
-          position: 'absolute', left: `${w.x}%`, top: `${fields.weather.y}%`,
-          width: `${fields.weather.size * 1.28}cqw`, height: `${fields.weather.size * 1.28}cqw`,
+          position: 'absolute', left: `${w.x}%`, top: `${row.y}%`,
+          width: `${row.size * 1.28}cqw`, height: `${row.size * 1.28}cqw`,
           transform: 'translate(-50%,-50%)', ...overSticker, ...noTouch,
         }
-        if (ro) return <span key={w.key} style={pos}>{on && ring}</span>
+        const id = `${row.axis}-${w.key}`
+        if (ro) return <span key={id} style={pos}>{on && ring}</span>
         return (
           <button
-            key={w.key}
+            key={id}
             type="button"
             className="press"
-            aria-label={`날씨 ${w.label}`}
+            // 🏷 이름표에 «축»을 붙인다 — 「날씨 맑음」·「기분 좋음」. 축이 여럿이라 이름이 겹치면 안 된다
+            aria-label={`${row.label} ${w.label}`}
             aria-pressed={on}
-            onClick={() => onChange({ ...value, weather: on ? '' : w.key })}
+            onClick={() => put(on ? '' : w.key)}
             style={{ ...pos, background: 'none', border: 'none', padding: 0 }}
           >
             {on && ring}
           </button>
         )
-      })}
+      }))}
 
       {/* ✍️ 본문 — 종이의 줄 위에 바로. 배경·테두리 0 */}
       {fields.write && (
