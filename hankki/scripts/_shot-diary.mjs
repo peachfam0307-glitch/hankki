@@ -144,6 +144,30 @@ else no('틀이 없는데 「오늘의 한 줄」 칸이 뜬다 — 그 칸은 �
 await pickPaper('레시피 기록')
 await page.screenshot({ path: join(OUT, 'diary-b3-레시피기록.png') })
 
+// ⓑ-3-2 🏷 제목 칸 (창업자 2026-08-06 *"나뭇잎옆에 제목 쓸 칸 … 다른 속지틀에도"*)
+const TITLE = '엄마 김치찌개'
+const titleBox = page.getByLabel('제목')
+if (await titleBox.isVisible().catch(() => false)) ok('레시피 기록 틀에 「제목」 칸이 있다')
+else no('제목 칸이 없다')
+await titleBox.fill(TITLE); await page.waitForTimeout(700)
+const savedTitle = await page.evaluate(() => {
+  const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+  return (s.diary || []).filter((d) => d.kind === 'diary').map((d) => d.title)
+})
+if (savedTitle.includes(TITLE)) ok('제목이 저장된다')
+else no(`제목이 저장 안 된다 — ${JSON.stringify(savedTitle)}`)
+// ⭐ **네 틀 «전부»** — 창업자 지시가 "다른 속지틀에도" 였다. 하나라도 빠지면 그 틀에선 제목을 못 쓴다
+for (const art of ['없음', '사진일기', '도트 · 파랑', '레시피 기록']) {
+  await pickPaper(art)
+  if ((await page.getByLabel('제목').count()) === 1) ok(`「${art}」 틀에 제목 칸이 있다`)
+  else no(`「${art}」 틀에 제목 칸이 없다`)
+}
+// 🖼 꾸미기 판(읽기 전용)에도 제목이 보여야 한다 — 안 보이면 그 위에 스티커를 놓는다
+await openDecor()
+if ((await page.locator('.decor-stage').first().innerText()).includes(TITLE)) ok('꾸미기 판에도 제목이 보인다')
+else no('꾸미기 판엔 제목이 안 보인다')
+await page.getByRole('button', { name: '취소' }).first().click(); await page.waitForTimeout(700)
+
 // ⓑ-4 📷 사진칸 — 틀에 그려진 «창»에 사진을 끼울 수 있어야 한다
 //   창업자 2026-08-06 *"사진틀에 사진올리기가없어"* — 틀만 있고 넣을 길이 없었다
 const shot = page.getByRole('button', { name: '사진 넣기' })
