@@ -79,7 +79,13 @@ export function takeOpenBackup() {
 // ─────────────────────────────────────────────────────────────
 export const REVIEW_AT = 3
 
-export const shouldAskReview = (diaryN) => diaryN === REVIEW_AT && read(K_REVIEW) !== '1'
+// ⚠️ 「딱 3번째」가 아니라 «3번째부터»다.
+//    예전엔 「만들었어요」를 누른 «그 순간»에 물었으니 숫자가 정확히 3을 지나갔다.
+//    2026-08-06 부터 「만들었어요」는 토스트만 띄우고(창업자 확정 ①),
+//    묻는 자리는 «기록을 직접 열었다 닫는 순간»으로 옮겼다 — 그땐 이미 4개일 수 있다.
+//    === 로 두면 그 사람에겐 영영 안 물어보게 된다.
+//    (한 번 물으면 K_REVIEW 가 막으니 >= 로 둬도 두 번 묻지 않는다)
+export const shouldAskReview = (diaryN) => diaryN >= REVIEW_AT && read(K_REVIEW) !== '1'
 export const markReviewAsked = () => write(K_REVIEW, '1')
 
 // 스토어 리뷰 주소 — 패키지명은 `CLAUDE.md` 고정 메모 기준.
