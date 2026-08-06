@@ -11,7 +11,8 @@
 //   ④ 글쓰기 중 **키보드가 떠도 속지가 안 줄어든다**
 import './_fresh.mjs'
 import { chromium } from 'playwright'
-import { readFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { createServer } from 'node:http'
 import { extname, join } from 'node:path'
 
@@ -99,7 +100,7 @@ const shot = await page.evaluate(() => {
   return top === el ? 'ok' : (top?.tagName || '?') + '[' + (top?.className || '무') + ']'
 })
 if (shot === 'ok') ok('⭐ 「속지」 탭에서 틀의 사진칸이 눌린다 — 탭을 옮겨다닐 일이 없다')
-else no()
+else no(`「속지」 탭인데 사진칸이 안 눌린다 — ${shot} 가 덮고 있다`)
 await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); await page.waitForTimeout(700)
 
 // ── ② 만족도는 별점처럼 차오른다 ────────────────────────
@@ -110,6 +111,31 @@ else {
   const n = await litCount()
   if (n === 3) ok(`⭐ 3을 고르니 1·2·3 이 «다» 칠해졌다 (${n}개)`)
   else no(`3을 골랐는데 ${n}개만 칠해졌다 — 별점처럼 차올라야 한다`)
+  // ⚠️⚠️ **`aria-pressed` 만 보면 거짓 통과한다** — 상태는 켜졌는데 «화면에 안 보일» 수 있다.
+  //   2026-08-07 에 실제로 그랬다: 만족도 점이 초록 원＋베이지 마테 위라 형광펜이 묻혀
+  //   검사는 「3개 칠해짐」이라 했는데 캡처를 3배로 키워야 겨우 보였다(칠한 것 51 vs 안 칠한 것 34).
+  //   ⭐ 그래서 **화면 픽셀로** 잰다 — 칠한 점과 안 칠한 점의 «노랑기» 차이.
+  const dots = await page.evaluate(() => [...document.querySelectorAll('.decor-stage [aria-label^="만족도 "]')]
+    .map((d) => { const r = d.getBoundingClientRect(); return { on: d.getAttribute('aria-pressed') === 'true', x: r.x + r.width / 2, y: r.y + r.height / 2, w: r.width } }))
+  if (dots.length < 5) no('만족도 점 다섯을 못 찾았다')
+  else {
+    const yellow = async (d) => {
+      const s = Math.max(6, Math.round(d.w * 0.5))
+      const png = await page.screenshot({ clip: { x: d.x - s / 2, y: d.y - s / 2, width: s, height: s } })
+      const f = join(OUT, '_dot.png'); writeFileSync(f, png)
+      return Number(execFileSync('python3', ['-c', `
+from PIL import Image
+import numpy as np, sys
+a = np.asarray(Image.open(sys.argv[1]).convert('RGB'), dtype=float).reshape(-1, 3).mean(0)
+print(round((a[0] + a[1]) / 2 - a[2], 1))
+`, f]).toString().trim())
+    }
+    const lit = await yellow(dots[1])   // 칠해진 것(2번)
+    const dark = await yellow(dots[4])  // 안 칠해진 것(5번)
+    const gap = lit - dark
+    if (gap > 40) ok(`⭐ 칠한 점이 «눈에 띈다» — 노랑기 ${lit} vs ${dark} (차이 ${Math.round(gap)})`)
+    else no(`칠했는데 티가 안 난다 — 노랑기 ${lit} vs ${dark} (차이 ${Math.round(gap)}) · 40 은 넘어야 보인다`)
+  }
   // 같은 걸 다시 누르면 지워진다(토글)
   await three.first().click(); await page.waitForTimeout(500)
   const off = await litCount()

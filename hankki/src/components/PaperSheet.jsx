@@ -173,11 +173,18 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
             aria-hidden
             style={{
               // 크기는 «버튼 기준 %» — 버튼이 아이콘에 맞춰져 있어 아이콘을 딱 감싼다
-              position: 'absolute', left: '50%', top: '52%', width: '52%', height: '46%',
+              // 🎯 `fill` 축(만족도)은 자국을 **점보다 크게** 한다 — 점 자체가 초록이라
+              //    그 안만 칠하면 색이 묻힌다(실측 차이 17 → 진하기만 올려도 35). 자국이
+              //    베이지 마테 위로 삐져나와야 「칠했다」가 한눈에 읽힌다. 종이에 그은 자국도 원래 그렇다.
+              position: 'absolute', left: '50%', top: '52%',
+              width: row.fill ? '96%' : '52%', height: row.fill ? '82%' : '46%',
               transform: 'translate(-50%,-50%) rotate(-4deg)',
               // 손으로 칠한 자국이라 정원이 아니다 — 네 모서리를 조금씩 다르게
               borderRadius: '48% 52% 50% 50%/50%',
-              background: '#f0d98a', opacity: 0.5, mixBlendMode: 'multiply',
+              // 🎯 `fill` 축(만족도)은 **더 진하게** — 그 점들은 «초록 원 ＋ 베이지 마테» 위에 있어서
+              //    0.5 로는 칠한 티가 안 난다(실측: 칠한 것 노랑기 51 vs 안 칠한 것 34 — 차이 17뿐).
+              //    날씨·기분은 «흰 바탕»이라 0.5 로도 잘 보인다. 바탕이 다르면 값도 달라야 한다.
+              background: '#f0d98a', opacity: row.fill ? 0.92 : 0.5, mixBlendMode: 'multiply',
             }}
           />
         )
