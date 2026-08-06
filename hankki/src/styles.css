@@ -1699,3 +1699,66 @@ html, body { overscroll-behavior: none; }
    ⏱ **2초 확정** (창업자 2026-08-05). 1.6초 → *"비가 너무 빨리 떨어져"* → 2초·4초를 나란히 보고 골랐다.
       ⭐ 4초는 «비가 아니라 흐르는 물»로 보였다 — 비는 어느 정도 속도가 있어야 비로 읽힌다. */
 .hk-bg-rain { animation: hk-bg-rain 2s linear infinite; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   📔 다이어리 속지 (2026-08-06 창업자 확정)
+   ══════════════════════════════════════════════════════════════════════════
+   ⭐ 창업자 걱정 = *"줄은 있어야 할 것 같은데.. **줄이 있으면 꾸미기가 안 예쁘려나**"*
+      → 그 걱정이 맞다. **그래서 아무도 종이에 줄을 «박아» 두지 않는다.**
+      다욜 10종 · 자꾸다꾸 스토어 · 영어권 5종(narrow/wide lined·dotted·grid·blank)
+      세 경로가 다 같은 말을 했다 — **줄은 «박는» 게 아니라 «고르는» 것.**
+
+   ⭐⭐ 전부 CSS 다 — **파일 0KB · 무한 확대해도 안 깨짐 · 색도 바꿀 수 있다.**
+      벡터 프레임(v8.58)과 같은 방법. ⛔그림(PNG)으로 받으면 타일 «이음매»가 보이고
+      크게 키우면 흐려진다. 그리고 첫 다운로드 4.1MB/8MB 칸을 또 먹는다.
+      📌 **선은 코드, 질감은 그림** — 종이 결·모서리처럼 그림이 이기는 건 따로 받는다.
+
+   ⛔ 표지 배경 탭(`DECOR_BACKGROUNDS`)과 «다른 물건»이다.
+      2026-07-30 창업자 결정 = *"기본배경에는 색깔만"* (마테에 이미 무늬가 있어 표지가 무늬 천지가 된다).
+      그건 **표지** 기준이고, 다이어리 종이는 **글 쓰는 판**이라 줄·모눈이 장식이 아니라 «도구»다.
+      → 표지 배경 탭·유료팩(`bgpaper`)은 **그대로 둔다.**
+   ────────────────────────────────────────────────────────────────────────── */
+.paper {
+  /* ⚠️ 순백(#fff)이 아니다 — 순백은 화면에서 «종이»가 아니라 «빈 칸»으로 읽힌다 */
+  --paper: #fbf7ef;
+  /* ⚠️ 줄은 아주 연하게. 진하면 «글씨보다 줄이 먼저» 보이고 그 순간 투박해진다 */
+  --rule: #e2d8c6;
+  --rule-gap: 28px;  /* 손글씨 한 줄 — 종이 다이어리 8mm 에 해당 */
+  position: relative;
+  background-color: var(--paper);
+  /* 종이의 결 — 위에서 아래로 아주 옅게. 「하얀 네모」가 아니라 종이로 보이게 한다 */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -22px 34px -30px rgba(90, 70, 45, 0.16);
+}
+/* 줄 — 밑줄이 칸의 «아래»에 오게(글씨는 줄 위에 앉는다) */
+.paper.lined {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--rule-gap) - 1px),
+    var(--rule) calc(var(--rule-gap) - 1px),
+    var(--rule) var(--rule-gap)
+  );
+}
+/* 모눈 — 줄보다 촘촘하고 더 연하게(가로세로 둘 다라 같은 색이면 두 배로 진해 보인다) */
+.paper.grid {
+  --rule-gap: 22px;
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--rule-gap) - 1px), var(--rule) calc(var(--rule-gap) - 1px), var(--rule) var(--rule-gap)),
+    repeating-linear-gradient(to right, transparent 0, transparent calc(var(--rule-gap) - 1px), var(--rule) calc(var(--rule-gap) - 1px), var(--rule) var(--rule-gap));
+  opacity: 1;
+}
+.paper.grid::before {
+  /* 모눈은 선이 두 겹이라 그대로 두면 진하다 — 종이색을 살짝 덮어 톤을 낮춘다 */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  opacity: 0.34;
+  pointer-events: none;
+}
+/* 도트 — 점은 «작고 촘촘»해야 종이로 읽힌다. 크면 무늬가 된다 */
+.paper.dots {
+  --rule-gap: 20px;
+  background-image: radial-gradient(circle, var(--rule) 1.2px, transparent 1.4px);
+  background-size: var(--rule-gap) var(--rule-gap);
+}
