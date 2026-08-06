@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
-import { StickerArt, StickerFx, FRIEND_IDS, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle } from './Stickers'
+import { StickerArt, StickerFx, FRIEND_IDS, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -115,7 +115,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
       {items.map((it) => {
         const on = editable && selectedId === it.id
         const isText = it.type === 'text'
-        const ratio = it.type === 'photo' ? (it.ratio || 1) : it.type === 'tape' ? (it.ratio || 3.4) : it.type === 'note' ? (it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
+        const ratio = it.type === 'photo' ? (it.ratio || 1) : (it.type === 'tape' || it.type === 'hl') ? (it.ratio || (it.type === 'hl' ? 6 : 3.4)) : it.type === 'note' ? (it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
         const base = {
           position: 'absolute',
           left: `${it.x * 100}%`,
@@ -142,7 +142,20 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             onPointerUp={onItemUp}
             onPointerCancel={onItemUp}
           >
-            {it.type === 'tape' ? (
+            {it.type === 'hl' ? (
+              // 🖍 형광펜 — ⭐`multiply` 라 **밑에 있는 글자가 그대로 비친다**(덮는 게 아니라 칠하는 것).
+              //   ⛔ 그림자를 넣지 않는다 — 형광펜은 종이에 «스민» 것이지 «얹은» 것이 아니다.
+              //   ⭐ 끝을 조금씩 다르게 굴린다 — 자로 잰 네모가 아니라 손으로 그은 자국이라야 한다.
+              // 🔖 `data-hl` = 검사가 «이것이 형광펜이다»를 정확히 짚는 표식.
+              //    ⛔ 계산된 CSS(mixBlendMode)로 찾으면 속지의 「고른 표시」까지 같이 잡힌다(그것도 multiply 다).
+              <div data-hl={it.key} style={{
+                position: 'absolute', inset: 0,
+                background: hlColor(it.key), opacity: it.o ?? 0.5, mixBlendMode: 'multiply',
+                // 📐 가로 반지름은 «폭의 %», 세로는 «높이의 %» — 띠가 6:1 이라 가로를 크게 주면
+                //    렌즈처럼 뾰족해진다. 끝만 살짝 굴리려면 가로 8% 안팎(≈ 높이의 절반)이라야 한다.
+                borderRadius: '8% 10% 9% 7%/46% 54% 50% 50%',
+              }} />
+            ) : it.type === 'tape' ? (
               <div style={{ position: 'absolute', inset: 0, ...tapeStyle(it.key), boxShadow: '0 1px 3px rgba(70,60,45,.18)' }} />
             ) : it.type === 'note' ? (
               <Note it={it} editable={editable} />

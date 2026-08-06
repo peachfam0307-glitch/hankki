@@ -12,7 +12,7 @@ import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
 import { cropSquare, cropRatio } from '../utils'
 import { FRAME_WINDOW } from '../data/frameWindows'
-import { StickerArt, stickerRatio, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
+import { StickerArt, stickerRatio, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -43,6 +43,19 @@ const TAPE_WIDTHS = [
   { key: 'thin', label: '가늘게', ratio: 5.2 },
   { key: 'mid', label: '보통', ratio: 3.4 },
   { key: 'thick', label: '굵게', ratio: 2.3 },
+]
+// 🖍 형광펜 굵기 — 마테보다 «한 벌 가늘다». 글 한 줄 위에 긋는 것이라 기본이 6:1.
+//   ⛔ 마테 값을 그대로 쓰지 않는다 — 3.4 는 글줄에 얹기엔 너무 두껍다(줄 두 개를 먹는다).
+const HL_WIDTHS = [
+  { key: 'thin', label: '가늘게', ratio: 9 },
+  { key: 'mid', label: '보통', ratio: 6 },
+  { key: 'thick', label: '굵게', ratio: 4 },
+]
+// 🖍 진하기 — 진짜 형광펜은 «두 번 그으면 진해진다». `multiply` 라 겹칠수록 색이 쌓인다.
+const HL_OPACITIES = [
+  { key: 'light', label: '연하게', o: 0.32 },
+  { key: 'mid', label: '보통', o: 0.5 },
+  { key: 'deep', label: '진하게', o: 0.72 },
 ]
 
 // 📔 다이어리 속지 세 층(선·종이·틀) — 「틀 고르기」가 화면에 따로 있던 것을 **서랍 안으로 들였다**.
@@ -182,7 +195,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    `pf_` = PNG 손그림 프레임(2026-07-29 추가). 벡터 `FRAMES`와 똑같이 밑판으로 다뤄야 한다.
   //    `sf_` = 여름 프레임. 이것도 프레임인데 밑판 목록에서 빠져 있어서, 탭하면 맨 앞으로
   //    올라와 안에 꾸며둔 작은 스티커를 다 덮었다(v8.59에서 고친 문제가 여기서 재발).
-  const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || (it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('dc_dma') || it.key.startsWith('pf_') || it.key.startsWith('sf_'))))
+  //    `hl` = 형광펜. 마테와 «같은 성질»이다 — 넓게 깔리는 띠라, 탭했다고 맨 앞으로 올라오면
+  //    그 밑에 붙여둔 스티커에 죄다 색이 입혀진다(multiply 라 비치긴 해도 색은 얹힌다).
+  const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || it.type === 'hl' || (it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('dc_dma') || it.key.startsWith('pf_') || it.key.startsWith('sf_'))))
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로. 단 배경격은 제자리 유지.
   const select = (id) => {
     setSel(id)
@@ -208,7 +223,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⭐ 화살표(ta_)는 안 막는다 — 뒤집으면 → 가 ← 가 되어 오히려 쓸모가 는다.
   //   📌 **접두어로 판단한다.** 라벨로 가르면 라벨을 다듬는 순간 깨진다(v9.07 사고).
   const NO_FLIP = ['tw_', 'tn_']   // 글자가 그려진 컷 (tw_ 문구 · tn_ 요일·라벨)
-  const canFlip = (it) => !!it && it.type !== 'text' && it.type !== 'note'
+  //   ⛔ 형광펜(hl)도 막는다 — 좌우 대칭이라 뒤집어도 «아무 일도 안 일어난다».
+  //      아무 일도 안 일어나는 단추는 고장으로 읽힌다(죽은 버튼 금지).
+  const canFlip = (it) => !!it && it.type !== 'text' && it.type !== 'note' && it.type !== 'hl'
     && !(typeof it.key === 'string' && NO_FLIP.some((p) => it.key.startsWith(p)))
   // ↩ **X 로 지운 것도 되살아난다** — 창업자가 물었던 「X 버튼이랑 뭐가 다르냐」의 답이 여기다.
   const remove = (id) => { mark(); setItems((arr) => arr.filter((x) => x.id !== id)); setSel(null) }
@@ -425,6 +442,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const addTape = (key) => {
     const n = items.length
     const it = { id: newDecorId(), type: 'tape', key, x: 0.5, y: 0.28 + (n % 3) * 0.14, s: 0.62, r: ((n % 5) - 2) * 3 }
+    mark(); setItems((arr) => [...arr, it])
+    setSel(it.id)
+  }
+  // 🖍 형광펜 — 마스킹테이프와 «같은 문법»이라 붙이는 코드도 같다(비율만 6:1 로 더 길쭉).
+  //   ⭐ 기울기를 안 준다(`r: 0`) — 글 위에 겹치려고 붙이는 것이라 삐뚤면 손으로 다시 맞춰야 한다.
+  //      마테는 장식이라 기울여 붙이지만 형광펜은 «줄을 따라» 가는 도구다.
+  const addHl = (key) => {
+    const n = items.length
+    const it = { id: newDecorId(), type: 'hl', key, x: 0.5, y: 0.34 + (n % 4) * 0.12, s: 0.56, r: 0 }
     mark(); setItems((arr) => [...arr, it])
     setSel(it.id)
   }
@@ -681,6 +707,44 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   ))}
                 </div>
               </div>
+            )}
+            {selItem.type === 'hl' && (
+              <>
+                <div style={ctxRow}>
+                  <span style={ctxLabel}>색</span>
+                  <div style={ctxScroll}>
+                    {HL_COLORS.map((c) => (
+                      <button key={c.key} className="press" onClick={() => patchRec(sel, { key: c.key })} aria-label={`형광펜 ${c.label}`}
+                        style={{ ...ctxDot, background: c.color, border: selItem.key === c.key ? selOn : '1.5px solid rgba(0,0,0,.12)', boxShadow: selItem.key === c.key ? '0 0 0 2px var(--cream)' : 'none' }} />
+                    ))}
+                  </div>
+                </div>
+                <div style={ctxRow}>
+                  <span style={ctxLabel}>굵기</span>
+                  <div style={ctxScroll}>
+                    {HL_WIDTHS.map((w) => {
+                      const on = (selItem.ratio || 6) === w.ratio
+                      return (
+                        <button key={w.key} className="press" onClick={() => patchRec(sel, { ratio: w.ratio })}
+                          style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{w.label}</button>
+                      )
+                    })}
+                  </div>
+                </div>
+                {/* 🖍 진하기 — 진짜 형광펜은 «두 번 그으면 진해진다». 그 감각을 그대로. */}
+                <div style={ctxRow}>
+                  <span style={ctxLabel}>진하기</span>
+                  <div style={ctxScroll}>
+                    {HL_OPACITIES.map((o) => {
+                      const on = (selItem.o ?? 0.5) === o.o
+                      return (
+                        <button key={o.key} className="press" onClick={() => patchRec(sel, { o: o.o })}
+                          style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{o.label}</button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
             )}
             {selItem.type === 'tape' && (
               <>
@@ -1005,6 +1069,17 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     글자 넣기
                   </button>
                   <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>넣은 뒤 톡 하면 색·굵기·글씨체를 바꿀 수 있어요</div>
+                </div>
+                {/* 🖍 형광펜 — 글자 «바로 밑»에 둔다. 강조할 글이 있어야 쓰는 도구라 순서가 곧 쓰는 순서다. */}
+                <div className="decor-sec">
+                  <div className="decor-sec-label">형광펜</div>
+                  <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+                    {HL_COLORS.map((c) => (
+                      <button key={c.key} className="press" onClick={() => addHl(c.key)} aria-label={`형광펜 ${c.label}`}
+                        style={{ flex: '1 1 28%', height: 30, borderRadius: '8% 10% 9% 7%/46% 54% 50% 50%', background: c.color, border: '1px solid rgba(0,0,0,.07)' }} />
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 7, lineHeight: 1.5 }}>글자 위에 겹쳐 놓으면 글씨가 비쳐 보여요</div>
                 </div>
                 <div className="decor-sec">
                   <div className="decor-sec-label">포스트잇</div>
