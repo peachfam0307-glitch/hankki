@@ -72,7 +72,9 @@ const pickPaper = async (...labels) => {
 }
 
 await page.getByText('레시피', { exact: true }).last().click(); await page.waitForTimeout(700)
-await page.locator('.seg', { hasText: /요리 (기록|일지)/ }).first().click(); await page.waitForTimeout(700)
+// ⚠️ 이름으로 찾지 않는다 — 탭 이름은 바뀐다(요리 기록 → 요리 일지 → 한끼 일기).
+//    «둘째 칸»이라는 자리는 안 바뀐다.
+await page.locator('.segment .seg').nth(1).click(); await page.waitForTimeout(700)
 await page.screenshot({ path: join(OUT, 'diary-a-입구.png') })
 const btn = page.getByRole('button', { name: /다이어리 쓰기/ }).first()
 if (await btn.isVisible().catch(() => false)) ok('요리 기록 탭에 「다이어리 쓰기」가 있다')

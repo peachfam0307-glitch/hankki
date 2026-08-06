@@ -20,7 +20,7 @@ const MYRECIPES_COACH_KEY = 'hankki:coach:myrecipes'
 const MYRECIPES_COACH_STEPS = [
   { sel: '[data-coach="collection"]', label: '모아보기', desc: '저장한 레시피를 한눈에 · 폴더·카테고리로 정리돼요' },
   { sel: '[data-coach="gridsize"]', label: '⊞ 보기 바꾸기', desc: '크게 2줄 ↔ 촘촘히 3줄 · 사진 큼직하게 보거나 한눈에 많이 보거나' },
-  { sel: '[data-coach="log"]', label: '요리 일지', desc: '요리하고 "만들었어요!" 한 번이면 별점·사진·팁이 쌓여요 · 다음엔 "그때 그 맛" 그대로 재현!' },
+  { sel: '[data-coach="log"]', label: '한끼 일기', desc: '요리하고 "만들었어요!" 한 번이면 별점·사진·팁이 쌓여요 · 다음엔 "그때 그 맛" 그대로 재현!' },
 ]
 
 // 카테고리와 연결된 기본 폴더 — 삭제 불가(사용자가 만든 폴더만 지울 수 있게)
@@ -306,7 +306,7 @@ export default function MyRecipesScreen() {
             ⭐ 창업자가 쓴 말을 그대로 쓴다 — *"속지를 고르고 **일지**를 쓰고 예쁘게 꾸며요"*.
             ⛔ 이 탭은 이제 요리 기록만 있는 곳이 아니다 — **달력 ＋ 다이어리 ＋ 요리 아카이브** 셋이 산다.
                「기록」은 별점·사진만 가리키는 말이라 다이어리가 안 담긴다. 「일지」가 셋을 다 품는다. */}
-          <button className={`seg ${view === 'log' ? 'on' : ''}`} data-coach="log" onClick={() => setView('log')}>요리 일지</button>
+          <button className={`seg ${view === 'log' ? 'on' : ''}`} data-coach="log" onClick={() => setView('log')}>한끼 일기</button>
         </div>
       </div>
 
