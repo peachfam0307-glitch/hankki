@@ -29,7 +29,8 @@ await new Promise((r) => srv.listen(4356, r))
 //   ⚠️ 아직 공개일(`from`)이 안 된 세트는 서랍에 «안 뜨는 게 정상»이라 뺀다.
 const SRC = readFileSync(join(ROOT, 'src/components/Stickers.jsx'), 'utf8')
 const today = new Date().toISOString().slice(0, 10)
-const DIARY = [...SRC.matchAll(/\{ key: '[a-z0-9_]+', tab: '([a-z]+)', diary: true,(?: from: '([\d-]+)',)? label: '([^']+)'/g)]
+//   ⚠️ 그룹에 `only: 'diary'` 가 낄 수 있다 — 순서를 못 박지 말고 «있으면 건너뛴다»
+const DIARY = [...SRC.matchAll(/\{ key: '[a-z0-9_]+', tab: '([a-z]+)', diary: true,(?: only: '[a-z]+',)?(?: from: '([\d-]+)',)? label: '([^']+)'/g)]
   .map((m) => ({ tab: m[1], from: m[2], label: m[3] }))
 const OPEN = DIARY.filter((d) => !d.from || d.from <= today)
 const LATER = DIARY.filter((d) => d.from && d.from > today)
