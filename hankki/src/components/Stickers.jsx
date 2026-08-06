@@ -537,6 +537,23 @@ export const pickableFx = (owned = ownedPacks()) => FX_KINDS.filter((f) => f.bas
 //   ⛔ `sellable` 이 false 인 팩은 `packDrawerGroups` 가 아예 안 준다 → **지금은 화면이 안 바뀐다.**
 //   ⚠️ `STICKER_GROUPS` 를 직접 쓰지 말고 이걸 쓴다 — 직접 쓰면 유료팩이 조용히 빠진다.
 export const drawerGroups = (owned = ownedPacks()) => [...STICKER_GROUPS, ...packDrawerGroups(owned)]
+
+// 🕗🕗 「최근 쓴 것」 — 서랍이 400컷을 넘어가면서 **찾는 게 일이 됐다.**
+//   ⭐ 우리는 이 문제를 이미 한 번 풀었다 — 음식 아이콘 299개일 때 v8.81 의 「최근 쓴 것 8개 맨 위」.
+//      **같은 처방을 서랍에도 쓴다**(근거 = `docs/서랍-감당되나-2026-08-01.md` 추천 ①).
+//   ⭐ 유저가 아무것도 «안 해도» 된다 — 즐겨찾기를 손으로 등록시키는 건 정리 시키는 일이고,
+//      다꾸는 노는 것이지 파일 정리가 아니다(그래서 접기·숨기기는 뒤로 미뤘다).
+//   ⛔ 여기서 «지우지» 않는다 — 목록에서 밀려날 뿐 원래 자리엔 그대로 있다.
+const RECENT_KEY = 'hankki:decorRecent'
+const RECENT_MAX = 40 // 탭별로 걸러 8개씩 보여주려면 통 목록은 넉넉해야 한다
+export function recentStickers() {
+  try { const v = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] }
+}
+export function pushRecentSticker(key) {
+  if (!key) return
+  const arr = [key, ...recentStickers().filter((k) => k !== key)].slice(0, RECENT_MAX)
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(arr)) } catch { /* 용량 초과 무시 */ }
+}
 // 효과 파티클 — 이모지 대신 뮤트 톤 커스텀 도형(세련되게), 머리 위쪽에 작게 배치.
 const SVG_SPARK = (
   <svg viewBox="0 0 24 24" width="100%" height="100%" style={{ display: 'block' }}>

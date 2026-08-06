@@ -11,7 +11,7 @@ import GiftPackSheet from './GiftPackSheet'
 import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
 import { cropSquare } from '../utils'
-import { StickerArt, STICKER_GROUPS, drawerGroups, ownedPacks, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
+import { StickerArt, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -52,6 +52,11 @@ const PAPER_AXES = [
   { key: 'skin', label: '종이', list: PAPER_SKINS },
   { key: 'art', label: '틀', list: PAPER_ARTS },
 ]
+
+// 🕗 「최근 쓴 것」을 띄우는 탭 — 스티커를 «고르는» 탭만.
+//   ⛔ `notetext`(글자) 제외 = 맨 위가 「직접 쓰기」여야 한다는 창업자 확정 순서(2026-07-30)를 안 흔든다.
+//   ⛔ `paper`(속지) 제외 = 열두 장뿐이라 찾을 게 없다.
+const RECENT_TABS = new Set(['bgtape', 'frame', 'tape', 'deco', 'buddies', 'food'])
 
 // ── 표지 꾸미기 에디터 ──
 // 전체 화면 오버레이. 표지(정사각) 위에 스티커·포스트잇을 얹고
@@ -108,6 +113,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
   const [gift, setGift] = useState(() => needsGiftPack())
+  // 🕗 최근 쓴 것 — **서랍을 여는 «순간» 값으로 고정한다.**
+  //    ⛔ 붙일 때마다 다시 읽으면 맨 윗줄이 방금 붙인 것으로 계속 흔들려 «자리»가 안 생긴다.
+  //    (음식 아이콘 픽커 v8.81 이 같은 이유로 시트 여는 순간 값으로 굳혔다)
+  const [recent] = useState(() => recentStickers())
   // 💰 자물쇠를 누르면 열리는 「사기」 시트. null 이면 안 떠 있다.
   //    ⛔ sellable 이 false 인 동안엔 자물쇠 자체가 안 나오므로 이 값은 영영 null 이다.
   const [buyPack, setBuyPack] = useState(null)
@@ -266,6 +275,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     // 🖼 프레임(액자)은 밑판이라 맨 뒤(배열 앞)로 — 이미 꾸며둔 스티커·글자가 프레임 위로 자연스럽게 얹힌다. 나머지는 맨 앞(위).
     setItems((arr) => isFrame ? [it, ...arr] : [...arr, it])
     setSel(it.id)
+    pushRecentSticker(key) // 🕗 다음에 열 때 맨 위에 놓아 준다(이번 서랍은 안 흔든다)
   }
   const addNote = (colorKey) => {
     const n = items.length
@@ -630,6 +640,24 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>출시 기념으로 네 가지를 넣어뒀어요</span>
               <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
             </button>
+            {/* 🕗🕗 최근 쓴 것 — **그 탭에서** 최근에 붙인 것 여덟.
+                ⭐ 서랍이 400컷을 넘었다. 늘 쓰는 예닐곱 개를 매번 찾아 내려가는 게 일이 됐다
+                   (`docs/서랍-감당되나-2026-08-01.md` 추천 ① · 음식 아이콘에서 이미 통한 처방).
+                ⛔ 탭을 섞지 않는다 — 마테 탭인데 캐릭터가 끼면 탭 뜻이 흐려진다.
+                ⛔ 「글자」 탭엔 안 붙인다 — 거긴 맨 위가 「직접 쓰기」로 창업자가 정한 자리다(2026-07-30).
+                ⭐ 자물쇠(광고)보다 위다 — *"서랍은 작업하는 자리인데 광고가 그걸 밀었다"*(2026-08-05). */}
+            {RECENT_TABS.has(cat) && (() => {
+              const vis = new Set(groupsByTab(cat).flatMap((g) => (g.locked ? [] : g.items)))
+              const list = recent.filter((k) => vis.has(k)).slice(0, 8)
+              // 한두 개뿐이면 줄만 차지한다 — 「최근」이 뜻을 가지려면 여러 개가 쌓여야 한다
+              if (list.length < 3) return null
+              return (
+                <div className="decor-sec">
+                  <div className="decor-sec-label">최근 쓴 것</div>
+                  <div className="decor-grid">{list.map(renderCell)}</div>
+                </div>
+              )
+            })()}
             {/* 📔 속지 — 선·종이·틀 세 층. 「각각 혹은 같이」 고른다
                 (창업자 2026-08-06 *"저렇게 각각 혹은 같이 사용하는거 아이디어야"*).
                 ⚠️ 고르는 순간 «위 판»이 바뀐다 — 저장을 눌러야 보이는 게 아니다. */}
