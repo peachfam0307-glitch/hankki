@@ -1341,7 +1341,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   </div>
                   {/* ⭐ 색 15칸을 다 늘어놓지 않는다 — 예전엔 색마다 칸이 있어서 **고른 색으로 바로 추가**됐고,
                       바꾸려면 지웠다 다시 넣어야 했다. 이제 **넣고 나서 편집 바에서 색·굵기**를 바꾼다. */}
-                  <button className="press" onClick={() => addText('white')}
+                  <button className="press" onClick={() => addText('charcoal')}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '13px 14px', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 800, border: 'none', fontFamily: chipFamily(TEXT_FONTS.find((f) => f.key === textFont) || TEXT_FONTS[0]) }}>
                     글자 넣기
                   </button>
@@ -1392,11 +1392,20 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ))}
                 <div className="decor-sec">
                   <div className="decor-sec-label">포스트잇</div>
+                  {/* 📏 고르는 칸 미리보기 **80% → 62%** (창업자 2026-08-07
+                      *"일꾸안에 고르라고 들어가는게 너무 큰거 아닌가 하는 말이었어."*)
+                      ⭐ 포스트잇은 «색면»이라 같은 크기라도 선 그림보다 훨씬 무겁게 보인다 —
+                         실측하니 포스트잇만 80%(48px)고 데코는 56%·부엌 62%·기본 78% 였다.
+                         62% 로 내리면 다른 칸들과 무게가 맞는다.
+                      ⚠️ 접힘 삼각형도 «같이» 줄인다 — 12px 고정이라 상자가 작아지면 비율이 커진다
+                         (48px 에선 25% 인데 37px 이면 32% 가 되어 삼각형만 커 보인다).
+                      ⛔ 이 주석을 `.map((c) => (` **바로 뒤**로 옮기지 말 것 — 거기는 «표현식 여는 자리»라
+                         JSX 주석이 객체 리터럴로 파싱돼 빌드가 깨진다(오늘 또 밟았다 · 다섯 번째). */}
                   <div className="decor-grid">
                     {NOTE_COLORS.map((c) => (
                       <button key={c.key} className="press decor-cell" onClick={() => addNote(c.key)} aria-label={`${c.key} 포스트잇`}>
-                        <span style={{ display: 'block', width: '80%', aspectRatio: '1.02', background: c.bg, borderRadius: '3px 3px 3px 10px', boxShadow: '1px 3px 7px rgba(70,60,45,.22)', position: 'relative' }}>
-                          <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: '0 0 12px 12px', borderColor: `transparent transparent ${c.fold} transparent` }} />
+                        <span style={{ display: 'block', width: '62%', aspectRatio: '1.02', background: c.bg, borderRadius: '3px 3px 3px 10px', boxShadow: '1px 3px 7px rgba(70,60,45,.22)', position: 'relative' }}>
+                          <span style={{ position: 'absolute', right: 0, bottom: 0, width: 0, height: 0, borderStyle: 'solid', borderWidth: '0 0 9px 9px', borderColor: `transparent transparent ${c.fold} transparent` }} />
                         </span>
                       </button>
                     ))}

@@ -324,7 +324,15 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                   onPointerCancel={onHandleUp}
                   style={{ position: 'absolute', ...hPos.res, width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1.5px solid rgba(0,0,0,.15)', boxShadow: '0 2px 7px rgba(0,0,0,.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none', cursor: 'nwse-resize', pointerEvents: 'auto' }}
                 >
-                  <svg viewBox="0 0 20 20" width="19" height="19"><path d="M4 12a8 8 0 0 0 8-8M12 4h4v4" fill="none" stroke="#5a5244" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  {/* ↻ **돌리기 화살표** (창업자 2026-08-07 *"스티커 돌리는 부분 아이콘 화살표로 바꿔줘
+                      지금 꺼는 꼬챙이같고 뭔지 잘모르겠어"*)
+                      ⛔ 옛 아이콘 = 호 ＋ 갈고리(`M4 12a8 8 0 0 0 8-8M12 4h4v4`) — **화살촉이 없어서**
+                         「돌린다」로 안 읽혔다. 창업자 말대로 꼬챙이로 보인다.
+                      ⭐ 이제 «거의 한 바퀴 도는 원» ＋ **채운 삼각 화살촉**. 19px 에서도 방향이 보인다. */}
+                  <svg viewBox="0 0 20 20" width="19" height="19">
+                    <path d="M10 4a6 6 0 1 1-4.9 2.6" fill="none" stroke="#5a5244" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M9.4 1.4 13.3 4 9.4 6.6z" fill="#5a5244" />
+                  </svg>
                 </span>
               </div>
             )}
@@ -434,6 +442,11 @@ function Note({ it, editable, typing, onText }) {
   }
   // 하트·별·곰 등은 글자가 실루엣 밖으로 안 나가게 안쪽 여백을 넉넉히.
   const textPad = isClip ? '22% 18%' : '9% 10%'
+  // 📐 글 길이에 맞춰 저절로 줄어든다 (위 `autoCqw` 주석 참고)
+  //   ⚠️ CSS 의 `padding: %` 는 **위아래도 «폭» 기준**이다 — 높이 기준으로 계산하면 세로가 어긋난다.
+  //   ⚠️ 포스트잇 상자 비율은 1.06 이라 «폭 대비 높이» = 100/1.06.
+  const pp = isClip ? [22, 18] : [9, 10]   // [위아래, 좌우] %
+  const noteCqw = autoCqw(text, 14, 100 - pp[1] * 2, 100 / 1.06 - pp[0] * 2, 1.4)
 
   return (
     <div style={{ position: 'absolute', inset: 0, containerType: 'size', color: c.text }}>
@@ -453,7 +466,12 @@ function Note({ it, editable, typing, onText }) {
           // 단, 얇은 손글씨(귀염체·펜글씨)만 동색 얇은 외곽선(0.4px)으로 살짝 두껍게(창업자 요청). 색은 그대로.
           fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
           ...((it.font === 'gaegu' || it.font === 'nanumpen') ? { WebkitTextStroke: `0.4px ${c.text}`, paintOrder: 'stroke fill' } : {}),
-          fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.4,
+          // 📏 **14cqw** — 「여섯 자가 한 줄에 들어가게」 (창업자 2026-08-07 *"예쁜크기 네가 정해줘"*)
+          //   ⭐ 눈대중이 아니라 **글씨체 열둘 전부로 재서** 골랐다(scripts/_measure-포스트잇글씨-0807.mjs).
+          //      15cqw = 귀염체·몽글체·또박체가 「오늘 김치찌개」에서 쪼개진다 · 14.5 = 또박체만 쪼개짐
+          //      **14 = 열둘 전부 한 줄** ← 여기가 「한 줄이 되는 가장 큰 값」이라 제일 안 작아 보인다.
+          //   ⛔ 더 낮추지 말 것 — 14 에서 이미 요구가 충족돼 그 아래는 글씨만 작아진다.
+          fontSize: `clamp(6px, ${noteCqw}cqw, 72px)`, lineHeight: 1.4,
           overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
           display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
           ...(typing ? { visibility: 'hidden' } : null),
@@ -474,7 +492,7 @@ function Note({ it, editable, typing, onText }) {
             resize: 'none', border: 'none', outline: 'none', background: 'transparent',
             margin: 0, overflow: 'hidden', color: c.text, caretColor: c.text, WebkitAppearance: 'none',
             fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
-            fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.4,
+            fontSize: `clamp(6px, ${noteCqw}cqw, 72px)`, lineHeight: 1.4,   // ⚠️ 위 글자 칸과 «같은 값»이어야 치는 중과 친 뒤가 안 튄다
             whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
             textAlign: 'center', textAlignLast: 'center',
           }}
@@ -508,6 +526,27 @@ function Note({ it, editable, typing, onText }) {
 //
 //   ⛔ 글자색은 `it.tc`(고른 색)가 있으면 그것, 없으면 **진갈색**이다.
 //      라벨 바탕이 크라프트·주황·파랑까지 있어 «흰 글자»를 기본으로 두면 안 읽히는 컷이 생긴다.
+// 📐📐 **글이 길면 글씨를 저절로 줄인다** (창업자 2026-08-07 *"긴글이 잘리는 건 자동으로 줄여야 할 것 같아"*)
+//   ⛔ 왜 필요했나 = 재현(`_repro-긴글-0807`)으로 확인 — 넉 줄짜리 글이 **열한 줄로 늘어나 63px 넘쳐 잘렸다.**
+//      ⭐ **엔터는 멀쩡히 먹고 있었다.** 「엔터가 안 된다」로 보인 것도 사실은 이 잘림이었다 —
+//         줄이 늘면 상자 밖으로 밀려 안 보이니 「줄이 안 바뀐다」로 읽힌다. 원인이 하나였다.
+//   ⭐ **재지 않고 «계산»한다.** 그려 보고 재서 다시 그리면 ⑴한 프레임 깜빡이고
+//      ⑵캡처(`html-to-image`)가 조정 «전» 상태를 찍을 수 있다. 계산은 언제나 같은 값이다.
+//   📏 바탕이 되는 실측 = `scripts/_measure-포스트잇글씨-0807.mjs` — **14cqw 에서 한글 여섯 자가 딱 한 줄.**
+//      → 한 줄에 들어가는 글자 수 ≈ (가로 여백 뺀 %) ÷ cqw.  (cqw = 상자 «폭»의 1%)
+//   ⚠️ 세로도 «폭 기준»으로 환산해야 맞다 — cqw 가 폭이라서. 그래서 `hPct` 는 폭 대비 높이다.
+//   ⚠️ 한글 한 자 ≈ 1em 으로 본다. 영문·숫자는 좁아 더 들어가니 «넉넉한» 쪽으로 틀린다(안전).
+function autoCqw(text, max, wPct, hPct, lh) {
+  const lines = String(text || '').split('\n')
+  for (let r = max; r > 5; r -= 0.25) {
+    const per = Math.max(1, Math.floor(wPct / r))          // 한 줄에 들어갈 글자 수
+    const cap = Math.max(1, Math.floor(hPct / (lh * r)))   // 세로로 들어갈 줄 수
+    const need = lines.reduce((s, l) => s + Math.max(1, Math.ceil(l.length / per)), 0)
+    if (need <= cap) return r
+  }
+  return 5
+}
+
 function ArtBox({ it, editable, typing, onText }) {
   const pad = BOX_PAD[it.art] || [12, 12, 12, 12]
   const nf = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
@@ -519,7 +558,9 @@ function ArtBox({ it, editable, typing, onText }) {
     top: `${pad[0]}%`, right: `${pad[1]}%`, bottom: `${pad[2]}%`, left: `${pad[3]}%`,
     boxSizing: 'border-box', color: ink,
     fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
-    fontSize: 'clamp(6px, 13cqw, 64px)', lineHeight: 1.35,
+    // 📐 글 길이에 맞춰 저절로 줄어든다 — 상자 «폭» 대비 가로 여백·세로 여백을 그대로 넘긴다
+    fontSize: `clamp(6px, ${autoCqw(text, 13, 100 - pad[1] - pad[3], (100 - pad[0] - pad[2]) / (stickerRatio(it.art) || 1), 1.35)}cqw, 64px)`,
+    lineHeight: 1.35,
     whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
     textAlign: 'center',
   }
