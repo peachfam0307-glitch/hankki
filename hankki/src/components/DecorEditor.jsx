@@ -1018,7 +1018,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           {showWriteTools && onWriteFont && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 2px 8px', flex: '0 0 auto' }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-sub)', flex: '0 0 auto' }}>글씨</span>
-              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', flex: '1 1 auto' }}>
+              {/* 📐 스크롤 막대가 «칩 바로 밑»에 붙어 글씨를 그어놓은 것처럼 보였다
+                  (창업자 2026-08-07 *"글씨 바로아래 스크롤이 붙어있어서.. 세로를 살짝 키우고 스크롤 위치를 내려야 할 듯"*)
+                  → 스크롤 칸 아래에 여백을 줘 막대를 칩에서 떼어놓는다. */}
+              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', flex: '1 1 auto', paddingBottom: 7 }}>
                 {TEXT_FONTS.map((f) => {
                   const on = (writeFont || 'gaegu') === f.key
                   return (
@@ -1138,16 +1141,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ⭐ **몰라서 못 쓰는 선물은 안 준 것과 같다.** 그래서 늘 보이는 자리에 둔다.
                 ⚠️ 탭을 바꿔도 계속 보인다 — 선물이 **네 탭에 흩어져 있어서**(프레임·친구들·배경·모션)
                    한 탭에만 두면 나머지 셋을 또 못 찾는다. */}
-            {/* 📷 내 사진 — **탭과 상관없이 늘 보인다.** 종이 종류를 안 가리고 붙는 유일한 길이라
-                한 탭에 숨기면 못 찾는다(선물 줄과 같은 이유). */}
-            <button className="press" onClick={() => photoRef.current?.click()}
-              style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px', marginBottom: 8,
-                borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>
-              <Icon name="photo" size={17} color="var(--brown)" />
-              <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{selFrame ? '이 프레임에 사진 넣기' : '사진 스티커로 붙이기'}</span>
-              <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
-            </button>
-            <input ref={photoRef} type="file" accept="image/*" onChange={onPhotoFile} style={{ display: 'none' }} />
+            {/* 📐📐 **순서 = 창업자 확정 2026-08-07** — *"선물(출시기념~)을 제일 위에 →
+                그아래 표지그림 (표지그림지우기, 사진 스티커로 붙이기) 이렇게 배치해줘"*
+                ⛔ 전엔 「사진 → 선물」이었고 **「표지 그림 지우기」는 배경 탭 «안»에 따로** 있었다
+                   → 표지를 손보려면 탭을 옮겨야 했다(오늘 내내 잡은 「탭 왕복」과 같은 문제).
+                ⭐ 표지를 다루는 둘을 **한 묶음**으로 모은다 — 지우고 나서 사진을 붙이는 게 한 흐름이다. */}
             <button className="press" onClick={() => setGift(true)}
               style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px', marginBottom: 10,
                 borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>
@@ -1155,6 +1153,30 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>출시 기념으로 네 가지를 넣어뒀어요</span>
               <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
             </button>
+            {/* 🖼 표지 그림 — 지우기 ＋ 사진 붙이기. **탭과 상관없이 늘 보인다.**
+                ⛔ 일기엔 표지 그림이 없다(종이가 곧 판이다) → 「지우기」는 레시피에서만 뜬다.
+                📷 사진 붙이기는 종이 종류를 안 가리고 붙는 유일한 길이라 어느 탭에서든 있어야 한다. */}
+            <div className="decor-sec">
+              <div className="decor-sec-label">표지 그림</div>
+              {!isDiary && (
+                <button className="press" onClick={() => setThumb(thumb === 'none' ? origThumb : 'none')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 13px', marginBottom: 8, borderRadius: 12, background: thumb === 'none' ? 'var(--brown)' : 'var(--cream)', color: thumb === 'none' ? '#fff' : 'var(--text)', border: thumb === 'none' ? 'none' : '1px solid var(--line)', fontWeight: 700, fontSize: 13, textAlign: 'left' }}>
+                  {/* 🏷 이름 = 창업자 확정 2026-08-07 *"배경음식아이콘지우기로 변경하자. 단어통일하는게 낫겠저"*
+                      ⭐ 처음엔 「표지 그림 지우기」였는데, 우리가 부르는 이름이 화면마다 달랐다.
+                         유저가 보는 그림은 «표지 배경에 깔린 음식 아이콘»이니 그대로 부른다. */}
+                  {thumb === 'none' ? '배경 음식 아이콘 되돌리기' : '배경 음식 아이콘 지우기'}
+                </button>
+              )}
+              <button className="press" onClick={() => photoRef.current?.click()}
+                style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px',
+                  borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>
+                <Icon name="photo" size={17} color="var(--brown)" />
+                <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{selFrame ? '이 프레임에 사진 넣기' : '사진 스티커로 붙이기'}</span>
+                <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
+              </button>
+              {!isDiary && <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>깨끗한 배경에 꾸미고 싶을 때. 원래 그림은 언제든 되돌려요.</div>}
+            </div>
+            <input ref={photoRef} type="file" accept="image/*" onChange={onPhotoFile} style={{ display: 'none' }} />
             {/* 🕗🕗 최근 쓴 것 — **그 탭에서** 최근에 붙인 것 여덟.
                 ⭐ 서랍이 400컷을 넘었다. 늘 쓰는 예닐곱 개를 매번 찾아 내려가는 게 일이 됐다
                    (`docs/서랍-감당되나-2026-08-01.md` 추천 ① · 음식 아이콘에서 이미 통한 처방).
@@ -1176,14 +1198,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             {/* 🎨 배경·테이프 */}
             {cat === 'bgtape' && (
               <>
-                <div className="decor-sec">
-                  <div className="decor-sec-label">표지 그림</div>
-                  <button className="press" onClick={() => setThumb(thumb === 'none' ? origThumb : 'none')}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 14px', borderRadius: 12, background: thumb === 'none' ? 'var(--brown)' : 'var(--cream)', color: thumb === 'none' ? '#fff' : 'var(--text)', fontWeight: 800, fontSize: 13.5, textAlign: 'left' }}>
-                    {thumb === 'none' ? '표지 그림 되돌리기' : '표지 그림 지우기 (아이콘·이모지·사진)'}
-                  </button>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>깨끗한 배경에 꾸미고 싶을 때. 원래 그림은 언제든 되돌려요.</div>
-                </div>
+                {/* ⛔ 옛 「표지 그림」 섹션은 여기 있었다 — 2026-08-07 에 «맨 위 선물 아래»로 옮겼다
+                    (창업자 배치 지시). 배경 탭에만 있으면 표지를 손보러 탭을 옮겨야 했다. */}
                 <div className="decor-sec">
                   <div className="decor-sec-label">배경지</div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
