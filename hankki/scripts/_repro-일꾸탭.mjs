@@ -124,6 +124,53 @@ else {
     })
     if (saved) ok(`저장값에도 남는다 (font = ${saved}) — 다시 열어도 그 글씨체다`)
     else no('화면만 바뀌고 저장값엔 안 남는다 — 다시 열면 되돌아간다')
+
+    // ⓓ 크기 3단 — 「보통」에서 열둘이 비슷해 보이나 ＋ 작게·크게가 진짜 달라지나
+    console.log('\n── ⓓ 글자 크기 작게·보통·크게 ──')
+    const px = () => page.evaluate(() => {
+      const t = document.querySelector('.decor-stage textarea')
+      return Math.round(parseFloat(getComputedStyle(t).fontSize) * 100) / 100
+    })
+    const mid = await px()
+    const step = {}
+    for (const nm of ['작게', '크게', '보통']) {
+      const bt = page.locator('.decor-drawer button').filter({ hasText: new RegExp(`^${nm}$`) })
+      if (!(await bt.count())) { no(`「${nm}」 단추가 없다`); continue }
+      await bt.first().click(); await page.waitForTimeout(600)
+      step[nm] = await px()
+    }
+    console.log(`   ℹ️ 작게 ${step['작게']}px · 보통 ${step['보통']}px · 크게 ${step['크게']}px`)
+    if (step['작게'] && step['크게'] && step['작게'] < step['보통'] && step['보통'] < step['크게']) ok('작게 < 보통 < 크게 로 실제 달라진다')
+    else no('크기 3단이 실제로 안 달라진다')
+    // ⭐ 「보통」에서 열둘의 «보이는 높이»가 비슷한가 — 글씨체를 바꿔가며 잰다
+    const heights = await page.evaluate(async (keys) => {
+      const t = document.querySelector('.decor-stage textarea')
+      const out = {}
+      const cs0 = getComputedStyle(t)
+      for (const k of keys) {
+        const btn = [...document.querySelectorAll('.decor-drawer button')].find((b) => b.textContent.trim() === k.label)
+        if (!btn) continue
+        btn.click()
+        await new Promise((r) => setTimeout(r, 90))
+        const cs = getComputedStyle(t)
+        const c = document.createElement('canvas'); c.width = 900; c.height = 260
+        const x = c.getContext('2d')
+        x.fillStyle = '#fff'; x.fillRect(0, 0, 900, 260)
+        x.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
+        x.textBaseline = 'alphabetic'; x.fillStyle = '#000'
+        x.fillText('한끼 맛있겠다', 10, 190)
+        const d = x.getImageData(0, 0, 900, 260).data
+        let top = -1, bot = -1
+        for (let y = 0; y < 260; y++) { let hit = false; for (let p = 0; p < 900; p++) if (d[(y * 900 + p) * 4] < 128) { hit = true; break } if (hit) { if (top < 0) top = y; bot = y } }
+        out[k.label] = top < 0 ? 0 : bot - top + 1
+      }
+      return out
+    }, [{ label: '귀염체' }, { label: '납작체' }, { label: '동글체' }, { label: '또박체' }, { label: '임팩트' }])
+    const hs = Object.values(heights).filter(Boolean)
+    const spread = hs.length ? (Math.max(...hs) - Math.min(...hs)) / Math.max(...hs) : 1
+    console.log('   ℹ️ 「보통」에서 보이는 높이 =', Object.entries(heights).map(([k, v]) => `${k} ${v}`).join(' · '))
+    if (spread <= 0.18) ok(`⭐ 「보통」에서 글씨체끼리 높이 차이가 ${(spread * 100).toFixed(0)}% — 비슷하다`)
+    else no(`「보통」인데 글씨체끼리 높이가 ${(spread * 100).toFixed(0)}% 나 차이난다`)
   }
 }
 

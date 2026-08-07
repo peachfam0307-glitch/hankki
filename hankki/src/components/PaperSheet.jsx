@@ -46,14 +46,24 @@ const box = (f) => ({
 
 // ⚠️ 줄 간격(`lineHeight`)은 «글씨체가 바뀌어도» 그대로다 — 종이의 줄과 묶여 있어서 흔들면 글이 줄에서 어긋난다.
 //    글자 «크기»만 글씨체를 따라간다. (납작한 글씨는 작아 보이는데 그게 그 글씨체의 성격이다)
-const handOf = (f) => ({
+const handOf = (f, k = 1) => ({
   fontFamily: f?.family || HAND,
   fontWeight: f?.weight || 700,
   color: INK,
-  fontSize: `${PAPER_LINE_H * 0.79}cqw`,
+  fontSize: `${PAPER_LINE_H * 0.79 * k}cqw`,
   lineHeight: `${PAPER_LINE_H}cqw`,
   letterSpacing: f?.ls || '0.01em',
 })
+
+// 📏 크기 3단 — **줄 «안»에서만 움직인다.**
+//   ⛔ 줄 간격은 못 건드린다. `PAPER_LINE_H` 는 사진일기 그림에 «인쇄된 줄»과 맞춘 값이라
+//      흔들면 그 틀에서 글이 인쇄된 줄에서 어긋난다.
+//   ⭐ 그래서 «크게»도 줄 높이의 0.90 까지만 — 커진 게 보이면서 줄을 안 넘는다.
+export const WRITE_SIZES = [
+  { key: 'sm', label: '작게', k: 0.88 },
+  { key: 'md', label: '보통', k: 1 },
+  { key: 'lg', label: '크게', k: 1.14 },
+]
 
 /**
  * 종이 위의 «쓰는 칸» 전부. `onChange` 가 없으면 읽기 전용(꾸미기 판·미리보기).
@@ -66,9 +76,12 @@ const handOf = (f) => ({
 //   ⭐ 둘은 성격이 다르다 — 글칸은 누르면 **키보드가 떠서** 꾸미기를 방해하지만,
 //      축은 **탭 한 번**이라 꾸미는 중에 눌러도 아무것도 안 가린다.
 //   📌 그래서 「글칸은 읽기 전용, 축은 살아 있음」을 **한 칸으로** 만든다.
-export default function PaperSheet({ fields, value = {}, onChange, onPick, onPickPhoto, dateLabel = '', rule = '', font = '' }) {
+export default function PaperSheet({ fields, value = {}, onChange, onPick, onPickPhoto, dateLabel = '', rule = '', font = '', size = '' }) {
   // ✍️ 본문 글씨체 — 못 찾으면 예전 그대로(귀염체). ⛔이미 쓴 일기가 바뀌면 안 된다
-  const hand = handOf(TEXT_FONTS.find((t) => t.key === font))
+  const f = TEXT_FONTS.find((t) => t.key === font)
+  // 📏 크기 = «글씨체 보정» × «작게/보통/크게». 둘 다 없으면 1 → 지금 모습 그대로
+  const k = (f?.sz || 1) * (WRITE_SIZES.find((z) => z.key === size)?.k || 1)
+  const hand = handOf(f, k)
   const ro = !onChange
   // ✅ 축을 고를 수 있나 — 쓰기 판(`onChange`)이거나, 고르기만 열어 준 판(`onPick`)이면 된다
   const write = onChange || onPick
@@ -158,7 +171,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
       {fields.title && (
         <div style={{ ...box(fields.title), ...overSticker, ...noTouch }}>
           {ro ? (
-            <div style={{ ...hand, fontSize: `${PAPER_LINE_H * 0.95}cqw`, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden' }}>{value.title || ''}</div>
+            <div style={{ ...hand, fontSize: `${PAPER_LINE_H * 0.95 * k}cqw`, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden' }}>{value.title || ''}</div>
           ) : (
             <input
               value={value.title || ''}
@@ -167,7 +180,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
               placeholder="제목"
               maxLength={24}
               style={{
-                ...hand, fontSize: `${PAPER_LINE_H * 0.95}cqw`, textAlign: 'center',
+                ...hand, fontSize: `${PAPER_LINE_H * 0.95 * k}cqw`, textAlign: 'center',
                 width: '100%', height: `${PAPER_LINE_H * 1.25}cqw`, display: 'block',
                 background: 'none', border: 'none', outline: 'none', padding: 0, margin: 0, borderRadius: 0,
               }}
@@ -178,7 +191,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
 
       {/* 📅 날짜 — 그림의 날짜 칸에 «값만» 얹는다(사진일기엔 달력 아이콘·밑줄이 이미 인쇄돼 있다) */}
       {fields.date && dateLabel && (
-        <div style={{ ...box(fields.date), ...hand, ...overSticker, fontSize: `${PAPER_LINE_H * (fields.date.fit || 0.68)}cqw`, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+        <div style={{ ...box(fields.date), ...hand, ...overSticker, fontSize: `${PAPER_LINE_H * (fields.date.fit || 0.68) * k}cqw`, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
           {dateLabel}
         </div>
       )}

@@ -4,7 +4,7 @@ import Icon from './Icon'
 import PromptSheet from './PromptSheet'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
-import { PaperBox } from './PaperSheet'
+import { PaperBox, WRITE_SIZES } from './PaperSheet'
 import { PAPER_RULES, PAPER_SKINS, PAPER_ARTS, paperStyle } from '../data/papers'
 import { seasonRank, isReleased } from '../season'
 import GiftPackSheet from './GiftPackSheet'
@@ -115,7 +115,7 @@ function loadDraft(id) {
 //      **위 판이 그 자리에서 바뀐다.** 여기서 따로 들고 있으면 판과 글자 자리가 어긋난다.
 // ✍️ `writeFont`·`onWriteFont` = **본문 글씨체** 두 짝. 값은 부모(다이어리 화면)가 쥔다 —
 //   여기서 들고 있으면 종이에 그려지는 글씨와 서랍이 어긋난다(속지 고르기와 같은 이유).
-export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, paperOverlay = null, paperEdit = null, title = '레시피 꾸미기', paperPick = null, onPaperPick = null, writeFont = '', onWriteFont = null }) {
+export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, paperOverlay = null, paperEdit = null, title = '레시피 꾸미기', paperPick = null, onPaperPick = null, writeFont = '', onWriteFont = null, writeSize = '', onWriteSize = null }) {
   const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
   // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
   const draft = loadDraft(recipe.id)
@@ -992,6 +992,27 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   )
                 })}
               </div>
+            </div>
+          )}
+          {/* 📏📏 **글자 크기 — 작게 · 보통 · 크게** (창업자 2026-08-07
+              *"글씨크기를 다 비슷하게 조정해서 보통으로 두고 작게 보통 크게로 올려줄수는 없어?"*)
+              ⭐ **「보통」에서 열둘이 비슷해 보인다** — 글씨체마다 «잉크 높이»를 재서 보정했다
+                 (`Stickers.jsx` 의 `TEXT_FONTS` → `sz` · 또박체 0.975 ~ 납작체 0.650 으로 1.5배 차이였다).
+              ⛔ 줄 간격은 «안» 건드린다 — 사진일기 그림에 인쇄된 줄과 맞춘 값이라 흔들면 어긋난다.
+                 그래서 「크게」도 줄 높이의 0.90 까지. 커진 게 보이면서 줄을 안 넘는다. */}
+          {writing && onWriteSize && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 2px 8px', flex: '0 0 auto' }}>
+              <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-sub)', flex: '0 0 auto' }}>크기</span>
+              {WRITE_SIZES.map((z) => {
+                const on = (writeSize || 'md') === z.key
+                return (
+                  <button key={z.key} className="press" onClick={() => onWriteSize(z.key)}
+                    style={{ flex: '0 0 auto', padding: '5px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 700,
+                      background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)', border: 'none' }}>
+                    {z.label}
+                  </button>
+                )
+              })}
             </div>
           )}
           {/* ↩↩ **되돌리기** — 되돌릴 게 «있을 때만» 보인다(빈 버튼은 죽은 버튼이다).
