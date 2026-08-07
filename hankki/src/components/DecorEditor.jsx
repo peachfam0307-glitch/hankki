@@ -12,7 +12,7 @@ import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
 import { cropRatio, imageRatio } from '../utils'
 import { FRAME_WINDOW } from '../data/frameWindows'
-import { StickerArt, stickerRatio, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
+import { StickerArt, stickerRatio, BOX_GROUPS, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -415,6 +415,23 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     mark(); setItems((arr) => [...arr, it])
     setSel(it.id)
     setNoteEdit(it) // 붙이면 바로 글씨 쓰기 시트 열기(무늬·모양은 상단 컨텍스트 바에서)
+  }
+  // 🏷🏷 **글 상자** — 우리 라벨지·메모지 그림에 글을 얹는다 (창업자 2026-08-07)
+  //   *"글자올릴수있는 스티커들을 다같이 배치해서 쓰자. 포스트잇이랑 여러가지 라벨들."*
+  //   ⭐ `addNote` 와 «같은 길»이다 — `art` 한 칸만 더 준다. 그래야 글·크기·글씨체·되돌리기가 그대로 따라온다.
+  //   ⭐ 크기는 그림 «가로세로»를 보고 정한다 — 리본 배너(3.25:1)에 정사각 크기를 주면 종이를 통째로 덮는다.
+  //      납작할수록 넓게(폭 0.72), 네모날수록 좁게(0.44). 붙자마자 「이 정도면 쓰겠다」가 되는 크기.
+  const addBox = (artKey) => {
+    const n = items.length
+    const ratio = stickerRatio(artKey) || 1
+    //   ⛔ 세로로 긴 것(태그·책갈피)은 더 작게 — 폭 0.44 를 주면 «높이»가 종이의 63% 가 된다.
+    //      실물 판에서 태그가 종이 절반을 먹는 걸 보고 알았다(숫자로는 안 보였다).
+    const s = ratio >= 2.4 ? 0.72 : ratio >= 1.6 ? 0.6 : ratio >= 1.1 ? 0.5 : ratio >= 0.9 ? 0.44 : 0.32
+    const it = { id: newDecorId(), type: 'note', art: artKey, text: '', font: 'gaegu', x: 0.5, y: 0.5 + ((n % 3) - 1) * 0.09, s, r: 0 }
+    mark(); setItems((arr) => [...arr, it])
+    setSel(it.id)
+    setNoteEdit(it)
+    pushRecentSticker(artKey)
   }
   // 📷 내 사진을 «스티커»로 붙인다 (창업자 2026-08-06 *"무지나 도트도 사진 넣고싶을수있지않아?"*)
   //   ⭐ 틀의 사진칸은 「창에 끼우는 것」이라 창이 그려진 속지에서만 된다.
@@ -1293,6 +1310,28 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   </div>
                   <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 7, lineHeight: 1.5 }}>글자 위에 겹쳐 놓으면 글씨가 비쳐 보여요</div>
                 </div>
+                {/* 🏷🏷 **글 상자 — 글자 올릴 수 있는 것을 «한자리에»** (창업자 2026-08-07
+                    *"글자올릴수있는 스티커들을 다같이 배치해서 쓰자. 포스트잇이랑 여러가지 라벨들."*)
+                    ⛔ 전엔 포스트잇만 여기 있고, 예쁜 라벨지·메모지는 **데코 탭에 흩어져** 있었다.
+                       게다가 그것들은 «그림»이라 글을 못 얹어서, 글자 스티커를 따로 얹어 손으로 맞춰야 했다.
+                    ⛔⛔ 그리고 「한끼 일기 · 메모지」 12컷은 `only:'diary'` 라 **레꾸 서랍엔 아예 안 나왔다** —
+                       레꾸엔 속지 글칸도 없어서 **글을 넣는 길이 포스트잇밖에 없었다.**
+                       창업자 *"이건 레꾸에서도 너무 불편했었어"* 가 이것이다.
+                    ⭐ 순서 = 우리 그림 먼저, 포스트잇은 맨 뒤. 창업자 판정 *"포스트잇은 디자인이나 색상이 넘 별루라서.."* */}
+                {BOX_GROUPS.map((g) => (
+                  <div className="decor-sec" key={g.key}>
+                    <div className="decor-sec-label">{g.label}</div>
+                    <div className="decor-grid">
+                      {g.items.map((k) => (
+                        <button key={k} className="press decor-cell" onClick={() => addBox(k)} aria-label={`글 상자 ${k}`}>
+                          <span style={{ display: 'block', width: '86%', aspectRatio: `${stickerRatio(k) || 1}` }}>
+                            <StickerArt id={k} motion={null} />
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
                 <div className="decor-sec">
                   <div className="decor-sec-label">포스트잇</div>
                   <div className="decor-grid">

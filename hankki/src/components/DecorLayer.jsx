@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
-import { StickerArt, StickerFx, FRIEND_IDS, motionClass, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
+import { StickerArt, StickerFx, FRIEND_IDS, motionClass, stickerRatio, NOTE_COLORS, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -375,6 +375,11 @@ function TextDeco({ it, editable, coverW = 0 }) {
 
 function Note({ it, editable }) {
   const c = NOTE_COLORS.find((n) => n.key === it.key) || NOTE_COLORS[0]
+  // 🏷 **글 상자** = 배경이 벡터 색판이 아니라 «우리 그림»인 포스트잇 (창업자 2026-08-07)
+  //   *"포스트잇은 디자인이나 색상이 넘 별루라서.."* · *"우리 예쁜 라벨이나 글상자로 쓸 수 있는 스티커들 있지 않나?"*
+  //   ⭐ 있었다 — 라벨지 `dlb` 12 · 찢은 종이 `dtp` 5 · 일기 메모지 `dgn` 12 · 메모라벨 `dc_dma` 10.
+  //   ⭐ 새 타입을 안 만들었다. `art` 한 칸이면 글·크기·글씨체·이동·되돌리기가 그대로 따라온다.
+  if (it.art) return <ArtBox it={it} editable={editable} />
   const shape = it.shape || 'fold'
   const pattern = it.pattern || 'plain'
   const pat = notePatternStyle(pattern, c.line || c.fold)
@@ -432,6 +437,50 @@ function Note({ it, editable }) {
           <span style={{ position: 'absolute', top: '22%', left: '26%', width: '26%', height: '26%', borderRadius: '50%', background: 'rgba(255,255,255,.65)' }} />
         </span>
       )}
+    </div>
+  )
+}
+
+// 🏷🏷 **글 상자** — 우리 라벨지·메모지 그림 위에 글이 얹힌다 (2026-08-07)
+//   창업자 *"글자올릴수있는 스티커들을 다같이 배치해서 쓰자. 포스트잇이랑 여러가지 라벨들."*
+//
+//   ⭐ 왜 포스트잇(`note`)에 얹었나 = **글·크기·글씨체·이동·되돌리기가 이미 다 된다.**
+//      새 타입을 만들면 그 넷을 전부 다시 만들어야 하고, 저장된 표지도 못 읽는다.
+//   ⭐ 그림은 `StickerArt` 를 그대로 쓴다 — 새 로더를 안 만든다.
+//
+//   📐 안쪽 여백은 `BOX_PAD` 에서 온다 — 그림마다 테두리·장식 자리가 달라 하나로 못 준다.
+//      `tools/measure-inner.py` 로 **재서** 뽑았고(그 도구를 네 번 고쳤다), 구석 장식 넷은 눈으로 잡았다.
+//      ⚠️ 값이 없는 그림은 **12% 한 바퀴**로 둔다 — 없다고 안 그리면 새 라벨을 넣을 때마다 깨진다.
+//
+//   ⛔ 글자색은 `it.tc`(고른 색)가 있으면 그것, 없으면 **진갈색**이다.
+//      라벨 바탕이 크라프트·주황·파랑까지 있어 «흰 글자»를 기본으로 두면 안 읽히는 컷이 생긴다.
+function ArtBox({ it, editable }) {
+  const pad = BOX_PAD[it.art] || [12, 12, 12, 12]
+  const nf = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
+  const ink = it.tc || '#4a4038'
+  const text = it.text || ''
+  return (
+    <div style={{ position: 'absolute', inset: 0, containerType: 'size' }}>
+      {/* 종이 = 우리 그림. ⛔ 그림자를 box-shadow 로 주면 «네모»가 생긴다(라벨은 네모가 아니다) → drop-shadow */}
+      <span style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(1.5px 3px 5px rgba(70,60,45,.28))' }}>
+        <StickerArt id={it.art} motion={null} />
+      </span>
+      {/* 글자 — 잰 여백 «안»에만. 그림 위라 층을 안 줘도 나중에 칠해진다 */}
+      <div
+        style={{
+          position: 'absolute',
+          top: `${pad[0]}%`, right: `${pad[1]}%`, bottom: `${pad[2]}%`, left: `${pad[3]}%`,
+          boxSizing: 'border-box', color: ink,
+          fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
+          // 얇은 손글씨만 동색 얇은 외곽선 — 포스트잇과 같은 규칙(창업자 요청)
+          ...((it.font === 'gaegu' || it.font === 'nanumpen') ? { WebkitTextStroke: `0.4px ${ink}`, paintOrder: 'stroke fill' } : {}),
+          fontSize: 'clamp(6px, 13cqw, 64px)', lineHeight: 1.35,
+          overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+        }}
+      >
+        {text}
+      </div>
     </div>
   )
 }
