@@ -245,7 +245,15 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             ) : it.type === 'tape' ? (
               <div style={{ position: 'absolute', inset: 0, ...tapeStyle(it.key), boxShadow: '0 1px 3px rgba(70,60,45,.18)' }} />
             ) : it.type === 'note' ? (
-              <Note it={it} editable={editable} typing={typingId === it.id} onText={onText} />
+              // 🎬✨ 포스트잇·글 상자에도 모션·효과 (창업자 폰 제보 2026-08-07 — 두 단추를 못 찾았다)
+              //   ⚠️ 모션 클래스는 **감싼 span** 에 준다 — 바깥 상자에 주면 `rotate`·`scaleX` 가 덮여
+              //      기울기와 뒤집기가 날아간다(v9.03 에서 이미 밟은 함정).
+              <>
+                <span className={motionClass(it.motion)} style={{ position: 'absolute', inset: 0 }}>
+                  <Note it={it} editable={editable} typing={typingId === it.id} onText={onText} />
+                </span>
+                <StickerFx kind={it.fx} />
+              </>
             ) : it.type === 'text' ? (
               // ✍️✨ **글자에도 모션·효과** (창업자 2026-08-07 *"글자에도 모션이나 효과가 들어가면 더 좋고"*)
               //   ⭐ 새로 만든 게 없다 — 모션은 `hk-m-*` CSS 클래스라 그림이든 글자든 똑같이 얹히고,
@@ -272,15 +280,22 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
               //    *"무지나 도트도 사진 넣고싶을수있지않아? 그럼 어떻게 사진넣어?"*)
               //    ⭐ 틀의 사진칸은 「창에 끼우는 것」이고, 이건 「사진을 붙이는 것」이다 — 둘 다 있어야 한다.
               //    흰 테 ＋ 그림자 = 인화한 사진을 얹은 느낌(다꾸의 기본 문법).
-              <span style={{ position: 'absolute', inset: 0, borderRadius: '2%', overflow: 'hidden', background: '#fff', padding: '3.5%', boxShadow: '0 3px 7px rgba(60,50,35,.28)' }}>
-                <img src={it.src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              </span>
+              <>
+                <span className={motionClass(it.motion)} style={{ position: 'absolute', inset: 0, borderRadius: '2%', overflow: 'hidden', background: '#fff', padding: '3.5%', boxShadow: '0 3px 7px rgba(60,50,35,.28)' }}>
+                  <img src={it.src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                </span>
+                <StickerFx kind={it.fx} />
+              </>
             ) : (
               <span style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(0 3px 4px rgba(60,50,35,.22))' }}>
                 <StickerArt id={it.key} color={it.color} motion={it.motion} />
                 {/* 🐻🐧 효과는 **친구들 탭 전부**에 붙는다 — 전엔 `gp_` 접두어만 봐서
-                    여름 곰펭(`sm_`)·가을 곰펭(`au_b`)은 효과를 골라도 화면에 안 나왔다. */}
-                {FRIEND_IDS.has(it.key) && <StickerFx kind={it.fx} />}
+                    여름 곰펭(`sm_`)·가을 곰펭(`au_b`)은 효과를 골라도 화면에 안 나왔다.
+                    ⛔⛔ 2026-08-07 — `FRIEND_IDS` 로 좁힌 것 «자체»가 창업자 제보의 뿌리였다.
+                       일기 서랍엔 **친구들 탭이 없다**(마테·데코·글자 셋뿐) → 일꾸에선 효과가 통째로 안 떴다.
+                       ⭐ 효과는 위에 겹쳐 그리는 파티클이라 **밑이 무엇이든 상관없다** → 스티커 전부에 준다.
+                       (`StickerFx` 는 `kind` 가 없거나 'none' 이면 `null` 이라 안 고른 스티커엔 아무것도 안 그린다) */}
+                <StickerFx kind={it.fx} />
               </span>
             )}
 

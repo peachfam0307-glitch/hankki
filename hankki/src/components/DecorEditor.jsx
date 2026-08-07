@@ -148,7 +148,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⚠️ 연필 단추도 «시트가 아니라» 그 자리 치기를 켠다 — 길이 하나뿐이라야 헷갈리지 않는다.
   const [typingId, setTypingId] = useState(null)
   // 🔀 움직임 ／ 효과 = «두 단추로 갈라» 한 쪽 칩만 그린다 (창업자 2026-08-07 판정 ②)
-  const [fxTab, setFxTab] = useState('motion')
+  // 🔀 컨텍스트 바 갈래 — 「순서·색·글씨·무늬·모양·움직임·효과」를 «한 번에 한 줄만» 그린다.
+  //   ⛔ 전엔 해당하는 줄을 «전부» 세로로 쌓았다 → 포스트잇 하나 고르면 다섯 줄 200px.
+  //      실측(창업자 폰 360×780): 서랍 343 → 164 · **스크롤 칸 231 → 53px** = 손가락보다 얇다.
+  //   ⭐ 갈래 문법은 새로 만든 게 아니다 — 2026-08-07 에 「움직임/효과」로 이미 쓴 것을 통째로 넓혔다
+  //      (창업자 판정 *"효과단추는 네가 아이디어낸게 좋은 것 같아"*).
+  const [ctxTab, setCtxTab] = useState('order')
+  // 🙈 잠깐 숨기기 (창업자 폰 제보 2026-08-07 *"위에 설정(색, 무늬 모양)부분이 너무 길어
+  //    이거 접는거나 잠깐 숨기기나 그런게 필요햐"*) — 접으면 갈래 줄만 남고 칩 줄이 사라진다.
+  const [ctxOpen, setCtxOpen] = useState(true)
   const [textFont, setTextFont] = useState('gaegu') // 글자 스티커 글씨체 기본 = 귀염체(손글씨 톤)
   const [bg, setBg] = useState(draft?.bg ?? recipe.decorBg ?? 'none') // 표지 배경(배경지)
   // 되돌리기용 실제 표지 — 저장값이 'none'이어도 아이콘/사진으로 되살릴 수 있게
@@ -291,9 +299,22 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //      이름 규칙 대신 이미 있는 분류(친구들 탭)를 쓴다 → 새 계절 곰펭도 자동으로 된다.
   //   ✍️ **직접 쓴 글자에도 붙인다** (창업자 2026-08-07 *"글자에도 모션이나 효과가 들어가면 더 좋고"*)
   //      ⭐ 모션·효과는 `transform`·파티클이라 그림이든 글자든 똑같이 얹힌다 — 새로 만들 게 없다.
-  //      ⛔ 포스트잇(`note`)·형광펜(`hl`)엔 안 붙인다: 포스트잇은 «받침»이라 흔들리면 위에 놓인
-  //         스티커와 어긋나 보이고, 형광펜은 글자에 겹쳐 두는 띠라 움직이면 밑줄이 어긋난다.
-  const selIsBuddy = (selItem?.type === 'sticker' && FRIEND_IDS.has(selItem.key)) || selItem?.type === 'text'
+  //      ⛔ 형광펜(`hl`)·마테(`tape`)엔 안 붙인다 — 글자에 겹쳐 두는 띠라 움직이면 밑줄이 어긋난다.
+  //   ⛔⛔ **「친구들 스티커만」이 창업자 제보의 뿌리였다** (2026-08-07 폰 제보 *"5번은 없어(어딨는지 못찾음)"*)
+  //      일기 서랍 탭 = **마테·데코·글자 셋뿐**(실측) — **친구들 탭이 «아예 없다».**
+  //      그래서 일꾸에선 「직접 쓴 글자」 말고는 두 단추를 띄울 길이 자체가 없었다.
+  //      ⭐ 모션은 `hk-m-*` CSS 클래스이고 효과는 위에 겹치는 파티클이라 **밑이 무엇이든 그냥 얹힌다** →
+  //         데코 스티커·포스트잇·글 상자·사진 전부 된다. 막고 있던 건 코드지 그림이 아니었다.
+  const selCanAnim = !!selItem && ['sticker', 'text', 'note', 'photo'].includes(selItem.type)
+  // 🎬 기본값 — 친구들 스티커만 «가만 두면 통통»이고 나머지는 «가만히»다(`StickerArt` 926줄과 같은 규칙).
+  //   ⛔ 예전 코드는 `selItem.motion || 'tongtong'` 이라 글자도 「통통」이 켜진 것처럼 보였는데
+  //      `motionClass(undefined)` 는 '' 라 **실제로는 안 움직였다**(칩과 화면이 어긋나 있었다).
+  const selMotion = selItem ? (selItem.motion ?? (selItem.type === 'sticker' && FRIEND_IDS.has(selItem.key) ? 'tongtong' : 'none')) : 'none'
+  const selFx = selItem?.fx || 'none'
+  // 🏷 글 상자(`art`)는 배경이 «우리 그림»이라 포스트잇 색·무늬·모양이 아무 일도 안 한다
+  //    (`DecorLayer` 424줄이 `it.art` 면 `ArtBox` 로 통째로 빠진다) → 죽은 단추라 아예 안 띄운다.
+  //    ⭐ 창업자 폰 제보 2026-08-07 *"소프트잇아니고 스티커에도 포스트잇(줄눈,그런선택지가 나와)"* 가 이것.
+  const selPlainNote = selItem?.type === 'note' && !selItem.art
   // 뭐든 선택하면 컨텍스트 바를 띄운다 — 최소한 '순서(맨 뒤/맨 앞)'는 항상 조절 가능하게(창업자 레이어 제보). 색·움직임 등은 그 아래 종류별로.
   const hasCtx = !!selItem
   const layerBtn = { padding: '6px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: 'var(--surface)', color: 'var(--text-sub)', border: '1px solid var(--line)' }
@@ -470,6 +491,31 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   }
   const selFramePhoto = photoOfFrame(selFrame)
   const selPhotoFrame = (selItem?.type === 'photo' && selItem.of) ? items.find((x) => x.id === selItem.of) : null
+
+  // 🔀 컨텍스트 바 갈래 목록 — 종류마다 「있는 것만」. 여기 한 줄만 늘리면 갈래가 생긴다.
+  //   ⚠️ `selFramePhoto`·`selPhotoFrame` 이 바로 위에서 정해지므로 **이 자리보다 앞에 두면 안 된다**
+  //      (const 는 정의 전에 못 읽는다 — 위로 올렸다가 실제로 터졌다).
+  const ctxTabs = !selItem ? [] : [
+    ...((selFramePhoto || selPhotoFrame) ? [{ k: 'photo', label: '사진' }] : []),
+    { k: 'order', label: '순서' },
+    ...(selItem.type === 'sticker' && RECOLORABLE.has(selItem.key) ? [{ k: 'color', label: '색' }] : []),
+    ...(selItem.type === 'hl' ? [{ k: 'color', label: '색' }, { k: 'width', label: '굵기' }, { k: 'opacity', label: '진하기' }] : []),
+    ...(selItem.type === 'tape' ? [{ k: 'pattern', label: '무늬' }, { k: 'width', label: '굵기' }] : []),
+    ...(selItem.type === 'text' ? [{ k: 'color', label: '색' }, { k: 'width', label: '굵기' }, { k: 'font', label: '글씨' }] : []),
+    ...(selItem.type === 'note' ? [
+      ...(selPlainNote ? [{ k: 'color', label: '색' }] : []),
+      { k: 'font', label: '글씨' },
+      ...(selPlainNote ? [{ k: 'pattern', label: '무늬' }, { k: 'shape', label: '모양' }] : []),
+    ] : []),
+    ...(selCanAnim ? [
+      { k: 'motion', label: '움직임', lit: selMotion !== 'none' },
+      { k: 'fx', label: '효과', lit: selFx !== 'none' },
+    ] : []),
+  ]
+  // 고른 아이템이 바뀌면 그 갈래가 사라질 수 있다 → 없으면 첫 갈래로 «계산해서» 떨어뜨린다.
+  //   ⛔ `useEffect` 로 고치면 한 프레임 동안 빈 줄이 그려진다(깜빡임).
+  const ctxCur = ctxTabs.some((t) => t.k === ctxTab) ? ctxTab : (ctxTabs[0]?.k || 'order')
+
   const onPhotoFile = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -782,26 +828,60 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
 
         {/* 고정 컨텍스트 바 — 선택한 아이템의 색·무늬·모양을 캔버스 바로 아래에서 바로 바꾼다(스크롤 이동 없음) */}
         {hasCtx && (
-          <div style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '7px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div className="decor-ctx" style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '6px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {/* 🔀🔀 **갈래 줄** — 「순서·색·글씨·무늬·모양·움직임·효과」를 세로로 쌓지 않고 «한 줄»에 늘어놓는다.
+                ⭐ 같은 갈래를 다시 누르면 접힌다 — 창업자가 말한 「잠깐 숨기기」가 **누르던 자리 그대로** 된다.
+                ⭐ 점(●) = 그 갈래에 뭔가 걸려 있다는 표시. 다른 갈래를 보고 있어도 «저쪽 상태»가 보인다.
+                ⛔ 라벨(`ctxLabel`)을 없앴다 — 갈래 단추가 이미 이름을 말한다. 가로도 34px 아낀다.
+                ⛔⛔ **가로 스크롤로 두면 안 된다** — 포스트잇은 갈래가 일곱이라 실측 **63px 밀려**
+                   「효과」가 잘렸다. 창업자가 바로 그것을 제보했었다(*"5번은 없어(어딨는지 못찾음)"*).
+                   ⭐ **줄바꿈(`wrap`)** 으로 간다 — 갈래가 많은 종류만 두 줄이 되고 «잘리는 게 없다».
+                      글자색 15색을 두 줄로 접은 것과 «같은 처방»이다(창업자 판정 통과, 안 ⓐ). */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, rowGap: 4, flex: 1 }}>
+                {ctxTabs.map((t) => {
+                  const on = ctxCur === t.k && ctxOpen
+                  return (
+                    // 🔖 `data-ctxtab` = 재현 검사가 갈래를 «이름 아닌 키»로 집게 하는 표식.
+                    //    ⛔ 라벨 글자로 찾으면 서랍에도 같은 글자(색·굵기)가 있어 엉뚱한 걸 누른다
+                    //       — 2026-08-07 에 `_repro-hl` 이 실제로 서랍 형광펜을 눌러 거짓 실패했다.
+                    <button key={t.k} className="press" aria-pressed={on} data-ctxtab={t.k}
+                      onClick={() => { if (ctxCur === t.k && ctxOpen) setCtxOpen(false); else { setCtxTab(t.k); setCtxOpen(true) } }}
+                      style={{ position: 'relative', padding: '5px 7px', borderRadius: 999, fontSize: 12, fontWeight: 800, flex: '0 0 auto', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>
+                      {t.label}
+                      {/* 📐 점은 «귀퉁이»에 얹는다 — 글자 옆에 두면 켤 때마다 칩이 넓어져
+                          일곱 개가 한 줄에서 두 줄로 «튄다»(실측 칩 합 296 → 312px, 칸은 305px). */}
+                      {t.lit && <span style={{ position: 'absolute', top: 2, right: 3, width: 4.5, height: 4.5, borderRadius: 999, background: on ? '#fff' : 'var(--brown)' }} />}
+                    </button>
+                  )
+                })}
+              </div>
+              {/* 🙈 접기·펴기 — 갈래 줄만 남기고 칩 줄을 감춘다(창업자 *"잠깐 숨기기"*). */}
+              <button className="press" onClick={() => setCtxOpen(!ctxOpen)} aria-label={ctxOpen ? '설정 접기' : '설정 펴기'}
+                style={{ width: 25, height: 25, borderRadius: 999, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface)', border: '1px solid var(--line)' }}>
+                <svg viewBox="0 0 20 20" width="14" height="14" style={{ transform: ctxOpen ? 'none' : 'rotate(180deg)' }}>
+                  <path d="M5 12.5 10 7.5l5 5" fill="none" stroke="var(--text-sub)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+            {ctxOpen && (
+            <div style={ctxRow}>
             {/* 🔗 프레임 ↔ 속 사진 — 창 안을 탭하면 프레임이 잡혀서 사진에 손이 안 닿는다(위 `photoOfFrame` 주석) */}
-            {(selFramePhoto || selPhotoFrame) && (
-              <div style={ctxRow}>
-                <span style={ctxLabel}>사진</span>
-                <div style={{ display: 'flex', gap: 7, flex: 1 }}>
-                  {selFramePhoto && (
-                    <button className="press" onClick={() => setSel(selFramePhoto.id)} style={layerBtn}>속 사진 고르기</button>
-                  )}
-                  {selPhotoFrame && (
-                    <button className="press" onClick={() => setSel(selPhotoFrame.id)} style={layerBtn}>프레임 고르기</button>
-                  )}
-                </div>
+            {ctxCur === 'photo' && (
+              <div style={{ display: 'flex', gap: 7, flex: 1 }}>
+                {selFramePhoto && (
+                  <button className="press" onClick={() => setSel(selFramePhoto.id)} style={layerBtn}>속 사진 고르기</button>
+                )}
+                {selPhotoFrame && (
+                  <button className="press" onClick={() => setSel(selPhotoFrame.id)} style={layerBtn}>프레임 고르기</button>
+                )}
               </div>
             )}
             {/* 🧷 순서 — 어떤 아이템이든 맨 뒤/맨 앞으로. 프레임·포스트잇에 스티커가 가려도 다 꺼낼 필요 없이 여기서 정리.
                 📐 뒤집기를 «같은 줄»에 둔다 — 둘 다 단추가 한둘뿐이라 줄을 따로 쓰면 서랍이 그만큼 눌린다
                    (2026-08-07 실측: 네 줄이 166px 를 먹어 서랍 스크롤 칸이 한 줄 반밖에 안 남았다). */}
-            <div style={{ ...ctxRow, ...ctxScroll, alignItems: 'center' }}>
-              <span style={ctxLabel}>순서</span>
+            {ctxCur === 'order' && (
+            <div style={{ ...ctxScroll, alignItems: 'center' }}>
               <button className="press" onClick={() => sendToBack(sel)} style={layerBtn}>맨 뒤로</button>
               <button className="press" onClick={() => bringToFront(sel)} style={layerBtn}>맨 앞으로</button>
               {selItem && canFlip(selItem) && (
@@ -822,6 +902,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 </button>
               )}
             </div>
+            )}
             {/* ↔↔ **좌우 뒤집기** (창업자 2026-08-06 *"캐릭터좌우반전돼?"*)
                 ⭐ 왜 값어치가 큰가 = **코너 장식이 왼쪽 위 모양 하나뿐**이라 오른쪽엔 못 놨다.
                    뒤집기 하나면 **6컷이 24컷**이 된다 — 자산을 늘리는 가장 싼 방법.
@@ -840,210 +921,158 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ⭐ 그래서 판은 그대로 두고 **줄만 줄인다.** 둘 다 칩 줄이라 한 줄에 이어 붙여도 읽힌다.
                 ⭐⭐ 2026-08-07 두 번째 손질 — **한 줄에 이어 붙이니 이번엔 «옆으로» 넘쳤다**(실측 밀림 254px).
                    줄을 아끼려다 칩을 화면 밖으로 밀어낸 셈이라 「효과」 칩은 끝까지 밀어야 보였다.
-                   → **갈래 단추 둘로 갈라 한 쪽만 그린다.** 줄 수는 그대로 하나인데 밀림이 사라진다. */}
-            {selIsBuddy && (
-              <div style={{ ...ctxRow, alignItems: 'center' }}>
-                {/* 🔀 갈래 단추 — 「움직임 ／ 효과」 중 «고른 쪽 칩만» 그린다.
-                    📌 갈래 단추는 **줄 밖에 못 나가게 «고정»**하고 칩만 미끄러지게 한다 —
-                       위 「색」 줄과 «같은 짜임»(라벨 고정 ＋ `ctxScroll` 안에 칩). 한 줄에 다 넣으면
-                       갈래 단추 자신이 화면 밖으로 밀려 나가 «무엇을 보고 있는지»가 안 보인다.
-                    ⭐ 칩과 안 헷갈리게 «붙은 두 칸»(세그먼트)으로 — 앱의 `.segment` 와 같은 문법이다.
-                    ⭐ 점(●) = 그 쪽에 뭔가 걸려 있다는 표시. 다른 쪽을 보고 있어도 «저쪽 상태»가 보인다
-                       (안 그러면 효과를 걸어둔 걸 확인하려고 탭을 왔다 갔다 해야 한다). */}
-                <div style={{ display: 'inline-flex', flex: '0 0 auto', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, padding: 2 }}>
-                  {[{ k: 'motion', label: '움직임', lit: (selItem.motion || 'tongtong') !== 'none' },
-                    { k: 'fx', label: '효과', lit: (selItem.fx || 'none') !== 'none' }].map((t) => {
-                    const cur = fxTab === t.k
-                    return (
-                      <button key={t.k} className="press" onClick={() => setFxTab(t.k)} aria-pressed={cur}
-                        style={{ padding: '4px 9px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4, background: cur ? 'var(--brown)' : 'transparent', color: cur ? '#fff' : 'var(--text-sub)' }}>
-                        {t.label}
-                        {t.lit && <span style={{ width: 5, height: 5, borderRadius: 999, flex: '0 0 auto', background: cur ? '#fff' : 'var(--brown)' }} />}
-                      </button>
-                    )
-                  })}
-                </div>
-                <div style={{ ...ctxScroll, gap: 6 }}>
-                  {(fxTab === 'motion' ? pickableMotions() : pickableFx()).map((o) => {
-                    const now = fxTab === 'motion' ? (selItem.motion || 'tongtong') : (selItem.fx || 'none')
-                    const on = now === o.key
-                    return (
-                      <button key={o.key} className="press" onClick={() => patchRec(sel, fxTab === 'motion' ? { motion: o.key } : { fx: o.key })}
-                        style={{ padding: '5px 10px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{o.label}</button>
-                    )
-                  })}
-                </div>
+                   → **갈래 단추 둘로 갈라 한 쪽만 그린다.** 줄 수는 그대로 하나인데 밀림이 사라진다.
+                ⭐⭐ 2026-08-07 세 번째 — 그 갈래 문법을 **컨텍스트 바 전체**로 넓혔다(위 갈래 줄).
+                   이제 「움직임·효과」도 다른 설정과 «같은 갈래 단추»다. */}
+            {(ctxCur === 'motion' || ctxCur === 'fx') && (
+              <div style={{ ...ctxScroll, gap: 6 }}>
+                {(ctxCur === 'motion' ? pickableMotions() : pickableFx()).map((o) => {
+                  const on = (ctxCur === 'motion' ? selMotion : selFx) === o.key
+                  return (
+                    <button key={o.key} className="press" onClick={() => patchRec(sel, ctxCur === 'motion' ? { motion: o.key } : { fx: o.key })}
+                      style={{ padding: '5px 10px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{o.label}</button>
+                  )
+                })}
               </div>
             )}
-            {selItem.type === 'sticker' && RECOLORABLE.has(selItem.key) && (
-              <div style={ctxRow}>
-                <span style={ctxLabel}>색</span>
-                <div style={ctxScroll}>
+            {ctxCur === 'color' && selItem.type === 'sticker' && (
+              <div style={ctxScroll}>
                   <button className="press" onClick={() => patchRec(sel, { color: null })} aria-label="기본색"
                     style={{ ...ctxDot, border: !selItem.color ? selOn : selOff, fontSize: 10, fontWeight: 800, color: 'var(--text-sub)', background: 'var(--surface)' }}>기본</button>
                   {STICKER_COLORS.map((c) => (
                     <button key={c.key} className="press" onClick={() => patchRec(sel, { color: c.color })} aria-label={`색 ${c.key}`}
                       style={{ ...ctxDot, background: c.color, border: selItem.color === c.color ? selOn : '1.5px solid rgba(0,0,0,.1)', boxShadow: selItem.color === c.color ? '0 0 0 2px var(--surface) inset' : 'none' }} />
                   ))}
-                </div>
               </div>
             )}
-            {selItem.type === 'hl' && (
-              <>
-                <div style={ctxRow}>
-                  <span style={ctxLabel}>색</span>
-                  <div style={ctxScroll}>
-                    {HL_COLORS.map((c) => (
-                      <button key={c.key} className="press" onClick={() => patchRec(sel, { key: c.key })} aria-label={`형광펜 ${c.label}`}
-                        style={{ ...ctxDot, background: c.color, border: selItem.key === c.key ? selOn : '1.5px solid rgba(0,0,0,.12)', boxShadow: selItem.key === c.key ? '0 0 0 2px var(--cream)' : 'none' }} />
-                    ))}
-                  </div>
-                </div>
-                <div style={ctxRow}>
-                  <span style={ctxLabel}>굵기</span>
-                  <div style={ctxScroll}>
-                    {HL_WIDTHS.map((w) => {
-                      const on = (selItem.ratio || 6) === w.ratio
-                      return (
-                        <button key={w.key} className="press" onClick={() => patchRec(sel, { ratio: w.ratio })}
-                          style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{w.label}</button>
-                      )
-                    })}
-                  </div>
-                </div>
-                {/* 🖍 진하기 — 진짜 형광펜은 «두 번 그으면 진해진다». 그 감각을 그대로. */}
-                <div style={ctxRow}>
-                  <span style={ctxLabel}>진하기</span>
-                  <div style={ctxScroll}>
-                    {HL_OPACITIES.map((o) => {
-                      const on = (selItem.o ?? 0.5) === o.o
-                      return (
-                        <button key={o.key} className="press" onClick={() => patchRec(sel, { o: o.o })}
-                          style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{o.label}</button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </>
-            )}
-            {selItem.type === 'tape' && (
-              <>
-                <div style={ctxRow}>
-                  <span style={ctxLabel}>무늬</span>
-                  <div style={ctxScroll}>
-                    {TAPE_PATTERNS.map((t) => (
-                      <button key={t.key} className="press" onClick={() => patchRec(sel, { key: t.key })} aria-label={`테이프 ${t.label}`}
-                        style={{ width: 46, height: 22, borderRadius: 3, ...t.style, flex: '0 0 auto', border: selItem.key === t.key ? selOn : '1px solid rgba(0,0,0,.08)' }} />
-                    ))}
-                  </div>
-                </div>
-                <div style={ctxRow}>
-                  <span style={ctxLabel}>굵기</span>
-                  <div style={ctxScroll}>
-                    {TAPE_WIDTHS.map((w) => {
-                      const on = (selItem.ratio || 3.4) === w.ratio
-                      return (
-                        <button key={w.key} className="press" onClick={() => patchRec(sel, { ratio: w.ratio })}
-                          style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{w.label}</button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </>
-            )}
-            {selItem.type === 'text' && (
-              <>
-              {/* 🎨 **놓은 뒤에도 색을 바꾼다.** 예전엔 색이 '추가할 때'만 있어서
-                  색을 바꾸려면 **지우고 다시 넣어야** 했다(창업자 2026-07-30
-                  *"글자 리컬러 안돼…"* · *"이렇게 색깔고르는게 되게 불편하네... 한개씩 눌러서 아니면 지우고.."*). */}
-              {/* 🎨🎨 **두 줄로 접는다** (창업자 판정 2026-08-07 — 안 ⓐ)
-                  ⛔ 전엔 한 줄 가로 스크롤이라 **15색 중 8개만 보이고 7개가 255px 밀려** 있었다(실측).
-                     밀 수 있다는 걸 아무도 모르니 「색이 4개뿐」으로 읽힌다 — 내가 실제로 그렇게 잘못 말했다.
-                  ⛔ 「칩을 작게」 안은 **찍어 보니 12개만 들어갔다**(3개 여전히 밀림) ＋ 비슷한 색끼리 구분이 안 됐다 → 탈락.
-                  ⭐ 두 줄이면 15개가 8＋7 로 다 보이고, **색을 나란히 견줄 수 있다** — 색 고르기는 원래 그런 일이다.
-                  📐 대가 = 세로 37px. 색 고르는 줄이라 그만한 값어치가 있다. */}
-              <div style={ctxRow}>
-                <span style={ctxLabel}>색</span>
-                <div style={{ ...ctxScroll, flexWrap: 'wrap', overflowX: 'visible', rowGap: 7 }}>
-                  {TEXT_COLORS.map((c) => (
-                    <button key={c.key} className="press" onClick={() => patchRec(sel, { color: c.key })} aria-label={`글자색 ${c.key}`}
-                      style={{ ...ctxDot, background: c.color, border: (selItem.color || 'white') === c.key ? selOn : '1.5px solid rgba(0,0,0,.14)', boxShadow: (selItem.color || 'white') === c.key ? '0 0 0 2px var(--cream)' : 'none' }} />
-                  ))}
-                </div>
+            {ctxCur === 'color' && selItem.type === 'hl' && (
+              <div style={ctxScroll}>
+                {HL_COLORS.map((c) => (
+                  <button key={c.key} className="press" onClick={() => patchRec(sel, { key: c.key })} aria-label={`형광펜 ${c.label}`}
+                    style={{ ...ctxDot, background: c.color, border: selItem.key === c.key ? selOn : '1.5px solid rgba(0,0,0,.12)', boxShadow: selItem.key === c.key ? '0 0 0 2px var(--cream)' : 'none' }} />
+                ))}
               </div>
-              <div style={ctxRow}>
-                <span style={ctxLabel}>굵기</span>
-                <div style={ctxScroll}>
-                  {TEXT_WEIGHTS.map((w) => (
-                    <button key={w.key} className="press" onClick={() => patchRec(sel, { w: w.key })}
-                      style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: (selItem.w || 'mid') === w.key ? 'var(--brown)' : 'var(--surface)', color: (selItem.w || 'mid') === w.key ? '#fff' : 'var(--text-sub)', border: 'none' }}>
-                      {w.label}
-                    </button>
-                  ))}
-                </div>
+            )}
+            {ctxCur === 'width' && selItem.type === 'hl' && (
+              <div style={ctxScroll}>
+                {HL_WIDTHS.map((w) => {
+                  const on = (selItem.ratio || 6) === w.ratio
+                  return (
+                    <button key={w.key} className="press" onClick={() => patchRec(sel, { ratio: w.ratio })}
+                      style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{w.label}</button>
+                  )
+                })}
               </div>
-              <div style={ctxRow}>
-                <span style={ctxLabel}>글씨</span>
-                <div style={ctxScroll}>
-                  {TEXT_FONTS.map((f) => (
+            )}
+            {/* 🖍 진하기 — 진짜 형광펜은 «두 번 그으면 진해진다». 그 감각을 그대로. */}
+            {ctxCur === 'opacity' && (
+              <div style={ctxScroll}>
+                {HL_OPACITIES.map((o) => {
+                  const on = (selItem.o ?? 0.5) === o.o
+                  return (
+                    <button key={o.key} className="press" onClick={() => patchRec(sel, { o: o.o })}
+                      style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{o.label}</button>
+                  )
+                })}
+              </div>
+            )}
+            {ctxCur === 'pattern' && selItem.type === 'tape' && (
+              <div style={ctxScroll}>
+                {TAPE_PATTERNS.map((t) => (
+                  <button key={t.key} className="press" onClick={() => patchRec(sel, { key: t.key })} aria-label={`테이프 ${t.label}`}
+                    style={{ width: 46, height: 22, borderRadius: 3, ...t.style, flex: '0 0 auto', border: selItem.key === t.key ? selOn : '1px solid rgba(0,0,0,.08)' }} />
+                ))}
+              </div>
+            )}
+            {ctxCur === 'width' && selItem.type === 'tape' && (
+              <div style={ctxScroll}>
+                {TAPE_WIDTHS.map((w) => {
+                  const on = (selItem.ratio || 3.4) === w.ratio
+                  return (
+                    <button key={w.key} className="press" onClick={() => patchRec(sel, { ratio: w.ratio })}
+                      style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{w.label}</button>
+                  )
+                })}
+              </div>
+            )}
+            {/* 🎨 **놓은 뒤에도 색을 바꾼다.** 예전엔 색이 '추가할 때'만 있어서
+                색을 바꾸려면 **지우고 다시 넣어야** 했다(창업자 2026-07-30
+                *"글자 리컬러 안돼…"* · *"이렇게 색깔고르는게 되게 불편하네... 한개씩 눌러서 아니면 지우고.."*). */}
+            {/* 🎨🎨 **두 줄로 접는다** (창업자 판정 2026-08-07 — 안 ⓐ)
+                ⛔ 전엔 한 줄 가로 스크롤이라 **15색 중 8개만 보이고 7개가 255px 밀려** 있었다(실측).
+                   밀 수 있다는 걸 아무도 모르니 「색이 4개뿐」으로 읽힌다 — 내가 실제로 그렇게 잘못 말했다.
+                ⛔ 「칩을 작게」 안은 **찍어 보니 12개만 들어갔다**(3개 여전히 밀림) ＋ 비슷한 색끼리 구분이 안 됐다 → 탈락.
+                ⭐ 두 줄이면 15개가 8＋7 로 다 보이고, **색을 나란히 견줄 수 있다** — 색 고르기는 원래 그런 일이다.
+                📐 대가 = 세로 37px. 색 고르는 줄이라 그만한 값어치가 있다.
+                ⭐ 갈래로 바뀌어도 이 줄만 두 줄인 건 그대로 — 이제 «색 갈래를 골랐을 때»만 그만큼 쓴다. */}
+            {ctxCur === 'color' && selItem.type === 'text' && (
+              <div style={{ ...ctxScroll, flexWrap: 'wrap', overflowX: 'visible', rowGap: 7 }}>
+                {TEXT_COLORS.map((c) => (
+                  <button key={c.key} className="press" onClick={() => patchRec(sel, { color: c.key })} aria-label={`글자색 ${c.key}`}
+                    style={{ ...ctxDot, background: c.color, border: (selItem.color || 'white') === c.key ? selOn : '1.5px solid rgba(0,0,0,.14)', boxShadow: (selItem.color || 'white') === c.key ? '0 0 0 2px var(--cream)' : 'none' }} />
+                ))}
+              </div>
+            )}
+            {ctxCur === 'width' && selItem.type === 'text' && (
+              <div style={ctxScroll}>
+                {TEXT_WEIGHTS.map((w) => (
+                  <button key={w.key} className="press" onClick={() => patchRec(sel, { w: w.key })}
+                    style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: (selItem.w || 'mid') === w.key ? 'var(--brown)' : 'var(--surface)', color: (selItem.w || 'mid') === w.key ? '#fff' : 'var(--text-sub)', border: 'none' }}>
+                    {w.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* ✍️ 글씨체 — 「직접 쓴 글자」와 포스트잇·글 상자가 «같은 목록»을 쓴다.
+                ⚠️ 기본값만 다르다: 글자는 없으면 첫 글씨체, 포스트잇은 귀염체(`gaegu`). */}
+            {ctxCur === 'font' && (
+              <div style={ctxScroll}>
+                {TEXT_FONTS.map((f) => {
+                  const now = selItem.type === 'note' ? (selItem.font || 'gaegu') : selItem.font
+                  return (
                     <button key={f.key} className="press" onClick={() => patchRec(sel, { font: f.key })}
-                      style={{ padding: '4px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, flex: '0 0 auto', fontFamily: chipFamily(f), background: selItem.font === f.key ? 'var(--brown)' : 'var(--surface)', color: selItem.font === f.key ? '#fff' : 'var(--text-sub)' }}>{f.label}</button>
-                  ))}
-                </div>
+                      style={{ padding: '4px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, flex: '0 0 auto', fontFamily: chipFamily(f), background: now === f.key ? 'var(--brown)' : 'var(--surface)', color: now === f.key ? '#fff' : 'var(--text-sub)' }}>{f.label}</button>
+                  )
+                })}
               </div>
-              </>
             )}
-            {selItem.type === 'note' && (
-              <>
-                {/* 🎨🎨 **붙인 뒤에도 색을 바꾼다** (2026-08-07 에 찾은 구멍)
-                    ⛔ 여태 포스트잇은 «서랍에서 색을 골라 붙이는 것»뿐이라, 색을 바꾸려면 **지우고 다시 붙여야** 했다.
-                       창업자 원문이 이미 2026-07-30 에 *"이렇게 색깔고르는게 되게 불편하네... 한개씩 눌러서 아니면 지우고.."*
-                       였는데 **그때 고친 건 「직접 쓴 글자」뿐이었다.** 포스트잇은 그대로 남아 있었다.
-                    📌 이게 창업자 *"포스트잇은 색상이 넘 별로"* 의 절반이다 — 별로인데 «바꿀 수도» 없었다.
-                    ⛔ 글 상자(`art`)엔 안 띄운다 — 배경이 우리 그림이라 이 색이 아무 일도 안 한다. */}
-                {!selItem.art && (
-                  <div style={ctxRow}>
-                    <span style={ctxLabel}>색</span>
-                    <div style={ctxScroll}>
-                      {NOTE_COLORS.map((c) => (
-                        <button key={c.key} className="press" onClick={() => patchRec(sel, { key: c.key })} aria-label={`포스트잇색 ${c.key}`}
-                          style={{ ...ctxDot, background: c.bg, border: selItem.key === c.key ? selOn : '1.5px solid rgba(0,0,0,.12)', boxShadow: selItem.key === c.key ? '0 0 0 2px var(--surface) inset' : 'none' }} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div style={ctxRow}>
-                  <span style={ctxLabel}>글씨</span>
-                  <div style={ctxScroll}>
-                    {TEXT_FONTS.map((f) => (
-                      <button key={f.key} className="press" onClick={() => patchRec(sel, { font: f.key })}
-                        style={{ padding: '4px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, flex: '0 0 auto', fontFamily: chipFamily(f), background: (selItem.font || 'gaegu') === f.key ? 'var(--brown)' : 'var(--surface)', color: (selItem.font || 'gaegu') === f.key ? '#fff' : 'var(--text-sub)' }}>{f.label}</button>
-                    ))}
-                  </div>
-                </div>
-                <div style={ctxRow}>
-                  <span style={ctxLabel}>무늬</span>
-                  <div style={ctxScroll}>
-                    {NOTE_PATTERNS.map((p) => (
-                      <button key={p.key} className="press" onClick={() => patchRec(sel, { pattern: p.key })}
-                        style={{ ...ctxChip, border: (selItem.pattern || 'plain') === p.key ? selOn : selOff }}>
-                        <MiniNote color={selNoteColor} pattern={p.key} shape="round" size={22} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div style={ctxRow}>
-                  <span style={ctxLabel}>모양</span>
-                  <div style={ctxScroll}>
-                    {NOTE_SHAPES.map((s) => (
-                      <button key={s.key} className="press" onClick={() => patchRec(sel, { shape: s.key })}
-                        style={{ ...ctxChip, border: (selItem.shape || 'fold') === s.key ? selOn : selOff }}>
-                        <MiniNote color={selNoteColor} pattern="plain" shape={s.key} size={22} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
+            {/* 🎨🎨 **붙인 뒤에도 색을 바꾼다** (2026-08-07 에 찾은 구멍)
+                ⛔ 여태 포스트잇은 «서랍에서 색을 골라 붙이는 것»뿐이라, 색을 바꾸려면 **지우고 다시 붙여야** 했다.
+                   창업자 원문이 이미 2026-07-30 에 *"이렇게 색깔고르는게 되게 불편하네... 한개씩 눌러서 아니면 지우고.."*
+                   였는데 **그때 고친 건 「직접 쓴 글자」뿐이었다.** 포스트잇은 그대로 남아 있었다.
+                📌 이게 창업자 *"포스트잇은 색상이 넘 별로"* 의 절반이다 — 별로인데 «바꿀 수도» 없었다.
+                ⛔⛔ **글 상자(`art`)엔 색·무늬·모양 갈래가 아예 «안 생긴다»** — 위 `selPlainNote` 를 볼 것.
+                   `DecorLayer` 424줄이 `it.art` 면 `ArtBox` 로 통째로 빠져서 **눌러도 아무 일이 안 났다.**
+                   창업자 폰 제보 2026-08-07 *"소프트잇아니고 스티커에도 포스트잇(줄눈,그런선택지가 나와)"* 가 이것. */}
+            {ctxCur === 'color' && selItem.type === 'note' && (
+              <div style={ctxScroll}>
+                {NOTE_COLORS.map((c) => (
+                  <button key={c.key} className="press" onClick={() => patchRec(sel, { key: c.key })} aria-label={`포스트잇색 ${c.key}`}
+                    style={{ ...ctxDot, background: c.bg, border: selItem.key === c.key ? selOn : '1.5px solid rgba(0,0,0,.12)', boxShadow: selItem.key === c.key ? '0 0 0 2px var(--surface) inset' : 'none' }} />
+                ))}
+              </div>
+            )}
+            {ctxCur === 'pattern' && selItem.type === 'note' && (
+              <div style={ctxScroll}>
+                {NOTE_PATTERNS.map((p) => (
+                  <button key={p.key} className="press" onClick={() => patchRec(sel, { pattern: p.key })}
+                    style={{ ...ctxChip, border: (selItem.pattern || 'plain') === p.key ? selOn : selOff }}>
+                    <MiniNote color={selNoteColor} pattern={p.key} shape="round" size={22} />
+                  </button>
+                ))}
+              </div>
+            )}
+            {ctxCur === 'shape' && (
+              <div style={ctxScroll}>
+                {NOTE_SHAPES.map((s) => (
+                  <button key={s.key} className="press" onClick={() => patchRec(sel, { shape: s.key })}
+                    style={{ ...ctxChip, border: (selItem.shape || 'fold') === s.key ? selOn : selOff }}>
+                    <MiniNote color={selNoteColor} pattern="plain" shape={s.key} size={22} />
+                  </button>
+                ))}
+              </div>
+            )}
+            </div>
             )}
           </div>
         )}
