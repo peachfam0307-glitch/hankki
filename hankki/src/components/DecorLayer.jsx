@@ -134,7 +134,24 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     const dy = e.clientY - h.cy
     // 글자는 커버를 꽉 채울 만큼 더 크게 · 그림은 원본 해상도가 허락하는 만큼만(h.maxS)
     const s = clamp(h.s0 * (Math.hypot(dx, dy) / h.d0), 0.07, h.isText ? 1.6 : (h.maxS || 0.9))
-    const r = h.r0 + (Math.atan2(dy, dx) * 180) / Math.PI - h.a0
+    let r = h.r0 + (Math.atan2(dy, dx) * 180) / Math.PI - h.a0
+    // 🧲🧲 **돌리기 문턱 ＋ 각도 자석** (창업자 2026-08-07 확정 — *"돌리고 키우는거 잘안되서 불편"* →
+    //   자석 안 승인: *"맘대로 삐딱하게도 정확하게도 붙일수있다는거지"* — 맞다, 그게 이 코드다)
+    //   실측(_repro-손잡이): 손잡이를 «똑바로» 바깥으로 끌어도 각도가 3.9° 딸려 돈다 —
+    //   크기만 키우려는데 스티커가 삐뚤어지는 「불편」의 정체.
+    //   ① **문턱 6°** — 끌기 시작 후 6° 안은 «안 돌린 것»으로 본다(iOS 마크업 문법).
+    //      크기만 키우는 손은 각을 안 넘기니 **각도가 1도도 안 흔들린다.**
+    //      ⛔ 문턱 없이 자석만 걸면, 크기 끄는 중 각이 흘러 자석 안에 들어간 순간 «툭» 돌아버린다.
+    //   ② **자석 ±5°** — 0·90·180·270° 근처면 그 각에 딱 붙는다. 5° 를 넘겨 돌리면 완전 자유 —
+    //      다꾸는 «일부러» 삐딱하게 붙이는 일이라 자석은 네 곳에만 건다(캔바·인스타 스토리 문법).
+    //   ⚠️ 저장값(r)을 스냅한다 — 화면과 저장이 어긋나면 캡처(공유 카드)에서 딴 각도가 찍힌다.
+    if (!h.turned && Math.abs(r - h.r0) < 6) r = h.r0
+    else {
+      h.turned = true
+      const rn = ((r % 360) + 360) % 360
+      const near = [0, 90, 180, 270, 360].find((a) => Math.abs(rn - a) <= 5)
+      if (near !== undefined) r = r + ((near % 360) - rn)
+    }
     if (!h.marked) { h.marked = true; onChange?.(h.id, { s, r }, true) }
     else onChange?.(h.id, { s, r })
   }

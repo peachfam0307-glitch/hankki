@@ -91,8 +91,20 @@ await page.screenshot({ path: join(OUT, '서랍-2-고름.png') })
 const rolled = await roll()
 console.log(`   ℹ️ 400px 굴려 보니 = ${rolled}px`)
 
+// 🗜 「접기」 — 고른 갈래를 한 번 더 누르면 칩 줄이 접힌다(창업자 요청 · 안 D 에서 한 번 사라졌다 되살림)
+console.log('\n── 갈래를 접었을 때 ──')
+const openTab = page.locator('.decor-tools button[aria-expanded="true"]').first()
+if (await openTab.count()) { await openTab.click(); await page.waitForTimeout(400) }
+const f = await measure()
+console.log('   ', JSON.stringify(f, null, 0))
+
 // ── 판정 ──
-if (c.스크롤칸 >= 240) ok(`⭐ 스티커를 골라도 서랍 스크롤 칸이 남는다 (${c.스크롤칸}px)`)
+// 📐 2026-08-07 안 D — 문턱을 «두 단»으로 잰다. ⛔낮춰서 통과시키는 게 아니라 «상태»가 둘로 갈린 것이다:
+//    · 도구를 쓰는 중(갈래 펼침) = 서랍은 보조 → 두 줄(≥170px)이면 굴러가고 손가락도 안 닿는다
+//    · 서랍을 뒤지는 중(접힘)    = 서랍이 주인공 → 옛 문턱 240px 그대로 요구한다
+if (f.스크롤칸 >= 240) ok(`⭐ 접으면 스크롤 칸 ${f.스크롤칸}px — 옛 문턱(240) 그대로 통과`)
+else no(`접어도 ${f.스크롤칸}px 뿐이다 — 서랍을 뒤질 자리가 안 나온다`)
+if (c.스크롤칸 >= 170) ok(`⭐ 갈래를 펼친 채로도 ${c.스크롤칸}px — 두 줄은 보인다`)
 else no(`⭐ 스티커를 고르니 서랍 스크롤 칸이 ${c.스크롤칸}px 밖에 안 된다 — 한두 줄이라 손가락이 탭 줄에 닿는다`)
 if (c.담긴내용 > c.스크롤칸 && rolled > 50) ok(`실제로 굴러간다 (${rolled}px 내려감 · 담긴 내용 ${c.담긴내용}px)`)
 else if (c.담긴내용 <= c.스크롤칸) no('담긴 내용이 칸보다 작다 — 서랍이 통째로 눌렸다')

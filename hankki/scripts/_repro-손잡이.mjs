@@ -83,6 +83,7 @@ console.log('\n── ⓐ 「크기만」 키우려 할 때 각도가 딸려 도
   const after = await val()
   const dr = Math.abs(after.r - before.r)
   console.log(`   ℹ️ 크기 ${before.s?.toFixed(3)} → ${after.s?.toFixed(3)} · 각도 ${before.r.toFixed(1)}° → ${after.r.toFixed(1)}°`)
+  // 🧲 2026-08-07 문턱＋자석 — 크기만 끌면 문턱(6°) 덕에 각도가 «전혀» 안 돈다.
   if (dr <= 1) ok(`똑바로 끌면 각도가 거의 안 돈다 (${dr.toFixed(1)}°)`)
   else no(`⭐ 크기만 키웠는데 각도가 ${dr.toFixed(1)}° 돌았다`)
 }
@@ -121,18 +122,30 @@ console.log('\n── ⓒ 손으로 180° 를 맞출 수 있나 (아래 귀퉁�
     const cx0 = sb.x + sb.width / 2, cy0 = sb.y + sb.height / 2
     const R = Math.hypot(hb.x + hb.width / 2 - cx0, hb.y + hb.height / 2 - cy0)
     await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await page.mouse.down()
-    // 반대편까지 «원을 그리며» 돈다 — 사람이 하는 그대로
+    // ⭐ «사람처럼» 돌린다 — 조금씩 돌리며 화면의 «실제 각»을 읽고, 180° 근처(4° 안)에 오면 손을 뗀다.
+    //    자석이 있으면 그 근처에서 정확히 180 에 붙고, 없으면(옛 코드) 어중간한 각이 남아 걸린다(규칙 12).
+    //    ⛔ 「몇 도 돌리겠다」고 미리 겨냥하지 않는다 — 축 추정이 살짝만 어긋나도 목표를 놓친다(실제로 그랬다).
     const a0 = Math.atan2(hb.y + hb.height / 2 - cy0, hb.x + hb.width / 2 - cx0)
-    for (let i = 1; i <= 18; i++) {
-      const a = a0 + (Math.PI * i) / 18
-      await page.mouse.move(cx0 + R * Math.cos(a), cy0 + R * Math.sin(a)); await page.waitForTimeout(30)
+    const liveR = () => page.evaluate(() => {
+      const el = document.querySelector('.decor-stage [style*="rotate"]')
+      const m = /rotate\((-?[\d.]+)deg\)/.exec(el?.getAttribute('style') || '')
+      return m ? parseFloat(m[1]) : NaN
+    })
+    for (let i = 1; i <= 90; i++) {
+      const a = a0 + (Math.PI / 36) * i   // 5° 씩
+      await page.mouse.move(cx0 + R * Math.cos(a), cy0 + R * Math.sin(a)); await page.waitForTimeout(25)
+      const rNow = await liveR()
+      const d = Math.abs((((rNow % 360) + 360) % 360) - 180)
+      if (d <= 4) break   // 사람 눈에 「거의 뒤집혔다」 — 여기서 손을 뗀다
     }
     await page.mouse.up(); await page.waitForTimeout(500)
     const after = await val()
-    const 돈각 = Math.abs(after.r - 시작)
-    const off = Math.abs(((돈각 % 360) + 360) % 360 - 180)
-    console.log(`   ℹ️ ${시작.toFixed(1)}° 에서 반 바퀴 → ${after.r.toFixed(1)}° (돈 각 ${돈각.toFixed(1)}° · 180° 에서 ${off.toFixed(1)}° 어긋남) · 크기도 ${after.s?.toFixed(3)} 로 바뀜`)
-    if (off <= 2) ok(`손으로도 180° 가 맞는다 (${off.toFixed(1)}° 차이)`)
+    // 🧲 자석이 생겨 물음이 바뀐다 — 「반 바퀴 돌리면 «180° 그 자리에» 딱 붙나」.
+    //    (전엔 시작각을 그대로 업고 가서 172° 같은 어중간한 값이 나왔다 — 그걸 자석이 먹는다)
+    const 끝 = ((after.r % 360) + 360) % 360
+    const off = Math.abs(끝 - 180)
+    console.log(`   ℹ️ ${시작.toFixed(1)}° 에서 반 바퀴 → ${after.r.toFixed(1)}° (180° 에서 ${off.toFixed(1)}° 어긋남) · 크기도 ${after.s?.toFixed(3)} 로 바뀜`)
+    if (off <= 2) ok(`⭐ 반 바퀴 돌리면 «정확히 180°» 에 붙는다 (${off.toFixed(1)}° 차이) — 자석이 일한다`)
     else no(`⭐ 반 바퀴 돌려도 ${off.toFixed(1)}° 어긋난다 — 코너를 아래 귀퉁이에 «정확히» 못 놓는다`)
   }
 }
