@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
-import { StickerArt, StickerFx, FRIEND_IDS, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
+import { StickerArt, StickerFx, FRIEND_IDS, motionClass, stickerRatio, NOTE_COLORS, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -58,7 +58,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
       b: Math.round(r.bottom - (s.bottom - M)),
     }
     setEdge((p) => (p && p.t === next.t && p.l === next.l && p.r === next.r && p.b === next.b ? p : next))
-  }, [selectedId, selIt?.x, selIt?.y, selIt?.s, selIt?.r, selIt?.flip, coverW])
+  }, [selectedId, selIt?.x, selIt?.y, selIt?.s, selIt?.r, selIt?.flip, selIt?.flipY, coverW])
 
   // 드래그(이동) — 아이템 몸통
   const dragRef = useRef(null)
@@ -148,8 +148,15 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
   return (
     <div
       ref={boxRef}
-      style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: editable ? 'auto' : 'none', touchAction: editable ? 'none' : 'auto' }}
-      onPointerDown={editable ? onBoxDown : undefined}
+      // 🎯 층 자체는 «늘» 통과시킨다 — 손가락이 닿은 것이 답이 된다(스티커면 스티커, 빈 자리면 글칸).
+      //   ⛔ 전엔 꾸미기 탭에서 `auto` 라 **빈 종이를 눌러도 층이 먹어** 글이 안 써졌다.
+      //   ⚠️ 그래서 「빈 자리 탭 = 고르기 풀기」는 여기가 아니라 `.decor-stage` 의 `onPointerDown` 이 한다.
+      //   ⛔⛔ `zIndex:2` 가 «없으면» 스티커를 글칸 위로 못 끈다 — 재현이 잡았다.
+      //      속지의 글칸이 `zIndex:1`(PaperSheet 의 `overSticker` — 「글은 가려지면 안 된다」)이라
+      //      그게 위에 깔려 손가락을 먼저 먹었다. **무지 속지는 글칸이 종이 거의 전체라 사실상 아무 데도 못 놓는다.**
+      //   ⭐ 층을 올려도 «층은 통과»라 빈 자리는 그대로 글칸이 받는다 —
+      //      올라가는 건 **스티커 하나하나뿐**이다(= 스티커 위는 스티커, 빈 자리는 글칸).
+      style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', touchAction: 'auto', zIndex: 2 }}
     >
       {(editable || items.some((it) => it.type === 'note' && noteIsClip(it.shape))) && <NoteShapeDefs />}
       {items.map((it) => {
@@ -183,11 +190,21 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           //   ⭐ `rotate` «뒤»에 `scaleX` 를 둔다 — 순서를 바꾸면 뒤집은 뒤 회전이라
           //      기울기가 반대로 돌아 손잡이가 엉뚱하게 움직인다.
           //   ⛔ 손잡이·지우기 단추는 이 상자 «안»에 있어서 같이 뒤집힌다 → 아래에서 되돌린다.
-          transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)${it.flip ? ' scaleX(-1)' : ''}`,
+          // ↕ `flipY` = 상하 뒤집기 (창업자 2026-08-07 *"이런거 상하좌우반전 넣어줄수있어?"*)
+          //   ⭐ 왜 필요한가 = 코너 장식은 **왼쪽 위 모양 하나뿐**이다. 좌우만 있으면 «위쪽 두 귀퉁이»뿐이고
+          //      아래 두 곳은 손으로 180° 돌려야 하는데, 돌리면 **✕ 도 같이 돌아** 스티커를 잡으려다 지워진다
+          //      (창업자 *"돌려서 오른쪽에 붙이면 삭제버튼이 오른쪽위에오니까 자꾸 지워져"* — 돌리기 자체는 잘 된다).
+          //   📌 좌우＋상하를 같이 켜면 180° 회전과 같은 그림이라 **네 귀퉁이가 다 나온다**(6컷 → 24가지).
+          transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)${it.flip ? ' scaleX(-1)' : ''}${it.flipY ? ' scaleY(-1)' : ''}`,
           touchAction: 'none',
           cursor: editable ? 'grab' : 'default',
-          // 🎯 층이 꺼져 있어도(`pointerEvents:none`) **아이템만** 손가락을 받는다 → 빈 자리는 글칸·축이 받는다
-          ...(!editable && onTapItem ? { pointerEvents: 'auto' } : null),
+          // 🎯🎯 **층은 늘 통과시키고 «아이템만» 손가락을 받는다** → 빈 자리는 언제나 글칸·축이 받는다
+          //   ⛔ 전엔 `!editable` 일 때만 이걸 줬다. 그래서 **일꾸·레꾸 탭에선 층이 통째로 먹어**
+          //      빈 종이를 눌러도 글칸에 안 닿았다 → 글을 고치려면 「글쓰기」 탭으로 옮겨야 했다.
+          //   ⭐ 창업자 2026-08-07 *"속지든 글쓰기등 일꾸레꾸 **어디서든 글씨수정가능하게** 만들어줘. 이게가장 중요"*
+          //      *"탭을 옮겨다니면서 수정해야하면 **안쓰게돼**"*
+          //   📌 v9.89 에 「층은 통과·아이템만」을 이미 썼는데 **꾸미기 탭엔 안 적용했다** — 반쪽이었다.
+          pointerEvents: 'auto',
           // 🔼 **고른 «사진»만 잠깐 위로.** 프레임에 끼운 사진은 일부러 프레임 «뒤»에 깔리는데,
           //    그러면 프레임 그림이 손잡이·지우기 단추를 덮어 눌리지 않는다(재현으로 확인).
           //    ⛔ 배열 순서는 안 건드린다 — 고르기를 풀면 도로 프레임 뒤로 간다.
@@ -222,7 +239,17 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             ) : it.type === 'note' ? (
               <Note it={it} editable={editable} />
             ) : it.type === 'text' ? (
-              <TextDeco it={it} editable={editable} coverW={coverW} />
+              // ✍️✨ **글자에도 모션·효과** (창업자 2026-08-07 *"글자에도 모션이나 효과가 들어가면 더 좋고"*)
+              //   ⭐ 새로 만든 게 없다 — 모션은 `hk-m-*` CSS 클래스라 그림이든 글자든 똑같이 얹히고,
+              //      효과는 위에 겹쳐 그리는 파티클이라 밑이 무엇이든 상관없다.
+              //   ⚠️ 모션 클래스를 «감싼 span» 에 준다 — `TextDeco` 안 글자에 직접 주면
+              //      글자 크기 계산(`coverW`)과 transform 이 섞인다.
+              <span style={{ position: 'absolute', inset: 0 }}>
+                <span className={motionClass(it.motion)} style={{ position: 'absolute', inset: 0 }}>
+                  <TextDeco it={it} editable={editable} coverW={coverW} />
+                </span>
+                <StickerFx kind={it.fx} />
+              </span>
             ) : it.type === 'photo' ? (
               // 📷 내 사진 — 종이 «종류와 상관없이» 붙는다 (창업자 2026-08-06
               //    *"무지나 도트도 사진 넣고싶을수있지않아? 그럼 어떻게 사진넣어?"*)
@@ -243,9 +270,10 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             {on && (
               // 핸들 프레임 — 최소 58px(작은 스티커여도 핸들이 몸통 바깥에 놓이게). 프레임은 클릭 통과(pointerEvents none),
               // 핸들 버튼만 auto → 작은 별도 몸통 중앙은 그대로 드래그, 삭제/확대가 잘못 안 눌림.
-              // ↔ 뒤집힌 아이템이면 «손잡이 판만» 다시 뒤집어 되돌린다 — 안 그러면
-              //   지우기 단추가 왼쪽으로 가고 ⟳ 아이콘이 거울이 된다(조작이 헷갈린다).
-              <div ref={frameRef} style={{ position: 'absolute', left: '50%', top: '50%', width: 'max(100%, 64px)', height: 'max(100%, 64px)', transform: `translate(-50%,-50%)${it.flip ? ' scaleX(-1)' : ''}`, pointerEvents: 'none' }}>
+              // ↔↕ 뒤집힌 아이템이면 «손잡이 판만» 다시 뒤집어 되돌린다 — 안 그러면
+              //   지우기 단추가 왼쪽(또는 아래)으로 가고 ⟳ 아이콘이 거울이 된다(조작이 헷갈린다).
+              //   ⚠️ 좌우·상하를 «둘 다» 되돌려야 한다 — 하나만 되돌리면 나머지 축에서 또 어긋난다.
+              <div ref={frameRef} style={{ position: 'absolute', left: '50%', top: '50%', width: 'max(100%, 64px)', height: 'max(100%, 64px)', transform: `translate(-50%,-50%)${it.flip ? ' scaleX(-1)' : ''}${it.flipY ? ' scaleY(-1)' : ''}`, pointerEvents: 'none' }}>
                 {/* 선택 테두리 */}
                 <span style={{ position: 'absolute', inset: -6, border: '1.6px dashed rgba(255,255,255,.9)', borderRadius: 10, boxShadow: '0 0 0 1px rgba(0,0,0,.25)', pointerEvents: 'none' }} />
                 {/* 삭제 */}

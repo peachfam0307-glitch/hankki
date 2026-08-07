@@ -275,7 +275,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⚠️ 전엔 `KITCHEN_IDS` 와 `gp_` 접두어 둘로 판정했는데, 여름 곰펭(`sm_`)·가을 곰펭(`au_b`)이
   //      어느 쪽에도 안 걸려 **모션·효과 바가 아예 안 떴다**(창업자 2026-07-30 제보).
   //      이름 규칙 대신 이미 있는 분류(친구들 탭)를 쓴다 → 새 계절 곰펭도 자동으로 된다.
-  const selIsBuddy = selItem?.type === 'sticker' && FRIEND_IDS.has(selItem.key)
+  //   ✍️ **직접 쓴 글자에도 붙인다** (창업자 2026-08-07 *"글자에도 모션이나 효과가 들어가면 더 좋고"*)
+  //      ⭐ 모션·효과는 `transform`·파티클이라 그림이든 글자든 똑같이 얹힌다 — 새로 만들 게 없다.
+  //      ⛔ 포스트잇(`note`)·형광펜(`hl`)엔 안 붙인다: 포스트잇은 «받침»이라 흔들리면 위에 놓인
+  //         스티커와 어긋나 보이고, 형광펜은 글자에 겹쳐 두는 띠라 움직이면 밑줄이 어긋난다.
+  const selIsBuddy = (selItem?.type === 'sticker' && FRIEND_IDS.has(selItem.key)) || selItem?.type === 'text'
   // 뭐든 선택하면 컨텍스트 바를 띄운다 — 최소한 '순서(맨 뒤/맨 앞)'는 항상 조절 가능하게(창업자 레이어 제보). 색·움직임 등은 그 아래 종류별로.
   const hasCtx = !!selItem
   const layerBtn = { padding: '6px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: 'var(--surface)', color: 'var(--text-sub)', border: '1px solid var(--line)' }
@@ -684,7 +688,17 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   <PaperBox skin={paper} ratio={ratio} style={{ borderRadius: 18 }}>
                     {/* ⚠️ 사진이 «먼저» — 그래야 스티커를 사진 위에 붙일 수 있다(글자는 zIndex 1)
                         ✍️ 글쓰기 땐 «쓸 수 있는 판»으로 갈아끼운다 — 자리는 똑같고 손이 닿을 뿐이다 */}
-                    {writing ? paperEdit : paperOverlay}
+                    {/* ✍️✍️ **어느 탭에서든 글이 써진다** (창업자 2026-08-07
+                        *"속지든 글쓰기등 일꾸레꾸 어디서든 글씨수정가능하게 만들어줘. **이게가장 중요**"*
+                        *"어느 탭이든 글자를 누르면 글자가 수정되고 이미지를 누르면 이미지가 수정되어야 하는데
+                          탭을 옮겨다니면서 수정해야하면 **안쓰게돼**"*)
+                        ⛔ 전엔 `writing ? paperEdit : paperOverlay` 라 **「글쓰기」 탭에서만** 글칸이 살아 있었다.
+                           일꾸·레꾸·속지에선 쓰는 칸이 «아예 없었다»(재현으로 확인 — textarea 0개).
+                        📌 v9.89 에 고친 건 «스티커 층»이었고 **종이 자체가 읽기 전용으로 갈리는 건 안 고쳤다.**
+                        ⭐ 둘은 «같은 `PaperSheet`»에 `onChange` 만 다른 조각이라 늘 `paperEdit` 를 써도 자리가 안 어긋난다.
+                        ⚠️ 대신 글칸이 포인터를 먹는다 → 스티커를 글칸 «위»로 끌 수 있는지 재현으로 확인했다
+                           (`_repro-0807-5.mjs` ⓑ — 드래그는 스티커에서 시작해 포인터가 잡히므로 그대로 끌린다). */}
+                    {paperEdit || paperOverlay}
                     {layer}
                   </PaperBox>
                 </div>
@@ -756,6 +770,17 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 <button className="press" onClick={() => patchRec(sel, { flip: !selItem.flip })}
                   style={{ ...layerBtn, background: selItem.flip ? 'var(--brown)' : undefined, color: selItem.flip ? '#fff' : undefined }}>
                   좌우 뒤집기
+                </button>
+              )}
+              {/* ↕ **상하 뒤집기** (창업자 2026-08-07 *"이런거 상하좌우반전 넣어줄수있어?"*)
+                  ⭐ 이유는 「돌리기가 어려워서」가 «아니다» — 창업자 원문 *"돌리는건 잘돼"*.
+                     **돌리면 ✕ 가 같이 돌아** 오른쪽 위로 오고, 스티커를 잡으려다 지워진다.
+                     상하 뒤집기가 있으면 **아래 귀퉁이에 놓을 때 돌릴 필요가 없다.**
+                  📌 좌우와 «같은 조건»으로 판단한다(`canFlip`) — 거울 글자가 되는 컷엔 둘 다 안 뜬다. */}
+              {selItem && canFlip(selItem) && (
+                <button className="press" onClick={() => patchRec(sel, { flipY: !selItem.flipY })}
+                  style={{ ...layerBtn, background: selItem.flipY ? 'var(--brown)' : undefined, color: selItem.flipY ? '#fff' : undefined }}>
+                  상하 뒤집기
                 </button>
               )}
             </div>
@@ -984,8 +1009,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 {TEXT_FONTS.map((f) => {
                   const on = (writeFont || 'gaegu') === f.key
                   return (
+                    // 📐 칩을 조금 높인다 (창업자 2026-08-07
+                    //    *"무지속지에서 글자체 선택시 좀만 그 부분 키워줘(너무 지금은 낮아…)"*)
+                    //    ⭐ 손가락이 닿는 칸이자 **글씨체를 «미리 보는» 칸**이라 낮으면 글자가 눌려 보인다.
+                    //    ⛔ 줄 «개수»는 안 늘린다 — 서랍이 그만큼 눌린다(2026-08-07 스크롤 사고).
                     <button key={f.key} className="press" onClick={() => onWriteFont(f.key)}
-                      style={{ flex: '0 0 auto', padding: '5px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700,
+                      style={{ flex: '0 0 auto', padding: '9px 14px', borderRadius: 999, fontSize: 15, fontWeight: 700,
                         fontFamily: chipFamily(f), background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)', border: 'none' }}>
                       {f.label}
                     </button>
