@@ -651,7 +651,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         <button
           key={g.key} className="press" onClick={() => setBuyPack(g)}
           style={{
-            display: 'flex', alignItems: 'center', gap: 9, width: '100%', minHeight: 48, padding: '9px 12px', marginBottom: 10,
+            display: 'flex', alignItems: 'center', gap: 9, width: '100%', minHeight: 44, padding: '5px 12px', marginBottom: 6,
             borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left',
           }}
         >
@@ -798,7 +798,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 //   ✅ 고른 순간에 크기가 «안 바뀐다» — 도구 바가 꾸미기 모드면 늘 떠 있기 때문이다.
                 //   ⛔⛔ 여기에 `{/* */}` 를 쓰면 빌드가 죽는다 — `return (` 바로 뒤라 JSX 가 아직 안 열렸다.
                 //      **바로 위에 이 경고가 적혀 있는데 2026-08-07 에 또 밟았다(여섯 번째).**
-                <div style={{ width: writing ? 'min(100%, 420px)' : 'min(100%, 27vh)', margin: '0 auto' }}>
+                <div style={{ width: writing ? 'min(100%, 420px)' : 'min(100%, 31vh)', margin: '0 auto' }}>
                   <PaperBox skin={paper} ratio={ratio} style={{ borderRadius: 18 }}>
                     {/* ⚠️ 사진이 «먼저» — 그래야 스티커를 사진 위에 붙일 수 있다(글자는 zIndex 1)
                         ✍️ 글쓰기 땐 «쓸 수 있는 판»으로 갈아끼운다 — 자리는 똑같고 손이 닿을 뿐이다 */}
@@ -1120,7 +1120,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ✍️ 「글쓰기」는 **한 장을 만드는 세 단계 그대로**다 — 종이를 깔고 · 쓰고 · 꾸민다.
                  ⛔ 예전엔 셋째 단계가 「저장하고 나가기」였다. 그게 창업자가 말한 불편이다. */}
           {(canPickPaper || paperEdit) && (
-            <div className="segment" style={{ margin: '2px 2px 9px' }}>
+            <div className="segment" style={{ margin: '0 2px 6px' }}>
               {canPickPaper && <button className={`seg ${mode === 'paper' ? 'on' : ''}`} onClick={() => setMode('paper')}>{isDiary ? '속지' : '속지 고르기'}</button>}
               {paperEdit && <button className={`seg ${writing ? 'on' : ''}`} onClick={() => setMode('write')}>글쓰기</button>}
               {isDiary ? (
@@ -1268,19 +1268,33 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ⛔ 전엔 「사진 → 선물」이었고 **「표지 그림 지우기」는 배경 탭 «안»에 따로** 있었다
                    → 표지를 손보려면 탭을 옮겨야 했다(오늘 내내 잡은 「탭 왕복」과 같은 문제).
                 ⭐ 표지를 다루는 둘을 **한 묶음**으로 모은다 — 지우고 나서 사진을 붙이는 게 한 흐름이다. */}
-            <button className="press" onClick={() => setGift(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', minHeight: 48, padding: '9px 12px', marginBottom: 10,
-                borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>
-              <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 800, background: 'var(--brown)', color: '#fff', flex: '0 0 auto' }}>선물</span>
-              <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>출시 기념으로 네 가지를 넣어뒀어요</span>
-              <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
-            </button>
-            {/* 🖼 표지 그림 — 지우기 ＋ 사진 붙이기. **탭과 상관없이 늘 보인다.**
-                ⛔ 일기엔 표지 그림이 없다(종이가 곧 판이다) → 「지우기」는 레시피에서만 뜬다.
-                📷 사진 붙이기는 종이 종류를 안 가리고 붙는 유일한 길이라 어느 탭에서든 있어야 한다. */}
-            <div className="decor-sec">
-              <div className="decor-sec-label">표지 그림</div>
-              {!isDiary && (
+            {/* 📐📐 **선물 ＋ 사진을 «한 줄»에** (창업자 2026-08-07 *"표지그림이랑 선물을 좀 줄여도 될 듯(높이)"*)
+                ⛔ 실물을 찍어 보니 «데코 탭인데 스티커가 한 장도 안 보였다» — 이 둘이 서랍 맨 위 200px 를 먹고
+                   스티커를 도구 바 아래로 밀어냈다.
+                ⛔ 44px 아래로는 못 내린다(손가락 최소) → **세로로 쌓지 말고 «가로로 나란히»** 둔다.
+                📏 세로 쌓기 44＋6＋라벨 20＋44 = 114px → 가로 한 줄 **44px** = **70px 회수.**
+                ⭐ 글자도 짧게 — 「출시 기념으로 네 가지를 넣어뒀어요」는 배너 하나를 통째로 먹던 말이다.
+                   누르면 창이 열려 거기서 다 설명한다. */}
+            <div style={{ display: 'flex', gap: 7, marginBottom: 8 }}>
+              <button className="press" onClick={() => setGift(true)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, minWidth: 0, minHeight: 44, padding: '0 8px',
+                  borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)' }}>
+                <Icon name="gift" size={17} color="var(--brown)" />
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap' }}>선물 네 가지</span>
+              </button>
+              <button className="press" onClick={() => photoRef.current?.click()}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, minWidth: 0, minHeight: 44, padding: '0 8px',
+                  borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)' }}>
+                <Icon name="photo" size={17} color="var(--brown)" />
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selFrame ? '프레임에 사진' : '사진 붙이기'}</span>
+              </button>
+            </div>
+            {/* 🖼 배경 음식 아이콘 — 레시피 표지에만 있다(일기는 종이가 곧 판이다).
+                ⭐ 라벨 「표지 그림」을 없앴다 — 버튼 글자가 이미 무엇인지 말한다(줄 하나 회수).
+                ⛔ `!isDiary` 를 **바깥**에 둔다 — 안에만 두면 일기에선 «빈 `.decor-sec` 9px»가 남는다.
+                   서랍 스크롤 칸을 1px 이라도 되찾는 게 오늘 대수술의 이유다. */}
+            {!isDiary && (
+              <div className="decor-sec">
                 <button className="press" onClick={() => setThumb(thumb === 'none' ? origThumb : 'none')}
                   style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '10px 13px', marginBottom: 8, borderRadius: 12, background: thumb === 'none' ? 'var(--brown)' : 'var(--cream)', color: thumb === 'none' ? '#fff' : 'var(--text)', border: thumb === 'none' ? 'none' : '1px solid var(--line)', fontWeight: 700, fontSize: 13, textAlign: 'left' }}>
                   {/* 🏷 아이콘 = 창업자 2026-08-07 *"배경음식아이콘지우기앞에도 이모지?아이콘 같은거 넣으면 좋겠어
@@ -1293,16 +1307,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                          유저가 보는 그림은 «표지 배경에 깔린 음식 아이콘»이니 그대로 부른다. */}
                   {thumb === 'none' ? '배경 음식 아이콘 되돌리기' : '배경 음식 아이콘 지우기'}
                 </button>
-              )}
-              <button className="press" onClick={() => photoRef.current?.click()}
-                style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', minHeight: 48, padding: '9px 12px',
-                  borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>
-                <Icon name="photo" size={17} color="var(--brown)" />
-                <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{selFrame ? '이 프레임에 사진 넣기' : '사진 스티커로 붙이기'}</span>
-                <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 17, flex: '0 0 auto' }}>›</span>
-              </button>
-              {!isDiary && <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>깨끗한 배경에 꾸미고 싶을 때. 원래 그림은 언제든 되돌려요.</div>}
-            </div>
+                {/* 📌 「사진 붙이기」는 위 «한 줄»로 옮겼다 — 여기 두면 같은 버튼이 두 번 나온다. */}
+              </div>
+            )}
             <input ref={photoRef} type="file" accept="image/*" onChange={onPhotoFile} style={{ display: 'none' }} />
             {/* 🕗🕗 최근 쓴 것 — **그 탭에서** 최근에 붙인 것 여덟.
                 ⭐ 서랍이 400컷을 넘었다. 늘 쓰는 예닐곱 개를 매번 찾아 내려가는 게 일이 됐다

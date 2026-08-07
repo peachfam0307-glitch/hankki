@@ -230,8 +230,8 @@ img {
    구글 사전 출시 보고서의 접근성 항목 「터치 대상 크기」(안드로이드 권장 48dp)를 위해서고,
    실제로 작은 버튼은 누르기도 어렵다. 2026-08-03 실측: 더보기 55×23 · 사용법 26×38 · 아바타 38×38.
    ⭐ 그림·글자 크기는 손대지 않는다 — 창업자 미감을 안 건드리는 게 조건이었다.
-   ⚠️ `::after` 로 넓히면 «레이아웃이 1px 도 안 밀린다». padding 으로 하면 옆 요소가 밀린다. */
-   ⛔⛔ `::after` 로 투명하게 넓히는 방법은 **쓰지 않는다** — 손가락엔 통하지만
+   ⚠️ `::after` 로 넓히면 «레이아웃이 1px 도 안 밀린다». padding 으로 하면 옆 요소가 밀린다.
+   ⛔⛔ 그런데 `::after` 로 투명하게 넓히는 방법은 **쓰지 않는다** — 손가락엔 통하지만
       «자동 검사가 못 잡는다»(가짜 요소라 요소 크기가 안 바뀐다). 2026-08-03 실측으로 확인했다.
       → 버튼 «자체»를 44 로 키우고, 안에 든 그림은 원래 크기 그대로 가운데 둔다. */
 .tap-ok {
@@ -1580,11 +1580,15 @@ html, body { overscroll-behavior: none; }
   border-bottom: 1.5px solid var(--line);
   gap: 0;
 }
+/* 📐 창업자 2026-08-07 *"속지 글쓰기 젤 위에 탭이 너무 커;;"*
+   ⛔ 44px 밑으로는 못 내린다(손가락 최소) → **글자를 가볍게** 해서 «커 보이는 것»을 줄인다.
+      14 → 13 · 굵기 800 → 700 · 밑줄 3 → 2.5px. 높이는 44 로 딱 맞춘다. */
 .decor-drawer .segment .seg {
-  min-height: 46px; border-radius: 0; background: none; box-shadow: none;
-  font-size: 14px; font-weight: 800; color: var(--text-sub);
-  border-bottom: 3px solid transparent; margin-bottom: -1.5px;
+  min-height: 44px; border-radius: 0; background: none; box-shadow: none;
+  font-size: 13px; font-weight: 700; color: var(--text-sub);
+  border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
 }
+.decor-drawer .segment .seg.on { font-weight: 800; }
 .decor-drawer .segment .seg.on {
   background: none; color: var(--brown); border-bottom-color: var(--brown);
 }
@@ -1597,8 +1601,11 @@ html, body { overscroll-behavior: none; }
   scrollbar-width: none;
 }
 .decor-scroll::-webkit-scrollbar { display: none; }
-.decor-sec { margin-bottom: 14px; }
-.decor-sec-label { font-size: 12px; font-weight: 700; color: var(--text-sub); margin: 0 2px 8px; letter-spacing: -0.01em; }
+/* 📐 2026-08-07 — 창업자 *"표지그림이랑 선물을 좀 줄여도 될 듯(높이)"*
+   ⭐ 배너 자체는 44px 아래로 못 내린다(손가락 최소) → **줄 사이 여백**을 깎는다.
+      섹션 라벨 14 → 9 · 라벨 밑 8 → 5. 라벨이 여럿이라 이 몇 px 이 모여서 크다. */
+.decor-sec { margin-bottom: 9px; }
+.decor-sec-label { font-size: 12px; font-weight: 700; color: var(--text-sub); margin: 0 2px 5px; letter-spacing: -0.01em; }
 .decor-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .decor-cell {
   width: 100%; aspect-ratio: 1; border-radius: 14px;
