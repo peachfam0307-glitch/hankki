@@ -25,7 +25,12 @@ import CookScreen from './screens/CookScreen'
 import DiaryScreen from './screens/DiaryScreen'
 
 // '일지'는 레시피 탭의 '요리 기록' 세그먼트로 합쳐졌다.
-const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, shop: ShopScreen, brag: BragScreen, profile: ProfileScreen }
+// 📔 「일기」 탭 = 레시피 화면을 «한끼 일기»부터 연다 (창업자 2026-08-07
+//    *"맨 아래 바에 한끼일기도 넣자. 일기쓰려면 레시피에서 한끼일기 또 들어가야 하니까"*)
+//    ⭐ 새 화면을 안 만든다 — 달력·목록이 이미 그 화면에 있다. «어디서 시작하나»만 다르다.
+//    ⚠️ 아래 렌더에 key={tab} 이 있어 탭이 바뀌면 다시 마운트된다 → initView 가 그대로 먹는다.
+const DiaryLogScreen = () => <MyRecipesScreen initView="log" />
+const TABS = { home: HomeScreen, search: SearchScreen, myrecipes: MyRecipesScreen, log: DiaryLogScreen, shop: ShopScreen, brag: BragScreen, profile: ProfileScreen }
 
 // 홈에서 뒤로가기를 두 번 눌러 나가는 창(ms). 안드로이드 앱들이 쓰는 그 방식.
 const EXIT_WINDOW_MS = 2000

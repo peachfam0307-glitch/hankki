@@ -120,10 +120,13 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, iconFor }) {
   )
 }
 
-export default function MyRecipesScreen() {
+// 📔 initView = 「일기」 탭으로 들어오면 «한끼 일기»부터 보여준다 (창업자 2026-08-07
+//    *"맨 아래 바에 한끼일기도 넣자. 일기쓰려면 레시피에서 한끼일기 또 들어가야 하니까"*)
+//    ⚠️ App 이 key 를 달리 줘서 «다시 마운트»되게 한다 — 안 그러면 초기값이 안 먹는다.
+export default function MyRecipesScreen({ initView = 'grid' }) {
   const { recipes, folders, addFolder, removeFolder, removeRecipe, diary, removeDiary } = useStore()
   const nav = useNav()
-  const [view, setView] = useState('grid') // grid | log | folders
+  const [view, setView] = useState(initView) // grid | log | folders
   const [coach, setCoach] = useState(() => needsCoach(MYRECIPES_COACH_KEY))
   const [folder, setFolder] = useState('전체')
   // 모아보기 크기 — 'big'(2열·이름 크게) | 'small'(3열 그리드). 선택은 기억된다.
@@ -267,7 +270,9 @@ export default function MyRecipesScreen() {
               장보기·레꾸자랑엔 이미 곰이 있어 겹치고, 설정은 잘 안 가서 여기로. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <img src={gomHeader} alt="" draggable={false} width={42} height={42} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-4px 0' }} />
-            <div className="h-title">레시피</div>
+            {/* 🏷 제목은 «지금 보고 있는 것»을 말한다 — 「일기」 탭으로 들어왔는데 머리글이
+                「레시피」면 어디에 있는지 헷갈린다(검수판에서 드러났다). */}
+            <div className="h-title">{view === 'log' ? '한끼 일기' : '레시피'}</div>
           </div>
           <TabTips tab="myrecipes" />
         </div>

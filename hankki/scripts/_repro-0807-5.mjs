@@ -253,6 +253,42 @@ await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); 
   }
 }
 
+// ═══ ⑧ 글자 «상자»가 글자 폭을 제대로 덮나 ══════════════════
+//   창업자 폰 제보 2026-08-07 (v9.93 회귀) —
+//   *"글자효과는 되는데 영역이 잘못표시됨, 효과가 글자 한개(제일 앞머리랑 겹치게 위에만 붙음)"*
+//   ⛔ 내가 모션을 붙이며 감싼 span 을 position:absolute 로 둔 탓에
+//      글자 상자(width:max-content)가 **폭을 정할 자식을 잃고 쪼그라들었다.**
+//      → 점선 테두리·손잡이·효과가 전부 맨 앞 한 글자 자리에만 떴다.
+console.log('\n── ⑧ 글자 상자가 글자 폭을 덮나 (효과·손잡이 자리) ──')
+await openDecor()
+await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); await page.waitForTimeout(600)
+await page.getByRole('button', { name: '글자', exact: true }).last().click(); await page.waitForTimeout(700)
+{
+  await page.locator('.decor-drawer button').filter({ hasText: /^글자 넣기$/ }).first().click(); await page.waitForTimeout(800)
+  const ta = page.locator('.sheet textarea, .sheet input').first()
+  if (await ta.count()) { await ta.fill('꾸미기'); await page.waitForTimeout(300) }
+  const save = page.locator('.sheet button').filter({ hasText: /저장|확인|넣기|완료|붙이기/ }).first()
+  if (await save.count()) { await save.click(); await page.waitForTimeout(900) }
+  await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(600)
+  const r = await page.evaluate(() => {
+    // 글자 아이템의 «상자» 와 그 안 «실제 글자» 폭을 견준다
+    const box = [...document.querySelectorAll('.decor-stage [style*="rotate"]')]
+      .find((e) => (e.textContent || '').includes('꾸미기'))
+    if (!box) return null
+    const inner = [...box.querySelectorAll('div')].find((d) => (d.textContent || '').trim() === '꾸미기')
+    if (!inner) return null
+    return { box: Math.round(box.getBoundingClientRect().width), text: Math.round(inner.getBoundingClientRect().width) }
+  })
+  if (!r) no('글자 아이템을 못 찾았다 — 검사 방식부터 볼 것')
+  else {
+    const ratio = r.text ? r.box / r.text : 0
+    console.log(`   ℹ️ 상자 폭 ${r.box}px · 글자 폭 ${r.text}px (상자÷글자 = ${ratio.toFixed(2)})`)
+    // ⭐ 상자가 글자를 «덮어야» 한다 — 0.9 밑이면 쪼그라든 것이다(옛 코드에선 거의 0 이었다)
+    if (ratio >= 0.9) ok('⭐ 상자가 글자 폭을 그대로 덮는다 — 효과·손잡이가 제자리에 뜬다')
+    else no(`상자가 글자보다 작다(${ratio.toFixed(2)}배) — 효과가 앞 글자에만 뜬다`)
+  }
+}
+
 // ═══ ⑦ 서랍 맨 위 배치 ═════════════════════════════════════
 //   창업자 2026-08-07 *"선물(출시기념~)을 제일 위에) -> 그아래 표지그림 (표지그림지우기, 사진 스티커로 붙이기)"*
 console.log('\n── ⑦ 서랍 맨 위 = 선물 → 표지 그림(지우기·사진) ──')

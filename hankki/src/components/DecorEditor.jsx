@@ -1160,7 +1160,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               <div className="decor-sec-label">표지 그림</div>
               {!isDiary && (
                 <button className="press" onClick={() => setThumb(thumb === 'none' ? origThumb : 'none')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 13px', marginBottom: 8, borderRadius: 12, background: thumb === 'none' ? 'var(--brown)' : 'var(--cream)', color: thumb === 'none' ? '#fff' : 'var(--text)', border: thumb === 'none' ? 'none' : '1px solid var(--line)', fontWeight: 700, fontSize: 13, textAlign: 'left' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '10px 13px', marginBottom: 8, borderRadius: 12, background: thumb === 'none' ? 'var(--brown)' : 'var(--cream)', color: thumb === 'none' ? '#fff' : 'var(--text)', border: thumb === 'none' ? 'none' : '1px solid var(--line)', fontWeight: 700, fontSize: 13, textAlign: 'left' }}>
+                  {/* 🏷 아이콘 = 창업자 2026-08-07 *"배경음식아이콘지우기앞에도 이모지?아이콘 같은거 넣으면 좋겠어
+                      (사진스티커로 붙이기 앞에 있는 이모지처럼)"* — 옆줄과 짝이 맞아야 한 묶음으로 읽힌다.
+                      ⭐ 상태에 따라 그림이 바뀐다 — 지울 땐 ✕, 되돌릴 땐 ↻. **누르기 전에 무슨 일이 날지 보인다.**
+                      ⛔ 유니코드 이모지는 안 쓴다(우리 아이콘만 · CLAUDE.md 핀). */}
+                  <Icon name={thumb === 'none' ? 'refresh' : 'x'} size={17} color={thumb === 'none' ? '#fff' : 'var(--brown)'} />
                   {/* 🏷 이름 = 창업자 확정 2026-08-07 *"배경음식아이콘지우기로 변경하자. 단어통일하는게 낫겠저"*
                       ⭐ 처음엔 「표지 그림 지우기」였는데, 우리가 부르는 이름이 화면마다 달랐다.
                          유저가 보는 그림은 «표지 배경에 깔린 음식 아이콘»이니 그대로 부른다. */}
