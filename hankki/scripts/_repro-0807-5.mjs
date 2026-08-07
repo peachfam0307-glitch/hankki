@@ -253,6 +253,39 @@ await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); 
   }
 }
 
+// ═══ ⑦ 서랍 맨 위 배치 ═════════════════════════════════════
+//   창업자 2026-08-07 *"선물(출시기념~)을 제일 위에) -> 그아래 표지그림 (표지그림지우기, 사진 스티커로 붙이기)"*
+console.log('\n── ⑦ 서랍 맨 위 = 선물 → 표지 그림(지우기·사진) ──')
+await openDecor()
+await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); await page.waitForTimeout(800)
+{
+  const order = await page.evaluate(() => {
+    const drawer = document.querySelector('.decor-drawer')
+    const out = []
+    for (const el of drawer.querySelectorAll('button, .decor-sec-label')) {
+      const t = (el.textContent || '').trim()
+      // ⚠️ 버튼 «안»에 뱃지(「선물」)와 화살표(›)가 같이 들어 있어 textContent 가 정확히 안 맞는다
+      //    (첫 판에 「선물 줄을 못 찾았다」로 잘못 찍혔다) → 포함으로 본다
+      if (t.includes('출시 기념으로 네 가지를')) out.push('선물')
+      else if (t === '표지 그림') out.push('표지그림(라벨)')
+      else if (/배경 음식 아이콘 (지우기|되돌리기)/.test(t)) out.push('배경아이콘지우기')
+      else if (t.includes('사진 스티커로 붙이기') || t.includes('이 프레임에 사진 넣기')) out.push('사진붙이기')
+    }
+    return out
+  })
+  console.log('   ℹ️ 맨 위 차례 =', order.join(' → ') || '(없음)')
+  const gi = order.indexOf('선물'), li = order.indexOf('표지그림(라벨)'), pi = order.indexOf('사진붙이기')
+  if (gi < 0) no('「선물」 줄을 못 찾았다')
+  else if (gi !== 0) no(`「선물」이 맨 위가 아니다 (${gi + 1}번째)`)
+  else if (li < 0 || pi < 0) no('「표지 그림」 묶음이 안 보인다')
+  else if (!(gi < li && li < pi)) no('선물 → 표지그림 → 사진 순서가 아니다')
+  else ok('⭐ 선물 → 표지 그림 → 사진 붙이기 순서가 맞다')
+  // ⛔ 옛 자리(배경 탭)에 «또» 있으면 두 번 보인다 — 옮긴 게 아니라 복사한 것이 된다
+  const dup = order.filter((x) => x === '사진붙이기').length
+  if (dup > 1) no(`「사진 붙이기」가 ${dup}번 나온다 — 옛 자리를 안 지웠다`)
+  else ok('중복 없음')
+}
+
 console.log(errs.length ? `\n⛔ pageerror ${errs.length}건 — ${errs[0]}` : '\n✅ pageerror 0')
 await b.close(); srv.close()
 console.log(bad ? `\n⛔⛔ ${bad}건 어긋남\n` : '\n✅✅ 전부 통과\n')

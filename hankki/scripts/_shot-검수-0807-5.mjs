@@ -108,6 +108,20 @@ await page.getByRole('button', { name: '글자', exact: true }).last().click(); 
   await shot('9-글자-편집바-색15과-모션효과')
 }
 
+// ⑦ 서랍 맨 위 배치 — 레시피 꾸미기라야 「배경 음식 아이콘 지우기」가 뜬다(일기엔 표지가 없다)
+{
+  await page.goto('http://127.0.0.1:4410/hankki/', { waitUntil: 'networkidle' }); await page.waitForTimeout(1300)
+  const card = page.locator('.grid-card').first()
+  if (await card.count()) {
+    await card.click(); await page.waitForTimeout(1100)
+    const deco = page.getByRole('button', { name: /레시피 꾸미기/ }).first()
+    if (await deco.count()) {
+      await deco.click(); await page.waitForTimeout(1400)
+      await shot('10-레시피꾸미기-선물→배경음식아이콘지우기→사진')
+    }
+  }
+}
+
 console.log(errs.length ? `⛔ pageerror ${errs.length}건 — ${errs[0]}` : '✅ pageerror 0')
 await b.close(); srv.close()
 console.log('📁', OUT)
