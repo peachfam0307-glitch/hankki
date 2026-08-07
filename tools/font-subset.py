@@ -25,6 +25,7 @@
         → dohyeon-latin-400.woff2 · dohyeon-korean-400.woff2
 """
 import argparse
+import json
 import os
 import sys
 
@@ -92,19 +93,41 @@ def main():
     print(f'\n🔤 {full}  —  원본 {len(cmap)}자 ({os.path.getsize(a.src) / 1024:.0f}KB)')
 
     jobs = [] if a.only == 'chip' else [('latin', latin), ('korean', korean)]
+    chip_chars = None
     if a.chars:
         want = {ord(c) for c in a.chars if not c.isspace()}
         miss = want - cmap
         if miss:
             # ⛔ 없는 글자를 조용히 넘기면 칸에서 그 글자만 다른 글씨로 나온다 — 여기서 말한다
             print('   ⚠️ 원본에 없는 글자 —', ''.join(chr(c) for c in sorted(miss)))
-        jobs.append(('chip', want & cmap))
+        got = want & cmap
+        jobs.append(('chip', got))
+        chip_chars = ''.join(chr(c) for c in sorted(got))
 
     tot = 0
     for tag, codes in jobs:
         p = os.path.join(a.out, f'{a.key}-{tag}-{a.weight}.woff2')
         n = cut(a.src, codes, p, tag)
         tot += n or 0
+
+    # 🗂🗂 **칩 벌에 «무슨 글자»가 들었는지 옆에 적어 둔다** (2026-08-07)
+    #    ⛔ 왜 = 검사(`check-fontchip.mjs`)가 woff2 를 읽으려고 파이썬 fontTools 를 불렀는데
+    #       **CI(깃허브)엔 fontTools 가 없다** → 로컬만 통과하고 **배포가 죽었다**(run 1128).
+    #    ⭐ 만든 «그 자리»에서 적어두면 검사는 이 파일만 읽으면 된다(노드만으로 된다).
+    #       손으로 적는 목록이 아니라 **자를 때 자동으로 써지는 것**이라 어긋날 수가 없다.
+    if chip_chars is not None:
+        man = os.path.join(a.out, 'chip-chars.json')
+        try:
+            with open(man, encoding='utf-8') as fp:
+                data = json.load(fp)
+        except Exception:
+            data = {}
+        data[a.key] = chip_chars
+        with open(man, 'w', encoding='utf-8') as fp:
+            json.dump(data, fp, ensure_ascii=False, indent=1, sort_keys=True)
+            fp.write('\n')
+        print(f'   🗂 chip-chars.json 갱신 — {a.key} {len(chip_chars)}자')
+
     print(f'   📦 합계 {tot / 1024:.1f}KB\n')
 
 

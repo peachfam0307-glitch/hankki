@@ -121,6 +121,30 @@ console.log('\n🪤 반복 실수 게이트')
   else ok(`검사 ${all.length}개가 다 어딘가에 물려 있다`)
 }
 
+// ═══ ③-2 배포 게이트가 «CI 에 없는 것»에 기대나 ═══════════
+//   ⛔⛔ 2026-08-07 — 내가 만든 `check-fontchip.mjs` 가 파이썬 `fontTools` 로 woff2 를 열었다.
+//      **CI 엔 fontTools 가 없다** → 로컬만 통과하고 **배포가 죽었다**(run 1128 · v9.91 이 안 나갔다).
+//      📌 2026-08-03 `globSync` 사고와 «똑같은 종류»다 — 「내 자리에 있는 것」을 CI 에도 있다고 여겼다.
+//   ⭐ 배포를 막는 게이트는 **노드만으로** 돌아야 한다. 파이썬·이미지 도구는 «만들 때» 쓰고,
+//      «검사할 때» 필요한 값은 만들면서 파일에 적어 둔다(`chip-chars.json` 이 그 방식이다).
+//   ⚠️ 주석에 `python3` 를 «적어둔 것»은 안 잡는다 — 첫 판이 그걸로 틀렸다.
+{
+  const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'))
+  const smoke = pkg.scripts.smoke || ''
+  const strip = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/\/\/.*$/, '')).join('\n')
+  const hits = []
+  for (const f of new Set([...smoke.matchAll(/scripts\/([\w.-]+\.mjs)/g)].map((m) => m[1]))) {
+    try {
+      const t = strip(readFileSync(join(ROOT, 'scripts', f), 'utf8'))
+      if (/(execFileSync|execSync|spawnSync|spawn)\s*\(\s*['"`]python/.test(t)) hits.push(f)
+    } catch { /* ③ 이 이미 잡는다 */ }
+  }
+  if (hits.length) {
+    no(`배포 게이트가 «파이썬»을 부른다 — CI 엔 우리 파이썬 꾸러미가 없다. 로컬만 통과하고 배포가 죽는다 (${hits.length}개)`)
+    hits.forEach((h) => console.log(`        ${h}   → 필요한 값은 «만들 때» 파일로 적어 두고 노드로 읽을 것`))
+  } else ok('배포 게이트가 노드만으로 돈다 (CI 에 없는 도구에 안 기댄다)')
+}
+
 // ═══ ④ 규칙 12 — 「옛 값으로 진짜 걸리는지」 확인한 흔적 ═════
 //   📌 창업자 2026-07-31 *"검사를 만들면 옛 값으로 진짜 걸리는지 먼저 돌려본다."*
 //      실제로 오늘도 세 번 «거짓 통과»가 나왔다(글씨 살 재기 · CORS · 뒤에 깔린 판).

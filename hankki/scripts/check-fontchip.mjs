@@ -16,7 +16,6 @@
 //     --chars '<모든 이름표 글자>' --only chip --out hankki/src/assets/fonts
 import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { execFileSync } from 'node:child_process'
 
 const ROOT = new URL('..', import.meta.url).pathname
 const FONTS = join(ROOT, 'src/assets/fonts')
@@ -39,19 +38,23 @@ for (const m of CSS.matchAll(/font-family: '([^']+)';\s*src: url\('\.\/assets\/f
   if (m[3] === 'korean') fileOf[m[1]] = m[2]
 }
 
-// 🔤 칩 벌이 담은 글자 — `fontTools` 로 실제 cmap 을 읽는다. ⛔파일이 있다는 것만으로 판단하지 않는다
-const cmapOf = (path) => {
-  const out = execFileSync('python3', ['-c', `
-import sys
-from fontTools.ttLib import TTFont
-f = TTFont(sys.argv[1], lazy=True)
-cs = set()
-for t in f['cmap'].tables: cs |= set(t.cmap.keys())
-f.close()
-sys.stdout.write(','.join(str(c) for c in sorted(cs)))
-`, path], { encoding: 'utf8' })
-  return new Set(out.split(',').filter(Boolean).map(Number))
+// 🔤🔤 칩 벌이 담은 글자 — **자를 때 옆에 적어 둔 목록**(`chip-chars.json`)을 읽는다.
+//
+// ⛔⛔ **첫 판은 파이썬 `fontTools` 로 woff2 를 열었다 → CI 에 fontTools 가 없어 «배포가 죽었다»**
+//    (run 1128 · `ModuleNotFoundError: No module named 'fontTools'`). v9.91 이 안 나갔다.
+//    📌 2026-08-03 `globSync` 사고와 **똑같은 종류**다 — 「내 자리에 있는 것」을 CI 에도 있다고 여겼다.
+//    ⭐ 배포를 막는 게이트는 **노드만으로** 돌아야 한다. 저장소 밖 도구에 기대면 안 된다.
+// ⚠️ 이 목록은 손으로 적는 게 아니라 `tools/font-subset.py` 가 **자를 때 자동으로 쓴다**
+//    → 파일과 어긋날 수가 없다. (없으면 「칩을 안 만들었다」는 뜻이라 그것도 잡힌다)
+const MAN = join(FONTS, 'chip-chars.json')
+let manifest = null
+try { manifest = JSON.parse(readFileSync(MAN, 'utf8')) } catch { /* 아래에서 잡는다 */ }
+if (!manifest) {
+  console.log('⛔ src/assets/fonts/chip-chars.json 이 없다 — 칩 벌을 만들 때 같이 써진다.')
+  console.log("   python3 tools/font-subset.py hankki/src/assets/fonts/<key>-korean-400.woff2 <key> --chars '…' --only chip --out hankki/src/assets/fonts")
+  process.exit(1)
 }
+const charsOf = (key) => new Set([...(manifest[key] || '')])
 
 // 「글자 넣기」 단추도 고른 글씨체로 그린다 — 그 글자도 칩에 있어야 한다
 const EXTRA = '글자 넣기'
@@ -66,9 +69,9 @@ for (const r of rows) {
   if (!existsSync(chip)) { console.log(`   ⛔ ${r.label} — 칩 벌이 없다 (${key}-chip-400.woff2)`); bad++; continue }
   // 칩 @font-face 선언도 있어야 한다 — 파일만 있고 선언이 없으면 아무 소용이 없다
   if (!CSS.includes(`${key}-chip-400.woff2`)) { console.log(`   ⛔ ${r.label} — 칩 파일은 있는데 styles.css 에 @font-face 가 없다`); bad++; continue }
-  const cs = cmapOf(chip)
+  const cs = charsOf(key)
   const need = [...new Set([...r.label, ...EXTRA])].filter((c) => !/\s/.test(c))
-  const miss = need.filter((c) => !cs.has(c.codePointAt(0)))
+  const miss = need.filter((c) => !cs.has(c))
   const kb = readFileSync(chip).length / 1024
   total += kb
   if (miss.length) { console.log(`   ⛔ ${r.label} — 칩에 없는 글자 「${miss.join('')}」 → 그 칸이 «진짜 글꼴»을 통째로 부른다`); bad++ }
