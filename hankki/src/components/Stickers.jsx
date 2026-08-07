@@ -1330,13 +1330,22 @@ export const FRIEND_IDS = new Set(
 //      레꾸엔 속지 글칸이 «아예 없어» 글 상자가 유일한 글쓰기 수단이다(재현으로 확인).
 //   ⚠️ 데코 탭에서 그 그림들을 «빼지 않는다» — 그냥 그림으로 붙이고 싶을 수도 있다.
 //      한 번 준 것은 빼앗지 않는다.
+// ✂️✂️ **44 → 26컷** — 창업자가 «번호로» 짚어 열아홉을 뺐다 (2026-08-07)
+//   판정판 = 44컷을 HTML 격자로 뽑아(번호 알약) 폰에서 고르게 했다.
+//   ⛔ **파일은 안 지운다** — 서랍에서 내리기만. 이미 그 컷으로 꾸며 저장한 일기가 깨지면 안 된다
+//      (`kf_c_`·`sf_` 를 내릴 때와 같은 방식). `BOX_PAD`·`PHOTO_RATIO` 값도 그대로 남긴다.
+//   📌 뺀 것(18) = dlb03 dlb08 · dtp03 dtp05 · dgn01 dgn03 dgn04 dgn06 dgn07 dgn09 dgn11
+//             · dc_dma07 dc_dma13 · pf_a07 pf_a05 pf_a08 pf_i07 pf_f08
+//   ⭐ 프레임은 8 → 3 으로 줄었다 — 창업자가 «프레임 탭과 같은 컷»임을 눈으로 알아채고 골라냈다
+//      (코드 대조 결과 8컷 전부 `deco_pf_bold` 와 겹쳤다). 남긴 셋은 글이 예쁘게 앉는 것들.
 export const BOX_GROUPS = [
-  { key: 'box_label', label: '라벨지 · 배너', items: ['dlb02', 'dlb04', 'dlb09', 'dlb12', 'dlb11', 'dlb01', 'dlb07', 'dlb10', 'dlb05', 'dlb03', 'dlb08', 'dlb06'] },
-  { key: 'box_paper', label: '찢은 종이', items: ['dtp03', 'dtp04', 'dtp05', 'dtp01', 'dtp02'] },
-  { key: 'box_memo', label: '메모지', items: ['dgn01', 'dgn02', 'dgn03', 'dgn04', 'dgn05', 'dgn06', 'dgn07', 'dgn08', 'dgn09', 'dgn10', 'dgn11', 'dgn12'] },
+  { key: 'box_label', label: '라벨지 · 배너', items: ['dlb02', 'dlb04', 'dlb09', 'dlb12', 'dlb11', 'dlb01', 'dlb07', 'dlb10', 'dlb05', 'dlb06'] },
+  { key: 'box_paper', label: '찢은 종이', items: ['dtp04', 'dtp01', 'dtp02'] },
+  { key: 'box_memo', label: '메모지', items: ['dgn02', 'dgn05', 'dgn08', 'dgn10', 'dgn12'] },
   // ⛔ 도장(dc_dma16)은 뺐다 — 손잡이가 커서 글 자리가 거의 안 나온다. 데코 탭엔 그대로 있다.
-  { key: 'box_dma', label: '메모 · 라벨', items: ['dc_dma01', 'dc_dma05', 'dc_dma11', 'dc_dma07', 'dc_dma14', 'dc_dma13', 'dc_dma06'] },
-  { key: 'box_frame', label: '글쓰기 프레임', items: ['pf_a07', 'pf_f06', 'pf_i06', 'pf_a05', 'pf_a06', 'pf_a08', 'pf_i07', 'pf_f08'] },
+  // ⭐ dc_dma05 는 창업자가 뺐다가 «다시 넣었다»(2026-08-07 *"31번 하나만 더 넣자"*)
+  { key: 'box_dma', label: '메모 · 라벨', items: ['dc_dma01', 'dc_dma05', 'dc_dma11', 'dc_dma14', 'dc_dma06'] },
+  { key: 'box_frame', label: '글쓰기 프레임', items: ['pf_f06', 'pf_i06', 'pf_a06'] },
 ]
 
 // 🏷 **글 상자 값** = 포스트잇에 «배경 그림»을 깐 것 (창업자 2026-08-07

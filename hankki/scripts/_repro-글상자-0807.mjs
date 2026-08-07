@@ -66,8 +66,11 @@ await openIlkku()
   const n = await boxCells().count()
   const labels = await page.evaluate(() => [...document.querySelectorAll('.decor-drawer .decor-sec-label')].map((e) => e.textContent.trim()))
   console.log(`   ℹ️ 글 상자 칸 ${n}개 · 묶음 = ${labels.join(' / ')}`)
-  if (n >= 40) ok(`글 상자가 ${n}개 뜬다`)
-  else no(`글 상자가 ${n}개뿐이다 — 40개 넘어야 한다`)
+  // ⚠️ 문턱 40 → 20. 창업자가 2026-08-07 에 44 → 25컷으로 «골라» 줄였다.
+  //    ⛔ 옛 문턱을 그대로 두면 「창업자가 정한 대로 했더니 검사가 실패」하는 자리가 된다.
+  //    ⭐ 여기서 볼 것은 «개수»가 아니라 「글 상자가 뜨고 묶음이 다 있나」다(규칙 18 ⓘ).
+  if (n >= 20) ok(`글 상자가 ${n}개 뜬다`)
+  else no(`글 상자가 ${n}개뿐이다 — 20개는 넘어야 한다`)
   for (const want of ['라벨지 · 배너', '찢은 종이', '메모지', '메모 · 라벨', '글쓰기 프레임']) {
     if (labels.includes(want)) ok(`「${want}」 묶음이 있다`)
     else no(`「${want}」 묶음이 없다`)
@@ -131,8 +134,8 @@ await openLekku()
   const n = await boxCells().count()
   const labels = await page.evaluate(() => [...document.querySelectorAll('.decor-drawer .decor-sec-label')].map((e) => e.textContent.trim()))
   console.log(`   ℹ️ 레꾸 글 상자 칸 ${n}개 · 묶음 = ${labels.join(' / ')}`)
-  if (n >= 40) ok(`⭐ 레꾸에서도 글 상자가 ${n}개 뜬다 — 여긴 속지 글칸이 «아예 없는» 자리다`)
-  else no(`레꾸엔 글 상자가 ${n}개뿐이다`)
+  if (n >= 20) ok(`⭐ 레꾸에서도 글 상자가 ${n}개 뜬다 — 여긴 속지 글칸이 «아예 없는» 자리다`)
+  else no(`레꾸엔 글 상자가 ${n}개뿐이다 — 20개는 넘어야 한다`)
   if (labels.includes('메모지')) ok('⭐ 일기 메모지 12컷이 레꾸에서도 나온다 (전엔 only:diary 라 0개였다)')
   else no('레꾸에 메모지 묶음이 없다 — only:diary 가 아직 막고 있다')
   // 실제로 붙여서 글까지
