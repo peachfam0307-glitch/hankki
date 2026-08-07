@@ -23,12 +23,15 @@ await page.getByRole('button',{name:'글자',exact:true}).last().click();await p
 const cells = page.locator('.decor-drawer button[aria-label^="글 상자"]')
 // 네 종류를 붙여 본다 — 라벨지·찢은종이·메모지·프레임
 const picks = [[0,'오늘 김치찌개'],[12,'국물이 진해'],[17,'8월 7일 금요일\n오늘도 해냈다'],[36,'우리집 최고']]
+// ⚠️ 2026-08-07 부터 시트가 «안» 열린다 — 붙이면 그 상자에서 바로 쳐진다.
+//    ⛔ 첫 판이 여기서 죽었다: 앞 상자의 치는 칸이 아직 떠 있어 다음 서랍 칸을 못 눌렀다.
+//       → 매번 «종이 밖»을 눌러 치기를 끝낸 뒤 다음 것을 붙인다.
 for (const [i,t] of picks) {
+  await page.mouse.click(8,300); await page.waitForTimeout(300)
   await cells.nth(i).click(); await page.waitForTimeout(800)
-  const ta = page.locator('.hk-sheet textarea, .sheet textarea, .hk-sheet input, .sheet input').first()
-  if (await ta.count()) { await ta.fill(t); await page.waitForTimeout(250) }
-  const sv = page.locator('.hk-sheet button, .sheet button').filter({hasText:/저장|확인|넣기|완료|붙이기/}).first()
-  if (await sv.count()) { await sv.click(); await page.waitForTimeout(700) }
+  const ta = page.locator('.decor-stage textarea[data-boxtext]').first()
+  if (await ta.count()) { await ta.fill(t); await page.waitForTimeout(350) }
+  await page.mouse.click(8,300); await page.waitForTimeout(400)
   await page.evaluate(([k])=>{const el=[...document.querySelectorAll('.decor-stage [style*="rotate"]')].pop();if(el){el.style.top=`${18+k*22}%`;el.style.left='50%'}},[picks.findIndex(p=>p[0]===i)])
   await page.waitForTimeout(200)
 }

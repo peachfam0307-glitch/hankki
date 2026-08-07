@@ -143,7 +143,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     })
   }
   const [sel, setSel] = useState(null)
-  const [noteEdit, setNoteEdit] = useState(null) // 글 수정 중인 포스트잇 item
+  // ⛔ 옛 「따로 창 떠서 쓰고 붙이기」 시트 상태(noteEdit)는 지웠다 — 이제 어디서도 안 연다.
+  // ⌨️⌨️ **그 자리에서 바로 치기** (창업자 2026-08-07 *"지금 처럼 붙이기는 너무 불편해"*)
+  //   붙이면 시트가 «안» 열리고 그 상자에 커서가 바로 들어간다. 종이 밖을 누르면 끝난다.
+  //   ⚠️ 시트를 없애지 않았다 — 연필 단추로 열린다(긴 글은 시트가 편하다).
+  const [typingId, setTypingId] = useState(null)
   const [textFont, setTextFont] = useState('gaegu') // 글자 스티커 글씨체 기본 = 귀염체(손글씨 톤)
   const [bg, setBg] = useState(draft?.bg ?? recipe.decorBg ?? 'none') // 표지 배경(배경지)
   // 되돌리기용 실제 표지 — 저장값이 'none'이어도 아이콘/사진으로 되살릴 수 있게
@@ -414,7 +418,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const it = { id: newDecorId(), type: 'note', key: colorKey, text: '', font: 'gaegu', x: 0.62 + ((n % 2) - 0.5) * 0.06, y: 0.68, s: 0.34, r: ((n % 5) - 2) * 3 }
     mark(); setItems((arr) => [...arr, it])
     setSel(it.id)
-    setNoteEdit(it) // 붙이면 바로 글씨 쓰기 시트 열기(무늬·모양은 상단 컨텍스트 바에서)
+    setTypingId(it.id) // ⌨️ 붙이면 «그 자리»에 커서 (전엔 시트가 열렸다 — 창업자 *"너무 불편해"*)
   }
   // 🏷🏷 **글 상자** — 우리 라벨지·메모지 그림에 글을 얹는다 (창업자 2026-08-07)
   //   *"글자올릴수있는 스티커들을 다같이 배치해서 쓰자. 포스트잇이랑 여러가지 라벨들."*
@@ -430,7 +434,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const it = { id: newDecorId(), type: 'note', art: artKey, text: '', font: 'gaegu', x: 0.5, y: 0.5 + ((n % 3) - 1) * 0.09, s, r: 0 }
     mark(); setItems((arr) => [...arr, it])
     setSel(it.id)
-    setNoteEdit(it)
+    setTypingId(it.id)   // ⌨️ 시트 대신 «그 자리»에 커서
     pushRecentSticker(artKey)
   }
   // 📷 내 사진을 «스티커»로 붙인다 (창업자 2026-08-06 *"무지나 도트도 사진 넣고싶을수있지않아?"*)
@@ -536,7 +540,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const it = { id: newDecorId(), type: 'text', color: colorKey, font: textFont, text: '', x: 0.5, y: 0.5 + ((n % 3) - 1) * 0.08, s: 0.5, r: 0 }
     mark(); setItems((arr) => [...arr, it])
     setSel(it.id)
-    setNoteEdit(it)
+    setTypingId(it.id) // ⌨️ 「글자 넣기」도 그 자리에서 바로 (전엔 시트가 열렸다)
   }
 
   // 스티커 셀 한 칸 — 종류별 크기(부엌식구들 세로길쭉 / 음식·데코 사진은 제 비율 / SVG 정사각)
@@ -641,7 +645,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                아무도 안 듣고 X·손잡이가 그대로 떠 있었다. 재현 = 종이 안 0 / 바깥 **1**.
             ⭐ 스티커·손잡이·X·연필은 넷 다 `stopPropagation` 을 하므로 여기까지 안 올라온다
                → 여기서 받은 것은 «빈 데를 누른 것»이 확실하다. */}
-        <div className={`decor-stage${writing ? ' writing' : ''}`} onPointerDown={() => setSel(null)}
+        <div className={`decor-stage${writing ? ' writing' : ''}`} onPointerDown={() => { setSel(null); setTypingId(null) }}
           // ⌨️ 종이의 글칸에 커서가 가면 「글씨·크기」 줄을 띄운다(어느 탭이든).
           //    `…Capture` 로 받는 이유 = focus/blur 는 «올라오지 않는»(bubble 안 하는) 이벤트다.
           onFocusCapture={(e) => { if (e.target.tagName === 'TEXTAREA') setTyping(true) }}
@@ -672,7 +676,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 onSelect={select}
                 onChange={patch}
                 onRemove={remove}
-                onEditNote={(it) => setNoteEdit(it)}
+                // ⌨️ 이미 붙은 것을 다시 탭 = «그 자리에서» 이어 쓴다. 글자 스티커만 시트로(상자가 없다).
+                onEditNote={(it) => setTypingId(it.id)}
+                typingId={typingId}
+                onText={(id, t) => patch(id, { text: t })}
                 // ⛔⛔ **`onEmptyTap` 을 뺐다** (창업자 폰 제보 2026-08-07
                 //    *"스티커 하나 붙이면 바로 글쓰기로 넘어가. 다른거 붙이려면 다시 일꾸 눌러야함."*)
                 //   📌 뿌리 = **이 문이 «열려야 할 곳»에선 안 열리고 «닫혀야 할 곳»에서만 열렸다.**
@@ -1358,27 +1365,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           </div>
         </div>
 
-        {noteEdit && (
-          <PromptSheet
-            compact
-            title={noteEdit.type === 'text' ? '글자' : '포스트잇'}
-            fields={[{
-              key: 'text',
-              label: noteEdit.type === 'text' ? '표지에 쓸 글자' : '나만의 팁 · 메모',
-              value: noteEdit.text || '',
-              placeholder: noteEdit.type === 'text' ? '예) 우리집 최고 메뉴' : '예) 설탕 반만! 더 담백해',
-              multiline: true,
-            }]}
-            submitLabel="붙이기"
-            onSubmit={({ text }) => {
-              const t = (text || '').trim()
-              // 글자를 비우면 새로 넣은 빈 아이템은 제거(표지에 유령 글자 안 남게)
-              if (noteEdit.type === 'text' && !t) remove(noteEdit.id)
-              else patch(noteEdit.id, { text: t })
-            }}
-            onClose={() => setNoteEdit(null)}
-          />
-        )}
+        {/* ⌨️⌨️ **「따로 창 떠서 쓰고 붙이기」는 없앴다** (창업자 2026-08-07
+            *"3번은 지금 처럼 붙이기는 너무 불편해(이건 레꾸에서도 너무 불편했었어)"*
+             · *"그럼 예전방식은 없어진거지? 따로창떠서 쓰고 붙이기하던거"*)
+            포스트잇 · 글 상자 · 글자 넣기 **셋 다** 이제 «그 자리에서» 쳐진다.
+            ⛔ 그래서 이 시트(`PromptSheet`)를 여는 곳이 하나도 안 남아 죽은 코드가 됐다 → 지웠다.
+            ⭐ 빈 글자 아이템을 지우던 일은 「종이 밖 누르기」가 대신한다(`stopTyping`). */}
 
         {/* 취소 확인 — 저장 안 한 변경이 있을 때만(실수로 날아가는 것 방지) */}
         {exitAsk && (

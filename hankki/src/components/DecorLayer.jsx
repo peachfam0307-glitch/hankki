@@ -16,7 +16,13 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 //      고치려면 매번 「일꾸」 탭을 먼저 눌러야 했다.
 //   ⭐ 답 = **층은 통과시키고 «아이템만» 받는다.** 빈 자리는 글칸·축이 그대로 받고,
 //      스티커 위를 누르면 그 스티커가 받아서 꾸미기로 넘어간다. 손가락이 누른 것이 답이 된다.
-export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote, onEmptyTap, onTapItem }) {
+// ⌨️⌨️ `typingId` = **지금 «그 자리에서» 글을 치고 있는 아이템** (창업자 2026-08-07
+//   *"3번은 지금 처럼 붙이기는 너무 불편해(이건 레꾸에서도 너무 불편했었어)"*)
+//   ⛔ 전엔 붙이면 «시트»가 열리고 거기 쳐서 「붙이기」를 눌러야 했다 — 두 단계다.
+//   ⭐ 방법 = **투명 textarea 를 글자 자리에 «겹친다».** contentEditable 이 아니다 —
+//      React 가 값을 내려보내도 **커서가 안 튄다.** v9.93 「어디서든 글씨 수정」이 쓰는 것과 같은 문법.
+//   ⚠️ 글꼴·크기·정렬·여백을 글자와 «똑같이» 줘야 치는 중과 친 뒤의 자리가 안 튄다.
+export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote, onEmptyTap, onTapItem, typingId, onText }) {
   const boxRef = useRef(null)
   // 커버 실제 폭(px) — 글자 상자를 글자에 딱 맞추면서(max-content) 글자 크기는 '커버 폭 기준'으로 px 계산하려고.
   const [coverW, setCoverW] = useState(0)
@@ -239,7 +245,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             ) : it.type === 'tape' ? (
               <div style={{ position: 'absolute', inset: 0, ...tapeStyle(it.key), boxShadow: '0 1px 3px rgba(70,60,45,.18)' }} />
             ) : it.type === 'note' ? (
-              <Note it={it} editable={editable} />
+              <Note it={it} editable={editable} typing={typingId === it.id} onText={onText} />
             ) : it.type === 'text' ? (
               // ✍️✨ **글자에도 모션·효과** (창업자 2026-08-07 *"글자에도 모션이나 효과가 들어가면 더 좋고"*)
               //   ⭐ 새로 만든 게 없다 — 모션은 `hk-m-*` CSS 클래스라 그림이든 글자든 똑같이 얹히고,
@@ -255,7 +261,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                     ✅ 모션 span 은 **흐름 안(`display:inline-block`)** 에 둬서 글자가 폭을 정하게 하고,
                        효과(StickerFx)만 absolute 로 얹는다(그건 원래 absolute 라 폭에 안 낀다). */}
                 <span className={motionClass(it.motion)} style={{ display: 'inline-block' }}>
-                  <TextDeco it={it} editable={editable} coverW={coverW} />
+                  <TextDeco it={it} editable={editable} coverW={coverW} typing={typingId === it.id} onText={onText} />
                 </span>
                 {/* ⬆️ lift = 효과를 «글자 위»에서 내보낸다 — 글자 상자는 납작해서 그냥 두면 글자 속에서 나온다
                     (창업자 2026-08-07 *"하트효과가 글자 윗부분부터 시작해야하지 않아?"*) */}
@@ -331,7 +337,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
 
 // 글자 크기 = it.s × 커버 폭(px). 길이와 무관하게 '한 글자 크기'가 일정 → 상자는 글자에 딱 맞음(max-content).
 // 줄바꿈은 사용자가 엔터로 직접(자동 분할 안 함 — "돼지고기가지볶음"처럼 붙은 글자가 이상하게 안 잘리게).
-function TextDeco({ it, editable, coverW = 0 }) {
+function TextDeco({ it, editable, coverW = 0, typing, onText }) {
   const c = TEXT_COLORS.find((t) => t.key === it.color) || TEXT_COLORS[0]
   const f = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
   const text = it.text || (editable ? '글자' : '')
@@ -366,20 +372,48 @@ function TextDeco({ it, editable, coverW = 0 }) {
           `${outPx * 0.7}px -${outPx * 0.7}px 0 ${c.stroke}`, `-${outPx * 0.7}px -${outPx * 0.7}px 0 ${c.stroke}`,
           '0 1px 3px rgba(0,0,0,.35)'].join(','),
         userSelect: 'none',
+        ...(typing ? { visibility: 'hidden' } : null),
+        // ⌨️ 치는 칸을 «이 상자 안»에 겹치려고 기준을 잡는다. 폭은 그대로 글자가 정한다.
+        position: 'relative',
       }}
     >
       {text}
+      {/* ⌨️⌨️ **글자 스티커도 그 자리에서 친다** (창업자 2026-08-07
+          *"그럼 예전방식은 없어진거지? 따로창떠서 쓰고 붙이기하던거"* → 셋 다 없앴다)
+          ⛔⛔ 여기 치는 칸을 «안 만들고» prop 만 넘겼다가 재현이 잡았다 —
+             「글자 넣기」만 시트도 없고 칠 곳도 없는 상태가 될 뻔했다.
+          ⭐ 겉 상자가 `width:max-content` 라 **폭은 글자가 정한다.** 글자를 `visibility:hidden` 으로
+             두면 폭이 살아 있어서, 치는 칸이 그 폭을 그대로 쓴다(글자가 늘면 상자도 늘어난다).
+          ⚠️ 외곽선·그림자는 치는 칸에 안 준다 — 커서까지 두꺼워져 지저분하다. */}
+      {typing && (
+        <textarea
+          autoFocus
+          data-boxtext="1"
+          value={it.text || ''}
+          onChange={(e) => onText?.(it.id, e.target.value)}
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute', inset: 0, visibility: 'visible',
+            resize: 'none', border: 'none', outline: 'none', background: 'transparent',
+            padding: 0, margin: 0, overflow: 'hidden', WebkitAppearance: 'none',
+            fontFamily: f.family, fontWeight: f.weight, fontSize: `${fontPx}px`,
+            letterSpacing: `calc(${f.ls || '0em'} + ${(wt.fat * 1.6).toFixed(3)}em)`,
+            lineHeight: 1.22, color: c.color, caretColor: c.color,
+            textAlign: 'center', textAlignLast: 'center', whiteSpace: 'pre',
+          }}
+        />
+      )}
     </div>
   )
 }
 
-function Note({ it, editable }) {
+function Note({ it, editable, typing, onText }) {
   const c = NOTE_COLORS.find((n) => n.key === it.key) || NOTE_COLORS[0]
   // 🏷 **글 상자** = 배경이 벡터 색판이 아니라 «우리 그림»인 포스트잇 (창업자 2026-08-07)
   //   *"포스트잇은 디자인이나 색상이 넘 별루라서.."* · *"우리 예쁜 라벨이나 글상자로 쓸 수 있는 스티커들 있지 않나?"*
   //   ⭐ 있었다 — 라벨지 `dlb` 12 · 찢은 종이 `dtp` 5 · 일기 메모지 `dgn` 12 · 메모라벨 `dc_dma` 10.
   //   ⭐ 새 타입을 안 만들었다. `art` 한 칸이면 글·크기·글씨체·이동·되돌리기가 그대로 따라온다.
-  if (it.art) return <ArtBox it={it} editable={editable} />
+  if (it.art) return <ArtBox it={it} editable={editable} typing={typing} onText={onText} />
   const shape = it.shape || 'fold'
   const pattern = it.pattern || 'plain'
   const pat = notePatternStyle(pattern, c.line || c.fold)
@@ -422,10 +456,30 @@ function Note({ it, editable }) {
           fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.4,
           overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
           display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+          ...(typing ? { visibility: 'hidden' } : null),
         }}
       >
         {text}
       </div>
+      {/* ⌨️ 포스트잇도 «그 자리에서» 친다 — 글 상자와 같은 방식 */}
+      {typing && (
+        <textarea
+          autoFocus
+          data-boxtext="1"
+          value={text}
+          onChange={(e) => onText?.(it.id, e.target.value)}
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute', inset: 0, boxSizing: 'border-box', padding: textPad,
+            resize: 'none', border: 'none', outline: 'none', background: 'transparent',
+            margin: 0, overflow: 'hidden', color: c.text, caretColor: c.text, WebkitAppearance: 'none',
+            fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
+            fontSize: 'clamp(7px, 15cqw, 72px)', lineHeight: 1.4,
+            whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
+            textAlign: 'center', textAlignLast: 'center',
+          }}
+        />
+      )}
 
       {/* 테이프 — 위쪽 가운데 반투명 마스킹테이프 */}
       {shape === 'tape' && (
@@ -454,11 +508,21 @@ function Note({ it, editable }) {
 //
 //   ⛔ 글자색은 `it.tc`(고른 색)가 있으면 그것, 없으면 **진갈색**이다.
 //      라벨 바탕이 크라프트·주황·파랑까지 있어 «흰 글자»를 기본으로 두면 안 읽히는 컷이 생긴다.
-function ArtBox({ it, editable }) {
+function ArtBox({ it, editable, typing, onText }) {
   const pad = BOX_PAD[it.art] || [12, 12, 12, 12]
   const nf = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
   const ink = it.tc || '#4a4038'
   const text = it.text || ''
+  // ⌨️ 치는 칸과 보이는 글자는 **같은 글꼴·크기·정렬·여백**이라야 자리가 안 튄다
+  const inner = {
+    position: 'absolute',
+    top: `${pad[0]}%`, right: `${pad[1]}%`, bottom: `${pad[2]}%`, left: `${pad[3]}%`,
+    boxSizing: 'border-box', color: ink,
+    fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
+    fontSize: 'clamp(6px, 13cqw, 64px)', lineHeight: 1.35,
+    whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
+    textAlign: 'center',
+  }
   return (
     <div style={{ position: 'absolute', inset: 0, containerType: 'size' }}>
       {/* 종이 = 우리 그림. ⛔ 그림자를 box-shadow 로 주면 «네모»가 생긴다(라벨은 네모가 아니다) → drop-shadow */}
@@ -468,19 +532,38 @@ function ArtBox({ it, editable }) {
       {/* 글자 — 잰 여백 «안»에만. 그림 위라 층을 안 줘도 나중에 칠해진다 */}
       <div
         style={{
-          position: 'absolute',
-          top: `${pad[0]}%`, right: `${pad[1]}%`, bottom: `${pad[2]}%`, left: `${pad[3]}%`,
-          boxSizing: 'border-box', color: ink,
-          fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
+          ...inner, overflow: 'hidden',
           // 얇은 손글씨만 동색 얇은 외곽선 — 포스트잇과 같은 규칙(창업자 요청)
           ...((it.font === 'gaegu' || it.font === 'nanumpen') ? { WebkitTextStroke: `0.4px ${ink}`, paintOrder: 'stroke fill' } : {}),
-          fontSize: 'clamp(6px, 13cqw, 64px)', lineHeight: 1.35,
-          overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          // ⌨️ 치는 동안은 «치는 칸»이 글자를 보여준다 — 두 겹으로 보이면 안 된다
+          ...(typing ? { visibility: 'hidden' } : null),
         }}
       >
         {text}
       </div>
+      {/* ⌨️⌨️ **그 자리에서 바로 친다** — 시트가 안 열린다 (창업자 2026-08-07)
+          ⭐ `textarea` 를 쓴다(contentEditable ❌) — React 가 값을 내려보내도 **커서가 안 튄다.**
+          ⚠️ 세로 가운데 정렬이 textarea 엔 없어서 `paddingTop` 으로 맞춘다 —
+             안 맞추면 글이 «위로 뛰어» 치는 중과 친 뒤가 어긋난다. */}
+      {typing && (
+        <textarea
+          autoFocus
+          // 🏷 표식 — 이 칸이 «글 상자의 것»임을 표시한다.
+          //   ⛔ 무지 속지에도 글칸(textarea)이 있어서 "판 안의 textarea" 만으로는 둘이 안 갈린다.
+          //      재현이 이걸로 세 번 거짓 실패했다(글이 속지에 들어가고, 커서를 딴 칸에서 찾았다).
+          //   ⭐ 캡처할 때 빼기도 쉬워진다.
+          data-boxtext="1"
+          value={text}
+          onChange={(e) => onText?.(it.id, e.target.value)}
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{
+            ...inner, resize: 'none', border: 'none', outline: 'none', background: 'transparent',
+            padding: 0, margin: 0, overflow: 'hidden', caretColor: ink, WebkitAppearance: 'none',
+            display: 'block', textAlignLast: 'center',
+          }}
+        />
+      )}
     </div>
   )
 }

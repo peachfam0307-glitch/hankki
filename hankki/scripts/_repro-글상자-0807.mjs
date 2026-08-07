@@ -81,13 +81,14 @@ await openIlkku()
 // ═══ ⑵⑶ 붙이면 그림이 올라가고, 그 «위»에 글이 얹히나 ══════════
 console.log('\n── ⑵⑶ 붙이기 → 그림 ＋ 그 위에 글 ──')
 {
+  // ⚠️ 2026-08-07 부터 시트가 «안» 열린다 — 붙이면 그 상자에 바로 커서가 들어간다.
+  //    첫 판은 시트를 기다리다 죽었다. 검사도 새 흐름을 따라가야 한다.
   await boxCells().first().click(); await page.waitForTimeout(900)
-  const ta = page.locator('.hk-sheet textarea, .sheet textarea, .hk-sheet input, .sheet input').first()
-  if (!(await ta.count())) no('붙였는데 글 쓰는 자리가 안 열렸다')
+  const ta = page.locator('.decor-stage textarea[data-boxtext]').first()
+  if (!(await ta.count())) no('붙였는데 글 쓰는 자리가 안 생겼다')
   else {
-    await ta.fill('오늘 김치찌개'); await page.waitForTimeout(300)
-    const save = page.locator('.hk-sheet button, .sheet button').filter({ hasText: /저장|확인|넣기|완료|붙이기/ }).first()
-    if (await save.count()) { await save.click(); await page.waitForTimeout(900) }
+    await ta.fill('오늘 김치찌개'); await page.waitForTimeout(400)
+    await page.mouse.click(8, 300); await page.waitForTimeout(600)   // 종이 밖 → 치기 끝
   }
   const r = await page.evaluate(() => {
     const el = [...document.querySelectorAll('.decor-stage [style*="rotate"]')].pop()
@@ -137,11 +138,10 @@ await openLekku()
   // 실제로 붙여서 글까지
   if (n) {
     await boxCells().first().click(); await page.waitForTimeout(900)
-    const ta = page.locator('.hk-sheet textarea, .sheet textarea, .hk-sheet input, .sheet input').first()
+    const ta = page.locator('.decor-stage textarea[data-boxtext]').first()
     if (await ta.count()) {
-      await ta.fill('우리집 최고'); await page.waitForTimeout(250)
-      const save = page.locator('.hk-sheet button, .sheet button').filter({ hasText: /저장|확인|넣기|완료|붙이기/ }).first()
-      if (await save.count()) { await save.click(); await page.waitForTimeout(900) }
+      await ta.fill('우리집 최고'); await page.waitForTimeout(400)
+      await page.mouse.click(8, 300); await page.waitForTimeout(600)
     }
     const t = await page.evaluate(() => {
       const el = [...document.querySelectorAll('.decor-stage [style*="rotate"]')].pop()
@@ -150,6 +150,73 @@ await openLekku()
     if (t && t.그림 && t.글자.includes('최고')) ok('⭐⭐ 레꾸 표지에 글 상자로 글을 썼다')
     else no(`레꾸에서 글이 안 얹혔다 — ${JSON.stringify(t)}`)
   }
+}
+
+// ═══ ⑹⭐ 「그 자리에서 바로 치기」 — 시트가 «안» 열리고 커서가 상자에 들어가나 ═══
+//   창업자 2026-08-07 *"지금 처럼 붙이기는 너무 불편해(이건 레꾸에서도 너무 불편했었어)"*
+console.log('\n── ⑹⭐ 붙이면 «그 자리»에서 바로 쳐지나 ──')
+await openIlkku()
+{
+  await boxCells().first().click(); await page.waitForTimeout(900)
+  const sheets = await page.evaluate(() => document.querySelectorAll('.hk-sheet, .sheet').length)
+  if (sheets) no(`아직 시트가 뜬다 (${sheets}개) — 창업자 제보 그대로`)
+  else ok('시트가 «안» 뜬다')
+  // 판 «안»에 글칸이 생겼나 ＋ 커서가 거기 있나
+  const r = await page.evaluate(() => {
+    const ta = document.querySelector('.decor-stage textarea[data-boxtext]')
+    return ta ? { 있나: true, 포커스: document.activeElement === ta } : { 있나: false }
+  })
+  if (!r.있나) no('상자에 치는 칸이 안 생겼다')
+  else {
+    ok('상자 «안»에 치는 칸이 생겼다')
+    if (r.포커스) ok('⭐ 커서가 «바로» 그 상자에 들어갔다 — 아무것도 안 눌러도 쳐진다')
+    else no('커서가 안 들어갔다 — 한 번 더 눌러야 한다')
+  }
+  // 실제로 쳐 보고 그림 위에 남나
+  await page.keyboard.type('바로 쳐진다'); await page.waitForTimeout(500)
+  await page.mouse.click(8, 300); await page.waitForTimeout(600)   // 종이 밖 → 치기 끝
+  const t = await page.evaluate(() => {
+    const el = [...document.querySelectorAll('.decor-stage [style*="rotate"]')].pop()
+    return el ? { 글자: (el.textContent || '').trim(), 칸남음: !!document.querySelector('.decor-stage textarea[data-boxtext]') } : null
+  })
+  console.log(`   ℹ️ 남은 글 "${t?.글자}" · 종이 밖 누른 뒤 치는 칸 ${t?.칸남음 ? '남음' : '없어짐'}`)
+  if (t && t.글자.includes('바로 쳐진다')) ok('⭐⭐ 친 글이 그림 위에 그대로 남았다')
+  else no(`친 글이 안 남았다 — ${JSON.stringify(t)}`)
+  if (t && !t.칸남음) ok('종이 밖을 누르면 치기가 끝난다')
+  else no('종이 밖을 눌러도 치는 칸이 안 닫힌다')
+}
+
+// ═══ ⑺ 「글자 넣기」도 시트 없이 그 자리에서 ═══════════════════
+//   창업자 2026-08-07 *"그럼 예전방식은 없어진거지? 따로창떠서 쓰고 붙이기하던거"*
+//   → 포스트잇·글 상자·글자 넣기 **셋 다** 없앴다. 여기선 마지막 하나를 잰다.
+console.log('\n── ⑺ 「글자 넣기」도 그 자리에서 ──')
+await openIlkku()
+{
+  const add = page.locator('.decor-drawer button').filter({ hasText: /^글자 넣기$/ }).first()
+  if (!(await add.count())) no('「글자 넣기」 단추를 못 찾았다 — 검사 방식부터 볼 것')
+  else {
+    await add.click(); await page.waitForTimeout(900)
+    const sheets = await page.evaluate(() => document.querySelectorAll('.hk-sheet, .sheet').length)
+    if (sheets) no(`「글자 넣기」에 아직 시트가 뜬다 (${sheets}개)`)
+    else ok('「글자 넣기」도 시트가 «안» 뜬다')
+    const ta = page.locator('.decor-stage textarea[data-boxtext]').first()
+    if (!(await ta.count())) no('글자 스티커에 치는 칸이 안 생겼다')
+    else {
+      await ta.fill('우리집 최고 메뉴'); await page.waitForTimeout(400)
+      await page.mouse.click(8, 300); await page.waitForTimeout(600)
+      const t = await page.evaluate(() => {
+        const el = [...document.querySelectorAll('.decor-stage [style*="rotate"]')].pop()
+        return el ? (el.textContent || '').trim() : null
+      })
+      console.log(`   ℹ️ 남은 글 "${t}"`)
+      if (t && t.includes('우리집 최고')) ok('⭐ 글자 스티커도 그 자리에서 쳐진다')
+      else no(`글자가 안 남았다 ("${t}")`)
+    }
+  }
+  // ⭐ 시트를 여는 길이 «하나도» 안 남았나 — 죽은 코드를 지웠으니 아예 없어야 한다
+  const anySheet = await page.evaluate(() => document.querySelectorAll('.hk-sheet, .sheet').length)
+  if (!anySheet) ok('「따로 창 떠서 쓰고 붙이기」가 어디서도 안 뜬다')
+  else no(`시트가 아직 ${anySheet}개 떠 있다`)
 }
 
 console.log(errs.length ? `\n⛔ pageerror ${errs.length}건 — ${errs[0]}` : '\n✅ pageerror 0')
