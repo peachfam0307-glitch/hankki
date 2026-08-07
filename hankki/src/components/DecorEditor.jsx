@@ -189,6 +189,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //      ⚠️ 그래서 새 화면을 안 만들었다. 같은 판에서 «층 하나»가 바뀔 뿐이다.
   const [mode, setMode] = useState(canPickPaper && items.length === 0 ? 'paper' : 'decor')
   const writing = mode === 'write' && !!paperEdit
+  // ⌨️⌨️ **글을 쓰기 시작하면 글씨 도구가 «따라온다»** (창업자 2026-08-07
+  //    *"유저가 여기저기 탭 안누르고 글쓸때 편하게 사용한다는 의미야 (한번에 쓸수있게는)"*)
+  //   ⛔ 글은 어느 탭에서든 써지게 고쳤는데, **글씨체·크기를 바꾸려면 여전히 「글쓰기」 탭으로 가야 했다.**
+  //      쓰다가 → 탭 옮겨 글씨체 고르고 → 다시 돌아와 쓰는 왕복이 남아 있었다.
+  //   ⭐ 인스타 스토리·캔바가 쓰는 문법 = **글을 치는 «동안»에만 그 도구가 나온다.**
+  //      우리도 「어느 탭인가」가 아니라 **「지금 글을 치고 있나」**로 띄운다.
+  //   ⚠️ 칩을 누르면 글칸이 포커스를 잃어 줄이 사라진다 → 칩에서 `onPointerDown` 을 막아 포커스를 지킨다.
+  const [typing, setTyping] = useState(false)
+  const showWriteTools = writing || typing
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
   const [gift, setGift] = useState(() => needsGiftPack())
@@ -615,7 +624,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                아무도 안 듣고 X·손잡이가 그대로 떠 있었다. 재현 = 종이 안 0 / 바깥 **1**.
             ⭐ 스티커·손잡이·X·연필은 넷 다 `stopPropagation` 을 하므로 여기까지 안 올라온다
                → 여기서 받은 것은 «빈 데를 누른 것»이 확실하다. */}
-        <div className={`decor-stage${writing ? ' writing' : ''}`} onPointerDown={() => setSel(null)}>
+        <div className={`decor-stage${writing ? ' writing' : ''}`} onPointerDown={() => setSel(null)}
+          // ⌨️ 종이의 글칸에 커서가 가면 「글씨·크기」 줄을 띄운다(어느 탭이든).
+          //    `…Capture` 로 받는 이유 = focus/blur 는 «올라오지 않는»(bubble 안 하는) 이벤트다.
+          onFocusCapture={(e) => { if (e.target.tagName === 'TEXTAREA') setTyping(true) }}
+          onBlurCapture={(e) => { if (e.target.tagName === 'TEXTAREA') setTyping(false) }}>
           {(() => {
             const layer = (
               <DecorLayer
@@ -1002,7 +1015,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ⚠️ **한 줄만** 둔다 — 서랍이 접혀야(`.decor-drawer.writing` 26vh) 종이가 커진다.
                  그 자리를 도로 먹으면 「글 쓰는데 서랍이 반을 먹는」 옛 문제로 돌아간다.
               ⚠️ 이름표는 «칩 글꼴»로 그린다 — 안 그러면 이 줄 하나에 4.45MB 를 부른다. */}
-          {writing && onWriteFont && (
+          {showWriteTools && onWriteFont && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 2px 8px', flex: '0 0 auto' }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-sub)', flex: '0 0 auto' }}>글씨</span>
               <div style={{ display: 'flex', gap: 6, overflowX: 'auto', flex: '1 1 auto' }}>
@@ -1014,6 +1027,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     //    ⭐ 손가락이 닿는 칸이자 **글씨체를 «미리 보는» 칸**이라 낮으면 글자가 눌려 보인다.
                     //    ⛔ 줄 «개수»는 안 늘린다 — 서랍이 그만큼 눌린다(2026-08-07 스크롤 사고).
                     <button key={f.key} className="press" onClick={() => onWriteFont(f.key)}
+                      onPointerDown={(e) => e.preventDefault()}
                       style={{ flex: '0 0 auto', padding: '9px 14px', borderRadius: 999, fontSize: 15, fontWeight: 700,
                         fontFamily: chipFamily(f), background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)', border: 'none' }}>
                       {f.label}
@@ -1029,14 +1043,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                  (`Stickers.jsx` 의 `TEXT_FONTS` → `sz` · 또박체 0.975 ~ 납작체 0.650 으로 1.5배 차이였다).
               ⛔ 줄 간격은 «안» 건드린다 — 사진일기 그림에 인쇄된 줄과 맞춘 값이라 흔들면 어긋난다.
                  그래서 「크게」도 줄 높이의 0.90 까지. 커진 게 보이면서 줄을 안 넘는다. */}
-          {writing && onWriteSize && (
+          {showWriteTools && onWriteSize && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 2px 8px', flex: '0 0 auto' }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-sub)', flex: '0 0 auto' }}>크기</span>
               {WRITE_SIZES.map((z) => {
                 const on = (writeSize || 'md') === z.key
                 return (
                   <button key={z.key} className="press" onClick={() => onWriteSize(z.key)}
-                    style={{ flex: '0 0 auto', padding: '5px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 700,
+                    onPointerDown={(e) => e.preventDefault()}
+                    style={{ flex: '0 0 auto', padding: '8px 15px', borderRadius: 999, fontSize: 12.5, fontWeight: 700,
                       background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)', border: 'none' }}>
                     {z.label}
                   </button>

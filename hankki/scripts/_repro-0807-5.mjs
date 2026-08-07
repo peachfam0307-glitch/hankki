@@ -129,7 +129,11 @@ await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); 
 //      글칸을 살렸으니 **이게 깨졌는지 반드시 확인한다**(형광펜 때 실제로 깨진 적이 있다).
 console.log('\n── ②-2 글칸을 살린 대가 — 스티커를 글칸 «위»로 끌 수 있나 ──')
 {
-  await page.locator('.decor-drawer .decor-sec img').first().click().catch(() => {})
+  // ⛔ 앞 단계에서 글칸에 커서가 남아 있으면 「글씨·크기」 두 줄이 서랍을 밀어 칩이 안 눌린다.
+  //    실제 손도 «글 다 쓰고 → 스티커»라 먼저 커서를 푼다. (＋ 그 밀림이 얼마인지는 아래에서 잰다)
+  await page.evaluate(() => document.activeElement?.blur?.())
+  await page.waitForTimeout(500)
+  await page.locator('.decor-drawer .decor-sec img').first().click()
   await page.waitForTimeout(900)
   const before = await first()
   if (!before) no('스티커를 못 붙였다 — 검사 방식부터 볼 것')
@@ -179,18 +183,16 @@ await page.getByRole('button', { name: '글자', exact: true }).last().click(); 
     if (!(await mbtn.count())) no('모션 칩을 못 찾았다 — 검사 방식부터 볼 것')
     else {
       await mbtn.click(); await page.waitForTimeout(700)
-      const it = await page.evaluate(() => {
-        const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
-        const d = (s.diary || []).find((x) => x.kind === 'diary')
-        return (d?.decor || []).find((x) => x.type === 'text') || null
-      })
+      // ⛔ 「마지막 hk-m- 요소」를 보면 «부엌 식구들 기본 모션»이 잡힌다 — 우리가 물을 것은
+      //    「그 글자에 붙었나」다. 그러니 **글자 내용으로 찾는다**(규칙 18 — 무엇을 보는지).
       const cls = await page.evaluate(() => {
-        const el = [...document.querySelectorAll('.decor-stage [class*="hk-m-"]')].pop()
+        const el = [...document.querySelectorAll('.decor-stage [class*="hk-m-"]')]
+          .find((e) => (e.textContent || '').includes('맛있겠다'))
         return el ? el.className : ''
       })
-      console.log(`   ℹ️ 고른 모션 = ${it?.motion} · 화면 클래스 = ${cls || '(없음)'}`)
-      if (it?.motion && cls.includes('hk-m-')) ok('⭐ 글자에 모션이 «화면에도» 걸린다')
-      else no('모션을 골랐는데 화면 클래스가 안 붙었다')
+      console.log(`   ℹ️ 「맛있겠다」에 붙은 클래스 = ${cls || '(없음)'}`)
+      if (cls.includes('hk-m-')) ok('⭐ 글자에 모션이 «화면에도» 걸린다')
+      else no('모션을 골랐는데 그 글자에 클래스가 안 붙었다')
     }
   }
 }
@@ -209,6 +211,46 @@ await page.getByRole('button', { name: '글쓰기', exact: true }).last().click(
   //    ⛔ 손가락 최소 44px 기준을 들이대지 않는다 — 여긴 칩이 촘촘히 붙는 줄이라 그만큼 키우면 서랍이 눌린다.
   if (h >= 36) ok(`칩이 ${h}px 로 커졌다`)
   else no(`아직 ${h}px — 안 커졌다`)
+}
+
+// ═══ ⑥ 글 치는 «동안» 글씨 도구가 따라오나 ══════════════════
+//   창업자 *"유저가 여기저기 탭 안누르고 글쓸때 편하게 사용한다는 의미야 (한번에 쓸수있게는)"*
+//   ⭐ 인스타 스토리·캔바 문법 = **치는 동안에만 그 도구가 나온다.**
+//      「어느 탭인가」가 아니라 「지금 치고 있나」로 띄운다.
+console.log('\n── ⑥ 일꾸 탭에서 글을 치는 «동안» 글씨·크기 줄이 따라오나 ──')
+await openDecor()
+await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); await page.waitForTimeout(700)
+{
+  const rows = () => page.evaluate(() => {
+    const has = (t) => [...document.querySelectorAll('.decor-drawer span')].some((s) => s.textContent.trim() === t)
+    return { 글씨: has('글씨'), 크기: has('크기') }
+  })
+  const before = await rows()
+  const st = await page.locator('.decor-stage .paper').first().boundingBox()
+  await page.mouse.click(st.x + st.width * 0.4, st.y + st.height * 0.3); await page.waitForTimeout(700)
+  const after = await rows()
+  console.log(`   ℹ️ 누르기 «전» 글씨 ${before.글씨} · 크기 ${before.크기}  →  «뒤» 글씨 ${after.글씨} · 크기 ${after.크기}`)
+  if (!after.글씨 || !after.크기) no('⭐ 글칸을 눌러도 글씨·크기 줄이 «안 뜬다» — 아직 탭을 옮겨야 한다')
+  else {
+    ok('⭐ 글을 치기 시작하면 글씨·크기 줄이 따라온다 (탭 안 옮겨도 된다)')
+    // ⚠️ 칩을 누르면 글칸이 포커스를 잃어 줄이 사라질 수 있다 — 그러면 한 번 고르고 끝이라 더 불편해진다
+    const chip = page.locator('.decor-drawer button').filter({ hasText: /^삐뚤체$/ }).first()
+    if (await chip.count()) {
+      await chip.click(); await page.waitForTimeout(600)
+      const keep = await rows()
+      const focus = await page.evaluate(() => document.activeElement?.tagName === 'TEXTAREA')
+      console.log(`   ℹ️ 글씨체 칩을 누른 «뒤» — 줄 ${keep.글씨 ? '그대로' : '사라짐'} · 커서 ${focus ? '유지' : '잃음'}`)
+      if (keep.글씨 && focus) ok('칩을 눌러도 커서와 줄이 그대로다 — 이어서 계속 쓸 수 있다')
+      else no('칩을 누르니 커서를 잃는다 — 한 번 고르면 줄이 사라져 더 불편해진다')
+      // 📐 **두 줄이 늘면 서랍이 그만큼 눌린다** — 2026-08-07 에 이걸로 스크롤이 죽었다.
+      //    ⭐ 폰에선 글 치는 동안 키보드가 서랍을 덮으니 손해가 없지만, «재서» 확인한다.
+      const shelf = await page.evaluate(() => {
+        const el = document.querySelector('.decor-drawer .decor-body, .decor-drawer .decor-scroll') || document.querySelector('.decor-drawer')
+        return el ? Math.round(el.getBoundingClientRect().height) : 0
+      })
+      console.log(`   ℹ️ 글 치는 «중» 서랍 높이 = ${shelf}px`)
+    }
+  }
 }
 
 console.log(errs.length ? `\n⛔ pageerror ${errs.length}건 — ${errs[0]}` : '\n✅ pageerror 0')
