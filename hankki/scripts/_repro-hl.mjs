@@ -154,8 +154,8 @@ const tab = async (key) => {
 }
 const tap = async (label, key, name) => {
   if (!(await tab(key))) { no(`${label} — 갈래 단추가 없다`); return false }
-  // 칩은 컨텍스트 바(`.decor-ctx`) «안»에서만 찾는다 — 서랍의 같은 이름표를 안 물게.
-  const use = page.locator('.decor-ctx').getByRole('button', { name, exact: true })
+  // 칩은 컨텍스트 바(`.decor-tools`) «안»에서만 찾는다 — 서랍의 같은 이름표를 안 물게.
+  const use = page.locator('.decor-tools').getByRole('button', { name, exact: true })
   if (await use.count() === 0) { no(`${label} — 「${name}」 단추가 없다`); return false }
   await use.first().click(); await page.waitForTimeout(400)
   ok(`${label} 바꿨다 (${name})`)

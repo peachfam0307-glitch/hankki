@@ -1540,10 +1540,23 @@ html, body { overscroll-behavior: none; }
      ⚠️ `safe` 가 핵심이다. 자판이 올라와 판이 넘칠 때 그냥 `center` 면 **위쪽이 잘려 못 올라간다.** */
   display: flex; flex-direction: column; justify-content: safe center;
 }
+/* 🔪🔪🔪 **안 D — 도구 바를 화면 «맨 아래»로** (창업자 2026-08-07 확정)
+   ⭐ JSX 를 250줄 옮기는 대신 **flex 의 `order`** 로 자리만 바꾼다 — DOM 은 그대로라 위험이 적다.
+      `.decor-top` 은 기본값 0 이라 그대로 맨 위.
+   ⚠️ 대가 = DOM 순서와 «보이는 순서»가 달라진다. 손가락으로 쓰는 화면이라 받아들인다.
+   📏 왜 맨 아래인가 = 시안 넷을 재서 골랐다(`scripts/_measure-시안-0807.mjs`)
+      · 도구가 먹는 높이 314 → 126px (서랍이 188px 더 커진다)
+      · 자주 하는 일 다섯 터치 13번 (겹치기 안은 19번)
+      · 자판이 뜨면 «자판 바로 위» = 아이폰 글자 툴바·카톡과 같은 자리 */
+.decor-stage { order: 1; }
+.decor-drawer { order: 2; }
+.decor-tools { order: 3; }
 /* 서랍은 칸 줄만 남기고 접힌다 — 그만큼 종이가 가져간다 */
 .decor-drawer.writing { max-height: 26vh; }
 .decor-drawer {
-  margin-top: auto;
+  /* ⛔ `margin-top:auto` 를 뺐다 — 예전엔 서랍을 «바닥»으로 밀려고 썼는데,
+        이제 바닥은 도구 바가 쓴다. 서랍은 «가운데를 채운다». */
+  flex: 1 1 auto;
   background: var(--surface);
   border-top: 1px solid var(--line);
   border-radius: 22px 22px 0 0;
@@ -1553,6 +1566,30 @@ html, body { overscroll-behavior: none; }
   min-height: 0;
 }
 .decor-grab { width: 40px; height: 4px; border-radius: 999px; background: var(--line); margin: 8px auto 2px; flex: 0 0 auto; }
+
+/* 🪜🪜 **층마다 «생김새»를 다르게** (안 D · 창업자 2026-08-07 *"구분이 안되니까 뭐가 뭔지 모르겠어"*)
+   ⛔ 예전엔 네 층이 전부 알약이었다 — 실측 29·31·35px 이라 차이가 «최대 6px».
+      교과서도 그러지 말라고 한다: *"중첩 탭은 피하라. 꼭 써야 하면 «다른 시각 요소»로"*
+      *"층 구분엔 색·표시자·글자 셋을 최소 같이"* (designmonks · UX Design World, 2026-08-07 조사)
+   ⭐ 그래서 층마다 다른 언어를 준다 —
+      ① 모드(속지·글쓰기·일꾸·레꾸) = **밑줄 탭**   ② 서랍(마테·데코·글자) = **알약**
+      ③ 갈래(순서·색·글씨…)        = **아이콘**     ④ 칩(맨 뒤로·색·글씨체…) = **작은 알약**
+   ⚠️ `.segment` 는 앱 여러 곳이 쓰는 공용이라 **꾸미기 서랍 안에서만** 갈아입힌다. */
+.decor-drawer .segment {
+  background: none; border-radius: 0; padding: 0;
+  border-bottom: 1.5px solid var(--line);
+  gap: 0;
+}
+.decor-drawer .segment .seg {
+  min-height: 46px; border-radius: 0; background: none; box-shadow: none;
+  font-size: 14px; font-weight: 800; color: var(--text-sub);
+  border-bottom: 3px solid transparent; margin-bottom: -1.5px;
+}
+.decor-drawer .segment .seg.on {
+  background: none; color: var(--brown); border-bottom-color: var(--brown);
+}
+/* 서랍 탭(마테·데코·글자) — 알약이되 손가락이 닿게 */
+.decor-cats button { min-height: 44px; }
 .decor-scroll {
   flex: 1 1 auto; min-height: 0;
   overflow-y: auto; -webkit-overflow-scrolling: touch;

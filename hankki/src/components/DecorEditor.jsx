@@ -288,7 +288,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // 선택한 아이템 편집용 '고정 컨텍스트 바' 스타일 — 캔버스 바로 아래 항상 보임(스크롤 왔다갔다 없앰)
   const ctxScroll = { display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 2, flex: 1 }
   const ctxRow = { display: 'flex', alignItems: 'center', gap: 9 }
-  const ctxDot = { width: 30, height: 30, borderRadius: '50%', flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+  // 🎨 색 동그라미 — 30 → 36px.
+  //   ⚠️ 44px 까지 못 올린다: 색이 15개라 44px 면 한 줄에 여섯뿐이라 «세 줄»이 되고 150px 를 먹는다.
+  //      색 고르기는 «많은 것을 나란히 견주는» 일이라 그 판을 쪼개면 고르기가 더 어려워진다.
+  //      (색 팔레트는 접근성 기준에서도 흔히 예외로 다루는 자리다 — ⛔단 나머지 칸은 전부 44px 이상)
+  const ctxDot = { width: 36, height: 36, borderRadius: '50%', flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }
   const ctxChip = { flex: '0 0 auto', padding: 4, borderRadius: 10, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }
   const selOn = '2.5px solid var(--brown)'
   const selOff = '1.5px solid var(--line)'
@@ -316,7 +320,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const selPlainNote = selItem?.type === 'note' && !selItem.art
   // 뭐든 선택하면 컨텍스트 바를 띄운다 — 최소한 '순서(맨 뒤/맨 앞)'는 항상 조절 가능하게(창업자 레이어 제보). 색·움직임 등은 그 아래 종류별로.
   const hasCtx = !!selItem
-  const layerBtn = { padding: '6px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: 'var(--surface)', color: 'var(--text-sub)', border: '1px solid var(--line)' }
+  // 📏 손가락 최소 44px — Apple 44pt · Material 48dp · WCAG 44px (2026-08-07 조사)
+  //   ⛔ 2026-08-07 실측에서 꾸미기 화면의 «누르는 칸 20개가 전부» 미달이었다(19~40px).
+  //      v9.47 에 「터치 영역 44px」를 했는데 이 화면만 빠져 있었다.
+  const layerBtn = { minHeight: 44, padding: '0 16px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: 'var(--surface)', color: 'var(--text-sub)', border: '1px solid var(--line)' }
 
   // 서랍 탭 — 배경 → **프레임** → 데코 → 글자 → 친구들 → 음식 → 라이프. 음식만 요리별 서브칩(2단계).
   // 🖼 **프레임을 독립 탭으로 뺐다** (창업자 2026-07-30 *"프레임은 프레임만 모아놓는 탭을 만들어야겠어"*)
@@ -494,21 +501,22 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // 🔀 컨텍스트 바 갈래 목록 — 종류마다 「있는 것만」. 여기 한 줄만 늘리면 갈래가 생긴다.
   //   ⚠️ `selFramePhoto`·`selPhotoFrame` 이 바로 위에서 정해지므로 **이 자리보다 앞에 두면 안 된다**
   //      (const 는 정의 전에 못 읽는다 — 위로 올렸다가 실제로 터졌다).
+  //   🔪 안 D — 갈래는 «아이콘»이다(글자 알약 X). `ic` = `Icon` 이름.
   const ctxTabs = !selItem ? [] : [
-    ...((selFramePhoto || selPhotoFrame) ? [{ k: 'photo', label: '사진' }] : []),
-    { k: 'order', label: '순서' },
-    ...(selItem.type === 'sticker' && RECOLORABLE.has(selItem.key) ? [{ k: 'color', label: '색' }] : []),
-    ...(selItem.type === 'hl' ? [{ k: 'color', label: '색' }, { k: 'width', label: '굵기' }, { k: 'opacity', label: '진하기' }] : []),
-    ...(selItem.type === 'tape' ? [{ k: 'pattern', label: '무늬' }, { k: 'width', label: '굵기' }] : []),
-    ...(selItem.type === 'text' ? [{ k: 'color', label: '색' }, { k: 'width', label: '굵기' }, { k: 'font', label: '글씨' }] : []),
+    ...((selFramePhoto || selPhotoFrame) ? [{ k: 'photo', label: '사진', ic: 'photo' }] : []),
+    { k: 'order', label: '순서', ic: 'layers' },
+    ...(selItem.type === 'sticker' && RECOLORABLE.has(selItem.key) ? [{ k: 'color', label: '색', ic: 'palette' }] : []),
+    ...(selItem.type === 'hl' ? [{ k: 'color', label: '색', ic: 'palette' }, { k: 'width', label: '굵기', ic: 'weight' }, { k: 'opacity', label: '진하기', ic: 'opacity' }] : []),
+    ...(selItem.type === 'tape' ? [{ k: 'pattern', label: '무늬', ic: 'grid4' }, { k: 'width', label: '굵기', ic: 'weight' }] : []),
+    ...(selItem.type === 'text' ? [{ k: 'color', label: '색', ic: 'palette' }, { k: 'width', label: '굵기', ic: 'weight' }, { k: 'font', label: '글씨', ic: 'textA' }] : []),
     ...(selItem.type === 'note' ? [
-      ...(selPlainNote ? [{ k: 'color', label: '색' }] : []),
-      { k: 'font', label: '글씨' },
-      ...(selPlainNote ? [{ k: 'pattern', label: '무늬' }, { k: 'shape', label: '모양' }] : []),
+      ...(selPlainNote ? [{ k: 'color', label: '색', ic: 'palette' }] : []),
+      { k: 'font', label: '글씨', ic: 'textA' },
+      ...(selPlainNote ? [{ k: 'pattern', label: '무늬', ic: 'grid4' }, { k: 'shape', label: '모양', ic: 'shape' }] : []),
     ] : []),
     ...(selCanAnim ? [
-      { k: 'motion', label: '움직임', lit: selMotion !== 'none' },
-      { k: 'fx', label: '효과', lit: selFx !== 'none' },
+      { k: 'motion', label: '움직임', ic: 'wave', lit: selMotion !== 'none' },
+      { k: 'fx', label: '효과', ic: 'sparkle', lit: selFx !== 'none' },
     ] : []),
   ]
   // 고른 아이템이 바뀌면 그 갈래가 사라질 수 있다 → 없으면 첫 갈래로 «계산해서» 떨어뜨린다.
@@ -643,7 +651,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         <button
           key={g.key} className="press" onClick={() => setBuyPack(g)}
           style={{
-            display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px', marginBottom: 10,
+            display: 'flex', alignItems: 'center', gap: 9, width: '100%', minHeight: 48, padding: '9px 12px', marginBottom: 10,
             borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left',
           }}
         >
@@ -670,13 +678,28 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       <div className="decor-editor">
         {/* 상단 바 */}
         <div className="decor-top">
-          <button className="press" onClick={handleCancel} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
+          <button className="press" onClick={handleCancel} style={{ minHeight: 44, padding: '0 4px', color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
           <div style={{ fontSize: 16, fontWeight: 800 }}>{title}</div>
           {/* 💾 **글자가 아니라 «누를 것»으로 보이게** (창업자 2026-08-06
               *"어떻게 꾸미기 탭을 닫아야 글씨를 쓸 수 있는지 모르겠어"*).
               ⛔ 파란 글자 하나는 「제목 옆에 적힌 말」로 읽힌다 — 닫는 길이 안 보였다. */}
-          <button className="press" onClick={doSave}
-            style={{ background: 'var(--brown)', color: '#fff', fontSize: 14, fontWeight: 800, padding: '7px 17px', borderRadius: 999, border: 'none' }}>저장</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* ↩↩ **되돌리기 = 상단바** (2026-08-07 안 D)
+                ⛔⛔ 처음엔 도구 바의 «빈 상태»에만 뒀다가 회귀를 냈다 — 아이템을 고르면 사라져서
+                   방금 한 짓을 무를 수가 없었다(`_repro-hl`·`_repro-undo` 가 둘 다 잡았다).
+                📌 이 파일에 이미 경고가 있었다: *"골라야만 보이는 자리에 두면 «지운 뒤»엔 못 누른다"*.
+                   나는 그 경고를 읽고 **반대 방향으로 같은 실수**를 했다.
+                ⭐ 상단바는 **무엇을 고르든·아무것도 안 고르든 늘 같은 자리**다. 여기가 제자리다.
+                ⛔ 되돌릴 게 없으면 안 그린다 — 빈 버튼은 죽은 버튼이다. */}
+            {past.length > 0 && (
+              <button className="press" onClick={undo} aria-label="되돌리기"
+                style={{ minWidth: 44, minHeight: 44, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--cream)', border: '1px solid var(--line)' }}>
+                <Icon name="undo" size={18} color="var(--brown)" />
+              </button>
+            )}
+            <button className="press" onClick={doSave}
+              style={{ background: 'var(--brown)', color: '#fff', fontSize: 14, fontWeight: 800, minHeight: 44, padding: '0 18px', borderRadius: 999, border: 'none' }}>저장</button>
+          </div>
         </div>
         {restoredRef.current && (
           <div style={{ flex: '0 0 auto', background: '#eef3e8', color: '#4f5a44', fontSize: 12.5, fontWeight: 700, textAlign: 'center', padding: '6px 10px' }}>
@@ -767,7 +790,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 //   ⭐ 컨텍스트 바가 들어온 만큼 판이 물러난다 — 도구가 나오면 종이가 자리를 내주는 게 자연스럽다.
                 //      0.18s 로 미끄러지게 해서 «툭» 튀지 않는다. 고르기를 풀면 판이 도로 커진다.
                 //   ⛔⛔ 위 경고를 «읽고도» 여기에 `{/* */}` 를 넣어 빌드를 깼다(2026-08-07 · 네 번째).
-                <div style={{ width: writing ? 'min(100%, 420px)' : 'min(100%, 31.5vh)', margin: '0 auto' }}>
+                // 📐 2026-08-07 안 D — 꾸미기 때 종이를 31.5vh → 27vh 로 줄인다.
+                //   ⛔ 왜 = 손가락 44px 를 지키려니 줄이 두꺼워져(큰칸 35→46 · 서랍탭 31→44 · 도구 80→107)
+                //      **서랍 스크롤 칸이 246 → 194px 로 오히려 줄었다.** 그 자리를 종이에서 되찾는다.
+                //   ⭐ 종이는 «미리보기»이고 실제로 고르는 일은 서랍에서 한다 — 서랍이 커야 덜 헤맨다.
+                //   ⚠️ 이 값은 **창업자 판정 대상**이다(종이 크기 = 미감).
+                //   ✅ 고른 순간에 크기가 «안 바뀐다» — 도구 바가 꾸미기 모드면 늘 떠 있기 때문이다.
+                //   ⛔⛔ 여기에 `{/* */}` 를 쓰면 빌드가 죽는다 — `return (` 바로 뒤라 JSX 가 아직 안 열렸다.
+                //      **바로 위에 이 경고가 적혀 있는데 2026-08-07 에 또 밟았다(여섯 번째).**
+                <div style={{ width: writing ? 'min(100%, 420px)' : 'min(100%, 27vh)', margin: '0 auto' }}>
                   <PaperBox skin={paper} ratio={ratio} style={{ borderRadius: 18 }}>
                     {/* ⚠️ 사진이 «먼저» — 그래야 스티커를 사진 위에 붙일 수 있다(글자는 zIndex 1)
                         ✍️ 글쓰기 땐 «쓸 수 있는 판»으로 갈아끼운다 — 자리는 똑같고 손이 닿을 뿐이다 */}
@@ -826,44 +857,49 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         </div>
 
         {/* 고정 컨텍스트 바 — 선택한 아이템의 색·무늬·모양을 캔버스 바로 아래에서 바로 바꾼다(스크롤 이동 없음) */}
-        {hasCtx && (
-          <div className="decor-ctx" style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '6px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {/* 🔀🔀 **갈래 줄** — 「순서·색·글씨·무늬·모양·움직임·효과」를 세로로 쌓지 않고 «한 줄»에 늘어놓는다.
-                ⭐ 같은 갈래를 다시 누르면 접힌다 — 창업자가 말한 「잠깐 숨기기」가 **누르던 자리 그대로** 된다.
-                ⭐ 점(●) = 그 갈래에 뭔가 걸려 있다는 표시. 다른 갈래를 보고 있어도 «저쪽 상태»가 보인다.
-                ⛔ 라벨(`ctxLabel`)을 없앴다 — 갈래 단추가 이미 이름을 말한다. 가로도 34px 아낀다.
-                ⛔⛔ **가로 스크롤로 두면 안 된다** — 포스트잇은 갈래가 일곱이라 실측 **63px 밀려**
-                   「효과」가 잘렸다. 창업자가 바로 그것을 제보했었다(*"5번은 없어(어딨는지 못찾음)"*).
-                   ⭐ **줄바꿈(`wrap`)** 으로 간다 — 갈래가 많은 종류만 두 줄이 되고 «잘리는 게 없다».
-                      글자색 15색을 두 줄로 접은 것과 «같은 처방»이다(창업자 판정 통과, 안 ⓐ). */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, rowGap: 4, flex: 1 }}>
-                {ctxTabs.map((t) => {
-                  const on = ctxCur === t.k && ctxOpen
-                  return (
-                    // 🔖 `data-ctxtab` = 재현 검사가 갈래를 «이름 아닌 키»로 집게 하는 표식.
-                    //    ⛔ 라벨 글자로 찾으면 서랍에도 같은 글자(색·굵기)가 있어 엉뚱한 걸 누른다
-                    //       — 2026-08-07 에 `_repro-hl` 이 실제로 서랍 형광펜을 눌러 거짓 실패했다.
-                    <button key={t.k} className="press" aria-pressed={on} data-ctxtab={t.k}
-                      onClick={() => { if (ctxCur === t.k && ctxOpen) setCtxOpen(false); else { setCtxTab(t.k); setCtxOpen(true) } }}
-                      style={{ position: 'relative', padding: '5px 7px', borderRadius: 999, fontSize: 12, fontWeight: 800, flex: '0 0 auto', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>
-                      {t.label}
-                      {/* 📐 점은 «귀퉁이»에 얹는다 — 글자 옆에 두면 켤 때마다 칩이 넓어져
-                          일곱 개가 한 줄에서 두 줄로 «튄다»(실측 칩 합 296 → 312px, 칸은 305px). */}
-                      {t.lit && <span style={{ position: 'absolute', top: 2, right: 3, width: 4.5, height: 4.5, borderRadius: 999, background: on ? '#fff' : 'var(--brown)' }} />}
-                    </button>
-                  )
-                })}
+        {/* 🔪🔪🔪 **도구 바 — 화면 «맨 아래» 고정** (창업자 2026-08-07 안 D 확정)
+            ⛔ 예전엔 종이와 서랍 «사이»에 있었다. 그게 세 가지를 한꺼번에 망가뜨렸다 —
+               ⑴ 서랍을 눌러 스크롤 칸이 53px(손가락보다 얇다) ⑵ 자판이 떠도 80px 로 종이를 계속 누른다
+               ⑶ 갈래·칩·서랍탭·큰칸이 전부 비슷한 알약(29·31·35px)이라 층이 안 읽힌다.
+            ⭐ 왜 맨 아래인가 — 시안 넷을 재서 골랐다(`scripts/_measure-시안-0807.mjs`):
+               · 도구가 먹는 높이 314 → **126px** (서랍이 188px 더 커진다 = 404컷 보기에 제일 좋다)
+               · 자주 하는 일 다섯 터치 = 13번 (겹치기 안은 19번 — 다꾸는 «연달아» 붙이는 일이라 치명적)
+               · 자판이 뜨면 **자판 바로 위**에 붙는다 = 아이폰 글자 툴바·카톡과 같은 자리.
+                 지금은 글씨체 줄이 서랍 «안»에 있어 자판이 뜨면 **18px 틈**에 갇혔다.
+            ⭐ **자리가 절대 안 움직인다** — 고른 게 있으면 「그것 꾸미기」, 없으면 「되돌리기」.
+               그래서 지금 혼자 한 줄 먹던 되돌리기도 여기로 회수된다. */}
+        {/* ⛔ 「고른 게 있을 때만」 띄우면 고를 때마다 화면이 «툭» 튄다 → 꾸미기 모드면 «항상» 띄운다. */}
+        {(mode === 'decor' || hasCtx) && (
+          <div className="decor-tools" style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '4px 8px calc(4px + var(--safe-bottom))', display: 'flex', flexDirection: 'column' }}>
+            {!hasCtx ? (
+              // 🈳 빈 상태 — 자리를 비우지 않는다(비우면 고를 때마다 화면이 «툭» 튄다).
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 52, color: 'var(--text-sub)', fontSize: 12.5 }}>
+                <Icon name="palette" size={16} color="var(--text-sub)" />
+                붙인 걸 탭하면 여기서 꾸며요
               </div>
-              {/* 🙈 접기·펴기 — 갈래 줄만 남기고 칩 줄을 감춘다(창업자 *"잠깐 숨기기"*). */}
-              <button className="press" onClick={() => setCtxOpen(!ctxOpen)} aria-label={ctxOpen ? '설정 접기' : '설정 펴기'}
-                style={{ width: 25, height: 25, borderRadius: 999, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface)', border: '1px solid var(--line)' }}>
-                <svg viewBox="0 0 20 20" width="14" height="14" style={{ transform: ctxOpen ? 'none' : 'rotate(180deg)' }}>
-                  <path d="M5 12.5 10 7.5l5 5" fill="none" stroke="var(--text-sub)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+            ) : (<>
+            {/* 🔀 갈래 = **아이콘 칸**(52px). 아래 칩은 알약 — 생김새가 달라 층이 갈린다.
+                ⭐ 점(●) = 그 갈래에 뭔가 걸려 있다는 표시. 귀퉁이에 둬서 켜도 칸 폭이 안 변한다. */}
+            {/* 📐 한 칸 46px × 일곱 = 322 ＋ 칸 344 → **한 줄에 다 들어간다**(밀림 0).
+                ⛔ 52px 로 뒀더니 합이 376 이라 **32px 밀려 「효과」가 잘렸다** — 창업자가 지적했던 바로 그 증상이 재발했다.
+                ⭐ 46 은 손가락 최소(44)보다 크다. 세로는 52 그대로라 누르기는 그대로 편하다.
+                🛟 그래도 넘치면 잘리는 대신 **두 줄이 되게**(`wrap`) — 새 갈래가 늘어도 안 잘린다. */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, rowGap: 2 }}>
+              {ctxTabs.map((t) => {
+                const on = ctxCur === t.k
+                return (
+                  // 🔖 `data-ctxtab` = 재현 검사가 갈래를 «이름 아닌 키»로 집게 하는 표식.
+                  //    ⛔ 라벨 글자로 찾으면 서랍에도 같은 글자(색·굵기)가 있어 엉뚱한 걸 누른다.
+                  <button key={t.k} className="press" aria-pressed={on} data-ctxtab={t.k} aria-label={t.label}
+                    onClick={() => setCtxTab(t.k)}
+                    style={{ position: 'relative', flex: '0 0 auto', minWidth: 46, minHeight: 52, borderRadius: 13, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--cream-deep)' : 'transparent', color: on ? 'var(--brown)' : 'var(--text-sub)', border: 'none' }}>
+                    <Icon name={t.ic} size={19} color={on ? 'var(--brown)' : 'var(--text-sub)'} />
+                    {t.label}
+                    {t.lit && <span style={{ position: 'absolute', top: 7, right: 10, width: 5, height: 5, borderRadius: 999, background: 'var(--brown)' }} />}
+                  </button>
+                )
+              })}
             </div>
-            {ctxOpen && (
             <div style={ctxRow}>
             {/* 🔗 프레임 ↔ 속 사진 — 창 안을 탭하면 프레임이 잡혀서 사진에 손이 안 닿는다(위 `photoOfFrame` 주석) */}
             {ctxCur === 'photo' && (
@@ -929,7 +965,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   const on = (ctxCur === 'motion' ? selMotion : selFx) === o.key
                   return (
                     <button key={o.key} className="press" onClick={() => patchRec(sel, ctxCur === 'motion' ? { motion: o.key } : { fx: o.key })}
-                      style={{ padding: '5px 10px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{o.label}</button>
+                      style={{ minHeight: 44, padding: '0 14px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{o.label}</button>
                   )
                 })}
               </div>
@@ -958,7 +994,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   const on = (selItem.ratio || 6) === w.ratio
                   return (
                     <button key={w.key} className="press" onClick={() => patchRec(sel, { ratio: w.ratio })}
-                      style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{w.label}</button>
+                      style={{ minHeight: 44, padding: '0 16px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{w.label}</button>
                   )
                 })}
               </div>
@@ -970,7 +1006,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   const on = (selItem.o ?? 0.5) === o.o
                   return (
                     <button key={o.key} className="press" onClick={() => patchRec(sel, { o: o.o })}
-                      style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{o.label}</button>
+                      style={{ minHeight: 44, padding: '0 16px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{o.label}</button>
                   )
                 })}
               </div>
@@ -989,7 +1025,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   const on = (selItem.ratio || 3.4) === w.ratio
                   return (
                     <button key={w.key} className="press" onClick={() => patchRec(sel, { ratio: w.ratio })}
-                      style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{w.label}</button>
+                      style={{ minHeight: 44, padding: '0 16px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{w.label}</button>
                   )
                 })}
               </div>
@@ -1016,7 +1052,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               <div style={ctxScroll}>
                 {TEXT_WEIGHTS.map((w) => (
                   <button key={w.key} className="press" onClick={() => patchRec(sel, { w: w.key })}
-                    style={{ padding: '5px 15px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: (selItem.w || 'mid') === w.key ? 'var(--brown)' : 'var(--surface)', color: (selItem.w || 'mid') === w.key ? '#fff' : 'var(--text-sub)', border: 'none' }}>
+                    style={{ minHeight: 44, padding: '0 16px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: (selItem.w || 'mid') === w.key ? 'var(--brown)' : 'var(--surface)', color: (selItem.w || 'mid') === w.key ? '#fff' : 'var(--text-sub)', border: 'none' }}>
                     {w.label}
                   </button>
                 ))}
@@ -1030,7 +1066,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   const now = selItem.type === 'note' ? (selItem.font || 'gaegu') : selItem.font
                   return (
                     <button key={f.key} className="press" onClick={() => patchRec(sel, { font: f.key })}
-                      style={{ padding: '4px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, flex: '0 0 auto', fontFamily: chipFamily(f), background: now === f.key ? 'var(--brown)' : 'var(--surface)', color: now === f.key ? '#fff' : 'var(--text-sub)' }}>{f.label}</button>
+                      style={{ minHeight: 44, padding: '0 14px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 14, fontWeight: 700, flex: '0 0 auto', fontFamily: chipFamily(f), background: now === f.key ? 'var(--brown)' : 'var(--surface)', color: now === f.key ? '#fff' : 'var(--text-sub)' }}>{f.label}</button>
                   )
                 })}
               </div>
@@ -1072,7 +1108,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               </div>
             )}
             </div>
-            )}
+            </>)}
           </div>
         )}
 
@@ -1159,16 +1195,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ⭐ 서랍 맨 위, 큰 칸 바로 밑 = 어느 탭에 있든 손이 닿는 자리.
               ⛔ 아이템을 골라야만 보이는 컨텍스트 바에 두면 «지운 뒤»엔 못 누른다
                  (지우면 선택이 풀리니까). 지운 걸 되살리는 게 이 버튼의 제일 큰 쓸모다. */}
-          {mode === 'decor' && past.length > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 2px 8px', flex: '0 0 auto' }}>
-              <button className="press" onClick={undo}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 999,
-                  fontSize: 12.5, fontWeight: 700, background: 'var(--cream)', border: '1px solid var(--line)', color: 'var(--brown)' }}>
-                <Icon name="undo" size={15} color="var(--brown)" />
-                되돌리기
-              </button>
-            </div>
-          )}
+          {/* 📌 2026-08-07 — 되돌리기는 **맨 아래 도구 바**로 옮겼다(안 D).
+              ⭐ 여기 있을 땐 «혼자 한 줄»을 먹었고, 그 줄이 서랍 스크롤 칸을 그만큼 눌렀다.
+              ⭐ 도구 바는 고른 게 없을 때 비어 있으므로 그 자리를 되돌리기가 채운다 — 줄 하나를 회수한 셈. */}
           {/* 카테고리 칩 — 가로로 골라 그 카테고리만(세로 스크롤 최소화) */}
           {mode === 'decor' && (
           <div className="decor-cats" style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '2px 2px 10px', flex: '0 0 auto' }}>
@@ -1240,7 +1269,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                    → 표지를 손보려면 탭을 옮겨야 했다(오늘 내내 잡은 「탭 왕복」과 같은 문제).
                 ⭐ 표지를 다루는 둘을 **한 묶음**으로 모은다 — 지우고 나서 사진을 붙이는 게 한 흐름이다. */}
             <button className="press" onClick={() => setGift(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px', marginBottom: 10,
+              style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', minHeight: 48, padding: '9px 12px', marginBottom: 10,
                 borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>
               <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 800, background: 'var(--brown)', color: '#fff', flex: '0 0 auto' }}>선물</span>
               <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>출시 기념으로 네 가지를 넣어뒀어요</span>
@@ -1266,7 +1295,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 </button>
               )}
               <button className="press" onClick={() => photoRef.current?.click()}
-                style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 12px',
+                style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', minHeight: 48, padding: '9px 12px',
                   borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left' }}>
                 <Icon name="photo" size={17} color="var(--brown)" />
                 <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{selFrame ? '이 프레임에 사진 넣기' : '사진 스티커로 붙이기'}</span>
