@@ -61,30 +61,34 @@ await page.getByRole('button', { name: '글자', exact: true }).last().click(); 
 //        창업자 원문이 *"이렇게 색깔고르는게 되게 불편하네... 한개씩 눌러서 아니면 지우고.."* 였는데
 //        고친 건 글자뿐이었다. 포스트잇은 아직 «지우고 다시 붙여야» 색이 바뀐다.)
 //    ✅ 그래서 서랍에서 **여섯 색을 하나씩 붙여** 한 판에 늘어놓고 찍는다.
-const names = ['크림', '피치', '세이지', '하늘', '라벤더', '클레이']
+// ⚠️ 2026-08-07 부터 **시트가 «안» 열린다** — 붙이면 그 자리에서 바로 쳐진다.
+//    첫 판이 시트를 기다리다 죽었다(30초 타임아웃). 검사도 새 흐름을 따라간다.
+// ⚠️ 색이 6 → **12** 로 늘었다(밝은 여섯 ＋ 진한 여섯). 4×3 격자로 늘어놓는다.
+const names = ['크림', '피치', '세이지', '하늘', '라벤더', '클레이', '민트', '올리브', '모카', '더스티', '데님', '그레이프']
 const cells = page.locator('.decor-drawer button[aria-label*="포스트잇"]')
 const n = await cells.count()
-if (n < 6) { console.log(`⛔ 포스트잇 칸이 ${n}개뿐이다 — 검사 방식부터 볼 것`); await b.close(); srv.close(); process.exit(1) }
-for (let i = 0; i < 6; i++) {
-  await cells.nth(i).click(); await page.waitForTimeout(800)
-  const ta = page.locator('.hk-sheet textarea, .sheet textarea, .hk-sheet input, .sheet input').first()
-  if (await ta.count()) { await ta.fill(names[i]); await page.waitForTimeout(250) }
-  const save = page.locator('.hk-sheet button, .sheet button').filter({ hasText: /저장|확인|넣기|완료|붙이기/ }).first()
-  if (await save.count()) { await save.click(); await page.waitForTimeout(700) }
+console.log(`   ℹ️ 서랍 포스트잇 칸 ${n}개`)
+if (n < 12) { console.log(`⛔ 12개보다 적다 — 검사 방식부터 볼 것`); await b.close(); srv.close(); process.exit(1) }
+for (let i = 0; i < 12; i++) {
+  await page.mouse.click(8, 300); await page.waitForTimeout(220)   // 앞의 치는 칸을 닫는다
+  await cells.nth(i).click(); await page.waitForTimeout(600)
+  const ta = page.locator('.decor-stage textarea[data-boxtext]').first()
+  if (await ta.count()) { await ta.fill(names[i]); await page.waitForTimeout(280) }
+  await page.mouse.click(8, 300); await page.waitForTimeout(280)
   // 격자로 늘어놓는다 — 겹치면 색을 못 견준다
   await page.evaluate(([k]) => {
     const el = [...document.querySelectorAll('.decor-stage [style*="rotate"]')].pop()
     if (!el) return
-    el.style.left = `${22 + (k % 3) * 28}%`
-    el.style.top = `${26 + Math.floor(k / 3) * 34}%`
-    el.style.width = '26%'; el.style.height = '25%'
+    el.style.left = `${19 + (k % 3) * 31}%`
+    el.style.top = `${16 + Math.floor(k / 3) * 23}%`
+    el.style.width = '27%'; el.style.height = '18%'
     el.style.transform = 'translate(-50%,-50%) rotate(0deg)'
   }, [i])
-  await page.waitForTimeout(250)
+  await page.waitForTimeout(180)
 }
 // 고른 표시(점선·손잡이)가 판을 가리지 않게 종이 밖을 눌러 푼다
 await page.mouse.click(8, 300); await page.waitForTimeout(500)
-await cut('포스트잇-여섯색', '.decor-stage', 4)
+await cut('포스트잇-열두색', '.decor-stage', 4)
 
 console.log(errs.length ? `\n⛔ pageerror ${errs.length}건 — ${errs[0]}` : '\n✅ pageerror 0')
 writeFileSync(join(OUT, 'cuts.json'), JSON.stringify(cuts))
