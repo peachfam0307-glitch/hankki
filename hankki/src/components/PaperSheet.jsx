@@ -1,3 +1,4 @@
+import Icon from './Icon'
 import { PAPER_LINE_H } from '../data/papers'
 
 // 📝📝 종이 «위»에 바로 쓴다.
@@ -93,10 +94,35 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
             ? (!canShot
               ? <img src={value.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               : (
-                <button type="button" className="press" onClick={onPickPhoto} aria-label="사진 바꾸기"
-                  style={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'none', display: 'block' }}>
-                  <img src={value.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                </button>
+                <>
+                  <button type="button" className="press" onClick={onPickPhoto} aria-label="사진 바꾸기"
+                    style={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'none', display: 'block' }}>
+                    <img src={value.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  </button>
+                  {/* 🗑🗑 **사진 지우기** (창업자 폰 제보 2026-08-07 *"하나추가 사진지우는게 없어."*)
+                      ⛔ 이건 «사진 스티커»가 아니라 **틀의 사진칸**(`value.photo`)이라
+                         `DecorLayer` 의 지우기 단추와 아무 상관이 없다 — 그래서 길이 «아예» 없었다.
+                         「사진 바꾸기」로 다른 걸 끼울 수는 있어도 **비울 수는 없었다.**
+                         한 번 넣으면 그 칸은 영영 사진 칸이 된다.
+                      ⭐ **스티커 지우기와 «똑같이» 만든다** — 31px · `#3f382e` · 같은 ✕ 아이콘.
+                         같은 화면에 둘이 나란히 뜨는데 모양이 다르면 «다른 기능»으로 읽힌다.
+                         ⛔ 그래서 여기만 `cqw` 로 재지 않는다(이 파일의 나머지는 글자라 폭 기준이 맞다).
+                            판은 320~330px 한 크기로만 그려지고, 캡처(1080)에선 `canShot` 이 false 라 안 뜬다.
+                      ⚠️ 자리는 사진칸 «안»쪽 — 밖에 두면 `overflow:hidden` 이 잘라 먹는다
+                         (오늘 손잡이에서 −60px 로 이미 겪었다).
+                      ⛔ 읽기 전용(꾸미기 밖·미리보기)엔 안 뜬다 — `canShot` 이 그걸 가른다. */}
+                  <button type="button" className="press" aria-label="사진 지우기"
+                    onClick={(e) => { e.stopPropagation(); write({ ...value, photo: '' }) }}
+                    style={{
+                      position: 'absolute', top: 5, right: 5,
+                      width: 31, height: 31, borderRadius: '50%',
+                      background: '#3f382e', color: '#fff', border: 'none', padding: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 2px 6px rgba(0,0,0,.3)',
+                    }}>
+                    <Icon name="x" size={15} color="#fff" stroke={2.6} />
+                  </button>
+                </>
               ))
             : (canShot && (
               <button type="button" className="press" onClick={onPickPhoto} aria-label="사진 넣기"
