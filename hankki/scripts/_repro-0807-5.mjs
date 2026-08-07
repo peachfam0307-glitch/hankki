@@ -159,26 +159,37 @@ await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); 
 await page.getByRole('button', { name: '글자', exact: true }).last().click(); await page.waitForTimeout(700)
 {
   await page.locator('.decor-drawer button').filter({ hasText: /^글자 넣기$/ }).first().click(); await page.waitForTimeout(800)
-  // ⚠️ 시트 클래스는  다( 가 아니다) — 첫 판에 저장 단추를 못 눌러 시트가 안 닫혔고
-  //    그 「sheet-mask」가 모션 칩 클릭을 30초 동안 막았다.
-  const ta = page.locator('.sheet textarea, .sheet input').first()
+  // ⛔⛔ **옛 판은 여기서 시트가 떴다. v9.96 에 «그 자리에서 바로 쳐지게» 바꿨다**
+  //    (창업자 *"3번은 지금 처럼 붙이기는 너무 불편해"*) → `.sheet` 를 찾으면 영원히 못 찾는다.
+  //    ⭐ 지금은 `textarea[data-boxtext]` 에 커서가 «이미» 들어가 있다.
+  const ta = page.locator('.decor-stage textarea[data-boxtext]').first()
   if (await ta.count()) { await ta.fill('맛있겠다'); await page.waitForTimeout(300) }
-  const save = page.locator('.sheet button').filter({ hasText: /저장|확인|넣기|완료|붙이기/ }).first()
-  if (await save.count()) { await save.click(); await page.waitForTimeout(900) }
+  else no('글칸이 그 자리에 «안» 열렸다 — 검사 방식부터 볼 것')
   // ⭐ 「글자 넣기」는 넣자마자 그것을 «고른 상태»로 만든다(addText → setSel) → 다시 누를 필요가 없다.
-  //    ⛔ 첫 판에 굳이 눌렀다가 «화면 밖»이라 죽었다(글자가 종이 아래쪽에 놓인다).
   await page.waitForTimeout(400)
 
+  // 🔀🔀 **갈래를 «먼저» 눌러야 그 줄이 나온다** (2026-08-07 안 D)
+  //    ⛔ 옛 판은 색·움직임·효과 줄이 «한꺼번에» 떠 있어 바로 셀 수 있었다.
+  //       안 D 는 아이콘 갈래로 갈라 뒀다 → 안 누르고 세면 늘 0개가 나온다(실제로 그랬다).
+  //    ⚠️ 이름 글자로 찾지 않는다 — 서랍에도 「색」·「글씨」가 있다. `data-ctxtab` 키로 집는다.
+  const 갈래 = async (k) => {
+    const b = page.locator(`.decor-tools button[data-ctxtab="${k}"]`)
+    if (!(await b.count())) return false
+    if ((await b.first().getAttribute('aria-expanded')) !== 'true') { await b.first().click(); await page.waitForTimeout(400) }
+    return true
+  }
+  if (!(await 갈래('color'))) no('「색」 갈래가 아예 없다')
   const colors = await page.locator('.decor-editor [aria-label^="글자색"]').count()
   console.log(`   ℹ️ 글자색 칩 ${colors}개`)
   if (colors >= 12) ok(`글자색 ${colors}개 — 스티커 색(13)과 어깨를 맞춘다`)
   else no(`글자색이 ${colors}개뿐`)
 
-  const motion = await page.locator('.decor-editor').getByText('움직임', { exact: true }).count()
-  const fx = await page.locator('.decor-editor').getByText('효과', { exact: true }).count()
-  console.log(`   ℹ️ 움직임 줄 ${motion ? '있다' : '없다'} · 효과 줄 ${fx ? '있다' : '없다'}`)
-  if (!motion || !fx) no('⭐ 글자에 모션·효과 줄이 «안 뜬다»')
+  const motion = await page.locator('.decor-tools button[data-ctxtab="motion"]').count()
+  const fx = await page.locator('.decor-tools button[data-ctxtab="fx"]').count()
+  console.log(`   ℹ️ 움직임 갈래 ${motion ? '있다' : '없다'} · 효과 갈래 ${fx ? '있다' : '없다'}`)
+  if (!motion || !fx) no('⭐ 글자에 모션·효과 갈래가 «안 뜬다»')
   else {
+    await 갈래('motion')
     const mbtn = page.locator('.decor-editor button').filter({ hasText: /^통통$|^갸웃$|^찰랑$|^살랑$/ }).first()
     if (!(await mbtn.count())) no('모션 칩을 못 찾았다 — 검사 방식부터 볼 것')
     else {
@@ -265,10 +276,11 @@ await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); 
 await page.getByRole('button', { name: '글자', exact: true }).last().click(); await page.waitForTimeout(700)
 {
   await page.locator('.decor-drawer button').filter({ hasText: /^글자 넣기$/ }).first().click(); await page.waitForTimeout(800)
-  const ta = page.locator('.sheet textarea, .sheet input').first()
+  // ⛔ v9.96 부터 시트가 «안» 뜬다 — 그 자리에서 바로 쳐진다(위 ③ 주석과 같은 이유).
+  const ta = page.locator('.decor-stage textarea[data-boxtext]').first()
   if (await ta.count()) { await ta.fill('꾸미기'); await page.waitForTimeout(300) }
-  const save = page.locator('.sheet button').filter({ hasText: /저장|확인|넣기|완료|붙이기/ }).first()
-  if (await save.count()) { await save.click(); await page.waitForTimeout(900) }
+  // 📐 폭을 재려면 «치는 칸»이 닫혀 그림 글자가 그려져야 한다 → 종이 밖을 눌러 끝낸다
+  await page.mouse.click(8, 300); await page.waitForTimeout(600)
   await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(600)
   const r = await page.evaluate(() => {
     // 글자 아이템의 «상자» 와 그 안 «실제 글자» 폭을 견준다
@@ -302,20 +314,31 @@ await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); 
       const t = (el.textContent || '').trim()
       // ⚠️ 버튼 «안»에 뱃지(「선물」)와 화살표(›)가 같이 들어 있어 textContent 가 정확히 안 맞는다
       //    (첫 판에 「선물 줄을 못 찾았다」로 잘못 찍혔다) → 포함으로 본다
-      if (t.includes('출시 기념으로 네 가지를')) out.push('선물')
-      else if (t === '표지 그림') out.push('표지그림(라벨)')
+      // ⛔⛔ 2026-08-07 안 D — **선물과 사진이 «한 줄»로 합쳐졌다**(창업자 *"표지그림이랑 선물을 좀 줄여도 될 듯(높이)"*).
+      //    그래서 옛 글자(「출시 기념으로 네 가지를…」·「표지 그림」 라벨)는 이제 «없다».
+      //    ⚠️ 「없다」를 「빠졌다」로 읽지 말 것 — 일부러 없앤 것이다(줄 하나가 70px 였다).
+      if (t.includes('선물')) out.push('선물')
       else if (/배경 음식 아이콘 (지우기|되돌리기)/.test(t)) out.push('배경아이콘지우기')
-      else if (t.includes('사진 스티커로 붙이기') || t.includes('이 프레임에 사진 넣기')) out.push('사진붙이기')
+      else if (/사진/.test(t) && /붙이기|넣기/.test(t)) out.push('사진붙이기')
     }
     return out
   })
   console.log('   ℹ️ 맨 위 차례 =', order.join(' → ') || '(없음)')
-  const gi = order.indexOf('선물'), li = order.indexOf('표지그림(라벨)'), pi = order.indexOf('사진붙이기')
+  const gi = order.indexOf('선물'), pi = order.indexOf('사진붙이기')
   if (gi < 0) no('「선물」 줄을 못 찾았다')
   else if (gi !== 0) no(`「선물」이 맨 위가 아니다 (${gi + 1}번째)`)
-  else if (li < 0 || pi < 0) no('「표지 그림」 묶음이 안 보인다')
-  else if (!(gi < li && li < pi)) no('선물 → 표지그림 → 사진 순서가 아니다')
-  else ok('⭐ 선물 → 표지 그림 → 사진 붙이기 순서가 맞다')
+  else if (pi < 0) no('「사진 붙이기」가 안 보인다')
+  else if (pi !== 1) no(`「사진」이 선물 «바로 옆»이 아니다 (${pi + 1}번째)`)
+  else ok('⭐ 선물 → 사진 붙이기 한 줄 · 그 아래 배경 아이콘 순서가 맞다')
+  // 🔤 두 길이 «이름으로» 갈리나 (v9.88 창업자 제보 — 프레임에 끼우는 것과 자유로 붙이는 것)
+  const 사진이름 = await page.evaluate(() => {
+    const b = [...document.querySelectorAll('.decor-drawer button')].find((x) => /사진/.test(x.textContent) && /붙이기|넣기/.test(x.textContent))
+    return b ? b.textContent.trim() : ''
+  })
+  console.log(`   ℹ️ 사진 버튼 이름 = "${사진이름}"`)
+  if (/프레임/.test(사진이름)) no('프레임을 안 골랐는데 「프레임」이라 쓰여 있다')
+  else if (/스티커/.test(사진이름)) ok('⭐ 프레임 없을 땐 「스티커로」라고 말해 준다 — 두 길이 이름으로 갈린다')
+  else no(`「스티커」라는 말이 빠졌다 ("${사진이름}") — 프레임에 끼우는 것과 구분이 안 된다`)
   // ⛔ 옛 자리(배경 탭)에 «또» 있으면 두 번 보인다 — 옮긴 게 아니라 복사한 것이 된다
   const dup = order.filter((x) => x === '사진붙이기').length
   if (dup > 1) no(`「사진 붙이기」가 ${dup}번 나온다 — 옛 자리를 안 지웠다`)

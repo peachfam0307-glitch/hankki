@@ -166,7 +166,7 @@ try {
   const back2 = p2.getByRole('button', { name: '뒤로' }).first()
   if (await back2.isVisible().catch(() => false)) { await back2.click().catch(() => {}); await p2.waitForTimeout(600) }
   await p2.getByText('레시피', { exact: true }).last().click(); await p2.waitForTimeout(800)
-  await p2.locator('.seg', { hasText: '요리 기록' }).first().click(); await p2.waitForTimeout(700)
+  await p2.locator('.seg', { hasText: '한끼 일기' }).first().click(); await p2.waitForTimeout(700)
   const tile = p2.locator('.album-tile').first()
   if (!(await tile.isVisible().catch(() => false))) {
     no('요리 기록 탭에 앨범 칸이 없다 — 기록이 안 쌓였거나 탭을 못 열었다')

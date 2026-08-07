@@ -52,16 +52,22 @@ const sec = page.locator('.decor-sec').filter({ hasText: '코너' }).first()
 const chip = (await sec.count()) ? sec.locator('img').first() : page.locator('.decor-drawer .decor-sec img').first()
 await chip.click(); await page.waitForTimeout(700)
 
+// ⛔⛔ 2026-08-07 전수검사에서 잡음 — 이 검사는 «저장 안 한» 상태를 hankki:v1 에서 읽고 있었다.
+//    거기엔 아무것도 없어서 크기·각도가 늘 undefined／0 이었고, 그래서 「각도가 안 돈다」가
+//    **무슨 짓을 해도 통과**했다(실패할 줄 모르는 검사 = 없는 검사).
+//    ⭐ 저장 전 값은 hankki:decorDraft:＜일기 id＞ 에 350ms 마다 쌓인다 — 거기서 읽는다.
+//    ⚠️ 초안 키의 뒷부분은 «일기 id» 인데 일기는 날짜로 id 를 짓는다(hankki:decorDraft:diary-2026-7-7).
+//       그래서 이름을 박지 않고 **decorDraft 로 시작하는 키를 찾아** 읽는다.
 const val = () => page.evaluate(() => {
-  const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
-  const d = (s.diary || []).find((x) => x.kind === 'diary')
-  const it = (d?.decor || [])[0] || {}
+  const k = Object.keys(localStorage).find((x) => x.startsWith('hankki:decorDraft:'))
+  const it = (k ? (JSON.parse(localStorage.getItem(k)).items || []) : [])[0] || {}
   return { s: it.s, r: it.r || 0, flip: !!it.flip, flipY: !!it.flipY }
 })
 const box = async () => (await page.locator('.decor-stage .paper').first().boundingBox())
 
 // 손잡이 = 선택된 아이템 우하단
-const handle = page.getByRole('button', { name: '크기·회전' }).first()
+// ⚠️ 손잡이는 button 이 아니라 span 이다(포인터 이벤트만 받는다) → role 로 찾으면 영원히 못 찾는다.
+const handle = page.locator('[aria-label="크기·회전"]').first()
 
 console.log('\n── ⓐ 「크기만」 키우려 할 때 각도가 딸려 도나 ──')
 {
@@ -99,22 +105,20 @@ console.log('\n── ⓑ 손가락이 살짝 빗나가면 (실제 손동작) �
 
 console.log('\n── ⓒ 손으로 180° 를 맞출 수 있나 (아래 귀퉁이에 놓으려면 필요) ──')
 {
-  await page.evaluate(() => {
-    const s = JSON.parse(localStorage.getItem('hankki:v1'))
-    const d = s.diary.find((x) => x.kind === 'diary'); d.decor[0].r = 0
-    localStorage.setItem('hankki:v1', JSON.stringify(s))
-  })
-  await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(1400)
-  await page.getByRole('button', { name: /일기 (쓰기|보기)/ }).first().click(); await page.waitForTimeout(900)
-  await page.getByRole('button', { name: '꾸미기 열기' }).first().click(); await page.waitForTimeout(1100)
-  const stk = page.locator('.decor-stage .decor-item').first()
-  if (await stk.count()) { await stk.click(); await page.waitForTimeout(600) }
-  const h2 = page.getByRole('button', { name: '크기·회전' }).first()
+  // ⛔ 옛 판은 여기서 새로고침을 했다 — 저장 안 한 값을 hankki:v1 에서 고치려다 터졌고,
+  //    새로고침 뒤 «홈»으로 돌아오는 것도 안 챙겨서 여기까지 온 적이 아예 없었다.
+  // ⭐ 새로고침이 필요 없다 — 물을 것은 「0 에서 180 이 되나」가 아니라 **「반 바퀴 돌리면 180° 가 도나」**다.
+  //    지금 각도를 재 두고 «움직인 만큼»을 본다. 판을 다시 세울 일이 없다.
+  const 시작 = (await val()).r
+  const h2 = page.locator('[aria-label="크기·회전"]').first()
   if (!(await h2.count())) { no('손잡이를 못 찾았다'); }
   else {
-    const st = await box()
+    // ⛔⛔ 옛 판은 «종이 한가운데»를 축으로 삼았다 — 스티커는 x 0.44 · y 0.345 라 «한가운데가 아니다».
+    //    엉뚱한 축으로 원을 그리니 반 바퀴를 돌려도 각이 안 맞는다(첫 판 67° 어긋남 = 검사 탓).
+    //    ⭐ 축은 «그 스티커의 한가운데»여야 한다 — 실제 상자에서 잰다.
+    const sb = await page.locator('.decor-stage [style*="rotate"]').first().boundingBox()
     const hb = await h2.boundingBox()
-    const cx0 = st.x + st.width / 2, cy0 = st.y + st.height / 2   // 스티커 중심은 판 한가운데 근처
+    const cx0 = sb.x + sb.width / 2, cy0 = sb.y + sb.height / 2
     const R = Math.hypot(hb.x + hb.width / 2 - cx0, hb.y + hb.height / 2 - cy0)
     await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await page.mouse.down()
     // 반대편까지 «원을 그리며» 돈다 — 사람이 하는 그대로
@@ -125,8 +129,9 @@ console.log('\n── ⓒ 손으로 180° 를 맞출 수 있나 (아래 귀퉁�
     }
     await page.mouse.up(); await page.waitForTimeout(500)
     const after = await val()
-    const off = Math.abs(((after.r % 360) + 360) % 360 - 180)
-    console.log(`   ℹ️ 반 바퀴 돌린 결과 = ${after.r.toFixed(1)}° (180° 에서 ${off.toFixed(1)}° 어긋남) · 크기도 ${after.s?.toFixed(3)} 로 바뀜`)
+    const 돈각 = Math.abs(after.r - 시작)
+    const off = Math.abs(((돈각 % 360) + 360) % 360 - 180)
+    console.log(`   ℹ️ ${시작.toFixed(1)}° 에서 반 바퀴 → ${after.r.toFixed(1)}° (돈 각 ${돈각.toFixed(1)}° · 180° 에서 ${off.toFixed(1)}° 어긋남) · 크기도 ${after.s?.toFixed(3)} 로 바뀜`)
     if (off <= 2) ok(`손으로도 180° 가 맞는다 (${off.toFixed(1)}° 차이)`)
     else no(`⭐ 반 바퀴 돌려도 ${off.toFixed(1)}° 어긋난다 — 코너를 아래 귀퉁이에 «정확히» 못 놓는다`)
   }
@@ -134,6 +139,19 @@ console.log('\n── ⓒ 손으로 180° 를 맞출 수 있나 (아래 귀퉁�
 
 console.log('\n── ⓓ 상하 뒤집기가 있나 ──')
 {
+  // ⛔⛔ 뒤집기는 «뒤집을 수 있는 컷»에만 뜬다(`canFlip`) — 마스킹테이프엔 안 뜨는 게 맞다.
+  //    앞 절이 마테를 붙여 놨으니 여기선 «데코» 스티커를 하나 붙여서 묻는다.
+  //    (옛 판은 마테를 고른 채 물어서 «없다»가 나왔다 — 기능이 아니라 검사가 틀렸다.)
+  await page.getByRole('button', { name: '데코', exact: true }).last().click(); await page.waitForTimeout(700)
+  const deco = page.locator('.decor-drawer .decor-sec img').first()
+  if (await deco.count()) { await deco.click(); await page.waitForTimeout(800) }
+  // 🔀 2026-08-07(안 D) — 뒤집기는 「순서」 갈래 «안»에 있다. 갈래를 안 열면 늘 0개다(규칙 18).
+  //    ⛔⛔ 「이미 펼쳐진 갈래를 또 누르면 «접힌다»」 — 무턱대고 누르면 오히려 닫아버린다.
+  //       실제로 이 검사가 그래서 「상하 뒤집기가 없다」로 잘못 찍혔다. `aria-expanded` 를 먼저 본다.
+  const 순서 = page.locator('.decor-tools button[data-ctxtab="order"]')
+  if (await 순서.count()) {
+    if ((await 순서.first().getAttribute('aria-expanded')) !== 'true') { await 순서.first().click(); await page.waitForTimeout(400) }
+  }
   const has = await page.locator('.decor-editor button').filter({ hasText: /^상하 뒤집기$/ }).count()
   if (has) ok('「상하 뒤집기」 단추가 있다')
   else no('⭐ 「상하 뒤집기」가 «없다» — 창업자 요청 그대로. 지금은 좌우(scaleX)뿐')

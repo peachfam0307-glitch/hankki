@@ -210,7 +210,14 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //      우리도 「어느 탭인가」가 아니라 **「지금 글을 치고 있나」**로 띄운다.
   //   ⚠️ 칩을 누르면 글칸이 포커스를 잃어 줄이 사라진다 → 칩에서 `onPointerDown` 을 막아 포커스를 지킨다.
   const [typing, setTyping] = useState(false)
-  const showWriteTools = writing || typing
+  // 🐛🐛 **이 줄은 «속지 본문»의 글씨체·크기다 — 글자 «스티커»를 칠 땐 뜨면 안 된다.** (2026-08-07 전수검사에서 잡음)
+  //   ⛔ `typing` 은 `.decor-stage` 안 아무 `textarea` 에나 켜져서, 글 상자·포스트잇을 칠 때도 같이 떴다.
+  //      그러면 ⑴도구 바엔 «그 스티커»의 「글씨」 갈래가, 서랍엔 «종이 본문»의 글씨 줄이 **둘 다** 뜨고
+  //           ⑵서랍 줄을 누르면 스티커가 아니라 **종이 본문**이 바뀐다 → 유저 눈엔 「안 먹는다」.
+  //   📏 게다가 두 줄이 서랍을 94px 먹어 창업자 폰에서 **스크롤 칸이 34px**(손가락보다 얇다)이 됐다.
+  //   ⭐ `typingId` = 「어느 «아이템»의 글칸에 커서가 있나」. 종이 본문을 칠 땐 늘 `null` 이다
+  //      (스테이지를 누르는 순간 `setTypingId(null)`). 그래서 이 한 조건으로 둘이 갈린다.
+  const showWriteTools = writing || (typing && !typingId)
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
   const [gift, setGift] = useState(() => needsGiftPack())
@@ -886,12 +893,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 🛟 그래도 넘치면 잘리는 대신 **두 줄이 되게**(`wrap`) — 새 갈래가 늘어도 안 잘린다. */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, rowGap: 2 }}>
               {ctxTabs.map((t) => {
-                const on = ctxCur === t.k
+                const on = ctxCur === t.k && ctxOpen
                 return (
                   // 🔖 `data-ctxtab` = 재현 검사가 갈래를 «이름 아닌 키»로 집게 하는 표식.
                   //    ⛔ 라벨 글자로 찾으면 서랍에도 같은 글자(색·굵기)가 있어 엉뚱한 걸 누른다.
-                  <button key={t.k} className="press" aria-pressed={on} data-ctxtab={t.k} aria-label={t.label}
-                    onClick={() => setCtxTab(t.k)}
+                  <button key={t.k} className="press" aria-pressed={on} aria-expanded={on} data-ctxtab={t.k}
+                    aria-label={on ? `${t.label} 접기` : t.label}
+                    onClick={() => { if (ctxCur === t.k && ctxOpen) setCtxOpen(false); else { setCtxTab(t.k); setCtxOpen(true) } }}
                     style={{ position: 'relative', flex: '0 0 auto', minWidth: 46, minHeight: 52, borderRadius: 13, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--cream-deep)' : 'transparent', color: on ? 'var(--brown)' : 'var(--text-sub)', border: 'none' }}>
                     <Icon name={t.ic} size={19} color={on ? 'var(--brown)' : 'var(--text-sub)'} />
                     {t.label}
@@ -900,6 +908,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 )
               })}
             </div>
+            {/* 🗜🗜 **접기 — 고른 갈래를 «한 번 더» 누르면 접힌다** (창업자 2026-08-07 *"위 설정이 너무 길다, 접기 필요"*)
+                ⛔⛔ 대수술 첫 판에서 이 기능이 **통째로 사라졌다**(`ctxOpen` 이 선언만 남은 죽은 값이었다).
+                   창업자가 «직접 요청»해서 v9.97 에 넣은 것인데 자리를 옮기며 같이 날렸다.
+                📏 그리고 그 46px 이 **서랍 스크롤 칸에서 빠진 46px 과 같은 값**이었다 —
+                   창업자 폰(360×780) 실측 스크롤 칸 v9.97 173 → 대수술 130px.
+                ⭐ 별도 단추를 안 만든다 — 갈래가 일곱이라 한 줄이 이미 322/344px 이고,
+                   여덟째를 넣으면 **밀려서 「효과」가 잘린다**(오늘 한 번 밟은 그 증상).
+                   대신 «고른 것을 다시 누르면 접힘» = v9.97 이 쓰던 바로 그 동작이다. */}
+            {ctxOpen && (
             <div style={ctxRow}>
             {/* 🔗 프레임 ↔ 속 사진 — 창 안을 탭하면 프레임이 잡혀서 사진에 손이 안 닿는다(위 `photoOfFrame` 주석) */}
             {ctxCur === 'photo' && (
@@ -1108,6 +1125,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               </div>
             )}
             </div>
+            )}
             </>)}
           </div>
         )}
@@ -1276,8 +1294,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ⭐ 글자도 짧게 — 「출시 기념으로 네 가지를 넣어뒀어요」는 배너 하나를 통째로 먹던 말이다.
                    누르면 창이 열려 거기서 다 설명한다. */}
             <div style={{ display: 'flex', gap: 7, marginBottom: 8 }}>
+              {/* 📐 선물은 «제 몸만큼만» — 74px 이면 되는데 반을 가져가서 320px 폰에서 옆 칸 글자가 11px 잘렸다(실측).
+                     사진 쪽이 글이 길다(114px) → 남는 자리를 사진이 다 갖는다. */}
               <button className="press" onClick={() => setGift(true)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, minWidth: 0, minHeight: 44, padding: '0 8px',
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: '0 0 auto', minWidth: 0, minHeight: 44, padding: '0 10px',
                   borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)' }}>
                 <Icon name="gift" size={17} color="var(--brown)" />
                 <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap' }}>선물 네 가지</span>
@@ -1286,7 +1306,14 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, minWidth: 0, minHeight: 44, padding: '0 8px',
                   borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)' }}>
                 <Icon name="photo" size={17} color="var(--brown)" />
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selFrame ? '프레임에 사진' : '사진 붙이기'}</span>
+                {/* 🔤🔤 **두 길은 «이름으로» 갈라야 한다** — v9.88 에서 창업자 제보로 고친 것이다
+                    (「이 프레임에 사진 넣기」 ↔ 「사진 스티커로 붙이기」).
+                    ⛔ 한 줄로 합치며 내가 「프레임에 사진」·「사진 붙이기」로 줄였는데, 그때 **「스티커로」가 빠졌다**
+                       = 「끼우는 것」과 「자유로 붙이는 것」의 구분이 사라졌다(전수검사에서 잡음).
+                    📏 그림(사진 아이콘)이 「사진」을 이미 말한다 → 글자는 «다른 점»만 남긴다.
+                       ⭐ 글자를 한 호수(13→12) 줄여 **창업자가 승인한 이름 그대로** 넣는다 — 서랍 라벨이 이미 12px 다.
+                    ⛔ 「사진」을 빼서 줄이면 «무엇을» 붙이는지가 그림에만 남는다(전수검사 두 번째 판에서 걸렀다). */}
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.02em' }}>{selFrame ? '프레임에 사진 넣기' : '사진 스티커로 붙이기'}</span>
               </button>
             </div>
             {/* 🖼 배경 음식 아이콘 — 레시피 표지에만 있다(일기는 종이가 곧 판이다).

@@ -80,7 +80,9 @@ const measure = async (label) => {
   })
   console.log(`\n📐 ${label}`)
   console.log('   화면', m.화면, '· 판', m.판, '· 컨텍스트바', m.컨텍스트바, `· 갈래 ${JSON.stringify(m.갈래)} (옆 밀림 ${m.갈래밀림}px)`)
-  if (m.칩폭.length) {
+  // ⛔ 갈래가 «없을 때»(아무것도 안 고른 빈 상태)는 재지 않는다 — 그 자리엔 안내 글자만 있어서
+  //    아이콘·글자 조각을 「칩」으로 잘못 세고 [11,2,2,2] 같은 헛값이 나왔다(2026-08-07 실제로 그랬다).
+  if (m.칩폭.length && m.갈래.length) {
     const need = m.칩폭.reduce((a, b) => a + b, 0) + (m.칩폭.length - 1) * 4
     console.log(`   갈래 칩 ${JSON.stringify(m.칩폭)} 합 ${need}px / 칸 ${m.칸폭}px → ${need <= m.칸폭 ? '✅ 한 줄' : `⛔ ${need - m.칸폭}px 넘침`}`)
   }
@@ -106,9 +108,20 @@ const scrolled = await page.evaluate(async () => {
 console.log('   스크롤 시험(0→400 밀어보기) =', scrolled)
 
 // ⑷ 「접기」 — 갈래 줄만 남고 칩 줄이 사라지나
-await page.getByRole('button', { name: '설정 접기' }).click(); await page.waitForTimeout(350)
-const folded = await measure('접은 뒤')
-await page.getByRole('button', { name: '설정 펴기' }).click(); await page.waitForTimeout(350)
+//    ⛔ 옛 판(v9.97)엔 따로 「설정 접기」 단추가 있었다. 안 D 에선 갈래가 일곱이라
+//       여덟째 단추를 넣으면 줄이 옆으로 밀려 「효과」가 잘린다(오늘 한 번 밟은 증상).
+//       → **고른 갈래를 한 번 더 누르면 접힌다**로 바꿨다. 검사도 그 동작을 그대로 누른다.
+//    ⚠️ 이름(`설정 접기`)으로 찾지 않는다 — 갈래마다 이름이 다르다. `aria-expanded` 로 집는다.
+const openTab = page.locator('.decor-tools button[aria-expanded="true"]')
+console.log(`   ℹ️ 펼쳐진 갈래 ${await openTab.count()}개`)
+if (!(await openTab.count())) console.log('   ⛔ 펼쳐진 갈래가 없다 — 접기를 시험할 수 없다')
+else {
+  await openTab.first().click(); await page.waitForTimeout(350)
+  const folded = await measure('접은 뒤')
+  if (folded.컨텍스트바 >= c.컨텍스트바) console.log(`   ⛔ 접었는데 도구 바가 안 줄었다 (${c.컨텍스트바} → ${folded.컨텍스트바}px)`)
+  else console.log(`   ✅ ⭐ 접으니 도구 바 ${c.컨텍스트바} → ${folded.컨텍스트바}px · 서랍 스크롤 칸 ${c.스크롤칸} → ${folded.스크롤칸}px`)
+  await page.locator('.decor-tools button[data-ctxtab]').first().click(); await page.waitForTimeout(350)
+}
 
 // ⑸ 🎬 모션이 «진짜로» 움직이나 — 포스트잇에 통통을 걸고 두 프레임을 견준다
 //    ⛔ 칩이 칠해지는 것과 그림이 움직이는 것은 다른 말이다(2026-08-07 글자에서 실제로 어긋나 있었다).

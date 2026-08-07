@@ -208,7 +208,13 @@ else {
     await page.mouse.click(ph2.x + ph2.width / 2, ph2.y + ph2.height / 2); await page.waitForTimeout(450)
     const k2 = await selKind()
     console.log(`   ℹ️ 창 안을 누르면 «${k2 === 'sticker' ? '프레임' : k2}» 이 골라진다 (프레임이 위에 있으니 당연하다)`)
-    // ⭐ 그래서 「길을 하나 낸다」 — 컨텍스트 바의 「속 사진 고르기」
+    // ⭐ 그래서 「길을 하나 낸다」 — 도구 바의 「속 사진 고르기」
+    // 🔀 2026-08-07(v9.97·안 D) — 도구가 «갈래»로 갈렸다. 「사진」 갈래를 먼저 눌러야 그 줄이 나온다.
+    //    ⛔ 안 누르고 찾으면 늘 0개다 → 「없다」가 아니라 «내가 안 열었다». (규칙 18)
+    const 사진갈래 = page.locator('.decor-tools button[data-ctxtab="photo"]')
+    console.log(`   ℹ️ 「사진」 갈래 ${await 사진갈래.count()}개`)
+    if (await 사진갈래.count()) { await 사진갈래.first().click(); await page.waitForTimeout(400) }
+    else no('⭐ 프레임을 골랐는데 「사진」 갈래가 아예 없다 — 속 사진으로 갈 길이 없다')
     const bridge = page.getByRole('button', { name: '속 사진 고르기' })
     if (!(await bridge.count())) no('⭐ 프레임을 골랐는데 「속 사진 고르기」가 없다 — 사진에 손이 안 닿는다')
     else {

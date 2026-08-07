@@ -190,7 +190,10 @@ const pickAndSave = async ({ newTitle, query, label }) => {
   await page.locator('.emoji-sheet').waitFor({ timeout: 4000 })
   await page.locator('.emoji-sheet input').first().fill(query)
   await page.waitForTimeout(500)
-  const cell = page.locator('.ficon-cell').first()
+  // ⛔ 「첫 칸」을 집지 않는다 — 「김밥」에 오니기리(별명 삼각김밥)가 걸려 첫 칸이 바뀔 수 있다.
+  //    ⭐ 2026-08-07 에 찾기 순서를 「친 이름이 맨 앞」으로 고쳤지만, 검사는 «이름으로» 집는 게 안전하다.
+  const named = page.locator('.ficon-cell').filter({ has: page.locator(':scope') }).and(page.locator(`[aria-label="${query}"]`))
+  const cell = (await named.count()) ? named.first() : page.locator('.ficon-cell').first()
   const picked = await cell.getAttribute('aria-label')
   await cell.click()
   await page.waitForTimeout(400)

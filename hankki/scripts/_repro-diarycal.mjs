@@ -62,7 +62,7 @@ await page.addInitScript((s) => {
 await page.goto('http://127.0.0.1:4347/hankki/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(1200)
 await page.getByText('레시피', { exact: true }).last().click(); await page.waitForTimeout(700)
-await page.locator('.seg', { hasText: '요리 기록' }).first().click(); await page.waitForTimeout(800)
+await page.locator('.seg', { hasText: '한끼 일기' }).first().click(); await page.waitForTimeout(800)
 await page.screenshot({ path: join(OUT, 'diarycal-a.png') })
 
 // ① 통계 띠 — 다이어리 둘이 「집밥」에 세어지면 안 된다

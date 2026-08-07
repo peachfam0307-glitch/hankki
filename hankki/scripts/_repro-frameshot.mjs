@@ -3,7 +3,7 @@
 //   *"무지에는 사진 넣는거 없어??"* → 있는데 «있는 줄을 몰랐다» → 안내 한 줄
 //
 // ⛔ 지켜야 하는 것 넷:
-//   ① 프레임을 고르면 버튼 이름이 「이 프레임에 사진 넣기」로 바뀐다
+//   ① 프레임을 고르면 버튼 이름이 「프레임에 사진 넣기」로 바뀐다
 //   ② 넣으면 사진이 **프레임 «뒤»**에 깔린다(앞에 두면 프레임을 덮는다)
 //   ③ 사진이 **창 자리·창 크기**에 들어간다(가운데에 덜렁 놓이지 않는다)
 //   ④ 사진칸 없는 틀(없음)을 고르면 「사진은 꾸미기에서」 안내가 뜬다
@@ -77,6 +77,8 @@ await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); 
 // ⚠️ 2026-08-07 이름이 바뀌었다 — 「내 사진 넣기」 → **「사진 스티커로 붙이기」**
 //   창업자 폰 제보 *"내사진넣기 잘 안보임 방식이 두가지라 헷갈림"* →
 //   틀의 «사진칸»(창에 끼우는 것)과 «스티커로 붙이는 것»이 이름으로 갈리게 했다.
+// 📐 2026-08-07 안 D — 선물과 «한 줄»로 합치며 칸에 맞게 줄였다(창업자 "표지그림이랑 선물을 좀 줄여도 될 듯").
+//    ⭐ 줄이되 **갈라주는 말(스티커로 ／ 프레임에)은 살렸다** — v9.88 에 창업자 제보로 고친 바로 그 구분이다.
 const before = await page.getByText('사진 스티커로 붙이기', { exact: true }).count()
 if (before > 0) ok('프레임 고르기 전 = 「사진 스티커로 붙이기」')
 else no('「사진 스티커로 붙이기」 버튼이 아예 없다')
@@ -84,13 +86,13 @@ else no('「사진 스티커로 붙이기」 버튼이 아예 없다')
 await page.locator('.decor-stage [style*="position: absolute"]').first().click({ position: { x: 8, y: 8 } }).catch(() => {})
 await page.waitForTimeout(400)
 // 못 골랐으면 프레임 그림을 직접 누른다
-if (!(await page.getByText('이 프레임에 사진 넣기', { exact: true }).count())) {
+if (!(await page.getByText('프레임에 사진 넣기', { exact: true }).count())) {
   const img = page.locator(`.decor-stage img[src*="${KEY}"]`).first()
   if (await img.count()) { const bb = await img.boundingBox(); if (bb) await page.mouse.click(bb.x + 6, bb.y + 6) }
   await page.waitForTimeout(400)
 }
-const after = await page.getByText('이 프레임에 사진 넣기', { exact: true }).count()
-if (after > 0) ok('프레임을 고르니 「이 프레임에 사진 넣기」로 바뀐다')
+const after = await page.getByText('프레임에 사진 넣기', { exact: true }).count()
+if (after > 0) ok('프레임을 고르니 「프레임에 사진 넣기」로 바뀐다')
 else no('프레임을 골랐는데 버튼 이름이 안 바뀐다')
 const hintFrame = await page.locator('.decor-editor .t-sub').first().innerText()
 if (/사진을 끼울 수 있어요/.test(hintFrame)) ok(`안내도 바뀐다 — "${hintFrame}"`)
