@@ -35,15 +35,12 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"
     />
-    <!-- 고운돋움(로고·포스트잇 손글씨 톤) + 개구체 Gaegu(꾸미기 '귀염체') -->
-    <!-- 구글폰트 css2 — 한글 서브셋 자동 포함, 오프라인이면 Pretendard 로 자연 대체. -->
-    <!-- (이전 @fontsource index.min.css 는 빈 파일이라 한글이 로드되지 않던 문제를 해결) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&family=Nanum+Pen+Script&family=Black+Han+Sans&family=Do+Hyeon&display=swap"
-    />
+    <!-- 🔤 꾸미기 글씨체 여섯은 **전부 우리 파일**이다 (`src/styles.css` 의 @font-face)
+         ⛔ 2026-08-07 까지 여기에 구글 폰트 CDN 링크가 있었고, 「임팩트」·「라운드」는 **그것으로만** 왔다.
+            → ⑴오프라인이면 안 떴고 ⑵`fontEmbed.js` 가 못 심어서
+              **그 글씨체로 쓴 글자가 공유 카드에서 다른 글씨로** 나갔다.
+         ✅ 원본 TTF(google/fonts · OFL 1.1)를 받아 `tools/font-subset.py` 로 잘라 넣었다.
+            ⚠️ 글씨체를 더할 땐 **①`styles.css` @font-face ②`fontEmbed.js` FAMILIES** 둘 다 손볼 것. -->
     <title>한끼 — 나만의 레시피 아카이브</title>
   </head>
   <body>

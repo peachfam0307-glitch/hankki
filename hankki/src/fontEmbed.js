@@ -29,7 +29,9 @@ import { getFontEmbedCSS } from 'html-to-image'
 
 // ⚠️ `styles.css` 의 @font-face 와 «같아야» 한다. 글꼴을 더하면 여기도 더할 것.
 //    (안 더하면 그 글꼴이 빠진 꾸러미가 되고, 안전장치가 통째로 버려 예전 속도로 돌아간다)
-const FAMILIES = ['Jua', 'Gowun Dodum', 'Gaegu', 'Nanum Pen Script']
+//    ⭐ 2026-08-07 — 「임팩트」·「라운드」를 더했다. 꾸미기 글씨체는 여섯인데 여긴 넷뿐이라
+//       **그 둘로 쓴 글자가 공유 카드에서 다른 글씨로 나갔다**(2026-08-05 「한끼」 깨짐과 같은 종류).
+const FAMILIES = ['Jua', 'Gowun Dodum', 'Gaegu', 'Nanum Pen Script', 'Black Han Sans', 'Do Hyeon']
 
 let done = null // 다 만든 꾸러미. ⛔ 못 만들었으면 계속 null — '' 로 굳히지 말 것(위 ⓐ)
 let pending = null
