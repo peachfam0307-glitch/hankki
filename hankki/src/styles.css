@@ -11,6 +11,15 @@
 @font-face { font-family: 'Nanum Pen Script'; src: url('./assets/fonts/nanumpen-korean-400.woff2') format('woff2'); font-display: swap; }
 @font-face { font-family: 'Jua'; src: url('./assets/fonts/jua-latin-400.woff2') format('woff2'); font-display: swap; }
 @font-face { font-family: 'Jua'; src: url('./assets/fonts/jua-korean-400.woff2') format('woff2'); font-display: swap; }
+/* 🔤 임팩트·라운드 — 2026-08-07 에 «로컬로» 내려받았다.
+   ⛔ 그전엔 `index.html` 의 구글 폰트 CDN 링크로만 왔다 → ⑴오프라인이면 안 뜨고
+      ⑵공유 카드에 안 실려서 **그 글씨체로 쓴 글자가 친구한테 다른 글씨로** 나갔다
+      (`fontEmbed.js` 가 심는 건 로컬 글꼴뿐이다).
+   📦 만드는 법 = `python3 tools/font-subset.py <원본.ttf> <이름>` (원본은 google/fonts · OFL 1.1) */
+@font-face { font-family: 'Black Han Sans'; src: url('./assets/fonts/blackhansans-latin-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Black Han Sans'; src: url('./assets/fonts/blackhansans-korean-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Do Hyeon'; src: url('./assets/fonts/dohyeon-latin-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Do Hyeon'; src: url('./assets/fonts/dohyeon-korean-400.woff2') format('woff2'); font-display: swap; }
 
 :root {
   --bg: #fdfbf7; /* 거의 화이트 · 아주 옅은 웜기만 (밝고 화사) */
