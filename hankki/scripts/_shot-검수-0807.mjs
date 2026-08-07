@@ -26,7 +26,9 @@ const state = {
     id: 'dd', kind: 'diary', at: Date.now(),
     paper: { rule: 'write', skin: 'ivory', art: 'today' },
     note: '오늘은 콩국수를 해먹었다\n깨를 넉넉히 갈아 넣으니\n훨씬 고소했다',
-    decor: [{ id: 'b1', type: 'sticker', key: 'gp_gomhi', x: 0.28, y: 0.72, s: 0.22, r: -4 }],
+    // 🐻 꼬르곰은 «메모칸» 위에 둔다 — y 0.72 면 만족도 점 줄(69.4%)을 가려서
+    //    창업자가 「칠해졌나」를 판정할 수 없다. ⛔검수판은 가리는 게 없어야 한다.
+    decor: [{ id: 'b1', type: 'sticker', key: 'gp_gomhi', x: 0.24, y: 0.87, s: 0.2, r: -4 }],
   }],
   seedV: BASICS_VERSION,
 }
@@ -70,14 +72,22 @@ await page.getByRole('button', { name: '일꾸', exact: true }).last().click(); 
 await shot('04', '일꾸탭-사진스티커로붙이기')
 
 // ⑤ 세로 사진을 붙여 본다 — 안 잘리는지
+//   ⭐ 9:16 = 폰으로 세로로 찍으면 흔히 나오는 모양. 창업자가 «실제 상황»을 봐야 한다.
+//   ⛔ 1:3 같은 극단값으로 찍으면 「이런 사진 안 찍는데」가 되어 판정이 안 된다.
 const b64 = await page.evaluate(() => {
-  const c = document.createElement('canvas'); c.width = 300; c.height = 900
+  const W = 540, H = 960
+  const c = document.createElement('canvas'); c.width = W; c.height = H
   const x = c.getContext('2d')
-  const g = x.createLinearGradient(0, 0, 0, 900)
+  const g = x.createLinearGradient(0, 0, 0, H)
   g.addColorStop(0, '#e8c9a0'); g.addColorStop(1, '#9db487')
-  x.fillStyle = g; x.fillRect(0, 0, 300, 900)
-  x.fillStyle = '#5b4436'; x.font = 'bold 40px sans-serif'; x.textAlign = 'center'
-  x.fillText('세로', 150, 300); x.fillText('사진', 150, 360)
+  x.fillStyle = g; x.fillRect(0, 0, W, H)
+  x.fillStyle = '#5b4436'; x.font = 'bold 62px sans-serif'; x.textAlign = 'center'
+  x.fillText('세로', W / 2, 300); x.fillText('사진', W / 2, 380)
+  x.font = '40px sans-serif'; x.fillText('9 : 16', W / 2, 500)
+  // 📐 네 귀퉁이에 표식 — 잘리면 «어디가» 잘렸는지 바로 보인다
+  x.font = 'bold 46px sans-serif'
+  x.fillText('↖', 60, 70); x.fillText('↗', W - 60, 70)
+  x.fillText('↙', 60, H - 30); x.fillText('↘', W - 60, H - 30)
   return c.toDataURL('image/png').split(',')[1]
 })
 const fi = page.locator('.decor-drawer input[type=file]').first()

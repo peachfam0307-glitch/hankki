@@ -51,6 +51,14 @@ const HL_WIDTHS = [
   { key: 'mid', label: '보통', ratio: 6 },
   { key: 'thick', label: '굵게', ratio: 4 },
 ]
+// 📷📷 사진을 처음 붙일 때의 크기 — ⭐**「폭」이 아니라 「높이」로 잡는다** (창업자 폰 제보 2026-08-07)
+//   ⛔ 전엔 `ar >= 1 ? 0.5 : 0.38` 이었다. 0.38 은 «3:4 사진 하나»에만 맞춘 값이라
+//      1:3 처럼 긴 사진이 오면 높이가 폭의 세 배(1.14)가 되어 **종이를 통째로 덮었다.**
+//   ⭐ `s` 는 «폭»이고 화면에 보이는 높이는 `s ÷ 비율` 이다 — 그러니 높이를 0.5 로 맞추려면
+//      가로 사진은 `s = 0.5`(높이가 저절로 작아진다), 세로 사진은 `s = 0.5 × 비율`.
+//      3:4(0.75) → 0.375 라 예전 0.38 과 거의 같다 = 흔한 사진은 하나도 안 달라진다.
+//   ⚠️ 바닥값 0.26 = 파노라마처럼 아주 긴 사진이 «실오라기»가 되는 걸 막는다.
+export const photoScale = (ar) => (ar >= 1 ? 0.5 : Math.max(0.26, 0.5 * ar))
 // 🖍 진하기 — 진짜 형광펜은 «두 번 그으면 진해진다». `multiply` 라 겹칠수록 색이 쌓인다.
 const HL_OPACITIES = [
   { key: 'light', label: '연하게', o: 0.32 },
@@ -452,7 +460,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const ar = await imageRatio(src)
     const small = await cropRatio(src, ar, 700, 0.8)
     const n = items.length
-    const it = { id: newDecorId(), type: 'photo', src: small, ratio: ar, x: 0.5, y: 0.44, s: ar >= 1 ? 0.5 : 0.38, r: ((n % 5) - 2) * 3 }
+    const it = { id: newDecorId(), type: 'photo', src: small, ratio: ar, x: 0.5, y: 0.44, s: photoScale(ar), r: ((n % 5) - 2) * 3 }
     mark(); setItems((arr) => [...arr, it])
     setSel(it.id)
   }

@@ -195,9 +195,11 @@ else {
     const imgs = [...document.querySelectorAll('.decor-stage img')].filter((i) => (i.currentSrc || i.src).startsWith('data:'))
     const el = imgs[imgs.length - 1]
     if (!el) return null
+    // 📐 종이(판)도 같이 잰다 — 「안 잘렸나」만 보면 **종이를 덮어도 통과**한다
+    const stage = document.querySelector('.decor-stage')?.getBoundingClientRect()
     const p = el.closest('[style*="translate(-50%"]') || el.parentElement
     const r = p.getBoundingClientRect()
-    return { w: r.width, h: r.height }
+    return { w: r.width, h: r.height, pw: stage?.width || 0, ph: stage?.height || 0 }
   })
   if (!box) no('붙인 사진을 판에서 못 찾았다')
   else {
@@ -205,6 +207,11 @@ else {
     const want = TW / TH
     if (Math.abs(got - want) < 0.08) ok(`⭐ 세로 사진이 «안 잘렸다» — 판 위 비율 ${got.toFixed(2)} (원본 ${want.toFixed(2)})`)
     else no(`사진이 잘렸다 — 판 위 ${got.toFixed(2)} vs 원본 ${want.toFixed(2)} (정사각이면 1.00)`)
+    // 📐 «안 잘렸다»만으로는 모자란다 — 1:3 사진이 종이를 통째로 덮어도 비율은 맞다.
+    //   ⛔ 실제로 그랬다(2026-08-07 검수판 05) → 높이도 같이 잰다.
+    const fill = box.ph ? box.h / box.ph : 9
+    if (fill <= 0.72) ok(`⭐ 종이를 «안 덮는다» — 사진 높이가 판의 ${Math.round(fill * 100)}%`)
+    else no(`사진이 종이를 덮는다 — 높이가 판의 ${Math.round(fill * 100)}% (72% 이하라야 한다)`)
   }
 }
 
