@@ -1450,18 +1450,62 @@ export const TEXT_WEIGHTS = [
 //   → 글씨체마다 기준 두께를 달리 줘서 **'보통'일 때 다 비슷하게 보이도록** 맞춘다.
 //   `ls` = 자간 보정(비워두면 기본).
 export const TEXT_FONTS = [
-  // `bw` = **가독 테두리** 보정(얇은 글씨일수록 크게) · `fw` = **굵기(살)** 보정 · `ls` = 자간
+  // `fw` = **굵기(살)** 보정 · `ls` = 자간
+  // ⚠️ `bw` 는 **아무도 안 읽는다** — 옛 시도의 흔적이다(`TextDeco` 는 `fw`·`ls` 만 쓴다).
+  //    지우면 저장된 값과 무관하니 안전하지만, 새 줄엔 «넣지 말 것».
   // ⚠️⚠️ 처음엔 둘을 **하나(`bw`)로 같이** 썼다가 사고가 났다 — 창업자 *"굵게하면 저 글씨체만 이상하고"*.
   //   펜글씨는 얇아서 `bw`를 2로 줬는데 그 값이 살에도 곱해져 **획이 서로 붙어 초록 덩어리**가 됐다.
   //   → **얇다고 살을 많이 붙이면 안 된다.** 획 간격이 좁은 글씨(펜글씨)는 오히려 **적게** 붙여야 한다.
+  // 🔤🔤 **귀여운 글씨체 여섯을 더했다 → 열둘** — 후보 14개를 실물로 찍어 창업자가 «번호로» 골랐다
+  //   (2026-08-07 *"귀여운글씨체 예쁜걸로 추가하자"* · *"더많았음좋겠어"* → *"1.2.3.4.7.8. 넣어줘"*)
+  //   ⭐ 고른 기준 = **우리에 없는 톤.** 붓글씨·아주 굵은 제목·명조·고딕은 지금 여섯과 겹쳐 뺐다.
+  //   ✒️ `fw`(살) 는 **눈으로** 정했다 — `scripts/_shot-글씨굵기.mjs` 로 얇게·보통·굵게를 나란히 찍어 견줬다.
+  //      ⛔⛔ 숫자로 세 번 시도했고 세 번 다 «엉뚱한 걸» 쟀다(그 기록은 그 스크립트 맨 위에).
+  //         우리 규칙이 맞았다 — **숫자는 「어디를 볼지」만 정하고 「맞나 틀리나」는 눈이 정한다**(v9.16).
+  //      📌 첫 시안(0.6~0.85)은 **굵게가 굵어 보이지 않았다** — 새 여섯이 다 얇은 글씨라 살을 아끼니
+  //         「보통」과 구분이 안 갔다. 올려도 획이 뭉치는 건 없어서 0.8~1 로 확정.
+  //
+  // 🧭🧭 **순서 = 「손글씨」 먼저, 「또렷한 글씨」 나중** (창업자 2026-08-07 *"안빼면 어떻게 할수있어?"*)
+  //   ⛔ 창업자가 겹치는 걸 «빼자» 했다가 되돌렸다(*"펜글씨빼지말자 ㅋ"* — 일기엔 펜글씨가 예쁘다).
+  //      **빼는 게 답이 아니었다** — 빼면 그 글씨체로 이미 쓴 일기 글자가 다른 글씨로 바뀐다
+  //      (스티커를 서랍에서 내릴 때 파일·비율을 남기는 것과 같은 이유).
+  //   ⭐ 대신 **순서**로 푼다. 꾸미기 바의 「글씨」 줄은 **가로 한 줄 스크롤**이라 뒤쪽은 안 보인다
+  //      → 비슷한 것끼리 붙여 두면 밀면서 고르기가 쉽다. 아무것도 안 뺐고 되돌리기도 쉽다.
+  //   ⚠️⚠️ **`gaegu` 를 맨 앞에서 옮기지 말 것** — 모르는 값이 오면 `TEXT_FONTS[0]` 으로 떨어지고,
+  //      포스트잇 기본값도 `'gaegu'` 다. 자리를 바꾸면 «옛 글자가 딴 글씨로» 바뀐다.
+  //
+  // ── ✍️ 손글씨(직접 쓴 느낌) ──
   { key: 'gaegu', label: '귀염체', family: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", weight: 700, bw: 0.9, fw: 0.85 },
-  // ⚠️ 펜글씨 = 획이 제일 얇고 글자끼리 붙는다 → 테두리는 두껍게(bw), **살은 얇게**(fw), 자간은 넓게
+  { key: 'gamja', label: '삐뚤체', family: "'Gamja Flower','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9 },
+  { key: 'poorstory', label: '연필체', family: "'Poor Story','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9 },
+  // ⚠️ 얇고 흘리는 글씨(몽글체·가는체)는 `ls` 를 조금 준다 — 굵게 하면 옆 글자와 닿는다(펜글씨 0.1em 과 같은 이유)
+  { key: 'himelody', label: '몽글체', family: "'Hi Melody','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.8, ls: '0.04em' },
+  { key: 'singleday', label: '가는체', family: "'Single Day','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9, ls: '0.02em' },
+  // ⚠️ 펜글씨 = 획이 제일 얇고 글자끼리 붙는다 → **살은 얇게**(fw), 자간은 넓게
   { key: 'nanumpen', label: '펜글씨', family: "'Nanum Pen Script','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 2, fw: 0.5, ls: '0.1em' },
+  // ── 🔠 또렷한 글씨(활자) ──
   { key: 'jua', label: '통통체', family: "'Jua','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 0.9, fw: 0.8 },
+  { key: 'cutefont', label: '동글체', family: "'Cute Font','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9, ls: '0.02em' },
+  // ⚠️ 납작체(Dongle)는 **글자 자체가 납작해서** 같은 크기로 놓으면 다른 글씨체보다 작아 보인다.
+  //    글씨체 성격이라 그대로 둔다 — 크게 쓰고 싶으면 손잡이로 키우면 된다.
+  { key: 'dongle', label: '납작체', family: "'Dongle','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 1 },
+  { key: 'dohyeon', label: '라운드', family: "'Do Hyeon','Pretendard',sans-serif", weight: 400, bw: 1.1, fw: 0.9 },
   { key: 'gowun', label: '또박체', family: "'Gowun Dodum','Pretendard',sans-serif", weight: 800, bw: 1.5, fw: 1, ls: '0.01em' },
   { key: 'blackhan', label: '임팩트', family: "'Black Han Sans','Pretendard',sans-serif", weight: 400, bw: 0.55, fw: 0.45 },
-  { key: 'dohyeon', label: '라운드', family: "'Do Hyeon','Pretendard',sans-serif", weight: 400, bw: 1.1, fw: 0.9 },
 ]
+
+// 🏷🏷 **고르는 칸에 쓸 «아주 작은» 벌** — 이름 몇 글자만 든 글꼴로 이름표를 그린다.
+//   ⛔⛔ 왜 = 칸은 이름을 «그 글씨체로» 보여준다 → 「글자」 탭을 여는 순간 **열두 벌을 다 받았다.
+//      실측 4.45MB**(`scripts/_measure-글씨무게.mjs`). 아직 그 글씨로 아무것도 안 썼는데.
+//      창업자가 *"무거워진다며 또 다른 버그생기는거 아냐?"* 라고 물어 **재 보고** 찾았다.
+//   ⭐ 칩 벌 12개 합쳐 **80KB.** 진짜 글씨체는 «그 글씨로 글자를 놓을 때» 받는다.
+//   ⭐ 이름을 «계산»한다 — 줄마다 손으로 적으면 하나 빠뜨려도 아무도 모른다(그럼 그 칸만 4.45MB 를 부른다).
+//   ⚠️ 뒤에 원래 글꼴을 남겨 둔다 — 칩에 없는 글자가 오면 «틀린 글씨»가 아니라 원래 글씨로 나온다.
+//      (그 대신 그 순간 큰 파일을 받는다 → `scripts/check-fontchip.mjs` 가 미리 잡는다)
+export const chipFamily = (f) => {
+  const first = (f.family.match(/^'([^']+)'/) || [])[1]
+  return first ? `'${first} Chip',${f.family}` : f.family
+}
 
 // ── 표지 배경(배경지) ──
 // 커버 전체 톤을 바꾼다 = '안 질림' 최고 지렛대. recipe.decorBg 에 key 저장.

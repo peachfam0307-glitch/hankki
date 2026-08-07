@@ -20,6 +20,47 @@
 @font-face { font-family: 'Black Han Sans'; src: url('./assets/fonts/blackhansans-korean-400.woff2') format('woff2'); font-display: swap; }
 @font-face { font-family: 'Do Hyeon'; src: url('./assets/fonts/dohyeon-latin-400.woff2') format('woff2'); font-display: swap; }
 @font-face { font-family: 'Do Hyeon'; src: url('./assets/fonts/dohyeon-korean-400.woff2') format('woff2'); font-display: swap; }
+/* 🔤🔤 귀여운 글씨체 여섯 — 창업자가 후보 14개를 보고 «번호로» 골랐다 (2026-08-07)
+   ⭐ 고른 기준 = 「우리에 없는 톤」. 붓글씨·아주 굵은 제목·명조·고딕은 지금 것과 겹쳐서 뺐다.
+   📦 전부 google/fonts · OFL 1.1 (상업 이용·앱 내장 허용) — `tools/font-subset.py` 로 잘랐다.
+   ⚠️ 무게가 열 배까지 차이난다(가는손 88KB ~ 삐뚤 882KB) — **쓸 때만 받으므로**
+      안 고른 글씨체는 아무도 안 내려받는다. 그래서 무거운 것도 넣을 수 있다.
+   ⚠️ 글씨체를 더할 땐 **①여기 ②`fontEmbed.js` FAMILIES ③`Stickers.jsx` TEXT_FONTS ④`sw.js` maxEntries** 넷 다. */
+@font-face { font-family: 'Single Day'; src: url('./assets/fonts/singleday-latin-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Single Day'; src: url('./assets/fonts/singleday-korean-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Cute Font'; src: url('./assets/fonts/cutefont-latin-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Cute Font'; src: url('./assets/fonts/cutefont-korean-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Dongle'; src: url('./assets/fonts/dongle-latin-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Dongle'; src: url('./assets/fonts/dongle-korean-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Poor Story'; src: url('./assets/fonts/poorstory-latin-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Poor Story'; src: url('./assets/fonts/poorstory-korean-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Hi Melody'; src: url('./assets/fonts/himelody-latin-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Hi Melody'; src: url('./assets/fonts/himelody-korean-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Gamja Flower'; src: url('./assets/fonts/gamjaflower-latin-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Gamja Flower'; src: url('./assets/fonts/gamjaflower-korean-400.woff2') format('woff2'); font-display: swap; }
+
+/* 🏷🏷 **고르는 칸(칩)용 «아주 작은» 벌 — 12벌 합쳐 80KB** (2026-08-07)
+   ⛔⛔ 글씨체 고르는 칸은 이름을 «그 글씨체로» 보여준다 → 「글자」 탭을 여는 순간
+      **열두 벌을 통째로 내려받았다. 실측 4.45MB**(`scripts/_measure-글씨무게.mjs`).
+      아직 그 글씨로 아무것도 안 썼는데 데이터를 다 쓴다. 창업자가 *"무거워진다며"* 라고 물어
+      재 보고 찾았다 — **물어보지 않았으면 그대로 나갈 뻔했다.**
+   ⭐ 칸에 필요한 건 «이름 몇 글자»뿐이다 → 그 28자만 담은 벌을 따로 만들어 칸에만 쓴다.
+      진짜 글씨체는 **그 글씨로 글자를 놓을 때** 받는다. 4.45MB → 80KB.
+   📦 만드는 법 = `python3 tools/font-subset.py <이미잘라둔>-korean-400.woff2 <이름> --chars '…' --only chip`
+   ⚠️ **이름표를 고치면 칩 벌도 다시 만들 것** — 없는 글자는 조용히 딴 글씨로 나온다.
+      `scripts/check-fontchip.mjs` 가 그걸 막는다(smoke 에 물려 있다). */
+@font-face { font-family: 'Gaegu Chip'; src: url('./assets/fonts/gaegu-chip-400.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Gamja Flower Chip'; src: url('./assets/fonts/gamjaflower-chip-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Poor Story Chip'; src: url('./assets/fonts/poorstory-chip-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Hi Melody Chip'; src: url('./assets/fonts/himelody-chip-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Single Day Chip'; src: url('./assets/fonts/singleday-chip-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Nanum Pen Script Chip'; src: url('./assets/fonts/nanumpen-chip-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Jua Chip'; src: url('./assets/fonts/jua-chip-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Cute Font Chip'; src: url('./assets/fonts/cutefont-chip-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Dongle Chip'; src: url('./assets/fonts/dongle-chip-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Do Hyeon Chip'; src: url('./assets/fonts/dohyeon-chip-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Gowun Dodum Chip'; src: url('./assets/fonts/gowun-dodum-chip-400.woff2') format('woff2'); font-weight: 800; font-display: swap; }
+@font-face { font-family: 'Black Han Sans Chip'; src: url('./assets/fonts/blackhansans-chip-400.woff2') format('woff2'); font-display: swap; }
 
 :root {
   --bg: #fdfbf7; /* 거의 화이트 · 아주 옅은 웜기만 (밝고 화사) */

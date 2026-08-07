@@ -65,6 +65,16 @@ def main():
     ap.add_argument('key', help='낼 이름 앞머리 (예: dohyeon)')
     ap.add_argument('--out', default='src/assets/fonts', help='낼 폴더')
     ap.add_argument('--weight', default='400')
+    # 🏷🏷 **고르는 칸(칩)용 아주 작은 벌** — 2026-08-07 신설
+    #    ⛔ 왜 필요한가: 글씨체 고르는 칸은 «이름을 그 글씨체로» 보여준다.
+    #       그래서 「글자」 탭을 여는 순간 **열두 벌을 다 내려받는다 — 실측 4.45MB**
+    #       (`scripts/_measure-글씨무게.mjs`). 아직 쓰지도 않았는데 데이터를 다 쓴다.
+    #    ⭐ 칸에 필요한 건 «그 이름 몇 글자»뿐이다 → 그 글자만 담은 벌을 따로 만든다(벌당 몇 KB).
+    #       진짜 글씨체는 **그 글씨로 글자를 놓을 때** 받는다.
+    ap.add_argument('--chars', default='', help='이 글자들만 담은 «칩» 벌도 만든다 (예: 귀염체)')
+    # 📌 이미 잘라 둔 woff2 에서 «칩만» 더 뽑을 때 쓴다 — 원본 TTF 를 다시 받을 필요가 없고,
+    #    **앱에 실제로 실린 그 글꼴에서** 뽑는 것이라 모양이 어긋날 수가 없다.
+    ap.add_argument('--only', default='', choices=['', 'chip'], help="'chip' 이면 칩 벌만 만든다")
     a = ap.parse_args()
 
     if not os.path.exists(a.src):
@@ -81,8 +91,17 @@ def main():
     korean = cmap - latin
     print(f'\n🔤 {full}  —  원본 {len(cmap)}자 ({os.path.getsize(a.src) / 1024:.0f}KB)')
 
+    jobs = [] if a.only == 'chip' else [('latin', latin), ('korean', korean)]
+    if a.chars:
+        want = {ord(c) for c in a.chars if not c.isspace()}
+        miss = want - cmap
+        if miss:
+            # ⛔ 없는 글자를 조용히 넘기면 칸에서 그 글자만 다른 글씨로 나온다 — 여기서 말한다
+            print('   ⚠️ 원본에 없는 글자 —', ''.join(chr(c) for c in sorted(miss)))
+        jobs.append(('chip', want & cmap))
+
     tot = 0
-    for tag, codes in (('latin', latin), ('korean', korean)):
+    for tag, codes in jobs:
         p = os.path.join(a.out, f'{a.key}-{tag}-{a.weight}.woff2')
         n = cut(a.src, codes, p, tag)
         tot += n or 0

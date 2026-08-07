@@ -27,9 +27,14 @@ let bad = 0
 const ok = (m) => console.log('   ✅', m)
 const no = (m) => { bad++; console.log('   ⛔', m) }
 
-const { TEXT_FONTS } = await import('../src/components/Stickers.jsx').catch(() => ({}))
-// ⚠️ JSX 는 노드가 못 읽는다 → 이름만 손으로 적되 «코드와 어긋나면 걸리게» 개수를 함께 잰다
-const WANT = ['Gaegu', 'Nanum Pen Script', 'Jua', 'Gowun Dodum', 'Black Han Sans', 'Do Hyeon']
+// ⚠️⚠️ **손으로 적지 않는다** — 글씨체가 여섯에서 열둘이 되면서 목록이 낡을 자리가 늘었다.
+//    `Stickers.jsx` 는 JSX 라 노드가 못 읽으니 **글자로** 읽어 `family` 의 «맨 앞 이름»을 뽑는다.
+//    📌 코드에 새 글씨체를 넣으면 이 검사가 «저절로» 그것까지 본다(적어두면 반드시 낡는다).
+const SRC = readFileSync(join(ROOT, 'src/components/Stickers.jsx'), 'utf8')
+const TBL = SRC.slice(SRC.indexOf('export const TEXT_FONTS = ['))
+const WANT = [...TBL.slice(0, TBL.indexOf('\n]')).matchAll(/family:\s*"'([^']+)'/g)].map((m) => m[1])
+if (WANT.length < 6) { console.log(`⛔ TEXT_FONTS 를 못 읽었다 (${WANT.length}개) — 읽는 방식부터 의심할 것`); process.exit(1) }
+console.log(`📖 코드에서 읽은 글씨체 ${WANT.length}개 — ${WANT.join(' · ')}`)
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium' })
 const page = await b.newPage({ viewport: { width: 360, height: 800 } })
@@ -83,8 +88,10 @@ for (const f of WANT) {
   else if (Math.abs(w - fallback) < 0.5) no(`「${f}」가 떴다는데 폭이 대체 글꼴과 «똑같다» (${w}px) — 진짜로는 안 뜬 것`)
   else ok(`「${f}」 우리 파일로 뜬다 (폭 ${w}px · 대체 ${fallback}px)`)
 }
-console.log(`   ℹ️ @font-face 선언 ${got.faces}줄 (글꼴 여섯 × 라틴·한글 = 12 이라야 한다)`)
-if (got.faces >= 12) ok('@font-face 가 열두 줄 다 있다')
+// ⭐ 선언 수는 «글꼴 수 × 2(라틴·한글)» 라야 한다 — 손으로 적으면 낡으니 코드에서 센 수로 잰다
+const wantFaces = WANT.length * 2
+console.log(`   ℹ️ @font-face 선언 ${got.faces}줄 (글꼴 ${WANT.length} × 라틴·한글 = ${wantFaces} 이라야 한다)`)
+if (got.faces >= wantFaces) ok(`@font-face 가 ${wantFaces}줄 다 있다`)
 else no(`@font-face 가 ${got.faces}줄뿐이다 — 라틴·한글 한 쌍이 빠졌다`)
 
 // ── ③ 오프라인에서도 사나 — 서비스워커가 글씨체를 담아뒀나 ──

@@ -43,12 +43,14 @@ registerRoute(
 // ✅ 그림과 똑같이 — 한 번 쓴 글씨체는 캐시에서 나온다. 안 쓴 건 안 받는다.
 //    ⚠️ 판정은 `request.destination === 'font'` — @font-face 로 부르면 이 값이 온다.
 //       ⛔ `fetch(url)` 로 부르면 `''` 라 안 걸린다(그림에서 이미 겪은 함정).
-//    ⚠️ maxEntries 12 = 글꼴 여섯 × 라틴·한글. 늘리면 여기도 늘릴 것.
+//    ⚠️⚠️ maxEntries 는 **글꼴 수 × 2(라틴·한글)보다 넉넉히** 잡는다.
+//       딱 맞게 잡으면 파일 하나만 더 들어와도 오래된 것부터 지워져 **쓰던 글씨체가 다시 사라진다**
+//       (그림 캐시에 이미 적어둔 함정이다). 지금 글씨체 **열둘 → 24개** ＋ 여유 → 40.
 registerRoute(
   ({ request, url }) => url.origin === self.location.origin && request.destination === 'font',
   new CacheFirst({
     cacheName: 'hankki-font',
-    plugins: [new ExpirationPlugin({ maxEntries: 24, maxAgeSeconds: 60 * 60 * 24 * 365, purgeOnQuotaError: true })],
+    plugins: [new ExpirationPlugin({ maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 365, purgeOnQuotaError: true })],
   })
 )
 

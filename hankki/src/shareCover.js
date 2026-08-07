@@ -50,9 +50,11 @@ export async function buildCoverPayload({ coverEl, title, info = [], appUrl, rec
   //   실측 2026-08-05 = 글꼴 포함 15.3초 vs 빼면 1.4초. → `src/fontEmbed.js`
   //   ⛔⛔ v9.66 에 **뺐었다** — 꾸러미에 글꼴이 «일부만» 실려 글자 폭이 어긋났다(창업자 캡처).
   //   ⭐ v9.73 에 다시 켠다 — «왜 일부만 실렸나»를 찾았다: 라이브러리가 «만들 때 쓴 조각이
-  //      실제로 쓰는 글꼴»만 담는다. 4종을 전부 쓰는 표본 조각으로 만들면 다 담긴다.
-  //      🔒 4종이 다 안 들어 있으면 `fontEmbed.js` 가 «안 쓴다»(느려도 정확한 옛 길로).
-  const fontOpt = fontOptFrom(await fontCSS())
+  //      실제로 쓰는 글꼴»만 담는다.
+  //   ⭐⭐ 2026-08-07 — **찍을 조각을 그대로 넘긴다.** 글씨체가 열둘이 돼서 「전부 담기」를 하면
+  //      4.7MB 가 되고, 글씨체 하나만 쓴 사람도 열두 벌을 다 받는다. 이 두 장이 쓰는 것만 담는다.
+  //      🔒 부르기로 한 게 다 안 들어 있으면 `fontEmbed.js` 가 «안 쓴다»(느려도 정확한 옛 길로).
+  const fontOpt = fontOptFrom(await fontCSS([coverEl, recipeEl]))
 
   // 2장째(레시피카드) 캡처를 표지 캡처와 '동시에' 시작한다 — 전체 대기시간을 줄여
   // 폰의 공유 허용 시간(user activation) 안에 navigator.share가 뜨게 한다.
