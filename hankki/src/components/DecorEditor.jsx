@@ -11,7 +11,49 @@ import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
 import { cropRatio, imageRatio } from '../utils'
 import { FRAME_WINDOW } from '../data/frameWindows'
-import { StickerArt, stickerRatio, BOX_GROUPS, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
+import { StickerArt, stickerRatio, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
+
+// 📜📜 HStrip — 가로로 «넘치는 칩 줄»에 막대를 **우리가 그려서** 항상 보여준다.
+//   (창업자 2026-08-08 *"스크롤바가 처음부터 안보여서 글자체 저게다처럼보임"* —
+//    글씨체 12개 중 5개만 보이는데 표시가 없으니 「저게 다」로 읽힌다)
+//   ⛔ CSS 로는 안 된다 — 두 번 밟았다: ⑴`::-webkit-scrollbar` 꾸밈은 **안드로이드 크롬이 통째로
+//      무시한다**(항상 오버레이 = 긁는 동안만 나타남 · 헤드리스 실측에서도 안 그려졌다)
+//      ⑵`scrollbar-width`(표준)를 같이 주면 크롬이 웹킷 꾸밈마저 끈다.
+//   ⭐ 안 넘치면 트랙째 안 그린다 — 짧은 줄엔 아무 티도 안 난다.
+//   ⚠️ 표식 `data-hstrip`(긁는 칸)·`data-hthumb`(막대) = 재현 검사가 «실제로 그려졌나»를 집는 자리.
+function HStrip({ style, children }) {
+  const ref = useRef(null)
+  const [bar, setBar] = useState(null) // [막대 왼쪽 %, 막대 폭 %] · null = 안 넘침
+  const measure = () => {
+    const el = ref.current
+    if (!el) return
+    const { scrollWidth: sw, clientWidth: cw, scrollLeft: sl } = el
+    if (sw <= cw + 8) { setBar(null); return }
+    const w = Math.max(14, (cw / sw) * 100)
+    const l = (sl / (sw - cw)) * (100 - w)
+    setBar((b) => (b && Math.abs(b[0] - l) < 0.5 && Math.abs(b[1] - w) < 0.5) ? b : [l, w])
+  }
+  useEffect(() => {
+    measure()
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return (
+    <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+      <div ref={ref} data-hstrip="1" onScroll={measure} style={style}>{children}</div>
+      {/* 트랙 3px — 칩 줄 «바로 밑»에 붙이지 않는다(글자에 줄 그은 것처럼 보인 v9.96 제보) → 칩 쪽 paddingBottom 으로 띄운다 */}
+      {bar && (
+        <div style={{ height: 3, borderRadius: 999, background: 'var(--line)', position: 'relative', margin: '0 2px' }}>
+          <span data-hthumb="1" style={{ position: 'absolute', left: `${bar[0]}%`, width: `${bar[1]}%`, top: 0, bottom: 0, borderRadius: 999, background: 'var(--text-sub)', opacity: 0.55 }} />
+        </div>
+      )}
+    </div>
+  )
+}
 
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
@@ -218,6 +260,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⭐ `typingId` = 「어느 «아이템»의 글칸에 커서가 있나」. 종이 본문을 칠 땐 늘 `null` 이다
   //      (스테이지를 누르는 순간 `setTypingId(null)`). 그래서 이 한 조건으로 둘이 갈린다.
   const showWriteTools = writing || (typing && !typingId)
+  // ⌨️⌨️ 탭을 옮기면 종이 커서를 «내려놓는다» (창업자 2026-08-08 캡처 — 일꾸 탭인데 글씨·크기 줄이
+  //   서랍을 먹고 고르는 칸이 한 줄뿐이었다). 폰은 「뒤로가기」로 키보드만 닫혀 **커서가 남는다**
+  //   (blur 가 안 온다) → typing 이 계속 참이라 위 줄이 유령처럼 떠 있었다.
+  //   ⭐ 탭 이동 = 「지금은 글 쓰는 중이 아니다」라는 신호이니 커서를 명시적으로 푼다.
+  //   ⛔ 「글쓰기」 탭엔 안 건다 — 거긴 글 쓰러 가는 자리다.
+  const dropCaret = () => { const el = document.activeElement; if (el && el.tagName === 'TEXTAREA') el.blur() }
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
   const [gift, setGift] = useState(() => needsGiftPack())
@@ -430,6 +478,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   }, [sel])
 
   const addSticker = (key) => {
+    // 🏷🏷 글 자리를 재둔 그림(메모지·라벨지·찢은 종이·메모라벨)은 **어느 탭에서 붙여도 글 상자**로.
+    //   같은 그림이 데코에선 «안 써지는 그림», 글자 갈래에선 «글 상자»로 붙는 두 갈래였다 —
+    //   창업자 2026-08-08 *"글자안써짐 아래탭에 글자색고르기없음"* (v9.88 「사진 두 길」과 같은 뿌리).
+    //   ⛔ 프레임(pf_·벡터)은 밑판이라 제외 — 「글쓰기 프레임」은 글자 갈래에서 붙일 때만 글 상자다.
+    if (BOX_PAD[key] && !FRAMES[key] && !key.startsWith('pf_')) return addBox(key)
     const n = items.length
     const isKf = KITCHEN_IDS.has(key)
     const isFrame = !!FRAMES[key] || (typeof key === 'string' && key.startsWith('pf_'))   // 벡터·PNG 프레임 둘 다
@@ -517,7 +570,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     ...(selItem.type === 'tape' ? [{ k: 'pattern', label: '무늬', ic: 'grid4' }, { k: 'width', label: '굵기', ic: 'weight' }] : []),
     ...(selItem.type === 'text' ? [{ k: 'color', label: '색', ic: 'palette' }, { k: 'width', label: '굵기', ic: 'weight' }, { k: 'font', label: '글씨', ic: 'textA' }] : []),
     ...(selItem.type === 'note' ? [
-      ...(selPlainNote ? [{ k: 'color', label: '색', ic: 'palette' }] : []),
+      // 🎨 색 = 포스트잇이면 «종이색», 그림 글 상자면 «글자색» (창업자 2026-08-08 *"글자색고르기없음"*)
+      { k: 'color', label: '색', ic: 'palette' },
       { k: 'font', label: '글씨', ic: 'textA' },
       ...(selPlainNote ? [{ k: 'pattern', label: '무늬', ic: 'grid4' }, { k: 'shape', label: '모양', ic: 'shape' }] : []),
     ] : []),
@@ -880,16 +934,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           <div className="decor-tools" style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '4px 8px calc(4px + var(--safe-bottom))', display: 'flex', flexDirection: 'column' }}>
             {!hasCtx ? (
               // 🈳 빈 상태 — 자리를 비우지 않는다(비우면 고를 때마다 화면이 «툭» 튄다).
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 52, color: 'var(--text-sub)', fontSize: 12.5 }}>
-                <Icon name="palette" size={16} color="var(--text-sub)" />
+              //   📐 52 → 46 (창업자 2026-08-08 *"아래탭이 너무커서 고르는부분이 안보임"*)
+              //      안내 글자라 손가락 최소(44)와 무관하지만, 갈래 아이콘 칸과 «같은 키»라야 안 튄다 → 둘 다 46.
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 46, color: 'var(--text-sub)', fontSize: 12 }}>
+                <Icon name="palette" size={15} color="var(--text-sub)" />
                 붙인 걸 탭하면 여기서 꾸며요
               </div>
             ) : (<>
-            {/* 🔀 갈래 = **아이콘 칸**(52px). 아래 칩은 알약 — 생김새가 달라 층이 갈린다.
+            {/* 🔀 갈래 = **아이콘 칸**(46px). 아래 칩은 알약 — 생김새가 달라 층이 갈린다.
                 ⭐ 점(●) = 그 갈래에 뭔가 걸려 있다는 표시. 귀퉁이에 둬서 켜도 칸 폭이 안 변한다. */}
             {/* 📐 한 칸 46px × 일곱 = 322 ＋ 칸 344 → **한 줄에 다 들어간다**(밀림 0).
                 ⛔ 52px 로 뒀더니 합이 376 이라 **32px 밀려 「효과」가 잘렸다** — 창업자가 지적했던 바로 그 증상이 재발했다.
-                ⭐ 46 은 손가락 최소(44)보다 크다. 세로는 52 그대로라 누르기는 그대로 편하다.
+                ⭐ 46 은 손가락 최소(44)보다 크다. 세로도 52 → **46** (창업자 2026-08-08 *"아래탭이 너무커"* —
+                   빈 안내 바와 «같은 키»로 맞춰야 골랐다 풀 때 화면이 안 튄다).
                 🛟 그래도 넘치면 잘리는 대신 **두 줄이 되게**(`wrap`) — 새 갈래가 늘어도 안 잘린다. */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, rowGap: 2 }}>
               {ctxTabs.map((t) => {
@@ -900,7 +957,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   <button key={t.k} className="press" aria-pressed={on} aria-expanded={on} data-ctxtab={t.k}
                     aria-label={on ? `${t.label} 접기` : t.label}
                     onClick={() => { if (ctxCur === t.k && ctxOpen) setCtxOpen(false); else { setCtxTab(t.k); setCtxOpen(true) } }}
-                    style={{ position: 'relative', flex: '0 0 auto', minWidth: 46, minHeight: 52, borderRadius: 13, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--cream-deep)' : 'transparent', color: on ? 'var(--brown)' : 'var(--text-sub)', border: 'none' }}>
+                    style={{ position: 'relative', flex: '0 0 auto', minWidth: 46, minHeight: 46, borderRadius: 13, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--cream-deep)' : 'transparent', color: on ? 'var(--brown)' : 'var(--text-sub)', border: 'none' }}>
                     <Icon name={t.ic} size={19} color={on ? 'var(--brown)' : 'var(--text-sub)'} />
                     {t.label}
                     {t.lit && <span style={{ position: 'absolute', top: 7, right: 10, width: 5, height: 5, borderRadius: 999, background: 'var(--brown)' }} />}
@@ -977,7 +1034,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ⭐⭐ 2026-08-07 세 번째 — 그 갈래 문법을 **컨텍스트 바 전체**로 넓혔다(위 갈래 줄).
                    이제 「움직임·효과」도 다른 설정과 «같은 갈래 단추»다. */}
             {(ctxCur === 'motion' || ctxCur === 'fx') && (
-              <div style={{ ...ctxScroll, gap: 6 }}>
+              <HStrip style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 5 }}>
+                {/* 📜 움직임 15 · 효과 14 — 글씨체 줄과 같은 「넘치는 줄」이라 막대를 항상 보인다 */}
                 {(ctxCur === 'motion' ? pickableMotions() : pickableFx()).map((o) => {
                   const on = (ctxCur === 'motion' ? selMotion : selFx) === o.key
                   return (
@@ -985,7 +1043,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                       style={{ minHeight: 44, padding: '0 14px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{o.label}</button>
                   )
                 })}
-              </div>
+              </HStrip>
             )}
             {ctxCur === 'color' && selItem.type === 'sticker' && (
               <div style={ctxScroll}>
@@ -1078,7 +1136,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             {/* ✍️ 글씨체 — 「직접 쓴 글자」와 포스트잇·글 상자가 «같은 목록»을 쓴다.
                 ⚠️ 기본값만 다르다: 글자는 없으면 첫 글씨체, 포스트잇은 귀염체(`gaegu`). */}
             {ctxCur === 'font' && (
-              <div style={ctxScroll}>
+              // 📜 글씨체 12개 = 넘치는 줄 — 막대를 항상 보인다(글쓰기 탭 글씨 줄과 같은 이유)
+              <HStrip style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 5 }}>
                 {TEXT_FONTS.map((f) => {
                   const now = selItem.type === 'note' ? (selItem.font || 'gaegu') : selItem.font
                   return (
@@ -1086,7 +1145,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                       style={{ minHeight: 44, padding: '0 14px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 14, fontWeight: 700, flex: '0 0 auto', fontFamily: chipFamily(f), background: now === f.key ? 'var(--brown)' : 'var(--surface)', color: now === f.key ? '#fff' : 'var(--text-sub)' }}>{f.label}</button>
                   )
                 })}
-              </div>
+              </HStrip>
             )}
             {/* 🎨🎨 **붙인 뒤에도 색을 바꾼다** (2026-08-07 에 찾은 구멍)
                 ⛔ 여태 포스트잇은 «서랍에서 색을 골라 붙이는 것»뿐이라, 색을 바꾸려면 **지우고 다시 붙여야** 했다.
@@ -1096,11 +1155,24 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ⛔⛔ **글 상자(`art`)엔 색·무늬·모양 갈래가 아예 «안 생긴다»** — 위 `selPlainNote` 를 볼 것.
                    `DecorLayer` 424줄이 `it.art` 면 `ArtBox` 로 통째로 빠져서 **눌러도 아무 일이 안 났다.**
                    창업자 폰 제보 2026-08-07 *"소프트잇아니고 스티커에도 포스트잇(줄눈,그런선택지가 나와)"* 가 이것. */}
-            {ctxCur === 'color' && selItem.type === 'note' && (
+            {ctxCur === 'color' && selPlainNote && (
               <div style={ctxScroll}>
                 {NOTE_COLORS.map((c) => (
                   <button key={c.key} className="press" onClick={() => patchRec(sel, { key: c.key })} aria-label={`포스트잇색 ${c.key}`}
                     style={{ ...ctxDot, background: c.bg, border: selItem.key === c.key ? selOn : '1.5px solid rgba(0,0,0,.12)', boxShadow: selItem.key === c.key ? '0 0 0 2px var(--surface) inset' : 'none' }} />
+                ))}
+              </div>
+            )}
+            {/* 🎨 그림 글 상자(메모지·라벨)의 색 = **글자색** — 배경이 우리 그림이라 바꿀 게 글자뿐이다.
+                (창업자 2026-08-08 *"아래탭에 글자색고르기없음"* · `ArtBox` 는 `tc` 를 이미 그릴 줄 안다)
+                직접 쓴 글자와 같은 15색 · 두 줄 접기(2026-08-07 창업자 판정 ⓐ)도 그대로. */}
+            {ctxCur === 'color' && selItem.type === 'note' && !!selItem.art && (
+              <div style={{ ...ctxScroll, flexWrap: 'wrap', overflowX: 'visible', rowGap: 7 }}>
+                <button className="press" onClick={() => patchRec(sel, { tc: null })} aria-label="글자색 기본"
+                  style={{ ...ctxDot, border: !selItem.tc ? selOn : selOff, fontSize: 10, fontWeight: 800, color: 'var(--text-sub)', background: 'var(--surface)' }}>기본</button>
+                {TEXT_COLORS.map((c) => (
+                  <button key={c.key} className="press" onClick={() => patchRec(sel, { tc: c.color })} aria-label={`글자색 ${c.key}`}
+                    style={{ ...ctxDot, background: c.color, border: selItem.tc === c.color ? selOn : '1.5px solid rgba(0,0,0,.14)', boxShadow: selItem.tc === c.color ? '0 0 0 2px var(--cream)' : 'none' }} />
                 ))}
               </div>
             )}
@@ -1139,17 +1211,17 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                  ⛔ 예전엔 셋째 단계가 「저장하고 나가기」였다. 그게 창업자가 말한 불편이다. */}
           {(canPickPaper || paperEdit) && (
             <div className="segment" style={{ margin: '0 2px 6px' }}>
-              {canPickPaper && <button className={`seg ${mode === 'paper' ? 'on' : ''}`} onClick={() => setMode('paper')}>{isDiary ? '속지' : '속지 고르기'}</button>}
+              {canPickPaper && <button className={`seg ${mode === 'paper' ? 'on' : ''}`} onClick={() => { dropCaret(); setMode('paper') }}>{isDiary ? '속지' : '속지 고르기'}</button>}
               {paperEdit && <button className={`seg ${writing ? 'on' : ''}`} onClick={() => setMode('write')}>글쓰기</button>}
               {isDiary ? (
                 <>
                   <button className={`seg ${mode === 'decor' && shelf === 'diary' ? 'on' : ''}`}
-                    onClick={() => { setMode('decor'); setShelf('diary') }}>일꾸</button>
+                    onClick={() => { dropCaret(); setMode('decor'); setShelf('diary') }}>일꾸</button>
                   <button className={`seg ${mode === 'decor' && shelf === 'all' ? 'on' : ''}`}
-                    onClick={() => { setMode('decor'); setShelf('all') }}>레꾸</button>
+                    onClick={() => { dropCaret(); setMode('decor'); setShelf('all') }}>레꾸</button>
                 </>
               ) : (
-                <button className={`seg ${mode === 'decor' ? 'on' : ''}`} onClick={() => setMode('decor')}>꾸미기</button>
+                <button className={`seg ${mode === 'decor' ? 'on' : ''}`} onClick={() => { dropCaret(); setMode('decor') }}>꾸미기</button>
               )}
             </div>
           )}
@@ -1168,7 +1240,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               {/* 📐 스크롤 막대가 «칩 바로 밑»에 붙어 글씨를 그어놓은 것처럼 보였다
                   (창업자 2026-08-07 *"글씨 바로아래 스크롤이 붙어있어서.. 세로를 살짝 키우고 스크롤 위치를 내려야 할 듯"*)
                   → 스크롤 칸 아래에 여백을 줘 막대를 칩에서 떼어놓는다. */}
-              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', flex: '1 1 auto', paddingBottom: 7 }}>
+              {/* 📜 HStrip = 막대를 «항상» 보인다 (창업자 2026-08-08
+                  *"스크롤바가 처음부터 안보여서 글자체 저게다처럼보임"* — 안드로이드 기본 막대는
+                  긁는 동안만 나타나서, 처음 보는 사람은 12개 중 5개가 전부인 줄 안다). */}
+              <HStrip style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 5 }}>
                 {TEXT_FONTS.map((f) => {
                   const on = (writeFont || 'gaegu') === f.key
                   return (
@@ -1184,7 +1259,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     </button>
                   )
                 })}
-              </div>
+              </HStrip>
             </div>
           )}
           {/* 📏📏 **글자 크기 — 작게 · 보통 · 크게** (창업자 2026-08-07
