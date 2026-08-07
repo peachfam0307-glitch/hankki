@@ -1369,14 +1369,24 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 {BOX_GROUPS.map((g) => (
                   <div className="decor-sec" key={g.key}>
                     <div className="decor-sec-label">{g.label}</div>
-                    <div className="decor-grid">
-                      {g.items.map((k) => (
-                        <button key={k} className="press decor-cell" onClick={() => addBox(k)} aria-label={`글 상자 ${k}`}>
-                          <span style={{ display: 'block', width: '86%', aspectRatio: `${stickerRatio(k) || 1}` }}>
-                            <StickerArt id={k} motion={null} />
-                          </span>
-                        </button>
-                      ))}
+                    {/* ⛔⛔ 여기서 서랍이 «옆으로» 터졌다 — 검수판이 잡았다(2026-08-07).
+                        칸 다섯이 60px 씩 나뉘어야 하는데 **86.7px 로 부풀어 다섯째가 화면 밖**으로 나갔다(밀림 133px).
+                        범인 = 칸마다 «다른» `aspectRatio` 를 준 것. `1fr` 은 사실 `minmax(auto,1fr)` 이라
+                        **auto 최소값이 그림 크기를 타고 컬럼을 밀어낸다.** 데코 탭은 비율이 다 1 이라 안 터졌다.
+                        ✅ `minmax(0,1fr)` = 최소값을 0으로 못 박아 칸이 «정확히» 다섯으로 나뉜다.
+                        📌 다른 탭은 안 건드린다 — 전역 CSS 가 아니라 이 묶음에만 준다. */}
+                    <div className="decor-grid" style={{ gridTemplateColumns: 'repeat(5, minmax(0,1fr))' }}>
+                      {g.items.map((k) => {
+                        // 가로로 길면 폭에, 세로로 길면 «높이»에 맞춘다 — 안 그러면 세로로 긴 컷이 칸 밖으로 삐져나온다(87×125 였다)
+                        const r = stickerRatio(k) || 1
+                        return (
+                          <button key={k} className="press decor-cell" onClick={() => addBox(k)} aria-label={`글 상자 ${k}`}>
+                            <span style={{ display: 'block', aspectRatio: `${r}`, width: r >= 1 ? '86%' : 'auto', height: r >= 1 ? 'auto' : '86%' }}>
+                              <StickerArt id={k} motion={null} />
+                            </span>
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 ))}
