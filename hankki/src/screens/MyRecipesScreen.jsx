@@ -7,9 +7,9 @@ import TabTips from '../components/TabTips'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
-import DiaryEntrySheet from '../components/DiaryEntrySheet'
-import ReviewAskSheet from '../components/ReviewAskSheet'
-import { shouldAskReview } from '../nudges'
+// ⛔ 2026-08-07 — 「요리 기록 남기기」 시트와 「한마디 청하기」를 이 화면에서 뺐다.
+//    앨범을 누르면 «그날 일기»로 가고(화면 이름이 「한끼 일기」다), 둘 다 «레시피 상세»에 그대로 있다.
+//    (DiaryEntrySheet · ReviewAskSheet · shouldAskReview import 제거)
 import { dateLabel } from '../utils'
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
@@ -183,10 +183,10 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   const lpEnd = () => clearTimeout(lpTimer.current)
   const [newFolder, setNewFolder] = useState(false)
   const [delFolder, setDelFolder] = useState(null) // 삭제할 사용자 폴더 이름
-  const [logEditing, setLogEditing] = useState(null)
+
   // 한마디 청하기 — 기록 시트를 닫는 순간. 상세 화면과 «같은 자리»다.
   // ⭐ 기록을 제일 많이 여닫는 곳이 여기라, 상세에만 걸면 사실상 아무한테도 안 물어보게 된다.
-  const [askReview, setAskReview] = useState(false)
+
 
   // 뒤로가기 처리는 모달(요리기록 시트 등)까지 포함해 아래(상태 선언 뒤)에서 한 번에 등록한다.
 
@@ -394,7 +394,15 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                     onClick={() => {
                       if (lpFired.current) { lpFired.current = false; return } // 꾹 누름 발동 직후 클릭 무시
                       if (logEdit) toggleLogSel(e.id)
-                      else setLogEditing(e)
+                      // 📔📔 **「한끼 일기」에서 누르면 «그날 일기»로 간다** (창업자 2026-08-07)
+                      //   ⛔ 전엔 「요리 기록 남기기」 시트가 떴다 — 창업자 *"이거 없애기로 하지않았어? 일기에서 만든음식 누르면 떠."*
+                      //   ⭐ v9.80 에 없앤 건 **「만들었어요」 누르면 «자동으로» 뜨던 것**이고,
+                      //      여기 «직접 누르는 길»은 남아 있었다. 화면 이름이 「한끼 일기」인데 요리 기록이 뜨니 앞뒤가 안 맞았다.
+                      //   ⭐ 기록(별점·사진·팁) 고치기는 **레시피 상세**에 그대로 있다(`RecipeDetailScreen` 「내 요리 기록」 카드)
+                      //      → 잃는 길이 없다.
+                      //   ⚠️ 딸려온 것 = 이 화면의 「한마디 청하기」가 그 시트 닫히는 자리를 썼다.
+                      //      화면을 옮기는 길에 묻는 건 실례라 여기선 안 묻고 **레시피 상세 쪽에 맡긴다**(거긴 그대로 산다).
+                      else nav.push({ name: 'diary', day: dayKey(e.at) })
                     }}
                   >
                     {e.photo ? (
@@ -608,17 +616,9 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
         />
       )}
 
-      {logEditing && (
-        <DiaryEntrySheet
-          entry={logEditing}
-          // ⛔ 삭제·레시피로 이동은 여기를 안 탄다 — 지운 직후나 화면을 옮기는 길에 물으면 실례다.
-          onClose={() => { setLogEditing(null); if (shouldAskReview(diary.length)) setAskReview(true) }}
-          onDelete={() => { removeDiary(logEditing.id); setLogEditing(null); nav.showToast('기록을 삭제했어요') }}
-          onOpenRecipe={recipes.some((r) => r.id === logEditing.recipeId) ? () => { const e = logEditing; setLogEditing(null); openRecipe(e) } : undefined}
-        />
-      )}
-      {/* 한마디 청하기 — 기록 시트가 닫힌 뒤에만(겹쳐 뜨지 않게). 시트가 스스로 '물어봤음'을 남긴다. */}
-      {askReview && !logEditing && <ReviewAskSheet onClose={() => setAskReview(false)} />}
+      {/* ⛔ 「요리 기록 남기기」 시트는 2026-08-07 에 여기서 뺐다 —
+             「한끼 일기」 앨범을 누르면 «그날 일기»로 간다(위 `album-tile` 참고).
+             기록 고치기와 「한마디 청하기」는 **레시피 상세**에 그대로 있다. */}
       {coach && <CoachMarks storageKey={MYRECIPES_COACH_KEY} steps={MYRECIPES_COACH_STEPS} onDone={() => setCoach(false)} />}
     </>
   )
