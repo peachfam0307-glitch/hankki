@@ -244,12 +244,19 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
               //      효과는 위에 겹쳐 그리는 파티클이라 밑이 무엇이든 상관없다.
               //   ⚠️ 모션 클래스를 «감싼 span» 에 준다 — `TextDeco` 안 글자에 직접 주면
               //      글자 크기 계산(`coverW`)과 transform 이 섞인다.
-              <span style={{ position: 'absolute', inset: 0 }}>
-                <span className={motionClass(it.motion)} style={{ position: 'absolute', inset: 0 }}>
+              <>
+                {/* ⛔⛔ **감싸는 것을 `position:absolute` 로 두면 안 된다** (창업자 폰 제보 2026-08-07 —
+                    *"글자효과는 되는데 영역이 잘못표시됨, 효과가 글자 한개(제일 앞머리랑 겹치게 위에만 붙음)"*)
+                    글자 아이템의 상자는 `width:'max-content'` = **자식이 폭을 정한다.**
+                    그런데 자식을 전부 absolute 로 만들면 **폭을 정할 것이 사라져 상자가 쪼그라든다** →
+                    점선 테두리·손잡이·효과가 전부 «맨 앞 한 글자» 자리에만 떴다.
+                    ✅ 모션 span 은 **흐름 안(`display:inline-block`)** 에 둬서 글자가 폭을 정하게 하고,
+                       효과(StickerFx)만 absolute 로 얹는다(그건 원래 absolute 라 폭에 안 낀다). */}
+                <span className={motionClass(it.motion)} style={{ display: 'inline-block' }}>
                   <TextDeco it={it} editable={editable} coverW={coverW} />
                 </span>
                 <StickerFx kind={it.fx} />
-              </span>
+              </>
             ) : it.type === 'photo' ? (
               // 📷 내 사진 — 종이 «종류와 상관없이» 붙는다 (창업자 2026-08-06
               //    *"무지나 도트도 사진 넣고싶을수있지않아? 그럼 어떻게 사진넣어?"*)
