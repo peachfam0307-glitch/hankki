@@ -132,6 +132,32 @@ if (s3.there && s3.inside && s3.over) ok('사진을 «위로 끌어도» 삭제 
 else no(`⭐ 사진을 위로 끄니 삭제 단추가 ${!s3.there ? '사라졌다' : !s3.inside ? `«판 밖»으로 잘렸다 — 판 기준 (${s3.x}, ${s3.y})` : '가렸다'}`)
 await shot('a2-위로끌기')
 
+// ═══ ⓒ 탭을 옮기지 «않아도» 고칠 수 있나 ═══════════════
+//   창업자 *"일꾸아이템은 일꾸탭을 눌러야 수정, 글쓰기는 글쓰기 탭을 눌러야 수정. 아직도 안바뀌었어."*
+console.log('\n── ⓒ 딴 탭에서도 스티커를 탭하면 고쳐지나 ──')
+await page.getByRole('button', { name: '속지', exact: true }).first().click(); await page.waitForTimeout(700)
+if ((await selKind()) !== 'none') no('탭을 옮겼는데 고른 게 남아 있다')
+const ph3 = await page.locator('.decor-stage img[src^="data:"]').first().boundingBox()
+if (!ph3) no('속지 탭에서 사진을 못 찾았다')
+else {
+  await page.mouse.click(ph3.x + ph3.width / 2, ph3.y + ph3.height / 2); await page.waitForTimeout(600)
+  const k4 = await selKind()
+  const onIlkku = await page.locator('.seg.on', { hasText: '일꾸' }).count()
+  if (k4 === 'photo') ok('⭐ 「속지」 탭에서 스티커를 탭하니 바로 골라진다 — 탭을 옮길 일이 없다')
+  else no(`⭐ 「속지」 탭에서 스티커를 탭했는데 «${k4}» — 여전히 「일꾸」 탭을 먼저 눌러야 한다`)
+  if (onIlkku) ok('꾸미기(일꾸) 탭으로 저절로 넘어갔다')
+  else no('고르긴 했는데 꾸미기 탭으로 안 넘어갔다 — 도구가 안 보인다')
+}
+// ⛔ 빈 자리는 그대로 통과해야 한다 — 스티커가 아닌 곳을 눌러 속지 축이 죽으면 안 된다
+await page.getByRole('button', { name: '속지', exact: true }).first().click(); await page.waitForTimeout(600)
+const axis = page.locator('.decor-stage [aria-label="날씨 표시"]').first()
+if (await axis.count()) {
+  await axis.click(); await page.waitForTimeout(350)
+  const pressed = await axis.getAttribute('aria-pressed')
+  if (pressed === 'true') ok('빈 자리는 그대로 통과한다 — 속지 축이 살아 있다')
+  else no('스티커 층이 속지 축을 가로챈다')
+} else console.log('   ℹ️ 이 틀엔 날씨 축이 없어 건너뜀')
+
 // ═══ ⓑ 프레임에 끼운 사진 ═════════════════════════════
 //   ⭐ 서랍에서 프레임을 «찾아 누르는» 길은 탭·스크롤에 흔들린다(첫 판에서 실제로 못 붙였다).
 //      `_repro-frameshot` 과 같이 **프레임을 미리 판에 심어두고** 시작한다 — 재는 건 그 «다음»이다.

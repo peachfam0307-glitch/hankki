@@ -70,6 +70,14 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
   const bg = ruleBg(rule)
   // ⛔ 읽기 전용(꾸미기 판)에선 아무것도 손가락을 먹으면 안 된다 — 그 위에서 스티커를 끌어야 한다
   const noTouch = ro ? { pointerEvents: 'none' } : {}
+  // 🗒🗒 **쓰는 칸은 «여럿»일 수 있다** (창업자 폰 제보 2026-08-07
+  //   *"일기인데 줄이 없어..가운데 뻥뚫려있음 줄도 안생기고. 이것도 줄 선택하게 해줌 좋겠어. 위에처럼"*)
+  //   ⛔ 「레시피 기록」 틀은 쓰는 칸이 **사진 옆 좁은 칸 하나**뿐이었다.
+  //      가운데 큰 자리는 아무 칸도 아니어서 **글도 못 쓰고 줄도 안 그려졌다**(그림을 재니 40.1~85.7% 가 통째로 빈칸).
+  //   📌 처음엔 그 자리를 «꾸미기 자리»로 비워 뒀는데, 써 보니 **일기인데 뻥 뚫려** 보였다.
+  //      → 칸을 하나 더 준다. 「선」을 무지로 두면 예전처럼 비어 있고, 줄·모눈·도트를 고르면 거기도 그어진다.
+  //   ⚠️ 칸마다 «저장 자리»가 다르다(`key`) — 안 그러면 두 칸이 같은 글을 비춘다.
+  const writes = fields.write ? (Array.isArray(fields.write) ? fields.write : [fields.write]) : []
   // 🧷 글자는 스티커·틀 그림보다 «위». 글은 가려지면 안 된다.
   //    ⚠️ 사진은 반대다 — 아래(`zIndex` 없음)라야 틀 선이 사진 위에 그려져 «창»이 된다.
   const overSticker = { zIndex: 1 }
@@ -217,36 +225,40 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
              메모칸에 인쇄된 꽃·마테·도장 «위로 줄이 지나갔다»(캡처로 잡았다).
           ⭐ 층을 안 주면 `::after`(틀 그림)가 나중에 칠해진다 — pseudo 는 «마지막 자식»이라.
              그래서 줄은 빈 종이에서만 보이고 인쇄된 장식 뒤로는 숨는다. **종이가 원래 그렇다.** */}
-      {fields.write && bg && (
+      {bg && writes.map((w, i) => (
         <div
+          key={`rule${i}`}
           aria-hidden
           style={{
-            ...box(fields.write), pointerEvents: 'none',
+            ...box(w), pointerEvents: 'none',
             backgroundImage: bg,
             backgroundSize: rule === 'dots' ? 'var(--rule-gap) var(--rule-gap)' : undefined,
           }}
         />
-      )}
+      ))}
 
       {/* ✍️ 본문 — 종이의 줄 위에 바로. 배경·테두리 0 */}
-      {fields.write && (
-        <div style={{ ...box(fields.write), ...overSticker, ...noTouch }}>
-          {ro ? (
-            <div style={{ ...hand, whiteSpace: 'pre-wrap', wordBreak: 'break-word', height: '100%', overflow: 'hidden' }}>{value.note || ''}</div>
-          ) : (
-            <textarea
-              value={value.note || ''}
-              onChange={set('note')}
-              aria-label="일기 본문"
-              placeholder="여기에 써요"
-              style={{
-                ...hand, width: '100%', height: '100%', display: 'block',
-                background: 'none', border: 'none', outline: 'none', resize: 'none', padding: 0, margin: 0,
-              }}
-            />
-          )}
-        </div>
-      )}
+      {writes.map((w, i) => {
+        const k = w.key || 'note'
+        return (
+          <div key={`write${i}`} style={{ ...box(w), ...overSticker, ...noTouch }}>
+            {ro ? (
+              <div style={{ ...hand, whiteSpace: 'pre-wrap', wordBreak: 'break-word', height: '100%', overflow: 'hidden' }}>{value[k] || ''}</div>
+            ) : (
+              <textarea
+                value={value[k] || ''}
+                onChange={set(k)}
+                aria-label={w.label || '일기 본문'}
+                placeholder="여기에 써요"
+                style={{
+                  ...hand, width: '100%', height: '100%', display: 'block',
+                  background: 'none', border: 'none', outline: 'none', resize: 'none', padding: 0, margin: 0,
+                }}
+              />
+            )}
+          </div>
+        )
+      })}
 
       {/* 📝 오늘의 한 줄 — 밑줄 하나 ＋ 라벨. 「레시피 기록」 속지의 맨 아래 칸이다
           (창업자 확정: *"평가빼고 오늘의 한 줄 정도로?"* → 별 다섯을 뺀 자리) */}

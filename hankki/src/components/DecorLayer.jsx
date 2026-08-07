@@ -10,7 +10,13 @@ import { StickerArt, StickerFx, FRIEND_IDS, stickerRatio, NOTE_COLORS, TEXT_COLO
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
-export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote, onEmptyTap }) {
+// 🎯🎯 `onTapItem` = **꾸미기 탭이 아니어도 스티커를 탭하면 바로 고치러 간다** (창업자 폰 제보 2026-08-07
+//   *"일꾸아이템은 일꾸탭을 눌러야 수정, 글쓰기는 글쓰기 탭을 눌러야 수정. 아직도 안바뀌었어."*)
+//   ⛔ 전엔 `editable` 하나로 층 전체를 껐다 → 속지·글쓰기 탭에선 스티커를 **아예 못 만졌다.**
+//      고치려면 매번 「일꾸」 탭을 먼저 눌러야 했다.
+//   ⭐ 답 = **층은 통과시키고 «아이템만» 받는다.** 빈 자리는 글칸·축이 그대로 받고,
+//      스티커 위를 누르면 그 스티커가 받아서 꾸미기로 넘어간다. 손가락이 누른 것이 답이 된다.
+export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote, onEmptyTap, onTapItem }) {
   const boxRef = useRef(null)
   // 커버 실제 폭(px) — 글자 상자를 글자에 딱 맞추면서(max-content) 글자 크기는 '커버 폭 기준'으로 px 계산하려고.
   const [coverW, setCoverW] = useState(0)
@@ -57,7 +63,11 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
   // 드래그(이동) — 아이템 몸통
   const dragRef = useRef(null)
   const onItemDown = (it) => (e) => {
-    if (!editable) return
+    if (!editable) {
+      // 🎯 꾸미기 탭이 아닐 때 — 이 스티커를 탭했다는 것만 알린다(꾸미기로 넘어가며 고른다)
+      if (onTapItem) { e.stopPropagation(); onTapItem(it.id) }
+      return
+    }
     e.stopPropagation()
     const wasSel = selectedId === it.id
     onSelect?.(it.id)
@@ -176,6 +186,8 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)${it.flip ? ' scaleX(-1)' : ''}`,
           touchAction: 'none',
           cursor: editable ? 'grab' : 'default',
+          // 🎯 층이 꺼져 있어도(`pointerEvents:none`) **아이템만** 손가락을 받는다 → 빈 자리는 글칸·축이 받는다
+          ...(!editable && onTapItem ? { pointerEvents: 'auto' } : null),
           // 🔼 **고른 «사진»만 잠깐 위로.** 프레임에 끼운 사진은 일부러 프레임 «뒤»에 깔리는데,
           //    그러면 프레임 그림이 손잡이·지우기 단추를 덮어 눌리지 않는다(재현으로 확인).
           //    ⛔ 배열 순서는 안 건드린다 — 고르기를 풀면 도로 프레임 뒤로 간다.

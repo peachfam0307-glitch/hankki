@@ -628,6 +628,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 //      «눌러보는» 검사를 안 만들었다(규칙 18 ⓘ — 검사가 무엇을 보는지).
                 //   ⭐ 속지 모드에서 스티커를 만질 일은 없다 — 그 모드는 «종이를 고르는» 자리다.
                 editable={mode === 'decor'}
+                // 🎯 속지·글쓰기 탭에서도 «스티커를 탭하면» 바로 꾸미기로 넘어가며 그걸 고른다
+                //    (창업자 2026-08-07 *"일꾸탭을 눌러야 수정 … 아직도 안바뀌었어"*)
+                //    ⛔ 빈 자리는 그대로 통과 — 글칸을 누르면 글쓰기, 축을 누르면 축이 눌린다.
+                onTapItem={(id) => { setMode('decor'); select(id) }}
                 selectedId={sel}
                 onSelect={select}
                 onChange={patch}
@@ -635,11 +639,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 onEditNote={(it) => setNoteEdit(it)}
                 // 📍 빈 종이의 «글칸»을 탭하면 글쓰기로 (창업자 *"속지 화면 줄 클릭하면 글쓰고"*)
                 //    ⚠️ 스티커를 탭한 건 여기로 안 온다 — `DecorLayer` 가 걸러서 준다.
+                //    ⚠️ 쓰는 칸은 «여럿»일 수 있다(「레시피 기록」은 사진 옆 ＋ 가운데 둘) — 하나만 보면 절반이 죽는다
                 onEmptyTap={paperEdit && paper?.fields?.write ? (x, y) => {
-                  const w = paper.fields.write
-                  const top = w.top ?? 0
-                  const bottom = 100 - (w.bottom ?? 0)
-                  if (x >= w.left && x <= 100 - w.right && y >= top && y <= bottom) setMode('write')
+                  const ws = Array.isArray(paper.fields.write) ? paper.fields.write : [paper.fields.write]
+                  const hit = ws.some((w) => x >= w.left && x <= 100 - w.right && y >= (w.top ?? 0) && y <= 100 - (w.bottom ?? 0))
+                  if (hit) setMode('write')
                 } : undefined}
               />
             )
@@ -665,6 +669,14 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 //   ⚠️ 상한 420px 은 큰 화면에서 종이만 커지는 것을 막는다.
                 //   ⛔⛔ 이 자리에 `{/* */}` 를 쓰면 **빌드가 죽는다** — `return (` 바로 뒤라
                 //      JSX 가 아직 안 열렸고 `{…}` 가 객체 리터럴로 읽힌다(2026-08-04·08-05·08-07 세 번 밟았다).
+                // 📐📐 스티커를 고르면 **판이 조금 작아진다** (창업자 폰 제보 2026-08-07
+                //    *"꾸미기탭에 다른스티커 보려고했는데 스크롤이 안움직여"*)
+                //   ⛔ 실측(360×800) = 판 360 ＋ 컨텍스트 바 166 ＋ 서랍 218 = 화면이 «꽉 찬다».
+                //      창업자 폰엔 「이어서 불러왔어요」 띠까지 있어서 서랍 스크롤 칸이 한 줄 반밖에 안 남았다.
+                //      그 좁은 띠에선 손가락이 탭 줄·선물 줄에 닿아 **스크롤이 안 되는 것처럼 느껴진다.**
+                //   ⭐ 컨텍스트 바가 들어온 만큼 판이 물러난다 — 도구가 나오면 종이가 자리를 내주는 게 자연스럽다.
+                //      0.18s 로 미끄러지게 해서 «툭» 튀지 않는다. 고르기를 풀면 판이 도로 커진다.
+                //   ⛔⛔ 위 경고를 «읽고도» 여기에 `{/* */}` 를 넣어 빌드를 깼다(2026-08-07 · 네 번째).
                 <div style={{ width: writing ? 'min(100%, 420px)' : 'min(100%, 31.5vh)', margin: '0 auto' }}>
                   <PaperBox skin={paper} ratio={ratio} style={{ borderRadius: 18 }}>
                     {/* ⚠️ 사진이 «먼저» — 그래야 스티커를 사진 위에 붙일 수 있다(글자는 zIndex 1)
@@ -675,6 +687,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 </div>
               )
             }
+            // 📐 레시피 표지도 스티커를 고르면 조금 물러난다 — 위 「일기」 판과 같은 이유다.
+            //   ⛔ 여긴 `width:'100%'` 라 컨텍스트 바가 나와도 안 줄어들어서 **서랍이 통째로 눌렸다**
+            //      (창업자 캡처가 바로 이 화면 — 「레시피 꾸미기」다). 실측 = 판 360 ＋ 바 130 ＋ 서랍 254.
+            //   ⛔⛔ 이 자리에 `{/* */}` 금지 — `return (` 앞이라 빌드가 죽는다(오늘 네 번째로 밟았다).
             return (
               <div style={{ position: 'relative', width: '100%', aspectRatio: ratio, borderRadius: 18, overflow: 'hidden' }}>
                 <Thumb recipe={{ ...recipe, decorBg: bg, thumb }} ratio={ratio} radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
@@ -711,7 +727,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
 
         {/* 고정 컨텍스트 바 — 선택한 아이템의 색·무늬·모양을 캔버스 바로 아래에서 바로 바꾼다(스크롤 이동 없음) */}
         {hasCtx && (
-          <div style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '9px 12px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '7px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {/* 🔗 프레임 ↔ 속 사진 — 창 안을 탭하면 프레임이 잡혀서 사진에 손이 안 닿는다(위 `photoOfFrame` 주석) */}
             {(selFramePhoto || selPhotoFrame) && (
               <div style={ctxRow}>
@@ -726,13 +742,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 </div>
               </div>
             )}
-            {/* 🧷 순서 — 어떤 아이템이든 맨 뒤/맨 앞으로. 프레임·포스트잇에 스티커가 가려도 다 꺼낼 필요 없이 여기서 정리. */}
-            <div style={ctxRow}>
+            {/* 🧷 순서 — 어떤 아이템이든 맨 뒤/맨 앞으로. 프레임·포스트잇에 스티커가 가려도 다 꺼낼 필요 없이 여기서 정리.
+                📐 뒤집기를 «같은 줄»에 둔다 — 둘 다 단추가 한둘뿐이라 줄을 따로 쓰면 서랍이 그만큼 눌린다
+                   (2026-08-07 실측: 네 줄이 166px 를 먹어 서랍 스크롤 칸이 한 줄 반밖에 안 남았다). */}
+            <div style={{ ...ctxRow, ...ctxScroll, alignItems: 'center' }}>
               <span style={ctxLabel}>순서</span>
-              <div style={{ display: 'flex', gap: 7, flex: 1 }}>
-                <button className="press" onClick={() => sendToBack(sel)} style={layerBtn}>맨 뒤로</button>
-                <button className="press" onClick={() => bringToFront(sel)} style={layerBtn}>맨 앞으로</button>
-              </div>
+              <button className="press" onClick={() => sendToBack(sel)} style={layerBtn}>맨 뒤로</button>
+              <button className="press" onClick={() => bringToFront(sel)} style={layerBtn}>맨 앞으로</button>
+              {selItem && canFlip(selItem) && (
+                <button className="press" onClick={() => patchRec(sel, { flip: !selItem.flip })}
+                  style={{ ...layerBtn, background: selItem.flip ? 'var(--brown)' : undefined, color: selItem.flip ? '#fff' : undefined }}>
+                  좌우 뒤집기
+                </button>
+              )}
             </div>
             {/* ↔↔ **좌우 뒤집기** (창업자 2026-08-06 *"캐릭터좌우반전돼?"*)
                 ⭐ 왜 값어치가 큰가 = **코너 장식이 왼쪽 위 모양 하나뿐**이라 오른쪽엔 못 놨다.
@@ -742,45 +764,33 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     유료팩 컷을 뺀 적이 있다 — 거울 글자는 그보다 눈에 더 띈다.)
                 ⭐ 화살표(ta_)는 오히려 뒤집는 게 쓸모 있어 막지 않는다(→ 가 ← 가 된다).
                 ⛔ 「직접 쓴 글자」(type 'text')·포스트잇도 막는다 — 유저가 친 글씨가 거울이 된다.
-                📌 판단은 **접두어**로 한다. 라벨로 가르지 않는다(CLAUDE.md 분류 원칙). */}
-            {selItem && canFlip(selItem) && (
-              <div style={ctxRow}>
-                <span style={ctxLabel}>뒤집기</span>
-                <div style={{ display: 'flex', gap: 7, flex: 1 }}>
-                  <button className="press" onClick={() => patchRec(sel, { flip: !selItem.flip })}
-                    style={{ ...layerBtn, background: selItem.flip ? 'var(--brown)' : undefined, color: selItem.flip ? '#fff' : undefined }}>
-                    좌우 뒤집기
-                  </button>
-                </div>
-              </div>
-            )}
+                📌 판단은 **접두어**로 한다. 라벨로 가르지 않는다(CLAUDE.md 분류 원칙).
+                📐 2026-08-07 — 이 단추는 «순서 줄»로 옮겼다(줄 하나를 아끼려고). 위 순서 줄을 볼 것. */}
+            {/* 🎬✨ 움직임 ＋ 효과를 «한 줄»에 (창업자 폰 제보 2026-08-07 — 서랍이 눌려 스크롤이 안 됐다)
+                ⛔ 줄마다 40px 이라 넷이면 166px 이다. 그만큼 서랍이 밀려 스크롤 칸이 한 줄 반밖에 안 남았다.
+                ⛔⛔ **판(종이)을 줄여서 자리를 만들려 했는데 그건 틀린 처방이었다** —
+                   탭한 «순간» 종이가 움직여서, 그 자리에서 이어 끄는 드래그가 옛 크기로 계산돼 어긋난다.
+                   (`_repro-hl` 이 잡아줬다 — 형광펜을 글자 위로 끌었는데 엉뚱한 데로 갔다)
+                ⭐ 그래서 판은 그대로 두고 **줄만 줄인다.** 둘 다 칩 줄이라 한 줄에 이어 붙여도 읽힌다. */}
             {selIsBuddy && (
-              <>
-                <div style={ctxRow}>
-                  <span style={ctxLabel}>움직임</span>
-                  <div style={ctxScroll}>
-                    {pickableMotions().map((m) => {
-                      const on = (selItem.motion || 'tongtong') === m.key
-                      return (
-                        <button key={m.key} className="press" onClick={() => patchRec(sel, { motion: m.key })}
-                          style={{ padding: '5px 13px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{m.label}</button>
-                      )
-                    })}
-                  </div>
-                </div>
-                <div style={ctxRow}>
-                  <span style={ctxLabel}>효과</span>
-                  <div style={ctxScroll}>
-                    {pickableFx().map((f) => {
-                      const on = (selItem.fx || 'none') === f.key
-                      return (
-                        <button key={f.key} className="press" onClick={() => patchRec(sel, { fx: f.key })}
-                          style={{ padding: '5px 13px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{f.label}</button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </>
+              <div style={{ ...ctxRow, ...ctxScroll, alignItems: 'center' }}>
+                <span style={ctxLabel}>움직임</span>
+                {pickableMotions().map((m) => {
+                  const on = (selItem.motion || 'tongtong') === m.key
+                  return (
+                    <button key={m.key} className="press" onClick={() => patchRec(sel, { motion: m.key })}
+                      style={{ padding: '5px 13px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{m.label}</button>
+                  )
+                })}
+                <span style={{ ...ctxLabel, marginLeft: 4 }}>효과</span>
+                {pickableFx().map((f) => {
+                  const on = (selItem.fx || 'none') === f.key
+                  return (
+                    <button key={f.key} className="press" onClick={() => patchRec(sel, { fx: f.key })}
+                      style={{ padding: '5px 13px', borderRadius: 999, fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--surface)', color: on ? '#fff' : 'var(--text-sub)', border: on ? 'none' : '1px solid var(--line)' }}>{f.label}</button>
+                  )
+                })}
+              </div>
             )}
             {selItem.type === 'sticker' && RECOLORABLE.has(selItem.key) && (
               <div style={ctxRow}>
