@@ -417,6 +417,22 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //       창을 못 잰 프레임(테두리가 열려 있어 바깥과 이어진 것)은 평균값으로 넣고 손잡이로 맞추게 한다.
   const frameOf = (it) => (it && it.type === 'sticker' && (FRAMES[it.key] || (typeof it.key === 'string' && it.key.startsWith('pf_'))) ? it : null)
   const selFrame = frameOf(items.find((x) => x.id === sel))
+  // 🔗🔗 **프레임 ↔ 속 사진 오가기** (창업자 폰 제보 2026-08-07 *"프레임에 넣은 사진을 줄이는 도구도 없고"*)
+  //   ⛔ 사진은 프레임 «뒤»에 깔린다 → 창 안을 탭해도 «프레임»이 잡힌다(재현으로 확인).
+  //      프레임 그림은 가운데가 투명이어도 `<img>` 는 네모 전체가 잡히기 때문이다.
+  //   ⭐ 그래서 「탭으로 어떻게든 되게」 하지 않고 **길을 하나 낸다** — 컨텍스트 바에서 서로 오간다.
+  //      한 번 고르면 지우기·크기·회전이 다 사진 것이 된다.
+  const photoOfFrame = (f) => {
+    if (!f) return null
+    const tagged = items.find((x) => x.type === 'photo' && x.of === f.id)
+    if (tagged) return tagged
+    // ⚠️ 옛 저장본엔 `of` 표시가 없다 — 그땐 프레임 «바로 앞»(화면에선 바로 뒤)에 꽂았으니 그걸로 찾는다
+    const i = items.findIndex((x) => x.id === f.id)
+    const prev = i > 0 ? items[i - 1] : null
+    return prev && prev.type === 'photo' ? prev : null
+  }
+  const selFramePhoto = photoOfFrame(selFrame)
+  const selPhotoFrame = (selItem?.type === 'photo' && selItem.of) ? items.find((x) => x.id === selItem.of) : null
   const onPhotoFile = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -440,7 +456,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       const dx = (win.cx - 0.5) * f.s
       const dy = (win.cy - 0.5) * (f.s / fr) * box
       const shot = await cropRatio(src, par, 700, 0.8)
-      const it = { id: newDecorId(), type: 'photo', src: shot, ratio: par, x: f.x + dx, y: f.y + dy, s: pw, r: f.r || 0 }
+      // 🔗 `of` = **이 사진의 주인 프레임.** 사진이 프레임 «뒤»에 깔려 있어서 탭으로는 못 고른다
+      //    (창업자 폰 제보 2026-08-07 *"프레임에 넣은 사진을 줄이는 도구도 없고"* — 재현으로 확인).
+      //    → 프레임을 고르면 컨텍스트 바에 「속 사진 고르기」가 뜨고, 그때 이 표시로 찾아간다.
+      //    ⚠️ 배열 순서로 찾으면 순서를 바꾸는 순간 깨진다 — 그래서 «누구 것인지»를 값으로 남긴다.
+      const it = { id: newDecorId(), type: 'photo', src: shot, ratio: par, x: f.x + dx, y: f.y + dy, s: pw, r: f.r || 0, of: f.id }
       // ⭐ 프레임 «바로 앞»에 꽂는다(배열에서 프레임보다 앞 = 화면에선 뒤).
     mark()
       setItems((arr) => { const i = arr.findIndex((x) => x.id === f.id); return i < 0 ? [it, ...arr] : [...arr.slice(0, i), it, ...arr.slice(i)] })
@@ -692,6 +712,20 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         {/* 고정 컨텍스트 바 — 선택한 아이템의 색·무늬·모양을 캔버스 바로 아래에서 바로 바꾼다(스크롤 이동 없음) */}
         {hasCtx && (
           <div style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '9px 12px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {/* 🔗 프레임 ↔ 속 사진 — 창 안을 탭하면 프레임이 잡혀서 사진에 손이 안 닿는다(위 `photoOfFrame` 주석) */}
+            {(selFramePhoto || selPhotoFrame) && (
+              <div style={ctxRow}>
+                <span style={ctxLabel}>사진</span>
+                <div style={{ display: 'flex', gap: 7, flex: 1 }}>
+                  {selFramePhoto && (
+                    <button className="press" onClick={() => setSel(selFramePhoto.id)} style={layerBtn}>속 사진 고르기</button>
+                  )}
+                  {selPhotoFrame && (
+                    <button className="press" onClick={() => setSel(selPhotoFrame.id)} style={layerBtn}>프레임 고르기</button>
+                  )}
+                </div>
+              </div>
+            )}
             {/* 🧷 순서 — 어떤 아이템이든 맨 뒤/맨 앞으로. 프레임·포스트잇에 스티커가 가려도 다 꺼낼 필요 없이 여기서 정리. */}
             <div style={ctxRow}>
               <span style={ctxLabel}>순서</span>

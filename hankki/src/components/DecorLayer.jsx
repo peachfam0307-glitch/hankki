@@ -24,6 +24,36 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     return () => ro.disconnect()
   }, [])
 
+  // 🧲🧲 손잡이가 «종이 밖으로 잘리는» 것을 막는다 (창업자 폰 제보 2026-08-07
+  //   *"일꾸에서 사진을 넣었잖아. 삭제하는 버튼이 없어(넣은 사진)"*)
+  //   ⛔ 원인 = 지우기·크기 단추가 상자 «바깥»(-17·-19px)에 붙어 있는데
+  //      이 판은 `overflow:hidden` 이다 → 아이템을 가장자리로 끌면 단추가 통째로 잘린다.
+  //      재현 실측(`_repro-사진손잡이`) = 사진을 위로 끄니 지우기 단추가 **판 기준 y −60**.
+  //   ⭐ 답 = 「못 나가게 막기」가 아니라 **「종이 «안»으로 끌어들이기」**.
+  //      막으면 창업자가 사진을 위쪽에 두고 싶을 때 못 둔다 — 자유는 그대로 두고 단추만 옮긴다.
+  //   ⛔⛔ **처음엔 「틀 안쪽으로 뒤집기」(top:-17 → 5)로 고쳤는데 그걸론 모자랐다.**
+  //      사진이 종이보다 커서 **손잡이 틀 «자체»가 종이 위로 올라가 있다** → 틀 안쪽(5px)도 여전히 종이 밖이다.
+  //      재현이 −60 → −38 로 «줄기만» 하고 안 고쳐져서 드러났다. 📌**부호가 아니라 「무엇을 기준으로 재나」가 틀렸다.**
+  //   ✅ 그래서 참·거짓이 아니라 **「몇 px 밀어야 종이 안으로 들어오나」를 재서** 그 값을 쓴다.
+  //   📌 사진만의 문제가 아니다 — 어떤 스티커든 가장자리에 가면 같다. 사진이 커서 자주 걸릴 뿐.
+  const frameRef = useRef(null)
+  const [edge, setEdge] = useState(null)
+  const selIt = items.find((i) => i.id === selectedId)
+  useEffect(() => {
+    const el = frameRef.current, box = boxRef.current
+    if (!el || !box) { setEdge((p) => (p ? null : p)); return }
+    const r = el.getBoundingClientRect(), s = box.getBoundingClientRect()
+    const M = 5 // 종이 가장자리에서 이만큼은 띄운다
+    // 🎯 「틀 모서리」를 0 으로 본 좌표. 값이 클수록 «틀 안쪽»으로 들어온다.
+    const next = {
+      t: Math.round((s.top + M) - r.top),
+      l: Math.round((s.left + M) - r.left),
+      r: Math.round(r.right - (s.right - M)),
+      b: Math.round(r.bottom - (s.bottom - M)),
+    }
+    setEdge((p) => (p && p.t === next.t && p.l === next.l && p.r === next.r && p.b === next.b ? p : next))
+  }, [selectedId, selIt?.x, selIt?.y, selIt?.s, selIt?.r, selIt?.flip, coverW])
+
   // 드래그(이동) — 아이템 몸통
   const dragRef = useRef(null)
   const onItemDown = (it) => (e) => {
@@ -114,6 +144,20 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
       {(editable || items.some((it) => it.type === 'note' && noteIsClip(it.shape))) && <NoteShapeDefs />}
       {items.map((it) => {
         const on = editable && selectedId === it.id
+        // 🧲 손잡이 자리 — 종이 밖으로 나갈 만큼만 «안쪽»으로 민다(위 `edge` 주석 참고)
+        //   기본은 틀 «바깥»(−17·−19). 종이를 넘으면 넘은 만큼 키워서 종이 안으로 들어오게 한다.
+        //   ⚠️ 오른쪽이 막히면 지우기(위)와 크기(아래)가 «같은 세로줄»에 겹친다 → 크기를 왼쪽 아래로 보낸다.
+        //      손잡이 계산은 «가운데에서의 거리»(`onHandleDown`)라 어느 구석에 있어도 그대로 돈다.
+        const e = edge || { t: -99, l: -99, r: -99, b: -99 }
+        const px = (base, over) => Math.max(base, over)
+        const rSquish = e.r > -17
+        const hPos = {
+          x: { top: px(-17, e.t), right: px(-17, e.r) },
+          pen: { top: px(-17, e.t), left: px(-17, e.l) },
+          res: (rSquish && e.l <= -19)
+            ? { bottom: px(-19, e.b), left: 5 }
+            : { bottom: px(-19, e.b), right: px(-19, e.r) },
+        }
         const isText = it.type === 'text'
         const ratio = it.type === 'photo' ? (it.ratio || 1) : (it.type === 'tape' || it.type === 'hl') ? (it.ratio || (it.type === 'hl' ? 6 : 3.4)) : it.type === 'note' ? (it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
         const base = {
@@ -132,6 +176,12 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)${it.flip ? ' scaleX(-1)' : ''}`,
           touchAction: 'none',
           cursor: editable ? 'grab' : 'default',
+          // 🔼 **고른 «사진»만 잠깐 위로.** 프레임에 끼운 사진은 일부러 프레임 «뒤»에 깔리는데,
+          //    그러면 프레임 그림이 손잡이·지우기 단추를 덮어 눌리지 않는다(재현으로 확인).
+          //    ⛔ 배열 순서는 안 건드린다 — 고르기를 풀면 도로 프레임 뒤로 간다.
+          //    ⛔ 프레임·마테·포스트잇 같은 «밑판»엔 이걸 주지 않는다. 올리면 그 위에 꾸민
+          //       작은 스티커가 통째로 숨는다(2026-07-26 창업자 제보로 고친 그 문제가 되살아난다).
+          ...(on && it.type === 'photo' ? { zIndex: 3 } : null),
         }
         return (
           <div
@@ -183,7 +233,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
               // 핸들 버튼만 auto → 작은 별도 몸통 중앙은 그대로 드래그, 삭제/확대가 잘못 안 눌림.
               // ↔ 뒤집힌 아이템이면 «손잡이 판만» 다시 뒤집어 되돌린다 — 안 그러면
               //   지우기 단추가 왼쪽으로 가고 ⟳ 아이콘이 거울이 된다(조작이 헷갈린다).
-              <div style={{ position: 'absolute', left: '50%', top: '50%', width: 'max(100%, 64px)', height: 'max(100%, 64px)', transform: `translate(-50%,-50%)${it.flip ? ' scaleX(-1)' : ''}`, pointerEvents: 'none' }}>
+              <div ref={frameRef} style={{ position: 'absolute', left: '50%', top: '50%', width: 'max(100%, 64px)', height: 'max(100%, 64px)', transform: `translate(-50%,-50%)${it.flip ? ' scaleX(-1)' : ''}`, pointerEvents: 'none' }}>
                 {/* 선택 테두리 */}
                 <span style={{ position: 'absolute', inset: -6, border: '1.6px dashed rgba(255,255,255,.9)', borderRadius: 10, boxShadow: '0 0 0 1px rgba(0,0,0,.25)', pointerEvents: 'none' }} />
                 {/* 삭제 */}
@@ -192,7 +242,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                   aria-label="스티커 삭제"
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => { e.stopPropagation(); onRemove?.(it.id) }}
-                  style={{ position: 'absolute', top: -17, right: -17, width: 31, height: 31, borderRadius: '50%', background: '#3f382e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,.3)', pointerEvents: 'auto' }}
+                  style={{ position: 'absolute', ...hPos.x, width: 31, height: 31, borderRadius: '50%', background: '#3f382e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,.3)', pointerEvents: 'auto' }}
                 >
                   <Icon name="x" size={15} color="#fff" stroke={2.6} />
                 </button>
@@ -203,7 +253,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                     aria-label="글 수정"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); onEditNote?.(it) }}
-                    style={{ position: 'absolute', top: -17, left: -17, width: 31, height: 31, borderRadius: '50%', background: 'var(--brown)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,.3)', pointerEvents: 'auto' }}
+                    style={{ position: 'absolute', ...hPos.pen, width: 31, height: 31, borderRadius: '50%', background: 'var(--brown)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,.3)', pointerEvents: 'auto' }}
                   >
                     <Icon name="pen" size={15} color="#fff" />
                   </button>
@@ -215,7 +265,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                   onPointerMove={onHandleMove}
                   onPointerUp={onHandleUp}
                   onPointerCancel={onHandleUp}
-                  style={{ position: 'absolute', bottom: -19, right: -19, width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1.5px solid rgba(0,0,0,.15)', boxShadow: '0 2px 7px rgba(0,0,0,.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none', cursor: 'nwse-resize', pointerEvents: 'auto' }}
+                  style={{ position: 'absolute', ...hPos.res, width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1.5px solid rgba(0,0,0,.15)', boxShadow: '0 2px 7px rgba(0,0,0,.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none', cursor: 'nwse-resize', pointerEvents: 'auto' }}
                 >
                   <svg viewBox="0 0 20 20" width="19" height="19"><path d="M4 12a8 8 0 0 0 8-8M12 4h4v4" fill="none" stroke="#5a5244" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </span>
