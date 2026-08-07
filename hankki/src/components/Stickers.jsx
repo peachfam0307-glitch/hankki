@@ -736,11 +736,19 @@ const FX_DEF = {
   //       후광은 반드시 **그림보다 커야** 한다. 340px ≒ 스티커의 1.43배.
   halo: { size: 340, items: [[50, 46, 0]] },
 }
-export function StickerFx({ kind }) {
+// ⬆️ `lift` = **글자에 붙일 때** 효과가 나오는 자리를 «글자 위»로 올린다 (창업자 2026-08-07
+//    *"하트효과가 글자 윗부분부터 시작해야하지 않아?"*)
+//    ⛔ 조각의 y 는 «퍼센트»다(`top: ${y}%`). 캐릭터 상자는 세로로 길어서 y=12% 가 «위쪽»이지만,
+//       **글자 상자는 납작해서**(글자 높이) 같은 12% 가 «글자 한가운데»가 된다 → 하트가 글자 속에서 나온다.
+//    ⭐ 그래서 글자일 때만 효과 판을 «글자 윗변 언저리»에 놓는다 — 조각 좌표는 그대로 두고 판만 옮긴다.
+export function StickerFx({ kind, lift }) {
   const def = FX_DEF[kind]
   if (!def) return null
+  const box = lift
+    ? { position: 'absolute', left: 0, right: 0, bottom: '60%', height: '140%' }
+    : { position: 'absolute', inset: 0 }
   return (
-    <span aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}>
+    <span aria-hidden="true" style={{ ...box, pointerEvents: 'none', overflow: 'visible' }}>
       {/* 4번째 값(vars) = 조각마다 다른 CSS 변수. 터지는 방향(--dx/--dy)·궤도 반지름(--r)·
           가로 이동 거리(--go) 처럼 **조각마다 달라야 하는 것**을 여기서 준다.
           (하나로 고정하면 '터졌다'가 아니라 '커졌다'로 보인다) */}

@@ -255,7 +255,9 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                 <span className={motionClass(it.motion)} style={{ display: 'inline-block' }}>
                   <TextDeco it={it} editable={editable} coverW={coverW} />
                 </span>
-                <StickerFx kind={it.fx} />
+                {/* ⬆️ lift = 효과를 «글자 위»에서 내보낸다 — 글자 상자는 납작해서 그냥 두면 글자 속에서 나온다
+                    (창업자 2026-08-07 *"하트효과가 글자 윗부분부터 시작해야하지 않아?"*) */}
+                <StickerFx kind={it.fx} lift />
               </>
             ) : it.type === 'photo' ? (
               // 📷 내 사진 — 종이 «종류와 상관없이» 붙는다 (창업자 2026-08-06
