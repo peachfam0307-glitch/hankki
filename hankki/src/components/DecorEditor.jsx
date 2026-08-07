@@ -113,7 +113,9 @@ function loadDraft(id) {
 // 📔 `paperPick`·`onPaperPick` = 다이어리 속지 고르기를 **이 서랍 안에서** 하게 하는 두 짝.
 //   ⭐ 값은 부모(다이어리 화면)가 쥔다 — 고르는 순간 부모의 `paper`·`paperOverlay` 가 다시 내려와
 //      **위 판이 그 자리에서 바뀐다.** 여기서 따로 들고 있으면 판과 글자 자리가 어긋난다.
-export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, paperOverlay = null, paperEdit = null, title = '레시피 꾸미기', paperPick = null, onPaperPick = null }) {
+// ✍️ `writeFont`·`onWriteFont` = **본문 글씨체** 두 짝. 값은 부모(다이어리 화면)가 쥔다 —
+//   여기서 들고 있으면 종이에 그려지는 글씨와 서랍이 어긋난다(속지 고르기와 같은 이유).
+export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, paperOverlay = null, paperEdit = null, title = '레시피 꾸미기', paperPick = null, onPaperPick = null, writeFont = '', onWriteFont = null }) {
   const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
   // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
   const draft = loadDraft(recipe.id)
@@ -637,14 +639,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 onChange={patch}
                 onRemove={remove}
                 onEditNote={(it) => setNoteEdit(it)}
-                // 📍 빈 종이의 «글칸»을 탭하면 글쓰기로 (창업자 *"속지 화면 줄 클릭하면 글쓰고"*)
-                //    ⚠️ 스티커를 탭한 건 여기로 안 온다 — `DecorLayer` 가 걸러서 준다.
-                //    ⚠️ 쓰는 칸은 «여럿»일 수 있다(「레시피 기록」은 사진 옆 ＋ 가운데 둘) — 하나만 보면 절반이 죽는다
-                onEmptyTap={paperEdit && paper?.fields?.write ? (x, y) => {
-                  const ws = Array.isArray(paper.fields.write) ? paper.fields.write : [paper.fields.write]
-                  const hit = ws.some((w) => x >= w.left && x <= 100 - w.right && y >= (w.top ?? 0) && y <= 100 - (w.bottom ?? 0))
-                  if (hit) setMode('write')
-                } : undefined}
+                // ⛔⛔ **`onEmptyTap` 을 뺐다** (창업자 폰 제보 2026-08-07
+                //    *"스티커 하나 붙이면 바로 글쓰기로 넘어가. 다른거 붙이려면 다시 일꾸 눌러야함."*)
+                //   📌 뿌리 = **이 문이 «열려야 할 곳»에선 안 열리고 «닫혀야 할 곳»에서만 열렸다.**
+                //      이 층은 `pointerEvents: editable ? 'auto' : 'none'` 이라 **꾸미기 모드에서만** 탭을 받는다.
+                //      그래서 「속지 탭에서 글칸을 누르면 글쓰기로」를 하려고 만든 것이 정작 속지 탭에선
+                //      한 번도 안 불렸고, **일꾸에서 고른 걸 풀려고 빈 종이를 누를 때마다** 글쓰기로 튀었다.
+                //      「없음」 틀은 쓰는 칸이 종이 «거의 전체»라 어디를 눌러도 걸린다 — 창업자가 본 그대로.
+                //   ⭐ 꾸미기에서 빈 자리 탭은 **「고른 것 풀기」** 하나만 한다. 탭을 옮기는 건 탭 줄이 한다.
+                //   🔬 `_repro-일꾸탭.mjs` 가 이걸 재현하고, 고친 뒤 안 넘어가는 것까지 잰다.
               />
             )
             // 📔 다이어리 — 종이 ＋ 쓴 글이 «화면과 똑같이» 보여야 한다.
@@ -963,6 +966,32 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ) : (
                 <button className={`seg ${mode === 'decor' ? 'on' : ''}`} onClick={() => setMode('decor')}>꾸미기</button>
               )}
+            </div>
+          )}
+          {/* ✍️✍️ **본문 글씨체** — 「글쓰기」 탭에만, 한 줄로 (창업자 2026-08-07
+              *"글쓰기할때 글자선택하는게 있었음 좋겠어. 글자가일꾸에 있어서 불편"*
+               → *"내 말은 «글쓰기 글자체»도 추가했으면 좋겠다는 뜻이었는데 스티커 글자체만 추가 되었단 뜻."*)
+              ⛔ 오늘 넣은 글씨체 열둘이 **글자 «스티커»에만** 붙어 있었다. 종이에 바로 쓰는 본문은
+                 귀염체 고정이라, 일기의 주인공인 글이 정작 못 고르는 상태였다.
+              ⭐ 「글자」 탭(일꾸 안)까지 가지 않아도 된다 — 글 쓰는 자리에서 바로 고른다.
+              ⚠️ **한 줄만** 둔다 — 서랍이 접혀야(`.decor-drawer.writing` 26vh) 종이가 커진다.
+                 그 자리를 도로 먹으면 「글 쓰는데 서랍이 반을 먹는」 옛 문제로 돌아간다.
+              ⚠️ 이름표는 «칩 글꼴»로 그린다 — 안 그러면 이 줄 하나에 4.45MB 를 부른다. */}
+          {writing && onWriteFont && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 2px 8px', flex: '0 0 auto' }}>
+              <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-sub)', flex: '0 0 auto' }}>글씨</span>
+              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', flex: '1 1 auto' }}>
+                {TEXT_FONTS.map((f) => {
+                  const on = (writeFont || 'gaegu') === f.key
+                  return (
+                    <button key={f.key} className="press" onClick={() => onWriteFont(f.key)}
+                      style={{ flex: '0 0 auto', padding: '5px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700,
+                        fontFamily: chipFamily(f), background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)', border: 'none' }}>
+                      {f.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
           {/* ↩↩ **되돌리기** — 되돌릴 게 «있을 때만» 보인다(빈 버튼은 죽은 버튼이다).

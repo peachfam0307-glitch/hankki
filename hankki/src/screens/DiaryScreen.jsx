@@ -78,8 +78,10 @@ export default function DiaryScreen({ day }) {
   //   🔀 `picks` = 「인쇄된 아이콘 중 고른 것」 여러 축(기분·장소·동행·시간대…). **객체**다.
   //      ⚠️ 그래서 «바뀌었나»를 `!==` 로 재면 안 된다 — 객체는 참조 비교라 늘 다르다고 나와
   //         매 렌더마다 저장이 돌게 된다. 아래 `same()` 이 그걸 막는다.
-  const blank = { title: '', note: '', line: '', weather: '', photo: '', picks: {} }
-  const of = (e) => ({ title: e?.title || '', note: e?.note || '', line: e?.line || '', weather: e?.weather || '', photo: e?.photo || '', picks: e?.picks || {} })
+  // ✍️ `font` = **본문 글씨체** (창업자 2026-08-07 *"글쓰기 글자체도 추가했으면"*)
+  //    ⛔ 빈 값이 «귀염체»다 — 이미 쓴 일기는 이 칸이 없으니 예전 모습 그대로 남는다
+  const blank = { title: '', note: '', line: '', weather: '', photo: '', picks: {}, font: '' }
+  const of = (e) => ({ title: e?.title || '', note: e?.note || '', line: e?.line || '', weather: e?.weather || '', photo: e?.photo || '', picks: e?.picks || {}, font: e?.font || '' })
   const same = (a, b) => (a && typeof a === 'object') || (b && typeof b === 'object')
     ? JSON.stringify(a || {}) === JSON.stringify(b || {})
     : a === b
@@ -89,9 +91,9 @@ export default function DiaryScreen({ day }) {
   const dirty = Object.keys(blank).some((k) => !same(text[k], saved[k]))
   useEffect(() => {
     if (!dirty) return // 처음 열었을 때 «빈 다이어리»를 만들어 버리지 않게
-    const t = setTimeout(() => save({ title: text.title, note: text.note, line: text.line, weather: text.weather, photo: text.photo, picks: text.picks }), 350)
+    const t = setTimeout(() => save({ title: text.title, note: text.note, line: text.line, weather: text.weather, photo: text.photo, picks: text.picks, font: text.font }), 350)
     return () => clearTimeout(t)
-  }, [text.title, text.note, text.line, text.weather, text.photo, JSON.stringify(text.picks)]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text.title, text.note, text.line, text.weather, text.photo, text.font, JSON.stringify(text.picks)]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 📷 사진 — 틀에 그려진 «창»에 끼운다 (창업자 2026-08-06 *"사진틀에 사진올리기가없어"*)
   //   ⭐ `cropSquare` 를 그대로 쓴다 — 레시피 표지·요리 기록·아바타가 다 쓰는, 이미 검증된 길이다
@@ -140,6 +142,7 @@ export default function DiaryScreen({ day }) {
             onChange={setText}
             onPickPhoto={() => photoRef.current?.click()}
             dateLabel={dateLabel}
+            font={text.font}
           />
           <DecorLayer items={decor} />
         </PaperBox>
@@ -188,7 +191,7 @@ export default function DiaryScreen({ day }) {
           //    ⛔ 전엔 `onChange` 하나가 전부를 갈라서 이 칸들이 **만든 날부터 한 번도 안 눌렸다.**
           //    📷 `onPickPhoto` 도 같이 — 틀의 사진칸은 «고르는 일»이지 «쓰는 일»이 아니다.
           //       전엔 글쓰기 탭에서만 눌려서 사진 넣으러 갔다 꾸미러 오는 왕복이 생겼다.
-          paperOverlay={<PaperSheet fields={skin.fields} rule={skin.rule} value={text} onPick={setText} onPickPhoto={() => photoRef.current?.click()} dateLabel={dateLabel} />}
+          paperOverlay={<PaperSheet fields={skin.fields} rule={skin.rule} value={text} onPick={setText} onPickPhoto={() => photoRef.current?.click()} dateLabel={dateLabel} font={text.font} />}
           // ✍️✍️ **꾸미기 안에서 «바로 쓴다»** (창업자 2026-08-06
           //    *"속지고르고 꾸미고 저장해야 글을 쓸수있어서 불편한데.. 속지 고른상태에서
           //      속지 화면 줄 클릭하면 글쓰고(꾸미기칸자동내려감) … 다시 꾸미기버튼 누르면 꾸미고"*)
@@ -202,11 +205,15 @@ export default function DiaryScreen({ day }) {
               onChange={setText}
               onPickPhoto={() => photoRef.current?.click()}
               dateLabel={dateLabel}
+              font={text.font}
             />
           )}
           // 📔 속지 고르기 = 꾸미기 첫 탭. 고르면 «그 자리에서» 판이 바뀐다(저장을 눌러야 보이는 게 아니다)
           paperPick={pick}
           onPaperPick={choose}
+          // ✍️ 본문 글씨체 — 「글쓰기」 탭 서랍에서 고른다. 값은 여기(부모)가 쥔다
+          writeFont={text.font}
+          onWriteFont={(k) => setText((t) => ({ ...t, font: k }))}
           // ⭐ 에디터에 들어가면 날짜가 안 보인다 → 머리글이 «지금 어느 날을 꾸미는 중인지»를 말한다
           title={`${date.getMonth() + 1}월 ${date.getDate()}일 일기`}
           recipe={{ id: `diary-${day}`, title: '', decor, decorBg: 'none', thumb: 'none' }}
