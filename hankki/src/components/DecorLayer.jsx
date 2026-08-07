@@ -176,7 +176,9 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             : { bottom: px(-19, e.b), right: px(-19, e.r) },
         }
         const isText = it.type === 'text'
-        const ratio = it.type === 'photo' ? (it.ratio || 1) : (it.type === 'tape' || it.type === 'hl') ? (it.ratio || (it.type === 'hl' ? 6 : 3.4)) : it.type === 'note' ? (it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
+        // 🏷 글 상자 = 포스트잇(`note`)에 «배경 그림»(`art`)을 깐 것 (2026-08-07)
+        //   ⭐ 비율은 그 그림의 실제 비율을 쓴다 — 벡터 포스트잇의 1.06 을 쓰면 라벨이 찌그러진다.
+        const ratio = it.type === 'photo' ? (it.ratio || 1) : (it.type === 'tape' || it.type === 'hl') ? (it.ratio || (it.type === 'hl' ? 6 : 3.4)) : it.type === 'note' ? (it.art ? stickerRatio(it.art) : it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
         const base = {
           position: 'absolute',
           left: `${it.x * 100}%`,
