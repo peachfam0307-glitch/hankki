@@ -16,7 +16,11 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 //      고치려면 매번 「일꾸」 탭을 먼저 눌러야 했다.
 //   ⭐ 답 = **층은 통과시키고 «아이템만» 받는다.** 빈 자리는 글칸·축이 그대로 받고,
 //      스티커 위를 누르면 그 스티커가 받아서 꾸미기로 넘어간다. 손가락이 누른 것이 답이 된다.
-export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote, onEmptyTap, onTapItem }) {
+// ⌨️ editingId = 지금 «그 자리에서» 글을 치고 있는 아이템. onText 로 글자만 올려보낸다.
+//    ⚠️ 이 주석은 bash 백틱 명령치환으로 두 낱말이 통째로 날아간 적이 있다(2026-08-07 · 두 번째).
+//       subst.py --new 안에는 백틱을 쓰지 않는다.
+//    ⛔ 전엔 붙이면 시트가 열려 거기 치고 「붙이기」를 눌러야 했다 — 창업자가 말한 「한 번에」가 아니다.
+export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote, onEmptyTap, onTapItem, editingId, onText }) {
   const boxRef = useRef(null)
   // 커버 실제 폭(px) — 글자 상자를 글자에 딱 맞추면서(max-content) 글자 크기는 '커버 폭 기준'으로 px 계산하려고.
   const [coverW, setCoverW] = useState(0)
@@ -237,7 +241,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             ) : it.type === 'tape' ? (
               <div style={{ position: 'absolute', inset: 0, ...tapeStyle(it.key), boxShadow: '0 1px 3px rgba(70,60,45,.18)' }} />
             ) : it.type === 'note' ? (
-              <Note it={it} editable={editable} />
+              <Note it={it} editable={editable} typing={editingId === it.id} onText={(t) => onText?.(it.id, t)} />
             ) : it.type === 'text' ? (
               // ✍️✨ **글자에도 모션·효과** (창업자 2026-08-07 *"글자에도 모션이나 효과가 들어가면 더 좋고"*)
               //   ⭐ 새로 만든 게 없다 — 모션은 `hk-m-*` CSS 클래스라 그림이든 글자든 똑같이 얹히고,
@@ -362,7 +366,10 @@ function TextDeco({ it, editable, coverW = 0 }) {
   )
 }
 
-function Note({ it, editable }) {
+function Note({ it, editable, typing, onText }) {
+  // ⌨️ 편집을 «시작할 때만» DOM 에 글자를 넣는다 — 매 입력마다 React 가 넣으면 커서가 맨 앞으로 튄다
+  const tRef = useRef(null)
+  useEffect(() => { if (typing && tRef.current) tRef.current.textContent = it.text || '' }, [typing])
   const c = NOTE_COLORS.find((n) => n.key === it.key) || NOTE_COLORS[0]
   const shape = it.shape || 'fold'
   const pattern = it.pattern || 'plain'
@@ -395,10 +402,22 @@ function Note({ it, editable }) {
         )}
       </div>
 
-      {/* 글자 (마스크 밖 — 실루엣 위에 얹힘) */}
+      {/* 글자 (마스크 밖 — 실루엣 위에 얹힘)
+          ⌨️⌨️ **그 자리에서 바로 쳐진다** (창업자 2026-08-07
+             *"자기가 원하는 줄글사각형프레임을 만들어서 크기를 키우고 원하는데 붙이면
+               거기서 «바로» 글 쓸 수 있고, 스티커처럼 여기저기 아무대나"*)
+          ⛔ 전엔 붙이면 **시트가 열려** 거기 치고 「붙이기」를 눌러야 했다 — 두 단계다.
+          ⭐ `contentEditable` 을 쓴다(textarea 가 아니라) — **글자 정렬·글꼴·여백이 그대로**라
+             치는 중과 친 뒤의 «자리가 안 튄다». textarea 는 세로 가운데 정렬이 안 돼 글이 위로 뛴다.
+          ⚠️ React 가 값을 다시 내려보내면 커서가 맨 앞으로 튄다 → **편집 중엔 DOM 이 주인**이고
+             부모는 값만 받아 둔다(`suppressContentEditableWarning`). */}
       <div
+        contentEditable={typing || undefined}
+        suppressContentEditableWarning
+        onInput={typing ? (e) => onText?.(e.currentTarget.textContent || '') : undefined}
         style={{
           position: 'absolute', inset: 0, boxSizing: 'border-box', padding: textPad,
+          ...(typing ? { outline: 'none', cursor: 'text', pointerEvents: 'auto' } : null),
           // 포스트잇 글자 = 웜브라운 본연의 부드러움(밝은 종이라 외곽선 없어도 잘 읽힘).
           // 단, 얇은 손글씨(귀염체·펜글씨)만 동색 얇은 외곽선(0.4px)으로 살짝 두껍게(창업자 요청). 색은 그대로.
           fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
@@ -407,8 +426,9 @@ function Note({ it, editable }) {
           overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
           display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
         }}
+        ref={tRef}
       >
-        {text}
+        {typing ? null : text}
       </div>
 
       {/* 테이프 — 위쪽 가운데 반투명 마스킹테이프 */}
