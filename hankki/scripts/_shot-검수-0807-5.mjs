@@ -106,6 +106,12 @@ await page.getByRole('button', { name: '글자', exact: true }).last().click(); 
   if (await save.count()) { await save.click(); await page.waitForTimeout(900) }
   await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(600)
   await shot('9-글자-편집바-색15과-모션효과')
+  // 🐛 창업자 제보(v9.93 회귀) — 효과가 «맨 앞 한 글자» 위에만 뜨던 것. 하트를 걸어 «전체»에 뜨는지 본다.
+  const fxb = page.locator('.decor-editor button').filter({ hasText: /^하트$/ }).first()
+  if (await fxb.count()) {
+    await fxb.click(); await page.waitForTimeout(900)
+    await shot('9b-글자에-하트효과-전체에-뜬다')
+  }
 }
 
 // ⑦ 서랍 맨 위 배치 — 레시피 꾸미기라야 「배경 음식 아이콘 지우기」가 뜬다(일기엔 표지가 없다)
