@@ -1450,7 +1450,15 @@ export const TEXT_WEIGHTS = [
 //   → 글씨체마다 기준 두께를 달리 줘서 **'보통'일 때 다 비슷하게 보이도록** 맞춘다.
 //   `ls` = 자간 보정(비워두면 기본).
 export const TEXT_FONTS = [
-  // `fw` = **굵기(살)** 보정 · `ls` = 자간
+  // `fw` = **굵기(살)** 보정 · `ls` = 자간 · `sz` = **크기 보정**
+  // 📏📏 `sz` — 같은 크기로 놓아도 글씨체마다 «보이는 크기»가 다르다 (창업자 2026-08-07
+  //   *"글씨크기를 다 비슷하게 조정해서 보통으로 두고 작게 보통 크게로 올려줄수는 없어?"*)
+  //   ⭐ **눈대중이 아니라 재서** 넣었다 — `scripts/_measure-글씨크기.mjs` 가 캔버스에 그려
+  //      «잉크가 실제로 차지하는 높이»를 잰다(글꼴이 «선언한» 값이 아니라 그려진 픽셀).
+  //      실측: 또박체 0.975 ~ 납작체 0.650 — **1.5배 차이**다. 그래서 납작체가 작아 보였다.
+  //   ⭐ 기준 = 귀염체(=1.00). 지금까지 본문이 쓰던 글씨체라 **지금 모습이 안 바뀐다.**
+  //   ⚠️ 0.8~1.35 로 묶는다 — 납작체는 잰 값이 1.42 라 묶였다(다 맞추면 그 글씨체가 안 납작해진다).
+  //   📌 **본문에만 쓴다.** 글자 스티커는 손잡이로 키우니 보정이 필요 없다.
   // ⚠️ `bw` 는 **아무도 안 읽는다** — 옛 시도의 흔적이다(`TextDeco` 는 `fw`·`ls` 만 쓴다).
   //    지우면 저장된 값과 무관하니 안전하지만, 새 줄엔 «넣지 말 것».
   // ⚠️⚠️ 처음엔 둘을 **하나(`bw`)로 같이** 썼다가 사고가 났다 — 창업자 *"굵게하면 저 글씨체만 이상하고"*.
@@ -1475,23 +1483,23 @@ export const TEXT_FONTS = [
   //      포스트잇 기본값도 `'gaegu'` 다. 자리를 바꾸면 «옛 글자가 딴 글씨로» 바뀐다.
   //
   // ── ✍️ 손글씨(직접 쓴 느낌) ──
-  { key: 'gaegu', label: '귀염체', family: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", weight: 700, bw: 0.9, fw: 0.85 },
-  { key: 'gamja', label: '삐뚤체', family: "'Gamja Flower','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9 },
-  { key: 'poorstory', label: '연필체', family: "'Poor Story','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9 },
+  { key: 'gaegu', label: '귀염체', family: "'Gaegu','Gowun Dodum','Pretendard',sans-serif", weight: 700, bw: 0.9, fw: 0.85, sz: 1 },
+  { key: 'gamja', label: '삐뚤체', family: "'Gamja Flower','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9, sz: 1.08 },
+  { key: 'poorstory', label: '연필체', family: "'Poor Story','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9, sz: 1.02 },
   // ⚠️ 얇고 흘리는 글씨(몽글체·가는체)는 `ls` 를 조금 준다 — 굵게 하면 옆 글자와 닿는다(펜글씨 0.1em 과 같은 이유)
-  { key: 'himelody', label: '몽글체', family: "'Hi Melody','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.8, ls: '0.04em' },
-  { key: 'singleday', label: '가는체', family: "'Single Day','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9, ls: '0.02em' },
+  { key: 'himelody', label: '몽글체', family: "'Hi Melody','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.8, ls: '0.04em', sz: 1.13 },
+  { key: 'singleday', label: '가는체', family: "'Single Day','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9, ls: '0.02em', sz: 1.04 },
   // ⚠️ 펜글씨 = 획이 제일 얇고 글자끼리 붙는다 → **살은 얇게**(fw), 자간은 넓게
-  { key: 'nanumpen', label: '펜글씨', family: "'Nanum Pen Script','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 2, fw: 0.5, ls: '0.1em' },
+  { key: 'nanumpen', label: '펜글씨', family: "'Nanum Pen Script','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 2, fw: 0.5, ls: '0.1em', sz: 1.12 },
   // ── 🔠 또렷한 글씨(활자) ──
-  { key: 'jua', label: '통통체', family: "'Jua','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 0.9, fw: 0.8 },
-  { key: 'cutefont', label: '동글체', family: "'Cute Font','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9, ls: '0.02em' },
+  { key: 'jua', label: '통통체', family: "'Jua','Gowun Dodum','Pretendard',sans-serif", weight: 400, bw: 0.9, fw: 0.8, sz: 1.07 },
+  { key: 'cutefont', label: '동글체', family: "'Cute Font','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 0.9, ls: '0.02em', sz: 1.21 },
   // ⚠️ 납작체(Dongle)는 **글자 자체가 납작해서** 같은 크기로 놓으면 다른 글씨체보다 작아 보인다.
   //    글씨체 성격이라 그대로 둔다 — 크게 쓰고 싶으면 손잡이로 키우면 된다.
-  { key: 'dongle', label: '납작체', family: "'Dongle','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 1 },
-  { key: 'dohyeon', label: '라운드', family: "'Do Hyeon','Pretendard',sans-serif", weight: 400, bw: 1.1, fw: 0.9 },
-  { key: 'gowun', label: '또박체', family: "'Gowun Dodum','Pretendard',sans-serif", weight: 800, bw: 1.5, fw: 1, ls: '0.01em' },
-  { key: 'blackhan', label: '임팩트', family: "'Black Han Sans','Pretendard',sans-serif", weight: 400, bw: 0.55, fw: 0.45 },
+  { key: 'dongle', label: '납작체', family: "'Dongle','Gowun Dodum','Pretendard',sans-serif", weight: 400, fw: 1, sz: 1.35 },
+  { key: 'dohyeon', label: '라운드', family: "'Do Hyeon','Pretendard',sans-serif", weight: 400, bw: 1.1, fw: 0.9, sz: 1.17 },
+  { key: 'gowun', label: '또박체', family: "'Gowun Dodum','Pretendard',sans-serif", weight: 800, bw: 1.5, fw: 1, ls: '0.01em', sz: 0.94 },
+  { key: 'blackhan', label: '임팩트', family: "'Black Han Sans','Pretendard',sans-serif", weight: 400, bw: 0.55, fw: 0.45, sz: 1.18 },
 ]
 
 // 🏷🏷 **고르는 칸에 쓸 «아주 작은» 벌** — 이름 몇 글자만 든 글꼴로 이름표를 그린다.
