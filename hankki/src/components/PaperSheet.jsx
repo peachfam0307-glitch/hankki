@@ -1,4 +1,5 @@
 import Icon from './Icon'
+import { TEXT_FONTS } from './Stickers'
 import { PAPER_LINE_H } from '../data/papers'
 
 // 📝📝 종이 «위»에 바로 쓴다.
@@ -16,6 +17,13 @@ import { PAPER_LINE_H } from '../data/papers'
 //    안 움직이던 그 함정의 반대 경우다 — 여기선 반드시 상대값이라야 한다)
 //    ⚠️ 컨테이너는 **종이 자신이 아니라 바깥 자**다. 제 폭은 제가 못 잰다 → `PaperBox` 가 감싼다.
 
+// ✍️✍️ **본문 글씨체는 «고를 수 있다»** (창업자 2026-08-07
+//   *"글쓰기할때 글자선택하는게 있었음 좋겠어. 글자가일꾸에 있어서 불편"*
+//    → *"내 말은 «글쓰기 글자체»도 추가했으면 좋겠다는 뜻이었는데 스티커 글자체만 추가 되었단 뜻."*)
+//   ⛔ 오늘 넣은 글씨체 열둘은 **글자 «스티커»에만** 붙었다. 종이에 바로 쓰는 본문은
+//      여기 상수 하나로 «귀염체 고정»이었다 — 일기의 주인공인 글이 정작 못 고르는 상태.
+//   ⭐ `TEXT_FONTS` 를 그대로 쓴다 — 목록이 하나라 스티커와 본문이 «같은 글씨체»로 맞는다.
+//   ⚠️ 못 받으면 예전 그대로(귀염체) — 이미 쓴 일기가 안 바뀐다.
 const HAND = "'Gaegu','Gowun Dodum','Pretendard',sans-serif"
 const INK = '#5b4436' // 우리 진갈색 — 속지 선(#e2d8c6)보다 진해 크라프트 위에서도 읽힌다
 
@@ -36,12 +44,16 @@ const box = (f) => ({
   ...(f.bottom !== undefined ? { bottom: `${f.bottom}%` } : {}),
 })
 
-const hand = {
-  fontFamily: HAND, fontWeight: 700, color: INK,
+// ⚠️ 줄 간격(`lineHeight`)은 «글씨체가 바뀌어도» 그대로다 — 종이의 줄과 묶여 있어서 흔들면 글이 줄에서 어긋난다.
+//    글자 «크기»만 글씨체를 따라간다. (납작한 글씨는 작아 보이는데 그게 그 글씨체의 성격이다)
+const handOf = (f) => ({
+  fontFamily: f?.family || HAND,
+  fontWeight: f?.weight || 700,
+  color: INK,
   fontSize: `${PAPER_LINE_H * 0.79}cqw`,
   lineHeight: `${PAPER_LINE_H}cqw`,
-  letterSpacing: '0.01em',
-}
+  letterSpacing: f?.ls || '0.01em',
+})
 
 /**
  * 종이 위의 «쓰는 칸» 전부. `onChange` 가 없으면 읽기 전용(꾸미기 판·미리보기).
@@ -54,7 +66,9 @@ const hand = {
 //   ⭐ 둘은 성격이 다르다 — 글칸은 누르면 **키보드가 떠서** 꾸미기를 방해하지만,
 //      축은 **탭 한 번**이라 꾸미는 중에 눌러도 아무것도 안 가린다.
 //   📌 그래서 「글칸은 읽기 전용, 축은 살아 있음」을 **한 칸으로** 만든다.
-export default function PaperSheet({ fields, value = {}, onChange, onPick, onPickPhoto, dateLabel = '', rule = '' }) {
+export default function PaperSheet({ fields, value = {}, onChange, onPick, onPickPhoto, dateLabel = '', rule = '', font = '' }) {
+  // ✍️ 본문 글씨체 — 못 찾으면 예전 그대로(귀염체). ⛔이미 쓴 일기가 바뀌면 안 된다
+  const hand = handOf(TEXT_FONTS.find((t) => t.key === font))
   const ro = !onChange
   // ✅ 축을 고를 수 있나 — 쓰기 판(`onChange`)이거나, 고르기만 열어 준 판(`onPick`)이면 된다
   const write = onChange || onPick

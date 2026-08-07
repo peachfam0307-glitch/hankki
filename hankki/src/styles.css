@@ -1511,6 +1511,20 @@ html, body { overscroll-behavior: none; }
   display: flex; flex-direction: column;
   padding-top: var(--safe-top);
   animation: fadeIn 0.18s ease both;
+  /* ✋✋ **길게 눌러도 「글자 선택」이 안 뜨게** (창업자 폰 제보 2026-08-07
+     *"스티커 늘리기하면 길게 누르면서 늘리면 구글검색? 이런게 켜져. 뭔가 불편해"*)
+     ⛔ 크기·회전 손잡이를 끄는 건 **길게 누른 채 끄는 동작**이다. 그 손가락이 화면의 글자 위를
+        지나가면 안드로이드가 «텍스트 선택»으로 알아듣고 복사·공유·웹 검색 막대를 띄운다.
+        실측 = 꾸미기 화면에서 글자를 «선택할 수 있는» 자리가 10곳(제목·안내줄·탭 이름…).
+     ⭐ 꾸미기 화면의 글자는 **읽는 것**이지 «고르는 것»이 아니다 → 통째로 막는다.
+     ⚠️ 글을 «쓰는» 칸은 예외 — 거기선 선택·복사가 되어야 한다(바로 아래 규칙). */
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+.decor-editor textarea,
+.decor-editor input {
+  -webkit-user-select: text; user-select: text;
+  -webkit-touch-callout: default;
 }
 .decor-top {
   display: flex; align-items: center; justify-content: space-between;
