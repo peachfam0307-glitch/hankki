@@ -945,6 +945,12 @@ img {
    ⭐ `multiply` 라 **띠를 글자 «위»에 얹어도 글자가 그대로 비친다**(덮는 게 아니라 칠하는 것).
       앱 꾸미기 형광펜(`DecorLayer`)과 «같은 문법» — z-index 로 밑에 깔 필요가 없다.
    📐 위에서 32% 부터 = 손으로 그은 형광펜처럼 «글자 아랫동아리»만 지나간다(윗줄을 다 덮으면 매직펜이 된다). */
+/* 🐻 절 머리 = 곰 ＋ 제목 ＋ 도움말 동그라미. 창업자 2026-08-08 *"이미지랑 재료 만드는법 너무 붙어있어.
+   한칸만 떼자"* → 곰과 제목 사이만 넓히고(12px) 제목과 도움말은 원래대로(5px) 둔다.
+   ⛔ `gap` 하나로 주면 셋 사이가 «다 같이» 벌어져 도움말 동그라미까지 멀어진다. */
+.sec-title-row { gap: 5px; }
+.sec-title-row > img:first-child { margin-right: 7px; }
+
 .hl-mark { position: relative; display: inline-block; }
 .hl-mark::after {
   content: ''; position: absolute; left: -6px; right: -6px; top: 32%; bottom: 6%;
@@ -960,11 +966,15 @@ img {
 
 /* ⓖ 맨 끝 「완성」 칸 — 줄은 하나도 안 건드리고 마지막 단계 «뒤»에만 붙는다 */
 .done-strip {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: center; gap: 18px;  /* ⛔12px 이면 떠오르는 조각이 글자를 스친다 */
   margin-top: 14px; padding: 13px 15px;
   background: var(--cream); border-radius: 15px;
 }
 .done-gom { position: relative; display: inline-block; flex: 0 0 auto; }
+/* ⛔ 떠오르는 음식 조각이 「다 됐어요」 글자를 스쳤다(창업자가 잡았다).
+   ✅ 글자를 조각보다 «앞»에 놓는다 — 효과는 배경 장식이니 글자 뒤로 지나가는 게 자연스럽다.
+   ⛔ lift 로 판을 위로 올려도 봤는데 그땐 조각이 칸 밖으로 나가 «안 보였다». */
+.done-strip > div { position: relative; z-index: 1; }
 .done-strip img { height: 46px; width: auto; display: block; }
 .done-strip b { display: block; font-size: 14.5px; color: var(--brown); }
 .done-strip span { display: block; font-size: 12.5px; color: var(--text-sub); margin-top: 1px; }

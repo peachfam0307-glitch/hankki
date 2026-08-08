@@ -405,7 +405,7 @@ export default function RecipeDetailScreen({ id }) {
         {r.ingredients?.length > 0 && (
           <>
             <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div className="sec-title-row" style={{ display: 'flex', alignItems: 'center' }}>
                 <DetailDecor mode={DECOR_MODE} where="head-재료" />
                 <SecTitle>재료</SecTitle>
                 <button className="press" onClick={() => setGuide(true)} aria-label="계량·손질 가이드" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 999, background: 'var(--cream)' }}>
@@ -463,7 +463,7 @@ export default function RecipeDetailScreen({ id }) {
         {r.steps?.length > 0 && (
           <>
             <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div className="sec-title-row" style={{ display: 'flex', alignItems: 'center' }}>
                 <DetailDecor mode={DECOR_MODE} where="head-만드는법" />
                 <SecTitle>만드는 법</SecTitle>
               </div>

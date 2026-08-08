@@ -155,6 +155,10 @@ export default function DetailDecor({ mode, where, text, prev }) {
       <div className="done-strip">
         {/* 효과 조각이 곰 둘레에서 나야 해서 «곰을 감싼 칸»에 얹는다(칸 전체에 뿌리면 글자 위로 지나간다) */}
         <span className="done-gom">
+          {/* ⛔ 조각이 곰 «옆»으로 퍼져 「다 됐어요」 글자를 스쳤다(창업자가 잡았다).
+              ⛔ 처음엔 lift 로 판을 위로 올렸는데 이번엔 조각이 칸 밖으로 나가 «안 보였다».
+              ✅ 그래서 조각은 그대로 두고 **글자를 조각보다 앞에** 놓는다(done-strip 의 z-index).
+                 효과는 배경 장식이니 글자 뒤로 지나가는 게 자연스럽다. */}
           <StickerFx kind={DONE_FX} />
           <img src={gomClap} alt="" aria-hidden="true" draggable={false} className={DONE_MOTION} />
         </span>
