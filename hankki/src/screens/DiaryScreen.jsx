@@ -8,7 +8,7 @@ import DecorEditor from '../components/DecorEditor'
 import PaperSheet, { PaperBox } from '../components/PaperSheet'
 import { paperStyle } from '../data/papers'
 import { useLayerBack } from '../useBackHandler'
-import { cropSquare } from '../utils'
+import { fitImage } from '../utils'
 
 // 📔📔 다이어리 — 「그날」 한 장. (창업자 확정 2026-08-06)
 //
@@ -80,8 +80,8 @@ export default function DiaryScreen({ day }) {
   //         매 렌더마다 저장이 돌게 된다. 아래 `same()` 이 그걸 막는다.
   // ✍️ `font` = **본문 글씨체** (창업자 2026-08-07 *"글쓰기 글자체도 추가했으면"*)
   //    ⛔ 빈 값이 «귀염체»다 — 이미 쓴 일기는 이 칸이 없으니 예전 모습 그대로 남는다
-  const blank = { title: '', note: '', line: '', weather: '', photo: '', photo2: '', photo3: '', note2: '', note3: '', note4: '', picks: {}, font: '', size: '' }
-  const of = (e) => ({ title: e?.title || '', note: e?.note || '', line: e?.line || '', weather: e?.weather || '', photo: e?.photo || '', photo2: e?.photo2 || '', photo3: e?.photo3 || '', note2: e?.note2 || '', note3: e?.note3 || '', note4: e?.note4 || '', picks: e?.picks || {}, font: e?.font || '', size: e?.size || '' })
+  const blank = { title: '', note: '', line: '', weather: '', photo: '', photo2: '', photo3: '', photoPos: '', photo2Pos: '', photo3Pos: '', note2: '', note3: '', note4: '', picks: {}, font: '', size: '' }
+  const of = (e) => ({ title: e?.title || '', note: e?.note || '', line: e?.line || '', weather: e?.weather || '', photo: e?.photo || '', photo2: e?.photo2 || '', photo3: e?.photo3 || '', photoPos: e?.photoPos || '', photo2Pos: e?.photo2Pos || '', photo3Pos: e?.photo3Pos || '', note2: e?.note2 || '', note3: e?.note3 || '', note4: e?.note4 || '', picks: e?.picks || {}, font: e?.font || '', size: e?.size || '' })
   const same = (a, b) => (a && typeof a === 'object') || (b && typeof b === 'object')
     ? JSON.stringify(a || {}) === JSON.stringify(b || {})
     : a === b
@@ -91,9 +91,9 @@ export default function DiaryScreen({ day }) {
   const dirty = Object.keys(blank).some((k) => !same(text[k], saved[k]))
   useEffect(() => {
     if (!dirty) return // 처음 열었을 때 «빈 다이어리»를 만들어 버리지 않게
-    const t = setTimeout(() => save({ title: text.title, note: text.note, line: text.line, weather: text.weather, photo: text.photo, photo2: text.photo2, photo3: text.photo3, note2: text.note2, note3: text.note3, note4: text.note4, picks: text.picks, font: text.font, size: text.size }), 350)
+    const t = setTimeout(() => save({ title: text.title, note: text.note, line: text.line, weather: text.weather, photo: text.photo, photo2: text.photo2, photo3: text.photo3, photoPos: text.photoPos, photo2Pos: text.photo2Pos, photo3Pos: text.photo3Pos, note2: text.note2, note3: text.note3, note4: text.note4, picks: text.picks, font: text.font, size: text.size }), 350)
     return () => clearTimeout(t)
-  }, [text.title, text.note, text.line, text.weather, text.photo, text.photo2, text.photo3, text.note2, text.note3, text.note4, text.font, text.size, JSON.stringify(text.picks)]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text.title, text.note, text.line, text.weather, text.photo, text.photo2, text.photo3, text.photoPos, text.photo2Pos, text.photo3Pos, text.note2, text.note3, text.note4, text.font, text.size, JSON.stringify(text.picks)]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 📷 사진 — 틀에 그려진 «창»에 끼운다 (창업자 2026-08-06 *"사진틀에 사진올리기가없어"*)
   //   ⭐ `cropSquare` 를 그대로 쓴다 — 레시피 표지·요리 기록·아바타가 다 쓰는, 이미 검증된 길이다
@@ -110,9 +110,14 @@ export default function DiaryScreen({ day }) {
     if (!file) return
     const reader = new FileReader()
     reader.onload = async () => {
-      const src = await cropSquare(reader.result, 900)
+      // 📐 **자르지 않고 줄이기만** (창업자 2026-08-08 *"사진 위치조정이 안되네"*)
+      //   ⛔ `cropSquare` 는 «고를 때» 가운데 정사각만 남겨서, 세로 사진의 위·아래가 그 자리에서 사라졌다.
+      //      버린 건 나중에 아무리 끌어도 못 살린다 → 원본 비율을 통째로 들고 있어야 위치 조정이 된다.
+      //   ⭐ 보일 부분은 `PaperSheet` 가 «볼 때»(objectPosition) 정한다.
+      const src = await fitImage(reader.result, 1200)
       const pk = photoKeyRef.current || 'photo'
-      setText((t) => ({ ...t, [pk]: src }))
+      // ⚠️ 새 사진을 넣으면 그 칸의 위치도 «가운데»로 되돌린다 — 옛 사진 기준 좌표는 뜻이 없다
+      setText((t) => ({ ...t, [pk]: src, [`${pk}Pos`]: '' }))
     }
     reader.readAsDataURL(file)
   }

@@ -123,16 +123,69 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
              ⚠️ `onPickPhoto(저장키)` 로 «어느 칸인지» 같이 넘긴다 — 안 넘기면 셋이 같은 사진을 비춘다. */}
       {(fields.photo ? (Array.isArray(fields.photo) ? fields.photo : [fields.photo]) : []).map((p, pi) => {
         const pk = p.key || 'photo'
+        // 🫳🫳 **사진을 «끌어서» 보일 부분을 고른다** (창업자 폰 제보 2026-08-08 *"사진 위치조정이 안되네"*)
+        //
+        //   ⛔ 전엔 고를 때 가운데 정사각으로 «잘라 버리고»(cropSquare) 칸에서도 가운데만 보여줘서
+        //      (`objectFit:cover` 기본값 = 50% 50%) 원하는 부분이 위·아래에 있으면 **볼 길이 없었다.**
+        //   ⭐ 처방이 둘로 나뉜다 — ⑴자를 때 안 버린다(`fitImage`) ⑵볼 때 위치를 고른다(여기).
+        //      두 번째만 고치면 이미 잘려 나간 사진은 못 살린다.
+        //   ⭐ 손짓은 인스타 문법 그대로 — 프레임 안에서 사진이 손가락을 따라온다.
+        //   ⚠️ 값이 없으면 «가운데»(50% 50%) — 이미 넣어 둔 사진이 그대로 보인다(규칙 18 ⓙ).
+        const pos = value[`${pk}Pos`] || '50% 50%'
+        const imgStyle = { width: '100%', height: '100%', objectFit: 'cover', objectPosition: pos, display: 'block' }
+        // 📌 «탭 = 사진 바꾸기»와 갈라야 한다 → 6px 넘게 움직였을 때만 드래그로 친다.
+        //    드래그였으면 뒤따라오는 click 을 삼킨다(`dragged` 표시) — 안 그러면 끌 때마다 파일창이 뜬다.
+        // 📐 이동량 → % 환산: `cover` 는 사진을 칸보다 크게 그리므로 «넘치는 만큼»(overX/overY)만 움직인다.
+        //    손가락을 아래로 끌면 사진이 아래로 따라와야 하니 objectPosition % 는 «줄어든다»(반대 부호).
+        const dragStart = (e) => {
+          if (!canShot) return
+          const btn = e.currentTarget
+          const img = btn.querySelector('img')
+          if (!img || !img.naturalWidth) return
+          const rect = btn.getBoundingClientRect()
+          const scale = Math.max(rect.width / img.naturalWidth, rect.height / img.naturalHeight)
+          const overX = img.naturalWidth * scale - rect.width
+          const overY = img.naturalHeight * scale - rect.height
+          const [px0, py0] = pos.split(' ').map((v) => parseFloat(v))
+          const x0 = e.clientX, y0 = e.clientY
+          let moved = false
+          let cur = { x: px0, y: py0 }
+          const onMove = (ev) => {
+            const dx = ev.clientX - x0, dy = ev.clientY - y0
+            if (!moved && Math.hypot(dx, dy) < 6) return
+            if (!moved) { moved = true; btn.dataset.dragged = '1'; btn.setPointerCapture?.(ev.pointerId) }
+            cur = {
+              x: overX > 0 ? Math.min(100, Math.max(0, px0 - (dx / overX) * 100)) : px0,
+              y: overY > 0 ? Math.min(100, Math.max(0, py0 - (dy / overY) * 100)) : py0,
+            }
+            img.style.objectPosition = `${cur.x}% ${cur.y}%` // 끄는 동안은 화면만 — 저장은 손 뗄 때 한 번
+          }
+          const onUp = () => {
+            btn.removeEventListener('pointermove', onMove)
+            btn.removeEventListener('pointerup', onUp)
+            btn.removeEventListener('pointercancel', onUp)
+            if (moved) write({ ...value, [`${pk}Pos`]: `${Math.round(cur.x)}% ${Math.round(cur.y)}%` })
+            // ⚠️ `dragged` 는 여기서 안 지운다 — click 이 pointerup «뒤»에 오므로 click 핸들러가 지운다
+          }
+          btn.addEventListener('pointermove', onMove)
+          btn.addEventListener('pointerup', onUp)
+          btn.addEventListener('pointercancel', onUp)
+        }
         return (
         <div key={`photo${pi}`} style={{ ...box(p), overflow: 'hidden' }}>
           {value[pk]
             ? (!canShot
-              ? <img src={value[pk]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ? <img src={value[pk]} alt="" style={imgStyle} />
               : (
                 <>
-                  <button type="button" className="press" onClick={() => onPickPhoto(pk)} aria-label="사진 바꾸기"
-                    style={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'none', display: 'block' }}>
-                    <img src={value[pk]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <button type="button" className="press" aria-label="사진 — 끌어서 위치 조정 · 누르면 바꾸기"
+                    onPointerDown={dragStart}
+                    onClick={(e) => {
+                      if (e.currentTarget.dataset.dragged) { delete e.currentTarget.dataset.dragged; return }
+                      onPickPhoto(pk)
+                    }}
+                    style={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'none', display: 'block', touchAction: 'none' }}>
+                    <img src={value[pk]} alt="" draggable={false} style={{ ...imgStyle, pointerEvents: 'none' }} />
                   </button>
                   {/* 🗑🗑 **사진 지우기** (창업자 폰 제보 2026-08-07 *"하나추가 사진지우는게 없어."*)
                       ⛔ 이건 «사진 스티커»가 아니라 **틀의 사진칸**(`value.photo`)이라

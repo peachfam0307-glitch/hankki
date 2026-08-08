@@ -113,6 +113,37 @@ export async function cropSquare(dataUrl, out = 800, quality = 0.85) {
   }
 }
 
+// 📐📐 **자르지 않고 «줄이기만»** — 틀 사진칸용 (창업자 2026-08-08 *"사진 위치조정이 안되네"*)
+//
+// ⛔ `cropSquare` 는 «고르는 순간» 가운데 정사각만 남기고 나머지를 버린다.
+//    세로로 긴 사진을 넣으면 위·아래가 그때 사라져서, 나중에 아무리 끌어도 못 살린다.
+//    **위치 조정은 원본이 다 남아 있어야 되는 일이다.**
+// ⭐ 그래서 화면에 보일 부분은 «자를 때»가 아니라 «볼 때»(objectPosition) 정한다.
+// ⚠️ 안전망 둘은 `cropSquare` 와 똑같이 유지한다 — ①흰색 먼저(검정 방지) ②`decode()` 로 비트맵 대기
+//    (2026-07-23 폰에서 «검정 사진» 사고를 여기서 이미 겪었다).
+export async function fitImage(dataUrl, max = 1200, quality = 0.85) {
+  try {
+    const img = new Image()
+    await new Promise((res) => { img.onload = res; img.onerror = res; img.src = dataUrl })
+    if (img.decode) { try { await img.decode() } catch {} }
+    const w = img.naturalWidth || img.width
+    const h = img.naturalHeight || img.height
+    if (!w || !h) return dataUrl
+    const s = Math.min(1, max / Math.max(w, h)) // 큰 사진만 줄인다 — 작은 건 그대로
+    const c = document.createElement('canvas')
+    c.width = Math.max(1, Math.round(w * s))
+    c.height = Math.max(1, Math.round(h * s))
+    const ctx = c.getContext('2d')
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, c.width, c.height)
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(img, 0, 0, c.width, c.height)
+    return c.toDataURL('image/jpeg', quality)
+  } catch {
+    return dataUrl
+  }
+}
+
 // 🔍 한글 «초성» 찾기 — 「ㄱㅈ」으로 「간장」이 걸리게.
 //
 // ⭐ 창업자가 미리 짚어 둔 다음 단계다 — 2026-08-03
