@@ -950,11 +950,25 @@ img {
   display: flex; align-items: center; gap: 18px;  /* ⛔12px 이면 떠오르는 조각이 글자를 스친다 */
   margin-top: 14px; padding: 13px 15px;
   background: var(--cream); border-radius: 15px;
+  /* 🔒🔒 **장치** — 앞으로 이 칸에 무엇을 넣든 «칸 밖으로는 못 나간다».
+     ⛔⛔ 2026-08-08 창업자 폰: 떠오르는 음식 조각이 칸을 **128px** 넘어
+        레시피 단계 4·5 글자를 덮었다. 원인은 고쳤지만(아래 GOM_PX) **원인만 고치면 또 난다** —
+        조각 배치·칸 높이·글꼴 중 하나만 바뀌어도 다시 넘칠 수 있다.
+     ⭐ 규칙 19 그대로 «규칙이 아니라 장치로». 이 한 줄이 그 부류 전체를 막는다.
+     ⚠️ 대신 조각이 칸 «경계»에서 잘리므로, 조각이 칸 안에서 놀도록 `.done-fx` 로 판을 내려 뒀다. */
+  overflow: hidden;
 }
 .done-gom { position: relative; display: inline-block; flex: 0 0 auto; }
+/* 🪟 효과 판을 아래로 내린다 — 조각 출발점(`FX_DEF.food` 의 y = -10~-26%)이 «상자 위쪽 바깥»이라
+   이동 거리를 아무리 줄여도 칸을 넘는다. 판을 내리면 곰 손 언저리에서 음식이 떠오른다.
+   ⛔ 반대인 `lift`(글자용)를 여기 쓰면 조각이 칸 밖으로 나가 통째로 «안 보인다». */
+.done-fx { position: absolute; left: 0; right: 0; top: 24px; bottom: -24px; pointer-events: none; }
+/* 🐢 완성 칸에서만 느리게 — 창업자 2026-08-08 *"속도가 좀 빨라"*.
+   ⛔ `@keyframes hk-fx-food` 의 3s 는 **꾸미기 캔버스와 공용**이라 건드리면 회귀다.
+      여기서만 덮는다(특이도 0,2,0 > 0,1,0 이라 단축 속성의 3s 를 이긴다). */
+.done-gom .hk-fx { animation-duration: 4.6s; }
 /* ⛔ 떠오르는 음식 조각이 「다 됐어요」 글자를 스쳤다(창업자가 잡았다).
-   ✅ 글자를 조각보다 «앞»에 놓는다 — 효과는 배경 장식이니 글자 뒤로 지나가는 게 자연스럽다.
-   ⛔ lift 로 판을 위로 올려도 봤는데 그땐 조각이 칸 밖으로 나가 «안 보였다». */
+   ✅ 글자를 조각보다 «앞»에 놓는다 — 효과는 배경 장식이니 글자 뒤로 지나가는 게 자연스럽다. */
 .done-strip > div { position: relative; z-index: 1; }
 .done-strip img { height: 46px; width: auto; display: block; }
 .done-strip b { display: block; font-size: 14.5px; color: var(--brown); }
