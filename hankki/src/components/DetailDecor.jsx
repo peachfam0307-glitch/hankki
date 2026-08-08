@@ -11,6 +11,7 @@
 //
 // ⚠️ 이 파일은 «시안»이다. 창업자가 하나를 고르면 나머지 갈래와 `mode` 를 지운다.
 import { useMemo } from 'react'
+import { StickerFx } from './Stickers'
 import gomPot from '../assets/sharepool/gom_pot.png'
 import gomPan from '../assets/sharepool/gom_pan.png'
 import gomDough from '../assets/sharepool/gom_dough.png'
@@ -80,9 +81,23 @@ export const SECTION_CUTS = { 재료: gomShop, 만드는법: duoCooking }
 
 // ── ⓓ 움직이는 절 머리 ────────────────────────────────────────────
 // ⭐⭐ **테스터가 「움직이는 거」라고 했는데 A·B·C 는 전부 정지 그림이었다.** 그래서 뒤늦게 넣는다.
-// ⛔ 무료 모션만 쓴다(가만히·통통·갸웃). 유료팩에 잠긴 모션을 앱 UI 에 공짜로 쓰면 팩 값어치가 깎인다.
-//    ⏳ 「팩 모션을 UI 장식으로 쓰는 게 괜찮은지」는 창업자 판정 사항이다 — 지금은 안전한 둘만.
-export const HEAD_MOTION = { 재료: 'hk-m-tilt', 만드는법: 'hk-m-tongtong' }
+// ✅✅ **창업자 확정 2026-08-08 = 「D 냠냠」** — 두 절 머리 다 냠냠.
+// ⛔ 어느 유료팩에도 «안 걸린» 모션만 쓴다 — 아장아장(추석)·빙글(핼러윈)·부르르(크리스마스)·
+//    콩닥(봄)·펄럭(심플)은 **팔 물건**이라 UI 장식으로 공짜로 쓰면 팩 값어치가 깎인다.
+//    냠냠은 「위아래」 축이 통통과 겹쳐 팩에서 빠진 예비다 — 여기선 겹칠 일이 없다.
+export const HEAD_MOTION = { 재료: 'hk-m-nyam', 만드는법: 'hk-m-nyam' }
+
+// ── ⓖ 완성 칸의 움직임·효과 ───────────────────────────────────────
+// ✅ **창업자 확정** — 모션 「쿵착지」(창업자 제안 *"맨 마지막에 쿵착지는?? G"*) ＋ 효과 「맛있는것들」
+// ⭐ 왜 절 머리와 다른 걸 쓰나 = **자리의 성격이 다르다.**
+//    절 머리는 «계속 보이는» 자리라 은은해야 하고(냠냠), 완성 칸은 «다 읽고 도착하는 끝»이라
+//    도착 느낌이 맞다(쿵착지). 같은 움직임을 두 곳에 쓰면 둘 다 심심해진다.
+// ⛔⛔ 효과 「김모락」을 내가 1순위로 밀었다가 **창업자가 잡았다** — *"김모락은 연한배경이 안보일 것 같아"*.
+//    맞다. `styles.css` 주석에 **「하얀 김(어두운 배경서 잘 보임)」** 이라고 «적혀 있는데»
+//    그걸 읽고도 추천했다. 상세 배경은 `--bg: #fdfbf7` = 거의 흰색이다.
+//    📌 **효과를 고를 땐 「어디에 놓이는지」를 같이 본다** — 그림만 보고 고르면 배경에서 사라진다.
+export const DONE_MOTION = 'hk-m-drop'
+export const DONE_FX = 'food'
 
 // ── ⓔ 단계 번호를 꼬르곰 얼굴로 ───────────────────────────────────
 // ⭐ 줄 폭을 «하나도» 안 먹는다 — 이미 있는 번호 동그라미 자리를 그대로 쓴다.
@@ -130,15 +145,19 @@ export default function DetailDecor({ mode, where, text, prev }) {
       return prev !== undefined && pickCut(prev) === cut ? null : cut
     }
     if (mode === 'b' && where === 'ing') return ingCut(text)
-    if ((mode === 'c' || mode === 'd') && where?.startsWith('head-')) return SECTION_CUTS[where.slice(5)] || null
+    if ((mode === 'c' || mode === 'd' || mode === 'final') && where?.startsWith('head-')) return SECTION_CUTS[where.slice(5)] || null
     return null
   }, [mode, where, text, prev])
 
   // ⓖ 완성 컷 — 그림 하나가 아니라 «한 칸»이라 따로 그린다
-  if (mode === 'g' && where === 'done') {
+  if ((mode === 'g' || mode === 'final') && where === 'done') {
     return (
       <div className="done-strip">
-        <img src={gomClap} alt="" aria-hidden="true" draggable={false} className="hk-m-tongtong" />
+        {/* 효과 조각이 곰 둘레에서 나야 해서 «곰을 감싼 칸»에 얹는다(칸 전체에 뿌리면 글자 위로 지나간다) */}
+        <span className="done-gom">
+          <StickerFx kind={DONE_FX} />
+          <img src={gomClap} alt="" aria-hidden="true" draggable={false} className={DONE_MOTION} />
+        </span>
         <div>
           <b>다 됐어요</b>
           <span>{text ? `${text} 완성!` : '완성!'}</span>
@@ -148,8 +167,8 @@ export default function DetailDecor({ mode, where, text, prev }) {
   }
 
   if (!img) return null
-  const size = mode === 'c' || mode === 'd' ? 34 : mode === 'f' ? 46 : mode === 'a' ? 42 : 22
-  const cls = mode === 'd' && where?.startsWith('head-') ? HEAD_MOTION[where.slice(5)] : undefined
+  const size = mode === 'c' || mode === 'd' || mode === 'final' ? 34 : mode === 'f' ? 46 : mode === 'a' ? 42 : 22
+  const cls = (mode === 'd' || mode === 'final') && where?.startsWith('head-') ? HEAD_MOTION[where.slice(5)] : undefined
   return (
     <img
       src={img}

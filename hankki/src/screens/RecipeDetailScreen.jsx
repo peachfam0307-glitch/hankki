@@ -40,13 +40,21 @@ const DECOR_MODE = (() => {
 })()
 // 🖍 절 제목 형광펜 색 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
 //    `?hl=lemon|lime|aqua|coral|grape|violet` 로 견준다(기본 레몬).
+// ✅ **레몬 확정** — 창업자가 판단을 맡겨서(*"형광펜은 잘모르겠다.. 네가 판단해봐"*) «재서» 골랐다.
+//   ⑴ 바탕과의 대비 ΔE **30.2** = 2위 라임(23.1)보다 또렷하고 꼴찌 자몽(13.3)의 2.3배
+//   ⑵ 앱 포인트색(더스티블루)과 가장 «멀다»(ΔE 71.9) → 파란 버튼 옆에서 또 다른 버튼처럼 안 읽힌다
+//      ⚠️ 바이올렛은 포인트색과 37.9 로 제일 가까워 위험했다
+//   ⑶ 형광펜의 원형이 노랑이라 설명 없이 「형광펜」으로 읽힌다
+//   ⛔ **내 눈은 「아쿠아가 제일 또렷」이라 봤는데 재보니 반대였다** — 웜 바탕에 쿨 색이라
+//      «다르게» 보인 것을 «진하게»로 오해했다(규칙 18: 눈이 본 것을 숫자로 확인한다).
+//   📌 다크 테마에선 여섯이 다 비슷해 보인다(screen 이라 채도가 안 산다) → 밝은 두 테마 기준으로 골랐다.
 const HL_PICK = (() => {
   try { return new URLSearchParams(window.location.search).get('hl') || 'lemon' } catch { return 'lemon' }
 })()
 // 절 제목을 형광펜으로 칠한다 — ⭐`multiply` 라 «글자가 그대로 비친다»(덮는 게 아니라 칠하는 것).
 //    앱 꾸미기의 형광펜(`DecorLayer` 249줄)과 «같은 문법»을 쓴다. 새로 만든 규칙이 아니다.
 const SecTitle = ({ children }) => (
-  DECOR_MODE === 'h'
+  DECOR_MODE === 'h' || DECOR_MODE === 'final'
     ? <div className="h-section"><span className="hl-mark" style={{ '--hl': hlColor(HL_PICK) }}>{children}</span></div>
     : <div className="h-section">{children}</div>
 )

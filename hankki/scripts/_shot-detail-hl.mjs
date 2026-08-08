@@ -30,34 +30,46 @@ const { BASICS_VERSION } = await import('../src/data/basics.js')
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium' })
 let bad = 0
 
-for (const c of COLORS) {
+// 🎨 테마 셋 다 본다 — 창업자 2026-08-08 *"앱배경 우리 테마 3개라 다 잘어울려야해"*
+//   ⛔ 다크는 배경이 #17171b 라 multiply 가 죽는다(곱하기는 어두운 쪽이 이긴다) → screen 으로 뒤집었다.
+const THEMES = [['greige', '그레이지(기본)'], ['cream', '크림'], ['dark', '다크']]
+for (const [theme, tname] of THEMES)
+for (const c of COLORS.filter((x) => x.key === 'lemon')) {
   const page = await b.newPage({ viewport: { width: 360, height: 1000 }, deviceScaleFactor: 3 })
   const errors = []
   page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
-  await page.addInitScript((s) => {
-    localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
+  await page.addInitScript((a) => {
+    localStorage.setItem('hankki:v1', JSON.stringify(a.s)); localStorage.setItem('hankki:onboarded', '1')
     localStorage.setItem('hankki:nudge:giftpack', '1')
+    localStorage.setItem('hankki-theme', a.theme)   // 부팅 때 main.jsx 가 applyTheme(getTheme()) 을 부른다
     for (const k of ['home', 'home2', 'detail', 'brag', 'shop', 'myrecipes', 'profile', 'decor']) localStorage.setItem(`hankki:coach:${k}`, '1')
-  }, { recipes: [], seedV: BASICS_VERSION })
-  await page.goto(`http://127.0.0.1:4363/hankki/?decor=h&hl=${c.key}`, { waitUntil: 'networkidle' })
+  }, { s: { recipes: [], seedV: BASICS_VERSION }, theme })
+  await page.goto(`http://127.0.0.1:4363/hankki/?decor=final&hl=${c.key}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(1000)
   await page.locator('.grid-card').first().click()
   await page.waitForTimeout(800)
 
   const marks = await page.locator('.hl-mark').count()
-  if (marks !== 2) { bad++; console.log(`   ⛔ ${c.label} — 형광펜이 ${marks}곳(재료·만드는 법 둘이라야 한다)`) }
-  if (errors.length) { bad++; console.log(`   ⛔ ${c.label} — pageerror ${errors.length}`) }
+  if (marks !== 2) { bad++; console.log(`   ⛔ ${tname}/${c.label} — 형광펜이 ${marks}곳(재료·만드는 법 둘이라야 한다)`) }
+  if (errors.length) { bad++; console.log(`   ⛔ ${tname}/${c.label} — pageerror ${errors.length}`) }
+  // ⛔ 테마가 실제로 걸렸나 — 「걸린 줄 알았는데 안 걸림」이 제일 흔한 거짓 통과다
+  const applied = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
+  if (applied !== theme) { bad++; console.log(`   ⛔ 테마가 '${applied}' 다 — '${theme}' 라야 한다`) }
 
   // 재료 제목 ~ 첫 세 줄만 — 색만 보면 되니 크게 잡을 필요가 없다
   await page.evaluate(() => {
     const head = [...document.querySelectorAll('.sec-head')].find((h) => /재료/.test(h.textContent))
     const wrap = document.createElement('div'); wrap.id = 'hl-wrap'
     head.parentNode.insertBefore(wrap, head)
+    // 최종판 = 재료 절 머리부터 «완성 칸»까지 통째로(세 갈래가 한 화면에 어떻게 보이나)
     let n = wrap.nextSibling, cnt = 0
-    while (n && cnt < 3) { const next = n.nextSibling; wrap.appendChild(n); cnt++; n = next }
+    while (n && cnt < 2) { const next = n.nextSibling; wrap.appendChild(n); cnt++; n = next }
     wrap.style.padding = '6px 0 10px'
   })
-  await page.locator('#hl-wrap').screenshot({ path: `${OUT}/형광펜-${c.key}.png` })
+  // 완성 칸만 따로 — 최종판에선 하단 고정바가 이 칸을 덮는다(스크롤하면 보이지만 캡처엔 안 잡힌다)
+  const dn = page.locator('.done-strip')
+  if (!(await dn.count())) { bad++; console.log(`   ⛔ ${tname} — 완성 칸이 없다`) }
+  else await dn.screenshot({ path: `${OUT}/완성칸-${theme}.png` })
   await page.close()
 }
 

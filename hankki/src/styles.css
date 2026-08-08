@@ -948,9 +948,15 @@ img {
 .hl-mark { position: relative; display: inline-block; }
 .hl-mark::after {
   content: ''; position: absolute; left: -6px; right: -6px; top: 32%; bottom: 6%;
-  background: var(--hl); opacity: .62; mix-blend-mode: multiply;
+  background: var(--hl); opacity: var(--hl-a, .62); mix-blend-mode: var(--hl-blend, multiply);
   border-radius: 2px 6px 3px 5px; pointer-events: none;
 }
+/* ⛔⛔ **다크 테마에선 `multiply` 가 죽는다** — 창업자 2026-08-08 *"앱배경 우리 테마 3개라 다 잘어울려야해"*.
+   곱하기는 «어두운 쪽»이 이기는 연산이라, 배경이 `#17171b`(거의 검정)면 무슨 색을 얹어도 검정이 된다.
+   ⭐ 그래서 다크에선 `screen`(밝은 쪽이 이김)으로 뒤집는다 — 같은 색이 어두운 종이 위에서 «빛나는 띠»가 된다.
+   📌 꾸미기 형광펜은 «늘 밝은 종이» 위라 multiply 하나로 됐다. UI 는 테마가 바뀌니 조건이 다르다.
+      김모락(하얀 김)을 밝은 배경에 추천했다가 잡힌 것과 **같은 종류의 실수**다. */
+:root[data-theme="dark"] { --hl-a: .34; --hl-blend: screen; }
 
 /* ⓖ 맨 끝 「완성」 칸 — 줄은 하나도 안 건드리고 마지막 단계 «뒤»에만 붙는다 */
 .done-strip {
@@ -958,7 +964,8 @@ img {
   margin-top: 14px; padding: 13px 15px;
   background: var(--cream); border-radius: 15px;
 }
-.done-strip img { height: 46px; width: auto; flex: 0 0 auto; }
+.done-gom { position: relative; display: inline-block; flex: 0 0 auto; }
+.done-strip img { height: 46px; width: auto; display: block; }
 .done-strip b { display: block; font-size: 14.5px; color: var(--brown); }
 .done-strip span { display: block; font-size: 12.5px; color: var(--text-sub); margin-top: 1px; }
 /* 재료 소제목 — [양념]·[소스]·[드레싱] 그룹 헤더 (불릿 없음) */
