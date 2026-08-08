@@ -14,7 +14,7 @@
 //    ⛔「잡히니까 괜찮다」로 읽지 말 것.
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
-import { join, relative } from 'node:path'
+import { join, relative, sep } from 'node:path'
 
 const ROOT = new URL('..', import.meta.url).pathname
 const REPO = join(ROOT, '..')
@@ -252,6 +252,46 @@ console.log('\n🪤 반복 실수 게이트')
     }
   }
   if (!trapped) ok(`재현판 ${files.length}개 — 옛 함정 재발 0`)
+}
+
+// ═══ ⑨ 코치 키를 «손으로» 적었나 ═══════════════════════════
+//   ⛔⛔ 2026-08-08 — v10.05 에서 홈 코치를 `home2` → `home3` 으로 올렸더니 «두 군데»가 조용히 깨졌다.
+//      ⒜ 🐛 설정 「기능 안내 다시 보기」가 `hankki:coach:home` 을 지우고 있었다 —
+//         홈 키는 v8.60 에 이미 `home2` 였다. **v8.60 부터 두 달 넘게 홈 안내가 안 돌아왔고 아무도 몰랐다.**
+//      ⒝ 🧪 배포 게이트가 `hankki:coach:home2` 를 «이름으로» 심어서, 키가 올라가자 코치 오버레이가
+//         화면을 덮었고 `test-exit` 가 「장보기 탭을 못 누른다」로 **배포를 막았다.** 앱은 멀쩡했다.
+//   📌 뿌리 = **같은 이름을 여러 곳에 손으로 적어 뒀다.** 한 곳만 고치면 나머지가 낡는다.
+//   ⭐ 그래서 키는 `src/coach.js` 에서만 만든다. 검사 스크립트는 **접두어로 통째로**(SEED_COACH_SEEN).
+//   ⚠️ 실패는 «배포에 걸리는 자리»만 — 앱(`src/`)과 배포 게이트 셋. 일회용 재현판까지 잡으면
+//      백 개가 쏟아져 시끄러운 게이트가 되고, 시끄러운 게이트는 아무도 안 본다(개수만 알려준다).
+{
+  const LIT = /['"`]hankki:coach:/
+  const APP = ['screens', 'components', '.'].flatMap((d) => {
+    try {
+      return readdirSync(join(ROOT, 'src', d === '.' ? '' : d))
+        .filter((f) => /\.(jsx?|mjs)$/.test(f))
+        .map((f) => join(ROOT, 'src', d === '.' ? '' : d, f))
+    } catch { return [] }
+  })
+  const GATES = ['smoke.mjs', 'test-exit.mjs', 'test-swart.mjs'].map((f) => join(ROOT, 'scripts', f))
+  let hits = 0
+  for (const p of [...APP, ...GATES]) {
+    if (p.endsWith(`${sep}coach.js`)) continue          // ⭐ 키를 만드는 «그 한 곳»
+    let s = ''
+    try { s = readFileSync(p, 'utf8') } catch { continue }
+    // 주석 줄은 뺀다 — 사고 기록에 옛 키 이름이 그대로 적혀 있다
+    const code = s.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n')
+    if (LIT.test(code)) { hits++; no(`${relative(REPO, p)} — 코치 키를 손으로 적었다. src/coach.js 의 COACH / SEED_COACH_SEEN 을 쓸 것`) }
+  }
+  if (!hits) {
+    let stale = 0
+    try {
+      for (const f of readdirSync(join(ROOT, 'scripts')).filter((f) => /^_(repro|shot|measure)-.*\.mjs$/.test(f))) {
+        if (/['"`]hankki:coach:|coach:\$\{/.test(readFileSync(join(ROOT, 'scripts', f), 'utf8'))) stale++
+      }
+    } catch { /* noop */ }
+    ok(`코치 키 = src/coach.js 한 곳${stale ? ` (일회용 재현판 ${stale}개는 아직 옛 이름 — 쓸 때 SEED_COACH_SEEN 으로 바꿀 것)` : ''}`)
+  }
 }
 
 console.log(bad ? `\n⛔⛔ ${bad}건 — 고치고 다시 돌릴 것\n` : '\n✅ 반복 실수 게이트 통과\n')

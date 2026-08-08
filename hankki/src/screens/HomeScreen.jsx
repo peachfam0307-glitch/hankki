@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef } from 'react'
+import { COACH } from '../coach'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -30,7 +31,7 @@ import { whatsNew } from '../data/whatsnew'
 // 2026-08-08: 「한끼 일기」 안내 추가하며 home2→home3.
 //   ⭐ 키를 안 올리면 **이미 본 사람에겐 영영 안 뜬다** — 일기는 v9.85~v10.02 에 크게 자란 기능인데
 //      온보딩·코치·스토어 스샷 어디에도 없어서 «탭이 있는 줄도 모르는» 상태였다(창업자 지적).
-const HOME_COACH_KEY = 'hankki:coach:home3'
+const HOME_COACH_KEY = COACH.home
 const HOME_COACH_STEPS = [
   { sel: '[data-coach="import"]', img: uiHandPoint, label: '레시피 가져오기', desc: '캡처·붙여넣기로 레시피를 쏙 담아요 · 여기서 시작!' },
   { sel: '[data-coach="today"]', img: uiGomThumb, label: '오늘 뭐 해먹지?', desc: '냉장고 재료로 만들 수 있는 요리를 추천해요' },

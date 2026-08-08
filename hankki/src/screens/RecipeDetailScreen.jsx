@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { COACH } from '../coach'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -49,7 +50,7 @@ const SecTitle = ({ children }) => (
 )
 
 // 첫 방문 코치마크 — 숨어 있는 중요 기능을 반짝이며 알려준다(창업자 딸 아이디어 ⭐)
-const COACH_KEY = 'hankki:coach:detail'
+const COACH_KEY = COACH.detail
 const COACH_STEPS = [
   { sel: '[data-coach="edit"]', label: '편집', desc: '재료·만드는 법, 언제든 고칠 수 있어요' },
   { sel: '[data-coach="shop"]', label: '재료 장보기 담기', desc: '필요한 재료를 한 번에 장보기 리스트에 담아요. 담은 건 장보기 탭에서 체크하며 사면 편해요' },

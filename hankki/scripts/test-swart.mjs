@@ -18,6 +18,7 @@ import { existsSync } from 'node:fs'
 import { chromium } from 'playwright'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { SEED_COACH_SEEN } from '../src/coach.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 if (!existsSync(join(ROOT, 'dist/index.html'))) {
@@ -57,12 +58,10 @@ try {
 
   browser = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } })
-  await ctx.addInitScript(() => {
-    ;['hankki:onboarded', 'hankki:coach:home2', 'hankki:coach:detail', 'hankki:coach:decor',
-      'hankki:coach:myrecipes', 'hankki:coach:editor'].forEach((k) => {
-      try { localStorage.setItem(k, '1') } catch { /* noop */ }
-    })
-  })
+  // 🧭 코치는 «이름으로» 심지 않는다 — 키를 올리면 조용히 낡아 화면을 덮는다(2026-08-08 사고).
+  //    `src/coach.js` 가 주는 조각이 **접두어 전체**를 「본 적 있음」으로 만든다 → 다음에 키를 올려도 안 낡는다.
+  await ctx.addInitScript({ content: SEED_COACH_SEEN })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch { /* noop */ } })
   const page = await ctx.newPage()
   page.setDefaultTimeout(12000)
 

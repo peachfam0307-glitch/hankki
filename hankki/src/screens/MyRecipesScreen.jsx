@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { COACH } from '../coach'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -16,7 +17,7 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
 
 // 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
-const MYRECIPES_COACH_KEY = 'hankki:coach:myrecipes'
+const MYRECIPES_COACH_KEY = COACH.myrecipes
 const MYRECIPES_COACH_STEPS = [
   { sel: '[data-coach="collection"]', label: '모아보기', desc: '저장한 레시피를 한눈에 · 폴더·카테고리로 정리돼요' },
   { sel: '[data-coach="gridsize"]', label: '⊞ 보기 바꾸기', desc: '크게 2줄 ↔ 촘촘히 3줄 · 사진 큼직하게 보거나 한눈에 많이 보거나' },

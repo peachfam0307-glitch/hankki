@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { COACH } from '../coach'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Thumb from '../components/Thumb'
@@ -17,7 +18,7 @@ import uiHandPoint from '../assets/ui/hand_point.png'
 // 🎴 카드자랑 탭 — 바이럴 진입점. 내 레시피를 골라 자랑한다.
 // ⭐ 창업자 방향: 주인공은 '내가 꾸민 표지', 랜덤 카드는 옵션(메인 아님).
 //    → 큰 랜덤 히어로 버튼 없음. 레시피를 탭하면 [🎨 내 꾸민 표지 / 🎴 랜덤 카드] 둘 중 고른다.
-const BRAG_COACH_KEY = 'hankki:coach:brag'
+const BRAG_COACH_KEY = COACH.brag
 const BRAG_COACH_STEPS = [
   { sel: '[data-coach="brag-list"]', img: uiGomHeart, label: '자랑할 레시피 고르기', desc: '레시피를 탭하면 → 내가 꾸민 표지 그대로 or 랜덤 카드로 골라 카톡·인스타에 보내요' },
   { sel: '[data-coach="brag-list"]', img: uiGomThumb, label: '내 레시피 표지로 저장', desc: '랜덤 카드가 마음에 들면 그 자리에서 “표지로 저장”도 돼요' },
