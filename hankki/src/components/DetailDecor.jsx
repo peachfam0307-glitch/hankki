@@ -36,6 +36,20 @@ const DONE_MOTION = 'hk-m-drop'
 //    📌 **효과를 고를 땐 「어디에 놓이는지」를 같이 본다** — 그림만 보고 고르면 배경에서 사라진다.
 const DONE_FX = 'food'
 
+// 📏📏 완성 칸 꼬르곰의 «진짜» 크기 — `styles.css` 의 `.done-strip img { height: 46px }` 와 같은 값이다.
+//   ⛔⛔ **이 한 줄이 빠져서 창업자 폰에서 조각이 단계 글자를 덮었다.**
+//      효과 조각의 이동 거리는 `Stickers.jsx` 의 `rel()` 이 계산하는데, 거기엔 **「스티커 = 238px」이
+//      못 박혀 있다**(꾸미기 캔버스 기준). 우리 곰은 46px 이라 거리가 **5.2배**로 튀어
+//      조각이 칸 밖 **128px** 까지 날아갔다(실측 · `_repro-완성칸조각-0808.mjs`).
+//   ⭐ 창업자는 *"위로 올라가는 거라 어쩔 수 없긴한데.."* 라고 했는데 **어쩔 수 없는 게 아니었다.**
+//   ⚠️ `styles.css` 의 46px 을 바꾸면 **이 숫자도 같이** 바꿀 것.
+const GOM_PX = 46
+
+// 📐 조각 한 장의 크기. 기본값 32px 은 «238px 스티커에 얹는 것」을 전제로 정해졌고,
+//    46px 곰에 그대로 쓰면 조각이 곰의 70% 라 덩어리처럼 보이고 칸 아래에서 잘렸다.
+//    22px ＝ 곰의 절반쯤. ⛔ 더 줄이면 «음식»인지 알아볼 수 없다.
+const FX_PX = 22
+
 /**
  * where = 'head-재료' | 'head-만드는법' | 'done'
  * text  = 완성 칸에 쓸 레시피 제목
@@ -51,7 +65,9 @@ export default function DetailDecor({ where, text }) {
             ✅ 그래서 조각은 그대로 두고 **글자를 조각보다 앞에** 놓는다(`.done-strip > div` 의 z-index).
                효과는 배경 장식이니 글자 뒤로 지나가는 게 자연스럽다. */}
         <span className="done-gom">
-          <StickerFx kind={DONE_FX} />
+          {/* 🪟 효과 판을 «아래로» 내린다 — 조각의 출발 y 가 원래 상자 «위쪽 바깥»(-26%)이라
+              거리를 아무리 줄여도 칸을 넘는다. 판을 내리면 곰 손 언저리에서 떠오른다. */}
+          <span className="done-fx"><StickerFx kind={DONE_FX} px={GOM_PX} size={FX_PX} /></span>
           <img src={gomClap} alt="" aria-hidden="true" draggable={false} className={DONE_MOTION} />
         </span>
         <div>

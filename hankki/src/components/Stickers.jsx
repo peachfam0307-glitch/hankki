@@ -771,9 +771,34 @@ const FX_DEF = {
 //    ⛔ 조각의 y 는 «퍼센트»다(`top: ${y}%`). 캐릭터 상자는 세로로 길어서 y=12% 가 «위쪽»이지만,
 //       **글자 상자는 납작해서**(글자 높이) 같은 12% 가 «글자 한가운데»가 된다 → 하트가 글자 속에서 나온다.
 //    ⭐ 그래서 글자일 때만 효과 판을 «글자 윗변 언저리»에 놓는다 — 조각 좌표는 그대로 두고 판만 옮긴다.
-export function StickerFx({ kind, lift }) {
+// 📏📏 `px` = **이 효과가 얹히는 상자의 진짜 크기(px).** 안 주면 238 = 지금까지와 픽셀 하나 안 달라진다.
+//    ⛔⛔ 왜 필요한가 — `rel()` 이 위에서 **「스티커 = 238px」을 못 박고 있다**(꾸미기 캔버스 기준이라 거기선 맞다).
+//       그런데 그보다 «작은» 자리에 그대로 쓰면 **이동 거리가 그 비율만큼 통째로 튄다.**
+//       실측(2026-08-08): 완성 칸의 46px 꼬르곰에 얹었더니 조각이 **128px** 날아가
+//       칸을 벗어나 **레시피 단계 글자를 덮었다**(창업자 폰 캡처 · `_repro-완성칸조각-0808.mjs`).
+//    ⭐ 창업자는 *"위로 올라가는 거라 어쩔 수 없긴한데.."* 라고 했지만 **어쩔 수 없는 게 아니었다.**
+//       238 을 46 으로 바꾸면 거리가 1/5.2 로 줄어 칸 안에서 논다.
+//    ⭐⭐ v9.94 의 *"퍼센트 좌표는 상자 «모양»을 탄다"*(→ `lift` 신설) 와 **같은 계열**이다.
+//       그땐 «모양»이었고 이번엔 «크기»다. 📌 **효과를 새 자리에 쓸 땐 「그 자리가 238px 인가」를 먼저 본다.**
+const fitVars = (vars, k) => {
+  if (!vars || k === 1) return vars
+  const out = {}
+  for (const key in vars) {
+    const n = parseFloat(vars[key])
+    out[key] = Number.isFinite(n) ? `${Math.round(n * k)}%` : vars[key]
+  }
+  return out
+}
+// 📐 `size` = 조각 «한 장»의 크기(px). 안 주면 FX_DEF 의 기본값.
+//   ⛔ 기본 크기는 **238px 스티커에 얹는 것을 전제**로 정해졌다(32px = 스티커의 13%).
+//      46px 짜리 곰에 그대로 얹으면 조각이 곰의 **70%** 라 덩어리처럼 보이고 칸 아래에서 잘린다.
+//   ⚠️ `px` 로 자동 계산하지 «않는다» — 비례로 줄이면 6px 이 돼 아예 안 보인다.
+//      **거리는 비례로, 크기는 눈으로.** 둘은 다른 문제다.
+export function StickerFx({ kind, lift, px, size }) {
   const def = FX_DEF[kind]
   if (!def) return null
+  const k = px ? px / STICKER_PX : 1
+  const sz = size || def.size
   const box = lift
     ? { position: 'absolute', left: 0, right: 0, bottom: '60%', height: '140%' }
     : { position: 'absolute', inset: 0 }
@@ -781,10 +806,11 @@ export function StickerFx({ kind, lift }) {
     <span aria-hidden="true" style={{ ...box, pointerEvents: 'none', overflow: 'visible' }}>
       {/* 4번째 값(vars) = 조각마다 다른 CSS 변수. 터지는 방향(--dx/--dy)·궤도 반지름(--r)·
           가로 이동 거리(--go) 처럼 **조각마다 달라야 하는 것**을 여기서 준다.
-          (하나로 고정하면 '터졌다'가 아니라 '커졌다'로 보인다) */}
+          (하나로 고정하면 '터졌다'가 아니라 '커졌다'로 보인다)
+          ⚠️ 이 값들이 전부 `rel()` 로 계산된 「이동 거리」라 px 배율은 **여기에** 곱한다. */}
       {def.items.map(([x, y, d, vars], i) => (
         <span key={i} className={`hk-fx hk-fx-${kind}`}
-          style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, width: def.size, height: def.size, lineHeight: 1, animationDelay: `${d}s`, ...(vars || {}) }}>
+          style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, width: sz, height: sz, lineHeight: 1, animationDelay: `${d}s`, ...(fitVars(vars, k) || {}) }}>
           {def.food
             ? <img src={FX_FOOD[i % FX_FOOD.length]} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
             : def.puff ? null : def.node}
