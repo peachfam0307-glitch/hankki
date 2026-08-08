@@ -13,6 +13,9 @@ import cuTsuyu from '../assets/curation/cu_stock_tsuyu.png'
 //     허리 절단면이 그대로 보인다. 정본은 처음부터 전신 단체 구도로 그려진 그림이다.)
 //    배경이 #F9F9F9 단색이라 같은 색 카드에 얹으면 이어붙인 자리가 안 보인다(투명 처리 불필요).
 import lineup5 from '../assets/cast/lineup5.png'
+// 📄 속지 실물 — 온보딩 「한끼 일기」 장면이 **앱에 진짜 있는 속지**를 그대로 보여준다(창업자 2026-08-08).
+//    좌표는 눈대중이 아니라 `src/data/papers.js` 의 실측값을 그대로 쓴다.
+import dpSnap from '../assets/paper/dp_snap.webp'
 // 얼굴 컷 — 이름·성격 줄 앞에 붙여 "누가 누구인지" 짝지어준다(단체 그림만으론 못 짚는다)
 import avGom from '../assets/avatars/av_gom.png'
 import avPeng from '../assets/avatars/av_peng.png'
@@ -143,9 +146,19 @@ const Slide2 = () => (
 //       📌 **기능이 자라면 「앱을 소개하는 자리」도 같이 자라야 한다** — 안 그러면 하단바 탭만 덩그러니 있고
 //          유저는 그게 뭔지 모른다.
 //    ⭐ 자리 = 레꾸(Slide2) «바로 다음». 「레시피를 꾸민다」 → 「일기도 꾸민다」로 이어진다.
-//    ⛔ 속지 PNG(dp_today 등)를 얹지 «않는다» — 사진칸·트래커 좌표를 눈대중으로 맞추면 어긋난다.
-//       다른 장면들이 다 그렇듯 **CSS 로 종이를 그린다**(Card·Postit·Tape 와 같은 문법).
-const TRACK = [['함께', '#e8c8b4'], ['장소', '#c9dbc0'], ['날씨', '#bed4e6'], ['기분', '#f0d3a8'], ['시간', '#d8cae8'], ['만족', '#f2c4c0']]
+//
+// 🎨🎨 창업자 지적 2026-08-08 (두 번째) — *"우리 일꾸랑 레꾸랑 큰 차이가 없어서.. 우리 새로운 스티커
+//    많으니까(일꾸전용) 그거 적용해서 꾸며볼래?"* ＋ *"무지속지나 반 나눠진 속지에 모서리꾸미기 붙이고
+//    기분스티커랑 별,. 우리가 안쓰던거 이용해서 펭펭이나 하나넣고"*
+//    ⛔ 맞았다. 첫 판은 **CSS 로 그린 흰 카드 ＋ 큰 음식 그림 ＋ 캐릭터** 라 레꾸(Slide2)와 짜임이 같았고,
+//       일꾸 전용 84컷 중 **딱 2컷**만 썼다(dc_td17·dc_td06). 나머지는 전부 내가 CSS 로 흉내 낸 것이다.
+//    ⛔⛔ **아래 옛 주석이 나를 막고 있었다** — *"속지 PNG 를 얹지 않는다, 좌표를 눈대중으로 맞추면 어긋난다"*.
+//       **틀린 제약이었다.** `src/data/papers.js` 에 사진칸·제목·날짜·글칸 좌표가 **이미 실측되어 있다**(퍼센트).
+//       눈대중이 아니라 그 값을 읽어 쓰면 된다. 📌 「하지 말 것」을 적을 땐 «왜 못 하는지»를 다시 재 볼 것.
+//    ⭐ 그래서 진짜 속지 `dp_snap`(반 나눠진 속지 = 위 사진칸 / 아래 글칸)을 얹고 그 위에 일꾸 전용 스티커로 꾸민다.
+const SNAP = { photo: { top: 7.8, bottom: 60.1, left: 10.3, right: 8.8 }, title: { top: 43.0, left: 12 }, date: { top: 43.9, left: 75.8 }, write: { top: 54.2, left: 12, right: 10.5 } }
+// 속지 위에 얹는 것은 전부 «퍼센트» — 속지 크기를 바꿔도 자리가 안 흔들린다(`papers.js` 와 같은 문법)
+const P = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, typeof v === 'number' ? `${v}%` : v]))
 // 달력 세 줄 — 해먹은 날에만 음식 아이콘이 박힌다(빈 칸 = 안 한 날). ⛔날짜 숫자는 안 쓴다(달마다 달라진다)
 // ⛔⛔ **2·3째 줄의 1·2번째 칸은 비워 둔다** — 펭펭이 달력 왼쪽 아래에 서 있어 «그 두 칸을 가린다».
 //    첫 판에서 3째 줄 1번 칸의 음식이 통째로 안 보였다(캡처로 잡았다). 달력의 요지가 「해먹은 날에 그림이 박힌다」인데
@@ -154,47 +167,59 @@ const CAL = [null, 'fh_k22', null, 'fe_15', null, null, 'fh_k27', null, null, nu
 const SlideD = () => (
   <Stage bg="linear-gradient(165deg,#d6dfea,#eef2f7)">
     <Cap top={210}><H1 style={{ color: '#3f5570' }}>오늘의 한 끼가<br />일기가 돼요</H1><Sub style={{ color: '#5b7291' }}>사진 붙이고 속지 골라 · 그날을 남겨요</Sub></Cap>
-    <div style={{ position: 'absolute', top: 630, left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
-      <div style={{ width: 660, background: '#fffdf8', borderRadius: 30, padding: '34px 32px 30px', boxShadow: '0 30px 62px rgba(55,75,105,.3)', transform: 'rotate(-2deg)', position: 'relative' }}>
-        <Tape />
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24 }}>
-          <div style={{ width: 250, height: 250, borderRadius: 18, background: 'linear-gradient(150deg,#f4efe3,#e9e2d2)', flexShrink: 0, position: 'relative', overflow: 'hidden', boxShadow: 'inset 0 0 0 5px #fffdf8, 0 4px 10px rgba(80,70,50,.18)' }}>
-            <Img k="fe_06" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 200 }} />
-          </div>
-          <div style={{ flex: 1, textAlign: 'left', paddingTop: 6 }}>
-            <div style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 46, color: '#3f4a5a' }}>연어 포케볼</div>
-            <div style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 30, color: '#9aa4b2', marginTop: 2 }}>8월 8일 토요일</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9, marginTop: 18 }}>
-              {TRACK.map(([t, c], k) => (
-                <span key={t} style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 27, color: '#4a4f58', padding: '7px 15px', borderRadius: 999, background: k < 3 ? c : '#f1eee6', opacity: k < 3 ? 1 : 0.55 }}>{t}</span>
-              ))}
-            </div>
-          </div>
+    <div style={{ position: 'absolute', top: 548, left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+      {/* 📄 속지 실물 = `dp_snap` 「사진 기록」(984×1312 · 3:4) — 창업자가 고른 «반 나눠진 속지».
+          위는 사진칸, 아래는 글칸이라 **꾸밀 여백이 넓다**. 좌표는 `papers.js` 실측값(SNAP) 그대로. */}
+      <div style={{ position: 'relative', width: 580, aspectRatio: '984/1312', transform: 'rotate(-1.6deg)', filter: 'drop-shadow(0 26px 48px rgba(55,75,105,.32))', zIndex: 2 }}>
+        <img src={dpSnap} alt="" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+        {/* 📷 사진칸 — 인쇄된 칸 안에 딱 (contain 이라 세로 사진도 안 잘린다) */}
+        {/* ⛔⛔ 창업자 제보 2026-08-08 *"음식 이모지도 크기 좀만 줄이자 잘렸어(아래위가)"* — 맞았다.
+            재보니 칸은 453×248 인데 `width:'62%'` 로 **폭만** 잡아 높이가 310px 이 됐다(fe_06 은 세로가 긴 컷).
+            `overflow:hidden` 이라 **위아래 62px 이 통째로 잘렸다.**
+            ⭐ 고침 = 칸을 100%로 채우고 `objectFit:'contain'` — 달력 칸이 이미 쓰는 문법이라 거긴 안 잘렸다.
+            📌 **한 축만 잡으면 다른 축은 «비율이 정한다» — 칸 안에 넣으려면 두 축을 다 잡아야 한다.** */}
+        <div style={{ position: 'absolute', ...P({ top: SNAP.photo.top, bottom: SNAP.photo.bottom, left: SNAP.photo.left, right: SNAP.photo.right }), padding: '4%', overflow: 'hidden' }}>
+          <img src={F('fe_06')} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
-        <div style={{ marginTop: 24, borderTop: '2px dashed #e6e0d2', paddingTop: 20, textAlign: 'left', fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 36, color: '#5a6270', lineHeight: 1.5 }}>
+        <div style={{ position: 'absolute', ...P({ top: SNAP.title.top, left: SNAP.title.left }), fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 44, color: '#3f4a5a', lineHeight: 1 }}>연어 포케볼</div>
+        <div style={{ position: 'absolute', ...P({ top: SNAP.date.top, left: SNAP.date.left }), fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 30, color: '#9aa4b2', lineHeight: 1 }}>8.8 토</div>
+        {/* ✍️ 글칸 — 첫 줄에 손글씨(형광펜), 아래 두 줄은 「줄」 속지를 고른 모습 */}
+        <div style={{ position: 'absolute', ...P({ top: 55.4, left: SNAP.write.left, right: SNAP.write.right }), textAlign: 'left', fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 34, color: '#5a6270', lineHeight: 1.35 }}>
           더위에 지쳐도 <span style={{ background: 'linear-gradient(transparent 58%,#f5e08a 58%)' }}>한 끼는 챙겼다</span>
-          <div style={{ height: 2, background: '#efeadd', marginTop: 14 }} />
-          <div style={{ height: 2, background: '#efeadd', marginTop: 26 }} />
+          {/* 줄은 «칸을 채울 만큼» 그린다 — 두 줄만 그렸더니 글칸 아래 절반이 텅 비었다 */}
+          {[22, 32, 32, 32].map((m, i) => <div key={i} style={{ height: 2, background: '#ece5d8', marginTop: m }} />)}
         </div>
-        <Img k="dc_td17" style={{ right: 34, top: 22, width: 84, transform: 'rotate(9deg)' }} />
-        <Img k="dc_td06" style={{ left: 216, top: 204, width: 76, transform: 'rotate(-12deg)' }} />
+        {/* 🎀 모서리 꾸미기 — «대각선 두 짝»으로. 오른쪽 아래는 같은 컷을 180° 돌려 쓴다
+            (코너 스티커는 전부 「왼쪽 위」 방향으로 그려져 있다) */}
+        <Img k="dgc04" style={{ ...P({ left: 1.5, top: 1.5, width: 15.5 }) }} />
+        <Img k="dgc05" style={{ ...P({ right: 1.5, bottom: 1.5, width: 14.5 }), transform: 'rotate(180deg)' }} />
+        {/* ⭐ 별 = 사진 «위»에 붙인 것처럼. 안 쓰던 컷(`dn_star`) */}
+        <Img k="dn_star" style={{ ...P({ right: 15, top: 28.5, width: 12 }), transform: 'rotate(-9deg)' }} />
+        {/* 🙂 기분 스티커 — 레꾸엔 아예 없는 갈래(only:'diary')라 두 장을 가르는 표식이 된다.
+            ⛔ `dgf01`(크림 바탕)은 «흰 속지 위에서 통째로 묻혔다» — 캡처로 잡았다.
+               속지가 흰색이니 **테두리에 색이 든 컷**을 고른다(`dgf07` = 주황 햇살·활짝 웃음).
+            ⛔ 자리는 글칸 «안쪽» 오른쪽 아래 — 칸 테두리에 걸치면 어정쩡하고 줄과도 겹친다 */}
+        <Img k="dgf07" style={{ ...P({ right: 8, bottom: 12.5, width: 16 }), transform: 'rotate(6deg)' }} />
       </div>
 
       {/* 📅 달력 — 일기의 «두 번째 축». 그날을 남기는 것과 «모아서 보는 것»은 다른 즐거움이라
           글자(「달력으로 한눈에」)만으로는 안 와닿는다. 만든 날에 음식 아이콘이 박힌다. */}
-      <div style={{ marginTop: 40, width: 660, background: 'rgba(255,253,248,.92)', borderRadius: 26, padding: '24px 22px 26px', boxShadow: '0 18px 40px rgba(55,75,105,.2)' }}>
-        <div style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 34, color: '#3f5570', marginBottom: 16 }}>8월</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 10 }}>
+      <div style={{ position: 'relative', marginTop: 30, width: 580, background: 'rgba(255,253,248,.94)', borderRadius: 24, padding: '20px 18px 22px', boxShadow: '0 18px 40px rgba(55,75,105,.2)' }}>
+        <Img k="wt_td02" style={{ left: -16, top: -18, width: 156, transform: 'rotate(-7deg)' }} />
+        <div style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 32, color: '#3f5570', marginBottom: 12 }}>8월</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 9 }}>
           {CAL.map((k, i) => (
-            <div key={i} style={{ aspectRatio: '1', borderRadius: 14, background: k ? '#f2efe6' : '#f7f5ee', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <div key={i} style={{ aspectRatio: '1', borderRadius: 13, background: k ? '#f2efe6' : '#f7f5ee', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {k ? <img src={F(k)} alt="" draggable={false} style={{ width: '84%', height: '84%', objectFit: 'contain' }} /> : null}
             </div>
           ))}
         </div>
       </div>
 
-      {/* 🐧 펭펭은 «종이 밖 왼쪽 아래» — 종이 위에 두면 손글씨 줄을 가린다(첫 판에서 「챙겼다」를 덮었다) */}
-      <Img k="gp_pengym" cls="hk-m-kong" style={{ left: -64, bottom: -16, width: 210, transformOrigin: 'bottom center', filter: 'drop-shadow(0 10px 16px rgba(60,80,110,.28))' }} />
+      {/* 🐧 펭펭 = 안 쓰던 컷 `gp_pengft`(두 주먹 파이팅) — 온보딩 아홉 장에 한 번도 안 나온 컷이다.
+          ⛔ `gp_pengtb`(엄지척)는 안 쓴다 — 엄지척은 «우리가 유저를 평가하는 그림»이라 쓰지 않기로 했다.
+          자리는 달력 밖 왼쪽 아래 — 종이 위에 두면 손글씨를 가린다(첫 판에서 「챙겼다」를 덮었다) */}
+      <Img k="gp_pengft" cls="hk-m-kong" style={{ left: -58, bottom: -14, width: 196, transformOrigin: 'bottom center', filter: 'drop-shadow(0 10px 16px rgba(60,80,110,.28))' }} />
     </div>
     <Foot style={{ background: '#3f5570', color: '#fffdf8' }}>달력으로 한눈에</Foot>
   </Stage>
