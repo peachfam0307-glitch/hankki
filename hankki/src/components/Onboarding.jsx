@@ -146,8 +146,11 @@ const Slide2 = () => (
 //    ⛔ 속지 PNG(dp_today 등)를 얹지 «않는다» — 사진칸·트래커 좌표를 눈대중으로 맞추면 어긋난다.
 //       다른 장면들이 다 그렇듯 **CSS 로 종이를 그린다**(Card·Postit·Tape 와 같은 문법).
 const TRACK = [['함께', '#e8c8b4'], ['장소', '#c9dbc0'], ['날씨', '#bed4e6'], ['기분', '#f0d3a8'], ['시간', '#d8cae8'], ['만족', '#f2c4c0']]
-// 달력 두 줄 — 해먹은 날에만 음식 아이콘이 박힌다(빈 칸 = 안 한 날). ⛔날짜 숫자는 안 쓴다(달마다 달라진다)
-const CAL = [null, 'fh_k22', null, 'fe_15', null, null, 'fh_k27', null, 'fe_06', null, null, 'fe_09', null, null, 'fe_22', null, null, 'fh_k29', null, 'fe_18', null]
+// 달력 세 줄 — 해먹은 날에만 음식 아이콘이 박힌다(빈 칸 = 안 한 날). ⛔날짜 숫자는 안 쓴다(달마다 달라진다)
+// ⛔⛔ **2·3째 줄의 1·2번째 칸은 비워 둔다** — 펭펭이 달력 왼쪽 아래에 서 있어 «그 두 칸을 가린다».
+//    첫 판에서 3째 줄 1번 칸의 음식이 통째로 안 보였다(캡처로 잡았다). 달력의 요지가 「해먹은 날에 그림이 박힌다」인데
+//    그 그림이 캐릭터 뒤로 숨으면 요지가 죽는다. 📌아이콘을 옮길 땐 펭펭 폭(container 0~146px)을 먼저 볼 것.
+const CAL = [null, 'fh_k22', null, 'fe_15', null, null, 'fh_k27', null, null, null, 'fe_06', null, 'fe_09', null, null, null, 'fe_22', null, 'fh_k29', null, 'fe_18']
 const SlideD = () => (
   <Stage bg="linear-gradient(165deg,#d6dfea,#eef2f7)">
     <Cap top={210}><H1 style={{ color: '#3f5570' }}>오늘의 한 끼가<br />일기가 돼요</H1><Sub style={{ color: '#5b7291' }}>사진 붙이고 속지 골라 · 그날을 남겨요</Sub></Cap>
