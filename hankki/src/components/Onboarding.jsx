@@ -1,4 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
+import Icon from './Icon'
+// 🛒 장보기 콤비 — 꼬르곰이 카트, 펭펭이 바구니. 스토어 스샷 ⑤가 쓰는 그 컷이다.
+//    ⚠️ `sharepool` 에 있어서 `F()`(stickers/photo) 로는 못 부른다 → 직접 import.
+import duoCart from '../assets/sharepool/duo_cart.png'
 import logoCream from '../assets/logo-hankki-cream.png'
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomThumb from '../assets/ui/gom_thumbsup.png'
@@ -289,6 +293,61 @@ const Pick = ({ n, d, c, e }) => (
     <div style={{ position: 'absolute', top: -16, right: 24, background: '#ffcf3f', color: '#6a4a10', fontSize: 26, padding: '8px 20px', borderRadius: 24, boxShadow: '0 6px 12px rgba(150,110,20,.25)' }}><svg viewBox="0 0 24 24" width={26} height={26} style={{ verticalAlign: '-4px', marginRight: 4 }}><path d="M12 2.5c.5 4 1.5 5 5.5 5.5-4 .5-5 1.5-5.5 5.5-.5-4-1.5-5-5.5-5.5 4-.5 5-1.5 5.5-5.5z" fill="#6a4a10" /></svg>꼬르곰·펭펭 PICK</div>
   </div>
 )
+// ── 6-S. 장보기 ──
+// 🛒🛒 창업자 지적 2026-08-09 — *"여기는 장보기가 빠졌구나.."* · *"온보드에 왜 빠져있었지? 스샷이랑 다 똑같이 했었는데"*
+//    ⛔ 맞았다. 스토어 스샷 «여덟 장» 중 **둘**이 온보딩에 없었다 — ④음식 아이콘 · ⑤장보기.
+//       v8.37(7/24) 에 「스샷을 앱 안에서 라이브로」를 하면서 **처음부터 여섯 장만 옮겼다.**
+//       ⚠️ 왜 그 둘을 뺐는지는 «기록에 안 적혀 있다» — 짐작해서 채우지 말 것.
+//    📌 일기 때와 뿌리가 같다 — **하단바에 「장보기」 탭이 있는데 소개하는 자리에서 그 이름을 한 번도 안 불렀다.**
+//    ⭐ 이 장면은 스샷 `design/promo/스토어스샷-2507/renders-v3/05-장보기.png` 를 그대로 라이브로 옮긴 것.
+//       ⛔ 마트는 «상호»가 아니라 «종류»로 쓴다(새벽배송·대형몰…) — 제3자 상표를 스토어 이미지에 못 쓴다(스샷 README 원칙).
+//       ⛔ 🛒 는 유니코드가 아니라 우리 `cart` 라인 아이콘이다(CLAUDE.md ⛔UI 유니코드 이모지 금지).
+const BUY = [['돼지고기 앞다리'], ['두부 한 모'], ['대파 한 단']]
+const MALLS = [['새벽배송', '#5a7fa8'], ['대형몰', '#8c93a0'], ['친환경마켓', '#6f9a5e'], ['오픈마켓', '#b0805a'], ['동네마트', '#9b86bd']]
+const Cart = ({ s = 34, c = '#fffdf8' }) => <Icon name="cart" size={s} color={c} stroke={2} />
+const SlideS = () => (
+  <Stage bg="linear-gradient(170deg,#b3d1e2,#cfe2ec 60%,#dfebf2)">
+    <Cap top={210}>
+      <H1 style={{ color: '#2f6187' }}>재료, 한 번에<br />사러가기 <span style={{ display: 'inline-block', verticalAlign: '-6px' }}><Cart s={64} c="#2f6187" /></span></H1>
+      <Sub style={{ color: '#4a7ba3' }}>레시피 재료 그대로 톡 — 여러 마트로 바로</Sub>
+    </Cap>
+    <div style={{ position: 'absolute', top: 556, left: '50%', transform: 'translateX(-50%)', width: 720 }}>
+      {/* 🍲 레시피 재료 → 담기 */}
+      <div style={{ background: '#fffdf8', borderRadius: 34, padding: '26px 30px 16px', boxShadow: '0 22px 44px rgba(45,75,105,.22)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div style={{ width: 92, height: 92, borderRadius: 22, background: '#f2efe6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <img src={F('fh_k02')} alt="" draggable={false} style={{ width: '84%', height: '84%', objectFit: 'contain' }} />
+          </div>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: 46, color: '#33302b' }}>김치찌개 재료</div>
+            <div style={{ fontSize: 28, color: '#9aa4b2', marginTop: 2 }}>돼지고기·두부·대파·김치…</div>
+          </div>
+        </div>
+        <div style={{ height: 2, margin: '22px 0 4px', backgroundImage: 'repeating-linear-gradient(90deg,#dcd6c8 0 12px,transparent 12px 24px)' }} />
+        {BUY.map(([n], i) => (
+          <div key={n} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 6px', borderTop: i ? '2px solid #f0ece1' : 'none' }}>
+            <span style={{ fontSize: 38, color: '#33302b' }}>· {n}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#5a83ab', color: '#fffdf8', fontSize: 32, padding: '12px 26px', borderRadius: 999 }}>담기 <Cart s={30} /></span>
+          </div>
+        ))}
+      </div>
+      {/* 🏪 마트는 «종류»로 — 상호를 스토어 이미지에 못 쓴다 */}
+      <div style={{ marginTop: 26, background: '#fffdf8', borderRadius: 34, padding: '22px 24px 26px', boxShadow: '0 22px 44px rgba(45,75,105,.22)', textAlign: 'center' }}>
+        <div style={{ fontSize: 38, color: '#2f6187', display: 'inline-flex', alignItems: 'center', gap: 12 }}>내가 자주 쓰는 마트로 바로 <Cart s={34} c="#2f6187" /></div>
+        <div style={{ fontSize: 27, color: '#8d97a4', marginTop: 6 }}>원하는 곳으로 톡 — 장바구니째 이동</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center', marginTop: 20 }}>
+          {MALLS.map(([n, c]) => (
+            <span key={n} style={{ background: c, color: '#fffdf8', fontSize: 30, padding: '12px 26px', borderRadius: 999 }}>{n}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+    <img src={duoCart} alt="" draggable={false} className="hk-m-sway"
+      style={{ position: 'absolute', left: '50%', bottom: 176, transform: 'translateX(-50%)', width: 344, transformOrigin: 'bottom center', filter: 'drop-shadow(0 14px 22px rgba(45,75,105,.3))' }} />
+    <Foot style={{ background: '#2f6187', color: '#fffdf8' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>장 볼 거 까먹을 일 없이 <Cart s={38} /></span></Foot>
+  </Stage>
+)
+
 const Slide6 = () => (
   <Stage bg="linear-gradient(160deg,#cdd2a0,#e4e7c6)">
     <Cap top={210}><H1 style={{ color: '#5f6a30' }}>아무거나 말고,<br />써본 것만 나눠요</H1><Sub style={{ color: '#72803a' }}>18년차 주부가 직접 쓰고 좋았던 살림템만</Sub></Cap>
@@ -432,7 +491,9 @@ const Slide8 = () => (
 // 📔 SlideD(한끼 일기) = 레꾸 «바로 다음». 「레시피를 꾸민다」 → 「일기도 꾸민다」로 이어진다.
 //    ⚠️ 장수가 늘면 아래 점 표시(dots)와 「다음」 버튼은 `SLIDES.length` 로 저절로 따라간다 —
 //       v9.04 에서 «개수를 글자에 박지 않는다»로 고쳐 놓은 덕이다.
-const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, SlideD, Slide3, Slide6, Slide7, Slide8]
+// 🛒 SlideS(장보기) = 큐레이션(Slide6) «바로 앞» — 스토어 스샷 순서 그대로다(⑤장보기 → ⑥큐레이션).
+//    「레시피 재료를 담아 사러 간다」가 먼저고 「살림템 추천」이 그다음이라 흐름도 맞는다.
+const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, SlideD, Slide3, SlideS, Slide6, Slide7, Slide8]
 
 export default function Onboarding({ onDone }) {
   const N = SLIDES.length

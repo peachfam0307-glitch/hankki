@@ -1,4 +1,6 @@
-// 🔎 온보딩 아홉 장 «전수» 검수 — 날짜 · 문구 · 이모지 · 넘침
+// 🔎 온보딩 «전수» 검수 — 날짜 · 문구 · 이모지 · 넘침
+//    ⛔ 파일 이름에 장수를 넣지 않는다 — 첫 판이 「9장」이었는데 그날 바로 열 장이 됐다.
+//       장수는 계속 늘어난다(v8.37 여섯 → v9.04 여덟 → v10.05 아홉 → 열). 개수는 아래 WANT_N 한 곳에서만.
 //
 // 📮 창업자 2026-08-09 — *"8장 검수해서 날짜랑 멘트랑 다 확인하자"*
 //    (＋ *"날짜도 맞춰야해(온보드에 날짜 써있는 이미지가 있을거야)"* — 맞았다.
@@ -57,13 +59,14 @@ const N = await page.evaluate(() => {
   const t = [...document.querySelectorAll('div')].find((d) => d.style.display === 'flex' && /^\d+%$/.test(d.style.width) && d.children.length > 3)
   return t ? t.children.length : 0
 })
-ok(N === 9, `슬라이드가 아홉 장이다 — 센 것 ${N}`)
+const WANT_N = 10   // 🛒 2026-08-09 장보기 추가 → 열 장
+ok(N === WANT_N, `슬라이드가 ${WANT_N}장이다 — 센 것 ${N}`)
 
 // 🈶 유니코드 이모지 — 우리 스티커만 쓴다(문서·주석 아닌 «화면 글자»에서만 본다)
 const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{23E9}-\u{23FA}]/u
 
 const rows = []
-for (let i = 0; i < 9; i++) {
+for (let i = 0; i < WANT_N; i++) {
   await page.waitForTimeout(460)
   const d = await page.evaluate((k) => {
     const t = [...document.querySelectorAll('div')].find((x) => x.style.display === 'flex' && /^\d+%$/.test(x.style.width) && x.children.length > 3)
@@ -118,5 +121,5 @@ ok(errs.length === 0, `런타임 크래시 0${errs.length ? ` — ${[...new Set(
 
 writeFileSync(`${OUT}/온보딩9장-글자.json`, JSON.stringify({ today: WANT_DOT, rows }, null, 2))
 await page.close(); await b.close(); srv.close()
-console.log(bad ? `\n⛔ ${bad}건 — 고칠 것\n` : '\n✅ 온보딩 아홉 장 전수 검수 통과\n')
+console.log(bad ? `\n⛔ ${bad}건 — 고칠 것\n` : `\n✅ 온보딩 ${WANT_N}장 전수 검수 통과\n`)
 process.exit(bad ? 1 : 0)
