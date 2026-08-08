@@ -42,6 +42,9 @@ const box = (f) => ({
   right: `${f.right}%`,
   ...(f.top !== undefined ? { top: `${f.top}%` } : {}),
   ...(f.bottom !== undefined ? { bottom: `${f.bottom}%` } : {}),
+  // 📐 `rot` = 칸이 그림에서 «기울어져» 그려진 속지(스크랩 사진첩의 폴라로이드 -9~6°).
+  //    칸을 같은 각도로 돌려야 사진·글이 창에 맞는다. 축정렬 칸(rot 없음)은 그대로.
+  ...(f.rot ? { transform: `rotate(${f.rot}deg)` } : {}),
 })
 
 // ⚠️ 줄 간격(`lineHeight`)은 «글씨체가 바뀌어도» 그대로다 — 종이의 줄과 묶여 있어서 흔들면 글이 줄에서 어긋난다.

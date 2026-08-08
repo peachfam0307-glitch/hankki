@@ -902,7 +902,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 //    ⛔ 「내 사진 넣기」가 서랍 맨 위에 있어도 프레임이랑 이어질 줄은 아무도 모른다.
                 ? '이 프레임에 사진을 끼울 수 있어요 · 서랍 맨 위'
                 : hasCtx
-                  ? '탭한 걸 여기서 바로 꾸며요 · 드래그로 이동 · ⟳ 크기/회전'
+                  ? '누른 걸 여기서 바로 꾸며요 · 끌어서 옮기고 · ⟳ 크기/돌리기'
                   : (isDiary && mode === 'paper' && !paperArtHasPhoto)
                     // 📷 틀에 사진칸이 «없는» 속지(없음·도트) — 사진을 못 넣는 게 아니라 «아무 데나» 넣는다.
                     //    창업자 2026-08-06 *"무지에는 사진 넣는거 없어??"* → 있는데 «있는 줄을 몰랐다».
@@ -913,7 +913,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     //    (「레꾸」는 이미 「레꾸자랑」 탭에 있어 유저가 안다 — 그래서 안 푼다.)
                       ? '일꾸 = 일기 꾸미기 · 더 많은 아이템은 「레꾸」에'
                       : '레꾸 = 레시피 꾸미기 · 일기에도 그대로 붙어요')
-                    : '아래에서 골라 붙이고 · 드래그로 이동 · ⟳ 손잡이로 크기/회전'}
+                    : '아래에서 골라 붙이고 · 끌어서 옮기고 · ⟳ 손잡이로 크기/돌리기'}
           </div>
         </div>
 
@@ -938,7 +938,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               //      안내 글자라 손가락 최소(44)와 무관하지만, 갈래 아이콘 칸과 «같은 키»라야 안 튄다 → 둘 다 46.
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 46, color: 'var(--text-sub)', fontSize: 12 }}>
                 <Icon name="palette" size={15} color="var(--text-sub)" />
-                붙인 걸 탭하면 여기서 꾸며요
+                붙인 걸 누르면 여기서 꾸며요
               </div>
             ) : (<>
             {/* 🔀 갈래 = **아이콘 칸**(46px). 아래 칩은 알약 — 생김새가 달라 층이 갈린다.

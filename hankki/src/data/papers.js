@@ -25,6 +25,7 @@ import dpFrameBlue from '../assets/paper/dp_frame_blue.webp'
 import dpToday from '../assets/paper/dp_today.webp'
 import dpSnap from '../assets/paper/dp_snap.webp'
 import dpList3 from '../assets/paper/dp_list3.webp'
+import dpScrap from '../assets/paper/dp_scrap.webp'
 
 /** ⑴ 선 — 무지가 기본. 「양식을 안 정한다」는 확정 그대로 빈 종이에서 시작한다. */
 export const PAPER_RULES = [
@@ -268,6 +269,34 @@ export const PAPER_ARTS = [
         { top: 65.5, left: 37, right: 7.5, bottom: 16.6, key: 'note3', label: '기록 3' },
         { top: 88.0, left: 9, right: 7, bottom: 4.8, key: 'note4', label: '메모' },
       ],
+    },
+  },
+  // 📷 스크랩 사진첩 — 창업자 시트 2026-08-08 「스크랩종이-8요소」 · **통짜 속지** 확정
+  //    (창업자 2026-08-08 *"통자속지로가자 요리사진모음기록용으로 하려고"* — 낱개 7컷(rs_x)은 서랍에 안 올린다)
+  //
+  // 📐 실측(창 내부 flood → 상단 변 회귀 · 규칙 18): 폴라로이드 창 셋이 «기울어져» 그려져 있다
+  //    · 큰 창  중심(27.8, 24.9) · 36.6×29.2% · **−9.4°**
+  //    · 파랑   중심(17.7, 60.3) · 20.1×14.5% · **−10.4°**
+  //    · 초록   중심(38.5, 64.4) · 18.5×13.7% · **5.8°**
+  //    → `rot` 필드(이 속지를 위해 box 에 넣었다)로 사진칸을 같은 각도로 돌린다.
+  // ✍️ 글칸 = 도트 메모지 한 칸(x 57~93.5 · y 36.3~75.2 안쪽). 찢은 종이(우상)는 제목 자리.
+  // ⛔ 체크리스트(하단)는 **그림 그대로** 뒀다 — 인쇄 줄 간격 3.3% ≠ 글줄 4.34% 라 글을 얹으면
+  //    어긋나고, 지우면 체크리스트가 아니게 된다. 스티커·글자 넣기로 자유롭게 쓰는 자리.
+  // ⛔ 태그 둘(초록·노랑)도 장식 — 날짜는 화면 위 제목 바에 이미 있다.
+  {
+    key: 'scrap', label: '스크랩 사진첩', src: dpScrap, note: '기울어진 폴라로이드 셋에 요리 사진 · 메모 한 칸',
+    fields: {
+      rule: 'none',
+      title: { top: 13.0, left: 53, right: 5.5, rot: 3.9 },
+      // 📐 상자는 «창 테두리 선»까지 (흰 영역 실측 +0.7%) — multiply 라 선은 사진 위에도 그려진다.
+      //    ⚠️ 파랑 right 는 75 에서 끊는다 — 창 오른쪽 끝이 «초록 폴라 몸통 아래»라 사진이 넘어가면
+      //       흰 몸통이 못 가린다(multiply 는 흰색을 못 얹는다). 원본에서도 가려진 부분이다.
+      photo: [
+        { top: 9.9, bottom: 60.2, left: 9.2, right: 53.6, rot: -9.4 },
+        { top: 52.6, bottom: 32.0, left: 7.2, right: 74, rot: -10.4, key: 'photo2' },
+        { top: 57.1, bottom: 28.3, left: 29.2, right: 51.8, rot: 5.8, key: 'photo3' },
+      ],
+      write: { top: 38, left: 58.5, right: 6.5, bottom: 26.5 },
     },
   },
 ]

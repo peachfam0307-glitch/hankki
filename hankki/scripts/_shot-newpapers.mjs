@@ -47,13 +47,18 @@ const entryList3 = mk('list3', {
   note: '아침 국 끓였다', note2: '점심 도시락 쌌다', note3: '저녁 볶음 했다', note4: '맨 아래 메모 칸이에요',
   photo: testPhoto('#7a9c6e', '1'), photo2: testPhoto('#6e86a0', '2'), photo3: testPhoto('#b08a6a', '3'),
 })
+const entryScrap = mk('scrap', {
+  title: '이번 주 요리들',
+  note: '도트 메모지에 쓰는 글이에요. 폴라로이드가 기울어져 있어서 사진도 같이 기울어야 해요.',
+  photo: testPhoto('#7a9c6e', '1'), photo2: testPhoto('#6e86a0', '2'), photo3: testPhoto('#b08a6a', '3'),
+})
 
 let bad = 0
 const ok = (m) => console.log('   ✅', m)
 const no = (m) => { bad++; console.log('   ⛔', m) }
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium' })
-for (const [entry, name] of [[entrySnap, '사진기록'], [entryList3, '기록3칸']]) {
+for (const [entry, name] of [[entrySnap, '사진기록'], [entryList3, '기록3칸'], [entryScrap, '스크랩']]) {
   const page = await b.newPage({ viewport: { width: 360, height: 880 }, deviceScaleFactor: 3 })
   const errors = []
   page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
