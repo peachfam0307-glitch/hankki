@@ -921,25 +921,6 @@ img {
   margin-top: 9px;
   flex: 0 0 auto;
 }
-/* 🎨 재료 아이콘이 붙은 줄은 불릿 대신 그림이 «점 자리»에 선다 (⏳시안 · 창업자 판정 대기) */
-.ing.has-cut::before { display: none; }
-.ing.has-cut { align-items: center; }
-/* ⛔ 아이콘(22px)이 불릿(5px)보다 커서 «붙은 줄만» 글이 밀렸다(첫 판에서 15px 어긋남).
-   그래서 이 판에서는 «안 붙은 줄»의 불릿도 같은 폭을 차지하게 해 글 시작점을 맞춘다. */
-.ing-cuts .ing::before { margin-left: 8px; margin-right: 9px; }
-/* 만드는 법 단계 오른쪽 꼬르곰 — 글이 먼저 자리를 잡고 남는 자리에 선다 */
-.step > img { margin-left: auto; align-self: center; }
-
-/* ⓔ 번호 동그라미가 꼬르곰 얼굴 — ⭐줄 폭을 «하나도» 안 먹는다(이미 있는 자리를 쓴다) */
-.n-gom { position: relative; background: none; width: 30px; height: 30px; }
-.n-gom img { width: 30px; height: 30px; border-radius: 50%; display: block; }
-.n-gom span {
-  position: absolute; right: -3px; bottom: -3px;
-  min-width: 15px; height: 15px; padding: 0 3px;
-  border-radius: 999px; background: var(--brown); color: #fff;
-  font-size: 10px; font-weight: 800; line-height: 15px; text-align: center;
-  box-shadow: 0 0 0 1.5px var(--bg);
-}
 
 /* ⓗ 절 제목 형광펜 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
    ⭐ `multiply` 라 **띠를 글자 «위»에 얹어도 글자가 그대로 비친다**(덮는 게 아니라 칠하는 것).

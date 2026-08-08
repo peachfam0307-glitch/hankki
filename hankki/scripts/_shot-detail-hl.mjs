@@ -44,7 +44,8 @@ for (const c of COLORS.filter((x) => x.key === 'lemon')) {
     localStorage.setItem('hankki-theme', a.theme)   // 부팅 때 main.jsx 가 applyTheme(getTheme()) 을 부른다
     for (const k of ['home', 'home2', 'detail', 'brag', 'shop', 'myrecipes', 'profile', 'decor']) localStorage.setItem(`hankki:coach:${k}`, '1')
   }, { s: { recipes: [], seedV: BASICS_VERSION }, theme })
-  await page.goto(`http://127.0.0.1:4363/hankki/?decor=final&hl=${c.key}`, { waitUntil: 'networkidle' })
+  // ⛔ 시안 스위치(?decor=)는 지웠다 — 이제 «그냥 열어도» 보여야 한다. 안 보이면 정리하다 깨뜨린 것
+  await page.goto('http://127.0.0.1:4363/hankki/', { waitUntil: 'networkidle' })
   await page.waitForTimeout(1000)
   await page.locator('.grid-card').first().click()
   await page.waitForTimeout(800)

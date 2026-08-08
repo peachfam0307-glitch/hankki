@@ -29,17 +29,10 @@ import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomThumb from '../assets/ui/gom_thumbsup.png'
-import DetailDecor, { ingCut, avGom } from '../components/DetailDecor'
+import DetailDecor from '../components/DetailDecor'
 import { hlColor } from '../components/Stickers'
 
-// 🎨 상세 꾸미기 시안 갈래 — ⏳창업자 판정 대기(2026-08-08 · 테스터 「글밖에 없어 심심하다」)
-//    ⛔ 임시다. 하나가 정해지면 이 줄과 `mode` 갈래를 지우고 그것만 남긴다.
-//    주소 뒤에 `?decor=a|b|c` 를 붙여 견준다 — 기본은 'off'(지금 그대로).
-const DECOR_MODE = (() => {
-  try { return new URLSearchParams(window.location.search).get('decor') || 'off' } catch { return 'off' }
-})()
-// 🖍 절 제목 형광펜 색 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
-//    `?hl=lemon|lime|aqua|coral|grape|violet` 로 견준다(기본 레몬).
+// 🖍 절 제목 형광펜 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
 // ✅ **레몬 확정** — 창업자가 판단을 맡겨서(*"형광펜은 잘모르겠다.. 네가 판단해봐"*) «재서» 골랐다.
 //   ⑴ 바탕과의 대비 ΔE **30.2** = 2위 라임(23.1)보다 또렷하고 꼴찌 자몽(13.3)의 2.3배
 //   ⑵ 앱 포인트색(더스티블루)과 가장 «멀다»(ΔE 71.9) → 파란 버튼 옆에서 또 다른 버튼처럼 안 읽힌다
@@ -47,16 +40,12 @@ const DECOR_MODE = (() => {
 //   ⑶ 형광펜의 원형이 노랑이라 설명 없이 「형광펜」으로 읽힌다
 //   ⛔ **내 눈은 「아쿠아가 제일 또렷」이라 봤는데 재보니 반대였다** — 웜 바탕에 쿨 색이라
 //      «다르게» 보인 것을 «진하게»로 오해했다(규칙 18: 눈이 본 것을 숫자로 확인한다).
-//   📌 다크 테마에선 여섯이 다 비슷해 보인다(screen 이라 채도가 안 산다) → 밝은 두 테마 기준으로 골랐다.
-const HL_PICK = (() => {
-  try { return new URLSearchParams(window.location.search).get('hl') || 'lemon' } catch { return 'lemon' }
-})()
-// 절 제목을 형광펜으로 칠한다 — ⭐`multiply` 라 «글자가 그대로 비친다»(덮는 게 아니라 칠하는 것).
-//    앱 꾸미기의 형광펜(`DecorLayer` 249줄)과 «같은 문법»을 쓴다. 새로 만든 규칙이 아니다.
+//   📌 다크에선 여섯이 다 비슷해 보인다(screen 이라 채도가 안 산다) → 밝은 두 테마 기준으로 골랐다.
+const HL_PICK = 'lemon'
+// 절 제목을 형광펜으로 칠한다 — ⭐multiply 라 «글자가 그대로 비친다»(덮는 게 아니라 칠하는 것).
+//    앱 꾸미기의 형광펜(`DecorLayer`)과 «같은 문법»을 쓴다. 새로 만든 규칙이 아니다.
 const SecTitle = ({ children }) => (
-  DECOR_MODE === 'h' || DECOR_MODE === 'final'
-    ? <div className="h-section"><span className="hl-mark" style={{ '--hl': hlColor(HL_PICK) }}>{children}</span></div>
-    : <div className="h-section">{children}</div>
+  <div className="h-section"><span className="hl-mark" style={{ '--hl': hlColor(HL_PICK) }}>{children}</span></div>
 )
 
 // 첫 방문 코치마크 — 숨어 있는 중요 기능을 반짝이며 알려준다(창업자 딸 아이디어 ⭐)
@@ -406,7 +395,7 @@ export default function RecipeDetailScreen({ id }) {
           <>
             <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
               <div className="sec-title-row" style={{ display: 'flex', alignItems: 'center' }}>
-                <DetailDecor mode={DECOR_MODE} where="head-재료" />
+                <DetailDecor where="head-재료" />
                 <SecTitle>재료</SecTitle>
                 <button className="press" onClick={() => setGuide(true)} aria-label="계량·손질 가이드" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 999, background: 'var(--cream)' }}>
                   <Icon name="help" size={14} color="var(--brown)" />
@@ -434,19 +423,12 @@ export default function RecipeDetailScreen({ id }) {
                 {servings !== baseServings && <button className="serv-reset press" onClick={() => setServings(baseServings)}>기본 {baseServings}인분</button>}
               </div>
             )}
-            <div className={DECOR_MODE === 'b' ? 'ing-cuts' : undefined}>
-              {r.ingredients.map((ing, i) => {
-                if (isIngHeader(ing)) return <div key={i} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
-                const line = scaleIngredient(ing, ratio)
-                // ⛔ JSX 요소는 «비어 있어도» 늘 참이다 — 아이콘이 붙는지는 «값»으로 묻는다
-                const hasCut = DECOR_MODE === 'b' && !!ingCut(line)
-                return (
-                  <div key={i} className={hasCut ? 'ing has-cut' : 'ing'}>
-                    <DetailDecor mode={DECOR_MODE} where="ing" text={line} />
-                    <span>{line}</span>
-                  </div>
-                )
-              })}
+            <div>
+              {r.ingredients.map((ing, i) => (
+                isIngHeader(ing)
+                  ? <div key={i} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
+                  : <div key={i} className="ing">{scaleIngredient(ing, ratio)}</div>
+              ))}
             </div>
           </>
         )}
@@ -464,7 +446,7 @@ export default function RecipeDetailScreen({ id }) {
           <>
             <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
               <div className="sec-title-row" style={{ display: 'flex', alignItems: 'center' }}>
-                <DetailDecor mode={DECOR_MODE} where="head-만드는법" />
+                <DetailDecor where="head-만드는법" />
                 <SecTitle>만드는 법</SecTitle>
               </div>
               <button className="mini-buy press" onClick={() => setTimer(true)}>타이머</button>
@@ -472,15 +454,12 @@ export default function RecipeDetailScreen({ id }) {
             <div>
               {r.steps.map((s, i) => (
                 <div key={i} className="step">
-                  <div className={DECOR_MODE === 'e' ? 'n n-gom' : 'n'}>
-                    {DECOR_MODE === 'e' && <img src={avGom} alt="" aria-hidden="true" draggable={false} />}
-                    <span>{i + 1}</span>
-                  </div>
+                  <div className="n">{i + 1}</div>
                   <div className="txt">{s}</div>
-                  <DetailDecor mode={DECOR_MODE} where="step" text={s} prev={r.steps[i - 1]} />
                 </div>
               ))}
-              <DetailDecor mode={DECOR_MODE} where="done" text={r.title} />
+              {/* 🏁 다 읽고 «도착하는» 자리 — 줄은 하나도 안 건드리고 마지막 단계 뒤에만 붙는다 */}
+              <DetailDecor where="done" text={r.title} />
             </div>
           </>
         )}
