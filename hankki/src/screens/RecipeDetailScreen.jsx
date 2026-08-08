@@ -30,6 +30,7 @@ import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomThumb from '../assets/ui/gom_thumbsup.png'
 import DetailDecor, { ingCut, avGom } from '../components/DetailDecor'
+import { hlColor } from '../components/Stickers'
 
 // 🎨 상세 꾸미기 시안 갈래 — ⏳창업자 판정 대기(2026-08-08 · 테스터 「글밖에 없어 심심하다」)
 //    ⛔ 임시다. 하나가 정해지면 이 줄과 `mode` 갈래를 지우고 그것만 남긴다.
@@ -37,6 +38,18 @@ import DetailDecor, { ingCut, avGom } from '../components/DetailDecor'
 const DECOR_MODE = (() => {
   try { return new URLSearchParams(window.location.search).get('decor') || 'off' } catch { return 'off' }
 })()
+// 🖍 절 제목 형광펜 색 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
+//    `?hl=lemon|lime|aqua|coral|grape|violet` 로 견준다(기본 레몬).
+const HL_PICK = (() => {
+  try { return new URLSearchParams(window.location.search).get('hl') || 'lemon' } catch { return 'lemon' }
+})()
+// 절 제목을 형광펜으로 칠한다 — ⭐`multiply` 라 «글자가 그대로 비친다»(덮는 게 아니라 칠하는 것).
+//    앱 꾸미기의 형광펜(`DecorLayer` 249줄)과 «같은 문법»을 쓴다. 새로 만든 규칙이 아니다.
+const SecTitle = ({ children }) => (
+  DECOR_MODE === 'h'
+    ? <div className="h-section"><span className="hl-mark" style={{ '--hl': hlColor(HL_PICK) }}>{children}</span></div>
+    : <div className="h-section">{children}</div>
+)
 
 // 첫 방문 코치마크 — 숨어 있는 중요 기능을 반짝이며 알려준다(창업자 딸 아이디어 ⭐)
 const COACH_KEY = 'hankki:coach:detail'
@@ -386,7 +399,7 @@ export default function RecipeDetailScreen({ id }) {
             <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <DetailDecor mode={DECOR_MODE} where="head-재료" />
-                <div className="h-section">재료</div>
+                <SecTitle>재료</SecTitle>
                 <button className="press" onClick={() => setGuide(true)} aria-label="계량·손질 가이드" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 999, background: 'var(--cream)' }}>
                   <Icon name="help" size={14} color="var(--brown)" />
                 </button>
@@ -444,7 +457,7 @@ export default function RecipeDetailScreen({ id }) {
             <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <DetailDecor mode={DECOR_MODE} where="head-만드는법" />
-                <div className="h-section">만드는 법</div>
+                <SecTitle>만드는 법</SecTitle>
               </div>
               <button className="mini-buy press" onClick={() => setTimer(true)}>타이머</button>
             </div>

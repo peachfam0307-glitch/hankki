@@ -941,6 +941,17 @@ img {
   box-shadow: 0 0 0 1.5px var(--bg);
 }
 
+/* ⓗ 절 제목 형광펜 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
+   ⭐ `multiply` 라 **띠를 글자 «위»에 얹어도 글자가 그대로 비친다**(덮는 게 아니라 칠하는 것).
+      앱 꾸미기 형광펜(`DecorLayer`)과 «같은 문법» — z-index 로 밑에 깔 필요가 없다.
+   📐 위에서 32% 부터 = 손으로 그은 형광펜처럼 «글자 아랫동아리»만 지나간다(윗줄을 다 덮으면 매직펜이 된다). */
+.hl-mark { position: relative; display: inline-block; }
+.hl-mark::after {
+  content: ''; position: absolute; left: -6px; right: -6px; top: 32%; bottom: 6%;
+  background: var(--hl); opacity: .62; mix-blend-mode: multiply;
+  border-radius: 2px 6px 3px 5px; pointer-events: none;
+}
+
 /* ⓖ 맨 끝 「완성」 칸 — 줄은 하나도 안 건드리고 마지막 단계 «뒤»에만 붙는다 */
 .done-strip {
   display: flex; align-items: center; gap: 12px;
