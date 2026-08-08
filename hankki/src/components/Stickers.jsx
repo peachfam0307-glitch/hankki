@@ -455,6 +455,26 @@ const PHOTO_RATIO = {
   ta_checkc: 0.9958, ta_star: 1.2197,
   // ✏️ 창업자 문구 시트 2026-07-31 신규 6종
   tw_itsme: 1.4038, tw_bland: 1.2773, tw_funfun: 1.5385, tw_kidpick: 1.4194, tw_hubbypick: 1.4324, tw_admit: 1.551,
+  // 🍳 레꾸 상황·평가 스티커 99컷 (2026-08-08 창업자 시트 14장 · 그림+캡션이 한 컷)
+  //   변형쌍 판정 = 창업자 2026-08-08: 조리법 귀요미(rs_q)·식사 노랑(rs_m)·건강 그린(rs_g)·상황 아이콘(rs_i)
+  //   탈락 벌(사실화 rs_c·초록 rs_n·사람손 rs_h·블루 rs_b)은 docs 낱개에만 있고 앱엔 안 들였다
+  rs_t01: 0.9184, rs_t02: 0.9491, rs_t03: 0.8401, rs_t04: 0.9152, rs_t05: 0.8057, rs_t06: 0.6901,
+  rs_t07: 0.6342, rs_t08: 0.9065, rs_t09: 0.845, rs_t10: 0.9174, rs_t11: 1.0063, rs_t12: 0.7485,
+  rs_r01: 0.8635, rs_r02: 0.8063, rs_r03: 0.9452, rs_r04: 1.1727, rs_r05: 1.0069, rs_r06: 0.94,
+  rs_r07: 0.9211, rs_r08: 0.9363, rs_r09: 0.8313, rs_r10: 1.0093, rs_r11: 0.678, rs_r12: 1.0651,
+  rs_q01: 0.9177, rs_q02: 0.8671, rs_q03: 0.9915, rs_q04: 1.0194, rs_q05: 0.8818, rs_q06: 0.9307,
+  rs_q07: 1.0286, rs_q08: 1.1603, rs_q09: 0.8612, rs_q10: 0.8915, rs_q11: 0.7912, rs_q12: 0.8817,
+  rs_m01: 1.1644, rs_m02: 1.1086, rs_m03: 1.0541, rs_m04: 1.0976, rs_m05: 1.0068, rs_m06: 1.0977,
+  rs_m07: 1.214, rs_m08: 1.5175, rs_m09: 1.4286, rs_m10: 1.8479, rs_m11: 1.4801, rs_m12: 1.6766,
+  rs_i01: 0.9366, rs_i02: 1.07, rs_i03: 1.0162, rs_i04: 1.0915, rs_i05: 1.1703, rs_i06: 1.12,
+  rs_i07: 1.0304, rs_i08: 1.0305, rs_i09: 1.0209, rs_i10: 1.1037, rs_i11: 1.1222, rs_i12: 1.124,
+  rs_i13: 1.0502, rs_i14: 1.254, rs_i15: 1.2509,
+  rs_p01: 0.8555, rs_p02: 0.912, rs_p03: 0.7514, rs_p04: 0.7007, rs_p05: 0.806, rs_p06: 0.7994,
+  rs_p07: 0.8222, rs_p08: 0.858, rs_p09: 0.8121, rs_p10: 0.9048, rs_p11: 0.72, rs_p12: 0.9203,
+  rs_s01: 1.0259, rs_s02: 1.0592, rs_s03: 1.0705, rs_s04: 0.9524, rs_s05: 1.0, rs_s06: 0.9876,
+  rs_s07: 0.9375, rs_s08: 0.9753, rs_s09: 1.0958, rs_s10: 0.9189, rs_s11: 0.9184, rs_s12: 1.1053,
+  rs_g01: 0.9479, rs_g02: 0.8257, rs_g03: 0.8087, rs_g04: 0.9, rs_g05: 0.949, rs_g06: 0.8576,
+  rs_g07: 1.0459, rs_g08: 0.9763, rs_g09: 1.0739, rs_g10: 0.8209, rs_g11: 0.8196, rs_g12: 0.8801,
 
   // ══════════════════════════════════════════════════════════════════════════
   // 💰 **유료팩 154컷 — 2026-08-05 결제 준비로 앱에 들였다**
@@ -1302,6 +1322,17 @@ export const STICKER_GROUPS = [
   //     「아이 원픽!」「남편 원픽!」 = 가족 반응 기록 — 우리 앱 성격에 딱 맞는 말.
   { key: 'text_hankki', tab: 'notetext', label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night', 'tw_kidpick', 'tw_hubbypick', 'tw_admit', 'tw_funfun', 'tw_itsme', 'tw_bland'] },
   { key: 'text_word', tab: 'notetext', label: '문구', items: ['tw_today', 'tw_success', 'tw_welldone', 'tw_tasty', 'tw_more', 'tw_fav', 'tw_honey', 'tw_hearty', 'tw_easy', 'tw_mom', 'tw_nexttime', 'tw_fail', 'tw_yummy', 'tw_best', 'tw_ourhankki', 'tw_goodday'] },
+  // 🍳 레꾸 상황·평가 8그룹 (2026-08-08 창업자 시트 · 그림+캡션 스티커)
+  //   「요리 기록에 실제로 도움이 되는 스티커」 — 스티커-방향 문서의 「없는 6묶음」을 채운다.
+  //   변형쌍은 창업자 판정분만(귀요미·노랑·그린·아이콘) — 탈락 벌은 앱에 안 들였다.
+  { key: 'rs_taste', tab: 'notetext', label: '맛 평가', items: ['rs_t01', 'rs_t02', 'rs_t03', 'rs_t04', 'rs_t05', 'rs_t06', 'rs_t07', 'rs_t08', 'rs_t09', 'rs_t10', 'rs_t11', 'rs_t12'] },
+  { key: 'rs_react', tab: 'notetext', label: '반응 평가', items: ['rs_r01', 'rs_r02', 'rs_r03', 'rs_r04', 'rs_r05', 'rs_r06', 'rs_r07', 'rs_r08', 'rs_r09', 'rs_r10', 'rs_r11', 'rs_r12'] },
+  { key: 'rs_cook', tab: 'notetext', label: '조리법', items: ['rs_q01', 'rs_q02', 'rs_q03', 'rs_q04', 'rs_q05', 'rs_q06', 'rs_q07', 'rs_q08', 'rs_q09', 'rs_q10', 'rs_q11', 'rs_q12'] },
+  { key: 'rs_scene', tab: 'notetext', label: '요리 상황', items: ['rs_i01', 'rs_i02', 'rs_i03', 'rs_i04', 'rs_i05', 'rs_i06', 'rs_i07', 'rs_i08', 'rs_i09', 'rs_i10', 'rs_i11', 'rs_i12', 'rs_i13', 'rs_i14', 'rs_i15'] },
+  { key: 'rs_meal', tab: 'notetext', label: '식사 상황', items: ['rs_m01', 'rs_m02', 'rs_m03', 'rs_m04', 'rs_m05', 'rs_m06', 'rs_m07', 'rs_m08', 'rs_m09', 'rs_m10', 'rs_m11', 'rs_m12'] },
+  { key: 'rs_prep', tab: 'notetext', label: '미리 준비', items: ['rs_p01', 'rs_p02', 'rs_p03', 'rs_p04', 'rs_p05', 'rs_p06', 'rs_p07', 'rs_p08', 'rs_p09', 'rs_p10', 'rs_p11', 'rs_p12'] },
+  { key: 'rs_store', tab: 'notetext', label: '보관', items: ['rs_s01', 'rs_s02', 'rs_s03', 'rs_s04', 'rs_s05', 'rs_s06', 'rs_s07', 'rs_s08', 'rs_s09', 'rs_s10', 'rs_s11', 'rs_s12'] },
+  { key: 'rs_health', tab: 'notetext', label: '건강 태그', items: ['rs_g01', 'rs_g02', 'rs_g03', 'rs_g04', 'rs_g05', 'rs_g06', 'rs_g07', 'rs_g08', 'rs_g09', 'rs_g10', 'rs_g11', 'rs_g12'] },
   // 📅 요일 = 무슨 요일에 해먹었는지 기록용. 빈 라벨 3종은 직접 글씨 얹으라고 둔다.
   //   ⚠️ 숫자 1~10 은 뺐다(창업자 2026-07-29) — 넣을 땐 '레시피 순서 매기기'를 생각했는데
   //      우리 레꾸는 **표지 한 장**이라 순서를 매길 자리가 없고(순서는 상세 화면에 이미 번호로 있음),
