@@ -136,6 +136,67 @@ const Slide2 = () => (
   </Stage>
 )
 
+// ── 2-D. 한끼 일기 ──
+// 📔📔 창업자 지적 2026-08-08 — *"우리 스샷이랑, 온보드, 안내코치에도 한끼일기 넣어야 하지 않아?"*
+//    ⛔ 맞았다. 온보딩 여덟 장에 **「일기」라는 낱말이 한 번도 없었다.**
+//       한끼 일기는 v9.85(8/6)~v10.02(8/8) 에 크게 자랐는데 온보딩은 v9.03(7/26) 것 그대로였다.
+//       📌 **기능이 자라면 「앱을 소개하는 자리」도 같이 자라야 한다** — 안 그러면 하단바 탭만 덩그러니 있고
+//          유저는 그게 뭔지 모른다.
+//    ⭐ 자리 = 레꾸(Slide2) «바로 다음». 「레시피를 꾸민다」 → 「일기도 꾸민다」로 이어진다.
+//    ⛔ 속지 PNG(dp_today 등)를 얹지 «않는다» — 사진칸·트래커 좌표를 눈대중으로 맞추면 어긋난다.
+//       다른 장면들이 다 그렇듯 **CSS 로 종이를 그린다**(Card·Postit·Tape 와 같은 문법).
+const TRACK = [['함께', '#e8c8b4'], ['장소', '#c9dbc0'], ['날씨', '#bed4e6'], ['기분', '#f0d3a8'], ['시간', '#d8cae8'], ['만족', '#f2c4c0']]
+// 달력 두 줄 — 해먹은 날에만 음식 아이콘이 박힌다(빈 칸 = 안 한 날). ⛔날짜 숫자는 안 쓴다(달마다 달라진다)
+const CAL = [null, 'fh_k22', null, 'fe_15', null, null, 'fh_k27', null, 'fe_06', null, null, 'fe_09', null, null, 'fe_22', null, null, 'fh_k29', null, 'fe_18', null]
+const SlideD = () => (
+  <Stage bg="linear-gradient(165deg,#d6dfea,#eef2f7)">
+    <Cap top={210}><H1 style={{ color: '#3f5570' }}>오늘의 한 끼가<br />일기가 돼요</H1><Sub style={{ color: '#5b7291' }}>사진 붙이고 속지 골라 · 그날을 남겨요</Sub></Cap>
+    <div style={{ position: 'absolute', top: 630, left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+      <div style={{ width: 660, background: '#fffdf8', borderRadius: 30, padding: '34px 32px 30px', boxShadow: '0 30px 62px rgba(55,75,105,.3)', transform: 'rotate(-2deg)', position: 'relative' }}>
+        <Tape />
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24 }}>
+          <div style={{ width: 250, height: 250, borderRadius: 18, background: 'linear-gradient(150deg,#f4efe3,#e9e2d2)', flexShrink: 0, position: 'relative', overflow: 'hidden', boxShadow: 'inset 0 0 0 5px #fffdf8, 0 4px 10px rgba(80,70,50,.18)' }}>
+            <Img k="fe_06" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 200 }} />
+          </div>
+          <div style={{ flex: 1, textAlign: 'left', paddingTop: 6 }}>
+            <div style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 46, color: '#3f4a5a' }}>연어 포케볼</div>
+            <div style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 30, color: '#9aa4b2', marginTop: 2 }}>8월 8일 토요일</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9, marginTop: 18 }}>
+              {TRACK.map(([t, c], k) => (
+                <span key={t} style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 27, color: '#4a4f58', padding: '7px 15px', borderRadius: 999, background: k < 3 ? c : '#f1eee6', opacity: k < 3 ? 1 : 0.55 }}>{t}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{ marginTop: 24, borderTop: '2px dashed #e6e0d2', paddingTop: 20, textAlign: 'left', fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 36, color: '#5a6270', lineHeight: 1.5 }}>
+          더위에 지쳐도 <span style={{ background: 'linear-gradient(transparent 58%,#f5e08a 58%)' }}>한 끼는 챙겼다</span>
+          <div style={{ height: 2, background: '#efeadd', marginTop: 14 }} />
+          <div style={{ height: 2, background: '#efeadd', marginTop: 26 }} />
+        </div>
+        <Img k="dc_td17" style={{ right: 34, top: 22, width: 84, transform: 'rotate(9deg)' }} />
+        <Img k="dc_td06" style={{ left: 216, top: 204, width: 76, transform: 'rotate(-12deg)' }} />
+      </div>
+
+      {/* 📅 달력 — 일기의 «두 번째 축». 그날을 남기는 것과 «모아서 보는 것»은 다른 즐거움이라
+          글자(「달력으로 한눈에」)만으로는 안 와닿는다. 만든 날에 음식 아이콘이 박힌다. */}
+      <div style={{ marginTop: 40, width: 660, background: 'rgba(255,253,248,.92)', borderRadius: 26, padding: '24px 22px 26px', boxShadow: '0 18px 40px rgba(55,75,105,.2)' }}>
+        <div style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 34, color: '#3f5570', marginBottom: 16 }}>8월</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 10 }}>
+          {CAL.map((k, i) => (
+            <div key={i} style={{ aspectRatio: '1', borderRadius: 14, background: k ? '#f2efe6' : '#f7f5ee', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {k ? <img src={F(k)} alt="" draggable={false} style={{ width: '84%', height: '84%', objectFit: 'contain' }} /> : null}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 🐧 펭펭은 «종이 밖 왼쪽 아래» — 종이 위에 두면 손글씨 줄을 가린다(첫 판에서 「챙겼다」를 덮었다) */}
+      <Img k="gp_pengym" cls="hk-m-kong" style={{ left: -64, bottom: -16, width: 210, transformOrigin: 'bottom center', filter: 'drop-shadow(0 10px 16px rgba(60,80,110,.28))' }} />
+    </div>
+    <Foot style={{ background: '#3f5570', color: '#fffdf8' }}>달력으로 한눈에</Foot>
+  </Stage>
+)
+
 // ── 3. 공유 (폰 스토리 목업) ──
 const Bub = ({ children, style }) => <div style={{ position: 'absolute', background: '#fff', fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 38, color: '#3a2f2a', boxShadow: '0 10px 22px rgba(150,50,80,.24)', zIndex: 5, ...style }}>{children}</div>
 const Slide3 = () => (
@@ -328,7 +389,10 @@ const Slide8 = () => (
 //    **사람 소개 → 친구들 → 기능 → 브랜드 CTA.** 기능부터 늘어놓으면 "또 하나의 앱" 이지만,
 //    *"꼬르곰은 저예요"* 로 시작하면 첫 화면부터 다른 앱이 복사할 수 없는 얘기가 된다.
 //    (근거 = `docs/기획-노트.md` "창업자 스토리 = 그 자체로 콘텐츠")
-const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, Slide3, Slide6, Slide7, Slide8]
+// 📔 SlideD(한끼 일기) = 레꾸 «바로 다음». 「레시피를 꾸민다」 → 「일기도 꾸민다」로 이어진다.
+//    ⚠️ 장수가 늘면 아래 점 표시(dots)와 「다음」 버튼은 `SLIDES.length` 로 저절로 따라간다 —
+//       v9.04 에서 «개수를 글자에 박지 않는다»로 고쳐 놓은 덕이다.
+const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, SlideD, Slide3, Slide6, Slide7, Slide8]
 
 export default function Onboarding({ onDone }) {
   const N = SLIDES.length

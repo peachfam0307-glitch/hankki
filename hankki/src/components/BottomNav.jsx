@@ -35,6 +35,13 @@ const ITEMS = [
   { key: 'brag', label: '레꾸자랑', icon: 'share' },
 ]
 
+// 🧭 안내코치가 짚을 자리 — 탭 키 → 코치 앵커 이름.
+//    ⛔ 전엔 삼항연산자를 이어 붙여 썼는데, 탭이 늘 때마다 그 줄을 고쳐야 해서 «한 번 빠뜨렸다» —
+//       2026-08-08 창업자 지적 *"안내코치에도 한끼일기 넣어야 하지 않아?"*. 일기 탭은 v9.94 에 생겼는데
+//       코치는 v8.60 것 그대로라 **탭은 있는데 아무도 안 짚어주는 상태**였다.
+//    📌 표로 두면 «빠뜨린 것»이 눈에 보인다.
+const COACH_ANCHOR = { log: 'nav-diary', shop: 'nav-shop', brag: 'nav-brag' }
+
 export default function BottomNav({ active, onChange, onImport }) {
   return (
     <nav className="bottom-nav">
@@ -59,7 +66,7 @@ export default function BottomNav({ active, onChange, onImport }) {
           <button
             key={it.key}
             className="nav-item press"
-            data-coach={it.key === 'shop' ? 'nav-shop' : it.key === 'brag' ? 'nav-brag' : undefined}
+            data-coach={COACH_ANCHOR[it.key]}
             onClick={() => onChange(it.key)}
             aria-current={on ? 'page' : undefined}
           >

@@ -16,6 +16,9 @@ import uiGomThumb from '../assets/ui/gom_thumbsup.png'
 import uiGomShop from '../assets/ui/gom_shop.png'
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomClap from '../assets/ui/gom_clap.png'
+// 📔 일기 안내에 쓸 컷 — 꼬르곰·펭펭이 «둘 다» 하트를 만든다. 일기는 「그날의 마음을 남기는」 자리라 맞다.
+//    ⛔ ui 컷 다섯(hand_point·thumbsup·shop·heart·clap)은 이미 다른 단계가 다 쓰고 있어 정본 콤비에서 가져왔다.
+import gpDuoHeart from '../assets/stickers/photo/gp_duoht.png'
 import { needsOnboarding } from '../components/Onboarding'
 import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount } from '../nudges'
 import { weeklyNow } from '../data/weekly'
@@ -23,10 +26,16 @@ import { whatsNew } from '../data/whatsnew'
 
 // 홈 첫 방문 코치마크 — 진짜 핵심 기능부터 짚어준다(창업자 딸 아이디어 ⭐).
 // 첫 스텝을 '되는 기능'(가져오기·오늘 뭐 해먹지)으로, 곧 출시 미리보기는 맨 뒤에 살짝.
-const HOME_COACH_KEY = 'hankki:coach:home2' // 2026-07-26: 장보기·레꾸자랑 탭 안내 추가하며 키 올림(기존 테스터도 개선된 가이드 1회 노출)
+// 2026-07-26: 장보기·레꾸자랑 탭 안내 추가하며 home→home2 (기존 테스터도 개선된 가이드 1회 노출)
+// 2026-08-08: 「한끼 일기」 안내 추가하며 home2→home3.
+//   ⭐ 키를 안 올리면 **이미 본 사람에겐 영영 안 뜬다** — 일기는 v9.85~v10.02 에 크게 자란 기능인데
+//      온보딩·코치·스토어 스샷 어디에도 없어서 «탭이 있는 줄도 모르는» 상태였다(창업자 지적).
+const HOME_COACH_KEY = 'hankki:coach:home3'
 const HOME_COACH_STEPS = [
   { sel: '[data-coach="import"]', img: uiHandPoint, label: '레시피 가져오기', desc: '캡처·붙여넣기로 레시피를 쏙 담아요 · 여기서 시작!' },
   { sel: '[data-coach="today"]', img: uiGomThumb, label: '오늘 뭐 해먹지?', desc: '냉장고 재료로 만들 수 있는 요리를 추천해요' },
+  // 📔 하단바 순서대로 짚는다(홈·가져오기·레시피·일기·장보기·레꾸자랑) — 화면과 안내가 어긋나면 못 찾는다
+  { sel: '[data-coach="nav-diary"]', img: gpDuoHeart, label: '한끼 일기', desc: '오늘 뭐 해먹었는지 사진·속지로 남기고 예쁘게 꾸며요 · 달력으로 한눈에' },
   { sel: '[data-coach="nav-shop"]', img: uiGomShop, label: '장보기 · 쇼핑몰', desc: '18년차 주부가 엄선한 식재료를 담아 바로 사러 가고 · 냉장고 유통기한도 챙겨요' },
   { sel: '[data-coach="nav-brag"]', img: uiGomHeart, label: '레꾸자랑', desc: '내가 꾸민 레시피를 예쁜 카드로 친구한테 자랑! 카톡·인스타로 쏙' },
   { sel: '[data-coach="preview"]', img: uiGomClap, label: '한끼 소식', desc: '새로 열린 레시피·꾸미기와 곧 나올 것을 여기서 알려드려요' },
