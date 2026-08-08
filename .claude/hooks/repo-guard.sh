@@ -66,6 +66,29 @@ if [ "$AHEAD" != "0" ] && [ "$AHEAD" != "?" ]; then
   echo ""
 fi
 
+# 💾 **자동 스냅샷이 남아 있나** (2026-08-08 신설 — `wip-snap.sh` 가 5분마다 담는다)
+#    ⭐ 이 안내가 이 훅의 «반쪽»이다. 회귀를 알려주기만 하면 «잃은 것»은 그대로 잃는다.
+#       2026-08-08 에 커밋 전이던 30분어치가 그렇게 사라졌고, 그래서 스냅샷을 만들었다.
+if command -v timeout >/dev/null 2>&1; then
+  timeout 15 git fetch origin wip/auto --quiet >/dev/null 2>&1 || true
+else
+  git fetch origin wip/auto --quiet >/dev/null 2>&1 || true
+fi
+WIP="$(git rev-parse --verify --quiet origin/wip/auto 2>/dev/null || true)"
+if [ -n "$WIP" ]; then
+  WIPWHEN="$(git log -1 --format=%s origin/wip/auto 2>/dev/null || true)"
+  # 스냅샷에만 있고 지금 워킹트리엔 없는 것이 있나 (있으면 «되살릴 게 있다»)
+  WIPDIFF="$(git diff --name-only HEAD origin/wip/auto 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "${WIPDIFF:-0}" != "0" ]; then
+    echo "   💾💾 **자동 스냅샷에 «지금 없는» 파일 ${WIPDIFF}개가 들어 있다** — ${WIPWHEN}"
+    echo "      회귀로 잃은 작업일 수 있다. **덮기 «전»에 먼저 본다**:"
+    echo "        git fetch origin wip/auto && git show --stat FETCH_HEAD"
+    echo "        git checkout FETCH_HEAD -- <되살릴 파일>      # 통째로는 \`-- .\`"
+    echo "      ⛔ 스냅샷이 «더 낡을» 수도 있다 — 목록을 보고 정한다(자동으로 덮지 않는다)."
+    echo ""
+  fi
+fi
+
 echo "   👉 **안전하면 이렇게 되찾는다**"
 echo "      git checkout $DEPLOY"
 echo "      git reset --hard origin/$DEPLOY"

@@ -215,6 +215,45 @@ console.log('\n🪤 반복 실수 게이트')
   } catch { no('dist 를 못 읽었다 — `npm run build` 부터') }
 }
 
+// ═══ ⑧ «한 번 밟은 함정»을 또 밟았나 ═══════════════════════
+//   ⛔⛔ 2026-08-08 — `page.reload()` 로 「저장이 남나」를 재는 재현판을 또 만들었다.
+//      `addInitScript` 는 **되돌아올 때마다 처음 상태를 다시 심어** 저장값을 «검사가» 지운다.
+//      → 앱이 멀쩡한데 「안 남는다」로 나오고, 그 거짓 실패를 좇아 코드를 고치려 든다.
+//   📌 **2026-08-06 에 `_shot-diary.mjs` 안에 경고를 적어뒀는데도 재발했다.**
+//      경고가 «그 파일 안»에만 있었기 때문이다 — 새 파일을 쓸 땐 옛 파일을 안 본다.
+//      ⭐ 그래서 파일 «바깥»(여기)에서 본다. 이게 「함정 사전」의 첫 항목이다.
+//   ⭐ 대신 쓰는 법 = ⑴뒤로 갔다 다시 들어오기(유저가 실제로 하는 행동) ⑵새 탭(앱 껐다 켜기)
+{
+  const TRAPS = [
+    {
+      name: 'reload ＋ addInitScript',
+      // 둘 다 쓰는 재현판 = 저장 검사가 «검사 자신»에게 지워질 수 있다
+      hit: (s) => /page\.reload\s*\(/.test(s) && /addInitScript/.test(s),
+      // 이미 알고 쓰는 경우는 통과 — 「왜 괜찮은지」를 적어 두면 그게 근거다
+      waive: (s) => /reload.{0,80}(시드|초기화|일부러|의도)/s.test(s) || /⛔.{0,200}reload/s.test(s),
+      why: 'addInitScript 가 reload 때 저장값을 시드로 덮어써 «거짓 실패»가 난다 → 뒤로가기·새 탭으로 재라',
+    },
+  ]
+  let files = []
+  try {
+    files = readdirSync(join(ROOT, 'scripts'))
+      .filter((f) => /^_(repro|shot|measure)-.*\.mjs$/.test(f))
+      .map((f) => join(ROOT, 'scripts', f))
+  } catch { /* scripts 가 없으면 볼 것도 없다 */ }
+  let trapped = 0
+  for (const f of files) {
+    let s = ''
+    try { s = readFileSync(f, 'utf8') } catch { continue }
+    for (const t of TRAPS) {
+      if (t.hit(s) && !t.waive(s)) {
+        trapped++
+        no(`${f.split('/').pop()} — 옛 함정 「${t.name}」\n      ${t.why}`)
+      }
+    }
+  }
+  if (!trapped) ok(`재현판 ${files.length}개 — 옛 함정 재발 0`)
+}
+
 console.log(bad ? `\n⛔⛔ ${bad}건 — 고치고 다시 돌릴 것\n` : '\n✅ 반복 실수 게이트 통과\n')
 console.log('   📖 기계가 «못 잡는» 것들 = docs/실수-패턴-2026-08-07.md\n')
 process.exit(bad ? 1 : 0)
