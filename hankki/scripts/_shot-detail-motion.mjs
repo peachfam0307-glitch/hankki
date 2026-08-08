@@ -55,11 +55,18 @@ for (const [theme, tname] of [['greige', '그레이지'], ['dark', '다크']]) {
   for (const [sel, name] of [['#shot-head', 'head'], ['#shot-done', 'done']]) {
     const el = page.locator(sel)
     if (!(await el.count())) { bad++; console.log(`   ⛔ ${tname}/${name} — 자리를 못 찾았다`); continue }
+    // ⛔⛔ **찍는 데 걸리는 시간을 «재야» 한다.**
+    //    screenshot() 자체가 오래 걸리면 실제 간격이 STEP 보다 커지는데, 재생은 STEP 으로 하니
+    //    **판이 앱보다 빨라진다** — 앱은 멀쩡한데 「너무 빠르다」로 보인다.
+    //    (창업자 2026-08-08 "다됐어요 저 속도야?? 너무 빨라.." → 이걸 재서 갈랐다)
+    const t0 = Date.now()
     for (let i = 0; i < N; i++) {
       await el.screenshot({ path: `${OUT}/${theme}-${name}-${String(i).padStart(2, '0')}.png` })
       await page.waitForTimeout(STEP)
     }
-    console.log(`   ✅ ${tname}/${name} — ${N}프레임`)
+    const real = Math.round((Date.now() - t0) / N)
+    const warn = real > STEP * 1.15 ? ` ⛔ 재생도 ${real}ms 로 해야 한다(안 그러면 ${(real / STEP).toFixed(1)}배 빨라 보인다)` : ''
+    console.log(`   ✅ ${tname}/${name} — ${N}프레임 · 실제 간격 ${real}ms${warn}`)
   }
   if (errors.length) { bad++; console.log(`   ⛔ ${tname} — pageerror ${errors.length}`) }
   await page.close()
