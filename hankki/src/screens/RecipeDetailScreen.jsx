@@ -29,6 +29,14 @@ import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomThumb from '../assets/ui/gom_thumbsup.png'
+import DetailDecor, { ingCut } from '../components/DetailDecor'
+
+// 🎨 상세 꾸미기 시안 갈래 — ⏳창업자 판정 대기(2026-08-08 · 테스터 「글밖에 없어 심심하다」)
+//    ⛔ 임시다. 하나가 정해지면 이 줄과 `mode` 갈래를 지우고 그것만 남긴다.
+//    주소 뒤에 `?decor=a|b|c` 를 붙여 견준다 — 기본은 'off'(지금 그대로).
+const DECOR_MODE = (() => {
+  try { return new URLSearchParams(window.location.search).get('decor') || 'off' } catch { return 'off' }
+})()
 
 // 첫 방문 코치마크 — 숨어 있는 중요 기능을 반짝이며 알려준다(창업자 딸 아이디어 ⭐)
 const COACH_KEY = 'hankki:coach:detail'
@@ -377,6 +385,7 @@ export default function RecipeDetailScreen({ id }) {
           <>
             <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <DetailDecor mode={DECOR_MODE} where="head-재료" />
                 <div className="h-section">재료</div>
                 <button className="press" onClick={() => setGuide(true)} aria-label="계량·손질 가이드" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 999, background: 'var(--cream)' }}>
                   <Icon name="help" size={14} color="var(--brown)" />
@@ -404,12 +413,19 @@ export default function RecipeDetailScreen({ id }) {
                 {servings !== baseServings && <button className="serv-reset press" onClick={() => setServings(baseServings)}>기본 {baseServings}인분</button>}
               </div>
             )}
-            <div>
-              {r.ingredients.map((ing, i) => (
-                isIngHeader(ing)
-                  ? <div key={i} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
-                  : <div key={i} className="ing">{scaleIngredient(ing, ratio)}</div>
-              ))}
+            <div className={DECOR_MODE === 'b' ? 'ing-cuts' : undefined}>
+              {r.ingredients.map((ing, i) => {
+                if (isIngHeader(ing)) return <div key={i} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
+                const line = scaleIngredient(ing, ratio)
+                // ⛔ JSX 요소는 «비어 있어도» 늘 참이다 — 아이콘이 붙는지는 «값»으로 묻는다
+                const hasCut = DECOR_MODE === 'b' && !!ingCut(line)
+                return (
+                  <div key={i} className={hasCut ? 'ing has-cut' : 'ing'}>
+                    <DetailDecor mode={DECOR_MODE} where="ing" text={line} />
+                    <span>{line}</span>
+                  </div>
+                )
+              })}
             </div>
           </>
         )}
@@ -426,7 +442,10 @@ export default function RecipeDetailScreen({ id }) {
         {r.steps?.length > 0 && (
           <>
             <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
-              <div className="h-section">만드는 법</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <DetailDecor mode={DECOR_MODE} where="head-만드는법" />
+                <div className="h-section">만드는 법</div>
+              </div>
               <button className="mini-buy press" onClick={() => setTimer(true)}>타이머</button>
             </div>
             <div>
@@ -434,6 +453,7 @@ export default function RecipeDetailScreen({ id }) {
                 <div key={i} className="step">
                   <div className="n">{i + 1}</div>
                   <div className="txt">{s}</div>
+                  <DetailDecor mode={DECOR_MODE} where="step" text={s} prev={r.steps[i - 1]} />
                 </div>
               ))}
             </div>
