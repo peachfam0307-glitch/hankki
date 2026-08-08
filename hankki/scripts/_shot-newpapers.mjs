@@ -81,13 +81,11 @@ for (const [entry, name] of [[entrySnap, '사진기록'], [entryList3, '기록3�
     ok(`${name} 판 캡처`)
   } else no(`${name} — .paper 를 못 찾았다`)
 
-  // 값이 실제로 화면에 있나
-  const txt = await page.evaluate(() => document.body.innerText)
-  const want = name === '사진기록' ? ['오늘의 한 끼 기록'] : ['오늘의 한 끼 기록']
-  for (const w of want) {
-    if (txt.includes(w)) ok(`${name} — 「${w}」 보임`)
-    else no(`${name} — 「${w}」 안 보임`)
-  }
+  // 제목이 실제로 화면에 있나 — ⚠️ 제목은 input 이라 innerText 에 «안 잡힌다»(늘 실패하는 검사였다)
+  //   → input 의 value 로 읽는다. 「보이나」와 「값이 있나」는 다르지만 여기선 값 확인이 목적이다.
+  const titleVal = await page.locator('input[aria-label="제목"]').first().inputValue().catch(() => '')
+  if (titleVal === entry.title) ok(`${name} — 제목 「${titleVal}」 값 확인`)
+  else no(`${name} — 제목 값이 다르다 (「${titleVal}」 ≠ 「${entry.title}」)`)
   if (!errors.length) ok(`${name} — pageerror 0`)
   else no(`${name} — pageerror: ${errors[0]}`)
   await page.close()
