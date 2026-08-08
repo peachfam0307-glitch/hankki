@@ -28,7 +28,12 @@ const rows = []
 //    ⛔ 한 편만 보면 매칭률 착시가 난다. 콩국수만 보면 「2/7 뿐」이라 시안이 과소평가된다.
 const RECIPES = [['콩국수', ''], ['제육볶음', '제육']]
 for (const [rname, q] of RECIPES)
-for (const [mode, label] of [['off', '지금'], ['a', 'A · 단계마다 꼬르곰'], ['b', 'B · 재료 줄 아이콘'], ['c', 'C · 절 머리 한 컷']]) {
+for (const [mode, label] of [
+  ['off', '지금'],
+  ['a', 'A · 단계마다 꼬르곰'], ['b', 'B · 재료 줄 아이콘'], ['c', 'C · 절 머리 한 컷'],
+  ['d', 'D · 절 머리가 움직인다'], ['e', 'E · 번호가 꼬르곰 얼굴'],
+  ['f', 'F · 조리법 스티커'], ['g', 'G · 맨 끝에 완성 칸'],
+]) {
   // ⛔ 창이 낮으면 절이 잘리고 «고정 하단바»가 그 위를 덮는다(첫 판이 그랬다).
   //    창을 높여 절 전체가 한 화면에 들어오게 한다. dpr 2 = 판 크기와 선명함의 절충.
   const page = await b.newPage({ viewport: { width: 360, height: 1900 }, deviceScaleFactor: 2 })
@@ -62,8 +67,10 @@ for (const [mode, label] of [['off', '지금'], ['a', 'A · 단계마다 꼬르�
     const img = (s) => q(s).reduce((a, e) => a + e.querySelectorAll('img').length, 0)
     return {
       ing: q('.ing').length, ingCut: img('.ing'),
-      step: q('.step').length, stepCut: img('.step'),
+      step: q('.step').length, stepCut: img('.step:not(:has(.n-gom)) '),
       head: q('.sec-head img').length,
+      // ⭐ E·G 는 «줄 폭을 안 먹는» 갈래라 따로 센다 — 위 숫자에 섞으면 「0」으로 읽혀 오해한다
+      face: q('.n-gom').length, done: q('.done-strip').length,
       broken: q('img').filter((i) => i.complete && i.naturalWidth === 0).length,
     }
   })
@@ -91,8 +98,8 @@ for (const [mode, label] of [['off', '지금'], ['a', 'A · 단계마다 꼬르�
   await page.close()
 }
 
-console.log('\n   ┌ 갈래 ─────────────────────── 재료줄 아이콘 · 단계 꼬르곰 · 절머리')
-for (const r of rows) console.log(`   │ ${r.label.padEnd(28)} ${String(r.ingCut).padStart(3)}/${String(r.ing).padEnd(3)}    ${String(r.stepCut).padStart(3)}/${String(r.step).padEnd(3)}    ${r.head}`)
+console.log('\n   ┌ 갈래 ─────────────────────── 재료줄 · 단계그림 · 절머리 · 얼굴번호 · 완성칸')
+for (const r of rows) console.log(`   │ ${r.label.padEnd(28)} ${String(r.ingCut).padStart(3)}/${String(r.ing).padEnd(3)}  ${String(r.stepCut).padStart(3)}/${String(r.step).padEnd(3)}    ${r.head}       ${r.face}        ${r.done}`)
 console.log(`\n   ${bad ? `⛔ 문제 ${bad}건` : '✅ 깨진 그림 0 · pageerror 0'}`)
 
 await b.close(); srv.close()

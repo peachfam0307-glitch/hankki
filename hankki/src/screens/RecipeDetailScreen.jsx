@@ -29,7 +29,7 @@ import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomThumb from '../assets/ui/gom_thumbsup.png'
-import DetailDecor, { ingCut } from '../components/DetailDecor'
+import DetailDecor, { ingCut, avGom } from '../components/DetailDecor'
 
 // 🎨 상세 꾸미기 시안 갈래 — ⏳창업자 판정 대기(2026-08-08 · 테스터 「글밖에 없어 심심하다」)
 //    ⛔ 임시다. 하나가 정해지면 이 줄과 `mode` 갈래를 지우고 그것만 남긴다.
@@ -451,11 +451,15 @@ export default function RecipeDetailScreen({ id }) {
             <div>
               {r.steps.map((s, i) => (
                 <div key={i} className="step">
-                  <div className="n">{i + 1}</div>
+                  <div className={DECOR_MODE === 'e' ? 'n n-gom' : 'n'}>
+                    {DECOR_MODE === 'e' && <img src={avGom} alt="" aria-hidden="true" draggable={false} />}
+                    <span>{i + 1}</span>
+                  </div>
                   <div className="txt">{s}</div>
                   <DetailDecor mode={DECOR_MODE} where="step" text={s} prev={r.steps[i - 1]} />
                 </div>
               ))}
+              <DetailDecor mode={DECOR_MODE} where="done" text={r.title} />
             </div>
           </>
         )}

@@ -18,8 +18,10 @@ import gomPasta from '../assets/sharepool/gom_pasta.png'
 import gomCarrot from '../assets/sharepool/gom_carrot.png'
 import duoCooking from '../assets/sharepool/duo_cooking.png'
 import gomShop from '../assets/ui/gom_shop.png'
+import gomClap from '../assets/ui/gom_clap.png'
+import avGom from '../assets/avatars/av_gom.png'
 
-const ing = import.meta.glob('../assets/stickers/photo/{ig,kt}_*.png', { eager: true, import: 'default' })
+const ing = import.meta.glob('../assets/stickers/photo/{ig,kt,rs}_*.png', { eager: true, import: 'default' })
 const pic = (k) => ing[`../assets/stickers/photo/${k}.png`]
 
 // ── ⓐ 단계 → 꼬르곰 컷 ─────────────────────────────────────────────
@@ -33,11 +35,18 @@ const STEP_CUTS = [
   { re: /끓|삶|데치|우려|졸이|고아내/, img: gomPot },
   { re: /썰|다지|손질|채썰|깎|씻|다듬/, img: gomCarrot },
 ]
+// ⛔⛔ **괄호 안 「곁말」은 빼고 본다.**
+//    제육볶음 2단계 *"재워요. (시간 없으면 바로 **볶아도** OK)"* 의 곁말에 「볶기」가 걸렸고,
+//    그 바람에 **정작 진짜 볶는 3단계가 «같은 그림»이라며 생략**됐다(첫 판에서 실제로 그랬다).
+//    📌 괄호 안은 «이렇게도 된다»는 덧말이지 그 단계의 «하는 일»이 아니다.
+const core = (s) => String(s).replace(/\([^)]*\)/g, ' ')
+
 // ⛔ 안 걸리면 «안 그린다» — `CookBuddy` 는 화면에 하나뿐이라 기본컷(duo)이 맞지만,
 //    여기선 단계마다 붙어서 「냉장고에 차게 둬요」·「얼음을 띄워요」에까지 요리 듀오가 떴다(첫 판).
 //    **안 맞는 그림은 없는 것만 못하다.**
 export function stepCut(text) {
-  return (STEP_CUTS.find((k) => k.re.test(String(text))) || {}).img || null
+  const s = core(text)
+  return (STEP_CUTS.find((k) => k.re.test(s)) || {}).img || null
 }
 
 // ── ⓑ 재료 → 아이콘 ────────────────────────────────────────────────
@@ -69,32 +78,85 @@ export function ingCut(text) {
 // ── ⓒ 절 머리에 큰 컷 하나 ────────────────────────────────────────
 export const SECTION_CUTS = { 재료: gomShop, 만드는법: duoCooking }
 
+// ── ⓓ 움직이는 절 머리 ────────────────────────────────────────────
+// ⭐⭐ **테스터가 「움직이는 거」라고 했는데 A·B·C 는 전부 정지 그림이었다.** 그래서 뒤늦게 넣는다.
+// ⛔ 무료 모션만 쓴다(가만히·통통·갸웃). 유료팩에 잠긴 모션을 앱 UI 에 공짜로 쓰면 팩 값어치가 깎인다.
+//    ⏳ 「팩 모션을 UI 장식으로 쓰는 게 괜찮은지」는 창업자 판정 사항이다 — 지금은 안전한 둘만.
+export const HEAD_MOTION = { 재료: 'hk-m-tilt', 만드는법: 'hk-m-tongtong' }
+
+// ── ⓔ 단계 번호를 꼬르곰 얼굴로 ───────────────────────────────────
+// ⭐ 줄 폭을 «하나도» 안 먹는다 — 이미 있는 번호 동그라미 자리를 그대로 쓴다.
+//    (A 는 오른쪽에 자리를 만들어서 글줄이 밀렸다)
+export { avGom }
+
+// ── ⓕ 오늘 넣은 「조리법」 스티커(rs_q 12컷) ──────────────────────
+// 캡션이 그림에 «박혀» 있다 — 썰기·볶기·끓이기·굽기·찌기·튀기기·에어프라이어·오븐.
+// ⚠️ 그래서 「볶아요」 옆에 「볶기」가 또 나온다 = 글자가 겹친다. 그게 이 갈래의 성격이다.
+// ⛔ 순서가 곧 우선순위 — 구체적인 것을 위에(에어프라이어·오븐이 「굽기」보다 먼저).
+const RSQ = [
+  [/에어프라이어|에프|air/i, 'rs_q11'],
+  [/오븐|예열/, 'rs_q12'],
+  [/튀기|튀겨|기름에/, 'rs_q10'],
+  [/찌기|쪄|찜기|김 오/, 'rs_q09'],
+  [/볶|팬에|웍/, 'rs_q03'],
+  [/굽|구워|노릇|부치|지지/, 'rs_q07'],
+  [/끓|삶|데치|졸이|우려/, 'rs_q05'],
+  [/썰|다지|채 썰|손질|깎/, 'rs_q01'],
+]
+export function methodCut(text) {
+  const s = core(text)
+  const m = RSQ.find(([re]) => re.test(s))
+  return m ? pic(m[1]) : null
+}
+
+// ── ⓖ 맨 끝에 「완성」 컷 ─────────────────────────────────────────
+// ⭐ 줄은 하나도 안 건드린다 — 마지막 단계 «뒤»에만 한 칸 붙는다.
+//    요리를 다 읽은 자리에 보상을 준다(리텐션 설계원칙: 성취가 아니라 흔적).
+
 // ── 렌더 ──────────────────────────────────────────────────────────
 /**
- * mode = 'a' 단계마다 꼬르곰 · 'b' 재료 줄 아이콘 · 'c' 절 머리 한 컷 · 'off' 지금 그대로
- * where = 'step' | 'ing' | 'head-재료' | 'head-만드는법'
+ * mode = 'a' 단계마다 꼬르곰 · 'b' 재료 줄 아이콘 · 'c' 절 머리 한 컷
+ *      · 'd' 움직이는 절 머리 · 'e' 번호가 꼬르곰 얼굴 · 'f' 조리법 스티커 · 'g' 맨 끝 완성 컷
+ *      · 'off' 지금 그대로
+ * where = 'step' | 'ing' | 'head-재료' | 'head-만드는법' | 'done'
  */
 export default function DetailDecor({ mode, where, text, prev }) {
   const img = useMemo(() => {
-    if (mode === 'a' && where === 'step') {
-      const cut = stepCut(text)
+    if (where === 'step' && (mode === 'a' || mode === 'f')) {
+      const pickCut = mode === 'f' ? methodCut : stepCut
+      const cut = pickCut(text)
       if (!cut) return null
       // ⭐ 같은 그림이 연달아 나오면 두 번째부터는 안 그린다 — 7단계에 꼬르곰 7마리는 시끄럽다
-      return prev !== undefined && stepCut(prev) === cut ? null : cut
+      return prev !== undefined && pickCut(prev) === cut ? null : cut
     }
     if (mode === 'b' && where === 'ing') return ingCut(text)
-    if (mode === 'c' && where?.startsWith('head-')) return SECTION_CUTS[where.slice(5)] || null
+    if ((mode === 'c' || mode === 'd') && where?.startsWith('head-')) return SECTION_CUTS[where.slice(5)] || null
     return null
   }, [mode, where, text, prev])
 
+  // ⓖ 완성 컷 — 그림 하나가 아니라 «한 칸»이라 따로 그린다
+  if (mode === 'g' && where === 'done') {
+    return (
+      <div className="done-strip">
+        <img src={gomClap} alt="" aria-hidden="true" draggable={false} className="hk-m-tongtong" />
+        <div>
+          <b>다 됐어요</b>
+          <span>{text ? `${text} 완성!` : '완성!'}</span>
+        </div>
+      </div>
+    )
+  }
+
   if (!img) return null
-  const size = mode === 'c' ? 34 : mode === 'a' ? 42 : 22
+  const size = mode === 'c' || mode === 'd' ? 34 : mode === 'f' ? 46 : mode === 'a' ? 42 : 22
+  const cls = mode === 'd' && where?.startsWith('head-') ? HEAD_MOTION[where.slice(5)] : undefined
   return (
     <img
       src={img}
       alt=""
       aria-hidden="true"
       draggable={false}
+      className={cls}
       style={{ height: size, width: 'auto', objectFit: 'contain', flex: '0 0 auto', display: 'block' }}
     />
   )
