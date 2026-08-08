@@ -712,7 +712,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         <button
           key={g.key} className="press" onClick={() => setBuyPack(g)}
           style={{
-            display: 'flex', alignItems: 'center', gap: 9, width: '100%', minHeight: 44, padding: '5px 12px', marginBottom: 6,
+            display: 'flex', alignItems: 'center', gap: 9, width: '100%', minHeight: 44, padding: '3px 12px', marginBottom: 3,
             borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)', textAlign: 'left',
           }}
         >
@@ -931,12 +931,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                그래서 지금 혼자 한 줄 먹던 되돌리기도 여기로 회수된다. */}
         {/* ⛔ 「고른 게 있을 때만」 띄우면 고를 때마다 화면이 «툭» 튄다 → 꾸미기 모드면 «항상» 띄운다. */}
         {(mode === 'decor' || hasCtx) && (
-          <div className="decor-tools" style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '4px 8px calc(4px + var(--safe-bottom))', display: 'flex', flexDirection: 'column' }}>
+          <div className="decor-tools" style={{ flex: '0 0 auto', borderTop: '1px solid var(--line)', background: 'var(--cream)', padding: '2px 8px calc(2px + var(--safe-bottom))', display: 'flex', flexDirection: 'column' }}>
             {!hasCtx ? (
               // 🈳 빈 상태 — 자리를 비우지 않는다(비우면 고를 때마다 화면이 «툭» 튄다).
               //   📐 52 → 46 (창업자 2026-08-08 *"아래탭이 너무커서 고르는부분이 안보임"*)
               //      안내 글자라 손가락 최소(44)와 무관하지만, 갈래 아이콘 칸과 «같은 키»라야 안 튄다 → 둘 다 46.
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 46, color: 'var(--text-sub)', fontSize: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 44, color: 'var(--text-sub)', fontSize: 12 }}>
                 <Icon name="palette" size={15} color="var(--text-sub)" />
                 붙인 걸 누르면 여기서 꾸며요
               </div>
@@ -948,7 +948,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ⭐ 46 은 손가락 최소(44)보다 크다. 세로도 52 → **46** (창업자 2026-08-08 *"아래탭이 너무커"* —
                    빈 안내 바와 «같은 키»로 맞춰야 골랐다 풀 때 화면이 안 튄다).
                 🛟 그래도 넘치면 잘리는 대신 **두 줄이 되게**(`wrap`) — 새 갈래가 늘어도 안 잘린다. */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, rowGap: 2 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, rowGap: 0 }}>
               {ctxTabs.map((t) => {
                 const on = ctxCur === t.k && ctxOpen
                 return (
@@ -957,7 +957,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   <button key={t.k} className="press" aria-pressed={on} aria-expanded={on} data-ctxtab={t.k}
                     aria-label={on ? `${t.label} 접기` : t.label}
                     onClick={() => { if (ctxCur === t.k && ctxOpen) setCtxOpen(false); else { setCtxTab(t.k); setCtxOpen(true) } }}
-                    style={{ position: 'relative', flex: '0 0 auto', minWidth: 46, minHeight: 46, borderRadius: 13, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--cream-deep)' : 'transparent', color: on ? 'var(--brown)' : 'var(--text-sub)', border: 'none' }}>
+                    style={{ position: 'relative', flex: '0 0 auto', minWidth: 44, minHeight: 44, borderRadius: 13, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--cream-deep)' : 'transparent', color: on ? 'var(--brown)' : 'var(--text-sub)', border: 'none' }}>
                     <Icon name={t.ic} size={19} color={on ? 'var(--brown)' : 'var(--text-sub)'} />
                     {t.label}
                     {t.lit && <span style={{ position: 'absolute', top: 7, right: 10, width: 5, height: 5, borderRadius: 999, background: 'var(--brown)' }} />}

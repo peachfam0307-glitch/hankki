@@ -1614,7 +1614,13 @@ html, body { overscroll-behavior: none; }
   border-radius: 22px 22px 0 0;
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
   display: flex; flex-direction: column;
-  max-height: 44vh;
+  /* 📏📏 창업자 2026-08-08 *"서랍이 좀 더 넓었으면 좋겠어"*
+     ⛔ 여백을 깎아 봤자 6px 이었다(182→188). 상한을 44vh→52vh 로 올려도 **그대로 188 이었다.**
+        ⭐ 왜냐면 이 화면은 이미 꽉 차 있다 — 종이(고정) ＋ 서랍 ＋ 도구 바 = 화면 전체.
+           서랍은 «남는 공간»을 쓰는데 남는 공간이 없다. 상한은 원인이 아니었다.
+        📌 **진짜로 넓히려면 종이를 줄여야 한다 — 그건 미감 판정(규칙 11)이라 창업자 몫.**
+     ⚠️ 52vh 는 «세로가 더 긴 폰»에서만 값을 한다(360×780 에선 차이 0 — 실측). */
+  max-height: 52vh;
   min-height: 0;
 }
 .decor-grab { width: 40px; height: 4px; border-radius: 999px; background: var(--line); margin: 8px auto 2px; flex: 0 0 auto; }
@@ -1649,7 +1655,7 @@ html, body { overscroll-behavior: none; }
 .decor-scroll {
   flex: 1 1 auto; min-height: 0;
   overflow-y: auto; -webkit-overflow-scrolling: touch;
-  padding: 6px 14px calc(12px + var(--safe-bottom));
+  padding: 3px 14px calc(6px + var(--safe-bottom));   /* 📏 서랍 넓히기 2026-08-09 — 여백만 깎는다(손가락 44 는 안 건드림) */
   scrollbar-width: none;
 }
 .decor-scroll::-webkit-scrollbar { display: none; }
