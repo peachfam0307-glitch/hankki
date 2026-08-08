@@ -6,7 +6,11 @@ import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
 import PaperSheet, { PaperBox } from '../components/PaperSheet'
-import { paperStyle } from '../data/papers'
+import { paperStyle, ALL_PHOTO_FIELDS, migratePhotoKeys } from '../data/papers'
+
+// ✍️ 일기가 담는 «글자» 자리 — 속지가 바뀌어도 그대로 간다.
+//    사진 자리는 속지마다 다르므로 papers.js 가 세어 준다(ALL_PHOTO_FIELDS).
+const WORDS = ['title', 'note', 'line', 'weather', 'note2', 'note3', 'note4', 'font', 'size']
 import { useLayerBack } from '../useBackHandler'
 import { fitImage } from '../utils'
 
@@ -80,20 +84,40 @@ export default function DiaryScreen({ day }) {
   //         매 렌더마다 저장이 돌게 된다. 아래 `same()` 이 그걸 막는다.
   // ✍️ `font` = **본문 글씨체** (창업자 2026-08-07 *"글쓰기 글자체도 추가했으면"*)
   //    ⛔ 빈 값이 «귀염체»다 — 이미 쓴 일기는 이 칸이 없으니 예전 모습 그대로 남는다
-  const blank = { title: '', note: '', line: '', weather: '', photo: '', photo2: '', photo3: '', photoPos: '', photo2Pos: '', photo3Pos: '', note2: '', note3: '', note4: '', picks: {}, font: '', size: '' }
-  const of = (e) => ({ title: e?.title || '', note: e?.note || '', line: e?.line || '', weather: e?.weather || '', photo: e?.photo || '', photo2: e?.photo2 || '', photo3: e?.photo3 || '', photoPos: e?.photoPos || '', photo2Pos: e?.photo2Pos || '', photo3Pos: e?.photo3Pos || '', note2: e?.note2 || '', note3: e?.note3 || '', note4: e?.note4 || '', picks: e?.picks || {}, font: e?.font || '', size: e?.size || '' })
+  // ✍️ 글자 자리 — 속지가 바뀌어도 같이 간다(제목·본문·오늘의 한 줄·날씨·기록 2~4·글씨체·크기)
+  //    ⛔ picks(고른 아이콘)는 «객체»라 여기 넣지 않는다 — 아래에서 따로 다룬다
+  // 📦📦 담는 자리 목록 = **여기 한 곳** — ⛔손으로 나열하지 말 것.
+  //   전엔 빈값·읽기·저장·의존성 «네 곳»에 똑같이 적어 뒀다. 속지마다 사진 자리를 가르는 순간
+  //   네 곳을 다 고쳐야 했고, 한 곳만 빠뜨려도 «저장은 되는데 안 보이는» 사진이 생긴다.
+  //   (오늘만 같은 병을 셋 봤다 — 코치 키 · 음식 아이콘 218종 · 이것.)
+  //   ⭐ 사진 자리는 papers.js 가 속지 정의에서 «세어» 준다(ALL_PHOTO_FIELDS).
+  const FIELDS = [...WORDS, ...ALL_PHOTO_FIELDS]
+  const blank = { ...Object.fromEntries(FIELDS.map((k) => [k, ''])), picks: {} }
+  //   🚚 읽을 때 옛 저장본을 «그 일기가 지금 쓰는 속지»의 자리로 한 번 옮긴다(이미 깔린 폰 · 규칙 18 ⓙ)
+  const of = (e0) => {
+    const e = migratePhotoKeys(e0)
+    return { ...Object.fromEntries(FIELDS.map((k) => [k, e?.[k] || ''])), picks: e?.picks || {} }
+  }
   const same = (a, b) => (a && typeof a === 'object') || (b && typeof b === 'object')
     ? JSON.stringify(a || {}) === JSON.stringify(b || {})
     : a === b
   const [text, setText] = useState(() => of(entry))
   useEffect(() => { setText(of(entry)) }, [day]) // eslint-disable-line react-hooks/exhaustive-deps
+  // 🚚🚚 이관을 «저장»까지 한다 — 화면만 고치면 옛 자리가 남아서, 앱을 껐다 켜고
+  //   다른 속지를 고른 상태면 **거기로 또 옮겨 간다**(＝딸려오기 재발). 재현판이 이걸 잡았다.
+  useEffect(() => {
+    if (!entry) return
+    const m = migratePhotoKeys(entry)
+    if (m !== entry) updateDiary(entry.id, m)   // 옮길 게 없으면 원본 그대로 돌아온다
+  }, [entry?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const saved = of(entry)
   const dirty = Object.keys(blank).some((k) => !same(text[k], saved[k]))
   useEffect(() => {
     if (!dirty) return // 처음 열었을 때 «빈 다이어리»를 만들어 버리지 않게
-    const t = setTimeout(() => save({ title: text.title, note: text.note, line: text.line, weather: text.weather, photo: text.photo, photo2: text.photo2, photo3: text.photo3, photoPos: text.photoPos, photo2Pos: text.photo2Pos, photo3Pos: text.photo3Pos, note2: text.note2, note3: text.note3, note4: text.note4, picks: text.picks, font: text.font, size: text.size }), 350)
+    const t = setTimeout(() => save({ ...Object.fromEntries(FIELDS.map((k) => [k, text[k]])), picks: text.picks }), 350)
     return () => clearTimeout(t)
-  }, [text.title, text.note, text.line, text.weather, text.photo, text.photo2, text.photo3, text.photoPos, text.photo2Pos, text.photo3Pos, text.note2, text.note3, text.note4, text.font, text.size, JSON.stringify(text.picks)]) // eslint-disable-line react-hooks/exhaustive-deps
+    // ⚠️ 의존성도 «같은 목록»에서 편다 — FIELDS 는 모듈 상수라 길이가 안 변한다(React 규칙 지킴)
+  }, [...FIELDS.map((k) => text[k]), JSON.stringify(text.picks)]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 📷 사진 — 틀에 그려진 «창»에 끼운다 (창업자 2026-08-06 *"사진틀에 사진올리기가없어"*)
   //   ⭐ `cropSquare` 를 그대로 쓴다 — 레시피 표지·요리 기록·아바타가 다 쓰는, 이미 검증된 길이다

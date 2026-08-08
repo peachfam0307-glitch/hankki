@@ -95,7 +95,7 @@ export const PAPER_ARTS = [
       // 📷 사진칸 — 그림에 «창»이 그려져 있는데 넣을 길이 없었다(창업자 2026-08-06
       //    *"사진틀에 사진올리기가없어"*). 실측 가로선 13.1·57.4% · 세로선 8.8·91.2%
       //    → 선 «안쪽»으로 1%쯤 넣는다(사진이 선을 덮으면 틀이 아니라 얼룩이 된다).
-      photo: { top: 14.2, bottom: 43.5, left: 10, right: 10 },
+      photo: { top: 14.2, bottom: 43.5, left: 10, right: 10, key: 'photo' },   // ⭐옛 키 그대로 — 저장본이 여기 제일 많다
       // 📅 그림에 **날짜 밑줄 세 칸이 인쇄돼 있다** — 실측 y 64.6~65.4% · x 17.7·28.2·38.7~46.4%
       //    글자 «밑»이 그 줄에 닿게 top 을 역산했다(65.0 − 줄높이 4.34).
       date: { top: 60.66, left: 17.7, right: 53.6, fit: 0.6 },
@@ -131,7 +131,7 @@ export const PAPER_ARTS = [
       //    → 가운데 x 29~84% 가 빈 자리. 사진칸(y 17.3%)보다 위다.
       title: { top: 6.5, left: 29, right: 16 },
       rule: 'write', // 줄은 «쓰는 칸 안에만» — 사진칸·빈 자리에 줄이 지나가면 안 된다
-      photo: { top: 17.3, bottom: 61, left: 11.2, right: 44.5 }, // 실측 x10~56.7% · y16.4~39.8% 의 안쪽
+      photo: { top: 17.3, bottom: 61, left: 11.2, right: 44.5, key: 'ph_card' }, // 실측 x10~56.7% · y16.4~39.8% 의 안쪽
       date: { top: 18.4, left: 60, right: 8 },
       // ✍️ 쓰는 칸이 «둘»이다 — 사진 옆 짧은 칸 ＋ 가운데 큰 칸
       //   ⛔ 전엔 사진 옆 하나뿐이라 **가운데가 통째로 뻥 뚫려** 있었다
@@ -186,7 +186,7 @@ export const PAPER_ARTS = [
     fields: {
       rule: 'write',
       title: { top: 6.4, left: 27, right: 21 },
-      photo: { top: 12.2, bottom: 46.8, left: 19.4, right: 18.5 },
+      photo: { top: 12.2, bottom: 46.8, left: 19.4, right: 18.5, key: 'ph_today' },
       // ☀️ 다섯은 «각각 다른 것»이다 — 하나를 고르는 게 아니라 그날 있었던 것에 표시한다
       picks: [
         { axis: 'who', label: '함께', y: 61.4, size: 11.5, items: [{ key: 'on', x: 18.1, label: '표시' }] },
@@ -237,7 +237,7 @@ export const PAPER_ARTS = [
     key: 'snap', label: '사진 기록', src: dpSnap, note: '큰 사진 ＋ 제목·날짜 ＋ 줄 노트',
     fields: {
       rule: 'write',
-      photo: { top: 7.8, bottom: 60.1, left: 10.3, right: 8.8 },
+      photo: { top: 7.8, bottom: 60.1, left: 10.3, right: 8.8, key: 'ph_snap' },
       title: { top: 43.0, left: 12, right: 31.5 },
       date: { top: 43.9, left: 75.8, right: 9.2, fit: 0.42 },
       write: { top: 54.2, left: 12, right: 10.5, bottom: 9.4 },
@@ -259,9 +259,9 @@ export const PAPER_ARTS = [
       title: { top: 6.2, left: 9, right: 9 },
       date: { top: 14.3, left: 9, right: 73, fit: 0.5 },
       photo: [
-        { top: 21.2, bottom: 62.0, left: 10.4, right: 66.9 },
-        { top: 43.7, bottom: 39.4, left: 10.4, right: 66.9, key: 'photo2' },
-        { top: 66.2, bottom: 17.0, left: 10.4, right: 66.9, key: 'photo3' },
+        { top: 21.2, bottom: 62.0, left: 10.4, right: 66.9, key: 'ph_l1' },
+        { top: 43.7, bottom: 39.4, left: 10.4, right: 66.9, key: 'ph_l2' },
+        { top: 66.2, bottom: 17.0, left: 10.4, right: 66.9, key: 'ph_l3' },
       ],
       write: [
         { top: 20.4, left: 37, right: 7.5, bottom: 61.6, label: '기록 1' },
@@ -292,9 +292,9 @@ export const PAPER_ARTS = [
       //    ⚠️ 파랑 right 는 75 에서 끊는다 — 창 오른쪽 끝이 «초록 폴라 몸통 아래»라 사진이 넘어가면
       //       흰 몸통이 못 가린다(multiply 는 흰색을 못 얹는다). 원본에서도 가려진 부분이다.
       photo: [
-        { top: 9.9, bottom: 60.2, left: 9.2, right: 53.6, rot: -9.4 },
-        { top: 52.6, bottom: 32.0, left: 7.2, right: 74, rot: -10.4, key: 'photo2' },
-        { top: 57.1, bottom: 28.3, left: 29.2, right: 51.8, rot: 5.8, key: 'photo3' },
+        { top: 9.9, bottom: 60.2, left: 9.2, right: 53.6, rot: -9.4, key: 'ph_s1' },
+        { top: 52.6, bottom: 32.0, left: 7.2, right: 74, rot: -10.4, key: 'ph_s2' },
+        { top: 57.1, bottom: 28.3, left: 29.2, right: 51.8, rot: 5.8, key: 'ph_s3' },
       ],
       write: { top: 38, left: 58.5, right: 6.5, bottom: 26.5 },
     },
@@ -332,4 +332,53 @@ export function paperStyle({ rule = 'plain', skin = 'ivory', art = 'none' } = {}
     ruleWhere: where,
     fields: a.fields || PAPER_ARTS[0].fields,
   }
+}
+
+// 📷📷 사진 저장 자리 = «속지마다 따로» (창업자 확정 2026-08-08 — 내가 낸 ①② 중 **②속지마다 따로 담는다**)
+//
+// ⛔ 전엔 여섯 속지가 **전부 `photo`/`photo2`/`photo3` 한 자리를 같이 썼다.**
+//    속지를 갈아입어도 사진이 안 날아가게 한 것인데, 칸 «모양»이 다르니 엉뚱하게 붙어 보였다 —
+//    창업자 폰 제보 2026-08-08 *"속지는 기록3칸에 올린 사진들이 스크랩사진첩에 똑같이 붙어."*
+// ⭐ `photo`(사진일기)만 옛 키 그대로다 — **저장본이 거기 제일 많다**(제일 오래된 틀).
+//    나머지는 자기 키를 쓴다: `ph_card`·`ph_today`·`ph_snap`·`ph_l1~3`·`ph_s1~3`.
+// ⚠️ 사진 «위치»(끌어서 고른 부분)는 `<키>Pos` 라 키를 따라 저절로 갈라진다.
+
+// 이 속지가 쓰는 사진 키들 (칸 순서대로)
+export function photoKeysOf(art) {
+  const a = PAPER_ARTS.find((x) => x.key === art) || PAPER_ARTS[0]
+  const p = (a.fields || {}).photo
+  if (!p) return []
+  return (Array.isArray(p) ? p : [p]).map((x) => x.key || 'photo')
+}
+
+// 📦 일기 한 칸이 담을 수 있는 사진 키 «전부» — ⛔손으로 나열하지 말 것.
+//    DiaryScreen 이 네 곳(빈값·읽기·저장·의존성)에 손으로 적어 뒀다가 이 작업에서 네 곳을 다 고쳐야 했다.
+export const ALL_PHOTO_KEYS = [...new Set(PAPER_ARTS.flatMap((a) => photoKeysOf(a.key)))]
+export const ALL_PHOTO_FIELDS = ALL_PHOTO_KEYS.flatMap((k) => [k, `${k}Pos`])
+
+// 🚚 옛 저장본 이관 — **이미 깔린 폰**(규칙 18 ⓙ)
+//    옛 `photo`/`photo2`/`photo3` 에 든 사진을 «그 일기가 지금 쓰는 속지»의 자리로 한 번만 옮긴다.
+//    ⭐ 그래야 ⑴쓰던 속지에선 사진이 그대로 보이고 ⑵다른 속지로 갈아입으면 안 딸려온다 — 둘 다 지켜진다.
+//    ⛔ 「없으면 옛 키를 대신 본다」식 폴백은 안 쓴다 — 그러면 «딸려오는» 증상이 그대로 되살아난다.
+const OLD_KEYS = ['photo', 'photo2', 'photo3']
+export function migratePhotoKeys(entry) {
+  if (!entry) return entry
+  const keys = photoKeysOf((entry.paper || {}).art)
+  if (!keys.length) return entry
+  const out = { ...entry }
+  let moved = false
+  keys.forEach((nk, i) => {
+    const ok = OLD_KEYS[i]
+    if (nk === ok) return                      // 사진일기 = 옮길 게 없다
+    if (out[nk] || !out[ok]) return            // 이미 옮겼거나 옛 자리가 비었다
+    out[nk] = out[ok]
+    if (out[`${ok}Pos`]) out[`${nk}Pos`] = out[`${ok}Pos`]
+    moved = true
+  })
+  // ⛔⛔ 안 옮겼으면 «원본 그대로» 돌려준다 — 새 객체를 늘 만들면 「바뀌었나」를 밖에서 못 가린다
+  if (!moved) return entry
+  // 옛 자리는 비운다 — 안 비우면 «다음에 다른 속지를 골랐을 때» 거기로 또 옮겨 간다(＝딸려오기 재발).
+  //   ⚠️ delete 가 아니라 빈 값 — 저장은 «덮어쓰기(merge)»라 지운 키는 안 지워진다.
+  OLD_KEYS.forEach((k) => { if (!keys.includes(k)) { out[k] = ''; out[k + 'Pos'] = '' } })
+  return out
 }
