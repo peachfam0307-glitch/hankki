@@ -80,8 +80,8 @@ export default function DiaryScreen({ day }) {
   //         매 렌더마다 저장이 돌게 된다. 아래 `same()` 이 그걸 막는다.
   // ✍️ `font` = **본문 글씨체** (창업자 2026-08-07 *"글쓰기 글자체도 추가했으면"*)
   //    ⛔ 빈 값이 «귀염체»다 — 이미 쓴 일기는 이 칸이 없으니 예전 모습 그대로 남는다
-  const blank = { title: '', note: '', line: '', weather: '', photo: '', picks: {}, font: '', size: '' }
-  const of = (e) => ({ title: e?.title || '', note: e?.note || '', line: e?.line || '', weather: e?.weather || '', photo: e?.photo || '', picks: e?.picks || {}, font: e?.font || '', size: e?.size || '' })
+  const blank = { title: '', note: '', line: '', weather: '', photo: '', photo2: '', photo3: '', note2: '', note3: '', note4: '', picks: {}, font: '', size: '' }
+  const of = (e) => ({ title: e?.title || '', note: e?.note || '', line: e?.line || '', weather: e?.weather || '', photo: e?.photo || '', photo2: e?.photo2 || '', photo3: e?.photo3 || '', note2: e?.note2 || '', note3: e?.note3 || '', note4: e?.note4 || '', picks: e?.picks || {}, font: e?.font || '', size: e?.size || '' })
   const same = (a, b) => (a && typeof a === 'object') || (b && typeof b === 'object')
     ? JSON.stringify(a || {}) === JSON.stringify(b || {})
     : a === b
@@ -91,15 +91,19 @@ export default function DiaryScreen({ day }) {
   const dirty = Object.keys(blank).some((k) => !same(text[k], saved[k]))
   useEffect(() => {
     if (!dirty) return // 처음 열었을 때 «빈 다이어리»를 만들어 버리지 않게
-    const t = setTimeout(() => save({ title: text.title, note: text.note, line: text.line, weather: text.weather, photo: text.photo, picks: text.picks, font: text.font, size: text.size }), 350)
+    const t = setTimeout(() => save({ title: text.title, note: text.note, line: text.line, weather: text.weather, photo: text.photo, photo2: text.photo2, photo3: text.photo3, note2: text.note2, note3: text.note3, note4: text.note4, picks: text.picks, font: text.font, size: text.size }), 350)
     return () => clearTimeout(t)
-  }, [text.title, text.note, text.line, text.weather, text.photo, text.font, text.size, JSON.stringify(text.picks)]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text.title, text.note, text.line, text.weather, text.photo, text.photo2, text.photo3, text.note2, text.note3, text.note4, text.font, text.size, JSON.stringify(text.picks)]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 📷 사진 — 틀에 그려진 «창»에 끼운다 (창업자 2026-08-06 *"사진틀에 사진올리기가없어"*)
   //   ⭐ `cropSquare` 를 그대로 쓴다 — 레시피 표지·요리 기록·아바타가 다 쓰는, 이미 검증된 길이다
   //      (검정 썸네일·세로 반토막 두 사고를 이미 여기서 다 잡았다).
   //   ⚠️ 창은 정사각이 아니라 가로로 길다 → `object-fit: cover` 가 화면에서 맞춰 자른다.
   const photoRef = useRef(null)
+  // 🗂 사진칸이 여럿인 속지(「기록 3칸」)는 «어느 칸을 눌렀는지»를 기억해야 한다 —
+  //    파일 고르기는 비동기라, 키를 안 잡아두면 셋 다 첫 칸(photo)으로 들어간다.
+  const photoKeyRef = useRef('photo')
+  const pickPhotoFor = (pk) => { photoKeyRef.current = pk || 'photo'; photoRef.current?.click() }
   const onPhotoFile = (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -107,7 +111,8 @@ export default function DiaryScreen({ day }) {
     const reader = new FileReader()
     reader.onload = async () => {
       const src = await cropSquare(reader.result, 900)
-      setText((t) => ({ ...t, photo: src }))
+      const pk = photoKeyRef.current || 'photo'
+      setText((t) => ({ ...t, [pk]: src }))
     }
     reader.readAsDataURL(file)
   }
@@ -140,7 +145,7 @@ export default function DiaryScreen({ day }) {
             rule={skin.rule}
             value={text}
             onChange={setText}
-            onPickPhoto={() => photoRef.current?.click()}
+            onPickPhoto={pickPhotoFor}
             dateLabel={dateLabel}
             font={text.font}
             size={text.size}
@@ -192,7 +197,7 @@ export default function DiaryScreen({ day }) {
           //    ⛔ 전엔 `onChange` 하나가 전부를 갈라서 이 칸들이 **만든 날부터 한 번도 안 눌렸다.**
           //    📷 `onPickPhoto` 도 같이 — 틀의 사진칸은 «고르는 일»이지 «쓰는 일»이 아니다.
           //       전엔 글쓰기 탭에서만 눌려서 사진 넣으러 갔다 꾸미러 오는 왕복이 생겼다.
-          paperOverlay={<PaperSheet fields={skin.fields} rule={skin.rule} value={text} onPick={setText} onPickPhoto={() => photoRef.current?.click()} dateLabel={dateLabel} font={text.font} size={text.size} />}
+          paperOverlay={<PaperSheet fields={skin.fields} rule={skin.rule} value={text} onPick={setText} onPickPhoto={pickPhotoFor} dateLabel={dateLabel} font={text.font} size={text.size} />}
           // ✍️✍️ **꾸미기 안에서 «바로 쓴다»** (창업자 2026-08-06
           //    *"속지고르고 꾸미고 저장해야 글을 쓸수있어서 불편한데.. 속지 고른상태에서
           //      속지 화면 줄 클릭하면 글쓰고(꾸미기칸자동내려감) … 다시 꾸미기버튼 누르면 꾸미고"*)
@@ -204,7 +209,7 @@ export default function DiaryScreen({ day }) {
               rule={skin.rule}
               value={text}
               onChange={setText}
-              onPickPhoto={() => photoRef.current?.click()}
+              onPickPhoto={pickPhotoFor}
               dateLabel={dateLabel}
               font={text.font}
               size={text.size}

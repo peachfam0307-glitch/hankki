@@ -114,17 +114,22 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
     <>
       {/* 📷 사진 — 틀에 그려진 «창»에 끼운다 (창업자 2026-08-06 *"사진틀에 사진올리기가없어"*)
           ⭐ 일부러 층을 «아래»에 둔다 — 틀 그림(`.paper.art::after`)이 나중에 칠해져서
-             사진 가장자리를 선이 덮는다. 그래야 붙인 게 아니라 «끼운» 것으로 보인다. */}
-      {fields.photo && (
-        <div style={{ ...box(fields.photo), overflow: 'hidden' }}>
-          {value.photo
+             사진 가장자리를 선이 덮는다. 그래야 붙인 게 아니라 «끼운» 것으로 보인다.
+          🗂 사진칸도 «여럿»일 수 있다 (2026-08-08 「기록 3칸」 속지 = 구획마다 사진칸 하나씩 셋).
+             write 배열과 같은 문법 — 칸마다 저장 자리(`key`)가 다르다(기본 'photo' = 옛 틀 그대로).
+             ⚠️ `onPickPhoto(저장키)` 로 «어느 칸인지» 같이 넘긴다 — 안 넘기면 셋이 같은 사진을 비춘다. */}
+      {(fields.photo ? (Array.isArray(fields.photo) ? fields.photo : [fields.photo]) : []).map((p, pi) => {
+        const pk = p.key || 'photo'
+        return (
+        <div key={`photo${pi}`} style={{ ...box(p), overflow: 'hidden' }}>
+          {value[pk]
             ? (!canShot
-              ? <img src={value.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ? <img src={value[pk]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               : (
                 <>
-                  <button type="button" className="press" onClick={onPickPhoto} aria-label="사진 바꾸기"
+                  <button type="button" className="press" onClick={() => onPickPhoto(pk)} aria-label="사진 바꾸기"
                     style={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'none', display: 'block' }}>
-                    <img src={value.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    <img src={value[pk]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   </button>
                   {/* 🗑🗑 **사진 지우기** (창업자 폰 제보 2026-08-07 *"하나추가 사진지우는게 없어."*)
                       ⛔ 이건 «사진 스티커»가 아니라 **틀의 사진칸**(`value.photo`)이라
@@ -139,7 +144,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
                          (오늘 손잡이에서 −60px 로 이미 겪었다).
                       ⛔ 읽기 전용(꾸미기 밖·미리보기)엔 안 뜬다 — `canShot` 이 그걸 가른다. */}
                   <button type="button" className="press" aria-label="사진 지우기"
-                    onClick={(e) => { e.stopPropagation(); write({ ...value, photo: '' }) }}
+                    onClick={(e) => { e.stopPropagation(); write({ ...value, [pk]: '' }) }}
                     style={{
                       position: 'absolute', top: 5, right: 5,
                       width: 31, height: 31, borderRadius: '50%',
@@ -152,7 +157,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
                 </>
               ))
             : (canShot && (
-              <button type="button" className="press" onClick={onPickPhoto} aria-label="사진 넣기"
+              <button type="button" className="press" onClick={() => onPickPhoto(pk)} aria-label="사진 넣기"
                 style={{
                   width: '100%', height: '100%', padding: 0, border: 'none', background: 'none',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.4cqw',
@@ -162,7 +167,8 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
               </button>
             ))}
         </div>
-      )}
+        )
+      })}
 
       {/* 🏷 제목 — 틀마다 «장식을 피한 빈 자리»에 한 줄 (창업자 2026-08-06
           *"저 맨위에 (사진틀위에) 나뭇잎옆에 제목 쓸 칸 만들어주면 좋겠어. 요리일지랑 다른 속지틀에도"*)

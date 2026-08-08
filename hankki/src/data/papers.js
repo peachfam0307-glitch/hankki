@@ -23,6 +23,8 @@ import dpPhoto from '../assets/paper/dp_photo.webp'
 import dpCard from '../assets/paper/dp_card.webp'
 import dpFrameBlue from '../assets/paper/dp_frame_blue.webp'
 import dpToday from '../assets/paper/dp_today.webp'
+import dpSnap from '../assets/paper/dp_snap.webp'
+import dpList3 from '../assets/paper/dp_list3.webp'
 
 /** ⑴ 선 — 무지가 기본. 「양식을 안 정한다」는 확정 그대로 빈 종이에서 시작한다. */
 export const PAPER_RULES = [
@@ -220,6 +222,52 @@ export const PAPER_ARTS = [
       rule: 'paper',
       title: { top: 3.4, left: 17, right: 16 },
       write: { top: 8.7, left: 9.5, right: 9.5, bottom: 8 },
+    },
+  },
+  // 📸 사진 기록 — 창업자 시트 2026-08-08 「속지-사진기록」 (1086×1448 · 셋째 장으로 낮에 도착)
+  //
+  // 📐 실측 (규칙 18 — 눈대중 아님): 사진칸 x 9.5~92.0 · y 7.0~40.7 / 제목줄 x 9.5~71.7 · y 42.6~47.1
+  //    날짜 작은 칸 x 74.8~92.0 / 태그 알약 다섯 x 35.7~81.5 · y 48.7~50.7 / 줄노트 칸 x 9.5~91.8 · y 52.3~92.1
+  // ⭐ **그림의 점선 줄은 지웠다** — 인쇄 간격이 2.5%로 우리 글줄(4.34%)과 안 맞아 글씨가 줄을 벗어난다.
+  //    도트·파랑에서 도트를 지운 것과 같은 처방: 줄은 CSS(「선」 탭)가 긋는다 → 무지·줄·모눈·도트 다 산다.
+  //    (원본은 docs 원본시트에 그대로 · 수술본만 webp)
+  // 🏷 태그 알약 다섯은 «그림 장식»으로 뒀다 — 글 기능을 안 붙였다. 맛평가·상황 스티커를 얹는 자리다.
+  {
+    key: 'snap', label: '사진 기록', src: dpSnap, note: '큰 사진 ＋ 제목·날짜 ＋ 줄 노트',
+    fields: {
+      rule: 'write',
+      photo: { top: 7.8, bottom: 60.1, left: 10.3, right: 8.8 },
+      title: { top: 43.0, left: 12, right: 31.5 },
+      date: { top: 43.9, left: 75.8, right: 9.2, fit: 0.42 },
+      write: { top: 54.2, left: 12, right: 10.5, bottom: 9.4 },
+    },
+  },
+  // 🗂 기록 3칸 — 창업자 시트 2026-08-08 「속지-기록3칸」 (1200×1600 · 파랑/초록/주황 탭 세 구획)
+  //
+  // 📐 실측: 제목 칸 y 4.4~12.1 / 날짜 알약 x 6.5~28.7 · y 13.5~17.1 (동그라미 넷은 장식)
+  //    구획 셋 y 18.9~40.6 · 41.4~63.1 · 63.9~85.6 — 각각 사진칸(x 9.6~33.9) ＋ 점선 넉 줄
+  //    맨 아래 메모 칸 y 86.4~96.4
+  // ⭐ 인쇄된 점선 간격 = 4.3% ≈ 우리 글줄(4.34%) → **인쇄 줄에 글을 그대로 앉힌다**(dp_photo 문법 ·
+  //    top = 첫 줄 − 4.34 역산). rule:'none' 이라 「선」 탭은 이 틀에선 안 바뀐다(사진일기와 같다).
+  // 🗂 **사진칸이 셋** — PaperSheet 의 photo 가 이 속지부터 배열을 받는다(write 배열과 같은 문법 ·
+  //    칸마다 저장 자리 key. 첫째는 'photo' 라 옛 틀과 호환).
+  {
+    key: 'list3', label: '기록 3칸', src: dpList3, note: '사진＋줄 세 구획 · 맨 아래 메모',
+    fields: {
+      rule: 'none',
+      title: { top: 6.2, left: 9, right: 9 },
+      date: { top: 14.3, left: 9, right: 73, fit: 0.5 },
+      photo: [
+        { top: 21.2, bottom: 62.0, left: 10.4, right: 66.9 },
+        { top: 43.7, bottom: 39.4, left: 10.4, right: 66.9, key: 'photo2' },
+        { top: 66.2, bottom: 17.0, left: 10.4, right: 66.9, key: 'photo3' },
+      ],
+      write: [
+        { top: 20.4, left: 37, right: 7.5, bottom: 61.6, label: '기록 1' },
+        { top: 42.9, left: 37, right: 7.5, bottom: 39.0, key: 'note2', label: '기록 2' },
+        { top: 65.5, left: 37, right: 7.5, bottom: 16.6, key: 'note3', label: '기록 3' },
+        { top: 88.0, left: 9, right: 7, bottom: 4.8, key: 'note4', label: '메모' },
+      ],
     },
   },
 ]
