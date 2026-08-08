@@ -11,3 +11,6 @@ __pycache__/
 
 # 검수 시트(자동 생성 — 볼 때만 만들고 저장소엔 안 넣는다)
 _검수/
+
+# 🏷 아이콘 대조판 — icon-labels.py 가 언제든 다시 뽑는다(한 번에 2MB+). 기록은 scripts/icon-checked.json 이 갖는다
+docs/_검수판/
