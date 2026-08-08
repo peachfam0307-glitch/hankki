@@ -34,6 +34,18 @@ export function markOnboarded() {
   try { localStorage.setItem(ONBOARD_KEY, '1') } catch { /* noop */ }
 }
 
+// ⏰⏰ 날짜는 «오늘»을 쓴다 — 고정으로 박으면 반드시 낡는다.
+//    (창업자 2026-08-08 *"날짜도 맞춰야해(온보드에 날짜 써있는 이미지가 있을거야)"* — 맞았다.
+//     레꾸 카드에 `2026.07.25` 가 박혀 있어서 **보름 넘게 지난 날짜**를 새 유저가 첫 화면에서 봤고,
+//     내가 만든 일기 장면과도 날짜가 어긋났다.)
+//    ⭐ 오늘로 계산하면 **레시피 카드와 일기가 저절로 같은 날**이 되고 영영 안 낡는다.
+//    ⚠️ 기기 시간대를 그대로 쓴다 — 우리 유저는 한국이라 그게 KST 다.
+const _now = new Date()
+const _wd = ['일', '월', '화', '수', '목', '금', '토'][_now.getDay()]
+const CARD_DATE = `${_now.getFullYear()}.${String(_now.getMonth() + 1).padStart(2, '0')}.${String(_now.getDate()).padStart(2, '0')}`
+const DIARY_DATE = `${_now.getMonth() + 1}.${_now.getDate()} ${_wd}`
+const THIS_MONTH = `${_now.getMonth() + 1}월`
+
 // 음식/곰펭/데코 PNG 자산 (앱 자산 재사용 — 무겁지 않게)
 const PHOTO = import.meta.glob('../assets/stickers/photo/*.png', { eager: true, query: '?url', import: 'default' })
 const F = (k) => PHOTO[`../assets/stickers/photo/${k}.png`]
@@ -86,7 +98,7 @@ const Postit = ({ children, style }) => <div style={{ position: 'absolute', padd
 const Tape = () => <div style={{ position: 'absolute', top: -24, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', width: 230, height: 54, background: 'rgba(255,214,150,.85)', border: '2px dashed rgba(160,110,55,.5)', borderRadius: 6 }} />
 
 // 폴라로이드 레꾸 카드
-function Card({ food, foodW = 380, cover, title, date = '2026.07.25', rot = -4, char, deco, postit }) {
+function Card({ food, foodW = 380, cover, title, date = CARD_DATE, rot = -4, char, deco, postit }) {
   return (
     <div style={{ width: 640, transform: `rotate(${rot}deg)`, background: '#fffdf8', borderRadius: 42, padding: '26px 26px 30px', boxShadow: '0 30px 60px rgba(90,60,30,.3)', position: 'relative' }}>
       <Tape />
@@ -179,10 +191,10 @@ const SlideD = () => (
             ⭐ 고침 = 칸을 100%로 채우고 `objectFit:'contain'` — 달력 칸이 이미 쓰는 문법이라 거긴 안 잘렸다.
             📌 **한 축만 잡으면 다른 축은 «비율이 정한다» — 칸 안에 넣으려면 두 축을 다 잡아야 한다.** */}
         <div style={{ position: 'absolute', ...P({ top: SNAP.photo.top, bottom: SNAP.photo.bottom, left: SNAP.photo.left, right: SNAP.photo.right }), padding: '4%', overflow: 'hidden' }}>
-          <img src={F('fe_06')} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img src={F('fe_81')} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
-        <div style={{ position: 'absolute', ...P({ top: SNAP.title.top, left: SNAP.title.left }), fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 44, color: '#3f4a5a', lineHeight: 1 }}>연어 포케볼</div>
-        <div style={{ position: 'absolute', ...P({ top: SNAP.date.top, left: SNAP.date.left }), fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 30, color: '#9aa4b2', lineHeight: 1 }}>8.8 토</div>
+        <div style={{ position: 'absolute', ...P({ top: SNAP.title.top, left: SNAP.title.left }), fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 44, color: '#3f4a5a', lineHeight: 1 }}>비빔국수</div>
+        <div style={{ position: 'absolute', ...P({ top: SNAP.date.top, left: SNAP.date.left }), fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 30, color: '#9aa4b2', lineHeight: 1 }}>{DIARY_DATE}</div>
         {/* ✍️ 글칸 — 첫 줄에 손글씨(형광펜), 아래 두 줄은 「줄」 속지를 고른 모습 */}
         <div style={{ position: 'absolute', ...P({ top: 55.4, left: SNAP.write.left, right: SNAP.write.right }), textAlign: 'left', fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 34, color: '#5a6270', lineHeight: 1.35 }}>
           더위에 지쳐도 <span style={{ background: 'linear-gradient(transparent 58%,#f5e08a 58%)' }}>한 끼는 챙겼다</span>
@@ -206,7 +218,7 @@ const SlideD = () => (
           글자(「달력으로 한눈에」)만으로는 안 와닿는다. 만든 날에 음식 아이콘이 박힌다. */}
       <div style={{ position: 'relative', marginTop: 30, width: 580, background: 'rgba(255,253,248,.94)', borderRadius: 24, padding: '20px 18px 22px', boxShadow: '0 18px 40px rgba(55,75,105,.2)' }}>
         <Img k="wt_td02" style={{ left: -16, top: -18, width: 156, transform: 'rotate(-7deg)' }} />
-        <div style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 32, color: '#3f5570', marginBottom: 12 }}>8월</div>
+        <div style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 32, color: '#3f5570', marginBottom: 12 }}>{THIS_MONTH}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 9 }}>
           {CAL.map((k, i) => (
             <div key={i} style={{ aspectRatio: '1', borderRadius: 13, background: k ? '#f2efe6' : '#f7f5ee', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>

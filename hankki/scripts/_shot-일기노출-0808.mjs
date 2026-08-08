@@ -31,10 +31,13 @@ const { BASICS_VERSION } = await import('../src/data/basics.js')
 const ok = (b, m) => { console.log(`${b ? '✅' : '⛔'} ${m}`); if (!b) bad++ }
 let bad = 0
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium' })
+// ⏰ 이 컨테이너는 UTC 라 날짜가 «하루 밀려» 찍힌다 — 유저 폰은 KST 다.
+//    온보딩이 날짜를 «오늘»로 계산하게 되면서 캡처와 실물이 어긋났다(2026-08-08 실측).
+const TZ = { timezoneId: 'Asia/Seoul', locale: 'ko-KR' }
 
 // ── ① 온보딩 ──────────────────────────────────────────────
 {
-  const page = await b.newPage({ viewport: { width: 380, height: 820 }, deviceScaleFactor: 3 })
+  const page = await b.newPage({ viewport: { width: 380, height: 820 }, deviceScaleFactor: 3, ...TZ })
   page.on('pageerror', (e) => { console.log('⛔ pageerror:', String(e.message).split('\n')[0]); bad++ })
   // ⛔ onboarded 를 «안» 심는다 — 온보딩이 떠야 한다
   await page.addInitScript((a) => { localStorage.setItem('hankki:v1', JSON.stringify(a.s)) }, { s: { recipes: [], seedV: BASICS_VERSION } })
@@ -79,7 +82,7 @@ const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM || 
 
 // ── ② 홈 안내코치 ────────────────────────────────────────
 {
-  const page = await b.newPage({ viewport: { width: 380, height: 820 }, deviceScaleFactor: 3 })
+  const page = await b.newPage({ viewport: { width: 380, height: 820 }, deviceScaleFactor: 3, ...TZ })
   page.on('pageerror', (e) => { console.log('⛔ pageerror:', String(e.message).split('\n')[0]); bad++ })
   await page.addInitScript((a) => {
     localStorage.setItem('hankki:v1', JSON.stringify(a.s)); localStorage.setItem('hankki:onboarded', '1')
