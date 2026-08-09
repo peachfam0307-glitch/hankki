@@ -132,6 +132,17 @@ jobs:
           sed -i "s/compileSdkVersion .*/compileSdkVersion ${{ inputs.targetSdk }}/" app/build.gradle
           echo "── 확인 ──"
           grep -nE "compileSdkVersion|targetSdkVersion|versionCode|versionName" app/build.gradle
+          # 📱 가로모드 — 2026-08-09 에 `portrait` → `default` 로 풀었는데 **로그에 안 찍혀서 확인을 못 했다.**
+          #   bubblewrap 은 twa-manifest.json 의 orientation 을 `resValue "string","orientation"` 으로 넣는다.
+          #   ⛔ 눈으로 못 보면 「됐겠지」가 된다 → 찍어 놓고, portrait 이면 **여기서 죽인다.**
+          echo "── 화면 방향 ──"
+          ORI="$(grep -oE 'resValue "string", "orientation", "[^"]*"' app/build.gradle | sed 's/.*, "//;s/"$//')"
+          echo "orientation = ${ORI:-(못 읽음)}"
+          case "$ORI" in
+            portrait*) echo "⛔ 세로로 잠겨 있다 — android/twa-manifest.json 을 볼 것"; exit 1 ;;
+            "") echo "⚠️ 값을 못 읽었다 — bubblewrap 판이 바뀌었을 수 있다(빌드는 계속한다)" ;;
+            *) echo "✅ 세로 잠금 없음" ;;
+          esac
 
       - name: 연습 실행이면 여기서 끝
         if: ${{ inputs.dryRun }}
