@@ -264,6 +264,26 @@ export default function App() {
   }, [])
   showToastRef.current = showToast
 
+  // ✋✋ **길게 눌러도 「이미지 메뉴」가 안 뜨게** (창업자 폰 캡처 2026-08-09 밤 — *"길게누르면 이렇게돼"*)
+  //    스티커를 길게 누르니 크롬 메뉴(새 탭에서 열기·이미지 복사·이미지 다운로드·이미지 공유)가 떴다.
+  //    ⛔⛔ **v9.92 에 고친 것과 «다른» 것이다** — 그건 「글자 선택」(끌면 복사·웹 검색 막대)이고 이건 「이미지 메뉴」다.
+  //    ⛔⛔ 그때 넣은 `-webkit-touch-callout: none`(styles.css)은 **iOS Safari 전용**이라
+  //       **안드로이드 크롬엔 처음부터 안 먹고 있었다.** 넣어놓고 고쳤다고 여긴 자리다.
+  //       (그 줄은 그대로 둔다 — 아이폰에선 그게 일한다.)
+  //    ⭐ 안드로이드 크롬에서 막는 길은 **`contextmenu` 를 취소하는 것** 하나다.
+  //    ⭐ 앱 전체에 건다 — 롱프레스가 우리 조작 방식이다(홈 카드 길게 눌러 삭제·스티커 크기·회전 손잡이).
+  //       화면 하나만 막으면 다음 화면에서 또 뜬다.
+  //    ⚠️ 글 쓰는 칸은 «반드시» 예외 — 거기선 「붙여넣기·전체 선택」이 나와야 한다.
+  useEffect(() => {
+    const onMenu = (e) => {
+      const t = e.target
+      if (t && t.closest && t.closest('input, textarea, [contenteditable="true"]')) return
+      e.preventDefault()
+    }
+    document.addEventListener('contextmenu', onMenu)
+    return () => document.removeEventListener('contextmenu', onMenu)
+  }, [])
+
   // 저장 공간이 가득 차서 저장이 실패하면(특히 iOS ~5MB) 조용히 사라지지 않게 알린다.
   useEffect(() => {
     const onFull = () => showToast('저장 공간이 가득 찼어요 · 설정에서 백업 후 오래된 사진을 정리해 주세요', 5000)
@@ -386,6 +406,10 @@ export default function App() {
           <StackLayer key={i}>{renderScreen(s)}</StackLayer>
         ))}
 
+        {/* ⚠️ 하단바·토스트 «앞»에 둔다 — 셋 다 fixed 라 뒤엣것이 위에 온다.
+            막대가 하단바를 뚫고 나오면 안 된다. */}
+        <ScrollHint dep={`${tab}:${stack.length}`} />
+
         {!top && <BottomNav active={tab} onChange={go} onImport={() => push({ name: 'import' })} />}
         <TimerBar bottom={top ? 'calc(84px + var(--safe-bottom))' : 'calc(66px + var(--safe-bottom))'} />
         {toast && <div className="toast">{toast}</div>}
@@ -393,6 +417,72 @@ export default function App() {
         {onboard && <Onboarding onDone={() => setOnboard(false)} />}
       </div>
     </NavCtx.Provider>
+  )
+}
+
+// 📜📜 ScrollHint — 세로로 «넘치는 화면»에 얇은 막대를 **우리가 그려서** 항상 보여준다.
+//   (창업자 2026-08-09 밤 — 세 번 말했다:
+//    *"스크롤이 되는데 우리는 되는지 알지만 보통은 모르니까"* ·
+//    *"지금 우리 일꾸나 레꾸 앱 전반적으로 스크롤이 표시가 안되어있지 않아??"* ·
+//    *"자리가 부족하니까 얇게라도 표시해줘야 할 것 같아"*
+//    폴드 테스터가 달력 밑 「오늘 일기 쓰기」를 못 찾고 **먹통인 줄 알았다**)
+//   ⛔ CSS 로는 안 된다 — `.screen::-webkit-scrollbar { width: 0 }` 로 꺼둔 것도 있지만,
+//      켜도 **안드로이드 크롬은 오버레이 막대**라 «긁는 동안만» 뜬다. 멈추면 사라져서
+//      「여기서 끝」으로 읽힌다. `scrollbar-width: thin` 도 모바일에선 상시 표시가 안 된다.
+//   ⭐ 그래서 v9.99 의 `HStrip`(가로)과 «같은 문법»으로 세로를 그린다 — 새 발명이 아니다.
+//   ⭐ **왜 화면마다 안 붙이고 여기 하나인가** = `.screen` 이 열 곳에 흩어져 있다(탭 5 + 쌓이는 화면들).
+//      한 곳만 붙이면 다음 화면에서 또 없다 → **맨 위 `.screen` 을 찾아** 한 막대가 따라다닌다.
+//   ⭐ 안 넘치면 아예 안 그린다 — 짧은 화면엔 아무 티도 안 난다.
+//   ⚠️ 꾸미기 판은 Portal 이라 `.app-frame` 밖 → 여기 안 걸린다(서랍 막대는 `DecorEditor` 가 따로 그린다).
+//   ⚠️ 표식 `data-vhint` = 재현 검사가 «실제로 그려졌나»를 집는 자리.
+function ScrollHint({ dep }) {
+  const [bar, setBar] = useState(null) // [화면 y, 높이, 오른쪽 x] · null = 안 넘침
+  useEffect(() => {
+    let raf = 0
+    const measure = () => {
+      // ⛔ 꾸미기 판은 Portal 이라 `.app-frame` 밖에서 화면을 통째로 덮는다 —
+      //    그때 «뒤 화면» 막대를 그리면 판 위에 떠 보인다(재현판이 잡았다: 판을 열었는데 막대 1개).
+      //    꾸미기 판은 자기 서랍 막대를 따로 그린다(`DecorEditor` 의 `VHint`).
+      if (document.querySelector('.decor-editor')) { setBar(null); return }
+      const list = document.querySelectorAll('.app-frame .screen')
+      const el = list[list.length - 1] // 맨 위 화면 = DOM 에서 마지막
+      if (!el) { setBar(null); return }
+      const { scrollHeight: sh, clientHeight: ch, scrollTop: st } = el
+      if (sh <= ch + 8) { setBar(null); return }
+      const r = el.getBoundingClientRect()
+      const h = Math.max(28, (ch / sh) * r.height)
+      const y = r.top + (st / (sh - ch)) * (r.height - h)
+      setBar((b) => (b && Math.abs(b[0] - y) < 0.5 && Math.abs(b[1] - h) < 0.5 && b[2] === r.right) ? b : [y, h, r.right])
+    }
+    const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
+    // ⚠️ `scroll` 은 bubble 을 안 한다 → **capture** 로 잡아야 어느 화면이 굴러도 걸린다.
+    document.addEventListener('scroll', onScroll, true)
+    window.addEventListener('resize', onScroll)
+    // ⚠️ 꾸미기 판·온보딩은 Portal 이라 body 직계로 붙는다 — 뜨고 지는 걸 여기서 잡아야
+    //    막대가 판 위에 남지 않는다(`dep` 은 탭·스택만 보므로 이건 못 잡는다).
+    const mo = new MutationObserver(onScroll)
+    mo.observe(document.body, { childList: true })
+    // ⚠️ 화면을 열자마자 재면 내용이 아직 없어 «안 넘침»으로 나온다 → 몇 번 더 잰다.
+    const timers = [0, 140, 420, 900].map((ms) => setTimeout(measure, ms))
+    return () => {
+      document.removeEventListener('scroll', onScroll, true)
+      window.removeEventListener('resize', onScroll)
+      mo.disconnect()
+      timers.forEach(clearTimeout)
+      cancelAnimationFrame(raf)
+    }
+  }, [dep])
+  if (!bar) return null
+  return (
+    <div
+      data-vhint="1"
+      aria-hidden="true"
+      style={{
+        position: 'fixed', top: bar[0], height: bar[1], left: bar[2] - 5,
+        width: 3, borderRadius: 999, background: 'var(--text-sub)', opacity: 0.38,
+        pointerEvents: 'none',
+      }}
+    />
   )
 }
 

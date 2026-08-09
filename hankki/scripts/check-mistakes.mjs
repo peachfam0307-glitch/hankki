@@ -316,7 +316,62 @@ console.log('\n🪤 반복 실수 게이트')
   else ok(`Play 앱(TWA) — "${twa.orientation}"`)
 }
 
+
+
+// ═══ ⑪ CSS 「미디어쿼리가 기본 규칙보다 «앞»에 있어서 안 먹는 것」 ══════
+//   🎨 2026-08-09 — 창업자 *"하나고치면 하나가 틀어지고 ㅠㅠ 무한반복인것같아"*
+//      그날 폴드 달력 아이콘을 34px 로 키웠는데 **재현판이 재보니 24px 그대로**였다.
+//      뿌리 = `@media (min-width:600px) { .cal-food { width:34px } }` 을 쓴 자리가
+//      기본 `.cal-food { width:24px }` 보다 **앞**이라, 세기가 같으면 «뒤엣것»이 이겨서 늘 24px.
+//   ⛔ 이건 v10.12 에 하루 여섯 번 밟은 것과 «같은» 실수다(확대 단추가 안 뜸·탭 줄이 안 줄음…).
+//      CLAUDE.md 에 적어뒀는데 또 밟았다 → **글로 적는 대신 여기서 막는다.**
+//   ⭐ 판정 = 선택자 «문자열이 정확히 같을» 때만 본다. 같으면 특정성도 같아서 **순서가 결과를 정한다.**
+//      다르면 순서와 무관하니 안 본다 — 거짓 경보를 안 내려는 것이다(시끄러운 게이트는 죽은 게이트).
+//   ⭐ `!important` 가 붙었으면 미디어 쪽이 이기므로 통과시킨다.
+{
+  console.log('\n🎨 CSS 우선순위(미디어쿼리 자리)')
+  const raw = readFileSync(join(ROOT, 'src/styles.css'), 'utf8')
+  // 주석은 지우되 «줄 수»는 남긴다 — 줄번호로 알려줘야 찾아간다.
+  const src = raw.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+  const decls = []
+  const stack = []
+  let buf = '', line = 1
+  const flush = () => {
+    const cur = stack[stack.length - 1]
+    const d = buf.trim()
+    buf = ''
+    if (!cur || cur.at || !d) return
+    const m = d.match(/^([-a-zA-Z]+)\s*:/)
+    if (!m) return
+    const inMedia = stack.some((x) => x.at && /^@media/.test(x.head))
+    for (const s of cur.head.split(',').map((x) => x.replace(/\s+/g, ' ').trim()).filter(Boolean)) {
+      decls.push({ sel: s, prop: m[1], line, inMedia, imp: /!important/.test(d) })
+    }
+  }
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i]
+    if (ch === '\n') { line++; buf += ch; continue }
+    if (ch === '{') {
+      const head = buf.replace(/\s+/g, ' ').trim()
+      stack.push({ head, at: head.startsWith('@') })
+      buf = ''
+      continue
+    }
+    if (ch === '}') { flush(); stack.pop(); buf = ''; continue }
+    if (ch === ';') { flush(); continue }
+    buf += ch
+  }
+  const 기본 = decls.filter((d) => !d.inMedia && !d.imp)
+  let hits = 0
+  for (const d of decls.filter((x) => x.inMedia && !x.imp)) {
+    const 뒤 = 기본.find((b) => b.sel === d.sel && b.prop === d.prop && b.line > d.line)
+    if (!뒤) continue
+    hits++
+    no(`styles.css:${d.line} — 미디어쿼리 안의 «${d.sel} { ${d.prop} }» 이 ${뒤.line}줄 기본 규칙에 «덮인다». 미디어 블록을 기본 규칙 뒤로 옮길 것`)
+  }
+  if (!hits) ok(`미디어쿼리가 전부 기본 규칙 뒤에 있다 (선언 ${decls.length}줄 검사)`)
+}
+
 console.log(bad ? `\n⛔⛔ ${bad}건 — 고치고 다시 돌릴 것\n` : '\n✅ 반복 실수 게이트 통과\n')
 console.log('   📖 기계가 «못 잡는» 것들 = docs/실수-패턴-2026-08-07.md\n')
 process.exit(bad ? 1 : 0)
-

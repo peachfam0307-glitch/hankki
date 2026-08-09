@@ -757,6 +757,28 @@ img {
   object-fit: cover;
   display: block;
 }
+/* 📱📱 **큰 화면(폴드 펼침·패드·폰 눕힘)에서 달력이 화면을 통째로 먹던 것** (창업자 2026-08-09 밤
+   📮 *"폴드 펼치면 딱 이렇게 보이나봐. 아래 오늘 일기, 8월0일일기 버튼이 안보여. 그래서 먹통일 줄 알았데."*)
+   ⛔ 뿌리 = `aspect-ratio: 1` — 칸이 **정사각**이라 «폭이 넓어지면 높이도 같이» 커진다.
+      폴드 펼침(폭 ~1500) 이면 한 칸이 200px 이 넘고 6줄 = 1200px+ → 달력 하나가 화면을 다 쓴다.
+      그러면 아래 「오늘 일기 쓰기」 단추가 화면 «밖»이라 **눌러도 아무 일 없는 것처럼** 보인다.
+   ⭐ 큰 화면에선 칸을 «가로로 긴 네모»로 둔다 — 달력 칸은 원래 정사각일 이유가 없다.
+   ⭐ 아이콘도 같이 키운다(창업자 *"음식아이콘도 되게 쪼그맣게 보이네;;"* — 24px 고정이라 넓은 칸에서 점처럼 보였다).
+   ⚠️ 폰 세로(360~430)는 «안» 걸린다 — 지금 그대로 정사각이다.
+   ⛔⛔ **이 두 블록은 반드시 `.cal-food` 기본 규칙 «뒤»에 온다.** 세기가 같으면 «뒤엣것»이 이기므로
+      앞에 두면 아이콘이 영영 24px 이다 — 2026-08-09 에 실제로 그랬고 재현판이 잡았다(24px).
+      📌 v10.12 에 하루 여섯 번 밟은 것과 «같은» 실수다. 이제 `check-mistakes.mjs` ⑪ 가 막는다. */
+@media (min-width: 600px) {
+  .cal-day { aspect-ratio: auto; min-height: 58px; max-height: 76px; font-size: 13.5px; }
+  .cal-food { width: 34px; height: 34px; }
+  .cal-food img { width: 34px; height: 34px; }
+}
+/* 📐 눕힌 폰은 높이가 낮아 더 줄인다 — 6줄 × 76 이면 456px 이라 411px 화면을 넘는다 */
+@media (min-width: 600px) and (max-height: 520px) {
+  .cal-day { min-height: 44px; max-height: 50px; }
+  .cal-food { width: 26px; height: 26px; }
+  .cal-food img { width: 26px; height: 26px; }
+}
 /* 하루에 둘 이상 만들었을 때만 — 구석에 작게 */
 .cal-more {
   position: absolute;
@@ -1604,11 +1626,8 @@ html, body { overscroll-behavior: none; }
       자판이 뜬 판(60~410)과 폰 가로(360~411)만 걸린다. 평소 화면은 하나도 안 건드린다.
    ⛔ 종이가 칸을 넘치므로 칸이 굴러가야 하고, 서랍도 살아 있어야 한다 —
       v10.15 에 바닥값을 크게 줬다가 **서랍이 0px** 이 된 적이 있다. 그래서 셋을 «같이» 준다. */
-@media (max-height: 430px) {
-  .decor-stage { flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
-  .decor-stage > div:not(.t-sub) { min-width: calc(min(78%, 230px) * var(--zoom, 1)); }
-  .decor-drawer { min-height: 96px; }
-}
+/* ⚠️ 이 블록은 «아래» `.decor-drawer` 정의 뒤에 있다 — 여기 두면 `min-height: 96px` 이
+      그쪽 `min-height: 0` 에 덮여 **서랍 바닥값이 통째로 안 먹었다**(게이트 ⑪ 가 잡았다). */
 /* ✍️ 글쓰기 모드 — 종이가 커지고 «스크롤이 된다».
    ⚠️ 폰에서 자판이 올라오면 화면 아래 절반이 덮인다. 판이 고정이면 메모칸이 자판 뒤로 숨는다
       → 스크롤을 열어 «올려서» 쓸 수 있게. (에디터가 position:fixed 라 페이지 스크롤이 없다) */
@@ -1648,6 +1667,22 @@ html, body { overscroll-behavior: none; }
      ⚠️ 52vh 는 «세로가 더 긴 폰»에서만 값을 한다(360×780 에선 차이 0 — 실측). */
   max-height: 52vh;
   min-height: 0;
+}
+/* ⌨️⌨️ **판이 낮을 땐(＝자판이 떠 있을 땐) 종이에 바닥값을 건다 — 커서가 있든 없든.**
+   ⛔ 전엔 `.decor-stage.typing` 에만 걸어서, **자판이 뜬 채로 탭을 옮기면**(`dropCaret` 이 커서를 내려놓는다)
+      바닥값이 사라지는데 자판은 안 내려가 판이 낮은 채였다 → 종이가 통째로 쪼그라들었다.
+      🔢 세로 실측 — 종이 230 → **119px** · 판이 60px 뿐일 땐 **26px**. 가로에선 창업자가 이걸 그대로 겪었다.
+   ⭐ 430px 을 경계로 삼는다 — 폰 세로(640~890)·작은 폰(640)은 «안» 걸리고,
+      자판이 뜬 판(60~410)과 폰 가로(360~411)만 걸린다. 평소 화면은 하나도 안 건드린다.
+   ⛔ 종이가 칸을 넘치므로 칸이 굴러가야 하고, 서랍도 살아 있어야 한다 —
+      v10.15 에 바닥값을 크게 줬다가 **서랍이 0px** 이 된 적이 있다. 그래서 셋을 «같이» 준다.
+   ⛔⛔ **이 블록은 반드시 위 `.decor-drawer` 정의 «뒤»에 온다.** 앞에 두면 `min-height: 96px` 이
+      `.decor-drawer { min-height: 0 }` 에 덮여 **셋 중 서랍만 안 먹는다** — 2026-08-09 에 실제로 그랬고
+      「셋을 같이 준다」고 적어놓고 반쪽이었다. 게이트 ⑪(`check-mistakes.mjs`)가 잡아냈다. */
+@media (max-height: 430px) {
+  .decor-stage { flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+  .decor-stage > div:not(.t-sub) { min-width: calc(min(78%, 230px) * var(--zoom, 1)); }
+  .decor-drawer { min-height: 96px; }
 }
 /* 🔄🔄 **가로모드 — 종이 왼쪽 · 서랍 오른쪽** (창업자 2026-08-09)
    📮 *"가로모드로 사용할 수 있으면 꾸미기서랍은 오른쪽에 종이는 왼쪽에 넣어도 괜찮을 것 같거든."*
@@ -1994,7 +2029,9 @@ html, body { overscroll-behavior: none; }
      ⚠️ `minmax` 값이 몇 칸이 되는지는 «폭에서 역산»해야 한다 — 처음에 52px 을 줬다가
         `52×6 + 7×5 = 347 > 328` 이라 **그대로 5칸이었다**(재서 알았다. 안 쟀으면 「고쳤다」고 할 뻔했다).
      📌 v10.12 에 가로에서 배운 것을 그대로 쓴 것이다 — 칸 «크기»를 정하고 개수는 폭이 정하게 둔다. */
-  .decor-grid { grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)) !important; gap: 7px; }
+  /* ⚠️ `gap` 에도 `!important` 가 붙어야 한다 — 이 블록이 아래쪽 `.decor-grid` 기본보다 «앞»이라
+        안 붙이면 간격만 8px 로 되돌아간다(게이트 ⑪ 가 잡았다). 칸 수만 줄고 간격은 그대로였다. */
+  .decor-grid { grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)) !important; gap: 7px !important; }
   /* 📏 안내문도 한 줄로 — 글자라 미감 손해가 제일 적고, 두 줄이면 그만큼 종이 칸을 먹는다. */
   .decor-stage > .t-sub {
     font-size: 12px; line-height: 1.3; margin-top: 3px !important;

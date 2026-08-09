@@ -41,7 +41,13 @@ const dayKey = (ts) => {
 // 📔 `diaryDays` = 다이어리를 쓴 날(`'y-m-d'` Set). 요리와 «따로» 받는다 —
 //    다이어리는 요리가 아니라서 음식 아이콘 자리에 못 들어가고, 「N번」에도 안 세어진다.
 //    ⭐ 대신 칸 왼쪽 위에 작은 펜 표시. **요리를 안 한 날에도 눌러서 다이어리로 갈 수 있다.**
-function CookCalendar({ entries, diaryDays, selected, onSelect, iconFor }) {
+// 📔📔 **칸을 누르면 «그날 일기»로 바로 간다** (창업자 2026-08-09 밤
+//    📮 *"달력에서 아이콘을 누르면 바로 일기로 들어가게 하면 좋을 것 같아"*)
+//    ⛔ 전엔 칸을 누르면 «아래 목록만» 걸러졌다. 그런데 폴드처럼 큰 화면에선 그 목록이 화면 밖이라
+//       **눌러도 아무 일도 안 일어난 것처럼** 보였다(창업자 가족이 「먹통」으로 여겼다).
+//    ⭐ 잃는 게 없다 — 일기 화면(`DiaryScreen`)이 그날 «요리 기록»까지 같이 보여준다(47줄 필터).
+//       오히려 목록 거르기보다 더 많이 본다.
+function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconFor }) {
   const [ym, setYm] = useState(() => {
     const n = new Date()
     return { y: n.getFullYear(), m: n.getMonth() }
@@ -99,7 +105,9 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, iconFor }) {
             <button
               key={d}
               className={`press cal-day ${on ? 'on' : ''} ${isToday(d) ? 'today' : ''}`}
-              onClick={() => (n || hasDiary) && onSelect(on ? null : k)}
+              // 📔 누르면 «그날 일기»로 바로 간다(위 주석). 고른 표시도 남겨 둔다 —
+              //    돌아왔을 때 어느 날을 봤는지 알 수 있고, 아래 「N월 N일 일기」 단추도 그 날짜를 쓴다.
+              onClick={() => { if (!n && !hasDiary) return; onSelect(k); onOpenDay?.(k) }}
               disabled={!n && !hasDiary}
             >
               <span className="cal-num">{d}</span>
@@ -323,7 +331,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                  그래서 만든 사람(창업자)조차 안 썼다 — 이 탭이 죽은 이유의 하나가 **기능이 모자란 게
                  아니라 자리를 잘못 준 것**이었다. 접기 버튼도 같이 없앴다(가릴 이유가 없어졌다). */}
           {(entries.length > 0 || diaryDays.size > 0) && (
-            <CookCalendar entries={entries} diaryDays={diaryDays} selected={dayFilter} onSelect={setDayFilter} iconFor={iconFor} />
+            <CookCalendar entries={entries} diaryDays={diaryDays} selected={dayFilter} onSelect={setDayFilter} onOpenDay={(k) => nav.push({ name: 'diary', day: k })} iconFor={iconFor} />
           )}
 
           {/* 📔 다이어리 쓰기 — 창업자 2026-08-06 *"따로 아이콘을 하나 파서 다이어리 쓰기

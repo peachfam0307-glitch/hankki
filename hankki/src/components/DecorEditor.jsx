@@ -55,6 +55,56 @@ function HStrip({ style, children }) {
   )
 }
 
+// 📜 VHint — 세로로 넘치는 칸(서랍)에 얇은 막대를 우리가 그린다. `HStrip` 의 세로 짝.
+//   (창업자 2026-08-09 *"자리가 부족하니까 얇게라도 표시해줘야 할 것 같아"*)
+//   ⭐ 서랍은 내용이 «자주» 바뀐다(탭·갈래를 옮길 때마다 높이가 통째로 달라진다) →
+//      `ResizeObserver` 로는 모자란다(그건 «칸» 크기만 본다. 칸은 그대로고 «안»이 바뀐다).
+//      → `MutationObserver` 로 내용이 바뀔 때마다 다시 잰다.
+//   ⚠️ `position: fixed` ＋ `getBoundingClientRect()` 라 **DOM 어디에 놓아도 자리가 맞는다** —
+//      서랍 여는 태그 앞에 둔 이유(닫는 자리가 400줄 아래다).
+function VHint({ boxRef }) {
+  const [bar, setBar] = useState(null) // [화면 y, 높이, 오른쪽 x] · null = 안 넘침
+  useEffect(() => {
+    const el = boxRef.current
+    if (!el) return
+    let raf = 0
+    const measure = () => {
+      const { scrollHeight: sh, clientHeight: ch, scrollTop: st } = el
+      if (sh <= ch + 8) { setBar(null); return }
+      const r = el.getBoundingClientRect()
+      const h = Math.max(24, (ch / sh) * r.height)
+      const y = r.top + (st / (sh - ch)) * (r.height - h)
+      setBar((b) => (b && Math.abs(b[0] - y) < 0.5 && Math.abs(b[1] - h) < 0.5 && b[2] === r.right) ? b : [y, h, r.right])
+    }
+    const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
+    el.addEventListener('scroll', onScroll)
+    window.addEventListener('resize', onScroll)
+    const mo = new MutationObserver(onScroll)
+    mo.observe(el, { childList: true, subtree: true })
+    const ro = new ResizeObserver(onScroll)
+    ro.observe(el)
+    const t = setTimeout(measure, 60)
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      mo.disconnect(); ro.disconnect(); clearTimeout(t); cancelAnimationFrame(raf)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  if (!bar) return null
+  return (
+    <div
+      data-vhint="1"
+      aria-hidden="true"
+      style={{
+        position: 'fixed', top: bar[0], height: bar[1], left: bar[2] - 5,
+        width: 3, borderRadius: 999, background: 'var(--text-sub)', opacity: 0.38,
+        pointerEvents: 'none', zIndex: 6,
+      }}
+    />
+  )
+}
+
 // 무늬·모양 칩용 미니 포스트잇 미리보기 (실루엣은 clip-path — defs 는 스테이지 DecorLayer 가 심는다)
 function MiniNote({ color, pattern = 'plain', shape = 'fold', size = 30 }) {
   const pat = notePatternStyle(pattern, color.line || color.fold)
@@ -1441,6 +1491,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             })}
           </div>
           )}
+          <VHint boxRef={drawerRef} />
           <div className="decor-scroll" ref={drawerRef}>
             {/* ✍️ 글쓰기 — 서랍엔 **아무것도 안 둔다.** 칸이 비어야 서랍이 접히고 종이가 커진다.
                 ⛔ 여기에 뭘 넣으면 「글 쓰는데 서랍이 반을 먹는」 지금 문제가 그대로 남는다.
