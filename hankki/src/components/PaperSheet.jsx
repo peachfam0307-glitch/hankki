@@ -133,7 +133,12 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
         const put = (v) => (row.axis === 'weather'
           ? onChange({ ...value, weather: v })
           : onChange({ ...value, picks: { ...(value.picks || {}), [row.axis]: v } }))
-        const on = cur === w.key
+        // ⭐ `fill` 축(만족도)은 **별점처럼 차오른다** — 3을 고르면 1·2·3 이 다 칠해진다.
+        //   ⛔ 다른 축은 「그것 하나」를 표시하는 것이라 고른 것만 칠한다.
+        //   📌 자리(`items` 차례)로 견준다 — 키가 '1'~'5' 라고 가정하지 않는다(다른 속지는 다를 수 있다).
+        const on = row.fill
+          ? (cur !== '' && row.items.findIndex((x) => x.key === w.key) <= row.items.findIndex((x) => x.key === cur))
+          : cur === w.key
         // 🖍🖍 **형광펜으로 칠한 표시** (창업자 확정 2026-08-06 — 후보 여섯을 실물로 찍어 골랐다)
         //
         // ⛔ 전엔 «갈색 동그라미»였는데 창업자 *"그 동그라미 너무 별로야"* · *"아이콘에 비해 너무 커"*.
