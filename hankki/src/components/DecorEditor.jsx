@@ -940,7 +940,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               // 🈳 빈 상태 — 자리를 비우지 않는다(비우면 고를 때마다 화면이 «툭» 튄다).
               //   📐 52 → 46 (창업자 2026-08-08 *"아래탭이 너무커서 고르는부분이 안보임"*)
               //      안내 글자라 손가락 최소(44)와 무관하지만, 갈래 아이콘 칸과 «같은 키»라야 안 튄다 → 둘 다 46.
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 44, color: 'var(--text-sub)', fontSize: 12 }}>
+              // 📱 가로에선 이 줄을 낮춘다(CSS) — 창업자 2026-08-09 *"아래 꾸며요 탭이 너무 커서 종이랑 꾸미기를 다 가려."*
+              //    ⭐ 이건 «누르는 것»이 아니라 안내 글자라 손가락 최소(44)를 안 지켜도 된다.
+              //    ⛔ 세로는 그대로 44 — 갈래 아이콘 칸과 같은 키라야 골랐다 풀 때 화면이 안 튄다.
+              <div className="decor-tools-empty" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 44, color: 'var(--text-sub)', fontSize: 12 }}>
                 <Icon name="palette" size={15} color="var(--text-sub)" />
                 붙인 걸 누르면 여기서 꾸며요
               </div>
@@ -1372,7 +1375,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 📏 세로 쌓기 44＋6＋라벨 20＋44 = 114px → 가로 한 줄 **44px** = **70px 회수.**
                 ⭐ 글자도 짧게 — 「출시 기념으로 네 가지를 넣어뒀어요」는 배너 하나를 통째로 먹던 말이다.
                    누르면 창이 열려 거기서 다 설명한다. */}
-            <div style={{ display: 'flex', gap: 7, marginBottom: 8 }}>
+            {/* 📱 가로에선 이 줄을 낮춘다(CSS 「decor-quick」) — 창업자 2026-08-09 *"꾸미기가 배경한줄만 보이네.."*
+                짧은 화면(322px)에선 이 두 줄이 굴릴 칸의 절반을 먹는다. 세로는 그대로 38. */}
+            <div className="decor-quick" style={{ display: 'flex', gap: 7, marginBottom: 8 }}>
               {/* 📐 선물은 «제 몸만큼만» — 74px 이면 되는데 반을 가져가서 320px 폰에서 옆 칸 글자가 11px 잘렸다(실측).
                      사진 쪽이 글이 길다(114px) → 남는 자리를 사진이 다 갖는다. */}
               {/* 📏 높이 38 — 창업자 2026-08-09 *"선물 네가지랑 사진스티커로 꾸미기 높이를 배경음식아이콘되돌리기랑 같게하자"*
@@ -1407,7 +1412,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                    서랍 스크롤 칸을 1px 이라도 되찾는 게 오늘 대수술의 이유다. */}
             {!isDiary && (
               <div className="decor-sec">
-                <button className="press" onClick={() => setThumb(thumb === 'none' ? origThumb : 'none')}
+                <button className="press decor-quick-btn" onClick={() => setThumb(thumb === 'none' ? origThumb : 'none')}
                   style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '10px 13px', marginBottom: 8, borderRadius: 12, background: thumb === 'none' ? 'var(--brown)' : 'var(--cream)', color: thumb === 'none' ? '#fff' : 'var(--text)', border: thumb === 'none' ? 'none' : '1px solid var(--line)', fontWeight: 700, fontSize: 13, textAlign: 'left' }}>
                   {/* 🏷 아이콘 = 창업자 2026-08-07 *"배경음식아이콘지우기앞에도 이모지?아이콘 같은거 넣으면 좋겠어
                       (사진스티커로 붙이기 앞에 있는 이모지처럼)"* — 옆줄과 짝이 맞아야 한 묶음으로 읽힌다.

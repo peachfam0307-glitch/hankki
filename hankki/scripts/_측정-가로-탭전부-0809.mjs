@@ -41,7 +41,16 @@ const 잰다 = () => {
     const q = el.getBoundingClientRect()
     if (q.width < 8 || q.height < 8) continue
     const over = Math.max(q.right - window.innerWidth, -q.left)
-    if (over > 2) { 넘친것++; 제일큰넘침 = Math.max(제일큰넘침, Math.round(over)) }
+    if (over <= 2) continue
+    // ⭐⭐ **「넘쳤다」 ≠ 「깨졌다」** — 우리 앱엔 «일부러» 옆으로 굴러가게 만든 줄이 있다(칩 줄).
+    //    2026-08-09 에 이걸로 두 번 속았다(오전엔 장보기를 「깨졌다」고 잘못 보고했다).
+    //    ⒜ 굴러가는 줄 «안»의 칩 → 스크롤하면 보인다. 정상.
+    //    ⒝ 「hscroll」 자체가 20px 넘침 → 화면 끝까지 흘리려고 준 «음수 여백»이다(styles.css). 정상.
+    if (typeof el.className === 'string' && el.className.split(' ').includes('hscroll')) continue
+    let 굴러가는줄안 = false, p = el.parentElement
+    while (p) { const c = getComputedStyle(p); if ((c.overflowX === 'auto' || c.overflowX === 'scroll') && p.scrollWidth > p.clientWidth + 4) { 굴러가는줄안 = true; break } p = p.parentElement }
+    if (굴러가는줄안) continue
+    넘친것++; 제일큰넘침 = Math.max(제일큰넘침, Math.round(over))
   }
   return {
     가로넘침: Math.max(0, Math.round(de.scrollWidth - window.innerWidth)),
@@ -62,7 +71,9 @@ const 잰다 = () => {
 }
 
 const 탭 = [['홈', null], ['가져오기', '가져오기'], ['레시피', '레시피'], ['일기', '일기'], ['장보기', '장보기'], ['레꾸자랑', '레꾸자랑']]
-const 판 = [['폰눕힘', 780, 360], ['폴드', 1104, 690]]
+// 📱 창업자 폰 = 2340×1080 · DPR 2.625 → CSS 891×411. 크롬은 주소창이 89px 을 먹어 «322».
+//    ⭐ 제일 짧은 판이 제일 잘 깨진다 — 그걸 맨 앞에 둔다.
+const 판 = [['크롬폰눕힘', 891, 322], ['앱폰눕힘', 891, 411], ['좁은폰눕힘', 780, 360], ['폴드', 1104, 690], ['패드', 1180, 820]]
 
 console.log('\n📐 가로에서 «다른 탭»은 멀쩡한가 (2026-08-09)\n')
 let 나쁨 = 0
@@ -92,6 +103,9 @@ for (const [판이름, w, h] of 판) {
     if (m.하단바보임 === false) 문제.push('하단바가 화면 밖')
     if (m.좌우로넘친요소 > 0) 문제.push(`요소 ${m.좌우로넘친요소}개가 좌우로 넘침(최대 ${m.제일큰넘침}px)`)
     if (errs.length) 문제.push(`크래시 ${errs[0]}`)
+    // 🚨 창업자 제보 *"스크롤 안되지만"* — 넘치는데 굴릴 칸이 없으면 «영영 못 본다»
+    if (m.세로스크롤 === 0 && !m.본문굴림 && m.하단바보임 === true) { /* 굴릴 게 없으면 정상 */ }
+    if (m.세로스크롤 > 0 && !m.본문굴림) 문제.push(`${m.세로스크롤}px 넘치는데 굴릴 칸이 없다`)
     if (문제.length) 나쁨++
     console.log(`   ${탭이름.padEnd(6)} ${문제.length ? '⛔ ' + 문제.join(' · ') : '✅ 멀쩡'}   ${JSON.stringify(m)}`)
     await page.screenshot({ path: `${OUT}/${판이름}-${탭이름}.png` })
