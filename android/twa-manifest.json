@@ -35,7 +35,7 @@
   "isMetaQuest": false,
   "fullScopeUrl": "https://peachfam0307-glitch.github.io/hankki/",
   "minSdkVersion": 23,
-  "orientation": "portrait",
+  "orientation": "default",
   "shareTarget": {
     "action": "https://peachfam0307-glitch.github.io/hankki/share-target",
     "method": "POST",

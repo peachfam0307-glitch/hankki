@@ -51,7 +51,11 @@ export default defineConfig({
         start_url: './',
         scope: './',
         display: 'standalone',
-        orientation: 'portrait',
+        // 📱📱 **가로모드 잠금을 푼다** (창업자 2026-08-09 *"핸드폰은 오늘 되게 할 수 있어?"*)
+        //   ⛔ 여기 `orientation: 'portrait'` 이 있으면 설치한 PWA 가 세로로 «잠긴다».
+        //   ⭐ 값을 아예 «안 주는 것»이 「잠그지 않는다」다 — 기기 설정(자동 회전)을 그대로 따른다.
+        //   ⚠️ Play 앱(TWA)은 이 파일이 아니라 `android/twa-manifest.json` 이 정한다 — 거기도 같이 풀었다.
+        //      (bubblewrap `update` 는 웹 매니페스트를 다시 안 읽는다 — twa-manifest.json 을 쓴다)
         background_color: '#FDFBF7',
         theme_color: '#6B4F3A',
         icons: [

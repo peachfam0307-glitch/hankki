@@ -294,6 +294,29 @@ console.log('\n🪤 반복 실수 게이트')
   }
 }
 
+// ═══ ⑩ 가로모드 잠금이 «되살아났나» ════════════════════════
+//   📱 2026-08-09 — 창업자 폰이 안 돌아가던 이유가 **세로 잠금 두 곳**이었다.
+//      ⒜ `vite.config.js` 웹 매니페스트 `orientation: 'portrait'` — 설치한 PWA 를 잠근다
+//      ⒝ `android/twa-manifest.json` 의 `"orientation"` — Play 앱(TWA)을 잠근다
+//   ⛔ **둘은 다른 파일이고 한쪽만 고치면 반쪽만 풀린다.** 게다가 twa-manifest 는 JSON 이라
+//      «주석을 못 단다» — 왜 그 값인지 파일 안에 남길 방법이 없다. 그래서 여기서 지킨다.
+//   ⭐ 값은 `default`(＝기기 설정을 따른다). `any` 는 안 쓴다 —
+//      쓰지 않은 이유 = 그 값이 「사용자의 회전 잠금까지 무시」하는지 확인하지 못했다.
+//   ✅ 규칙 12 — **옛 값(`portrait`)으로 되돌려 돌려 봤다. 두 줄 다 ⛔ 로 잡혔다**(2026-08-09).
+{
+  console.log('\n📱 가로모드 잠금')
+  const 웹 = readFileSync(join(ROOT, 'vite.config.js'), 'utf8')
+    .split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n')
+  if (/orientation:\s*['"]portrait/.test(웹)) no("vite.config.js — 웹 매니페스트가 다시 세로로 잠겼다(orientation: 'portrait')")
+  else ok('웹 매니페스트 — 세로 잠금 없음')
+  let twa = null
+  try { twa = JSON.parse(readFileSync(join(REPO, 'android/twa-manifest.json'), 'utf8')) } catch { /* 없으면 넘어간다 */ }
+  if (!twa) ok('android/twa-manifest.json 을 못 읽었다 — 건너뜀')
+  else if (String(twa.orientation || '').startsWith('portrait')) no(`android/twa-manifest.json — Play 앱이 다시 세로로 잠겼다("${twa.orientation}")`)
+  else ok(`Play 앱(TWA) — "${twa.orientation}"`)
+}
+
 console.log(bad ? `\n⛔⛔ ${bad}건 — 고치고 다시 돌릴 것\n` : '\n✅ 반복 실수 게이트 통과\n')
 console.log('   📖 기계가 «못 잡는» 것들 = docs/실수-패턴-2026-08-07.md\n')
 process.exit(bad ? 1 : 0)
+
