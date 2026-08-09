@@ -44,12 +44,12 @@ const 재기 = () => {
   // ⛔⛔ **첫 판이 「가로로 미는 줄」의 칩까지 잡았다**(레시피 카테고리·장보기 칩).
   //    거긴 밖에 있는 게 «정상»이다 — 옆으로 밀면 나온다. 진짜 문제는 «밀 수 있다는 표시»가 없던 것이고
   //    그건 아래 「가로 막대」로 따로 본다. 📌 규칙 18 — 잘못 재고 ⛔ 를 찍는 칸은 없느니만 못하다.
-  const 밖 = [...document.querySelectorAll('button, a')].filter((x) => {
+  const 이름 = (x) => (x.getAttribute('aria-label') || x.textContent || '').trim().slice(0, 14)
+  const 밖전부 = [...document.querySelectorAll('button, a')].filter((x) => {
     const r = x.getBoundingClientRect()
-    if (!(r.width > 2 && r.height > 2)) return false
-    if (!(r.right > innerWidth + 1 || r.left < -1)) return false
-    return !미는줄안(x)
-  }).map((x) => (x.getAttribute('aria-label') || x.textContent || '').trim().slice(0, 14)).filter(Boolean)
+    return r.width > 2 && r.height > 2 && (r.right > innerWidth + 1 || r.left < -1)
+  })
+  const 밖 = 밖전부.filter((x) => !미는줄안(x)).map(이름).filter(Boolean)
   // ➡️ 가로로 넘치는 줄이 몇 개고, 막대가 몇 개 그려졌나
   const 넘치는가로 = [...(판 || document.querySelector('.app-frame') || document.body).querySelectorAll('div, ul, nav')]
     .filter((el) => el.scrollWidth > el.clientWidth + 8 && /auto|scroll/.test(getComputedStyle(el).overflowX))
@@ -61,6 +61,10 @@ const 재기 = () => {
     열: g ? getComputedStyle(g).gridTemplateColumns.split(' ').filter(Boolean).length : 0,
     옆으로나감: 밖,
     넘치는가로,
+    // ⭐⭐ **이게 진짜 잣대다** — 「미는 줄인지」를 두 곳에서 따로 판단하면 그 사이에 구멍이 생긴다
+    //    (`미는줄안` 은 조상을 «전부» 보고, 막대는 `div·ul·nav` 만 본다 → 조상이 딴 태그면 표시 없이 통과).
+    //    → **밖에 나간 게 있으면 «무조건» 막대가 있어야 한다.** 무엇이 미는 줄인지 안 물어본다.
+    밖에나간것: 밖전부.length,
     가로막대: document.querySelectorAll('[data-hhint], [data-hthumb]').length,
     글자: (맨위 ? 맨위.innerText : '').slice(0, 34).replace(/\n/g, ' | '),
   }
@@ -99,7 +103,7 @@ for (const [판, w, h, 큰판] of [
     봄(r.가로넘침 === 0, `${이름} — 화면이 옆으로 안 밀린다 (${r.가로넘침}px)`)
     봄(r.옆으로나감.length === 0, `${이름} — 화면 밖으로 나간 단추 없음 ${r.옆으로나감.length ? JSON.stringify(r.옆으로나감) : ''}`)
     if (r.세로넘침 > 8) 봄(r.막대 > 0, `${이름} — 세로로 굴러가는데(${r.세로넘침}px) 막대가 보인다`)
-    if (r.넘치는가로 > 0) 봄(r.가로막대 > 0, `${이름} — 옆으로 미는 줄 ${r.넘치는가로}개에 막대가 보인다 (${r.가로막대}개)`)
+    if (r.밖에나간것 > 0) 봄(r.가로막대 > 0, `${이름} — 화면 밖에 ${r.밖에나간것}개가 있는데 막대가 보인다 (${r.가로막대}개)`)
     if (큰판 && r.열 > 0) 봄(r.열 >= 3, `${이름} — 격자가 한 줄에 ${r.열}칸 (3 이상이라야)`)
   }
 
