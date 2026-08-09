@@ -611,6 +611,18 @@ img {
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
+/* 📐📐 **넓은 화면에선 칸이 늘어난다** (창업자 패드 캡처 2026-08-09 밤
+   📮 *"홈화면,레시피,레꾸자랑 다 딱 2개만 뜸. 이미지가 너무 커서 아래가 안보인다.
+      (2*3)6장이 한번에 보이고 스크롤 되면 좋겠음"*)
+   ⛔ 뿌리 = `1fr 1fr` 이 **개수를 못 박아서** 화면이 넓어지면 칸만 커진다.
+      패드 1600px 이면 카드 하나가 **780px** — 두 장이 화면을 통째로 먹는다.
+      📌 v10.12 에 꾸미기 서랍에서 겪은 것과 «같은» 실수다(`repeat(5, 1fr)` → 영영 5칸).
+   ⭐ 칸 «크기»를 정하고 개수는 폭이 정하게 둔다 → 폴드 765px **3열** · 패드 1600px **6열**.
+   ⛔ 폰은 안 건드린다 — 700px 아래는 그대로 2열이다(창업자가 이미 OK 한 화면).
+   ⚠️ 이 블록은 위 `.grid2` 기본 «뒤»에 온다(게이트 ⑪). 앞에 두면 통째로 안 먹는다. */
+@media (min-width: 700px) {
+  .grid2 { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+}
 /* 모아보기 '그리드(작게)' — 3열 촘촘하게 */
 .grid3 {
   display: grid;
@@ -769,13 +781,34 @@ img {
       앞에 두면 아이콘이 영영 24px 이다 — 2026-08-09 에 실제로 그랬고 재현판이 잡았다(24px).
       📌 v10.12 에 하루 여섯 번 밟은 것과 «같은» 실수다. 이제 `check-mistakes.mjs` ⑪ 가 막는다. */
 @media (min-width: 600px) {
-  .cal-day { aspect-ratio: auto; min-height: 58px; max-height: 76px; font-size: 13.5px; }
-  .cal-food { width: 34px; height: 34px; }
-  .cal-food img { width: 34px; height: 34px; }
+  /* 📐📐 **달력에 폭 상한을 준다** (창업자 패드 캡처 2026-08-09 밤
+     📮 *"달력 사이에 선 안보임, 숫자, 글자, 아이콘 너무 작음"* · *"폴드도 달력아이콘글자가 너무 작음"*)
+     ⛔ 뿌리 = 가로에선 `.app-frame { max-width: none }`(창업자 확정 「안 D」)이라 달력이 화면 폭을 다 쓴다.
+        패드 1600px 이면 한 칸이 **220×58** 인 «가로로 아주 긴 납작한 네모»가 되고,
+        그 한가운데 12px 숫자가 점처럼 떠서 **날짜도 아이콘도 안 보인다.**
+     ⭐ 종이·표지에 이미 쓴 처방과 «같은 것»이다 — 폭이 넓다고 좋아지지 않는 것엔 상한을 준다.
+        7칸 격자에 760px 이면 한 칸 ~104px 이라 거의 정사각이 되고 숫자·아이콘이 제 크기를 찾는다.
+     ⛔ 「꽉 채우기」와 안 부딪힌다 — 글·목록은 그대로 꽉 쓰고 **달력만** 가운데로 모은다. */
+  .cal-card { max-width: 760px; margin-left: auto; margin-right: auto; }
+  .cal-day { aspect-ratio: auto; min-height: 74px; max-height: 92px; font-size: 15px; }
+  .cal-num { font-size: 14px; }
+  .cal-week { font-size: 12.5px; }
+  .cal-food { width: 42px; height: 42px; }
+  .cal-food img { width: 42px; height: 42px; }
+  /* ➖ **칸 사이 선** — 창업자 *"달력 사이에 선 안보임"*. 칸이 커질수록 「어디까지가 하루인지」가 흐려진다.
+     ⚠️ `.cal-day.today`·`.cal-day.on` 이 아래에서 자기 box-shadow·배경으로 덮는다(뒤엣것이 이긴다) — 그대로 둔다. */
+  .cal-day { box-shadow: inset 0 0 0 1px var(--line); }
+  .cal-more { min-width: 17px; height: 16px; font-size: 10px; line-height: 16px; }
+  .cal-diary { width: 17px; height: 17px; }
 }
-/* 📐 눕힌 폰은 높이가 낮아 더 줄인다 — 6줄 × 76 이면 456px 이라 411px 화면을 넘는다 */
+/* 📐 눕힌 폰은 높이가 낮아 더 줄인다 — 6줄 × 92 이면 552px 이라 411px 화면을 훌쩍 넘는다.
+   ⛔ **칸 높이만 낮추면 이번엔 «가로로 길어진다»** — 760px 폭에 44px 높이면 103×44(폭÷높이 2.34)라
+      숫자가 다시 점처럼 보인다(재현판이 잡았다). **폭도 같이 줄여야 모양이 산다** → 480px 에서 68×44(1.55).
+   📌 「높이만 고치고 폭을 안 본 것」 = 한쪽만 고쳐 반쪽이 된 자리다. 칸은 «두 축»이 같이 정한다. */
 @media (min-width: 600px) and (max-height: 520px) {
-  .cal-day { min-height: 44px; max-height: 50px; }
+  .cal-card { max-width: 480px; }
+  .cal-day { min-height: 44px; max-height: 50px; font-size: 13px; }
+  .cal-num { font-size: 13px; }
   .cal-food { width: 26px; height: 26px; }
   .cal-food img { width: 26px; height: 26px; }
 }
@@ -2064,7 +2097,14 @@ html, body { overscroll-behavior: none; }
      ✅ 그래서 «글은 그대로 꽉» 두고 **종이·표지만 화면 «높이»에 맞춘다.** 다른 탭은 안 건드린다.
      📐 종이는 3:4 라 0.72(→높이 0.96 화면) · 표지는 1:1 이라 0.85. */
   .paper-box { max-width: calc(var(--app-height, 100dvh) * 0.72); margin-left: auto; margin-right: auto; }
-  .cover-box { max-width: calc(var(--app-height, 100dvh) * 0.85); margin-left: auto; margin-right: auto; }
+  /* 🍲🍲 **표지가 화면을 통째로 먹어 재료·만드는 법이 안 보이던 것** (창업자 패드 캡처 2026-08-09 밤
+     📮 *"레시피누르면(예를들어 된장찌개) 아이콘이미지랑 아래 요리시작만 보이고 재료 만드는법 등이 다 안보임"*)
+     ⛔ 0.85 는 «화면 밖으로 안 나가게» 하려던 값이라 **여전히 화면의 85%** 였다.
+        패드 높이 1000px 이면 표지가 850px — 첫 화면에 표지 하나만 남는다.
+     ⭐ 눕힌 화면에서 표지는 «간판»이지 본문이 아니다. 본문(재료·만드는 법)이 같이 보여야 레시피다.
+        🔢 0.42 ＋ 340px 상한 — 패드 1000px → **340px**(아래 660px 에 재료가 보인다) · 폰 가로 411px → **173px**.
+     ⛔ 폰 «세로»는 안 건드린다 — 이 블록은 가로 미디어쿼리 안이다(창업자가 OK 한 화면). */
+  .cover-box { max-width: min(calc(var(--app-height, 100dvh) * 0.42), 340px); margin-left: auto; margin-right: auto; }
   /* ⛔⛔ **꾸미기 판 «안»의 종이엔 걸면 안 된다** — 같은 `PaperBox` 를 꾸미기에서도 쓴다.
      🔢 안 빼면: 자판 뜬 가로(891×160)에서 화면 높이 160 × 0.72 = **115px** 이 상한이 되어
         애써 걸어둔 바닥값 230 을 눌러 **종이가 절반으로 쪼그라든다**(실측 230×307 → 115×154).
