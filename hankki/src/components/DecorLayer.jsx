@@ -22,7 +22,17 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 //   ⭐ 방법 = **투명 textarea 를 글자 자리에 «겹친다».** contentEditable 이 아니다 —
 //      React 가 값을 내려보내도 **커서가 안 튄다.** v9.93 「어디서든 글씨 수정」이 쓰는 것과 같은 문법.
 //   ⚠️ 글꼴·크기·정렬·여백을 글자와 «똑같이» 줘야 치는 중과 친 뒤의 자리가 안 튄다.
-export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote, onEmptyTap, onTapItem, typingId, onText }) {
+//   ⛔⛔⛔ **그 투명 textarea 가 «스티커를 못 끌게» 막고 있었다** (창업자 2026-08-09
+//      📮 *"스티커 붙이고 바로 움직이면 안움직여짐. 자판바를 없애고 움직여야 움직여짐."* — 정확한 제보였다)
+//      뿌리 = 세 곳(`TextDeco`·`Note`·`ArtBox`)의 textarea 가 전부 `onPointerDown` 에서 `stopPropagation()` 했다.
+//      textarea 는 아이템을 통째로 덮고(`inset: 0`) 있어서, 붙이자마자 커서가 들어간 «그 상태»에선
+//      손가락이 아이템의 `onItemDown` 에 **한 번도 안 닿았다.** 자판을 내려야(＝textarea 가 사라져야) 끌렸다.
+//   ✅ 그 `stopPropagation` 을 뺐다 — 이제 pointerdown 이 textarea 를 지나 아이템까지 «올라간다».
+//      · textarea 는 제 일(커서 자리 잡기)을 그대로 하고
+//      · 아이템은 끌기 준비를 한다 → 움직이면 이동, 안 움직이면 커서 그대로.
+//   ⛔ `.decor-stage` 까지는 안 올라간다 — 아이템의 `onItemDown` 이 거기서 `stopPropagation()` 한다.
+//      (안 그러면 「빈 데 눌렀다」로 읽혀 커서가 바로 풀린다 — 그건 그대로 살아 있다.)
+export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote, onEmptyTap, onTapItem, typingId, onText, pinching = false }) {
   const boxRef = useRef(null)
   // 커버 실제 폭(px) — 글자 상자를 글자에 딱 맞추면서(max-content) 글자 크기는 '커버 폭 기준'으로 px 계산하려고.
   const [coverW, setCoverW] = useState(0)
@@ -84,6 +94,8 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
   const onItemMove = (e) => {
     const d = dragRef.current
     if (!d) return
+    // 🤏 두 손가락으로 벌리는 중이면 «끌기를 그만둔다» — 확대하려던 손에 스티커가 딸려 가면 안 된다.
+    if (pinching) { dragRef.current = null; return }
     if (Math.abs(e.clientX - d.px) > 8 || Math.abs(e.clientY - d.py) > 8) d.moved = true
     const nx = clamp(d.x0 + (e.clientX - d.px) / d.rect.width, 0.02, 0.98)
     const ny = clamp(d.y0 + (e.clientY - d.py) / d.rect.height, 0.02, 0.98)
@@ -431,7 +443,6 @@ function TextDeco({ it, editable, coverW = 0, typing, onText }) {
           data-boxtext="1"
           value={it.text || ''}
           onChange={(e) => onText?.(it.id, e.target.value)}
-          onPointerDown={(e) => e.stopPropagation()}
           style={{
             position: 'absolute', inset: 0, visibility: 'visible',
             resize: 'none', border: 'none', outline: 'none', background: 'transparent',
@@ -518,7 +529,6 @@ function Note({ it, editable, typing, onText }) {
           data-boxtext="1"
           value={text}
           onChange={(e) => onText?.(it.id, e.target.value)}
-          onPointerDown={(e) => e.stopPropagation()}
           style={{
             position: 'absolute', inset: 0, boxSizing: 'border-box', padding: textPad,
             resize: 'none', border: 'none', outline: 'none', background: 'transparent',
@@ -629,7 +639,6 @@ function ArtBox({ it, editable, typing, onText }) {
           data-boxtext="1"
           value={text}
           onChange={(e) => onText?.(it.id, e.target.value)}
-          onPointerDown={(e) => e.stopPropagation()}
           style={{
             ...inner, resize: 'none', border: 'none', outline: 'none', background: 'transparent',
             padding: 0, margin: 0, overflow: 'hidden', caretColor: ink, WebkitAppearance: 'none',

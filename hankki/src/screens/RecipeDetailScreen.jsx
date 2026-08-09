@@ -279,7 +279,10 @@ export default function RecipeDetailScreen({ id }) {
       </div>
 
       {/* 히어로 이미지(표지) — 꾸미기 스티커·포스트잇이 이 위에 얹힌다. ref로 통째 캡처(자랑 공유) */}
-      <div ref={coverRef} style={{ position: 'relative' }}>
+      {/* 🖼 `cover-box` = 가로에서 표지 폭을 화면 «높이»에 맞추는 손잡이 (창업자 2026-08-09
+          *"꾸미다가 취소하면 화면이 엄청커짐"* — 눕히면 앱이 폭을 다 써서 1:1 표지가 851×851 이 됐다).
+          ⛔ 세로에선 아무 일도 안 한다 · 캡처(자랑 공유)는 이 `ref` 안만 찍으므로 그대로다. */}
+      <div ref={coverRef} className="cover-box" style={{ position: 'relative' }}>
         <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
         <DecorLayer items={r.decor || []} />
       </div>

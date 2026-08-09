@@ -412,7 +412,10 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
  */
 export function PaperBox({ skin, ratio = '3/4', children, style, className = '', ...rest }) {
   return (
-    <div style={{ containerType: 'inline-size', width: '100%' }}>
+    // 🖼 `paper-box` = **가로에서 종이 폭을 화면 «높이»에 맞추는 손잡이** (창업자 2026-08-09
+    //    *"꾸미다가 취소하면 화면이 엄청커짐"* — 눕히면 앱이 폭을 다 쓰는데 3:4 종이는 폭이 곧 높이라
+    //    851×1135 가 되어 화면 밖으로 나갔다). 세로에선 아무 일도 안 한다.
+    <div className="paper-box" style={{ containerType: 'inline-size', width: '100%' }}>
       <div
         className={`${skin.className} ${className}`.trim()}
         style={{

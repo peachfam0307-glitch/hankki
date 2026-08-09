@@ -252,9 +252,43 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //      우리도 「어느 탭인가」가 아니라 **「지금 글을 치고 있나」**로 띄운다.
   //   ⚠️ 칩을 누르면 글칸이 포커스를 잃어 줄이 사라진다 → 칩에서 `onPointerDown` 을 막아 포커스를 지킨다.
   const [typing, setTyping] = useState(false)
-  // 🔍 종이 확대 배율 — 가로에서만 쓴다(세로는 종이가 이미 화면 폭을 다 쓴다).
+  // 🔍 종이 확대 배율 — ⭐**세로·가로 둘 다** 쓴다(2026-08-09 창업자 *"손가락으로 확대해서 쓸 수 있는 것"*).
   //    ⛔ 저장 안 한다 — 「이번에 꾸미는 동안」만. 다음에 열었을 때 확대된 채로 뜨면 놀란다.
+  const ZOOM_MIN = 1, ZOOM_MAX = 2.6
   const [zoom, setZoom] = useState(1)
+  const 배율 = (v) => setZoom(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(v * 20) / 20)))
+  // 🤏🤏 **두 손가락으로 벌려서 확대** (창업자 2026-08-09
+  //    📮 *"내가 원한건 자판으로 글쓰다 안보이면 **손가락으로 확대해서** 쓸 수 있는 것이었음"*)
+  //    ⭐ ＋ 단추는 «자판을 가리는 위바»까지 손이 올라가야 한다. 글을 치는 손은 화면 가운데 있다 —
+  //       거기서 바로 벌리면 된다. 그게 사진 앱·지도에서 몸에 밴 동작이다.
+  //    ⛔ 손가락이 «둘일 때만» 동작한다 — 하나면 스티커 끌기·글칸 누르기 그대로다.
+  //    ⛔ 벌리는 동안엔 스티커 끌기를 멈춘다(`pinching`) — 안 그러면 첫 손가락에 스티커가 딸려 간다.
+  const pinchRef = useRef(null)
+  const ptsRef = useRef(new Map())
+  const [pinching, setPinching] = useState(false)
+  const 두점거리 = () => {
+    const p = [...ptsRef.current.values()]
+    return Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y)
+  }
+  const pinchDown = (e) => {
+    ptsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (ptsRef.current.size === 2) {
+      pinchRef.current = { d0: 두점거리() || 1, z0: zoom }
+      setPinching(true)
+    }
+  }
+  const pinchMove = (e) => {
+    if (!ptsRef.current.has(e.pointerId)) return
+    ptsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    const p = pinchRef.current
+    if (!p || ptsRef.current.size < 2) return
+    e.preventDefault?.()
+    배율(p.z0 * (두점거리() / p.d0))
+  }
+  const pinchUp = (e) => {
+    ptsRef.current.delete(e.pointerId)
+    if (ptsRef.current.size < 2 && pinchRef.current) { pinchRef.current = null; setPinching(false) }
+  }
   // 🐛🐛 **이 줄은 «속지 본문»의 글씨체·크기다 — 글자 «스티커»를 칠 땐 뜨면 안 된다.** (2026-08-07 전수검사에서 잡음)
   //   ⛔ `typing` 은 `.decor-stage` 안 아무 `textarea` 에나 켜져서, 글 상자·포스트잇을 칠 때도 같이 떴다.
   //      그러면 ⑴도구 바엔 «그 스티커»의 「글씨」 갈래가, 서랍엔 «종이 본문»의 글씨 줄이 **둘 다** 뜨고
@@ -791,12 +825,18 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ⛔ 세로에선 안 보인다 — 세로는 종이가 이미 화면 폭을 다 쓴다(CSS 가 감춘다). */}
           {/* 🚪 나가는 길은 «단추»가 아니라 «저절로» — 창업자가 두 번 말했다 *"왜 저기떠있는지 모르겠다"*
               → 「다 썼어요」 단추를 없앴다. 자판이 내려가면 위 `useEffect` 가 커서를 내려놓는다. */}
+          {/* ⌨️ `onPointerDown` 을 막는다 — ⛔안 막으면 **＋ 를 누르는 순간 글칸이 포커스를 잃는다.**
+              🔢 실측(고치기 전) 커서 `TEXTAREA` → ＋ 누르면 `BUTTON` · 종이가 «오히려 작아졌다»
+                 (커서가 풀리며 자판용 바닥값이 사라져서). 글씨를 쓰다 확대하는 게 이 단추의 «본래 일»인데
+                 누르면 글쓰기가 끝나 버렸다. 글씨체 칩에서 이미 쓰던 문법이다. */}
           <div className="decor-zoom">
-            <button className="press" aria-label="종이 작게" disabled={zoom <= 1}
-              onClick={() => setZoom((z) => Math.max(1, Math.round((z - 0.4) * 10) / 10))}>－</button>
+            <button className="press" aria-label="종이 작게" disabled={zoom <= ZOOM_MIN}
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={() => 배율(zoom - 0.4)}>－</button>
             <span aria-live="polite">{Math.round(zoom * 100)}%</span>
-            <button className="press" aria-label="종이 크게" disabled={zoom >= 2.6}
-              onClick={() => setZoom((z) => Math.min(2.6, Math.round((z + 0.4) * 10) / 10))}>＋</button>
+            <button className="press" aria-label="종이 크게" disabled={zoom >= ZOOM_MAX}
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={() => 배율(zoom + 0.4)}>＋</button>
           </div>
           {/* 💾 **글자가 아니라 «누를 것»으로 보이게** (창업자 2026-08-06
               *"어떻게 꾸미기 탭을 닫아야 글씨를 쓸 수 있는지 모르겠어"*).
@@ -832,10 +872,22 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                아무도 안 듣고 X·손잡이가 그대로 떠 있었다. 재현 = 종이 안 0 / 바깥 **1**.
             ⭐ 스티커·손잡이·X·연필은 넷 다 `stopPropagation` 을 하므로 여기까지 안 올라온다
                → 여기서 받은 것은 «빈 데를 누른 것»이 확실하다. */}
-        <div className={`decor-stage${writing ? ' writing' : ''}${typing ? ' typing' : ''}`} style={{ '--zoom': zoom }} onPointerDown={() => { setSel(null); setTypingId(null) }}
+        <div className={`decor-stage${writing ? ' writing' : ''}${typing ? ' typing' : ''}${zoom > 1 ? ' zoomed' : ''}`} style={{ '--zoom': zoom }}
+          onPointerDown={(e) => { pinchDown(e); setSel(null); setTypingId(null) }}
+          onPointerMove={pinchMove} onPointerUp={pinchUp} onPointerCancel={pinchUp}
           // ⌨️ 종이의 글칸에 커서가 가면 「글씨·크기」 줄을 띄운다(어느 탭이든).
           //    `…Capture` 로 받는 이유 = focus/blur 는 «올라오지 않는»(bubble 안 하는) 이벤트다.
-          onFocusCapture={(e) => { if (e.target.tagName === 'TEXTAREA') setTyping(true) }}
+          onFocusCapture={(e) => {
+            if (e.target.tagName !== 'TEXTAREA') return
+            setTyping(true)
+            // 👁 **커서가 들어간 칸이 «보이게» 굴려 준다** (창업자 2026-08-09
+            //    *"속지 선택하고 바로 글쓰면 젤 위칸에 글쓰는데 안보임(자판은 눌러짐)"*)
+            //    🔢 실측(가로 891×411 · 자판) — 첫 글칸 128~211 인데 보이는 칸은 0~160 = **아래 51px 이 잘렸다.**
+            //    ⛔ 브라우저가 알아서 해줄 거라 여겼는데 «판이 줄어드는»(resizes-content) 방식이라 안 해준다.
+            //    ⚠️ 자판이 올라오며 판이 줄어드는 데 시간이 걸린다 → 다음 프레임 두 번 뒤에 잰다.
+            const t = e.target
+            setTimeout(() => { try { t.scrollIntoView({ block: 'center', inline: 'nearest' }) } catch { /* 옛 브라우저 */ } }, 350)
+          }}
           onBlurCapture={(e) => { if (e.target.tagName === 'TEXTAREA') setTyping(false) }}>
           {(() => {
             const layer = (
@@ -863,6 +915,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 onSelect={select}
                 onChange={patch}
                 onRemove={remove}
+                // 🤏 두 손가락으로 벌리는 «동안»엔 스티커를 끌지 않는다 — 첫 손가락이 스티커 위에 있으면
+                //    확대하려다 스티커가 딸려 움직인다.
+                pinching={pinching}
                 // ⌨️ 이미 붙은 것을 다시 탭 = «그 자리에서» 이어 쓴다. 글자 스티커만 시트로(상자가 없다).
                 onEditNote={(it) => setTypingId(it.id)}
                 typingId={typingId}
@@ -916,7 +971,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 //   ✅ 고른 순간에 크기가 «안 바뀐다» — 도구 바가 꾸미기 모드면 늘 떠 있기 때문이다.
                 //   ⛔⛔ 여기에 `{/* */}` 를 쓰면 빌드가 죽는다 — `return (` 바로 뒤라 JSX 가 아직 안 열렸다.
                 //      **바로 위에 이 경고가 적혀 있는데 2026-08-07 에 또 밟았다(여섯 번째).**
-                <div style={{ width: writing ? 'min(100%, 420px)' : 'min(100%, 31vh)', margin: '0 auto' }}>
+                // 🔍 세로에서도 확대가 먹게 «폭에 배율을 곱한다». 배율 1 이면 값이 그대로라 지금과 똑같다.
+                //    ⛔ 가로는 이 줄을 안 쓴다 — CSS 가 `width: 100% !important` 로 덮고 `max-width` 에 배율을 건다.
+                // 📐 종이 높이 몫을 CSS 변수로 뺀다 — **작은 폰에서만** 조금 줄이려고(styles.css 의 max-height 700 블록).
+                //    ⛔ 값을 여기 숫자로 박으면 화면 크기에 따라 못 바꾼다.
+                <div style={{ width: writing ? 'calc(min(100%, 420px) * var(--zoom, 1))' : 'calc(min(100%, var(--paper-vh, 31vh)) * var(--zoom, 1))', margin: '0 auto' }}>
                   <PaperBox skin={paper} ratio={ratio} style={{ borderRadius: 18 }}>
                     {/* ⚠️ 사진이 «먼저» — 그래야 스티커를 사진 위에 붙일 수 있다(글자는 zIndex 1)
                         ✍️ 글쓰기 땐 «쓸 수 있는 판»으로 갈아끼운다 — 자리는 똑같고 손이 닿을 뿐이다 */}
