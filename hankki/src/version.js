@@ -23,4 +23,4 @@ export const LAB_BUG_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSf8bMGM8JlY
 // 오류 폼 주소에 `__VER__` 를 넣어두면 앱 버전으로 바뀐 채 열린다.
 // (구글 폼 → 오른쪽 위 ⋮ → '미리 채워진 링크 가져오기' 로 만든 주소의 버전 칸에 `__VER__` 를 써두면 된다)
 
-// 시험용 표식 — 이게 담겼는지 본다 (0809 재현)
+// 재시험 표식 0809-B
