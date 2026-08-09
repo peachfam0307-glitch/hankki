@@ -205,7 +205,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const origThumb = savedThumb !== 'none' ? savedThumb : (recipe.image ? 'photo' : 'icon')
   const [thumb, setThumb] = useState(draft?.thumb ?? savedThumb) // 'none'이면 표지 그림 비움 → 깨끗한 배경에 꾸미기
   const [exitAsk, setExitAsk] = useState(false) // 취소 시 "저장 안 함?" 확인
-  const restoredRef = useRef(!!draft) // 초안에서 복구했는지(안내 토스트용)
+  // ⛔⛔ **이 안내 띠가 «가로에서 판을 통째로 밀어내고 있었다»** (창업자 폰 제보 2026-08-09 밤
+  //    📮 *"오늘의한끼누르면 쪼그라들어"* — 캡처 둘 다 이 띠가 격자 «밖»으로 튀어나와 있었다)
+  //    가로에선 `.decor-editor` 가 **격자(grid)** 인데 이 띠엔 `grid-area` 가 없다 →
+  //    브라우저가 **암묵 행을 새로 만들어** 종이 칸을 위로 밀고, 자판까지 뜨면 종이가 통째로 쪼그라든다.
+  //    ⭐ 고치는 법 둘을 같이 쓴다 — ⑴가로에선 «띄운다»(CSS `position: fixed`, 격자를 안 건드림)
+  //       ⑵**6초 뒤 저절로 사라진다.** 한 번 알려주면 되는 말인데 꾸미는 내내 자리를 먹고 있었다.
+  //    ⛔ `useRef` 로는 사라지게 못 한다(리렌더를 안 부른다) → `useState`.
+  const [restored, setRestored] = useState(!!draft) // 초안에서 복구했는지(안내 띠)
+  useEffect(() => {
+    if (!restored) return
+    const t = setTimeout(() => setRestored(false), 6000)
+    return () => clearTimeout(t)
+  }, [restored])
   // 📔 여기가 다이어리인가 = `paper` 를 받았나. 아래 「어느 판에서 보이나」를 가르는 기준.
   //   ⭐ 새 값을 안 만든다 — 판을 종이로 바꾸는 그 인자가 곧 「다이어리다」라는 뜻이다.
   const isDiary = !!paper
@@ -859,8 +871,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               style={{ background: 'var(--brown)', color: '#fff', fontSize: 14, fontWeight: 800, minHeight: 44, padding: '0 18px', borderRadius: 999, border: 'none' }}>저장</button>
           </div>
         </div>
-        {restoredRef.current && (
-          <div style={{ flex: '0 0 auto', background: '#eef3e8', color: '#4f5a44', fontSize: 12.5, fontWeight: 700, textAlign: 'center', padding: '6px 10px' }}>
+        {restored && (
+          <div className="decor-restored" style={{ flex: '0 0 auto', background: '#eef3e8', color: '#4f5a44', fontSize: 12.5, fontWeight: 700, textAlign: 'center', padding: '6px 10px' }}>
             저장 안 하고 나갔던 꾸미기를 이어서 불러왔어요
           </div>
         )}

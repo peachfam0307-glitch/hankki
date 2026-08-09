@@ -1596,6 +1596,19 @@ html, body { overscroll-behavior: none; }
    ⛔ 굴러가려면 칸이 «높이를 스스로 정하면» 안 된다 — `flex: 0 0 auto` 면 종이가 커진 만큼
       서랍을 밀어낸다. 그래서 확대 중일 때만(`.zoomed`) 칸이 남는 자리를 쓰고 안쪽이 굴러가게 한다. */
 .decor-stage.zoomed { flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+/* ⌨️⌨️ **판이 낮을 땐(＝자판이 떠 있을 땐) 종이에 바닥값을 건다 — 커서가 있든 없든.**
+   ⛔ 전엔 `.decor-stage.typing` 에만 걸어서, **자판이 뜬 채로 탭을 옮기면**(`dropCaret` 이 커서를 내려놓는다)
+      바닥값이 사라지는데 자판은 안 내려가 판이 낮은 채였다 → 종이가 통째로 쪼그라들었다.
+      🔢 세로 실측 — 종이 230 → **119px** · 판이 60px 뿐일 땐 **26px**. 가로에선 창업자가 이걸 그대로 겪었다.
+   ⭐ 430px 을 경계로 삼는다 — 폰 세로(640~890)·작은 폰(640)은 «안» 걸리고,
+      자판이 뜬 판(60~410)과 폰 가로(360~411)만 걸린다. 평소 화면은 하나도 안 건드린다.
+   ⛔ 종이가 칸을 넘치므로 칸이 굴러가야 하고, 서랍도 살아 있어야 한다 —
+      v10.15 에 바닥값을 크게 줬다가 **서랍이 0px** 이 된 적이 있다. 그래서 셋을 «같이» 준다. */
+@media (max-height: 430px) {
+  .decor-stage { flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+  .decor-stage > div:not(.t-sub) { min-width: calc(min(78%, 230px) * var(--zoom, 1)); }
+  .decor-drawer { min-height: 96px; }
+}
 /* ✍️ 글쓰기 모드 — 종이가 커지고 «스크롤이 된다».
    ⚠️ 폰에서 자판이 올라오면 화면 아래 절반이 덮인다. 판이 고정이면 메모칸이 자판 뒤로 숨는다
       → 스크롤을 열어 «올려서» 쓸 수 있게. (에디터가 position:fixed 라 페이지 스크롤이 없다) */
@@ -1817,7 +1830,15 @@ html, body { overscroll-behavior: none; }
   /* ⛔ 서랍을 넓혔는데 스티커가 더 많이 보이지 «않았다» — 칸이 `repeat(5, 1fr)` 로 못 박혀 있어서
      넓어진 만큼 **칸만 커졌다**(66 → 77px). 📌 「넓혔다」와 「많이 보인다」는 다른 말이다.
      ⭐ 가로에선 칸 «크기»를 정하고 개수는 폭이 정하게 한다 → 폰 6칸 · 폴드·패드 7칸. */
-  .decor-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)) !important; }
+  /* 🗄 창업자 폰 실측 제보 2026-08-09 밤 — *"스티커 한줄5칸"*. 60px 이면 좁은 폰에서 5칸이 된다
+     (서랍 폭 396px 기준 (396+8)÷68 = 5.9). **52px 로 낮추면 6칸**이고 칸은 59px 이라 거의 안 작아진다. */
+  .decor-grid { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)) !important; }
+  /* ⛔ 「이어서 불러왔어요」 띠는 격자 «밖»으로 띄운다 — 안 그러면 암묵 행이 생겨 종이 칸을 밀어낸다.
+     종이 칸 아래쪽에만 걸치고, 6초 뒤 저절로 사라진다(DecorEditor). */
+  .decor-restored {
+    position: fixed; left: 0; bottom: 0; width: 50%; z-index: 8;
+    border-radius: 0 12px 0 0; box-shadow: 0 -1px 6px rgba(60, 50, 35, 0.12);
+  }
   /* 📏 도구바 갈래 아이콘 칸도 낮춘다 — 스티커를 «고른 동안»엔 이 바가 서랍에서 95px 을 가져간다.
      ⛔ 세로는 44 그대로(빈 안내 바와 같은 키라야 골랐다 풀 때 화면이 안 튄다). */
   .decor-tools [data-ctxtab] { min-height: 36px !important; }
@@ -1861,6 +1882,17 @@ html, body { overscroll-behavior: none; }
      ⛔ 세로는 안 건드린다 — 세로는 자판이 떠도 종이가 폭 전체라 원래 크다. */
   .decor-stage.writing > div:not(.t-sub) { max-width: calc(max((100cqh - 20px), 293px) * var(--zoom, 1)); }
   .decor-stage.writing > div:has(.paper) { max-width: calc(max((100cqh - 20px) * 0.75, 220px) * var(--zoom, 1)); }
+
+  /* ⛔⛔⛔ **바닥값을 «글 치는 동안»에만 걸어놨던 것** (창업자 폰 제보 2026-08-09 밤 · 가로
+     📮 *"오늘의한끼누르면 쪼그라들어"* — 캡처의 종이가 **36px** 이었다)
+     🔢 재현으로 길을 찾았다 — 자판이 «뜬 채로» 속지 탭을 누르면
+        탭이 `dropCaret()` 으로 커서를 내려놓아 `typing` 이 꺼진다 → **자판용 바닥값이 사라진다.**
+        그런데 **자판은 안 내려가서 판은 여전히 낮다** → 종이가 칸 높이를 따라 통째로 쪼그라든다.
+        실측 종이 230 → **152px** · 판이 90px 뿐일 땐 **47px**(창업자 캡처와 같은 크기).
+     ⭐ 그래서 바닥값을 «커서가 있든 없든» 가로에선 늘 건다. 종이가 칸보다 커지면 굴려서 본다 —
+        **작아서 안 보이는 것보다 넘쳐서 굴리는 게 낫다.**
+     ⛔ 세로엔 안 건다 — 세로에서 바닥값을 크게 줬다가 **서랍이 0px** 이 된 적이 있다(v10.15). */
+  .decor-stage > div:not(.t-sub) { min-width: calc(min(78%, 230px) * var(--zoom, 1)); }
 
   /* 🔍🔍 **확대 단추를 종이 «왼쪽 아래 여백»으로 내린다** (창업자 2026-08-09 *"확대 버튼이 글자칸을 가림"*)
      🔢 실측(고치기 전) — 단추가 `159,4` 에 102×34 로 떠서 **종이(x 80~367)와 3,468px² 겹쳤다.**
@@ -2059,7 +2091,21 @@ html, body { overscroll-behavior: none; }
       섹션 라벨 14 → 9 · 라벨 밑 8 → 5. 라벨이 여럿이라 이 몇 px 이 모여서 크다. */
 .decor-sec { margin-bottom: 9px; }
 .decor-sec-label { font-size: 12px; font-weight: 700; color: var(--text-sub); margin: 0 2px 5px; letter-spacing: -0.01em; }
-.decor-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+/* 🗄 창업자 폰 실측 2026-08-09 밤 — *"꾸미기탭(가로 세로모드 똑같이 5칸)"*
+   ⛔ `repeat(5, 1fr)` 이라 **화면이 넓어져도 영영 5칸**이었다. 아래 「작은 폰」 규칙은
+      `max-height: 700px` 이라 창업자 폰(세로 ~888)엔 «안 걸린다» — 그래서 세로가 계속 5칸이었다.
+   ⭐ 칸 «크기»를 정하고 개수는 폭이 정하게 둔다 → 411 폰 **6칸**(칸 56.5px) · 패드는 더 많이.
+      가로 서랍도 같은 값이라 이제 가로·세로가 같은 규칙으로 움직인다. */
+.decor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px; }
+/* 🏷🏷 **「제목」이 저장한 뒤에도 남아 보이던 것** (창업자 2026-08-09 밤
+   📮 *"일기저장하면 제목도 보임(제목입력안하면)"* · *"다른속지도 … 저장하면 제목이라고 떠"*)
+   ⛔ 그건 값이 아니라 **빈 칸 안내(placeholder)** 다. 일기 화면은 «쓰는 판»이라 안내가 살아 있어서,
+      제목을 안 쓰면 저장한 뒤에도 종이에 「제목」이라는 회색 글자가 그대로 앉아 있었다.
+      🔢 재현 — 저장하고 나온 일기 화면에서 그 안내가 «보이는» 상태로 잡혔다.
+   ⭐ 그 칸에 «커서가 있을 때만» 보이게 한다. 누르면 「제목」이 뜨니 어디 쓰는지는 그대로 알 수 있다.
+   ⛔ 본문 「여기에 써요」는 안 건드린다 — 줄만 그어진 칸이라 안내가 없으면 어디 쓰는지 모른다.
+      (창업자가 짚은 것도 제목 하나다 — 내가 넓혀 잡지 않는다) */
+.paper input[aria-label="제목"]:not(:focus)::placeholder { color: transparent; }
 .decor-cell {
   width: 100%; aspect-ratio: 1; border-radius: 14px;
   background: var(--cream);
