@@ -1721,35 +1721,6 @@ html, body { overscroll-behavior: none; }
     border-radius: 22px 0 0 22px; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.06);
   }
   .decor-tools { grid-area: tools; }
-  /* 📮📮 *"가로판에서 저 저장버튼위치를 옮기면안돼? 그럼 꾸미기 더 크게쓸수있을것같은데"* (창업자 2026-08-09)
-     ⭐ 맞는 생각이다 — 가로에선 종이 칸(499px)에 종이(210px)만 서 있어 **좌우가 텅 빈다.**
-        위바를 그 빈자리에 «얹으면» 39px 이 통째로 종이·서랍 몫이 된다.
-     ⭐ 위바를 종이 칸 «폭»(56%)만 덮게 둔다 — 서랍의 손잡이·탭 줄을 안 가린다.
-     ⛔ 제목은 가로에서 숨긴다 — 종이 바로 위에 떠서 꾸민 것을 가린다(어느 화면인지는 이미 안다).
-     ⚠️ `pointer-events` 를 껐다 켠다 — 안 그러면 «투명한 띠»가 종이 위쪽 탭을 통째로 먹는다. */
-  .decor-editor {
-    grid-template-rows: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "stage drawer"
-      "tools tools";
-  }
-  .decor-top {
-    position: absolute; top: 0; left: 0; width: 56%; z-index: 6;
-    padding: 4px 10px !important; pointer-events: none;
-  }
-  .decor-top > * { pointer-events: auto; }
-  .decor-title { display: none; }
-  /* ⛔⛔ **세로용 규칙이 «더 세서» 내 가로 규칙을 이기고 있었다** (창업자 캡처 2026-08-09 · 일꾸 글쓰기 탭)
-     `.decor-drawer.writing { max-height: 26vh }`(클래스 둘 = 0,2,0)가
-     내 `.decor-drawer`(0,1,0)를 눌러서, 322px 화면에서 서랍이 **84px** 로 쪼그라들었다.
-     그래서 글씨체 칩 줄이 서랍 밖으로 삐져나와 보였다.
-     📌 **오늘만 두 번째다** — 인라인 style 도, 클래스 둘짜리 규칙도 «우선순위»가 범인이었다.
-     ⭐ 가로에선 글쓰기 모드에도 서랍을 안 줄인다 — 자판이 «옆»이 아니라 아래에서 올라오고,
-        종이는 왼쪽 칸에 따로 서 있어 서랍을 줄일 이유가 없다. */
-  .decor-drawer.writing { max-height: none !important; height: auto !important; }
-  /* 📏 칩 줄의 «음수 여백»(화면 끝까지 흘리려고 준 것)이 가로에선 서랍 밖으로 새어 나온다 —
-     세로는 서랍이 화면 폭 전체라 안 보이지만, 가로는 서랍이 44% 라 종이 위로 튀어나온다. */
-  .decor-drawer .hscroll { margin-left: 0; margin-right: 0; }
 }
 /* 📱📱 **가로에선 앱이 화면을 «꽉» 쓴다** — 창업자 2026-08-09 확정 (안 D)
    📮 *"장보기같은 탭은 폰 눕혔을때 여백이 양쪽이 생기게 될 수 밖에 없나? 양쪽으로 꽉차게는 어려우려나?"*

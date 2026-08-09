@@ -171,7 +171,9 @@ else no(`일꾸 탭에 「글씨·크기」 줄이 ${rowsAfter}개 떠 있다 (�
 await page.locator('.decor-stage').click({ position: { x: 20, y: 20 } }).catch(() => {}); await page.waitForTimeout(300)
 const barH = await page.evaluate(() => {
   const spans = [...document.querySelectorAll('.decor-tools div')]
-  const el = spans.find((d) => d.textContent.trim().startsWith('붙인 걸 탭하면'))
+  // ⛔ 옛 문구를 찾고 있었다 — v10.01 에 창업자가 *"쉬운말로바꿔줘"* 해서 「탭하면」→「누르면」이 됐다.
+  //    ⭐ 낱말이 또 바뀔 수 있으니 «바뀌지 않는 부분»으로 찾는다.
+  const el = spans.find((d) => /붙인 걸 .*꾸며요/.test(d.textContent.trim()))
   return el ? Math.round(el.getBoundingClientRect().height) : -1
 })
 // 📐 목표 = 46 — 40 까지 안 내리는 이유: 갈래 아이콘 줄(손가락 최소 44+여백)과 «같은 키»라야

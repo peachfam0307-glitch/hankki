@@ -740,7 +740,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         {/* 상단 바 */}
         <div className="decor-top">
           <button className="press" onClick={handleCancel} style={{ minHeight: 44, padding: '0 4px', color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
-          <div className="decor-title" style={{ fontSize: 16, fontWeight: 800 }}>{title}</div>
+          <div style={{ fontSize: 16, fontWeight: 800 }}>{title}</div>
           {/* 💾 **글자가 아니라 «누를 것»으로 보이게** (창업자 2026-08-06
               *"어떻게 꾸미기 탭을 닫아야 글씨를 쓸 수 있는지 모르겠어"*).
               ⛔ 파란 글자 하나는 「제목 옆에 적힌 말」로 읽힌다 — 닫는 길이 안 보였다. */}
@@ -896,8 +896,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           {/* ⚠️ `keep-all` — 한국어는 낱말 중간에서 끊으면 「저 / 장」처럼 읽힌다(실물 캡처로 잡음) */}
           <div className="t-sub" style={{ fontSize: 12, textAlign: 'center', marginTop: 10, lineHeight: 1.5, wordBreak: 'keep-all' }}>
             {writing
-              // 🔄 가로에선 서랍이 «오른쪽»에 선다 — 레꾸 안내문과 같은 방식(CSS 가 낱말 하나만 보여준다)
-              ? <>종이에 바로 써요 · 꾸미려면 <span className="only-portrait">아래</span><span className="only-landscape">오른쪽</span> 「일꾸」</>
+              ? '종이에 바로 써요 · 꾸미려면 아래 「일꾸」'
               : selFrame
                 // 🖼 프레임을 고른 순간 «사진을 끼울 수 있다»는 걸 그 자리에서 말한다.
                 //    ⛔ 「내 사진 넣기」가 서랍 맨 위에 있어도 프레임이랑 이어질 줄은 아무도 모른다.

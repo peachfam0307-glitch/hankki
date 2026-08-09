@@ -98,7 +98,18 @@ for (const l of wantOpen) {
 //   ➕ 2026-08-07(v9.96) — 「글 쓸 수 있는 라벨지」 26컷이 붙었다. 이것도 **글을 다루는 도구**다
 //      (붙이면 그 자리에서 바로 글이 쳐진다) → 포스트잇과 같은 부류라 일꾸·레꾸 둘 다에 있어야 한다.
 //      ⚠️ 실제로 `_repro-글상자-0807` 이 「레꾸에서도 26개가 뜬다」를 못 박고 있다 — 두 검사가 어긋나면 안 된다.
-const TOOLS = ['글자', '형광펜', '포스트잇', '라벨지 · 배너', '찢은 종이', '메모지', '메모 · 라벨', '글쓰기 프레임']
+// ⛔⛔ **손으로 적어둔 목록이 낡았다** (2026-08-09) — 「말풍선 · 판」을 새로 만들자 바로 걸렸다.
+//    바로 윗줄에 *"여기에 이름을 넣기 시작하면 이 검사는 그날로 죽는다"* 고 적혀 있었는데
+//    **적어둔 대로 죽고 있었다.** 이름을 하나 더 적는 대신 **코드에서 읽는다.**
+//    ⭐ 글 상자 그룹(`BOX_GROUPS`)은 «전부» 글 다루는 도구다 — 새 그룹이 늘어도 안 낡는다.
+//    ⚠️ Node 는 JSX 를 못 읽는다 → 파일을 «글자로» 읽어 라벨만 뽑는다(check-paperphoto 와 같은 방식).
+const BOX_LABELS = (() => {
+  const src = readFileSync(new URL('../src/components/Stickers.jsx', import.meta.url), 'utf8')
+  const blk = src.slice(src.indexOf('export const BOX_GROUPS'))
+  return [...blk.slice(0, blk.indexOf('\n]')).matchAll(/label:\s*'([^']+)'/g)].map((m) => m[1])
+})()
+if (BOX_LABELS.length < 4) { console.log('   ⛔ BOX_GROUPS 라벨을 못 읽었다 — 검사가 못 도는 상태다'); process.exit(1) }
+const TOOLS = ['글자', '형광펜', '포스트잇', ...BOX_LABELS]
 const strays = seen.filter((l) => !wantOpen.includes(l) && !TOOLS.includes(l))
 if (!strays.length) ok(`일기 칸엔 일기 세트«만» 있다 (세트 ${seen.length - seen.filter((l) => TOOLS.includes(l)).length}그룹 ＋ 도구 ${TOOLS.length})`)
 else no(`일기 칸에 남의 그룹 ${strays.length}개가 섞였다 — ${strays.slice(0, 6).join(' / ')}`)
