@@ -798,8 +798,7 @@ img {
   /* ➖ **칸 사이 선** — 창업자 *"달력 사이에 선 안보임"*. 칸이 커질수록 「어디까지가 하루인지」가 흐려진다.
      ⚠️ `.cal-day.today`·`.cal-day.on` 이 아래에서 자기 box-shadow·배경으로 덮는다(뒤엣것이 이긴다) — 그대로 둔다. */
   .cal-day { box-shadow: inset 0 0 0 1px var(--line); }
-  .cal-more { min-width: 17px; height: 16px; font-size: 10px; line-height: 16px; }
-  .cal-diary { width: 17px; height: 17px; }
+  /* ⚠️ `.cal-more`·`.cal-diary` 는 «아래» 기본 정의 뒤에 따로 둔다 — 여기 두면 덮인다(게이트 ⑪ 가 잡았다). */
 }
 /* 📐 눕힌 폰은 높이가 낮아 더 줄인다 — 6줄 × 92 이면 552px 이라 411px 화면을 훌쩍 넘는다.
    ⛔ **칸 높이만 낮추면 이번엔 «가로로 길어진다»** — 760px 폭에 44px 높이면 103×44(폭÷높이 2.34)라
@@ -850,6 +849,13 @@ img {
 }
 .cal-day.on .cal-diary {
   background: #fff;
+}
+/* 📐 큰 화면에선 구석 표식도 같이 키운다 — 칸이 커지면 이것만 점처럼 남는다.
+   ⛔⛔ 처음엔 위 `@media (min-width: 600px)` 블록에 넣었다가 **기본 규칙에 덮여 하나도 안 먹었다.**
+      게이트 ⑪ 가 여섯 줄을 잡아냈다 — 만든 지 한 시간 만에 «내가» 같은 실수를 또 한 것이다. */
+@media (min-width: 600px) {
+  .cal-more { min-width: 17px; height: 16px; font-size: 10px; line-height: 16px; }
+  .cal-diary { width: 17px; height: 17px; }
 }
 .grid-card .name {
   font-size: 14px;

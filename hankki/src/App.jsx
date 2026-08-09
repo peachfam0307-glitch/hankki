@@ -437,13 +437,38 @@ export default function App() {
 //   ⚠️ 표식 `data-vhint` = 재현 검사가 «실제로 그려졌나»를 집는 자리.
 function ScrollHint({ dep }) {
   const [bar, setBar] = useState(null) // [화면 y, 높이, 오른쪽 x] · null = 안 넘침
+  const [hbars, setHbars] = useState([]) // 가로로 넘치는 줄들 — [왼쪽 x, 폭, 아래 y]
   useEffect(() => {
     let raf = 0
+    // ➡️➡️ **가로로 넘치는 줄에도 막대를 그린다** (전수 재현판이 잡았다 — 2026-08-09 밤)
+    //    🔢 실측 = 레시피 탭 「전체 41 · 아시안 2 · ＋ 폴더」 · 장보기 탭 「고기·해산물 … 자연드림」이
+    //       화면 밖으로 나가 있었다. 옆으로 밀면 나오는데 **밀 수 있다는 표시가 없다.**
+    //    ⛔ v9.99 의 `HStrip` 은 «꾸미기 서랍의 칩 줄»에만 붙였다 — 나머지 화면엔 없었다.
+    //       창업자 *"앱 전반적으로 스크롤이 표시가 안되어있지 않아??"* 의 **나머지 절반**이 여기다.
+    //    ⭐ 화면마다 손으로 붙이면 다음 화면에서 또 빠진다 → **넘치는 줄을 찾아** 한 곳에서 그린다.
+    //    ⚠️ `data-hstrip`(이미 우리가 그린 줄)은 건너뛴다 — 두 겹으로 그리면 안 된다.
+    const 가로재기 = (root) => {
+      const out = []
+      for (const el of root.querySelectorAll('div, ul, nav')) {
+        if (el.scrollWidth <= el.clientWidth + 8) continue
+        if (el.hasAttribute('data-hstrip')) continue
+        if (!/auto|scroll/.test(getComputedStyle(el).overflowX)) continue
+        const r = el.getBoundingClientRect()
+        if (r.width < 60 || r.bottom < 4 || r.top > innerHeight - 4) continue
+        const w = Math.max(24, (el.clientWidth / el.scrollWidth) * r.width)
+        const x = r.left + (el.scrollLeft / (el.scrollWidth - el.clientWidth)) * (r.width - w)
+        out.push([Math.round(x), Math.round(w), Math.round(r.bottom - 3)])
+      }
+      return out
+    }
     const measure = () => {
       // ⛔ 꾸미기 판은 Portal 이라 `.app-frame` 밖에서 화면을 통째로 덮는다 —
       //    그때 «뒤 화면» 막대를 그리면 판 위에 떠 보인다(재현판이 잡았다: 판을 열었는데 막대 1개).
       //    꾸미기 판은 자기 서랍 막대를 따로 그린다(`DecorEditor` 의 `VHint`).
-      if (document.querySelector('.decor-editor')) { setBar(null); return }
+      // ⭐ 꾸미기 판이 열렸으면 «판 안»의 가로 줄만 본다(판이 화면을 덮는다).
+      const 판 = document.querySelector('.decor-editor')
+      setHbars(가로재기(판 || document.querySelector('.app-frame') || document.body))
+      if (판) { setBar(null); return }
       const list = document.querySelectorAll('.app-frame .screen')
       const el = list[list.length - 1] // 맨 위 화면 = DOM 에서 마지막
       if (!el) { setBar(null); return }
@@ -472,17 +497,33 @@ function ScrollHint({ dep }) {
       cancelAnimationFrame(raf)
     }
   }, [dep])
-  if (!bar) return null
+  if (!bar && !hbars.length) return null
   return (
-    <div
-      data-vhint="1"
-      aria-hidden="true"
-      style={{
-        position: 'fixed', top: bar[0], height: bar[1], left: bar[2] - 5,
-        width: 3, borderRadius: 999, background: 'var(--text-sub)', opacity: 0.38,
-        pointerEvents: 'none',
-      }}
-    />
+    <>
+      {bar && (
+        <div
+          data-vhint="1"
+          aria-hidden="true"
+          style={{
+            position: 'fixed', top: bar[0], height: bar[1], left: bar[2] - 5,
+            width: 3, borderRadius: 999, background: 'var(--text-sub)', opacity: 0.38,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+      {hbars.map(([x, w, y], i) => (
+        <div
+          key={i}
+          data-hhint="1"
+          aria-hidden="true"
+          style={{
+            position: 'fixed', left: x, width: w, top: y,
+            height: 3, borderRadius: 999, background: 'var(--text-sub)', opacity: 0.34,
+            pointerEvents: 'none',
+          }}
+        />
+      ))}
+    </>
   )
 }
 
