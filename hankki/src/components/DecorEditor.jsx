@@ -263,6 +263,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⭐ `typingId` = 「어느 «아이템»의 글칸에 커서가 있나」. 종이 본문을 칠 땐 늘 `null` 이다
   //      (스테이지를 누르는 순간 `setTypingId(null)`). 그래서 이 한 조건으로 둘이 갈린다.
   const showWriteTools = writing || (typing && !typingId)
+  // ⌨️⌨️ **가로에서 종이 글칸에 커서가 들어가면 「큰 글칸」으로 바꾼다** (창업자 확정 2026-08-09)
+  //    📮 *"글자쓰면 위로 올라가 붙음"* · *"1칸만보여"* — 자판이 뜨면 앱에 **160px 밖에 안 남는다**(실측).
+  //    ⛔ 그 안에 종이·서랍·도구바를 다 넣을 방법은 없다 — **덜 줄이는 문제가 아니라 자리가 없는 문제**다.
+  //    ⭐ 그래서 쓰는 «동안»엔 서랍·도구바를 접고 종이를 화면 폭으로 넓힌다(CSS 가 가로에서만 한다).
+  //    ⛔ 스티커 글 상자(`typingId`)는 제외 — 그건 작은 상자라 넓힐 이유가 없다.
+  const bigWrite = typing && !typingId
   // ⌨️⌨️ 탭을 옮기면 종이 커서를 «내려놓는다» (창업자 2026-08-08 캡처 — 일꾸 탭인데 글씨·크기 줄이
   //   서랍을 먹고 고르는 칸이 한 줄뿐이었다). 폰은 「뒤로가기」로 키보드만 닫혀 **커서가 남는다**
   //   (blur 가 안 온다) → typing 이 계속 참이라 위 줄이 유령처럼 떠 있었다.
@@ -739,7 +745,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
 
   return (
     <Portal>
-      <div className="decor-editor">
+      <div className={`decor-editor${bigWrite ? ' bigwrite' : ''}`}>
         {/* 상단 바 */}
         <div className="decor-top">
           <button className="press" onClick={handleCancel} style={{ minHeight: 44, padding: '0 4px', color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
@@ -750,6 +756,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ⭐ 끌기·손잡이 계산은 전부 `getBoundingClientRect()`(＝화면에 그려진 실제 크기)를 재서 하므로
                  확대해도 스티커가 엉뚱한 데로 가지 않는다. 코드로 확인하고 넣었다.
               ⛔ 세로에선 안 보인다 — 세로는 종이가 이미 화면 폭을 다 쓴다(CSS 가 감춘다). */}
+          {/* 🚪 큰 글칸에서 빠져나오는 길 — ⛔안드로이드는 뒤로가기로 «자판만» 닫혀 blur 가 안 온다.
+              그러면 서랍이 접힌 채로 남는다. 눌러서 나올 단추를 반드시 둔다(가로에서만 보인다). */}
+          <button className="press decor-donewrite" onClick={dropCaret}
+            style={{ minHeight: 34, padding: '0 14px', borderRadius: 999, fontSize: 13, fontWeight: 800, alignItems: 'center', background: 'var(--cream)', border: '1px solid var(--line)', color: 'var(--brown)' }}>다 썼어요</button>
           <div className="decor-zoom">
             <button className="press" aria-label="종이 작게" disabled={zoom <= 1}
               onClick={() => setZoom((z) => Math.max(1, Math.round((z - 0.4) * 10) / 10))}>－</button>

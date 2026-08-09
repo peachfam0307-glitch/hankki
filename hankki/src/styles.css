@@ -1792,6 +1792,25 @@ html, body { overscroll-behavior: none; }
   /* 📏 도구바 갈래 아이콘 칸도 낮춘다 — 스티커를 «고른 동안»엔 이 바가 서랍에서 95px 을 가져간다.
      ⛔ 세로는 44 그대로(빈 안내 바와 같은 키라야 골랐다 풀 때 화면이 안 튄다). */
   .decor-tools [data-ctxtab] { min-height: 36px !important; }
+
+  /* ⌨️⌨️⌨️ **큰 글칸** — 창업자 확정 2026-08-09 (*"큰 글칸으로 바꾸기"*)
+     🔢 자판이 뜨면 앱에 **160px 밖에 안 남는다**(창업자 폰 실측 · 자판이 251px 을 먹는다).
+        그 안에 종이·서랍·도구바를 다 넣을 방법은 «없다» — 덜 줄이는 문제가 아니라 자리가 없는 문제다.
+     ⭐ 그래서 «쓰는 동안»엔 서랍·도구바를 접고 **종이를 화면 폭으로** 넓힌다.
+        글씨가 커지고 여러 줄이 보인다. 자판을 내리면 그대로 돌아온다.
+     ⛔ 폭을 620px 로 묶는다 — 891 을 다 쓰면 한 줄이 너무 길어 눈이 되돌아오기 힘들다.
+     ⛔ 스티커 글 상자엔 안 걸린다(`bigWrite` 가 `typingId` 를 뺀다). */
+  .decor-editor.bigwrite { grid-template-columns: 100% 0; }
+  .decor-editor.bigwrite .decor-drawer,
+  .decor-editor.bigwrite .decor-tools { display: none; }
+  .decor-editor.bigwrite .decor-top { width: 100%; }
+  .decor-editor.bigwrite .decor-stage > div:not(.t-sub),
+  .decor-editor.bigwrite .decor-stage > div:has(.paper) { max-width: min(100%, calc(620px * var(--zoom, 1))); }
+  /* 🚪 나가는 길 — ⛔안드로이드는 «뒤로가기로 자판만 닫혀» blur 가 안 온다(v9.99 에 겪었다).
+     그러면 서랍이 접힌 채로 남는다 → 눌러서 빠져나올 단추를 «반드시» 둔다. */
+  .decor-editor.bigwrite .decor-zoom { display: none; }
+  .decor-donewrite { display: none; }
+  .decor-editor.bigwrite .decor-donewrite { display: inline-flex; }
   .decor-cats button { min-height: 38px !important; }
 
   /* 🔍🔍 **종이 확대** — 창업자 *"일꾸판 확대되야돼. 스티커 붙이고 글쓰기가 너무 불편해."* (2026-08-09)
