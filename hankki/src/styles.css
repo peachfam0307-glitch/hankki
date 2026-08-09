@@ -1767,6 +1767,76 @@ html, body { overscroll-behavior: none; }
   /* 📏 접기 전에 «먼저 줄여» 본다 — 창업자 화면(392px 칸)에선 이 4px 씩이면 한 줄에 다 들어간다
      (실측 396 → 356). 더 좁은 판에선 그때 접힌다. 손가락 최소 높이(44)는 안 건드린다. */
   .decor-ctx-order > .press { padding: 0 11px !important; }
+
+  /* 🗄🗄 **서랍 — 「고르는 버튼」이 자리를 다 먹고 있었다** (창업자 2026-08-09
+     📮 *"꾸미기판 작은 것도 해결됐어? 1칸만보여 (스티커같은게) 나머지는 다 고르는 버튼이고"*)
+     🔢 실측(891×322 · 스티커 고른 상태) — 서랍 227 중
+        손잡이 4 ＋ **탭 줄 44** ＋ **갈래 칩 줄 56** = 104 가 «고정»이라 스티커 칸이 **107px** 뿐이었다.
+        스티커 한 칸이 66px 이니 **1.6줄** — 창업자가 본 그대로다.
+     ⭐ 셋을 손본다 ⑴탭 줄 44→38 ⑵갈래 칩 44→38 ⑶**서랍 폭 44%→50%**
+     ⭐⭐ ⑶이 «공짜»인 이유 = 종이는 «높이»에 걸려 있어서(221px) 종이 칸이 좁아져도 안 작아진다.
+        재서 확인했다 — 칸이 499→446 이 돼도 종이는 그대로 221 이고, 서랍만 392→446 으로 넓어진다.
+     ⛔ 세로는 안 건드린다 — 세로는 서랍이 화면 폭 전체라 이 문제가 없다(손가락 44 도 지킨다). */
+  .decor-editor { grid-template-columns: 50% 50%; }
+  .decor-top { width: 50%; }
+  .decor-drawer .segment { margin-bottom: 8px; }
+  /* ⛔⛔ 두 번 졌다 —
+     ⑴ `min-height: 38px` 을 줬다가 오히려 «커졌다»(42→46). 📌 줄이려면 «바닥»이 아니라 «여백»을 만진다.
+     ⑵ 고친 뒤에도 44 그대로였다 — 아래 1860줄 `.decor-drawer .segment .seg`(0,3,0)가 «더 세고 뒤에» 있었다.
+        📌 **오늘 여섯 번째 우선순위 사고다.** 이 파일에서 같은 이름을 여러 번 잡고 있으면 «전부» 찾아본다. */
+  .decor-editor .decor-drawer .segment .seg { min-height: 36px; padding: 6px; }
+  /* ⛔ 서랍을 넓혔는데 스티커가 더 많이 보이지 «않았다» — 칸이 `repeat(5, 1fr)` 로 못 박혀 있어서
+     넓어진 만큼 **칸만 커졌다**(66 → 77px). 📌 「넓혔다」와 「많이 보인다」는 다른 말이다.
+     ⭐ 가로에선 칸 «크기»를 정하고 개수는 폭이 정하게 한다 → 폰 6칸 · 폴드·패드 7칸. */
+  .decor-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)) !important; }
+  /* 📏 도구바 갈래 아이콘 칸도 낮춘다 — 스티커를 «고른 동안»엔 이 바가 서랍에서 95px 을 가져간다.
+     ⛔ 세로는 44 그대로(빈 안내 바와 같은 키라야 골랐다 풀 때 화면이 안 튄다). */
+  .decor-tools [data-ctxtab] { min-height: 36px !important; }
+  .decor-cats button { min-height: 38px !important; }
+
+  /* 🔍🔍 **종이 확대** — 창업자 *"일꾸판 확대되야돼. 스티커 붙이고 글쓰기가 너무 불편해."* (2026-08-09)
+     🔢 눕힌 화면은 높이가 322px 뿐이다. 종이는 이미 그 높이를 꽉 쓰고 있어서(294)
+        **「더 키우기」로는 여기서 끝**이다 — 남은 길은 **키우고 칸 안에서 밀어 보기**뿐이다.
+     ⭐ 그래서 상한에 `--zoom` 을 곱하고, 넘치면 **칸이 굴러간다**(100~260%).
+     ⭐ `justify-content: safe center` 라서 넘칠 땐 위쪽부터 보인다 — 그냥 `center` 면 **위가 잘려 못 올라간다.** */
+  .decor-stage { overflow: auto; -webkit-overflow-scrolling: touch; position: relative; }
+  .decor-stage > div:not(.t-sub) { max-width: calc((100cqh - 20px) * var(--zoom, 1)); }
+  .decor-stage > div:has(.paper) { max-width: calc((100cqh - 20px) * 0.75 * var(--zoom, 1)); }
+
+  /* ⌨️⌨️ **글씨를 칠 땐 종이가 「칸 높이」를 안 본다** — 창업자 2026-08-09
+     📮 *"글자쓰면 위로 올라가 붙음(가운데정렬안됨). 꾸미기칸 딱 1칸보임"*
+     ⛔ 원인 = `index.html` 의 `interactive-widget=resizes-content` — 자판이 뜨면 **판 자체가 줄어든다.**
+        눕힌 화면에선 322 → 130px 쯤이 되고, 종이 상한이 칸 높이(100cqh)라 **종이가 82px 로 쪼그라든다.**
+        「가운데 정렬이 안 된다」도 같은 뿌리다 — 넘치니까 `safe` 가 위쪽 정렬로 되돌린 것이다.
+     ⭐ 글씨 칠 땐 **높이 대신 «폭»에 맞춘다.** 종이가 칸보다 길어지지만 굴려서 본다 —
+        자판이 뜬 동안엔 **읽을 수 있는 크기**가 「다 보이는 것」보다 중요하다.
+        커서가 있는 줄은 브라우저가 알아서 보이게 굴려 준다.
+     ⛔ 세로는 안 건드린다 — 세로는 자판이 떠도 종이가 폭 전체라 원래 크다. */
+  .decor-stage.writing > div:not(.t-sub) { max-width: calc(max((100cqh - 20px), 293px) * var(--zoom, 1)); }
+  .decor-stage.writing > div:has(.paper) { max-width: calc(max((100cqh - 20px) * 0.75, 220px) * var(--zoom, 1)); }
+
+  /* 🔍 확대 단추 — 가로에선 제목을 숨기니 그 빈자리가 그대로 이 자리다.
+     ⛔ `.decor-top` 을 앞에 붙여 «더 세게» 만든다 — 기본 규칙(`display:none`)이 이 블록 «뒤»에 있어서
+        같은 세기면 뒤엣것이 이긴다. 처음에 그렇게 써서 단추가 아예 안 떴다(오늘 다섯 번째 우선순위 사고). */
+  .decor-top .decor-zoom { display: inline-flex; }
+}
+
+/* 🔍 확대 단추 — ⛔세로에선 안 보인다(세로는 종이가 이미 화면 폭을 다 쓴다). */
+.decor-zoom { display: none; align-items: center; gap: 2px; font-size: 12px; font-weight: 800; color: var(--text-sub); }
+.decor-zoom > button {
+  min-width: 30px; min-height: 30px; border-radius: 999px; font-size: 15px; font-weight: 800; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--cream); border: 1px solid var(--line); color: var(--brown);
+}
+.decor-zoom > button:disabled { opacity: 0.35; }
+.decor-zoom > span { min-width: 38px; text-align: center; font-variant-numeric: tabular-nums; }
+/* 📐 **키 큰 가로 화면(폴드 안쪽·태블릿)은 종이 쪽을 더 준다** — 반씩 나누면 종이가 «폭»에 걸려 작아진다.
+   🔢 실측(패드 1180×820) — 56% 면 종이 594, 반씩이면 566. 폰(높이 322~411)에선 반대로
+      종이가 «높이»에 걸려 있어서 칸이 좁아져도 안 작아진다 → 그 남는 폭을 서랍에 준다.
+   📌 그래서 «화면 키»로 가른다. 500px 이 경계 = 폰 눕힘(322~411) ↔ 폴드·패드(690~820). */
+@media (orientation: landscape) and (min-height: 500px) {
+  .decor-editor { grid-template-columns: 56% 44%; }
+  .decor-top { width: 56%; }
 }
 /* 📱📱 **가로에선 앱이 화면을 «꽉» 쓴다** — 창업자 2026-08-09 확정 (안 D)
    📮 *"장보기같은 탭은 폰 눕혔을때 여백이 양쪽이 생기게 될 수 밖에 없나? 양쪽으로 꽉차게는 어려우려나?"*

@@ -252,6 +252,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //      우리도 「어느 탭인가」가 아니라 **「지금 글을 치고 있나」**로 띄운다.
   //   ⚠️ 칩을 누르면 글칸이 포커스를 잃어 줄이 사라진다 → 칩에서 `onPointerDown` 을 막아 포커스를 지킨다.
   const [typing, setTyping] = useState(false)
+  // 🔍 종이 확대 배율 — 가로에서만 쓴다(세로는 종이가 이미 화면 폭을 다 쓴다).
+  //    ⛔ 저장 안 한다 — 「이번에 꾸미는 동안」만. 다음에 열었을 때 확대된 채로 뜨면 놀란다.
+  const [zoom, setZoom] = useState(1)
   // 🐛🐛 **이 줄은 «속지 본문»의 글씨체·크기다 — 글자 «스티커»를 칠 땐 뜨면 안 된다.** (2026-08-07 전수검사에서 잡음)
   //   ⛔ `typing` 은 `.decor-stage` 안 아무 `textarea` 에나 켜져서, 글 상자·포스트잇을 칠 때도 같이 떴다.
   //      그러면 ⑴도구 바엔 «그 스티커»의 「글씨」 갈래가, 서랍엔 «종이 본문»의 글씨 줄이 **둘 다** 뜨고
@@ -741,6 +744,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         <div className="decor-top">
           <button className="press" onClick={handleCancel} style={{ minHeight: 44, padding: '0 4px', color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>취소</button>
           <div className="decor-title" style={{ fontSize: 16, fontWeight: 800 }}>{title}</div>
+          {/* 🔍🔍 **종이 확대** (창업자 2026-08-09 *"일꾸판 확대되야돼. 스티커 붙이고 글쓰기가 너무 불편해."*)
+              ⛔ 눕힌 화면은 높이가 322px 뿐이라 종이를 아무리 키워도 그 높이에 갇힌다 —
+                 「더 키우기」로는 답이 안 나온다. **키우고 «칸 안에서 밀어 보는»** 게 답이다.
+              ⭐ 끌기·손잡이 계산은 전부 `getBoundingClientRect()`(＝화면에 그려진 실제 크기)를 재서 하므로
+                 확대해도 스티커가 엉뚱한 데로 가지 않는다. 코드로 확인하고 넣었다.
+              ⛔ 세로에선 안 보인다 — 세로는 종이가 이미 화면 폭을 다 쓴다(CSS 가 감춘다). */}
+          <div className="decor-zoom">
+            <button className="press" aria-label="종이 작게" disabled={zoom <= 1}
+              onClick={() => setZoom((z) => Math.max(1, Math.round((z - 0.4) * 10) / 10))}>－</button>
+            <span aria-live="polite">{Math.round(zoom * 100)}%</span>
+            <button className="press" aria-label="종이 크게" disabled={zoom >= 2.6}
+              onClick={() => setZoom((z) => Math.min(2.6, Math.round((z + 0.4) * 10) / 10))}>＋</button>
+          </div>
           {/* 💾 **글자가 아니라 «누를 것»으로 보이게** (창업자 2026-08-06
               *"어떻게 꾸미기 탭을 닫아야 글씨를 쓸 수 있는지 모르겠어"*).
               ⛔ 파란 글자 하나는 「제목 옆에 적힌 말」로 읽힌다 — 닫는 길이 안 보였다. */}
@@ -775,7 +791,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                아무도 안 듣고 X·손잡이가 그대로 떠 있었다. 재현 = 종이 안 0 / 바깥 **1**.
             ⭐ 스티커·손잡이·X·연필은 넷 다 `stopPropagation` 을 하므로 여기까지 안 올라온다
                → 여기서 받은 것은 «빈 데를 누른 것»이 확실하다. */}
-        <div className={`decor-stage${writing ? ' writing' : ''}`} onPointerDown={() => { setSel(null); setTypingId(null) }}
+        <div className={`decor-stage${writing ? ' writing' : ''}`} style={{ '--zoom': zoom }} onPointerDown={() => { setSel(null); setTypingId(null) }}
           // ⌨️ 종이의 글칸에 커서가 가면 「글씨·크기」 줄을 띄운다(어느 탭이든).
           //    `…Capture` 로 받는 이유 = focus/blur 는 «올라오지 않는»(bubble 안 하는) 이벤트다.
           onFocusCapture={(e) => { if (e.target.tagName === 'TEXTAREA') setTyping(true) }}
