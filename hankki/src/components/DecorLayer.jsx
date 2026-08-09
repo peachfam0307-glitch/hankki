@@ -450,6 +450,15 @@ function TextDeco({ it, editable, coverW = 0, typing, onText }) {
             fontFamily: f.family, fontWeight: f.weight, fontSize: `${fontPx}px`,
             letterSpacing: `calc(${f.ls || '0em'} + ${(wt.fat * 1.6).toFixed(3)}em)`,
             lineHeight: 1.22, color: c.color, caretColor: c.color,
+            // ⌨️⌨️ **세로 가운데 정렬** — 창업자 2026-08-09
+            //    📮 *"스티커 붙이고 글쓰면 글자가 위에 붙거든? 다쓰고 움직이면 중간으로 내려와. 버그야 의도한거야?"*
+            //    ⛔ 버그다. 「친 뒤」를 보여주는 겹은 `align-items: center` 인데 `textarea` 는 «위에서부터» 쌓인다.
+            //       🔢 실측 — 짧은 글에서 **8px**, 두 줄 글에서 **4px** 튀었다.
+            //    ⛔⛔ 바로 위 주석에 *"세로 가운데 정렬이 textarea 엔 없어서 `paddingTop` 으로 맞춘다"* 라고
+            //       **적혀 있는데 코드엔 `padding: 0` 뿐이었다.** 주석이 「했다」고 하고 코드는 안 했다(규칙 18).
+            //    ⭐ `align-content` 는 이제 블록 컨테이너에도 먹는다 — 한 줄로 끝난다.
+            //       안 먹는 옛 브라우저에선 «지금까지와 똑같다»(위 정렬) — 더 나빠질 게 없다.
+            alignContent: 'center',
             textAlign: 'center', textAlignLast: 'center', whiteSpace: 'pre',
           }}
         />
@@ -516,7 +525,8 @@ function Note({ it, editable, typing, onText }) {
           //   ⛔ 더 낮추지 말 것 — 14 에서 이미 요구가 충족돼 그 아래는 글씨만 작아진다.
           fontSize: `clamp(6px, ${noteCqw}cqw, 72px)`, lineHeight: 1.4,
           overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+          // ⌨️ `safe` — 글이 칸보다 커지면 치는 칸과 같은 「위 정렬」이 되어 글자가 안 튄다(위 ArtBox 주석 참조)
+          display: 'flex', alignItems: 'safe center', justifyContent: 'safe center', textAlign: 'center',
           ...(typing ? { visibility: 'hidden' } : null),
         }}
       >
@@ -536,6 +546,8 @@ function Note({ it, editable, typing, onText }) {
             fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
             fontSize: `clamp(6px, ${noteCqw}cqw, 72px)`, lineHeight: 1.4,   // ⚠️ 위 글자 칸과 «같은 값»이어야 치는 중과 친 뒤가 안 튄다
             whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
+            // ⌨️ 세로 가운데 정렬 — 보이는 겹(`align-items:center`)과 자리를 맞춘다(위 TextDeco 주석 참조)
+            alignContent: 'center',
             textAlign: 'center', textAlignLast: 'center',
           }}
         />
@@ -578,15 +590,23 @@ function Note({ it, editable, typing, onText }) {
 //      → 한 줄에 들어가는 글자 수 ≈ (가로 여백 뺀 %) ÷ cqw.  (cqw = 상자 «폭»의 1%)
 //   ⚠️ 세로도 «폭 기준»으로 환산해야 맞다 — cqw 가 폭이라서. 그래서 `hPct` 는 폭 대비 높이다.
 //   ⚠️ 한글 한 자 ≈ 1em 으로 본다. 영문·숫자는 좁아 더 들어가니 «넉넉한» 쪽으로 틀린다(안전).
+//   ⛔⛔ **`Math.max(1, …)` 하나가 「글씨가 상자를 넘는」 뿌리였다** (창업자 2026-08-09
+//      📮 *"스티커 붙이고 글쓰면 글자가 위에 붙거든? 다쓰고 움직이면 중간으로 내려와."*)
+//      세로로 들어갈 줄 수를 `max(1, …)` 로 감싸서 **한 줄도 안 들어가는 얕은 상자도 「한 줄은 된다」**로 쳤다.
+//      🔢 실측(라벨지) — 글칸 높이 **20px 에 글 덩어리 35px**. 넘치니까 「친 뒤」 겹은 위아래로 똑같이 밀어내고
+//      「치는 중」 `textarea` 는 위에서부터 쌓여 **8px 어긋났다.** 창업자가 본 「튐」의 정체가 이것이다.
+//   ✅ 한 줄도 안 들어가면 «넘어가지 말고 더 줄인다». 바닥도 5 → 2 로 내린다(그 아래는 `clamp(6px…)` 가 지킨다).
+//   ⚠️ 잘 되던 상자(줄이 하나라도 들어가는 경우)는 값이 «하나도 안 바뀐다» — `cap ≥ 1` 이면 예전 식과 같다.
 function autoCqw(text, max, wPct, hPct, lh) {
   const lines = String(text || '').split('\n')
-  for (let r = max; r > 5; r -= 0.25) {
-    const per = Math.max(1, Math.floor(wPct / r))          // 한 줄에 들어갈 글자 수
-    const cap = Math.max(1, Math.floor(hPct / (lh * r)))   // 세로로 들어갈 줄 수
+  for (let r = max; r > 2; r -= 0.25) {
+    const per = Math.max(1, Math.floor(wPct / r))    // 한 줄에 들어갈 글자 수
+    const cap = Math.floor(hPct / (lh * r))          // 세로로 들어갈 줄 수 — 0 이면 한 줄도 못 들어간다
+    if (cap < 1) continue
     const need = lines.reduce((s, l) => s + Math.max(1, Math.ceil(l.length / per)), 0)
     if (need <= cap) return r
   }
-  return 5
+  return 2
 }
 
 function ArtBox({ it, editable, typing, onText }) {
@@ -618,7 +638,11 @@ function ArtBox({ it, editable, typing, onText }) {
           ...inner, overflow: 'hidden',
           // 얇은 손글씨만 동색 얇은 외곽선 — 포스트잇과 같은 규칙(창업자 요청)
           ...((it.font === 'gaegu' || it.font === 'nanumpen') ? { WebkitTextStroke: `0.4px ${ink}`, paintOrder: 'stroke fill' } : {}),
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          // ⌨️ `safe` 가 핵심 — **글이 칸보다 크면** 그냥 `center` 는 위아래로 똑같이 밀어내는데
+          //    치는 칸(`textarea`)은 «위에서부터» 쌓인다 → 다 치고 커서를 빼는 순간 글자가 툭 내려앉는다.
+          //    🔢 실측(라벨지 · 칸 20px 에 글 35px) — **8px 튀었다.** `safe` 면 넘칠 때 둘 다 위 정렬이라 0px.
+          //    ⚠️ 안 넘칠 땐 지금처럼 가운데 그대로다(포스트잇 실측 0px 유지).
+          display: 'flex', alignItems: 'safe center', justifyContent: 'safe center',
           // ⌨️ 치는 동안은 «치는 칸»이 글자를 보여준다 — 두 겹으로 보이면 안 된다
           ...(typing ? { visibility: 'hidden' } : null),
         }}
@@ -642,7 +666,8 @@ function ArtBox({ it, editable, typing, onText }) {
           style={{
             ...inner, resize: 'none', border: 'none', outline: 'none', background: 'transparent',
             padding: 0, margin: 0, overflow: 'hidden', caretColor: ink, WebkitAppearance: 'none',
-            display: 'block', textAlignLast: 'center',
+            // ⌨️ 세로 가운데 정렬 — 보이는 겹(`align-items:center`)과 자리를 맞춘다(위 TextDeco 주석 참조)
+            display: 'block', alignContent: 'center', textAlignLast: 'center',
           }}
         />
       )}
