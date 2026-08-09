@@ -270,8 +270,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    ⛔⛔ **처음엔 스티커 글 상자(`typingId`)를 뺐는데 그게 틀렸다** (창업자 폰 캡처 2026-08-09 17:36).
   //       스티커에 글을 칠 때도 «자판은 똑같이 뜬다» — 160px 안에서 종이·서랍·도구바가 그대로 뭉갠다.
   //       📌 가른 기준이 「상자가 작냐」였는데, 진짜 기준은 **「자판이 떴냐」**다. 상자 크기는 상관이 없었다.
-  //    ⭐ 그래서 종이 글칸이든 스티커 글 상자든 «커서가 들어가면» 똑같이 넓힌다.
-  const bigWrite = typing
+  //    ⭐ 그래서 «종이가 쪼그라들지 않게» 하는 건 둘 다 해준다 — `.decor-stage.typing` 바닥값(CSS).
+  //    ⛔⛔ 다만 **큰 글칸(620px)까지 스티커에 주면 오히려 나빴다** (창업자 캡처 17:45 · 재현으로 확인)
+  //       스티커는 종이 «위 한 점»이라, 종이를 620 으로 키우면 그 점을 찾아 한참 굴려야 한다.
+  //       창업자 화면이 정확히 그 모습이었다 — 스티커만 덩그러니 크고 종이 맥락이 사라졌다.
+  //    ✅ 그래서 큰 글칸은 «종이 글칸»에만. 스티커 글 상자는 바닥값(230px)으로 안 쪼그라들기만 한다.
+  const bigWrite = typing && !typingId
   // ⌨️⌨️ 탭을 옮기면 종이 커서를 «내려놓는다» (창업자 2026-08-08 캡처 — 일꾸 탭인데 글씨·크기 줄이
   //   서랍을 먹고 고르는 칸이 한 줄뿐이었다). 폰은 「뒤로가기」로 키보드만 닫혀 **커서가 남는다**
   //   (blur 가 안 온다) → typing 이 계속 참이라 위 줄이 유령처럼 떠 있었다.
@@ -804,7 +808,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                아무도 안 듣고 X·손잡이가 그대로 떠 있었다. 재현 = 종이 안 0 / 바깥 **1**.
             ⭐ 스티커·손잡이·X·연필은 넷 다 `stopPropagation` 을 하므로 여기까지 안 올라온다
                → 여기서 받은 것은 «빈 데를 누른 것»이 확실하다. */}
-        <div className={`decor-stage${writing ? ' writing' : ''}`} style={{ '--zoom': zoom }} onPointerDown={() => { setSel(null); setTypingId(null) }}
+        <div className={`decor-stage${writing ? ' writing' : ''}${typing ? ' typing' : ''}`} style={{ '--zoom': zoom }} onPointerDown={() => { setSel(null); setTypingId(null) }}
           // ⌨️ 종이의 글칸에 커서가 가면 「글씨·크기」 줄을 띄운다(어느 탭이든).
           //    `…Capture` 로 받는 이유 = focus/blur 는 «올라오지 않는»(bubble 안 하는) 이벤트다.
           onFocusCapture={(e) => { if (e.target.tagName === 'TEXTAREA') setTyping(true) }}
