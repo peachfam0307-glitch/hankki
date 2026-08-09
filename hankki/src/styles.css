@@ -1667,7 +1667,17 @@ html, body { overscroll-behavior: none; }
      ⚠️ `width: 100%` 는 남겨둔다 — 레꾸(520·비율 정상)를 안 건드리고 일꾸도 나빠지지 않는다.
      ⏳ **원인은 아직 못 찾았다.** 다음에 팔 것 = `PaperBox` 래퍼 3겹 중 «어느 겹이 폭을 정하나»
         (레꾸는 `.decor-stage > div` 가 곧 종이라 잘 먹고, 일꾸만 래퍼가 겹쳐 있다). */
-  .decor-stage > div { flex: 0 0 auto; width: 100%; max-width: min(100%, calc(100dvh - 170px)); }
+  /* ⭐⭐ **`!important` 가 필요하다** — 이 래퍼엔 JSX 인라인 style 이 붙어 있어서
+     그냥 `width: 100%` 를 주면 «인라인이 이겨» 값이 안 바뀐다.
+     🔎 진단으로 확인: 같은 규칙의 `max-width` 는 먹었는데(min(100%,520px)) `width` 만 213.891px
+        = 내용 크기 그대로였다. **한 규칙에서 하나만 안 먹으면 인라인을 의심한다.**
+     ⛔ 앞선 두 가설(align-items·래퍼 겹수)은 둘 다 틀렸다 — 범인은 «우선순위»였다. */
+  .decor-stage > div { flex: 0 0 auto; width: 100% !important; max-width: min(100%, calc(100dvh - 170px)); }
+  /* 📄 **속지(일꾸)는 세로로 긴 종이(3/4)** — 폭 상한을 정사각 기준으로 두면 높이가 칸을 넘는다
+     (실측: 520 폭 → 693 높이인데 칸은 538). ⭐ 그래서 «세로 종이일 때만» 폭을 비율만큼 낮춘다.
+     🔎 가르는 법 = 속지에는 `.paper` 가 있고 레시피 표지에는 없다 → `:has()` 로 그 겹만 집는다.
+     ⛔ 레꾸(1/1)는 건드리지 않는다 — 창업자가 본 520×520 이 그대로 남아야 한다. */
+  .decor-stage > div:has(.paper) { max-width: min(100%, calc((100dvh - 176px) * 0.75)); }
   /* ⛔ `max-height: none` 만 주면 서랍이 «내용만큼» 늘어나 화면을 넘긴다(폴드에서 3063px 나왔다). */
   .decor-drawer {
     flex: 1 1 44%; order: 2; min-width: 0;
