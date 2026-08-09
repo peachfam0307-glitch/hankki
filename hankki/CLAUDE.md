@@ -329,6 +329,18 @@
         근거 = `@bubblewrap/core` 1.25.0 `dist/lib/TwaManifest.js` 의 `ORIENTATION_VALUES` 를 직접 열어 확인.
      ⚠️⚠️ **폰의 「자동 회전」이 꺼져 있으면 이 판으로도 안 돌아간다** — 기기 설정이라 앱이 못 바꾼다.
         창업자 폰이 안 돌아간 이유가 이것일 수도 있다. **AAB 를 깔고 «먼저 빠른 설정부터» 볼 것.**
+     ⛔⛔ **「구글에 세로 고정으로 «신고»해놨다」는 내가 말을 잘못 고른 것이다** (창업자 2026-08-09
+        *"이거 확실해? 구글에 그런거 있나 찾아보고 얘기해.."* → 찾아보니 **내 말이 틀렸다**).
+        우리는 Play 콘솔에 「데이터 보안 신고」·「콘텐츠 등급」을 «신고»하니까, 「신고해놨다」고 하면
+        **구글 서류에 체크한 것**으로 읽힌다. 창업자가 정확히 그렇게 알아들었다.
+        📌 **말 한 마디가 원인을 딴 데로 보낸다.** 우리 코드 얘기엔 「신고」를 쓰지 않는다.
+     ✅ **값이 «어디» 있는지 = `@bubblewrap/core` 1.25.0 패키지를 열어 확인했다**(짐작 아님)
+        · `template_project/app/build.gradle` → `resValue "string", "orientation", twaManifest.orientation`
+        · `template_project/app/src/main/AndroidManifest.xml` → `<meta-data android:name="android.support.customtabs.trusted.SCREEN_ORIENTATION" android:value="@string/orientation"/>`
+        ⭐ **즉 값은 «우리가 만든 AAB 파일 안»에 들어간다.** 구글에 내는 서류가 아니다.
+        ⚠️ `android:screenOrientation` 속성으로 «안» 들어간다 — TWA 는 메타데이터로 크롬에 넘긴다.
+     🔎 **Play 콘솔에 화면 방향을 신고하는 칸은 «못 찾았다»**(⛔「없다」가 아니다 — 이 환경은 콘솔을 못 연다).
+        검색으로도 안 나왔고, 위 구조상 **있을 이유도 없다**(방향은 앱 파일에 컴파일된다).
      🔒 장치 = `check-mistakes.mjs` ⑩ (배포 게이트) — 세로 잠금이 되살아나면 막는다.
         **`twa-manifest.json` 은 JSON 이라 «주석을 못 단다»** — 왜 그 값인지 파일 안에 남길 방법이 없어 게이트가 지킨다.
         규칙 12대로 옛 값(`portrait`)으로 되돌려 **두 줄 다 ⛔ 로 잡히는 것까지 확인**했다.
