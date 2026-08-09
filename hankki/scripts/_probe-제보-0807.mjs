@@ -76,12 +76,46 @@ const three = page.getByRole('button', { name: '만족도 3' })
 if (await three.count() === 0) console.log('   ⛔ 「만족도 3」 단추를 못 찾았다')
 else {
   const blocker = await page.evaluate(() => {
+    const probe = (sel) => {
+      const el = document.querySelector(sel); if (!el) return sel + ' 없음'
+      const r = el.getBoundingClientRect()
+      const top = document.elementsFromPoint(r.x + r.width / 2, r.y + r.height / 2)[0]
+      return sel + ' → 맨 위 = ' + (top === el ? '⭕ 자기 자신(눌린다)' : '⛔ ' + top.tagName + '[' + (top.className || '무') + ']')
+    }
+    // ⚠️ 규칙 18 ⓕ — 「내가 본 것」이 전부라고 여기지 말 것. 같은 이름표가 여럿일 수 있다.
+    window.__cmp = [...document.querySelectorAll('[aria-label="만족도 3"]')].map((el, i) => {
+      const r = el.getBoundingClientRect()
+      const top = document.elementsFromPoint(r.x + r.width / 2, r.y + r.height / 2)[0]
+      const tag = el.tagName + (el.disabled ? '(꺼짐)' : '')
+      return i + '번째 ' + tag + ' ' + Math.round(r.width) + 'x' + Math.round(r.height)
+        + ' @' + Math.round(r.x) + ',' + Math.round(r.y)
+        + ' → ' + (top === el ? '⭕ 눌린다' : '⛔ ' + top.tagName + '[' + (top.className || '무') + ']')
+    })
+    window.__cmp.unshift('「만족도 3」 이름표 개수 = ' + document.querySelectorAll('[aria-label="만족도 3"]').length)
+    // 🔎 pointer-events 가 어디서 꺼졌나 — 버튼부터 위로 거슬러 올라간다
+    let el = document.querySelector('[aria-label="만족도 3"]'), depth = 0
+    while (el && depth < 8) {
+      const cs = getComputedStyle(el)
+      window.__cmp.push('   ↑' + depth + ' ' + el.tagName + '[' + (el.className || '무') + ']'
+        + ' pe=' + cs.pointerEvents + ' vis=' + cs.visibility + ' op=' + cs.opacity)
+      el = el.parentElement; depth++
+    }
     const b = [...document.querySelectorAll('[aria-label="만족도 3"]')][0]
     const r = b.getBoundingClientRect()
-    const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
-    return { btn: Math.round(r.width) + 'x' + Math.round(r.height), top: top ? (top.tagName + '.' + (top.className || '(무)') + ' ' + (top.getAttribute('aria-label') || '')) : '없음' }
+    const stack = document.elementsFromPoint(r.x + r.width / 2, r.y + r.height / 2).slice(0, 5).map((e) => {
+      const cs = getComputedStyle(e)
+      const rr = e.getBoundingClientRect()
+      return e.tagName + '[' + (e.getAttribute('aria-label') || e.className || '무') + '] '
+        + Math.round(rr.width) + 'x' + Math.round(rr.height)
+        + ' z=' + cs.zIndex + ' pe=' + cs.pointerEvents
+    })
+    return { btn: Math.round(r.width) + 'x' + Math.round(r.height), stack }
   })
-  console.log('   단추 크기 =', blocker.btn, '· 그 자리 «맨 위» 요소 =', blocker.top)
+  console.log('   단추 크기 =', blocker.btn, '· 그 자리에 쌓인 것(위→아래):')
+  blocker.stack.forEach((s, i) => console.log('     ' + (i + 1) + '.', s))
+  const cmp = await page.evaluate(() => window.__cmp)
+  console.log('   ⭐ 축끼리 견주기 — 같은 코드인데 하나만 죽었나?')
+  cmp.forEach((c) => console.log('     ', c))
   await three.first().click({ force: true }); await page.waitForTimeout(600)
   const lit = await page.evaluate(() => [...document.querySelectorAll('[aria-label^="만족도 "]')]
     .filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.getAttribute('aria-label')))
