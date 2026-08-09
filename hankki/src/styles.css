@@ -1582,7 +1582,11 @@ html, body { overscroll-behavior: none; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 18px 10px;
 }
-.decor-stage { padding: 4px 16px 0; flex: 0 0 auto; }
+/* 📏 좌우 여백 16 → 8 — 창업자 2026-08-09 *"레꾸화면을 좀 더 키울 수 있잖아"*
+   ⭐ 종이 폭 = 화면 − 이 여백 ×2. 360px 폰에서 **328 → 344px**(＋16).
+   ⚠️ 종이만 커지는 게 아니다 — 서랍 맨 위 버튼 셋을 44→38 로 줄여 번 자리가 있어서
+      **종이(＋16)와 서랍(＋2) 이 «둘 다» 커진다**(실측). 둘은 한 화면을 나눠 쓰므로 보통은 하나만 커진다. */
+.decor-stage { padding: 4px 8px 0; flex: 0 0 auto; }
 /* ✍️ 글쓰기 모드 — 종이가 커지고 «스크롤이 된다».
    ⚠️ 폰에서 자판이 올라오면 화면 아래 절반이 덮인다. 판이 고정이면 메모칸이 자판 뒤로 숨는다
       → 스크롤을 열어 «올려서» 쓸 수 있게. (에디터가 position:fixed 라 페이지 스크롤이 없다) */
@@ -1623,6 +1627,56 @@ html, body { overscroll-behavior: none; }
   max-height: 52vh;
   min-height: 0;
 }
+/* 🔄🔄 **가로모드 — 종이 왼쪽 · 서랍 오른쪽** (창업자 2026-08-09)
+   📮 *"가로모드로 사용할 수 있으면 꾸미기서랍은 오른쪽에 종이는 왼쪽에 넣어도 괜찮을 것 같거든."*
+      ＋ *"가로모드일때 종이 크기를 더 크게 하자. 가운데에 배치하고(종이를)"*
+
+   ⭐⭐ **이건 「새 기능」이 아니라 「이미 깨진 것」을 고치는 것이다.**
+      공식 문서 = Android 16 부터 **큰 화면(sw≥600dp)에선 `screenOrientation` 이 무시**되고 폰에선 존중된다.
+      우리는 이미 targetSdk 36 이라 **폴드·태블릿에선 벌써 가로로 돌아간다** — 창업자 폰은 안 돌고
+      폴드는 도는 두 제보가 이걸로 한 줄에 설명된다. 즉 **폴드 테스터는 «지금» 깨진 화면을 보고 있다.**
+   🔢 실측(`scripts/_시안-서랍-0809.mjs` · 굴릴 칸) — 폰 눕힘 **9 → 137px** · 폴드 **62 → 467px(7.5배)**
+
+   ⭐ **범인은 `max-width: 440px` 한 줄이었다** — 가로에서도 앱이 440px 에 갇혀
+      폴드 1104px 중 **660px 이 그냥 놀고** 있었다. 그 놀던 자리가 그대로 서랍이 된다. */
+@media (orientation: landscape) {
+  .decor-editor {
+    max-width: none;                 /* ⭐ 놀던 좌우를 되찾는다 */
+    flex-direction: row; flex-wrap: wrap; align-content: flex-start;
+  }
+  .decor-top { width: 100%; order: 0; }
+  .decor-stage {
+    flex: 1 1 56%; order: 1; min-width: 0;
+    /* 📮 *"가운데에 배치하고(종이를)"* — 세로로 쌓고 가운데 정렬해야 종이가 제 칸 한가운데 온다.
+       ⛔ 안 그러면 안내문이 옆에 나란히 서서 종이를 왼쪽 끝으로 민다(첫 시안이 그랬다). */
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 10px 16px;
+    max-height: calc(100dvh - 152px);
+  }
+  /* 📮 *"종이 크기를 더 크게"*
+     ⛔⛔ **폭·높이를 «강제»하면 종이 비율이 깨진다 — 두 번 다 그랬다.**
+        `width: 100%` → 정사각이 586×490 · `height: 100%` → **405×89 로 납작**해졌다.
+        (`.decor-stage > div` 는 속지에선 «래퍼»라 안쪽 종이에 곧이곧대로 전달되지 않는다)
+     ⭐ 그래서 **상한만** 준다 — 폭·높이는 종이가 제 비율로 알아서 정한다.
+     ⭐ 상한은 **칸 높이에서 역산**한다 — `vh` 고정값은 화면마다 넘치거나 모자란다(62vh 면
+        폰 눕힘에서 칸을 15px 넘겼다). 칸이 `100dvh−152` 이므로 그보다 18px 작게 잡는다.
+        실측 = 폰 눕힘 190 · **폴드 520**(고정 62vh 였을 때 428 → ＋92px 더 크다). */
+  .decor-stage > div { flex: 0 0 auto; max-width: min(100%, calc(100dvh - 170px)); }
+  /* ⛔ `max-height: none` 만 주면 서랍이 «내용만큼» 늘어나 화면을 넘긴다(폴드에서 3063px 나왔다). */
+  .decor-drawer {
+    flex: 1 1 44%; order: 2; min-width: 0;
+    max-height: calc(100dvh - 152px); height: calc(100dvh - 152px); overflow: hidden;
+    border-radius: 22px 0 0 22px; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.06);
+  }
+  .decor-tools { width: 100%; order: 3; }
+}
+/* 🔄 안내문 낱말 — 창업자 *"돌리면 오른쪽이 되니까"*. JS 상태를 안 늘리고 CSS 가 하나만 보여준다. */
+.only-landscape { display: none; }
+@media (orientation: landscape) {
+  .only-portrait { display: none; }
+  .only-landscape { display: inline; }
+}
+
 .decor-grab { width: 40px; height: 4px; border-radius: 999px; background: var(--line); margin: 8px auto 2px; flex: 0 0 auto; }
 
 /* 🪜🪜 **층마다 «생김새»를 다르게** (안 D · 창업자 2026-08-07 *"구분이 안되니까 뭐가 뭔지 모르겠어"*)

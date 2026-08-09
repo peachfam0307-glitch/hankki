@@ -20,6 +20,12 @@ export default function CookScreen({ id }) {
   const [i, setI] = useState(0) // 0 = 재료 준비, 1..steps.length = 조리 단계
   const [showTimer, setShowTimer] = useState(false)
   const [showIng, setShowIng] = useState(false)
+  // ☑️ 재료 준비 체크 — 창업자 2026-08-09 *"준비단계에서 체크박스가 있으면 어떨까. 단순 체크용도로."*
+  //    ⭐ **저장하지 않는다.** 이건 «이번에 요리하는 동안»만 쓰는 표시라, 다음에 또 만들 땐 깨끗해야 한다.
+  //       (레시피에 저장하면 다음번에 «남이 체크해둔 것»처럼 보인다)
+  //    ⭐ 상태를 CookScreen 이 들고 있어서 조리 단계로 갔다 돌아와도 체크가 남는다.
+  const [checked, setChecked] = useState({})
+  const toggle = (k) => setChecked((c) => ({ ...c, [k]: !c[k] }))
   // 재료 시트 — 뒤로가기로 닫기(요리모드는 유지). 타이머 시트는 자체 처리.
   useLayerBack(showIng, () => setShowIng(false))
   useWakeLock() // 화면이 꺼지지 않게 (요리 모드)
@@ -68,8 +74,33 @@ export default function CookScreen({ id }) {
         <div className="cook-body">
           <div className="cook-stepno">재료 준비 <span>· 요리의 시작</span></div>
           <div style={{ width: '100%', maxWidth: 460, margin: '4px auto 0', textAlign: 'left' }}>
+            {/* ☑️ 눌러서 체크 — 창업자 2026-08-09 *"준비단계에서 체크박스가 있으면 어떨까. 단순 체크용도로."*
+                ⭐ 재료를 «꺼내면서» 하나씩 지워가는 자리다. 그래서 저장도 계산도 안 한다 — 표시만.
+                ⭐ 줄 전체가 버튼이라 손가락이 작은 네모를 겨냥할 필요가 없다(최소 높이 44).
+                ⛔ 유니코드 ✓ 대신 우리 아이콘(`check`)을 쓴다 — CLAUDE.md 핀. */}
             {ings.length ? ings.map((ing, k) => (
-              <div key={k} className="ing" style={{ fontSize: 17 }}>{scaleIngredient(ing, 1)}</div>
+              <button
+                key={k} type="button" className="press" aria-pressed={!!checked[k]}
+                onClick={() => toggle(k)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 11, width: '100%', minHeight: 44,
+                  padding: '6px 4px', background: 'none', border: 'none', textAlign: 'left',
+                }}>
+                <span style={{
+                  flex: '0 0 auto', width: 23, height: 23, borderRadius: 7,
+                  border: checked[k] ? 'none' : '2px solid var(--line)',
+                  background: checked[k] ? 'var(--brown)' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {checked[k] && <Icon name="check" size={15} color="#fff" stroke={2.6} />}
+                </span>
+                {/* ⭐ 체크한 줄은 «흐리게 ＋ 취소선» — 「했다」가 한눈에 보인다(장보기 목록과 같은 문법) */}
+                <span className="ing" style={{
+                  fontSize: 17, flex: 1, minWidth: 0,
+                  opacity: checked[k] ? 0.44 : 1,
+                  textDecoration: checked[k] ? 'line-through' : 'none',
+                }}>{scaleIngredient(ing, 1)}</span>
+              </button>
             )) : <div className="empty">재료 정보가 없어요.</div>}
           </div>
           {/* 안내 — 화면 안 꺼짐 · 타이머는 필요할 때 */}

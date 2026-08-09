@@ -1364,7 +1364,15 @@ export const STICKER_GROUPS = [
   //      우리 레꾸는 **표지 한 장**이라 순서를 매길 자리가 없고(순서는 상세 화면에 이미 번호로 있음),
   //      날짜로 쓰기엔 10까지뿐이라 반쪽이었다. 파일(`tn_1`~`tn_10`)은 지우지 않고 남겨둠.
   { key: 'text_num', tab: 'notetext', label: '요일 · 라벨', items: ['tn_mon', 'tn_tue', 'tn_wed', 'tn_thu', 'tn_fri', 'tn_sat', 'tn_sun', 'tn_cal', 'tn_ribbon', 'tn_circle'] },
-  { key: 'text_arrow', tab: 'notetext', label: '화살표 · 구분선', items: ['ta_right', 'ta_left', 'ta_up', 'ta_down', 'ta_curve', 'ta_loop', 'ta_dash', 'ta_wave', 'ta_leaf', 'ta_check', 'ta_checkc', 'ta_star'] },
+  // 🎗 「글자」 → 「마테」 로 옮김 — 창업자 2026-08-09
+  //    *"화살표 구분선 부분 이게 글자에 있을필요가 있나 싶어서. 데코나 마테로 가는게 맞지않아?"*
+  //    → *"데코는 너무 많아서 구분선 보려면 한참 스크롤해야하니까 마테로 보내야하나 했어."*
+  //    ⭐ **기준이 「성격」이 아니라 「찾기 쉬움」이다** — 그리고 세어보니 창업자 말이 맞았다:
+  //       데코 **255컷** · 글자 153 · 재료 82 · 프레임 67 · **마테 49** · 친구들 46.
+  //       데코는 마테의 **5.2배**라 거기 넣으면 정말 한참 굴려야 한다. 마테가 제일 적어 제일 빨리 찾는다.
+  //    ⭐ 성격도 맞다 — 구분선은 «줄»이라 가로로 눕히는 마스킹테이프와 한 결이다.
+  //    ⛔ 글자 탭에 둘 이유가 없었다 — 이건 «쓰는 글»이 아니라 «긋는 줄»이다.
+  { key: 'text_arrow', tab: 'tape', label: '화살표 · 구분선', items: ['ta_right', 'ta_left', 'ta_up', 'ta_down', 'ta_curve', 'ta_loop', 'ta_dash', 'ta_wave', 'ta_leaf', 'ta_check', 'ta_checkc', 'ta_star'] },
 ]
 
 // 🐻🐧 **모션·효과를 쓸 수 있는 스티커 = 친구들 탭에 든 것 전부.**

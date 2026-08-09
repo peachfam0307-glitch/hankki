@@ -913,7 +913,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     //    (「레꾸」는 이미 「레꾸자랑」 탭에 있어 유저가 안다 — 그래서 안 푼다.)
                       ? '일꾸 = 일기 꾸미기 · 더 많은 아이템은 「레꾸」에'
                       : '레꾸 = 레시피 꾸미기 · 일기에도 그대로 붙어요')
-                    : '아래에서 골라 붙이고 · 끌어서 옮기고 · ⟳ 손잡이로 크기/돌리기'}
+                    // 🔄 가로에선 서랍이 «오른쪽»에 선다 — 창업자 2026-08-09
+                    //    *"레꾸화면 (가로모드)에사 아래에서 골라붙이고도 바꿔야해 돌리면 오른쪽이 되니까."*
+                    //    ⭐ JS 상태(matchMedia)를 안 늘린다 — 낱말 둘을 다 그려두고 **CSS 가 하나만 보여준다.**
+                    //       리렌더가 없고, 화면을 돌리는 «순간» 바로 맞는 말이 된다.
+                    : <><span className="only-portrait">아래</span><span className="only-landscape">오른쪽</span>에서 골라 붙이고 · 끌어서 옮기고 · ⟳ 손잡이로 크기/돌리기</>}
           </div>
         </div>
 
@@ -1371,14 +1375,20 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             <div style={{ display: 'flex', gap: 7, marginBottom: 8 }}>
               {/* 📐 선물은 «제 몸만큼만» — 74px 이면 되는데 반을 가져가서 320px 폰에서 옆 칸 글자가 11px 잘렸다(실측).
                      사진 쪽이 글이 길다(114px) → 남는 자리를 사진이 다 갖는다. */}
+              {/* 📏 높이 38 — 창업자 2026-08-09 *"선물 네가지랑 사진스티커로 꾸미기 높이를 배경음식아이콘되돌리기랑 같게하자"*
+                     → *"줄이라는거야. 선물네가지버튼이 더 커서"*
+                  ✅ **실측이 창업자 말과 맞았다** = 선물 44 · 사진 44 · **배경 음식 아이콘 38**.
+                  ⚠️ 바로 위 주석에 *"44px 아래로는 못 내린다(손가락 최소)"* 라고 적어뒀는데,
+                     **「배경 음식 아이콘」 버튼이 이미 38 로 돌고 있었다** — 그 기준은 이미 안 지켜지고 있었다.
+                     세 버튼이 한 묶음으로 읽히려면 «같은 키»라야 한다(창업자 판정 · 규칙 11). */}
               <button className="press" onClick={() => setGift(true)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: '0 0 auto', minWidth: 0, minHeight: 44, padding: '0 10px',
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: '0 0 auto', minWidth: 0, minHeight: 38, padding: '0 10px',
                   borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)' }}>
                 <Icon name="gift" size={17} color="var(--brown)" />
                 <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap' }}>선물 네 가지</span>
               </button>
               <button className="press" onClick={() => photoRef.current?.click()}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, minWidth: 0, minHeight: 44, padding: '0 8px',
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, minWidth: 0, minHeight: 38, padding: '0 8px',
                   borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)' }}>
                 <Icon name="photo" size={17} color="var(--brown)" />
                 {/* 🔤🔤 **두 길은 «이름으로» 갈라야 한다** — v9.88 에서 창업자 제보로 고친 것이다
