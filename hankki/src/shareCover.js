@@ -73,6 +73,13 @@ export async function buildCoverPayload({ coverEl, title, info = [], appUrl, rec
   //    2 로 낮춰도 액자 안에서 1080px 폭을 채운다(창업자 *"너무 느려졌어 한참기다려야해"*).
   const scale = Math.min(2, 1080 / Math.max(1, rect.width))
   let coverUrl
+  // 🔲 **찍는 동안만 모서리를 각지게 한다** (2026-08-09 가로 2단)
+  //    가로 2단에서 표지에 `border-radius: 16px` 을 줬는데, 캡처 대상이 바로 그 `.cover-box` 라
+  //    **둥근 모서리가 공유 카드에 그대로 찍힌다**(PNG 라 네 귀퉁이가 투명 → 카톡에서 흰/검정으로 뜬다).
+  //    ⭐ 공유 카드는 바이럴의 핵심이라 위험을 안 진다 — 찍기 전에 0 으로, 끝나면 되돌린다.
+  //    ⚠️ 인라인 스타일이라 CSS 를 이긴다. 세로에선 애초에 radius 가 없어 아무 일도 안 한다.
+  const 옛모서리 = coverEl.style.borderRadius
+  coverEl.style.borderRadius = '0'
   try {
     // ⏱ **12초 제한** — 캡처가 안 끝나면 로딩만 돌고 아무 말이 없다. 그게 유저에겐 먹통이다
     //    (창업자 2026-08-03 *"로딩은 돌아가. 그다음이 안돼"*). 끝나든 못 끝나든 **말은 한다.**
@@ -86,6 +93,9 @@ export async function buildCoverPayload({ coverEl, title, info = [], appUrl, rec
     ])
   } catch (e) {
     return null
+  } finally {
+    // ⚠️ `finally` 라야 «실패해도» 되돌아간다 — catch 안에서 return 하므로 여기가 아니면 각진 채로 남는다.
+    coverEl.style.borderRadius = 옛모서리
   }
   const coverImg = await loadImage(coverUrl)
   if (!coverImg) return null
