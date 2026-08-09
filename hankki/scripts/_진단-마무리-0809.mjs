@@ -39,6 +39,9 @@ for (const [판, w, h, 자판h] of [['📱 세로 411×891', 411, 891, 410], ['�
   {
     const page = await 연다(w, h)
     await page.locator('.seg', { hasText: /^일꾸$/ }).first().click(); await page.waitForTimeout(700)
+    // ⚠️ 기본 갈래(마테)는 그룹이 3컷뿐이라 무엇을 고쳐도 「3칸」으로 보인다 — 컷이 많은 「데코」로 잰다.
+    const 데코 = page.locator('.decor-cats button').filter({ hasText: /^데코$/ })
+    if (await 데코.count()) { await 데코.first().click(); await page.waitForTimeout(700) }
     await page.evaluate(() => { const b2 = [...document.querySelectorAll('.decor-grid button')]; if (b2[0]) b2[0].click() })
     await page.waitForTimeout(900)
     const d = await page.evaluate(() => {
@@ -48,11 +51,16 @@ for (const [판, w, h, 자판h] of [['📱 세로 411×891', 411, 891, 410], ['�
       const cr = cell ? cell.getBoundingClientRect() : null
       const tools = document.querySelector('.decor-tools'), tr = tools ? tools.getBoundingClientRect() : null
       const 보임 = Math.max(0, Math.min(scr.bottom, dwr.bottom) - Math.max(scr.top, dwr.top))
-      return { 서랍: Math.round(dwr.height), 도구바: tr ? Math.round(tr.height) : 0, 굴칸: Math.round(보임), 한칸: cr ? Math.round(cr.height) : null, 줄: cr ? +(보임 / cr.height).toFixed(2) : null }
+      // ⭐⭐ **「몇 줄」이 아니라 «실제로 온전히 보이는 칸 개수»를 센다** — 창업자가 세는 것이 이것이다.
+      //    ⛔ 「굴칸 ÷ 한 칸」은 가정이다. 굴칸 안엔 선물 줄·그룹 이름·여백이 같이 들어 있어서
+      //       숫자로는 2.4줄인데 화면엔 한 줄만 차 있었다(검수판을 눈으로 보고 알았다 — 규칙 13·18).
+      const 칸들 = [...dw.querySelectorAll('.decor-grid > *')]
+      const 온전히 = 칸들.filter((c) => { const r = c.getBoundingClientRect(); return r.top >= scr.top - 1 && r.bottom <= scr.bottom + 1 }).length
+      const 첫칸위 = 칸들.length ? 칸들[0].getBoundingClientRect().top : scr.top
+      return { 서랍: Math.round(dwr.height), 도구바: tr ? Math.round(tr.height) : 0, 굴칸: Math.round(보임), 한칸: cr ? Math.round(cr.height) : null, 온전히, 첫칸앞: Math.round(첫칸위 - scr.top) }
     })
-    // 📌 문턱 = **2줄**. 창업자 제보가 *"1칸도 채 안보임"* 이었으니 「한 줄 넘게」로는 답이 안 된다 —
-    //    두 줄이 보여야 «굴릴 것이 있다»는 게 눈에 보인다.
-    봄(d.줄 !== null && d.줄 >= 2, `ⓑ 스티커 «고른» 상태 서랍 ${d.서랍}px(도구바 ${d.도구바}) · 굴러가는 칸 ${d.굴칸}px · 한 칸 ${d.한칸} → ${d.줄}줄 보임`)
+    // 📌 문턱 = **5칸**. 창업자 제보가 *"1칸도 채 안보임"* 이었다 — 한 줄이 온전히 차야 답이 된다.
+    봄(d.온전히 >= 5, `ⓑ 스티커 «고른» 상태 — **온전히 보이는 칸 ${d.온전히}개** · 서랍 ${d.서랍}px(도구바 ${d.도구바}) · 굴칸 ${d.굴칸}px 중 첫 칸 앞을 ${d.첫칸앞}px 이 먹는다 · 한 칸 ${d.한칸}px`)
     await page.close()
   }
 

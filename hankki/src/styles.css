@@ -1876,6 +1876,12 @@ html, body { overscroll-behavior: none; }
     box-shadow: 0 1px 6px rgba(60, 50, 35, 0.18);
   }
   .decor-top .decor-zoom > span { min-width: 0; font-size: 10.5px; }
+  /* 🔍 확대하면 종이가 커져 위바 글자와 겹친다(검수판에서 「취소」가 종이 위에 얹혀 보였다).
+     「저장」은 알약 배경이 있어 읽히는데 「취소」는 글자뿐이었다 → 같은 알약을 준다. */
+  .decor-top > button:first-child {
+    background: var(--bg); border-radius: 999px; padding: 0 12px !important;
+    box-shadow: 0 1px 4px rgba(60, 50, 35, 0.14);
+  }
 }
 
 /* ⌨️⌨️⌨️ **자판이 뜨면 종이가 「칸 높이」에 갇혀 쪼그라들던 것 — 뿌리 하나였다** (창업자 제보 2026-08-09)
@@ -1929,12 +1935,27 @@ html, body { overscroll-behavior: none; }
    📌 `max-width: 500px` 로 거는 이유 = 자판이 떠서 411×410 이 돼도 그대로 걸리게(그때가 제일 좁다). */
 @media (max-width: 500px) and (max-height: 700px) {
   .decor-editor { --paper-vh: 29vh; }
-  .decor-top { padding: 6px 14px 4px; }
+  .decor-top { padding: 6px 12px 4px; }
   .decor-top button { min-height: 40px; }
-  .decor-editor .decor-drawer .segment .seg { min-height: 38px; padding: 7px; }
-  .decor-cats button { min-height: 38px !important; }
-  .decor-tools [data-ctxtab] { min-height: 38px !important; }
-  .decor-quick > button, .decor-quick-btn { min-height: 34px !important; }
+  /* ⛔ **검수판을 «눈으로» 보고 잡았다** — 360px 폰에서 위바에 [취소][제목][－100%＋][되돌리기][저장] 이
+     다 안 들어가 **「취/소」·「저/장」이 두 줄로 접혔다.** 숫자 검사는 전부 초록불이었다(규칙 13이 값을 한 자리).
+     ⭐ 제목을 숨긴다 — 가로에서 이미 그렇게 하고 있고, 어느 화면인지는 이미 안다.
+     ⛔ 확대 단추는 못 뺀다(창업자가 요청한 기능이다). */
+  .decor-title { display: none; }
+  .decor-zoom > span { min-width: 32px; }
+  /* 🔢 실측(360×640 · 검수판을 눈으로 보고 다시 잼) — 서랍 225px 중 **「고르는 것」이 153px · 스티커는 49px**.
+     창업자 말이 정확하다: *"나머지는 고르기버튼이 다 잡아먹음."* → **종이 말고 「고르는 것」을 줄인다.**
+     ⚠️ 여기 값들은 손가락 최소(44px)를 깬다 — 640px 화면에선 44 를 지키면 스티커가 «한 줄»뿐이다. */
+  .decor-editor .decor-drawer .segment .seg { min-height: 32px; padding: 5px; }
+  .decor-drawer .segment { margin-bottom: 5px !important; }
+  .decor-cats button { min-height: 32px !important; }
+  .decor-cats { margin-bottom: 5px !important; }
+  .decor-tools [data-ctxtab] { min-height: 34px !important; }
+  .decor-quick > button, .decor-quick-btn { min-height: 30px !important; margin-bottom: 4px !important; padding: 4px 10px !important; }
+  .decor-quick { margin-bottom: 4px !important; }
+  /* 📏 그룹 이름 줄도 굴러가는 칸을 먹는다 — 첫 칸 앞이 67px 이었다(스티커 한 칸이 49px 인데!) */
+  .decor-sec { margin-bottom: 6px !important; }
+  .decor-sec-label { font-size: 11.5px !important; margin: 0 2px 3px !important; }
   /* ⭐⭐ **한 줄에 5칸 → 6칸.** 칸이 60→56px 로 작아지는 대신 «같은 높이에 더 많이» 들어간다.
      🔢 360px 폰 실측 — 5칸이면 한 칸 60px 이라 굴러가는 칸 116px 에 **1.93줄**(두 줄이 안 된다).
         6칸이면 한 칸 **48.8px** 이라 **2.4줄** — 한 화면에 보이는 스티커가 **5개 → 12개**가 된다.
