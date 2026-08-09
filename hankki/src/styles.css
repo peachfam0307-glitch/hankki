@@ -1673,7 +1673,7 @@ html, body { overscroll-behavior: none; }
     /* 📮 *"가운데에 배치하고(종이를)"* — 세로로 쌓고 가운데 정렬해야 종이가 제 칸 한가운데 온다.
        ⛔ 안 그러면 안내문이 옆에 나란히 서서 종이를 왼쪽 끝으로 민다(첫 시안이 그랬다). */
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 6px 12px;
+    padding: 4px 12px;               /* 📮 종이를 더 키우려고 위아래를 6 → 4 로 (좌우는 그대로) */
     container-type: size;            /* ⭐ 종이가 「칸 높이」를 알 수 있게 */
   }
   /* 📮 *"종이 크기를 더 크게"*
@@ -1687,11 +1687,13 @@ html, body { overscroll-behavior: none; }
   /* ⛔⛔ **`> div` 는 안내문까지 잡는다** — 창업자 캡처에서 안내문이 두세 줄로 접혀 잘렸다
      (*"오른쪽에서 골라 붙이고 · 끌어서"* 에서 끊겼다). 안내문도 `div` 라 종이 상한(219px)에
      같이 걸려 폭이 좁아진 것이다. 📌 **`> div` 로 집을 땐 「형제가 몇인지」부터 본다.** */
-  .decor-stage > div:not(.t-sub) { flex: 0 0 auto; width: 100% !important; max-width: min(100%, calc(100cqh - 26px)); }
+  .decor-stage > div:not(.t-sub) { flex: 0 0 auto; width: 100% !important; max-width: min(100%, calc(100cqh - 20px)); }
   /* 📏 안내문 = 가로에선 «딱 한 줄». 넘치면 말줄임으로 — 두 줄이 되면 종이가 그만큼 밀린다.
      ⭐ 한 줄이라 높이가 확정이고, 위 종이 상한에서 그만큼(26px)만 빼면 된다. */
+  /* ⛔ 이 줄엔 JSX 인라인 style 로 marginTop:10 이 붙어 있어 «인라인이 이긴다» —
+     오늘만 세 번째 우선순위 사고다. 안 붙이면 4px 이 한 번도 안 먹는다(실측 10px). */
   .decor-stage > .t-sub {
-    width: 100%; max-width: 100%; margin-top: 4px;
+    width: 100%; max-width: 100%; margin-top: 4px !important;
     font-size: 12px; line-height: 1.35;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
@@ -1711,7 +1713,7 @@ html, body { overscroll-behavior: none; }
   .decor-quick-btn { min-height: 30px !important; padding: 5px 12px !important; margin-bottom: 5px !important; }
   /* 📄 **속지(일꾸)는 세로로 긴 종이(3/4)** — 폭 상한을 정사각 기준으로 두면 높이가 칸을 넘는다.
      🔎 가르는 법 = 속지에는 `.paper` 가 있고 레시피 표지에는 없다 → `:has()` 로 그 겹만 집는다. */
-  .decor-stage > div:has(.paper) { max-width: min(100%, calc((100cqh - 26px) * 0.75)); }
+  .decor-stage > div:has(.paper) { max-width: min(100%, calc((100cqh - 20px) * 0.75)); }
   /* 📏 가로에선 안내문이 두 줄로 접혀 종이 자리를 먹는다 — 한 단계 작게 */
   .decor-stage > p, .decor-hint { font-size: 12px; line-height: 1.35; }
   /* ⛔ 높이를 손으로 주지 않는다 — 격자가 남는 만큼을 준다. `min-height: 0` 이라야 안이 굴러간다. */
@@ -1721,6 +1723,50 @@ html, body { overscroll-behavior: none; }
     border-radius: 22px 0 0 22px; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.06);
   }
   .decor-tools { grid-area: tools; }
+  /* 📮📮 *"가로판에서 저 저장버튼위치를 옮기면안돼? 그럼 꾸미기 더 크게쓸수있을것같은데"* (창업자 2026-08-09)
+     ⭐ 맞는 생각이다 — 가로에선 종이 칸(499px)에 종이(210px)만 서 있어 **좌우가 텅 빈다.**
+        위바를 그 빈자리에 «얹으면» 39px 이 통째로 종이·서랍 몫이 된다.
+     ⭐ 위바를 종이 칸 «폭»(56%)만 덮게 둔다 — 서랍의 손잡이·탭 줄을 안 가린다.
+     ⛔ 제목은 가로에서 숨긴다 — 종이 바로 위에 떠서 꾸민 것을 가린다(어느 화면인지는 이미 안다).
+     ⚠️ `pointer-events` 를 껐다 켠다 — 안 그러면 «투명한 띠»가 종이 위쪽 탭을 통째로 먹는다. */
+  /* 📮📮 *"아직도 일꾸종이가 좀 작아. 확대되게 가능해?"* (창업자 2026-08-09)
+     🔢 재보니 종이 칸 높이(313)를 이렇게 쓰고 있었다 — 종이 287 ＋ 안내문 26.
+        그 위·아래로 도구바 35 가 통째로 한 줄을 차지해 «종이 칸에서 빼앗고» 있었다.
+     ⭐ 도구바를 «서랍 밑»으로 보낸다 — 종이 칸이 두 줄을 통째로 갖는다(＋35px).
+        도구바는 세로일 때 화면 폭 360 에서 잘 살았고, 여기 서랍 칸도 343~392 라 좁지 않다.
+     ⭐⭐ 딸려오는 이득 = **종이 칸 높이가 이제 «안 변한다».** 도구바가 커지든 작아지든
+        그건 오른쪽 칸에서만 오르내린다. (v9.89 에 「고르면 판이 줄어」 드래그가 어긋난 적이 있다) */
+  .decor-editor {
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "stage drawer"
+      "stage tools";
+  }
+  .decor-top {
+    position: absolute; top: 0; left: 0; width: 56%; z-index: 6;
+    padding: 4px 10px !important; pointer-events: none;
+  }
+  .decor-top > * { pointer-events: auto; }
+  .decor-title { display: none; }
+  /* ⛔⛔ **세로용 규칙이 «더 세서» 내 가로 규칙을 이기고 있었다** (창업자 캡처 2026-08-09 · 일꾸 글쓰기 탭)
+     `.decor-drawer.writing { max-height: 26vh }`(클래스 둘 = 0,2,0)가
+     내 `.decor-drawer`(0,1,0)를 눌러서, 322px 화면에서 서랍이 **84px** 로 쪼그라들었다.
+     그래서 글씨체 칩 줄이 서랍 밖으로 삐져나와 보였다.
+     📌 **오늘만 두 번째다** — 인라인 style 도, 클래스 둘짜리 규칙도 «우선순위»가 범인이었다.
+     ⭐ 가로에선 글쓰기 모드에도 서랍을 안 줄인다 — 자판이 «옆»이 아니라 아래에서 올라오고,
+        종이는 왼쪽 칸에 따로 서 있어 서랍을 줄일 이유가 없다. */
+  .decor-drawer.writing { max-height: none !important; height: auto !important; }
+  /* 📏 칩 줄의 «음수 여백»(화면 끝까지 흘리려고 준 것)이 가로에선 서랍 밖으로 새어 나온다 —
+     세로는 서랍이 화면 폭 전체라 안 보이지만, 가로는 서랍이 44% 라 종이 위로 튀어나온다. */
+  .decor-drawer .hscroll { margin-left: 0; margin-right: 0; }
+  /* ⛔ 도구바를 서랍 밑(44%)으로 옮기니 「맨 뒤로 / 맨 앞으로 / 좌우 뒤집기 / 상하 뒤집기」 네 단추가
+     한 줄에 안 들어간다(실측 396px 인데 칸은 293~392). 굴러가긴 하지만 **막대가 안 보여서
+     「이게 다」로 읽힌다** — 창업자가 v9.99 에 정확히 그걸 제보했다(글씨체 줄).
+     ⭐ 그래서 굴리지 말고 «접어서» 두 줄로 둔다. 도구바가 커져도 이제 종이 칸은 안 줄어든다. */
+  .decor-ctx-order { flex-wrap: wrap; overflow-x: visible !important; }
+  /* 📏 접기 전에 «먼저 줄여» 본다 — 창업자 화면(392px 칸)에선 이 4px 씩이면 한 줄에 다 들어간다
+     (실측 396 → 356). 더 좁은 판에선 그때 접힌다. 손가락 최소 높이(44)는 안 건드린다. */
+  .decor-ctx-order > .press { padding: 0 11px !important; }
 }
 /* 📱📱 **가로에선 앱이 화면을 «꽉» 쓴다** — 창업자 2026-08-09 확정 (안 D)
    📮 *"장보기같은 탭은 폰 눕혔을때 여백이 양쪽이 생기게 될 수 밖에 없나? 양쪽으로 꽉차게는 어려우려나?"*

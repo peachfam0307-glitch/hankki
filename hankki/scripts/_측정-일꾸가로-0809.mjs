@@ -9,7 +9,7 @@ const srv=createServer((q,s)=>{let p=decodeURIComponent(q.url.split('?')[0]).rep
 await new Promise(r=>srv.listen(4386,r))
 const {BASICS_VERSION}=await import(R+'src/data/basics.js')
 const b=await chromium.launch({executablePath:process.env.SMOKE_CHROMIUM||'/opt/pw-browsers/chromium'})
-for(const [n,w,h] of [['폰눕힘',780,360],['폴드',1104,690],['패드가로',1180,820]]){
+for(const [n,w,h] of [['크롬눕힘',891,322],['폰눕힘',780,360],['폴드',1104,690],['패드가로',1180,820]]){
   const page=await b.newPage({viewport:{width:w,height:h},timezoneId:'Asia/Seoul',locale:'ko-KR',deviceScaleFactor:2})
   await page.addInitScript((s)=>{const d=new Date();d.setHours(12,0,0,0);s.diary.forEach(x=>{x.at=d.getTime()});localStorage.setItem('hankki:v1',JSON.stringify(s));localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:nudge:giftpack','1');const g=Storage.prototype.getItem;Storage.prototype.getItem=function(k){return(typeof k==='string'&&k.startsWith('hankki:coach:'))?'1':g.call(this,k)}},{recipes:[],diary:[{id:'d1',kind:'diary',at:0,paper:{rule:'plain',skin:'ivory',art:'none'},decor:[],note:''}],seedV:BASICS_VERSION})
   await page.goto('http://127.0.0.1:4386/hankki/',{waitUntil:'networkidle'});await page.waitForTimeout(1000)
