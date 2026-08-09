@@ -34,7 +34,12 @@ for (const [판, w, h, 자판h] of [['📱 가로 891×411', 891, 411, 230], ['�
   await page.locator('.seg', { hasText: /^일꾸$/ }).first().click(); await page.waitForTimeout(600)
   await page.evaluate(() => { const bs = [...document.querySelectorAll('.decor-grid button')]; if (bs[0]) bs[0].click() })
   await page.waitForTimeout(1200)
-  await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(1200)
+  // ⚠️ 「reload ＋ addInitScript」는 옛 함정이라 배포 게이트가 막는다 — 여기선 **왜 괜찮은지** 적고 쓴다.
+  //    ⭐ 초안이 남으려면 «앱이 죽은 것»을 흉내내야 하는데 그 길이 reload 뿐이다.
+  //    ⭐ 안전한 이유 = `addInitScript` 가 덮는 건 `hankki:v1`·코치 키뿐이고 **초안 키는 안 건드린다.**
+  //       그래서 거짓 실패가 안 난다 — 실제로 띠가 「1개」로 정확히 잡혔다(안 잡히면 이 줄이 먼저 실패한다).
+  await page.reload({ waitUntil: 'networkidle' }) // 일부러 — 초안을 남기려면 앱이 죽은 것을 흉내내야 한다
+  await page.waitForTimeout(1200)
   await page.getByText('일기', { exact: true }).last().click(); await page.waitForTimeout(600)
   await page.getByRole('button', { name: /오늘 일기 (쓰기|보기)/ }).first().click(); await page.waitForTimeout(1100)
   await page.getByRole('button', { name: '꾸미기 열기' }).first().click(); await page.waitForTimeout(1000)
