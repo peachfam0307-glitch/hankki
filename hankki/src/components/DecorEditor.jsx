@@ -275,13 +275,39 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //       스티커는 종이 «위 한 점»이라, 종이를 620 으로 키우면 그 점을 찾아 한참 굴려야 한다.
   //       창업자 화면이 정확히 그 모습이었다 — 스티커만 덩그러니 크고 종이 맥락이 사라졌다.
   //    ✅ 그래서 큰 글칸은 «종이 글칸»에만. 스티커 글 상자는 바닥값(230px)으로 안 쪼그라들기만 한다.
-  const bigWrite = typing && !typingId
+  // ⛔⛔⛔ **큰 글칸을 통째로 뺐다** (창업자 캡처 2026-08-09 18:13 · *"확대하면 이렇게 크게 되고 먹통"*)
+  //    무슨 일이었나 = 글칸에 커서가 들어가면 종이를 화면 폭으로 넓히고 서랍·도구바를 접었다.
+  //    창업자에겐 그게 **「확대되고 먹통」**으로 보였다 — 스티커만 거대해지고 고를 데가 사라지니까.
+  //    ⛔ `typingId` 로 스티커를 가르려 했는데 **그 값이 스티커 글 상자에선 안 잡힌다.**
+  //       📌 내 재현에도 `큰글칸: true` 로 «찍혀 있었는데** 「재현이 경로를 못 밟았나 보다」 하고 넘겼다.
+  //          재현이 맞았고 앱이 그랬다. **규칙 18을 내가 어겼다 — 검사 결과를 내 가설로 덮었다.**
+  //    ✅ 남기는 것 = `.decor-stage.typing` **바닥값(230px)** 하나. 자판이 떠도 종이가 안 쪼그라들되
+  //       **화면 구성은 안 바뀐다.** 갑자기 바뀌는 화면이 작은 종이보다 훨씬 나쁘다.
+  const bigWrite = false
   // ⌨️⌨️ 탭을 옮기면 종이 커서를 «내려놓는다» (창업자 2026-08-08 캡처 — 일꾸 탭인데 글씨·크기 줄이
   //   서랍을 먹고 고르는 칸이 한 줄뿐이었다). 폰은 「뒤로가기」로 키보드만 닫혀 **커서가 남는다**
   //   (blur 가 안 온다) → typing 이 계속 참이라 위 줄이 유령처럼 떠 있었다.
   //   ⭐ 탭 이동 = 「지금은 글 쓰는 중이 아니다」라는 신호이니 커서를 명시적으로 푼다.
   //   ⛔ 「글쓰기」 탭엔 안 건다 — 거긴 글 쓰러 가는 자리다.
   const dropCaret = () => { const el = document.activeElement; if (el && el.tagName === 'TEXTAREA') el.blur() }
+  // ⌨️⌨️ **자판이 내려가면 «저절로» 원래 판으로 돌아온다** (창업자 2026-08-09 *"다썼어요 가로모드 아직도 있어"*)
+  //    ⛔ 처음엔 「다 썼어요」 단추로 나가게 했는데 창업자가 두 번 말했다 — *"왜 저기떠있는지 모르겠다"*.
+  //       **모르는 단추는 없는 것만 못하다.** 나가는 길은 «눌러야 아는 것»이 아니라 저절로여야 한다.
+  //    ⭐ 안드로이드는 뒤로가기로 «자판만» 닫혀 blur 가 안 온다(v9.99) — 그래서 blur 대신 **판 높이**를 본다.
+  //       index.html 의 viewport 가 interactive-widget=resizes-content 라, 자판이 뜨고 내릴 때 판 높이가 실제로 오르내린다.
+  //    📌 «가장 낮았던 높이»를 기억해 두고 거기서 100px 넘게 올라오면 = 자판이 내려간 것.
+  //       ⛔ 「처음 높이」와 견주면 안 된다 — 커서가 들어간 직후는 아직 자판이 안 떠서 그게 최고값이다.
+  useEffect(() => {
+    if (!typing) return
+    let 바닥 = window.innerHeight
+    const 봄 = () => {
+      const h = window.innerHeight
+      if (h < 바닥) 바닥 = h
+      else if (h > 바닥 + 100) dropCaret()
+    }
+    window.addEventListener('resize', 봄)
+    return () => window.removeEventListener('resize', 봄)
+  }, [typing])
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
   const [gift, setGift] = useState(() => needsGiftPack())
@@ -763,10 +789,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ⭐ 끌기·손잡이 계산은 전부 `getBoundingClientRect()`(＝화면에 그려진 실제 크기)를 재서 하므로
                  확대해도 스티커가 엉뚱한 데로 가지 않는다. 코드로 확인하고 넣었다.
               ⛔ 세로에선 안 보인다 — 세로는 종이가 이미 화면 폭을 다 쓴다(CSS 가 감춘다). */}
-          {/* 🚪 큰 글칸에서 빠져나오는 길 — ⛔안드로이드는 뒤로가기로 «자판만» 닫혀 blur 가 안 온다.
-              그러면 서랍이 접힌 채로 남는다. 눌러서 나올 단추를 반드시 둔다(가로에서만 보인다). */}
-          <button className="press decor-donewrite" onClick={dropCaret}
-            style={{ minHeight: 34, padding: '0 14px', borderRadius: 999, fontSize: 13, fontWeight: 800, alignItems: 'center', background: 'var(--cream)', border: '1px solid var(--line)', color: 'var(--brown)' }}>다 썼어요</button>
+          {/* 🚪 나가는 길은 «단추»가 아니라 «저절로» — 창업자가 두 번 말했다 *"왜 저기떠있는지 모르겠다"*
+              → 「다 썼어요」 단추를 없앴다. 자판이 내려가면 위 `useEffect` 가 커서를 내려놓는다. */}
           <div className="decor-zoom">
             <button className="press" aria-label="종이 작게" disabled={zoom <= 1}
               onClick={() => setZoom((z) => Math.max(1, Math.round((z - 0.4) * 10) / 10))}>－</button>
