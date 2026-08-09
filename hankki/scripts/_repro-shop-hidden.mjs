@@ -18,7 +18,7 @@ const page = await ctx.newPage()
 await page.goto(`http://127.0.0.1:${PORT}/`)
 await page.evaluate(() => {
   localStorage.setItem('hankki:onboarded', '1')
-  for (const k of ['hankki:coach:home2', 'hankki:coach:my', 'hankki:coach:search', 'hankki:coach:shop', 'hankki:coach:brag']) localStorage.setItem(k, '1')
+  const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
 })
 await page.goto(`http://127.0.0.1:${PORT}/`)
 await page.waitForTimeout(2000)

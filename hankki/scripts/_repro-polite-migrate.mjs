@@ -47,7 +47,7 @@ await page.goto(url)
 await page.evaluate((s) => {
   localStorage.setItem('hankki:v1', JSON.stringify(s))
   localStorage.setItem('hankki:onboarded', '1')
-  for (const k of ['hankki:coach:home2', 'hankki:coach:my', 'hankki:coach:search', 'hankki:coach:shop', 'hankki:coach:brag']) localStorage.setItem(k, '1')
+  const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
 }, state)
 await page.goto(url)          // ← 여기서 마이그레이션이 돈다
 await page.waitForTimeout(2500)

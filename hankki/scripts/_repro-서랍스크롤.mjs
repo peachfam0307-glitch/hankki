@@ -35,7 +35,7 @@ await page.addInitScript((s) => {
   localStorage.clear()
   localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
-  for (const k of ['home', 'home2', 'detail', 'brag', 'shop', 'myrecipes', 'profile', 'decor']) localStorage.setItem(`hankki:coach:${k}`, '1')
+  const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
 }, {
   recipes: [{ id: 'r1', title: '콩국수', at: Date.now(), thumb: 'none', ing: [], steps: [], source: 'hankki',
     // 🐻🐧 창업자 캡처와 같은 상황 — 곰펭 콤비를 하나 얹어 두면 고르는 순간 컨텍스트 바가 «네 줄» 난다

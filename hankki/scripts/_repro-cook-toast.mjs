@@ -51,9 +51,8 @@ try {
   browser = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } })
   await ctx.addInitScript(() => {
-    ;['hankki:onboarded', 'hankki:coach:home2', 'hankki:coach:detail', 'hankki:coach:decor',
-      'hankki:coach:myrecipes', 'hankki:coach:editor', 'hankki:coach:shop', 'hankki:coach:brag',
-      'hankki:coach:profile'].forEach((k) => { try { localStorage.setItem(k, '1') } catch { /* noop */ } })
+    const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
+    ;['hankki:onboarded', ].forEach((k) => { try { localStorage.setItem(k, '1') } catch { /* noop */ } })
   })
   const page = await ctx.newPage()
   page.setDefaultTimeout(8000)

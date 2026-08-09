@@ -52,7 +52,7 @@ await page.addInitScript((s) => {
   // ⚠️ 이미 저장된 게 있으면 «안 덮는다» — 새 탭(앱 껐다 켜기)에서도 저장값이 살아 있어야 한다
   if (!localStorage.getItem('hankki:v1')) localStorage.setItem('hankki:v1', JSON.stringify(s))
   localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:nudge:giftpack', '1')
-  for (const k of ['home', 'home2', 'detail', 'brag', 'shop', 'myrecipes', 'profile', 'decor']) localStorage.setItem(`hankki:coach:${k}`, '1')
+  const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
 }, { recipes: [], diary: [entry], seedV: BASICS_VERSION })
 
 const openDiary = async (pg) => {

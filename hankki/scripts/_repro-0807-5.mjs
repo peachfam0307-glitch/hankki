@@ -42,7 +42,7 @@ await page.addInitScript((s) => {
   localStorage.clear()
   localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
-  for (const k of ['home', 'home2', 'detail', 'brag', 'shop', 'myrecipes', 'profile', 'decor']) localStorage.setItem(`hankki:coach:${k}`, '1')
+  const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
 }, {
   recipes: [], seedV: BASICS_VERSION,
   // ⚠️ 창업자 화면 그대로 = **무지 속지**. 여기선 쓰는 칸이 종이 거의 전체다.

@@ -45,7 +45,7 @@ page.on('pageerror', (e) => errs.push(String(e.message || e).split('\n')[0]))
 await page.addInitScript((s) => {
   localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
-  for (const k of ['home', 'home2', 'detail', 'brag', 'shop', 'myrecipes', 'profile', 'decor']) localStorage.setItem(`hankki:coach:${k}`, '1')
+  const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
 }, state)
 await page.goto('http://127.0.0.1:4391/hankki/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(1200)
@@ -172,7 +172,7 @@ await page.addInitScript((s) => {
   localStorage.clear()
   localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
-  for (const k of ['home', 'home2', 'detail', 'brag', 'shop', 'myrecipes', 'profile', 'decor']) localStorage.setItem(`hankki:coach:${k}`, '1')
+  const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
 }, { ...state, diary: [{ ...state.diary[0], decor: [{ id: 'fr1', type: 'sticker', key: FKEY, x: 0.5, y: 0.42, s: 0.58, r: 0 }] }] })
 await page.goto('http://127.0.0.1:4391/hankki/', { waitUntil: 'networkidle' }); await page.waitForTimeout(1200)
 await page.getByText('레시피', { exact: true }).last().click(); await page.waitForTimeout(600)
