@@ -18,7 +18,7 @@ for(const [n,w,h] of [['폰눕힘',780,360],['폴드',1104,690],['패드가로',
   await page.getByRole('button',{name:'꾸미기 열기'}).first().click();await page.waitForTimeout(1100)
   const t=page.getByRole('button',{name:'일꾸',exact:true}).last()
   if(await t.count().catch(()=>0)){await t.click().catch(()=>{});await page.waitForTimeout(700)}
-  const m=await page.evaluate(()=>{const d=document.querySelector('.decor-drawer'),st=document.querySelector('.decor-stage');const p=st?st.querySelector(':scope > div'):null
+  const m=await page.evaluate(()=>{const d=document.querySelector('.decor-drawer'),st=document.querySelector('.decor-stage');const p=st?st.querySelector(':scope > div'):null;const paper=document.querySelector('.paper');const cs=st?getComputedStyle(st):null;console.log('CHAIN',JSON.stringify({stage:st?Math.round(st.getBoundingClientRect().width)+'x'+Math.round(st.getBoundingClientRect().height):null,stageMaxH:cs?cs.maxHeight:null,wrap:p?Math.round(p.getBoundingClientRect().width)+'x'+Math.round(p.getBoundingClientRect().height):null,wrapMaxW:p?getComputedStyle(p).maxWidth:null,paper:paper?Math.round(paper.getBoundingClientRect().width)+'x'+Math.round(paper.getBoundingClientRect().height):null}))
     const r=e=>e?e.getBoundingClientRect():null;const dr=r(d),pr=r(p)
     return{종이:pr?`${Math.round(pr.width)}×${Math.round(pr.height)}`:null,서랍:dr?Math.round(dr.height):null,
       서랍이오른쪽:dr&&pr?dr.left>pr.right-1:null,넘침:dr?Math.max(0,Math.round(dr.bottom-window.innerHeight)):null,
