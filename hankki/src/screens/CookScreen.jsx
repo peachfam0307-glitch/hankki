@@ -20,7 +20,8 @@ export default function CookScreen({ id }) {
   const [i, setI] = useState(0) // 0 = 재료 준비, 1..steps.length = 조리 단계
   const [showTimer, setShowTimer] = useState(false)
   const [showIng, setShowIng] = useState(false)
-  // ☑️ 재료 준비 체크 — 창업자 2026-08-09 *"준비단계에서 체크박스가 있으면 어떨까. 단순 체크용도로."*
+  // ☑️ 재료 준비 체크 — 🧪**테스터 의견**(창업자 전달 2026-08-09 *"아까 요리재료에 체크표시 넣었으면 좋겠다는 거 테스터 의견이야"*)
+  //    원문 = *"요리 시작 누른 뒤 준비단계에서 체크박스가 있으면 어떨까. 단순 체크용도로."*
   //    ⭐ **저장하지 않는다.** 이건 «이번에 요리하는 동안»만 쓰는 표시라, 다음에 또 만들 땐 깨끗해야 한다.
   //       (레시피에 저장하면 다음번에 «남이 체크해둔 것»처럼 보인다)
   //    ⭐ 상태를 CookScreen 이 들고 있어서 조리 단계로 갔다 돌아와도 체크가 남는다.
@@ -74,7 +75,7 @@ export default function CookScreen({ id }) {
         <div className="cook-body">
           <div className="cook-stepno">재료 준비 <span>· 요리의 시작</span></div>
           <div style={{ width: '100%', maxWidth: 460, margin: '4px auto 0', textAlign: 'left' }}>
-            {/* ☑️ 눌러서 체크 — 창업자 2026-08-09 *"준비단계에서 체크박스가 있으면 어떨까. 단순 체크용도로."*
+            {/* ☑️ 눌러서 체크 — 🧪테스터 의견(창업자 전달 2026-08-09) *"준비단계에서 체크박스가 있으면 어떨까. 단순 체크용도로."*
                 ⭐ 재료를 «꺼내면서» 하나씩 지워가는 자리다. 그래서 저장도 계산도 안 한다 — 표시만.
                 ⭐ 줄 전체가 버튼이라 손가락이 작은 네모를 겨냥할 필요가 없다(최소 높이 44).
                 ⛔ 유니코드 ✓ 대신 우리 아이콘(`check`)을 쓴다 — CLAUDE.md 핀. */}
