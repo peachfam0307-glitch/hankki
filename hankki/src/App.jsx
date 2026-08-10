@@ -470,11 +470,13 @@ function ScrollHint({ dep }) {
       //    꾸미기 판은 자기 서랍 막대를 따로 그린다(`DecorEditor` 의 `VHint`).
       // ⭐ 꾸미기 판이 열렸으면 «판 안»의 가로 줄만 본다(판이 화면을 덮는다).
       const 판 = document.querySelector('.decor-editor')
-      setHbars(가로재기(판 || document.querySelector('.app-frame') || document.body))
-      if (판) { setBar(null); return }
+      if (판) { setHbars(가로재기(판)); setBar(null); return }
       const list = document.querySelectorAll('.app-frame .screen')
       const el = list[list.length - 1] // 맨 위 화면 = DOM 에서 마지막
-      if (!el) { setBar(null); return }
+      if (!el) { setHbars([]); setBar(null); return }
+      // ⭐ 가로 막대도 «맨 위 화면 안»에서만 찾는다 — `.app-frame` 을 통째로 훑으면
+      //    쌓인 화면 «뒤»에 깔린 줄까지 잡아 남의 화면에 막대가 뜬다(세로 막대와 같은 기준).
+      setHbars(가로재기(el))
       const { scrollHeight: sh, clientHeight: ch, scrollTop: st } = el
       if (sh <= ch + 8) { setBar(null); return }
       const r = el.getBoundingClientRect()
@@ -490,6 +492,16 @@ function ScrollHint({ dep }) {
     //    막대가 판 위에 남지 않는다(`dep` 은 탭·스택만 보므로 이건 못 잡는다).
     const mo = new MutationObserver(onScroll)
     mo.observe(document.body, { childList: true })
+    // ⛔⛔ **「모아보기 ↔ 한끼 일기」·「장보기 ↔ 냉장고」는 «한 화면 안»에서 갈린다** —
+    //    탭도 스택도 안 바뀌고(`dep` 그대로) `body` 직계 자식도 안 바뀐다.
+    //    그래서 다시 잴 신호가 «하나도» 없었고, 마지막에 잰 막대가 `fixed` 로 그대로 남아
+    //    **다른 화면을 가로질렀다**(창업자 2026-08-10 *"모아보기 바가 다른데도 침범중야"* —
+    //    폰 캡처에서 「한끼 일기」 달력 위를 지나갔다).
+    //    📌 규칙 18 — 「막대가 틀린 자리에 있다」가 아니라 **「다시 잰 적이 없다」**였다.
+    // ⭐ 그래서 화면 «속»까지 본다. `characterData` 는 안 본다(글씨만 바뀌는 건 자리와 무관).
+    //    재는 건 rAF 로 묶어 한 프레임에 한 번뿐이다.
+    const frame = document.querySelector('.app-frame')
+    if (frame) mo.observe(frame, { childList: true, subtree: true })
     // ⚠️ 화면을 열자마자 재면 내용이 아직 없어 «안 넘침»으로 나온다 → 몇 번 더 잰다.
     const timers = [0, 140, 420, 900].map((ms) => setTimeout(measure, ms))
     return () => {
@@ -565,6 +577,10 @@ function ToTop({ dep, hasNav }) {
     window.addEventListener('resize', onScroll)
     const mo = new MutationObserver(onScroll) // 꾸미기 판·온보딩은 body 직계로 뜬다
     mo.observe(document.body, { childList: true })
+    // ⭐ `ScrollHint` 와 같은 구멍 — 「모아보기 ↔ 한끼 일기」처럼 «한 화면 안»에서 갈리면
+    //    긴 화면에서 뜬 단추가 짧은 화면으로 옮겨도 그대로 남는다. 화면 속까지 본다.
+    const frame = document.querySelector('.app-frame')
+    if (frame) mo.observe(frame, { childList: true, subtree: true })
     const timers = [0, 140, 420].map((ms) => setTimeout(measure, ms))
     return () => {
       document.removeEventListener('scroll', onScroll, true)

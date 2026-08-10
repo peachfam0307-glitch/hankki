@@ -24,6 +24,17 @@ const MYRECIPES_COACH_STEPS = [
   { sel: '[data-coach="log"]', label: '한끼 일기', desc: '요리하고 "만들었어요!" 한 번이면 별점·사진·팁이 쌓여요 · 다음엔 "그때 그 맛" 그대로 재현!' },
 ]
 
+// 📔 「일기」 탭 코치 — ⛔예전엔 «없었다.**
+//   하단바에서 「레시피」와 「일기」가 따로 선 탭인데 **코치 키를 같이 썼다**(`COACH.myrecipes`).
+//   레시피 탭을 먼저 본 사람은 일기 탭에서 안내가 영영 안 떴고, 뜬다 해도 내용이
+//   「모아보기·보기 바꾸기」라 **달력도 일기 쓰기도 한 줄도 안 알려줬다.**
+//   (창업자 2026-08-10 *"한끼일기는 눌러도안내코치가 없네"*)
+const DIARY_COACH_KEY = COACH.diary
+const DIARY_COACH_STEPS = [
+  { sel: '[data-coach="cal"]', label: '요리 달력', desc: '요리한 날엔 그날 만든 음식이 떠요 · 날짜를 누르면 그날 일기로 바로 가요' },
+  { sel: '[data-coach="diary-write"]', label: '오늘 일기 쓰기', desc: '속지를 고르고 · 일기를 쓰고 · 스티커로 예쁘게 꾸며요' },
+]
+
 // 카테고리와 연결된 기본 폴더 — 삭제 불가(사용자가 만든 폴더만 지울 수 있게)
 const DEFAULT_FOLDERS = new Set(['한식', '양식', '일식', '간식', '아시안'])
 
@@ -137,6 +148,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   const nav = useNav()
   const [view, setView] = useState(initView) // grid | log | folders
   const [coach, setCoach] = useState(() => needsCoach(MYRECIPES_COACH_KEY))
+  const [dCoach, setDCoach] = useState(() => needsCoach(DIARY_COACH_KEY)) // 📔 일기 탭 전용
   const [folder, setFolder] = useState('전체')
   // 모아보기 크기 — 'big'(2열·이름 크게) | 'small'(3열 그리드). 선택은 기억된다.
   const [gridSize, setGridSizeState] = useState(() => {
@@ -332,7 +344,9 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                  그래서 만든 사람(창업자)조차 안 썼다 — 이 탭이 죽은 이유의 하나가 **기능이 모자란 게
                  아니라 자리를 잘못 준 것**이었다. 접기 버튼도 같이 없앴다(가릴 이유가 없어졌다). */}
           {(entries.length > 0 || diaryDays.size > 0) && (
-            <CookCalendar entries={entries} diaryDays={diaryDays} selected={dayFilter} onSelect={setDayFilter} onOpenDay={(k) => nav.push({ name: 'diary', day: k })} iconFor={iconFor} />
+            <div data-coach="cal">
+              <CookCalendar entries={entries} diaryDays={diaryDays} selected={dayFilter} onSelect={setDayFilter} onOpenDay={(k) => nav.push({ name: 'diary', day: k })} iconFor={iconFor} />
+            </div>
           )}
 
           {/* 📔 다이어리 쓰기 — 창업자 2026-08-06 *"따로 아이콘을 하나 파서 다이어리 쓰기
@@ -342,6 +356,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                  날짜를 골라 두고 누르면 그날, 안 고르면 오늘. (새 UI 0개) */}
           <button
             className="press"
+            data-coach="diary-write"
             onClick={() => nav.push({ name: 'diary', day: dayFilter || dayKey(Date.now()) })}
             style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 12, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontSize: 13.5, fontWeight: 800, border: 'none' }}
           >
@@ -629,7 +644,10 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       {/* ⛔ 「요리 기록 남기기」 시트는 2026-08-07 에 여기서 뺐다 —
              「한끼 일기」 앨범을 누르면 «그날 일기»로 간다(위 `album-tile` 참고).
              기록 고치기와 「한마디 청하기」는 **레시피 상세**에 그대로 있다. */}
-      {coach && <CoachMarks storageKey={MYRECIPES_COACH_KEY} steps={MYRECIPES_COACH_STEPS} onDone={() => setCoach(false)} />}
+      {/* ⭐ 보고 있는 것에 맞는 코치만 띄운다 — 일기 화면에서 「보기 바꾸기」를 안내하면 앞뒤가 안 맞고,
+          그 단추는 일기 화면에 «있지도 않다»(코치가 그 단계를 건너뛴다). */}
+      {coach && view !== 'log' && <CoachMarks storageKey={MYRECIPES_COACH_KEY} steps={MYRECIPES_COACH_STEPS} onDone={() => setCoach(false)} />}
+      {dCoach && view === 'log' && <CoachMarks storageKey={DIARY_COACH_KEY} steps={DIARY_COACH_STEPS} onDone={() => setDCoach(false)} />}
     </>
   )
 }

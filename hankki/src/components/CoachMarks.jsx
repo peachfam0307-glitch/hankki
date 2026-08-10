@@ -26,7 +26,19 @@ export default function CoachMarks({ storageKey, steps, onDone }) {
       // 대상이 화면 밖(아래쪽 버튼 등)이면 보이게 스크롤한 뒤 위치를 잰다.
       if (el) el.scrollIntoView({ block: 'center', behavior: 'auto' })
       const r = el?.getBoundingClientRect()
-      if (r && r.width > 0) setRect({ top: r.top, left: r.left, width: r.width, height: r.height })
+      // ⛔⛔ **대상이 «화면보다 클 수» 있다** (창업자 폰 2026-08-10 *"안내코치 레꾸자랑 이렇게돼"*)
+      //    레꾸자랑 코치가 레시피 격자를 «통째로» 가리켜 실측 **링 높이 4807px · 화면 891px** 이었다.
+      //    그러면 ⒜구멍 뚫는 그림자(`0 0 0 9999px`)가 통째로 화면 «밖»으로 밀려 **화면이 안 어두워지고**
+      //         ⒝말풍선이 **y −2178** 로 화면 위로 사라진다 → 금색 테두리만 남는다.
+      //    ✅ **보이는 부분으로 잘라서** 잰다 — 어느 화면에서 무엇을 가리켜도 링이 화면 안에 남는다.
+      //    📌 규칙 18 — 「코치가 이상하다」가 아니라 «가리키는 것이 화면보다 크다»였다.
+      if (r && r.width > 0) {
+        const top = Math.max(10, Math.min(r.top, window.innerHeight - 60))
+        const bottom = Math.min(window.innerHeight - 10, Math.max(r.bottom, top + 40))
+        const left = Math.max(6, Math.min(r.left, window.innerWidth - 60))
+        const right = Math.min(window.innerWidth - 6, Math.max(r.right, left + 40))
+        setRect({ top, left, width: right - left, height: bottom - top })
+      }
       else if (tries++ < 8) t = setTimeout(measure, 120)
       else next() // 대상이 없으면(화면 구성이 다르면) 그 단계는 건너뛴다
     }
@@ -39,7 +51,16 @@ export default function CoachMarks({ storageKey, steps, onDone }) {
   if (!rect) return null
   const s = steps[i]
   const pad = 7 // 하이라이트 여유
+  // 💬 말풍선 자리 — 아래에 자리가 있으면 아래, 없으면 위. **둘 다 좁으면 화면 아래에 붙인다.**
+  //    ⛔ 예전엔 「아래가 안 되면 무조건 위」라, 대상이 화면을 거의 다 채우면
+  //       위쪽 여유가 음수가 되어 **말풍선이 화면 밖으로 나갔다**(위 clamp 와 한 사고다).
   const below = rect.top + rect.height + 150 < window.innerHeight // 말풍선을 아래에 둘 수 있나
+  const above = !below && rect.top - 150 > 0                       // 위에는 둘 수 있나
+  const 자리 = below
+    ? { top: rect.top + rect.height + pad + 16 }
+    : above
+      ? { bottom: window.innerHeight - rect.top + pad + 16 }
+      : { bottom: 26 }
   return (
     <Portal>
       <div
@@ -77,7 +98,7 @@ export default function CoachMarks({ storageKey, steps, onDone }) {
           style={{
             position: 'absolute',
             left: 18, right: 18,
-            ...(below ? { top: rect.top + rect.height + pad + 16 } : { bottom: window.innerHeight - rect.top + pad + 16 }),
+            ...자리,
             display: 'flex', justifyContent: 'center', pointerEvents: 'none',
           }}
         >

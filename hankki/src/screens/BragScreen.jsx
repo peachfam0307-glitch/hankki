@@ -181,9 +181,14 @@ export default function BragScreen() {
               : '아직 레시피가 없어요.\n가져오기로 담으면 여기서 예쁜 카드로 자랑할 수 있어요'}
           </div>
         ) : (
-          <div className="grid2" data-coach="brag-list">
-            {list.map((r) => (
-              <div key={r.id} className="grid-card">
+          <div className="grid2">
+            {/* ⛔⛔ `data-coach` 를 **격자 통째**에 붙였다가 안내코치가 깨졌다 (창업자 폰 2026-08-10)
+                — 레시피가 217개면 이 div 높이가 **4807px** 이라 코치가 화면을 못 어둡게 하고
+                  말풍선이 y −2178 로 사라져 **금색 테두리만** 남았다.
+                ✅ 코치는 **첫 카드 하나**를 가리킨다 — 「레시피를 탭하세요」니까 가리킬 것도 카드다.
+                ⛔ 이 주석을 `) : (` 바로 뒤로 올리지 말 것 — 표현식 여는 자리라 빌드가 깨진다(실제로 깨뜨렸다). */}
+            {list.map((r, i) => (
+              <div key={r.id} className="grid-card" {...(i === 0 ? { 'data-coach': 'brag-list' } : {})}>
                 <button className="press" style={{ textAlign: 'left', width: '100%' }} onClick={() => setPick(r)} aria-label={`${r.title} 자랑하기`}>
                   <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                   <div className="name">{r.title}</div>
