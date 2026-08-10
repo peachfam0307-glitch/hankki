@@ -61,9 +61,12 @@ export const WEEKLY = [
   // ═══════════════════════════════════════════════════════════════
   // ⭐⭐ 이 주는 «창업자가 직접 쓴 레시피» 둘이 들어간다 (2026-08-10 · 설계 §3.7 「간판」)
   //    ⛔ 내가 쓴 초안(햅쌀 솥밥·누룽지탕)은 창업자 지시로 뺐다 — 실제로 해먹어 본 것이 이긴다.
+  // ⚠️ 제목은 「솥밥」이 아니라 «햅쌀» 이다 (창업자 2026-08-10 *"햅쌀(비빔밥도 있으니까)"*).
+  //    내가 「솥밥」으로 바꿔 놨었는데 그러면 돌솥비빔밥이 제목 밖으로 밀린다.
+  //    ⭐ 재료 이름으로 두면 밥 셋을 다 품는다.
   {
-    from: '2026-08-31', title: '솥밥',
-    why: '햅쌀이 나오는 때예요. 갓 지은 밥이 주인공인 세 가지예요.',
+    from: '2026-08-31', title: '햅쌀',
+    why: '올해 첫 햅쌀이 나오는 때예요. 갓 지은 밥이 주인공인 세 가지예요.',
     ids: ['basic-beoseot-butter-bap', 'basic-sogogi-sotbap', 'basic-dolsot-bibimbap'],
   },
   {
@@ -76,10 +79,13 @@ export const WEEKLY = [
     why: '가을 갈치는 기름이 올라 제일 고소해요. 조림·구이·맑은국이에요.',
     ids: ['basic-galchi-jorim', 'basic-galchi-gui', 'basic-galchi-guk'],
   },
+  // ⛔ 옛 「버섯 솥밥」(basic-beoseot-sotbap)을 여기서 뺐다 (창업자 2026-08-10).
+  //    8/31 에 들어간 창업자 「버섯솥밥」과 이름이 거의 같아 3주 간격으로 두 번 나왔다.
+  //    ⭐ 파일·레시피는 그대로 산다 — 주간 레시피 줄에서만 내렸다(검색·레시피 탭엔 그대로).
   {
     from: '2026-09-21', title: '버섯',
-    why: '버섯이 가장 좋을 때예요. 밥·전골·볶음으로 골고루 담았어요.',
-    ids: ['basic-beoseot-sotbap', 'basic-dubu-deulkkae-jeongol', 'basic-beoseot-bokkeum'],
+    why: '버섯이 가장 좋을 때예요. 끓이고 볶고 부치는 세 가지로.',
+    ids: ['basic-dubu-deulkkae-jeongol', 'basic-beoseot-bokkeum', 'basic-beoseot-jeon'],
   },
   {
     from: '2026-09-28', title: '추석 남은 음식',
