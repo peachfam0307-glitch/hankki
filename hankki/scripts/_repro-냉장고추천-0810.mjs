@@ -89,7 +89,7 @@ await page.waitForTimeout(900)
 // ⛔ 첫 판이 `.sec-head` 의 «바로 다음»을 봤는데 거긴 **안내문(`.t-sub`)** 이라 늘 빈 값이었다.
 //    앱이 아니라 «내 선택자»가 범인이었다 — 규칙 18. → 격자가 나올 때까지 형제를 따라간다.
 const 파먹기 = await page.evaluate(() => {
-  const h = [...document.querySelectorAll('.h-section')].find((x) => x.textContent.includes('냉장고 파먹기'))
+  const h = [...document.querySelectorAll('.h-section')].find((x) => x.textContent.includes('만들 수 있어요'))
   if (!h) return null
   let el = h.closest('.sec-head')
   while (el && !el.classList.contains('grid2')) el = el.nextElementSibling

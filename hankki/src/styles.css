@@ -598,6 +598,18 @@ img {
 }
 
 /* 섹션 헤더 */
+/* 📣 냉장고 맨 위 «무엇을 하는 곳인가» 한 줄 (창업자 2026-08-10)
+   화면이 「영수증 스캔」으로 시작해서 영수증 탭으로 오해받던 것을 고치며 넣었다.
+   ⭐ 크림 바탕 ＋ 포인트색 글자 — 안내문(회색)보다 세지만 버튼처럼 «눌러야 할 것»으로는 안 보이게. */
+.pantry-lead {
+  display: flex; align-items: flex-start; gap: 7px;
+  background: var(--cream); border-radius: var(--r-md);
+  padding: 11px 13px; margin: 8px 0 12px;
+  font-size: 13.2px; line-height: 1.55; color: var(--text);
+}
+.pantry-lead svg { flex: 0 0 auto; margin-top: 2px; }
+.pantry-lead b { color: var(--brown); }
+
 .sec-head {
   display: flex;
   align-items: center;
