@@ -577,7 +577,7 @@ export const MOTIONS = [
   { key: 'none', label: '가만히', axis: '없음', base: true },
   { key: 'tongtong', label: '통통', axis: '위아래', base: true },
   { key: 'tilt', label: '갸웃', axis: '기울기', base: true },
-  // 🏖 출시기념 여름팩 = **무료 선물**이라 base:true. "새 모션 1개 넣자"(창업자)의 그 한 개.
+  // 🏖 출시기념 여름팩 = **무료 선물**이라 base:true. "새 모션 1개 넣자"(창업자)의 그 한 개. ✅확정
   { key: 'wave', label: '찰랑', axis: '물 위 부유', base: true, pack: 'summer2026', sheet: 'B-03③ 잔물결' },
   // ✅✅ **배분 = 창업자가 2026-08-05 에 직접 고른 것** (그 전까지는 «내 초안»이었다)
   //   *"추석은 아장아장, 할로윈은 빙글, 가을은 슝, 크리스마스는 부르르, 겨울은 물방울(눈으로 바꿔서)"*
@@ -623,7 +623,7 @@ export const FX_KINDS = [
   { key: 'spark', label: '반짝이', dir: '제자리 깜빡', base: true },
   { key: 'heart', label: '하트', dir: '위로 뜸', base: true },
   { key: 'bubble', label: '뽀글', dir: '위로 뜸', base: true },
-  { key: 'zoom', label: '슝', dir: '가로지름', pack: 'autumn2026', sheet: '(새로 만듦) D-02 바람' },   // 26-10 가을 다꾸
+  { key: 'zoom', label: '슝', dir: '가로지름', pack: 'autumn2026', sheet: '(새로 만듦) D-02 바람' },   // 26-10 가을 다꾸 ✅확정
   // 🅿️ 팡! — 크리스마스가 **모션 「부르르」**로 확정돼서(창업자 2026-08-05) 여기서 내렸다.
   //    ⭐ 버리는 게 아니다 — **설날 팩**에 딱이다(같은 「터짐」 축에 복주머니·엽전 조각만 새로 그리면 된다).
   { key: 'pop', label: '팡!', dir: '바깥으로 터짐', sheet: 'D-08② 폭죽' },
