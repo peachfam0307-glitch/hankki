@@ -12,6 +12,7 @@ import CropSheet from './CropSheet'
 import Portal from './Portal'
 import { useLayerBack } from '../useBackHandler'
 import { guessEmoji } from '../emoji'
+import { pantryScore, countPantryHits } from '../pantryMatch'
 
 function toYMD(d) {
   const y = d.getFullYear()
@@ -97,15 +98,19 @@ export default function PantryView() {
     return da - db
   })
 
-  // 냉장고 파먹기 — 보유 재료가 들어가는 레시피를 매칭 개수 순으로.
+  // 냉장고 파먹기 — 보유 재료가 들어가는 레시피를 «가진 만큼» 순으로.
+  // ⛔⛔ 예전엔 `ings.includes(p.name)` 로 **풀네임을 글자 그대로** 찾았다 →
+  //    「돼지고기 앞다리살」이 「돼지고기 300g」에 **영영 안 걸렸다.** 영수증·손입력은 뒤에
+  //    부위·용량이 붙는데 그걸 통째로 맞추려 한 것이다(2026-08-10에 찾았다).
+  // ⭐ 이제 「오늘 뭐 해먹지」와 **같은 판단**을 쓴다(`src/pantryMatch.js`) —
+  //    두 화면이 같은 냉장고를 보고 딴 요리를 말하면 안 된다.
+  // ⚠️⚠️ **세우는 값과 보여주는 값을 갈라야 한다** — 카드에 「가진 재료 N개」가 찍힌다.
+  //    `pantryScore` 는 «같은 개수면 재료 적은 쪽이 이기게» 소수를 얹은 값이라 그대로 쓰면
+  //    화면에 **「가진 재료 1.0833333개」**가 뜬다(재현판이 잡았다 · 2026-08-10).
   const matches = recipes
-    .map((r) => {
-      const ings = (r.ingredients || []).join(' ')
-      const n = pantry.filter((p) => p.name && ings.includes(p.name)).length
-      return { r, n }
-    })
+    .map((r) => ({ r, n: countPantryHits(r, pantry), score: pantryScore(r, pantry) }))
     .filter((m) => m.n > 0)
-    .sort((a, b) => b.n - a.n)
+    .sort((a, b) => b.score - a.score)
     .slice(0, 4)
 
   return (

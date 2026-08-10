@@ -24,6 +24,7 @@ import { needsOnboarding } from '../components/Onboarding'
 import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount } from '../nudges'
 import { weeklyNow } from '../data/weekly'
 import { whatsNew } from '../data/whatsnew'
+import { pantryScore } from '../pantryMatch'
 
 // 홈 첫 방문 코치마크 — 진짜 핵심 기능부터 짚어준다(창업자 딸 아이디어 ⭐).
 // 첫 스텝을 '되는 기능'(가져오기·오늘 뭐 해먹지)으로, 곧 출시 미리보기는 맨 뒤에 살짝.
@@ -98,17 +99,14 @@ export default function HomeScreen() {
   const closeNews = () => { markNewsSeen(news); setNewsPop(false) }
 
   // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
+  // ⭐ 맞추기·점수는 `src/pantryMatch.js` **한 곳**에서 한다 —
+  //    「냉장고 파먹기」(`PantryView`)와 «같은 판단»이라야 두 화면이 딴소리를 안 한다.
+  //    (2026-08-10 창업자 *"오늘뭐해먹지는 뭘 기반으로 추천해주는거야?"* → 코드를 읽다 두 곳이
+  //     따로 적혀 있고 둘 다 「글자 포함」이라 「무」가 «풀무원·단무지»에 걸리는 걸 찾았다)
   const today = useMemo(() => {
     const pool = recipes.filter((r) => r.status !== 'unsorted')
     const withPantry = pool
-      .map((r) => {
-        const ings = (r.ingredients || []).join(' ')
-        const n = (pantry || []).filter((p) => {
-          const k = (p.name || '').trim().split(/\s+/)[0]
-          return k && ings.includes(k)
-        }).length
-        return { r, n }
-      })
+      .map((r) => ({ r, n: pantryScore(r, pantry) }))
       .filter((x) => x.n > 0)
       .sort((a, b) => b.n - a.n)
     if (withPantry.length) return { list: withPantry.map((x) => x.r), fromFridge: true }
