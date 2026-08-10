@@ -94,8 +94,8 @@ export const WEEKLY = [
   },
   {
     from: '2026-10-05', title: '고구마',
-    why: '고구마가 제일 단 때예요. 굽고 볶고 부치는 세 가지로.',
-    ids: ['basic-gun-goguma', 'basic-goguma-mattang', 'basic-goguma-jeon'],
+    why: '고구마가 제일 단 때예요. 튀기고 부치고 굽는 세 가지로.',
+    ids: ['basic-goguma-mattang', 'basic-goguma-jeon', 'basic-goguma-gratin'],
   },
   {
     from: '2026-10-12', title: '대하',
