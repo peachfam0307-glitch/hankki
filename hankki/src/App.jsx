@@ -551,8 +551,12 @@ function ToTop({ dep, hasNav }) {
       const list = document.querySelectorAll('.app-frame .screen')
       const s = list[list.length - 1] // 맨 위 화면 = DOM 에서 마지막
       if (!s) { setEl(null); return }
-      // 「한 화면 넘게 내려왔나」로 가른다 — 조금 굴렸을 뿐인데 뜨면 방해만 된다.
-      const 문턱 = Math.max(320, s.clientHeight * 0.9)
+      // 「반 화면쯤 내려왔나」로 가른다 — 조금 굴렸을 뿐인데 뜨면 방해만 된다.
+      // ⛔⛔ 2026-08-10 창업자 폰 제보 *"아 한참내려야 보이네"* — 처음엔 `0.9` 였다.
+      //    폰 세로(891)에서 문턱이 **802px** 이라 카드 두 줄을 지나야 겨우 떴다.
+      //    ⭐ 「돌아가고 싶다」는 훨씬 일찍 생긴다 → **0.45**(폰 401px · 카드 한 줄 반).
+      //    ⚠️ 더 낮추면 조금만 굴려도 떠서 내용을 가린다 — 재현판 ②(200px 에선 안 뜸)가 그 선을 지킨다.
+      const 문턱 = Math.max(240, s.clientHeight * 0.45)
       setEl(s.scrollHeight > s.clientHeight + 8 && s.scrollTop > 문턱 ? s : null)
     }
     const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
