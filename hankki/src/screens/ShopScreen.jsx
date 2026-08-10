@@ -21,7 +21,8 @@ import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { openExternal, matchKo } from '../utils'
-import { CURATION, curIcon } from '../data/curation'
+import { CURATION, curIcon, weeklyPicks } from '../data/curation'
+import { weeklyNow, todayKST } from '../data/weekly'
 
 // 외부 쇼핑몰 열기 — 정식 새 탭(설치된 앱 있으면 App Link 로 앱)으로 연다.
 // (features 문자열을 주면 팝업 창으로 열려 모바일에서 세로로 깨지고 두 번 열린 듯 보였음)
@@ -215,7 +216,7 @@ export default function ShopScreen() {
 // 주부의 장바구니 — 18년차 주부가 엄선한 건강 식재료. '사러가기'는 선호 쇼핑몰에서 자동검색.
 function Curation() {
   const store = useStore()
-  const { shops } = store
+  const { shops, recipes } = store // `recipes` = 「이번 주 픽」이 이번 주 레시피를 보려고 쓴다
   const nav = useNav()
   const [open, setOpen] = useState(true)
   // 큐레이션이 맨 위로 오면서, 26장 벽 대신 '이번 주 픽'을 기본으로 보여주고
@@ -233,7 +234,11 @@ function Curation() {
   const found = curQuery
     ? flat.filter((it) => matchKo(it.name, curQuery) || matchKo(it.cat, curQuery) || matchKo(it.group, curQuery))
     : []
-  const picks = flat.filter((it) => it.pick)
+  // 🗓 「이번 주 픽」 — 날짜가 돌린다 (창업자 2026-08-10 *"주부장바구니픽도 매주 꼭 바꿔줘"*)
+  //   ⛔ 예전엔 `it.pick` 이 박힌 «둘»을 그대로 보여줘 **영영 안 바뀌었다**(창업자 *"예시야 된장."*).
+  //   ⭐ 1순위 = 이번 주 레시피가 쓰는 제품 → 홈의 「이번 주 제철」과 **한 이야기**가 된다.
+  //      모자라면 주차 번호로 돌려 채운다(어느 주에도 안 빈다). 자세한 건 `curation.js` 의 `weeklyPicks`.
+  const picks = weeklyPicks(weeklyNow(recipes), todayKST())
   // 🗂🗂 칩은 «큰 칸»만 보여준다 — 창업자 2026-08-03
   //   *"장바구니 종류탭이 너무 길어지네... 지금 종류가 더 늘텐데 옆으로 계속 길어지면 불편할 것 같아."*
   //   🔎 재보니 카테고리 23개 · 칩 줄 길이 ≈2,227px = **화면 폭의 5.7배**(다섯 번 넘게 밀어야 끝).

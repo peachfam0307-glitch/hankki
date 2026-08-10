@@ -1,3 +1,5 @@
+import { pickRotate } from './weeklypick.js'
+
 // 주부의 장바구니 — 18년차 주부가 엄선한 건강 식재료 큐레이션.
 // name + benefit(왜 좋은지 + 실제 쓰는 팁, 담백한 친구 추천 톤). '사러가기' 연결 규칙:
 //   url 이 있으면 그 직접 링크로, mall 이 있으면 그 쇼핑몰 검색으로, 없으면 네이버쇼핑 통합검색.
@@ -29,7 +31,7 @@ export const CURATION = [
     cat: '된장', group: '양념', emoji: '🥣', icon: 'cu_doenjang',
     items: [
       { name: '죽장연 전통된장', benefit: '국산콩과 천일염만으로 담가 깊고 진한 맛이 나요. 맛이 조금 진한 편이에요', q: '죽장연 전통된장', mall: 'coupang' },
-      { name: '맥된장', benefit: '국산콩 메주 96%, 천일염 4%로만 만들어 성분이 좋아요. 가격도 합리적이라 손이 자주 가요. 특히 백합된장과 궁합이 좋아 섞어 쓰면 더 맛있어요', q: '맥된장', mall: 'coupang', url: 'https://www.coupang.com/vp/products/160227399?itemId=15032545519&vendorItemId=82255154528', pick: true },
+      { name: '맥된장', benefit: '국산콩 메주 96%, 천일염 4%로만 만들어 성분이 좋아요. 가격도 합리적이라 손이 자주 가요. 특히 백합된장과 궁합이 좋아 섞어 쓰면 더 맛있어요', q: '맥된장', mall: 'coupang', url: 'https://www.coupang.com/vp/products/160227399?itemId=15032545519&vendorItemId=82255154528' },
       { name: '백합된장', benefit: '수녀님들이 메주·물·소금만으로 정성껏 만들었어요. 찌개도 좋지만 국을 끓이면 구수한 맛이 확 살아나요. 맥된장과 섞어 쓰면 궁합이 좋아요', q: '백합된장', url: 'http://www.spcfood.co.kr/product/product_view.php?ProductSeqNo=8' },
     ],
   },
@@ -42,7 +44,7 @@ export const CURATION = [
   {
     cat: '굴소스', group: '양념', emoji: '🦪', icon: 'cu_gulsauce',
     items: [
-      { name: '요리맛샘 굴소스', matches: ['굴소스'], benefit: '첨가물 없이 국산 재료로 만들었어요. 감칠맛이 깔끔하고 짜지 않아 아이들 볶음요리에도 좋아요. 저는 떨어지면 바로 다시 주문해요', q: '요리맛샘 굴소스', mall: 'coupang', pick: true },
+      { name: '요리맛샘 굴소스', matches: ['굴소스'], benefit: '첨가물 없이 국산 재료로 만들었어요. 감칠맛이 깔끔하고 짜지 않아 아이들 볶음요리에도 좋아요. 저는 떨어지면 바로 다시 주문해요', q: '요리맛샘 굴소스', mall: 'coupang' },
     ],
   },
   {
@@ -233,3 +235,28 @@ export const picksForIngredients = (ingredients = []) => {
   }
   return [...direct, ...byWord]
 }
+
+// 🗓🗓 **「이번 주 픽」은 «저절로» 돈다** (창업자 2026-08-10 *"주부장바구니픽도 매주 꼭 바꿔줘"*)
+//
+// ⛔⛔ **예전엔 `pick: true` 가 박힌 «두 개»를 그대로 보여줬다 — 매주는커녕 영영 안 바뀌었다.**
+//    이름만 「이번 주 픽」이고 실제로는 「고정 둘」이었다. 창업자 확인 = *"예시야 된장."*
+//
+// ⭐⭐ **왜 「매주 손으로 바꾸기」로 안 만들었나** — 사람이 매주 하는 일은 반드시 빠진다.
+//    2026-08-10 아침에 배포가 세 번 막힌 것도 같은 뿌리다(주간 레시피 재고를 미리 안 채웠다).
+//    주간 레시피가 `from` 날짜로 저절로 열리듯, 픽도 **날짜가 돌린다.**
+//
+// ⭐ 고르는 순서
+//   ① **이번 주 레시피가 실제로 쓰는 제품** — 홈의 「이번 주 제철」과 장보기의 「이번 주 픽」이
+//      **한 이야기가 된다.** 깻잎 주에는 깻잎 요리에 들어가는 양념이 뜬다.
+//   ② 모자라면 **주차 번호로 밀어가며** 나머지를 채운다 → 어느 주에도 픽이 비지 않는다.
+//
+// ⚠️ 돌리는 «규칙»은 `weeklypick.js` 에 있다 — 이 파일은 `import.meta.glob`(Vite 전용) 때문에
+//    노드가 못 읽어서, 배포 게이트가 검사할 수 있게 순수 계산만 갈라 뒀다.
+export const weeklyPicks = (weekly = null, today = '', n = 4) => pickRotate({
+  products: PRODUCTS,
+  matched: weekly
+    ? picksForIngredients((weekly.items || []).flatMap((r) => [...(r.ingredients || []), r.memo || '']))
+    : [],
+  today,
+  n,
+})
