@@ -32,6 +32,25 @@ function shopSearchUrl(shop, q) {
   return shop.url
 }
 
+// 🛒 장보기 리스트 한 줄에서 「사러가기」를 눌렀을 때 갈 곳.
+//   ⭐ 담을 때 주소가 붙어 있으면(주부의 장바구니·레시피 재료 담기) 그 제품으로 바로 간다.
+//      직접 손으로 쓴 재료는 주소가 없으니 «쇼핑몰에서 이름으로 찾아» 준다 — 유저에겐 둘 다 「사러 가는 것」이다.
+//   ⛔⛔ 예전엔 이 둘을 「사러가기」와 「검색」 두 이름으로 갈라 놨는데,
+//      **테스터가 «둘이 뭐가 다르냐»고 물었다** (창업자 전달 2026-08-10).
+//      같은 자리·같은 모양인데 이름만 다르면 «다른 기능인 줄» 안다. 게다가 「검색」은
+//      우리 앱에서 이미 «앱 안에서 찾기»(레시피 탭·장보기·레꾸자랑)로 쓰는 낱말이라 뜻이 둘이 됐다.
+//      → 이름은 **「사러가기」 하나**로. 어디로 가는지는 눌러서 알면 되는 것이고, 목적은 같다.
+//      (근거 = CLAUDE.md 「같은 기능은 같은 이름」 · 창업자 2026-07-30 *"데코랑 이름 같아야지"*)
+//   ⚠️ 몰 고르기는 «검색이 되는» 첫 몰로 — 한살림·자연드림은 `search` 가 검색이 아니라 «홈 주소»라
+//      맨 앞에 두면 찾던 재료가 아니라 홈이 열렸다(찾아보고 알았다).
+//   ⚠️ 쇼핑몰을 다 지운 사람도 있다 → 그때는 네이버쇼핑 통합검색. 안 그러면 «아무 데도 안 가는» 죽은 버튼이 된다.
+function buyUrlFor(item, shops) {
+  if (item.url) return item.url
+  const s = (shops || []).find((x) => x.search && x.search.includes('{q}'))
+  if (s) return shopSearchUrl(s, item.name)
+  return `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(item.name)}`
+}
+
 // 섹션 헤더의 '편집 / 접기·펼치기' 버튼 — 손가락으로 누르기 쉽게 살짝 키운 알약 버튼.
 const secBtnStyle = { fontSize: 13.5, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream)', padding: '7px 14px', borderRadius: 999 }
 
@@ -112,8 +131,8 @@ export default function ShopScreen() {
               <span style={{ flex: 1, fontSize: 15, textDecoration: it.done ? 'line-through' : 'none', color: it.done ? 'var(--text-sub)' : 'var(--text)' }}>
                 {it.name}
               </span>
-              <button className="press mini-buy" onClick={() => (it.url ? openUrl(it.url) : openUrl(shopSearchUrl(shops[0] || { url: '' }, it.name)))}>
-                {it.url ? '사러가기' : '검색'}
+              <button className="press mini-buy" onClick={() => openUrl(buyUrlFor(it, shops))}>
+                사러가기
               </button>
               <button className="icon-btn press" onClick={() => store.removeShopItem(it.id)} aria-label="삭제">
                 <Icon name="x" size={17} color="var(--sand)" />
