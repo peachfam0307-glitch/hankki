@@ -38,6 +38,18 @@ DEPLOY="claude/chatgpt-conversation-link-kvn5ph"
 cd "$REPO" 2>/dev/null || exit 0
 git rev-parse --git-dir >/dev/null 2>&1 || exit 0
 
+# 🕳 base-guard 를 «git 밖»으로 복사한다 (2026-08-10) — ⭐일찍 끝나는 길보다 «위»에 둔다
+#   ⛔ 훅을 저장소 «안»에만 두면 **브랜치를 옮기는 순간 꺼진다** — 실제로 그랬다.
+#      `hold/…` 로 옮기니 그 브랜치 바닥엔 훅이 없어서 무방비가 됐다.
+#   ⭐ 그래서 «도는 것»은 `~/.claude/hooks/`(git 밖 · `~/.claude/settings.json` 이 부른다),
+#      «원본»은 저장소에 두어 버전 관리한다. 세션마다 여기서 덮어 써 둘이 안 어긋나게 한다.
+#   ⚠️ 이 줄이 «BEHIND==0 이면 그냥 끝」보다 아래 있으면 평소엔 한 번도 안 돈다 — 그래서 여기다.
+if [ -f "$REPO/.claude/hooks/base-guard.sh" ]; then
+  mkdir -p "$HOME/.claude/hooks" 2>/dev/null
+  cp -f "$REPO/.claude/hooks/base-guard.sh" "$HOME/.claude/hooks/base-guard.sh" 2>/dev/null
+  chmod +x "$HOME/.claude/hooks/base-guard.sh" 2>/dev/null
+fi
+
 # ⏱ 세션 시작을 붙잡지 않는다 — 느리거나 막히면 포기하고 옛 훅(repo-guard)에 넘긴다
 run() { if command -v timeout >/dev/null 2>&1; then timeout "$1" "${@:2}"; else "${@:2}"; fi; }
 

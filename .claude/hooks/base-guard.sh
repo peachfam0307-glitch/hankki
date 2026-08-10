@@ -26,25 +26,36 @@ IN=$(cat)
 CMD=$(printf '%s' "$IN" | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d.get("tool_input",{}).get("command",""))' 2>/dev/null || true)
 [ -z "$CMD" ] && exit 0
 
-# 커밋하거나 «새 브랜치를 만드는» 명령일 때만 본다
-echo "$CMD" | grep -qE 'git +([a-z-]+ +)*(commit|checkout +-[bB]|switch +-c)' || exit 0
-
 DEPLOY=claude/chatgpt-conversation-link-kvn5ph
 ROOT=/home/user/hankki
 cd "$ROOT" 2>/dev/null || exit 0
 
-# 원격을 «지금» 확인한다 — 캐시된 ref 자체가 되감겼을 수 있다.
-# ⚠️ 네트워크가 막히면 조용히 통과한다(막는 게 목적이지 멈추는 게 목적이 아니다).
-timeout 12 git fetch -q origin "$DEPLOY" 2>/dev/null || exit 0
+# ⭐⭐ **모든 bash 명령에서 본다** — 커밋할 때만 보면 늦다.
+#   2026-08-10 두 번째 사고: 나는 «커밋하기 훨씬 전에» 낡은 디스크에서 `grep -c` 로 주차를 세고
+#   「4주뿐이라 8/31 부터 빈다」고 창업자를 놀라게 했다. **진짜는 13주였다.**
+#   창업자 — *"왜 비지? 다 정했었는데"*. 그 «세는 순간»엔 아무것도 안 막고 있었다.
+#   📌 되감김은 «커밋»만 망치는 게 아니라 **내가 읽는 숫자를 전부 거짓말로 만든다.**
+#
+# 💰 공짜로 만드는 법 = **fetch 를 안 한다.** 이미 받아둔 `refs/remotes/origin/…` 과 로컬 ref 만 견준다.
+#   ref 두 개 읽기라 몇 밀리초다. 커밋·브랜치 만들기 «같은 위험한 명령»일 때만 fetch 로 최신을 확인한다.
+RISKY=0
+echo "$CMD" | grep -qE 'git +([a-z-]+ +)*(commit|checkout +-[bB]|switch +-c|push)' && RISKY=1
+
+if [ "$RISKY" = 1 ]; then
+  # ⚠️ 네트워크가 막히면 조용히 통과한다(막는 게 목적이지 멈추는 게 목적이 아니다).
+  timeout 12 git fetch -q origin "$DEPLOY" 2>/dev/null || true
+fi
 
 LOCAL=$(git rev-parse --verify -q "refs/heads/$DEPLOY" 2>/dev/null) || exit 0
-REMOTE=$(git rev-parse --verify -q FETCH_HEAD 2>/dev/null) || exit 0
+REMOTE=$(git rev-parse --verify -q "refs/remotes/origin/$DEPLOY" 2>/dev/null) || exit 0
 [ "$LOCAL" = "$REMOTE" ] && exit 0
 git merge-base --is-ancestor "$REMOTE" "$LOCAL" 2>/dev/null && exit 0
 
 MISSING=$(git rev-list --count "$LOCAL..$REMOTE" 2>/dev/null || echo '?')
 cat >&2 <<EOF
-🕳 **디스크가 되감겼다 — 지금 커밋하면 낡은 바닥 위에 얹힌다.**
+🕳 **디스크가 되감겼다 — 지금 무엇을 세든 «거짓 숫자»가 나온다.**
+   ⛔ 커밋만 문제가 아니다. **파일을 읽고 세는 것부터 전부 틀린다.**
+      2026-08-10 에 낡은 바닥에서 주차를 세고 「4주뿐이라 8/31 부터 빈다」고 잘못 알렸다(진짜는 13주).
 
    로컬 배포 브랜치 = $(git log --oneline -1 "$LOCAL" 2>/dev/null)
    원격 배포 브랜치 = $(git log --oneline -1 "$REMOTE" 2>/dev/null)
