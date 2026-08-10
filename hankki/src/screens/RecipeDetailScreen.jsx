@@ -18,10 +18,11 @@ import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
 import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
-import { dateLabel } from '../utils'
+import { dateLabel, openExternal as openUrl } from '../utils'
 import { shouldAskReview } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
+import { picksForIngredients, productLink, productMall, curIcon } from '../data/curation'
 
 import { useWakeLock } from '../useWakeLock'
 import { useLayerBack } from '../useBackHandler'
@@ -217,8 +218,23 @@ export default function RecipeDetailScreen({ id }) {
     }
   }
 
-  // ⛔ 「주부의 장바구니 픽」(제품 사러가기)은 2026-08-03 에 레시피에서 뺐다 — 아래 §광고 주석 참고.
-  //    `picksForIngredients`·`productLink`·`productMall` 은 **장보기 화면이 계속 쓴다**(지우지 말 것).
+  // 🛒 이 레시피가 쓴 「주부의 장바구니」 제품 — 재료·메모에 제품명이 있으면 자동으로 붙는다.
+  //   ⛔⛔ 2026-08-03 에 이 자리를 통째로 없앴던 것을 2026-08-10 에 되살렸다.
+  //      창업자 원문은 *"우리 레시피에서 **한살림꺼는** 다 빼야할 듯"* 인데
+  //      내가 그걸 「픽 자리 통째로」로 넓게 읽어 **82편 전부에서 사러가기가 사라졌다**(일주일).
+  //      창업자 정정 2026-08-10 — *"그게 **한살림제품만** 빼자는 뜻이었어"* · *"다 빼자는게 아니라"*.
+  //   ⭐ 그리고 한살림 문제는 «같은 날» 장보기 화면에서 이미 풀려 있었다 —
+  //      `mallLabel()` 의 **「한살림 · 조합원만」** 배지. 누르기 «전»에 보이니 헛걸음이 없다.
+  //      여기도 같은 배지를 쓴다 → **막다른 길이 안 생기니 뺄 이유가 없다.**
+  //   ⚠️ 자연드림(아이쿱)은 **실버회원 가입으로 누구나 온라인 구매 가능**(조합원과 가격만 다르다)
+  //      → 아무 표시도 안 붙인다. 창업자 확인 2026-08-10.
+  const pantryPicks = picksForIngredients([...(r?.ingredients || []), r?.memo || ''])
+  const addAllPicks = () => {
+    pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p) }))
+    nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요`)
+  }
+  // 구매처 배지 — 장보기 화면 `mallLabel()` 과 «같은 규칙»이라야 한다(한쪽만 고치면 앞뒤가 안 맞는다)
+  const mallBadge = (p) => (String(p.url || '').includes('hansalim') ? '한살림 · 조합원만' : productMall(p))
 
   return (
     <div className="screen fade" style={{ paddingBottom: 0 }}>
@@ -437,14 +453,32 @@ export default function RecipeDetailScreen({ id }) {
           </>
         )}
 
-        {/* ⛔⛔ **레시피 안의 「사러가기」 광고를 뺐다** — 창업자 2026-08-03 *"큐레이션엔 그냥 두고,
-            **레시피에 광고만 빼자**"*. 앞선 맥락 = *"우리 레시피에서 한살림꺼는 다 빼야할 듯.
-            **사러가기나 담기되잖아**"* — 한살림 온라인몰은 **조합원만** 살 수 있어서(가입비 3천원＋출자금 3만원)
-            비조합원이 누르면 **막다른 길**이 된다.
-            ⭐ 그래서 「제품을 고르러 오는 자리(장보기 → 주부의 장바구니)」에만 남기고,
-               「내 레시피를 보는 자리」에서는 뺐다. **레시피는 광고판이 아니다.**
-            ✅ 담는 기능은 안 없어졌다 — 재료 절의 **「장보기 담기」** 버튼이 그대로 있다.
-            ⛔ 되살릴 땐 창업자에게 먼저 물을 것(수익 연결이라 자동 복구 대상이 아니다). */}
+        {/* 🛒 주부의 장바구니 픽 — 이 레시피가 쓴 제품을 바로 사러가기(재료 바로 밑 · 수익 연결) */}
+        {pantryPicks.length > 0 && (
+          <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>
+              <Icon name="cart" size={17} color="var(--brown)" />
+              이 레시피, 이걸로 만들었어요
+            </div>
+            {pantryPicks.map((p) => (
+              <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
+                {curIcon(p.icon) && <img src={curIcon(p.icon)} alt="" draggable={false} style={{ width: 30, height: 30, objectFit: 'contain', flex: '0 0 auto' }} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{p.name}</span>
+                  {mallBadge(p) && (
+                    <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원만') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{mallBadge(p)}</span>
+                  )}
+                </div>
+                <button className="press" onClick={() => openUrl(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>
+              </div>
+            ))}
+            <button className="press" onClick={addAllPicks} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 14 }}>
+              <Icon name="cart" size={16} color="#fff" />
+              이 재료 다 담기
+            </button>
+            <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>담아두고 장보기에서 체크하며 사면 편해요 · 18년차 주부가 진짜 쓰는 재료예요</div>
+          </div>
+        )}
 
         {r.steps?.length > 0 && (
           <>
@@ -466,6 +500,18 @@ export default function RecipeDetailScreen({ id }) {
               <DetailDecor where="done" text={r.title} />
             </div>
           </>
+        )}
+
+        {/* 🏁 만드는 법이 «0줄»인 레시피(소스·양념처럼 섞으면 끝)에도 완성 칸을 준다.
+            ⛔⛔ 예전엔 완성 칸이 만드는 법 절 «안»에만 있어서, 순서가 없으면 절과 함께 통째로 사라졌다.
+               창업자 2026-08-10 — *"소스레시피만(만드는법 없음) 추가하면 꼬르곰(다 됐어요)이 안뜨는거야"*
+            ⭐ 거꾸로다 — v10.03 에 완성 칸을 넣은 이유가 *"레시피가 다 글밖에 없어 심심하다"* 였는데,
+               **만드는 법 없는 레시피가 제일 심심하다**(재료만 덩그러니). 가장 필요한 자리에서만 빠져 있었다.
+            ⚠️ 재료도 없으면 안 그린다 — 아직 아무것도 안 적은 빈 레시피에 「완성!」은 앞뒤가 안 맞는다. */}
+        {!r.steps?.length && r.ingredients?.length > 0 && (
+          <div style={{ marginTop: 18 }}>
+            <DetailDecor where="done" text={r.title} />
+          </div>
         )}
 
         {r.memo && (
