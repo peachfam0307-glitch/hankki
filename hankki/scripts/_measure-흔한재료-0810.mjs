@@ -37,8 +37,19 @@ const 낼곳 = process.argv[3] || '/tmp'
 const d = JSON.parse(readFileSync(백업, 'utf8'))
 
 // 📚 ① 사전 만들기 — 우리가 «정제해 쓴» 이름만
+// ⛔⛔ **첫 판은 `w.length >= 2` 라 «한 글자 재료»를 통째로 버렸다** —
+//   물·무·파·밥·떡·깨·꿀·굴. **우리 앱에서 제일 흔한 것들이다.**
+//   그래서 「물 500ml」·「무 120g」 같은 줄이 전부 ❓«못 읽음»으로 나왔고, 45편 중 39편이 ❓ 로 몰렸다.
+//   📌 2글자로 막은 이유는 「무」가 「무염버터」에 걸리는 것이었는데,
+//      그건 **substring 으로 찾아서** 생긴 문제지 낱말 자체의 문제가 아니었다.
+//   ✅ 그래서 갈랐다 — **2글자 이상은 substring · 한 글자는 «낱말이 통째로 같을 때만»**.
 const dict = new Set()
-const 넣기 = (w) => { if (w && w.length >= 2 && !/\d/.test(w)) dict.add(w) }
+const 한글자 = new Set()
+const 넣기 = (w) => {
+  if (!w || /\d/.test(w)) return
+  if (w.length >= 2) dict.add(w)
+  else if (/^[가-힣]$/.test(w)) 한글자.add(w)
+}
 for (const r of basicRecipes) {
   for (const l of r.ingredients || []) {
     const 밖 = String(l).replace(/[（(][^)）]*[)）]/g, ' ')   // 괄호 안(대체품·설명)은 뺀다
@@ -61,12 +72,31 @@ for (const m of rulesBlock.matchAll(/'([가-힣]{2,})'/g)) 넣기(m[1])
   '총', '큰술', '작은술', '한줌', '두줌', '재료', '양념', '소스', '준비'].forEach((w) => dict.delete(w))
 const words = [...dict].sort((a, b) => b.length - a.length)   // ⭐ 긴 것부터 — 「진간장」이 「간장」보다 먼저
 
+// 🚫 재료가 «아닌» 줄 — 섹션 제목·단위 안내·통째 괄호 메모.
+//   ⛔ 이걸 안 걸러내면 「양념」·「계량스푼기준 1큰술 15ml」 같은 줄이 «못 읽은 재료»로 잡혀
+//      멀쩡한 레시피가 ❓ 로 밀린다. 재료가 아닌 것을 못 읽었다고 세면 안 된다.
+const 비재료 = (line) => {
+  const s = String(line).trim()
+  if (!s) return true
+  if (/^[（(].*[)）]$/.test(s)) return true                     // 줄 전체가 괄호 = 메모
+  if (/^(양념|소스|재료|양념장|고명|기타)$/.test(s)) return true  // 섹션 제목
+  if (/(기준|밥숟가락|계량|종이컵\s*1컵)/.test(s) && /\d\s*(T|t|ml|큰술|작은술|컵)/.test(s)) return true
+  if (/^\d+인분/.test(s)) return true
+  return false
+}
+
 // 🔎 ② 창업자 재료 줄에서 «아는 이름»을 찾아낸다
 const 뽑기 = (line) => {
   let s = String(line).replace(/[（(][^)）]*[)）]/g, ' ')
   const out = []
   for (const w of words) if (s.includes(w)) { out.push(w); s = s.split(w).join(' ') }
-  return out
+  // ⭐ 한 글자는 «낱말이 통째로 같을 때만» — substring 으로 찾으면 「무」가 「무염버터」에 걸린다.
+  //   숫자·단위가 붙은 것(「물4T」·「물2」)은 꼬리를 떼고 본다.
+  for (const t of s.split(/[\s,·/[\]]+/)) {
+    const 머리 = t.replace(/[\d.~/]+.*$/, '')
+    if (한글자.has(머리)) out.push(머리)
+  }
+  return [...new Set(out)]
 }
 
 const all = d.recipes || []
@@ -83,13 +113,15 @@ const 흔함 = (w) => (빈도[w] || 0) >= 6
 const 특이 = (w) => (빈도[w] || 0) <= 2
 
 const 결과 = mine.map((r) => {
-  const ing = (r.ingredients || []).filter((x) => x && !/^\[/.test(x))
+  const ing = (r.ingredients || []).filter((x) => x && !/^\[/.test(x) && !비재료(x))
   const ws = [...new Set(ing.flatMap(뽑기))]
-  const 못읽음 = ing.length - ing.filter((l) => 뽑기(l).length).length
+  // ⭐ 개수만 세면 사람이 판단을 못 한다 — «어느 줄»을 못 읽었는지 그대로 들고 다닌다.
+  //   (첫 판은 숫자만 세서 39편이 통째로 ❓ 로 몰렸고, 그 안을 볼 방법이 없었다)
+  const 못읽은줄 = ing.filter((l) => 뽑기(l).length === 0)
   const 특 = ws.filter(특이)
   return {
     t: r.title, i: ing.length, s: (r.steps || []).length,
-    안: ws.length, 흔: ws.filter(흔함).length, 특, 못읽음,
+    안: ws.length, 흔: ws.filter(흔함).length, 특, 못읽음: 못읽은줄.length, 못읽은줄,
     갈래: (ing.length >= 5 && (r.steps || []).length >= 3) ? 'ready'
       : (r.steps || []).length === 0 ? 'nosteps' : ing.length <= 1 ? 'raw' : 'thin',
   }
@@ -119,3 +151,14 @@ ready.forEach((x, i) => {
 const c = (t) => ready.filter((x) => 갈래표(x) === t).length
 console.log(`\n   🏠 생활요리 ${c('🏠 생활요리')} · ⭐ 특별 ${c('⭐ 특별')} · ❓ 모름 ${c('❓ 모름')}`)
 console.log('   ⭐ ❓ 는 「특이하다」가 아니라 «내가 못 읽었다»다 — 창업자가 보면 0.5초에 갈린다.')
+
+// 🔎 ⭐ 못 읽은 줄을 «그대로» 찍는다 — 개수만 세면 사람이 손댈 수가 없다.
+//   여기 나오는 줄이 ⒜사전에 없는 흔한 재료면 → 사전에 넣는다
+//                  ⒝진짜 특이 재료면 → ⭐특별 로 간다
+//                  ⒞재료가 아닌 말이면 → 세지 말아야 한다
+const 못읽은전부 = ready.flatMap((x) => x.못읽은줄)
+console.log(`\n▶ ❓ 못 읽은 줄 전부 (${못읽은전부.length}줄) — 이게 무엇인지가 다음 한 걸음이다`)
+const 묶음 = {}
+for (const l of 못읽은전부) 묶음[l] = (묶음[l] || 0) + 1
+Object.entries(묶음).sort((a, b) => b[1] - a[1])
+  .forEach(([l, n]) => console.log(`   ${n > 1 ? `(${n}) ` : '    '}${l}`))
