@@ -588,13 +588,20 @@ function ToTop({ dep, hasNav }) {
       style={{
         position: 'fixed', right: 16, bottom: `calc(${바닥}px + var(--safe-bottom))`,
         width: 44, height: 44, borderRadius: 999, zIndex: 45,
-        background: 'var(--surface)', border: '1px solid var(--line)',
+        // 🎨 색 = 창업자 확정 2026-08-10 (갈래 넷을 테마 셋에 얹어 찍어 고름 · `_shot-위로단추색-0810.mjs`)
+        //   ⭐ 고른 이유는 «대비»가 아니라 «위계»다 — 우리 앱에서 파랑은 「누르는 것」이라는 뜻인데,
+        //      하단바 「가져오기」는 파랑 «채움»(주 동작)이고 이건 파랑 «테두리»(거들어주는 것)다.
+        //      같은 색인데 무게가 달라 한 화면에 둘이 있어도 안 싸운다.
+        //   ⛔ 통째로 채우면(갈래 B) 가져오기 단추와 «똑같은 파란 원»이 둘이 된다.
+        //   ⛔ 진한 잉크로 채우면(갈래 C) 배경 대비 9.5:1 이라 화면에서 제일 진한 물체가 된다 —
+        //      「위로 가기」가 레시피 사진보다 눈에 띄면 안 된다.
+        background: 'var(--surface)', border: '1px solid var(--brown)',
         boxShadow: '0 6px 18px rgba(60, 45, 30, 0.18)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         animation: 'fadeUp 0.18s ease both',
       }}
     >
-      <Icon name="chevron-up" size={21} color="var(--text)" stroke={2.4} />
+      <Icon name="chevron-up" size={21} color="var(--brown)" stroke={2.4} />
     </button>
   )
 }
