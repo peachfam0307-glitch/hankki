@@ -11,7 +11,7 @@ import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 // ⛔ 2026-08-07 — 「요리 기록 남기기」 시트와 「한마디 청하기」를 이 화면에서 뺐다.
 //    앨범을 누르면 «그날 일기»로 가고(화면 이름이 「한끼 일기」다), 둘 다 «레시피 상세»에 그대로 있다.
 //    (DiaryEntrySheet · ReviewAskSheet · shouldAskReview import 제거)
-import { dateLabel } from '../utils'
+import { dateLabel, matchKo } from '../utils'
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
@@ -208,10 +208,11 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   //      내가 담아둔 것에서 찾고 싶은데 기본 레시피까지 섞여 나오고, 돌아오려면 뒤로가기를 눌러야 했다.
   //   ⭐ 이제 그 자리에서 열리고, 치는 대로 걸러진다. 전체(기본 레시피 포함) 검색은 홈 상단 검색창이 맡는다.
   //   ⚠️ 찾는 중엔 폴더를 무시한다 — 어느 폴더에 넣었는지 기억나면 안 찾는다.
+  //   ⭐ 2026-08-10 — 초성으로도 찾게 올렸다(`matchKo`). 장보기 탭은 v9.70 부터 되는데
+  //      여기는 글자를 다 쳐야 했다. **같은 기능인데 탭마다 다르면 「되나 안 되나」를 매번 시험하게 된다.**
   const query = q.trim().toLowerCase()
   const hit = (r) =>
-    [r.title, r.category, r.folder, ...(r.tags || []), ...(r.ingredients || [])]
-      .filter(Boolean).join(' ').toLowerCase().includes(query)
+    matchKo([r.title, r.category, r.folder, ...(r.tags || []), ...(r.ingredients || [])].filter(Boolean).join(' '), query)
   const list = query
     ? sorted.filter(hit)
     : folder === '전체' ? sorted

@@ -63,6 +63,8 @@ const PATHS = {
   ),
   'chevron-right': <path d="m9 6 6 6-6 6" />,
   'chevron-left': <path d="m15 6-6 6 6 6" />,
+  'chevron-up': <path d="m6 15 6-6 6 6" />, // 「맨 위로」 단추(App 의 ToTop)
+
   x: <path d="M6 6l12 12M18 6 6 18" />,
   heart: (
     <path d="M12 20s-7-4.5-9.2-9C1.3 8 3 5 6 5c2 0 3.2 1.4 4 2.5C10.8 6.4 12 5 14 5c3 0 4.7 3 3.2 6-2.2 4.5-9.2 9-9.2 9z" />

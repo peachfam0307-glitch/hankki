@@ -217,24 +217,53 @@ export default function HomeScreen() {
                우리 업데이트는 «날짜가 저절로» 여는데 앱이 아무 말도 안 했다.
                ⛔ 부제를 손으로 적어두면 낡는다 → `whatsNew()` 가 실제로 열린 것을 세어 말한다.
             ⛔ 뱃지는 «새로 열린 게 있을 때만» 뜬다 — 늘 떠 있으면 아무도 안 본다. */}
-        <button
-          className="press"
-          onClick={() => setPreview(true)}
-          data-coach="preview"
-          style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 14, background: 'var(--tease)', border: 'none', textAlign: 'left' }}
-        >
-          <span style={{ flex: '0 0 auto', display: 'inline-flex' }}><Icon name="gift" size={20} color="var(--tease-ic)" stroke={1.7} /></span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>한끼 소식</span>
-              {news.opened.length > 0 && (
-                <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
+        {/* 📐📐 **넓은 화면에선 「한끼 소식」과 「오늘 뭐 해먹지」가 좌우로 나란히 선다** (창업자 확정 2026-08-10 · 안 E)
+            📮 창업자 *"홈에사 한끼소식이랑 오징어가 너무 오른쪽이 휑해보인다.."* → 갈래 여섯을 실물로 찍어 **E** 확정.
+            ⛔ 뿌리 = 둘 다 `flex` 라 「글 왼쪽 · 화살표 오른쪽」이고, 넓어지면 **가운데만** 늘어난다.
+               🔢 손대기 전 실측(패드 1600) = 소식 빈 폭 **1364px** · 오늘 빈 폭 **1358px**.
+            ⭐ 폭 상한을 씌우지 «않는다» — 창업자 확정 안 D(v10.07) 「가로에선 앱이 화면 폭을 꽉 쓴다」와 안 부딪히게.
+            ⚠️ 이 묶음 때문에 «순서»가 바뀐다(소식 → 오늘 → 제철). 창업자가 고른 E 시안이 그 순서였다. */}
+        <div className="home-pair">
+          <button
+            className="press news-card"
+            onClick={() => setPreview(true)}
+            data-coach="preview"
+          >
+            <span style={{ flex: '0 0 auto', display: 'inline-flex' }}><Icon name="gift" size={20} color="var(--tease-ic)" stroke={1.7} /></span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {/* 🔠 크기는 인라인이 아니라 클래스로 — 넓은 화면에서 키우려면 CSS 가 이겨야 한다
+                    (인라인은 `!important` 없이는 절대 못 이긴다 · v10.08 에 실제로 당했다) */}
+                <span className="news-title">한끼 소식</span>
+                {news.opened.length > 0 && (
+                  <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
+                )}
+              </div>
+              <div className="t-sub news-sub">{newsLine}</div>
+            </div>
+            <Icon name="chevron-right" size={18} color="var(--sand)" />
+          </button>
+
+          {/* 오늘 뭐 해먹지? */}
+          {todayPick && (
+            <div className="today-card" data-coach="today">
+              <button className="today-main press" onClick={() => open(todayPick.id)}>
+                {/* ⛔⛔ 크기를 클래스로만 주면 «안 먹는다» — `Thumb` 이 `width: 100%` 를 **인라인**으로 넣기 때문.
+                    2026-08-10 에 이걸로 카드가 통째로 깨졌다(썸네일이 전폭 · 글자가 세로로 쌓임).
+                    ⭐ 그래서 인라인이 **CSS 변수를 읽게** 한다 — 넓은 화면에선 `.today-card` 가 그 변수만 바꾼다. */}
+                <Thumb recipe={todayPick} style={{ width: 'var(--today-thumb)', height: 'var(--today-thumb)', flex: '0 0 auto' }} radius={16} showDecor />
+                <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                  <div className="today-label">오늘 뭐 해먹지?</div>
+                  <div className="today-title">{todayPick.title}</div>
+                  <div className="today-reason">{today.fromFridge ? '냉장고 재료로 만들 수 있어요' : '이건 어때요?'}</div>
+                </div>
+              </button>
+              {today.list.length > 1 && (
+                <button className="today-refresh press" onClick={() => setPick((p) => p + 1)}>다른<br />추천</button>
               )}
             </div>
-            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{newsLine}</div>
-          </div>
-          <Icon name="chevron-right" size={18} color="var(--sand)" />
-        </button>
+          )}
+        </div>
 
         {/* 🗓 이번 주 레시피 — 「왜 이게 올라왔는지」를 말해주는 자리.
             창업자 2026-08-03: *"뭐라도 안내를 하고 올려야지 않나? 올린 이유를?
@@ -242,18 +271,25 @@ export default function HomeScreen() {
             → 8/2 에 레시피 12편을 «안내 없이» 부어서 유저 눈엔 그냥 목록이 늘어난 것이었다.
             ⛔ 재고가 없으면 `weekly` 가 null 이라 이 줄이 통째로 안 그려진다(빈 자리 금지).
             ⛔ 「이번 주」는 **추천이지 잠금이 아니다** — 지난 주 것도 레시피 탭에 그대로 있다. */}
+        {/* 📐 **넓은 화면에선 이 줄이 반반으로 갈린다** — 왼쪽은 글, 오른쪽은 요리 셋.
+            📮 창업자 2026-08-10 *"이번주 제철은 반반으로 나눠서(지금 한줄을) 왼쪽반은 글자 쪽(글자크기키우기)
+               오른쪽반은 이미지넣자. **(윗줄 콩국수랑 같은 위치로)**"*
+            ⭐ 「같은 위치」가 핵심이다 — 위 `home-pair` 의 오른쪽 칸(오늘 뭐 해먹지)과 **x 가 딱 맞아야**
+               두 줄이 한 판으로 읽힌다. 그래서 `1fr 1fr` ＋ 같은 `gap` 을 쓴다(auto 로 두면 카드가 오른쪽 끝에 몰린다). */}
         {weekly && (
-          <div style={{ marginTop: 14, padding: '13px 14px 12px', borderRadius: 16, background: 'var(--cream)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {/* ⚠️ `calendar` 아이콘은 우리 세트에 «없다» — 이름을 추측해 넣으면 화면에 아무것도 안 나온다.
-                  있는 것 중 「새로 왔어요」에 가장 가까운 `sparkle`. (전체 목록 = `src/components/Icon.jsx`) */}
-              <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />
-              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--brown)', letterSpacing: '0.02em' }}>이번 주 제철</div>
+          <div className="weekly-box">
+            <div className="weekly-text">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {/* ⚠️ `calendar` 아이콘은 우리 세트에 «없다» — 이름을 추측해 넣으면 화면에 아무것도 안 나온다.
+                    있는 것 중 「새로 왔어요」에 가장 가까운 `sparkle`. (전체 목록 = `src/components/Icon.jsx`) */}
+                <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />
+                <div className="weekly-kicker">이번 주 제철</div>
+              </div>
+              <div className="weekly-title">{weekly.title}</div>
+              <div className="t-sub weekly-why">{weekly.why}</div>
             </div>
-            <div style={{ fontSize: 17, fontWeight: 800, marginTop: 5 }}>{weekly.title}</div>
-            <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3, lineHeight: 1.5 }}>{weekly.why}</div>
             {/* 🗓 `weekly-row` = 밀지 않고 한 화면에 딱 맞는 격자 (2026-08-03 오징어 상자 사고 → 잘림 0) */}
-            <div className="weekly-row" style={{ marginTop: 11 }}>
+            <div className="weekly-row">
               {weekly.items.map((r) => (
                 <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
                   <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
@@ -261,23 +297,6 @@ export default function HomeScreen() {
                 </button>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* 오늘 뭐 해먹지? */}
-        {todayPick && (
-          <div className="today-card" data-coach="today">
-            <button className="today-main press" onClick={() => open(todayPick.id)}>
-              <Thumb recipe={todayPick} style={{ width: 72, height: 72, flex: '0 0 auto' }} radius={16} showDecor />
-              <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                <div className="today-label">오늘 뭐 해먹지?</div>
-                <div className="today-title">{todayPick.title}</div>
-                <div className="today-reason">{today.fromFridge ? '냉장고 재료로 만들 수 있어요' : '이건 어때요?'}</div>
-              </div>
-            </button>
-            {today.list.length > 1 && (
-              <button className="today-refresh press" onClick={() => setPick((p) => p + 1)}>다른<br />추천</button>
-            )}
           </div>
         )}
 

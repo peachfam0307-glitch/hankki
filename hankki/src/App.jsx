@@ -8,6 +8,8 @@ import { fetchLinkRecipe } from './linkReader'
 import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
 import TimerBar from './components/TimerBar'
+import Icon from './components/Icon'
+import { useTimer } from './timer'
 import Onboarding, { needsOnboarding } from './components/Onboarding'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
@@ -409,6 +411,7 @@ export default function App() {
         {/* ⚠️ 하단바·토스트 «앞»에 둔다 — 셋 다 fixed 라 뒤엣것이 위에 온다.
             막대가 하단바를 뚫고 나오면 안 된다. */}
         <ScrollHint dep={`${tab}:${stack.length}`} />
+        <ToTop dep={`${tab}:${stack.length}`} hasNav={!top} />
 
         {!top && <BottomNav active={tab} onChange={go} onImport={() => push({ name: 'import' })} />}
         <TimerBar bottom={top ? 'calc(84px + var(--safe-bottom))' : 'calc(66px + var(--safe-bottom))'} />
@@ -524,6 +527,82 @@ function ScrollHint({ dep }) {
         />
       ))}
     </>
+  )
+}
+
+// ⬆️⬆️ ToTop — 한참 굴러 내려오면 오른쪽 아래에 「위로」 단추가 뜬다.
+//   (창업자 2026-08-10 *"레시피(전체, 모아보기)에 스크롤이 기니까 위로 바로가는 버튼? 하나 만들면 좋겠어."*)
+//   ⭐ **왜 화면마다 안 붙이고 여기 하나인가** = 바로 위 `ScrollHint` 와 같은 이유다.
+//      `.screen` 이 열 곳에 흩어져 있어 한 곳만 붙이면 다음 화면에서 또 없다.
+//      **맨 위 `.screen` 을 찾아** 한 단추가 따라다닌다 → 레시피·레꾸자랑·장보기·홈이 다 같이 된다.
+//      ⛔ 레시피 탭에만 넣으면 목록이 긴 다른 탭에서 「여긴 왜 안 돼?」가 된다.
+//   ⭐ 안 넘치면 아예 안 그린다 · 조금 굴린 정도로도 안 뜬다(화면 하나 넘게 내려와야).
+//     짧은 화면엔 아무 티도 안 나고, 단추가 내용을 가리는 시간도 짧다.
+//   ⚠️ 꾸미기 판이 열렸으면 안 그린다 — 판은 Portal 이라 화면을 통째로 덮는다(`ScrollHint` 와 같은 함정).
+//   ⚠️ 타이머 바가 떠 있으면 그 위로 비켜 앉는다(`.timer-bar` 는 좌우 12px 전폭이라 그냥 두면 겹친다).
+//   ⚠️ 표식 `data-totop` = 재현 검사가 «실제로 그려졌나»를 집는 자리.
+function ToTop({ dep, hasNav }) {
+  const [el, setEl] = useState(null) // 지금 굴러갈 화면 · null = 안 보임
+  const { timer } = useTimer()
+  useEffect(() => {
+    let raf = 0
+    const measure = () => {
+      if (document.querySelector('.decor-editor')) { setEl(null); return }
+      const list = document.querySelectorAll('.app-frame .screen')
+      const s = list[list.length - 1] // 맨 위 화면 = DOM 에서 마지막
+      if (!s) { setEl(null); return }
+      // 「한 화면 넘게 내려왔나」로 가른다 — 조금 굴렸을 뿐인데 뜨면 방해만 된다.
+      const 문턱 = Math.max(320, s.clientHeight * 0.9)
+      setEl(s.scrollHeight > s.clientHeight + 8 && s.scrollTop > 문턱 ? s : null)
+    }
+    const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
+    // ⚠️ `scroll` 은 bubble 을 안 한다 → **capture** 로 잡아야 어느 화면이 굴러도 걸린다.
+    document.addEventListener('scroll', onScroll, true)
+    window.addEventListener('resize', onScroll)
+    const mo = new MutationObserver(onScroll) // 꾸미기 판·온보딩은 body 직계로 뜬다
+    mo.observe(document.body, { childList: true })
+    const timers = [0, 140, 420].map((ms) => setTimeout(measure, ms))
+    return () => {
+      document.removeEventListener('scroll', onScroll, true)
+      window.removeEventListener('resize', onScroll)
+      mo.disconnect()
+      timers.forEach(clearTimeout)
+      cancelAnimationFrame(raf)
+    }
+  }, [dep])
+  if (!el) return null
+  // 타이머 바와 같은 바닥값(App 이 TimerBar 에 주는 값) ＋ 타이머가 떠 있으면 그 높이만큼 더
+  // ⚠️ 타이머 바가 쓰는 66/84 를 그대로 쓰면 하단바까지 **2px** 밖에 안 남았다(실측).
+  //    바는 하단바에 붙는 게 자연스럽지만 «동그란 단추»는 띄워야 떠 있는 것으로 읽힌다 → ＋8px.
+  const 바닥 = (hasNav ? 74 : 92) + (timer ? 70 : 0)
+  return (
+    <button
+      data-totop="1"
+      className="press"
+      aria-label="맨 위로"
+      onClick={() => {
+        // ♿ 「움직임 줄이기」를 켠 사람에겐 부드럽게 흐르지 않고 바로 올라간다
+        const 부드럽게 = !matchMedia('(prefers-reduced-motion: reduce)').matches
+        el.scrollTo({ top: 0, behavior: 부드럽게 ? 'smooth' : 'auto' })
+      }}
+      style={{
+        position: 'fixed', right: 16, bottom: `calc(${바닥}px + var(--safe-bottom))`,
+        width: 44, height: 44, borderRadius: 999, zIndex: 45,
+        // 🎨 색 = 창업자 확정 2026-08-10 (갈래 넷을 테마 셋에 얹어 찍어 고름 · `_shot-위로단추색-0810.mjs`)
+        //   ⭐ 고른 이유는 «대비»가 아니라 «위계»다 — 우리 앱에서 파랑은 「누르는 것」이라는 뜻인데,
+        //      하단바 「가져오기」는 파랑 «채움»(주 동작)이고 이건 파랑 «테두리»(거들어주는 것)다.
+        //      같은 색인데 무게가 달라 한 화면에 둘이 있어도 안 싸운다.
+        //   ⛔ 통째로 채우면(갈래 B) 가져오기 단추와 «똑같은 파란 원»이 둘이 된다.
+        //   ⛔ 진한 잉크로 채우면(갈래 C) 배경 대비 9.5:1 이라 화면에서 제일 진한 물체가 된다 —
+        //      「위로 가기」가 레시피 사진보다 눈에 띄면 안 된다.
+        background: 'var(--surface)', border: '1px solid var(--brown)',
+        boxShadow: '0 6px 18px rgba(60, 45, 30, 0.18)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        animation: 'fadeUp 0.18s ease both',
+      }}
+    >
+      <Icon name="chevron-up" size={21} color="var(--brown)" stroke={2.4} />
+    </button>
   )
 }
 

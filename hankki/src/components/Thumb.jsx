@@ -14,7 +14,9 @@ import { graphemes } from '../utils'
 // 색·개성은 꾸미기(사용자 배경/스티커)가 담당한다. (여기 색 넣으면 꾸미기 의미가 죽음)
 // 테마별로 화이트 톤이 달라야 함(크림=웜/블루=쿨/다크=톤다운) → CSS 토큰 --thumb 사용.
 
-export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '2rem', iconSize = '56%', showDecor = false }) {
+// `className` = 크기를 «CSS 로» 정하고 싶을 때 쓴다 (넓은 화면에서 키우려면 인라인이면 못 이긴다).
+// ⚠️ 안에서 쓰는 움직임 클래스(`anim`)와 «합쳐서» 넘긴다 — 덮어쓰면 움직이는 배경이 죽는다.
+export default function Thumb({ recipe, radius = 16, ratio, style, className = '', emojiSize = '2rem', iconSize = '56%', showDecor = false }) {
   const [failed, setFailed] = useState(false)
   const thumb = recipe.thumb || (recipe.image ? 'photo' : 'icon') // 예전 레시피 호환
   const showImg = thumb === 'photo' && recipe.image && !failed
@@ -98,7 +100,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, emojiSize = '
   const decorated = showDecor && recipe.decor?.length > 0
 
   return (
-    <div className={anim} style={base}>
+    <div className={[anim, className].filter(Boolean).join(' ')} style={base}>
       {inner}
       {decorated && <DecorLayer items={recipe.decor} />}
     </div>
