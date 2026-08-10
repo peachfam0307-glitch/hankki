@@ -38,6 +38,11 @@ const items = (s) => [...s.matchAll(/'([a-z0-9_]+)'/gi)].map((m) => m[1])
 function drawer() {
   const out = []
   for (const line of read('src/components/Stickers.jsx').split('\n')) {
+    // ⛔⛔ 주석 줄은 건너뛴다 — 2026-08-10 에 «유령 그룹»이 하나 떴다.
+    //    「⛔ 자동 공개 전날 검수는 절대원칙 → … --on 2026-09-01」 이라고 «적어둔 주석»이
+    //    날짜를 갖고 있어서 「? 탭 · (이름 없음) · 0컷」 으로 잡혔다.
+    //    📌 이 도구는 8/31 검수의 «유일한 눈»이다 — 없는 줄을 만들면 그날 그걸 찾느라 헤맨다.
+    if (/^\s*(\/\/|\*|\/\*)/.test(line)) continue
     const from = line.match(/from:\s*'(\d{4}-\d{2}-\d{2})'/)
     if (!from) continue
     const label = line.match(/label:\s*'([^']*)'/)
