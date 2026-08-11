@@ -29,14 +29,18 @@ import { pantryScore } from '../pantryMatch'
 // 🗓🍳 「이번 주」 박스 — 제철 줄과 우리집레시피 줄이 «똑같이» 생겼다.
 //   ⛔ 마크업을 두 번 적지 않는다 — 그러면 한쪽만 고치는 사고가 난다(2026-08-11 신설).
 //   ⚠️ HomeScreen «밖»에 둔다. 안에 정의하면 렌더마다 새 컴포넌트가 되어 리마운트가 일어난다.
-function WeekBox({ w, 기본, open }) {
+function WeekBox({ w, 기본, open, img }) {
   return (
     <div className="weekly-box">
       <div className="weekly-text">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {/* ⚠️ `calendar` 아이콘은 우리 세트에 «없다» — 이름을 추측해 넣으면 화면에 아무것도 안 나온다.
-              있는 것 중 「새로 왔어요」에 가장 가까운 `sparkle`. (전체 목록 = `src/components/Icon.jsx`) */}
-          <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />
+              있는 것 중 「새로 왔어요」에 가장 가까운 `sparkle`. (전체 목록 = `src/components/Icon.jsx`)
+              🍳 우리집레시피는 «우리 스티커»로 가른다 — 두 박스가 같은 아이콘이면 구분이 안 된다.
+                 ⛔ 유니코드 이모지는 안 쓴다(우리 스티커만). */}
+          {img
+            ? <img src={img} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />
+            : <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />}
           {/* ⛔ 여기 「이번 주 제철」이 «글자로 박혀» 있었다 — 제철이 아닌 주도 그렇게 떴다.
               (2026-09-28 「추석 남은 음식」이 실제로 그랬고, 52주 표 기준 17주가 제철이 아니다) */}
           <div className="weekly-kicker">{w.kicker || 기본}</div>
@@ -315,7 +319,7 @@ export default function HomeScreen() {
         {(weekly || homemade) && (
           <div className={`week-pair${weekly && homemade ? ' two' : ''}`}>
             {weekly && <WeekBox w={weekly} 기본="이번 주 제철" open={open} />}
-            {homemade && <WeekBox w={homemade} 기본="우리집레시피" open={open} />}
+            {homemade && <WeekBox w={homemade} 기본="우리집레시피" open={open} img={uiGomHeart} />}
           </div>
         )}
 
