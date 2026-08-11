@@ -312,6 +312,8 @@ function Curation() {
     coupang: 'https://www.coupang.com/np/search?q={q}',
     oasis: 'https://www.oasis.co.kr/product/search?keyword={q}',
     naver: 'https://search.shopping.naver.com/search/all?query={q}',
+    // 🛒 2026-08-11 — curation.js 의 같은 값과 짝. 정확한 주소 미확인(창업자 검수 때 같이 본다).
+    kurly: 'https://www.kurly.com/search?sword={q}',
   }
   // 쇼핑몰 검색으로 연결. (설치 PWA 안에서 외부 '앱' 강제 열기는 브라우저 제어라 불안정 →
   //  쿠팡 앱 직접 열기는 정식 TWA 출시 때 다시. 지금은 웹 검색이 안정적.)
@@ -327,6 +329,7 @@ function Curation() {
   const mallLabel = (it) => {
     if (it.mall === 'coupang') return '쿠팡'
     if (it.mall === 'oasis') return '오아시스'
+    if (it.mall === 'kurly') return '컬리'
     const u = it.url || ''
     // ⭐ 한살림만 「조합원만」을 덧붙인다 — 창업자 2026-08-03
     //   *"한살림템을 사러가기 누르면 안내해주는건 어때?"* → *"너무 복잡한가..."*
@@ -368,27 +371,32 @@ function Curation() {
               ⛔ 자르지 «않는다». 39개를 재보니 **가장 짧은 설명도 41자**(가운데 74 · 최장 127)라
                  한 줄에 들어가는 게 하나도 없고, 이 설명이 바로 큐레이션의 값어치다
                  (*"남편이 콩국수를 좋아해서…"*). 잘라내면 그냥 상품 목록이 된다.
-              ⭐ 그래서 «접어만» 둔다 — 훑을 땐 짧고, 궁금하면 눌러서 한 글자도 안 빠진 전문을 본다. */}
-          <button
-            className="press"
-            onClick={() => setOpenCard((s) => ({ ...s, [it.name]: !s[it.name] }))}
-            style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0 }}
-          >
-            <span
-              className="t-sub"
-              style={{
-                display: openCard[it.name] ? 'block' : '-webkit-box',
-                WebkitLineClamp: openCard[it.name] ? 'none' : 1,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                fontSize: 13,
-                lineHeight: 1.58,
-              }}
+              ⭐ 그래서 «접어만» 둔다 — 훑을 땐 짧고, 궁금하면 눌러서 한 글자도 안 빠진 전문을 본다.
+              ⛔⛔ [2026-08-11] `benefit` 이 «없으면» 통째로 안 그린다 — 빈 줄 + 「더보기」(눌러도 아무것도
+                 안 나옴)는 고장으로 보인다. 설명 없는 72개(창업자 *"설명없는것도 넣어도 돼"*)가 이 경우다.
+                 지어낸 문구를 채우지 않는다 — 「18년차 주부가 써본 것」이 아니면 값어치가 없다(규칙 문서). */}
+          {it.benefit && (
+            <button
+              className="press"
+              onClick={() => setOpenCard((s) => ({ ...s, [it.name]: !s[it.name] }))}
+              style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0 }}
             >
-              {it.benefit}
-            </span>
-            {!openCard[it.name] && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brown)' }}>더보기</span>}
-          </button>
+              <span
+                className="t-sub"
+                style={{
+                  display: openCard[it.name] ? 'block' : '-webkit-box',
+                  WebkitLineClamp: openCard[it.name] ? 'none' : 1,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  fontSize: 13,
+                  lineHeight: 1.58,
+                }}
+              >
+                {it.benefit}
+              </span>
+              {!openCard[it.name] && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brown)' }}>더보기</span>}
+            </button>
+          )}
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 11 }}>

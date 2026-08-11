@@ -33,6 +33,224 @@ export const CURATION = [
       { name: '죽장연 전통된장', benefit: '국산콩과 천일염만으로 담가 깊고 진한 맛이 나요. 맛이 조금 진한 편이에요', q: '죽장연 전통된장', mall: 'coupang' },
       { name: '맥된장', benefit: '국산콩 메주 96%, 천일염 4%로만 만들어 성분이 좋아요. 가격도 합리적이라 손이 자주 가요. 특히 백합된장과 궁합이 좋아 섞어 쓰면 더 맛있어요', q: '맥된장', mall: 'coupang', url: 'https://www.coupang.com/vp/products/160227399?itemId=15032545519&vendorItemId=82255154528' },
       { name: '백합된장', benefit: '수녀님들이 메주·물·소금만으로 정성껏 만들었어요. 찌개도 좋지만 국을 끓이면 구수한 맛이 확 살아나요. 맥된장과 섞어 쓰면 궁합이 좋아요', q: '백합된장', url: 'http://www.spcfood.co.kr/product/product_view.php?ProductSeqNo=8' },
+      { name: '미소된장', matches: [], q: '미소된장', tag: '미소된장', mall: 'naver', neu: true },
+    ],
+  },
+  {
+    // 🌯 2026-08-11 창업자 자료. `cu_burrito` 는 이미 있었는데 아무 갈래도 안 쓰고 있었다.
+    cat: '또띠아', group: '면·밥', emoji: '🌯', icon: 'cu_burrito',
+    items: [
+      { name: '자연드림 담백한우리밀또띠아', matches: ['또띠아', '또띠야', '토르티야'], tag: '또띠아', benefit: '우리밀이라 담백하고 부드러워요. 남은 반찬 올려 랩으로 싸먹거나 피자도우로도 써요.', q: '자연드림 담백한 우리밀 또띠아', neu: true },
+    ],
+  },
+  {
+    cat: '낫또', group: '두부·콩', emoji: '🫘', icon: 'cu_tofu',
+    items: [
+      { name: '자연드림 낫또', matches: ['낫또', '낫토'], tag: '낫또', benefit: '낫또를 썩 좋아하진 않는데 몸에 좋다고 해서 브랜드별로 거의 먹어봤어요. 그중에 자연드림 낫또가 제 입맛에는 제일 괜찮았어요. 저같은 낫또 초심자추천.', q: '자연드림 낫또', neu: true },
+    ],
+  },
+  {
+    cat: '밥친구', group: '면·밥', emoji: '🍚', icon: 'cu_maesaengi',
+    items: [
+      { name: '자연드림 밥꾸러기 해물', matches: [], tag: '밥친구', benefit: '아침밥 해줄거 없을 때 계란 스크램블해서 요거 뿌려 참기름 통깨 주먹밥 만들어 해결했었어요. 구비해두면 좋을 추천템', q: '자연드림 밥꾸러기 해물', neu: true },
+    ],
+  },
+  {
+    cat: '반찬', group: '반찬', emoji: '🥬', icon: 'cu_gochujang',
+    items: [
+      { name: '자연드림 꼬들단무지', matches: ['단무지'], tag: '단무지', benefit: '저희가족은 꼬들 쫀득한 식감을 좋아하는데 이 단무지 식감이 꼬들꼬들해서 좋아해요. 고춧가루 살짝 참기름 통깨만 넣으면 간단한 반찬으로 좋아요.', q: '자연드림 꼬들단무지', neu: true },
+      { name: '한살림 황태채무침', matches: [], tag: '반찬', benefit: '제가 좋아하는데 혼자 먹자고 집에서 하기 좀 그래서 가끔 구입해서 먹는 아이템. 간간하지만 양념이 맛있어서 좋아해요', q: '한살림 황태채무침', url: HANSALIM_APP, neu: true },
+      { name: '한살림 옥수수병조림', matches: ['옥수수'], tag: '병조림', benefit: 'GMO는 가급적이면 피하고 싶어서 찾은 정착템. 그냥 먹어도 맛있어요. 페퍼런치할 때나 볶아서 밥에 뿌려도 주고, 콘치즈로도 먹고 추천해요.', q: '한살림 옥수수병조림', url: HANSALIM_APP, neu: true },
+    ],
+  },
+  {
+    cat: '간편식', group: '간편식·간식', emoji: '🍲', icon: 'cu_curry',
+    items: [
+      { name: '한살림 곤드레나물밥', matches: [], tag: '즉석밥', benefit: '곤드레나물부터 양념까지 다 국산재료라 건강한 한끼 먹고 싶을 때 구입해요.', q: '한살림 곤드레나물밥', url: HANSALIM_APP, neu: true },
+      { name: '한살림 섬진강재첩국', matches: ['재첩'], tag: '재첩국', benefit: '재첩은 쉽게 구하기 어려우니까 시원한 국물이 먹고싶을 때 구비해놓고 먹어요 냉동이라 보관도편하고 아이도 잘 먹어서 좋아요', q: '한살림 섬진강 재첩국', url: HANSALIM_APP, neu: true },
+      { name: '한살림 물만두', matches: ['물만두'], tag: '만두', benefit: '떡국에도 넣고 만둣국 끓일 때도 좋고, 물만두로 간단히 조리해 먹기도 좋아요. 첨가물거의 없고 전재료 국산이라 자극적인 맛은 아니지만 냉동실에 꾸준히 있는 아이템.', q: '한살림 물만두', url: HANSALIM_APP, neu: true },
+      { name: '자연드림 꼬꼬너겟', matches: [], tag: '냉동', benefit: '아이가 좋아해서 사두는 템. 에어프라이어에 돌리면 바삭하고, 반찬 없을 때 한 접시 나와요.', q: '자연드림 꼬꼬너겟', neu: true },
+    ],
+  },
+  {
+    cat: '떡', group: '면·밥', emoji: '🍡', icon: 'cu_nurungji',
+    items: [
+      { name: '칠갑농산 우리쌀 떡국떡', matches: [], q: '칠갑농산 우리쌀 떡국떡', mall: 'kurly', neu: true },
+      { name: '창억떡', matches: [], q: '창억떡', mall: 'kurly', neu: true },
+      { name: '더바른 삼색꿀떡 (냉동)', matches: [], q: '더바른 삼색꿀떡', mall: 'coupang', neu: true },
+      { name: '홍블랑푸드 밤·옥수수설기 · 증편', matches: [], q: '홍블랑푸드 밤 옥수수설기 증편', neu: true },
+    ],
+  },
+  {
+    cat: '즉석밥', group: '면·밥', emoji: '🍚', icon: 'cu_nurungji',
+    items: [
+      { name: '치밀 유기농 골드퀸 현미밥 간편 건강 즉석밥', matches: [], q: '치밀 유기농 골드퀸 현미밥 즉석밥', mall: 'coupang', neu: true },
+      { name: '빅마마 이혜정의 꽉찬 수제 영양밥 · 전복 바다 영양밥', matches: [], q: '빅마마 이혜정의 꽉찬 수제 영양밥', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '빵', group: '베이커리', emoji: '🍞', icon: 'cu_pizza',
+    items: [
+      { name: '아우어베이커리 오리지널 치아바타', matches: [], q: '아우어베이커리 오리지널 치아바타', mall: 'kurly', neu: true },
+      { name: '아르토스베이커리 통밀식빵', matches: [], q: '아르토스베이커리 통밀식빵', mall: 'kurly', neu: true },
+      { name: '타르틴베이커리 슬랩 · 올리브푸가스', matches: [], q: '타르틴베이커리 슬랩', mall: 'kurly', neu: true },
+      { name: '리치몬드 밤밤식빵', matches: [], q: '리치몬드 밤밤식빵', mall: 'kurly', neu: true },
+      { name: '바비브레드 까만쫀득크런치', matches: [], q: '바비브레드 까만쫀득크런치', mall: 'kurly', neu: true },
+      { name: '포비베이글 호두크림치즈', matches: [], q: '포비베이글 호두크림치즈', tag: '베이글', mall: 'coupang', neu: true },
+      { name: '연세우유 생크림 우유롤', matches: [], q: '연세우유 생크림 우유롤', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '디저트', group: '베이커리', emoji: '🍰', icon: 'cu_pizza',
+    items: [
+      { name: '페이브 레드블랜드', matches: [], q: '페이브 레드블랜드', mall: 'kurly', neu: true },
+      { name: '나폴레옹 쇼콜라비스큐슈니탱', matches: [], q: '나폴레옹 쇼콜라비스큐슈니탱', mall: 'kurly', neu: true },
+    ],
+  },
+  {
+    // ⭐ 「데본 클로티드크림」은 빵에 발라 먹는 것 → 잼과 같은 칸
+    cat: '잼·스프레드', group: '양념', emoji: '🍯', icon: 'cu_sauce',
+    items: [
+      { name: '데본 클로티드크림', matches: [], q: '데본 클로티드크림', mall: 'kurly', neu: true },
+      { name: '딸기 간편 파우치 무설탕 저당 저칼로리 알룰로스 딸기잼', matches: [], q: '딸기 알룰로스 딸기잼', tag: '딸기잼', mall: 'coupang', neu: true },
+      { name: '포비 무화과 스프레드', matches: [], q: '포비 무화과 스프레드', tag: '무화과잼', mall: 'coupang', neu: true },
+      { name: '마야항아리 기버터', matches: [], q: '마야항아리 기버터', tag: '기버터', neu: true },
+    ],
+  },
+  {
+    cat: '시즈닝', group: '양념', emoji: '🧂', icon: 'cu_gochugaru',
+    items: [
+      { name: '밍글 바비큐시즈닝', matches: [], q: '밍글 바비큐시즈닝', tag: '시즈닝', mall: 'kurly', neu: true },
+    ],
+  },
+  {
+    cat: '유제품', group: '유제품·간식', emoji: '🧀', icon: 'cu_soymilk',
+    items: [
+      { name: '알라 하바티치즈', matches: [], q: '알라 하바티치즈', tag: '치즈', mall: 'kurly', neu: true },
+      { name: '연세우유 소화가잘되는 우유', matches: [], q: '연세우유 소화가잘되는 우유', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '요거트', group: '유제품·간식', emoji: '🥛', icon: 'cu_soymilk',
+    items: [
+      { name: '강훈목장 수제요거트 딸기', matches: [], q: '강훈목장 수제요거트 딸기', mall: 'coupang', neu: true },
+      { name: '또요 또먹는 플레인 요거트', matches: [], q: '또요 또먹는 플레인 요거트', mall: 'coupang', neu: true },
+      { name: '임실치즈마을 요거트 더 달콤 스트로베리', matches: [], q: '임실치즈마을 요거트 스트로베리', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '커피·차', group: '유제품·간식', emoji: '☕', icon: 'cu_soymilk',
+    items: [
+      { name: '매일 마이카페라떼 마일드', matches: [], q: '매일 마이카페라떼 마일드', mall: 'coupang', neu: true },
+      { name: '콜롬비아 디카페인 싱글 원두커피', matches: [], q: '콜롬비아 디카페인 싱글 원두커피', mall: 'coupang', neu: true },
+      { name: '평창다원 유기농 타타리메밀차', matches: [], q: '평창다원 유기농 타타리메밀차', tag: '메밀차', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '즉석식품', group: '간편식·간식', emoji: '🍱', icon: 'cu_curry',
+    items: [
+      { name: '빠르게한끼 오리엔탈연두부', matches: [], q: '빠르게한끼 오리엔탈연두부', mall: 'kurly', neu: true },
+      { name: '차돌듬뿍묵은지볶음밥', matches: [], q: '차돌듬뿍묵은지볶음밥', mall: 'kurly', neu: true },
+      { name: 'cj주부 초밥왕', matches: [], q: 'cj주부 초밥왕', mall: 'kurly', neu: true },
+      { name: '비비고 남도떡갈비', matches: [], q: '비비고 남도떡갈비', mall: 'coupang', neu: true },
+      { name: '심플잇 김치볶음밥 포켓누룽지', matches: [], q: '심플잇 김치볶음밥 포켓누룽지', mall: 'coupang', neu: true },
+      { name: '누들핏 어묵탕맛', matches: [], q: '누들핏 어묵탕맛', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '국·탕', group: '간편식·간식', emoji: '🍲', icon: 'cu_stock_seafood',
+    items: [
+      { name: '신선설농탕 고기설렁탕', matches: [], q: '신선설농탕 고기설렁탕', tag: '설렁탕', mall: 'kurly', neu: true },
+      { name: '더오담 김치콩비지찌개', matches: [], q: '더오담 김치콩비지찌개', mall: 'coupang', neu: true },
+      { name: '오모가리 수제 김치찌개', matches: [], q: '오모가리 수제 김치찌개', mall: 'coupang', neu: true },
+      { name: '설성목장 한우 사골 곰탕 스틱', matches: [], q: '설성목장 한우 사골 곰탕 스틱', tag: '곰탕', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '만두', group: '간편식·간식', emoji: '🥟', icon: 'cu_curry',
+    items: [
+      { name: '굽네 닭가슴살 만두', matches: [], q: '굽네 닭가슴살 만두', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '전·부침', group: '간편식·간식', emoji: '🥞', icon: 'cu_gochujang',
+    items: [
+      { name: '부침명장 해물파전 · 김치전', matches: [], q: '부침명장 해물파전', mall: 'kurly', neu: true },
+    ],
+  },
+  {
+    cat: '피자·냉동간편식', group: '간편식·간식', emoji: '🍕', icon: 'cu_pizza',
+    items: [
+      { name: '톰볼라 버섯피자', matches: [], q: '톰볼라 버섯피자', mall: 'kurly', neu: true },
+      { name: '우리별피자 작은사이즈 · 고르곤졸라·불고기', matches: [], q: '우리별피자 작은사이즈', neu: true },
+    ],
+  },
+  {
+    cat: '조미김·해조', group: '간편식·간식', emoji: '🌿', icon: 'cu_maesaengi',
+    items: [
+      { name: '포프리 100% 엑스트라버진으로 구운 올리브 김', matches: [], q: '포프리 엑스트라버진 올리브 김', tag: '조미김', mall: 'coupang', neu: true },
+      { name: '바다숲뿌려먹는 감태랑 해물이랑', matches: [], q: '바다숲 뿌려먹는 감태랑 해물이랑', tag: '후리카케', mall: 'kurly', neu: true },
+    ],
+  },
+  {
+    cat: '김치', group: '반찬', emoji: '🥬', icon: 'cu_gochujang',
+    items: [
+      { name: '풀무원 들기름 볶음김치', matches: [], q: '풀무원 들기름 볶음김치', mall: 'coupang', neu: true },
+      { name: '종가 석박지', matches: [], q: '종가 석박지', mall: 'coupang', neu: true },
+      { name: '대복 포기김치 5kg', matches: [], q: '대복 포기김치', mall: 'coupang', neu: true },
+      { name: '맘쏙김치 (100%국산) 경상도 국밥집 겉절이', matches: [], q: '맘쏙김치 경상도 국밥집 겉절이', tag: '겉절이', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '채소', group: '채소·과일', emoji: '🥦', icon: 'cu_oliveoil',
+    items: [
+      { name: '국내산 베이비 브로콜리', matches: [], q: '국내산 베이비 브로콜리', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '버섯', group: '채소·과일', emoji: '🍄', icon: 'cu_maesaengi',
+    items: [
+      { name: '국내산 무농약인증 생목이버섯 · 건목이버섯 · 건백목이버섯', matches: [], q: '국내산 무농약 목이버섯', tag: '목이버섯', mall: 'coupang', neu: true },
+      { name: '하진이네버섯뜰에 건조 흰목이버섯', matches: [], q: '하진이네버섯뜰에 건조 흰목이버섯', tag: '흰목이버섯', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '샐러드', group: '채소·과일', emoji: '🥗', icon: 'cu_oliveoil',
+    items: [
+      { name: '샐러딩 야키토리 샐러드', matches: [], q: '샐러딩 야키토리 샐러드', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '참치', group: '정육·수산', emoji: '🐟', icon: 'cu_eomuk',
+    items: [
+      { name: '리오마레 일반 · 올리브 · 샐러드', matches: [], q: '리오마레 참치', neu: true },
+      { name: '퍼시피카나튜나(워터참치)', matches: [], q: '퍼시피카나튜나 워터참치', neu: true },
+      { name: '동원 참치인 워터', matches: [], q: '동원 참치인 워터', neu: true },
+    ],
+  },
+  {
+    cat: '수산물', group: '정육·수산', emoji: '🐙', icon: 'cu_eomuk',
+    items: [
+      { name: '하남쭈꾸미', matches: [], q: '하남쭈꾸미', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '소고기', group: '정육·수산', emoji: '🥩', icon: 'cu_pork',
+    items: [
+      { name: '설성목장 무항생제 한우 1등급 이상 목심 샤브샤브용 (냉동)', matches: [], q: '설성목장 무항생제 한우 목심 샤브샤브용', tag: '샤브샤브', mall: 'coupang', neu: true },
+    ],
+  },
+  {
+    cat: '닭가슴살', group: '정육·수산', emoji: '🍗', icon: 'cu_pork',
+    items: [
+      { name: '청정원 그레인보우 닭가슴살', matches: [], q: '청정원 그레인보우 닭가슴살', mall: 'kurly', neu: true },
+    ],
+  },
+  {
+    cat: '달걀', group: '정육·수산', emoji: '🥚', icon: 'cu_pork',
+    items: [
+      { name: '요리란 난백', matches: [], q: '요리란 난백', tag: '난백', mall: 'kurly', neu: true },
+      { name: '자연애찬 반숙이, 6구', matches: [], q: '자연애찬 반숙이', tag: '반숙란', mall: 'coupang', neu: true },
     ],
   },
   {
@@ -51,6 +269,8 @@ export const CURATION = [
     cat: '액젓', group: '양념', emoji: '🐟', icon: 'cu_aekjeot',
     items: [
       { name: '와촌식품 초피액젓', benefit: '국물요리 간은 거의 이걸로 해요. 수도 없이 사서 쓰는 템이에요. 감칠맛이 좋아 국·찌개·나물무침 어디에나 잘 맞아요', q: '와촌식품 초피액젓', url: 'https://wachonfood.co.kr/' },
+      { name: '자연드림 참새우젓', matches: ['새우젓'], tag: '새우젓', benefit: '새우젓을 쓸일이 많이 없는데 가끔 필요할 때 있잖아요. 작은용량이라 냉동실 넣어두고, 필요할 때 요긴하게 사용하고 있어요.', q: '자연드림 참새우젓', neu: true },
+      { name: '한살림 양념낙지젓', matches: ['낙지젓'], tag: '낙지젓', benefit: '낙지젓은 사실 호불호가 있는데 이건 비리지 않고 양념이 맛있어서 밥반찬으로 자주 사요.', q: '한살림 양념낙지젓', url: HANSALIM_APP, neu: true },
     ],
   },
   {
@@ -63,6 +283,8 @@ export const CURATION = [
     cat: '설탕', group: '양념', emoji: '🍬', icon: 'cu_sugar',
     items: [
       { name: '아우노슈가', benefit: '성분 좋은 설탕이에요. 많이 달지 않아서 일반 설탕보다 조금 넉넉히 넣어도 부담 없어요. 저는 요리에 두루 이걸 써요', q: '아우노슈가', mall: 'coupang' },
+      { name: '자연드림 우리밀 올리고당', matches: ['올리고당'], tag: '올리고당', benefit: '자연드림 올리고당은 어느요리나 무난하게 잘 어울려요. 꽤 오래사용했던 템.', q: '자연드림 우리밀 올리고당', neu: true },
+      { name: '아우노슈가 올리고당', matches: [], q: '아우노슈가 올리고당', tag: '올리고당', mall: 'coupang', neu: true },
     ],
   },
   {
@@ -109,6 +331,7 @@ export const CURATION = [
     items: [
       { name: '문어 비엔나', matches: ['비엔나', '소시지'], icon: 'cu_ham_vienna', benefit: '햄·소시지는 첨가물이 많아 쉽게 손이 안 가는데, 이건 성분이 괜찮아 오아시스 장볼 때마다 하나씩 꼭 담는 단골템이에요. 살짝 데쳐 그냥 먹어도 맛있고 모양도 귀여워 아이들이 좋아해요', q: '문어 비엔나', mall: 'oasis' },
       { name: '위드잇 슬라이스햄 슬림', matches: ['슬라이스햄'], icon: 'cu_ham_slice', benefit: "첨가물 없는 '착한 스팸' 컨셉이에요. (스팸의 찐한 맛을 기대하면 조금 아쉬울 수 있어요) 데리야끼소스에 살짝 구워 무스비에 넣으면 아이 간편식으로 좋아요. 저희 애는 2주 동안 하루 한 개씩 무스비로 먹었어요", q: '위드잇 슬라이스햄 슬림', mall: 'coupang' },
+      { name: '베이컨리얼리즘 무설탕 삼겹 베이컨', matches: [], q: '베이컨리얼리즘 무설탕 삼겹 베이컨', tag: '베이컨', mall: 'coupang', neu: true },
     ],
   },
   {
@@ -129,6 +352,10 @@ export const CURATION = [
     items: [
       { name: '오월햇살 우리밀 유기농국수', matches: ['소면', '국수'], benefit: '성분 좋고 쫄깃해서 잔치국수·비빔국수 어디든 편하게 써요. 급할 땐 삶아서 냉면육수만 부어도 시원한 한 그릇 완성!', q: '오월햇살 우리밀 유기농 국수', mall: 'coupang' },
       { name: '보보리쿡시 보리면', matches: ['보리면'], benefit: '밀가루 0%라 속이 편해요. 삶지 않고 익혀내는 방식이라 쫄깃하고 씹을수록 향이 올라와요. 쯔유와 특히 잘 어울려요', q: '보보리쿡시 보리면' },
+      { name: '자연드림 건자른당면', matches: ['당면'], tag: '당면', benefit: '잡채할 때 자른당면이 훨씬 편해요. 삶는시간도 짧고 아이들 먹기도 좋아요.', q: '자연드림 건자른당면', neu: true },
+      { name: '한살림 납작당면', matches: ['납작당면', '당면'], tag: '납작당면', benefit: '납작당면은 국물요리에 넣으면 쫄깃하고 잘 붇지않아서 좋아요. 부대찌개나 밀푀유나베에 넣어요.', q: '한살림 납작당면', url: HANSALIM_APP, neu: true },
+      { name: '샐러드판다 들기름막국수', matches: [], q: '샐러드판다 들기름막국수', tag: '막국수', mall: 'kurly', neu: true },
+      { name: '세끼판다 메밀면 샐러드', matches: [], q: '세끼판다 메밀면 샐러드', mall: 'coupang', neu: true },
     ],
   },
   {
@@ -164,6 +391,7 @@ export const CURATION = [
       { name: '한살림 몽글이 순두부', matches: ['순두부'], benefit: '작은 냄비에 파르르 끓여 양념장만 넣으면 3분 컷. 바쁜 아침 남편 식사대용으로, 저녁에 출출할 때 야식으로도 좋아요', q: '한살림 몽글이 순두부', url: HANSALIM_APP },
       // ⭐ 창업자 2026-08-03 제공. **쿠팡이라 조합원 아니어도 산다** — 도토리묵 자리에 한살림밖에 없던 걸 메운다.
       { name: '친정엄마 국내산 도토리로 만든 도토리묵', matches: ['도토리묵'], benefit: '국산 도토리앙금·천일염, 성분이 심플해요. 작은 사이즈로 소분돼 있어 하나 까서 혼자 먹기 딱이에요', q: '친정엄마 국내산 도토리묵', mall: 'coupang' },
+      { name: '농협식품 우리콩 두부면 넓은면', matches: [], q: '농협식품 우리콩 두부면 넓은면', tag: '두부면', mall: 'coupang', neu: true },
     ],
   },
   {
@@ -191,6 +419,16 @@ export const CURATION = [
     items: [
       { name: '초당옥수수피자', icon: 'cu_pizza', benefit: '아이 방학 간식 구원템이에요. 달달 고소한 옥수수랑 피자치즈로 재료가 심플하고 성분도 괜찮아요. 스팀오븐에 조리하면 도우가 말랑해서 간식으로 딱. 사이즈가 크지 않아 한 끼 대용으로도 좋아요', q: '한살림 초당옥수수피자', url: HANSALIM_APP },
       { name: '고구마부리또', icon: 'cu_burrito', benefit: '달달하고 고소해서 제가 아끼는 간식템이에요. 또띠아에 고구마·모짜렐라 치즈로 재료가 심플하고 전자레인지로 데우기만 하면 돼 편해요. 어르신 간식으로도 좋고 저희 집 냉동실에도 구비해두는 거예요', q: '한살림 고구마부리또', url: HANSALIM_APP },
+      { name: '자연드림 초코크림파이', matches: [], tag: '간식', benefit: '크림이 부드럽고 많이 달지않아 냉장고에 넣어두고 아이간식, 커피랑도 참 잘어울려요.', q: '자연드림 초코크림파이', neu: true },
+      { name: '자연드림 기리쉬케이크', matches: [], tag: '간식', benefit: '한 조각씩 포장돼 있어 먹기 편해요. 냉동실에 두고 손님 오면 꺼내기도 좋아요.', q: '자연드림 기리쉬케이크', neu: true },
+      { name: '자연드림 젤리스틱', matches: [], tag: '간식', benefit: '아이 간식으로 사두는 젤리. 스틱이라 하나씩 꺼내주기 좋아요.', q: '자연드림 젤리스틱', neu: true },
+      { name: '한살림 인절미', matches: [], tag: '떡', benefit: '콩고물이 고소해요. 냉동해뒀다 살짝 구우면 겉은 바삭 속은 쫀득해서 간식으로 좋아요.', q: '한살림 인절미', url: HANSALIM_APP, neu: true },
+      { name: '아우노슈가 아우노너띠', matches: [], q: '아우노슈가 아우노너띠', mall: 'coupang', neu: true },
+      { name: '농심 누룽지팝', matches: [], q: '농심 누룽지팝', mall: 'coupang', neu: true },
+      { name: '먼투썬 하루견과블랙', matches: [], q: '먼투썬 하루견과블랙', tag: '견과', mall: 'kurly', neu: true },
+      { name: '그라놀로지 시그니쳐크런치코코넛', matches: [], q: '그라놀로지 시그니쳐크런치코코넛', tag: '그라놀라', mall: 'coupang', neu: true },
+      { name: '크놀라 크런치 코코넛', matches: [], q: '크놀라 크런치 코코넛', tag: '그라놀라', mall: 'coupang', neu: true },
+      { name: '매홍 국내산 촉촉한 군고구마 말랭이', matches: [], q: '매홍 국내산 촉촉한 군고구마 말랭이', mall: 'coupang', neu: true },
     ],
   },
 ]
@@ -203,6 +441,9 @@ const MALL_SEARCH = {
   coupang: 'https://www.coupang.com/np/search?q={q}',
   oasis: 'https://www.oasis.co.kr/product/search?keyword={q}',
   naver: 'https://search.shopping.naver.com/search/all?query={q}',
+  // 🛒 2026-08-11 창업자 자료(컬리 23개)로 처음 등장. ⚠️정확한 검색 주소를 확인할 방법이 없어
+  //    (이 환경은 쇼핑몰을 못 연다) «가장 흔히 알려진 꼴»로 넣었다 — 창업자 검수 때 살아 있는지 같이 본다.
+  kurly: 'https://www.kurly.com/search?sword={q}',
 }
 // '사러가기' 링크: url 이 있으면 직접 링크, mall 이 있으면 그 쇼핑몰 검색, 없으면 네이버쇼핑.
 export const productLink = (it) =>
@@ -212,6 +453,7 @@ export const productLink = (it) =>
 export const productMall = (it) => {
   if (it.mall === 'coupang') return '쿠팡'
   if (it.mall === 'oasis') return '오아시스'
+  if (it.mall === 'kurly') return '컬리'
   const u = it.url || ''
   if (u.includes('hansalim')) return '한살림'
   if (u.includes('sanjitalk')) return '산지톡'
@@ -260,7 +502,7 @@ export const picksForIngredients = (ingredients = []) => {
 //
 // ⚠️ 돌리는 «규칙»은 `weeklypick.js` 에 있다 — 이 파일은 `import.meta.glob`(Vite 전용) 때문에
 //    노드가 못 읽어서, 배포 게이트가 검사할 수 있게 순수 계산만 갈라 뒀다.
-export const weeklyPicks = (weekly = null, today = '', n = 4) => pickRotate({
+export const weeklyPicks = (weekly = null, today = '', n = 3) => pickRotate({
   products: PRODUCTS,
   matched: weekly
     ? picksForIngredients((weekly.items || []).flatMap((r) => [...(r.ingredients || []), r.memo || '']))

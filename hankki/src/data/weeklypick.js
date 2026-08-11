@@ -11,16 +11,64 @@
 // ⛔ 연중 주차로 세면 12월 말~1월 초에 튄다.
 export const weekNo = (ymd) => Math.floor(Date.parse(`${ymd}T00:00:00Z`) / 604800000)
 
-// 이번 주 픽 = ①이번 주 레시피가 쓰는 제품 ②모자라면 주차로 밀어 채운다.
-//   matched = ①의 결과(호출부가 넘긴다) · products = 전체 제품
-export const pickRotate = ({ products = [], matched = [], today = '', n = 4 } = {}) => {
-  const 담김 = new Set(matched.map((p) => p && p.name).filter(Boolean))
-  const 나머지 = products.filter((p) => p && !담김.has(p.name))
-  if (!나머지.length) return matched.slice(0, n)
-  // ⭐⭐ **한 주에 `n` 칸씩 민다** — 한 칸씩 밀면 4개 중 3개가 다음 주에도 그대로 남는다.
-  //    창업자가 *"매주 꼭 바꿔줘"* 라고 한 건 «다른 게 뜬다»는 뜻이지 «하나만 바뀐다»가 아니다.
-  //    🔢 실측 = 한 칸씩일 때 앞뒤 주가 3개씩 겹쳤다(2026-08-10 게이트 미리보기에서 드러났다).
+// 🔁 한 주 «밀어» 고르기 — 주차마다 다른 자리에서 `k` 개를 뽑는다.
+const 밀어 = (목록, today, k, 씨 = 0) => {
+  if (!목록.length || k <= 0) return []
   // ⚠️ `%` 는 음수에서 음수를 내니 한 번 더 더해 양수로 만든다(1970 이전 날짜·이상값 방어).
-  const off = today ? ((((weekNo(today) * n) % 나머지.length) + 나머지.length) % 나머지.length) : 0
-  return [...matched, ...나머지.slice(off), ...나머지.slice(0, off)].slice(0, n)
+  const off = today ? ((((weekNo(today) * k + 씨) % 목록.length) + 목록.length) % 목록.length) : 0
+  return [...목록.slice(off), ...목록.slice(0, off)].slice(0, k)
+}
+
+// ✅✅ [창업자 확정 2026-08-11] 이번 주 픽 = **3칸 · 기존 1 ＋ 새것 2**
+//   📮 창업자 *"기존장바구니40개와 똑같은것 1개 다른것2개가 들어가야맞지."*
+//
+// ⛔⛔ **왜 바꿨나 — 옛 규칙은 「매주 바꿔줘」를 못 지키고 있었다.**
+//   옛 판은 «레시피가 쓰는 제품(matched)»을 항상 앞에 붙이고 4칸에서 잘랐다.
+//   그런데 걸리는 게 **진간장·맛술·초피액젓·아우노슈가**처럼 거의 모든 레시피에 있는 양념이라
+//   matched 가 4개를 넘는 주가 대부분이었고, 그러면 **회전분이 한 칸도 안 들어간다.**
+//   🔢 실측(2026-08-11 날짜별 일지) = 8/03 ↔ 8/10 이 **4개 전부 같음** · 13주 앞뒤 겹침 **26/48**.
+//
+// ⭐ 새 규칙 — 자리를 «미리 갈라» 둔다. 그러면 어떤 주에도 새 것 2칸이 보장된다.
+//   · 1칸 = **기존 제품**(`neu` 없음). 그 주 레시피가 쓰는 기존 제품이 있으면 그걸 먼저(연결이 산다).
+//   · 2칸 = **새로 들어온 제품**(`neu: true`). 주차로 밀어 매주 바뀐다.
+//   ⚠️ 새 것이 없으면 기존으로 채운다 — 빈 자리는 안 만든다.
+// 🌱🌱 [창업자 확정 2026-08-11] **한살림은 «한 달에 한 번, 한 개»만 픽에 올린다.**
+//   📮 창업자 *"한살림꺼는 한달에 1번만 넣자. 조합원만 살수있으니까."*
+//   ⭐ 한살림 온라인은 «조합원만» 산다 — 매주 뜨면 조합원이 아닌 대부분에겐 «헛것»이다.
+//     (v10.28 에 「조합원만」 배지를 붙인 것과 같은 뜻: 헛걸음을 안 만든다)
+//   ⚠️ 판정은 `url` 로 한다 — `HANSALIM_APP` 에 `kr.or.hansalim.shop` 이 들어 있다.
+//     ⛔ 이 파일에 import 를 늘리면 배포 게이트가 못 읽는다(파일 맨 위 경고).
+const 한살림 = (p) => !!(p && p.url && p.url.includes('hansalim'))
+const 한살림차례 = (today) => (today ? ((weekNo(today) % 4) + 4) % 4 === 0 : false)
+
+export const pickRotate = ({ products = [], matched = [], today = '', n = 3 } = {}) => {
+  // 🌱 한살림 차례가 아닌 주는 후보에서 아예 뺀다 → 그 주엔 한 개도 안 뜬다.
+  const 차례 = 한살림차례(today)
+  const 후보 = 차례 ? products : products.filter((p) => !한살림(p))
+  const matched2 = 차례 ? matched : matched.filter((p) => !한살림(p))
+
+  const 새것 = 후보.filter((p) => p && p.neu)
+  const 기존 = 후보.filter((p) => p && !p.neu)
+  const 새칸수 = Math.min(2, 새것.length)
+
+  // ① 기존 1칸 — 그 주 레시피가 쓰는 «기존» 제품이 있으면 거기서, 없으면 기존 전체에서 민다.
+  const 기존매칭 = matched2.filter((p) => p && !p.neu)
+  const 앞 = 밀어(기존매칭.length ? 기존매칭 : 기존, today, n - 새칸수)
+
+  // ② 새것 2칸 — ⚠️ 씨앗을 달리 줘서 기존 칸과 같은 박자로 돌지 않게 한다.
+  const 담김 = new Set(앞.map((p) => p.name))
+  const 뒤 = 밀어(새것.filter((p) => !담김.has(p.name)), today, 새칸수, 1)
+
+  // 🌱 한살림 차례여도 **한 개까지**. 넘치면 한살림 아닌 것으로 갈아끼운다.
+  let 뽑음 = [...앞, ...뒤]
+  if (차례 && 뽑음.filter(한살림).length > 1) {
+    const 쓴것 = new Set(뽑음.map((p) => p.name))
+    const 여분 = 후보.filter((p) => !한살림(p) && !쓴것.has(p.name))
+    let 본것 = 0, i = 0
+    뽑음 = 뽑음.map((p) => (한살림(p) && ++본것 > 1 ? (여분[i++] || p) : p))
+  }
+  if (뽑음.length >= n) return 뽑음.slice(0, n)
+  // 모자라면(새 것이 0개 등) 남은 것으로 메운다 — 빈 자리 금지.
+  const 쓴것 = new Set(뽑음.map((p) => p.name))
+  return [...뽑음, ...products.filter((p) => p && !쓴것.has(p.name))].slice(0, n)
 }
