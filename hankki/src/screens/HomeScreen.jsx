@@ -22,9 +22,40 @@ import uiGomClap from '../assets/ui/gom_clap.png'
 import gpDuoHeart from '../assets/stickers/photo/gp_duoht.png'
 import { needsOnboarding } from '../components/Onboarding'
 import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount } from '../nudges'
-import { weeklyNow } from '../data/weekly'
+import { weeklyNow, homemadeNow } from '../data/weekly'
 import { whatsNew } from '../data/whatsnew'
 import { pantryScore } from '../pantryMatch'
+
+// 🗓🍳 「이번 주」 박스 — 제철 줄과 우리집레시피 줄이 «똑같이» 생겼다.
+//   ⛔ 마크업을 두 번 적지 않는다 — 그러면 한쪽만 고치는 사고가 난다(2026-08-11 신설).
+//   ⚠️ HomeScreen «밖»에 둔다. 안에 정의하면 렌더마다 새 컴포넌트가 되어 리마운트가 일어난다.
+function WeekBox({ w, 기본, open }) {
+  return (
+    <div className="weekly-box">
+      <div className="weekly-text">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {/* ⚠️ `calendar` 아이콘은 우리 세트에 «없다» — 이름을 추측해 넣으면 화면에 아무것도 안 나온다.
+              있는 것 중 「새로 왔어요」에 가장 가까운 `sparkle`. (전체 목록 = `src/components/Icon.jsx`) */}
+          <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />
+          {/* ⛔ 여기 「이번 주 제철」이 «글자로 박혀» 있었다 — 제철이 아닌 주도 그렇게 떴다.
+              (2026-09-28 「추석 남은 음식」이 실제로 그랬고, 52주 표 기준 17주가 제철이 아니다) */}
+          <div className="weekly-kicker">{w.kicker || 기본}</div>
+        </div>
+        <div className="weekly-title">{w.title}</div>
+        <div className="t-sub weekly-why">{w.why}</div>
+      </div>
+      {/* 🗓 `weekly-row` = 밀지 않고 한 화면에 딱 맞는 격자 (2026-08-03 오징어 상자 사고 → 잘림 0) */}
+      <div className="weekly-row">
+        {w.items.map((r) => (
+          <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
+            <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
+            <div className="name">{r.title}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 // 홈 첫 방문 코치마크 — 진짜 핵심 기능부터 짚어준다(창업자 딸 아이디어 ⭐).
 // 첫 스텝을 '되는 기능'(가져오기·오늘 뭐 해먹지)으로, 곧 출시 미리보기는 맨 뒤에 살짝.
@@ -72,6 +103,9 @@ export default function HomeScreen() {
   // 🗓 이번 주 레시피 — 달력이 여는 줄. ⛔재고가 없으면 `null` 이라 **줄을 아예 안 그린다**
   //    (빈 「이번 주」 자리를 남기지 않는다 · `LAB_*_URL` 이 비면 그 칸을 안 그리는 것과 같은 방식).
   const weekly = useMemo(() => weeklyNow(recipes), [recipes])
+  // 🍳 우리집레시피 — 창업자가 실제로 해먹는 것. 제철과 «별개» 줄이다(창업자 확정 2026-08-11, 안 ⒜).
+  //    ⛔ 재고가 없으면 `null` 이라 박스를 아예 안 그린다(제철 줄과 같은 규칙).
+  const homemade = useMemo(() => homemadeNow(recipes), [recipes])
 
   // 📣 소식 한 줄 — ⛔손으로 적지 않는다. 날짜 게이트와 «같은 데이터»를 세어 만든다.
   //    새로 열린 게 있으면 그걸 먼저 말하고, 없으면 다음에 열릴 것을, 그것도 없으면 예고 목록을 말한다.
@@ -274,30 +308,14 @@ export default function HomeScreen() {
                오른쪽반은 이미지넣자. **(윗줄 콩국수랑 같은 위치로)**"*
             ⭐ 「같은 위치」가 핵심이다 — 위 `home-pair` 의 오른쪽 칸(오늘 뭐 해먹지)과 **x 가 딱 맞아야**
                두 줄이 한 판으로 읽힌다. 그래서 `1fr 1fr` ＋ 같은 `gap` 을 쓴다(auto 로 두면 카드가 오른쪽 끝에 몰린다). */}
-        {weekly && (
-          <div className="weekly-box">
-            <div className="weekly-text">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {/* ⚠️ `calendar` 아이콘은 우리 세트에 «없다» — 이름을 추측해 넣으면 화면에 아무것도 안 나온다.
-                    있는 것 중 「새로 왔어요」에 가장 가까운 `sparkle`. (전체 목록 = `src/components/Icon.jsx`) */}
-                <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />
-                {/* ⛔ 여기 「이번 주 제철」이 «글자로 박혀» 있었다 — 제철이 아닌 주도 그렇게 떴다.
-                    (2026-09-28 「추석 남은 음식」이 실제로 그랬고, 52주 표 기준 17주가 제철이 아니다)
-                    ⭐ 이제 줄마다 `kicker` 로 정한다. 안 적으면 「이번 주 제철」. */}
-                <div className="weekly-kicker">{weekly.kicker || '이번 주 제철'}</div>
-              </div>
-              <div className="weekly-title">{weekly.title}</div>
-              <div className="t-sub weekly-why">{weekly.why}</div>
-            </div>
-            {/* 🗓 `weekly-row` = 밀지 않고 한 화면에 딱 맞는 격자 (2026-08-03 오징어 상자 사고 → 잘림 0) */}
-            <div className="weekly-row">
-              {weekly.items.map((r) => (
-                <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
-                  <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
-                  <div className="name">{r.title}</div>
-                </button>
-              ))}
-            </div>
+        {/* 🍳 ＋ 우리집레시피 = 창업자가 실제로 해먹는 것 (창업자 확정 2026-08-11 · 안 ⒜ 별도 줄)
+            📐 창업자 *"폰에서는 2줄이 필요하지만 패드에서는 1줄에 다 들어가잖아"*
+               · 폰   = 위아래 두 박스   · 패드 = 좌우 나란히 (`.week-pair.two`)
+            ⛔ `two` 는 «둘 다 있을 때만» 붙는다 — 하나뿐이면 지금 모양(박스 안이 좌우로) 그대로다. */}
+        {(weekly || homemade) && (
+          <div className={`week-pair${weekly && homemade ? ' two' : ''}`}>
+            {weekly && <WeekBox w={weekly} 기본="이번 주 제철" open={open} />}
+            {homemade && <WeekBox w={homemade} 기본="우리집레시피" open={open} />}
           </div>
         )}
 

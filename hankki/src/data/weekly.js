@@ -162,11 +162,26 @@ export const todayKST = (now = new Date()) =>
   new Date(now.getTime() + (KST + now.getTimezoneOffset()) * 60000).toISOString().slice(0, 10)
 
 // 이번 주 한 줄. 없으면 `null` → **홈에서 줄을 아예 안 그린다.**
-export const weeklyNow = (recipes = [], now = new Date()) => {
+// 🍳🍳 우리집레시피 — 창업자가 실제로 해먹는 레시피. 제철 줄과 «별개» 줄이다.
+//   ✅ 창업자 확정 2026-08-11 = 이름표 「우리집레시피」 · 안 ⒜(별도 줄) · 한 번에 **3편**
+//   ⭐ 왜 3편인가 = 제철 줄과 «칸 수가 같아야» 나란히 놓았을 때 한 판으로 읽힌다.
+//      2편이면 패드에서 오른쪽 박스만 한 칸이 빈다(격자가 3칸이다).
+//   ⛔ WEEKLY 와 «같은 모양»이다 — from·title·why·ids. 새 문법을 만들지 않는다.
+//   ⏳ 지금 든 3편은 «자리 잡는 용»이다. 창업자 36편을 붙일 때 갈아끼운다.
+export const HOMEMADE = [
+  {
+    from: '2026-08-10', title: '매일 먹는 반찬',
+    why: '제가 매일 아침 만드는 것들이에요. 손 많이 안 가고 아이도 잘 먹어요.',
+    ids: ['basic-gongsimchae-bokkeum', 'basic-hunje-ori-kkaennip', 'basic-daegu-mungtigi'],
+  },
+]
+
+// ⭐ 제철·우리집이 «같은 방식»으로 열린다 — 고르는 규칙을 한 곳에만 둔다.
+const 열린줄 = (LIST, recipes, now) => {
   const t = todayKST(now)
   // `from` 이 오늘 이하인 것 중 가장 늦은 것. (배열 순서에 기대지 않는다)
   let pick = null
-  for (const w of WEEKLY) if (w.from <= t && (!pick || w.from > pick.from)) pick = w
+  for (const w of LIST) if (w.from <= t && (!pick || w.from > pick.from)) pick = w
   if (!pick) return null
 
   // ⭐ 실제로 있는 레시피만 남긴다 — 레시피를 지우거나 id 를 바꿔도 앱이 안 깨진다.
@@ -175,6 +190,14 @@ export const weeklyNow = (recipes = [], now = new Date()) => {
   if (!items.length) return null // ⛔ 하나도 없으면 그 줄은 없는 것으로 친다
 
   return { ...pick, items }
+}
+
+export const weeklyNow = (recipes = [], now = new Date()) => 열린줄(WEEKLY, recipes, now)
+
+// ⛔ 재고가 없으면 `null` — 홈에서 그 박스를 «아예 안 그린다»(빈 자리 금지).
+export const homemadeNow = (recipes = [], now = new Date()) => {
+  const r = 열린줄(HOMEMADE, recipes, now)
+  return r && { ...r, kicker: r.kicker || '우리집레시피' }
 }
 
 // 몇 주치 남았나 — 재고가 마르기 전에 알아채려고. (`npm run weekly`)
