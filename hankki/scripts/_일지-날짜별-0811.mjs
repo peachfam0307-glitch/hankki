@@ -31,6 +31,69 @@ for (const 덩 of bs.split(/\n  \{/)) {
 }
 if (!Object.keys(잠금).length) throw new Error('⛔ basics.js 의 `from` 을 하나도 못 읽었다')
 
+// ── ②-b 우리집레시피 (HOMEMADE) — 창업자가 직접 쓴 레시피 줄 ──
+const HOMEMADE = [...wk.slice(wk.indexOf('export const HOMEMADE')).matchAll(
+  /from:\s*'([\d-]+)',\s*title:\s*'([^']+)'[\s\S]{0,400}?ids:\s*\[([^\]]*)\]/g,
+)].map((m) => ({ 날: m[1], 제목: m[2], ids: [...m[3].matchAll(/'([^']+)'/g)].map((x) => x[1]) }))
+
+// ── ②-c 🛒 주부의 장바구니 「이번 주 픽」 — 주차로 저절로 돈다. **앱과 같은 계산을 그대로 한다** ──
+//    ⛔ `curation.js` 는 `import.meta.glob`(Vite 전용)이라 노드가 못 연다 → 글자로 읽는다.
+//       (`check-picks.mjs` 가 쓰는 방법 그대로다 — 새로 만들지 않는다)
+const cur = readFileSync(`${뿌리}src/data/curation.js`, 'utf8')
+const 제품 = [...cur.slice(cur.indexOf('export const CURATION'), cur.indexOf('export const PRODUCTS'))
+  .matchAll(/\{\s*name:\s*'([^']+)'(?:\s*,\s*matches:\s*\[([^\]]*)\])?/g)]
+  .map((m) => ({ name: m[1], matches: m[2] ? [...m[2].matchAll(/'([^']+)'/g)].map((x) => x[1]) : [] }))
+if (제품.length < 20) throw new Error(`⛔ 큐레이션 제품을 ${제품.length}개밖에 못 읽었다 — curation.js 모양이 바뀌었다`)
+
+// 레시피 id → 재료·메모 (basics.js)
+const 재료표 = {}
+for (const 덩 of bs.split(/\n  \{/)) {
+  const id = 덩.match(/id:\s*'([^']+)'/)
+  if (!id) continue
+  const ing = [...(덩.match(/ingredients:\s*\[([\s\S]*?)\]/)?.[1] || '').matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((x) => x[1])
+  const memo = 덩.match(/memo:\s*'((?:[^'\\]|\\.)*)'/)?.[1] || ''
+  재료표[id[1]] = [...ing, memo]
+}
+
+// ⭐ 앱의 `picksForIngredients` 를 그대로 옮긴다 — ⛔「낱말 «시작»」으로만 맞는다(노두유↔두유 사고).
+const 맞는제품 = (줄들) => {
+  const text = 줄들.join('  ')
+  const tokens = 줄들.flatMap((i) => String(i).split(/[\s,()·/]+/)).filter(Boolean)
+  const 시작으로 = (w) => tokens.some((t) => t.startsWith(w))
+  const 직접 = [], 낱말 = []
+  for (const p of 제품) {
+    if (p.name && text.includes(p.name)) 직접.push(p)
+    else if (p.matches.some((w) => w && 시작으로(w))) 낱말.push(p)
+  }
+  return [...직접, ...낱말]
+}
+// ⭐ `weeklypick.js` 의 규칙을 그대로 — 한 주에 n칸씩 민다(한 칸씩이면 4개 중 3개가 다음 주에도 남는다)
+const 주차 = (ymd) => Math.floor(Date.parse(`${ymd}T00:00:00Z`) / 604800000)
+const 이번주픽 = (날, ids, n = 4) => {
+  const matched = 맞는제품(ids.flatMap((id) => 재료표[id] || []))
+  const 담김 = new Set(matched.map((p) => p.name))
+  const 나머지 = 제품.filter((p) => !담김.has(p.name))
+  if (!나머지.length) return matched.slice(0, n)
+  const off = ((((주차(날) * n) % 나머지.length) + 나머지.length) % 나머지.length)
+  return [...matched, ...나머지.slice(off), ...나머지.slice(0, off)].slice(0, n)
+}
+
+// ⚠️⚠️ 주마다 픽을 미리 다 계산해 «앞 주와 겹치는지»까지 본다.
+//    2026-08-11 에 이 표를 만들다가 **진짜 문제가 드러났다** — 창업자 *"주부장바구니픽도 매주 꼭 바꿔줘"* 인데
+//    ⛔ `pickRotate` 는 matched(레시피가 쓰는 제품)를 «항상 앞»에 붙이고 n칸에서 자른다.
+//       그래서 **matched 가 4개 이상인 주는 회전분이 한 칸도 안 들어간다.**
+//    🔢 실측 = 8/03 ↔ 8/10 이 **4개 전부 같다** · 13주 통틀어 앞뒤 겹침 **26/48**.
+//    📌 매칭되는 게 진간장·맛술·초피액젓·아우노슈가처럼 «거의 모든 레시피에 있는 양념»이라 매주 같은 넷이다.
+const 픽표 = {}
+{
+  let 앞 = null
+  for (const w of WEEKLY) {
+    const 목록 = 이번주픽(w.날, w.ids)
+    픽표[w.날] = { 목록, 겹침: 앞 ? 목록.filter((p) => 앞.includes(p.name)).map((p) => p.name) : [] }
+    앞 = 목록.map((p) => p.name)
+  }
+}
+
 // ── ③ 스티커·카드 자동 공개 (release-calendar 를 그대로 쓴다 — 두 벌 만들지 않는다) ──
 const cal = execSync(`node ${뿌리}scripts/release-calendar.mjs`, { encoding: 'utf8' })
 const 자동 = {}
@@ -63,7 +126,7 @@ const 손 = [
 ]
 
 // ── 표 만들기 ──
-const 날들 = [...new Set([...WEEKLY.map((w) => w.날), ...Object.keys(잠금), ...Object.keys(자동), ...손.map((x) => x[0])])].sort()
+const 날들 = [...new Set([...WEEKLY.map((w) => w.날), ...HOMEMADE.map((h) => h.날), ...Object.keys(잠금), ...Object.keys(자동), ...손.map((x) => x[0])])].sort()
 const D = (d) => Math.round((new Date(d + 'T00:00:00+09:00') - new Date(오늘 + 'T00:00:00+09:00')) / 86400000)
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
 
@@ -91,6 +154,28 @@ for (const d of 날들) {
   if (새편.length) {
     안 += `<div class="row"><span class="tag auto">저절로</span><div><b>레시피 ${새편.length}편이 열린다</b>
       <div class="sub">${새편.map(esc).join(' · ')}</div></div></div>`
+  }
+  // 🛒 그 주에 장보기 「이번 주 픽」으로 뜰 제품 — 주차로 저절로 돈다
+  if (w) {
+    const { 목록: 픽, 겹침 } = 픽표[w.날]
+    const 레시피것 = new Set(맞는제품(w.ids.flatMap((id) => 재료표[id] || [])).map((p) => p.name))
+    안 += `<div class="row"><span class="tag ${겹침.length >= 3 ? 'urgent' : 'auto'}">${겹침.length >= 3 ? '⚠️같음' : '저절로'}</span><div><b>주부의 장바구니 「이번 주 픽」</b>
+      <div class="sub">${픽.map((p) => (겹침.includes(p.name)
+        ? `<span class="same">${esc(p.name)}</span>`
+        : 레시피것.has(p.name) ? `<b class="lk">${esc(p.name)}</b>` : esc(p.name))).join(' · ')}</div>
+      ${겹침.length ? `<div class="hint">⚠️ 지난주와 <b>똑같은 것 ${겹침.length}개</b></div>` : ''}</div></div>`
+  }
+  // 🍳 우리집레시피 — 창업자가 직접 쓴 레시피 줄
+  const h = HOMEMADE.find((x) => x.날 === d)
+  if (h) {
+    const 있는것 = h.ids.filter((id) => 재료표[id])
+    const 뜨나 = 있는것.length > 0
+    안 += `<div class="row"><span class="tag ${뜨나 ? 'auto' : 'todo'}">${뜨나 ? '저절로' : '아직 안 뜸'}</span>
+      <div><b>우리집레시피 — ${esc(h.제목)}</b>
+      <div class="sub">${뜨나
+        ? `창업자 레시피 ${있는것.length}편`
+        : `창업자 레시피 ${h.ids.length}편이 여기 붙을 자리 — <b>아직 <code>basics.js</code> 에 안 들어가서 박스가 안 뜬다.</b> 36편 넣는 판에서 살아난다`}</div>
+      <div class="hint">홈에서 「이번 주 제철」 <b>옆</b>의 다른 박스 · 이름표 = 「우리집레시피」</div></div></div>`
   }
   if (a && (a.서랍 || a.카드)) {
     안 += `<div class="row"><span class="tag auto">저절로</span><div><b>꾸미기·카드 ${a.서랍 + a.카드}컷</b>
@@ -158,6 +243,9 @@ time i{font-style:normal;font-weight:800;font-size:13px;color:var(--urgent)}
 .sub{font-size:12.8px;color:var(--muted);margin-top:2px}
 .who{display:inline-block;margin-top:5px;font-size:11px;font-weight:800;color:var(--muted);
  border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+.hint{font-size:11.5px;color:var(--muted);opacity:.82;margin-top:3px}
+.lk{color:var(--auto)}
+.same{color:var(--urgent);text-decoration:line-through;text-decoration-color:var(--urgent);opacity:.85}
 details{margin-top:6px} summary{font-size:12px;color:var(--muted);cursor:pointer}
 details ul{margin:6px 0 0;padding-left:17px} details li{font-size:12px;color:var(--muted)}
 .note{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px;margin:22px 0 0;
@@ -180,6 +268,9 @@ details ul{margin:6px 0 0;padding-left:17px} details li{font-size:12px;color:var
     <span class="tag todo">손으로 · 여유 있음</span>
     <span class="tag urgent">손으로 · 놓치면 큰일</span>
   </div>
+  <p class="lead" style="font-size:12.8px;margin:-8px 0 0">장바구니 픽 읽는 법 —
+  <b class="lk">굵은 초록</b> = 그 주 레시피가 실제로 쓰는 제품이라 붙은 것 ·
+  <span class="same">회색 취소선</span> = 지난주와 똑같은 것.</p>
 </header>
 ${칸}
 <div class="note">
@@ -189,6 +280,15 @@ ${칸}
   ③ <b>9/30 Android 개발자 인증</b> — 등록 안 된 Play 앱은 <b>삭제된다.</b> Play 로만 배포하면 자동 등록일 가능성이 크지만 <b>확인은 해야 한다.</b><br><br>
   <b>⏰ 조용히 다가오는 마감</b> — 주간 레시피 재고. 지금 11주치인데 <b>10/13 부터 3주 밑</b>이 되어 <b>배포 자체가 막힌다.</b>
   11월치 다섯 주를 <b>10/12 전에</b> 채워야 한다.<br><br>
+  <b>이 표를 만들다 나온 것 — 장바구니 픽이 «매주 안 바뀐다»</b><br>
+  네가 <b>"주부장바구니픽도 매주 꼭 바꿔줘"</b> 라고 했는데 실제로는
+  <b>8/03 ↔ 8/10 이 네 개 전부 같고</b>, 13주 통틀어 앞뒤 주 겹침이 <b>26/48</b> 이야.<br>
+  ⭐ 뿌리 = 「그 주 레시피가 쓰는 제품」을 <b>항상 앞에</b> 붙이고 4칸에서 자르는데,
+  걸리는 게 <b>진간장·맛술·초피액젓·아우노슈가</b>처럼 거의 모든 레시피에 있는 양념이라
+  <b>매주 같은 넷이 자리를 다 먹는다.</b> 회전분이 한 칸도 못 들어와.<br>
+  ⛔ <b>아직 안 고쳤어</b> — 어떻게 고칠지는 네가 정할 문제라서(레시피와 이어진 걸 살릴지, 매주 새 걸 보여줄지).<br><br>
+  <b>우리집레시피(네 레시피 36편)</b> — 자리는 만들어져 있는데 <b>아직 안 뜬다.</b>
+  <code>basics.js</code> 에 36편이 안 들어가서 붙일 레시피가 없어. <b>날짜는 아직 안 정했다.</b><br><br>
   <b>📌 이 표에 «없는» 것</b> — 결제(#54)·구매 복원(#63)은 날짜가 안 정해졌다.
   창업자 확정 = <b>「8월엔 안 켠다 · 9월 유저 보고 정한다」.</b>
 </div>
