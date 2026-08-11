@@ -1,0 +1,20 @@
+import { chromium } from 'playwright-core'
+import { spawn } from 'node:child_process'
+import { SEED_COACH_SEEN } from '../src/coach.js'
+const srv = spawn('npx',['vite','preview','--port','4183','--strictPort'],{cwd:process.cwd(),stdio:'ignore'})
+const 잠깐=(ms)=>new Promise(r=>setTimeout(r,ms)); await 잠깐(2800)
+const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'})
+const ctx=await b.newContext({viewport:{width:411,height:900},timezoneId:'Asia/Seoul'})
+await ctx.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1')}catch{}})
+await ctx.addInitScript({content:SEED_COACH_SEEN})
+const p=await ctx.newPage()
+await p.goto('http://127.0.0.1:4183',{waitUntil:'networkidle'})
+await p.evaluate(()=>{const K='hankki:v1';const s=JSON.parse(localStorage.getItem(K)||'{}');const n=Date.now()
+  s.recipes=['오징어 새우전','계란장','충무김밥'].map((t,i)=>({id:'zz-'+i,title:t,ingredients:[],steps:[],savedAt:n+100-i})).concat(s.recipes||[])
+  localStorage.setItem(K,JSON.stringify(s))})
+await p.goto('http://127.0.0.1:4183',{waitUntil:'networkidle'}); await 잠깐(800)
+await p.getByRole('button',{name:'레시피',exact:true}).click(); await 잠깐(900)
+console.log('레시피탭 — grid-card', await p.locator('.grid-card').count(), '· mini-card', await p.locator('.mini-card').count())
+console.log('글자:', (await p.evaluate(()=>document.body.innerText)).slice(0,220).replace(/\n/g,' | '))
+console.log('샘플:', JSON.stringify(await p.evaluate(()=>[...document.querySelectorAll('.mini-card,.grid-card')].slice(0,4).map(el=>({t:(el.innerText||'').split('\n')[0],img:el.querySelector('img')?.currentSrc.split('/').pop()||'없음'})))))
+await b.close(); srv.kill(); process.exit(0)
