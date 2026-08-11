@@ -174,7 +174,7 @@ h1{margin:0 0 9px;font-size:25px;line-height:1.28;letter-spacing:-.01em;text-wra
     </div>
     <div class="out">⛔ <b>뺀 것</b> — ${뺀것.map(([t]) => t).join(' · ')} <span>(네가 「빼」라고 확정해준 것)</span></div>
     <div class="ask">
-      <h2>❓ 이건 네가 한마디 해줘</h2>
+      <h2>✅ 네가 정해준 것</h2>
       <ul>${물어볼것.map(([t, m]) => `<li><b>${esc(t)}</b> — ${m.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</li>`).join('')}</ul>
     </div>
   </div>
