@@ -16,6 +16,7 @@
 //
 // 로컬: SMOKE_CHROMIUM=/opt/pw-browsers/chromium node scripts/test-exit.mjs
 import { chromium } from 'playwright'
+import { SEED_COACH_SEEN } from '../src/coach.js'
 import { spawn } from 'node:child_process'
 
 const PORT = Number(process.env.SMOKE_PORT || 4174)
@@ -54,11 +55,10 @@ try {
 
   browser = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } })
-  await ctx.addInitScript(() => {
-    ;['hankki:onboarded', 'hankki:coach:home2', 'hankki:coach:shop'].forEach((k) => {
-      try { localStorage.setItem(k, '1') } catch { /* noop */ }
-    })
-  })
+  // 🧭 코치는 «이름으로» 심지 않는다 — 키를 올리면 조용히 낡아 화면을 덮는다(2026-08-08 사고).
+  //    `src/coach.js` 가 주는 조각이 **접두어 전체**를 「본 적 있음」으로 만든다 → 다음에 키를 올려도 안 낡는다.
+  await ctx.addInitScript({ content: SEED_COACH_SEEN })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch { /* noop */ } })
   const page = await ctx.newPage()
   page.setDefaultTimeout(8000)
   const pageErrors = []

@@ -1178,16 +1178,33 @@ export function searchFoodIcons(query = '') {
   if (!q) return null
   const byChosung = isChosungQuery(q)
   const seen = new Set()
+  // 🥇🥇 **찾은 것을 「얼마나 딱 맞나」로 줄 세운다** (2026-08-07 전수검사에서 잡음)
+  //   ⛔ 전엔 걸린 순서(= 탭 순서) 그대로였다. 그래서 「김밥」을 치면 **오니기리가 먼저** 나왔다 —
+  //      오니기리 별명에 「삼각김밥」이 있어 걸리는데, v9.79 창업자 확정 순서상 «일식»이 «분식»보다 앞이라서다.
+  //      찾는 사람은 자기가 친 그 이름을 맨 앞에서 보길 기대한다.
+  //   ⭐ 0=이름이 그대로 · 1=그 말로 시작 · 2=중간에 들어 있음. 같은 점수면 «원래 탭 순서»를 지킨다
+  //      (안정 정렬이라 창업자가 정한 「끼니 앞·군것질 뒤」가 안 흐트러진다).
   const hit = []
   for (const g of FOOD_ICON_GROUPS_SORTED) {
     for (const k of g.items) {
       if (seen.has(k)) continue
       const hay = (SEARCH_INDEX[k] || k).toLowerCase()
-      const ok = byChosung ? chosungOf(hay).includes(q) : hay.replace(/\s+/g, '').includes(q)
-      if (ok) { seen.add(k); hit.push(k) }
+      const flat = byChosung ? chosungOf(hay) : hay.replace(/\s+/g, '')
+      if (!flat.includes(q)) continue
+      // 🔎 별명들은 **공백으로 이어 붙어** 있다(`SEARCH_INDEX` 의 `add`) — 낱개로 갈라야
+      //    「그 이름 그대로인지」를 물을 수 있다. ⛔ 공백을 먼저 지우면 낱말 경계가 사라진다.
+      const words = hay.split(/[\s·,]+/).filter(Boolean).map((w) => (byChosung ? chosungOf(w) : w))
+      // 🥇 0 = **제 이름이 그대로** · 1 = 별명이 그대로 · 2 = 그 말로 시작 · 3 = 중간에 들어 있음
+      //   ⭐ 0 과 1 을 가르는 이유 = 「비빔밥」을 치면 **돌솥비빔밥**이 먼저 나왔다.
+      //      돌솥비빔밥이 별명으로 「비빔밥」을 갖고 있어 동점이었기 때문이다(실측).
+      //      친 말이 «그 음식의 이름 자체»인 쪽이 언제나 먼저다.
+      const 제이름 = (FOOD_NAMES[k] || '').toLowerCase().replace(/\s+/g, '')
+      const 제이름맞음 = (byChosung ? chosungOf(제이름) : 제이름) === q
+      const rank = 제이름맞음 ? 0 : words.includes(q) ? 1 : words.some((w) => w.startsWith(q)) ? 2 : 3
+      seen.add(k); hit.push({ k, rank })
     }
   }
-  return hit
+  return hit.sort((a, b) => a.rank - b.rank).map((x) => x.k)
 }
 
 export default function FoodIcon({ name = 'default', size = 40 }) {

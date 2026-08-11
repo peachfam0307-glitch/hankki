@@ -34,6 +34,26 @@ registerRoute(
   })
 )
 
+// 🔤🔤 **꾸미기 글씨체 — 그림과 «같은 처방»** (2026-08-07)
+//
+// ⛔ woff2 는 `globPatterns` 에서 일부러 빠져 있다 — 설치할 때 1.7MB 를 미리 받지 않으려고.
+//    그건 맞는 판단인데, **런타임 캐시가 없어서 「받은 뒤에도 오프라인이면 못 쓰는」** 상태였다.
+//    (그림은 `hankki-art` 로 이미 이렇게 하고 있었다. 폰트만 빠져 있었다)
+//
+// ✅ 그림과 똑같이 — 한 번 쓴 글씨체는 캐시에서 나온다. 안 쓴 건 안 받는다.
+//    ⚠️ 판정은 `request.destination === 'font'` — @font-face 로 부르면 이 값이 온다.
+//       ⛔ `fetch(url)` 로 부르면 `''` 라 안 걸린다(그림에서 이미 겪은 함정).
+//    ⚠️⚠️ maxEntries 는 **글꼴 수 × 2(라틴·한글)보다 넉넉히** 잡는다.
+//       딱 맞게 잡으면 파일 하나만 더 들어와도 오래된 것부터 지워져 **쓰던 글씨체가 다시 사라진다**
+//       (그림 캐시에 이미 적어둔 함정이다). 지금 글씨체 **열둘 → 24개** ＋ 여유 → 40.
+registerRoute(
+  ({ request, url }) => url.origin === self.location.origin && request.destination === 'font',
+  new CacheFirst({
+    cacheName: 'hankki-font',
+    plugins: [new ExpirationPlugin({ maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 365, purgeOnQuotaError: true })],
+  })
+)
+
 // Pretendard 폰트
 registerRoute(
   ({ url }) => url.origin === 'https://cdn.jsdelivr.net',

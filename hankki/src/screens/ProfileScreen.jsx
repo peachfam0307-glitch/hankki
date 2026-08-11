@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { COACH, COACH_KEYS } from '../coach'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
@@ -18,7 +19,7 @@ import { cropSquare } from '../utils'
 import { takeOpenBackup, backupDone } from '../nudges'
 
 // 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
-const PROFILE_COACH_KEY = 'hankki:coach:profile'
+const PROFILE_COACH_KEY = COACH.profile
 const PROFILE_COACH_STEPS = [
   { sel: '[data-coach="backup"]', label: '백업 · 내보내기', desc: '폰을 바꾸거나 지워도 레시피를 지키는 제일 중요한 버튼!' },
   { sel: '[data-coach="update"]', label: '최신 버전 확인', desc: '앱이 옛 버전에서 멈췄을 때 눌러요 · 새 기능·수정이 바로 반영돼요' },
@@ -222,7 +223,10 @@ export default function ProfileScreen() {
       icon: 'sparkle', label: '기능 안내 다시 보기', badge: '반짝 안내',
       onClick: () => {
         // 코치마크 본 기록을 지워 각 화면 첫 방문 안내가 다시 나오게 한다(딸 아이디어 ⭐ 후속)
-        try { ['detail', 'shop', 'home', 'profile', 'myrecipes'].forEach((k) => localStorage.removeItem(`hankki:coach:${k}`)) } catch { /* noop */ }
+        // ⛔⛔ 🐛 여기 이름을 «손으로» 적어 뒀다가 두 칸이 죽어 있었다 (2026-08-08 발견) —
+        //    `home` 을 지웠는데 실제 키는 v8.60 부터 `home2`(지금은 `home3`) 였고, `brag` 는 목록에 아예 없었다.
+        //    → **눌러도 홈·레꾸자랑 안내는 안 돌아왔다.** 이제 `src/coach.js` 가 가진 목록을 통째로 지운다.
+        try { COACH_KEYS.forEach((k) => localStorage.removeItem(k)) } catch { /* noop */ }
         nav.showToast('각 화면에 들어가면 반짝 안내가 다시 나와요')
       },
     },

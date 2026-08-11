@@ -817,9 +817,11 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
     //   ⭐ 오후에 «왜 일부만 실렸나»를 찾았다 — 라이브러리는 «꾸러미를 만들 때 쓴 조각이
     //      실제로 쓰는 글꼴»만 담는다. 옛 코드는 홈 화면으로 만들어 **Jua 가 통째로 빠졌고**,
     //      위에 깨진 글자 셋이 전부 Jua 다. 근거·실측 = `src/fontEmbed.js` 머리말
-    //   🔒 4종이 다 안 들어 있으면 `fontEmbed.js` 가 «안 쓴다» → 느려도 정확한 옛 길로 돌아간다.
+    //   🔒 부르기로 한 게 다 안 들어 있으면 `fontEmbed.js` 가 «안 쓴다» → 느려도 정확한 옛 길로 돌아간다.
+    //   ⭐ 2026-08-07 — **찍을 조각(`el`)을 그대로 넘긴다.** 글씨체가 열둘이 돼서 「전부 담기」를 하면
+    //      4.7MB 가 되고, 글씨체 하나만 쓴 사람도 열두 벌을 다 내려받는다.
     //   ⚠️ pixelRatio 는 1.6 유지 — 1 로 낮추면 반올림 때문에 폭이 미세하게 달라진다.
-    const fontOpt = fontOptFrom(await fontCSS())
+    const fontOpt = fontOptFrom(await fontCSS(el))
     const u = await toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff', ...fontOpt })
     const b = await (await fetch(u)).blob()
     return new File([b], name.replace(/\.png$/, '.jpg'), { type: 'image/jpeg' })

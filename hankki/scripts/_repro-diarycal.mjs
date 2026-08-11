@@ -57,12 +57,12 @@ page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
 await page.addInitScript((s) => {
   localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
-  for (const k of ['home', 'home2', 'detail', 'brag', 'shop', 'myrecipes', 'profile', 'decor']) localStorage.setItem(`hankki:coach:${k}`, '1')
+  const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
 }, state)
 await page.goto('http://127.0.0.1:4347/hankki/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(1200)
 await page.getByText('레시피', { exact: true }).last().click(); await page.waitForTimeout(700)
-await page.locator('.seg', { hasText: '요리 기록' }).first().click(); await page.waitForTimeout(800)
+await page.locator('.seg', { hasText: '한끼 일기' }).first().click(); await page.waitForTimeout(800)
 await page.screenshot({ path: join(OUT, 'diarycal-a.png') })
 
 // ① 통계 띠 — 다이어리 둘이 「집밥」에 세어지면 안 된다
@@ -92,12 +92,12 @@ if (await solo.isDisabled()) no(`${soloD}일(다이어리만 쓴 날)이 눌러�
 else {
   ok(`${soloD}일(다이어리만 쓴 날)도 눌러진다`)
   await solo.click(); await page.waitForTimeout(600)
-  const label = await page.getByRole('button', { name: /다이어리 (쓰기|보기)/ }).first().innerText()
-  if (/다이어리 보기/.test(label)) ok(`이미 쓴 날 버튼 = "${label.trim()}"`)
+  const label = await page.getByRole('button', { name: /일기 (쓰기|보기)/ }).first().innerText()
+  if (/일기 보기/.test(label)) ok(`이미 쓴 날 버튼 = "${label.trim()}"`)
   else no(`이미 쓴 날인데 "${label.trim()}" — 「쓰기」는 새로 쓴다는 뜻으로 읽힌다`)
   await page.screenshot({ path: join(OUT, 'diarycal-b-다이어리만쓴날.png') })
   // 실제로 그 날 다이어리로 들어가진다
-  await page.getByRole('button', { name: /다이어리 (쓰기|보기)/ }).first().click(); await page.waitForTimeout(900)
+  await page.getByRole('button', { name: /일기 (쓰기|보기)/ }).first().click(); await page.waitForTimeout(900)
   const cls = await page.locator('.paper').first().getAttribute('class').catch(() => null)
   if (cls && cls.includes('kraft')) ok(`그 날 저장해둔 속지가 그대로 열린다 (${cls})`)
   else no(`저장한 속지가 안 열린다 (${cls})`)

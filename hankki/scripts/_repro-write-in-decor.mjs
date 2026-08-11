@@ -46,7 +46,7 @@ page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
 await page.addInitScript((s) => {
   localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
-  for (const k of ['home', 'home2', 'detail', 'brag', 'shop', 'myrecipes', 'profile', 'decor']) localStorage.setItem(`hankki:coach:${k}`, '1')
+  const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
 }, state)
 await page.goto('http://127.0.0.1:4353/hankki/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(1200)
@@ -63,27 +63,30 @@ const segs = await page.locator('.decor-editor .segment .seg').allInnerTexts()
 if (segs.join('|') === WANT) ok(`서랍 칸 넷 (${segs.join(' · ')})`)
 else no(`서랍 칸이 「${segs.join(' · ')}」 — 기대: ${WANT.replace(/\|/g, ' · ')}`)
 
-// ② 「꾸미기」 상태에선 글칸이 손가락을 안 먹는다(스티커를 끌어야 하니까)
+// ② ⭐⭐ 「꾸미기」 상태에서도 글칸이 «살아» 있다 — v9.93 창업자 최우선 요청
+//    *"어느 탭이든 글자를 누르면 글자가 수정되어야 하는데 탭을 옮겨다니면서 수정해야하면 안쓰게돼"* · *"이게가장 중요"*
+//    ⛔⛔ 옛 판정(「꾸미기 중엔 읽기 전용이라야 한다」)은 그 요청으로 «뒤집힌» 설계다 — 2026-08-07 전수검사에서 갈아엎음.
+//    ⚠️ 「글칸이 살아 있으면 스티커를 못 끄나」는 별도 재현(_repro-0807-5 ⓑ)이 «끌린다»로 못 박고 있다.
 await page.locator('.decor-editor .segment .seg').last().click(); await page.waitForTimeout(400)
 const decorMode = await page.evaluate(() => {
   const ta = document.querySelector('.decor-editor textarea[aria-label="일기 본문"]')
-  const lay = document.querySelector('.decor-editor .decor-stage [style*="position: absolute"][style*="inset: 0px"]')
-  return { hasTextarea: !!ta, layerTouch: lay ? getComputedStyle(lay).pointerEvents : null }
+  return { hasTextarea: !!ta }
 })
-if (!decorMode.hasTextarea) ok('꾸미기 상태 — 종이는 읽기 전용(스티커를 끌 수 있다)')
-else no('꾸미기 상태인데 글칸이 살아 있다 — 스티커를 못 끈다')
+if (decorMode.hasTextarea) ok('⭐ 꾸미기 상태에서도 글칸이 살아 있다 — 탭 왕복 없이 바로 쓴다(v9.93)')
+else no('꾸미기 상태에서 글칸이 죽어 있다 — 「어디서든 글씨 수정」이 깨졌다')
 
-// ③ ⭐ 창업자가 말한 길 — **종이의 메모칸을 탭하면 글쓰기로**
+// ③ ⭐ 창업자가 말한 길 — **종이의 메모칸을 탭하면 «그 자리에서» 쓴다**
 const box = await page.locator('.decor-editor .paper').first().boundingBox()
 // 「오늘의 한끼」 메모칸 = write { top 74.5 · left 13.7 · right 15.4 · bottom 5.5 } → 가운데쯤을 찍는다
 await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.85)
 await page.waitForTimeout(600)
 // ⛔ `nth(1)` 로 재면 안 된다 — 옛 판(두 칸)에선 그 자리가 「꾸미기」라 **거짓으로 통과**한다.
 //    실제로 옛 코드로 돌려보고 잡았다(규칙 12). 「글쓰기」라고 «쓰인» 칸이 켜졌나로 본다.
-const writeSeg = page.locator('.decor-editor .segment .seg', { hasText: /^글쓰기$/ })
-const onWrite = (await writeSeg.count()) ? await writeSeg.first().getAttribute('class') : ''
-if ((onWrite || '').includes('on')) ok('메모칸을 탭하니 「글쓰기」로 넘어갔다')
-else no('메모칸을 탭했는데 글쓰기로 안 넘어간다')
+// ⭐ v9.93 부터 탭이 «안» 바뀐다 — 커서가 그 자리에 바로 들어가는 게 새 설계다.
+//    판정 = 「글쓰기 탭이 켜졌나」(옛) → 「본문 칸에 커서가 들어갔나」(현행)
+const focused = await page.evaluate(() => document.activeElement?.getAttribute('aria-label') === '일기 본문')
+if (focused) ok('⭐ 메모칸을 탭하니 «그 자리에» 커서가 들어간다 — 탭 전환 없이')
+else no('메모칸을 탭했는데 커서가 안 들어간다')
 
 // ④ 글칸이 «진짜로» 써지나
 const ta = page.locator('.decor-editor textarea[aria-label="일기 본문"]')
@@ -95,7 +98,9 @@ if (await ta.count()) {
   else no(`글이 안 들어간다 (${v})`)
 } else no('글쓰기인데 본문 칸이 없다')
 
-// ⑤ 서랍이 접혔나 — 종이가 커져야 「쓰는 판」으로 읽힌다
+// ⑤ 「글쓰기」 탭을 «직접» 누르면 서랍이 접힌다 — 종이가 커져야 「쓰는 판」으로 읽힌다
+//    ⭐ v9.93 부터 메모칸 탭은 모드를 안 바꾼다(그 자리에서 쓴다) → 접힘은 «글쓰기 탭»의 일이다.
+await page.locator('.decor-editor .segment .seg', { hasText: /^글쓰기$/ }).first().click(); await page.waitForTimeout(500)
 const m = await page.evaluate(() => {
   const d = document.querySelector('.decor-drawer'), p = document.querySelector('.decor-editor .paper')
   return { drawer: d?.getBoundingClientRect().height || 0, paper: p?.getBoundingClientRect().height || 0, h: innerHeight }

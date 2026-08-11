@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { COACH } from '../coach'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -7,16 +8,16 @@ import TabTips from '../components/TabTips'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
-import DiaryEntrySheet from '../components/DiaryEntrySheet'
-import ReviewAskSheet from '../components/ReviewAskSheet'
-import { shouldAskReview } from '../nudges'
+// ⛔ 2026-08-07 — 「요리 기록 남기기」 시트와 「한마디 청하기」를 이 화면에서 뺐다.
+//    앨범을 누르면 «그날 일기»로 가고(화면 이름이 「한끼 일기」다), 둘 다 «레시피 상세»에 그대로 있다.
+//    (DiaryEntrySheet · ReviewAskSheet · shouldAskReview import 제거)
 import { dateLabel } from '../utils'
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
 
 // 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
-const MYRECIPES_COACH_KEY = 'hankki:coach:myrecipes'
+const MYRECIPES_COACH_KEY = COACH.myrecipes
 const MYRECIPES_COACH_STEPS = [
   { sel: '[data-coach="collection"]', label: '모아보기', desc: '저장한 레시피를 한눈에 · 폴더·카테고리로 정리돼요' },
   { sel: '[data-coach="gridsize"]', label: '⊞ 보기 바꾸기', desc: '크게 2줄 ↔ 촘촘히 3줄 · 사진 큼직하게 보거나 한눈에 많이 보거나' },
@@ -40,7 +41,13 @@ const dayKey = (ts) => {
 // 📔 `diaryDays` = 다이어리를 쓴 날(`'y-m-d'` Set). 요리와 «따로» 받는다 —
 //    다이어리는 요리가 아니라서 음식 아이콘 자리에 못 들어가고, 「N번」에도 안 세어진다.
 //    ⭐ 대신 칸 왼쪽 위에 작은 펜 표시. **요리를 안 한 날에도 눌러서 다이어리로 갈 수 있다.**
-function CookCalendar({ entries, diaryDays, selected, onSelect, iconFor }) {
+// 📔📔 **칸을 누르면 «그날 일기»로 바로 간다** (창업자 2026-08-09 밤
+//    📮 *"달력에서 아이콘을 누르면 바로 일기로 들어가게 하면 좋을 것 같아"*)
+//    ⛔ 전엔 칸을 누르면 «아래 목록만» 걸러졌다. 그런데 폴드처럼 큰 화면에선 그 목록이 화면 밖이라
+//       **눌러도 아무 일도 안 일어난 것처럼** 보였다(창업자 가족이 「먹통」으로 여겼다).
+//    ⭐ 잃는 게 없다 — 일기 화면(`DiaryScreen`)이 그날 «요리 기록»까지 같이 보여준다(47줄 필터).
+//       오히려 목록 거르기보다 더 많이 본다.
+function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconFor }) {
   const [ym, setYm] = useState(() => {
     const n = new Date()
     return { y: n.getFullYear(), m: n.getMonth() }
@@ -98,7 +105,9 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, iconFor }) {
             <button
               key={d}
               className={`press cal-day ${on ? 'on' : ''} ${isToday(d) ? 'today' : ''}`}
-              onClick={() => (n || hasDiary) && onSelect(on ? null : k)}
+              // 📔 누르면 «그날 일기»로 바로 간다(위 주석). 고른 표시도 남겨 둔다 —
+              //    돌아왔을 때 어느 날을 봤는지 알 수 있고, 아래 「N월 N일 일기」 단추도 그 날짜를 쓴다.
+              onClick={() => { if (!n && !hasDiary) return; onSelect(k); onOpenDay?.(k) }}
               disabled={!n && !hasDiary}
             >
               <span className="cal-num">{d}</span>
@@ -120,10 +129,13 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, iconFor }) {
   )
 }
 
-export default function MyRecipesScreen() {
+// 📔 initView = 「일기」 탭으로 들어오면 «한끼 일기»부터 보여준다 (창업자 2026-08-07
+//    *"맨 아래 바에 한끼일기도 넣자. 일기쓰려면 레시피에서 한끼일기 또 들어가야 하니까"*)
+//    ⚠️ App 이 key 를 달리 줘서 «다시 마운트»되게 한다 — 안 그러면 초기값이 안 먹는다.
+export default function MyRecipesScreen({ initView = 'grid' }) {
   const { recipes, folders, addFolder, removeFolder, removeRecipe, diary, removeDiary } = useStore()
   const nav = useNav()
-  const [view, setView] = useState('grid') // grid | log | folders
+  const [view, setView] = useState(initView) // grid | log | folders
   const [coach, setCoach] = useState(() => needsCoach(MYRECIPES_COACH_KEY))
   const [folder, setFolder] = useState('전체')
   // 모아보기 크기 — 'big'(2열·이름 크게) | 'small'(3열 그리드). 선택은 기억된다.
@@ -180,10 +192,10 @@ export default function MyRecipesScreen() {
   const lpEnd = () => clearTimeout(lpTimer.current)
   const [newFolder, setNewFolder] = useState(false)
   const [delFolder, setDelFolder] = useState(null) // 삭제할 사용자 폴더 이름
-  const [logEditing, setLogEditing] = useState(null)
+
   // 한마디 청하기 — 기록 시트를 닫는 순간. 상세 화면과 «같은 자리»다.
   // ⭐ 기록을 제일 많이 여닫는 곳이 여기라, 상세에만 걸면 사실상 아무한테도 안 물어보게 된다.
-  const [askReview, setAskReview] = useState(false)
+
 
   // 뒤로가기 처리는 모달(요리기록 시트 등)까지 포함해 아래(상태 선언 뒤)에서 한 번에 등록한다.
 
@@ -267,7 +279,9 @@ export default function MyRecipesScreen() {
               장보기·레꾸자랑엔 이미 곰이 있어 겹치고, 설정은 잘 안 가서 여기로. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <img src={gomHeader} alt="" draggable={false} width={42} height={42} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-4px 0' }} />
-            <div className="h-title">레시피</div>
+            {/* 🏷 제목은 «지금 보고 있는 것»을 말한다 — 「일기」 탭으로 들어왔는데 머리글이
+                「레시피」면 어디에 있는지 헷갈린다(검수판에서 드러났다). */}
+            <div className="h-title">{view === 'log' ? '한끼 일기' : '레시피'}</div>
           </div>
           <TabTips tab="myrecipes" />
         </div>
@@ -317,7 +331,7 @@ export default function MyRecipesScreen() {
                  그래서 만든 사람(창업자)조차 안 썼다 — 이 탭이 죽은 이유의 하나가 **기능이 모자란 게
                  아니라 자리를 잘못 준 것**이었다. 접기 버튼도 같이 없앴다(가릴 이유가 없어졌다). */}
           {(entries.length > 0 || diaryDays.size > 0) && (
-            <CookCalendar entries={entries} diaryDays={diaryDays} selected={dayFilter} onSelect={setDayFilter} iconFor={iconFor} />
+            <CookCalendar entries={entries} diaryDays={diaryDays} selected={dayFilter} onSelect={setDayFilter} onOpenDay={(k) => nav.push({ name: 'diary', day: k })} iconFor={iconFor} />
           )}
 
           {/* 📔 다이어리 쓰기 — 창업자 2026-08-06 *"따로 아이콘을 하나 파서 다이어리 쓰기
@@ -389,7 +403,15 @@ export default function MyRecipesScreen() {
                     onClick={() => {
                       if (lpFired.current) { lpFired.current = false; return } // 꾹 누름 발동 직후 클릭 무시
                       if (logEdit) toggleLogSel(e.id)
-                      else setLogEditing(e)
+                      // 📔📔 **「한끼 일기」에서 누르면 «그날 일기»로 간다** (창업자 2026-08-07)
+                      //   ⛔ 전엔 「요리 기록 남기기」 시트가 떴다 — 창업자 *"이거 없애기로 하지않았어? 일기에서 만든음식 누르면 떠."*
+                      //   ⭐ v9.80 에 없앤 건 **「만들었어요」 누르면 «자동으로» 뜨던 것**이고,
+                      //      여기 «직접 누르는 길»은 남아 있었다. 화면 이름이 「한끼 일기」인데 요리 기록이 뜨니 앞뒤가 안 맞았다.
+                      //   ⭐ 기록(별점·사진·팁) 고치기는 **레시피 상세**에 그대로 있다(`RecipeDetailScreen` 「내 요리 기록」 카드)
+                      //      → 잃는 길이 없다.
+                      //   ⚠️ 딸려온 것 = 이 화면의 「한마디 청하기」가 그 시트 닫히는 자리를 썼다.
+                      //      화면을 옮기는 길에 묻는 건 실례라 여기선 안 묻고 **레시피 상세 쪽에 맡긴다**(거긴 그대로 산다).
+                      else nav.push({ name: 'diary', day: dayKey(e.at) })
                     }}
                   >
                     {e.photo ? (
@@ -603,17 +625,9 @@ export default function MyRecipesScreen() {
         />
       )}
 
-      {logEditing && (
-        <DiaryEntrySheet
-          entry={logEditing}
-          // ⛔ 삭제·레시피로 이동은 여기를 안 탄다 — 지운 직후나 화면을 옮기는 길에 물으면 실례다.
-          onClose={() => { setLogEditing(null); if (shouldAskReview(diary.length)) setAskReview(true) }}
-          onDelete={() => { removeDiary(logEditing.id); setLogEditing(null); nav.showToast('기록을 삭제했어요') }}
-          onOpenRecipe={recipes.some((r) => r.id === logEditing.recipeId) ? () => { const e = logEditing; setLogEditing(null); openRecipe(e) } : undefined}
-        />
-      )}
-      {/* 한마디 청하기 — 기록 시트가 닫힌 뒤에만(겹쳐 뜨지 않게). 시트가 스스로 '물어봤음'을 남긴다. */}
-      {askReview && !logEditing && <ReviewAskSheet onClose={() => setAskReview(false)} />}
+      {/* ⛔ 「요리 기록 남기기」 시트는 2026-08-07 에 여기서 뺐다 —
+             「한끼 일기」 앨범을 누르면 «그날 일기»로 간다(위 `album-tile` 참고).
+             기록 고치기와 「한마디 청하기」는 **레시피 상세**에 그대로 있다. */}
       {coach && <CoachMarks storageKey={MYRECIPES_COACH_KEY} steps={MYRECIPES_COACH_STEPS} onDone={() => setCoach(false)} />}
     </>
   )

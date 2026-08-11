@@ -50,9 +50,11 @@ export async function buildCoverPayload({ coverEl, title, info = [], appUrl, rec
   //   실측 2026-08-05 = 글꼴 포함 15.3초 vs 빼면 1.4초. → `src/fontEmbed.js`
   //   ⛔⛔ v9.66 에 **뺐었다** — 꾸러미에 글꼴이 «일부만» 실려 글자 폭이 어긋났다(창업자 캡처).
   //   ⭐ v9.73 에 다시 켠다 — «왜 일부만 실렸나»를 찾았다: 라이브러리가 «만들 때 쓴 조각이
-  //      실제로 쓰는 글꼴»만 담는다. 4종을 전부 쓰는 표본 조각으로 만들면 다 담긴다.
-  //      🔒 4종이 다 안 들어 있으면 `fontEmbed.js` 가 «안 쓴다»(느려도 정확한 옛 길로).
-  const fontOpt = fontOptFrom(await fontCSS())
+  //      실제로 쓰는 글꼴»만 담는다.
+  //   ⭐⭐ 2026-08-07 — **찍을 조각을 그대로 넘긴다.** 글씨체가 열둘이 돼서 「전부 담기」를 하면
+  //      4.7MB 가 되고, 글씨체 하나만 쓴 사람도 열두 벌을 다 받는다. 이 두 장이 쓰는 것만 담는다.
+  //      🔒 부르기로 한 게 다 안 들어 있으면 `fontEmbed.js` 가 «안 쓴다»(느려도 정확한 옛 길로).
+  const fontOpt = fontOptFrom(await fontCSS([coverEl, recipeEl]))
 
   // 2장째(레시피카드) 캡처를 표지 캡처와 '동시에' 시작한다 — 전체 대기시간을 줄여
   // 폰의 공유 허용 시간(user activation) 안에 navigator.share가 뜨게 한다.
@@ -71,6 +73,13 @@ export async function buildCoverPayload({ coverEl, title, info = [], appUrl, rec
   //    2 로 낮춰도 액자 안에서 1080px 폭을 채운다(창업자 *"너무 느려졌어 한참기다려야해"*).
   const scale = Math.min(2, 1080 / Math.max(1, rect.width))
   let coverUrl
+  // 🔲 **찍는 동안만 모서리를 각지게 한다** (2026-08-09 가로 2단)
+  //    가로 2단에서 표지에 `border-radius: 16px` 을 줬는데, 캡처 대상이 바로 그 `.cover-box` 라
+  //    **둥근 모서리가 공유 카드에 그대로 찍힌다**(PNG 라 네 귀퉁이가 투명 → 카톡에서 흰/검정으로 뜬다).
+  //    ⭐ 공유 카드는 바이럴의 핵심이라 위험을 안 진다 — 찍기 전에 0 으로, 끝나면 되돌린다.
+  //    ⚠️ 인라인 스타일이라 CSS 를 이긴다. 세로에선 애초에 radius 가 없어 아무 일도 안 한다.
+  const 옛모서리 = coverEl.style.borderRadius
+  coverEl.style.borderRadius = '0'
   try {
     // ⏱ **12초 제한** — 캡처가 안 끝나면 로딩만 돌고 아무 말이 없다. 그게 유저에겐 먹통이다
     //    (창업자 2026-08-03 *"로딩은 돌아가. 그다음이 안돼"*). 끝나든 못 끝나든 **말은 한다.**
@@ -84,6 +93,9 @@ export async function buildCoverPayload({ coverEl, title, info = [], appUrl, rec
     ])
   } catch (e) {
     return null
+  } finally {
+    // ⚠️ `finally` 라야 «실패해도» 되돌아간다 — catch 안에서 return 하므로 여기가 아니면 각진 채로 남는다.
+    coverEl.style.borderRadius = 옛모서리
   }
   const coverImg = await loadImage(coverUrl)
   if (!coverImg) return null

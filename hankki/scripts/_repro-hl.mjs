@@ -71,7 +71,7 @@ page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
 await page.addInitScript((s) => {
   localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
-  for (const k of ['home', 'home2', 'detail', 'brag', 'shop', 'myrecipes', 'profile', 'decor']) localStorage.setItem(`hankki:coach:${k}`, '1')
+  const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
 }, state)
 await page.goto('http://127.0.0.1:4361/hankki/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(1200)
@@ -142,10 +142,22 @@ else {
 
 // ── ④ 색·굵기·진하기를 바꾼다 ──────────────────────────
 await page.mouse.click(stage.x + stage.width / 2, stage.y + stage.height * 0.4); await page.waitForTimeout(500)
-const tap = async (label, name) => {
-  const btn = page.getByRole('button', { name, exact: true })
-  if (await btn.count() === 0) { no(`${label} — 「${name}」 단추가 없다`); return false }
-  await btn.first().click(); await page.waitForTimeout(400)
+// 🔀 2026-08-07 — 컨텍스트 바가 «갈래»로 바뀌었다(색·굵기·진하기가 한 번에 한 줄만 뜬다).
+//   ⛔ 그래서 갈래를 «먼저» 눌러야 그 칩이 그려진다. 안 누르면 화면에 없다.
+//   ⛔⛔ 갈래를 «글자»로 찾으면 안 된다 — 서랍에도 「색·굵기」가 있어 엉뚱한 걸 누른다.
+//      (이 검사가 실제로 서랍 형광펜을 눌러 「색이 반영 안 됐다」로 거짓 실패했다) → `data-ctxtab` 로.
+const tab = async (key) => {
+  const t = page.locator(`button[data-ctxtab="${key}"]`)
+  if (await t.count() === 0) return false
+  await t.first().click(); await page.waitForTimeout(300)
+  return true
+}
+const tap = async (label, key, name) => {
+  if (!(await tab(key))) { no(`${label} — 갈래 단추가 없다`); return false }
+  // 칩은 컨텍스트 바(`.decor-tools`) «안»에서만 찾는다 — 서랍의 같은 이름표를 안 물게.
+  const use = page.locator('.decor-tools').getByRole('button', { name, exact: true })
+  if (await use.count() === 0) { no(`${label} — 「${name}」 단추가 없다`); return false }
+  await use.first().click(); await page.waitForTimeout(400)
   ok(`${label} 바꿨다 (${name})`)
   return true
 }
@@ -153,9 +165,9 @@ const tap = async (label, name) => {
 //    서랍의 세 번째 칸이 무엇이든 그 이름표를 읽어서 누른다.
 const before3 = await page.evaluate(() => document.querySelector('.decor-stage [data-hl]')?.getAttribute('data-hl'))
 const third = await pens.nth(2).getAttribute('aria-label')
-await tap('색', third)
-await tap('굵기', '굵게')
-await tap('진하기', '진하게')
+await tap('색', 'color', third)
+await tap('굵기', 'width', '굵게')
+await tap('진하기', 'opacity', '진하게')
 const changed = await page.evaluate(() => {
   const el = document.querySelector('.decor-stage [data-hl]')
   return el ? { key: el.getAttribute('data-hl'), o: getComputedStyle(el).opacity } : null

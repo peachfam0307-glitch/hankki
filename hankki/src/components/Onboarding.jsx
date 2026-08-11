@@ -1,4 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
+import Icon from './Icon'
+// 🛒 장보기 콤비 — 꼬르곰이 카트, 펭펭이 바구니. 스토어 스샷 ⑤가 쓰는 그 컷이다.
+//    ⚠️ `sharepool` 에 있어서 `F()`(stickers/photo) 로는 못 부른다 → 직접 import.
+import duoCart from '../assets/sharepool/duo_cart.png'
 import logoCream from '../assets/logo-hankki-cream.png'
 import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomThumb from '../assets/ui/gom_thumbsup.png'
@@ -13,6 +17,9 @@ import cuTsuyu from '../assets/curation/cu_stock_tsuyu.png'
 //     허리 절단면이 그대로 보인다. 정본은 처음부터 전신 단체 구도로 그려진 그림이다.)
 //    배경이 #F9F9F9 단색이라 같은 색 카드에 얹으면 이어붙인 자리가 안 보인다(투명 처리 불필요).
 import lineup5 from '../assets/cast/lineup5.png'
+// 📄 속지 실물 — 온보딩 「한끼 일기」 장면이 **앱에 진짜 있는 속지**를 그대로 보여준다(창업자 2026-08-08).
+//    좌표는 눈대중이 아니라 `src/data/papers.js` 의 실측값을 그대로 쓴다.
+import dpSnap from '../assets/paper/dp_snap.webp'
 // 얼굴 컷 — 이름·성격 줄 앞에 붙여 "누가 누구인지" 짝지어준다(단체 그림만으론 못 짚는다)
 import avGom from '../assets/avatars/av_gom.png'
 import avPeng from '../assets/avatars/av_peng.png'
@@ -30,6 +37,18 @@ export function needsOnboarding() {
 export function markOnboarded() {
   try { localStorage.setItem(ONBOARD_KEY, '1') } catch { /* noop */ }
 }
+
+// ⏰⏰ 날짜는 «오늘»을 쓴다 — 고정으로 박으면 반드시 낡는다.
+//    (창업자 2026-08-08 *"날짜도 맞춰야해(온보드에 날짜 써있는 이미지가 있을거야)"* — 맞았다.
+//     레꾸 카드에 `2026.07.25` 가 박혀 있어서 **보름 넘게 지난 날짜**를 새 유저가 첫 화면에서 봤고,
+//     내가 만든 일기 장면과도 날짜가 어긋났다.)
+//    ⭐ 오늘로 계산하면 **레시피 카드와 일기가 저절로 같은 날**이 되고 영영 안 낡는다.
+//    ⚠️ 기기 시간대를 그대로 쓴다 — 우리 유저는 한국이라 그게 KST 다.
+const _now = new Date()
+const _wd = ['일', '월', '화', '수', '목', '금', '토'][_now.getDay()]
+const CARD_DATE = `${_now.getFullYear()}.${String(_now.getMonth() + 1).padStart(2, '0')}.${String(_now.getDate()).padStart(2, '0')}`
+const DIARY_DATE = `${_now.getMonth() + 1}.${_now.getDate()} ${_wd}`
+const THIS_MONTH = `${_now.getMonth() + 1}월`
 
 // 음식/곰펭/데코 PNG 자산 (앱 자산 재사용 — 무겁지 않게)
 const PHOTO = import.meta.glob('../assets/stickers/photo/*.png', { eager: true, query: '?url', import: 'default' })
@@ -83,7 +102,7 @@ const Postit = ({ children, style }) => <div style={{ position: 'absolute', padd
 const Tape = () => <div style={{ position: 'absolute', top: -24, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', width: 230, height: 54, background: 'rgba(255,214,150,.85)', border: '2px dashed rgba(160,110,55,.5)', borderRadius: 6 }} />
 
 // 폴라로이드 레꾸 카드
-function Card({ food, foodW = 380, cover, title, date = '2026.07.25', rot = -4, char, deco, postit }) {
+function Card({ food, foodW = 380, cover, title, date = CARD_DATE, rot = -4, char, deco, postit }) {
   return (
     <div style={{ width: 640, transform: `rotate(${rot}deg)`, background: '#fffdf8', borderRadius: 42, padding: '26px 26px 30px', boxShadow: '0 30px 60px rgba(90,60,30,.3)', position: 'relative' }}>
       <Tape />
@@ -133,6 +152,92 @@ const Slide2 = () => (
       </div>
       <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 40, color: '#4a6b42' }}><img src={uiHandPoint} alt="" draggable={false} style={{ width: 52, height: 52, objectFit: 'contain' }} />톡 눌러 붙이기만 하면 끝!</div>
     </div>
+  </Stage>
+)
+
+// ── 2-D. 한끼 일기 ──
+// 📔📔 창업자 지적 2026-08-08 — *"우리 스샷이랑, 온보드, 안내코치에도 한끼일기 넣어야 하지 않아?"*
+//    ⛔ 맞았다. 온보딩 여덟 장에 **「일기」라는 낱말이 한 번도 없었다.**
+//       한끼 일기는 v9.85(8/6)~v10.02(8/8) 에 크게 자랐는데 온보딩은 v9.03(7/26) 것 그대로였다.
+//       📌 **기능이 자라면 「앱을 소개하는 자리」도 같이 자라야 한다** — 안 그러면 하단바 탭만 덩그러니 있고
+//          유저는 그게 뭔지 모른다.
+//    ⭐ 자리 = 레꾸(Slide2) «바로 다음». 「레시피를 꾸민다」 → 「일기도 꾸민다」로 이어진다.
+//
+// 🎨🎨 창업자 지적 2026-08-08 (두 번째) — *"우리 일꾸랑 레꾸랑 큰 차이가 없어서.. 우리 새로운 스티커
+//    많으니까(일꾸전용) 그거 적용해서 꾸며볼래?"* ＋ *"무지속지나 반 나눠진 속지에 모서리꾸미기 붙이고
+//    기분스티커랑 별,. 우리가 안쓰던거 이용해서 펭펭이나 하나넣고"*
+//    ⛔ 맞았다. 첫 판은 **CSS 로 그린 흰 카드 ＋ 큰 음식 그림 ＋ 캐릭터** 라 레꾸(Slide2)와 짜임이 같았고,
+//       일꾸 전용 84컷 중 **딱 2컷**만 썼다(dc_td17·dc_td06). 나머지는 전부 내가 CSS 로 흉내 낸 것이다.
+//    ⛔⛔ **아래 옛 주석이 나를 막고 있었다** — *"속지 PNG 를 얹지 않는다, 좌표를 눈대중으로 맞추면 어긋난다"*.
+//       **틀린 제약이었다.** `src/data/papers.js` 에 사진칸·제목·날짜·글칸 좌표가 **이미 실측되어 있다**(퍼센트).
+//       눈대중이 아니라 그 값을 읽어 쓰면 된다. 📌 「하지 말 것」을 적을 땐 «왜 못 하는지»를 다시 재 볼 것.
+//    ⭐ 그래서 진짜 속지 `dp_snap`(반 나눠진 속지 = 위 사진칸 / 아래 글칸)을 얹고 그 위에 일꾸 전용 스티커로 꾸민다.
+const SNAP = { photo: { top: 7.8, bottom: 60.1, left: 10.3, right: 8.8 }, title: { top: 43.0, left: 12 }, date: { top: 43.9, left: 75.8 }, write: { top: 54.2, left: 12, right: 10.5 } }
+// 속지 위에 얹는 것은 전부 «퍼센트» — 속지 크기를 바꿔도 자리가 안 흔들린다(`papers.js` 와 같은 문법)
+const P = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, typeof v === 'number' ? `${v}%` : v]))
+// 달력 세 줄 — 해먹은 날에만 음식 아이콘이 박힌다(빈 칸 = 안 한 날). ⛔날짜 숫자는 안 쓴다(달마다 달라진다)
+// ⛔⛔ **2·3째 줄의 1·2번째 칸은 비워 둔다** — 펭펭이 달력 왼쪽 아래에 서 있어 «그 두 칸을 가린다».
+//    첫 판에서 3째 줄 1번 칸의 음식이 통째로 안 보였다(캡처로 잡았다). 달력의 요지가 「해먹은 날에 그림이 박힌다」인데
+//    그 그림이 캐릭터 뒤로 숨으면 요지가 죽는다. 📌아이콘을 옮길 땐 펭펭 폭(container 0~146px)을 먼저 볼 것.
+const CAL = [null, 'fh_k22', null, 'fe_15', null, null, 'fh_k27', null, null, null, 'fe_06', null, 'fe_09', null, null, null, 'fe_22', null, 'fh_k29', null, 'fe_18']
+const SlideD = () => (
+  <Stage bg="linear-gradient(165deg,#d6dfea,#eef2f7)">
+    <Cap top={210}><H1 style={{ color: '#3f5570' }}>오늘의 한 끼가<br />일기가 돼요</H1><Sub style={{ color: '#5b7291' }}>사진 붙이고 속지 골라 · 그날을 남겨요</Sub></Cap>
+    <div style={{ position: 'absolute', top: 548, left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+      {/* 📄 속지 실물 = `dp_snap` 「사진 기록」(984×1312 · 3:4) — 창업자가 고른 «반 나눠진 속지».
+          위는 사진칸, 아래는 글칸이라 **꾸밀 여백이 넓다**. 좌표는 `papers.js` 실측값(SNAP) 그대로. */}
+      <div style={{ position: 'relative', width: 580, aspectRatio: '984/1312', transform: 'rotate(-1.6deg)', filter: 'drop-shadow(0 26px 48px rgba(55,75,105,.32))', zIndex: 2 }}>
+        <img src={dpSnap} alt="" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+        {/* 📷 사진칸 — 인쇄된 칸 안에 딱 (contain 이라 세로 사진도 안 잘린다) */}
+        {/* ⛔⛔ 창업자 제보 2026-08-08 *"음식 이모지도 크기 좀만 줄이자 잘렸어(아래위가)"* — 맞았다.
+            재보니 칸은 453×248 인데 `width:'62%'` 로 **폭만** 잡아 높이가 310px 이 됐다(fe_06 은 세로가 긴 컷).
+            `overflow:hidden` 이라 **위아래 62px 이 통째로 잘렸다.**
+            ⭐ 고침 = 칸을 100%로 채우고 `objectFit:'contain'` — 달력 칸이 이미 쓰는 문법이라 거긴 안 잘렸다.
+            📌 **한 축만 잡으면 다른 축은 «비율이 정한다» — 칸 안에 넣으려면 두 축을 다 잡아야 한다.** */}
+        <div style={{ position: 'absolute', ...P({ top: SNAP.photo.top, bottom: SNAP.photo.bottom, left: SNAP.photo.left, right: SNAP.photo.right }), padding: '4%', overflow: 'hidden' }}>
+          <img src={F('fe_81')} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        </div>
+        <div style={{ position: 'absolute', ...P({ top: SNAP.title.top, left: SNAP.title.left }), fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 44, color: '#3f4a5a', lineHeight: 1 }}>비빔국수</div>
+        <div style={{ position: 'absolute', ...P({ top: SNAP.date.top, left: SNAP.date.left }), fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 30, color: '#9aa4b2', lineHeight: 1 }}>{DIARY_DATE}</div>
+        {/* ✍️ 글칸 — 첫 줄에 손글씨(형광펜), 아래 두 줄은 「줄」 속지를 고른 모습 */}
+        <div style={{ position: 'absolute', ...P({ top: 55.4, left: SNAP.write.left, right: SNAP.write.right }), textAlign: 'left', fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 34, color: '#5a6270', lineHeight: 1.35 }}>
+          더위에 지쳐도 <span style={{ background: 'linear-gradient(transparent 58%,#f5e08a 58%)' }}>한 끼는 챙겼다</span>
+          {/* 줄은 «칸을 채울 만큼» 그린다 — 두 줄만 그렸더니 글칸 아래 절반이 텅 비었다 */}
+          {[22, 32, 32, 32].map((m, i) => <div key={i} style={{ height: 2, background: '#ece5d8', marginTop: m }} />)}
+        </div>
+        {/* 🎀 모서리 꾸미기 — «대각선 두 짝»으로. 오른쪽 아래는 같은 컷을 180° 돌려 쓴다
+            (코너 스티커는 전부 「왼쪽 위」 방향으로 그려져 있다) */}
+        <Img k="dgc04" style={{ ...P({ left: 1.5, top: 1.5, width: 15.5 }) }} />
+        <Img k="dgc05" style={{ ...P({ right: 1.5, bottom: 1.5, width: 14.5 }), transform: 'rotate(180deg)' }} />
+        {/* ⭐ 별 = 사진 «위»에 붙인 것처럼. 안 쓰던 컷(`dn_star`) */}
+        <Img k="dn_star" style={{ ...P({ right: 15, top: 28.5, width: 12 }), transform: 'rotate(-9deg)' }} />
+        {/* 🙂 기분 스티커 — 레꾸엔 아예 없는 갈래(only:'diary')라 두 장을 가르는 표식이 된다.
+            ⛔ `dgf01`(크림 바탕)은 «흰 속지 위에서 통째로 묻혔다» — 캡처로 잡았다.
+               속지가 흰색이니 **테두리에 색이 든 컷**을 고른다(`dgf07` = 주황 햇살·활짝 웃음).
+            ⛔ 자리는 글칸 «안쪽» 오른쪽 아래 — 칸 테두리에 걸치면 어정쩡하고 줄과도 겹친다 */}
+        <Img k="dgf07" style={{ ...P({ right: 8, bottom: 12.5, width: 16 }), transform: 'rotate(6deg)' }} />
+      </div>
+
+      {/* 📅 달력 — 일기의 «두 번째 축». 그날을 남기는 것과 «모아서 보는 것»은 다른 즐거움이라
+          글자(「달력으로 한눈에」)만으로는 안 와닿는다. 만든 날에 음식 아이콘이 박힌다. */}
+      <div style={{ position: 'relative', marginTop: 30, width: 580, background: 'rgba(255,253,248,.94)', borderRadius: 24, padding: '20px 18px 22px', boxShadow: '0 18px 40px rgba(55,75,105,.2)' }}>
+        <Img k="wt_td02" style={{ left: -16, top: -18, width: 156, transform: 'rotate(-7deg)' }} />
+        <div style={{ fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 32, color: '#3f5570', marginBottom: 12 }}>{THIS_MONTH}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 9 }}>
+          {CAL.map((k, i) => (
+            <div key={i} style={{ aspectRatio: '1', borderRadius: 13, background: k ? '#f2efe6' : '#f7f5ee', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {k ? <img src={F(k)} alt="" draggable={false} style={{ width: '84%', height: '84%', objectFit: 'contain' }} /> : null}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 🐧 펭펭 = 안 쓰던 컷 `gp_pengft`(두 주먹 파이팅) — 온보딩 아홉 장에 한 번도 안 나온 컷이다.
+          ⛔ `gp_pengtb`(엄지척)는 안 쓴다 — 엄지척은 «우리가 유저를 평가하는 그림»이라 쓰지 않기로 했다.
+          자리는 달력 밖 왼쪽 아래 — 종이 위에 두면 손글씨를 가린다(첫 판에서 「챙겼다」를 덮었다) */}
+      <Img k="gp_pengft" cls="hk-m-kong" style={{ left: -58, bottom: -14, width: 196, transformOrigin: 'bottom center', filter: 'drop-shadow(0 10px 16px rgba(60,80,110,.28))' }} />
+    </div>
+    <Foot style={{ background: '#3f5570', color: '#fffdf8' }}>달력으로 한눈에</Foot>
   </Stage>
 )
 
@@ -188,6 +293,64 @@ const Pick = ({ n, d, c, e }) => (
     <div style={{ position: 'absolute', top: -16, right: 24, background: '#ffcf3f', color: '#6a4a10', fontSize: 26, padding: '8px 20px', borderRadius: 24, boxShadow: '0 6px 12px rgba(150,110,20,.25)' }}><svg viewBox="0 0 24 24" width={26} height={26} style={{ verticalAlign: '-4px', marginRight: 4 }}><path d="M12 2.5c.5 4 1.5 5 5.5 5.5-4 .5-5 1.5-5.5 5.5-.5-4-1.5-5-5.5-5.5 4-.5 5-1.5 5.5-5.5z" fill="#6a4a10" /></svg>꼬르곰·펭펭 PICK</div>
   </div>
 )
+// ── 6-S. 장보기 ──
+// 🛒🛒 창업자 지적 2026-08-09 — *"여기는 장보기가 빠졌구나.."* · *"온보드에 왜 빠져있었지? 스샷이랑 다 똑같이 했었는데"*
+//    ⛔ 맞았다. 스토어 스샷 «여덟 장» 중 **둘**이 온보딩에 없었다 — ④음식 아이콘 · ⑤장보기.
+//       v8.37(7/24) 에 「스샷을 앱 안에서 라이브로」를 하면서 **처음부터 여섯 장만 옮겼다.**
+//       ⚠️ 왜 그 둘을 뺐는지는 «기록에 안 적혀 있다» — 짐작해서 채우지 말 것.
+//    ✅✅ **④ 음식 아이콘은 온보딩에 «안» 넣는다 — 창업자 확정 2026-08-09** (*"온보드에는 없어도 될 것 같아"*).
+//       ⛔ 다음에 「스샷엔 있는데 온보딩엔 없네?」로 다시 파고들지 말 것. **온보딩은 열 장으로 확정.**
+//       ⭐ **스토어 스샷엔 그대로 «넣는다»** (창업자 *"스샷에는 넣자"*) — 온보딩과 스샷이 «달라도 된다»는 결정이다.
+//    📌 일기 때와 뿌리가 같다 — **하단바에 「장보기」 탭이 있는데 소개하는 자리에서 그 이름을 한 번도 안 불렀다.**
+//    ⭐ 이 장면은 스샷 `design/promo/스토어스샷-2507/renders-v3/05-장보기.png` 를 그대로 라이브로 옮긴 것.
+//       ⛔ 마트는 «상호»가 아니라 «종류»로 쓴다(새벽배송·대형몰…) — 제3자 상표를 스토어 이미지에 못 쓴다(스샷 README 원칙).
+//       ⛔ 🛒 는 유니코드가 아니라 우리 `cart` 라인 아이콘이다(CLAUDE.md ⛔UI 유니코드 이모지 금지).
+const BUY = [['돼지고기 앞다리'], ['두부 한 모'], ['대파 한 단']]
+const MALLS = [['새벽배송', '#5a7fa8'], ['대형몰', '#8c93a0'], ['친환경마켓', '#6f9a5e'], ['오픈마켓', '#b0805a'], ['동네마트', '#9b86bd']]
+const Cart = ({ s = 34, c = '#fffdf8' }) => <Icon name="cart" size={s} color={c} stroke={2} />
+const SlideS = () => (
+  <Stage bg="linear-gradient(170deg,#b3d1e2,#cfe2ec 60%,#dfebf2)">
+    <Cap top={210}>
+      <H1 style={{ color: '#2f6187' }}>재료, 한 번에<br />사러가기 <span style={{ display: 'inline-block', verticalAlign: '-6px' }}><Cart s={64} c="#2f6187" /></span></H1>
+      <Sub style={{ color: '#4a7ba3' }}>레시피 재료 그대로 톡 — 여러 마트로 바로</Sub>
+    </Cap>
+    <div style={{ position: 'absolute', top: 556, left: '50%', transform: 'translateX(-50%)', width: 720 }}>
+      {/* 🍲 레시피 재료 → 담기 */}
+      <div style={{ background: '#fffdf8', borderRadius: 34, padding: '26px 30px 16px', boxShadow: '0 22px 44px rgba(45,75,105,.22)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div style={{ width: 92, height: 92, borderRadius: 22, background: '#f2efe6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <img src={F('fh_k02')} alt="" draggable={false} style={{ width: '84%', height: '84%', objectFit: 'contain' }} />
+          </div>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: 46, color: '#33302b' }}>김치찌개 재료</div>
+            <div style={{ fontSize: 28, color: '#9aa4b2', marginTop: 2 }}>돼지고기·두부·대파·김치…</div>
+          </div>
+        </div>
+        <div style={{ height: 2, margin: '22px 0 4px', backgroundImage: 'repeating-linear-gradient(90deg,#dcd6c8 0 12px,transparent 12px 24px)' }} />
+        {BUY.map(([n], i) => (
+          <div key={n} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 6px', borderTop: i ? '2px solid #f0ece1' : 'none' }}>
+            <span style={{ fontSize: 38, color: '#33302b' }}>· {n}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#5a83ab', color: '#fffdf8', fontSize: 32, padding: '12px 26px', borderRadius: 999 }}>담기 <Cart s={30} /></span>
+          </div>
+        ))}
+      </div>
+      {/* 🏪 마트는 «종류»로 — 상호를 스토어 이미지에 못 쓴다 */}
+      <div style={{ marginTop: 26, background: '#fffdf8', borderRadius: 34, padding: '22px 24px 26px', boxShadow: '0 22px 44px rgba(45,75,105,.22)', textAlign: 'center' }}>
+        <div style={{ fontSize: 38, color: '#2f6187', display: 'inline-flex', alignItems: 'center', gap: 12 }}>내가 자주 쓰는 마트로 바로 <Cart s={34} c="#2f6187" /></div>
+        <div style={{ fontSize: 27, color: '#8d97a4', marginTop: 6 }}>원하는 곳으로 톡 — 장바구니째 이동</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center', marginTop: 20 }}>
+          {MALLS.map(([n, c]) => (
+            <span key={n} style={{ background: c, color: '#fffdf8', fontSize: 30, padding: '12px 26px', borderRadius: 999 }}>{n}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+    <img src={duoCart} alt="" draggable={false} className="hk-m-sway"
+      style={{ position: 'absolute', left: '50%', bottom: 176, transform: 'translateX(-50%)', width: 344, transformOrigin: 'bottom center', filter: 'drop-shadow(0 14px 22px rgba(45,75,105,.3))' }} />
+    <Foot style={{ background: '#2f6187', color: '#fffdf8' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>장 볼 거 까먹을 일 없이 <Cart s={38} /></span></Foot>
+  </Stage>
+)
+
 const Slide6 = () => (
   <Stage bg="linear-gradient(160deg,#cdd2a0,#e4e7c6)">
     <Cap top={210}><H1 style={{ color: '#5f6a30' }}>아무거나 말고,<br />써본 것만 나눠요</H1><Sub style={{ color: '#72803a' }}>18년차 주부가 직접 쓰고 좋았던 살림템만</Sub></Cap>
@@ -328,7 +491,12 @@ const Slide8 = () => (
 //    **사람 소개 → 친구들 → 기능 → 브랜드 CTA.** 기능부터 늘어놓으면 "또 하나의 앱" 이지만,
 //    *"꼬르곰은 저예요"* 로 시작하면 첫 화면부터 다른 앱이 복사할 수 없는 얘기가 된다.
 //    (근거 = `docs/기획-노트.md` "창업자 스토리 = 그 자체로 콘텐츠")
-const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, Slide3, Slide6, Slide7, Slide8]
+// 📔 SlideD(한끼 일기) = 레꾸 «바로 다음». 「레시피를 꾸민다」 → 「일기도 꾸민다」로 이어진다.
+//    ⚠️ 장수가 늘면 아래 점 표시(dots)와 「다음」 버튼은 `SLIDES.length` 로 저절로 따라간다 —
+//       v9.04 에서 «개수를 글자에 박지 않는다»로 고쳐 놓은 덕이다.
+// 🛒 SlideS(장보기) = 큐레이션(Slide6) «바로 앞» — 스토어 스샷 순서 그대로다(⑤장보기 → ⑥큐레이션).
+//    「레시피 재료를 담아 사러 간다」가 먼저고 「살림템 추천」이 그다음이라 흐름도 맞는다.
+const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, SlideD, Slide3, SlideS, Slide6, Slide7, Slide8]
 
 export default function Onboarding({ onDone }) {
   const N = SLIDES.length

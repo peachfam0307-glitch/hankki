@@ -51,9 +51,8 @@ try {
   browser = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } })
   await ctx.addInitScript(() => {
-    ;['hankki:onboarded', 'hankki:coach:home2', 'hankki:coach:detail', 'hankki:coach:decor',
-      'hankki:coach:myrecipes', 'hankki:coach:editor', 'hankki:coach:shop', 'hankki:coach:brag',
-      'hankki:coach:profile'].forEach((k) => { try { localStorage.setItem(k, '1') } catch { /* noop */ } })
+    const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
+    ;['hankki:onboarded', ].forEach((k) => { try { localStorage.setItem(k, '1') } catch { /* noop */ } })
   })
   const page = await ctx.newPage()
   page.setDefaultTimeout(8000)
@@ -166,18 +165,21 @@ try {
   const back2 = p2.getByRole('button', { name: '뒤로' }).first()
   if (await back2.isVisible().catch(() => false)) { await back2.click().catch(() => {}); await p2.waitForTimeout(600) }
   await p2.getByText('레시피', { exact: true }).last().click(); await p2.waitForTimeout(800)
-  await p2.locator('.seg', { hasText: '요리 기록' }).first().click(); await p2.waitForTimeout(700)
+  await p2.locator('.seg', { hasText: '한끼 일기' }).first().click(); await p2.waitForTimeout(700)
   const tile = p2.locator('.album-tile').first()
   if (!(await tile.isVisible().catch(() => false))) {
     no('요리 기록 탭에 앨범 칸이 없다 — 기록이 안 쌓였거나 탭을 못 열었다')
   } else {
     await tile.click(); await p2.waitForTimeout(700)
-    if (await seen2(LOG_SHEET)) ok('앨범 칸을 누르면 기록 시트가 열린다')
-    else no('기록 시트가 안 열린다')
-    await p2.getByRole('button', { name: '닫기' }).first().click().catch(() => {})
-    await p2.waitForTimeout(800)
-    if (await seen2(REVIEW_SHEET)) ok('닫는 순간 리뷰 시트가 뜬다 — 요리 기록 탭에서도 산다')
-    else no('리뷰 시트가 안 뜬다 — 요리 기록 탭에선 영영 안 물어보게 된다')
+    // ⭐⭐ v9.95 창업자 확정(ⓒ) — *"이거 없애기로 하지않았어? 일기에서 만든음식 누르면 떠."*
+    //    「한끼 일기」 앨범을 누르면 기록 시트가 아니라 **그날 일기**로 간다.
+    //    기록 시트·리뷰 청하기는 «레시피 상세»에 그대로 산다(위 절이 이미 재고 있다).
+    //    ⛔ 옛 판정(「앨범 → 기록 시트」)은 그 확정으로 뒤집힌 설계다 — 2026-08-07 전수검사에서 갈아엎음.
+    if (await seen2(LOG_SHEET)) no('앨범을 눌렀는데 기록 시트가 뜬다 — v9.95 에 없앤 길이 되살아났다')
+    else ok('⭐ 앨범을 눌러도 기록 시트가 «안» 뜬다 (v9.95 ⓒ)')
+    const diaryOpened = await p2.getByRole('button', { name: '꾸미기 열기' }).first().isVisible().catch(() => false)
+    if (diaryOpened) ok('⭐ 대신 «그날 일기»로 들어간다')
+    else no('일기로도 안 간다 — 앨범이 죽은 단추다')
   }
   if (errors2.length) errors2.forEach((e) => no(`pageerror(2판) — ${e}`))
   else console.log('   ✅ pageerror 0')

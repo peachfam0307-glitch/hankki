@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { COACH } from '../coach'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
@@ -7,7 +8,7 @@ import uiGomShop from '../assets/ui/gom_shop.png' // 🐻 장보기 꼬르곰(�
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 
 // 장보기 탭 첫 방문 코치마크 — 숨은 기능 안내(창업자 딸 아이디어 ⭐)
-const SHOP_COACH_KEY = 'hankki:coach:shop'
+const SHOP_COACH_KEY = COACH.shop
 const SHOP_COACH_STEPS = [
   { sel: '[data-coach="curation"]', label: '주부의 장바구니', desc: '18년차 주부가 엄선한 식재료 · 담고 바로 사러 가요' },
   { sel: '[data-coach="pantry"]', label: '냉장고', desc: '재료를 넣으면 유통기한 챙기고, 그 재료로 만들 요리도 추천해요' },

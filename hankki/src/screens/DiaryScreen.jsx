@@ -6,9 +6,13 @@ import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
 import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
 import PaperSheet, { PaperBox } from '../components/PaperSheet'
-import { paperStyle } from '../data/papers'
+import { paperStyle, ALL_PHOTO_FIELDS, migratePhotoKeys } from '../data/papers'
+
+// ✍️ 일기가 담는 «글자» 자리 — 속지가 바뀌어도 그대로 간다.
+//    사진 자리는 속지마다 다르므로 papers.js 가 세어 준다(ALL_PHOTO_FIELDS).
+const WORDS = ['title', 'note', 'line', 'weather', 'note2', 'note3', 'note4', 'font', 'size']
 import { useLayerBack } from '../useBackHandler'
-import { cropSquare } from '../utils'
+import { fitImage } from '../utils'
 
 // 📔📔 다이어리 — 「그날」 한 장. (창업자 확정 2026-08-06)
 //
@@ -78,34 +82,66 @@ export default function DiaryScreen({ day }) {
   //   🔀 `picks` = 「인쇄된 아이콘 중 고른 것」 여러 축(기분·장소·동행·시간대…). **객체**다.
   //      ⚠️ 그래서 «바뀌었나»를 `!==` 로 재면 안 된다 — 객체는 참조 비교라 늘 다르다고 나와
   //         매 렌더마다 저장이 돌게 된다. 아래 `same()` 이 그걸 막는다.
-  const blank = { title: '', note: '', line: '', weather: '', photo: '', picks: {} }
-  const of = (e) => ({ title: e?.title || '', note: e?.note || '', line: e?.line || '', weather: e?.weather || '', photo: e?.photo || '', picks: e?.picks || {} })
+  // ✍️ `font` = **본문 글씨체** (창업자 2026-08-07 *"글쓰기 글자체도 추가했으면"*)
+  //    ⛔ 빈 값이 «귀염체»다 — 이미 쓴 일기는 이 칸이 없으니 예전 모습 그대로 남는다
+  // ✍️ 글자 자리 — 속지가 바뀌어도 같이 간다(제목·본문·오늘의 한 줄·날씨·기록 2~4·글씨체·크기)
+  //    ⛔ picks(고른 아이콘)는 «객체»라 여기 넣지 않는다 — 아래에서 따로 다룬다
+  // 📦📦 담는 자리 목록 = **여기 한 곳** — ⛔손으로 나열하지 말 것.
+  //   전엔 빈값·읽기·저장·의존성 «네 곳»에 똑같이 적어 뒀다. 속지마다 사진 자리를 가르는 순간
+  //   네 곳을 다 고쳐야 했고, 한 곳만 빠뜨려도 «저장은 되는데 안 보이는» 사진이 생긴다.
+  //   (오늘만 같은 병을 셋 봤다 — 코치 키 · 음식 아이콘 218종 · 이것.)
+  //   ⭐ 사진 자리는 papers.js 가 속지 정의에서 «세어» 준다(ALL_PHOTO_FIELDS).
+  const FIELDS = [...WORDS, ...ALL_PHOTO_FIELDS]
+  const blank = { ...Object.fromEntries(FIELDS.map((k) => [k, ''])), picks: {} }
+  //   🚚 읽을 때 옛 저장본을 «그 일기가 지금 쓰는 속지»의 자리로 한 번 옮긴다(이미 깔린 폰 · 규칙 18 ⓙ)
+  const of = (e0) => {
+    const e = migratePhotoKeys(e0)
+    return { ...Object.fromEntries(FIELDS.map((k) => [k, e?.[k] || ''])), picks: e?.picks || {} }
+  }
   const same = (a, b) => (a && typeof a === 'object') || (b && typeof b === 'object')
     ? JSON.stringify(a || {}) === JSON.stringify(b || {})
     : a === b
   const [text, setText] = useState(() => of(entry))
   useEffect(() => { setText(of(entry)) }, [day]) // eslint-disable-line react-hooks/exhaustive-deps
+  // 🚚🚚 이관을 «저장»까지 한다 — 화면만 고치면 옛 자리가 남아서, 앱을 껐다 켜고
+  //   다른 속지를 고른 상태면 **거기로 또 옮겨 간다**(＝딸려오기 재발). 재현판이 이걸 잡았다.
+  useEffect(() => {
+    if (!entry) return
+    const m = migratePhotoKeys(entry)
+    if (m !== entry) updateDiary(entry.id, m)   // 옮길 게 없으면 원본 그대로 돌아온다
+  }, [entry?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const saved = of(entry)
   const dirty = Object.keys(blank).some((k) => !same(text[k], saved[k]))
   useEffect(() => {
     if (!dirty) return // 처음 열었을 때 «빈 다이어리»를 만들어 버리지 않게
-    const t = setTimeout(() => save({ title: text.title, note: text.note, line: text.line, weather: text.weather, photo: text.photo, picks: text.picks }), 350)
+    const t = setTimeout(() => save({ ...Object.fromEntries(FIELDS.map((k) => [k, text[k]])), picks: text.picks }), 350)
     return () => clearTimeout(t)
-  }, [text.title, text.note, text.line, text.weather, text.photo, JSON.stringify(text.picks)]) // eslint-disable-line react-hooks/exhaustive-deps
+    // ⚠️ 의존성도 «같은 목록»에서 편다 — FIELDS 는 모듈 상수라 길이가 안 변한다(React 규칙 지킴)
+  }, [...FIELDS.map((k) => text[k]), JSON.stringify(text.picks)]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 📷 사진 — 틀에 그려진 «창»에 끼운다 (창업자 2026-08-06 *"사진틀에 사진올리기가없어"*)
   //   ⭐ `cropSquare` 를 그대로 쓴다 — 레시피 표지·요리 기록·아바타가 다 쓰는, 이미 검증된 길이다
   //      (검정 썸네일·세로 반토막 두 사고를 이미 여기서 다 잡았다).
   //   ⚠️ 창은 정사각이 아니라 가로로 길다 → `object-fit: cover` 가 화면에서 맞춰 자른다.
   const photoRef = useRef(null)
+  // 🗂 사진칸이 여럿인 속지(「기록 3칸」)는 «어느 칸을 눌렀는지»를 기억해야 한다 —
+  //    파일 고르기는 비동기라, 키를 안 잡아두면 셋 다 첫 칸(photo)으로 들어간다.
+  const photoKeyRef = useRef('photo')
+  const pickPhotoFor = (pk) => { photoKeyRef.current = pk || 'photo'; photoRef.current?.click() }
   const onPhotoFile = (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
     const reader = new FileReader()
     reader.onload = async () => {
-      const src = await cropSquare(reader.result, 900)
-      setText((t) => ({ ...t, photo: src }))
+      // 📐 **자르지 않고 줄이기만** (창업자 2026-08-08 *"사진 위치조정이 안되네"*)
+      //   ⛔ `cropSquare` 는 «고를 때» 가운데 정사각만 남겨서, 세로 사진의 위·아래가 그 자리에서 사라졌다.
+      //      버린 건 나중에 아무리 끌어도 못 살린다 → 원본 비율을 통째로 들고 있어야 위치 조정이 된다.
+      //   ⭐ 보일 부분은 `PaperSheet` 가 «볼 때»(objectPosition) 정한다.
+      const src = await fitImage(reader.result, 1200)
+      const pk = photoKeyRef.current || 'photo'
+      // ⚠️ 새 사진을 넣으면 그 칸의 위치도 «가운데»로 되돌린다 — 옛 사진 기준 좌표는 뜻이 없다
+      setText((t) => ({ ...t, [pk]: src, [`${pk}Pos`]: '' }))
     }
     reader.readAsDataURL(file)
   }
@@ -138,8 +174,10 @@ export default function DiaryScreen({ day }) {
             rule={skin.rule}
             value={text}
             onChange={setText}
-            onPickPhoto={() => photoRef.current?.click()}
+            onPickPhoto={pickPhotoFor}
             dateLabel={dateLabel}
+            font={text.font}
+            size={text.size}
           />
           <DecorLayer items={decor} />
         </PaperBox>
@@ -183,7 +221,12 @@ export default function DiaryScreen({ day }) {
           paper={skin}
           // ✍️ 꾸미는 동안에도 쓴 글이 «같은 자리»에 보여야 한다 — 안 보이면 그 위에 스티커를 놓는다.
           //    ⭐ 에디터가 글을 «모르게» 조각째 넘긴다 — 두 곳에서 그리면 자리가 어긋난다.
-          paperOverlay={<PaperSheet fields={skin.fields} rule={skin.rule} value={text} dateLabel={dateLabel} />}
+          // ⭐ `onPick` = **고르는 칸만** 살린다(창업자 폰 제보 2026-08-07). 글칸은 그대로 읽기 전용이라
+          //    그 위에서 스티커를 끌 수 있고, 함께·장소·날씨·기분·시간·만족도는 **꾸미는 중에도 눌린다.**
+          //    ⛔ 전엔 `onChange` 하나가 전부를 갈라서 이 칸들이 **만든 날부터 한 번도 안 눌렸다.**
+          //    📷 `onPickPhoto` 도 같이 — 틀의 사진칸은 «고르는 일»이지 «쓰는 일»이 아니다.
+          //       전엔 글쓰기 탭에서만 눌려서 사진 넣으러 갔다 꾸미러 오는 왕복이 생겼다.
+          paperOverlay={<PaperSheet fields={skin.fields} rule={skin.rule} value={text} onPick={setText} onPickPhoto={pickPhotoFor} dateLabel={dateLabel} font={text.font} size={text.size} />}
           // ✍️✍️ **꾸미기 안에서 «바로 쓴다»** (창업자 2026-08-06
           //    *"속지고르고 꾸미고 저장해야 글을 쓸수있어서 불편한데.. 속지 고른상태에서
           //      속지 화면 줄 클릭하면 글쓰고(꾸미기칸자동내려감) … 다시 꾸미기버튼 누르면 꾸미고"*)
@@ -195,13 +238,20 @@ export default function DiaryScreen({ day }) {
               rule={skin.rule}
               value={text}
               onChange={setText}
-              onPickPhoto={() => photoRef.current?.click()}
+              onPickPhoto={pickPhotoFor}
               dateLabel={dateLabel}
+              font={text.font}
+              size={text.size}
             />
           )}
           // 📔 속지 고르기 = 꾸미기 첫 탭. 고르면 «그 자리에서» 판이 바뀐다(저장을 눌러야 보이는 게 아니다)
           paperPick={pick}
           onPaperPick={choose}
+          // ✍️ 본문 글씨체 — 「글쓰기」 탭 서랍에서 고른다. 값은 여기(부모)가 쥔다
+          writeFont={text.font}
+          onWriteFont={(k) => setText((t) => ({ ...t, font: k }))}
+          writeSize={text.size}
+          onWriteSize={(k) => setText((t) => ({ ...t, size: k }))}
           // ⭐ 에디터에 들어가면 날짜가 안 보인다 → 머리글이 «지금 어느 날을 꾸미는 중인지»를 말한다
           title={`${date.getMonth() + 1}월 ${date.getDate()}일 일기`}
           recipe={{ id: `diary-${day}`, title: '', decor, decorBg: 'none', thumb: 'none' }}

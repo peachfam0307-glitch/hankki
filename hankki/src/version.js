@@ -1,7 +1,7 @@
 // 앱 버전 — 배포마다 숫자를 올린다. 설정 화면 맨 아래에 표시되고,
 // 새 버전으로 업데이트되면(서비스워커 교체 → 새로고침) 안내 토스트를 띄우는 기준이 된다.
 // 사용자가 "지금 몇 버전이야?"를 바로 확인해 알려줄 수 있어, 캐시 문제 진단에도 쓴다.
-export const APP_VERSION = 'v9.87'
+export const APP_VERSION = 'v10.21'
 export const APP_TAGLINE = '꼬르곰·펭펭과 레꾸해요'
 
 // 익명 의견 보내기 채널 — 로그인 없이 익명으로 받는 구글 폼(또는 Tally) 링크.
@@ -22,5 +22,3 @@ export const LAB_SURVEY_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfZjqkFe
 export const LAB_BUG_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSf8bMGM8JlYRy0GJm8Lg-153mpPjVCHDkM_-51ruff-9PIcpg/viewform'     // 오류·안 되는 것 신고
 // 오류 폼 주소에 `__VER__` 를 넣어두면 앱 버전으로 바뀐 채 열린다.
 // (구글 폼 → 오른쪽 위 ⋮ → '미리 채워진 링크 가져오기' 로 만든 주소의 버전 칸에 `__VER__` 를 써두면 된다)
-
-// 재시험 표식 0809-B

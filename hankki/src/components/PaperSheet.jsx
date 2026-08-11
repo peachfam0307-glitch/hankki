@@ -1,3 +1,5 @@
+import Icon from './Icon'
+import { TEXT_FONTS } from './Stickers'
 import { PAPER_LINE_H } from '../data/papers'
 
 // 📝📝 종이 «위»에 바로 쓴다.
@@ -15,6 +17,13 @@ import { PAPER_LINE_H } from '../data/papers'
 //    안 움직이던 그 함정의 반대 경우다 — 여기선 반드시 상대값이라야 한다)
 //    ⚠️ 컨테이너는 **종이 자신이 아니라 바깥 자**다. 제 폭은 제가 못 잰다 → `PaperBox` 가 감싼다.
 
+// ✍️✍️ **본문 글씨체는 «고를 수 있다»** (창업자 2026-08-07
+//   *"글쓰기할때 글자선택하는게 있었음 좋겠어. 글자가일꾸에 있어서 불편"*
+//    → *"내 말은 «글쓰기 글자체»도 추가했으면 좋겠다는 뜻이었는데 스티커 글자체만 추가 되었단 뜻."*)
+//   ⛔ 오늘 넣은 글씨체 열둘은 **글자 «스티커»에만** 붙었다. 종이에 바로 쓰는 본문은
+//      여기 상수 하나로 «귀염체 고정»이었다 — 일기의 주인공인 글이 정작 못 고르는 상태.
+//   ⭐ `TEXT_FONTS` 를 그대로 쓴다 — 목록이 하나라 스티커와 본문이 «같은 글씨체»로 맞는다.
+//   ⚠️ 못 받으면 예전 그대로(귀염체) — 이미 쓴 일기가 안 바뀐다.
 const HAND = "'Gaegu','Gowun Dodum','Pretendard',sans-serif"
 const INK = '#5b4436' // 우리 진갈색 — 속지 선(#e2d8c6)보다 진해 크라프트 위에서도 읽힌다
 
@@ -33,25 +42,73 @@ const box = (f) => ({
   right: `${f.right}%`,
   ...(f.top !== undefined ? { top: `${f.top}%` } : {}),
   ...(f.bottom !== undefined ? { bottom: `${f.bottom}%` } : {}),
+  // 📐 `rot` = 칸이 그림에서 «기울어져» 그려진 속지(스크랩 사진첩의 폴라로이드 -9~6°).
+  //    칸을 같은 각도로 돌려야 사진·글이 창에 맞는다. 축정렬 칸(rot 없음)은 그대로.
+  ...(f.rot ? { transform: `rotate(${f.rot}deg)` } : {}),
 })
 
-const hand = {
-  fontFamily: HAND, fontWeight: 700, color: INK,
-  fontSize: `${PAPER_LINE_H * 0.79}cqw`,
+// ⚠️ 줄 간격(`lineHeight`)은 «글씨체가 바뀌어도» 그대로다 — 종이의 줄과 묶여 있어서 흔들면 글이 줄에서 어긋난다.
+//    글자 «크기»만 글씨체를 따라간다. (납작한 글씨는 작아 보이는데 그게 그 글씨체의 성격이다)
+const handOf = (f, k = 1) => ({
+  fontFamily: f?.family || HAND,
+  fontWeight: f?.weight || 700,
+  color: INK,
+  fontSize: `${PAPER_LINE_H * 0.79 * k}cqw`,
   lineHeight: `${PAPER_LINE_H}cqw`,
-  letterSpacing: '0.01em',
-}
+  letterSpacing: f?.ls || '0.01em',
+})
+
+// 📏 크기 3단 — **줄 «안»에서만 움직인다.**
+//   ⛔ 줄 간격은 못 건드린다. `PAPER_LINE_H` 는 사진일기 그림에 «인쇄된 줄»과 맞춘 값이라
+//      흔들면 그 틀에서 글이 인쇄된 줄에서 어긋난다.
+//   ⭐ 그래서 «크게»도 줄 높이의 0.90 까지만 — 커진 게 보이면서 줄을 안 넘는다.
+export const WRITE_SIZES = [
+  { key: 'sm', label: '작게', k: 0.88 },
+  { key: 'md', label: '보통', k: 1 },
+  { key: 'lg', label: '크게', k: 1.14 },
+]
 
 /**
  * 종이 위의 «쓰는 칸» 전부. `onChange` 가 없으면 읽기 전용(꾸미기 판·미리보기).
  * `value` = { note: 본문, line: 오늘의 한 줄 }
  */
-export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, dateLabel = '', rule = '' }) {
+// 🖊 `onPick` = **「고르는 칸」만 살리는 문**(창업자 폰 제보 2026-08-07)
+//   ⛔ 전엔 `ro = !onChange` 하나가 **전부**를 갈랐다 — 꾸미기 판(`paperOverlay`)은
+//      `onChange` 를 안 받으므로 글칸뿐 아니라 **함께·장소·날씨·기분·시간·만족도까지 통째로 죽었다.**
+//      → 서랍이 열려 있는 동안 그 칸들을 **하나도 못 골랐다**(만든 날부터 그랬다).
+//   ⭐ 둘은 성격이 다르다 — 글칸은 누르면 **키보드가 떠서** 꾸미기를 방해하지만,
+//      축은 **탭 한 번**이라 꾸미는 중에 눌러도 아무것도 안 가린다.
+//   📌 그래서 「글칸은 읽기 전용, 축은 살아 있음」을 **한 칸으로** 만든다.
+export default function PaperSheet({ fields, value = {}, onChange, onPick, onPickPhoto, dateLabel = '', rule = '', font = '', size = '' }) {
+  // ✍️ 본문 글씨체 — 못 찾으면 예전 그대로(귀염체). ⛔이미 쓴 일기가 바뀌면 안 된다
+  const f = TEXT_FONTS.find((t) => t.key === font)
+  // 📏 크기 = «글씨체 보정» × «작게/보통/크게». 둘 다 없으면 1 → 지금 모습 그대로
+  const k = (f?.sz || 1) * (WRITE_SIZES.find((z) => z.key === size)?.k || 1)
+  const hand = handOf(f, k)
   const ro = !onChange
+  // ✅ 축을 고를 수 있나 — 쓰기 판(`onChange`)이거나, 고르기만 열어 준 판(`onPick`)이면 된다
+  const write = onChange || onPick
+  const canPick = !!write
+  // 📷 **틀의 사진칸도 「탭 한 번」이다** (창업자 폰 제보 2026-08-07
+  //    *"사진은 일꾸 글쓰기는 글쓰기 각탭에서 수정해야해서 번거로움"*)
+  //   ⛔ 전엔 `!ro` 라 **글쓰기 탭에서만** 눌렸다 → 사진 넣으러 글쓰기로 갔다가
+  //      꾸미러 일꾸로 돌아오는 «왕복»이 생겼다.
+  //   ⭐ 사진 고르기는 글쓰기가 아니라 **고르는 일**이다(키보드가 안 뜬다) — 축과 같은 부류다.
+  //      그래서 「속지」 탭에서도 눌리게 해서 **고르는 일을 한자리에** 모은다.
+  //   ⚠️ 누를 «곳»(`onPickPhoto`)이 없으면 못 누른다 — 판마다 넘겨줘야 한다.
+  const canShot = canPick && !!onPickPhoto
   const set = (k) => (e) => onChange({ ...value, [k]: e.target.value })
   const bg = ruleBg(rule)
   // ⛔ 읽기 전용(꾸미기 판)에선 아무것도 손가락을 먹으면 안 된다 — 그 위에서 스티커를 끌어야 한다
   const noTouch = ro ? { pointerEvents: 'none' } : {}
+  // 🗒🗒 **쓰는 칸은 «여럿»일 수 있다** (창업자 폰 제보 2026-08-07
+  //   *"일기인데 줄이 없어..가운데 뻥뚫려있음 줄도 안생기고. 이것도 줄 선택하게 해줌 좋겠어. 위에처럼"*)
+  //   ⛔ 「레시피 기록」 틀은 쓰는 칸이 **사진 옆 좁은 칸 하나**뿐이었다.
+  //      가운데 큰 자리는 아무 칸도 아니어서 **글도 못 쓰고 줄도 안 그려졌다**(그림을 재니 40.1~85.7% 가 통째로 빈칸).
+  //   📌 처음엔 그 자리를 «꾸미기 자리»로 비워 뒀는데, 써 보니 **일기인데 뻥 뚫려** 보였다.
+  //      → 칸을 하나 더 준다. 「선」을 무지로 두면 예전처럼 비어 있고, 줄·모눈·도트를 고르면 거기도 그어진다.
+  //   ⚠️ 칸마다 «저장 자리»가 다르다(`key`) — 안 그러면 두 칸이 같은 글을 비춘다.
+  const writes = fields.write ? (Array.isArray(fields.write) ? fields.write : [fields.write]) : []
   // 🧷 글자는 스티커·틀 그림보다 «위». 글은 가려지면 안 된다.
   //    ⚠️ 사진은 반대다 — 아래(`zIndex` 없음)라야 틀 선이 사진 위에 그려져 «창»이 된다.
   const overSticker = { zIndex: 1 }
@@ -60,20 +117,103 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
     <>
       {/* 📷 사진 — 틀에 그려진 «창»에 끼운다 (창업자 2026-08-06 *"사진틀에 사진올리기가없어"*)
           ⭐ 일부러 층을 «아래»에 둔다 — 틀 그림(`.paper.art::after`)이 나중에 칠해져서
-             사진 가장자리를 선이 덮는다. 그래야 붙인 게 아니라 «끼운» 것으로 보인다. */}
-      {fields.photo && (
-        <div style={{ ...box(fields.photo), overflow: 'hidden' }}>
-          {value.photo
-            ? (ro
-              ? <img src={value.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+             사진 가장자리를 선이 덮는다. 그래야 붙인 게 아니라 «끼운» 것으로 보인다.
+          🗂 사진칸도 «여럿»일 수 있다 (2026-08-08 「기록 3칸」 속지 = 구획마다 사진칸 하나씩 셋).
+             write 배열과 같은 문법 — 칸마다 저장 자리(`key`)가 다르다(기본 'photo' = 옛 틀 그대로).
+             ⚠️ `onPickPhoto(저장키)` 로 «어느 칸인지» 같이 넘긴다 — 안 넘기면 셋이 같은 사진을 비춘다. */}
+      {(fields.photo ? (Array.isArray(fields.photo) ? fields.photo : [fields.photo]) : []).map((p, pi) => {
+        const pk = p.key || 'photo'
+        // 🫳🫳 **사진을 «끌어서» 보일 부분을 고른다** (창업자 폰 제보 2026-08-08 *"사진 위치조정이 안되네"*)
+        //
+        //   ⛔ 전엔 고를 때 가운데 정사각으로 «잘라 버리고»(cropSquare) 칸에서도 가운데만 보여줘서
+        //      (`objectFit:cover` 기본값 = 50% 50%) 원하는 부분이 위·아래에 있으면 **볼 길이 없었다.**
+        //   ⭐ 처방이 둘로 나뉜다 — ⑴자를 때 안 버린다(`fitImage`) ⑵볼 때 위치를 고른다(여기).
+        //      두 번째만 고치면 이미 잘려 나간 사진은 못 살린다.
+        //   ⭐ 손짓은 인스타 문법 그대로 — 프레임 안에서 사진이 손가락을 따라온다.
+        //   ⚠️ 값이 없으면 «가운데»(50% 50%) — 이미 넣어 둔 사진이 그대로 보인다(규칙 18 ⓙ).
+        const pos = value[`${pk}Pos`] || '50% 50%'
+        const imgStyle = { width: '100%', height: '100%', objectFit: 'cover', objectPosition: pos, display: 'block' }
+        // 📌 «탭 = 사진 바꾸기»와 갈라야 한다 → 6px 넘게 움직였을 때만 드래그로 친다.
+        //    드래그였으면 뒤따라오는 click 을 삼킨다(`dragged` 표시) — 안 그러면 끌 때마다 파일창이 뜬다.
+        // 📐 이동량 → % 환산: `cover` 는 사진을 칸보다 크게 그리므로 «넘치는 만큼»(overX/overY)만 움직인다.
+        //    손가락을 아래로 끌면 사진이 아래로 따라와야 하니 objectPosition % 는 «줄어든다»(반대 부호).
+        const dragStart = (e) => {
+          if (!canShot) return
+          const btn = e.currentTarget
+          const img = btn.querySelector('img')
+          if (!img || !img.naturalWidth) return
+          const rect = btn.getBoundingClientRect()
+          const scale = Math.max(rect.width / img.naturalWidth, rect.height / img.naturalHeight)
+          const overX = img.naturalWidth * scale - rect.width
+          const overY = img.naturalHeight * scale - rect.height
+          const [px0, py0] = pos.split(' ').map((v) => parseFloat(v))
+          const x0 = e.clientX, y0 = e.clientY
+          let moved = false
+          let cur = { x: px0, y: py0 }
+          const onMove = (ev) => {
+            const dx = ev.clientX - x0, dy = ev.clientY - y0
+            if (!moved && Math.hypot(dx, dy) < 6) return
+            if (!moved) { moved = true; btn.dataset.dragged = '1'; btn.setPointerCapture?.(ev.pointerId) }
+            cur = {
+              x: overX > 0 ? Math.min(100, Math.max(0, px0 - (dx / overX) * 100)) : px0,
+              y: overY > 0 ? Math.min(100, Math.max(0, py0 - (dy / overY) * 100)) : py0,
+            }
+            img.style.objectPosition = `${cur.x}% ${cur.y}%` // 끄는 동안은 화면만 — 저장은 손 뗄 때 한 번
+          }
+          const onUp = () => {
+            btn.removeEventListener('pointermove', onMove)
+            btn.removeEventListener('pointerup', onUp)
+            btn.removeEventListener('pointercancel', onUp)
+            if (moved) write({ ...value, [`${pk}Pos`]: `${Math.round(cur.x)}% ${Math.round(cur.y)}%` })
+            // ⚠️ `dragged` 는 여기서 안 지운다 — click 이 pointerup «뒤»에 오므로 click 핸들러가 지운다
+          }
+          btn.addEventListener('pointermove', onMove)
+          btn.addEventListener('pointerup', onUp)
+          btn.addEventListener('pointercancel', onUp)
+        }
+        return (
+        <div key={`photo${pi}`} style={{ ...box(p), overflow: 'hidden' }}>
+          {value[pk]
+            ? (!canShot
+              ? <img src={value[pk]} alt="" style={imgStyle} />
               : (
-                <button type="button" className="press" onClick={onPickPhoto} aria-label="사진 바꾸기"
-                  style={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'none', display: 'block' }}>
-                  <img src={value.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                </button>
+                <>
+                  <button type="button" className="press" aria-label="사진 — 끌어서 위치 조정 · 누르면 바꾸기"
+                    onPointerDown={dragStart}
+                    onClick={(e) => {
+                      if (e.currentTarget.dataset.dragged) { delete e.currentTarget.dataset.dragged; return }
+                      onPickPhoto(pk)
+                    }}
+                    style={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'none', display: 'block', touchAction: 'none' }}>
+                    <img src={value[pk]} alt="" draggable={false} style={{ ...imgStyle, pointerEvents: 'none' }} />
+                  </button>
+                  {/* 🗑🗑 **사진 지우기** (창업자 폰 제보 2026-08-07 *"하나추가 사진지우는게 없어."*)
+                      ⛔ 이건 «사진 스티커»가 아니라 **틀의 사진칸**(`value.photo`)이라
+                         `DecorLayer` 의 지우기 단추와 아무 상관이 없다 — 그래서 길이 «아예» 없었다.
+                         「사진 바꾸기」로 다른 걸 끼울 수는 있어도 **비울 수는 없었다.**
+                         한 번 넣으면 그 칸은 영영 사진 칸이 된다.
+                      ⭐ **스티커 지우기와 «똑같이» 만든다** — 31px · `#3f382e` · 같은 ✕ 아이콘.
+                         같은 화면에 둘이 나란히 뜨는데 모양이 다르면 «다른 기능»으로 읽힌다.
+                         ⛔ 그래서 여기만 `cqw` 로 재지 않는다(이 파일의 나머지는 글자라 폭 기준이 맞다).
+                            판은 320~330px 한 크기로만 그려지고, 캡처(1080)에선 `canShot` 이 false 라 안 뜬다.
+                      ⚠️ 자리는 사진칸 «안»쪽 — 밖에 두면 `overflow:hidden` 이 잘라 먹는다
+                         (오늘 손잡이에서 −60px 로 이미 겪었다).
+                      ⛔ 읽기 전용(꾸미기 밖·미리보기)엔 안 뜬다 — `canShot` 이 그걸 가른다. */}
+                  <button type="button" className="press" aria-label="사진 지우기"
+                    onClick={(e) => { e.stopPropagation(); write({ ...value, [pk]: '' }) }}
+                    style={{
+                      position: 'absolute', top: 5, right: 5,
+                      width: 31, height: 31, borderRadius: '50%',
+                      background: '#3f382e', color: '#fff', border: 'none', padding: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 2px 6px rgba(0,0,0,.3)',
+                    }}>
+                    <Icon name="x" size={15} color="#fff" stroke={2.6} />
+                  </button>
+                </>
               ))
-            : (!ro && (
-              <button type="button" className="press" onClick={onPickPhoto} aria-label="사진 넣기"
+            : (canShot && (
+              <button type="button" className="press" onClick={() => onPickPhoto(pk)} aria-label="사진 넣기"
                 style={{
                   width: '100%', height: '100%', padding: 0, border: 'none', background: 'none',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.4cqw',
@@ -83,7 +223,8 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
               </button>
             ))}
         </div>
-      )}
+        )
+      })}
 
       {/* 🏷 제목 — 틀마다 «장식을 피한 빈 자리»에 한 줄 (창업자 2026-08-06
           *"저 맨위에 (사진틀위에) 나뭇잎옆에 제목 쓸 칸 만들어주면 좋겠어. 요리일지랑 다른 속지틀에도"*)
@@ -92,7 +233,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
       {fields.title && (
         <div style={{ ...box(fields.title), ...overSticker, ...noTouch }}>
           {ro ? (
-            <div style={{ ...hand, fontSize: `${PAPER_LINE_H * 0.95}cqw`, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden' }}>{value.title || ''}</div>
+            <div style={{ ...hand, fontSize: `${PAPER_LINE_H * 0.95 * k}cqw`, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden' }}>{value.title || ''}</div>
           ) : (
             <input
               value={value.title || ''}
@@ -101,7 +242,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
               placeholder="제목"
               maxLength={24}
               style={{
-                ...hand, fontSize: `${PAPER_LINE_H * 0.95}cqw`, textAlign: 'center',
+                ...hand, fontSize: `${PAPER_LINE_H * 0.95 * k}cqw`, textAlign: 'center',
                 width: '100%', height: `${PAPER_LINE_H * 1.25}cqw`, display: 'block',
                 background: 'none', border: 'none', outline: 'none', padding: 0, margin: 0, borderRadius: 0,
               }}
@@ -112,7 +253,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
 
       {/* 📅 날짜 — 그림의 날짜 칸에 «값만» 얹는다(사진일기엔 달력 아이콘·밑줄이 이미 인쇄돼 있다) */}
       {fields.date && dateLabel && (
-        <div style={{ ...box(fields.date), ...hand, ...overSticker, fontSize: `${PAPER_LINE_H * (fields.date.fit || 0.68)}cqw`, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+        <div style={{ ...box(fields.date), ...hand, ...overSticker, fontSize: `${PAPER_LINE_H * (fields.date.fit || 0.68) * k}cqw`, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
           {dateLabel}
         </div>
       )}
@@ -130,9 +271,10 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
         // 🗃 값을 어디에 넣나 — 날씨는 **옛 자리(`value.weather`)** 에 그대로.
         //    ⛔ 새 자리로 옮기면 이미 쓴 일기의 날씨가 통째로 사라진다(규칙 18 ⓙ).
         const cur = row.axis === 'weather' ? (value.weather || '') : ((value.picks || {})[row.axis] || '')
+        // ⭐ 쓰기 판이면 `onChange`, 꾸미기 판이면 `onPick` — 어느 쪽이든 «값을 돌려주는 곳»은 하나다
         const put = (v) => (row.axis === 'weather'
-          ? onChange({ ...value, weather: v })
-          : onChange({ ...value, picks: { ...(value.picks || {}), [row.axis]: v } }))
+          ? write({ ...value, weather: v })
+          : write({ ...value, picks: { ...(value.picks || {}), [row.axis]: v } }))
         // ⭐ `fill` 축(만족도)은 **별점처럼 차오른다** — 3을 고르면 1·2·3 이 다 칠해진다.
         //   ⛔ 다른 축은 「그것 하나」를 표시하는 것이라 고른 것만 칠한다.
         //   📌 자리(`items` 차례)로 견준다 — 키가 '1'~'5' 라고 가정하지 않는다(다른 속지는 다를 수 있다).
@@ -154,21 +296,29 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
             aria-hidden
             style={{
               // 크기는 «버튼 기준 %» — 버튼이 아이콘에 맞춰져 있어 아이콘을 딱 감싼다
-              position: 'absolute', left: '50%', top: '52%', width: '52%', height: '46%',
+              // 🎯 `fill` 축(만족도)은 자국을 **점보다 크게** 한다 — 점 자체가 초록이라
+              //    그 안만 칠하면 색이 묻힌다(실측 차이 17 → 진하기만 올려도 35). 자국이
+              //    베이지 마테 위로 삐져나와야 「칠했다」가 한눈에 읽힌다. 종이에 그은 자국도 원래 그렇다.
+              position: 'absolute', left: '50%', top: '52%',
+              width: row.fill ? '96%' : '52%', height: row.fill ? '82%' : '46%',
               transform: 'translate(-50%,-50%) rotate(-4deg)',
               // 손으로 칠한 자국이라 정원이 아니다 — 네 모서리를 조금씩 다르게
               borderRadius: '48% 52% 50% 50%/50%',
-              background: '#f0d98a', opacity: 0.5, mixBlendMode: 'multiply',
+              // 🎯 `fill` 축(만족도)은 **더 진하게** — 그 점들은 «초록 원 ＋ 베이지 마테» 위에 있어서
+              //    0.5 로는 칠한 티가 안 난다(실측: 칠한 것 노랑기 51 vs 안 칠한 것 34 — 차이 17뿐).
+              //    날씨·기분은 «흰 바탕»이라 0.5 로도 잘 보인다. 바탕이 다르면 값도 달라야 한다.
+              background: '#f0d98a', opacity: row.fill ? 0.92 : 0.5, mixBlendMode: 'multiply',
             }}
           />
         )
         const pos = {
           position: 'absolute', left: `${w.x}%`, top: `${row.y}%`,
           width: `${row.size * 1.28}cqw`, height: `${row.size * 1.28}cqw`,
-          transform: 'translate(-50%,-50%)', ...overSticker, ...noTouch,
+          // ⭐ 축은 «고를 수 있으면» 손가락을 받는다 — 글칸의 읽기 전용(ro)과 따로 논다
+          transform: 'translate(-50%,-50%)', ...overSticker, ...(canPick ? {} : { pointerEvents: 'none' }),
         }
         const id = `${row.axis}-${w.key}`
-        if (ro) return <span key={id} style={pos}>{on && ring}</span>
+        if (!canPick) return <span key={id} style={pos}>{on && ring}</span>
         return (
           <button
             key={id}
@@ -190,36 +340,40 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
              메모칸에 인쇄된 꽃·마테·도장 «위로 줄이 지나갔다»(캡처로 잡았다).
           ⭐ 층을 안 주면 `::after`(틀 그림)가 나중에 칠해진다 — pseudo 는 «마지막 자식»이라.
              그래서 줄은 빈 종이에서만 보이고 인쇄된 장식 뒤로는 숨는다. **종이가 원래 그렇다.** */}
-      {fields.write && bg && (
+      {bg && writes.map((w, i) => (
         <div
+          key={`rule${i}`}
           aria-hidden
           style={{
-            ...box(fields.write), pointerEvents: 'none',
+            ...box(w), pointerEvents: 'none',
             backgroundImage: bg,
             backgroundSize: rule === 'dots' ? 'var(--rule-gap) var(--rule-gap)' : undefined,
           }}
         />
-      )}
+      ))}
 
       {/* ✍️ 본문 — 종이의 줄 위에 바로. 배경·테두리 0 */}
-      {fields.write && (
-        <div style={{ ...box(fields.write), ...overSticker, ...noTouch }}>
-          {ro ? (
-            <div style={{ ...hand, whiteSpace: 'pre-wrap', wordBreak: 'break-word', height: '100%', overflow: 'hidden' }}>{value.note || ''}</div>
-          ) : (
-            <textarea
-              value={value.note || ''}
-              onChange={set('note')}
-              aria-label="일기 본문"
-              placeholder="여기에 써요"
-              style={{
-                ...hand, width: '100%', height: '100%', display: 'block',
-                background: 'none', border: 'none', outline: 'none', resize: 'none', padding: 0, margin: 0,
-              }}
-            />
-          )}
-        </div>
-      )}
+      {writes.map((w, i) => {
+        const k = w.key || 'note'
+        return (
+          <div key={`write${i}`} style={{ ...box(w), ...overSticker, ...noTouch }}>
+            {ro ? (
+              <div style={{ ...hand, whiteSpace: 'pre-wrap', wordBreak: 'break-word', height: '100%', overflow: 'hidden' }}>{value[k] || ''}</div>
+            ) : (
+              <textarea
+                value={value[k] || ''}
+                onChange={set(k)}
+                aria-label={w.label || '일기 본문'}
+                placeholder="여기에 써요"
+                style={{
+                  ...hand, width: '100%', height: '100%', display: 'block',
+                  background: 'none', border: 'none', outline: 'none', resize: 'none', padding: 0, margin: 0,
+                }}
+              />
+            )}
+          </div>
+        )
+      })}
 
       {/* 📝 오늘의 한 줄 — 밑줄 하나 ＋ 라벨. 「레시피 기록」 속지의 맨 아래 칸이다
           (창업자 확정: *"평가빼고 오늘의 한 줄 정도로?"* → 별 다섯을 뺀 자리) */}
@@ -258,7 +412,10 @@ export default function PaperSheet({ fields, value = {}, onChange, onPickPhoto, 
  */
 export function PaperBox({ skin, ratio = '3/4', children, style, className = '', ...rest }) {
   return (
-    <div style={{ containerType: 'inline-size', width: '100%' }}>
+    // 🖼 `paper-box` = **가로에서 종이 폭을 화면 «높이»에 맞추는 손잡이** (창업자 2026-08-09
+    //    *"꾸미다가 취소하면 화면이 엄청커짐"* — 눕히면 앱이 폭을 다 쓰는데 3:4 종이는 폭이 곧 높이라
+    //    851×1135 가 되어 화면 밖으로 나갔다). 세로에선 아무 일도 안 한다.
+    <div className="paper-box" style={{ containerType: 'inline-size', width: '100%' }}>
       <div
         className={`${skin.className} ${className}`.trim()}
         style={{
