@@ -55,10 +55,38 @@ git rev-parse --git-dir >/dev/null 2>&1 || { note "⛔ git 저장소가 아니�
 #   ⭐ 그래서 «도는 것»은 `~/.claude/hooks/`(git 밖 · `~/.claude/settings.json` 이 부른다),
 #      «원본»은 저장소에 두어 버전 관리한다. 세션마다 여기서 덮어 써 둘이 안 어긋나게 한다.
 #   ⚠️ 이 줄이 «BEHIND==0 이면 그냥 끝」보다 아래 있으면 평소엔 한 번도 안 돈다 — 그래서 여기다.
-if [ -f "$REPO/.claude/hooks/base-guard.sh" ]; then
-  mkdir -p "$HOME/.claude/hooks" 2>/dev/null
-  cp -f "$REPO/.claude/hooks/base-guard.sh" "$HOME/.claude/hooks/base-guard.sh" 2>/dev/null
-  chmod +x "$HOME/.claude/hooks/base-guard.sh" 2>/dev/null
+#   ⭐⭐ [2026-08-12 확장] base-guard «하나»만 복사하던 것을 **훅 셋 ＋ 부르는 설정까지**로 넓혔다.
+#      ⛔ 어제까지는 파일만 복사하고 **`~/.claude/settings.json` 을 «안 만들었다»** →
+#         git 밖 복사본이 있어도 **아무도 안 불러서 한 번도 안 돌았다.** 절반만 된 설계였다.
+#         (2026-08-12 아침 실측 = `/root/.claude/settings.json` 이 아예 없었다)
+#      📌 **「파일을 둔 것」과 「불리는 것」은 다른 말이다.**
+for f in base-guard.sh sync-guard.sh repo-sync.sh; do
+  if [ -f "$REPO/.claude/hooks/$f" ]; then
+    mkdir -p "$HOME/.claude/hooks" 2>/dev/null
+    cp -f "$REPO/.claude/hooks/$f" "$HOME/.claude/hooks/$f" 2>/dev/null
+    chmod +x "$HOME/.claude/hooks/$f" 2>/dev/null
+  fi
+done
+# 🔗 부르는 설정도 «git 밖»에 유지한다 — 없으면 만들고, 있으면 빠진 것만 채운다(덮어쓰지 않는다).
+if command -v python3 >/dev/null 2>&1; then
+  python3 - <<'PYEOF' >/dev/null 2>&1 || true
+import json, os
+p = os.path.expanduser('~/.claude/settings.json')
+d = {}
+if os.path.exists(p):
+    try: d = json.load(open(p))
+    except Exception: d = {}
+h = d.setdefault('hooks', {})
+def put(evt, matcher, cmd):
+    lst = h.setdefault(evt, [])
+    if any(cmd in hk.get('command','') for i in lst for hk in i.get('hooks',[])): return
+    lst.append({"matcher": matcher, "hooks": [{"type":"command","command":cmd}]})
+home = os.path.expanduser('~/.claude/hooks')
+put('PreToolUse', 'Bash|Read|Edit|Write|Glob|Grep', home + '/sync-guard.sh')
+put('PreToolUse', 'Bash', home + '/base-guard.sh')
+put('SessionStart', '', home + '/repo-sync.sh')
+json.dump(d, open(p, 'w'), ensure_ascii=False, indent=2)
+PYEOF
 fi
 
 # ⏱ 세션 시작을 붙잡지 않는다 — 느리거나 막히면 포기하고 옛 훅(repo-guard)에 넘긴다
