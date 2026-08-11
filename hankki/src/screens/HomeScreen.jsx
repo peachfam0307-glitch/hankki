@@ -281,7 +281,10 @@ export default function HomeScreen() {
                 {/* ⚠️ `calendar` 아이콘은 우리 세트에 «없다» — 이름을 추측해 넣으면 화면에 아무것도 안 나온다.
                     있는 것 중 「새로 왔어요」에 가장 가까운 `sparkle`. (전체 목록 = `src/components/Icon.jsx`) */}
                 <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />
-                <div className="weekly-kicker">이번 주 제철</div>
+                {/* ⛔ 여기 「이번 주 제철」이 «글자로 박혀» 있었다 — 제철이 아닌 주도 그렇게 떴다.
+                    (2026-09-28 「추석 남은 음식」이 실제로 그랬고, 52주 표 기준 17주가 제철이 아니다)
+                    ⭐ 이제 줄마다 `kicker` 로 정한다. 안 적으면 「이번 주 제철」. */}
+                <div className="weekly-kicker">{weekly.kicker || '이번 주 제철'}</div>
               </div>
               <div className="weekly-title">{weekly.title}</div>
               <div className="t-sub weekly-why">{weekly.why}</div>
