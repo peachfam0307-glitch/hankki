@@ -133,7 +133,40 @@ def 알파로(sub, capY=None):
 
     out_rgb = sub.copy()
     out_rgb[band] = base[band]           # 띠에 남은 흰 기운만 속살 색으로 (cut.py 304줄)
-    return Image.fromarray(np.dstack([out_rgb, alpha * 255]).astype(np.uint8), 'RGBA')
+
+    # ✂️✂️ **띠부씰 흰 테두리** — `cut.py --diecut` 표준을 그대로 옮겼다(306~401줄).
+    #   ⛔⛔ **2026-08-12 에 이 단계를 통째로 빠뜨렸다.** 창업자가 폰에서 잡았다 —
+    #      *"꼬르곰 펭펭 테두리가 잘렸어. 우리이거 띠부실스타일로 얇게 자르기로하지 않았어?"*
+    #      CLAUDE.md 핀에 **「자를 때 최우선 = `--diecut`」** 이라고 박혀 있는데 내 자체 스크립트에 안 넣었다.
+    #   ⭐ 흰 테는 «스타일»이 아니라 **보호막**이다 — 흰 배경에서 자를 때 진갈색 외곽선이 파먹히는 걸 막는다.
+    #      그래서 증상이 「테두리가 잘렸다」로 나온다.
+    #   🔢 두께 = **기존 99컷(`rs_*`)을 재서 맞췄다** — 흰 테 중앙값 **2.0px · 긴변 328px = 0.61%**.
+    #      같은 서랍에 나란히 놓이니 «같은 마감»이라야 한다. 새 컷 긴변 ~348px → 2px.
+    #   ⭐ 칼선은 「부풀리기」가 아니라 **거리밭 등고선** — 부풀리면 요철을 따라가 너덜너덜해진다.
+    #   ⚠️⚠️ **`d` 는 「원하는 두께」가 아니다** — 거리밭을 흐리면 등고선이 안으로 밀려 «1px 얇게» 나온다.
+    #      실측(2026-08-12) d 2→1.0px · **d 3→2.0px** · d 4→3.0px · d 5→4.1px.
+    #      → 목표 2.0px 이니 **d = 3**. 컷마다 긴변이 230~397 로 다르지만 «두께는 고정»한다 —
+    #        서랍에 나란히 놓이니 두께가 들쭉날쭉하면 한 세트로 안 보인다(기존 99컷도 전부 2.0px).
+    d = 3
+    ink = ndimage.binary_fill_holes(ndimage.binary_closing(sub.min(axis=2) < 200, np.ones((7, 7))))
+    solid = (ink | (sub.min(axis=2) < WHITE - 10)) & reg
+    solid = ndimage.binary_fill_holes(ndimage.binary_closing(solid, np.ones((5, 5))))
+    if solid.sum() < 50:
+        solid = reg                       # 못 찾으면 원래대로(안전) — cut.py 353줄과 같은 이유
+    dist = ndimage.distance_transform_edt(~solid)
+    # ⚠️ 부드러움은 «두께»가 아니라 «그림 크기»를 따른다 — 얇게 한다고 흐림까지 약해지면 실루엣이 너덜해진다.
+    dist = ndimage.gaussian_filter(dist, sigma=max(1.8, max(reg.shape) * 0.007))
+    cut_a = np.clip((d + 0.6 - dist) / 1.4, 0.0, 1.0)
+    # ⭐ 발밑 그림자는 살린다 — 흰색은 «원래 아무것도 없던 자리»에만 칠한다(cut.py 393~401줄).
+    soft = (~solid) & (alpha > 0.06)
+    alpha = np.where(solid, 1.0, np.maximum(cut_a, alpha))
+    out_rgb[(~solid) & (cut_a > 0) & (~soft)] = 255.0
+
+    # ⚠️ 가장자리에 닿으면 투명 여백을 덧댄다 — 테를 두르면 그만큼 밖으로 나간다(cut.py 438줄).
+    out = np.dstack([out_rgb, alpha * 255]).astype(np.uint8)
+    if max(out[0, :, 3].max(), out[-1, :, 3].max(), out[:, 0, 3].max(), out[:, -1, 3].max()) > 25:
+        out = np.pad(out, ((PAD, PAD), (PAD, PAD), (0, 0)), constant_values=0)
+    return Image.fromarray(out, 'RGBA')
 
 
 # ⛔⛔ **「캡션만 키우기」 안은 «실측으로» 죽었다 (2026-08-12) — 되살리지 말 것.**
