@@ -54,13 +54,25 @@ const 재기 = async (탭) => {
 console.log('🔠 글자 탭')
 for (const r of await 재기('글자')) console.log(`   ${r.큰칸 ? '⭐' : '  '} ${r.라벨.padEnd(16)} 칸 ${r.칸} · 한 줄 ${r.한줄}칸`)
 // ⛔ 첫 캡처엔 「한끼 문구」가 «화면 아래»라 안 잡혔다 — 검수판인데 정작 볼 것이 없었다(규칙 21).
-//    → 그 그룹이 보이게 서랍을 굴린 뒤 찍는다.
-await p.evaluate(() => {
-  const 라벨 = [...document.querySelectorAll('.decor-sec-label')].find((x) => x.textContent.includes('한끼 문구'))
-  라벨?.scrollIntoView({ block: 'start' })
-})
-await p.waitForTimeout(600)
-await p.screenshot({ path: 'docs/_shot/글자탭-큰칸-0812.png' })
+// ⛔⛔ 그리고 「한끼 문구」 하나만 찍은 것도 모자랐다 — 창업자 2026-08-12
+//    *"저 글자말고 더 아래로 내리면 건강태그 반응평가 이런거 있잖아. 걔가 너무 안보여"*
+//    ⭐ 맞다. 한끼 문구는 «말풍선에 큰 글자»라 유리하고, `rs_` 는 **그림 ＋ 아래 작은 캡션**이라
+//       같은 88px 에서도 훨씬 불리하다. **제일 불리한 것으로 판정해야 한다.**
+const 찍기 = async (라벨조각, 파일) => {
+  const 됐나 = await p.evaluate((조각) => {
+    const el = [...document.querySelectorAll('.decor-sec-label')].find((x) => x.textContent.includes(조각))
+    if (!el) return false
+    el.scrollIntoView({ block: 'start' }); return true
+  }, 라벨조각)
+  if (!됐나) { console.log(`   ⛔ 「${라벨조각}」 그룹을 못 찾음`); return }
+  await p.waitForTimeout(600)
+  await p.screenshot({ path: `docs/_shot/${파일}` })
+  console.log(`   📸 ${라벨조각} → ${파일}`)
+}
+await 찍기('한끼 문구', '글자탭-큰칸-0812.png')
+await 찍기('반응 평가', '글자탭-반응평가-0812.png')
+await 찍기('건강 태그', '글자탭-건강태그-0812.png')
+await 찍기('보관', '글자탭-보관-0812.png')
 
 console.log('\n🎨 데코 탭 (⛔안 바뀌어야 한다 — 창업자가 이미 OK 한 크기)')
 for (const r of await 재기('데코')) console.log(`   ${r.큰칸 ? '⭐' : '  '} ${r.라벨.padEnd(16)} 칸 ${r.칸} · 한 줄 ${r.한줄}칸`)
