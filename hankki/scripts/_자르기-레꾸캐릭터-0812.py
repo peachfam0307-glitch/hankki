@@ -33,22 +33,64 @@ CORE_ERODE = 7       # cut.py 와 같은 값 — 속살은 이만큼 안쪽에�
 PAD = 14
 JOIN = 9             # 칸 안에서 떨어진 조각(김·하트·별)을 한 컷으로 묶는다
 
-# 📐 실측값 (위 주석 참조). 줄 경계 y — 맨 위 0, 맨 아래는 높이.
-줄경계 = {
+# 📐 2026-08-12 «손으로 잰» 값 — 이제 자동 검출의 «정답지»로만 쓴다(아래 --자가검사).
+#    ⛔ 지우지 말 것: 자동 검출이 틀어지면 이 값이 알려준다.
+정답지 = {
     '시트A': [0, 449, 815, 1152, 1536],
     '시트B': [0, 432, 780, 1121, 1536],
 }
 
 
+def 줄경계(a, 줄수):
+    """줄 사이 «빈 가로 띠»를 찾아 줄을 나눈다.
+
+    ⛔⛔ 1536/줄수 로 못 박으면 **캡션이 다음 줄 칸으로 넘어간다.**
+       실측 = 시트A 449(명목 384 · 65px 차이) · 815(768 · 47) · 1152(0).
+
+    ⛔⛔ **「잉크가 가장 적은 y」로 찾으면 «66px 위»로 어긋난다** (2026-08-12 자가검사가 잡았다).
+       한 줄 안엔 빈 띠가 «둘»이다 — ⑴그림↔캡션 사이 ⑵캡션↔다음 줄 사이.
+       그런데 ⑴이 더 깨끗해서(잉크 0) 최소값을 고르면 **거기가 뽑힌다.**
+       그러면 **캡션이 다음 칸으로 통째로 넘어간다.**
+       🔢 실측 두 짝 — 시트A 389/449 · 767/815 · 시트B 371/432 · 728/780 · 1068/1121
+
+    ⭐ **그래서 「짝 중 아래쪽」을 고른다.** 순서가 늘 «그림 → 빈 → 캡션 → 빈 → 다음 줄» 이라
+       아래쪽이 항상 줄 경계다. 두께로 가르는 방법은 «아슬아슬해서» 안 쓴다
+       (시트A 그림↔캡션 16px vs 시트B 줄경계 18px — 2px 차이로 뒤집힌다).
+    ⚠️ 창 = 칸 높이의 25%. 더 넓히면 «다음 줄»의 그림↔캡션 띠까지 들어온다.
+    """
+    prof = (a < WHITE).sum(axis=1)
+    H = a.shape[0]
+    lab, n = ndimage.label(prof <= 2)
+    띠 = []
+    for i in range(1, n + 1):
+        ys = np.where(lab == i)[0]
+        if len(ys) >= 4:                    # 4px 미만은 글자 획 사이 빈틈이다
+            띠.append((ys[0] + ys[-1]) // 2)
+    폭 = round(H / 줄수 * 0.25)
+    out = [0]
+    for k in range(1, 줄수):
+        nom = round(H * k / 줄수)
+        후보 = [y for y in 띠 if abs(y - nom) <= 폭]
+        if 후보:
+            out.append(int(max(후보)))       # ⭐ 아래쪽 = 캡션 다음
+        else:                                # 컷이 붙어 빈 띠가 아예 없을 때만
+            lo, hi = max(0, nom - 폭), min(H, nom + 폭)
+            out.append(lo + int(np.argmin(prof[lo:hi])))
+    out.append(H)
+    return out
+
+
 def 칸경계(a, y0, y1, 칸수=4):
     """줄 안에서 «잉크가 가장 적은 x」를 찾아 칸을 나눈다.
-       ⛔ 1024/4 = 256 으로 못 박으면 팔·냄비가 옆 칸에 걸린 곳에서 잘린다."""
+       ⛔ 1024/4 = 256 으로 못 박으면 팔·냄비가 옆 칸에 걸린 곳에서 잘린다.
+       ⚠️ 창은 «칸 폭의 18%» — 칸수가 줄면(4→2) 칸이 넓어지니 창도 같이 넓어져야 한다."""
     prof = (a[y0:y1] < WHITE).sum(axis=0)
     W = a.shape[1]
+    폭 = max(30, round(W / 칸수 * 0.18))
     out = [0]
     for k in range(1, 칸수):
         nom = round(W * k / 칸수)
-        lo, hi = max(0, nom - 46), min(W, nom + 46)
+        lo, hi = max(0, nom - 폭), min(W, nom + 폭)
         out.append(lo + int(np.argmin(prof[lo:hi])))
     out.append(W)
     return out
@@ -180,23 +222,56 @@ def 알파로(sub, capY=None):
 #   (＋ 35px 글자를 늘리면 흐려진다 — 해상도 규칙에도 어긋난다)
 
 
+def 자가검사():
+    """⭐ 규칙 12 — 자동 검출이 «손으로 잰 값»과 같은지 먼저 확인한다.
+       여기가 어긋나면 새 시트에서도 틀린다."""
+    base = 'docs/stickers/레꾸캐릭터-창업자-2026-08-12/원본시트'
+    나쁨 = 0
+    for 이름, 정답 in 정답지.items():
+        p = f'{base}/{이름}.png'
+        if not os.path.exists(p):
+            print(f'  ⚠️ {이름} — 원본이 없어 건너뜀')
+            continue
+        a = np.asarray(Image.open(p).convert('RGB')).astype(float).min(2)
+        찾음 = 줄경계(a, 4)
+        차 = [abs(x - y) for x, y in zip(찾음, 정답)]
+        ok = max(차) <= 3
+        print(f'  {"✅" if ok else "⛔"} {이름}  자동 {찾음}')
+        print(f'      손으로 잰 값 {정답}   최대 차이 {max(차)}px')
+        if not ok:
+            나쁨 += 1
+    if 나쁨:
+        print('\n⛔ 자동 검출이 손으로 잰 값과 다르다 — 새 시트에 쓰지 말 것.')
+        sys.exit(1)
+    print('\n✅ 자동 검출 = 손으로 잰 값. 새 시트에 써도 된다.')
+
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == '--자가검사':
+        return 자가검사()
     시트, 낼폴더, 접두 = sys.argv[1], sys.argv[2], sys.argv[3]
+    # 📐 격자를 «인자로» 받는다 — 시트마다 다르다(2026-08-12 4x4 · 다시 뽑는 판 2x3).
+    #    ⛔ 손으로 박으면 시트가 바뀔 때마다 스크립트를 고쳐야 하고, 그때 또 틀린다.
+    줄수 = int(next((v for v in sys.argv[4:] if v.startswith('--줄=')), '--줄=4').split('=')[1])
+    칸수 = int(next((v for v in sys.argv[4:] if v.startswith('--칸=')), '--칸=4').split('=')[1])
     이름 = os.path.splitext(os.path.basename(시트))[0]
     im = Image.open(시트).convert('RGB')
     rgb = np.asarray(im).astype(float)
     a = rgb.min(2)
-    rows = 줄경계[이름]
+    # ⭐ 손으로 잰 값이 있으면 그것을 쓴다(2026-08-12 두 장). 없으면 자동으로 찾는다.
+    rows = 정답지.get(이름) or 줄경계(a, 줄수)
+    print(f'📐 {이름} {im.size}  {줄수}줄 × {칸수}칸 = {줄수*칸수}컷  줄경계 {rows}'
+          f'{"  (손으로 잰 값)" if 이름 in 정답지 else "  (자동)"}')
     for d in ('글자있음', '글자없음'):
         os.makedirs(os.path.join(낼폴더, d), exist_ok=True)
 
     n, 만든것 = 0, []
-    for r in range(4):
+    for r in range(줄수):
         y0, y1 = rows[r], rows[r + 1]
-        cols = 칸경계(a, y0, y1)
+        cols = 칸경계(a, y0, y1, 칸수)
         cy, capH = 캡션y(a, y0, y1)
         print(f'  ▦ {r+1}줄  y {y0}~{y1}  칸 {cols}  캡션위 {cy} (띠 {capH}px)')
-        for c in range(4):
+        for c in range(칸수):
             n += 1
             키 = f'{접두}{n:02d}'
             x0, x1 = cols[c], cols[c + 1]
@@ -211,8 +286,8 @@ def main():
             만든것.append(키)
             print(f'   ✅ {키}  글자있음 {a1.size}  글자없음 {a2.size if a2 else "-"}')
     print(f'\n📦 {이름} → {len(만든것)}컷 (칸 {n}개)')
-    if len(만든것) != 16:
-        print(f'⛔⛔ 16컷이 아니다 — 창업자 확인값과 다르다. 격자를 다시 재라.')
+    if len(만든것) != 줄수 * 칸수:
+        print(f'⛔⛔ {줄수*칸수}컷이 아니다 — 칸 하나가 비었거나 격자가 틀렸다. 경계를 다시 재라.')
         sys.exit(1)
 
 
