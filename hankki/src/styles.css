@@ -2724,8 +2724,10 @@ html, body { overscroll-behavior: none; }
    ⭐ 「고르는 것」을 깎아 「붙일 것」에 준다 — 2026-08-09 작은 폰에서 이미 통한 방법이다.
    ⛔ 손가락이 닿는 칸은 38px 아래로 안 내린다(「배경 음식 아이콘」이 이미 38 로 돌고 있어 그게 우리 실질 최소치다).
    ⚠️ 이 블록은 파일 «맨 끝» — 앞의 정의들보다 뒤라야 이긴다. */
-.decor-drawer .segment { margin-bottom: 6px; }
-.decor-editor .decor-drawer .segment .seg { min-height: 38px; padding: 6px 8px; }
+/* ⛔⛔ 여기 있던 «.decor-drawer .segment»·«.seg» 두 줄은 뺐다 — 배포 게이트 ⑪ 이 잡았다.
+   파일 맨 끝이라 **작은 폰(360×640)용 미디어쿼리(1916·1921줄)를 덮어** 거기 촘촘히 맞춰둔 값이
+   통째로 안 먹게 된다. 얻는 건 굴칸 6px 뿐인데 잃는 건 작은 폰 화면 전체다 — 값어치가 없다.
+   📌 CLAUDE.md 에 적힌 「같은 이름을 여러 번 잡고 있으면 전부 찾아본다」 그 함정이다. */
 /* 🎁 선물·사진 줄 — 자주 쓰는 게 아니라 자리를 조금만 준다(38 → 34) */
 .decor-quick > button { min-height: 34px !important; }
 .decor-quick { margin-bottom: 6px !important; }
