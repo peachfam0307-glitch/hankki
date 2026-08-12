@@ -20,8 +20,9 @@
 // ⚠️ **정규식 안전장치** — 읽은 줄이 적으면 «조용히 빈 결과»를 내지 말고 **죽는다.**
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const 뿌리 = path.resolve(import.meta.dirname, '..')
+const 뿌리 = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')  // ⛔ import.meta.dirname 은 Node 21+ · CI 는 20 이다
 const R = (p) => fs.readFileSync(path.join(뿌리, p), 'utf8')
 
 // ── ① 지금 «재료 그림(SVG)»이 있는 키 ─────────────────────────────

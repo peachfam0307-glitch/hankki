@@ -3,7 +3,8 @@
 //   ⚠️ 판 파일은 scratchpad 에 낸다 — 저장소는 공개라 창업자 개인 레시피 원문을 안 올린다.
 import fs from 'node:fs'
 import path from 'node:path'
-const 뿌리 = path.resolve(import.meta.dirname, '..')
+import { fileURLToPath } from 'node:url'
+const 뿌리 = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')  // ⛔ import.meta.dirname 은 Node 21+ · CI 는 20 이다
 const d = JSON.parse(fs.readFileSync(path.join(뿌리, 'scripts/_재료조사-0812.json'), 'utf8'))
 
 // ⭐ 시트는 «결»로 묶는다 — 한 장을 한 번에 뽑으니 갈래가 섞이면 그림체가 흔들린다
