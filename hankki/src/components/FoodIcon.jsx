@@ -1337,6 +1337,25 @@ export const FOOD_ICON_GROUPS_SORTED = FOOD_ICON_GROUPS.map((g) => {
   }
 })
 
+// 📊📊 [2026-08-12] 「이번 달 뭘 해먹었나」 — 아이콘 키로 «갈래»를 되찾는다.
+//   📮 창업자 폰 제보 *"통계는 저게다야? 우리얘기했던거있었는데"*
+//   ⭐⭐ 갈래표를 «새로 만들지 않는다» — 픽커 탭(`FOOD_ICON_GROUPS`)이 이미 창업자가 정한 갈래다
+//      (2026-08-05 순서 확정). 따로 표를 두면 **컷을 넣을 때마다 두 곳을 고쳐야 하고 반드시 어긋난다.**
+//      `docs/요리기록-다이어리-방향-2026-08-05.md` §2 가 정해둔 방식 그대로다.
+//   ⛔ 「요리 아이콘」(재료·도구 SVG)은 «요리 갈래»가 아니라 뺀다 — 그건 그림이 없을 때 쓰는 도형이다.
+const DISH_CAT_SKIP = '요리 아이콘'
+const DISH_CAT_BY_KEY = (() => {
+  const m = {}
+  for (const g of FOOD_ICON_GROUPS) {
+    if (g.label === DISH_CAT_SKIP) continue
+    for (const k of g.items) if (!m[k]) m[k] = g.label // 먼저 나온 갈래가 이긴다(픽커와 같은 규칙)
+  }
+  return m
+})()
+export function dishCatOf(iconKey) {
+  return DISH_CAT_BY_KEY[iconKey] || null
+}
+
 // 검색어에 맞는 아이콘 키 목록. 빈 검색어면 null(=검색 안 함).
 export function searchFoodIcons(query = '') {
   const q = String(query).trim().toLowerCase().replace(/\s+/g, '')
