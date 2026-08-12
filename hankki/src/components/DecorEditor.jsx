@@ -883,6 +883,14 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     try { localStorage.setItem(FOLD_KEY, JSON.stringify([...n])) } catch { /* 저장 못 해도 이번 판은 접힌다 */ }
     return n
   })
+  // 🗂 접히는 이름표 — 스티커 «그룹»이 아닌 블록(글자 직접 쓰기·포스트잇 등)도 같은 문법으로 접는다.
+  const SecFold = ({ k, label }) => (
+    <button type="button" className="press decor-sec-label" onClick={() => toggleFold(k)}
+      aria-expanded={!folded.has(k)} aria-label={`${label} ${folded.has(k) ? '펼치기' : '접기'}`}>
+      <span aria-hidden style={{ display: 'inline-block', width: 11, transform: folded.has(k) ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }}>▾</span>
+      {label}
+    </button>
+  )
   const renderStickerGroup = (g) => {
     // 🔒 **잠긴 팩은 서랍에 「한 줄」로만 둔다 — 격자는 안 편다** (창업자 2026-08-05
     //    *"이런 방식말고 따로 안내팝업이나 창을 만들어서 보여주면 안돼?"*)
@@ -1792,8 +1800,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 글자를 넣으려고 들어오는 탭이라 **직접 쓰기가 맨 위**. 포스트잇은 글씨 받침이라 그다음. */}
             {cat === 'notetext' && (
               <>
+                {/* 🗂🗂 **이 블록도 접힌다** (창업자 2026-08-12 *"꼬르곰은 한끼문구 위에 넣어줘. 접기 잘보이게"*)
+                    🔢 왜 = 「글자」 탭 굴칸 259px 을 이 블록(글씨체 칩 12 ＋ 「글자 넣기」 ＋ 안내)이 통째로 먹어
+                       **온전히 보이는 스티커 칸이 0개**였다. 레꾸에선 이것 때문에 꼬르곰 32컷이 **1298px 아래**에 있었다.
+                    ⭐ 그룹 접기와 «같은 문법»이다 — 이름을 누르면 접히고, 접은 건 기억한다. */}
                 <div className="decor-sec">
-                  <div className="decor-sec-label">글자</div>
+                  <SecFold k="sec_text" label="글자 직접 쓰기" />
+                  {!folded.has('sec_text') && (<>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '0 0 10px' }}>
                     {TEXT_FONTS.map((f) => (
                       <button key={f.key} className="press" onClick={() => setTextFont(f.key)}
@@ -1809,6 +1822,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     글자 넣기
                   </button>
                   <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>넣은 뒤 톡 하면 색·굵기·글씨체를 바꿀 수 있어요</div>
+                  </>)}
                 </div>
                 {/* 🖍 형광펜 — 글자 «바로 밑»에 둔다. 강조할 글이 있어야 쓰는 도구라 순서가 곧 쓰는 순서다. */}
                 <div className="decor-sec">

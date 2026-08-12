@@ -2717,3 +2717,15 @@ html, body { overscroll-behavior: none; }
   margin-left: 4px; padding: 1px 7px; border-radius: 999px;
   background: var(--cream); color: var(--text-sub); font-size: 11px; font-weight: 800;
 }
+
+/* 📏📏 **서랍 고정 줄 깎기** (창업자 2026-08-12 *"글씨(높이줄이고) 프레임데코..얘네들도 높이줄이자"*)
+   🔢 실측 = 일꾸 서랍 373px 중 굴칸이 253px 뿐이었다. 나머지 120px 을 고정 줄이 먹는다:
+      탭 줄(속지·글쓰기·일꾸·레꾸) 44 ＋ 갈래 줄(마테·데코·글자·기록) 56 ＋ 손잡이 4 ＋ 안내문 24~52
+   ⭐ 「고르는 것」을 깎아 「붙일 것」에 준다 — 2026-08-09 작은 폰에서 이미 통한 방법이다.
+   ⛔ 손가락이 닿는 칸은 38px 아래로 안 내린다(「배경 음식 아이콘」이 이미 38 로 돌고 있어 그게 우리 실질 최소치다).
+   ⚠️ 이 블록은 파일 «맨 끝» — 앞의 정의들보다 뒤라야 이긴다. */
+.decor-drawer .segment { margin-bottom: 6px; }
+.decor-editor .decor-drawer .segment .seg { min-height: 38px; padding: 6px 8px; }
+/* 🎁 선물·사진 줄 — 자주 쓰는 게 아니라 자리를 조금만 준다(38 → 34) */
+.decor-quick > button { min-height: 34px !important; }
+.decor-quick { margin-bottom: 6px !important; }
