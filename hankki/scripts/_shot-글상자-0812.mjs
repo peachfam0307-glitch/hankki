@@ -50,6 +50,13 @@ await pg.getByRole('button', { name: /오늘 일기/ }).first().click(); await p
 await pg.getByRole('button', { name: /꾸미기/ }).first().click(); await pg.waitForTimeout(900); await 시트닫기()
 await 탭('일꾸'); await 탭('글자')
 
+// 🐛 창업자 «순서»를 그대로 밟는다 — 먼저 «종이 본문»에 커서를 두고, 그 다음 글 상자를 고른다.
+//   ⛔ 폰은 뒤로가기로 자판만 닫혀 **blur 가 안 온다** → 본문 커서가 남는다(v10.18 에 겪은 그것).
+//   그러면 `typing` 이 참인데 `typingId` 는 없어서 **본문용 「글씨·크기」 줄이 유령처럼 떠 있는다.**
+{
+  const 본문 = pg.locator('.decor-stage textarea').first()
+  if (await 본문.count()) { await 본문.click(); await pg.waitForTimeout(400); await 본문.type('불고기', { delay: 30 }); await pg.waitForTimeout(400) }
+}
 const 칸 = pg.locator('button[aria-label^="글 상자"]').first()
 if (!(await 칸.count())) { console.log('⛔ 글 상자 칸을 못 찾았다'); await b.close(); srv.close(); process.exit(1) }
 console.log('붙인 칸 :', await 칸.getAttribute('aria-label'))
@@ -76,6 +83,22 @@ const 잰값 = await pg.evaluate(() => {
   }
 })
 console.log('잰 값 :', JSON.stringify(잰값?.글꼴 ? { ...잰값, 로드된벌: [...new Set(잰값.로드된벌)].join('/') } : 잰값, null, 1))
+
+// 🐛🐛 창업자 캡처 그대로 — **글 상자를 골라 글을 친 «그때» 서랍에 뭐가 떠 있나**
+//    ⛔ 「글씨」·「크기」는 «종이 본문»용 줄이다. 글 상자를 만지는 중엔 뜨면 안 된다
+//       (누르면 엉뚱하게 «본문» 글씨체가 바뀐다 = 창업자 *"글씨체가 뭔가 바뀐거 같아"*).
+const 서랍줄 = await pg.evaluate(() => {
+  const d = document.querySelector('.decor-drawer')
+  if (!d) return null
+  const 줄 = [...d.querySelectorAll('*')]
+    .filter((e) => e.children.length === 0 && ['글씨', '크기'].includes((e.textContent || '').trim()))
+    .map((e) => (e.textContent || '').trim())
+  const 굴 = d.querySelector('.decor-scroll')
+  return { 본문줄: [...new Set(줄)], 서랍: d.clientHeight, 굴칸: 굴 ? 굴.clientHeight : null }
+})
+console.log('서랍 상태 :', JSON.stringify(서랍줄))
+console.log(서랍줄?.본문줄.length ? `  ⛔ 본문용 줄이 떠 있다 → ${서랍줄.본문줄.join('·')} (창업자가 본 그 화면)` : '  ✅ 본문용 줄 안 뜸')
+{ const bb = await pg.locator('.decor-drawer').first().boundingBox(); if (bb) await pg.screenshot({ path: join(OUT, '글상자-서랍.png'), clip: bb }) }
 
 // 「크기」 갈래로 키워 본다
 const 크기갈래 = pg.getByRole('button', { name: '크기', exact: true }).first()
