@@ -48,12 +48,20 @@ echo "$CMD" | grep -qE 'git +([a-z-]+ +)*(commit|checkout +-[bB]|switch +-c|push
 #   ✅ 통과시키는 것 = ⒜맞추는 명령(checkout -B ... origin/DEPLOY · reset --hard origin/DEPLOY)
 #                    ⒝읽기만 하는 명령(status·log·diff·rev-parse·fetch·branch·show)
 #   ⚠️ ⒝를 통과시켜도 안전하다 — 「읽은 숫자가 거짓」인 게 문제지만, 되감김을 «진단»하려면 읽어야 한다.
-if echo "$CMD" | grep -qE "git +(checkout +-B|switch +-C) +[^ ]+ +origin/$DEPLOY|git +reset +--hard +origin/$DEPLOY"; then exit 0; fi
-if echo "$CMD" | grep -qvE 'git +([a-z-]+ +)*(commit|checkout|switch|push|merge|rebase|cherry-pick|add|mv|rm)' ; then
-  # git 이 아예 없거나 «읽기 전용» git 만 있는 명령 → 진단·복구에 필요하니 통과
-  echo "$CMD" | grep -qE '\bgit\b' || exit 0
-  echo "$CMD" | grep -qE 'git +(status|log|diff|rev-parse|rev-list|fetch|branch|show|ls-tree|merge-base|remote|config)' && exit 0
-fi
+#   ⛔⛔ **[2026-08-13 정정] 08-12 판의 ⒝가 «너무 넓었다» — 이 훅의 본래 목적을 통째로 껐다.**
+#      `git 이 없으면 무조건 통과` 라서 `grep -c … weekly.js` · `node scripts/check-*.mjs` ·
+#      `cat` · `wc` 가 **전부 통과**했다. 그런데 이 훅을 만든 «이유»가 바로 그것이었다 —
+#      2026-08-10 에 낡은 바닥에서 `grep -c` 로 주차를 세고 「4주뿐」이라 잘못 알린 사고(진짜 13주).
+#      📌 **막다른 길을 푼다고 문을 다 떼어버렸다.** 재현판이 잡았다(⛔ 통과 (기대=막힘) 두 칸).
+#   ✅✅ **그래서 방향을 바꾼다 — 「막기」 대신 「고치기」.**
+#      되감김을 보면 **그 자리에서 `repo-sync.sh` 를 불러 맞춘다.** 맞춰지면 막을 이유가 없다.
+#      정말 못 고쳤을 때(네트워크가 없을 때)만 막고, 그때도 ⒜⒝ 문은 열어 둔다.
+#      ⭐ 이러면 창업자가 겪은 「똑같은 메시지가 계속」이 사라진다 — 알리는 대신 «해결»하니까.
+if echo "$CMD" | grep -qE "git +(checkout +-[fqB ]*B|switch +-C) +[^ ]+ +origin/$DEPLOY|git +reset +--hard +origin/$DEPLOY"; then exit 0; fi
+if echo "$CMD" | grep -qE '(^|[;&|]) *(cd [^;&|]* *(&&|;) *)*git +(status|log|diff|show|fetch|remote|branch|reflog|stash|rev-parse|rev-list|ls-remote|ls-tree|ls-files|merge-base|cat-file|describe|blame)\b'; then exit 0; fi
+#   ⒞ **담아두는 push(`hold/`·`wip/`)는 통과** — 「잃지 않게 먼저 담는」 단계다. 막으면 안 된다.
+#      ⛔ 배포 브랜치로 가는 push 는 여전히 막는다(낡은 바닥을 «원격에» 퍼뜨리는 유일한 길이라).
+if echo "$CMD" | grep -qE 'git +push[^;&|]*(hold/|wip/)'; then exit 0; fi
 
 if [ "$RISKY" = 1 ]; then
   # ⚠️ 네트워크가 막히면 조용히 통과한다(막는 게 목적이지 멈추는 게 목적이 아니다).
@@ -65,9 +73,37 @@ REMOTE=$(git rev-parse --verify -q "refs/remotes/origin/$DEPLOY" 2>/dev/null) ||
 [ "$LOCAL" = "$REMOTE" ] && exit 0
 git merge-base --is-ancestor "$REMOTE" "$LOCAL" 2>/dev/null && exit 0
 
+# ── 🔧 되감겼다 → **먼저 스스로 고쳐본다** (2026-08-13 신설) ──────────────
+#   ⭐ `repo-sync.sh` 가 하는 일을 여기 베끼지 않는다 — **부르기만 한다**(둘이 어긋나면 안 된다).
+#      그 안에 이미 안전장치가 다 있다: 버리기 «전»에 `hold/자동회수` 에 담고 · 담기 실패하면 안 되돌리고.
+#   ⚠️ 네트워크가 없으면 매 명령마다 20초씩 먹으면 안 된다 → **실패를 60초 기억한다.**
+FIXED=0
+COOL=/tmp/hankki-fix-cooldown
+NOW=$(date +%s 2>/dev/null || echo 0)
+LAST=$(cat "$COOL" 2>/dev/null || echo 0)
+if [ $(( NOW - LAST )) -gt 60 ]; then
+  for c in "$ROOT/.claude/hooks/repo-sync.sh" "$HOME/.claude/hooks/repo-sync.sh"; do
+    [ -x "$c" ] || continue
+    printf '{"source":"net"}' | timeout 90 "$c" >/dev/null 2>&1
+    break
+  done
+  LOCAL=$(git rev-parse --verify -q "refs/heads/$DEPLOY" 2>/dev/null || echo x)
+  REMOTE=$(git rev-parse --verify -q "refs/remotes/origin/$DEPLOY" 2>/dev/null || echo y)
+  if [ "$LOCAL" = "$REMOTE" ] || git merge-base --is-ancestor "$REMOTE" "$LOCAL" 2>/dev/null; then
+    FIXED=1
+  else
+    printf '%s' "$NOW" > "$COOL" 2>/dev/null || true
+  fi
+fi
+# ✅ 고쳐졌으면 «조용히» 통과한다 — 작업을 끊지 않는 게 목적이다.
+[ "$FIXED" = 1 ] && exit 0
+
 MISSING=$(git rev-list --count "$LOCAL..$REMOTE" 2>/dev/null || echo '?')
 cat >&2 <<EOF
-🕳 **디스크가 되감겼다 — 지금 무엇을 세든 «거짓 숫자»가 나온다.**
+🕳 **디스크가 되감겼고 «자동으로 맞추는 것도 실패»했다 (원격을 못 봤다).**
+   ⭐ 아래 명령들은 **이 게이트를 통과한다** — `git status`·`git diff`·`git log` 같은 읽기와
+      `origin/$DEPLOY` 로 맞추는 명령은 안 막힌다. 막히는 건 «낡은 바닥을 퍼뜨리는» 것뿐이다.
+
    ⛔ 커밋만 문제가 아니다. **파일을 읽고 세는 것부터 전부 틀린다.**
       2026-08-10 에 낡은 바닥에서 주차를 세고 「4주뿐이라 8/31 부터 빈다」고 잘못 알렸다(진짜는 13주).
 
