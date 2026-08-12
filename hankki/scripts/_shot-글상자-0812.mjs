@@ -60,7 +60,10 @@ await 탭('일꾸'); await 탭('글자')
 const 칸 = pg.locator('button[aria-label^="글 상자"]').first()
 if (!(await 칸.count())) { console.log('⛔ 글 상자 칸을 못 찾았다'); await b.close(); srv.close(); process.exit(1) }
 console.log('붙인 칸 :', await 칸.getAttribute('aria-label'))
+const 셈 = () => pg.locator('.decor-stage [class*="hk-"], .decor-stage textarea').count()
+console.log('  누르기 «전» 종이 위 글칸 :', await pg.locator('.decor-stage textarea').count())
 await 칸.click(); await pg.waitForTimeout(700)
+console.log('  누르기 «뒤» 종이 위 글칸 :', await pg.locator('.decor-stage textarea').count(), '← 안 늘면 «붙지 않은 것»')
 
 console.log('갈래 :', (await 갈래들()).join(' · '))
 

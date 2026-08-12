@@ -49,9 +49,25 @@ await page.screenshot({ path: join(OUT, '레꾸-글자탭-맨위.png') })
 
 // 서랍을 굴려서 「반응 · 별점」이 나올 때까지
 const 서랍 = page.locator('.decor-drawer').first()
-const 라벨 = await page.evaluate(() => [...document.querySelectorAll('.decor-drawer *')]
-  .filter((e) => e.children.length === 0 && /반응|조리법|한끼 문구|문구/.test(e.textContent || ''))
-  .map((e) => (e.textContent || '').trim()))
+// ⚠️ 이름표가 이제 «단추»(안에 화살표 span)라 「자식 0개」로 찾으면 못 찾는다 — 클래스로 찾는다(규칙 18)
+const 자리 = async () => page.evaluate(() => {
+  const sc = document.querySelector('.decor-scroll')
+  const base = sc.getBoundingClientRect().top - sc.scrollTop
+  const f = (t) => [...sc.querySelectorAll('.decor-sec-label')].find((e) => (e.textContent || '').includes(t))
+  const e = f('반응 · 별점')
+  return { 반응: e ? Math.round(e.getBoundingClientRect().top - base) : null, 담긴것: sc.scrollHeight,
+    이름표: [...sc.querySelectorAll('.decor-sec-label')].map((x) => (x.textContent || '').trim().replace(/^▾/, '')) }
+})
+const 전 = await 자리()
+console.log('접기 «전»  「반응 · 별점」이 서랍 맨 위에서', 전.반응, 'px 아래 · 담긴 것', 전.담긴것)
+console.log('   이름표 :', 전.이름표.join(' / '))
+// 🗂 위쪽 블록들을 접어 본다 — 창업자가 실제로 할 행동
+for (let i = 0; i < 3; i++) { const b = page.locator('.decor-sec-label').nth(i); if (await b.count()) { await b.click(); await page.waitForTimeout(150) } }
+await page.waitForTimeout(400)
+const 후 = await 자리()
+console.log('접기 «후»  「반응 · 별점」이', 후.반응, 'px 아래 · 담긴 것', 후.담긴것)
+console.log(후.반응 < 전.반응 ? `✅ ${전.반응 - 후.반응}px 위로 올라왔다` : '⛔ 안 올라왔다')
+const 라벨 = []
 console.log('서랍 안 이름표 :', [...new Set(라벨)].join(' / ') || '(없음)')
 
 // 📏 굴리는 «진짜» 칸을 찾는다 — `.decor-drawer` 가 아니라 그 안쪽일 수 있다(짐작 금지)

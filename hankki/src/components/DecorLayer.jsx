@@ -222,7 +222,18 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           // 나머지(스티커·테이프·포스트잇): 폭=it.s + 종횡비 고정.
           ...(isText
             ? { width: 'max-content', maxWidth: '150%' }
-            : { width: `${it.s * 100}%`, aspectRatio: `${ratio}` }),
+            // 📏📏 **글 상자·포스트잇은 「크기」 갈래가 «상자째» 키운다** (창업자 2026-08-12
+            //   *"글씨체가 커지는데 상자는 그대로라 글씨가 잘려..ㅠㅠ"* — **맞다, 내가 낸 것이다.**)
+            //   ⛔ 처음엔 글자만 곱했다. 그런데 글자 크기는 이미 `autoCqw` 가 «상자에 딱 맞는 최대치»로
+            //      잡아둔 값이라, 거기에 1.6 을 곱하면 **반드시 넘치고 `overflow:hidden` 이 잘라먹는다.**
+            //      상자 안에 남은 자리가 없으니 「글자만」은 물리적으로 안 되는 요구였다.
+            //   ⭐ 그래서 상자와 글자를 «같이» 키운다 — 화면에서 글자는 그대로 1.6배로 커지고,
+            //      글자와 그림의 비율은 안 변하니 **한 글자도 안 잘린다.**
+            //   ⚠️ 「크기」가 손잡이와 겹치지 않나 = 안 겹친다. 손잡이는 끌어서 «아무 값이나»,
+            //      이건 **정해진 네 단**이라 한 번 눌러 딱 맞춘다(작게 0.82 · 보통 1 · 크게 1.28 · 아주 크게 1.6).
+            //   ⛔ 저장값 `s` 는 안 건드린다 — 보이는 크기만 곱한다. 그래야 「보통」으로 되돌리면 원래대로 온다.
+            //   ⚠️ 종이 폭을 넘지 않게 묶는다 — 리본 배너(0.72)에 1.6 을 곱하면 115% 라 좌우가 잘린다(실물로 봤다)
+            : { width: `${Math.min(98, it.s * 100 * (it.type === 'note' ? textSizeV(it.tz) : 1))}%`, aspectRatio: `${ratio}` }),
           // ↔ **좌우 뒤집기**(창업자 2026-08-06 *"캐릭터좌우반전돼?"* → 된다).
           //   ⭐ `rotate` «뒤»에 `scaleX` 를 둔다 — 순서를 바꾸면 뒤집은 뒤 회전이라
           //      기울기가 반대로 돌아 손잡이가 엉뚱하게 움직인다.
@@ -505,7 +516,9 @@ function Note({ it, editable, typing, onText }) {
   //   ⭐ `autoCqw` 는 «넘치면 줄이는» 안전장치라 그대로 두고, 그 위에 배율만 곱한다.
   //      그래서 「보통」(tz 없음)일 땐 값이 한 톨도 안 바뀐다 — 이미 쓴 일기가 안 흔들린다.
   //   ⚠️ 키우면 상자를 넘칠 수 있다. 그건 «넘치게 두는 게» 맞다 — 창업자가 원한 게 「글자를 키우기」다.
-  const noteCqw = autoCqw(text, 14, 100 - pp[1] * 2, 100 / 1.06 - pp[0] * 2, 1.4) * textSizeV(it.tz)
+  // 📏 ⛔ 여기서 배율을 «다시» 곱하지 않는다 — 상자가 이미 커졌고 글자는 (상자 폭 기준)라
+  //    저절로 같이 커진다. 두 번 곱하면 그만큼 또 넘쳐 잘린다.
+  const noteCqw = autoCqw(text, 14, 100 - pp[1] * 2, 100 / 1.06 - pp[0] * 2, 1.4)
 
   return (
     <div style={{ position: 'absolute', inset: 0, containerType: 'size', color: c.text }}>
@@ -632,7 +645,8 @@ function ArtBox({ it, editable, typing, onText }) {
     //   *"글에 비해 글자상자가 너무 작아(스티커-돌밥돌밥쓴거) 스티커를 줄이면 글자가 너무 작아져"*)
     //   ⛔⛔ 처음엔 `Note` 쪽만 고치고 여기를 빠뜨려 **재현이 「글자가 안 커졌다」로 잡았다.**
     //      창업자가 쓴 말풍선은 `it.art` 가 있어 **`ArtBox`(여기)** 로 온다 — 두 함수를 «같이» 고쳐야 한다.
-    fontSize: `clamp(6px, ${autoCqw(text, 13, 100 - pad[1] - pad[3], (100 - pad[0] - pad[2]) / (stickerRatio(it.art) || 1), 1.35) * textSizeV(it.tz)}cqw, 64px)`,
+    // 📏 ⛔ 배율은 «상자»에만 건다(DecorLayer 225줄) — 글자는 cqw 라 저절로 따라온다
+    fontSize: `clamp(6px, ${autoCqw(text, 13, 100 - pad[1] - pad[3], (100 - pad[0] - pad[2]) / (stickerRatio(it.art) || 1), 1.35)}cqw, 64px)`,
     lineHeight: 1.35,
     whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
     textAlign: 'center',
