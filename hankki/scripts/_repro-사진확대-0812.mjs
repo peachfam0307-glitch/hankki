@@ -148,6 +148,9 @@ const z5 = await zoomOf(page)
 const 맞춤 = await page.locator(`${SEL} img`).first().evaluate((i) => getComputedStyle(i).objectFit)
 z5 < 1 && z5 >= 0.5 ? ok(`1 밑으로 내려간다 — ${z5}배 (0.5 에서 멈춘다)`) : no(`안 줄어든다: ${z5}`)
 맞춤 === 'contain' ? ok('사진 «전체»가 창 안에 들어온다 (잘리지 않는다)') : no(`아직 잘린다: objectFit ${맞춤}`)
+// 📸 규칙 21 — 숫자만 믿지 않는다. 줄인 «그 상태»를 찍어서 눈으로 본다.
+{ const 종이 = await page.locator('.paper-box, .paper').first().boundingBox()
+  if (종이) await page.screenshot({ path: join(OUT, '사진축소-실물.png'), clip: 종이 }) }
 
 console.log('\n⑥ 짧은 탭 = 사진 바꾸기 그대로')
 // 🚪 파일창이 열리나 = 숨은 `<input type=file>` 이 click 을 받나
