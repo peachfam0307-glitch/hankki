@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
-import { StickerArt, StickerFx, motionClass, stickerRatio, NOTE_COLORS, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
+import { StickerArt, StickerFx, motionClass, stickerRatio, NOTE_COLORS, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, textSizeV, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -395,7 +395,10 @@ function TextDeco({ it, editable, coverW = 0, typing, onText }) {
   const text = it.text || (editable ? '글자' : '')
   // it.s(사용자 조절)만으로 크기 결정 → 크기/회전 핸들 로직 그대로, 상자만 글자에 맞게 줄어듦.
   const cw = coverW || 320
-  const fontPx = Math.max(8, Math.min(220, it.s * 0.15 * cw))
+  // 📏 「크기」 갈래(작게·보통·크게·아주 크게) — 글 상자와 «같은 배율표»를 쓴다.
+  //   ⭐ 글자 스티커는 상자가 글자에 맞춰지므로 결과적으로 상자도 같이 커진다(그게 맞다).
+  //   ⚠️ 손잡이(`it.s`)는 그대로 산다 — 갈래는 «누르면 되는 길»을 더한 것이지 대체가 아니다.
+  const fontPx = Math.max(8, Math.min(220, it.s * 0.15 * cw * textSizeV(it.tz)))
   // ✒️ 굵기 = 외곽선 두께로 낸다(글씨체가 400 한 종류뿐이라 font-weight 로는 안 굵어진다).
   //    `paintOrder: stroke fill` 이라 선이 글자 뒤에 깔려 **획을 안 갉고 바깥으로만** 두꺼워진다.
   const wt = TEXT_WEIGHTS.find((t) => t.key === it.w) || TEXT_WEIGHTS[1]
@@ -498,7 +501,11 @@ function Note({ it, editable, typing, onText }) {
   //   ⚠️ CSS 의 `padding: %` 는 **위아래도 «폭» 기준**이다 — 높이 기준으로 계산하면 세로가 어긋난다.
   //   ⚠️ 포스트잇 상자 비율은 1.06 이라 «폭 대비 높이» = 100/1.06.
   const pp = isClip ? [22, 18] : [9, 10]   // [위아래, 좌우] %
-  const noteCqw = autoCqw(text, 14, 100 - pp[1] * 2, 100 / 1.06 - pp[0] * 2, 1.4)
+  // 📏 **상자는 그대로 · 글자만** 키운다 (창업자 2026-08-12 *"스티커를 줄이면 글자가 너무 작아져"*)
+  //   ⭐ `autoCqw` 는 «넘치면 줄이는» 안전장치라 그대로 두고, 그 위에 배율만 곱한다.
+  //      그래서 「보통」(tz 없음)일 땐 값이 한 톨도 안 바뀐다 — 이미 쓴 일기가 안 흔들린다.
+  //   ⚠️ 키우면 상자를 넘칠 수 있다. 그건 «넘치게 두는 게» 맞다 — 창업자가 원한 게 「글자를 키우기」다.
+  const noteCqw = autoCqw(text, 14, 100 - pp[1] * 2, 100 / 1.06 - pp[0] * 2, 1.4) * textSizeV(it.tz)
 
   return (
     <div style={{ position: 'absolute', inset: 0, containerType: 'size', color: c.text }}>
@@ -621,7 +628,11 @@ function ArtBox({ it, editable, typing, onText }) {
     boxSizing: 'border-box', color: ink,
     fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
     // 📐 글 길이에 맞춰 저절로 줄어든다 — 상자 «폭» 대비 가로 여백·세로 여백을 그대로 넘긴다
-    fontSize: `clamp(6px, ${autoCqw(text, 13, 100 - pad[1] - pad[3], (100 - pad[0] - pad[2]) / (stickerRatio(it.art) || 1), 1.35)}cqw, 64px)`,
+    // 📏📏 **그림은 그대로 · 글자만** 「크기」 갈래로 (창업자 2026-08-12
+    //   *"글에 비해 글자상자가 너무 작아(스티커-돌밥돌밥쓴거) 스티커를 줄이면 글자가 너무 작아져"*)
+    //   ⛔⛔ 처음엔 `Note` 쪽만 고치고 여기를 빠뜨려 **재현이 「글자가 안 커졌다」로 잡았다.**
+    //      창업자가 쓴 말풍선은 `it.art` 가 있어 **`ArtBox`(여기)** 로 온다 — 두 함수를 «같이» 고쳐야 한다.
+    fontSize: `clamp(6px, ${autoCqw(text, 13, 100 - pad[1] - pad[3], (100 - pad[0] - pad[2]) / (stickerRatio(it.art) || 1), 1.35) * textSizeV(it.tz)}cqw, 64px)`,
     lineHeight: 1.35,
     whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
     textAlign: 'center',

@@ -11,7 +11,7 @@ import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
 import { cropRatio, imageRatio } from '../utils'
 import { FRAME_WINDOW } from '../data/frameWindows'
-import { StickerArt, stickerRatio, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
+import { StickerArt, stickerRatio, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, TEXT_SIZES, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
 
 // 📜📜 HStrip — 가로로 «넘치는 칩 줄»에 막대를 **우리가 그려서** 항상 보여준다.
 //   (창업자 2026-08-08 *"스크롤바가 처음부터 안보여서 글자체 저게다처럼보임"* —
@@ -726,10 +726,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     ...(selItem.type === 'sticker' && RECOLORABLE.has(selItem.key) ? [{ k: 'color', label: '색', ic: 'palette' }] : []),
     ...(selItem.type === 'hl' ? [{ k: 'color', label: '색', ic: 'palette' }, { k: 'width', label: '굵기', ic: 'weight' }, { k: 'opacity', label: '진하기', ic: 'opacity' }] : []),
     ...(selItem.type === 'tape' ? [{ k: 'pattern', label: '무늬', ic: 'grid4' }, { k: 'width', label: '굵기', ic: 'weight' }] : []),
-    ...(selItem.type === 'text' ? [{ k: 'color', label: '색', ic: 'palette' }, { k: 'width', label: '굵기', ic: 'weight' }, { k: 'font', label: '글씨', ic: 'textA' }] : []),
+    // 📏 「크기」 = 글자 크기 (창업자 2026-08-12 *"일꾸 글자는 크기 조절이 없어"* · *"레꾸도 마찬가지"*)
+    ...(selItem.type === 'text' ? [{ k: 'color', label: '색', ic: 'palette' }, { k: 'size', label: '크기', ic: 'textSize' }, { k: 'width', label: '굵기', ic: 'weight' }, { k: 'font', label: '글씨', ic: 'textA' }] : []),
     ...(selItem.type === 'note' ? [
       // 🎨 색 = 포스트잇이면 «종이색», 그림 글 상자면 «글자색» (창업자 2026-08-08 *"글자색고르기없음"*)
       { k: 'color', label: '색', ic: 'palette' },
+      // 📏 여기가 창업자 제보의 자리 — 글 상자는 손잡이로 키우면 «그림까지» 커졌다.
+      { k: 'size', label: '크기', ic: 'textSize' },
       { k: 'font', label: '글씨', ic: 'textA' },
       ...(selPlainNote ? [{ k: 'pattern', label: '무늬', ic: 'grid4' }, { k: 'shape', label: '모양', ic: 'shape' }] : []),
     ] : []),
@@ -1335,6 +1338,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 {TEXT_COLORS.map((c) => (
                   <button key={c.key} className="press" onClick={() => patchRec(sel, { color: c.key })} aria-label={`글자색 ${c.key}`}
                     style={{ ...ctxDot, background: c.color, border: (selItem.color || 'white') === c.key ? selOn : '1.5px solid rgba(0,0,0,.14)', boxShadow: (selItem.color || 'white') === c.key ? '0 0 0 2px var(--cream)' : 'none' }} />
+                ))}
+              </div>
+            )}
+            {/* 📏 글자 크기 — 글자 스티커·글 상자가 «같은 표»를 쓴다(TEXT_SIZES).
+                ⭐ 글 상자는 `tz` 가 **글자에만** 곱해져 그림 크기는 안 변한다 —
+                   창업자 *"스티커를 줄이면 글자가 너무 작아져"* 가 바로 그 구조였다. */}
+            {ctxCur === 'size' && (selItem.type === 'text' || selItem.type === 'note') && (
+              <div style={ctxScroll}>
+                {TEXT_SIZES.map((z) => (
+                  <button key={z.key} className="press" onClick={() => patchRec(sel, { tz: z.key })}
+                    style={{ minHeight: 44, padding: '0 16px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: (selItem.tz || 'md') === z.key ? 'var(--brown)' : 'var(--surface)', color: (selItem.tz || 'md') === z.key ? '#fff' : 'var(--text-sub)', border: 'none' }}>
+                    {z.label}
+                  </button>
                 ))}
               </div>
             )}
