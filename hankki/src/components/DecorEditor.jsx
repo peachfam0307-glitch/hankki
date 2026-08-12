@@ -872,6 +872,17 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    *"결제붙는날 전체를 다 보여줘야지. 이런게 있으니 사라고 배경부터 싹 다"*)
   //    ⚠️ 몇 컷만 맛보기로 보여주지 않는다 — 그러면 «있는 줄»을 모른다.
   //    ⚠️ 흐리게만 하고 **그림은 다 보인다.** 못 쓰게 막는 것이지 감추는 게 아니다.
+  // 🗂 접어 둔 그룹 — **기억한다**(다음에 열어도 접힌 채). 값이 깨져 있어도 앱이 안 죽게 감싼다.
+  const FOLD_KEY = 'hankki:decor:folded'
+  const [folded, setFolded] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(FOLD_KEY) || '[]')) } catch { return new Set() }
+  })
+  const toggleFold = (key) => setFolded((s) => {
+    const n = new Set(s)
+    n.has(key) ? n.delete(key) : n.add(key)
+    try { localStorage.setItem(FOLD_KEY, JSON.stringify([...n])) } catch { /* 저장 못 해도 이번 판은 접힌다 */ }
+    return n
+  })
   const renderStickerGroup = (g) => {
     // 🔒 **잠긴 팩은 서랍에 「한 줄」로만 둔다 — 격자는 안 편다** (창업자 2026-08-05
     //    *"이런 방식말고 따로 안내팝업이나 창을 만들어서 보여주면 안돼?"*)
@@ -902,7 +913,23 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     }
     return (
       <div className="decor-sec" key={g.key}>
-        {g.label && <div className="decor-sec-label">{g.label}{g.gift && <GiftTag />}</div>}
+        {/* 🗂🗂 **그룹 접기** (창업자 2026-08-12 *"접기기능이라도 있으면 잘보이겠구만.. 스티커가너무 안보여"*)
+            🔢 왜 필요한가 = 실측 일꾸 서랍 굴칸 **253px** 인데 담긴 것이 «기록» 갈래만 **4540px = 17.9화면**.
+               글자 그려진 칸은 한 칸 122px 이라 **한 화면에 세 칸**뿐이다.
+            ⭐ 칸을 도로 줄이지 «않는다» — 오늘 낮에 「캡션이 안 읽힌다」고 52→110px 로 키운 것이고
+               줄이면 그 문제가 되살아난다. **안 쓰는 묶음을 치워서** 쓰는 묶음이 큰 칸 그대로 앞에 오게 한다.
+            ⛔ 자동으로는 «절대» 안 접는다 — *"안 쓰는 것 같아서 치웠어요"* 는 뺏은 걸로 읽힌다.
+               (한 번 준 것은 빼앗지 않는다 — 우리 원칙)
+            ⭐ 접은 것은 **기억한다** — 다음에 열어도 접혀 있다. 매번 다시 접어야 하면 그게 더 짜증이다.
+            ⚠️ 이름표가 이제 «단추»다 — 손가락이 닿는 칸이라 높이를 44px 로 준다(우리 최소치). */}
+        {g.label && (
+          <button type="button" className="press decor-sec-label" onClick={() => toggleFold(g.key)}
+            aria-expanded={!folded.has(g.key)} aria-label={`${g.label} ${folded.has(g.key) ? '펼치기' : '접기'}`}>
+            <span aria-hidden style={{ display: 'inline-block', width: 11, transform: folded.has(g.key) ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }}>▾</span>
+            {g.label}{g.gift && <GiftTag />}
+            {folded.has(g.key) && <span className="decor-sec-n">{g.items.length}</span>}
+          </button>
+        )}
         {/* 🔠 `wordy` = **그림 안에 글자(캡션)가 그려진 그룹.** 칸을 크게 준다.
             📮 창업자 2026-08-12 *"좀작네 글자가."* · 앞서 *"글자가 너무 작아서 (그림도) 잘 안보여"*
             🔢 재서 정했다 — 컷 긴변 348px 에 캡션 글자 35px 이라 칸이 W 면 화면 글자 = 35×W÷348:
@@ -911,8 +938,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                줄 수가 안 늘어난다(둘 다 39줄). 같은 값에 글자만 커진다.
             ⛔ 130px 은 2칸이 되어 줄이 58줄로 늘어난다 — 거기서 끊었다.
             ⛔ 접두어(`rs_`·`tw_`)로 가르지 않는다 — 표시용 이름·키로 분류하면 언젠가 어긋난다
-               (v9.07 에 라벨로 분류했다가 자산 도구가 깨졌다). 데이터에 표시를 단다. */}
-        <div className={g.wordy ? 'decor-grid wordy' : 'decor-grid'}>{g.items.map(renderCell)}</div>
+               (v9.07 에 라벨로 분류했다가 자산 도구가 깨졌다). 데이터에 표시를 단다.
+            ⛔⛔ 아래 조건 «뒤»에 JSX 주석을 넣지 말 것 — 거긴 표현식 여는 자리라 빌드가 깨진다.
+               2026-08-12 에 또 밟았다(CLAUDE.md 에 적힌 함정인데 이번이 여섯 번째다). */}
+        {!folded.has(g.key) && (
+          <div className={g.wordy ? 'decor-grid wordy' : 'decor-grid'}>{g.items.map(renderCell)}</div>
+        )}
       </div>
     )
   }
