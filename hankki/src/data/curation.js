@@ -197,7 +197,14 @@ export const CURATION = [
 
 // ── 공용 헬퍼 (ShopScreen · 레시피 상세가 함께 사용) ─────────────────
 // 카테고리 평면화된 전체 제품 목록.
-export const PRODUCTS = CURATION.flatMap((g) => g.items.map((it) => ({ ...it, cat: g.cat, emoji: g.emoji })))
+// ⛔⛔ [2026-08-12] `icon` 을 안 얹고 있었다 — 창업자 폰 제보 *"장바구니 아이콘 바뀜"*
+//    `icon` 은 «카테고리» 줄에 있는데(`{cat:'굴소스', icon:'cu_gulsauce'}`) 제품 줄엔 대개 없다.
+//    그래서 「이번 주 픽」처럼 «제품 단위»로 그리는 자리는 `it.icon` 이 undefined 라
+//    **이모지로 폴백**했다(🫗🍶🐟🍬). 카테고리 카드는 `c.icon` 을 직접 써서 멀쩡했고 —
+//    그래서 «한 화면 안에서» 어떤 건 그림, 어떤 건 이모지가 됐다.
+//    ⛔ 우리 규칙은 **UI에 유니코드 이모지 금지**(CLAUDE.md)라 이건 규칙 위반이기도 하다.
+//    ✅ 제품이 자기 그림을 가졌으면 그걸, 없으면 카테고리 그림을 물려받는다.
+export const PRODUCTS = CURATION.flatMap((g) => g.items.map((it) => ({ ...it, cat: g.cat, emoji: g.emoji, icon: it.icon || g.icon })))
 
 const MALL_SEARCH = {
   coupang: 'https://www.coupang.com/np/search?q={q}',
