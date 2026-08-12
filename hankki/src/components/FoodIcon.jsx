@@ -1,6 +1,7 @@
 // 한끼 브랜드 재료 아이콘 세트 — 앱 쿨톤과 어울리는 채도 낮은 컬러 듀오톤.
 // 이름으로 자동 매칭(guessFoodIcon)되거나, 픽커에서 직접 고를 수 있다.
 import { PHOTO_FAMILY } from './Stickers' // 🍱 뉴 음식 이모지(다꾸본 완성요리 PNG)도 레시피 아이콘으로 쓸 수 있게
+import { ING_SRC, ingIconOf } from '../data/ingIcons' // 🥕 냉장고·장보기 «재료» 그림 171컷(창업자 2026-08-12)
 
 const I = {
   // ── 곡물·면 ──
@@ -1213,8 +1214,13 @@ export function guessFoodIcon(name = '') {
 //   ✅ 사진 키(fe_·fh_·fy_·fj_·fi_·fb_)가 나오면 «쓰지 않고» 장바구니 그림으로 물러난다.
 //      선 그림 재료 SVG 는 그대로 쓴다 — 그건 진짜 재료 그림이다.
 //   ⏳ 창업자가 재료 아이콘을 뽑아주면 그때 진짜 그림이 붙는다(2026-08-12 *"냉장고 재료 아이콘 필요하면 다 뽑아줄게"*).
+//   ✅✅ [2026-08-12] **창업자 재료 아이콘 171컷이 왔다** — 이제 진짜 그림이 붙는다.
+//      창업자 시트 11장 → `src/data/ingIcons.js`. ⛔큐레이션엔 안 쓴다(그림체가 다르다).
+//      ⭐ 그 표를 «먼저» 본다 — 요리 규칙에 얹지 않는 이유가 바로 위 애호박 사고다.
 const 사진키 = /^(fe|fh|fy|fj|fi|fb)_/
 export function guessIngredientIcon(name = '') {
+  const ing = ingIconOf(name)
+  if (ing) return ing
   const key = guessFoodIcon(name)
   return 사진키.test(key) ? 'basket' : key
 }
@@ -1393,6 +1399,12 @@ export function searchFoodIcons(query = '') {
 
 export default function FoodIcon({ name = 'default', size = 40 }) {
   // 🍱 뉴 음식 이모지(PNG) — 완성요리 사진을 아이콘으로. 없으면 SVG 브랜드 아이콘.
+  // 🥕 재료 그림(창업자 시트 171컷) — 음식 사진보다 «먼저» 본다.
+  //    ⛔ 키가 `ig_` 로 시작하는 것뿐이라 음식 아이콘과 섞일 일이 없다.
+  const ing = ING_SRC[name]
+  if (ing) {
+    return <img src={ing} alt="" draggable={false} width={size} height={size} style={{ display: 'block', objectFit: 'contain' }} />
+  }
   const pf = PHOTO_FAMILY[name]
   if (pf && pf.src) {
     return <img src={pf.src} alt="" draggable={false} width={size} height={size} style={{ display: 'block', objectFit: 'contain' }} />
