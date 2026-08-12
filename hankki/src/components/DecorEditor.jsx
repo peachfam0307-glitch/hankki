@@ -424,7 +424,18 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    그 밑에 붙여둔 스티커에 죄다 색이 입혀진다(multiply 라 비치긴 해도 색은 얹힌다).
   const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || it.type === 'hl' || (it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('dc_dma') || it.key.startsWith('pf_') || it.key.startsWith('sf_'))))
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로. 단 배경격은 제자리 유지.
+  // ⌨️⌨️ **아이템을 만지면 «종이 본문» 커서를 내려놓는다** (창업자 폰 캡처 2026-08-12 · 재현으로 확정)
+  //   ⛔⛔ 폰은 뒤로가기로 «자판만» 닫혀 blur 가 안 온다 → 본문 커서가 남고 `typing` 이 참인 채다.
+  //      그 상태로 글 상자를 고르면 `showWriteTools` 가 켜져 있어 세 가지가 한꺼번에 어긋난다:
+  //        ⑴서랍의 「글씨」를 누르면 글 상자가 아니라 **«본문»이 바뀐다**(＝「글씨체가 바뀐 것 같아」)
+  //        ⑵본문용 「글씨·크기」 두 줄이 자리를 먹어 **스티커 굴칸 207 → 156px**(＝「갑자기 칸 작아짐」)
+  //        ⑶글 상자 컨텍스트 갈래가 **하나도 안 뜬다**(＝「글씨 크게 하는 게 없다」)
+  //   📌 셋이 다른 버그가 아니라 **하나였다.**
+  //   ⛔ v10.18 은 「탭을 옮길 때」만 내려놨다 — **「아이템을 만질 때」가 빠져 있었다.**
+  //   ⚠️ `typingId` 가 있으면(＝«그 아이템»의 글칸에 커서) 안 건드린다 — 글 쓰는 중에 커서를 뺏으면 안 된다.
+  const dropBodyCaret = () => { if (!typingId) dropCaret() }
   const select = (id) => {
+    if (id) dropBodyCaret()
     setSel(id)
     if (id) setItems((arr) => {
       const i = arr.findIndex((x) => x.id === id)
@@ -663,6 +674,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const n = items.length
     const it = { id: newDecorId(), type: 'note', key: colorKey, text: '', font: 'gaegu', x: 0.62 + ((n % 2) - 0.5) * 0.06, y: 0.68, s: 0.34, r: ((n % 5) - 2) * 3 }
     mark(); setItems((arr) => [...arr, it])
+    dropBodyCaret() // ⌨️ 본문 커서가 남아 있으면 내려놓는다 — 안 그러면 본문용 줄이 서랍을 먹는다
     setSel(it.id)
     setTypingId(it.id) // ⌨️ 붙이면 «그 자리»에 커서 (전엔 시트가 열렸다 — 창업자 *"너무 불편해"*)
   }
@@ -679,6 +691,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const s = ratio >= 2.4 ? 0.72 : ratio >= 1.6 ? 0.6 : ratio >= 1.1 ? 0.5 : ratio >= 0.9 ? 0.44 : 0.32
     const it = { id: newDecorId(), type: 'note', art: artKey, text: '', font: 'gaegu', x: 0.5, y: 0.5 + ((n % 3) - 1) * 0.09, s, r: 0 }
     mark(); setItems((arr) => [...arr, it])
+    dropBodyCaret() // ⌨️ 위와 같은 이유 — 본문 커서를 남겨두면 글 상자 갈래가 아예 안 뜬다
     setSel(it.id)
     setTypingId(it.id)   // ⌨️ 시트 대신 «그 자리»에 커서
     pushRecentSticker(artKey)
