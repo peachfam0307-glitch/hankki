@@ -70,9 +70,34 @@ try {
   // 우리가 심어둔 히스토리 칸인지( {hankki:1} / {hankki:1,guard:1} ) — 이게 남아 있으면 못 나간다
   const ourEntry = () => page.evaluate(() => !!(history.state && history.state.hankki))
 
+  // 🫳🫳 「아무 데나 탭」 — **눌리는 것이 «없는» 자리**를 찾아 찍는다.
+  //   ⛔⛔ 2026-08-12: 여기가 `mouse.click(195, 700)` 으로 «좌표가 박혀» 있었다.
+  //      홈에 「우리집레시피」 박스가 새로 뜨면서 그 자리에 **레시피 카드가 생겼고**,
+  //      탭이 카드를 눌러 «상세 화면»으로 들어갔다. 상세엔 하단바가 아예 없어서
+  //      뒤 검사 셋이 줄줄이 무너졌다(마지막은 「장보기」를 못 찾아 타임아웃).
+  //   📌 규칙 18 — 「나가기가 깨졌다」가 아니라 **「내 검사가 딴 걸 눌렀다」**였다. 앱은 멀쩡했다.
+  //   ⭐ 좌표를 «또» 옮기면 다음에 홈이 바뀔 때 똑같이 깨진다 → **자리를 그때그때 찾는다.**
+  //      재는 것(=pointerup 이 앱에 닿으면 가드가 깔린다)은 하나도 안 느슨해진다.
+  const 빈곳탭 = async () => {
+    const p = await page.evaluate(() => {
+      const { innerWidth: W, innerHeight: H } = window
+      for (let y = 120; y < H - 90; y += 10) {          // ⛔ 위 상단바·아래 하단바는 뺀다
+        for (const x of [8, W / 2, W - 8]) {
+          const el = document.elementFromPoint(x, y)
+          if (!el) continue
+          if (el.closest('button, a, input, textarea, [role="button"]')) continue
+          return { x, y }
+        }
+      }
+      return null
+    })
+    if (!p) throw new Error('누를 것이 없는 자리를 못 찾았다 — 검사를 고칠 것')
+    await page.mouse.click(p.x, p.y)
+  }
+
   // 0) 가드가 실제로 깔리는지 — 이게 안 깔리면 딴 탭에서 뒤로가기가 앱을 바로 종료시킨다
   await must('탭하면 히스토리 가드가 깔린다', async () => {
-    await page.mouse.click(195, 700) // 아무 데나 탭(pointerup → ensureGuard)
+    await 빈곳탭() // 아무 데나 탭(pointerup → ensureGuard)
     await page.waitForTimeout(300)
     if (!(await ourEntry())) throw new Error('가드가 안 깔림')
   })
@@ -88,7 +113,7 @@ try {
 
   // 2) 대기 중엔 화면을 만져도 가드를 다시 심지 않아야 한다 (심으면 두 번째 뒤로가기를 먹어버림)
   await must('나가기 대기 중엔 가드를 다시 안 심는다', async () => {
-    await page.mouse.click(195, 700)
+    await 빈곳탭()
     await page.waitForTimeout(200)
     if (await ourEntry()) throw new Error('대기 중에 가드가 다시 깔림 = 두 번째 뒤로가기가 막힌다')
   })
@@ -96,7 +121,7 @@ try {
   // 3) 창(2초)이 지나면 다시 보호로 복귀 = 실수로 나가는 것 방지 (안내 무시하고 계속 쓰는 경우)
   await must('창이 지나면 가드가 되살아난다', async () => {
     await page.waitForTimeout(2100)
-    await page.mouse.click(195, 700)
+    await 빈곳탭()
     await page.waitForTimeout(300)
     if (!(await ourEntry())) throw new Error('창이 지났는데도 가드가 안 깔림')
   })

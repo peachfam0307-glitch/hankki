@@ -19,7 +19,7 @@
 //
 // ⛔ 재고가 없으면 «빈 절»을 그리지 않는다 — 배열이 비면 화면에서 그 칸이 통째로 사라진다
 //   (`LAB_*_URL` 이 비면 그 칸을 안 그리는 것과 같은 방식 · 죽은 안내 방지).
-import { WEEKLY } from './weekly'
+import { WEEKLY, HOMEMADE } from './weekly'
 import { STICKER_GROUPS, PHOTO_IDS } from '../components/Stickers'
 import { SEASON_CUTS } from './cardSeasons'
 
@@ -98,8 +98,10 @@ export function spread(items = [], max = 6) {
 }
 
 // 🍳 이번 주 레시피 = 오늘 이하 중 «가장 최근» 한 줄 (weeklyNow 와 같은 규칙).
-function weekOpen(today) {
-  const past = WEEKLY.filter((w) => w.from <= today).sort((a, b) => a.from.localeCompare(b.from))
+//   ⛔ LIST 를 받는다 — 제철(`WEEKLY`)과 우리집(`HOMEMADE`)이 «같은 규칙»으로 열리기 때문이다.
+//      규칙을 두 번 적으면 한쪽만 고쳐져 어긋난다(`weekly.js` 의 `열린줄()` 과 같은 생각).
+function weekOpen(today, LIST = WEEKLY) {
+  const past = LIST.filter((w) => w.from <= today).sort((a, b) => a.from.localeCompare(b.from))
   return past.length ? past[past.length - 1] : null
 }
 
@@ -119,23 +121,38 @@ export function whatsNew(today = todayKST()) {
     .sort((a, b) => b.when.localeCompare(a.when))
 
   // 🍳 이번 주 레시피도 «방금 열린 것»이다 — 이번 주에 시작했을 때만(지난주 것을 새것이라 하지 않는다).
-  const w = weekOpen(today)
-  if (w && days(w.from, today) <= 6) {
-    opened.unshift({ when: w.from, kind: '이번 주 레시피', title: w.title, count: w.ids.length, why: w.why })
+  // 🏠 [2026-08-12] **우리집레시피도 같이 센다.**
+  //   ⛔⛔ 여기가 `WEEKLY` 만 보고 있었다 — 우리집레시피는 **매주 2편이 저절로 열리는데
+  //      소식이 한 마디도 안 했다.** 어제까진 그 박스가 아예 안 떠서 티가 안 났을 뿐이다.
+  //   📮 창업자 2026-08-03 *"새로 열릴때 꼭 안내페이지에 올라오도록 해."* — 이 지시가 여기에도 걸린다.
+  //      「매주 올라간다」는 «열리는 것»과 «알리는 것»이 짝이라야 완성된다.
+  //   ⭐ 제철을 먼저 넣고 우리집을 그 앞에 unshift 한다 → 화면엔 **우리집이 위**로 온다.
+  //      우리집레시피가 «우리만 가진 것»이라 먼저 말한다.
+  for (const [LIST, 이름] of [[WEEKLY, '이번 주 레시피'], [HOMEMADE, '우리집레시피']]) {
+    const w = weekOpen(today, LIST)
+    if (w && days(w.from, today) <= 6) {
+      opened.unshift({ when: w.from, kind: 이름, title: w.title, count: w.ids.length, why: w.why })
+    }
   }
 
   const nextDate = all.filter((g) => g.when > today).map((g) => g.when).sort()[0] || null
-  const nextWeek = WEEKLY.filter((x) => x.from > today).sort((a, b) => a.from.localeCompare(b.from))[0] || null
+  const 다음줄 = (LIST) => LIST.filter((x) => x.from > today).sort((a, b) => a.from.localeCompare(b.from))[0] || null
+  const nextWeek = 다음줄(WEEKLY)
+  const nextHome = 다음줄(HOMEMADE)   // 🏠 우리집레시피도 «곧 열릴 것»에 나와야 한다
 
   let upcoming = []
   let when = null
   // 다음 «문»과 다음 «주» 중 **먼저 오는 날짜**를 고른다.
-  const cand = [nextDate, nextWeek?.from].filter(Boolean).sort()
+  const cand = [nextDate, nextWeek?.from, nextHome?.from].filter(Boolean).sort()
   if (cand.length) {
     when = cand[0]
     upcoming = all.filter((g) => g.when === when)
     if (nextWeek && nextWeek.from === when) {
       upcoming = [{ when, kind: '이번 주 레시피', title: nextWeek.title, count: nextWeek.ids.length }, ...upcoming]
+    }
+    // ⭐ 우리집을 «맨 앞»에 — 열린 것과 같은 차례로 보이게 한다
+    if (nextHome && nextHome.from === when) {
+      upcoming = [{ when, kind: '우리집레시피', title: nextHome.title, count: nextHome.ids.length }, ...upcoming]
     }
   }
 
