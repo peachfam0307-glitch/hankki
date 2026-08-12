@@ -161,9 +161,17 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
         const pzRaw = Number(value[`${pk}Zoom`])
         const pz = Math.min(PHOTO_ZOOM_MAX, Math.max(PHOTO_ZOOM_MIN, Number.isFinite(pzRaw) && pzRaw > 0 ? pzRaw : 1))
         const 전체보기 = pz < 1
+        // ⛔⛔ **줄이면 왼쪽에 붙던 것** (창업자 2026-08-12 *"사진도 줄이니까 좌우로 안움직여서 왼쪽에 붙어있어"*)
+        //    🔢 뿌리 = 1 밑이면 사진이 칸보다 «작아서» 넘치는 게 0 이다 → 끌기 계산(`overX`)이 0 이하라 안 움직이고,
+        //       그 상태에서 `objectPosition`·`transformOrigin` 이 **전에 끌어둔 값**(예: `0% 50%`)을 그대로 쓰니
+        //       줄어드는 기준점이 왼쪽 끝이 되어 **사진이 왼쪽 벽에 붙는다.**
+        //    ⭐ 답 = 1 밑에선 **가운데 고정**. 전체가 보이는 게 목적이라 좌우로 끌 이유가 없고,
+        //       남는 여백은 양쪽에 똑같이 나뉘는 게 「창 안에 사진을 붙인」 모양이 된다.
+        //    ⛔ 저장값(`pos`)은 «안» 건드린다 — 다시 1 이상으로 키우면 끌어둔 자리가 그대로 돌아온다.
+        const posEff = 전체보기 ? '50% 50%' : pos
         const imgStyle = {
-          width: '100%', height: '100%', objectFit: 전체보기 ? 'contain' : 'cover', objectPosition: pos, display: 'block',
-          ...(pz !== 1 ? { transform: `scale(${전체보기 ? pz / 1 : pz})`, transformOrigin: pos } : null),
+          width: '100%', height: '100%', objectFit: 전체보기 ? 'contain' : 'cover', objectPosition: posEff, display: 'block',
+          ...(pz !== 1 ? { transform: `scale(${pz})`, transformOrigin: posEff } : null),
         }
         // 📌 «탭 = 사진 바꾸기»와 갈라야 한다 → 6px 넘게 움직였을 때만 드래그로 친다.
         //    드래그였으면 뒤따라오는 click 을 삼킨다(`dragged` 표시) — 안 그러면 끌 때마다 파일창이 뜬다.
@@ -183,8 +191,12 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
             return Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y)
           }
           const 그리기 = () => {
-            img.style.objectPosition = `${S.cur.x}% ${S.cur.y}%`
-            img.style.transformOrigin = `${S.cur.x}% ${S.cur.y}%`
+            // ⭐ 1 밑(전체 보기)이면 «가운데 고정» — 위 imgStyle 과 같은 규칙이라야 손 뗄 때 안 튄다.
+            //    ⛔ 여기만 빼먹으면 오므리는 «동안»은 왼쪽에 붙었다가 손 떼면 가운데로 툭 뛴다.
+            const 작다 = S.cur.z < 1
+            const px = 작다 ? 50 : S.cur.x, py = 작다 ? 50 : S.cur.y
+            img.style.objectPosition = `${px}% ${py}%`
+            img.style.transformOrigin = `${px}% ${py}%`
             img.style.transform = `scale(${S.cur.z})` // 끄는 동안은 화면만 — 저장은 손 다 뗄 때 한 번
           }
           if (S.pts.size === 1) {
