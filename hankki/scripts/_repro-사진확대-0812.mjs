@@ -104,7 +104,7 @@ if (!(await btn.count())) { no('사진 버튼을 못 찾았다'); await b.close(
 
 console.log('\n① 알려주나 · 처음 상태')
 const label = await btn.getAttribute('aria-label')
-label.includes('두 손가락') ? ok(`이름표가 확대를 알려준다 — 「${label}」`) : no(`이름표에 확대 안내가 없다 — 「${label}」`)
+label.includes('확대·축소') ? ok(`이름표가 확대를 알려준다 — 「${label}」`) : no(`이름표에 확대 안내가 없다 — 「${label}」`)
 // ⭐ 배율 없이 저장된 옛 사진이 «하나도 안 움직여야» 한다(규칙 18 ⓙ — 이미 깔린 폰)
 const z0 = await zoomOf(page)
 z0 === 1 ? ok('처음 배율 = 1 (옛 사진 그대로)') : no(`처음부터 배율이 1이 아니다: ${z0}`)
@@ -140,11 +140,14 @@ after < before - 2 ? ok(`확대 상태에서도 끌린다 — ${before}% → ${a
 const z4 = await zoomOf(page)
 Math.abs(z4 - z1) < 0.05 ? ok('끌어도 배율은 그대로') : no(`끌었더니 배율이 ${z4} 로 바뀜`)
 
-console.log('\n⑤ 오므리면 「꽉 찬 상태(1)」에서 멈추나 — 되돌리는 단추가 없어도 되는 근거')
+console.log('\n⑤ 오므리면 «사진 전체»가 보이나 (창업자 확정 2026-08-12 — 1 밑을 열었다)')
+// ⛔ 옛 잣대(「1에서 멈춘다」)는 죽었다 — 창업자가 «전체가 보이게» 로 정했다. 기준을 바꾼다.
 await 벌리기(page, SEL, 160, 20)            // 아주 많이 오므린다
 await page.waitForTimeout(500)
 const z5 = await zoomOf(page)
-z5 === 1 ? ok('1배에서 멈춘다 (칸에 빈 데가 안 생긴다)') : no(`1 밑으로 내려갔다: ${z5}`)
+const 맞춤 = await page.locator(`${SEL} img`).first().evaluate((i) => getComputedStyle(i).objectFit)
+z5 < 1 && z5 >= 0.5 ? ok(`1 밑으로 내려간다 — ${z5}배 (0.5 에서 멈춘다)`) : no(`안 줄어든다: ${z5}`)
+맞춤 === 'contain' ? ok('사진 «전체»가 창 안에 들어온다 (잘리지 않는다)') : no(`아직 잘린다: objectFit ${맞춤}`)
 
 console.log('\n⑥ 짧은 탭 = 사진 바꾸기 그대로')
 // 🚪 파일창이 열리나 = 숨은 `<input type=file>` 이 click 을 받나

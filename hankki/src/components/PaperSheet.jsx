@@ -30,6 +30,8 @@ const INK = '#5b4436' // 우리 진갈색 — 속지 선(#e2d8c6)보다 진해 �
 // 🔍 틀 사진칸 확대 상한 — 1 = 칸을 꽉 채운 상태(그 밑으론 안 내려간다·빈 데가 생긴다).
 //    3 배까지만 — 폰 사진(보통 3000px 대)이라도 그 위로 가면 뭉개진다.
 const PHOTO_ZOOM_MAX = 3
+// 🔍 1 밑 = 「사진 전체가 보이게」(contain). 0.5 까지 — 그보다 작으면 창 안에서 우표만 해진다.
+const PHOTO_ZOOM_MIN = 0.5
 
 // 줄·모눈·도트를 «쓰는 칸 안에만» 그릴 때 쓰는 배경. `.paper.lined` 등과 같은 그림이다.
 const ruleBg = (cls) => {
@@ -148,10 +150,20 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
         //      그래서 `z = 1` 이면 지금과 **픽셀 하나까지 똑같다**(이미 넣어 둔 사진이 안 움직인다).
         //   ⚠️ 배율은 1 밑으로 안 내려간다 — 1 이 「칸을 꽉 채운 상태」다. 더 줄이면 칸에 빈 데가 생긴다.
         //      ⭐ 그래서 **되돌리는 단추가 없어도 된다**(오므리면 1 에서 멈춘다).
-        const pz = Math.min(PHOTO_ZOOM_MAX, Math.max(1, Number(value[`${pk}Zoom`]) || 1))
+        //   ⭐⭐ **1 밑 = 「사진 전체가 보이게」** (창업자 확정 2026-08-12)
+        //      ⛔ 위 주석의 *"1 밑으론 안 내려간다"* 는 «지금까지»의 이야기다 — 창업자가 열라고 정했다.
+        //      🔢 왜 잘려 보였나 =  는 칸을 꽉 채우려고 넘치는 쪽을 «잘라낸다». 세로로 긴 사진이면
+        //         위아래가 통째로 안 보인다. 아무리 끌어도 «한 화면에 전부»는 못 본다.
+        //      ✅ 그래서 1 밑으로 가면 **(전체가 들어오게)** 으로 바꾼다. 남는 자리엔 속지가 비친다
+        //         — 창을 꽉 채운 게 아니라 «사진을 창 안에 테이프로 붙인» 모양이 된다.
+        //      ⚠️ 1 에서 «한 번 툭» 바뀐다 — 자르기(cover)와 다 보이기(contain)는 성질이 다른 상태라
+        //         중간이 없다. 그 경계가 바로 「전체가 보이기 시작하는 순간」이라 오히려 알기 쉽다.
+        const pzRaw = Number(value[`${pk}Zoom`])
+        const pz = Math.min(PHOTO_ZOOM_MAX, Math.max(PHOTO_ZOOM_MIN, Number.isFinite(pzRaw) && pzRaw > 0 ? pzRaw : 1))
+        const 전체보기 = pz < 1
         const imgStyle = {
-          width: '100%', height: '100%', objectFit: 'cover', objectPosition: pos, display: 'block',
-          ...(pz > 1 ? { transform: `scale(${pz})`, transformOrigin: pos } : null),
+          width: '100%', height: '100%', objectFit: 전체보기 ? 'contain' : 'cover', objectPosition: pos, display: 'block',
+          ...(pz !== 1 ? { transform: `scale(${전체보기 ? pz / 1 : pz})`, transformOrigin: pos } : null),
         }
         // 📌 «탭 = 사진 바꾸기»와 갈라야 한다 → 6px 넘게 움직였을 때만 드래그로 친다.
         //    드래그였으면 뒤따라오는 click 을 삼킨다(`dragged` 표시) — 안 그러면 끌 때마다 파일창이 뜬다.
@@ -200,7 +212,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
             if (!S.pts.has(ev.pointerId)) return
             S.pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY })
             if (S.pts.size >= 2) {
-              S.cur.z = Math.min(PHOTO_ZOOM_MAX, Math.max(1, S.z0 * (두점() / S.d0)))
+              S.cur.z = Math.min(PHOTO_ZOOM_MAX, Math.max(PHOTO_ZOOM_MIN, S.z0 * (두점() / S.d0)))
               그리기()
               return
             }
@@ -255,7 +267,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
               ? <img src={value[pk]} alt="" style={imgStyle} />
               : (
                 <>
-                  <button type="button" className="press" aria-label="사진 — 끌어서 위치 조정 · 두 손가락으로 확대 · 누르면 바꾸기"
+                  <button type="button" className="press" aria-label="사진 — 끌어서 위치 조정 · 두 손가락으로 확대·축소 · 누르면 바꾸기"
                     onPointerDown={dragStart}
                     onClick={(e) => {
                       const t = Number(e.currentTarget.dataset.dragged || 0)

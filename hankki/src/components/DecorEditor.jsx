@@ -1824,6 +1824,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>넣은 뒤 톡 하면 색·굵기·글씨체를 바꿀 수 있어요</div>
                   </>)}
                 </div>
+                {/* 🐻🐧🐻🐧 **꼬르곰·펭펭 32컷을 「글자 직접 쓰기」 바로 다음으로** (창업자 확정 2026-08-12 「맨 위로」)
+                    📮 *"꼬르곰 안보이는데?? 레꾸 어디에 넣었어?"* · *"꼬르곰은 한끼문구 위에 넣어줘"*
+                    ⛔ 「한끼 문구 위」는 지키고 있었다 — 그런데 **한끼 문구 자체가 1374px 아래**였다.
+                       위에 글 상자 아홉 묶음(라벨지·찢은 종이·메모지·메모 라벨·글쓰기 프레임·말풍선·포스트잇·형광펜)이 있어서다.
+                       ⭐ 접기로는 156px 밖에 못 줄였다 — 그래서 «순서»를 바꾼다.
+                    ⭐ 여기 두면 **여전히 한끼 문구 위**이면서 탭을 열자마자 보인다.
+                    ⛔ 글 상자들을 «빼는» 게 아니라 아래로 미는 것이다 — 자주 쓰면 위 묶음을 접으면 된다.
+                    ⚠️ 레꾸 전용()이라 일꾸 서랍엔 안 뜬다. 일꾸엔 「기록」 갈래에 따로 있다. */}
+                {groupsByTab('notetext').filter((g) => g.key === 'rs_star' || g.key === 'rs_way').map(renderStickerGroup)}
                 {/* 🖍 형광펜 — 글자 «바로 밑»에 둔다. 강조할 글이 있어야 쓰는 도구라 순서가 곧 쓰는 순서다. */}
                 <div className="decor-sec">
                   <div className="decor-sec-label">형광펜</div>
@@ -1888,7 +1897,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     ))}
                   </div>
                 </div>
-                {groupsByTab('notetext').map(renderStickerGroup)}
+                {/* ⚠️ 위로 올린 둘은 여기서 빼야 «두 번» 나오지 않는다 */}
+                {groupsByTab('notetext').filter((g) => g.key !== 'rs_star' && g.key !== 'rs_way').map(renderStickerGroup)}
               </>
             )}
             {/* 🐻 친구들 */}
