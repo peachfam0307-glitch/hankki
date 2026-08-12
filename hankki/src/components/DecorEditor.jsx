@@ -867,7 +867,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     return (
       <div className="decor-sec" key={g.key}>
         {g.label && <div className="decor-sec-label">{g.label}{g.gift && <GiftTag />}</div>}
-        <div className="decor-grid">{g.items.map(renderCell)}</div>
+        {/* 🔠 `wordy` = 그림 «안»에 글자가 박힌 그룹(한끼 문구·맛 평가 … 건강 태그 10그룹 131컷).
+            창업자 2026-08-12 *"글자가 너무 작아서 (그림도) 잘 안보여"* → 갈래 넷을 실제 크기로
+            찍어 보고 **Ⓑ(88px)** 확정. 🔢원본은 300×240 쯤인데 칸이 57px 이라 캡션이 14px 로
+            떨어져 한글이 안 읽혔다.
+            ⛔ 접두어(`tw_`·`rs_`)로 가르지 않는다 — 데이터에 표시를 단다(CLAUDE.md 분류 원칙). */}
+        <div className={g.wordy ? 'decor-grid wordy' : 'decor-grid'}>{g.items.map(renderCell)}</div>
       </div>
     )
   }

@@ -2661,3 +2661,19 @@ html, body { overscroll-behavior: none; }
   .grid-card .name { font-size: 17px; }
   .mini-card .name { font-size: 15px; }
 }
+
+/* 🔠🔠 글자가 «그림 안»에 박힌 스티커 칸을 크게 — 창업자 확정 Ⓑ(88px) 2026-08-12
+   📮 *"레꾸 글자에 한끼문구~건강태그까지 글자가 너무 작아서 (그림도) 잘 안보여."* → *"나도b가 좋아"*
+   🔢 원본은 한끼문구 299×240 · 상황평가 304×321 인데 칸이 정사각 57px 이라
+      캡션(그림 아래 ~25%)이 화면에서 14px 로 떨어졌다. 한글은 그 크기로 못 읽는다.
+   🗂 갈래 넷을 «실제 크기 그대로» 찍어 창업자가 골랐다 —
+      Ⓐ57(6칸·안 읽힘) / ⭐Ⓑ88(4칸·읽힘) / ⛔Ⓒ가로로 넓은 칸(반쪽 — 세로가 그대로라 정사각 컷이 안 커진다) / Ⓓ110(3칸)
+   ⛔⛔ **이 규칙은 파일 «맨 끝»에 있어야 한다.** `.decor-grid` 를 잡는 미디어쿼리가 둘(1921·2085줄)
+      있고 그것들이 `!important` 를 쓴다 — 같은 세기면 **뒤에 오는 것이 이긴다.**
+      앞에 두면 작은 화면에서 통째로 안 먹는다(v10.12 에 하루 여섯 번 밟은 그 함정).
+   ⭐ 「글자」 탭에만 걸린다 — 데코·친구들 탭은 창업자가 이미 OK 한 크기다. 안 건드린다. */
+.decor-grid.wordy { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)) !important; }
+/* 📱 작은 폰(360×640 급)은 서랍 폭이 좁아 88px 이면 3칸도 아슬하다 — 72px 로 낮춘다(읽히는 선은 넘는다) */
+@media (max-height: 700px) {
+  .decor-grid.wordy { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)) !important; }
+}

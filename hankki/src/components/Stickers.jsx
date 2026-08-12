@@ -1399,19 +1399,19 @@ export const STICKER_GROUPS = [
   //   → 새 시트는 `--diecut keep`(그려진 흰 테 두께를 실측해 그대로)로 잘랐다. 두 겹도 지글거림도 없다.
   //   ⭐ 새로 6종 — It's me · 싱거워.. · 레꾸 재밌어 · 아이 원픽! · 남편 원픽! · 이건 인정!
   //     「아이 원픽!」「남편 원픽!」 = 가족 반응 기록 — 우리 앱 성격에 딱 맞는 말.
-  { key: 'text_hankki', tab: 'notetext', label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night', 'tw_kidpick', 'tw_hubbypick', 'tw_admit', 'tw_funfun', 'tw_itsme', 'tw_bland'] },
-  { key: 'text_word', tab: 'notetext', label: '문구', items: ['tw_today', 'tw_success', 'tw_welldone', 'tw_tasty', 'tw_more', 'tw_fav', 'tw_honey', 'tw_hearty', 'tw_easy', 'tw_mom', 'tw_nexttime', 'tw_fail', 'tw_yummy', 'tw_best', 'tw_ourhankki', 'tw_goodday'] },
+  { key: 'text_hankki', tab: 'notetext', wordy: true, label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night', 'tw_kidpick', 'tw_hubbypick', 'tw_admit', 'tw_funfun', 'tw_itsme', 'tw_bland'] },
+  { key: 'text_word', tab: 'notetext', wordy: true, label: '문구', items: ['tw_today', 'tw_success', 'tw_welldone', 'tw_tasty', 'tw_more', 'tw_fav', 'tw_honey', 'tw_hearty', 'tw_easy', 'tw_mom', 'tw_nexttime', 'tw_fail', 'tw_yummy', 'tw_best', 'tw_ourhankki', 'tw_goodday'] },
   // 🍳 레꾸 상황·평가 8그룹 (2026-08-08 창업자 시트 · 그림+캡션 스티커)
   //   「요리 기록에 실제로 도움이 되는 스티커」 — 스티커-방향 문서의 「없는 6묶음」을 채운다.
   //   변형쌍은 창업자 판정분만(귀요미·노랑·그린·아이콘) — 탈락 벌은 앱에 안 들였다.
-  { key: 'rs_taste', tab: 'notetext', label: '맛 평가', items: ['rs_t01', 'rs_t02', 'rs_t03', 'rs_t04', 'rs_t05', 'rs_t06', 'rs_t07', 'rs_t08', 'rs_t09', 'rs_t10', 'rs_t11', 'rs_t12'] },
-  { key: 'rs_react', tab: 'notetext', label: '반응 평가', items: ['rs_r01', 'rs_r02', 'rs_r03', 'rs_r04', 'rs_r05', 'rs_r06', 'rs_r07', 'rs_r08', 'rs_r09', 'rs_r10', 'rs_r11', 'rs_r12'] },
-  { key: 'rs_cook', tab: 'notetext', label: '조리법', items: ['rs_q01', 'rs_q02', 'rs_q03', 'rs_q04', 'rs_q05', 'rs_q06', 'rs_q07', 'rs_q08', 'rs_q09', 'rs_q10', 'rs_q11', 'rs_q12'] },
-  { key: 'rs_scene', tab: 'notetext', label: '요리 상황', items: ['rs_i01', 'rs_i02', 'rs_i03', 'rs_i04', 'rs_i05', 'rs_i06', 'rs_i07', 'rs_i08', 'rs_i09', 'rs_i10', 'rs_i11', 'rs_i12', 'rs_i13', 'rs_i14', 'rs_i15'] },
-  { key: 'rs_meal', tab: 'notetext', label: '식사 상황', items: ['rs_m01', 'rs_m02', 'rs_m03', 'rs_m04', 'rs_m05', 'rs_m06', 'rs_m07', 'rs_m08', 'rs_m09', 'rs_m10', 'rs_m11', 'rs_m12'] },
-  { key: 'rs_prep', tab: 'notetext', label: '미리 준비', items: ['rs_p01', 'rs_p02', 'rs_p03', 'rs_p04', 'rs_p05', 'rs_p06', 'rs_p07', 'rs_p08', 'rs_p09', 'rs_p10', 'rs_p11', 'rs_p12'] },
-  { key: 'rs_store', tab: 'notetext', label: '보관', items: ['rs_s01', 'rs_s02', 'rs_s03', 'rs_s04', 'rs_s05', 'rs_s06', 'rs_s07', 'rs_s08', 'rs_s09', 'rs_s10', 'rs_s11', 'rs_s12'] },
-  { key: 'rs_health', tab: 'notetext', label: '건강 태그', items: ['rs_g01', 'rs_g02', 'rs_g03', 'rs_g04', 'rs_g05', 'rs_g06', 'rs_g07', 'rs_g08', 'rs_g09', 'rs_g10', 'rs_g11', 'rs_g12'] },
+  { key: 'rs_taste', tab: 'notetext', wordy: true, label: '맛 평가', items: ['rs_t01', 'rs_t02', 'rs_t03', 'rs_t04', 'rs_t05', 'rs_t06', 'rs_t07', 'rs_t08', 'rs_t09', 'rs_t10', 'rs_t11', 'rs_t12'] },
+  { key: 'rs_react', tab: 'notetext', wordy: true, label: '반응 평가', items: ['rs_r01', 'rs_r02', 'rs_r03', 'rs_r04', 'rs_r05', 'rs_r06', 'rs_r07', 'rs_r08', 'rs_r09', 'rs_r10', 'rs_r11', 'rs_r12'] },
+  { key: 'rs_cook', tab: 'notetext', wordy: true, label: '조리법', items: ['rs_q01', 'rs_q02', 'rs_q03', 'rs_q04', 'rs_q05', 'rs_q06', 'rs_q07', 'rs_q08', 'rs_q09', 'rs_q10', 'rs_q11', 'rs_q12'] },
+  { key: 'rs_scene', tab: 'notetext', wordy: true, label: '요리 상황', items: ['rs_i01', 'rs_i02', 'rs_i03', 'rs_i04', 'rs_i05', 'rs_i06', 'rs_i07', 'rs_i08', 'rs_i09', 'rs_i10', 'rs_i11', 'rs_i12', 'rs_i13', 'rs_i14', 'rs_i15'] },
+  { key: 'rs_meal', tab: 'notetext', wordy: true, label: '식사 상황', items: ['rs_m01', 'rs_m02', 'rs_m03', 'rs_m04', 'rs_m05', 'rs_m06', 'rs_m07', 'rs_m08', 'rs_m09', 'rs_m10', 'rs_m11', 'rs_m12'] },
+  { key: 'rs_prep', tab: 'notetext', wordy: true, label: '미리 준비', items: ['rs_p01', 'rs_p02', 'rs_p03', 'rs_p04', 'rs_p05', 'rs_p06', 'rs_p07', 'rs_p08', 'rs_p09', 'rs_p10', 'rs_p11', 'rs_p12'] },
+  { key: 'rs_store', tab: 'notetext', wordy: true, label: '보관', items: ['rs_s01', 'rs_s02', 'rs_s03', 'rs_s04', 'rs_s05', 'rs_s06', 'rs_s07', 'rs_s08', 'rs_s09', 'rs_s10', 'rs_s11', 'rs_s12'] },
+  { key: 'rs_health', tab: 'notetext', wordy: true, label: '건강 태그', items: ['rs_g01', 'rs_g02', 'rs_g03', 'rs_g04', 'rs_g05', 'rs_g06', 'rs_g07', 'rs_g08', 'rs_g09', 'rs_g10', 'rs_g11', 'rs_g12'] },
   // 📅 요일 = 무슨 요일에 해먹었는지 기록용. 빈 라벨 3종은 직접 글씨 얹으라고 둔다.
   //   ⚠️ 숫자 1~10 은 뺐다(창업자 2026-07-29) — 넣을 땐 '레시피 순서 매기기'를 생각했는데
   //      우리 레꾸는 **표지 한 장**이라 순서를 매길 자리가 없고(순서는 상세 화면에 이미 번호로 있음),
