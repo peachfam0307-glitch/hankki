@@ -1279,7 +1279,12 @@ export const STICKER_GROUPS = [
   { key: 'deco_dy_hand_c', tab: 'deco', diary: true, from: '2026-11-01', label: '점·붓칠', items: ['dyh02', 'dyh04', 'dyh10', 'dyh11'] },
 
   { key: 'deco_dy_tape_a', tab: 'tape', diary: true, from: '2026-09-01', label: '무늬 테이프', items: ['wt_dy02', 'wt_dy04', 'wt_dy03', 'wt_dy05', 'wt_dy06', 'wt_dy09', 'wt_dy21'] },
-  { key: 'deco_dy_tape_b', tab: 'tape', diary: true, from: '2026-10-01', label: '민무늬·종이', items: ['wt_dy01', 'wt_dy11', 'wt_dy14', 'wt_dy18', 'wt_dy07', 'wt_dy08', 'wt_dy16'] },
+  // 🎗 [2026-08-12] `wt_dy07` 을 «내렸다» — 창업자 *"1.6중에 네가 보고 하나 빼."*
+  //   🔬 25컷을 픽셀로 재니 «같은 그림»은 0쌍인데, `wt_dy07`↔`wt_dy16` 만 **같은 크림 한지·같은 질감**이고
+  //      길이만 달랐다(1.49 ↔ 2.89). 눈으로 보고 골랐다 —
+  //      ⭐ **짧은 한지는 `wt_dy08`(갈색)이 대신한다.** 긴 크림 한지는 `wt_dy16` 하나뿐이라 빼면 그 자리가 빈다.
+  //   ⛔ **파일은 안 지운다.** 서랍에서만 내린다 — 이미 이 마테로 꾸며 저장한 일기가 깨지면 안 된다.
+  { key: 'deco_dy_tape_b', tab: 'tape', diary: true, from: '2026-10-01', label: '민무늬·종이', items: ['wt_dy01', 'wt_dy11', 'wt_dy14', 'wt_dy18', 'wt_dy08', 'wt_dy16'] },
   { key: 'deco_dy_tape_c', tab: 'tape', diary: true, from: '2026-11-01', label: '격자·도트·겹침', items: ['wt_dy12', 'wt_dy13', 'wt_dy15', 'wt_dy17', 'wt_dy19', 'wt_dy20'] },
 
   // ── 여름 (2026-07-29 재제작) ── 제철(6~8월)이면 데코 탭 맨 위로 올라간다.

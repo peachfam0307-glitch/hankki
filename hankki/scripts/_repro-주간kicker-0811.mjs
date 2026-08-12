@@ -35,8 +35,11 @@ async function 그날(날짜) {
   }`)
   await p.goto(BASE, { waitUntil: 'networkidle' })
   await 잠깐(700)
-  const box = p.locator('.weekly-box')
-  const 있나 = await box.count()
+  // ⚠️ [2026-08-12] 홈에 **「우리집 레시피」 박스가 생겨** `.weekly-box` 가 둘이 됐다
+  //    → strict mode violation 으로 판이 죽었다. **앱이 아니라 이 판이 낡은 것이다.**
+  //    이 판이 보는 건 «주간(제철) 박스»니까 `.first()` 로 첫 박스만 본다.
+  const box = p.locator('.weekly-box').first()
+  const 있나 = await p.locator('.weekly-box').count()
   const out = { 있나, kicker: null, title: null }
   if (있나) {
     out.kicker = (await box.locator('.weekly-kicker').innerText()).trim()
@@ -53,7 +56,11 @@ const a = await 그날('2026-08-11')
 // ② 9/28 (명절 뒤) — ⛔여기가 「이번 주 제철」이면 실패
 const c = await 그날('2026-09-28')
 판.push([c.title === '추석 남은 음식', '②-0 9/28 에 그 주가 열린다', `${c.title}`])
-판.push([c.kicker === '이번 주는', '② 제철 아닌 주는 kicker 가 바뀐다', `${c.kicker} / ${c.title}`])
+// ⚠️ [2026-08-12] 옛 판은 「이번 주는」을 기대했는데 **창업자가 「이번 주 특별한 한끼」로 확정**했다
+//    (*"그냥 이번주 특별한 한끼로 가 그때그때 붙이는거 어려우니"*) → 값을 «코드에서» 읽어 온다.
+//    ⭐ 글자를 판에 박으면 말이 바뀔 때마다 판이 낡는다.
+const { KICKER_SPECIAL } = await import('../src/data/weekly.js')
+판.push([c.kicker === KICKER_SPECIAL, '② 제철 아닌 주는 kicker 가 바뀐다', `${c.kicker} / ${c.title}`])
 판.push([c.kicker !== '이번 주 제철', '②-2 ⛔「이번 주 제철」이 아니어야 한다', `${c.kicker}`])
 
 // ③ 다음 제철 주(10/05 고구마)도 기본값이 살아 있나 — kicker 를 넣은 줄만 바뀌어야 한다
@@ -63,7 +70,12 @@ const d = await 그날('2026-10-05')
 // ④ kicker 를 안 적은 줄이 «전부» 기본값인가 (데이터 쪽 확인)
 const { WEEKLY } = await import('../src/data/weekly.js')
 const 적힌줄 = WEEKLY.filter((w) => w.kicker)
-판.push([적힌줄.length === 1 && 적힌줄[0].from === '2026-09-28', '④ kicker 를 적은 줄은 9/28 하나뿐', `${적힌줄.length}줄`])
+// ⚠️ [2026-08-12] 옛 판은 «개수»를 박았다(1줄) — 그러면 제철 아닌 주를 하나 넣을 때마다 판이 낡는다.
+//    ⭐ 잣대를 바꾼다: **kicker 를 적은 줄은 «전부» `KICKER_SPECIAL` 이어야 한다.**
+//       진짜로 막고 싶은 건 「내가 주마다 딴 말을 지어내는 것」이지 「몇 줄인가」가 아니다.
+판.push([적힌줄.length > 0 && 적힌줄.every((w) => w.kicker === KICKER_SPECIAL),
+  '④ kicker 를 적은 줄은 «전부» 「이번 주 특별한 한끼」',
+  `${적힌줄.length}줄 · ${[...new Set(적힌줄.map((w) => w.kicker))].join(' / ')}`])
 
 console.log('')
 for (const [ok, n, v] of 판) console.log(`  ${ok ? '✅' : '⛔'} ${n}  —  ${v}`)

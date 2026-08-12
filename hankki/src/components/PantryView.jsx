@@ -5,7 +5,7 @@ import { ocrImage } from '../ocr'
 import { extractReceiptItems } from '../receipt'
 import Icon from './Icon'
 import Thumb from './Thumb'
-import FoodIcon, { guessFoodIcon } from './FoodIcon'
+import FoodIcon, { guessIngredientIcon } from './FoodIcon'
 import FoodIconPicker from './FoodIconPicker'
 import EmojiPicker from './EmojiPicker'
 import CropSheet from './CropSheet'
@@ -13,6 +13,16 @@ import Portal from './Portal'
 import { useLayerBack } from '../useBackHandler'
 import { guessEmoji } from '../emoji'
 import { pantryScore, countPantryHits } from '../pantryMatch'
+
+// 🥕 냉장고 한 줄에 붙일 그림. 창업자 제보 *"재료 하나만 담아도 큰 이미지가 생겨서 재료가 안보였어."*
+//   ⛔⛔ **이미 담아둔 재료도 같이 고쳐져야 한다**(규칙 18 ⓙ) — 담을 때 `icon` 이 굳어 저장되기 때문에
+//      새로 담는 길만 고치면 창업자 폰의 애호박은 「완성 접시」 그대로다.
+//   ✅ 그래서 «저장된 키»가 요리 사진이면 버리고 다시 고른다.
+//   ⭐ 단 **직접 고른 것(`iconPicked`)은 건드리지 않는다** — 픽커에서 일부러 골랐으면 그게 맞다(v9.77 과 같은 문법).
+function 재료그림(p) {
+  if (p.iconPicked && p.icon) return p.icon      // 직접 고른 것 = 그대로
+  return guessIngredientIcon(p.name || '')       // 자동으로 붙은 것 = «지금» 규칙으로 다시 고른다
+}
 
 function toYMD(d) {
   const y = d.getFullYear()
@@ -81,7 +91,7 @@ export default function PantryView() {
     let added = 0
     names.forEach((nm) => {
       if (!pantry.some((p) => p.name === nm)) {
-        store.addPantry({ id: newId(), name: nm, icon: guessFoodIcon(nm), expiry: null, addedAt: Date.now() })
+        store.addPantry({ id: newId(), name: nm, icon: guessIngredientIcon(nm), expiry: null, addedAt: Date.now() })
         added++
       }
     })
@@ -282,7 +292,7 @@ export default function PantryView() {
                     {f.on && <Icon name="check" size={15} color="#fff" stroke={2.6} />}
                   </button>
                   <div className="emoji-tile" style={{ width: 38, height: 38, flex: '0 0 auto' }}>
-                    <FoodIcon name={guessFoodIcon(f.name)} size={24} />
+                    <FoodIcon name={guessIngredientIcon(f.name)} size={24} />
                   </div>
                   <input
                     className="wa-inp"
@@ -322,7 +332,7 @@ export default function PantryView() {
                   ✅ 타일 46→**38** · 아이콘 28→**24** · gap 12→**10** → 이름 칸이 **10px** 넓어진다.
                   ⛔ 더 줄이지 않는다 — 38 은 영수증 확인 시트(`:284`)와 같은 값이라 앱 안에서 결이 맞는다. */}
               <div className="emoji-tile" style={{ width: 38, height: 38, flex: '0 0 auto', fontSize: 22 }}>
-                {p.thumb === 'emoji' && p.emoji ? p.emoji : <FoodIcon name={p.icon || guessFoodIcon(p.name)} size={24} />}
+                {p.thumb === 'emoji' && p.emoji ? p.emoji : <FoodIcon name={재료그림(p)} size={24} />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -364,7 +374,7 @@ function PantryForm({ item, onClose }) {
 
   const setNm = (v) => {
     setName(v)
-    if (!iconPicked) { setIcon(guessFoodIcon(v)); setEmoji(guessEmoji(v)) }
+    if (!iconPicked) { setIcon(guessIngredientIcon(v)); setEmoji(guessEmoji(v)) }
   }
   const quick = (days) => { const d = new Date(); d.setDate(d.getDate() + days); setExpiry(toYMD(d)) }
 
@@ -374,7 +384,9 @@ function PantryForm({ item, onClose }) {
     const data = {
       name: nm,
       thumb,
-      icon: iconPicked ? icon : guessFoodIcon(nm),
+      icon: iconPicked ? icon : guessIngredientIcon(nm),
+      // ⭐ 「직접 골랐다」를 저장한다 — 안 남기면 목록에서 자동 추천과 구분이 안 돼 골라둔 그림이 지워진다
+      iconPicked: iconPicked || undefined,
       emoji: thumb === 'emoji' ? emoji : (item.emoji || null),
       qty: qty.trim(),
       expiry: expiry || null,
