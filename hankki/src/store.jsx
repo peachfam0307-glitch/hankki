@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
 import { seedRecipes } from './data/seed'
 import { basicRecipes, BASICS_VERSION } from './data/basics'
+import { makeSampleDiary, SAMPLE_DIARY_ID, SAMPLE_READY } from './data/sampleDiary'
 import { guessFoodIcon } from './components/FoodIcon'
 import { cleanMemo } from './parseRecipe'
 import { politeSteps, politeFormalSteps } from './polish'
@@ -321,13 +322,30 @@ function migratePolite(recipes, saved) {
   return { recipes: out, politeV: POLITE_V }
 }
 
+// 📔📔 **샘플 일기 한 장** (창업자 2026-08-12 *"샘플레시피는 지울 수 있게도 해줘
+//   자기 일기가 아니니까 지워도 되게(샘플이라고 적어주고)"*)
+//
+//   ⭐ **일기가 «한 장도 없는» 사람에게만** 놓는다 — 이미 쓰고 있는 사람의 목록에
+//      갑자기 남의 일기가 끼어들면 그건 선물이 아니라 침입이다.
+//      📌 규칙 18 ⓙ — 「새로 까는 사람」만 보지 말고 «이미 깔린 폰»을 본다. 여기선 **안 넣는 것**이 답이다.
+//   ⭐ 한 번 지우면 `sampleGone` 이 남아 **영영 다시 안 생긴다.** 지웠는데 또 나오면 그건 고장이다.
+//   ⚠️ 요리 기록(`kind` 없음)은 안 센다 — 「만들었어요」만 눌러 본 사람도 일기 샘플은 받아야 한다.
+function withSample(saved) {
+  const diary = saved.diary || []
+  // ⏳ 창업자가 만든 진짜 샘플로 갈아끼우기 «전»엔 안 놓는다 — 까닭은 `sampleDiary.js` 맨 위에
+  if (!SAMPLE_READY) return diary
+  if (saved.sampleGone) return diary
+  if (diary.some((d) => d.kind === 'diary')) return diary
+  return [makeSampleDiary(), ...diary]
+}
+
 function initialState() {
   const saved = load()
   if (saved) {
     const mig = migrateBasics(saved)
     const memoMig = migrateMemos(mig.recipes, saved)
     const politeMig = migratePolite(memoMig.recipes, saved)
-    const diary = saved.diary || []
+    const diary = withSample(saved)
     return {
       recipes: reconcileCooked(politeMig.recipes, diary),
       seedV: mig.seedV,
@@ -342,7 +360,8 @@ function initialState() {
       wishlist: [], // 위시는 장보기로 흡수됨 — 더 이상 별도 목록으로 쓰지 않는다
       shoppingList: foldWishIntoShopping(saved.wishlist, saved.shoppingList || migrateShopping()),
       pantry: saved.pantry || [],
-      diary: saved.diary || [],
+      diary,
+      sampleGone: saved.sampleGone || false,
     }
   }
   return {
@@ -357,7 +376,10 @@ function initialState() {
     wishlist: [],
     shoppingList: [],
     pantry: [],
-    diary: [],
+    // 📔 처음 켠 사람은 일기 탭이 텅 비어 「뭘 하는 곳인지」 안 보인다 → 샘플 한 장 놓아 둔다.
+    //    ⏳ 스위치가 꺼져 있으면 빈 채로 둔다(까닭 = `sampleDiary.js` 맨 위)
+    diary: SAMPLE_READY ? [makeSampleDiary()] : [],
+    sampleGone: false,
   }
 }
 
@@ -553,6 +575,12 @@ function reducer(state, action) {
       //   ⛔ 그래도 원인을 다 잡은 건 아니다 — 「레시피 삭제」(`case 'remove'`)는 여전히 diary 를
       //      안 건드린다. 지운 레시피의 기록이 달력·앨범에 남는 건 «창업자 판정»이 필요한 자리다.
       const 남은diary = state.diary.filter((d) => d.id !== action.id)
+      // 📔 **샘플을 지우면 영영 다시 안 생긴다** (창업자 2026-08-12 *"지워도 되게"*)
+      //   ⛔ 이 한 줄이 없으면 앱을 다시 켤 때 `withSample` 이 «일기 0장」을 보고 또 놓는다
+      //      = 지웠는데 또 나온다 = 고장으로 읽힌다.
+      if (action.id === SAMPLE_DIARY_ID) {
+        return { ...state, diary: 남은diary, sampleGone: true, recipes: reconcileCooked(state.recipes, 남은diary) }
+      }
       return {
         ...state,
         diary: 남은diary,
