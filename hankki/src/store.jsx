@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
 import { seedRecipes } from './data/seed'
 import { basicRecipes, BASICS_VERSION } from './data/basics'
-import { makeSampleDiary, SAMPLE_DIARY_ID } from './data/sampleDiary'
+import { makeSampleDiary, SAMPLE_DIARY_ID, SAMPLE_READY } from './data/sampleDiary'
 import { guessFoodIcon } from './components/FoodIcon'
 import { cleanMemo } from './parseRecipe'
 import { politeSteps, politeFormalSteps } from './polish'
@@ -332,6 +332,8 @@ function migratePolite(recipes, saved) {
 //   ⚠️ 요리 기록(`kind` 없음)은 안 센다 — 「만들었어요」만 눌러 본 사람도 일기 샘플은 받아야 한다.
 function withSample(saved) {
   const diary = saved.diary || []
+  // ⏳ 창업자가 만든 진짜 샘플로 갈아끼우기 «전»엔 안 놓는다 — 까닭은 `sampleDiary.js` 맨 위에
+  if (!SAMPLE_READY) return diary
   if (saved.sampleGone) return diary
   if (diary.some((d) => d.kind === 'diary')) return diary
   return [makeSampleDiary(), ...diary]
@@ -375,7 +377,8 @@ function initialState() {
     shoppingList: [],
     pantry: [],
     // 📔 처음 켠 사람은 일기 탭이 텅 비어 「뭘 하는 곳인지」 안 보인다 → 샘플 한 장 놓아 둔다.
-    diary: [makeSampleDiary()],
+    //    ⏳ 스위치가 꺼져 있으면 빈 채로 둔다(까닭 = `sampleDiary.js` 맨 위)
+    diary: SAMPLE_READY ? [makeSampleDiary()] : [],
     sampleGone: false,
   }
 }
