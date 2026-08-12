@@ -1550,7 +1550,20 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           </div>
           )}
           <VHint boxRef={drawerRef} />
-          <div className="decor-scroll" ref={drawerRef}>
+          {/* ⌨️⌨️⌨️ **서랍을 누르는 «동안»엔 종이 커서를 뺏지 않는다** (창업자 폰 제보 2026-08-12 · 실측으로 확정)
+              ⛔⛔ 안 막으면 이런 일이 난다 — 손가락을 대는 «순간» 본문 커서가 풀리고,
+                 그 바람에 본문용 「글씨」·「크기」 두 줄(실측 **97px**)이 사라지면서
+                 **서랍 내용이 통째로 97px 위로 올라간다.** 손을 뗄 때 그 자리엔 딴 칸이 있다.
+              🔢 실측 = 글 상자 칸 y **1049 → 952**. 그 칸이 받은 이벤트는 「본문 커서 풀림」 하나뿐 —
+                 **pointerdown·click 이 한 번도 안 왔다.** 그래서 첫 탭이 통째로 사라진다.
+                 (창업자가 겪은 「눌러도 안 붙는다」·「두 번 눌러야 된다」·「글씨 크게가 없다」가 전부 이것)
+              ⭐ 고치는 법 = 바로 위 글씨체 «칩»이 이미 쓰던 그 방법이다(`onPointerDown` 기본동작 막기).
+                 칩 한 줄에만 걸려 있던 것을 **서랍 전체**로 넓힌다.
+              ⚠️ 단추일 때만 막는다 — 빈 자리는 그대로 둬야 손가락으로 굴릴 수 있다.
+                 (`preventDefault` 는 굴리기를 안 막는다 — 그건 `touch-action` 이 정한다. 칩 줄에서 이미 확인된 방식)
+              ⚠️ 붙인 «뒤»엔 `addBox`·`addNote` 가 커서를 내려놓는다 — 그때 줄이 사라져도 이미 붙은 뒤라 괜찮다. */}
+          <div className="decor-scroll" ref={drawerRef}
+            onPointerDown={(e) => { if (e.target.closest && e.target.closest('button')) e.preventDefault() }}>
             {/* ✍️ 글쓰기 — 서랍엔 **아무것도 안 둔다.** 칸이 비어야 서랍이 접히고 종이가 커진다.
                 ⛔ 여기에 뭘 넣으면 「글 쓰는데 서랍이 반을 먹는」 지금 문제가 그대로 남는다.
                 ⛔ 안내도 여기 두지 않는다 — 종이 밑에 이미 한 줄 있어서 **같은 말이 두 번** 나온다. */}
