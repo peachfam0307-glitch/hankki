@@ -41,6 +41,20 @@ cd "$ROOT" 2>/dev/null || exit 0
 RISKY=0
 echo "$CMD" | grep -qE 'git +([a-z-]+ +)*(commit|checkout +-[bB]|switch +-c|push)' && RISKY=1
 
+# 🚪🚪 **빠져나갈 문** — ⛔2026-08-12: 이 훅이 «자기가 안내한 복구 명령»까지 막았다.
+#   되감기면 모든 bash 가 막히는데, 푸는 명령도 bash 라서 **순환에 갇혔다.**
+#   창업자 작업이 통째로 멈췄다(그날 장바구니 그림 59컷 검수 중).
+#   📌 게이트는 «틀린 길»을 막아야지 «옳은 길»까지 막으면 안 된다.
+#   ✅ 통과시키는 것 = ⒜맞추는 명령(checkout -B ... origin/DEPLOY · reset --hard origin/DEPLOY)
+#                    ⒝읽기만 하는 명령(status·log·diff·rev-parse·fetch·branch·show)
+#   ⚠️ ⒝를 통과시켜도 안전하다 — 「읽은 숫자가 거짓」인 게 문제지만, 되감김을 «진단»하려면 읽어야 한다.
+if echo "$CMD" | grep -qE "git +(checkout +-B|switch +-C) +[^ ]+ +origin/$DEPLOY|git +reset +--hard +origin/$DEPLOY"; then exit 0; fi
+if echo "$CMD" | grep -qvE 'git +([a-z-]+ +)*(commit|checkout|switch|push|merge|rebase|cherry-pick|add|mv|rm)' ; then
+  # git 이 아예 없거나 «읽기 전용» git 만 있는 명령 → 진단·복구에 필요하니 통과
+  echo "$CMD" | grep -qE '\bgit\b' || exit 0
+  echo "$CMD" | grep -qE 'git +(status|log|diff|rev-parse|rev-list|fetch|branch|show|ls-tree|merge-base|remote|config)' && exit 0
+fi
+
 if [ "$RISKY" = 1 ]; then
   # ⚠️ 네트워크가 막히면 조용히 통과한다(막는 게 목적이지 멈추는 게 목적이 아니다).
   timeout 12 git fetch -q origin "$DEPLOY" 2>/dev/null || true
