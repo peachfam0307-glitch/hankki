@@ -126,12 +126,21 @@ export default function PantryView() {
   //      담은 재료가 적으면 추천도 한 줄만. 그러면 담은 재료가 화면 안으로 들어온다.
   //   ⛔ 「냉장고 재료함을 위로」는 안 한다 — 2026-08-10 창업자 지시가 *"재료를 넣으면 레시피를
   //      추천해주는게 주가 되어야 할 듯"* 이라 추천이 맨 위인 것은 «맞다».
-  const 추천개수 = pantry.length <= 1 ? 2 : 4
+  //   ⭐⭐ [2026-08-12] 창업자 *"냉장고-가진재료로 만들기(지금은 2개 추천 여러개 추천되면 옆으로 넘기게)"*
+  //      → **개수를 줄이는 대신 «가로 한 줄»로 바꿨다.**
+  //      ⭐ 이게 바로 위 8/12 사고(두부 y=847)의 «진짜» 해법이다 — 세로로 쌓으면 추천이 늘 때마다
+  //         담은 재료가 아래로 밀리는데, 가로 한 줄이면 **추천이 몇 개든 높이가 안 변한다.**
+  //         그래서 「재료가 하나면 2장만」이라는 임시 처방을 걷어냈다.
+  //      ⛔ 새 클래스를 안 만들었다 — `.hscroll` 이 이미 홈·장보기에서 쓰는 가로 줄이다.
+  //         (v9.99 에 새 이름 `.hscroll` 을 지었다가 «같은 이름의 기존 클래스»와 부딪혀
+  //          칩이 라벨을 12px 덮은 적이 있다 → 이름을 새로 짓기 전에 grep 부터.)
+  //      ⚠️ 상한은 남긴다 — 레시피가 100편이면 카드도 100장이라 그리는 값이 아깝다.
+  const 추천상한 = 12
   const matches = recipes
     .map((r) => ({ r, n: countPantryHits(r, pantry), score: pantryScore(r, pantry) }))
     .filter((m) => m.n > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 추천개수)
+    .slice(0, 추천상한)
 
   // 🍳 「가진 재료로 만들 수 있는 것」 칸 — **화면 맨 위**에 놓으려고 여기서 만든다.
   //    ⚠️ JSX 로 미리 만들어 두는 이유 = 아래 재료 목록보다 «먼저» 그려야 하는데,
@@ -139,9 +148,20 @@ export default function PantryView() {
   const 추천칸 = matches.length > 0 ? (
     <>
       <div className="sec-head" style={{ marginTop: 2 }}><div className="h-section">가진 재료로 만들 수 있어요</div></div>
-      <div className="grid2" style={{ marginBottom: 4 }}>
+      {/* ⭐ 가로 한 줄 — 다음 카드가 «살짝 걸치게» 폭을 잡아 「옆으로 넘긴다」가 글자 없이 전해진다.
+          ⚠️ `.hscroll > *` 는 `flex: 0 0 auto` 라 폭을 «안 주면» 카드가 내용 크기로 쪼그라든다.
+          📜 가로 스크롤 막대는 `App.jsx` 의 `ScrollHint` 가 알아서 그린다(화면에서 넘치는 줄을 찾는다).
+          ⛔⛔ `inset` 이 «반드시» 있어야 한다 — 맨 `.hscroll` 은 `margin: 0 -20px` 로 화면 padding 을
+             되돌려 카드를 화면 끝까지 흘린다. 그러면 **첫 카드가 왼쪽 끝에 붙어 제목 글자가 깎인다**
+             (캡처로 봤다 — 「돼지고기 김치찌개」의 첫 글자가 잘렸다 · 규칙 21).
+             창업자가 v10.21 에 *"왼쪽이 잘린 것 같아"* 로 잡은 것과 같은 모양이다.
+          📐 폭 41% — ⛔48%(＝격자와 같은 157px)로 뒀더니 **두 장이 칸을 꽉 채워 세 번째가 2px** 만
+             남았다. 그러면 「옆으로 넘긴다」가 아무에게도 안 보인다(캡처로 봤다).
+             41% 면 세 번째가 ~36px 걸쳐서 **글자 없이도 「더 있다」가 전해진다.**
+             ⭐ 좁혀도 제목은 안 잘린다 — `.grid-card .name` 에 `nowrap` 이 없어 두 줄로 접힌다. */}
+      <div className="hscroll inset" style={{ marginBottom: 4 }}>
         {matches.map(({ r, n }) => (
-          <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
+          <button key={r.id} className="grid-card press" style={{ flex: '0 0 41%', textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
             <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
             <div className="name">{r.title}</div>
             <div className="date">가진 재료 {n}개</div>
