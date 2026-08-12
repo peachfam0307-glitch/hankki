@@ -195,7 +195,12 @@ export const HOMEMADE = [
     //    36편을 넣는 판에서 그때 살아난다.
     // ⛔ 제철 줄과 «같은 레시피»를 넣지 않는다 — 한 화면에 두 번 뜨면 이상하다
     //    (2026-08-11 시안에서 「훈제오리 깻잎볶음」이 이번 주 제철(깻잎)과 겹쳐 두 박스에 다 떴다).
-    ids: ['basic-ganjang-jeyuk', 'basic-ojingeo-saeujeon', 'basic-deulgireum-dubu-jeongol'],
+    // 🍲 [2026-08-12] **닭곰탕을 맨 앞에 넣어 이 박스를 살린다.**
+    //    📮 창업자 *"내 레시피중에 닭곰탕을 이번레시피로 추가하자(여름보양식이니까)"*
+    //    ⭐ 제철 줄(이번 주 「깻잎」)이 아니라 «여기»에 넣은 이유 = 닭곰탕은 «제철 재료» 얘기가 아니라
+    //       **창업자가 해먹는 것**이다. 깻잎 옆에 붙이면 그 주의 이야기가 둘로 갈린다.
+    //    ⚠️ 나머지 셋은 아직 `basics.js` 에 없어 조용히 걸러진다 → 지금은 **닭곰탕 한 편으로 뜬다.**
+    ids: ['basic-dakgomtang', 'basic-ganjang-jeyuk', 'basic-ojingeo-saeujeon', 'basic-deulgireum-dubu-jeongol'],
   },
 ]
 
