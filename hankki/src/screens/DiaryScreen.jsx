@@ -141,7 +141,8 @@ export default function DiaryScreen({ day }) {
       const src = await fitImage(reader.result, 1200)
       const pk = photoKeyRef.current || 'photo'
       // ⚠️ 새 사진을 넣으면 그 칸의 위치도 «가운데»로 되돌린다 — 옛 사진 기준 좌표는 뜻이 없다
-      setText((t) => ({ ...t, [pk]: src, [`${pk}Pos`]: '' }))
+      //   ⚠️ 확대 배율도 같이 되돌린다 — 옛 사진에 맞춰 3배로 당겨 뒀으면 새 사진이 통째로 확대돼 뜬다
+      setText((t) => ({ ...t, [pk]: src, [`${pk}Pos`]: '', [`${pk}Zoom`]: '' }))
     }
     reader.readAsDataURL(file)
   }
@@ -152,8 +153,22 @@ export default function DiaryScreen({ day }) {
     <div className="screen fade" style={{ paddingBottom: 0 }}>
       <div className="detail-bar">
         <button className="bar-btn" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
-        <div style={{ fontSize: 15, fontWeight: 800 }}>
-          {date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 13, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span>
+        <div style={{ fontSize: 15, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 7 }}>
+          <span>{date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 13, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span></span>
+          {/* 🏷 **「샘플」** (창업자 2026-08-12 *"자기 일기가 아니니까 지워도 되게(샘플이라고 적어주고)"*)
+              ⭐ 제목 «옆»에 둔다 — 종이 위에 얹으면 꾸민 것과 섞여 「이것도 스티커인가」가 된다.
+              ⛔⛔ 첫 판은 **연한 크림 바탕에 보조색 글자 11px** 이었다 → 창업자 *"샘플표시가 너무 작아 티도안나"*.
+                 **맞다** — 크림(#f2ede3)은 화면 바탕(#faf8f4)과 거의 같아서 «칠한 티»가 안 난다.
+              ⭐ 그래서 «채운 pill» 로 바꾼다 — 진한 잉크 바탕 ＋ 흰 글자 ＋ 12.5px.
+                 ⛔ 포인트색(파랑)은 **안 쓴다** — 우리 앱에서 파랑은 「누르는 것」이라 단추로 읽힌다.
+                    이건 눌러도 아무 일 없는 «이름표»다. 스티커 지우기 단추와 같은 잉크색을 쓴다. */}
+          {entry?.sample && (
+            <span style={{
+              fontSize: 12.5, fontWeight: 800, letterSpacing: '.02em',
+              padding: '4px 11px', borderRadius: 999,
+              background: '#3f382e', color: '#fff', flex: '0 0 auto',
+            }}>샘플</span>
+          )}
         </div>
         {/* ⛔⛔ [2026-08-12] 지운 뒤 «화면을 떠난다». 안 그러면 지운 일기가 되살아난다.
             📮 창업자 *"일기 지워도 뜸. (아카이브+달력)"* — 재현으로 확정했다(`_repro-일기삭제-0812` ②-2).

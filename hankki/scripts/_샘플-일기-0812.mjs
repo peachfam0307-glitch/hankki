@@ -35,7 +35,7 @@ await new Promise((r) => srv.listen(4382, r))
 //    ⭐ 모션·효과는 **무료인 것만**(`base: true`) — 팩 잠금 컷을 샘플에 쓰면 «되는 줄 알고» 찾다 못 찾는다.
 //       무료 모션 = 가만히·통통·갸웃 ＋ 찰랑(출시기념) / 무료 효과 = 반짝이·하트·뽀글
 const 샘플 = {
-  id: 'seed-diary-sample', kind: 'diary',
+  id: 'seed-diary-sample', kind: 'diary', sample: true,
   paper: { rule: 'plain', skin: 'ivory', art: 'dotblue' },   // 심플한 틀 하나 (창업자 지시)
   title: '콩국수 한 그릇',
   font: 'gaegu',

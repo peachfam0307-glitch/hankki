@@ -354,7 +354,8 @@ export function photoKeysOf(art) {
 // 📦 일기 한 칸이 담을 수 있는 사진 키 «전부» — ⛔손으로 나열하지 말 것.
 //    DiaryScreen 이 네 곳(빈값·읽기·저장·의존성)에 손으로 적어 뒀다가 이 작업에서 네 곳을 다 고쳐야 했다.
 export const ALL_PHOTO_KEYS = [...new Set(PAPER_ARTS.flatMap((a) => photoKeysOf(a.key)))]
-export const ALL_PHOTO_FIELDS = ALL_PHOTO_KEYS.flatMap((k) => [k, `${k}Pos`])
+//    ⚠️ 사진 한 장에 딸린 값이 셋이다 — 사진·보일 자리(Pos)·확대 배율(Zoom).
+export const ALL_PHOTO_FIELDS = ALL_PHOTO_KEYS.flatMap((k) => [k, `${k}Pos`, `${k}Zoom`])
 
 // 🚚 옛 저장본 이관 — **이미 깔린 폰**(규칙 18 ⓙ)
 //    옛 `photo`/`photo2`/`photo3` 에 든 사진을 «그 일기가 지금 쓰는 속지»의 자리로 한 번만 옮긴다.
@@ -373,12 +374,13 @@ export function migratePhotoKeys(entry) {
     if (out[nk] || !out[ok]) return            // 이미 옮겼거나 옛 자리가 비었다
     out[nk] = out[ok]
     if (out[`${ok}Pos`]) out[`${nk}Pos`] = out[`${ok}Pos`]
+    if (out[`${ok}Zoom`]) out[`${nk}Zoom`] = out[`${ok}Zoom`]
     moved = true
   })
   // ⛔⛔ 안 옮겼으면 «원본 그대로» 돌려준다 — 새 객체를 늘 만들면 「바뀌었나」를 밖에서 못 가린다
   if (!moved) return entry
   // 옛 자리는 비운다 — 안 비우면 «다음에 다른 속지를 골랐을 때» 거기로 또 옮겨 간다(＝딸려오기 재발).
   //   ⚠️ delete 가 아니라 빈 값 — 저장은 «덮어쓰기(merge)»라 지운 키는 안 지워진다.
-  OLD_KEYS.forEach((k) => { if (!keys.includes(k)) { out[k] = ''; out[k + 'Pos'] = '' } })
+  OLD_KEYS.forEach((k) => { if (!keys.includes(k)) { out[k] = ''; out[k + 'Pos'] = ''; out[k + 'Zoom'] = '' } })
   return out
 }
