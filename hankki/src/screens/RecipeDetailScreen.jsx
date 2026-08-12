@@ -167,13 +167,13 @@ export default function RecipeDetailScreen({ id }) {
     const today = new Date().toDateString()
     const existing = myEntries.find((d) => new Date(d.at).toDateString() === today)
     if (existing) {
-      nav.showToast('오늘은 이미 요리 기록에 있어요')
+      nav.showToast('오늘은 이미 한끼 일기에 있어요')
       return
     }
     const entry = { id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: null }
     addDiary(entry)
     cook(r.id)
-    nav.showToast('만들었어요! 요리 기록에 남겼어요')
+    nav.showToast('만들었어요! 한끼 일기에 남겼어요')
   }
 
   const del = () => setConfirmDel(true)

@@ -315,9 +315,14 @@ export default function PantryView() {
         return (
           <div key={p.id} className="wish-row">
             {/* 재료를 탭하면 편집(수량·유통기한·이모지·메모) */}
-            <button className="press" onClick={() => setForm(p)} style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, textAlign: 'left' }}>
-              <div className="emoji-tile" style={{ width: 46, height: 46, flex: '0 0 auto', fontSize: 26 }}>
-                {p.thumb === 'emoji' && p.emoji ? p.emoji : <FoodIcon name={p.icon || guessFoodIcon(p.name)} size={28} />}
+            <button className="press" onClick={() => setForm(p)} style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textAlign: 'left' }}>
+              {/* 🔽 [2026-08-12] 창업자 *"장보기에 재료담으면 음식아이콘이 너무 커서 장보기 재료가 안보임"*
+                  🔢 옛 값 = 타일 46×46 ＋ 아이콘 28. 한 줄이 [타일 46] ＋ gap 12 ＋ [이름] ＋ [유통기한 칩] ＋ [✕]
+                     이라, 좁은 폰(360px)에서 이름 칸이 눌려 «말줄임(…)»으로 잘렸다.
+                  ✅ 타일 46→**38** · 아이콘 28→**24** · gap 12→**10** → 이름 칸이 **10px** 넓어진다.
+                  ⛔ 더 줄이지 않는다 — 38 은 영수증 확인 시트(`:284`)와 같은 값이라 앱 안에서 결이 맞는다. */}
+              <div className="emoji-tile" style={{ width: 38, height: 38, flex: '0 0 auto', fontSize: 22 }}>
+                {p.thumb === 'emoji' && p.emoji ? p.emoji : <FoodIcon name={p.icon || guessFoodIcon(p.name)} size={24} />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

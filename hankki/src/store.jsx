@@ -544,15 +544,19 @@ function reducer(state, action) {
     case 'removeDiary': {
       // 기록을 지우면 그 레시피의 '만든 횟수'도 함께 1 줄인다.
       // (cooked는 '만들었어요'가 diary 항목과 항상 짝으로 올리므로, 지울 때도 짝으로 내려 어긋나지 않게 한다)
-      const gone = state.diary.find((d) => d.id === action.id)
+      // ⭐⭐ [2026-08-12] «1 빼기» 대신 **남은 기록으로 다시 센다**.
+      //   📮 창업자 *"자주해먹는 요리는 지워도 계속 뜸."*
+      //   ⛔ 옛 방식(`cooked - 1`)은 «어긋난 값을 물려받는다» — 한 번이라도 어긋나면
+      //      `reconcileCooked`(293줄)가 **앱을 다시 켤 때까지** 안 고쳐준다.
+      //      그래서 지웠는데도 `cooked > 0` 이 남아 「자주 해먹는 요리」(HomeScreen:156)에 계속 떴다.
+      //   ✅ 지운 뒤 남은 diary 로 «전부 다시 세면» 어긋날 자리가 없다. 그 자리에서 맞는다.
+      //   ⛔ 그래도 원인을 다 잡은 건 아니다 — 「레시피 삭제」(`case 'remove'`)는 여전히 diary 를
+      //      안 건드린다. 지운 레시피의 기록이 달력·앨범에 남는 건 «창업자 판정»이 필요한 자리다.
+      const 남은diary = state.diary.filter((d) => d.id !== action.id)
       return {
         ...state,
-        diary: state.diary.filter((d) => d.id !== action.id),
-        recipes: gone
-          ? state.recipes.map((r) =>
-              r.id === gone.recipeId ? { ...r, cooked: Math.max(0, (r.cooked || 0) - 1) } : r
-            )
-          : state.recipes,
+        diary: 남은diary,
+        recipes: reconcileCooked(state.recipes, 남은diary),
       }
     }
 

@@ -64,6 +64,9 @@ const PATHS = {
   'chevron-right': <path d="m9 6 6 6-6 6" />,
   'chevron-left': <path d="m15 6-6 6 6 6" />,
   'chevron-up': <path d="m6 15 6-6 6 6" />, // 「맨 위로」 단추(App 의 ToTop)
+  // 🔽 2026-08-12 신설 — 장바구니 카드의 「더보기 ↔ 접기」. up 만 있고 down 이 «없었다».
+  //    ⛔ 없는 이름을 쓰면 조용히 아무것도 안 그려진다 — 쓰기 «전»에 목록을 본다.
+  'chevron-down': <path d="m6 9 6 6 6-6" />,
 
   x: <path d="M6 6l12 12M18 6 6 18" />,
   heart: (

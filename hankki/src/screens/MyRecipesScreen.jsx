@@ -112,14 +112,20 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconF
           const top = list && list[0]
           const on = selected === k
           const hasDiary = diaryDays.has(k)
+          // 🗓 [2026-08-12] 아무것도 없는 «지난 날»도 누를 수 있어야 한다.
+          //   📮 창업자 *"달력에 날짜누르면 바로 일기로 들어가지는지 확인"*
+          //   🔬 재현으로 확정 — 빈 칸이 `disabled` 라 **지난 날엔 일기를 쓰러 갈 길이 아예 없었다**
+          //      (아래 「일기 쓰기」 단추도 `dayFilter || 오늘` 이라 오늘로만 열린다).
+          //   ⛔ **앞날은 그대로 막는다** — 아직 안 온 날의 일기를 쓰는 건 뜻이 안 맞는다.
+          const 앞날 = new Date(ym.y, ym.m, d).setHours(0, 0, 0, 0) > new Date().setHours(0, 0, 0, 0)
           return (
             <button
               key={d}
               className={`press cal-day ${on ? 'on' : ''} ${isToday(d) ? 'today' : ''}`}
               // 📔 누르면 «그날 일기»로 바로 간다(위 주석). 고른 표시도 남겨 둔다 —
               //    돌아왔을 때 어느 날을 봤는지 알 수 있고, 아래 「N월 N일 일기」 단추도 그 날짜를 쓴다.
-              onClick={() => { if (!n && !hasDiary) return; onSelect(k); onOpenDay?.(k) }}
-              disabled={!n && !hasDiary}
+              onClick={() => { if (앞날) return; onSelect(k); onOpenDay?.(k) }}
+              disabled={앞날}
             >
               <span className="cal-num">{d}</span>
               {hasDiary && <span className="cal-diary" aria-label="일기 쓴 날"><Icon name="pen" size={9} /></span>}
@@ -378,11 +384,23 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             속지를 고르고 · 일기를 쓰고 · 예쁘게 꾸며요
           </div>
 
-          {entries.length > 0 && (
+          {/* 📊📊 [2026-08-12] 통계 띠가 «일기만 쓴 사람»에겐 아예 안 보이던 것.
+              📮 창업자 *"한끼일기 통계는 언제 반영돼?"* — 답은 «바로»인데, 조건이 `entries.length > 0`
+                 하나뿐이라 **요리 기록이 0이면 띠 자체가 안 그려졌다.** 일기만 쓰면 영영 못 본다.
+              🔬 재현으로 확정(`_repro-일기삭제-0812` ③) — 일기 1장만 있을 때 통계띠 false.
+              ✅ 요리 기록 «또는» 일기가 하나라도 있으면 그린다 ＋ **일기 수를 칸으로 추가**.
+                 ⛔ 요리 기록 수(`entries`)와 일기 수(`diaryDays`)는 «다른 것»이라 합치지 않는다. */}
+          {(entries.length > 0 || diaryDays.size > 0) && (
             <div className="card" style={{ padding: '11px 14px', marginBottom: 12, background: 'var(--cream)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, fontWeight: 600 }}>
               <span>이번 달 <b style={{ color: 'var(--brown)' }}>{thisMonth}</b>번</span>
               <span style={{ color: 'var(--sand)' }}>·</span>
               <span>총 <b style={{ color: 'var(--brown)' }}>{entries.length}</b>개</span>
+              {diaryDays.size > 0 && (
+                <>
+                  <span style={{ color: 'var(--sand)' }}>·</span>
+                  <span>일기 <b style={{ color: 'var(--brown)' }}>{diaryDays.size}</b>일</span>
+                </>
+              )}
               {topDish && (
                 <>
                   <span style={{ color: 'var(--sand)' }}>·</span>
@@ -394,7 +412,13 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
 
           {/* 나의 요리 앨범 — 설명은 앨범 «바로 위»로 내렸다. 달력이 먼저 보여야 해서. */}
           <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 10 }}>
-            <b style={{ color: 'var(--text)' }}>내가 만든 요리 아카이브</b> — 요리할 때마다 별점·사진·나만의 팁을 남겨두면, 다음에 <b style={{ color: 'var(--text)' }}>그때 그 간·불 세기</b>를 그대로 재현해요. 내 요리 실력이 쌓이는 기록이에요.
+            {/* ✍️ [2026-08-12] 창업자 *"한끼일기에 나만의 별점~~블라블라 하는거 설명 바꾸면 좋겠어."*
+                ⛔ 옛 문구는 «기능 설명»이었다 — 「별점·사진·나만의 팁을 남겨두면 … 재현해요」.
+                   무엇을 «할 수 있는지»만 말하고, 왜 남기고 싶은지는 한 마디도 없었다.
+                ⭐ 우리 컨셉은 「성취」가 아니라 **「흔적」**이다(`docs/리텐션-설계원칙-2026-07-30.md`).
+                   그래서 「실력이 쌓인다」(성취)를 빼고 **「그날이 남는다」**로 바꿨다.
+                ⛔ 재촉·평가·숫자 자랑 금지. ⛔ 「매일」 같은 약속도 안 한다(스트릭 금지와 같은 뿌리). */}
+            <b style={{ color: 'var(--text)' }}>오늘 뭘 해먹었는지</b>가 한 장씩 쌓여요. 사진 한 장, 별점 하나면 충분해요 — 나중에 넘겨보면 <b style={{ color: 'var(--text)' }}>그날의 내가</b> 보여요.
           </div>
 
           {dayFilter && (

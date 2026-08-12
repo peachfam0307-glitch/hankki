@@ -387,7 +387,15 @@ function Curation() {
             >
               {it.benefit}
             </span>
-            {!openCard[it.name] && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brown)' }}>더보기</span>}
+            {/* 🔽🔼 [2026-08-12] 창업자 *"주부의 장바구니(접기버튼 잘보이게)"*
+                ⛔ 옛 코드는 `!openCard[...]` 라 **펼친 뒤엔 「접기」가 아예 안 그려졌다.**
+                   접으려면 설명 글 자체를 다시 눌러야 하는데 그걸 알려주는 표시가 없었다.
+                   → 「펼치기는 보이는데 접기가 안 보인다」가 정확히 이것이다.
+                ✅ 펼쳐도 «같은 자리에» 「접기」를 그린다 ＋ 화살표를 붙여 눌리는 곳임을 보인다. */}
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brown)', display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
+              {openCard[it.name] ? '접기' : '더보기'}
+              <Icon name={openCard[it.name] ? 'chevron-up' : 'chevron-down'} size={12} />
+            </span>
           </button>
         </div>
       </div>
