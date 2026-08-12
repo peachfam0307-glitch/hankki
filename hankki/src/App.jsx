@@ -177,10 +177,20 @@ export default function App() {
       // 1.5) 모달·오버레이(꾸미기·미리보기·시트·픽커 등)가 열려 있으면 최상위 하나만 닫는다.
       //      이 칸은 열 때 gesture-backed 로 쌓였고 방금 popstate 로 소비됐으니 '다시 채우지 않는다'.
       //      (popstate 안 gesture-less pushState 가 사라져 크롬 intervention 재종료 버그를 근본 제거)
+      // ⛔⛔ **꾸미기 뒤로가기 먹통** (창업자 2026-08-12 *"뒤로가기 안됨(꾸미기 닫힘안돼)"*)
+      //    🔢 뿌리 = 여기서 층을 «무조건» 빼버렸다. 그런데 꾸미기의 닫기는 곧장 안 닫고
+      //       **「저장하지 않고 나갈까요?」를 먼저 묻는다** → 판은 그대로인데 층과 히스토리 칸이 사라진다.
+      //       → 다음 뒤로가기가 갈 곳을 잃어 «먹통»이 되거나, 판보다 아래 칸을 먹어 **꾸민 게 날아간다.**
+      //    ⭐ 답 = 닫기가 `false` 를 돌려주면 «아직 안 닫았다»로 보고 **층을 남기고 칸을 되채운다.**
+      //       (2번·4번 경로가 이미 같은 문법으로 `trap()` 을 쓴다 — 새 발명이 아니다.
+      //        ⛔`trap()` 금지는 5번 「홈에서 나가기」 자리에만 해당한다)
       if (modalLayers.current.length > 0) {
-        const layer = modalLayers.current.pop()
+        const layer = modalLayers.current[modalLayers.current.length - 1]
         layer.consumed = true
-        try { layer.close() } catch { /* noop */ }
+        let 아직안닫힘 = false
+        try { 아직안닫힘 = layer.close() === false } catch { /* noop */ }
+        if (아직안닫힘) { layer.consumed = false; trap(); return }
+        modalLayers.current.pop()
         return
       }
       // 2) 그 밖의 화면 내부 상태(필터·세그먼트 등)를 위에서부터 처리한다.

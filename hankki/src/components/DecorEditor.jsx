@@ -255,6 +255,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const origThumb = savedThumb !== 'none' ? savedThumb : (recipe.image ? 'photo' : 'icon')
   const [thumb, setThumb] = useState(draft?.thumb ?? savedThumb) // 'none'이면 표지 그림 비움 → 깨끗한 배경에 꾸미기
   const [exitAsk, setExitAsk] = useState(false) // 취소 시 "저장 안 함?" 확인
+  const [drawerDown, setDrawerDown] = useState(false) // 🫳 서랍 내리기(손잡이 단추) — 종이를 크게 보려고
+  const grabY = useRef(null) // 손잡이를 끈 거리(아래로 끌면 내려간다)
   // ⛔⛔ **이 안내 띠가 «가로에서 판을 통째로 밀어내고 있었다»** (창업자 폰 제보 2026-08-09 밤
   //    📮 *"오늘의한끼누르면 쪼그라들어"* — 캡처 둘 다 이 띠가 격자 «밖»으로 튀어나와 있었다)
   //    가로에선 `.decor-editor` 가 **격자(grid)** 인데 이 띠엔 `grid-area` 가 없다 →
@@ -482,9 +484,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const doSave = () => { clearDraft(); onSave(items, bg, thumb) }
   const doExit = () => { clearDraft(); onClose() }
   const handleCancel = () => { if (isDirty()) setExitAsk(true); else doExit() }
+  // 🔙🔙 **뒤로가기 = 「저장하고 닫기」. 묻지 않는다.** (창업자 2026-08-12 *"뒤로가기 안됨 … 급짜증난다ㅠ"*)
+  //   ⛔⛔ 예전엔 뒤로가기도 「취소」와 똑같이 **먼저 물었다.** 그런데 그 물음창은 «자기 히스토리 칸»이 없어서,
+  //      뒤로가기 한 번이 판의 칸을 써버리고 판은 안 닫힌다 → 다음 뒤로가기가 갈 곳을 잃어 **먹통**이 되거나
+  //      판보다 «아래» 칸을 먹어 꾸민 게 통째로 날아갔다. 칸을 popstate 안에서 되채우는 것도
+  //      크롬이 «터치 없이 만든 칸»이라 건너뛰어 안 통했다(재현으로 확인).
+  //   ⭐ 그래서 «묻는 것»을 없앴다 — 뒤로가기는 **저장하고 닫는다.** 잃는 게 없으니 물을 이유도 없다.
+  //   ⛔ 「취소」 단추는 그대로 «버리고 나가기»다(위 `handleCancel`) — 그게 취소라는 낱말의 뜻이다.
+  //      뒤로가기와 취소는 유저가 «다른 뜻으로» 누른다. 하나로 묶었던 게 애초에 잘못이었다.
+  //   ⚠️ 실수로 눌러도 되돌리기(↺)가 있고 다시 꾸미면 된다 — 「날아가는 것」보다 훨씬 낫다.
+  const handleBack = () => { if (exitAsk) { setExitAsk(false); return false } doSave(); return true }
   // 🔙 안드로이드 뒤로가기도 **취소 버튼과 똑같이** 동작하게 — 부모(상세화면)가 이걸 부른다.
   //    (뒤로가기가 곧장 닫아버려서 "저장하지 않고 나갈까요?" 를 건너뛰던 것 수정)
-  if (closeRef) closeRef.current = handleCancel
+  if (closeRef) closeRef.current = handleBack
 
   const selItem = items.find((x) => x.id === sel)
   const selNoteColor = NOTE_COLORS.find((n) => n.key === selItem?.key) || NOTE_COLORS[0]
@@ -600,9 +612,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // 📔 **선반 가르기** — 일기를 꾸밀 때만. 왼쪽 칸이면 `diary` 붙은 것만, 오른쪽 칸이면 나머지 전부.
   //    표지 꾸미기(`isDiary === false`)는 선반이 하나라 **아무것도 안 거른다**(일기 세트도 그대로 보인다).
   const where = isDiary ? 'diary' : 'cover'
-  const onShelf = (x) => !isDiary || (shelf === 'diary' ? !!x.diary : !x.diary)
+  // ⭐ `both` = 일꾸·레꾸 «두 선반 다»에 두는 그룹(꼬르곰 32컷).
+  //    ⛔ `diary` 만 주면 일꾸엔 뜨지만 **레꾸 선반에서 사라진다** — 창업자가 보던 그 화면이 레꾸였다.
+  const onShelf = (x) => !isDiary || x.both || (shelf === 'diary' ? !!x.diary : !x.diary)
   const groupsByTab = (t) => drawerGroups()
-    .filter((x) => x.tab === t && isReleased(x.from) && (!x.only || x.only === where) && onShelf(x))
+    // ⭐ `tabDiary` = 일기 화면에선 «다른 탭»에 둔다 — 꼬르곰 32컷은 레꾸 「글자」 / 일꾸 「기록」.
+    //    ⛔ 두 탭에 «동시에» 두면 일꾸에서 글자·기록 양쪽에 같은 게 나온다(실측으로 잡았다).
+    .filter((x) => ((isDiary && x.tabDiary) || x.tab) === t && isReleased(x.from) && (!x.only || x.only === where) && onShelf(x))
     .sort((a, b) => ((b.gift ? 1 : 0) - (a.gift ? 1 : 0))
       || ((b.locked ? 1 : 0) - (a.locked ? 1 : 0))
       || (seasonRank(a.season) - seasonRank(b.season))
@@ -883,11 +899,20 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     try { localStorage.setItem(FOLD_KEY, JSON.stringify([...n])) } catch { /* 저장 못 해도 이번 판은 접힌다 */ }
     return n
   })
+  // 🔻🔻 **접기 세모** (창업자 2026-08-12 *"세모단추크기 아직도 작아. 세모자체가 커져야해."*)
+  //    ⛔ 처음엔 `▾` «글자»를 썼다 — 글자는 위아래에 제 여백이 있어서 **13px 을 줘도 실제 삼각형은 7px 쯤**이다.
+  //       원만 키워도 세모는 그대로였다. 그게 창업자가 두 번 말한 그것이다.
+  //    ✅ **SVG 로 그린다** — 16px 을 주면 삼각형이 «정말로» 16px 이다. 여백이 없다.
+  const FoldIco = ({ open }) => (
+    <span aria-hidden className="decor-fold-ico" style={{ transform: open ? 'none' : 'rotate(-90deg)' }}>
+      <svg width="20" height="20" viewBox="0 0 20 20"><path d="M2 6 L18 6 L10 16 Z" fill="currentColor" /></svg>
+    </span>
+  )
   // 🗂 접히는 이름표 — 스티커 «그룹»이 아닌 블록(글자 직접 쓰기·포스트잇 등)도 같은 문법으로 접는다.
   const SecFold = ({ k, label }) => (
     <button type="button" className="press decor-sec-label" onClick={() => toggleFold(k)}
       aria-expanded={!folded.has(k)} aria-label={`${label} ${folded.has(k) ? '펼치기' : '접기'}`}>
-      <span aria-hidden className="decor-fold-ico" style={{ transform: folded.has(k) ? 'rotate(-90deg)' : 'none' }}>▾</span>
+      <FoldIco open={!folded.has(k)} />
       {label}
     </button>
   )
@@ -933,7 +958,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         {g.label && (
           <button type="button" className="press decor-sec-label" onClick={() => toggleFold(g.key)}
             aria-expanded={!folded.has(g.key)} aria-label={`${g.label} ${folded.has(g.key) ? '펼치기' : '접기'}`}>
-            <span aria-hidden className="decor-fold-ico" style={{ transform: folded.has(g.key) ? 'rotate(-90deg)' : 'none' }}>▾</span>
+            <FoldIco open={!folded.has(g.key)} />
             {g.label}{g.gift && <GiftTag />}
             {folded.has(g.key) && <span className="decor-sec-n">{g.items.length}</span>}
           </button>
@@ -1486,8 +1511,22 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         )}
 
         {/* 서랍 — 새로 붙이기 전용(배경·스티커·테이프·글자·포스트잇). 선택 아이템 편집은 위 컨텍스트 바에서. */}
-        <div className={`decor-drawer${writing ? ' writing' : ''}`}>
-          <div className="decor-grab" />
+        <div className={`decor-drawer${writing ? ' writing' : ''}${drawerDown ? ' down' : ''}`}>
+          {/* 🫳🫳 **서랍 내리기 손잡이** (창업자 2026-08-12 *"내리기 버튼 만들어주면 안돼??
+              가운데 두꺼운 버튼같이 만들어서 그거 누르면 탭 전체가 내려가게 하면 편할텐데..."*)
+              ⭐ 새 단추를 만들지 않고 **이미 있던 손잡이 막대를 단추로** 만들었다 — 원래 「잡아 내리는 것」처럼
+                 생긴 자리라 배울 게 없다. 두께 4 → 6px · 폭 40 → 56px · 닿는 칸 38px.
+              ⭐ 내려도 손잡이는 남는다 — 다시 누르면 올라온다. ⛔사라지면 되돌릴 길이 없어진다. */}
+          {/* ⭐ 창업자 *"아니면 아래로 스크롤하면 내려가게 하거나.. 뭐든 편한방법으로"*
+              → **둘 다** 된다. 톡 = 내렸다 올렸다 · 아래로 끌면 내려가고 위로 끌면 올라온다.
+              🔢 24px 넘게 움직였을 때만 «끈 것»으로 친다(그 밑은 손 떨림이라 탭으로 본다). */}
+          <button type="button" className="decor-grab press"
+            onPointerDown={(e) => { grabY.current = e.clientY }}
+            onPointerUp={(e) => {
+              const d = e.clientY - (grabY.current ?? e.clientY)
+              setDrawerDown((v) => (Math.abs(d) > 24 ? d > 0 : !v))
+            }}
+            aria-expanded={!drawerDown} aria-label={drawerDown ? '서랍 올리기' : '서랍 내리기'} />
           {/* 🧭 큰 칸들 — 「속지 고르기 · 글쓰기 · 꾸미기」 (창업자 2026-08-06)
               ⭐ 앱에 이미 있는 `.segment` 를 쓴다 — 「모아보기 / 요리 기록」과 같은 문법이라 배울 게 없다.
               ✍️ 「글쓰기」는 **한 장을 만드는 세 단계 그대로**다 — 종이를 깔고 · 쓰고 · 꾸민다.

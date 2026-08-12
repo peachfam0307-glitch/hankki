@@ -64,7 +64,9 @@ export default function DiaryScreen({ day }) {
   useEffect(() => { setPick(entry?.paper || FIRST) }, [day]) // eslint-disable-line react-hooks/exhaustive-deps
   const [open, setOpen] = useState(false)
   const closeRef = useRef(null)
-  useLayerBack(open, () => { if (closeRef.current) closeRef.current(); else setOpen(false) })
+  // ⭐ 돌려주는 값을 «그대로» 넘긴다 — `false` 면 App 이 「아직 안 닫았다」로 보고 층을 남긴다.
+  //    ⛔ 안 넘기면 undefined 라 「닫았다」로 읽혀 뒤로가기가 먹통이 된다(2026-08-12 창업자 제보).
+  useLayerBack(open, () => { if (closeRef.current) return closeRef.current(); setOpen(false); return true })
 
   const decor = entry?.decor || []
   const skin = paperStyle(pick)

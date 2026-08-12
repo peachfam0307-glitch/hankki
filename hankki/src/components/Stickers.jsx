@@ -1420,8 +1420,12 @@ export const STICKER_GROUPS = [
   //      그림만으로 못 가른다 — **뜻이 글자에 있다**(2026-08-08 rs_ 99컷과 같은 판단).
   //   ⛔ 「글자 뗀 판」도 잘라 뒀지만 «안 들인다» — 같은 그림이 서랍에 두 번 나온다
   //      (창업자 *"왜 같은그림이 나와?"*). 파일은 docs 에 그대로 있다.
-  { key: 'rs_star', wordy: true, tab: 'notetext', only: 'cover', label: '반응 · 별점', items: ['rs_v01', 'rs_v02', 'rs_v03', 'rs_v04', 'rs_v05', 'rs_v06', 'rs_v07', 'rs_v08', 'rs_v09', 'rs_v10', 'rs_v11', 'rs_v12', 'rs_v13', 'rs_v14', 'rs_v15', 'rs_v16'] },
-  { key: 'rs_way', wordy: true, tab: 'notetext', only: 'cover', label: '조리법 · 기록', items: ['rs_k01', 'rs_k02', 'rs_k03', 'rs_k04', 'rs_k05', 'rs_k06', 'rs_k07', 'rs_k08', 'rs_k09', 'rs_k10', 'rs_k11', 'rs_k12', 'rs_k13', 'rs_k14', 'rs_k15', 'rs_k16'] },
+  // 🐻 창업자 2026-08-12 *"꼬르곰도 제발 넣어줘."* — 레꾸 «전용»이라 일기를 꾸미는 동안엔 못 봤다.
+  //    ⭐ only 를 뺀다 → 레꾸 「글자」 탭과 일꾸 「기록」 탭 «둘 다»에 뜬다.
+  //    ⛔ 일꾸 「기록」의 기존 99컷과 안 겹친다 — 그건 «도구·재료» 그림이고 이건 «꼬르곰·펭펭이 하는 모습»이다.
+  //    ⚠️ 「일꾸」 선반은 diary 표시가 있어야 뜬다(onShelf) — tabs 만 넣고 이걸 빠뜨려 안 보였다.
+  { key: 'rs_star', wordy: true, tab: 'notetext', tabDiary: 'record', diary: true, both: true, label: '반응 · 별점', items: ['rs_v01', 'rs_v02', 'rs_v03', 'rs_v04', 'rs_v05', 'rs_v06', 'rs_v07', 'rs_v08', 'rs_v09', 'rs_v10', 'rs_v11', 'rs_v12', 'rs_v13', 'rs_v14', 'rs_v15', 'rs_v16'] },
+  { key: 'rs_way', wordy: true, tab: 'notetext', tabDiary: 'record', diary: true, both: true, label: '조리법 · 기록', items: ['rs_k01', 'rs_k02', 'rs_k03', 'rs_k04', 'rs_k05', 'rs_k06', 'rs_k07', 'rs_k08', 'rs_k09', 'rs_k10', 'rs_k11', 'rs_k12', 'rs_k13', 'rs_k14', 'rs_k15', 'rs_k16'] },
   { key: 'text_hankki', wordy: true, tab: 'notetext', label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night', 'tw_kidpick', 'tw_hubbypick', 'tw_admit', 'tw_funfun', 'tw_itsme', 'tw_bland'] },
   { key: 'text_word', wordy: true, tab: 'notetext', label: '문구', items: ['tw_today', 'tw_success', 'tw_welldone', 'tw_tasty', 'tw_more', 'tw_fav', 'tw_honey', 'tw_hearty', 'tw_easy', 'tw_mom', 'tw_nexttime', 'tw_fail', 'tw_yummy', 'tw_best', 'tw_ourhankki', 'tw_goodday'] },
   // 🍳 레꾸 상황·평가 8그룹 (2026-08-08 창업자 시트 · 그림+캡션 스티커)

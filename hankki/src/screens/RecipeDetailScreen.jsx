@@ -88,7 +88,8 @@ export default function RecipeDetailScreen({ id }) {
   //    "저장하지 않고 나갈까요?" 를 건너뛰고 꾸민 게 날아갔다.
   //    → 에디터가 채워주는 `decorCloseRef`(= 물어보는 닫기)를 부른다.
   const decorCloseRef = useRef(null)
-  useLayerBack(decorOpen, () => { if (decorCloseRef.current) decorCloseRef.current(); else setDecorOpen(false) })
+  // ⭐ 돌려주는 값을 «그대로» 넘긴다 — `false` = 「물어보는 중, 아직 안 닫음」(App 이 층을 남긴다)
+  useLayerBack(decorOpen, () => { if (decorCloseRef.current) return decorCloseRef.current(); setDecorOpen(false); return true })
   const [coach, setCoach] = useState(() => needsCoach(COACH_KEY))
   const iconRef = useRef(null)
   const [iconSheet, setIconSheet] = useState(false) // 표지 아이콘 바꾸기 — 상세에서 바로(편집 안 들어가고)

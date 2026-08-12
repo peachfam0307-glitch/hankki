@@ -2186,7 +2186,24 @@ html, body { overscroll-behavior: none; }
   .only-landscape { display: inline; }
 }
 
-.decor-grab { width: 40px; height: 4px; border-radius: 999px; background: var(--line); margin: 8px auto 2px; flex: 0 0 auto; }
+/* 🫳 손잡이 = «내리는 단추». 창업자 2026-08-12 *"가운데 두꺼운 버튼같이 만들어서 … 탭 전체가 내려가게"*
+   ⭐ 막대만 두껍게(4 → 6px · 40 → 56px) 하고 **닿는 칸은 38px** 로 넉넉히 — 손가락이 겨냥할 게 막대다.
+   ⛔ 막대를 44px 로 키우면 「가로줄」로 보여 서랍 테두리와 헷갈린다. 막대는 작게, 칸만 크게. */
+.decor-grab {
+  display: block; width: 100%; min-height: 38px; padding: 0; flex: 0 0 auto;
+  background: none; border: none; cursor: pointer;
+}
+.decor-grab::before {
+  content: ''; display: block; width: 56px; height: 6px; margin: 10px auto;
+  border-radius: 999px; background: var(--line);
+}
+/* 🫳 내린 상태 — 손잡이만 남기고 다 감춘다. 다시 누르면 올라온다.
+   ⛔ 처음엔 서랍만 줄였더니 **그 자리가 통째로 텅 비었다**(실물로 보고 잡았다 · 규칙 21).
+   ⭐ 남는 자리는 «종이 칸»이 가져간다 — 내리는 이유가 「종이를 크게 보려고」이니 그게 맞다. */
+.decor-drawer.down { flex: 0 0 auto; min-height: 0; max-height: none; }
+.decor-drawer.down > *:not(.decor-grab) { display: none !important; }
+.decor-drawer.down .decor-grab::before { background: var(--brown); }
+.decor-editor:has(.decor-drawer.down) .decor-stage { flex: 1 1 auto; min-height: 0; }
 
 /* 🪜🪜 **층마다 «생김새»를 다르게** (안 D · 창업자 2026-08-07 *"구분이 안되니까 뭐가 뭔지 모르겠어"*)
    ⛔ 예전엔 네 층이 전부 알약이었다 — 실측 29·31·35px 이라 차이가 «최대 6px».
@@ -2229,11 +2246,11 @@ html, body { overscroll-behavior: none; }
    ⭐ 동그란 칸에 담는다 — 배경이 있으면 「누르는 데」로 읽힌다(글자는 아무리 키워도 글자로 보인다).
    ⭐ 색은 포인트색(파랑) — 우리 앱에서 파랑은 「누르는 것」이다. 채움이 아니라 «작은 원»이라
       「글자 넣기」 같은 주 동작 단추와 무게가 안 겹친다(v10.22 「위로」 단추와 같은 잣대). */
+/* ⭐ 창업자 2026-08-12 *"원을 늘리지말고 그냥 삼각형만 늘려"* — 동그란 바탕을 빼고 세모만 키운다.
+   ⛔ 원을 두면 세모가 그 안에 갇혀 아무리 키워도 원보다 작아 보인다. */
 .decor-fold-ico {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; flex: 0 0 auto;
-  border-radius: 999px; background: var(--cream); color: var(--brown);
-  font-size: 13px; line-height: 1; transition: transform .15s;
+  flex: 0 0 auto; color: var(--brown); transition: transform .15s;
 }
 .decor-scroll {
   flex: 1 1 auto; min-height: 0;
