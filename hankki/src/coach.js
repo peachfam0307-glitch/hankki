@@ -21,6 +21,10 @@ const NS = 'hankki:coach:'
 export const COACH = {
   home: `${NS}home3`,          // v8.60 home → home2 → v10.05 home3(한끼 일기 단계 추가)
   myrecipes: `${NS}myrecipes`,
+  // 📔 「일기」 탭은 하단바에서 «따로 선 탭»인데 코치가 `myrecipes` 와 한 키를 썼다 →
+  //    레시피 탭을 먼저 본 사람은 일기 탭에서 **영영 안내가 안 떴다**
+  //    (창업자 2026-08-10 *"한끼일기는 눌러도안내코치가 없네"*). 키를 갈랐다.
+  diary: `${NS}diary`,
   detail: `${NS}detail`,
   shop: `${NS}shop`,
   brag: `${NS}brag`,

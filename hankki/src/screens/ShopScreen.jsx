@@ -21,7 +21,8 @@ import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { openExternal, matchKo } from '../utils'
-import { CURATION, curIcon } from '../data/curation'
+import { CURATION, curIcon, weeklyPicks } from '../data/curation'
+import { weeklyNow, todayKST } from '../data/weekly'
 
 // 외부 쇼핑몰 열기 — 정식 새 탭(설치된 앱 있으면 App Link 로 앱)으로 연다.
 // (features 문자열을 주면 팝업 창으로 열려 모바일에서 세로로 깨지고 두 번 열린 듯 보였음)
@@ -29,6 +30,25 @@ const openUrl = openExternal
 function shopSearchUrl(shop, q) {
   if (q && shop.search) return shop.search.replace('{q}', encodeURIComponent(q))
   return shop.url
+}
+
+// 🛒 장보기 리스트 한 줄에서 「사러가기」를 눌렀을 때 갈 곳.
+//   ⭐ 담을 때 주소가 붙어 있으면(주부의 장바구니·레시피 재료 담기) 그 제품으로 바로 간다.
+//      직접 손으로 쓴 재료는 주소가 없으니 «쇼핑몰에서 이름으로 찾아» 준다 — 유저에겐 둘 다 「사러 가는 것」이다.
+//   ⛔⛔ 예전엔 이 둘을 「사러가기」와 「검색」 두 이름으로 갈라 놨는데,
+//      **테스터가 «둘이 뭐가 다르냐»고 물었다** (창업자 전달 2026-08-10).
+//      같은 자리·같은 모양인데 이름만 다르면 «다른 기능인 줄» 안다. 게다가 「검색」은
+//      우리 앱에서 이미 «앱 안에서 찾기»(레시피 탭·장보기·레꾸자랑)로 쓰는 낱말이라 뜻이 둘이 됐다.
+//      → 이름은 **「사러가기」 하나**로. 어디로 가는지는 눌러서 알면 되는 것이고, 목적은 같다.
+//      (근거 = CLAUDE.md 「같은 기능은 같은 이름」 · 창업자 2026-07-30 *"데코랑 이름 같아야지"*)
+//   ⚠️ 몰 고르기는 «검색이 되는» 첫 몰로 — 한살림·자연드림은 `search` 가 검색이 아니라 «홈 주소»라
+//      맨 앞에 두면 찾던 재료가 아니라 홈이 열렸다(찾아보고 알았다).
+//   ⚠️ 쇼핑몰을 다 지운 사람도 있다 → 그때는 네이버쇼핑 통합검색. 안 그러면 «아무 데도 안 가는» 죽은 버튼이 된다.
+function buyUrlFor(item, shops) {
+  if (item.url) return item.url
+  const s = (shops || []).find((x) => x.search && x.search.includes('{q}'))
+  if (s) return shopSearchUrl(s, item.name)
+  return `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(item.name)}`
 }
 
 // 섹션 헤더의 '편집 / 접기·펼치기' 버튼 — 손가락으로 누르기 쉽게 살짝 키운 알약 버튼.
@@ -111,8 +131,8 @@ export default function ShopScreen() {
               <span style={{ flex: 1, fontSize: 15, textDecoration: it.done ? 'line-through' : 'none', color: it.done ? 'var(--text-sub)' : 'var(--text)' }}>
                 {it.name}
               </span>
-              <button className="press mini-buy" onClick={() => (it.url ? openUrl(it.url) : openUrl(shopSearchUrl(shops[0] || { url: '' }, it.name)))}>
-                {it.url ? '사러가기' : '검색'}
+              <button className="press mini-buy" onClick={() => openUrl(buyUrlFor(it, shops))}>
+                사러가기
               </button>
               <button className="icon-btn press" onClick={() => store.removeShopItem(it.id)} aria-label="삭제">
                 <Icon name="x" size={17} color="var(--sand)" />
@@ -215,7 +235,7 @@ export default function ShopScreen() {
 // 주부의 장바구니 — 18년차 주부가 엄선한 건강 식재료. '사러가기'는 선호 쇼핑몰에서 자동검색.
 function Curation() {
   const store = useStore()
-  const { shops } = store
+  const { shops, recipes } = store // `recipes` = 「이번 주 픽」이 이번 주 레시피를 보려고 쓴다
   const nav = useNav()
   const [open, setOpen] = useState(true)
   // 큐레이션이 맨 위로 오면서, 26장 벽 대신 '이번 주 픽'을 기본으로 보여주고
@@ -233,7 +253,11 @@ function Curation() {
   const found = curQuery
     ? flat.filter((it) => matchKo(it.name, curQuery) || matchKo(it.cat, curQuery) || matchKo(it.group, curQuery))
     : []
-  const picks = flat.filter((it) => it.pick)
+  // 🗓 「이번 주 픽」 — 날짜가 돌린다 (창업자 2026-08-10 *"주부장바구니픽도 매주 꼭 바꿔줘"*)
+  //   ⛔ 예전엔 `it.pick` 이 박힌 «둘»을 그대로 보여줘 **영영 안 바뀌었다**(창업자 *"예시야 된장."*).
+  //   ⭐ 1순위 = 이번 주 레시피가 쓰는 제품 → 홈의 「이번 주 제철」과 **한 이야기**가 된다.
+  //      모자라면 주차 번호로 돌려 채운다(어느 주에도 안 빈다). 자세한 건 `curation.js` 의 `weeklyPicks`.
+  const picks = weeklyPicks(weeklyNow(recipes), todayKST())
   // 🗂🗂 칩은 «큰 칸»만 보여준다 — 창업자 2026-08-03
   //   *"장바구니 종류탭이 너무 길어지네... 지금 종류가 더 늘텐데 옆으로 계속 길어지면 불편할 것 같아."*
   //   🔎 재보니 카테고리 23개 · 칩 줄 길이 ≈2,227px = **화면 폭의 5.7배**(다섯 번 넘게 밀어야 끝).
@@ -363,7 +387,15 @@ function Curation() {
             >
               {it.benefit}
             </span>
-            {!openCard[it.name] && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brown)' }}>더보기</span>}
+            {/* 🔽🔼 [2026-08-12] 창업자 *"주부의 장바구니(접기버튼 잘보이게)"*
+                ⛔ 옛 코드는 `!openCard[...]` 라 **펼친 뒤엔 「접기」가 아예 안 그려졌다.**
+                   접으려면 설명 글 자체를 다시 눌러야 하는데 그걸 알려주는 표시가 없었다.
+                   → 「펼치기는 보이는데 접기가 안 보인다」가 정확히 이것이다.
+                ✅ 펼쳐도 «같은 자리에» 「접기」를 그린다 ＋ 화살표를 붙여 눌리는 곳임을 보인다. */}
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brown)', display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
+              {openCard[it.name] ? '접기' : '더보기'}
+              <Icon name={openCard[it.name] ? 'chevron-up' : 'chevron-down'} size={12} />
+            </span>
           </button>
         </div>
       </div>

@@ -16,7 +16,7 @@
 //   📌 **명단은 사람이 적고, 파일은 사람이 옮긴다. 둘은 반드시 어긋난다 — 그래서 코드가 맞춘다.**
 //
 // ⚠️ 조용한 실패는 게이트가 없으면 «영원히» 안 드러난다. 화면이 안 깨지기 때문이다.
-import { readdirSync, existsSync } from 'node:fs'
+import { readdirSync, existsSync, readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -52,6 +52,38 @@ for (const s of SEASON_CUTS) {
   //    ⛔ 실패로는 안 만든다(일부러 비워 두는 때가 있다 — 자산이 아직 없을 때).
   if (!keys.length) console.log(`  ⚠️  ${s.label} 세트가 통째로 비었다 — 창이 열려도 카드가 안 나온다`)
   else if (keys.length < 3) console.log(`  ⚠️  ${s.label} 이 ${keys.length}컷뿐 — 뽑기가 금방 되풀이된다(3컷 이상 권장)`)
+}
+
+// 📐📐 **카드 히어로는 520~660px 로 «크게» 쓴다 — 작은 컷은 뭉갠다.**
+//   ⛔⛔ 2026-08-10 에 이걸로 «주석과 코드가 어긋난» 것을 찾았다.
+//      `cardSeasons.js` 머리말은 *"긴변 400px 미만 9컷은 카드에서 뺐다 … cs_b02 …"* 라고 적혀 있는데
+//      정작 목록엔 `cs_b02`(236×330)가 들어 있었다. 2026-07-30 에 뺐다가 08-03 에
+//      **창업자가 직접 골라 되돌린 것**인데, 그때 아무도 크기를 안 쟀고 주석만 옛말로 남았다.
+//   📌 v8.95 에 172종이 확대 뭉갬으로 통째 롤백된 적이 있다 — 같은 함정이다.
+//   ⛔ **실패로 안 만든다.** 창업자가 «보고 고른» 컷을 기계가 물리면 안 된다(규칙 11 = 미감은 창업자).
+//      기계는 «몇 배로 커지는지»만 말하고, 뺄지 말지는 8/31 검수에서 사람이 정한다.
+// ⚠️ **대표값이 아니라 «제일 큰 값»으로 잰다** — 뽑기는 어느 레이아웃에 걸릴지 모른다.
+//    2026-08-10 에 560(대표값)으로 재서 `cs_b02` 가 1.70 «바로 밑»으로 빠져나갔다.
+//    `ShareDrawCard.jsx` 의 `hero({ … height })` 여덟 곳 실측 = 496·524·540·560·560·596·600·**648**
+const HERO = 648
+const 한계 = 1.7           // check-sticker-res.mjs 와 같은 잣대
+const png = (k) => join(PHOTO, `${k}.png`)
+const 긴변 = (k) => {       // PNG 머리 24바이트에 폭·높이가 있다(디코드 불필요)
+  const b = readFileSync(png(k)).subarray(16, 24)
+  return Math.max(b.readUInt32BE(0), b.readUInt32BE(4))
+}
+const 큰것 = []
+for (const s of SEASON_CUTS) {
+  for (const k of ['gom', 'peng', 'duo'].flatMap((x) => s[x] || [])) {
+    if (!have.has(k)) continue
+    const w = 긴변(k)
+    if (HERO / w > 한계) 큰것.push({ 세트: s.label, k, w, 배: (HERO / w).toFixed(2) })
+  }
+}
+if (큰것.length) {
+  console.log(`\n  ⚠️  카드에서 ${한계}배 넘게 커지는 컷 ${큰것.length}개 — 히어로 ${HERO}px 기준`)
+  큰것.forEach((x) => console.log(`      ${x.세트} · ${x.k}  긴변 ${x.w}px → ${x.배}배`))
+  console.log(`      👉 8/31 검수에서 «키워서 보고» 뺄지 정할 것 (⛔기계가 정하지 않는다)`)
 }
 
 console.log(bad

@@ -30,13 +30,64 @@ set -u
 #    (2026-08-09 신설 직후 실측으로 잡았다 — 규칙 12)
 INPUT="$(cat 2>/dev/null || true)"
 SOURCE="$(printf '%s' "$INPUT" | tr ',{}' '\n\n\n' | grep '"source"' | head -1 | sed 's/.*"source"[[:space:]]*:[[:space:]]*"\([a-z]*\)".*/\1/' || true)"
-[ "$SOURCE" = "compact" ] && exit 0
+
+# 🐾🐾 **발자국을 남긴다** (2026-08-11 신설)
+#   ⛔⛔ 그날 아침 디스크가 되감겼는데 이 훅이 «안 돌았나 / 돌았는데 조용히 멈췄나»를 **가를 수가 없었다.**
+#      `hold/자동회수` 에 그날 커밋이 없고 브리핑에 이 훅의 말이 한 줄도 없었지만, 그건 «안 돌았다»의
+#      증거가 아니라 **「증거가 없다」** 였다. 장치가 있어도 «돌았는지»를 모르면 고칠 수가 없다.
+#   ⭐ 그래서 **모든 갈림길에서 한 줄씩** 남긴다. 다음엔 이 파일만 보면 안다.
+#   ⚠️ `/tmp` 에 두는 이유 = 컨테이너와 생명주기가 같다. 되감김 때 «이 파일이 비어 있는 것» 자체가 신호다.
+SYNCLOG="/tmp/hankki-sync.log"
+note() { printf '%s  %s\n' "$(TZ=Asia/Seoul date '+%m-%d %H:%M:%S' 2>/dev/null || date '+%m-%d %H:%M:%S')" "$1" >> "$SYNCLOG" 2>/dev/null || true; }
+note "▶ 시작 (source=${SOURCE:-?})"
+
+[ "$SOURCE" = "compact" ] && { note "· compact 라 비켜남"; exit 0; }
 
 REPO="${CLAUDE_PROJECT_DIR:-/home/user/hankki}"
 DEPLOY="claude/chatgpt-conversation-link-kvn5ph"
 
-cd "$REPO" 2>/dev/null || exit 0
-git rev-parse --git-dir >/dev/null 2>&1 || exit 0
+cd "$REPO" 2>/dev/null || { note "⛔ cd 실패 ($REPO)"; exit 0; }
+git rev-parse --git-dir >/dev/null 2>&1 || { note "⛔ git 저장소가 아니다"; exit 0; }
+
+# 🕳 base-guard 를 «git 밖»으로 복사한다 (2026-08-10) — ⭐일찍 끝나는 길보다 «위»에 둔다
+#   ⛔ 훅을 저장소 «안»에만 두면 **브랜치를 옮기는 순간 꺼진다** — 실제로 그랬다.
+#      `hold/…` 로 옮기니 그 브랜치 바닥엔 훅이 없어서 무방비가 됐다.
+#   ⭐ 그래서 «도는 것»은 `~/.claude/hooks/`(git 밖 · `~/.claude/settings.json` 이 부른다),
+#      «원본»은 저장소에 두어 버전 관리한다. 세션마다 여기서 덮어 써 둘이 안 어긋나게 한다.
+#   ⚠️ 이 줄이 «BEHIND==0 이면 그냥 끝」보다 아래 있으면 평소엔 한 번도 안 돈다 — 그래서 여기다.
+#   ⭐⭐ [2026-08-12 확장] base-guard «하나»만 복사하던 것을 **훅 셋 ＋ 부르는 설정까지**로 넓혔다.
+#      ⛔ 어제까지는 파일만 복사하고 **`~/.claude/settings.json` 을 «안 만들었다»** →
+#         git 밖 복사본이 있어도 **아무도 안 불러서 한 번도 안 돌았다.** 절반만 된 설계였다.
+#         (2026-08-12 아침 실측 = `/root/.claude/settings.json` 이 아예 없었다)
+#      📌 **「파일을 둔 것」과 「불리는 것」은 다른 말이다.**
+for f in base-guard.sh sync-guard.sh repo-sync.sh; do
+  if [ -f "$REPO/.claude/hooks/$f" ]; then
+    mkdir -p "$HOME/.claude/hooks" 2>/dev/null
+    cp -f "$REPO/.claude/hooks/$f" "$HOME/.claude/hooks/$f" 2>/dev/null
+    chmod +x "$HOME/.claude/hooks/$f" 2>/dev/null
+  fi
+done
+# 🔗 부르는 설정도 «git 밖»에 유지한다 — 없으면 만들고, 있으면 빠진 것만 채운다(덮어쓰지 않는다).
+if command -v python3 >/dev/null 2>&1; then
+  python3 - <<'PYEOF' >/dev/null 2>&1 || true
+import json, os
+p = os.path.expanduser('~/.claude/settings.json')
+d = {}
+if os.path.exists(p):
+    try: d = json.load(open(p))
+    except Exception: d = {}
+h = d.setdefault('hooks', {})
+def put(evt, matcher, cmd):
+    lst = h.setdefault(evt, [])
+    if any(cmd in hk.get('command','') for i in lst for hk in i.get('hooks',[])): return
+    lst.append({"matcher": matcher, "hooks": [{"type":"command","command":cmd}]})
+home = os.path.expanduser('~/.claude/hooks')
+put('PreToolUse', 'Bash|Read|Edit|Write|Glob|Grep', home + '/sync-guard.sh')
+put('PreToolUse', 'Bash', home + '/base-guard.sh')
+put('SessionStart', '', home + '/repo-sync.sh')
+json.dump(d, open(p, 'w'), ensure_ascii=False, indent=2)
+PYEOF
+fi
 
 # ⏱ 세션 시작을 붙잡지 않는다 — 느리거나 막히면 포기하고 옛 훅(repo-guard)에 넘긴다
 run() { if command -v timeout >/dev/null 2>&1; then timeout "$1" "${@:2}"; else "${@:2}"; fi; }
@@ -54,7 +105,7 @@ LOCAL="$(git rev-parse HEAD 2>/dev/null || true)"
 DIRTY="$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
 
 # ✅ 이미 맞다 → 조용히 통과
-if [ "$BR" = "$DEPLOY" ] && [ "$LOCAL" = "$REMOTE" ] && [ "$DIRTY" = "0" ]; then exit 0; fi
+if [ "$BR" = "$DEPLOY" ] && [ "$LOCAL" = "$REMOTE" ] && [ "$DIRTY" = "0" ]; then note "✅ 이미 맞다 ($LOCAL)"; exit 0; fi
 
 BEHIND="$(git rev-list --count "HEAD..origin/$DEPLOY" 2>/dev/null || echo 0)"
 
@@ -63,7 +114,7 @@ BEHIND="$(git rev-list --count "HEAD..origin/$DEPLOY" 2>/dev/null || echo 0)"
 #    ⭐ 이 한 줄이 없으면 «방금 만든 안 커밋된 작업»을 낡은 것으로 착각해 되돌린다.
 #       2026-08-09 신설 직후 실제로 그랬다 — 이 훅 파일 자체가 날아갔다(담아둔 덕에 되살렸다).
 #    ⛔ 그러니 `hold/*` 에서 검수 대기 중이거나 뭔가 쓰던 중이면 이 훅은 조용히 비켜난다.
-[ "${BEHIND:-0}" = "0" ] && exit 0
+[ "${BEHIND:-0}" = "0" ] && { note "· 안 낡았다 (BEHIND=0 · @${BR:-?})"; exit 0; }
 
 # ── 낡았다 ───────────────────────────────────────────────────────────────
 AHEAD="$(git rev-list --count "origin/$DEPLOY..HEAD" 2>/dev/null || echo 0)"
@@ -153,6 +204,7 @@ fi
 LOCK_AFTER="$(git rev-parse "HEAD:hankki/package-lock.json" 2>/dev/null || true)"
 
 NEWVER="$(grep -o "v[0-9]\+\.[0-9]\+" hankki/src/version.js 2>/dev/null | head -1 || true)"
+note "🔄 맞췄다 — ${BEHIND}커밋 뒤처져 있었다 (${VER:-?} → ${NEWVER:-?})${SAVED:+ · 담아둠=$SAVED}"
 
 # ── ③ 한 줄로 보고 (⛔길게 쓰지 않는다 — 세션 시작마다 읽는 글이다) ────────
 echo ""

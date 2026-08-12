@@ -12,6 +12,7 @@ import CropSheet from './CropSheet'
 import Portal from './Portal'
 import { useLayerBack } from '../useBackHandler'
 import { guessEmoji } from '../emoji'
+import { pantryScore, countPantryHits } from '../pantryMatch'
 
 function toYMD(d) {
   const y = d.getFullYear()
@@ -97,55 +98,112 @@ export default function PantryView() {
     return da - db
   })
 
-  // 냉장고 파먹기 — 보유 재료가 들어가는 레시피를 매칭 개수 순으로.
+  // 냉장고 파먹기 — 보유 재료가 들어가는 레시피를 «가진 만큼» 순으로.
+  // ⛔⛔ 예전엔 `ings.includes(p.name)` 로 **풀네임을 글자 그대로** 찾았다 →
+  //    「돼지고기 앞다리살」이 「돼지고기 300g」에 **영영 안 걸렸다.** 영수증·손입력은 뒤에
+  //    부위·용량이 붙는데 그걸 통째로 맞추려 한 것이다(2026-08-10에 찾았다).
+  // ⭐ 이제 「오늘 뭐 해먹지」와 **같은 판단**을 쓴다(`src/pantryMatch.js`) —
+  //    두 화면이 같은 냉장고를 보고 딴 요리를 말하면 안 된다.
+  // ⚠️⚠️ **세우는 값과 보여주는 값을 갈라야 한다** — 카드에 「가진 재료 N개」가 찍힌다.
+  //    `pantryScore` 는 «같은 개수면 재료 적은 쪽이 이기게» 소수를 얹은 값이라 그대로 쓰면
+  //    화면에 **「가진 재료 1.0833333개」**가 뜬다(재현판이 잡았다 · 2026-08-10).
   const matches = recipes
-    .map((r) => {
-      const ings = (r.ingredients || []).join(' ')
-      const n = pantry.filter((p) => p.name && ings.includes(p.name)).length
-      return { r, n }
-    })
+    .map((r) => ({ r, n: countPantryHits(r, pantry), score: pantryScore(r, pantry) }))
     .filter((m) => m.n > 0)
-    .sort((a, b) => b.n - a.n)
+    .sort((a, b) => b.score - a.score)
     .slice(0, 4)
+
+  // 🍳 「가진 재료로 만들 수 있는 것」 칸 — **화면 맨 위**에 놓으려고 여기서 만든다.
+  //    ⚠️ JSX 로 미리 만들어 두는 이유 = 아래 재료 목록보다 «먼저» 그려야 하는데,
+  //       `matches` 는 목록보다 아래에서 계산되던 코드라 자리를 옮기기만 하면 순서가 꼬인다.
+  const 추천칸 = matches.length > 0 ? (
+    <>
+      <div className="sec-head" style={{ marginTop: 2 }}><div className="h-section">가진 재료로 만들 수 있어요</div></div>
+      <div className="grid2" style={{ marginBottom: 4 }}>
+        {matches.map(({ r, n }) => (
+          <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
+            <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
+            <div className="name">{r.title}</div>
+            <div className="date">가진 재료 {n}개</div>
+          </button>
+        ))}
+      </div>
+    </>
+  ) : pantry.length > 0 ? (
+    // 재료는 있는데 딱 맞는 게 없을 때 — 빈 자리를 두지 않는다
+    <>
+      <div className="sec-head" style={{ marginTop: 2 }}><div className="h-section">한끼 추천</div></div>
+      <div className="t-sub" style={{ fontSize: 12.5, marginTop: -2, marginBottom: 12 }}>
+        가진 재료로 딱 맞는 레시피가 없네요. 실패 없는 기본 메뉴는 어때요?
+      </div>
+      <div className="grid2" style={{ marginBottom: 4 }}>
+        {recipes
+          .filter((r) => String(r.id).startsWith('basic-'))
+          .slice(0, 4)
+          .map((r) => (
+            <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
+              <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
+              <div className="name">{r.title}</div>
+              <div className="date">기본 제공</div>
+            </button>
+          ))}
+      </div>
+    </>
+  ) : null
 
   return (
     <div className="fade">
-      <div className="sec-head" style={{ marginTop: 6 }}>
+      {/* 📣📣 **이 화면이 무엇을 하는 곳인지 맨 위에 한 줄** (창업자 2026-08-10
+          *"재료를 넣으면 레시피를 추천해주는게 주가 되어야 할 듯. 안내도 해야하고."*)
+          ⛔⛔ 예전엔 이 화면이 **「영수증 스캔」으로 시작**했다 — 15.5px 굵은 제목 ＋ 채움색 큰 버튼(그림자까지).
+             정작 «왜 넣는가»(추천이 온다)는 **빈 냉장고일 때 안내문에만** 있었다.
+             창업자: *"영수증스캔이 버튼이 더 커서. 영수증 스캔하는 탭이라고 생각할 것 같아."* — 맞다.
+          ⭐ 영수증은 **재료를 넣는 여러 길 중 하나**지 이 화면의 목적이 아니다. */}
+      <div className="pantry-lead">
+        <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />
+        <span>재료를 넣어두면 <b>그걸로 만들 요리</b>를 골라줘요 · 유통기한도 챙겨주고요</span>
+      </div>
+
+      {/* ⭐⭐ **결과를 «먼저» 보여준다** — 그래야 「왜 넣는지」가 설명 없이 전해진다.
+          예전엔 파먹기가 재료 목록 «아래»라, 재료가 쌓일수록 화면 밖으로 밀려나 아무도 못 봤다
+          (창업자도 오늘 처음 봤다 — *"아.. 아래 있구나"*). */}
+      {추천칸}
+
+      {/* ⚠️ 추천 카드 바로 밑이라 여백이 없으면 «카드에 붙은 글»처럼 읽힌다(검수판에서 보였다) */}
+      <div className="sec-head" style={{ marginTop: 18 }}>
         <div className="h-section">냉장고 재료함</div>
       </div>
-      {/* 영수증 스캔 — 베타. 영수증마다 인식이 달라 기대치를 낮춰두고(라벨) 안내한다. */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
-        <span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>영수증 스캔</span>
-        <span style={{ fontSize: 12.5, fontWeight: 800, color: '#fff', background: '#c79553', borderRadius: 999, padding: '3px 11px', letterSpacing: '0.02em' }}>베타</span>
-      </div>
-      <div style={{ fontSize: 12.8, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 11 }}>
-        영수증에 따라 인식률이 다를 수 있어요. 안 되면 아래 <b style={{ color: 'var(--brown)' }}>＋재료</b>로 직접 담아도 돼요.
-      </div>
+      {/* 🔘 **＋재료 담기가 «주» · 영수증은 «보조»** — 버튼 크기가 곧 「이 화면이 뭐 하는 곳인가」를 말한다. */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <button
           className="press"
-          onClick={() => receiptCamRef.current?.click()}
+          onClick={() => setForm({})}
           style={{
-            flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             padding: '13px 14px', borderRadius: 'var(--r-md)',
             background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 700,
             boxShadow: '0 3px 10px rgba(90,70,45,0.18)',
           }}
         >
-          <Icon name="camera" size={17} />
-          영수증 촬영
+          <Icon name="plus" size={17} stroke={2.4} /> 재료 담기
         </button>
         <button
           className="press"
-          onClick={() => setForm({})}
+          onClick={() => receiptCamRef.current?.click()}
           style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            padding: '13px 16px', borderRadius: 'var(--r-md)',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            padding: '13px 14px', borderRadius: 'var(--r-md)',
             background: 'var(--cream)', color: 'var(--brown)', fontSize: 14.5, fontWeight: 700,
           }}
         >
-          <Icon name="plus" size={17} color="var(--brown)" stroke={2.4} /> 재료
+          <Icon name="camera" size={16} color="var(--brown)" />
+          영수증
+          {/* 베타 = 영수증«만» 베타다. 화면 전체가 베타로 읽히면 안 된다 */}
+          <span style={{ fontSize: 10.5, fontWeight: 800, color: '#fff', background: '#c79553', borderRadius: 999, padding: '2px 6px' }}>베타</span>
         </button>
+      </div>
+      <div style={{ fontSize: 12.3, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 9 }}>
+        영수증은 사진에 따라 인식률이 달라요 · 안 되면 <b style={{ color: 'var(--brown)' }}>＋재료 담기</b>로 직접 넣어도 돼요.
       </div>
       <button
         className="press"
@@ -164,9 +222,22 @@ export default function PantryView() {
           title="영수증에서 품목만 남기기"
           hint={
             <>
+              {/* ⚠️⚠️ **베타 안내는 «스캔하는 순간»에 · «잘 보이는 색»으로** (창업자 2026-08-10
+                  *"영수증은 스캔할때 베타버전으로 인식률떨어질 수 있다고 적어놓으면 좋을 것 같아
+                  (대신 잘보이는 색상으로)"*)
+                  ⛔ 예전엔 이 말이 **냉장고 화면의 작은 회색 글씨**로만 있었다 — 정작 찍는 사람은 못 본다.
+                  ⭐ 여기 배경이 어두워서 회색(`#8f8b83`)은 묻힌다 → 베타 뱃지와 같은 계열의 **밝은 살구색**. */}
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8,
+                background: 'rgba(240,180,90,0.18)', border: '1px solid rgba(240,180,90,0.55)',
+                color: '#f6c886', borderRadius: 999, padding: '5px 12px', fontSize: 12.5, fontWeight: 800,
+              }}>
+                베타 · 영수증에 따라 잘못 읽을 수 있어요
+              </span>
+              <br />
               위·아래 매장 정보·합계는 빼고 <b style={{ color: '#f0ede7' }}>상품명·가격이 적힌 부분만</b> 남겨주세요.
               <br />
-              <span style={{ color: '#8f8b83', fontSize: 11.5 }}>딱 맞게 자를수록 · 반듯하고 밝을수록 정확해요</span>
+              <span style={{ color: '#8f8b83', fontSize: 11.5 }}>딱 맞게 자를수록 · 반듯하고 밝을수록 정확해요 · 담기 전에 한 번 더 확인해요</span>
             </>
           }
           onDone={scanReceipt}
@@ -244,9 +315,14 @@ export default function PantryView() {
         return (
           <div key={p.id} className="wish-row">
             {/* 재료를 탭하면 편집(수량·유통기한·이모지·메모) */}
-            <button className="press" onClick={() => setForm(p)} style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, textAlign: 'left' }}>
-              <div className="emoji-tile" style={{ width: 46, height: 46, flex: '0 0 auto', fontSize: 26 }}>
-                {p.thumb === 'emoji' && p.emoji ? p.emoji : <FoodIcon name={p.icon || guessFoodIcon(p.name)} size={28} />}
+            <button className="press" onClick={() => setForm(p)} style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textAlign: 'left' }}>
+              {/* 🔽 [2026-08-12] 창업자 *"장보기에 재료담으면 음식아이콘이 너무 커서 장보기 재료가 안보임"*
+                  🔢 옛 값 = 타일 46×46 ＋ 아이콘 28. 한 줄이 [타일 46] ＋ gap 12 ＋ [이름] ＋ [유통기한 칩] ＋ [✕]
+                     이라, 좁은 폰(360px)에서 이름 칸이 눌려 «말줄임(…)»으로 잘렸다.
+                  ✅ 타일 46→**38** · 아이콘 28→**24** · gap 12→**10** → 이름 칸이 **10px** 넓어진다.
+                  ⛔ 더 줄이지 않는다 — 38 은 영수증 확인 시트(`:284`)와 같은 값이라 앱 안에서 결이 맞는다. */}
+              <div className="emoji-tile" style={{ width: 38, height: 38, flex: '0 0 auto', fontSize: 22 }}>
+                {p.thumb === 'emoji' && p.emoji ? p.emoji : <FoodIcon name={p.icon || guessFoodIcon(p.name)} size={24} />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -263,43 +339,8 @@ export default function PantryView() {
         )
       })}
 
-      {matches.length > 0 && (
-        <>
-          <div className="sec-head"><div className="h-section">냉장고 파먹기</div></div>
-          <div className="t-sub" style={{ fontSize: 12.5, marginTop: -2, marginBottom: 12 }}>지금 가진 재료로 만들 수 있어요.</div>
-          <div className="grid2">
-            {matches.map(({ r, n }) => (
-              <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
-                <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
-                <div className="name">{r.title}</div>
-                <div className="date">가진 재료 {n}개</div>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* 내 레시피·기본 레시피에서 마땅한 게 없을 때 — 한끼가 추천 */}
-      {pantry.length > 0 && matches.length === 0 && (
-        <>
-          <div className="sec-head"><div className="h-section">한끼 추천</div></div>
-          <div className="t-sub" style={{ fontSize: 12.5, marginTop: -2, marginBottom: 12 }}>
-            가진 재료로 딱 맞는 레시피가 없네요. 실패 없는 기본 메뉴는 어때요?
-          </div>
-          <div className="grid2">
-            {recipes
-              .filter((r) => String(r.id).startsWith('basic-'))
-              .slice(0, 4)
-              .map((r) => (
-                <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
-                  <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
-                  <div className="name">{r.title}</div>
-                  <div className="date">기본 제공</div>
-                </button>
-              ))}
-          </div>
-        </>
-      )}
+      {/* ⛔ 「가진 재료로 만들 수 있어요」·「한끼 추천」은 **맨 위로 옮겼다**(위 `추천칸`).
+          여기 아래에 두면 재료가 쌓일수록 화면 밖으로 밀려 아무도 못 본다. */}
     </div>
   )
 }

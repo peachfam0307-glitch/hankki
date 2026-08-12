@@ -155,8 +155,17 @@ export default function DiaryScreen({ day }) {
         <div style={{ fontSize: 15, fontWeight: 800 }}>
           {date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 13, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span>
         </div>
+        {/* ⛔⛔ [2026-08-12] 지운 뒤 «화면을 떠난다». 안 그러면 지운 일기가 되살아난다.
+            📮 창업자 *"일기 지워도 뜸. (아카이브+달력)"* — 재현으로 확정했다(`_repro-일기삭제-0812` ②-2).
+            🔬 무슨 일이 났나 = 지워도 이 화면에 그대로 머무는데, `text` state 는 지운 글을 쥐고 있다.
+               그 상태에서 한 글자만 쳐도 자동저장(350ms)이 돌고, `entry` 가 null 이라
+               `save()` 가 `updateDiary` 가 아니라 **`addDiary` 로 «새 id»를 만든다**(74줄).
+               → 달력 펜 표시가 다시 뜬다. 「지웠는데 또 있다」의 정체다.
+            ✅ 고침 = 지우면 바로 `nav.pop()`. 머물 이유가 없다 — 볼 일기가 없어졌으니까.
+            ⛔⛔ 이 주석을 `{entry ? (` **뒤로** 옮기지 말 것 — 거긴 «표현식 자리»라 JSX 주석이 못 온다.
+               2026-08-12 에 그렇게 넣어 빌드를 깼다(`Expected ")" but found "className"`). CLAUDE.md 에도 있는 함정이다. */}
         {entry ? (
-          <button className="bar-btn" aria-label="일기 삭제" onClick={() => { removeDiary(entry.id); nav.showToast('일기를 지웠어요') }}>
+          <button className="bar-btn" aria-label="일기 삭제" onClick={() => { removeDiary(entry.id); nav.showToast('일기를 지웠어요'); nav.pop() }}>
             <Icon name="trash" size={19} />
           </button>
         ) : <span style={{ width: 36 }} />}

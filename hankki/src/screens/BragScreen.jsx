@@ -7,6 +7,8 @@ import DecorLayer from '../components/DecorLayer'
 import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 import Portal from '../components/Portal'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
+import Icon from '../components/Icon'
+import { matchKo } from '../utils'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
 import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
@@ -34,10 +36,22 @@ export default function BragScreen() {
   const [coach, setCoach] = useState(() => needsCoach(BRAG_COACH_KEY))
   const coverRef = useRef(null) // 꾸민 표지 캡처용(화면 밖 숨은 레이어)
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
-  const list = useMemo(
+  // 🔍 레꾸자랑 «안에서» 찾기 (창업자 요청 2026-08-10 — *"레꾸자라에 검색도 넣고."*)
+  //   ⭐ 레시피 탭(v9.68)·주부의 장바구니(v9.70)에 이미 넣은 것과 «같은 처방»이다. 새로 만들지 않았다.
+  //      우상단 돋보기로 그 자리에서 열리고, 치는 대로 걸러진다(화면을 안 떠난다).
+  //   ⚠️ 여기 목록은 레시피가 쌓일수록 길어지는데, 자랑하려는 건 «방금 꾸민 그 한 장»이라
+  //      스크롤로 찾는 게 제일 답답한 화면이었다.
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [q, setQ] = useState('')
+  const query = q.trim().toLowerCase()
+  const sorted = useMemo(
     () => recipes.filter((r) => r.status === 'sorted').sort((a, b) => b.savedAt - a.savedAt),
     [recipes],
   )
+  // 초성으로도 찾는다 — 「ㄱㅂ」으로 「김밥」이 걸린다(`matchKo`, 장보기 탭과 같은 함수)
+  const list = query
+    ? sorted.filter((r) => matchKo([r.title, r.category, r.folder, ...(r.tags || []), ...(r.ingredients || [])].filter(Boolean).join(' '), query))
+    : sorted
   const appUrl = location.origin + location.pathname.replace(/[^/]*$/, '')
   const isDecorated = (r) => !!((r?.decor && r.decor.length) || (r?.decorBg && r.decorBg !== 'none') || r?.thumb === 'none')
   const hasRecipe = (r) => !!((r?.ingredients || []).length || (r?.steps || []).length)
@@ -109,24 +123,72 @@ export default function BragScreen() {
     <>
       <div className="topbar">
         <div className="h-title">레꾸자랑</div>
+        <button
+          className="icon-btn press"
+          onClick={() => setSearchOpen((v) => { if (v) setQ(''); return !v })}
+          aria-label={searchOpen ? '찾기 닫기' : '자랑할 레시피 찾기'}
+        >
+          <Icon name={searchOpen ? 'x' : 'search'} size={22} />
+        </button>
       </div>
-      <div className="pad">
-        <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 16 }}>
-          내 레시피를 <b style={{ color: 'var(--text)' }}>내가 꾸민 표지</b>나 <b style={{ color: 'var(--text)' }}>예쁜 랜덤 카드</b>로 친구한테 자랑하고, 표지로도 저장해요.
-        </div>
 
-        {/* 안내 — 자랑할 레시피를 눌러주세요(창업자 요청) */}
-        <div style={{ fontSize: 14.5, fontWeight: 800, color: 'var(--text)', margin: '2px 2px 11px', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <img src={uiHandPoint} alt="" draggable={false} style={{ width: 22, height: 22, objectFit: 'contain', flex: '0 0 auto' }} />
-          자랑할 레시피를 눌러주세요
+      {searchOpen && (
+        <div className="pad fade" style={{ marginBottom: 10 }}>
+          <div className="searchbar">
+            <Icon name="search" size={19} color="var(--text-sub)" />
+            {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="자랑할 레시피 찾기 · 제목 · 재료 · 태그"
+              autoComplete="off"
+              autoFocus
+            />
+            {q && (
+              <button className="press" onClick={() => setQ('')} aria-label="지우기">
+                <Icon name="x" size={18} color="var(--text-sub)" />
+              </button>
+            )}
+          </div>
+          {query && (
+            <div className="t-sub" style={{ margin: '10px 2px 0', fontSize: 12.5 }}>
+              ‘{q.trim()}’ — 내 레시피 {list.length}개
+            </div>
+          )}
         </div>
+      )}
+
+      <div className="pad">
+        {/* 찾는 중엔 안내문을 감춘다 — 이미 무엇을 하려는지 아는 사람이다 */}
+        {!query && (
+          <>
+            <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 16 }}>
+              내 레시피를 <b style={{ color: 'var(--text)' }}>내가 꾸민 표지</b>나 <b style={{ color: 'var(--text)' }}>예쁜 랜덤 카드</b>로 친구한테 자랑하고, 표지로도 저장해요.
+            </div>
+
+            {/* 안내 — 자랑할 레시피를 눌러주세요(창업자 요청) */}
+            <div style={{ fontSize: 14.5, fontWeight: 800, color: 'var(--text)', margin: '2px 2px 11px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <img src={uiHandPoint} alt="" draggable={false} style={{ width: 22, height: 22, objectFit: 'contain', flex: '0 0 auto' }} />
+              자랑할 레시피를 눌러주세요
+            </div>
+          </>
+        )}
 
         {list.length === 0 ? (
-          <div className="empty">{'아직 레시피가 없어요.\n가져오기로 담으면 여기서 예쁜 카드로 자랑할 수 있어요'}</div>
+          <div className="empty">
+            {query
+              ? `‘${q.trim()}’ 로 찾은 레시피가 없어요.\n제목·재료·태그로 찾아요 · 초성(ㄱㅂ)도 돼요`
+              : '아직 레시피가 없어요.\n가져오기로 담으면 여기서 예쁜 카드로 자랑할 수 있어요'}
+          </div>
         ) : (
-          <div className="grid2" data-coach="brag-list">
-            {list.map((r) => (
-              <div key={r.id} className="grid-card">
+          <div className="grid2">
+            {/* ⛔⛔ `data-coach` 를 **격자 통째**에 붙였다가 안내코치가 깨졌다 (창업자 폰 2026-08-10)
+                — 레시피가 217개면 이 div 높이가 **4807px** 이라 코치가 화면을 못 어둡게 하고
+                  말풍선이 y −2178 로 사라져 **금색 테두리만** 남았다.
+                ✅ 코치는 **첫 카드 하나**를 가리킨다 — 「레시피를 탭하세요」니까 가리킬 것도 카드다.
+                ⛔ 이 주석을 `) : (` 바로 뒤로 올리지 말 것 — 표현식 여는 자리라 빌드가 깨진다(실제로 깨뜨렸다). */}
+            {list.map((r, i) => (
+              <div key={r.id} className="grid-card" {...(i === 0 ? { 'data-coach': 'brag-list' } : {})}>
                 <button className="press" style={{ textAlign: 'left', width: '100%' }} onClick={() => setPick(r)} aria-label={`${r.title} 자랑하기`}>
                   <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                   <div className="name">{r.title}</div>
@@ -199,7 +261,8 @@ export default function BragScreen() {
         </div>
       )}
 
-      {coach && list.length > 0 && <CoachMarks storageKey={BRAG_COACH_KEY} steps={BRAG_COACH_STEPS} onDone={() => setCoach(false)} />}
+      {/* ⚠️ 코치는 «찾는 중»엔 안 띄운다 — 검색으로 0개가 되면 짚을 카드가 없다(list 가 아니라 sorted 로 본다) */}
+      {coach && !searchOpen && sorted.length > 0 && <CoachMarks storageKey={BRAG_COACH_KEY} steps={BRAG_COACH_STEPS} onDone={() => setCoach(false)} />}
     </>
   )
 }

@@ -19,6 +19,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { readPins, byTopic, scanDocs, topicsIn } from './latest-map.mjs'
+import { checkStale, staleBanner } from './stale-check.mjs'
 
 const ROOT = (() => {
   try { return execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim() } catch { return process.cwd() }
@@ -39,6 +40,28 @@ const rel = (p) => {
 let hook = {}
 try { hook = JSON.parse(readFileSync(0, 'utf8')) } catch { process.exit(0) }
 const ev = hook.hook_event_name || ''
+
+// ⛔⛔⛔ **낡은 디스크에서는 「최신 문서」를 «뿌리지 않는다».** (창업자 2026-08-11 *"시작브리핑 낡은거 반영안되도록 시스템만들자"*)
+//
+//   그날 아침 컨테이너가 «어제 낮» 스냅샷으로 되살아났는데 이 훅은 **그걸 모르고**
+//   *"작업복기 → 2026-08-09"* 를 「최신」이라며 뿌렸다. 어젯밤에 8/10 판을 만들어 푸시해 뒀는데도.
+//   ⭐⭐ **제일 나쁜 것은 「낡은 것」이 아니라 「낡은 것을 최신인 척 주는 것」이다.**
+//      최신인 줄 알면 그 위에서 판단하고 문서를 고치고 창업자에게 보고한다 — 2026-08-10 에 실제로 그랬다.
+//
+//   ⭐ 그래서 낡았으면 **목록 대신 「낡았다」만** 내보낸다. 값이 없으면 다시 받게 되지만,
+//      틀린 값이 있으면 그걸 믿는다. **없는 게 틀린 것보다 낫다.**
+//   ⚠️ 도는 자리를 «둘»로 좁힌다 — 창업자가 말할 때(UserPromptSubmit)와 세션 시작(SessionStart).
+//      PreToolUse(파일 열기)에서까지 뿌리면 시끄럽고, 시끄러운 게이트는 죽은 게이트다.
+//   ⏱ 세션 시작엔 반드시 새로 받아 보고(always), 그 뒤엔 10분마다만 받는다(auto).
+if (ev === 'UserPromptSubmit' || ev === 'SessionStart') {
+  try {
+    const s = checkStale({ fetch: ev === 'SessionStart' ? 'always' : 'auto' })
+    if (s.ok && s.stale) {
+      console.log(staleBanner(s))
+      process.exit(0) // ⛔ 낡은 목록을 «이어서» 뿌리지 않는다 — 그게 그날 사고의 모양이었다
+    }
+  } catch { /* 훅은 절대 세션을 깨지 않는다 — 못 재면 그냥 평소대로 간다 */ }
+}
 
 try {
   // ── ① 창업자가 말할 때마다 — 그 주제의 최신을 들이민다 ──────────

@@ -53,7 +53,7 @@ export default function CookScreen({ id }) {
       cook(r.id)
     }
     nav.popAll()
-    nav.showToast('완성! 요리 기록에 담았어요 별점·팁은 레시피 화면에서')
+    nav.showToast('완성! 한끼 일기에 담았어요 별점·팁은 레시피 화면에서')
   }
 
   return (

@@ -22,8 +22,44 @@ import uiGomClap from '../assets/ui/gom_clap.png'
 import gpDuoHeart from '../assets/stickers/photo/gp_duoht.png'
 import { needsOnboarding } from '../components/Onboarding'
 import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount } from '../nudges'
-import { weeklyNow } from '../data/weekly'
+import { weeklyNow, homemadeNow } from '../data/weekly'
 import { whatsNew } from '../data/whatsnew'
+import { pantryScore } from '../pantryMatch'
+
+// 🗓🍳 「이번 주」 박스 — 제철 줄과 우리집레시피 줄이 «똑같이» 생겼다.
+//   ⛔ 마크업을 두 번 적지 않는다 — 그러면 한쪽만 고치는 사고가 난다(2026-08-11 신설).
+//   ⚠️ HomeScreen «밖»에 둔다. 안에 정의하면 렌더마다 새 컴포넌트가 되어 리마운트가 일어난다.
+function WeekBox({ w, 기본, open, img }) {
+  return (
+    <div className="weekly-box">
+      <div className="weekly-text">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {/* ⚠️ `calendar` 아이콘은 우리 세트에 «없다» — 이름을 추측해 넣으면 화면에 아무것도 안 나온다.
+              있는 것 중 「새로 왔어요」에 가장 가까운 `sparkle`. (전체 목록 = `src/components/Icon.jsx`)
+              🍳 우리집레시피는 «우리 스티커»로 가른다 — 두 박스가 같은 아이콘이면 구분이 안 된다.
+                 ⛔ 유니코드 이모지는 안 쓴다(우리 스티커만). */}
+          {img
+            ? <img src={img} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />
+            : <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />}
+          {/* ⛔ 여기 「이번 주 제철」이 «글자로 박혀» 있었다 — 제철이 아닌 주도 그렇게 떴다.
+              (2026-09-28 「추석 남은 음식」이 실제로 그랬고, 52주 표 기준 17주가 제철이 아니다) */}
+          <div className="weekly-kicker">{w.kicker || 기본}</div>
+        </div>
+        <div className="weekly-title">{w.title}</div>
+        <div className="t-sub weekly-why">{w.why}</div>
+      </div>
+      {/* 🗓 `weekly-row` = 밀지 않고 한 화면에 딱 맞는 격자 (2026-08-03 오징어 상자 사고 → 잘림 0) */}
+      <div className="weekly-row">
+        {w.items.map((r) => (
+          <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
+            <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
+            <div className="name">{r.title}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 // 홈 첫 방문 코치마크 — 진짜 핵심 기능부터 짚어준다(창업자 딸 아이디어 ⭐).
 // 첫 스텝을 '되는 기능'(가져오기·오늘 뭐 해먹지)으로, 곧 출시 미리보기는 맨 뒤에 살짝.
@@ -71,6 +107,9 @@ export default function HomeScreen() {
   // 🗓 이번 주 레시피 — 달력이 여는 줄. ⛔재고가 없으면 `null` 이라 **줄을 아예 안 그린다**
   //    (빈 「이번 주」 자리를 남기지 않는다 · `LAB_*_URL` 이 비면 그 칸을 안 그리는 것과 같은 방식).
   const weekly = useMemo(() => weeklyNow(recipes), [recipes])
+  // 🍳 우리집레시피 — 창업자가 실제로 해먹는 것. 제철과 «별개» 줄이다(창업자 확정 2026-08-11, 안 ⒜).
+  //    ⛔ 재고가 없으면 `null` 이라 박스를 아예 안 그린다(제철 줄과 같은 규칙).
+  const homemade = useMemo(() => homemadeNow(recipes), [recipes])
 
   // 📣 소식 한 줄 — ⛔손으로 적지 않는다. 날짜 게이트와 «같은 데이터»를 세어 만든다.
   //    새로 열린 게 있으면 그걸 먼저 말하고, 없으면 다음에 열릴 것을, 그것도 없으면 예고 목록을 말한다.
@@ -98,17 +137,14 @@ export default function HomeScreen() {
   const closeNews = () => { markNewsSeen(news); setNewsPop(false) }
 
   // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
+  // ⭐ 맞추기·점수는 `src/pantryMatch.js` **한 곳**에서 한다 —
+  //    「냉장고 파먹기」(`PantryView`)와 «같은 판단»이라야 두 화면이 딴소리를 안 한다.
+  //    (2026-08-10 창업자 *"오늘뭐해먹지는 뭘 기반으로 추천해주는거야?"* → 코드를 읽다 두 곳이
+  //     따로 적혀 있고 둘 다 「글자 포함」이라 「무」가 «풀무원·단무지»에 걸리는 걸 찾았다)
   const today = useMemo(() => {
     const pool = recipes.filter((r) => r.status !== 'unsorted')
     const withPantry = pool
-      .map((r) => {
-        const ings = (r.ingredients || []).join(' ')
-        const n = (pantry || []).filter((p) => {
-          const k = (p.name || '').trim().split(/\s+/)[0]
-          return k && ings.includes(k)
-        }).length
-        return { r, n }
-      })
+      .map((r) => ({ r, n: pantryScore(r, pantry) }))
       .filter((x) => x.n > 0)
       .sort((a, b) => b.n - a.n)
     if (withPantry.length) return { list: withPantry.map((x) => x.r), fromFridge: true }
@@ -217,24 +253,53 @@ export default function HomeScreen() {
                우리 업데이트는 «날짜가 저절로» 여는데 앱이 아무 말도 안 했다.
                ⛔ 부제를 손으로 적어두면 낡는다 → `whatsNew()` 가 실제로 열린 것을 세어 말한다.
             ⛔ 뱃지는 «새로 열린 게 있을 때만» 뜬다 — 늘 떠 있으면 아무도 안 본다. */}
-        <button
-          className="press"
-          onClick={() => setPreview(true)}
-          data-coach="preview"
-          style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 14, background: 'var(--tease)', border: 'none', textAlign: 'left' }}
-        >
-          <span style={{ flex: '0 0 auto', display: 'inline-flex' }}><Icon name="gift" size={20} color="var(--tease-ic)" stroke={1.7} /></span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>한끼 소식</span>
-              {news.opened.length > 0 && (
-                <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
+        {/* 📐📐 **넓은 화면에선 「한끼 소식」과 「오늘 뭐 해먹지」가 좌우로 나란히 선다** (창업자 확정 2026-08-10 · 안 E)
+            📮 창업자 *"홈에사 한끼소식이랑 오징어가 너무 오른쪽이 휑해보인다.."* → 갈래 여섯을 실물로 찍어 **E** 확정.
+            ⛔ 뿌리 = 둘 다 `flex` 라 「글 왼쪽 · 화살표 오른쪽」이고, 넓어지면 **가운데만** 늘어난다.
+               🔢 손대기 전 실측(패드 1600) = 소식 빈 폭 **1364px** · 오늘 빈 폭 **1358px**.
+            ⭐ 폭 상한을 씌우지 «않는다» — 창업자 확정 안 D(v10.07) 「가로에선 앱이 화면 폭을 꽉 쓴다」와 안 부딪히게.
+            ⚠️ 이 묶음 때문에 «순서»가 바뀐다(소식 → 오늘 → 제철). 창업자가 고른 E 시안이 그 순서였다. */}
+        <div className="home-pair">
+          <button
+            className="press news-card"
+            onClick={() => setPreview(true)}
+            data-coach="preview"
+          >
+            <span style={{ flex: '0 0 auto', display: 'inline-flex' }}><Icon name="gift" size={20} color="var(--tease-ic)" stroke={1.7} /></span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {/* 🔠 크기는 인라인이 아니라 클래스로 — 넓은 화면에서 키우려면 CSS 가 이겨야 한다
+                    (인라인은 `!important` 없이는 절대 못 이긴다 · v10.08 에 실제로 당했다) */}
+                <span className="news-title">한끼 소식</span>
+                {news.opened.length > 0 && (
+                  <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
+                )}
+              </div>
+              <div className="t-sub news-sub">{newsLine}</div>
+            </div>
+            <Icon name="chevron-right" size={18} color="var(--sand)" />
+          </button>
+
+          {/* 오늘 뭐 해먹지? */}
+          {todayPick && (
+            <div className="today-card" data-coach="today">
+              <button className="today-main press" onClick={() => open(todayPick.id)}>
+                {/* ⛔⛔ 크기를 클래스로만 주면 «안 먹는다» — `Thumb` 이 `width: 100%` 를 **인라인**으로 넣기 때문.
+                    2026-08-10 에 이걸로 카드가 통째로 깨졌다(썸네일이 전폭 · 글자가 세로로 쌓임).
+                    ⭐ 그래서 인라인이 **CSS 변수를 읽게** 한다 — 넓은 화면에선 `.today-card` 가 그 변수만 바꾼다. */}
+                <Thumb recipe={todayPick} style={{ width: 'var(--today-thumb)', height: 'var(--today-thumb)', flex: '0 0 auto' }} radius={16} showDecor />
+                <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                  <div className="today-label">오늘 뭐 해먹지?</div>
+                  <div className="today-title">{todayPick.title}</div>
+                  <div className="today-reason">{today.fromFridge ? '냉장고 재료로 만들 수 있어요' : '이건 어때요?'}</div>
+                </div>
+              </button>
+              {today.list.length > 1 && (
+                <button className="today-refresh press" onClick={() => setPick((p) => p + 1)}>다른<br />추천</button>
               )}
             </div>
-            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{newsLine}</div>
-          </div>
-          <Icon name="chevron-right" size={18} color="var(--sand)" />
-        </button>
+          )}
+        </div>
 
         {/* 🗓 이번 주 레시피 — 「왜 이게 올라왔는지」를 말해주는 자리.
             창업자 2026-08-03: *"뭐라도 안내를 하고 올려야지 않나? 올린 이유를?
@@ -242,42 +307,19 @@ export default function HomeScreen() {
             → 8/2 에 레시피 12편을 «안내 없이» 부어서 유저 눈엔 그냥 목록이 늘어난 것이었다.
             ⛔ 재고가 없으면 `weekly` 가 null 이라 이 줄이 통째로 안 그려진다(빈 자리 금지).
             ⛔ 「이번 주」는 **추천이지 잠금이 아니다** — 지난 주 것도 레시피 탭에 그대로 있다. */}
-        {weekly && (
-          <div style={{ marginTop: 14, padding: '13px 14px 12px', borderRadius: 16, background: 'var(--cream)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {/* ⚠️ `calendar` 아이콘은 우리 세트에 «없다» — 이름을 추측해 넣으면 화면에 아무것도 안 나온다.
-                  있는 것 중 「새로 왔어요」에 가장 가까운 `sparkle`. (전체 목록 = `src/components/Icon.jsx`) */}
-              <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />
-              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--brown)', letterSpacing: '0.02em' }}>이번 주 제철</div>
-            </div>
-            <div style={{ fontSize: 17, fontWeight: 800, marginTop: 5 }}>{weekly.title}</div>
-            <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3, lineHeight: 1.5 }}>{weekly.why}</div>
-            {/* 🗓 `weekly-row` = 밀지 않고 한 화면에 딱 맞는 격자 (2026-08-03 오징어 상자 사고 → 잘림 0) */}
-            <div className="weekly-row" style={{ marginTop: 11 }}>
-              {weekly.items.map((r) => (
-                <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
-                  <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
-                  <div className="name">{r.title}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 오늘 뭐 해먹지? */}
-        {todayPick && (
-          <div className="today-card" data-coach="today">
-            <button className="today-main press" onClick={() => open(todayPick.id)}>
-              <Thumb recipe={todayPick} style={{ width: 72, height: 72, flex: '0 0 auto' }} radius={16} showDecor />
-              <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                <div className="today-label">오늘 뭐 해먹지?</div>
-                <div className="today-title">{todayPick.title}</div>
-                <div className="today-reason">{today.fromFridge ? '냉장고 재료로 만들 수 있어요' : '이건 어때요?'}</div>
-              </div>
-            </button>
-            {today.list.length > 1 && (
-              <button className="today-refresh press" onClick={() => setPick((p) => p + 1)}>다른<br />추천</button>
-            )}
+        {/* 📐 **넓은 화면에선 이 줄이 반반으로 갈린다** — 왼쪽은 글, 오른쪽은 요리 셋.
+            📮 창업자 2026-08-10 *"이번주 제철은 반반으로 나눠서(지금 한줄을) 왼쪽반은 글자 쪽(글자크기키우기)
+               오른쪽반은 이미지넣자. **(윗줄 콩국수랑 같은 위치로)**"*
+            ⭐ 「같은 위치」가 핵심이다 — 위 `home-pair` 의 오른쪽 칸(오늘 뭐 해먹지)과 **x 가 딱 맞아야**
+               두 줄이 한 판으로 읽힌다. 그래서 `1fr 1fr` ＋ 같은 `gap` 을 쓴다(auto 로 두면 카드가 오른쪽 끝에 몰린다). */}
+        {/* 🍳 ＋ 우리집레시피 = 창업자가 실제로 해먹는 것 (창업자 확정 2026-08-11 · 안 ⒜ 별도 줄)
+            📐 창업자 *"폰에서는 2줄이 필요하지만 패드에서는 1줄에 다 들어가잖아"*
+               · 폰   = 위아래 두 박스   · 패드 = 좌우 나란히 (`.week-pair.two`)
+            ⛔ `two` 는 «둘 다 있을 때만» 붙는다 — 하나뿐이면 지금 모양(박스 안이 좌우로) 그대로다. */}
+        {(weekly || homemade) && (
+          <div className={`week-pair${weekly && homemade ? ' two' : ''}`}>
+            {weekly && <WeekBox w={weekly} 기본="이번 주 제철" open={open} />}
+            {homemade && <WeekBox w={homemade} 기본="우리집레시피" open={open} img={uiGomHeart} />}
           </div>
         )}
 
