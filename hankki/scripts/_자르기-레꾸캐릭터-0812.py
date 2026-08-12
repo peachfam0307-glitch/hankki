@@ -281,12 +281,19 @@ def main():
     for r in range(줄수):
         y0, y1 = rows[r], rows[r + 1]
         cols = 칸경계(a, y0, y1, 칸수)
-        cy, capH = 캡션y(a, y0, y1)
-        print(f'  ▦ {r+1}줄  y {y0}~{y1}  칸 {cols}  캡션위 {cy} (띠 {capH}px)')
+        # ⛔⛔ **캡션을 「줄 전체」로 찾으면 못 찾는 줄이 나온다** (2026-08-12 밤 · 창업자
+        #    *"글자있으니까 일기장 꾸민게 안살아"* 로 글자없음 판이 필요해지며 드러났다)
+        #    🔢 실측 = 시트3·6 에서 글자없음이 **6컷 중 3컷**만 나왔다.
+        #       한 줄 안에서도 칸마다 캡션이 56~71px 로 달라, 줄을 통째로 재면 띠가 뭉개진다.
+        #    ✅ **칸별로 잰다** — 균일 격자로 다시 재니 12/12 전부 찾힌다(진단으로 확인).
+        cy_줄, capH줄 = 캡션y(a, y0, y1)
+        print(f'  ▦ {r+1}줄  y {y0}~{y1}  칸 {cols}  줄기준 캡션위 {cy_줄} (띠 {capH줄}px)')
         for c in range(칸수):
             n += 1
             키 = f'{접두}{n:02d}'
             x0, x1 = cols[c], cols[c + 1]
+            cy_칸, capH칸 = 캡션y(a[:, x0:x1], y0, y1)
+            cy, capH = (cy_칸, capH칸) if cy_칸 else (cy_줄, capH줄)
             a1 = 알파로(rgb[y0:y1, x0:x1].copy(), capY=(cy - y0) if cy else None)
             if a1 is None:
                 print(f'   ⚠️ {키} — 칸이 비었다')

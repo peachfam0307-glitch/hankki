@@ -513,7 +513,14 @@ function Note({ it, editable, typing, onText }) {
   //   ⭐ 배율을 「글자가 커질 수 있는 «한도»」에 건다 — `autoCqw` 가 «넘치지 않는 가장 큰 값»을 찾으므로
   //      짧은 글은 한도까지 커지고, 긴 글은 그 안에서 알아서 줄어든다. **잘림이 안 생긴다.**
   //   ⛔ 결과값에 곱하면 안 된다 — 그건 이미 «딱 맞는 최대»라 곱하는 순간 무조건 넘친다(앞 판의 실수).
-  const noteCqw = autoCqw(text, 14 * textSizeV(it.tz), 100 - pp[1] * 2, 100 / 1.06 - pp[0] * 2, 1.4, textSizeV(it.tz) > 1 ? 1.25 : 1)
+  // 📏 **「보통」 크기를 먼저 구하고, 거기에 배율을 «곱한다».**
+  //   ⛔⛔ 앞 판은 배율을 «한도»(max)에 넣었다 — 창업자가 정확히 잡았다:
+  //      *"보통보다 크게가 살짝 더 작아져"* . autoCqw 는 0.25 씩 내려가며 맞는 값을 찾는데
+  //      **시작점이 바뀌면 «다른 계단»에 걸려** 큰 한도에서 내려온 값이 오히려 더 작아질 수 있다.
+  //      (한 줄에 들어갈 글자 수 per = floor(폭/r) 이 계단식으로 뚝뚝 떨어져서다)
+  //   ⭐ 그래서 계산은 «보통»으로 한 번만 하고 결과에 배율을 곱한다 — 순서가 뒤집힐 수 없다.
+  //   ⭐ 넘치면 «안 자른다»(아래 overflow) — 창업자가 싫다 한 건 「잘림」이지 「넘침」이 아니다.
+  const noteCqw = autoCqw(text, 14, 100 - pp[1] * 2, 100 / 1.06 - pp[0] * 2, 1.4) * textSizeV(it.tz)
 
   return (
     <div style={{ position: 'absolute', inset: 0, containerType: 'size', color: c.text }}>
@@ -539,7 +546,8 @@ function Note({ it, editable, typing, onText }) {
           //      **14 = 열둘 전부 한 줄** ← 여기가 「한 줄이 되는 가장 큰 값」이라 제일 안 작아 보인다.
           //   ⛔ 더 낮추지 말 것 — 14 에서 이미 요구가 충족돼 그 아래는 글씨만 작아진다.
           fontSize: `clamp(6px, ${noteCqw}cqw, 72px)`, lineHeight: 1.4,
-          overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
+          // ⭐ 「크게」 이상이면 «안 자른다» — 창업자가 싫다 한 건 「잘림」이고, 넘치는 건 다 보인다.
+          overflow: textSizeV(it.tz) > 1 ? 'visible' : 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
           // ⌨️ `safe` — 글이 칸보다 커지면 치는 칸과 같은 「위 정렬」이 되어 글자가 안 튄다(위 ArtBox 주석 참조)
           display: 'flex', alignItems: 'safe center', justifyContent: 'safe center', textAlign: 'center',
           ...(typing ? { visibility: 'hidden' } : null),
@@ -647,7 +655,7 @@ function ArtBox({ it, editable, typing, onText }) {
     //   ⛔⛔ 처음엔 `Note` 쪽만 고치고 여기를 빠뜨려 **재현이 「글자가 안 커졌다」로 잡았다.**
     //      창업자가 쓴 말풍선은 `it.art` 가 있어 **`ArtBox`(여기)** 로 온다 — 두 함수를 «같이» 고쳐야 한다.
     // 📏 배율은 「커질 수 있는 한도」에 건다 — 그림(상자)은 그대로, 글자만 커진다.
-    fontSize: `clamp(6px, ${autoCqw(text, 13 * textSizeV(it.tz), 100 - pad[1] - pad[3], (100 - pad[0] - pad[2]) / (stickerRatio(it.art) || 1), 1.35, textSizeV(it.tz) > 1 ? 1.25 : 1)}cqw, 64px)`,
+    fontSize: `clamp(6px, ${autoCqw(text, 13, 100 - pad[1] - pad[3], (100 - pad[0] - pad[2]) / (stickerRatio(it.art) || 1), 1.35) * textSizeV(it.tz)}cqw, 64px)`,
     lineHeight: 1.35,
     whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
     textAlign: 'center',
@@ -661,7 +669,8 @@ function ArtBox({ it, editable, typing, onText }) {
       {/* 글자 — 잰 여백 «안»에만. 그림 위라 층을 안 줘도 나중에 칠해진다 */}
       <div
         style={{
-          ...inner, overflow: 'hidden',
+          // ⭐ 「크게」 이상이면 «안 자른다»(위 Note 와 같은 규칙)
+          ...inner, overflow: textSizeV(it.tz) > 1 ? 'visible' : 'hidden',
           // 얇은 손글씨만 동색 얇은 외곽선 — 포스트잇과 같은 규칙(창업자 요청)
           ...((it.font === 'gaegu' || it.font === 'nanumpen') ? { WebkitTextStroke: `0.4px ${ink}`, paintOrder: 'stroke fill' } : {}),
           // ⌨️ `safe` 가 핵심 — **글이 칸보다 크면** 그냥 `center` 는 위아래로 똑같이 밀어내는데
