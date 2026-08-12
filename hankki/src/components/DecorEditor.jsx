@@ -549,6 +549,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     { key: 'tape', label: '마테' },
     { key: 'deco', label: '데코' },
     { key: 'notetext', label: '글자' },
+    // 📔📔 **「기록」 = 일꾸 전용 탭** (창업자 2026-08-12 *"일꾸에 탭을 하나 만들어서 거기에 다 넣자"*)
+    //   ⭐ 왜 «글자» 탭에 안 넣나 = 창업자 원문 그대로다 —
+    //      *"레꾸에 글자가 너무 많아서 스크롤하려면 좀 불편했어. 일꾸는 상대적으로 스티커가 너무 적었고"*
+    //      99컷을 일꾸 «글자» 탭에 그냥 옮기면 **이번엔 일꾸 글자 탭이 길어진다.** 문제가 자리만 옮긴다.
+    //   ⭐ 여기 들어가는 것 = 맛 평가·반응 평가·조리법·요리 상황·식사 상황·미리 준비·보관·건강 태그
+    //      여덟 다 «요리를 기록할 때 붙이는 라벨»이라 한 탭으로 묶이는 게 자연스럽다.
+    //   ⚠️ 레꾸에선 이 탭이 저절로 사라진다 — 그룹이 전부 `only: 'diary'` 라 0개가 되고,
+    //      591줄 「빈 탭은 안 그린다」가 걷어낸다. `isDiary` 조건은 «혹시»를 막는 이중 안전장치다.
+    ...(isDiary ? [{ key: 'record', label: '기록' }] : []),
     { key: 'buddies', label: '친구들' },
     { key: 'food', label: '재료' },
   ]
@@ -627,7 +636,18 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const it = {
       id: newDecorId(), type: 'sticker', key,
       x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.46 : 0.42 + ((n % 4) - 1.5) * 0.05,
-      s: isFrame ? 0.58 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
+      // 📏📏 **`rs_v`·`rs_k`(레꾸 캐릭터 32컷)만 0.32** — 창업자 *"근데 글자가 너무 작아?"* (2026-08-12)
+      //   ⭐⭐ **`s` 는 «폭» 기준이다**(`DecorLayer` 225줄 `width: ${it.s * 100}%`).
+      //      ⛔ 나는 처음에 «긴변» 기준으로 계산해 창업자에게 **11.7px 이라고 잘못 말했다.**
+      //         이 컷들은 세로로 길어서(비율 0.54~1.01) 폭을 맞추면 긴변은 더 커진다.
+      //      🔢 실측으로 다시 (종이 344px · 캡션 글자가 폰에서 몇 px):
+      //         s 0.22(기본) **9.5px** / **s 0.32 → 14.0px** / (기존 99컷 `rs_g01` = 11.8px)
+      //   ⛔⛔ **0.32 가 상한이다 — 0.34 는 못 쓴다.** 제일 좁은 컷 `rs_v06`(폭 204px)이
+      //      0.34 면 **1.80배**로 확대돼 해상도 한계(1.7배)를 넘는다. 0.32 면 **1.69배**.
+      //      → 0.32 는 0.34 보다 6% 작을 뿐인데 뭉개짐을 확실히 피한다.
+      //   📌 더 키우려면 «시트를 뽑을 때 글자를 크게» 하는 수밖에 없다 — 확대는 화질을 못 살린다.
+      //   ⚠️ 여기 값을 고치면 `scripts/check-sticker-res.mjs` 의 `defaultScale()` «도» 고칠 것(복사본이다).
+      s: isFrame ? 0.58 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : (key.startsWith('rs_v') || key.startsWith('rs_k')) ? 0.32 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
       r: isFrame ? 0 : ((n % 5) - 2) * 4,
       // 🐻🐧 친구들(캐릭터)은 붙자마자 통통 움직인다 — 소품·음식은 가만히.
       //    ⚠️ 여기도 `gp_` 접두어로 골랐었다 → 여름·가을 곰펭은 붙여도 모션이 안 박혔다.
@@ -1782,6 +1802,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             {/* ✨ 데코 (색 바꾸는 심볼 + 데코 + 응원) */}
             {cat === 'frame' && groupsByTab('frame').map(renderStickerGroup)}
             {cat === 'deco' && groupsByTab('deco').map(renderStickerGroup)}
+            {/* 📔 기록 (일꾸 전용) — 맛 평가·반응·조리법·상황·준비·보관·건강 태그 99컷
+                ⛔⛔ **탭을 CATS 에 넣는 것만으로는 «안 그려진다».** 서랍 본문이 여기서
+                   `cat === '…'` 로 «손으로 나열»돼 있기 때문이다. 2026-08-12 에 이 한 줄을 빠뜨려
+                   탭은 떴는데 **안이 텅 비었다**(숫자 검사는 「탭 있음」으로 통과시켰고, 화면을 찍어서 잡았다).
+                📌 새 탭을 만들면 **CATS ＋ 여기 둘 다** 고친다. */}
+            {cat === 'record' && groupsByTab('record').map(renderStickerGroup)}
             </>)}
           </div>
         </div>

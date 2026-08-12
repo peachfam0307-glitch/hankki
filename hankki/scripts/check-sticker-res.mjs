@@ -28,6 +28,10 @@ const defaultScale = (key) => {
   if (key.startsWith('pf_')) return 0.58              // 프레임(밑판)
   if (key.startsWith('gp_duo')) return 0.34
   if (key.startsWith('gp_')) return 0.26
+  // 🐻🐧 레꾸 캐릭터 32컷 — 캡션이 붙어 있어 크게 붙는다(창업자 2026-08-12 *"글자가 너무 작아?"*)
+  //   ⛔⛔ **2026-08-12 에 이 줄을 빠뜨려 게이트가 «거짓 초록불»을 냈다.** 0.22 로 재고 통과시켰다.
+  //      DecorEditor 630줄을 고치면 **여기도 반드시** 고친다(값이 두 곳에 복사돼 있다).
+  if (key.startsWith('rs_v') || key.startsWith('rs_k')) return 0.32
   if (key.startsWith('dc_') || key.startsWith('ch_')) return 0.15
   return 0.22                                          // 그 밖의 사진 스티커
 }
@@ -48,6 +52,7 @@ for (const m of src.matchAll(/items:\s*\[([^\]]*)\]/g)) {
 }
 
 const bad = []
+const 축섞임 = []
 for (const key of registered) {
   const f = path.join(PHOTO_DIR, `${key}.png`)
   if (!fs.existsSync(f)) continue                      // SVG 스티커·프레임은 대상 아님
@@ -56,6 +61,18 @@ for (const key of registered) {
   const long = Math.max(w, h)
   const zoom = shown / long
   if (zoom > 1.7) bad.push({ key, long, shown, zoom: zoom.toFixed(1) })
+  // ⚠️⚠️ **이 검사는 축이 섞여 있다** (2026-08-12 발견 · 실측)
+  //   `s` 는 **폭** 기준인데(`DecorLayer` 225줄 `width: ${it.s*100}%`) 위에서는
+  //   «표시 폭 ÷ 소스 긴변»으로 나눈다 → **세로로 긴 컷을 실제보다 작게 잰다.**
+  //   진짜 배율은 «표시 폭 ÷ 소스 폭» 이다.
+  //   ⛔ 그런데 바로 고쳐 «실패»로 만들면 **프레임 23컷이 통째로 배포를 막는다** —
+  //      전부 2026-07-30에 눈으로 보고 «멀쩡하다»고 판정한 것들이다
+  //      (CLAUDE.md: *"프레임 1.4~1.6배 → 멀쩡 ✅ 굵은 단색 선이라 확대에 강하다"*).
+  //      시끄러운 게이트는 죽은 게이트라, **경고로만** 띄우고 실패는 안 시킨다.
+  //   ✅ 새로 넣는 컷은 «이 숫자»로 보고 s 를 정한다 — 2026-08-12 레꾸 캐릭터 32컷이 그랬다.
+  //   ⏳ 프레임 23컷을 창업자가 판정하면 그때 이걸 실패로 승격한다.
+  const 진짜 = shown / w
+  if (진짜 > 1.7) 축섞임.push({ key, w, h, shown, 옛: zoom.toFixed(2), 진짜: 진짜.toFixed(2) })
 }
 
 if (bad.length) {
@@ -71,6 +88,17 @@ if (bad.length) {
   process.exit(1)
 }
 console.log(`✅ 스티커 해상도 OK — 등록된 사진 스티커 ${registered.size}개 중 1.7배 넘게 확대되는 것 없음`)
+
+if (축섞임.length) {
+  축섞임.sort((a, b) => b.진짜 - a.진짜)
+  console.log(`\n⚠️ 「폭으로 다시 재면」 1.7배를 넘는 컷 ${축섞임.length}개 (⛔실패 아님 — 위 주석 참조)`)
+  console.log('   위 검사는 «표시 폭 ÷ 소스 긴변» 이라 세로로 긴 컷을 작게 잰다. 아래가 진짜 배율이다.')
+  for (const b of 축섞임.slice(0, 8)) {
+    console.log(`   ${b.key.padEnd(12)} 소스 ${String(b.w).padStart(4)}×${String(b.h).padStart(4)} → 표시 폭 ${b.shown}px   옛 ${b.옛}배 → 진짜 ${b.진짜}배`)
+  }
+  if (축섞임.length > 8) console.log(`   … 외 ${축섞임.length - 8}개`)
+  console.log('   ⏳ 프레임(pf_)은 2026-07-30 에 눈으로 보고 멀쩡하다고 판정한 것들이다. 창업자 재판정 뒤 실패로 승격한다.')
+}
 
 // ── 📏 「키울 수 있는 여유」 — 위 검사가 못 잡는 것 (2026-07-31 추가) ─────────────
 // ⚠️ 위 검사는 **기본 크기**만 잰다. 그런데 유저는 손잡이로 **키운다.**
