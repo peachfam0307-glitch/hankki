@@ -56,9 +56,18 @@ const 샘플 = {
     // 💗 하트 — 왼쪽 빈자리. 효과 「하트」가 위로 뜬다
     { id: 'd3', type: 'sticker', key: 'dc_td11', x: 0.255, y: 0.625, s: 0.12, r: -6, fx: 'heart' },
     // 🐻 꼬르곰 — 붙이면 저절로 통통 뛴다(FRIEND_IDS 기본값 그대로)
-    { id: 'd4', type: 'sticker', key: 'gp_gomhi', x: 0.755, y: 0.805, s: 0.25, r: 3, motion: 'tongtong', fx: 'none' },
-    // ✍️ 글자 — 색·모션·효과가 «글자에도» 걸린다는 걸 보여주는 자리(#88 그대로)
-    { id: 'd5', type: 'text', color: 't_teal', font: 'gaegu', text: '오늘도 한 끼 해냄', x: 0.37, y: 0.885, s: 0.50, r: -2, motion: 'tilt', fx: 'spark' },
+    { id: 'd4', type: 'sticker', key: 'gp_gomhi', x: 0.735, y: 0.800, s: 0.25, r: 3, motion: 'tongtong', fx: 'none' },
+    // ✍️ 글자 — 색·모션·효과가 «글자에도» 걸린다(#88 그대로)
+    { id: 'd5', type: 'text', color: 't_teal', font: 'gaegu', text: '오늘도 한 끼 해냄', x: 0.37, y: 0.880, s: 0.50, r: -2, motion: 'tilt', fx: 'spark' },
+    // 📐📐 **속지 모서리 꾸미기** — 창업자 *"속지모서리도 꾸며달라했는데"* (첫 판에서 내가 빠뜨렸다)
+    //   ⭐ 코너 6컷(`dgc01~06`)은 **왼쪽 위 방향으로만** 그려져 있다 → 네 귀퉁이는 `flip`·`flipY` 로 만든다
+    //      (2026-08-06 좌우반전이 들어가며 6컷 → 24컷이 된 바로 그 자리다)
+    //   🎨 `dgc05`(하늘색 레이스＋별)를 골랐다 — 이 속지 테두리가 «파랑»이라 톤이 맞는다.
+    //      ⛔ dgc04(분홍 꽃)·dgc06(보라 리본)은 파란 테두리와 색이 부딪친다.
+    //   ⚠️ 대각선 둘만 — 넷을 다 두르면 «액자»가 되어 가운데 꾸민 게 오히려 죽는다.
+    //   ⚠️ 왼쪽 위는 «본문 첫 줄»이 바로 아래라 검사가 5% 덮음으로 잡았다 → 더 귀퉁이로 밀었다
+    { id: 'd6', type: 'sticker', key: 'dgc05', x: 0.112, y: 0.058, s: 0.17, r: 0 },
+    { id: 'd7', type: 'sticker', key: 'dgc05', x: 0.888, y: 0.942, s: 0.17, r: 0, flip: true, flipY: true },
   ],
 }
 
@@ -165,4 +174,21 @@ console.log('종이 :', 잰것.종이, '· 꾸민 것', 잰것.꾸민것, '· �
 if (!잰것.꾸민것) { console.log('⛔⛔ 꾸민 것을 하나도 못 찾았다 — 셀렉터가 틀렸다. 검사가 죽어 있다.'); }
 console.log('글줄 :', 잰것.줄수, '· ⛔덮음', (잰것.덮음 || []).length, (잰것.덮음 || []).join(' / '))
 
-await br.close(); srv.close(); console.log(`\n🖼 ${OUT}/sample-*.png`); process.exit(0)
+// 🎬🎬 **움직이는 판** — 창업자 *"내가 글자 효과나 모션도 넣고.."*
+//   ⭐ 모션·효과는 «넣었는데» 정지 캡처엔 안 보인다. 그래서 **앱 화면을 여러 장 이어 붙인다**
+//      (v10.03 상세 꾸미기 판정판과 같은 방식 — CSS 흉내가 아니라 진짜 앱이다).
+//   ⛔ 그때 **찍는 데 걸린 시간을 안 재고 100ms 로 재생해 2배 빨랐다**(창업자가 잡았다).
+//      → 여기선 **찍힌 «간격»을 같이 남겨서** 그대로 재생한다.
+const 종이 = pg.locator('.paper-box').first()
+mkdirSync(`${OUT}/frames`, { recursive: true })
+const 프레임 = [], 시각 = []
+const t0 = Date.now()
+for (let i = 0; i < 30; i += 1) {
+  await 종이.screenshot({ path: `${OUT}/frames/f${String(i).padStart(2, '0')}.png` })
+  시각.push(Date.now() - t0)
+  프레임.push(i)
+}
+const 간격 = Math.round((시각[시각.length - 1] - 시각[0]) / (시각.length - 1))
+console.log(`🎬 ${프레임.length}장 · 찍힌 간격 평균 ${간격}ms (이 값 그대로 재생할 것)`)
+
+await br.close(); srv.close(); console.log(`\n🖼 ${OUT}/sample-*.png · 🎬 ${OUT}/frames/`); process.exit(0)
