@@ -1,3 +1,5 @@
+import { allBasicRecipes } from './basics.js'
+
 // 🗓 이번 주 레시피 — «미리 채워두고 날짜가 열게 한다».
 //
 // 왜 이 모양인가 (창업자 2026-08-01):
@@ -252,6 +254,11 @@ export const HOMEMADE = [
   // ⬆⬆ [자동] 우리집레시피 18주 끝 ⬆⬆
 ]
 
+// 🏷 id → 제목. `allBasicRecipes` 를 쓰는 이유 = 날짜로 안 거른 «전부»라 아직 안 열린 것도 찾힌다.
+//   ⚠️ 순환 참조 없다 — `basics.js` 는 `polish.js` 만 import 한다(2026-08-12 확인).
+const 제목표 = new Map(allBasicRecipes.map((r) => [r.id, (r.title || '').trim()]))
+const 제목of = (id) => 제목표.get(id) || ''
+
 // ⭐ 제철·우리집이 «같은 방식»으로 열린다 — 고르는 규칙을 한 곳에만 둔다.
 const 열린줄 = (LIST, recipes, now) => {
   const t = todayKST(now)
@@ -262,7 +269,27 @@ const 열린줄 = (LIST, recipes, now) => {
 
   // ⭐ 실제로 있는 레시피만 남긴다 — 레시피를 지우거나 id 를 바꿔도 앱이 안 깨진다.
   const byId = new Map(recipes.map((r) => [r.id, r]))
-  const items = pick.ids.map((id) => byId.get(id)).filter(Boolean)
+  // ⭐⭐ **id 로 없으면 «같은 제목»으로 찾는다.** (창업자 2026-08-12 *"홈에 내레시피 아직 안올라왔어"*)
+  //   ⛔⛔ 왜 필요한가 — `store.jsx` 의 `migrateBasics` 는 **「같은 제목이 이미 있으면 안 넣는다」**
+  //      (`!haveTitles.has(r.title)`). 그런데 우리집레시피는 **창업자가 «실제로 해먹는» 요리**라
+  //      창업자 폰엔 「닭곰탕」·「오이물김치」가 «자기 레시피»로 이미 있다.
+  //      → 시드가 안 들어오고 → 여기서 id 를 못 찾아 → **홈 박스가 통째로 안 그려졌다.**
+  //   🔬 재현으로 확정(2026-08-12) — 두 제목이 다 있으면 ⛔ · 하나만 있으면 ✅ · 새 폰 ✅
+  //   ⛔ 게다가 「한끼 소식」은 `HOMEMADE` 데이터만 보고 **「2개 열렸어요」라고 말했다** —
+  //      소식은 열렸다는데 홈엔 없는 «앞뒤 안 맞는» 상태였다(창업자 폰 캡처).
+  //   ⭐ 제목으로 찾으면 **창업자가 쓴 그 레시피가 그 자리에 온다** — 우리집레시피니까 오히려 맞다.
+  //      `migrateBasics` 도 「같은 제목 = 같은 요리」로 보고 중복을 막는다. 같은 가정을 쓴다.
+  const byTitle = new Map()
+  for (const r of recipes) {
+    const t = (r?.title || '').trim()
+    if (t && !byTitle.has(t)) byTitle.set(t, r)   // 먼저 저장된 것 우선(사용자가 오래 쓴 것)
+  }
+  //   ⭐ 창업자 *"근데 그거랑 무관하게 떠야할듯해"* — 여기서 「그거」는 **「내 레시피에 같은 게 있는지」**다.
+  //      제목 폴백이 정확히 그걸 무관하게 만든다(겹치든 안 겹치든 뜬다).
+  //   ⛔⛔ **`basics.js` 원본까지 폴백하지는 «않는다».** 그러면 «유저가 일부러 지운 레시피»까지
+  //      홈에 되살아난다(재현으로 확인 — 지운 판에서도 박스가 떴다). 그건 창업자가 시킨 범위 밖이고,
+  //      누르면 없는 레시피를 여는 «죽은 카드»가 된다. 지운 뜻은 존중한다.
+  const items = pick.ids.map((id) => byId.get(id) || byTitle.get(제목of(id))).filter(Boolean)
   if (!items.length) return null // ⛔ 하나도 없으면 그 줄은 없는 것으로 친다
 
   return { ...pick, items }

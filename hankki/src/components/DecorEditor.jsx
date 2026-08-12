@@ -887,7 +887,16 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     return (
       <div className="decor-sec" key={g.key}>
         {g.label && <div className="decor-sec-label">{g.label}{g.gift && <GiftTag />}</div>}
-        <div className="decor-grid">{g.items.map(renderCell)}</div>
+        {/* 🔠 `wordy` = **그림 안에 글자(캡션)가 그려진 그룹.** 칸을 크게 준다.
+            📮 창업자 2026-08-12 *"좀작네 글자가."* · 앞서 *"글자가 너무 작아서 (그림도) 잘 안보여"*
+            🔢 재서 정했다 — 컷 긴변 348px 에 캡션 글자 35px 이라 칸이 W 면 화면 글자 = 35×W÷348:
+               52px(지금) **5.2px 못 읽는다** / 80px 8.0 / 92px 9.3 / **110px → 11.1px 읽힌다**
+            ⭐⭐ 110px 이 «공짜»인 이유 = 폰 411px 에서 92px 도 110px 도 **똑같이 3칸**이라
+               줄 수가 안 늘어난다(둘 다 39줄). 같은 값에 글자만 커진다.
+            ⛔ 130px 은 2칸이 되어 줄이 58줄로 늘어난다 — 거기서 끊었다.
+            ⛔ 접두어(`rs_`·`tw_`)로 가르지 않는다 — 표시용 이름·키로 분류하면 언젠가 어긋난다
+               (v9.07 에 라벨로 분류했다가 자산 도구가 깨졌다). 데이터에 표시를 단다. */}
+        <div className={g.wordy ? 'decor-grid wordy' : 'decor-grid'}>{g.items.map(renderCell)}</div>
       </div>
     )
   }
