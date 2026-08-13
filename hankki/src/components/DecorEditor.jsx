@@ -387,7 +387,25 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   (blur 가 안 온다) → typing 이 계속 참이라 위 줄이 유령처럼 떠 있었다.
   //   ⭐ 탭 이동 = 「지금은 글 쓰는 중이 아니다」라는 신호이니 커서를 명시적으로 푼다.
   //   ⛔ 「글쓰기」 탭엔 안 건다 — 거긴 글 쓰러 가는 자리다.
-  const dropCaret = () => { const el = document.activeElement; if (el && el.tagName === 'TEXTAREA') el.blur() }
+  //   📍 `bodyOnly` = **종이 본문 글칸만** 놓는다(`data-paper-body`). 스티커 글 상자는 안 건드린다.
+  //      ⭐ 서랍을 누를 때 쓴다 — 방금 붙인 글 상자의 커서까지 뺏으면 「붙였는데 못 쓴다」가 된다.
+  const dropCaret = (bodyOnly) => {
+    const el = document.activeElement
+    if (!el || el.tagName !== 'TEXTAREA') return
+    if (bodyOnly && !el.dataset.paperBody) return
+    el.blur()
+  }
+  // 🗄🗄 **서랍을 «누르고 나면» 종이 본문 커서를 놓는다** (창업자 2026-08-13
+  //    *"갑자기 스티커보이는칸이 작아졌어 위에 속지 글쓰기탭이 커진것같기도하고"*)
+  //    🔢 실측(360×800) = 본문 커서가 남으면 「글씨」 56 ＋ 「크기」 41 = **97px** 이 서랍을 먹어
+  //       굴칸 **182 → 85px**. 창업자 캡처가 정확히 그 화면이었다(레꾸 탭인데 본문 글씨줄이 떠 있었다).
+  //    ⛔ 폰은 뒤로가기로 «자판만» 닫혀 blur 가 안 온다 → `typing` 이 참인 채 남는다.
+  //       ＋ 2026-08-12 에 「서랍을 누르는 동안 커서를 안 뺏는다」를 넣어서 **서랍을 눌러도 안 풀리게 됐다.**
+  //          그 처방은 맞았지만(첫 탭이 먹히던 문제) **다시 놓을 길을 같이 안 냈다.**
+  //    ⭐ 그래서 «손 뗀 뒤»(click)에 놓는다 — pointerdown 에 놓으면 그 자리에서 97px 이 튀어
+  //       탭이 통째로 먹힌다(그게 2026-08-12 에 고친 바로 그 사고다). click 이면 이미 붙은 뒤다.
+  //    ⚠️ 「글씨」·「크기」 줄 자신을 누를 땐 안 놓는다 — 그건 글 쓰는 도구다(그 줄들은 서랍 «밖»이라 안 걸린다).
+  const dropBodyOnTap = (e) => { if (e.target.closest && e.target.closest('button')) dropCaret(true) }
   // ⌨️⌨️ **자판이 내려가면 «저절로» 원래 판으로 돌아온다** (창업자 2026-08-09 *"다썼어요 가로모드 아직도 있어"*)
   //    ⛔ 처음엔 「다 썼어요」 단추로 나가게 했는데 창업자가 두 번 말했다 — *"왜 저기떠있는지 모르겠다"*.
   //       **모르는 단추는 없는 것만 못하다.** 나가는 길은 «눌러야 아는 것»이 아니라 저절로여야 한다.
@@ -395,16 +413,27 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //       index.html 의 viewport 가 interactive-widget=resizes-content 라, 자판이 뜨고 내릴 때 판 높이가 실제로 오르내린다.
   //    📌 «가장 낮았던 높이»를 기억해 두고 거기서 100px 넘게 올라오면 = 자판이 내려간 것.
   //       ⛔ 「처음 높이」와 견주면 안 된다 — 커서가 들어간 직후는 아직 자판이 안 떠서 그게 최고값이다.
+  //    ⭐⭐ 2026-08-13 보강 — **`visualViewport` 도 같이 듣는다.**
+  //       `window.innerHeight` 는 `interactive-widget=resizes-content` 가 먹을 때만 오르내린다.
+  //       그게 안 먹는 기기·웹뷰에선 **resize 가 아예 안 와서 커서가 영영 남는다**(창업자 폰이 그랬을 수 있다).
+  //       `visualViewport.height` 는 자판이 뜨면 어느 쪽이든 줄어든다 — 더 확실한 신호다.
+  //       ⛔ 「왜 안 왔나」를 내가 정하지 않는다(규칙 18) — **이유가 무엇이든 잡히게** 신호를 늘린다.
   useEffect(() => {
     if (!typing) return
-    let 바닥 = window.innerHeight
+    const vv = window.visualViewport
+    const 잰다 = () => (vv ? vv.height : window.innerHeight)
+    let 바닥 = 잰다()
     const 봄 = () => {
-      const h = window.innerHeight
+      const h = 잰다()
       if (h < 바닥) 바닥 = h
       else if (h > 바닥 + 100) dropCaret()
     }
     window.addEventListener('resize', 봄)
-    return () => window.removeEventListener('resize', 봄)
+    if (vv) vv.addEventListener('resize', 봄)
+    return () => {
+      window.removeEventListener('resize', 봄)
+      if (vv) vv.removeEventListener('resize', 봄)
+    }
   }, [typing])
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
@@ -906,6 +935,22 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const FoldIco = ({ open }) => (
     <span aria-hidden className="decor-fold-ico" style={{ transform: open ? 'none' : 'rotate(-90deg)' }}>
       <svg width="20" height="20" viewBox="0 0 20 20"><path d="M2 6 L18 6 L10 16 Z" fill="currentColor" /></svg>
+    </span>
+  )
+  // 🗂🗂 **「고르는 줄」 접기** (창업자 2026-08-13 *"고르는게 너무많아. 고르고나서 탭접기가능한버튼 생기면안되나.."*)
+  //    🔢 실측(360×800) 서랍 320px 중 «고르는 것»이 고정으로 먹는 자리 =
+  //       손잡이 38 ＋ 탭줄 38 ＋ 갈래칩 50 ( ＋ 글 쓸 땐 글씨 56 ＋ 크기 41 ) = **126 ~ 223px**
+  //       → 스티커가 굴러가는 칸은 **182px**, 글 쓰는 중이면 **85px** 뿐이었다.
+  //    ⭐ 접으면 **탭줄·글씨·크기가 사라지고 갈래칩 줄만 남는다** — 스티커를 고르는 동안 제일 자주 쓰는 게 갈래다.
+  //       그 줄 오른쪽 끝에 세모 단추가 붙어 있어 **접은 뒤에도 돌아올 길이 늘 보인다.**
+  //    ⛔ `mode === 'decor'` 일 때만 접는다 — 속지·글쓰기 탭엔 갈래칩 줄이 없어서
+  //       거기서 탭줄을 감추면 **펼 단추가 같이 사라져 막다른 길**이 된다(게이트가 자기 안내를 막던 그 사고와 같은 꼴).
+  //    ⭐ 기억은 이미 있는 `folded` 를 그대로 쓴다 — 저장 자리를 새로 만들지 않는다.
+  const PICKS_FOLD = 'sec_picks'
+  const picksFold = mode === 'decor' && folded.has(PICKS_FOLD)
+  const PickFoldIco = ({ open }) => (
+    <span aria-hidden style={{ display: 'inline-flex', transform: open ? 'rotate(180deg)' : 'none' }}>
+      <svg width="18" height="18" viewBox="0 0 20 20"><path d="M2 6 L18 6 L10 16 Z" fill="currentColor" /></svg>
     </span>
   )
   // 🗂 접히는 이름표 — 스티커 «그룹»이 아닌 블록(글자 직접 쓰기·포스트잇 등)도 같은 문법으로 접는다.
@@ -1531,7 +1576,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ⭐ 앱에 이미 있는 `.segment` 를 쓴다 — 「모아보기 / 요리 기록」과 같은 문법이라 배울 게 없다.
               ✍️ 「글쓰기」는 **한 장을 만드는 세 단계 그대로**다 — 종이를 깔고 · 쓰고 · 꾸민다.
                  ⛔ 예전엔 셋째 단계가 「저장하고 나가기」였다. 그게 창업자가 말한 불편이다. */}
-          {(canPickPaper || paperEdit) && (
+          {!picksFold && (canPickPaper || paperEdit) && (
             <div className="segment" style={{ margin: '0 2px 6px' }}>
               {canPickPaper && <button className={`seg ${mode === 'paper' ? 'on' : ''}`} onClick={() => { dropCaret(); setMode('paper') }}>{isDiary ? '속지' : '속지 고르기'}</button>}
               {paperEdit && <button className={`seg ${writing ? 'on' : ''}`} onClick={() => setMode('write')}>글쓰기</button>}
@@ -1556,7 +1601,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ⚠️ **한 줄만** 둔다 — 서랍이 접혀야(`.decor-drawer.writing` 26vh) 종이가 커진다.
                  그 자리를 도로 먹으면 「글 쓰는데 서랍이 반을 먹는」 옛 문제로 돌아간다.
               ⚠️ 이름표는 «칩 글꼴»로 그린다 — 안 그러면 이 줄 하나에 4.45MB 를 부른다. */}
-          {showWriteTools && onWriteFont && (
+          {!picksFold && showWriteTools && onWriteFont && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 2px 8px', flex: '0 0 auto' }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-sub)', flex: '0 0 auto' }}>글씨</span>
               {/* 📐 스크롤 막대가 «칩 바로 밑»에 붙어 글씨를 그어놓은 것처럼 보였다
@@ -1575,7 +1620,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     //    ⛔ 줄 «개수»는 안 늘린다 — 서랍이 그만큼 눌린다(2026-08-07 스크롤 사고).
                     <button key={f.key} className="press" onClick={() => onWriteFont(f.key)}
                       onPointerDown={(e) => e.preventDefault()}
-                      style={{ flex: '0 0 auto', padding: '9px 14px', borderRadius: 999, fontSize: 15, fontWeight: 700,
+                      /* 📏 2026-08-13 창업자 *"글씨버튼도 크다"* — 9/14·15px → 6/12·13.5px
+                         🔢 이 줄 통째로 **56 → 46px** (10px 회수)
+                         ⛔ 더는 못 줄인다 — 2026-08-07 에 창업자가 *"좀만 그 부분 키워줘(너무 지금은 낮아…)"*
+                            라고 «키우라»고 했던 자리다. 칩이 곧 «글씨체 미리보기»라 낮으면 글자가 눌려 보인다. */
+                      style={{ flex: '0 0 auto', padding: '6px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700,
                         fontFamily: chipFamily(f), background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)', border: 'none' }}>
                       {f.label}
                     </button>
@@ -1590,7 +1639,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                  (`Stickers.jsx` 의 `TEXT_FONTS` → `sz` · 또박체 0.975 ~ 납작체 0.650 으로 1.5배 차이였다).
               ⛔ 줄 간격은 «안» 건드린다 — 사진일기 그림에 인쇄된 줄과 맞춘 값이라 흔들면 어긋난다.
                  그래서 「크게」도 줄 높이의 0.90 까지. 커진 게 보이면서 줄을 안 넘는다. */}
-          {showWriteTools && onWriteSize && (
+          {!picksFold && showWriteTools && onWriteSize && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 2px 8px', flex: '0 0 auto' }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-sub)', flex: '0 0 auto' }}>크기</span>
               {WRITE_SIZES.map((z) => {
@@ -1615,7 +1664,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ⭐ 도구 바는 고른 게 없을 때 비어 있으므로 그 자리를 되돌리기가 채운다 — 줄 하나를 회수한 셈. */}
           {/* 카테고리 칩 — 가로로 골라 그 카테고리만(세로 스크롤 최소화) */}
           {mode === 'decor' && (
-          <div className="decor-cats" style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '2px 2px 10px', flex: '0 0 auto' }}>
+          <div className="decor-catsrow" style={{ display: 'flex', alignItems: 'flex-start', gap: 4, flex: '0 0 auto' }}>
+          {/* 🗂 접기 단추 — **갈래칩 줄에 붙여 둔다.** 접어도 이 줄은 남으니 «돌아올 길»이 늘 보인다.
+              ⛔ 접힌 상태에서 사라지는 자리에 두면 다시 펼 수가 없다. */}
+          <div className="decor-cats" onClick={dropBodyOnTap} style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '2px 2px 10px', flex: '1 1 auto', minWidth: 0 }}>
             {visCats.map((c) => {
               const on = cat === c.key
               return (
@@ -1625,6 +1677,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 </button>
               )
             })}
+          </div>
+            <button type="button" className="press decor-pickfold"
+              onClick={() => { dropCaret(true); toggleFold(PICKS_FOLD) }}
+              aria-expanded={!picksFold}
+              aria-label={picksFold ? '고르는 줄 펴기' : '고르는 줄 접기'}>
+              <PickFoldIco open={!picksFold} />
+            </button>
           </div>
           )}
           <VHint boxRef={drawerRef} />
@@ -1641,7 +1700,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                  (`preventDefault` 는 굴리기를 안 막는다 — 그건 `touch-action` 이 정한다. 칩 줄에서 이미 확인된 방식)
               ⚠️ 붙인 «뒤»엔 `addBox`·`addNote` 가 커서를 내려놓는다 — 그때 줄이 사라져도 이미 붙은 뒤라 괜찮다. */}
           <div className="decor-scroll" ref={drawerRef}
-            onPointerDown={(e) => { if (e.target.closest && e.target.closest('button')) e.preventDefault() }}>
+            onPointerDown={(e) => { if (e.target.closest && e.target.closest('button')) e.preventDefault() }}
+            onClick={dropBodyOnTap}>
             {/* ✍️ 글쓰기 — 서랍엔 **아무것도 안 둔다.** 칸이 비어야 서랍이 접히고 종이가 커진다.
                 ⛔ 여기에 뭘 넣으면 「글 쓰는데 서랍이 반을 먹는」 지금 문제가 그대로 남는다.
                 ⛔ 안내도 여기 두지 않는다 — 종이 밑에 이미 한 줄 있어서 **같은 말이 두 번** 나온다. */}

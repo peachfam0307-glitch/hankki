@@ -468,6 +468,10 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
                 onChange={set(k)}
                 aria-label={w.label || '일기 본문'}
                 placeholder="여기에 써요"
+                /* 📍 「종이 본문」 표시 — 스티커 글 상자(`DecorLayer`)의 글칸과 갈라야 한다.
+                   ⭐ `DecorEditor` 의 `dropCaret(true)` 가 **이 표시가 붙은 것만** 커서를 놓는다.
+                      (서랍을 누르면 본문 커서는 놓되, 방금 붙인 글 상자 커서는 안 뺏는다) */
+                data-paper-body="1"
                 style={{
                   ...hand, width: '100%', height: '100%', display: 'block',
                   background: 'none', border: 'none', outline: 'none', resize: 'none', padding: 0, margin: 0,
