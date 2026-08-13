@@ -387,9 +387,14 @@ export default function RecipeDetailScreen({ id }) {
                · **일기 샘플** = 남의 기록이라 «지우는 것»이 맞다 → 「지워도 돼요」
                · **레시피 샘플** = 레시피 자체는 쓸모가 있고 **꾸민 표지만 우리 것**이다 → 「바꿔 보세요」
             📌 같은 「샘플」이라도 **지우면 잃는 게 다르면 안내도 달라야 한다.** */}
+        {/* 🔠 [2026-08-13 창업자 *"콩국수 샘플도 아래 글자 너무 작고 색이 연해서 안보임"*]
+            ⛔ 첫 판 = `t-sub`(연한 회색) ＋ 11.5px. 본문이 15px 인데 그 3/4 라 패드에서 특히 안 읽혔다.
+            ✅ 13px ＋ 갈색(우리 주색). ⛔파랑은 안 쓴다 — 우리 앱에서 파랑은 「누르는 것」이다.
+            ⭐ 굵은 두 낱말(「보여드리는 샘플」·「레시피 꾸미기」)이 눈에 먼저 들어오게 색을 한 단 더 준다. */}
         {r.sample && (
-          <div className="t-sub" style={{ fontSize: 11.5, marginTop: 5, lineHeight: 1.5 }}>
-            표지는 <b>보여드리는 샘플</b>이에요 · <b>레시피 꾸미기</b>에서 마음대로 바꿔 보세요
+          <div style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55, color: 'var(--brown)', letterSpacing: '-.2px' }}>
+            표지는 <b style={{ fontWeight: 800, color: '#5b4632' }}>보여드리는 샘플</b>이에요 ·{' '}
+            <b style={{ fontWeight: 800, color: '#5b4632' }}>레시피 꾸미기</b>에서 마음대로 바꿔 보세요
           </div>
         )}
 

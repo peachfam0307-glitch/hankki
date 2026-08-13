@@ -456,8 +456,10 @@ function Curation() {
             )}
           </div>
 
-          {/* 카테고리 칩 — 기본은 '이번 주 픽', 필요한 카테고리만 펼쳐 본다 (찾는 중엔 감춘다) */}
-          <div className="hscroll" style={{ paddingBottom: 4, marginBottom: 4, display: curQuery ? 'none' : undefined }}>
+          {/* 카테고리 칩 — 기본은 '이번 주 픽', 필요한 카테고리만 펼쳐 본다 (찾는 중엔 감춘다)
+              🔢 `cur-chips` = 패드에서 «줄바꿈»으로 바꾸려고 붙인 이름 (창업자 2026-08-13 *"장보기 잘림"*).
+                 좌우 2단이 되면서 왼쪽 칸이 좁아져 마지막 칩이 반쯤 잘려 보였다. 스타일은 styles.css 에. */}
+          <div className="hscroll cur-chips" style={{ paddingBottom: 4, marginBottom: 4, display: curQuery ? 'none' : undefined }}>
             {chip('pick', '이번 주 픽')}
             {chip('전체', '전체')}
             {groupList.map((c) => chip(c.name, (

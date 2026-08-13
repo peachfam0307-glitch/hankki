@@ -2743,12 +2743,26 @@ html, body { overscroll-behavior: none; }
   .hscroll .mini-card,
   .hscroll .pick-card { max-width: 200px; }
 
+  /* 📔 [2026-08-13 창업자 *"한끼일기 아래 뜨는 음식 이미지 너무 커"*]
+     ⛔ `.album-grid` 가 «3칸 고정»이라 폰(411px)에선 한 칸 ≈133px 인데 패드(1280px)에선 **400px 넘게** 커진다.
+     ✅ 폰에서 보이던 크기에 맞춰 칸 «수»를 늘린다 — 한 칸을 160px 언저리로.
+     ⭐ `auto-fill` 이다(`auto-fit` 아니다) — `auto-fit` 은 기록이 적을 때 그 몇 장을 «늘려» 채워
+        다시 커진다. 앨범은 장수가 적어도 칸 크기가 일정한 게 맞다. */
+  .album-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+
   /* 🛒📐 [2026-08-13 창업자 지시 *"장보기를 오른쪽에 장바구니를 왼쪽에"*]
      ⛔ 그 전엔 한 줄에 하나라 카드가 화면 폭(1280px)을 다 써서
         「담기·사러가기 버튼이 너무 크고 제품설명은 왼쪽에 쏠린다」가 됐다.
      ✅ 좌우로 나누면 카드가 절반 폭이 되어 둘 다 저절로 풀린다.
      ⭐ 폰(1열)에선 «담은 게 있으면 리스트가 위»를 그대로 지킨다 — 아래 order 참고. */
   .shop-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  /* ✂️ [2026-08-13 창업자 *"장보기 잘림"*] 좌우로 갈리며 왼쪽 칸이 좁아지자
+     카테고리 칩 줄의 «마지막 칩이 반쯤 잘려» 보였다. 가로 스크롤이라 밀면 보이긴 하지만,
+     화면이 넓은 패드에서 잘린 채 놓이면 «고장»으로 읽힌다.
+     ✅ 패드에선 줄바꿈으로 — 칸이 좁아도 칩이 다 보인다. ⛔폰은 지금 그대로(가로 스크롤). */
+  .cur-chips { flex-wrap: wrap; overflow-x: visible; margin: 0; padding-left: 0; padding-right: 0; row-gap: 8px; }
+  /* 🔘 장보기·냉장고 토글 — 화면 폭을 다 쓰면 「냉장고」가 저 멀리 오른쪽 끝에 떨어져 짝이 안 보인다 */
+  .screen .segment { max-width: 420px; }
   /* 좌우일 땐 «항상» 왼쪽=장바구니 · 오른쪽=리스트. 폰에서 쓰던 순서 바꾸기를 되돌린다. */
   .shop-pair.has-items .shop-cur { order: 0; }
   .shop-pair.has-items .shop-list { order: 0; }
