@@ -20,7 +20,17 @@
 // ⚠️ 뒤집을 때 한 번 더 틀렸다 — 처음엔 22줄이 걸렸는데 **21줄이 헛것**이었다.
 //    「…볶아요. (김치를 볶아야 국물이 깊어져요)」 처럼 **괄호 설명으로 끝나는 줄**을 못 봤다.
 //    → 끝의 괄호와 문장부호를 «떼고» 본다.
-import { basicRecipes } from '../src/data/basics.js'
+//
+// ⛔⛔ 2026-08-13 — **이 게이트에 큰 구멍이 있었다. `basicRecipes` 를 봤다.**
+//   그건 **「오늘 열린 것」만** 이다(`from` 이 오늘 이하). 주간 레시피는 `from` 이 «미래»라
+//   **게이트가 한 줄도 안 봤다.** 🔢 실측 = 전체 **111편 중 46편**만 검사 → **65편이 검사 밖.**
+//   ⭐ 그 65편은 «날짜가 되면 저절로 열린다» — 그날 한다체로 나가고 아무도 안 막는다.
+//   📌 「자동 공개 전날 검수」(절대원칙)가 사람 눈이라면, 이건 그 앞에 서 있어야 할 기계다.
+//   ✅ 그래서 **`allBasicRecipes`(미래 것까지 전부)** 를 본다.
+//   ⚠️ 실제로 2026-08-13 에 11월 주간 레시피 **11편**이 한다체로 걸렸는데,
+//      이 게이트가 아니라 «내가 따로 만든 일회용 스크립트»가 잡았다. 다음엔 그 사람이 없다.
+//   📌 #81 과 같은 성격이다 — **검사가 초록불이어도 «무엇을 보는지»를 봐야 한다**(규칙 18 ⓘ).
+import { allBasicRecipes } from '../src/data/basics.js'
 
 // 문장 «진짜 끝»만 남긴다 — 끝의 괄호 설명 · 마침표 · 느낌표 · 물결표를 뗀다
 const tail = (s) => String(s).trim()
@@ -29,7 +39,7 @@ const tail = (s) => String(s).trim()
   .trim()
 
 const bad = []
-for (const r of basicRecipes) {
+for (const r of allBasicRecipes) {
   for (const [i, s] of (r.steps || []).entries()) {
     const t = tail(s)
     if (!t) continue
@@ -46,4 +56,4 @@ if (bad.length) {
   process.exit(1)
 }
 
-console.log(`✅ 만드는 법 문체 통일 — 레시피 ${basicRecipes.length}개, 해요체가 아닌 줄 0`)
+console.log(`✅ 만드는 법 문체 통일 — 레시피 ${allBasicRecipes.length}개(⭐날짜로 잠긴 주간 레시피 포함), 해요체가 아닌 줄 0`)
