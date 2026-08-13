@@ -40,8 +40,14 @@ const 고침 = {
   'basic-maesaengi-kalguksu': '해물가루육수 2봉',
   'basic-maesaengi-jeon': '반죽에 해물가루육수 1큰술',
   'basic-kkodeul-danmuji-muchim': '⭐새로 씀 — 창업자 원문 그대로 (김치볶음밥 자리에 · 김치볶음밥은 나중에 한그릇요리로)',
-  'basic-eomuk-bokkeum': '전처리 추가 — 10초 데치고 200도에 7분 ＋ 뒤집어 5분 노릇하게 굽기 (25분)',
+  'basic-eomuk-bokkeum': '창업자 원문으로 다시 씀 — 전처리(데치고 굽기) ＋ 마늘 먼저 · 간장 1/2큰술 · ⛔물·설탕 뺐다. 쫄깃 ↔ 부드러움 두 갈래',
 }
+
+// 📌 주가 아직 «안 정해진» 새 편 — 판 맨 아래에 따로 묶는다.
+//    ⛔ 여기 안 넣으면 창업자가 볼 길이 없다(판은 주 단위로만 그린다).
+const 주미정 = [
+  { id: 'basic-eomuk-tang', why: '창업자가 오늘 준 원문. 어느 주에 얹을지는 아직 안 정했어요.' },
+]
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 // 브랜드 낱말이 있으면 그 «줄 전체»를 칠한다 — 낱말만 칠하면 분량이 잘려 읽기 나쁘다
@@ -63,20 +69,19 @@ if (없는것.length) {
 }
 
 let 편수 = 0, 양념편 = 0, 고친편 = 0
-const 몸통 = 주.map((w, wi) => {
-  const 편 = w.ids.map(id => {
-    const r = by.get(id)
-    if (!r) { console.error(`⛔ ${w.from} 「${w.title}」 의 ${id} 가 basics.js 에 없다`); process.exit(1) }
-    편수++
-    const has = r.ingredients.some(칠 => BRAND.some(b => 칠.includes(b)))
-    if (has) 양념편++
-    const fix = 고침[id]
-    if (fix) 고친편++
-    return `
+
+// 한 편 그리기 — 주에 붙은 편과 「주 미정」 편이 «똑같이» 보여야 한다(따로 그리면 반드시 어긋난다)
+function 편그리기(r, fix) {
+  편수++
+  const has = r.ingredients.some(줄 => BRAND.some(b => 줄.includes(b)))
+  if (has) 양념편++
+  if (fix) 고친편++
+  return `
   <article class="rec${has ? ' has-brand' : ''}${fix ? ' has-fix' : ''}">
     <div class="rhead">
       <h4>${esc(r.title)}</h4>
       <span class="meta">${r.time}분 · ${r.servings}인분</span>
+      ${/파운더/.test(r.memo || '') ? '<span class="founder">파운더 레시피</span>' : ''}
     </div>
     ${fix ? `<p class="fix"><b>오늘 고침</b> — ${esc(fix)}</p>` : ''}
     <div class="cols">
@@ -91,6 +96,13 @@ const 몸통 = 주.map((w, wi) => {
     </div>
     ${r.memo ? `<div class="memo">${r.memo.split('\n\n').map(p => `<p>${esc(p)}</p>`).join('')}</div>` : ''}
   </article>`
+}
+
+const 몸통 = 주.map((w, wi) => {
+  const 편 = w.ids.map(id => {
+    const r = by.get(id)
+    if (!r) { console.error(`⛔ ${w.from} 「${w.title}」 의 ${id} 가 basics.js 에 없다`); process.exit(1) }
+    return 편그리기(r, 고침[id])
   }).join('')
 
   const [, m, d] = w.from.split('-')
@@ -104,6 +116,22 @@ const 몸통 = 주.map((w, wi) => {
     <p class="why">${esc(w.why)}</p>${편}
   </details>`
 }).join('')
+
+// 📌 주가 안 정해진 새 편 — 맨 아래 한 칸에
+const 미정몸통 = !주미정.length ? '' : `
+  <details class="wk" open>
+    <summary>
+      <span class="date">?</span>
+      <span class="wt">주가 아직 안 정해졌어요</span>
+      <span class="cnt">${주미정.length}편</span>
+    </summary>
+    <p class="why">어느 주에 얹을지 정해주시면 그 주로 옮길게요.</p>${
+  주미정.map(({ id, why }) => {
+    const r = by.get(id)
+    if (!r) { console.error(`⛔ 「주 미정」의 ${id} 가 basics.js 에 없다`); process.exit(1) }
+    return 편그리기(r, why)
+  }).join('')}
+  </details>`
 
 const html = `<title>11주 주간 레시피 검수</title>
 <style>
@@ -166,6 +194,9 @@ const html = `<title>11주 주간 레시피 검수</title>
   .rhead{display:flex;align-items:baseline;gap:9px;margin-bottom:10px}
   h4{margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em}
   .meta{font-size:12.5px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+  /* 파운더 레시피 = 창업자가 «실제로 해먹는» 편. 다른 데선 못 베끼는 우리 간판이라 눈에 띄게 */
+  .founder{font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:999px;
+    background:var(--brand-bg);color:var(--brand-ink);white-space:nowrap}
   .fix{margin:0 0 11px;padding:9px 12px;border-radius:10px;background:var(--fix-bg);color:var(--fix-ink);
     border:1px solid var(--fix-line);font-size:13.5px;line-height:1.6}
   .cols{display:grid;grid-template-columns:1fr;gap:14px}
@@ -213,7 +244,7 @@ const html = `<title>11주 주간 레시피 검수</title>
     <button class="chip" data-f="open" aria-pressed="false">모두 펴기</button>
   </div>
 </div>
-${몸통}
+${몸통}${미정몸통}
 <footer>
   값은 <b>앱 데이터에서 직접 읽어</b> 그렸어요 — 손으로 옮겨 적지 않았습니다.<br>
   다시 뽑기 = <code>node scripts/_판-주간11주-0813.mjs &lt;파일&gt;</code>

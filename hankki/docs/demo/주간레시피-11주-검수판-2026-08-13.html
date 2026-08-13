@@ -59,6 +59,9 @@
   .rhead{display:flex;align-items:baseline;gap:9px;margin-bottom:10px}
   h4{margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em}
   .meta{font-size:12.5px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+  /* 파운더 레시피 = 창업자가 «실제로 해먹는» 편. 다른 데선 못 베끼는 우리 간판이라 눈에 띄게 */
+  .founder{font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:999px;
+    background:var(--brand-bg);color:var(--brand-ink);white-space:nowrap}
   .fix{margin:0 0 11px;padding:9px 12px;border-radius:10px;background:var(--fix-bg);color:var(--fix-ink);
     border:1px solid var(--fix-line);font-size:13.5px;line-height:1.6}
   .cols{display:grid;grid-template-columns:1fr;gap:14px}
@@ -91,18 +94,18 @@
   </div>
   <div class="now">
     <div class="stat"><div class="k">주</div><div class="v">11주</div></div>
-    <div class="stat"><div class="k">레시피</div><div class="v">33편</div></div>
-    <div class="stat"><div class="k">우리 양념 쓴 편</div><div class="v">28편</div></div>
-    <div class="stat"><div class="k">오늘 고친 편</div><div class="v">15편</div></div>
+    <div class="stat"><div class="k">레시피</div><div class="v">34편</div></div>
+    <div class="stat"><div class="k">우리 양념 쓴 편</div><div class="v">29편</div></div>
+    <div class="stat"><div class="k">오늘 고친 편</div><div class="v">16편</div></div>
   </div>
 </header>
 
 <div class="tools">
   <input type="search" id="q" placeholder="찾기 — 굴, 매생이, 초피액젓…" autocomplete="off">
   <div class="chips">
-    <button class="chip" data-f="all" aria-pressed="true">전체 33</button>
-    <button class="chip" data-f="fix" aria-pressed="false">오늘 고친 것 15</button>
-    <button class="chip" data-f="brand" aria-pressed="false">우리 양념 쓴 것 28</button>
+    <button class="chip" data-f="all" aria-pressed="true">전체 34</button>
+    <button class="chip" data-f="fix" aria-pressed="false">오늘 고친 것 16</button>
+    <button class="chip" data-f="brand" aria-pressed="false">우리 양념 쓴 것 29</button>
     <button class="chip" data-f="open" aria-pressed="false">모두 펴기</button>
   </div>
 </div>
@@ -118,6 +121,7 @@
     <div class="rhead">
       <h4>배추겉절이</h4>
       <span class="meta">30분 · 4인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 참기름 빼고 · 마늘 듬뿍(기호에 따라) · 초피액젓 「간 보며 가감」</p>
     <div class="cols">
@@ -136,6 +140,7 @@
     <div class="rhead">
       <h4>김장수육</h4>
       <span class="meta">80분 · 4인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 창업자 원문 「초초 간단 버전」으로 통째 교체 — 된장·월계수잎·커피가루·소주 뺐다</p>
     <div class="cols">
@@ -154,6 +159,7 @@
     <div class="rhead">
       <h4>배추전</h4>
       <span class="meta">20분 · 2인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 반죽에 해물가루육수 1큰술 (없으면 백간장 1/2큰술)</p>
     <div class="cols">
@@ -180,6 +186,7 @@
     <div class="rhead">
       <h4>깍두기</h4>
       <span class="meta">40분 · 6인분</span>
+      
     </div>
     
     <div class="cols">
@@ -198,6 +205,7 @@
     <div class="rhead">
       <h4>소고기뭇국</h4>
       <span class="meta">35분 · 4인분</span>
+      
     </div>
     
     <div class="cols">
@@ -216,6 +224,7 @@
     <div class="rhead">
       <h4>무말랭이무침</h4>
       <span class="meta">30분 · 6인분</span>
+      
     </div>
     
     <div class="cols">
@@ -242,6 +251,7 @@
     <div class="rhead">
       <h4>가리비술찜</h4>
       <span class="meta">20분 · 2인분</span>
+      
     </div>
     
     <div class="cols">
@@ -260,6 +270,7 @@
     <div class="rhead">
       <h4>가리비구이</h4>
       <span class="meta">25분 · 2인분</span>
+      
     </div>
     
     <div class="cols">
@@ -278,6 +289,7 @@
     <div class="rhead">
       <h4>가리비파스타</h4>
       <span class="meta">30분 · 2인분</span>
+      
     </div>
     
     <div class="cols">
@@ -304,6 +316,7 @@
     <div class="rhead">
       <h4>부대찌개</h4>
       <span class="meta">40분 · 4인분</span>
+      
     </div>
     
     <div class="cols">
@@ -322,6 +335,7 @@
     <div class="rhead">
       <h4>만둣국</h4>
       <span class="meta">25분 · 2인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 초피액젓 1큰술 ＋ 백간장 1큰술로 감칠맛 (간은 가감)</p>
     <div class="cols">
@@ -340,6 +354,7 @@
     <div class="rhead">
       <h4>순두부찌개</h4>
       <span class="meta">20분 · 2인분</span>
+      
     </div>
     
     <div class="cols">
@@ -366,6 +381,7 @@
     <div class="rhead">
       <h4>동태찌개</h4>
       <span class="meta">35분 · 4인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 해물가루육수 1봉 추가</p>
     <div class="cols">
@@ -384,6 +400,7 @@
     <div class="rhead">
       <h4>동태전</h4>
       <span class="meta">40분 · 4인분</span>
+      
     </div>
     
     <div class="cols">
@@ -402,6 +419,7 @@
     <div class="rhead">
       <h4>알탕</h4>
       <span class="meta">30분 · 2인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 해물가루육수 1봉 추가</p>
     <div class="cols">
@@ -428,6 +446,7 @@
     <div class="rhead">
       <h4>묵은지김치찌개</h4>
       <span class="meta">40분 · 3인분</span>
+      
     </div>
     
     <div class="cols">
@@ -446,6 +465,7 @@
     <div class="rhead">
       <h4>묵은지 들기름 파스타</h4>
       <span class="meta">20분 · 1인분</span>
+      
     </div>
     
     <div class="cols">
@@ -464,6 +484,7 @@
     <div class="rhead">
       <h4>묵은지볶음</h4>
       <span class="meta">20분 · 4인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 해물가루육수 1봉 ＋ 올리고당 빼고 아우노슈가 1큰술 (당도는 가감)</p>
     <div class="cols">
@@ -490,6 +511,7 @@
     <div class="rhead">
       <h4>감바스 알 아히요</h4>
       <span class="meta">15분 · 2인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 백간장 1큰술 (소금 대신) ＋ 오징어 넣으면 깔라마리 알 아히요</p>
     <div class="cols">
@@ -508,6 +530,7 @@
     <div class="rhead">
       <h4>빠에야</h4>
       <span class="meta">45분 · 4인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 해물가루육수 1/2봉</p>
     <div class="cols">
@@ -526,6 +549,7 @@
     <div class="rhead">
       <h4>키쉬</h4>
       <span class="meta">60분 · 4인분</span>
+      
     </div>
     
     <div class="cols">
@@ -552,6 +576,7 @@
     <div class="rhead">
       <h4>굴국밥</h4>
       <span class="meta">25분 · 2인분</span>
+      
     </div>
     
     <div class="cols">
@@ -570,6 +595,7 @@
     <div class="rhead">
       <h4>굴전</h4>
       <span class="meta">30분 · 3인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 백간장 1작은술 (소금 대신 · 연두도 좋아요)</p>
     <div class="cols">
@@ -588,6 +614,7 @@
     <div class="rhead">
       <h4>굴 매생이 떡국</h4>
       <span class="meta">25분 · 2인분</span>
+      <span class="founder">파운더 레시피</span>
     </div>
     
     <div class="cols">
@@ -615,6 +642,7 @@
     <div class="rhead">
       <h4>매생이바지락국</h4>
       <span class="meta">20분 · 2인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 해물가루육수 1봉 (기호에 따라)</p>
     <div class="cols">
@@ -633,6 +661,7 @@
     <div class="rhead">
       <h4>매생이칼국수</h4>
       <span class="meta">25분 · 2인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 해물가루육수 2봉</p>
     <div class="cols">
@@ -651,6 +680,7 @@
     <div class="rhead">
       <h4>매생이전</h4>
       <span class="meta">20분 · 2인분</span>
+      
     </div>
     <p class="fix"><b>오늘 고침</b> — 반죽에 해물가루육수 1큰술</p>
     <div class="cols">
@@ -677,6 +707,7 @@
     <div class="rhead">
       <h4>황태국</h4>
       <span class="meta">30분 · 4인분</span>
+      
     </div>
     
     <div class="cols">
@@ -696,6 +727,7 @@
     <div class="rhead">
       <h4>황태구이</h4>
       <span class="meta">25분 · 3인분</span>
+      
     </div>
     
     <div class="cols">
@@ -714,6 +746,7 @@
     <div class="rhead">
       <h4>황태채무침</h4>
       <span class="meta">15분 · 4인분</span>
+      
     </div>
     
     <div class="cols">
@@ -740,6 +773,7 @@
     <div class="rhead">
       <h4>계란말이</h4>
       <span class="meta">15분 · 2인분</span>
+      
     </div>
     
     <div class="cols">
@@ -758,8 +792,9 @@
     <div class="rhead">
       <h4>어묵볶음</h4>
       <span class="meta">20분 · 4인분</span>
+      <span class="founder">파운더 레시피</span>
     </div>
-    <p class="fix"><b>오늘 고침</b> — 전처리 추가 — 10초 데치고 200도에 7분 ＋ 뒤집어 5분 노릇하게 굽기 (25분)</p>
+    <p class="fix"><b>오늘 고침</b> — 창업자 원문으로 다시 씀 — 전처리(데치고 굽기) ＋ 마늘 먼저 · 간장 1/2큰술 · ⛔물·설탕 뺐다. 쫄깃 ↔ 부드러움 두 갈래</p>
     <div class="cols">
       <div>
         <div class="lbl">재료</div>
@@ -767,16 +802,18 @@
       </div>
       <div>
         <div class="lbl">만드는 법</div>
-        <ol class="steps"><li>어묵은 뜨거운 물에 «10초만» 데쳐 기름기를 빼요.</li><li>체에 밭쳐 물기를 털어요.</li><li>쫄깃한 게 좋으면 구워요. 부드러운 게 좋으면 굽지 않고 바로 썰어요.</li><li>오븐이나 에어프라이어를 200도로 예열해요.</li><li>어묵을 7분 굽고, 뒤집어 5분 더 노릇하게 구워요. 오븐에 따라 다르니 색을 보며 맞춰요.</li><li>먹기 좋은 크기로 잘라둬요.</li><li>양파와 당근을 채 썰어요.</li><li>기름 두른 팬에 간 마늘을 볶아요.</li><li>채소를 넣고 아삭하게 볶아요.</li><li>어묵을 넣어요.</li><li>진간장을 넣고 살짝 볶아요.</li><li>올리고당을 넣어요.</li><li>참기름과 통깨를 넣어 마무리해요.</li></ol>
+        <ol class="steps"><li>어묵은 뜨거운 물에 «10초만» 데쳐 기름기를 빼요.</li><li>체에 밭쳐 물기를 털어요.</li><li>쫄깃한 게 좋으면 다음 두 걸음처럼 구워요. 부드러운 게 좋으면 굽지 않고 바로 썰어요.</li><li>오븐이나 에어프라이어를 200도로 예열해요.</li><li>어묵을 7분 굽고, 뒤집어 5분 더 노릇하게 구워요. 오븐에 따라 다르니 색을 보며 맞춰요.</li><li>먹기 좋은 크기로 잘라둬요.</li><li>양파와 당근을 채 썰어요.</li><li>기름 두른 팬에 간 마늘을 볶아요.</li><li>채소를 넣고 아삭하게 볶아요.</li><li>어묵을 넣어요.</li><li>진간장을 넣고 살짝 볶아요.</li><li>올리고당을 넣어요.</li><li>참기름과 통깨를 넣어 마무리해요.</li></ol>
       </div>
     </div>
     <div class="memo"><p>⭐ 좋아하는 식감에 따라 갈라져요.</p><p>«쫄깃한 어묵볶음»이 좋으면 전처리는 필수예요 — 데치고 굽기 두 가지 다.
-«부드러운 어묵볶음»이 좋으면 물에 살짝 데쳐서 물기만 빼고 바로 볶으세요.</p><p>데치는 10초는 «둘 다» 해요. 어묵 겉의 기름이 빠져서 느끼하지 않고 양념도 잘 배요.</p><p>200도에 노릇하게 구우면 겉이 쫄깃해져요. 볶을 때 흐물거리지 않고 씹는 맛이 살아요.</p><p>굽는 시간은 «오븐마다 달라요». 7분 + 5분은 기준이고, 색을 보면서 맞추세요.</p><p>⭐ 전처리는 «한꺼번에 많이» 해두세요. 식혀서 냉동실에 두었다가 어묵탕 끓일 때 넣으면 쫄깃하고 맛있어요.</p><p>마늘을 «맨 먼저» 기름에 볶으세요. 향이 기름에 배어서 나중에 넣는 것과 아주 달라요.</p><p>채소는 «아삭하게». 오래 볶으면 물이 나와서 어묵이 눅눅해져요.</p><p>간장은 1/2큰술로 시작해서 «가감»하세요. 구운 어묵이라 간이 잘 배거든요.</p><p>올리고당은 «맨 마지막»에. 처음부터 넣으면 눌어붙어요. 단맛 좋아하면 더 넣어도 돼요.</p><p>식어도 맛있어서 도시락에 좋아요.</p><p>제가 쓰는 양념 — 어묵 「명태살 가득 참 어묵」 · 간장 「성가정 우리콩 진간장」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+«부드러운 어묵볶음»이 좋으면 물에 살짝 데쳐서 물기만 빼고 바로 볶으세요.</p><p>데치는 10초는 «둘 다» 해요. 어묵 겉의 기름이 빠져서 느끼하지 않고 양념도 잘 배요.</p><p>200도에 노릇하게 구우면 겉이 쫄깃해져요. 볶을 때 흐물거리지 않고 씹는 맛이 살아요.</p><p>굽는 시간은 «오븐마다 달라요». 7분 + 5분은 기준이고, 색을 보면서 맞추세요.</p><p>⭐ 전처리는 «한꺼번에 많이» 해두세요. 식혀서 냉동실에 두었다가 어묵탕 끓일 때 넣으면 쫄깃하고 맛있어요.</p><p>마늘을 «맨 먼저» 기름에 볶으세요. 향이 기름에 배어서 나중에 넣는 것과 아주 달라요.</p><p>채소는 «아삭하게». 오래 볶으면 물이 나와서 어묵이 눅눅해져요.</p><p>간장은 1/2큰술로 시작해서 «가감»하세요. 구운 어묵이라 간이 잘 배거든요.</p><p>올리고당은 «맨 마지막»에. 처음부터 넣으면 눌어붙어요. 단맛 좋아하면 더 넣어도 돼요.</p><p>식어도 맛있어서 도시락에 좋아요.
+파운더의 실사용 레시피 ✨</p><p>제가 쓰는 양념 — 어묵 「명태살 가득 참 어묵」 · 간장 「성가정 우리콩 진간장」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
   </article>
   <article class="rec has-brand has-fix">
     <div class="rhead">
       <h4>꼬들단무지 무침</h4>
       <span class="meta">10분 · 4인분</span>
+      <span class="founder">파운더 레시피</span>
     </div>
     <p class="fix"><b>오늘 고침</b> — ⭐새로 씀 — 창업자 원문 그대로 (김치볶음밥 자리에 · 김치볶음밥은 나중에 한그릇요리로)</p>
     <div class="cols">
@@ -789,7 +826,36 @@
         <ol class="steps"><li>꼬들단무지는 씻지 않아요. 체에 밭쳐 물기만 빼요.</li><li>일반 단무지를 쓸 때만 물에 아주 살짝 헹궈 물기를 꼭 짜요.</li><li>파를 다져요.</li><li>볼에 단무지와 고춧가루, 설탕, 다진 파, 통깨를 넣어요.</li><li>간이 심심하면 초피액젓으로 간을 맞춰요.</li><li>새콤한 것을 좋아하면 식초를 조금 넣어요.</li><li>참기름을 넣고 무쳐요.</li></ol>
       </div>
     </div>
-    <div class="memo"><p>불을 안 써요. 무치기만 하면 끝이라 10분이면 나와요.</p><p>«물기»가 전부예요. 물이 남으면 양념이 겉돌고 다음 날 흥건해져요.</p><p>⛔ 꼬들단무지는 «씻으면 안 돼요». 물기만 빼세요. 씻으면 꼬들꼬들한 게 죽어요.</p><p>헹구는 건 «일반 단무지를 쓸 때만»이에요. 그것도 아주 살짝. 오래 담그면 간이 다 빠져요. 헹군 뒤엔 물기를 꼭 짜야 해요.</p><p>간은 초피액젓으로 맞춰요. 꼭 «참기름 넣기 전»에 보세요. 기름이 들어가면 간이 안 배요.</p><p>새콤한 걸 좋아하면 식초를 조금 넣으세요. 일반 단무지는 헹구면서 신맛이 빠지니까 특히요. 이것도 참기름 전에.</p><p>소금이나 간장은 안 넣어요. 단무지에 이미 간이 되어 있어요.</p><p>냉장고에서 사흘쯤 가요. 꼬들꼬들한 게 살아 있을 때가 제일 맛있어요.</p><p>제가 쓰는 것 — 단무지 「자연드림 꼬들단무지」 · 고춧가루 「복이네먹거리」 · 설탕 「아우노슈가」 · 액젓 「와촌식품 초피액젓」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+    <div class="memo"><p>불을 안 써요. 무치기만 하면 끝이라 10분이면 나와요.</p><p>«물기»가 전부예요. 물이 남으면 양념이 겉돌고 다음 날 흥건해져요.</p><p>⛔ 꼬들단무지는 «씻으면 안 돼요». 물기만 빼세요. 씻으면 꼬들꼬들한 게 죽어요.</p><p>헹구는 건 «일반 단무지를 쓸 때만»이에요. 그것도 아주 살짝. 오래 담그면 간이 다 빠져요. 헹군 뒤엔 물기를 꼭 짜야 해요.</p><p>간은 초피액젓으로 맞춰요. 꼭 «참기름 넣기 전»에 보세요. 기름이 들어가면 간이 안 배요.</p><p>새콤한 걸 좋아하면 식초를 조금 넣으세요. 일반 단무지는 헹구면서 신맛이 빠지니까 특히요. 이것도 참기름 전에.</p><p>소금이나 간장은 안 넣어요. 단무지에 이미 간이 되어 있어요.</p><p>냉장고에서 사흘쯤 가요. 꼬들꼬들한 게 살아 있을 때가 제일 맛있어요.
+파운더의 실사용 레시피 ✨</p><p>제가 쓰는 것 — 단무지 「자연드림 꼬들단무지」 · 고춧가루 「복이네먹거리」 · 설탕 「아우노슈가」 · 액젓 「와촌식품 초피액젓」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  </details>
+  <details class="wk" open>
+    <summary>
+      <span class="date">?</span>
+      <span class="wt">주가 아직 안 정해졌어요</span>
+      <span class="cnt">1편</span>
+    </summary>
+    <p class="why">어느 주에 얹을지 정해주시면 그 주로 옮길게요.</p>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>어묵탕</h4>
+      <span class="meta">15분 · 2인분</span>
+      <span class="founder">파운더 레시피</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 창업자가 오늘 준 원문. 어느 주에 얹을지는 아직 안 정했어요.</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>전처리한 어묵 4장 (데치고 구운 것 · 어묵볶음 편 참고)</li><li>물 350ml</li><li><span class="brand">올바른가 요리의정수 해물가루육수 1봉</span></li><li><span class="brand">와촌식품 초피액젓 1큰술 (없으면 멸치액젓)</span></li><li>대파 1대</li><li>청양고추 1개 (기호에 따라)</li><li><span class="brand">홍영의 붉은대게 백간장 또는 연두 1작은술 (감칠맛 · 기호에 따라)</span></li><li>후추 넉넉히</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>냄비에 물 350ml와 해물가루육수를 넣고 끓여요.</li><li>초피액젓을 넣어요.</li><li>전처리한 어묵을 넣어요.</li><li>대파를 어슷 썰어 넣어요.</li><li>기호에 따라 청양고추를 썰어 넣어요.</li><li>감칠맛을 더하고 싶으면 백간장이나 연두를 넣어요.</li><li>그릇에 담고 후추를 팍팍 뿌려요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>⭐ 어묵을 «전처리해서» 넣으면 쫄깃해요. 어묵볶음 편처럼 10초 데쳐 200도에 구운 거예요.</p><p>한꺼번에 많이 해서 냉동실에 두었다가 이럴 때 꺼내 쓰면 편해요.</p><p>후추는 «팍팍». 이 국물은 후추가 살려요.</p><p>감칠맛이 부족하면 백간장이나 연두를 1작은술. 소금을 더 넣는 것보다 훨씬 나아요.</p><p>청양고추는 기호예요. 넣으면 칼칼하고 안 넣으면 아이도 먹어요.
+파운더의 실사용 레시피 ✨</p><p>제가 쓰는 양념 — 육수 「올바른가 요리의정수 해물가루육수」 · 액젓 「와촌식품 초피액젓」 · 백간장 「홍영의 붉은대게」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
   </article>
   </details>
 <footer>
