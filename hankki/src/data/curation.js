@@ -185,10 +185,11 @@ export const CURATION = [
   {
     cat: '단무지·절임', group: '간편식·간식', emoji: '🥕',
     items: [
-      // ⛔ `mall: 'naturedream'` 은 «없는 몰»이다 — MALL_SEARCH 에 coupang·oasis·naver 뿐이라
-      //    적어두면 조용히 네이버로 가면서 배지만 빈다. 그래서 mall 을 안 준다(＝네이버쇼핑 검색).
-      //    ⏳ 자연드림 온라인 «상품 링크»를 창업자에게 받으면 `url` 로 바꾼다(한살림·산지톡과 같은 방식).
-      { name: '자연드림 꼬들단무지', matches: ['꼬들단무지', '단무지'], benefit: '꼬들한 식감이 좋아요. 뜯어서 물기만 빼고 무치면 되니까 반찬 하나가 금방 나와요. 단무지 자체도 새콤달콤 맛있어요', q: '자연드림 꼬들단무지' },
+      // ✅ 창업자가 준 «상품 직접 링크» (2026-08-13). 검색이 아니라 그 상품으로 바로 간다.
+      //    ⭐ 자연드림(아이쿱)은 실버회원 가입으로 누구나 온라인에서 산다 —
+      //       한살림처럼 「조합원만」 배지를 붙이지 않는다(창업자 확인 2026-08-03).
+      { name: '자연드림 꼬들단무지', matches: ['꼬들단무지', '단무지'], benefit: '꼬들한 식감이 좋아요. 물기가 다 빠져 나와서 뜯어서 바로 무치면 되니까 반찬 하나가 금방 나와요. 단무지 자체도 새콤달콤 맛있어요', q: '자연드림 꼬들단무지',
+        url: 'https://icoop.or.kr/coopmall/goodsmall.phtm?key=%EA%BC%AC%EB%93%A4%EB%8B%A8%EB%AC%B4%EC%A7%80&act=detail&left_ca_name=&gc=26003GZ800&gg=N05&gg2=' },
     ],
   },
   {
@@ -239,6 +240,9 @@ export const productMall = (it) => {
   if (it.mall === 'oasis') return '오아시스'
   const u = it.url || ''
   if (u.includes('hansalim')) return '한살림'
+  // 🛒 자연드림(아이쿱) — 2026-08-13 신설. 없으면 배지가 «빈칸»으로 떠서 어디서 사는지 안 보인다.
+  //    ⭐ 「조합원만」 배지는 안 붙인다 — 실버회원 가입으로 누구나 산다(창업자 확인 2026-08-03).
+  if (u.includes('icoop')) return '자연드림'
   if (u.includes('sanjitalk')) return '산지톡'
   if (u.includes('smartstore.naver') || u.includes('brand.naver')) return '네이버'
   return ''

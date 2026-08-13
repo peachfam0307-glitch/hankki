@@ -335,6 +335,9 @@ function Curation() {
     //      온라인몰 이용어려우니까"*)은 이 네 글자로 다 해결된다.
     //   ⚠️ 한살림 온라인 장보기는 **조합원만**(가입비 3천원＋출자금 3만원·탈퇴 시 환불 · 공식 안내 확인)
     if (u.includes('hansalim')) return '한살림 · 조합원만'
+    // 🛒 자연드림(아이쿱) — 2026-08-13. ⛔여기 없으면 배지가 «빈칸»이라 어디서 사는지 안 보인다.
+    //   ⭐ 한살림과 달리 「조합원만」을 «안» 붙인다 — 실버회원 가입으로 누구나 산다(창업자 2026-08-03).
+    if (u.includes('icoop')) return '자연드림'
     if (u.includes('sanjitalk')) return '산지톡'
     if (u.includes('smartstore.naver')) return '네이버'
     return ''
