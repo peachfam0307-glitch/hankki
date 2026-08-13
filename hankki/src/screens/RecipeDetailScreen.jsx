@@ -299,6 +299,11 @@ export default function RecipeDetailScreen({ id }) {
       {/* 🖼 `cover-box` = 가로에서 표지 폭을 화면 «높이»에 맞추는 손잡이 (창업자 2026-08-09
           *"꾸미다가 취소하면 화면이 엄청커짐"* — 눕히면 앱이 폭을 다 써서 1:1 표지가 851×851 이 됐다).
           ⛔ 세로에선 아무 일도 안 한다 · 캡처(자랑 공유)는 이 `ref` 안만 찍으므로 그대로다. */}
+      {/* 📌 `cover-col` = 표지 ＋ 아래 단추 줄을 «한 칸»으로 묶는 래퍼 (2026-08-13).
+          ⭐ 왜 만들었나 = 패드 2단에서 왼쪽 칸을 «고정»하려면(테스터 *"내렸을때 계속 닭곰탕이보여"*)
+             둘을 한 덩어리로 잡아야 한다. 예전에 grid 로 네 번 실패한 이유가 바로 «묶을 래퍼가 없어서»였다.
+          ⛔ 세로(폰)에선 아무 일도 안 한다 — 스타일은 가로 미디어쿼리 안에만 있다. */}
+      <div className="cover-col">
       <div ref={coverRef} className="cover-box" style={{ position: 'relative' }}>
         <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
         <DecorLayer items={r.decor || []} />
@@ -336,6 +341,7 @@ export default function RecipeDetailScreen({ id }) {
           <Icon name="palette" size={14} />
           레시피 꾸미기
         </button>
+      </div>
       </div>
       {iconSheet && (
         <FoodIconSheet value={r.icon || guessFoodIcon(r.title)} onChange={pickIcon} onClose={() => setIconSheet(false)} />
