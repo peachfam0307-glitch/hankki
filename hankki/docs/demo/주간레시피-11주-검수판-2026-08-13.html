@@ -1,0 +1,838 @@
+<title>11주 주간 레시피 검수</title>
+<style>
+  /* 색 = 앱 팔레트(그레이지 ＋ 더스티블루). 브랜드 재료만 «따뜻한 호박»으로 따로 튄다 */
+  :root{
+    --ground:#F5F2EC; --card:#FFFFFF; --ink:#33291F; --muted:#857767;
+    --accent:#5878a0; --accent-soft:#E7EDF4; --line:#E4DED3;
+    --brand-bg:#F6EAD1; --brand-ink:#87652C;
+    --fix-bg:#EAF2E8; --fix-ink:#3F6B44; --fix-line:#BFD6C0;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --ground:#17171b; --card:#212024; --ink:#E9E3DA; --muted:#9C9287;
+    --accent:#7093c0; --accent-soft:#232C38; --line:#32302C;
+    --brand-bg:#3A2F1C; --brand-ink:#E0BE7C;
+    --fix-bg:#1E2A20; --fix-ink:#9FC9A5; --fix-line:#334636;
+  }}
+  :root[data-theme="dark"]{
+    --ground:#17171b; --card:#212024; --ink:#E9E3DA; --muted:#9C9287;
+    --accent:#7093c0; --accent-soft:#232C38; --line:#32302C;
+    --brand-bg:#3A2F1C; --brand-ink:#E0BE7C;
+    --fix-bg:#1E2A20; --fix-ink:#9FC9A5; --fix-line:#334636;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+    font-size:15px;line-height:1.62;-webkit-text-size-adjust:100%}
+  .wrap{max-width:820px;margin:0 auto;padding:0 16px 64px}
+  header{padding:34px 0 8px}
+  .eyebrow{font-size:11.5px;letter-spacing:.14em;color:var(--muted);font-weight:700}
+  h1{margin:8px 0 0;font-size:29px;font-weight:800;letter-spacing:-.02em;line-height:1.2;text-wrap:balance}
+  .lede{margin:11px 0 0;color:var(--muted);font-size:14.5px}
+  .ask{margin-top:16px;padding:14px 16px;border-radius:13px;background:var(--accent-soft);
+    border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);font-size:14px;line-height:1.62}
+  .ask b{color:var(--accent)}
+  .ask ol{margin:8px 0 0;padding-left:20px}
+  .ask li{margin:3px 0}
+  .now{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .stat{flex:1 1 130px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 13px}
+  .stat .k{font-size:11.5px;color:var(--muted);font-weight:700}
+  .stat .v{font-size:17px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+  .tools{position:sticky;top:0;z-index:5;background:var(--ground);padding:14px 0 10px;margin-top:12px;
+    border-bottom:1px solid var(--line)}
+  input[type=search]{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font:inherit;font-size:15px}
+  input[type=search]:focus-visible{outline:2.5px solid var(--accent);outline-offset:1px}
+  .chips{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+  .chip{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card);
+    color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;min-height:36px}
+  .chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+  details.wk{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-top:11px;overflow:hidden}
+  details.wk[hidden]{display:none}
+  summary{list-style:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:11px;min-height:56px}
+  summary::-webkit-details-marker{display:none}
+  .date{font-variant-numeric:tabular-nums;font-weight:800;color:var(--accent);font-size:14px;flex:none}
+  .wt{font-weight:800;font-size:16.5px;letter-spacing:-.01em}
+  .cnt{margin-left:auto;font-size:12px;color:var(--muted);font-weight:700;flex:none}
+  .why{margin:0 16px 6px;color:var(--muted);font-size:13.5px}
+  .rec{border-top:1px solid var(--line);padding:15px 16px}
+  .rec[hidden]{display:none}
+  .rhead{display:flex;align-items:baseline;gap:9px;margin-bottom:10px}
+  h4{margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em}
+  .meta{font-size:12.5px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+  .fix{margin:0 0 11px;padding:9px 12px;border-radius:10px;background:var(--fix-bg);color:var(--fix-ink);
+    border:1px solid var(--fix-line);font-size:13.5px;line-height:1.6}
+  .cols{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:640px){.cols{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:20px}}
+  .lbl{font-size:11.5px;letter-spacing:.1em;color:var(--muted);font-weight:800;margin-bottom:5px}
+  ul.ing{margin:0;padding-left:17px}
+  ul.ing li{margin:2px 0;font-size:14.5px}
+  ol.steps{margin:0;padding-left:19px}
+  ol.steps li{margin:3px 0;font-size:14.5px}
+  .brand{background:var(--brand-bg);color:var(--brand-ink);font-weight:700;border-radius:5px;padding:1px 4px}
+  .memo{margin-top:12px;padding:11px 13px;border-radius:11px;background:var(--ground);
+    border:1px solid var(--line);font-size:13.5px;color:var(--muted);line-height:1.66}
+  .memo p{margin:0 0 8px}
+  .memo p:last-child{margin:0}
+  footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">2026년 8월 13일 · 검수 요청</div>
+  <h1>11주 주간 레시피</h1>
+  <p class="lede">11월 2일 ~ 1월 18일에 <b>저절로</b> 열릴 것들이에요. 아직 앱엔 안 넣었어요.</p>
+  <div class="ask">
+    👀 <b>세 가지만 봐주시면 돼요.</b>
+    <ol>
+      <li><b>내가 쓰는 재료로</b> — 초피액젓·백간장처럼 바꿀 것 (칠해둔 곳이 지금 우리 양념이에요)</li>
+      <li><b>양이랑 시간</b> — 설탕·간장 줄여도 되는지, 시간이 맞는지</li>
+      <li><b>이상한 것</b> — 순서가 뒤바뀌었거나 안 해먹는 요리</li>
+    </ol>
+    ⛔ 고쳐 쓰지 마시고 <b>주차랑 요리 이름만</b> 짚어주세요. 고치는 건 제가 해요.
+  </div>
+  <div class="now">
+    <div class="stat"><div class="k">주</div><div class="v">11주</div></div>
+    <div class="stat"><div class="k">레시피</div><div class="v">33편</div></div>
+    <div class="stat"><div class="k">우리 양념 쓴 편</div><div class="v">28편</div></div>
+    <div class="stat"><div class="k">오늘 고친 편</div><div class="v">14편</div></div>
+  </div>
+</header>
+
+<div class="tools">
+  <input type="search" id="q" placeholder="찾기 — 굴, 매생이, 초피액젓…" autocomplete="off">
+  <div class="chips">
+    <button class="chip" data-f="all" aria-pressed="true">전체 33</button>
+    <button class="chip" data-f="fix" aria-pressed="false">오늘 고친 것 14</button>
+    <button class="chip" data-f="brand" aria-pressed="false">우리 양념 쓴 것 28</button>
+    <button class="chip" data-f="open" aria-pressed="false">모두 펴기</button>
+  </div>
+</div>
+
+  <details class="wk" open>
+    <summary>
+      <span class="date">11/02</span>
+      <span class="wt">배추</span>
+      <span class="cnt">3편</span>
+    </summary>
+    <p class="why">김장철이에요. 이맘때 배추가 제일 달고 속이 꽉 차요.</p>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>배추겉절이</h4>
+      <span class="meta">30분 · 4인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 참기름 빼고 · 마늘 듬뿍(기호에 따라) · 초피액젓 「간 보며 가감」</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>알배추 1통 (600g쯤 · 없으면 배추 속대)</li><li>굵은소금 1큰술 (숨 죽이는 용)</li><li>쪽파 한 줌</li><li><span class="brand">복이네먹거리 고춧가루 3큰술 (고춧가루 어떤 것이든)</span></li><li><span class="brand">와촌식품 초피액젓 1큰술 (없으면 멸치액젓 · 간 보며 가감)</span></li><li>새우젓 1작은술</li><li>간 마늘 1큰술 (듬뿍 넣으면 더 맛있어요 · 기호에 따라)</li><li><span class="brand">아우노슈가 1큰술 (일반설탕 2/3큰술)</span></li><li>매실청 1큰술</li><li>통깨 1작은술</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>알배추는 밑동을 자르고 한 장씩 떼어 씻어요.</li><li>큰 잎은 세로로 반 갈라 4cm 폭으로 썰어요.</li><li>굵은소금을 뿌려 20분 둬요. 중간에 한 번 뒤집어요.</li><li>숨이 죽으면 물에 한 번만 헹구고 체에 밭쳐요.</li><li>볼에 고춧가루와 액젓, 새우젓, 마늘, 설탕, 매실청을 넣고 양념장을 만들어요. 액젓은 간을 보며 가감해요.</li><li>고춧가루가 불도록 5분 둬요.</li><li>쪽파는 4cm로 썰어 양념장에 넣어요.</li><li>배추를 넣고 위아래로 살살 버무려요.</li><li>통깨를 뿌려 마무리해요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>절이지 않아요. 소금 뿌려 «20분»이면 숨이 죽어요. 오래 두면 물이 많이 나와서 싱거워져요.</p><p>헹구는 건 «한 번만». 여러 번 씻으면 간이 다 빠져서 양념이 겉돌아요.</p><p>체에 받쳐 물기를 털되 꽉 짜지 마세요. 배추가 으스러지면 아삭한 맛이 없어져요.</p><p>고춧가루를 «먼저» 액젓에 5분 불리면 색이 곱게 나요. 마른 채로 배추에 뿌리면 겉돌아요.</p><p>마늘을 «듬뿍» 넣으면 더 맛있어요. 입맛 따라 가감하세요.</p><p>액젓 1큰술은 «시작하는 양»이에요. 배추 크기랑 물기에 따라 간이 달라지니까 버무리면서 간을 보고 더 넣으세요.</p><p>참기름은 안 넣어요. 겉절이는 아삭한 게 맛이라 기름이 들어가면 무거워져요.</p><p>바로 먹는 김치예요. 냉장고에서 사흘쯤 맛있고, 그 뒤엔 시어져서 찌개에 넣으면 좋아요.</p><p>제가 쓰는 양념 — 액젓 「와촌식품 초피액젓」 · 고춧가루 「복이네먹거리」 · 설탕 「아우노슈가」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-fix">
+    <div class="rhead">
+      <h4>김장수육</h4>
+      <span class="meta">80분 · 4인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 창업자 원문 「초초 간단 버전」으로 통째 교체 — 된장·월계수잎·커피가루·소주 뺐다</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>돼지고기 1kg (통삼겹살·앞다리살 어느 것이든)</li><li>소금 1큰술</li><li>간장 1큰술</li><li>청주 1큰술</li><li>통후추 1작은술</li><li>물 (고기가 잠길 정도)</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>끓는 물에 고기를 넣어 겉만 데쳐요.</li><li>데친 고기를 꺼내 흐르는 물에 씻어요.</li><li>냄비에 고기가 잠길 만큼 물을 부어요.</li><li>소금과 간장, 청주, 통후추를 넣어요.</li><li>중불에서 1시간 끓여요.</li><li>불을 끄고 10분간 뜸을 들여요.</li><li>결 반대로 썰어내요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>김장날은 수육이에요. 김치 속 넣다가 배춧잎에 싸 먹으면 그게 제일 맛있어요.</p><p>«초초 간단» 버전이에요. 된장도 월계수잎도 안 넣어요. 소금·간장·청주·통후추 넷이면 충분해요.</p><p>한 번 «데쳐서 씻는» 게 핵심이에요. 이걸로 잡내와 핏물이 같이 빠져서 향신 재료가 많이 필요 없어요.</p><p>뜸 10분을 꼭 들이세요. 바로 썰면 육즙이 도마에 다 흘러요.</p></div>
+  </article>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>배추전</h4>
+      <span class="meta">20분 · 2인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 반죽에 해물가루육수 1큰술 (없으면 백간장 1/2큰술)</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>배추 겉잎 6장</li><li>부침가루 1컵</li><li>물 1컵</li><li><span class="brand">해물가루육수 1큰술 (없으면 백간장 1/2큰술)</span></li><li>소금 약간</li><li>식용유 넉넉히</li><li><span class="brand">성가정 우리콩 진간장 1큰술 (진간장 어떤 것이든 · 초간장용)</span></li><li>식초 1작은술 (초간장용)</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>배춧잎은 씻어 물기를 털어요.</li><li>두꺼운 줄기는 칼등으로 자근자근 두드려요.</li><li>부침가루에 물을 붓고 해물가루육수와 소금을 넣어 반죽을 풀어요.</li><li>팬에 기름을 넉넉히 두르고 달궈요.</li><li>배춧잎을 반죽에 담갔다 건져요.</li><li>중불에서 앞뒤로 노릇하게 부쳐요.</li><li>진간장에 식초를 섞어 곁들여요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>반죽에 «해물가루육수 1큰술»을 넣으면 간이 배어서 초간장 없이도 맛있어요. 없으면 백간장 1/2큰술로 대신해요.</p><p>김장하다 남은 겉잎으로 부치는 전이에요. 버릴 잎이 제일 맛있어요.</p><p>줄기를 두드리는 게 핵심이에요. 안 두드리면 익는 데 오래 걸리고 반죽만 타요.</p><p>반죽은 «묽게». 배추 모양이 비칠 만큼 얇아야 바삭해요. 두꺼우면 부침개가 돼요.</p><p>기름을 아끼지 마세요. 넉넉해야 가장자리가 과자처럼 바삭해져요.</p><p>제가 쓰는 양념 — 간장 「성가정 우리콩 진간장」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  </details>
+  <details class="wk">
+    <summary>
+      <span class="date">11/09</span>
+      <span class="wt">무</span>
+      <span class="cnt">3편</span>
+    </summary>
+    <p class="why">서리 맞은 무가 제일 달아요. 이때 담근 깍두기는 설탕을 덜 넣어도 돼요.</p>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>깍두기</h4>
+      <span class="meta">40분 · 6인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>무 2개 (2kg쯤)</li><li>굵은소금 2큰술</li><li><span class="brand">아우노슈가 2큰술 (일반설탕 1큰술 반)</span></li><li><span class="brand">복이네먹거리 고춧가루 5큰술 (고춧가루 어떤 것이든)</span></li><li><span class="brand">와촌식품 초피액젓 3큰술 (없으면 멸치액젓)</span></li><li>새우젓 2큰술</li><li>간 마늘 2큰술</li><li>다진 생강 1/2작은술</li><li>쪽파 한 줌</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>무는 껍질을 벗기고 2cm 깍둑썰기 해요.</li><li>굵은소금과 설탕을 뿌려 30분 절여요.</li><li>중간에 한 번 위아래를 뒤집어요.</li><li>나온 물은 «버리지 않고» 반만 따라 둬요.</li><li>고춧가루를 먼저 넣어 색을 들여요.</li><li>액젓과 새우젓, 마늘, 생강을 넣고 버무려요.</li><li>쪽파를 4cm로 썰어 넣고 살살 섞어요.</li><li>통에 눌러 담고 하루 실온에 둬요.</li><li>다음 날 냉장고에 넣어요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>무에서 나온 물을 반만 남겨 쓰세요. 다 버리면 국물이 안 생겨서 깍두기가 뻑뻑해요.</p><p>설탕을 소금과 «같이» 넣고 절이면 무가 물러지지 않고 아삭해요.</p><p>고춧가루를 먼저 넣어 색을 들인 다음 액젓을 넣으세요. 순서가 바뀌면 색이 탁해요.</p><p>김장철 무가 제일 답니다. 이때 담근 깍두기는 설탕을 덜 넣어도 달아요.</p><p>제가 쓰는 양념 — 액젓 「와촌식품 초피액젓」 · 고춧가루 「복이네먹거리」 · 설탕 「아우노슈가」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>소고기뭇국</h4>
+      <span class="meta">35분 · 4인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>소고기 국거리 200g</li><li>무 1/3개 (400g쯤)</li><li>참기름 1큰술</li><li><span class="brand">올바른가 요리의정수 해물가루육수 1봉 (없어도 돼요)</span></li><li><span class="brand">홍영의 붉은대게 백간장 2큰술 (없으면 국간장)</span></li><li><span class="brand">와촌식품 초피액젓 1큰술 (없으면 멸치액젓 · 마지막 간)</span></li><li>간 마늘 1큰술</li><li>대파 1대</li><li>물 1.5L</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>무는 나박하게 썰어요.</li><li>냄비에 참기름을 두르고 소고기를 볶아요.</li><li>고기 겉면이 하얘지면 무를 넣고 같이 볶아요.</li><li>무가 반투명해질 때까지 3분 더 볶아요.</li><li>물 1.5L를 붓고 센불에서 끓여요.</li><li>끓어오르면 거품을 걷어내요.</li><li>해물가루육수와 마늘을 넣고 중불로 20분 끓여요.</li><li>백간장으로 간을 맞춰요.</li><li>마지막에 초피액젓을 넣고 대파를 썰어 넣어요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>무를 «볶아서» 넣는 게 핵심이에요. 그냥 끓이면 국물이 맹맹하고, 볶으면 단맛이 우러나요.</p><p>간은 백간장으로 하고 마지막 한 큰술만 액젓으로 하세요. 감칠맛이 확 달라져요.</p><p>거품은 꼭 걷어내세요. 그거 하나로 국물이 맑아져요.</p><p>가을 무는 달아서 설탕이 아예 필요 없어요.</p><p>제가 쓰는 양념 — 간장 「홍영의 붉은대게 백간장」 · 액젓 「와촌식품 초피액젓」 · 육수 「올바른가 요리의정수 해물가루육수」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>무말랭이무침</h4>
+      <span class="meta">30분 · 6인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>무말랭이 100g</li><li>고춧잎 20g (없어도 돼요)</li><li><span class="brand">복이네먹거리 고춧가루 4큰술 (고춧가루 어떤 것이든)</span></li><li><span class="brand">와촌식품 초피액젓 3큰술 (없으면 멸치액젓)</span></li><li><span class="brand">성가정 우리콩 진간장 2큰술 (진간장 어떤 것이든)</span></li><li>올리고당 3큰술</li><li>간 마늘 1큰술</li><li>통깨 1큰술</li><li>참기름 1큰술</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>무말랭이는 물에 담가 20분 불려요.</li><li>두 번 헹궈 물기를 꼭 짜요.</li><li>고춧잎도 같이 불려 물기를 짜요.</li><li>큰 볼에 고춧가루와 액젓, 진간장, 올리고당을 섞어요.</li><li>양념을 10분 두어 고춧가루를 불려요.</li><li>무말랭이와 고춧잎을 넣고 조물조물 무쳐요.</li><li>마늘과 통깨, 참기름을 넣고 한 번 더 버무려요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>너무 오래 불리지 마세요. 20분이면 충분해요. 물러지면 «꼬들꼬들»한 맛이 사라져요.</p><p>물기를 꼭 짜세요. 남으면 양념이 겉돌고 이틀 만에 물이 생겨요.</p><p>양념을 먼저 10분 재워두면 고춧가루가 불어서 가루 씹히는 느낌이 없어요.</p><p>하루 지난 게 더 맛있어요. 냉장고에서 2주는 가요.</p><p>제가 쓰는 양념 — 액젓 「와촌식품 초피액젓」 · 간장 「성가정 우리콩 진간장」 · 고춧가루 「복이네먹거리」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  </details>
+  <details class="wk">
+    <summary>
+      <span class="date">11/16</span>
+      <span class="wt">가리비</span>
+      <span class="cnt">3편</span>
+    </summary>
+    <p class="why">찬바람 불면 가리비가 살이 올라요. 껍데기째 쪄서 그대로 상에 올려요.</p>
+  <article class="rec">
+    <div class="rhead">
+      <h4>가리비술찜</h4>
+      <span class="meta">20분 · 2인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>가리비 12개</li><li>청주 반 컵 (없으면 소주)</li><li>물 반 컵</li><li>대파 1대</li><li>통마늘 5쪽</li><li>청양고추 1개</li><li>버터 1큰술 (없어도 돼요)</li><li>모에솔트 대파소금 약간 (없으면 소금)</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>가리비는 솔로 껍데기를 문질러 씻어요.</li><li>옅은 소금물에 30분 담가 해감해요.</li><li>냄비에 가리비를 껍데기째 담아요.</li><li>청주와 물을 부어요.</li><li>대파와 통마늘, 청양고추를 썰어 얹어요.</li><li>뚜껑을 덮고 센불에서 5분 쪄요.</li><li>입이 벌어지면 불을 꺼요.</li><li>버터를 얹고 소금으로 간해요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>입을 «벌리자마자» 불을 끄세요. 더 익히면 순식간에 질겨져요. 30초 차이예요.</p><p>안 벌어진 건 버리세요. 억지로 열지 마세요.</p><p>국물이 제일 맛있어요. 남으면 칼국수 사리를 넣어 드세요.</p><p>청양고추 하나가 비린내를 잡아요. 매운 걸 못 드셔도 한 개는 넣으세요.</p><p>⚠️ 이 편은 아직 «우리 그림»이 없어요 — 다음 시트에 같이 뽑을 것.</p></div>
+  </article>
+  <article class="rec">
+    <div class="rhead">
+      <h4>가리비구이</h4>
+      <span class="meta">25분 · 2인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>가리비 12개</li><li>버터 2큰술</li><li>간 마늘 1큰술</li><li>모짜렐라 치즈 한 줌 (없어도 돼요)</li><li>파슬리가루 약간 (없어도 돼요)</li><li>레몬 1/4개 (없어도 돼요)</li><li>후추 약간</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>가리비는 솔로 문질러 씻고 30분 해감해요.</li><li>끓는 물에 30초만 데쳐 입을 벌려요.</li><li>위쪽 껍데기를 떼고 아래쪽만 남겨요.</li><li>버터를 녹여 마늘과 섞어요.</li><li>가리비 살 위에 마늘버터를 한 숟갈씩 얹어요.</li><li>치즈를 올려요.</li><li>에어프라이어 190도에서 6분 구워요.</li><li>파슬리를 뿌리고 레몬을 곁들여요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>데치는 건 «입을 열려고» 하는 거라 30초면 돼요. 여기서 익히면 구울 때 질겨져요.</p><p>에어프라이어가 없으면 오븐 200도 8분, 그것도 없으면 팬에 뚜껑 덮고 중약불 5분이면 돼요.</p><p>치즈를 얹으면 아이들이 잘 먹어요. 술안주로 낼 땐 빼고 레몬만 짜세요.</p><p>껍데기째 접시에 올리면 그대로 손님상이에요.</p><p>⚠️ 이 편은 아직 «우리 그림»이 없어요 — 다음 시트에 같이 뽑을 것.</p></div>
+  </article>
+  <article class="rec">
+    <div class="rhead">
+      <h4>가리비파스타</h4>
+      <span class="meta">30분 · 2인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>스파게티 180g</li><li>가리비살 12개분 (껍데기째 12개)</li><li>마늘 6쪽</li><li>이리아다 칼라마타 엑스트라버진 올리브유 3큰술 (올리브유 어떤 것이든)</li><li>화이트와인 1/4컵 (없으면 청주)</li><li>생크림 1컵</li><li>버터 1큰술</li><li>소금 약간</li><li>후추 약간</li><li>파슬리가루 약간 (없어도 돼요)</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>가리비는 씻어 살만 발라내요.</li><li>끓는 물에 소금을 넣고 면을 7분 삶아요.</li><li>면수 1컵을 따로 남겨요.</li><li>팬에 올리브유를 두르고 저민 마늘을 약불에 볶아요.</li><li>마늘이 노릇해지면 가리비살을 넣어 한 면씩 30초 구워요.</li><li>가리비만 먼저 건져 둬요.</li><li>와인을 붓고 센불에서 알코올을 날려요.</li><li>생크림과 버터를 넣고 중약불로 졸여요.</li><li>면과 면수를 조금씩 넣어가며 섞어요.</li><li>가리비를 다시 올리고 소금과 후추로 간해요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>가리비를 «먼저 굽고 건져두는» 게 핵심이에요. 소스에 계속 두면 고무처럼 질겨져요.</p><p>면수를 버리지 마세요. 소스가 뻑뻑할 때 한 국자씩 넣으면 부드럽게 풀려요.</p><p>면은 7분만 삶으세요. 소스에서 1분 더 익어요.</p><p>와인이 없으면 청주도 괜찮아요. 비린내만 날리면 되거든요.</p><p>제가 쓰는 양념 — 올리브유 「이리아다 칼라마타 엑스트라버진」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  </details>
+  <details class="wk">
+    <summary>
+      <span class="date">11/30</span>
+      <span class="wt">겨울 전골 한 그릇</span>
+      <span class="cnt">3편</span>
+    </summary>
+    <p class="why">추워지면 한 냄비에 끓여 같이 떠먹는 게 제일이에요. 재료도 적게 들어요.</p>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>부대찌개</h4>
+      <span class="meta">40분 · 4인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>스팸(또는 햄) 400g</li><li>소세지 240g</li><li>두부 1모</li><li>양파 1/2개</li><li>대파 1대</li><li>떡 한 줌</li><li>익은 김치 1/2컵</li><li>베이크드빈 듬뿍 2큰술</li><li>라면사리 1개</li><li>치즈 1장</li><li>사골육수 800g + 물 200ml (또는 물 + 사골분말)</li><li><span class="brand">해물가루육수 1봉</span></li><li>소금·후추 약간</li><li>[소고기 밑간]</li><li>다진 소고기 70g</li><li>맛술 1큰술</li><li>진간장 1/2큰술</li><li>다진 마늘 1/2큰술</li><li>후추 톡톡</li><li>[양념장]</li><li>고추장 1큰술</li><li>다진 마늘 1큰술</li><li>고춧가루 1큰술</li><li>국간장 1큰술</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>뜨거운 물에 햄을 살짝 데쳐 기름을 빼고 얇게 썰어요.</li><li>두부와 소세지도 썰어 준비해요.</li><li>다진 소고기에 맛술 1큰술, 진간장 1/2큰술, 다진 마늘 1/2큰술, 후추를 넣어 양념하고, 익은 김치도 잘게 썰어 준비해요.</li><li>전골냄비에 채 썬 양파를 깔고 그 위에 햄·두부·소세지·떡·김치·베이크드빈·양념한 소고기·양념장·대파를 올려요.</li><li>사골육수 800g과 물 200ml를 붓고 소금·후추를 살짝 뿌린 뒤 해물가루육수 1봉를 넣고 뚜껑을 덮어 10분 끓여요.</li><li>마지막에 치즈를 넣고 라면사리까지 넣으면 완성이에요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>햄을 뜨거운 물에 한 번 데치면 기름이 빠져 국물이 훨씬 깔끔해요.</p></div>
+  </article>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>만둣국</h4>
+      <span class="meta">25분 · 2인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 초피액젓 1큰술 ＋ 백간장 1큰술로 감칠맛 (간은 가감)</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>냉동만두 10개</li><li>소고기 국거리 100g (없어도 돼요)</li><li>달걀 1개</li><li>대파 1대</li><li>김가루 약간</li><li><span class="brand">올바른가 요리의정수 해물가루육수 1봉 (없어도 돼요)</span></li><li><span class="brand">와촌식품 초피액젓 1큰술 (없으면 멸치액젓)</span></li><li><span class="brand">홍영의 붉은대게 백간장 1큰술 (없으면 국간장)</span></li><li>간 마늘 1/2큰술</li><li>참기름 1작은술</li><li>물 1L</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>냄비에 참기름을 두르고 소고기를 볶아요.</li><li>물 1L를 붓고 끓여요.</li><li>끓어오르면 해물가루육수와 마늘을 넣어요.</li><li>만두를 «얼린 채로» 넣어요.</li><li>만두가 떠오르면 3분 더 끓여요.</li><li>초피액젓과 백간장을 1큰술씩 넣어 간을 맞춰요. 입맛 따라 가감해요.</li><li>달걀을 풀어 둘러 붓고 젓지 않아요.</li><li>대파를 썰어 넣고 불을 꺼요.</li><li>그릇에 담아 김가루를 얹어요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>간은 «초피액젓 1 ＋ 백간장 1»이에요. 액젓이 감칠맛을 내고 백간장이 색을 안 죽여요. 둘 중 하나만 쓰면 밍밍하거나 국물이 탁해져요.</p><p>간은 «가감»하세요. 만두가 짭짤한 제품이면 반 큰술씩만 넣고 나중에 더해요.</p><p>만두는 «녹이지 말고» 얼린 채로 넣으세요. 녹이면 껍질이 들러붙어 터져요.</p><p>달걀은 붓고 «젓지 마세요». 10초만 기다리면 결이 살아요. 저으면 국물이 탁해져요.</p><p>소고기가 없으면 육수만으로도 충분해요. 만두에서 이미 기름이 나오거든요.</p><p>제가 쓰는 양념 — 액젓 「와촌식품 초피액젓」 · 간장 「홍영의 붉은대게 백간장」 · 육수 「올바른가 요리의정수 해물가루육수」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>순두부찌개</h4>
+      <span class="meta">20분 · 2인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>한살림 몽글이 순두부 1봉 (순두부 어떤 것이든)</li><li>돼지고기 다짐육 100g (없으면 바지락)</li><li>달걀 1개</li><li><span class="brand">복이네먹거리 고춧가루 2큰술 (고춧가루 어떤 것이든)</span></li><li>식용유 2큰술</li><li>간 마늘 1큰술</li><li><span class="brand">와촌식품 초피액젓 1큰술 (없으면 멸치액젓)</span></li><li><span class="brand">홍영의 붉은대게 백간장 1큰술 (없으면 국간장)</span></li><li>대파 1/2대</li><li>물 300ml</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>뚝배기에 식용유를 두르고 약불로 달궈요.</li><li>고춧가루를 넣고 30초만 볶아 고추기름을 내요.</li><li>돼지고기와 마늘을 넣어 볶아요.</li><li>고기가 익으면 물 300ml를 부어요.</li><li>끓어오르면 순두부를 숟가락으로 뚝뚝 떠 넣어요.</li><li>액젓과 백간장으로 간을 맞춰요.</li><li>3분 끓이고 달걀을 깨 넣어요.</li><li>대파를 썰어 올리고 불을 꺼요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>고추기름을 «먼저» 내는 게 전부예요. 약불에서 30초, 그 이상은 타서 써져요.</p><p>순두부는 칼로 자르지 말고 숟가락으로 뚝뚝 떠 넣으세요. 모양도 살고 국물도 덜 탁해요.</p><p>달걀은 마지막에. 오래 끓이면 노른자가 굳어서 부드러운 맛이 사라져요.</p><p>돼지고기 대신 바지락을 넣으면 시원한 맛이 나요. 둘 다 넣어도 좋아요.</p><p>제가 쓰는 양념 — 순두부 「한살림 몽글이」 · 액젓 「와촌식품 초피액젓」 · 고춧가루 「복이네먹거리」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  </details>
+  <details class="wk">
+    <summary>
+      <span class="date">12/07</span>
+      <span class="wt">동태·명태</span>
+      <span class="cnt">3편</span>
+    </summary>
+    <p class="why">한겨울 동태가 살이 단단해요. 찌개·전·알탕으로 한 마리를 다 써요.</p>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>동태찌개</h4>
+      <span class="meta">35분 · 4인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 해물가루육수 1봉 추가</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>동태 1마리 (토막 낸 것)</li><li>무 1/4개</li><li>두부 1/2모</li><li>미나리 한 줌 (없으면 쑥갓)</li><li><span class="brand">올바른가 요리의정수 해물가루육수 1봉</span></li><li><span class="brand">복이네먹거리 고춧가루 3큰술 (고춧가루 어떤 것이든)</span></li><li><span class="brand">와촌식품 초피액젓 2큰술 (없으면 멸치액젓)</span></li><li><span class="brand">홍영의 붉은대게 백간장 1큰술 (없으면 국간장)</span></li><li>간 마늘 1큰술</li><li>다진 생강 1/2작은술</li><li>대파 1대</li><li>물 1.2L</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>동태는 찬물에 헹궈 핏물을 빼요.</li><li>무는 나박하게 썰어 냄비 바닥에 깔아요.</li><li>물 1.2L를 붓고 센불에서 끓여요.</li><li>끓어오르면 동태를 넣어요.</li><li>거품을 걷어내고 해물가루육수와 고춧가루, 마늘, 생강을 넣어요.</li><li>중불로 15분 끓여요.</li><li>두부를 넣고 5분 더 끓여요.</li><li>액젓과 백간장으로 간을 맞춰요.</li><li>미나리와 대파를 넣고 불을 꺼요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>생선은 «끓는 물»에 넣으세요. 찬물부터 끓이면 살이 부서지고 비린내가 남아요.</p><p>무를 바닥에 까는 이유가 있어요. 생선이 냄비에 눌어붙지 않고, 무에 국물이 배어 그게 더 맛있어요.</p><p>생강 반 작은술이면 비린내가 잡혀요. 많이 넣으면 생강 맛만 나요.</p><p>미나리는 «불 끄고» 넣으세요. 끓이면 향이 다 날아가요.</p><p>해물가루육수 한 봉이면 다시마·멸치를 안 우려도 국물이 깊어요.</p><p>제가 쓰는 양념 — 액젓 「와촌식품 초피액젓」 · 간장 「홍영의 붉은대게 백간장」 · 고춧가루 「복이네먹거리」 · 육수 「올바른가 요리의정수 해물가루육수」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>동태전</h4>
+      <span class="meta">40분 · 4인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>동태포 500g</li><li>달걀 3개</li><li>부침가루 1/2컵 (100ml쯤)</li><li>소금 약간</li><li>후추 약간</li><li>식용유 넉넉히</li><li><span class="brand">성가정 우리콩 진간장 1큰술 (진간장 어떤 것이든 · 초간장용)</span></li><li>식초 1작은술 (초간장용)</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>동태포는 키친타월로 물기를 꼭 눌러 빼요.</li><li>소금과 후추를 뿌려 10분 둬요.</li><li>달걀을 풀고 소금 한 꼬집을 넣어요.</li><li>동태포에 부침가루를 얇게 묻혀요.</li><li>가루를 털어내고 달걀물에 담가요.</li><li>팬에 기름을 두르고 «약불»로 달궈요.</li><li>앞면을 3분, 뒤집어 2분 부쳐요.</li><li>진간장에 식초를 섞어 곁들여요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>물기를 빼는 게 반이에요. 젖어 있으면 가루가 뭉치고 부칠 때 튀어요.</p><p>가루는 «털어내세요». 두껍게 묻으면 달걀옷이 안 붙고 따로 놀아요.</p><p>무조건 약불이에요. 센불이면 겉만 타고 속은 덜 익어요.</p><p>식은 뒤에 냉동해 두면 명절이나 손님 올 때 데워서 그대로 내요.</p><p>제가 쓰는 양념 — 간장 「성가정 우리콩 진간장」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>알탕</h4>
+      <span class="meta">30분 · 2인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 해물가루육수 1봉 추가</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>명란·곤이 300g</li><li>콩나물 한 줌</li><li>무 1/6개</li><li>미나리 한 줌 (없으면 쑥갓)</li><li><span class="brand">올바른가 요리의정수 해물가루육수 1봉</span></li><li><span class="brand">복이네먹거리 고춧가루 2큰술 (고춧가루 어떤 것이든)</span></li><li><span class="brand">와촌식품 초피액젓 2큰술 (없으면 멸치액젓)</span></li><li>간 마늘 1큰술</li><li>청주 2큰술 (없으면 소주)</li><li>대파 1대</li><li>물 800ml</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>알과 곤이는 찬물에 살살 흔들어 씻어요.</li><li>청주에 5분 재워 비린내를 빼요.</li><li>냄비에 무를 깔고 물 800ml를 부어요.</li><li>끓어오르면 해물가루육수와 고춧가루, 마늘을 풀어요.</li><li>알과 곤이를 넣고 그대로 둬요.</li><li>5분 끓여 알이 하얗게 익으면 콩나물을 넣어요.</li><li>뚜껑을 덮고 3분 더 끓여요.</li><li>액젓으로 간을 맞춰요.</li><li>미나리와 대파를 넣고 불을 꺼요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>알을 넣고 «젓지 마세요». 저으면 알집이 터져서 국물이 뿌옇게 흐려져요.</p><p>청주에 5분만 재우면 비린내가 확 줄어요. 물에 오래 담그면 알이 물러져요.</p><p>콩나물은 뚜껑을 덮었으면 «끝까지» 덮으세요. 중간에 열면 비린내가 나요.</p><p>곤이가 없으면 알만으로도 돼요. 시장에서는 섞어서 팔아요.</p><p>해물가루육수 한 봉을 같이 넣으면 알에서 나는 비린 맛을 덮어줘요.</p><p>제가 쓰는 양념 — 액젓 「와촌식품 초피액젓」 · 고춧가루 「복이네먹거리」 · 육수 「올바른가 요리의정수 해물가루육수」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  </details>
+  <details class="wk">
+    <summary>
+      <span class="date">12/14</span>
+      <span class="wt">묵은지</span>
+      <span class="cnt">3편</span>
+    </summary>
+    <p class="why">김장한 김치가 두 달이면 알맞게 익어요. 신맛이 오른 김치가 주인공이에요.</p>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>묵은지김치찌개</h4>
+      <span class="meta">40분 · 3인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>묵은지 1/4포기</li><li>돼지고기 목살 250g (앞다리살도 좋아요)</li><li>두부 1/2모</li><li>양파 1/2개</li><li><span class="brand">복이네먹거리 고춧가루 1큰술 (고춧가루 어떤 것이든)</span></li><li><span class="brand">아우노슈가 1작은술 (일반설탕 2/3작은술)</span></li><li>간 마늘 1큰술</li><li>들기름 1큰술</li><li>대파 1대</li><li>쌀뜨물 700ml (없으면 물)</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>묵은지는 «씻지 않고» 양념째 손으로 짜요.</li><li>먹기 좋게 썰어요.</li><li>냄비에 들기름을 두르고 묵은지를 5분 볶아요.</li><li>고기를 넣고 겉면이 익을 때까지 같이 볶아요.</li><li>고춧가루와 설탕을 넣고 한 번 더 볶아요.</li><li>쌀뜨물을 붓고 센불에서 끓여요.</li><li>끓어오르면 중약불로 25분 푹 끓여요.</li><li>두부와 양파를 넣고 5분 더 끓여요.</li><li>대파를 썰어 넣고 불을 꺼요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>묵은지를 «씻지 마세요». 그 양념이 국물의 바탕이에요. 짜면 물만 짜내세요.</p><p>볶는 게 핵심이에요. 그냥 끓이면 신맛이 그대로 남고, 볶으면 단맛으로 바뀌어요.</p><p>설탕 1작은술이 신맛을 잡아요. 달아지는 게 아니라 «둥글어져요».</p><p>쌀뜨물을 쓰면 국물이 뽀얗고 부드러워요. 없으면 물도 괜찮아요.</p><p>11월에 담근 김장이 두 달이면 이만큼 익어요.</p><p>제가 쓰는 양념 — 고춧가루 「복이네먹거리」 · 설탕 「아우노슈가」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>묵은지 들기름 파스타</h4>
+      <span class="meta">20분 · 1인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>스파게티 면 100g</li><li>묵은지 1컵 (속을 털고 잘게 썬 것)</li><li>들기름 2큰술</li><li>다진 마늘 1큰술</li><li>진간장 1작은술</li><li><span class="brand">아우노슈가 약간</span></li><li>김가루·깨·쪽파 약간</li><li>면수 약간</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>스파게티를 소금 넣은 물에 삶고, 면수를 조금 남겨 둬요.</li><li>묵은지는 속을 털어내고 잘게 썰어요.</li><li>팬에 들기름과 다진 마늘을 넣고 약불에서 향을 내요.</li><li>묵은지를 넣고 중불에서 달달 볶아요.</li><li>삶은 면과 면수 약간, 간장을 넣어 촉촉하게 볶아 섞어요.</li><li>접시에 담고 김가루·깨·쪽파를 올려요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>신김치일수록 맛있어요. 들기름은 불 끄기 직전에 한 번 더 둘러도 좋아요.</p><p>제가 쓰는 양념 — 간장 「성가정 우리콩 진간장」 · 설탕 「아우노슈가」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>묵은지볶음</h4>
+      <span class="meta">20분 · 4인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 해물가루육수 1봉 ＋ 올리고당 빼고 아우노슈가 1큰술 (당도는 가감)</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>묵은지 1/4포기</li><li>들기름 2큰술</li><li><span class="brand">올바른가 요리의정수 해물가루육수 1봉</span></li><li><span class="brand">아우노슈가 1큰술 (일반설탕 2/3큰술 · 당도는 가감)</span></li><li>간 마늘 1/2큰술</li><li>들깨가루 1큰술 (없어도 돼요)</li><li>통깨 약간</li><li>물 100ml</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>묵은지는 양념째 물기만 꼭 짜요.</li><li>3cm 길이로 썰어요.</li><li>팬에 들기름을 두르고 묵은지를 넣어요.</li><li>중불에서 5분 볶아요.</li><li>설탕과 마늘을 넣고 2분 더 볶아요.</li><li>물 100ml에 해물가루육수를 풀어 붓고 뚜껑을 덮어요.</li><li>약불에서 10분 조려요.</li><li>들깨가루를 넣고 섞어요.</li><li>통깨를 뿌려요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>물을 조금 넣고 뚜껑을 덮어 «조리는» 게 포인트예요. 그래야 질긴 묵은지가 부드러워져요.</p><p>들기름이라야 해요. 참기름은 향이 튀어서 김치 맛을 덮어요.</p><p>들깨가루가 신맛을 감싸요. 한 큰술이면 충분해요.</p><p>밥에 얹어도 되고, 김밥이나 볶음밥에 넣어도 좋아요. 냉장고에서 일주일은 가요.</p><p>단맛은 «아우노슈가 한 큰술»로 냈어요. 올리고당을 따로 안 넣어도 충분해요. 묵은지가 많이 시면 조금 더, 덜 시면 덜 — «당도는 가감»하세요.</p><p>조리는 물에 해물가루육수 한 봉을 풀면 신맛이 둥글어져요.</p><p>제가 쓰는 양념 — 설탕 「아우노슈가」 · 육수 「올바른가 요리의정수 해물가루육수」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  </details>
+  <details class="wk">
+    <summary>
+      <span class="date">12/21</span>
+      <span class="wt">연말 홈파티</span>
+      <span class="cnt">3편</span>
+    </summary>
+    <p class="why">한 해 마지막 주예요. 큰 팬째 상에 올리는 것들로 골랐어요.</p>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>감바스 알 아히요</h4>
+      <span class="meta">15분 · 2인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 백간장 1큰술 (소금 대신) ＋ 오징어 넣으면 깔라마리 알 아히요</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>냉동 새우(중하) 15마리</li><li>마늘 10쪽</li><li>올리브유 1컵 (200ml)</li><li>페페론치노 4개</li><li>방울토마토 5개 (선택)</li><li><span class="brand">홍영의 붉은대게 백간장 1큰술 (소금 대신 · 없으면 국간장)</span></li><li>후추 약간</li><li>파슬리 약간</li><li>바게트 (곁들임)</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>새우는 해동해 물기를 제거하고 후추로 밑간해요.</li><li>마늘은 편으로 썰고 페페론치노는 부숴요.</li><li>작은 팬(또는 뚝배기)에 올리브유를 넉넉히 붓고 약불에서 마늘을 익혀 향을 내요.</li><li>마늘이 노릇해지면 새우와 페페론치노를 넣고 중약불로 5~6분 익혀요.</li><li>새우가 분홍색으로 익으면 백간장으로 간하고 파슬리를 뿌려요.</li><li>구운 바게트를 올리브유에 찍어 곁들여요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>간은 «소금 대신 백간장 1큰술»로 해요. 짠맛만 나는 소금과 달리 감칠맛이 붙어서 기름에 녹아든 마늘 향이 더 살아나요.</p><p>기름 온도가 너무 높으면 마늘이 타요. 약불에서 은근히 익히는 게 포인트예요.</p><p>⭐ 새우 대신 «오징어»를 넣으면 「깔라마리 알 아히요」가 돼요. 오징어는 몸통을 1cm 링으로 썰어 넣고, 새우보다 짧게 «2~3분»만 익히세요. 오래 익히면 질겨져요.</p><p>제가 쓰는 양념 — 간장 「홍영의 붉은대게 백간장」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>빠에야</h4>
+      <span class="meta">45분 · 4인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 해물가루육수 1/2봉</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>쌀 2컵 (400ml쯤 · 씻지 않아요)</li><li>새우 8마리</li><li>홍합 12개 (없으면 바지락)</li><li>닭다리살 200g</li><li>양파 1/2개</li><li>파프리카 1개</li><li>토마토 1개</li><li>이리아다 칼라마타 엑스트라버진 올리브유 3큰술 (올리브유 어떤 것이든)</li><li>마늘 4쪽</li><li>파프리카가루 1작은술 (없어도 돼요)</li><li>사프란 한 꼬집 (없으면 카레가루 1/2작은술)</li><li><span class="brand">올바른가 요리의정수 해물가루육수 1/2봉</span></li><li>소금 약간</li><li>따뜻한 물 800ml</li><li>레몬 1/2개</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>팬에 올리브유를 두르고 닭고기를 구워요.</li><li>겉이 노릇해지면 건져 둬요.</li><li>같은 팬에 다진 마늘과 양파를 볶아요.</li><li>토마토와 파프리카를 넣고 3분 볶아요.</li><li>파프리카가루와 사프란을 넣어 향을 내요.</li><li>쌀을 «씻지 않고» 넣어 기름에 코팅되게 볶아요.</li><li>따뜻한 물 800ml에 해물가루육수 1/2봉을 풀어 붓고 소금으로 간해요.</li><li>닭고기를 다시 올리고 «젓지 않고» 중불로 15분 끓여요.</li><li>새우와 홍합을 얹고 10분 더 익혀요.</li><li>불을 세게 올려 1분 두어 바닥에 누룽지를 만들어요.</li><li>불을 끄고 5분 뜸을 들인 뒤 레몬을 곁들여요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>쌀을 «씻지 마세요». 전분이 남아야 국물을 머금고 알알이 살아요.</p><p>물을 부은 뒤로는 «절대 젓지 마세요». 저으면 리조또가 돼요. 빠에야는 밥알이 서 있어야 해요.</p><p>마지막 1분 센불이 바닥에 누룽지를 만들어요. 스페인에서는 그 부분을 제일 좋아해요.</p><p>사프란이 없으면 카레가루 반 작은술로 색을 내세요. 향은 다르지만 색은 비슷해요.</p><p>해물가루육수는 «반 봉»만 넣으세요. 한 봉을 다 넣으면 우리 국물 맛이 나서 빠에야 느낌이 사라져요.</p><p>연말에 큰 팬째로 상에 올리면 그것만으로 파티가 돼요.</p><p>제가 쓰는 양념 — 올리브유 「이리아다 칼라마타 엑스트라버진」 · 육수 「올바른가 요리의정수 해물가루육수」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec">
+    <div class="rhead">
+      <h4>키쉬</h4>
+      <span class="meta">60분 · 4인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>냉동 파이시트 1장 (또띠아 2장으로도 돼요)</li><li>달걀 3개</li><li>생크림 200ml (우유 반, 생크림 반도 좋아요)</li><li>위드잇 슬라이스햄 4장 (베이컨도 좋아요)</li><li>양파 1/2개</li><li>시금치 한 줌 (없으면 브로콜리)</li><li>모짜렐라 치즈 한 줌</li><li>소금 약간</li><li>후추 약간</li><li>넛맥가루 약간 (없어도 돼요)</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>파이시트를 틀에 깔고 포크로 바닥을 콕콕 찔러요.</li><li>오븐 180도에서 10분 애벌구이 해요.</li><li>햄과 양파를 잘게 썰어 팬에 볶아요.</li><li>시금치를 넣고 숨만 죽인 뒤 물기를 짜요.</li><li>달걀을 풀고 생크림을 섞어요.</li><li>소금과 후추, 넛맥을 넣어요.</li><li>구운 시트에 볶은 재료를 깔고 치즈를 뿌려요.</li><li>달걀물을 «가장자리 1cm 남기고» 부어요.</li><li>180도에서 30분 구워요.</li><li>10분 식힌 뒤 잘라요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>애벌구이를 꼭 하세요. 안 하면 바닥이 눅눅해져서 칼이 안 들어가요.</p><p>시금치 물기를 꼭 짜세요. 물이 남으면 달걀물이 안 굳고 질척해져요.</p><p>달걀물은 가장자리를 조금 남기고 부으세요. 부풀어 넘쳐요.</p><p>«따뜻할 때 자르면 무너져요.» 10분은 꼭 식히세요.</p><p>식어도 맛있어서 손님상에 미리 만들어두기 좋아요.</p><p>제가 쓰는 양념 — 햄 「위드잇 슬라이스햄」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  </details>
+  <details class="wk">
+    <summary>
+      <span class="date">12/28</span>
+      <span class="wt">굴</span>
+      <span class="cnt">3편</span>
+    </summary>
+    <p class="why">한겨울 굴이 제일 통통해요. 새해 떡국까지 이 한 재료로 나요.</p>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>굴국밥</h4>
+      <span class="meta">25분 · 2인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>굴 300g</li><li>무 1/6개</li><li>콩나물 한 줌</li><li>밥 2공기</li><li>달걀 2개</li><li><span class="brand">올바른가 요리의정수 해물가루육수 1봉 (없어도 돼요)</span></li><li><span class="brand">홍영의 붉은대게 백간장 1큰술 (없으면 국간장)</span></li><li><span class="brand">와촌식품 초피액젓 1큰술 (없으면 멸치액젓)</span></li><li>간 마늘 1/2큰술</li><li>대파 1대</li><li>김가루 약간</li><li>물 1L</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>굴은 소금물에 살살 흔들어 씻고 체에 밭쳐요.</li><li>냄비에 무를 깔고 물 1L를 부어 끓여요.</li><li>끓어오르면 해물가루육수와 마늘을 넣어요.</li><li>콩나물을 넣고 뚜껑을 덮어 3분 끓여요.</li><li>굴을 넣고 «2분만» 끓여요.</li><li>백간장과 액젓으로 간을 맞춰요.</li><li>달걀을 풀어 둘러 붓고 젓지 않아요.</li><li>대파를 썰어 넣고 불을 꺼요.</li><li>그릇에 밥을 담고 국을 부은 뒤 김가루를 얹어요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>굴은 «2분»이에요. 더 끓이면 쪼그라들고 국물만 비려져요.</p><p>굴 씻을 땐 소금물에 «살살 흔드세요». 박박 씻으면 굴 속 우유 같은 진액이 다 빠져나가요.</p><p>무를 먼저 끓여 두면 국물이 시원해져요. 굴만으로는 그 맛이 안 나요.</p><p>새해 아침에 떡국이 물리면 이걸로 해장하세요.</p><p>제가 쓰는 양념 — 간장 「홍영의 붉은대게 백간장」 · 액젓 「와촌식품 초피액젓」 · 육수 「올바른가 요리의정수 해물가루육수」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>굴전</h4>
+      <span class="meta">30분 · 3인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 백간장 1작은술 (소금 대신 · 연두도 좋아요)</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>굴 400g</li><li>달걀 3개</li><li>부침가루 1/2컵 (100ml쯤)</li><li>쪽파 3대</li><li><span class="brand">홍영의 붉은대게 백간장 1작은술 (소금 대신 · 연두도 좋아요)</span></li><li>후추 약간</li><li>식용유 넉넉히</li><li><span class="brand">성가정 우리콩 진간장 1큰술 (진간장 어떤 것이든 · 초간장용)</span></li><li>식초 1작은술 (초간장용)</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>굴은 소금물에 씻어 체에 밭쳐요.</li><li>키친타월로 물기를 «꾹꾹» 눌러 빼요.</li><li>달걀을 풀고 백간장과 후추, 송송 썬 쪽파를 넣어요.</li><li>굴에 부침가루를 얇게 묻히고 털어내요.</li><li>달걀물에 담가요.</li><li>팬에 기름을 두르고 중약불로 달궈요.</li><li>굴을 한 개씩 떼어 올려 앞뒤로 부쳐요.</li><li>진간장에 식초를 섞어 곁들여요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>물기를 «끝까지» 빼세요. 굴은 물을 많이 머금어서 대충 하면 기름이 사방으로 튀어요.</p><p>한 개씩 떼어 올리세요. 붙여 놓으면 서로 들러붙어서 뒤집을 때 다 부서져요.</p><p>중약불이라야 속까지 익어요. 센불이면 겉만 노랗고 속은 물컹해요.</p><p>쪽파를 달걀물에 넣으면 비린내가 덜해요.</p><p>달걀물 간은 «소금 대신 백간장 1작은술»로 해요. 감칠맛이 붙어서 초간장 없이 그냥 집어 먹어도 맛있어요. 연두를 써도 좋아요.</p><p>⚠️ 이 편은 아직 «우리 그림»이 없어요 — 다음 시트에 같이 뽑을 것.</p><p>제가 쓰는 양념 — 간장 「홍영의 붉은대게 백간장」 · 「성가정 우리콩 진간장」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>굴 매생이 떡국</h4>
+      <span class="meta">25분 · 2인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>떡국떡 2인분</li><li>굴 두 줌</li><li>건조 매생이 적당량</li><li>대파 1/2대</li><li>물 350ml</li><li><span class="brand">초피액젓 1큰술 (없으면 멸치액젓 1큰술)</span></li><li><span class="brand">해물가루육수 1봉</span></li><li><span class="brand">연두 또는 백간장 약간 (간 맞추기용)</span></li><li>참기름 약간</li><li>후추 약간</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>물에 떡국떡, 초피액젓 1큰술, 해물가루육수 1봉을 넣어 중약불로 끓여요.</li><li>떡이 떠오르고 말랑해지면 굴을 넣고 잠깐 끓여요.</li><li>매생이와 대파를 넣고, 모자란 간은 초피액젓이나 연두·백간장으로 맞춰요.</li><li>불을 끄고 참기름을 넣어요.</li><li>먹기 전에 후추를 톡톡 뿌려 드세요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>굴은 오래 끓이면 질겨져요 — 떡이 다 익은 뒤에 넣어 잠깐만.
+파운더의 실사용 레시피 ✨</p></div>
+  </article>
+  </details>
+  <details class="wk">
+    <summary>
+      <span class="date">01/04</span>
+      <span class="wt">매생이</span>
+      <span class="cnt">3편</span>
+    </summary>
+    <p class="why">매생이는 1~2월이 제철이에요. 국·칼국수·전으로 한 봉지를 다 써요.</p>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>매생이바지락국</h4>
+      <span class="meta">20분 · 2인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 해물가루육수 1봉 (기호에 따라)</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>갯푸른 간편 매생이 블럭 2개 (매생이 어떤 것이든)</li><li>바지락 300g</li><li><span class="brand">올바른가 요리의정수 해물가루육수 1봉 (기호에 따라 · 없어도 돼요)</span></li><li><span class="brand">홍영의 붉은대게 백간장 1큰술 (없으면 국간장)</span></li><li>간 마늘 1/2큰술</li><li>참기름 1작은술</li><li>물 700ml</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>바지락은 옅은 소금물에 30분 담가 해감해요.</li><li>냄비에 물 700ml와 바지락을 넣고 끓여요.</li><li>입이 벌어지면 거품을 걷어내요.</li><li>매생이를 넣고 젓지 않아요.</li><li>한소끔 끓으면 마늘을 넣어요. 진하게 먹고 싶으면 해물가루육수 1봉을 같이 넣어요.</li><li>백간장으로 간을 맞춰요.</li><li>불을 끄고 참기름을 한 방울 떨어뜨려요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>매생이는 «오래 끓이지 마세요». 한소끔이면 끝이에요. 더 끓이면 풀어져서 국물이 걸쭉해져요.</p><p>젓지 마세요. 저으면 매생이가 뭉쳐서 덩어리져요.</p><p>⚠️ 김이 잘 안 올라와서 «안 뜨거워 보이는데 아주 뜨거워요». 첫술은 조심하세요.</p><p>소금을 따로 안 넣어도 바지락이 짭짤해요. 간은 마지막에 보세요.</p><p>해물가루육수는 «기호에 따라»예요. 바지락만으로도 충분한데, 진하게 먹고 싶은 날엔 한 봉 넣으세요.</p><p>제가 쓰는 양념 — 매생이 「갯푸른 간편 매생이 블럭」 · 간장 「홍영의 붉은대게 백간장」 · 육수 「올바른가 요리의정수 해물가루육수」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>매생이칼국수</h4>
+      <span class="meta">25분 · 2인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 해물가루육수 2봉</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>칼국수 생면 2인분</li><li>갯푸른 간편 매생이 블럭 2개 (매생이 어떤 것이든)</li><li>바지락 200g (없어도 돼요)</li><li>애호박 1/3개</li><li><span class="brand">올바른가 요리의정수 해물가루육수 2봉</span></li><li><span class="brand">홍영의 붉은대게 백간장 1큰술 (없으면 국간장)</span></li><li>간 마늘 1/2큰술</li><li>물 1L</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>냄비에 물 1L와 바지락을 넣고 끓여요.</li><li>입이 벌어지면 해물가루육수 2봉과 마늘을 넣어요.</li><li>면은 «따로» 털어서 넣어요.</li><li>애호박을 채 썰어 같이 넣어요.</li><li>면이 익을 때까지 5분 끓여요.</li><li>매생이를 넣고 한소끔만 더 끓여요.</li><li>백간장으로 간을 맞춰요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>생면은 밀가루를 «털어서» 넣으세요. 안 털면 국물이 걸쭉해지고 매생이 맛이 묻혀요.</p><p>매생이는 «맨 마지막»이에요. 면이랑 같이 넣으면 다 풀어져요.</p><p>바지락이 없으면 육수만으로도 돼요. 매생이 자체가 바다 맛이라 심심하지 않아요.</p><p>육수는 «두 봉»이에요. 칼국수는 면이 국물을 많이 먹어서 한 봉이면 밍밍해져요.</p><p>제가 쓰는 양념 — 매생이 「갯푸른 간편 매생이 블럭」 · 육수 「올바른가 요리의정수 해물가루육수」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>매생이전</h4>
+      <span class="meta">20분 · 2인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — 반죽에 해물가루육수 1큰술</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>갯푸른 간편 매생이 블럭 3개 (매생이 어떤 것이든)</li><li>부침가루 1컵 (200ml쯤)</li><li>물 2/3컵 (130ml쯤)</li><li><span class="brand">올바른가 요리의정수 해물가루육수 1큰술</span></li><li>양파 1/4개</li><li>홍고추 1개 (없어도 돼요)</li><li>소금 약간</li><li>식용유 넉넉히</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>매생이는 해동해 물기를 «가볍게» 짜요.</li><li>양파는 채 썰고 홍고추는 어슷 썰어요.</li><li>부침가루에 물을 붓고 해물가루육수와 소금을 넣어 반죽해요.</li><li>매생이와 채소를 넣고 섞어요.</li><li>팬에 기름을 넉넉히 두르고 달궈요.</li><li>반죽을 얇게 펴 올려요.</li><li>중불에서 앞뒤로 노릇하게 부쳐요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>물기를 «꽉» 짜면 안 돼요. 매생이는 그 물기가 있어야 반죽이 부드럽게 이어져요.</p><p>얇게 펴야 바삭해요. 두꺼우면 매생이가 뭉쳐서 질겨져요.</p><p>간장은 안 찍어도 돼요. 매생이 자체가 짭짤해서 그냥 먹는 게 더 맛있어요.</p><p>반죽에 «해물가루육수 1큰술»을 풀면 간장 없이도 그냥 집어 먹게 돼요.</p><p>⚠️ 이 편은 아직 «우리 그림»이 없어요 — 다음 시트에 같이 뽑을 것.</p><p>제가 쓰는 양념 — 매생이 「갯푸른 간편 매생이 블럭」 · 육수 「올바른가 요리의정수 해물가루육수」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  </details>
+  <details class="wk">
+    <summary>
+      <span class="date">01/11</span>
+      <span class="wt">황태</span>
+      <span class="cnt">3편</span>
+    </summary>
+    <p class="why">황태는 봉지째 팔아서 손질이 없어요. 물에 잠깐 적시면 바로 요리가 돼요.</p>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>황태국</h4>
+      <span class="meta">30분 · 4인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>황태채 50g</li><li>감자 1개 (없어도 괜찮아요)</li><li>무 100g</li><li>대파 1대</li><li>두부 조금</li><li>계란 1개</li><li>들기름 2큰술</li><li>물 1L (500ml씩 두 번 나눠 넣어요)</li><li><span class="brand">야채가루육수 1봉 (없으면 해물가루육수 1~2봉)</span></li><li><span class="brand">해물가루육수 1봉</span></li><li><span class="brand">초피액젓 1큰술 (없으면 국간장)</span></li><li>다진 마늘 1큰술</li><li>후추 약간</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>냄비에 황태채 50g, 들기름 2큰술, 물 500ml를 넣고 센 불로 5분간 끓여요.</li><li>그동안 감자·무·대파·두부를 손질해요.</li><li>국이 끓어오르면 물 500ml를 더 붓고 감자와 무를 넣어 한 번 더 끓여요.</li><li>야채가루육수 1봉, 해물가루육수 1봉, 초피액젓 1큰술, 다진 마늘 1큰술을 넣고 끓여요.</li><li>국이 끓어오르면 두부와 대파를 넣고, 다시 팔팔 끓을 때 계란을 풀어 넣어요.</li><li>후추를 넣어 마무리해요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>황태를 들기름에 먼저 볶듯 끓여야 국물이 뽀얗게 우러나요.
+부족한 간은 초피액젓이나 백간장으로 맞춰요.</p></div>
+  </article>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>황태구이</h4>
+      <span class="meta">25분 · 3인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>황태포 2마리</li><li>고추장 2큰술</li><li><span class="brand">성가정 우리콩 진간장 1큰술 (진간장 어떤 것이든)</span></li><li>올리고당 2큰술</li><li><span class="brand">아우노슈가 1작은술 (일반설탕 2/3작은술)</span></li><li>간 마늘 1큰술</li><li>참기름 1큰술</li><li>통깨 약간</li><li>들기름 2큰술 (초벌용)</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>황태포는 물에 «5초만» 적셨다 꺼내요.</li><li>10분 두어 촉촉해지면 물기를 짜요.</li><li>가시를 발라내고 먹기 좋게 잘라요.</li><li>껍질 쪽에 칼집을 촘촘히 넣어요.</li><li>팬에 들기름을 두르고 껍질 쪽부터 초벌로 구워요.</li><li>고추장과 진간장, 올리고당, 설탕, 마늘을 섞어 양념장을 만들어요.</li><li>황태에 양념장을 발라요.</li><li>약불에서 앞뒤로 3분씩 구워요.</li><li>참기름과 통깨를 뿌려요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>물에 «오래 담그지 마세요». 5초 적시고 10분 두면 알아서 촉촉해져요. 담가두면 살이 흐물해져요.</p><p>칼집을 안 넣으면 구울 때 껍질이 오그라들어 새우처럼 말려요.</p><p>초벌구이를 먼저 하세요. 양념부터 바르면 설탕이 타서 써져요.</p><p>양념을 바른 뒤엔 무조건 약불이에요.</p><p>⚠️ 이 편은 아직 «우리 그림»이 없어요 — 다음 시트에 같이 뽑을 것.</p><p>제가 쓰는 양념 — 간장 「성가정 우리콩 진간장」 · 설탕 「아우노슈가」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>황태채무침</h4>
+      <span class="meta">15분 · 4인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>황태채 100g</li><li><span class="brand">복이네먹거리 고춧가루 2큰술 (고춧가루 어떤 것이든)</span></li><li>고추장 1큰술</li><li><span class="brand">성가정 우리콩 진간장 1큰술 (진간장 어떤 것이든)</span></li><li>올리고당 2큰술</li><li><span class="brand">아우노슈가 1작은술 (일반설탕 2/3작은술)</span></li><li>간 마늘 1/2큰술</li><li>참기름 1큰술</li><li>통깨 1큰술</li><li>마요네즈 1큰술 (없어도 돼요)</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>황태채는 손으로 비벼 부드럽게 풀어요.</li><li>분무기로 물을 «살짝» 뿌리거나 손에 물을 묻혀 버무려요.</li><li>5분 두어 촉촉해지게 해요.</li><li>고춧가루와 고추장, 진간장, 올리고당, 설탕, 마늘을 섞어요.</li><li>양념을 10분 두어 고춧가루를 불려요.</li><li>황태채에 양념을 조금씩 넣어가며 무쳐요.</li><li>마요네즈와 참기름, 통깨를 넣고 한 번 더 버무려요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>물을 «분무기로» 뿌리세요. 부으면 황태가 물러져서 무칠 때 다 부서져요.</p><p>양념은 한 번에 다 넣지 말고 조금씩 넣어가며 보세요. 황태채는 브랜드마다 짠맛이 달라요.</p><p>마요네즈 한 큰술이 들어가면 훨씬 부드러워요. 아이들이 잘 먹어요.</p><p>일주일은 가요. 도시락 반찬으로 좋아요.</p><p>제가 쓰는 양념 — 간장 「성가정 우리콩 진간장」 · 고춧가루 「복이네먹거리」 · 설탕 「아우노슈가」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  </details>
+  <details class="wk">
+    <summary>
+      <span class="date">01/18</span>
+      <span class="wt">초간단 반찬</span>
+      <span class="cnt">3편</span>
+    </summary>
+    <p class="why">새해 첫 달이라 바쁘죠. 재료 적고 15분이면 되는 밑반찬들이에요.</p>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>계란말이</h4>
+      <span class="meta">15분 · 2인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>달걀 4개</li><li>당근 1/6개</li><li>대파 1/2대 (없으면 쪽파)</li><li><span class="brand">홍영의 붉은대게 백간장 1작은술 (없으면 소금 약간)</span></li><li>물 2큰술</li><li>식용유 약간</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>당근과 대파를 아주 잘게 다져요.</li><li>달걀을 풀고 백간장과 물을 넣어요.</li><li>체에 «한 번 걸러» 알끈을 빼요.</li><li>다진 채소를 섞어요.</li><li>팬에 기름을 얇게 바르고 약불로 달궈요.</li><li>달걀물을 1/3만 부어 얇게 펴요.</li><li>반쯤 익으면 한쪽에서부터 말아줘요.</li><li>남은 달걀물을 부어 이어 말기를 두 번 더 해요.</li><li>한 김 식힌 뒤 썰어요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>체에 거르는 «한 단계»가 전부예요. 알끈이 빠지면 단면이 매끈하게 나와요.</p><p>물 2큰술이 들어가면 촉촉해져요. 우유를 넣어도 좋아요.</p><p>무조건 약불이에요. 센불이면 겉이 갈색으로 타고 속은 안 익어요.</p><p>뜨거울 때 썰면 부서져요. 한 김 식히고 써세요. 김발에 말아 두면 모양이 더 예뻐요.</p><p>제가 쓰는 양념 — 간장 「홍영의 붉은대게 백간장」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand">
+    <div class="rhead">
+      <h4>어묵볶음</h4>
+      <span class="meta">15분 · 4인분</span>
+    </div>
+    
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li>명태살 가득 참 어묵 4장 (어묵 어떤 것이든)</li><li>양파 1/2개</li><li>당근 1/6개</li><li><span class="brand">성가정 우리콩 진간장 2큰술 (진간장 어떤 것이든)</span></li><li>올리고당 1큰술</li><li><span class="brand">아우노슈가 1작은술 (일반설탕 2/3작은술)</span></li><li>간 마늘 1/2큰술</li><li>식용유 1큰술</li><li>참기름 1작은술</li><li>통깨 약간</li><li>물 3큰술</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>어묵은 끓는 물에 «10초만» 데쳐 기름기를 빼요.</li><li>먹기 좋게 썰어요.</li><li>양파와 당근을 채 썰어요.</li><li>팬에 식용유를 두르고 채소를 먼저 볶아요.</li><li>어묵을 넣고 2분 볶아요.</li><li>진간장과 설탕, 마늘, 물을 넣어요.</li><li>국물이 없어질 때까지 3분 볶아요.</li><li>올리고당과 참기름, 통깨를 넣고 섞어요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>데치는 10초가 맛을 바꿔요. 어묵 겉의 기름이 빠져서 느끼하지 않고 양념도 잘 배요.</p><p>물 3큰술을 넣는 이유는 양념이 골고루 퍼지라고예요. 그냥 볶으면 간장이 닿은 데만 짜요.</p><p>올리고당은 «맨 마지막»에. 처음부터 넣으면 눌어붙어요.</p><p>식어도 맛있어서 도시락에 좋아요.</p><p>제가 쓰는 양념 — 어묵 「명태살 가득 참 어묵」 · 간장 「성가정 우리콩 진간장」 · 설탕 「아우노슈가」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  <article class="rec has-brand has-fix">
+    <div class="rhead">
+      <h4>꼬들단무지 무침</h4>
+      <span class="meta">10분 · 4인분</span>
+    </div>
+    <p class="fix"><b>오늘 고침</b> — ⭐새로 씀 — 김치볶음밥 자리에 (김치볶음밥은 나중에 한그릇요리로)</p>
+    <div class="cols">
+      <div>
+        <div class="lbl">재료</div>
+        <ul class="ing"><li><span class="brand">자연드림 꼬들단무지 200g (단무지 어떤 것이든)</span></li><li>쪽파 한 줌 (없으면 대파 흰 부분)</li><li><span class="brand">복이네먹거리 고춧가루 1큰술 (고춧가루 어떤 것이든)</span></li><li>간 마늘 1/2큰술</li><li><span class="brand">아우노슈가 1/2작은술 (일반설탕 1작은술 · 단맛은 가감)</span></li><li>식초 1작은술 (신맛은 가감)</li><li>참기름 1큰술</li><li>통깨 1작은술</li></ul>
+      </div>
+      <div>
+        <div class="lbl">만드는 법</div>
+        <ol class="steps"><li>꼬들단무지는 체에 밭쳐 물기를 빼요.</li><li>너무 짜면 찬물에 5분 담갔다가 다시 물기를 빼요.</li><li>먹기 좋은 크기로 썰어요.</li><li>쪽파는 3cm로 썰어요.</li><li>볼에 고춧가루와 마늘, 설탕, 식초를 넣고 섞어요.</li><li>단무지와 쪽파를 넣어 버무려요.</li><li>참기름과 통깨를 넣어 마무리해요.</li></ol>
+      </div>
+    </div>
+    <div class="memo"><p>불을 안 써요. 썰어서 무치기만 하면 끝이라 10분이면 나와요.</p><p>«물기를 빼는 게» 전부예요. 물이 남으면 양념이 겉돌고 다음 날 흥건해져요.</p><p>짠맛·신맛은 제품마다 달라요. 한 조각 먹어보고 짜면 찬물에 담그고, 이미 새콤하면 식초를 빼세요.</p><p>소금이나 간장을 따로 안 넣어요. 단무지에 이미 간이 다 되어 있어요.</p><p>냉장고에서 사흘쯤 가요. 꼬들꼬들한 게 살아 있을 때가 제일 맛있어요.</p><p>제가 쓰는 것 — 단무지 「자연드림 꼬들단무지」 · 고춧가루 「복이네먹거리」 · 설탕 「아우노슈가」 (아래 ‘주부의 장바구니 픽’에서 담을 수 있어요)</p></div>
+  </article>
+  </details>
+<footer>
+  값은 <b>앱 데이터에서 직접 읽어</b> 그렸어요 — 손으로 옮겨 적지 않았습니다.<br>
+  다시 뽑기 = <code>node scripts/_판-주간11주-0813.mjs &lt;파일&gt;</code>
+</footer>
+</div>
+<script>
+  const q = document.getElementById('q')
+  const chips = [...document.querySelectorAll('.chip')]
+  let 갈래 = 'all'
+
+  function 그리기(){
+    const 말 = q.value.trim().toLowerCase()
+    for (const wk of document.querySelectorAll('details.wk')) {
+      let 남음 = 0
+      for (const rec of wk.querySelectorAll('.rec')) {
+        const 글 = rec.textContent.toLowerCase()
+        const 말맞음 = !말 || 글.includes(말) || wk.querySelector('.wt').textContent.toLowerCase().includes(말)
+        const 갈래맞음 = 갈래 === 'brand' ? rec.classList.contains('has-brand')
+                      : 갈래 === 'fix'   ? rec.classList.contains('has-fix')
+                      : true
+        const 보임 = 말맞음 && 갈래맞음
+        rec.hidden = !보임
+        if (보임) 남음++
+      }
+      wk.hidden = 남음 === 0
+      wk.querySelector('.cnt').textContent = 남음 + '편'
+      // 찾는 중이거나 갈래를 좁혔으면 저절로 펴준다 — 접혀 있으면 「없다」로 읽힌다
+      if (말 || 갈래 !== 'all') wk.open = !wk.hidden
+    }
+  }
+
+  q.addEventListener('input', 그리기)
+  for (const c of chips) c.addEventListener('click', () => {
+    const f = c.dataset.f
+    if (f === 'open') {
+      const 펼까 = c.getAttribute('aria-pressed') !== 'true'
+      c.setAttribute('aria-pressed', String(펼까))
+      for (const wk of document.querySelectorAll('details.wk')) if (!wk.hidden) wk.open = 펼까
+      return
+    }
+    갈래 = f
+    for (const o of chips) if (o.dataset.f !== 'open') o.setAttribute('aria-pressed', String(o.dataset.f === f))
+    그리기()
+  })
+</script>
