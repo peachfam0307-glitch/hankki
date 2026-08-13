@@ -37,7 +37,13 @@ CMD=$(printf '%s' "$IN" | python3 -c 'import sys,json;print(json.load(sys.stdin)
 
 # ② 자르는 명령이면 표식을 남긴다(이 훅은 PreToolUse 라 «자르기 직전»에 찍힌다 — 그래도 맞다.
 #    자르고 나면 반드시 봐야 하니까).
-if echo "$CMD" | grep -qE 'tools/cut\.py|tools/recut\.py'; then
+# ⚠️⚠️ **heredoc 본문은 «명령»이 아니다** (2026-08-13 거짓 표식)
+#   CLAUDE.md 에 「자르기 표준 = `python3 tools/cut.py …`」라는 «설명 줄»을 쓰는 python heredoc 을
+#   실행했더니, 훅이 그 «글자»를 자르는 명령으로 오인해 표식을 찍었다. 자른 건 하나도 없었다.
+#   📌 cwd-guard 가 커밋 메시지 «안»의 경로를 잡은 것과 같은 종류다 — **명령과 「명령을 적은 글」은 다르다.**
+#   ✅ heredoc(`<<`) 이 있으면 그 시작 줄부터 잘라내고 본다.
+CMD_RUN=$(printf '%s' "$CMD" | sed '/<<[[:space:]]*.\?[A-Za-z_]/,$d')
+if echo "$CMD_RUN" | grep -qE 'tools/cut\.py|tools/recut\.py'; then
   echo "자름: $(date '+%H:%M:%S')" > "$MARK"
   exit 0
 fi

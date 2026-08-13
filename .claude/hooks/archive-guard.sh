@@ -36,10 +36,11 @@ if tool == 'Read':
     print(ti.get('file_path') or '')
 elif tool == 'Bash':
     cmd = ti.get('command') or ''
-    # .md 를 «읽는» 명령만 본다 — 쓰기(>)·git 은 대상이 아니다
-    if not re.search(r'\b(sed|head|tail|grep|awk|cut|cat|less|more)\b', cmd): sys.exit(0)
-    for m in re.finditer(r'[\w./가-힣_-]+\.md', cmd):
-        print(m.group(0))
+    # ⚠️ 「읽는 명령이 어딘가 있고 .md 도 어딘가 있다」로 잡으면 **너무 넓다** (2026-08-13)
+    #    `git add …/보관소.md` 같은 «정상 작업»까지 막혀 커밋이 통째로 멈췄다.
+    # ✅ 읽는 명령 «바로 뒤»에 오는 .md 만 본다. cut 은 뺐다 — 파일 이름에 흔하다.
+    for m in re.finditer(r'\b(?:sed|head|tail|grep|awk|cat|less|more)\b[^|;&]*?([\w./가-힣_-]+\.md)', cmd):
+        print(m.group(1))
 ")
 
 [ -n "$TARGETS" ] || exit 0

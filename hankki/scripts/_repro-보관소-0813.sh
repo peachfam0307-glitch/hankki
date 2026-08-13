@@ -19,6 +19,7 @@ t "보통 문서 Read"           0 '{"tool_name":"Read","tool_input":{"file_path
 t "허가 표식 만들기"          0 '{"tool_name":"Bash","tool_input":{"command":"echo 지시 > /tmp/hankki-보관소-허가"}}'
 t "git add (보관소 파일)"     0 "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git add $VG\"}}"
 t "Edit 툴"                  0 "{\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$VG\"}}"
+t "git add ＋ 여러 명령 이어붙임" 0 "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd /x \&\& cp a b \&\& git add $VG hankki/CLAUDE.md \&\& git commit -q -F m.txt\"}}"
 echo "▶ 창업자가 지시하면 열리나"
 echo '창업자: "버전기록 열어봐"' > /tmp/hankki-보관소-허가
 t "허가 뒤 Read"             0 "{\"tool_name\":\"Read\",\"tool_input\":{\"file_path\":\"$VG\"}}"
