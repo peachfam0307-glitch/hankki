@@ -355,7 +355,13 @@ function Curation() {
     <div key={it.name} className="card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
       <div style={{ display: 'flex', gap: 11 }}>
         <div className="emoji-tile" style={{ width: 46, height: 46, fontSize: 24, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain' }} /> : it.emoji}
+          {/* ⛔ 예전엔 그림이 없으면 `it.emoji`(유니코드)를 그렸다 — UI 유니코드 이모지 금지 위반이다.
+              v10.36 에 「제품이 카테고리 그림을 물려받게」 한 것이 절반이었고, 그래도 «그림 자체가 없는»
+              새 제품은 이모지가 떴다(2026-08-13 설성목장 사골육수·자연드림 꼬들단무지를 넣다 드러남).
+              ✅ 이제 우리 장바구니 아이콘으로 떨어진다 — 하단바 장보기와 같은 그림이라 낯설지 않다. */}
+          {curIcon(it.icon)
+            ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain' }} />
+            : <FoodIcon name="cart" size={30} />}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
