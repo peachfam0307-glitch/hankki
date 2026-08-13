@@ -358,7 +358,26 @@ export default function RecipeDetailScreen({ id }) {
         )}
 
         {/* 즐겨찾기는 상단 오버레이 북마크 하나로 통일 (중복 버튼 정리) */}
-        <div className="h-title" style={{ fontSize: 24 }}>{r.title}</div>
+        <div className="h-title" style={{ fontSize: 24, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {r.title}
+          {/* 🏷 **「샘플」** — 창업자가 직접 꾸민 표지가 붙은 딱 한 편(콩국수)에만 뜬다.
+              📮 창업자 2026-08-13 *"샘플이라고(삭제가능) 명시하고"* — 일기 샘플과 **같은 모양·같은 잉크색**을 쓴다.
+                 ⛔ 두 곳에서 다르게 생기면 「다른 것」으로 읽힌다.
+              ⛔ 포인트색(파랑)은 안 쓴다 — 우리 앱에서 파랑은 「누르는 것」이라 단추로 읽힌다. 이건 이름표다. */}
+          {r.sample && (
+            <span style={{
+              fontSize: 12.5, fontWeight: 800, letterSpacing: '.02em',
+              padding: '4px 11px', borderRadius: 999,
+              background: '#3f382e', color: '#fff', flex: '0 0 auto',
+            }}>샘플</span>
+          )}
+        </div>
+        {/* 🗑 «지워도 된다»를 글자로 — 위 휴지통이 그 길이다(v8.74 에 이미 있다) */}
+        {r.sample && (
+          <div className="t-sub" style={{ fontSize: 11.5, marginTop: 5, lineHeight: 1.5 }}>
+            꾸미기를 <b>보여드리는 샘플</b>이에요 · 위 휴지통으로 지워도 돼요
+          </div>
+        )}
 
         <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
           <SourceBadge source={r.source} size={16} showLabel={false} />
