@@ -40,7 +40,13 @@
 - **무료 한도 올리기**(유료 유저 생겼을 때): `worker.js`의 `LIMITS.MONTHLY_GLOBAL`(전역)·`PER_USER_MONTHLY`(유저당) 숫자만 바꿔 Deploy. 900을 넘기면 초과분은 1건 ≈2원 과금(무료티어 초과).
 - **키 교체**: Cloudflare → Workers & Pages → `hankki-ocr` → **Settings** 탭 → **Variables and secrets** 에서 `VISION_KEY` 값 갱신.
 - **코드 올리기**: 같은 화면 오른쪽 위 **`</> Edit code`** → 코드 안 클릭 → `Ctrl+A`·`Delete`(⚠️기존 걸 «다» 지운다) → 붙여넣기 → **파란 `Deploy`**.
-  ⛔ Deploy 옆 «화살표▾ → Save」는 저장만 하고 «반영이 안 된다». 되돌리기는 **Deployments** 탭 → 직전 버전 → Rollback.
+  - ⭐⭐ **Deploy 가 성공하면 뜨는 문구가 「Version saved」다** (2026-08-13 실측). 「Deployed」가 아니다 —
+    이걸 몰라서 「저장만 된 건가?」 하고 한 바퀴 돌았다. **저 문구가 뜨면 «배포된» 것이다.**
+  - ⭐ 그 뒤 **Deploy 버튼이 회색으로 잠긴다** = 「더 올릴 게 없다」 = 정상. 고장이 아니다.
+  - ✅ **진짜 확인은 `Deployments` 탭**에서 한다 — 맨 윗줄이 «방금 시각 · 100%», Version History 맨 위에
+    «Manually deployed · 파란 막대» 면 끝난 것.
+  - ⛔ Deploy 옆 «화살표▾ → Save」는 «버전만 만들고 반영은 안 된다». 되돌리기는 **Deployments** 탭 → 직전 버전 → Rollback.
+  - ⚠️ 창업자 폰은 **운영자 모드**라 장수 제한을 안 받는다 → 배포 확인은 「글자가 나오는가」로만 한다.
 
 ## ⭐ provider는 언제든 교체 가능 (Vision에 락인 아님)
 프록시는 "어떤 OCR이든 갈아끼우는" 구조. 만약 Vision이 특정 이미지(손글씨 등)에 약하면
