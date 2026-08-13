@@ -69,7 +69,7 @@ export const WEEKLY = [
     from: '2026-08-10', title: '깻잎',
     // ⛔ 「5분 볶음까지」였는데 그게 가리키는 「훈제오리 깻잎볶음」은 «10분»이다 — 숫자가 틀려 있었다.
     //    분을 박으면 편의 시간이 바뀌어도 주 설명은 안 고쳐서 이렇게 어긋난다(check-time 이 잡았다).
-    why: '깻잎이 가장 향 좋은 철이에요. 밥반찬으로 오래 두고 먹을 것부터 후딱 볶는 것까지.',
+    why: '깻잎이 가장 향 좋은 철이에요. 밥반찬으로 오래 두고 먹을 것부터 노릇하게 볶는 것까지.',
     ids: ['basic-kkaennip-jangajji', 'basic-kkaennip-jeon', 'basic-hunje-ori-kkaennip'],
   },
   {
