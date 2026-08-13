@@ -17,7 +17,7 @@ import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES } from '../theme'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
-import { ocrImage, getOcrNote } from '../ocr'
+import { ocrImage, getOcrNote, getOcrLeft } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk } from '../parseRecipe'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
@@ -271,15 +271,28 @@ export default function EditorScreen({ id, prefill }) {
     const note = getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
     const quotaTail =
       note === 'user_quota'
-        ? ' · 이번 달 무료 스캔 5회를 다 써서 기본 인식이에요'
+        ? ' · 무료 AI 스캔을 다 써서 기본 인식이에요'
         : note === 'global_quota' || note === 'rate_limited'
           ? ' · 지금 이용이 많아 기본 인식이에요'
+          : ''
+
+    // 📢 남은 장수 알림 — 창업자 *"20장을 다쓰면 다썼다고 알려줘야해 무료서비스로 변경된다고"*
+    //   ⭐ 「막힌 다음」이 아니라 «마지막 장을 쓴 그 순간» 알린다. 그래야 한 박자 늦지 않다.
+    //   ⭐⭐ 미리 알림은 «1장 남았을 때 한 번만** (창업자 *"어차피 유저도 알잖아 쓰면서 몇장남았는지"*)
+    //      ⛔ 3장·1장 두 번은 안 한다 — 가져오기 화면 뱃지가 이미 잔량을 보여줘서 잔소리가 된다.
+    const leftNow = getOcrLeft()
+    const leftTail = quotaTail
+      ? ''
+      : leftNow.total === 0
+        ? ' · 무료 AI 스캔을 다 썼어요 · 이제 기본 인식으로 계속 돼요'
+        : leftNow.total === 1
+          ? ' · 무료 AI 스캔 1장 남았어요'
           : ''
 
     // 마지막 장 — 결과 반영
     if (target === 'ingredients' || target === 'steps') {
       const base = target === 'ingredients' ? '재료 초안을 담았어요' : '만드는 법 초안을 담았어요'
-      nav.showToast(base + (quotaTail || ' · 다듬어 주세요'), quotaTail ? 6500 : 4800)
+      nav.showToast(base + (quotaTail || leftTail || ' · 다듬어 주세요'), quotaTail || leftTail ? 6500 : 4800)
       return
     }
     const combined = ocrAccum.current
@@ -298,8 +311,12 @@ export default function EditorScreen({ id, prefill }) {
           : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
     }))
     nav.showToast(
-      quotaTail ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요' : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
-      quotaTail ? 6500 : 4800,
+      quotaTail
+        ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
+        : leftTail
+          ? '초안을 채웠어요' + leftTail
+          : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
+      quotaTail || leftTail ? 6500 : 4800,
     )
   }
 

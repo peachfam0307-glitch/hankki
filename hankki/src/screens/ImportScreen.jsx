@@ -6,6 +6,7 @@ import { guessCategory, openExternal } from '../utils'
 import { parseRecipeText } from '../parseRecipe'
 import { fetchLinkRecipe } from '../linkReader'
 import { guessFoodIcon } from '../components/FoodIcon'
+import { getOcrLeft } from '../ocr'
 import Icon from '../components/Icon'
 import Portal from '../components/Portal'
 
@@ -29,6 +30,8 @@ export default function ImportScreen() {
   const [text, setText] = useState('')
   const [help, setHelp] = useState(false)
   const [aiPreview, setAiPreview] = useState(false) // AI 자동정리 '이렇게 돼요' 안내 시트
+  // 📢 AI 스캔 남은 장수 — localStorage 를 읽을 뿐이라 가볍다. 화면에 들어올 때마다 최신값이 나온다.
+  const ocrLeft = getOcrLeft()
   const [linkBusy, setLinkBusy] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false) // '링크만 저장'은 접어둔다(화면을 조용하게)
   const linkCancel = useRef(false)
@@ -215,6 +218,19 @@ export default function ImportScreen() {
               </div>
               <div style={{ fontSize: 11.6, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2 }}>
                 캡처·링크 올리면 재료·순서를 자동으로 채워요
+              </div>
+              {/* 📢 남은 장수 — 창업자 *"유저가 몇장남았는지 스스로 알아야해"* · *"되게 잘 보이게"*
+                  ⛔「사세요」는 넣지 않는다. 이건 «정보»고 재촉이 아니다(⛔재촉 금지 원칙). */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6,
+                fontSize: 11.8, fontWeight: 800, letterSpacing: '-.2px',
+                color: ocrLeft.total > 0 ? '#3d6b38' : '#8a6a3a',
+                background: '#fff', border: `1px solid ${ocrLeft.total > 0 ? '#cfe3c4' : '#e6d6bd'}`,
+                borderRadius: 999, padding: '3.5px 10px',
+              }}>
+                {ocrLeft.total > 0
+                  ? <>무료 AI 스캔 <span style={{ fontSize: 13.5 }}>{ocrLeft.total}</span>장 남음</>
+                  : '무료 AI 스캔 다 썼어요 · 기본 인식으로 계속 돼요'}
               </div>
             </div>
             <Icon name="chevron-right" size={16} color="#8aa07a" />
