@@ -15,6 +15,7 @@ import { dateLabel, matchKo } from '../utils'
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
+import pengNyam from '../assets/ui/wave/peng_nyam1.png' // 🐧 펭펭(한 술) — 한끼 일기 상단
 
 // 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
 const MYRECIPES_COACH_KEY = COACH.myrecipes
@@ -325,7 +326,14 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
           {/* 인사하는 꼬르곰 — 홈 상단에 있던 걸 이리로 옮겼다(창업자 2026-07-29).
               장보기·레꾸자랑엔 이미 곰이 있어 겹치고, 설정은 잘 안 가서 여기로. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <img src={gomHeader} alt="" draggable={false} width={42} height={42} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-4px 0' }} />
+            {/* 🐧 [2026-08-13 창업자 제보] *"레시피, 한끼일기탭은 «같은 모양» 꼬르곰이"* ＋ *"펭펭이든 친구들이든 우리애들"*
+                ⭐ 한 화면인데 제목만 갈리니 **같은 곰이 두 탭에 그대로** 있었다 → 일기일 땐 펭펭이 한 술 뜬다(냠냠).
+                   일기 = «먹은 것을 적는 자리» 라 숟가락 든 컷이 맞다. */}
+            {view === 'log' ? (
+              <img src={pengNyam} alt="" draggable={false} width={34} height={44} className="hk-m-nyam" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-5px 0' }} />
+            ) : (
+              <img src={gomHeader} alt="" draggable={false} width={42} height={42} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-4px 0' }} />
+            )}
             {/* 🏷 제목은 «지금 보고 있는 것»을 말한다 — 「일기」 탭으로 들어왔는데 머리글이
                 「레시피」면 어디에 있는지 헷갈린다(검수판에서 드러났다). */}
             <div className="h-title">{view === 'log' ? '한끼 일기' : '레시피'}</div>

@@ -9,6 +9,12 @@ import { guessFoodIcon } from '../components/FoodIcon'
 import { getOcrLeft } from '../ocr'
 import Icon from '../components/Icon'
 import Portal from '../components/Portal'
+// 🐻 [2026-08-13 창업자] *"가져오기에 무료스캔 알림에 캐릭터 하나 넣자(오른쪽 비어있는 칸에)"* · *"귀여운 걸로 해줘. 움직이게"*
+//    남았을 땐 꼬르곰 브이(응원) · 다 썼을 땐 둘이 하트(괜찮아요) — 「막혔다」로 읽히면 안 되는 자리라 표정이 갈린다.
+//    ⛔ 첫 판은 `ui/gom_thumbsup`·`ui/gom_heart` 였는데 **옛 매끈 그림체**다(창업자 *"쟤 옛날 곰이야"*) → 물결 정본으로.
+//    ⭐ 남음 = **펭펭이 돋보기로 들여다보는 컷** — 이 기능이 하는 일(글자를 찾아 읽어준다)이 그림에 그대로 있다.
+import uiPengSearch from '../assets/ui/wave/pn_search.png'
+import uiDuoHeart from '../assets/ui/wave/duo_hearthand.png'
 
 // '사진으로 가져오기'와 '직접 작성하기'는 결국 같은 작성 화면 — 하나로 합쳤다.
 // 캡처는 작성 화면에서 재료/만드는 법 칸별로 읽어 채운다(인식이 훨씬 정확).
@@ -167,7 +173,7 @@ export default function ImportScreen() {
             {/* ✏️ 말투 = 앱 전체와 같은 「~해요」체 (창업자 2026-08-13 *"남았어요나 완곡한표현으로 바꾸자"*)
                 ⛔ 「남음」 같은 명사형은 여기서만 튄다. */}
             {ocrLeft.total > 0 ? (
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 14.5, fontWeight: 800, color: '#3d6b38', letterSpacing: '-.3px' }}>
                   무료 AI 스캔 <span style={{ fontSize: 18.5 }}>{ocrLeft.total}장</span> 남았어요
                 </div>
@@ -202,7 +208,7 @@ export default function ImportScreen() {
                 )}
               </div>
             ) : (
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 800, color: '#8a6a3a', letterSpacing: '-.3px' }}>이번 달 무료 AI 스캔을 다 썼어요</div>
                 {/* ⭐ 「못 쓴다」가 아니라 「계속 되는데 품질이 바뀐다」 ＋ 언제·«몇 장» 돌아오는지까지.
                     ⛔ 「다시 채워져요」만 두면 몇 장인지 모른다 → 창업자 *"다음달에 무료5장채워져요"* */}
@@ -211,6 +217,18 @@ export default function ImportScreen() {
                 </div>
               </div>
             )}
+            {/* 🐻 오른쪽 빈 칸 — 창업자 *"캐릭터 하나 넣자(오른쪽 비어있는 칸에)"* · *"귀여운 걸로 해줘. 움직이게"*
+                ⭐ 통통 튀게(`hk-m-tongtong`) — 이 띠는 «돈이 걸린 안내»라 딱딱해지기 쉬운데, 움직이는 애가 하나 있으면
+                   같은 문장도 재촉이 아니라 알림으로 읽힌다.
+                ⚠️ 「움직임 끄기」를 켠 사람에겐 저절로 멈춘다(`hk-m-` 접두어가 그 스위치에 걸려 있다).
+                ⛔ `alt` 는 비운다 — 옆 글자가 이미 다 말하고 있어서 읽어주기가 같은 말을 두 번 하게 된다. */}
+            <img
+              src={ocrLeft.total > 0 ? uiPengSearch : uiDuoHeart}
+              alt="" aria-hidden="true" draggable={false}
+              className="hk-m-tongtong"
+              width={ocrLeft.total > 0 ? 38 : 59} height={ocrLeft.total > 0 ? 53 : 53}
+              style={{ flex: '0 0 auto', alignSelf: 'center', objectFit: 'contain', margin: '-6px -2px -6px 0' }}
+            />
           </div>
 
           {/* 제일 많이 쓰는 방법 — 히어로(진짜 동작). 첫 유저가 큰 걸 눌러도 바로 되는 기능. */}

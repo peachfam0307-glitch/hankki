@@ -5,6 +5,13 @@ import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
 import uiGomShop from '../assets/ui/gom_shop.png' // 🐻 장보기 꼬르곰(주부의 장바구니 헤더)
+// 🐧 장보기 상단 펭펭 — 창업자 2026-08-13 *"장보기는 펭펭장보는거 있지않아?"*
+//    ⛔ 처음엔 `sm_peng_shop`(여름 원피스＋아이스크림)을 썼는데 **여름 컷이라 11월엔 어색하다.**
+//    ✅ `pn_shop` = 트렌치코트에 쇼핑백 — **계절을 안 탄다.** 그래서 계절 분기 자체가 필요 없어졌다.
+//    ✅ 창업자가 «장보는 펭펭» 4컷을 새로 뽑아 줬다(2026-08-13) → 그중 **메모지 보며 바구니** 컷.
+//       ⭐ 넷 중 이걸 고른 이유 = 이 화면이 «장보기 리스트»라 그림이 화면 뜻과 같다.
+//         (시장 컷은 배경 진열대가 붙어 38px 에선 뭉치고, 카트 컷은 가로로 길어 상단바에 안 맞는다)
+import uiPengShop from '../assets/ui/wave/pn_shoplist.png'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 
 // 장보기 탭 첫 방문 코치마크 — 숨은 기능 안내(창업자 딸 아이디어 ⭐)
@@ -82,6 +89,11 @@ export default function ShopScreen() {
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <div className="h-title">장보기</div>
+          {/* 🐧 [2026-08-13 창업자 제보] *"장보기 레꾸자랑에는 없어…(글씨옆에)"* ＋ *"펭펭이든 친구들이든 우리애들"*
+              ⭐ 여기만 펭펭인 이유 = 이 화면 «아래» 「주부의 장바구니」에 이미 장바구니 든 꼬르곰이 있다.
+                 상단바까지 꼬르곰이면 한 화면에 같은 애가 둘 → 펭펭을 올려 둘 다 나오게 했다. */}
+          <img src={uiPengShop} alt="" draggable={false} width={34} height={45} className="hk-m-tongtong"
+            style={{ display: 'block', objectFit: 'contain', margin: '-6px 0' }} />
           <TabTips tab="shop" />
         </div>
       </div>

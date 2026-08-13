@@ -21,6 +21,10 @@ import { ocrImage, getOcrNote, getOcrLeft } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk } from '../parseRecipe'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
+// 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
+//    ⛔ `ui/gom_clap` 은 **옛 매끈 곰**이라 안 쓴다(창업자 2026-08-13 *"쟤 옛날 곰이야"*) → 물결 정본.
+//    ⭐ 냄비 젓는 컷 — 「멈춰 있지 않고 뭔가 «하고 있다»」가 그림으로 보인다(동그라미 하나보다 세다).
+import uiGomPot from '../assets/ui/wave/gom_pot.png'
 
 // 특정 칸(재료/만드는 법)에 넣을 때는 분류하지 않고, 읽은 줄을 그대로 정리만 한다.
 // 사용자가 "이 사진은 재료다/만드는 법이다"라고 이미 지정했으니 다시 쪼개지 않는다.
@@ -663,11 +667,37 @@ export default function EditorScreen({ id, prefill }) {
           ))}
         </div>
 
-        {/* 사진 읽는 중 — 칸 채우기 진행 표시 */}
+        {/* 사진 읽는 중 — 칸 채우기 진행 표시
+            ⏳⏳ [2026-08-13 창업자 제보] *"레시피 2장 올릴때 로딩이 좀 걸려. **못기다리고 이상하다 하고 끌수도 있을 듯.**"*
+            ⛔ 옛 판 = 동그라미 하나 돌고 「…40%」 한 줄. **한 장을 다 읽으면 40% 가 0% 로 돌아간다** —
+               숫자가 뒤로 가니 «멈췄다/고장났다»로 읽힌다. 그게 끄고 싶어지는 순간이다.
+            ✅ 셋을 고쳤다 —
+               ① **막대가 앞으로만 간다**(장 수를 반영한 «전체» 진척률 — 1장째 40% 면 2장 중 20%)
+               ② **얼마나 걸리는지 미리 말한다**(여러 장이면 「조금 걸려요」 · 「그대로 두면 돼요」)
+               ③ **꼬르곰이 통통 뛴다** — 그림이 움직이면 «살아 있다»가 보인다(동그라미보다 세다) */}
         {ocr.busy && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 700, marginBottom: 12 }}>
-            <div className="ocr-spin" style={{ width: 18, height: 18, borderWidth: 2.5, margin: 0 }} />
-            사진에서 글자 읽는 중… {ocr.pct}%{ocr.total > 1 ? ` · ${ocr.total}장 중 ${ocr.page}장째` : ''}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 13px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', marginBottom: 12 }}>
+            <img src={uiGomPot} alt="" aria-hidden="true" draggable={false} className="hk-m-tongtong"
+              width={33} height={47} style={{ flex: '0 0 auto', objectFit: 'contain', margin: '-6px 0' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700 }}>
+                사진에서 글자 읽는 중… {ocr.total > 1 ? `${ocr.total}장 중 ${ocr.page}장째` : `${ocr.pct}%`}
+              </div>
+              {/* 📊 전체 진척률 — 여러 장이면 「앞 장들은 다 끝났다」까지 세어야 막대가 뒤로 안 간다 */}
+              <div style={{ height: 6, borderRadius: 99, background: 'rgba(122,90,58,.16)', overflow: 'hidden', margin: '6px 0 0' }}>
+                <div style={{
+                  height: '100%', borderRadius: 99, background: 'var(--brown)',
+                  width: `${Math.min(100, Math.round(((ocr.page - 1) * 100 + ocr.pct) / Math.max(1, ocr.total)))}%`,
+                  transition: 'width .35s ease',
+                }} />
+              </div>
+              {/* ⏱ 「오래 걸린다」를 «먼저» 말해 준다 — 예고된 기다림은 고장으로 안 읽힌다 */}
+              <div className="t-sub" style={{ fontSize: 11.8, marginTop: 5, lineHeight: 1.4 }}>
+                {ocr.total > 1
+                  ? <>사진이 {ocr.total}장이라 조금 걸려요 · <b style={{ fontWeight: 800, color: 'var(--brown)' }}>이 화면 그대로 두면 돼요</b></>
+                  : '잠깐만요, 다 읽으면 칸을 채워 드려요'}
+              </div>
+            </div>
           </div>
         )}
 
