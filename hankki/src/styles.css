@@ -1455,7 +1455,11 @@ img {
   border-radius: var(--r-pill);
   font-size: 14px;
   font-weight: 500;
-  z-index: 100;
+  /* ⛔⛔ 토스트는 «무조건 맨 위»여야 한다 — 안 보이는 토스트는 없는 것과 같다.
+     🔢 2026-08-13 실측 사고: z-index 가 100 이라 자르기 화면(CropSheet, zIndex 400)에 «가려졌다».
+        창업자 *"나 방금 2장 올렸는데 암것도 안떴어"* — 떴는데 검은 화면 뒤에 깔려 있었던 것.
+     ⭐ 앱에서 제일 높은 층이 3000(계량 바)이라 그보다 위로 둔다. 새 층을 만들면 여기도 확인할 것. */
+  z-index: 3500;
   box-shadow: 0 8px 24px rgba(107, 79, 58, 0.28);
   animation: fadeUp 0.22s ease both;
   max-width: 88%;
