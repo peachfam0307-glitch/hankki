@@ -1,0 +1,148 @@
+// 🔢 「한 묶음 = 1장」 재현 — 창업자 확정 2026-08-13 (*"2장 썼는데 4장 나오면 문제"*)
+//
+// 무엇이 문제였나 = 여태 **사진 한 장 읽을 때마다** 유저 장수가 1장씩 빠졌다.
+//   긴 레시피라 캡처 3장으로 «레시피 하나»를 만들면 3장이 나갔다.
+//   유저 눈엔 레시피 하나 저장했는데 3장이 사라진 것 → 990원 20장팩이 7편밖에 못 만드는 셈.
+//
+// 어떻게 고쳤나 = 앱이 «편집 화면 한 번»마다 같은 `batch` 를 실어 보내고,
+//   worker 는 그 묶음의 **첫 장에서만** 유저 몫(월 카운터·웰컴)을 깎는다.
+//   ⛔ 비용 방어(전역 월900·일120·IP분당6)는 «호출당» 그대로다 — 구글엔 부른 만큼 돈이 나가니까.
+//
+// 여기서 확인하는 것 (전부 «돈»이 걸린 것)
+//   ① 캡처 3장을 한 묶음으로 읽으면 유저 장수는 «1장»만 빠진다
+//   ② 그래도 전역·일 카운터는 «3번» 다 오른다 (비용 방어는 호출당)
+//   ③ 묶음이 다르면(=다른 레시피) 따로 센다
+//   ④ 1장 남았는데 3장 묶음을 보내도 두 번째 장에서 «안» 막힌다 (이미 값을 치렀으니)
+//   ⑤ 응답의 남은 장수가 헛돌지 않는다 (안 깎은 장에서 또 1을 빼면 안 된다)
+//   ⑥ batch 를 «안» 보내는 옛 앱도 그대로 돈다 (장당 차감 — 후퇴가 아니다)
+//
+// ⛔ worker.js 의 판정을 바꾸면 여기도 같이 고칠 것.
+
+import { readFileSync } from 'node:fs'
+
+const LIMITS = { PER_USER_MONTHLY: 5, WELCOME_FREE: 20 }
+
+const mkKv = () => {
+  const m = new Map()
+  return {
+    get: async (k) => (m.has(k) ? m.get(k) : null),
+    put: async (k, v) => { m.set(k, v) },
+    _m: m,
+  }
+}
+const num = async (kv, k) => { const v = await kv.get(k); return v ? parseInt(v, 10) || 0 : 0 }
+const inc = async (kv, k) => { await kv.put(k, String((await num(kv, k)) + 1)) }
+
+// worker.js 의 순서 그대로 — 묶음 판정 → 한도 → 카운터 → 응답
+async function call(kv, uid, ym, batch = '') {
+  const raw = await kv.get(`w:${uid}`)
+  const welcomeLeft = raw === null ? LIMITS.WELCOME_FREE : (parseInt(raw, 10) || 0)
+  const sameBatch = batch ? (await kv.get(`b:${uid}:${batch}`)) !== null : false
+  const userC = await num(kv, `u:${uid}:${ym}`)
+
+  if (!sameBatch && welcomeLeft <= 0 && userC >= LIMITS.PER_USER_MONTHLY) {
+    return { ok: false, error: 'user_quota' }
+  }
+
+  // 비용 방어 — «호출당» 그대로 (구글엔 부른 만큼 돈이 나간다)
+  await inc(kv, `m:${ym}`)
+  await inc(kv, `d:${ym}-15`)
+
+  // 유저 몫 — «묶음의 첫 장에서만»
+  if (!sameBatch) {
+    await inc(kv, `u:${uid}:${ym}`)
+    if (welcomeLeft > 0) await kv.put(`w:${uid}`, String(welcomeLeft - 1))
+    if (batch) await kv.put(`b:${uid}:${batch}`, '1')
+  }
+
+  const leftWelcome = Math.max(0, sameBatch ? welcomeLeft : welcomeLeft - 1)
+  let leftMonth = LIMITS.PER_USER_MONTHLY
+  if (leftWelcome <= 0) leftMonth = Math.max(0, LIMITS.PER_USER_MONTHLY - (await num(kv, `u:${uid}:${ym}`)))
+  return { ok: true, left: { welcome: leftWelcome, month: leftMonth } }
+}
+
+let ok = 0
+let ng = 0
+const chk = (설명, got, want) => {
+  if (String(got) === String(want)) { console.log(`   ✅ ${설명}`); ok++ }
+  else { console.log(`   ⛔ ${설명}\n        기대 ${want} · 실제 ${got}`); ng++ }
+}
+
+console.log('\n🔢 한 묶음 = 1장 재현\n')
+
+{
+  // ①② 캡처 3장을 «한 레시피»로 — 장수는 1장, 구글 호출은 3번
+  const kv = mkKv()
+  for (let i = 0; i < 3; i++) await call(kv, 'u1', '2026-08', 'recipeA')
+  chk('① 캡처 3장을 한 묶음으로 읽어도 유저 장수는 1장만 빠진다', await num(kv, 'u:u1:2026-08'), 1)
+  chk('①-b 웰컴도 1장만 빠진다 (20 → 19)', parseInt(await kv.get('w:u1'), 10), 19)
+  chk('② 그래도 전역 카운터는 3번 다 오른다 (비용 방어는 호출당)', await num(kv, 'm:2026-08'), 3)
+  chk('②-b 일 카운터도 3번', await num(kv, 'd:2026-08-15'), 3)
+}
+
+{
+  // ③ 묶음이 다르면 따로 센다 = 레시피 2개면 2장
+  const kv = mkKv()
+  await call(kv, 'u2', '2026-08', 'recipeA')
+  await call(kv, 'u2', '2026-08', 'recipeA')
+  await call(kv, 'u2', '2026-08', 'recipeB')
+  chk('③ 레시피 둘(묶음 둘)이면 2장 빠진다', await num(kv, 'u:u2:2026-08'), 2)
+  chk('③-b 창업자 기준 — 「2장 썼는데 4장 나오면 문제」가 안 난다', parseInt(await kv.get('w:u2'), 10), 18)
+}
+
+{
+  // ④ 1장 남았는데 캡처 3장 묶음 — 두 번째 장에서 막히면 안 된다(이미 값을 치렀다)
+  const kv = mkKv()
+  await kv.put('w:u3', '0')                   // 웰컴 다 씀
+  await kv.put('u:u3:2026-08', '4')           // 월 5장 중 4장 씀 = 1장 남음
+  const r1 = await call(kv, 'u3', '2026-08', 'last')
+  const r2 = await call(kv, 'u3', '2026-08', 'last')
+  const r3 = await call(kv, 'u3', '2026-08', 'last')
+  chk('④ 1장 남았을 때 3장 묶음 — 첫 장 통과', r1.ok, 'true')
+  chk('④-b 두 번째 장도 통과 (이미 값을 치렀다)', r2.ok, 'true')
+  chk('④-c 세 번째 장도 통과', r3.ok, 'true')
+  chk('④-d 그래도 깎인 건 1장뿐', await num(kv, 'u:u3:2026-08'), 5)
+  // 다음 «다른» 묶음은 막혀야 한다
+  chk('④-e 다음 레시피(새 묶음)는 막힌다', (await call(kv, 'u3', '2026-08', 'next')).error, 'user_quota')
+}
+
+{
+  // ⑤ 응답의 남은 장수가 헛돌지 않는다
+  const kv = mkKv()
+  const a = await call(kv, 'u4', '2026-08', 'r1')
+  const b = await call(kv, 'u4', '2026-08', 'r1')
+  chk('⑤ 첫 장 뒤 웰컴 19장', a.left.welcome, 19)
+  chk('⑤-b 같은 묶음 두 번째 장도 «그대로» 19장 (안 깎았으니 안 뺀다)', b.left.welcome, 19)
+}
+
+{
+  // ⑥ batch 를 안 보내는 옛 앱 — 예전처럼 장당 차감(후퇴가 아니라 그대로)
+  const kv = mkKv()
+  for (let i = 0; i < 3; i++) await call(kv, 'u5', '2026-08', '')
+  chk('⑥ batch 없이 보내면 예전처럼 3장 빠진다(옛 앱도 안 깨진다)', await num(kv, 'u:u5:2026-08'), 3)
+}
+
+// ⭐⭐ 위는 «옮겨 적은 것»이라 원본이 바뀌면 거짓 초록이 된다 — 원본을 직접 읽어 잠근다.
+const wk = readFileSync(new URL('../ocr-proxy/worker.js', import.meta.url), 'utf8')
+const ocr = readFileSync(new URL('../src/ocr.js', import.meta.url), 'utf8')
+const ed = readFileSync(new URL('../src/screens/EditorScreen.jsx', import.meta.url), 'utf8')
+
+chk('🔒 worker 가 batch 를 읽는다', /body\.batch/.test(wk), 'true')
+chk('🔒 worker 가 같은 묶음인지 본다', /sameBatch = \(await kv\.get\(`b:\$\{uid\}:\$\{batch\}`\)\)/.test(wk), 'true')
+chk('🔒 유저 몫이 «묶음 첫 장에서만» 깎인다', /\.\.\.\(sameBatch \? \[\] : \[/.test(wk), 'true')
+// ⛔⛔ 전역·일·IP 는 «반드시» 호출당이어야 한다 — 묶음으로 묶으면 비용 방어가 뚫린다
+chk('🔒⛔ 전역 월 카운터는 묶음 밖(=호출당)에 있다', /inc\(kv, `m:\$\{ym\}`/.test(wk.split('...(sameBatch ? [] : [')[0]), 'true')
+chk('🔒⛔ 전역 일 카운터도 호출당', /inc\(kv, `d:\$\{ymd\}`/.test(wk.split('...(sameBatch ? [] : [')[0]), 'true')
+chk('🔒⛔ IP 분당 카운터도 호출당', /inc\(kv, `ip:/.test(wk.split('...(sameBatch ? [] : [')[0]), 'true')
+chk('🔒 한도 검사가 sameBatch 를 존중한다(두 번째 장이 막히면 안 된다)', /!sameBatch && welcomeLeft <= 0/.test(wk), 'true')
+chk('🔒 안 깎은 장에서 잔량을 또 빼지 않는다', /sameBatch \? welcomeLeft : welcomeLeft - 1/.test(wk), 'true')
+
+chk('🔒 앱이 batch 를 실어 보낸다', /batch: batch \|\| ''/.test(ocr), 'true')
+chk('🔒 편집 화면이 «화면당 하나»의 묶음을 만든다', /const ocrBatch = useRef\(/.test(ed), 'true')
+chk('🔒 그 묶음을 ocrImage 에 넘긴다', /batch: ocrBatch\.current/.test(ed), 'true')
+// ⛔ 옛 문구(장당 차감)가 남아 있으면 유저에게 «틀린 말»이 된다
+chk('🔒⭐ 「사진 1장에 AI 스캔 1장씩」 옛 문구가 남아 있지 않다', /사진 1장에 AI 스캔 1장씩/.test(ed), 'false')
+chk('🔒⭐ 「AI 스캔은 1장만 써요」로 바뀌었다', ed.includes('AI 스캔은 1장만 써요'), 'true')
+
+console.log(`\n   ── ${ok}칸 통과 · ${ng}칸 어긋남 ──\n`)
+process.exit(ng ? 1 : 0)

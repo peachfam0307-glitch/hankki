@@ -96,6 +96,18 @@ export default {
       welcomeLeft = raw === null ? LIMITS.WELCOME_FREE : (parseInt(raw, 10) || 0)
     }
 
+    // 🔢🔢 «한 묶음 = 1장» (창업자 확정 2026-08-13 · *"2장 썼는데 4장 나오면 문제"*)
+    //   묶음 = 앱의 «편집 화면 한 번» = 레시피 하나를 만드는 동안. 앱이 같은 `batch` 를 실어 보낸다.
+    //   ⭐ 그 안에서 캡처를 몇 장 읽든, 잘못 잘라 다시 읽든 **유저 장수는 1장만** 빠진다.
+    //   ⛔ 비용 방어(전역 월900·일120·IP분당6)는 «호출당» 그대로다 — 구글엔 부른 만큼 돈이 나가니까.
+    //      즉 «유저 카운트만» 묶음당으로 가른다(`docs/AI-레시피추출-기능계획.md` §9-4-③ 설계 그대로).
+    //   ⚠️ KV 는 최종 일관성이라 방금 쓴 값이 바로 안 보일 수 있다. 다만 우리 앱은 장마다
+    //      «사람이 자르는 화면»이 끼어 요청 사이에 초 단위 간격이 있어 실제로는 거의 문제되지 않는다.
+    //      설령 못 읽어도 그 묶음이 1장 더 세질 뿐 — 지금(장당 차감)보다 나빠지지 않는다.
+    const batch = String(body.batch || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40)
+    let sameBatch = false
+    if (kv && batch) sameBatch = (await kv.get(`b:${uid}:${batch}`)) !== null
+
     if (kv) {
       const [ipC, dayC, monC, userC] = await Promise.all([
         num(kv, `ip:${ip}:${minute}`),
@@ -107,7 +119,9 @@ export default {
       if (monC >= LIMITS.MONTHLY_GLOBAL) return json({ error: 'global_quota' }, 429, cors)              // ① 운영자도 존중
       if (dayC >= LIMITS.DAILY_GLOBAL) return json({ error: 'global_quota' }, 429, cors)                // ② 운영자도 존중
       // ③ 유저 한도 — ⭐**웰컴이 남아 있으면 월 한도를 안 본다.** 웰컴을 다 쓴 뒤부터 월 5장이다.
-      if (!founder && welcomeLeft <= 0 && userC >= LIMITS.PER_USER_MONTHLY) {
+      //   ⭐ `sameBatch` = 이 묶음은 «이미 1장 값을 치렀다» → 한도를 다시 보지 않는다.
+      //      (1장 남았는데 캡처 3장을 고른 사람이 두 번째 장에서 막히면 안 된다)
+      if (!founder && !sameBatch && welcomeLeft <= 0 && userC >= LIMITS.PER_USER_MONTHLY) {
         return json({ error: 'user_quota' }, 429, cors)
       }
     }
@@ -122,11 +136,16 @@ export default {
         // ⭐ 웰컴을 쓰는 동안에도 «월 카운터를 같이» 올린다 —
         //    그래야 웰컴 20장을 다 쓴 순간 월 카운터가 5를 넘어 「그 달은 끝」이 된다.
         //    (창업자 확정: *"웰컴20장 다쓰면 무료5장은 소진한거니까 기본인식으로"*)
-        inc(kv, `u:${uid}:${ym}`, 60 * 60 * 24 * 40),
-        // 🎁 웰컴 차감 — ⚠️만료를 «1년»으로 둔다(달이 바뀌어도 남아야 하니까 · 창업자 Ⓐ)
-        ...(welcomeLeft > 0
-          ? [kv.put(`w:${uid}`, String(welcomeLeft - 1), { expirationTtl: 60 * 60 * 24 * 365 })]
-          : []),
+        // ⭐ 유저 몫(월 카운터·웰컴)은 «묶음의 첫 장에서만» 깎는다. 두 번째 장부터는 공짜.
+        ...(sameBatch ? [] : [
+          inc(kv, `u:${uid}:${ym}`, 60 * 60 * 24 * 40),
+          // 🎁 웰컴 차감 — ⚠️만료를 «1년»으로 둔다(달이 바뀌어도 남아야 하니까 · 창업자 Ⓐ)
+          ...(welcomeLeft > 0
+            ? [kv.put(`w:${uid}`, String(welcomeLeft - 1), { expirationTtl: 60 * 60 * 24 * 365 })]
+            : []),
+          // 🔢 이 묶음은 값을 치렀다는 표식 — 6시간이면 레시피 한 편 쓰기엔 충분하고도 남는다
+          ...(batch ? [kv.put(`b:${uid}:${batch}`, '1', { expirationTtl: 60 * 60 * 6 })] : []),
+        ]),
       ])
     }
 
@@ -158,7 +177,8 @@ export default {
     //   · `welcome` = 웰컴 남은 장수(다 쓸 때까지 유지) · `month` = 이번 달 남은 장수
     //   ⚠️ 이 호출 «자신»이 이미 차감됐으므로 1을 뺀 값을 보낸다(유저가 보는 것과 맞춘다).
     //   ⚠️ `kv` 는 «없을 수도 있다»(바인딩 누락·로컬) — 없이 `num()` 을 부르면 죽는다. 반드시 가드.
-    const leftWelcome = Math.max(0, welcomeLeft - 1)
+    //   ⭐ 같은 묶음의 두 번째 장부터는 «안 깎았으므로» 1을 빼지 않는다 — 안 그러면 화면 숫자가 헛돈다.
+    const leftWelcome = Math.max(0, sameBatch ? welcomeLeft : welcomeLeft - 1)
     let leftMonth = LIMITS.PER_USER_MONTHLY           // 웰컴을 쓰는 동안엔 월 몫이 아직 안 줄었다
     if (kv && leftWelcome <= 0) {
       leftMonth = Math.max(0, LIMITS.PER_USER_MONTHLY - (await num(kv, `u:${uid}:${ym}`)))

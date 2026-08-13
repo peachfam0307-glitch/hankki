@@ -38,7 +38,9 @@ function deviceId() {
 }
 
 // 프록시로 OCR 시도 → 성공 시 텍스트, 실패 시 예외를 던져 폴백을 유도.
-async function ocrViaProxy(dataUrl, onProgress) {
+// batch = 🔢「한 묶음 = 1장」 표식. 같은 값으로 보내면 서버가 «유저 장수»를 한 번만 깎는다.
+//   (앱의 편집 화면 한 번 = 레시피 하나 = 한 묶음 · 창업자 확정 2026-08-13)
+async function ocrViaProxy(dataUrl, onProgress, batch) {
   _ocrNote = null
   if (typeof dataUrl !== 'string' || !/^data:image\//.test(dataUrl)) throw new Error('not_dataurl')
   if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new Error('offline')
@@ -54,7 +56,7 @@ async function ocrViaProxy(dataUrl, onProgress) {
   const resp = await fetch(OCR_PROXY_URL, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ image: dataUrl, uid: deviceId() }),
+    body: JSON.stringify({ image: dataUrl, uid: deviceId(), batch: batch || '' }),
   })
   if (!resp.ok) {
     // 429(한도 초과) → 어느 한도인지 기록(앱이 "무료 다 썼어요" 안내). 전부 폴백으로 넘긴다 — 앱은 늘 동작해야 하니까.
@@ -357,7 +359,7 @@ export async function ocrImage(image, onProgress, opts = {}) {
   // 0) Google Vision 프록시 우선 — 한국어 인식 최상. 실패하면 폰내장→tesseract로 폴백.
   if (typeof image === 'string') {
     try {
-      const t = await ocrViaProxy(image, onProgress)
+      const t = await ocrViaProxy(image, onProgress, opts.batch)
       if (t && !looksGibberish(t)) {
         if (onProgress) onProgress(100)
         return normalizeNumerals(t)

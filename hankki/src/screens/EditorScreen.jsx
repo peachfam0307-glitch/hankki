@@ -60,6 +60,16 @@ export default function EditorScreen({ id, prefill }) {
   const ocrAccum = useRef('') // 'all' 자동분류용 — 여러 장의 인식 텍스트를 모아 한 번에 파싱
   const ocrBusy = useRef(false) // 지금 읽는 중인가 — 화면 표시는 ocr.busy, «판단»은 이 ref 로
   const ocrTotal = useRef(1) // 이번에 고른 장 수 — 「2장 중 1장째」를 알려주려고(창업자: "시간은 좀 걸림")
+  // 🔢🔢 «한 묶음 = 1장» — 이 편집 화면 한 번(=레시피 하나)이 한 묶음이다.
+  //   ⭐ 그래서 재료 칸에 한 번, 만드는 법 칸에 한 번, 잘못 잘라 다시 한 번 읽어도 **장수는 1장**만 빠진다.
+  //   (창업자 확정 2026-08-13 — *"2장 썼는데 4장 나오면 문제"*)
+  //   ⚠️ `useRef(초기값)` 이라 화면을 새로 열 때마다 새 묶음이 된다 = 레시피마다 따로 센다.
+  const ocrBatch = useRef(
+    (typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2) + Date.now().toString(36)
+    ).replace(/-/g, '').slice(0, 32),
+  )
   const ingRef = useRef(null) // 재료 입력칸
   const stepRef = useRef(null) // 만드는 법 입력칸
   const titleRef = useRef(null) // 제목 입력칸 — 제목 없이 저장 누르면 여기로 데려간다
@@ -220,17 +230,16 @@ export default function EditorScreen({ id, prefill }) {
       ocrAccum.current = ''
       ocrTotal.current = urls.length
       ocrQueue.current = urls.slice(1) // 첫 장은 지금 크롭, 나머지는 대기열
-      // 📢 «고른 직후» 몇 장 쓰는지 알린다 — 창업자 *"한번에 2장 넣으면 2장소진된다는 것도 알려야겠네"*
-      //   ⛔ 지금은 사진 «한 장마다» 1장씩 빠진다. 안내 없이 깎으면
-      //      「여러 장을 한꺼번에 골라도 돼요」로 권해놓고 «몰래» 깎는 꼴이 된다.
-      //   ⏳ 다음 Deploy 때 «한 묶음 = 1장»으로 고치면 이 안내는 없앤다(창업자 확정 2026-08-13).
+      // 📢 «고른 직후» 알린다 — 이제는 «좋은 소식»이다.
+      //   ⭐ 「한 묶음 = 1장」이 되어(2026-08-13) 여러 장을 골라도 장수는 **1장만** 빠진다.
+      //   ⛔ 예전 문구(*"사진 3장이라 AI 스캔 3장을 써요"*)는 이제 «틀린 말»이라 지웠다.
       //   ⚠️ 한 장일 땐 안 띄운다 — 잔소리가 된다(⛔재촉 금지).
       if (urls.length > 1) {
         const left = getOcrLeft().total
         nav.showToast(
-          left >= urls.length
-            ? `사진 ${urls.length}장이라 AI 스캔 ${urls.length}장을 써요`
-            : `사진 ${urls.length}장인데 AI 스캔은 ${left}장 남았어요 · 나머지는 기본 인식이에요`,
+          left > 0
+            ? `사진 ${urls.length}장을 읽어요 · AI 스캔은 1장만 써요`
+            : `사진 ${urls.length}장을 읽어요 · 무료 AI 스캔을 다 써서 기본 인식이에요`,
           5200,
         )
       }
@@ -259,7 +268,7 @@ export default function EditorScreen({ id, prefill }) {
     setOcr({ busy: true, pct: 0, page, total })
     let text = ''
     try {
-      text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }))
+      text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current })
     } catch {
       // ⛔ 한 장이 실패해도 «대기열은 계속 간다». 예전엔 여기서 터지면 busy 가 true 로 굳어
       //    남은 장이 영영 안 들어오고 버튼도 계속 흐렸다.
@@ -636,8 +645,8 @@ export default function EditorScreen({ id, prefill }) {
         <div style={{ marginBottom: 14, padding: '13px 16px', borderRadius: 'var(--r-md)', background: 'var(--cream)', border: '1px solid var(--line)' }}>
           <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>캡처는 이렇게 채워요</div>
           {[
-            // ⚠️ 권하는 줄에 «값»을 같이 적는다 — 권해놓고 조용히 깎으면 안 된다.
-            ['긴 레시피는 ', '여러 장을 한꺼번에', ' 골라도 돼요 — 사진 1장에 AI 스캔 1장씩 써요.'],
+            // ⭐ 권하는 줄에 «값»을 같이 적는다. 지금은 그게 좋은 소식이다 — 몇 장을 골라도 1장.
+            ['긴 레시피는 ', '여러 장을 한꺼번에', ' 골라도 돼요 — AI 스캔은 1장만 써요.'],
             ['재료·순서가 섞이면 각 칸의 ', '사진에서 채우기', '로 그 칸만 다시 채워요.'],
             ['읽은 내용은 ', '초안', '이니 사진 보며 다듬어 주세요.'],
           ].map(([a, b, c], k) => (
