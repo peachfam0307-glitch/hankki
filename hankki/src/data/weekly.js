@@ -226,9 +226,12 @@ export const WEEKLY = [
     ids: ['basic-hwangtae-guk', 'basic-hwangtae-gui', 'basic-hwangtaechae-muchim'],
   },
   {
-    from: '2027-01-18', title: '초간단 한 끼', kicker: KICKER_SPECIAL,
-    why: '새해 첫 달이라 바쁘죠. 재료 적고 15분이면 되는 것들이에요.',
-    ids: ['basic-gyeran-mari', 'basic-eomuk-bokkeum', 'basic-kimchibokkeumbap'],
+    from: '2027-01-18', title: '초간단 반찬', kicker: KICKER_SPECIAL,
+    why: '새해 첫 달이라 바쁘죠. 재료 적고 15분이면 되는 밑반찬들이에요.',
+    // 🔁 2026-08-13 창업자 — *"초간단 한끼가 아니라 «초간단 반찬»으로 하고 «꼬들단무지 무침» 넣어줘.
+    //    김치볶음밥은 나중에 한그릇요리로 넣자"*
+    //    ⛔ 김치볶음밥 레시피는 안 지웠다 — `from` 없는 상시 레시피라 앱에 그대로 있다.
+    ids: ['basic-gyeran-mari', 'basic-eomuk-bokkeum', 'basic-kkodeul-danmuji-muchim'],
   },
   //
   // ⏰ 다음 마감 = **2026-10-11(일)** (위 ⛔⛔ 참조). 지금 재고는 11/16 까지라 여유가 생겼다.
