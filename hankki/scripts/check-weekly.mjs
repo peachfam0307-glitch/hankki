@@ -34,6 +34,31 @@ for (const w of WEEKLY) {
 const froms = WEEKLY.map((w) => w.from)
 if (new Set(froms).size !== froms.length) bad.push('같은 날짜가 두 번 있다')
 
+// ③ ⭐⭐ 중간에 «빠진 주»가 있나 (2026-08-13 신설)
+//   ⛔ 이 검사가 없어서 **2026-11-23 이 통째로 빠진 걸 아무도 못 잡았다.**
+//      재고는 22주라 넉넉했고(①②③ 전부 통과) 그 사이에 구멍이 있는 줄 몰랐다.
+//      📌 「몇 주 있나」와 「끊긴 데 없나」는 다른 말이다. 개수만 세면 구멍이 안 보인다.
+//   ⏰ 먼 미래의 구멍은 «경고»만 — 아직 채울 시간이 있다(창업자 2026-08-13 *"10월쯤 정하자"*).
+//      D-30 안으로 들어오면 «실패»시킨다. 그때 안 채우면 진짜로 그 주가 빈다.
+const 급함일 = 30
+const 뒤 = [...WEEKLY].filter((w) => w.from >= t).sort((a, b) => (a.from < b.from ? -1 : 1))
+const 구멍 = []
+for (let i = 1; i < 뒤.length; i++) {
+  const 앞 = new Date(`${뒤[i - 1].from}T00:00:00Z`)
+  const 뒷 = new Date(`${뒤[i].from}T00:00:00Z`)
+  const 주차 = Math.round((뒷 - 앞) / 604800000)   // 일주일 = 604,800,000ms
+  for (let k = 1; k < 주차; k++) {
+    const 빈 = new Date(앞.getTime() + k * 604800000).toISOString().slice(0, 10)
+    구멍.push({ 빈, 앞: 뒤[i - 1].title, 뒷: 뒤[i].title })
+  }
+}
+for (const g of 구멍) {
+  const 남 = Math.round((new Date(`${g.빈}T00:00:00Z`) - new Date(`${t}T00:00:00Z`)) / 86400000)
+  const 말 = `${g.빈} 이 비었다 — 「${g.앞}」 다음이 바로 「${g.뒷}」이라 한 주가 통째로 없다 (D-${남})`
+  if (남 <= 급함일) bad.push(`${말} ⛔D-${급함일} 안이다. 지금 채워야 한다`)
+  else console.log(`⚠️ ${말} — 아직 시간이 있어 통과시킨다. D-${급함일} 안에 들어오면 배포가 막힌다`)
+}
+
 if (bad.length) {
   console.error(`\n⛔ 이번 주 레시피 설정에 문제가 ${bad.length}건 있다.\n`)
   for (const b of bad) console.error(`   ${b}`)
