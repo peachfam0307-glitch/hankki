@@ -119,6 +119,17 @@ try {
         console.log('   전체 = `node hankki/scripts/doc-guard.mjs --stale --recent`')
       }
     } catch { /* 없으면 조용히 */ }
+    // 🔢 「대기」라고 적혀 있는데 **상수는 이미 채워진** 줄 (#81 · 2026-08-05 모션 배분 사고)
+    //   ⭐ 위 검사의 «짝»이다 — 저건 파일을 보고 이건 코드에 박힌 값을 본다.
+    try {
+      const { constStale, recentDocs } = await import('./doc-guard.mjs')
+      const cs = constStale(recentDocs())
+      if (cs.length) {
+        console.log(`\n🔢 요즘 문서에 「대기」인데 **코드엔 이미 값이 있는** 줄 ${cs.length}개 — 나중에 코드를 보고 「확정」으로 굳힌다`)
+        cs.slice(0, 3).forEach((h) => console.log(`   ${h.file}:${h.line}  「${h.name}」 = ${h.val}  (${h.at})`))
+        console.log('   전체 = `node hankki/scripts/doc-guard.mjs --const --recent`')
+      }
+    } catch { /* 없으면 조용히 */ }
     // 🙈 「모른다」고 적어놓고 «그 위에서 추천»한 곳 (2026-08-03 네이버 커넥트 사고)
     try {
       const { execFileSync } = await import('node:child_process')
