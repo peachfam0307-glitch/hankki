@@ -206,6 +206,30 @@ export const WEEKLY = [
     why: '한 해 마지막 주예요. 큰 팬째 상에 올리는 것들로 골랐어요.',
     ids: ['basic-gambas', 'basic-paella', 'basic-quiche'],
   },
+  // ⚠️ 아래 두 주는 표를 «그대로 안 썼다» — 굴이 2주 내리 나오는 걸 갈랐다.
+  //    자세한 이유는 `basics.js` 의 「1월 4주」 머리 주석에 적어 뒀다.
+  {
+    // ⭐ 이 주에 새해가 들어간다(2027-01-01 금) → 표의 「새해 첫 주 = 떡국 주간」이 여기 맞는다.
+    from: '2026-12-28', title: '굴',
+    why: '한겨울 굴이 제일 통통해요. 새해 떡국까지 이 한 재료로 나요.',
+    ids: ['basic-gul-gukbap', 'basic-gul-jeon', 'basic-gul-maesaengi-tteokguk'],
+  },
+  {
+    // ⛔ 굴을 «안» 넣는다 — 바로 앞 주가 굴이라 두 주 연속이면 같은 국으로 읽힌다.
+    from: '2027-01-04', title: '매생이',
+    why: '매생이는 1~2월이 제철이에요. 국·칼국수·전으로 한 봉지를 다 써요.',
+    ids: ['basic-maesaengi-bajirak-guk', 'basic-maesaengi-kalguksu', 'basic-maesaengi-jeon'],
+  },
+  {
+    from: '2027-01-11', title: '황태',
+    why: '황태는 봉지째 팔아서 손질이 없어요. 물에 잠깐 적시면 바로 요리가 돼요.',
+    ids: ['basic-hwangtae-guk', 'basic-hwangtae-gui', 'basic-hwangtaechae-muchim'],
+  },
+  {
+    from: '2027-01-18', title: '초간단 한 끼', kicker: KICKER_SPECIAL,
+    why: '새해 첫 달이라 바쁘죠. 재료 적고 15분이면 되는 것들이에요.',
+    ids: ['basic-gyeran-mari', 'basic-eomuk-bokkeum', 'basic-kimchibokkeumbap'],
+  },
   //
   // ⏰ 다음 마감 = **2026-10-11(일)** (위 ⛔⛔ 참조). 지금 재고는 11/16 까지라 여유가 생겼다.
   //    바닥 = docs/52주-제철표-2026-08-01.md (요리 셋까지 이미 정해져 있다)
