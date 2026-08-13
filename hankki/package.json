@@ -26,6 +26,7 @@
     "실수": "node scripts/check-mistakes.mjs",
     "a11y": "node scripts/check-a11y.mjs",
     "test:crop": "node scripts/test-crop.mjs",
+    "hello": "node scripts/hello-read.mjs",
     "steps": "node scripts/check-steps.mjs",
     "text": "node scripts/check-text.mjs",
     "weekly": "node scripts/check-weekly.mjs",
