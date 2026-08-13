@@ -39,7 +39,8 @@ const 고침 = {
   'basic-maesaengi-bajirak-guk': '해물가루육수 1봉 (기호에 따라)',
   'basic-maesaengi-kalguksu': '해물가루육수 2봉',
   'basic-maesaengi-jeon': '반죽에 해물가루육수 1큰술',
-  'basic-kkodeul-danmuji-muchim': '⭐새로 씀 — 김치볶음밥 자리에 (김치볶음밥은 나중에 한그릇요리로)',
+  'basic-kkodeul-danmuji-muchim': '⭐새로 씀 — 창업자 원문 그대로 (김치볶음밥 자리에 · 김치볶음밥은 나중에 한그릇요리로)',
+  'basic-eomuk-bokkeum': '전처리 추가 — 10초 데치고 200도에 7분 ＋ 뒤집어 5분 노릇하게 굽기 (25분)',
 }
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
