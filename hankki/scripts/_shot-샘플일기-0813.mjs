@@ -58,5 +58,27 @@ const 잰값 = await pg.evaluate(() => {
 console.log(JSON.stringify(잰값, null, 1))
 console.log('pageerror:', 오류.length, 오류.slice(0, 3))
 
+// 🍜 레꾸 샘플(콩국수)도 같이 — 창업자 2026-08-13 *"다하고 스샷(콩국수랑 불고기일기) 둘다 샘플-삭제가능문구있는지"*
+// ⚠️ 새로고침해도 «보던 탭»이 기억된다(`sessionStorage['hankki:tab']`) → 일기 탭에 그대로 서 있었다.
+//    ⭐ 주소를 다시 여는 걸로는 탭이 안 바뀐다 — **하단바를 눌러서** 간다(유저와 같은 길).
+await pg.goto('http://localhost:4191/', { waitUntil: 'networkidle' })
+await pg.waitForTimeout(500)
+await pg.getByRole('button', { name: /레시피/ }).first().click()
+await pg.waitForTimeout(800)
+const 콩 = pg.locator('.grid-card').filter({ hasText: '콩국수' }).first()
+if (await 콩.count()) { await 콩.click(); await pg.waitForTimeout(1200) }
+await pg.screenshot({ path: 'scripts/_shot-샘플일기-③레꾸.png' })
+
+const 레꾸 = await pg.evaluate(() => {
+  const 글 = document.body.innerText
+  return {
+    제목: 글.includes('콩국수'),
+    샘플배지: 글.includes('샘플'),
+    지워도돼요: 글.includes('지워도 돼요'),
+    휴지통: !!document.querySelector('[aria-label="삭제"]'),
+  }
+})
+console.log('레꾸(콩국수):', JSON.stringify(레꾸))
+
 await b.close(); srv.kill()
 process.exit(0)
