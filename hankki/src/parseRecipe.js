@@ -422,10 +422,28 @@ export function parseRecipeText(raw = '', opts = {}) {
   // 재료 단위 오독 교정(T·g) + 만드는 법 문체 통일('~다' → '~요')
   return {
     title: cleanTitleTail(title),
-    ingredients: ingredients.map(fixIngredientUnits),
-    steps: politeSteps(splitParagraphSteps(mergeStepFragments(steps))),
+    ingredients: dedupeLines(ingredients.map(fixIngredientUnits)),
+    steps: dedupeLines(politeSteps(splitParagraphSteps(mergeStepFragments(steps)))),
     memo,
   }
+}
+
+// 🔁 같은 줄이 두 번 들어오면 뒤쪽을 지운다.
+//   🔢 2026-08-13 실측: 캡처 «2장»으로 삼계탕을 담았더니 만드는 법이 12단계였는데
+//      5·6·7 이 8·9·10 에 «통째로» 다시 나왔다. 두 캡처가 겹치는 부분(첫 장 끝 = 둘째 장 시작)이
+//      그대로 두 번 들어간 것이다. 창업자 *"인식이 구려"* — 사실 인식은 정확했고 «정리»가 문제였다.
+//   ⚠️ 짧은 줄(10자 미만)은 «진짜로» 반복될 수 있다 — 「소금 넣기」·「물 300ml」처럼.
+//      그래서 긴 줄만 지운다. 레시피에서 20자짜리 문장이 토씨 하나 안 틀리고 반복될 일은 없다.
+//   ⚠️ 견주는 건 «공백을 뺀 글자»다 — 줄바꿈 위치만 달라도 같은 문장이기 때문.
+function dedupeLines(arr) {
+  const seen = new Set()
+  return arr.filter((s) => {
+    const key = String(s).replace(/\s+/g, '')
+    if (key.length < 10) return true
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 // 제목 꼬리 정리 — "… 레시피"·"…황금레시피"·"… 만드는 법"은 요리 이름이 아니다.
