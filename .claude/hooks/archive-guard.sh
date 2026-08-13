@@ -5,7 +5,7 @@
 #      그 앞에 = *"이거 저장소로 옮기면 **또 여기가서 읽고 오는거 아냐?**"*
 #
 # ⛔⛔ **왜 「읽기 목록에서 빼기」로는 모자란가**
-#   같은 날 CLAUDE.md 의 옛 버전 기록 623줄을 `docs/버전기록-전체.md` 로 옮기고
+#   같은 날 CLAUDE.md 의 옛 버전 기록 623줄을 `docs/_archive/버전기록-전체.md` 로 옮기고
 #   `hello-read.mjs` 가 그 문서를 「읽어라」 목록에서 빼게 했다. **그건 «권하지 않는 것»일 뿐이다.**
 #   뭘 찾다가 `grep` 으로 걸리거나 그냥 `Read` 로 열면 **그대로 옛 판을 읽는다.**
 #   📌 CLAUDE.md 에 있을 때와 «똑같은 사고»가 난다 — 자리만 옮기고 위험은 그대로.
@@ -34,6 +34,12 @@ ti = d.get('tool_input') or {}
 tool = d.get('tool_name') or ''
 if tool == 'Read':
     print(ti.get('file_path') or '')
+elif tool in ('Grep', 'Glob'):
+    # 2026-08-13 창업자 물음에 답하려고 재보니 Grep 툴이 통째로 새고 있었다.
+    # 내용 모드로 검색하면 보관소 본문이 그대로 들어온다 - Read 와 다를 게 없다.
+    # 다만 path 없는 전체 검색은 못 막는다. 그건 결과 경로를 보고 내가 안 쓰는 수밖에 없다.
+    # 주의: 이 python 은 큰따옴표 안에 있다. 백틱을 쓰면 bash 가 먹어서 코드가 깨진다.
+    print(ti.get('path') or '')
 elif tool == 'Bash':
     cmd = ti.get('command') or ''
     # ⚠️ 「읽는 명령이 어딘가 있고 .md 도 어딘가 있다」로 잡으면 **너무 넓다** (2026-08-13)
@@ -50,7 +56,13 @@ BLOCKED=""
 while IFS= read -r f; do
   [ -n "$f" ] || continue
   for p in "$f" "/home/user/hankki/$f" "/home/user/hankki/hankki/$f"; do
-    [ -f "$p" ] || continue
+    # ⚠️ Grep·Glob 의 path 는 «폴더»일 수 있다 — 파일만 보면 `_archive` 폴더째 검색이 새어 나간다
+    [ -e "$p" ] || continue
+    if [ -d "$p" ]; then
+      case "$p" in *_archive*|*_아껴둠*|*_구판*) BLOCKED="${BLOCKED}   ⛔ ${p}  (폴더)
+" ;; esac
+      break
+    fi
     kind=""
     case "$p" in *_archive*|*_아껴둠*|*_구판*) kind="경로" ;; esac
     if [ -z "$kind" ] && head -40 "$p" 2>/dev/null | grep -q '🗄 \*\*보관소'; then kind="표시"; fi
