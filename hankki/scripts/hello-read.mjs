@@ -15,7 +15,7 @@
 //   ③ 날짜 없는 상시 문서   ← 규칙·일하는 방식(늘 유효하니 순서가 늦어도 된다)
 //   ⛔ 목록에 «없는» 날짜 문서는 브리핑 근거로 쓰지 않는다.
 import { execFileSync } from 'node:child_process'
-import { existsSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { generations, recentDocs } from './doc-guard.mjs'
 
@@ -38,8 +38,21 @@ console.log('👋 `/안녕` — **이 순서로 읽는다. 위가 아래를 이�
 // ── ① 어제~오늘 ──────────────────────────────────────────
 // ⚠️ `recentDocs()` 는 2026-08-13 에 고친 값을 쓴다 — 그 전엔 git 이 한글 경로를
 //    이스케이프해서 **한글 이름 문서를 통째로 못 봤다**(28개 중 2개만 봤다).
+// 🗄 **보관소는 「읽을 것」이 아니다** (2026-08-13)
+//   📮 창업자 *"이거 저장소로 옮기면 «또 여기가서 읽고 오는거 아냐?»"* — **맞는 걱정이었다.**
+//      CLAUDE.md 에서 덜어낸 옛 버전 기록이 «오늘 손댄 문서»라 이 목록 맨 위에 올라왔다.
+//      **자리만 옮기고 위험은 그대로**였던 것이다 — 브리핑이 옛 판부터 읽게 된다.
+//   ⭐ 경로 이름(`_archive` …)으로 거르지 않는다 — **새 보관소가 생길 때마다 여기를 고쳐야 하고, 반드시 낡는다.**
+//      대신 **문서가 스스로 「🗄 보관소」라고 말하게** 하고 그 표시를 읽는다. 붙이는 쪽이 아는 게 맞다.
+//   ⚠️ 앞 40줄만 본다 — 본문 «중간»에 그 낱말이 나온다고 보관소는 아니다.
+//   ⛔⛔ **`try/catch` 로 감싸지 않는다** — 첫 판이 `readFileSync` 를 import 안 하고 썼는데
+//      catch 가 그 오류를 삼켜 «조용히 통과»시켰다. 규칙 12(옛 값으로 돌려보기)가 아니었으면
+//      「고쳤다」고 말할 뻔했다. 없는 파일만 건너뛰고, 나머지 오류는 «죽어서» 드러나게 둔다.
+const 보관소 = (f) =>
+  existsSync(f) && /🗄\s*\*\*보관소/.test(readFileSync(f, 'utf8').split('\n').slice(0, 40).join('\n'))
 const 요즘 = recentDocs(2)
   .filter((f) => !/_archive|_아껴둠|_구판/.test(f))
+  .filter((f) => !보관소(f))
   .map((f) => ({ f, m: statSync(f).mtimeMs }))
   .sort((a, b) => b.m - a.m)
 
