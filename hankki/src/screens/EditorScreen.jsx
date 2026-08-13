@@ -220,6 +220,20 @@ export default function EditorScreen({ id, prefill }) {
       ocrAccum.current = ''
       ocrTotal.current = urls.length
       ocrQueue.current = urls.slice(1) // 첫 장은 지금 크롭, 나머지는 대기열
+      // 📢 «고른 직후» 몇 장 쓰는지 알린다 — 창업자 *"한번에 2장 넣으면 2장소진된다는 것도 알려야겠네"*
+      //   ⛔ 지금은 사진 «한 장마다» 1장씩 빠진다. 안내 없이 깎으면
+      //      「여러 장을 한꺼번에 골라도 돼요」로 권해놓고 «몰래» 깎는 꼴이 된다.
+      //   ⏳ 다음 Deploy 때 «한 묶음 = 1장»으로 고치면 이 안내는 없앤다(창업자 확정 2026-08-13).
+      //   ⚠️ 한 장일 땐 안 띄운다 — 잔소리가 된다(⛔재촉 금지).
+      if (urls.length > 1) {
+        const left = getOcrLeft().total
+        nav.showToast(
+          left >= urls.length
+            ? `사진 ${urls.length}장이라 AI 스캔 ${urls.length}장을 써요`
+            : `사진 ${urls.length}장인데 AI 스캔은 ${left}장 남았어요 · 나머지는 기본 인식이에요`,
+          5200,
+        )
+      }
       setCropImg(urls[0])
     })
   }
@@ -622,7 +636,8 @@ export default function EditorScreen({ id, prefill }) {
         <div style={{ marginBottom: 14, padding: '13px 16px', borderRadius: 'var(--r-md)', background: 'var(--cream)', border: '1px solid var(--line)' }}>
           <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>캡처는 이렇게 채워요</div>
           {[
-            ['긴 레시피는 ', '여러 장을 한꺼번에', ' 골라도 돼요.'],
+            // ⚠️ 권하는 줄에 «값»을 같이 적는다 — 권해놓고 조용히 깎으면 안 된다.
+            ['긴 레시피는 ', '여러 장을 한꺼번에', ' 골라도 돼요 — 사진 1장에 AI 스캔 1장씩 써요.'],
             ['재료·순서가 섞이면 각 칸의 ', '사진에서 채우기', '로 그 칸만 다시 채워요.'],
             ['읽은 내용은 ', '초안', '이니 사진 보며 다듬어 주세요.'],
           ].map(([a, b, c], k) => (
