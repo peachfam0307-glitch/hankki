@@ -1294,6 +1294,14 @@ img {
 }
 
 /* 장보기 행 */
+/* 🛒 장보기 = 「주부의 장바구니」 ＋ 「장보기 리스트」 두 덩어리.
+   · 폰   = 세로 1열. **담은 게 있으면 리스트를 위로** 올린다(긴 큐레이션에 리스트가 묻히던 옛 문제).
+            ⭐ DOM 순서는 «장바구니 먼저»로 두고 `order` 로만 바꾼다 — 그래야 패드에서 그냥 좌우가 된다.
+   · 패드 = 좌우 2열(왼쪽 장바구니·오른쪽 리스트) — 위 `@media (min-width: 700px)` 참고. */
+.shop-pair { display: flex; flex-direction: column; }
+.shop-pair.has-items .shop-cur { order: 2; margin-top: 26px; }
+.shop-pair.has-items .shop-list { order: 1; }
+
 .shop-row {
   display: flex;
   align-items: center;
@@ -2709,6 +2717,29 @@ html, body { overscroll-behavior: none; }
 .weekly-box > .weekly-row { margin-top: 11px; }
 
 @media (min-width: 700px) {
+  /* 🔢🔢 [2026-08-13 창업자 제보 *"장보기 이미지 너무 크고, … 아래로 스크롤 안됨"*]
+     ⛔ 원인 = 가로 목록 카드가 `flex: 0 0 41%` 로 «화면 폭의 비율»로 박혀 있다.
+        폰(411px)에선 ≈168px 인데 **패드(1280px)에선 500px 넘게** 커진다.
+        썸네일이 1:1 정사각이라 높이도 같이 커져 **카드 하나가 화면을 통째로 차지**했고,
+        그래서 세로로 «밀 여백»이 없어 창업자가 *"아래로 스크롤 안 된다"* 로 겪었다.
+        (`.screen` 은 `overflow-y: auto` 라 스크롤 자체는 열려 있었다)
+     ✅ 폰에서 보이던 크기(≈170px)에 맞춰 «상한»만 둔다 — `flex-basis` 는 그대로라 폰은 안 바뀐다. */
+  .hscroll .grid-card,
+  .hscroll .mini-card,
+  .hscroll .pick-card { max-width: 200px; }
+
+  /* 🛒📐 [2026-08-13 창업자 지시 *"장보기를 오른쪽에 장바구니를 왼쪽에"*]
+     ⛔ 그 전엔 한 줄에 하나라 카드가 화면 폭(1280px)을 다 써서
+        「담기·사러가기 버튼이 너무 크고 제품설명은 왼쪽에 쏠린다」가 됐다.
+     ✅ 좌우로 나누면 카드가 절반 폭이 되어 둘 다 저절로 풀린다.
+     ⭐ 폰(1열)에선 «담은 게 있으면 리스트가 위»를 그대로 지킨다 — 아래 order 참고. */
+  .shop-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  /* 좌우일 땐 «항상» 왼쪽=장바구니 · 오른쪽=리스트. 폰에서 쓰던 순서 바꾸기를 되돌린다. */
+  .shop-pair.has-items .shop-cur { order: 0; }
+  .shop-pair.has-items .shop-list { order: 0; }
+  /* 좌우로 갈리면 첫 제목의 윗여백이 왼쪽과 어긋난다 — 맞춰 준다 */
+  .shop-pair .shop-list > .sec-head:first-child { margin-top: 2px; }
+
   /* ⭐ 소식·오늘이 좌우로 — 넓어지면 «가운데만» 늘어나던 것을 칸으로 나눈다 */
   .home-pair { grid-template-columns: 1fr 1fr; align-items: stretch; }
 

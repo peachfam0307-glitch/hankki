@@ -96,10 +96,16 @@ export default function ShopScreen() {
         {view === 'pantry' && <PantryView />}
 
         {view === 'shop' && (
-        <>
-        {/* 1) 주부의 장바구니 — 담은 게 없을 땐 맨 위(발견용). 담은 게 있으면 아래로 내려가 장보기 리스트가 위로 온다(창업자 피드백: 긴 큐레이션에 리스트가 묻힘). */}
-        {shoppingList.length === 0 && <div data-coach="curation"><Curation /></div>}
+        /* 📐📐 [2026-08-13 창업자 지시 *"장보기를 오른쪽에 장바구니를 왼쪽에"*]
+           패드에선 좌우 2단 — **왼쪽 = 주부의 장바구니 · 오른쪽 = 장보기 리스트**.
+           ⛔ 그 전엔 한 줄에 하나라 카드가 화면 폭을 다 써서
+              「담기·사러가기 버튼이 너무 크고 설명은 왼쪽에 쏠린다」가 됐다(창업자 제보).
+           ⭐ 폰(1열)에선 **지금 순서를 그대로 지킨다** — 담은 게 있으면 리스트가 위로 온다
+              (긴 큐레이션에 리스트가 묻힌다는 옛 피드백). CSS `order` 로만 바꾸고 DOM 은 안 건드린다. */
+        <div className={`shop-pair${shoppingList.length > 0 ? ' has-items' : ''}`}>
+        <div className="shop-cur" data-coach="curation"><Curation /></div>
 
+        <div className="shop-list">
         {/* 2) 장보기 리스트 — 담은 것이 여기로. 큐레이션 바로 아래라 담기 동선이 자연스럽다. */}
         <div className="sec-head" style={{ marginTop: 20 }}>
           <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="cart" size={18} color="var(--brown)" stroke={1.9} />장보기 리스트</div>
@@ -141,10 +147,8 @@ export default function ShopScreen() {
           ))
         )}
 
-        {/* 담은 게 있을 땐 큐레이션을 리스트 아래로 (리스트가 위로 올라와 잘 보이게) */}
-        {shoppingList.length > 0 && (
-          <div data-coach="curation" style={{ marginTop: 26 }}><Curation /></div>
-        )}
+        {/* ⛔ 큐레이션을 여기 한 번 «더» 그리던 것을 지웠다 — 위로 올려 하나만 둔다.
+            담은 게 있을 때 리스트를 위로 올리는 건 이제 CSS `order` 가 한다(`.shop-pair.has-items`). */}
 
         {/* 3) 쇼핑몰 바로가기 — 리스트 확인하고 바로 사러 가는 자리(리스트 바로 아래). */}
         <div className="sec-head" style={{ marginTop: 24 }}>
@@ -209,7 +213,8 @@ export default function ShopScreen() {
               · 자연드림(아이쿱) = 일반가·조합원가가 따로 있다 = **비조합원도 온라인 구매 가능**
                         → 그래서 자연드림엔 아무 표시도 안 붙인다(그게 기본이다). */}
         {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
-        </>
+        </div>
+        </div>
         )}
       </div>
 
@@ -352,7 +357,9 @@ function Curation() {
       : mallStyle
 
   const Card = (it) => (
-    <div key={it.name} className="card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
+    // 🔢 `cur-card`·`cur-buy` = 패드에서 폭을 잡으려고 붙인 이름(창업자 2026-08-13
+    //    *"담기 사러가기버튼이 너무 크고, 제품설명은 다 왼쪽에 쏠려있어"*). 스타일은 styles.css 에.
+    <div key={it.name} className="card cur-card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
       <div style={{ display: 'flex', gap: 11 }}>
         <div className="emoji-tile" style={{ width: 46, height: 46, fontSize: 24, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain' }} /> : it.emoji}
@@ -399,7 +406,7 @@ function Curation() {
           </button>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 11 }}>
+      <div className="cur-buy" style={{ display: 'flex', gap: 8, marginTop: 11 }}>
         <button className="press" onClick={() => add(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 13.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Icon name="cart" size={14} />담기</button>
         <button className="press" onClick={() => buy(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 13.5 }}>사러가기</button>
       </div>
