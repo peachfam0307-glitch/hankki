@@ -2240,6 +2240,16 @@ html, body { overscroll-behavior: none; }
    ⛔ 이 줄은 «고르는 것»이지 «붙이는 것»이 아니다 — 자리를 먹으면 스티커가 밀린다. */
 .decor-cats button { min-height: 38px; }
 .decor-cats { margin-bottom: 6px; }
+/* 🗂🗂 **「고르는 줄」 접기 단추** (창업자 2026-08-13 *"고르는게 너무많아. 고르고나서 탭접기가능한버튼 생기면안되나.."*)
+   ⭐ 갈래칩 줄 «오른쪽 끝»에 붙는다 — 접으면 탭줄·글씨·크기가 사라지고 이 줄만 남으니
+      **돌아올 길이 늘 같은 자리에 보인다.**
+   ⚠️ 칩 줄은 옆으로 굴러가므로 이 단추는 굴칸 «밖»에 둔다(안에 두면 밀려 사라진다). */
+.decor-pickfold {
+  flex: 0 0 auto; width: 34px; min-height: 38px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 999px; background: none; color: var(--text-sub);
+}
+.decor-pickfold[aria-expanded='false'] { color: var(--brown); }
 /* 🔻🔻 **접기 세모를 «단추»로** (창업자 2026-08-12 *"세모가 전혀 안보여서 접는줄 아무도 모를 듯"*)
    ⛔ 원래는 폭 11px 짜리 맨 글자였다 — 창업자 말 그대로 *"그냥 글씨앞에 붙은 모양인줄"* 이었다.
       **접기는 되고 있었는데 단추로 안 보인 것**이라, 고칠 것은 기능이 아니라 «생김새»다.
