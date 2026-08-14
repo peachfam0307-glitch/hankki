@@ -22,7 +22,7 @@
 //   ⓓ 선언한 세대가 STALE_DAYS 넘게 안 바뀌었으면 → ⚠️ 경고(실패 아님)
 //      ⛔ 실패로 안 만든다 — 날짜가 찼다고 배포를 막으면 **급할 때 게이트를 꺼버린다.**
 //         꺼진 게이트는 없는 게이트다.
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { generations } from './doc-guard.mjs'
 
@@ -31,11 +31,28 @@ const STALE_DAYS = 21
 
 // 「현행이다」라고 «선언»하는 제목 줄. ⚠️ 인용(>)·본문은 안 본다.
 const DECLARE = /^#{1,3}\s.*현행이다/
+// ⚠️ 위 것은 «한 줄»을 재는 자다 — 파일 통째로 볼 땐 `m` 이 있어야 둘째 줄부터도 걸린다.
+const DECLARE_ANY = /^#{1,3}\s.*현행이다/m
 
 // 이 검사가 도는 문서 = **스스로 「현행이다」를 선언한 문서**만.
 // ⭐ 목록을 손으로 관리하지 않는다 — 선언한 문서가 곧 대상이다(늘어나도 저절로 따라온다).
-const DOCS = ['docs/로드맵-우선순위.md', 'docs/할일-전체정리-2026-08-13.md']
-  .map((p) => join(APP, p)).filter(existsSync)
+//
+// ⛔⛔ 2026-08-14 — 바로 윗줄을 «적어만» 두고 실제론 파일 두 개를 손으로 박아뒀었다.
+//   그래서 `할일-전체정리-2026-08-14.md` 처럼 **날짜가 바뀐 새 문서를 만들면 게이트가 그걸 안 봤다.**
+//   📌 낡는 게 아니라 «조용히 꺼진다» — 새 문서엔 검사가 아예 안 붙으니 초록불만 보인다.
+//   ✅ 이제 `docs/` 를 훑어서 «선언한 문서»를 직접 찾는다. 목록이라는 게 없다.
+//   ⛔ 보관소(`_archive`·`_구판`·`_아껴둠`)는 뺀다 — 지나간 판의 옛 선언까지 세면 헛방이다.
+const 보관소 = /(^|\/)(_archive|_구판|_아껴둠)(\/|$)/
+function 선언한문서(dir, out = []) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name)
+    if (보관소.test(p)) continue
+    if (e.isDirectory()) 선언한문서(p, out)
+    else if (e.name.endsWith('.md') && DECLARE_ANY.test(readFileSync(p, 'utf8'))) out.push(p)
+  }
+  return out
+}
+const DOCS = existsSync(join(APP, 'docs')) ? 선언한문서(join(APP, 'docs')).sort() : []
 
 const 오늘 = new Date()
 let 죽음 = 0
