@@ -4,6 +4,7 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import TimerSheet from '../components/TimerSheet'
 import CookBuddy from '../components/CookBuddy'
+import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import Portal from '../components/Portal'
 import { scaleIngredient } from '../scale'
 import { useWakeLock } from '../useWakeLock'
@@ -31,6 +32,14 @@ export default function CookScreen({ id }) {
   useLayerBack(showIng, () => setShowIng(false))
   useWakeLock() // 화면이 꺼지지 않게 (요리 모드)
   const prep = i === 0 // 재료 준비 화면인지
+  // 📖 요리 가이드(계량·손질) — 🧪**테스터 의견**(창업자 전달 2026-08-14)
+  //    원문 = *"재료손질 화면에서도 요리가이드 있었으면 좋겠데"* ＋ 창업자 풀이
+  //    *"요리가이드 있자나 물음표. 그거 누르면 재료별 손질법이랑 계량하는거 등등 나오는거.
+  //      그걸 «요리시작 누르고 재료 쭉 나열될 때»도 볼 수 있게 하면 좋겠다는거지"*
+  //    ⭐ **새로 만든 게 0이다** — 「KitchenGuideSheet」 가 이미 계량 지표 ＋ 재료 손질법을 담고 있다.
+  //       레시피 상세와 설정에서만 열리던 걸 **재료를 꺼내는 «바로 그 자리»** 에도 놓는다.
+  //    📌 여기가 제일 필요한 자리다 — 손질법은 «읽을 때»가 아니라 «칼 잡을 때» 찾는다.
+  const [guide, setGuide] = useState(false)
 
   if (!r || steps.length === 0) {
     return (
@@ -74,6 +83,14 @@ export default function CookScreen({ id }) {
       {prep ? (
         <div className="cook-body">
           <div className="cook-stepno">재료 준비 <span>· 요리의 시작</span></div>
+          {/* 📖 [2026-08-14 테스터] 재료를 꺼내는 «바로 이 자리»에서 계량·손질법을 열 수 있게.
+              ⭐ 레시피 상세의 것과 «같은» 시트다 — 새로 만든 게 없다.
+              ⚠️ 글자 버튼이다(옛 「?」 는 작고 뭔지 몰랐다 — 창업자 *"버튼 물음표 너무작고 모르니까"*). */}
+          <button className="press" onClick={() => setGuide(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, margin: '8px auto 0', padding: '7px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            <Icon name="help" size={14} color="var(--brown)" />
+            계량·손질
+          </button>
           <div style={{ width: '100%', maxWidth: 460, margin: '4px auto 0', textAlign: 'left' }}>
             {/* ☑️ 눌러서 체크 — 🧪테스터 의견(창업자 전달 2026-08-09) *"준비단계에서 체크박스가 있으면 어떨까. 단순 체크용도로."*
                 ⭐ 재료를 «꺼내면서» 하나씩 지워가는 자리다. 그래서 저장도 계산도 안 한다 — 표시만.
@@ -141,6 +158,8 @@ export default function CookScreen({ id }) {
       </div>
 
       {showTimer && <TimerSheet label={`${r.title} · STEP ${i}`} onClose={() => setShowTimer(false)} />}
+      {/* 📖 요리 가이드(계량·손질) — 재료 준비 화면의 버튼이 연다 (테스터 의견 2026-08-14) */}
+      {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
 
       {showIng && (
        <Portal>

@@ -124,11 +124,13 @@ export default function BragScreen() {
     <>
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-          <div className="h-title">레꾸자랑</div>
           {/* 🐻 [2026-08-13 창업자 제보] *"장보기 레꾸자랑에는 없어…(글씨옆에)"*
-              ⭐ 컷 이름 그대로 «뿌듯한» 꼬르곰 — 자랑 탭에 뜻이 딱 맞는다(별 두 개도 붙어 있다). */}
+              ⭐ 컷 이름 그대로 «뿌듯한» 꼬르곰 — 자랑 탭에 뜻이 딱 맞는다(별 두 개도 붙어 있다).
+              🧍‍♀️ [2026-08-14 확정] 캐릭터는 **글자 «왼쪽»** — 창업자 *"캐릭터는 같은방향에넣자.왼쪽으로"*
+                 ⛔ 전엔 여기만 제목 «뒤»였다(레시피·일기·홈은 앞). 의도가 아니라 「글씨옆에」를 뒤로 읽은 것. */}
           <img src={uiGomProud} alt="" draggable={false} width={29} height={44} className="hk-m-tongtong"
             style={{ display: 'block', objectFit: 'contain', margin: '-5px 0' }} />
+          <div className="h-title">레꾸자랑</div>
         </div>
         <button
           className="icon-btn press"

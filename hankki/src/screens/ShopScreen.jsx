@@ -88,12 +88,13 @@ export default function ShopScreen() {
     <>
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div className="h-title">장보기</div>
           {/* 🐧 [2026-08-13 창업자 제보] *"장보기 레꾸자랑에는 없어…(글씨옆에)"* ＋ *"펭펭이든 친구들이든 우리애들"*
               ⭐ 여기만 펭펭인 이유 = 이 화면 «아래» 「주부의 장바구니」에 이미 장바구니 든 꼬르곰이 있다.
-                 상단바까지 꼬르곰이면 한 화면에 같은 애가 둘 → 펭펭을 올려 둘 다 나오게 했다. */}
+                 상단바까지 꼬르곰이면 한 화면에 같은 애가 둘 → 펭펭을 올려 둘 다 나오게 했다.
+              🧍‍♀️ [2026-08-14 확정] 캐릭터는 **글자 «왼쪽»** — 창업자 *"캐릭터는 같은방향에넣자.왼쪽으로"* */}
           <img src={uiPengShop} alt="" draggable={false} width={34} height={45} className="hk-m-tongtong"
             style={{ display: 'block', objectFit: 'contain', margin: '-6px 0' }} />
+          <div className="h-title">장보기</div>
           <TabTips tab="shop" />
         </div>
       </div>

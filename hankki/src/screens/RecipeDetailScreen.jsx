@@ -456,8 +456,17 @@ export default function RecipeDetailScreen({ id }) {
               <div className="sec-title-row" style={{ display: 'flex', alignItems: 'center' }}>
                 <DetailDecor where="head-재료" />
                 <SecTitle>재료</SecTitle>
-                <button className="press" onClick={() => setGuide(true)} aria-label="계량·손질 가이드" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 999, background: 'var(--cream)' }}>
-                  <Icon name="help" size={14} color="var(--brown)" />
+                {/* 📖 [2026-08-14 창업자] *"버튼 물음표 너무 작고 «모르니까» 요리가이드로 적거나 해서"*
+                    ⛔ 전엔 22×22 동그란 「?」 뿐이라 **뭐가 들었는지 알 길이 없었다.**
+                    ⭐ 글자는 「요리 가이드」가 아니라 **「계량·손질」** — 창업자 확정(ⓑ).
+                       버튼엔 «제목»이 아니라 **안에 뭐가 있는지**가 적혀야 눌러보게 된다
+                       (설정에서도 이미 그 두 낱말을 부제로 쓰고 있다).
+                    ⚠️ 이 줄 오른쪽엔 「사러가기」가 있다 → 글자를 늘린 만큼 좁은 폰에서 밀릴 수 있어
+                       `check-charside.mjs` 와 같이 폭을 재서 확인했다. */}
+                <button className="press" onClick={() => setGuide(true)} aria-label="계량·손질 가이드"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '3px 8px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', flex: '0 0 auto' }}>
+                  <Icon name="help" size={12} color="var(--brown)" />
+                  계량·손질
                 </button>
               </div>
               <button
