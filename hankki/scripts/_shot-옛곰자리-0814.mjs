@@ -15,7 +15,8 @@ import { createServer } from 'node:http'
 import { extname, join } from 'node:path'
 
 const DIST = '/home/user/hankki/hankki/dist'
-const OUT = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/옛곰'
+// 낼 곳 = 환경변수로 바꿀 수 있다(갈아끼운 «뒤» 화면을 딴 폴더에 담으려고)
+const OUT = process.env.SHOT_OUT || '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/옛곰'
 const VW = 411, VH = 891
 mkdirSync(OUT, { recursive: true })
 

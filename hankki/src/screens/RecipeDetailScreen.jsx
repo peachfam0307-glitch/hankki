@@ -30,7 +30,8 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
-import uiGomThumb from '../assets/ui/gom_thumbsup.png'
+// 🐻 엄지척 = **물결 정본**(창업자 2026-08-14 · `gt_01`). 옛 `ui/gom_thumbsup` 은 매끈 곰이었다.
+import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
 import DetailDecor from '../components/DetailDecor'
 import { hlColor } from '../components/Stickers'
 

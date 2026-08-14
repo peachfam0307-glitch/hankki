@@ -7,7 +7,7 @@ import { createServer } from 'node:http'
 import { extname, join } from 'node:path'
 
 const DIST = '/home/user/hankki/hankki/dist'
-const OUT = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/옛곰'
+const OUT = process.env.SHOT_OUT || '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/옛곰'
 const VW = 411, VH = 891
 mkdirSync(OUT, { recursive: true })
 const M = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2' }

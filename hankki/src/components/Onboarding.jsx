@@ -5,7 +5,8 @@ import Icon from './Icon'
 import duoCart from '../assets/sharepool/duo_cart.png'
 import logoCream from '../assets/logo-hankki-cream.png'
 import uiGomHeart from '../assets/ui/gom_heart.png'
-import uiGomThumb from '../assets/ui/gom_thumbsup.png'
+// 🐻 엄지척 = **물결 정본**(창업자 2026-08-14 제공 · `…-08-14/낱개/gt_01`). 옛 `ui/gom_thumbsup` 은 매끈 곰이었다.
+import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
 import uiHandPoint from '../assets/ui/hand_point.png'
 // 🛒 큐레이션 제품 일러 — 온보딩 '주부 PICK' 카드에 쓴다.
 //    예전엔 🍜🧂🍶 유니코드였는데, **쇼핑 화면에서 이미 쓰는 진짜 제품 그림**이 있어서 그걸 쓴다(2026-07-29).
