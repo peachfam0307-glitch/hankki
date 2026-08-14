@@ -47,7 +47,13 @@ const 잰다 = `(async () => {
     await new Promise(r => setTimeout(r, 150)); const t끝 = 어긋남()
     결과.push({ 굴린곳: 목표, 같은순간: t0, '1프레임뒤': t1, '2프레임뒤': t2, '150ms뒤': t끝 })
   }
-  return { 결과, 막대스타일: (() => { const s = bar().style; return { top: s.top, transform: s.transform || '(없음)' } })() }
+  const cs = getComputedStyle(bar())
+  return { 결과, 막대스타일: {
+    top: bar().style.top,
+    인라인transform: bar().style.transform || '(없음)',
+    시계: cs.animationTimeline || '(없음)',
+    애니: cs.animationName || '(없음)',
+  } }
 })()`
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
@@ -73,6 +79,13 @@ if (r.오류) { console.log('  ⛔', r.오류) } else {
   const 늦음 = r.결과.filter(x => x["1프레임뒤"] > 2).length
   console.log(늦음 ? `\n  ⛔ ${늦음}/${r.결과.length} 번은 «1프레임 뒤»에도 막대가 2px 넘게 어긋나 있다 — 이게 「따라온다」로 보인다`
                    : `\n  ✅ 스크롤 신호가 온 «그 프레임»에 막대가 붙는다 (막대를 옮기는 방식도 transform 이어야 한다)`)
-  if (!/translate/.test(r.막대스타일.transform)) console.log("  ⛔ transform 이 아니다 — top/left 로 옮기면 레이아웃·페인트가 다시 돈다")
+  // ⭐ 옮기는 «방식»도 본다 — 둘 중 하나라야 한다:
+  //   ⒜ 브라우저가 스크롤을 시계로 삼아 옮긴다(제일 좋다 · 컴포지터라 안 덜덜거린다)
+  //   ⒝ 그게 안 되는 브라우저면 우리가 `transform` 으로 (⛔`top`/`left` 면 레이아웃이 다시 돈다)
+  const 시계 = r.막대스타일.시계 && r.막대스타일.시계 !== "auto" && r.막대스타일.시계 !== "(없음)"
+  const 트랜스폼 = /translate/.test(r.막대스타일.인라인transform)
+  console.log(시계 ? "  ✅ 브라우저가 «스크롤을 시계로» 옮긴다 — 메인 스레드와 무관 (덜덜거림의 뿌리를 없앤다)"
+            : 트랜스폼 ? "  ⚠️ 시계는 못 쓰고 `transform` 으로 옮긴다(폴백) — 이 브라우저에선 이게 최선이다"
+            : "  ⛔ top/left 로 옮기고 있다 — 레이아웃·페인트가 다시 돈다")
 }
 await b.close(); srv.close()

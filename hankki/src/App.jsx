@@ -469,9 +469,22 @@ function ScrollHint({ dep }) {
   const 화면 = useRef(null)   // 지금 굴러가는 화면
   const 가로줄 = useRef([])   // 가로로 넘치는 줄들(요소 그대로 — 자리는 그때그때 다시 잰다)
   const paintRef = useRef(() => {})
+  // 📜📜 [2026-08-14 창업자] *"스크롤하면 덜덜거리자나 회색막대기가"*
+  //   ⛔ 「늦게 따라온다」(v10.68)와 **다른 증상**이다. 늦음 = 한 박자 뒤 · 떨림 = 박자가 안 맞음.
+  //   🔎 안드로이드에선 **화면은 컴포지터가** 굴리고 **막대는 메인 스레드가** 옮긴다 →
+  //      메인이 조금만 바빠도 프레임을 놓쳐 막대만 멈췄다 튄다. **JS 로는 못 이긴다.**
+  //   ✅ 브라우저에게 「스크롤 그 자체를 시계로 삼아」 옮기라고 넘긴다(CSS `scroll-timeline`).
+  //      그러면 컴포지터에서 돌아 메인 스레드와 «무관»해진다 — 원리적으로 떨림이 없어진다.
+  //   ⚠️ 되는 브라우저에서만. 안 되면 지금까지처럼 `paint()` 가 옮긴다(눈에 보이는 건 똑같다).
+  const 시계로옮긴다 = useRef(false)
+  const 표시한화면 = useRef(null) // `hk-tl` 을 붙여 둔 화면(다른 데로 옮길 때 떼야 한다)
 
   useEffect(() => {
     let raf = 0
+    // 🔎 이 브라우저가 「스크롤을 시계로」 쓸 수 있나 — 한 번만 묻는다.
+    //    ⚠️ 「기능이 있다」와 「우리 DOM 에서 된다」는 다른 말이라 실제 화면으로도 확인했다
+    //       (`scripts/_probe-타임라인-0814.mjs` — 굴린 곳 다섯 군데 전부 차이 0~1px).
+    try { 시계로옮긴다.current = CSS.supports('animation-timeline', 'scroll()') } catch { 시계로옮긴다.current = false }
     // ➡️➡️ **가로로 넘치는 줄에도 막대를 그린다** (전수 재현판이 잡았다 — 2026-08-09 밤)
     //    🔢 실측 = 레시피 탭 「전체 41 · 아시안 2 · ＋ 폴더」 · 장보기 탭 「고기·해산물 … 자연드림」이
     //       화면 밖으로 나가 있었다. 옆으로 밀면 나오는데 **밀 수 있다는 표시가 없다.**
@@ -498,7 +511,9 @@ function ScrollHint({ dep }) {
     const paint = () => {
       const s = 화면.current
       const v = vRef.current
-      if (s && v && s.isConnected) {
+      // ⭐ 시계로 옮기는 브라우저면 세로 막대는 **손대지 않는다** — 브라우저가 컴포지터에서 옮긴다.
+      //    여기서 또 `transform` 을 쓰면 애니메이션과 싸워 오히려 튄다.
+      if (s && v && s.isConnected && !시계로옮긴다.current) {
         const { scrollHeight: sh, clientHeight: ch, scrollTop: st } = s
         if (sh > ch + 8) {
           const r = s.getBoundingClientRect()
@@ -519,7 +534,27 @@ function ScrollHint({ dep }) {
         b.style.transform = `translate3d(${x}px, ${r.bottom - 3}px, 0)`
       }
     }
-    paintRef.current = paint
+    // 📜 시계 달기 — 「어느 화면이 시계인가」와 「막대가 어디서 어디까지 가나」를 정해 준다.
+    //   ⭐ 이건 «화면이 바뀔 때»만 돈다. 스크롤 중엔 브라우저가 알아서 그 사이를 채운다.
+    //   ⚠️ `.screen` 이 여러 개인데 이름이 겹치면 시계가 통째로 죽는다 → **맨 위 하나에만** 붙인다.
+    const 시계달기 = (el) => {
+      const v = vRef.current
+      if (!시계로옮긴다.current || !v) return
+      if (표시한화면.current && 표시한화면.current !== el) 표시한화면.current.classList.remove('hk-tl')
+      if (!el) { 표시한화면.current = null; v.classList.remove('hk-anim'); return }
+      el.classList.add('hk-tl')
+      표시한화면.current = el
+      const { scrollHeight: sh, clientHeight: ch } = el
+      const r = el.getBoundingClientRect()
+      const h = Math.max(28, (ch / sh) * r.height)
+      v.style.height = `${h}px`
+      v.style.setProperty('--hk-vx', `${Math.round(r.right - 5)}px`)
+      v.style.setProperty('--hk-vy0', `${Math.round(r.top)}px`)
+      v.style.setProperty('--hk-vy1', `${Math.round(r.top + (r.height - h))}px`)
+      v.classList.add('hk-anim')
+    }
+    // ⭐ 막대는 «렌더 뒤»에 생긴다 — 그때 시계를 다시 달고 자리를 잡아야 첫 프레임부터 제자리다.
+    paintRef.current = () => { 시계달기(화면.current); paint() }
 
     // 📐 무거운 재기 — «무엇을» 그릴지만 정한다. 개수가 안 바뀌면 state 도 안 건드린다(리렌더 0).
     const 세팅 = (v, h) => setN((p) => (p.v === v && p.h === h ? p : { v, h }))
@@ -528,15 +563,16 @@ function ScrollHint({ dep }) {
       //    그때 «뒤 화면» 막대를 그리면 판 위에 떠 보인다(재현판이 잡았다: 판을 열었는데 막대 1개).
       //    꾸미기 판은 자기 서랍 막대를 따로 그린다(`DecorEditor` 의 `VHint`).
       const 판 = document.querySelector('.decor-editor')
-      if (판) { 화면.current = null; 가로줄.current = 가로찾기(판); 세팅(false, 가로줄.current.length); paint(); return }
+      if (판) { 화면.current = null; 시계달기(null); 가로줄.current = 가로찾기(판); 세팅(false, 가로줄.current.length); paint(); return }
       const list = document.querySelectorAll('.app-frame .screen')
       const el = list[list.length - 1] // 맨 위 화면 = DOM 에서 마지막
-      if (!el) { 화면.current = null; 가로줄.current = []; 세팅(false, 0); return }
+      if (!el) { 화면.current = null; 시계달기(null); 가로줄.current = []; 세팅(false, 0); return }
       // ⭐ 가로 막대도 «맨 위 화면 안»에서만 찾는다 — `.app-frame` 을 통째로 훑으면
       //    쌓인 화면 «뒤»에 깔린 줄까지 잡아 남의 화면에 막대가 뜬다(세로 막대와 같은 기준).
       화면.current = el
       가로줄.current = 가로찾기(el)
       세팅(el.scrollHeight > el.clientHeight + 8, 가로줄.current.length)
+      시계달기(el.scrollHeight > el.clientHeight + 8 ? el : null)
       paint()
     }
     // ⚠️ `scroll` 은 bubble 을 안 한다 → **capture** 로 잡아야 어느 화면이 굴러도 걸린다.
@@ -564,6 +600,8 @@ function ScrollHint({ dep }) {
       mo.disconnect()
       timers.forEach(clearTimeout)
       cancelAnimationFrame(raf)
+      // ⚠️ 시계 표식을 떼고 나간다 — 두 화면에 같은 이름이 남으면 시계가 통째로 죽는다.
+      if (표시한화면.current) { 표시한화면.current.classList.remove('hk-tl'); 표시한화면.current = null }
     }
   }, [dep])
 

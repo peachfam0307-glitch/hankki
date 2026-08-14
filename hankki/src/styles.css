@@ -206,6 +206,27 @@ img {
   width: 0;
 }
 
+/* 📜📜 스크롤 막대를 «브라우저가» 옮긴다 — 창업자 2026-08-14 *"스크롤하면 덜덜거리자나 회색막대기가"*
+   ⛔ 「늦게 따라온다」(v10.68 에서 고침)와 **다른 증상**이다. 늦음 = 한 박자 뒤 · 떨림 = 박자가 안 맞음.
+   🔎 원인 = 안드로이드에선 **화면은 컴포지터가** 굴리고 **막대는 메인 스레드가** 옮긴다.
+      메인이 조금만 바빠도(그림 디코딩·React·GC) 프레임을 놓쳐 막대만 멈췄다 튄다.
+      ⚠️ **헤드리스에선 재현이 안 된다**(여기 크로미움은 스크롤도 메인 스레드라 박자가 저절로 맞는다).
+         숫자로 0 이 나와도 그건 「덜덜이 없다」가 아니라 「이 판에선 못 잡는다」다(규칙 18).
+   ✅ 그래서 JS 를 빼고 **스크롤 그 자체를 애니메이션 시계로** 쓴다 — 컴포지터에서 돌아 메인과 무관해진다.
+      🔬 실측(`scripts/_probe-타임라인-0814.mjs`) — 우리 실제 DOM 에서 굴린 곳 0/500/1500/3000/끝 전부 **차이 0~1px**
+   ⚠️ `.screen` 은 여러 개다(탭 5 ＋ 쌓이는 화면) → **맨 위 하나에만** `hk-tl` 을 붙인다(이름이 겹치면 시계가 죽는다).
+   ⚠️ 못 쓰는 브라우저는 지금까지처럼 JS 가 옮긴다(`App.jsx` 의 `paint()`). */
+.app-frame { timeline-scope: --hk-v; }
+.screen.hk-tl { scroll-timeline-name: --hk-v; scroll-timeline-axis: block; }
+@keyframes hk-vhint {
+  from { transform: translate3d(var(--hk-vx, 0px), var(--hk-vy0, 0px), 0); }
+  to { transform: translate3d(var(--hk-vx, 0px), var(--hk-vy1, 0px), 0); }
+}
+[data-vhint].hk-anim {
+  animation: hk-vhint linear both;
+  animation-timeline: --hk-v;
+}
+
 .pad {
   padding: 0 20px;
 }
