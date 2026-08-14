@@ -505,6 +505,26 @@ function ScrollHint({ dep }) {
       return out
     }
 
+    // 📐📐 [2026-08-14 창업자 ②] *"아직도 좀 덜덜하긴해 … 걔는 고정이어야하는데 스크롤하면 움직이니까."*
+    //   ⛔⛔ **v10.69(시계로 옮기기)로도 안 끝났다. 내가 «막대»만 보고 «바닥»을 안 봤다.**
+    //   🔎 뿌리 = `src/main.jsx` 가 `visualViewport` 의 **scroll·resize 마다** `--app-height` 를 다시 쓴다.
+    //      안드로이드 크롬은 굴리는 «동안» 주소창을 접었다 폈다 하므로 그때마다
+    //      `.app-frame { height: var(--app-height) }` 가 다시 레이아웃된다 → 화면(.screen)도 같이 움직인다.
+    //      그런데 막대는 `position: fixed` = **뷰포트**에 붙어 있었다.
+    //      📌 **내용은 프레임 기준, 막대는 뷰포트 기준** — 바닥이 흔들리면 둘이 갈라진다. 그게 「덜덜」이다.
+    //   🔢 실측(`scripts/_probe-바닥흔들-0814.mjs`) — 주소창만큼(56·64px) 앱 높이를 바꾸니 **최대 10px 어긋났다.**
+    //      ⚠️ 이 컨테이너엔 주소창이 «없어서» 있는 그대로는 0 이 나온다 —
+    //         「덜덜이 없다」가 아니라 **「이 판에선 못 잡는다」**라 흉내를 내서 쟀다(규칙 18).
+    //   ✅ 고침 = 세로 막대를 **`.app-frame` 안에 `absolute`** 로 붙인다(프레임이 `position: relative`).
+    //      그러면 막대와 내용이 **같은 상자**에 들어가 프레임이 커지든 작아지든 «같이» 움직인다.
+    //      좌표도 프레임 기준이라 `r.top - fr.top` = 0 → 주소창이 움직여도 **값이 낡지 않는다.**
+    //   ⛔ 가로 막대는 그대로 `fixed` 로 둔다 — ⑴스크롤마다 rect 를 다시 읽어 낡을 틈이 없고
+    //      ⑵꾸미기 판은 Portal 이라 `.app-frame` «밖»이다. 프레임 기준으로 바꾸면 판 위 막대가 잘린다.
+    const 프레임자리 = () => {
+      const f = vRef.current && vRef.current.offsetParent
+      return f ? f.getBoundingClientRect() : { left: 0, top: 0 }
+    }
+
     // 🖌 가벼운 칠하기 — **스크롤마다 즉시.** rAF 도 state 도 안 거친다.
     //    ⭐ `transform` 만 만진다(컴포지터가 처리 → 레이아웃·페인트가 안 돈다).
     //    ⚠️ 그래서 막대 자체는 `top:0; left:0` 에 두고 **전부 translate 로** 옮긴다.
@@ -517,10 +537,11 @@ function ScrollHint({ dep }) {
         const { scrollHeight: sh, clientHeight: ch, scrollTop: st } = s
         if (sh > ch + 8) {
           const r = s.getBoundingClientRect()
+          const fr = 프레임자리() // ⭐ 세로 막대는 프레임 기준(absolute) — 뷰포트가 흔들려도 안 갈라진다
           const h = Math.max(28, (ch / sh) * r.height)
-          const y = r.top + (st / (sh - ch)) * (r.height - h)
+          const y = r.top - fr.top + (st / (sh - ch)) * (r.height - h)
           v.style.height = `${h}px`
-          v.style.transform = `translate3d(${r.right - 5}px, ${y}px, 0)`
+          v.style.transform = `translate3d(${r.right - fr.left - 5}px, ${y}px, 0)`
         }
       }
       for (let i = 0; i < 가로줄.current.length; i++) {
@@ -546,11 +567,12 @@ function ScrollHint({ dep }) {
       표시한화면.current = el
       const { scrollHeight: sh, clientHeight: ch } = el
       const r = el.getBoundingClientRect()
+      const fr = 프레임자리() // ⭐ 프레임 기준 — 주소창이 접혀도 `r.top - fr.top` 은 그대로다(= 값이 안 낡는다)
       const h = Math.max(28, (ch / sh) * r.height)
       v.style.height = `${h}px`
-      v.style.setProperty('--hk-vx', `${Math.round(r.right - 5)}px`)
-      v.style.setProperty('--hk-vy0', `${Math.round(r.top)}px`)
-      v.style.setProperty('--hk-vy1', `${Math.round(r.top + (r.height - h))}px`)
+      v.style.setProperty('--hk-vx', `${Math.round(r.right - fr.left - 5)}px`)
+      v.style.setProperty('--hk-vy0', `${Math.round(r.top - fr.top)}px`)
+      v.style.setProperty('--hk-vy1', `${Math.round(r.top - fr.top + (r.height - h))}px`)
       v.classList.add('hk-anim')
     }
     // ⭐ 막대는 «렌더 뒤»에 생긴다 — 그때 시계를 다시 달고 자리를 잡아야 첫 프레임부터 제자리다.
@@ -581,6 +603,17 @@ function ScrollHint({ dep }) {
     const onScroll = () => { paint(); cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
     document.addEventListener('scroll', onScroll, true)
     window.addEventListener('resize', onScroll)
+    // ⛔⛔ **여기가 「덜덜」의 나머지 절반이었다** (2026-08-14 · 프로브가 잡았다)
+    //   막대를 프레임 기준(absolute)으로 바꿔도 어긋남이 10px 그대로였다. 왜냐면 —
+    //   `--app-height` 가 바뀌어 화면 높이가 달라져도 **다시 잴 신호가 «하나도» 없었다.**
+    //   📌 우리는 `window.resize` 만 듣는데, 안드로이드 주소창 접힘은 **`visualViewport` 의 resize**를 쏜다.
+    //      **둘은 다른 사건이다** — 레이아웃 뷰포트는 그대로고 «보이는» 뷰포트만 바뀌기 때문이다.
+    //   ✅ 그래서 시계 값(`--hk-vy0/1`)이 옛 높이로 남아 내용과 갈라졌다.
+    //   ⭐ 여기선 **무거운 `measure()` 를 부르지 않는다** — 화면이 바뀐 게 아니라 «크기»만 바뀐 것이라
+    //      시계 다시 달기 ＋ 칠하기(`paintRef`)면 충분하다. 스크롤 길에 무게를 얹지 않는 게 이 판의 전부다.
+    const vv = window.visualViewport
+    const onVV = () => { paintRef.current() }
+    if (vv) { vv.addEventListener('resize', onVV); vv.addEventListener('scroll', onVV) }
     // ⚠️ 꾸미기 판·온보딩은 Portal 이라 body 직계로 붙는다 — 뜨고 지는 걸 여기서 잡아야
     //    막대가 판 위에 남지 않는다(`dep` 은 탭·스택만 보므로 이건 못 잡는다).
     const mo = new MutationObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) })
@@ -597,6 +630,7 @@ function ScrollHint({ dep }) {
     return () => {
       document.removeEventListener('scroll', onScroll, true)
       window.removeEventListener('resize', onScroll)
+      if (vv) { vv.removeEventListener('resize', onVV); vv.removeEventListener('scroll', onVV) }
       mo.disconnect()
       timers.forEach(clearTimeout)
       cancelAnimationFrame(raf)
@@ -612,18 +646,22 @@ function ScrollHint({ dep }) {
   if (!n.v && !n.h) return null
   // ⚠️ 표식 `data-vhint`·`data-hhint` = 재현 검사가 «실제로 그려졌나»를 집는 자리.
   const 공통 = {
-    position: 'fixed', top: 0, left: 0, borderRadius: 999,
+    top: 0, left: 0, borderRadius: 999,
     background: 'var(--text-sub)', pointerEvents: 'none', willChange: 'transform',
   }
   return (
     <>
       {n.v && (
+        // ⭐ 세로 막대만 `absolute` = **프레임 기준**(위 `프레임자리()` 주석 참고).
+        //    ⛔ `fixed`(뷰포트 기준)로 두면 주소창이 접힐 때 내용과 갈라져 «덜덜»거린다.
         <div ref={vRef} data-vhint="1" aria-hidden="true"
-          style={{ ...공통, width: 3, height: 28, opacity: 0.38 }} />
+          style={{ ...공통, position: 'absolute', width: 3, height: 28, opacity: 0.38 }} />
       )}
       {Array.from({ length: n.h }, (_, i) => (
+        // ⛔ 가로 막대는 `fixed` 그대로 — 꾸미기 판(Portal)은 `.app-frame` «밖»이라
+        //    프레임 기준으로 바꾸면 판 위 막대가 잘린다. 얘는 스크롤마다 rect 를 다시 읽어 낡을 틈도 없다.
         <div key={i} ref={(el) => { hRefs.current[i] = el }} data-hhint="1" aria-hidden="true"
-          style={{ ...공통, height: 3, width: 24, opacity: 0.34 }} />
+          style={{ ...공통, position: 'fixed', height: 3, width: 24, opacity: 0.34 }} />
       ))}
     </>
   )
