@@ -242,6 +242,12 @@ export const HOMEMADE = [
   { from: '2026-11-16', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     ids: ['basic-eolkeun-syabeu-kalguksu', 'basic-sunsal-jjimdak'] },   // 얼큰 샤브 칼국수 · 순살찜닭
+  // 🍢 11/23 제철 줄이 «비어 있었다» — 창업자가 아껴둔 자기 레시피 둘로 채웠다(2026-08-14).
+  //    📮 *"23주?에는 아껴둔 레시피들 있잖아 그거 섞어서 나가자. 2개"* → *"어묵탕 어묵볶음 좋다."*
+  //    ⭐ 안 채우면 앞 주 「가리비」가 2주 연속으로 보인다.
+  { from: '2026-11-23', title: '어묵', kicker: '이번 주 재료',
+    why: '쌀쌀해지면 국물이 당겨요. 어묵 한 봉이면 탕도 반찬도 돼요.',
+    ids: ['basic-eomuk-tang', 'basic-eomuk-bokkeum'] },
   { from: '2026-11-23', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     ids: ['basic-insaeng-budae-jjigae', 'basic-dak-bokkeumtang'] },   // 인생 부대찌개 · 닭볶음탕
