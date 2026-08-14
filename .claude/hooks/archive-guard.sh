@@ -59,12 +59,12 @@ while IFS= read -r f; do
     # ⚠️ Grep·Glob 의 path 는 «폴더»일 수 있다 — 파일만 보면 `_archive` 폴더째 검색이 새어 나간다
     [ -e "$p" ] || continue
     if [ -d "$p" ]; then
-      case "$p" in *_archive*|*_아껴둠*|*_구판*) BLOCKED="${BLOCKED}   ⛔ ${p}  (폴더)
+      case "$p" in *_archive*|*_아껴둠*|*_구판*|*_구버전*) BLOCKED="${BLOCKED}   ⛔ ${p}  (폴더)
 " ;; esac
       break
     fi
     kind=""
-    case "$p" in *_archive*|*_아껴둠*|*_구판*) kind="경로" ;; esac
+    case "$p" in *_archive*|*_아껴둠*|*_구판*|*_구버전*) kind="경로" ;; esac
     if [ -z "$kind" ] && head -40 "$p" 2>/dev/null | grep -q '🗄 \*\*보관소'; then kind="표시"; fi
     [ -n "$kind" ] && BLOCKED="${BLOCKED}   ⛔ ${p}  (${kind})
 "
