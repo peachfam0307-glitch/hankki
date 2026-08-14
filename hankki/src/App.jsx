@@ -476,15 +476,33 @@ function ScrollHint({ dep }) {
   //   ✅ 브라우저에게 「스크롤 그 자체를 시계로 삼아」 옮기라고 넘긴다(CSS `scroll-timeline`).
   //      그러면 컴포지터에서 돌아 메인 스레드와 «무관»해진다 — 원리적으로 떨림이 없어진다.
   //   ⚠️ 되는 브라우저에서만. 안 되면 지금까지처럼 `paint()` 가 옮긴다(눈에 보이는 건 똑같다).
+  //
+  // ⛔⛔⛔ [2026-08-14 · 창업자 영상이 뒤집었다] **그 시계가 창업자 폰에서 «안 돌았다».**
+  //   📮 창업자 *"해결안됐어 찍어줘?"* → 12.4초 화면 녹화(1080×2340·114fps)를 프레임마다 쟀다
+  //      (`scripts/_영상-흔들-0814.mjs`).
+  //   🔢 레시피 화면 3.8~7.5초 — **내용은 2,272px 굴렀는데 막대는 y 96~133 안에서 떨기만 했다.**
+  //      즉 막대가 스크롤을 «따라가지 않고» 맨 위(`--hk-vy0`)에 붙박여 제자리 진동만 했다.
+  //      ⭐ 그게 창업자가 본 「덜덜」이다. 창업자 말 *"걔는 고정이어야하는데"* 가 정확했다 —
+  //         **막대는 붙박여 있었고 «떨림»만 남았다.**
+  //   ⛔ **그런데 나는 시계를 믿고 `paint()` 를 꺼버렸다** → 얼어붙은 막대를 되살릴 길이 없었다.
+  //   ⛔⛔ **검사가 왜 못 잡았나 = 「기능이 있나」만 물었다.**
+  //      `CSS.supports('animation-timeline','scroll()')` 은 «익명 시계»를 묻는데
+  //      우리가 실제로 쓰는 건 **`timeline-scope` 로 이름 붙인 시계**다 — «다른 기능»이다.
+  //      게다가 헤드리스 크로미움(141)에선 돌아서 재현판이 초록불이었다.
+  //      📌 **「되나」를 물어야 할 자리에서 「있나」를 물었다.** (규칙 18 ⓘ 그대로)
+  //   ✅ **그래서 시계를 뺐다. 다시 `paint()` 가 옮긴다.**
+  //      ⭐ 대신 **rAF 고리**로 옮긴다 — 스크롤 이벤트는 안드로이드에서 «몰려서» 오므로
+  //         이벤트마다 그리면 계단이 진다(그게 v10.68 의 떨림이었다).
+  //         화면이 그려지는 «매 프레임» `scrollTop` 을 새로 읽어 그리면 JS 가 낼 수 있는 최선이 된다.
+  //   ⛔ 다시 시계로 돌아가려면 **「폰에서 진짜로 도는지」를 먼저 확인**할 것.
+  //      기능 검사로는 절대 판정하지 말 것 — 오늘 그걸로 하루를 썼다.
   const 시계로옮긴다 = useRef(false)
   const 표시한화면 = useRef(null) // `hk-tl` 을 붙여 둔 화면(다른 데로 옮길 때 떼야 한다)
 
   useEffect(() => {
     let raf = 0
-    // 🔎 이 브라우저가 「스크롤을 시계로」 쓸 수 있나 — 한 번만 묻는다.
-    //    ⚠️ 「기능이 있다」와 「우리 DOM 에서 된다」는 다른 말이라 실제 화면으로도 확인했다
-    //       (`scripts/_probe-타임라인-0814.mjs` — 굴린 곳 다섯 군데 전부 차이 0~1px).
-    try { 시계로옮긴다.current = CSS.supports('animation-timeline', 'scroll()') } catch { 시계로옮긴다.current = false }
+    // ⛔ 시계는 «끈다» — 창업자 폰에서 안 돌았다(위 주석의 영상 실측). 기능 검사로 켜지 말 것.
+    시계로옮긴다.current = false
     // ➡️➡️ **가로로 넘치는 줄에도 막대를 그린다** (전수 재현판이 잡았다 — 2026-08-09 밤)
     //    🔢 실측 = 레시피 탭 「전체 41 · 아시안 2 · ＋ 폴더」 · 장보기 탭 「고기·해산물 … 자연드림」이
     //       화면 밖으로 나가 있었다. 옆으로 밀면 나오는데 **밀 수 있다는 표시가 없다.**
@@ -600,7 +618,24 @@ function ScrollHint({ dep }) {
     // ⚠️ `scroll` 은 bubble 을 안 한다 → **capture** 로 잡아야 어느 화면이 굴러도 걸린다.
     // ⭐ 스크롤에선 **칠하기만** 한다(가볍다). 무거운 재기는 rAF 로 따로 묶는다 —
     //    안 그러면 `querySelectorAll('div,ul,nav')` 가 스크롤마다 돌아 이번엔 «버벅임»이 된다.
-    const onScroll = () => { paint(); cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
+    // 🎞🎞 **매 프레임 그린다** — 스크롤 이벤트마다가 «아니다».
+    //   ⛔ 안드로이드는 굴리는 동안 `scroll` 이벤트를 **몰아서** 준다(한 프레임에 여러 번 오거나 건너뛴다).
+    //      이벤트마다 그리면 막대가 «계단»으로 움직인다 — 그게 v10.68 에서 창업자가 본 떨림이다.
+    //   ✅ 화면이 그려지는 «그 프레임»마다 `scrollTop` 을 새로 읽어 그린다. JS 가 낼 수 있는 최선이다.
+    //   ⭐ 굴림이 멎으면 고리도 멎는다(300ms) — 가만있는데 rAF 를 돌리면 배터리만 먹는다.
+    let 그리기고리 = 0
+    let 마지막굴림 = 0
+    const 한바퀴 = () => {
+      paint()
+      if (performance.now() - 마지막굴림 < 300) 그리기고리 = requestAnimationFrame(한바퀴)
+      else 그리기고리 = 0
+    }
+    const onScroll = () => {
+      마지막굴림 = performance.now()
+      if (!그리기고리) 그리기고리 = requestAnimationFrame(한바퀴)
+      paint() // 첫 프레임을 기다리지 않게 즉시 한 번
+      cancelAnimationFrame(raf); raf = requestAnimationFrame(measure)
+    }
     document.addEventListener('scroll', onScroll, true)
     window.addEventListener('resize', onScroll)
     // ⛔⛔ **여기가 「덜덜」의 나머지 절반이었다** (2026-08-14 · 프로브가 잡았다)
@@ -634,6 +669,7 @@ function ScrollHint({ dep }) {
       mo.disconnect()
       timers.forEach(clearTimeout)
       cancelAnimationFrame(raf)
+      cancelAnimationFrame(그리기고리)
       // ⚠️ 시계 표식을 떼고 나간다 — 두 화면에 같은 이름이 남으면 시계가 통째로 죽는다.
       if (표시한화면.current) { 표시한화면.current.classList.remove('hk-tl'); 표시한화면.current = null }
     }
