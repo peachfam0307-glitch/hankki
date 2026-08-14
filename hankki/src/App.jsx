@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useStore } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
@@ -464,6 +465,9 @@ function ScrollHint({ dep }) {
   //   ⛔ 막대를 없애지 않는다 — 창업자 2026-08-08 *"스크롤바가 처음부터 안보여서 글자체 저게다처럼보임"*
   //      안드로이드 크롬의 오버레이 막대는 «긁는 동안만» 떠서 「여기서 끝」으로 읽힌다.
   const [n, setN] = useState({ v: false, h: 0 }) // ⭐ 자리가 아니라 «개수»만
+  // ➡️ 가로 막대는 «그 줄의 부모» 안에 그린다(Portal) → 세로로 굴려도 브라우저가 함께 옮긴다.
+  //    그래서 «어느 줄인가»를 state 로 들고 있어야 한다(개수만으론 어디에 붙일지 모른다).
+  const [붙일곳, set붙일곳] = useState([])
   const vRef = useRef(null)
   const hRefs = useRef([])
   const 화면 = useRef(null)   // 지금 굴러가는 화면
@@ -562,15 +566,25 @@ function ScrollHint({ dep }) {
           v.style.transform = `translate3d(${r.right - fr.left - 5}px, ${y}px, 0)`
         }
       }
+      // ➡️➡️ [2026-08-14 창업자 ③] *"아니 막대가 «가로»라니까 세로막대아니고"*
+      //   ⛔⛔ 오늘 하루(v10.68·69·70·71)를 **세로 막대만** 보고 고쳤다. 창업자가 말한 건 «가로» 막대였다.
+      //   ⭐ 그러면 *"걔는 고정이어야하는데 스크롤하면 움직이니까"* 가 그대로 읽힌다 —
+      //      **가로 막대는 «자기 줄»에 딱 붙어 있어야 한다.** 세로로 굴릴 때 줄에서 떨어지면 안 된다.
+      //   🔢 실측(`scripts/_repro-가로막대-0814.mjs`) — 굴린 «그 순간» 막대가 자기 줄에서
+      //      **레시피 최대 80px · 장보기 최대 896px** 떨어져 있었다. 줄은 컴포지터가 즉시 굴리는데
+      //      막대는 `fixed` 라 JS 가 «쫓아다녔기» 때문이다.
+      //   ✅ **막대를 그 줄의 부모 안으로 넣었다**(Portal ＋ `absolute`) → 세로로 굴리면
+      //      브라우저가 줄과 **함께** 옮긴다. **세로 스크롤에 JS 가 0이다** — 늦을 수가 없다.
+      //   ⭐ 그래서 여기선 **가로 자리만** 정한다. 세로(`top`)는 붙일 때 한 번 잡고 안 건드린다.
       for (let i = 0; i < 가로줄.current.length; i++) {
         const el = 가로줄.current[i]
         const b = hRefs.current[i]
         if (!b || !el || !el.isConnected) continue
-        const r = el.getBoundingClientRect()
-        const w = Math.max(24, (el.clientWidth / el.scrollWidth) * r.width)
-        const x = r.left + (el.scrollLeft / (el.scrollWidth - el.clientWidth)) * (r.width - w)
+        const w = Math.max(24, (el.clientWidth / el.scrollWidth) * el.clientWidth)
+        // 부모 기준 좌표 — `offsetLeft/Top` 은 «굴려도 안 변한다»(그게 이 고침의 전부다)
+        const x = el.offsetLeft + (el.scrollLeft / (el.scrollWidth - el.clientWidth)) * (el.clientWidth - w)
         b.style.width = `${w}px`
-        b.style.transform = `translate3d(${x}px, ${r.bottom - 3}px, 0)`
+        b.style.transform = `translate3d(${x}px, ${el.offsetTop + el.offsetHeight - 3}px, 0)`
       }
     }
     // 📜 시계 달기 — 「어느 화면이 시계인가」와 「막대가 어디서 어디까지 가나」를 정해 준다.
@@ -598,19 +612,34 @@ function ScrollHint({ dep }) {
 
     // 📐 무거운 재기 — «무엇을» 그릴지만 정한다. 개수가 안 바뀌면 state 도 안 건드린다(리렌더 0).
     const 세팅 = (v, h) => setN((p) => (p.v === v && p.h === h ? p : { v, h }))
+    // ➡️ 막대를 «어느 상자»에 그릴지 — 줄의 부모다.
+    //    ⭐ 부모에 「position: relative」 를 준다(없으면 「absolute」 가 엉뚱한 조상 기준이 된다).
+    //    ⚠️ 이 줄은 낫표다 — 여기 백틱을 쓰면 bash 로 넣을 때 «실행»돼 내용이 사라진다(오늘 또 당했다).
+    //       ⚠️ 이미 자리를 가진 부모는 «안 건드린다» — 남의 배치를 망가뜨리면 안 된다.
+    const 붙이기 = (줄들) => {
+      const 곳 = []
+      for (const e of 줄들) {
+        const p = e.parentElement
+        if (!p) continue
+        if (getComputedStyle(p).position === 'static') p.style.position = 'relative'
+        곳.push(p)
+      }
+      set붙일곳((옛) => (옛.length === 곳.length && 옛.every((x, i) => x === 곳[i]) ? 옛 : 곳))
+    }
     const measure = () => {
       // ⛔ 꾸미기 판은 Portal 이라 `.app-frame` 밖에서 화면을 통째로 덮는다 —
       //    그때 «뒤 화면» 막대를 그리면 판 위에 떠 보인다(재현판이 잡았다: 판을 열었는데 막대 1개).
       //    꾸미기 판은 자기 서랍 막대를 따로 그린다(`DecorEditor` 의 `VHint`).
       const 판 = document.querySelector('.decor-editor')
-      if (판) { 화면.current = null; 시계달기(null); 가로줄.current = 가로찾기(판); 세팅(false, 가로줄.current.length); paint(); return }
+      if (판) { 화면.current = null; 시계달기(null); 가로줄.current = 가로찾기(판); 붙이기(가로줄.current); 세팅(false, 가로줄.current.length); paint(); return }
       const list = document.querySelectorAll('.app-frame .screen')
       const el = list[list.length - 1] // 맨 위 화면 = DOM 에서 마지막
-      if (!el) { 화면.current = null; 시계달기(null); 가로줄.current = []; 세팅(false, 0); return }
+      if (!el) { 화면.current = null; 시계달기(null); 가로줄.current = []; 붙이기([]); 세팅(false, 0); return }
       // ⭐ 가로 막대도 «맨 위 화면 안»에서만 찾는다 — `.app-frame` 을 통째로 훑으면
       //    쌓인 화면 «뒤»에 깔린 줄까지 잡아 남의 화면에 막대가 뜬다(세로 막대와 같은 기준).
       화면.current = el
       가로줄.current = 가로찾기(el)
+      붙이기(가로줄.current)
       세팅(el.scrollHeight > el.clientHeight + 8, 가로줄.current.length)
       시계달기(el.scrollHeight > el.clientHeight + 8 ? el : null)
       paint()
@@ -679,7 +708,7 @@ function ScrollHint({ dep }) {
   //    그래서 `useEffect` 가 아니라 `useLayoutEffect` — 브라우저가 그리기 «전»에 자리를 잡는다.
   useLayoutEffect(() => { paintRef.current() })
 
-  if (!n.v && !n.h) return null
+  if (!n.v && !붙일곳.length) return null
   // ⚠️ 표식 `data-vhint`·`data-hhint` = 재현 검사가 «실제로 그려졌나»를 집는 자리.
   const 공통 = {
     top: 0, left: 0, borderRadius: 999,
@@ -693,12 +722,17 @@ function ScrollHint({ dep }) {
         <div ref={vRef} data-vhint="1" aria-hidden="true"
           style={{ ...공통, position: 'absolute', width: 3, height: 28, opacity: 0.38 }} />
       )}
-      {Array.from({ length: n.h }, (_, i) => (
-        // ⛔ 가로 막대는 `fixed` 그대로 — 꾸미기 판(Portal)은 `.app-frame` «밖»이라
-        //    프레임 기준으로 바꾸면 판 위 막대가 잘린다. 얘는 스크롤마다 rect 를 다시 읽어 낡을 틈도 없다.
-        <div key={i} ref={(el) => { hRefs.current[i] = el }} data-hhint="1" aria-hidden="true"
-          style={{ ...공통, position: 'fixed', height: 3, width: 24, opacity: 0.34 }} />
-      ))}
+      {/* ➡️➡️ 가로 막대는 «그 줄의 부모 안»에 그린다 (창업자 2026-08-14
+          *"레시피 전체 자주 한식 양식 거기아래있는 가로바. 장바구니 이번주 픽 아래있는 가로바.
+            그게 아래로 스크롤내리면 떨린다고"* · *"세로막대는 처음부터 문제없었어"*)
+          ⛔ 전엔 `fixed` 라 JS 가 매 프레임 쫓아다녔다 → 줄은 컴포지터가 즉시 굴리는데
+             막대는 뒤에 남았다가 따라붙어 **줄에서 떨어졌다 붙었다** 했다(레시피 80px · 장보기 896px 실측).
+          ✅ 같은 상자에 넣으면 브라우저가 줄과 **함께** 옮긴다 — **세로 스크롤에 JS 가 0이다.**
+          ⚠️ 부모가 없거나 사라졌으면 그냥 안 그린다(억지로 붙이지 않는다). */}
+      {붙일곳.map((부모, i) => (부모 && 부모.isConnected ? createPortal(
+        <div ref={(el) => { hRefs.current[i] = el }} data-hhint="1" aria-hidden="true"
+          style={{ ...공통, position: 'absolute', height: 3, width: 24, opacity: 0.34 }} />,
+        부모, `hh${i}`) : null))}
     </>
   )
 }
