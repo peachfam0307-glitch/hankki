@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useStore } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
@@ -449,8 +449,27 @@ export default function App() {
 //   ⚠️ 꾸미기 판은 Portal 이라 `.app-frame` 밖 → 여기 안 걸린다(서랍 막대는 `DecorEditor` 가 따로 그린다).
 //   ⚠️ 표식 `data-vhint` = 재현 검사가 «실제로 그려졌나»를 집는 자리.
 function ScrollHint({ dep }) {
-  const [bar, setBar] = useState(null) // [화면 y, 높이, 오른쪽 x] · null = 안 넘침
-  const [hbars, setHbars] = useState([]) // 가로로 넘치는 줄들 — [왼쪽 x, 폭, 아래 y]
+  // 📜📜 [2026-08-14 테스터] *"화면에서 스크롤 할때 회색 막대기? 같은게 «살짝 부자연스럽게 따라와여»"*
+  //   🔢 실측(`scripts/_repro-막대따라옴-0814.mjs`) — 굴린 «순간» 막대가 **63~110px 어긋나** 있었고
+  //      **1프레임 뒤에도 그대로**, **2프레임 뒤에야** 0 이 됐다. 늦는 게 «느낌»이 아니라 사실이었다.
+  //   ⛔ 지연이 두 겹이었다 —
+  //      ⑴ `scroll` → `requestAnimationFrame(measure)` = 한 프레임
+  //      ⑵ `measure()` → `setState` → React 리렌더/커밋 = 또 한 프레임
+  //      게다가 `top`/`left` 를 바꾸니 그때마다 **레이아웃＋페인트**가 다시 돌았다.
+  //      그동안 화면 자체는 브라우저가 컴포지터에서 «즉시» 굴린다 → 막대만 뒤처진다.
+  //   ✅ 그래서 «무거운 것»과 «가벼운 것»을 갈랐다:
+  //      · `measure()` = 무엇을 그릴까(어느 화면·가로 줄 몇 개) — 여전히 rAF·MutationObserver 로 «가끔»
+  //      · `paint()`   = 어디에 그릴까(scrollTop → 자리) — **스크롤마다 즉시 · DOM 에 직접 · transform**
+  //      state 는 **개수만** 들고 있는다. 자리를 state 로 옮기면 리렌더 한 겹이 다시 끼어든다.
+  //   ⛔ 막대를 없애지 않는다 — 창업자 2026-08-08 *"스크롤바가 처음부터 안보여서 글자체 저게다처럼보임"*
+  //      안드로이드 크롬의 오버레이 막대는 «긁는 동안만» 떠서 「여기서 끝」으로 읽힌다.
+  const [n, setN] = useState({ v: false, h: 0 }) // ⭐ 자리가 아니라 «개수»만
+  const vRef = useRef(null)
+  const hRefs = useRef([])
+  const 화면 = useRef(null)   // 지금 굴러가는 화면
+  const 가로줄 = useRef([])   // 가로로 넘치는 줄들(요소 그대로 — 자리는 그때그때 다시 잰다)
+  const paintRef = useRef(() => {})
+
   useEffect(() => {
     let raf = 0
     // ➡️➡️ **가로로 넘치는 줄에도 막대를 그린다** (전수 재현판이 잡았다 — 2026-08-09 밤)
@@ -460,7 +479,7 @@ function ScrollHint({ dep }) {
     //       창업자 *"앱 전반적으로 스크롤이 표시가 안되어있지 않아??"* 의 **나머지 절반**이 여기다.
     //    ⭐ 화면마다 손으로 붙이면 다음 화면에서 또 빠진다 → **넘치는 줄을 찾아** 한 곳에서 그린다.
     //    ⚠️ `data-hstrip`(이미 우리가 그린 줄)은 건너뛴다 — 두 겹으로 그리면 안 된다.
-    const 가로재기 = (root) => {
+    const 가로찾기 = (root) => {
       const out = []
       for (const el of root.querySelectorAll('div, ul, nav')) {
         if (el.scrollWidth <= el.clientWidth + 8) continue
@@ -468,48 +487,73 @@ function ScrollHint({ dep }) {
         if (!/auto|scroll/.test(getComputedStyle(el).overflowX)) continue
         const r = el.getBoundingClientRect()
         if (r.width < 60 || r.bottom < 4 || r.top > innerHeight - 4) continue
-        const w = Math.max(24, (el.clientWidth / el.scrollWidth) * r.width)
-        const x = r.left + (el.scrollLeft / (el.scrollWidth - el.clientWidth)) * (r.width - w)
-        out.push([Math.round(x), Math.round(w), Math.round(r.bottom - 3)])
+        out.push(el)
       }
       return out
     }
+
+    // 🖌 가벼운 칠하기 — **스크롤마다 즉시.** rAF 도 state 도 안 거친다.
+    //    ⭐ `transform` 만 만진다(컴포지터가 처리 → 레이아웃·페인트가 안 돈다).
+    //    ⚠️ 그래서 막대 자체는 `top:0; left:0` 에 두고 **전부 translate 로** 옮긴다.
+    const paint = () => {
+      const s = 화면.current
+      const v = vRef.current
+      if (s && v && s.isConnected) {
+        const { scrollHeight: sh, clientHeight: ch, scrollTop: st } = s
+        if (sh > ch + 8) {
+          const r = s.getBoundingClientRect()
+          const h = Math.max(28, (ch / sh) * r.height)
+          const y = r.top + (st / (sh - ch)) * (r.height - h)
+          v.style.height = `${h}px`
+          v.style.transform = `translate3d(${r.right - 5}px, ${y}px, 0)`
+        }
+      }
+      for (let i = 0; i < 가로줄.current.length; i++) {
+        const el = 가로줄.current[i]
+        const b = hRefs.current[i]
+        if (!b || !el || !el.isConnected) continue
+        const r = el.getBoundingClientRect()
+        const w = Math.max(24, (el.clientWidth / el.scrollWidth) * r.width)
+        const x = r.left + (el.scrollLeft / (el.scrollWidth - el.clientWidth)) * (r.width - w)
+        b.style.width = `${w}px`
+        b.style.transform = `translate3d(${x}px, ${r.bottom - 3}px, 0)`
+      }
+    }
+    paintRef.current = paint
+
+    // 📐 무거운 재기 — «무엇을» 그릴지만 정한다. 개수가 안 바뀌면 state 도 안 건드린다(리렌더 0).
+    const 세팅 = (v, h) => setN((p) => (p.v === v && p.h === h ? p : { v, h }))
     const measure = () => {
       // ⛔ 꾸미기 판은 Portal 이라 `.app-frame` 밖에서 화면을 통째로 덮는다 —
       //    그때 «뒤 화면» 막대를 그리면 판 위에 떠 보인다(재현판이 잡았다: 판을 열었는데 막대 1개).
       //    꾸미기 판은 자기 서랍 막대를 따로 그린다(`DecorEditor` 의 `VHint`).
-      // ⭐ 꾸미기 판이 열렸으면 «판 안»의 가로 줄만 본다(판이 화면을 덮는다).
       const 판 = document.querySelector('.decor-editor')
-      if (판) { setHbars(가로재기(판)); setBar(null); return }
+      if (판) { 화면.current = null; 가로줄.current = 가로찾기(판); 세팅(false, 가로줄.current.length); paint(); return }
       const list = document.querySelectorAll('.app-frame .screen')
       const el = list[list.length - 1] // 맨 위 화면 = DOM 에서 마지막
-      if (!el) { setHbars([]); setBar(null); return }
+      if (!el) { 화면.current = null; 가로줄.current = []; 세팅(false, 0); return }
       // ⭐ 가로 막대도 «맨 위 화면 안»에서만 찾는다 — `.app-frame` 을 통째로 훑으면
       //    쌓인 화면 «뒤»에 깔린 줄까지 잡아 남의 화면에 막대가 뜬다(세로 막대와 같은 기준).
-      setHbars(가로재기(el))
-      const { scrollHeight: sh, clientHeight: ch, scrollTop: st } = el
-      if (sh <= ch + 8) { setBar(null); return }
-      const r = el.getBoundingClientRect()
-      const h = Math.max(28, (ch / sh) * r.height)
-      const y = r.top + (st / (sh - ch)) * (r.height - h)
-      setBar((b) => (b && Math.abs(b[0] - y) < 0.5 && Math.abs(b[1] - h) < 0.5 && b[2] === r.right) ? b : [y, h, r.right])
+      화면.current = el
+      가로줄.current = 가로찾기(el)
+      세팅(el.scrollHeight > el.clientHeight + 8, 가로줄.current.length)
+      paint()
     }
-    const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
     // ⚠️ `scroll` 은 bubble 을 안 한다 → **capture** 로 잡아야 어느 화면이 굴러도 걸린다.
+    // ⭐ 스크롤에선 **칠하기만** 한다(가볍다). 무거운 재기는 rAF 로 따로 묶는다 —
+    //    안 그러면 `querySelectorAll('div,ul,nav')` 가 스크롤마다 돌아 이번엔 «버벅임»이 된다.
+    const onScroll = () => { paint(); cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
     document.addEventListener('scroll', onScroll, true)
     window.addEventListener('resize', onScroll)
     // ⚠️ 꾸미기 판·온보딩은 Portal 이라 body 직계로 붙는다 — 뜨고 지는 걸 여기서 잡아야
     //    막대가 판 위에 남지 않는다(`dep` 은 탭·스택만 보므로 이건 못 잡는다).
-    const mo = new MutationObserver(onScroll)
+    const mo = new MutationObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) })
     mo.observe(document.body, { childList: true })
     // ⛔⛔ **「모아보기 ↔ 한끼 일기」·「장보기 ↔ 냉장고」는 «한 화면 안»에서 갈린다** —
     //    탭도 스택도 안 바뀌고(`dep` 그대로) `body` 직계 자식도 안 바뀐다.
     //    그래서 다시 잴 신호가 «하나도» 없었고, 마지막에 잰 막대가 `fixed` 로 그대로 남아
-    //    **다른 화면을 가로질렀다**(창업자 2026-08-10 *"모아보기 바가 다른데도 침범중야"* —
-    //    폰 캡처에서 「한끼 일기」 달력 위를 지나갔다).
+    //    **다른 화면을 가로질렀다**(창업자 2026-08-10 *"모아보기 바가 다른데도 침범중야"*).
     //    📌 규칙 18 — 「막대가 틀린 자리에 있다」가 아니라 **「다시 잰 적이 없다」**였다.
-    // ⭐ 그래서 화면 «속»까지 본다. `characterData` 는 안 본다(글씨만 바뀌는 건 자리와 무관).
-    //    재는 건 rAF 로 묶어 한 프레임에 한 번뿐이다.
     const frame = document.querySelector('.app-frame')
     if (frame) mo.observe(frame, { childList: true, subtree: true })
     // ⚠️ 화면을 열자마자 재면 내용이 아직 없어 «안 넘침»으로 나온다 → 몇 번 더 잰다.
@@ -522,31 +566,26 @@ function ScrollHint({ dep }) {
       cancelAnimationFrame(raf)
     }
   }, [dep])
-  if (!bar && !hbars.length) return null
+
+  // ⭐ 새로 생긴 막대는 «첫 프레임부터» 제자리여야 한다 — 안 그러면 왼쪽 위(0,0)에 한 번 번쩍인다.
+  //    그래서 `useEffect` 가 아니라 `useLayoutEffect` — 브라우저가 그리기 «전»에 자리를 잡는다.
+  useLayoutEffect(() => { paintRef.current() })
+
+  if (!n.v && !n.h) return null
+  // ⚠️ 표식 `data-vhint`·`data-hhint` = 재현 검사가 «실제로 그려졌나»를 집는 자리.
+  const 공통 = {
+    position: 'fixed', top: 0, left: 0, borderRadius: 999,
+    background: 'var(--text-sub)', pointerEvents: 'none', willChange: 'transform',
+  }
   return (
     <>
-      {bar && (
-        <div
-          data-vhint="1"
-          aria-hidden="true"
-          style={{
-            position: 'fixed', top: bar[0], height: bar[1], left: bar[2] - 5,
-            width: 3, borderRadius: 999, background: 'var(--text-sub)', opacity: 0.38,
-            pointerEvents: 'none',
-          }}
-        />
+      {n.v && (
+        <div ref={vRef} data-vhint="1" aria-hidden="true"
+          style={{ ...공통, width: 3, height: 28, opacity: 0.38 }} />
       )}
-      {hbars.map(([x, w, y], i) => (
-        <div
-          key={i}
-          data-hhint="1"
-          aria-hidden="true"
-          style={{
-            position: 'fixed', left: x, width: w, top: y,
-            height: 3, borderRadius: 999, background: 'var(--text-sub)', opacity: 0.34,
-            pointerEvents: 'none',
-          }}
-        />
+      {Array.from({ length: n.h }, (_, i) => (
+        <div key={i} ref={(el) => { hRefs.current[i] = el }} data-hhint="1" aria-hidden="true"
+          style={{ ...공통, height: 3, width: 24, opacity: 0.34 }} />
       ))}
     </>
   )
