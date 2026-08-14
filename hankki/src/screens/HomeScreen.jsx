@@ -13,10 +13,13 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import ConfirmSheet from '../components/ConfirmSheet'
 // 🐻 코치 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지 규칙)
 import uiHandPoint from '../assets/ui/hand_point.png'
-import uiGomThumb from '../assets/ui/gom_thumbsup.png'
+// 🐻 엄지척·박수 = **물결 정본**(창업자 2026-08-14 제공 · `…-08-14/낱개/gt_01`·`gt_c01`)
+//    ⛔ 옛 `ui/gom_thumbsup`·`ui/gom_clap` 은 «매끈 곰»이었다 — 창업자 판정 *"2.4번만 옛날곰이고 나머지는 물결곰이야."*
+//    ✅ `gom_shop`·`gom_heart` 는 **물결이 맞아서 그대로 둔다**(같은 판정).
+import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
 import uiGomShop from '../assets/ui/gom_shop.png'
 import uiGomHeart from '../assets/ui/gom_heart.png'
-import uiGomClap from '../assets/ui/gom_clap.png'
+import uiGomClap from '../assets/ui/wave/gom_clap.png'
 // 🐻🐧 «물결 정본»(`gp_*`)만 쓴다 — 창업자 2026-08-13 *"한끼소식에 쟤 옛날 곰이야"*
 //    ⛔ `assets/ui/gom_*` 다섯(clap·thumbsup·heart·shop)은 **옛 매끈 그림체**다. 선이 굵고 얼굴이 크고 앞치마 무늬도 다르다.
 //       핀에 *"곰펭 = 무조건 물결 · 옛 매끈 곰펭은 앱 반영 금지"* 라고 박혀 있는데 내가 새 자리에 그걸 갖다 썼다.
