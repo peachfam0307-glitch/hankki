@@ -379,6 +379,14 @@ img {
   scroll-snap-type: x proximity;
   padding: 2px 20px;
   margin: 0 -20px;
+  /* 🐛🐛 [2026-08-14 테스터 영상] **첫 칸이 처음부터 왼쪽으로 잘려 있었다** — 「전체 230」이 「체 230」으로.
+     🔎 원인 = `scroll-snap-align: start` 는 첫 칸을 «스크롤포트(= padding «바깥»)» 에 맞춘다.
+        그래서 브라우저가 열자마자 `scrollLeft` 를 **padding-left 만큼(20px)** 밀어 버린다.
+        🔬 실측(`scripts/_probe-칩밀림-0814.mjs`) — 지금 밀림 20 · 첫 칸 왼쪽 **−20**(= 잘림)
+           · snap 을 끄면 0/0 ✅  · snap 을 «켠 채» 이 한 줄을 주면 **0/0** ✅
+     ✅ 그래서 스냅을 죽이지 않고 **스냅 기준선만 패딩 안쪽으로** 옮긴다.
+     ⚠️ 이 줄은 앱 열두 곳이 쓴다(레시피 갈래·홈 제철·장보기 칩 …) — 한 곳만 고칠 문제가 아니었다. */
+  scroll-padding-left: 20px;
 }
 .hscroll::-webkit-scrollbar {
   height: 0;
@@ -398,6 +406,9 @@ img {
 .hscroll.inset {
   padding: 2px 0;
   margin: 0;
+  /* ⛔ 여긴 좌우 padding 이 0 이라 스냅 기준선도 0 이어야 한다 — 위 20px 을 그대로 물려받으면
+        이번엔 반대로 첫 칸이 **20px 안쪽으로 파고든다.** */
+  scroll-padding-left: 0;
 }
 /* 🗓 홈 「이번 주 제철」 요리 줄 — **밀지 않고 한눈에 딱 맞게** (2026-08-03)
    창업자: *"배경안에서 움직이긴 하는데 잘려보여(첫인상이) 아예 각각 레시피 액자사이즈를 줄여서 딱 맞게 하자."*
