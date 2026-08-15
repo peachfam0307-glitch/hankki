@@ -242,16 +242,26 @@ export default function PantryView() {
           <span style={{ fontSize: 10.5, fontWeight: 800, color: '#fff', background: '#c79553', borderRadius: 999, padding: '2px 6px' }}>베타</span>
         </button>
       </div>
-      <div style={{ fontSize: 12.3, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 9 }}>
-        영수증은 사진에 따라 인식률이 달라요 · 안 되면 <b style={{ color: 'var(--brown)' }}>＋재료 담기</b>로 직접 넣어도 돼요.
-      </div>
+      {/* 📮📮 2026-08-15 창업자 *"갤러리에 저장된 영수증을 불러올 수 있는 기능이없음. 매번 새로 찍어야함."*
+          ⭐⭐ **기능은 «있었다».** 바로 이 자리에 있었는데 **12.5px 회색 글자**라
+             큰 「영수증 📷」 단추 옆에서 안 보였다.
+          📌 「없다」가 아니라 **「우리가 숨겨 놨다」** — 그래서 «찍기»와 «불러오기»를 나란히 같은 크기로 놓는다.
+          ⛔ 옛 판처럼 작은 글자 링크로 되돌리지 말 것. */}
       <button
         className="press"
         onClick={() => receiptRef.current?.click()}
-        style={{ display: 'block', margin: '0 auto 14px', padding: '4px 8px', color: 'var(--text-sub)', fontSize: 12.5, fontWeight: 600 }}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          width: '100%', padding: '13px 14px', borderRadius: 'var(--r-md)', marginBottom: 9,
+          background: 'var(--cream)', color: 'var(--brown)', fontSize: 14.5, fontWeight: 700,
+        }}
       >
-        저장된 영수증·주문내역 사진에서
+        <Icon name="photo" size={16} color="var(--brown)" />
+        갤러리에서 영수증 고르기
       </button>
+      <div style={{ fontSize: 12.3, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 14 }}>
+        영수증은 사진에 따라 인식률이 달라요 · 안 되면 <b style={{ color: 'var(--brown)' }}>＋재료 담기</b>로 직접 넣어도 돼요.
+      </div>
 
       <input ref={receiptCamRef} type="file" accept="image/*" capture="environment" onChange={onReceipt} style={{ display: 'none' }} />
       <input ref={receiptRef} type="file" accept="image/*" onChange={onReceipt} style={{ display: 'none' }} />

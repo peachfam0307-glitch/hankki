@@ -12,13 +12,13 @@
 #
 # ⭐ 막지 않고 «알린다» — 부분 읽기 자체가 나쁜 게 아니라 «맨 아래를 안 보는 것»이 나쁘다.
 
+# ⭐⭐ [2026-08-15] 명령 뽑는 python 을 «파일»로 뺐다 — 전엔 여기 큰따옴표에 싸여 있었다.
+#   그 안에서는 백틱이 «실행»되고 큰따옴표가 «블록을 닫는다». 같은 구조로 archive-guard 가
+#   하루에 두 번 깨졌고 그때마다 **훅이 조용히 통과**했다.
+#   📄 판정 = .claude/hooks/_mdread-cmd.py · 🔒 게이트 = hankki/scripts/check-hookinline.mjs
 INPUT=$(cat)
-CMD=$(printf '%s' "$INPUT" | python3 -c "
-import sys,json
-try: d=json.load(sys.stdin)
-except Exception: sys.exit(0)
-print((d.get('tool_input') or {}).get('command',''))
-" 2>/dev/null)
+HERE=$(dirname "$0")
+CMD=$(printf '%s' "$INPUT" | python3 "$HERE/_mdread-cmd.py" 2>/dev/null)
 
 printf '%s' "$CMD" | grep -qE '(sed|head|tail|grep|awk|cut)\b[^|]*\.md' || exit 0
 
@@ -37,10 +37,20 @@ cat <<'EOF'
 EOF
 
 if [ -n "$MD" ]; then
-  # 앱 폴더 기준·저장소 기준 둘 다 시도한다(뿌리가 둘이라 — cwd-guard 와 같은 이유)
-  for base in "$CLAUDE_PROJECT_DIR/hankki" "$CLAUDE_PROJECT_DIR" .; do
+  # ⛔⛔ [2026-08-15 고침] 전엔 «$base/$MD» 로만 찾아서 **절대경로면 영영 안 걸렸다.**
+  #   `/home/user/…/x.md` 를 읽으면 `/home/user/hankki/hankki//home/user/…` 가 되어 늘 헛방.
+  #   ⭐ 그런데 나는 절대경로로 읽는 일이 훨씬 많다 → 「대신 돌려주는」 이 부분이 **거의 안 돌고 있었다.**
+  #   📌 규칙 19 그대로 — **«장치를 만든 것»과 «장치가 도는 것»은 다른 말이다.**
+  case "$MD" in
+    /*) BASES="/" ;;
+    # 앱 폴더 기준·저장소 기준 둘 다 시도한다(뿌리가 둘이라 — cwd-guard 와 같은 이유)
+    *)  BASES="$CLAUDE_PROJECT_DIR/hankki $CLAUDE_PROJECT_DIR ." ;;
+  esac
+  for base in $BASES; do
     [ -f "$base/$MD" ] || continue
-    OUT=$(cd "$base" 2>/dev/null && node scripts/doc-guard.mjs --gen "$MD" 2>/dev/null) || true
+    # doc-guard 는 앱 폴더에서 돌려야 한다(scripts/ 가 거기 있다) · 문서는 절대경로로 넘긴다
+    ABS=$(cd "$base" 2>/dev/null && pwd)/${MD#/}
+    OUT=$(cd "$CLAUDE_PROJECT_DIR/hankki" 2>/dev/null && node scripts/doc-guard.mjs --gen "$ABS" 2>/dev/null) || true
     [ -n "$OUT" ] && { echo; echo "$OUT" | sed 's/^/  /'; }
     break
   done
