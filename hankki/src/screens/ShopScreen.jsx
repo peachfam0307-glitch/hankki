@@ -5,6 +5,13 @@ import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
 import uiGomShop from '../assets/ui/gom_shop.png' // 🐻 장보기 꼬르곰(주부의 장바구니 헤더)
+// 🐧 장보기 상단 펭펭 — 창업자 2026-08-13 *"장보기는 펭펭장보는거 있지않아?"*
+//    ⛔ 처음엔 `sm_peng_shop`(여름 원피스＋아이스크림)을 썼는데 **여름 컷이라 11월엔 어색하다.**
+//    ✅ `pn_shop` = 트렌치코트에 쇼핑백 — **계절을 안 탄다.** 그래서 계절 분기 자체가 필요 없어졌다.
+//    ✅ 창업자가 «장보는 펭펭» 4컷을 새로 뽑아 줬다(2026-08-13) → 그중 **메모지 보며 바구니** 컷.
+//       ⭐ 넷 중 이걸 고른 이유 = 이 화면이 «장보기 리스트»라 그림이 화면 뜻과 같다.
+//         (시장 컷은 배경 진열대가 붙어 38px 에선 뭉치고, 카트 컷은 가로로 길어 상단바에 안 맞는다)
+import uiPengShop from '../assets/ui/wave/pn_shoplist.png'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 
 // 장보기 탭 첫 방문 코치마크 — 숨은 기능 안내(창업자 딸 아이디어 ⭐)
@@ -81,6 +88,12 @@ export default function ShopScreen() {
     <>
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          {/* 🐧 [2026-08-13 창업자 제보] *"장보기 레꾸자랑에는 없어…(글씨옆에)"* ＋ *"펭펭이든 친구들이든 우리애들"*
+              ⭐ 여기만 펭펭인 이유 = 이 화면 «아래» 「주부의 장바구니」에 이미 장바구니 든 꼬르곰이 있다.
+                 상단바까지 꼬르곰이면 한 화면에 같은 애가 둘 → 펭펭을 올려 둘 다 나오게 했다.
+              🧍‍♀️ [2026-08-14 확정] 캐릭터는 **글자 «왼쪽»** — 창업자 *"캐릭터는 같은방향에넣자.왼쪽으로"* */}
+          <img src={uiPengShop} alt="" draggable={false} width={34} height={45} className="hk-m-tongtong"
+            style={{ display: 'block', objectFit: 'contain', margin: '-6px 0' }} />
           <div className="h-title">장보기</div>
           <TabTips tab="shop" />
         </div>
@@ -96,10 +109,16 @@ export default function ShopScreen() {
         {view === 'pantry' && <PantryView />}
 
         {view === 'shop' && (
-        <>
-        {/* 1) 주부의 장바구니 — 담은 게 없을 땐 맨 위(발견용). 담은 게 있으면 아래로 내려가 장보기 리스트가 위로 온다(창업자 피드백: 긴 큐레이션에 리스트가 묻힘). */}
-        {shoppingList.length === 0 && <div data-coach="curation"><Curation /></div>}
+        /* 📐📐 [2026-08-13 창업자 지시 *"장보기를 오른쪽에 장바구니를 왼쪽에"*]
+           패드에선 좌우 2단 — **왼쪽 = 주부의 장바구니 · 오른쪽 = 장보기 리스트**.
+           ⛔ 그 전엔 한 줄에 하나라 카드가 화면 폭을 다 써서
+              「담기·사러가기 버튼이 너무 크고 설명은 왼쪽에 쏠린다」가 됐다(창업자 제보).
+           ⭐ 폰(1열)에선 **지금 순서를 그대로 지킨다** — 담은 게 있으면 리스트가 위로 온다
+              (긴 큐레이션에 리스트가 묻힌다는 옛 피드백). CSS `order` 로만 바꾸고 DOM 은 안 건드린다. */
+        <div className={`shop-pair${shoppingList.length > 0 ? ' has-items' : ''}`}>
+        <div className="shop-cur" data-coach="curation"><Curation /></div>
 
+        <div className="shop-list">
         {/* 2) 장보기 리스트 — 담은 것이 여기로. 큐레이션 바로 아래라 담기 동선이 자연스럽다. */}
         <div className="sec-head" style={{ marginTop: 20 }}>
           <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="cart" size={18} color="var(--brown)" stroke={1.9} />장보기 리스트</div>
@@ -141,10 +160,8 @@ export default function ShopScreen() {
           ))
         )}
 
-        {/* 담은 게 있을 땐 큐레이션을 리스트 아래로 (리스트가 위로 올라와 잘 보이게) */}
-        {shoppingList.length > 0 && (
-          <div data-coach="curation" style={{ marginTop: 26 }}><Curation /></div>
-        )}
+        {/* ⛔ 큐레이션을 여기 한 번 «더» 그리던 것을 지웠다 — 위로 올려 하나만 둔다.
+            담은 게 있을 때 리스트를 위로 올리는 건 이제 CSS `order` 가 한다(`.shop-pair.has-items`). */}
 
         {/* 3) 쇼핑몰 바로가기 — 리스트 확인하고 바로 사러 가는 자리(리스트 바로 아래). */}
         <div className="sec-head" style={{ marginTop: 24 }}>
@@ -209,7 +226,8 @@ export default function ShopScreen() {
               · 자연드림(아이쿱) = 일반가·조합원가가 따로 있다 = **비조합원도 온라인 구매 가능**
                         → 그래서 자연드림엔 아무 표시도 안 붙인다(그게 기본이다). */}
         {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
-        </>
+        </div>
+        </div>
         )}
       </div>
 
@@ -352,7 +370,9 @@ function Curation() {
       : mallStyle
 
   const Card = (it) => (
-    <div key={it.name} className="card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
+    // 🔢 `cur-card`·`cur-buy` = 패드에서 폭을 잡으려고 붙인 이름(창업자 2026-08-13
+    //    *"담기 사러가기버튼이 너무 크고, 제품설명은 다 왼쪽에 쏠려있어"*). 스타일은 styles.css 에.
+    <div key={it.name} className="card cur-card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
       <div style={{ display: 'flex', gap: 11 }}>
         <div className="emoji-tile" style={{ width: 46, height: 46, fontSize: 24, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain' }} /> : it.emoji}
@@ -399,7 +419,7 @@ function Curation() {
           </button>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 11 }}>
+      <div className="cur-buy" style={{ display: 'flex', gap: 8, marginTop: 11 }}>
         <button className="press" onClick={() => add(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 13.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Icon name="cart" size={14} />담기</button>
         <button className="press" onClick={() => buy(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 13.5 }}>사러가기</button>
       </div>
@@ -449,8 +469,10 @@ function Curation() {
             )}
           </div>
 
-          {/* 카테고리 칩 — 기본은 '이번 주 픽', 필요한 카테고리만 펼쳐 본다 (찾는 중엔 감춘다) */}
-          <div className="hscroll" style={{ paddingBottom: 4, marginBottom: 4, display: curQuery ? 'none' : undefined }}>
+          {/* 카테고리 칩 — 기본은 '이번 주 픽', 필요한 카테고리만 펼쳐 본다 (찾는 중엔 감춘다)
+              🔢 `cur-chips` = 패드에서 «줄바꿈»으로 바꾸려고 붙인 이름 (창업자 2026-08-13 *"장보기 잘림"*).
+                 좌우 2단이 되면서 왼쪽 칸이 좁아져 마지막 칩이 반쯤 잘려 보였다. 스타일은 styles.css 에. */}
+          <div className="hscroll cur-chips" style={{ paddingBottom: 4, marginBottom: 4, display: curQuery ? 'none' : undefined }}>
             {chip('pick', '이번 주 픽')}
             {chip('전체', '전체')}
             {groupList.map((c) => chip(c.name, (

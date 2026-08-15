@@ -47,7 +47,14 @@ export default function TimerSheet({ label = '요리 타이머', onClose }) {
             <Stepper label="초" value={sec} setValue={setSec} max={59} step={10} />
           </div>
 
-          <div className="emoji-cat" style={{ marginTop: 18 }}>알림음 (눌러서 미리듣기)</div>
+          {/* 🔔 [2026-08-13 테스터 · 창업자 전달 *"타이머 눌렀을때 알림음 있는지 모르더라 … 너무 작거나 잘 안보여"*]
+              ⛔ 첫 판 = `emoji-cat`(작은 회색 라벨)로 「알림음 (눌러서 미리듣기)」 한 줄뿐이었다.
+                 소리는 «나는데» 난다는 걸 모르니, 타이머를 켜 두고도 화면을 못 떠났다.
+              ✅ 「끝나면 알려준다」를 «먼저» 말하고, 미리듣기는 그다음에 안내한다. */}
+          <div style={{ marginTop: 18, fontSize: 14, fontWeight: 800, color: 'var(--brown)', letterSpacing: '-.3px' }}>
+            끝나면 이 소리로 알려드려요
+          </div>
+          <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3, marginBottom: 8 }}>눌러서 미리 들어볼 수 있어요</div>
           <div className="sound-row">
             {SOUNDS.map((s) => (
               <button
@@ -65,6 +72,12 @@ export default function TimerSheet({ label = '요리 타이머', onClose }) {
           <button className="btn-primary press" style={{ width: '100%', marginTop: 20 }} onClick={goCustom}>
             {min}분 {sec > 0 ? `${sec}초 ` : ''}시작
           </button>
+          {/* ⭐ 「다른 화면에 있어도 울린다」를 «반드시» 말한다 — 타이머는 전역이라 실제로 그런데,
+              그걸 모르면 유저가 타이머 화면에 붙들려 앉아 있는다(테스터가 그랬다). */}
+          <div style={{ marginTop: 9, textAlign: 'center', fontSize: 12.8, lineHeight: 1.5, color: 'var(--brown)' }}>
+            <b style={{ fontWeight: 800 }}>소리와 진동</b>으로 알려드려요<br />
+            <span className="t-sub" style={{ fontSize: 12.3 }}>다른 화면에 있어도 울려요</span>
+          </div>
         </div>
       </div>
     </div>

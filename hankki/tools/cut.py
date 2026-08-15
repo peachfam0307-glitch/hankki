@@ -106,7 +106,7 @@ def _cut_alpha(a, outdir, prefix, min_px, join, drop, grid):
         print(f'   {nm}  {w}x{h}')
     return made
 
-def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, drop=0.12, grid=None, punch=0.0, smooth=1.0):
+def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, drop=0.12, grid=None, punch=0.0, smooth=1.0, allow_thick=False):
     # ⭐⭐ **이미 «투명»으로 온 시트는 알파를 그대로 쓴다 — 픽셀을 다시 만들지 않는다.**
     #   (창업자 2026-07-31 — 프레임을 직접 잘라서 투명 PNG로 줬다)
     #   ⚠️ 이 도구의 본업은 «흰 배경을 알파로 되돌리는 것»이다. 그런데 이미 알파가 있으면
@@ -397,8 +397,14 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
             #   → 원래 알파가 남아 있던 연한 부분(그림자)은 **그 색·그 투명도 그대로** 두고,
             #     흰색은 **아무것도 없던 자리에만** 칠한다. 칼선 자체는 그대로라 윤곽은 여전히 매끈하다.
             soft = (~solid) & (alpha > 0.06)                   # 그림자처럼 «원래 그려져 있던» 연한 부분
-            alpha = np.where(solid, 1.0, np.maximum(cut_a, alpha))
-            out_rgb[(~solid) & (cut_a > 0) & (~soft)] = 255.0
+            # 🚫🚫🚫 **[절대원칙 · 창업자 2026-08-13] 진갈색 외곽선을 «절대» 파먹지 않는다.**
+            #   📮 *"외곽선(진갈색 테두리) 절대 파먹지 않는다 (절대원칙) 이건 강제해둬. 폭발직전이야."*
+            #      · *"이 테두리 선 끊긴거는 어제부터 계속 내가 지적한거고."*
+            #   ⛔ 어두운 픽셀은 «흰색으로도 속살 색으로도» 안 덮는다 — 흰 테를 두르는 «이유»가 외곽선 보호다.
+            #      깎으면 안 하느니 못하다. (`soft` 만으론 모자랐다 — 외곽선 바깥쪽 안티에일리어싱 구간이 샜다)
+            어두움 = sub.min(axis=2) < 200
+            alpha = np.where(solid, 1.0, np.maximum(cut_a, np.where(soft | 어두움, alpha, 0.0)))
+            out_rgb[(~solid) & (cut_a > 0) & (~soft) & (~어두움)] = 255.0
             if win_mask is not None:
                 # ⭐⭐ **창 안쪽에도 칼선을 두른다.** (창업자 2026-07-31
                 #   *"여름프레임은 내부투명도 띠부씰모드로 라인따야할듯해"*)
@@ -433,7 +439,55 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
                 for ai in range(1, an + 1):
                     if asz[ai - 1] < amax * drop:
                         alpha[ndimage.binary_dilation(albl == ai, np.ones((3, 3)), iterations=3)] = 0
+        # 🚫🚫🚫 **[절대원칙 관문] 진갈색 외곽선이 몇 % 살아남았나 — 자르는 «그 자리»에서 잰다.**
+        #   ⭐ 나중엔 원본이 없어 못 잰다. 그래서 여기서만 잴 수 있다.
+        #   ⛔⛔ **결과(out_rgb)로 세야 한다** — 원본(sub)으로 세면 RGB 를 흰색으로 덮어도 통과한다.
+        #      2026-08-13 첫 판이 정확히 그렇게 «거짓 통과»했다.
+        #   ⚠️ 알파 문턱은 낮게(0.1) — 안티에일리어싱된 선 가장자리는 반투명이어도 «보인다».
+        _원본선 = int(((sub.min(axis=2) < 150) & reg).sum())
+        if _원본선 > 200:
+            _남은선 = int(((out_rgb.min(axis=2) < 150) & (alpha > 0.1)).sum())
+            _살아 = _남은선 / _원본선
+            if _살아 < 0.995:
+                raise SystemExit(
+                    f'🚫 **절대원칙 위반 — 진갈색 외곽선을 파먹었다.**\n'
+                    f'   원본 {_원본선}px → 남은 것 {_남은선}px  ({_살아*100:.1f}%)\n'
+                    f'   📮 창업자 2026-08-13 *"외곽선(진갈색 테두리) 절대 파먹지 않는다 (절대원칙)"*\n'
+                    f'   👉 흰색·속살색으로 «덮는» 자리에서 어두운 픽셀(<200)을 빼라.')
         out = np.dstack([out_rgb.astype(np.uint8), (alpha * 255).astype(np.uint8)])
+
+        # 🚫🚫 **[절대원칙 ②③] 흰 테 두께 · 떨어진 조각** — 창업자 2026-08-13
+        #   *"표준도구에 위에서 정한거+테두리 안파먹는것+두께 등등 다 박아서 강제해."*
+        #   ⭐ `cut-check.py` 에도 같은 검사가 있지만 **여기서도 본다** —
+        #      검수를 건너뛰거나 딴 도구로 자를 때도 걸리게. 관문은 «자르는 자리»에 있어야 한다.
+        if diecut and not allow_thick:
+            _sil = alpha > 0.5
+            if _sil.sum() > 300:
+                _흰 = _sil & (out_rgb.min(axis=2) > 235)
+                _cur, _n = _sil, 0
+                while _n < 40:
+                    _er = ndimage.binary_erosion(_cur, np.ones((3, 3)))
+                    _bd = _cur & ~_er
+                    if _bd.sum() == 0 or _흰[_bd].mean() < 0.6:
+                        break
+                    _n += 1
+                    _cur = _er
+                _pct = _n * 100.0 / max(out.shape[0], out.shape[1])
+                if not (0.35 <= _pct <= 1.30):
+                    raise SystemExit(
+                        f'🚫 **절대원칙 위반 — 흰 테 두께가 규칙 밖이다.** {_pct:.2f}% (규칙 0.35~1.30%)\n'
+                        f'   📌 문서 = 긴변의 0.7%(--diecut auto) · 기존 앱 99컷 실측 0.61%\n'
+                        f'   📮 창업자 *"두껍게 하면 모든스티커가 다 띠부씰같자나… 나머지는 최대한 얇게 가자"*\n'
+                        f'   ⚠️ 띠부씰 팩으로 «일부러» 두껍게 낼 때만 --allow-thick')
+        _albl, _an2 = ndimage.label(alpha > 0.16)
+        if _an2 > 1:
+            _asz2 = ndimage.sum(alpha > 0.16, _albl, range(1, _an2 + 1))
+            _조각 = int(sum(1 for s in _asz2 if s / _asz2.max() < 0.12))
+            if _조각:
+                raise SystemExit(
+                    f'🚫 **절대원칙 위반 — 본체에서 떨어진 조각 {_조각}개.**\n'
+                    f'   📮 창업자 *"옆에 하트나 그런거 달린거는 떼고 쓰자. 흰색이 연결되어 보이니까 이상해"*\n'
+                    f'   👉 조각은 «최종 알파»에서도 한 번 더 턴다 — reg 단계만으론 모자란다.')
 
         # ⚠️ **가장자리에 닿으면 투명 여백을 덧댄다.** 2026-07-31 게이트가 잡아낸 것 —
         #   그림이 시트 왼쪽 끝 가까이 있으면 **테두리를 두를 자리가 시트 밖**이라 크롭이 0에서 잘린다.
@@ -497,6 +551,7 @@ if __name__ == '__main__':
         diecut=(sys.argv[dc_i] if sys.argv[dc_i] in ('auto', 'keep') else int(sys.argv[dc_i])) if dc_i else 0,
         join=int(sys.argv[jn_i]) if jn_i else 5,
         drop=float(sys.argv[dr_i]) if dr_i else 0.12,
+        allow_thick='--allow-thick' in sys.argv,   # 🏷 띠부씰 팩으로 «일부러» 두껍게 낼 때만
         grid=tuple(int(x) for x in sys.argv[gd_i].lower().split('x')) if gd_i else None,
         punch=float(sys.argv[pu_i]) if pu_i else 0.0,
         smooth=float(sys.argv[sm_i]) if sm_i else 1.0)

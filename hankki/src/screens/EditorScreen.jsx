@@ -17,10 +17,14 @@ import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES } from '../theme'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
-import { ocrImage, getOcrNote } from '../ocr'
+import { ocrImage, getOcrNote, getOcrLeft } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk } from '../parseRecipe'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
+// 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
+//    ⛔ `ui/gom_clap` 은 **옛 매끈 곰**이라 안 쓴다(창업자 2026-08-13 *"쟤 옛날 곰이야"*) → 물결 정본.
+//    ⭐ 냄비 젓는 컷 — 「멈춰 있지 않고 뭔가 «하고 있다»」가 그림으로 보인다(동그라미 하나보다 세다).
+import uiGomPot from '../assets/ui/wave/gom_pot.png'
 
 // 특정 칸(재료/만드는 법)에 넣을 때는 분류하지 않고, 읽은 줄을 그대로 정리만 한다.
 // 사용자가 "이 사진은 재료다/만드는 법이다"라고 이미 지정했으니 다시 쪼개지 않는다.
@@ -60,6 +64,16 @@ export default function EditorScreen({ id, prefill }) {
   const ocrAccum = useRef('') // 'all' 자동분류용 — 여러 장의 인식 텍스트를 모아 한 번에 파싱
   const ocrBusy = useRef(false) // 지금 읽는 중인가 — 화면 표시는 ocr.busy, «판단»은 이 ref 로
   const ocrTotal = useRef(1) // 이번에 고른 장 수 — 「2장 중 1장째」를 알려주려고(창업자: "시간은 좀 걸림")
+  // 🔢🔢 «한 묶음 = 1장» — 이 편집 화면 한 번(=레시피 하나)이 한 묶음이다.
+  //   ⭐ 그래서 재료 칸에 한 번, 만드는 법 칸에 한 번, 잘못 잘라 다시 한 번 읽어도 **장수는 1장**만 빠진다.
+  //   (창업자 확정 2026-08-13 — *"2장 썼는데 4장 나오면 문제"*)
+  //   ⚠️ `useRef(초기값)` 이라 화면을 새로 열 때마다 새 묶음이 된다 = 레시피마다 따로 센다.
+  const ocrBatch = useRef(
+    (typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2) + Date.now().toString(36)
+    ).replace(/-/g, '').slice(0, 32),
+  )
   const ingRef = useRef(null) // 재료 입력칸
   const stepRef = useRef(null) // 만드는 법 입력칸
   const titleRef = useRef(null) // 제목 입력칸 — 제목 없이 저장 누르면 여기로 데려간다
@@ -220,6 +234,22 @@ export default function EditorScreen({ id, prefill }) {
       ocrAccum.current = ''
       ocrTotal.current = urls.length
       ocrQueue.current = urls.slice(1) // 첫 장은 지금 크롭, 나머지는 대기열
+      // 📢 «고른 직후» 몇 장 쓰는지 알린다 — 창업자 *"한번에 2장 넣으면 2장소진된다는 것도 알려야겠네"*
+      //   ⛔⛔ **지금은 사진 «한 장마다» 1장씩 빠진다.** 「한 묶음 = 1장」 코드는 다 만들어 뒀지만
+      //      **worker 를 아직 서버에 안 올렸다**(창업자 2026-08-13 *"리스크를 감수하고싶진않은데"*
+      //      → *"2장레시피 잘없기도하고 있어도 50원이야"*). 8/16 재신청 사흘 앞이라 서버를 안 건드린다.
+      //      ⭐ 그러니 이 문구가 «지금 서버»와 맞다. 서버를 올리는 날 「1장만 써요」로 바꾼다.
+      //   ⚠️ 안내 없이 깎으면 「여러 장을 한꺼번에 골라도 돼요」로 권해놓고 «몰래» 깎는 꼴이 된다.
+      //   ⚠️ 한 장일 땐 안 띄운다 — 잔소리가 된다(⛔재촉 금지).
+      if (urls.length > 1) {
+        const left = getOcrLeft().total
+        nav.showToast(
+          left >= urls.length
+            ? `사진 ${urls.length}장이라 AI 스캔 ${urls.length}장을 써요`
+            : `사진 ${urls.length}장인데 AI 스캔은 ${left}장 남았어요 · 나머지는 기본 인식이에요`,
+          5200,
+        )
+      }
       setCropImg(urls[0])
     })
   }
@@ -245,7 +275,7 @@ export default function EditorScreen({ id, prefill }) {
     setOcr({ busy: true, pct: 0, page, total })
     let text = ''
     try {
-      text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }))
+      text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current })
     } catch {
       // ⛔ 한 장이 실패해도 «대기열은 계속 간다». 예전엔 여기서 터지면 busy 가 true 로 굳어
       //    남은 장이 영영 안 들어오고 버튼도 계속 흐렸다.
@@ -271,15 +301,28 @@ export default function EditorScreen({ id, prefill }) {
     const note = getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
     const quotaTail =
       note === 'user_quota'
-        ? ' · 이번 달 무료 스캔 5회를 다 써서 기본 인식이에요'
+        ? ' · 무료 AI 스캔을 다 써서 기본 인식이에요'
         : note === 'global_quota' || note === 'rate_limited'
           ? ' · 지금 이용이 많아 기본 인식이에요'
+          : ''
+
+    // 📢 남은 장수 알림 — 창업자 *"20장을 다쓰면 다썼다고 알려줘야해 무료서비스로 변경된다고"*
+    //   ⭐ 「막힌 다음」이 아니라 «마지막 장을 쓴 그 순간» 알린다. 그래야 한 박자 늦지 않다.
+    //   ⭐⭐ 미리 알림은 «1장 남았을 때 한 번만** (창업자 *"어차피 유저도 알잖아 쓰면서 몇장남았는지"*)
+    //      ⛔ 3장·1장 두 번은 안 한다 — 가져오기 화면 뱃지가 이미 잔량을 보여줘서 잔소리가 된다.
+    const leftNow = getOcrLeft()
+    const leftTail = quotaTail
+      ? ''
+      : leftNow.total === 0
+        ? ' · 무료 AI 스캔을 다 썼어요 · 이제 기본 인식으로 계속 돼요'
+        : leftNow.total === 1
+          ? ' · 무료 AI 스캔 1장 남았어요'
           : ''
 
     // 마지막 장 — 결과 반영
     if (target === 'ingredients' || target === 'steps') {
       const base = target === 'ingredients' ? '재료 초안을 담았어요' : '만드는 법 초안을 담았어요'
-      nav.showToast(base + (quotaTail || ' · 다듬어 주세요'), quotaTail ? 6500 : 4800)
+      nav.showToast(base + (quotaTail || leftTail || ' · 다듬어 주세요'), quotaTail || leftTail ? 6500 : 4800)
       return
     }
     const combined = ocrAccum.current
@@ -298,8 +341,12 @@ export default function EditorScreen({ id, prefill }) {
           : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
     }))
     nav.showToast(
-      quotaTail ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요' : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
-      quotaTail ? 6500 : 4800,
+      quotaTail
+        ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
+        : leftTail
+          ? '초안을 채웠어요' + leftTail
+          : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
+      quotaTail || leftTail ? 6500 : 4800,
     )
   }
 
@@ -605,7 +652,11 @@ export default function EditorScreen({ id, prefill }) {
         <div style={{ marginBottom: 14, padding: '13px 16px', borderRadius: 'var(--r-md)', background: 'var(--cream)', border: '1px solid var(--line)' }}>
           <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>캡처는 이렇게 채워요</div>
           {[
-            ['긴 레시피는 ', '여러 장을 한꺼번에', ' 골라도 돼요.'],
+            // ⚠️⚠️ 권하는 줄에 «값»을 같이 적는다 — 권해놓고 조용히 깎으면 안 된다.
+            //    ⭐ 굵게 = «값» 쪽. 창업자 *"안내를 정확하게 해야해. 한번에 레시피2장 올리면 2장카운트된다고"*
+            //       ⛔ 첫 판은 「여러 장을 한꺼번에」가 굵었다 — 권하는 말만 눈에 띄고 값은 안 보였다.
+            //    ⏳ worker 를 올리는 날 「몇 장을 골라도 1장만 쓴다」는 쪽으로 바꾼다(코드는 이미 있다).
+            ['긴 레시피는 여러 장을 한꺼번에 골라도 돼요 — ', '사진 1장에 AI 스캔 1장씩', ' 써요.'],
             ['재료·순서가 섞이면 각 칸의 ', '사진에서 채우기', '로 그 칸만 다시 채워요.'],
             ['읽은 내용은 ', '초안', '이니 사진 보며 다듬어 주세요.'],
           ].map(([a, b, c], k) => (
@@ -616,11 +667,37 @@ export default function EditorScreen({ id, prefill }) {
           ))}
         </div>
 
-        {/* 사진 읽는 중 — 칸 채우기 진행 표시 */}
+        {/* 사진 읽는 중 — 칸 채우기 진행 표시
+            ⏳⏳ [2026-08-13 창업자 제보] *"레시피 2장 올릴때 로딩이 좀 걸려. **못기다리고 이상하다 하고 끌수도 있을 듯.**"*
+            ⛔ 옛 판 = 동그라미 하나 돌고 「…40%」 한 줄. **한 장을 다 읽으면 40% 가 0% 로 돌아간다** —
+               숫자가 뒤로 가니 «멈췄다/고장났다»로 읽힌다. 그게 끄고 싶어지는 순간이다.
+            ✅ 셋을 고쳤다 —
+               ① **막대가 앞으로만 간다**(장 수를 반영한 «전체» 진척률 — 1장째 40% 면 2장 중 20%)
+               ② **얼마나 걸리는지 미리 말한다**(여러 장이면 「조금 걸려요」 · 「그대로 두면 돼요」)
+               ③ **꼬르곰이 통통 뛴다** — 그림이 움직이면 «살아 있다»가 보인다(동그라미보다 세다) */}
         {ocr.busy && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 700, marginBottom: 12 }}>
-            <div className="ocr-spin" style={{ width: 18, height: 18, borderWidth: 2.5, margin: 0 }} />
-            사진에서 글자 읽는 중… {ocr.pct}%{ocr.total > 1 ? ` · ${ocr.total}장 중 ${ocr.page}장째` : ''}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 13px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', marginBottom: 12 }}>
+            <img src={uiGomPot} alt="" aria-hidden="true" draggable={false} className="hk-m-tongtong"
+              width={33} height={47} style={{ flex: '0 0 auto', objectFit: 'contain', margin: '-6px 0' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700 }}>
+                사진에서 글자 읽는 중… {ocr.total > 1 ? `${ocr.total}장 중 ${ocr.page}장째` : `${ocr.pct}%`}
+              </div>
+              {/* 📊 전체 진척률 — 여러 장이면 「앞 장들은 다 끝났다」까지 세어야 막대가 뒤로 안 간다 */}
+              <div style={{ height: 6, borderRadius: 99, background: 'rgba(122,90,58,.16)', overflow: 'hidden', margin: '6px 0 0' }}>
+                <div style={{
+                  height: '100%', borderRadius: 99, background: 'var(--brown)',
+                  width: `${Math.min(100, Math.round(((ocr.page - 1) * 100 + ocr.pct) / Math.max(1, ocr.total)))}%`,
+                  transition: 'width .35s ease',
+                }} />
+              </div>
+              {/* ⏱ 「오래 걸린다」를 «먼저» 말해 준다 — 예고된 기다림은 고장으로 안 읽힌다 */}
+              <div className="t-sub" style={{ fontSize: 11.8, marginTop: 5, lineHeight: 1.4 }}>
+                {ocr.total > 1
+                  ? <>사진이 {ocr.total}장이라 조금 걸려요 · <b style={{ fontWeight: 800, color: 'var(--brown)' }}>이 화면 그대로 두면 돼요</b></>
+                  : '잠깐만요, 다 읽으면 칸을 채워 드려요'}
+              </div>
+            </div>
           </div>
         )}
 

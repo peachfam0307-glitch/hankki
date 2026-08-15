@@ -94,6 +94,33 @@ export default function PreviewSheet({ onClose }) {
           </div>
           <div style={{ padding: '2px 16px 0' }}>
 
+            {/* 📱📱 «패드·폴드에서도 써요» (창업자 2026-08-13 *"우리앱 패드에서도 되는 것도 안내해야해"* ·
+                    자리를 물으니 *"실사용자들이알아야지."* → **스토어가 아니라 앱 안**이다)
+                ⭐ 왜 「한끼 소식」인가 = 이 시트는 **이미 깐 사람**이 보는 자리다. 스토어 설명·스크린샷은
+                   «설치를 고르는 사람»이 보는 것이라 실사용자에겐 안 닿는다.
+                   ⛔ 온보딩에도 안 넣었다 — 처음 켤 때 한 번이라 **이미 깐 사람은 영영 못 본다.**
+                ⭐ 그리고 이건 진짜 «새 소식»이다 — 가로·큰 화면은 2026-08-09 v10.07~10.08 에 열었고
+                   (`vite.config.js` 웹 매니페스트 ＋ `android/twa-manifest.json` **두 곳**의 세로 잠금을 풀었다)
+                   유저는 그게 열린 걸 모른다.
+                ⛔ 「곧」이 아니라 «지금 된다» — 없는 걸 된다고도, 되는 걸 안 된다고도 안 한다(이 파일 정직 원칙).
+                ⚠️ 폰의 「자동 회전」이 꺼져 있으면 안 돌아간다 — 기기 설정이라 앱이 못 바꾼다. 그래서 한 줄 덧붙였다. */}
+            <div style={{
+              display: 'flex', gap: 10, alignItems: 'flex-start',
+              background: 'var(--cream)', borderRadius: 14, padding: '11px 13px', marginBottom: 14,
+            }}>
+              {/* ⛔ 처음엔 `phone` 을 썼는데 **우리 아이콘 목록에 없는 이름**이라 빈 칸이 될 뻔했다
+                  (`Icon.jsx` 를 세어 보고 잡았다 · 규칙 18 — 있는 줄 알고 쓰지 말 것).
+                  ⭐ `bulb` 가 오히려 맞다 — 이건 새 기능 광고가 아니라 «알려주는 팁»이다. */}
+              <Icon name="bulb" size={18} color="var(--brown)" stroke={1.9} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 3 }}>패드·폴드에서도 써요</div>
+                <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.55 }}>
+                  큰 화면에선 레시피가 좌우 두 칸으로 열리고, 일기 종이도 더 커져요.
+                  폰을 눕혀도 돼요 — 안 돌아가면 폰의 <b>자동 회전</b>을 켜 보세요.
+                </div>
+              </div>
+            </div>
+
             {/* 🎁 방금 열렸어요 — ⛔ 없으면 이 절을 통째로 안 그린다(빈 자리 금지) */}
             {news.opened.length > 0 && (
               <>

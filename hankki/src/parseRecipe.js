@@ -422,10 +422,28 @@ export function parseRecipeText(raw = '', opts = {}) {
   // 재료 단위 오독 교정(T·g) + 만드는 법 문체 통일('~다' → '~요')
   return {
     title: cleanTitleTail(title),
-    ingredients: ingredients.map(fixIngredientUnits),
-    steps: politeSteps(splitParagraphSteps(mergeStepFragments(steps))),
+    ingredients: dedupeLines(ingredients.map(fixIngredientUnits)),
+    steps: dedupeLines(politeSteps(splitParagraphSteps(mergeStepFragments(steps)))),
     memo,
   }
+}
+
+// 🔁 같은 줄이 두 번 들어오면 뒤쪽을 지운다.
+//   🔢 2026-08-13 실측: 캡처 «2장»으로 삼계탕을 담았더니 만드는 법이 12단계였는데
+//      5·6·7 이 8·9·10 에 «통째로» 다시 나왔다. 두 캡처가 겹치는 부분(첫 장 끝 = 둘째 장 시작)이
+//      그대로 두 번 들어간 것이다. 창업자 *"인식이 구려"* — 사실 인식은 정확했고 «정리»가 문제였다.
+//   ⚠️ 짧은 줄(10자 미만)은 «진짜로» 반복될 수 있다 — 「소금 넣기」·「물 300ml」처럼.
+//      그래서 긴 줄만 지운다. 레시피에서 20자짜리 문장이 토씨 하나 안 틀리고 반복될 일은 없다.
+//   ⚠️ 견주는 건 «공백을 뺀 글자»다 — 줄바꿈 위치만 달라도 같은 문장이기 때문.
+function dedupeLines(arr) {
+  const seen = new Set()
+  return arr.filter((s) => {
+    const key = String(s).replace(/\s+/g, '')
+    if (key.length < 10) return true
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 // 제목 꼬리 정리 — "… 레시피"·"…황금레시피"·"… 만드는 법"은 요리 이름이 아니다.
@@ -477,6 +495,12 @@ function hasOpenBracket(s) {
 const stripParens = (s) => s.replace(/[([{（][^)\]}）]*[)\]}）]/g, ' ').trim()
 // 앞 문장에 «붙는 말»로 시작하면 길이와 상관없이 붙인다 — 홀로 설 수 없는 말들
 const GLUE_HEAD = /^(?:동안|후에|후|뒤에|뒤|정도|가량|쯤|까지|부터|만큼|째|간|경|이내|이상|이하|남짓|씩)\b/
+// 💬 「조리 지시」가 아니라 «후기·감상»으로 읽히는 줄.
+//   ⚠️ 아주 좁게 잡는다 — 넓히면 진짜 단계를 삼킨다. 화자가 나오거나(저희집·남편·애들)
+//      경험을 말하는 말끝(~더라구요·잘먹·싫어해)이 있을 때만.
+//   ⛔ 여기 걸려도 «지우지 않는다». 앞 단계 뒤에 붙일 뿐이다.
+const CHATTY = /^(저희|우리|제|내)\s?집|^(저희|우리|제가|저는|남편|애들|아이들)|더라구요|더라고요|더라구용|잘먹|싫어해|좋아해요|맛있대요/
+
 function mergeStepFragments(arr) {
   const out = []
   for (const s of arr) {
@@ -487,7 +511,21 @@ function mergeStepFragments(arr) {
       const glue = GLUE_HEAD.test(s.trim())
       // 7 → 25자. ⚠️ 앞줄이 «미완성일 때만» 늘렸다 — 멀쩡히 끝난 문장엔 아무것도 안 붙는다.
       const short = s.replace(/\s/g, '').length <= 25
-      if (hasOpenBracket(prev) || (prevOpen && (glue || short))) {
+      // 🔢 [2026-08-13] 창업자 캡처에서 나온 두 가지 — 앞 줄이 «멀쩡히 끝났어도» 붙여야 하는 경우
+      //   ⑴ 괄호로 «시작»하는 줄 = 앞 문장의 꼬리다.
+      //      실측: 「물 600ml를 붓고 중강불에서 먼저 끓여줍니다.」 / 「(인덕션 8사용)」 이 두 줄이었는데
+      //      괄호가 «다음» 단계 앞에 붙어 「(인덕션 8사용) 물이 끓어오르면…」 이 되어 있었다.
+      //   ⑵ 후기·감상 줄 = 조리 지시가 아니다.
+      //      실측: 「저희집 남편이랑 애들은 퍽퍽살을 싫어해서…」 가 «4번 단계»로 들어가 있었다.
+      //      ⛔ 지우지 «않는다» — 잘못 지우면 진짜 단계가 사라진다. 앞 단계 뒤에 «붙여» 잃지 않게 한다.
+      //      ⭐ 첫 줄이면 prev 가 없어 그대로 남는다(맨 앞 인사말까지 삼키지 않는다).
+      //   ⚠️⚠️ 괄호는 «짧은 것만» 붙인다 — 첫 판이 «길이 제한 없이» 붙였다가
+      //      「(간장을 넣으시면 국물이 탁해지니…)」 같은 긴 설명까지 앞 단계에 삼켜
+      //      기존 테스트 둘이 빨간불이 됐다(4단계 → 3단계). 그 테스트가 나를 잡았다.
+      //      「(인덕션 8사용)」은 8자, 저 설명은 30자가 넘는다 → 25자로 가른다.
+      const parenHead = /^[(（[]/.test(s.trim()) && s.replace(/\s/g, '').length <= 25
+      const chatty = CHATTY.test(s)
+      if (hasOpenBracket(prev) || parenHead || chatty || (prevOpen && (glue || short))) {
         out[out.length - 1] = (prev + ' ' + s).trim()
         continue
       }

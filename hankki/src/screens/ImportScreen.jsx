@@ -6,8 +6,15 @@ import { guessCategory, openExternal } from '../utils'
 import { parseRecipeText } from '../parseRecipe'
 import { fetchLinkRecipe } from '../linkReader'
 import { guessFoodIcon } from '../components/FoodIcon'
+import { getOcrLeft } from '../ocr'
 import Icon from '../components/Icon'
 import Portal from '../components/Portal'
+// 🐻 [2026-08-13 창업자] *"가져오기에 무료스캔 알림에 캐릭터 하나 넣자(오른쪽 비어있는 칸에)"* · *"귀여운 걸로 해줘. 움직이게"*
+//    남았을 땐 꼬르곰 브이(응원) · 다 썼을 땐 둘이 하트(괜찮아요) — 「막혔다」로 읽히면 안 되는 자리라 표정이 갈린다.
+//    ⛔ 첫 판은 `ui/gom_thumbsup`·`ui/gom_heart` 였는데 **옛 매끈 그림체**다(창업자 *"쟤 옛날 곰이야"*) → 물결 정본으로.
+//    ⭐ 남음 = **펭펭이 돋보기로 들여다보는 컷** — 이 기능이 하는 일(글자를 찾아 읽어준다)이 그림에 그대로 있다.
+import uiPengSearch from '../assets/ui/wave/pn_search.png'
+import uiDuoHeart from '../assets/ui/wave/duo_hearthand.png'
 
 // '사진으로 가져오기'와 '직접 작성하기'는 결국 같은 작성 화면 — 하나로 합쳤다.
 // 캡처는 작성 화면에서 재료/만드는 법 칸별로 읽어 채운다(인식이 훨씬 정확).
@@ -29,6 +36,8 @@ export default function ImportScreen() {
   const [text, setText] = useState('')
   const [help, setHelp] = useState(false)
   const [aiPreview, setAiPreview] = useState(false) // AI 자동정리 '이렇게 돼요' 안내 시트
+  // 📢 AI 스캔 남은 장수 — localStorage 를 읽을 뿐이라 가볍다. 화면에 들어올 때마다 최신값이 나온다.
+  const ocrLeft = getOcrLeft()
   const [linkBusy, setLinkBusy] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false) // '링크만 저장'은 접어둔다(화면을 조용하게)
   const linkCancel = useRef(false)
@@ -142,8 +151,84 @@ export default function ImportScreen() {
       {!flow ? (
         <div className="pad">
           <div className="h-title" style={{ marginTop: 6 }}>가져오기</div>
-          <div className="t-sub" style={{ marginTop: 8, marginBottom: 18, fontSize: 14 }}>
+          <div className="t-sub" style={{ marginTop: 8, marginBottom: 14, fontSize: 14 }}>
             레시피를 가져오는 방법을 선택해 주세요.
+          </div>
+
+          {/* 📢📢 남은 장수 — 창업자 *"유저가 몇장남았는지 스스로 알아야해"* · *"되게 잘 보이게"*
+              ⭐⭐ 자리 = 제목 «바로 아래·맨 위» (창업자 2026-08-13 판정 *"너무 안보여. 가져오기 바로 아래넣어야지"*)
+                 ⛔ 처음엔 아래쪽 「AI 자동 정리」 카드 «안»에 넣었는데 창업자가 «안 보인다»고 물렸다.
+                    스크롤해야 나오는 자리는 「잘 보이게」가 아니다.
+              ⛔ 「사세요」는 안 붙인다 — 이건 «정보»고 재촉이 아니다(⛔재촉 금지 원칙). */}
+          <div style={{
+            // ⚠️ 아이콘은 «위쪽» 정렬 — 아래 줄이 두 줄이 되면 가운데 정렬은 별이 붕 뜬다
+            display: 'flex', alignItems: 'flex-start', gap: 9,
+            marginBottom: 18, padding: '13px 15px', borderRadius: 15,
+            background: ocrLeft.total > 0
+              ? 'linear-gradient(135deg, #eef7e7, #e2eed7)'
+              : 'linear-gradient(135deg, #faf3e6, #f3e9d6)',
+            border: `1px solid ${ocrLeft.total > 0 ? '#cfe3c4' : '#e6d6bd'}`,
+          }}>
+            <Icon name="sparkle" size={20} color={ocrLeft.total > 0 ? '#6e9459' : '#b08a52'} stroke={1.7} />
+            {/* ✏️ 말투 = 앱 전체와 같은 「~해요」체 (창업자 2026-08-13 *"남았어요나 완곡한표현으로 바꾸자"*)
+                ⛔ 「남음」 같은 명사형은 여기서만 튄다. */}
+            {ocrLeft.total > 0 ? (
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 14.5, fontWeight: 800, color: '#3d6b38', letterSpacing: '-.3px' }}>
+                  무료 AI 스캔 <span style={{ fontSize: 18.5 }}>{ocrLeft.total}장</span> 남았어요
+                </div>
+                {/* ⭐⭐ 작은 줄은 «상태마다 다르다» — 여기서 오해가 나면 곧장 분쟁이 된다.
+                    ① 웰컴 중 = 창업자 *"매달 20장씩 주는 줄 알지도 몰라"* → **처음 한 번**이라고 못박는다.
+                       ⛔ 「20장 남았어요」만 두면 매달 20장으로 읽힌다. 나중에 5장이 되면 「속았다」가 된다.
+                    ② 웰컴을 다 쓴 뒤 = 매달 채워진다는 걸 알려준다(끊긴 게 아니다).
+                    ③ 3장 이하 = 창업자 *"다쓰면 무료인식되는건 어디서 안내받아?"* → «다 쓰기 전»에 안심시킨다.
+                       ⛔ 여태 «다 쓴 뒤»에야 알 수 있었다. 그 불안이 곧 결제 압박이 된다. */}
+                {ocrLeft.welcome > 0 ? (
+                  // ⭐⭐ 창업자 *"이게 제일 중요하니까 잘보이게 넣어줘"* — 웰컴만 알약으로 띄워 도드라지게.
+                  //     나머지 상태는 조용한 회색 한 줄로 둔다(다 크면 아무것도 안 보인다).
+                  <div style={{
+                    display: 'inline-block', marginTop: 5, padding: '4.5px 10px',
+                    borderRadius: 9, background: '#fff', border: '1px solid #cfe3c4',
+                    fontSize: 12.6, fontWeight: 700, color: '#4f7d48', lineHeight: 1.4, letterSpacing: '-.2px',
+                    // ⛔ 한글 낱말이 잘리면 안 된다 — 첫 판이 「다 쓰면 매 / 달 5장」으로 잘렸다
+                    wordBreak: 'keep-all',
+                  }}>
+                    {/* ⛔⛔ 「익월부터」·「다음 달부터」라고 못박지 «않는다» — 실제로 사람마다 시점이 다르다.
+                        · 8월에 20장을 다 쓴 사람 → 8월 카운터가 20이라 그 달은 끝 → 9월부터 5장 (맞다)
+                        · 8월에 17장만 쓴 사람 → 웰컴 3장이 9월로 이월 → 9월에 그 3장을 쓰고 «그 9월에 2장 더» 쓴다
+                          (worker: 웰컴을 다 쓴 뒤 `userC(3) < PER_USER_MONTHLY(5)` 라 통과)
+                        ⭐ 그래서 「다 쓰면(조건) · 매달(주기)」로만 적는다 — 두 경우 다 맞는 유일한 표현. */}
+                    <b style={{ fontWeight: 900, color: '#356131' }}>처음 한 번만</b> 드리는 20장이에요<br />
+                    다 쓰면 <b style={{ fontWeight: 900, color: '#356131' }}>매달 무료 5장</b>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12.3, color: 'var(--text-sub)', marginTop: 2 }}>
+                    {ocrLeft.total <= 3 ? '다 써도 기본 인식으로 계속 읽어 드려요' : '매달 5장씩 채워져요'}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#8a6a3a', letterSpacing: '-.3px' }}>이번 달 무료 AI 스캔을 다 썼어요</div>
+                {/* ⭐ 「못 쓴다」가 아니라 「계속 되는데 품질이 바뀐다」 ＋ 언제·«몇 장» 돌아오는지까지.
+                    ⛔ 「다시 채워져요」만 두면 몇 장인지 모른다 → 창업자 *"다음달에 무료5장채워져요"* */}
+                <div style={{ fontSize: 12.3, color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.45 }}>
+                  기본 인식으로 계속 읽어 드려요<br />다음 달에 <b style={{ fontWeight: 800, color: '#8a6a3a' }}>무료 5장</b> 채워져요
+                </div>
+              </div>
+            )}
+            {/* 🐻 오른쪽 빈 칸 — 창업자 *"캐릭터 하나 넣자(오른쪽 비어있는 칸에)"* · *"귀여운 걸로 해줘. 움직이게"*
+                ⭐ 통통 튀게(`hk-m-tongtong`) — 이 띠는 «돈이 걸린 안내»라 딱딱해지기 쉬운데, 움직이는 애가 하나 있으면
+                   같은 문장도 재촉이 아니라 알림으로 읽힌다.
+                ⚠️ 「움직임 끄기」를 켠 사람에겐 저절로 멈춘다(`hk-m-` 접두어가 그 스위치에 걸려 있다).
+                ⛔ `alt` 는 비운다 — 옆 글자가 이미 다 말하고 있어서 읽어주기가 같은 말을 두 번 하게 된다. */}
+            <img
+              src={ocrLeft.total > 0 ? uiPengSearch : uiDuoHeart}
+              alt="" aria-hidden="true" draggable={false}
+              className="hk-m-tongtong"
+              width={ocrLeft.total > 0 ? 38 : 59} height={ocrLeft.total > 0 ? 53 : 53}
+              style={{ flex: '0 0 auto', alignSelf: 'center', objectFit: 'contain', margin: '-6px -2px -6px 0' }}
+            />
           </div>
 
           {/* 제일 많이 쓰는 방법 — 히어로(진짜 동작). 첫 유저가 큰 걸 눌러도 바로 되는 기능. */}
@@ -216,6 +301,8 @@ export default function ImportScreen() {
               <div style={{ fontSize: 11.6, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2 }}>
                 캡처·링크 올리면 재료·순서를 자동으로 채워요
               </div>
+              {/* ⛔ 남은 장수는 여기 «두지 않는다» — 창업자 *"너무 안보여"* (2026-08-13).
+                  스크롤해야 나오는 자리라 「잘 보이게」가 안 된다. → 화면 «맨 위»로 올렸다. */}
             </div>
             <Icon name="chevron-right" size={16} color="#8aa07a" />
           </button>

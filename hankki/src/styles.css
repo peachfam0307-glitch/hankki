@@ -206,6 +206,27 @@ img {
   width: 0;
 }
 
+/* 📜📜 스크롤 막대를 «브라우저가» 옮긴다 — 창업자 2026-08-14 *"스크롤하면 덜덜거리자나 회색막대기가"*
+   ⛔ 「늦게 따라온다」(v10.68 에서 고침)와 **다른 증상**이다. 늦음 = 한 박자 뒤 · 떨림 = 박자가 안 맞음.
+   🔎 원인 = 안드로이드에선 **화면은 컴포지터가** 굴리고 **막대는 메인 스레드가** 옮긴다.
+      메인이 조금만 바빠도(그림 디코딩·React·GC) 프레임을 놓쳐 막대만 멈췄다 튄다.
+      ⚠️ **헤드리스에선 재현이 안 된다**(여기 크로미움은 스크롤도 메인 스레드라 박자가 저절로 맞는다).
+         숫자로 0 이 나와도 그건 「덜덜이 없다」가 아니라 「이 판에선 못 잡는다」다(규칙 18).
+   ✅ 그래서 JS 를 빼고 **스크롤 그 자체를 애니메이션 시계로** 쓴다 — 컴포지터에서 돌아 메인과 무관해진다.
+      🔬 실측(`scripts/_probe-타임라인-0814.mjs`) — 우리 실제 DOM 에서 굴린 곳 0/500/1500/3000/끝 전부 **차이 0~1px**
+   ⚠️ `.screen` 은 여러 개다(탭 5 ＋ 쌓이는 화면) → **맨 위 하나에만** `hk-tl` 을 붙인다(이름이 겹치면 시계가 죽는다).
+   ⚠️ 못 쓰는 브라우저는 지금까지처럼 JS 가 옮긴다(`App.jsx` 의 `paint()`). */
+.app-frame { timeline-scope: --hk-v; }
+.screen.hk-tl { scroll-timeline-name: --hk-v; scroll-timeline-axis: block; }
+@keyframes hk-vhint {
+  from { transform: translate3d(var(--hk-vx, 0px), var(--hk-vy0, 0px), 0); }
+  to { transform: translate3d(var(--hk-vx, 0px), var(--hk-vy1, 0px), 0); }
+}
+[data-vhint].hk-anim {
+  animation: hk-vhint linear both;
+  animation-timeline: --hk-v;
+}
+
 .pad {
   padding: 0 20px;
 }
@@ -379,6 +400,14 @@ img {
   scroll-snap-type: x proximity;
   padding: 2px 20px;
   margin: 0 -20px;
+  /* 🐛🐛 [2026-08-14 테스터 영상] **첫 칸이 처음부터 왼쪽으로 잘려 있었다** — 「전체 230」이 「체 230」으로.
+     🔎 원인 = `scroll-snap-align: start` 는 첫 칸을 «스크롤포트(= padding «바깥»)» 에 맞춘다.
+        그래서 브라우저가 열자마자 `scrollLeft` 를 **padding-left 만큼(20px)** 밀어 버린다.
+        🔬 실측(`scripts/_probe-칩밀림-0814.mjs`) — 지금 밀림 20 · 첫 칸 왼쪽 **−20**(= 잘림)
+           · snap 을 끄면 0/0 ✅  · snap 을 «켠 채» 이 한 줄을 주면 **0/0** ✅
+     ✅ 그래서 스냅을 죽이지 않고 **스냅 기준선만 패딩 안쪽으로** 옮긴다.
+     ⚠️ 이 줄은 앱 열두 곳이 쓴다(레시피 갈래·홈 제철·장보기 칩 …) — 한 곳만 고칠 문제가 아니었다. */
+  scroll-padding-left: 20px;
 }
 .hscroll::-webkit-scrollbar {
   height: 0;
@@ -398,6 +427,9 @@ img {
 .hscroll.inset {
   padding: 2px 0;
   margin: 0;
+  /* ⛔ 여긴 좌우 padding 이 0 이라 스냅 기준선도 0 이어야 한다 — 위 20px 을 그대로 물려받으면
+        이번엔 반대로 첫 칸이 **20px 안쪽으로 파고든다.** */
+  scroll-padding-left: 0;
 }
 /* 🗓 홈 「이번 주 제철」 요리 줄 — **밀지 않고 한눈에 딱 맞게** (2026-08-03)
    창업자: *"배경안에서 움직이긴 하는데 잘려보여(첫인상이) 아예 각각 레시피 액자사이즈를 줄여서 딱 맞게 하자."*
@@ -407,7 +439,13 @@ img {
    ⚠️ `.mini-card` 의 `width:108px` 를 풀어야 칸 폭에 맞춰 준다. */
 .weekly-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(94px, 1fr));
+  /* ⭐⭐ **`auto-fit` 이다 — `auto-fill` 이 아니다.** (창업자 2026-08-12
+     📮 *"위에는 레시피가 3개인데 아래는 2개라 이상해보여"*)
+     ⛔ `auto-fill` 은 **빈 칸을 만들어 둔다** — 폰 411px 에서 칸이 3개 생기는데
+        우리집레시피는 «매주 2편»이라 **오른쪽 한 칸이 비어** 덜 찬 것처럼 보였다.
+     ✅ `auto-fit` 은 빈 칸을 접어 **있는 것만 늘려 꽉 채운다.** 2편이면 반반, 3편이면 셋.
+     ⭐ 개수 결정(창업자 *"매주 2개씩"*)은 한 글자도 안 건드린다 — 보이는 것만 고친다. */
+  grid-template-columns: repeat(auto-fit, minmax(94px, 1fr));
   gap: 10px;
 }
 .weekly-row .mini-card {
@@ -1288,6 +1326,14 @@ img {
 }
 
 /* 장보기 행 */
+/* 🛒 장보기 = 「주부의 장바구니」 ＋ 「장보기 리스트」 두 덩어리.
+   · 폰   = 세로 1열. **담은 게 있으면 리스트를 위로** 올린다(긴 큐레이션에 리스트가 묻히던 옛 문제).
+            ⭐ DOM 순서는 «장바구니 먼저»로 두고 `order` 로만 바꾼다 — 그래야 패드에서 그냥 좌우가 된다.
+   · 패드 = 좌우 2열(왼쪽 장바구니·오른쪽 리스트) — 위 `@media (min-width: 700px)` 참고. */
+.shop-pair { display: flex; flex-direction: column; }
+.shop-pair.has-items .shop-cur { order: 2; margin-top: 26px; }
+.shop-pair.has-items .shop-list { order: 1; }
+
 .shop-row {
   display: flex;
   align-items: center;
@@ -1449,7 +1495,11 @@ img {
   border-radius: var(--r-pill);
   font-size: 14px;
   font-weight: 500;
-  z-index: 100;
+  /* ⛔⛔ 토스트는 «무조건 맨 위»여야 한다 — 안 보이는 토스트는 없는 것과 같다.
+     🔢 2026-08-13 실측 사고: z-index 가 100 이라 자르기 화면(CropSheet, zIndex 400)에 «가려졌다».
+        창업자 *"나 방금 2장 올렸는데 암것도 안떴어"* — 떴는데 검은 화면 뒤에 깔려 있었던 것.
+     ⭐ 앱에서 제일 높은 층이 3000(계량 바)이라 그보다 위로 둔다. 새 층을 만들면 여기도 확인할 것. */
+  z-index: 3500;
   box-shadow: 0 8px 24px rgba(107, 79, 58, 0.28);
   animation: fadeUp 0.22s ease both;
   max-width: 88%;
@@ -2118,7 +2168,25 @@ html, body { overscroll-behavior: none; }
      ⛔ 좌우로 놓일 때는 박스 «안»을 다시 좌우로 가르지 않는다 — 4칸이 되어 글도 그림도 다 좁아진다. */
   .week-pair.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   .week-pair.two .weekly-box { grid-template-columns: 1fr; align-items: stretch; }
-  .week-pair.two .weekly-box > .weekly-row { margin-top: 11px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* ⛔ 패드에서 좌우로 놓일 땐 3칸으로 못 박는다 — 2편인 우리집레시피가 오른쪽 한 칸을 비운다.
+     ⭐ 위 기본과 같은 이유로 `auto-fit` 을 쓴다(창업자 2026-08-12 *"3개인데 아래는 2개라 이상해보여"*).
+     ⚠️ 최소 폭을 낮게(72px) 잡아야 좁은 반쪽 칸에서도 셋이 한 줄에 들어간다. */
+  /* 🔢🔢 [2026-08-13 창업자 제보 *"패드에서 레시피두개 높이 안맞아"*]
+     ⛔ 원인 = 썸네일이 «1:1 정사각»이라 **카드가 넓어지면 높이도 같이 커진다**.
+        왼쪽(제철)은 3개라 칸이 좁고, 오른쪽(우리집레시피)은 2개라 칸이 넓어
+        오른쪽 박스만 길어져 두 박스의 아래가 어긋났다.
+     ✅ 그래서 좌우로 놓일 «패드에서만» 3칸으로 못 박는다 — 카드 폭이 같아지면 높이도 같아진다.
+     ⭐ 폰(위아래)은 `auto-fit` 그대로다. 거기선 빈 칸이 「덜 찬 것」으로 보여 창업자가 물렸다
+        (2026-08-12 *"3개인데 아래는 2개라 이상해보여"*). **패드는 반대로 «줄이 안 맞는 게» 눈에 띈다.** */
+  /* ⛔ 첫 판은 `repeat(3, 1fr)` 이었다 — 높이는 맞았지만 오른쪽 셋째 칸이 «휑하게» 비어
+        창업자가 물렸다(*"이거 레시피2개 오른쪽자리비어"*).
+     ✅ 그래서 카드 폭은 «3칸 기준»으로 고정하되(→ 사진 크기가 같아 두 박스 높이가 맞는다)
+        개수가 적으면 **가운데로 모은다**. 오른쪽만 비는 게 아니라 양쪽에 고르게 남는다. */
+  .week-pair.two .weekly-box > .weekly-row {
+    margin-top: 11px;
+    grid-template-columns: repeat(auto-fit, calc((100% - 20px) / 3)); /* 20px = gap 10px × 2 */
+    justify-content: center;
+  }
   /* 🖼🖼 **꽉 채우기의 대가 — 눕히면 종이·표지가 화면 밖으로 나간다** (창업자 2026-08-09
      📮 *"꾸미다가 취소하면 화면이 엄청커짐."*)
      🔢 실측(891×411) — 꾸미기에서 나오면 일기 종이가 **851×1135**(화면 높이의 2.8배) ·
@@ -2143,17 +2211,32 @@ html, body { overscroll-behavior: none; }
      ⚠️ 여백 20px 은 창업자 지적(*"왼쪽이 잘린 것 같아"*)으로 넣었다 — 그림은 «안» 잘렸지만(넘침 0)
         화면 가장자리에 붙으면 **잘린 것처럼 보인다.** 모서리 16px 도 「한 장의 그림」으로 읽히게 한 것.
      ⛔ 폰 «세로»는 안 건드린다 — 이 블록은 가로 미디어쿼리 안이다(창업자가 OK 한 화면). */
-  .screen:has(> .cover-box) { padding-left: 20px; padding-right: 12px; }
-  .screen:has(> .cover-box) > .pad { overflow: hidden; }   /* ← 이 한 줄이 「오른쪽 칸」을 만든다 */
-  .cover-box {
+  .screen:has(> .cover-col) { padding-left: 20px; padding-right: 12px; }
+  .screen:has(> .cover-col) > .pad { overflow: hidden; }   /* ← 이 한 줄이 「오른쪽 칸」을 만든다 */
+  /* 📌 왼쪽 칸을 «통째로» 띄운다 — 표지＋단추가 한 덩어리라 스크롤해도 같이 붙어 있는다.
+     (테스터 *"아래로 내렸을때 계속 닭곰탕이보여"* · 창업자 전달 2026-08-13) */
+  .cover-col {
     float: left; width: 38%;
     margin: 0 20px 0 0;
+    position: sticky; top: 12px;
+  }
+  /* 📌 [2026-08-13 테스터 의견 · 창업자 전달 *"왼쪽 음식이모지는 고정하고(어차피 아래 아무것도 없음)
+        오른쪽 화면스크롤만 내려가면 아래로 내렸을때 계속 닭곰탕이보여"*]
+     ⭐ 왼쪽 칸은 표지＋단추 둘뿐이라 «따라 올라갈 이유»가 없다. 붙여 두면 재료·순서를 내리는 내내
+        무슨 요리인지가 보인다.
+     ⚠️ float 과 sticky 를 같이 쓴다 — 배타적인 건 `absolute/fixed` 이고 sticky 는 in-flow 라 붙는다(실측함).
+     ⚠️ 기준 컨테이너 = `.screen`(`overflow-y: auto`). top 은 화면 위 여백만큼. */
+  /* ⛔ 예전엔 `.cover-box` 자신이 float 이었다 — 이제 래퍼(`.cover-col`)가 그 일을 한다.
+     ⚠️ float 요소에 `position: sticky` 를 걸면 «안 붙는다»(2026-08-13 실측: 스크롤 900 → y −461).
+        그래서 float 은 래퍼가 지고, 안쪽은 평범한 블록으로 둔다. */
+  .cover-box {
+    width: 100%;
+    margin: 0;
     border-radius: 16px; overflow: hidden;
   }
-  /* 표지 바로 밑 「아이콘 바꾸기 · 레시피 꾸미기」 줄도 표지를 따라 왼쪽으로 */
-  .screen > .cover-box + div {
-    float: left; clear: left; width: 38%;
-    margin: 10px 20px 12px 0;
+  /* 표지 바로 밑 「아이콘 바꾸기 · 레시피 꾸미기」 줄 — 이제 래퍼 안이라 그냥 아래에 붙는다 */
+  .cover-col > div:last-child {
+    margin: 10px 0 12px;
     padding-left: 0 !important; padding-right: 0 !important;
   }
   /* ⛔⛔ **꾸미기 판 «안»의 종이엔 걸면 안 된다** — 같은 `PaperBox` 를 꾸미기에서도 쓴다.
@@ -2177,7 +2260,24 @@ html, body { overscroll-behavior: none; }
   .only-landscape { display: inline; }
 }
 
-.decor-grab { width: 40px; height: 4px; border-radius: 999px; background: var(--line); margin: 8px auto 2px; flex: 0 0 auto; }
+/* 🫳 손잡이 = «내리는 단추». 창업자 2026-08-12 *"가운데 두꺼운 버튼같이 만들어서 … 탭 전체가 내려가게"*
+   ⭐ 막대만 두껍게(4 → 6px · 40 → 56px) 하고 **닿는 칸은 38px** 로 넉넉히 — 손가락이 겨냥할 게 막대다.
+   ⛔ 막대를 44px 로 키우면 「가로줄」로 보여 서랍 테두리와 헷갈린다. 막대는 작게, 칸만 크게. */
+.decor-grab {
+  display: block; width: 100%; min-height: 38px; padding: 0; flex: 0 0 auto;
+  background: none; border: none; cursor: pointer;
+}
+.decor-grab::before {
+  content: ''; display: block; width: 56px; height: 6px; margin: 10px auto;
+  border-radius: 999px; background: var(--line);
+}
+/* 🫳 내린 상태 — 손잡이만 남기고 다 감춘다. 다시 누르면 올라온다.
+   ⛔ 처음엔 서랍만 줄였더니 **그 자리가 통째로 텅 비었다**(실물로 보고 잡았다 · 규칙 21).
+   ⭐ 남는 자리는 «종이 칸»이 가져간다 — 내리는 이유가 「종이를 크게 보려고」이니 그게 맞다. */
+.decor-drawer.down { flex: 0 0 auto; min-height: 0; max-height: none; }
+.decor-drawer.down > *:not(.decor-grab) { display: none !important; }
+.decor-drawer.down .decor-grab::before { background: var(--brown); }
+.decor-editor:has(.decor-drawer.down) .decor-stage { flex: 1 1 auto; min-height: 0; }
 
 /* 🪜🪜 **층마다 «생김새»를 다르게** (안 D · 창업자 2026-08-07 *"구분이 안되니까 뭐가 뭔지 모르겠어"*)
    ⛔ 예전엔 네 층이 전부 알약이었다 — 실측 29·31·35px 이라 차이가 «최대 6px».
@@ -2195,8 +2295,12 @@ html, body { overscroll-behavior: none; }
 /* 📐 창업자 2026-08-07 *"속지 글쓰기 젤 위에 탭이 너무 커;;"*
    ⛔ 44px 밑으로는 못 내린다(손가락 최소) → **글자를 가볍게** 해서 «커 보이는 것»을 줄인다.
       14 → 13 · 굵기 800 → 700 · 밑줄 3 → 2.5px. 높이는 44 로 딱 맞춘다. */
+/* 📏 2026-08-12 창업자 *"속지글쓰기 일꾸 레꾸도 이렇게 높을 이유가 없어 조금 줄여도 돼"*
+   ⛔ 위 주석의 *"44px 밑으로는 못 내린다"* 는 «내가 정한 잣대»였고 창업자가 풀어줬다.
+      우리 앱은 「배경 음식 아이콘 되돌리기」가 이미 38px 로 돌고 있다 = **실질 최소치는 38.**
+   🔢 44 → 38 = 서랍 굴칸 6px 확보. 작아 보이지 않게 밑줄은 그대로 둔다(위치를 알려주는 건 밑줄이다). */
 .decor-drawer .segment .seg {
-  min-height: 44px; border-radius: 0; background: none; box-shadow: none;
+  min-height: 38px; border-radius: 0; background: none; box-shadow: none;
   font-size: 13px; font-weight: 700; color: var(--text-sub);
   border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
 }
@@ -2205,7 +2309,33 @@ html, body { overscroll-behavior: none; }
   background: none; color: var(--brown); border-bottom-color: var(--brown);
 }
 /* 서랍 탭(마테·데코·글자) — 알약이되 손가락이 닿게 */
-.decor-cats button { min-height: 44px; }
+/* 📏 2026-08-12 창업자 *"프레임데코..얘네들도 높이줄이자"* — 갈래 칩 줄
+   🔢 실측 = 이 줄이 통째로 56px(버튼 44 ＋ 여백)이었다. 38 ＋ 여백 6 = 44px 로 12px 을 돌려준다.
+   ⛔ 이 줄은 «고르는 것»이지 «붙이는 것»이 아니다 — 자리를 먹으면 스티커가 밀린다. */
+.decor-cats button { min-height: 38px; }
+.decor-cats { margin-bottom: 6px; }
+/* 🗂🗂 **「고르는 줄」 접기 단추** (창업자 2026-08-13 *"고르는게 너무많아. 고르고나서 탭접기가능한버튼 생기면안되나.."*)
+   ⭐ 갈래칩 줄 «오른쪽 끝»에 붙는다 — 접으면 탭줄·글씨·크기가 사라지고 이 줄만 남으니
+      **돌아올 길이 늘 같은 자리에 보인다.**
+   ⚠️ 칩 줄은 옆으로 굴러가므로 이 단추는 굴칸 «밖»에 둔다(안에 두면 밀려 사라진다). */
+.decor-pickfold {
+  flex: 0 0 auto; width: 34px; min-height: 38px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 999px; background: none; color: var(--text-sub);
+}
+.decor-pickfold[aria-expanded='false'] { color: var(--brown); }
+/* 🔻🔻 **접기 세모를 «단추»로** (창업자 2026-08-12 *"세모가 전혀 안보여서 접는줄 아무도 모를 듯"*)
+   ⛔ 원래는 폭 11px 짜리 맨 글자였다 — 창업자 말 그대로 *"그냥 글씨앞에 붙은 모양인줄"* 이었다.
+      **접기는 되고 있었는데 단추로 안 보인 것**이라, 고칠 것은 기능이 아니라 «생김새»다.
+   ⭐ 동그란 칸에 담는다 — 배경이 있으면 「누르는 데」로 읽힌다(글자는 아무리 키워도 글자로 보인다).
+   ⭐ 색은 포인트색(파랑) — 우리 앱에서 파랑은 「누르는 것」이다. 채움이 아니라 «작은 원»이라
+      「글자 넣기」 같은 주 동작 단추와 무게가 안 겹친다(v10.22 「위로」 단추와 같은 잣대). */
+/* ⭐ 창업자 2026-08-12 *"원을 늘리지말고 그냥 삼각형만 늘려"* — 동그란 바탕을 빼고 세모만 키운다.
+   ⛔ 원을 두면 세모가 그 안에 갇혀 아무리 키워도 원보다 작아 보인다. */
+.decor-fold-ico {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto; color: var(--brown); transition: transform .15s;
+}
 .decor-scroll {
   flex: 1 1 auto; min-height: 0;
   overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -2634,6 +2764,43 @@ html, body { overscroll-behavior: none; }
 .weekly-box > .weekly-row { margin-top: 11px; }
 
 @media (min-width: 700px) {
+  /* 🔢🔢 [2026-08-13 창업자 제보 *"장보기 이미지 너무 크고, … 아래로 스크롤 안됨"*]
+     ⛔ 원인 = 가로 목록 카드가 `flex: 0 0 41%` 로 «화면 폭의 비율»로 박혀 있다.
+        폰(411px)에선 ≈168px 인데 **패드(1280px)에선 500px 넘게** 커진다.
+        썸네일이 1:1 정사각이라 높이도 같이 커져 **카드 하나가 화면을 통째로 차지**했고,
+        그래서 세로로 «밀 여백»이 없어 창업자가 *"아래로 스크롤 안 된다"* 로 겪었다.
+        (`.screen` 은 `overflow-y: auto` 라 스크롤 자체는 열려 있었다)
+     ✅ 폰에서 보이던 크기(≈170px)에 맞춰 «상한»만 둔다 — `flex-basis` 는 그대로라 폰은 안 바뀐다. */
+  .hscroll .grid-card,
+  .hscroll .mini-card,
+  .hscroll .pick-card { max-width: 200px; }
+
+  /* 📔 [2026-08-13 창업자 *"한끼일기 아래 뜨는 음식 이미지 너무 커"*]
+     ⛔ `.album-grid` 가 «3칸 고정»이라 폰(411px)에선 한 칸 ≈133px 인데 패드(1280px)에선 **400px 넘게** 커진다.
+     ✅ 폰에서 보이던 크기에 맞춰 칸 «수»를 늘린다 — 한 칸을 160px 언저리로.
+     ⭐ `auto-fill` 이다(`auto-fit` 아니다) — `auto-fit` 은 기록이 적을 때 그 몇 장을 «늘려» 채워
+        다시 커진다. 앨범은 장수가 적어도 칸 크기가 일정한 게 맞다. */
+  .album-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+
+  /* 🛒📐 [2026-08-13 창업자 지시 *"장보기를 오른쪽에 장바구니를 왼쪽에"*]
+     ⛔ 그 전엔 한 줄에 하나라 카드가 화면 폭(1280px)을 다 써서
+        「담기·사러가기 버튼이 너무 크고 제품설명은 왼쪽에 쏠린다」가 됐다.
+     ✅ 좌우로 나누면 카드가 절반 폭이 되어 둘 다 저절로 풀린다.
+     ⭐ 폰(1열)에선 «담은 게 있으면 리스트가 위»를 그대로 지킨다 — 아래 order 참고. */
+  .shop-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  /* ✂️ [2026-08-13 창업자 *"장보기 잘림"*] 좌우로 갈리며 왼쪽 칸이 좁아지자
+     카테고리 칩 줄의 «마지막 칩이 반쯤 잘려» 보였다. 가로 스크롤이라 밀면 보이긴 하지만,
+     화면이 넓은 패드에서 잘린 채 놓이면 «고장»으로 읽힌다.
+     ✅ 패드에선 줄바꿈으로 — 칸이 좁아도 칩이 다 보인다. ⛔폰은 지금 그대로(가로 스크롤). */
+  .cur-chips { flex-wrap: wrap; overflow-x: visible; margin: 0; padding-left: 0; padding-right: 0; row-gap: 8px; }
+  /* 🔘 장보기·냉장고 토글 — 화면 폭을 다 쓰면 「냉장고」가 저 멀리 오른쪽 끝에 떨어져 짝이 안 보인다 */
+  .screen .segment { max-width: 420px; }
+  /* 좌우일 땐 «항상» 왼쪽=장바구니 · 오른쪽=리스트. 폰에서 쓰던 순서 바꾸기를 되돌린다. */
+  .shop-pair.has-items .shop-cur { order: 0; }
+  .shop-pair.has-items .shop-list { order: 0; }
+  /* 좌우로 갈리면 첫 제목의 윗여백이 왼쪽과 어긋난다 — 맞춰 준다 */
+  .shop-pair .shop-list > .sec-head:first-child { margin-top: 2px; }
+
   /* ⭐ 소식·오늘이 좌우로 — 넓어지면 «가운데만» 늘어나던 것을 칸으로 나눈다 */
   .home-pair { grid-template-columns: 1fr 1fr; align-items: stretch; }
 
@@ -2661,3 +2828,64 @@ html, body { overscroll-behavior: none; }
   .grid-card .name { font-size: 17px; }
   .mini-card .name { font-size: 15px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   🔠 **글자 그려진 스티커는 서랍 칸을 크게** (창업자 2026-08-12 *"좀작네 글자가."*)
+
+   📮 앞선 제보 = *"레꾸 글자에 한끼문구~건강태그까지 글자가 너무 작아서 (그림도) 잘 안보여."*
+   🔢 재서 정했다 — 컷 긴변 348px 에 캡션 글자 35px 이라 칸이 W 면 화면 글자 = 35 × W ÷ 348:
+        52px(기본) **5.2px 못 읽는다** · 80px 8.0 · 92px 9.3 · **110px → 11.1px 읽힌다** · 130px 13.1
+   ⭐⭐ 110px 이 «공짜»다 — 폰 411px 에서 92px 도 110px 도 **똑같이 3칸**이라 줄 수가 안 는다(둘 다 39줄).
+      같은 값을 치르고 글자만 커진다. ⛔130px 은 2칸이 되어 58줄로 늘어나서 거기서 끊었다.
+
+   ⛔⛔ **반드시 파일 «맨 끝»에 둔다.** `.decor-grid` 를 잡는 미디어쿼리가 둘(1921·2085줄) 있고
+      **둘 다 `!important`** 다. 앞에 두면 그것들에 져서 조용히 안 먹는다
+      (v10.19 에 같은 함정으로 하루 여섯 번 당했고 게이트 ⑪ 이 그래서 생겼다).
+
+   ⚠️ 작은 폰(360px)에선 auto-fill 이 저절로 2칸으로 줄인다 — 칸이 더 커져 글자는 오히려 잘 보인다.
+   ══════════════════════════════════════════════════════════════════════════ */
+.decor-grid.wordy { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important; }
+
+/* 📱 판이 낮을 때(자판이 뜬 화면·폰 가로)는 줄이면 종이가 안 보인다 — 조금만 키운다.
+   ⭐ 기준 430px 은 v10.18 에서 정한 값 그대로 쓴다(폰 세로 640~890 은 «안» 걸린다). */
+@media (max-height: 430px) {
+  .decor-grid.wordy { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)) !important; }
+}
+
+/* 🗂🗂 **꾸미기 서랍 — 그룹 접기** (창업자 2026-08-12 *"접기기능이라도 있으면 잘보이겠구만"*)
+   ⭐ 이름표가 «단추»가 됐다. 손가락이 닿는 칸이라 44px 을 준다(우리 최소치).
+   ⛔ 여백을 키우지 않는다 — 접기를 넣는 이유가 «자리를 되찾는 것»인데 이름표가 그걸 도로 먹으면 안 된다.
+      그래서 위아래 여백은 그대로 두고 «높이»만 손가락 크기로 채운다.
+   ⚠️ 이 블록은 파일 «맨 끝»이다 — 위의 `.decor-sec-label` 정의보다 뒤라야 이긴다.
+      (같은 이름을 여러 번 잡고 있으면 뒤엣것이 이긴다 — 2026-08-09 에 하루 여섯 번 밟은 함정) */
+.decor-sec-label {
+  display: flex; align-items: center; gap: 5px;
+  width: 100%; min-height: 34px; padding: 0 2px;
+  background: none; border: none; text-align: left; cursor: pointer;
+}
+/* 🗂 **접힌 이름표는 더 얇게** — 재현판이 잡은 것: 여덟 그룹을 다 접으면 34px×8 = 272px 이
+   굴칸(253px)을 통째로 먹어 **스티커가 한 칸도 안 보였다**(3개 → 0개).
+   ⭐ 접힌 줄은 «지나가는 줄»이라 26px 이면 된다 — 다시 펴려고 누를 땐 줄이 하나뿐이라 겨냥이 쉽다.
+   🔢 26×8 = 208px < 253px → 여덟 개를 다 접어도 스티커 자리가 남는다.
+   ⛔ 펼친 이름표는 34px 그대로 — 거긴 밑에 격자가 붙어 있어 손가락이 헷갈릴 일이 없다. */
+.decor-sec-label[aria-expanded='false'] { min-height: 26px; opacity: .82; }
+.decor-sec:has(> .decor-sec-label[aria-expanded='false']) { margin-bottom: 0; }
+/* 접었을 때 「몇 컷인지」 — 안 보이는 것을 숫자로 알려준다(펼칠지 말지 판단이 된다) */
+.decor-sec-n {
+  margin-left: 4px; padding: 1px 7px; border-radius: 999px;
+  background: var(--cream); color: var(--text-sub); font-size: 11px; font-weight: 800;
+}
+
+/* 📏📏 **서랍 고정 줄 깎기** (창업자 2026-08-12 *"글씨(높이줄이고) 프레임데코..얘네들도 높이줄이자"*)
+   🔢 실측 = 일꾸 서랍 373px 중 굴칸이 253px 뿐이었다. 나머지 120px 을 고정 줄이 먹는다:
+      탭 줄(속지·글쓰기·일꾸·레꾸) 44 ＋ 갈래 줄(마테·데코·글자·기록) 56 ＋ 손잡이 4 ＋ 안내문 24~52
+   ⭐ 「고르는 것」을 깎아 「붙일 것」에 준다 — 2026-08-09 작은 폰에서 이미 통한 방법이다.
+   ⛔ 손가락이 닿는 칸은 38px 아래로 안 내린다(「배경 음식 아이콘」이 이미 38 로 돌고 있어 그게 우리 실질 최소치다).
+   ⚠️ 이 블록은 파일 «맨 끝» — 앞의 정의들보다 뒤라야 이긴다. */
+/* ⛔⛔ 여기 있던 «.decor-drawer .segment»·«.seg» 두 줄은 뺐다 — 배포 게이트 ⑪ 이 잡았다.
+   파일 맨 끝이라 **작은 폰(360×640)용 미디어쿼리(1916·1921줄)를 덮어** 거기 촘촘히 맞춰둔 값이
+   통째로 안 먹게 된다. 얻는 건 굴칸 6px 뿐인데 잃는 건 작은 폰 화면 전체다 — 값어치가 없다.
+   📌 CLAUDE.md 에 적힌 「같은 이름을 여러 번 잡고 있으면 전부 찾아본다」 그 함정이다. */
+/* 🎁 선물·사진 줄 — 자주 쓰는 게 아니라 자리를 조금만 준다(38 → 34) */
+.decor-quick > button { min-height: 34px !important; }
+.decor-quick { margin-bottom: 6px !important; }

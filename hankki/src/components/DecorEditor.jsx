@@ -11,7 +11,7 @@ import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
 import { cropRatio, imageRatio } from '../utils'
 import { FRAME_WINDOW } from '../data/frameWindows'
-import { StickerArt, stickerRatio, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
+import { StickerArt, stickerRatio, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, TEXT_SIZES, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
 
 // 📜📜 HStrip — 가로로 «넘치는 칩 줄»에 막대를 **우리가 그려서** 항상 보여준다.
 //   (창업자 2026-08-08 *"스크롤바가 처음부터 안보여서 글자체 저게다처럼보임"* —
@@ -255,6 +255,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const origThumb = savedThumb !== 'none' ? savedThumb : (recipe.image ? 'photo' : 'icon')
   const [thumb, setThumb] = useState(draft?.thumb ?? savedThumb) // 'none'이면 표지 그림 비움 → 깨끗한 배경에 꾸미기
   const [exitAsk, setExitAsk] = useState(false) // 취소 시 "저장 안 함?" 확인
+  const [drawerDown, setDrawerDown] = useState(false) // 🫳 서랍 내리기(손잡이 단추) — 종이를 크게 보려고
+  const grabY = useRef(null) // 손잡이를 끈 거리(아래로 끌면 내려간다)
   // ⛔⛔ **이 안내 띠가 «가로에서 판을 통째로 밀어내고 있었다»** (창업자 폰 제보 2026-08-09 밤
   //    📮 *"오늘의한끼누르면 쪼그라들어"* — 캡처 둘 다 이 띠가 격자 «밖»으로 튀어나와 있었다)
   //    가로에선 `.decor-editor` 가 **격자(grid)** 인데 이 띠엔 `grid-area` 가 없다 →
@@ -385,7 +387,25 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   (blur 가 안 온다) → typing 이 계속 참이라 위 줄이 유령처럼 떠 있었다.
   //   ⭐ 탭 이동 = 「지금은 글 쓰는 중이 아니다」라는 신호이니 커서를 명시적으로 푼다.
   //   ⛔ 「글쓰기」 탭엔 안 건다 — 거긴 글 쓰러 가는 자리다.
-  const dropCaret = () => { const el = document.activeElement; if (el && el.tagName === 'TEXTAREA') el.blur() }
+  //   📍 `bodyOnly` = **종이 본문 글칸만** 놓는다(`data-paper-body`). 스티커 글 상자는 안 건드린다.
+  //      ⭐ 서랍을 누를 때 쓴다 — 방금 붙인 글 상자의 커서까지 뺏으면 「붙였는데 못 쓴다」가 된다.
+  const dropCaret = (bodyOnly) => {
+    const el = document.activeElement
+    if (!el || el.tagName !== 'TEXTAREA') return
+    if (bodyOnly && !el.dataset.paperBody) return
+    el.blur()
+  }
+  // 🗄🗄 **서랍을 «누르고 나면» 종이 본문 커서를 놓는다** (창업자 2026-08-13
+  //    *"갑자기 스티커보이는칸이 작아졌어 위에 속지 글쓰기탭이 커진것같기도하고"*)
+  //    🔢 실측(360×800) = 본문 커서가 남으면 「글씨」 56 ＋ 「크기」 41 = **97px** 이 서랍을 먹어
+  //       굴칸 **182 → 85px**. 창업자 캡처가 정확히 그 화면이었다(레꾸 탭인데 본문 글씨줄이 떠 있었다).
+  //    ⛔ 폰은 뒤로가기로 «자판만» 닫혀 blur 가 안 온다 → `typing` 이 참인 채 남는다.
+  //       ＋ 2026-08-12 에 「서랍을 누르는 동안 커서를 안 뺏는다」를 넣어서 **서랍을 눌러도 안 풀리게 됐다.**
+  //          그 처방은 맞았지만(첫 탭이 먹히던 문제) **다시 놓을 길을 같이 안 냈다.**
+  //    ⭐ 그래서 «손 뗀 뒤»(click)에 놓는다 — pointerdown 에 놓으면 그 자리에서 97px 이 튀어
+  //       탭이 통째로 먹힌다(그게 2026-08-12 에 고친 바로 그 사고다). click 이면 이미 붙은 뒤다.
+  //    ⚠️ 「글씨」·「크기」 줄 자신을 누를 땐 안 놓는다 — 그건 글 쓰는 도구다(그 줄들은 서랍 «밖»이라 안 걸린다).
+  const dropBodyOnTap = (e) => { if (e.target.closest && e.target.closest('button')) dropCaret(true) }
   // ⌨️⌨️ **자판이 내려가면 «저절로» 원래 판으로 돌아온다** (창업자 2026-08-09 *"다썼어요 가로모드 아직도 있어"*)
   //    ⛔ 처음엔 「다 썼어요」 단추로 나가게 했는데 창업자가 두 번 말했다 — *"왜 저기떠있는지 모르겠다"*.
   //       **모르는 단추는 없는 것만 못하다.** 나가는 길은 «눌러야 아는 것»이 아니라 저절로여야 한다.
@@ -393,16 +413,27 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //       index.html 의 viewport 가 interactive-widget=resizes-content 라, 자판이 뜨고 내릴 때 판 높이가 실제로 오르내린다.
   //    📌 «가장 낮았던 높이»를 기억해 두고 거기서 100px 넘게 올라오면 = 자판이 내려간 것.
   //       ⛔ 「처음 높이」와 견주면 안 된다 — 커서가 들어간 직후는 아직 자판이 안 떠서 그게 최고값이다.
+  //    ⭐⭐ 2026-08-13 보강 — **`visualViewport` 도 같이 듣는다.**
+  //       `window.innerHeight` 는 `interactive-widget=resizes-content` 가 먹을 때만 오르내린다.
+  //       그게 안 먹는 기기·웹뷰에선 **resize 가 아예 안 와서 커서가 영영 남는다**(창업자 폰이 그랬을 수 있다).
+  //       `visualViewport.height` 는 자판이 뜨면 어느 쪽이든 줄어든다 — 더 확실한 신호다.
+  //       ⛔ 「왜 안 왔나」를 내가 정하지 않는다(규칙 18) — **이유가 무엇이든 잡히게** 신호를 늘린다.
   useEffect(() => {
     if (!typing) return
-    let 바닥 = window.innerHeight
+    const vv = window.visualViewport
+    const 잰다 = () => (vv ? vv.height : window.innerHeight)
+    let 바닥 = 잰다()
     const 봄 = () => {
-      const h = window.innerHeight
+      const h = 잰다()
       if (h < 바닥) 바닥 = h
       else if (h > 바닥 + 100) dropCaret()
     }
     window.addEventListener('resize', 봄)
-    return () => window.removeEventListener('resize', 봄)
+    if (vv) vv.addEventListener('resize', 봄)
+    return () => {
+      window.removeEventListener('resize', 봄)
+      if (vv) vv.removeEventListener('resize', 봄)
+    }
   }, [typing])
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
@@ -424,7 +455,18 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    그 밑에 붙여둔 스티커에 죄다 색이 입혀진다(multiply 라 비치긴 해도 색은 얹힌다).
   const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || it.type === 'hl' || (it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('dc_dma') || it.key.startsWith('pf_') || it.key.startsWith('sf_'))))
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로. 단 배경격은 제자리 유지.
+  // ⌨️⌨️ **아이템을 만지면 «종이 본문» 커서를 내려놓는다** (창업자 폰 캡처 2026-08-12 · 재현으로 확정)
+  //   ⛔⛔ 폰은 뒤로가기로 «자판만» 닫혀 blur 가 안 온다 → 본문 커서가 남고 `typing` 이 참인 채다.
+  //      그 상태로 글 상자를 고르면 `showWriteTools` 가 켜져 있어 세 가지가 한꺼번에 어긋난다:
+  //        ⑴서랍의 「글씨」를 누르면 글 상자가 아니라 **«본문»이 바뀐다**(＝「글씨체가 바뀐 것 같아」)
+  //        ⑵본문용 「글씨·크기」 두 줄이 자리를 먹어 **스티커 굴칸 207 → 156px**(＝「갑자기 칸 작아짐」)
+  //        ⑶글 상자 컨텍스트 갈래가 **하나도 안 뜬다**(＝「글씨 크게 하는 게 없다」)
+  //   📌 셋이 다른 버그가 아니라 **하나였다.**
+  //   ⛔ v10.18 은 「탭을 옮길 때」만 내려놨다 — **「아이템을 만질 때」가 빠져 있었다.**
+  //   ⚠️ `typingId` 가 있으면(＝«그 아이템»의 글칸에 커서) 안 건드린다 — 글 쓰는 중에 커서를 뺏으면 안 된다.
+  const dropBodyCaret = () => { if (!typingId) dropCaret() }
   const select = (id) => {
+    if (id) dropBodyCaret()
     setSel(id)
     if (id) setItems((arr) => {
       const i = arr.findIndex((x) => x.id === id)
@@ -471,9 +513,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   const doSave = () => { clearDraft(); onSave(items, bg, thumb) }
   const doExit = () => { clearDraft(); onClose() }
   const handleCancel = () => { if (isDirty()) setExitAsk(true); else doExit() }
+  // 🔙🔙 **뒤로가기 = 「저장하고 닫기」. 묻지 않는다.** (창업자 2026-08-12 *"뒤로가기 안됨 … 급짜증난다ㅠ"*)
+  //   ⛔⛔ 예전엔 뒤로가기도 「취소」와 똑같이 **먼저 물었다.** 그런데 그 물음창은 «자기 히스토리 칸»이 없어서,
+  //      뒤로가기 한 번이 판의 칸을 써버리고 판은 안 닫힌다 → 다음 뒤로가기가 갈 곳을 잃어 **먹통**이 되거나
+  //      판보다 «아래» 칸을 먹어 꾸민 게 통째로 날아갔다. 칸을 popstate 안에서 되채우는 것도
+  //      크롬이 «터치 없이 만든 칸»이라 건너뛰어 안 통했다(재현으로 확인).
+  //   ⭐ 그래서 «묻는 것»을 없앴다 — 뒤로가기는 **저장하고 닫는다.** 잃는 게 없으니 물을 이유도 없다.
+  //   ⛔ 「취소」 단추는 그대로 «버리고 나가기»다(위 `handleCancel`) — 그게 취소라는 낱말의 뜻이다.
+  //      뒤로가기와 취소는 유저가 «다른 뜻으로» 누른다. 하나로 묶었던 게 애초에 잘못이었다.
+  //   ⚠️ 실수로 눌러도 되돌리기(↺)가 있고 다시 꾸미면 된다 — 「날아가는 것」보다 훨씬 낫다.
+  const handleBack = () => { if (exitAsk) { setExitAsk(false); return false } doSave(); return true }
   // 🔙 안드로이드 뒤로가기도 **취소 버튼과 똑같이** 동작하게 — 부모(상세화면)가 이걸 부른다.
   //    (뒤로가기가 곧장 닫아버려서 "저장하지 않고 나갈까요?" 를 건너뛰던 것 수정)
-  if (closeRef) closeRef.current = handleCancel
+  if (closeRef) closeRef.current = handleBack
 
   const selItem = items.find((x) => x.id === sel)
   const selNoteColor = NOTE_COLORS.find((n) => n.key === selItem?.key) || NOTE_COLORS[0]
@@ -549,6 +601,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     { key: 'tape', label: '마테' },
     { key: 'deco', label: '데코' },
     { key: 'notetext', label: '글자' },
+    // 📔📔 **「기록」 = 일꾸 전용 탭** (창업자 2026-08-12 *"일꾸에 탭을 하나 만들어서 거기에 다 넣자"*)
+    //   ⭐ 왜 «글자» 탭에 안 넣나 = 창업자 원문 그대로다 —
+    //      *"레꾸에 글자가 너무 많아서 스크롤하려면 좀 불편했어. 일꾸는 상대적으로 스티커가 너무 적었고"*
+    //      99컷을 일꾸 «글자» 탭에 그냥 옮기면 **이번엔 일꾸 글자 탭이 길어진다.** 문제가 자리만 옮긴다.
+    //   ⭐ 여기 들어가는 것 = 맛 평가·반응 평가·조리법·요리 상황·식사 상황·미리 준비·보관·건강 태그
+    //      여덟 다 «요리를 기록할 때 붙이는 라벨»이라 한 탭으로 묶이는 게 자연스럽다.
+    //   ⚠️ 레꾸에선 이 탭이 저절로 사라진다 — 그룹이 전부 `only: 'diary'` 라 0개가 되고,
+    //      591줄 「빈 탭은 안 그린다」가 걷어낸다. `isDiary` 조건은 «혹시»를 막는 이중 안전장치다.
+    ...(isDiary ? [{ key: 'record', label: '기록' }] : []),
     { key: 'buddies', label: '친구들' },
     { key: 'food', label: '재료' },
   ]
@@ -580,9 +641,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // 📔 **선반 가르기** — 일기를 꾸밀 때만. 왼쪽 칸이면 `diary` 붙은 것만, 오른쪽 칸이면 나머지 전부.
   //    표지 꾸미기(`isDiary === false`)는 선반이 하나라 **아무것도 안 거른다**(일기 세트도 그대로 보인다).
   const where = isDiary ? 'diary' : 'cover'
-  const onShelf = (x) => !isDiary || (shelf === 'diary' ? !!x.diary : !x.diary)
+  // ⭐ `both` = 일꾸·레꾸 «두 선반 다»에 두는 그룹(꼬르곰 32컷).
+  //    ⛔ `diary` 만 주면 일꾸엔 뜨지만 **레꾸 선반에서 사라진다** — 창업자가 보던 그 화면이 레꾸였다.
+  const onShelf = (x) => !isDiary || x.both || (shelf === 'diary' ? !!x.diary : !x.diary)
   const groupsByTab = (t) => drawerGroups()
-    .filter((x) => x.tab === t && isReleased(x.from) && (!x.only || x.only === where) && onShelf(x))
+    // ⭐ `tabDiary` = 일기 화면에선 «다른 탭»에 둔다 — 꼬르곰 32컷은 레꾸 「글자」 / 일꾸 「기록」.
+    //    ⛔ 두 탭에 «동시에» 두면 일꾸에서 글자·기록 양쪽에 같은 게 나온다(실측으로 잡았다).
+    .filter((x) => ((isDiary && x.tabDiary) || x.tab) === t && isReleased(x.from) && (!x.only || x.only === where) && onShelf(x))
     .sort((a, b) => ((b.gift ? 1 : 0) - (a.gift ? 1 : 0))
       || ((b.locked ? 1 : 0) - (a.locked ? 1 : 0))
       || (seasonRank(a.season) - seasonRank(b.season))
@@ -627,7 +692,18 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const it = {
       id: newDecorId(), type: 'sticker', key,
       x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.46 : 0.42 + ((n % 4) - 1.5) * 0.05,
-      s: isFrame ? 0.58 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
+      // 📏📏 **`rs_v`·`rs_k`(레꾸 캐릭터 32컷)만 0.32** — 창업자 *"근데 글자가 너무 작아?"* (2026-08-12)
+      //   ⭐⭐ **`s` 는 «폭» 기준이다**(`DecorLayer` 225줄 `width: ${it.s * 100}%`).
+      //      ⛔ 나는 처음에 «긴변» 기준으로 계산해 창업자에게 **11.7px 이라고 잘못 말했다.**
+      //         이 컷들은 세로로 길어서(비율 0.54~1.01) 폭을 맞추면 긴변은 더 커진다.
+      //      🔢 실측으로 다시 (종이 344px · 캡션 글자가 폰에서 몇 px):
+      //         s 0.22(기본) **9.5px** / **s 0.32 → 14.0px** / (기존 99컷 `rs_g01` = 11.8px)
+      //   ⛔⛔ **0.32 가 상한이다 — 0.34 는 못 쓴다.** 제일 좁은 컷 `rs_v06`(폭 204px)이
+      //      0.34 면 **1.80배**로 확대돼 해상도 한계(1.7배)를 넘는다. 0.32 면 **1.69배**.
+      //      → 0.32 는 0.34 보다 6% 작을 뿐인데 뭉개짐을 확실히 피한다.
+      //   📌 더 키우려면 «시트를 뽑을 때 글자를 크게» 하는 수밖에 없다 — 확대는 화질을 못 살린다.
+      //   ⚠️ 여기 값을 고치면 `scripts/check-sticker-res.mjs` 의 `defaultScale()` «도» 고칠 것(복사본이다).
+      s: isFrame ? 0.58 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : (key.startsWith('rs_v') || key.startsWith('rs_k')) ? 0.32 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
       r: isFrame ? 0 : ((n % 5) - 2) * 4,
       // 🐻🐧 친구들(캐릭터)은 붙자마자 통통 움직인다 — 소품·음식은 가만히.
       //    ⚠️ 여기도 `gp_` 접두어로 골랐었다 → 여름·가을 곰펭은 붙여도 모션이 안 박혔다.
@@ -643,6 +719,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const n = items.length
     const it = { id: newDecorId(), type: 'note', key: colorKey, text: '', font: 'gaegu', x: 0.62 + ((n % 2) - 0.5) * 0.06, y: 0.68, s: 0.34, r: ((n % 5) - 2) * 3 }
     mark(); setItems((arr) => [...arr, it])
+    dropBodyCaret() // ⌨️ 본문 커서가 남아 있으면 내려놓는다 — 안 그러면 본문용 줄이 서랍을 먹는다
     setSel(it.id)
     setTypingId(it.id) // ⌨️ 붙이면 «그 자리»에 커서 (전엔 시트가 열렸다 — 창업자 *"너무 불편해"*)
   }
@@ -659,6 +736,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const s = ratio >= 2.4 ? 0.72 : ratio >= 1.6 ? 0.6 : ratio >= 1.1 ? 0.5 : ratio >= 0.9 ? 0.44 : 0.32
     const it = { id: newDecorId(), type: 'note', art: artKey, text: '', font: 'gaegu', x: 0.5, y: 0.5 + ((n % 3) - 1) * 0.09, s, r: 0 }
     mark(); setItems((arr) => [...arr, it])
+    dropBodyCaret() // ⌨️ 위와 같은 이유 — 본문 커서를 남겨두면 글 상자 갈래가 아예 안 뜬다
     setSel(it.id)
     setTypingId(it.id)   // ⌨️ 시트 대신 «그 자리»에 커서
     pushRecentSticker(artKey)
@@ -706,10 +784,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     ...(selItem.type === 'sticker' && RECOLORABLE.has(selItem.key) ? [{ k: 'color', label: '색', ic: 'palette' }] : []),
     ...(selItem.type === 'hl' ? [{ k: 'color', label: '색', ic: 'palette' }, { k: 'width', label: '굵기', ic: 'weight' }, { k: 'opacity', label: '진하기', ic: 'opacity' }] : []),
     ...(selItem.type === 'tape' ? [{ k: 'pattern', label: '무늬', ic: 'grid4' }, { k: 'width', label: '굵기', ic: 'weight' }] : []),
-    ...(selItem.type === 'text' ? [{ k: 'color', label: '색', ic: 'palette' }, { k: 'width', label: '굵기', ic: 'weight' }, { k: 'font', label: '글씨', ic: 'textA' }] : []),
+    // 📏 「크기」 = 글자 크기 (창업자 2026-08-12 *"일꾸 글자는 크기 조절이 없어"* · *"레꾸도 마찬가지"*)
+    ...(selItem.type === 'text' ? [{ k: 'color', label: '색', ic: 'palette' }, { k: 'size', label: '크기', ic: 'textSize' }, { k: 'width', label: '굵기', ic: 'weight' }, { k: 'font', label: '글씨', ic: 'textA' }] : []),
     ...(selItem.type === 'note' ? [
       // 🎨 색 = 포스트잇이면 «종이색», 그림 글 상자면 «글자색» (창업자 2026-08-08 *"글자색고르기없음"*)
       { k: 'color', label: '색', ic: 'palette' },
+      // 📏 여기가 창업자 제보의 자리 — 글 상자는 손잡이로 키우면 «그림까지» 커졌다.
+      { k: 'size', label: '크기', ic: 'textSize' },
       { k: 'font', label: '글씨', ic: 'textA' },
       ...(selPlainNote ? [{ k: 'pattern', label: '무늬', ic: 'grid4' }, { k: 'shape', label: '모양', ic: 'shape' }] : []),
     ] : []),
@@ -836,6 +917,50 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    *"결제붙는날 전체를 다 보여줘야지. 이런게 있으니 사라고 배경부터 싹 다"*)
   //    ⚠️ 몇 컷만 맛보기로 보여주지 않는다 — 그러면 «있는 줄»을 모른다.
   //    ⚠️ 흐리게만 하고 **그림은 다 보인다.** 못 쓰게 막는 것이지 감추는 게 아니다.
+  // 🗂 접어 둔 그룹 — **기억한다**(다음에 열어도 접힌 채). 값이 깨져 있어도 앱이 안 죽게 감싼다.
+  const FOLD_KEY = 'hankki:decor:folded'
+  const [folded, setFolded] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(FOLD_KEY) || '[]')) } catch { return new Set() }
+  })
+  const toggleFold = (key) => setFolded((s) => {
+    const n = new Set(s)
+    n.has(key) ? n.delete(key) : n.add(key)
+    try { localStorage.setItem(FOLD_KEY, JSON.stringify([...n])) } catch { /* 저장 못 해도 이번 판은 접힌다 */ }
+    return n
+  })
+  // 🔻🔻 **접기 세모** (창업자 2026-08-12 *"세모단추크기 아직도 작아. 세모자체가 커져야해."*)
+  //    ⛔ 처음엔 `▾` «글자»를 썼다 — 글자는 위아래에 제 여백이 있어서 **13px 을 줘도 실제 삼각형은 7px 쯤**이다.
+  //       원만 키워도 세모는 그대로였다. 그게 창업자가 두 번 말한 그것이다.
+  //    ✅ **SVG 로 그린다** — 16px 을 주면 삼각형이 «정말로» 16px 이다. 여백이 없다.
+  const FoldIco = ({ open }) => (
+    <span aria-hidden className="decor-fold-ico" style={{ transform: open ? 'none' : 'rotate(-90deg)' }}>
+      <svg width="20" height="20" viewBox="0 0 20 20"><path d="M2 6 L18 6 L10 16 Z" fill="currentColor" /></svg>
+    </span>
+  )
+  // 🗂🗂 **「고르는 줄」 접기** (창업자 2026-08-13 *"고르는게 너무많아. 고르고나서 탭접기가능한버튼 생기면안되나.."*)
+  //    🔢 실측(360×800) 서랍 320px 중 «고르는 것»이 고정으로 먹는 자리 =
+  //       손잡이 38 ＋ 탭줄 38 ＋ 갈래칩 50 ( ＋ 글 쓸 땐 글씨 56 ＋ 크기 41 ) = **126 ~ 223px**
+  //       → 스티커가 굴러가는 칸은 **182px**, 글 쓰는 중이면 **85px** 뿐이었다.
+  //    ⭐ 접으면 **탭줄·글씨·크기가 사라지고 갈래칩 줄만 남는다** — 스티커를 고르는 동안 제일 자주 쓰는 게 갈래다.
+  //       그 줄 오른쪽 끝에 세모 단추가 붙어 있어 **접은 뒤에도 돌아올 길이 늘 보인다.**
+  //    ⛔ `mode === 'decor'` 일 때만 접는다 — 속지·글쓰기 탭엔 갈래칩 줄이 없어서
+  //       거기서 탭줄을 감추면 **펼 단추가 같이 사라져 막다른 길**이 된다(게이트가 자기 안내를 막던 그 사고와 같은 꼴).
+  //    ⭐ 기억은 이미 있는 `folded` 를 그대로 쓴다 — 저장 자리를 새로 만들지 않는다.
+  const PICKS_FOLD = 'sec_picks'
+  const picksFold = mode === 'decor' && folded.has(PICKS_FOLD)
+  const PickFoldIco = ({ open }) => (
+    <span aria-hidden style={{ display: 'inline-flex', transform: open ? 'rotate(180deg)' : 'none' }}>
+      <svg width="18" height="18" viewBox="0 0 20 20"><path d="M2 6 L18 6 L10 16 Z" fill="currentColor" /></svg>
+    </span>
+  )
+  // 🗂 접히는 이름표 — 스티커 «그룹»이 아닌 블록(글자 직접 쓰기·포스트잇 등)도 같은 문법으로 접는다.
+  const SecFold = ({ k, label }) => (
+    <button type="button" className="press decor-sec-label" onClick={() => toggleFold(k)}
+      aria-expanded={!folded.has(k)} aria-label={`${label} ${folded.has(k) ? '펼치기' : '접기'}`}>
+      <FoldIco open={!folded.has(k)} />
+      {label}
+    </button>
+  )
   const renderStickerGroup = (g) => {
     // 🔒 **잠긴 팩은 서랍에 「한 줄」로만 둔다 — 격자는 안 편다** (창업자 2026-08-05
     //    *"이런 방식말고 따로 안내팝업이나 창을 만들어서 보여주면 안돼?"*)
@@ -866,8 +991,37 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     }
     return (
       <div className="decor-sec" key={g.key}>
-        {g.label && <div className="decor-sec-label">{g.label}{g.gift && <GiftTag />}</div>}
-        <div className="decor-grid">{g.items.map(renderCell)}</div>
+        {/* 🗂🗂 **그룹 접기** (창업자 2026-08-12 *"접기기능이라도 있으면 잘보이겠구만.. 스티커가너무 안보여"*)
+            🔢 왜 필요한가 = 실측 일꾸 서랍 굴칸 **253px** 인데 담긴 것이 «기록» 갈래만 **4540px = 17.9화면**.
+               글자 그려진 칸은 한 칸 122px 이라 **한 화면에 세 칸**뿐이다.
+            ⭐ 칸을 도로 줄이지 «않는다» — 오늘 낮에 「캡션이 안 읽힌다」고 52→110px 로 키운 것이고
+               줄이면 그 문제가 되살아난다. **안 쓰는 묶음을 치워서** 쓰는 묶음이 큰 칸 그대로 앞에 오게 한다.
+            ⛔ 자동으로는 «절대» 안 접는다 — *"안 쓰는 것 같아서 치웠어요"* 는 뺏은 걸로 읽힌다.
+               (한 번 준 것은 빼앗지 않는다 — 우리 원칙)
+            ⭐ 접은 것은 **기억한다** — 다음에 열어도 접혀 있다. 매번 다시 접어야 하면 그게 더 짜증이다.
+            ⚠️ 이름표가 이제 «단추»다 — 손가락이 닿는 칸이라 높이를 44px 로 준다(우리 최소치). */}
+        {g.label && (
+          <button type="button" className="press decor-sec-label" onClick={() => toggleFold(g.key)}
+            aria-expanded={!folded.has(g.key)} aria-label={`${g.label} ${folded.has(g.key) ? '펼치기' : '접기'}`}>
+            <FoldIco open={!folded.has(g.key)} />
+            {g.label}{g.gift && <GiftTag />}
+            {folded.has(g.key) && <span className="decor-sec-n">{g.items.length}</span>}
+          </button>
+        )}
+        {/* 🔠 `wordy` = **그림 안에 글자(캡션)가 그려진 그룹.** 칸을 크게 준다.
+            📮 창업자 2026-08-12 *"좀작네 글자가."* · 앞서 *"글자가 너무 작아서 (그림도) 잘 안보여"*
+            🔢 재서 정했다 — 컷 긴변 348px 에 캡션 글자 35px 이라 칸이 W 면 화면 글자 = 35×W÷348:
+               52px(지금) **5.2px 못 읽는다** / 80px 8.0 / 92px 9.3 / **110px → 11.1px 읽힌다**
+            ⭐⭐ 110px 이 «공짜»인 이유 = 폰 411px 에서 92px 도 110px 도 **똑같이 3칸**이라
+               줄 수가 안 늘어난다(둘 다 39줄). 같은 값에 글자만 커진다.
+            ⛔ 130px 은 2칸이 되어 줄이 58줄로 늘어난다 — 거기서 끊었다.
+            ⛔ 접두어(`rs_`·`tw_`)로 가르지 않는다 — 표시용 이름·키로 분류하면 언젠가 어긋난다
+               (v9.07 에 라벨로 분류했다가 자산 도구가 깨졌다). 데이터에 표시를 단다.
+            ⛔⛔ 아래 조건 «뒤»에 JSX 주석을 넣지 말 것 — 거긴 표현식 여는 자리라 빌드가 깨진다.
+               2026-08-12 에 또 밟았다(CLAUDE.md 에 적힌 함정인데 이번이 여섯 번째다). */}
+        {!folded.has(g.key) && (
+          <div className={g.wordy ? 'decor-grid wordy' : 'decor-grid'}>{g.items.map(renderCell)}</div>
+        )}
       </div>
     )
   }
@@ -1309,6 +1463,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ))}
               </div>
             )}
+            {/* 📏 글자 크기 — 글자 스티커·글 상자가 «같은 표»를 쓴다(TEXT_SIZES).
+                ⭐ 글 상자는 `tz` 가 **글자에만** 곱해져 그림 크기는 안 변한다 —
+                   창업자 *"스티커를 줄이면 글자가 너무 작아져"* 가 바로 그 구조였다. */}
+            {ctxCur === 'size' && (selItem.type === 'text' || selItem.type === 'note') && (
+              <div style={ctxScroll}>
+                {TEXT_SIZES.map((z) => (
+                  <button key={z.key} className="press" onClick={() => patchRec(sel, { tz: z.key })}
+                    style={{ minHeight: 44, padding: '0 16px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, flex: '0 0 auto', background: (selItem.tz || 'md') === z.key ? 'var(--brown)' : 'var(--surface)', color: (selItem.tz || 'md') === z.key ? '#fff' : 'var(--text-sub)', border: 'none' }}>
+                    {z.label}
+                  </button>
+                ))}
+              </div>
+            )}
             {ctxCur === 'width' && selItem.type === 'text' && (
               <div style={ctxScroll}>
                 {TEXT_WEIGHTS.map((w) => (
@@ -1389,13 +1556,27 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
         )}
 
         {/* 서랍 — 새로 붙이기 전용(배경·스티커·테이프·글자·포스트잇). 선택 아이템 편집은 위 컨텍스트 바에서. */}
-        <div className={`decor-drawer${writing ? ' writing' : ''}`}>
-          <div className="decor-grab" />
+        <div className={`decor-drawer${writing ? ' writing' : ''}${drawerDown ? ' down' : ''}`}>
+          {/* 🫳🫳 **서랍 내리기 손잡이** (창업자 2026-08-12 *"내리기 버튼 만들어주면 안돼??
+              가운데 두꺼운 버튼같이 만들어서 그거 누르면 탭 전체가 내려가게 하면 편할텐데..."*)
+              ⭐ 새 단추를 만들지 않고 **이미 있던 손잡이 막대를 단추로** 만들었다 — 원래 「잡아 내리는 것」처럼
+                 생긴 자리라 배울 게 없다. 두께 4 → 6px · 폭 40 → 56px · 닿는 칸 38px.
+              ⭐ 내려도 손잡이는 남는다 — 다시 누르면 올라온다. ⛔사라지면 되돌릴 길이 없어진다. */}
+          {/* ⭐ 창업자 *"아니면 아래로 스크롤하면 내려가게 하거나.. 뭐든 편한방법으로"*
+              → **둘 다** 된다. 톡 = 내렸다 올렸다 · 아래로 끌면 내려가고 위로 끌면 올라온다.
+              🔢 24px 넘게 움직였을 때만 «끈 것»으로 친다(그 밑은 손 떨림이라 탭으로 본다). */}
+          <button type="button" className="decor-grab press"
+            onPointerDown={(e) => { grabY.current = e.clientY }}
+            onPointerUp={(e) => {
+              const d = e.clientY - (grabY.current ?? e.clientY)
+              setDrawerDown((v) => (Math.abs(d) > 24 ? d > 0 : !v))
+            }}
+            aria-expanded={!drawerDown} aria-label={drawerDown ? '서랍 올리기' : '서랍 내리기'} />
           {/* 🧭 큰 칸들 — 「속지 고르기 · 글쓰기 · 꾸미기」 (창업자 2026-08-06)
               ⭐ 앱에 이미 있는 `.segment` 를 쓴다 — 「모아보기 / 요리 기록」과 같은 문법이라 배울 게 없다.
               ✍️ 「글쓰기」는 **한 장을 만드는 세 단계 그대로**다 — 종이를 깔고 · 쓰고 · 꾸민다.
                  ⛔ 예전엔 셋째 단계가 「저장하고 나가기」였다. 그게 창업자가 말한 불편이다. */}
-          {(canPickPaper || paperEdit) && (
+          {!picksFold && (canPickPaper || paperEdit) && (
             <div className="segment" style={{ margin: '0 2px 6px' }}>
               {canPickPaper && <button className={`seg ${mode === 'paper' ? 'on' : ''}`} onClick={() => { dropCaret(); setMode('paper') }}>{isDiary ? '속지' : '속지 고르기'}</button>}
               {paperEdit && <button className={`seg ${writing ? 'on' : ''}`} onClick={() => setMode('write')}>글쓰기</button>}
@@ -1420,7 +1601,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ⚠️ **한 줄만** 둔다 — 서랍이 접혀야(`.decor-drawer.writing` 26vh) 종이가 커진다.
                  그 자리를 도로 먹으면 「글 쓰는데 서랍이 반을 먹는」 옛 문제로 돌아간다.
               ⚠️ 이름표는 «칩 글꼴»로 그린다 — 안 그러면 이 줄 하나에 4.45MB 를 부른다. */}
-          {showWriteTools && onWriteFont && (
+          {!picksFold && showWriteTools && onWriteFont && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 2px 8px', flex: '0 0 auto' }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-sub)', flex: '0 0 auto' }}>글씨</span>
               {/* 📐 스크롤 막대가 «칩 바로 밑»에 붙어 글씨를 그어놓은 것처럼 보였다
@@ -1439,7 +1620,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     //    ⛔ 줄 «개수»는 안 늘린다 — 서랍이 그만큼 눌린다(2026-08-07 스크롤 사고).
                     <button key={f.key} className="press" onClick={() => onWriteFont(f.key)}
                       onPointerDown={(e) => e.preventDefault()}
-                      style={{ flex: '0 0 auto', padding: '9px 14px', borderRadius: 999, fontSize: 15, fontWeight: 700,
+                      /* 📏 2026-08-13 창업자 *"글씨버튼도 크다"* — 9/14·15px → 6/12·13.5px
+                         🔢 이 줄 통째로 **56 → 46px** (10px 회수)
+                         ⛔ 더는 못 줄인다 — 2026-08-07 에 창업자가 *"좀만 그 부분 키워줘(너무 지금은 낮아…)"*
+                            라고 «키우라»고 했던 자리다. 칩이 곧 «글씨체 미리보기»라 낮으면 글자가 눌려 보인다. */
+                      style={{ flex: '0 0 auto', padding: '6px 12px', borderRadius: 999, fontSize: 13.5, fontWeight: 700,
                         fontFamily: chipFamily(f), background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)', border: 'none' }}>
                       {f.label}
                     </button>
@@ -1454,7 +1639,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                  (`Stickers.jsx` 의 `TEXT_FONTS` → `sz` · 또박체 0.975 ~ 납작체 0.650 으로 1.5배 차이였다).
               ⛔ 줄 간격은 «안» 건드린다 — 사진일기 그림에 인쇄된 줄과 맞춘 값이라 흔들면 어긋난다.
                  그래서 「크게」도 줄 높이의 0.90 까지. 커진 게 보이면서 줄을 안 넘는다. */}
-          {showWriteTools && onWriteSize && (
+          {!picksFold && showWriteTools && onWriteSize && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 2px 8px', flex: '0 0 auto' }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-sub)', flex: '0 0 auto' }}>크기</span>
               {WRITE_SIZES.map((z) => {
@@ -1479,7 +1664,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ⭐ 도구 바는 고른 게 없을 때 비어 있으므로 그 자리를 되돌리기가 채운다 — 줄 하나를 회수한 셈. */}
           {/* 카테고리 칩 — 가로로 골라 그 카테고리만(세로 스크롤 최소화) */}
           {mode === 'decor' && (
-          <div className="decor-cats" style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '2px 2px 10px', flex: '0 0 auto' }}>
+          <div className="decor-catsrow" style={{ display: 'flex', alignItems: 'flex-start', gap: 4, flex: '0 0 auto' }}>
+          {/* 🗂 접기 단추 — **갈래칩 줄에 붙여 둔다.** 접어도 이 줄은 남으니 «돌아올 길»이 늘 보인다.
+              ⛔ 접힌 상태에서 사라지는 자리에 두면 다시 펼 수가 없다. */}
+          <div className="decor-cats" onClick={dropBodyOnTap} style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '2px 2px 10px', flex: '1 1 auto', minWidth: 0 }}>
             {visCats.map((c) => {
               const on = cat === c.key
               return (
@@ -1490,9 +1678,30 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               )
             })}
           </div>
+            <button type="button" className="press decor-pickfold"
+              onClick={() => { dropCaret(true); toggleFold(PICKS_FOLD) }}
+              aria-expanded={!picksFold}
+              aria-label={picksFold ? '고르는 줄 펴기' : '고르는 줄 접기'}>
+              <PickFoldIco open={!picksFold} />
+            </button>
+          </div>
           )}
           <VHint boxRef={drawerRef} />
-          <div className="decor-scroll" ref={drawerRef}>
+          {/* ⌨️⌨️⌨️ **서랍을 누르는 «동안»엔 종이 커서를 뺏지 않는다** (창업자 폰 제보 2026-08-12 · 실측으로 확정)
+              ⛔⛔ 안 막으면 이런 일이 난다 — 손가락을 대는 «순간» 본문 커서가 풀리고,
+                 그 바람에 본문용 「글씨」·「크기」 두 줄(실측 **97px**)이 사라지면서
+                 **서랍 내용이 통째로 97px 위로 올라간다.** 손을 뗄 때 그 자리엔 딴 칸이 있다.
+              🔢 실측 = 글 상자 칸 y **1049 → 952**. 그 칸이 받은 이벤트는 「본문 커서 풀림」 하나뿐 —
+                 **pointerdown·click 이 한 번도 안 왔다.** 그래서 첫 탭이 통째로 사라진다.
+                 (창업자가 겪은 「눌러도 안 붙는다」·「두 번 눌러야 된다」·「글씨 크게가 없다」가 전부 이것)
+              ⭐ 고치는 법 = 바로 위 글씨체 «칩»이 이미 쓰던 그 방법이다(`onPointerDown` 기본동작 막기).
+                 칩 한 줄에만 걸려 있던 것을 **서랍 전체**로 넓힌다.
+              ⚠️ 단추일 때만 막는다 — 빈 자리는 그대로 둬야 손가락으로 굴릴 수 있다.
+                 (`preventDefault` 는 굴리기를 안 막는다 — 그건 `touch-action` 이 정한다. 칩 줄에서 이미 확인된 방식)
+              ⚠️ 붙인 «뒤»엔 `addBox`·`addNote` 가 커서를 내려놓는다 — 그때 줄이 사라져도 이미 붙은 뒤라 괜찮다. */}
+          <div className="decor-scroll" ref={drawerRef}
+            onPointerDown={(e) => { if (e.target.closest && e.target.closest('button')) e.preventDefault() }}
+            onClick={dropBodyOnTap}>
             {/* ✍️ 글쓰기 — 서랍엔 **아무것도 안 둔다.** 칸이 비어야 서랍이 접히고 종이가 커진다.
                 ⛔ 여기에 뭘 넣으면 「글 쓰는데 서랍이 반을 먹는」 지금 문제가 그대로 남는다.
                 ⛔ 안내도 여기 두지 않는다 — 종이 밑에 이미 한 줄 있어서 **같은 말이 두 번** 나온다. */}
@@ -1690,8 +1899,23 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 글자를 넣으려고 들어오는 탭이라 **직접 쓰기가 맨 위**. 포스트잇은 글씨 받침이라 그다음. */}
             {cat === 'notetext' && (
               <>
+                {/* 🗂🗂 **이 블록도 접힌다** (창업자 2026-08-12 *"꼬르곰은 한끼문구 위에 넣어줘. 접기 잘보이게"*)
+                    🔢 왜 = 「글자」 탭 굴칸 259px 을 이 블록(글씨체 칩 12 ＋ 「글자 넣기」 ＋ 안내)이 통째로 먹어
+                       **온전히 보이는 스티커 칸이 0개**였다. 레꾸에선 이것 때문에 꼬르곰 32컷이 **1298px 아래**에 있었다.
+                    ⭐ 그룹 접기와 «같은 문법»이다 — 이름을 누르면 접히고, 접은 건 기억한다. */}
+                {/* 🐻🐧🐻🐧 **꼬르곰·펭펭 32컷 = 「글자」 탭 «맨 위»** (창업자 확정 2026-08-12 「맨 위로」)
+                    📮 *"꼬르곰 안보이는데?? 레꾸 어디에 넣었어?"* → 고친 뒤에도 또 *"꼬르곰은 어디있어?"*
+                    ⛔⛔ **두 번째 제보다.** 앞서 「글자 직접 쓰기 바로 다음」으로 옮겨놓고 주석엔 「맨 위로」라 적었다 —
+                       적은 것과 한 것이 달랐다. 🔢 실측 = 그 자리가 **277px 아래**인데 보이는 칸이 **276px** 이라
+                       **1px 차이로 탭을 열면 한 컷도 안 보였다.** 위의 글씨체 12칸 ＋ 「글자 넣기」 단추가 통째로 깔려서다.
+                    ⭐ 그래서 진짜 맨 위로 올린다 — 탭을 열면 «바로» 꼬르곰이 보인다.
+                    ⛔ 「글자 직접 쓰기」를 «빼는» 게 아니라 한 칸 아래로 미는 것이고, 그건 접힌다(SecFold).
+                    ⛔ 자동으로 접지 않는다 — 「한 번 준 것은 빼앗지 않는다」와 같은 결이다.
+                    ⚠️ 레꾸 전용(only:'cover')이라 일꾸 서랍엔 안 뜬다. 일꾸엔 「기록」 갈래에 따로 있다. */}
+                {groupsByTab('notetext').filter((g) => g.key === 'rs_star' || g.key === 'rs_way').map(renderStickerGroup)}
                 <div className="decor-sec">
-                  <div className="decor-sec-label">글자</div>
+                  <SecFold k="sec_text" label="글자 직접 쓰기" />
+                  {!folded.has('sec_text') && (<>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '0 0 10px' }}>
                     {TEXT_FONTS.map((f) => (
                       <button key={f.key} className="press" onClick={() => setTextFont(f.key)}
@@ -1707,6 +1931,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     글자 넣기
                   </button>
                   <div style={{ fontSize: 11.5, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>넣은 뒤 톡 하면 색·굵기·글씨체를 바꿀 수 있어요</div>
+                  </>)}
                 </div>
                 {/* 🖍 형광펜 — 글자 «바로 밑»에 둔다. 강조할 글이 있어야 쓰는 도구라 순서가 곧 쓰는 순서다. */}
                 <div className="decor-sec">
@@ -1772,7 +1997,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     ))}
                   </div>
                 </div>
-                {groupsByTab('notetext').map(renderStickerGroup)}
+                {/* ⚠️ 위로 올린 둘은 여기서 빼야 «두 번» 나오지 않는다 */}
+                {groupsByTab('notetext').filter((g) => g.key !== 'rs_star' && g.key !== 'rs_way').map(renderStickerGroup)}
               </>
             )}
             {/* 🐻 친구들 */}
@@ -1782,6 +2008,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             {/* ✨ 데코 (색 바꾸는 심볼 + 데코 + 응원) */}
             {cat === 'frame' && groupsByTab('frame').map(renderStickerGroup)}
             {cat === 'deco' && groupsByTab('deco').map(renderStickerGroup)}
+            {/* 📔 기록 (일꾸 전용) — 맛 평가·반응·조리법·상황·준비·보관·건강 태그 99컷
+                ⛔⛔ **탭을 CATS 에 넣는 것만으로는 «안 그려진다».** 서랍 본문이 여기서
+                   `cat === '…'` 로 «손으로 나열»돼 있기 때문이다. 2026-08-12 에 이 한 줄을 빠뜨려
+                   탭은 떴는데 **안이 텅 비었다**(숫자 검사는 「탭 있음」으로 통과시켰고, 화면을 찍어서 잡았다).
+                📌 새 탭을 만들면 **CATS ＋ 여기 둘 다** 고친다. */}
+            {cat === 'record' && groupsByTab('record').map(renderStickerGroup)}
             </>)}
           </div>
         </div>

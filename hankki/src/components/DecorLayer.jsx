@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
-import { StickerArt, StickerFx, motionClass, stickerRatio, NOTE_COLORS, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
+import { StickerArt, StickerFx, motionClass, stickerRatio, NOTE_COLORS, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, textSizeV, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -222,6 +222,14 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           // 나머지(스티커·테이프·포스트잇): 폭=it.s + 종횡비 고정.
           ...(isText
             ? { width: 'max-content', maxWidth: '150%' }
+            // 📏📏 **상자는 그대로 · 글자만 커진다** (창업자 2026-08-12
+            //   *"글자가 커지면서 상자가 커지면 그게 무슨의미가 있어.. 스티커는 그대로고 글자크기만 커져야지."*)
+            //   ⛔⛔ 앞 판에서 내가 배율을 «상자»에 걸었다 — 그러면 그림째 커져서 「크기」 갈래가
+            //      손잡이로 키우는 것과 똑같아진다. 창업자 말이 맞다, 그럼 있을 이유가 없다.
+            //   ⭐ 그래서 상자는 손 안 대고, 배율은 **글자가 커질 수 있는 「한도」**에 건다(`autoCqw` 의 `max`).
+            //      `autoCqw` 는 «넘치지 않는 가장 큰 값»을 찾는 함수라, 한도만 올리면
+            //      **짧은 글은 그만큼 커지고 긴 글은 알아서 안 넘는다.** 잘림이 구조적으로 안 생긴다.
+            //   ⛔ 저장값 `s` 는 안 건드린다 — 「보통」으로 되돌리면 원래대로 온다.
             : { width: `${it.s * 100}%`, aspectRatio: `${ratio}` }),
           // ↔ **좌우 뒤집기**(창업자 2026-08-06 *"캐릭터좌우반전돼?"* → 된다).
           //   ⭐ `rotate` «뒤»에 `scaleX` 를 둔다 — 순서를 바꾸면 뒤집은 뒤 회전이라
@@ -395,7 +403,10 @@ function TextDeco({ it, editable, coverW = 0, typing, onText }) {
   const text = it.text || (editable ? '글자' : '')
   // it.s(사용자 조절)만으로 크기 결정 → 크기/회전 핸들 로직 그대로, 상자만 글자에 맞게 줄어듦.
   const cw = coverW || 320
-  const fontPx = Math.max(8, Math.min(220, it.s * 0.15 * cw))
+  // 📏 「크기」 갈래(작게·보통·크게·아주 크게) — 글 상자와 «같은 배율표»를 쓴다.
+  //   ⭐ 글자 스티커는 상자가 글자에 맞춰지므로 결과적으로 상자도 같이 커진다(그게 맞다).
+  //   ⚠️ 손잡이(`it.s`)는 그대로 산다 — 갈래는 «누르면 되는 길»을 더한 것이지 대체가 아니다.
+  const fontPx = Math.max(8, Math.min(220, it.s * 0.15 * cw * textSizeV(it.tz)))
   // ✒️ 굵기 = 외곽선 두께로 낸다(글씨체가 400 한 종류뿐이라 font-weight 로는 안 굵어진다).
   //    `paintOrder: stroke fill` 이라 선이 글자 뒤에 깔려 **획을 안 갉고 바깥으로만** 두꺼워진다.
   const wt = TEXT_WEIGHTS.find((t) => t.key === it.w) || TEXT_WEIGHTS[1]
@@ -498,7 +509,18 @@ function Note({ it, editable, typing, onText }) {
   //   ⚠️ CSS 의 `padding: %` 는 **위아래도 «폭» 기준**이다 — 높이 기준으로 계산하면 세로가 어긋난다.
   //   ⚠️ 포스트잇 상자 비율은 1.06 이라 «폭 대비 높이» = 100/1.06.
   const pp = isClip ? [22, 18] : [9, 10]   // [위아래, 좌우] %
-  const noteCqw = autoCqw(text, 14, 100 - pp[1] * 2, 100 / 1.06 - pp[0] * 2, 1.4)
+  // 📏 **상자는 그대로 · 글자만** 커진다 (창업자 2026-08-12 *"스티커는 그대로고 글자크기만 커져야지"*)
+  //   ⭐ 배율을 「글자가 커질 수 있는 «한도»」에 건다 — `autoCqw` 가 «넘치지 않는 가장 큰 값»을 찾으므로
+  //      짧은 글은 한도까지 커지고, 긴 글은 그 안에서 알아서 줄어든다. **잘림이 안 생긴다.**
+  //   ⛔ 결과값에 곱하면 안 된다 — 그건 이미 «딱 맞는 최대»라 곱하는 순간 무조건 넘친다(앞 판의 실수).
+  // 📏 **「보통」 크기를 먼저 구하고, 거기에 배율을 «곱한다».**
+  //   ⛔⛔ 앞 판은 배율을 «한도»(max)에 넣었다 — 창업자가 정확히 잡았다:
+  //      *"보통보다 크게가 살짝 더 작아져"* . autoCqw 는 0.25 씩 내려가며 맞는 값을 찾는데
+  //      **시작점이 바뀌면 «다른 계단»에 걸려** 큰 한도에서 내려온 값이 오히려 더 작아질 수 있다.
+  //      (한 줄에 들어갈 글자 수 per = floor(폭/r) 이 계단식으로 뚝뚝 떨어져서다)
+  //   ⭐ 그래서 계산은 «보통»으로 한 번만 하고 결과에 배율을 곱한다 — 순서가 뒤집힐 수 없다.
+  //   ⭐ 넘치면 «안 자른다»(아래 overflow) — 창업자가 싫다 한 건 「잘림」이지 「넘침」이 아니다.
+  const noteCqw = autoCqw(text, 14, 100 - pp[1] * 2, 100 / 1.06 - pp[0] * 2, 1.4) * textSizeV(it.tz)
 
   return (
     <div style={{ position: 'absolute', inset: 0, containerType: 'size', color: c.text }}>
@@ -524,7 +546,8 @@ function Note({ it, editable, typing, onText }) {
           //      **14 = 열둘 전부 한 줄** ← 여기가 「한 줄이 되는 가장 큰 값」이라 제일 안 작아 보인다.
           //   ⛔ 더 낮추지 말 것 — 14 에서 이미 요구가 충족돼 그 아래는 글씨만 작아진다.
           fontSize: `clamp(6px, ${noteCqw}cqw, 72px)`, lineHeight: 1.4,
-          overflow: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
+          // ⭐ 「크게」 이상이면 «안 자른다» — 창업자가 싫다 한 건 「잘림」이고, 넘치는 건 다 보인다.
+          overflow: textSizeV(it.tz) > 1 ? 'visible' : 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
           // ⌨️ `safe` — 글이 칸보다 커지면 치는 칸과 같은 「위 정렬」이 되어 글자가 안 튄다(위 ArtBox 주석 참조)
           display: 'flex', alignItems: 'safe center', justifyContent: 'safe center', textAlign: 'center',
           ...(typing ? { visibility: 'hidden' } : null),
@@ -597,11 +620,17 @@ function Note({ it, editable, typing, onText }) {
 //      「치는 중」 `textarea` 는 위에서부터 쌓여 **8px 어긋났다.** 창업자가 본 「튐」의 정체가 이것이다.
 //   ✅ 한 줄도 안 들어가면 «넘어가지 말고 더 줄인다». 바닥도 5 → 2 로 내린다(그 아래는 `clamp(6px…)` 가 지킨다).
 //   ⚠️ 잘 되던 상자(줄이 하나라도 들어가는 경우)는 값이 «하나도 안 바뀐다» — `cap ≥ 1` 이면 예전 식과 같다.
-function autoCqw(text, max, wPct, hPct, lh) {
+// 📐 `room` = 세로를 얼마나 봐줄까(1 = 딱 맞게 · 1.25 = 25% 넘쳐도 됨)
+//   ⭐ 「크기」 갈래로 글자를 키울 때 쓴다 — **납작한 상자**(라벨지·배너)는 세로 여유가 거의 없어서
+//      딱 맞게만 재면 아무리 한도를 올려도 «한 줄도 안 들어간다»며 도로 작아진다.
+//      실측 = 「아주 크게」를 눌러도 14.9 → 15.0px(0.1px). 창업자가 두 번 말한 그 자리다.
+//   ⛔ 넘침은 «잘림»이 아니다 — 글 상자는 `overflow` 를 안 잘라서 살짝 나가도 글자는 다 보인다.
+//   ⛔ 「보통」일 땐 room = 1 이라 **값이 한 톨도 안 바뀐다**(이미 쓴 일기가 안 흔들린다).
+function autoCqw(text, max, wPct, hPct, lh, room = 1) {
   const lines = String(text || '').split('\n')
   for (let r = max; r > 2; r -= 0.25) {
     const per = Math.max(1, Math.floor(wPct / r))    // 한 줄에 들어갈 글자 수
-    const cap = Math.floor(hPct / (lh * r))          // 세로로 들어갈 줄 수 — 0 이면 한 줄도 못 들어간다
+    const cap = Math.floor((hPct * room) / (lh * r)) // 세로로 들어갈 줄 수 — 0 이면 한 줄도 못 들어간다
     if (cap < 1) continue
     const need = lines.reduce((s, l) => s + Math.max(1, Math.ceil(l.length / per)), 0)
     if (need <= cap) return r
@@ -621,7 +650,12 @@ function ArtBox({ it, editable, typing, onText }) {
     boxSizing: 'border-box', color: ink,
     fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
     // 📐 글 길이에 맞춰 저절로 줄어든다 — 상자 «폭» 대비 가로 여백·세로 여백을 그대로 넘긴다
-    fontSize: `clamp(6px, ${autoCqw(text, 13, 100 - pad[1] - pad[3], (100 - pad[0] - pad[2]) / (stickerRatio(it.art) || 1), 1.35)}cqw, 64px)`,
+    // 📏📏 **그림은 그대로 · 글자만** 「크기」 갈래로 (창업자 2026-08-12
+    //   *"글에 비해 글자상자가 너무 작아(스티커-돌밥돌밥쓴거) 스티커를 줄이면 글자가 너무 작아져"*)
+    //   ⛔⛔ 처음엔 `Note` 쪽만 고치고 여기를 빠뜨려 **재현이 「글자가 안 커졌다」로 잡았다.**
+    //      창업자가 쓴 말풍선은 `it.art` 가 있어 **`ArtBox`(여기)** 로 온다 — 두 함수를 «같이» 고쳐야 한다.
+    // 📏 배율은 「커질 수 있는 한도」에 건다 — 그림(상자)은 그대로, 글자만 커진다.
+    fontSize: `clamp(6px, ${autoCqw(text, 13, 100 - pad[1] - pad[3], (100 - pad[0] - pad[2]) / (stickerRatio(it.art) || 1), 1.35) * textSizeV(it.tz)}cqw, 64px)`,
     lineHeight: 1.35,
     whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
     textAlign: 'center',
@@ -635,7 +669,8 @@ function ArtBox({ it, editable, typing, onText }) {
       {/* 글자 — 잰 여백 «안»에만. 그림 위라 층을 안 줘도 나중에 칠해진다 */}
       <div
         style={{
-          ...inner, overflow: 'hidden',
+          // ⭐ 「크게」 이상이면 «안 자른다»(위 Note 와 같은 규칙)
+          ...inner, overflow: textSizeV(it.tz) > 1 ? 'visible' : 'hidden',
           // 얇은 손글씨만 동색 얇은 외곽선 — 포스트잇과 같은 규칙(창업자 요청)
           ...((it.font === 'gaegu' || it.font === 'nanumpen') ? { WebkitTextStroke: `0.4px ${ink}`, paintOrder: 'stroke fill' } : {}),
           // ⌨️ `safe` 가 핵심 — **글이 칸보다 크면** 그냥 `center` 는 위아래로 똑같이 밀어내는데

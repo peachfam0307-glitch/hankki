@@ -14,7 +14,10 @@
 import { StickerFx } from './Stickers'
 import duoCooking from '../assets/sharepool/duo_cooking.png'
 import gomShop from '../assets/ui/gom_shop.png'
-import gomClap from '../assets/ui/gom_clap.png'
+// 🐻 완성 칸 꼬르곰 = **물결 정본 박수 곰**(창업자 2026-08-14 제공 · `docs/stickers/…-08-14/낱개/gt_c01`).
+//    ⛔ 옛 `ui/gom_clap` 은 «매끈 곰»이었다 — 창업자 판정 *"2.4번만 옛날곰이고 나머지는 물결곰이야."*
+//    ⭐ 비율이 옛 컷과 사실상 같아(0.99 ↔ 0.98) `height:46px` 자리에 그대로 들어간다.
+import gomClap from '../assets/ui/wave/gom_clap.png'
 
 // 절 머리에 붙는 컷 — 「재료」엔 장보기 꼬르곰, 「만드는 법」엔 함께 요리하는 듀오
 const SECTION_CUTS = { 재료: gomShop, 만드는법: duoCooking }

@@ -64,7 +64,9 @@ export default function DiaryScreen({ day }) {
   useEffect(() => { setPick(entry?.paper || FIRST) }, [day]) // eslint-disable-line react-hooks/exhaustive-deps
   const [open, setOpen] = useState(false)
   const closeRef = useRef(null)
-  useLayerBack(open, () => { if (closeRef.current) closeRef.current(); else setOpen(false) })
+  // ⭐ 돌려주는 값을 «그대로» 넘긴다 — `false` 면 App 이 「아직 안 닫았다」로 보고 층을 남긴다.
+  //    ⛔ 안 넘기면 undefined 라 「닫았다」로 읽혀 뒤로가기가 먹통이 된다(2026-08-12 창업자 제보).
+  useLayerBack(open, () => { if (closeRef.current) return closeRef.current(); setOpen(false); return true })
 
   const decor = entry?.decor || []
   const skin = paperStyle(pick)
@@ -141,7 +143,8 @@ export default function DiaryScreen({ day }) {
       const src = await fitImage(reader.result, 1200)
       const pk = photoKeyRef.current || 'photo'
       // ⚠️ 새 사진을 넣으면 그 칸의 위치도 «가운데»로 되돌린다 — 옛 사진 기준 좌표는 뜻이 없다
-      setText((t) => ({ ...t, [pk]: src, [`${pk}Pos`]: '' }))
+      //   ⚠️ 확대 배율도 같이 되돌린다 — 옛 사진에 맞춰 3배로 당겨 뒀으면 새 사진이 통째로 확대돼 뜬다
+      setText((t) => ({ ...t, [pk]: src, [`${pk}Pos`]: '', [`${pk}Zoom`]: '' }))
     }
     reader.readAsDataURL(file)
   }
@@ -152,8 +155,22 @@ export default function DiaryScreen({ day }) {
     <div className="screen fade" style={{ paddingBottom: 0 }}>
       <div className="detail-bar">
         <button className="bar-btn" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
-        <div style={{ fontSize: 15, fontWeight: 800 }}>
-          {date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 13, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span>
+        <div style={{ fontSize: 15, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 7 }}>
+          <span>{date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 13, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span></span>
+          {/* 🏷 **「샘플」** (창업자 2026-08-12 *"자기 일기가 아니니까 지워도 되게(샘플이라고 적어주고)"*)
+              ⭐ 제목 «옆»에 둔다 — 종이 위에 얹으면 꾸민 것과 섞여 「이것도 스티커인가」가 된다.
+              ⛔⛔ 첫 판은 **연한 크림 바탕에 보조색 글자 11px** 이었다 → 창업자 *"샘플표시가 너무 작아 티도안나"*.
+                 **맞다** — 크림(#f2ede3)은 화면 바탕(#faf8f4)과 거의 같아서 «칠한 티»가 안 난다.
+              ⭐ 그래서 «채운 pill» 로 바꾼다 — 진한 잉크 바탕 ＋ 흰 글자 ＋ 12.5px.
+                 ⛔ 포인트색(파랑)은 **안 쓴다** — 우리 앱에서 파랑은 「누르는 것」이라 단추로 읽힌다.
+                    이건 눌러도 아무 일 없는 «이름표»다. 스티커 지우기 단추와 같은 잉크색을 쓴다. */}
+          {entry?.sample && (
+            <span style={{
+              fontSize: 12.5, fontWeight: 800, letterSpacing: '.02em',
+              padding: '4px 11px', borderRadius: 999,
+              background: '#3f382e', color: '#fff', flex: '0 0 auto',
+            }}>샘플</span>
+          )}
         </div>
         {/* ⛔⛔ [2026-08-12] 지운 뒤 «화면을 떠난다». 안 그러면 지운 일기가 되살아난다.
             📮 창업자 *"일기 지워도 뜸. (아카이브+달력)"* — 재현으로 확정했다(`_repro-일기삭제-0812` ②-2).
@@ -205,6 +222,13 @@ export default function DiaryScreen({ day }) {
             ⛔ 아무 말 없이 옮기면 「없어졌다」로 읽힌다 — 있던 자리에서 사라진 기능이라 더 그렇다. */}
         <div className="t-sub" style={{ fontSize: 11.5, textAlign: 'center', marginTop: 6, lineHeight: 1.5 }}>
           속지(선·종이·틀)도 꾸미기 안에서 골라요
+          {/* 🗑 «지워도 된다»를 글자로도 (창업자 2026-08-13 *"샘플이라고(삭제가능) 명시하고"*)
+              ⭐ 배지에 「샘플 · 지워도 돼요」를 다 넣지 «않았다» — 320px 폰에서 날짜·휴지통과 한 줄에 안 들어간다.
+                 배지는 «눈에 띄는 이름표», 설명은 이 줄이 맡는다(자리를 새로 안 만든다).
+              ⛔ 「지우세요」가 아니라 **「지워도 돼요」** — 재촉이 아니라 허락이다(`리텐션-설계원칙` 참고). */}
+          {entry?.sample && (
+            <><br />이건 <b>보여드리는 샘플</b>이에요 · 위 휴지통으로 지워도 돼요</>
+          )}
         </div>
 
         {/* 그날 만든 요리 — ⛔자동으로 안 얹는다. 「있다」만 알려주고 붙일지는 본인이 정한다 */}

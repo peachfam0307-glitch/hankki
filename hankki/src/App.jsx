@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useStore } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
@@ -177,10 +178,20 @@ export default function App() {
       // 1.5) 모달·오버레이(꾸미기·미리보기·시트·픽커 등)가 열려 있으면 최상위 하나만 닫는다.
       //      이 칸은 열 때 gesture-backed 로 쌓였고 방금 popstate 로 소비됐으니 '다시 채우지 않는다'.
       //      (popstate 안 gesture-less pushState 가 사라져 크롬 intervention 재종료 버그를 근본 제거)
+      // ⛔⛔ **꾸미기 뒤로가기 먹통** (창업자 2026-08-12 *"뒤로가기 안됨(꾸미기 닫힘안돼)"*)
+      //    🔢 뿌리 = 여기서 층을 «무조건» 빼버렸다. 그런데 꾸미기의 닫기는 곧장 안 닫고
+      //       **「저장하지 않고 나갈까요?」를 먼저 묻는다** → 판은 그대로인데 층과 히스토리 칸이 사라진다.
+      //       → 다음 뒤로가기가 갈 곳을 잃어 «먹통»이 되거나, 판보다 아래 칸을 먹어 **꾸민 게 날아간다.**
+      //    ⭐ 답 = 닫기가 `false` 를 돌려주면 «아직 안 닫았다»로 보고 **층을 남기고 칸을 되채운다.**
+      //       (2번·4번 경로가 이미 같은 문법으로 `trap()` 을 쓴다 — 새 발명이 아니다.
+      //        ⛔`trap()` 금지는 5번 「홈에서 나가기」 자리에만 해당한다)
       if (modalLayers.current.length > 0) {
-        const layer = modalLayers.current.pop()
+        const layer = modalLayers.current[modalLayers.current.length - 1]
         layer.consumed = true
-        try { layer.close() } catch { /* noop */ }
+        let 아직안닫힘 = false
+        try { 아직안닫힘 = layer.close() === false } catch { /* noop */ }
+        if (아직안닫힘) { layer.consumed = false; trap(); return }
+        modalLayers.current.pop()
         return
       }
       // 2) 그 밖의 화면 내부 상태(필터·세그먼트 등)를 위에서부터 처리한다.
@@ -439,10 +450,63 @@ export default function App() {
 //   ⚠️ 꾸미기 판은 Portal 이라 `.app-frame` 밖 → 여기 안 걸린다(서랍 막대는 `DecorEditor` 가 따로 그린다).
 //   ⚠️ 표식 `data-vhint` = 재현 검사가 «실제로 그려졌나»를 집는 자리.
 function ScrollHint({ dep }) {
-  const [bar, setBar] = useState(null) // [화면 y, 높이, 오른쪽 x] · null = 안 넘침
-  const [hbars, setHbars] = useState([]) // 가로로 넘치는 줄들 — [왼쪽 x, 폭, 아래 y]
+  // 📜📜 [2026-08-14 테스터] *"화면에서 스크롤 할때 회색 막대기? 같은게 «살짝 부자연스럽게 따라와여»"*
+  //   🔢 실측(`scripts/_repro-막대따라옴-0814.mjs`) — 굴린 «순간» 막대가 **63~110px 어긋나** 있었고
+  //      **1프레임 뒤에도 그대로**, **2프레임 뒤에야** 0 이 됐다. 늦는 게 «느낌»이 아니라 사실이었다.
+  //   ⛔ 지연이 두 겹이었다 —
+  //      ⑴ `scroll` → `requestAnimationFrame(measure)` = 한 프레임
+  //      ⑵ `measure()` → `setState` → React 리렌더/커밋 = 또 한 프레임
+  //      게다가 `top`/`left` 를 바꾸니 그때마다 **레이아웃＋페인트**가 다시 돌았다.
+  //      그동안 화면 자체는 브라우저가 컴포지터에서 «즉시» 굴린다 → 막대만 뒤처진다.
+  //   ✅ 그래서 «무거운 것»과 «가벼운 것»을 갈랐다:
+  //      · `measure()` = 무엇을 그릴까(어느 화면·가로 줄 몇 개) — 여전히 rAF·MutationObserver 로 «가끔»
+  //      · `paint()`   = 어디에 그릴까(scrollTop → 자리) — **스크롤마다 즉시 · DOM 에 직접 · transform**
+  //      state 는 **개수만** 들고 있는다. 자리를 state 로 옮기면 리렌더 한 겹이 다시 끼어든다.
+  //   ⛔ 막대를 없애지 않는다 — 창업자 2026-08-08 *"스크롤바가 처음부터 안보여서 글자체 저게다처럼보임"*
+  //      안드로이드 크롬의 오버레이 막대는 «긁는 동안만» 떠서 「여기서 끝」으로 읽힌다.
+  const [n, setN] = useState({ v: false, h: 0 }) // ⭐ 자리가 아니라 «개수»만
+  // ➡️ 가로 막대는 «그 줄의 부모» 안에 그린다(Portal) → 세로로 굴려도 브라우저가 함께 옮긴다.
+  //    그래서 «어느 줄인가»를 state 로 들고 있어야 한다(개수만으론 어디에 붙일지 모른다).
+  const [붙일곳, set붙일곳] = useState([])
+  const vRef = useRef(null)
+  const hRefs = useRef([])
+  const 화면 = useRef(null)   // 지금 굴러가는 화면
+  const 가로줄 = useRef([])   // 가로로 넘치는 줄들(요소 그대로 — 자리는 그때그때 다시 잰다)
+  const paintRef = useRef(() => {})
+  // 📜📜 [2026-08-14 창업자] *"스크롤하면 덜덜거리자나 회색막대기가"*
+  //   ⛔ 「늦게 따라온다」(v10.68)와 **다른 증상**이다. 늦음 = 한 박자 뒤 · 떨림 = 박자가 안 맞음.
+  //   🔎 안드로이드에선 **화면은 컴포지터가** 굴리고 **막대는 메인 스레드가** 옮긴다 →
+  //      메인이 조금만 바빠도 프레임을 놓쳐 막대만 멈췄다 튄다. **JS 로는 못 이긴다.**
+  //   ✅ 브라우저에게 「스크롤 그 자체를 시계로 삼아」 옮기라고 넘긴다(CSS `scroll-timeline`).
+  //      그러면 컴포지터에서 돌아 메인 스레드와 «무관»해진다 — 원리적으로 떨림이 없어진다.
+  //   ⚠️ 되는 브라우저에서만. 안 되면 지금까지처럼 `paint()` 가 옮긴다(눈에 보이는 건 똑같다).
+  //
+  // ⛔⛔⛔ [2026-08-14 · 창업자 영상이 뒤집었다] **그 시계가 창업자 폰에서 «안 돌았다».**
+  //   📮 창업자 *"해결안됐어 찍어줘?"* → 12.4초 화면 녹화(1080×2340·114fps)를 프레임마다 쟀다
+  //      (`scripts/_영상-흔들-0814.mjs`).
+  //   🔢 레시피 화면 3.8~7.5초 — **내용은 2,272px 굴렀는데 막대는 y 96~133 안에서 떨기만 했다.**
+  //      즉 막대가 스크롤을 «따라가지 않고» 맨 위(`--hk-vy0`)에 붙박여 제자리 진동만 했다.
+  //      ⭐ 그게 창업자가 본 「덜덜」이다. 창업자 말 *"걔는 고정이어야하는데"* 가 정확했다 —
+  //         **막대는 붙박여 있었고 «떨림»만 남았다.**
+  //   ⛔ **그런데 나는 시계를 믿고 `paint()` 를 꺼버렸다** → 얼어붙은 막대를 되살릴 길이 없었다.
+  //   ⛔⛔ **검사가 왜 못 잡았나 = 「기능이 있나」만 물었다.**
+  //      `CSS.supports('animation-timeline','scroll()')` 은 «익명 시계»를 묻는데
+  //      우리가 실제로 쓰는 건 **`timeline-scope` 로 이름 붙인 시계**다 — «다른 기능»이다.
+  //      게다가 헤드리스 크로미움(141)에선 돌아서 재현판이 초록불이었다.
+  //      📌 **「되나」를 물어야 할 자리에서 「있나」를 물었다.** (규칙 18 ⓘ 그대로)
+  //   ✅ **그래서 시계를 뺐다. 다시 `paint()` 가 옮긴다.**
+  //      ⭐ 대신 **rAF 고리**로 옮긴다 — 스크롤 이벤트는 안드로이드에서 «몰려서» 오므로
+  //         이벤트마다 그리면 계단이 진다(그게 v10.68 의 떨림이었다).
+  //         화면이 그려지는 «매 프레임» `scrollTop` 을 새로 읽어 그리면 JS 가 낼 수 있는 최선이 된다.
+  //   ⛔ 다시 시계로 돌아가려면 **「폰에서 진짜로 도는지」를 먼저 확인**할 것.
+  //      기능 검사로는 절대 판정하지 말 것 — 오늘 그걸로 하루를 썼다.
+  const 시계로옮긴다 = useRef(false)
+  const 표시한화면 = useRef(null) // `hk-tl` 을 붙여 둔 화면(다른 데로 옮길 때 떼야 한다)
+
   useEffect(() => {
     let raf = 0
+    // ⛔ 시계는 «끈다» — 창업자 폰에서 안 돌았다(위 주석의 영상 실측). 기능 검사로 켜지 말 것.
+    시계로옮긴다.current = false
     // ➡️➡️ **가로로 넘치는 줄에도 막대를 그린다** (전수 재현판이 잡았다 — 2026-08-09 밤)
     //    🔢 실측 = 레시피 탭 「전체 41 · 아시안 2 · ＋ 폴더」 · 장보기 탭 「고기·해산물 … 자연드림」이
     //       화면 밖으로 나가 있었다. 옆으로 밀면 나오는데 **밀 수 있다는 표시가 없다.**
@@ -450,7 +514,7 @@ function ScrollHint({ dep }) {
     //       창업자 *"앱 전반적으로 스크롤이 표시가 안되어있지 않아??"* 의 **나머지 절반**이 여기다.
     //    ⭐ 화면마다 손으로 붙이면 다음 화면에서 또 빠진다 → **넘치는 줄을 찾아** 한 곳에서 그린다.
     //    ⚠️ `data-hstrip`(이미 우리가 그린 줄)은 건너뛴다 — 두 겹으로 그리면 안 된다.
-    const 가로재기 = (root) => {
+    const 가로찾기 = (root) => {
       const out = []
       for (const el of root.querySelectorAll('div, ul, nav')) {
         if (el.scrollWidth <= el.clientWidth + 8) continue
@@ -458,48 +522,171 @@ function ScrollHint({ dep }) {
         if (!/auto|scroll/.test(getComputedStyle(el).overflowX)) continue
         const r = el.getBoundingClientRect()
         if (r.width < 60 || r.bottom < 4 || r.top > innerHeight - 4) continue
-        const w = Math.max(24, (el.clientWidth / el.scrollWidth) * r.width)
-        const x = r.left + (el.scrollLeft / (el.scrollWidth - el.clientWidth)) * (r.width - w)
-        out.push([Math.round(x), Math.round(w), Math.round(r.bottom - 3)])
+        out.push(el)
       }
       return out
+    }
+
+    // 📐📐 [2026-08-14 창업자 ②] *"아직도 좀 덜덜하긴해 … 걔는 고정이어야하는데 스크롤하면 움직이니까."*
+    //   ⛔⛔ **v10.69(시계로 옮기기)로도 안 끝났다. 내가 «막대»만 보고 «바닥»을 안 봤다.**
+    //   🔎 뿌리 = `src/main.jsx` 가 `visualViewport` 의 **scroll·resize 마다** `--app-height` 를 다시 쓴다.
+    //      안드로이드 크롬은 굴리는 «동안» 주소창을 접었다 폈다 하므로 그때마다
+    //      `.app-frame { height: var(--app-height) }` 가 다시 레이아웃된다 → 화면(.screen)도 같이 움직인다.
+    //      그런데 막대는 `position: fixed` = **뷰포트**에 붙어 있었다.
+    //      📌 **내용은 프레임 기준, 막대는 뷰포트 기준** — 바닥이 흔들리면 둘이 갈라진다. 그게 「덜덜」이다.
+    //   🔢 실측(`scripts/_probe-바닥흔들-0814.mjs`) — 주소창만큼(56·64px) 앱 높이를 바꾸니 **최대 10px 어긋났다.**
+    //      ⚠️ 이 컨테이너엔 주소창이 «없어서» 있는 그대로는 0 이 나온다 —
+    //         「덜덜이 없다」가 아니라 **「이 판에선 못 잡는다」**라 흉내를 내서 쟀다(규칙 18).
+    //   ✅ 고침 = 세로 막대를 **`.app-frame` 안에 `absolute`** 로 붙인다(프레임이 `position: relative`).
+    //      그러면 막대와 내용이 **같은 상자**에 들어가 프레임이 커지든 작아지든 «같이» 움직인다.
+    //      좌표도 프레임 기준이라 `r.top - fr.top` = 0 → 주소창이 움직여도 **값이 낡지 않는다.**
+    //   ⛔ 가로 막대는 그대로 `fixed` 로 둔다 — ⑴스크롤마다 rect 를 다시 읽어 낡을 틈이 없고
+    //      ⑵꾸미기 판은 Portal 이라 `.app-frame` «밖»이다. 프레임 기준으로 바꾸면 판 위 막대가 잘린다.
+    const 프레임자리 = () => {
+      const f = vRef.current && vRef.current.offsetParent
+      return f ? f.getBoundingClientRect() : { left: 0, top: 0 }
+    }
+
+    // 🖌 가벼운 칠하기 — **스크롤마다 즉시.** rAF 도 state 도 안 거친다.
+    //    ⭐ `transform` 만 만진다(컴포지터가 처리 → 레이아웃·페인트가 안 돈다).
+    //    ⚠️ 그래서 막대 자체는 `top:0; left:0` 에 두고 **전부 translate 로** 옮긴다.
+    const paint = () => {
+      const s = 화면.current
+      const v = vRef.current
+      // ⭐ 시계로 옮기는 브라우저면 세로 막대는 **손대지 않는다** — 브라우저가 컴포지터에서 옮긴다.
+      //    여기서 또 `transform` 을 쓰면 애니메이션과 싸워 오히려 튄다.
+      if (s && v && s.isConnected && !시계로옮긴다.current) {
+        const { scrollHeight: sh, clientHeight: ch, scrollTop: st } = s
+        if (sh > ch + 8) {
+          const r = s.getBoundingClientRect()
+          const fr = 프레임자리() // ⭐ 세로 막대는 프레임 기준(absolute) — 뷰포트가 흔들려도 안 갈라진다
+          const h = Math.max(28, (ch / sh) * r.height)
+          const y = r.top - fr.top + (st / (sh - ch)) * (r.height - h)
+          v.style.height = `${h}px`
+          v.style.transform = `translate3d(${r.right - fr.left - 5}px, ${y}px, 0)`
+        }
+      }
+      // ➡️➡️ [2026-08-14 창업자 ③] *"아니 막대가 «가로»라니까 세로막대아니고"*
+      //   ⛔⛔ 오늘 하루(v10.68·69·70·71)를 **세로 막대만** 보고 고쳤다. 창업자가 말한 건 «가로» 막대였다.
+      //   ⭐ 그러면 *"걔는 고정이어야하는데 스크롤하면 움직이니까"* 가 그대로 읽힌다 —
+      //      **가로 막대는 «자기 줄»에 딱 붙어 있어야 한다.** 세로로 굴릴 때 줄에서 떨어지면 안 된다.
+      //   🔢 실측(`scripts/_repro-가로막대-0814.mjs`) — 굴린 «그 순간» 막대가 자기 줄에서
+      //      **레시피 최대 80px · 장보기 최대 896px** 떨어져 있었다. 줄은 컴포지터가 즉시 굴리는데
+      //      막대는 `fixed` 라 JS 가 «쫓아다녔기» 때문이다.
+      //   ✅ **막대를 그 줄의 부모 안으로 넣었다**(Portal ＋ `absolute`) → 세로로 굴리면
+      //      브라우저가 줄과 **함께** 옮긴다. **세로 스크롤에 JS 가 0이다** — 늦을 수가 없다.
+      //   ⭐ 그래서 여기선 **가로 자리만** 정한다. 세로(`top`)는 붙일 때 한 번 잡고 안 건드린다.
+      for (let i = 0; i < 가로줄.current.length; i++) {
+        const el = 가로줄.current[i]
+        const b = hRefs.current[i]
+        if (!b || !el || !el.isConnected) continue
+        const w = Math.max(24, (el.clientWidth / el.scrollWidth) * el.clientWidth)
+        // 부모 기준 좌표 — `offsetLeft/Top` 은 «굴려도 안 변한다»(그게 이 고침의 전부다)
+        const x = el.offsetLeft + (el.scrollLeft / (el.scrollWidth - el.clientWidth)) * (el.clientWidth - w)
+        b.style.width = `${w}px`
+        b.style.transform = `translate3d(${x}px, ${el.offsetTop + el.offsetHeight - 3}px, 0)`
+      }
+    }
+    // 📜 시계 달기 — 「어느 화면이 시계인가」와 「막대가 어디서 어디까지 가나」를 정해 준다.
+    //   ⭐ 이건 «화면이 바뀔 때»만 돈다. 스크롤 중엔 브라우저가 알아서 그 사이를 채운다.
+    //   ⚠️ `.screen` 이 여러 개인데 이름이 겹치면 시계가 통째로 죽는다 → **맨 위 하나에만** 붙인다.
+    const 시계달기 = (el) => {
+      const v = vRef.current
+      if (!시계로옮긴다.current || !v) return
+      if (표시한화면.current && 표시한화면.current !== el) 표시한화면.current.classList.remove('hk-tl')
+      if (!el) { 표시한화면.current = null; v.classList.remove('hk-anim'); return }
+      el.classList.add('hk-tl')
+      표시한화면.current = el
+      const { scrollHeight: sh, clientHeight: ch } = el
+      const r = el.getBoundingClientRect()
+      const fr = 프레임자리() // ⭐ 프레임 기준 — 주소창이 접혀도 `r.top - fr.top` 은 그대로다(= 값이 안 낡는다)
+      const h = Math.max(28, (ch / sh) * r.height)
+      v.style.height = `${h}px`
+      v.style.setProperty('--hk-vx', `${Math.round(r.right - fr.left - 5)}px`)
+      v.style.setProperty('--hk-vy0', `${Math.round(r.top - fr.top)}px`)
+      v.style.setProperty('--hk-vy1', `${Math.round(r.top - fr.top + (r.height - h))}px`)
+      v.classList.add('hk-anim')
+    }
+    // ⭐ 막대는 «렌더 뒤»에 생긴다 — 그때 시계를 다시 달고 자리를 잡아야 첫 프레임부터 제자리다.
+    paintRef.current = () => { 시계달기(화면.current); paint() }
+
+    // 📐 무거운 재기 — «무엇을» 그릴지만 정한다. 개수가 안 바뀌면 state 도 안 건드린다(리렌더 0).
+    const 세팅 = (v, h) => setN((p) => (p.v === v && p.h === h ? p : { v, h }))
+    // ➡️ 막대를 «어느 상자»에 그릴지 — 줄의 부모다.
+    //    ⭐ 부모에 「position: relative」 를 준다(없으면 「absolute」 가 엉뚱한 조상 기준이 된다).
+    //    ⚠️ 이 줄은 낫표다 — 여기 백틱을 쓰면 bash 로 넣을 때 «실행»돼 내용이 사라진다(오늘 또 당했다).
+    //       ⚠️ 이미 자리를 가진 부모는 «안 건드린다» — 남의 배치를 망가뜨리면 안 된다.
+    const 붙이기 = (줄들) => {
+      const 곳 = []
+      for (const e of 줄들) {
+        const p = e.parentElement
+        if (!p) continue
+        if (getComputedStyle(p).position === 'static') p.style.position = 'relative'
+        곳.push(p)
+      }
+      set붙일곳((옛) => (옛.length === 곳.length && 옛.every((x, i) => x === 곳[i]) ? 옛 : 곳))
     }
     const measure = () => {
       // ⛔ 꾸미기 판은 Portal 이라 `.app-frame` 밖에서 화면을 통째로 덮는다 —
       //    그때 «뒤 화면» 막대를 그리면 판 위에 떠 보인다(재현판이 잡았다: 판을 열었는데 막대 1개).
       //    꾸미기 판은 자기 서랍 막대를 따로 그린다(`DecorEditor` 의 `VHint`).
-      // ⭐ 꾸미기 판이 열렸으면 «판 안»의 가로 줄만 본다(판이 화면을 덮는다).
       const 판 = document.querySelector('.decor-editor')
-      if (판) { setHbars(가로재기(판)); setBar(null); return }
+      if (판) { 화면.current = null; 시계달기(null); 가로줄.current = 가로찾기(판); 붙이기(가로줄.current); 세팅(false, 가로줄.current.length); paint(); return }
       const list = document.querySelectorAll('.app-frame .screen')
       const el = list[list.length - 1] // 맨 위 화면 = DOM 에서 마지막
-      if (!el) { setHbars([]); setBar(null); return }
+      if (!el) { 화면.current = null; 시계달기(null); 가로줄.current = []; 붙이기([]); 세팅(false, 0); return }
       // ⭐ 가로 막대도 «맨 위 화면 안»에서만 찾는다 — `.app-frame` 을 통째로 훑으면
       //    쌓인 화면 «뒤»에 깔린 줄까지 잡아 남의 화면에 막대가 뜬다(세로 막대와 같은 기준).
-      setHbars(가로재기(el))
-      const { scrollHeight: sh, clientHeight: ch, scrollTop: st } = el
-      if (sh <= ch + 8) { setBar(null); return }
-      const r = el.getBoundingClientRect()
-      const h = Math.max(28, (ch / sh) * r.height)
-      const y = r.top + (st / (sh - ch)) * (r.height - h)
-      setBar((b) => (b && Math.abs(b[0] - y) < 0.5 && Math.abs(b[1] - h) < 0.5 && b[2] === r.right) ? b : [y, h, r.right])
+      화면.current = el
+      가로줄.current = 가로찾기(el)
+      붙이기(가로줄.current)
+      세팅(el.scrollHeight > el.clientHeight + 8, 가로줄.current.length)
+      시계달기(el.scrollHeight > el.clientHeight + 8 ? el : null)
+      paint()
     }
-    const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) }
     // ⚠️ `scroll` 은 bubble 을 안 한다 → **capture** 로 잡아야 어느 화면이 굴러도 걸린다.
+    // ⭐ 스크롤에선 **칠하기만** 한다(가볍다). 무거운 재기는 rAF 로 따로 묶는다 —
+    //    안 그러면 `querySelectorAll('div,ul,nav')` 가 스크롤마다 돌아 이번엔 «버벅임»이 된다.
+    // 🎞🎞 **매 프레임 그린다** — 스크롤 이벤트마다가 «아니다».
+    //   ⛔ 안드로이드는 굴리는 동안 `scroll` 이벤트를 **몰아서** 준다(한 프레임에 여러 번 오거나 건너뛴다).
+    //      이벤트마다 그리면 막대가 «계단»으로 움직인다 — 그게 v10.68 에서 창업자가 본 떨림이다.
+    //   ✅ 화면이 그려지는 «그 프레임»마다 `scrollTop` 을 새로 읽어 그린다. JS 가 낼 수 있는 최선이다.
+    //   ⭐ 굴림이 멎으면 고리도 멎는다(300ms) — 가만있는데 rAF 를 돌리면 배터리만 먹는다.
+    let 그리기고리 = 0
+    let 마지막굴림 = 0
+    const 한바퀴 = () => {
+      paint()
+      if (performance.now() - 마지막굴림 < 300) 그리기고리 = requestAnimationFrame(한바퀴)
+      else 그리기고리 = 0
+    }
+    const onScroll = () => {
+      마지막굴림 = performance.now()
+      if (!그리기고리) 그리기고리 = requestAnimationFrame(한바퀴)
+      paint() // 첫 프레임을 기다리지 않게 즉시 한 번
+      cancelAnimationFrame(raf); raf = requestAnimationFrame(measure)
+    }
     document.addEventListener('scroll', onScroll, true)
     window.addEventListener('resize', onScroll)
+    // ⛔⛔ **여기가 「덜덜」의 나머지 절반이었다** (2026-08-14 · 프로브가 잡았다)
+    //   막대를 프레임 기준(absolute)으로 바꿔도 어긋남이 10px 그대로였다. 왜냐면 —
+    //   `--app-height` 가 바뀌어 화면 높이가 달라져도 **다시 잴 신호가 «하나도» 없었다.**
+    //   📌 우리는 `window.resize` 만 듣는데, 안드로이드 주소창 접힘은 **`visualViewport` 의 resize**를 쏜다.
+    //      **둘은 다른 사건이다** — 레이아웃 뷰포트는 그대로고 «보이는» 뷰포트만 바뀌기 때문이다.
+    //   ✅ 그래서 시계 값(`--hk-vy0/1`)이 옛 높이로 남아 내용과 갈라졌다.
+    //   ⭐ 여기선 **무거운 `measure()` 를 부르지 않는다** — 화면이 바뀐 게 아니라 «크기»만 바뀐 것이라
+    //      시계 다시 달기 ＋ 칠하기(`paintRef`)면 충분하다. 스크롤 길에 무게를 얹지 않는 게 이 판의 전부다.
+    const vv = window.visualViewport
+    const onVV = () => { paintRef.current() }
+    if (vv) { vv.addEventListener('resize', onVV); vv.addEventListener('scroll', onVV) }
     // ⚠️ 꾸미기 판·온보딩은 Portal 이라 body 직계로 붙는다 — 뜨고 지는 걸 여기서 잡아야
     //    막대가 판 위에 남지 않는다(`dep` 은 탭·스택만 보므로 이건 못 잡는다).
-    const mo = new MutationObserver(onScroll)
+    const mo = new MutationObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure) })
     mo.observe(document.body, { childList: true })
     // ⛔⛔ **「모아보기 ↔ 한끼 일기」·「장보기 ↔ 냉장고」는 «한 화면 안»에서 갈린다** —
     //    탭도 스택도 안 바뀌고(`dep` 그대로) `body` 직계 자식도 안 바뀐다.
     //    그래서 다시 잴 신호가 «하나도» 없었고, 마지막에 잰 막대가 `fixed` 로 그대로 남아
-    //    **다른 화면을 가로질렀다**(창업자 2026-08-10 *"모아보기 바가 다른데도 침범중야"* —
-    //    폰 캡처에서 「한끼 일기」 달력 위를 지나갔다).
+    //    **다른 화면을 가로질렀다**(창업자 2026-08-10 *"모아보기 바가 다른데도 침범중야"*).
     //    📌 규칙 18 — 「막대가 틀린 자리에 있다」가 아니라 **「다시 잰 적이 없다」**였다.
-    // ⭐ 그래서 화면 «속»까지 본다. `characterData` 는 안 본다(글씨만 바뀌는 건 자리와 무관).
-    //    재는 건 rAF 로 묶어 한 프레임에 한 번뿐이다.
     const frame = document.querySelector('.app-frame')
     if (frame) mo.observe(frame, { childList: true, subtree: true })
     // ⚠️ 화면을 열자마자 재면 내용이 아직 없어 «안 넘침»으로 나온다 → 몇 번 더 잰다.
@@ -507,37 +694,45 @@ function ScrollHint({ dep }) {
     return () => {
       document.removeEventListener('scroll', onScroll, true)
       window.removeEventListener('resize', onScroll)
+      if (vv) { vv.removeEventListener('resize', onVV); vv.removeEventListener('scroll', onVV) }
       mo.disconnect()
       timers.forEach(clearTimeout)
       cancelAnimationFrame(raf)
+      cancelAnimationFrame(그리기고리)
+      // ⚠️ 시계 표식을 떼고 나간다 — 두 화면에 같은 이름이 남으면 시계가 통째로 죽는다.
+      if (표시한화면.current) { 표시한화면.current.classList.remove('hk-tl'); 표시한화면.current = null }
     }
   }, [dep])
-  if (!bar && !hbars.length) return null
+
+  // ⭐ 새로 생긴 막대는 «첫 프레임부터» 제자리여야 한다 — 안 그러면 왼쪽 위(0,0)에 한 번 번쩍인다.
+  //    그래서 `useEffect` 가 아니라 `useLayoutEffect` — 브라우저가 그리기 «전»에 자리를 잡는다.
+  useLayoutEffect(() => { paintRef.current() })
+
+  if (!n.v && !붙일곳.length) return null
+  // ⚠️ 표식 `data-vhint`·`data-hhint` = 재현 검사가 «실제로 그려졌나»를 집는 자리.
+  const 공통 = {
+    top: 0, left: 0, borderRadius: 999,
+    background: 'var(--text-sub)', pointerEvents: 'none', willChange: 'transform',
+  }
   return (
     <>
-      {bar && (
-        <div
-          data-vhint="1"
-          aria-hidden="true"
-          style={{
-            position: 'fixed', top: bar[0], height: bar[1], left: bar[2] - 5,
-            width: 3, borderRadius: 999, background: 'var(--text-sub)', opacity: 0.38,
-            pointerEvents: 'none',
-          }}
-        />
+      {n.v && (
+        // ⭐ 세로 막대만 `absolute` = **프레임 기준**(위 `프레임자리()` 주석 참고).
+        //    ⛔ `fixed`(뷰포트 기준)로 두면 주소창이 접힐 때 내용과 갈라져 «덜덜»거린다.
+        <div ref={vRef} data-vhint="1" aria-hidden="true"
+          style={{ ...공통, position: 'absolute', width: 3, height: 28, opacity: 0.38 }} />
       )}
-      {hbars.map(([x, w, y], i) => (
-        <div
-          key={i}
-          data-hhint="1"
-          aria-hidden="true"
-          style={{
-            position: 'fixed', left: x, width: w, top: y,
-            height: 3, borderRadius: 999, background: 'var(--text-sub)', opacity: 0.34,
-            pointerEvents: 'none',
-          }}
-        />
-      ))}
+      {/* ➡️➡️ 가로 막대는 «그 줄의 부모 안»에 그린다 (창업자 2026-08-14
+          *"레시피 전체 자주 한식 양식 거기아래있는 가로바. 장바구니 이번주 픽 아래있는 가로바.
+            그게 아래로 스크롤내리면 떨린다고"* · *"세로막대는 처음부터 문제없었어"*)
+          ⛔ 전엔 `fixed` 라 JS 가 매 프레임 쫓아다녔다 → 줄은 컴포지터가 즉시 굴리는데
+             막대는 뒤에 남았다가 따라붙어 **줄에서 떨어졌다 붙었다** 했다(레시피 80px · 장보기 896px 실측).
+          ✅ 같은 상자에 넣으면 브라우저가 줄과 **함께** 옮긴다 — **세로 스크롤에 JS 가 0이다.**
+          ⚠️ 부모가 없거나 사라졌으면 그냥 안 그린다(억지로 붙이지 않는다). */}
+      {붙일곳.map((부모, i) => (부모 && 부모.isConnected ? createPortal(
+        <div ref={(el) => { hRefs.current[i] = el }} data-hhint="1" aria-hidden="true"
+          style={{ ...공통, position: 'absolute', height: 3, width: 24, opacity: 0.34 }} />,
+        부모, `hh${i}`) : null))}
     </>
   )
 }

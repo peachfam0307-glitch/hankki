@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { Fragment, useMemo, useRef, useState } from 'react'
 import { COACH } from '../coach'
 import { useStore } from '../store'
 import { useNav } from '../App'
@@ -7,7 +7,7 @@ import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
-import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
+import FoodIcon, { guessFoodIcon, dishCatOf } from '../components/FoodIcon'
 // ⛔ 2026-08-07 — 「요리 기록 남기기」 시트와 「한마디 청하기」를 이 화면에서 뺐다.
 //    앨범을 누르면 «그날 일기»로 가고(화면 이름이 「한끼 일기」다), 둘 다 «레시피 상세»에 그대로 있다.
 //    (DiaryEntrySheet · ReviewAskSheet · shouldAskReview import 제거)
@@ -15,6 +15,7 @@ import { dateLabel, matchKo } from '../utils'
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
+import pengNyam from '../assets/ui/wave/peng_nyam1.png' // 🐧 펭펭(한 술) — 한끼 일기 상단
 
 // 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
 const MYRECIPES_COACH_KEY = COACH.myrecipes
@@ -274,10 +275,38 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     return false
   }, { tabLevel: true }) // 탭 화면 — 위에 상세·요리 등 스택 화면이 있으면 이 핸들러는 잠재운다
   const now = new Date()
-  const thisMonth = entries.filter((e) => {
-    const d = new Date(e.at)
-    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
-  }).length
+  // 📊📊 [2026-08-12] 통계 둘을 마저 만들었다 — 창업자 폰 제보 *"통계는 저게다야? 우리얘기했던거있었는데"*
+  //   📄 `docs/요리기록-다이어리-방향-2026-08-05.md` §2 에서 넷을 정해놓고 **둘만 만들어져 있었다**
+  //      ✅이번 달 몇 회 ✅최애 요리 ／ ❌갈래별 횟수 ❌이번 달 «처음» 만든 요리
+  //   ⛔ 「지난달보다 3번 적어요」 같은 «평가»는 안 넣는다 — 세기만 한다(`docs/리텐션-설계원칙-2026-07-30.md`).
+  const monthKey = `${now.getFullYear()}-${now.getMonth()}`
+  // ⚠️ `now` 를 의존성에 쓰면 «렌더마다 새 객체»라 useMemo 가 매번 다시 돈다 → 달 키(글자)로 잡는다.
+  const inMonth = (at) => { const d = new Date(at); return `${d.getFullYear()}-${d.getMonth()}` === monthKey }
+  const monthEntries = useMemo(() => entries.filter((e) => inMonth(e.at)), [entries, monthKey])
+  const thisMonth = monthEntries.length
+  // 갈래별 — 이번 달에 «뭘» 해먹었나. 많은 순 셋만(넷부터는 띠가 두 줄로 접힌다).
+  const catTop = useMemo(() => {
+    const c = {}
+    for (const e of monthEntries) {
+      const cat = dishCatOf(iconFor(e))
+      if (cat) c[cat] = (c[cat] || 0) + 1
+    }
+    return Object.entries(c).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ko')).slice(0, 3)
+  }, [monthEntries, iconById])
+  // 이번 달 «처음» 만든 요리 — 그 전엔 한 번도 안 만든 것. 최대 4개.
+  //   ⭐ 「이번 달에 만든 것」이 아니다 — 늘 하던 걸 또 한 건 «처음»이 아니다.
+  //   ⚠️ 요리 «기록» 전체에서 제일 이른 날을 찾아야 한다. 이번 달만 보면 지난달에 한 것도 처음이 된다.
+  const firstTimes = useMemo(() => {
+    const earliest = {}
+    for (const e of entries) {
+      const cur = earliest[e.title]
+      if (!cur || +new Date(e.at) < +new Date(cur.at)) earliest[e.title] = e
+    }
+    return Object.values(earliest)
+      .filter((e) => inMonth(e.at))
+      .sort((a, b) => +new Date(b.at) - +new Date(a.at))
+      .slice(0, 4)
+  }, [entries, monthKey])
   // 최애 요리 — 제일 많이 만든 메뉴
   const topDish = useMemo(() => {
     const c = {}
@@ -297,7 +326,14 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
           {/* 인사하는 꼬르곰 — 홈 상단에 있던 걸 이리로 옮겼다(창업자 2026-07-29).
               장보기·레꾸자랑엔 이미 곰이 있어 겹치고, 설정은 잘 안 가서 여기로. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <img src={gomHeader} alt="" draggable={false} width={42} height={42} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-4px 0' }} />
+            {/* 🐧 [2026-08-13 창업자 제보] *"레시피, 한끼일기탭은 «같은 모양» 꼬르곰이"* ＋ *"펭펭이든 친구들이든 우리애들"*
+                ⭐ 한 화면인데 제목만 갈리니 **같은 곰이 두 탭에 그대로** 있었다 → 일기일 땐 펭펭이 한 술 뜬다(냠냠).
+                   일기 = «먹은 것을 적는 자리» 라 숟가락 든 컷이 맞다. */}
+            {view === 'log' ? (
+              <img src={pengNyam} alt="" draggable={false} width={34} height={44} className="hk-m-nyam" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-5px 0' }} />
+            ) : (
+              <img src={gomHeader} alt="" draggable={false} width={42} height={42} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-4px 0' }} />
+            )}
             {/* 🏷 제목은 «지금 보고 있는 것»을 말한다 — 「일기」 탭으로 들어왔는데 머리글이
                 「레시피」면 어디에 있는지 헷갈린다(검수판에서 드러났다). */}
             <div className="h-title">{view === 'log' ? '한끼 일기' : '레시피'}</div>
@@ -407,6 +443,41 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                   <span>최애 <b style={{ color: 'var(--brown)' }}>{topDish}</b></span>
                 </>
               )}
+              {/* 🥘 갈래별 — 「이번 달에 뭘 해먹었나」. 위 줄과 성격이 달라(횟수 vs 종류) 줄을 나눈다.
+                  ⭐ 갈래 이름은 픽커 탭 그대로다 — 유저가 아이콘 고를 때 이미 본 말이라 따로 배울 게 없다. */}
+              {catTop.length > 0 && (
+                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 12.5, paddingTop: 7, marginTop: 1, borderTop: '1px solid var(--line)' }}>
+                  {catTop.map(([label, n], i) => (
+                    <Fragment key={label}>
+                      {i > 0 && <span style={{ color: 'var(--sand)' }}>·</span>}
+                      <span>{label} <b style={{ color: 'var(--brown)' }}>{n}</b></span>
+                    </Fragment>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 🌱 이번 달 «처음» 만든 요리 — 격려도 평가도 아닌데 보면 기분이 좋다.
+              (`docs/요리기록-다이어리-방향-2026-08-05.md` §2 ⭐ 「넣을 것」)
+              ⛔ 「N개나 도전했어요!」 같은 칭찬 문구는 안 붙인다 — 평가가 되고 우리 톤도 아니다.
+              ⚠️ 갓 시작한 사람은 «전부»가 처음이라 이 칸이 앨범과 똑같아진다 → 기록이 5개는 돼야 뜬다. */}
+          {firstTimes.length > 0 && entries.length >= 5 && (
+            <div className="card" style={{ padding: '10px 12px 11px', marginBottom: 12, background: 'var(--cream)', border: 'none' }}>
+              <div className="t-sub" style={{ fontSize: 12, marginBottom: 8 }}>이번 달 처음 만든 요리</div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {firstTimes.map((e) => (
+                  <button
+                    key={e.id}
+                    className="press"
+                    onClick={() => openRecipe(e)}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, width: 62, minHeight: 44 }}
+                  >
+                    <FoodIcon name={iconFor(e)} size={34} />
+                    <span style={{ fontSize: 11, lineHeight: 1.25, textAlign: 'center', wordBreak: 'keep-all', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.title}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

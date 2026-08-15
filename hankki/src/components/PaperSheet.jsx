@@ -27,6 +27,12 @@ import { PAPER_LINE_H } from '../data/papers'
 const HAND = "'Gaegu','Gowun Dodum','Pretendard',sans-serif"
 const INK = '#5b4436' // 우리 진갈색 — 속지 선(#e2d8c6)보다 진해 크라프트 위에서도 읽힌다
 
+// 🔍 틀 사진칸 확대 상한 — 1 = 칸을 꽉 채운 상태(그 밑으론 안 내려간다·빈 데가 생긴다).
+//    3 배까지만 — 폰 사진(보통 3000px 대)이라도 그 위로 가면 뭉개진다.
+const PHOTO_ZOOM_MAX = 3
+// 🔍 1 밑 = 「사진 전체가 보이게」(contain). 0.5 까지 — 그보다 작으면 창 안에서 우표만 해진다.
+const PHOTO_ZOOM_MIN = 0.5
+
 // 줄·모눈·도트를 «쓰는 칸 안에만» 그릴 때 쓰는 배경. `.paper.lined` 등과 같은 그림이다.
 const ruleBg = (cls) => {
   const g = 'var(--rule-gap)'
@@ -132,40 +138,135 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
         //   ⭐ 손짓은 인스타 문법 그대로 — 프레임 안에서 사진이 손가락을 따라온다.
         //   ⚠️ 값이 없으면 «가운데»(50% 50%) — 이미 넣어 둔 사진이 그대로 보인다(규칙 18 ⓙ).
         const pos = value[`${pk}Pos`] || '50% 50%'
-        const imgStyle = { width: '100%', height: '100%', objectFit: 'cover', objectPosition: pos, display: 'block' }
+        // 🔍🔍 **두 손가락으로 벌려서 확대·축소** (창업자 폰 제보 2026-08-12
+        //    *"사진 붙이면 위아래로 움직이는데 확대 축소는 안되더라. 수정가능해?"*)
+        //
+        //   ⛔ 끌기(위)만 있고 배율이 없어서, 사진이 칸보다 «조금만» 클 땐 아무리 끌어도
+        //      보고 싶은 데가 안 왔다(끌 수 있는 양 = 넘치는 만큼뿐이라 0 에 가깝다).
+        //   ⭐⭐ **`transform: scale(z)` ＋ `transformOrigin` 을 `objectPosition` 과 «같은 값»으로** 준다.
+        //      배율을 어떤 점 둘레로 걸든, 그 점을 `objectPosition` 이 잡아둔 자리와 맞추면
+        //      **자리 계산식이 하나도 안 바뀐다** — 넘치는 양만 `z` 배가 된다:
+        //          overX' = z × (사진폭 × 맞춤배율) − 칸폭
+        //      그래서 `z = 1` 이면 지금과 **픽셀 하나까지 똑같다**(이미 넣어 둔 사진이 안 움직인다).
+        //   ⚠️ 배율은 1 밑으로 안 내려간다 — 1 이 「칸을 꽉 채운 상태」다. 더 줄이면 칸에 빈 데가 생긴다.
+        //      ⭐ 그래서 **되돌리는 단추가 없어도 된다**(오므리면 1 에서 멈춘다).
+        //   ⭐⭐ **1 밑 = 「사진 전체가 보이게」** (창업자 확정 2026-08-12)
+        //      ⛔ 위 주석의 *"1 밑으론 안 내려간다"* 는 «지금까지»의 이야기다 — 창업자가 열라고 정했다.
+        //      🔢 왜 잘려 보였나 =  는 칸을 꽉 채우려고 넘치는 쪽을 «잘라낸다». 세로로 긴 사진이면
+        //         위아래가 통째로 안 보인다. 아무리 끌어도 «한 화면에 전부»는 못 본다.
+        //      ✅ 그래서 1 밑으로 가면 **(전체가 들어오게)** 으로 바꾼다. 남는 자리엔 속지가 비친다
+        //         — 창을 꽉 채운 게 아니라 «사진을 창 안에 테이프로 붙인» 모양이 된다.
+        //      ⚠️ 1 에서 «한 번 툭» 바뀐다 — 자르기(cover)와 다 보이기(contain)는 성질이 다른 상태라
+        //         중간이 없다. 그 경계가 바로 「전체가 보이기 시작하는 순간」이라 오히려 알기 쉽다.
+        const pzRaw = Number(value[`${pk}Zoom`])
+        const pz = Math.min(PHOTO_ZOOM_MAX, Math.max(PHOTO_ZOOM_MIN, Number.isFinite(pzRaw) && pzRaw > 0 ? pzRaw : 1))
+        const 전체보기 = pz < 1
+        // ⛔⛔ **줄이면 왼쪽에 붙던 것** (창업자 2026-08-12 *"사진도 줄이니까 좌우로 안움직여서 왼쪽에 붙어있어"*)
+        //    🔢 뿌리 = 1 밑이면 사진이 칸보다 «작아서» 넘치는 게 0 이다 → 끌기 계산(`overX`)이 0 이하라 안 움직이고,
+        //       그 상태에서 `objectPosition`·`transformOrigin` 이 **전에 끌어둔 값**(예: `0% 50%`)을 그대로 쓰니
+        //       줄어드는 기준점이 왼쪽 끝이 되어 **사진이 왼쪽 벽에 붙는다.**
+        //    ⭐ 답 = 1 밑에선 **가운데 고정**. 전체가 보이는 게 목적이라 좌우로 끌 이유가 없고,
+        //       남는 여백은 양쪽에 똑같이 나뉘는 게 「창 안에 사진을 붙인」 모양이 된다.
+        //    ⛔ 저장값(`pos`)은 «안» 건드린다 — 다시 1 이상으로 키우면 끌어둔 자리가 그대로 돌아온다.
+        const posEff = 전체보기 ? '50% 50%' : pos
+        const imgStyle = {
+          width: '100%', height: '100%', objectFit: 전체보기 ? 'contain' : 'cover', objectPosition: posEff, display: 'block',
+          ...(pz !== 1 ? { transform: `scale(${pz})`, transformOrigin: posEff } : null),
+        }
         // 📌 «탭 = 사진 바꾸기»와 갈라야 한다 → 6px 넘게 움직였을 때만 드래그로 친다.
         //    드래그였으면 뒤따라오는 click 을 삼킨다(`dragged` 표시) — 안 그러면 끌 때마다 파일창이 뜬다.
         // 📐 이동량 → % 환산: `cover` 는 사진을 칸보다 크게 그리므로 «넘치는 만큼»(overX/overY)만 움직인다.
         //    손가락을 아래로 끌면 사진이 아래로 따라와야 하니 objectPosition % 는 «줄어든다»(반대 부호).
+        // 🫳🤏 손가락 «하나»면 끌기, «둘»이면 확대. 상태는 버튼 노드에 얹는다
+        //    (이 함수는 렌더마다 새로 만들어지므로 클로저에 담아 두면 손짓 중에 끊긴다).
         const dragStart = (e) => {
           if (!canShot) return
           const btn = e.currentTarget
           const img = btn.querySelector('img')
           if (!img || !img.naturalWidth) return
-          const rect = btn.getBoundingClientRect()
-          const scale = Math.max(rect.width / img.naturalWidth, rect.height / img.naturalHeight)
-          const overX = img.naturalWidth * scale - rect.width
-          const overY = img.naturalHeight * scale - rect.height
-          const [px0, py0] = pos.split(' ').map((v) => parseFloat(v))
-          const x0 = e.clientX, y0 = e.clientY
-          let moved = false
-          let cur = { x: px0, y: py0 }
-          const onMove = (ev) => {
-            const dx = ev.clientX - x0, dy = ev.clientY - y0
-            if (!moved && Math.hypot(dx, dy) < 6) return
-            if (!moved) { moved = true; btn.dataset.dragged = '1'; btn.setPointerCapture?.(ev.pointerId) }
-            cur = {
-              x: overX > 0 ? Math.min(100, Math.max(0, px0 - (dx / overX) * 100)) : px0,
-              y: overY > 0 ? Math.min(100, Math.max(0, py0 - (dy / overY) * 100)) : py0,
-            }
-            img.style.objectPosition = `${cur.x}% ${cur.y}%` // 끄는 동안은 화면만 — 저장은 손 뗄 때 한 번
+          const S = btn._ph || (btn._ph = { pts: new Map() })
+          S.pts.set(e.pointerId, { x: e.clientX, y: e.clientY })
+          const 두점 = () => {
+            const p = [...S.pts.values()]
+            return Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y)
           }
-          const onUp = () => {
+          const 그리기 = () => {
+            // ⭐ 1 밑(전체 보기)이면 «가운데 고정» — 위 imgStyle 과 같은 규칙이라야 손 뗄 때 안 튄다.
+            //    ⛔ 여기만 빼먹으면 오므리는 «동안»은 왼쪽에 붙었다가 손 떼면 가운데로 툭 뛴다.
+            const 작다 = S.cur.z < 1
+            const px = 작다 ? 50 : S.cur.x, py = 작다 ? 50 : S.cur.y
+            img.style.objectPosition = `${px}% ${py}%`
+            img.style.transformOrigin = `${px}% ${py}%`
+            img.style.transform = `scale(${S.cur.z})` // 끄는 동안은 화면만 — 저장은 손 다 뗄 때 한 번
+          }
+          if (S.pts.size === 1) {
+            const rect = btn.getBoundingClientRect()
+            S.fit = Math.max(rect.width / img.naturalWidth, rect.height / img.naturalHeight)
+            S.W = rect.width; S.H = rect.height
+            const [px0, py0] = pos.split(' ').map((v) => parseFloat(v))
+            S.cur = { x: px0, y: py0, z: pz }
+            S.from = { ...S.cur }
+            S.start = { x: e.clientX, y: e.clientY }
+            S.moved = false
+          }
+          if (S.pts.size === 2) {
+            // ⛔ 여기서 «끊는다» — 안 그러면 종이 전체 확대(`DecorEditor` 의 두 손가락)까지 같이 걸려
+            //    사진과 종이가 한꺼번에 커진다. 손가락이 하나일 땐 그대로 흘려보낸다(스티커 고르기가 살아 있게).
+            e.stopPropagation()
+            S.d0 = 두점() || 1
+            S.z0 = S.cur.z
+            S.from = { ...S.cur }
+            S.moved = true
+          }
+          if (S.on) return
+          S.on = true
+          const onMove = (ev) => {
+            if (!S.pts.has(ev.pointerId)) return
+            S.pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY })
+            if (S.pts.size >= 2) {
+              S.cur.z = Math.min(PHOTO_ZOOM_MAX, Math.max(PHOTO_ZOOM_MIN, S.z0 * (두점() / S.d0)))
+              그리기()
+              return
+            }
+            const dx = ev.clientX - S.start.x, dy = ev.clientY - S.start.y
+            // 📌 «탭 = 사진 바꾸기»와 갈라야 한다 → 6px 넘게 움직였을 때만 드래그로 친다.
+            if (!S.moved && Math.hypot(dx, dy) < 6) return
+            if (!S.moved) { S.moved = true; btn.setPointerCapture?.(ev.pointerId) }
+            // 📐 이동량 → % 환산: 넘치는 만큼(overX/overY)만 움직인다. 배율을 걸면 그만큼 더 넘친다.
+            //    손가락을 아래로 끌면 사진이 아래로 따라와야 하니 objectPosition % 는 «줄어든다»(반대 부호).
+            const overX = img.naturalWidth * S.fit * S.cur.z - S.W
+            const overY = img.naturalHeight * S.fit * S.cur.z - S.H
+            S.cur.x = overX > 0 ? Math.min(100, Math.max(0, S.from.x - (dx / overX) * 100)) : S.from.x
+            S.cur.y = overY > 0 ? Math.min(100, Math.max(0, S.from.y - (dy / overY) * 100)) : S.from.y
+            그리기()
+          }
+          const onUp = (ev) => {
+            S.pts.delete(ev.pointerId)
+            // ✋ 둘 중 하나만 뗐다 — 남은 손가락으로 «이어서 끌» 수 있게 기준을 다시 잡는다
+            //    (안 잡으면 첫 손가락 자리를 기준으로 계산해 사진이 «툭» 튄다)
+            if (S.pts.size === 1) {
+              const [p] = [...S.pts.values()]
+              S.start = { x: p.x, y: p.y }
+              S.from = { ...S.cur }
+              return
+            }
+            if (S.pts.size > 0) return
             btn.removeEventListener('pointermove', onMove)
             btn.removeEventListener('pointerup', onUp)
             btn.removeEventListener('pointercancel', onUp)
-            if (moved) write({ ...value, [`${pk}Pos`]: `${Math.round(cur.x)}% ${Math.round(cur.y)}%` })
-            // ⚠️ `dragged` 는 여기서 안 지운다 — click 이 pointerup «뒤»에 오므로 click 핸들러가 지운다
+            S.on = false
+            if (!S.moved) return
+            write({
+              ...value,
+              [`${pk}Pos`]: `${Math.round(S.cur.x)}% ${Math.round(S.cur.y)}%`,
+              [`${pk}Zoom`]: Math.round(S.cur.z * 100) / 100,
+            })
+            // ⏱ 손짓 «끝난 시각»을 적어 둔다 — 바로 뒤따라오는 click(사진 바꾸기)을 삼키려고.
+            //   ⛔⛔ 전엔 그냥 `'1'` 을 박고 click 핸들러가 지웠는데, **두 손가락 뒤엔 click 이 «안 온다».**
+            //      그러면 표시가 안 지워진 채 남아서 **다음에 진짜로 누른 한 번을 잡아먹는다**
+            //      (＝「사진 바꾸기가 한 번 안 먹는다」). 재현판 ⑥이 이걸 잡았다.
+            //   ⭐ 시각으로 두면 click 이 오든 안 오든 0.5초 뒤엔 저절로 풀린다.
+            btn.dataset.dragged = String(Date.now())
           }
           btn.addEventListener('pointermove', onMove)
           btn.addEventListener('pointerup', onUp)
@@ -178,10 +279,12 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
               ? <img src={value[pk]} alt="" style={imgStyle} />
               : (
                 <>
-                  <button type="button" className="press" aria-label="사진 — 끌어서 위치 조정 · 누르면 바꾸기"
+                  <button type="button" className="press" aria-label="사진 — 끌어서 위치 조정 · 두 손가락으로 확대·축소 · 누르면 바꾸기"
                     onPointerDown={dragStart}
                     onClick={(e) => {
-                      if (e.currentTarget.dataset.dragged) { delete e.currentTarget.dataset.dragged; return }
+                      const t = Number(e.currentTarget.dataset.dragged || 0)
+                      delete e.currentTarget.dataset.dragged
+                      if (t && Date.now() - t < 500) return // 방금 끌거나 벌린 뒤 따라온 click
                       onPickPhoto(pk)
                     }}
                     style={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'none', display: 'block', touchAction: 'none' }}>
@@ -365,6 +468,10 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
                 onChange={set(k)}
                 aria-label={w.label || '일기 본문'}
                 placeholder="여기에 써요"
+                /* 📍 「종이 본문」 표시 — 스티커 글 상자(`DecorLayer`)의 글칸과 갈라야 한다.
+                   ⭐ `DecorEditor` 의 `dropCaret(true)` 가 **이 표시가 붙은 것만** 커서를 놓는다.
+                      (서랍을 누르면 본문 커서는 놓되, 방금 붙인 글 상자 커서는 안 뺏는다) */
+                data-paper-body="1"
                 style={{
                   ...hand, width: '100%', height: '100%', display: 'block',
                   background: 'none', border: 'none', outline: 'none', resize: 'none', padding: 0, margin: 0,

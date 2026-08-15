@@ -109,6 +109,12 @@ try {
         if (d <= 7) console.log('   ⛔ 전날에 «고화질 전수 검수». 안 하면 그대로 유저 앞에 나간다.')
       }
     } catch { /* 없으면 조용히 */ }
+    // 👋 세션 «시작»에만 — 읽을 것과 순서를 어디서 얻는지 (창업자 2026-08-13 *"예전문서 읽어와서 짬뽕만들고있어"*)
+    //   ⛔ UserPromptSubmit 마다 뿌리면 시끄럽다. 시작 한 번이면 족하다.
+    if (ev === 'SessionStart') {
+      console.log('\n👋 **읽는 순서는 `npm run hello` 가 정해준다** — ①어제~오늘 → ②주제별 최신 → ③상시 문서')
+      console.log('   ⛔ 그 목록에 «없는» 날짜 문서는 브리핑 근거로 쓰지 않는다(옛 판을 쓸 땐 「옛 판이다」라고 밝힌다)')
+    }
     // 🧭 「대기」라고 적혀 있는데 **파일은 이미 있는** 줄 (2026-08-01 클레이 가을밤 사고)
     try {
       const { stale, recentDocs } = await import('./doc-guard.mjs')
@@ -117,6 +123,17 @@ try {
         console.log(`\n🧭 요즘 문서에 「대기·예정」인데 **파일은 이미 있는** 줄 ${st.length}개 — 끝난 걸 대기로 두면 또 안 한다`)
         st.slice(0, 3).forEach((h) => console.log(`   ${h.file}:${h.line}  「${h.name}」 → ${h.found}`))
         console.log('   전체 = `node hankki/scripts/doc-guard.mjs --stale --recent`')
+      }
+    } catch { /* 없으면 조용히 */ }
+    // 🔢 「대기」라고 적혀 있는데 **상수는 이미 채워진** 줄 (#81 · 2026-08-05 모션 배분 사고)
+    //   ⭐ 위 검사의 «짝»이다 — 저건 파일을 보고 이건 코드에 박힌 값을 본다.
+    try {
+      const { constStale, recentDocs } = await import('./doc-guard.mjs')
+      const cs = constStale(recentDocs())
+      if (cs.length) {
+        console.log(`\n🔢 요즘 문서에 「대기」인데 **코드엔 이미 값이 있는** 줄 ${cs.length}개 — 나중에 코드를 보고 「확정」으로 굳힌다`)
+        cs.slice(0, 3).forEach((h) => console.log(`   ${h.file}:${h.line}  「${h.name}」 = ${h.val}  (${h.at})`))
+        console.log('   전체 = `node hankki/scripts/doc-guard.mjs --const --recent`')
       }
     } catch { /* 없으면 조용히 */ }
     // 🙈 「모른다」고 적어놓고 «그 위에서 추천»한 곳 (2026-08-03 네이버 커넥트 사고)

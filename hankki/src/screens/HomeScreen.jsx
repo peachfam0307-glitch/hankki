@@ -13,10 +13,25 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import ConfirmSheet from '../components/ConfirmSheet'
 // 🐻 코치 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지 규칙)
 import uiHandPoint from '../assets/ui/hand_point.png'
-import uiGomThumb from '../assets/ui/gom_thumbsup.png'
+// 🐻 엄지척·박수 = **물결 정본**(창업자 2026-08-14 제공 · `…-08-14/낱개/gt_01`·`gt_c01`)
+//    ⛔ 옛 `ui/gom_thumbsup`·`ui/gom_clap` 은 «매끈 곰»이었다 — 창업자 판정 *"2.4번만 옛날곰이고 나머지는 물결곰이야."*
+//    ✅ `gom_shop`·`gom_heart` 는 **물결이 맞아서 그대로 둔다**(같은 판정).
+import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
 import uiGomShop from '../assets/ui/gom_shop.png'
 import uiGomHeart from '../assets/ui/gom_heart.png'
-import uiGomClap from '../assets/ui/gom_clap.png'
+import uiGomClap from '../assets/ui/wave/gom_clap.png'
+// 🐻🐧 «물결 정본»(`gp_*`)만 쓴다 — 창업자 2026-08-13 *"한끼소식에 쟤 옛날 곰이야"*
+//    ⛔ `assets/ui/gom_*` 다섯(clap·thumbsup·heart·shop)은 **옛 매끈 그림체**다. 선이 굵고 얼굴이 크고 앞치마 무늬도 다르다.
+//       핀에 *"곰펭 = 무조건 물결 · 옛 매끈 곰펭은 앱 반영 금지"* 라고 박혀 있는데 내가 새 자리에 그걸 갖다 썼다.
+//    ⚠️ 안내 코치가 아직 옛 컷을 쓰는데(7/29부터 그대로) 그건 창업자 판정 전이라 손대지 않았다.
+//    ⭐⭐ 컷은 «서랍에 있는 13개»가 아니라 `assets/ui/wave/` 에서 가져온다 — 창업자 2026-08-13
+//       *"우리 안쓰는 곰이랑 펭 많은데.."* · *"맨날 똑같은거 말고 다른거 좀 써"*
+//       실측 = `docs/stickers/공유카드-곰펭-2508` 에 **안 쓰던 물결 정본이 70장** 놀고 있었다.
+//       화면에 33~56px 로 붙으니 긴변 320px 로 줄여 담았다(원본은 문서에 그대로 있다).
+//    ⛔ 「한끼」 제목 «옆»엔 안 넣는다 — 창업자 2026-08-13 *"홈화면 한끼옆에는 안넣고. 지저분해.."*
+//       (아바타 ＋ 제목 ＋ 물음표 ＋ 가져오기 ＋ 톱니가 이미 한 줄에 다섯이다)
+//    ⭐ 홈의 우리 애 자리 = **「한끼 소식」 하나.** 창업자가 콕 집었다 — *"한끼소식 옆에 캐릭터 하나 넣으면 되겠다"*
+import uiGomWow from '../assets/ui/wave/gom_wow.png' // 꼬르곰 감탄(별눈) — 창업자가 2026-08-13 에 새로 뽑아 준 컷
 // 📔 일기 안내에 쓸 컷 — 꼬르곰·펭펭이 «둘 다» 하트를 만든다. 일기는 「그날의 마음을 남기는」 자리라 맞다.
 //    ⛔ ui 컷 다섯(hand_point·thumbsup·shop·heart·clap)은 이미 다른 단계가 다 쓰고 있어 정본 콤비에서 가져왔다.
 import gpDuoHeart from '../assets/stickers/photo/gp_duoht.png'
@@ -29,18 +44,17 @@ import { pantryScore } from '../pantryMatch'
 // 🗓🍳 「이번 주」 박스 — 제철 줄과 우리집레시피 줄이 «똑같이» 생겼다.
 //   ⛔ 마크업을 두 번 적지 않는다 — 그러면 한쪽만 고치는 사고가 난다(2026-08-11 신설).
 //   ⚠️ HomeScreen «밖»에 둔다. 안에 정의하면 렌더마다 새 컴포넌트가 되어 리마운트가 일어난다.
-function WeekBox({ w, 기본, open, img }) {
+function WeekBox({ w, 기본, open }) {
   return (
     <div className="weekly-box">
       <div className="weekly-text">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {/* ⚠️ `calendar` 아이콘은 우리 세트에 «없다» — 이름을 추측해 넣으면 화면에 아무것도 안 나온다.
               있는 것 중 「새로 왔어요」에 가장 가까운 `sparkle`. (전체 목록 = `src/components/Icon.jsx`)
-              🍳 우리집레시피는 «우리 스티커»로 가른다 — 두 박스가 같은 아이콘이면 구분이 안 된다.
-                 ⛔ 유니코드 이모지는 안 쓴다(우리 스티커만). */}
-          {img
-            ? <img src={img} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />
-            : <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />}
+              🔠 [2026-08-13 창업자] *"아래 이번주한끼는 이번주제철이랑 «같은» 이모지 넣자."*
+                 ⛔ 전엔 우리집레시피만 곰 스티커(20px)를 달아 «가르려» 했는데, 두 상자는 나란히 선 같은 갈래다.
+                    다른 표를 달면 「왜 얘만 다르지」가 되고, 게다가 그 컷이 **옛 매끈 곰**이었다. */}
+          <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />
           {/* ⛔ 여기 「이번 주 제철」이 «글자로 박혀» 있었다 — 제철이 아닌 주도 그렇게 떴다.
               (2026-09-28 「추석 남은 음식」이 실제로 그랬고, 52주 표 기준 17주가 제철이 아니다) */}
           <div className="weekly-kicker">{w.kicker || 기본}</div>
@@ -265,7 +279,12 @@ export default function HomeScreen() {
             onClick={() => setPreview(true)}
             data-coach="preview"
           >
-            <span style={{ flex: '0 0 auto', display: 'inline-flex' }}><Icon name="gift" size={20} color="var(--tease-ic)" stroke={1.7} /></span>
+            {/* 🐻 [2026-08-13 창업자] *"한끼소식 옆에 캐릭터 하나 넣으면 되겠다"*
+                ⭐ 선물 아이콘을 «치우는» 게 아니라 **그 자리를 꼬르곰이 대신한다** — 새 소식은 오른쪽 「새로」 뱃지가
+                   이미 말하고 있어서 선물 그림은 같은 말을 두 번 하고 있었다.
+                ⛔ 첫 판은 `ui/gom_clap`(옛 매끈 곰)이었다 → 창업자가 한 번에 잡았다. **물결 정본으로 교체.** */}
+            <img src={uiGomWow} alt="" draggable={false} width={26} height={45} className="hk-m-tongtong"
+              style={{ flex: '0 0 auto', display: 'block', objectFit: 'contain', margin: '-9px 0' }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {/* 🔠 크기는 인라인이 아니라 클래스로 — 넓은 화면에서 키우려면 CSS 가 이겨야 한다
@@ -319,7 +338,7 @@ export default function HomeScreen() {
         {(weekly || homemade) && (
           <div className={`week-pair${weekly && homemade ? ' two' : ''}`}>
             {weekly && <WeekBox w={weekly} 기본="이번 주 제철" open={open} />}
-            {homemade && <WeekBox w={homemade} 기본="우리집레시피" open={open} img={uiGomHeart} />}
+            {homemade && <WeekBox w={homemade} 기본="우리집레시피" open={open} />}
           </div>
         )}
 

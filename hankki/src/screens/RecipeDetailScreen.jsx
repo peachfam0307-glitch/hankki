@@ -30,7 +30,8 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
-import uiGomThumb from '../assets/ui/gom_thumbsup.png'
+// 🐻 엄지척 = **물결 정본**(창업자 2026-08-14 · `gt_01`). 옛 `ui/gom_thumbsup` 은 매끈 곰이었다.
+import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
 import DetailDecor from '../components/DetailDecor'
 import { hlColor } from '../components/Stickers'
 
@@ -66,6 +67,9 @@ const COACH_STEPS = [
 // (장보기 담기·인분 환산에서 제외) — 전 레시피 양념/소스 표기 통일용.
 const isIngHeader = (s) => /^\[[^\]]+\]$/.test(String(s).trim())
 
+// 🛒 주부의 장바구니 픽 — 몇 칸까지 펼쳐 두나 (창업자 2026-08-15 *"4칸 넘어가면 접을 수 있게"*)
+const PICK_FOLD = 4
+
 export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateRecipe } = useStore()
   const nav = useNav()
@@ -88,7 +92,8 @@ export default function RecipeDetailScreen({ id }) {
   //    "저장하지 않고 나갈까요?" 를 건너뛰고 꾸민 게 날아갔다.
   //    → 에디터가 채워주는 `decorCloseRef`(= 물어보는 닫기)를 부른다.
   const decorCloseRef = useRef(null)
-  useLayerBack(decorOpen, () => { if (decorCloseRef.current) decorCloseRef.current(); else setDecorOpen(false) })
+  // ⭐ 돌려주는 값을 «그대로» 넘긴다 — `false` = 「물어보는 중, 아직 안 닫음」(App 이 층을 남긴다)
+  useLayerBack(decorOpen, () => { if (decorCloseRef.current) return decorCloseRef.current(); setDecorOpen(false); return true })
   const [coach, setCoach] = useState(() => needsCoach(COACH_KEY))
   const iconRef = useRef(null)
   const [iconSheet, setIconSheet] = useState(false) // 표지 아이콘 바꾸기 — 상세에서 바로(편집 안 들어가고)
@@ -98,6 +103,7 @@ export default function RecipeDetailScreen({ id }) {
   const baseServings = r?.servings || 0
   const [servings, setServings] = useState(baseServings || 1)
   const ratio = baseServings ? servings / baseServings : 1
+  const [picksOpen, setPicksOpen] = useState(false) // 🛒 픽카드 접기 — 4칸까지만 보이고 나머지는 「더 보기」
   // ⛔⛔ 훅은 «전부» 아래 `if (!r)` 보다 위에 있어야 한다 — 밑에 두면 레시피를 지우는 순간
   //    early return 이 걸려 훅 개수가 줄고 React 가 트리째 죽는다(빈 화면).
   //    2026-08-03 창업자 제보 *"홍콩식가지볶음 지웠더니 먹통됨"* 의 정체가 이거였다.
@@ -229,6 +235,10 @@ export default function RecipeDetailScreen({ id }) {
   //   ⚠️ 자연드림(아이쿱)은 **실버회원 가입으로 누구나 온라인 구매 가능**(조합원과 가격만 다르다)
   //      → 아무 표시도 안 붙인다. 창업자 확인 2026-08-10.
   const pantryPicks = picksForIngredients([...(r?.ingredients || []), r?.memo || ''])
+  // 🔽 4칸까지만 보이고 나머지는 접는다(창업자 2026-08-15 *"너무 길면 좀 그래"*)
+  const shownPicks = picksOpen ? pantryPicks : pantryPicks.slice(0, PICK_FOLD)
+  // ⭐ 「다 담기」는 접혀 있어도 «전부» 담는다 — 「다」라고 써 놓고 보이는 것만 담으면 거짓말이 된다.
+  //    담고 나서 뜨는 토스트가 개수를 말해주니 유저도 몇 개 담겼는지 안다.
   const addAllPicks = () => {
     pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p) }))
     nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요`)
@@ -298,6 +308,11 @@ export default function RecipeDetailScreen({ id }) {
       {/* 🖼 `cover-box` = 가로에서 표지 폭을 화면 «높이»에 맞추는 손잡이 (창업자 2026-08-09
           *"꾸미다가 취소하면 화면이 엄청커짐"* — 눕히면 앱이 폭을 다 써서 1:1 표지가 851×851 이 됐다).
           ⛔ 세로에선 아무 일도 안 한다 · 캡처(자랑 공유)는 이 `ref` 안만 찍으므로 그대로다. */}
+      {/* 📌 `cover-col` = 표지 ＋ 아래 단추 줄을 «한 칸»으로 묶는 래퍼 (2026-08-13).
+          ⭐ 왜 만들었나 = 패드 2단에서 왼쪽 칸을 «고정»하려면(테스터 *"내렸을때 계속 닭곰탕이보여"*)
+             둘을 한 덩어리로 잡아야 한다. 예전에 grid 로 네 번 실패한 이유가 바로 «묶을 래퍼가 없어서»였다.
+          ⛔ 세로(폰)에선 아무 일도 안 한다 — 스타일은 가로 미디어쿼리 안에만 있다. */}
+      <div className="cover-col">
       <div ref={coverRef} className="cover-box" style={{ position: 'relative' }}>
         <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
         <DecorLayer items={r.decor || []} />
@@ -336,6 +351,7 @@ export default function RecipeDetailScreen({ id }) {
           레시피 꾸미기
         </button>
       </div>
+      </div>
       {iconSheet && (
         <FoodIconSheet value={r.icon || guessFoodIcon(r.title)} onChange={pickIcon} onClose={() => setIconSheet(false)} />
       )}
@@ -357,7 +373,39 @@ export default function RecipeDetailScreen({ id }) {
         )}
 
         {/* 즐겨찾기는 상단 오버레이 북마크 하나로 통일 (중복 버튼 정리) */}
-        <div className="h-title" style={{ fontSize: 24 }}>{r.title}</div>
+        <div className="h-title" style={{ fontSize: 24, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {r.title}
+          {/* 🏷 **「샘플」** — 창업자가 직접 꾸민 표지가 붙은 딱 한 편(콩국수)에만 뜬다.
+              📮 창업자 2026-08-13 *"샘플이라고(삭제가능) 명시하고"* — 일기 샘플과 **같은 모양·같은 잉크색**을 쓴다.
+                 ⛔ 두 곳에서 다르게 생기면 「다른 것」으로 읽힌다.
+              ⛔ 포인트색(파랑)은 안 쓴다 — 우리 앱에서 파랑은 「누르는 것」이라 단추로 읽힌다. 이건 이름표다. */}
+          {r.sample && (
+            <span style={{
+              fontSize: 12.5, fontWeight: 800, letterSpacing: '.02em',
+              padding: '4px 11px', borderRadius: 999,
+              background: '#3f382e', color: '#fff', flex: '0 0 auto',
+            }}>샘플</span>
+          )}
+        </div>
+        {/* ⛔⛔ [2026-08-13 창업자가 잡았다] 첫 판은 일기와 «똑같이» 「지워도 돼요」였는데 **위험한 안내였다.**
+               📮 창업자 *"콩국수는 지우면 안되겠다. 레시피라서... 되살릴수가 없자나.
+                  샘플이니까 편집에서 다시꾸밀 수 있어요라던가.. 가르게 적어야겠다"*
+               🔢 코드로 확인 = `store.jsx` 87줄 — **«사용자가 지운 기본 레시피는 다시 안 들어온다»**
+                  (`removedSeedIds` 에 기록된다). 즉 콩국수를 지우면 **레시피가 영영 없어진다.**
+            ⭐⭐ 그래서 일기와 «갈라서» 적는다 —
+               · **일기 샘플** = 남의 기록이라 «지우는 것»이 맞다 → 「지워도 돼요」
+               · **레시피 샘플** = 레시피 자체는 쓸모가 있고 **꾸민 표지만 우리 것**이다 → 「바꿔 보세요」
+            📌 같은 「샘플」이라도 **지우면 잃는 게 다르면 안내도 달라야 한다.** */}
+        {/* 🔠 [2026-08-13 창업자 *"콩국수 샘플도 아래 글자 너무 작고 색이 연해서 안보임"*]
+            ⛔ 첫 판 = `t-sub`(연한 회색) ＋ 11.5px. 본문이 15px 인데 그 3/4 라 패드에서 특히 안 읽혔다.
+            ✅ 13px ＋ 갈색(우리 주색). ⛔파랑은 안 쓴다 — 우리 앱에서 파랑은 「누르는 것」이다.
+            ⭐ 굵은 두 낱말(「보여드리는 샘플」·「레시피 꾸미기」)이 눈에 먼저 들어오게 색을 한 단 더 준다. */}
+        {r.sample && (
+          <div style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55, color: 'var(--brown)', letterSpacing: '-.2px' }}>
+            표지는 <b style={{ fontWeight: 800, color: '#5b4632' }}>보여드리는 샘플</b>이에요 ·{' '}
+            <b style={{ fontWeight: 800, color: '#5b4632' }}>레시피 꾸미기</b>에서 마음대로 바꿔 보세요
+          </div>
+        )}
 
         <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
           <SourceBadge source={r.source} size={16} showLabel={false} />
@@ -417,8 +465,17 @@ export default function RecipeDetailScreen({ id }) {
               <div className="sec-title-row" style={{ display: 'flex', alignItems: 'center' }}>
                 <DetailDecor where="head-재료" />
                 <SecTitle>재료</SecTitle>
-                <button className="press" onClick={() => setGuide(true)} aria-label="계량·손질 가이드" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 999, background: 'var(--cream)' }}>
-                  <Icon name="help" size={14} color="var(--brown)" />
+                {/* 📖 [2026-08-14 창업자] *"버튼 물음표 너무 작고 «모르니까» 요리가이드로 적거나 해서"*
+                    ⛔ 전엔 22×22 동그란 「?」 뿐이라 **뭐가 들었는지 알 길이 없었다.**
+                    ⭐ 글자는 「요리 가이드」가 아니라 **「계량·손질」** — 창업자 확정(ⓑ).
+                       버튼엔 «제목»이 아니라 **안에 뭐가 있는지**가 적혀야 눌러보게 된다
+                       (설정에서도 이미 그 두 낱말을 부제로 쓰고 있다).
+                    ⚠️ 이 줄 오른쪽엔 「사러가기」가 있다 → 글자를 늘린 만큼 좁은 폰에서 밀릴 수 있어
+                       `check-charside.mjs` 와 같이 폭을 재서 확인했다. */}
+                <button className="press" onClick={() => setGuide(true)} aria-label="계량·손질 가이드"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '3px 8px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', flex: '0 0 auto' }}>
+                  <Icon name="help" size={12} color="var(--brown)" />
+                  계량·손질
                 </button>
               </div>
               <button
@@ -458,9 +515,9 @@ export default function RecipeDetailScreen({ id }) {
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>
               <Icon name="cart" size={17} color="var(--brown)" />
-              이 레시피, 이걸로 만들었어요
+              주부의 장바구니에서 고른 재료
             </div>
-            {pantryPicks.map((p) => (
+            {shownPicks.map((p) => (
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
                 {curIcon(p.icon) && <img src={curIcon(p.icon)} alt="" draggable={false} style={{ width: 30, height: 30, objectFit: 'contain', flex: '0 0 auto' }} />}
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -472,11 +529,29 @@ export default function RecipeDetailScreen({ id }) {
                 <button className="press" onClick={() => openUrl(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>
               </div>
             ))}
+            {/* 🔽🔼 [2026-08-15] 창업자 *"4칸 넘어가면 접을 수 있게 해줘. 너무 길면 좀 그래."*
+                🔢 실측(113편) — 픽이 5개 넘는 편이 **15편**(제일 많은 게 어묵탕 7개 · 감바스 5개).
+                ⛔ 옛 코드는 **몇 개든 다 펼쳐** 카드가 재료 목록보다 길어졌다 — 광고 칸이 본문을 밀어낸다.
+                ⭐ 문구·화살표는 장보기 화면(`ShopScreen`)의 「더보기 / 접기」와 «같은 모양»으로.
+                   ⛔ 거기서 냈던 사고를 되풀이하지 않는다 — **펼친 뒤에도 같은 자리에 「접기」를 그린다.**
+                ⭐ 개수를 밝힌다(「3개 더보기」) — 이 카드가 고친 게 «몇 개인지 안 밝힌 것»이라 숨기면 앞뒤가 안 맞는다. */}
+            {pantryPicks.length > PICK_FOLD && (
+              <button className="press" onClick={() => setPicksOpen((v) => !v)} aria-label={picksOpen ? '장바구니 재료 접기' : '장바구니 재료 더 보기'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%', marginTop: 2, padding: '9px 0', borderTop: '1px solid rgba(0,0,0,.05)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>
+                {picksOpen ? '접기' : `${pantryPicks.length - PICK_FOLD}개 더보기`}
+                <Icon name={picksOpen ? 'chevron-up' : 'chevron-down'} size={13} color="var(--brown)" />
+              </button>
+            )}
             <button className="press" onClick={addAllPicks} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 14 }}>
               <Icon name="cart" size={16} color="#fff" />
               이 재료 다 담기
             </button>
-            <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>담아두고 장보기에서 체크하며 사면 편해요 · 18년차 주부가 진짜 쓰는 재료예요</div>
+            {/* 🧑‍🤝‍🧑 테스터 *"왜 많은 재료 중에 몇 개만 올려놨냐"* (창업자 전달 2026-08-15)
+                ⛔ 옛 제목 「이 레시피, 이걸로 만들었어요」가 **재료 목록**으로 읽혔다 —
+                   실측하니 평균 재료 11.6줄 → 픽 2.9개(전복솥밥은 28줄 → 2개)라 「몇 개만 올렸다」로 보인다.
+                ⭐ 창업자 관찰이 정확했다 — *"주부의 장바구니에서 볼수있다는 내용이 없네"*.
+                   카드 어디에도 「주부의 장바구니」라는 말이 없어서 **어디서 온 목록인지 알 방법이 없었다.**
+                ✅ 문구는 창업자 확정 — 제목 ＋ 「계속 추가된다」로 «지금 몇 개뿐인 게 아니다»를 밝힌다. */}
+            <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>평소에 제가 쓰는 재료들이에요 · 레시피에도 계속 추가돼요</div>
           </div>
         )}
 

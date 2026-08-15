@@ -406,6 +406,19 @@ const PHOTO_RATIO = {
   fe_252: 1.9442, fe_253: 1.9918, fe_254: 2.0041, fe_255: 1.1768,
   fe_256: 1.1658, fe_257: 1.2020, fe_258: 1.2846, fe_259: 1.3042,
   fe_260: 1.2108,
+  // 🍱 2026-08-14 창업자 새 시트 3장(15컷) ＋ 「줬는데 안 넣었던」 8컷
+  fe_261: 1.2121, fe_262: 1.2797, fe_263: 1.3348, fe_264: 1.1449,
+  fe_265: 1.1459, fe_266: 1.2600, fe_267: 1.0918, fe_268: 1.4078,
+  fe_269: 0.7244, fe_270: 1.2394, fe_271: 1.1232, fe_272: 1.1818,
+  fe_273: 1.1404, fe_274: 1.1800, fe_275: 1.3644, fe_276: 0.9833,
+  fe_277: 1.2987, fe_278: 1.1790, fe_279: 1.0192, fe_280: 1.0518,
+  fe_281: 1.0217, fe_282: 1.2321, fe_283: 1.2355, fe_284: 1.3629,
+  // 🍱 2026-08-15 창업자 시트 4장 → 20컷 (fe_285~fe_304)
+  //   ⭐ 비율이 전부 1.00~1.28 — 정사각에 가까워 아이콘 칸에 꽉 찬다(1.9 넘으면 얇은 띠가 된다)
+  fe_285: 1.2071, fe_286: 1.2071, fe_287: 1.2354, fe_288: 1.1082, fe_289: 1.0853,
+  fe_290: 1.0549, fe_291: 1.1581, fe_292: 1.1450, fe_293: 1.1581, fe_294: 0.9974,
+  fe_295: 1.1300, fe_296: 1.0158, fe_297: 1.1611, fe_298: 1.1537, fe_299: 1.1657,
+  fe_300: 1.0994, fe_301: 1.1043, fe_302: 1.2113, fe_303: 1.2768, fe_304: 1.1826,
   ce_manse: 0.7471, ce_pokjuk: 0.5848, ce_cheers: 1.0923,
   // ⛔ **여기 있던 여름다꾸 37(`sd_`)·미니아이콘 92(`mn_`)·파스텔 43(`ps_`)은 도로 뺐다** (2026-07-29 당일 롤백).
   //    창업자 폰 제보: "우리 꾸미기에 추가한 데코에 여름 스티커들 다 깨져."
@@ -507,6 +520,15 @@ const PHOTO_RATIO = {
   rs_s07: 0.9375, rs_s08: 0.9753, rs_s09: 1.0958, rs_s10: 0.9189, rs_s11: 0.9184, rs_s12: 1.1053,
   rs_g01: 0.9479, rs_g02: 0.8257, rs_g03: 0.8087, rs_g04: 0.9, rs_g05: 0.949, rs_g06: 0.8576,
   rs_g07: 1.0459, rs_g08: 0.9763, rs_g09: 1.0739, rs_g10: 0.8209, rs_g11: 0.8196, rs_g12: 0.8801,
+  // 🐻🐧 레꾸 캐릭터 32컷 (2026-08-12 창업자 시트 2장 · 레꾸 전용 · `only: 'cover'`)
+  //   ⚠️ 위 `rs_*` 보다 세로로 길다(0.54~1.01) — 칸 «아래»에 캡션이 붙은 채로 잘랐기 때문이다.
+  //   ⚠️ 2026-08-12 재컷(띠부씰 흰 테 2px)으로 비율이 조금 달라졌다 — PNG 를 바꾸면 여기도 «반드시» 같이.
+  rs_v01: 1.069, rs_v02: 1.4777, rs_v03: 0.6217, rs_v04: 1.0356, rs_v05: 1.0919, rs_v06: 0.732,
+  rs_v07: 0.9435, rs_v08: 0.9695, rs_v09: 0.9203, rs_v10: 0.8664, rs_v11: 1.1081, rs_v12: 0.7786,
+  rs_v13: 1.0289, rs_v14: 0.995, rs_v15: 0.9048, rs_v16: 1.0443,
+  rs_k01: 0.9368, rs_k02: 1.036, rs_k03: 0.8423, rs_k04: 1.0299, rs_k05: 0.9404, rs_k06: 0.9903,
+  rs_k07: 0.9883, rs_k08: 1.0043, rs_k09: 1.019, rs_k10: 0.8817, rs_k11: 0.846, rs_k12: 0.9457,
+  rs_k13: 0.9124, rs_k14: 0.8591, rs_k15: 1.0514, rs_k16: 1.127,
 
   // ══════════════════════════════════════════════════════════════════════════
   // 💰 **유료팩 154컷 — 2026-08-05 결제 준비로 앱에 들였다**
@@ -1029,7 +1051,13 @@ export function StickerArt({ id, color, style, motion }) {
   let art = isBubble ? YUM_BUBBLE : ART[id] || ''
   if (color && STICKER_DEFAULT[id]) art = art.split(STICKER_DEFAULT[id]).join(color)
   const svg = `<svg viewBox="${isBubble ? '0 0 74 46' : '0 0 48 48'}" width="100%" height="100%" style="display:block">${art}</svg>`
-  return <span style={{ display: 'block', width: '100%', height: '100%', ...style }} dangerouslySetInnerHTML={{ __html: svg }} />
+  // 🎬🎬 **모션이 여기만 빠져 있었다** (창업자 2026-08-12 *"색을 넣고 모션하니까 안되던데"*)
+  //   ⛔ 위 PNG 분기(`PHOTO_FAMILY`)·부엌 식구들은 `motionClass` 를 붙이는데
+  //      **벡터 스티커(하트·별·반짝이·리본·브이손)는 그게 없어 모션을 골라도 안 움직였다.**
+  //   📌 하필 이 다섯이 **리컬러 되는 벡터 전부**라, 창업자에겐 「색을 넣은 것만 모션이 안 된다」로 보였다.
+  //      원인은 색이 아니라 «벡터라서»다 — 색은 처음부터 상관이 없었다.
+  //   ⚠️ 프레임(`FRAMES`)엔 일부러 안 준다 — 밑판이라 흔들리면 그 위 스티커와 따로 논다.
+  return <span className={motionClass(motion)} style={{ display: 'block', width: '100%', height: '100%', ...style }} dangerouslySetInnerHTML={{ __html: svg }} />
 }
 
 // 스티커별 가로:세로 비율(레이아웃용). 말풍선은 넓고, 부엌 식구들은 세로가 길다.
@@ -1279,7 +1307,12 @@ export const STICKER_GROUPS = [
   { key: 'deco_dy_hand_c', tab: 'deco', diary: true, from: '2026-11-01', label: '점·붓칠', items: ['dyh02', 'dyh04', 'dyh10', 'dyh11'] },
 
   { key: 'deco_dy_tape_a', tab: 'tape', diary: true, from: '2026-09-01', label: '무늬 테이프', items: ['wt_dy02', 'wt_dy04', 'wt_dy03', 'wt_dy05', 'wt_dy06', 'wt_dy09', 'wt_dy21'] },
-  { key: 'deco_dy_tape_b', tab: 'tape', diary: true, from: '2026-10-01', label: '민무늬·종이', items: ['wt_dy01', 'wt_dy11', 'wt_dy14', 'wt_dy18', 'wt_dy07', 'wt_dy08', 'wt_dy16'] },
+  // 🎗 [2026-08-12] `wt_dy07` 을 «내렸다» — 창업자 *"1.6중에 네가 보고 하나 빼."*
+  //   🔬 25컷을 픽셀로 재니 «같은 그림»은 0쌍인데, `wt_dy07`↔`wt_dy16` 만 **같은 크림 한지·같은 질감**이고
+  //      길이만 달랐다(1.49 ↔ 2.89). 눈으로 보고 골랐다 —
+  //      ⭐ **짧은 한지는 `wt_dy08`(갈색)이 대신한다.** 긴 크림 한지는 `wt_dy16` 하나뿐이라 빼면 그 자리가 빈다.
+  //   ⛔ **파일은 안 지운다.** 서랍에서만 내린다 — 이미 이 마테로 꾸며 저장한 일기가 깨지면 안 된다.
+  { key: 'deco_dy_tape_b', tab: 'tape', diary: true, from: '2026-10-01', label: '민무늬·종이', items: ['wt_dy01', 'wt_dy11', 'wt_dy14', 'wt_dy18', 'wt_dy08', 'wt_dy16'] },
   { key: 'deco_dy_tape_c', tab: 'tape', diary: true, from: '2026-11-01', label: '격자·도트·겹침', items: ['wt_dy12', 'wt_dy13', 'wt_dy15', 'wt_dy17', 'wt_dy19', 'wt_dy20'] },
 
   // ── 여름 (2026-07-29 재제작) ── 제철(6~8월)이면 데코 탭 맨 위로 올라간다.
@@ -1394,19 +1427,43 @@ export const STICKER_GROUPS = [
   //   → 새 시트는 `--diecut keep`(그려진 흰 테 두께를 실측해 그대로)로 잘랐다. 두 겹도 지글거림도 없다.
   //   ⭐ 새로 6종 — It's me · 싱거워.. · 레꾸 재밌어 · 아이 원픽! · 남편 원픽! · 이건 인정!
   //     「아이 원픽!」「남편 원픽!」 = 가족 반응 기록 — 우리 앱 성격에 딱 맞는 말.
-  { key: 'text_hankki', tab: 'notetext', label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night', 'tw_kidpick', 'tw_hubbypick', 'tw_admit', 'tw_funfun', 'tw_itsme', 'tw_bland'] },
-  { key: 'text_word', tab: 'notetext', label: '문구', items: ['tw_today', 'tw_success', 'tw_welldone', 'tw_tasty', 'tw_more', 'tw_fav', 'tw_honey', 'tw_hearty', 'tw_easy', 'tw_mom', 'tw_nexttime', 'tw_fail', 'tw_yummy', 'tw_best', 'tw_ourhankki', 'tw_goodday'] },
+  // 🐻🐧 **레꾸 캐릭터 32컷 (2026-08-12 창업자 시트 2장 · 레꾸 «전용»)**
+  //   창업자 *"글자있는 버전도 넣자"* — 그림 밑에 캡션이 붙은 채로 한 컷이다.
+  //   ⭐ 왜 글자를 넣나 = 창업자 *"직관적이지 않는 것도 있어서"*. 「저당」과 「저염」은
+  //      그림만으로 못 가른다 — **뜻이 글자에 있다**(2026-08-08 rs_ 99컷과 같은 판단).
+  //   ⛔ 「글자 뗀 판」도 잘라 뒀지만 «안 들인다» — 같은 그림이 서랍에 두 번 나온다
+  //      (창업자 *"왜 같은그림이 나와?"*). 파일은 docs 에 그대로 있다.
+  // 🐻 창업자 2026-08-12 *"꼬르곰도 제발 넣어줘."* — 레꾸 «전용»이라 일기를 꾸미는 동안엔 못 봤다.
+  //    ⭐ only 를 뺀다 → 레꾸 「글자」 탭과 일꾸 「기록」 탭 «둘 다»에 뜬다.
+  //    ⛔ 일꾸 「기록」의 기존 99컷과 안 겹친다 — 그건 «도구·재료» 그림이고 이건 «꼬르곰·펭펭이 하는 모습»이다.
+  //    ⚠️ 「일꾸」 선반은 diary 표시가 있어야 뜬다(onShelf) — tabs 만 넣고 이걸 빠뜨려 안 보였다.
+  { key: 'rs_star', wordy: true, tab: 'notetext', tabDiary: 'record', diary: true, both: true, label: '반응 · 별점', items: ['rs_v01', 'rs_v02', 'rs_v03', 'rs_v04', 'rs_v05', 'rs_v06', 'rs_v07', 'rs_v08', 'rs_v09', 'rs_v10', 'rs_v11', 'rs_v12', 'rs_v13', 'rs_v14', 'rs_v15', 'rs_v16'] },
+  { key: 'rs_way', wordy: true, tab: 'notetext', tabDiary: 'record', diary: true, both: true, label: '조리법 · 기록', items: ['rs_k01', 'rs_k02', 'rs_k03', 'rs_k04', 'rs_k05', 'rs_k06', 'rs_k07', 'rs_k08', 'rs_k09', 'rs_k10', 'rs_k11', 'rs_k12', 'rs_k13', 'rs_k14', 'rs_k15', 'rs_k16'] },
+  { key: 'text_hankki', wordy: true, tab: 'notetext', label: '한끼 문구', items: ['tw_haenaem', 'tw_first', 'tw_5min', 'tw_again', 'tw_better', 'tw_really', 'tw_daebak', 'tw_wow', 'tw_salty', 'tw_night', 'tw_kidpick', 'tw_hubbypick', 'tw_admit', 'tw_funfun', 'tw_itsme', 'tw_bland'] },
+  { key: 'text_word', wordy: true, tab: 'notetext', label: '문구', items: ['tw_today', 'tw_success', 'tw_welldone', 'tw_tasty', 'tw_more', 'tw_fav', 'tw_honey', 'tw_hearty', 'tw_easy', 'tw_mom', 'tw_nexttime', 'tw_fail', 'tw_yummy', 'tw_best', 'tw_ourhankki', 'tw_goodday'] },
   // 🍳 레꾸 상황·평가 8그룹 (2026-08-08 창업자 시트 · 그림+캡션 스티커)
   //   「요리 기록에 실제로 도움이 되는 스티커」 — 스티커-방향 문서의 「없는 6묶음」을 채운다.
   //   변형쌍은 창업자 판정분만(귀요미·노랑·그린·아이콘) — 탈락 벌은 앱에 안 들였다.
-  { key: 'rs_taste', tab: 'notetext', label: '맛 평가', items: ['rs_t01', 'rs_t02', 'rs_t03', 'rs_t04', 'rs_t05', 'rs_t06', 'rs_t07', 'rs_t08', 'rs_t09', 'rs_t10', 'rs_t11', 'rs_t12'] },
-  { key: 'rs_react', tab: 'notetext', label: '반응 평가', items: ['rs_r01', 'rs_r02', 'rs_r03', 'rs_r04', 'rs_r05', 'rs_r06', 'rs_r07', 'rs_r08', 'rs_r09', 'rs_r10', 'rs_r11', 'rs_r12'] },
-  { key: 'rs_cook', tab: 'notetext', label: '조리법', items: ['rs_q01', 'rs_q02', 'rs_q03', 'rs_q04', 'rs_q05', 'rs_q06', 'rs_q07', 'rs_q08', 'rs_q09', 'rs_q10', 'rs_q11', 'rs_q12'] },
-  { key: 'rs_scene', tab: 'notetext', label: '요리 상황', items: ['rs_i01', 'rs_i02', 'rs_i03', 'rs_i04', 'rs_i05', 'rs_i06', 'rs_i07', 'rs_i08', 'rs_i09', 'rs_i10', 'rs_i11', 'rs_i12', 'rs_i13', 'rs_i14', 'rs_i15'] },
-  { key: 'rs_meal', tab: 'notetext', label: '식사 상황', items: ['rs_m01', 'rs_m02', 'rs_m03', 'rs_m04', 'rs_m05', 'rs_m06', 'rs_m07', 'rs_m08', 'rs_m09', 'rs_m10', 'rs_m11', 'rs_m12'] },
-  { key: 'rs_prep', tab: 'notetext', label: '미리 준비', items: ['rs_p01', 'rs_p02', 'rs_p03', 'rs_p04', 'rs_p05', 'rs_p06', 'rs_p07', 'rs_p08', 'rs_p09', 'rs_p10', 'rs_p11', 'rs_p12'] },
-  { key: 'rs_store', tab: 'notetext', label: '보관', items: ['rs_s01', 'rs_s02', 'rs_s03', 'rs_s04', 'rs_s05', 'rs_s06', 'rs_s07', 'rs_s08', 'rs_s09', 'rs_s10', 'rs_s11', 'rs_s12'] },
-  { key: 'rs_health', tab: 'notetext', label: '건강 태그', items: ['rs_g01', 'rs_g02', 'rs_g03', 'rs_g04', 'rs_g05', 'rs_g06', 'rs_g07', 'rs_g08', 'rs_g09', 'rs_g10', 'rs_g11', 'rs_g12'] },
+  //
+  // 📔📔 **[2026-08-12 창업자 확정] 이 여덟은 «일꾸로 보낸다» — 레꾸 서랍엔 안 나온다.**
+  //   창업자 원문 = *"맛평가부터 반응 조리법,요리상황 식사상황미리준비보관 건강태그까지는 일꾸로
+  //   보내는데 좋을 것 같아"* · *"레꾸 그 자리를 오늘뽑은 꼬르곰이 채워주면 좋을 것 같아.
+  //   **어차피 레꾸자리는 많은 양이 스티커를 붙일 수 없으니**.."*
+  //   ⭐⭐ 마지막 줄이 근거다 — 레꾸는 **표지 한 장**이라 스티커 몇 개면 꽉 찬다.
+  //      99컷을 다 펼쳐 봐야 고르기만 힘들다. 일꾸(속지)는 넓어서 이만큼이 값을 한다.
+  //   ⛔⛔ **그리고 안 가르면 「같은 게 두 번」 나온다** — 새 32컷과 이름이 실제로 겹친다(실측):
+  //      조리법 **8개 완전 일치**(썰기·볶기·끓이기·굽기·찌기·튀기기·에어프라이어·오븐)
+  //      반응 평가 **4개 완전 일치**(칭찬받음·간이 딱·저장 필수·실패 없는 메뉴) ＋ 뜻만 같은 것 4개
+  //      갈래는 **그림**이다 — 기존은 «도구·재료», 새것은 «꼬르곰·펭펭이 하는 모습».
+  //   ⚠️ `only` 는 **서랍(고르는 목록)만** 거른다. 이미 붙여 저장한 표지는 그대로 그려진다(안 사라진다).
+  { key: 'rs_taste', wordy: true, tab: 'record', diary: true, only: 'diary', label: '맛 평가', items: ['rs_t01', 'rs_t02', 'rs_t03', 'rs_t04', 'rs_t05', 'rs_t06', 'rs_t07', 'rs_t08', 'rs_t09', 'rs_t10', 'rs_t11', 'rs_t12'] },
+  { key: 'rs_react', wordy: true, tab: 'record', diary: true, only: 'diary', label: '반응 평가', items: ['rs_r01', 'rs_r02', 'rs_r03', 'rs_r04', 'rs_r05', 'rs_r06', 'rs_r07', 'rs_r08', 'rs_r09', 'rs_r10', 'rs_r11', 'rs_r12'] },
+  { key: 'rs_cook', wordy: true, tab: 'record', diary: true, only: 'diary', label: '조리법', items: ['rs_q01', 'rs_q02', 'rs_q03', 'rs_q04', 'rs_q05', 'rs_q06', 'rs_q07', 'rs_q08', 'rs_q09', 'rs_q10', 'rs_q11', 'rs_q12'] },
+  { key: 'rs_scene', wordy: true, tab: 'record', diary: true, only: 'diary', label: '요리 상황', items: ['rs_i01', 'rs_i02', 'rs_i03', 'rs_i04', 'rs_i05', 'rs_i06', 'rs_i07', 'rs_i08', 'rs_i09', 'rs_i10', 'rs_i11', 'rs_i12', 'rs_i13', 'rs_i14', 'rs_i15'] },
+  { key: 'rs_meal', wordy: true, tab: 'record', diary: true, only: 'diary', label: '식사 상황', items: ['rs_m01', 'rs_m02', 'rs_m03', 'rs_m04', 'rs_m05', 'rs_m06', 'rs_m07', 'rs_m08', 'rs_m09', 'rs_m10', 'rs_m11', 'rs_m12'] },
+  { key: 'rs_prep', wordy: true, tab: 'record', diary: true, only: 'diary', label: '미리 준비', items: ['rs_p01', 'rs_p02', 'rs_p03', 'rs_p04', 'rs_p05', 'rs_p06', 'rs_p07', 'rs_p08', 'rs_p09', 'rs_p10', 'rs_p11', 'rs_p12'] },
+  { key: 'rs_store', wordy: true, tab: 'record', diary: true, only: 'diary', label: '보관', items: ['rs_s01', 'rs_s02', 'rs_s03', 'rs_s04', 'rs_s05', 'rs_s06', 'rs_s07', 'rs_s08', 'rs_s09', 'rs_s10', 'rs_s11', 'rs_s12'] },
+  { key: 'rs_health', wordy: true, tab: 'record', diary: true, only: 'diary', label: '건강 태그', items: ['rs_g01', 'rs_g02', 'rs_g03', 'rs_g04', 'rs_g05', 'rs_g06', 'rs_g07', 'rs_g08', 'rs_g09', 'rs_g10', 'rs_g11', 'rs_g12'] },
   // 📅 요일 = 무슨 요일에 해먹었는지 기록용. 빈 라벨 3종은 직접 글씨 얹으라고 둔다.
   //   ⚠️ 숫자 1~10 은 뺐다(창업자 2026-07-29) — 넣을 땐 '레시피 순서 매기기'를 생각했는데
   //      우리 레꾸는 **표지 한 장**이라 순서를 매길 자리가 없고(순서는 상세 화면에 이미 번호로 있음),
@@ -1709,6 +1766,31 @@ export const TEXT_WEIGHTS = [
   { key: 'mid', label: '보통', fat: 0.055 },
   { key: 'bold', label: '굵게', fat: 0.16 },
 ]
+
+// 📏📏 **글자 크기** — 「글 상자」와 「글자 스티커」 공통 (창업자 2026-08-12)
+//   📮 *"글에 비해 글자상자가 너무 작아(스티커-돌밥돌밥쓴거) **스티커를 줄이면 글자가 너무 작아져**"* ·
+//      *"일꾸 글자는 크기 조절이 없어"* · *"레꾸도 마찬가지.. 글자크기조절되는거 넣어야 할 듯"*
+//   ⛔⛔ **없던 게 맞다** — 컨텍스트바 갈래가 글자 스티커는 「색·굵기·글씨」, 글 상자는 「색·글씨」뿐이었다.
+//      글자 크기를 바꾸는 유일한 길이 **상자 크기(손잡이)** 라, 글 상자에선 **그림까지 같이 커졌다.**
+//      창업자 말이 정확하다 — 「스티커를 줄이면 글자가 너무 작아진다」가 그 구조 그대로다.
+//   ⭐ 그래서 **상자와 글자를 갈랐다**:
+//      · 글 상자(`note`) = 상자는 그대로 두고 **글자만** 이 배율로 (`it.tz`)
+//      · 글자 스티커(`text`) = 상자가 글자에 맞춰지므로 결과적으로 둘 다 커진다(같은 뜻)
+//   ⚠️ 값은 「한 단계가 눈에 보이되 확 튀지 않게」 — 1.28 은 보통 대비 한눈에 크고, 1.6 은 제목용이다.
+//   ⚠️ 빈 값(`undefined`)이 **보통**이다 — 이미 쓴 일기·표지가 한 글자도 안 바뀐다.
+export const TEXT_SIZES = [
+  { key: 'sm', label: '작게', v: 0.82 },
+  { key: 'md', label: '보통', v: 1 },
+  { key: 'lg', label: '크게', v: 1.28 },
+  // ⚠️⚠️ 키를 「엑스엘」로 뒀다가 **유료팩 게이트에 걸려 배포가 막혔다**(2026-08-12).
+  //   `paidPacks.js` 의 **겨울 팩 접두어에 그 두 글자가 실제로 있다** — 우연히 같은 이름을 지은 것이다.
+  //   ⛔ 게다가 고친 뒤에도 계속 걸렸는데, 이번엔 **내가 쓴 이 주석 안의 따옴표 낱말**이 범인이었다.
+  //      `check-packmix.mjs` 는 소스에서 «따옴표 낱말»을 전부 키로 보고, 주석도 소스다.
+  //   📌 새 상수 키를 지을 땐 **팩 접두어(x·au·ci·hw…)로 시작하지 말 것** ＋
+  //      **주석에도 그 키를 따옴표로 쓰지 말 것.**
+  { key: 'hg', label: '아주 크게', v: 1.6 },
+]
+export const textSizeV = (k) => (TEXT_SIZES.find((t) => t.key === k) || TEXT_SIZES[1]).v
 
 // 글자 스티커 글씨체 — 또박체(고운돋움) / 귀염체(개구체). 오프라인이면 다음 폰트로 자연 대체.
 // ✏️ 글씨체 — `bw` = **굵기 보정.** 창업자 2026-07-30 *"글씨체자체가 두꺼운 애들도 있는데

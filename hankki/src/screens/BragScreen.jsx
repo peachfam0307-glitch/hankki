@@ -14,8 +14,10 @@ import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
-import uiGomThumb from '../assets/ui/gom_thumbsup.png'
+// 🐻 엄지척 = **물결 정본**(창업자 2026-08-14 · `gt_01`). 옛 `ui/gom_thumbsup` 은 매끈 곰이었다.
+import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
 import uiHandPoint from '../assets/ui/hand_point.png'
+import uiGomProud from '../assets/ui/wave/gom_proud.png' // 🐻 꼬르곰(뿌듯) — 레꾸자랑 상단
 
 // 🎴 카드자랑 탭 — 바이럴 진입점. 내 레시피를 골라 자랑한다.
 // ⭐ 창업자 방향: 주인공은 '내가 꾸민 표지', 랜덤 카드는 옵션(메인 아님).
@@ -122,7 +124,15 @@ export default function BragScreen() {
   return (
     <>
       <div className="topbar">
-        <div className="h-title">레꾸자랑</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+          {/* 🐻 [2026-08-13 창업자 제보] *"장보기 레꾸자랑에는 없어…(글씨옆에)"*
+              ⭐ 컷 이름 그대로 «뿌듯한» 꼬르곰 — 자랑 탭에 뜻이 딱 맞는다(별 두 개도 붙어 있다).
+              🧍‍♀️ [2026-08-14 확정] 캐릭터는 **글자 «왼쪽»** — 창업자 *"캐릭터는 같은방향에넣자.왼쪽으로"*
+                 ⛔ 전엔 여기만 제목 «뒤»였다(레시피·일기·홈은 앞). 의도가 아니라 「글씨옆에」를 뒤로 읽은 것. */}
+          <img src={uiGomProud} alt="" draggable={false} width={29} height={44} className="hk-m-tongtong"
+            style={{ display: 'block', objectFit: 'contain', margin: '-5px 0' }} />
+          <div className="h-title">레꾸자랑</div>
+        </div>
         <button
           className="icon-btn press"
           onClick={() => setSearchOpen((v) => { if (v) setQ(''); return !v })}
