@@ -269,15 +269,41 @@ export default function DiaryScreen({ day }) {
             ⛔⛔ 이 주석을 `{entry ? (` **뒤로** 옮기지 말 것 — 거긴 «표현식 자리»라 JSX 주석이 못 온다.
                2026-08-12 에 그렇게 넣어 빌드를 깼다(`Expected ")" but found "className"`). CLAUDE.md 에도 있는 함정이다. */}
         {entry ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2, flex: '0 0 auto' }}>
-            <button className="bar-btn" aria-label={가려짐 ? '일기 열기' : locked ? '일기 잠금 풀기' : '일기 잠그기'} onClick={잠금단추}>
-              <Icon name={locked ? 'lock' : 'unlock'} size={19} color={locked ? 'var(--brown)' : undefined} />
+          // 🔘🔘 **채운 동그라미로** (창업자 2026-08-15 *"휴지통 버튼 잘보이게(지금 라인만있어서 안보임)"*)
+          //   ⛔ `.bar-btn` 은 배경이 transparent 라 **선만 떠 있어** 단추로 안 읽힌다. 맞는 지적이다.
+          //   ⭐ 그렇다고 `.bar-btn` 자체를 고치면 **앱의 모든 상단바**가 같이 바뀐다 →
+          //      창업자가 지목한 **이 화면에서만** 배경을 준다(⛔넓히지 않는다).
+          //   ⭐ 잠긴 자물쇠는 **채운 포인트색 ＋ 흰 아이콘** — 「잠겼다」가 한눈에 보인다.
+          //   ⚠️ `--brown` 은 이름과 달리 **더스티 블루(#5878a0)** 다(`styles.css:71` — 전 테마 통일 포인트색).
+          //      ⭐ 여기선 그게 맞다 — 자물쇠는 **진짜 누르는 것**이고, 잠긴 표시로도 눈에 띈다.
+          //      ⛔ 「파랑은 안 쓴다」는 «눌러도 아무 일 없는 이름표»에 해당하는 말이다(샘플 배지처럼).
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: '0 0 auto' }}>
+            <button
+              className="press"
+              aria-label={가려짐 ? '일기 열기' : locked ? '일기 잠금 풀기' : '일기 잠그기'}
+              onClick={잠금단추}
+              style={{
+                width: 36, height: 36, borderRadius: '50%', border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: locked ? 'var(--brown)' : 'var(--cream)',
+              }}
+            >
+              <Icon name={locked ? 'lock' : 'unlock'} size={18} color={locked ? '#fff' : 'var(--brown)'} />
             </button>
             {/* 🗑 잠겨서 가려진 동안엔 «지우기»도 숨긴다 — 내용을 못 보게 해 놓고 지우게 두면
                 남이 통째로 없앨 수 있다. 잠금은 「못 보게」이자 「못 건드리게」다. */}
             {!가려짐 && (
-              <button className="bar-btn" aria-label="일기 삭제" onClick={() => { removeDiary(entry.id); nav.showToast('일기를 지웠어요'); nav.pop() }}>
-                <Icon name="trash" size={19} />
+              <button
+                className="press"
+                aria-label="일기 삭제"
+                onClick={() => { removeDiary(entry.id); nav.showToast('일기를 지웠어요'); nav.pop() }}
+                style={{
+                  width: 36, height: 36, borderRadius: '50%', border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'var(--cream)',
+                }}
+              >
+                <Icon name="trash" size={18} color="var(--danger)" />
               </button>
             )}
           </div>

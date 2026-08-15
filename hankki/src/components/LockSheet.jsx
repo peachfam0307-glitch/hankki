@@ -119,8 +119,8 @@ export default function LockSheet({ mode = 'check', onClose, onDone }) {
               <>
                 {/* 💡 힌트는 «건너뛸 수 있다» — 강제하면 아무 말이나 치고 넘어간다.
                     ⛔ 비번 자체를 힌트에 적지 말라고 한 줄로 말해 준다(실제로 그렇게 적는 사람이 많다). */}
-                <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.6, marginBottom: 11 }}>
-                  비번을 잊으면 이 말만 보여줘. 안 써도 돼.<br />
+                <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.65, marginBottom: 11 }}>
+                  비번은 되찾을 길이 없어서 <b style={{ color: 'var(--brown)' }}>이 힌트가 하나뿐인 실마리</b>예요. 안 써도 돼요.<br />
                   <b style={{ color: 'var(--brown)' }}>비번 숫자 자체는 적지 말기</b> — 남도 같이 보게 되니까.
                 </div>
                 <input
@@ -150,6 +150,19 @@ export default function LockSheet({ mode = 'check', onClose, onDone }) {
                     : step === 'first' ? '이 비번으로 일기를 잠가' : '틀리지 않게 한 번 더')}
                 </div>
                 <숫자판 onNum={눌러} onBack={() => { setPinText(pin.slice(0, -1)); setErr('') }} disabled={busy} />
+
+                {/* ⚠️⚠️ **「못 찾는다」를 «정하는 그 순간»에 말한다** (창업자 2026-08-15
+                    *"비밀번호는 찾을 수 없다는 안내(서버에 저장되지 않아 비번을 찾기어려움)"*)
+                    ⭐ 잊은 «뒤»에 알려주면 늦다 — 그때는 이미 못 여는 일기가 생긴 뒤다.
+                    ⭐⭐ 그리고 이건 **우리 약점이 아니라 강점**이다. 서버가 0개라 우리도 못 본다.
+                       그래서 「우리가 안 갖고 있어서」를 «먼저» 말하고 「그래서 못 찾아준다」로 잇는다.
+                    ⛔ 「완전 암호화」라고는 쓰지 않는다 — 이건 «가리는 것»이다. */}
+                {step === 'first' && (
+                  <div style={{ marginTop: 14, padding: '11px 13px', borderRadius: 12, background: 'var(--cream)', fontSize: 12.5, lineHeight: 1.65, color: 'var(--text-sub)' }}>
+                    비번은 <b style={{ color: 'var(--brown)' }}>이 폰에만</b> 있어요 · 서버에 저장하지 않아요.
+                    <br />그래서 <b style={{ color: 'var(--danger)' }}>잊으면 찾아드릴 수 없어요</b> — 다음에 힌트를 남길 수 있어요.
+                  </div>
+                )}
 
                 {/* 🆘 잊었을 때 — ⛔ 우회 코드는 만들지 않는다(있으면 잠금이 아니다).
                     ✅ 대신 «무엇을 잃는지 먼저 말하고» 확인을 받는다. 조용히 지우지 않는다. */}
