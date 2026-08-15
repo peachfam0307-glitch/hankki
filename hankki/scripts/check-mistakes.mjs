@@ -395,6 +395,30 @@ console.log('\n🪤 반복 실수 게이트')
   else ok(`옛 기록 ${옛}줄 · CLAUDE.md ${자}자`)
 }
 
+// ── 🖥 배포 체인 스크립트가 «이 컨테이너에만 있는 것»에 기대나 (2026-08-15) ──
+//   ⛔⛔ **오늘 두 번 밟았다 — 둘 다 「로컬은 초록불인데 CI 에서 죽는」 꼴이다.**
+//      ⑴ 아침 — 일기잠금 재현판이 preview 서버를 «고정 시간»만 기다려 ERR_CONNECTION_REFUSED
+//      ⑵ 밤   — 감정컷 재현판에 `/opt/pw-browsers/chromium` 을 «박아» 넣어 배포 실패(run #1416)
+//   ⭐ CI 러너는 이 컨테이너가 아니다. 브라우저 자리도, 속도도 다르다.
+//      플레이라이트가 «알아서 찾게» 두면 양쪽에서 다 돈다(`smoke.mjs` 가 그렇게 한다).
+//   ⚠️ 배포를 «막는» 것은 smoke 체인에 실제로 물린 스크립트뿐이다 — 그 밖의 도구는 알려만 준다.
+{
+  console.log('\n🖥 배포 체인 — 이 컨테이너에만 있는 경로')
+  const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'))
+  const 체인 = [...(pkg.scripts.smoke || '').matchAll(/node (scripts\/[^\s]+\.mjs)/g)].map((m) => m[1])
+  const 박힘 = []
+  for (const rel of 체인) {
+    let src = ''
+    try { src = readFileSync(join(ROOT, rel), 'utf8') } catch { continue }
+    // ⚠️ 「그 글자가 있나」로 보면 **주석과 이 검사 자신까지** 잡는다(첫 판이 그랬다 · 규칙 18 ⓘ).
+    //    «브라우저를 그 경로로 여는 줄»만 본다 — 주석은 떼고, `executablePath` 가 같은 줄에 있어야 한다.
+    const 코드 = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n')
+    if (/executablePath[^\n]*\/opt\/pw-browsers/.test(코드)) 박힘.push(rel)
+  }
+  if (박힘.length) no(`배포 체인 ${박힘.length}개가 /opt/pw-browsers 를 «박아» 쓴다 — CI 엔 그 파일이 없다: ${박힘.join(' ')}\n     👉 chromium.launch() 로 두거나 process.env.SMOKE_CHROMIUM 이 있을 때만 executablePath 를 준다`)
+  else ok(`배포 체인 ${체인.length}개 — 박힌 브라우저 경로 0`)
+}
+
 console.log(bad ? `\n⛔⛔ ${bad}건 — 고치고 다시 돌릴 것\n` : '\n✅ 반복 실수 게이트 통과\n')
 console.log('   📖 기계가 «못 잡는» 것들 = docs/실수-패턴-2026-08-07.md\n')
 process.exit(bad ? 1 : 0)

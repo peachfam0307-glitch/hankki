@@ -49,7 +49,11 @@ const state = {
   seedV: BASICS_VERSION,
 }
 
-const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium' })
+// ⛔⛔ 경로를 «박지 말 것» — `/opt/pw-browsers/chromium` 은 이 컨테이너에만 있고 **CI 러너엔 없다.**
+//   2026-08-15 에 이걸 하드코딩해서 배포가 죽었다(run #1416).
+//   ⭐ 체인의 다른 재현판처럼 플레이라이트가 «알아서 찾게» 둔다(smoke.mjs 와 같은 꼴).
+const CHROMIUM = process.env.SMOKE_CHROMIUM
+const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const page = await b.newPage({ viewport: { width: 360, height: 880 }, deviceScaleFactor: 2 })
 const errors = []
 page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
