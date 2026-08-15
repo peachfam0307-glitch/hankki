@@ -57,6 +57,15 @@
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/archive-guard.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/backtick-guard.sh"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
