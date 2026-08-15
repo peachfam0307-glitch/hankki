@@ -39,6 +39,18 @@ MAXINK = 0.30      # 이보다 꽉 찬 띠는 그림
 #    국수 그림 바닥을 7px 문다(실측: 그림이 y737 에서 끝나는데 y731 부터 지운다).
 #    🔢 진짜 라벨 높이는 37~61px 이었다 — 14 는 그 아래로 한참 여유가 있다.
 
+# ⭐⭐⭐ [절대원칙] 「배경이다」의 문턱은 «자르는 칼과 같아야» 한다.
+#    지우개가 배경이라 여긴 것을 칼이 그림으로 여기면, **그 차이만큼 잘린다.**
+#    📮 창업자 *"솥 아래 흰색 부분 잘렸어"* · *"미나리 볶음밥도 조금 잘렸어"* · *"바닥이 잘린거야 약간"*
+#    🔢 시트01 칸(2,2) 실측 — 그릇이 «끝나는 줄»이 문턱마다 다르다:
+#         <235 → y914   ｜   <250 → y920   ｜   <253 → y924
+#       그릇의 **흰 테와 옅은 그림자**가 y915~920 에 있는데 <235 로 보면 «배경»이다.
+#       그래서 「틈이 10px」이라 착각하고 위 8px 을 지워 **흰 테 4줄을 먹었다.**
+#    ✅ 그래서 문턱을 «둘»로 가른다 — 하는 일이 다르기 때문이다:
+BG_MAX = 250       # 여기까지가 «그림»이다 — 띠의 «경계»를 잡을 때(칼과 같은 눈)
+INK_MAX = 235      # 여기까지가 «잉크»다 — 「글자냐 그림이냐」 진하기를 잴 때
+# ⛔ 하나로 합치지 말 것. 250 으로 진하기를 재면 옅은 그림자까지 세어 글자가 그림으로 보인다.
+
 
 def bands_of(mask):
     """빈 줄로 끊어 «띠»(y0, y1) 목록을 만든다."""
@@ -62,24 +74,62 @@ colsN = int(sys.argv[4]) if len(sys.argv) > 4 else 1
 im = Image.open(src).convert('RGB')
 a = np.asarray(im).astype(np.int16)
 H, W = a.shape[:2]
-dark = (a.max(axis=2) < 235)            # 흰 배경이 아닌 픽셀
+art = (a.max(axis=2) < BG_MAX)          # «그림»이다 — 흰 테·옅은 그림자까지 (칼과 같은 눈)
+ink = (a.max(axis=2) < INK_MAX)         # «잉크»다 — 진하기를 잴 때만 쓴다
 
 killed = 0
+keep = []          # 「그림」이라고 판정한 띠 — 여기 픽셀은 «한 개도» 지우면 안 된다
 rstep, cstep = H // rowsN, W // colsN
 for r in range(rowsN):
     for c in range(colsN):
         y0c, y1c = r * rstep, (H if r == rowsN - 1 else (r + 1) * rstep)
         x0c, x1c = c * cstep, (W if c == colsN - 1 else (c + 1) * cstep)
-        cell = dark[y0c:y1c, x0c:x1c]
-        for (s, e) in bands_of(cell):
-            seg = cell[s:e + 1]
-            if not (MINH <= (e - s + 1) <= MAXH) or seg.mean() > MAXINK:
-                continue                                  # 그림이다
-            ys, ye = y0c + s, y0c + e
-            a[max(y0c, ys - UP):min(y1c, ye + 1 + DOWN), x0c:x1c] = 255
+        cink = ink[y0c:y1c, x0c:x1c]        # 라벨 «찾기»는 잉크 눈으로 (흰 테는 안 보인다 = 글자만 남는다)
+        cart = art[y0c:y1c, x0c:x1c]        # 지울 «자리»는 그림 눈으로 (흰 테·그림자가 보인다)
+        artrow = cart.sum(axis=1)           # 줄마다 «그림» 픽셀 수
+        bs = bands_of(cink)
+        labels = [i for i, (s, e) in enumerate(bs)
+                  if MINH <= (e - s + 1) <= MAXH and cink[s:e + 1].mean() <= MAXINK]
+        pic_max = max([artrow[s:e + 1].max() for i, (s, e) in enumerate(bs) if i not in labels] or [1])
+        for i in labels:
+            s, e = bs[i]
+            # ⭐⭐⭐ [절대원칙] 여유(UP) «안»에서 «그림이 가장 옅어지는 줄»부터 지운다.
+            #    ⛔ 고정 여유를 그대로 빼면 그림을 먹는다(2026-08-15 에 세 번).
+            #    ⛔ 「틈」으로만 깎아도 모자란다 — 그릇의 «옅은 그림자»는 잉크로는 안 보여서
+            #       틈이 넓어 «보이지만» 실제로는 그림이 이어져 있다(솥밥 = 그림자가 y932 까지).
+            #    ✅ 그래서 그림 픽셀이 «가장 적은» 줄을 골라 거기서부터 지운다.
+            lo = max(0, s - UP)
+            if i > 0:
+                lo = max(lo, bs[i - 1][1] + 1)
+            win = artrow[lo:s + 1]
+            top = lo + int(len(win) - 1 - np.argmin(win[::-1]))   # 같으면 «아래쪽»(안전한 쪽)
+            gap_dn = (bs[i + 1][0] - e - 1) if i + 1 < len(bs) else (y1c - y0c - 1 - e)
+            dn = min(DOWN, max(0, gap_dn))
+            keep.append((y0c, y0c + top - 1, x0c, x1c))           # 여기 위는 «한 픽셀도» 못 지운다
+            a[y0c + top:y0c + e + 1 + dn, x0c:x1c] = 255
             killed += 1
-            print(f'   🏷 칸({r+1},{c+1}) 라벨 지움  y {ys}~{ye}'
-                  f'  (높이 {e - s + 1}px · 아래로 {DOWN}px 더)')
+            note = ''
+            if top < s:
+                note += f' (글자 위 {s - top}px 부터 · 그 줄 그림 {int(artrow[top])}px)'
+            if dn < DOWN:
+                note += f' ⚠️아래 여유 {DOWN}→{dn}'
+            if artrow[top] > pic_max * 0.40:
+                note += f' ⛔그림이 진하다({int(artrow[top])}/{int(pic_max)})'
+            print(f'   🏷 칸({r+1},{c+1}) 라벨 {y0c+s}~{y0c+e} → 지움 {y0c+top}~{y0c+e+dn}{note}')
+
+# ── 🔒 스스로 검사 — 「그림은 한 픽셀도 안 지웠나」 ──
+#    ⛔ 규칙을 주석에 적어두는 것으로는 «세 번» 못 막았다. 도구가 자기 결과를 재게 한다.
+after = (a.max(axis=2) < BG_MAX)        # ⭐ 검사도 «그림» 눈으로 — 흰 테를 먹은 것도 잡히게
+lost = 0
+for (ys, ye, xs_, xe_) in keep:
+    b = art[ys:ye + 1, xs_:xe_].sum()
+    n = after[ys:ye + 1, xs_:xe_].sum()
+    if n < b:
+        lost += b - n
+        print(f'   ⛔ 그림 띠 y {ys}~{ye} x {xs_}~{xe_} 에서 {b - n}px 을 지웠다')
+if lost:
+    sys.exit(f'⛔⛔ 그림을 {lost}px 먹었다 — 저장하지 않는다.\n'
+             '   여유(UP/DOWN)가 틈보다 크다. 위 clamp 가 왜 안 먹었는지 볼 것.')
 
 Image.fromarray(a.astype(np.uint8)).save(dst)
-print(f'✅ {src.split("/")[-1]} — 라벨 {killed}개 지움  ({rowsN}행 × {colsN}열)')
+print(f'✅ {src.split("/")[-1]} — 라벨 {killed}개 지움  ({rowsN}행 × {colsN}열) · 그림 손실 0px')
