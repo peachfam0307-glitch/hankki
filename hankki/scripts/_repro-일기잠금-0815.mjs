@@ -16,6 +16,8 @@
 //    📌 「심었으니 있겠지」가 아니라 「화면에 떴나」로 확인한다(규칙 18).
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { SEED_COACH_SEEN } from '../src/coach.js'
 
 const PORT = 4183 // ⛔ 스모크(4173)와 겹치면 서로 죽인다
@@ -29,8 +31,22 @@ const 칸 = (이름, ok, 덧말 = '') => {
   console.log(`  ${ok ? '✅' : '⛔'} ${이름}${덧말 ? ' — ' + 덧말 : ''}`)
 }
 
-const 서버 = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'ignore' })
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const 서버 = spawn('npx', ['vite', 'preview', '--host', '127.0.0.1', '--port', String(PORT), '--strictPort'],
+  { cwd: ROOT, stdio: 'ignore' })
 const 잠깐 = (ms) => new Promise((r) => setTimeout(r, ms))
+
+// ⛔⛔ 서버를 «고정 시간»으로 기다리지 않는다 — 2026-08-15 배포가 정확히 이걸로 죽었다.
+//    2.6초는 이 컨테이너에선 넉넉했지만 **CI 러너는 더 느려서** `ERR_CONNECTION_REFUSED` 로 실패했다.
+//    📌 어제 만든 `_repro-탭스와이프-0815.mjs` 는 이미 「뜰 때까지」로 돼 있었는데 **오늘 것만 고정으로 썼다.**
+//    ⭐ 「내 기계에서 되니까 되겠지」가 아니라 **「떴나」를 실제로 물어본다**(규칙 18 ⓘ).
+const 서버뜰때까지 = async () => {
+  for (let i = 0; i < 60; i++) { // 최대 30초
+    try { const r = await fetch(URL); if (r.ok) return true } catch { /* 아직 */ }
+    await 잠깐(500)
+  }
+  return false
+}
 
 // 비번 네 자리를 우리 숫자판으로 누른다.
 // ⚠️ 반드시 **시트 «안»에서만** 찾는다 — 일기 화면 뒤에 달력이 깔려 있어서
@@ -57,7 +73,10 @@ const 일기열기 = async (ctx) => {
 }
 
 try {
-  await 잠깐(2600)
+  if (!(await 서버뜰때까지())) {
+    console.log('  ⛔ preview 서버가 30초 안에 안 떴다 (포트 ' + PORT + ')')
+    process.exit(1)
+  }
   const browser = await chromium.launch()
   const ctx = await browser.newContext()
   await ctx.addInitScript(`${SEED_COACH_SEEN}\ntry { localStorage.setItem('hankki:onboarded','1') } catch(e){}`)
