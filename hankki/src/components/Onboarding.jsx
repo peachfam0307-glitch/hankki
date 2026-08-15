@@ -499,7 +499,15 @@ const Slide8 = () => (
 //    「레시피 재료를 담아 사러 간다」가 먼저고 「살림템 추천」이 그다음이라 흐름도 맞는다.
 const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, SlideD, Slide3, SlideS, Slide6, Slide7, Slide8]
 
-export default function Onboarding({ onDone }) {
+// 🔁🔁 onRestore = 「이미 다른 기기에서 쓰고 있었어요」 문 (창업자 2026-08-15)
+//   📮 *"이거 백업안하고 기기를 바꾸거나, 패드에 깔면 이메일을 안받으니까 **처음 가입한 것 처럼되거든?**
+//      … 패드에 깔아서 핸드폰에 내가 저장한 것들 살리는 법도 안내하고."*
+//   ⛔ 그 전엔 마지막 장 버튼이 「한끼 시작하기」 «하나»뿐이었다 — 새 기기에 깐 사람은
+//      여기서 그냥 시작하고 «빈 앱»을 본다. 백업 파일이 카톡에 멀쩡히 있어도
+//      **「불러오면 된다」는 걸 알 자리가 앱 어디에도 없었다**(백업 메뉴는 설정 «안»에 있다).
+//   ⭐ 새 기기에서 앱을 처음 여는 순간이 **유일하게 안 놓치는 자리**다. 여기서 못 잡으면
+//      유저는 빈 앱을 보고 「초기화됐다」고 읽는다 (창업자 *"저장한거 초기화되면 나같으면 앱지워"*).
+export default function Onboarding({ onDone, onRestore }) {
   const N = SLIDES.length
   const [i, setI] = useState(0)
   const [drag, setDrag] = useState(0)      // 손가락 따라오는 오프셋(px)
@@ -554,6 +562,18 @@ export default function Onboarding({ onDone }) {
           {SLIDES.map((_, k) => <span key={k} style={{ width: k === i ? 20 : 7, height: 7, borderRadius: 999, background: k === i ? 'var(--brown)' : 'var(--line)', transition: 'all .25s ease' }} />)}
         </div>
         <button className="btn-primary press" style={{ width: '100%' }} onClick={next}>{last ? '한끼 시작하기' : '다음'}</button>
+        {/* ⭐ 마지막 장에서만 — 앞 장에 두면 «처음 깐 사람»이 매 장 이 문구를 보고 헷갈린다.
+            ⛔ 버튼(btn-primary)으로 만들지 않는다 — 대부분은 새로 시작하는 사람이라
+               두 버튼이 같은 무게로 있으면 «뭘 눌러야 하나»가 된다. 아는 사람만 찾으면 되는 줄이다. */}
+        {last && onRestore && (
+          <button
+            className="press"
+            onClick={() => { markOnboarded(); onRestore() }}
+            style={{ width: '100%', marginTop: 12, color: 'var(--text-sub)', fontSize: 13, fontWeight: 600, padding: '6px 0', textDecoration: 'underline', textUnderlineOffset: 3 }}
+          >
+            이미 다른 기기에서 쓰고 있었어요 · 백업 불러오기
+          </button>
+        )}
       </div>
     </div>
   )
