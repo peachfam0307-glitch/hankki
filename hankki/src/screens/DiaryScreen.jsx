@@ -288,7 +288,9 @@ export default function DiaryScreen({ day }) {
                 background: locked ? 'var(--brown)' : 'var(--cream)',
               }}
             >
-              <Icon name={locked ? 'lock' : 'unlock'} size={18} color={locked ? '#fff' : 'var(--brown)'} />
+              {/* ✏️ 선을 기본(1.6)보다 굵게 — 창업자 2026-08-15 *"자물쇠랑 휴지통 선을 조금만 더 굵게해줘"*
+                  ⛔ `Icon` 기본값을 올리면 **앱의 모든 아이콘**이 굵어진다. 이 둘만 준다. */}
+              <Icon name={locked ? 'lock' : 'unlock'} size={18} stroke={2} color={locked ? '#fff' : 'var(--brown)'} />
             </button>
             {/* 🗑 잠겨서 가려진 동안엔 «지우기»도 숨긴다 — 내용을 못 보게 해 놓고 지우게 두면
                 남이 통째로 없앨 수 있다. 잠금은 「못 보게」이자 「못 건드리게」다. */}
@@ -303,7 +305,7 @@ export default function DiaryScreen({ day }) {
                   background: 'var(--cream)',
                 }}
               >
-                <Icon name="trash" size={18} color="var(--danger)" />
+                <Icon name="trash" size={18} stroke={2} color="var(--danger)" />
               </button>
             )}
           </div>
