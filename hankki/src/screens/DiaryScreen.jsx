@@ -13,6 +13,8 @@ import { paperStyle, ALL_PHOTO_FIELDS, migratePhotoKeys } from '../data/papers'
 const WORDS = ['title', 'note', 'line', 'weather', 'note2', 'note3', 'note4', 'font', 'size']
 import { useLayerBack } from '../useBackHandler'
 import { fitImage } from '../utils'
+import LockSheet from '../components/LockSheet'
+import { isDayOpen, unlockDay, forgetDay, hasPin } from '../diaryLock'
 
 // 📔📔 다이어리 — 「그날」 한 장. (창업자 확정 2026-08-06)
 //
@@ -151,6 +153,91 @@ export default function DiaryScreen({ day }) {
 
   const dateLabel = `${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEK[date.getDay()]}요일`
 
+  // 🔒🔒 잠금 — 「그날 일기 한 장」을 비번 네 자리로 가린다 (창업자 확정 2026-08-15)
+  //   📮 *"일기에 나만볼 수 있는 자물쇠? 잠금기능 넣으면 좋겠어"*
+  //   ⭐ 잠긴 표시는 **일기에 붙어 있고**(`entry.locked`), 푼 것은 **이 세션에만** 산다(`diaryLock`).
+  //      → 앱을 껐다 켜면 다시 잠긴다. ⛔안 그러면 한 번 풀고 폰을 건네는 순간 잠금이 없는 것과 같다.
+  //   ⛔ 일기 «내용»이 보이는 곳은 이 화면 하나뿐이다(달력엔 「썼다」 표시만 뜬다) —
+  //      전수로 확인했다. 그래서 여기만 막으면 새는 데가 없다.
+  const locked = !!entry?.locked
+  const [opened, setOpened] = useState(() => isDayOpen(day))
+  useEffect(() => { setOpened(isDayOpen(day)) }, [day])
+  const [lockSheet, setLockSheet] = useState(null) // null | 'set' | 'check'
+  const 가려짐 = locked && !opened
+
+  const 잠그기 = () => {
+    save({ locked: true })
+    unlockDay(day)
+    setOpened(true)
+    // ⭐ 잠근 «그 자리에서» 화면을 가리지 않는다 — 방금 비번을 정했는데 또 치라고 하면 짜증난다.
+    //    대신 «언제» 물어보는지를 토스트로 말해 준다. 그래야 잠긴 걸 믿을 수 있다.
+    nav.showToast('잠갔어요 · 앱을 껐다 켜면 비번을 물어요')
+  }
+  const 잠금단추 = () => {
+    // ⛔⛔ 가려진 채로 이 단추를 누르면 «비번 없이 풀리면» 안 된다 — 그럼 잠금이 아니다.
+    //    잠겨 있고 아직 안 열었으면 무조건 **비번부터** 받는다.
+    if (가려짐) { setLockSheet('check'); return }
+    if (locked) {
+      updateDiary(entry.id, { locked: false })
+      forgetDay(day)
+      nav.showToast('잠금을 풀었어요')
+      return
+    }
+    if (!hasPin()) { setLockSheet('set'); return } // 비번을 아직 안 정했다
+    잠그기()
+  }
+
+  // 🔒 잠긴 채로 아직 안 연 날 — **종이를 아예 그리지 않는다.**
+  //    ⛔ 흐리게(blur) 덮는 방식은 안 쓴다 — 글자가 DOM 에 그대로 남아 캡처·검사로 보이고,
+  //       무엇보다 «흐릿하게 비치는 것»만으로도 남이 대충 읽는다. 안 그리는 게 가리는 것이다.
+  if (가려짐) {
+    return (
+      <div className="screen fade" style={{ paddingBottom: 0 }}>
+        <div className="detail-bar">
+          <button className="bar-btn" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
+          <div style={{ fontSize: 15, fontWeight: 800 }}>
+            {date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 13, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span>
+          </div>
+          <span style={{ width: 36 }} />
+        </div>
+        <div className="pad" style={{ paddingTop: 54, textAlign: 'center' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 76, height: 76, borderRadius: '50%', background: 'var(--cream)', marginBottom: 16 }}>
+            <Icon name="lock" size={34} color="var(--brown)" />
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 7 }}>잠가 둔 일기예요</div>
+          <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 22 }}>
+            비번 네 자리를 넣으면 열려요
+          </div>
+          <button
+            className="press"
+            onClick={() => setLockSheet('check')}
+            style={{ padding: '13px 30px', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontSize: 14.5, fontWeight: 800, border: 'none' }}
+          >
+            열기
+          </button>
+          {/* ⭐ 우리 구조가 여기서 제일 강하다 — 서버가 0개라 «애초에 우리도 못 본다».
+              ⛔ 다만 「완전 암호화」라고는 쓰지 않는다(거짓말이 된다). 사실만. */}
+          <div className="t-sub" style={{ fontSize: 11.5, lineHeight: 1.6, marginTop: 26 }}>
+            일기는 이 폰 안에만 있어요 · 만든 사람도 볼 수 없어요
+          </div>
+        </div>
+        {lockSheet && (
+          <LockSheet
+            mode="check"
+            onClose={() => setLockSheet(null)}
+            onDone={(r) => {
+              setLockSheet(null)
+              // 「잠금 없애기」로 왔으면 이 일기의 자물쇠 표시도 같이 뗀다 — 안 그러면 비번이 없는데 잠긴 채로 남는다.
+              if (r && r.reset) { updateDiary(entry.id, { locked: false }); nav.showToast('잠금을 없앴어요'); return }
+              unlockDay(day)
+              setOpened(true)
+            }}
+          />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="screen fade" style={{ paddingBottom: 0 }}>
       <div className="detail-bar">
@@ -182,9 +269,18 @@ export default function DiaryScreen({ day }) {
             ⛔⛔ 이 주석을 `{entry ? (` **뒤로** 옮기지 말 것 — 거긴 «표현식 자리»라 JSX 주석이 못 온다.
                2026-08-12 에 그렇게 넣어 빌드를 깼다(`Expected ")" but found "className"`). CLAUDE.md 에도 있는 함정이다. */}
         {entry ? (
-          <button className="bar-btn" aria-label="일기 삭제" onClick={() => { removeDiary(entry.id); nav.showToast('일기를 지웠어요'); nav.pop() }}>
-            <Icon name="trash" size={19} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, flex: '0 0 auto' }}>
+            <button className="bar-btn" aria-label={가려짐 ? '일기 열기' : locked ? '일기 잠금 풀기' : '일기 잠그기'} onClick={잠금단추}>
+              <Icon name={locked ? 'lock' : 'unlock'} size={19} color={locked ? 'var(--brown)' : undefined} />
+            </button>
+            {/* 🗑 잠겨서 가려진 동안엔 «지우기»도 숨긴다 — 내용을 못 보게 해 놓고 지우게 두면
+                남이 통째로 없앨 수 있다. 잠금은 「못 보게」이자 「못 건드리게」다. */}
+            {!가려짐 && (
+              <button className="bar-btn" aria-label="일기 삭제" onClick={() => { removeDiary(entry.id); nav.showToast('일기를 지웠어요'); nav.pop() }}>
+                <Icon name="trash" size={19} />
+              </button>
+            )}
+          </div>
         ) : <span style={{ width: 36 }} />}
       </div>
 
@@ -297,6 +393,15 @@ export default function DiaryScreen({ day }) {
             nav.showToast(!items.length && had ? '꾸민 걸 비웠어요' : '일기에 저장했어요')
           }}
           onClose={() => setOpen(false)}
+        />
+      )}
+
+      {/* 🔒 비번을 아직 안 정했을 때 — 정하고 나면 그 자리에서 잠근다 */}
+      {lockSheet === 'set' && (
+        <LockSheet
+          mode="set"
+          onClose={() => setLockSheet(null)}
+          onDone={() => { setLockSheet(null); 잠그기() }}
         />
       )}
     </div>
