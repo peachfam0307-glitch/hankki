@@ -69,3 +69,34 @@ console.log(`[foodtab] · 일부러 내려둔 것 ${shelved.length}컷 — 같�
 
 if (fail) { console.error('\n❌ 음식 탭 게이트 실패'); process.exit(1) }
 console.log('✅ 음식 탭 통과 — 중복 0 · 깨진 참조 0 · 빈 이름표 0')
+
+// ── ⑦ ⛔ 「구체어 먼저」 — 긴 이름이 짧은 이름에 «먼저» 먹히는 것 (2026-08-15) ──
+//    📮 창업자 *"탕수육1줄은 고치자"*
+//    ⛔⛔ **같은 자리를 두 번 밟았다.** 「탕수육」은 ⑴`fried`(튀김 도형)에 먹혔고(고침)
+//       ⑵ 바로 위 **「수육」**에 먹혀 **수육(보쌈 고기) 그림**이 떴다. ①을 고치며 «아래»만 보고
+//       **바로 위는 안 봤다.** 규칙(*"구체어 먼저"*)은 파일에 이미 적혀 있었는데도 그랬다.
+//    ⭐ 그래서 규칙이 아니라 **장치로 막는다**(규칙 19).
+//    ⚠️ 전수로 막지 «않는다» — 지금 저장소에 이런 자리가 65곳이고, 대부분 일부러 그런 것이거나
+//       해가 없다. **65곳에서 실패하는 게이트는 아무도 안 보는 죽은 게이트다.**
+//       📌 CLAUDE.md 그대로 = **«두 번 밟은 것»만 사전에 넣는다.**
+const 못박기 = [
+  ['탕수육', 'fe_91'],      // ⛔ 「수육」에 먹혀 보쌈 고기가 떴다
+  ['찹쌀탕수육', 'fe_47'],   // ⛔ 꿔바로우가 맞다 — 「탕수육」보다 구체적이라 위에 있어야 한다
+  ['수육', 'fe_125'],       // ✅ 이건 그대로여야 한다(고치다 반대로 깨뜨리지 않게)
+]
+{
+  const body = src.slice(src.indexOf('const ICON_RULES = ['), src.indexOf('export function guessFoodIcon'))
+  const rules = []
+  for (const m of body.matchAll(/\[\s*\[([^\]]*)\]\s*,\s*'([\w]+)'\s*\]/g))
+    rules.push([[...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]), m[2]])
+  const 붙는것 = (n) => { for (const [ks, k] of rules) if (ks.some((x) => n.includes(x))) return k; return 'default' }
+  const 틀린것 = 못박기.filter(([이름, 키]) => 붙는것(이름) !== 키)
+  if (틀린것.length) {
+    console.error('\n⛔ 「구체어 먼저」가 깨졌다 — 짧은 이름이 긴 이름을 먼저 먹는다.')
+    for (const [이름, 키] of 틀린것) console.error(`     「${이름}」 → ${붙는것(이름)} (맞는 것 = ${키})`)
+    console.error('   👉 «더 구체적인» 규칙을 그 위로 올릴 것 (ICON_RULES 는 위에서부터 첫 매칭이 이긴다).')
+    console.error('   📌 2026-08-15: 「탕수육」이 「수육」에 먹혀 보쌈 고기 그림이 떴다. 같은 자리를 두 번 밟았다.\n')
+    process.exit(1)
+  }
+  console.log(`✅ 구체어 먼저 — 못 박은 ${못박기.length}자리 정상`)
+}
