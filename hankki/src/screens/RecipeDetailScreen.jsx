@@ -67,6 +67,9 @@ const COACH_STEPS = [
 // (장보기 담기·인분 환산에서 제외) — 전 레시피 양념/소스 표기 통일용.
 const isIngHeader = (s) => /^\[[^\]]+\]$/.test(String(s).trim())
 
+// 🛒 주부의 장바구니 픽 — 몇 칸까지 펼쳐 두나 (창업자 2026-08-15 *"4칸 넘어가면 접을 수 있게"*)
+const PICK_FOLD = 4
+
 export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateRecipe } = useStore()
   const nav = useNav()
@@ -100,6 +103,7 @@ export default function RecipeDetailScreen({ id }) {
   const baseServings = r?.servings || 0
   const [servings, setServings] = useState(baseServings || 1)
   const ratio = baseServings ? servings / baseServings : 1
+  const [picksOpen, setPicksOpen] = useState(false) // 🛒 픽카드 접기 — 4칸까지만 보이고 나머지는 「더 보기」
   // ⛔⛔ 훅은 «전부» 아래 `if (!r)` 보다 위에 있어야 한다 — 밑에 두면 레시피를 지우는 순간
   //    early return 이 걸려 훅 개수가 줄고 React 가 트리째 죽는다(빈 화면).
   //    2026-08-03 창업자 제보 *"홍콩식가지볶음 지웠더니 먹통됨"* 의 정체가 이거였다.
@@ -231,6 +235,10 @@ export default function RecipeDetailScreen({ id }) {
   //   ⚠️ 자연드림(아이쿱)은 **실버회원 가입으로 누구나 온라인 구매 가능**(조합원과 가격만 다르다)
   //      → 아무 표시도 안 붙인다. 창업자 확인 2026-08-10.
   const pantryPicks = picksForIngredients([...(r?.ingredients || []), r?.memo || ''])
+  // 🔽 4칸까지만 보이고 나머지는 접는다(창업자 2026-08-15 *"너무 길면 좀 그래"*)
+  const shownPicks = picksOpen ? pantryPicks : pantryPicks.slice(0, PICK_FOLD)
+  // ⭐ 「다 담기」는 접혀 있어도 «전부» 담는다 — 「다」라고 써 놓고 보이는 것만 담으면 거짓말이 된다.
+  //    담고 나서 뜨는 토스트가 개수를 말해주니 유저도 몇 개 담겼는지 안다.
   const addAllPicks = () => {
     pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p) }))
     nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요`)
@@ -507,9 +515,9 @@ export default function RecipeDetailScreen({ id }) {
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>
               <Icon name="cart" size={17} color="var(--brown)" />
-              이 레시피, 이걸로 만들었어요
+              주부의 장바구니에서 고른 재료
             </div>
-            {pantryPicks.map((p) => (
+            {shownPicks.map((p) => (
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
                 {curIcon(p.icon) && <img src={curIcon(p.icon)} alt="" draggable={false} style={{ width: 30, height: 30, objectFit: 'contain', flex: '0 0 auto' }} />}
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -521,11 +529,29 @@ export default function RecipeDetailScreen({ id }) {
                 <button className="press" onClick={() => openUrl(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>
               </div>
             ))}
+            {/* 🔽🔼 [2026-08-15] 창업자 *"4칸 넘어가면 접을 수 있게 해줘. 너무 길면 좀 그래."*
+                🔢 실측(113편) — 픽이 5개 넘는 편이 **15편**(제일 많은 게 어묵탕 7개 · 감바스 5개).
+                ⛔ 옛 코드는 **몇 개든 다 펼쳐** 카드가 재료 목록보다 길어졌다 — 광고 칸이 본문을 밀어낸다.
+                ⭐ 문구·화살표는 장보기 화면(`ShopScreen`)의 「더보기 / 접기」와 «같은 모양»으로.
+                   ⛔ 거기서 냈던 사고를 되풀이하지 않는다 — **펼친 뒤에도 같은 자리에 「접기」를 그린다.**
+                ⭐ 개수를 밝힌다(「3개 더보기」) — 이 카드가 고친 게 «몇 개인지 안 밝힌 것»이라 숨기면 앞뒤가 안 맞는다. */}
+            {pantryPicks.length > PICK_FOLD && (
+              <button className="press" onClick={() => setPicksOpen((v) => !v)} aria-label={picksOpen ? '장바구니 재료 접기' : '장바구니 재료 더 보기'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%', marginTop: 2, padding: '9px 0', borderTop: '1px solid rgba(0,0,0,.05)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>
+                {picksOpen ? '접기' : `${pantryPicks.length - PICK_FOLD}개 더보기`}
+                <Icon name={picksOpen ? 'chevron-up' : 'chevron-down'} size={13} color="var(--brown)" />
+              </button>
+            )}
             <button className="press" onClick={addAllPicks} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 14 }}>
               <Icon name="cart" size={16} color="#fff" />
               이 재료 다 담기
             </button>
-            <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>담아두고 장보기에서 체크하며 사면 편해요 · 18년차 주부가 진짜 쓰는 재료예요</div>
+            {/* 🧑‍🤝‍🧑 테스터 *"왜 많은 재료 중에 몇 개만 올려놨냐"* (창업자 전달 2026-08-15)
+                ⛔ 옛 제목 「이 레시피, 이걸로 만들었어요」가 **재료 목록**으로 읽혔다 —
+                   실측하니 평균 재료 11.6줄 → 픽 2.9개(전복솥밥은 28줄 → 2개)라 「몇 개만 올렸다」로 보인다.
+                ⭐ 창업자 관찰이 정확했다 — *"주부의 장바구니에서 볼수있다는 내용이 없네"*.
+                   카드 어디에도 「주부의 장바구니」라는 말이 없어서 **어디서 온 목록인지 알 방법이 없었다.**
+                ✅ 문구는 창업자 확정 — 제목 ＋ 「계속 추가된다」로 «지금 몇 개뿐인 게 아니다»를 밝힌다. */}
+            <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>평소에 제가 쓰는 재료들이에요 · 레시피에도 계속 추가돼요</div>
           </div>
         )}
 
