@@ -32,9 +32,46 @@ if (products.length < 5) {
 }
 
 // ── ② 우리 레시피 재료 줄 전부 ──
+// ⛔⛔ [2026-08-15 고침] 여기가 «구멍»이었다.
+//    옛 코드 = `/ingredients:\s*\[([\s\S]*?)\]/g` — 짧게 잡는 정규식이라
+//    재료 안의 **소제목 `'[국물]'` 의 닫는 대괄호에서 그냥 멈췄다.**
+//    → 소제목 «뒤»에 적힌 재료를 ①~⑥ 검사가 **한 줄도 못 봤다.**
+//    🔢 실측 = 옛 방식 482줄(소제목 0개) · 지금 716줄. **234줄이 안 보이고 있었다.**
+//    ⭐⭐ 그리고 이게 «조용한» 구멍이다 — 검사는 초록불인데 그 뒤 재료는 아무도 안 본다.
+//       실제로 오이물김치의 「뉴슈가」가 소제목 뒤에 있어서 ⑥ 이 «사라졌다»고 잘못 외쳤다.
+//    ✅ 대괄호를 «세면서» 읽는다 — 따옴표 «안»의 대괄호는 글자로 치고 안 센다.
+const 재료덩어리 = (src) => {
+  const out = []
+  for (const m of src.matchAll(/ingredients:\s*\[/g)) {
+    let i = m.index + m[0].length
+    let 깊이 = 1
+    const 시작 = i
+    while (i < src.length && 깊이 > 0) {
+      const c = src[i]
+      if (c === "'") {
+        // 따옴표 안은 통째로 건너뛴다(\' 는 글자다)
+        i++
+        while (i < src.length && src[i] !== "'") i += src[i] === '\\' ? 2 : 1
+      } else if (c === '[') 깊이++
+      else if (c === ']') 깊이--
+      i++
+    }
+    out.push(src.slice(시작, i - 1))
+  }
+  return out
+}
+
 const lines = new Set()
-for (const m of basics.matchAll(/ingredients:\s*\[([\s\S]*?)\]/g)) {
-  for (const s of m[1].matchAll(/'((?:[^'\\]|\\.)*)'/g)) lines.add(s[1].replace(/\\'/g, "'"))
+for (const 덩 of 재료덩어리(basics)) {
+  for (const s of 덩.matchAll(/'((?:[^'\\]|\\.)*)'/g)) lines.add(s[1].replace(/\\'/g, "'"))
+}
+// ⛔ 구멍이 되살아나면 배포를 막는다 — 소제목이 하나도 안 보이면 또 짧게 끊긴 것이다
+const 소제목 = [...lines].filter((l) => /^\[.*\]$/.test(l))
+if (소제목.length === 0) {
+  console.error('\n⛔ 재료에서 «소제목»(「[국물]」 같은 줄)이 한 개도 안 보인다 — 재료를 짧게 끊어 읽고 있다.')
+  console.error('   👉 `재료덩어리()` 가 대괄호를 세면서 읽는지 확인할 것.')
+  console.error('   📌 2026-08-15: 소제목의 `]` 에서 멈춰 **234줄을 못 보고 있었다**(검사는 초록불이었다).\n')
+  process.exit(1)
 }
 // ⚠️ 창업자가 «가져오기»로 넣는 재료는 우리 사전에 없다 — 실제로 터진 것부터 넣는다
 for (const x of [
