@@ -8,6 +8,7 @@ import { parseRecipeText } from './parseRecipe'
 import { fetchLinkRecipe } from './linkReader'
 import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
+import TabSwipe from './components/TabSwipe'
 import TimerBar from './components/TimerBar'
 import Icon from './components/Icon'
 import { useTimer } from './timer'
@@ -424,6 +425,10 @@ export default function App() {
         <ScrollHint dep={`${tab}:${stack.length}`} />
         <ToTop dep={`${tab}:${stack.length}`} hasNav={!top} />
 
+        {/* 👉👈 하단 탭을 «좌우로 밀어» 넘긴다 (창업자 2026-08-15). 쌓인 화면·모달·온보딩에선 꺼진다. */}
+        {/* ⛔  는 여기 «없는» 변수다(121줄 콜백 안의 지역변수). ref 를 직접 본다.
+            📌 빌드는 통과하고 «화면에서만» 죽는다 — 2026-08-15 에 쓰자마자 잡았다. */}
+        <TabSwipe tab={tab} go={go} enabled={!top && modalLayers.current.length === 0 && !onboard} />
         {!top && <BottomNav active={tab} onChange={go} onImport={() => push({ name: 'import' })} />}
         <TimerBar bottom={top ? 'calc(84px + var(--safe-bottom))' : 'calc(66px + var(--safe-bottom))'} />
         {toast && <div className="toast">{toast}</div>}
