@@ -60,7 +60,17 @@ export default function EditorScreen({ id, prefill }) {
   const [ocr, setOcr] = useState({ busy: false, pct: 0, page: 1, total: 1 })
   const [cropImg, setCropImg] = useState(null) // 글자 읽기 전 '자르기' 단계
   const ocrTargetRef = useRef('all') // 'all' | 'ingredients' | 'steps' — 어느 칸에 채울지
-  const ocrQueue = useRef([]) // 여러 장 선택 시 남은 이미지들(한 장씩 크롭→인식)
+  // ⏳⏳⏳ **[2026-08-16] 「자르기」와 「읽기」를 떼어놓았다** — 창업자 *"레시피 2장 안내시 로딩 오래걸리는거"*
+  //   🔬 실측(`scripts/_measure-스캔시간-0816.mjs`) = **2장째 자르기 화면은 1장째 «읽기가 끝나야» 떴다.**
+  //      그래서 유저는 1장째 읽는 내내 **아무것도 못 하고 막대만 본다.** 서버가 3초면 3초를 통째로 버린다.
+  //   ⭐⭐ 고침 = **자를 건 바로 이어서 자르게 하고, 읽기는 뒤에서 한 장씩 돌린다.**
+  //      2장째를 자르는 «사람 시간»(대개 3~10초) 동안 1장째가 읽히니 기다림이 한 장치 사라진다.
+  //   ⛔ 읽기 자체는 여전히 **한 번에 한 장**이다 — tesseract 워커가 «하나»라 겹쳐 돌리면 서로 망가진다.
+  const ocrQueue = useRef([]) // 아직 «자르지» 않은 이미지들
+  const ocrJobs = useRef([]) // 잘렸고 «읽기»를 기다리는 것들 — [{ img, idx }]
+  const ocrParts = useRef([]) // 읽은 글자를 «고른 순서대로» 담는다(끝나는 순서가 아니라)
+  const ocrCropped = useRef(0) // 지금까지 자른 장 수 = 다음 장의 자리(idx)
+  const ocrCropOpen = useRef(false) // 자르기 화면이 지금 떠 있나 — 마무리를 미룰지 판단
   const ocrAccum = useRef('') // 'all' 자동분류용 — 여러 장의 인식 텍스트를 모아 한 번에 파싱
   const ocrBusy = useRef(false) // 지금 읽는 중인가 — 화면 표시는 ocr.busy, «판단»은 이 ref 로
   const ocrTotal = useRef(1) // 이번에 고른 장 수 — 「2장 중 1장째」를 알려주려고(창업자: "시간은 좀 걸림")
@@ -233,7 +243,10 @@ export default function EditorScreen({ id, prefill }) {
     ).then((urls) => {
       ocrAccum.current = ''
       ocrTotal.current = urls.length
-      ocrQueue.current = urls.slice(1) // 첫 장은 지금 크롭, 나머지는 대기열
+      ocrQueue.current = urls.slice(1) // 첫 장은 지금 자르고, 나머지는 자르기 대기열
+      ocrJobs.current = []
+      ocrParts.current = []
+      ocrCropped.current = 0
       // 📢 «고른 직후» 몇 장 쓰는지 알린다 — 창업자 *"한번에 2장 넣으면 2장소진된다는 것도 알려야겠네"*
       //   ⛔⛔ **지금은 사진 «한 장마다» 1장씩 빠진다.** 「한 묶음 = 1장」 코드는 다 만들어 뒀지만
       //      **worker 를 아직 서버에 안 올렸다**(창업자 2026-08-13 *"리스크를 감수하고싶진않은데"*
@@ -250,6 +263,7 @@ export default function EditorScreen({ id, prefill }) {
           5200,
         )
       }
+      ocrCropOpen.current = true
       setCropImg(urls[0])
     })
   }
@@ -262,40 +276,65 @@ export default function EditorScreen({ id, prefill }) {
     return base ? base + '\n' + add : add
   }
 
-  // 사진 속 글자를 읽어 칸을 채운다. (썸네일과 별개)
-  const runOcr = async (img) => {
-    // ⭐ 중복 방지는 state 가 아니라 ref 로 본다 — state 는 이 함수가 «만들어질 때»의 값이라
-    //   여러 장을 이어 읽을 때 옛 값을 붙들고 조용히 리턴할 수 있다(2장째가 안 들어오는 길).
-    if (!img || ocrBusy.current) return
+  // ✂️ 한 장을 «다 잘랐다» — 읽기는 뒤에 맡기고, 자를 게 남았으면 **바로** 다음 자르기를 띄운다.
+  //   ⭐⭐ 여기가 이번 고침의 핵심이다. 예전엔 이 자리에서 `await` 로 읽기를 끝까지 기다렸다.
+  const onCropped = (img) => {
+    if (!img) return
+    ocrJobs.current.push({ img, idx: ocrCropped.current })
+    ocrCropped.current += 1
+    if (ocrQueue.current.length) {
+      ocrCropOpen.current = true
+      setCropImg(ocrQueue.current.shift()) // 👉 사람은 다음 장을 자른다 · 앞 장은 뒤에서 읽힌다
+    } else {
+      ocrCropOpen.current = false
+    }
+    pumpOcr()
+  }
+
+  // 🔁 읽기 펌프 — 잘린 것을 **한 번에 한 장씩** 읽는다.
+  //   ⛔ 겹쳐 돌리지 않는다 — 기본 인식(tesseract) 워커가 «하나»라 동시에 시키면 서로 설정을 덮어쓴다.
+  const pumpOcr = async () => {
+    if (ocrBusy.current) return // 이미 돌고 있으면 그 펌프가 이어서 다 처리한다
     const target = ocrTargetRef.current || 'all'
-    // 여러 장이면 「2장 중 1장째」를 보여준다 — 얼마나 남았는지 모르면 기다림이 두 배로 길게 느껴진다
     const total = ocrTotal.current
-    const page = Math.max(1, total - ocrQueue.current.length)
     ocrBusy.current = true
-    setOcr({ busy: true, pct: 0, page, total })
-    let text = ''
+    // ⛔ `try/finally` 로 감싼다 — 여기서 무엇이 터져도 `ocrBusy` 가 true 로 «굳으면»
+    //    남은 장이 영영 안 들어오고 단추도 계속 흐린 채로 남는다(옛 판에서 실제로 났던 사고).
     try {
-      text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current })
-    } catch {
-      // ⛔ 한 장이 실패해도 «대기열은 계속 간다». 예전엔 여기서 터지면 busy 가 true 로 굳어
-      //    남은 장이 영영 안 들어오고 버튼도 계속 흐렸다.
-      text = ''
+      while (ocrJobs.current.length) {
+        const { img, idx } = ocrJobs.current.shift()
+        // 「2장 중 1장째」 — 얼마나 남았는지 모르면 기다림이 두 배로 길게 느껴진다
+        const page = Math.min(total, idx + 1)
+        setOcr({ busy: true, pct: 0, page, total })
+        let text = ''
+        try {
+          text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current })
+        } catch {
+          // ⛔ 한 장이 실패해도 «남은 장은 계속 간다».
+          text = ''
+        }
+        if (target === 'ingredients' || target === 'steps') {
+          // 지정한 칸에만 — 읽은 줄을 정리해 이어붙인다(여러 장이면 계속 쌓인다).
+          const lines = cleanOcrLines(text)
+          if (lines.length) setF((prev) => ({ ...prev, [target]: appendLines(prev[target], lines) }))
+        } else {
+          // ⭐ 자동 분류는 «고른 순서»로 담는다 — 끝나는 순서로 이어붙이면 재료·순서가 뒤바뀔 수 있다.
+          ocrParts.current[idx] = text
+        }
+      }
     } finally {
       ocrBusy.current = false
-      setOcr({ busy: false, pct: 0, page, total })
+      setOcr({ busy: false, pct: 0, page: total, total })
     }
+    // 아직 자를 게 남았으면 마무리하지 않는다 — 다 자르고 다 읽은 뒤에 한 번만 정리한다.
+    if (ocrCropOpen.current || ocrQueue.current.length) return
+    finishOcr()
+  }
 
-    if (target === 'ingredients' || target === 'steps') {
-      // 지정한 칸에만 — 읽은 줄을 정리해 이어붙인다(여러 장이면 계속 쌓인다).
-      const lines = cleanOcrLines(text)
-      if (lines.length) setF((prev) => ({ ...prev, [target]: appendLines(prev[target], lines) }))
-    } else {
-      // 자동 분류 — 여러 장이면 텍스트를 모았다가 마지막에 한 번에 파싱(분류가 더 정확).
-      if (text.trim()) ocrAccum.current = (ocrAccum.current + '\n' + text).trim()
-    }
-
-    // 대기열에 다음 장이 있으면 이어서 크롭 → 인식
-    if (ocrQueue.current.length) { setCropImg(ocrQueue.current.shift()); return }
+  // 🏁 다 읽었다 — 모아둔 글자를 칸에 넣고 안내한다.
+  const finishOcr = () => {
+    const target = ocrTargetRef.current || 'all'
+    ocrAccum.current = ocrParts.current.filter((t) => t && t.trim()).join('\n').trim()
 
     // (마지막 장) 프록시 한도 안내 — 무료 소진 등이면 "기본 인식으로 진행됐어요" 꼬리를 붙인다.
     const note = getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
@@ -846,9 +885,17 @@ export default function EditorScreen({ id, prefill }) {
               <>이 사진의 글자는 <b style={{ color: '#f0ede7' }}>만드는 법 칸에만</b> 담겨요. 순서 부분만 남겨주세요.</>
             ) : undefined
           }
-          onDone={(img) => { setCropImg(null); setRefs((p) => [...p, img]); setPin('photo'); runOcr(img) }}
-          onSkip={() => { const img = cropImg; setCropImg(null); setRefs((p) => [...p, img]); setPin('photo'); runOcr(img) }}
-          onCancel={() => setCropImg(null)}
+          onDone={(img) => { setCropImg(null); setRefs((p) => [...p, img]); setPin('photo'); onCropped(img) }}
+          onSkip={() => { const img = cropImg; setCropImg(null); setRefs((p) => [...p, img]); setPin('photo'); onCropped(img) }}
+          onCancel={() => {
+            // ⛔⛔ 그만두면 «남은 자르기»를 비운다 — 안 그러면 마무리가 영영 안 와서
+            //    **이미 읽은 앞 장의 글자가 통째로 버려졌다**(옛 판의 조용한 버그).
+            //    읽는 중이면 그 펌프가 끝나면서 마무리한다. 놀고 있으면 여기서 바로 마무리한다.
+            setCropImg(null)
+            ocrQueue.current = []
+            ocrCropOpen.current = false
+            if (!ocrBusy.current && !ocrJobs.current.length) finishOcr()
+          }}
         />
       )}
 
