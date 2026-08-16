@@ -361,7 +361,12 @@ console.log(`  · 원본 ${원본길이.toFixed(1)}s → 앞 ${앞자름}s 자�
 execFileSync(ffmpeg, ['-y', '-ss', String(앞자름), '-i', join(REC, webm),
   '-r', '30', '-c:v', 'libx264', '-preset', 'slow', '-crf', '15',
   '-maxrate', '14M', '-bufsize', '22M', '-pix_fmt', 'yuv420p',
-  '-vf', `scale=1920:1080:flags=lanczos,unsharp=5:5:0.6:5:5:0.0,fade=t=out:st=${페이드시작.toFixed(2)}:d=${페이드}`,
+  // ⛔⛔ **`unsharp`(선명화)를 뺐다** — 창업자 *"영상보면 하단이 그림자처럼 어둡게 되어있어"*
+  //   ⭐ 스샷은 멀쩡한데 영상만 어둡다 = 앱이 아니라 «영상 처리» 문제다.
+  //      선명화는 경계 둘레에 **어두운 테두리(halo)**를 만든다. 하단바 위 `border-top` 이 그 자리다.
+  //   ⚠️ `lanczos` 도 링잉을 만들지만 업스케일에 필요해 남긴다 — 먼저 unsharp 부터 빼고 본다.
+  //   ⛔ 이건 «제일 유력한 후보»이지 확정된 원인이 아니다. 뽑아서 창업자가 다시 봐야 한다.
+  '-vf', `scale=1920:1080:flags=lanczos,fade=t=out:st=${페이드시작.toFixed(2)}:d=${페이드}`,
   '-movflags', '+faststart', '-an', mp4], { stdio: 'ignore' })
 
 console.log(`  ✅ ${mp4}`)
