@@ -43,32 +43,65 @@ const 잰다 = await pg.evaluate(async () => {
     x.drawImage(src, (src.width - s) / 2, (src.height - s) / 2, s, s, 0, 0, size, size)
     return { out, q, bytes: c.toDataURL('image/jpeg', q).length }
   }
-  return [정사각(800, 0.85), 정사각(640, 0.8), 정사각(512, 0.75), 정사각(400, 0.7)]
+  // 📔 일기 사진은 «정사각이 아니다» — `DiaryEntrySheet.downscale(max=900, q0.82)` 와 같은 계산
+  const 긴변 = (max, q) => {
+    const s = Math.min(1, max / Math.max(src.width, src.height))
+    const c = document.createElement('canvas')
+    c.width = Math.round(src.width * s); c.height = Math.round(src.height * s)
+    c.getContext('2d').drawImage(src, 0, 0, c.width, c.height)
+    return { max, q, w: c.width, h: c.height, bytes: c.toDataURL('image/jpeg', q).length }
+  }
+  return {
+    표지: [정사각(800, 0.85), 정사각(640, 0.8), 정사각(512, 0.75), 정사각(400, 0.7)],
+    일기: [긴변(900, 0.82), 긴변(720, 0.78), 긴변(600, 0.75)],
+  }
 })
 await b.close()
 
 const KB = (n) => (n / 1024).toFixed(0) + 'KB'
-const 지금 = 잰다[0]
+const 표지 = 잰다.표지
+const 일기사진 = 잰다.일기
+const 지금 = 표지[0]
 
 console.log('\n📸 레시피 «표지 사진» 한 장 (base64 로 올라가는 덩치)\n')
 console.log('  크기        화질    덩치      1GiB 에 몇 장')
-for (const r of 잰다) {
+for (const r of 표지) {
   const 표 = r.out === 800 ? '  ← 지금 앱이 쓰는 값' : ''
   console.log(`  ${String(r.out + '×' + r.out).padEnd(11)} q${r.q}   ${KB(r.bytes).padStart(6)}   ${String(Math.floor(1024 ** 3 / r.bytes)).padStart(7)}장${표}`)
 }
+
+// 📔 일기 — 창업자 *"조사철저히"* 로 추가로 잰 것 (2026-08-16)
+//   ⭐⭐ **꾸민 종이는 그림으로 안 굽는다** — `decor` 는 «스티커 좌표 목록»(JSON)이다.
+//      샘플 일기(스티커 여러 개)의 decor 블록 = **약 0.8KB**. 즉 꾸미기는 거의 공짜다.
+//      → **일기에서 무거운 것도 사진뿐**이다.
+console.log('\n📔 «일기 사진» 한 장 (긴 변 기준 · DiaryEntrySheet 와 같은 계산)\n')
+console.log('  긴 변       화질    덩치      1GiB 에 몇 장')
+for (const r of 일기사진) {
+  const 표 = r.max === 900 ? '  ← 지금 앱이 쓰는 값' : ''
+  console.log(`  ${String(r.max + 'px (' + r.w + '×' + r.h + ')').padEnd(20)} q${r.q}  ${KB(r.bytes).padStart(6)}   ${String(Math.floor(1024 ** 3 / r.bytes)).padStart(7)}장${표}`)
+}
+console.log(`  🎀 꾸민 스티커(decor) = 좌표 목록이라 **한 장당 약 0.8KB** — 사진의 ${Math.round(일기사진[0].bytes / 820)}분의 1`)
 
 // 📐 한 사람이 얼마나 쓰나 — 레시피 30편(사진 있는 게 절반)이라 잡는다
 //    ⚠️ 이건 «가정»이다. 진짜 숫자는 테스터 폰에서 재야 안다.
 const 글자 = 3 * 1024 // 레시피 한 편의 글자(제목·재료·순서·메모) 대충 3KB
 const 편수 = 30
 const 사진있는비율 = 0.5
-console.log(`\n👤 한 사람이 레시피 ${편수}편(절반에 사진) 을 올리면`)
-for (const r of 잰다) {
-  const 한사람 = 편수 * 글자 + 편수 * 사진있는비율 * r.bytes
-  console.log(`  ${String(r.out).padEnd(4)}q${r.q} → 한 사람 ${(한사람 / 1024 / 1024).toFixed(1)}MB · **1GiB 무료로 ${Math.floor(1024 ** 3 / 한사람)}명**`)
+// 📔 일기도 같이 잡는다 — 한 달에 8장 쓰고 그 중 절반에 사진 (⚠️ 가정)
+const 일기수 = 8 * 6 // 반 년치
+const 일기글 = 1 * 1024 + 820 // 글 1KB ＋ 꾸민 스티커 0.8KB
+const 일기사진비율 = 0.5
+
+console.log(`\n👤 한 사람이 «레시피 ${편수}편(절반에 사진) ＋ 일기 ${일기수}장(절반에 사진)» 을 올리면`)
+const 짝 = [[표지[0], 일기사진[0], '지금 값 그대로'], [표지[1], 일기사진[1], '⭐ 줄인 값(추천)'], [표지[2], 일기사진[2], '더 줄인 값']]
+for (const [t, d, 이름] of 짝) {
+  const 한사람 = 편수 * 글자 + 편수 * 사진있는비율 * t.bytes
+    + 일기수 * 일기글 + 일기수 * 일기사진비율 * d.bytes
+  console.log(`  ${이름.padEnd(16)} 표지 ${t.out}px · 일기 ${d.max}px` +
+    ` → 한 사람 ${(한사람 / 1024 / 1024).toFixed(1)}MB · **1GiB 무료로 ${Math.floor(1024 ** 3 / 한사람)}명**`)
 }
 
-console.log(`\n⭐ 지금 값(800 q0.85)이면 사진 한 장 ${KB(지금.bytes)} —` +
-  ` 사진을 ${잰다[2].out}px 로 줄이면 ${(지금.bytes / 잰다[2].bytes).toFixed(1)}배 가벼워진다.`)
+console.log(`\n⭐ 지금 값이면 표지 ${KB(지금.bytes)} · 일기 ${KB(일기사진[0].bytes)} —` +
+  ` 둘 다 한 단계 줄이면 ${((지금.bytes + 일기사진[0].bytes) / (표지[1].bytes + 일기사진[1].bytes)).toFixed(1)}배 가벼워진다.`)
 console.log('⚠️ 이건 «올리는 사진»만 줄이는 것이다 — 폰 안의 원본 화질은 그대로 둘 수 있다.')
-console.log('⚠️ 일기(꾸민 종이)·레꾸자랑 카드는 여기 안 들어 있다. 그건 따로 재야 한다.\n')
+console.log('⚠️ 사람마다 쓰는 양은 다르다 — 위 「30편·48장」은 가정이다. 진짜는 테스터 폰에서 재야 안다.\n')
