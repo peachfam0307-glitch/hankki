@@ -148,5 +148,36 @@ if (!packedBg.length) ok('pack 이 붙은 배경이 아직 없다')
 else if (/DECOR_BACKGROUNDS\.filter\([\s\S]{0,120}?b\.pack/.test(dec)) ok('pack 붙은 배경을 피커가 거른다')   // ⚠️개수는 정규식이 겹쳐 잡아 부정확하다 — 「있나 없나」만 본다
 else bad('배경 피커가 b.pack 을 «안 본다» — 유료팩 배경이 무료로 풀린다.\n     👉 DecorEditor.jsx 의 DECOR_BACKGROUNDS.filter 에 (!b.pack || ownedPacks().has(b.pack)) 를 넣을 것')
 
+// ── Ⓕ 「몇 컷이라고 «말하는» 수」와 「실제로 «담은» 수」가 같은가 ─────────
+//   ⛔⛔ **2026-08-16, 창업자가 «팩 수를 정하자»고 해서 판을 뽑다가 잡았다.**
+//      추석이 `total: 70` 이라고 적혀 있는데 `packed` 를 세어 보니 **62컷**이었다.
+//      · 캐릭터 22 ＋ 종이 8 ＋ 마테 8 ＋ 프레임 4 ＋ 소품 20 = **62**. 중복 0.
+//      · 창업자 확인 = *"62컷으로 줄였었을걸"* · *"최종"* → **62가 맞고 70이 낡은 값이었다.**
+//   ⭐ 왜 아무도 못 잡았나 = **`total` 을 «읽는» 검사가 한 곳도 없었다.**
+//      `check-packassets` 는 파일이 있나만 보고, `check-packmix` 는 새나만 본다.
+//      「선언한 수」와 「담은 수」를 견주는 눈이 **없었다.**
+//   💰 왜 위험한가 = `total` 은 서랍 자물쇠 메타(`paidPacks.js` 아래)로 나간다.
+//      **파는 창을 만드는 날 「70컷」이라 뜨고 62개를 준다** = 광고와 실제가 다른 상태.
+//      ⚠️ 지금은 이 값을 «그리는» 코드가 없어 유저에겐 안 보인다 — 그래서 더 조용히 썩는다.
+//   📌 규칙 19 그대로 — **「고치기」로 끝내면 다음에 또 어긋난다. 「어긋날 수 없게」 만든다.**
+console.log('\n🔢 「말하는 컷 수」와 「담은 컷 수」가 같나')
+let numMiss = 0
+for (const p of PACKS) {
+  const packed = Array.isArray(p.packed) ? p.packed.length : 0
+  if (!packed) { console.log(`  ⏳ ${p.label} — 아직 컷을 안 골랐다 (total ${p.total} · 고르는 날 다시 본다)`); continue }
+  if (packed === p.total) { ok(`${p.label} ${packed}컷 — 말과 실제가 같다`); continue }
+  numMiss++
+  bad(`${p.label} — «${p.total}컷»이라 적어놓고 실제로 담긴 건 «${packed}컷» (${p.total - packed} 어긋남)\n`
+    + `     👉 둘 중 «진짜»에 맞춘다: 컷을 더 넣거나, total 을 ${packed} 로 고치거나.\n`
+    + `     ⛔ 이 값은 파는 창에 그대로 뜬다 — 그냥 두면 광고와 실제가 달라진다.`)
+}
+// ⚠️ 중복도 같이 본다 — 같은 컷을 두 번 적으면 «담긴 수»가 부풀어 위 검사를 속인다.
+for (const p of PACKS) {
+  const arr = Array.isArray(p.packed) ? p.packed : []
+  const dup = arr.filter((k, i) => arr.indexOf(k) !== i)
+  if (dup.length) bad(`${p.label} — 같은 컷이 두 번 적혀 있다: ${[...new Set(dup)].join(', ')}`)
+}
+if (!numMiss) ok('컷 수가 전부 맞다')
+
 console.log(fail ? `\n❌ 팩 배분표 검사 실패 ${fail}건\n` : '\n✅ 팩 배분표 통과\n')
 process.exit(fail ? 1 : 0)
