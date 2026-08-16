@@ -232,5 +232,56 @@ const 일기맞나 = await page.evaluate(() => {
 if (!일기맞나) console.log('  ⛔ 07-일기 — 화면에 샘플 일기가 없다. 딴 화면을 찍을 뻔했다')
 else await 찍기('07-일기')
 
+// ⑧⑨ 요리 모드 ＋ 타이머 — 창업자 *"요리시작해서 타이머 설정 그런것도 찍자."* ·
+//    *"**시간 카운트되고 요리모드 되는거**"*
+//
+// ⭐⭐ 이 장이 「이건 요리하면서 «쓰는» 앱이다」를 말한다 — 나머지 일곱은 «보고 고르는» 화면이다.
+//    큰 글씨 · 화면 안 꺼짐 · 단계 타이머 = 브라우저 탭으로는 못 하는 일이고, 손에 물 묻은 채 쓰는 자리다.
+// 📌 타이머를 켜면 시트가 닫히고 **`TimerBar`**(진행 막대 ＋ 남은 시간)가 화면 아래에서 «돈다» —
+//    창업자가 말한 「시간 카운트되고 요리모드 되는거」가 바로 그 화면이다.
+// ⛔ 요리 모드는 **풀스크린이라 하단 탭이 없다** — 그래서 맨 뒤에 둔다(빠져나올 일이 없다).
+await page.goto('http://127.0.0.1:4381/hankki/', { waitUntil: 'networkidle' })
+await page.waitForTimeout(1300)
+await 탭('레시피')
+const 요리카드 = page.locator('.grid-card').filter({ hasText: '김치찌개' }).first()
+if (await 요리카드.count()) { await 요리카드.click(); await page.waitForTimeout(1400) }
+else console.log('  ⚠️ 김치찌개를 못 찾았다 — 지금 열린 레시피로 간다')
+
+const 요리시작 = page.getByRole('button', { name: /요리 시작/ }).first()
+if (!(await 요리시작.count())) console.log('  ⛔ 상세에서 「요리 시작」을 못 찾았다')
+else {
+  await 요리시작.click(); await page.waitForTimeout(1500)
+  // ⛔ 첫 화면은 «재료 준비»(체크 목록)라 타이머 버튼이 «없다» — 한 칸 넘겨야 STEP 화면이 나온다
+  const 준비완료 = page.getByRole('button', { name: /재료 준비 완료/ }).first()
+  if (await 준비완료.count()) { await 준비완료.click(); await page.waitForTimeout(1300) }
+
+  // ⑨ 타이머 «맞추는» 화면 — 프리셋 ＋ 분·초 ＋ 알림음 고르기
+  const 타이머버튼 = page.getByRole('button', { name: /타이머 맞추기/ }).first()
+  if (!(await 타이머버튼.count())) console.log('  ⛔ 「이 단계 타이머 맞추기」를 못 찾았다 — STEP 화면이 아닌가')
+  else {
+    await 타이머버튼.click(); await page.waitForTimeout(1300)
+    await 찍기('09-타이머맞추기')
+
+    // ⏱ 「5분 시작」을 눌러 «실제로 켠다» — 시트가 닫히고 아래 막대가 카운트다운을 시작한다
+    //   ⛔ 첫 프리셋(1분)을 누르면 「0:55」가 찍힌다 — **요리 타이머로는 안 어울리는 숫자**다.
+    //      ✅ 커스텀 기본값이 5분이라 「5분 시작」을 누르면 「4:5x」 — 볶고 끓이는 시간으로 읽힌다.
+    const 프리셋 = page.getByRole('button', { name: /분 시작$/ }).first()
+    if (await 프리셋.count()) {
+      const 몇분 = (await 프리셋.innerText()).trim()
+      await 프리셋.click()
+      // ⭐ 잠깐 기다린다 — 켜자마자 찍으면 「5:00」 이라 «멈춰 있는지 도는지» 구분이 안 된다.
+      //    몇 초 흘려 「4:5x」 가 되면 «가고 있다»가 한눈에 읽힌다.
+      await page.waitForTimeout(4200)
+      // ⛔ 막대가 실제로 떴나 — 안 떴으면 그냥 요리 화면이라 창업자가 말한 장이 아니다
+      const 돌고있나 = await page.evaluate(() => {
+        const bar = document.querySelector('.timer-bar')
+        return bar ? (bar.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 40) : ''
+      })
+      console.log(돌고있나 ? `  · 타이머 ${몇분} 켜짐 → 막대 「${돌고있나}」` : `  ⛔ 타이머를 켰는데 막대가 안 보인다`)
+    } else console.log('  ⛔ 타이머 프리셋 버튼을 못 찾았다')
+    await 찍기('08-요리모드')
+  }
+}
+
 console.log(errors.length ? `\n  ⛔ pageerror ${errors.length}건 — ${errors[0]}` : '\n  ✅ pageerror 0')
 await b.close(); srv.close()
