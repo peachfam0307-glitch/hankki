@@ -39,7 +39,13 @@ await new Promise((r) => srv.listen(4381, r))
 const { SEED_COACH_SEEN } = await import(`${H}/src/coach.js`)
 const CHROMIUM = process.env.SMOKE_CHROMIUM
 const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
-const page = await b.newPage({ viewport: { width: 2560, height: 1440 }, deviceScaleFactor: 1 })
+// ⛔⛔⛔ 첫 판이 **2560×1440 · DPR 1** 이었다 — 창업자 판정 *"2346번은 비어있고 글자 작은게 너무 이상해"*
+//   ⭐ 「글자가 작다」가 결정적 단서였다. 원인 = **CSS 픽셀 폭을 두 배로 잡았다.**
+//      실제 갤럭시탭은 화면이 2560px 이어도 **DPR 2** 라 앱은 **1280 CSS 픽셀**로 그린다.
+//      나는 2560 CSS 픽셀로 띄웠으니 **글자는 절반 크기 · 빈 공간은 두 배**가 됐다.
+//   📌 **앱이 휑한 게 아니라 내가 잰 조건이 실제와 달랐다**(규칙 18 — 「없다」의 이유를 내가 정하지 말 것).
+//   ✅ 1280×720 CSS × DPR 2 = **출력은 그대로 2560×1440**, 레이아웃만 실제 태블릿과 같아진다.
+const page = await b.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 2 })
 const errors = []
 page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
 await page.addInitScript(SEED_COACH_SEEN)                                   // 코치마크가 클릭을 가로챈다
