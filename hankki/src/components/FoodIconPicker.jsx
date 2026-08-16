@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useLayerBack } from '../useBackHandler'
-import FoodIcon, { FOOD_ICON_GROUPS_SORTED, FOOD_NAMES, searchFoodIcons } from './FoodIcon'
+import FoodIcon, { FOOD_ICON_GROUPS_ING_FIRST, FOOD_ICON_GROUPS_SORTED, FOOD_NAMES, searchFoodIcons } from './FoodIcon'
 import Icon from './Icon'
 import Portal from './Portal'
 
@@ -26,8 +26,13 @@ function pushRecent(key) {
 
 // 아이콘 고르는 바텀시트만 따로 — 표지처럼 "자기 버튼 없이 시트만 열고 싶은 곳"에서 쓴다.
 // (레시피 상세에서 표지 아이콘 바꾸기 — 창업자 2026-07-28 "사진 바꾸기가 갤러리 말고 음식아이콘으로 가야 해")
-export function FoodIconSheet({ value, onChange, onClose }) {
+// 🥕 mode='ing' = 「재료를 고르는 자리」 (냉장고 재료 담기). 재료 갈래가 맨 위로 온다.
+//    📮 창업자 폰 제보 2026-08-16 *"냉장고에 유통기한넣을때 아이콘바꾸는거 음식이 먼저다떠"*
+//    ⛔ 기본값은 그대로 'dish' — 레시피 표지·프로필·쇼핑몰은 아무것도 안 바뀐다.
+export function FoodIconSheet({ value, onChange, onClose, mode = 'dish' }) {
   useLayerBack(true, onClose) // 뒤로가기 → 닫기
+  const ing = mode === 'ing'
+  const groups = ing ? FOOD_ICON_GROUPS_ING_FIRST : FOOD_ICON_GROUPS_SORTED
   const [q, setQ] = useState('')
   // 최근 목록은 시트를 여는 순간의 것으로 고정 — 고를 때마다 위가 움직이면 눈이 어지럽다.
   const [recent] = useState(readRecent)
@@ -62,7 +67,7 @@ export function FoodIconSheet({ value, onChange, onClose }) {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="음식 이름으로 찾기 (초성도 돼요)"
+              placeholder={ing ? '재료 이름으로 찾기 (초성도 돼요)' : '음식 이름으로 찾기 (초성도 돼요)'}
               aria-label="아이콘 검색"
             />
             {q && (
@@ -93,7 +98,7 @@ export function FoodIconSheet({ value, onChange, onClose }) {
                     <div className="ficon-grid">{recent.map((k) => cell(k, 'r'))}</div>
                   </div>
                 )}
-                {FOOD_ICON_GROUPS_SORTED.map((g) => (
+                {groups.map((g) => (
                   <div key={g.label} style={{ marginBottom: 14 }}>
                     <div className="emoji-cat">{g.label}</div>
                     <div className="ficon-grid">{g.items.map((k) => cell(k, g.label))}</div>
@@ -110,7 +115,7 @@ export function FoodIconSheet({ value, onChange, onClose }) {
 
 // 커스텀 재료/요리 아이콘 선택기 — 타일 버튼 + 위 시트.
 // 이모지 대신 앱 톤과 어울리는 브랜드 아이콘을 고른다.
-export default function FoodIconPicker({ value, onChange, size = 64 }) {
+export default function FoodIconPicker({ value, onChange, size = 64, mode = 'dish' }) {
   const [open, setOpen] = useState(false)
   return (
     <>
@@ -123,7 +128,7 @@ export default function FoodIconPicker({ value, onChange, size = 64 }) {
       >
         <FoodIcon name={value || 'default'} size={size * 0.62} />
       </button>
-      {open && <FoodIconSheet value={value} onChange={onChange} onClose={() => setOpen(false)} />}
+      {open && <FoodIconSheet value={value} onChange={onChange} onClose={() => setOpen(false)} mode={mode} />}
     </>
   )
 }
