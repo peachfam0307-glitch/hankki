@@ -117,7 +117,18 @@ export default function ProfileScreen() {
     diary: store.diary, seedV: store.seedV, memoCleanV: store.memoCleanV, removedSeedIds: store.removedSeedIds,
   })
 
-  const backupFilename = () => `한끼백업-${new Date().toISOString().slice(0, 10)}.json`
+  // 📁 파일 이름에 «시각»까지 넣는다 (2026-08-16 창업자 캡처)
+  //   ⛔ 날짜만 넣었더니 같은 날 두 번째 저장에서 안드로이드가
+  //      **「파일을 다시 다운로드하시겠습니까?」** 를 띄웠다(같은 이름이 이미 있어서).
+  //      📮 창업자 *"이런거 뜨면안되는거잖아"* — 맞다. 백업은 여러 번 눌러도 «그냥 되어야» 한다.
+  //   ⭐ 시각이 붙으면 이름이 매번 달라 그 물음이 아예 안 뜬다.
+  //      ＋ 덤으로 **어느 게 최신인지** 파일 목록에서 바로 보인다.
+  //   ⛔ `toISOString()` 은 UTC 라 한국 시각과 9시간 어긋난다 → 로컬 시각으로 짠다.
+  const backupFilename = () => {
+    const d = new Date()
+    const p = (n) => String(n).padStart(2, '0')
+    return `한끼백업-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`
+  }
 
   // 다운로드 폴더로 저장 (데스크톱·폴백)
   const downloadBackup = () => {
@@ -154,9 +165,12 @@ export default function ProfileScreen() {
       if (e && e.name === 'AbortError') return // 사용자가 공유 취소
       // 그 외 오류(파일 공유 거부 등)는 아래 복사 폴백으로 넘어간다
     }
-    // 설치형(홈 화면) 앱에선 공유가 막히거나 파일 다운로드가 조용히 실패할 수 있어,
-    // 어디서나 되는 '복사'로 대체한다. (카톡 「나에게」에 붙여넣어 보관)
-    copyBackup()
+    // ⛔⛔ [2026-08-16 정정] 여기서 `copyBackup()` 으로 떨어뜨리고 있었다 — **그게 창업자 폰의 사고였다.**
+    //   공유가 막힌 폰에서 복사로 떨어졌는데 **복사도 실패**해서
+    //   시스템이 「클립보드로 복사하지 못했습니다」를 띄웠다(창업자 캡처).
+    //   ⭐ **폴백은 「어디서나 되는 것」이 아니라 「됐는지 유저가 아는 것」이어야 한다.**
+    //      파일 저장은 **다운로드 알림**이 뜬다 — 복사는 아무 표시가 없다.
+    downloadBackup()
   }
 
   // 백업 코드를 클립보드로 복사 — 공유가 막힌 기기의 마지막 수단
@@ -177,21 +191,36 @@ export default function ProfileScreen() {
   //   ⑵ 토스트를 정직하게 — 「복사했어요」로 끝내지 않고 **붙여넣어 확인하라**고 말한다.
   //   ⛔ `clipboard.readText()` 로 대조하는 길은 **일부러 안 썼다** — 안드로이드에서 권한 프롬프트를
   //      띄울 수 있어 「붙여넣기 허용?」을 보게 된다. 확인하려다 더 나빠진다.
+  // 📏 클립보드로 보낼 수 있는 크기인가 — ⛔100KB 는 «확인된 값이 아니다».
+  //   우리가 아는 건 **창업자 폰 247KB 에서 실패한 사례 하나**뿐이고, 상한은 기기·안드로이드 판마다 다르다.
+  //   ⭐ 넉넉히 잡는 쪽이 안전하다 — 틀려서 파일로 저장돼도 **유저는 아무것도 잃지 않는다.**
+  const CLIP_MAX = 100 * 1024
+
   const copyBackup = async () => {
     const json = JSON.stringify(buildBackup())
+
+    // ⛔⛔⛔ [2026-08-16 두 번째 고침] **큰 백업은 복사를 «시도조차 하지 않는다».**
+    //   📮 창업자 캡처 = 「클립보드로 복사하지 못했습니다」(시스템) ＋ 우리 안내가 «겹쳐서» 떴다.
+    //      *"이런거 뜨면안되는거잖아"* — 맞다.
+    //   ⛔ 오전에 고친 건 «토스트 문구»뿐이라 **시스템 실패 알림은 그대로 떴다.**
+    //      `clipboard.writeText()` 가 **성공으로 resolve 되고도 실제 복사는 실패**하므로
+    //      `catch` 로는 영영 못 잡는다. **애초에 안 부르는 것 말고는 길이 없다.**
+    //   ⭐ 그래서 클 때는 **바로 파일로** 저장하고 «왜 그랬는지»를 말해준다.
+    //      파일은 다운로드 알림이 떠서 유저가 «됐다»를 안다.
+    if (json.length > CLIP_MAX) {
+      downloadBackup()
+      nav.showToast('저장한 게 많아 복사 대신 «파일»로 저장했어요 다운로드 폴더를 확인하세요')
+      return
+    }
+
     try {
       await navigator.clipboard.writeText(json)
       setBackup(false)
-      // ⚠️ 큰 백업은 «복사됐다고 하고 실제로는 안 되는» 일이 잦다(창업자 폰 = 레시피 237편 ≈ 247KB).
-      //    ⛔ 문턱 100KB 는 **확인된 값이 아니다** — 클립보드 상한은 기기·안드로이드 판마다 다르고
-      //       우리가 아는 건 «247KB 에서 실패한 사례 하나»뿐이다. 넉넉히 잡아 «미리» 알린다.
-      //    ⭐ 틀려도 손해가 작다 — 권유일 뿐이고, 맞으면 데이터를 지킨다.
-      const 큼 = json.length > 100 * 1024
-      nav.showToast(큼
-        ? '복사했지만 저장한 게 많아 «잘렸을 수 있어요» 붙여넣어 확인하고, 안 되면 파일로 저장하세요'
-        : '백업 코드를 복사했어요 카톡 「나에게」에 붙여넣어 «들어갔는지» 꼭 확인하세요')
+      // ⛔ `backupDone()` 을 부르지 않는다 — 복사는 «됐는지 확인할 방법이 없다».
+      //    부르면 홈의 백업 안내가 영영 꺼져서, 유저는 백업이 있다고 믿고 폰을 바꾸고 아무것도 없다.
+      nav.showToast('백업 코드를 복사했어요 카톡 「나에게」에 붙여넣어 «들어갔는지» 꼭 확인하세요')
     } catch {
-      // 클립보드까지 막히면 최후로 파일 저장 시도
+      // 클립보드가 «대놓고» 막힌 기기 — 파일로
       downloadBackup()
     }
   }
@@ -548,8 +577,11 @@ export default function ProfileScreen() {
                   📮 *"카톡보내기는 **외계어가 너무 길어서** 복사붙이기가 번거롭건데"*
                   📮 *"카톡보내기도 **나쁘지않은데** 저장한게 많은수록 **길이가 엄청나.**"*
                   ⛔ 옛 판은 「백업 보내서 저장하기」가 추천이고 3단계가 «카톡 나에게»를 밀었다.
-                     그런데 창업자는 그 길을 **「외계어 붙여넣기」로 겪고 있다** — 공유가 안 뜨면
-                     `shareBackup` 이 조용히 `copyBackup()` 으로 떨어지기 때문이다(159줄).
+                     그런데 창업자는 그 길을 **「외계어 붙여넣기」로 겪고 있었다** — 공유가 안 뜨면
+                     `shareBackup` 이 조용히 `copyBackup()` 으로 떨어졌기 때문이다.
+                  ✅✅ [2026-08-16 밤] **그 폴백을 «파일 저장»으로 바꿨다** — 창업자 캡처에
+                     「클립보드로 복사하지 못했습니다」가 떠서, 복사는 폴백으로도 못 쓴다는 게 확인됐다.
+                     이제 어느 버튼을 눌러도 **끝에는 반드시 파일이 하나 생긴다.**
                      📌 **추천한 길이 그 폰에서 딴 길로 새고 있었다.**
                   ⭐ 파일은 그 갈림길이 없다 — 누르면 파일 하나가 «반드시» 생긴다.
                   ⛔ 나머지 둘을 «지우지» 않는다 — 창업자 *"카톡보내기도 나쁘지않은데"*.
@@ -564,7 +596,9 @@ export default function ProfileScreen() {
                 파일 앱 → <b>다운로드</b> 에 <b>한끼백업-날짜.json</b> 이 생겨요.{'\n'}폰이 고장나도 남게 하려면 그 파일을 <b>드라이브·카톡 「나에게」</b>에 한 번 더 올려두면 제일 안전해요.
               </div>
               <button className="btn-ghost press" style={{ width: '100%' }} onClick={shareBackup}>백업 보내서 저장하기 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 공유 창으로</span></button>
-              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={copyBackup}>백업 코드 복사 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 공유가 안 될 때</span></button>
+              {/* ⚠️ 저장한 게 많으면 복사가 «안 되는» 폰이 있다(창업자 폰 247KB 에서 실패).
+                  그럴 땐 코드가 알아서 파일로 저장한다 — 그래서 라벨에 「짧을 때」라고 미리 적는다. */}
+              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={copyBackup}>백업 코드 복사 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 저장한 게 적을 때만</span></button>
               <div className="t-sub" style={{ fontSize: 11.5, lineHeight: 1.5, margin: '7px 2px 0' }}>
                 코드는 저장한 게 많을수록 <b>아주 길어요.</b> 붙여넣기가 번거로우면 위 <b>파일</b>로 하세요.
               </div>
