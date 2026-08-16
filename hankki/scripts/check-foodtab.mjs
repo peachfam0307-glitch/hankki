@@ -47,7 +47,21 @@ for (const m of rBlock.matchAll(/\[\[\s*'([^']+)'[^\]]*\],\s*'([^']+)'\]/g)) if 
 const eStart = src.indexOf('EXTRA_NAMES = {')
 if (eStart > 0) for (const m of src.slice(eStart, src.indexOf('\n}', eStart)).matchAll(/([\w]+)\s*:\s*'([^']+)'/g)) names[m[1]] = m[2]
 
+// 🥕🥕 [2026-08-16] 재료 컷(`ig_`)도 «같이 본다» — 이게 없어서 3일 넘게 조용히 샜다.
+//   ⛔ 2026-08-12 에 재료 171컷을 넣었는데 **픽커에 한 컷도 안 실렸고**, 이 검사는
+//      `fe|fh|fy|fj|fi|fb` 만 봐서 **있든 없든 아무 말도 안 했다.**
+//   📌 검사가 «안 보는 것»은 언제든 조용히 비어 있을 수 있다.
+const ING = path.join(root, 'src/assets/stickers/ing')
+const ingSrc = readFileSync(path.join(root, 'src/data/ingIcons.js'), 'utf8')
+{
+  const st = ingSrc.indexOf('export const ING_RULES = [')
+  const body = ingSrc.slice(st, ingSrc.indexOf('\n]', st))
+  // ⛔ ING_RULES 는 [이름, 키] 순서다 (ICON_RULES 와 반대)
+  for (const m of body.matchAll(/\['([^']+)',\s*'([^']+)'\]/g)) if (!names[m[2]]) names[m[2]] = m[1]
+}
+const isIng = (k) => /^ig_/.test(k)
 const isPhoto = (k) => /^(fe|fh|fy|fj|fi|fb)_/.test(k)
+const 그림있나 = (k) => (isIng(k) ? existsSync(path.join(ING, `${k}.png`)) : existsSync(path.join(PHOTO, `${k}.png`)))
 let fail = 0
 
 // ── ① 한 컷 = 한 집 ──
@@ -64,12 +78,12 @@ if (dup.length) {
 } else console.log(`[foodtab] ✓ 한 컷 = 한 집 (${home.size}컷 · 그룹 ${groups.length}개)`)
 
 // ── ② 부르는데 그림이 없다 ──
-const broken = [...home.keys()].filter((k) => isPhoto(k) && !existsSync(path.join(PHOTO, `${k}.png`)))
+const broken = [...home.keys()].filter((k) => (isPhoto(k) || isIng(k)) && !그림있나(k))
 if (broken.length) { console.error(`[foodtab] ❌ 그림이 없는 컷 ${broken.length}개: ${broken.join(', ')}`); fail++ }
 else console.log('[foodtab] ✓ 부르는 그림 전부 있다')
 
 // ── ③ 이름표 ──
-const noname = [...home.keys()].filter((k) => isPhoto(k) && !names[k])
+const noname = [...home.keys()].filter((k) => (isPhoto(k) || isIng(k)) && !names[k])
 if (noname.length) { console.error(`[foodtab] ❌ 이름표 없는 컷 ${noname.length}개: ${noname.join(', ')} — 픽커에서 라벨이 빈칸이 된다`); fail++ }
 else console.log('[foodtab] ✓ 이름표 전부 있다')
 
@@ -78,6 +92,21 @@ const files = readdirSync(PHOTO).filter((f) => /^(fe|fh|fy|fj|fi|fb)_.*\.png$/.t
 const shelved = files.filter((k) => !home.has(k))
 console.log(`[foodtab] · 픽커에 실린 음식 ${files.length - shelved.length}컷 / 파일 ${files.length}장`)
 console.log(`[foodtab] · 일부러 내려둔 것 ${shelved.length}컷 — 같은 요리를 두 번 그린 뒷세대. 파일은 보존(저장된 레시피 보호)`)
+
+// ── ⑤ 🥕 재료 컷이 «픽커에 실렸나» (2026-08-16 신설 — 이번 사고를 직접 막는 검사) ──
+//   ⛔ 그림을 넣고 「이름 치면 붙기」만 잇고 **픽커 목록에 안 실으면**, 유저는 손으로 못 고른다.
+//      2026-08-12 에 정확히 그랬고 **아무 검사도 그걸 안 봤다**(3일 넘게 조용했다).
+//   ⭐ 「이름 치면 붙나」와 「골라서 바꿀 수 있나」는 «다른 것»이다. 둘 다 봐야 한다.
+{
+  const ingFiles = readdirSync(ING).filter((f) => f.endsWith('.png')).map((f) => f.replace('.png', ''))
+  const 안실림 = ingFiles.filter((k) => !home.has(k))
+  if (안실림.length) {
+    console.error(`[foodtab] ❌ 재료 그림인데 「아이콘 선택」 목록에 없는 컷 ${안실림.length}개`)
+    console.error(`   ${안실림.slice(0, 12).map((k) => `${names[k] || '?'}(${k})`).join(', ')}${안실림.length > 12 ? ' …' : ''}`)
+    console.error('   👉 FOOD_ICON_GROUPS 의 재료 갈래(kind: \'ing\')에 넣어라 — 안 넣으면 유저가 손으로 못 고른다.')
+    fail++
+  } else console.log(`[foodtab] ✓ 재료 ${ingFiles.length}컷 전부 픽커에 실렸다`)
+}
 
 if (fail) { console.error('\n❌ 음식 탭 게이트 실패'); process.exit(1) }
 console.log('✅ 음식 탭 통과 — 중복 0 · 깨진 참조 0 · 빈 이름표 0')

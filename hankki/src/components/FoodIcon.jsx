@@ -1,7 +1,7 @@
 // 한끼 브랜드 재료 아이콘 세트 — 앱 쿨톤과 어울리는 채도 낮은 컬러 듀오톤.
 // 이름으로 자동 매칭(guessFoodIcon)되거나, 픽커에서 직접 고를 수 있다.
 import { PHOTO_FAMILY } from './Stickers' // 🍱 뉴 음식 이모지(다꾸본 완성요리 PNG)도 레시피 아이콘으로 쓸 수 있게
-import { ING_SRC, ingIconOf } from '../data/ingIcons' // 🥕 냉장고·장보기 «재료» 그림 171컷(창업자 2026-08-12)
+import { ING_RULES, ING_SRC, ingIconOf } from '../data/ingIcons' // 🥕 냉장고·장보기 «재료» 그림 171컷(창업자 2026-08-12)
 
 const I = {
   // ── 곡물·면 ──
@@ -698,14 +698,29 @@ export const FOOD_ICON_GROUPS = [
   //      그래서 **갈래마다 `kind` 를 직접 적는다.** 새 갈래를 넣는 사람이 여기서 한 번 고르면 끝이다.
   //   ⛔ 요리 갈래를 «지우지» 않는다 — 남은 된장찌개를 통째로 넣어둘 수도 있다. 밑에 그대로 둔다.
   //   ⛔ 「쇼핑」(bag·cart)은 ing 이 아니다 — 냉장고에 장바구니를 넣진 않는다. 쇼핑몰 아이콘용이다.
+  //
+  // 🥕🥕🥕 [2026-08-16] 재료 갈래를 **창업자 그림 171컷**으로 갈아끼웠다.
+  //   📮 창업자 *"근데 우리 이거 아이콘 내가 새로 다 뽑은걸로 기억하는데"* · *"**다 어디갔어?????**"*
+  //   ⛔⛔ **2026-08-12 에 «절반만» 연결돼 있었다** (커밋 005a9b6):
+  //      ✅ 그림 171장 ＋ 이름표 ＋ 「이름을 치면 붙기」(guessIngredientIcon)
+  //      ⛔ **「아이콘 선택」 목록엔 한 컷도 안 실었다** → 바꾸려고 열면 옛 SVG 도형만 나왔다
+  //      ⛔ 그때 만든 검사 5칸이 «전부» 「이름 치면 붙나」만 재서 **픽커가 텅 빈 채로 5/5 초록불**이었다
+  //         📌 규칙 18 ⓘ — 「통과했나」가 아니라 **「무엇을 보고 통과했나」**.
+  //      ⛔ 그리고 재료 갈래가 픽커 15번째에 파묻혀 있어 **아무도 안 열어봐서 3일 넘게 안 들켰다.**
+  //   ⛔ 옛 SVG 재료 55컷(cabbage·kimchi…)은 **픽커에서 내리기만 한다 — 파일·코드는 남긴다.**
+  //      그걸로 저장한 재료가 깨지면 안 된다(kf_c_·sf_ 때와 같은 방식).
+  //   ⭐ 덤으로 이름표도 고쳐졌다 — 옛 도형은 제 이름이 없어 요리 규칙에서 빌려 썼다
+  //      (떡 → 「떡볶이」 · 두부 → 「순두부」 · 무 → 「무말랭이」). 창업자 컷은 제 이름이 박혀 있다.
+  //   🔢 갈래 나누기는 손으로 세지 않았다 — `scratchpad/분류-재료171.mjs` 가 빠짐·중복을 대조한다
+  //      (채소 47 · 과일 20 · 고기해산물 34 · 유제품 8 · 양념장 33 · 밥면빵 22 · 음료기타 7 = 171).
   { label: '요리 아이콘', items: ['donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert', 'icecream'] },
-  { label: '밥·면·빵', kind: 'ing', items: ['bread', 'tteok', 'tofu'] },
-  { label: '채소', kind: 'ing', items: ['cabbage', 'kimchi', 'lettuce', 'onion', 'garlic', 'greenOnion', 'sprout', 'potato', 'carrot', 'chili', 'pepper', 'cucumber', 'eggplant', 'corn', 'radish', 'mushroom', 'broccoli', 'beans'] },
-  { label: '과일', kind: 'ing', items: ['tomato', 'apple', 'banana', 'strawberry', 'grape', 'lemon', 'orange', 'avocado'] },
-  { label: '고기·해산물', kind: 'ing', items: ['beef', 'pork', 'chicken', 'egg', 'fish', 'shrimp', 'squid', 'clam'] },
-  { label: '유제품', kind: 'ing', items: ['milk', 'cheese', 'butter'] },
-  { label: '양념·장', kind: 'ing', items: ['gochujang', 'doenjang', 'soy', 'soyLong', 'sesameOil', 'oil', 'vinegar', 'fishSauce', 'salt', 'honey', 'jar'] },
-  { label: '음료·기타', kind: 'ing', items: ['coffee', 'water', 'seaweed', 'nuts'] },
+  { label: '채소', kind: 'ing', items: ['ig_s1_01', 'ig_s1_02', 'ig_s1_03', 'ig_s1_04', 'ig_s1_05', 'ig_s1_06', 'ig_s1_09', 'ig_s1_10', 'ig_s1_11', 'ig_s1_13', 'ig_s1_14', 'ig_s1_15', 'ig_s1_16', 'ig_s2_01', 'ig_s2_02', 'ig_s2_03', 'ig_s2_04', 'ig_s2_05', 'ig_s2_06', 'ig_s2_07', 'ig_s2_08', 'ig_s2_09', 'ig_s2_10', 'ig_s2_11', 'ig_s2_12', 'ig_s2_14', 'ig_s2_15', 'ig_s2_16', 'ig_s3_01', 'ig_s3_02', 'ig_s3_03', 'ig_s3_04', 'ig_s3_05', 'ig_s3_06', 'ig_s3_07', 'ig_s3_08', 'ig_s3_09', 'ig_s3_10', 'ig_s3_11', 'ig_s3_12', 'ig_s3_13', 'ig_s3_14', 'ig_s3_15', 'ig_s3_16', 'ig_s8_13', 'ig_s8_01', 'ig_s11_02'] },
+  { label: '과일', kind: 'ing', items: ['ig_s7_04', 'ig_s7_05', 'ig_s7_06', 'ig_s7_07', 'ig_s7_08', 'ig_s7_09', 'ig_s7_10', 'ig_s7_11', 'ig_s7_12', 'ig_s7_13', 'ig_s7_14', 'ig_s7_15', 'ig_s7_16', 'ig_s10_01', 'ig_s10_02', 'ig_s10_03', 'ig_s10_04', 'ig_s10_05', 'ig_s10_06', 'ig_s10_07'] },
+  { label: '고기·해산물', kind: 'ing', items: ['ig_s6_01', 'ig_s6_02', 'ig_s6_03', 'ig_s6_04', 'ig_s6_05', 'ig_s6_07', 'ig_s6_08', 'ig_s6_09', 'ig_s6_10', 'ig_s6_11', 'ig_s6_12', 'ig_s6_13', 'ig_s6_14', 'ig_s6_15', 'ig_s6_16', 'ig_s8_03', 'ig_s8_04', 'ig_s8_05', 'ig_s8_06', 'ig_s8_07', 'ig_s8_08', 'ig_s8_09', 'ig_s8_10', 'ig_s8_14', 'ig_s8_15', 'ig_s9_13', 'ig_s9_14', 'ig_s9_15', 'ig_s9_16', 'ig_s9_01', 'ig_s6_06', 'ig_s4_16', 'ig_s8_11', 'ig_s8_02'] },
+  { label: '유제품', kind: 'ing', items: ['ig_s7_01', 'ig_s7_02', 'ig_s7_03', 'ig_s9_09', 'ig_s9_10', 'ig_s10_09', 'ig_s8_16', 'ig_s11_09'] },
+  { label: '양념·장', kind: 'ing', items: ['ig_s1_07', 'ig_s4_01', 'ig_s4_02', 'ig_s4_03', 'ig_s4_04', 'ig_s4_05', 'ig_s4_06', 'ig_s4_07', 'ig_s4_08', 'ig_s4_09', 'ig_s4_10', 'ig_s4_11', 'ig_s4_12', 'ig_s4_13', 'ig_s4_14', 'ig_s4_15', 'ig_s5_01', 'ig_s5_02', 'ig_s5_03', 'ig_s5_04', 'ig_s5_05', 'ig_s5_06', 'ig_s5_07', 'ig_s5_08', 'ig_s5_09', 'ig_s5_11', 'ig_s5_13', 'ig_s5_14', 'ig_s5_15', 'ig_s5_16', 'ig_s10_12', 'ig_s10_13', 'ig_s10_16'] },
+  { label: '밥·면·빵', kind: 'ing', items: ['ig_s9_02', 'ig_s9_11', 'ig_s11_16', 'ig_s9_03', 'ig_s9_06', 'ig_s9_07', 'ig_s9_04', 'ig_s11_04', 'ig_s11_06', 'ig_s11_07', 'ig_s11_08', 'ig_s8_12', 'ig_s11_15', 'ig_s9_05', 'ig_s11_10', 'ig_s11_11', 'ig_s11_12', 'ig_s11_03', 'ig_s11_05', 'ig_s10_11', 'ig_s10_14', 'ig_s10_15'] },
+  { label: '음료·기타', kind: 'ing', items: ['ig_s9_12', 'ig_s10_08', 'ig_s9_08', 'ig_s10_10', 'ig_s11_01', 'ig_s11_13', 'ig_s11_14'] },
   { label: '쇼핑', items: ['bag', 'cart', 'basket', 'store', 'box'] },
 ]
 
@@ -1391,7 +1406,14 @@ const EXTRA_NAMES = {
 export const FOOD_NAMES = (() => {
   const m = {}
   for (const [keys, key] of ICON_RULES) if (!m[key]) m[key] = keys[0]
-  return { seafood: '해산물', dessert: '디저트', icecream: '아이스크림', bag: '장바구니', basket: '바구니', box: '박스', ...EXTRA_NAMES, ...m }
+  // 🥕🥕 [2026-08-16] 재료 171컷의 «제 이름»을 합친다 — ⛔이게 없으면 픽커 라벨이 빈칸이다.
+  //   ⭐ 재료는 일부러 `ICON_RULES`(요리 규칙)에 안 얹었다(「애호박」이 「애호박새우젓볶음」에 걸리던 사고).
+  //      그래서 이름도 거기서 안 나온다 → **재료 표에서 따로 가져온다.**
+  //   ⭐ 덤 = `searchFoodIcons` 색인이 `FOOD_NAMES` 를 훑으므로 **재료 이름·초성 검색도 같이 열린다.**
+  //   ⛔ ING_RULES 는 [이름, 키] 순서다 (ICON_RULES 와 반대) — 뒤집어 읽지 말 것.
+  const ing = {}
+  for (const [nm, key] of ING_RULES) if (!ing[key]) ing[key] = nm
+  return { seafood: '해산물', dessert: '디저트', icecream: '아이스크림', bag: '장바구니', basket: '바구니', box: '박스', ...EXTRA_NAMES, ...m, ...ing }
 })()
 
 // 🔎 아이콘 찾기 — 299개나 되어 스크롤로는 못 찾는다(창업자 2026-07-29).
