@@ -551,6 +551,15 @@ function reducer(state, action) {
         pantry,
       }
     }
+    // ✏️ 장보기 줄 고치기 — 창업자 2026-08-16 *"근데 **사는 양은 유저가 맘대로 적을수 있어야지**"*
+    //   ⭐ 레시피에서 담으면 「양파」로 들어오는데, 사람마다 사는 양이 다르다(1망·3개·600g).
+    //      **담아주는 건 우리가 하고, 양은 유저가 적는다.**
+    //   ⛔ 빈 이름으로는 안 바꾼다 — 지우려면 삭제(×)를 쓴다. 빈 줄이 남으면 그게 고장이다.
+    case 'updateShopItem': {
+      const name = (action.name || '').trim()
+      if (!name) return state
+      return { ...state, shoppingList: state.shoppingList.map((i) => (i.id === action.id ? { ...i, name } : i)) }
+    }
     case 'removeShopItem': {
       return { ...state, shoppingList: state.shoppingList.filter((i) => i.id !== action.id) }
     }
@@ -675,6 +684,7 @@ export function StoreProvider({ children }) {
     addShopItems: useCallback((names) => dispatch({ type: 'addShopItems', names }), []),
     addShopItem: useCallback((item) => dispatch({ type: 'addShopItem', item }), []),
     toggleShopItem: useCallback((id) => dispatch({ type: 'toggleShopItem', id }), []),
+    updateShopItem: useCallback((id, name) => dispatch({ type: 'updateShopItem', id, name }), []),
     removeShopItem: useCallback((id) => dispatch({ type: 'removeShopItem', id }), []),
     clearDoneShopItems: useCallback(() => dispatch({ type: 'clearDoneShopItems' }), []),
     clearShopItemsAll: useCallback(() => dispatch({ type: 'clearShopItemsAll' }), []),

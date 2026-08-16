@@ -77,6 +77,8 @@ export default function ShopScreen() {
     try { sessionStorage.setItem('hankki:shopView', v) } catch { /* noop */ }
   }
   const [clearAsk, setClearAsk] = useState(false)
+  // ✏️ 지금 «고치는 중인» 장보기 줄 — { id, text } · null 이면 아무 줄도 편집 중이 아니다
+  const [편집, set편집] = useState(null)
   // 인라인 시트(쇼핑몰 편집·추가/편집 폼) — 뒤로가기로 닫기(비우기 확인은 ConfirmSheet 자체 처리)
   useLayerBack(editShops, () => setEditShops(false))
   useLayerBack(!!shopForm, () => setShopForm(null))
@@ -147,9 +149,40 @@ export default function ShopScreen() {
               <button className="check-box press" data-on={it.done} onClick={() => { const was = it.done; store.toggleShopItem(it.id); if (!was) nav.showToast('샀어요! 냉장고에 넣어뒀어요') }}>
                 {it.done && <Icon name="check" size={15} color="#fff" stroke={2.4} />}
               </button>
-              <span style={{ flex: 1, fontSize: 15, textDecoration: it.done ? 'line-through' : 'none', color: it.done ? 'var(--text-sub)' : 'var(--text)' }}>
-                {it.name}
-              </span>
+              {/* ✏️✏️ **누르면 그 자리에서 고친다** — 창업자 2026-08-16
+                    *"근데 **사는 양은 유저가 맘대로 적을수 있어야지**"*
+                  ⭐ 레시피에서 담으면 「양파」로 들어온다(분량은 뗀다 · `utils.ingredientName`).
+                     사는 양은 사람마다 달라서(1망·3개·600g) **우리가 정하면 안 되는 자리**다.
+                  ⛔ 늘 `<input>` 으로 두지 않는다 — 목록을 훑다가 손가락이 스치면 글이 바뀐다.
+                     ✅ **누른 줄만** 편집으로 바뀐다. Enter·다른 곳 누르면 저장, Esc 면 되돌린다. */}
+              {편집?.id === it.id ? (
+                <input
+                  autoFocus
+                  value={편집.text}
+                  onChange={(e) => set편집({ id: it.id, text: e.target.value })}
+                  onBlur={() => { store.updateShopItem(it.id, 편집.text); set편집(null) }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') set편집(null) }}
+                  style={{
+                    flex: 1, minWidth: 0, fontSize: 15, fontFamily: 'inherit', color: 'var(--text)',
+                    background: 'var(--cream)', border: '1.5px solid var(--brown)', borderRadius: 9,
+                    padding: '5px 9px', outline: 'none',
+                  }}
+                />
+              ) : (
+                <button
+                  className="press"
+                  onClick={() => set편집({ id: it.id, text: it.name })}
+                  aria-label={`${it.name} 고치기`}
+                  style={{
+                    flex: 1, minWidth: 0, textAlign: 'left', fontSize: 15, fontFamily: 'inherit',
+                    background: 'none', border: 'none', padding: '5px 0', cursor: 'pointer',
+                    textDecoration: it.done ? 'line-through' : 'none',
+                    color: it.done ? 'var(--text-sub)' : 'var(--text)',
+                  }}
+                >
+                  {it.name}
+                </button>
+              )}
               <button className="press mini-buy" onClick={() => openUrl(buyUrlFor(it, shops))}>
                 사러가기
               </button>
@@ -158,6 +191,13 @@ export default function ShopScreen() {
               </button>
             </div>
           ))
+        )}
+        {/* 💡 **고칠 수 있다는 걸 알려준다** — 누를 수 있어도 «누를 수 있는 줄 모르면» 없는 기능이다.
+              ⭐ 예를 «창업자가 말한 그대로» 적는다 — *"양파 1망 돼지고기 600g은 맞지."* */}
+        {shoppingList.length > 0 && (
+          <div className="t-sub" style={{ fontSize: 11.5, marginTop: 9, lineHeight: 1.55 }}>
+            재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
+          </div>
         )}
 
         {/* ⛔ 큐레이션을 여기 한 번 «더» 그리던 것을 지웠다 — 위로 올려 하나만 둔다.

@@ -18,7 +18,7 @@ import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
 import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
-import { dateLabel, openExternal as openUrl } from '../utils'
+import { dateLabel, openExternal as openUrl, ingredientName } from '../utils'
 import { shouldAskReview } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
@@ -483,7 +483,10 @@ export default function RecipeDetailScreen({ id }) {
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
                 data-coach="shop"
                 onClick={() => {
-                  addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => scaleIngredient(ing, ratio)))
+                  // 🛒 **분량은 떼고 «이름»만 담는다** — 창업자 *"그냥 두부 양파를 사지. 해물가루육수 1봉을 사진 않잖아"*
+                  //   ⛔ 그래서 `scaleIngredient`(인분 환산)도 여기선 안 쓴다 — 어차피 분량을 뗄 것이라
+                  //      환산해 봐야 그 숫자가 버려진다. 인분 환산은 «재료 목록 화면»이 하는 일이다.
+                  addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => ingredientName(ing)))
                   nav.showToast('재료를 장보기 리스트에 담았어요')
                 }}
               >

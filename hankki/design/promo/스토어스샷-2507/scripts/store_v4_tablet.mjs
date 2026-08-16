@@ -65,6 +65,9 @@ const 덮개 = await page.evaluate(() => {
 console.log('  · 화면 한가운데 =', 덮개)
 
 const 찍기 = async (이름) => {
+  // ⛔ 웹폰트가 덜 실린 채 찍으면 손글씨 칩이 **빈 회색 알약**으로 나온다 —
+  //    07-일기 첫 판이 그랬다(글씨체 고르는 칸 5개가 텅 빈 회색으로 찍혔다 · 규칙 21 로 잡았다).
+  await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(900)
   await page.screenshot({ path: join(OUT, `${이름}.png`) })
   console.log(`  ✓ ${이름}`)
@@ -82,6 +85,17 @@ const 카드 = page.locator('.grid-card').filter({ hasText: '김치찌개' }).fi
 const 아무카드 = (await 카드.count()) ? 카드 : page.locator('.grid-card').nth(1)
 await 아무카드.click()
 await 찍기('02-레시피상세')
+
+// 🛒 「장보기 담기」 — ④장보기와 ⑤냉장고를 채우는 길이다.
+//   ⛔⛔ 첫 판은 여기서 담은 것이 **「두부 1/2모」·「해물가루육수 1봉」**으로 찍혔고
+//      창업자가 그걸 보고 잡았다 — *"장보기에 두부1/2모 양파1/2개를 사진 않지.."* ·
+//      *"그냥 두부 양파를 사지. **해물가루육수 1봉을 사진 않잖아**"*
+//   ✅ **앱을 고쳤다**(`utils.ingredientName`) — 이제 「두부」·「해물가루육수」로 담기고
+//      「돼지고기 200g」처럼 «파는 단위»는 그대로 남는다(창업자 *"양파 1망 돼지고기 600g은 맞지."*).
+//   📌 그러니 이 스샷은 **고친 것이 실제로 도는지 보는 자리**이기도 하다.
+const 담기 = page.getByRole('button', { name: /장보기 담기/ }).first()
+if (await 담기.count()) { await 담기.click(); await page.waitForTimeout(1400) }
+else console.log('  ⛔ 상세에서 「장보기 담기」를 못 찾았다 — 장보기·냉장고가 빈 채로 나온다')
 
 // ⭐ 레꾸는 «이미 꾸며진» 레시피로 연다 — 김치찌개는 꾸민 게 없어 「꾸미기 전」 화면이 나왔다.
 //   레꾸 샘플(콩국수)은 표지에 배·꼬르곰·펭펭이 붙어 있어 **결과가 보인다.**
@@ -117,12 +131,100 @@ const 확인찍기 = async (탭이름, 파일, 보여야할글) => {
   if (!맞나) { console.log(`  ⛔ ${파일} — 화면에 「${보여야할글}」이 없다. 딴 탭을 찍을 뻔했다`); return }
   await 찍기(파일)
 }
-await 확인찍기('장보기', '04-장보기', '주부의 장바구니')
-await 확인찍기('레꾸자랑', '05-레꾸자랑', '자랑할 레시피')
+// ④ 장보기 — ⛔`확인찍기` 를 안 쓴다. **찍기 «전»에 체크를 눌러야** 해서 사이에 손이 들어간다
+await page.goto('http://127.0.0.1:4381/hankki/', { waitUntil: 'networkidle' })
+await page.waitForTimeout(1300)
+await 탭('장보기')
+if (!(await page.getByText('주부의 장바구니', { exact: false }).first().count())) {
+  console.log('  ⛔ 04-장보기 — 화면에 「주부의 장바구니」가 없다. 딴 탭을 찍을 뻔했다')
+} else {
+  // ⭐⭐ **찍는 것이 «먼저»다.** 첫 판은 체크부터 해서 ⑴「샀어요!」 토스트가 화면에 떠 있고
+  //    ⑵열두 줄 중 다섯이 취소선이라 «다 사고 난 뒤»로 읽혔다(내가 열어 보고 잡았다 · 규칙 21).
+  //    📌 장보기 화면이 보여줄 것은 **「살 것 목록」**이지 「산 것 목록」이 아니다.
+  await 찍기('04-장보기')
+
+  // 🛒 찍은 «뒤에» 몇 개를 「샀어요」로 → **그 재료가 냉장고로 들어간다**(⑤ 를 채우는 것이 이 줄이다)
+  //   ⚠️ 체크하면 줄 차례가 바뀔 수 있어 **늘 첫 칸을 누른다** — nth(i) 로 잡으면 어긋난다
+  const 살것 = await page.locator('.check-box').count()
+  const 살개수 = Math.min(5, 살것)
+  for (let i = 0; i < 살개수; i++) {
+    await page.locator('.check-box[data-on="false"]').first().click().catch(() => {})
+    await page.waitForTimeout(350)
+  }
+  console.log(`  · 장보기 ${살것}칸 중 ${살개수}칸을 「샀어요」로 → 냉장고로 들어간다`)
+  await page.waitForTimeout(2600)   // ⛔ 「샀어요!」 토스트가 사라질 때까지 — 안 기다리면 ⑤에 토스트가 찍힌다
+}
+
+// ⑤ 냉장고 — 창업자 *"냉장고랑"*. 장보기 탭 «안»의 토글이라 거기서 한 번 더 누른다
+const 냉장고 = page.getByText('냉장고', { exact: true }).first()
+if (await 냉장고.count()) {
+  await 냉장고.click(); await page.waitForTimeout(1400)
+  // ⛔ 빈 냉장고를 찍으면 스토어에 「휑한 화면」이 올라간다 — 재료가 들어왔는지 «보고» 찍는다
+  const 비었나 = await page.getByText('집에 있는 재료를 넣어두세요', { exact: false }).first().count()
+  if (비었나) console.log('  ⛔ 05-냉장고 — 아직 비어 있다. 「샀어요」가 냉장고로 안 넘어갔다')
+  else await 찍기('05-냉장고')
+} else console.log('  ⛔ 장보기에서 「냉장고」 토글을 못 찾았다')
+
 await 확인찍기('홈', '06-홈', '이번 주 제철')
 
-// ⛔ 「일기」는 뺐다 — 시드에 일기가 0개라 **달력만 텅 빈 화면**이 나온다.
-//    스샷용으로 가짜 일기를 만들지 않는다. 일기는 온보딩 세로 판(05-한끼일기)이 이미 잘 보여준다.
+// ⛔ 「레꾸자랑」은 뺐다 — 창업자 *"레꾸자랑이랑 레시피는 화면이 똑같아"*.
+//    맞다. 둘 다 음식 카드 그리드라 한 장을 낭비한다. 레시피 목록(01)이 그 역할을 이미 한다.
+
+// ⑦ 한끼 일기 — 창업자 *"일기는?"* → *"**가짜일기있자나 우리 불고기 그거**"*
+//   ⛔⛔ 내가 여기에 *"시드에 일기가 0개라 달력만 텅 빈 화면"* 이라고 적어놨는데 **틀렸다.**
+//      `src/data/sampleDiary.js` = **창업자가 8/12 에 직접 쓴 일기**(불고기 전골 사진 · 「방학언제끝나냐..」)가
+//      `SAMPLE_READY = true` 로 **처음 켠 사람에게 한 장 놓인다**(`store.jsx:355` `withSample`).
+//      📌 규칙 18 — 「없다」가 아니라 «내가 못 찾은 것»이었다. **창업자가 잡아줬다.**
+//   ✅ 그래서 빈 종이(「오늘 일기 쓰기」)가 아니라 **그 샘플을 열어서** 찍는다 —
+//      사진·스티커 5개·포스트잇·모션이 다 붙어 있어 «태블릿에서 이렇게 넓게 꾸민다»가 한 장에 다 보인다.
+//   ⛔ 스샷용 «가짜 일기»를 새로 만들지는 않는다 — 앱에 이미 있는 것을 그대로 연다.
+await page.goto('http://127.0.0.1:4381/hankki/', { waitUntil: 'networkidle' })
+await page.waitForTimeout(1300)
+await 탭('일기')
+// ⛔ 탭 첫 화면(달력)은 «안» 찍는다 — 일기가 한 장이라 **31칸이 거의 다 빈** 화면이다(찍어서 봤다).
+//    창업자가 지적한 그 «휑함»이 그대로다. 보여줄 것은 달력이 아니라 **일기 한 장**이다.
+const 일기칸 = page.locator('.grid-card, .cal-diary, .mini-card').first()
+if (await 일기칸.count()) { await 일기칸.click(); await page.waitForTimeout(1800) }
+else console.log('  ⛔ 일기 목록에서 샘플 칸을 못 찾았다')
+await page.waitForTimeout(2600)
+
+// 📐📐 **아래 잘림** — 창업자 *"일기 아래 잘림 확인"*. 세로 종이가 가로 화면보다 길어 밑이 썰린다.
+//   ⛔ 종이 «요소만» 찍어서 피하지 않는다 — 그러면 「앱 화면」이 아니라 「종이 그림」이 된다.
+//   ✅ 넘치는 만큼 **굴려서** 종이가 다 들어오게 한 뒤 화면을 통째로 찍는다(유저도 그렇게 본다).
+const 잘림 = await page.evaluate(() => {
+  const 종이 = document.querySelector('.paper-box') || document.querySelector('.paper')
+  if (!종이) return { 못찾음: true }
+  const r = 종이.getBoundingClientRect()
+  const 넘침 = Math.ceil(r.bottom - window.innerHeight + 14)
+  if (넘침 > 0) {
+    // 굴러가는 칸을 «찾아서» 굴린다 — 어느 조상이 스크롤을 쥐는지 코드가 정하지 않는다
+    let n = 종이.parentElement
+    while (n && n !== document.body) {
+      if (n.scrollHeight > n.clientHeight + 4) { n.scrollBy(0, 넘침); break }
+      n = n.parentElement
+    }
+    if (!n || n === document.body) window.scrollBy(0, 넘침)
+  }
+  return { 넘침, 종이: `${Math.round(r.width)}x${Math.round(r.height)}`, 화면높이: window.innerHeight }
+})
+console.log(`  · 일기 종이 ${잘림.종이} · 화면 ${잘림.화면높이} → ${잘림.넘침}px 넘쳐서 그만큼 굴렸다`)
+await page.waitForTimeout(800)
+// ⛔ 굴리고도 여전히 잘리면 «시끄럽게» 알린다 — 조용히 잘린 걸 올리는 게 제일 나쁘다
+const 남은잘림 = await page.evaluate(() => {
+  const 종이 = document.querySelector('.paper-box') || document.querySelector('.paper')
+  if (!종이) return -1
+  const r = 종이.getBoundingClientRect()
+  return Math.max(0, Math.ceil(r.bottom - window.innerHeight))
+})
+if (남은잘림 > 0) console.log(`  ⛔ 일기 종이가 아직 ${남은잘림}px 잘린다 — 이 판은 창업자에게 그대로 보내지 말 것`)
+// ⛔ 제목·본문은 `<textarea>`·`<input>` 의 **value** 라 `innerText` 로는 «안 잡힌다»
+//    (`_shot-샘플일기-0813.mjs` 가 이걸로 한 번 「제목 없음」이라 거짓 보고했다)
+const 일기맞나 = await page.evaluate(() => {
+  const 글칸 = [...document.querySelectorAll('textarea, input')].map((t) => t.value).join('\n')
+  return 글칸.includes('방학언제끝나냐') || document.body.innerText.includes('돌밥돌밥')
+})
+if (!일기맞나) console.log('  ⛔ 07-일기 — 화면에 샘플 일기가 없다. 딴 화면을 찍을 뻔했다')
+else await 찍기('07-일기')
 
 console.log(errors.length ? `\n  ⛔ pageerror ${errors.length}건 — ${errors[0]}` : '\n  ✅ pageerror 0')
 await b.close(); srv.close()
