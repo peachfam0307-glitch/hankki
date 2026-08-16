@@ -34,12 +34,21 @@
 #   ⛔ 그래서 **주석 한 줄에 큰따옴표를 쓴 것만으로 python 이 통째로 깨졌고, 훅은 조용히 통과했다.**
 #      「가뒀다」고 말해 놓고 안 가둬진 것이다 — 창업자에게 그렇게 보고할 뻔했다.
 #   ⭐ 파일로 빼면 bash 가 그 안을 «아예 안 본다». 지뢰가 사라진다.
-#   📄 판정 = .claude/hooks/_archive-targets.py
+#   📄 판정 = .claude/hooks/guard-targets.py
+#
+# ⛔⛔ **[2026-08-16] 그 판정 파일 이름이 `_archive-targets.py` 였다 — 훅이 «자기 부품»을 막았다.**
+#   경로에 `_archive` 가 들어가서 Read 로 못 열었고, **훅을 고치려면 그 부품을 읽어야 하는데 못 읽었다.**
+#   📌 규칙 19 그 자리를 «두 번째» 밟았다(첫 번째 = 이 파일 머리말의 「🗄 보관소」 표시).
+#   ✅ 고침 = ⑴이름을 `guard-targets.py` 로 ⑵`.claude/hooks/` 아래는 판정 대상에서 제외.
+#      **「하지 마라」보다 «할 수 없게» 만드는 쪽으로.**
+#
+# ⛔ **＋ 같은 날 구멍 하나를 메웠다** — `git show HEAD:docs/_archive/…` 로 **내용을 그대로 읽을 수 있었다.**
+#   `cat` 은 막히는데 `git show` 는 통과했다 — 같은 일을 하는데 한쪽만 막혀 있었다(재현으로 잡음).
 
 INPUT=$(cat)
 HERE=$(dirname "$0")
 
-TARGETS=$(printf '%s' "$INPUT" | python3 "$HERE/_archive-targets.py" 2>/dev/null)
+TARGETS=$(printf '%s' "$INPUT" | python3 "$HERE/guard-targets.py" 2>/dev/null)
 
 [ -n "$TARGETS" ] || exit 0
 
