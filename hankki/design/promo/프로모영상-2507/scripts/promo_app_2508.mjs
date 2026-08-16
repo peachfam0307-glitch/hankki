@@ -1,21 +1,26 @@
-// 🎬🎬 프로모 영상 v2 — **실제 앱을 조작하면서 녹화한다** (2026-08-16)
+// 🎬🎬 프로모 영상 v2 — **실제 앱을 «손가락으로 눌러가며» 녹화한다** (2026-08-16)
 //
 // 📮 창업자 = *"스토어 영상도 다시만들어야해 (**영상이 완전 낡은거고, 상표권등록한 한끼 로고부터 달라**)"*
-//    → 갈래를 물었더니 *"**알아서해 난 모르겠어.**"*
+//    → 갈래를 물었더니 *"알아서해 난 모르겠어."*
 //
-// ⭐⭐⭐ 왜 방식을 바꿨나 — **7월 판이 한 달 만에 낡은 «뿌리»를 없앤다.**
-//   옛 판(`promo_build.mjs`)은 `promo.html` = **앱 밖에서 따로 그린 화면**을 녹화했다.
-//   그래서 앱이 v8 → v10.94 로 가는 동안 영상만 7월에 멈춰 있었다 —
-//     · 로고가 옛 판(상표 출원본은 2026-07-23 확정인데 영상은 그 전)
-//     · **일기가 아예 없다**(v9.94 신설) · 상세 꾸미기 없다(v10.03) · 요리 타이머 없다
-//   ✅ **앱을 직접 녹화하면 앱이 바뀔 때 다시 돌리기만 하면 된다.** 스샷 v4 와 같은 처방이다.
-//      (`docs/내일-꼭-할것-2026-08-16.md` 에 이미 *"이번엔 실제 앱 화면을 Playwright 로 찍어서 만든다"* 로 적혀 있었다)
+// ⭐⭐ 왜 방식을 바꿨나 — **7월 판이 한 달 만에 낡은 «뿌리»를 없앤다.**
+//   옛 판(`promo_build.mjs`)은 `promo.html` = 앱 «밖»에서 그린 화면을 녹화했다. 그래서 앱이
+//   v8 → v10.94 로 가는 동안 영상만 7월에 멈췄다(로고 옛 판 · 일기 없음 · 요리 타이머 없음).
+//   ✅ 앱을 직접 녹화하면 앱이 바뀔 때 **다시 돌리기만** 하면 된다.
 //
-// 📐 **가로 16:9 로 찍는다** — 유튜브가 스토어에 붙는 유일한 통로이고 **숏츠는 지원 안 한다**(세로 불가).
-//   ⭐ 7월엔 앱이 세로뿐이라 가로 판이 레터박스였다. 지금은 **v10.08 에 가로모드를 열었고**
-//      v10.62~65 에 패드 레이아웃을 고쳐서 **화면이 꽉 찬다.**
-//   ⭐ CSS 1280×720 으로 띄운다 — 오늘 태블릿 스샷과 «같은 조건»이라 글자 크기가 실제와 같다
-//      (2560 CSS 로 띄웠다가 「글자 절반·여백 두 배」가 된 사고를 8/16 에 이미 겪었다).
+// ⭐⭐⭐⭐ **제일 큰 고침 = 「손가락」을 그린다** (창업자 판정 2026-08-16 · 세 판을 거쳐 도달)
+//   ⑴ *"너무 정신없이 빨리빨리 지나가 뭐가 뭔지도 모르겠어"*   → 머무는 시간을 늘렸다
+//   ⑵ *"떴던게 또 뜨고. 탭을 왔다갔다 하는게 그냥 찍히니까…"*  → **한 레시피(콩국수)로 흐름을 잇는다**
+//   ⑶ *"**마우스커서를 하나 놓던지 이동하는 흐름이 자연스럽게 해야해.**"*
+//      *"**지금은 툭툭끊겨. 뭘 눌렀는지 뭘 하는지 모르겠는거야.**"*
+//   📌 ⑶ 이 결정적이었다 — **화면을 가리는 것으로는 못 푼다.** 가리면 「뭘 눌렀는지」를 더 모른다.
+//      ✅ **커서가 버튼으로 «움직여 가서» 누르고, 그래서 화면이 바뀐다** — 인과가 보이면 안 끊긴다.
+//   ⑷ *"순서도 잘지켜줘. **탭 왼쪽부터** 진행되게하고, 레시피꾸미기보여주고, 요리시작눌러서 진행."*
+//      → 하단바 차례대로 **홈 → 레시피 → 일기 → 장보기**. (가져오기·레꾸자랑은 뺐다 —
+//        레꾸자랑은 스샷에서도 뺐다: 창업자 *"레꾸자랑이랑 레시피는 화면이 똑같아"*)
+//
+// 📐 **가로 16:9** — 유튜브가 스토어에 붙는 유일한 통로이고 숏츠는 지원 안 한다(세로 불가).
+//   ⭐ CSS 1280×720 = 태블릿 스샷과 «같은 조건»이라 글자 크기가 실제와 같다.
 //
 // 실행: node design/promo/프로모영상-2507/scripts/promo_app_2508.mjs
 import fs from 'node:fs'
@@ -36,8 +41,20 @@ if (!fs.existsSync(`${DIST}/index.html`)) { console.log('⛔ dist 가 없다 —
 const REC = `${WORK}/rec-app`; fs.rmSync(REC, { recursive: true, force: true }); fs.mkdirSync(REC, { recursive: true })
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2', '.jpg': 'image/jpeg' }
+// 🏷 `/promo-logo.png` = **상표 출원한 로고**(곰=ㅎ · 크림) — 창업자 *"상표권등록한 한끼 로고부터 달라"*
+// ⛔⛔ 처음엔 «크림» 판을 썼는데 **로고 뒤에 회색 사각형이 떴다** — 그 PNG 는 투명이 아니라
+//    「크림 바탕(#fffdf8)이 칠해진」 판이라 브라운 화면 위에 네모가 그대로 보였다(프레임을 열어보고 잡았다).
+//    ✅ **브라운 판**은 바탕이 `#5d3410` = 맺음말 배경과 «똑같아» 이음매가 안 보인다.
+const LOGO = `${H}/design/promo/logo/한끼로고-곰ㅎ-브라운-2507.png`
+// 🐻 **커서로 쓸 꼬르곰 얼굴** — 창업자 *"커서는 큼직하게 만들어 귀엽게"* ·
+//    *"꼬르곰이나 펭펭으로 만들던가.. 뭐 하여튼. 잘보이게"* · *"한끼로고로 만들더가.."*
+//    ⭐ **셋이 한 파일로 풀린다** — 이 컷은 «로고의 곰» 이자 «꼬르곰 얼굴»이다.
+//       평균색 `#eaaf7d` = 꼬르곰 몸색(`#EBAB73`)과 사실상 같아 크림 바탕에서 잘 보인다(재서 확인).
+const BEAR = `${H}/design/promo/logo/한끼로고-곰ㅎ-소스-곰얼굴.png`
 const srv = createServer((q, s) => {
   let p = decodeURIComponent(q.url.split('?')[0]).replace(/^\/hankki/, ''); if (p === '/' || p === '') p = '/index.html'
+  if (p === '/promo-logo.png') { s.writeHead(200, { 'content-type': 'image/png' }); s.end(readFileSync(LOGO)); return }
+  if (p === '/promo-bear.png') { s.writeHead(200, { 'content-type': 'image/png' }); s.end(readFileSync(BEAR)); return }
   let body, type = MIME[extname(p)] || 'application/octet-stream'
   try { body = readFileSync(join(DIST, p)) } catch { body = readFileSync(join(DIST, 'index.html')); type = 'text/html' }
   s.writeHead(200, { 'content-type': type }); s.end(body)
@@ -46,19 +63,11 @@ await new Promise((r) => srv.listen(4395, r))
 
 const { SEED_COACH_SEEN } = await import(`${H}/src/coach.js`)
 const br = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium', args: ['--force-color-profile=srgb'] })
-// 🔍🔍 **화질** — 창업자 *"화질신경써줘."*
-//
-// ⛔⛔ **첫 판이 화면을 잘라먹었다.** `deviceScaleFactor: 2` ＋ `recordVideo.size: 1920×1080` 으로
-//    「크게 그려서 줄이면 선명하다」를 노렸는데, 녹화 프레임 **왼쪽 위 1280×720 에만 앱이 있고
-//    나머지는 회색**이었다. Playwright 의 녹화는 viewport 픽셀을 그대로 담고 size 로 스케일하지 않는다.
-//    📌 **화질 욕심이 화면을 잘랐다.** 규칙 21 로 프레임을 열어보고 잡았다 — 안 열어봤으면 그대로 올릴 뻔했다.
-//
-// ✅ 그래서 **녹화 크기 = viewport 크기**로 맞춘다(잘림 0). 1080p 는 ffmpeg 에서 lanczos 로 올린다.
-//   ⭐ viewport 를 1920 으로 키우지 «않는» 이유 = 글자가 작아진다.
-//      2560 CSS 로 띄웠다가 창업자에게 *"글자 작은게 너무 이상해"* 를 들은 게 오늘 아침이다.
-//      1280 CSS = 실제 갤럭시탭(2560px · DPR 2)과 «같은 레이아웃»이다.
-//   ⚠️ 720p → 1080p 업스케일은 선명도를 «만들지» 못한다. 다만 앱 화면은 사진이 아니라
-//      선·글자·단색이라 사진보다 덜 티나고, **잘린 화면보다는 백배 낫다.**
+// 🔍 **화질** — 창업자 *"화질신경써줘."*
+//   ⛔⛔ 첫 판은 `deviceScaleFactor: 2` ＋ `recordVideo.size 1920×1080` 으로 「크게 그려 줄이면 선명」을
+//      노렸는데 **녹화 왼쪽 위에만 앱이 있고 나머지가 회색**이었다(프레임을 열어보고 잡았다 · 규칙 21).
+//      Playwright 녹화는 viewport 픽셀을 그대로 담는다. **화질 욕심이 화면을 잘랐다.**
+//   ✅ 녹화 크기 = viewport 크기(잘림 0). 1080p 는 ffmpeg lanczos 로 올린다(＋가벼운 선명화).
 const ctx = await br.newContext({
   viewport: { width: 1280, height: 720 },
   recordVideo: { dir: REC, size: { width: 1280, height: 720 } },
@@ -66,121 +75,243 @@ const ctx = await br.newContext({
 const page = await ctx.newPage()
 const errors = []
 page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
-// ⛔ 온보딩·코치마크·선물 시트가 화면을 덮는다 — 스샷에서 겪은 그대로 미리 끈다
-await page.addInitScript(SEED_COACH_SEEN)
-await page.addInitScript(() => localStorage.setItem('hankki:onboarded', '1'))
+await page.addInitScript(SEED_COACH_SEEN)                                     // 코치마크가 화면을 덮는다
+await page.addInitScript(() => localStorage.setItem('hankki:onboarded', '1'))  // 온보딩도
 await page.addInitScript(() => localStorage.setItem('hankki:nudge:giftpack', '1'))
 
-const 탭 = async (이름) => { await page.getByText(이름, { exact: true }).last().click() }
-// ⏱ **전체 길이를 «한 줄»로 조절한다** — 첫 판이 68.8초로 너무 길었다(스토어 프로모는 30초 안팎).
-//   ⭐ 장면마다 숫자를 고치면 손이 많이 가고 비율이 흐트러진다. 배율 하나면 «리듬은 그대로» 짧아진다.
-//   ⚠️ 너무 줄이면 글자를 못 읽는다 — 0.5 밑으로는 내리지 말 것.
-const 배율 = Number(process.env.PROMO_SPEED || 0.55)
-const 쉼 = (ms) => page.waitForTimeout(Math.max(120, Math.round(ms * 배율)))
-const 장면 = (n, 무엇) => console.log(`  🎬 ${n} ${무엇}`)
+const 배율 = Number(process.env.PROMO_SPEED || 1.0)
+const 쉼 = (ms) => page.waitForTimeout(Math.max(150, Math.round(ms * 배율)))
+const 잠깐 = (ms) => page.waitForTimeout(ms)   // 배율을 안 먹이는 대기(연출용)
+const 장면 = (무엇) => console.log(`  🎬 ${무엇}`)
 
+// 🐻🐻 **꼬르곰 커서** — 이 영상의 심장이다.
+//   📮 창업자 *"커서는 **큼직하게 만들어 귀엽게**"* · *"**잘보이게**"*
+//   ⭐ `transition` 으로 «미끄러져» 가고, 누를 때 **폭 작아졌다 통통 튀며 링이 퍼진다** —
+//      「여기를 눌렀다」와 「그래서 화면이 바뀌었다」가 한눈에 이어진다.
+//   ⭐ **곰을 클릭 지점 «오른쪽 아래»에 둔다** — 가운데 두면 곰이 누른 버튼을 가린다.
+//      마우스 화살표가 «끝»으로 가리키는 것과 같은 이치. 링은 «클릭 지점»에 그려서 자리를 못 박는다.
+//   ⛔ 유니코드 이모지를 안 쓴다 — 우리 컷이다(규칙: UI 에 유니코드 금지).
+const 손가락만들기 = async () => {
+  await page.evaluate(() => {
+    const st = document.createElement('style')
+    st.textContent = `
+      #hkcur { position: fixed; z-index: 100000; left: 0; top: 0; width: 0; height: 0;
+        pointer-events: none; opacity: 0;
+        transition: transform .78s cubic-bezier(.33,0,.2,1), opacity .35s ease; }
+      #hkcur.on { opacity: 1; }
+      /* ⛔⛔ 커서가 통째로 안 보였다 — 크기가 0x0 이었다.
+         이미지는 멀쩡히 로드됐고(1035x1165) opacity·z-index 도 정상인데 화면 자리만 0x0.
+         범인 = 앱 CSS 의 「img { max-width: 100% }」 — 부모 「#hkcur」 가 width:0 이라
+         86px 로 적어도 「부모의 100%」＝0 으로 깎였다.
+         📌 규칙 18 — 「안 보인다」의 이유를 짐작하지 말고 재서 알아냈다(로드 여부·opacity 를 다 찍어봤다).
+         ✅ max-width: none ＋ height: auto 를 못 박는다.
+         ⛔ 이 주석에 백틱을 쓰면 안 된다 — 이 블록 자체가 템플릿 문자열이라 문자열이 끊긴다(실제로 한 번 죽었다). */
+      #hkcur img { position: absolute; left: 6px; top: 6px;
+        width: 86px !important; height: auto !important; max-width: none !important; display: block;
+        filter: drop-shadow(0 7px 16px rgba(93,52,16,.42));
+        transform-origin: 22% 18%; transition: transform .17s cubic-bezier(.34,1.56,.64,1); }
+      #hkcur img.tap { transform: scale(.74); }
+      .hkring { position: fixed; z-index: 99999; width: 44px; height: 44px; margin: -22px 0 0 -22px;
+        border-radius: 50%; border: 3.5px solid rgba(93,52,16,.55); pointer-events: none;
+        animation: hkring .7s ease-out forwards; }
+      @keyframes hkring { from { transform: scale(.7); opacity: .95 } to { transform: scale(3); opacity: 0 } }`
+    document.head.appendChild(st)
+    const c = document.createElement('div'); c.id = 'hkcur'
+    c.innerHTML = '<img src="/promo-bear.png" alt="">'
+    document.body.appendChild(c)
+  })
+}
+// 손가락을 그 자리로 «미끄러뜨린다». 처음 부를 땐 순간이동(보이기 전이라 티가 안 난다).
+const 손옮기기 = async (x, y, 첫판 = false) => {
+  await page.evaluate(({ x, y, 첫판 }) => {
+    const c = document.getElementById('hkcur')
+    if (!c) return
+    if (첫판) c.style.transition = 'none'
+    c.style.transform = `translate(${x}px, ${y}px)`
+    if (첫판) { void c.offsetWidth; c.style.transition = '' }
+    c.classList.add('on')
+  }, { x, y, 첫판 })
+  await 잠깐(첫판 ? 300 : 860)   // 미끄러지는 시간
+}
+// 👆 **누르기** = 손을 옮기고 → 링을 퍼뜨리고 → 실제로 클릭한다.
+//   ⛔ 못 찾으면 «시끄럽게» 알린다 — 조용히 넘어가면 그 장면이 통째로 어긋난다.
+const 누르기 = async (loc, 라벨, 뒤대기 = 900) => {
+  // ⛔⛔ `boundingBox()` 는 «타임아웃 옵션이 없어» 없는 요소를 기다리며 30초를 태운다 —
+  //    그것 때문에 한 판이 **211초**가 됐다(일기 탭·샀어요를 못 찾은 세 번 × 30초).
+  //    ✅ 먼저 «짧게» 나타나길 기다리고, 안 나오면 바로 접는다.
+  const 있나 = await loc.waitFor({ state: 'visible', timeout: 4000 }).then(() => true).catch(() => false)
+  if (!있나) { console.log(`  ⛔ 「${라벨}」 를 못 찾았다`); return false }
+  const b = await loc.boundingBox().catch(() => null)
+  if (!b) { console.log(`  ⛔ 「${라벨}」 자리를 못 찾았다`); return false }
+  const x = Math.round(b.x + b.width / 2), y = Math.round(b.y + b.height / 2)
+  await 손옮기기(x, y)
+  await page.evaluate(({ x, y }) => {
+    const i = document.querySelector('#hkcur img')
+    if (i) { i.classList.add('tap'); setTimeout(() => i.classList.remove('tap'), 320) }
+    const r = document.createElement('div'); r.className = 'hkring'
+    r.style.left = x + 'px'; r.style.top = y + 'px'
+    document.body.appendChild(r); setTimeout(() => r.remove(), 760)
+  }, { x, y })
+  await 잠깐(280)
+  await loc.click({ timeout: 8000 }).catch(() => console.log(`  ⚠️ 「${라벨}」 클릭 실패`))
+  await 잠깐(뒤대기)
+  return true
+}
+// 하단 탭은 이름으로 집는다(마지막 것 = 하단바)
+const 탭누르기 = async (이름, 뒤대기 = 1000) =>
+  누르기(page.getByText(이름, { exact: true }).last(), `${이름} 탭`, 뒤대기)
+
+// 🔙 뒤로가기 — 손가락을 «잠깐 감춘다». 되돌아가는 건 보여줄 장면이 아니라 이동일 뿐이다.
+//   ⭐ 앱 주석이 답이었다(`DecorEditor.jsx:516`) — *"뒤로가기 = 「저장하고 닫기」. 묻지 않는다."*
+//      (「취소」를 눌렀다가 *"저장하고 나가기…"* 시트에 막혀 30초 타임아웃으로 죽은 적이 있다)
+const 뒤로 = async (겹 = 1) => {
+  await page.evaluate(() => { const c = document.getElementById('hkcur'); if (c) c.classList.remove('on') })
+  for (let i = 0; i < 겹; i++) { await page.goBack().catch(() => {}); await 잠깐(700) }
+}
+
+// 🎬 오프닝 · 엔딩 — 창업자
+//   *"**우리아이콘 누르면 홈으로 들어가는 것부터** 시작해서 하나씩 눌러가며 보여주고, **마지막에 맺음말.**"*
+// 🎨 색은 **앱 아이콘과 같은 조합** — 브라운 바탕(`#5d3410`) ＋ 크림 로고. 브랜드가 이어진다.
+const 오프닝 = async () => {
+  await page.evaluate(() => {
+    const st = document.createElement('style')
+    st.textContent = `
+      #promo-open { position: fixed; inset: 0; z-index: 99998; background: #5d3410;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px;
+        transition: opacity .8s ease; }
+      #promo-open img { width: 208px; height: 208px; border-radius: 46px; display: block;
+        box-shadow: 0 20px 50px rgba(0,0,0,.3); transition: transform .18s ease; }
+      #promo-open.tap img { transform: scale(.9); }
+      #promo-open .nm { font-size: 30px; font-weight: 800; color: #fffdf8; letter-spacing: .04em; }`
+    document.head.appendChild(st)
+    const d = document.createElement('div'); d.id = 'promo-open'
+    d.innerHTML = '<img src="/hankki/icons/icon-512-v7.png" alt=""><div class="nm">한끼</div>'
+    document.body.appendChild(d)
+  })
+  await 잠깐(1500)
+  // 👆 손가락이 아이콘으로 와서 «누른다» — 그래서 앱이 열린다
+  await 손옮기기(640, 330, true)
+  await 잠깐(700)
+  await page.evaluate(() => {
+    const d = document.getElementById('promo-open'); if (d) d.classList.add('tap')
+    const i = document.querySelector('#hkcur img'); if (i) i.classList.add('tap')
+    const r = document.createElement('div'); r.className = 'hkring'
+    r.style.left = '640px'; r.style.top = '330px'; document.body.appendChild(r)
+    setTimeout(() => r.remove(), 760)
+  })
+  await 잠깐(460)
+  await page.evaluate(() => {
+    const d = document.getElementById('promo-open'); if (d) { d.classList.remove('tap'); d.style.opacity = '0' }
+    const i = document.querySelector('#hkcur img'); if (i) i.classList.remove('tap')
+    const c = document.getElementById('hkcur'); if (c) c.classList.remove('on')
+  })
+  await 잠깐(950)
+  await page.evaluate(() => { const d = document.getElementById('promo-open'); if (d) d.remove() })
+}
+
+const 엔딩 = async () => {
+  await page.evaluate(() => {
+    const c = document.getElementById('hkcur'); if (c) c.classList.remove('on')
+    const st = document.createElement('style')
+    st.textContent = `
+      #promo-end { position: fixed; inset: 0; z-index: 99999; background: #5d3410;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+        opacity: 0; transition: opacity .9s ease; }
+      #promo-end img { width: 300px; display: block; }
+      #promo-end .msg { font-size: 40px; font-weight: 800; color: #fffdf8; letter-spacing: .02em; }
+      #promo-end .sub { font-size: 20px; font-weight: 700; color: #e8d9c6; letter-spacing: .02em; }`
+    document.head.appendChild(st)
+    const d = document.createElement('div'); d.id = 'promo-end'
+    d.innerHTML = '<img src="/promo-logo.png" alt=""><div class="msg">한끼에서 만나요</div><div class="sub">꼬르곰·펭펭과 레꾸해요</div>'
+    document.body.appendChild(d)
+    requestAnimationFrame(() => { d.style.opacity = '1' })
+  })
+  await 잠깐(4300)   // ⛔ 배율을 안 먹인다 — 맺음말은 «읽을 시간»이 있어야 한다
+}
+
+// ─────────────────────────────────────────────────────────
 await page.goto('http://127.0.0.1:4395/hankki/', { waitUntil: 'networkidle' })
 await page.evaluate(() => document.fonts.ready)
-await 쉼(2400)   // ⛔ 녹화 첫 프레임이 검은 화면이라 여유를 준다(뒤에서 잘라낸다)
+await 손가락만들기()
+await 잠깐(1600)   // ⛔ 녹화 첫 프레임이 검은 화면이라 여유를 둔다(뒤에서 잘라낸다)
 
-// ① 홈 — 앱을 열면 보는 화면. ⭐상단바에 **상표 출원한 곰=ㅎ 로고**가 있다(창업자가 짚은 그것)
-장면('①', '홈')
-await 쉼(2600)
-await page.mouse.wheel(0, 320); await 쉼(1500)   // 살짝 굴려 「더 있다」를 보여준다
-await page.mouse.wheel(0, -320); await 쉼(900)
+장면('오프닝 — 아이콘을 누른다')
+await 오프닝()
 
-// ② 레시피 목록 — 음식 그림이 한 화면에 쫙
-장면('②', '레시피 목록')
-await 탭('레시피'); await 쉼(2400)
-await page.mouse.wheel(0, 420); await 쉼(1600)
+// ① 홈 — ⭐상단바에 상표 출원한 곰=ㅎ 로고가 있다
+//   ⛔ 스크롤을 안 한다 — 화면이 가만히 있어야 읽힌다.
+장면('① 홈')
+await 쉼(3600)
 
-// ③ 레꾸(표지 꾸미기) — ⭐⭐필살기. 종이 왼쪽 · 스티커 서랍 오른쪽
-장면('③', '레꾸 — 표지 꾸미기')
-const 콩국수 = page.locator('.grid-card').filter({ hasText: '콩국수' }).first()
-if (await 콩국수.count()) { await 콩국수.click(); await 쉼(1800) }
-const 꾸미기 = page.getByRole('button', { name: /꾸미|레꾸/ }).first()
-if (await 꾸미기.count()) {
-  await 꾸미기.click(); await 쉼(2000)
-  const 친구들 = page.getByText('친구들', { exact: true }).first()
-  if (await 친구들.count()) { await 친구들.click(); await 쉼(2200) }
-  // 서랍을 굴려 스티커가 «많다»를 보여준다 — 정지 화면으로는 안 보이는 것
-  const 서랍 = page.locator('.decor-drawer, .sticker-list, .decor-editor').last()
-  await 서랍.hover().catch(() => {})
-  await page.mouse.wheel(0, 300); await 쉼(1400)
-  await page.mouse.wheel(0, 300); await 쉼(1600)
-} else console.log('  ⛔ 「꾸미기」 버튼을 못 찾았다')
+// ② 레시피 — 하단바 «왼쪽부터» 차례대로 (창업자 지시)
+장면('② 레시피 목록')
+await 탭누르기('레시피', 1200)
+await 쉼(3200)
 
-// 🚪🚪 **화면을 옮길 땐 «앱을 새로 열지» 않는다** — 창업자 *"마지막에 영상이 탁 안끊기게."*
-//   ⛔⛔ 첫 판은 장면마다 `page.goto()` 로 앱을 새로 열었다. 그때마다 **흰 화면이 한 번 번쩍**하고
-//      페이드인이 다시 돈다 — 프레임을 뽑아 보니 31초 지점이 통째로 하얗게 날아가 있었다(규칙 21).
-//      **여섯 번 있었으니 여섯 번 끊긴 것**이다. 끝만 끊긴 게 아니었다.
-//   ✅ **유저와 같은 길로 간다** — 닫기·뒤로가기로 빠져나오고 하단 탭으로 옮긴다.
-//      앱이 가진 «화면 전환 애니메이션»이 그대로 담겨서 오히려 부드럽다.
-// 🔙🔙 **나가는 길은 «브라우저 뒤로가기» 하나로 통일한다.**
-//   ⛔ 첫 판은 레꾸에서 「취소」를 눌렀다가 **30초 타임아웃으로 죽었다** —
-//      「취소」는 *"저장하고 나가기 / …"* 를 **한 번 더 묻는 시트**를 띄우고, 스크립트는 그걸 몰랐다.
-//   ⭐ 앱 주석이 답을 줬다(`DecorEditor.jsx:516`) —
-//      *"**뒤로가기 = 「저장하고 닫기」. 묻지 않는다.**"*(창업자 2026-08-12 *"뒤로가기 안됨 … 급짜증난다ㅠ"*)
-//   ✅ 앱이 `useLayerBack` 으로 층을 관리하므로 `goBack()` 이 **화면 한 겹만** 닫는다.
-//      SPA 히스토리라 **흰 화면 없이** 앱 자체 전환 애니메이션으로 닫힌다 — 우리가 없애려던 그 깜빡임이 안 난다.
-const 뒤로 = async (겹 = 1) => {
-  for (let i = 0; i < 겹; i++) { await page.goBack().catch(() => {}); await 쉼(800) }
+// ③ 레시피 상세 — ⭐**콩국수 하나로 끝까지 간다.** 레시피를 바꿔 오가면 「떴던 게 또 뜬다」
+장면('③ 레시피 상세 — 콩국수')
+await 누르기(page.locator('.grid-card').filter({ hasText: '콩국수' }).first(), '콩국수 카드', 1300)
+await 쉼(3000)
+
+// ④ 레꾸(표지 꾸미기) — ⭐⭐필살기. 종이 왼쪽 · 스티커 서랍 오른쪽
+장면('④ 레꾸 — 표지 꾸미기')
+await 누르기(page.getByRole('button', { name: /꾸미|레꾸/ }).first(), '레시피 꾸미기', 1500)
+await 누르기(page.getByText('친구들', { exact: true }).first(), '친구들 탭', 1100)
+await 쉼(3800)
+
+// ⑤ 요리 시작 — 창업자 *"요리시작눌러서 진행"*
+장면('⑤ 요리 시작')
+await 뒤로()                       // 레꾸 → 상세 (손가락은 잠깐 감춘다)
+await 누르기(page.getByRole('button', { name: /요리 시작/ }).first(), '요리 시작', 1500)
+await 쉼(2600)                      // 재료 준비 화면
+await 누르기(page.getByRole('button', { name: /재료 준비 완료/ }).first(), '재료 준비 완료', 1400)
+장면('⑥ 요리 모드 — 큰 글씨 단계')
+await 쉼(3400)
+
+// ⑦ 타이머
+장면('⑦ 타이머 맞추기')
+await 누르기(page.getByRole('button', { name: /타이머 맞추기/ }).first(), '이 단계 타이머 맞추기', 1400)
+await 쉼(2800)
+await 누르기(page.getByRole('button', { name: /분 시작$/ }).first(), '5분 시작', 1200)
+장면('⑧ 타이머 도는 중')
+await 쉼(3600)
+
+// ⑨ 장보기 담기 — ⭐**상세로 돌아온 김에** 누른다. 뒤에 장보기·냉장고를 채우는 것이 이 한 번이다.
+//   ⛔ 첫 판은 이걸 빼놓고 장보기로 가서 **목록이 텅 비었고** 「샀어요」를 못 찾았다.
+장면('⑨ 장보기 담기')
+await 뒤로()                       // 요리 모드 → 상세
+await 누르기(page.getByRole('button', { name: /장보기 담기/ }).first(), '장보기 담기', 1600)
+await 쉼(1600)
+
+// ⑩ 일기 — 하단바 차례대로
+//   ⛔⛔ 첫 판은 뒤로를 «한 번»만 해서 **상세(하단 탭이 없는 화면)** 에 선 채 일기 탭을 찾다가 못 찾았다.
+//      상세 → 목록까지 나와야 하단바가 있다.
+장면('⑩ 한끼 일기')
+await 뒤로()                       // 상세 → 목록
+await 탭누르기('일기', 1300)
+await 쉼(2400)
+await 누르기(page.locator('.grid-card, .cal-diary, .mini-card').first(), '일기 한 장', 1500)
+await 쉼(3800)
+
+// ⑪ 장보기 — ⑨에서 담은 재료가 「살 것 목록」으로 들어와 있다
+장면('⑪ 장보기')
+await 뒤로()                       // 일기 펼침 → 일기 목록
+await 탭누르기('장보기', 1300)
+await 쉼(3200)
+
+// ⑫ 냉장고 — 「가진 재료로 만들 수 있어요」
+//   ⛔ 재료가 없으면 텅 빈 화면이다 → 장보기 줄을 몇 개 «샀어요»로 만든 뒤 넘어간다
+장면('⑫ 냉장고')
+for (let i = 0; i < 3; i++) {
+  await 누르기(page.locator('.check-box[data-on="false"]').first(), `샀어요 ${i + 1}`, 500)
 }
+await 잠깐(2200)                    // 「샀어요!」 토스트가 사라질 때까지
+await 탭누르기('냉장고', 1400)
+await 쉼(3600)
 
-// ④ 한끼 일기 — ⭐v9.94 에 생긴 축. 7월 영상엔 아예 없다
-장면('④', '한끼 일기')
-await 뒤로(2)                         // 레꾸(전체화면) → 상세 → 목록. 두 겹이라 두 번.
-await 탭('일기'); await 쉼(1500)
-const 일기칸 = page.locator('.grid-card, .cal-diary, .mini-card').first()
-if (await 일기칸.count()) { await 일기칸.click(); await 쉼(3200) }
-
-// ⑤ 요리 모드 ＋ 타이머 — ⭐「보는 앱」이 아니라 「요리하면서 쓰는 앱」
-장면('⑤', '요리 모드 ＋ 타이머')
-await 뒤로()                          // 일기 펼침 → 일기 목록
-await 탭('레시피'); await 쉼(1000)
-const 요리카드 = page.locator('.grid-card').filter({ hasText: '김치찌개' }).first()
-if (await 요리카드.count()) { await 요리카드.click(); await 쉼(1500) }
-const 요리시작 = page.getByRole('button', { name: /요리 시작/ }).first()
-if (await 요리시작.count()) {
-  await 요리시작.click(); await 쉼(1800)
-  const 준비완료 = page.getByRole('button', { name: /재료 준비 완료/ }).first()
-  if (await 준비완료.count()) { await 준비완료.click(); await 쉼(1800) }
-  const 타이머버튼 = page.getByRole('button', { name: /타이머 맞추기/ }).first()
-  if (await 타이머버튼.count()) {
-    await 타이머버튼.click(); await 쉼(2200)
-    const 시작 = page.getByRole('button', { name: /분 시작$/ }).first()
-    if (await 시작.count()) { await 시작.click(); await 쉼(3400) }  // ⏱ 막대가 «줄어드는» 걸 보여준다
-  }
-  // 다음 단계로 넘겨 「단계별로 간다」를 보여준다
-  const 다음 = page.getByRole('button', { name: /다음/ }).first()
-  if (await 다음.count()) { await 다음.click(); await 쉼(2000) }
-  // 요리 모드도 전체화면 — 같은 길(뒤로가기)로 나온다. 나오면 «레시피 상세»에 선다.
-  await 뒤로()
-}
-
-// ⑥ 장보기 → 냉장고 — 재료를 담고 「가진 재료로 만들 수 있어요」
-//   ⭐ 지금 서 있는 곳이 «레시피 상세»라 「장보기 담기」가 바로 눌린다 — 새로 열 필요가 없다
-장면('⑥', '장보기 → 냉장고')
-const 담기 = page.getByRole('button', { name: /장보기 담기/ }).first()
-if (await 담기.count()) { await 담기.click(); await 쉼(1600) }
-else console.log('  ⚠️ 「장보기 담기」를 못 찾았다 — 상세 화면이 아닌가')
-await 뒤로()
-await 탭('장보기'); await 쉼(2200)
-for (let i = 0; i < 4; i++) {
-  await page.locator('.check-box[data-on="false"]').first().click().catch(() => {})
-  await 쉼(420)
-}
-await 쉼(1800)
-const 냉장고 = page.getByText('냉장고', { exact: true }).first()
-if (await 냉장고.count()) { await 냉장고.click(); await 쉼(3000) }
-
-// ⑦ 홈으로 — 로고로 닫는다
-//   🎞 **끝을 넉넉히 잡는다** — 창업자 *"마지막에 영상이 탁 안끊기게."*
-//      뒤에서 1.4초 페이드아웃을 얹는데, 마지막 장면이 짧으면 «보자마자 어두워진다».
-//      화면을 충분히 보여준 «뒤»에 어두워져야 「끝났다」로 읽힌다.
-장면('⑦', '홈 — 로고로 마무리')
-await 탭('홈')
-await page.waitForTimeout(3800)   // ⛔ 배율을 안 먹인다 — 페이드가 얹히는 자리라 여기만은 항상 넉넉해야 한다
+// 🎬 맺음말 — ⛔ 홈으로 «다시 돌아가지 않는다». 창업자 *"중간에 홈이 또 떠"*
+장면('맺음말 — 한끼에서 만나요')
+await 엔딩()
 
 await page.close()
 await ctx.close(); await br.close(); srv.close()
@@ -189,31 +320,23 @@ const webm = fs.readdirSync(REC).find((f) => f.endsWith('.webm'))
 if (!webm) { console.log('⛔ 녹화 파일이 없다'); process.exit(1) }
 console.log(`\n  · 녹화 = ${webm}`)
 
-// 🎞 mp4 인코딩 — H.264 · yuv420p · 30fps (유튜브 호환)
-//   ⛔ 첫 몇 프레임이 검은 화면이라 잘라낸다. 옛 판은 `blackdetect` 로 «찾아서» 잘랐는데
-//      그 로그가 **stderr 로 나와서** 파싱이 늘 실패했다(옛 스크립트 주석에 그 사고가 적혀 있다).
-//      ✅ 우리는 시작에 2.4초 여유를 «일부러» 뒀으니 그만큼 고정으로 자른다 — 찾을 필요가 없다.
 const mp4 = `${OUT}/한끼-프로모-2508-앱실사.mp4`
-const 앞자름 = 1.6
-
-// 🎞 ① 먼저 «길이»를 잰다 — 페이드아웃을 어디서 시작할지 알아야 한다
+const 앞자름 = 1.3
+// ⛔ `ffmpeg -i` 만 주면 **에러로 끝나고 정보는 stderr 에 있다**(옛 스크립트가 이걸로 파싱에 늘 실패했다)
 const 재기 = (f) => {
   let out = ''
   try { execFileSync(ffmpeg, ['-i', f], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) }
-  catch (e) { out = String(e.stderr || '') }   // ⛔ ffmpeg 는 -i 만 주면 «에러로» 끝난다. 정보는 stderr 에 있다
+  catch (e) { out = String(e.stderr || '') }
   const m = out.match(/Duration: (\d+):(\d+):([\d.]+)/)
   return m ? (+m[1]) * 3600 + (+m[2]) * 60 + parseFloat(m[3]) : 0
 }
 const 원본길이 = 재기(join(REC, webm))
 const 쓸길이 = Math.max(1, 원본길이 - 앞자름)
-const 페이드 = 1.4
+const 페이드 = 1.2
 const 페이드시작 = Math.max(0, 쓸길이 - 페이드)
 console.log(`  · 원본 ${원본길이.toFixed(1)}s → 앞 ${앞자름}s 자르고 ${쓸길이.toFixed(1)}s · 페이드아웃 ${페이드시작.toFixed(1)}s 부터`)
 
-// 🎞 ② 인코딩 — 화질 ＋ 마무리
-//   ⭐ `crf 15` = 옛 판과 같은 값. 유튜브가 한 번 더 재압축하므로 **소스를 넉넉히** 둬야 덜 뭉개진다.
-//   ⭐ **scale 을 안 건다** — 녹화가 이미 1920×1080 이라 다시 손대면 한 번 더 뭉갠다.
-//   🌙 `fade=out` = 창업자 *"마지막에 영상이 탁 안끊기게."* — 끝에서 1.4초에 걸쳐 어두워진다.
+// 🎞 인코딩 — `crf 15`(유튜브가 재압축하므로 소스를 넉넉히) ＋ 끝 페이드아웃
 execFileSync(ffmpeg, ['-y', '-ss', String(앞자름), '-i', join(REC, webm),
   '-r', '30', '-c:v', 'libx264', '-preset', 'slow', '-crf', '15',
   '-maxrate', '14M', '-bufsize', '22M', '-pix_fmt', 'yuv420p',
