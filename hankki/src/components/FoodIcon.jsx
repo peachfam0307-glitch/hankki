@@ -688,14 +688,24 @@ export const FOOD_ICON_GROUPS = [
   { label: '분식', items: ['fe_282', 'fe_202', 'fh_k22', 'fh_k27', 'fh_k31', 'fh_k37', 'fe_92', 'fb_b01', 'fb_b03', 'fb_b04', 'fb_b05', 'fb_b07', 'fb_bun11'] },
   { label: '빵·디저트·음료', items: ['fe_264', 'fe_269', 'fe_244', 'fe_245', 'fe_186', 'fe_196', 'fe_82', 'fe_83', 'fe_84', 'fe_85', 'fe_49', 'fe_50', 'fe_51', 'fe_39', 'fe_40', 'fe_41', 'fe_17', 'fe_19', 'fe_93', 'fe_94', 'fe_15', 'fb_b09', 'fy_y13'] },
   // ── 🥕 아래는 «요리 사진»이 아니라 재료·도구 SVG 아이콘. 성격이 달라서 따로 둔다. ──
+  //
+  // 🥕🥕 `kind: 'ing'` = **냉장고에 «들어가는 것»** (창업자 폰 제보 2026-08-16)
+  //   📮 창업자 *"냉장고에 유통기한넣을때 아이콘바꾸는거 **음식이 먼저다떠**"*
+  //   ⭐ 맞는 지적 — 「재료 담기」 시트인데 요리 갈래 14줄(밥·국탕찌개·면…)을 지나야 채소가 나왔다.
+  //      **거기서 고르는 건 「무엇을 만들었나」가 아니라 「무엇을 넣어뒀나」다.**
+  //   ⛔ **라벨 글자로 가르지 않는다** — 라벨은 «표시용»이라 다듬으면 분류가 깨진다
+  //      (2026-07-30 `asset-map.mjs` 의 `CAT()` 이 정확히 그렇게 터졌다 · CLAUDE.md 「분류 원칙」).
+  //      그래서 **갈래마다 `kind` 를 직접 적는다.** 새 갈래를 넣는 사람이 여기서 한 번 고르면 끝이다.
+  //   ⛔ 요리 갈래를 «지우지» 않는다 — 남은 된장찌개를 통째로 넣어둘 수도 있다. 밑에 그대로 둔다.
+  //   ⛔ 「쇼핑」(bag·cart)은 ing 이 아니다 — 냉장고에 장바구니를 넣진 않는다. 쇼핑몰 아이콘용이다.
   { label: '요리 아이콘', items: ['donburi', 'bibimbap', 'gimbap', 'noodle', 'guksu', 'pasta', 'soup', 'stew', 'pot', 'spicybowl', 'stirfry', 'stirfryspicy', 'stirfryveg', 'grill', 'fried', 'salad', 'seafood', 'sushi', 'dessert', 'icecream'] },
-  { label: '밥·면·빵', items: ['bread', 'tteok', 'tofu'] },
-  { label: '채소', items: ['cabbage', 'kimchi', 'lettuce', 'onion', 'garlic', 'greenOnion', 'sprout', 'potato', 'carrot', 'chili', 'pepper', 'cucumber', 'eggplant', 'corn', 'radish', 'mushroom', 'broccoli', 'beans'] },
-  { label: '과일', items: ['tomato', 'apple', 'banana', 'strawberry', 'grape', 'lemon', 'orange', 'avocado'] },
-  { label: '고기·해산물', items: ['beef', 'pork', 'chicken', 'egg', 'fish', 'shrimp', 'squid', 'clam'] },
-  { label: '유제품', items: ['milk', 'cheese', 'butter'] },
-  { label: '양념·장', items: ['gochujang', 'doenjang', 'soy', 'soyLong', 'sesameOil', 'oil', 'vinegar', 'fishSauce', 'salt', 'honey', 'jar'] },
-  { label: '음료·기타', items: ['coffee', 'water', 'seaweed', 'nuts'] },
+  { label: '밥·면·빵', kind: 'ing', items: ['bread', 'tteok', 'tofu'] },
+  { label: '채소', kind: 'ing', items: ['cabbage', 'kimchi', 'lettuce', 'onion', 'garlic', 'greenOnion', 'sprout', 'potato', 'carrot', 'chili', 'pepper', 'cucumber', 'eggplant', 'corn', 'radish', 'mushroom', 'broccoli', 'beans'] },
+  { label: '과일', kind: 'ing', items: ['tomato', 'apple', 'banana', 'strawberry', 'grape', 'lemon', 'orange', 'avocado'] },
+  { label: '고기·해산물', kind: 'ing', items: ['beef', 'pork', 'chicken', 'egg', 'fish', 'shrimp', 'squid', 'clam'] },
+  { label: '유제품', kind: 'ing', items: ['milk', 'cheese', 'butter'] },
+  { label: '양념·장', kind: 'ing', items: ['gochujang', 'doenjang', 'soy', 'soyLong', 'sesameOil', 'oil', 'vinegar', 'fishSauce', 'salt', 'honey', 'jar'] },
+  { label: '음료·기타', kind: 'ing', items: ['coffee', 'water', 'seaweed', 'nuts'] },
   { label: '쇼핑', items: ['bag', 'cart', 'basket', 'store', 'box'] },
 ]
 
@@ -1431,6 +1441,14 @@ export const FOOD_ICON_GROUPS_SORTED = FOOD_ICON_GROUPS.map((g) => {
     ],
   }
 })
+
+// 🥕 재료를 먼저 — 냉장고 「재료 담기」처럼 «넣어둘 것»을 고르는 자리에서 쓴다.
+//   ⭐ 갈래 «순서»만 바꾼다. 안에 든 컷도, 요리 갈래도 하나도 안 없앤다(밑에 그대로 이어진다).
+//   📌 `kind` 를 보고 가르므로 라벨을 다듬어도 안 깨진다.
+export const FOOD_ICON_GROUPS_ING_FIRST = [
+  ...FOOD_ICON_GROUPS_SORTED.filter((g) => g.kind === 'ing'),
+  ...FOOD_ICON_GROUPS_SORTED.filter((g) => g.kind !== 'ing'),
+]
 
 // 📊📊 [2026-08-12] 「이번 달 뭘 해먹었나」 — 아이콘 키로 «갈래»를 되찾는다.
 //   📮 창업자 폰 제보 *"통계는 저게다야? 우리얘기했던거있었는데"*

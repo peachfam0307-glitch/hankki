@@ -485,7 +485,7 @@ function PantryForm({ item, onClose }) {
             {thumb === 'emoji' ? (
               <EmojiPicker value={emoji} size={64} only={FOOD_EMOJI_GROUPS} onChange={(e) => { setEmoji(e); setIconPicked(true) }} />
             ) : (
-              <FoodIconPicker value={icon} size={64} onChange={(k) => { setIcon(k); setIconPicked(true) }} />
+              <FoodIconPicker value={icon} size={64} mode="ing" onChange={(k) => { setIcon(k); setIconPicked(true) }} />
             )}
             <div style={{ flex: 1 }}>
               <input className="wa-inp" value={name} onChange={(e) => setNm(e.target.value)} placeholder="재료 이름 (예: 두부)" autoFocus={!editing} />

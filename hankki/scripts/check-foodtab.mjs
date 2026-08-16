@@ -23,8 +23,20 @@ const PHOTO = path.join(root, 'src/assets/stickers/photo')
 const gStart = src.indexOf('export const FOOD_ICON_GROUPS = [')
 const gBody = src.slice(gStart, src.indexOf('\n]', gStart))
 const groups = []
-for (const m of gBody.matchAll(/\{\s*label:\s*'([^']+)',\s*items:\s*\[([^\]]*)\]/g)) {
+// ⛔⛔ [2026-08-16] `label` 과 `items` 사이에 «다른 필드가 와도» 읽는다.
+//   그날 `kind: 'ing'` 을 7개 갈래에 넣었더니 옛 정규식(label 바로 뒤에 items)이 그 일곱을 통째로 놓쳤다.
+//   → 게이트는 **초록불인데** 보는 범위가 466컷·22갈래 → 411컷·15갈래로 줄었다(재료 갈래 55컷이 사라짐).
+//   📌 규칙 18 ⓘ 그대로 — **「통과했나」가 아니라 「무엇을 보고 통과했나」**를 봐야 한다.
+for (const m of gBody.matchAll(/\{\s*label:\s*'([^']+)',[^{}]*?items:\s*\[([^\]]*)\]/g)) {
   groups.push({ label: m[1], items: m[2].split(',').map((s) => s.trim().replace(/^'|'$/g, '')).filter(Boolean) })
+}
+// ⭐ 상한을 «손으로 적지 않는다» — 적힌 `{ label:` 수를 세서 읽은 수와 대조한다.
+//   ⛔ 옛 검사는 `< 10` 이라 15개만 읽어도 통과했다. **고정 숫자는 반드시 낡는다.**
+const declared = (gBody.match(/\{\s*label:\s*'/g) || []).length
+if (groups.length !== declared) {
+  console.error(`[foodtab] ❌ 갈래를 다 못 읽었다 — 적힌 건 ${declared}개인데 읽은 건 ${groups.length}개.`)
+  console.error('   FOOD_ICON_GROUPS 의 모양이 바뀌었다(필드 추가·줄바꿈 등). 위 정규식을 그 모양에 맞춰라.')
+  process.exit(1)
 }
 if (groups.length < 10) { console.error('[foodtab] ❌ 그룹을 못 읽었다 — FOOD_ICON_GROUPS 모양이 바뀌었나?'); process.exit(1) }
 
