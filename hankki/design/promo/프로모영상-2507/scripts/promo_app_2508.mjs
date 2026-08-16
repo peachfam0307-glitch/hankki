@@ -106,6 +106,11 @@ const 손가락만들기 = async () => {
          📌 규칙 18 — 「안 보인다」의 이유를 짐작하지 말고 재서 알아냈다(로드 여부·opacity 를 다 찍어봤다).
          ✅ max-width: none ＋ height: auto 를 못 박는다.
          ⛔ 이 주석에 백틱을 쓰면 안 된다 — 이 블록 자체가 템플릿 문자열이라 문자열이 끊긴다(실제로 한 번 죽었다). */
+      /* 🔽 아래쪽 버튼(하단바)을 누를 땐 곰을 «위»에 둔다 — 창업자
+         "화면이 너무 꽉차서 아래버튼 누르는 커서랑 버튼이 잘 안모이는 듯"
+         맞다. 하단바는 화면 맨 끝이라 곰을 오른쪽 «아래»에 두면 화면 밖으로 밀려 잘린다.
+         위로 올리면 앱 화면 안이라 곰도 버튼도 다 보인다. */
+      #hkcur.up img { top: -104px !important; }
       #hkcur img { position: absolute; left: 6px; top: 6px;
         width: 86px !important; height: auto !important; max-width: none !important; display: block;
         filter: drop-shadow(0 7px 16px rgba(93,52,16,.42));
@@ -144,6 +149,10 @@ const 누르기 = async (loc, 라벨, 뒤대기 = 900) => {
   const b = await loc.boundingBox().catch(() => null)
   if (!b) { console.log(`  ⛔ 「${라벨}」 자리를 못 찾았다`); return false }
   const x = Math.round(b.x + b.width / 2), y = Math.round(b.y + b.height / 2)
+  // 🔽 화면 아래쪽(하단바 언저리)이면 곰을 위로 올린다 — 안 그러면 곰이 화면 밖으로 잘린다
+  await page.evaluate((아래냐) => {
+    const c = document.getElementById('hkcur'); if (c) c.classList.toggle('up', 아래냐)
+  }, y > 580)
   await 손옮기기(x, y)
   await page.evaluate(({ x, y }) => {
     const i = document.querySelector('#hkcur img')
@@ -172,22 +181,28 @@ const 뒤로 = async (겹 = 1) => {
 // 🎬 오프닝 · 엔딩 — 창업자
 //   *"**우리아이콘 누르면 홈으로 들어가는 것부터** 시작해서 하나씩 눌러가며 보여주고, **마지막에 맺음말.**"*
 // 🎨 색은 **앱 아이콘과 같은 조합** — 브라운 바탕(`#5d3410`) ＋ 크림 로고. 브랜드가 이어진다.
-const 오프닝 = async () => {
-  await page.evaluate(() => {
+// ⛔⛔ **첫 판은 홈이 먼저 뜨고 «그다음» 아이콘이 나왔다** — 창업자 *"처음에 홈화면 나옴. 그리고 아이콘나와."*
+//   원인 = 앱이 «다 뜬 뒤»에 오버레이를 덮었기 때문. 그 틈에 홈이 한 번 보인다.
+//   ✅ `addInitScript` 로 **앱 스크립트보다 먼저** 깔아 둔다 — 그러면 홈이 그려질 때 이미 덮여 있다.
+await page.addInitScript(() => {
+  const 넣기 = () => {
+    if (document.getElementById('promo-open')) return
     const st = document.createElement('style')
-    st.textContent = `
-      #promo-open { position: fixed; inset: 0; z-index: 99998; background: #5d3410;
-        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px;
-        transition: opacity .8s ease; }
-      #promo-open img { width: 208px; height: 208px; border-radius: 46px; display: block;
-        box-shadow: 0 20px 50px rgba(0,0,0,.3); transition: transform .18s ease; }
-      #promo-open.tap img { transform: scale(.9); }
-      #promo-open .nm { font-size: 30px; font-weight: 800; color: #fffdf8; letter-spacing: .04em; }`
+    st.textContent = '#promo-open{position:fixed;inset:0;z-index:99998;background:#5d3410;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;transition:opacity .8s ease}'
+      + '#promo-open img{width:208px;height:208px;border-radius:46px;display:block;max-width:none;box-shadow:0 20px 50px rgba(0,0,0,.3);transition:transform .18s ease}'
+      + '#promo-open.tap img{transform:scale(.9)}'
+      + '#promo-open .nm{font-size:30px;font-weight:800;color:#fffdf8;letter-spacing:.04em}'
     document.head.appendChild(st)
     const d = document.createElement('div'); d.id = 'promo-open'
     d.innerHTML = '<img src="/hankki/icons/icon-512-v7.png" alt=""><div class="nm">한끼</div>'
     document.body.appendChild(d)
-  })
+  }
+  if (document.body) 넣기()
+  else document.addEventListener('DOMContentLoaded', 넣기)
+})
+
+// 오버레이는 위 `addInitScript` 가 «앱보다 먼저» 깔아 뒀다 — 여기선 누르고 걷기만 한다
+const 오프닝 = async () => {
   await 잠깐(1500)
   // 👆 손가락이 아이콘으로 와서 «누른다» — 그래서 앱이 열린다
   await 손옮기기(640, 330, true)
@@ -278,6 +293,12 @@ await 쉼(3600)
 
 // ⑨ 장보기 담기 — ⭐**상세로 돌아온 김에** 누른다. 뒤에 장보기·냉장고를 채우는 것이 이 한 번이다.
 //   ⛔ 첫 판은 이걸 빼놓고 장보기로 가서 **목록이 텅 비었고** 「샀어요」를 못 찾았다.
+// ⛔⛔ **타이머를 끈다** — 창업자 *"요리타이머가 계속 실행되는게 다른탭 눌러도 계속 뜸"*
+//   맞다. 타이머 막대는 «앱 전체»에 뜨는 것이라 일기·장보기·냉장고 화면까지 따라다닌다.
+//   보여줄 건 「요리하면서 타이머를 쓴다」이지 「영상 내내 파란 막대가 있다」가 아니다.
+await page.locator('.timer-bar button').last().click({ timeout: 3000 }).catch(() => console.log('  ⚠️ 타이머 끄기 단추를 못 찾았다'))
+await 잠깐(700)
+
 장면('⑨ 장보기 담기')
 await 뒤로()                       // 요리 모드 → 상세
 await 누르기(page.getByRole('button', { name: /장보기 담기/ }).first(), '장보기 담기', 1600)
