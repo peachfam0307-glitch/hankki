@@ -3,7 +3,7 @@ import { seedRecipes } from './data/seed'
 import { basicRecipes, BASICS_VERSION } from './data/basics'
 import { makeSampleDiary, SAMPLE_DIARY_ID, SAMPLE_READY } from './data/sampleDiary'
 import { guessFoodIcon } from './components/FoodIcon'
-import { cleanMemo } from './parseRecipe'
+import { cleanMemo, mergeQtyOnlyIngredients } from './parseRecipe'
 import { politeSteps, politeFormalSteps } from './polish'
 
 const KEY = 'hankki:v1'
@@ -344,6 +344,25 @@ function migratePolite(recipes, saved) {
   return { recipes: out, politeV: POLITE_V }
 }
 
+// 🚚🚚 **이미 저장된 레시피의 «분량만 있는 줄»을 앞 재료에 붙인다** (창업자 2026-08-16)
+//   📮 *"황태장아찌 요리시작 누르면 1/2컵이 줄바뀜으로 혼자 뜨는거"*
+//      → *"그 레시피는 **테스터가 캡쳐해준거야.** 근데도 고칠 수가 없다고?"*
+//   ⭐⭐ **파서만 고치면 «앞으로 가져올 것»만 고쳐진다** — 이미 폰에 든 건 그대로다.
+//      테스터 폰·창업자 폰에 저장된 그 레시피는 앱을 켜는 순간 여기서 고쳐진다.
+//   📌 규칙 18 ⓙ 그대로 — 「새로 까는 사람」만 보지 말고 **«이미 깔린 폰»을 본다.**
+//   ⚠️ 한 번만 돈다(`qtyOnlyV`) — 유저가 일부러 그렇게 적었다면 두 번 손대지 않는다.
+//   ⚠️ 규칙은 파서와 «똑같다»(`mergeQtyOnlyIngredients`) — 두 자리가 갈라지면 그때부터 어긋난다.
+const QTY_ONLY_V = 1
+function migrateQtyOnly(recipes, saved) {
+  if ((saved.qtyOnlyV || 0) >= QTY_ONLY_V) return { recipes, qtyOnlyV: saved.qtyOnlyV }
+  const out = recipes.map((r) => {
+    if (!r || !Array.isArray(r.ingredients) || r.ingredients.length < 2) return r
+    const ingredients = mergeQtyOnlyIngredients(r.ingredients)
+    return ingredients === r.ingredients ? r : { ...r, ingredients }
+  })
+  return { recipes: out, qtyOnlyV: QTY_ONLY_V }
+}
+
 // 📔📔 **샘플 일기 한 장** (창업자 2026-08-12 *"샘플레시피는 지울 수 있게도 해줘
 //   자기 일기가 아니니까 지워도 되게(샘플이라고 적어주고)"*)
 //
@@ -367,12 +386,14 @@ function initialState() {
     const mig = migrateBasics(saved)
     const memoMig = migrateMemos(mig.recipes, saved)
     const politeMig = migratePolite(memoMig.recipes, saved)
+    const qtyMig = migrateQtyOnly(politeMig.recipes, saved)
     const diary = withSample(saved)
     return {
-      recipes: reconcileCooked(politeMig.recipes, diary),
+      recipes: reconcileCooked(qtyMig.recipes, diary),
       seedV: mig.seedV,
       memoCleanV: memoMig.memoCleanV,
       politeV: politeMig.politeV,
+      qtyOnlyV: qtyMig.qtyOnlyV,
       removedSeedIds: saved.removedSeedIds || [],
       folders: saved.folders
         ? (saved.folders.includes('아시안') ? saved.folders : [...saved.folders, '아시안'])
@@ -391,6 +412,7 @@ function initialState() {
     seedV: BASICS_VERSION,
     memoCleanV: MEMO_CLEAN_V,
     politeV: POLITE_V,
+    qtyOnlyV: QTY_ONLY_V, // 처음 켠 사람은 고칠 게 없다 — 이사를 «이미 한 것»으로 둔다
     removedSeedIds: [],
     folders: ['한식', '양식', '일식', '간식', '아시안'],
     profile: PROFILE_DEFAULT,

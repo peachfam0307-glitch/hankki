@@ -873,6 +873,13 @@ export default function EditorScreen({ id, prefill }) {
       {cropImg && (
         <CropSheet
           image={cropImg}
+          // ⏳ 자르는 동안 뒤에서 앞 장을 읽고 있으면 그걸 «이 화면 위»에 보여준다.
+          //    ⛔ 안 보이면 유저는 「아무 일도 안 난다」고 여기고 앱을 끈다(창업자 2026-08-16).
+          reading={ocr.busy ? { page: ocr.page, total: ocr.total, pct: ocr.pct } : null}
+          // 🔢 「2장 중 2장째를 자르는 중」 — CropSheet 이 원래 받던 값인데 안 넘기고 있었다.
+          //    ⭐ 읽는 중 안내(위)와 자르는 장(제목)이 다른 숫자라 둘 다 있어야 헷갈리지 않는다.
+          index={ocrCropped.current}
+          total={ocrTotal.current}
           title={
             ocrTargetRef.current === 'ingredients' ? '재료 사진 자르기'
               : ocrTargetRef.current === 'steps' ? '만드는 법 사진 자르기'

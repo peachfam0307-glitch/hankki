@@ -164,6 +164,9 @@ export default function DiaryScreen({ day }) {
   useEffect(() => { setOpened(isDayOpen(day)) }, [day])
   const [lockSheet, setLockSheet] = useState(null) // null | 'set' | 'check'
   const 가려짐 = locked && !opened
+  // 🔓 [2026-08-16 ⒜] 「잠금 없애기」로 «지워질» 일기들 — 몇 장인지 미리 말해 주려고 여기서 센다.
+  //    ⚠️ 잠금은 앱에 «하나»라 비번을 없애면 잠긴 날이 전부 열린다 → 그래서 전부가 대상이다.
+  const 잠긴것 = diary.filter((d) => d && d.kind === 'diary' && d.locked)
 
   const 잠그기 = () => {
     save({ locked: true })
@@ -224,11 +227,19 @@ export default function DiaryScreen({ day }) {
         {lockSheet && (
           <LockSheet
             mode="check"
+            lockedCount={잠긴것.length}
             onClose={() => setLockSheet(null)}
             onDone={(r) => {
               setLockSheet(null)
-              // 「잠금 없애기」로 왔으면 이 일기의 자물쇠 표시도 같이 뗀다 — 안 그러면 비번이 없는데 잠긴 채로 남는다.
-              if (r && r.reset) { updateDiary(entry.id, { locked: false }); nav.showToast('잠금을 없앴어요'); return }
+              // 🔓 [2026-08-16 ⒜] 「잠금 없애기」 = **잠긴 일기를 전부 지운다.**
+              //    ⛔ 옛 판은 자물쇠 표시만 떼서 «비번 없이 전부 열리는 정문»이었다.
+              //    ⚠️ 지금 보고 있는 이 일기도 지워질 수 있으니 목록으로 돌아간다.
+              if (r && r.reset) {
+                잠긴것.forEach((d) => removeDiary(d.id))
+                nav.showToast(`잠긴 일기 ${잠긴것.length}장을 지우고 잠금을 없앴어요`, 5200)
+                nav.pop()
+                return
+              }
               unlockDay(day)
               setOpened(true)
             }}

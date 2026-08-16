@@ -105,6 +105,12 @@ try {
   await 말투검사(p2, '⑤ 비번 잊었을 때')
   await p2.locator('.sheet').screenshot({ path: path.join(OUT, '5-비번잊었을때.png') })
 
+  // ⑥ 「지우고 풀기」를 한 번 눌렀을 때 — 마지막 확인 (창업자 판정 ⒜ · 2026-08-16)
+  await p2.locator('.sheet').getByRole('button', { name: /지우고 풀기/ }).first().click()
+  await 잠깐(400)
+  await 말투검사(p2, '⑥ 지우기 마지막 확인')
+  await p2.locator('.sheet').screenshot({ path: path.join(OUT, '6-지우기-마지막확인.png') })
+
   await browser.close()
 } finally {
   서버.kill()

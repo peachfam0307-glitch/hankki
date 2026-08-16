@@ -10,6 +10,28 @@ const QTY =
 //    ⚠️ **첫 글자가 숫자여야 한다** — 「파 30g」·「물 50ml」처럼 이름이 한 글자인 재료를 지키려고.
 const QTY_ONLY =
   /^[\d½⅓⅔¼¾][\d½⅓⅔¼¾/.\s~-]*(g|kg|ml|l|리터|cc|개|알|쪽|봉지|봉|모|장|대|톨|줄기|컵|큰\s?술|작은\s?술|스푼|티스푼|숟가락|줌|꼬집|줄|캔|팩|조각|인분|마리|공기|스틱)$/i
+
+// 🚚🚚 **이미 «저장된» 재료 목록을 고친다** (창업자 2026-08-16)
+//   📮 *"그 레시피는 애가 캡쳐한게 아니라 **테스터가 캡쳐해준거야**. 근데도 고칠 수가 없다고?"*
+//   ⛔⛔ 위 파서 고침은 «앞으로 가져올 것»만 고친다 — **이미 폰에 저장된 레시피엔 안 닿는다.**
+//      테스터 폰에 든 황태장아찌는 그대로 「1/2컵」이 별개 재료로 남아 있다.
+//   ✅ 그래서 저장된 목록도 같은 규칙으로 이어 붙인다 — `store.jsx` 의 «이사(migration)»가 부른다.
+//   ⚠️ 조건은 파서와 «똑같다» — 숫자로 시작해 단위로 끝나는 줄만. 「파 30g」은 안 건드린다.
+//   ⚠️ 앞에 붙일 재료가 없으면(첫 줄이면) 그냥 둔다 — 붙일 데가 없다.
+export function mergeQtyOnlyIngredients(list) {
+  if (!Array.isArray(list) || list.length < 2) return list
+  const out = []
+  for (const raw of list) {
+    const l = String(raw == null ? '' : raw).trim()
+    if (out.length && l && QTY_ONLY.test(l)) {
+      out[out.length - 1] = String(out[out.length - 1]).trimEnd() + ' ' + l
+      continue
+    }
+    out.push(raw)
+  }
+  return out.length === list.length ? list : out
+}
+
 const STEP = /^(\d{1,2}\s*[.)]|[①-⑳❶-❿]|step\s*\d+|스텝\s*\d+|순서\s*\d+)/i
 const NOISE =
   /^(ingredients?\s*[:：]?$|recipe\b|요리\b|tip\b|instagram|youtube|www\.|https?:|좋아요|댓글|팔로우|공유|저장|더\s?보기|답글)/i

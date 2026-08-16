@@ -106,6 +106,7 @@ const 재기 = async ({ 이름, 프록시 }) => {
 
   const 마디 = []
   let 시작 = 0
+  let 칸안내 = false // 자르는 동안 「읽는 중」 안내가 보였나
   const 찍기 = (무엇) => 마디.push([무엇, ((Date.now() - 시작) / 1000).toFixed(1) + 's'])
 
   const [chooser] = await Promise.all([
@@ -123,6 +124,12 @@ const 재기 = async ({ 이름, 프록시 }) => {
   // ⭐⭐ 여기가 핵심 — 2장째 «자르기»가 언제 뜨나.
   //    옛 판 = 1장째 읽기가 **다 끝나야** 떴다(줄서기) · 새 판 = **바로** 뜬다(자르기와 읽기를 뗐다)
   await 자르기.waitFor({ state: 'visible' }); 찍기('⭐ 2장째 자르기가 뜸')
+  // 📸 창업자 *"사진2장스캔은 기다리다 끌 수 있으니 스캔중이다라는 안내가 필요해."*
+  //    ⭐ 자르는 «동안» 앞 장이 읽히니 그게 이 화면 «위»에 보여야 한다. 안 보이면 없는 것과 같다.
+  await 잠깐(500)
+  const 읽는중안내 = await pg.locator('text=읽는 중이에요').first().isVisible().catch(() => false)
+  칸안내 = 읽는중안내
+  await pg.screenshot({ path: `/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/자르는중-읽는중-${프록시}.png` })
   // 🧍 사람이 자르는 시간 — 실제로는 3~10초다. 여기선 4초로 잡는다.
   //    ⭐ 새 판에선 **이 4초 동안 1장째가 읽힌다** = 기다림이 사라지는 자리.
   await 잠깐(4000); 찍기('   (사람이 4초 동안 잘랐다고 치고)')
@@ -136,6 +143,9 @@ const 재기 = async ({ 이름, 프록시 }) => {
 
   console.log(`\n━━ ${이름} ━━`)
   for (const [무엇, 때] of 마디) console.log(`   ${때.padStart(7)}  ${무엇}`)
+
+  console.log(`   ${칸안내 ? '✅' : '⛔'} 자르는 동안 「읽는 중이에요」 안내가 보인다`)
+  if (!칸안내) 실패 += 1
 
   // 🔎 회귀 감시 — 자르기와 읽기를 떼어놓았으니 «순서가 뒤바뀌지 않았나»를 본다
   let 탈 = ''

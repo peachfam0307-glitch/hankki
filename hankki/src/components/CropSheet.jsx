@@ -23,6 +23,13 @@ export default function CropSheet({
   onDone,
   onSkip,
   onCancel,
+  // ⏳⏳ **[2026-08-16] 「앞 장은 지금 읽고 있어요」** — 창업자 *"사진2장스캔은 기다리다 끌 수 있으니
+  //   스캔중이다라는 안내가 필요해."*
+  //   ⭐⭐ **이건 내가 오늘 만든 구멍이다.** 자르기와 읽기를 떼어놓으면서
+  //      «읽는 중» 상자가 이 자르기 화면 «뒤»로 숨어 버렸다 — 유저 눈엔 아무 일도 안 일어난다.
+  //      ⛔ 안 보이는 진행은 없는 진행이다. 그래서 여기 «위»에 다시 띄운다.
+  //   ⚠️ 읽고 있을 때만 뜬다 — 한 장짜리는 이 자리에 아무것도 안 나온다(잔소리 금지).
+  reading = null, // { page, total, pct } | null
   title = '글자 부분만 남기기',
   hint = (
     <>
@@ -189,6 +196,24 @@ export default function CropSheet({
       <div style={{ margin: '2px 16px 10px', padding: '10px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.13)', color: '#f4f1eb', fontSize: 13, textAlign: 'center', lineHeight: 1.6 }}>
         {hint}
       </div>
+
+      {/* ⏳ 앞 장 읽는 중 — 자르는 동안 뒤에서 돌고 있다는 걸 «보이게» 한다.
+          ⭐ 막대까지 같이 둔다 — 글자만 있으면 「멈춘 것」인지 「도는 것」인지 구별이 안 된다. */}
+      {reading && (
+        <div style={{ margin: '0 16px 10px', padding: '9px 13px', borderRadius: 12, background: 'rgba(255,255,255,0.10)', color: '#f4f1eb' }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, lineHeight: 1.45 }}>
+            {reading.total > 1 ? `${reading.total}장 중 ${reading.page}장째 읽는 중이에요` : '사진에서 글자 읽는 중이에요'}
+            <span style={{ color: '#cfcac1', fontWeight: 600 }}> · 자르는 동안 같이 읽고 있어요</span>
+          </div>
+          <div style={{ height: 5, borderRadius: 99, background: 'rgba(255,255,255,0.18)', overflow: 'hidden', marginTop: 6 }}>
+            <div style={{
+              height: '100%', borderRadius: 99, background: '#f4f1eb',
+              width: `${Math.min(100, Math.max(4, Math.round(((reading.page - 1) * 100 + (reading.pct || 0)) / Math.max(1, reading.total))))}%`,
+              transition: 'width .35s ease',
+            }} />
+          </div>
+        </div>
+      )}
 
       <div ref={areaRef} style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: `0 ${AREA_PAD}px` }}>
         {/* 박스 크기 = 위 measure() 가 잰 값. 이미지가 이 박스를 «딱» 채우므로 여백(레터박스)이 0이다. */}
