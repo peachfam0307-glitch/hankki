@@ -380,17 +380,27 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       </div>
 
       {view === 'log' && (
-        <div className="pad fade">
+        // eslint-disable-next-line
+        <div className="pad fade log-2col">
+          {/* 🗓🗓 `log-2col` = **가로에서 왼쪽 달력 · 오른쪽 나머지 2단**(창업자 2026-08-16 · CSS 는 styles.css 맨 끝)
+              ⛔⛔ 여기서 **함정을 둘이나 밟았다. 둘 다 주석 때문이다.**
+                ⑴ 이 주석을 «div 밖»(`{view === 'log' && (` 다음 줄)에 뒀더니 빌드가 죽었다 —
+                   **JSX 주석은 «자식» 자리에서만 된다.** 표현식이 열리는 자리엔 «JS 주석»을 쓴다.
+                ⑵ 그걸 설명하려고 주석 «안»에 별표·빗금 닫는 짝을 적었더니 **거기서 주석이 끝났다.**
+                   뒷부분이 화면에 «글자»로 새어 나와 **격자 칸을 하나 더 먹고 2단이 무너졌다.**
+                   ⭐ 빌드는 통과한다 — 글자가 보일 뿐이라 «찍어서 재보기 전엔 모른다»(규칙 21).
+              📌 규칙 = **주석 안에 닫는 짝을 적지 않는다.** 백틱 함정(CLAUDE.md)과 같은 뿌리다. */}
           {/* 🗓 요리 달력 — **맨 위 · 항상 펼쳐 둔다.** (창업자 확정 2026-08-06 ②)
               ⛔ 예전엔 `useState(false)` 로 **기본이 접힘**이었고, 「요리 달력 보기 ▾」를 눌러야 나왔다.
                  그래서 만든 사람(창업자)조차 안 썼다 — 이 탭이 죽은 이유의 하나가 **기능이 모자란 게
                  아니라 자리를 잘못 준 것**이었다. 접기 버튼도 같이 없앴다(가릴 이유가 없어졌다). */}
           {(entries.length > 0 || diaryDays.size > 0) && (
-            <div data-coach="cal">
+            <div data-coach="cal" className="log-cal">
               <CookCalendar entries={entries} diaryDays={diaryDays} selected={dayFilter} onSelect={setDayFilter} onOpenDay={(k) => nav.push({ name: 'diary', day: k })} iconFor={iconFor} />
             </div>
           )}
 
+          <div className="log-main">
           {/* 📔 다이어리 쓰기 — 창업자 2026-08-06 *"따로 아이콘을 하나 파서 다이어리 쓰기
               (날짜 넣고 쓰면 달력에 저장되도록)"*
               ⭐ 요리를 «안 한 날»에도 쓸 수 있어야 한다 — 그래서 「만들었어요」와 별개 입구다.
@@ -474,7 +484,19 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, width: 62, minHeight: 44 }}
                   >
                     <FoodIcon name={iconFor(e)} size={34} />
-                    <span style={{ fontSize: 11, lineHeight: 1.25, textAlign: 'center', wordBreak: 'keep-all', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.title}</span>
+                    {/* ⛔⛔ [2026-08-16 고침] **긴 이름이 62px 칸을 넘쳐 옆 이름과 «붙어» 보였다.**
+                        🔢 실측 = 「수제 떡갈비」＋「목살돼지갈비구이」가 `수제 떡갈비목살돼지갈비구이` 로 읽혔다.
+                           폰 세로에서도 똑같아서 **내 가로 2단 작업 때문이 아니라 원래 있던 버그**다.
+                        ⭐ 뿌리 = `overflow: hidden` 은 있는데 **span 이 자기 폭을 안 가졌다.**
+                           flex 칸의 자식이라 «내용만큼» 늘어나서, 잘릴 폭 자체가 없었다.
+                           ＋`wordBreak: keep-all` 이라 「목살돼지갈비구이」는 띄어쓰기가 없어 «한 낱말»이라 안 꺾인다.
+                        ✅ `width: 100%` 한 줄 — 그제서야 62px 에서 잘리고 두 줄 말줄임이 실제로 돈다.
+                        📌 규칙 21 로 잡았다 — 숫자는 다 초록불이었고 **판을 열어보고서야 보였다.** */}
+                    {/* ⚠️ `overflowWrap: anywhere` 를 같이 준다 — `keep-all` 만으로는 「목살돼지갈비구이」처럼
+                        **띄어쓰기 없는 긴 이름이 «한 낱말»이라 안 꺾여** 두 줄 말줄임이 아예 안 돈다(한 줄에서 싹둑).
+                        ⭐ `anywhere` 는 «담을 수 없을 때만» 꺾으므로 「수제 떡갈비」처럼 띄어쓰기 있는 이름은
+                           지금처럼 낱말 단위로 그대로 꺾인다. 둘을 같이 두는 게 맞다. */}
+                    <span style={{ width: '100%', fontSize: 11, lineHeight: 1.25, textAlign: 'center', wordBreak: 'keep-all', overflowWrap: 'anywhere', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.title}</span>
                   </button>
                 ))}
               </div>
@@ -542,6 +564,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               })}
             </div>
           )}
+          </div>{/* .log-main */}
         </div>
       )}
 
