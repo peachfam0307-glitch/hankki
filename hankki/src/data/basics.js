@@ -4277,8 +4277,15 @@ const RECIPE_PHOTOS = {
 //    · 레시피 탭 목록 · 홈 최근저장 · `weeklyNow`(없는 id 는 알아서 걸러진다) · 시드 · 마이그레이션 추가
 // ⚠️ `from` 이 없는 레시피는 «처음부터 열려 있는 것» — 지금까지 있던 것은 하나도 안 잠긴다.
 //    (원칙 = 한 번 준 것은 빼앗지 않는다)
-const today = new Date(Date.now() + (9 * 60 + new Date().getTimezoneOffset()) * 60000)
-  .toISOString().slice(0, 10)   // ⏰ KST — 컨테이너가 UTC 라 그냥 쓰면 하루 어긋난다
+// ⏰ 오늘(KST).
+// ⛔⛔⛔ [2026-08-17 · 창업자 폰 캡처로 잡음] 옛 공식은 **한국 폰에서만** 하루 어긋났다.
+//    옛것 = `Date.now() + (9*60 + new Date().getTimezoneOffset()) * 60000`
+//    · UTC 컨테이너(offset 0) → +540분 → ✅  ·  **KST 폰(offset −540) → +0분 → ⛔ 어제**
+//    ⭐ `Date.now()` 는 이미 UTC 기준이고 `toISOString()` 도 UTC 로 찍는다 → **그냥 +9시간**.
+//    📌 여기가 제일 크다 — **레시피가 `from` 날짜로 열리는 자리**라, 아침 0~9시엔
+//       그 주 레시피가 통째로 «아직 안 열린» 상태였다(8/17 아침 8시 캡처로 확인).
+//    ⚠️ 같은 공식이 `weekly.js`·`whatsnew.js` 에도 있었다 — 셋 다 고쳤다.
+const today = new Date(Date.now() + 9 * 60 * 60000).toISOString().slice(0, 10)
 
 // 🔎 «잠긴 것까지 전부» — 앱은 이걸 안 쓴다. 검사 도구(`check-weekly`)가
 //    「그 주가 오면 레시피가 있나」를 보려면 날짜로 거르기 «전» 목록이 필요하다.

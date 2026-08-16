@@ -26,8 +26,10 @@ let bad = 0
 const fail = (m) => { console.log(`  ✗ ${m}`); bad++ }
 const ok = (m) => console.log(`  ok  ${m}`)
 
+// ⛔ [2026-08-17] 앱과 «같은» 공식이어야 한다 — 옛 공식은 KST 폰에서 하루 어긋났다
+//    (`getTimezoneOffset()` 을 더하면 +9시간이 상쇄된다). 검사가 앱과 다르면 재는 의미가 없다.
 const todayKST = () =>
-  new Date(Date.now() + (9 * 60 + new Date().getTimezoneOffset()) * 60000).toISOString().slice(0, 10)
+  new Date(Date.now() + 9 * 60 * 60000).toISOString().slice(0, 10)
 const today = process.env.WHATSNEW_TODAY || todayKST()
 
 console.log('\n── 안내 페이지(한끼 소식) ──')

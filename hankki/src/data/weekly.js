@@ -168,9 +168,21 @@ export const WEEKLY = [
 
 const KST = 9 * 60 // 분
 
-// 오늘(KST) 을 'YYYY-MM-DD' 로. ⚠️ 컨테이너는 UTC 라 그냥 `toISOString()` 하면 하루 어긋난다.
+// 오늘(KST) 을 'YYYY-MM-DD' 로.
+//
+// ⛔⛔⛔ [2026-08-17 · 창업자 폰 캡처로 잡음] **옛 공식은 «한국 폰에서만» 하루 어긋났다.**
+//   옛것 = `now.getTime() + (KST + now.getTimezoneOffset()) * 60000`
+//   · 내 컨테이너(UTC) → offset 0 → +540분 → ✅ 맞다
+//   · **창업자 폰(KST) → offset −540 → +0분 → UTC 그대로 → ⛔ 어제가 나온다**
+//   ⭐⭐ `getTime()` 은 «이미 UTC 기준 숫자»이고 `toISOString()` 도 UTC 로 찍는다.
+//      그러니 **그냥 +9시간만** 더하면 된다. 거기에 폰 오프셋까지 더해서 «서로 상쇄»됐다.
+//   📌 그래서 KST 폰에서 **매일 0시~9시 사이엔 어제 날짜**가 나왔다.
+//      창업자가 아침 8시에 열어봐서 걸렸다 — 오후였으면 멀쩡했고, 그래서 여태 안 들켰다.
+//   ⛔⛔ **검사가 UTC 컨테이너에서 도니 계속 초록불이었다.** 「내 화면에선 되는데 폰에서 안 된다」.
+//      🔒 그래서 `_repro-KST날짜-0817.mjs` 가 **KST 폰을 흉내내서** 잰다. UTC 에서만 재면 영영 못 잡는다.
+//   ⚠️ 같은 공식이 `whatsnew.js`·`basics.js` 에도 있었다 — **셋 다 고쳤다.**
 export const todayKST = (now = new Date()) =>
-  new Date(now.getTime() + (KST + now.getTimezoneOffset()) * 60000).toISOString().slice(0, 10)
+  new Date(now.getTime() + 9 * 60 * 60000).toISOString().slice(0, 10)
 
 // 이번 주 한 줄. 없으면 `null` → **홈에서 줄을 아예 안 그린다.**
 // 🍳🍳 우리집레시피 — 창업자가 실제로 해먹는 레시피. 제철 줄과 «별개» 줄이다.

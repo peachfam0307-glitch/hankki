@@ -25,8 +25,12 @@ import { SEASON_CUTS } from './cardSeasons'
 
 // ⏰ 오늘(KST). ⚠️ **함수로 둔다** — 모듈 상수로 굳히면 앱을 켜둔 채 자정을 넘길 때 안 바뀐다
 //    (`ShareDrawCard` 의 `seasonCuts` 가 상수 아닌 함수인 것과 같은 이유).
+// ⛔⛔ [2026-08-17] 옛 공식은 **한국 폰에서만** 하루 어긋났다 — `getTimezoneOffset()` 을 더하면
+//    KST 폰(−540)에서 +9시간이 «상쇄»돼 UTC 가 나온다. 0시~9시 사이엔 어제가 된다.
+//    `Date.now()` 는 이미 UTC 기준이고 `toISOString()` 도 UTC 로 찍으니 **그냥 +9시간**이면 된다.
+//    📌 `weekly.js`·`basics.js` 에도 같은 공식이 있었다 — 셋 다 고쳤다(창업자 폰 캡처로 잡음).
 export const todayKST = () =>
-  new Date(Date.now() + (9 * 60 + new Date().getTimezoneOffset()) * 60000).toISOString().slice(0, 10)
+  new Date(Date.now() + 9 * 60 * 60000).toISOString().slice(0, 10)
 
 const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000)
 
