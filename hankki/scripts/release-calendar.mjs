@@ -28,8 +28,9 @@ const APP = existsSync(join(ROOT, 'hankki/src')) ? join(ROOT, 'hankki') : ROOT
 const read = (p) => { try { return readFileSync(join(APP, p), 'utf8') } catch { return '' } }
 
 // ⏰ 오늘은 **무조건 KST** — 컨테이너는 UTC라 그냥 쓰면 하루 어긋난다.
-export const todayKST = () =>
-  new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })   // sv-SE = YYYY-MM-DD
+//    ⭐ [2026-08-17] 여기서 «만들지» 않는다 — 날짜는 `src/today.js` 한 곳에서만(게이트 `check-kst`).
+import { todayKST, tomorrowKST } from '../src/today.js'
+export { todayKST }
 const dday = (d, from = todayKST()) => Math.round((Date.parse(d) - Date.parse(from)) / 86400000)
 const items = (s) => [...s.matchAll(/'([a-z0-9_]+)'/gi)].map((m) => m[1])
 
@@ -106,7 +107,42 @@ function promises() {
   return out
 }
 
-export const gates = () => [...drawer(), ...cards(), ...promises()].sort((a, b) => a.date.localeCompare(b.date))
+// ── ④ 🍳 레시피 — `basics.js` 의 `from:` ＋ `weekly.js` 의 줄 이름 ──────
+//
+// ⛔⛔⛔ **[2026-08-17] 이 달력이 «레시피를 안 보고 있었다» — 그래서 「전날 검수」가 통째로 샜다.**
+//    📮 창업자 *"**전날 검수 못한거는 어떻게잡아? 절대원칙도 무시됐는데?**"*
+//    8/17 에 레시피 5편이 저절로 열렸는데, 8/16 브리핑엔 **「9/1 D-15 · 78컷」만** 떴다.
+//    달력이 ①꾸미기 서랍 ②레꾸자랑 카드 ③유료팩 약속 셋만 읽었기 때문이다.
+//    📌 **「알림이 있다」와 「알림이 «전부»를 본다」는 다른 말이다** — 우리가 이미 배운 것인데 또 밟았다.
+//
+// ⭐ 「그날 열리는 레시피 제목」과 「검수 표시가 붙었나」를 같이 찍는다 —
+//    검수가 안 됐으면 그 자리에서 보인다(＋`check-review` 가 «전날»에 배포를 막는다).
+function recipes() {
+  const 줄이름 = new Map()
+  for (const m of read('src/data/weekly.js').matchAll(/from:\s*'(\d{4}-\d{2}-\d{2})',\s*title:\s*'([^']+)'/g)) {
+    줄이름.set(m[1], [...(줄이름.get(m[1]) || []), m[2]])
+  }
+  const 날짜별 = new Map()
+  for (const m of read('src/data/basics.js').matchAll(/\{\s*\.\.\.base,([\s\S]*?)\n  \},/g)) {
+    const t = m[1].match(/title:\s*'([^']+)'/)
+    const f = m[1].match(/from:\s*'(\d{4}-\d{2}-\d{2})'/)
+    if (!t || !f) continue
+    const r = m[1].match(/review:\s*'([^']*)'/)
+    날짜별.set(f[1], [...(날짜별.get(f[1]) || []), { 제목: t[1], 검수: r ? r[1] : null }])
+  }
+  return [...날짜별].map(([date, 편]) => {
+    const 미검수 = 편.filter((x) => x.검수 !== '창업자')
+    const 줄 = 줄이름.get(date)
+    return {
+      date, where: '🍳 레시피', kind: 'recipe',
+      what: `${줄 ? `${[...new Set(줄)].join(' · ')} — ` : ''}${편.map((x) => x.제목).join(' · ')}`
+        + (미검수.length ? `   ⛔검수 안 받은 것 ${미검수.length}편` : '   ✅검수 완료'),
+      keys: 편.map((x) => x.제목),
+    }
+  })
+}
+
+export const gates = () => [...drawer(), ...cards(), ...promises(), ...recipes()].sort((a, b) => a.date.localeCompare(b.date))
 export const nextGate = (from = todayKST()) => {
   const up = gates().filter((g) => g.date >= from)
   return up.length ? up.filter((g) => g.date === up[0].date) : []
@@ -118,6 +154,34 @@ const isMain = (process.argv[1] || '').endsWith('release-calendar.mjs')
 const mode = process.argv[2] || ''
 const arg = process.argv[3] || ''
 if (isMain) {
+
+// 📅📅 **`--tomorrow` = 「자동 공개 전날 검수」를 «하루 닫을 때» 강제하는 자리** (2026-08-17)
+//
+// 📮 창업자 = *"**심지어 어제 자기전에 확인하라했는데 네가 안 읽었잖아. 이걸어떻게 강제해?**"*
+//
+// ⛔⛔ **맞는 지적이다** — 창업자는 8/16 밤에 *"내일 여름시원한 것 열리네? 확인만해줘"* 라고
+//    «말로» 알려줬고, 나는 `/잘자` 를 돌리면서도 그걸 안 했다.
+//    `/잘자` 순서(복기·정리·점검·청소·아카이브·저장)에 **「내일 열리는 것」 칸이 아예 없었다.**
+//
+// ⭐ 그래서 `/잘자` 가 이걸 부르고, **검수 안 된 레시피가 내일 열리면 exit 1 로 죽는다.**
+//    ＝ 하루를 «닫을 수 없다». 규칙으로 부탁하던 것이 장치가 된다.
+if (mode === '--tomorrow') {
+  const 내일 = tomorrowKST()
+  const g = gates().filter((x) => x.date === 내일)
+  if (!g.length) { console.log(`✅ 내일(${내일}) 저절로 열리는 것 없음`); process.exit(0) }
+  console.log(`📅📅 **내일(${내일}) 저절로 열린다** — 절대원칙: «오늘» 검수한다\n`)
+  g.forEach((x) => console.log(`   · ${x.where} — ${x.what}${x.todo ? '' : `  (${x.keys.length})`}`))
+  const 미검수 = g.filter((x) => x.kind === 'recipe' && /검수 안 받은 것/.test(x.what))
+  if (미검수.length) {
+    console.log(`\n⛔⛔ 검수 안 받은 레시피가 «내일» 열린다 — 오늘 안에 창업자 검수를 받을 것.`)
+    console.log(`   👉 창업자에게 실물을 보여 주고, 확인받으면 그 편에 review: '창업자', 를 붙인다.`)
+    console.log(`   ⛔ 내가 잘 썼다고 생각해서 붙이는 표시가 아니다.`)
+    process.exit(1)
+  }
+  console.log(`\n   ⚠️ 레시피 검수는 끝났다. 그림·카드는 «고화질 전수»로 눈으로 볼 것:`)
+  console.log(`      node hankki/scripts/release-calendar.mjs --on ${내일}`)
+  process.exit(0)
+}
 
 if (mode === '--on') {
   const g = gates().filter((x) => x.date === arg)

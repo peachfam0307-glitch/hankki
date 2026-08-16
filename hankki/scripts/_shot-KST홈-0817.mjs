@@ -41,10 +41,14 @@ const 찍기 = async (tz, 이름) => {
   }`)
   await p.goto('http://127.0.0.1:4391/hankki/', { waitUntil: 'networkidle' })
   await p.waitForTimeout(1400)
+  // ⛔⛔ 첫 판이 **글자 「이번 주 제철」로 찾아서 «(못 찾음)»** 이 나왔다.
+  //    그 글자는 `HomeScreen` 의 «기본값»이고, 8/17 주는 `kicker: KICKER_SPECIAL` 이라
+  //    화면엔 **「이번 주 특별한 한끼」**로 뜬다. 📌 규칙 18 — 「없다」가 아니라 «내가 딴 걸 찾았다».
+  //    ✅ 그래서 글자가 아니라 **구조(`.week-pair`)** 로 잡는다 — 문구가 바뀌어도 안 낡는다.
   const 제철 = await p.evaluate(() => {
-    const el = [...document.querySelectorAll('*')].find((e) => e.textContent.trim() === '이번 주 제철')
-    const box = el?.closest('div')?.parentElement
-    return box ? box.innerText.split('\n').slice(0, 3).join(' / ') : '(못 찾음)'
+    const box = document.querySelector('.week-pair')
+    if (!box) return '(주간 박스가 화면에 없다)'
+    return box.innerText.split('\n').filter(Boolean).slice(0, 4).join(' / ')
   })
   console.log(`  ${이름.padEnd(18)} → ${제철}`)
   await p.screenshot({ path: join(OUT, `KST홈-${이름}.png`) })

@@ -18,6 +18,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { generations, recentDocs } from './doc-guard.mjs'
+import { todayKST } from '../src/today.js'
 
 const ROOT = (() => {
   try { return execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim() } catch { return process.cwd() }
@@ -70,7 +71,8 @@ for (const { f } of 요즘.slice(0, 8)) {
 //   ⭐ 그리고 시끄러우면 안 본다 — 우리가 게이트에서 이미 배운 것이다.
 //   ✅ **최근 DAYS 일 안의 주제만** 줄로 찍고, 나머지는 «개수»만 알려 필요할 때 찾게 한다.
 const DAYS = 14
-const 문턱 = new Date(Date.now() - DAYS * 86400000).toISOString().slice(0, 10)
+// ⏰ [2026-08-17] 문턱도 KST 로 — 「어제~오늘 손댄 문서」를 UTC 로 재면 아침에 하루를 통째로 놓친다
+const 문턱 = todayKST(new Date(Date.now() - DAYS * 86400000))
 // ⭐ ②는 «읽을 목록»이 아니라 «찾아보는 표»다 — 지금 하는 일에 걸리는 것만 연다.
 //   그래서 다 찍지 않고 최근 것만 보여준다(나머지는 개수로).
 const 보일수 = 10

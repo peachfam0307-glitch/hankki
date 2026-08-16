@@ -29,8 +29,9 @@ import { SEASON_CUTS } from './cardSeasons'
 //    KST 폰(−540)에서 +9시간이 «상쇄»돼 UTC 가 나온다. 0시~9시 사이엔 어제가 된다.
 //    `Date.now()` 는 이미 UTC 기준이고 `toISOString()` 도 UTC 로 찍으니 **그냥 +9시간**이면 된다.
 //    📌 `weekly.js`·`basics.js` 에도 같은 공식이 있었다 — 셋 다 고쳤다(창업자 폰 캡처로 잡음).
-export const todayKST = () =>
-  new Date(Date.now() + 9 * 60 * 60000).toISOString().slice(0, 10)
+// ⭐⭐ [2026-08-17] 공식을 여기서 «없앴다» — `src/today.js` 한 곳에만 둔다(창업자 절대원칙).
+import { todayKST } from '../today.js'   // ⛔ re-export 만 하면 이 파일 안에서 못 쓴다
+export { todayKST }
 
 const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000)
 

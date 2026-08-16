@@ -181,8 +181,16 @@ const KST = 9 * 60 // 분
 //   ⛔⛔ **검사가 UTC 컨테이너에서 도니 계속 초록불이었다.** 「내 화면에선 되는데 폰에서 안 된다」.
 //      🔒 그래서 `_repro-KST날짜-0817.mjs` 가 **KST 폰을 흉내내서** 잰다. UTC 에서만 재면 영영 못 잡는다.
 //   ⚠️ 같은 공식이 `whatsnew.js`·`basics.js` 에도 있었다 — **셋 다 고쳤다.**
-export const todayKST = (now = new Date()) =>
-  new Date(now.getTime() + 9 * 60 * 60000).toISOString().slice(0, 10)
+//
+// ⭐⭐ **[2026-08-17] 공식을 여기서 «없앴다» — `src/today.js` 한 곳에만 둔다.**
+//   📮 창업자 *"한국시간은 정확하게 고쳐. 반복되지않게. 절대원칙. **강제할수있게 만들어**"*
+//   흩어져 있으면 «한 곳만 고치고 끝났다고 말하게 된다» — 실제로 그랬다.
+//   🔒 `scripts/check-kst.mjs` 가 「`today.js` 밖에서 날짜를 만들면」 배포를 막는다.
+// ⛔ re-export «만» 하면 이 파일 «안»에서는 못 쓴다 — 실제로 그렇게 짰다가
+//    `weeksLeft()` 가 `todayKST is not defined` 로 죽었다. ⚠️**빌드는 exit 0 이었다**(런타임 오류라).
+//    📌 「빌드 통과」가 「돈다」는 뜻이 아니다 — 노드 검사(`check-weekly`)가 잡았다.
+import { todayKST } from '../today.js'
+export { todayKST }
 
 // 이번 주 한 줄. 없으면 `null` → **홈에서 줄을 아예 안 그린다.**
 // 🍳🍳 우리집레시피 — 창업자가 실제로 해먹는 레시피. 제철 줄과 «별개» 줄이다.

@@ -19,6 +19,7 @@
 import { readFileSync, readdirSync, existsSync, statSync, writeFileSync } from 'node:fs'
 import { inflateSync } from 'node:zlib'
 import { join } from 'node:path'
+import { todayKST } from '../src/today.js'
 
 // PNG 알파 채널만 필요해서 최소 디코더를 직접 짰다(의존성 없이 CI에서도 돌게).
 // 우리 스티커는 전부 8비트 RGBA(color type 6) — 그 외 형식이면 조용히 건너뛴다.
@@ -140,9 +141,13 @@ for (const rel of stock) {
 }
 
 // ── 계산 ─────────────────────────────────────────────────────────────────
-const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
-const ymd = (d) => d.toISOString().slice(0, 10)
-const locked = (g) => g.from && g.from > ymd(today)
+// ⛔⛔ [2026-08-17] 여기도 **같은 뿌리의 버그**였다 —
+//    `new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))` 는
+//    KST «문자열»을 만든 뒤 다시 파싱하는데, 그 파싱이 **머신의 로컬 시간대로** 읽힌다.
+//    UTC 컨테이너에선 우연히 맞았지만 KST 머신에서 돌리면 9시간이 또 밀린다.
+//    ⭐ 이제 날짜는 `src/today.js` 한 곳에서만 만든다(게이트 `check-kst` 가 강제).
+const 오늘 = todayKST()
+const locked = (g) => g.from && g.from > 오늘
 
 const byTab = {}
 for (const g of groups) (byTab[g.tab] = byTab[g.tab] || []).push(g)
@@ -188,7 +193,7 @@ const out = []
 const p = (s = '') => out.push(s)
 const TABNAME = { bgtape: '배경', frame: '프레임', tape: '마테', deco: '데코', notetext: '글자', buddies: '친구들', food: '재료' }
 
-p(`# 🗂 꾸미기 자산 현황 (${ymd(today)} KST · 자동 집계)`)
+p(`# 🗂 꾸미기 자산 현황 (${오늘} KST · 자동 집계)`)
 p()
 p('> ⚠️ 이 문서는 **`npm run assets` 로 다시 뽑는다.** 손으로 고치지 말 것 — 코드·파일을 직접 센 값이다.')
 p()

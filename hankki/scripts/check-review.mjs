@@ -37,14 +37,30 @@ if (!편들.length) {
   process.exit(1)
 }
 
-// 오늘(KST) — 컨테이너는 UTC 라 그냥 비교하면 하루 어긋난다
-const 오늘 = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10)
-const 열린것 = 편들.filter((r) => !r.from || r.from <= 오늘)
-const 안된것 = 열린것.filter((r) => r.review !== '창업자')
+// ⏰⏰⏰ **[2026-08-17 창업자 절대원칙] 「오늘」이 아니라 «내일»까지 본다.**
+//
+// 📮 창업자 원문 = *"**전날 검수 못한거는 어떻게잡아? 절대원칙도 무시됐는데?**"*
+//
+// ⛔⛔ **2026-08-17 에 이 관문이 「막긴 했는데 늦었다».** 다섯 편이 «이미 열린 뒤»에 막았다.
+//    「날짜가 저절로 여는 문도 전날 검수한다」(절대원칙 2026-08-01)를 지키려면
+//    **열리기 «전날»에 막혀야** 한다. 오늘 잣대로 재면 영영 «당일»에만 걸린다.
+//
+// ⭐⭐ **고침은 글자 두 개다 — `오늘` → `내일`.**
+//    그러면 8/16 에 배포하려 할 때 「내일 열리는 5편이 검수 전이다」로 **배포가 막힌다.**
+//    ＝ 규칙으로 부탁하던 「전날 검수」가 **장치로 강제된다.**
+//
+// ⏰ 날짜는 `src/today.js` 한 곳에서만 만든다(게이트 `check-kst` 가 강제 · 2026-08-17 사고).
+import { todayKST, tomorrowKST } from '../src/today.js'
 
-console.log(`🛑 검수 관문 — 레시피 ${편들.length}편 중 «열린» 것 ${열린것.length}편`)
+const 오늘 = todayKST()
+const 내일 = tomorrowKST()
+const 열린것 = 편들.filter((r) => !r.from || r.from <= 내일)
+const 안된것 = 열린것.filter((r) => r.review !== '창업자')
+const 내일열림 = (r) => r.from === 내일
+
+console.log(`🛑 검수 관문 — 레시피 ${편들.length}편 중 «열린 것 ＋ 내일 열릴 것» ${열린것.length}편 (오늘 ${오늘} · 내일 ${내일})`)
 if (!안된것.length) {
-  console.log('   ✅ 열린 편은 모두 창업자 검수 표시가 있다')
+  console.log('   ✅ 열린 편도 내일 열릴 편도 모두 창업자 검수 표시가 있다')
   process.exit(0)
 }
 
@@ -55,12 +71,17 @@ const 유예 = readFileSync(join(ROOT, 'scripts/review-allow.json'), 'utf8')
 const 봐준다 = new Set(JSON.parse(유예).검수대기)
 const 막힘 = 안된것.filter((r) => !봐준다.has(r.title))
 
-for (const r of 안된것) console.log(`   ${막힘.includes(r) ? '⛔' : '⏳'} ${r.title} (from ${r.from || '없음'})`)
+for (const r of 안된것) {
+  const 표 = 막힘.includes(r) ? '⛔' : '⏳'
+  const 때 = 내일열림(r) ? ' 📅 «내일» 열린다 — 오늘 검수받을 것' : ''
+  console.log(`   ${표} ${r.title} (from ${r.from || '없음'})${때}`)
+}
 if (!막힘.length) {
   console.log(`\n   ⏳ ${안된것.length}편이 «검수 대기» 목록에 있다 — 하나씩 창업자 검수를 받고 목록에서 뺄 것.`)
   process.exit(0)
 }
-console.log(`\n⛔⛔ 검수 안 받은 레시피 ${막힘.length}편이 «열려» 있다 — 배포를 막는다.`)
+const 내일것 = 막힘.filter(내일열림).length
+console.log(`\n⛔⛔ 검수 안 받은 레시피 ${막힘.length}편${내일것 ? ` (그중 ${내일것}편은 «내일» 열린다)` : ''} — 배포를 막는다.`)
 console.log('   👉 창업자에게 실물(앱 화면)을 보여 주고, 확인받으면 그 편에 `review: \'창업자\',` 를 붙일 것.')
 console.log('   ⛔ 내가 잘 썼다고 생각해서 붙이는 표시가 아니다.')
 process.exit(1)
