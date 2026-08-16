@@ -64,7 +64,14 @@ const 덮개 = await page.evaluate(() => {
 })
 console.log('  · 화면 한가운데 =', 덮개)
 
-const 찍기 = async (이름) => {
+// 🏷🏷 **파일 이름에 `태블릿-` 을 붙인다** (2026-08-16)
+//   ⛔ 전엔 폰 판(`renders-v4/`)과 «이름이 똑같았다** — `04-레꾸.png` 가 두 곳에 있었다.
+//      그래서 배포 게이트(`latest-map --check`)가 **「옛 세대가 되살아났다」로 읽고 배포를 막았다.**
+//   ⭐ 게이트가 틀린 게 아니다 — **폴더가 달라도 같은 이름이면 사람도 헷갈린다.**
+//      창업자가 스토어에 올릴 때 「이게 폰 거야 패드 거야」를 파일 이름만 보고 알아야 한다.
+//   📌 이름 원칙 그대로 = **「무엇이 들어 있는지」를 이름이 말해야 한다**(CLAUDE.md).
+const 찍기 = async (이름0) => {
+  const 이름 = `태블릿-${이름0}`
   // ⛔ 웹폰트가 덜 실린 채 찍으면 손글씨 칩이 **빈 회색 알약**으로 나온다 —
   //    07-일기 첫 판이 그랬다(글씨체 고르는 칸 5개가 텅 빈 회색으로 찍혔다 · 규칙 21 로 잡았다).
   await page.evaluate(() => document.fonts.ready)
@@ -184,53 +191,49 @@ if (await 냉장고.count()) {
 //   ✅ 그래서 빈 종이(「오늘 일기 쓰기」)가 아니라 **그 샘플을 열어서** 찍는다 —
 //      사진·스티커 5개·포스트잇·모션이 다 붙어 있어 «태블릿에서 이렇게 넓게 꾸민다»가 한 장에 다 보인다.
 //   ⛔ 스샷용 «가짜 일기»를 새로 만들지는 않는다 — 앱에 이미 있는 것을 그대로 연다.
+// ⭐⭐⭐ **[2026-08-16 바꿈] 이제 「일기 «탭»」을 찍는다 — 일기 «한 장»이 아니라.**
+//   📮 창업자 = *"다른건 다 가로인데 **일기만 세로라 이상해**"* (바로 이 스샷을 보고 한 말이다)
+//      → *"**왼쪽에 달력을 붙이던가 꽉차보여야해**"*
+//      → 확정 = *"**달력왼쪽 오른쪽에 만든음식이 나오고**, 달력 일기를 클릭하면 일기＋꾸미기가 나와야해"*
+//   ✅ 오늘 그 화면을 만들었다(`styles.css` `.pad.log-2col`) — **왼쪽 달력 · 오른쪽 만든 음식.**
+//      일기 «한 장»은 3:4 세로 종이라 가로 화면에서 좌우가 비는 게 «구조상» 어쩔 수 없다.
+//      ⭐ 그 대신 **프로모 영상**이 일기 한 장과 일꾸(꾸미기)를 담는다 — 자산끼리 역할을 나눈다.
+//
+// 🍚 **달력에 요리 기록을 심는다** (창업자 *"달력에 이미지 몇개는 넣어둬야하고"* · *"여러개 붙여둬"*)
+//   ⛔⛔ 옛 주석의 *"31칸이 거의 다 빈 화면이라 안 찍는다"* 는 **이 씨앗으로 사라진 이유**다.
+//      기록을 심으니 칸마다 그날 만든 음식 그림이 뜬다 — 창업자 *"달력 옆에는 만든 이모지가 떠야하는건데"*.
+//   ⛔ **앱 씨앗 데이터는 안 건드린다** — 찍을 때만 localStorage 에 심는다(유저에겐 안 나간다).
+//   ⚠️ 날짜는 «오늘에서 며칠 전»으로 — 고정 날짜는 달이 바뀌면 달력에서 사라진다.
 await page.goto('http://127.0.0.1:4381/hankki/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(1300)
+await page.evaluate((목록) => {
+  const raw = localStorage.getItem('hankki:v1'); if (!raw) return
+  const st = JSON.parse(raw)
+  const 이제 = Date.now()
+  st.diary = [
+    ...목록.map((x, i) => ({ id: `shot-cook-${i}`, at: 이제 - x[0] * 86400000, title: x[1], rating: 0 })),
+    ...(st.diary || []),
+  ]
+  localStorage.setItem('hankki:v1', JSON.stringify(st))
+}, [[1, '수제 떡갈비'], [2, '목살돼지갈비구이'], [3, '감바스'], [5, '소불고기'], [6, '콩국수'], [8, '된장찌개'], [9, '제육볶음'], [12, '소고기 미역국']])
+await page.goto('http://127.0.0.1:4381/hankki/', { waitUntil: 'networkidle' })
+await page.waitForTimeout(1500)
 await 탭('일기')
-// ⛔ 탭 첫 화면(달력)은 «안» 찍는다 — 일기가 한 장이라 **31칸이 거의 다 빈** 화면이다(찍어서 봤다).
-//    창업자가 지적한 그 «휑함»이 그대로다. 보여줄 것은 달력이 아니라 **일기 한 장**이다.
-const 일기칸 = page.locator('.grid-card, .cal-diary, .mini-card').first()
-if (await 일기칸.count()) { await 일기칸.click(); await page.waitForTimeout(1800) }
-else console.log('  ⛔ 일기 목록에서 샘플 칸을 못 찾았다')
-await page.waitForTimeout(2600)
+await page.waitForTimeout(2200)
 
-// 📐📐 **아래 잘림** — 창업자 *"일기 아래 잘림 확인"*. 세로 종이가 가로 화면보다 길어 밑이 썰린다.
-//   ⛔ 종이 «요소만» 찍어서 피하지 않는다 — 그러면 「앱 화면」이 아니라 「종이 그림」이 된다.
-//   ✅ 넘치는 만큼 **굴려서** 종이가 다 들어오게 한 뒤 화면을 통째로 찍는다(유저도 그렇게 본다).
-const 잘림 = await page.evaluate(() => {
-  const 종이 = document.querySelector('.paper-box') || document.querySelector('.paper')
-  if (!종이) return { 못찾음: true }
-  const r = 종이.getBoundingClientRect()
-  const 넘침 = Math.ceil(r.bottom - window.innerHeight + 14)
-  if (넘침 > 0) {
-    // 굴러가는 칸을 «찾아서» 굴린다 — 어느 조상이 스크롤을 쥐는지 코드가 정하지 않는다
-    let n = 종이.parentElement
-    while (n && n !== document.body) {
-      if (n.scrollHeight > n.clientHeight + 4) { n.scrollBy(0, 넘침); break }
-      n = n.parentElement
-    }
-    if (!n || n === document.body) window.scrollBy(0, 넘침)
-  }
-  return { 넘침, 종이: `${Math.round(r.width)}x${Math.round(r.height)}`, 화면높이: window.innerHeight }
+// ⭐ 「2단이 실제로 섰나」를 «자리»로 확인한다 — 안 서면 세로판을 찍게 되고 그게 원래 문제였다(규칙 18 ⓘ)
+const 이단 = await page.evaluate(() => {
+  const r = (q) => { const el = document.querySelector(q); if (!el) return null; const b = el.getBoundingClientRect(); return { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width) } }
+  const 달력 = r('.log-cal'), 오른 = r('.log-main')
+  return { 달력, 오른, 그림: document.querySelectorAll('.cal-food').length }
 })
-console.log(`  · 일기 종이 ${잘림.종이} · 화면 ${잘림.화면높이} → ${잘림.넘침}px 넘쳐서 그만큼 굴렸다`)
-await page.waitForTimeout(800)
-// ⛔ 굴리고도 여전히 잘리면 «시끄럽게» 알린다 — 조용히 잘린 걸 올리는 게 제일 나쁘다
-const 남은잘림 = await page.evaluate(() => {
-  const 종이 = document.querySelector('.paper-box') || document.querySelector('.paper')
-  if (!종이) return -1
-  const r = 종이.getBoundingClientRect()
-  return Math.max(0, Math.ceil(r.bottom - window.innerHeight))
-})
-if (남은잘림 > 0) console.log(`  ⛔ 일기 종이가 아직 ${남은잘림}px 잘린다 — 이 판은 창업자에게 그대로 보내지 말 것`)
-// ⛔ 제목·본문은 `<textarea>`·`<input>` 의 **value** 라 `innerText` 로는 «안 잡힌다»
-//    (`_shot-샘플일기-0813.mjs` 가 이걸로 한 번 「제목 없음」이라 거짓 보고했다)
-const 일기맞나 = await page.evaluate(() => {
-  const 글칸 = [...document.querySelectorAll('textarea, input')].map((t) => t.value).join('\n')
-  return 글칸.includes('방학언제끝나냐') || document.body.innerText.includes('돌밥돌밥')
-})
-if (!일기맞나) console.log('  ⛔ 07-일기 — 화면에 샘플 일기가 없다. 딴 화면을 찍을 뻔했다')
-else await 찍기('07-일기')
+const 나란히 = !!(이단.달력 && 이단.오른 && 이단.달력.x + 이단.달력.w <= 이단.오른.x + 8 && Math.abs(이단.달력.y - 이단.오른.y) < 40)
+console.log(`  · 일기 탭 2단 = ${나란히 ? '✅ 왼쪽 달력 · 오른쪽 만든 음식' : '⛔ 2단이 안 섰다'} · 달력 그림 ${이단.그림}개`)
+if (!나란히 || 이단.그림 < 5) console.log('  ⛔ 07-일기 — 이 판은 창업자에게 그대로 보내지 말 것')
+
+// 🗄 옛 판에 있던 「일기 종이 아래 잘림」 처리는 여기서 **뺐다** — 이제 일기 «한 장»을 안 연다.
+//    (그 처리는 `styles.css` `.paper-box` 고침으로 이미 0px 이 됐고, 필요하면 git 히스토리에 있다)
+await 찍기('07-일기')
 
 // ⑧⑨ 요리 모드 ＋ 타이머 — 창업자 *"요리시작해서 타이머 설정 그런것도 찍자."* ·
 //    *"**시간 카운트되고 요리모드 되는거**"*
