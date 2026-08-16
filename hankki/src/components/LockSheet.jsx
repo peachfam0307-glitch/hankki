@@ -100,7 +100,11 @@ export default function LockSheet({ mode = 'check', onClose, onDone }) {
     onDone()
   }
 
-  const 제목 = { first: '비번 네 자리를 정해줘', again: '한 번 더 눌러줘', hint: '잊었을 때 볼 힌트', check: '비번 네 자리' }[step]
+  // 🗣🗣 **[2026-08-16] 화면 글자는 «해요체»다** — 창업자 제보 *"일기 잠금 안내 반말임 (잠금푸는 안내도)"*
+  //   ⭐ 앱은 처음부터 「~어요」로 말한다(「비번이 안 맞아요」·「잠가 둔 일기예요」).
+  //      그런데 **이 시트만 반말이 섞여** 있었다 — 같은 화면 안에서 말투가 튀면 남의 글처럼 읽힌다.
+  //   ⛔ 아래 «화면에 나가는 글자»에는 반말을 쓰지 않는다(주석·변수명은 반말이어도 된다).
+  const 제목 = { first: '비번 네 자리를 정해 주세요', again: '한 번 더 눌러 주세요', hint: '잊었을 때 볼 힌트', check: '비번 네 자리' }[step]
 
   return (
     <Portal>
@@ -131,7 +135,7 @@ export default function LockSheet({ mode = 'check', onClose, onDone }) {
                 />
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button className="press" disabled={busy} onClick={힌트마치기} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14, border: 'none' }}>
-                    안 쓸래
+                    안 쓸래요
                   </button>
                   <button className="press" disabled={busy} onClick={힌트마치기} style={{ flex: 1.5, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 14.5, border: 'none' }}>
                     잠그기
@@ -147,7 +151,7 @@ export default function LockSheet({ mode = 'check', onClose, onDone }) {
                 <div style={{ minHeight: 34, textAlign: 'center', fontSize: 12.5, lineHeight: 1.5, padding: '4px 0 6px', color: err ? 'var(--danger)' : 'var(--text-sub)', fontWeight: err ? 700 : 500 }}>
                   {err || (step === 'check'
                     ? (저장된힌트 ? `힌트 · ${저장된힌트}` : '이 일기는 잠겨 있어요')
-                    : step === 'first' ? '이 비번으로 일기를 잠가' : '틀리지 않게 한 번 더')}
+                    : step === 'first' ? '이 비번으로 일기를 잠가요' : '틀리지 않게 한 번 더')}
                 </div>
                 <숫자판 onNum={눌러} onBack={() => { setPinText(pin.slice(0, -1)); setErr('') }} disabled={busy} />
 
@@ -170,17 +174,17 @@ export default function LockSheet({ mode = 'check', onClose, onDone }) {
                   <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
                     {!잊음 ? (
                       <button className="press" onClick={() => set잊음(true)} style={{ width: '100%', padding: '9px 0', background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: 12.5, fontWeight: 600, textDecoration: 'underline' }}>
-                        비번을 잊었어
+                        비번을 잊었어요
                       </button>
                     ) : (
                       <>
                         <div style={{ fontSize: 12.5, lineHeight: 1.6, color: 'var(--text-sub)', marginBottom: 10 }}>
-                          되찾는 길이 없어서 <b style={{ color: 'var(--danger)' }}>잠금을 아예 없애는 것</b>밖에 안 돼.
-                          <br />일기 글과 사진은 <b style={{ color: 'var(--brown)' }}>그대로 남아</b> — 잠긴 날들이 전부 다시 열릴 뿐이야.
+                          되찾는 길이 없어서 <b style={{ color: 'var(--danger)' }}>잠금을 아예 없애는 것</b>밖에 안 돼요.
+                          <br />일기 글과 사진은 <b style={{ color: 'var(--brown)' }}>그대로 남아요</b> — 잠긴 날들이 전부 다시 열릴 뿐이에요.
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button className="press" onClick={() => set잊음(false)} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 13.5, border: 'none' }}>
-                            그만둘래
+                            그만둘래요
                           </button>
                           <button className="press" onClick={() => { resetAllLocks(); onDone({ reset: true }) }} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 700, fontSize: 13.5, border: 'none' }}>
                             잠금 없애기
