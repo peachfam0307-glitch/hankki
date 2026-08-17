@@ -33,10 +33,24 @@
 import { allBasicRecipes } from '../src/data/basics.js'
 
 // 문장 «진짜 끝»만 남긴다 — 끝의 괄호 설명 · 마침표 · 느낌표 · 물결표를 뗀다
-const tail = (s) => String(s).trim()
-  .replace(/\s*\([^)]*\)\s*$/, '')   // 「…볶아요. (팁)」 → 「…볶아요.」
-  .replace(/[.!~]+$/, '')            // 「…볶아요.」      → 「…볶아요」
-  .trim()
+//
+// ⛔⛔ [2026-08-17] 첫 판은 «한 번씩만» 떼서 **괄호 «뒤»에 마침표가 오면 못 읽었다.**
+//    창업자가 검수로 준 문장이 정확히 그 모양이었다 —
+//    「…노릇하게 구워져요(너무 두껍지 않게 잘라요).」
+//    → 괄호 규칙은 `$` 에 안 맞아 그냥 지나가고, 마침표만 떼서 「…잘라요)」로 끝나 **한다체로 잡혔다.**
+//    ⭐ 창업자가 준 «맞는 문장»을 게이트가 막으면 그건 게이트가 틀린 것이다(시끄러운 게이트는 죽은 게이트).
+//    ✅ 그래서 **더 이상 안 줄어들 때까지 번갈아 뗀다.**
+const tail = (s) => {
+  let t = String(s).trim()
+  for (let i = 0; i < 5; i++) {
+    const 전 = t
+    t = t.replace(/[.!~]+$/, '')          // 「…볶아요.」          → 「…볶아요」
+      .replace(/\s*\([^)]*\)\s*$/, '')    // 「…볶아요 (팁)」      → 「…볶아요」
+      .trim()
+    if (t === 전) break
+  }
+  return t
+}
 
 const bad = []
 for (const r of allBasicRecipes) {
@@ -57,3 +71,40 @@ if (bad.length) {
 }
 
 console.log(`✅ 만드는 법 문체 통일 — 레시피 ${allBasicRecipes.length}개(⭐날짜로 잠긴 주간 레시피 포함), 해요체가 아닌 줄 0`)
+
+// ⑤⑤ **[2026-08-17 창업자 절대원칙] «원문»도 해요체여야 한다.**
+//
+// 📮 창업자 = *"다 문체이상 해요체로 바꾸기"* → *"여름꺼 3개 문체이상이야."*
+//    ＋ *"**완벽하게해. 강제하는 방법을 꼭 만들어**"*
+//
+// ⛔⛔ **위 ①~④ 는 «화면»만 본다** — `allBasicRecipes` 가 이미 `politeSteps()` 를 거친 값이라
+//    **원문이 한다체여도 전부 초록불**이었다(실측: 114편 중 원문 한다체 71 · 섞임 14).
+//    그래서 **앱은 멀쩡한데 내가 만든 검수판이 원문을 그려** 창업자가 «앱에 없는 문제»를 짚었다.
+//    📌 규칙 18 ⓘ 그대로 — 「통과했나」가 아니라 «무엇을 보고 통과했나».
+//
+// ⭐ 원문 = 화면 이면 **어느 쪽을 보여줘도 같다.** 그래서 원문을 본다.
+//    🛠 되돌아갔으면 `node scripts/_문체통일-0817.mjs` 한 번이면 고쳐진다(화면 불변까지 스스로 검증).
+{
+  const { readFileSync } = await import('node:fs')
+  const src = readFileSync(new URL('../src/data/basics.js', import.meta.url), 'utf8')
+  const 줄들 = src.split('\n')
+  let steps안 = false
+  const 원문나쁨 = []
+  for (const l of 줄들) {
+    if (/^\s*steps:\s*\[\s*$/.test(l)) { steps안 = true; continue }
+    if (steps안 && /^\s*\],\s*$/.test(l)) { steps안 = false; continue }
+    if (!steps안 || /^\s*\/\//.test(l)) continue
+    const m = l.match(/^\s*'((?:[^'\\]|\\.)*)',\s*$/)
+    if (!m) continue
+    const t = tail(m[1].replace(/\\n/g, '\n'))
+    if (t && !/요$/.test(t)) 원문나쁨.push(m[1])
+  }
+  if (원문나쁨.length) {
+    console.error(`\n⛔⛔ **원문**에 해요체가 아닌 줄이 ${원문나쁨.length}개 — 화면은 멀쩡해도 «보여주는 판»이 틀려진다.`)
+    for (const s of 원문나쁨.slice(0, 10)) console.error(`   ${s.slice(0, 70)}`)
+    if (원문나쁨.length > 10) console.error(`   … 외 ${원문나쁨.length - 10}줄`)
+    console.error(`\n👉 고치는 법: node scripts/_문체통일-0817.mjs  (바꾼 뒤 «화면이 그대로인지»까지 스스로 검증한다)\n`)
+    process.exit(1)
+  }
+  console.log(`✅ **원문**도 해요체 — 원문 = 화면이라 어느 쪽을 보여줘도 같다`)
+}

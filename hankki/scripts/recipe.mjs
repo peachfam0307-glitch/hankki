@@ -16,44 +16,20 @@
 //   node hankki/scripts/recipe.mjs --from 2026-08-17   ← 그날 열리는 편 전부
 //   node hankki/scripts/recipe.mjs --sample        ← 샘플 표시가 붙은 편
 //   node hankki/scripts/recipe.mjs --unreviewed    ← 검수 표시가 없는데 열린 편
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { todayKST } from '../src/today.js'
+import { allBasicRecipes } from '../src/data/basics.js'
 
-const ROOT = new URL('..', import.meta.url).pathname
-const src = readFileSync(join(ROOT, 'src/data/basics.js'), 'utf8')
-
-/** `basics.js` 한 편을 통째로 뽑는다. ⛔여러 곳에서 따로 파싱하지 말고 이걸 쓴다. */
-export const 레시피들 = () => {
-  const out = []
-  for (const m of src.matchAll(/\{\s*\.\.\.base,([\s\S]*?)\n  \},/g)) {
-    const b = m[1]
-    const g = (re) => { const x = b.match(re); return x ? x[1] : null }
-    const 배열 = (key) => {
-      const x = b.match(new RegExp(`${key}:\\s*\\[([\\s\\S]*?)\\n?\\s*\\],`))
-      if (!x) return []
-      return [...x[1].matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((q) => q[1].replace(/\\n/g, '\n').replace(/\\'/g, "'"))
-    }
-    const id = g(/id:\s*'([^']+)'/)
-    if (!id) continue
-    out.push({
-      id,
-      title: g(/title:\s*'([^']+)'/),
-      from: g(/from:\s*'(\d{4}-\d{2}-\d{2})'/),
-      review: g(/review:\s*'([^']*)'/),
-      sample: /\bsample:\s*true/.test(b),
-      icon: g(/icon:\s*'([^']+)'/),
-      folder: g(/folder:\s*'([^']+)'/),
-      time: g(/time:\s*(\d+)/),
-      servings: g(/servings:\s*(\d+)/),
-      difficulty: g(/difficulty:\s*'([^']+)'/),
-      ingredients: 배열('ingredients'),
-      steps: 배열('steps'),
-      memo: (g(/memo:\s*'((?:[^'\\]|\\.)*)'/) || '').replace(/\\n/g, '\n').replace(/\\'/g, "'"),
-    })
-  }
-  return out
-}
+/**
+ * 레시피 전부 — ⭐⭐ **앱이 화면에 쓰는 «바로 그 값»이다.**
+ *
+ * ⛔⛔ [2026-08-17] 첫 판은 `basics.js` 를 **글자로 파싱**했다. 그래서 `politeSteps()` 를
+ *    «거치지 않은» 원문이 나왔고, 그걸로 만든 검수판이 앱 화면과 달랐다.
+ *    창업자는 **앱에 없는 문체 문제**를 세 편이나 짚느라 시간을 썼다
+ *    (*"다 문체이상 해요체로 바꾸기"* → *"여름꺼 3개 문체이상이야."*).
+ * ⭐ 이제 앱과 «같은 모듈»을 부른다 — 흉내가 아니라 그 값 자체라 어긋날 수가 없다.
+ * ⛔ **검수판·조회 도구는 반드시 이걸 쓴다. 글자로 다시 파싱하지 말 것.**
+ */
+export const 레시피들 = () => allBasicRecipes
 
 const isMain = (process.argv[1] || '').endsWith('recipe.mjs')
 if (!isMain) { /* import 용 */ } else {
