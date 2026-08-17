@@ -40,6 +40,7 @@ await pg.waitForTimeout(1500)
 
 // 장보기 탭으로
 await pg.getByRole('button', { name: /장보기|장바구니/ }).first().click().catch(() => {})
+await pg.waitForTimeout(600)
 await pg.waitForTimeout(900)
 
 const 본문 = await pg.evaluate(() => document.body.innerText)

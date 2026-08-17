@@ -12,6 +12,7 @@ import uiGomShop from '../assets/ui/gom_shop.png' // 🐻 장보기 꼬르곰(�
 //       ⭐ 넷 중 이걸 고른 이유 = 이 화면이 «장보기 리스트»라 그림이 화면 뜻과 같다.
 //         (시장 컷은 배경 진열대가 붙어 38px 에선 뭉치고, 카트 컷은 가로로 길어 상단바에 안 맞는다)
 import uiPengShop from '../assets/ui/wave/pn_shoplist.png'
+import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png' // 👍 「이번 주 픽」 소제목 (창업자 2026-08-17)
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 
 // 장보기 탭 첫 방문 코치마크 — 숨은 기능 안내(창업자 딸 아이디어 ⭐)
@@ -562,7 +563,19 @@ function Curation() {
               <div className="empty">{'찾는 재료가 없어요.\n이름이나 초성(ㄱㅈ)으로 찾아보세요.'}</div>
             )
           ) : curCat === 'pick'
-            ? picks.map((it) => Card(it))
+            ? (
+              <>
+                {/* 🐻 [창업자 2026-08-17] *"스티커도 하나 달아주면 좋을 것 같아(이번주픽에)"*
+                    ⭐ 픽엔 원래 «소제목이 없어» 카드만 나열됐다 → 다른 갈래와 «같은 문법»으로 소제목 줄을 만들고 거기 붙인다.
+                    ⛔ `gom_shop` 은 이 화면 헤더(「주부의 장바구니」)에 이미 있다 — 한 화면에 같은 곰이 두 번이면 어색하다.
+                    ✅ `gom_thumbsup`(엄지척) = 「이번 주 픽 ＝ 내가 고른 추천」이라는 뜻이 그대로 읽힌다. */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '2px 2px 8px' }}>
+                  <img src={uiGomThumb} alt="" draggable={false} style={{ width: 26, height: 26, objectFit: 'contain' }} />
+                  이번 주 픽
+                </div>
+                {picks.map((it) => Card(it))}
+              </>
+            )
             : byGroup.map((G) => {
                 const total = G.cats.reduce((s, c) => s + c.items.length, 0)
                 // ⛔⛔ 2026-08-05 — 예전엔 큰 칸을 «직접 고르면» 안 접었다(«보려고 고른 것»이라 봤다).

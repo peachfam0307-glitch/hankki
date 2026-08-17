@@ -11,11 +11,28 @@
 // ⛔ 연중 주차로 세면 12월 말~1월 초에 튄다.
 export const weekNo = (ymd) => Math.floor(Date.parse(`${ymd}T00:00:00Z`) / 604800000)
 
-// 이번 주 픽 = ①이번 주 레시피가 쓰는 제품 ②모자라면 주차로 밀어 채운다.
+// 🆕 「새로 올린 것」으로 치는 기간 = **4주**.
+//   ⭐ 날짜로 재니 **저절로 낡는다** — 손으로 `new: true` 를 지울 일이 없다(지우는 걸 잊으면 영영 새 것이 된다).
+export const NEW_WEEKS = 4
+export const 새것인가 = (since, today) =>
+  !!(since && today && weekNo(today) - weekNo(since) >= 0 && weekNo(today) - weekNo(since) < NEW_WEEKS)
+
+// 이번 주 픽 = ①이번 주 레시피가 쓰는 제품 ②**새로 올린 것** ③모자라면 주차로 밀어 채운다.
 //   matched = ①의 결과(호출부가 넘긴다) · products = 전체 제품
+//
+// 🆕🆕 [창업자 2026-08-17] *"주부 장바구니 이번주 픽은 **새로 열린거 우선으로** 올려줘"*
+//   ⭐⭐ 왜 필요한가 — 회전(`off`)은 **전체 목록을 한 바퀴 도는** 구조라, 새 제품을 올려도
+//      그 차례가 오기까지 **몇 주~몇 달**이 걸린다. 창업자가 설명을 써서 올린 그 주에 안 뜨면
+//      **「올린 보람」이 없다.** 그래서 새 것은 회전을 «건너뛰고» 앞에 선다.
+//   ⏰ 4주가 지나면 저절로 회전 대열로 돌아간다(`새것인가`).
+//   ⛔ 순서는 **①레시피가 쓰는 것 → ②새 것 → ③회전** — ①이 먼저인 건 안 바꾼다.
+//      그건 «이번 주 요리에 실제로 필요한 것»이라 광고가 아니라 안내다.
 export const pickRotate = ({ products = [], matched = [], today = '', n = 4 } = {}) => {
   const 담김 = new Set(matched.map((p) => p && p.name).filter(Boolean))
-  const 나머지 = products.filter((p) => p && !담김.has(p.name))
+  const 안담김 = products.filter((p) => p && !담김.has(p.name))
+  const 새것 = 안담김.filter((p) => 새것인가(p.since, today))
+  const 나머지 = 안담김.filter((p) => !새것인가(p.since, today))
+  if (새것.length) return [...matched, ...새것, ...나머지].slice(0, n)
   if (!나머지.length) return matched.slice(0, n)
   // ⭐⭐ **한 주에 `n` 칸씩 민다** — 한 칸씩 밀면 4개 중 3개가 다음 주에도 그대로 남는다.
   //    창업자가 *"매주 꼭 바꿔줘"* 라고 한 건 «다른 게 뜬다»는 뜻이지 «하나만 바뀐다»가 아니다.
