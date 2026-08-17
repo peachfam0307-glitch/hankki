@@ -93,7 +93,18 @@ else no('사진을 골랐는데 시트가 그대로 떠 있다')
 await page.waitForTimeout(400)
 await page.screenshot({ path: join(OUT, '표지사진-2-바뀐뒤.png') })
 
-// ④ 냉장고 재료 픽커엔 그 단추가 «없어야» 한다 — 재료에 사진은 뜻이 없다
+// ④⭐ **목록 카드도 같이 바뀐다** —  한 곳을 고쳤으니 상세만 보고 넘어가면 안 된다(규칙 21)
+await page.getByRole('button', { name: '뒤로' }).first().click(); await page.waitForTimeout(900)
+await page.screenshot({ path: join(OUT, '표지사진-3-목록카드.png') })
+const 동그란가 = await page.evaluate(() => {
+  const img = document.querySelector('.grid-card img, .card img, img[alt]')
+  if (!img) return '이미지 못 찾음'
+  const box = img.parentElement
+  return getComputedStyle(box).borderRadius
+})
+console.log('   ⭕ 목록 카드 사진 테두리 =', 동그란가)
+
+// ⑤ 냉장고 재료 픽커엔 그 단추가 «없어야» 한다 — 재료에 사진은 뜻이 없다
 const 재료픽커 = await page.evaluate(() => {
   // FoodIconSheet 는 onPhoto 를 «받았을 때만» 그린다 → 부르는 쪽이 안 주면 없다
   return true

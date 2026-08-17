@@ -40,14 +40,28 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
 
   let inner
   if (showImg) {
+    // 📷📷 [2026-08-17 창업자] *"저 사진을 **이모지랑 똑같이 동그랗게** 만들어주고, **확대 축소도** 가능하게"*
+    //   ⛔ 그 전엔 `objectFit: cover` 로 **네모를 꽉 채웠다.** 그래서 아이콘 표지(가운데 그릇 그림 ＋ 여백)와
+    //      «같은 자리인데 완전히 다른 모양»이 됐다 — 창업자가 표지를 사진으로 바꾸자마자 *"컥."*
+    //   ⭐ 그래서 **아이콘과 «같은 크기»(`iconSize`)로 동그랗게** 놓는다. 값을 새로 정하지 않는다 —
+    //      아이콘이 쓰는 그 값을 그대로 쓰면 **둘이 어긋날 수가 없다.**
+    //   🔍 `imagePos`·`imageZoom` = 원 안에서 어디를 보여줄지. 일기 속지 사진이 쓰는 문법 그대로다
+    //      (`PaperSheet` 의 `<키>Pos`·`<키>Zoom`) — 두 곳이 다른 규칙을 쓰면 한쪽을 고칠 때 다른 쪽이 낡는다.
+    //   ⚠️ `transformOrigin` 을 `objectPosition` 과 **같은 값**으로 준다. 다르면 확대할 때 사진이 옆으로 튄다.
+    const pos = recipe.imagePos || '50% 50%'
+    const z = Number(recipe.imageZoom) > 0 ? Number(recipe.imageZoom) : 1
     inner = (
-      <img
-        src={recipe.image}
-        alt={recipe.title}
-        loading="lazy"
-        onError={() => setFailed(true)}
-        style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
-      />
+      <div style={center}>
+        <div style={{ width: iconSize, aspectRatio: '1 / 1', borderRadius: '50%', overflow: 'hidden', flex: '0 0 auto' }}>
+          <img
+            src={recipe.image}
+            alt={recipe.title}
+            loading="lazy"
+            onError={() => setFailed(true)}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: pos, transform: z === 1 ? undefined : `scale(${z})`, transformOrigin: pos, display: 'block' }}
+          />
+        </div>
+      </div>
     )
   } else if (thumb === 'emoji') {
     inner = <div style={center}><span style={{ fontSize: emojiSize, lineHeight: 1 }}>{recipe.emoji || '🍽️'}</span></div>
