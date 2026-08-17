@@ -80,7 +80,10 @@ let bad = 0
 const ok = (m) => console.log('   ✅', m)
 const no = (m) => { bad++; console.log('   ⛔', m) }
 
-const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium' })
+// ⚠️ 경로를 «박지» 않는다 — /opt/pw-browsers 는 이 컨테이너에만 있고 CI 엔 없다(run #1416 을 그렇게 죽였다).
+//    플레이라이트가 알아서 찾게 두고, 이 컨테이너에서만 env 로 알려준다.
+const CHROMIUM = process.env.SMOKE_CHROMIUM
+const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const page = await b.newPage({ viewport: { width: 360, height: 880 }, deviceScaleFactor: 2 })
 const errors = []
 page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
