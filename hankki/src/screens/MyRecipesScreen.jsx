@@ -335,10 +335,33 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     [entries, dayFilter],
   )
   const pickedYm = dayFilter ? dayFilter.split('-').slice(0, 2).join('-') : null
-  const monthList = useMemo(
-    () => (pickedYm ? entries.filter((e) => ymKey(e.at) === pickedYm) : entries),
-    [entries, pickedYm],
-  )
+  // 🔁🔁 [창업자 2026-08-17] **「그 달」 묶음은 «겹치지 않는다».**
+  //   📮 *"한달치니까 겹치지 않게 하자. **3번 같은 걸 만들면 3번 보이게 되잖아**"*
+  //   ⭐⭐ 창업자가 «한 달»이라는 길이에서 답을 냈다 — 하루면 같은 요리를 두 번 할 일이 드물지만
+  //      **한 달이면 제육볶음을 세 번 한다.** 그대로 세면 같은 그림이 세 칸을 먹고, 그 달에 «무엇을»
+  //      해먹었는지가 오히려 안 보인다. 이 묶음의 목적은 «횟수»가 아니라 «무엇»이다.
+  //      (횟수는 바로 위 통계 띠가 「이번 달 N번」으로 이미 말한다 — 두 번 말할 이유가 없다.)
+  //   ⛔ 겹치는 자리가 «둘»이라 둘 다 막는다 —
+  //      ⑴ 같은 요리를 여러 번 (창업자가 짚은 것) ⑵ 그날 것이 그 달에도 또 (내가 물어본 것)
+  //   ⚠️ 남기는 것은 «가장 최근» 한 판 — `entries` 가 최신순이라 처음 만난 것이 그것이다.
+  //   ⚠️ 같은 요리의 잣대 = **제목**. `recipeId` 는 레시피를 지우면 끊기고, 유저 눈에 보이는 건 제목이다.
+  //   ⛔ 날짜를 «안» 골랐을 땐 손대지 않는다 — 그건 「나의 요리 앨범」이고 한 장씩 쌓이는 게 그 자리의 뜻이다.
+  const monthList = useMemo(() => {
+    if (!pickedYm) return entries
+    const 본것 = new Set()
+    const out = []
+    for (const e of entries) {
+      if (ymKey(e.at) !== pickedYm) continue
+      if (dayKey(e.at) === dayFilter) continue // ⑵ 위 「그날」 묶음에 이미 있다
+      if (본것.has(e.title)) continue          // ⑴ 같은 요리는 한 번만
+      본것.add(e.title)
+      out.push(e)
+    }
+    return out
+  }, [entries, pickedYm, dayFilter])
+  // 🖐 「전체 선택」이 잡을 것 = **화면에 실제로 있는 것 전부**(그날 ＋ 그 달).
+  //    ⛔ `monthList` 하나만 쓰면 그날 묶음이 선택에서 빠진다 — 겹침을 없앤 «뒤»엔 둘이 남남이다.
+  const shownAll = useMemo(() => [...dayList, ...monthList], [dayList, monthList])
   const openRecipe = (e) => {
     if (recipes.some((r) => r.id === e.recipeId)) nav.push({ name: 'detail', id: e.recipeId })
   }
@@ -597,9 +620,11 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                     <div className="album-grid" style={{ marginBottom: 16 }}>{dayList.map(albumTile)}</div>
                   )}
                   {/* 🗓 그 달 머리글 — 아래 앨범이 «무엇의 묶음»인지 말해 준다.
-                      ⛔ 이 줄이 없으면 그날 것과 달 것이 한 덩어리로 보여 더 헷갈린다. */}
+                      ⛔ 이 줄이 없으면 그날 것과 달 것이 한 덩어리로 보여 더 헷갈린다.
+                      ⚠️ 「다른」은 **그날 것이 있을 때만** 붙인다 — 일기만 쓴 날엔 뺀 게 없어서
+                         「다른」이라고 하면 «어디에 견줘 다른지»가 없는 말이 된다. */}
                   <div className="t-sub" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--brown)', margin: '0 2px 8px' }}>
-                    {Number(dayFilter.split('-')[1]) + 1}월에 만든 요리 {monthList.length}개
+                    {Number(dayFilter.split('-')[1]) + 1}월에 만든 {dayList.length > 0 ? '다른 ' : ''}요리 {monthList.length}개
                   </div>
                 </>
               )}
@@ -716,11 +741,11 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>
               {logSel.size > 0 ? `${logSel.size}개 선택` : '기록을 눌러 선택'}
             </span>
-            {/* ⚠️ 「전체」 = **지금 화면에 있는 것**이다(옛 `shown`). 날짜를 골랐을 땐 그 달 묶음이 화면 전체이고,
-                그날 묶음은 그 안에 통째로 들어 있어(같은 id) `monthList` 하나로 둘 다 덮인다. */}
+            {/* ⚠️ 「전체」 = **지금 화면에 있는 것**이다(옛 `shown`) — 그날 묶음 ＋ 그 달 묶음.
+                ⛔ 겹침을 없앤 뒤로 둘은 남남이라, 한쪽만 세면 나머지가 선택에서 빠진다. */}
             <button className="press" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 8px' }}
-              onClick={() => setLogSel(logSel.size === monthList.length ? new Set() : new Set(monthList.map((e) => e.id)))}>
-              {logSel.size === monthList.length && monthList.length > 0 ? '전체 해제' : '전체 선택'}
+              onClick={() => setLogSel(logSel.size === shownAll.length ? new Set() : new Set(shownAll.map((e) => e.id)))}>
+              {logSel.size === shownAll.length && shownAll.length > 0 ? '전체 해제' : '전체 선택'}
             </button>
             <button className="press" disabled={logSel.size === 0}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 999, background: logSel.size ? 'var(--danger)' : 'var(--cream)', color: logSel.size ? '#fff' : 'var(--text-sub)', fontSize: 13.5, fontWeight: 800 }}

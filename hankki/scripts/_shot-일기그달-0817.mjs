@@ -26,7 +26,8 @@ await new Promise((r) => srv.listen(4362, r))
 const { BASICS_VERSION } = await import('../src/data/basics.js')
 const N = new Date(), Y = N.getFullYear(), M = N.getMonth(), T = N.getDate()
 const at = (y, m, d) => new Date(y, m, d, 12, 0, 0).getTime()
-const dA = T, dB = Math.max(1, T - 2), dC = Math.max(1, T - 4), dJ = Math.max(1, T - 6)
+// ⭐ 「제육볶음」을 «세 번» 넣는다 — 창업자가 짚은 그 상황(*"3번 같은 걸 만들면 3번 보이게 되잖아"*)
+const dA = T, dB = Math.max(1, T - 2), dC = Math.max(1, T - 4), dD = Math.max(1, T - 8), dE = Math.max(1, T - 10), dJ = Math.max(1, T - 6)
 const cook = (id, d, title, icon) => ({ id, recipeId: icon, title, at: at(Y, M, d), rating: 5, note: '', photo: null })
 const R = (id, title, icon) => ({ id, title, category: '한식', time: 15, thumb: 'icon', icon, ingredients: ['재료 1'], steps: ['끓여요.'], tags: [], savedAt: Date.now(), source: 'user' })
 const state = {
@@ -36,6 +37,8 @@ const state = {
     cook('c2', dA, '콩나물국', '콩나물국'),
     cook('c3', dB, '제육볶음', '제육볶음'),
     cook('c4', dC, '된장찌개', '된장찌개'),
+    cook('c5', dD, '제육볶음', '제육볶음'),
+    cook('c6', dE, '제육볶음', '제육볶음'),
     { id: 'p1', recipeId: '김치찌개', title: '김치찌개', at: at(Y, M - 1, 20), rating: 4, note: '', photo: null },
     { id: 'p2', recipeId: '어묵탕', title: '어묵탕', at: at(Y, M - 1, 22), rating: 4, note: '', photo: null },
     { id: 'j1', kind: 'diary', at: at(Y, M, dJ), paper: { rule: 'plain', skin: 'kraft', art: 'none' }, decor: [], note: '' },
