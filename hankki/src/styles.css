@@ -2828,6 +2828,11 @@ html, body { overscroll-behavior: none; }
      화면이 넓은 패드에서 잘린 채 놓이면 «고장»으로 읽힌다.
      ✅ 패드에선 줄바꿈으로 — 칸이 좁아도 칩이 다 보인다. ⛔폰은 지금 그대로(가로 스크롤). */
   .cur-chips { flex-wrap: wrap; overflow-x: visible; margin: 0; padding-left: 0; padding-right: 0; row-gap: 8px; }
+  /* 🛍 [2026-08-17 창업자 *"줄바꿈으로 하자"*] 「쇼핑몰 바로가기」도 칩 줄과 «같은 처방».
+     ⛔ 좌우로 갈리며 칸이 좁아지자 마지막 쇼핑몰이 반쯤 잘려 보였다 — 밀면 보이지만
+        화면이 넓은 패드에서 잘린 채 놓이면 «고장»으로 읽힌다(위 `.cur-chips` 와 같은 이유).
+     ⭐ `.hscroll` 을 통째로 안 고친다 — 홈 최근저장·레시피 줄까지 바뀐다. 그래서 `mall-row` 전용. */
+  .mall-row { flex-wrap: wrap; overflow-x: visible; margin: 0; padding-left: 0; padding-right: 0; row-gap: 10px; }
   /* 🔘 장보기·냉장고 토글 — 화면 폭을 다 쓰면 「냉장고」가 저 멀리 오른쪽 끝에 떨어져 짝이 안 보인다 */
   .screen .segment { max-width: 420px; }
   /* 좌우일 땐 «항상» 왼쪽=장바구니 · 오른쪽=리스트. 폰에서 쓰던 순서 바꾸기를 되돌린다. */

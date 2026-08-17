@@ -210,7 +210,9 @@ export default function ShopScreen() {
             {editShops ? '완료' : '편집'}
           </button>
         </div>
-        <div className="hscroll" style={{ paddingBottom: 4 }}>
+        {/* 🏷 [2026-08-17] `mall-row` 는 «이 줄만» 잡으려고 붙인 이름이다 (창업자 *"줄바꿈으로 하자"*).
+            ⛔ `.hscroll` 을 통째로 고치면 홈 최근저장·레시피 줄까지 다 바뀐다 — 지목한 곳만 건드린다. */}
+        <div className="hscroll mall-row" style={{ paddingBottom: 4 }}>
           {shops.map((s) => (
             <div key={s.id} style={{ position: 'relative' }}>
               <button
