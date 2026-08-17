@@ -1,7 +1,14 @@
 // 🔖 요리소품 **32컷 전부**를 「인덱스 자리」에 28px 로 얹어 본다 — 창업자 그림 고르기용 (2026-08-18)
 //
-// ✅ 창업자 확정 = **표시용 · 흰 동그라미 없음 · 28px · 모서리에 걸침 · 안 걸린 칸은 텅**
+// ✅ 창업자 확정 = **표시용 · 흰 동그라미 없음 · 28px · 안 걸린 칸은 텅**
 //    📮 *"28이 적당해보여. 흐림은 네말대로 지저분해보여."*
+// ✅ 자리도 확정 = **G — 오른쪽 위 · 위로 반반 · 그림이 오른쪽 끝까지**
+//    📮 *"나는 위치가 **사각박스 오른쪽 상단 위**도 하나있었으면 좋겠는데. **(반은 안에 반은 밖에)**"*
+//    📮 → G 확대판을 보고 *"**이걸로** 몇개넣어서 보여줘 **글자빼고**"*
+//    ⭐ 「그림이 오른쪽 끝까지」 = 상자를 그림 크기로 줄인다(`width/height: auto`).
+//       ⛔ 안 그러면 `.fav-dot`(34px)이 28px 그림을 «가운데» 놓아 3px 안쪽에 서고,
+//          ＋스티커 PNG 자체의 투명 여백까지 겹쳐 「오른쪽 끝인데 안 붙어 보이는」 착시가 난다.
+// ⛔ **이름표를 안 붙인다** (창업자 *"글자빼고"*) — 대신 순서가 `ck_01`→`ck_32` 라 자리로 짚을 수 있다.
 //
 // ⭐⭐ **왜 32컷을 «카드 위»에서 고르나** — 19px 실측판(`_판-인덱스19px-0817.py`)은 «흰 칸» 위에서 잰다.
 //    앱에선 **크림색 카드 위 · 28px · 모서리에 걸친 채**로 보인다. 조건이 다르면 답도 다르다.
@@ -28,7 +35,8 @@ const DIST = join(ROOT, 'dist')
 const 낱개 = join(ROOT, 'docs/stickers/요리소품-창업자-2026-08-17/낱개')
 
 const PX = 28      // ✅ 창업자 확정
-const 밖 = 10      // 모서리에 걸치는 양
+const 밖 = 14      // 옆 — 그림이 카드 오른쪽 끝에 딱 붙는다
+const 위밖 = 22    // 위 — 28px 의 절반이 카드 위로 (반은 안, 반은 밖)
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2' }
 const srv = createServer((q, s) => {
@@ -68,7 +76,7 @@ await page.waitForTimeout(1200)
 await page.getByText('레시피', { exact: true }).last().click(); await page.waitForTimeout(900)
 
 // ① 카드 위 — 내가 심은 32개만 남기고 기본 레시피는 감춘다(안 그러면 섞여서 못 센다)
-const n = await page.evaluate(({ 컷, PX, 밖, 제목들 }) => {
+const 얹기 = async (page) => page.evaluate(({ 컷, PX, 밖, 위밖, 제목들 }) => {
   const 남길 = new Set(제목들)
   const 카드들 = [...document.querySelectorAll('.grid-card')]
   카드들.forEach((c) => {
@@ -80,22 +88,42 @@ const n = await page.evaluate(({ 컷, PX, 밖, 제목들 }) => {
   for (const c of 보이는) {
     const d = c.querySelector('.fav-dot')
     if (!d) continue
-    const [키, url] = 컷[i % 컷.length]; i++
+    // ⛔ 제목으로 걸렀더니 **같은 이름의 기본 레시피가 같이 남아 35개**가 됐다(된장찌개·제육볶음…).
+    //    컷은 32개니 33번째부터는 «두 번째로» 나오게 된다 → 아예 감춘다. 창업자가 세는 판이다.
+    if (i >= 컷.length) { c.style.display = 'none'; continue }
+    const [, url] = 컷[i]; i++
     d.style.background = 'none'; d.style.backdropFilter = 'none'; d.style.webkitBackdropFilter = 'none'
-    d.style.top = `${8 - 밖}px`; d.style.right = `${8 - 밖}px`; d.style.overflow = 'visible'
-    d.innerHTML = `<img src="${url}" width="${PX}" height="${PX}" style="display:block;object-fit:contain" alt="">`
-    const tag = document.createElement('span')
-    tag.dataset.판이름표 = '1'
-    tag.textContent = 키
-    tag.style.cssText = 'position:absolute;left:4px;bottom:2px;background:rgba(255,255,255,.95);border-radius:6px;padding:1px 5px;font-size:9px;font-weight:800;color:#5d3410;z-index:6'
-    c.appendChild(tag)
+    // ⭐ 상자를 그림 크기로 — 좌표와 그림이 어긋나지 않게(G 자리의 핵심)
+    d.style.width = 'auto'; d.style.height = 'auto'; d.style.overflow = 'visible'
+    d.style.top = `${8 - 위밖}px`; d.style.right = `${8 - 밖}px`
+    d.innerHTML = `<img src="${url}" style="display:block;height:${PX}px;width:auto" alt="">`
+    // ⛔ 이름표를 안 붙인다 — 창업자 *"글자빼고"*
   }
   document.querySelectorAll('.grid-card').forEach((c) => { c.style.overflow = 'visible' })
   return i
-}, { 컷, PX, 밖, 제목들: 요리.slice(0, 컷.length) })
-console.log(`   ✅ 카드 ${n}개에 얹었다`)
+}, { 컷, PX, 밖, 위밖, 제목들: 요리.slice(0, 컷.length) })
+
+const n = await 얹기(page)
+console.log(`   ✅ 작은 격자 — 카드 ${n}개에 얹었다`)
 await page.waitForTimeout(500)
-await page.screenshot({ path: join(OUT, '인덱스32컷-카드위.png'), fullPage: true })
+await page.screenshot({ path: join(OUT, '인덱스32컷-카드위-작은격자.png'), fullPage: true })
+
+// 🔁 큰 격자(2열)로도 — 카드가 커서 그림이 어떻게 보이는지 다르다
+const page2 = await b.newPage({ viewport: { width: 360, height: 880 }, deviceScaleFactor: 3 })
+page2.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
+await page2.addInitScript((s) => {
+  localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
+  localStorage.setItem('hankki:nudge:giftpack', '1'); localStorage.setItem('hankki:gridSize', 'big')
+  const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
+}, state)
+await page2.goto('http://127.0.0.1:4378/hankki/', { waitUntil: 'networkidle' })
+await page2.waitForTimeout(1200)
+await page2.getByText('레시피', { exact: true }).last().click(); await page2.waitForTimeout(900)
+const n2 = await 얹기(page2)
+console.log(`   ✅ 큰 격자 — 카드 ${n2}개에 얹었다`)
+await page2.waitForTimeout(500)
+await page2.screenshot({ path: join(OUT, '인덱스32컷-카드위-큰격자.png'), fullPage: true })
+await page2.close()
 
 // ② 28px 실물 띠 — 그림끼리 견주기. ⛔줄이거나 키워서 눈속임하지 않는다(1배 ＋ 4배 나란히)
 await page.evaluate(({ 컷, PX }) => {
