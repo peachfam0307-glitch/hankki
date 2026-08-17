@@ -396,7 +396,16 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
         ) : (
           <div className="album-icon"><FoodIcon name={iconFor(e)} size={34} /></div>
         )}
-        {e.rating > 0 && !logEdit && <span className="album-star">★{e.rating}</span>}
+        {/* ⭐ [2026-08-17 창업자 *"음식 아이콘에 별은 뭐야?"*] = 「만들었어요!」 하고 «매긴 별점».
+            ⛔ 여기만 **유니코드 글자 `★`** 였다 — 별점을 «매기는» 자리(`DiaryEntrySheet` 의 `Stars`)는
+               우리 `Icon name="star"` 를 쓴다. **같은 것을 두 모양으로 그리고 있었다.**
+               우리 규칙은 「UI엔 우리 스티커·아이콘만」이라 여기가 예외로 남아 있던 자리다. */}
+        {e.rating > 0 && !logEdit && (
+          <span className="album-star">
+            <Icon name="star" size={10} color="#ffd66b" style={{ fill: '#ffd66b' }} />
+            {e.rating}
+          </span>
+        )}
         <span className="album-cap">{e.title}</span>
         {logEdit && (
           <span aria-hidden style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', background: on ? 'var(--brown)' : 'rgba(255,255,255,0.92)', border: on ? 'none' : '1.8px solid rgba(0,0,0,0.22)', boxShadow: '0 1px 5px rgba(0,0,0,0.22)' }}>

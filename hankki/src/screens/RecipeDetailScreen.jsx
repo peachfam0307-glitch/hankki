@@ -449,7 +449,16 @@ export default function RecipeDetailScreen({ id }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ fontSize: 14.5, fontWeight: 700 }}>내 요리 기록</span>
-                {latestEntry?.rating > 0 && <Stars value={latestEntry.rating} onChange={() => {}} size={13} />}
+                {/* ⭐⭐ [2026-08-17 창업자] *"**평점 매기는데가 없으니까 안뜨는거 아닌가**"* — 맞는 지적이었다.
+                    ⛔ 전엔 `rating > 0` 일 때만 별을 그렸다. 그래서 **한 번도 안 매긴 사람 화면엔**
+                       「내 요리 기록 · 1번 만들었어요 · 날짜 · ›」 뿐이고 **별점 얘기가 한 글자도 없었다.**
+                       ＝ 매길 수는 있는데 «매기는 자리인 줄을 모른다». 실물로 확인했다(`_probe-별점길-0817`).
+                    ⭐ 그래서 **안 매겼어도 빈 별 다섯을 그린다** — 「여기서 매기는구나」가 한눈에 읽힌다.
+                       ⛔ 새로 만든 것 0개 — 시트가 쓰는 `Stars` 를 그대로 가져왔다. 회색(`--cream-deep`)이라
+                          «매긴 것»과 «안 매긴 것»이 색으로 갈린다.
+                    ⚠️ 별을 눌러도 여기선 값이 안 바뀐다(`onChange` 가 빈 함수) — 카드 전체가 버튼이라
+                       **어딜 눌러도 기록 시트가 열린다.** 매기는 건 거기서. */}
+                <Stars value={latestEntry?.rating || 0} onChange={() => {}} size={13} empty="var(--sand)" />
               </div>
               <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3 }}>
                 {cookedN}번 만들었어요{latestEntry ? ` · ${dateLabel(latestEntry.at)}` : ''}

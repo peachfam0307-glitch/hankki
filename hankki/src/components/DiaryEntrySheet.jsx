@@ -24,12 +24,17 @@ function downscale(dataUrl, max = 900) {
   })
 }
 
-export function Stars({ value, onChange, size = 30 }) {
+// ⭐ `empty` = **안 매긴 별의 색**. 기본은 시트 기준(`--cream-deep`)이고, 놓이는 «바탕»에 따라 바꾼다.
+//   ⛔ [2026-08-17] 레시피 상세의 「내 요리 기록」 카드에 이 별을 얹었더니 **거의 안 보였다** —
+//      그 카드 바탕이 `--cream`(#f2ede3) 인데 빈 별이 `--cream-deep`(#ebe1d1) 이라 **색차가 거의 0**이다.
+//      숫자 검사는 전부 통과했고 **판을 열어보고서야 보였다**(규칙 21).
+//   📌 색을 여기서 통째로 바꾸지 않는다 — 시트는 흰 바탕이라 지금이 맞다. **부르는 쪽이 바탕을 안다.**
+export function Stars({ value, onChange, size = 30, empty = 'var(--cream-deep)' }) {
   return (
     <div style={{ display: 'flex', gap: 5 }}>
       {[1, 2, 3, 4, 5].map((n) => (
         <button key={n} type="button" className="press" onClick={() => onChange(n === value ? 0 : n)} aria-label={`${n}점`}>
-          <Icon name="star" size={size} color={n <= value ? '#e0a83a' : 'var(--cream-deep)'} style={{ fill: n <= value ? '#e0a83a' : 'var(--cream-deep)' }} />
+          <Icon name="star" size={size} color={n <= value ? '#e0a83a' : empty} style={{ fill: n <= value ? '#e0a83a' : empty }} />
         </button>
       ))}
     </div>
