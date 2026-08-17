@@ -157,7 +157,7 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconF
 //    *"맨 아래 바에 한끼일기도 넣자. 일기쓰려면 레시피에서 한끼일기 또 들어가야 하니까"*)
 //    ⚠️ App 이 key 를 달리 줘서 «다시 마운트»되게 한다 — 안 그러면 초기값이 안 먹는다.
 export default function MyRecipesScreen({ initView = 'grid' }) {
-  const { recipes, folders, addFolder, removeFolder, removeRecipe, diary, removeDiary } = useStore()
+  const { recipes, folders, addFolder, removeFolder, removeRecipe, diary, removeDiary, toggleFavorite } = useStore()
   const nav = useNav()
   const [view, setView] = useState(initView) // grid | log | folders
   const [coach, setCoach] = useState(() => needsCoach(MYRECIPES_COACH_KEY))
@@ -732,12 +732,33 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                         <div style={on ? { outline: '3px solid var(--brown)', outlineOffset: -3, borderRadius: gridSize === 'big' ? 16 : 12 } : undefined}>
                           <Thumb recipe={r} ratio="1/1" radius={gridSize === 'big' ? 16 : 12} emojiSize={gridSize === 'big' ? undefined : '1.6rem'} showDecor />
                         </div>
-                        {r.favorite && !edit && (
-                          <div className="fav-dot"><Icon name="bookmark" size={gridSize === 'big' ? 16 : 13} color="var(--brown)" style={{ fill: 'var(--brown)' }} /></div>
-                        )}
                         <div className="name" style={gridSize === 'small' ? { fontSize: 11.5, marginTop: 5 } : undefined}>{r.title}</div>
                         {gridSize === 'big' && <div className="date">{dateLabel(r.savedAt)}</div>}
                       </button>
+                      {/* 🔖🔖 [2026-08-17 창업자] **북마크를 목록에서 «바로» 누른다.**
+                          📮 *"근데 그 북마크는 **나도 한번도 안썼어 번거로워서. 레시피에 들어가서 눌러야 하니까**"*
+                          📮 → *"**북마크를 밖으로 빼면 되겠다 레시피 속이 아니라**"* · *"(**잘 보이게** 해줘.)"*
+                          ⭐⭐ 창업자가 «왜 안 쓰는지»를 그대로 말해줬다 — 기능이 모자란 게 아니라 **자리가 멀었다.**
+                             상세로 들어가 상단바를 눌러야 했으니, 목록을 훑다가 「이거 좋았지」 하는 순간에 못 누른다.
+                          ⭐ 그래서 **안 찜한 것도 늘 보이게** 한다(빈 책갈피). 안 보이면 「누를 수 있는 줄」을 모른다.
+                          ⛔ 카드 «밖»에 둔다 — 카드 전체가 `<button>` 이라 안에 넣으면 **중첩 버튼**이 되어
+                             북마크를 눌러도 카드가 같이 눌려 상세로 튕겨 나간다.
+                          ⛔ 고르기(편집) 중엔 감춘다 — 체크 동그라미와 **같은 자리**(top/right)라 겹친다. */}
+                      {!edit && (
+                        <button
+                          className="fav-dot press"
+                          aria-label={r.favorite ? `${r.title} 인덱스 빼기` : `${r.title} 인덱스 남기기`}
+                          aria-pressed={!!r.favorite}
+                          onClick={(ev) => { ev.stopPropagation(); toggleFavorite(r.id) }}
+                        >
+                          <Icon
+                            name="bookmark"
+                            size={gridSize === 'big' ? 19 : 16}
+                            color={r.favorite ? 'var(--brown)' : 'var(--sand)'}
+                            style={{ fill: r.favorite ? 'var(--brown)' : 'none' }}
+                          />
+                        </button>
+                      )}
                       {edit && (
                         <div aria-hidden style={{ position: 'absolute', top: 7, right: 7, width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', background: on ? 'var(--brown)' : 'rgba(255,255,255,0.92)', border: on ? 'none' : '1.8px solid rgba(0,0,0,0.22)', boxShadow: '0 1px 5px rgba(0,0,0,0.22)' }}>
                           {on && <Icon name="check" size={15} color="#fff" stroke={3} />}
