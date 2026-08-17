@@ -18,7 +18,7 @@ import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
 import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
-import { dateLabel, openExternal as openUrl, ingredientName } from '../utils'
+import { dateLabel, openExternal as openUrl, ingredientName, cropSquare } from '../utils'
 import { shouldAskReview } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
@@ -96,6 +96,7 @@ export default function RecipeDetailScreen({ id }) {
   useLayerBack(decorOpen, () => { if (decorCloseRef.current) return decorCloseRef.current(); setDecorOpen(false); return true })
   const [coach, setCoach] = useState(() => needsCoach(COACH_KEY))
   const iconRef = useRef(null)
+  const coverPhotoRef = useRef(null) // 📷 표지 사진 고르기 (아이콘 시트의 「내 사진으로 하기」가 누른다)
   const [iconSheet, setIconSheet] = useState(false) // 표지 아이콘 바꾸기 — 상세에서 바로(편집 안 들어가고)
   const coverRef = useRef(null) // 꾸민 표지(레꾸) 캡처용
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
@@ -192,6 +193,27 @@ export default function RecipeDetailScreen({ id }) {
     //   (EditorScreen 의 자동 재추천이 직접 고른 것까지 덮던 것 · 창업자 제보 2026-08-05)
     updateRecipe(r.id, { thumb: 'icon', icon: k, iconPicked: true, touched: true })
     nav.showToast('표지 아이콘을 바꿨어요')
+  }
+  // 📷📷 **표지를 «내 사진»으로 — 이 화면에서 바로** (창업자 2026-08-17
+  //   *"아이콘 바꾸기에 바로 내가 사진 올릴 수 있는 버튼도 있었으면 좋겠다고"* · *"이것도 반영아직이네"*)
+  //   ⛔ 그 전엔 **편집 화면**까지 들어가야 했다(이 파일 189줄 주석에 그렇게 적혀 있었다).
+  //      표지를 바꾸러 왔는데 사진만 다른 화면이면, 그 길은 있어도 «없는 것»이다
+  //      — 북마크가 안 쓰이던 이유(*"레시피에 들어가서 눌러야 하니까"*)와 **같은 뿌리**다.
+  //   ⭐ 새로 만든 게 없다 — `cropSquare` 800 은 **편집 화면이 쓰던 그 길**이고(`EditorScreen:221`),
+  //      저장 모양(`thumb:'photo'` ＋ `image`)은 **자랑카드 표지 저장이 쓰던 그것**이다(:721).
+  //   ⚠️ `iconPicked` 는 «아이콘을 골랐다»는 표시라 여기선 안 건드린다 — 사진을 지우면 원래 아이콘 규칙으로 돌아가야 한다.
+  const onCoverPhoto = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // ⚠️ 먼저 비운다 — 같은 파일을 다시 고르면 change 가 안 뜬다
+    if (!file || !r) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const cropped = await cropSquare(reader.result, 800)
+      updateRecipe(r.id, { thumb: 'photo', image: cropped, touched: true })
+      setIconSheet(false)
+      nav.showToast('표지를 내 사진으로 바꿨어요')
+    }
+    reader.readAsDataURL(file)
   }
   const doDelete = () => {
     removeRecipe(r.id)
@@ -356,8 +378,16 @@ export default function RecipeDetailScreen({ id }) {
       </div>
       </div>
       {iconSheet && (
-        <FoodIconSheet value={r.icon || guessFoodIcon(r.title)} onChange={pickIcon} onClose={() => setIconSheet(false)} />
+        <FoodIconSheet
+          value={r.icon || guessFoodIcon(r.title)}
+          onChange={pickIcon}
+          onClose={() => setIconSheet(false)}
+          onPhoto={() => coverPhotoRef.current?.click()}
+        />
       )}
+      {/* 📷 표지 사진 고르기 — 화면엔 안 보이고 위 단추가 대신 누른다.
+          ⛔ `accept="image/*"` 만 준다. `capture` 를 주면 **갤러리를 못 열고 카메라만** 뜬다. */}
+      <input ref={coverPhotoRef} type="file" accept="image/*" onChange={onCoverPhoto} style={{ display: 'none' }} />
 
       <div className="pad" style={{ paddingTop: 18, paddingBottom: 120 }}>
         {r.status === 'unsorted' && (
