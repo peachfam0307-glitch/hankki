@@ -53,11 +53,17 @@ const 놓기 = [
   //       28px 을 반쯤(14px) 빼면 → 오른쪽 열은 화면 끝까지 **6px 남고**(✅),
   //       큰 격자 왼쪽 열은 옆 카드에 **딱 닿고**, 작은 격자는 옆 카드를 **5px 침범**한다.
   //    ⭐ 그래서 「반쯤」의 «방향»을 갈라 본다 — 옆으로 / 대각선으로 / 위로.
-  { 이름: '2-중간', 설명: '② 지금 안 — 모서리에 살짝 걸침 (28px)', px: 28, 밖: 10, 위밖: 10, 기울기: 0, 안걸린것: '없음' },
   { 이름: '6-반쯤옆', 설명: '⑥ 옆으로 반쯤 나오게 (14px 밖)', px: 28, 밖: 22, 위밖: 8, 기울기: 0, 안걸린것: '없음' },
   { 이름: '7-반쯤대각', 설명: '⑦ 대각선으로 반쯤 (옆·위 둘 다 14px 밖)', px: 28, 밖: 22, 위밖: 22, 기울기: 0, 안걸린것: '없음' },
-  { 이름: '8-반쯤위', 설명: '⑧ 위로만 반쯤 나오게 (옆은 안 나감)', px: 28, 밖: 8, 위밖: 22, 기울기: 0, 안걸린것: '없음' },
-  { 이름: '9-반쯤옆기울임', 설명: '⑨ 옆으로 반쯤 ＋ 살짝 기울임 (−12°)', px: 28, 밖: 22, 위밖: 8, 기울기: -12, 안걸린것: '없음' },
+  // 📮 [08-18] *"**사각박스 오른쪽 상단 위**도 하나있었으면 좋겠는데. **(반은 안에 반은 밖에)**"*
+  //    ⚠️ ⑧을 이미 만들었는데 창업자가 «없다»고 느꼈다 → 왜인지 재보니
+  //       **스티커 PNG 안에 투명 여백이 있다.** 28×28 상자에 `contain` 으로 넣으면
+  //       세로로 긴 컷(ck_27 = 393×587)은 **폭이 19px** 라 오른쪽에 9px 빈다.
+  //       → 「오른쪽 끝」에 맞췄는데도 «안쪽으로 들어간» 것처럼 보인다.
+  //    ⭐ 그래서 상자 기준이 아니라 **그림이 실제로 오른쪽에 붙게** 더 빼는 판을 같이 만든다.
+  { 이름: '8-위반반', 설명: '⑧ 오른쪽 위 · 위로 반반 (오른쪽 끝 정렬)', px: 28, 밖: 8, 위밖: 22, 기울기: 0, 안걸린것: '없음' },
+  { 이름: 'G-위반반붙임', 설명: 'G · 오른쪽 위 · 위로 반반 ＋ 그림을 오른쪽 끝까지', px: 28, 밖: 14, 위밖: 22, 기울기: 0, 안걸린것: '없음', 꽉: true },
+  { 이름: 'H-위반반모서리', 설명: 'H · 오른쪽 위 모서리에 반반 (옆으로도 6px)', px: 28, 밖: 20, 위밖: 22, 기울기: 0, 안걸린것: '없음', 꽉: true },
 ]
 
 // 📋 어떤 그림으로 볼까
@@ -74,9 +80,9 @@ const 묶음 = {
 
 // 🎬 찍을 판 = (놓는 방식 × 그림 묶음 × 격자)
 const 찍기 = [
-  ['2-중간', '창업자픽', 'big'], ['6-반쯤옆', '창업자픽', 'big'], ['7-반쯤대각', '창업자픽', 'big'],
-  ['8-반쯤위', '창업자픽', 'big'], ['9-반쯤옆기울임', '창업자픽', 'big'],
-  ['6-반쯤옆', '창업자픽', 'small'],   // ⚠️ 작은 격자는 옆 카드를 5px 침범한다 — 눈으로 볼 것
+  ['8-위반반', '창업자픽', 'big'], ['G-위반반붙임', '창업자픽', 'big'], ['H-위반반모서리', '창업자픽', 'big'],
+  ['6-반쯤옆', '창업자픽', 'big'], ['7-반쯤대각', '창업자픽', 'big'],
+  ['G-위반반붙임', '창업자픽', 'small'],   // ⚠️ 작은 격자도 본다
 ]
 
 const { BASICS_VERSION } = await import('../src/data/basics.js')
@@ -127,11 +133,22 @@ for (const [놓기이름, 묶음이름, 격자] of 찍기) {
       d.style.background = 'none'; d.style.backdropFilter = 'none'; d.style.webkitBackdropFilter = 'none'
       // ⭐ 옆(right)과 위(top)를 «따로» 준다 — 「반쯤」의 방향이 갈래마다 다르다
       d.style.top = `${8 - (방식.위밖 ?? 방식.밖)}px`; d.style.right = `${8 - 방식.밖}px`
+      // ⛔⛔ **`.fav-dot` 은 34×34 인데 그림은 «가운데»에 놓인다**(`align/justify: center`).
+      //    28px 그림이면 좌우로 3px 씩 남아서, right 를 0 으로 맞춰도 그림은 3px 안쪽에 선다.
+      //    ＋ 스티커 PNG 자체의 투명 여백까지 더해져 「오른쪽 끝인데 안 붙어 보이는」 착시가 난다.
+      //    ⭐ `꽉` 일 땐 상자를 그림 크기로 줄여 **좌표와 그림이 어긋나지 않게** 한다.
+      if (방식.꽉) { d.style.width = 'auto'; d.style.height = 'auto' }
       d.style.overflow = 'visible'
       if (!걸림 && 방식.안걸린것 === '없음') { d.innerHTML = ''; return }   // ⭐ 표시용 = 안 걸리면 텅 빈다
       const [키, 라벨, url] = 컷[걸린번호++ % 컷.length]
       const 흐림 = !걸림 && 방식.안걸린것 === '흐리게' ? ';opacity:.28' : ''
-      d.innerHTML = `<img src="${url}" width="${방식.px}" height="${방식.px}" style="display:block;object-fit:contain${방식.기울기 ? `;transform:rotate(${방식.기울기}deg)` : ''}${흐림}" alt="">`
+      // ⭐ `꽉` = 상자 여백을 없앤다 — 세로로 긴 컷은 `contain` 이면 좌우가 비어
+      //    「오른쪽 끝에 맞췄는데 안쪽으로 들어가 보이는」 착시가 난다(창업자가 그걸 잡았다).
+      //    높이만 28px 로 두고 폭은 그림 비율대로 → 그림이 진짜 오른쪽 끝에 붙는다.
+      const 크기 = 방식.꽉
+        ? `height:${방식.px}px;width:auto`
+        : `width:${방식.px}px;height:${방식.px}px;object-fit:contain`
+      d.innerHTML = `<img src="${url}" style="display:block;${크기}${방식.기울기 ? `;transform:rotate(${방식.기울기}deg)` : ''}${흐림}" alt="">`
       if (걸림) {
         const tag = document.createElement('span')
         tag.dataset.판이름표 = '1'
@@ -152,7 +169,16 @@ for (const [놓기이름, 묶음이름, 격자] of 찍기) {
   await page.waitForTimeout(400)
   const 파일 = `인덱스-${놓기이름}-${묶음이름}-${격자 === 'big' ? '큰격자' : '작은격자'}.png`
   await page.screenshot({ path: join(OUT, 파일) })
-  console.log(`   ✅ ${방식.설명} · ${묶음이름} · ${격자} — 카드 ${n}개 → ${파일}`)
+  // 🔍 확대 — 「반은 안 반은 밖」이 진짜 반반인지는 **한 칸을 크게 봐야** 안다
+  const 칸 = await page.evaluate(() => {
+    const c = [...document.querySelectorAll('.grid-card')]
+      .find((x) => x.querySelector('.fav-dot')?.innerHTML.includes('<img'))
+    if (!c) return null
+    const r = c.getBoundingClientRect()
+    return { x: Math.max(0, r.left - 26), y: Math.max(0, r.top - 26), width: r.width + 52, height: Math.min(r.height, r.width) + 52 }
+  })
+  if (칸) await page.screenshot({ path: join(OUT, `인덱스확대-${놓기이름}-${격자 === 'big' ? '큰격자' : '작은격자'}.png`), clip: 칸 })
+  console.log(`   ✅ ${방식.설명} · ${묶음이름} · ${격자} — 카드 ${n}개 → ${파일}${칸 ? ' ＋확대' : ''}`)
 }
 
 if (errors.length) errors.forEach((e) => console.log('   ⛔ pageerror —', e))
