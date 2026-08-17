@@ -18,7 +18,8 @@ import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
 import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
-import { dateLabel, openExternal as openUrl, ingredientName, cropSquare } from '../utils'
+import { dateLabel, openExternal as openUrl, ingredientName, fitImage } from '../utils'
+import { photoPanStart } from '../photoPan'
 import { shouldAskReview } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
@@ -208,8 +209,14 @@ export default function RecipeDetailScreen({ id }) {
     if (!file || !r) return
     const reader = new FileReader()
     reader.onload = async () => {
-      const cropped = await cropSquare(reader.result, 800)
-      updateRecipe(r.id, { thumb: 'photo', image: cropped, touched: true })
+      // ⛔⛔ cropSquare 를 쓰면 **확대·축소가 반쪽이 된다** — 고를 때 가운데 정사각만 남기고 나머지를 «버려서»
+      //    원 안에서 끌 여지가 0 이 된다(넘치는 게 없으면 안 움직인다). 위·아래에 있던 것은 영영 못 본다.
+      //    ⭐ 일기 속지 사진이 2026-08-12 에 이미 겪고 고친 자리다(PaperSheet 주석) —
+      //       *"처방이 둘로 나뉜다: ⑴자를 때 안 버린다 ⑵볼 때 위치를 고른다. 두 번째만 고치면 못 살린다."*
+      //    ✅ 그래서 **안 자르고 줄이기만**(fitImage). 어디를 보여줄지는 imagePos·imageZoom 이 정한다.
+      //    ⚠️ 새 사진을 넣으면 자리·배율도 되돌린다 — 옛 사진 기준 좌표는 새 사진에서 뜻이 없다.
+      const shrunk = await fitImage(reader.result, 1200)
+      updateRecipe(r.id, { thumb: 'photo', image: shrunk, imagePos: '', imageZoom: '', touched: true })
       setIconSheet(false)
       nav.showToast('표지를 내 사진으로 바꿨어요')
     }
@@ -339,7 +346,18 @@ export default function RecipeDetailScreen({ id }) {
           ⛔ 세로(폰)에선 아무 일도 안 한다 — 스타일은 가로 미디어쿼리 안에만 있다. */}
       <div className="cover-col">
       <div ref={coverRef} className="cover-box" style={{ position: 'relative' }}>
-        <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
+        <Thumb
+          recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }}
+          panProps={{
+            onPointerDown: (e) => photoPanStart(e, {
+              pos: r.imagePos,
+              zoom: r.imageZoom,
+              onCommit: ({ pos, zoom }) => updateRecipe(r.id, { imagePos: pos, imageZoom: zoom }),
+            }),
+            "aria-label": "표지 사진 — 끌어서 위치 조정 · 두 손가락으로 확대·축소",
+            style: { touchAction: "none", cursor: "grab" },
+          }}
+        />
         <DecorLayer items={r.decor || []} />
       </div>
 

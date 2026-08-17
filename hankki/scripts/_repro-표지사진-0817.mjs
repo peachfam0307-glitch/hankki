@@ -93,7 +93,28 @@ else no('사진을 골랐는데 시트가 그대로 떠 있다')
 await page.waitForTimeout(400)
 await page.screenshot({ path: join(OUT, '표지사진-2-바뀐뒤.png') })
 
-// ④⭐ **목록 카드도 같이 바뀐다** —  한 곳을 고쳤으니 상세만 보고 넘어가면 안 된다(규칙 21)
+// ④⭐⭐ **끌면 자리가 저장되나** (창업자 *"확대 축소도 가능하게"* · *"자연스럽게 되게"*)
+//    ⚠️ 두 손가락(핀치)은 이 판에서 못 흉내낸다 — 한 손가락 끌기로 «손짓이 붙었나»를 잰다.
+//    ⭐ 끌 수 있으려면 사진이 원보다 «넘쳐야» 한다. 그래서 자를 때 fitImage 로 안 버린다.
+const 원 = page.locator('[aria-label^="표지 사진"]').first()
+if (await 원.count() === 0) no('표지 사진에 손짓이 안 붙었다 (aria-label 없음)')
+else {
+  const box = await 원.boundingBox()
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 40, { steps: 8 })
+  await page.mouse.up()
+  await page.waitForTimeout(600)
+  const 자리 = await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+    const r = (s.recipes || []).find((x) => x.id === 'r1') || {}
+    return { pos: r.imagePos || '(없음)', zoom: r.imageZoom }
+  })
+  if (자리.pos !== '(없음)' && 자리.pos !== '50% 50%') ok('끌면 자리가 저장된다 — imagePos = ' + 자리.pos)
+  else no('끌었는데 자리가 안 바뀐다 — ' + JSON.stringify(자리) + ' (사진이 원보다 안 넘치면 이렇게 된다)')
+}
+
+// ⑤⭐ **목록 카드도 같이 바뀐다** — Thumb 한 곳을 고쳤으니 상세만 보고 넘어가면 안 된다(규칙 21)
 await page.getByRole('button', { name: '뒤로' }).first().click(); await page.waitForTimeout(900)
 await page.screenshot({ path: join(OUT, '표지사진-3-목록카드.png') })
 const 동그란가 = await page.evaluate(() => {

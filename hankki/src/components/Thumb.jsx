@@ -3,6 +3,8 @@ import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
 import { bgStyle, bgIsDark, bgAnim } from './Stickers'
 import { graphemes } from '../utils'
+// 🔍 사진 자리·배율 규칙 = 일기 속지 사진과 «같은 곳»에서 온다 (src/photoPan.js)
+import { clampZoom, photoImgStyle } from '../photoPan'
 
 // 카드 썸네일. recipe.thumb 로 표시 방식을 고른다:
 //   'icon'  — 브랜드 커스텀 아이콘(이름 자동매칭 or 직접 선택)  ← 기본
@@ -16,7 +18,7 @@ import { graphemes } from '../utils'
 
 // `className` = 크기를 «CSS 로» 정하고 싶을 때 쓴다 (넓은 화면에서 키우려면 인라인이면 못 이긴다).
 // ⚠️ 안에서 쓰는 움직임 클래스(`anim`)와 «합쳐서» 넘긴다 — 덮어쓰면 움직이는 배경이 죽는다.
-export default function Thumb({ recipe, radius = 16, ratio, style, className = '', emojiSize = '2rem', iconSize = '56%', showDecor = false }) {
+export default function Thumb({ recipe, radius = 16, ratio, style, className = '', emojiSize = '2rem', iconSize = '56%', showDecor = false, panProps }) {
   const [failed, setFailed] = useState(false)
   const thumb = recipe.thumb || (recipe.image ? 'photo' : 'icon') // 예전 레시피 호환
   const showImg = thumb === 'photo' && recipe.image && !failed
@@ -49,16 +51,24 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //      (`PaperSheet` 의 `<키>Pos`·`<키>Zoom`) — 두 곳이 다른 규칙을 쓰면 한쪽을 고칠 때 다른 쪽이 낡는다.
     //   ⚠️ `transformOrigin` 을 `objectPosition` 과 **같은 값**으로 준다. 다르면 확대할 때 사진이 옆으로 튄다.
     const pos = recipe.imagePos || '50% 50%'
-    const z = Number(recipe.imageZoom) > 0 ? Number(recipe.imageZoom) : 1
+    const z = clampZoom(recipe.imageZoom)
     inner = (
       <div style={center}>
-        <div style={{ width: iconSize, aspectRatio: '1 / 1', borderRadius: '50%', overflow: 'hidden', flex: '0 0 auto' }}>
+        {/* 🫳 `panProps` = 「끌어서 옮기고 두 손가락으로 확대」를 걸 자리 (창업자 2026-08-17).
+            ⭐ **원 자체**에 건다 — 손짓이 칸 크기(`getBoundingClientRect`)로 이동량을 계산해서,
+               바깥 상자에 걸면 원보다 큰 칸을 기준으로 재어 손가락보다 사진이 덜 움직인다.
+            ⛔ 안 넘기면 아무 일도 안 한다 — 목록 카드는 «보기만» 하는 자리라 넘기지 않는다. */}
+        <div
+          {...panProps}
+          style={{ width: iconSize, aspectRatio: '1 / 1', borderRadius: '50%', overflow: 'hidden', flex: '0 0 auto', ...(panProps?.style || {}) }}
+        >
           <img
             src={recipe.image}
             alt={recipe.title}
             loading="lazy"
+            draggable={false}
             onError={() => setFailed(true)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: pos, transform: z === 1 ? undefined : `scale(${z})`, transformOrigin: pos, display: 'block' }}
+            style={{ ...photoImgStyle(pos, z), pointerEvents: 'none' }}
           />
         </div>
       </div>
