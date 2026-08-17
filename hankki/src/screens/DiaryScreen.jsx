@@ -14,6 +14,7 @@ const WORDS = ['title', 'note', 'line', 'weather', 'note2', 'note3', 'note4', 'f
 import { useLayerBack } from '../useBackHandler'
 import { fitImage } from '../utils'
 import LockSheet from '../components/LockSheet'
+import { Stars } from '../components/DiaryEntrySheet'
 import { isDayOpen, unlockDay, forgetDay, hasPin } from '../diaryLock'
 
 // 📔📔 다이어리 — 「그날」 한 장. (창업자 확정 2026-08-06)
@@ -366,15 +367,29 @@ export default function DiaryScreen({ day }) {
           )}
         </div>
 
-        {/* 그날 만든 요리 — ⛔자동으로 안 얹는다. 「있다」만 알려주고 붙일지는 본인이 정한다 */}
+        {/* 그날 만든 요리 — ⛔자동으로 안 얹는다. 「있다」만 알려주고 붙일지는 본인이 정한다
+            ⭐⭐ [2026-08-17 창업자] 별점을 «여기서» 매긴다.
+            📮 *"누를 시간 없어서 안하기로 했잖아"* → *"별을 매기게 하는 다른 효율적인 방법이 있나?"*
+               → 갈래를 대니 *"**일기칸이 제일 좋아보여**"*
+            ⭐ 왜 여기가 맞나 = **「시간」 문제를 「자리」로 푼다.**
+               요리 «중»에 물으면 손에 물이 묻어 있고 마음이 급하다(그래서 2026-08-06 에 시트를 뺐다).
+               일기를 쓰는 순간은 **이미 앉아서 그날을 되돌아보는 시간**이라 정반대다.
+            ⭐ 새로 만든 것이 거의 없다 — 그날 요리가 이 칸에 «이미» 떠 있었고(누를 수 없는 글자였다),
+               `updateDiary` 도 이 화면이 이미 갖고 있고, `Stars` 는 다시 누르면 0점으로 풀리는 토글까지 돼 있다.
+            ⛔ 시트를 띄우지 않는다 · 화면을 떠나지 않는다 · 토스트도 안 띄운다
+               (별이 노랗게 차는 것 «자체»가 저장됐다는 표시다. 그 위에 토스트를 얹으면 잔소리가 된다.)
+            ⛔ 가로로 흘리지 않고 **줄마다 한 줄**로 쌓는다 — 제목 옆에 별 다섯이 붙으면
+               `flexWrap` 으로는 제목과 별이 갈라져 «어느 별이 어느 요리 것인지»가 흐려진다. */}
         {cooked.length > 0 && (
           <div className="card" style={{ marginTop: 16, padding: '11px 13px', background: 'var(--cream)', border: 'none' }}>
             <div className="t-sub" style={{ fontSize: 12, fontWeight: 700, marginBottom: 7 }}>이 날 만든 요리</div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {cooked.map((e) => (
-                <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700 }}>
+                <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <FoodIcon name={iconOf(e)} size={22} />
-                  {e.title}
+                  {/* ⚠️ 이름이 길면 별을 밀어낸다 → 이름 쪽만 줄어들게 하고 한 줄 말줄임 */}
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
+                  <Stars value={e.rating || 0} onChange={(n) => updateDiary(e.id, { rating: n })} size={19} />
                 </div>
               ))}
             </div>
