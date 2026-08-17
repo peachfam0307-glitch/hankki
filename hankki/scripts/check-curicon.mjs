@@ -73,8 +73,13 @@ if (미승인.length) {
   console.error(`\n   ⭐ 「그림체가 맞나」는 기계가 못 가른다(위 주석 실측). **창업자 눈이 유일한 관문이다.**`)
   console.error(`   ✅ 창업자가 실물을 보고 OK 하면 → scripts/curation-icons.json 에 줄을 넣는다:`)
   console.error(`        "<키>": { "본날": "YYYY-MM-DD", "무엇": "…" }`)
-  console.error(`   ⚠️ 그림은 큐레이션 문법으로 — 「접시에 담긴 수채톤·외곽선 없음」(cu_ham_slice·cu_tofu 참고).`)
-  console.error(`      ⛔ 스티커 문법(굵은 검은 외곽선·납작한 벡터)을 그대로 가져오면 화면에서 튄다.\n`)
+  console.error(`   ⚠️⚠️ 큐레이션 아이콘 «규격» — 2026-08-17 창업자와 실물로 맞춘 값:`)
+  console.error(`      · 수채화 톤 · 부드러운 그림자 · ⛔굵은 검은 외곽선 없이(스티커 문법을 가져오면 튄다)`)
+  console.error(`      · 제품 «하나»만 · 여백 적게 · 배경 흰색(여백은 넣을 때 잘라 낸다)`)
+  console.error(`      · 접시에 담아도 되고(cu_ham_slice·cu_tofu) 포장/병째여도 된다(cu_soy·cu_sugar·cu_oligo)`)
+  console.error(`      · ⛔⛔ **포장 글자는 낱말 «하나»까지** — 화면 표시가 42px 이라 여러 줄이면 통째로 뭉갠다`)
+  console.error(`        (기존 = 「간장」·「맛술」·「굴소스」 한 낱말. 5줄짜리 라벨은 안 읽히고 지저분해진다)`)
+  console.error(`      · ⛔ 그림 속 글자가 «제품과 다르면» 안 된다 — 하바티인데 「체다」라고 적힌 컷이 실제로 왔다(반려)\n`)
 }
 if (없음.length || 미승인.length) process.exit(1)
 
