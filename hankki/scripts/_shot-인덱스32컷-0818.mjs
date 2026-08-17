@@ -32,11 +32,22 @@ const OUT = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b
 mkdirSync(OUT, { recursive: true })
 const ROOT = new URL('..', import.meta.url).pathname
 const DIST = join(ROOT, 'dist')
-const 낱개 = join(ROOT, 'docs/stickers/요리소품-창업자-2026-08-17/낱개')
+// ⭐ 폴더를 갈아끼울 수 있게 — 창업자가 새 시안을 줄 때마다 스크립트를 안 고치게 한다
+//    예: SHEET_DIR=docs/stickers/클립인덱스-창업자-2026-08-18/낱개 node scripts/_shot-인덱스32컷-0818.mjs
+const 낱개 = join(ROOT, process.env.SHEET_DIR || 'docs/stickers/요리소품-창업자-2026-08-17/낱개')
 
-const PX = 28      // ✅ 창업자 확정
-const 밖 = 14      // 옆 — 그림이 카드 오른쪽 끝에 딱 붙는다
-const 위밖 = 22    // 위 — 28px 의 절반이 카드 위로 (반은 안, 반은 밖)
+// ⚠️ [2026-08-18] **「28px 확정」의 전제가 바뀌었다** — 창업자가 클립 시안을 새로 뽑았는데
+//    가로/세로 평균이 **0.55**(어제 요리소품 32컷은 0.93). 28px 높이면 **폭이 15px** 밖에 안 된다.
+//    ⭐ 그래서 크기·나가는 양을 «환경변수»로 바꿔가며 찍는다.
+//    ⭐⭐ 그리고 위로 나가는 양을 «높이의 절반」이 아니라 «고정값»으로 두면 —
+//       키울수록 **클립 다리가 카드 안으로 더 꽂힌다.** 진짜 인덱스에 가까워진다.
+// ⛔⛔ [2026-08-18 고침] 기본값이 **밖 14 = `right: -6px`** 이었다 = 카드 오른쪽 «밖»으로 6px.
+//    그건 창업자가 «명시적으로 거부한» 방향이다 — 📮 *"오른쪽 완전끝말고 살짝 왼쪽으로."*
+//    ✅ 확정은 **G3 = 밖 −4 → `right: 12px`**(📮 *"나도 3번이 붙였을때 제일 이쁜거 같아."*)
+//    📌 확정한 값을 «기본값»으로 옮기지 않으면 다음 판이 또 옛 자리로 나간다.
+const PX = Number(process.env.IDX_PX || 28)      // 그림 높이
+const 밖 = Number(process.env.IDX_SIDE || -4)    // 옆 — 카드 오른쪽에서 (8 - 값)px
+const 위밖 = Number(process.env.IDX_TOP || 22)   // 위 — 카드 위로 (값 - 8)px 나간다
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2' }
 const srv = createServer((q, s) => {
