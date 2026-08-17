@@ -666,6 +666,8 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-avocado-banana-smoothie',
     title: '아보카도 바나나 스무디', from: '2026-08-17',
+    // ✅ 창업자가 실물(검수판)을 보고 확인했다 — 2026-08-17. 코코넛 워터를 메인으로 바꾼 판.
+    review: '창업자',
     icon: 'fe_15',
     category: '간식',
     folder: '간식',
@@ -1268,6 +1270,8 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-siwon-mukchae',
     title: '시원한 묵채', from: '2026-08-17',
+    // ✅ 창업자가 실물(검수판)을 보고 확인했다 — 2026-08-17. 1번에서 「찬물에」 뺀 판.
+    review: '창업자',
     icon: 'fe_14',
     category: '한식',
     folder: '한식',
@@ -1609,6 +1613,8 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-seulleoshi',
     title: '슬러시', from: '2026-08-17',
+    // ✅ 창업자가 실물(검수판)을 보고 확인했다 — 2026-08-17.
+    review: '창업자',
     icon: 'fb_b09',
     category: '간식',
     folder: '간식',
@@ -2927,6 +2933,8 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-deulgireum-makguksu',
     title: '들기름 막국수', from: '2026-08-17',
+    // ✅ 창업자가 실물(검수판)을 보고 확인했다 — 2026-08-17. 차돌박이 선택 ＋ 1번 지퍼백 뺀 판.
+    review: '창업자',
     icon: 'fh_k25',
     category: '한식',
     folder: '한식',
@@ -2971,6 +2979,8 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-broccoli-gui',
     title: '브로콜리 구이', from: '2026-08-17',
+    // ✅ 창업자가 실물(검수판)을 보고 확인했다 — 2026-08-17. 6걸음 판 ＋ 모짜렐라치즈.
+    review: '창업자',
     icon: 'fe_162',
     category: '한식',
     folder: '반찬',

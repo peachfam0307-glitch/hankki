@@ -203,6 +203,24 @@ const 검수대기 = (안 = 30) => {
     .filter((g) => dday(g.date) <= 안)
     .map((g) => ({ ...g, d: dday(g.date) }))
 }
+// 📅📅 **`--month <YYYY-MM>` = 「한 달치 미리 검수」의 재료** (창업자 확정 2026-08-17)
+//    📮 *"앞으로 **한달치씩 미리 검수해두자.** 전날도 무조건 한번 확인하고 나가고"*
+//    ⭐ 그 달에 열리는 레시피를 «검수 됐든 안 됐든» 전부 준다 — 판을 한 번에 뽑으라고.
+if (mode === '--month') {
+  const 달 = arg || todayKST().slice(0, 7)
+  const 것 = gates().filter((g) => g.kind === 'recipe' && g.date.startsWith(달))
+  if (!것.length) { console.log(`(${달} 에 열리는 레시피가 없다)`); process.exit(0) }
+  const 미검수 = 것.filter((g) => /검수 안 받은 것/.test(g.what))
+  const n = 것.reduce((s, g) => s + g.keys.length, 0)
+  console.log(`📅 ${달} 에 열리는 레시피 ${n}편 (${것.length}번) · 검수 대기 ${미검수.length}번\n`)
+  것.forEach((g) => console.log(`   ${g.date} (D-${dday(g.date)})  ${g.what}`))
+  // ⛔ 없는 명령을 안내하지 않는다 — 지금 있는 판 생성기는 `_판-검수5편-0817.mjs`(8/17 전용)뿐이다.
+  //    ⏳ 날짜를 인자로 받는 일반판은 아직 «없다». 만들 때 이 줄을 같이 고친다.
+  console.log(`\n   👉 판 재료 = 위 날짜들 ${미검수.map((g) => g.date).join(' ')}`)
+  console.log(`      판 생성기는 scripts/_판-검수5편-0817.mjs 를 본떠 만든다(⏳날짜를 받는 일반판은 아직 없다)`)
+  process.exit(0)
+}
+
 if (mode === '--pending') {
   const 것 = 검수대기(Number(arg) || 365)
   if (!것.length) { console.log('✅ 앞으로 열릴 레시피는 전부 검수 표시가 있다'); process.exit(0) }
