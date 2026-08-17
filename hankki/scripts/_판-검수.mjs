@@ -71,7 +71,9 @@ const 그림 = (key) => {
       'import sys',
       'from PIL import Image',
       'im = Image.open(sys.argv[1]).convert("RGBA")',
-      'im.thumbnail((320, 320), Image.LANCZOS)',
+      // 📐 화면 표시는 78px 이라 220px 이면 2.8배 — 넉넉하다.
+      //    ⛔ 320px 로 두면 24편 판이 4.4MB 가 돼 폰에서 무겁다(5편일 땐 858KB 였다).
+      'im.thumbnail((220, 220), Image.LANCZOS)',
       'im.save(sys.argv[2])',
     ].join('\n'), p, 작은])
     return `data:image/png;base64,${readFileSync(작은).toString('base64')}`
