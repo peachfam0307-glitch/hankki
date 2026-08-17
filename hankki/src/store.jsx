@@ -551,10 +551,14 @@ function reducer(state, action) {
       return { ...state, shoppingList: [...add, ...state.shoppingList] }
     }
     // 단건 담기 — 사러가기 링크(url)를 함께 저장(주부의 장바구니 '담기' 등). 이름 중복은 무시.
+    //   🌱 `noBuy` = 「사러가기를 그리지 않는다」(한살림 = 조합원 전용 · 창업자 2026-08-17).
+    //   ⛔⛔ 여기가 **필드를 골라서 새 객체를 만드는 자리**다 — 넘겨준 필드가 목록에 없으면
+    //      **말없이 버려진다.** 실제로 `noBuy` 를 담는 코드를 써 놓고도 리스트엔 사러가기가 그대로 떴다
+    //      (2026-08-17 · 게이트 50개가 전부 초록불이었고 «화면을 열어보고» 잡았다 — 규칙 21).
     case 'addShopItem': {
       const name = (action.item?.name || '').trim()
       if (!name || state.shoppingList.some((i) => i.name === name)) return state
-      const item = { id: newId(), name, done: false, url: action.item.url || undefined }
+      const item = { id: newId(), name, done: false, url: action.item.url || undefined, ...(action.item.noBuy ? { noBuy: true } : {}) }
       return { ...state, shoppingList: [item, ...state.shoppingList] }
     }
     case 'toggleShopItem': {

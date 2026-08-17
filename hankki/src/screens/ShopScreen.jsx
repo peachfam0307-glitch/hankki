@@ -28,7 +28,7 @@ import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { openExternal, matchKo } from '../utils'
-import { CURATION, curIcon, weeklyPicks } from '../data/curation'
+import { CURATION, curIcon, weeklyPicks, isHansalim } from '../data/curation'
 import { weeklyNow, todayKST } from '../data/weekly'
 
 // 외부 쇼핑몰 열기 — 정식 새 탭(설치된 앱 있으면 App Link 로 앱)으로 연다.
@@ -51,6 +51,14 @@ function shopSearchUrl(shop, q) {
 //   ⚠️ 몰 고르기는 «검색이 되는» 첫 몰로 — 한살림·자연드림은 `search` 가 검색이 아니라 «홈 주소»라
 //      맨 앞에 두면 찾던 재료가 아니라 홈이 열렸다(찾아보고 알았다).
 //   ⚠️ 쇼핑몰을 다 지운 사람도 있다 → 그때는 네이버쇼핑 통합검색. 안 그러면 «아무 데도 안 가는» 죽은 버튼이 된다.
+// 🌱 이 줄에 「사러가기」를 안 그리나 — **두 겹**으로 본다.
+//   ⑴ `noBuy` = 오늘부터 담는 것에 붙는 표식
+//   ⑵ ⭐⭐ url 에 `hansalim` — **이미 담아둔 사람**을 위한 것이다(규칙 18 ⓙ).
+//      8/17 «전»에 담은 한살림 줄은 옛 앱 링크(`intent:…kr.or.hansalim.shop…`)를 그대로 들고 있고
+//      `noBuy` 가 없다. ⑴만 보면 그 사람들은 영영 옛 동작 그대로다.
+//      📌 **고칠 땐 「고친 뒤 상태」가 아니라 「이미 나가 있는 상태」에서 출발한다.**
+const noBuyRow = (item) => !!item?.noBuy || String(item?.url || '').includes('hansalim')
+
 function buyUrlFor(item, shops) {
   if (item.url) return item.url
   const s = (shops || []).find((x) => x.search && x.search.includes('{q}'))
@@ -183,9 +191,14 @@ export default function ShopScreen() {
                   {it.name}
                 </button>
               )}
-              <button className="press mini-buy" onClick={() => openUrl(buyUrlFor(it, shops))}>
-                사러가기
-              </button>
+              {/* ⛔ `noBuy`(한살림) 는 사러가기를 안 그린다 — 담을 때 붙여 둔 표식이다.
+                  ⚠️ 이 줄이 없으면 `buyUrlFor()` 가 url 없는 줄을 **쿠팡·네이버 검색으로 보내서**
+                     큐레이션에서 링크를 뺀 게 통째로 헛일이 된다(담은 뒤에 새는 구멍). */}
+              {!noBuyRow(it) && (
+                <button className="press mini-buy" onClick={() => openUrl(buyUrlFor(it, shops))}>
+                  사러가기
+                </button>
+              )}
               <button className="icon-btn press" onClick={() => store.removeShopItem(it.id)} aria-label="삭제">
                 <Icon name="x" size={17} color="var(--sand)" />
               </button>
@@ -259,7 +272,8 @@ export default function ShopScreen() {
           {editShops ? '아이콘을 눌러 이름·주소·아이콘을 바꿀 수 있어요.' : '쇼핑몰 앱이 깔려 있고 로그인돼 있으면 바로 연결돼요. 한 번 로그인해두면 계속 유지돼 편해요.'}
         </div>
         {/* 🌱 생협 안내 — **긴 안내문을 뺐다.** 창업자 2026-08-03 *"너무 복잡한가..."*
-            ⭐ 대신 「사러가기」 배지에 네 글자만 넣었다 → `mallLabel()` 의 **「한살림 · 조합원만」**.
+            ⭐ 대신 「사러가기」 배지에 넣었다 → `mallLabel()` 의 **「한살림 · 조합원 전용」**.
+               🌱 2026-08-17 부터 **한살림은 사러가기 자체를 안 단다** (창업자 *"링크안달면되고"*).
                누른 «뒤»에 알리는 것보다 누르기 «전»에 보이는 게 낫다 — 헛걸음이 아예 없고
                시트·기억·버튼 같은 새 장치가 하나도 안 생긴다.
             📌 확인한 사실(공식 안내 · 2026-08-03) — 고칠 땐 그날 공식 페이지를 다시 볼 것:
@@ -375,11 +389,16 @@ function Curation() {
   }
   // 쇼핑몰 검색으로 연결. (설치 PWA 안에서 외부 '앱' 강제 열기는 브라우저 제어라 불안정 →
   //  쿠팡 앱 직접 열기는 정식 TWA 출시 때 다시. 지금은 웹 검색이 안정적.)
+  // ⛔ 한살림은 **빈 문자열** = 「사러가기를 안 그린다」 (창업자 2026-08-17 *"링크안달면되고"*)
+  //   ⚠️ 폴백을 타면 한살림 제품을 네이버에서 찾게 되므로 «맨 먼저» 걸러 낸다.
   const linkFor = (it) =>
-    it.url || (MALL_SEARCH[it.mall] || MALL_SEARCH.naver).replace('{q}', encodeURIComponent(it.q))
+    isHansalim(it) ? '' : it.url || (MALL_SEARCH[it.mall] || MALL_SEARCH.naver).replace('{q}', encodeURIComponent(it.q))
   const buy = (it) => openUrl(linkFor(it))
   const add = (it) => {
-    store.addShopItem({ name: it.name, url: linkFor(it) })
+    // ⭐ 담는 건 그대로 된다 — 매장에 갈 때 «적어두는 것»은 여전히 쓸모가 있다.
+    //   다만 `noBuy` 를 같이 담아 **리스트에서도** 사러가기를 안 그린다.
+    //   ⛔ 이게 없으면 `buyUrlFor()` 가 url 없는 줄을 쿠팡·네이버 검색으로 보낸다(＝링크 뺀 게 헛일).
+    store.addShopItem({ name: it.name, url: linkFor(it), ...(isHansalim(it) ? { noBuy: true } : {}) })
     nav.showToast('장보기 리스트에 담았어요')
   }
 
@@ -394,7 +413,9 @@ function Curation() {
     //      시트·기억·버튼 같은 새 장치가 하나도 안 생긴다. 창업자 원래 걱정(*"조합원이 아니면
     //      온라인몰 이용어려우니까"*)은 이 네 글자로 다 해결된다.
     //   ⚠️ 한살림 온라인 장보기는 **조합원만**(가입비 3천원＋출자금 3만원·탈퇴 시 환불 · 공식 안내 확인)
-    if (u.includes('hansalim')) return '한살림 · 조합원만'
+    //   🌱 2026-08-17 부터 **사러가기를 아예 안 단다** → 그래서 「조합원만」이 아니라 «전용»이라고 못 박는다.
+    //      ⛔ 판정을 `url` 로 하면 안 된다 — url 을 뺐으니 영영 안 걸린다(`mall` 표식으로).
+    if (isHansalim(it)) return '한살림 · 조합원 전용'
     if (u.includes('sanjitalk')) return '산지톡'
     if (u.includes('smartstore.naver')) return '네이버'
     return ''
@@ -463,7 +484,11 @@ function Curation() {
       </div>
       <div className="cur-buy" style={{ display: 'flex', gap: 8, marginTop: 11 }}>
         <button className="press" onClick={() => add(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 13.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Icon name="cart" size={14} />담기</button>
-        <button className="press" onClick={() => buy(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 13.5 }}>사러가기</button>
+        {/* ⛔ 한살림은 「사러가기」를 안 그린다 (창업자 2026-08-17). 대신 «왜 없는지»를 그 자리에 적는다 —
+            버튼만 사라지면 「고장인가?」가 되고, 배지는 카드 위쪽이라 여기까지 안 따라온다. */}
+        {linkFor(it)
+          ? <button className="press" onClick={() => buy(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 13.5 }}>사러가기</button>
+          : <div style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 700, fontSize: 12, textAlign: 'center', lineHeight: 1.3 }}>매장에서 만나요<br /><span style={{ fontSize: 10.5 }}>온라인은 조합원만</span></div>}
       </div>
     </div>
   )

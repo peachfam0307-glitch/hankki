@@ -22,7 +22,7 @@ import { dateLabel, openExternal as openUrl, ingredientName } from '../utils'
 import { shouldAskReview } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
-import { picksForIngredients, productLink, productMall, curIcon } from '../data/curation'
+import { picksForIngredients, productLink, productMall, curIcon, isHansalim } from '../data/curation'
 
 import { useWakeLock } from '../useWakeLock'
 import { useLayerBack } from '../useBackHandler'
@@ -230,7 +230,8 @@ export default function RecipeDetailScreen({ id }) {
   //      내가 그걸 「픽 자리 통째로」로 넓게 읽어 **82편 전부에서 사러가기가 사라졌다**(일주일).
   //      창업자 정정 2026-08-10 — *"그게 **한살림제품만** 빼자는 뜻이었어"* · *"다 빼자는게 아니라"*.
   //   ⭐ 그리고 한살림 문제는 «같은 날» 장보기 화면에서 이미 풀려 있었다 —
-  //      `mallLabel()` 의 **「한살림 · 조합원만」** 배지. 누르기 «전»에 보이니 헛걸음이 없다.
+  //      `mallLabel()` 의 **「한살림 · 조합원 전용」** 배지. 누르기 «전»에 보이니 헛걸음이 없다.
+  //      🌱 2026-08-17 부터 한 걸음 더 — **사러가기를 아예 안 그린다**(창업자 *"링크안달면되고"*).
   //      여기도 같은 배지를 쓴다 → **막다른 길이 안 생기니 뺄 이유가 없다.**
   //   ⚠️ 자연드림(아이쿱)은 **실버회원 가입으로 누구나 온라인 구매 가능**(조합원과 가격만 다르다)
   //      → 아무 표시도 안 붙인다. 창업자 확인 2026-08-10.
@@ -240,11 +241,13 @@ export default function RecipeDetailScreen({ id }) {
   // ⭐ 「다 담기」는 접혀 있어도 «전부» 담는다 — 「다」라고 써 놓고 보이는 것만 담으면 거짓말이 된다.
   //    담고 나서 뜨는 토스트가 개수를 말해주니 유저도 몇 개 담겼는지 안다.
   const addAllPicks = () => {
-    pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p) }))
+    // ⛔ 한살림은 `noBuy` 를 같이 담는다 — 안 그러면 장보기 리스트에서 쿠팡·네이버 검색으로 샌다
+    pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p), ...(isHansalim(p) ? { noBuy: true } : {}) }))
     nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요`)
   }
   // 구매처 배지 — 장보기 화면 `mallLabel()` 과 «같은 규칙»이라야 한다(한쪽만 고치면 앞뒤가 안 맞는다)
-  const mallBadge = (p) => (String(p.url || '').includes('hansalim') ? '한살림 · 조합원만' : productMall(p))
+  //   ⭐ 이제 판정이 `productMall()` «한 곳»에 모였다 — 전엔 여기서 url 로 한 번 더 봐서 두 벌이었다.
+  const mallBadge = (p) => productMall(p)
 
   return (
     <div className="screen fade" style={{ paddingBottom: 0 }}>
@@ -526,10 +529,13 @@ export default function RecipeDetailScreen({ id }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{p.name}</span>
                   {mallBadge(p) && (
-                    <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원만') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{mallBadge(p)}</span>
+                    <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{mallBadge(p)}</span>
                   )}
                 </div>
-                <button className="press" onClick={() => openUrl(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>
+                {/* ⛔ 한살림은 사러가기를 안 그린다 (창업자 2026-08-17 *"링크안달면되고"*) */}
+                {isHansalim(p)
+                  ? <span style={{ flex: '0 0 auto', fontSize: 11.5, fontWeight: 700, color: 'var(--text-sub)' }}>매장에서</span>
+                  : <button className="press" onClick={() => openUrl(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>}
               </div>
             ))}
             {/* 🔽🔼 [2026-08-15] 창업자 *"4칸 넘어가면 접을 수 있게 해줘. 너무 길면 좀 그래."*

@@ -8,10 +8,19 @@ import { pickRotate } from './weeklypick.js'
 // 나중에 url/mall 을 제휴(어필리에이트) 링크로 바꾸면 그대로 수수료 링크가 됨.
 // 문구 원본·톤 원칙: docs/주부의장바구니-큐레이션.md
 
-// 한살림은 로그인 때문에 웹 검색 URL이 없어, 로그인이 유지되는 '한살림 앱'을 바로 연다(안드로이드).
-// 주소 기반 intent(intent://host…)는 앱이 딥링크를 등록해야 작동해서 웹 홈으로 폴백됐다.
-// → 패키지로 앱 런처를 직접 실행하는 형식(intent:#Intent;package=…)으로 변경.
-const HANSALIM_APP = 'intent:#Intent;package=kr.or.hansalim.shop;S.browser_fallback_url=https%3A%2F%2Fshop.hansalim.or.kr%2Fshopping%2FspMain.do;end'
+// 🌱🌱 [창업자 확정 2026-08-17] **한살림 제품엔 「사러가기」를 아예 안 단다.**
+//   📮 창업자 = *"한살림은 조합원전용스티커붙이고 링크안달면되고, 자연드림은 비조합원도되니까 링크달아도돼"*
+//   ⭐⭐ 테스터가 이미 제보했던 그 자리다 — *"한살림은 대표 홈페이지로만 간다. 어떻게 물건을 살 수 있냐"*
+//      (`docs/의견-로그.md` 08-03). 조합원이 아니면 «어디로 보내도» 못 산다.
+//      **막다른 길로 보내느니 「조합원 전용」이라고 말하고 안 보내는 게 낫다.**
+//   ⛔ 옛 판은 한살림 앱을 열었다(`intent:#Intent;package=kr.or.hansalim.shop;…`).
+//      로그인 검색 URL이 없어서 그렇게 했는데, **앱을 열어도 비조합원은 못 산다**는 게 문제였다.
+//   ⚠️⚠️ **`url` 을 비우기만 하면 «더 나빠진다»** — `productLink()`·`buyUrlFor()` 둘 다
+//      url 이 없으면 **네이버·쿠팡 검색으로 폴백**해서, 한살림 제품을 엉뚱한 몰에서 찾게 된다.
+//      → 그래서 `mall: 'hansalim'` 이라는 **표식**을 주고 세 자리에서 전부 걸러 낸다:
+//        ①큐레이션 카드 ②레시피 상세 픽 카드 ③장보기 리스트(담은 뒤에도).
+//   ✅ 자연드림(아이쿱)은 **비조합원도 온라인 구매 가능**이라 아무 표시도 안 붙인다(그게 기본).
+export const isHansalim = (it) => it?.mall === 'hansalim'
 
 // 큐레이션 카테고리/상품 아이콘 — 얼굴 없는 제품 일러스트(수채톤·창업자 생성).
 // 이모지 대신 ShopScreen에서 렌더. key = assets/curation/<key>.png. 없으면 이모지로 폴백.
@@ -162,7 +171,7 @@ export const CURATION = [
     //    (두유는 마시는 것, 콩국물은 요리 재료다).
     cat: '콩국물', group: '두부·콩', emoji: '🫘', icon: 'cu_soymilk',
     items: [
-      { name: '무농약콩으로 만든 콩국물', matches: ['콩국물'], benefit: '남편이 콩국수를 좋아해서 여름에 자주 사는 아이템이에요. 국산 대두＋정제수가 끝이에요. 가격도 저렴하고 양도 적어서 한 끼에 딱 끝나요. 간이 안 되어 있어서 소금은 먹기 직전에 취향껏 넣으면 돼요', q: '한살림 무농약콩으로 만든 콩국물', url: HANSALIM_APP },
+      { name: '무농약콩으로 만든 콩국물', matches: ['콩국물'], benefit: '남편이 콩국수를 좋아해서 여름에 자주 사는 아이템이에요. 국산 대두＋정제수가 끝이에요. 가격도 저렴하고 양도 적어서 한 끼에 딱 끝나요. 간이 안 되어 있어서 소금은 먹기 직전에 취향껏 넣으면 돼요', q: '한살림 무농약콩으로 만든 콩국물', mall: 'hansalim' },
       { name: '풀무원 특등급 국산콩물', matches: ['콩국물'], benefit: '한살림이 근처에 없을 때 쿠팡에서 바로 받을 수 있어요. 이건 소금간이 되어 있어서 그냥 부어 먹어도 되고, 맛을 보고 싱거우면 소금만 조금 더하면 돼요', q: '풀무원 특등급 국산콩물', mall: 'coupang',
         // ⚠️ 창업자가 콕 집어준 상품이라 «검색어»가 아니라 직접 링크로 건다(검색은 다른 풀무원 콩물이 먼저 뜬다).
         //    ⛔ 원본 주소에 붙어 있던 `searchId`·`traceId`·`rank` 등은 **창업자 검색 세션 식별자**라 떼어냈다.
@@ -174,8 +183,8 @@ export const CURATION = [
   {
     cat: '두부', group: '두부·콩', emoji: '🧈', icon: 'cu_tofu',
     items: [
-      { name: '한살림 마른두부', matches: ['마른두부', '포두부'], benefit: '"두부는 한살림"이라는 말, 써보면 알아요. 물기를 쫙 빼 쫄깃해서 구이·조림에 좋아요. (부드러운 두부 좋아하면 이건 비추)', q: '한살림 마른두부', url: HANSALIM_APP },
-      { name: '한살림 몽글이 순두부', matches: ['순두부'], benefit: '작은 냄비에 파르르 끓여 양념장만 넣으면 3분 컷. 바쁜 아침 남편 식사대용으로, 저녁에 출출할 때 야식으로도 좋아요', q: '한살림 몽글이 순두부', url: HANSALIM_APP },
+      { name: '한살림 마른두부', matches: ['마른두부', '포두부'], benefit: '"두부는 한살림"이라는 말, 써보면 알아요. 물기를 쫙 빼 쫄깃해서 구이·조림에 좋아요. (부드러운 두부 좋아하면 이건 비추)', q: '한살림 마른두부', mall: 'hansalim' },
+      { name: '한살림 몽글이 순두부', matches: ['순두부'], benefit: '작은 냄비에 파르르 끓여 양념장만 넣으면 3분 컷. 바쁜 아침 남편 식사대용으로, 저녁에 출출할 때 야식으로도 좋아요', q: '한살림 몽글이 순두부', mall: 'hansalim' },
       // ⭐ 창업자 2026-08-03 제공. **쿠팡이라 조합원 아니어도 산다** — 도토리묵 자리에 한살림밖에 없던 걸 메운다.
       { name: '친정엄마 국내산 도토리로 만든 도토리묵', matches: ['도토리묵'], benefit: '국산 도토리앙금·천일염, 성분이 심플해요. 작은 사이즈로 소분돼 있어 하나 까서 혼자 먹기 딱이에요', q: '친정엄마 국내산 도토리묵', mall: 'coupang' },
     ],
@@ -190,7 +199,7 @@ export const CURATION = [
   {
     cat: '어묵', group: '고기·해산물', emoji: '🍢', icon: 'cu_eomuk',
     items: [
-      { name: '명태살 가득 참 어묵', matches: ['어묵'], benefit: '명태살이 가득해 성분 좋은 어묵이에요. 종류별로 사서 오븐에 구운 뒤 냉동해두면, 가루육수 넣어 남편이 좋아하는 어묵탕 5분 컷', q: '한살림 명태살가득참어묵', url: HANSALIM_APP },
+      { name: '명태살 가득 참 어묵', matches: ['어묵'], benefit: '명태살이 가득해 성분 좋은 어묵이에요. 종류별로 사서 오븐에 구운 뒤 냉동해두면, 가루육수 넣어 남편이 좋아하는 어묵탕 5분 컷', q: '한살림 명태살가득참어묵', mall: 'hansalim' },
       { name: '새로미 바른어묵', matches: ['어묵'], benefit: '성분 좋고 맛있는 어묵이에요. 짜지 않아 아이 반찬으로도 안심. 한살림이 집 근처에 없다면 이걸로 대용해도 좋아요. 구우면 겉이 쫄깃해져 더 맛있어요', q: '새로미 바른어묵', mall: 'coupang' },
     ],
   },
@@ -203,8 +212,8 @@ export const CURATION = [
   {
     cat: '간식', group: '간편식·간식', emoji: '🍡', icon: 'cu_pizza',
     items: [
-      { name: '초당옥수수피자', icon: 'cu_pizza', benefit: '아이 방학 간식 구원템이에요. 달달 고소한 옥수수랑 피자치즈로 재료가 심플하고 성분도 괜찮아요. 스팀오븐에 조리하면 도우가 말랑해서 간식으로 딱. 사이즈가 크지 않아 한 끼 대용으로도 좋아요', q: '한살림 초당옥수수피자', url: HANSALIM_APP },
-      { name: '고구마부리또', icon: 'cu_burrito', benefit: '달달하고 고소해서 제가 아끼는 간식템이에요. 또띠아에 고구마·모짜렐라 치즈로 재료가 심플하고 전자레인지로 데우기만 하면 돼 편해요. 어르신 간식으로도 좋고 저희 집 냉동실에도 구비해두는 거예요', q: '한살림 고구마부리또', url: HANSALIM_APP },
+      { name: '초당옥수수피자', icon: 'cu_pizza', benefit: '아이 방학 간식 구원템이에요. 달달 고소한 옥수수랑 피자치즈로 재료가 심플하고 성분도 괜찮아요. 스팀오븐에 조리하면 도우가 말랑해서 간식으로 딱. 사이즈가 크지 않아 한 끼 대용으로도 좋아요', q: '한살림 초당옥수수피자', mall: 'hansalim' },
+      { name: '고구마부리또', icon: 'cu_burrito', benefit: '달달하고 고소해서 제가 아끼는 간식템이에요. 또띠아에 고구마·모짜렐라 치즈로 재료가 심플하고 전자레인지로 데우기만 하면 돼 편해요. 어르신 간식으로도 좋고 저희 집 냉동실에도 구비해두는 거예요', q: '한살림 고구마부리또', mall: 'hansalim' },
     ],
   },
 ]
@@ -226,15 +235,17 @@ const MALL_SEARCH = {
   naver: 'https://search.shopping.naver.com/search/all?query={q}',
 }
 // '사러가기' 링크: url 이 있으면 직접 링크, mall 이 있으면 그 쇼핑몰 검색, 없으면 네이버쇼핑.
+//   ⛔ 한살림만 **빈 문자열**을 준다 = 「사러가기 버튼을 그리지 않는다」는 뜻(위 절 참고).
+//      ⚠️ 여기서 폴백을 타면 한살림 제품을 네이버에서 찾게 된다 — 그래서 «맨 먼저» 걸러 낸다.
 export const productLink = (it) =>
-  it.url || (MALL_SEARCH[it.mall] || MALL_SEARCH.naver).replace('{q}', encodeURIComponent(it.q))
+  isHansalim(it) ? '' : it.url || (MALL_SEARCH[it.mall] || MALL_SEARCH.naver).replace('{q}', encodeURIComponent(it.q))
 
 // 구매처 배지 라벨.
 export const productMall = (it) => {
+  if (isHansalim(it)) return '한살림 · 조합원 전용'
   if (it.mall === 'coupang') return '쿠팡'
   if (it.mall === 'oasis') return '오아시스'
   const u = it.url || ''
-  if (u.includes('hansalim')) return '한살림'
   if (u.includes('sanjitalk')) return '산지톡'
   if (u.includes('smartstore.naver') || u.includes('brand.naver')) return '네이버'
   return ''
