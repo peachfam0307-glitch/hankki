@@ -43,6 +43,12 @@ const dayKey = (ts) => {
   const d = new Date(ts)
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
 }
+// 🗓 달 키 — `dayKey` 의 앞 두 토막과 «같은 모양»이라 `dayFilter` 를 잘라 그대로 견줄 수 있다.
+//   ⛔ 달 이름을 글자로 만들지 말 것(「8월」) — 해가 넘어가면 작년 8월과 섞인다.
+const ymKey = (ts) => {
+  const d = new Date(ts)
+  return `${d.getFullYear()}-${d.getMonth()}`
+}
 
 // 🗓 월간 요리 달력 — 요리한 날에 «그날 만든 음식»이 뜬다. 날짜를 누르면 그날 기록만 모아본다.
 //
@@ -314,9 +320,68 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     const best = Object.entries(c).sort((a, b) => b[1] - a[1])[0]
     return best && best[1] >= 2 ? best[0] : null
   }, [entries])
-  const shown = dayFilter ? entries.filter((e) => dayKey(e.at) === dayFilter) : entries
+  // 📅📅 [창업자 2026-08-17] **날짜를 골라도 「그 달」이 안 사라진다.**
+  //   📮 *"일기에서 날짜를 누르면 그날에 만든 음식이 보이잖아. **근데 그 달에 만든 음식 전체도 보였으면 좋겠어.**"*
+  //   📮 ＋ *"처음들어가면 그달에만든게 보이는데 **일기쓰고 나면 날짜꺼만 보여.** 다른탭에 나갔다가 다시오면 다 보이고."*
+  //   ⭐⭐ 창업자가 본 그대로였다 — 달력 칸이 `onSelect(k)`(거르기 켜기)와 `onOpenDay(k)`(일기로 이동)를
+  //      **한 번에** 한다(위 `CookCalendar`). 그래서 일기를 쓰고 돌아오면 거르기가 «살아 있어» 그날 것만 남고,
+  //      탭을 나갔다 오면 화면이 다시 마운트돼 거르기가 풀려서 «다 보인다». 오락가락한 게 아니라 이 구조였다.
+  //   ⛔ **거르기를 없애지 않는다** — 그날 것만 보는 건 창업자가 «쓰는» 기능이다(*"그날에 만든 음식이 보이잖아"*).
+  //   ✅ **덜어내지 말고 얹는다** = 위에 「그날」, 아래에 「그 달 전체」. 둘 다 보인다.
+  //   ⚠️ 「그 달」의 기준 = **고른 날이 속한 달**. 달력에서 달을 넘기면 `move()` 가 `onSelect(null)` 을 부르니
+  //      달력이 보고 있는 달과 언제나 같다 — 달력 상태를 밖으로 끌어낼 필요가 없다.
+  const dayList = useMemo(
+    () => (dayFilter ? entries.filter((e) => dayKey(e.at) === dayFilter) : []),
+    [entries, dayFilter],
+  )
+  const pickedYm = dayFilter ? dayFilter.split('-').slice(0, 2).join('-') : null
+  const monthList = useMemo(
+    () => (pickedYm ? entries.filter((e) => ymKey(e.at) === pickedYm) : entries),
+    [entries, pickedYm],
+  )
   const openRecipe = (e) => {
     if (recipes.some((r) => r.id === e.recipeId)) nav.push({ name: 'detail', id: e.recipeId })
+  }
+
+  // 🖼 앨범 한 칸 — **그리드가 둘이 되어(그날 · 그 달) 한 곳으로 모았다.**
+  //   ⛔ 복사해 두 벌로 두지 말 것. 꾹 누름·편집 체크·별점이 붙어 있어 한쪽만 고치면 바로 갈린다.
+  const albumTile = (e) => {
+    const on = logEdit && logSel.has(e.id)
+    return (
+      <button
+        key={e.id}
+        className="album-tile press"
+        aria-label={`${e.title} 기록 보기`}
+        style={{ position: 'relative', opacity: logEdit && !on ? 0.75 : 1, outline: on ? '3px solid var(--brown)' : 'none', outlineOffset: -3, WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+        {...hold(() => { setLogEdit(true); setLogSel((s) => { const n = new Set(s); n.add(e.id); return n }) })}
+        onClick={() => {
+          if (lpFired.current) { lpFired.current = false; return } // 꾹 누름 발동 직후 클릭 무시
+          if (logEdit) toggleLogSel(e.id)
+          // 📔📔 **「한끼 일기」에서 누르면 «그날 일기»로 간다** (창업자 2026-08-07)
+          //   ⛔ 전엔 「요리 기록 남기기」 시트가 떴다 — 창업자 *"이거 없애기로 하지않았어? 일기에서 만든음식 누르면 떠."*
+          //   ⭐ v9.80 에 없앤 건 **「만들었어요」 누르면 «자동으로» 뜨던 것**이고,
+          //      여기 «직접 누르는 길»은 남아 있었다. 화면 이름이 「한끼 일기」인데 요리 기록이 뜨니 앞뒤가 안 맞았다.
+          //   ⭐ 기록(별점·사진·팁) 고치기는 **레시피 상세**에 그대로 있다(`RecipeDetailScreen` 「내 요리 기록」 카드)
+          //      → 잃는 길이 없다.
+          //   ⚠️ 딸려온 것 = 이 화면의 「한마디 청하기」가 그 시트 닫히는 자리를 썼다.
+          //      화면을 옮기는 길에 묻는 건 실례라 여기선 안 묻고 **레시피 상세 쪽에 맡긴다**(거긴 그대로 산다).
+          else nav.push({ name: 'diary', day: dayKey(e.at) })
+        }}
+      >
+        {e.photo ? (
+          <img src={e.photo} alt="" loading="lazy" />
+        ) : (
+          <div className="album-icon"><FoodIcon name={iconFor(e)} size={34} /></div>
+        )}
+        {e.rating > 0 && !logEdit && <span className="album-star">★{e.rating}</span>}
+        <span className="album-cap">{e.title}</span>
+        {logEdit && (
+          <span aria-hidden style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', background: on ? 'var(--brown)' : 'rgba(255,255,255,0.92)', border: on ? 'none' : '1.8px solid rgba(0,0,0,0.22)', boxShadow: '0 1px 5px rgba(0,0,0,0.22)' }}>
+            {on && <Icon name="check" size={14} color="#fff" stroke={3} />}
+          </span>
+        )}
+      </button>
+    )
   }
 
   return (
@@ -514,55 +579,32 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             <b style={{ color: 'var(--text)' }}>오늘 뭘 해먹었는지</b>가 한 장씩 쌓여요. 사진 한 장, 별점 하나면 충분해요 — 나중에 넘겨보면 <b style={{ color: 'var(--text)' }}>그날의 내가</b> 보여요.
           </div>
 
-          {dayFilter && (
-            <button className="press" onClick={() => setDayFilter(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, margin: '2px 0 10px', padding: '6px 12px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}>
-              {Number(dayFilter.split('-')[1]) + 1}월 {dayFilter.split('-')[2]}일의 요리 {shown.length}개 <Icon name="x" size={13} color="#fff" stroke={2.4} />
-            </button>
-          )}
-
           {entries.length === 0 ? (
             <div className="empty" style={{ marginTop: 10 }}>{'아직 기록이 없어요.\n요리하고 "만들었어요!"만 눌러도 별점·사진이 한 장씩 쌓여요.\n다음에 "그때 그 맛"을 그대로 재현하는 나만의 요리 일기예요'}</div>
           ) : (
-            <div className="album-grid">
-              {shown.map((e) => {
-                const on = logEdit && logSel.has(e.id)
-                return (
-                  <button
-                    key={e.id}
-                    className="album-tile press"
-                    aria-label={`${e.title} 기록 보기`}
-                    style={{ position: 'relative', opacity: logEdit && !on ? 0.75 : 1, outline: on ? '3px solid var(--brown)' : 'none', outlineOffset: -3, WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
-                    {...hold(() => { setLogEdit(true); setLogSel((s) => { const n = new Set(s); n.add(e.id); return n }) })}
-                    onClick={() => {
-                      if (lpFired.current) { lpFired.current = false; return } // 꾹 누름 발동 직후 클릭 무시
-                      if (logEdit) toggleLogSel(e.id)
-                      // 📔📔 **「한끼 일기」에서 누르면 «그날 일기»로 간다** (창업자 2026-08-07)
-                      //   ⛔ 전엔 「요리 기록 남기기」 시트가 떴다 — 창업자 *"이거 없애기로 하지않았어? 일기에서 만든음식 누르면 떠."*
-                      //   ⭐ v9.80 에 없앤 건 **「만들었어요」 누르면 «자동으로» 뜨던 것**이고,
-                      //      여기 «직접 누르는 길»은 남아 있었다. 화면 이름이 「한끼 일기」인데 요리 기록이 뜨니 앞뒤가 안 맞았다.
-                      //   ⭐ 기록(별점·사진·팁) 고치기는 **레시피 상세**에 그대로 있다(`RecipeDetailScreen` 「내 요리 기록」 카드)
-                      //      → 잃는 길이 없다.
-                      //   ⚠️ 딸려온 것 = 이 화면의 「한마디 청하기」가 그 시트 닫히는 자리를 썼다.
-                      //      화면을 옮기는 길에 묻는 건 실례라 여기선 안 묻고 **레시피 상세 쪽에 맡긴다**(거긴 그대로 산다).
-                      else nav.push({ name: 'diary', day: dayKey(e.at) })
-                    }}
-                  >
-                    {e.photo ? (
-                      <img src={e.photo} alt="" loading="lazy" />
-                    ) : (
-                      <div className="album-icon"><FoodIcon name={iconFor(e)} size={34} /></div>
-                    )}
-                    {e.rating > 0 && !logEdit && <span className="album-star">★{e.rating}</span>}
-                    <span className="album-cap">{e.title}</span>
-                    {logEdit && (
-                      <span aria-hidden style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', background: on ? 'var(--brown)' : 'rgba(255,255,255,0.92)', border: on ? 'none' : '1.8px solid rgba(0,0,0,0.22)', boxShadow: '0 1px 5px rgba(0,0,0,0.22)' }}>
-                        {on && <Icon name="check" size={14} color="#fff" stroke={3} />}
-                      </span>
-                    )}
+            <>
+              {/* 📅 날짜를 골랐을 때만 «그날» 묶음이 위에 선다. 알약을 누르면 거르기가 풀린다. */}
+              {dayFilter && (
+                <>
+                  <button className="press" onClick={() => setDayFilter(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, margin: '2px 0 10px', padding: '6px 12px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}>
+                    {Number(dayFilter.split('-')[1]) + 1}월 {dayFilter.split('-')[2]}일의 요리 {dayList.length}개 <Icon name="x" size={13} color="#fff" stroke={2.4} />
                   </button>
-                )
-              })}
-            </div>
+                  {/* ⛔ 요리를 안 한 날에도 일기는 쓴다 — 그때 아래가 통째로 비면 «고장»으로 읽힌다.
+                      전엔 앨범이 빈 채로 끝나서 화면에 아무것도 없었다. 이제 그 아래에 그 달이 이어진다. */}
+                  {dayList.length === 0 ? (
+                    <div className="t-sub" style={{ fontSize: 12.5, margin: '0 2px 14px' }}>이 날 만든 요리는 없어요.</div>
+                  ) : (
+                    <div className="album-grid" style={{ marginBottom: 16 }}>{dayList.map(albumTile)}</div>
+                  )}
+                  {/* 🗓 그 달 머리글 — 아래 앨범이 «무엇의 묶음»인지 말해 준다.
+                      ⛔ 이 줄이 없으면 그날 것과 달 것이 한 덩어리로 보여 더 헷갈린다. */}
+                  <div className="t-sub" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--brown)', margin: '0 2px 8px' }}>
+                    {Number(dayFilter.split('-')[1]) + 1}월에 만든 요리 {monthList.length}개
+                  </div>
+                </>
+              )}
+              <div className="album-grid">{monthList.map(albumTile)}</div>
+            </>
           )}
           </div>{/* .log-main */}
         </div>
@@ -674,9 +716,11 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>
               {logSel.size > 0 ? `${logSel.size}개 선택` : '기록을 눌러 선택'}
             </span>
+            {/* ⚠️ 「전체」 = **지금 화면에 있는 것**이다(옛 `shown`). 날짜를 골랐을 땐 그 달 묶음이 화면 전체이고,
+                그날 묶음은 그 안에 통째로 들어 있어(같은 id) `monthList` 하나로 둘 다 덮인다. */}
             <button className="press" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 8px' }}
-              onClick={() => setLogSel(logSel.size === shown.length ? new Set() : new Set(shown.map((e) => e.id)))}>
-              {logSel.size === shown.length && shown.length > 0 ? '전체 해제' : '전체 선택'}
+              onClick={() => setLogSel(logSel.size === monthList.length ? new Set() : new Set(monthList.map((e) => e.id)))}>
+              {logSel.size === monthList.length && monthList.length > 0 ? '전체 해제' : '전체 선택'}
             </button>
             <button className="press" disabled={logSel.size === 0}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 999, background: logSel.size ? 'var(--danger)' : 'var(--cream)', color: logSel.size ? '#fff' : 'var(--text-sub)', fontSize: 13.5, fontWeight: 800 }}
