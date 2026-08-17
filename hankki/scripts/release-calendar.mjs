@@ -190,9 +190,40 @@ if (mode === '--on') {
   process.exit(0)
 }
 
+// 🚨🚨 **검수 안 받은 레시피가 «앞으로» 언제 열리나 — 미리 보여준다** (2026-08-17)
+//
+// ⛔⛔ **「전날」만으로는 늦다.** 전날에 걸리면 그날 밤에 급히 검수해야 하고,
+//    우리는 **매주 5편씩 16번** 그 상황을 맞게 되어 있었다(8/24 ~ 12/07 · 62편).
+//    📌 실측으로 드러난 것 — 2026-08-17 사고는 **첫 번째였을 뿐**이다.
+// ⭐ 그래서 브리핑에 **D-30 안의 검수 대기**를 같이 띄운다. 몰아서 미리 받으면 밤에 안 몰린다.
+const 검수대기 = (안 = 30) => {
+  const 오늘 = todayKST()
+  return gates()
+    .filter((g) => g.kind === 'recipe' && g.date > 오늘 && /검수 안 받은 것/.test(g.what))
+    .filter((g) => dday(g.date) <= 안)
+    .map((g) => ({ ...g, d: dday(g.date) }))
+}
+if (mode === '--pending') {
+  const 것 = 검수대기(Number(arg) || 365)
+  if (!것.length) { console.log('✅ 앞으로 열릴 레시피는 전부 검수 표시가 있다'); process.exit(0) }
+  const n = 것.reduce((s, g) => s + Number((g.what.match(/검수 안 받은 것 (\d+)편/) || [, 0])[1]), 0)
+  console.log(`⏳ 검수 안 받은 레시피가 «앞으로» ${것.length}번에 걸쳐 ${n}편 열린다\n`)
+  것.forEach((g) => console.log(`   ${g.date} (D-${g.d})  ${g.what}`))
+  console.log(`\n   👉 몰아서 미리 검수판을 뽑는다 — 전날에 몰리면 그날 밤에 급해진다.`)
+  process.exit(0)
+}
+
 const nx = nextGate()
 if (mode === '--brief' || mode === '--check') {
-  if (!nx.length) process.exit(0)
+  // ⭐ 「가장 가까운 한 날짜」와 별개로 **검수 대기는 늘 보인다** — 미리 준비하라고.
+  const 대기 = 검수대기(30)
+  if (대기.length) {
+    const n = 대기.reduce((s, g) => s + Number((g.what.match(/검수 안 받은 것 (\d+)편/) || [, 0])[1]), 0)
+    console.log(`⏳ **검수 안 받은 레시피가 30일 안에 ${대기.length}번 · ${n}편 열린다** — 미리 받아둘 것`)
+    대기.slice(0, 3).forEach((g) => console.log(`   · ${g.date} (D-${g.d}) ${g.what.replace(/\s+⛔검수.*/, '').slice(0, 62)}`))
+    if (대기.length > 3) console.log(`   · … 외 ${대기.length - 3}번  (전부 보기 = release-calendar.mjs --pending)`)
+  }
+  if (!nx.length) process.exit(대기.length && mode === '--check' ? 0 : 0)
   const d = dday(nx[0].date)
   const n = nx.reduce((s, g) => s + g.keys.length, 0)
   const hot = d <= 7

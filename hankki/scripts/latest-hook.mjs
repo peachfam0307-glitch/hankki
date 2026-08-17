@@ -100,13 +100,28 @@ try {
     console.log('   전체는 `node hankki/scripts/latest-map.mjs` · 지도는 hankki/docs/최신-지도.md')
     // 📅 날짜가 «저절로» 여는 문 — 푸시 안 해도 열린다 (창업자 2026-08-01 절대원칙)
     try {
-      const { nextGate, todayKST } = await import('./release-calendar.mjs')
+      const { nextGate, todayKST, gates } = await import('./release-calendar.mjs')
+      const 오늘 = todayKST()
       const nx = nextGate()
       if (nx.length) {
-        const d = Math.round((Date.parse(nx[0].date) - Date.parse(todayKST())) / 86400000)
+        const d = Math.round((Date.parse(nx[0].date) - Date.parse(오늘)) / 86400000)
         const n = nx.reduce((s, g) => s + g.keys.length, 0)
         console.log(`\n${d <= 7 ? '🚨' : '📅'} ${nx[0].date}(D-${d}) 에 **저절로** 열린다 — ${n}컷`)
         if (d <= 7) console.log('   ⛔ 전날에 «고화질 전수 검수». 안 하면 그대로 유저 앞에 나간다.')
+      }
+      // ⏳⏳ **[2026-08-17] 검수 안 받은 레시피가 «앞으로» 언제 열리나 — 미리 띄운다.**
+      //   ⛔ 「전날」만 보면 그날 밤에 급해진다. 실측하니 **16번에 걸쳐 62편**이 그렇게 열릴 참이었다.
+      //      8/17 사고는 첫 번째였을 뿐이다 — 매주 5편씩 되풀이될 구조였다.
+      const 대기 = gates().filter((g) => g.kind === 'recipe' && g.date > 오늘 && /검수 안 받은 것/.test(g.what))
+      if (대기.length) {
+        const n = 대기.reduce((s, g) => s + Number((g.what.match(/검수 안 받은 것 (\d+)편/) || [, 0])[1]), 0)
+        const 가까움 = 대기.filter((g) => Date.parse(g.date) - Date.parse(오늘) <= 30 * 86400000)
+        console.log(`\n⏳ **검수 안 받은 레시피 ${n}편**이 앞으로 ${대기.length}번에 걸쳐 저절로 열린다 (30일 안 = ${가까움.length}번)`)
+        가까움.slice(0, 2).forEach((g) => {
+          const d = Math.round((Date.parse(g.date) - Date.parse(오늘)) / 86400000)
+          console.log(`   · ${g.date} (D-${d}) ${g.what.replace(/\s+⛔검수.*/, '').slice(0, 60)}`)
+        })
+        console.log('   👉 몰아서 미리 받는다 = `node hankki/scripts/release-calendar.mjs --pending`')
       }
     } catch { /* 없으면 조용히 */ }
     // 👋 세션 «시작»에만 — 읽을 것과 순서를 어디서 얻는지 (창업자 2026-08-13 *"예전문서 읽어와서 짬뽕만들고있어"*)
