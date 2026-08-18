@@ -174,6 +174,38 @@ if (spec.ask) {
   const uniq = clash
     .filter((c) => { const k = c.q + c.at; if (seen.has(k)) return false; seen.add(k); return true })
     .sort((a, b) => b.n - a.n)              // 많이 맞은 줄부터 — 그게 진짜 그 얘기다
+
+  // ⛔⛔ [2026-08-18 재검수에서 잡음] `--알고있음 "ㅇ"` **한 글자로 게이트가 통째로 뚫렸다.**
+  //    그날 사고 ⑴(사업장 주소)이 그대로 통과됐다. 문(門)을 만들어 놓고 «누구나 여는 손잡이»를 달았던 것.
+  //    ✅ 그래서 «본 척»을 못 하게 한다 — 게이트가 보여준 **자리(파일:줄)를 인용해야** 통과한다.
+  //       그 자리는 게이트를 «돌려야» 알 수 있으므로, 인용 자체가 「읽었다」는 증거가 된다.
+  // ⛔⛔ 여기서 «한 번 통째로 헛돌았다» — 첫 판이 `넵?` 이었다. `?` 가 붙어 **빈 문자열도 매치**해서
+  //    `^(넵?)` 가 «어떤 문장이든» 시작에서 빈 매치가 됐다 → **맞는 이유까지 전부 빈 말로 막혔다.**
+  //    📌 게이트가 «틀린 것을 막는» 게 아니라 «길을 없애면» 더 나쁘다. 짧은 말은 «전체 일치»로 가른다.
+  const HOLLOW = /^(ㅇ+|응|넵|네|ok|o|yes|암|됐)$|^(그냥|알아|알았|맞아|괜찮)/i
+  const okWhy = (w) => {
+    if (!w || w.trim().length < 20) return false          // 한두 마디로는 못 넘긴다
+    if (HOLLOW.test(w.trim())) return false
+    return true
+  }
+  if (uniq.length && knows.length) {
+    const bad = knows.filter((w) => !okWhy(w))
+    // 게이트가 보여준 자리 중 «하나라도» 인용했나 — 안 봤으면 못 적는다
+    const spots = [...new Set(uniq.map((c) => c.at))]
+    const cited = knows.some((w) => spots.some((s) => w.includes(s) || w.includes(s.split(':')[0])))
+    if (bad.length || !cited) {
+      console.error(`\n⛔ --알고있음 이 «본 척»이다. 게이트를 통째로 뚫는 손잡이가 되면 안 된다.\n`)
+      if (bad.length) console.error(`   ⛔ 너무 짧거나 빈 말이다(20자 이상 · 「ㅇ」·「그냥」 안 됨): ${bad.join(' / ')}`)
+      if (!cited) {
+        console.error(`   ⛔ **겹친 자리를 «인용»해야 한다** — 아래 중 하나를 그대로 적는다:`)
+        spots.slice(0, 5).forEach((s) => console.error(`        ${s}`))
+      }
+      console.error(`
+   ✅ 예: "CLAUDE.md:798 은 «앱 이전» 전제로 접은 갈래다. 이번은 «소유자 변경»이라 다른 절차다"
+   📌 2026-08-18 재검수에서 잡았다 — \`--알고있음 "ㅇ"\` 한 글자로 그날 사고가 그대로 통과됐다.\n`)
+      process.exit(1)
+    }
+  }
   if (uniq.length && !knows.length) {
     console.error(`\n🚨 이미 «정한» 것과 겹친다 — ${uniq.length}줄. 보고 나서 다시 판단한다.\n`)
     uniq.slice(0, 12).forEach((c) => console.error(`   Q${c.q} 「${c.key}」 → ${c.at}\n      ${c.ln}`))
@@ -209,7 +241,8 @@ if (spec.ask) {
 
   // ── 통과 ── 도장을 찍고 기록한다
   const day = (get('--날짜') || todayKST()).replace(/-/g, '').slice(4)
-  const stamp = `ASK-${day}-${qs.length}`
+  // 🔢 도장은 «유일»해야 한다 — 같은 날 두 번이면 앞 도장과 겹쳐 창업자가 못 가른다(2026-08-18 재검수)
+  const stamp = `ASK-${day}-${log.length + 1}~${log.length + qs.length}`
   console.log(`\n✅ 지원팀문의 관문 통과 — 도장 ${stamp}\n`)
   qs.forEach((q, i) => {
     console.log(`   Q${i + 1} ${q}`)

@@ -48,7 +48,9 @@ lines.forEach((ln, i) => {
   rules.push({ no: +m[1], title: m[2].replace(/\s+/g, ' ').trim(), at: i + 1, body: '' })
 })
 rules.forEach((r, k) => {
-  const end = k + 1 < rules.length ? rules[k + 1].at - 1 : Math.min(r.at + 60, lines.length)
+  // ⛔ 마지막 규칙엔 «다음 머리»가 없다. 첫 판은 +60 줄로 잘랐는데 그건 근거 없는 값이라
+  //    그보다 긴 규칙이면 도구를 놓쳐 «맨몸»으로 잘못 뜬다 → 파일 끝까지 본다(2026-08-18 재검수).
+  const end = k + 1 < rules.length ? rules[k + 1].at - 1 : lines.length
   r.body = lines.slice(r.at - 1, end).join('\n')
 })
 

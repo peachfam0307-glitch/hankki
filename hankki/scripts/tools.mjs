@@ -38,7 +38,8 @@ const KIND = [
   { re: /^test-/,   tag: '🧫', name: '검사', why: '기능이 도는지 본다' },
   { re: /^_shot-/,  tag: '📸', name: '캡처', why: '앱을 띄워 눈으로 볼 판을 찍는다' },
   { re: /^_판-/,    tag: '📋', name: '검수판', why: '창업자가 폰에서 볼 판을 만든다' },
-  { re: /^_/,       tag: '🛠', name: '한번쓴것', why: '그날 일회용' },
+  // ⚠️ 「한번쓴것」은 «찾을 때만» 보인다 — 갈래 요약에서 빼야 목록이 안 흐려진다(2026-08-18 재검수)
+  { re: /^_/,       tag: '🛠', name: '한번쓴것', why: '그날 일회용 · 요약에선 숨긴다', quiet: true },
   { re: /./,        tag: '⚙️', name: '상시도구', why: '언제든 부르는 것' },
 ]
 const kindOf = (f) => KIND.find((k) => k.re.test(f))
@@ -93,7 +94,7 @@ if (!words.length && !wantAll && !wantGate) {
   console.log(`\n🗺 이 저장소의 도구 ${rows.length}개 — **만들기 «전»에 여기부터**\n`)
   for (const k of KIND) {
     const n = rows.filter((r) => r.name === k.name).length
-    if (!n) continue
+    if (!n || k.quiet) continue
     console.log(`  ${k.tag} ${k.name.padEnd(6)} ${String(n).padStart(3)}개   ${k.why}`)
   }
   const g = rows.filter((r) => r.smoke).length
