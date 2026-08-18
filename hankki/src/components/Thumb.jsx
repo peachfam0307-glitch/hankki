@@ -16,12 +16,39 @@ import { clampZoom, photoImgStyle } from '../photoPan'
 // 색·개성은 꾸미기(사용자 배경/스티커)가 담당한다. (여기 색 넣으면 꾸미기 의미가 죽음)
 // 테마별로 화이트 톤이 달라야 함(크림=웜/블루=쿨/다크=톤다운) → CSS 토큰 --thumb 사용.
 
+// 🎴 **`imageFit` 이 없던 시절에 저장한 자랑카드 표지를 되살리는 문턱** (2026-08-18)
+//   ⛔ 「이미 깔린 폰」을 안 보면 반쪽이다(규칙 18 ⓙ) — 자랑카드→표지는 v8.50부터 있던 기능이라
+//      **8/17 «전»에 저장한 사람들도 지금 전부 동그랗게 깨져 있다.** 그 사람들에겐 표시가 없다.
+//   ⭐ 짐작이 아니라 **코드에 적힌 두 값의 차이**다 —
+//      · 자랑카드 = 1080×1350 을 `pixelRatio 1.5` 로 캡처 → **1620×2025** (`ShareDrawCard.jsx` `shell`·`saveCover`)
+//      · 내 사진  = `cropSquare(800)` · `fitImage(1200)` → **긴 변이 1200 을 넘을 수 없다** (`utils.js`)
+//      실측으로도 확인했다(재현판이 원본을 `1620×2025` 로 찍었다).
+//   ⚠️ 틀려도 안전한 쪽이다 — 어쩌다 걸리면 «8/17 이전 모습»(네모 꽉 참)이 될 뿐이다.
+const 카드높이문턱 = 1600
+
 // `className` = 크기를 «CSS 로» 정하고 싶을 때 쓴다 (넓은 화면에서 키우려면 인라인이면 못 이긴다).
 // ⚠️ 안에서 쓰는 움직임 클래스(`anim`)와 «합쳐서» 넘긴다 — 덮어쓰면 움직이는 배경이 죽는다.
 export default function Thumb({ recipe, radius = 16, ratio, style, className = '', emojiSize = '2rem', iconSize = '56%', showDecor = false, panProps }) {
   const [failed, setFailed] = useState(false)
+  // 🎴🎴 「이 그림은 자랑카드다」 — `imageFit` 이 없던 시절에 저장한 표지를 되살리는 자리.
+  //   ⭐ 값에 **그림 자체**를 담는다(참/거짓이 아니라) — 표지를 바꾸면 저절로 무효가 된다.
+  //      (목록에서 카드 하나가 다른 레시피를 그리게 될 때 옛 판정이 남는 것을 막는다)
+  const [카드였던그림, set카드였던그림] = useState(null)
   const thumb = recipe.thumb || (recipe.image ? 'photo' : 'icon') // 예전 레시피 호환
   const showImg = thumb === 'photo' && recipe.image && !failed
+  // 🎴🎴 **「사진」과 「이미 완성된 표지 한 장(자랑카드)」은 다른 물건이다.** (창업자 2026-08-18)
+  //   📮 *"레꾸자랑카드를 표지로바꾼거 이렇게돼"* → *"아니 **원래 자랑카드전체가 표지여야하는데** 동그랗게됐다고"*
+  //      ＋ *"**사진넣기 기능 -일기에서 쓰던거 넣고 변했어**"* ← 창업자가 원인까지 짚었다(맞았다).
+  //   ⛔ 2026-08-17 `5d1a5bb` 「표지 사진을 아이콘처럼 동그랗게」가 **자랑카드까지 같이 동그랗게** 만들었다.
+  //      실측 = 표지 칸을 채우는 넓이 **24.5%** · 카드 원본이 살아남은 넓이 **62.8%**
+  //      (`scripts/_repro-카드표지-0818.mjs` — 진짜로 저장해서 잰 값).
+  //   ⭐ 8/17 결정(*"사진을 이모지랑 똑같이 동그랗게"*)은 **내 음식 사진**을 두고 한 말이다 —
+  //      사진은 피사체가 가운데라 동그라미가 어울리지만, **카드는 판 전체가 그림**이라 자르면 안 된다.
+  //   📌 이건 «그림만 봐서는» 못 가른다. 그래서 **저장할 때 표시**한다(`imageFit: 'whole'`).
+  //   ⛔⛔ 한 번 더 갈렸다 — 내가 「원래」를 «네모로 꽉 채움(cover)»으로 읽고 고쳤더니
+  //      창업자가 *"**위에잘렸어**"*. 4:5 카드를 1:1 칸에 채우면 위아래 20% 가 날아간다.
+  //      ✅ 그래서 **자르지 않는다**(`contain`) — 좌우에 여백이 생겨도 카드가 다 보이는 게 먼저다.
+  const 카드표지 = recipe.imageFit === 'whole' || 카드였던그림 === recipe.image
   // 표지 배경(배경지) — 정하면 기본 그라데이션 대신 그 배경으로. 패턴은 %라 어느 크기든 스케일된다.
   const bg = recipe.decorBg ? bgStyle(recipe.decorBg) : null
   const dark = recipe.decorBg ? bgIsDark(recipe.decorBg) : false // 딥 배경 = 글자·아이콘 밝게
@@ -55,12 +82,19 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     inner = (
       <div style={center}>
         {/* 🫳 `panProps` = 「끌어서 옮기고 두 손가락으로 확대」를 걸 자리 (창업자 2026-08-17).
-            ⭐ **원 자체**에 건다 — 손짓이 칸 크기(`getBoundingClientRect`)로 이동량을 계산해서,
-               바깥 상자에 걸면 원보다 큰 칸을 기준으로 재어 손가락보다 사진이 덜 움직인다.
+            ⭐ **그림 담은 칸 자체**에 건다 — 손짓이 칸 크기(`getBoundingClientRect`)로 이동량을 계산해서,
+               바깥 상자에 걸면 그 칸보다 큰 상자를 기준으로 재어 손가락보다 사진이 덜 움직인다.
             ⛔ 안 넘기면 아무 일도 안 한다 — 목록 카드는 «보기만» 하는 자리라 넘기지 않는다. */}
         <div
           {...panProps}
-          style={{ width: iconSize, aspectRatio: '1 / 1', borderRadius: '50%', overflow: 'hidden', flex: '0 0 auto', ...(panProps?.style || {}) }}
+          style={{
+            ...(카드표지
+              ? { width: '100%', height: '100%', borderRadius: 0 }        // 카드 = 표지 칸을 통째로
+              : { width: iconSize, aspectRatio: '1 / 1', borderRadius: '50%' }), // 사진 = 아이콘처럼 동그랗게
+            overflow: 'hidden',
+            flex: '0 0 auto',
+            ...(panProps?.style || {}),
+          }}
         >
           <img
             src={recipe.image}
@@ -68,7 +102,14 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
             loading="lazy"
             draggable={false}
             onError={() => setFailed(true)}
-            style={{ ...photoImgStyle(pos, z), pointerEvents: 'none' }}
+            onLoad={(e) => { if (e.currentTarget.naturalHeight >= 카드높이문턱) set카드였던그림(recipe.image) }}
+            style={{
+              ...photoImgStyle(pos, z),
+              // 🎴 카드는 **한 군데도 안 자른다**(`contain`) — 좌우에 여백이 생겨도 다 보이는 게 먼저다.
+              //    ⚠️ 유저가 두 손가락으로 «확대»했으면(zoom>1) 그 뜻이 우선이라 그때는 잘라 채운다.
+              ...(카드표지 && clampZoom(recipe.imageZoom) <= 1 ? { objectFit: 'contain' } : null),
+              pointerEvents: 'none',
+            }}
           />
         </div>
       </div>

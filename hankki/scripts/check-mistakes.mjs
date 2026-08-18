@@ -419,6 +419,33 @@ console.log('\n🪤 반복 실수 게이트')
   else ok(`배포 체인 ${체인.length}개 — 박힌 브라우저 경로 0`)
 }
 
+// 🎴🎴 자랑카드를 표지로 저장할 때 «카드라는 표시»가 붙나 (창업자 2026-08-18)
+//   📮 *"원래 자랑카드전체가 표지여야하는데 동그랗게됐다고"* — 2026-08-17 에 「사진을 동그랗게」를
+//      넣으면서 **자랑카드까지 같이 원 안에 갇혔다**(표지를 채우는 넓이 24.5% · 카드 생존 62.8%).
+//   ⭐ 뿌리 = 카드와 사진이 **저장 모양이 똑같아서**(`thumb:'photo'` ＋ `image`) 구분이 안 됐다.
+//      → `imageFit: 'fill'` 이 그 표시다. 이 표시가 빠지면 **또 동그래진다.**
+//   ⛔ 이 검사는 「글자가 있나」가 아니라 «두 짝이 다 있나»를 본다(규칙 18 ⓘ) —
+//      ⑴저장하는 쪽이 표시를 붙이나 ⑵그리는 쪽이 그 표시를 보나. 한쪽만 있으면 조용히 반쪽이 된다.
+{
+  console.log('\n🎴 자랑카드 표지 — 「사진」과 갈리는 표시')
+  const 부르는곳 = ['src/screens/RecipeDetailScreen.jsx', 'src/screens/BragScreen.jsx']
+  let 샘 = 0
+  for (const rel of 부르는곳) {
+    const src = readFileSync(join(ROOT, rel), 'utf8')
+    const 줄 = src.split('\n').filter((l) => l.includes('onSaveCover=') && !l.trim().startsWith('//'))
+    if (!줄.length) { no(`${rel} — onSaveCover 를 넘기는 줄이 없다(자랑카드→표지 길이 끊겼나?)`); 샘++; continue }
+    const 직접 = 줄.filter((l) => !l.includes('카드표지로('))
+    if (직접.length) { no(`${rel} — onSaveCover 가 «카드표지로()» 를 안 쓴다 → imageFit 표시가 안 붙어 또 동그래진다`); 샘++ }
+  }
+  const 만드는곳 = readFileSync(join(ROOT, 'src/components/ShareDrawCard.jsx'), 'utf8')
+  if (!/export const 카드표지로[^\n]*imageFit:\s*'whole'/.test(만드는곳)) { no("ShareDrawCard 의 카드표지로() 가 imageFit:'whole' 을 안 담는다"); 샘++ }
+  const 그리는곳 = readFileSync(join(ROOT, 'src/components/Thumb.jsx'), 'utf8')
+  const 코드 = 그리는곳.split('\n').filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*')).join('\n')
+  if (!/recipe\.imageFit\s*===\s*'whole'/.test(코드)) { no('Thumb 이 imageFit 을 안 본다 — 저장은 되는데 그릴 때 무시되면 표시가 헛것이 된다'); 샘++ }
+  else if (!/카드표지\s*\?[\s\S]{0,220}borderRadius:\s*'50%'/.test(코드)) { no('Thumb 이 imageFit 을 보긴 하는데 «원/네모»를 안 가른다'); 샘++ }
+  if (!샘) ok('저장(2곳) → 표시(imageFit:whole) → 그리기(Thumb·contain) 세 짝이 다 붙어 있다')
+}
+
 console.log(bad ? `\n⛔⛔ ${bad}건 — 고치고 다시 돌릴 것\n` : '\n✅ 반복 실수 게이트 통과\n')
 console.log('   📖 기계가 «못 잡는» 것들 = docs/실수-패턴-2026-08-07.md\n')
 process.exit(bad ? 1 : 0)
