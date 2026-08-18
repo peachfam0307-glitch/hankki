@@ -315,7 +315,11 @@ export default function RecipeDetailScreen({ id }) {
           <button className="bar-btn" onClick={() => nav.push({ name: 'editor', id: r.id })} data-coach="edit" aria-label="편집">
             <Icon name="edit" size={19} stroke={2.2} />
           </button>
-          <button className="bar-btn" onClick={() => toggleFavorite(r.id)} aria-label="즐겨찾기">
+          {/* 🔖 [2026-08-18] 이름 통일 「즐겨찾기」 → **「책갈피」** (창업자 확정)
+              ⏳ **그림은 아직 북마크 아이콘이다** — 목록은 요리사모자 클립으로 갔다.
+                 말은 같은데 그림이 달라 「같은 기능인 줄 모른다」가 될 수 있다 → 창업자 판정 대기.
+                 ⛔ 창업자가 지목한 건 「칩」이라 여기까지 그림을 넓히지 않았다. */}
+          <button className="bar-btn" onClick={() => toggleFavorite(r.id)} aria-label="책갈피">
             <Icon name="bookmark" size={20} color={r.favorite ? '#c2703f' : 'currentColor'} style={{ fill: r.favorite ? '#c2703f' : 'none' }} />
           </button>
           {/* 삭제 — 예전엔 '⋯ 더보기' 뒤에 숨겨뒀는데 메뉴 안에 삭제 하나뿐이라

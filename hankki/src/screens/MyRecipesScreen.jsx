@@ -242,6 +242,15 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   // 스마트 폴더 — ★즐겨찾기 / 🍳자주 해먹는. 실제 폴더와 안 겹치게 '__' 접두 키를 쓴다.
   const favCount = sorted.filter((r) => r.favorite).length
   const oftenCount = sorted.filter((r) => (r.cooked || 0) > 0).length
+  // 🔖🔖 [2026-08-18] 책갈피가 카드 «위로 14px» 나가므로 그만큼 자리를 비운다.
+  //   ⛔ 안 비웠더니 **맨 윗줄 책갈피가 필터 칩 줄에 가렸다**(실측 = 큰 2건 · 작은 3건).
+  //   ⭐ 줄 사이도 같은 이유로 벌린다 — 아랫줄 책갈피가 «윗줄 이름표 «글자»»를 덮었다.
+  //      🔢 Range 로 «글자가 실제로 차지하는 상자»를 재서 작은 격자 22건.
+  //         ⛔ `.name` div 로 재면 49건이 나오는데 그건 «카드 폭 전체»라 이름표가 왼쪽 정렬일 때
+  //            오른쪽 빈칸까지 세어진다 — 규칙 18 ⓘ(검사가 «무엇을» 보는가).
+  //   ⛔ `.grid2`·`.grid3` 자체는 안 고친다 — 책갈피가 없는 다른 화면(즐겨찾기·홈)까지 성겨진다.
+  //   🧪 `scripts/_probe-책갈피가림-0818.mjs` 가 지킨다(되돌리면 실패한다).
+  const 책갈피자리 = { paddingTop: 14, rowGap: gridSize === 'big' ? 24 : 22 }
   // 🔍 레시피 탭 «안에서» 찾기 (창업자 요청 2026-08-05 — *"레시피탭에 검색기능 있으면 좋겠어"*)
   //   ⛔ 예전엔 우상단 돋보기가 «탭을 떠나» 전체 검색 화면으로 튕겨 나갔다.
   //      내가 담아둔 것에서 찾고 싶은데 기본 레시피까지 섞여 나오고, 돌아오려면 뒤로가기를 눌러야 했다.
@@ -693,12 +702,22 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                 ⛔ 앱에서 유니코드 별을 쓰던 곳이 둘이었다(앨범 배지 · 이 칩) — 이걸로 0이 된다.
                 ⚠️ `currentColor` 로 둔다 — 칩은 눌리면 글자색이 바뀌는데(`.pill.active`)
                    색을 박으면 별만 안 따라가서 «그때만» 어긋난다. `.pill` 이 이미 flex 라 정렬은 그대로.
+                🔖🔖 **[2026-08-18 창업자 확정] 별 → 요리사모자 · 「즐겨찾기」 → 「책갈피」**
+                   📮 *"아니면 **즐겨찾기 버튼 앞에 요리사모자를 넣어봐.**"* → 갈래 여섯을 찍어 **② 모자＋글자** 확정
+                   📮 이름 = *"3번가자"*(책갈피). 그 앞에 창업자가 «my pick» 을 냈는데 실측으로 접었다 —
+                      ⑴「픽」은 장보기의 **「이번 주 픽」(제품)**으로 이미 쓰인다(＋레시피 메모 여러 편)
+                      ⑵**화면에 보이는 영어 낱말이 0개**라 유일한 영어가 된다(창업자 스스로 *"혼자영어인가ㅋ"*)
+                   ⭐⭐ **칩의 모자 = 카드의 모자** → 「이 모자가 책갈피구나」를 유저가 저절로 배운다.
+                      「모아보기 단추」를 새로 만들 필요가 없다 — 이 자리가 이미 그것이다.
+                   ⭐ 별점을 접고 인덱스로 갔는데 **별(★)이 여기 남아 있었다.** 이걸로 0이 된다.
+                   ⚠️ 이름은 여섯 곳을 «같이» 바꿨다(여기 · 사용법 · 설정 메뉴 · 설정 통계 · 모아보기 화면 제목·빈칸).
+                      ⛓ CLAUDE.md 「같은 기능은 탭이 달라도 같은 이름」 — 한 곳만 바꾸면 말이 갈라진다.
                 ⛔⛔ 이 주석은 `{favCount > 0 && (` **«바깥»**에 둔다 — 그 괄호 안은 «표현식» 자리라
                    JSX 주석을 넣으면 객체 리터럴로 파싱돼 **빌드가 죽는다**(오늘 실제로 죽였다 · CLAUDE.md 함정). */}
             {favCount > 0 && (
               <button className={`pill press ${folder === '__fav' ? 'active' : ''}`} onClick={() => setFolder('__fav')}>
-                <Icon name="star" size={13} color="currentColor" style={{ fill: 'currentColor' }} />
-                즐겨찾기 {favCount}
+                <img src={idxChef} alt="" className="pill-chef" />
+                책갈피 {favCount}
               </button>
             )}
             {oftenCount > 0 && (
@@ -723,7 +742,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                   : '이 폴더에 레시피가 없어요.\n가져오기로 채워보세요.'}
               </div>
             ) : (
-              <div className={gridSize === 'big' ? 'grid2' : 'grid3'}>
+              <div className={gridSize === 'big' ? 'grid2' : 'grid3'} style={책갈피자리}>
                 {list.map((r) => {
                   const on = edit && sel.has(r.id)
                   return (
@@ -761,7 +780,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                       {!edit && (
                         <button
                           className={`fav-dot press${r.favorite ? ' on' : ''}`}
-                          aria-label={r.favorite ? `${r.title} 인덱스 빼기` : `${r.title} 인덱스 남기기`}
+                          aria-label={r.favorite ? `${r.title} 책갈피 빼기` : `${r.title} 책갈피 꽂기`}
                           aria-pressed={!!r.favorite}
                           onClick={(ev) => { ev.stopPropagation(); toggleFavorite(r.id) }}
                         >

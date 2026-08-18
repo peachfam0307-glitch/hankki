@@ -267,7 +267,8 @@ export default function ProfileScreen() {
   // '만들었어요! 기록'은 하단 '일지' 탭과 겹쳐서 뺐고, '설정' 행은 프로필 편집을 여는 잘못된 항목이라 뺐다.
   // (프로필 편집은 맨 위 프로필 카드를 누르면 열린다)
   const menu = [
-    { icon: 'heart', label: '즐겨찾기', onClick: () => nav.push({ name: 'favorites' }) },
+    // 🔖 [2026-08-18] 「즐겨찾기」 → **「책갈피」** (창업자 확정 · 유저에게 보이는 여섯 곳을 같이 바꿨다)
+    { icon: 'heart', label: '책갈피', onClick: () => nav.push({ name: 'favorites' }) },
     // 💾 백업은 이 목록에서 «꺼냈다» — 아래 독립 카드로. (창업자 2026-08-16)
     { icon: 'help', label: '요리 가이드', badge: '계량·손질', onClick: () => setGuide(true) },
     { icon: 'help', label: '앱 소개 다시 보기', onClick: () => nav.showOnboarding && nav.showOnboarding() },
@@ -405,7 +406,7 @@ export default function ProfileScreen() {
         <div className="card" style={{ display: 'flex', padding: '16px 0', background: 'var(--cream)', border: 'none' }}>
           <Stat n={recipes.length} label="전체 레시피" />
           <div style={{ width: 1, background: 'var(--line)' }} />
-          <Stat n={recipes.filter((r) => r.favorite).length} label="즐겨찾기" />
+          <Stat n={recipes.filter((r) => r.favorite).length} label="책갈피" />
           <div style={{ width: 1, background: 'var(--line)' }} />
           {/* 예전 'Inbox' — 홈에서 뺀 대신 여기 통계에서 연다. 아직 편집 안 끝난(미정리) 레시피 개수, 탭하면 목록 */}
           <Stat n={recipes.filter((r) => r.status === 'unsorted').length} label="미정리" onClick={() => nav.push({ name: 'inbox' })} />
