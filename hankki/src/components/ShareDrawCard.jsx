@@ -340,6 +340,55 @@ const WARDROBE = {
 // 뼈대 하나가 지금 입을 옷. 계절 옷이 없으면 기본 옷 그대로.
 const wearOf = (k, now) => ({ ...BASE_WEAR[k], ...(WARDROBE[seasonsNow(now)[0]]?.[k] || {}), badge: WARDROBE[seasonsNow(now)[0]]?.badge })
 
+// 📏📏 **표지로 저장할 때 「아래 빈 자리」를 잘라낸다.** (창업자 2026-08-18
+//   *"저 이미지는 **위아래여백이달라서** 표지적용하니 **아래가 너무 휑해**"*)
+//   ⭐ 왜 생겼나 = 카드 아래쪽은 원래 **「레시피 보러가기」·「Play스토어 ‘한끼’ 검색」이 앉던 자리**다.
+//      표지용(`cover`)이라 그 둘을 빼니 **그 자리가 통째로 비었다.** 카드가 잘려 보일 땐 안 드러났고,
+//      「카드 전체를 보여주기」로 바꾸는 순간 드러났다.
+//   ⛔ 스킨 8개(warm·panel·pola·mag·summer·halloween·chuseok·arch)의 좌표를 하나씩 고치지 않는다 —
+//      여덟을 손으로 맞추면 새 스킨이 생길 때마다 또 어긋난다.
+//   ✅ 대신 **그리고 나서 «실제로 어디까지 찼는지»를 DOM 에 물어본다.** 스킨이 몇 개든 저절로 맞는다.
+//      · 카드 «전체»를 덮는 것(배경판·텍스처·그라데이션 베일)은 뺀다 — 그건 늘 맨 아래까지 간다
+//      · 남은 것들의 제일 아래 ＋ **위 여백과 같은 만큼** = 잘라낼 높이 → 위아래가 같아진다
+//   ⚠️ 못 재면(0개) 원래 높이 그대로 간다 — 재기에 실패했다고 카드를 망치지 않는다.
+const 찬높이 = (el) => {
+  const 판 = el.firstElementChild            // shell(1080×1350)
+  if (!판) return 0
+  const R = 판.getBoundingClientRect()
+  if (!R.height) return 0
+  let 위 = Infinity, 아래 = 0
+  for (const n of 판.querySelectorAll('*')) {
+    const r = n.getBoundingClientRect()
+    if (!r.width || !r.height) continue
+    if (r.width >= R.width * 0.98 && r.height >= R.height * 0.92) continue  // 배경·베일
+    위 = Math.min(위, r.top - R.top)
+    아래 = Math.max(아래, r.bottom - R.top)
+  }
+  if (!Number.isFinite(위) || 아래 <= 0) return 0
+  const 여백 = Math.max(0, 위)
+  // ⛔⛔ **단위를 섞지 말 것.** `R.height` 는 «화면에 보이는» 높이(카드가 scale 로 줄어 438px),
+  //    `판.offsetHeight` 는 «CSS» 높이(1350px)다. 첫 판이 `Math.min(R.height, …)` 로 둘을 견줘
+  //    **438 을 골랐고 카드가 40% 로 납작하게 잘렸다**(1620×656 · 창업자에게 보이기 전에 규칙 21 로 잡았다).
+  //    ⭐ 비율(`÷ R.height`)로 바꾼 «뒤»에는 **CSS 쪽 값끼리만** 비교한다.
+  const h = Math.min(판.offsetHeight, Math.round((아래 + 여백) / R.height * 판.offsetHeight))
+  // 🛟 하한 — 스킨이 여덟이라 «내가 안 본 배치»가 있을 수 있다. 절반 넘게 잘릴 값이 나오면
+  //    재기에 실패한 것으로 보고 **원래 높이 그대로 간다**(0). 잘못 자르느니 조금 휑한 게 낫다.
+  return h < 판.offsetHeight * 0.55 ? 0 : h
+}
+
+// 🎴🎴 **자랑카드를 표지로 저장할 때의 «모양».** (창업자 2026-08-18)
+//   📮 *"원래 **자랑카드전체가** 표지여야하는데 동그랗게됐다고"* → *"**위에잘렸어**"*
+//   ⭐⭐ 두 마디가 같은 것을 가리킨다 — **한 군데도 잘리면 안 된다.**
+//      ⛔ 나는 처음에 「원래」를 «2026-08-17 이전 모습(네모 꽉 채움)»으로만 읽었다.
+//         그런데 그 판도 4:5 카드를 1:1 칸에 채우느라 **위아래 20% 를 잘랐고**,
+//         창업자가 그걸 바로 짚었다. 「전체」는 비유가 아니라 **글자 그대로였다.**
+//   ⭐ `imageFit: 'whole'` = 「이건 사진이 아니라 **이미 완성된 표지 한 장**이다 → 통째로 보여라」
+//      `Thumb` 이 표지 칸을 다 쓰되 `object-fit: contain` 으로 **카드를 한 군데도 안 자른다.**
+//   ⚠️ `imagePos`·`imageZoom` 을 비운다 — 옛 사진 기준 좌표는 새 그림에서 뜻이 없다
+//      (`RecipeDetailScreen.onCoverPhoto` 가 같은 이유로 같은 일을 한다).
+//   📌 부르는 화면이 둘(레시피 상세 · 레꾸자랑)이라 **여기 한 곳**에서만 만든다.
+export const 카드표지로 = (img) => ({ thumb: 'photo', image: img, imageFit: 'whole', imagePos: '', imageZoom: '', touched: true })
+
 function Card({ char, no, title, tags, cover, recipe, skin }) {
   const K = skin
   // 👗 이 뼈대가 지금 입은 옷(색·질감·손글씨). 계절 옷이 없으면 기본 옷.
@@ -347,7 +396,13 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
   const [l1, l2] = splitTitle(title)
   const meta = metaOf(recipe, tags)
   const grain = <div style={{ position: 'absolute', inset: 0, backgroundImage: GRAIN, backgroundSize: '7px 7px', pointerEvents: 'none', zIndex: 2 }} />
-  const brand = (col, extra) => <div style={{ position: 'absolute', top: PAD - 4, left: PAD, fontFamily: 'Jua, sans-serif', fontSize: 34, color: col, letterSpacing: 1, zIndex: 8, ...extra }}>한끼</div>
+  // 🏷🏷 **표지로 저장할 카드(`cover`)엔 「한끼」 글자를 안 넣는다.** (창업자 2026-08-18 *"한끼글자는빼야지"*)
+  //   ⭐ 갈래가 분명하다 — **친구에게 «나가는» 카드**엔 브랜드가 있어야 하고,
+  //      **내 앱 안에서 보는 «내 표지»**엔 있을 이유가 없다. 아래 `foot`(Play스토어 알약)과 같은 뿌리다.
+  //   ⛔ `cover` 는 원래 「CTA 없는 카드」였는데 **「레시피 보러가기」 하나만 빼고 있었다** —
+  //      브랜드·설치유도가 그대로 남아 있었고, 카드가 «잘려서» 안 보였을 뿐이다.
+  //      카드 전체를 표지로 보여주기 시작하자 셋이 한꺼번에 드러났다.
+  const brand = (col, extra) => !cover && <div style={{ position: 'absolute', top: PAD - 4, left: PAD, fontFamily: 'Jua, sans-serif', fontSize: 34, color: col, letterSpacing: 1, zIndex: 8, ...extra }}>한끼</div>
   const stamp = (col, top, bottom, extra) => (
     <div style={{ position: 'absolute', top: 70, right: PAD, width: 138, height: 138, transform: 'rotate(11deg)', zIndex: 9, ...extra }}>
       <svg viewBox="0 0 100 100" style={{ position: 'absolute', inset: 0 }}><path d={STAR_D} fill="none" stroke={col} strokeWidth="3.2" /></svg>
@@ -377,7 +432,12 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
   //    '한끼' 검색」이 세 겹으로 있었다. 브랜드는 알약 하나로 충분하다(설치 유도까지 같이 붙는다).
   // ⛔⛔ 이 주석을 아래 `(` «안»에 `{/* */}` 로 넣었다가 **빌드가 깨졌다** — 바로 위 `more` 에
   //    똑같은 경고가 적혀 있는데 또 밟았다. JSX 주석은 «자식» 자리에서만 된다.
-  const foot = (wm) => (
+  // 🖼🖼 **표지로 저장할 카드(`cover`)엔 이 알약을 안 붙인다** (창업자 2026-08-18 *"위에잘렸어"* 를 고치며 드러남)
+  //   ⛔ `cover` 는 원래 「CTA 없는 카드」인데 **「레시피 보러가기」만 빼고 이 알약은 남아 있었다** — 반쪽이었다.
+  //      그동안은 표지가 «잘려서» 안 보였을 뿐이고, 카드 전체를 보여주는 순간
+  //      **내 레시피 표지에 「Play스토어 ‘한끼’ 검색」 광고가 박힌다.**
+  //   ⭐ 홍보 손해는 없다 — 친구에게 나가는 «공유용» 카드(`cover` 아님)엔 그대로 붙는다.
+  const foot = (wm) => !cover && (
     <div style={{ position: 'absolute', left: PAD, bottom: 52, zIndex: 8 }}>
       {/* ⚠️ 글자색은 알약 «배경 밝기»로 정한다 — `night` 처럼 어두운 스킨은 `footWm` 이
           밝은 크림이라, 흰 글자로 굳혀 두면 거기서 또 안 읽힌다(고치려던 바로 그 증상이 재발). */}
@@ -960,12 +1020,15 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   }, [busy, title, hasRecipe, capture])
 
   // 🖼 이 카드를 레시피 표지로 저장 — CTA 없는 cover 카드를 이미지로 캡처해 부모(레시피 화면)에 넘긴다.
+  //    ⭐ 저장 «모양»은 아래 `카드표지로()` 한 곳에서 만든다 — 부르는 화면이 둘이라 흩어지면 한쪽이 낡는다.
   const saveCover = useCallback(async () => {
     if (!coverRef.current || busy) return
     setBusy('레시피 표지로 저장하는 중이에요')
     try {
       // ⛔ `cacheBust` 를 껐다 — 켜면 카드 안 그림을 «전부 다시» 내려받는다. 우리 그림은 같은 출처라 안전하다.
-      const opt = { pixelRatio: 1.5, quality: 0.86, backgroundColor: '#ffffff' }
+      // 📏 아래 빈 자리를 잘라낸 높이로 찍는다(위 주석) — 0 이면 원래 높이 그대로.
+      const h = 찬높이(coverRef.current)
+      const opt = { pixelRatio: 1.5, quality: 0.86, backgroundColor: '#ffffff', ...(h ? { height: h } : null) }
       // 폰트 임베드 단계에서 외부 stylesheet fetch가 막히면(드묾) skipFonts로 폴백 — 표지 저장이 끊기지 않게.
       let url
       try { url = await toJpeg(coverRef.current, opt) } catch { url = await toJpeg(coverRef.current, { ...opt, skipFonts: true }) }
