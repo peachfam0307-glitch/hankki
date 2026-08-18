@@ -11,20 +11,33 @@
 // ⛔ 백업 파일은 **저장소에 안 둔다**(공개 저장소). scratchpad 에서만 읽고, 판도 거기 만든다.
 //
 // 쓰기:  node scripts/_판-내레시피.mjs
-import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs'
 
 const OUT = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad'
-const 신 = `${OUT}/백업-2026-08-18.json`
-const 구 = `${OUT}/백업-2026-08-10.json`
-if (!existsSync(신)) {
-  console.error(`⛔ 백업이 없다 — ${신}`)
-  console.error('   창업자에게 백업 파일을 받아 scratchpad 에 두고 다시 돌린다.')
+
+// ⭐⭐ [2026-08-18] 백업을 **저장소에 둔다** — `docs/_내레시피-백업/`
+//   📮 창업자 = *"들어가도 돼.."* · *"제발 같은일 반복하게만 하지마"*
+//   ⛔⛔ 그 전엔 scratchpad 에만 뒀다. 세션이 끝나면 날아가서 **다음에 또 백업을 달라고 하게 된다.**
+//      2026-08-12 에 34편을 넣고 아무 기록도 안 남겨 2026-08-18 에 처음부터 다시 셌다 —
+//      창업자 = *"이거 저번에도 한 것 같은데..ㅠ"*. **한 일을 안 적으면 그 일을 또 한다.**
+//   ✅ 사진은 뺐다(용량) — 레시피 «글»은 그대로다.
+//   🔎 새 백업을 받으면 그 폴더에 `YYYY-MM-DD.json` 으로 넣기만 하면 이 도구가 «저절로» 최신을 고른다.
+const 창고 = new URL('../docs/_내레시피-백업/', import.meta.url)
+const 있는것 = existsSync(창고)
+  ? readdirSync(창고).filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort()
+  : []
+if (있는것.length < 1) {
+  console.error('⛔ 백업이 없다 — hankki/docs/_내레시피-백업/YYYY-MM-DD.json')
+  console.error('   창업자에게 백업 파일을 받아 그 폴더에 날짜 이름으로 넣고 다시 돌린다.')
   process.exit(1)
 }
+const 신 = new URL(있는것[있는것.length - 1], 창고)          // 제일 새 백업
+const 구 = 있는것.length > 1 ? new URL(있는것[있는것.length - 2], 창고) : null   // 그 앞 백업
+console.log(`📂 백업 ${있는것.length}개 — 새것 ${있는것[있는것.length - 1]}${구 ? ` · 견줄 것 ${있는것[있는것.length - 2]}` : ''}`)
 const J = (p) => JSON.parse(readFileSync(p, 'utf8'))
 const 내것 = (d) => d.recipes.filter((r) => !String(r.id || '').startsWith('basic-'))
 const 신것 = 내것(J(신))
-const 구제목 = existsSync(구) ? new Set(내것(J(구)).map((r) => (r.title || '').trim())) : null
+const 구제목 = 구 ? new Set(내것(J(구)).map((r) => (r.title || '').trim())) : null
 
 const 줄 = (a) => (a || []).map(String).filter((x) => x.trim())
 const 순서 = (r) => 줄(r.steps).length
