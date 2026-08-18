@@ -29,9 +29,9 @@ on:
   workflow_dispatch:
     inputs:
       versionCode:
-        description: '버전코드 — 콘솔에 올라간 최신보다 커야 함. ✅2026-08-10 확인(창업자 콘솔 실물): Play 최신 = 13 (10.08 · 비공개 테스트-베타테스트 · 8/9 오후 2:48 게시) → 다음은 14'
+        description: '버전코드 — 콘솔에 올라간 최신보다 커야 함. ✅2026-08-18 확인(굽기 아티팩트 실물 hankki-aab-10.85-15): 마지막 = 15 (v10.85 · 8/15) → 다음은 16'
         required: true
-        default: '14'
+        default: '16'
       versionName:
         description: '버전 이름 — 비워두면 hankki/src/version.js 에서 자동으로 읽는다'
         required: false
