@@ -11,6 +11,17 @@ import FoodIcon, { guessFoodIcon, dishCatOf } from '../components/FoodIcon'
 // 🔖 인덱스 = 창업자가 고른 요리사모자 클립 (`ck_27` · 2026-08-18 확정)
 //    📮 *"하나만 고른다면 요리사모자(아무것도 없는거)"* · *"그러자 1개만 넣자. 제일 깔끔하긴해"*
 import idxChef from '../assets/ui/idx_chef.png'
+// ⭐⭐ [2026-08-18 창업자] 안 걸린 칸 = **같은 모자의 «연한 판»**
+//    📮 *"연한책갈피가 **모양이 같지 않아서 안누르고 싶게 생기지 않아??**
+//        인덱스를 붙이는 자리에다 **연한요리사모자**를 만들면??"*
+//    ⭐ 정확한 지적이었다 — 안 걸림이 «책갈피(∪)» 이고 걸림이 «요리사모자» 라
+//       **모양이 아예 달라서 「누르면 이게 저렇게 된다」가 안 읽힌다.**
+//       유저는 책갈피가 채워질 거라 예상하는데 엉뚱한 게 나온다.
+//    🔬 만드는 법 셋을 견줬다 — ⓐ외곽선만 · ⓑ통째로 30% · ⓒ실루엣
+//       ✅ⓐ = 지금 책갈피와 «같은 문법»(선화)이라 안 튀고 26px 에서도 형태가 보인다
+//       ⛔ⓑ = 창업자가 이미 거부한 흐릿함(*"흐림은 네말대로 지저분해보여"*)
+//       ⛔ⓒ = 26px 에선 뭉개진 덩어리라 뭔지 모른다
+import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 // ⛔ 2026-08-07 — 「요리 기록 남기기」 시트와 「한마디 청하기」를 이 화면에서 뺐다.
 //    앨범을 누르면 «그날 일기»로 가고(화면 이름이 「한끼 일기」다), 둘 다 «레시피 상세»에 그대로 있다.
 //    (DiaryEntrySheet · ReviewAskSheet · shouldAskReview import 제거)
@@ -765,16 +776,11 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                                  크기가 변하면 「같은 물건」으로 안 읽힌다.
                               ⏳ **안 걸린 칸은 «아직 지금 그대로»**(연한 책갈피). 창업자 확정은 「텅 비우기」인데
                                  텅 비우면 **누를 자리가 사라져** 거는 방법을 길게 누르기로 옮겨야 한다 → 다음 단계. */}
-                          {r.favorite ? (
-                            <img src={idxChef} alt="" className="idx-clip" />
-                          ) : (
-                            <Icon
-                              name="bookmark"
-                              size={gridSize === 'big' ? 19 : 16}
-                              color="var(--sand)"
-                              style={{ fill: 'none' }}
-                            />
-                          )}
+                          <img
+                            src={r.favorite ? idxChef : idxChefFaint}
+                            alt=""
+                            className="idx-clip"
+                          />
                         </button>
                       )}
                       {edit && (
