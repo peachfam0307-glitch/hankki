@@ -349,6 +349,48 @@ if (mode === '--gen') {
   process.exit(0)
 }
 
+// ══════════════════════════════════════════════════════════════════
+// 🪤 --myown : 「창업자 확정」이라 «적어놓고» 창업자 «원문 인용»이 없는 줄
+//   ⭐ 왜 = 반복 실수 패턴 🅴 (`docs/실수-패턴-2026-08-07.md`) — **문서가 「제일 비싸다」고 적은 것.**
+//      2026-08-18 실측에서 **패턴 여덟 중 유일하게 «맨몸»** 이었다.
+//   ⛔ 그 문서의 구멍 = *"«쳐내는 것»은 아무 흔적을 안 남긴다. 게이트가 볼 게 없다."* — 맞다.
+//      ✅ 그래서 **반대쪽**을 잡는다: «안 물어본 것»은 못 봐도, **「확정」이라고 적은 것**은 글자로 남는다.
+//         창업자 확정엔 이 저장소 규율상 반드시 `📮 창업자 = *"원문"*` 이 붙는다. 그게 없으면 «내가 정한 것»이다.
+if (mode === '--myown') {
+  const docs = arg === '--recent' ? recentDocs() : [join(APP, 'CLAUDE.md'), ...walk(join(APP, 'docs'))]
+  // ⛔ 「창업자 판정 «뒤에»」·「확정 «되면»」은 아직 «안 정해진» 것이다 — 확정으로 세면 오탐이 된다
+  //    (2026-08-18 첫 판이 그랬다. 시끄러운 게이트는 아무도 안 본다)
+  const SAYS = /창업자\s*(가\s*)?(확정|판정)(?!\s*(대기|필요|뒤|후|받|나면|되면|하면|전))|\[창업자[^\]]*확정/
+  const QUOTE = /["“”『」]|\*"|창업자\s*[=:]|📮/     // 원문 인용의 흔적
+  const hits = []
+  for (const f of docs) {
+    if (!existsSync(f) || !f.endsWith('.md')) continue
+    if (/_archive|_아껴둠|_구판/.test(f)) continue      // 🗄 보관소는 안 본다(절대원칙 24)
+    let lines; try { lines = readFileSync(f, 'utf8').split('\n') } catch { continue }
+    lines.forEach((ln, i) => {
+      if (!SAYS.test(ln)) return
+      // 그 절(위아래 5줄) 어딘가에 «창업자 원문»이 있으면 통과 — 인용이 다음 줄에 오는 게 흔하다
+      const near = lines.slice(Math.max(0, i - 5), i + 6).join('\n')
+      if (QUOTE.test(near)) return
+      hits.push({ at: `${rel(f)}:${i + 1}`, ln: ln.trim().slice(0, 108) })
+    })
+  }
+  if (!hits.length) {
+    console.log('✅ 「창업자 확정」이라 적었는데 원문 인용이 없는 줄 — 없음')
+    process.exit(0)
+  }
+  console.log(`🪤 「창업자 확정」이라 «적어놓고» 원문 인용이 없는 줄 ${hits.length}개`)
+  console.log('   ⛔ 창업자가 «정말» 그렇게 말했나? 아니면 **내가 대신 정하고 확정이라 적었나?**')
+  console.log('   📌 반복 실수 패턴 🅴 — 문서가 「제일 비싸다」고 적은 자리다.\n')
+  hits.slice(0, 20).forEach((h) => console.log(`   ${h.at}\n      ${h.ln}`))
+  if (hits.length > 20) console.log(`\n   … ${hits.length - 20}개 더`)
+  console.log(`
+   ✅ 고치는 법 = ⓐ창업자 원문을 «찾아» 붙인다(📮 창업자 = *"…"*)
+                  ⓑ 못 찾으면 「확정」이 아니라 **「⏳창업자 판정 대기」로 되돌린다**
+   ⛔ 이 게이트는 «세는» 것이지 배포를 막지 않는다 — 옛 줄이 많아 막으면 시끄럽다(원칙 = 시끄러우면 죽는다).`)
+  process.exit(0)
+}
+
 if (mode === '--decided') {
   const ds = decidedStale(arg === '--recent' ? recentDocs() : undefined)
   if (!ds.length) console.log('✅ 「판정 대기」인데 이미 확정된 주제 — 없음')

@@ -64,7 +64,27 @@ for (const f of files) {
   })
 }
 
+// ⭐⭐ [2026-08-18] 커밋 로그도 «같이» 뒤진다 (창업자 *"했던일 또 하라고 하는 것도..(안읽거나 저장안하고)"*)
+//   📌 이 저장소는 커밋 메시지가 «무엇을 왜 했는지»까지 적혀 있어 **제일 좋은 「했던 일」 기록**이다.
+//      그런데 여태 문서·코드만 뒤졌다 → 「이미 한 일」을 못 찾고 또 하자고 들고 왔다.
+//   ⛔ 새 도구를 «만들지» 않았다 — 도구가 이미 179개다. 늘리면 그것도 못 찾게 된다(오늘 배운 것).
+let did = []
+try {
+  const { execFileSync } = await import('node:child_process')
+  const log = execFileSync('git', ['-C', ROOT, 'log', '--since=120 days ago', '--date=short',
+    '--pretty=format:%ad\t%h\t%s'], { encoding: 'utf8', maxBuffer: 8 << 20 })
+  did = log.split('\n').filter((l) => {
+    const s = l.toLowerCase()
+    return words.every((w) => s.includes(w.toLowerCase()))
+  }).slice(0, 8)
+} catch { /* git 이 없으면 조용히 넘어간다 */ }
+
 console.log(`\n🔎 «${words.join(' ')}» — 저장소에서 찾은 것 ${hits.length}줄\n`)
+if (did.length) {
+  console.log(`  🕘 **이미 «한» 일** — 커밋 ${did.length}건 (여기 있으면 다시 하자고 하지 말 것)`)
+  for (const d of did) { const [ad, h, s] = d.split('\t'); console.log(`     ${ad}  ${h}  ${s}`) }
+  console.log('')
+}
 if (!hits.length) {
   console.log('  (아무것도 없다 — 이제야 「정한 적 없다」고 말할 수 있다)')
   console.log('  ⚠️ 단, 말을 바꿔 한 번 더 찾아볼 것: 정원·상한·기준·개수·몇 개·최대\n')

@@ -28,7 +28,8 @@ cat /dev/null   # 입력은 안 본다 — 무엇을 쓰든 뜬다
 cat <<'EOF'
 ⛔⛔ **답하기 전에 «먼저 읽는다». 기억으로 대답하지 말 것.**
 
-  1) node hankki/scripts/decided.mjs "<핵심어>"     ← 「이미 정한 것」이 있나 (문서＋코드 상수 전부)
+  1) node hankki/scripts/decided.mjs "<핵심어>"     ← 「이미 정한 것」·「이미 «한» 일」(커밋 로그까지)
+  1-b) node hankki/scripts/tools.mjs "<핵심어>"     ← ⭐**그 도구 이미 있나** (179개 · 만들기 «전»에)
   2) npm run assets                                  ← 개수·정원·자산 현황은 **손으로 세지 말 것**
   3) node hankki/scripts/latest-map.mjs              ← 그 주제의 «최신» 문서
   4) node hankki/scripts/recipe.mjs <이름조각>        ← 레시피는 **파일을 열어서** (--sample · --from · --unreviewed)
