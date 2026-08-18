@@ -97,7 +97,7 @@ const 카드 = (r, meta, i) => {
   const 색 = /우리집/.test(meta.줄) ? 'home' : 'cool'
   const img = 그림(r.icon)
   return `
-<article class="card ${색}" id="r${i + 1}">
+<article class="card ${색}" id="r${i + 1}" data-key="${r.id}">
   <header class="card-h">
     ${img ? `<img class="thumb" src="${img}" alt="">` : '<div class="thumb none">그림 없음</div>'}
     <div class="card-t">
@@ -408,7 +408,10 @@ const html = `<title>레시피 검수판 ${이름}</title>
       ⚠️ clipboard.writeText() 는 «성공으로 resolve 되고도» 실제 복사가 실패한다(v10.97 사고).
          그래서 성공 여부와 무관하게 실패하면 글을 화면에 띄우는 폴백을 둔다. */
 (function () {
-  var KEY = 'hankki:검수판:' + (document.title || 'x')
+  /* ⛔ 열쇠에 «날짜 범위»만 넣으면 33편 판과 21편 판이 «같은 열쇠»를 쓴다(2026-08-18 밀림 사고).
+     이제 담는 모양이 이름표 기준이라 섞여도 안 밀리지만, 판이 다르면 열쇠도 다른 게 맞다. */
+  var KEY = 'hankki:검수판:v2:' + (document.title || 'x') + ':' + document.querySelectorAll('article[data-key]').length
+  var arts = [].slice.call(document.querySelectorAll('article[data-key]'))
   var boxes = [].slice.call(document.querySelectorAll('.judge input.ck'))
   var notes = [].slice.call(document.querySelectorAll('.judge input.note'))
   var cnt = document.getElementById('cnt')
@@ -423,20 +426,41 @@ const html = `<title>레시피 검수판 ${이름}</title>
       + notes.filter(function (t) { return t.value.trim() }).length
     cnt.textContent = n ? ('고른 것 ' + n + '개 — 저장됐어') : '아직 고른 게 없어'
   }
+  /* ⛔⛔⛔ [2026-08-18 사고] **저장을 «순서 번호»로 했다가 창업자 검수가 통째로 밀렸다.**
+     📮 창업자 = "이거 뭐가 밀렸는데 … 샐러드에 가루육수들어가고 양념게장에 가루육수들어가고 이상해졌어"
+     · 옛 코드는 c:[1,0,1…] 처럼 **몇 번째 칸인지**로 담았다.
+     · 판을 33편 → 21편으로 다시 뽑으니 **번호가 다 밀렸고**,
+       열쇠가 제목(날짜 범위)이라 **두 판이 같은 열쇠**를 써서 옛 값이 새 판에 얹혔다.
+     · 그 결과 고등어조림 메모("가루육수1큰술")가 **연근사과샐러드**에,
+       고등어김치찜 메모가 **양념게장**에 붙었다. 레시피 자체는 멀쩡한데 **판이 거짓말을 했다.**
+     ⭐ 고침 = **레시피 이름표(id)로 담는다.** 판이 늘든 줄든 제 자리를 찾아간다.
+     📌 규칙 18 그대로 — 「자리(순서)」는 흔들리고 「이름」은 안 흔들린다. */
+  function 칸들(art) {
+    return { c: art.querySelectorAll('.judge input.ck'), n: art.querySelector('.judge input.note') }
+  }
   function 저장() {
-    try {
-      localStorage.setItem(KEY, JSON.stringify({
-        c: boxes.map(function (b) { return b.checked ? 1 : 0 }),
-        n: notes.map(function (t) { return t.value })
-      }))
-    } catch (e) {}
+    var out = {}
+    arts.forEach(function (art) {
+      var k = art.getAttribute('data-key'); if (!k) return
+      var q = 칸들(art)
+      var c0 = q.c[0] && q.c[0].checked, c1 = q.c[1] && q.c[1].checked
+      var v = q.n ? q.n.value : ''
+      if (c0 || c1 || (v && v.trim())) out[k] = { a: c0 ? 1 : 0, b: c1 ? 1 : 0, n: v }
+    })
+    try { localStorage.setItem(KEY, JSON.stringify(out)) } catch (e) {}
     세기()
   }
   try {
     var s = JSON.parse(localStorage.getItem(KEY) || 'null')
-    if (s) {
-      if (s.c) boxes.forEach(function (b, i) { b.checked = !!s.c[i] })
-      if (s.n) notes.forEach(function (t, i) { t.value = s.n[i] || '' })
+    /* 옛 형식(배열)이면 «버린다» — 그게 밀림의 원인이다. 되살리면 또 어긋난다. */
+    if (s && !Array.isArray(s.c) && typeof s === 'object') {
+      arts.forEach(function (art) {
+        var v = s[art.getAttribute('data-key')]; if (!v) return
+        var q = 칸들(art)
+        if (q.c[0]) q.c[0].checked = !!v.a
+        if (q.c[1]) q.c[1].checked = !!v.b
+        if (q.n) q.n.value = v.n || ''
+      })
     }
   } catch (e) {}
   세기()
