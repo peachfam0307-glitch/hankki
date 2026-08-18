@@ -51,6 +51,9 @@ must_pass Bash '{"command":"node hankki/scripts/decided.mjs 가루육수"}'     
 must_pass Bash '{"command":"cat > /tmp/cm.txt <<EOF\n청소 = 복기 둘을 hankki/docs/_archive/작업복기/ 로\nEOF\ngit commit -F /tmp/cm.txt"}' "heredoc 으로 커밋메시지 쓰기 (보관소 경로 포함)"
 must_pass Bash '{"command":"cat >> hankki/docs/복기.md <<EOF\n- 청소 = docs/_archive/ 로 옮김\nEOF"}' "문서에 「보관소로 옮겼다」고 «적기»"
 must_pass Bash '{"command":"cat > /tmp/x.txt"}'                                            "cat > 파일 (쓰기)"
+# ⭐ 2026-08-18 «세 번째» 같은 자리 — printf 로 허가 표식을 만드는 그 명령이 막혔다(창업자 "청소해")
+must_pass Bash '{"command":"printf %s 청소=끝난것을 hankki/docs/_archive/ 로 git mv > /tmp/hankki-보관소-허가 && cat /tmp/hankki-보관소-허가"}' "printf 로 허가 표식 만들기 (글에 보관소 낱말 포함)"
+must_block Bash '{"command":"printf hi > /tmp/x && cat hankki/docs/_archive/a.md"}'        "printf 로 지운 뒤에도 진짜 읽기는 막힌다"
 
 echo
 echo "──────────────────────────────"
