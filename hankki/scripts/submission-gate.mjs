@@ -24,7 +24,17 @@
 //   node hankki/scripts/submission-gate.mjs --종류 재신청 \
 //     --값 "활성기기30일=7/22 16 · 7/24 18 · 7/25 15 · 이후 0~2" \
 //     --값 "출시내역=1,2,3,5,7,9,10 (일곱 판)" …
+// ⭐⭐ 2026-08-18 추가 = `--종류 지원팀문의` (창업자 *"구글메일에 뭘 물어볼까 하는데 안읽고 지어내잖아"*)
+//   그날 사고 «둘» — ⑴한 세션이 「사업장 주소로 바꿀 수 있나」를 물으라 했다. 그건 8/17 에 이미 접은 갈래다.
+//                    ⑵다른 세션(나)은 「결제 프로필이 이미 연결돼 있습니다」라는 «틀린 전제»로 초안을 썼다.
+//   ⛔ 그날 이 훅이 «여러 번 떴는데» 종류가 넷(재신청·스토어등록·설문·데이터보안)뿐이라 **우리 칸이 없어서 그냥 지나갔다.**
+//   📌 훅이 울려도 «가리키는 칸»이 없으면 아무도 안 걸린다. 그래서 칸을 만든다.
 import { argv } from 'node:process'
+import { readFileSync, existsSync, writeFileSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+// ⏰ 「오늘」은 여기서 «만들지» 않는다 — 날짜는 src/today.js 한 곳에서만(게이트 check-kst · 절대원칙 27)
+import { todayKST } from '../src/today.js'
 
 // ── 제출물마다 «반드시 실물로 봐야 하는» 칸 ──
 //    ⚠️ 칸을 늘릴 땐 «그 화면이 없으면 답을 못 쓰는가»로 판단한다. 있으면 좋은 건 넣지 않는다.
@@ -61,6 +71,8 @@ const NEED = {
       현재신고: '데이터 보안 화면 — 지금 신고돼 있는 내용',
     },
   },
+  // ⭐ 이 칸만 «질문마다» 검사한다(아래 ask 분기) — 콘솔 값이 아니라 «물음 자체»가 제출물이라서다
+  지원팀문의: { what: '구글 지원팀에 보낼 질문', ask: true },
 }
 
 const args = argv.slice(2)
@@ -73,6 +85,145 @@ const spec = NEED[kind]
 if (!spec) {
   console.error(`\n⛔ --종류 를 골라라: ${Object.keys(NEED).join(' | ')}\n`)
   process.exit(1)
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 📮 지원팀문의 — 「물음」이 제출물이다. 칸이 아니라 «질문마다» 검문한다.
+// ══════════════════════════════════════════════════════════════════
+if (spec.ask) {
+  const HERE = dirname(fileURLToPath(import.meta.url))
+  const LOG = join(HERE, 'ask-log.json')
+  const qs = all('--질문'); const gs = all('--근거'); const cs = all('--바뀜')
+  const knows = all('--알고있음')
+  const die = (msg) => { console.error('\n' + msg + '\n'); process.exit(1) }
+
+  if (!qs.length) {
+    die(`⛔ 「구글 지원팀에 보낼 질문」 — 질문마다 셋을 짝지어 적는다.
+
+   node hankki/scripts/submission-gate.mjs --종류 지원팀문의 \\
+     --질문 "소유자 변경이 우리 계정에서 가능한가" \\
+     --근거 "결제 프로필 미연결 = 창업자 콘솔 캡처 2026-08-18" \\
+     --바뀜 "되면 남편 $25 안 냄 · 안 되면 앱 이전으로 간다"
+
+   ⛔ 셋이 다 있어야 한다 —
+      --질문  무엇을 묻나
+      --근거  그 질문이 서 있는 «전제»와 그것을 확인한 실물 (캡처·콘솔·원문·파일:줄)
+      --바뀜  답이 오면 «우리 행동»이 어떻게 갈리나 (규칙 31 — 안 갈리면 안 묻는다)`)
+  }
+  if (qs.length !== gs.length || qs.length !== cs.length) {
+    die(`⛔ 개수가 안 맞는다 — 질문 ${qs.length} · 근거 ${gs.length} · 바뀜 ${cs.length}\n   질문 하나마다 근거와 바뀜을 «하나씩» 짝지어야 한다.`)
+  }
+
+  // ⓐ 근거가 «빈 말»인가 — 실물을 가리키는 낱말이 하나도 없으면 안 본 것이다
+  const REAL = /캡처|콘솔|원문|실물|스크린샷|이메일|답장|:\d+|\.md|\.js|\.json|20\d\d-\d\d-\d\d/
+  const thin = gs.map((g, i) => (REAL.test(g) ? null : i + 1)).filter(Boolean)
+  if (thin.length) {
+    die(`⛔ ${thin.join('·')}번 근거가 «빈 말»이다 — 무엇을 «보고» 그렇게 아는지 적어야 한다.
+   ✅ 예: "결제 프로필 미연결 = 창업자 콘솔 캡처 2026-08-18" · "docs/출시행정-학습-2026-08-17.md:195"
+   ⛔ 예: "확인함" · "알고 있음" · "그렇게 알고 있다"
+   📌 2026-08-18 사고 = 「이미 연결돼 있습니다」라는 «틀린 전제»로 물을 뻔했다. 캡처 한 장이 뒤집었다.`)
+  }
+
+  // ⓑ 답이 와도 행동이 안 갈리면 묻지 않는다 (규칙 31)
+  const NOCHANGE = /^(없|모름|모른|그냥|참고|궁금)/
+  const idle = cs.map((c, i) => (NOCHANGE.test(c.trim()) || c.trim().length < 6 ? i + 1 : null)).filter(Boolean)
+  if (idle.length) {
+    die(`⛔ ${idle.join('·')}번 — 답이 와도 «행동이 안 갈린다». 그러면 묻지 않는다(규칙 31).
+   📌 한 통에 질문이 많을수록 답이 얕아진다. 갈리는 것만 남긴다.`)
+  }
+
+  // ⓒ ⭐ 제일 중요 — 이미 «정한» 것을 또 묻는가 (2026-08-18 사고 ⑴)
+  const APP = join(HERE, '..')
+  const DOCS = [join(APP, 'CLAUDE.md')]
+  // 🗄 보관소(_로 시작)는 «안 본다» — 끝난 기록이라 늘 옛 판정이 남아 있다(절대원칙 24)
+  try { const { readdirSync } = await import('node:fs')
+    const rec = (p) => { for (const e of readdirSync(p, { withFileTypes: true })) {
+      if (/^_|node_modules|낱개|원본시트/.test(e.name)) continue
+      const f = join(p, e.name)
+      if (e.isDirectory()) rec(f); else if (e.name.endsWith('.md')) DOCS.push(f)
+    } }
+    rec(join(APP, 'docs'))
+  } catch { /* docs 없으면 CLAUDE.md 만 본다 */ }
+  const DECIDED = /창업자[^\n]{0,12}(확정|판정)(?!\s*(대기|필요))|✅+\s*\*{0,2}확정|⛔재론 금지|안 한다/
+  // 질문에서 «찾을 말» 을 뽑는다 — 「」 안이 있으면 그것, 없으면 2글자 이상 낱말
+  // ⛔⛔ 첫 판은 «시끄러워서» 못 썼다 — 「소유자」·「프로덕션」 하나만 걸려도 15줄이 쏟아졌다.
+  //    📌 이 저장소 원칙 그대로 = **시끄러운 게이트는 아무도 안 본다.** 그래서 둘을 좁혔다:
+  //    ⓐ 우리 문서에 «수백 번» 나오는 낱말은 열쇠로 안 쓴다  ⓑ 한 줄에 «둘 이상» 맞아야 겹침으로 친다
+  const COMMON = /^(계정|프로덕션|구글|플레이|소유자|변경|이전|가능|우리|상태|경우|사용|확인|필요|문의|질문|답변|화면|설정|정보|주소|이름|표시|출시|테스트|앱|것|수|더|또|안|안된|되나|하나|해야|있나|없나|무엇|어떻게|언제)$/
+  const keyOf = (q) => {
+    const inQ = [...q.matchAll(/[「『]([^」』]{2,20})[」』]/g)].map((m) => m[1])
+    if (inQ.length) return inQ
+    return q.split(/[^가-힣A-Za-z0-9]+/).filter((w) => w.length >= 2 && !COMMON.test(w)).slice(0, 8)
+  }
+  const clash = []
+  for (let i = 0; i < qs.length; i++) {
+    const keys = keyOf(qs[i])
+    const quoted = /[「『]/.test(qs[i])      // 「」로 콕 집었으면 하나만 맞아도 본다
+    const need = quoted ? 1 : 2             // 아니면 «둘 이상» 맞아야 그 줄 얘기다
+    for (const f of DOCS) {
+      let t; try { t = readFileSync(f, 'utf8') } catch { continue }
+      t.split('\n').forEach((ln, n) => {
+        if (!DECIDED.test(ln)) return
+        const hit = keys.filter((k) => ln.includes(k))
+        if (hit.length < need) return
+        clash.push({ q: i + 1, key: hit.slice(0, 3).join('·'), at: `${f.replace(APP + '/', '')}:${n + 1}`, ln: ln.trim().slice(0, 100), n: hit.length })
+      })
+    }
+  }
+  const seen = new Set()
+  const uniq = clash
+    .filter((c) => { const k = c.q + c.at; if (seen.has(k)) return false; seen.add(k); return true })
+    .sort((a, b) => b.n - a.n)              // 많이 맞은 줄부터 — 그게 진짜 그 얘기다
+  if (uniq.length && !knows.length) {
+    console.error(`\n🚨 이미 «정한» 것과 겹친다 — ${uniq.length}줄. 보고 나서 다시 판단한다.\n`)
+    uniq.slice(0, 12).forEach((c) => console.error(`   Q${c.q} 「${c.key}」 → ${c.at}\n      ${c.ln}`))
+    if (uniq.length > 12) console.error(`   … ${uniq.length - 12}줄 더`)
+    console.error(`
+   📌 2026-08-18 사고 = 「사업장 주소로 바꿀 수 있나」를 물으려 했는데
+      그건 8/17 에 창업자가 «안 한다»로 접은 갈래였다. 답이 와도 안 쓴다.
+
+   ✅ 그래도 물어야 한다면 «왜» 인지 적는다 — 그러면 통과한다:
+      --알고있음 "위 확정은 앱 이전 전제였다. 소유자 변경은 다른 절차라 다시 물어야 한다"\n`)
+    process.exit(1)
+  }
+
+  // ⓓ 지난번에 이미 보낸 질문인가
+  let log = []
+  if (existsSync(LOG)) { try { log = JSON.parse(readFileSync(LOG, 'utf8')) } catch { log = [] } }
+  const dup = []
+  for (let i = 0; i < qs.length; i++) {
+    const keys = keyOf(qs[i])
+    for (const past of log) {
+      const hit = keys.filter((k) => past.질문.includes(k)).length
+      if (hit >= Math.max(2, Math.ceil(keys.length * 0.6))) dup.push({ q: i + 1, past })
+    }
+  }
+  if (dup.length && !knows.length) {
+    console.error(`\n🚨 지난번에 «이미 보낸» 질문과 겹친다\n`)
+    dup.slice(0, 6).forEach((d) => console.error(`   Q${d.q} ↔ ${d.past.날짜} ${d.past.도장}\n      ${d.past.질문}`))
+    console.error(`\n   ⛔ 같은 걸 또 물으면 담당자가 앞 답을 붙여넣고 케이스를 닫는다.
+   ✅ 앞 답이 모자랐다면 «무엇이 모자랐는지» 적어 통과시킨다:
+      --알고있음 "앞 답은 앱 이전 기준이었고 소유자 변경은 안 다뤘다"\n`)
+    process.exit(1)
+  }
+
+  // ── 통과 ── 도장을 찍고 기록한다
+  const day = (get('--날짜') || todayKST()).replace(/-/g, '').slice(4)
+  const stamp = `ASK-${day}-${qs.length}`
+  console.log(`\n✅ 지원팀문의 관문 통과 — 도장 ${stamp}\n`)
+  qs.forEach((q, i) => {
+    console.log(`   Q${i + 1} ${q}`)
+    console.log(`      📸 근거 ${gs[i]}`)
+    console.log(`      🔀 바뀜 ${cs[i]}`)
+  })
+  if (knows.length) knows.forEach((k) => console.log(`   ⚠️ 알고도 묻는 이유 — ${k}`))
+  console.log(`
+   📮 창업자 규칙 = **도장 없는 질문은 구글에 안 보낸다.**
+      이 도장(${stamp})을 창업자에게 그대로 보여주고 나서 보낸다.
+`)
+  const rec = qs.map((q, i) => ({ 날짜: get('--날짜') || todayKST(), 도장: stamp, 질문: q, 근거: gs[i], 바뀜: cs[i] }))
+  try { writeFileSync(LOG, JSON.stringify([...log, ...rec], null, 2) + '\n') } catch { /* 못 써도 통과는 살린다 */ }
+  process.exit(0)
 }
 
 const given = {}

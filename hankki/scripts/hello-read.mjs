@@ -105,7 +105,13 @@ console.log(`
 ④ **숫자는 «읽지 말고 돌려서» 얻는다** — 문서에 적힌 개수는 반드시 낡는다
    · \`npm run assets\`                      자산·서랍·정원 현황
    · \`node scripts/release-calendar.mjs --brief\`  다음에 «저절로» 열리는 것
-   · \`node scripts/doc-guard.mjs --gen <문서>\`    그 문서의 현행 세대 줄번호`)
+   · \`node scripts/doc-guard.mjs --gen <문서>\`    그 문서의 현행 세대 줄번호
+
+⑤ **만들기·묻기 «전»에 돌리는 것** (2026-08-18 신설 — 그날 세 번 헛돌아서 만들었다)
+   · \`node scripts/tools.mjs <핵심어>\`      **그 도구 이미 있나** (177개 중에서 찾는다)
+   · \`node scripts/rules.mjs --bare\`        장치 «없는» 규칙 — 여기가 다음에 깨질 자리
+   · \`node scripts/submission-gate.mjs --종류 지원팀문의 …\`  **구글에 보낼 질문**은 도장부터
+     ⛔ 창업자 규칙 = **도장 없는 질문은 안 보낸다.**`)
 
 console.log(`
 ⛔⛔ **이 목록에 «없는» 날짜 문서는 브리핑 근거로 쓰지 않는다.**

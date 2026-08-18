@@ -1,0 +1,51 @@
+// 🧪 지원팀문의 관문이 «진짜 잡나» — 2026-08-18 사고 둘을 그대로 재현한다.
+//
+// ⭐ 왜 (규칙 19 = 회귀·함정은 «규칙»이 아니라 «장치»가 잡는다)
+//   그날 사고 둘 —
+//     ⑴ 「사업장 주소로 바꿀 수 있나」를 구글에 물으려 했다 → 8/17 에 «안 한다»로 접은 갈래였다
+//     ⑵ 「결제 프로필이 이미 연결돼 있습니다」라는 «틀린 전제»로 초안을 썼다
+//   ⛔ 게이트를 만들어도 **「잡나」를 재보지 않으면** 다음에 조용히 새어 나간다.
+//
+// ⚠️ 통과(exit 0) 쪽은 «일부러» 안 잰다 — 통과하면 `ask-log.json` 에 기록이 쌓여
+//    다음 검사가 「중복」으로 죽는다. 여기서는 **막아야 하는 것만** 잰다.
+import { execFileSync } from 'node:child_process'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const HERE = dirname(fileURLToPath(import.meta.url))
+const GATE = join(HERE, 'submission-gate.mjs')
+
+const run = (args) => {
+  try { execFileSync('node', [GATE, ...args], { encoding: 'utf8', stdio: 'pipe' }); return 0 }
+  catch (e) { return e.status ?? 1 }
+}
+const A = ['--종류', '지원팀문의']
+
+const cases = [
+  { 이름: '아무것도 안 적으면',
+    args: [] },
+  { 이름: '근거가 「확인함」 같은 빈 말이면 (사고 ⑵)',
+    args: ['--질문', '소유자 변경이 되나', '--근거', '확인함', '--바뀜', '되면 25달러를 안 낸다'] },
+  { 이름: '답이 와도 행동이 안 갈리면 (규칙 31)',
+    args: ['--질문', '소유자 변경이 되나', '--근거', '창업자 콘솔 캡처 2026-08-18', '--바뀜', '없음'] },
+  { 이름: '⭐이미 «확정»된 것을 또 물으면 (사고 ⑴)',
+    args: ['--질문', '사업장 주소로 「집 주소」 대신 표시할 수 있나',
+           '--근거', '구글 지원팀 2차 답장 2026-08-18', '--바뀜', '되면 집 주소를 안 띄운다'] },
+  { 이름: '질문·근거·바뀜 개수가 안 맞으면',
+    args: ['--질문', 'A', '--질문', 'B', '--근거', '캡처 2026-08-18', '--바뀜', '갈린다 어떻게'] },
+]
+
+let bad = 0
+for (const c of cases) {
+  const code = run([...A, ...c.args])
+  const ok = code === 1
+  if (!ok) bad++
+  console.log(`  ${ok ? '✅' : '⛔'} ${c.이름}  → exit ${code}${ok ? '' : ' (1이라야 막은 것이다)'}`)
+}
+
+if (bad) {
+  console.error(`\n⛔ ${bad}칸이 «안 막았다». 게이트가 새고 있다.`)
+  console.error('   📌 2026-08-18 사고가 그대로 다시 난다 — 이미 정한 것을 구글에 또 묻게 된다.\n')
+  process.exit(1)
+}
+console.log(`\n✅ 지원팀문의 관문 ${cases.length}/${cases.length} — 막아야 할 것을 전부 막는다\n`)
