@@ -8,6 +8,9 @@ import TabTips from '../components/TabTips'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon, dishCatOf } from '../components/FoodIcon'
+// 🔖 인덱스 = 창업자가 고른 요리사모자 클립 (`ck_27` · 2026-08-18 확정)
+//    📮 *"하나만 고른다면 요리사모자(아무것도 없는거)"* · *"그러자 1개만 넣자. 제일 깔끔하긴해"*
+import idxChef from '../assets/ui/idx_chef.png'
 // ⛔ 2026-08-07 — 「요리 기록 남기기」 시트와 「한마디 청하기」를 이 화면에서 뺐다.
 //    앨범을 누르면 «그날 일기»로 가고(화면 이름이 「한끼 일기」다), 둘 다 «레시피 상세»에 그대로 있다.
 //    (DiaryEntrySheet · ReviewAskSheet · shouldAskReview import 제거)
@@ -746,17 +749,32 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                           ⛔ 고르기(편집) 중엔 감춘다 — 체크 동그라미와 **같은 자리**(top/right)라 겹친다. */}
                       {!edit && (
                         <button
-                          className="fav-dot press"
+                          className={`fav-dot press${r.favorite ? ' on' : ''}`}
                           aria-label={r.favorite ? `${r.title} 인덱스 빼기` : `${r.title} 인덱스 남기기`}
                           aria-pressed={!!r.favorite}
                           onClick={(ev) => { ev.stopPropagation(); toggleFavorite(r.id) }}
                         >
-                          <Icon
-                            name="bookmark"
-                            size={gridSize === 'big' ? 19 : 16}
-                            color={r.favorite ? 'var(--brown)' : 'var(--sand)'}
-                            style={{ fill: r.favorite ? 'var(--brown)' : 'none' }}
-                          />
+                          {/* 🔖🔖 [2026-08-18 창업자 확정] 걸린 것 = **요리사모자 클립이 카드 밖으로 걸친다.**
+                              📮 *"딱 레시피 안에 넣기보다 **바깥에 걸쳐서** 넣는게 더 예쁜거 같아 레꾸도 안해치고"*
+                              📮 *"오른쪽 완전끝말고 **살짝 왼쪽으로**"* → 셋을 견줘 **G3**(right 12px) 확정
+                              📮 크기 = *"난 크기는 **26**이제일 괜찮아보이는데"* ＋ *"**표시용이니까 존재감이 너무 크면 곤란해**"*
+                              🔢 26px 이면 폭 17px(이 컷 가로/세로 0.65) · 꾸민 표지를 가리는 넓이 **4% 미만**
+                                 — 40px 은 48%, 44px 은 80% 를 가린다(콩국수 샘플 표지 실측).
+                              ⭐ 큰 격자도 **같은 26px** — 창업자 *"큰 격자도 너무 크지않게 맞추면좋겠어"*.
+                                 큰 격자는 카드가 1.5배라 44px 에서도 5%밖에 안 가리지만, 격자를 오갈 때
+                                 크기가 변하면 「같은 물건」으로 안 읽힌다.
+                              ⏳ **안 걸린 칸은 «아직 지금 그대로»**(연한 책갈피). 창업자 확정은 「텅 비우기」인데
+                                 텅 비우면 **누를 자리가 사라져** 거는 방법을 길게 누르기로 옮겨야 한다 → 다음 단계. */}
+                          {r.favorite ? (
+                            <img src={idxChef} alt="" className="idx-clip" />
+                          ) : (
+                            <Icon
+                              name="bookmark"
+                              size={gridSize === 'big' ? 19 : 16}
+                              color="var(--sand)"
+                              style={{ fill: 'none' }}
+                            />
+                          )}
                         </button>
                       )}
                       {edit && (
