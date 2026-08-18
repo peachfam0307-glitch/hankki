@@ -254,10 +254,13 @@ export const HOMEMADE = [
     ids: ['basic-ganjang-yakiniku', 'basic-ojingeo-saeujeon'] },   // 간장 야키니쿠 · 오징어 새우전
   { from: '2026-10-26', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-honey-ganjang-chicken', 'basic-sipbun-beoseotbap'] },   // 허니 간장 치킨 · 10분 버섯밥
+    // 🍄 [2026-08-18] 「간단 버섯밥」을 뺐다 — 8/31 「뚝딱 버섯 볶음밥」과 «같은 요리»였다
+    //    (창업자 *"간단 버섯밥 이거 아까 후딱버섯밥아냐?"* → 대조하니 재료·순서가 같았다).
+    //    ✅ 빈 자리엔 창업자 「샤브샤브」가 들어왔다 — **만드는 법도 창업자가 직접 썼다**(2026-08-18).
+    ids: ['basic-honey-ganjang-chicken', 'basic-shabu-shabu'] },   // 허니 간장 치킨 · 샤브샤브
   { from: '2026-11-02', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-deulgireum-dubu-jeongol', 'basic-bibim-galbijjim'] },   // 들기름 두부전골 · 비빔갈비찜
+    ids: ['basic-deulgireum-dubu-jeongol', 'basic-bibim-galbijjim'] },   // 들기름 두부전골 · 간편갈비조림
   { from: '2026-11-09', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     ids: ['basic-hwangtae-guk', 'basic-hwangtae-jangajji'] },   // 황태국 · 황태장아찌
@@ -275,10 +278,14 @@ export const HOMEMADE = [
     ids: ['basic-insaeng-budae-jjigae', 'basic-dak-bokkeumtang'] },   // 인생 부대찌개 · 닭볶음탕
   { from: '2026-11-30', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-gul-maesaengi-tteokguk', 'basic-bomdong-geotjeori'] },   // 굴 매생이 떡국 · 봄동겉절이
+    // 🌱 [창업자 검수 2026-08-18] 「봄동겉절이」를 뺐다 — *"11월에 봄동이 없을거야"*
+    //    우리 52주 제철표도 봄동 = 9주차(2~3월)다. ⛔레시피는 «안 지운다» — 봄 주차가 생기면 그때 쓴다.
+    //    ⭐ 대신 창업자 「순두부조림」(백업 원문). 이 줄은 제철이 아니라 «가정식»이라 계절이 아니라
+    //       「그때 재료를 구할 수 있나」만 본다(창업자 *"가정식이니까 상관없어"*). 순두부는 사철 나온다.
+    ids: ['basic-gul-maesaengi-tteokguk', 'basic-sundubu-jorim'] },   // 굴 매생이 떡국 · 순두부조림
   { from: '2026-12-07', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-yangnyeom-gejang'] },   // 양념게장
+    ids: ['basic-yangnyeom-gejang', 'basic-daepa-bulgogi-jeongol'] },   // 양념게장 · 대파듬뿍 불고기전골   // 양념게장
   // ⬆⬆ [자동] 우리집레시피 18주 끝 ⬆⬆
 ]
 
