@@ -97,7 +97,7 @@ const 카드 = (r, meta, i) => {
   const 색 = /우리집/.test(meta.줄) ? 'home' : 'cool'
   const img = 그림(r.icon)
   return `
-<article class="card ${색}" id="r${i + 1}">
+<article class="card ${색}" id="r${i + 1}" data-key="${r.id}">
   <header class="card-h">
     ${img ? `<img class="thumb" src="${img}" alt="">` : '<div class="thumb none">그림 없음</div>'}
     <div class="card-t">
@@ -324,10 +324,25 @@ const html = `<title>레시피 검수판 ${이름}</title>
   }
   .judge .note::placeholder{color:var(--faint)}
   .judge .note:focus{outline:2px solid var(--brand); outline-offset:1px; border-color:transparent}
-  /* 저장이 꺼지면(읽기 전용으로 열렸을 때 등) 그렇다고 알린다 — 조용히 사라지면 헛수고가 된다 */
-  artifact-sync[artifact-sync-state=off] .judge::after{
-    content:'⚠️ 이 판은 지금 저장이 안 돼 — 적은 게 안 남아. 채팅으로 알려줘.';
-    flex:1 1 100%; font-size:13px; font-weight:700; color:var(--mine);
+  /* ⛔⛔ [2026-08-18] artifact-sync 는 이 판에서 «안 돈다»(LIVE DOCS ONLY) — 저장은 localStorage 가 한다.
+     그래서 이 「저장 안 됨」 경고를 «안 띄운다». 띄우면 멀쩡히 저장되는데도 창업자가 헛걱정한다. */
+  /* 📋 결과 복사 막대 — 늘 화면 아래에 붙어 있다 */
+  .bar{
+    position:sticky; bottom:0; z-index:20; display:flex; gap:10px; align-items:center;
+    margin:22px 0 0; padding:12px 14px; border:1px solid var(--line); border-radius:14px;
+    background:var(--card); box-shadow:0 -6px 18px rgba(0,0,0,.06);
+  }
+  .bar button{
+    font:inherit; font-weight:800; font-size:15px; padding:11px 16px; border-radius:11px;
+    border:0; background:var(--brand); color:var(--paper); cursor:pointer;
+  }
+  .bar span{font-size:13px; color:var(--dim); font-weight:700}
+  #fallback{margin:14px 0 0}
+  #fallback p{font-size:14px; color:var(--mine); font-weight:700; margin:0 0 8px}
+  #fallback textarea{
+    width:100%; box-sizing:border-box; font:inherit; font-size:14px; line-height:1.6;
+    padding:12px; border:1px solid var(--line); border-radius:12px;
+    background:var(--paper); color:var(--ink);
   }
   .memo p{margin:0 0 8px}
   .memo p:last-child{margin:0}
@@ -371,6 +386,117 @@ const html = `<title>레시피 검수판 ${이름}</title>
 
   <p class="sig">이 판은 손으로 안 썼어 — <b>앱이 화면에 쓰는 바로 그 값</b>(<code>allBasicRecipes</code>)을 그대로 그렸어.<br>지난 판은 «원문»을 그려서 문체가 달라 보였던 거야 — 그건 내 잘못이고 이제 어긋날 수가 없어.</p>
 </div>
+
+<div class="bar" id="bar">
+  <button id="copy" type="button">📋 결과 복사</button>
+  <span id="cnt">아직 고른 게 없어</span>
+</div>
+<div id="fallback" hidden>
+  <p>복사가 안 됐어 — <b>아래 글을 길게 눌러 전부 복사</b>해서 채팅에 붙여줘.</p>
+  <textarea id="out" readonly rows="10"></textarea>
+</div>
+
+<script>
+/* 💾💾 [2026-08-18] «저장»을 localStorage 로 바꿨다 — artifact-sync 는 이 판에서 «안 돈다».
+   ⛔⛔ 창업자 = "이판은 저장이 안된다고 되어있어 아직도!! 제발 확인좀해"
+   📌 원인 = 런타임 계약 문서에 **"LIVE DOCS ONLY — sync regions"** 라고 박혀 있다.
+      artifact-sync 태그는 «라이브 문서»로 만든 아티팩트에서만 돌고, 보통 아티팩트에선
+      region 이 artifact-sync-state="off" 로 꺼진다. 우리 판은 보통 아티팩트다.
+      ⛔ 나는 태그가 있는 것만 보고 「이제 저장된다」고 말했다. 문서를 안 읽었다.
+   ✅ localStorage 는 보통 아티팩트에서도 확실히 돈다 — 새로고침·다시 열기에도 남는다.
+   ⛔ 다만 그건 «창업자 폰 안»에만 남는다 → 그래서 「결과 복사」 버튼이 «반드시» 같이 있어야 한다.
+      ⚠️ clipboard.writeText() 는 «성공으로 resolve 되고도» 실제 복사가 실패한다(v10.97 사고).
+         그래서 성공 여부와 무관하게 실패하면 글을 화면에 띄우는 폴백을 둔다. */
+(function () {
+  /* ⛔ 열쇠에 «날짜 범위»만 넣으면 33편 판과 21편 판이 «같은 열쇠»를 쓴다(2026-08-18 밀림 사고).
+     이제 담는 모양이 이름표 기준이라 섞여도 안 밀리지만, 판이 다르면 열쇠도 다른 게 맞다. */
+  var KEY = 'hankki:검수판:v2:' + (document.title || 'x') + ':' + document.querySelectorAll('article[data-key]').length
+  var arts = [].slice.call(document.querySelectorAll('article[data-key]'))
+  var boxes = [].slice.call(document.querySelectorAll('.judge input.ck'))
+  var notes = [].slice.call(document.querySelectorAll('.judge input.note'))
+  var cnt = document.getElementById('cnt')
+
+  function 제목(el) {
+    var art = el.closest('article')
+    var h = art && art.querySelector('h2, .title, h3')
+    return h ? h.textContent.trim() : '(제목 없음)'
+  }
+  function 세기() {
+    var n = boxes.filter(function (b) { return b.checked }).length
+      + notes.filter(function (t) { return t.value.trim() }).length
+    cnt.textContent = n ? ('고른 것 ' + n + '개 — 저장됐어') : '아직 고른 게 없어'
+  }
+  /* ⛔⛔⛔ [2026-08-18 사고] **저장을 «순서 번호»로 했다가 창업자 검수가 통째로 밀렸다.**
+     📮 창업자 = "이거 뭐가 밀렸는데 … 샐러드에 가루육수들어가고 양념게장에 가루육수들어가고 이상해졌어"
+     · 옛 코드는 c:[1,0,1…] 처럼 **몇 번째 칸인지**로 담았다.
+     · 판을 33편 → 21편으로 다시 뽑으니 **번호가 다 밀렸고**,
+       열쇠가 제목(날짜 범위)이라 **두 판이 같은 열쇠**를 써서 옛 값이 새 판에 얹혔다.
+     · 그 결과 고등어조림 메모("가루육수1큰술")가 **연근사과샐러드**에,
+       고등어김치찜 메모가 **양념게장**에 붙었다. 레시피 자체는 멀쩡한데 **판이 거짓말을 했다.**
+     ⭐ 고침 = **레시피 이름표(id)로 담는다.** 판이 늘든 줄든 제 자리를 찾아간다.
+     📌 규칙 18 그대로 — 「자리(순서)」는 흔들리고 「이름」은 안 흔들린다. */
+  function 칸들(art) {
+    return { c: art.querySelectorAll('.judge input.ck'), n: art.querySelector('.judge input.note') }
+  }
+  function 저장() {
+    var out = {}
+    arts.forEach(function (art) {
+      var k = art.getAttribute('data-key'); if (!k) return
+      var q = 칸들(art)
+      var c0 = q.c[0] && q.c[0].checked, c1 = q.c[1] && q.c[1].checked
+      var v = q.n ? q.n.value : ''
+      if (c0 || c1 || (v && v.trim())) out[k] = { a: c0 ? 1 : 0, b: c1 ? 1 : 0, n: v }
+    })
+    try { localStorage.setItem(KEY, JSON.stringify(out)) } catch (e) {}
+    세기()
+  }
+  try {
+    var s = JSON.parse(localStorage.getItem(KEY) || 'null')
+    /* 옛 형식(배열)이면 «버린다» — 그게 밀림의 원인이다. 되살리면 또 어긋난다. */
+    if (s && !Array.isArray(s.c) && typeof s === 'object') {
+      arts.forEach(function (art) {
+        var v = s[art.getAttribute('data-key')]; if (!v) return
+        var q = 칸들(art)
+        if (q.c[0]) q.c[0].checked = !!v.a
+        if (q.c[1]) q.c[1].checked = !!v.b
+        if (q.n) q.n.value = v.n || ''
+      })
+    }
+  } catch (e) {}
+  세기()
+  boxes.forEach(function (b) { b.addEventListener('change', 저장) })
+  notes.forEach(function (t) { t.addEventListener('input', 저장) })
+
+  function 글만들기() {
+    var 줄 = []
+    document.querySelectorAll('article').forEach(function (art) {
+      var t = art.querySelector('h2, .title, h3')
+      var ck = art.querySelectorAll('.judge input.ck')
+      var nt = art.querySelector('.judge input.note')
+      var 괜 = ck[0] && ck[0].checked, 이상 = ck[1] && ck[1].checked
+      var 메모 = nt ? nt.value.trim() : ''
+      if (!괜 && !이상 && !메모) return
+      줄.push('· ' + (t ? t.textContent.trim() : '?') + ' — '
+        + (이상 ? '이상해' : (괜 ? '괜찮아' : '')) + (메모 ? ' : ' + 메모 : ''))
+    })
+    return 줄.length ? ('[검수 결과]\\n' + 줄.join('\\n')) : ''
+  }
+  document.getElementById('copy').addEventListener('click', function () {
+    var 글 = 글만들기()
+    if (!글) { cnt.textContent = '아직 고른 게 없어'; return }
+    var fb = document.getElementById('fallback')
+    var out = document.getElementById('out')
+    /* ⛔ writeText 는 «성공했다고 해놓고» 실패한다 → 결과와 무관하게 글도 같이 띄운다 */
+    out.value = 글
+    fb.hidden = false
+    out.focus(); out.select()
+    /* ⛔ 거부되면 «약속이 깨진다» — 안 잡으면 pageerror 로 뜬다(헤드리스에서 실제로 그랬다) */
+    try { if (navigator.clipboard) navigator.clipboard.writeText(글).catch(function () {}) } catch (e) {}
+    try { document.execCommand('copy') } catch (e) {}
+    cnt.textContent = '복사했어 — 안 됐으면 아래 글을 붙여줘'
+  })
+})()
+</script>
 `
 
 const 파일 = `검수판-${날짜들[0]}${날짜들.length > 1 ? `-외${날짜들.length - 1}` : ''}.html`
