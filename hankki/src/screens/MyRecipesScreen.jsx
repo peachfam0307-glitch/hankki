@@ -458,7 +458,10 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                 「레시피」면 어디에 있는지 헷갈린다(검수판에서 드러났다). */}
             <div className="h-title">{view === 'log' ? '한끼 일기' : '레시피'}</div>
           </div>
-          <TabTips tab="myrecipes" />
+          {/* 📔 [2026-08-18 창업자 제보] *"한끼일기에 도움말에도 책갈피가 있어 잘못쓴것 같은데"*
+              ⛔ 여기가 «항상» tab="myrecipes" 였다 — 바로 윗줄에서 제목은 갈라 놓고 도움말만 안 갈랐다.
+                 그래서 한끼 일기에서 「?」를 누르면 책갈피·보기 바꾸기 같은 «없는 기능»이 안내됐다. */}
+          <TabTips tab={view === 'log' ? 'log' : 'myrecipes'} />
         </div>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           {view === 'grid' && (
