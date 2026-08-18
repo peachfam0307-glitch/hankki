@@ -140,6 +140,18 @@ try {
         console.log('   전체 = `node hankki/scripts/doc-guard.mjs --stale --recent`')
       }
     } catch { /* 없으면 조용히 */ }
+    // 🚨 「판정 대기」라고 적혀 있는데 **창업자가 이미 확정한** 주제 (2026-08-18 「집 주소 공개」 사고)
+    //   ⭐ 위 검사의 «셋째 짝» — 파일(⒝)·코드(⒞)에 이어 **결정**을 본다. 이게 제일 나쁘다:
+    //      창업자에게 «이미 답한 것»을 또 묻게 된다.
+    try {
+      const { decidedStale } = await import('./doc-guard.mjs')
+      const ds = decidedStale()
+      if (ds.length) {
+        console.log(`\n🚨 「⏳판정 대기」인데 **창업자가 이미 확정한** 주제 ${ds.length}개 — ⛔이걸 읽고 또 물으면 안 된다`)
+        ds.slice(0, 3).forEach((h) => console.log(`   ${h.file}:${h.line}  「${h.topic}」 → 확정은 ${h.at}`))
+        console.log('   전체 = `node hankki/scripts/doc-guard.mjs --decided`')
+      }
+    } catch { /* 없으면 조용히 */ }
     // 🔢 「대기」라고 적혀 있는데 **상수는 이미 채워진** 줄 (#81 · 2026-08-05 모션 배분 사고)
     //   ⭐ 위 검사의 «짝»이다 — 저건 파일을 보고 이건 코드에 박힌 값을 본다.
     try {
