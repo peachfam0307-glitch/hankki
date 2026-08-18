@@ -63,6 +63,65 @@ for (const r of rules) {
   r.hook = r.tools.filter((t) => HOOKS.includes(t))
 }
 
+// ══════════════════════════════════════════════════════════════════
+// 🪤 --patterns : 반복 실수 «패턴»(docs/실수-패턴)에 장치가 있나 — 규칙과 «다른 축»이다
+//   ⭐ 왜 (창업자 2026-08-18 *"쟤가 매번 놓치고 실수하는 포인트들 검사해서 도구 만들어줘"*)
+//   ⛔ 그 말을 듣고 곧장 「JSX 주석 게이트를 만들자」고 했는데 — **이미 있었고 잘 잡고 있었다.**
+//      그날 «네 번째»로 「이미 있는 걸 만들 뻔한」 것이다.
+//   📌 그래서 짐작을 버리고 **패턴 여덟을 기계로 대조**한다. 빈 자리는 «세어서» 안다.
+if (process.argv.includes('--patterns')) {
+  const PDOC = join(APP, 'docs', '실수-패턴-2026-08-07.md')
+  let ptxt = ''
+  try { ptxt = readFileSync(PDOC, 'utf8') } catch {
+    console.error(`\n⛔ ${PDOC} 를 못 읽었다 — 패턴 문서가 옮겨졌나 확인할 것.\n`); process.exit(1)
+  }
+  const pl = ptxt.split('\n')
+  const pats = []
+  pl.forEach((ln, i) => {
+    const m = ln.match(/^##\s+(\S+)\s+패턴\s+([A-Z])\s+—\s+(.+)$/)
+    if (m) pats.push({ tag: m[1], id: m[2], title: m[3].replace(/\s*⭐.*$/, '').trim(), at: i + 1 })
+  })
+  pats.forEach((p, k) => {
+    const end = k + 1 < pats.length ? pats[k + 1].at - 1 : pl.length
+    const body = pl.slice(p.at - 1, end)
+    p.block = body.join('\n')
+    p.guard = (body.find((l) => l.includes('지금 막는 것')) || '').replace(/^.*지금 막는 것\*{0,2}\s*—?\s*/, '').trim()
+    p.hole = (body.find((l) => l.includes('**구멍**')) || '').replace(/^.*\*\*구멍\*\*\s*—?\s*/, '').trim()
+    const named = [...new Set([...p.block.matchAll(/([A-Za-z0-9_가-힣-]+\.(?:mjs|js|sh|py))/g)].map((m) => m[1]))]
+    p.tools = named.filter((t) => HAVE.has(t) || HOOKS.includes(t))
+    p.gate = p.tools.filter((t) => SMOKE.includes(t))
+    // 「npm run 실수」처럼 «명령»으로만 적힌 것도 장치다 — package.json 을 뒤져 실체를 찾는다
+    // ⛔ `(\S+)` 로 잡으면 감싼 백틱까지 낱말에 붙어 scripts['실수`'] 를 찾다 «거짓 맨몸»이 된다
+    //    (2026-08-18 재검수에서 잡음 — 🅶 가 잘 막히는데 맨몸으로 떴다)
+    if (!p.tools.length && /npm run ([가-힣A-Za-z0-9_-]+)/.test(p.block)) {
+      const n = p.block.match(/npm run ([가-힣A-Za-z0-9_-]+)/)[1]
+      try {
+        const s = JSON.parse(readFileSync(join(APP, 'package.json'), 'utf8')).scripts?.[n] || ''
+        const t = [...s.matchAll(/scripts\/([A-Za-z0-9_가-힣-]+\.m?js)/g)].map((m) => m[1])
+        p.tools = t; p.gate = t.filter((x) => SMOKE.includes(x))
+      } catch { /* 없으면 맨몸으로 둔다 */ }
+    }
+  })
+  console.log(`\n🪤 반복 실수 패턴 ${pats.length}개 — 장치가 «저절로» 도나\n`)
+  for (const p of pats) {
+    const mark = p.gate.length ? '🚦배포막음' : p.tools.length ? '🔧불러야함' : '⚠️맨몸  '
+    console.log(`  ${p.tag} ${p.id}  ${mark}  ${p.title}`)
+    if (p.tools.length) console.log(`        ${p.tools.slice(0, 3).join(' · ')}`)
+    if (p.hole) console.log(`        🕳 ${p.hole.replace(/[*_]/g, '').slice(0, 88)}`)
+  }
+  const g = pats.filter((p) => p.gate.length).length
+  const c = pats.filter((p) => !p.gate.length && p.tools.length).length
+  const b = pats.length - g - c
+  console.log(`
+  🔢 🚦저절로 ${g}  ·  🔧불러야 ${c}  ·  ⚠️맨몸 ${b}
+
+  ⛔ **「구멍」은 문서가 «이미» 적어둔 것이다** — 새로 지어내지 말 것.
+  ⭐ 도구를 만들기 «전»에 반드시: node hankki/scripts/tools.mjs "<핵심어>"
+     📌 2026-08-18 에 「JSX 주석 게이트를 만들자」고 했는데 **이미 있었고 잘 잡고 있었다**(네 번째 헛돎).
+`)
+  process.exit(0)
+}
+
 const bareOnly = process.argv.includes('--bare')
 const bare = rules.filter((r) => !r.tools.length)
 const armed = rules.filter((r) => r.tools.length)
