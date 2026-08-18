@@ -130,6 +130,24 @@ const 카드 = (r, meta, i) => {
   </section>
 
   ${r.memo ? `<section><h3>메모</h3><div class="memo">${r.memo.split('\n').filter(Boolean).map((p) => `<p>${esc(p)}</p>`).join('')}</div></section>` : ''}
+
+  <!-- ✍️✍️ [2026-08-18 창업자] **판에서 바로 체크·입력한다.**
+       📮 창업자 = *"검수판에 내가 바로 체크하거나 입력할수있게 해줄래?"*
+       ⭐⭐ 여기가 «공유 문서»다(artifact-sync 영역) — 창업자가 체크하거나 적으면
+          그 DOM 변화가 그대로 저장되고 **내가 읽는다.** 채팅으로 옮겨 적을 필요가 없다.
+       ⛔ 규칙 셋(런타임 계약 0.2.4) —
+          ⑴ 마크업을 **HTML 로 페이지에 쓴다.** 브라우저에서 JS 로 렌더하면 저장이 «꺼진다».
+          ⑵ **textarea 는 값이 캡처 안 된다** → 반드시 input.
+          ⑶ 손짓(클릭·타이핑) 중의 변화만 저장된다 — 타이머·load 때 바꾼 건 안 남는다.
+       ⛔ ＋ 이 주석을 고칠 때 «백틱»을 쓰지 말 것 — 이 카드 전체가 템플릿 리터럴이라 문자열이 끊긴다
+          (2026-08-18 에 실제로 그래서 빌드가 죽었다. CLAUDE.md 에 박힌 함정인데 또 밟았다). -->
+  <artifact-sync>
+    <div class="judge">
+      <label class="ok"><input type="checkbox" class="ck"> <span>봤어 · 괜찮아</span></label>
+      <label class="bad"><input type="checkbox" class="ck"> <span>이상해</span></label>
+      <input class="note" type="text" placeholder="어디가 이상한지 한 줄 (고치는 건 내가 할게)">
+    </div>
+  </artifact-sync>
 </article>`
 }
 
@@ -281,6 +299,36 @@ const html = `<title>레시피 검수판 ${이름}</title>
   .home ol.st li::before{background:var(--home-bg); color:var(--home)}
 
   .memo{font-size:14.5px; color:var(--dim)}
+
+  /* ✍️ 판정 칸 — 창업자가 여기서 바로 체크·입력한다(공유 문서라 내가 읽는다) */
+  .judge{
+    margin:16px -18px -16px; padding:14px 18px 16px;
+    border-top:1px solid var(--line); background:var(--paper);
+    border-radius:0 0 15px 15px;
+    display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center;
+  }
+  .judge label{
+    display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+    padding:8px 14px; border-radius:999px; border:1px solid var(--line);
+    background:var(--card); font-size:14.5px; font-weight:700; color:var(--dim);
+    user-select:none;
+  }
+  /* 손가락으로 누르는 판이라 체크박스를 키운다 */
+  .judge input.ck{width:19px; height:19px; margin:0; accent-color:var(--brand)}
+  .judge label.ok:has(.ck:checked){border-color:var(--yours); background:var(--yours-bg); color:var(--yours)}
+  .judge label.bad:has(.ck:checked){border-color:var(--mine); background:var(--mine-bg); color:var(--mine)}
+  .judge .note{
+    flex:1 1 100%; min-width:0; padding:11px 14px; font:inherit; font-size:14.5px;
+    color:var(--ink); background:var(--card);
+    border:1px solid var(--line); border-radius:12px;
+  }
+  .judge .note::placeholder{color:var(--faint)}
+  .judge .note:focus{outline:2px solid var(--brand); outline-offset:1px; border-color:transparent}
+  /* 저장이 꺼지면(읽기 전용으로 열렸을 때 등) 그렇다고 알린다 — 조용히 사라지면 헛수고가 된다 */
+  artifact-sync[artifact-sync-state=off] .judge::after{
+    content:'⚠️ 이 판은 지금 저장이 안 돼 — 적은 게 안 남아. 채팅으로 알려줘.';
+    flex:1 1 100%; font-size:13px; font-weight:700; color:var(--mine);
+  }
   .memo p{margin:0 0 8px}
   .memo p:last-child{margin:0}
 
@@ -310,6 +358,7 @@ const html = `<title>레시피 검수판 ${이름}</title>
       <li>시간·인분·난이도가 <b>말이 되나</b></li>
     </ol>
     <p class="no">고쳐 쓰지 말고 <b>요리 이름이랑 어디가 이상한지만</b> 짚어줘 — 고치는 건 내가 할게.</p>
+    <p class="no"><b>편마다 아래에 체크칸이 있어.</b> 거기 체크하거나 한 줄 적으면 <b>내가 바로 봐</b> — 채팅에 다시 안 옮겨도 돼.</p>
   </div>
 
   ${몸통}
