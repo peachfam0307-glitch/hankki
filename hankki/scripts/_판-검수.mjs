@@ -324,10 +324,25 @@ const html = `<title>레시피 검수판 ${이름}</title>
   }
   .judge .note::placeholder{color:var(--faint)}
   .judge .note:focus{outline:2px solid var(--brand); outline-offset:1px; border-color:transparent}
-  /* 저장이 꺼지면(읽기 전용으로 열렸을 때 등) 그렇다고 알린다 — 조용히 사라지면 헛수고가 된다 */
-  artifact-sync[artifact-sync-state=off] .judge::after{
-    content:'⚠️ 이 판은 지금 저장이 안 돼 — 적은 게 안 남아. 채팅으로 알려줘.';
-    flex:1 1 100%; font-size:13px; font-weight:700; color:var(--mine);
+  /* ⛔⛔ [2026-08-18] artifact-sync 는 이 판에서 «안 돈다»(LIVE DOCS ONLY) — 저장은 localStorage 가 한다.
+     그래서 이 「저장 안 됨」 경고를 «안 띄운다». 띄우면 멀쩡히 저장되는데도 창업자가 헛걱정한다. */
+  /* 📋 결과 복사 막대 — 늘 화면 아래에 붙어 있다 */
+  .bar{
+    position:sticky; bottom:0; z-index:20; display:flex; gap:10px; align-items:center;
+    margin:22px 0 0; padding:12px 14px; border:1px solid var(--line); border-radius:14px;
+    background:var(--card); box-shadow:0 -6px 18px rgba(0,0,0,.06);
+  }
+  .bar button{
+    font:inherit; font-weight:800; font-size:15px; padding:11px 16px; border-radius:11px;
+    border:0; background:var(--brand); color:var(--paper); cursor:pointer;
+  }
+  .bar span{font-size:13px; color:var(--dim); font-weight:700}
+  #fallback{margin:14px 0 0}
+  #fallback p{font-size:14px; color:var(--mine); font-weight:700; margin:0 0 8px}
+  #fallback textarea{
+    width:100%; box-sizing:border-box; font:inherit; font-size:14px; line-height:1.6;
+    padding:12px; border:1px solid var(--line); border-radius:12px;
+    background:var(--paper); color:var(--ink);
   }
   .memo p{margin:0 0 8px}
   .memo p:last-child{margin:0}
@@ -371,6 +386,93 @@ const html = `<title>레시피 검수판 ${이름}</title>
 
   <p class="sig">이 판은 손으로 안 썼어 — <b>앱이 화면에 쓰는 바로 그 값</b>(<code>allBasicRecipes</code>)을 그대로 그렸어.<br>지난 판은 «원문»을 그려서 문체가 달라 보였던 거야 — 그건 내 잘못이고 이제 어긋날 수가 없어.</p>
 </div>
+
+<div class="bar" id="bar">
+  <button id="copy" type="button">📋 결과 복사</button>
+  <span id="cnt">아직 고른 게 없어</span>
+</div>
+<div id="fallback" hidden>
+  <p>복사가 안 됐어 — <b>아래 글을 길게 눌러 전부 복사</b>해서 채팅에 붙여줘.</p>
+  <textarea id="out" readonly rows="10"></textarea>
+</div>
+
+<script>
+/* 💾💾 [2026-08-18] «저장»을 localStorage 로 바꿨다 — artifact-sync 는 이 판에서 «안 돈다».
+   ⛔⛔ 창업자 = "이판은 저장이 안된다고 되어있어 아직도!! 제발 확인좀해"
+   📌 원인 = 런타임 계약 문서에 **"LIVE DOCS ONLY — sync regions"** 라고 박혀 있다.
+      artifact-sync 태그는 «라이브 문서»로 만든 아티팩트에서만 돌고, 보통 아티팩트에선
+      region 이 artifact-sync-state="off" 로 꺼진다. 우리 판은 보통 아티팩트다.
+      ⛔ 나는 태그가 있는 것만 보고 「이제 저장된다」고 말했다. 문서를 안 읽었다.
+   ✅ localStorage 는 보통 아티팩트에서도 확실히 돈다 — 새로고침·다시 열기에도 남는다.
+   ⛔ 다만 그건 «창업자 폰 안»에만 남는다 → 그래서 「결과 복사」 버튼이 «반드시» 같이 있어야 한다.
+      ⚠️ clipboard.writeText() 는 «성공으로 resolve 되고도» 실제 복사가 실패한다(v10.97 사고).
+         그래서 성공 여부와 무관하게 실패하면 글을 화면에 띄우는 폴백을 둔다. */
+(function () {
+  var KEY = 'hankki:검수판:' + (document.title || 'x')
+  var boxes = [].slice.call(document.querySelectorAll('.judge input.ck'))
+  var notes = [].slice.call(document.querySelectorAll('.judge input.note'))
+  var cnt = document.getElementById('cnt')
+
+  function 제목(el) {
+    var art = el.closest('article')
+    var h = art && art.querySelector('h2, .title, h3')
+    return h ? h.textContent.trim() : '(제목 없음)'
+  }
+  function 세기() {
+    var n = boxes.filter(function (b) { return b.checked }).length
+      + notes.filter(function (t) { return t.value.trim() }).length
+    cnt.textContent = n ? ('고른 것 ' + n + '개 — 저장됐어') : '아직 고른 게 없어'
+  }
+  function 저장() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({
+        c: boxes.map(function (b) { return b.checked ? 1 : 0 }),
+        n: notes.map(function (t) { return t.value })
+      }))
+    } catch (e) {}
+    세기()
+  }
+  try {
+    var s = JSON.parse(localStorage.getItem(KEY) || 'null')
+    if (s) {
+      if (s.c) boxes.forEach(function (b, i) { b.checked = !!s.c[i] })
+      if (s.n) notes.forEach(function (t, i) { t.value = s.n[i] || '' })
+    }
+  } catch (e) {}
+  세기()
+  boxes.forEach(function (b) { b.addEventListener('change', 저장) })
+  notes.forEach(function (t) { t.addEventListener('input', 저장) })
+
+  function 글만들기() {
+    var 줄 = []
+    document.querySelectorAll('article').forEach(function (art) {
+      var t = art.querySelector('h2, .title, h3')
+      var ck = art.querySelectorAll('.judge input.ck')
+      var nt = art.querySelector('.judge input.note')
+      var 괜 = ck[0] && ck[0].checked, 이상 = ck[1] && ck[1].checked
+      var 메모 = nt ? nt.value.trim() : ''
+      if (!괜 && !이상 && !메모) return
+      줄.push('· ' + (t ? t.textContent.trim() : '?') + ' — '
+        + (이상 ? '이상해' : (괜 ? '괜찮아' : '')) + (메모 ? ' : ' + 메모 : ''))
+    })
+    return 줄.length ? ('[검수 결과]\\n' + 줄.join('\\n')) : ''
+  }
+  document.getElementById('copy').addEventListener('click', function () {
+    var 글 = 글만들기()
+    if (!글) { cnt.textContent = '아직 고른 게 없어'; return }
+    var fb = document.getElementById('fallback')
+    var out = document.getElementById('out')
+    /* ⛔ writeText 는 «성공했다고 해놓고» 실패한다 → 결과와 무관하게 글도 같이 띄운다 */
+    out.value = 글
+    fb.hidden = false
+    out.focus(); out.select()
+    /* ⛔ 거부되면 «약속이 깨진다» — 안 잡으면 pageerror 로 뜬다(헤드리스에서 실제로 그랬다) */
+    try { if (navigator.clipboard) navigator.clipboard.writeText(글).catch(function () {}) } catch (e) {}
+    try { document.execCommand('copy') } catch (e) {}
+    cnt.textContent = '복사했어 — 안 됐으면 아래 글을 붙여줘'
+  })
+})()
+</script>
 `
 
 const 파일 = `검수판-${날짜들[0]}${날짜들.length > 1 ? `-외${날짜들.length - 1}` : ''}.html`
