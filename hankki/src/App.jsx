@@ -13,6 +13,7 @@ import TimerBar from './components/TimerBar'
 import Icon from './components/Icon'
 import { useTimer } from './timer'
 import Onboarding, { needsOnboarding } from './components/Onboarding'
+import { askOpenBackup } from './nudges'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
@@ -433,7 +434,14 @@ export default function App() {
         <TimerBar bottom={top ? 'calc(84px + var(--safe-bottom))' : 'calc(66px + var(--safe-bottom))'} />
         {toast && <div className="toast">{toast}</div>}
 
-        {onboard && <Onboarding onDone={() => setOnboard(false)} />}
+        {/* 🔁 「이미 다른 기기에서 쓰고 있었어요」 = 설정으로 보내며 «백업 시트를 열라는 쪽지»를 남긴다.
+            (`go(tab)` 은 인자를 못 받아서 `nudges.js` 의 쪽지로 넘긴다 — 홈 백업 유도 줄과 같은 길) */}
+        {onboard && (
+          <Onboarding
+            onDone={() => setOnboard(false)}
+            onRestore={() => { setOnboard(false); askOpenBackup(); go('profile') }}
+          />
+        )}
       </div>
     </NavCtx.Provider>
   )

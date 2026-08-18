@@ -8,6 +8,20 @@ import TabTips from '../components/TabTips'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon, dishCatOf } from '../components/FoodIcon'
+// 🔖 인덱스 = 창업자가 고른 요리사모자 클립 (`ck_27` · 2026-08-18 확정)
+//    📮 *"하나만 고른다면 요리사모자(아무것도 없는거)"* · *"그러자 1개만 넣자. 제일 깔끔하긴해"*
+import idxChef from '../assets/ui/idx_chef.png'
+// ⭐⭐ [2026-08-18 창업자] 안 걸린 칸 = **같은 모자의 «연한 판»**
+//    📮 *"연한책갈피가 **모양이 같지 않아서 안누르고 싶게 생기지 않아??**
+//        인덱스를 붙이는 자리에다 **연한요리사모자**를 만들면??"*
+//    ⭐ 정확한 지적이었다 — 안 걸림이 «책갈피(∪)» 이고 걸림이 «요리사모자» 라
+//       **모양이 아예 달라서 「누르면 이게 저렇게 된다」가 안 읽힌다.**
+//       유저는 책갈피가 채워질 거라 예상하는데 엉뚱한 게 나온다.
+//    🔬 만드는 법 셋을 견줬다 — ⓐ외곽선만 · ⓑ통째로 30% · ⓒ실루엣
+//       ✅ⓐ = 지금 책갈피와 «같은 문법»(선화)이라 안 튀고 26px 에서도 형태가 보인다
+//       ⛔ⓑ = 창업자가 이미 거부한 흐릿함(*"흐림은 네말대로 지저분해보여"*)
+//       ⛔ⓒ = 26px 에선 뭉개진 덩어리라 뭔지 모른다
+import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 // ⛔ 2026-08-07 — 「요리 기록 남기기」 시트와 「한마디 청하기」를 이 화면에서 뺐다.
 //    앨범을 누르면 «그날 일기»로 가고(화면 이름이 「한끼 일기」다), 둘 다 «레시피 상세»에 그대로 있다.
 //    (DiaryEntrySheet · ReviewAskSheet · shouldAskReview import 제거)
@@ -42,6 +56,12 @@ const DEFAULT_FOLDERS = new Set(['한식', '양식', '일식', '간식', '아시
 const dayKey = (ts) => {
   const d = new Date(ts)
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+}
+// 🗓 달 키 — `dayKey` 의 앞 두 토막과 «같은 모양»이라 `dayFilter` 를 잘라 그대로 견줄 수 있다.
+//   ⛔ 달 이름을 글자로 만들지 말 것(「8월」) — 해가 넘어가면 작년 8월과 섞인다.
+const ymKey = (ts) => {
+  const d = new Date(ts)
+  return `${d.getFullYear()}-${d.getMonth()}`
 }
 
 // 🗓 월간 요리 달력 — 요리한 날에 «그날 만든 음식»이 뜬다. 날짜를 누르면 그날 기록만 모아본다.
@@ -151,7 +171,7 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconF
 //    *"맨 아래 바에 한끼일기도 넣자. 일기쓰려면 레시피에서 한끼일기 또 들어가야 하니까"*)
 //    ⚠️ App 이 key 를 달리 줘서 «다시 마운트»되게 한다 — 안 그러면 초기값이 안 먹는다.
 export default function MyRecipesScreen({ initView = 'grid' }) {
-  const { recipes, folders, addFolder, removeFolder, removeRecipe, diary, removeDiary } = useStore()
+  const { recipes, folders, addFolder, removeFolder, removeRecipe, diary, removeDiary, toggleFavorite } = useStore()
   const nav = useNav()
   const [view, setView] = useState(initView) // grid | log | folders
   const [coach, setCoach] = useState(() => needsCoach(MYRECIPES_COACH_KEY))
@@ -222,6 +242,15 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   // 스마트 폴더 — ★즐겨찾기 / 🍳자주 해먹는. 실제 폴더와 안 겹치게 '__' 접두 키를 쓴다.
   const favCount = sorted.filter((r) => r.favorite).length
   const oftenCount = sorted.filter((r) => (r.cooked || 0) > 0).length
+  // 🔖🔖 [2026-08-18] 책갈피가 카드 «위로 14px» 나가므로 그만큼 자리를 비운다.
+  //   ⛔ 안 비웠더니 **맨 윗줄 책갈피가 필터 칩 줄에 가렸다**(실측 = 큰 2건 · 작은 3건).
+  //   ⭐ 줄 사이도 같은 이유로 벌린다 — 아랫줄 책갈피가 «윗줄 이름표 «글자»»를 덮었다.
+  //      🔢 Range 로 «글자가 실제로 차지하는 상자»를 재서 작은 격자 22건.
+  //         ⛔ `.name` div 로 재면 49건이 나오는데 그건 «카드 폭 전체»라 이름표가 왼쪽 정렬일 때
+  //            오른쪽 빈칸까지 세어진다 — 규칙 18 ⓘ(검사가 «무엇을» 보는가).
+  //   ⛔ `.grid2`·`.grid3` 자체는 안 고친다 — 책갈피가 없는 다른 화면(즐겨찾기·홈)까지 성겨진다.
+  //   🧪 `scripts/_probe-책갈피가림-0818.mjs` 가 지킨다(되돌리면 실패한다).
+  const 책갈피자리 = { paddingTop: 14, rowGap: gridSize === 'big' ? 24 : 22 }
   // 🔍 레시피 탭 «안에서» 찾기 (창업자 요청 2026-08-05 — *"레시피탭에 검색기능 있으면 좋겠어"*)
   //   ⛔ 예전엔 우상단 돋보기가 «탭을 떠나» 전체 검색 화면으로 튕겨 나갔다.
   //      내가 담아둔 것에서 찾고 싶은데 기본 레시피까지 섞여 나오고, 돌아오려면 뒤로가기를 눌러야 했다.
@@ -314,9 +343,100 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     const best = Object.entries(c).sort((a, b) => b[1] - a[1])[0]
     return best && best[1] >= 2 ? best[0] : null
   }, [entries])
-  const shown = dayFilter ? entries.filter((e) => dayKey(e.at) === dayFilter) : entries
+  // 📅📅 [창업자 2026-08-17] **날짜를 골라도 「그 달」이 안 사라진다.**
+  //   📮 *"일기에서 날짜를 누르면 그날에 만든 음식이 보이잖아. **근데 그 달에 만든 음식 전체도 보였으면 좋겠어.**"*
+  //   📮 ＋ *"처음들어가면 그달에만든게 보이는데 **일기쓰고 나면 날짜꺼만 보여.** 다른탭에 나갔다가 다시오면 다 보이고."*
+  //   ⭐⭐ 창업자가 본 그대로였다 — 달력 칸이 `onSelect(k)`(거르기 켜기)와 `onOpenDay(k)`(일기로 이동)를
+  //      **한 번에** 한다(위 `CookCalendar`). 그래서 일기를 쓰고 돌아오면 거르기가 «살아 있어» 그날 것만 남고,
+  //      탭을 나갔다 오면 화면이 다시 마운트돼 거르기가 풀려서 «다 보인다». 오락가락한 게 아니라 이 구조였다.
+  //   ⛔ **거르기를 없애지 않는다** — 그날 것만 보는 건 창업자가 «쓰는» 기능이다(*"그날에 만든 음식이 보이잖아"*).
+  //   ✅ **덜어내지 말고 얹는다** = 위에 「그날」, 아래에 「그 달 전체」. 둘 다 보인다.
+  //   ⚠️ 「그 달」의 기준 = **고른 날이 속한 달**. 달력에서 달을 넘기면 `move()` 가 `onSelect(null)` 을 부르니
+  //      달력이 보고 있는 달과 언제나 같다 — 달력 상태를 밖으로 끌어낼 필요가 없다.
+  const dayList = useMemo(
+    () => (dayFilter ? entries.filter((e) => dayKey(e.at) === dayFilter) : []),
+    [entries, dayFilter],
+  )
+  const pickedYm = dayFilter ? dayFilter.split('-').slice(0, 2).join('-') : null
+  // 🔁🔁 [창업자 2026-08-17] **「그 달」 묶음은 «겹치지 않는다».**
+  //   📮 *"한달치니까 겹치지 않게 하자. **3번 같은 걸 만들면 3번 보이게 되잖아**"*
+  //   ⭐⭐ 창업자가 «한 달»이라는 길이에서 답을 냈다 — 하루면 같은 요리를 두 번 할 일이 드물지만
+  //      **한 달이면 제육볶음을 세 번 한다.** 그대로 세면 같은 그림이 세 칸을 먹고, 그 달에 «무엇을»
+  //      해먹었는지가 오히려 안 보인다. 이 묶음의 목적은 «횟수»가 아니라 «무엇»이다.
+  //      (횟수는 바로 위 통계 띠가 「이번 달 N번」으로 이미 말한다 — 두 번 말할 이유가 없다.)
+  //   ⛔ 겹치는 자리가 «둘»이라 둘 다 막는다 —
+  //      ⑴ 같은 요리를 여러 번 (창업자가 짚은 것) ⑵ 그날 것이 그 달에도 또 (내가 물어본 것)
+  //   ⚠️ 남기는 것은 «가장 최근» 한 판 — `entries` 가 최신순이라 처음 만난 것이 그것이다.
+  //   ⚠️ 같은 요리의 잣대 = **제목**. `recipeId` 는 레시피를 지우면 끊기고, 유저 눈에 보이는 건 제목이다.
+  //   ⛔ 날짜를 «안» 골랐을 땐 손대지 않는다 — 그건 「나의 요리 앨범」이고 한 장씩 쌓이는 게 그 자리의 뜻이다.
+  const monthList = useMemo(() => {
+    if (!pickedYm) return entries
+    const 본것 = new Set()
+    const out = []
+    for (const e of entries) {
+      if (ymKey(e.at) !== pickedYm) continue
+      if (dayKey(e.at) === dayFilter) continue // ⑵ 위 「그날」 묶음에 이미 있다
+      if (본것.has(e.title)) continue          // ⑴ 같은 요리는 한 번만
+      본것.add(e.title)
+      out.push(e)
+    }
+    return out
+  }, [entries, pickedYm, dayFilter])
+  // 🖐 「전체 선택」이 잡을 것 = **화면에 실제로 있는 것 전부**(그날 ＋ 그 달).
+  //    ⛔ `monthList` 하나만 쓰면 그날 묶음이 선택에서 빠진다 — 겹침을 없앤 «뒤»엔 둘이 남남이다.
+  const shownAll = useMemo(() => [...dayList, ...monthList], [dayList, monthList])
   const openRecipe = (e) => {
     if (recipes.some((r) => r.id === e.recipeId)) nav.push({ name: 'detail', id: e.recipeId })
+  }
+
+  // 🖼 앨범 한 칸 — **그리드가 둘이 되어(그날 · 그 달) 한 곳으로 모았다.**
+  //   ⛔ 복사해 두 벌로 두지 말 것. 꾹 누름·편집 체크·별점이 붙어 있어 한쪽만 고치면 바로 갈린다.
+  const albumTile = (e) => {
+    const on = logEdit && logSel.has(e.id)
+    return (
+      <button
+        key={e.id}
+        className="album-tile press"
+        aria-label={`${e.title} 기록 보기`}
+        style={{ position: 'relative', opacity: logEdit && !on ? 0.75 : 1, outline: on ? '3px solid var(--brown)' : 'none', outlineOffset: -3, WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+        {...hold(() => { setLogEdit(true); setLogSel((s) => { const n = new Set(s); n.add(e.id); return n }) })}
+        onClick={() => {
+          if (lpFired.current) { lpFired.current = false; return } // 꾹 누름 발동 직후 클릭 무시
+          if (logEdit) toggleLogSel(e.id)
+          // 📔📔 **「한끼 일기」에서 누르면 «그날 일기»로 간다** (창업자 2026-08-07)
+          //   ⛔ 전엔 「요리 기록 남기기」 시트가 떴다 — 창업자 *"이거 없애기로 하지않았어? 일기에서 만든음식 누르면 떠."*
+          //   ⭐ v9.80 에 없앤 건 **「만들었어요」 누르면 «자동으로» 뜨던 것**이고,
+          //      여기 «직접 누르는 길»은 남아 있었다. 화면 이름이 「한끼 일기」인데 요리 기록이 뜨니 앞뒤가 안 맞았다.
+          //   ⭐ 기록(별점·사진·팁) 고치기는 **레시피 상세**에 그대로 있다(`RecipeDetailScreen` 「내 요리 기록」 카드)
+          //      → 잃는 길이 없다.
+          //   ⚠️ 딸려온 것 = 이 화면의 「한마디 청하기」가 그 시트 닫히는 자리를 썼다.
+          //      화면을 옮기는 길에 묻는 건 실례라 여기선 안 묻고 **레시피 상세 쪽에 맡긴다**(거긴 그대로 산다).
+          else nav.push({ name: 'diary', day: dayKey(e.at) })
+        }}
+      >
+        {e.photo ? (
+          <img src={e.photo} alt="" loading="lazy" />
+        ) : (
+          <div className="album-icon"><FoodIcon name={iconFor(e)} size={34} /></div>
+        )}
+        {/* ⭐ [2026-08-17 창업자 *"음식 아이콘에 별은 뭐야?"*] = 「만들었어요!」 하고 «매긴 별점».
+            ⛔ 여기만 **유니코드 글자 `★`** 였다 — 별점을 «매기는» 자리(`DiaryEntrySheet` 의 `Stars`)는
+               우리 `Icon name="star"` 를 쓴다. **같은 것을 두 모양으로 그리고 있었다.**
+               우리 규칙은 「UI엔 우리 스티커·아이콘만」이라 여기가 예외로 남아 있던 자리다. */}
+        {e.rating > 0 && !logEdit && (
+          <span className="album-star">
+            <Icon name="star" size={10} color="#ffd66b" style={{ fill: '#ffd66b' }} />
+            {e.rating}
+          </span>
+        )}
+        <span className="album-cap">{e.title}</span>
+        {logEdit && (
+          <span aria-hidden style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', background: on ? 'var(--brown)' : 'rgba(255,255,255,0.92)', border: on ? 'none' : '1.8px solid rgba(0,0,0,0.22)', boxShadow: '0 1px 5px rgba(0,0,0,0.22)' }}>
+            {on && <Icon name="check" size={14} color="#fff" stroke={3} />}
+          </span>
+        )}
+      </button>
+    )
   }
 
   return (
@@ -338,7 +458,10 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                 「레시피」면 어디에 있는지 헷갈린다(검수판에서 드러났다). */}
             <div className="h-title">{view === 'log' ? '한끼 일기' : '레시피'}</div>
           </div>
-          <TabTips tab="myrecipes" />
+          {/* 📔 [2026-08-18 창업자 제보] *"한끼일기에 도움말에도 책갈피가 있어 잘못쓴것 같은데"*
+              ⛔ 여기가 «항상» tab="myrecipes" 였다 — 바로 윗줄에서 제목은 갈라 놓고 도움말만 안 갈랐다.
+                 그래서 한끼 일기에서 「?」를 누르면 책갈피·보기 바꾸기 같은 «없는 기능»이 안내됐다. */}
+          <TabTips tab={view === 'log' ? 'log' : 'myrecipes'} />
         </div>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           {view === 'grid' && (
@@ -380,17 +503,27 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       </div>
 
       {view === 'log' && (
-        <div className="pad fade">
+        // eslint-disable-next-line
+        <div className="pad fade log-2col">
+          {/* 🗓🗓 `log-2col` = **가로에서 왼쪽 달력 · 오른쪽 나머지 2단**(창업자 2026-08-16 · CSS 는 styles.css 맨 끝)
+              ⛔⛔ 여기서 **함정을 둘이나 밟았다. 둘 다 주석 때문이다.**
+                ⑴ 이 주석을 «div 밖»(`{view === 'log' && (` 다음 줄)에 뒀더니 빌드가 죽었다 —
+                   **JSX 주석은 «자식» 자리에서만 된다.** 표현식이 열리는 자리엔 «JS 주석»을 쓴다.
+                ⑵ 그걸 설명하려고 주석 «안»에 별표·빗금 닫는 짝을 적었더니 **거기서 주석이 끝났다.**
+                   뒷부분이 화면에 «글자»로 새어 나와 **격자 칸을 하나 더 먹고 2단이 무너졌다.**
+                   ⭐ 빌드는 통과한다 — 글자가 보일 뿐이라 «찍어서 재보기 전엔 모른다»(규칙 21).
+              📌 규칙 = **주석 안에 닫는 짝을 적지 않는다.** 백틱 함정(CLAUDE.md)과 같은 뿌리다. */}
           {/* 🗓 요리 달력 — **맨 위 · 항상 펼쳐 둔다.** (창업자 확정 2026-08-06 ②)
               ⛔ 예전엔 `useState(false)` 로 **기본이 접힘**이었고, 「요리 달력 보기 ▾」를 눌러야 나왔다.
                  그래서 만든 사람(창업자)조차 안 썼다 — 이 탭이 죽은 이유의 하나가 **기능이 모자란 게
                  아니라 자리를 잘못 준 것**이었다. 접기 버튼도 같이 없앴다(가릴 이유가 없어졌다). */}
           {(entries.length > 0 || diaryDays.size > 0) && (
-            <div data-coach="cal">
+            <div data-coach="cal" className="log-cal">
               <CookCalendar entries={entries} diaryDays={diaryDays} selected={dayFilter} onSelect={setDayFilter} onOpenDay={(k) => nav.push({ name: 'diary', day: k })} iconFor={iconFor} />
             </div>
           )}
 
+          <div className="log-main">
           {/* 📔 다이어리 쓰기 — 창업자 2026-08-06 *"따로 아이콘을 하나 파서 다이어리 쓰기
               (날짜 넣고 쓰면 달력에 저장되도록)"*
               ⭐ 요리를 «안 한 날»에도 쓸 수 있어야 한다 — 그래서 「만들었어요」와 별개 입구다.
@@ -474,7 +607,19 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, width: 62, minHeight: 44 }}
                   >
                     <FoodIcon name={iconFor(e)} size={34} />
-                    <span style={{ fontSize: 11, lineHeight: 1.25, textAlign: 'center', wordBreak: 'keep-all', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.title}</span>
+                    {/* ⛔⛔ [2026-08-16 고침] **긴 이름이 62px 칸을 넘쳐 옆 이름과 «붙어» 보였다.**
+                        🔢 실측 = 「수제 떡갈비」＋「목살돼지갈비구이」가 `수제 떡갈비목살돼지갈비구이` 로 읽혔다.
+                           폰 세로에서도 똑같아서 **내 가로 2단 작업 때문이 아니라 원래 있던 버그**다.
+                        ⭐ 뿌리 = `overflow: hidden` 은 있는데 **span 이 자기 폭을 안 가졌다.**
+                           flex 칸의 자식이라 «내용만큼» 늘어나서, 잘릴 폭 자체가 없었다.
+                           ＋`wordBreak: keep-all` 이라 「목살돼지갈비구이」는 띄어쓰기가 없어 «한 낱말»이라 안 꺾인다.
+                        ✅ `width: 100%` 한 줄 — 그제서야 62px 에서 잘리고 두 줄 말줄임이 실제로 돈다.
+                        📌 규칙 21 로 잡았다 — 숫자는 다 초록불이었고 **판을 열어보고서야 보였다.** */}
+                    {/* ⚠️ `overflowWrap: anywhere` 를 같이 준다 — `keep-all` 만으로는 「목살돼지갈비구이」처럼
+                        **띄어쓰기 없는 긴 이름이 «한 낱말»이라 안 꺾여** 두 줄 말줄임이 아예 안 돈다(한 줄에서 싹둑).
+                        ⭐ `anywhere` 는 «담을 수 없을 때만» 꺾으므로 「수제 떡갈비」처럼 띄어쓰기 있는 이름은
+                           지금처럼 낱말 단위로 그대로 꺾인다. 둘을 같이 두는 게 맞다. */}
+                    <span style={{ width: '100%', fontSize: 11, lineHeight: 1.25, textAlign: 'center', wordBreak: 'keep-all', overflowWrap: 'anywhere', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.title}</span>
                   </button>
                 ))}
               </div>
@@ -492,56 +637,36 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             <b style={{ color: 'var(--text)' }}>오늘 뭘 해먹었는지</b>가 한 장씩 쌓여요. 사진 한 장, 별점 하나면 충분해요 — 나중에 넘겨보면 <b style={{ color: 'var(--text)' }}>그날의 내가</b> 보여요.
           </div>
 
-          {dayFilter && (
-            <button className="press" onClick={() => setDayFilter(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, margin: '2px 0 10px', padding: '6px 12px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}>
-              {Number(dayFilter.split('-')[1]) + 1}월 {dayFilter.split('-')[2]}일의 요리 {shown.length}개 <Icon name="x" size={13} color="#fff" stroke={2.4} />
-            </button>
-          )}
-
           {entries.length === 0 ? (
             <div className="empty" style={{ marginTop: 10 }}>{'아직 기록이 없어요.\n요리하고 "만들었어요!"만 눌러도 별점·사진이 한 장씩 쌓여요.\n다음에 "그때 그 맛"을 그대로 재현하는 나만의 요리 일기예요'}</div>
           ) : (
-            <div className="album-grid">
-              {shown.map((e) => {
-                const on = logEdit && logSel.has(e.id)
-                return (
-                  <button
-                    key={e.id}
-                    className="album-tile press"
-                    aria-label={`${e.title} 기록 보기`}
-                    style={{ position: 'relative', opacity: logEdit && !on ? 0.75 : 1, outline: on ? '3px solid var(--brown)' : 'none', outlineOffset: -3, WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
-                    {...hold(() => { setLogEdit(true); setLogSel((s) => { const n = new Set(s); n.add(e.id); return n }) })}
-                    onClick={() => {
-                      if (lpFired.current) { lpFired.current = false; return } // 꾹 누름 발동 직후 클릭 무시
-                      if (logEdit) toggleLogSel(e.id)
-                      // 📔📔 **「한끼 일기」에서 누르면 «그날 일기»로 간다** (창업자 2026-08-07)
-                      //   ⛔ 전엔 「요리 기록 남기기」 시트가 떴다 — 창업자 *"이거 없애기로 하지않았어? 일기에서 만든음식 누르면 떠."*
-                      //   ⭐ v9.80 에 없앤 건 **「만들었어요」 누르면 «자동으로» 뜨던 것**이고,
-                      //      여기 «직접 누르는 길»은 남아 있었다. 화면 이름이 「한끼 일기」인데 요리 기록이 뜨니 앞뒤가 안 맞았다.
-                      //   ⭐ 기록(별점·사진·팁) 고치기는 **레시피 상세**에 그대로 있다(`RecipeDetailScreen` 「내 요리 기록」 카드)
-                      //      → 잃는 길이 없다.
-                      //   ⚠️ 딸려온 것 = 이 화면의 「한마디 청하기」가 그 시트 닫히는 자리를 썼다.
-                      //      화면을 옮기는 길에 묻는 건 실례라 여기선 안 묻고 **레시피 상세 쪽에 맡긴다**(거긴 그대로 산다).
-                      else nav.push({ name: 'diary', day: dayKey(e.at) })
-                    }}
-                  >
-                    {e.photo ? (
-                      <img src={e.photo} alt="" loading="lazy" />
-                    ) : (
-                      <div className="album-icon"><FoodIcon name={iconFor(e)} size={34} /></div>
-                    )}
-                    {e.rating > 0 && !logEdit && <span className="album-star">★{e.rating}</span>}
-                    <span className="album-cap">{e.title}</span>
-                    {logEdit && (
-                      <span aria-hidden style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', background: on ? 'var(--brown)' : 'rgba(255,255,255,0.92)', border: on ? 'none' : '1.8px solid rgba(0,0,0,0.22)', boxShadow: '0 1px 5px rgba(0,0,0,0.22)' }}>
-                        {on && <Icon name="check" size={14} color="#fff" stroke={3} />}
-                      </span>
-                    )}
+            <>
+              {/* 📅 날짜를 골랐을 때만 «그날» 묶음이 위에 선다. 알약을 누르면 거르기가 풀린다. */}
+              {dayFilter && (
+                <>
+                  <button className="press" onClick={() => setDayFilter(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, margin: '2px 0 10px', padding: '6px 12px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 12.5, fontWeight: 700 }}>
+                    {Number(dayFilter.split('-')[1]) + 1}월 {dayFilter.split('-')[2]}일의 요리 {dayList.length}개 <Icon name="x" size={13} color="#fff" stroke={2.4} />
                   </button>
-                )
-              })}
-            </div>
+                  {/* ⛔ 요리를 안 한 날에도 일기는 쓴다 — 그때 아래가 통째로 비면 «고장»으로 읽힌다.
+                      전엔 앨범이 빈 채로 끝나서 화면에 아무것도 없었다. 이제 그 아래에 그 달이 이어진다. */}
+                  {dayList.length === 0 ? (
+                    <div className="t-sub" style={{ fontSize: 12.5, margin: '0 2px 14px' }}>이 날 만든 요리는 없어요.</div>
+                  ) : (
+                    <div className="album-grid" style={{ marginBottom: 16 }}>{dayList.map(albumTile)}</div>
+                  )}
+                  {/* 🗓 그 달 머리글 — 아래 앨범이 «무엇의 묶음»인지 말해 준다.
+                      ⛔ 이 줄이 없으면 그날 것과 달 것이 한 덩어리로 보여 더 헷갈린다.
+                      ⚠️ 「다른」은 **그날 것이 있을 때만** 붙인다 — 일기만 쓴 날엔 뺀 게 없어서
+                         「다른」이라고 하면 «어디에 견줘 다른지»가 없는 말이 된다. */}
+                  <div className="t-sub" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--brown)', margin: '0 2px 8px' }}>
+                    {Number(dayFilter.split('-')[1]) + 1}월에 만든 {dayList.length > 0 ? '다른 ' : ''}요리 {monthList.length}개
+                  </div>
+                </>
+              )}
+              <div className="album-grid">{monthList.map(albumTile)}</div>
+            </>
           )}
+          </div>{/* .log-main */}
         </div>
       )}
 
@@ -576,8 +701,27 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
           {/* 찾는 중엔 폴더 칩을 감춘다 — 어느 폴더에 넣었는지 기억나면 애초에 안 찾는다 */}
           <div className="hscroll" style={{ marginBottom: 8, display: query ? 'none' : undefined }}>
             <button className={`pill press ${folder === '전체' ? 'active' : ''}`} onClick={() => setFolder('전체')}>전체 {sorted.length}</button>
+            {/* ⭐ [2026-08-17 창업자 *"바꿔"*] 유니코드 글자 `★` → 우리 별 아이콘.
+                ⛔ 앱에서 유니코드 별을 쓰던 곳이 둘이었다(앨범 배지 · 이 칩) — 이걸로 0이 된다.
+                ⚠️ `currentColor` 로 둔다 — 칩은 눌리면 글자색이 바뀌는데(`.pill.active`)
+                   색을 박으면 별만 안 따라가서 «그때만» 어긋난다. `.pill` 이 이미 flex 라 정렬은 그대로.
+                🔖🔖 **[2026-08-18 창업자 확정] 별 → 요리사모자 · 「즐겨찾기」 → 「책갈피」**
+                   📮 *"아니면 **즐겨찾기 버튼 앞에 요리사모자를 넣어봐.**"* → 갈래 여섯을 찍어 **② 모자＋글자** 확정
+                   📮 이름 = *"3번가자"*(책갈피). 그 앞에 창업자가 «my pick» 을 냈는데 실측으로 접었다 —
+                      ⑴「픽」은 장보기의 **「이번 주 픽」(제품)**으로 이미 쓰인다(＋레시피 메모 여러 편)
+                      ⑵**화면에 보이는 영어 낱말이 0개**라 유일한 영어가 된다(창업자 스스로 *"혼자영어인가ㅋ"*)
+                   ⭐⭐ **칩의 모자 = 카드의 모자** → 「이 모자가 책갈피구나」를 유저가 저절로 배운다.
+                      「모아보기 단추」를 새로 만들 필요가 없다 — 이 자리가 이미 그것이다.
+                   ⭐ 별점을 접고 인덱스로 갔는데 **별(★)이 여기 남아 있었다.** 이걸로 0이 된다.
+                   ⚠️ 이름은 여섯 곳을 «같이» 바꿨다(여기 · 사용법 · 설정 메뉴 · 설정 통계 · 모아보기 화면 제목·빈칸).
+                      ⛓ CLAUDE.md 「같은 기능은 탭이 달라도 같은 이름」 — 한 곳만 바꾸면 말이 갈라진다.
+                ⛔⛔ 이 주석은 `{favCount > 0 && (` **«바깥»**에 둔다 — 그 괄호 안은 «표현식» 자리라
+                   JSX 주석을 넣으면 객체 리터럴로 파싱돼 **빌드가 죽는다**(오늘 실제로 죽였다 · CLAUDE.md 함정). */}
             {favCount > 0 && (
-              <button className={`pill press ${folder === '__fav' ? 'active' : ''}`} onClick={() => setFolder('__fav')}>★ 즐겨찾기 {favCount}</button>
+              <button className={`pill press ${folder === '__fav' ? 'active' : ''}`} onClick={() => setFolder('__fav')}>
+                <img src={idxChef} alt="" className="pill-chef" />
+                책갈피 {favCount}
+              </button>
             )}
             {oftenCount > 0 && (
               <button className={`pill press ${folder === '__often' ? 'active' : ''}`} onClick={() => setFolder('__often')}>자주 {oftenCount}</button>
@@ -601,7 +745,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                   : '이 폴더에 레시피가 없어요.\n가져오기로 채워보세요.'}
               </div>
             ) : (
-              <div className={gridSize === 'big' ? 'grid2' : 'grid3'}>
+              <div className={gridSize === 'big' ? 'grid2' : 'grid3'} style={책갈피자리}>
                 {list.map((r) => {
                   const on = edit && sel.has(r.id)
                   return (
@@ -624,12 +768,43 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                         <div style={on ? { outline: '3px solid var(--brown)', outlineOffset: -3, borderRadius: gridSize === 'big' ? 16 : 12 } : undefined}>
                           <Thumb recipe={r} ratio="1/1" radius={gridSize === 'big' ? 16 : 12} emojiSize={gridSize === 'big' ? undefined : '1.6rem'} showDecor />
                         </div>
-                        {r.favorite && !edit && (
-                          <div className="fav-dot"><Icon name="bookmark" size={gridSize === 'big' ? 16 : 13} color="var(--brown)" style={{ fill: 'var(--brown)' }} /></div>
-                        )}
                         <div className="name" style={gridSize === 'small' ? { fontSize: 11.5, marginTop: 5 } : undefined}>{r.title}</div>
                         {gridSize === 'big' && <div className="date">{dateLabel(r.savedAt)}</div>}
                       </button>
+                      {/* 🔖🔖 [2026-08-17 창업자] **북마크를 목록에서 «바로» 누른다.**
+                          📮 *"근데 그 북마크는 **나도 한번도 안썼어 번거로워서. 레시피에 들어가서 눌러야 하니까**"*
+                          📮 → *"**북마크를 밖으로 빼면 되겠다 레시피 속이 아니라**"* · *"(**잘 보이게** 해줘.)"*
+                          ⭐⭐ 창업자가 «왜 안 쓰는지»를 그대로 말해줬다 — 기능이 모자란 게 아니라 **자리가 멀었다.**
+                             상세로 들어가 상단바를 눌러야 했으니, 목록을 훑다가 「이거 좋았지」 하는 순간에 못 누른다.
+                          ⭐ 그래서 **안 찜한 것도 늘 보이게** 한다(빈 책갈피). 안 보이면 「누를 수 있는 줄」을 모른다.
+                          ⛔ 카드 «밖»에 둔다 — 카드 전체가 `<button>` 이라 안에 넣으면 **중첩 버튼**이 되어
+                             북마크를 눌러도 카드가 같이 눌려 상세로 튕겨 나간다.
+                          ⛔ 고르기(편집) 중엔 감춘다 — 체크 동그라미와 **같은 자리**(top/right)라 겹친다. */}
+                      {!edit && (
+                        <button
+                          className={`fav-dot press${r.favorite ? ' on' : ''}`}
+                          aria-label={r.favorite ? `${r.title} 책갈피 빼기` : `${r.title} 책갈피 꽂기`}
+                          aria-pressed={!!r.favorite}
+                          onClick={(ev) => { ev.stopPropagation(); toggleFavorite(r.id) }}
+                        >
+                          {/* 🔖🔖 [2026-08-18 창업자 확정] 걸린 것 = **요리사모자 클립이 카드 밖으로 걸친다.**
+                              📮 *"딱 레시피 안에 넣기보다 **바깥에 걸쳐서** 넣는게 더 예쁜거 같아 레꾸도 안해치고"*
+                              📮 *"오른쪽 완전끝말고 **살짝 왼쪽으로**"* → 셋을 견줘 **G3**(right 12px) 확정
+                              📮 크기 = *"난 크기는 **26**이제일 괜찮아보이는데"* ＋ *"**표시용이니까 존재감이 너무 크면 곤란해**"*
+                              🔢 26px 이면 폭 17px(이 컷 가로/세로 0.65) · 꾸민 표지를 가리는 넓이 **4% 미만**
+                                 — 40px 은 48%, 44px 은 80% 를 가린다(콩국수 샘플 표지 실측).
+                              ⭐ 큰 격자도 **같은 26px** — 창업자 *"큰 격자도 너무 크지않게 맞추면좋겠어"*.
+                                 큰 격자는 카드가 1.5배라 44px 에서도 5%밖에 안 가리지만, 격자를 오갈 때
+                                 크기가 변하면 「같은 물건」으로 안 읽힌다.
+                              ⏳ **안 걸린 칸은 «아직 지금 그대로»**(연한 책갈피). 창업자 확정은 「텅 비우기」인데
+                                 텅 비우면 **누를 자리가 사라져** 거는 방법을 길게 누르기로 옮겨야 한다 → 다음 단계. */}
+                          <img
+                            src={r.favorite ? idxChef : idxChefFaint}
+                            alt=""
+                            className="idx-clip"
+                          />
+                        </button>
+                      )}
                       {edit && (
                         <div aria-hidden style={{ position: 'absolute', top: 7, right: 7, width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', background: on ? 'var(--brown)' : 'rgba(255,255,255,0.92)', border: on ? 'none' : '1.8px solid rgba(0,0,0,0.22)', boxShadow: '0 1px 5px rgba(0,0,0,0.22)' }}>
                           {on && <Icon name="check" size={15} color="#fff" stroke={3} />}
@@ -651,9 +826,11 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)' }}>
               {logSel.size > 0 ? `${logSel.size}개 선택` : '기록을 눌러 선택'}
             </span>
+            {/* ⚠️ 「전체」 = **지금 화면에 있는 것**이다(옛 `shown`) — 그날 묶음 ＋ 그 달 묶음.
+                ⛔ 겹침을 없앤 뒤로 둘은 남남이라, 한쪽만 세면 나머지가 선택에서 빠진다. */}
             <button className="press" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 8px' }}
-              onClick={() => setLogSel(logSel.size === shown.length ? new Set() : new Set(shown.map((e) => e.id)))}>
-              {logSel.size === shown.length && shown.length > 0 ? '전체 해제' : '전체 선택'}
+              onClick={() => setLogSel(logSel.size === shownAll.length ? new Set() : new Set(shownAll.map((e) => e.id)))}>
+              {logSel.size === shownAll.length && shownAll.length > 0 ? '전체 해제' : '전체 선택'}
             </button>
             <button className="press" disabled={logSel.size === 0}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 999, background: logSel.size ? 'var(--danger)' : 'var(--cream)', color: logSel.size ? '#fff' : 'var(--text-sub)', fontSize: 13.5, fontWeight: 800 }}

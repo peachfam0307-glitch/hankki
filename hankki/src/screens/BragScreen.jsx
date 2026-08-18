@@ -4,7 +4,7 @@ import { useStore } from '../store'
 import { useNav } from '../App'
 import Thumb from '../components/Thumb'
 import DecorLayer from '../components/DecorLayer'
-import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
+import ShareDrawCard, { RecipeCard, 카드표지로 } from '../components/ShareDrawCard'
 import Portal from '../components/Portal'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import Icon from '../components/Icon'
@@ -18,6 +18,7 @@ import uiGomHeart from '../assets/ui/gom_heart.png'
 import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
 import uiHandPoint from '../assets/ui/hand_point.png'
 import uiGomProud from '../assets/ui/wave/gom_proud.png' // 🐻 꼬르곰(뿌듯) — 레꾸자랑 상단
+import TabTips from '../components/TabTips'
 
 // 🎴 카드자랑 탭 — 바이럴 진입점. 내 레시피를 골라 자랑한다.
 // ⭐ 창업자 방향: 주인공은 '내가 꾸민 표지', 랜덤 카드는 옵션(메인 아님).
@@ -133,8 +134,11 @@ export default function BragScreen() {
             style={{ display: 'block', objectFit: 'contain', margin: '-5px 0' }} />
           <div className="h-title">레꾸자랑</div>
         </div>
+        {/* 🎀 [2026-08-18 창업자 제보] *"레꾸자랑은 도움말이 없네?"* — 여섯 탭 중 여기만 없었다. */}
+        <TabTips tab="brag" />
         <button
           className="icon-btn press"
+          style={{ marginLeft: 'auto' }}
           onClick={() => setSearchOpen((v) => { if (v) setQ(''); return !v })}
           aria-label={searchOpen ? '찾기 닫기' : '자랑할 레시피 찾기'}
         >
@@ -244,7 +248,7 @@ export default function BragScreen() {
           <ShareDrawCard
             recipe={share}
             onClose={() => setShare(null)}
-            onSaveCover={(img) => { updateRecipe(share.id, { thumb: 'photo', image: img }); nav.showToast('카드를 표지로 저장했어요') }}
+            onSaveCover={(img) => { updateRecipe(share.id, 카드표지로(img)); nav.showToast('카드를 표지로 저장했어요') }}
           />
         </Portal>
       )}

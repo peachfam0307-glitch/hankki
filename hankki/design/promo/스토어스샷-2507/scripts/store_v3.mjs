@@ -15,9 +15,23 @@
 //
 // 실행: node design/promo/스토어스샷-2507/scripts/store_v3.mjs
 import fs from 'fs'
+import { execSync } from 'node:child_process'
 import pw from '/home/user/hankki/hankki/node_modules/playwright-core/index.js'
 const { chromium } = pw
 const H = '/home/user/hankki/hankki'
+
+// 🔢🔢 음식 그림 개수는 «글자로 박지 않는다» — 이 자리가 벌써 두 번 낡았다 (88 → 218 → 386).
+//   ⛔ 위 주석 ④ 가 「88종이 낡았다 → 218종」인데, 그 218 도 2026-08-16 에 낡아 있었다.
+//      **낡은 값을 고치면서 «또 글자로 박은 것»이 뿌리다.**
+//   ✅ 배포 게이트(`check-foodtab.mjs`)가 코드를 직접 세니 그 값을 읽는다 — 자산이 늘면 저절로 따라온다.
+//   ⛔ 못 읽으면 «죽는다». 조용히 낡느니 시끄럽게 멈추는 게 낫다(규칙 18 ⓘ).
+const 음식컷수 = (() => {
+  const out = execSync(`node ${H}/scripts/check-foodtab.mjs`, { encoding: 'utf8' })
+  const m = out.match(/픽커에 실린 음식 (\d+)컷/)
+  if (!m) throw new Error('⛔ 음식 컷 수를 못 읽었다 — check-foodtab 출력 형식이 바뀌었나 확인할 것')
+  return Number(m[1])
+})()
+console.log(`  · 음식 그림 ${음식컷수}컷 (코드에서 읽음)`)
 const PH = `${H}/src/assets/stickers/photo`, UI = `${H}/src/assets/ui`, CU = `${H}/src/assets/curation`
 const FT = `${H}/design/promo/fonts`
 const OUT = `${H}/design/promo/스토어스샷-2507/renders-v3`

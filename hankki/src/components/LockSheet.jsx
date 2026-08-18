@@ -46,7 +46,8 @@ function 숫자판({ onNum, onBack, disabled }) {
   )
 }
 
-export default function LockSheet({ mode = 'check', onClose, onDone }) {
+// lockedCount = 지금 잠겨 있는 일기가 몇 장인가. 「없애면 몇 장이 지워지는지」를 «미리» 말하려고 받는다.
+export default function LockSheet({ mode = 'check', onClose, onDone, lockedCount = 0 }) {
   useModalBack(onClose)
   const [pin, setPinText] = useState('')
   const [confirm, setConfirm] = useState(null) // set 모드 2단계: 처음 친 네 자리
@@ -54,7 +55,7 @@ export default function LockSheet({ mode = 'check', onClose, onDone }) {
   const [step, setStep] = useState(mode === 'set' ? 'first' : 'check') // first | again | hint | check
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
-  const [잊음, set잊음] = useState(false)
+  const [잊음, set잊음] = useState(false) // false | true(1단 안내) | 2(진짜 지울지 마지막 확인)
 
   const 저장된힌트 = getHint()
 
@@ -100,7 +101,11 @@ export default function LockSheet({ mode = 'check', onClose, onDone }) {
     onDone()
   }
 
-  const 제목 = { first: '비번 네 자리를 정해줘', again: '한 번 더 눌러줘', hint: '잊었을 때 볼 힌트', check: '비번 네 자리' }[step]
+  // 🗣🗣 **[2026-08-16] 화면 글자는 «해요체»다** — 창업자 제보 *"일기 잠금 안내 반말임 (잠금푸는 안내도)"*
+  //   ⭐ 앱은 처음부터 「~어요」로 말한다(「비번이 안 맞아요」·「잠가 둔 일기예요」).
+  //      그런데 **이 시트만 반말이 섞여** 있었다 — 같은 화면 안에서 말투가 튀면 남의 글처럼 읽힌다.
+  //   ⛔ 아래 «화면에 나가는 글자»에는 반말을 쓰지 않는다(주석·변수명은 반말이어도 된다).
+  const 제목 = { first: '비번 네 자리를 정해 주세요', again: '한 번 더 눌러 주세요', hint: '잊었을 때 볼 힌트', check: '비번 네 자리' }[step]
 
   return (
     <Portal>
@@ -131,7 +136,7 @@ export default function LockSheet({ mode = 'check', onClose, onDone }) {
                 />
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button className="press" disabled={busy} onClick={힌트마치기} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14, border: 'none' }}>
-                    안 쓸래
+                    안 쓸래요
                   </button>
                   <button className="press" disabled={busy} onClick={힌트마치기} style={{ flex: 1.5, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 14.5, border: 'none' }}>
                     잠그기
@@ -147,7 +152,7 @@ export default function LockSheet({ mode = 'check', onClose, onDone }) {
                 <div style={{ minHeight: 34, textAlign: 'center', fontSize: 12.5, lineHeight: 1.5, padding: '4px 0 6px', color: err ? 'var(--danger)' : 'var(--text-sub)', fontWeight: err ? 700 : 500 }}>
                   {err || (step === 'check'
                     ? (저장된힌트 ? `힌트 · ${저장된힌트}` : '이 일기는 잠겨 있어요')
-                    : step === 'first' ? '이 비번으로 일기를 잠가' : '틀리지 않게 한 번 더')}
+                    : step === 'first' ? '이 비번으로 일기를 잠가요' : '틀리지 않게 한 번 더')}
                 </div>
                 <숫자판 onNum={눌러} onBack={() => { setPinText(pin.slice(0, -1)); setErr('') }} disabled={busy} />
 
@@ -164,26 +169,52 @@ export default function LockSheet({ mode = 'check', onClose, onDone }) {
                   </div>
                 )}
 
-                {/* 🆘 잊었을 때 — ⛔ 우회 코드는 만들지 않는다(있으면 잠금이 아니다).
-                    ✅ 대신 «무엇을 잃는지 먼저 말하고» 확인을 받는다. 조용히 지우지 않는다. */}
+                {/* 🆘🆘 잊었을 때 — ⛔ 우회 코드는 만들지 않는다(있으면 잠금이 아니다).
+                    🔓🔓 **[2026-08-16 창업자 판정 ⒜] 「잠금 없애기」는 잠긴 일기를 «같이 지운다».**
+                      📮 창업자 *"일기잠금 의미없어. 비번 잊으면 잠금 풀게 해뒀잖아.
+                         **누구든 비번 몇번 틀리면 잠금풀면 일기 다 봄**"* → 갈래 넷 중 ⒜ 선택.
+                      ⛔⛔ **옛 판이 정확히 그 「정문」이었다** — 비번을 «모르는» 사람도 두 번 눌러
+                         잠긴 일기를 전부 열 수 있었다. 폰을 빌려준 사람·가족·주운 사람 누구나.
+                         ＋ 어제 내가 CLAUDE.md 에 *"우회 코드는 만들지 않는다"* 라고 적어놓고
+                            정작 「잠금 해제」를 우회로로 만들어 뒀다. 규칙을 적은 사람이 어긴 자리다.
+                      ✅ 이제 **내용을 지워야만 잠금이 풀린다** → 훔쳐볼 길이 사라진다.
+                      ⭐ 우리 원칙 *"조용히 지우지 않는다"* 는 지킨다 — **몇 장이 지워지는지 먼저 말하고,
+                         「지운다」는 낱말을 단추에 박고, 확인을 «한 번 더» 받는다.**
+                      ⚠️ 진짜 잊은 사람은 그 일기를 잃는다. 그게 ⒜의 값이고, 그래서 두 번 묻는다. */}
                 {step === 'check' && hasPin() && (
                   <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
                     {!잊음 ? (
                       <button className="press" onClick={() => set잊음(true)} style={{ width: '100%', padding: '9px 0', background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: 12.5, fontWeight: 600, textDecoration: 'underline' }}>
-                        비번을 잊었어
+                        비번을 잊었어요
                       </button>
                     ) : (
                       <>
                         <div style={{ fontSize: 12.5, lineHeight: 1.6, color: 'var(--text-sub)', marginBottom: 10 }}>
-                          되찾는 길이 없어서 <b style={{ color: 'var(--danger)' }}>잠금을 아예 없애는 것</b>밖에 안 돼.
-                          <br />일기 글과 사진은 <b style={{ color: 'var(--brown)' }}>그대로 남아</b> — 잠긴 날들이 전부 다시 열릴 뿐이야.
+                          비번은 이 폰에만 있어서 <b style={{ color: 'var(--brown)' }}>되찾을 길이 없어요</b>.
+                          <br />잠금을 없애려면 <b style={{ color: 'var(--danger)' }}>잠긴 일기 {lockedCount}장을 함께 지워야</b> 해요
+                          {잊음 === 2 ? <> — <b style={{ color: 'var(--danger)' }}>지우면 되돌릴 수 없어요.</b></> : '.'}
+                          <br />
+                          <span style={{ color: 'var(--text-sub)' }}>
+                            {잊음 === 2
+                              ? '정말 지울까요? 이 단추를 누르면 바로 지워져요.'
+                              : '내용만 남기고 잠금을 푸는 길은 없어요 — 그러면 남도 그렇게 열 수 있으니까요.'}
+                          </span>
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button className="press" onClick={() => set잊음(false)} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 13.5, border: 'none' }}>
-                            그만둘래
+                            그만둘래요
                           </button>
-                          <button className="press" onClick={() => { resetAllLocks(); onDone({ reset: true }) }} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 700, fontSize: 13.5, border: 'none' }}>
-                            잠금 없애기
+                          <button
+                            className="press"
+                            onClick={() => {
+                              // 1단 = 「지울래요」로 뜻을 밝힌다 · 2단 = 진짜 지운다. 한 번 눌러서는 안 지워진다.
+                              if (잊음 !== 2) { set잊음(2); return }
+                              resetAllLocks()
+                              onDone({ reset: true, deleteLocked: true })
+                            }}
+                            style={{ flex: 1.5, padding: 11, borderRadius: 12, background: 잊음 === 2 ? 'var(--danger)' : 'var(--cream)', color: 잊음 === 2 ? '#fff' : 'var(--danger)', fontWeight: 700, fontSize: 13.5, border: 'none' }}
+                          >
+                            {잊음 === 2 ? `${lockedCount}장 지우기` : `잠긴 일기 ${lockedCount}장 지우고 풀기`}
                           </button>
                         </div>
                       </>

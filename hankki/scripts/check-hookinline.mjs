@@ -34,8 +34,12 @@ let bad = 0
 let 본것 = 0
 let 홑 = 0
 for (const 이름 of readdirSync(훅폴더).filter((f) => f.endsWith('.sh')).sort()) {
-  const s = readFileSync(path.join(훅폴더, 이름), 'utf8')
+  const 원문 = readFileSync(path.join(훅폴더, 이름), 'utf8')
   본것++
+  // ⛔⛔ [2026-08-16] **주석 줄은 안 본다** — 주석에 «하지 마라»는 예시를 적는 건 우리가 늘 하는 일인데
+  //    그걸 진짜 코드로 읽어 배포를 막았다(그날 실제로 `_test-archive-guard.sh` 가 자기 주석에 걸렸다).
+  //    ⭐ 줄 수는 그대로 세야 하므로 «지우지 말고 빈 줄로» 바꾼다 — 안 그러면 알려주는 줄번호가 어긋난다.
+  const s = 원문.split('\n').map((l) => (/^\s*#/.test(l) ? '' : l)).join('\n')
   // python3 -c  또는  node -e  뒤에 오는 따옴표가 «어느 쪽인지» 본다
   const re = /(python3?|node)\s+-[ce]\s+(["'])/g
   let m

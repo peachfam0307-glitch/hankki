@@ -104,7 +104,9 @@ export const WEEKLY = [
   },
   {
     from: '2026-09-07', title: '꽃게',
-    why: '가을 꽃게는 암게라 알이 꽉 차요. 담그고 끓이고 찌는 세 가지로.',
+    // 🦀 [2026-08-18] 「찌는」 → 「조리는」 — 꽃게찜을 창업자 어머니 「꽃게간장조림」으로 갈았다.
+    //    ⛔ 안 고치면 이 줄이 «찐다»고 해놓고 조림을 준다(기능을 옮기면 설명하는 글도 같이 옮긴다).
+    why: '가을 꽃게는 암게라 알이 꽉 차요. 담그고 끓이고 조리는 세 가지로.',
     ids: ['basic-ganjang-gejang', 'basic-kkotge-tang', 'basic-kkotge-jjim'],
   },
   {
@@ -168,9 +170,29 @@ export const WEEKLY = [
 
 const KST = 9 * 60 // 분
 
-// 오늘(KST) 을 'YYYY-MM-DD' 로. ⚠️ 컨테이너는 UTC 라 그냥 `toISOString()` 하면 하루 어긋난다.
-export const todayKST = (now = new Date()) =>
-  new Date(now.getTime() + (KST + now.getTimezoneOffset()) * 60000).toISOString().slice(0, 10)
+// 오늘(KST) 을 'YYYY-MM-DD' 로.
+//
+// ⛔⛔⛔ [2026-08-17 · 창업자 폰 캡처로 잡음] **옛 공식은 «한국 폰에서만» 하루 어긋났다.**
+//   옛것 = `now.getTime() + (KST + now.getTimezoneOffset()) * 60000`
+//   · 내 컨테이너(UTC) → offset 0 → +540분 → ✅ 맞다
+//   · **창업자 폰(KST) → offset −540 → +0분 → UTC 그대로 → ⛔ 어제가 나온다**
+//   ⭐⭐ `getTime()` 은 «이미 UTC 기준 숫자»이고 `toISOString()` 도 UTC 로 찍는다.
+//      그러니 **그냥 +9시간만** 더하면 된다. 거기에 폰 오프셋까지 더해서 «서로 상쇄»됐다.
+//   📌 그래서 KST 폰에서 **매일 0시~9시 사이엔 어제 날짜**가 나왔다.
+//      창업자가 아침 8시에 열어봐서 걸렸다 — 오후였으면 멀쩡했고, 그래서 여태 안 들켰다.
+//   ⛔⛔ **검사가 UTC 컨테이너에서 도니 계속 초록불이었다.** 「내 화면에선 되는데 폰에서 안 된다」.
+//      🔒 그래서 `_repro-KST날짜-0817.mjs` 가 **KST 폰을 흉내내서** 잰다. UTC 에서만 재면 영영 못 잡는다.
+//   ⚠️ 같은 공식이 `whatsnew.js`·`basics.js` 에도 있었다 — **셋 다 고쳤다.**
+//
+// ⭐⭐ **[2026-08-17] 공식을 여기서 «없앴다» — `src/today.js` 한 곳에만 둔다.**
+//   📮 창업자 *"한국시간은 정확하게 고쳐. 반복되지않게. 절대원칙. **강제할수있게 만들어**"*
+//   흩어져 있으면 «한 곳만 고치고 끝났다고 말하게 된다» — 실제로 그랬다.
+//   🔒 `scripts/check-kst.mjs` 가 「`today.js` 밖에서 날짜를 만들면」 배포를 막는다.
+// ⛔ re-export «만» 하면 이 파일 «안»에서는 못 쓴다 — 실제로 그렇게 짰다가
+//    `weeksLeft()` 가 `todayKST is not defined` 로 죽었다. ⚠️**빌드는 exit 0 이었다**(런타임 오류라).
+//    📌 「빌드 통과」가 「돈다」는 뜻이 아니다 — 노드 검사(`check-weekly`)가 잡았다.
+import { todayKST } from '../today.js'
+export { todayKST }
 
 // 이번 주 한 줄. 없으면 `null` → **홈에서 줄을 아예 안 그린다.**
 // 🍳🍳 우리집레시피 — 창업자가 실제로 해먹는 레시피. 제철 줄과 «별개» 줄이다.

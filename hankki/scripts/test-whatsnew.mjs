@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { gates as calendarGates } from './release-calendar.mjs'
+import { todayKST } from '../src/today.js'
 
 const APP = join(dirname(fileURLToPath(import.meta.url)), '..')
 const read = (p) => readFileSync(join(APP, p), 'utf8')
@@ -26,8 +27,10 @@ let bad = 0
 const fail = (m) => { console.log(`  ✗ ${m}`); bad++ }
 const ok = (m) => console.log(`  ok  ${m}`)
 
-const todayKST = () =>
-  new Date(Date.now() + (9 * 60 + new Date().getTimezoneOffset()) * 60000).toISOString().slice(0, 10)
+// ⛔ [2026-08-17] 앱과 «같은» 공식이어야 한다 — 옛 공식은 KST 폰에서 하루 어긋났다
+//    (`getTimezoneOffset()` 을 더하면 +9시간이 상쇄된다). 검사가 앱과 다르면 재는 의미가 없다.
+//    ⭐⭐ [2026-08-17] 공식을 여기서 «베껴 적지» 않는다 — `src/today.js` 를 그대로 부른다.
+//       베껴 적으면 앱만 고치고 검사는 옛 공식을 재게 된다(그럼 또 초록불이다).
 const today = process.env.WHATSNEW_TODAY || todayKST()
 
 console.log('\n── 안내 페이지(한끼 소식) ──')
@@ -51,7 +54,9 @@ const mine = [...new Set([...drawerDates, ...cardDates])].sort()
 // ⚠️ 달력엔 «우리 할 일»(`paidPacks.recheck` → `todo: true`)도 같이 실린다 — 잊지 않으려고 한 데 모은 것.
 //    ⛔ 그건 «유저에게 새로 열리는 것»이 아니라 안내 페이지엔 안 나간다. 여기선 빼고 센다.
 //    (2026-08-03 실제로 이 검사가 막았다 — 9/30 「효과 다시 보기」 약속을 넣자마자 걸렸다. 옳게 걸린 것.)
-const theirs = [...new Set(calendarGates().filter((g) => !g.todo).map((g) => g.date))].sort()
+// ⛔ [2026-08-17] 달력에 «레시피»도 실리기 시작했다(전날 검수가 새던 자리) — 여기선 빼고 센다.
+//    이 검사가 보는 건 «꾸미기 서랍 ＋ 레꾸자랑 카드» 두 출처뿐이다.
+const theirs = [...new Set(calendarGates().filter((g) => !g.todo && g.kind !== 'recipe').map((g) => g.date))].sort()
 if (mine.join() === theirs.join()) ok(`여는 날짜가 달력과 같다 — ${theirs.length}개 (${theirs.join(' · ')})`)
 else fail(`⛔ 안내 ${mine.join(' · ')} ≠ 달력 ${theirs.join(' · ')}`)
 

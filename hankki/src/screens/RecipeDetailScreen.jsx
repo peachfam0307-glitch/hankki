@@ -18,16 +18,17 @@ import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
 import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
-import { dateLabel, openExternal as openUrl } from '../utils'
+import { dateLabel, openExternal as openUrl, ingredientName, fitImage } from '../utils'
+import { photoPanStart } from '../photoPan'
 import { shouldAskReview } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
-import { picksForIngredients, productLink, productMall, curIcon } from '../data/curation'
+import { picksForIngredients, productLink, productMall, curIcon, isHansalim } from '../data/curation'
 
 import { useWakeLock } from '../useWakeLock'
 import { useLayerBack } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
-import ShareDrawCard, { RecipeCard } from '../components/ShareDrawCard'
+import ShareDrawCard, { RecipeCard, 카드표지로 } from '../components/ShareDrawCard'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
 // 🐻 엄지척 = **물결 정본**(창업자 2026-08-14 · `gt_01`). 옛 `ui/gom_thumbsup` 은 매끈 곰이었다.
@@ -96,6 +97,7 @@ export default function RecipeDetailScreen({ id }) {
   useLayerBack(decorOpen, () => { if (decorCloseRef.current) return decorCloseRef.current(); setDecorOpen(false); return true })
   const [coach, setCoach] = useState(() => needsCoach(COACH_KEY))
   const iconRef = useRef(null)
+  const coverPhotoRef = useRef(null) // 📷 표지 사진 고르기 (아이콘 시트의 「내 사진으로 하기」가 누른다)
   const [iconSheet, setIconSheet] = useState(false) // 표지 아이콘 바꾸기 — 상세에서 바로(편집 안 들어가고)
   const coverRef = useRef(null) // 꾸민 표지(레꾸) 캡처용
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
@@ -193,6 +195,33 @@ export default function RecipeDetailScreen({ id }) {
     updateRecipe(r.id, { thumb: 'icon', icon: k, iconPicked: true, touched: true })
     nav.showToast('표지 아이콘을 바꿨어요')
   }
+  // 📷📷 **표지를 «내 사진»으로 — 이 화면에서 바로** (창업자 2026-08-17
+  //   *"아이콘 바꾸기에 바로 내가 사진 올릴 수 있는 버튼도 있었으면 좋겠다고"* · *"이것도 반영아직이네"*)
+  //   ⛔ 그 전엔 **편집 화면**까지 들어가야 했다(이 파일 189줄 주석에 그렇게 적혀 있었다).
+  //      표지를 바꾸러 왔는데 사진만 다른 화면이면, 그 길은 있어도 «없는 것»이다
+  //      — 북마크가 안 쓰이던 이유(*"레시피에 들어가서 눌러야 하니까"*)와 **같은 뿌리**다.
+  //   ⭐ 새로 만든 게 없다 — `cropSquare` 800 은 **편집 화면이 쓰던 그 길**이고(`EditorScreen:221`),
+  //      저장 모양(`thumb:'photo'` ＋ `image`)은 **자랑카드 표지 저장이 쓰던 그것**이다(:721).
+  //   ⚠️ `iconPicked` 는 «아이콘을 골랐다»는 표시라 여기선 안 건드린다 — 사진을 지우면 원래 아이콘 규칙으로 돌아가야 한다.
+  const onCoverPhoto = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // ⚠️ 먼저 비운다 — 같은 파일을 다시 고르면 change 가 안 뜬다
+    if (!file || !r) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      // ⛔⛔ cropSquare 를 쓰면 **확대·축소가 반쪽이 된다** — 고를 때 가운데 정사각만 남기고 나머지를 «버려서»
+      //    원 안에서 끌 여지가 0 이 된다(넘치는 게 없으면 안 움직인다). 위·아래에 있던 것은 영영 못 본다.
+      //    ⭐ 일기 속지 사진이 2026-08-12 에 이미 겪고 고친 자리다(PaperSheet 주석) —
+      //       *"처방이 둘로 나뉜다: ⑴자를 때 안 버린다 ⑵볼 때 위치를 고른다. 두 번째만 고치면 못 살린다."*
+      //    ✅ 그래서 **안 자르고 줄이기만**(fitImage). 어디를 보여줄지는 imagePos·imageZoom 이 정한다.
+      //    ⚠️ 새 사진을 넣으면 자리·배율도 되돌린다 — 옛 사진 기준 좌표는 새 사진에서 뜻이 없다.
+      const shrunk = await fitImage(reader.result, 1200)
+      updateRecipe(r.id, { thumb: 'photo', image: shrunk, imagePos: '', imageZoom: '', touched: true })
+      setIconSheet(false)
+      nav.showToast('표지를 내 사진으로 바꿨어요')
+    }
+    reader.readAsDataURL(file)
+  }
   const doDelete = () => {
     removeRecipe(r.id)
     nav.pop()
@@ -230,7 +259,8 @@ export default function RecipeDetailScreen({ id }) {
   //      내가 그걸 「픽 자리 통째로」로 넓게 읽어 **82편 전부에서 사러가기가 사라졌다**(일주일).
   //      창업자 정정 2026-08-10 — *"그게 **한살림제품만** 빼자는 뜻이었어"* · *"다 빼자는게 아니라"*.
   //   ⭐ 그리고 한살림 문제는 «같은 날» 장보기 화면에서 이미 풀려 있었다 —
-  //      `mallLabel()` 의 **「한살림 · 조합원만」** 배지. 누르기 «전»에 보이니 헛걸음이 없다.
+  //      `mallLabel()` 의 **「한살림 · 조합원 전용」** 배지. 누르기 «전»에 보이니 헛걸음이 없다.
+  //      🌱 2026-08-17 부터 한 걸음 더 — **사러가기를 아예 안 그린다**(창업자 *"링크안달면되고"*).
   //      여기도 같은 배지를 쓴다 → **막다른 길이 안 생기니 뺄 이유가 없다.**
   //   ⚠️ 자연드림(아이쿱)은 **실버회원 가입으로 누구나 온라인 구매 가능**(조합원과 가격만 다르다)
   //      → 아무 표시도 안 붙인다. 창업자 확인 2026-08-10.
@@ -240,11 +270,13 @@ export default function RecipeDetailScreen({ id }) {
   // ⭐ 「다 담기」는 접혀 있어도 «전부» 담는다 — 「다」라고 써 놓고 보이는 것만 담으면 거짓말이 된다.
   //    담고 나서 뜨는 토스트가 개수를 말해주니 유저도 몇 개 담겼는지 안다.
   const addAllPicks = () => {
-    pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p) }))
+    // ⛔ 한살림은 `noBuy` 를 같이 담는다 — 안 그러면 장보기 리스트에서 쿠팡·네이버 검색으로 샌다
+    pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p), ...(isHansalim(p) ? { noBuy: true } : {}) }))
     nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요`)
   }
   // 구매처 배지 — 장보기 화면 `mallLabel()` 과 «같은 규칙»이라야 한다(한쪽만 고치면 앞뒤가 안 맞는다)
-  const mallBadge = (p) => (String(p.url || '').includes('hansalim') ? '한살림 · 조합원만' : productMall(p))
+  //   ⭐ 이제 판정이 `productMall()` «한 곳»에 모였다 — 전엔 여기서 url 로 한 번 더 봐서 두 벌이었다.
+  const mallBadge = (p) => productMall(p)
 
   return (
     <div className="screen fade" style={{ paddingBottom: 0 }}>
@@ -283,7 +315,11 @@ export default function RecipeDetailScreen({ id }) {
           <button className="bar-btn" onClick={() => nav.push({ name: 'editor', id: r.id })} data-coach="edit" aria-label="편집">
             <Icon name="edit" size={19} stroke={2.2} />
           </button>
-          <button className="bar-btn" onClick={() => toggleFavorite(r.id)} aria-label="즐겨찾기">
+          {/* 🔖 [2026-08-18] 이름 통일 「즐겨찾기」 → **「책갈피」** (창업자 확정)
+              ⏳ **그림은 아직 북마크 아이콘이다** — 목록은 요리사모자 클립으로 갔다.
+                 말은 같은데 그림이 달라 「같은 기능인 줄 모른다」가 될 수 있다 → 창업자 판정 대기.
+                 ⛔ 창업자가 지목한 건 「칩」이라 여기까지 그림을 넓히지 않았다. */}
+          <button className="bar-btn" onClick={() => toggleFavorite(r.id)} aria-label="책갈피">
             <Icon name="bookmark" size={20} color={r.favorite ? '#c2703f' : 'currentColor'} style={{ fill: r.favorite ? '#c2703f' : 'none' }} />
           </button>
           {/* 삭제 — 예전엔 '⋯ 더보기' 뒤에 숨겨뒀는데 메뉴 안에 삭제 하나뿐이라
@@ -314,7 +350,18 @@ export default function RecipeDetailScreen({ id }) {
           ⛔ 세로(폰)에선 아무 일도 안 한다 — 스타일은 가로 미디어쿼리 안에만 있다. */}
       <div className="cover-col">
       <div ref={coverRef} className="cover-box" style={{ position: 'relative' }}>
-        <Thumb recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
+        <Thumb
+          recipe={r} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }}
+          panProps={{
+            onPointerDown: (e) => photoPanStart(e, {
+              pos: r.imagePos,
+              zoom: r.imageZoom,
+              onCommit: ({ pos, zoom }) => updateRecipe(r.id, { imagePos: pos, imageZoom: zoom }),
+            }),
+            "aria-label": "표지 사진 — 끌어서 위치 조정 · 두 손가락으로 확대·축소",
+            style: { touchAction: "none", cursor: "grab" },
+          }}
+        />
         <DecorLayer items={r.decor || []} />
       </div>
 
@@ -353,8 +400,16 @@ export default function RecipeDetailScreen({ id }) {
       </div>
       </div>
       {iconSheet && (
-        <FoodIconSheet value={r.icon || guessFoodIcon(r.title)} onChange={pickIcon} onClose={() => setIconSheet(false)} />
+        <FoodIconSheet
+          value={r.icon || guessFoodIcon(r.title)}
+          onChange={pickIcon}
+          onClose={() => setIconSheet(false)}
+          onPhoto={() => coverPhotoRef.current?.click()}
+        />
       )}
+      {/* 📷 표지 사진 고르기 — 화면엔 안 보이고 위 단추가 대신 누른다.
+          ⛔ `accept="image/*"` 만 준다. `capture` 를 주면 **갤러리를 못 열고 카메라만** 뜬다. */}
+      <input ref={coverPhotoRef} type="file" accept="image/*" onChange={onCoverPhoto} style={{ display: 'none' }} />
 
       <div className="pad" style={{ paddingTop: 18, paddingBottom: 120 }}>
         {r.status === 'unsorted' && (
@@ -446,6 +501,15 @@ export default function RecipeDetailScreen({ id }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ fontSize: 14.5, fontWeight: 700 }}>내 요리 기록</span>
+                {/* ⛔⛔ [2026-08-17] **여기에 「빈 별 다섯」을 띄웠다가 되돌렸다. 되살리지 말 것.**
+                    📮 창업자 *"평점 매기는데가 없으니까 안뜨는거 아닌가"* 를 **「안 보이니 보이게 하자」로 읽고**
+                       안 매긴 사람에게도 빈 별을 그렸다. 그러자 창업자 = *"**요리기록 남기기 안하기로 하지 않았어???**"*
+                       *"**누를 시간 없어서 안하기로 했잖아**"*
+                    ⭐⭐ 창업자는 «없는 걸 지적»한 게 아니라 **«없는 게 맞는데 왜 별이 뜨냐»**를 물은 것이었다.
+                       ⛔ 확정 = **2026-08-06 「만들었어요 → 토스트만, 시트 안 뜬다」**
+                          (`docs/요리기록-다이어리-방향-2026-08-05.md` 9️⃣ ① · 게이트 `_repro-cook-toast.mjs`)
+                       📌 뿌리 = **요리 중에 붙잡는 마찰.** 문패를 키우는 건 그 결정을 정면으로 거스른다.
+                    ✅ 그래서 **매긴 사람에게만** 보여준다 — 안 매긴 사람은 권유받지 않는다. */}
                 {latestEntry?.rating > 0 && <Stars value={latestEntry.rating} onChange={() => {}} size={13} />}
               </div>
               <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3 }}>
@@ -483,7 +547,10 @@ export default function RecipeDetailScreen({ id }) {
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
                 data-coach="shop"
                 onClick={() => {
-                  addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => scaleIngredient(ing, ratio)))
+                  // 🛒 **분량은 떼고 «이름»만 담는다** — 창업자 *"그냥 두부 양파를 사지. 해물가루육수 1봉을 사진 않잖아"*
+                  //   ⛔ 그래서 `scaleIngredient`(인분 환산)도 여기선 안 쓴다 — 어차피 분량을 뗄 것이라
+                  //      환산해 봐야 그 숫자가 버려진다. 인분 환산은 «재료 목록 화면»이 하는 일이다.
+                  addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => ingredientName(ing)))
                   nav.showToast('재료를 장보기 리스트에 담았어요')
                 }}
               >
@@ -523,10 +590,13 @@ export default function RecipeDetailScreen({ id }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{p.name}</span>
                   {mallBadge(p) && (
-                    <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원만') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{mallBadge(p)}</span>
+                    <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{mallBadge(p)}</span>
                   )}
                 </div>
-                <button className="press" onClick={() => openUrl(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>
+                {/* ⛔ 한살림은 사러가기를 안 그린다 (창업자 2026-08-17 *"링크안달면되고"*) */}
+                {isHansalim(p)
+                  ? <span style={{ flex: '0 0 auto', fontSize: 11.5, fontWeight: 700, color: 'var(--text-sub)' }}>매장에서</span>
+                  : <button className="press" onClick={() => openUrl(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>}
               </div>
             ))}
             {/* 🔽🔼 [2026-08-15] 창업자 *"4칸 넘어가면 접을 수 있게 해줘. 너무 길면 좀 그래."*
@@ -700,7 +770,7 @@ export default function RecipeDetailScreen({ id }) {
         </Portal>
       )}
 
-      {drawOpen && <Portal><ShareDrawCard recipe={r} onClose={() => setDrawOpen(false)} onSaveCover={(img) => { updateRecipe(r.id, { thumb: 'photo', image: img }); nav.showToast('카드를 표지로 저장했어요') }} /></Portal>}
+      {drawOpen && <Portal><ShareDrawCard recipe={r} onClose={() => setDrawOpen(false)} onSaveCover={(img) => { updateRecipe(r.id, 카드표지로(img)); nav.showToast('카드를 표지로 저장했어요') }} /></Portal>}
 
     </div>
   )

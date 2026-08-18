@@ -359,6 +359,27 @@ export default function PantryView() {
         </div>
       )}
 
+      {/* 📅📅 **[2026-08-16] 「유통기한을 챙겨준다」를 «보이는 상자»로** — 창업자 두 번 짚음
+          📮 *"눌러야 유통기한이랑 관리 안내가 뜨는데. **나도 몰랐었거든.**"*
+          📮 *"**유통기한 관리를 해준다는 것도 모를 것 같아. 나도 그랬으니까.**"*
+          ⛔⛔ 만든 사람이 두 번 다 몰랐다 = 화면이 그 말을 «안 하고 있었다»는 뜻이다.
+             맨 위 한 줄(`pantry-lead`)에 「유통기한도 챙겨주고요」가 꼬리처럼 붙어 있긴 했는데,
+             **꼬리로 붙은 말은 안 읽힌다.** 그리고 「그래서 내가 뭘 해야 하나」가 없었다.
+          ⭐ 그래서 **재료 목록 «바로 위»**에 상자로 둔다 — ⑴무엇을 해주는지 ⑵내가 뭘 눌러야 하는지 둘 다.
+             ⛔ 처음엔 「냉장고 재료함」 제목 밑에 뒀는데, 그 사이에 «재료 담기·영수증» 버튼 셋이 끼어
+                **말하는 것(재료 줄)에서 한 화면 멀어졌다.** 안내는 가리키는 것 옆에 있어야 한다.
+          ⚠️ 재료가 없을 땐 안 띄운다 — 빈 화면 안내가 이미 말하고 있어서 잔소리가 된다.
+          ⚠️ 「기한이 되면 알림이 온다」고는 쓰지 않는다 — 우리는 **줄 옆에 D-3 같은 표를 붙일 뿐**이다.
+             ⛔ 못 하는 걸 한다고 쓰면 그게 다음 제보가 된다. */}
+      {pantry.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', marginBottom: 9, borderRadius: 'var(--r-md)', background: 'var(--cream)' }}>
+          <span style={{ flex: '0 0 auto', marginTop: 1 }}><Icon name="clock" size={15} color="var(--brown)" stroke={2.2} /></span>
+          <span style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--text)' }}>
+            <b style={{ color: 'var(--brown)', fontWeight: 700 }}>유통기한을 대신 세어 드려요</b> — 기한이 가까우면 재료 옆에 <span className="exp-chip exp-soon" style={{ fontSize: 10.5, padding: '1px 6px' }}>D-3</span> 처럼 표시돼요.
+            <br />재료를 <b style={{ color: 'var(--brown)', fontWeight: 700 }}>누르면</b> 유통기한 · 수량 · 보관 메모를 적을 수 있어요.
+          </span>
+        </div>
+      )}
       {sorted.map((p) => {
         const chip = expiryChip(daysLeft(p.expiry))
         const sub = [p.expiry ? `유통기한 ${p.expiry.replace(/-/g, '.')}` : '', p.memo].filter(Boolean).join(' · ')
@@ -378,7 +399,21 @@ export default function PantryView() {
                 <div style={{ fontSize: 14.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {p.name}{p.qty ? <span style={{ color: 'var(--text-sub)', fontWeight: 500 }}> · {p.qty}</span> : null}
                 </div>
-                {sub && <div className="t-sub" style={{ marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
+                {/* 👆👆 **[2026-08-16] 「누르면 열린다」를 «줄 안»에서 보여준다** — 창업자 제보
+                    📮 *"냉장고에서 재료 누르는 것 모르는 경우가 있을 것 같아. 눌러야 유통기한이랑
+                       관리 안내가 뜨는데. **나도 몰랐었거든.**"*
+                    ⛔⛔ 만든 사람도 몰랐다 = **화면에 그런 표시가 없었다**는 뜻이다.
+                       유통기한이 «없는» 재료는 아랫줄이 통째로 비어서, 줄 전체가 그냥 «읽는 것»처럼 보였다.
+                    ⭐ 그래서 빈 자리에 **할 일을 적어 둔다** — 누를 자리와 «눌러서 얻는 것»이 한 곳에 있다.
+                    ⭐ 회색이 아니라 포인트색으로 — 회색이면 「설명」으로 읽히고, 색이 있어야 「누르는 것」이 된다. */}
+                {sub
+                  ? <div className="t-sub" style={{ marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>
+                  : (
+                    <div style={{ marginTop: 2, fontSize: 11.5, fontWeight: 600, color: 'var(--brown)', opacity: 0.8, display: 'flex', alignItems: 'center', gap: 3, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      눌러서 유통기한 · 보관 메모 넣기
+                      <Icon name="chevron-right" size={13} stroke={2.4} />
+                    </div>
+                  )}
               </div>
             </button>
             {chip && <span className={`exp-chip ${chip.cls}`}>{chip.text}</span>}
@@ -450,7 +485,7 @@ function PantryForm({ item, onClose }) {
             {thumb === 'emoji' ? (
               <EmojiPicker value={emoji} size={64} only={FOOD_EMOJI_GROUPS} onChange={(e) => { setEmoji(e); setIconPicked(true) }} />
             ) : (
-              <FoodIconPicker value={icon} size={64} onChange={(k) => { setIcon(k); setIconPicked(true) }} />
+              <FoodIconPicker value={icon} size={64} mode="ing" onChange={(k) => { setIcon(k); setIconPicked(true) }} />
             )}
             <div style={{ flex: 1 }}>
               <input className="wa-inp" value={name} onChange={(e) => setNm(e.target.value)} placeholder="재료 이름 (예: 두부)" autoFocus={!editing} />

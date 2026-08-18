@@ -3,7 +3,7 @@ import { seedRecipes } from './data/seed'
 import { basicRecipes, BASICS_VERSION } from './data/basics'
 import { makeSampleDiary, SAMPLE_DIARY_ID, SAMPLE_READY } from './data/sampleDiary'
 import { guessFoodIcon } from './components/FoodIcon'
-import { cleanMemo } from './parseRecipe'
+import { cleanMemo, mergeQtyOnlyIngredients } from './parseRecipe'
 import { politeSteps, politeFormalSteps } from './polish'
 
 const KEY = 'hankki:v1'
@@ -269,6 +269,13 @@ function migrateBasics(saved) {
     '로제 파스타': 'fe_27', '치즈 샌드위치': 'fe_26', '새우 크림 파스타': 'fe_24',
     '대구뭉티기': 'fe_22', // v41: 기존 레시피였는데 아이콘 교체를 놓쳐 사시미(fi_j09)로 떠 있던 것
     '베이컨 크림 파스타': 'fe_53', '묵은지 들기름 파스타': 'fe_52', // v41: 얼굴 있는 새 파스타 아이콘(옛 faceless fy_y03 대체)
+    // 🍲 v42 (2026-08-18) — 창업자 폰 제보에서 나왔다. *"누룽지 삼계탕에 이모지같은게 들어있어"*
+    //    ⛔ 「누룽지삼계탕」이 규칙에서 «누룽지»(fe_114 오징어누룽지)에 먼저 먹혀 엉뚱한 그림이 붙었다.
+    //    ⭐ 규칙(`FoodIcon.ICON_RULES`)은 고쳤지만 **그것만으론 창업자 폰이 안 고쳐진다** —
+    //       아이콘은 만들 때 레시피에 «박혀» 저장되기 때문이다(규칙 18 ⓙ · v10.76 에서 같은 자리를 겪었다).
+    //    ⚠️ 띄어쓰기를 모르니 네 가지를 다 적는다(이 표는 «제목이 정확히 같을 때»만 맞는다).
+    '누룽지삼계탕': 'fh_k06', '누룽지 삼계탕': 'fh_k06',
+    '누룽지백숙': 'fh_k06', '누룽지 백숙': 'fh_k06',
   }
   fixed = fixed.map((r) => {
     if (!r) return r
@@ -344,6 +351,25 @@ function migratePolite(recipes, saved) {
   return { recipes: out, politeV: POLITE_V }
 }
 
+// 🚚🚚 **이미 저장된 레시피의 «분량만 있는 줄»을 앞 재료에 붙인다** (창업자 2026-08-16)
+//   📮 *"황태장아찌 요리시작 누르면 1/2컵이 줄바뀜으로 혼자 뜨는거"*
+//      → *"그 레시피는 **테스터가 캡쳐해준거야.** 근데도 고칠 수가 없다고?"*
+//   ⭐⭐ **파서만 고치면 «앞으로 가져올 것»만 고쳐진다** — 이미 폰에 든 건 그대로다.
+//      테스터 폰·창업자 폰에 저장된 그 레시피는 앱을 켜는 순간 여기서 고쳐진다.
+//   📌 규칙 18 ⓙ 그대로 — 「새로 까는 사람」만 보지 말고 **«이미 깔린 폰»을 본다.**
+//   ⚠️ 한 번만 돈다(`qtyOnlyV`) — 유저가 일부러 그렇게 적었다면 두 번 손대지 않는다.
+//   ⚠️ 규칙은 파서와 «똑같다»(`mergeQtyOnlyIngredients`) — 두 자리가 갈라지면 그때부터 어긋난다.
+const QTY_ONLY_V = 1
+function migrateQtyOnly(recipes, saved) {
+  if ((saved.qtyOnlyV || 0) >= QTY_ONLY_V) return { recipes, qtyOnlyV: saved.qtyOnlyV }
+  const out = recipes.map((r) => {
+    if (!r || !Array.isArray(r.ingredients) || r.ingredients.length < 2) return r
+    const ingredients = mergeQtyOnlyIngredients(r.ingredients)
+    return ingredients === r.ingredients ? r : { ...r, ingredients }
+  })
+  return { recipes: out, qtyOnlyV: QTY_ONLY_V }
+}
+
 // 📔📔 **샘플 일기 한 장** (창업자 2026-08-12 *"샘플레시피는 지울 수 있게도 해줘
 //   자기 일기가 아니니까 지워도 되게(샘플이라고 적어주고)"*)
 //
@@ -367,12 +393,14 @@ function initialState() {
     const mig = migrateBasics(saved)
     const memoMig = migrateMemos(mig.recipes, saved)
     const politeMig = migratePolite(memoMig.recipes, saved)
+    const qtyMig = migrateQtyOnly(politeMig.recipes, saved)
     const diary = withSample(saved)
     return {
-      recipes: reconcileCooked(politeMig.recipes, diary),
+      recipes: reconcileCooked(qtyMig.recipes, diary),
       seedV: mig.seedV,
       memoCleanV: memoMig.memoCleanV,
       politeV: politeMig.politeV,
+      qtyOnlyV: qtyMig.qtyOnlyV,
       removedSeedIds: saved.removedSeedIds || [],
       folders: saved.folders
         ? (saved.folders.includes('아시안') ? saved.folders : [...saved.folders, '아시안'])
@@ -391,6 +419,7 @@ function initialState() {
     seedV: BASICS_VERSION,
     memoCleanV: MEMO_CLEAN_V,
     politeV: POLITE_V,
+    qtyOnlyV: QTY_ONLY_V, // 처음 켠 사람은 고칠 게 없다 — 이사를 «이미 한 것»으로 둔다
     removedSeedIds: [],
     folders: ['한식', '양식', '일식', '간식', '아시안'],
     profile: PROFILE_DEFAULT,
@@ -529,10 +558,14 @@ function reducer(state, action) {
       return { ...state, shoppingList: [...add, ...state.shoppingList] }
     }
     // 단건 담기 — 사러가기 링크(url)를 함께 저장(주부의 장바구니 '담기' 등). 이름 중복은 무시.
+    //   🌱 `noBuy` = 「사러가기를 그리지 않는다」(한살림 = 조합원 전용 · 창업자 2026-08-17).
+    //   ⛔⛔ 여기가 **필드를 골라서 새 객체를 만드는 자리**다 — 넘겨준 필드가 목록에 없으면
+    //      **말없이 버려진다.** 실제로 `noBuy` 를 담는 코드를 써 놓고도 리스트엔 사러가기가 그대로 떴다
+    //      (2026-08-17 · 게이트 50개가 전부 초록불이었고 «화면을 열어보고» 잡았다 — 규칙 21).
     case 'addShopItem': {
       const name = (action.item?.name || '').trim()
       if (!name || state.shoppingList.some((i) => i.name === name)) return state
-      const item = { id: newId(), name, done: false, url: action.item.url || undefined }
+      const item = { id: newId(), name, done: false, url: action.item.url || undefined, ...(action.item.noBuy ? { noBuy: true } : {}) }
       return { ...state, shoppingList: [item, ...state.shoppingList] }
     }
     case 'toggleShopItem': {
@@ -550,6 +583,15 @@ function reducer(state, action) {
         ),
         pantry,
       }
+    }
+    // ✏️ 장보기 줄 고치기 — 창업자 2026-08-16 *"근데 **사는 양은 유저가 맘대로 적을수 있어야지**"*
+    //   ⭐ 레시피에서 담으면 「양파」로 들어오는데, 사람마다 사는 양이 다르다(1망·3개·600g).
+    //      **담아주는 건 우리가 하고, 양은 유저가 적는다.**
+    //   ⛔ 빈 이름으로는 안 바꾼다 — 지우려면 삭제(×)를 쓴다. 빈 줄이 남으면 그게 고장이다.
+    case 'updateShopItem': {
+      const name = (action.name || '').trim()
+      if (!name) return state
+      return { ...state, shoppingList: state.shoppingList.map((i) => (i.id === action.id ? { ...i, name } : i)) }
     }
     case 'removeShopItem': {
       return { ...state, shoppingList: state.shoppingList.filter((i) => i.id !== action.id) }
@@ -675,6 +717,7 @@ export function StoreProvider({ children }) {
     addShopItems: useCallback((names) => dispatch({ type: 'addShopItems', names }), []),
     addShopItem: useCallback((item) => dispatch({ type: 'addShopItem', item }), []),
     toggleShopItem: useCallback((id) => dispatch({ type: 'toggleShopItem', id }), []),
+    updateShopItem: useCallback((id, name) => dispatch({ type: 'updateShopItem', id, name }), []),
     removeShopItem: useCallback((id) => dispatch({ type: 'removeShopItem', id }), []),
     clearDoneShopItems: useCallback(() => dispatch({ type: 'clearDoneShopItems' }), []),
     clearShopItemsAll: useCallback(() => dispatch({ type: 'clearShopItemsAll' }), []),

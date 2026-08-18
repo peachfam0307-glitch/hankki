@@ -44,7 +44,24 @@ async function ocrViaProxy(dataUrl, onProgress, batch) {
   _ocrNote = null
   if (typeof dataUrl !== 'string' || !/^data:image\//.test(dataUrl)) throw new Error('not_dataurl')
   if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new Error('offline')
-  if (onProgress) onProgress(35)
+  if (onProgress) onProgress(8)
+  // ⏳⏳ [2026-08-16] **막대가 «기어가게» 한다** — 창업자 *"레시피 2장 안내시 로딩 오래걸리는거"*
+  //   🔬 옛 판 = 여기서 35 를 한 번 주고, 서버가 답할 때까지 **막대가 그 자리에 멈춰 있었다.**
+  //      올리는 것도 기다리는 것도 «알려줄 게 없어서» 아무 소식이 없다.
+  //   ⛔ 멈춘 막대는 「오래 걸린다」가 아니라 **「고장났다」로 읽힌다** — 그게 앱을 끄는 순간이다.
+  //   ✅ 그래서 서버를 기다리는 동안 8 → 85 로 «조금씩» 올린다. 85 에서 멈추고, 답이 오면 92 → 100.
+  //      ⚠️ 100 까지 밀지 않는다 — 다 찼는데 안 끝나면 그게 더 「고장」처럼 보인다.
+  //      ⚠️ 시간을 «맞히려» 하지 않는다. 빠르면 금방 92 로 뛰어넘고, 느리면 85 에서 기다린다.
+  let 기어감 = null
+  if (onProgress) {
+    let p = 8
+    기어감 = setInterval(() => {
+      p += Math.max(0.6, (85 - p) * 0.06) // 뒤로 갈수록 느려진다 — 끝이 가까운 척하지 않으려고
+      if (p >= 85) { p = 85; clearInterval(기어감); 기어감 = null }
+      onProgress(Math.round(p))
+    }, 220)
+  }
+  const 그만기어 = () => { if (기어감) { clearInterval(기어감); 기어감 = null } }
   const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
   // 운영자 무제한 모드(이 기기가 ?founder=…로 진입해 둔 경우)면 무제한 헤더를 실어 보낸다.
   try {
@@ -53,11 +70,18 @@ async function ocrViaProxy(dataUrl, onProgress, batch) {
   } catch {
     /* noop */
   }
-  const resp = await fetch(OCR_PROXY_URL, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ image: dataUrl, uid: deviceId(), batch: batch || '' }),
-  })
+  let resp
+  try {
+    resp = await fetch(OCR_PROXY_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ image: dataUrl, uid: deviceId(), batch: batch || '' }),
+    })
+  } catch (e) {
+    그만기어() // ⛔ 던지기 전에 반드시 멈춘다 — 안 그러면 폴백이 도는 내내 막대가 혼자 기어간다
+    throw e
+  }
+  그만기어()
   if (!resp.ok) {
     // 429(한도 초과) → 어느 한도인지 기록(앱이 "무료 다 썼어요" 안내). 전부 폴백으로 넘긴다 — 앱은 늘 동작해야 하니까.
     if (resp.status === 429) {

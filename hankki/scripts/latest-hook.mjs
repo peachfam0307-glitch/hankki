@@ -100,13 +100,28 @@ try {
     console.log('   전체는 `node hankki/scripts/latest-map.mjs` · 지도는 hankki/docs/최신-지도.md')
     // 📅 날짜가 «저절로» 여는 문 — 푸시 안 해도 열린다 (창업자 2026-08-01 절대원칙)
     try {
-      const { nextGate, todayKST } = await import('./release-calendar.mjs')
+      const { nextGate, todayKST, gates } = await import('./release-calendar.mjs')
+      const 오늘 = todayKST()
       const nx = nextGate()
       if (nx.length) {
-        const d = Math.round((Date.parse(nx[0].date) - Date.parse(todayKST())) / 86400000)
+        const d = Math.round((Date.parse(nx[0].date) - Date.parse(오늘)) / 86400000)
         const n = nx.reduce((s, g) => s + g.keys.length, 0)
         console.log(`\n${d <= 7 ? '🚨' : '📅'} ${nx[0].date}(D-${d}) 에 **저절로** 열린다 — ${n}컷`)
         if (d <= 7) console.log('   ⛔ 전날에 «고화질 전수 검수». 안 하면 그대로 유저 앞에 나간다.')
+      }
+      // ⏳⏳ **[2026-08-17] 검수 안 받은 레시피가 «앞으로» 언제 열리나 — 미리 띄운다.**
+      //   ⛔ 「전날」만 보면 그날 밤에 급해진다. 실측하니 **16번에 걸쳐 62편**이 그렇게 열릴 참이었다.
+      //      8/17 사고는 첫 번째였을 뿐이다 — 매주 5편씩 되풀이될 구조였다.
+      const 대기 = gates().filter((g) => g.kind === 'recipe' && g.date > 오늘 && /검수 안 받은 것/.test(g.what))
+      if (대기.length) {
+        const n = 대기.reduce((s, g) => s + Number((g.what.match(/검수 안 받은 것 (\d+)편/) || [, 0])[1]), 0)
+        const 가까움 = 대기.filter((g) => Date.parse(g.date) - Date.parse(오늘) <= 30 * 86400000)
+        console.log(`\n⏳ **검수 안 받은 레시피 ${n}편**이 앞으로 ${대기.length}번에 걸쳐 저절로 열린다 (30일 안 = ${가까움.length}번)`)
+        가까움.slice(0, 2).forEach((g) => {
+          const d = Math.round((Date.parse(g.date) - Date.parse(오늘)) / 86400000)
+          console.log(`   · ${g.date} (D-${d}) ${g.what.replace(/\s+⛔검수.*/, '').slice(0, 60)}`)
+        })
+        console.log('   👉 몰아서 미리 받는다 = `node hankki/scripts/release-calendar.mjs --pending`')
       }
     } catch { /* 없으면 조용히 */ }
     // 👋 세션 «시작»에만 — 읽을 것과 순서를 어디서 얻는지 (창업자 2026-08-13 *"예전문서 읽어와서 짬뽕만들고있어"*)
@@ -123,6 +138,18 @@ try {
         console.log(`\n🧭 요즘 문서에 「대기·예정」인데 **파일은 이미 있는** 줄 ${st.length}개 — 끝난 걸 대기로 두면 또 안 한다`)
         st.slice(0, 3).forEach((h) => console.log(`   ${h.file}:${h.line}  「${h.name}」 → ${h.found}`))
         console.log('   전체 = `node hankki/scripts/doc-guard.mjs --stale --recent`')
+      }
+    } catch { /* 없으면 조용히 */ }
+    // 🚨 「판정 대기」라고 적혀 있는데 **창업자가 이미 확정한** 주제 (2026-08-18 「집 주소 공개」 사고)
+    //   ⭐ 위 검사의 «셋째 짝» — 파일(⒝)·코드(⒞)에 이어 **결정**을 본다. 이게 제일 나쁘다:
+    //      창업자에게 «이미 답한 것»을 또 묻게 된다.
+    try {
+      const { decidedStale } = await import('./doc-guard.mjs')
+      const ds = decidedStale()
+      if (ds.length) {
+        console.log(`\n🚨 「⏳판정 대기」인데 **창업자가 이미 확정한** 주제 ${ds.length}개 — ⛔이걸 읽고 또 물으면 안 된다`)
+        ds.slice(0, 3).forEach((h) => console.log(`   ${h.file}:${h.line}  「${h.topic}」 → 확정은 ${h.at}`))
+        console.log('   전체 = `node hankki/scripts/doc-guard.mjs --decided`')
       }
     } catch { /* 없으면 조용히 */ }
     // 🔢 「대기」라고 적혀 있는데 **상수는 이미 채워진** 줄 (#81 · 2026-08-05 모션 배분 사고)

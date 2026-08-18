@@ -29,9 +29,9 @@ on:
   workflow_dispatch:
     inputs:
       versionCode:
-        description: '버전코드 — 콘솔에 올라간 최신보다 커야 함. ✅2026-08-10 확인(창업자 콘솔 실물): Play 최신 = 13 (10.08 · 비공개 테스트-베타테스트 · 8/9 오후 2:48 게시) → 다음은 14'
+        description: '버전코드 — 콘솔에 올라간 최신보다 커야 함. ✅2026-08-18 확인(굽기 아티팩트 실물 hankki-aab-10.85-15): 마지막 = 15 (v10.85 · 8/15) → 다음은 16'
         required: true
-        default: '14'
+        default: '16'
       versionName:
         description: '버전 이름 — 비워두면 hankki/src/version.js 에서 자동으로 읽는다'
         required: false
@@ -69,7 +69,14 @@ jobs:
       - name: 런처명 검사
         run: node hankki/scripts/check-launcher.mjs
 
+      # ⛔⛔ 2026-08-18 사고 — versionName 을 «비우고» 구웠더니 아티팩트가 `hankki-aab--16` 으로 나왔다.
+      #   AAB 속 값은 멀쩡했다(versionName "11.08"). 낡은 건 «이름표»다.
+      #   📌 근데 우리 절대원칙이 **「다음 판 번호는 굽기 아티팩트 «이름»이 답이다」**(CLAUDE.md) 라서,
+      #      이름에서 버전이 빠지면 **다음에 몇 판인지 알려주던 근거가 사라진다.**
+      #   ✅ 그래서 «정해진 이름»을 이 단계에서 만들어 밖으로 내보내고, 올릴 때 그걸 쓴다.
+      #      → 입력을 비우든 채우든 이름이 같아진다.
       - name: twa-manifest 준비 (버전 주입)
+        id: ver
         run: |
           mkdir -p build && cp android/twa-manifest.json build/twa-manifest.json
           cd build
@@ -89,6 +96,9 @@ jobs:
             fs.writeFileSync('twa-manifest.json', JSON.stringify(m, null, 2))
             console.log('버전코드', m.appVersionCode, '/ 버전이름', m.appVersionName, inName ? '(직접 입력)' : '(version.js 에서 읽음)')
             console.log('런처명 글자수', [...m.launcherName].length)
+            // ⭐ 아티팩트 이름을 여기서 «정해서» 넘긴다 — 올리는 쪽이 입력칸을 다시 읽으면 빈칸일 수 있다.
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'name=' + name + '\n')
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'artifact=hankki-aab-' + name + '-' + m.appVersionCode + '\n')
           "
         env:
           ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -135,13 +145,24 @@ jobs:
           # 📱 가로모드 — 2026-08-09 에 `portrait` → `default` 로 풀었는데 **로그에 안 찍혀서 확인을 못 했다.**
           #   bubblewrap 은 twa-manifest.json 의 orientation 을 `resValue "string","orientation"` 으로 넣는다.
           #   ⛔ 눈으로 못 보면 「됐겠지」가 된다 → 찍어 놓고, portrait 이면 **여기서 죽인다.**
+          # ⛔⛔ 2026-08-18 — 이 검사가 versionCode 16 에서 **「(못 읽음)」** 을 찍고 그냥 지나갔다.
+          #   ⭐ 그건 「됐다」도 「안 됐다」도 아니다 — **아무것도 안 재는 검사**다(CLAUDE.md 규칙 18 ⓘ).
+          #   ✅ 그래서 «우리가 넣은 값»부터 본다. 그건 우리가 쓰는 파일이라 언제나 읽힌다.
+          #      bubblewrap 이 낸 값은 «있으면» 같이 본다(형식이 바뀌어도 우리 판정이 안 죽는다).
           echo "── 화면 방향 ──"
-          ORI="$(grep -oE 'resValue "string", "orientation", "[^"]*"' app/build.gradle | sed 's/.*, "//;s/"$//')"
-          echo "orientation = ${ORI:-(못 읽음)}"
-          case "$ORI" in
+          IN_ORI="$(node -p "JSON.parse(require('fs').readFileSync('twa-manifest.json','utf8')).orientation || ''")"
+          echo "넣은 값(twa-manifest.json) = ${IN_ORI:-(없음)}"
+          case "$IN_ORI" in
             portrait*) echo "⛔ 세로로 잠겨 있다 — android/twa-manifest.json 을 볼 것"; exit 1 ;;
-            "") echo "⚠️ 값을 못 읽었다 — bubblewrap 판이 바뀌었을 수 있다(빌드는 계속한다)" ;;
-            *) echo "✅ 세로 잠금 없음" ;;
+            "") echo "⛔ orientation 칸이 아예 없다 — 넣고 다시 구울 것"; exit 1 ;;
+            *) echo "✅ 넣은 값에 세로 잠금 없음" ;;
+          esac
+          GEN_ORI="$(grep -oE 'resValue "string", *"orientation", *"[^"]*"' app/build.gradle | sed 's/.*, *"//;s/"$//')"
+          echo "나온 값(build.gradle) = ${GEN_ORI:-(안 적힘)}"
+          case "$GEN_ORI" in
+            portrait*) echo "⛔ 넣은 값은 멀쩡한데 나온 값이 세로다 — bubblewrap 쪽을 볼 것"; exit 1 ;;
+            "") echo "ℹ️ bubblewrap 이 방향 줄을 «안 적었다». 넣은 값이 default 라 덮어쓸 게 없어서일 수 있는데 ⛔확인한 적은 없다." ;;
+            *) echo "✅ 나온 값도 세로 잠금 없음" ;;
           esac
 
       - name: 연습 실행이면 여기서 끝
@@ -162,7 +183,8 @@ jobs:
         if: ${{ !inputs.dryRun }}
         uses: actions/upload-artifact@v4
         with:
-          name: hankki-aab-${{ inputs.versionName }}-${{ inputs.versionCode }}
+          # ⛔ `inputs.versionName` 을 쓰지 말 것 — 비워두고 구우면 `hankki-aab--16` 이 된다(2026-08-18 실제로 그랬다)
+          name: ${{ steps.ver.outputs.artifact }}
           path: |
             build/app-release-bundle.aab
             build/app-release-signed.apk

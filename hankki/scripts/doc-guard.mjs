@@ -64,6 +64,88 @@ const norm = (s) => s.replace(/\.[a-z0-9]+$/i, '').replace(/^.*\//, '').replace(
 const SKIP_DIR = /^_|제외|보관|백업|구판|아껴둠|archive/
 const rel = (p) => resolve(p).replace(APP + '/', '')
 
+// ── ⒞ 「판정 대기」인데 창업자가 «이미 확정한» 것 ────────────────────
+//
+// 📮 창업자 2026-08-18 = *"어차피 너 저장해도 보지도 않고 니멋대로 판단해서 딴소리하잖아"*
+//    ＋ *"아니 얼마나 중요한건데 저장만 하고 안읽어? 또 출시 못하게 하려고?"*
+//
+// ⛔⛔ **그날 사고** — `CLAUDE.md` 에 「⏳창업자 판정 대기 — 「집 주소 공개」」가 하루 낡아 있었다.
+//    확정은 **2026-08-17 에 이미 났다**(창업자 *"1 집주소 가능"* · 출시행정-학습 195·199·556줄).
+//    그 낡은 줄을 읽은 **두 세션이 8/18 에 둘 다 그 얘길 다시 꺼냈고**, 나는 구글에 보낼 메일 초안에
+//    *"주거지 주소 대신 사업장 주소를 등록할 수 있나"* 까지 적었다 — **둘이 같은 주소라 물어도 답이 같다.**
+//
+// ⭐⭐ **⒝(파일)·⒞(결정)는 다른 함정이다.**
+//    ⒝ = 「대기」인데 **파일이** 이미 있다   ／   ⒞ = 「대기」인데 **창업자가 이미 판정했다**
+//    ⒞ 가 더 나쁘다 — **창업자에게 «이미 답한 것»을 또 묻게 된다.**
+//
+// 📌 잣대 = 「대기」 줄에서 **「…」로 묶인 주제**를 뽑아, 그 주제가 **다른 곳에서 ✅확정**됐나 본다.
+//    ⛔ 시끄러우면 죽은 게이트다 → **주제가 「」로 명시된 줄만** 본다(짐작으로 주제를 만들지 않는다).
+// ⚠️⚠️ **첫 판이 21개를 뱉었다 — 죽은 게이트다.** 좁힌 데가 셋:
+//   ⑴ 한 줄의 「」를 «전부» 주제로 삼았다 → *"앱이 세 이름으로 부른다(「스캔」·「자동 정리」…)"* 같은
+//      **나열까지 주제**가 됐다. ✅**「대기」라는 낱말 «근처»에 있는 「」만** 본다(그게 그 문장의 주어다).
+//   ⑵ 확정 잣대가 `✅` 하나면 통과였다 → **✅가 흔해서** 아무 줄이나 걸렸다.
+//      ✅**「창업자 확정」·「[창업자 …]」·날짜 붙은 확정**만 «확정»으로 친다.
+//   ⑶ 「대기」·「확정」 같은 **메타 낱말이 주제로** 잡혔다 → 뺀다.
+const PENDING = /(판정|확정|결정)\s*(대기|필요)|판정을?\s*기다/
+// ⛔⛔ **여기서 한 번 통째로 헛돌았다** — `창업자\s*(확정|판정)` 이 **「창업자 판정 «대기»」에도 걸려서**
+//    같은 줄 확정 검사(`if (DECIDED.test(ln)) return`)가 **정작 잡아야 할 793줄을 스스로 걸러냈다.**
+//    ✅ 뒤에 「대기·필요」가 붙으면 확정이 아니다 → 부정 예측(lookahead)으로 뺀다.
+//    📌 규칙 12 그대로 — **옛 값으로 돌려보지 않았으면 「2개 잡았다」에 안심하고 넘어갔다.**
+const DECIDED = /창업자\s*(가\s*)?(확정|판정)(?!\s*(대기|필요))|\[창업자[^\]]*확정|✅+\s*\*{0,2}확정|확정\s*\(?\s*20\d\d[-.]\d\d|확정본|= *\*{0,2}확정\*{0,2}/
+const TOPIC = /「([^」\n]{2,24})」/g
+const META = /^(대기|확정|예정|판정|미정|없음|있다|없다|그대로|안 한다)$|대기|확정 대기/
+
+export function decidedStale(files) {
+  const docs = files || [join(APP, 'CLAUDE.md'), ...walk(join(APP, 'docs'))]
+  // ① 문서를 한 번만 읽어 둔다
+  const body = []
+  for (const f of docs) {
+    if (!existsSync(f) || !f.endsWith('.md')) continue
+    if (/_archive|_아껴둠|_구판/.test(f)) continue   // 🗄 보관소는 «안 본다»(절대원칙 24) — 끝난 기록이라 늘 「대기」로 남아 있다
+    let t = ''
+    try { t = readFileSync(f, 'utf8') } catch { continue }
+    body.push({ f, lines: t.split('\n') })
+  }
+  // ② 「대기」 줄에서 주제를 뽑는다
+  const pend = []
+  for (const { f, lines } of body) {
+    lines.forEach((ln, i) => {
+      const pm = ln.match(PENDING)
+      if (!pm) return
+      if (DECIDED.test(ln)) return                 // 같은 줄에 확정 표시가 있으면 이미 닫힌 것
+      // ⭐ 「대기」라는 낱말 «근처»의 「」만 주제로 본다 — 멀리 있는 건 그 문장의 주어가 아니다
+      const at = pm.index ?? 0
+      for (const m of ln.matchAll(TOPIC)) {
+        const d = (m.index ?? 0) - at
+        if (d < -34 || d > 44) continue
+        const topic = m[1].trim()
+        if (/^[⓪-⓿ⓐ-ⓩ\d\s·]+$/.test(topic)) continue   // 「ⓐ」 「①」 같은 갈래 기호는 주제가 아니다
+        if (META.test(topic)) continue
+        pend.push({ file: rel(f), line: i + 1, topic, text: ln.trim().slice(0, 110) })
+      }
+    })
+  }
+  // ③ 그 주제가 «다른 곳»에서 확정됐나
+  const hits = []
+  for (const p of pend) {
+    for (const { f, lines } of body) {
+      const rf = rel(f)
+      let found = null
+      lines.forEach((ln, i) => {
+        if (found) return
+        if (rf === p.file && i + 1 === p.line) return
+        if (!ln.includes(p.topic)) return
+        if (!DECIDED.test(ln)) return
+        if (PENDING.test(ln)) return
+        // ⛔ 키를 `text` 로 두면 아래 `{...p, ...found}` 에서 «대기 줄»의 글자를 덮어쓴다
+        found = { at: `${rf}:${i + 1}`, foundText: ln.trim().slice(0, 110) }
+      })
+      if (found) { hits.push({ ...p, ...found }); break }
+    }
+  }
+  return hits.filter((h, i) => hits.findIndex((x) => x.file === h.file && x.line === h.line && x.topic === h.topic) === i)
+}
+
 // 저장소의 «현행» 자산 이름표 — 격리 폴더는 뺀다(거기 있는 건 「있다」로 안 친다)
 function assetIndex() {
   const idx = new Map()
@@ -265,6 +347,23 @@ if (mode === '--gen') {
   g.forEach((x) => console.log(`   ${x === top ? '⭐' : '  '} ${x.line}줄  ${x.date}  ${x.title}`))
   console.log(`\n👉 ${top.line}줄부터 먼저 읽어라. 위쪽은 «지나간 판단»이다.`)
   process.exit(0)
+}
+
+if (mode === '--decided') {
+  const ds = decidedStale(arg === '--recent' ? recentDocs() : undefined)
+  if (!ds.length) console.log('✅ 「판정 대기」인데 이미 확정된 주제 — 없음')
+  else {
+    console.log(`🚨 「⏳판정 대기」라고 적혀 있는데 **창업자가 이미 확정한** 주제 ${ds.length}개`)
+    console.log('   ⛔ 이걸 읽은 새 세션이 «이미 답한 것»을 또 묻는다 — 2026-08-18 「집 주소 공개」 사고\n')
+    ds.slice(0, 20).forEach((h) => {
+      console.log(`   ${h.file}:${h.line}   주제 = 「${h.topic}」`)
+      console.log(`      ⏳ ${h.text}`)
+      console.log(`      ✅ 이미 확정 → ${h.at}`)
+      console.log(`         ${h.text2 || h.at ? '' : ''}${h.textFound || ''}`)
+    })
+    console.log('\n👉 「대기」 줄을 «확정»으로 고쳐라. 고치기 전엔 그 주제를 창업자에게 다시 묻지 않는다.')
+  }
+  process.exit(ds.length ? 1 : 0)
 }
 
 if (mode !== '--stale' && mode !== '--const') {

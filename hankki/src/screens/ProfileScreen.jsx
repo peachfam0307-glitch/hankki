@@ -117,7 +117,18 @@ export default function ProfileScreen() {
     diary: store.diary, seedV: store.seedV, memoCleanV: store.memoCleanV, removedSeedIds: store.removedSeedIds,
   })
 
-  const backupFilename = () => `한끼백업-${new Date().toISOString().slice(0, 10)}.json`
+  // 📁 파일 이름에 «시각»까지 넣는다 (2026-08-16 창업자 캡처)
+  //   ⛔ 날짜만 넣었더니 같은 날 두 번째 저장에서 안드로이드가
+  //      **「파일을 다시 다운로드하시겠습니까?」** 를 띄웠다(같은 이름이 이미 있어서).
+  //      📮 창업자 *"이런거 뜨면안되는거잖아"* — 맞다. 백업은 여러 번 눌러도 «그냥 되어야» 한다.
+  //   ⭐ 시각이 붙으면 이름이 매번 달라 그 물음이 아예 안 뜬다.
+  //      ＋ 덤으로 **어느 게 최신인지** 파일 목록에서 바로 보인다.
+  //   ⛔ `toISOString()` 은 UTC 라 한국 시각과 9시간 어긋난다 → 로컬 시각으로 짠다.
+  const backupFilename = () => {
+    const d = new Date()
+    const p = (n) => String(n).padStart(2, '0')
+    return `한끼백업-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`
+  }
 
   // 다운로드 폴더로 저장 (데스크톱·폴백)
   const downloadBackup = () => {
@@ -154,21 +165,62 @@ export default function ProfileScreen() {
       if (e && e.name === 'AbortError') return // 사용자가 공유 취소
       // 그 외 오류(파일 공유 거부 등)는 아래 복사 폴백으로 넘어간다
     }
-    // 설치형(홈 화면) 앱에선 공유가 막히거나 파일 다운로드가 조용히 실패할 수 있어,
-    // 어디서나 되는 '복사'로 대체한다. (카톡 「나에게」에 붙여넣어 보관)
-    copyBackup()
+    // ⛔⛔ [2026-08-16 정정] 여기서 `copyBackup()` 으로 떨어뜨리고 있었다 — **그게 창업자 폰의 사고였다.**
+    //   공유가 막힌 폰에서 복사로 떨어졌는데 **복사도 실패**해서
+    //   시스템이 「클립보드로 복사하지 못했습니다」를 띄웠다(창업자 캡처).
+    //   ⭐ **폴백은 「어디서나 되는 것」이 아니라 「됐는지 유저가 아는 것」이어야 한다.**
+    //      파일 저장은 **다운로드 알림**이 뜬다 — 복사는 아무 표시가 없다.
+    downloadBackup()
   }
 
-  // 백업 코드를 클립보드로 복사 — 공유가 안 되는 기기에서도 100% 되는 방법
+  // 백업 코드를 클립보드로 복사 — 공유가 막힌 기기의 마지막 수단
+  //
+  // ⛔⛔⛔ [2026-08-16 창업자 캡처] **앱이 「실패」를 「성공」이라고 말하고 있었다.**
+  //   화면에 토스트가 «둘» 겹쳐 떴다 —
+  //     시스템: 「클립보드로 복사하지 못했습니다.」   ← 진짜
+  //     우리:   「백업 코드를 복사했어요 …」          ← 거짓
+  //   `navigator.clipboard.writeText()` 가 **성공으로 resolve 되고도 실제 복사는 실패**한다.
+  //   (창업자 폰 레시피 237편 ≈ 247KB — 안드로이드 클립보드 상한으로 보이지만 ⛔확인된 값이 아니다.)
+  //
+  // ⭐⭐ 그래서 고친 건 «원인»이 아니라 «태도»다 — **확인할 수 없는 것을 성공이라고 말하지 않는다.**
+  //   ⑴ ⛔ **`backupDone()` 을 뺐다** — 이게 제일 위험했다.
+  //      그걸 부르면 홈의 백업 안내가 **영영 꺼진다.** 복사가 실패해도 「이미 백업한 사람」이 되어
+  //      **유저는 백업이 있다고 믿고 폰을 바꾸고, 아무것도 없다.**
+  //      📌 파일 저장은 다운로드 알림이, 공유는 공유 시트가 뜬다 — **유저가 «됐다»를 안다.**
+  //         복사만 아무 피드백이 없다. 그래서 여기서만 뺀다.
+  //   ⑵ 토스트를 정직하게 — 「복사했어요」로 끝내지 않고 **붙여넣어 확인하라**고 말한다.
+  //   ⛔ `clipboard.readText()` 로 대조하는 길은 **일부러 안 썼다** — 안드로이드에서 권한 프롬프트를
+  //      띄울 수 있어 「붙여넣기 허용?」을 보게 된다. 확인하려다 더 나빠진다.
+  // 📏 클립보드로 보낼 수 있는 크기인가 — ⛔100KB 는 «확인된 값이 아니다».
+  //   우리가 아는 건 **창업자 폰 247KB 에서 실패한 사례 하나**뿐이고, 상한은 기기·안드로이드 판마다 다르다.
+  //   ⭐ 넉넉히 잡는 쪽이 안전하다 — 틀려서 파일로 저장돼도 **유저는 아무것도 잃지 않는다.**
+  const CLIP_MAX = 100 * 1024
+
   const copyBackup = async () => {
     const json = JSON.stringify(buildBackup())
+
+    // ⛔⛔⛔ [2026-08-16 두 번째 고침] **큰 백업은 복사를 «시도조차 하지 않는다».**
+    //   📮 창업자 캡처 = 「클립보드로 복사하지 못했습니다」(시스템) ＋ 우리 안내가 «겹쳐서» 떴다.
+    //      *"이런거 뜨면안되는거잖아"* — 맞다.
+    //   ⛔ 오전에 고친 건 «토스트 문구»뿐이라 **시스템 실패 알림은 그대로 떴다.**
+    //      `clipboard.writeText()` 가 **성공으로 resolve 되고도 실제 복사는 실패**하므로
+    //      `catch` 로는 영영 못 잡는다. **애초에 안 부르는 것 말고는 길이 없다.**
+    //   ⭐ 그래서 클 때는 **바로 파일로** 저장하고 «왜 그랬는지»를 말해준다.
+    //      파일은 다운로드 알림이 떠서 유저가 «됐다»를 안다.
+    if (json.length > CLIP_MAX) {
+      downloadBackup()
+      nav.showToast('저장한 게 많아 복사 대신 «파일»로 저장했어요 다운로드 폴더를 확인하세요')
+      return
+    }
+
     try {
       await navigator.clipboard.writeText(json)
       setBackup(false)
-      backupDone()
-      nav.showToast('백업 코드를 복사했어요 카톡 「나에게」나 메모에 붙여넣어 보관하세요')
+      // ⛔ `backupDone()` 을 부르지 않는다 — 복사는 «됐는지 확인할 방법이 없다».
+      //    부르면 홈의 백업 안내가 영영 꺼져서, 유저는 백업이 있다고 믿고 폰을 바꾸고 아무것도 없다.
+      nav.showToast('백업 코드를 복사했어요 카톡 「나에게」에 붙여넣어 «들어갔는지» 꼭 확인하세요')
     } catch {
-      // 클립보드까지 막히면 최후로 파일 저장 시도
+      // 클립보드가 «대놓고» 막힌 기기 — 파일로
       downloadBackup()
     }
   }
@@ -215,8 +267,9 @@ export default function ProfileScreen() {
   // '만들었어요! 기록'은 하단 '일지' 탭과 겹쳐서 뺐고, '설정' 행은 프로필 편집을 여는 잘못된 항목이라 뺐다.
   // (프로필 편집은 맨 위 프로필 카드를 누르면 열린다)
   const menu = [
-    { icon: 'heart', label: '즐겨찾기', onClick: () => nav.push({ name: 'favorites' }) },
-    { icon: 'cloud', label: '백업 · 내보내기', badge: 'NEW', coach: 'backup', onClick: () => setBackup(true) },
+    // 🔖 [2026-08-18] 「즐겨찾기」 → **「책갈피」** (창업자 확정 · 유저에게 보이는 여섯 곳을 같이 바꿨다)
+    { icon: 'heart', label: '책갈피', onClick: () => nav.push({ name: 'favorites' }) },
+    // 💾 백업은 이 목록에서 «꺼냈다» — 아래 독립 카드로. (창업자 2026-08-16)
     { icon: 'help', label: '요리 가이드', badge: '계량·손질', onClick: () => setGuide(true) },
     { icon: 'help', label: '앱 소개 다시 보기', onClick: () => nav.showOnboarding && nav.showOnboarding() },
     {
@@ -353,11 +406,33 @@ export default function ProfileScreen() {
         <div className="card" style={{ display: 'flex', padding: '16px 0', background: 'var(--cream)', border: 'none' }}>
           <Stat n={recipes.length} label="전체 레시피" />
           <div style={{ width: 1, background: 'var(--line)' }} />
-          <Stat n={recipes.filter((r) => r.favorite).length} label="즐겨찾기" />
+          <Stat n={recipes.filter((r) => r.favorite).length} label="책갈피" />
           <div style={{ width: 1, background: 'var(--line)' }} />
           {/* 예전 'Inbox' — 홈에서 뺀 대신 여기 통계에서 연다. 아직 편집 안 끝난(미정리) 레시피 개수, 탭하면 목록 */}
           <Stat n={recipes.filter((r) => r.status === 'unsorted').length} label="미정리" onClick={() => nav.push({ name: 'inbox' })} />
         </div>
+
+        {/* 💾💾 백업 = 메뉴 목록에서 «꺼내» 따로 세운다 (창업자 2026-08-16)
+            📮 *"설정에 백업 내보내기는 **버튼색을 다르게한다거나. 뭔가 눈에 확띄게** 해야할 것 같아.
+               **우리 클라우드 저장전까지는**"*
+            ⛔ 목록 «안»에서 색만 바꾸면 여전히 「목록의 한 줄」이다 — 요리 가이드·앱 소개와 같은 무게로 읽힌다.
+               꺼내서 위에 세우면 통계 바로 밑이라 **시선이 먼저 닿는다.**
+            ⭐ 포인트색 테두리 = 이 화면에서 «유일하게» 테두리가 있는 카드라 저절로 튄다
+               (⛔ 배경을 크림으로 칠하면 `opt-row:active` 와 같은 색이라 «눌린 것»처럼 보인다).
+            ⭐ 부제 한 줄이 색보다 세다 — 다른 줄엔 부제가 없어서 이것만 두 줄이 되고,
+               «왜 눌러야 하는지»까지 말해준다.
+            ⏰ 창업자 말대로 **클라우드 저장(#87)이 나오면 이 강조는 되돌린다** — 그때는 백업이 저절로 되니까. */}
+        <button
+          className="card press" data-coach="backup" onClick={() => setBackup(true)}
+          style={{ marginTop: 20, padding: 16, display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left', border: '1.5px solid var(--brown)' }}
+        >
+          <Icon name="cloud" size={24} color="var(--brown)" stroke={2} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--brown)' }}>백업 · 내보내기</div>
+            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 2 }}>폰을 바꾸거나 앱을 지워도 안 잃게 저장해요</div>
+          </div>
+          <Icon name="chevron-right" size={18} color="var(--brown)" />
+        </button>
 
         {/* 메뉴 */}
         <div className="card" style={{ marginTop: 20, overflow: 'hidden' }}>
@@ -488,24 +563,67 @@ export default function ProfileScreen() {
               <button className="press" onClick={() => setBackup(false)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '2px 16px 0' }}>
-              <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.65, marginBottom: 12 }}>
-                레시피 · 일지 · 냉장고 · 장보기 · 프로필까지 <b>모든 데이터를 파일 하나</b>로 담아요.{'\n'}폰을 바꾸거나 앱을 지워도 이 파일만 있으면 그대로 되살아나요.
+              {/* ⭐ 첫 문장을 「무엇을」에서 «왜»로 바꿨다 (창업자 2026-08-15)
+                  📮 *"이거 백업안하고 기기를 바꾸거나, 패드에 깔면 이메일을 안받으니까 처음 가입한 것 처럼되거든?
+                     그래서 **백업하는 걸 좀 강조**해서 알려줘야 할 것 같아."*
+                  ⛔ 옛 문구는 「모든 데이터를 파일 하나로 담아요」 = «무엇을»이라 안 해도 그만으로 읽힌다.
+                     유저가 모르는 건 «담긴다»가 아니라 **「로그인이 없어서 새 기기엔 아무것도 안 따라온다」**는 사실이다.
+                  ⛔ 겁주지 않는다(`docs/리텐션-설계원칙-2026-07-30.md`) — 「사라져요!」가 아니라 **사실 ＋ 다음 행동.**
+                  ⚠️ `t-sub` 은 pre-line 이 아니라 {'\n'} 이 안 먹는다 — 여기서 명시한다(옛 문구는 한 줄로 뭉쳐 있었다). */}
+              <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.65, marginBottom: 12, whiteSpace: 'pre-line' }}>
+                한끼는 <b>로그인이 없어요.</b> 모든 게 이 기기 안에만 있어서, 새 폰·패드에 깔면 처음 쓰는 것처럼 비어 있어요.{'\n'}이 파일 하나면 레시피 · 일지 · 냉장고 · 장보기 · 프로필까지 <b>그대로 옮겨져요.</b>
               </div>
+              {/* 📁📁 추천 자리 = 「파일로 저장」 (창업자 2026-08-16 · 셋 다 직접 써보고 말했다)
+                  📮 *"카톡나에게 보내기보다 **파일이 편해.**"*
+                  📮 *"카톡보내기는 **외계어가 너무 길어서** 복사붙이기가 번거롭건데"*
+                  📮 *"카톡보내기도 **나쁘지않은데** 저장한게 많은수록 **길이가 엄청나.**"*
+                  ⛔ 옛 판은 「백업 보내서 저장하기」가 추천이고 3단계가 «카톡 나에게»를 밀었다.
+                     그런데 창업자는 그 길을 **「외계어 붙여넣기」로 겪고 있었다** — 공유가 안 뜨면
+                     `shareBackup` 이 조용히 `copyBackup()` 으로 떨어졌기 때문이다.
+                  ✅✅ [2026-08-16 밤] **그 폴백을 «파일 저장»으로 바꿨다** — 창업자 캡처에
+                     「클립보드로 복사하지 못했습니다」가 떠서, 복사는 폴백으로도 못 쓴다는 게 확인됐다.
+                     이제 어느 버튼을 눌러도 **끝에는 반드시 파일이 하나 생긴다.**
+                     📌 **추천한 길이 그 폰에서 딴 길로 새고 있었다.**
+                  ⭐ 파일은 그 갈림길이 없다 — 누르면 파일 하나가 «반드시» 생긴다.
+                  ⛔ 나머지 둘을 «지우지» 않는다 — 창업자 *"카톡보내기도 나쁘지않은데"*.
+                     순서만 바꾸고, 코드 복사엔 「길다」를 미리 적어 놀라지 않게 한다. */}
               <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 14, fontSize: 12.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
-                <b style={{ color: 'var(--brown)' }}>제일 쉬운 방법 (3단계)</b>{'\n'}
-                <b>1.</b> 아래 <b>백업 보내서 저장하기</b> 누르기{'\n'}
-                <b>2.</b> 공유 창이 뜨면 <b>「카톡 나에게 보내기」</b> 선택{'\n'}
-                <b>3.</b> 끝! 나중에 폰을 바꾸면 그 파일을 열어 아래 <b>「불러오기」</b>만 하면 그대로 복원돼요
+                <b style={{ color: 'var(--brown)' }}>제일 쉬운 방법 (2단계)</b>{'\n'}
+                <b>1.</b> 아래 <b>폰에 파일로 저장</b> 누르기{'\n'}
+                <b>2.</b> 끝! <b>다운로드 폴더</b>에 파일 하나가 생겨요
               </div>
-              <button className="btn-primary press" onClick={shareBackup}>백업 보내서 저장하기 (추천)</button>
-              <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.55, margin: '8px 2px 12px' }}>
-                누르면 공유 창이 떠요 → <b>카톡 나에게 보내기</b>나 <b>드라이브·파일</b>에 저장하면 제일 안전해요. (폰이 고장나도 클라우드에 남아요){'\n'}공유 창이 안 뜨는 폰이면 자동으로 <b>백업 코드가 복사</b>돼요.
+              <button className="btn-primary press" onClick={downloadBackup}>폰에 파일로 저장 (추천)</button>
+              <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.55, margin: '8px 2px 12px', whiteSpace: 'pre-line' }}>
+                파일 앱 → <b>다운로드</b> 에 <b>한끼백업-날짜.json</b> 이 생겨요.{'\n'}폰이 고장나도 남게 하려면 그 파일을 <b>드라이브·카톡 「나에게」</b>에 한 번 더 올려두면 제일 안전해요.
               </div>
-              <button className="btn-ghost press" style={{ width: '100%' }} onClick={copyBackup}>백업 코드 복사 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 카톡·메모에 붙여넣기</span></button>
-              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={downloadBackup}>폰에 파일로 저장 (다운로드 폴더)</button>
+              <button className="btn-ghost press" style={{ width: '100%' }} onClick={shareBackup}>백업 보내서 저장하기 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 공유 창으로</span></button>
+              {/* ⚠️ 저장한 게 많으면 복사가 «안 되는» 폰이 있다(창업자 폰 247KB 에서 실패).
+                  그럴 땐 코드가 알아서 파일로 저장한다 — 그래서 라벨에 「짧을 때」라고 미리 적는다. */}
+              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={copyBackup}>백업 코드 복사 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 저장한 게 적을 때만</span></button>
+              <div className="t-sub" style={{ fontSize: 11.5, lineHeight: 1.5, margin: '7px 2px 0' }}>
+                코드는 저장한 게 많을수록 <b>아주 길어요.</b> 붙여넣기가 번거로우면 위 <b>파일</b>로 하세요.
+              </div>
 
               <hr className="divider" style={{ margin: '16px 0' }} />
               <div style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 10 }}>백업에서 되살리기</div>
+              {/* 🔁🔁 「폰 → 패드」 옮기는 법 (창업자 2026-08-15)
+                  📮 *"**패드에 깔아서 핸드폰에 내가 저장한 것들 살리는 법도 안내하고.**"*
+                  ⛔ 그 전엔 버튼 둘뿐이고 «어떻게 옮기는지»가 앱 어디에도 없었다 —
+                     버튼 이름만 봐선 「내 폰 안 어딘가에서 되살린다」로 읽힌다.
+                  ⚠️ 경고 둘은 «내가 코드로 확인한 사실»이라 반드시 적는다:
+                     ⑴ `store.jsx` 의 `importAll` 은 **합치기가 아니라 덮어쓰기**다(614줄) —
+                        받는 기기에 이미 쓴 게 있으면 통째로 사라진다.
+                     ⑵ 일기 잠금 비번은 `diaryLock.js` 가 localStorage 에 따로 두고
+                        `buildBackup()` 에 «안» 들어간다 → 옮긴 기기에선 **잠금이 풀린 채로 열린다.**
+                        ⛔ 비번(4자리) 해시를 백업에 넣으면 평문 JSON이라 즉시 깨진다 — 그래서 안 넣는 게 맞고, 대신 알린다. */}
+              <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 12, fontSize: 12.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
+                <b style={{ color: 'var(--brown)' }}>새 폰·패드로 옮기기</b>{'\n'}
+                <b>1.</b> 쓰던 기기에서 위 <b>「폰에 파일로 저장」</b>을 눌러요{'\n'}
+                <b>2.</b> 그 파일을 새 기기로 보내요 — 카톡 「나에게」·드라이브·메일 어느 쪽이든 돼요{'\n'}
+                <b>3.</b> 새 기기에서 <b>「이미 다른 기기에서 쓰고 있었어요」</b>(소개 마지막 줄) 또는 <b>홈 오른쪽 위 설정 → 백업</b>에서 그 파일을 열면 끝이에요{'\n'}
+                {'\n'}
+                <span className="t-sub" style={{ fontSize: 12 }}>불러오면 <b>그 기기에 있던 내용은 백업 내용으로 바뀌어요.</b>{'\n'}잠가둔 일기는 옮긴 기기에서 <b>잠금이 풀려요</b> — 다시 잠가주세요.</span>
+              </div>
               <button className="btn-ghost press" style={{ width: '100%' }} onClick={() => fileRef.current?.click()}>백업 파일 불러오기</button>
               <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={() => setPasteOpen(true)}>코드 붙여넣기로 불러오기</button>
             </div>
