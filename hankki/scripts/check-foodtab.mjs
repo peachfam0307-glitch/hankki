@@ -108,6 +108,53 @@ console.log(`[foodtab] · 일부러 내려둔 것 ${shelved.length}컷 — 같�
   } else console.log(`[foodtab] ✓ 재료 ${ingFiles.length}컷 전부 픽커에 실렸다`)
 }
 
+// ── ⑥ 🔁🔁 **같은 그림이 «두 키»로 픽커에 올라왔나** (2026-08-19 신설) ──
+//   ⛔⛔ 창업자가 눈으로 잡았다 — *"같은이름 2번올라간것(소스빼고) 정리하자.
+//      무스비, 유부초밥…2개씩 있는거봤어. 카레라이스는 3개야"*
+//   🔢 실측 = 픽커 466컷 중 **42컷이 파일 해시까지 똑같은 중복**이었다.
+//      2026-08-12 시트를 이미 앱에 넣어놨는데, 8/19 에 로드맵의 「판정 대기」 줄만 보고 **또 넣었다.**
+//      ＋ 그날 「60컷 추가」의 실체는 **새 요리 두 개**(두부조림·지코바치킨)였다.
+//   ⛔⛔ **①(한 컷 = 한 집)이 이걸 못 잡는다** — 그건 «같은 키»가 두 갈래에 있는 걸 본다.
+//      키가 다르면 **그림이 완전히 같아도 통과**한다. 그래서 42컷이 조용히 들어왔다(규칙 18 ⓘ).
+//   ⭐ 이 검사는 «파일 내용»으로 본다 — 이름표도 키도 못 속인다.
+//      고를 것이 없는 명백한 잘못이라 **예외 목록을 두지 않는다.**
+//   ⚠️ 「같은 이름·다른 그림」은 **경고만** 한다 — 어느 쪽이 예쁜지는 창업자가 정한다(규칙 11).
+{
+  const { createHash } = await import('node:crypto')
+  const 사진들 = [...home.keys()].filter(isPhoto)
+  const 해시 = new Map()
+  for (const k of 사진들) {
+    const f = path.join(PHOTO, `${k}.png`)
+    if (!existsSync(f)) continue
+    const h = createHash('sha1').update(readFileSync(f)).digest('hex')
+    if (!해시.has(h)) 해시.set(h, [])
+    해시.get(h).push(k)
+  }
+  const 판박이 = [...해시.values()].filter((ks) => ks.length > 1)
+  if (판박이.length) {
+    console.error(`[foodtab] ❌ 같은 그림이 두 키로 픽커에 올라왔다 — ${판박이.length}쌍`)
+    for (const ks of 판박이.slice(0, 15)) console.error(`   ${names[ks[0]] || '?'} — ${ks.join(' = ')}`)
+    if (판박이.length > 15) console.error(`   … 그리고 ${판박이.length - 15}쌍 더`)
+    console.error('   👉 «나중에» 넣은 키를 FOOD_ICON_GROUPS 와 ICON_RULES 에서 내린다.')
+    console.error('      ⛔ 파일은 지우지 않는다 — 그 키로 저장한 레시피가 깨진다.')
+    fail++
+  } else console.log('[foodtab] ✓ 판박이 그림 0쌍')
+
+  // 같은 이름·다른 그림 = 알려만 준다
+  const 이름별 = new Map()
+  for (const k of 사진들) {
+    const n = names[k]
+    if (!n || n.includes('모둠')) continue   // ⛔ 소스 모둠은 「둘 다」가 창업자 확정(2026-08-19)
+    if (!이름별.has(n)) 이름별.set(n, [])
+    이름별.get(n).push(k)
+  }
+  const 겹친이름 = [...이름별].filter(([, ks]) => ks.length > 1)
+  if (겹친이름.length) {
+    console.log(`[foodtab] ⚠️ 같은 이름·다른 그림 ${겹친이름.length}개 — ⏳창업자 판정 대기(배포는 안 막는다)`)
+    console.log(`   ${겹친이름.slice(0, 8).map(([n, ks]) => `${n}(${ks.length})`).join(' · ')}${겹친이름.length > 8 ? ' …' : ''}`)
+  }
+}
+
 if (fail) { console.error('\n❌ 음식 탭 게이트 실패'); process.exit(1) }
 console.log('✅ 음식 탭 통과 — 중복 0 · 깨진 참조 0 · 빈 이름표 0')
 
