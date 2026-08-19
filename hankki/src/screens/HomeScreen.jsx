@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef } from 'react'
 import { COACH } from '../coach'
+import { pickNextUp } from '../nextUp'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -93,7 +94,8 @@ const HOME_COACH_STEPS = [
 ]
 
 export default function HomeScreen() {
-  const { recipes, profile, pantry, removeRecipe } = useStore()
+  // 📔 diary = 「만들었어요」가 쌓는 요리 일기 — 「한 줄 안 쓴 것」을 세는 데 쓴다(`nextUp.js`)
+  const { recipes, profile, pantry, diary, removeRecipe } = useStore()
   const nav = useNav()
   const [pick, setPick] = useState(0)
   const [preview, setPreview] = useState(false)
@@ -166,6 +168,14 @@ export default function HomeScreen() {
     return { list: cooked.length ? cooked : pool, fromFridge: false }
   }, [recipes, pantry])
   const todayPick = today.list.length ? today.list[pick % today.list.length] : null
+
+  // 🍳 「다음에 뭐 할까」 — 한 자리가 상황을 보고 «하나»를 고른다 (창업자 확정 2026-08-19 · 안 ⓐ)
+  //    ⭐ 고르는 법은 `src/nextUp.js` **한 곳**에 있다 — 여기선 «그리기»만 한다.
+  //    ⛔ 셋을 각각 줄로 놓지 않는다 — 다 「다음에 뭐 할까」라는 같은 물음의 답이라 서로 경쟁한다.
+  const [nextTurn, setNextTurn] = useState(0)
+  const nextUp = useMemo(() => pickNextUp(recipes, diary, Date.now(), nextTurn), [recipes, diary, nextTurn])
+  // ⏳ 시안 둘을 나란히 보려고 잠깐 둔 스위치 — 창업자가 고르면 «진 쪽을 지운다»
+  const 시안 = (typeof localStorage !== 'undefined' && localStorage.getItem('hankki:시안-다음에')) || 'B'
 
   const often = useMemo(
     () => [...recipes].filter((r) => (r.cooked || 0) > 0).sort((a, b) => b.cooked - a.cooked).slice(0, 8),
@@ -262,6 +272,35 @@ export default function HomeScreen() {
           </div>
         )}
 
+        {/* 🍳🍳 「다음에 뭐 할까」 ㉯ 안 — «눈에 띄는 새 카드» (⏳시안 · 창업자 판정 대기)
+            📮 창업자 2026-08-19 = *"a로 가자 **대신 눈에 잘띄게 만들어줘**
+               홈에 비슷한 안내가 많아서 잘 안보고 넘길가능성이 높아."*
+            🔢 실측이 그 말을 뒷받침했다 — 홈에 **같은 결의 베이지 카드가 셋 연속**이다
+               (오늘 뭐 해먹지 · 이번 주 특별한 한끼 · 우리집레시피). 넷째를 얹으면 그냥 묻힌다.
+            ⭐ 지금 홈에서 눈에 걸리는 유일한 카드 = 「한끼 소식」(연파랑 ＋ 곰 ＋ 뱃지) = **결이 달라서**다.
+            ⭐⭐ 그래서 이 카드는 홈에서 **유일하게 「채워진」(진한 바탕) 카드**로 만든다.
+               나머지가 전부 «옅은 바탕 + 진한 글자»라, 반대로 하면 한 장만 튄다.
+            ⭐ 자리도 근거다 — 다른 카드는 «앱이 골라준 것»(소식·추천·이번 주)인데
+               이건 **내가 한 일**에 대한 것이라 결이 다르다. 그래서 맨 위. */}
+        {시안 === 'B' && nextUp && (
+          <button className="next-card press" onClick={() => nextUp.recipe && open(nextUp.recipe.id)}>
+            <img src={nextUp.갈래 === '한줄' ? uiGomHeart : nextUp.갈래 === '안해본것' ? uiGomThumb : uiGomClap}
+              alt="" draggable={false} className="next-gom hk-m-tongtong" />
+            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+              <div className="next-label">{nextUp.라벨}</div>
+              <div className="next-title">{nextUp.제목}</div>
+              <div className="next-reason">{nextUp.이유}</div>
+            </div>
+            {nextUp.단추
+              ? <span className="next-cta">{nextUp.단추}</span>
+              : <Icon name="chevron-right" size={18} color="var(--surface)" />}
+          </button>
+        )}
+        {/* ⛔ 「다른 것」은 카드 «밖»에 — 카드 전체가 눌리는 단추라 안에 넣으면 버튼이 겹친다 */}
+        {시안 === 'B' && nextUp && nextUp.후보수 > 1 && (
+          <button className="next-more press" onClick={() => setNextTurn((n) => n + 1)}>다른 것 보여줘</button>
+        )}
+
         {/* 📣 한끼 소식 — 기대감. 강제 팝업 대신 눈에 띄는 슬림 진입점.
             ⭐⭐ 창업자 2026-08-03 *"새로 열릴때 꼭 안내페이지에 올라오도록 해."*
                우리 업데이트는 «날짜가 저절로» 여는데 앱이 아무 말도 안 했다.
@@ -299,8 +338,26 @@ export default function HomeScreen() {
             <Icon name="chevron-right" size={18} color="var(--sand)" />
           </button>
 
-          {/* 오늘 뭐 해먹지? */}
-          {todayPick && (
+          {/* 오늘 뭐 해먹지?
+              🍳 ㉮ 안(⏳시안) = **이 카드를 다시 쓴다** — 홈에 칸이 «안» 늘어난다.
+                 근거 = 이 카드가 이미 「뭐 먹지」를 묻고 있어서 「다음에 뭐 할까」와 같은 물음이다.
+                 ⛔ 약점 = 눈에 익은 카드라 창업자 걱정(*"잘 안보고 넘길 가능성"*)이 그대로 남는다. */}
+          {시안 === 'A' && nextUp && nextUp.recipe && (
+            <div className="today-card" data-coach="today">
+              <button className="today-main press" onClick={() => open(nextUp.recipe.id)}>
+                <Thumb recipe={nextUp.recipe} style={{ width: 'var(--today-thumb)', height: 'var(--today-thumb)', flex: '0 0 auto' }} radius={16} showDecor />
+                <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                  <div className="today-label">{nextUp.라벨}</div>
+                  <div className="today-title">{nextUp.제목}</div>
+                  <div className="today-reason">{nextUp.이유}</div>
+                </div>
+              </button>
+              {nextUp.후보수 > 1 && (
+                <button className="today-refresh press" onClick={() => setNextTurn((n) => n + 1)}>다른<br />것</button>
+              )}
+            </div>
+          )}
+          {!(시안 === 'A' && nextUp && nextUp.recipe) && todayPick && (
             <div className="today-card" data-coach="today">
               <button className="today-main press" onClick={() => open(todayPick.id)}>
                 {/* ⛔⛔ 크기를 클래스로만 주면 «안 먹는다» — `Thumb` 이 `width: 100%` 를 **인라인**으로 넣기 때문.

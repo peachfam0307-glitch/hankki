@@ -45,8 +45,11 @@ export function pickNextUp(recipes = [], diary = [], now = Date.now(), 돌리기
 
   // ── ① 한 줄 안 쓴 것 (창업자 안 · 시간에 제일 민감하다) ─────────────
   //    ⭐ 최근 것부터 — 오래된 건 이미 기억이 흐리다
+  //    ⛔ **레시피가 아직 있는 것만** — 지우고 나서 일기만 남은 항목을 꺼내면
+  //       눌러도 갈 데가 없다(빈 화면). 「없는 것을 권하지 않는다」
   const 한줄없음 = (diary || [])
     .filter((d) => d && !String(d.note || '').trim() && now - (d.at || 0) <= 한줄_유효기간_일 * 하루)
+    .filter((d) => 살아있는.some((x) => x.id === d.recipeId))
     .sort((a, b) => (b.at || 0) - (a.at || 0))
   if (한줄없음.length) {
     const e = 고르기(한줄없음)
