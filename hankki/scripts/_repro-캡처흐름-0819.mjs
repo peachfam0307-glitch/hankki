@@ -92,8 +92,7 @@ try {
   console.log('— 편집 화면을 다시 열어 캡처를 시험한다 —')
   await page.getByRole('button', { name: '가져오기' }).first().click(); await page.waitForTimeout(700)
   await page.getByText('직접 작성', { exact: false }).first().click(); await page.waitForTimeout(1000)
-  const cap2 = page.getByRole('button', { name: /캡처 사진으로/ }).first()
-  void cap2
+  // ⭐ `cap` 을 그대로 쓴다 — Playwright locator 는 «쓸 때» 다시 찾으므로 새 화면에서도 맞다.
 
   // ── ② 버튼이 «파일 고르기»를 여나 — 사슬의 첫 고리 ──
   //   ⛔⛔ 첫 판은 `document.querySelector('input[type=file]')` 로 쟀다가 **틀린 답**이 나왔다.
