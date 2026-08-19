@@ -17,6 +17,7 @@ import LabSheet from '../components/LabSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { cropSquare } from '../utils'
 import { takeOpenBackup, backupDone } from '../nudges'
+import { 백업용잠그기, 잠긴장수, 백업풀기 } from '../diaryLock'
 
 // 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
 const PROFILE_COACH_KEY = COACH.profile
@@ -38,6 +39,7 @@ export default function ProfileScreen() {
   const [avatarSheet, setAvatarSheet] = useState(false)
   const [editSheet, setEditSheet] = useState(false)
   const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
+  const [unlockAsk, setUnlockAsk] = useState(null) // 백업 안 잠긴 일기를 풀 때 { n, data }
   // 인라인 시트(백업·아바타) — 뒤로가기로 닫기(편집·붙여넣기·확인 시트는 자체 처리)
   useLayerBack(backup, () => setBackup(false))
   useLayerBack(avatarSheet, () => setAvatarSheet(false))
@@ -110,11 +112,25 @@ export default function ProfileScreen() {
     nav.showToast('프로필을 바꿨어요')
   }
 
-  const buildBackup = () => ({
+  // 🔐 [창업자 확정 ⓑ · 2026-08-19] 잠긴 일기는 «본문만 잠가서» 담는다.
+  //   📮 창업자 *"백업할때 일기 잠금 풀리는건 어떻게 해결해?"* → *"일기는 b로 가자"*
+  //   ⛔ 그 전엔 `store.diary` 를 통째로 담고 JSON 으로 평문 저장해서
+  //      **백업 파일을 메모장으로 열면 잠근 일기가 그대로 보였다.**
+  //      (앱 «화면»으로는 못 열었다 — `checkPin` 이 막는다. 새던 건 «파일»이다)
+  //   ⭐ 열쇠 = 이미 저장돼 있는 비번 «자국» → **백업할 때 비번을 안 물어도 된다.**
+  //      푸는 건 「불러오기」 때만 묻는다.
+  //   ⚠️ `crypto.subtle` 이 없으면 **평문으로 담지 않고 본문을 뺀다** — 새는 것보다 잃는 게 낫다
+  //      (원본은 그 폰에 그대로 있다).
+  //   📌 글씨체(`font`·`size`)는 글이 아니라서 안 잠근다.
+  const 일기글자칸 = ['title', 'note', 'line', 'weather', 'note2', 'note3', 'note4']
+
+  // ⚠️ 잠그는 데 시간이 걸려 «비동기»가 됐다 — 부르는 쪽 셋 다 await 로 바꿨다.
+  const buildBackup = async () => ({
     _app: 'hankki', _v: 2, _at: new Date().toISOString(),
     recipes: store.recipes, folders: store.folders, profile: store.profile,
     shops: store.shops, wishlist: store.wishlist, shoppingList: store.shoppingList, pantry: store.pantry,
-    diary: store.diary, seedV: store.seedV, memoCleanV: store.memoCleanV, removedSeedIds: store.removedSeedIds,
+    diary: await 백업용잠그기(store.diary, 일기글자칸),
+    seedV: store.seedV, memoCleanV: store.memoCleanV, removedSeedIds: store.removedSeedIds,
   })
 
   // 📁 파일 이름에 «시각»까지 넣는다 (2026-08-16 창업자 캡처)
@@ -131,8 +147,9 @@ export default function ProfileScreen() {
   }
 
   // 다운로드 폴더로 저장 (데스크톱·폴백)
-  const downloadBackup = () => {
-    const blob = new Blob([JSON.stringify(buildBackup())], { type: 'application/json' })
+  const downloadBackup = async () => {
+    // ⛔ await 를 빼면 `JSON.stringify(Promise)` 가 `{}` 로 굳어 **백업이 통째로 빈다.**
+    const blob = new Blob([JSON.stringify(await buildBackup())], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -148,7 +165,7 @@ export default function ProfileScreen() {
 
   // 공유로 보내기 — 카톡 나에게·드라이브·파일 앱 등 안전한 곳에 바로 저장 (모바일)
   const shareBackup = async () => {
-    const file = new File([JSON.stringify(buildBackup())], backupFilename(), { type: 'application/json' })
+    const file = new File([JSON.stringify(await buildBackup())], backupFilename(), { type: 'application/json' })
     try {
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
@@ -197,7 +214,7 @@ export default function ProfileScreen() {
   const CLIP_MAX = 100 * 1024
 
   const copyBackup = async () => {
-    const json = JSON.stringify(buildBackup())
+    const json = JSON.stringify(await buildBackup())
 
     // ⛔⛔⛔ [2026-08-16 두 번째 고침] **큰 백업은 복사를 «시도조차 하지 않는다».**
     //   📮 창업자 캡처 = 「클립보드로 복사하지 못했습니다」(시스템) ＋ 우리 안내가 «겹쳐서» 떴다.
@@ -225,6 +242,31 @@ export default function ProfileScreen() {
     }
   }
 
+  // 🔐 백업에 «잠긴 일기»가 들어 있으면 불러온 뒤 비번을 물어 푼다.
+  //   ⭐ 순서가 중요하다 — **먼저 불러오고(안 잃는다) → 그다음 푼다.**
+  //      비번을 먼저 물으면 「모르겠다」는 사람이 백업 자체를 못 불러온다.
+  //   ⛔ 「나중에 할래요」를 눌러도 **일기는 그대로 들어와 있다** — 잠긴 채로 남을 뿐이다.
+  //      비번이 생각나면 그때 다시 불러오면 된다.
+  const 불러오기끝 = (data) => {
+    importAll(data)
+    setBackup(false)
+    const n = 잠긴장수(data.diary)
+    if (!n) { nav.showToast('백업을 불러왔어요'); return }
+    nav.showToast(`백업을 불러왔어요 · 잠긴 일기 ${n}장은 비번을 넣어야 보여요`)
+    setUnlockAsk({ n, data })
+  }
+
+  const 잠금풀기 = async ({ pin }) => {
+    const p = String(pin || '').trim()
+    if (!p) { setUnlockAsk(null); return }
+    const { 일기목록, 푼수, 못푼수 } = await 백업풀기(unlockAsk.data.diary, p)
+    setUnlockAsk(null)
+    if (!푼수) { nav.showToast('비번이 안 맞아요 · 다시 불러와서 넣어볼 수 있어요'); return }
+    // ⭐ 푼 것만 반영한다 — 못 푼 것은 «잠긴 채로» 그대로 있다(안 지운다).
+    importAll({ ...unlockAsk.data, diary: 일기목록 })
+    nav.showToast(못푼수 ? `일기 ${푼수}장을 열었어요 · ${못푼수}장은 아직 잠겨 있어요` : `잠긴 일기 ${푼수}장을 열었어요`)
+  }
+
   // 붙여넣은 백업 코드로 복원
   const importFromText = ({ code }) => {
     try {
@@ -234,7 +276,7 @@ export default function ProfileScreen() {
         title: '백업 불러오기',
         message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
         confirmLabel: '불러오기',
-        onConfirm: () => { importAll(data); setBackup(false); nav.showToast('백업을 불러왔어요') },
+        onConfirm: () => 불러오기끝(data),
       })
     } catch {
       nav.showToast('백업 코드를 읽을 수 없어요 처음부터 끝까지 전체를 붙여넣었는지 확인해 주세요')
@@ -253,7 +295,7 @@ export default function ProfileScreen() {
           title: '백업 불러오기',
           message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
           confirmLabel: '불러오기',
-          onConfirm: () => { importAll(data); setBackup(false); nav.showToast('백업을 불러왔어요') },
+          onConfirm: () => 불러오기끝(data),
         })
       } catch {
         nav.showToast('백업 파일을 읽을 수 없어요')
@@ -543,6 +585,22 @@ export default function ProfileScreen() {
         />
       )}
 
+      {/* 🔐 백업 안 잠긴 일기를 푸는 자리 — 새 시트를 만들지 않고 PromptSheet 를 그대로 쓴다 */}
+      {unlockAsk && (
+        <PromptSheet
+          title="잠긴 일기 열기"
+          fields={[{
+            key: 'pin',
+            label: `잠긴 일기 ${unlockAsk.n}장이 있어요`,
+            value: '',
+            placeholder: '비번 네 자리',
+          }]}
+          submitLabel="열기"
+          onSubmit={잠금풀기}
+          onClose={() => setUnlockAsk(null)}
+        />
+      )}
+
       {confirmAsk && (
         <ConfirmSheet
           title={confirmAsk.title}
@@ -613,16 +671,18 @@ export default function ProfileScreen() {
                   ⚠️ 경고 둘은 «내가 코드로 확인한 사실»이라 반드시 적는다:
                      ⑴ `store.jsx` 의 `importAll` 은 **합치기가 아니라 덮어쓰기**다(614줄) —
                         받는 기기에 이미 쓴 게 있으면 통째로 사라진다.
-                     ⑵ 일기 잠금 비번은 `diaryLock.js` 가 localStorage 에 따로 두고
-                        `buildBackup()` 에 «안» 들어간다 → 옮긴 기기에선 **잠금이 풀린 채로 열린다.**
-                        ⛔ 비번(4자리) 해시를 백업에 넣으면 평문 JSON이라 즉시 깨진다 — 그래서 안 넣는 게 맞고, 대신 알린다. */}
+                     ⑵ ✅✅ **[2026-08-19 고쳤다] 잠긴 일기는 이제 «잠긴 채로» 옮겨간다**(창업자 확정 ⓑ).
+                        ⛔ 그 전엔 `store.diary` 를 평문으로 통째 담아 **백업 파일을 메모장으로 열면 본문이 보였다.**
+                           (앱 «화면»으로는 못 열었다 — `checkPin` 이 막는다. 새던 건 «파일»이다)
+                        ⭐ 이제 본문만 비번 자국으로 잠가 담고, 불러올 때 비번을 물어 푼다.
+                           ⛔ 비번 «자국»을 백업에 넣지 않는다 — 넣으면 파일만으로 풀려서 잠근 의미가 없다. */}
               <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 12, fontSize: 12.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
                 <b style={{ color: 'var(--brown)' }}>새 폰·패드로 옮기기</b>{'\n'}
                 <b>1.</b> 쓰던 기기에서 위 <b>「폰에 파일로 저장」</b>을 눌러요{'\n'}
                 <b>2.</b> 그 파일을 새 기기로 보내요 — 카톡 「나에게」·드라이브·메일 어느 쪽이든 돼요{'\n'}
                 <b>3.</b> 새 기기에서 <b>「이미 다른 기기에서 쓰고 있었어요」</b>(소개 마지막 줄) 또는 <b>홈 오른쪽 위 설정 → 백업</b>에서 그 파일을 열면 끝이에요{'\n'}
                 {'\n'}
-                <span className="t-sub" style={{ fontSize: 12 }}>불러오면 <b>그 기기에 있던 내용은 백업 내용으로 바뀌어요.</b>{'\n'}잠가둔 일기는 옮긴 기기에서 <b>잠금이 풀려요</b> — 다시 잠가주세요.</span>
+                <span className="t-sub" style={{ fontSize: 12 }}>불러오면 <b>그 기기에 있던 내용은 백업 내용으로 바뀌어요.</b>{'\n'}잠가둔 일기는 <b>잠긴 채로</b> 옮겨가요 — 불러올 때 비번을 물어볼게요.</span>
               </div>
               <button className="btn-ghost press" style={{ width: '100%' }} onClick={() => fileRef.current?.click()}>백업 파일 불러오기</button>
               <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={() => setPasteOpen(true)}>코드 붙여넣기로 불러오기</button>
