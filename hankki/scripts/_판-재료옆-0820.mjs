@@ -61,19 +61,34 @@ const CHROMIUM = process.env.SMOKE_CHROMIUM
 const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 900 }, timezoneId: 'Asia/Seoul', deviceScaleFactor: 2 })
 
+// 🍲 레시피 둘 — 재료 길이가 다르면 두 갈래의 «차이»가 드러나는 정도가 다르다
+//    📮 창업자 = *"재료와 2단이랑 재료옆이랑 **다른점이뭐야?**"*
+//    ⛔ 콩국수(첫 레시피)로는 안 보인다 — 메모지 «아래» 재료가 「오이 1/2개」처럼 짧아서
+//       전체 폭을 써도 티가 안 난다. **재료가 긴 편이라야 차이가 눈에 보인다.**
+//    🔢 실측으로 고른 것 = **닭곰탕**(재료 10줄 · 18자 넘는 줄 7개 · 평균 21자)
+const 긴편 = '닭곰탕'
+
 const p0 = await ctx.newPage()
 await p0.addInitScript(SEED_COACH_SEEN)
 await p0.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1') })
 await p0.goto('http://127.0.0.1:4404/', { waitUntil: 'networkidle' })
 await p0.waitForFunction(() => !!localStorage.getItem('hankki:v1'), null, { timeout: 15000 })
-const 제목 = await p0.evaluate(() => {
+const 준비 = await p0.evaluate((긴편) => {
   const s = JSON.parse(localStorage.getItem('hankki:v1'))
-  const r = s.recipes[0]
-  r.cooked = 1; r.cookedAt = Date.now() - 864e5
-  s.diary = [{ id: 'd1', recipeId: r.id, title: r.title, source: r.source, at: Date.now() - 864e5, rating: 4, note: '간장 반만 · 마지막에 참기름', photo: null }]
+  const 메모 = (r) => ({ id: 'd_' + r.id, recipeId: r.id, title: r.title, source: r.source, at: Date.now() - 864e5, rating: 4, note: '간장 반만 · 마지막에 참기름', photo: null })
+  const 첫 = s.recipes[0]
+  const 긴 = s.recipes.find((r) => r.title === 긴편)
+  s.diary = []
+  for (const r of [첫, 긴]) {
+    if (!r) continue
+    r.cooked = 1; r.cookedAt = Date.now() - 864e5
+    s.diary.push(메모(r))
+  }
   localStorage.setItem('hankki:v1', JSON.stringify(s))
-  return r.title
-})
+  return { 짧은: 첫.title, 긴: 긴 ? 긴.title : null }
+}, 긴편)
+const 제목 = 준비.짧은
+if (!준비.긴) { console.log(`⚠️ 「${긴편}」을 못 찾았다 — 짧은 편만 찍는다`) }
 await p0.close()
 
 const 놓기 = async (p, 갈래) => {
@@ -174,13 +189,22 @@ const 놓기 = async (p, 갈래) => {
   }, { url: 데이터(종이), w, h, fam: 글씨[0], weight: 글씨[1], 갈래 })
 }
 
+// 찍을 목록 = 짧은 편(갈래 다섯) ＋ 긴 편(차이가 드러나는 둘만)
+const 찍을것 = 갈래들.map(([키, 이름, 설명]) => ({ 편: '짧은', 제목: 준비.짧은, 키, 이름, 설명 }))
+if (준비.긴) {
+  for (const 키 of ['f44t', 'col']) {
+    const [, 이름, 설명] = 갈래들.find((g) => g[0] === 키)
+    찍을것.push({ 편: '긴', 제목: 준비.긴, 키, 이름, 설명 })
+  }
+}
+
 const 컷들 = []
-for (const [키, 이름, 설명] of 갈래들) {
+for (const { 편, 제목: 이번제목, 키, 이름, 설명 } of 찍을것) {
   const p = await ctx.newPage()
   await p.addInitScript(SEED_COACH_SEEN)
   await p.goto('http://127.0.0.1:4404/', { waitUntil: 'networkidle' })
   await p.waitForTimeout(700)
-  await p.click(`text=${제목}`)
+  await p.click(`text=${이번제목}`)
   await p.waitForSelector('.memo-note', { timeout: 10000 })
   const 잰값 = await 놓기(p, 키)
   await p.waitForTimeout(420)
@@ -199,21 +223,24 @@ for (const [키, 이름, 설명] of 갈래들) {
     const 아래 = Math.min(window.innerHeight, Math.round(r.bottom + 330))
     return { x: 0, y: 위, width: 390, height: Math.max(120, 아래 - 위) }
   })
-  const 곳 = `${OUT}/재료옆-${키}.png`
+  const 곳 = `${OUT}/재료옆-${편}-${키}.png`
   await p.screenshot({ path: 곳, clip })
-  컷들.push({ 키, 이름, 설명, 곳, ...(잰값 || {}) })
-  console.log(`  ${이름} → ${잰값 ? `${잰값.폭}×${잰값.높이}px` : '못 잼'}`)
+  컷들.push({ 편, 제목: 이번제목, 키, 이름, 설명, 곳, ...(잰값 || {}) })
+  console.log(`  [${편}] ${이번제목} · ${이름} → ${잰값 ? `${잰값.폭}×${잰값.높이}px` : '못 잼'}`)
   await p.close()
 }
 await ctx.close(); await b.close(); srv.close()
 
 // ── 판 ────────────────────────────────────
 const 파일 = (f) => 'data:image/png;base64,' + readFileSync(f).toString('base64')
-const 줄 = 컷들.map((c) => `
+const 줄만들기 = (편) => 컷들.filter((c) => c.편 === 편).map((c) => `
   <figure class="shot${c.키 === 'now' ? ' base' : ''}">
     <img src="${파일(c.곳)}" alt="">
     <figcaption><b>${c.이름}</b> · 메모지 <b>${c.폭 || '?'}px</b><br><span>${c.설명}</span></figcaption>
   </figure>`).join('')
+const 줄 = 줄만들기('짧은')
+const 긴줄 = 줄만들기('긴')
+const 긴제목 = (컷들.find((c) => c.편 === '긴') || {}).제목 || ''
 
 const html = `<title>메모지를 재료 옆으로</title>
 <style>
@@ -288,9 +315,22 @@ const html = `<title>메모지를 재료 옆으로</title>
   ⛔ 맨 왼쪽 점선이 <b>지금</b>(재료 위)이야.
 </div>
 
-<h2>자리 갈래 넷</h2>
+<h2>자리 갈래 다섯</h2>
 <p class="h2sub">전부 폰(390) 화면이야. 옆으로 밀어서 봐줘.</p>
 <div class="row">${줄}</div>
+
+<h2>「재료 옆」과 「2단」의 차이 — ${긴제목}</h2>
+<p class="h2sub">네가 물은 그거야. <b>콩국수로는 차이가 안 보여</b> — 메모지 아래 재료가
+「오이 1/2개」처럼 짧아서 넓어져도 티가 안 나거든.
+그래서 <b>재료가 긴 편(${긴제목})</b>으로 다시 찍었어.</p>
+
+<div class="note">
+  ⭐⭐ <b>차이는 「메모지 아래」에 있어.</b><br>
+  · <b>재료 옆</b> — 메모지 옆으로 글이 흐르다가, <b>메모지가 끝나면 재료가 다시 화면 전체 폭</b>을 써.
+    종이에 포스트잇 붙인 그대로야.<br>
+  · <b>2단</b> — 재료가 <b>끝까지 좁아.</b> 메모지 아래 오른쪽이 계속 빈칸으로 남아.
+</div>
+<div class="row">${긴줄}</div>
 
 <div class="ask">
   <h3>1. 어느 자리로 갈까?</h3>
