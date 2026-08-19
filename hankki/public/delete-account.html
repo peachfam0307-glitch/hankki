@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>한끼 — 계정·데이터 삭제 요청</title>
+<meta name="description" content="한끼(HANKKI) 앱의 계정 및 데이터 삭제를 요청하는 방법 안내" />
+<!--
+  🗑 계정·데이터 삭제 요청 페이지 — 2026-08-19
+  ⭐ 왜 있나 = Play 정책. 공식 요건 넷(support.google.com/googleplay/android-developer/answer/13327111):
+     ①오류 없이 열린다 ②삭제 요청 경로가 «눈에 잘 띈다» ③**앱 또는 개발자 이름을 참조**한다
+     ④Play Console 의 지정된 URL 칸에 이 주소를 넣는다
+  ⭐ ＋ *"정당한 사유로 데이터를 보관해야 하면 보관 관행을 «명확히 알려야» 한다"* → 아래 3번
+  ⛔ `mailto:` 만 제출하면 «거절»된다 — 반드시 `https://` 페이지여야 한다. 그래서 이 파일이 있다.
+  ⛔ 앱(`src/`)을 한 줄도 안 건드린다. `privacy.html` 과 같은 «따로 선» 정적 페이지다.
+  📌 여기 적힌 보관 기간은 `privacy.html` ＋ `ocr-proxy/worker.js` 의 «실제 값»이다. 지어낸 게 아니다.
+-->
+<style>
+  :root {
+    --bg: #f5f6f4; --card: #ffffff; --ink: #3d3830; --sub: #6b6a63; --faint: #9a9990;
+    --brown: #6b4f3a; --line: #e8e9e4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16180f; --card: #1e2118; --ink: #ecebdf; --sub: #aab0a0; --faint: #7c8274; --brown: #ca9d70; --line: #2b3026; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+    line-height: 1.75; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 22px 80px; }
+  .eyebrow { font-size: 13px; letter-spacing: .04em; color: var(--brown); font-weight: 700; margin: 0 0 8px; }
+  h1 { font-size: 26px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.02em; }
+  .updated { font-size: 13px; color: var(--faint); margin: 0 0 26px; }
+  .lead {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 18px 20px; font-size: 15px; color: var(--ink); margin-bottom: 30px;
+  }
+  .lead b { color: var(--brown); }
+  h2 { font-size: 17px; font-weight: 800; margin: 30px 0 8px; letter-spacing: -.01em; }
+  p, li { font-size: 14.5px; color: var(--sub); }
+  ul { margin: 6px 0; padding-left: 20px; }
+  li { margin: 4px 0; }
+  b { color: var(--ink); }
+  a { color: var(--brown); }
+  .act {
+    background: var(--card); border: 2px solid var(--brown); border-radius: 16px;
+    padding: 20px; margin: 22px 0 8px;
+  }
+  .act h2 { margin-top: 0; }
+  .mail {
+    display: block; text-align: center; background: var(--brown); color: #fffdf8;
+    padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 800;
+    text-decoration: none; margin: 14px 0 6px;
+  }
+  .did {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; font-size: 13px; margin: 10px 0 0; word-break: break-all;
+  }
+  .did code { font-size: 14px; color: var(--brown); font-weight: 700; }
+  button.copy {
+    margin-top: 8px; padding: 9px 14px; font-size: 13.5px; font-weight: 700;
+    border: 1px solid var(--line); border-radius: 9px; background: var(--card); color: var(--ink);
+  }
+  footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--faint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">HANKKI · 한끼</p>
+  <h1>계정·데이터 삭제 요청</h1>
+  <p class="updated">한끼(HANKKI) 앱 · 2026년 8월 19일</p>
+
+  <div class="lead">
+    <b>한끼는 회원가입도 로그인도 없습니다.</b> 그래서 <b>지울 «계정» 자체가 없습니다.</b><br /><br />
+    레시피·냉장고·장보기·요리 기록·일기는 전부 <b>사용자 폰 안에만</b> 저장됩니다.
+    <b>앱을 지우면 그 데이터도 함께 사라집니다.</b><br /><br />
+    다만 글자 인식(AI 스캔)을 쓴 적이 있다면 <b>이용 횟수를 세기 위한 «임의의 기기 번호»</b>가
+    한끼 중계 서버에 잠시 남습니다. <b>그것도 삭제를 요청하실 수 있습니다</b> — 아래 방법으로요.
+  </div>
+
+  <div class="act">
+    <h2>삭제 요청하기</h2>
+    <p>아래 주소로 메일을 보내 주세요. <b>따로 양식은 없습니다.</b></p>
+    <a class="mail" href="mailto:annyeong.hankki@gmail.com?subject=%5B%ED%95%9C%EB%81%BC%5D%20%EB%8D%B0%EC%9D%B4%ED%84%B0%20%EC%82%AD%EC%A0%9C%20%EC%9A%94%EC%B2%AD">annyeong.hankki@gmail.com</a>
+    <p>메일에 <b>아래 「내 기기 번호」</b>를 붙여넣어 주시면 그 자리에서 찾아 지워 드립니다.</p>
+    <div class="did" id="didBox">내 기기 번호를 찾는 중…</div>
+    <p style="margin-top:14px">
+      <b>기기 번호를 모르셔도 됩니다.</b> 번호 없이 보내시면 확인 방법을 답장으로 안내해 드립니다.
+      번호는 이름·연락처와 연결되지 않는 <b>무작위 문자열</b>이라, 그 자체로는 누구인지 알 수 없습니다.
+    </p>
+  </div>
+
+  <h2>1. 앱 안에서 지우는 방법</h2>
+  <p>지금은 계정이 없으므로 <b>앱을 삭제하는 것이 곧 전체 삭제</b>입니다.</p>
+  <ul>
+    <li>폰에서 <b>한끼 앱을 길게 눌러 삭제</b>하면 저장된 모든 데이터가 함께 지워집니다</li>
+    <li>⚠️ <b>되돌릴 수 없습니다.</b> 남기고 싶은 레시피가 있다면 지우기 전에
+      앱의 <b>설정 → 백업</b>에서 파일로 저장해 두세요</li>
+  </ul>
+
+  <h2>2. 무엇이 지워지나요</h2>
+  <ul>
+    <li><b>폰 안의 모든 것</b> — 레시피·냉장고·장보기·요리 기록·일기·꾸미기·프로필. 앱 삭제와 동시에 사라집니다</li>
+    <li><b>중계 서버의 이용 기록</b> — 임의의 기기 번호와 그에 붙은 이용 횟수. 위 요청으로 즉시 삭제해 드립니다</li>
+  </ul>
+
+  <h2>3. 요청하지 않으면 언제까지 남나요</h2>
+  <p>한끼가 서버에 두는 것은 <b>「누가」가 아니라 「몇 번 썼나」</b>뿐이며, 아래 기간이 지나면 <b>저절로 사라집니다.</b></p>
+  <ul>
+    <li><b>사진</b> — <b>보관하지 않습니다.</b> 글자만 읽고 곧바로 버립니다</li>
+    <li><b>임의의 기기 번호와 이용 횟수</b> — <b>40일</b> 뒤 자동 삭제</li>
+    <li><b>무료 이용권 잔여 횟수</b> — 남아 있는 동안 <b>최대 1년</b> 보관 (다 쓰기 전에 없애면
+      받으신 무료 횟수가 사라지기 때문입니다)</li>
+    <li><b>접속 주소(IP)</b> — 과도한 요청을 막기 위해 잠시만 쓰고 <b>2분</b> 뒤 삭제</li>
+  </ul>
+  <p>이름·이메일·전화번호·위치는 <b>애초에 받지 않습니다.</b> 자세한 내용은
+    <a href="./privacy.html">개인정보처리방침</a>에 있습니다.</p>
+
+  <h2>4. 처리 기간</h2>
+  <p>메일을 받으면 <b>지체 없이</b> 처리하고 완료 사실을 답장으로 알려 드립니다.
+    보통 <b>영업일 기준 3일 이내</b>입니다.</p>
+
+  <h2>5. 앞으로 로그인이 생기면</h2>
+  <p>한끼는 데이터를 클라우드에 백업하는 기능을 준비하고 있습니다. 그때 <b>구글 로그인</b>이 생기면,
+    <b>앱 안에도 「계정 삭제」 버튼</b>이 함께 들어가고 이 페이지도 그에 맞게 갱신됩니다.
+    <b>지금은 계정이 없으므로 해당되지 않습니다.</b></p>
+
+  <footer>
+    © 2026 한끼(HANKKI) · 문의 <a href="mailto:annyeong.hankki@gmail.com">annyeong.hankki@gmail.com</a><br />
+    이 안내는 한끼 앱의 실제 동작에 근거하여 작성되었습니다.
+  </footer>
+</div>
+
+<script>
+// 🔑 「내 기기 번호」를 여기서 직접 보여준다 — 유저는 앱 안에서 이 값을 볼 방법이 없다.
+//   ⭐ 같은 주소(origin)라 앱이 저장해 둔 값을 이 페이지가 그대로 읽는다.
+//   ⚠️ 앱을 이미 지웠거나 다른 브라우저면 «없다» — 그때는 없이 보내도 된다고 안내한다.
+//   ⛔ 어디로도 보내지 않는다. 화면에 보여주기만 한다.
+(function () {
+  var box = document.getElementById('didBox')
+  var id = null
+  try { id = localStorage.getItem('hankki:did') } catch (e) { id = null }
+  if (!id) {
+    box.innerHTML = '<b>내 기기 번호</b> — 이 브라우저에는 없습니다.'
+      + '<br />앱을 이미 지우셨거나 다른 브라우저로 여신 경우입니다. <b>번호 없이 메일을 보내셔도 됩니다.</b>'
+    return
+  }
+  box.innerHTML = '<b>내 기기 번호</b><br /><code id="didVal">' + id + '</code>'
+  var btn = document.createElement('button')
+  btn.className = 'copy'; btn.textContent = '번호 복사하기'
+  btn.onclick = async function () {
+    try { await navigator.clipboard.writeText(id); btn.textContent = '복사했어요 ✓' }
+    catch (e) { btn.textContent = '위 번호를 길게 눌러 복사해 주세요' }
+  }
+  box.appendChild(btn)
+})()
+</script>
+</body>
+</html>
