@@ -244,10 +244,18 @@
   var KEY = 'hankki:oauthClientId'
   try { $('cid').value = localStorage.getItem(KEY) || '' } catch (e) {}
   $('real').onclick = function () {
-    var id = ($('cid').value || '').trim()
-    if (!/apps\.googleusercontent\.com$/.test(id)) {
-      $('realNote').textContent = '⚠️ 아직 열쇠(클라이언트 ID)가 없어요. …apps.googleusercontent.com 으로 끝나야 해요.'
-      return
+    // ⛔⛔ 2026-08-19 — 여기 검사가 «너무 빡빡해서» 창업자가 제대로 붙여넣고도 막혔다.
+    //   ⭐ 틀린 열쇠면 «구글이» 알려준다(invalid_client). 내가 미리 막을 이유가 없다.
+    //   ⭐ 그리고 막을 거면 «뭘 받았는지»를 보여줘야 한다 — 안 보여주면 원인을 못 찾는다.
+    //   ⚠️ 폰에서 복사하면 눈에 안 보이는 글자(줄바꿈·제로폭 공백)가 딸려온다 → 그것부터 턴다.
+    var id = ($('cid').value || '').replace(/[\s​-‍﻿]/g, '')
+    $('cid').value = id
+    if (!id) { $('realNote').textContent = '⚠️ 칸이 비어 있어요.'; return }
+    if (id.indexOf('googleusercontent') < 0) {
+      $('realNote').innerHTML = '⚠️ 이게 클라이언트 ID 가 맞나요? <b>받은 글자 ' + id.length + '자</b>,'
+        + ' 끝부분이 <b>「…' + id.slice(-24) + '」</b> 예요.<br>'
+        + '보통은 <b>…apps.googleusercontent.com</b> 으로 끝나요. 그래도 그냥 눌러 보시려면 한 번 더 누르세요.'
+      if (!window.__forceTry) { window.__forceTry = 1; return }
     }
     try { localStorage.setItem(KEY, id) } catch (e) {}
     // ⛔⛔ `response_type=token`(암묵적 흐름)을 쓰면 안 된다 — 구글이 새 클라이언트에 막고 있어
