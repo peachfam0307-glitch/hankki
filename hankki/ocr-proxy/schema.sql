@@ -32,12 +32,13 @@ CREATE TABLE IF NOT EXISTS credits (
   sku           TEXT NOT NULL,
   uid           TEXT NOT NULL,             -- 지금 이 팩을 쓰는 기기
   remaining     INTEGER NOT NULL,          -- 남은 장수
-  needs_consume INTEGER NOT NULL DEFAULT 0,-- 다 썼다 → 다음 sync 때 consume 해서 «또 살 수 있게»
-  consumed      INTEGER NOT NULL DEFAULT 0,
+  needs_consume INTEGER NOT NULL DEFAULT 0,-- (예비) 「다 쓴 뒤에 비우기」 모드에서만 쓴다
+  consumed      INTEGER NOT NULL DEFAULT 0,-- ⛔⛔ **구글 쪽에서 비웠다는 표시일 뿐 «잔량과 무관»하다.**
+                                           --   섞어 보면 «사자마자 잔량이 0» 이 된다(2026-08-19 실제 버그).
   created_at    INTEGER NOT NULL,
   updated_at    INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS credits_uid ON credits (uid, consumed, remaining);
+CREATE INDEX IF NOT EXISTS credits_uid ON credits (uid, remaining);
 
 -- ③ 영구 팩 — ⛔consume 하지 않는다. 사실 구글이 기억해 주므로 이 표는 «장부»에 가깝다
 --   (앱이 켜질 때마다 `listPurchases()` 로 다시 들고 와 sync 하면 저절로 되살아난다).

@@ -86,15 +86,17 @@ const BILLING = {
   // 🎨 영구 = 한 번 사면 계속. ⛔consume 하지 않는다(하면 복원이 깨진다).
   DURABLE: ['deco_chuseok', 'deco_halloween', 'deco_autumn', 'deco_xmas', 'deco_winter'],
 
-  // ⏳⏳ **창업자 판정 대기 — 소모성 팩을 «언제» consume 하나**
-  //   'exhausted' = 다 쓸 때까지 미룬다  ← 지금 값
-  //       ✅ 폰을 바꿔도 «남은 장수»가 따라온다 (구글이 토큰을 기억하니까 · 이메일 없이 복원)
-  //       ⛔ 다 쓰기 «전»엔 같은 팩을 다시 못 산다 (Play 가 「이미 보유」로 막는다)
-  //   'now'       = 사자마자 consume
-  //       ✅ 언제든 또 살 수 있다
-  //       ⛔ 앱을 지웠다 깔면 «남은 장수»가 사라진다 (기기 uid 가 바뀌므로)
-  //   📌 `docs/결제-준비상태-2026-08-07.md` 6️⃣-②·③ 의 그 판정이다. 한 낱말만 바꾸면 된다.
-  CONSUME_WHEN: 'exhausted',
+  // 🔢 소모성 팩을 «언제» 비우나(consume).
+  //   ⛔⛔ **'exhausted'(다 쓸 때까지 미루기) 는 «죽은 길»이다 — 다시 넣지 말 것.**
+  //      공식(안드로이드 개발자 문서) = *"소모하지 않으면 «보유 중»이라 다시 살 수 없고
+  //      `ITEM_ALREADY_OWNED` 가 돌아온다"* → **다 쓰기 전엔 한 팩도 더 못 판다.**
+  //      📌 우리 문서가 이미 그렇게 닫아 뒀다 = `docs/구글에-물어볼것-결제-2026-08-16.md` 7️⃣ 「바」
+  //         (*"「다 쓸 때까지 미룬다」 안은 죽었다. 잔량은 서버(Worker＋D1)로"*)
+  //   ✅ 그래서 'now' = **사자마자 비운다.** 언제든 또 살 수 있다.
+  //      ⭐ 그 대신 「폰을 바꾸면 남은 장수가 사라진다」를 우리가 막아야 한다 —
+  //         잔량을 «구매 토큰»에 매달아 두고, 앱이 그 토큰을 다시 들고 오면 새 기기로 옮긴다.
+  //         (`listPurchaseHistory()` 는 **소모된 구매도** 토큰째 돌려준다 · 공식 확인 2026-08-19)
+  CONSUME_WHEN: 'now',
 }
 
 const OAUTH_URL = 'https://oauth2.googleapis.com/token'
@@ -382,11 +384,20 @@ async function handlePurchase(env, uid, sku, token) {
           'INSERT OR IGNORE INTO credits (token, sku, uid, remaining, needs_consume, consumed, created_at, updated_at) VALUES (?,?,?,?,0,0,?,?)',
         ).bind(token, sku, uid, give, now, now).run()
       } else {
-        // ⭐⭐ **이미 아는 토큰인데 uid 가 다르다 = 폰을 바꿨거나 앱을 지웠다 깐 것.**
-        //   남은 장수를 «새 기기로 옮겨 준다». 이메일도 로그인도 없이 복원되는 자리다.
-        //   (구글이 계정에 토큰을 기억해 주므로 앱이 `listPurchases()` 로 다시 들고 온다)
-        await db.prepare('UPDATE credits SET uid=?, updated_at=? WHERE token=? AND consumed=0')
+        // ⭐⭐⭐ **이미 아는 토큰인데 uid 가 다르다 = 폰을 바꿨거나 앱을 지웠다 깐 것.**
+        //   남은 장수를 «새 기기로 옮겨 준다». **이메일도 로그인도 없이 복원되는 자리다.**
+        //   ⭐ 앱은 `listPurchases()` ＋ **`listPurchaseHistory()`** 를 같이 보낸다 —
+        //      뒤엣것은 **이미 비운(consumed) 구매까지** 토큰째 돌려주므로, 사자마자 비워도 복원이 산다.
+        const old = await db.prepare('SELECT uid FROM credits WHERE token=?').bind(token).first()
+        await db.prepare('UPDATE credits SET uid=?, updated_at=? WHERE token=?')
           .bind(uid, now, token).run()
+        // ⚠️⚠️ `listPurchaseHistory()` 는 **상품마다 «가장 최근» 한 건만** 준다(공식).
+        //   그래서 팩을 두 번 산 사람은 옛 토큰이 안 돌아온다 →
+        //   ⭐ 돌아온 토큰의 «옛 주인»을 찾아 **그 기기에 있던 남은 팩을 전부 같이 옮긴다.**
+        if (old && old.uid && old.uid !== uid) {
+          await db.prepare('UPDATE credits SET uid=?, updated_at=? WHERE uid=? AND remaining>0')
+            .bind(uid, now, old.uid).run()
+        }
         await db.prepare('UPDATE purchases SET uid=?, updated_at=? WHERE token=?').bind(uid, now, token).run()
       }
     } else {
@@ -435,7 +446,7 @@ async function consumeExhausted(env, uid) {
 async function billingState(env, uid) {
   const out = { credits: 0, entitlements: [] }
   try {
-    const c = await env.HANKKI_DB.prepare('SELECT COALESCE(SUM(remaining),0) AS n FROM credits WHERE uid=? AND consumed=0').bind(uid).first()
+    const c = await env.HANKKI_DB.prepare('SELECT COALESCE(SUM(remaining),0) AS n FROM credits WHERE uid=?').bind(uid).first()
     out.credits = (c && c.n) || 0
     const e = await env.HANKKI_DB.prepare('SELECT sku FROM entitlements WHERE uid=?').bind(uid).all()
     out.entitlements = ((e && e.results) || []).map((r) => r.sku)
@@ -446,12 +457,18 @@ async function billingState(env, uid) {
 // ── OCR 길에서 부르는 둘 ──────────────────────────────────
 // ⭐⭐ 이 둘은 **무슨 일이 나도 던지지 않는다.** 던지면 사진 읽기가 통째로 죽는다.
 //   결제가 안 되는 것과 앱이 깨지는 것은 다르다(`src/billing.js` 와 같은 원칙).
+//
+// ⛔⛔ **`consumed` 와 `remaining` 을 헷갈리지 말 것 — 2026-08-19 에 실제로 헷갈려 버그를 냈다.**
+//   · `consumed=1` = **구글 쪽에서 비웠다**(＝또 살 수 있게 풀었다). 우리 장수와 아무 상관이 없다.
+//   · `remaining`  = **우리가 줘야 할 남은 장수.**
+//   📌 그래서 잔량을 셀 때 `consumed` 를 보면 안 된다 — 보면 **사자마자 잔량이 0이 된다**
+//      (`CONSUME_WHEN: 'now'` 이라 구매 즉시 consumed=1 이 되니까). 재현판 ⑤가 이걸 잡았다.
 
 // 산 장수가 몇 장 남았나. ⛔D1 이 없거나 오류면 **0** → 지금과 «똑같이» 막힌다.
 async function paidCredits(env, uid) {
   if (!env.HANKKI_DB) return 0
   try {
-    const r = await env.HANKKI_DB.prepare('SELECT COALESCE(SUM(remaining),0) AS n FROM credits WHERE uid=? AND consumed=0').bind(uid).first()
+    const r = await env.HANKKI_DB.prepare('SELECT COALESCE(SUM(remaining),0) AS n FROM credits WHERE uid=?').bind(uid).first()
     return (r && r.n) || 0
   } catch { return 0 }
 }
@@ -464,7 +481,7 @@ async function spendCredit(env, uid) {
   const now = Math.floor(Date.now() / 1000)
   try {
     const row = await env.HANKKI_DB.prepare(
-      'SELECT token FROM credits WHERE uid=? AND consumed=0 AND remaining>0 ORDER BY created_at LIMIT 1',
+      'SELECT token FROM credits WHERE uid=? AND remaining>0 ORDER BY created_at LIMIT 1',
     ).bind(uid).first()
     if (!row) return { left: 0, token: null }
     const u = await env.HANKKI_DB.prepare(
@@ -479,7 +496,7 @@ async function spendCredit(env, uid) {
 async function refundCredit(env, token) {
   if (!env.HANKKI_DB || !token) return
   try {
-    await env.HANKKI_DB.prepare('UPDATE credits SET remaining=remaining+1, needs_consume=0, updated_at=? WHERE token=? AND consumed=0')
+    await env.HANKKI_DB.prepare('UPDATE credits SET remaining=remaining+1, updated_at=? WHERE token=?')
       .bind(Math.floor(Date.now() / 1000), token).run()
   } catch { /* 되돌리기 실패는 유저에게 손해가 없다(장수가 한 장 덜 남을 뿐) */ }
 }

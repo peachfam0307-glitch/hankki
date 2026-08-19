@@ -205,8 +205,28 @@ export async function buy(sku) {
 //      `listPurchases()` 에 다시 나오고 → 여기서 다시 보내 → acknowledge·장수 지급이 «따라붙는다».
 //   ⭐ 서버는 **토큰이 기본키**라 몇 번을 보내도 결과가 같다(멱등) — 두 배로 주지 않는다.
 //   ⛔ 던지지 않는다. 결제가 안 되는 것과 앱이 깨지는 것은 다르다.
+// 📜 «비운 구매까지» 되짚기 — `listPurchases()` 는 소모된 것을 안 준다.
+//   ⭐⭐ 앱을 지웠다 깔면 기기 번호가 바뀌는데, 이걸로 옛 구매 토큰이 돌아와 **남은 장수가 복원된다.**
+//   ⚠️ 공식 = **상품마다 «가장 최근» 한 건**만 준다 → 여러 번 산 사람은 옛 토큰이 안 온다.
+//      ⭐ 그건 서버가 「그 토큰의 옛 주인」을 찾아 그 기기의 팩을 전부 같이 옮겨 메운다.
+//   ⛔ 없는 브라우저도 있다 → 없으면 빈 배열(앱은 그대로 돈다).
+export async function purchaseHistory() {
+  const s = await service()
+  if (!s || typeof s.listPurchaseHistory !== 'function') return []
+  try {
+    const list = await s.listPurchaseHistory()
+    return (list || []).map((p) => ({ sku: p.itemId, token: p.purchaseToken }))
+  } catch {
+    return []
+  }
+}
+
 export async function syncPurchases() {
-  const list = await purchases()
+  // ⭐ 둘을 합쳐 보낸다 — 지금 가진 것(listPurchases) ＋ 비운 것까지(listPurchaseHistory).
+  //   같은 토큰이 양쪽에 있을 수 있어 «토큰으로» 겹치는 걸 뺀다.
+  const seen = new Set()
+  const list = [...(await purchases()), ...(await purchaseHistory())]
+    .filter((p) => p && p.token && !seen.has(p.token) && seen.add(p.token))
   if (!list.length) return { ok: false, reason: 'none' }
   try {
     const r = await fetch(`${OCR_PROXY_URL}/billing/sync`, {

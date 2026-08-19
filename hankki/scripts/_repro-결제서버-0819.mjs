@@ -44,9 +44,17 @@ function fakeDB() {
         T.credits.set(a[0], { token: a[0], sku: a[1], uid: a[2], remaining: a[3], needs_consume: 0, consumed: 0, created_at: a[4] })
         return { meta: { changes: 1 } }
       },
-    'UPDATE credits SET uid=?, updated_at=? WHERE token=? AND consumed=0': (a) => {
-      const r = T.credits.get(a[2]); if (!r || r.consumed) return { meta: { changes: 0 } }
+    'UPDATE credits SET uid=?, updated_at=? WHERE token=?': (a) => {
+      const r = T.credits.get(a[2]); if (!r) return { meta: { changes: 0 } }
       r.uid = a[0]; return { meta: { changes: 1 } }
+    },
+    'SELECT uid FROM credits WHERE token=?': (a) => {
+      const r = T.credits.get(a[0]); return r ? { uid: r.uid } : null
+    },
+    'UPDATE credits SET uid=?, updated_at=? WHERE uid=? AND remaining>0': (a) => {
+      let n = 0
+      for (const r of T.credits.values()) if (r.uid === a[2] && r.remaining > 0) { r.uid = a[0]; n++ }
+      return { meta: { changes: n } }
     },
     'UPDATE purchases SET uid=?, updated_at=? WHERE token=?': (a) => {
       const r = T.purchases.get(a[2]); if (!r) return { meta: { changes: 0 } }
@@ -67,12 +75,12 @@ function fakeDB() {
       const r = T.credits.get(a[1]); if (!r) return { meta: { changes: 0 } }
       r.consumed = 1; return { meta: { changes: 1 } }
     },
-    'SELECT COALESCE(SUM(remaining),0) AS n FROM credits WHERE uid=? AND consumed=0': (a) =>
-      ({ n: [...T.credits.values()].filter((r) => r.uid === a[0] && !r.consumed).reduce((s, r) => s + r.remaining, 0) }),
+    'SELECT COALESCE(SUM(remaining),0) AS n FROM credits WHERE uid=?': (a) =>
+      ({ n: [...T.credits.values()].filter((r) => r.uid === a[0]).reduce((s, r) => s + r.remaining, 0) }),
     'SELECT sku FROM entitlements WHERE uid=?': (a) =>
       ({ results: [...T.entitlements.values()].filter((r) => r.uid === a[0]) }),
-    'SELECT token FROM credits WHERE uid=? AND consumed=0 AND remaining>0 ORDER BY created_at LIMIT 1': (a) => {
-      const list = [...T.credits.values()].filter((r) => r.uid === a[0] && !r.consumed && r.remaining > 0)
+    'SELECT token FROM credits WHERE uid=? AND remaining>0 ORDER BY created_at LIMIT 1': (a) => {
+      const list = [...T.credits.values()].filter((r) => r.uid === a[0] && r.remaining > 0)
         .sort((x, y) => x.created_at - y.created_at)
       return list[0] || null
     },
@@ -80,9 +88,9 @@ function fakeDB() {
       const r = T.credits.get(a[1]); if (!r || r.remaining <= 0) return { meta: { changes: 0 } }
       r.remaining -= 1; r.needs_consume = r.remaining <= 0 ? 1 : 0; return { meta: { changes: 1 } }
     },
-    'UPDATE credits SET remaining=remaining+1, needs_consume=0, updated_at=? WHERE token=? AND consumed=0': (a) => {
-      const r = T.credits.get(a[1]); if (!r || r.consumed) return { meta: { changes: 0 } }
-      r.remaining += 1; r.needs_consume = 0; return { meta: { changes: 1 } }
+    'UPDATE credits SET remaining=remaining+1, updated_at=? WHERE token=?': (a) => {
+      const r = T.credits.get(a[1]); if (!r) return { meta: { changes: 0 } }
+      r.remaining += 1; return { meta: { changes: 1 } }
     },
   }
   return {
@@ -245,29 +253,55 @@ const run = async () => {
     eq('옛 기기 쪽은 0 이 됐다(두 배로 늘지 않는다)', (await old.json()).credits, 0)
   }
 
-  // ── ⑦ 다 쓰면 consume → «또 살 수 있다» ───────────────────
-  console.log('\n⑦ 다 쓰면 consume 해서 또 살 수 있게 푼다')
+  // ── ⑥-b 제일 어려운 경우 = 두 번 산 사람이 앱을 지웠다 깐다 ──
+  console.log('\n⑥-b 팩을 «두 번» 산 사람이 앱을 지웠다 깐다 — 둘 다 따라와야 한다')
   {
+    // 두 번째 팩(다른 토큰)을 지금 기기에 붙인다
+    state.purchase = { purchaseState: 0, acknowledgementState: 0, orderId: 'GPA.2', quantity: 1 }
+    await worker.fetch(req('/billing/sync', { uid: 'NEW-uid', purchases: [{ sku: PACK, token: 'tok-2nd' }] }), env3)
+    const before = (await (await worker.fetch(req('/billing/state', { uid: 'NEW-uid' }), env3)).json()).credits
+    eq('두 팩이 한 기기에 모였다', before > 20, true)
+    // ⚠️ 앱을 지웠다 깔면 uid 가 바뀌고, `listPurchaseHistory()` 는 **최근 한 건**만 준다
+    //    → 두 번째 토큰만 돌아온다. 그래도 옛 주인을 타고 «첫 팩까지» 와야 한다.
+    const r = await worker.fetch(req('/billing/sync', { uid: 'AFTER-reinstall', purchases: [{ sku: PACK, token: 'tok-2nd' }] }), env3)
+    eq('⭐토큰 하나만 돌아왔는데 «두 팩이 다» 따라왔다', (await r.json()).credits, before)
+    const old = await worker.fetch(req('/billing/state', { uid: 'NEW-uid' }), env3)
+    eq('옛 기기 쪽은 0 (두 배로 늘지 않는다)', (await old.json()).credits, 0)
+  }
+
+  // ── ⑦ 다 쓰면 consume → «또 살 수 있다» ───────────────────
+  console.log('\n⑦ 사자마자 비운다(consume) → «언제든 또 살 수 있다». 그래도 남은 장수는 안 사라진다')
+  {
+    // ⛔ 「다 쓸 때까지 미룬다」는 죽은 길이다 — 안 비우면 Play 가 `ITEM_ALREADY_OWNED` 로
+    //    **다 쓰기 전엔 한 팩도 더 못 팔게** 막는다(공식 안드로이드 문서 · 2026-08-19 확인).
+    eq('산 팩마다 그때그때 비웠다(＝언제든 또 살 수 있다)', state.consumed, 2)
+    // ⭐⭐ 이 칸이 2026-08-19 의 버그를 잡았다 — 「구글이 비웠다」와 「우리 장수가 없다」는 다른 말이다.
     const row = db._T.credits.get(TOK)
-    row.remaining = 1; row.needs_consume = 0
+    eq('⭐그런데도 남은 장수는 그대로 살아 있다', [row.consumed, row.remaining > 0], [1, true])
+
+    const c0 = state.consumed
+    const ME = 'AFTER-reinstall'
+    for (const r of db._T.credits.values()) r.remaining = 0
+    row.remaining = 1
     const kv7 = env3.OCR_KV
-    await kv7.put('w:NEW-uid', '0'); await kv7.put('u:NEW-uid:' + new Date().toISOString().slice(0, 7), '5')
-    await worker.fetch(req('/', { image: 'data:image/png;base64,AAAA', uid: 'NEW-uid', batch: 'B9' }), env3)
-    eq('다 썼다고 표시됐다', [row.remaining, row.needs_consume], [0, 1])
-    eq('OCR 길에서는 consume 을 «안» 불렀다(느려지니까)', state.consumed, 0)
-    await worker.fetch(req('/billing/sync', { uid: 'NEW-uid', purchases: [{ sku: PACK, token: TOK }] }), env3)
-    eq('다음 sync 때 consume 했다', state.consumed, 1)
+    await kv7.put(`w:${ME}`, '0'); await kv7.put(`u:${ME}:` + new Date().toISOString().slice(0, 7), '5')
+    const r1 = await worker.fetch(req('/', { image: 'data:image/png;base64,AAAA', uid: ME, batch: 'B9' }), env3)
+    eq('마지막 한 장을 썼다', [(await r1.json()).left.paid, row.remaining], [0, 0])
+    eq('OCR 길에선 구글을 한 번도 안 부른다(사진 읽기가 느려지니까)', state.consumed, c0)
+    const r2 = await worker.fetch(req('/', { image: 'data:image/png;base64,AAAA', uid: ME, batch: 'B10' }), env3)
+    eq('다 쓰면 다시 기본 인식으로(429) — ⛔막는 건 그때가 처음이다', r2.status, 429)
   }
 
   // ── ⑧ 영구 팩 ─────────────────────────────────────────────
   console.log('\n⑧ 꾸미기 팩(영구) — acknowledge 만 하고 ⛔consume 은 «절대» 안 한다')
   {
     const c0 = state.consumed
+    const a0 = state.acked
     state.purchase.acknowledgementState = 0
     const r = await worker.fetch(req('/billing/sync', { uid: 'u2', purchases: [{ sku: 'deco_chuseok', token: 'tok-deco' }] }), env3)
     const j = await r.json()
     eq('추석팩이 붙었다', j.entitlements, ['deco_chuseok'])
-    eq('acknowledge 했다', state.acked, 2)
+    eq('acknowledge 했다', state.acked > a0, true)
     eq('consume 은 안 했다', state.consumed, c0)
   }
 
@@ -295,6 +329,21 @@ const run = async () => {
     eq('앱 토큰 없음 → 401', (await worker.fetch(bad2, env3)).status, 401)
     const bad3 = await worker.fetch(req('/billing/없는길', { uid: 'u1' }), env3)
     eq('모르는 길 → 404', bad3.status, 404)
+  }
+
+  // ── ⑪ 앱 쪽 — 여긴 «글자로» 본다(브라우저가 없으면 못 돌린다) ──
+  console.log('\n⑪ 앱이 제 몫을 하나 (⛔여기가 비면 서버가 아무리 멀쩡해도 소용없다)')
+  {
+    const bill = readFileSync(join(HERE, '..', 'src', 'billing.js'), 'utf8')
+    const main = readFileSync(join(HERE, '..', 'src', 'main.jsx'), 'utf8')
+    eq('산 직후 서버에 알린다(＝acknowledge 가 걸린다)', /const sync = await syncPurchases\(\)/.test(bill), true)
+    eq('앱을 켤 때마다 다시 보낸다', /syncPurchases\(\)/.test(main), true)
+    eq('지금 가진 것을 보낸다(listPurchases)', /await purchases\(\)/.test(bill), true)
+    eq('⭐비운 구매까지 되짚는다(listPurchaseHistory) — 이게 빠지면 복원이 죽는다',
+      /listPurchaseHistory\(\)/.test(bill) && /await purchaseHistory\(\)/.test(bill), true)
+    eq('같은 토큰을 두 번 안 보낸다', /seen\.has\(p\.token\)/.test(bill), true)
+    eq('산 장수를 화면 숫자에 바로 반영한다', /setOcrPaid\(j\.credits\)/.test(bill), true)
+    eq('⛔꾸미기 팩엔 consume 을 안 부른다', /await s\.consume\(token\)/.test(bill) && !/consume\(.*deco/.test(bill), true)
   }
 
   console.log(`\n${'─'.repeat(50)}\n✅ ${ok}칸 통과 · ⛔ ${bad}칸 실패`)
