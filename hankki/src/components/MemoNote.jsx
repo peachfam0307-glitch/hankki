@@ -29,7 +29,7 @@ const 종이URL = (k) => PHOTO_FAMILY[k]?.src || ''
 // ⏳ `종이`·`글씨` = 시안을 나란히 찍으려고 잠깐 받는 값 (창업자 판정 뒤 «진 쪽을 지운다»)
 //    ⛔ 창업자 = *"포스트잇 넘 안예쁜데..ㅠ"* · *"글씨체두 별로고.."*
 //       → 내가 만든 노란 네모 대신 **우리가 이미 가진 메모지 스티커**를 종이로 쓴다.
-export default function MemoNote({ recipeId, style, 종이, 글씨 }) {
+export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟수 }) {
   const { diary } = useStore()
 
   // 그 레시피의 메모만, 최근 것부터. ⛔빈 메모는 세지 않는다(「만들었어요」가 note:'' 로 만든다)
@@ -49,9 +49,12 @@ export default function MemoNote({ recipeId, style, 종이, 글씨 }) {
   //       손그림이라 조금 늘어나도 티가 안 난다(모눈·점선은 예외라 시안에서 눈으로 확인).
   const 종이키 = 종이 || 기본종이
   const 바탕 = 종이키 ? { backgroundImage: `url(${종이URL(종이키)})` } : null
+  // 🖐 누를 수 있으면 button 으로 — 레시피 상세에선 눌러서 기록을 고친다
+  const Tag = onClick ? 'button' : 'div'  // ⛔ JSX 는 «대문자»라야 컴포넌트로 읽는다(소문자면 HTML 태그로 본다)
 
   return (
-    <div className={`memo-note${종이키 ? ' paper' : ''}`}
+    <Tag className={`memo-note${종이키 ? ' paper' : ''}${onClick ? ' press' : ''}`}
+      {...(onClick ? { type: 'button', onClick } : null)}
       style={{ ...바탕, ...(글씨 ? { fontFamily: 글씨 } : null), ...style }}>
       <div className="memo-note-head">
         {/* ⛔ 색을 테마 변수로 주지 않는다 — 포스트잇은 «자기 바탕»을 들고 다닌다.
@@ -73,9 +76,12 @@ export default function MemoNote({ recipeId, style, 종이, 글씨 }) {
         )}
       </div>
       <div className="memo-note-body">“{최근.note.trim()}”</div>
-      {메모들.length > 1 && (
-        <div className="memo-note-more">앞서 {메모들.length - 1}번 더 남겼어요</div>
+      {/* 📌 「몇 번 만들었나」 — 레시피 상세에선 이 줄이 옛 「내 요리 기록」 카드를 대신한다 */}
+      {(횟수 > 1 || 메모들.length > 1) && (
+        <div className="memo-note-more">
+          {횟수 > 1 ? `${횟수}번 만들었어요` : `앞서 ${메모들.length - 1}번 더 남겼어요`}
+        </div>
       )}
-    </div>
+    </Tag>
   )
 }
