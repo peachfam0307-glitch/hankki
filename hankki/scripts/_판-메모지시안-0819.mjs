@@ -77,8 +77,7 @@ const 글씨줄 = 글씨들.map((g) => `
     <div class="cap"><b>${g[0]}</b></div>
   </div>`).join('')
 
-const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>메모지 시안</title>
+const html = `<title>지난번 메모 종이 고르기</title>
 <style>
 ${폰트face}
 :root{--bg:#f3f2ef;--card:#fff;--ink:#3d3830;--sub:#6f6a62;--line:#e6e4df}
@@ -104,7 +103,7 @@ h2{font-size:15px;margin:26px 0 2px}
 .cap b{color:var(--ink)}
 .who{margin-left:auto;font-size:11px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
 .note{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px;font-size:13px;color:var(--sub);margin-top:22px}
-</style></head><body><div class="wrap">
+</style><div class="wrap">
 <h1>지난번 메모 — 종이 고르기</h1>
 <p class="sub">레시피 상세와 요리 모드(재료 준비)에 자동으로 붙는 그 메모야.</p>
 
@@ -118,7 +117,7 @@ ${글씨줄}
 
 <div class="note">⛔ 글씨가 길면 종이가 세로로 늘어나. 그래서 한 줄 메모를 전제로 잡았어 —
 길게 쓰면 종이도 같이 커져(모눈·점선은 조금 늘어난 티가 날 수 있어).</div>
-</div></body></html>`
+</div>`
 
 const 낼곳 = join(OUT, '메모지시안.html')
 writeFileSync(낼곳, html)
