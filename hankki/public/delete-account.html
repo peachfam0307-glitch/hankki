@@ -58,9 +58,11 @@
     background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
     padding: 12px 14px; font-size: 13px; margin: 10px 0 0; word-break: break-all;
   }
-  .did code { font-size: 14px; color: var(--brown); font-weight: 700; }
+  /* ⛔ 2026-08-19 창업자 폰에서 잡힘 — 번호가 두 줄로 넘어가면 «단추가 마지막 줄에 겹쳤다».
+     원인 = 단추가 글자 흐름에 붙는 인라인 요소였다. `block` 으로 줄을 바꿔 아래로 내린다. */
+  .did code { font-size: 14px; color: var(--brown); font-weight: 700; display: block; margin: 4px 0 0; }
   button.copy {
-    margin-top: 8px; padding: 9px 14px; font-size: 13.5px; font-weight: 700;
+    display: block; margin-top: 12px; padding: 11px 16px; font-size: 13.5px; font-weight: 700;
     border: 1px solid var(--line); border-radius: 9px; background: var(--card); color: var(--ink);
   }
   footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--faint); }
@@ -152,7 +154,7 @@
       + '<br />앱을 이미 지우셨거나 다른 브라우저로 여신 경우입니다. <b>번호 없이 메일을 보내셔도 됩니다.</b>'
     return
   }
-  box.innerHTML = '<b>내 기기 번호</b><br /><code id="didVal">' + id + '</code>'
+  box.innerHTML = '<b>내 기기 번호</b><code id="didVal">' + id + '</code>'
   var btn = document.createElement('button')
   btn.className = 'copy'; btn.textContent = '번호 복사하기'
   btn.onclick = async function () {
