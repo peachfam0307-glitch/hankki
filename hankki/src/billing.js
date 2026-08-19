@@ -238,6 +238,9 @@ export async function syncPurchases() {
     if (!r.ok) return { ok: false, reason: `http_${r.status}` }
     const j = await r.json().catch(() => null)
     if (!j || !j.ok) return { ok: false, reason: 'bad_reply' }
+    // ⛔⛔ `stale` = 서버가 **원장을 못 읽었다**는 뜻이다(0장이라는 뜻이 «아니다»).
+    //   그때 화면을 고치면 **산 사람의 장수·팩이 사라진 것처럼 보인다.** → 아무것도 안 건드린다.
+    if (j.stale) return { ok: false, reason: 'stale' }
     // 📢 산 장수를 화면 숫자에 «즉시» 반영 (창업자 *"유저가 몇장남았는지 스스로 알아야해"*)
     if (typeof j.credits === 'number') setOcrPaid(j.credits)
     return {

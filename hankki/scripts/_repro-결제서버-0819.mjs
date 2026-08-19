@@ -312,7 +312,7 @@ const run = async () => {
     eq('모르는 상품 → unknown_sku', (await r1.json()).results[0].reason, 'unknown_sku')
     state.purchase = { purchaseState: 1, acknowledgementState: 0 }
     const r2 = await worker.fetch(req('/billing/sync', { uid: 'u3', purchases: [{ sku: PACK, token: 'tok-cancel' }] }), env3)
-    eq('취소된 구매 → not_purchased', (await r2.json()).results[0].reason, 'not_purchased')
+    eq('취소된 구매 → revoked (＋이미 준 게 있으면 거둬들인다 · 사고판 참고)', (await r2.json()).results[0].reason, 'revoked')
     state.getStatus = 404
     const r3 = await worker.fetch(req('/billing/sync', { uid: 'u3', purchases: [{ sku: PACK, token: 'tok-fake' }] }), env3)
     eq('구글이 모르는 토큰 → token_unknown', (await r3.json()).results[0].reason, 'token_unknown')

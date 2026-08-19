@@ -231,6 +231,10 @@ export default {
       const spent = await spendCredit(env, uid)
       spentToken = spent.token
       paidLeft = spent.left
+      // ⛔⛔ **못 깎았으면 «쓰지 않는다».** (2026-08-19 재검토에서 찾은 구멍)
+      //   두 요청이 «동시에» 마지막 한 장을 노리면 하나는 못 깎는데, 그래도 그냥 진행하면
+      //   **장수가 0인 채로 한 장을 더 써 버린다.** 여기서 한 번 더 막는다.
+      if (!spentToken) return json({ error: 'user_quota' }, 429, cors)
     }
 
     // ── Google Vision (문서 OCR + 한/영 힌트) ──
@@ -355,69 +359,91 @@ async function handlePurchase(env, uid, sku, token) {
   const isDurable = BILLING.DURABLE.includes(sku)
   if (!isConsumable && !isDurable) return { ok: false, reason: 'unknown_sku' }
 
-  // ① 구글에 묻는다 (⛔앱 말을 믿지 않는다 — 이게 서버가 있는 이유다)
-  const v = await playGet(env, `${PLAY_API}/${BILLING.PACKAGE}/purchases/products/${encodeURIComponent(sku)}/tokens/${encodeURIComponent(token)}`)
-  if (!v.ok) return { ok: false, reason: v.reason }
-  const g = v.data || {}
-  // purchaseState 0=구매됨 1=취소됨 2=보류중
-  if (g.purchaseState !== 0) return { ok: false, reason: g.purchaseState === 2 ? 'pending' : 'not_purchased' }
-
   const db = env.HANKKI_DB
   const now = Math.floor(Date.now() / 1000)
 
-  // ② 원장 — 처음 보는 토큰이면 changes===1, 이미 있으면 0.
-  let ins
+  // ① 구글에 묻는다 (⛔앱 말을 믿지 않는다 — 이게 서버가 있는 이유다)
+  const v = await playGet(env, `${PLAY_API}/${BILLING.PACKAGE}/purchases/products/${encodeURIComponent(sku)}/tokens/${encodeURIComponent(token)}`)
+  if (!v.ok) {
+    // ⛔⛔ **여기서 «회수하지 않는다».** 특히 404(token_unknown) —
+    //   구글이 오래된 기록을 지웠을 수도 있어서, 회수하면 **멀쩡한 사람의 장수를 뺏는다.**
+    //   「없다」와 「취소됐다」는 다른 말이다(규칙 18).
+    return { ok: false, reason: v.reason }
+  }
+  const g = v.data || {}
+
+  // ②🚨 **환불·취소된 구매는 «이미 준 것»을 거둬들인다.** (2026-08-19 재검토에서 찾은 구멍)
+  //   purchaseState 0=구매됨 1=취소됨 2=보류중
+  //   ⛔ 이게 없으면 「20장 받고 환불」이 그대로 통한다 — 앱이 sync 를 계속 보내니 여기서 잡힌다.
+  //   ⚠️ 2(보류)는 아직 «준 적이 없는» 상태라 회수할 것도 없다. 그래도 같이 0으로 맞춰 둔다(중복 결제 방지).
+  if (g.purchaseState !== 0) {
+    try {
+      await db.prepare('UPDATE credits SET remaining=0, updated_at=? WHERE token=?').bind(now, token).run()
+      await db.prepare('DELETE FROM entitlements WHERE token=?').bind(token).run()
+      await db.prepare('UPDATE purchases SET state=?, updated_at=? WHERE token=?').bind(g.purchaseState, now, token).run()
+    } catch { /* 못 거둬도 다음 sync 에서 또 시도한다 */ }
+    return { ok: false, reason: g.purchaseState === 2 ? 'pending' : 'revoked' }
+  }
+
+  // ③ 원장. ⭐**「처음 보는 토큰인가」로 갈리지 않는다.**
+  //   ⛔⛔ 갈랐다가 구멍이 났었다 — `purchases` 는 들어갔는데 `credits` 가 실패하면
+  //      다음 번엔 「처음이 아니다」로 판정돼 **장수를 영영 안 준다**(＝돈 내고 0장).
+  //   ✅ 그래서 **넣는 문장 자체를 멱등**(`INSERT OR IGNORE`)으로 두고 **매번 그냥 다시 넣는다.**
+  //      이미 있으면 무시되고, 없으면 그제야 생긴다. 몇 번을 보내도 결과가 같다.
+  let fresh = false
   try {
-    ins = await db.prepare(
+    // 옛 주인을 «넣기 전»에 봐 둔다 — 없으면 이번이 처음이다.
+    const old = isConsumable
+      ? await db.prepare('SELECT uid FROM credits WHERE token=?').bind(token).first()
+      : null
+    fresh = isConsumable ? !old : false
+
+    await db.prepare(
       'INSERT OR IGNORE INTO purchases (token, sku, uid, order_id, state, acked, created_at, updated_at) VALUES (?,?,?,?,?,0,?,?)',
     ).bind(token, sku, uid, String(g.orderId || ''), g.purchaseState, now, now).run()
-  } catch { return { ok: false, reason: 'db_error' } }
-  const isNew = !!(ins && ins.meta && ins.meta.changes === 1)
 
-  try {
     if (isConsumable) {
-      if (isNew) {
-        // 새 팩 → 장수를 넣는다. ⚠️ `quantity` 는 여러 개 한꺼번에 산 경우(보통 1).
-        const qty = Math.max(1, Math.min(50, parseInt(g.quantity, 10) || 1))
-        const give = BILLING.CONSUMABLE[sku] * qty
-        await db.prepare(
-          'INSERT OR IGNORE INTO credits (token, sku, uid, remaining, needs_consume, consumed, created_at, updated_at) VALUES (?,?,?,?,0,0,?,?)',
-        ).bind(token, sku, uid, give, now, now).run()
-      } else {
-        // ⭐⭐⭐ **이미 아는 토큰인데 uid 가 다르다 = 폰을 바꿨거나 앱을 지웠다 깐 것.**
-        //   남은 장수를 «새 기기로 옮겨 준다». **이메일도 로그인도 없이 복원되는 자리다.**
-        //   ⭐ 앱은 `listPurchases()` ＋ **`listPurchaseHistory()`** 를 같이 보낸다 —
-        //      뒤엣것은 **이미 비운(consumed) 구매까지** 토큰째 돌려주므로, 사자마자 비워도 복원이 산다.
-        const old = await db.prepare('SELECT uid FROM credits WHERE token=?').bind(token).first()
-        await db.prepare('UPDATE credits SET uid=?, updated_at=? WHERE token=?')
-          .bind(uid, now, token).run()
+      // ⚠️ `quantity` = 한 번에 여러 개 산 경우(보통 1). ⛔값을 그대로 믿지 말고 1~50 으로 자른다.
+      const qty = Math.max(1, Math.min(50, parseInt(g.quantity, 10) || 1))
+      const give = BILLING.CONSUMABLE[sku] * qty
+      await db.prepare(
+        'INSERT OR IGNORE INTO credits (token, sku, uid, remaining, needs_consume, consumed, created_at, updated_at) VALUES (?,?,?,?,0,0,?,?)',
+      ).bind(token, sku, uid, give, now, now).run()
+
+      // ⭐⭐⭐ **아는 토큰인데 주인이 다르다 = 폰을 바꿨거나 앱을 지웠다 깐 것.**
+      //   남은 장수를 «새 기기로 옮겨 준다». **이메일도 로그인도 없이 복원되는 자리다.**
+      //   ⭐ 앱은 `listPurchases()` ＋ **`listPurchaseHistory()`** 를 같이 보낸다 —
+      //      뒤엣것은 **이미 비운(consumed) 구매까지** 토큰째 돌려주므로, 사자마자 비워도 복원이 산다.
+      if (old && old.uid && old.uid !== uid) {
+        await db.prepare('UPDATE credits SET uid=?, updated_at=? WHERE token=?').bind(uid, now, token).run()
         // ⚠️⚠️ `listPurchaseHistory()` 는 **상품마다 «가장 최근» 한 건만** 준다(공식).
         //   그래서 팩을 두 번 산 사람은 옛 토큰이 안 돌아온다 →
         //   ⭐ 돌아온 토큰의 «옛 주인»을 찾아 **그 기기에 있던 남은 팩을 전부 같이 옮긴다.**
-        if (old && old.uid && old.uid !== uid) {
-          await db.prepare('UPDATE credits SET uid=?, updated_at=? WHERE uid=? AND remaining>0')
-            .bind(uid, now, old.uid).run()
-        }
+        await db.prepare('UPDATE credits SET uid=?, updated_at=? WHERE uid=? AND remaining>0')
+          .bind(uid, now, old.uid).run()
         await db.prepare('UPDATE purchases SET uid=?, updated_at=? WHERE token=?').bind(uid, now, token).run()
       }
     } else {
       // 영구 팩 — uid 마다 한 줄. ⛔consume 하지 않는다(하면 복원이 깨진다).
+      //   ⭐ 기기가 바뀌어도 앱이 `listPurchases()` 로 다시 들고 오므로 새 uid 에 그냥 다시 생긴다.
       await db.prepare('INSERT OR REPLACE INTO entitlements (uid, sku, token, created_at) VALUES (?,?,?,?)')
         .bind(uid, sku, token, now).run()
     }
   } catch { return { ok: false, reason: 'db_error' } }
 
-  // ③ acknowledge — ⭐⭐**이걸 3일 안에 안 하면 구글이 «환불하고 회수»한다.**
+  // ④ acknowledge — ⭐⭐**이걸 3일 안에 안 하면 구글이 «환불하고 회수»한다.**
   //   멱등이라 여러 번 불러도 안전하다. 이미 돼 있으면(1) 아예 안 부른다.
+  //   ⭐ 장수를 «먼저» 주고 여기서 ack 한다 — 순서가 반대면 「ack 은 됐는데 장수는 없는」 상태가 생기고
+  //      그건 3일 환불로도 안 풀린다(구글은 ack 된 걸 회수하지 않는다).
   let acked = g.acknowledgementState === 1
   if (!acked) {
     const a = await playPost(env, `${PLAY_API}/${BILLING.PACKAGE}/purchases/products/${encodeURIComponent(sku)}/tokens/${encodeURIComponent(token)}:acknowledge`, {})
     acked = a.ok
     if (!acked) return { ok: false, reason: 'ack_failed' }   // ⛔ 실패를 «성공»으로 말하지 않는다 — 앱이 다시 보낸다
   }
-  try { await env.HANKKI_DB.prepare('UPDATE purchases SET acked=1, updated_at=? WHERE token=?').bind(now, token).run() } catch { /* 원장 표시일 뿐 */ }
+  try { await db.prepare('UPDATE purchases SET acked=1, updated_at=? WHERE token=?').bind(now, token).run() } catch { /* 원장 표시일 뿐 */ }
 
-  return { ok: true, acked: true, fresh: isNew }
+  return { ok: true, acked: true, fresh }
 }
 
 // 다 쓴 소모성 팩을 consume 한다 = 「또 살 수 있게」 푼다.
@@ -450,7 +476,12 @@ async function billingState(env, uid) {
     out.credits = (c && c.n) || 0
     const e = await env.HANKKI_DB.prepare('SELECT sku FROM entitlements WHERE uid=?').bind(uid).all()
     out.entitlements = ((e && e.results) || []).map((r) => r.sku)
-  } catch { /* 못 읽으면 «없는 것»으로 — ⛔지어내지 않는다 */ }
+  } catch {
+    // ⛔⛔ **「못 읽었다」와 「없다」는 다른 말이다.** (2026-08-19 재검토에서 찾은 구멍)
+    //   조용히 0·[] 로 답하면 앱이 **「산 게 없네」로 읽고 산 팩을 도로 잠근다.**
+    //   → 표를 세워 알린다. 앱은 `stale` 이면 **화면을 건드리지 않는다.**
+    out.stale = true
+  }
   return out
 }
 
