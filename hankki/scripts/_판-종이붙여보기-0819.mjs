@@ -78,6 +78,22 @@ const 제목 = await p0.evaluate(() => {
 })
 await p0.close()
 
+// 📐 메모지가 «지금 화면 어디»에 있나 — 잘라 찍을 네모를 돌려준다
+//    ⛔ 고정 숫자로 자르면 컷마다 종이 높이가 달라 위가 잘린다(창업자가 잡았다).
+//       ✅ 그때그때 «재서» 자른다.
+const 자리 = async (p) => {
+  const r = await p.evaluate(() => {
+    const els = [...document.querySelectorAll('.memo-note')]
+    const el = els[els.length - 1]
+    if (!el) return null
+    const b = el.getBoundingClientRect()
+    return { top: b.top, height: b.height }
+  })
+  if (!r) return undefined
+  const 위 = Math.max(0, Math.round(r.top - 26))
+  return { x: 0, y: 위, width: 390, height: Math.round(r.height + 26 + 150) }
+}
+
 const 갈아끼우기 = async (p, k) => {
   const { w, h } = 재기(k)
   await p.evaluate(({ url, w, h }) => {
@@ -121,12 +137,14 @@ for (const [k, 설명] of 종이들) {
   await p.click(`text=${제목}`)
   await p.waitForSelector('.memo-note', { timeout: 10000 })
   await 갈아끼우기(p, k)
-  // ⛔ 처음엔 «메모 둘레만» 잘라 찍었는데 메모지가 통째로 빠진 판이 나왔다.
-  //    🔎 원인 = 화면을 쌓으면 이전 화면이 DOM 에 남아 `querySelector('.memo-note')` 가
-  //       «상세 화면의» 메모지(화면 밖)를 잡았다 → 좌표가 엉뚱했다.
-  //    ✅ 화면을 통째로 찍는다. 자리 계산이 안 끼어들고, 「어울리나」는 주변과 함께라야 보인다.
+  // 📐 메모지 둘레만 잘라 찍는다 — «크게 보여야» 색·모양이 판정된다
+  //    ⛔ 첫 판은 메모지가 통째로 빠졌다. 뿌리 = `querySelector` 가 «첫째»(이전 화면)를 잡았다.
+  //       그래서 화면을 통째로 찍는 쪽으로 도망갔는데, 그러면 메모지가 화면의 1/10 이라
+  //       **줄여 담는 순간 색도 모양도 안 보인다**(창업자 = *"다 잘리고 색이랑 모양이 잘 안보여"*).
+  //    ✅ 이제 좌표는 «마지막» 것으로 제대로 잡는다 → 잘라 찍어도 안 빗나간다.
+  //    ⭐ 위아래로 주변을 조금 남긴다 — 「어울리나」는 주변과 함께라야 보인다.
   const 낼곳 = `${OUT}/붙여-상세-${k}.png`
-  await p.screenshot({ path: 낼곳 })
+  await p.screenshot({ path: 낼곳, clip: await 자리(p) })
   상세컷.push([k, 설명, 낼곳])
   await p.close()
 }
@@ -144,7 +162,7 @@ for (const [k, 설명] of 종이들) {
   await p.waitForSelector('.memo-note', { timeout: 10000 })
   await 갈아끼우기(p, k)
   const 낼곳 = `${OUT}/붙여-요리-${k}.png`
-  await p.screenshot({ path: 낼곳 })
+  await p.screenshot({ path: 낼곳, clip: await 자리(p) })
   요리컷.push([k, 설명, 낼곳])
   await p.close()
 }
