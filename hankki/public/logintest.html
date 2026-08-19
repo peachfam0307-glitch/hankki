@@ -76,6 +76,13 @@
   <p class="note" id="realNote"></p>
 </div>
 
+<h2>⑥ 인앱결제가 «진짜로» 붙나</h2>
+<div class="card">
+  <p class="why">누르면 <b>구글 결제 창구에 붙어 보기만</b> 해요. <b>아무것도 안 사고, 돈은 1원도 안 나가요.</b></p>
+  <button id="dg">결제 창구에 붙어보기</button>
+  <p class="note" id="dgNote">아직 안 눌렀어요.</p>
+</div>
+
 <h2>⑤ 결과 보내기</h2>
 <div class="card">
   <button id="copy">결과 복사하기</button>
@@ -117,8 +124,11 @@
     return false
   })
   R.남의앱브라우저 = inApp || '아니오'
-  // 🔌 (덤) 인앱결제 API 가 이 판에 있나 — BILLING AAB 를 올린 «뒤»에 여기서 확인하면 된다
-  R.결제API = ('getDigitalGoodsService' in window) ? '있음 ✅' : '없음(아직 BILLING AAB 를 안 올렸으니 정상)'
+  // 🔌 (덤) 인앱결제 API — ⛔⛔ **「있다」와 「된다」는 다른 말이다.**
+  //   `getDigitalGoodsService` 는 «창구가 보인다»는 뜻일 뿐이다. 실제로 Play 결제에 «붙는지»는
+  //   BILLING 권한이 든 AAB 라야 안다. 지금 우리 AAB 는 `features: {}` 라 권한이 없다.
+  //   → 그래서 아래 ⑥칸에서 **직접 불러 본다.**
+  R.결제창구 = ('getDigitalGoodsService' in window) ? '보임(함수는 있다)' : '안 보임'
   var chrome = (/Chrome\/(\d+)/.exec(ua) || [])[1] || '모름'
   var android = (/Android (\d+)/.exec(ua) || [])[1] || '아님'
 
@@ -127,7 +137,10 @@
   R.표시모드 = mode
   R.웹뷰인가 = isWv ? '예 ⛔' : '아니오'
   R.크롬버전 = chrome
-  R.안드로이드 = android
+  // ⚠️⚠️ 「Android 10 · 기종 K」는 **진짜 값이 아니다** — 크롬이 지문추적을 막으려고 «모든 폰»에
+  //   똑같이 박아 보내는 고정값이다(User-Agent Reduction · 크롬 110+).
+  //   ⛔ 그대로 「안드로이드 10」이라 적으면 창업자가 «내 폰이 10인가?» 하고 오해한다.
+  R.안드로이드 = android === '10' ? '10 (⚠️크롬이 감춘 «가짜» 값 — 모든 폰이 이렇게 나온다)' : android
   R.UA = ua
 
   var w = $('where')
@@ -136,7 +149,7 @@
   row(w, isWv ? '⛔' : '✅', isWv ? '앱 안에 박은 브라우저(WebView)예요' : '진짜 크롬이에요',
     isWv ? '구글이 여기선 로그인을 막아요' : '구글이 «권장»하는 방식이에요')
   row(w, '·', '화면 모드', mode)
-  row(w, '·', '크롬 · 안드로이드', chrome + ' · ' + android)
+  row(w, '·', '크롬 · 안드로이드', chrome + ' · ' + R.안드로이드)
   row(w, '·', '브라우저 이름표(UA)', ua)
 
   // ── ② 저장이 사나 ────────────────────────────────────────
@@ -231,15 +244,27 @@
   var KEY = 'hankki:oauthClientId'
   try { $('cid').value = localStorage.getItem(KEY) || '' } catch (e) {}
   $('real').onclick = function () {
-    var id = ($('cid').value || '').trim()
-    if (!/apps\.googleusercontent\.com$/.test(id)) {
-      $('realNote').textContent = '⚠️ 아직 열쇠(클라이언트 ID)가 없어요. …apps.googleusercontent.com 으로 끝나야 해요.'
-      return
+    // ⛔⛔ 2026-08-19 — 여기 검사가 «너무 빡빡해서» 창업자가 제대로 붙여넣고도 막혔다.
+    //   ⭐ 틀린 열쇠면 «구글이» 알려준다(invalid_client). 내가 미리 막을 이유가 없다.
+    //   ⭐ 그리고 막을 거면 «뭘 받았는지»를 보여줘야 한다 — 안 보여주면 원인을 못 찾는다.
+    //   ⚠️ 폰에서 복사하면 눈에 안 보이는 글자(줄바꿈·제로폭 공백)가 딸려온다 → 그것부터 턴다.
+    var id = ($('cid').value || '').replace(/[\s​-‍﻿]/g, '')
+    $('cid').value = id
+    if (!id) { $('realNote').textContent = '⚠️ 칸이 비어 있어요.'; return }
+    if (id.indexOf('googleusercontent') < 0) {
+      $('realNote').innerHTML = '⚠️ 이게 클라이언트 ID 가 맞나요? <b>받은 글자 ' + id.length + '자</b>,'
+        + ' 끝부분이 <b>「…' + id.slice(-24) + '」</b> 예요.<br>'
+        + '보통은 <b>…apps.googleusercontent.com</b> 으로 끝나요. 그래도 그냥 눌러 보시려면 한 번 더 누르세요.'
+      if (!window.__forceTry) { window.__forceTry = 1; return }
     }
     try { localStorage.setItem(KEY, id) } catch (e) {}
+    // ⛔⛔ `response_type=token`(암묵적 흐름)을 쓰면 안 된다 — 구글이 새 클라이언트에 막고 있어
+    //   «우리 문제가 아닌 이유»로 실패한다. 우리가 재려는 건 «돌아오나» 하나다.
+    // ✅ `code` 로 받으면 주소에 `?code=…` 가 붙어 돌아온다 — 그것만 보면 왕복이 증명된다.
+    //   ⭐ 그 코드를 «쓰려면» 비밀키가 필요하지만, 우리는 쓸 게 아니라 «돌아왔나»만 본다.
     location.href = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + encodeURIComponent(id)
       + '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname)
-      + '&response_type=token&scope=' + encodeURIComponent('openid email profile')
+      + '&response_type=code&scope=' + encodeURIComponent('openid email')
       + '&prompt=select_account'
   }
 
@@ -253,6 +278,33 @@
       ? '<b class="ok">✅ 로그인이 됐어요.</b> 구글이 열쇠를 돌려줬어요.'
       : '<b class="warn">구글이 이렇게 답했어요:</b> ' + decodeURIComponent((m && m[1]) || '?')
         + '<br>⭐ 이게 «브라우저가 안전하지 않다»가 아니면 <b>UA 단계는 통과한 거예요.</b>'
+  }
+
+  // ── ⑥ 인앱결제가 «진짜로» 붙나 ───────────────────────────
+  //   ⭐ 이걸 눌러도 «사는 창»은 안 뜬다. 서비스에 «연결»만 해 본다.
+  //   ⛔ 지금 AAB 엔 BILLING 권한이 없다 → 실패가 «정상»이다. 그 실패 «모양»이 값이다.
+  $('dg').onclick = async function () {
+    var n = $('dgNote')
+    if (!('getDigitalGoodsService' in window)) { n.textContent = '⛔ 이 브라우저엔 결제 창구가 아예 없어요.'; R.결제붙기 = '창구 없음'; dump(); return }
+    n.textContent = '붙어보는 중…'
+    try {
+      var svc = await window.getDigitalGoodsService('https://play.google.com/billing')
+      if (!svc) { n.innerHTML = '<b class="warn">창구는 있는데 «안 붙었어요»</b> — BILLING 권한이 없어서 그런 거라 <b>지금은 정상</b>이에요.'; R.결제붙기 = '안 붙음(권한 없음 · 정상)' }
+      else {
+        n.innerHTML = '<b class="ok">✅ 붙었어요.</b> 이제 상품을 물어볼게요…'
+        R.결제붙기 = '붙음 ✅'
+        try {
+          var d = await svc.getDetails(['ocr_pack_20', 'deco_chuseok'])
+          R.상품조회 = (d && d.length) ? (d.length + '개: ' + d.map(function (x) { return x.itemId }).join(', ')) : '0개(상품을 아직 등록 안 했으니 정상)'
+          n.innerHTML += '<br>상품: ' + R.상품조회
+        } catch (e2) { R.상품조회 = '오류: ' + (e2 && e2.name); n.innerHTML += '<br>상품 물어보기 오류: ' + (e2 && e2.name) }
+      }
+    } catch (e) {
+      n.innerHTML = '<b class="warn">못 붙었어요</b> — ' + (e && (e.name + ': ' + e.message) || '?')
+        + '<br>⭐ BILLING 권한이 없어서 그런 거면 <b>지금은 정상</b>이에요.'
+      R.결제붙기 = '오류 ' + (e && e.name)
+    }
+    dump()
   }
 
   // ── ⑤ 결과 보내기 ────────────────────────────────────────
