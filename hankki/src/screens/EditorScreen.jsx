@@ -681,6 +681,39 @@ export default function EditorScreen({ id, prefill }) {
           <input ref={titleRef} value={f.title} onChange={(e) => set('title', e.target.value)} placeholder="예) 명란 크림 파스타" />
         </div>
 
+        {/* 🍚🍚 [2026-08-19 창업자] 카테고리·조리시간·인분을 «제목 바로 아래»로 올렸다.
+            📮 *"자동으로 한식 양식 종류 저장해주면 좋겠어. 솔직히 **맨날 까먹어 맨 아래 있어서
+               거기까지 잘 안보게돼**.."* → *"유저가 직접입력하게끔 **칸만 잘보이게** 두면좋겠어
+               (**2인분 시간도 위로 올리고**)"*
+            ⛔ 전엔 재료(7줄)·만드는 법(7줄) «아래»라 스크롤을 한참 내려야 나왔다.
+               옛 주석은 *"캡처는 제목+재료+만드는 법이 붙어 있어 … 아래로 뺐다"* 였고 **이유도 있었다.**
+               ⭐ 그런데 «쓰는 사람»이 「거기까지 안 가게 된다」고 했다 — **의도가 좋아도 결과가 그러면 진 것이다.**
+            ⭐ 여기가 맞는 자리인 이유 = 이 셋은 「이 레시피가 뭔가」라서 **제목과 한 묶음**이다.
+               캡처 버튼은 여전히 재료 칸 바로 위에 있어 «채우는 흐름»은 안 깨진다.
+            ⛔⛔ **자동 분류는 «안» 한다**(창업자가 스스로 접었다) — 「구체어 먼저」 위반이 65곳이라
+               자동으로 채우면 엉뚱한 값이 유저 레시피에 박히고, `category` 실측값이 열 가지인데
+               고를 수 있는 칩은 다섯뿐이라 **고를 수 없는 값**이 들어갈 수도 있었다.
+            🔒 자리 검사 = `scripts/_probe-부가정보자리-0819.mjs` (되돌리면 exit 1) */}
+        <div className="field">
+          <label>카테고리</label>
+          <div className="hscroll" style={{ padding: 0, margin: 0 }}>
+            {CATEGORIES.filter((c) => c !== '전체').map((c) => (
+              <button key={c} className={`pill press ${f.category === c ? 'active' : ''}`} onClick={() => set('category', c)}>{c}</button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div className="field" style={{ flex: 1 }}>
+            <label>조리시간 (분)</label>
+            <input value={f.time} onChange={(e) => set('time', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="예: 20" />
+          </div>
+          <div className="field" style={{ flex: 1 }}>
+            <label>인분</label>
+            <input value={f.servings} onChange={(e) => set('servings', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="예: 2" />
+          </div>
+        </div>
+
         {/* 캡처 한 장으로 재료+만드는 법 한 번에 — 사진 두 번 올리는 번거로움 없이(요청 반영).
             잘못 섞이면 아래 각 칸의 📷로 따로 채워 보정한다(안전망 유지). */}
         <button className="press" onClick={() => pickOcr('all')} disabled={ocr.busy}
@@ -760,27 +793,7 @@ export default function EditorScreen({ id, prefill }) {
           <textarea ref={stepRef} rows={7} value={f.steps} onChange={(e) => set('steps', e.target.value)} style={{ scrollMarginTop: pin === 'photo' && photoFold ? 64 : pin ? '38vh' : undefined }} placeholder={'조리 순서를 한 줄에 하나씩 적어주세요'} />
         </div>
 
-        {/* 부가 정보 — 캡처는 보통 제목+재료+만드는 법이 붙어 있어, 그걸 먼저 적고 나서 채우게 아래로 뺐다 */}
-        <div className="field">
-          <label>카테고리</label>
-          <div className="hscroll" style={{ padding: 0, margin: 0 }}>
-            {CATEGORIES.filter((c) => c !== '전체').map((c) => (
-              <button key={c} className={`pill press ${f.category === c ? 'active' : ''}`} onClick={() => set('category', c)}>{c}</button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div className="field" style={{ flex: 1 }}>
-            <label>조리시간 (분)</label>
-            <input value={f.time} onChange={(e) => set('time', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="예: 20" />
-          </div>
-          <div className="field" style={{ flex: 1 }}>
-            <label>인분</label>
-            <input value={f.servings} onChange={(e) => set('servings', e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="예: 2" />
-          </div>
-        </div>
-
+        {/* 부가 정보 — 난이도부터는 여기 남긴다(자주 안 건드린다) */}
         <div className="field">
           <label>난이도</label>
           <div style={{ display: 'flex', gap: 8 }}>
