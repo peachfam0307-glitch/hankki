@@ -61,11 +61,16 @@ export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟
   // 📌 붙인 포스트잇 = 종이 «그대로의 비율» ＋ 그 종이의 «안쪽 여백»
   //    ⛔ 여백을 하나로 못 준다 — 그림마다 장식 자리가 다르다(그래서 `BOX_PAD` 가 있다).
   //    ⭐ 글자 크기는 «종이 폭»에 매단다(`cqw`) — 자리가 작아지면 글씨도 같이 작아져 안 넘친다.
-  const 붙임꼴 = (() => {
+  //    ⛔⛔ **여백을 이 상자의 `padding: %` 로 주면 안 된다** — CSS 에서 padding 의 %는
+  //       «자기 폭»이 아니라 **부모 폭** 기준이다. 2026-08-20 에 실제로 터졌다:
+  //       메모지 160px · 부모 350px → 좌우 padding 이 **138px** 이 되어 안쪽이 **22px**,
+  //       글씨가 **한 글자씩 세로로** 쏟아졌다.
+  //    ✅ 그래서 «안쪽 상자»에 `width: %` 를 준다 — 그 %는 부모(＝메모지) 폭 기준이라 정확하다.
+  const 붙임꼴 = 붙임 ? { aspectRatio: String(PHOTO_FAMILY[종이키]?.ratio || 1) } : null
+  const 안쪽꼴 = (() => {
     if (!붙임) return null
-    const 비 = PHOTO_FAMILY[종이키]?.ratio || 1     // 가로 ÷ 세로
-    const [위, 오, 아, 왼] = 안여백(종이키)
-    return { aspectRatio: String(비), padding: `${위}% ${오}% ${아}% ${왼}%` }
+    const [, 오, , 왼] = 안여백(종이키)
+    return { width: `${Math.max(40, 100 - 오 - 왼)}%` }   // ⛔너무 좁아지지 않게 바닥을 둔다
   })()
   // 🖐 누를 수 있으면 button 으로 — 레시피 상세에선 눌러서 기록을 고친다
   const Tag = onClick ? 'button' : 'div'  // ⛔ JSX 는 «대문자»라야 컴포넌트로 읽는다(소문자면 HTML 태그로 본다)
@@ -74,6 +79,9 @@ export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟
     <Tag className={`memo-note${종이키 ? ' paper' : ''}${붙임 ? ' stick' : ''}${onClick ? ' press' : ''}`}
       {...(onClick ? { type: 'button', onClick } : null)}
       style={{ ...바탕, ...붙임꼴, ...(글씨 ? { fontFamily: 글씨 } : null), ...style }}>
+      {/* 📐 안쪽 상자 — 여백을 여기 «폭»으로 준다(위 주석 참고).
+          ⛔ 붙임이 아니면 `안쪽꼴` 이 null 이라 폭이 100% — 지금까지와 똑같이 그려진다. */}
+      <div className="memo-in" style={안쪽꼴}>
       <div className="memo-note-head">
         {/* ⛔ 색을 테마 변수로 주지 않는다 — 포스트잇은 «자기 바탕»을 들고 다닌다.
             `currentColor` 라야 종이 색이 바뀌어도 글자·아이콘이 같이 따라간다. */}
@@ -100,6 +108,7 @@ export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟
           {횟수 > 1 ? `${횟수}번 만들었어요` : `앞서 ${메모들.length - 1}번 더 남겼어요`}
         </div>
       )}
+      </div>
     </Tag>
   )
 }

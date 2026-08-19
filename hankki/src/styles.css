@@ -2994,9 +2994,17 @@ html, body { overscroll-behavior: none; }
   display: flex;
   flex-direction: column;
   justify-content: center;
+  /* ⛔⛔ 이 줄이 없으면 글씨가 «한 글자씩 세로로» 쏟아진다 (2026-08-20 실제로 그랬다).
+     메모지는 누를 수 있어서 `button` 인데, 브라우저 기본 스타일이 버튼에 `align-items: center`
+     를 준다 → flex 세로 배치에서 자식이 «내용 폭»만 차지해 한 글자 너비로 쪼그라든다.
+     📌 부모 태그가 무엇인지가 자식 폭을 바꾼다 — div 로 보고 짜면 안 보이는 함정이다. */
+  align-items: center;
   text-align: center;
   overflow: hidden;
+  padding: 0;
 }
+/* 📐 안쪽 상자 — 종이의 여백을 «폭»으로 준다(컴포넌트가 `BOX_PAD` 에서 계산해 넘긴다) */
+.memo-note.stick .memo-in { display: flex; flex-direction: column; }
 /* ⭐ 글자를 «종이 폭»에 매단다 — 자리가 좁아지면 같이 작아져서 안 넘친다.
    ⛔ 작은 자리(157px)에서 머리줄이 한 줄에 안 들어간다 → 감기게 두고 별점도 가운데로. */
 .memo-note.stick .memo-note-head { font-size: clamp(7.5px, 5.4cqw, 11px); flex-wrap: wrap; justify-content: center; row-gap: 1px; }
