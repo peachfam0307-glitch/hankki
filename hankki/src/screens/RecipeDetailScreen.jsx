@@ -486,9 +486,23 @@ export default function RecipeDetailScreen({ id }) {
           </div>
         )}
 
+        {/* 📌📌 내가 남긴 한 줄이 «있으면» — 카드가 아니라 «메모지»로 (창업자 확정 2026-08-19)
+            📮 창업자 = *"근데 그 요리기록카드가 **눈에도 안띄고 안예뻐**.."*
+            🔢 실물로 보니 맞았다 — 크림 바탕 ＋ 회색 연필 네모라 주변(칩·태그)에 완전히 묻혔다.
+            ⭐⭐ 한 번에 셋이 풀린다 = ⑴자리를 «안» 늘린다(이미 있던 자리다)
+               ⑵같은 말이 두 번 안 나온다 ⑶예쁘고 눈에 띈다
+            📌 창업자가 두 번 짚은 *"레시피마다 붙일 수 있는 자리가 다르다"* 의 답이 이것이다 —
+               «새 자리를 찾는 것»이 아니라 «이미 있는 자리를 바꾸는 것».
+            ⛔ 한 줄이 «없으면» 옛 카드 그대로 — 메모지는 글이 있어야 종이 구실을 한다. */}
+        {latestEntry?.note && (
+          <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center' }}>
+            <MemoNote recipeId={r.id} 횟수={cookedN} onClick={() => setLogEntry(latestEntry)} />
+          </div>
+        )}
+
         {/* 내 요리 기록 — 위로 올려 잘 보이게. 별점·만든 횟수·최근 메모 요약, 탭하면 남기기/보기.
             (‘나만의 팁’은 이제 표지 꾸미기 포스트잇·글자로 — 역할이 겹치지 않게 분리) */}
-        {(myEntries.length > 0 || cookedN > 0) && (
+        {!latestEntry?.note && (myEntries.length > 0 || cookedN > 0) && (
           <button
             className="card press"
             onClick={() => { if (latestEntry) setLogEntry(latestEntry) }}
@@ -524,14 +538,11 @@ export default function RecipeDetailScreen({ id }) {
           </button>
         )}
 
-        {/* 📌 지난번에 내가 남긴 한 줄 — 「재료 옆에 붙여둘게요」라고 한 줄 쓰는 창에서 «약속»한 자리다.
-            📮 창업자 2026-08-19 *"레시피에 카드처럼 띄워주면 안돼?(재료나 만들기옆에)"*
-            ⭐ 요리 모드(재료 준비)와 «같은 컴포넌트»다 — 두 곳에 마크업을 적지 않는다.
-            ⛔ 없으면 아무것도 안 그린다. */}
-        {r.ingredients?.length > 0 && (
-          <div style={{ marginTop: 22 }}><MemoNote recipeId={r.id} /></div>
-        )}
-
+        {/* ⛔⛔ 여기 메모지를 «따로» 붙였다가 걷어냈다 — 위 「내 요리 기록」 카드가 이미
+            같은 한 줄을 보여주고 있어서 **같은 말이 두 번** 나왔다(2026-08-19 · 찍어 보고 알았다).
+            📌 창업자가 두 번 짚은 *"레시피마다 붙일 수 있는 자리가 다르다"* 의 답이 여기였다 —
+               «새 자리를 찾는 것»이 아니라 «이미 있는 자리를 바꾸는 것».
+            ✅ 그래서 「내 요리 기록」 카드 자체를 메모지 모양으로 만들었다(위 참조). */}
         {r.ingredients?.length > 0 && (
           <>
             <div className="sec-head" style={{ marginTop: 14, marginBottom: 6 }}>
