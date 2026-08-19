@@ -42,8 +42,29 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('hankki/package-lock.json') }}
+      # ⛔⛔ [2026-08-19] 여기서 배포 «둘»이 멎었다 — 우리 코드가 아니라 러너 «바깥» 문제였다.
+      #    run #1537 = 33분 멎다가 취소 · #1538 = 15분. 그 앞 #1536 은 같은 단계를 «19초»에 끝냈다.
+      #    로그가 `Get:5 … noble-security InRelease` 뒤로 33분간 «백지»였다 —
+      #    `--with-deps` 가 부르는 `apt-get` 이 우분투 패키지 서버에서 멎은 것이다
+      #    (`azure.archive.ubuntu.com` 이 전부 `Ign:` 로 무시되고 폴백 서버에서 멈췄다).
+      #    ⭐ #1537 은 «문서만» 고친 커밋인데도 멎었다 = 우리 코드와 무관하다는 증거.
+      #
+      # ⭐⭐ 갈라야 할 두 가지 — **`--with-deps` 만 apt 를 쓴다.**
+      #    브라우저 바이너리 자체는 playwright CDN 에서 받으므로 apt 와 상관이 없다.
+      #    그래서 apt 가 멎으면 «잘라내고» 브라우저만 받는다.
+      #    ubuntu-latest 이미지엔 크로미움 의존 라이브러리가 대부분 이미 깔려 있다.
+      # ⛔ 폴백이 모자라면 스모크가 브라우저를 못 띄워 «실패»한다 = 배포가 막힌다.
+      #    **안전한 쪽으로 넘어진다** — 검사를 건너뛰고 나가는 일은 없다.
+      # ⏱ 시간 제한이 «없으면» job 기본값인 **6시간**까지 매달린다. 그게 이 날 겪은 일이다.
+      #    `timeout-minutes` 는 단계 전체의 상한이고, 셸 안의 `timeout` 이 apt 만 따로 자른다.
+      #    ⛔ `timeout-minutes` 만으로는 폴백이 안 돈다(단계째로 죽는다) — 둘 다 필요하다.
       - name: Install Chromium (smoke)
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 10
+        run: |
+          timeout 300 npx playwright install --with-deps chromium || {
+            echo "⚠️ --with-deps 가 5분 안에 안 끝났다(apt 지연) — 브라우저만 받는다"
+            timeout 240 npx playwright install chromium
+          }
       - name: Smoke test — 저장·핵심 흐름 (실패 시 배포 차단)
         run: npm run smoke
       - uses: actions/upload-pages-artifact@v3
