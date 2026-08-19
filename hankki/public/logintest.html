@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>한끼 — 폰에서 확인하는 판</title>
+<!--
+  🔬 TWA 실물 확인판 — 2026-08-19
+  ⭐ 왜 있나 = `docs/출시행정-학습-2026-08-17.md` 🅱-1
+     *"TWA 에서 구글 로그인이 뜨나 — ⭐여기서 막히면 클라우드 설계가 통째로 바뀐다. 제일 먼저"*
+  ⛔ 앱(`src/`)을 한 줄도 안 건드린다. `privacy.html` 처럼 «따로 선» 정적 페이지다.
+  ⛔ 밖으로 나가는 건 «구글 로그인 화면» 하나뿐 — 우리 서버로 아무것도 안 보낸다.
+-->
+<style>
+  :root{--bg:#fffdf8;--ink:#3b2a1a;--dim:#8b7863;--line:#e6ddcf;--card:#fff;--ok:#1f7a3d;--no:#b3261e;--warn:#8a6d00}
+  @media (prefers-color-scheme:dark){:root{--bg:#17151a;--ink:#f2ece3;--dim:#a99b88;--line:#332d26;--card:#211d24;--ok:#6fd08c;--no:#ff8a80;--warn:#e5c76b}}
+  *{box-sizing:border-box}
+  body{margin:0;padding:18px 16px 48px;background:var(--bg);color:var(--ink);
+       font:16px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+       -webkit-text-size-adjust:100%}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--dim);font-size:13px;margin:0 0 18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px;margin:0 0 14px}
+  .big{font-size:19px;font-weight:700;line-height:1.45;margin:0 0 6px}
+  .why{color:var(--dim);font-size:13px;margin:0}
+  h2{font-size:15px;margin:18px 0 8px;color:var(--dim);font-weight:600}
+  .row{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .mark{flex:0 0 22px;font-size:17px;line-height:1.4}
+  .k{font-weight:600}
+  .v{color:var(--dim);font-size:13px;word-break:break-all}
+  button{width:100%;padding:15px 14px;font-size:16px;font-weight:700;border-radius:12px;
+         border:1px solid var(--line);background:var(--card);color:var(--ink);margin:8px 0 0;cursor:pointer}
+  button.go{background:#6b4f3a;color:#fffdf8;border-color:#6b4f3a}
+  input{width:100%;padding:13px;font-size:15px;border-radius:10px;border:1px solid var(--line);
+        background:var(--bg);color:var(--ink);margin:8px 0 0}
+  pre{white-space:pre-wrap;word-break:break-all;font-size:12px;line-height:1.55;color:var(--dim);margin:10px 0 0}
+  .ok{color:var(--ok)} .no{color:var(--no)} .warn{color:var(--warn)}
+  .note{font-size:13px;color:var(--dim);margin:8px 0 0}
+</style>
+</head>
+<body>
+
+<h1>한끼 — 폰에서 확인하는 판</h1>
+<p class="sub">2026-08-19 · 이 페이지는 앱과 따로 서 있어요. 눌러도 앱엔 아무 일도 안 나요.</p>
+
+<div class="card">
+  <p class="big" id="verdict">재는 중…</p>
+  <p class="why" id="verdictWhy"></p>
+</div>
+
+<h2>① 지금 어디서 열렸나</h2>
+<div class="card" id="where"></div>
+
+<h2>② 저장이 사나 <span style="font-weight:400">(레시피가 안 날아가나)</span></h2>
+<div class="card" id="store"></div>
+
+<h2>③ 구글 로그인이 되나</h2>
+<div class="card">
+  <p class="why">아래 단추를 누르면 <b>구글 화면으로 넘어가요.</b> 거기서 <b>뭐라고 나오는지</b>가 답이에요.
+    보고 나서 <b>뒤로</b> 눌러 돌아오면 돼요.</p>
+  <button class="go" id="probe">구글 화면 열어보기</button>
+  <p class="note">
+    ✅ <b>「액세스 차단됨 / invalid_client」</b> 같은 오류 → <b>좋은 신호.</b> 구글이 우리 브라우저를 <b>안 막았다</b>는 뜻이에요.<br>
+    ⛔ <b>「이 브라우저 또는 앱은 안전하지 않을 수 있습니다」</b> → <b>막혔다.</b> 이 화면을 캡처해 주세요.
+  </p>
+  <p class="note">⚠️ 이건 <b>강한 신호</b>지 증명은 아니에요. 진짜 로그인은 아래 칸에 열쇠를 넣으면 돼요.</p>
+</div>
+
+<h2>④ (나중에) 진짜로 로그인해 보기</h2>
+<div class="card">
+  <p class="why">구글 클라우드에서 <b>OAuth 클라이언트 ID</b>를 만들면 여기 붙여넣어요. 한 번만 넣으면 기억해요.</p>
+  <input id="cid" placeholder="…apps.googleusercontent.com" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <button id="real">진짜 구글 로그인 해보기</button>
+  <p class="note" id="realNote"></p>
+</div>
+
+<h2>⑤ 결과 보내기</h2>
+<div class="card">
+  <button id="copy">결과 복사하기</button>
+  <button id="share">카톡 등으로 보내기</button>
+  <pre id="dump"></pre>
+</div>
+
+<script>
+(function () {
+  var R = {}                                  // 결과 모음
+  var $ = function (id) { return document.getElementById(id) }
+
+  function row(box, mark, k, v) {
+    var d = document.createElement('div'); d.className = 'row'
+    var m = document.createElement('div'); m.className = 'mark'; m.textContent = mark
+    var t = document.createElement('div')
+    var a = document.createElement('div'); a.className = 'k'; a.textContent = k
+    var b = document.createElement('div'); b.className = 'v'; b.textContent = v
+    t.appendChild(a); t.appendChild(b); d.appendChild(m); d.appendChild(t)
+    box.appendChild(d)
+  }
+
+  // ── ① 어디서 열렸나 ──────────────────────────────────────
+  var ua = navigator.userAgent || ''
+  var ref = document.referrer || ''
+  // ⭐ TWA 의 «공식» 표시 = 여는 주체가 안드로이드 앱이라 referrer 가 `android-app://` 로 온다
+  var fromApp = ref.indexOf('android-app://') === 0
+  var mode = ['standalone', 'minimal-ui', 'fullscreen', 'browser'].filter(function (m) {
+    try { return window.matchMedia('(display-mode: ' + m + ')').matches } catch (e) { return false }
+  })[0] || '모름'
+  // ⛔ WebView 는 UA 에 `; wv)` 가 박힌다 — 구글이 로그인을 막는 바로 그 표시
+  var isWv = /;\s*wv\)/.test(ua) || / Version\/[\d.]+ Chrome\//.test(ua)
+  // ⭐⭐ **다른 앱의 «자기 브라우저»에서 열면 우리 앱이 막힌 것처럼 보인다** — 그건 헛알람이다.
+  //   카톡·네이버·인스타는 자기 웹뷰로 링크를 연다. 이름을 짚어 주고 「다른 브라우저로 열기」를 안내한다.
+  var inApp = null
+  ;[['KAKAOTALK', '카카오톡'], ['NAVER', '네이버'], ['Instagram', '인스타그램'], ['FBAN', '페이스북'],
+    ['FBAV', '페이스북'], ['DaumApps', '다음'], ['Line/', '라인'], ['Whale', '웨일']].some(function (p) {
+    if (ua.indexOf(p[0]) >= 0) { inApp = p[1]; return true }
+    return false
+  })
+  R.남의앱브라우저 = inApp || '아니오'
+  // 🔌 (덤) 인앱결제 API 가 이 판에 있나 — BILLING AAB 를 올린 «뒤»에 여기서 확인하면 된다
+  R.결제API = ('getDigitalGoodsService' in window) ? '있음 ✅' : '없음(아직 BILLING AAB 를 안 올렸으니 정상)'
+  var chrome = (/Chrome\/(\d+)/.exec(ua) || [])[1] || '모름'
+  var android = (/Android (\d+)/.exec(ua) || [])[1] || '아님'
+
+  R.어디 = fromApp ? '한끼 앱(TWA) 안' : (mode === 'standalone' ? '홈화면 앱' : '브라우저 탭')
+  R.referrer = ref || '(없음)'
+  R.표시모드 = mode
+  R.웹뷰인가 = isWv ? '예 ⛔' : '아니오'
+  R.크롬버전 = chrome
+  R.안드로이드 = android
+  R.UA = ua
+
+  var w = $('where')
+  row(w, fromApp ? '✅' : '⚠️', fromApp ? '한끼 앱 «안»에서 열렸어요' : '앱 밖에서 열렸어요',
+    fromApp ? ref : '앱 아이콘으로 연 게 아니라면 이 칸이 이래요 · ' + (ref || '보낸 곳 없음'))
+  row(w, isWv ? '⛔' : '✅', isWv ? '앱 안에 박은 브라우저(WebView)예요' : '진짜 크롬이에요',
+    isWv ? '구글이 여기선 로그인을 막아요' : '구글이 «권장»하는 방식이에요')
+  row(w, '·', '화면 모드', mode)
+  row(w, '·', '크롬 · 안드로이드', chrome + ' · ' + android)
+  row(w, '·', '브라우저 이름표(UA)', ua)
+
+  // ── ② 저장이 사나 ────────────────────────────────────────
+  var s = $('store')
+  var lsOk = false
+  try { localStorage.setItem('hankki:_t', '1'); lsOk = localStorage.getItem('hankki:_t') === '1'; localStorage.removeItem('hankki:_t') } catch (e) { lsOk = false }
+  R.localStorage = lsOk ? '됨' : '안 됨 ⛔'
+  row(s, lsOk ? '✅' : '⛔', '지금 쓰는 저장(localStorage)', lsOk ? '읽고 쓰기 다 돼요' : '막혀 있어요 — 앱이 아무것도 못 저장해요')
+
+  var idbOk = null
+  try {
+    var rq = indexedDB.open('hankki_probe', 1)
+    rq.onsuccess = function () { idbOk = true; try { rq.result.close(); indexedDB.deleteDatabase('hankki_probe') } catch (e) {} done() }
+    rq.onerror = function () { idbOk = false; done() }
+  } catch (e) { idbOk = false }
+
+  var idbRow = document.createElement('div'); idbRow.className = 'row'
+  idbRow.innerHTML = '<div class="mark">…</div><div><div class="k">더 큰 저장(IndexedDB)</div><div class="v">재는 중…</div></div>'
+  s.appendChild(idbRow)
+
+  // ⭐ `persist()` = 「이 사이트 데이터를 함부로 지우지 마세요」 — 클라우드 저장 전까지의 보험
+  var persistRow = document.createElement('div'); persistRow.className = 'row'
+  persistRow.innerHTML = '<div class="mark">…</div><div><div class="k">데이터 지킴(persist)</div><div class="v">재는 중…</div></div>'
+  s.appendChild(persistRow)
+  var quotaRow = document.createElement('div'); quotaRow.className = 'row'
+  quotaRow.innerHTML = '<div class="mark">·</div><div><div class="k">쓸 수 있는 공간</div><div class="v">재는 중…</div></div>'
+  s.appendChild(quotaRow)
+
+  function set(el, mark, v) { el.children[0].textContent = mark; el.children[1].children[1].textContent = v }
+
+  function done() {
+    if (idbOk === null) return
+    set(idbRow, idbOk ? '✅' : '⛔', idbOk ? '열려요' : '안 열려요')
+    R.IndexedDB = idbOk ? '됨' : '안 됨 ⛔'
+    dump()
+  }
+
+  ;(async function () {
+    try {
+      if (navigator.storage && navigator.storage.persist) {
+        var already = await navigator.storage.persisted()
+        var got = already || await navigator.storage.persist()
+        R.persist = got ? '켜짐 ✅' : '거절됨 ⚠️'
+        set(persistRow, got ? '✅' : '⚠️',
+          got ? '켰어요 — 저장 공간이 부족해도 우리 데이터를 먼저 안 지워요'
+              : '브라우저가 거절했어요(앱을 자주 쓰면 저절로 켜지기도 해요)')
+      } else {
+        R.persist = '이 브라우저엔 없음'
+        set(persistRow, '⚠️', '이 브라우저엔 그 기능이 없어요')
+      }
+    } catch (e) { R.persist = '오류'; set(persistRow, '⚠️', '재다가 오류가 났어요') }
+    try {
+      var est = await navigator.storage.estimate()
+      var mb = function (n) { return (n / 1048576).toFixed(0) + 'MB' }
+      R.공간 = mb(est.usage || 0) + ' / ' + mb(est.quota || 0)
+      set(quotaRow, '·', '지금 ' + mb(est.usage || 0) + ' 쓰는 중 · 최대 ' + mb(est.quota || 0))
+    } catch (e) { set(quotaRow, '·', '못 쟀어요') }
+    dump()
+  })()
+
+  // ── 한 줄 결론 ───────────────────────────────────────────
+  // ⭐⭐ **순서가 중요하다** — 「남의 앱 브라우저」를 먼저 짚어야 헛알람이 안 난다.
+  //   그리고 «진짜 답»은 「한끼 앱 안인가」가 아니라 **「웹뷰인가」**다.
+  //   한끼 앱(TWA)이든, 거기서 열린 크롬 창이든, 그냥 크롬이든 — 셋 다 «진짜 크롬»이라 구글이 안 막는다.
+  var v = $('verdict'), vw = $('verdictWhy')
+  if (inApp) {
+    v.innerHTML = '<span class="warn">⚠️ 지금은 ' + inApp + ' «자기 브라우저»예요</span>'
+    vw.textContent = '이건 우리 앱이 아니에요. 여기선 구글이 원래 막아요 — 우리 문제가 아니에요. '
+      + '오른쪽 위 ⋮ 를 눌러 「다른 브라우저로 열기」를 골라 주세요.'
+  } else if (isWv) {
+    v.innerHTML = '<span class="no">⛔ 여기선 구글 로그인이 막혀요</span>'
+    vw.textContent = '앱 안에 박은 브라우저(WebView)라서예요. 이 결과를 그대로 보내 주세요 — 설계를 바꿔야 해요.'
+  } else {
+    v.innerHTML = '<span class="ok">✅ 진짜 크롬이에요 — 구글이 막는 조건에 안 걸려요</span>'
+    vw.textContent = (fromApp ? '게다가 «한끼 앱 안»에서 열렸어요. ' : '(한끼 앱 안인지까지는 아래 ①에서 봐 주세요. ⭐앱이든 크롬이든 이 답은 안 바뀌어요.) ')
+      + '이제 ③번을 눌러 «구글이 진짜로 뭐라 하는지» 봐 주세요.'
+  }
+
+  // ── ③ 구글이 우리를 막나 ─────────────────────────────────
+  // ⭐ 일부러 «가짜» 클라이언트 ID 를 보낸다. 콘솔에서 아무것도 안 만들어도 된다.
+  //   · 「안전하지 않은 브라우저」가 뜨면 → 사용자-에이전트 단계에서 «막힌» 것
+  //   · 「invalid_client」류 오류가 뜨면 → 그 단계를 «지나갔다» = 좋은 신호
+  $('probe').onclick = function () {
+    var u = 'https://accounts.google.com/o/oauth2/v2/auth'
+      + '?client_id=000000000000-hankkitwaprobe.apps.googleusercontent.com'
+      + '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname)
+      + '&response_type=code&scope=openid%20email&prompt=select_account'
+    location.href = u
+  }
+
+  // ── ④ 진짜 로그인 ────────────────────────────────────────
+  var KEY = 'hankki:oauthClientId'
+  try { $('cid').value = localStorage.getItem(KEY) || '' } catch (e) {}
+  $('real').onclick = function () {
+    var id = ($('cid').value || '').trim()
+    if (!/apps\.googleusercontent\.com$/.test(id)) {
+      $('realNote').textContent = '⚠️ 아직 열쇠(클라이언트 ID)가 없어요. …apps.googleusercontent.com 으로 끝나야 해요.'
+      return
+    }
+    try { localStorage.setItem(KEY, id) } catch (e) {}
+    location.href = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + encodeURIComponent(id)
+      + '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname)
+      + '&response_type=token&scope=' + encodeURIComponent('openid email profile')
+      + '&prompt=select_account'
+  }
+
+  // 돌아왔을 때 — 구글이 뭘 줬는지 그대로 보여준다
+  var back = (location.hash || '').slice(1) + '&' + (location.search || '').slice(1)
+  if (/access_token=|error=|code=/.test(back)) {
+    var m = /error=([^&]*)/.exec(back)
+    var okTok = /access_token=|code=/.test(back)
+    R.돌아온결과 = okTok ? '로그인 성공 ✅' : ('오류: ' + decodeURIComponent((m && m[1]) || '?'))
+    $('realNote').innerHTML = okTok
+      ? '<b class="ok">✅ 로그인이 됐어요.</b> 구글이 열쇠를 돌려줬어요.'
+      : '<b class="warn">구글이 이렇게 답했어요:</b> ' + decodeURIComponent((m && m[1]) || '?')
+        + '<br>⭐ 이게 «브라우저가 안전하지 않다»가 아니면 <b>UA 단계는 통과한 거예요.</b>'
+  }
+
+  // ── ⑤ 결과 보내기 ────────────────────────────────────────
+  function text() {
+    return Object.keys(R).map(function (k) { return k + ': ' + R[k] }).join('\n')
+  }
+  function dump() { $('dump').textContent = text() }
+  dump()
+  $('copy').onclick = async function () {
+    try { await navigator.clipboard.writeText(text()); $('copy').textContent = '복사했어요 ✅' }
+    catch (e) { $('copy').textContent = '복사가 안 돼요 — 아래 글자를 길게 눌러 복사해 주세요' }
+  }
+  $('share').onclick = async function () {
+    try { await navigator.share({ title: '한끼 확인 결과', text: text() }) }
+    catch (e) { $('share').textContent = '공유가 안 돼요 — 위 복사를 써 주세요' }
+  }
+})()
+</script>
+</body>
+</html>
