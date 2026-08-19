@@ -2829,42 +2829,155 @@ html, body { overscroll-behavior: none; }
   gap: 14px;
   margin-top: 10px;
 }
-/* 🍳🍳 「다음에 뭐 할까」 ㉯ 안 — 홈에서 «유일하게 채워진» 카드 (⏳시안 · 창업자 판정 대기)
-   📮 창업자 2026-08-19 = *"눈에 잘띄게 만들어줘 홈에 비슷한 안내가 많아서 잘 안보고 넘길가능성이 높아."*
-   ⭐ 왜 «채움»인가 = 홈의 다른 카드가 전부 «옅은 바탕 ＋ 진한 글자»다(소식 연파랑 · 오늘/이번주 베이지).
-      한 장만 반대로 하면 색을 더 안 써도 저절로 튄다. ⛔새 색을 만들지 않는다 — 우리 갈색 그대로.
+/* 🍳🍳 「다음에 뭐 할까」 — 홈에서 «유일하게 채워진» 카드 (창업자 확정 2026-08-19 · 안 ㉯)
+   📮 창업자 = *"눈에 잘띄게 만들어줘 홈에 비슷한 안내가 많아서 잘 안보고 넘길가능성이 높아."*
+   🔢 실물로 세니 창업자 말이 맞았다 — 홈에 **같은 결의 베이지 카드가 셋 연속**
+      (오늘 뭐 해먹지 · 이번 주 특별한 한끼 · 우리집레시피). 넷째를 얹으면 그냥 묻힌다.
+   ⭐ 왜 «채움»인가 = 다른 카드가 전부 «옅은 바탕 ＋ 진한 글자»다. 한 장만 반대로 하면
+      새 색을 안 만들고도 저절로 튄다. ⛔우리 갈색 그대로 쓴다.
    ⛔ 그림자를 세게 주지 않는다 — 「광고 배너」로 읽히면 오히려 안 본다. */
-.next-card {
-  width: 100%;
+
+/* 📐 가로로 밀어서 최대 3장 (창업자 *"레시피 오른쪽 스크롤해서 3개정도까지는 보이게?"*)
+   ⭐ `scroll-padding-left` 를 준다 — 없으면 첫 칸이 padding «바깥»에 맞아 열자마자 20px 밀린다(v10.68 사고).
+   ⛔ 카드가 하나뿐일 땐 밀 것도 없으니 그냥 전폭으로 선다(아래 `:only-child`). */
+.next-row {
   display: flex;
-  align-items: center;
-  gap: 11px;
-  margin-top: 10px;
-  padding: 12px 13px 12px 11px;
+  gap: 10px;
+  margin: 10px -20px 0;
+  padding: 2px 20px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  /* ⛔⛔ 이 한 줄이 없으면 **첫 칸이 열자마자 20px 잘린다** — `scroll-snap-align: start` 가
+     첫 칸을 padding «바깥»(스크롤포트)에 맞추기 때문. 2026-08-14 테스터 영상으로 잡은 그 사고다.
+     ✅ 스냅을 죽이지 않고 «기준선만» 패딩 안쪽으로 옮긴다(`.hscroll` 과 같은 해법). */
+  scroll-padding-left: 20px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.next-row::-webkit-scrollbar { display: none; }
+
+.next-card {
+  flex: 0 0 86%;              /* 다음 장이 살짝 보여야 «밀 수 있다»를 안다 */
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;     /* 📌 창업자 확정 = 안내가 위, 단추가 아래 */
   border-radius: 16px;
   background: var(--brown);
-  border: none;
-  text-align: left;
+  padding: 12px 13px 13px;
+  min-width: 0;
 }
-.next-card:active { filter: brightness(1.08); }
+.next-card:only-child { flex: 0 0 100%; }
+/* 🎨 둘째부터는 옅게 — 「지금 할 건 첫 장」이 분명해지고, 진한 카드 셋이 나란해 시끄러운 것도 막는다 */
+.next-card.sub { background: color-mix(in srgb, var(--brown) 82%, var(--surface)); }
+
+/* 카드 «전체»가 눌려 레시피로 간다 */
+.next-open { display: block; width: 100%; text-align: left; min-width: 0; }
+.next-open:active { opacity: 0.85; }
+.next-head { display: flex; align-items: center; gap: 7px; }
 /* 🐻 곰은 카드 높이를 안 늘린다 — 위아래로 살짝 넘겨 담는다(소식 카드와 같은 수법) */
-.next-gom { flex: 0 0 auto; display: block; width: 34px; height: auto; object-fit: contain; margin: -6px 0; }
-.next-label { font-size: 11.5px; font-weight: 800; color: var(--surface); opacity: 0.72; }
+.next-gom { flex: 0 0 auto; display: block; width: 30px; height: auto; object-fit: contain; margin: -5px 0; }
+.next-label { font-size: 11.5px; font-weight: 800; color: var(--surface); opacity: 0.75; }
 .next-title {
-  font-size: 16.5px; font-weight: 800; color: var(--surface); margin-top: 1px;
+  font-size: 17px; font-weight: 800; color: var(--surface); margin-top: 3px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.02em;
 }
-.next-reason { font-size: 12px; color: var(--surface); opacity: 0.8; margin-top: 2px; }
-/* 「한 줄 남기기」 — 눌러야 할 게 있는 갈래에만 붙는다(없으면 화살표) */
+/* 📌 이 줄이 「끌어들이는 말」이다 — 창업자가 *"확 끌리게"* 라고 콕 집은 자리라 흐리지 않는다 */
+.next-reason { font-size: 13.5px; font-weight: 700; color: var(--surface); margin-top: 5px; }
+/* 예시(“간장 반만”) — 뭘 쓸지 바로 떠오르게 하는 줄. 본문보다 한 단 낮춘다 */
+.next-eg { font-size: 11.5px; color: var(--surface); opacity: 0.72; margin-top: 2px; }
+/* 「한 줄 남기기」 — 안내 «아래»에 전폭으로. 눌러야 할 게 있는 갈래에만 붙는다 */
 .next-cta {
-  flex: 0 0 auto; font-size: 12px; font-weight: 800; color: var(--brown);
-  background: var(--surface); border-radius: 999px; padding: 7px 12px; white-space: nowrap;
+  width: 100%; margin-top: 11px; padding: 10px 12px;
+  font-size: 13px; font-weight: 800; color: var(--brown);
+  background: var(--surface); border-radius: 11px; border: none;
 }
-/* 「다른 것 보여줘」 — 카드 밖 · 조용하게(카드가 주인공이라 여기서 소리를 내면 둘이 싸운다) */
-.next-more {
-  display: block; margin: 6px 0 0 auto; padding: 5px 4px;
-  font-size: 11.5px; font-weight: 700; color: var(--text-sub);
+.next-cta:active { transform: scale(0.98); }
+
+/* ✍️✍️ 「한 줄 남기기」 창 — 작고 한 가지만 하는 시트 (창업자 2026-08-19)
+   📮 창업자 = *"이거 사진추가가 의미가 있어? 그리고 **글쓰는 창도 불편하고 안예뻤어..**"*
+   ⛔ 기존 요리 기록 시트를 그대로 부르니 「한 줄」 쓰러 왔는데 별점·사진 네모가 더 컸다.
+   ⭐ 그래서 이 창은 **메모 ＋ 별점**만 받는다. 사진은 없다(일기 탭엔 그대로 있다). */
+.one-sheet { padding: 0 18px calc(14px + var(--safe-bottom)); }
+.one-head { display: flex; align-items: center; gap: 10px; padding: 4px 0 12px; }
+.one-title {
+  flex: 1; min-width: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.02em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+.one-close { flex: 0 0 auto; font-size: 14px; font-weight: 600; color: var(--text-sub); padding: 6px 2px; }
+.one-note {
+  width: 100%; margin-top: 12px; padding: 13px 14px;
+  border: 1.5px solid var(--line); border-radius: 13px; background: var(--surface);
+  font: inherit; font-size: 15.5px; line-height: 1.5; color: var(--text); resize: none;
+}
+.one-note:focus { outline: none; border-color: var(--brown); }
+.one-note::placeholder { color: var(--sand); }
+/* ⭐ 별점은 메모 «아래»에 조용히 — 「한 줄」이 주인공이다 */
+.one-stars { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; }
+.one-stars-label { font-size: 12.5px; color: var(--text-sub); font-weight: 600; }
+.one-foot { display: flex; gap: 9px; margin-top: 16px; }
+.one-later {
+  flex: 1; padding: 14px; border-radius: 13px; background: var(--cream);
+  color: var(--text-sub); font-weight: 700; font-size: 14.5px;
+}
+.one-save {
+  flex: 1.7; padding: 14px; border-radius: 13px; background: var(--brown);
+  color: var(--surface); font-weight: 800; font-size: 15px; border: none;
+}
+/* ⛔ 빈 채로 저장하면 카드가 안 사라져 「고장인가?」가 된다 — 못 누르는 걸 «보여준다» */
+.one-save:disabled { opacity: 0.42; }
+
+/* ✍️ 한 줄 쓰는 창 머리말 — 「왜 쓰는지」 ＋ 「어디에 쓰이는지」 (창업자 2026-08-19)
+   ⭐ 크림 바탕 ＋ 왼쪽 굵은 선 = 「메모지」 결. 시트 안이라 진한 채움은 과하다. */
+.oneline-hint {
+  background: var(--cream);
+  border-left: 3px solid var(--brown);
+  border-radius: 0 10px 10px 0;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+.oneline-hint-head { font-size: 13.5px; font-weight: 800; color: var(--text); }
+.oneline-hint-sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+
+/* 📌📌 지난번 메모 = «포스트잇처럼» 자동으로 붙는다 (창업자 2026-08-19)
+   📮 창업자 = *"약간 포스트잇 붙이듯이. **자동으로 붙여주면 유저는 편하겠지**"*
+      ＋ *"그 한줄도 **담에 만들때 바로 보여야 의미가 있는건데**"*
+   ⭐ 자리 근거 = 「간장 반만」은 **재료를 넣기 «전»에** 봐야 쓸모가 있다. 다 만들고 보면 늦다.
+      → 요리 모드 **0단계(재료 준비)** ＋ 레시피 상세의 **재료 바로 위**.
+   ⛔ 유저가 손으로 붙이는 꾸미기 포스트잇(레꾸)과 «다른 것»이다 — 이건 앱이 붙여준다.
+   🎨 살짝 기울여 «붙여 놓은» 느낌만 준다(1도). ⛔더 기울이면 글자가 읽기 힘들다.
+   ⛔⛔ 색은 «미디어 쿼리 안»에서만 뒤집는다 — 첫 판이 (data-theme 조건)을
+      미디어 쿼리 «밖»에 둬서 **밝은 화면에서도 어두운 포스트잇**이 됐다(글자가 안 읽혔다).
+      📌 어두운 바탕이 되는 순간 글자색도 같이 뒤집어야 한다 — 바탕만 바꾸면 어두운 글자가 남는다.
+   ⛔⛔ ＋ 그걸 고치면서 **주석을 닫는 기호를 두 번 넣어 규칙이 통째로 깨졌다** —
+      종이가 아예 안 그려지고 글자만 떠 있었다. 빌드는 통과했고 화면을 열어봐야 보였다(절대원칙 21).
+      📌 그리고 **그 사고를 설명하는 주석에 그 기호를 또 적어서 «같은 사고를 두 번» 냈다.**
+         CSS 주석 안에는 닫는 기호를 «글자로도» 적지 않는다.
+   🎨 배경이 크림색인 화면(요리 모드)에서도 «종이로 보이게» 살짝 진한 노랑 ＋ 테두리를 준다. */
+.memo-note {
+  position: relative;
+  /* 🎨 요리 모드 배경이 크림색이라 «연한 노랑»으론 종이가 안 보였다 — 한 단 진하게 ＋ 테두리 */
+  background: #fbeeb4;
+  color: #4a4030;
+  border: 1px solid rgba(120, 100, 40, 0.16);
+  border-radius: 3px 12px 3px 12px;
+  padding: 11px 13px;
+  box-shadow: 0 2px 8px rgba(90, 75, 30, 0.14);
+  transform: rotate(-1deg);
+  /* ⛔ 요리 모드는 가운데 정렬이라 상속받으면 메모가 가운데로 간다 — 종이는 왼쪽 정렬이 자연스럽다 */
+  text-align: left;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .memo-note { background: #4a4433; color: #f0e9d8; }
+}
+:root[data-theme="dark"] .memo-note { background: #4a4433; color: #f0e9d8; }
+/* ⛔ 색을 `var(--text)` 로 두지 않는다 — 포스트잇은 «자기 바탕»을 들고 다녀서
+   화면 테마가 아니라 «이 종이»에 맞는 글자색이라야 한다 */
+.memo-note-head { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; opacity: 0.62; }
+/* ⭐ 별점 = 포스트잇 «머리줄 오른쪽 끝»에. 창업자 *"별점은 넣어도 괜찮겠다 포스트잇에 보이면 되니까"*
+   ⛔ 안 매겼으면 아예 안 그린다(컴포넌트에서 막는다) — 빈 별은 재촉이 된다 */
+.memo-note-stars { margin-left: auto; display: inline-flex; align-items: center; gap: 1px; }
+.memo-note-body { font-size: 14px; font-weight: 700; margin-top: 3px; line-height: 1.45; }
+.memo-note-more { font-size: 11px; opacity: 0.6; margin-top: 5px; }
 
 .news-card {
   width: 100%;
