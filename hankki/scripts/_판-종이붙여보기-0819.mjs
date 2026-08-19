@@ -28,21 +28,34 @@ const srv = createServer((q, s) => {
 })
 await new Promise((r) => srv.listen(4398, r))
 
+// 🎨 창업자가 2026-08-19 밤에 새로 뽑아 준 13컷 — 세 갈래
+//    ① 시트1 = 「프랑스 쿠튀르」(지피티 미감 · 리본·진주·퀼트)  ⑥컷
+//    ② 시트2 = 스티커 결 — ⛔창업자 판정 *"숟가락 노랑색만 그나마 쓸만하고 나머지는 촌스러워서 버려줘"*  ①컷
+//    ③ 시트3 = 창업자가 직접 쓴 프롬프트(자수·수채화)  ⑥컷
 const 종이들 = [
-  ['dlb11', '노란 라벨 ＋ 하트'],
-  ['dc_dma01', '모눈 노트 ＋ 형광펜'],
-  ['dc_dma05', '체크 테이프로 붙인 종이'],
-  ['dgn06', '집게로 집은 종이 ＋ 하트'],
-  ['dgn02', '마스킹테이프 ＋ 반짝이'],
-  ['dgn05', '하트 ＋ 모서리 접힘'],
-  ['dgn12', '리본 ＋ 하트 ＋ 점선'],
+  ['mp1_1', '쿠튀르 · 노랑 프릴 ＋ 파란 장미'],
+  ['mp1_2', '쿠튀르 · 트위드 ＋ 살구 리본'],
+  ['mp1_3', '쿠튀르 · 퀼트 ＋ 하트 단추'],
+  ['mp1_4', '쿠튀르 · 세이지 리본 ＋ 체리'],
+  ['mp1_5', '쿠튀르 · 진주 ＋ 파란 리본'],
+  ['mp1_6', '쿠튀르 · 파랑노랑 뜨개 ＋ 꽃'],
+  ['mp2_1', '스티커 · 나무 숟가락 ＋ 노랑 물결 (창업자가 유일하게 남긴 것)'],
+  ['mp3_1', '자수 · 구름 ＋ 파란 단추'],
+  ['mp3_2', '자수 · 파랑 가죽 ＋ 리본'],
+  ['mp3_3', '자수 · 갈색 깅엄 프릴 ＋ 하트'],
+  ['mp3_4', '자수 · 초록 깅엄 ＋ 꽃'],
+  ['mp3_5', '자수 · 파란 홈질 ＋ 나무 숟가락'],
+  ['mp3_6', '자수 · 세이지 ＋ 들꽃'],
 ]
 // ⭐ 그림 크기는 PNG 헤더에서 «직접» 읽는다 — 손으로 적으면 그림을 갈 때 낡는다
+// ⛔ 아직 앱 자산이 «아니다» — 창업자가 방금 준 시안이라 scratchpad 에서 읽는다.
+//    고른 뒤에 큰 판으로 다시 받아  로 들어간다.
+const 컷폴더 = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/종이컷'
 const 재기 = (k) => {
-  const buf = readFileSync(join(ROOT, `src/assets/stickers/photo/${k}.png`))
+  const buf = readFileSync(join(컷폴더, `${k}.png`))
   return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) }
 }
-const 데이터 = (k) => 'data:image/png;base64,' + readFileSync(join(ROOT, `src/assets/stickers/photo/${k}.png`)).toString('base64')
+const 데이터 = (k) => 'data:image/png;base64,' + readFileSync(join(컷폴더, `${k}.png`)).toString('base64')
 
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const CHROMIUM = process.env.SMOKE_CHROMIUM
@@ -68,11 +81,18 @@ await p0.close()
 const 갈아끼우기 = async (p, k) => {
   const { w, h } = 재기(k)
   await p.evaluate(({ url, w, h }) => {
-    const el = document.querySelector('.memo-note')
+    // ⛔⛔ `querySelector` 는 «첫째»를 잡는다 — 화면을 쌓으면 이전 화면(상세)이 DOM 에 남아
+    //    요리 모드에서도 «상세의» 메모를 갈아끼웠다(그래서 13컷이 전부 같은 종이로 나왔다).
+    //    ✅ 맨 «마지막» 것 = 지금 화면의 것.
+    const els = [...document.querySelectorAll('.memo-note')]
+    const el = els[els.length - 1]
     if (!el) return
     el.classList.add('paper')
-    el.style.backgroundImage = `url(${url})`
-    el.style.width = '230px'
+    // ⛔ `MemoNote` 에 기본 종이가 박혀 있어(`기본종이`) 그냥 넣으면 안 이긴다 → priority 로 못 박는다
+    el.style.setProperty('background-image', `url(${url})`, 'important')
+    el.style.setProperty('background-size', '100% 100%', 'important')
+    el.style.setProperty('background-repeat', 'no-repeat', 'important')
+    el.style.width = '100%'
     el.style.aspectRatio = `${w}/${h}`
     el.style.display = 'flex'
     el.style.alignItems = 'center'
@@ -83,7 +103,7 @@ const 갈아끼우기 = async (p, k) => {
     if (!inner) {
       inner = document.createElement('div')
       inner.className = 'memo-inner'
-      inner.style.cssText = 'width:74%;text-align:center'
+      inner.style.cssText = 'width:72%;text-align:center;font-size:0.92em;line-height:1.35'
       while (el.firstChild) inner.appendChild(el.firstChild)
       el.appendChild(inner)
     }
