@@ -1,6 +1,11 @@
 import { useMemo } from 'react'
 import { useStore } from '../store'
 import Icon from './Icon'
+import { PHOTO_FAMILY } from './Stickers'
+
+// 🎨 기본 종이 — ⏳창업자 판정 뒤 하나로 굳힌다
+const 기본종이 = 'dc_dma01'
+const 종이URL = (k) => PHOTO_FAMILY[k]?.src || ''
 
 // 📌📌 「지난번 메모」 포스트잇 — 앱이 «자동으로» 붙여준다
 //
@@ -21,7 +26,10 @@ import Icon from './Icon'
 //    (`WeekBox` 를 뺀 것과 같은 이유 · HomeScreen 주석 참고).
 //
 // ⛔ 없으면 «아무것도 안 그린다» — 빈 자리를 남기지 않는다(우리 규칙).
-export default function MemoNote({ recipeId, style }) {
+// ⏳ `종이`·`글씨` = 시안을 나란히 찍으려고 잠깐 받는 값 (창업자 판정 뒤 «진 쪽을 지운다»)
+//    ⛔ 창업자 = *"포스트잇 넘 안예쁜데..ㅠ"* · *"글씨체두 별로고.."*
+//       → 내가 만든 노란 네모 대신 **우리가 이미 가진 메모지 스티커**를 종이로 쓴다.
+export default function MemoNote({ recipeId, style, 종이, 글씨 }) {
   const { diary } = useStore()
 
   // 그 레시피의 메모만, 최근 것부터. ⛔빈 메모는 세지 않는다(「만들었어요」가 note:'' 로 만든다)
@@ -34,8 +42,17 @@ export default function MemoNote({ recipeId, style }) {
   if (!메모들.length) return null
   const 최근 = 메모들[0]
 
+  // 🎨 종이 = 우리가 이미 가진 메모지 스티커. ⛔새로 그린 게 0장이다.
+  //    ⭐ 「가운데는 조용해서 글씨가 읽히고 가장자리엔 장식이 있는 것」으로 골랐다 —
+  //       창업자 = *"예뻐야해 ㅋㅋ 그리고 **너무 밋밋하면 눈에 안띄어**"*
+  //    ⚠️ 종이 그림은 비율이 정해져 있다 → `background-size: 100% 100%` 로 늘린다.
+  //       손그림이라 조금 늘어나도 티가 안 난다(모눈·점선은 예외라 시안에서 눈으로 확인).
+  const 종이키 = 종이 || 기본종이
+  const 바탕 = 종이키 ? { backgroundImage: `url(${종이URL(종이키)})` } : null
+
   return (
-    <div className="memo-note" style={style}>
+    <div className={`memo-note${종이키 ? ' paper' : ''}`}
+      style={{ ...바탕, ...(글씨 ? { fontFamily: 글씨 } : null), ...style }}>
       <div className="memo-note-head">
         {/* ⛔ 색을 테마 변수로 주지 않는다 — 포스트잇은 «자기 바탕»을 들고 다닌다.
             `currentColor` 라야 종이 색이 바뀌어도 글자·아이콘이 같이 따라간다. */}
