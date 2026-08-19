@@ -33,24 +33,16 @@ await new Promise((r) => srv.listen(4398, r))
 //    ② 시트2 = 스티커 결 — ⛔창업자 판정 *"숟가락 노랑색만 그나마 쓸만하고 나머지는 촌스러워서 버려줘"*  ①컷
 //    ③ 시트3 = 창업자가 직접 쓴 프롬프트(자수·수채화)  ⑥컷
 const 종이들 = [
-  ['mp1_1', '쿠튀르 · 노랑 프릴 ＋ 파란 장미'],
-  ['mp1_2', '쿠튀르 · 트위드 ＋ 살구 리본'],
-  ['mp1_3', '쿠튀르 · 퀼트 ＋ 하트 단추'],
-  ['mp1_4', '쿠튀르 · 세이지 리본 ＋ 체리'],
-  ['mp1_5', '쿠튀르 · 진주 ＋ 파란 리본'],
-  ['mp1_6', '쿠튀르 · 파랑노랑 뜨개 ＋ 꽃'],
-  ['mp2_1', '스티커 · 나무 숟가락 ＋ 노랑 물결 (창업자가 유일하게 남긴 것)'],
-  ['mp3_1', '자수 · 구름 ＋ 파란 단추'],
-  ['mp3_2', '자수 · 파랑 가죽 ＋ 리본'],
-  ['mp3_3', '자수 · 갈색 깅엄 프릴 ＋ 하트'],
-  ['mp3_4', '자수 · 초록 깅엄 ＋ 꽃'],
-  ['mp3_5', '자수 · 파란 홈질 ＋ 나무 숟가락'],
-  ['mp3_6', '자수 · 세이지 ＋ 들꽃'],
+  ['s3_1_01', '자수 · 구름 ＋ 파란 단추'],
+  ['s3_2_01', '자수 · 파랑 가죽 ＋ 리본'],
+  ['s3_3_01', '자수 · 갈색 깅엄 프릴 ＋ 하트'],
+  ['s3_4_01', '자수 · 초록 깅엄 ＋ 꽃'],
+  ['s3_5_01', '자수 · 파란 홈질 ＋ 나무 숟가락'],
 ]
 // ⭐ 그림 크기는 PNG 헤더에서 «직접» 읽는다 — 손으로 적으면 그림을 갈 때 낡는다
 // ⛔ 아직 앱 자산이 «아니다» — 창업자가 방금 준 시안이라 scratchpad 에서 읽는다.
 //    고른 뒤에 큰 판으로 다시 받아  로 들어간다.
-const 컷폴더 = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/종이컷'
+const 컷폴더 = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/표준컷'
 const 재기 = (k) => {
   const buf = readFileSync(join(컷폴더, `${k}.png`))
   return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) }
@@ -170,46 +162,137 @@ for (const [k, 설명] of 종이들) {
 await ctx.close(); await b.close(); srv.close()
 
 // ── 판 만들기 (아티팩트용 · 문서 껍데기 없이) ───────
+// ☑️☑️ 창업자 절대원칙(2026-08-19) = **검수판은 무조건 체크 ＋ 복사가 된다.**
+//    📮 *"체크표시하는거 만들어주면 체크할게. 복사되게(무조건 검수판은 체크+복사되게 만들어줘) 앞으로 모든 검수판에"*
+//    ⭐ 창업자는 폰에서 판정한다 — 체크가 없으면 어디까지 봤는지 잃고, 복사가 없으면 손으로 다시 친다.
 const b64 = (p) => 'data:image/png;base64,' + readFileSync(p).toString('base64')
-const 줄 = (컷들) => 컷들.map(([k, 설명, 파일]) => `
-  <div class="cell">
-    <img src="${b64(파일)}" alt="${k}">
-    <div class="cap"><b>${k}</b> · ${설명}</div>
-  </div>`).join('')
 
-const html = `<title>레시피에 붙여본 메모지</title>
+// 두 자리를 «한 칸»에 나란히 — 같은 종이가 상세·요리모드에서 어떻게 보이나 한눈에
+const 칸 = 종이들.map(([k, 설명]) => {
+  const 상 = 상세컷.find((x) => x[0] === k)
+  const 요 = 요리컷.find((x) => x[0] === k)
+  return `
+  <section class="cell" data-k="${k}">
+    <div class="head"><b>${k}</b> · ${설명}</div>
+    <div class="shots">
+      ${요 ? `<figure><figcaption>요리 모드 — 만들 때</figcaption><img src="${b64(요[2])}" alt=""></figure>` : ''}
+      ${상 ? `<figure><figcaption>레시피 상세 — 볼 때</figcaption><img src="${b64(상[2])}" alt=""></figure>` : ''}
+    </div>
+    <div class="pick" role="group" aria-label="${k} 판정">
+      <button data-v="좋다">좋다</button>
+      <button data-v="모르겠다">모르겠다</button>
+      <button data-v="버린다">버린다</button>
+    </div>
+  </section>`
+}).join('')
+
+const html = `<title>메모지 검수 — 레시피에 붙여본 것</title>
 <style>
-:root{--bg:#f3f2ef;--card:#fff;--ink:#3d3830;--sub:#6f6a62;--line:#e6e4df}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1e1c19;--card:#2a2724;--ink:#ece7df;--sub:#a9a49b;--line:#3b3733}}
-:root[data-theme="dark"]{--bg:#1e1c19;--card:#2a2724;--ink:#ece7df;--sub:#a9a49b;--line:#3b3733}
+:root{--bg:#f3f2ef;--card:#fff;--ink:#3d3830;--sub:#6f6a62;--line:#e6e4df;--brown:#6b4f3a;
+  --ok:#4f7a4f;--okbg:#e8f0e8;--no:#a4564a;--nobg:#f7ece9;--may:#8a7a52;--maybg:#f4efe0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1e1c19;--card:#2a2724;--ink:#ece7df;--sub:#a9a49b;--line:#3b3733;--brown:#d3b394;
+  --ok:#9dbd9d;--okbg:#2b3a2b;--no:#d99a8e;--nobg:#3b2b28;--may:#c9b782;--maybg:#3a352a}}
+:root[data-theme="dark"]{--bg:#1e1c19;--card:#2a2724;--ink:#ece7df;--sub:#a9a49b;--line:#3b3733;--brown:#d3b394;
+  --ok:#9dbd9d;--okbg:#2b3a2b;--no:#d99a8e;--nobg:#3b2b28;--may:#c9b782;--maybg:#3a352a}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);line-height:1.6;
   font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif}
-.wrap{max-width:460px;margin:0 auto;padding:20px 14px 60px}
+.wrap{max-width:620px;margin:0 auto;padding:20px 12px 90px}
 h1{font-size:21px;margin:0 0 4px}
-.sub{color:var(--sub);font-size:14px;margin:0 0 4px}
-h2{font-size:16px;margin:26px 0 2px}
-.h2sub{color:var(--sub);font-size:12.5px;margin:0 0 12px}
-.cell{margin:0 0 20px}
-.cell img{width:100%;display:block;border:1px solid var(--line);border-radius:12px}
-.cap{font-size:12.5px;color:var(--sub);margin-top:7px}
-.cap b{color:var(--ink)}
-.note{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px;font-size:13px;color:var(--sub);margin-top:20px}
+.sub{color:var(--sub);font-size:13.5px;margin:0 0 18px}
+.cell{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:13px;margin:0 0 18px}
+.cell.done{border-color:var(--brown)}
+.head{font-size:13.5px;color:var(--sub);margin:0 0 10px}
+.head b{color:var(--ink);font-size:14.5px}
+.shots{display:flex;flex-direction:column;gap:10px}
+figure{margin:0}
+figcaption{font-size:11.5px;color:var(--sub);margin:0 0 4px}
+.shots img{width:100%;display:block;border:1px solid var(--line);border-radius:10px}
+.pick{display:flex;gap:7px;margin-top:11px}
+.pick button{flex:1;padding:11px 6px;border:1.5px solid var(--line);border-radius:11px;
+  background:transparent;color:var(--sub);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.pick button[aria-pressed="true"][data-v="좋다"]{background:var(--okbg);color:var(--ok);border-color:var(--ok)}
+.pick button[aria-pressed="true"][data-v="버린다"]{background:var(--nobg);color:var(--no);border-color:var(--no)}
+.pick button[aria-pressed="true"][data-v="모르겠다"]{background:var(--maybg);color:var(--may);border-color:var(--may)}
+.bar{position:sticky;bottom:0;background:var(--bg);padding:10px 0 6px;margin-top:10px;border-top:1px solid var(--line)}
+.count{font-size:12.5px;color:var(--sub);margin-bottom:7px}
+#copy{width:100%;padding:14px;border:0;border-radius:13px;background:var(--brown);color:var(--card);
+  font:inherit;font-size:15px;font-weight:800;cursor:pointer}
+#out{white-space:pre-wrap;font-size:12.5px;background:var(--card);border:1px solid var(--line);
+  border-radius:11px;padding:11px;margin-top:9px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.note{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px;font-size:12.5px;color:var(--sub);margin:18px 0}
 </style><div class="wrap">
-<h1>레시피에 붙여본 메모지</h1>
-<p class="sub">종이 일곱을 «실제 앱 화면»에 붙여서 찍었어. 글씨체는 연필체 고정.</p>
+<h1>메모지 검수</h1>
+<p class="sub">표준 도구로 자른 <b>${종이들.length}컷</b>을 «실제 앱 화면»에 붙여 찍었어.<br>
+칸마다 골라주면 맨 아래에서 <b>한 번에 복사</b>돼.</p>
 
-<h2>① 레시피 상세 — 재료 위</h2>
-<p class="h2sub">레시피를 «볼 때» 보이는 자리야.</p>
-${줄(상세컷)}
+<div class="note">⭐ 볼 것 셋 — ⑴아래 재료 목록과 톤이 맞나 ⑵글씨가 장식에 안 가리나 ⑶세로를 얼마나 먹나<br>
+⚠️ 글씨체는 아직 기본 고딕이야. 종이를 고른 뒤 손글씨를 얹으면 느낌이 또 달라져.</div>
 
-<h2>② 요리 모드 — 재료 준비</h2>
-<p class="h2sub">실제로 «만들 때» 재료를 꺼내며 보는 자리야. 여기가 더 중요해.</p>
-${줄(요리컷)}
+${칸}
 
-<div class="note">⭐ 볼 것 셋 — ⑴주변(재료 목록·표지)과 톤이 맞나 ⑵글씨가 장식에 안 가리나 ⑶세로를 얼마나 먹나<br>
-⛔ 세로를 많이 먹으면 재료 목록이 아래로 밀려. 폰에선 그게 제일 아까워.</div>
-</div>`
+<div class="bar">
+  <div class="count" id="cnt"></div>
+  <button id="copy">복사하기</button>
+  <div id="out">아직 아무것도 안 골랐어</div>
+</div>
+</div>
+<script>
+(function(){
+  var KEY='hankki:메모지검수-0819'
+  var 고른것={}
+  try{ 고른것=JSON.parse(localStorage.getItem(KEY)||'{}') }catch(e){}
+  var cells=[].slice.call(document.querySelectorAll('.cell'))
+  function 그리기(){
+    cells.forEach(function(c){
+      var k=c.dataset.k, v=고른것[k]
+      c.classList.toggle('done', !!v);
+      // ⛔⛔ 세미콜론이 «반드시» 있어야 한다 — 없으면 JS 가 다음 줄의 대괄호를 이어 붙여 읽어
+      //    구문 오류로 **스크립트가 통째로 죽는다.**
+      //    2026-08-19 실제 사고 = 체크가 하나도 안 눌렸다(창업자 = *"검수판에체크가 안눌려"*).
+      //    📌 판을 만들면 «열어서 실제로 눌러본다» — 보이는 것과 도는 것은 다르다(절대원칙 21).
+      //    ⛔ 이 주석에 백틱을 쓰면 «판 스크립트 자체»가 깨진다(여기는 템플릿 문자열 안이다).
+      [].slice.call(c.querySelectorAll('.pick button')).forEach(function(b){
+        b.setAttribute('aria-pressed', String(b.dataset.v===v))
+      })
+    })
+    var n=Object.keys(고른것).length
+    document.getElementById('cnt').textContent = n+' / '+cells.length+' 골랐어'
+    var 줄=[]
+    cells.forEach(function(c){
+      var k=c.dataset.k, v=고른것[k]
+      if(v) 줄.push(k+' — '+v)
+    })
+    document.getElementById('out').textContent = 줄.length ? 줄.join('\\n') : '아직 아무것도 안 골랐어'
+  }
+  cells.forEach(function(c){
+    c.addEventListener('click', function(e){
+      var b=e.target.closest('.pick button'); if(!b) return
+      var k=c.dataset.k
+      if(고른것[k]===b.dataset.v) delete 고른것[k]; else 고른것[k]=b.dataset.v
+      try{ localStorage.setItem(KEY, JSON.stringify(고른것)) }catch(e){}
+      그리기()
+    })
+  })
+  // ⛔ clipboard 는 «성공으로 resolve 되고도» 실제 복사가 안 되는 폰이 있다(v10.97 교훈)
+  //    → 실패하면 글자를 골라 준다. 길게 눌러 복사하면 된다.
+  document.getElementById('copy').onclick=function(){
+    var t=document.getElementById('out').textContent
+    var 골라주기=function(){
+      var r=document.createRange(); r.selectNodeContents(document.getElementById('out'))
+      var s=window.getSelection(); s.removeAllRanges(); s.addRange(r)
+      document.getElementById('copy').textContent='글자가 골라졌어 — 길게 눌러 복사해줘'
+    }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){
+        document.getElementById('copy').textContent='복사했어'
+        setTimeout(function(){document.getElementById('copy').textContent='복사하기'},1800)
+      }, 골라주기)
+    } else 골라주기()
+  }
+  그리기()
+})()
+</script>`
 
 const 낼판 = join(OUT, '종이붙여보기.html')
 writeFileSync(낼판, html)
