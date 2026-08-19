@@ -1,11 +1,17 @@
 import { useMemo } from 'react'
 import { useStore } from '../store'
 import Icon from './Icon'
-import { PHOTO_FAMILY } from './Stickers'
+import { PHOTO_FAMILY, BOX_PAD } from './Stickers'
 
-// 🎨 기본 종이 — ⏳창업자 판정 뒤 하나로 굳힌다
+// 🎨 기본 종이 — ⏳창업자가 새 시안을 뽑는 중(2026-08-20). 오면 이 한 줄만 갈아끼운다.
+//    ⭐ 지금 값 `dc_dma01` 은 가로÷세로 **0.97** 이라 「포스트잇 비율」 조건에 이미 맞는다.
 const 기본종이 = 'dc_dma01'
 const 종이URL = (k) => PHOTO_FAMILY[k]?.src || ''
+// 📐 종이 «안쪽 여백» — `BOX_PAD` 는 그림마다 「글 쓸 수 있는 자리」를 **재서** 뽑아둔 값이다
+//    (꾸미기 글상자가 이미 쓰고 있다 · `tools/measure-inner.py`).
+//    ⭐⭐ 그래서 안전지대를 «짐작하지 않는다» — 새 시안이 와도 재기만 하면 그대로 맞는다.
+//    ⛔ 없는 종이는 넉넉히 준다(글이 장식 위로 올라가는 것보다 낫다).
+const 안여백 = (k) => BOX_PAD[k] || [18, 16, 16, 16]
 
 // 📌📌 「지난번 메모」 포스트잇 — 앱이 «자동으로» 붙여준다
 //
@@ -29,7 +35,10 @@ const 종이URL = (k) => PHOTO_FAMILY[k]?.src || ''
 // ⏳ `종이`·`글씨` = 시안을 나란히 찍으려고 잠깐 받는 값 (창업자 판정 뒤 «진 쪽을 지운다»)
 //    ⛔ 창업자 = *"포스트잇 넘 안예쁜데..ㅠ"* · *"글씨체두 별로고.."*
 //       → 내가 만든 노란 네모 대신 **우리가 이미 가진 메모지 스티커**를 종이로 쓴다.
-export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟수 }) {
+// 📌 `붙임` = **재료 목록 옆에 «붙인» 포스트잇**(창업자 확정 2026-08-20)
+//    📮 *"우리 보통 **필기하다가 포스트잇 붙이잖아. 그런느낌으로.**"* · *"자리는 **재료옆**이어야해"*
+//    ✅ 판정 = **재료 옆 · 비뚤게 · 44%**
+export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟수, 붙임 }) {
   const { diary } = useStore()
 
   // 그 레시피의 메모만, 최근 것부터. ⛔빈 메모는 세지 않는다(「만들었어요」가 note:'' 로 만든다)
@@ -49,13 +58,22 @@ export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟
   //       손그림이라 조금 늘어나도 티가 안 난다(모눈·점선은 예외라 시안에서 눈으로 확인).
   const 종이키 = 종이 || 기본종이
   const 바탕 = 종이키 ? { backgroundImage: `url(${종이URL(종이키)})` } : null
+  // 📌 붙인 포스트잇 = 종이 «그대로의 비율» ＋ 그 종이의 «안쪽 여백»
+  //    ⛔ 여백을 하나로 못 준다 — 그림마다 장식 자리가 다르다(그래서 `BOX_PAD` 가 있다).
+  //    ⭐ 글자 크기는 «종이 폭»에 매단다(`cqw`) — 자리가 작아지면 글씨도 같이 작아져 안 넘친다.
+  const 붙임꼴 = (() => {
+    if (!붙임) return null
+    const 비 = PHOTO_FAMILY[종이키]?.ratio || 1     // 가로 ÷ 세로
+    const [위, 오, 아, 왼] = 안여백(종이키)
+    return { aspectRatio: String(비), padding: `${위}% ${오}% ${아}% ${왼}%` }
+  })()
   // 🖐 누를 수 있으면 button 으로 — 레시피 상세에선 눌러서 기록을 고친다
   const Tag = onClick ? 'button' : 'div'  // ⛔ JSX 는 «대문자»라야 컴포넌트로 읽는다(소문자면 HTML 태그로 본다)
 
   return (
-    <Tag className={`memo-note${종이키 ? ' paper' : ''}${onClick ? ' press' : ''}`}
+    <Tag className={`memo-note${종이키 ? ' paper' : ''}${붙임 ? ' stick' : ''}${onClick ? ' press' : ''}`}
       {...(onClick ? { type: 'button', onClick } : null)}
-      style={{ ...바탕, ...(글씨 ? { fontFamily: 글씨 } : null), ...style }}>
+      style={{ ...바탕, ...붙임꼴, ...(글씨 ? { fontFamily: 글씨 } : null), ...style }}>
       <div className="memo-note-head">
         {/* ⛔ 색을 테마 변수로 주지 않는다 — 포스트잇은 «자기 바탕»을 들고 다닌다.
             `currentColor` 라야 종이 색이 바뀌어도 글자·아이콘이 같이 따라간다. */}

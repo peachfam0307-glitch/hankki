@@ -486,57 +486,32 @@ export default function RecipeDetailScreen({ id }) {
           </div>
         )}
 
-        {/* 📌📌 내가 남긴 한 줄이 «있으면» — 카드가 아니라 «메모지»로 (창업자 확정 2026-08-19)
-            📮 창업자 = *"근데 그 요리기록카드가 **눈에도 안띄고 안예뻐**.."*
-            🔢 실물로 보니 맞았다 — 크림 바탕 ＋ 회색 연필 네모라 주변(칩·태그)에 완전히 묻혔다.
-            ⭐⭐ 한 번에 셋이 풀린다 = ⑴자리를 «안» 늘린다(이미 있던 자리다)
-               ⑵같은 말이 두 번 안 나온다 ⑶예쁘고 눈에 띈다
-            📌 창업자가 두 번 짚은 *"레시피마다 붙일 수 있는 자리가 다르다"* 의 답이 이것이다 —
-               «새 자리를 찾는 것»이 아니라 «이미 있는 자리를 바꾸는 것».
-            ⛔ 한 줄이 «없으면» 옛 카드 그대로 — 메모지는 글이 있어야 종이 구실을 한다. */}
-        {latestEntry?.note && (
-          <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center' }}>
-            <MemoNote recipeId={r.id} 횟수={cookedN} onClick={() => setLogEntry(latestEntry)} />
-          </div>
-        )}
+        {/* 📌📌📌 [창업자 확정 2026-08-20] 메모지는 이제 **재료 목록 «옆»**에 붙는다 — 아래 재료 절 참고.
+            📮 *"위에 직사각형 자리 아니고(재료 위 만들었어요? 기록하는 자리빼고)"*
+               · *"**대신 자리는 재료옆이어야해.**"* · *"**그 자리는 아예 비운다**"*
+            ⛔ 그래서 여기(재료 «위»)엔 아무것도 그리지 않는다 — 메모지도, 옛 「내 요리 기록」 카드도.
+            ⭐ 왜 옮겼나 = 여기선 메모지가 «가로로 긴» 자리를 채워야 해서 라벨·배너처럼 보였다.
+               창업자 = *"디자인이 많이 들어간 라벨이 썩 잘어울리진 않네"* · *"가로가 너무 기니까"*
+               · *"포스트잇 느낌을 살리면 좋겠는데.."*
+            ⚠️ **딸려 사라진 것 하나** — 한 줄을 «안 쓴» 사람은 「N번 만들었어요」가 안 보인다
+               (옛 카드가 그걸 보여줬다). 그 사람은 홈의 「한 줄 남기기」 안내를 받는다. */}
 
-        {/* 내 요리 기록 — 위로 올려 잘 보이게. 별점·만든 횟수·최근 메모 요약, 탭하면 남기기/보기.
-            (‘나만의 팁’은 이제 표지 꾸미기 포스트잇·글자로 — 역할이 겹치지 않게 분리) */}
-        {!latestEntry?.note && (myEntries.length > 0 || cookedN > 0) && (
-          <button
-            className="card press"
-            onClick={() => { if (latestEntry) setLogEntry(latestEntry) }}
-            style={{ width: '100%', textAlign: 'left', marginTop: 18, padding: 13, display: 'flex', gap: 12, alignItems: 'center', background: 'var(--cream)', border: 'none' }}
-          >
-            {latestEntry?.photo ? (
-              <img src={latestEntry.photo} alt="" style={{ width: 50, height: 50, borderRadius: 12, objectFit: 'cover', flex: '0 0 auto' }} />
-            ) : (
-              <div style={{ width: 50, height: 50, borderRadius: 12, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}><Icon name="pen" size={20} color="var(--sand)" /></div>
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{ fontSize: 14.5, fontWeight: 700 }}>내 요리 기록</span>
-                {/* ⛔⛔ [2026-08-17] **여기에 「빈 별 다섯」을 띄웠다가 되돌렸다. 되살리지 말 것.**
-                    📮 창업자 *"평점 매기는데가 없으니까 안뜨는거 아닌가"* 를 **「안 보이니 보이게 하자」로 읽고**
-                       안 매긴 사람에게도 빈 별을 그렸다. 그러자 창업자 = *"**요리기록 남기기 안하기로 하지 않았어???**"*
-                       *"**누를 시간 없어서 안하기로 했잖아**"*
-                    ⭐⭐ 창업자는 «없는 걸 지적»한 게 아니라 **«없는 게 맞는데 왜 별이 뜨냐»**를 물은 것이었다.
-                       ⛔ 확정 = **2026-08-06 「만들었어요 → 토스트만, 시트 안 뜬다」**
-                          (`docs/요리기록-다이어리-방향-2026-08-05.md` 9️⃣ ① · 게이트 `_repro-cook-toast.mjs`)
-                       📌 뿌리 = **요리 중에 붙잡는 마찰.** 문패를 키우는 건 그 결정을 정면으로 거스른다.
-                    ✅ 그래서 **매긴 사람에게만** 보여준다 — 안 매긴 사람은 권유받지 않는다. */}
-                {latestEntry?.rating > 0 && <Stars value={latestEntry.rating} onChange={() => {}} size={13} />}
-              </div>
-              <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3 }}>
-                {cookedN}번 만들었어요{latestEntry ? ` · ${dateLabel(latestEntry.at)}` : ''}
-              </div>
-              {latestEntry?.note && (
-                <div style={{ fontSize: 13, marginTop: 4, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>“{latestEntry.note}”</div>
-              )}
-            </div>
-            <Icon name="chevron-right" size={18} color="var(--sand)" />
-          </button>
-        )}
+        {/* ⛔⛔⛔ [창업자 확정 2026-08-20] 옛 「내 요리 기록」 카드를 **뺐다** — 위 주석 참고.
+            📮 판의 물음 = *"메모지가 옆으로 가면 재료 위 그 자리가 빈다. 어떻게 할까?"*
+               → 창업자 = **"그 자리는 아예 비운다"**
+            ⭐ 그래도 흐름이 안 끊기는 이유 = 한 줄을 «쓴» 사람은 재료 옆 메모지를 누르면 기록으로 가고,
+               «안 쓴» 사람은 홈의 「한 줄 남기기」 안내를 받는다.
+            ⛓ ＋ 2026-08-06 확정 *"만들었어요 → 토스트만, 시트 안 뜬다"* 와도 같은 방향이다
+               (창업자 = *"누를 시간 없어서 안하기로 했잖아"*).
+            ⛔ 되살리지 말 것. 되살리면 「같은 말이 두 번」이 다시 난다. */}
+        {/* ⛔⛔ [2026-08-17에 여기 있던 것] 「빈 별 다섯」을 띄웠다가 되돌린 적이 있다. 되살리지 말 것.
+            📮 창업자 *"평점 매기는데가 없으니까 안뜨는거 아닌가"* 를 **「안 보이니 보이게 하자」로 읽고**
+               안 매긴 사람에게도 빈 별을 그렸다. 그러자 창업자 = *"**요리기록 남기기 안하기로 하지 않았어???**"*
+               *"**누를 시간 없어서 안하기로 했잖아**"*
+            ⭐⭐ 창업자는 «없는 걸 지적»한 게 아니라 **«없는 게 맞는데 왜 별이 뜨냐»**를 물은 것이었다.
+               확정 = **2026-08-06 「만들었어요 → 토스트만, 시트 안 뜬다」**
+               (`docs/요리기록-다이어리-방향-2026-08-05.md` 9️⃣ ① · 게이트 `_repro-cook-toast.mjs`)
+            📌 그 결정의 «끝»이 오늘(08-20)이다 — 카드 자체가 사라졌다. */}
 
         {/* ⛔⛔ 여기 메모지를 «따로» 붙였다가 걷어냈다 — 위 「내 요리 기록」 카드가 이미
             같은 한 줄을 보여주고 있어서 **같은 말이 두 번** 나왔다(2026-08-19 · 찍어 보고 알았다).
@@ -588,11 +563,24 @@ export default function RecipeDetailScreen({ id }) {
               </div>
             )}
             <div>
+              {/* 📌📌📌 [창업자 확정 2026-08-20] 「필기하다 포스트잇 붙이기」 — 메모지가 여기 붙는다.
+                  📮 *"우리 보통 **필기하다가 포스트잇 붙이잖아. 그런느낌으로.**"* · 판정 = **재료 옆 · 비뚤게 · 44%**
+                  ⭐⭐ `float: right` 라 **재료 글이 그 옆으로 흐르다가, 메모지가 끝나면 «전체 폭»을 되찾는다.**
+                     🔢 실측(닭곰탕 재료 10줄) = 같은 높이에 **float 10줄 전부 · 2단 8줄**
+                        (2단은 끝까지 좁아서 「통마늘 한 주먹 (없으면 다진 마늘 2~3큰술)」이 두 줄로 감긴다)
+                  ⛔ **재료 목록 «안»에 넣어야 한다** — 밖에 두면 글이 안 흐르고 통째로 아래로 밀린다.
+                  ⛔ 요리 모드(`CookScreen`)엔 이 방식이 «안 통한다» — 거긴 재료 한 줄이 «flex 버튼»이라
+                     float 를 감싸지 않는다(`scripts/_probe-요리모드재료-0820.mjs` 로 쟀다). */}
+              {latestEntry?.note && (
+                <MemoNote recipeId={r.id} 횟수={cookedN} 붙임 onClick={() => setLogEntry(latestEntry)} />
+              )}
               {r.ingredients.map((ing, i) => (
                 isIngHeader(ing)
                   ? <div key={i} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
                   : <div key={i} className="ing">{scaleIngredient(ing, ratio)}</div>
               ))}
+              {/* ⛔ float 는 부모가 높이를 안 잡는다 — 재료가 메모지보다 짧으면 다음 절이 겹친다 */}
+              {latestEntry?.note && <div style={{ clear: 'both' }} />}
             </div>
           </>
         )}
