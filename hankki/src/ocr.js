@@ -4,13 +4,15 @@
 // 3순위: tesseract.js (어디서나 동작·오프라인). LSTM 엔진 + 전처리.
 import Tesseract, { createWorker } from 'tesseract.js'
 import { normalizeNumerals } from './ocrCorrect'
+// 🔌 우리 서버와 주고받는 공통 부품(주소·앱토큰·기기번호·남은 장수) — 결제도 «같은 것»을 쓴다
+import { OCR_PROXY_URL, OCR_APP_TOKEN, deviceId, saveOcrLeft } from './proxy'
+export { getOcrLeft } from './proxy'
 
 // ── Google Vision OCR 프록시 ──────────────────────────────────
 // 서버(Cloudflare Worker)가 API 키를 숨기고 Vision을 호출해 '텍스트'만 돌려준다.
 // 프록시엔 6중 방어벽(월 900건 상한 등)이 있어 비용 $0을 물리적으로 보장한다.
 // 실패(오프라인·한도초과·오류)하면 아래 폰내장/tesseract로 '조용히' 폴백 → OCR은 늘 동작.
-const OCR_PROXY_URL = 'https://hankki-ocr.annyeong-hankki.workers.dev'
-const OCR_APP_TOKEN = '0VRNDSjHBhwniTzIDAbnRaJygyfGJ2K2'
+// ⚠️ 결제(`src/billing.js`)도 «같은 서버·같은 토큰»을 쓴다 → `src/proxy.js` 한 곳에만 적는다.
 
 // 마지막 프록시 호출의 안내 신호 — 'user_quota'(내 월 무료 소진)·'global_quota'·'rate_limited'.
 // 앱(EditorScreen)이 읽어 "무료 다 써서 기본 인식이에요" 안내를 띄운다. 읽으면 소비(초기화).
@@ -21,21 +23,6 @@ export function getOcrNote() {
   return n
 }
 
-// 기기 식별자 — 유저당 월 무료 횟수 카운트용. 개인정보 아님(임의 난수), 이 브라우저에만 저장.
-function deviceId() {
-  try {
-    let id = localStorage.getItem('hankki:did')
-    if (!id) {
-      id = typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2) + Date.now().toString(36)
-      localStorage.setItem('hankki:did', id)
-    }
-    return id
-  } catch {
-    return 'anon'
-  }
-}
 
 // 프록시로 OCR 시도 → 성공 시 텍스트, 실패 시 예외를 던져 폴백을 유도.
 // batch = 🔢「한 묶음 = 1장」 표식. 같은 값으로 보내면 서버가 «유저 장수»를 한 번만 깎는다.
@@ -96,41 +83,9 @@ async function ocrViaProxy(dataUrl, onProgress, batch) {
   if (data && data.left) saveOcrLeft(data.left)
   return (data && data.text) || ''
 }
-
 // ── 📢 AI 스캔 남은 장수 ────────────────────────────────────
-// 서버(worker)가 응답에 { left: { welcome, month } } 를 실어 보낸다.
-//   welcome = 🎁 웰컴 20장의 잔량(첫 1회·달이 바뀌어도 남는다) · month = 웰컴을 다 쓴 뒤의 그 달 잔량
-// ⭐ note 와 달리 «읽어도 지우지 않는다» — 화면에 상시 떠 있어야 하니까.
-// ⚠️ 아직 한 번도 안 써 본 사람은 서버 응답이 없다 → 웰컴 20장이 «그대로»인 게 맞으므로 그 값으로 시작한다.
-const WELCOME_FREE = 20 // ⛔ worker.js 의 LIMITS.WELCOME_FREE 와 같아야 한다
-const MONTHLY_FREE = 5 // ⛔ worker.js 의 LIMITS.PER_USER_MONTHLY 와 같아야 한다
-const LEFT_KEY = 'hankki:ocrLeft'
-
-function saveOcrLeft(left) {
-  const w = Math.max(0, parseInt(left.welcome, 10) || 0)
-  const m = Math.max(0, parseInt(left.month, 10) || 0)
-  try {
-    localStorage.setItem(LEFT_KEY, JSON.stringify({ welcome: w, month: m }))
-  } catch {
-    /* noop */
-  }
-}
-
-// 남은 장수 = { welcome, month, total, unknown }
-//   total   = 지금 실제로 쓸 수 있는 장수(웰컴이 남았으면 웰컴, 아니면 그 달 잔량)
-//   unknown = 서버 응답을 아직 한 번도 못 받았다(=안 써 봤다) → 웰컴 그대로로 본다
-export function getOcrLeft() {
-  let v = null
-  try {
-    v = JSON.parse(localStorage.getItem(LEFT_KEY) || 'null')
-  } catch {
-    v = null
-  }
-  if (!v || typeof v.welcome !== 'number') {
-    return { welcome: WELCOME_FREE, month: MONTHLY_FREE, total: WELCOME_FREE, unknown: true }
-  }
-  return { ...v, total: v.welcome > 0 ? v.welcome : v.month, unknown: false }
-}
+// ⭐ 저장·읽기는 `src/proxy.js` 로 옮겼다 — 결제(`src/billing.js`)도 같은 칸을 고쳐야 하기 때문이다.
+//   여기서는 «받아서 넘기는» 일만 한다. (`getOcrLeft` 는 위에서 그대로 다시 내보낸다)
 
 function loadImg(dataUrl) {
   return new Promise((resolve) => {

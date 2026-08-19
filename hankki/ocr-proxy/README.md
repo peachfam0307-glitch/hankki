@@ -61,7 +61,35 @@
 | | 상태 |
 |---|---|
 | 🎁 웰컴 20장 + 이월 | ✅ **worker 구현 완료**(2026-08-13) · 시뮬 = `../scripts/_repro-웰컴20-0813.mjs` |
-| 📢 남은 장수 응답(`left.welcome`·`left.month`) | ✅ worker 가 같이 돌려준다 |
-| 잔량 표시 UI | ⏳ 앱쪽 미구현 |
-| 저장당 1건 카운트 | ⛔ **아직 「호출당」이다** — 고쳐야 함 |
-| 990원 20장팩 결제·KV 크레딧 원장 | ⛔ 미구현 = **#54**(출시 게이트) |
+| 📢 남은 장수 응답(`left.welcome`·`left.month`·💳`left.paid`) | ✅ worker 가 같이 돌려준다 |
+| 잔량 표시 UI | ⏳ 앱쪽 미구현 (데이터는 `getOcrLeft()` 로 이미 온다) |
+| 저장당 1건 카운트 | ✅ **`batch` 로 구현 완료**(2026-08-13) · 시뮬 = `../scripts/_repro-묶음1장-0813.mjs` — ⚠️단 **대시보드에 올려야 실제로 돈다** |
+| 💳 990원 20장팩 결제·검증·원장 | ✅ **코드 완료**(2026-08-19) · ⛔**아직 «꺼져 있다»** — 아래 참고 |
+
+## 💳 결제 검증 (2026-08-19 신설) — ⛔아직 «켜지지» 않았다
+
+⭐ 왜 서버가 필요한가 = 공식(크롬) *"구매를 acknowledge 하지 않으면 **3일 뒤 유저에게 환불되고 Google Play 가 구매를 회수**한다"*
+   ＋ *"사기 방지를 위해 이 단계는 **반드시 백엔드**로 구현해야 한다"*.
+   ⛔ Digital Goods API v2.1 엔 `acknowledge()` 가 **아예 없다** → 앱 쪽으로는 못 한다.
+
+### 길 두 개 (`worker.js` 의 `billingRoute`)
+| 주소 | 무엇 |
+|---|---|
+| `POST /billing/sync` | 앱이 `listPurchases()` 결과를 통째로 보낸다 → 구글에 확인 → 원장 → **acknowledge** → 다 쓴 팩 consume |
+| `POST /billing/state` | 지금 잔량·가진 팩만 (확인 없이) |
+| 그 밖(루트) | **지금까지처럼 OCR** — 한 톨도 안 바뀐다 |
+
+### ⏰ 켜는 순서 (⛔프로덕션 «승인 뒤»에 · 창업자 확정 ⓑ 2026-08-19)
+1. **Google Cloud** → 프로젝트 `hankki-ocr` → 서비스 계정 만들기 → **JSON 키** 내려받기
+2. **Google Play Console** → 사용자 및 권한 → 그 서비스 계정 이메일 초대 → 「재무 데이터 보기」 권한
+   ⚠️⚠️ **권한이 붙는 데 최대 24시간** 걸린다. 하루를 계산에 넣을 것.
+3. **Cloudflare** → `hankki-ocr` → Settings → Variables and secrets →
+   Secret **`PLAY_SA_JSON`** = 그 JSON **통째로** (⛔채팅·git 에 절대 붙여넣지 말 것)
+4. **Cloudflare** → Storage & Databases → **D1** 만들기(`hankki-billing`) → Console 에 `schema.sql` 붙여넣기
+   → Worker Settings → Bindings → D1 · Variable name **`HANKKI_DB`**
+5. `worker.js` 를 대시보드에 붙여넣고 **Deploy**
+
+⭐ **3·4 중 하나라도 없으면 결제 길이 `billing_off`(503) 로 잠긴다** — 반쯤 켜지는 일이 없다.
+🧪 검사 = `node scripts/_repro-결제서버-0819.mjs` (**29칸** · smoke 에 물려 있다)
+   ⛔ 이 판은 **우리 코드**만 증명한다. 「구글이 진짜 그렇게 답하나」는 **라이선스 테스트로만** 닫힌다.
+📄 전문·위험 아홉 = `../docs/결제서버-리스크조사-2026-08-19.md` **9️⃣ 절**

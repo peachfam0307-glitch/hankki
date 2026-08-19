@@ -26,6 +26,10 @@
 //   *"라이선스 및 결제 통합을 테스트하세요"* — **신청·심사·비용 0.** 토스는 이걸 받으려고
 //   3개월 심사를 통과해야 했다.
 
+// ⚠️ OCR 프록시와 «같은 서버»를 쓴다 — 결제 확인 길만 `/billing/…` 로 갈린다.
+//   ⛔ 주소·앱토큰을 여기 또 적지 않는다(두 벌이 되면 언젠가 어긋나 401 이 난다).
+import { OCR_PROXY_URL, OCR_APP_TOKEN, deviceId, setOcrPaid } from './proxy.js'
+
 // ── 상품 ID ────────────────────────────────────────────────
 // ⚠️⚠️ **Play Console 에 «똑같은 글자»로 등록해야 한다.** 한 글자만 달라도 안 붙는다.
 //   등록 자리 = Play Console → 앱 → 수익 창출 → 상품 → **인앱 상품** → 상품 만들기
@@ -186,13 +190,45 @@ export async function buy(sku) {
     try { await resp.complete('fail') } catch { /* noop */ }
     return { ok: false, reason: 'fail' }
   }
-  // ⚠️ 여기서 「서버 검증」을 하는 게 정석이다(Play Developer API 로 토큰 확인).
-  //    ⏳ 아직 안 붙였다 — 붙이기 전엔 **폰에서 조작될 수 있다.**
-  //    다만 우리 손해는 막혀 있다: OCR 은 Worker 에 **전역 월 900건 상한**이 있어
-  //    크레딧이 조작돼도 «우리 돈»은 안 나간다(`ocr-proxy/worker.js`). 꾸미기 팩은 원가 0.
-  //    📌 그래도 매출이 붙으면 검증을 넣는다 — 그때까진 이 주석이 빚 문서다.
   try { await resp.complete('success') } catch { /* noop */ }
-  return { ok: true, token }
+  // ⭐⭐ **산 «즉시» 서버에 알린다** — 여기가 acknowledge 가 걸리는 자리다.
+  //   ⛔ 이게 없으면 공식대로 **3일 뒤 구글이 환불하고 구매를 회수한다**(＝산 사람이 팩을 잃는다).
+  //   ⚠️ 실패해도 **구매는 성공한 것**이다(돈은 이미 냈다) → `ok: true` 는 그대로 두고
+  //      `verified` 로 갈라 알린다. 못 붙은 건 **앱을 켤 때마다 `syncPurchases()` 가 다시 보낸다.**
+  const sync = await syncPurchases()
+  return { ok: true, token, verified: !!sync.ok, credits: sync.credits }
+}
+
+// 🔁🔁 **미확인 구매 재전송** — 앱이 켜질 때와 산 직후에 부른다.
+//   ⭐⭐ 이게 「돈 냈는데 못 받는다」를 막는 장치다.
+//      살 때 인터넷이 끊겨 서버에 못 알려도, 구글은 그 구매를 계속 기억하므로
+//      `listPurchases()` 에 다시 나오고 → 여기서 다시 보내 → acknowledge·장수 지급이 «따라붙는다».
+//   ⭐ 서버는 **토큰이 기본키**라 몇 번을 보내도 결과가 같다(멱등) — 두 배로 주지 않는다.
+//   ⛔ 던지지 않는다. 결제가 안 되는 것과 앱이 깨지는 것은 다르다.
+export async function syncPurchases() {
+  const list = await purchases()
+  if (!list.length) return { ok: false, reason: 'none' }
+  try {
+    const r = await fetch(`${OCR_PROXY_URL}/billing/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN },
+      body: JSON.stringify({ uid: deviceId(), purchases: list }),
+    })
+    // 503 billing_off = 서버 결제가 아직 «안 켜졌다». 정상 상태이므로 조용히 넘어간다.
+    if (!r.ok) return { ok: false, reason: `http_${r.status}` }
+    const j = await r.json().catch(() => null)
+    if (!j || !j.ok) return { ok: false, reason: 'bad_reply' }
+    // 📢 산 장수를 화면 숫자에 «즉시» 반영 (창업자 *"유저가 몇장남았는지 스스로 알아야해"*)
+    if (typeof j.credits === 'number') setOcrPaid(j.credits)
+    return {
+      ok: true,
+      credits: j.credits || 0,
+      entitlements: Array.isArray(j.entitlements) ? j.entitlements : [],
+      results: Array.isArray(j.results) ? j.results : [],
+    }
+  } catch {
+    return { ok: false, reason: 'net' }
+  }
 }
 
 // 소모성 상품 소진 — ⛔**꾸미기 팩엔 절대 부르지 말 것.** 부르면 복원이 깨진다.

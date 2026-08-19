@@ -143,7 +143,10 @@ chk('🔒 유저 몫이 «묶음 첫 장에서만» 깎인다', /\.\.\.\(sameBat
 chk('🔒⛔ 전역 월 카운터는 묶음 밖(=호출당)에 있다', /inc\(kv, `m:\$\{ym\}`/.test(wk.split('...(sameBatch ? [] : [')[0]), 'true')
 chk('🔒⛔ 전역 일 카운터도 호출당', /inc\(kv, `d:\$\{ymd\}`/.test(wk.split('...(sameBatch ? [] : [')[0]), 'true')
 chk('🔒⛔ IP 분당 카운터도 호출당', /inc\(kv, `ip:/.test(wk.split('...(sameBatch ? [] : [')[0]), 'true')
-chk('🔒 한도 검사가 sameBatch 를 존중한다(두 번째 장이 막히면 안 된다)', /!sameBatch && welcomeLeft <= 0/.test(wk), 'true')
+// ⭐ 2026-08-19 — 결제가 붙으면서 모양이 바뀌었다. 「`user_quota` 로 «막는» 그 줄이 `!sameBatch` 안에 있나」를 본다.
+//   ⛔ 글자 모양이 아니라 «막는 자리»를 봐야 한다 — 모양만 맞추면 다음에 또 헛통과한다(규칙 18 ⓘ).
+chk('🔒 한도 검사가 sameBatch 를 존중한다(두 번째 장이 막히면 안 된다)', /if \(!sameBatch\) \{[\s\S]{0,240}?'user_quota'/.test(wk), 'true')
+chk('🔒💳 무료를 다 쓰면 «산 장수»를 보고서야 막는다', /paidLeft = await paidCredits\(env, uid\)[\s\S]{0,200}?paidLeft <= 0\) return json\(\{ error: 'user_quota'/.test(wk), 'true')
 chk('🔒 안 깎은 장에서 잔량을 또 빼지 않는다', /sameBatch \? welcomeLeft : welcomeLeft - 1/.test(wk), 'true')
 
 chk('🔒 앱이 batch 를 실어 보낸다', /batch: batch \|\| ''/.test(ocr), 'true')

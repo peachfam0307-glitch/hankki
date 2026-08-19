@@ -140,7 +140,10 @@ chk('⑦ 저장값이 깨져도 웰컴 20장으로 되돌아간다', badge(getOc
 
 // ⭐⭐ 위 ①~⑦ 은 로직을 «옮겨 적은 것»이라, 원본이 바뀌면 여기만 통과하는 «거짓 초록»이 된다.
 //    그래서 원본 파일을 직접 읽어 「같은 규칙인가」를 못박는다. 원본을 고치면 여기가 빨개진다.
+// ⭐ 2026-08-19 — 잔량 저장·읽기가 `src/proxy.js` 로 옮겨졌다(결제도 같은 칸을 고쳐야 해서).
+//   ⛔ 한쪽만 읽으면 이 게이트가 «못 보고 통과»한다 → 둘을 이어 붙여 본다.
 const src = readFileSync(new URL('../src/ocr.js', import.meta.url), 'utf8')
+  + readFileSync(new URL('../src/proxy.js', import.meta.url), 'utf8')
 const wk = readFileSync(new URL('../ocr-proxy/worker.js', import.meta.url), 'utf8')
 const imp = readFileSync(new URL('../src/screens/ImportScreen.jsx', import.meta.url), 'utf8')
 
@@ -166,7 +169,10 @@ chk(
 )
 
 chk('🔒 원본이 서버 응답의 left 를 «저장한다»', /saveOcrLeft\(data\.left\)/.test(src), 'true')
-chk('🔒 원본의 total 규칙 = 웰컴이 남으면 웰컴', /v\.welcome > 0 \? v\.welcome : v\.month/.test(src), 'true')
+chk('🔒 원본의 total 규칙 = 웰컴이 남으면 웰컴', /v\.welcome > 0 \? v\.welcome :/.test(src), 'true')
+// 💳 2026-08-19 — 무료를 다 쓰면 «산 장수»로 이어진다. ⛔이 줄이 없으면 돈 내고도 「0장」으로 보인다.
+chk('🔒💳 그 다음이 그 달 무료, 마지막이 «산 장수»', /v\.month > 0 \? v\.month : paid/.test(src), 'true')
+chk('🔒💳 서버가 안 보낸 paid 를 «0으로 덮지» 않는다', /left\.paid === undefined/.test(src), 'true')
 chk('🔒 원본은 읽어도 «지우지 않는다»(note 처럼 소비하면 뱃지가 사라진다)', /_ocrLeft = null/.test(src), 'false')
 
 // ⭐⭐ 앱과 서버가 «같은 숫자»를 봐야 한다 — 어긋나면 유저에게 «거짓 잔량»을 보여준다.
