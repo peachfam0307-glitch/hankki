@@ -44,13 +44,21 @@
   .steps li{margin:0 0 5px}
   .steps b{color:var(--ink)}
 
+  /* ⛔ 2026-08-19 — 옛 판은 «감춘 input + JS 로 click()» 이었는데 창업자 폰에서 «아무 반응이 없었다».
+     아티팩트는 iframe sandbox 안에서 돌아 «페이지가 스스로 여는» 파일 창이 막힌다(재현으로 확인).
+     ✅ 그래서 label 로 바꿨다 — 브라우저 «기본 동작»이라 JS 도 sandbox 도 안 탄다.
+        ＋ 진짜 input 도 아래에 «보이게» 남겨 둔다. label 이 막혀도 그건 눌린다. */
   .pick{
     display:block; width:100%; margin:0; padding:18px 16px; text-align:center;
     font:inherit; font-size:17px; font-weight:800; color:var(--paper); background:var(--brand);
-    border:0; border-radius:14px; cursor:pointer;
+    border:0; border-radius:14px; cursor:pointer; -webkit-tap-highlight-color:transparent;
   }
   .pick:active{opacity:.85}
   .hint{margin:9px 0 0; font-size:13px; color:var(--faint); text-align:center}
+
+  .backup{margin:12px 0 0; padding:12px 14px; background:var(--paper); border:1px dashed var(--line); border-radius:12px}
+  .backup b{display:block; font-size:13px; color:var(--dim); margin:0 0 7px}
+  .backup input[type=file]{font:inherit; font-size:14px; color:var(--ink); max-width:100%}
 
   .knob{margin:14px 0 0; display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-size:14px; color:var(--dim)}
   .knob select{
@@ -117,9 +125,13 @@
 </div>
 
 <div class="card">
-  <button class="pick" id="btn" type="button">🎬 영상 고르기</button>
-  <input id="file" type="file" accept="video/*" hidden>
+  <label class="pick" for="file">🎬 영상 고르기</label>
   <p class="hint">영상은 <b>네 폰 밖으로 안 나가</b> — 어디에도 안 올려.</p>
+
+  <div class="backup">
+    <b>↑ 위를 눌러도 아무 일이 없으면 이걸 눌러</b>
+    <input id="file" type="file" accept="video/*">
+  </div>
 
   <div class="knob">
     <label>몇 초마다 자를까
@@ -166,7 +178,6 @@
 
 <script>
 (function () {
-  var btn = document.getElementById('btn')
   var file = document.getElementById('file')
   var gap = document.getElementById('gap')
   var state = document.getElementById('state')
@@ -179,7 +190,8 @@
   var numtable = document.getElementById('numtable')
   var savebox = document.getElementById('savebox')
 
-  btn.addEventListener('click', function () { file.click() })
+  /* ⛔ 옛 판의 `btn.click() → file.click()` 을 없앴다 — sandbox 가 그 경로를 막는다(2026-08-19).
+     이제 label 과 input 이 «직접» 이어져 있어 JS 가 파일 창을 여는 일이 없다. */
   file.addEventListener('change', function () {
     var f = file.files && file.files[0]
     if (f) 시작(f)
