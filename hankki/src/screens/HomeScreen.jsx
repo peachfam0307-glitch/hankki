@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef } from 'react'
 import { COACH } from '../coach'
-import { pickNextUp } from '../nextUp'
+import { nextUpList } from '../nextUp'
+import OneLineSheet from '../components/OneLineSheet'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -169,7 +170,7 @@ export default function HomeScreen() {
   }, [recipes, pantry])
   const todayPick = today.list.length ? today.list[pick % today.list.length] : null
 
-  // 🍳 「다음에 뭐 할까」 — 한 자리가 상황을 보고 «하나»를 고른다 (창업자 확정 2026-08-19 · 안 ⓐ)
+  // 🍳 「다음에 뭐 할까」 — 홈 맨 위 한 줄이 상황을 보고 «할 일»을 꺼낸다 (창업자 확정 2026-08-19 · 안 ⓐ)
   //    ⭐ 고르는 법은 `src/nextUp.js` **한 곳**에 있다 — 여기선 «그리기»만 한다.
   //    ⛔ 셋을 각각 줄로 놓지 않는다 — 다 「다음에 뭐 할까」라는 같은 물음의 답이라 서로 경쟁한다.
   //    ⛔ 「다음 날부터」라 «오늘» 만든 것은 안 뜬다 — 「만들었어요는 누르면 끝」 확정(2026-08-06)을 온전히 지킨다.
@@ -284,23 +285,33 @@ export default function HomeScreen() {
                나머지가 전부 «옅은 바탕 + 진한 글자»라, 반대로 하면 한 장만 튄다.
             ⭐ 자리도 근거다 — 다른 카드는 «앱이 골라준 것»(소식·추천·이번 주)인데
                이건 **내가 한 일**에 대한 것이라 결이 다르다. 그래서 맨 위. */}
-        {시안 === 'B' && nextUp && (
-          <button className="next-card press" onClick={() => nextUp.recipe && open(nextUp.recipe.id)}>
-            <img src={nextUp.갈래 === '한줄' ? uiGomHeart : nextUp.갈래 === '안해본것' ? uiGomThumb : uiGomClap}
-              alt="" draggable={false} className="next-gom hk-m-tongtong" />
-            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-              <div className="next-label">{nextUp.라벨}</div>
-              <div className="next-title">{nextUp.제목}</div>
-              <div className="next-reason">{nextUp.이유}</div>
-            </div>
-            {nextUp.단추
-              ? <span className="next-cta">{nextUp.단추}</span>
-              : <Icon name="chevron-right" size={18} color="var(--surface)" />}
-          </button>
-        )}
-        {/* ⛔ 「다른 것」은 카드 «밖»에 — 카드 전체가 눌리는 단추라 안에 넣으면 버튼이 겹친다 */}
-        {시안 === 'B' && nextUp && nextUp.후보수 > 1 && (
-          <button className="next-more press" onClick={() => setNextTurn((n) => n + 1)}>다른 것 보여줘</button>
+        {nextUp && (
+          // 📐 여럿이면 «가로로 밀어서» 최대 3장 (창업자 *"레시피 오른쪽 스크롤해서 3개정도까지는 보이게?"*)
+          //    ⭐ 「다른 것 보여줘」 단추가 필요 없어진다 — 미는 게 더 자연스럽고 손가락이 이미 아는 동작이다.
+          //    ⭐ 우리 앱에 이미 있는 패턴이다(자주 해먹는 요리 · 이번 주 제철) — 새로 배울 게 없다.
+          //    ⛔ 갈래를 섞지 않으므로 한 줄 안에서 성격이 안 갈린다(`nextUp.js` 참고).
+          <div className="next-row" role="list">
+            {nextUp.것들.map((it, i) => (
+              <div className={`next-card${i > 0 ? ' sub' : ''}`} key={it.키} role="listitem">
+                {/* 🐻 카드 «전체»가 눌려 상세로 간다. 단추는 그 위에 얹어 따로 잡는다.
+                    ⛔ button 안에 button 을 넣지 않는다(HTML 규칙 위반 · 안드로이드에서 안 눌린다) */}
+                <button className="next-open press" onClick={() => it.recipe && open(it.recipe.id)}>
+                  <div className="next-head">
+                    <img src={nextUp.갈래 === '한줄' ? uiGomHeart : nextUp.갈래 === '안해본것' ? uiGomThumb : uiGomClap}
+                      alt="" draggable={false} className="next-gom hk-m-tongtong" />
+                    <span className="next-label">{it.라벨}</span>
+                  </div>
+                  <div className="next-title">{it.제목}</div>
+                  {/* 📌 창업자 확정 = 안내가 «위», 단추가 «아래» (*"안내는 젤 위에 그 아래 한줄남기기"*) */}
+                  <div className="next-reason">{it.이유}</div>
+                  {it.보기 && <div className="next-eg">{it.보기}</div>}
+                </button>
+                {it.단추 && (
+                  <button className="next-cta press" onClick={() => setOneLine(it.entry)}>{it.단추}</button>
+                )}
+              </div>
+            ))}
+          </div>
         )}
 
         {/* 📣 한끼 소식 — 기대감. 강제 팝업 대신 눈에 띄는 슬림 진입점.
@@ -472,6 +483,13 @@ export default function HomeScreen() {
           onClose={() => setDelAsk(null)}
         />
       )}
+
+      {/* ✍️ 「한 줄 남기기」 — 홈에서 «바로» 쓴다. 상세로 안 보낸다.
+          ⭐ 쓰고 닫으면 `note` 가 차서 위 카드가 «저절로» 사라진다(지우는 코드가 없다).
+          ⛔ 처음엔 기존 `DiaryEntrySheet`(요리 기록 전체)를 불렀는데 창업자가 잡았다 —
+             *"이거 사진추가가 의미가 있어? 그리고 글쓰는 창도 불편하고 안예뻤어.."*
+             「한 줄」 쓰러 왔는데 별점·사진 칸이 더 컸다. → 목적이 하나면 화면도 하나(`OneLineSheet`). */}
+      {oneLine && <OneLineSheet entry={oneLine} onClose={() => setOneLine(null)} />}
 
       {/* 첫 방문 코치마크 — 미리보기 진입점 안내 */}
       {coach && <CoachMarks storageKey={HOME_COACH_KEY} steps={HOME_COACH_STEPS} onDone={() => setCoach(false)} />}

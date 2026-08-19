@@ -34,6 +34,7 @@ import uiGomHeart from '../assets/ui/gom_heart.png'
 // 🐻 엄지척 = **물결 정본**(창업자 2026-08-14 · `gt_01`). 옛 `ui/gom_thumbsup` 은 매끈 곰이었다.
 import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
 import DetailDecor from '../components/DetailDecor'
+import MemoNote from '../components/MemoNote'
 import { hlColor } from '../components/Stickers'
 
 // 🖍 절 제목 형광펜 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
@@ -523,9 +524,17 @@ export default function RecipeDetailScreen({ id }) {
           </button>
         )}
 
+        {/* 📌 지난번에 내가 남긴 한 줄 — 「재료 옆에 붙여둘게요」라고 한 줄 쓰는 창에서 «약속»한 자리다.
+            📮 창업자 2026-08-19 *"레시피에 카드처럼 띄워주면 안돼?(재료나 만들기옆에)"*
+            ⭐ 요리 모드(재료 준비)와 «같은 컴포넌트»다 — 두 곳에 마크업을 적지 않는다.
+            ⛔ 없으면 아무것도 안 그린다. */}
+        {r.ingredients?.length > 0 && (
+          <div style={{ marginTop: 22 }}><MemoNote recipeId={r.id} /></div>
+        )}
+
         {r.ingredients?.length > 0 && (
           <>
-            <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
+            <div className="sec-head" style={{ marginTop: 14, marginBottom: 6 }}>
               <div className="sec-title-row" style={{ display: 'flex', alignItems: 'center' }}>
                 <DetailDecor where="head-재료" />
                 <SecTitle>재료</SecTitle>
