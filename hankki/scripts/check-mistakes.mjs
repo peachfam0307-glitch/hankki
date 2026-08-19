@@ -446,6 +446,24 @@ console.log('\n🪤 반복 실수 게이트')
   if (!샘) ok('저장(2곳) → 표시(imageFit:whole) → 그리기(Thumb·contain) 세 짝이 다 붙어 있다')
 }
 
+// ═══ ⑫ 저장이 «함부로 지워지는» 보험이 살아 있나 ═══════════
+//   💾 2026-08-19 — 창업자 *"저장한거 초기화되면 나같으면 앱지워"* · *"이거 되게 큰거야."*
+//      폰 저장 공간이 모자라면 크롬은 «안 쓰는 사이트 데이터»부터 지운다. 그때 우리가 1순위가 될 수 있다.
+//      `navigator.storage.persist()` 한 줄이 그걸 막는다 — 클라우드 저장이 나오기 전까지의 보험이다.
+//   ⛔ **한 줄짜리라 리팩터링에서 소리 없이 사라지기 딱 좋다.** 사라져도 화면은 멀쩡해서 아무도 모른다.
+//   ⭐ ＋ «구경 온 사람에게 권한 팝업을 띄우지 않는» 조건도 같이 지킨다 —
+//      크롬은 조용히 켜 주지만 파이어폭스 등은 창을 띄운다. 그래서 «앱으로 깔아 쓰는 사람»에게만 묻는다.
+//   ✅ 실물 = 창업자 폰에서 `persist: 켜짐 ✅` 확인(2026-08-19 · logintest.html)
+{
+  console.log('\n💾 저장 지킴(persist)')
+  const m = readFileSync(join(ROOT, 'src/main.jsx'), 'utf8')
+  const 코드 = m.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n')
+  if (!/navigator\.storage\.persist\(\)/.test(코드)) no('main.jsx 에서 persist() 요청이 사라졌다 — 저장이 함부로 지워질 수 있다')
+  else if (!/display-mode:\s*standalone/.test(코드) || !/if \(!installed\) return/.test(코드)) {
+    no('persist() 를 «누구에게나» 부른다 — 구경 온 사람에게 권한 팝업이 뜬다(앱으로 깐 사람에게만 물어야 한다)')
+  } else ok('persist() 요청이 있고, 앱으로 깐 사람에게만 묻는다')
+}
+
 console.log(bad ? `\n⛔⛔ ${bad}건 — 고치고 다시 돌릴 것\n` : '\n✅ 반복 실수 게이트 통과\n')
 console.log('   📖 기계가 «못 잡는» 것들 = docs/실수-패턴-2026-08-07.md\n')
 process.exit(bad ? 1 : 0)

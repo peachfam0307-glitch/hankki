@@ -62,3 +62,30 @@ if ('serviceWorker' in navigator) {
     setInterval(check, 30 * 60 * 1000)
   })
 }
+
+// 💾💾 **「이 앱 데이터는 함부로 지우지 마세요」를 브라우저에 요청한다.** (2026-08-19 · 🅱-5)
+//   ⭐⭐ 왜 = 창업자 *"저장한거 초기화되면 나같으면 앱지워"* · *"이거 되게 큰거야."*
+//      폰 저장 공간이 모자라면 크롬은 «안 쓰는 사이트 데이터»부터 지운다. 그때 우리가 1순위가 될 수 있다.
+//      이 한 줄이 켜지면 **우리 데이터를 먼저 지우지 않는다.** 클라우드 저장이 나오기 전까지의 보험이다.
+//   ✅ 창업자 폰에서 실물로 확인됨(2026-08-19 · `logintest.html` → `persist: 켜짐 ✅`).
+//      ⚠️ 다만 그건 «그 폰 하나»다 — 이 줄이 있어야 **다른 유저 폰에도** 걸린다.
+//
+//   ⛔⛔ **아무한테나 부르면 안 된다** — 브라우저마다 반응이 다르다.
+//      · 크롬(우리 앱·TWA) = 조건이 맞으면 **아무 창도 안 띄우고** 조용히 켜 준다
+//      · 파이어폭스 등    = **권한 팝업**을 띄운다 → 웹으로 잠깐 구경 온 사람에게 뜬금없는 창이 뜬다
+//   ✅ 그래서 **「앱으로 깔아 쓰는 사람」에게만** 요청한다(홈화면 앱·TWA = `standalone`).
+//      ⭐ 데이터가 쌓여서 잃으면 아까운 사람이 정확히 그 사람들이다. 구경 온 사람은 잃을 게 없다.
+//   ⛔ 실패해도 아무 일 없다 — 조용히 넘어간다(앱이 깨지는 것보다 안 켜지는 게 낫다).
+setTimeout(() => {
+  ;(async () => {
+    try {
+      if (!navigator.storage || !navigator.storage.persist) return
+      const installed = window.matchMedia('(display-mode: standalone)').matches
+        || window.matchMedia('(display-mode: fullscreen)').matches
+        || document.referrer.startsWith('android-app://')
+      if (!installed) return
+      if (await navigator.storage.persisted()) return   // 이미 켜져 있으면 다시 안 묻는다
+      await navigator.storage.persist()
+    } catch { /* 안 되는 브라우저도 있다 — 앱은 그대로 돈다 */ }
+  })()
+}, 4000)
