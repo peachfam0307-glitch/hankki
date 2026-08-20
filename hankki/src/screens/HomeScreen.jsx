@@ -34,6 +34,9 @@ import uiGomClap from '../assets/ui/wave/gom_clap.png'
 //       (아바타 ＋ 제목 ＋ 물음표 ＋ 가져오기 ＋ 톱니가 이미 한 줄에 다섯이다)
 //    ⭐ 홈의 우리 애 자리 = **「한끼 소식」 하나.** 창업자가 콕 집었다 — *"한끼소식 옆에 캐릭터 하나 넣으면 되겠다"*
 import uiGomWow from '../assets/ui/wave/gom_wow.png' // 꼬르곰 감탄(별눈) — 창업자가 2026-08-13 에 새로 뽑아 준 컷
+// 🐧 「다음에 뭐 할까」 카드의 주인 — 창업자 *"꼬르곰이 한끼소식도 꼬르곰 얘도 꼬르곰이라 좀 정신이없어"*
+//    ⭐ 홈에서 꼬르곰 자리는 「한끼 소식」 하나로 두고, 이 카드는 펭펭이 맡는다.
+import uiPengSearch from '../assets/ui/wave/pn_search.png'
 // 📔 일기 안내에 쓸 컷 — 꼬르곰·펭펭이 «둘 다» 하트를 만든다. 일기는 「그날의 마음을 남기는」 자리라 맞다.
 //    ⛔ ui 컷 다섯(hand_point·thumbsup·shop·heart·clap)은 이미 다른 단계가 다 쓰고 있어 정본 콤비에서 가져왔다.
 import gpDuoHeart from '../assets/stickers/photo/gp_duoht.png'
@@ -275,45 +278,6 @@ export default function HomeScreen() {
           </div>
         )}
 
-        {/* 🍳🍳 「다음에 뭐 할까」 ㉯ 안 — «눈에 띄는 새 카드» (⏳시안 · 창업자 판정 대기)
-            📮 창업자 2026-08-19 = *"a로 가자 **대신 눈에 잘띄게 만들어줘**
-               홈에 비슷한 안내가 많아서 잘 안보고 넘길가능성이 높아."*
-            🔢 실측이 그 말을 뒷받침했다 — 홈에 **같은 결의 베이지 카드가 셋 연속**이다
-               (오늘 뭐 해먹지 · 이번 주 특별한 한끼 · 우리집레시피). 넷째를 얹으면 그냥 묻힌다.
-            ⭐ 지금 홈에서 눈에 걸리는 유일한 카드 = 「한끼 소식」(연파랑 ＋ 곰 ＋ 뱃지) = **결이 달라서**다.
-            ⭐⭐ 그래서 이 카드는 홈에서 **유일하게 「채워진」(진한 바탕) 카드**로 만든다.
-               나머지가 전부 «옅은 바탕 + 진한 글자»라, 반대로 하면 한 장만 튄다.
-            ⭐ 자리도 근거다 — 다른 카드는 «앱이 골라준 것»(소식·추천·이번 주)인데
-               이건 **내가 한 일**에 대한 것이라 결이 다르다. 그래서 맨 위. */}
-        {nextUp && (
-          // 📐 여럿이면 «가로로 밀어서» 최대 3장 (창업자 *"레시피 오른쪽 스크롤해서 3개정도까지는 보이게?"*)
-          //    ⭐ 「다른 것 보여줘」 단추가 필요 없어진다 — 미는 게 더 자연스럽고 손가락이 이미 아는 동작이다.
-          //    ⭐ 우리 앱에 이미 있는 패턴이다(자주 해먹는 요리 · 이번 주 제철) — 새로 배울 게 없다.
-          //    ⛔ 갈래를 섞지 않으므로 한 줄 안에서 성격이 안 갈린다(`nextUp.js` 참고).
-          <div className="next-row" role="list">
-            {nextUp.것들.map((it, i) => (
-              <div className={`next-card${i > 0 ? ' sub' : ''}`} key={it.키} role="listitem">
-                {/* 🐻 카드 «전체»가 눌려 상세로 간다. 단추는 그 위에 얹어 따로 잡는다.
-                    ⛔ button 안에 button 을 넣지 않는다(HTML 규칙 위반 · 안드로이드에서 안 눌린다) */}
-                <button className="next-open press" onClick={() => it.recipe && open(it.recipe.id)}>
-                  <div className="next-head">
-                    <img src={nextUp.갈래 === '한줄' ? uiGomHeart : nextUp.갈래 === '안해본것' ? uiGomThumb : uiGomClap}
-                      alt="" draggable={false} className="next-gom hk-m-tongtong" />
-                    <span className="next-label">{it.라벨}</span>
-                  </div>
-                  <div className="next-title">{it.제목}</div>
-                  {/* 📌 창업자 확정 = 안내가 «위», 단추가 «아래» (*"안내는 젤 위에 그 아래 한줄남기기"*) */}
-                  <div className="next-reason">{it.이유}</div>
-                  {it.보기 && <div className="next-eg">{it.보기}</div>}
-                </button>
-                {it.단추 && (
-                  <button className="next-cta press" onClick={() => setOneLine(it.entry)}>{it.단추}</button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* 📣 한끼 소식 — 기대감. 강제 팝업 대신 눈에 띄는 슬림 진입점.
             ⭐⭐ 창업자 2026-08-03 *"새로 열릴때 꼭 안내페이지에 올라오도록 해."*
                우리 업데이트는 «날짜가 저절로» 여는데 앱이 아무 말도 안 했다.
@@ -350,6 +314,49 @@ export default function HomeScreen() {
             </div>
             <Icon name="chevron-right" size={18} color="var(--sand)" />
           </button>
+
+          {/* 🍳🍳 「다음에 뭐 할까」 — ✅창업자 확정 2026-08-20 (시안 4판의 「라 — 라벨 알약」)
+              📮 판정 원문 = *"**라벨알약 말한거야**"* · 그 앞 = *"좋아졌어."*
+              ⭐⭐ 여기까지 온 길이 셋이다 —
+                 ⑴ *"꼬르곰이 한끼소식도 꼬르곰 얘도 꼬르곰이라 좀 정신이없어"* → 🐧**펭펭**이 맡는다
+                 ⑵ *"높이도 줄이면 좋겠어"* ＋ *"몰려있어서 산만해보이고 지저분해"* → **1장 · 한 줄**(102→48px)
+                 ⑶ *"1줄이라 **오늘뭐해먹지랑 같은 색 구성인데 «반대로» 보여**"* → 바탕을 「오늘」과 **한 벌**로
+              ⛔⛔ **자리가 `.home-pair` «안»이다** — 밖에 두면 안 된다.
+                 창업자 확정 순서는 *"한끼소식이 제일 위로 그 아래 아직안해봤어요"* 인데,
+                 소식만 위로 빼면 `.home-pair` 에 「오늘 뭐 해먹지」가 «혼자» 남아
+                 넓은 화면(패드)에서 **오른쪽 칸이 텅 빈다** — 창업자가 예전에 짚은
+                 *"한끼소식이랑 오징어가 너무 오른쪽이 휑해보인다.."* 가 그대로 되돌아온다.
+                 ✅ 그래서 소식이 비운 자리에 **이 카드가 들어간다**:
+                    · 폰  = 소식 → 다음에 뭐 할까 → 오늘 뭐 해먹지 (세로 · 확정 순서 그대로)
+                    · 패드 = 소식(전폭) ／ [다음에 뭐 할까 | 오늘 뭐 해먹지] (좌우)
+              ⛔ 「이유」·「보기」 줄은 CSS 가 접는다 — 데이터·코드는 그대로 산다(`styles.css` `.next-reason`).
+              ⛔ `.next-card.sub` 와 여러 장 코드도 남긴다 — 되돌리는 날 그대로 살아난다. */}
+          {nextUp && (
+            <div className="next-row" role="list">
+              {nextUp.것들.map((it, i) => (
+                <div className={`next-card${i > 0 ? ' sub' : ''}`} key={it.키} role="listitem">
+                  {/* 🐻 카드 «전체»가 눌려 상세로 간다. 단추는 그 위에 얹어 따로 잡는다.
+                      ⛔ button 안에 button 을 넣지 않는다(HTML 규칙 위반 · 안드로이드에서 안 눌린다) */}
+                  <button className="next-open press" onClick={() => it.recipe && open(it.recipe.id)}>
+                    {/* 🐧 펭펭은 갈래와 무관하게 «한 컷»이다 — 이 카드가 한 장뿐이라 갈래마다 바꿀 이유가 없고,
+                        찾는 포즈(`pn_search`)가 「다음에 뭐 할까」와 뜻이 맞는다.
+                        ⛔ 펭펭을 웃기지 않는다(정본 규칙) — `pn_search` 는 무표정이라 그대로 쓴다. */}
+                    <img src={uiPengSearch} alt="" draggable={false} className="next-peng hk-m-tongtong" />
+                    <div className="next-head">
+                      <span className="next-label">{it.라벨}</span>
+                    </div>
+                    <div className="next-title">{it.제목}</div>
+                    {/* 📌 창업자 확정 = 안내가 «위», 단추가 «아래» (*"안내는 젤 위에 그 아래 한줄남기기"*) */}
+                    <div className="next-reason">{it.이유}</div>
+                    {it.보기 && <div className="next-eg">{it.보기}</div>}
+                  </button>
+                  {it.단추 && (
+                    <button className="next-cta press" onClick={() => setOneLine(it.entry)}>{it.단추}</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* 오늘 뭐 해먹지?
               ⛔ 「다음에 뭐 할까」가 이 카드를 «대신 쓰는» 안(㉮)은 창업자가 접었다 — 그대로 둔다.
