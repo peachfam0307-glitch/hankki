@@ -43,7 +43,38 @@ const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const 찍은것 = []
 const 놓친것 = []
 
-const 새페이지 = async () => {
+// 🥕🥕 **예시를 «넣고» 찍는다** — 창업자 2026-08-20 *"예시도 넣고(장보기나 냉장고)"*
+//   ⛔⛔ 갓 깐 앱은 **장보기·냉장고·일기가 텅 비어 있다.** 그 화면을 홍보물에 얹으면
+//      「이 앱 아무것도 없네」가 첫인상이 된다. 우리가 팔려는 건 «채워진 뒤»의 모습이다.
+//   ⛔ `page.reload()` 금지 — 저장값이 시드로 덮인다(check-mistakes ⑧). **새 탭으로 연다.**
+//   ⚠️ 유통기한은 «오늘 기준»으로 만든다 — 날짜를 박아두면 내일 캡처가 낡는다.
+const 씨앗 = () => {
+  const st = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+  const 오늘 = new Date(); 오늘.setHours(12, 0, 0, 0)
+  const 날 = (d) => { const x = new Date(오늘); x.setDate(x.getDate() + d); return x.getTime() }
+
+  // 🧊 냉장고 — 유통기한이 «가까운 것부터» 보이게 섞는다(D-1 · D-3 이 있어야 그 기능이 보인다)
+  st.pantry = [
+    { id: 'pz1', name: '두부', qty: '1모', exp: 날(1), at: 날(-2) },
+    { id: 'pz2', name: '애호박', qty: '1개', exp: 날(3), at: 날(-2) },
+    { id: 'pz3', name: '달걀', qty: '10구', exp: 날(12), at: 날(-4) },
+    { id: 'pz4', name: '대파', qty: '2대', exp: 날(6), at: 날(-1) },
+    { id: 'pz5', name: '돼지고기 앞다리살', qty: '400g', exp: 날(2), at: 날(-1) },
+    { id: 'pz6', name: '신김치', qty: '1/4포기', exp: 날(30), at: 날(-9) },
+    { id: 'pz7', name: '양파', qty: '3개', exp: 날(15), at: 날(-5) },
+  ]
+  // 🛒 장보기 — «산 것 ＋ 안 산 것»이 섞여야 체크 기능이 보인다
+  st.shop = [
+    { id: 'sz1', name: '콩나물', qty: '1봉', done: false },
+    { id: 'sz2', name: '두부', qty: '1모', done: true },
+    { id: 'sz3', name: '청양고추', qty: '3개', done: false },
+    { id: 'sz4', name: '느타리버섯', qty: '1팩', done: false },
+    { id: 'sz5', name: '다시마', qty: '1봉', done: true },
+  ]
+  localStorage.setItem('hankki:v1', JSON.stringify(st))
+}
+
+const 새페이지 = async (씨앗넣기 = false) => {
   // ⭐ deviceScaleFactor 3 = 폰 실물 해상도(1170×2532). 홍보물에 크게 얹어도 안 뭉갠다
   const page = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 })
   await page.addInitScript(SEED_COACH_SEEN)
@@ -51,6 +82,16 @@ const 새페이지 = async () => {
   await page.goto('http://127.0.0.1:4381/hankki/', { waitUntil: 'networkidle' })
   await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(900)
+  if (씨앗넣기) {
+    await page.evaluate(씨앗)
+    // ⛔⛔ `b.newPage()` 로 «새 탭»을 열면 안 된다 — Playwright 는 그때마다 **새 컨텍스트**를 만들어서
+    //    localStorage 가 통째로 갈린다(씨앗이 통째로 사라진다). 2026-08-20 에 짜다가 잡았다.
+    // ⛔ `page.reload()` 도 안 된다 — 저장값이 시드로 덮인다(check-mistakes ⑧ 「옛 함정 사전」).
+    // ✅ **같은 페이지에서 `goto`** — localStorage 는 살고 앱만 다시 읽는다.
+    await page.goto('http://127.0.0.1:4381/hankki/', { waitUntil: 'networkidle' })
+    await page.evaluate(() => document.fonts.ready)
+    await page.waitForTimeout(1100)
+  }
   return page
 }
 
@@ -140,7 +181,7 @@ if (await 탭으로(p2, '레시피')) {
 }
 
 // ── ⑤ 장보기 · 냉장고 ────────────────────────────────────────
-const p3 = await 새페이지()
+const p3 = await 새페이지(true)   // ⭐ 씨앗 = 장보기·냉장고에 실제 재료를 넣고 연다
 if (await 탭으로(p3, '장보기')) {
   await 찍자(p3, '04-장보기', '장보기 목록')
   const 냉장고 = p3.locator('[data-coach="pantry"]').first()
@@ -153,6 +194,60 @@ if (await 탭으로(p3, '장보기')) {
 // ── ⑥ 일기 (덤 — 「그날의 기억」 카드에 쓸 재료) ──────────────
 const p4 = await 새페이지()
 if (await 탭으로(p4, '일기')) await 찍자(p4, '07-일기', '요리 일기')
+
+// ═══════════════════════════════════════════════════════════════
+// 🆕 [2026-08-20 밤] 창업자 = *"오늘 준 것보다 더 자세히 찍어줘야 좋을 것 같아"*
+//    ⭐ 홍보 시안(「레꾸자랑 만드는 법 ①②」)이 «레꾸자랑 흐름»을 쓰는데 그게 통째로 빠져 있었다.
+//    ⛔ 지피티가 «기억으로» 그리면 오차가 난다 — 실제로 「한식 32」(진짜 35) ·
+//       「Ploy스토어」(진짜 Play) 가 그렇게 나왔다. **실물을 주면 그럴 일이 구조적으로 없다.**
+// ═══════════════════════════════════════════════════════════════
+
+// 📜 스크롤해서 «아래쪽»도 찍는다 — 한 화면에 안 들어가는 것이 많다(냉장고 재료 목록이 잘렸다)
+const 굴려찍자 = async (page, 이름, 설명, px = 700) => {
+  await page.evaluate((y) => {
+    const el = document.querySelector('.screen') || document.scrollingElement
+    el.scrollTop = y
+  }, px)
+  await page.waitForTimeout(700)
+  return 찍자(page, 이름, 설명)
+}
+
+// ── ⑦ 냉장고 «재료 목록» — D-3 배지가 보이는 자리 ────────────
+if (await 탭으로(p3, '장보기')) {
+  const 냉2 = p3.locator('[data-coach="pantry"]').first()
+  if (await 냉2.count()) {
+    await 냉2.click(); await p3.waitForTimeout(1000)
+    await 굴려찍자(p3, '05b-냉장고-재료목록', '냉장고 — 재료 목록·유통기한 배지', 900)
+  }
+}
+
+// ── ⑧ 레꾸자랑 목록 (홍보 시안 ①이 쓰는 화면) ────────────────
+const p5 = await 새페이지()
+if (await 탭으로(p5, '레꾸자랑')) {
+  await 시트닫기(p5)
+  await 찍자(p5, '08-레꾸자랑목록', '레꾸자랑 — 자랑할 레시피 고르기')
+
+  // ── ⑨ 카드 고르기 시트 ＋ ⑩ 랜덤 카드 (시안 ②가 쓰는 화면) ──
+  const 첫칸 = p5.locator('.grid-card, .album-tile, .brag-card').first()
+  if (await 첫칸.count()) {
+    await 첫칸.click(); await p5.waitForTimeout(1300)
+    await 찍자(p5, '09-카드고르기', '레꾸자랑 — 내 표지 or 랜덤 카드 고르기', true)
+
+    // 「랜덤 카드」 쪽을 눌러 실제 카드 화면까지
+    const 랜덤 = p5.getByRole('button', { name: /랜덤/ }).first()
+    if (await 랜덤.count()) {
+      await 랜덤.click(); await p5.waitForTimeout(2200)   // 카드 그리는 데 시간이 걸린다
+      await 찍자(p5, '10-랜덤카드', '랜덤 카드 — 뽑을 때마다 달라지는 그 화면', true)
+    } else 놓친것.push('「랜덤 카드」 버튼을 못 찾았다')
+  } else 놓친것.push('레꾸자랑 목록의 첫 칸을 못 찾았다')
+} else 놓친것.push('레꾸자랑 탭을 못 찾았다')
+
+// ── ⑪ 가져오기 (＋) — 「흩어진 걸 담는다」를 보여주는 자리 ────
+const p6 = await 새페이지()
+if (await 탭으로(p6, '가져오기')) {
+  await p6.waitForTimeout(900)
+  await 찍자(p6, '11-가져오기', '가져오기 — 캡처·붙여넣기로 담기', true)
+}
 
 await b.close(); srv.close()
 
