@@ -54,6 +54,29 @@ const state = {
   seedV: BASICS_VERSION,
 }
 
+// 🎯🎯 **하단 탭을 «콕» 집는다** — 2026-08-20 에 이것 때문에 smoke 가 죽었다.
+//   ⛔ 옛 잣대 = `getByText('레시피', { exact: true }).last()`
+//      죽은 로그가 원인을 그대로 말해 줬다:
+//        locator resolved to <div class="h-title">레시피</div>
+//        <div class="detail-bar">…</div> … intercepts pointer events
+//      「레시피」라는 글자는 **하단 탭에도 있고 화면 «제목»에도 있다.**
+//      `.last()` 는 «DOM 순서상 마지막»을 집는데, 그게 화면 상태에 따라 달라진다 →
+//      제목을 집으면 그 자리는 하단 고정 바(`.detail-bar`)에 가려 «영영» 못 누른다.
+//   ⭐ 혼자 돌리면 6/6 통과하고 smoke 안에서만 죽어서 「불안정한 검사」로 보였는데,
+//      진짜 원인은 타이밍이 아니라 **잣대가 무엇을 잡는지**였다(규칙 18 ⓘ).
+//      ⚠️ 실제로 CPU 를 12배 느리게 해도 재현이 «안 됐다» — 시간 문제였다면 거기서 죽었어야 한다.
+//   🔎 실물로 확인 — **상세를 연 채**로 재보니:
+//        옛 잣대  → 「레시피」 글자 1개, 그 정체가 `h-title`(화면 제목)
+//        `.nav-item` → **0개** (상세 화면엔 하단 탭이 «아예 없다»)
+//   ⭐⭐ 그래서 진짜 뿌리는 **「뒤로」가 아직 안 끝난 것**이다. 옛 잣대는 그때 «제목»을 집어
+//      30초를 헤매다 죽고, 새 잣대만으로도 「못 찾음」으로 죽는다.
+//   ✅ 그래서 **하단 탭이 «보일 때까지» 기다린 뒤 누른다** — 고정 시간이 아니라 «상태»를 기다린다.
+//      `waitForTimeout(800)` 은 바쁜 컴퓨터에서 언젠가 모자란다.
+const 탭 = async (이름) => {
+  await page.waitForSelector('.nav-item', { state: 'visible', timeout: 10000 })
+  await page.locator('.nav-item').filter({ hasText: new RegExp('^' + 이름 + '$') }).first().click()
+}
+
 let bad = 0
 const ok = (m) => console.log('   ✅', m)
 const no = (m) => { bad++; console.log('   ⛔', m) }
@@ -73,7 +96,7 @@ await page.goto('http://127.0.0.1:4363/hankki/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(1200)
 
 // 레시피 상세로
-await page.getByText('레시피', { exact: true }).last().click(); await page.waitForTimeout(700)
+await 탭('레시피'); await page.waitForTimeout(700)
 await page.getByText('들깨나물무침').first().click({ timeout: 15000 }); await page.waitForTimeout(900)
 
 const 카드 = page.locator('.card').filter({ hasText: '내 요리 기록' }).first()
@@ -108,7 +131,7 @@ if (await 카드.count() === 0) {
     else no('시트에 저장 버튼을 못 찾았다')
     // ⚠️ 상세는 «스택 화면»이라 하단바가 없다 — 먼저 뒤로 나온다.
     await page.getByRole('button', { name: '뒤로' }).first().click(); await page.waitForTimeout(800)
-    await page.getByText('일기', { exact: true }).last().click(); await page.waitForTimeout(1200)
+    await 탭('일기'); await page.waitForTimeout(1200)
     // ⚠️ 배지의 별이 «글자 ★» 에서 «SVG» 로 바뀌었다 → innerText 엔 숫자만 남는다.
     //    그래서 «숫자»와 «별 그림»을 따로 본다(규칙 18 ⓘ — 낡은 잣대로 재면 멀쩡한 걸 ⛔ 라 한다).
     const 배지 = (await page.locator('.album-star').allInnerTexts()).map((s) => s.trim())
@@ -121,7 +144,7 @@ if (await 카드.count() === 0) {
 }
 
 // ⑷ 앱 어디에도 «유니코드 별 글자»가 남아 있지 않다 (레시피 탭 「즐겨찾기」 칩까지)
-await page.getByText('레시피', { exact: true }).last().click(); await page.waitForTimeout(900)
+await 탭('레시피'); await page.waitForTimeout(900)
 const 화면글 = await page.locator('.screen').first().innerText().catch(() => '')
 if (!화면글.includes('★')) ok('레시피 탭에 유니코드 별 글자 0 (즐겨찾기 칩도 우리 아이콘)')
 else no('레시피 탭에 유니코드 `★` 가 남아 있다 — 우리 규칙은 「UI엔 우리 아이콘만」')
