@@ -5,6 +5,7 @@ import { makeSampleDiary, SAMPLE_DIARY_ID, SAMPLE_READY } from './data/sampleDia
 import { guessFoodIcon } from './components/FoodIcon'
 import { cleanMemo, mergeQtyOnlyIngredients } from './parseRecipe'
 import { politeSteps, politeFormalSteps } from './polish'
+import { pickPaper } from './memoPaper'
 
 const KEY = 'hankki:v1'
 let lastFullWarn = 0 // 저장공간 초과 경고 throttle(모듈 스코프)
@@ -619,7 +620,11 @@ function reducer(state, action) {
 
     // 요리 일지 — 저장한 레시피에 연결된 기록(별점·팁·사진). '만들었어요'가 항목을 만든다.
     case 'addDiary': {
-      return { ...state, diary: [action.entry, ...state.diary] }
+      // 📌 메모지 종이를 «만들 때» 적어 둔다 (창업자 2026-08-20 「레시피마다 다르게」)
+      //   ⛔ 안 적고 그때그때 계산하면, 종이를 «추가»하는 날 이미 쓴 메모의 종이가 전부 갈린다
+      //      (해시 % 16 → % 20). 유저 눈엔 「내 메모지가 왜 바뀌었지」가 된다. → `src/memoPaper.js`
+      const e = action.entry
+      return { ...state, diary: [{ ...e, paper: e.paper || pickPaper(e.recipeId) }, ...state.diary] }
     }
     case 'updateDiary': {
       return {
