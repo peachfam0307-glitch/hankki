@@ -32,7 +32,7 @@ mkdirSync(OUT, { recursive: true })
 const ROOT = new URL('..', import.meta.url).pathname
 const DIST = join(ROOT, 'dist')
 // 🩹 두 벌 = `tools/자른뒤-다듬기.py` 가 만든 것 (①흰 테 ②종이색 테 · 둘 다 pn302 고침)
-const 벌 = { 흰테: '/tmp/판A', 종이색: '/tmp/판B' }
+const 벌 = { 종이색: '/tmp/판A' }   // ⭐ pn302 속만 되살린 벌 (흰 테는 그대로 둔다)
 for (const [이름, 길] of Object.entries(벌)) {
   if (!existsSync(길)) { console.error(`⛔ ${이름} 벌이 없다 — tools/자른뒤-다듬기.py 를 먼저 돌린다: ${길}`); process.exit(1) }
 }
@@ -46,7 +46,7 @@ const srv = createServer((q, s) => {
 })
 await new Promise((r) => srv.listen(4408, r))
 
-const 컷들 = readdirSync(벌.흰테).filter((f) => f.endsWith('.png')).sort()
+const 컷들 = readdirSync(벌.종이색).filter((f) => f.endsWith('.png')).sort()
 const 재기 = (폴더, f) => { const b = readFileSync(join(폴더, f)); return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) } }
 const 데이터 = (폴더, f) => 'data:image/png;base64,' + readFileSync(join(폴더, f)).toString('base64')
 console.log(`🖼 ${컷들.length}컷 × 두 벌`)
@@ -131,25 +131,11 @@ const 찍기 = async (p, 곳, 아래 = 150) => {
   await p.screenshot({ path: 곳, clip })
 }
 
-// ── ① 흰 테 vs 종이색 테 — 16컷 전수 ───────────────────
+// ⛔⛔ ① 흰 테 갈래는 «없앴다» — 2026-08-20 에 원인이 컷이 아니라 CSS 로 드러났다.
+//    `.paper` (일기 종이) 스타일이 메모지에 딸려와 「네모난 흰 상자 ＋ 위 흰 줄 ＋ 아래 음영」을 만들었다.
+//    창업자는 내내 *"프레임 자른거에는 문제가 없다니까??"* 라고 말했고 **맞았다.**
+//    → 컷은 그대로 둔다. 이 판은 **크기 · 글씨체**만 묻는다.
 const 테컷 = []
-{
-  const p = await 열기()
-  for (const f of 컷들) {
-    const 키 = f.replace('.png', ''); const 쌍 = {}
-    for (const [이름, 폴더] of Object.entries(벌)) {
-      await 갈아끼우기(p, 폴더, f)
-      const 곳 = `${OUT}/마무리-테-${키}-${이름}.png`
-      await 찍기(p, 곳, 40)
-      const 돋 = `${OUT}/마무리-돋-${키}-${이름}.png`
-      await 메모지만(p, 돋)
-      쌍[이름] = 곳; 쌍['돋' + 이름] = 돋
-    }
-    테컷.push({ 키, ...쌍 })
-  }
-  await p.close()
-}
-console.log(`🏷 흰 테 갈래 ${테컷.length}쌍`)
 
 // ── ② 크기 ────────────────────────────────────────
 //    🔢 지금 = 44%(157px · `styles.css` `.memo-note.stick`). 줄이고 키우는 게 되는지 실물로.
@@ -274,31 +260,22 @@ const html = `<title>메모지 마무리</title>
 </style>
 <div class="wrap">
 <h1>메모지 마무리</h1>
-<p class="sub">흰 테 · 크기 · 글씨체 — 2026-08-20 · 전부 <b>진짜 앱 화면</b>을 찍은 것</p>
+<p class="sub">크기 · 글씨체 — 2026-08-20 · 전부 <b>진짜 앱 화면</b>을 찍은 것</p>
 
 <div class="note">
-  <b>먼저 끝난 것 둘</b><br>
-  · <b>음영·그라데이션 — 컷엔 없어.</b> 16컷 바깥 그림자 <b>0px</b>. 네가 본 음영은 내가 넣었던 CSS 그림자였고 이미 뺐어.<br>
-  · <b>pn302 속 뚫림 — 고쳤어.</b> 16컷 중 그거 하나였고, 원본 종이 질감으로 되살렸어. (이 판의 pn302 가 고친 판이야)
+  <b>흰 줄은 고쳤어 — 네 말이 맞았어.</b><br>
+  종이 그림 잘못이 아니었어. 앱이 메모지 뒤에 <b>흰 종이를 한 장 더 깔고</b> 있었어.
+  그게 <b>위쪽 흰 줄 · 아래쪽 어두움 · 네모 상자</b> 셋을 다 만들었어. 치웠고, 아래 사진은 <b>치운 뒤 화면</b>이야.<br>
+  · <b>302 속 비어 있던 것</b>도 고쳤어(16장 중 그거 하나였어).
 </div>
 
-<h2>① 흰 테 — 16컷 전수</h2>
+<h2>① 크기 — 하나만 골라줘</h2>
 <div class="note">
-  네 말대로 <b>16장 전부</b> 똑같은 자리(위 3~9% · 아래 91~96%)에 있었어. 원본 시트엔 없고 <b>내가 자를 때 두른 것</b>이야.<br>
-  ⛔ <b>그냥 빼는 건 못 해</b> — 흰 테 없이 자르니 <b>진갈색 외곽선이 최대 30% 파먹혔고</b> 네가 만든 절대원칙이 막았어.
-  흰 테는 장식이 아니라 <b>외곽선 보호막</b>이었어. 얇게(2px)도 규칙 하한 밖이라 안 잘려. <b>지금 3~4px 이 이미 최소야.</b><br>
-  ✅ 그래서 <b>두께가 아니라 「색」</b>을 바꿨어. 오른쪽이 흰 테를 그 종이 색으로 바꾼 거야. 마테가 <b>떠 있는 조각</b>처럼 안 보여.
-</div>
-${테HTML}
-
-<h2>② 크기 — 줄이고 키우는 거 돼</h2>
-<div class="note">
-  <b>돼.</b> 숫자 한 줄이야(지금 44%). 종이 비율은 그대로 따라가고 글씨도 같이 커져.
-  아래는 진짜로 바꿔서 찍은 거야. <b>하나만 골라줘.</b>
+  줄이고 키우는 거 <b>돼.</b> 종이 비율도 글씨도 같이 따라와.
 </div>
 ${크기HTML}
 
-<h2>③ 글씨체 — 앱에 이미 있는 손글씨 여섯</h2>
+<h2>② 글씨체 — 하나만 골라줘</h2>
 <div class="note">새로 받을 필요 없이 <b>지금 앱에 들어 있는</b> 것들이야. <b>하나만 골라줘.</b></div>
 ${글씨HTML}
 <textarea id="out" readonly></textarea>
@@ -326,10 +303,8 @@ btns.forEach(function(b){ b.addEventListener('click', function(){
 그리기();
 function 글만들기(){
   var L=['메모지 마무리 판정 (2026-08-20)',''];
-  var 테=[]; Object.keys(saved).forEach(function(k){ if(k.indexOf('테-')===0) 테.push(k.slice(2)+' : '+saved[k]) });
-  L.push('[① 흰 테]'); L.push(테.length? 테.join('\\n') : '(안 고름)'); L.push('');
-  L.push('[② 크기] '+(saved['크기']||'(안 고름)'));
-  L.push('[③ 글씨체] '+(saved['글씨']||'(안 고름)'));
+  L.push('[① 크기] '+(saved['크기']||'(안 고름)'));
+  L.push('[② 글씨체] '+(saved['글씨']||'(안 고름)'));
   return L.join('\\n');
 }
 document.getElementById('copy').addEventListener('click', function(){
