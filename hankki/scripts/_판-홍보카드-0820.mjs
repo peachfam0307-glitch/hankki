@@ -46,6 +46,10 @@ const F = (n) => `data:font/woff2;base64,${b64(join(ROOT, 'src/assets/fonts', n)
 //       모자 온전 ＋ 꼬르곰 활짝 웃음 ＋ 발 다섯 다 온전. 배경빼기는 «좌우에서만» flood 했다
 const 다섯 = 그림(join(OUT, '5인-마스터-카드용.png'))
 // ⭐ 로고는 «투명판» — 브라운판은 갈색 «사각형»이 통째로 찍힌다(첫 판에서 실제로 그랬다)
+// 🐧 [창업자 확정 2026-08-20] 세로판 주인공 = «펭펭 비치체어» (📮 *"세로버전은 내최애 펭펭으로 그려주라ㅋㅋ 수영복입은"*)
+//    ⭐ 랜덤 카드에서 창업자가 「내 최애」로 고른 그 컷(sm_peng_beach) — 분홍 선글라스 ＋ 파라솔 ＋ 수박
+//    ⚠️ 518×525 «거의 정사각»이라 5인(1.67)처럼 width:100% 로 넣으면 세로 카드를 통째로 먹는다
+const 펭펭 = 그림(join(ROOT, 'src/assets/sharepool/sm_peng_beach.png'))
 const 로고 = 그림(join(ROOT, 'design/promo/logo/한끼로고-곰ㅎ-투명-2507.png'))
 // 🎀 마테 = 48컷을 다 열어보고 «우리 톤»으로 둘 — 노랑 데이지 ＋ 살구
 const 마테A = 스티커('wt_daisy_yellow')
@@ -112,7 +116,7 @@ const 세로 = (f) => `${머리(f)}
 
   <img src="${로고}" style="height:156px">
 
-  <img class="애들" src="${다섯}" style="width:100%">
+  <img class="애들" src="${펭펭}" style="width:74%;align-self:center">
 
   <div class="덩">
     <div class="슬로건" style="font-size:92px;text-align:center">
