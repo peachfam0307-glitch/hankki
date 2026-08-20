@@ -19,7 +19,11 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 const SHOP_COACH_KEY = COACH.shop
 const SHOP_COACH_STEPS = [
   { sel: '[data-coach="curation"]', label: '주부의 장바구니', desc: '18년차 주부가 엄선한 식재료 · 담고 바로 사러 가요' },
-  { sel: '[data-coach="pantry"]', label: '냉장고', desc: '재료를 넣으면 유통기한 챙기고, 그 재료로 만들 요리도 추천해요' },
+  // 🧾 ⛔ 옛 문구 = *"«재료를 넣으면» 유통기한 챙기고…"* — **손으로 하나씩 넣으라는 말로 읽혔다.**
+  //    ⭐ 우리는 영수증만 찍으면 자동으로 들어오는데(이 분야 앱 실패 1순위가 「손 입력」이다)
+  //       **풀어놓고 그 말을 안 하고 있었다.** 코치는 첫 방문에 딱 한 번 뜨는 자리라 제일 아깝다.
+  //    ⛔ 버튼을 키우는 게 아니라 «말»만 고친다(창업자 확정 = 영수증을 크게 내세우지 않는다).
+  { sel: '[data-coach="pantry"]', label: '냉장고', desc: '영수증만 찍으면 재료가 저절로 들어와요 · 유통기한도 챙겨줘요' },
 ]
 import TextTile from '../components/TextTile'
 import EmojiPicker from '../components/EmojiPicker'
