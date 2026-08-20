@@ -1,5 +1,7 @@
 import { useMemo, useState, useRef } from 'react'
 import { COACH } from '../coach'
+import { nextUpList } from '../nextUp'
+import OneLineSheet from '../components/OneLineSheet'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -93,7 +95,8 @@ const HOME_COACH_STEPS = [
 ]
 
 export default function HomeScreen() {
-  const { recipes, profile, pantry, removeRecipe } = useStore()
+  // 📔 diary = 「만들었어요」가 쌓는 요리 일기 — 「한 줄 안 쓴 것」을 세는 데 쓴다(`nextUp.js`)
+  const { recipes, profile, pantry, diary, removeRecipe } = useStore()
   const nav = useNav()
   const [pick, setPick] = useState(0)
   const [preview, setPreview] = useState(false)
@@ -166,6 +169,16 @@ export default function HomeScreen() {
     return { list: cooked.length ? cooked : pool, fromFridge: false }
   }, [recipes, pantry])
   const todayPick = today.list.length ? today.list[pick % today.list.length] : null
+
+  // 🍳 「다음에 뭐 할까」 — 홈 맨 위 한 줄이 상황을 보고 «할 일»을 꺼낸다 (창업자 확정 2026-08-19 · 안 ⓐ)
+  //    ⭐ 고르는 법은 `src/nextUp.js` **한 곳**에 있다 — 여기선 «그리기»만 한다.
+  //    ⛔ 셋을 각각 줄로 놓지 않는다 — 다 「다음에 뭐 할까」라는 같은 물음의 답이라 서로 경쟁한다.
+  //    ⛔ 「다음 날부터」라 «오늘» 만든 것은 안 뜬다 — 「만들었어요는 누르면 끝」 확정(2026-08-06)을 온전히 지킨다.
+  const nextUp = useMemo(() => nextUpList(recipes, diary, Date.now()), [recipes, diary])
+  // ✍️ 「한 줄 남기기」 — 홈에서 «바로» 쓴다(상세로 안 보낸다).
+  //    ⭐ 쓰고 닫으면 `note` 가 차서 `nextUp` 에서 저절로 빠진다 —
+  //       창업자 *"한줄남기기 마치면 그 창은 사라지게 하자"* 가 «지우는 코드 없이» 된다.
+  const [oneLine, setOneLine] = useState(null)
 
   const often = useMemo(
     () => [...recipes].filter((r) => (r.cooked || 0) > 0).sort((a, b) => b.cooked - a.cooked).slice(0, 8),
@@ -262,6 +275,45 @@ export default function HomeScreen() {
           </div>
         )}
 
+        {/* 🍳🍳 「다음에 뭐 할까」 ㉯ 안 — «눈에 띄는 새 카드» (⏳시안 · 창업자 판정 대기)
+            📮 창업자 2026-08-19 = *"a로 가자 **대신 눈에 잘띄게 만들어줘**
+               홈에 비슷한 안내가 많아서 잘 안보고 넘길가능성이 높아."*
+            🔢 실측이 그 말을 뒷받침했다 — 홈에 **같은 결의 베이지 카드가 셋 연속**이다
+               (오늘 뭐 해먹지 · 이번 주 특별한 한끼 · 우리집레시피). 넷째를 얹으면 그냥 묻힌다.
+            ⭐ 지금 홈에서 눈에 걸리는 유일한 카드 = 「한끼 소식」(연파랑 ＋ 곰 ＋ 뱃지) = **결이 달라서**다.
+            ⭐⭐ 그래서 이 카드는 홈에서 **유일하게 「채워진」(진한 바탕) 카드**로 만든다.
+               나머지가 전부 «옅은 바탕 + 진한 글자»라, 반대로 하면 한 장만 튄다.
+            ⭐ 자리도 근거다 — 다른 카드는 «앱이 골라준 것»(소식·추천·이번 주)인데
+               이건 **내가 한 일**에 대한 것이라 결이 다르다. 그래서 맨 위. */}
+        {nextUp && (
+          // 📐 여럿이면 «가로로 밀어서» 최대 3장 (창업자 *"레시피 오른쪽 스크롤해서 3개정도까지는 보이게?"*)
+          //    ⭐ 「다른 것 보여줘」 단추가 필요 없어진다 — 미는 게 더 자연스럽고 손가락이 이미 아는 동작이다.
+          //    ⭐ 우리 앱에 이미 있는 패턴이다(자주 해먹는 요리 · 이번 주 제철) — 새로 배울 게 없다.
+          //    ⛔ 갈래를 섞지 않으므로 한 줄 안에서 성격이 안 갈린다(`nextUp.js` 참고).
+          <div className="next-row" role="list">
+            {nextUp.것들.map((it, i) => (
+              <div className={`next-card${i > 0 ? ' sub' : ''}`} key={it.키} role="listitem">
+                {/* 🐻 카드 «전체»가 눌려 상세로 간다. 단추는 그 위에 얹어 따로 잡는다.
+                    ⛔ button 안에 button 을 넣지 않는다(HTML 규칙 위반 · 안드로이드에서 안 눌린다) */}
+                <button className="next-open press" onClick={() => it.recipe && open(it.recipe.id)}>
+                  <div className="next-head">
+                    <img src={nextUp.갈래 === '한줄' ? uiGomHeart : nextUp.갈래 === '안해본것' ? uiGomThumb : uiGomClap}
+                      alt="" draggable={false} className="next-gom hk-m-tongtong" />
+                    <span className="next-label">{it.라벨}</span>
+                  </div>
+                  <div className="next-title">{it.제목}</div>
+                  {/* 📌 창업자 확정 = 안내가 «위», 단추가 «아래» (*"안내는 젤 위에 그 아래 한줄남기기"*) */}
+                  <div className="next-reason">{it.이유}</div>
+                  {it.보기 && <div className="next-eg">{it.보기}</div>}
+                </button>
+                {it.단추 && (
+                  <button className="next-cta press" onClick={() => setOneLine(it.entry)}>{it.단추}</button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* 📣 한끼 소식 — 기대감. 강제 팝업 대신 눈에 띄는 슬림 진입점.
             ⭐⭐ 창업자 2026-08-03 *"새로 열릴때 꼭 안내페이지에 올라오도록 해."*
                우리 업데이트는 «날짜가 저절로» 여는데 앱이 아무 말도 안 했다.
@@ -299,7 +351,10 @@ export default function HomeScreen() {
             <Icon name="chevron-right" size={18} color="var(--sand)" />
           </button>
 
-          {/* 오늘 뭐 해먹지? */}
+          {/* 오늘 뭐 해먹지?
+              ⛔ 「다음에 뭐 할까」가 이 카드를 «대신 쓰는» 안(㉮)은 창업자가 접었다 — 그대로 둔다.
+                 실물로 찍어 보니 ⑴이 카드가 잡아먹혀 「오늘의 추천」을 잃고
+                 ⑵누를 단추가 안 보이고 ⑶베이지 카드 셋 중 하나가 되어 그냥 묻혔다. */}
           {todayPick && (
             <div className="today-card" data-coach="today">
               <button className="today-main press" onClick={() => open(todayPick.id)}>
@@ -428,6 +483,13 @@ export default function HomeScreen() {
           onClose={() => setDelAsk(null)}
         />
       )}
+
+      {/* ✍️ 「한 줄 남기기」 — 홈에서 «바로» 쓴다. 상세로 안 보낸다.
+          ⭐ 쓰고 닫으면 `note` 가 차서 위 카드가 «저절로» 사라진다(지우는 코드가 없다).
+          ⛔ 처음엔 기존 `DiaryEntrySheet`(요리 기록 전체)를 불렀는데 창업자가 잡았다 —
+             *"이거 사진추가가 의미가 있어? 그리고 글쓰는 창도 불편하고 안예뻤어.."*
+             「한 줄」 쓰러 왔는데 별점·사진 칸이 더 컸다. → 목적이 하나면 화면도 하나(`OneLineSheet`). */}
+      {oneLine && <OneLineSheet entry={oneLine} onClose={() => setOneLine(null)} />}
 
       {/* 첫 방문 코치마크 — 미리보기 진입점 안내 */}
       {coach && <CoachMarks storageKey={HOME_COACH_KEY} steps={HOME_COACH_STEPS} onDone={() => setCoach(false)} />}

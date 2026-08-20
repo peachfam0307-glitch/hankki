@@ -2829,6 +2829,239 @@ html, body { overscroll-behavior: none; }
   gap: 14px;
   margin-top: 10px;
 }
+/* 🍳🍳 「다음에 뭐 할까」 — 홈에서 «유일하게 채워진» 카드 (창업자 확정 2026-08-19 · 안 ㉯)
+   📮 창업자 = *"눈에 잘띄게 만들어줘 홈에 비슷한 안내가 많아서 잘 안보고 넘길가능성이 높아."*
+   🔢 실물로 세니 창업자 말이 맞았다 — 홈에 **같은 결의 베이지 카드가 셋 연속**
+      (오늘 뭐 해먹지 · 이번 주 특별한 한끼 · 우리집레시피). 넷째를 얹으면 그냥 묻힌다.
+   ⭐ 왜 «채움»인가 = 다른 카드가 전부 «옅은 바탕 ＋ 진한 글자»다. 한 장만 반대로 하면
+      새 색을 안 만들고도 저절로 튄다. ⛔우리 갈색 그대로 쓴다.
+   ⛔ 그림자를 세게 주지 않는다 — 「광고 배너」로 읽히면 오히려 안 본다. */
+
+/* 📐 가로로 밀어서 최대 3장 (창업자 *"레시피 오른쪽 스크롤해서 3개정도까지는 보이게?"*)
+   ⭐ `scroll-padding-left` 를 준다 — 없으면 첫 칸이 padding «바깥»에 맞아 열자마자 20px 밀린다(v10.68 사고).
+   ⛔ 카드가 하나뿐일 땐 밀 것도 없으니 그냥 전폭으로 선다(아래 `:only-child`). */
+.next-row {
+  display: flex;
+  gap: 10px;
+  margin: 10px -20px 0;
+  padding: 2px 20px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  /* ⛔⛔ 이 한 줄이 없으면 **첫 칸이 열자마자 20px 잘린다** — `scroll-snap-align: start` 가
+     첫 칸을 padding «바깥»(스크롤포트)에 맞추기 때문. 2026-08-14 테스터 영상으로 잡은 그 사고다.
+     ✅ 스냅을 죽이지 않고 «기준선만» 패딩 안쪽으로 옮긴다(`.hscroll` 과 같은 해법). */
+  scroll-padding-left: 20px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.next-row::-webkit-scrollbar { display: none; }
+
+.next-card {
+  flex: 0 0 86%;              /* 다음 장이 살짝 보여야 «밀 수 있다»를 안다 */
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;     /* 📌 창업자 확정 = 안내가 위, 단추가 아래 */
+  border-radius: 16px;
+  background: var(--brown);
+  padding: 12px 13px 13px;
+  min-width: 0;
+}
+.next-card:only-child { flex: 0 0 100%; }
+/* 🎨 둘째부터는 옅게 — 「지금 할 건 첫 장」이 분명해지고, 진한 카드 셋이 나란해 시끄러운 것도 막는다 */
+.next-card.sub { background: color-mix(in srgb, var(--brown) 82%, var(--surface)); }
+
+/* 카드 «전체»가 눌려 레시피로 간다 */
+.next-open { display: block; width: 100%; text-align: left; min-width: 0; }
+.next-open:active { opacity: 0.85; }
+.next-head { display: flex; align-items: center; gap: 7px; }
+/* 🐻 곰은 카드 높이를 안 늘린다 — 위아래로 살짝 넘겨 담는다(소식 카드와 같은 수법) */
+.next-gom { flex: 0 0 auto; display: block; width: 30px; height: auto; object-fit: contain; margin: -5px 0; }
+.next-label { font-size: 11.5px; font-weight: 800; color: var(--surface); opacity: 0.75; }
+.next-title {
+  font-size: 17px; font-weight: 800; color: var(--surface); margin-top: 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.02em;
+}
+/* 📌 이 줄이 「끌어들이는 말」이다 — 창업자가 *"확 끌리게"* 라고 콕 집은 자리라 흐리지 않는다 */
+.next-reason { font-size: 13.5px; font-weight: 700; color: var(--surface); margin-top: 5px; }
+/* 예시(“간장 반만”) — 뭘 쓸지 바로 떠오르게 하는 줄. 본문보다 한 단 낮춘다 */
+.next-eg { font-size: 11.5px; color: var(--surface); opacity: 0.72; margin-top: 2px; }
+/* 「한 줄 남기기」 — 안내 «아래»에 전폭으로. 눌러야 할 게 있는 갈래에만 붙는다 */
+.next-cta {
+  width: 100%; margin-top: 11px; padding: 10px 12px;
+  font-size: 13px; font-weight: 800; color: var(--brown);
+  background: var(--surface); border-radius: 11px; border: none;
+}
+.next-cta:active { transform: scale(0.98); }
+
+/* ✍️✍️ 「한 줄 남기기」 창 — 작고 한 가지만 하는 시트 (창업자 2026-08-19)
+   📮 창업자 = *"이거 사진추가가 의미가 있어? 그리고 **글쓰는 창도 불편하고 안예뻤어..**"*
+   ⛔ 기존 요리 기록 시트를 그대로 부르니 「한 줄」 쓰러 왔는데 별점·사진 네모가 더 컸다.
+   ⭐ 그래서 이 창은 **메모 ＋ 별점**만 받는다. 사진은 없다(일기 탭엔 그대로 있다). */
+.one-sheet { padding: 0 18px calc(14px + var(--safe-bottom)); }
+.one-head { display: flex; align-items: center; gap: 10px; padding: 4px 0 12px; }
+.one-title {
+  flex: 1; min-width: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.02em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.one-close { flex: 0 0 auto; font-size: 14px; font-weight: 600; color: var(--text-sub); padding: 6px 2px; }
+.one-note {
+  width: 100%; margin-top: 12px; padding: 13px 14px;
+  border: 1.5px solid var(--line); border-radius: 13px; background: var(--surface);
+  font: inherit; font-size: 15.5px; line-height: 1.5; color: var(--text); resize: none;
+}
+.one-note:focus { outline: none; border-color: var(--brown); }
+.one-note::placeholder { color: var(--sand); }
+/* ⭐ 별점은 메모 «아래»에 조용히 — 「한 줄」이 주인공이다 */
+.one-stars { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; }
+.one-stars-label { font-size: 12.5px; color: var(--text-sub); font-weight: 600; }
+.one-foot { display: flex; gap: 9px; margin-top: 16px; }
+.one-later {
+  flex: 1; padding: 14px; border-radius: 13px; background: var(--cream);
+  color: var(--text-sub); font-weight: 700; font-size: 14.5px;
+}
+.one-save {
+  flex: 1.7; padding: 14px; border-radius: 13px; background: var(--brown);
+  color: var(--surface); font-weight: 800; font-size: 15px; border: none;
+}
+/* ⛔ 빈 채로 저장하면 카드가 안 사라져 「고장인가?」가 된다 — 못 누르는 걸 «보여준다» */
+.one-save:disabled { opacity: 0.42; }
+
+/* ✍️ 한 줄 쓰는 창 머리말 — 「왜 쓰는지」 ＋ 「어디에 쓰이는지」 (창업자 2026-08-19)
+   ⭐ 크림 바탕 ＋ 왼쪽 굵은 선 = 「메모지」 결. 시트 안이라 진한 채움은 과하다. */
+.oneline-hint {
+  background: var(--cream);
+  border-left: 3px solid var(--brown);
+  border-radius: 0 10px 10px 0;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+.oneline-hint-head { font-size: 13.5px; font-weight: 800; color: var(--text); }
+.oneline-hint-sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+
+/* 📌📌 지난번 메모 = «포스트잇처럼» 자동으로 붙는다 (창업자 2026-08-19)
+   📮 창업자 = *"약간 포스트잇 붙이듯이. **자동으로 붙여주면 유저는 편하겠지**"*
+      ＋ *"그 한줄도 **담에 만들때 바로 보여야 의미가 있는건데**"*
+   ⭐ 자리 근거 = 「간장 반만」은 **재료를 넣기 «전»에** 봐야 쓸모가 있다. 다 만들고 보면 늦다.
+      → 요리 모드 **0단계(재료 준비)** ＋ 레시피 상세의 **재료 바로 위**.
+   ⛔ 유저가 손으로 붙이는 꾸미기 포스트잇(레꾸)과 «다른 것»이다 — 이건 앱이 붙여준다.
+   🎨 살짝 기울여 «붙여 놓은» 느낌만 준다(1도). ⛔더 기울이면 글자가 읽기 힘들다.
+   ⛔⛔ 색은 «미디어 쿼리 안»에서만 뒤집는다 — 첫 판이 (data-theme 조건)을
+      미디어 쿼리 «밖»에 둬서 **밝은 화면에서도 어두운 포스트잇**이 됐다(글자가 안 읽혔다).
+      📌 어두운 바탕이 되는 순간 글자색도 같이 뒤집어야 한다 — 바탕만 바꾸면 어두운 글자가 남는다.
+   ⛔⛔ ＋ 그걸 고치면서 **주석을 닫는 기호를 두 번 넣어 규칙이 통째로 깨졌다** —
+      종이가 아예 안 그려지고 글자만 떠 있었다. 빌드는 통과했고 화면을 열어봐야 보였다(절대원칙 21).
+      📌 그리고 **그 사고를 설명하는 주석에 그 기호를 또 적어서 «같은 사고를 두 번» 냈다.**
+         CSS 주석 안에는 닫는 기호를 «글자로도» 적지 않는다.
+   🎨 배경이 크림색인 화면(요리 모드)에서도 «종이로 보이게» 살짝 진한 노랑 ＋ 테두리를 준다. */
+.memo-note {
+  position: relative;
+  color: #4a4030;
+  padding: 11px 13px;
+  transform: rotate(-1deg);
+  /* ⛔⛔ 이 두 줄이 없으면 «종이 바깥에 흰 네모»가 생긴다 (2026-08-20 창업자가 잡았다 —
+     *"테두리라인따라 잘라야해. 저건 너무 이상해."* · *"근데 검수판에는 그렇게 안보이는데?"*).
+     ⭐ 창업자 말이 정확했다 — 컷은 멀쩡했고(모서리 알파 0 · 투명 17~23%) **앱이 범인**이었다.
+     메모지는 누를 수 있을 때 `button` 이 되는데, 브라우저가 버튼에 «기본 배경·테두리»를 준다.
+     투명 PNG 를 배경으로 깔아도 그 흰 네모가 뒤로 비친다.
+     📌 요리 모드에선 안 그랬다 — 거긴 누를 일이 없어 `div` 라서. **같은 컴포넌트인데 태그가 달랐다.** */
+  background-color: transparent;
+  border: none;
+  /* ⛔ 요리 모드는 가운데 정렬이라 상속받으면 메모가 가운데로 간다 — 종이는 왼쪽 정렬이 자연스럽다 */
+  text-align: left;
+  /* ✍️ 글씨체 = 귀염체 (창업자 확정 2026-08-20 — *"지금 44%랑 귀염체로"*)
+     ⭐ 손글씨 여섯을 실물로 찍어 나란히 놓고 골랐다(`scripts/_판-메모지마무리-0820.mjs`).
+     ⚠️ 이름은 `TEXT_FONTS` 의 `gaegu` 와 같아야 한다 — 꾸미기 글상자와 «같은 글씨»라야
+        유저가 메모지에 손으로 쓴 글자와 앱이 붙여준 글자가 한 손에서 나온 것처럼 보인다.
+     ⛔ 굵기는 **700 한 종류만** 담겨 있다(`@font-face` 선언 그대로). 800 을 달라고 하면
+        브라우저가 «가짜 굵기»를 만들어 획이 뭉갠다 — 그래서 아래 머리줄도 700 으로 맞췄다.
+     📦 한글 파일 277KB — 메모를 «남긴» 레시피를 열 때만 받고 그 뒤엔 캐시된다.
+        `font-display: swap` 이라 글자가 먼저 뜨고 글씨체가 나중에 얹힌다(빈 칸이 안 생긴다). */
+  font-family: 'Gaegu', 'Gowun Dodum', 'Pretendard', sans-serif;
+}
+/* 🎨🎨 종이 = 우리 메모지 스티커를 «배경»으로 (창업자 2026-08-19)
+   ⛔⛔⛔ **클래스 이름을 `paper` 로 쓰면 안 된다 — 2026-08-20 에 실제로 터졌다.**
+      `.paper`(2730줄)는 **일기 종이(다이어리)** 것이라 「크림 배경 ＋ 위 흰 선 ＋ 아래 결 그림자」를
+      통째로 들고 있다. 메모지에 같은 이름을 붙였더니 그게 **다 딸려왔다**:
+        · `background-color: #fbf7ef` → 투명 PNG 뒤로 **네모난 흰 상자**
+        · `inset 0 1px 0 rgba(255,255,255,.9)` → 종이 **위쪽 가로 흰 줄**
+        · `inset 0 -22px 34px -30px rgba(90,70,45,.16)` → **아래쪽 어두운 음영**
+      📮 창업자가 셋을 따로따로 짚었는데 **원인은 이 한 줄**이었다 —
+         *"빨간색 마테 위에 가로로 긴 흰색선이생겼잖아"* · *"아래는 어둡고"* ·
+         *"지금 포스트잇을 자른게 아니라 **네모상자를 잘라서 붙인거 같아**"*
+      ⛔⛔ 그리고 **나는 컷을 의심해서 하루를 썼다** — 16컷을 다시 재고 다시 자르고 후처리 도구까지 만들었다.
+         창업자는 처음부터 *"프레임 자른거에는 문제가 없다니까??"* 라고 말하고 있었다. **맞았다.**
+      📌 배운 것 = **공용 클래스 이름을 재사용하지 않는다.** `.memo-note.paper` 처럼 «더 구체적으로» 써도
+         내가 안 적은 속성(background-color·box-shadow)은 **공용 쪽이 그대로 이긴다.**
+   📮 창업자 = *"포스트잇 넘 안예쁜데..ㅠ"* → 내가 만든 노란 네모를 버리고 우리 자산을 쓴다.
+   ⭐ 「가운데는 조용해서 글씨가 읽히고 가장자리엔 장식이 있는 것」으로 골랐다 —
+      창업자 = *"예뻐야해 ㅋㅋ 그리고 **너무 밋밋하면 눈에 안띄어**"*
+   ⚠️ 그림 비율이 정해져 있어 100% 100% 로 늘린다. 손그림이라 조금 늘어나도 티가 안 난다.
+   ⛔ 종이 그림에 이미 테두리·그림자가 그려져 있다 — CSS 로 또 주면 «테두리가 둘»이 된다. */
+.memo-note.memo-paper {
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  padding: 15px 20px 17px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .memo-note { background: #4a4433; color: #f0e9d8; }
+}
+:root[data-theme="dark"] .memo-note { background: #4a4433; color: #f0e9d8; }
+/* ⛔ 색을 `var(--text)` 로 두지 않는다 — 포스트잇은 «자기 바탕»을 들고 다녀서
+   화면 테마가 아니라 «이 종이»에 맞는 글자색이라야 한다 */
+/* 📌📌 재료 목록 «옆»에 붙인 포스트잇 (창업자 확정 2026-08-20 — 재료 옆 · 비뚤게 · 44%)
+   📮 창업자 = *"우리 보통 필기하다가 포스트잇 붙이잖아. 그런느낌으로."*
+   ⭐ `float` 라 재료 글이 옆으로 흐르다가, 메모지가 끝나면 «전체 폭»을 되찾는다.
+      실측(닭곰탕 재료 10줄) = 같은 높이에 float 10줄 전부 · 2단 8줄.
+   ⛔ 기울기는 2.2도까지 — 더 돌리면 「떨어지려는 것」처럼 보인다.
+   ⛔ 세로 크기는 컴포넌트가 종이 비율로 준다(aspect-ratio) — 여기서 높이를 정하지 않는다. */
+.memo-note.stick {
+  float: right;
+  width: 44%;
+  margin: 2px 0 12px 14px;
+  transform: rotate(-2.2deg);
+  /* ⛔⛔ 여기에 `drop-shadow` 를 넣었다가 뺐다 (창업자 2026-08-20 *"아직 안사라졌어. 음영이생겼어"*).
+     `drop-shadow` 는 «투명 모양»을 따라 그림자를 만드는데, 컷엔 흰 다이컷 테가 둘려 있어서
+     그 테 모양대로 그림자가 져 **종이 바깥에 네모난 음영**이 생겼다.
+     📌 게다가 바로 아래 `.memo-note.paper` 주석에 *"종이 그림에 이미 테두리·그림자가 그려져 있다 —
+        CSS 로 또 주면 «테두리가 둘»이 된다"* 라고 **이미 적혀 있었다.** 내가 그걸 어겼다.
+     ✅ 기울기(-2.2도)만으로도 「붙인 느낌」은 난다. 그림자는 그림이 들고 있다. */
+  container-type: inline-size;
+  /* 🤏 두 손가락으로 크기 바꾸기 — 세로 스크롤은 브라우저가 굴리고 두 손가락만 우리가 받는다.
+     ⛔ `none` 으로 주면 메모지 위에서 화면이 «안 굴러간다»(유저는 고장으로 읽는다). */
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* ⛔⛔ 이 줄이 없으면 글씨가 «한 글자씩 세로로» 쏟아진다 (2026-08-20 실제로 그랬다).
+     메모지는 누를 수 있어서 `button` 인데, 브라우저 기본 스타일이 버튼에 `align-items: center`
+     를 준다 → flex 세로 배치에서 자식이 «내용 폭»만 차지해 한 글자 너비로 쪼그라든다.
+     📌 부모 태그가 무엇인지가 자식 폭을 바꾼다 — div 로 보고 짜면 안 보이는 함정이다. */
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  padding: 0;
+}
+/* 📐 안쪽 상자 — 종이의 여백을 «폭»으로 준다(컴포넌트가 `BOX_PAD` 에서 계산해 넘긴다) */
+.memo-note.stick .memo-in { display: flex; flex-direction: column; }
+/* ⭐ 글자를 «종이 폭»에 매단다 — 자리가 좁아지면 같이 작아져서 안 넘친다.
+   ⛔ 작은 자리(157px)에서 머리줄이 한 줄에 안 들어간다 → 감기게 두고 별점도 가운데로. */
+.memo-note.stick .memo-note-head { font-size: clamp(7.5px, 5.4cqw, 11px); flex-wrap: wrap; justify-content: center; row-gap: 1px; word-break: keep-all; }
+.memo-note.stick .memo-note-stars { margin-left: 0; }
+.memo-note.stick .memo-note-body {
+  font-size: clamp(10.5px, 8.4cqw, 15px); line-height: 1.3; margin-top: 2px;
+  /* ✂️ 줄바꿈 = **낱말 단위로** (창업자 2026-08-20 *"줄바꿈이랑…"*)
+     ⛔ 기본값은 한국어를 «글자 단위»로 끊는다 → 「고추장 한 술 줄이/기」처럼 한 글자가 혼자 떨어진다.
+     ✅ `keep-all` 이 어절을 안 쪼갠다. ⚠️ 대신 아주 긴 낱말은 넘칠 수 있어 `break-word` 를 같이 준다. */
+  word-break: keep-all; overflow-wrap: break-word;
+}
+.memo-note.stick .memo-note-more { font-size: clamp(8px, 5cqw, 11px); margin-top: 3px; }
+.memo-note-head { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; opacity: 0.62; }
+/* ⭐ 별점 = 포스트잇 «머리줄 오른쪽 끝»에. 창업자 *"별점은 넣어도 괜찮겠다 포스트잇에 보이면 되니까"*
+   ⛔ 안 매겼으면 아예 안 그린다(컴포넌트에서 막는다) — 빈 별은 재촉이 된다 */
+.memo-note-stars { margin-left: auto; display: inline-flex; align-items: center; gap: 1px; }
+.memo-note-body { font-size: 14px; font-weight: 700; margin-top: 3px; line-height: 1.45; }
+.memo-note-more { font-size: 11px; opacity: 0.6; margin-top: 5px; }
+
 .news-card {
   width: 100%;
   display: flex;
