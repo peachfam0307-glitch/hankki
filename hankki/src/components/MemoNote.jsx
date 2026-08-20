@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useStore } from '../store'
 import Icon from './Icon'
 import { PHOTO_FAMILY, BOX_PAD } from './Stickers'
@@ -45,7 +45,7 @@ const 메모날짜 = (at) => { const d = new Date(at || Date.now()); return `${d
 //    📮 *"우리 보통 **필기하다가 포스트잇 붙이잖아. 그런느낌으로.**"* · *"자리는 **재료옆**이어야해"*
 //    ✅ 판정 = **재료 옆 · 비뚤게 · 44%**
 export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟수, 붙임 }) {
-  const { diary } = useStore()
+  const { diary, profile, setProfile } = useStore()
 
   // 그 레시피의 메모만, 최근 것부터. ⛔빈 메모는 세지 않는다(「만들었어요」가 note:'' 로 만든다)
   const 메모들 = useMemo(() => {
@@ -53,6 +53,58 @@ export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟
       .filter((d) => d && d.recipeId === recipeId && String(d.note || '').trim())
       .sort((a, b) => (b.at || 0) - (a.at || 0))
   }, [diary, recipeId])
+
+  // 🤏🤏 **두 손가락으로 크기 바꾸기** (창업자 확정 2026-08-20 *"유저가 손가락으로 키우고 줄이게"*)
+  //
+  // ⭐ 크기는 **한 벌로 저장한다**(`profile.memoScale`) — 레시피마다 따로 두면
+  //    레시피가 백 편일 때 백 번 조절해야 한다. 한 번 정하면 모든 메모지가 그 크기다.
+  //    ⭐ `profile` 이라 **백업에 같이 담긴다**(폰을 바꿔도 따라온다).
+  //
+  // ⛔⛔ `touch-action` 을 `none` 으로 주면 **메모지 위에서 세로 스크롤이 죽는다** —
+  //    유저는 「화면이 안 굴러간다」로 읽는다. `pan-y` 면 세로는 브라우저가 굴리고
+  //    두 손가락은 우리가 받는다(브라우저가 «페이지 확대»로 안 가져간다).
+  //
+  // ⛔ 벌리는 동안 «누르기»가 같이 일어나면 안 된다 — 손을 떼는 순간 기록 편집 시트가 열린다.
+  //    그래서 `집었나` 를 세우고 `onClick` 에서 막는다(꾸미기의 `pinching` 과 같은 생각).
+  const 저장크기 = Number(profile?.memoScale) || 44
+  const [크기, 크기바꾸기] = useState(저장크기)
+  useEffect(() => { 크기바꾸기(저장크기) }, [저장크기])
+  const 두손 = useRef(new Map())
+  const 시작 = useRef(null)
+  const 집었나 = useRef(false)
+  const 거리 = () => {
+    const p = [...두손.current.values()]
+    return p.length < 2 ? 0 : Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y)
+  }
+  const 손내림 = (e) => {
+    두손.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (두손.current.size === 2) {
+      시작.current = { d: 거리() || 1, s: 크기 }
+      집었나.current = true
+      e.currentTarget.setPointerCapture?.(e.pointerId)
+    }
+  }
+  const 손이동 = (e) => {
+    if (!두손.current.has(e.pointerId)) return
+    두손.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (두손.current.size < 2 || !시작.current) return
+    e.preventDefault()
+    // ⛔ 34~68% 밖으로는 안 간다 — 판에서 창업자가 본 그 범위다.
+    //    더 작으면 글씨가 안 읽히고, 더 크면 재료 글이 한 줄에 두세 글자로 좁아진다.
+    const v = 시작.current.s * (거리() / 시작.current.d)
+    크기바꾸기(Math.round(Math.min(68, Math.max(34, v))))
+  }
+  const 손올림 = (e) => {
+    두손.current.delete(e.pointerId)
+    if (두손.current.size >= 2) return
+    if (시작.current) {
+      시작.current = null
+      if (크기 !== 저장크기) setProfile({ memoScale: 크기 })
+      // ⛔ 손을 뗀 «그 순간» 클릭이 온다 — 한 박자 뒤에 푼다
+      setTimeout(() => { 집었나.current = false }, 60)
+    }
+  }
+
 
   if (!메모들.length) return null
   const 최근 = 메모들[0]
@@ -79,6 +131,7 @@ export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟
   //   ⛔ 더 줄이면 구석 장식(앞치마·냄비·오븐장갑)에 글이 걸린다 — 여백판을 눈으로 보고 정했다.
   //   ⛔ 세로(위·아래)는 안 건드린다 — 마테가 위에 있어 좁히면 글이 마테에 올라탄다.
   const 글자리 = 0.68
+
   const 안쪽꼴 = (() => {
     if (!붙임) return null
     const [, 오, , 왼] = 안여백(종이키)
@@ -86,11 +139,13 @@ export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟
   })()
   // 🖐 누를 수 있으면 button 으로 — 레시피 상세에선 눌러서 기록을 고친다
   const Tag = onClick ? 'button' : 'div'  // ⛔ JSX 는 «대문자»라야 컴포넌트로 읽는다(소문자면 HTML 태그로 본다)
+  const 폭꼴 = 붙임 ? { width: `${크기}%` } : null
 
   return (
     <Tag className={`memo-note${종이키 ? ' memo-paper' : ''}${붙임 ? ' stick' : ''}${onClick ? ' press' : ''}`}
-      {...(onClick ? { type: 'button', onClick } : null)}
-      style={{ ...바탕, ...붙임꼴, ...(글씨 ? { fontFamily: 글씨 } : null), ...style }}>
+      {...(onClick ? { type: 'button', onClick: (e) => { if (집었나.current) return; onClick(e) } } : null)}
+      {...(붙임 ? { onPointerDown: 손내림, onPointerMove: 손이동, onPointerUp: 손올림, onPointerCancel: 손올림 } : null)}
+      style={{ ...바탕, ...붙임꼴, ...폭꼴, ...(글씨 ? { fontFamily: 글씨 } : null), ...style }}>
       {/* 📐 안쪽 상자 — 여백을 여기 «폭»으로 준다(위 주석 참고).
           ⛔ 붙임이 아니면 `안쪽꼴` 이 null 이라 폭이 100% — 지금까지와 똑같이 그려진다. */}
       <div className="memo-in" style={안쪽꼴}>

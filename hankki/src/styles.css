@@ -3026,6 +3026,9 @@ html, body { overscroll-behavior: none; }
         CSS 로 또 주면 «테두리가 둘»이 된다"* 라고 **이미 적혀 있었다.** 내가 그걸 어겼다.
      ✅ 기울기(-2.2도)만으로도 「붙인 느낌」은 난다. 그림자는 그림이 들고 있다. */
   container-type: inline-size;
+  /* 🤏 두 손가락으로 크기 바꾸기 — 세로 스크롤은 브라우저가 굴리고 두 손가락만 우리가 받는다.
+     ⛔ `none` 으로 주면 메모지 위에서 화면이 «안 굴러간다»(유저는 고장으로 읽는다). */
+  touch-action: pan-y;
   display: flex;
   flex-direction: column;
   justify-content: center;
