@@ -5,7 +5,6 @@ import Icon from '../components/Icon'
 import TimerSheet from '../components/TimerSheet'
 import CookBuddy from '../components/CookBuddy'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
-import MemoNote from '../components/MemoNote'
 import Portal from '../components/Portal'
 import { scaleIngredient } from '../scale'
 import { useWakeLock } from '../useWakeLock'
@@ -92,14 +91,6 @@ export default function CookScreen({ id }) {
             <Icon name="help" size={14} color="var(--brown)" />
             계량·손질
           </button>
-          {/* 📌📌 지난번에 내가 남긴 한 줄 — «재료를 꺼내는 바로 이 자리»에 자동으로 붙는다
-              📮 창업자 2026-08-19 *"그 한줄도 담에 만들때 바로 보여야 의미가 있는건데"*
-                 ＋ *"약간 포스트잇 붙이듯이. 자동으로 붙여주면 유저는 편하겠지"*
-              ⭐⭐ 여기가 그 자리인 이유 = 「간장 반만」은 **간장을 꺼내기 «전»에** 봐야 쓸모가 있다.
-                 다 만들고 나서 보면 늦다. ⛔없으면 아무것도 안 그린다. */}
-          <div style={{ width: '100%', maxWidth: 460, margin: '14px auto 0' }}>
-            <MemoNote recipeId={r?.id} />
-          </div>
           <div style={{ width: '100%', maxWidth: 460, margin: '4px auto 0', textAlign: 'left' }}>
             {/* ☑️ 눌러서 체크 — 🧪테스터 의견(창업자 전달 2026-08-09) *"준비단계에서 체크박스가 있으면 어떨까. 단순 체크용도로."*
                 ⭐ 재료를 «꺼내면서» 하나씩 지워가는 자리다. 그래서 저장도 계산도 안 한다 — 표시만.
