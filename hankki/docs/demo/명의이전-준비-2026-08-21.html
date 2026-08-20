@@ -292,7 +292,7 @@ footer{padding:34px 0 0; font-size:13px; color:var(--muted); border-top:1px soli
 </section>
 
 <section>
-  <h2>⏳ 7일 대기 동안 정할 것 하나</h2>
+  <h2>⏳ 7일 대기 동안 정할 것 하나 <span style="font-size:15px;font-weight:400;color:var(--muted)">— 안심번호 조사 붙임</span></h2>
   <p class="lede">지금 안 정해도 된다. 다만 남편과 얘기할 시간이 있으니 미리 꺼내둔다.</p>
   <div class="scroller">
     <table>
@@ -305,6 +305,38 @@ footer{padding:34px 0 0; font-size:13px; color:var(--muted); border-top:1px soli
     </table>
   </div>
   <p style="margin-top:14px;font-size:14px;color:var(--muted)">⛔ 번호 자체는 저장소·대화에 안 적는다. 「그 칸이 있다」만 기록한다.</p>
+
+  <h3 style="font-size:19px;margin:28px 0 8px">📞 전화번호 칸은 «둘»이다 — 섞으면 안 된다</h3>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>칸</th><th>공개?</th><th>무엇</th></tr></thead>
+      <tbody>
+        <tr><th>ⓐ 연락처 정보</th><td><b style="color:var(--ok)">비공개</b></td><td>구글이 <b>우리한테 연락할 때</b> 쓴다 — <i>“유저에게 표시되지 않습니다”</i></td></tr>
+        <tr><th>ⓑ 개발자 전화번호</th><td><b style="color:var(--stop)">공개</b></td><td><b>2023-08-31 이후 만든 대한민국 «개인» 계정은 필수</b> — 앱에 문제가 있을 때 유저가 연락하라고 스토어에 표시된다(<b>한국 유저에게만</b>)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:12px;font-size:14.5px">⚠️ <b>우리 계정이 정확히 ⓑ 대상이다</b> — 2023-11-13 이후 만든 개인 계정이라 「14일·12명」 요건이 붙었던 그 조건이다. 그리고 <b>「판매」와 무관하다</b> — 무료 앱이어도 붙는다.</p>
+
+  <h3 style="font-size:19px;margin:28px 0 8px">🔎 안심번호 — 써도 되나</h3>
+  <div class="stopcard" style="background:var(--surface);border-color:var(--line)">
+    <p style="margin:0 0 14px"><b>관문은 「써도 되나」가 아니라 「인증이 되나」다.</b> 두 층으로 갈린다:</p>
+    <ul class="stoplist">
+      <li><span class="x" style="color:var(--ok)">✓</span><span><b>규정상 — 막는 근거를 못 찾았다.</b> 구글이 요구하는 건 <i>“유저가 앱 관련 문제로 연락할 수 있을 것”</i>이고, 안심번호는 <b>전화가 착신전환되니 그 목적에 맞는다.</b> 「실번호만」·「휴대폰만」이라는 조항은 검색으로 안 나왔다. <span style="color:var(--muted)">(⛔ “없다”가 아니라 <b>“내가 못 찾았다”</b>. 공식 원문을 못 연다)</span></span></li>
+      <li><span class="x">⚠</span><span><b>실무상 — 여기서 막힐 수 있다.</b> 그 번호를 <b>OTP로 인증</b>해야 하는데, 050 안심번호는 <b>「수신 «전화»」가 중심</b>이고 <b>문자 수신은 제한적</b>이다. 웹·시스템에서 보내는 문자(구글 OTP가 그것이다)는 <b>안 들어오는 경우가 있다.</b> 서비스마다 다르다.</span></li>
+    </ul>
+    <div class="note" style="border-color:var(--line)">
+      ⚠️ <b>PG 때와는 다른 이유로 걸린다</b> — 포트원은 <i>“유선번호만·휴대폰 불가”</i>라 안심번호가 <b>규정</b>에서 잘렸다. 여기는 규정이 아니라 <b>문자가 오느냐</b>가 관문이다.
+    </div>
+  </div>
+
+  <div class="okbox" style="margin-top:16px">
+    <b>✅ 5분이면 닫힌다 — 지금 확인해 볼 수 있다</b><br>
+    ① 그 안심번호 서비스(통신사·앱)에서 <b>「문자 수신 지원」</b>이라고 적혀 있나 본다 — 제일 싸다<br>
+    ② 아무 사이트에서 <b>그 번호로 SMS 인증을 한 번 걸어본다</b> — 코드가 오면 끝, 안 오면 실번호<br>
+    <span style="color:var(--muted)">⛔ Play 칸에서 처음 시험하지 말고, 미리 알고 들어가는 게 낫다.</span>
+  </div>
+  <p style="margin-top:14px;font-size:14.5px">⭐ <b>그래도 급하지 않다</b> — 이 칸은 <b>7일 대기가 끝나고 남편이 마무리할 때</b> 나온다. 그 전에만 정하면 된다.</p>
 </section>
 
 <section>
@@ -391,12 +423,14 @@ footer{padding:34px 0 0; font-size:13px; color:var(--muted); border-top:1px soli
     </fieldset>
 
     <fieldset>
-      <legend>③ 개발자 전화번호 — 스토어에 공개된다</legend>
+      <legend>③ 개발자 전화번호 — 한국 유저에게 공개된다</legend>
       <div class="opts">
         <label class="opt"><input type="radio" name="tel" value="남편 개인 번호">
           <span><span class="t">남편 개인 번호를 쓴다</span><span class="d">제일 간단하다 · 스토어에 그 번호가 공개된다</span></span></label>
-        <label class="opt"><input type="radio" name="tel" value="번호를 따로 판다">
-          <span><span class="t">번호를 따로 판다 (안심번호·업무용)</span><span class="d">공개돼도 부담이 없다 · 준비할 게 하나 는다</span></span></label>
+        <label class="opt"><input type="radio" name="tel" value="이미 받아둔 안심번호">
+          <span><span class="t">이미 받아둔 안심번호를 쓴다</span><span class="d">공개돼도 부담이 없다 · ⚠️먼저 「문자 인증이 오나」를 확인해야 한다</span></span></label>
+        <label class="opt"><input type="radio" name="tel" value="번호를 새로 판다">
+          <span><span class="t">번호를 새로 판다 (업무용·인터넷전화)</span><span class="d">문자 인증이 확실히 되는 것으로 · 준비할 게 하나 는다</span></span></label>
         <label class="opt"><input type="radio" name="tel" value="나중에 정한다">
           <span><span class="t">7일 대기 동안 정한다</span><span class="d">지금 안 정해도 아무것도 안 막힌다</span></span></label>
       </div>
