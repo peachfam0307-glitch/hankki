@@ -76,7 +76,7 @@ export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟
   const Tag = onClick ? 'button' : 'div'  // ⛔ JSX 는 «대문자»라야 컴포넌트로 읽는다(소문자면 HTML 태그로 본다)
 
   return (
-    <Tag className={`memo-note${종이키 ? ' paper' : ''}${붙임 ? ' stick' : ''}${onClick ? ' press' : ''}`}
+    <Tag className={`memo-note${종이키 ? ' memo-paper' : ''}${붙임 ? ' stick' : ''}${onClick ? ' press' : ''}`}
       {...(onClick ? { type: 'button', onClick } : null)}
       style={{ ...바탕, ...붙임꼴, ...(글씨 ? { fontFamily: 글씨 } : null), ...style }}>
       {/* 📐 안쪽 상자 — 여백을 여기 «폭»으로 준다(위 주석 참고).
