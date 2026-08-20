@@ -23,6 +23,10 @@
 //
 // ⚠️⚠️ **뿌리는 시점** — 2026-08-20 지금은 **검토 중**이라 스토어에 «없다».
 //    검토가 최대 7일이니 **게시된 걸 확인한 뒤에 뿌린다.** 만들어 두는 건 괜찮다.
+// 🛒 [창업자 확정 2026-08-20] 알약 문구 = **「Google Play 에서 한끼 다운로드」**
+//    📮 *"어차피 출시하고올릴거라서 다운로드용으로해줘"* — 뿌릴 때는 이미 스토어에 있다는 뜻이다.
+//    ⛔ 그래서 「곧 만나요」 판은 안 만든다(대기 항목이던 것이 창업자 판단으로 닫혔다).
+//    ⛔ 「검색」이 아니라 「다운로드」인 이유 = 검색은 «한 단계 더» 시킨다. 뿌리는 목적이 설치다.
 //
 // 실행: cd /home/user/hankki/hankki && node scripts/_판-홍보카드-0820.mjs
 import { chromium } from 'playwright'
@@ -127,7 +131,7 @@ const 세로 = (f) => `${머리(f)}
 
   <div class="덩">
     <div class="알약" style="font-size:42px;padding:30px 56px">
-      Google Play 에서 <b>한끼</b> 검색
+      Google Play 에서 <b>한끼</b> 다운로드
     </div>
     <div class="부제" style="font-size:28px;margin-top:24px">회원가입 없이 바로 시작해요</div>
   </div>
@@ -135,22 +139,27 @@ const 세로 = (f) => `${머리(f)}
 </div>`
 
 // ⭐ 가로판 — 첫 판에서 **뾰미가 오른쪽으로 잘렸다**. 음수 margin 을 없애고 폭으로 맞춘다.
+// 🐧 [창업자 확정 2026-08-20] 가로판 주인공도 «펭펭 비치체어» (📮 *"가로판도 펭펭으로 해줘"*)
+//    ⚠️⚠️ 5인(1.67)을 빼고 펭펭(0.99 «거의 정사각»)을 넣으면 **폭 지정으로는 못 맞춘다** —
+//       `flex:1` 로 오른쪽 592px 을 다 주면 높이가 600px 이 되어 630 카드를 통째로 먹는다.
+//    ✅ 그래서 **높이로 잡는다**(520px · 카드의 83%) → 폭 513px 이 저절로 따라온다.
+//       왼쪽 글자칸도 452 → 520 으로 넓혀 셋(520 ＋ gap 44 ＋ 513 = 1077)이 안쪽 1088 에 딱 맞는다.
 const 가로 = (f) => `${머리(f)}
 <div class="판" style="width:1200px;height:630px">
  <div class="속" style="align-items:center;padding:0 56px;gap:44px">
 
-  <div style="flex:0 0 452px;display:flex;flex-direction:column;align-items:flex-start">
+  <div style="flex:0 0 520px;display:flex;flex-direction:column;align-items:flex-start">
     <img src="${로고}" style="height:88px;margin-bottom:18px">
     <div class="슬로건" style="font-size:54px;text-align:left">
       한 끼를 해낸다면,<br><span class="레꾸">레꾸</span>하세요.
     </div>
     <div class="부제" style="font-size:24px;margin-top:14px">레시피를 예쁘게 꾸미는 앱</div>
     <div class="알약" style="font-size:25px;padding:17px 32px;margin-top:26px">
-      Google Play 에서 <b>한끼</b> 검색
+      Google Play 에서 <b>한끼</b> 다운로드
     </div>
   </div>
 
-  <img class="애들" src="${다섯}" style="flex:1;min-width:0">
+  <img class="애들" src="${펭펭}" style="flex:0 0 auto;height:520px;width:auto">
  </div>
 </div>`
 
@@ -167,7 +176,7 @@ const 피드 = (f) => `${머리(f)}
   </div>
 
   <div class="알약" style="font-size:35px;padding:24px 48px">
-    Google Play 에서 <b>한끼</b> 검색
+    Google Play 에서 <b>한끼</b> 다운로드
   </div>
  </div>
 </div>`
@@ -196,3 +205,4 @@ for (const [키, f] of Object.entries(글씨체)) {
 await b.close()
 console.log(`\n📁 ${OUT}`)
 console.log('⚠️ 뿌리기 «전»에 스토어에 실제로 올라왔는지 확인할 것 — 2026-08-20 지금은 검토 중이다.')
+console.log('   (카드 문구가 「다운로드」라 스토어에 없으면 누른 사람이 빈손으로 돌아간다)')
