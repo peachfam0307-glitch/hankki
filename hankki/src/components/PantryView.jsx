@@ -268,17 +268,14 @@ export default function PantryView() {
           ⭐ 편집 화면과 «같은 문장 틀»로 쓴다 — 「N장에 AI 스캔 N장」.
              자리마다 말이 다르면 유저가 «다른 규칙»으로 읽는다(같은 기능은 같은 이름 원칙). */}
       <div style={{
-        display: 'flex', gap: 9, alignItems: 'flex-start',
         paddingLeft: 10, marginBottom: 10,
         borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
       }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px' }}>
-            영수증 1장에 AI 스캔 1장을 써요
-          </div>
-          <div style={{ fontSize: 12.2, color: 'var(--text-sub)', marginTop: 3, lineHeight: 1.5 }}>
-            다 써도 <b style={{ fontWeight: 800, color: 'var(--text)' }}>기본 인식</b>으로 계속 읽어 드려요
-          </div>
+        {/* ⛔ 둘째 줄(「다 써도 기본 인식으로 계속」)을 뺐다 — 창업자 *"다 구구절절이야 헷갈린다고"*.
+               «다 썼을 때» 할 말을 쓰기도 전에 깔아 두면 한 번에 둘을 읽어야 한다.
+               ⭐ 소진 안내는 그때 이미 나간다(`ocr.js` note → 편집 화면 꼬리). */}
+        <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px' }}>
+          영수증 1장에 무료 이용 1장이 소모돼요
         </div>
       </div>
       <div style={{ fontSize: 12.3, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 14 }}>
