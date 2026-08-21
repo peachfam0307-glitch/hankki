@@ -42,7 +42,7 @@ page.on('pageerror', (e) => errs.push(String(e.message || e).split('\n')[0]))
 try {
   await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(1800)
-  await page.getByRole('button', { name: '가져오기' }).first().click()
+  await page.getByRole('button', { name: '가져오기', exact: true }).first().click()
   await page.waitForTimeout(700)
   await page.getByText('직접 작성', { exact: false }).first().click()
   await page.waitForTimeout(1000)
@@ -90,7 +90,7 @@ try {
   // 🔁 캡처 시험은 «맨 마지막»에 — 자르기 시트가 뜨면 아래 칸·저장 버튼을 덮는다.
   //    첫 판이 그래서 ⑤ 저장이 「12초 타임아웃」으로 실패했다 — 앱이 아니라 «판»의 문제였다(규칙 18).
   console.log('— 편집 화면을 다시 열어 캡처를 시험한다 —')
-  await page.getByRole('button', { name: '가져오기' }).first().click(); await page.waitForTimeout(700)
+  await page.getByRole('button', { name: '가져오기', exact: true }).first().click(); await page.waitForTimeout(700)
   await page.getByText('직접 작성', { exact: false }).first().click(); await page.waitForTimeout(1000)
   // ⭐ `cap` 을 그대로 쓴다 — Playwright locator 는 «쓸 때» 다시 찾으므로 새 화면에서도 맞다.
 

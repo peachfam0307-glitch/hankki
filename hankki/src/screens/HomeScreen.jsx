@@ -285,8 +285,12 @@ export default function HomeScreen() {
               onClick={() => { markCloudHomeSeen(); askOpenCloud(); setCloudRow(false); nav.go('profile') }}
               style={{ flex: 1, textAlign: 'left', minWidth: 0 }}
             >
-              <div style={{ fontSize: 13.5, fontWeight: 700 }}>레시피를 계정에 매어둘까요?</div>
-              <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>새 폰·패드에 깔아도 그대로 따라와요</div>
+              {/* ⛔⛔ 「계정에 매어둘까요?」로 두지 말 것 — 창업자 2026-08-21 = *"매어둘까요 그런거말고"*.
+                  📌 그때 첫 화면(CloudGate)만 고치고 «이 줄과 설정 카드»를 안 고쳐서 같은 말이 살아남았다.
+                     같은 기능은 화면이 달라도 같은 말로(v11.02 「책갈피」가 일곱 곳이었던 것과 같은 뿌리).
+                  ⭐ 첫 화면의 안내 줄과 «한 글자도 다르지 않게» 맞춘다. */}
+              <div style={{ fontSize: 13.5, fontWeight: 700 }}>로그인하면 새 폰에서도 이어서 써요</div>
+              <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>지금은 레시피·일기가 이 폰에만 있어요</div>
             </button>
             <button className="press" onClick={() => { markCloudHomeSeen(); setCloudRow(false) }} aria-label="닫기" style={{ flex: '0 0 auto', padding: 6 }}>
               <Icon name="x" size={16} color="var(--sand)" />

@@ -34,7 +34,10 @@ async function 창 (init) {
 {
   const { ctx, pg } = await 창()
   await pg.screenshot({ path: '/tmp/검수1-첫화면.png' })
-  await pg.getByText('로그인하면 새 폰에서도 이어서 써요').first().click(); await pg.waitForTimeout(400)
+  // ⛔ `.first()` 는 «홈 한 줄»을 집는다 — 같은 문장이 세 곳(첫화면·홈·설정)에 있고 홈이 DOM 에서 앞이라
+  //    첫 화면이 그 위를 덮어 클릭이 «가로채인다». 첫 화면은 맨 나중에 그려지므로 `.last()`.
+  //    📌 문구를 통일한 대가다 — 통일이 맞고, 잣대를 좁히는 게 맞다.
+  await pg.getByText('로그인하면 새 폰에서도 이어서 써요').last().click(); await pg.waitForTimeout(400)
   await pg.screenshot({ path: '/tmp/검수2-자세히.png' })
   await pg.getByText('나중에 하기').first().click(); await pg.waitForTimeout(600)
   await pg.screenshot({ path: '/tmp/검수3-나중에팝업.png' })
@@ -54,8 +57,8 @@ async function 창 (init) {
   await pg.screenshot({ path: '/tmp/검수5-설정카드.png', fullPage: true })
   await pg.getByText('클라우드 저장', { exact: true }).first().click(); await pg.waitForTimeout(1300)
   await pg.screenshot({ path: '/tmp/검수6-설정시트.png' })
-  const 자 = pg.getByText('뭐가 올라가는지 자세히')
-  if (await 자.count()) { await 자.first().click(); await pg.waitForTimeout(400); await pg.screenshot({ path: '/tmp/검수7-시트자세히.png' }) }
+  const 자 = pg.getByText('로그인하면 새 폰에서도 이어서 써요')
+  if (await 자.count()) { await 자.last().click(); await pg.waitForTimeout(400); await pg.screenshot({ path: '/tmp/검수7-시트자세히.png' }) }
   console.log('✅ ④⑤⑥⑦ 홈·설정')
   await ctx.close()
 }

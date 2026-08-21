@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Icon from './Icon'
 import PromptSheet from './PromptSheet'
 import ConfirmSheet from './ConfirmSheet'
+import GoogleButton from './GoogleButton'
 import { useStore } from '../store'
 import { APP_TAGLINE } from '../version'
 import { markCloudGateSeen } from '../nudges'
@@ -85,11 +86,20 @@ export default function CloudGate({ onDone }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 210, background: 'var(--bg)',
-      display: 'flex', flexDirection: 'column', justifyContent: 'center',
+      display: 'flex', flexDirection: 'column', justifyContent: 'flex-start',
       padding: 'calc(var(--safe-top) + 24px) 24px calc(var(--safe-bottom) + 28px)',
       overflowY: 'auto',
     }}>
-      <img src={duoHi} alt="" style={{ width: 168, maxWidth: '52%', margin: '0 auto 18px', display: 'block' }} />
+      {/* ⬇️ 아래로 몬다 — 창업자 확정 2026-08-21 = *"B로 가자"* (＝*"단추를 조금 내리고 레꾸해요 위는 좀 올리자"*)
+          📮 창업자가 다른 앱 로그인 창을 보내 줬고(*"다른사이트로그인창"*) 그 앱이 이 짜임이다.
+          ⭐ 얻는 것 둘 = ⑴단추가 «엄지 닿는 자리»로 내려온다 ⑵곰펭이 커져 먼저 눈에 든다.
+             📌 첫 화면에서 제일 센 무기가 곰펭인데 가운데로 모으면 168px 로 작았다.
+
+          ⛔⛔ `justifyContent: 'flex-end'` 로 하지 않는다 — 「자세히」를 펴면 내용이 화면보다 길어지는데
+             그때 flex-end 는 **위쪽이 잘려서 스크롤로도 못 올라간다**(브라우저 공통 함정).
+             ✅ `flex-start` ＋ 그림에 `margin-top: auto` = 평소엔 아래로 몰리고, 길어지면 auto 가 0 이 되어
+                위부터 정상으로 굴러간다. **보이는 건 같고 안 깨진다.** */}
+      <img src={duoHi} alt="" style={{ width: 210, maxWidth: '62%', margin: 'auto auto 34px', display: 'block' }} />
 
       {!찾음 ? (
         <>
@@ -103,9 +113,9 @@ export default function CloudGate({ onDone }) {
             <div className="t-sub" style={{ fontSize: 14, marginTop: 7 }}>{APP_TAGLINE}</div>
           </div>
 
-          <button className="btn-primary press" style={{ width: '100%' }} disabled={!!바쁨} onClick={눌러로그인}>
-            {바쁨 === '로그인' ? '기다려 주세요…' : 'Google로 시작하기'}
-          </button>
+          {/* 🔵🔴🟡🟢 구글 규정 단추 — 창업자가 보내 준 다른 앱 캡처 그대로(2026-08-21).
+              ⛔ 우리 파란 단추(`btn-primary`)로 두지 말 것 — 「우리 앱 단추」로 보이지 «구글 단추»로 안 보인다. */}
+          <GoogleButton busy={바쁨 === '로그인'} disabled={!!바쁨} onClick={눌러로그인} />
           {/* ⛔ 이 줄을 «버튼»으로 만들지 않는다 — 둘이 같은 무게로 서면 「뭘 눌러야 하나」가 된다.
               (소개 마지막 장의 「이미 다른 기기에서…」와 같은 이유) */}
           {/* ⛔ 「둘러보기」가 아니다 (창업자 2026-08-21 = *"그냥 둘러보기??"*) —

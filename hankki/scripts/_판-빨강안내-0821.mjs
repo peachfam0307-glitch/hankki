@@ -91,7 +91,7 @@ const 컷 = {}
 const 잰값 = []
 
 async function 편집화면(page) {
-  await page.getByRole('button', { name: '가져오기' }).first().click()
+  await page.getByRole('button', { name: '가져오기', exact: true }).first().click()
   await page.waitForTimeout(700)
   await page.getByText('직접 작성', { exact: false }).first().click()
   await page.waitForTimeout(900)

@@ -491,7 +491,8 @@ export default function ProfileScreen() {
           <Icon name="cloud" size={24} color="var(--brown)" stroke={2} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 15.5, fontWeight: 800 }}>클라우드 저장</div>
-            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 2 }}>구글 계정에 매어 두면 새 폰에서도 그대로 나와요 · 글자만</div>
+            {/* ⛔ 「매어 두면」 금지 (창업자 2026-08-21) · ⭐ 첫 화면·홈 한 줄과 «같은 말»로 */}
+            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 2 }}>로그인하면 새 폰에서도 이어서 써요</div>
           </div>
           <Icon name="chevron-right" size={18} color="var(--sand)" />
         </button>

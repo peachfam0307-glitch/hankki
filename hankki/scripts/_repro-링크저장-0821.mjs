@@ -65,7 +65,7 @@ const 전 = await page.evaluate(() => {
 console.log(`  · 저장 전 레시피 ${전}개`)
 
 // ── ② 가져오기 → 링크 붙여넣기 ──
-await page.getByRole('button', { name: '가져오기' }).first().click()
+await page.getByRole('button', { name: '가져오기', exact: true }).first().click()
 await page.waitForTimeout(700)
 await page.getByText('링크 붙여넣기', { exact: false }).first().click()
 await page.waitForTimeout(900)
