@@ -9,6 +9,7 @@ import Thumb from '../components/Thumb'
 import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
 import TabTips from '../components/TabTips'
+import TabTalk from '../components/TabTalk'
 import PreviewSheet from '../components/PreviewSheet'
 import NewsPopup, { needsNewsPopup, markNewsSeen } from '../components/NewsPopup'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
@@ -230,6 +231,10 @@ export default function HomeScreen() {
           </button>
         </div>
       </div>
+
+      {/* 💬 상단바 «바깥»이라야 아래로 내려간다 — `.topbar` 는 가로 flex 라
+          그 «안»에 넣으면 제목 옆으로 붙고 「한/끼」로 쪼개진다(시안에서 실제로 그랬다). */}
+      <TabTalk tab="home" />
 
       <div className="pad">
         {/* 1. 검색 */}

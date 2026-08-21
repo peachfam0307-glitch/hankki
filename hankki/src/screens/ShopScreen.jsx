@@ -27,6 +27,7 @@ import FoodIcon from '../components/FoodIcon'
 import FoodIconPicker from '../components/FoodIconPicker'
 import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
+import TabTalk from '../components/TabTalk'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { openExternal, matchKo } from '../utils'
 import { CURATION, curIcon, weeklyPicks, isHansalim } from '../data/curation'
@@ -109,6 +110,9 @@ export default function ShopScreen() {
           <TabTips tab="shop" />
         </div>
       </div>
+
+      {/* 💬 꼬리가 왼쪽 위 = 펭펭(`pn_shoplist`) 쪽. 이 탭 캐릭터는 «펭펭»이다 */}
+      <TabTalk tab="shop" />
 
       <div className="pad">
         {/* 장보기가 주(첫인상), 냉장고는 옆 토글(부). 냉장고 기능은 유지하되 앞으로 안 내세운다. */}
