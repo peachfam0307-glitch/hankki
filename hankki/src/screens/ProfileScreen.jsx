@@ -18,7 +18,8 @@ import CloudSheet from '../components/CloudSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { cropSquare } from '../utils'
 import { takeOpenBackup, backupDone, takeOpenCloud } from '../nudges'
-import { 백업용잠그기, 잠긴장수, 백업풀기 } from '../diaryLock'
+import { 잠긴장수, 백업풀기 } from '../diaryLock'
+import { 백업만들기 } from '../backupData'
 
 // 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
 const PROFILE_COACH_KEY = COACH.profile
@@ -129,16 +130,10 @@ export default function ProfileScreen() {
   //   ⚠️ `crypto.subtle` 이 없으면 **평문으로 담지 않고 본문을 뺀다** — 새는 것보다 잃는 게 낫다
   //      (원본은 그 폰에 그대로 있다).
   //   📌 글씨체(`font`·`size`)는 글이 아니라서 안 잠근다.
-  const 일기글자칸 = ['title', 'note', 'line', 'weather', 'note2', 'note3', 'note4']
-
-  // ⚠️ 잠그는 데 시간이 걸려 «비동기»가 됐다 — 부르는 쪽 셋 다 await 로 바꿨다.
-  const buildBackup = async () => ({
-    _app: 'hankki', _v: 2, _at: new Date().toISOString(),
-    recipes: store.recipes, folders: store.folders, profile: store.profile,
-    shops: store.shops, wishlist: store.wishlist, shoppingList: store.shoppingList, pantry: store.pantry,
-    diary: await 백업용잠그기(store.diary, 일기글자칸),
-    seedV: store.seedV, memoCleanV: store.memoCleanV, removedSeedIds: store.removedSeedIds,
-  })
+  // ⭐⭐ 만드는 코드는 «한 곳»에 있다 → `src/backupData.js`
+  //   ⛔ 여기와 클라우드가 따로 만들면 «백업 파일엔 들어가는데 클라우드엔 안 들어가는 칸»이 생긴다.
+  //      그건 폰을 바꾼 «뒤에야» 드러난다 — 제일 늦게 발견되는 사고다.
+  const buildBackup = () => 백업만들기(store)
 
   // 📁 파일 이름에 «시각»까지 넣는다 (2026-08-16 창업자 캡처)
   //   ⛔ 날짜만 넣었더니 같은 날 두 번째 저장에서 안드로이드가

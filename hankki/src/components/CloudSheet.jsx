@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Portal from './Portal'
 import Icon from './Icon'
-import { 로그인, 로그아웃, 사람지켜보기, 요약, 올리기, 내려받기, 미리붙기 } from '../cloud'
+import { 로그인, 로그아웃, 사람지켜보기, 요약, 올리기, 내려받기, 미리붙기, 받았다표시, 받았다지우기 } from '../cloud'
 
 // ☁️ 클라우드 저장 시트 — 「새 폰에서도 그대로 나오게」
 //
@@ -53,6 +53,8 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
 
   const 올리자 = () => 감싸기('올리기', async () => {
     const 백업 = await 백업만들기()
+    // ⭐ 손으로 「이 폰 것으로 덮기」를 눌렀다 = 유저가 «폰 판»을 골랐다는 뜻 → 그 뒤론 저절로 올려도 된다
+    받았다표시()
     const r = await 올리기(백업)
     set구름(await 요약())
     const 뒤 = r.건너뛴것.length ? ` · ${r.건너뛴것.length}개는 너무 커서 못 올렸어요` : ''
@@ -62,11 +64,14 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
   const 내려받자 = () => 감싸기('내려받기', async () => {
     const data = await 내려받기()
     if (!data) { set탈('클라우드에 아직 아무것도 없어요'); return }
+    받았다표시() // ⭐ 가져왔다 → 이제부터 저절로 올려도 안전하다(안전장치 ②)
     불러오기끝(data) // ⭐ 백업 불러오기와 «같은 흐름» — 잠긴 일기 비번 묻기까지 여기서 처리된다
     onClose()
   })
 
-  const 나가자 = () => 감싸기('로그아웃', async () => { await 로그아웃(); set구름(null) })
+  // ⛔ 로그아웃하면 «봤다» 표식도 지운다 — 다른 계정으로 로그인했을 때
+  //    옛 표식이 남아 있으면 «남의 클라우드»를 이 폰 것으로 덮어버린다.
+  const 나가자 = () => 감싸기('로그아웃', async () => { await 로그아웃(); 받았다지우기(); set구름(null) })
 
   return (
     <Portal>

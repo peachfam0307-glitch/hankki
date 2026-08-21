@@ -94,6 +94,11 @@ const 잰다 = (이름, 하기) => {
   try { 하기(); console.log('✅ ' + 이름); 통과++ }
   catch (e) { console.log('⛔ ' + 이름 + '\n   ' + (e && e.message)); 실패++ }
 }
+// ⚠️ 비동기 검사는 «따로» — 위 잰다는 던진 Promise 를 못 잡아 «틀려도 통과»한다(조용한 거짓 초록불).
+const 잰다비동기 = async (이름, 하기) => {
+  try { await 하기(); console.log('✅ ' + 이름); 통과++ }
+  catch (e) { console.log('⛔ ' + 이름 + '\n   ' + (e && e.message)); 실패++ }
+}
 
 // ══ ① 첫 올리기 ════════════════════════════════════════════════════════
 const r1 = await C.올리기(백업())
@@ -250,6 +255,59 @@ const 되돌린것 = await C.내려받기()
     assert.equal(r.지운것, 1, '지운것 = ' + r.지운것)
     assert.ok(!창고.has('users/' + 구글번호 + '/recipes/r2'), '🚨 클라우드에 지운 레시피가 남았다')
     assert.deepEqual(다시.recipes.map((x) => x.id).sort(), ['r1', 'r3'])
+  })
+}
+
+
+// ══ ⑩ 🔄 저절로 올리기 — 안전장치 둘 ═══════════════════════════════════
+// 📮 창업자 2026-08-21 = *"나도 폰 패드 같이쓰거든."* · *"2번도 기변하는 사람들 많으니까 나도 기변할수있고"*
+//   ⭐ 둘 다 «창업자 본인 시나리오»다. 여기서 안 재면 창업자 폰에서 데이터가 날아간다.
+{
+  창고.clear(); C.지문지우기(); C.받았다지우기()
+  칸.set('hankki:cloud:on', '1')      // 로그인해 둔 표식
+  칸.set('hankki:did', '폰A')          // 이 기기 = 폰A
+  const 내것 = { ...백업(), diary: [], recipes: [{ id: 'r1', title: '하나' }, { id: 'r2', title: '둘' }] }
+
+  잰다('⑱ 🚨 클라우드 것을 «안 가져왔으면» 안 올린다 (기변 — 빈 폰이 클라우드를 덮는 것을 막는다)', async () => {
+    const r = await C.저절로올리기(async () => 내것)
+    assert.equal(r.했나, false)
+    assert.equal(r.왜, '아직안받았다', '왜 = ' + r.왜)
+    assert.equal(창고.size, 0, '🚨 안 가져왔는데 올라갔다')
+  })
+
+  await 잰다비동기('⑲ 가져온 뒤엔 올라간다', async () => {
+    C.받았다표시()
+    const r = await C.저절로올리기(async () => 내것)
+    assert.equal(r.했나, true, '왜 = ' + r.왜)
+    assert.ok(창고.has('users/' + 구글번호 + '/recipes/r1'))
+    assert.equal(창고.get('users/' + 구글번호).기기, '폰A', '기기 표식이 안 붙었다')
+  })
+
+  await 잰다비동기('⑳ 🔢 안 바뀌었으면 «한 건도» 안 쓴다 (ⓒ가 ⓐ보다 안 비싸다)', async () => {
+    const 커밋전 = 커밋수
+    const r = await C.저절로올리기(async () => 내것)
+    assert.equal(r.했나, false)
+    assert.equal(r.왜, '바뀐것없음', '왜 = ' + r.왜)
+    assert.equal(커밋수, 커밋전, '쓰기가 ' + (커밋수 - 커밋전) + '번 났다')
+  })
+
+  await 잰다비동기('㉑ 🚨 다른 기기가 먼저 올렸으면 «안» 덮는다 (폰↔패드)', async () => {
+    칸.set('hankki:did', '패드B')      // 이제 패드에서 켰다
+    C.지문지우기(); C.받았다표시()
+    const 패드것 = { ...백업(), diary: [], recipes: [{ id: 'x9', title: '패드에서 쓴 것' }] }
+    const r = await C.저절로올리기(async () => 패드것)
+    assert.equal(r.했나, false)
+    assert.equal(r.왜, '다른기기', '왜 = ' + r.왜)
+    assert.ok(창고.has('users/' + 구글번호 + '/recipes/r1'), '🚨 폰A 것이 덮였다')
+    assert.ok(!창고.has('users/' + 구글번호 + '/recipes/x9'), '🚨 패드 것이 올라갔다')
+    assert.equal(r.레시피, 2, '물어볼 때 보여줄 개수가 틀렸다')
+  })
+
+  await 잰다비동기('㉒ 로그인 안 했으면 아무것도 안 한다', async () => {
+    칸.delete('hankki:cloud:on')
+    const r = await C.저절로올리기(async () => 내것)
+    assert.equal(r.했나, false)
+    assert.equal(r.왜, '로그인안함')
   })
 }
 

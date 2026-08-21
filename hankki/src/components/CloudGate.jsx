@@ -6,7 +6,7 @@ import { useStore } from '../store'
 import { APP_TAGLINE } from '../version'
 import { markCloudGateSeen } from '../nudges'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
-import { 로그인, 요약, 내려받기, 미리붙기 } from '../cloud'
+import { 로그인, 요약, 내려받기, 미리붙기, 받았다표시 } from '../cloud'
 import duoHi from '../assets/sharepool/duo_hi.png'
 
 // ☁️🚪 클라우드 첫 화면 — 앱을 켜자마자 «맨 처음» 뜬다. 소개보다 앞.
@@ -45,7 +45,9 @@ export default function CloudGate({ onDone }) {
       await 로그인()
       const r = await 요약()
       if (r.있나 && (r.레시피 || r.일기)) { set찾음(r); set바쁨(''); return }
-      // 클라우드가 비어 있으면 = 처음 쓰는 사람. 그냥 들어간다(나중에 설정에서 올린다).
+      // ⭐ 클라우드가 비어 있으면 = 처음 쓰는 사람. **가져올 게 없으니 「봤다」로 친다.**
+      //   📌 이 표식이 있어야 다음에 앱을 켤 때 «저절로 올리기»가 돈다(안전장치 ②).
+      받았다표시()
       지나가기()
     } catch (e) {
       set탈(고운말(e)); set바쁨('')
@@ -58,6 +60,7 @@ export default function CloudGate({ onDone }) {
       const data = await 내려받기()
       if (!data) { 지나가기(); return }
       importAll(data)
+      받았다표시() // ⭐ 가져왔다 → 이제부터 저절로 올려도 안전하다(안전장치 ②)
       const n = 잠긴장수(data.diary)
       // ⭐ 잠긴 일기는 «먼저 담고» 비번을 묻는다 — 비번을 먼저 물으면 「모르겠다」는 사람이 다 못 가져온다.
       if (n) { set잠금물음({ n, data }); set바쁨(''); return }
