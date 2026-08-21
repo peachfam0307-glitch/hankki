@@ -86,16 +86,17 @@ const 미정리 = await page.evaluate(() => {
 })
 console.log(`  · 미정리 ${미정리}개 (0개라야 이 검사가 뜻이 있다)`)
 const 홈글 = await 글자()
-chk('① 미정리가 0개인데도 보관함 입구가 «보인다»', /담아둔 레시피 보관함|정리 안 한 레시피/.test(홈글))
+chk('① 미정리가 0개인데도 임시보관함 입구가 «보인다»', /임시보관함|정리 안 한 레시피/.test(홈글))
 writeFileSync(join(OUT, '1-홈.png'), await page.screenshot())
 
 // 눌러서 진짜 열리나 — 「보인다」와 「간다」는 다른 말이다(규칙 21)
-await page.getByText('담아둔 레시피 보관함', { exact: false }).first().click().catch(() => {})
+await page.getByText('임시보관함', { exact: false }).first().click().catch(() => {})
 await page.waitForTimeout(900)
 const 보관함글 = await 글자()
-chk('② 눌렀더니 보관함이 «열린다»', /보관함/.test(보관함글))
+chk('② 눌렀더니 임시보관함이 «열린다»', /임시보관함/.test(보관함글))
 // 🏷 창업자 = *"INBOX나도 어딨는지 모르는데"* — 입구를 늘 띄워도 **이름이 영어면 같은 곳인 줄 모른다.**
-//    홈은 「보관함」이라 부르는데 화면 제목이 「Inbox」면 유저는 둘을 못 잇는다.
+//    홈과 화면 제목이 «같은 말»이라야 유저가 둘을 잇는다.
+//    ⛔ 「보관함」으로 갔다가 창업자가 물렸다 — *"임시보관함으로 바꾸던가.. 그냥 보관함은 애매"*
 chk('③ ⭐화면에 영어 「Inbox」가 «0개»', !/Inbox/i.test(보관함글))
 writeFileSync(join(OUT, '2-보관함.png'), await page.screenshot())
 await page.goBack(); await page.waitForTimeout(700)

@@ -86,7 +86,7 @@ export default function ImportScreen() {
     addRecipe(makeInboxRecipe({ source: flow, title: t, sourceUrl: url.trim() }))
     nav.pop()
     nav.push({ name: 'inbox' })
-    nav.showToast('보관함에 담았어요 · 나중에 정리해요')
+    nav.showToast('임시보관함에 담았어요 · 나중에 정리해요')
   }
 
   // ⏳ 서버 되면 되살릴 것 ① — 여기 `readLink()`(링크 본문 자동 읽기)가 있었다.
@@ -418,7 +418,7 @@ export default function ImportScreen() {
           <div className="card" style={{ padding: 14, background: 'var(--cream)', border: 'none', display: 'flex', gap: 10 }}>
             <Icon name="inbox" size={20} color="var(--brown)" />
             <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--brown)' }}>
-              담아두면 <b>보관함</b>에 들어가요. 나중에 열어 <b>캡처</b>나 <b>텍스트 붙여넣기</b>로 내용을 채워 주세요.
+              담아두면 <b>임시보관함</b>에 들어가요. 나중에 열어 <b>캡처</b>나 <b>텍스트 붙여넣기</b>로 내용을 채워 주세요.
             </div>
           </div>
         </div>

@@ -251,7 +251,7 @@ export default function HomeScreen() {
             ⛔ 전엔 `unsortedN > 0` 이라 **정리를 끝내는 순간 입구가 사라졌다.** 그래서 담아둔 걸
                다시 보려 해도 갈 길이 없었다(설정 안쪽 통계 숫자 말곤 입구가 없었다).
             ⭐ 만든 사람이 못 찾으면 유저는 당연히 못 찾는다.
-            ⭐ 글자는 «상태마다» 다르게 — 할 일이 있으면 재촉처럼, 없으면 조용한 보관함처럼.
+            ⭐ 글자는 «상태마다» 다르게 — 할 일이 있으면 재촉처럼, 없으면 조용한 서랍처럼.
                ⛔ 「정리 안 한 레시피 0개」로 늘 띄우면 할 일이 없는데도 할 일처럼 보인다. */}
         <button
           className="press"
@@ -260,7 +260,7 @@ export default function HomeScreen() {
         >
           <Icon name={unsortedN > 0 ? 'edit' : 'inbox'} size={18} color="var(--brown)" stroke={1.9} />
           <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700 }}>
-            {unsortedN > 0 ? `정리 안 한 레시피 ${unsortedN}개` : '담아둔 레시피 보관함'}
+            {unsortedN > 0 ? `정리 안 한 레시피 ${unsortedN}개` : '임시보관함'}
           </span>
           <Icon name="chevron-right" size={17} color="var(--sand)" />
         </button>
