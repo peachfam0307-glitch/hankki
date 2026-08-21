@@ -96,23 +96,23 @@ await page.waitForTimeout(900)
 const t가져오기 = await 글자()
 // ⭐ 「1장씩」과 「0장」이 «같은 줄»에 나란히 있어야 뜻이 선다.
 //    한쪽만 적으면 유저는 비교할 게 없어 그냥 지나친다.
-chk('① 캡처가 「1장 소모」라고 적혀 있다', t가져오기.includes('1장 소모'))
+chk('① 캡처가 「1회 소모」라고 적혀 있다', t가져오기.includes('1회 소모'))
 chk('② 글 붙여넣기는 「소모 없음」이라고 «나란히» 적혀 있다', t가져오기.includes('소모 없음'))
-const 캡처값 = await 글자자리('1장 소모')
+const 캡처값 = await 글자자리('1회 소모')
 const 위험 = await 위험색()
 chk(`③ 그 값이 위험색(--danger = ${위험})으로 칠해졌다`, !!캡처값 && 캡처값.color === 위험)
 // ⛔ 잔량 띠는 v10.56 부터 있던 것이다 — 이 판이 그걸 «깨뜨리지 않았나»도 같이 본다.
 chk('④ 맨 위 잔량 띠가 그대로 살아 있다', /무료 AI 스캔.*남았어요|다 썼어요/.test(t가져오기))
 // ⭐⭐ 값을 «고르는 그 줄»에도 — 창업자가 결제에 대해 정한 「쓰려는 순간 그 자리에서」와 같은 원칙.
 //    ⛔ 맨 위 잔량 띠로는 못 대신한다 — 그건 「몇 장 남았나」고 이건 「이 길이 몇 장을 쓰나」다.
-chk('④-b 제일 많이 누르는 길(사진·직접 작성)에 「AI 스캔 1장」이 붙어 있다', /직접 작성[\s\S]{0,80}1장 소모/.test(t가져오기))
-chk('④-c 공짜 길(텍스트 붙여넣기)에 「AI 스캔 0장」이 나란히 붙어 있다', /텍스트 붙여넣기[\s\S]{0,80}소모 없음/.test(t가져오기))
+chk('④-b 제일 많이 누르는 길(사진·직접 작성)에 「AI 스캔 1회 소모」가 붙어 있다', /직접 작성[\s\S]{0,80}1회 소모/.test(t가져오기))
+chk('④-c 공짜 길(텍스트 붙여넣기)에 「소모 없음」이 나란히 붙어 있다', /텍스트 붙여넣기[\s\S]{0,80}소모 없음/.test(t가져오기))
 // ⛔ 히어로 카드 설명은 `.opt-row .t .b` 가 «아니라» 인라인 style 이라 v11.19 의 keep-all 이 안 걸렸다.
 //    실물에서 「읽어 채워 / 요」로 잘려 있었다. 클래스로 고친 것은 클래스를 쓰는 줄만 낫는다.
 const 가져오기잘림 = await page.evaluate(() => {
   const 값 = [...document.querySelectorAll('body *')]
-    .filter((e) => /캡처는 재료·만드는 법|캡처는 1장 소모/.test(e.textContent || '')
-      && ![...e.children].some((c) => /캡처는 재료·만드는 법|캡처는 1장 소모/.test(c.textContent || '')))
+    .filter((e) => /캡처는 재료·만드는 법|캡처는 1회 소모/.test(e.textContent || '')
+      && ![...e.children].some((c) => /캡처는 재료·만드는 법|캡처는 1회 소모/.test(c.textContent || '')))
   return { n: 값.length, 나쁨: 값.filter((e) => getComputedStyle(e).wordBreak !== 'keep-all').length }
 })
 chk(`④-d ⛔가져오기 안내도 낱말 가운데서 안 잘린다 (${가져오기잘림.n}줄 중 어긴 것 ${가져오기잘림.나쁨})`,
@@ -138,7 +138,7 @@ chk(`⑤-a ⭐목록 «네 줄 전부»가 장수를 말한다 (${목록.안내}
 // ⚠️ 조건부인 둘(인스타·유튜브)은 「캡처는」을 앞에 붙여야 한다 —
 //    그냥 「1장」이라 적으면 «붙여넣기»로 담는 사람도 깎이는 줄 안다.
 chk('⑤-b ⚠️조건부인 줄은 조건을 밝힌다 (「캡처는 AI 스캔 1장」)',
-  (t가져오기.match(/캡처하면 1장 소모/g) || []).length >= 2)
+  (t가져오기.match(/캡처하면 1회 소모/g) || []).length >= 2)
 writeFileSync(join(OUT, '1-가져오기.png'), await page.screenshot({ fullPage: true }))
 
 // ── ② 편집 화면 : ⭐값이 «권유보다 먼저» 나오나 ──
@@ -148,13 +148,13 @@ await page.waitForTimeout(1000)
 const t편집 = await 글자()
 // ⭐⭐ 창업자가 «직접 준» 문구다 — *"무료이용이 1장 소모가 된다던지"*.
 //    ⛔ 내 말로 다듬지 않는다. 핵심 낱말은 **「소모」** — 「써요」는 «한다»는 말이고 「소모돼요」는 «줄어든다»는 말이다.
-chk('⑤ 창업자 문구 그대로 —「사진 1장에 무료 이용 1장이 소모돼요」', t편집.includes('사진 1장에 무료 이용 1장이 소모돼요'))
+chk('⑤ 창업자 문구 그대로 —「사진 1장에 AI 스캔 1회가 소모돼요」', t편집.includes('사진 1장에 AI 스캔 1회가 소모돼요'))
 // ⛔⛔ 창업자 = *"다 구구절절이야 헷갈린다고"* — 값 줄은 **한 줄**이어야 한다.
 //    옛 판은 둘째 줄에 예시(「3장 고르면 3장」)와 소진 안내(「다 써도 기본 인식」)를 붙여 두 줄이었다.
 //    ⭐ 이 칸이 «다시 늘어나는 것»을 막는다 — 설명은 늘 «하나만 더» 붙이고 싶어진다.
 chk('⑥ ⛔값 줄이 «한 줄»이다 (예시·소진 안내를 미리 안 깐다)',
   !t편집.includes('3장 고르면 3장') && !/다 써도.*기본 인식/.test(t편집))
-const 값줄 = await 글자자리('사진 1장에 무료 이용 1장이 소모돼요')
+const 값줄 = await 글자자리('사진 1장에 AI 스캔 1회가 소모돼요')
 const 초안줄 = await 글자자리('사진 보며 다듬어')
 chk(`⑧ ⭐⭐값 줄이 안내 목록보다 «위»에 있다 (값 y=${값줄?.y} · 목록 y=${초안줄?.y})`,
   !!값줄 && !!초안줄 && 값줄.y < 초안줄.y)
@@ -171,8 +171,8 @@ chk('⑫ ⛔「섞여 들어왔다면」 안내가 사라졌다', !t편집.inclu
 //       그래서 computed style 을 본다. 문장을 새로 넣을 때마다 다시 나는 병이라 못 박는다.
 const 안잘림 = await page.evaluate(() => {
   const 값 = [...document.querySelectorAll('body *')]
-    .filter((e) => /사진 1장에 무료 이용|읽은 글은/.test(e.textContent || '')
-      && ![...e.children].some((c) => /사진 1장에 무료 이용|읽은 글은/.test(c.textContent || '')))
+    .filter((e) => /사진 1장에 AI 스캔|읽은 글은/.test(e.textContent || '')
+      && ![...e.children].some((c) => /사진 1장에 AI 스캔|읽은 글은/.test(c.textContent || '')))
   return { n: 값.length, 나쁨: 값.filter((e) => getComputedStyle(e).wordBreak !== 'keep-all').length }
 })
 chk(`⑫-b ⛔안내 줄이 «낱말 가운데»서 안 잘린다 (keep-all · ${안잘림.n}줄 중 어긴 것 ${안잘림.나쁨})`,
@@ -188,13 +188,13 @@ await page.waitForTimeout(800)
 await page.getByText('냉장고', { exact: false }).first().click().catch(() => {})
 await page.waitForTimeout(800)
 const t냉장고 = await 글자()
-chk('⑬ ⭐영수증 화면에 「영수증 1장에 AI 스캔 1장을 써요」가 있다', t냉장고.includes('영수증 1장에 무료 이용 1장이 소모돼요'))
+chk('⑬ ⭐영수증 화면에 「영수증 1장에 AI 스캔 1장을 써요」가 있다', t냉장고.includes('영수증 1장에 AI 스캔 1회가 소모돼요'))
 chk('⑭ ⛔여기도 둘째 줄을 안 깐다 (구구절절 금지)', !/다 써도.*기본 인식/.test(t냉장고))
-const 영수증값 = await 글자자리('영수증 1장에 무료 이용 1장이 소모돼요')
+const 영수증값 = await 글자자리('영수증 1장에 AI 스캔 1회가 소모돼요')
 chk(`⑮ 위험색이다 (${영수증값?.color})`, !!영수증값 && 영수증값.color === 위험)
 // ⭐ 셋이 «같은 문장 틀»이라야 유저가 같은 규칙으로 읽는다(같은 기능은 같은 이름 원칙).
 chk('⑯ ⭐편집·영수증이 «같은 문장 틀»이다 (「N장에 AI 스캔 N장을 써요」)',
-  t편집.includes('무료 이용 1장이 소모돼요') && t냉장고.includes('무료 이용 1장이 소모돼요'))
+  t편집.includes('AI 스캔 1회가 소모돼요') && t냉장고.includes('AI 스캔 1회가 소모돼요'))
 writeFileSync(join(OUT, '3-냉장고.png'), await page.screenshot({ fullPage: true }))
 
 // ── ④ 공유받기 : 토스트에 잔량이 실리나 (소스로 «불렀나»만 본다) ──
@@ -235,7 +235,7 @@ for (const 이름 of ['YouTube', 'Instagram']) {
     단추.n === 3 && 단추.안내 === 3)
   const t흐름 = await 글자()
   // ⭐ 갈림길이라 «둘 다» 보여야 값이 값으로 읽힌다 — 1장짜리 하나, 0장짜리 둘.
-  chk(`㉡ ${이름} 흐름에 「1장 소모」와 「소모 없음」이 «나란히» 있다`, /1장 소모/.test(t흐름) && /소모 없음/.test(t흐름))
+  chk(`㉡ ${이름} 흐름에 「1장 소모」와 「소모 없음」이 «나란히» 있다`, /1회 소모/.test(t흐름) && /소모 없음/.test(t흐름))
   writeFileSync(join(OUT, `4-흐름-${이름}.png`), await page.screenshot({ fullPage: true }))
 }
 

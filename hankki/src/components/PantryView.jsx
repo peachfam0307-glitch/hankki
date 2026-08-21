@@ -275,7 +275,7 @@ export default function PantryView() {
                «다 썼을 때» 할 말을 쓰기도 전에 깔아 두면 한 번에 둘을 읽어야 한다.
                ⭐ 소진 안내는 그때 이미 나간다(`ocr.js` note → 편집 화면 꼬리). */}
         <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px' }}>
-          영수증 1장에 무료 이용 1장이 소모돼요
+          영수증 1장에 AI 스캔 1회가 소모돼요
         </div>
       </div>
       <div style={{ fontSize: 12.3, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 14 }}>

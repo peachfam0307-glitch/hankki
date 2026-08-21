@@ -369,7 +369,7 @@ export default function App() {
         showToast(
           left.unknown
             ? '사진에서 글자를 읽어 채웠어요'
-            : `사진에서 글자를 읽어 채웠어요 · 무료 AI 스캔 ${left.total}장 남았어요`,
+            : `사진에서 글자를 읽어 채웠어요 · 무료 AI 스캔 ${left.total}회 남았어요`,
         )
         return
       }

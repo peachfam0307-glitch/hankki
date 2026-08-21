@@ -258,8 +258,8 @@ export default function EditorScreen({ id, prefill }) {
         const left = getOcrLeft().total
         nav.showToast(
           left >= urls.length
-            ? `사진 ${urls.length}장이라 무료 이용 ${urls.length}장이 소모돼요`
-            : `무료 이용이 ${left}장 남아서 ${left}장만 AI로 읽어요`,
+            ? `사진 ${urls.length}장이라 AI 스캔 ${urls.length}회가 소모돼요`
+            : `AI 스캔이 ${left}회 남아서 ${left}장만 AI로 읽어요`,
           5200,
         )
       }
@@ -355,7 +355,7 @@ export default function EditorScreen({ id, prefill }) {
       : leftNow.total === 0
         ? ' · 무료 AI 스캔을 다 썼어요 · 이제 기본 인식으로 계속 돼요'
         : leftNow.total === 1
-          ? ' · 무료 AI 스캔 1장 남았어요'
+          ? ' · 무료 AI 스캔 1회 남았어요'
           : ''
 
     // 마지막 장 — 결과 반영
@@ -704,7 +704,7 @@ export default function EditorScreen({ id, prefill }) {
             borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
             fontSize: 13.4, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px',
           }}>
-            사진 1장에 무료 이용 1장이 소모돼요
+            사진 1장에 AI 스캔 1회가 소모돼요
           </div>
 
           {[

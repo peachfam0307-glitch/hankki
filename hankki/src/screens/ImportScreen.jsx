@@ -41,9 +41,9 @@ import uiDuoHeart from '../assets/ui/wave/duo_hearthand.png'
 //       ＋ 흐름 화면의 단추 «셋»에도 각각 정확한 값을 적는다(아래 `방법들`).
 const OPTIONS = [
   // 제일 많이 쓰는 방법이라 맨 위
-  { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A', costText: '무료 이용 1장 소모', paid: true },
-  { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '캡처해서 담기 (제일 정확)', color: '#C13584', costText: '캡처하면 1장 소모', paid: true },
-  { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '캡처·설명 붙여넣기로 담기', color: '#E33', costText: '캡처하면 1장 소모', paid: true },
+  { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A', costText: 'AI 스캔 1회 소모', paid: true },
+  { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '캡처해서 담기 (제일 정확)', color: '#C13584', costText: '캡처하면 1회 소모', paid: true },
+  { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '캡처·설명 붙여넣기로 담기', color: '#E33', costText: '캡처하면 1회 소모', paid: true },
   // ⭐ 링크가 못 하는 일을 «이 줄이» 한다 — 그래서 설명을 키웠다(창업자 ⓐ안의 「텍스트 안내를 키운다」를 여기서 살렸다)
   { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 재료·순서까지 자동 정리', color: '#B0895E', costText: '소모 없음', paid: false },
   { key: 'link', icon: 'link', title: '링크 주소만 담아두기', desc: '주소만 저장해요 · 재료·순서는 안 담겨요', color: '#9B8B79', costText: '소모 없음', paid: false },
@@ -161,7 +161,7 @@ export default function ImportScreen() {
             {ocrLeft.total > 0 ? (
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 14.5, fontWeight: 800, color: '#3d6b38', letterSpacing: '-.3px' }}>
-                  무료 AI 스캔 <span style={{ fontSize: 18.5 }}>{ocrLeft.total}장</span> 남았어요
+                  무료 AI 스캔 <span style={{ fontSize: 18.5 }}>{ocrLeft.total}회</span> 남았어요
                 </div>
                 {/* ⭐⭐ 작은 줄은 «상태마다 다르다» — 여기서 오해가 나면 곧장 분쟁이 된다.
                     ① 웰컴 중 = 창업자 *"매달 20장씩 주는 줄 알지도 몰라"* → **처음 한 번**이라고 못박는다.
@@ -184,8 +184,8 @@ export default function ImportScreen() {
                         · 8월에 17장만 쓴 사람 → 웰컴 3장이 9월로 이월 → 9월에 그 3장을 쓰고 «그 9월에 2장 더» 쓴다
                           (worker: 웰컴을 다 쓴 뒤 `userC(3) < PER_USER_MONTHLY(5)` 라 통과)
                         ⭐ 그래서 「다 쓰면(조건) · 매달(주기)」로만 적는다 — 두 경우 다 맞는 유일한 표현. */}
-                    <b style={{ fontWeight: 900, color: '#356131' }}>처음 한 번만</b> 드리는 20장이에요<br />
-                    다 쓰면 <b style={{ fontWeight: 900, color: '#356131' }}>매달 무료 5장</b>
+                    <b style={{ fontWeight: 900, color: '#356131' }}>처음 한 번만</b> 드리는 20회예요<br />
+                    다 쓰면 <b style={{ fontWeight: 900, color: '#356131' }}>매달 무료 5회</b>
                   </div>
                 ) : (
                   <div style={{ fontSize: 12.3, color: 'var(--text-sub)', marginTop: 2 }}>
@@ -199,7 +199,7 @@ export default function ImportScreen() {
                 {/* ⭐ 「못 쓴다」가 아니라 「계속 되는데 품질이 바뀐다」 ＋ 언제·«몇 장» 돌아오는지까지.
                     ⛔ 「다시 채워져요」만 두면 몇 장인지 모른다 → 창업자 *"다음달에 무료5장채워져요"* */}
                 <div style={{ fontSize: 12.3, color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.45 }}>
-                  기본 인식으로 계속 읽어 드려요<br />다음 달에 <b style={{ fontWeight: 800, color: '#8a6a3a' }}>무료 5장</b> 채워져요
+                  기본 인식으로 계속 읽어 드려요<br />다음 달에 <b style={{ fontWeight: 800, color: '#8a6a3a' }}>무료 5회</b> 채워져요
                 </div>
               </div>
             )}
@@ -301,7 +301,7 @@ export default function ImportScreen() {
                   ⭐ 값을 «숫자 대 숫자»로 놓는다 — 「공짜」라고 쓰면 「되는데 돈만 안 든다」로 읽혀
                      정작 무엇이 깎이는지가 안 보인다. 1 ↔ 0 이 제일 빠르게 읽힌다. */}
               <div style={{ fontSize: 11.6, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2, wordBreak: 'keep-all' }}>
-                캡처는 <b style={{ fontWeight: 800, color: 'var(--danger)' }}>1장 소모</b> · 글 붙여넣기는 <b style={{ fontWeight: 800, color: '#4a7a45' }}>소모 없음</b>
+                캡처는 <b style={{ fontWeight: 800, color: 'var(--danger)' }}>1회 소모</b> · 글 붙여넣기는 <b style={{ fontWeight: 800, color: '#4a7a45' }}>소모 없음</b>
               </div>
               {/* ⛔ 남은 장수는 여기 «두지 않는다» — 창업자 *"너무 안보여"* (2026-08-13).
                   스크롤해야 나오는 자리라 「잘 보이게」가 안 된다. → 화면 «맨 위»로 올렸다. */}
@@ -363,12 +363,12 @@ export default function ImportScreen() {
                  그래서 그냥 「0장」이라 안 적고 조건을 밝힌다. ⛔안 밝히면 캡처를 누른 사람이 «속았다»고 느낀다. */}
           {(flow === 'youtube'
             ? [
-                ['camera', '캡처해서 올리기', '캡처만 하면 재료·순서 자동으로', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), '1장 소모', true],
+                ['camera', '캡처해서 올리기', '캡처만 하면 재료·순서 자동으로', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), '1회 소모', true],
                 ['pen', '설명(더보기) 붙여넣기', '글 복사해 오면 알아서 정리해요', false, () => { setFlow('text'); setText('') }, '소모 없음', false],
                 ['play', '영상 보면서 적기', '영상 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } }), '받아적으면 소모 없음', false],
               ]
             : [
-                ['camera', '캡처해서 올리기', '인스타는 글자 복사가 안 돼요', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), '1장 소모', true],
+                ['camera', '캡처해서 올리기', '인스타는 글자 복사가 안 돼요', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), '1회 소모', true],
                 ['pen', '글을 복사했다면 붙여넣기', '복사한 글을 넣으면 알아서 정리해요', false, () => { setFlow('text'); setText('') }, '소모 없음', false],
                 ['photo', '미리보기 띄우고 적기', '게시물 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } }), '받아적으면 소모 없음', false],
               ]
