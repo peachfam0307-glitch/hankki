@@ -116,7 +116,7 @@ export default function LockSheet({ mode = 'check', onClose, onDone, lockedCount
               <Icon name="lock" size={17} color="var(--brown)" />
               {제목}
             </span>
-            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
           </div>
 
           <div style={{ padding: '4px 16px 0' }}>
@@ -124,7 +124,7 @@ export default function LockSheet({ mode = 'check', onClose, onDone, lockedCount
               <>
                 {/* 💡 힌트는 «건너뛸 수 있다» — 강제하면 아무 말이나 치고 넘어간다.
                     ⛔ 비번 자체를 힌트에 적지 말라고 한 줄로 말해 준다(실제로 그렇게 적는 사람이 많다). */}
-                <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.65, marginBottom: 11 }}>
+                <div className="t-sub" style={{ fontSize: 14.5, lineHeight: 1.65, marginBottom: 11 }}>
                   비번은 되찾을 길이 없어서 <b style={{ color: 'var(--brown)' }}>이 힌트가 하나뿐인 실마리</b>예요. 안 써도 돼요.<br />
                   <b style={{ color: 'var(--brown)' }}>비번 숫자 자체는 적지 말기</b> — 남도 같이 보게 되니까.
                 </div>
@@ -132,13 +132,13 @@ export default function LockSheet({ mode = 'check', onClose, onDone, lockedCount
                   value={hint}
                   onChange={(e) => setHint(e.target.value.slice(0, 40))}
                   placeholder="예: 우리 결혼기념일"
-                  style={{ width: '100%', padding: '12px 13px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--cream)', fontSize: 14.5, marginBottom: 12 }}
+                  style={{ width: '100%', padding: '12px 13px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--cream)', fontSize: 15.5, marginBottom: 12 }}
                 />
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="press" disabled={busy} onClick={힌트마치기} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14, border: 'none' }}>
+                  <button className="press" disabled={busy} onClick={힌트마치기} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 15, border: 'none' }}>
                     안 쓸래요
                   </button>
-                  <button className="press" disabled={busy} onClick={힌트마치기} style={{ flex: 1.5, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 14.5, border: 'none' }}>
+                  <button className="press" disabled={busy} onClick={힌트마치기} style={{ flex: 1.5, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 15.5, border: 'none' }}>
                     잠그기
                   </button>
                 </div>
@@ -146,10 +146,10 @@ export default function LockSheet({ mode = 'check', onClose, onDone, lockedCount
             ) : (
               <>
                 {/* ⚪ 네 자리 — 점으로만 보여준다 */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 15, fontSize: 26, color: 'var(--brown)', letterSpacing: '.04em', margin: '6px 0 4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 15, fontSize: 27, color: 'var(--brown)', letterSpacing: '.04em', margin: '6px 0 4px' }}>
                   {[0, 1, 2, 3].map((i) => <span key={i}>{점(i, pin.length)}</span>)}
                 </div>
-                <div style={{ minHeight: 34, textAlign: 'center', fontSize: 12.5, lineHeight: 1.5, padding: '4px 0 6px', color: err ? 'var(--danger)' : 'var(--text-sub)', fontWeight: err ? 700 : 500 }}>
+                <div style={{ minHeight: 34, textAlign: 'center', fontSize: 14.5, lineHeight: 1.5, padding: '4px 0 6px', color: err ? 'var(--danger)' : 'var(--text-sub)', fontWeight: err ? 700 : 500 }}>
                   {err || (step === 'check'
                     ? (저장된힌트 ? `힌트 · ${저장된힌트}` : '이 일기는 잠겨 있어요')
                     : step === 'first' ? '이 비번으로 일기를 잠가요' : '틀리지 않게 한 번 더')}
@@ -163,7 +163,7 @@ export default function LockSheet({ mode = 'check', onClose, onDone, lockedCount
                        그래서 「우리가 안 갖고 있어서」를 «먼저» 말하고 「그래서 못 찾아준다」로 잇는다.
                     ⛔ 「완전 암호화」라고는 쓰지 않는다 — 이건 «가리는 것»이다. */}
                 {step === 'first' && (
-                  <div style={{ marginTop: 14, padding: '11px 13px', borderRadius: 12, background: 'var(--cream)', fontSize: 12.5, lineHeight: 1.65, color: 'var(--text-sub)' }}>
+                  <div style={{ marginTop: 14, padding: '11px 13px', borderRadius: 12, background: 'var(--cream)', fontSize: 14.5, lineHeight: 1.65, color: 'var(--text-sub)' }}>
                     비번은 <b style={{ color: 'var(--brown)' }}>이 폰에만</b> 있어요 · 서버에 저장하지 않아요.
                     <br />그래서 <b style={{ color: 'var(--danger)' }}>잊으면 찾아드릴 수 없어요</b> — 다음에 힌트를 남길 수 있어요.
                   </div>
@@ -184,12 +184,12 @@ export default function LockSheet({ mode = 'check', onClose, onDone, lockedCount
                 {step === 'check' && hasPin() && (
                   <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
                     {!잊음 ? (
-                      <button className="press" onClick={() => set잊음(true)} style={{ width: '100%', padding: '9px 0', background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: 12.5, fontWeight: 600, textDecoration: 'underline' }}>
+                      <button className="press" onClick={() => set잊음(true)} style={{ width: '100%', padding: '9px 0', background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: 14.5, fontWeight: 600, textDecoration: 'underline' }}>
                         비번을 잊었어요
                       </button>
                     ) : (
                       <>
-                        <div style={{ fontSize: 12.5, lineHeight: 1.6, color: 'var(--text-sub)', marginBottom: 10 }}>
+                        <div style={{ fontSize: 14.5, lineHeight: 1.6, color: 'var(--text-sub)', marginBottom: 10 }}>
                           비번은 이 폰에만 있어서 <b style={{ color: 'var(--brown)' }}>되찾을 길이 없어요</b>.
                           <br />잠금을 없애려면 <b style={{ color: 'var(--danger)' }}>잠긴 일기 {lockedCount}장을 함께 지워야</b> 해요
                           {잊음 === 2 ? <> — <b style={{ color: 'var(--danger)' }}>지우면 되돌릴 수 없어요.</b></> : '.'}
@@ -201,7 +201,7 @@ export default function LockSheet({ mode = 'check', onClose, onDone, lockedCount
                           </span>
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <button className="press" onClick={() => set잊음(false)} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 13.5, border: 'none' }}>
+                          <button className="press" onClick={() => set잊음(false)} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 15.5, border: 'none' }}>
                             그만둘래요
                           </button>
                           <button
@@ -212,7 +212,7 @@ export default function LockSheet({ mode = 'check', onClose, onDone, lockedCount
                               resetAllLocks()
                               onDone({ reset: true, deleteLocked: true })
                             }}
-                            style={{ flex: 1.5, padding: 11, borderRadius: 12, background: 잊음 === 2 ? 'var(--danger)' : 'var(--cream)', color: 잊음 === 2 ? '#fff' : 'var(--danger)', fontWeight: 700, fontSize: 13.5, border: 'none' }}
+                            style={{ flex: 1.5, padding: 11, borderRadius: 12, background: 잊음 === 2 ? 'var(--danger)' : 'var(--cream)', color: 잊음 === 2 ? '#fff' : 'var(--danger)', fontWeight: 700, fontSize: 15.5, border: 'none' }}
                           >
                             {잊음 === 2 ? `${lockedCount}장 지우기` : `잠긴 일기 ${lockedCount}장 지우고 풀기`}
                           </button>

@@ -64,12 +64,12 @@ function NewsRow({ it, tone }) {
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 14.5, fontWeight: 800 }}>{it.title}</span>
-          <span style={{ fontSize: 10.5, fontWeight: 800, color: tone, background: 'var(--surface)', borderRadius: 999, padding: '2px 8px' }}>
+          <span style={{ fontSize: 15.5, fontWeight: 800 }}>{it.title}</span>
+          <span style={{ fontSize: 14, fontWeight: 800, color: tone, background: 'var(--surface)', borderRadius: 999, padding: '2px 8px' }}>
             {it.kind} {it.count}
           </span>
         </div>
-        {it.why && <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3, lineHeight: 1.4 }}>{it.why}</div>}
+        {it.why && <div className="t-sub" style={{ fontSize: 14.5, marginTop: 3, lineHeight: 1.4 }}>{it.why}</div>}
         <Peek keys={it.peek} />
       </div>
     </div>
@@ -90,7 +90,7 @@ export default function PreviewSheet({ onClose }) {
         <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 'calc(18px + var(--safe-bottom))', maxHeight: 'calc(100dvh - 40px)' }}>
           <div className="emoji-sheet-head">
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><Icon name="gift" size={19} color="var(--tease-ic)" stroke={1.7} /> 한끼 소식</span>
-            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
           </div>
           <div style={{ padding: '2px 16px 0' }}>
 
@@ -113,8 +113,8 @@ export default function PreviewSheet({ onClose }) {
                   ⭐ `bulb` 가 오히려 맞다 — 이건 새 기능 광고가 아니라 «알려주는 팁»이다. */}
               <Icon name="bulb" size={18} color="var(--brown)" stroke={1.9} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 3 }}>패드·폴드에서도 써요</div>
-                <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.55 }}>
+                <div style={{ fontSize: 15.5, fontWeight: 800, marginBottom: 3 }}>패드·폴드에서도 써요</div>
+                <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.55 }}>
                   큰 화면에선 레시피가 좌우 두 칸으로 열리고, 일기 종이도 더 커져요.
                   폰을 눕혀도 돼요 — 안 돌아가면 폰의 <b>자동 회전</b>을 켜 보세요.
                 </div>
@@ -126,7 +126,7 @@ export default function PreviewSheet({ onClose }) {
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0 9px' }}>
                   <Icon name="sparkle" size={16} color="var(--brown)" stroke={2} />
-                  <span style={{ fontSize: 13.5, fontWeight: 900, color: 'var(--brown)' }}>방금 열렸어요</span>
+                  <span style={{ fontSize: 15.5, fontWeight: 900, color: 'var(--brown)' }}>방금 열렸어요</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {news.opened.map((it, i) => <NewsRow key={`o${i}`} it={it} tone="var(--brown)" />)}
@@ -139,8 +139,8 @@ export default function PreviewSheet({ onClose }) {
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: news.opened.length ? '18px 0 9px' : '2px 0 9px' }}>
                   <Icon name="clock" size={16} color="var(--tease-ic)" stroke={2} />
-                  <span style={{ fontSize: 13.5, fontWeight: 900, color: 'var(--tease-ic)' }}>곧 열려요</span>
-                  <span className="t-sub" style={{ fontSize: 11.5, marginLeft: 'auto', fontWeight: 700 }}>{dday}</span>
+                  <span style={{ fontSize: 15.5, fontWeight: 900, color: 'var(--tease-ic)' }}>곧 열려요</span>
+                  <span className="t-sub" style={{ fontSize: 14, marginLeft: 'auto', fontWeight: 700 }}>{dday}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {news.upcoming.items.map((it, i) => <NewsRow key={`u${i}`} it={it} tone="var(--tease-ic)" />)}
@@ -148,7 +148,7 @@ export default function PreviewSheet({ onClose }) {
               </>
             )}
 
-            <p className="t-sub" style={{ fontSize: 13, margin: hasNews ? '20px 0 12px' : '0 0 14px', lineHeight: 1.55 }}>
+            <p className="t-sub" style={{ fontSize: 15, margin: hasNews ? '20px 0 12px' : '0 0 14px', lineHeight: 1.55 }}>
               {hasNews
                 ? '그다음엔 이런 걸 준비하고 있어요.'
                 : <>한끼가 이런 걸 준비하고 있어요.<br />준비되면 가장 먼저 보여드릴게요 :)</>}
@@ -159,15 +159,15 @@ export default function PreviewSheet({ onClose }) {
                   <span style={{ flex: '0 0 auto', width: 26, display: 'inline-flex', justifyContent: 'center', paddingTop: 1 }}><Icon name={f.icon} size={22} color="var(--tease-ic)" stroke={1.7} /></span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 14.5, fontWeight: 800 }}>{f.title}</span>
-                      <span style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--brown)', background: 'var(--surface)', borderRadius: 999, padding: '2px 8px' }}>{f.tag}</span>
+                      <span style={{ fontSize: 15.5, fontWeight: 800 }}>{f.title}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--brown)', background: 'var(--surface)', borderRadius: 999, padding: '2px 8px' }}>{f.tag}</span>
                     </div>
-                    <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3, lineHeight: 1.4 }}>{f.desc}</div>
+                    <div className="t-sub" style={{ fontSize: 14.5, marginTop: 3, lineHeight: 1.4 }}>{f.desc}</div>
                   </div>
                 </div>
               ))}
             </div>
-            <p className="t-sub" style={{ fontSize: 11.5, textAlign: 'center', margin: '14px 0 2px', color: 'var(--sand)' }}>
+            <p className="t-sub" style={{ fontSize: 14, textAlign: 'center', margin: '14px 0 2px', color: 'var(--sand)' }}>
               지금 쌓아둔 레시피는 새 기능이 나와도 그대로 이어져요.
             </p>
           </div>

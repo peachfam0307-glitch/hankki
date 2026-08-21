@@ -6,7 +6,9 @@ import Portal from './Portal'
 import { useModalBack } from '../useBackHandler'
 
 // 사진을 캔버스로 축소해 저장 공간을 아낀다.
-function downscale(dataUrl, max = 900) {
+// ⭐ `export` 인 이유 = 요리 모드의 「완성 사진」(`CookScreen`)이 «같은 함수»를 쓴다.
+//    ⛔ 복사해 두면 한쪽만 고쳐져 저장 용량이 갈린다(`Stars` 를 내보낸 것과 같은 이유).
+export function downscale(dataUrl, max = 900) {
   return new Promise((resolve) => {
     const img = new Image()
     img.onload = () => {
@@ -64,18 +66,18 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete, onOpenRecipe
       <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 0 }}>
         <div className="emoji-sheet-head">
           <span>요리 기록 남기기</span>
-          <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+          <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
         </div>
         <div style={{ padding: '2px 16px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 700, flex: 1, minWidth: 0 }}>{entry.title}</div>
+            <div style={{ fontSize: 16.5, fontWeight: 700, flex: 1, minWidth: 0 }}>{entry.title}</div>
             {onOpenRecipe && (
-              <button className="press" onClick={onOpenRecipe} style={{ flex: '0 0 auto', padding: '6px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 12.5, fontWeight: 700 }}>
+              <button className="press" onClick={onOpenRecipe} style={{ flex: '0 0 auto', padding: '6px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 14.5, fontWeight: 700 }}>
                 레시피 보기 →
               </button>
             )}
           </div>
-          <div className="t-sub" style={{ fontSize: 12, marginBottom: 12 }}>{new Date(entry.at).toLocaleDateString('ko-KR')} 요리</div>
+          <div className="t-sub" style={{ fontSize: 14, marginBottom: 12 }}>{new Date(entry.at).toLocaleDateString('ko-KR')} 요리</div>
 
           <div style={{ display: 'flex', justifyContent: 'center', margin: '2px 0 16px' }}>
             <Stars value={rating} onChange={setRating} />
@@ -105,14 +107,17 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete, onOpenRecipe
         {/* 저장 버튼은 항상 보이게 시트 하단에 고정 */}
         <div style={{ position: 'sticky', bottom: 0, background: 'var(--surface)', display: 'flex', gap: 8, padding: '10px 16px calc(6px + var(--safe-bottom))', boxShadow: '0 -6px 14px rgba(0,0,0,0.05)' }}>
           {onDelete && (
-            <button className="press" onClick={onDelete} style={{ padding: '13px 14px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 14 }}>삭제</button>
+            <button className="press" onClick={onDelete} style={{ padding: '13px 14px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 15 }}>삭제</button>
           )}
-          <button className="press" onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>나중에</button>
-          <button className="press" onClick={save} style={{ flex: 1.4, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 14.5 }}>저장하기</button>
+          <button className="press" onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 15 }}>나중에</button>
+          <button className="press" onClick={save} style={{ flex: 1.4, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 15.5 }}>저장하기</button>
         </div>
       </div>
 
       {cropSrc && (
+        // 🏷 `doneLabel` 창업자 확정 2026-08-21 = *"일기도 담기로 바꾸고"*
+        //    사진은 «읽는» 게 아니라 «담는» 것이다 (요리 모드 완성 사진과 같은 말)
+        //    ⛔ 주석을 <CropSheet …> «속성 자리»에 넣으면 빌드가 깨진다 — 자식 자리에서만 된다
         <CropSheet
           image={cropSrc}
           title="사진 자르기"
@@ -121,6 +126,7 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete, onOpenRecipe
               모서리를 끌어 <b style={{ color: '#f0ede7' }}>남기고 싶은 부분만</b> 담아주세요.
             </>
           }
+          doneLabel="이 부분만 담기"
           onDone={async (img) => { setCropSrc(null); setPhoto(await downscale(img)) }}
           onSkip={async () => { const s = cropSrc; setCropSrc(null); setPhoto(await downscale(s)) }}
           onCancel={() => setCropSrc(null)}
