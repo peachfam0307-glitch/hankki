@@ -23,7 +23,7 @@ export default function CookedScreen() {
                   <div className="name">{r.title}</div>
                   <div className="t-sub" style={{ marginTop: 3 }}>{r.category}</div>
                 </div>
-                <span className="info-pill" style={{ fontSize: 12 }}>{r.cooked}번</span>
+                <span className="info-pill" style={{ fontSize: 14 }}>{r.cooked}번</span>
               </button>
               {i < cooked.length - 1 && <hr className="divider" />}
             </div>

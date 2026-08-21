@@ -220,7 +220,7 @@ export default function HomeScreen() {
             data-coach="import"
             onClick={() => nav.push({ name: 'import' })}
             aria-label="가져오기"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--brown)', color: '#fff', fontSize: 13, fontWeight: 700, padding: '8px 13px', borderRadius: 999 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 700, padding: '8px 13px', borderRadius: 999 }}
           >
             <Icon name="plus" size={16} color="#fff" stroke={2.4} /> 가져오기
           </button>
@@ -244,7 +244,7 @@ export default function HomeScreen() {
           onClick={() => nav.go('search')}
         >
           <Icon name="search" size={19} color="var(--text-sub)" />
-          <span style={{ fontSize: 14.5 }}>레시피, 재료, 태그를 검색해 보세요.</span>
+          <span style={{ fontSize: 15.5 }}>레시피, 재료, 태그를 검색해 보세요.</span>
         </button>
 
         {/* 📥📥 [2026-08-21 창업자 제보] *"**INBOX 나도 어딨는지 모르는데**"* → 입구를 «늘» 보이게 했다.
@@ -259,7 +259,7 @@ export default function HomeScreen() {
           style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderRadius: 14, background: 'var(--cream)', border: 'none', textAlign: 'left' }}
         >
           <Icon name={unsortedN > 0 ? 'edit' : 'inbox'} size={18} color="var(--brown)" stroke={1.9} />
-          <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700 }}>
+          <span style={{ flex: 1, fontSize: 15.5, fontWeight: 700 }}>
             {unsortedN > 0 ? `정리 안 한 레시피 ${unsortedN}개` : '임시보관함'}
           </span>
           <Icon name="chevron-right" size={17} color="var(--sand)" />
@@ -278,8 +278,8 @@ export default function HomeScreen() {
               onClick={() => { askOpenBackup(); setBkStep(0); nav.go('profile') }}
               style={{ flex: 1, textAlign: 'left', minWidth: 0 }}
             >
-              <div style={{ fontSize: 13.5, fontWeight: 700 }}>내 레시피가 {myN}개 쌓였어요</div>
-              <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>폰을 바꿔도 안 잃게 한 번 저장해둘까요?</div>
+              <div style={{ fontSize: 15.5, fontWeight: 700 }}>내 레시피가 {myN}개 쌓였어요</div>
+              <div className="t-sub" style={{ fontSize: 14, marginTop: 1 }}>폰을 바꿔도 안 잃게 한 번 저장해둘까요?</div>
             </button>
             <button className="press" onClick={() => { dismissBackupNudge(bkStep); setBkStep(0) }} aria-label="닫기" style={{ flex: '0 0 auto', padding: 6 }}>
               <Icon name="x" size={16} color="var(--sand)" />
@@ -316,7 +316,7 @@ export default function HomeScreen() {
                     (인라인은 `!important` 없이는 절대 못 이긴다 · v10.08 에 실제로 당했다) */}
                 <span className="news-title">한끼 소식</span>
                 {news.opened.length > 0 && (
-                  <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
+                  <span style={{ fontSize: 14, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
                 )}
               </div>
               <div className="t-sub news-sub">{newsLine}</div>
@@ -468,7 +468,7 @@ export default function HomeScreen() {
           onClick={() => nav.go('myrecipes')}
           style={{
             width: '100%', marginTop: 22, padding: 15, borderRadius: 'var(--r-md)',
-            background: 'var(--cream)', color: 'var(--brown)', fontSize: 14.5, fontWeight: 700,
+            background: 'var(--cream)', color: 'var(--brown)', fontSize: 15.5, fontWeight: 700,
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           }}
         >

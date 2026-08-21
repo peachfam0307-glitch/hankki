@@ -96,7 +96,7 @@ export default function SearchScreen() {
                   <div className="emoji-tile" style={{ width: 56, height: 56, borderRadius: '50%' }}>
                     <FoodIcon name={c.icon || guessFoodIcon(c.name)} size={34} />
                   </div>
-                  <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text)' }}>{c.name}</span>
+                  <span style={{ fontSize: 14.5, fontWeight: 500, color: 'var(--text)' }}>{c.name}</span>
                 </button>
               ))}
             </div>

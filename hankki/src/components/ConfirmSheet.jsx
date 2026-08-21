@@ -14,11 +14,11 @@ export default function ConfirmSheet({ title, message, confirmLabel = '확인', 
         <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
           <div className="emoji-sheet-head">
             <span>{title}</span>
-            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
           </div>
           <div style={{ padding: '2px 16px 0' }}>
             {message && (
-              <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.65, whiteSpace: 'pre-wrap', marginBottom: 16 }}>{message}</div>
+              <div className="t-sub" style={{ fontSize: 15.5, lineHeight: 1.65, whiteSpace: 'pre-wrap', marginBottom: 16 }}>{message}</div>
             )}
             <button
               className="btn-primary press"

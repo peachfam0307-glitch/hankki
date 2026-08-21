@@ -66,18 +66,18 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete, onOpenRecipe
       <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 0 }}>
         <div className="emoji-sheet-head">
           <span>요리 기록 남기기</span>
-          <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+          <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
         </div>
         <div style={{ padding: '2px 16px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 700, flex: 1, minWidth: 0 }}>{entry.title}</div>
+            <div style={{ fontSize: 16.5, fontWeight: 700, flex: 1, minWidth: 0 }}>{entry.title}</div>
             {onOpenRecipe && (
-              <button className="press" onClick={onOpenRecipe} style={{ flex: '0 0 auto', padding: '6px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 12.5, fontWeight: 700 }}>
+              <button className="press" onClick={onOpenRecipe} style={{ flex: '0 0 auto', padding: '6px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 14.5, fontWeight: 700 }}>
                 레시피 보기 →
               </button>
             )}
           </div>
-          <div className="t-sub" style={{ fontSize: 12, marginBottom: 12 }}>{new Date(entry.at).toLocaleDateString('ko-KR')} 요리</div>
+          <div className="t-sub" style={{ fontSize: 14, marginBottom: 12 }}>{new Date(entry.at).toLocaleDateString('ko-KR')} 요리</div>
 
           <div style={{ display: 'flex', justifyContent: 'center', margin: '2px 0 16px' }}>
             <Stars value={rating} onChange={setRating} />
@@ -107,10 +107,10 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete, onOpenRecipe
         {/* 저장 버튼은 항상 보이게 시트 하단에 고정 */}
         <div style={{ position: 'sticky', bottom: 0, background: 'var(--surface)', display: 'flex', gap: 8, padding: '10px 16px calc(6px + var(--safe-bottom))', boxShadow: '0 -6px 14px rgba(0,0,0,0.05)' }}>
           {onDelete && (
-            <button className="press" onClick={onDelete} style={{ padding: '13px 14px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 14 }}>삭제</button>
+            <button className="press" onClick={onDelete} style={{ padding: '13px 14px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 15 }}>삭제</button>
           )}
-          <button className="press" onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>나중에</button>
-          <button className="press" onClick={save} style={{ flex: 1.4, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 14.5 }}>저장하기</button>
+          <button className="press" onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 15 }}>나중에</button>
+          <button className="press" onClick={save} style={{ flex: 1.4, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 15.5 }}>저장하기</button>
         </div>
       </div>
 

@@ -20,12 +20,12 @@ export default function ReviewAskSheet({ onClose }) {
         <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 'calc(20px + var(--safe-bottom))' }}>
           <div className="emoji-sheet-head">
             <span>{REVIEW_AT}번째 한 끼예요</span>
-            <button className="press" onClick={close} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={close} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
           </div>
           <div style={{ padding: '2px 16px 0' }}>
             <div style={{ display: 'flex', gap: 13, alignItems: 'center', marginBottom: 16 }}>
               <img src={uiGomHeart} alt="" aria-hidden="true" width={62} height={62} style={{ width: 62, height: 62, objectFit: 'contain', flex: '0 0 auto' }} />
-              <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.65 }}>
+              <div className="t-sub" style={{ fontSize: 15.5, lineHeight: 1.65 }}>
                 한끼가 도움이 됐다면 한마디 남겨주실래요?<br />짧은 한 줄도 큰 힘이 돼요.
               </div>
             </div>

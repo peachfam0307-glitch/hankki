@@ -63,7 +63,7 @@ export function FoodIconSheet({ value, onChange, onClose, mode = 'dish', onPhoto
         <div className="sheet emoji-sheet" onClick={(e) => e.stopPropagation()}>
           <div className="emoji-sheet-head">
             <span>아이콘 선택</span>
-            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
           </div>
 
           {/* 🔎 찾기 — 아이콘이 300개 가까워 스크롤로는 못 찾는다(창업자 2026-07-29).
@@ -90,7 +90,7 @@ export function FoodIconSheet({ value, onChange, onClose, mode = 'dish', onPhoto
             <button
               className="press"
               onClick={onPhoto}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: 'calc(100% - 32px)', margin: '0 16px 10px', padding: '10px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 800, border: 'none' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: 'calc(100% - 32px)', margin: '0 16px 10px', padding: '10px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15.5, fontWeight: 800, border: 'none' }}
             >
               <Icon name="camera" size={17} color="var(--brown)" />
               내 사진으로 하기
@@ -107,7 +107,7 @@ export function FoodIconSheet({ value, onChange, onClose, mode = 'dish', onPhoto
               ) : (
                 <div className="empty" style={{ padding: '38px 20px' }}>
                   ‘{q}’으로 찾은 아이콘이 없어요.<br />
-                  <span className="t-sub" style={{ fontSize: 12.5 }}>다른 이름으로 찾거나, 아래 목록에서 골라주세요.</span>
+                  <span className="t-sub" style={{ fontSize: 14.5 }}>다른 이름으로 찾거나, 아래 목록에서 골라주세요.</span>
                 </div>
               )
             ) : (

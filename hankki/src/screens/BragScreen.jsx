@@ -165,7 +165,7 @@ export default function BragScreen() {
             )}
           </div>
           {query && (
-            <div className="t-sub" style={{ margin: '10px 2px 0', fontSize: 12.5 }}>
+            <div className="t-sub" style={{ margin: '10px 2px 0', fontSize: 14.5 }}>
               ‘{q.trim()}’ — 내 레시피 {list.length}개
             </div>
           )}
@@ -176,12 +176,12 @@ export default function BragScreen() {
         {/* 찾는 중엔 안내문을 감춘다 — 이미 무엇을 하려는지 아는 사람이다 */}
         {!query && (
           <>
-            <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 16 }}>
+            <div className="t-sub" style={{ fontSize: 14.5, lineHeight: 1.55, marginBottom: 16 }}>
               내 레시피를 <b style={{ color: 'var(--text)' }}>내가 꾸민 표지</b>나 <b style={{ color: 'var(--text)' }}>예쁜 랜덤 카드</b>로 친구한테 자랑하고, 표지로도 저장해요.
             </div>
 
             {/* 안내 — 자랑할 레시피를 눌러주세요(창업자 요청) */}
-            <div style={{ fontSize: 14.5, fontWeight: 800, color: 'var(--text)', margin: '2px 2px 11px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)', margin: '2px 2px 11px', display: 'flex', alignItems: 'center', gap: 6 }}>
               <img src={uiHandPoint} alt="" draggable={false} style={{ width: 22, height: 22, objectFit: 'contain', flex: '0 0 auto' }} />
               자랑할 레시피를 눌러주세요
             </div>
@@ -218,21 +218,21 @@ export default function BragScreen() {
         <Portal>
           <div className="sheet-mask" onClick={() => setPick(null)}>
             <div className="sheet" onClick={(e) => e.stopPropagation()}>
-              <div style={{ fontSize: 16.5, fontWeight: 800, textAlign: 'center', color: 'var(--text)' }}>{pick.title} 자랑하기</div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-sub)', textAlign: 'center', margin: '4px 0 16px' }}>어떻게 보낼까요?</div>
+              <div style={{ fontSize: 17.5, fontWeight: 800, textAlign: 'center', color: 'var(--text)' }}>{pick.title} 자랑하기</div>
+              <div style={{ fontSize: 14.5, color: 'var(--text-sub)', textAlign: 'center', margin: '4px 0 16px' }}>어떻게 보낼까요?</div>
 
               {/* 내가 꾸민 표지 — 주인공(먼저·강조) */}
               <button className="press" onClick={sendCover}
                 style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--brown)', border: 'none', marginBottom: 10, textAlign: 'left' }}>
                 <img src={uiGomHeart} alt="" draggable={false} style={{ width: 44, height: 44, objectFit: 'contain', flex: '0 0 auto' }} />
-                <span><span style={{ fontSize: 15.5, fontWeight: 800, color: '#fff' }}>내가 꾸민 표지 그대로</span><br /><span style={{ fontSize: 12.5, color: 'rgba(255,255,255,.9)' }}>{isDecorated(pick) ? '배경·스티커·효과 그대로 보내요' : '먼저 예쁘게 꾸며볼까요 →'}</span></span>
+                <span><span style={{ fontSize: 16.5, fontWeight: 800, color: '#fff' }}>내가 꾸민 표지 그대로</span><br /><span style={{ fontSize: 14.5, color: 'rgba(255,255,255,.9)' }}>{isDecorated(pick) ? '배경·스티커·효과 그대로 보내요' : '먼저 예쁘게 꾸며볼까요 →'}</span></span>
               </button>
 
               {/* 랜덤 카드 — 옵션 */}
               <button className="press" onClick={drawRandom}
                 style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--cream)', border: 'none', textAlign: 'left' }}>
                 <img src={uiGomThumb} alt="" draggable={false} style={{ width: 44, height: 44, objectFit: 'contain', flex: '0 0 auto' }} />
-                <span><span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>랜덤 카드로 뽑기</span><br /><span style={{ fontSize: 12.5, color: 'var(--text-sub)' }}>꼬르곰·펭펭이 매번 다르게 · 안 꾸며도 예쁘게 · 다시 뽑기</span></span>
+                <span><span style={{ fontSize: 16.5, fontWeight: 800, color: 'var(--text)' }}>랜덤 카드로 뽑기</span><br /><span style={{ fontSize: 14.5, color: 'var(--text-sub)' }}>꼬르곰·펭펭이 매번 다르게 · 안 꾸며도 예쁘게 · 다시 뽑기</span></span>
               </button>
             </div>
           </div>
@@ -258,8 +258,8 @@ export default function BragScreen() {
         <Portal>
           <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(30,26,22,.55)', backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
             <div className="ocr-spin" />
-            <div style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>예쁜 카드 만드는 중…</div>
-            <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5 }}>표지 + 레시피 2장 준비 중이에요</div>
+            <div style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>예쁜 카드 만드는 중…</div>
+            <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 14.5 }}>표지 + 레시피 2장 준비 중이에요</div>
           </div>
         </Portal>
       )}

@@ -125,23 +125,40 @@
 }
 
 /* ── 뮤트로 그레이지(기본 테마) — 오트밀 그레이지 배경 + 더스티 블루 포인트. 배경 뉴트럴로 빼서 꾸민 표지·음식이 주인공, 곰펭 웜톤과 웜+쿨 조화 ── */
+/* 🎨🎨 [창업자 확정 2026-08-21] 「톤 D」 — 그레이지를 «한 단» 밝게 ＋ 큰 카드를 배경 «위»로
+ *
+ * 📮 창업자 = *"우리 화면도 지금 **그레이지가 좀 칙칙하게느껴지거든? 톤을 올리면 좋겠어.**"*
+ *    → 시안 넷을 폰에서 보고 = *"아까 검수판은 **톤D 글자2**"*
+ *
+ * ⭐⭐ **「칙칙함」의 정체를 재서 찾았다 — 제일 큰 카드가 배경보다 «어두웠다».**
+ *    손보기 «전» 실측(홈 첫 화면 · 색이 차지한 넓이 순) —
+ *      --bg      #eeebe3  밝기 0.831   app-frame  329k
+ *      --cream   #e6e0d4  밝기 0.749   ⭐weekly-box 199k  ← 배경보다 **−0.083**
+ *      --surface #f7f3ec  밝기 0.899   겨우 20k          ← 밝은데 «거의 안 쓰였다»
+ *    📌 보통 카드는 배경보다 «밝아야» 떠 보이는데 우리는 반대였다. 그래서 한 덩어리로 읽혔다.
+ *
+ * ⛔⛔ **`--cream` 자체를 밝히면 안 된다** — 버튼·칩·알약이 **110곳**(CSS 35 ＋ 인라인 75)에서 쓴다.
+ *    그것들은 배경과 «달라야» 눌리는 것으로 보인다. → **「큰 카드」만** `--surface` 로 갈아끼웠다(아래 `.weekly-box`).
+ *
+ * ⛔ 다크·크림 테마는 «안 건드린다» — 이 판정은 «그레이지(기본)» 한 테마에 대한 것이다.
+ */
 :root[data-theme='greige'] {
-  --bg: #eeebe3; /* 오트밀 그레이지(노란기 확실히 뺌) */
-  --surface: #f7f3ec; /* 순백 대신 웜 오프화이트 */
+  --bg: #f4f1ea; /* 톤D — 오트밀 그레이지를 한 단 밝게(결은 남기고 전체를 올린다) */
+  --surface: #ffffff; /* 톤D — 큰 카드가 배경 «위»로 떠야 한다 */
   --cream: #e6e0d4;
   --cream-deep: #d9d1c2;
   --sand: #c2b298;
   --brown: #5878a0; /* 포인트 = 더스티 블루(펭 톤) — 크림의 주황과 구분·주황 남용 탈피, 웜 배경 위 쿨 악센트 */
   --text: #3a352e;
   --text-sub: #877e70;
-  --line: #e2dacd;
+  --line: #eae2d5; /* 톤D — 배경이 밝아졌으니 선도 같이 올린다(안 그러면 선만 진해 보인다) */
   --danger: #bd5a44;
-  --frame: #e7dfd2;
-  --nav-bg: rgba(238, 235, 227, 0.92);
-  --today-grad: linear-gradient(135deg, #efe9dc, #e6ddcc);
+  --frame: #ece5d8; /* 톤D */
+  --nav-bg: rgba(244, 241, 234, 0.92); /* 톤D — 배경과 같은 값이라야 하단바가 안 뜬다 */
+  --today-grad: linear-gradient(135deg, #f7f2e8, #efe7d9); /* 톤D */
   --tease: linear-gradient(100deg, #e6eef0, #d9e8ea);
   --tease-ic: #5f9298;
-  --thumb: linear-gradient(160deg, #f7f3ec, #e9e3d7);
+  --thumb: linear-gradient(160deg, #ffffff, #f5f1e9); /* 톤D */
 }
 
 * {
@@ -238,18 +255,18 @@ img {
 
 /* ---- 공용 타이포 ---- */
 .h-title {
-  font-size: 26px;
+  font-size: 27px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 .h-section {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 .t-sub {
   color: var(--text-sub);
-  font-size: 13px;
+  font-size: 15px;
   letter-spacing: -0.01em;
 }
 /* ♿ 손가락이 닿는 자리 44px 보장 — «보이는 크기는 그대로», 눌리는 범위만 넓힌다.
@@ -270,7 +287,7 @@ img {
 
 .t-more {
   color: var(--text-sub);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
@@ -290,7 +307,7 @@ img {
   background: var(--surface);
   border: 1px solid var(--line);
   color: var(--text-sub);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   white-space: nowrap;
   transition: all 0.15s ease;
@@ -308,7 +325,7 @@ img {
   border-radius: var(--r-pill);
   background: var(--cream);
   color: var(--brown);
-  font-size: 12.5px;
+  font-size: 14.5px;
   font-weight: 500;
 }
 
@@ -317,7 +334,7 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   padding: 3px 8px;
   border-radius: var(--r-pill);
@@ -352,7 +369,7 @@ img {
   width: 100%;
   background: var(--brown);
   color: #fff;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   padding: 16px;
   border-radius: var(--r-md);
@@ -486,7 +503,7 @@ img {
   text-align: center;
   color: var(--text-sub);
   padding: 48px 24px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.7;
   white-space: pre-line;
 }
@@ -516,7 +533,7 @@ img {
   align-items: center;
   justify-content: center;
   gap: 3px;
-  font-size: 10.5px;
+  font-size: 14px;
   letter-spacing: -0.02em;
   transition: transform 0.08s ease;
 }
@@ -552,7 +569,7 @@ img {
   flex: 1;
   padding: 9px;
   border-radius: var(--r-pill);
-  font-size: 13.5px;
+  font-size: 15.5px;
   font-weight: 600;
   color: var(--text-sub);
   transition: all 0.18s ease;
@@ -621,7 +638,7 @@ img {
   outline: none;
   background: none;
   flex: 1;
-  font-size: 14.5px;
+  font-size: 15.5px;
   color: var(--text);
 }
 .searchbar input::placeholder {
@@ -633,7 +650,7 @@ img {
   width: 108px;
 }
 .mini-card .name {
-  font-size: 12.5px;
+  font-size: 14.5px;
   font-weight: 600;
   margin-top: 7px;
   text-align: center;
@@ -656,7 +673,7 @@ img {
   min-width: 0;
 }
 .list-row .name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.02em;
   overflow: hidden;
@@ -672,7 +689,7 @@ img {
   display: flex; align-items: flex-start; gap: 7px;
   background: var(--cream); border-radius: var(--r-md);
   padding: 11px 13px; margin: 8px 0 12px;
-  font-size: 13.2px; line-height: 1.55; color: var(--text);
+  font-size: 15.2px; line-height: 1.55; color: var(--text);
 }
 .pantry-lead svg { flex: 0 0 auto; margin-top: 2px; }
 .pantry-lead b { color: var(--brown); }
@@ -747,7 +764,7 @@ img {
   border-radius: 999px;
   background: rgba(20, 19, 17, 0.55);
   color: #ffd66b;
-  font-size: 10.5px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.02em;
 }
@@ -759,7 +776,7 @@ img {
   padding: 14px 7px 5px;
   background: linear-gradient(transparent, rgba(20, 19, 17, 0.62));
   color: #fff;
-  font-size: 10.5px;
+  font-size: 14px;
   font-weight: 700;
   text-align: left;
   white-space: nowrap;
@@ -779,7 +796,7 @@ img {
   margin-bottom: 8px;
 }
 .cal-title {
-  font-size: 14.5px;
+  font-size: 15.5px;
   font-weight: 800;
 }
 .cal-nav {
@@ -797,7 +814,7 @@ img {
   gap: 2px;
 }
 .cal-week {
-  font-size: 10.5px;
+  font-size: 14px;
   font-weight: 700;
   text-align: center;
   margin-bottom: 3px;
@@ -814,12 +831,12 @@ img {
   justify-content: center;
   gap: 1px;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
 }
 .cal-num {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.15;
 }
@@ -873,9 +890,9 @@ img {
         7칸 격자에 760px 이면 한 칸 ~104px 이라 거의 정사각이 되고 숫자·아이콘이 제 크기를 찾는다.
      ⛔ 「꽉 채우기」와 안 부딪힌다 — 글·목록은 그대로 꽉 쓰고 **달력만** 가운데로 모은다. */
   .cal-card { max-width: 760px; margin-left: auto; margin-right: auto; }
-  .cal-day { aspect-ratio: auto; min-height: 74px; max-height: 92px; font-size: 15px; }
-  .cal-num { font-size: 14px; }
-  .cal-week { font-size: 12.5px; }
+  .cal-day { aspect-ratio: auto; min-height: 74px; max-height: 92px; font-size: 16px; }
+  .cal-num { font-size: 15px; }
+  .cal-week { font-size: 14.5px; }
   .cal-food { width: 42px; height: 42px; }
   .cal-food img { width: 42px; height: 42px; }
   /* ➖ **칸 사이 선** — 창업자 *"달력 사이에 선 안보임"*. 칸이 커질수록 「어디까지가 하루인지」가 흐려진다.
@@ -889,8 +906,8 @@ img {
    📌 「높이만 고치고 폭을 안 본 것」 = 한쪽만 고쳐 반쪽이 된 자리다. 칸은 «두 축»이 같이 정한다. */
 @media (min-width: 600px) and (max-height: 520px) {
   .cal-card { max-width: 480px; }
-  .cal-day { min-height: 44px; max-height: 50px; font-size: 13px; }
-  .cal-num { font-size: 13px; }
+  .cal-day { min-height: 44px; max-height: 50px; font-size: 15px; }
+  .cal-num { font-size: 15px; }
   .cal-food { width: 26px; height: 26px; }
   .cal-food img { width: 26px; height: 26px; }
 }
@@ -905,7 +922,7 @@ img {
   border-radius: 999px;
   background: var(--brown);
   color: #fff;
-  font-size: 8.5px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 13px;
   text-align: center;
@@ -937,17 +954,17 @@ img {
    ⛔⛔ 처음엔 위 `@media (min-width: 600px)` 블록에 넣었다가 **기본 규칙에 덮여 하나도 안 먹었다.**
       게이트 ⑪ 가 여섯 줄을 잡아냈다 — 만든 지 한 시간 만에 «내가» 같은 실수를 또 한 것이다. */
 @media (min-width: 600px) {
-  .cal-more { min-width: 17px; height: 16px; font-size: 10px; line-height: 16px; }
+  .cal-more { min-width: 17px; height: 16px; font-size: 14px; line-height: 16px; }
   .cal-diary { width: 17px; height: 17px; }
 }
 .grid-card .name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   margin-top: 8px;
   letter-spacing: -0.02em;
 }
 .grid-card .date {
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--text-sub);
   margin-top: 2px;
 }
@@ -1078,12 +1095,12 @@ img {
   min-width: 0;
 }
 .opt-row .t .a {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 .opt-row .t .b {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--text-sub);
   margin-top: 2px;
   /* ⛔ [2026-08-21] 두 줄이 되면 한글 낱말이 «가운데서» 잘렸다 — 「안 담겨 / 요」·「채워 / 요」·「재료· / 순서까지」.
@@ -1111,7 +1128,7 @@ img {
   color: var(--brown);
   border-radius: var(--r-pill);
   padding: 7px 14px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -1120,7 +1137,7 @@ img {
   display: flex;
   gap: 10px;
   padding: 9px 0;
-  font-size: 14.5px;
+  font-size: 15.5px;
   color: var(--text);
   align-items: flex-start;
   word-break: keep-all; /* 한글 단어가 줄 끝에서 중간에 잘리지 않게(띄어쓰기 기준으로만 줄바꿈) */
@@ -1185,11 +1202,11 @@ img {
    ✅ 글자를 조각보다 «앞»에 놓는다 — 효과는 배경 장식이니 글자 뒤로 지나가는 게 자연스럽다. */
 .done-strip > div { position: relative; z-index: 1; }
 .done-strip img { height: 46px; width: auto; display: block; }
-.done-strip b { display: block; font-size: 14.5px; color: var(--brown); }
-.done-strip span { display: block; font-size: 12.5px; color: var(--text-sub); margin-top: 1px; }
+.done-strip b { display: block; font-size: 15.5px; color: var(--brown); }
+.done-strip span { display: block; font-size: 14.5px; color: var(--text-sub); margin-top: 1px; }
 /* 재료 소제목 — [양념]·[소스]·[드레싱] 그룹 헤더 (불릿 없음) */
 .ing-head {
-  font-size: 12.5px;
+  font-size: 14.5px;
   font-weight: 800;
   color: var(--brown);
   margin: 13px 0 2px;
@@ -1206,7 +1223,7 @@ img {
   border-radius: 50%;
   background: var(--cream-deep);
   color: var(--brown);
-  font-size: 12.5px;
+  font-size: 14.5px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -1214,7 +1231,7 @@ img {
   flex: 0 0 auto;
 }
 .step .txt {
-  font-size: 14.5px;
+  font-size: 15.5px;
   line-height: 1.55;
   color: var(--text);
   padding-top: 2px;
@@ -1226,7 +1243,7 @@ img {
 }
 .field label {
   display: block;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-sub);
   margin-bottom: 7px;
@@ -1239,7 +1256,7 @@ img {
   background: var(--surface);
   border-radius: var(--r-sm);
   padding: 13px 14px;
-  font-size: 15.5px;
+  font-size: 16.5px;
   color: var(--text);
   outline: none;
   transition: border-color 0.15s ease;
@@ -1355,7 +1372,7 @@ img {
   align-items: center;
   gap: 12px;
   padding: 16px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   text-align: left;
   border-radius: 14px;
@@ -1378,7 +1395,7 @@ img {
   gap: 7px;
 }
 .shop-chip .nm {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
   letter-spacing: -0.02em;
@@ -1407,7 +1424,7 @@ img {
 }
 .mini-buy {
   flex: 0 0 auto;
-  font-size: 12.5px;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--brown);
   background: var(--cream);
@@ -1420,7 +1437,7 @@ img {
   background: var(--surface);
   border-radius: var(--r-sm);
   padding: 11px 12px;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text);
   outline: none;
 }
@@ -1484,7 +1501,7 @@ img {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px 12px;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
 }
 .emoji-scroll {
@@ -1509,14 +1526,14 @@ img {
   border: none;
   background: transparent;
   padding: 0;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text);
 }
 .ficon-search input:focus {
   outline: none;
 }
 .emoji-cat {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-sub);
   margin: 4px 2px 8px;
@@ -1530,7 +1547,7 @@ img {
 .emoji-cell {
   aspect-ratio: 1;
   border-radius: 12px;
-  font-size: 22px;
+  font-size: 23px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1564,7 +1581,7 @@ img {
 }
 /* 🏷 아이콘 식별용 이름 라벨(창업자 "음식 아래 이름 달아 식별되게") — 이미지엔 안 박고 글자로 */
 .ficon-name {
-  font-size: 10.5px;
+  font-size: 14px;
   line-height: 1.15;
   color: var(--text-sub);
   text-align: center;
@@ -1596,7 +1613,7 @@ img {
   color: #fff;
   padding: 12px 20px;
   border-radius: var(--r-pill);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   /* ⛔⛔ 토스트는 «무조건 맨 위»여야 한다 — 안 보이는 토스트는 없는 것과 같다.
      🔢 2026-08-13 실측 사고: z-index 가 100 이라 자르기 화면(CropSheet, zIndex 400)에 «가려졌다».
@@ -1622,45 +1639,45 @@ img {
 @keyframes slideUpBar { from { transform: translateY(28px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .timer-bar-fill { position: absolute; top: 0; bottom: 0; left: 0; background: rgba(255, 255, 255, 0.15); transition: width 0.3s linear; }
 .timer-bar-in { position: relative; display: flex; align-items: center; gap: 10px; padding: 11px 12px; }
-.tb-emoji { font-size: 22px; flex: 0 0 auto; }
-.tb-label { font-size: 12px; opacity: 0.82; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tb-time { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
-.tb-btn { flex: 0 0 auto; background: rgba(255, 255, 255, 0.16); color: #fff; font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 11px; display: flex; align-items: center; justify-content: center; }
+.tb-emoji { font-size: 23px; flex: 0 0 auto; }
+.tb-label { font-size: 14px; opacity: 0.82; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-time { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.tb-btn { flex: 0 0 auto; background: rgba(255, 255, 255, 0.16); color: #fff; font-size: 15px; font-weight: 700; padding: 8px 12px; border-radius: 11px; display: flex; align-items: center; justify-content: center; }
 .tb-btn.primary { background: rgba(255, 255, 255, 0.26); }
 
 /* 타이머 세팅 시트 */
 .timer-presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
-.timer-preset { padding: 14px 0; border-radius: 14px; background: var(--cream); font-size: 15px; font-weight: 700; color: var(--brown); transition: transform 0.08s ease; }
+.timer-preset { padding: 14px 0; border-radius: 14px; background: var(--cream); font-size: 16px; font-weight: 700; color: var(--brown); transition: transform 0.08s ease; }
 .timer-preset:active { transform: scale(0.95); }
 .timer-custom { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; }
 .timer-stepper { display: flex; align-items: center; gap: 10px; background: var(--cream); border-radius: 14px; padding: 8px 10px; }
 .timer-stepper button { width: 30px; height: 30px; border-radius: 9px; background: #fff; display: flex; align-items: center; justify-content: center; }
-.ts-val { min-width: 50px; text-align: center; font-size: 14px; color: var(--text); }
-.ts-val b { font-size: 20px; font-weight: 800; }
+.ts-val { min-width: 50px; text-align: center; font-size: 15px; color: var(--text); }
+.ts-val b { font-size: 21px; font-weight: 800; }
 
 /* 알림음 칩 */
 .sound-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.sound-chip { display: flex; align-items: center; gap: 6px; padding: 9px 13px; border-radius: 999px; background: var(--cream); font-size: 13px; font-weight: 600; color: var(--text); transition: transform 0.08s ease; }
+.sound-chip { display: flex; align-items: center; gap: 6px; padding: 9px 13px; border-radius: 999px; background: var(--cream); font-size: 15px; font-weight: 600; color: var(--text); transition: transform 0.08s ease; }
 .sound-chip.on { background: var(--cream-deep); box-shadow: inset 0 0 0 2px var(--sand); }
 .sound-chip:active { transform: scale(0.94); }
 
 /* 인분 조절 */
 .serv-row { display: flex; align-items: center; gap: 10px; margin: 2px 0 12px; }
-.serv-label { font-size: 13px; color: var(--text-sub); font-weight: 600; }
+.serv-label { font-size: 15px; color: var(--text-sub); font-weight: 600; }
 .serv-btn { width: 30px; height: 30px; border-radius: 9px; background: var(--cream); display: flex; align-items: center; justify-content: center; transition: transform 0.08s ease; }
 .serv-btn:active { transform: scale(0.9); }
-.serv-val { font-size: 15px; font-weight: 800; color: var(--text); min-width: 54px; text-align: center; }
-.serv-reset { font-size: 12px; color: var(--text-sub); text-decoration: underline; margin-left: 2px; }
+.serv-val { font-size: 16px; font-weight: 800; color: var(--text); min-width: 54px; text-align: center; }
+.serv-reset { font-size: 14px; color: var(--text-sub); text-decoration: underline; margin-left: 2px; }
 
 /* 고스트 버튼 */
-.btn-ghost { background: var(--cream); color: var(--brown); font-weight: 700; font-size: 15px; border-radius: 14px; padding: 15px 0; transition: transform 0.08s ease; }
+.btn-ghost { background: var(--cream); color: var(--brown); font-weight: 700; font-size: 16px; border-radius: 14px; padding: 15px 0; transition: transform 0.08s ease; }
 .btn-ghost:active { transform: scale(0.97); }
 
 /* ── 요리 모드 (풀스크린) ── */
 .cook { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; padding-top: var(--safe-top); }
 .cook-top { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
-.cook-title { flex: 1; text-align: center; font-size: 15px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cook-ing-btn { flex: 0 0 auto; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 13px; padding: 9px 14px; border-radius: 12px; }
+.cook-title { flex: 1; text-align: center; font-size: 16px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cook-ing-btn { flex: 0 0 auto; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 15px; padding: 9px 14px; border-radius: 12px; }
 .cook-progress { display: flex; gap: 5px; padding: 6px 16px 0; }
 .cp-seg { flex: 1; height: 5px; border-radius: 3px; background: var(--cream-deep); transition: background 0.2s ease; }
 .cp-seg.on { background: var(--brown); }
@@ -1673,7 +1690,7 @@ img {
    ⚠️ `justify-content:center` 만 두면 넘칠 때 **위쪽이 잘려 스크롤로도 못 본다**(flexbox 함정) →
       `safe center` 를 덧대 넘칠 땐 시작 정렬로 떨어지게. (모르는 브라우저는 이 줄만 무시하고 위가 남는다) */
 .cook-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; justify-content: safe center; text-align: center; padding: 20px 26px; gap: 24px; }
-.cook-stepno { font-size: 14px; font-weight: 800; color: var(--brown); letter-spacing: 0.04em; }
+.cook-stepno { font-size: 15px; font-weight: 800; color: var(--brown); letter-spacing: 0.04em; }
 .cook-stepno span { color: var(--sand); }
 /* 🍳🔠🔠 [창업자 확정 2026-08-21] 요리 모드 글씨 = **화면 «키»에 따라 세 단.**
    📮 창업자 = *"**요리시작모드 글씨는 사실 더 커도돼**"*
@@ -1713,7 +1730,7 @@ img {
    ⛔ **`min-height: 700px` 을 같이 건다** — 안 걸면 «폰 가로»(900×500)가 폭만 보고 38px 를 먹는다.
       키 500px 짜리 화면에 38px 는 두 줄이면 화면을 다 먹는다. */
 @media (min-width: 700px) and (min-height: 700px) { .cook-steptext { font-size: 38px; } }
-.cook-timer { display: inline-flex; align-items: center; gap: 7px; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 14px; padding: 12px 18px; border-radius: 14px; transition: transform 0.08s ease; }
+.cook-timer { display: inline-flex; align-items: center; gap: 7px; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 15px; padding: 12px 18px; border-radius: 14px; transition: transform 0.08s ease; }
 .cook-timer:active { transform: scale(0.96); }
 /* ⛔ `flex-shrink` 기본값이 1이라 자리가 모자라면 이 줄부터 눌린다 — 버튼 줄은 절대 안 줄어들게 못 박는다 */
 /* 📷📷 완성 사진 줄 — 「다 만들었어요」 «위». 창업자 확정 갈래 ⓒ (2026-08-21)
@@ -1727,7 +1744,7 @@ img {
 .cook-shot-add {
   flex: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 7px;
   border: 1.5px dashed var(--cream-deep); border-radius: 14px; background: none;
-  color: var(--brown); font-size: 14.5px; font-weight: 700; word-break: keep-all;
+  color: var(--brown); font-size: 15.5px; font-weight: 700; word-break: keep-all;
   transition: transform 0.08s ease;
 }
 .cook-shot-add:active { transform: scale(0.97); }
@@ -1739,7 +1756,7 @@ img {
 .cook-shot-cover {
   flex: 1; min-height: 46px; display: flex; align-items: center; gap: 9px;
   background: none; border: none; text-align: left; padding: 0;
-  font-size: 14px; font-weight: 600; color: var(--text); word-break: keep-all;
+  font-size: 15px; font-weight: 600; color: var(--text); word-break: keep-all;
 }
 .cook-shot-box {
   flex: 0 0 auto; width: 22px; height: 22px; border-radius: 7px;
@@ -1753,36 +1770,36 @@ img {
 }
 
 .cook-nav { flex: 0 0 auto; display: flex; gap: 10px; padding: 12px 16px calc(16px + var(--safe-bottom)); }
-.cook-navbtn { flex: 1; padding: 16px 0; border-radius: 15px; font-size: 16px; font-weight: 700; background: var(--cream); color: var(--text); transition: transform 0.08s ease; }
+.cook-navbtn { flex: 1; padding: 16px 0; border-radius: 15px; font-size: 17px; font-weight: 700; background: var(--cream); color: var(--text); transition: transform 0.08s ease; }
 .cook-navbtn.primary { background: var(--brown); color: #fff; flex: 1.4; }
 .cook-navbtn:disabled { opacity: 0.4; }
 .cook-navbtn:active { transform: scale(0.97); }
 
 /* 냉장고 재료함 — 유통기한 칩 */
-.exp-chip { flex: 0 0 auto; font-size: 11.5px; font-weight: 700; padding: 4px 9px; border-radius: 999px; }
+.exp-chip { flex: 0 0 auto; font-size: 14px; font-weight: 700; padding: 4px 9px; border-radius: 999px; }
 .exp-chip.exp-over { background: #f4e0d8; color: #b5502f; }
 .exp-chip.exp-soon { background: #f6e6d6; color: #c2703f; }
 .exp-chip.exp-mid { background: #eef0e6; color: #869657; }
 .exp-chip.exp-ok { background: var(--cream); color: var(--text-sub); }
-.chip-quick { padding: 8px 12px; border-radius: 10px; background: var(--cream); color: var(--brown); font-size: 12.5px; font-weight: 700; transition: transform 0.08s ease; }
+.chip-quick { padding: 8px 12px; border-radius: 10px; background: var(--cream); color: var(--brown); font-size: 14.5px; font-weight: 700; transition: transform 0.08s ease; }
 .chip-quick:active { transform: scale(0.94); }
 
 /* 요리 일지 */
 .diary-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.diary-note-preview { font-size: 13px; line-height: 1.5; color: var(--text); margin-top: 5px; background: var(--cream); padding: 7px 10px; border-radius: 10px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.diary-note-preview { font-size: 15px; line-height: 1.5; color: var(--text); margin-top: 5px; background: var(--cream); padding: 7px 10px; border-radius: 10px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .diary-photo { display: block; width: 100%; border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
 .diary-photo img { width: 100%; max-height: 220px; object-fit: cover; display: block; }
-.diary-photo-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; height: 116px; background: var(--cream); color: var(--text-sub); font-size: 13px; font-weight: 600; border-radius: 14px; }
-.diary-note { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 14px; line-height: 1.55; color: var(--text); resize: none; outline: none; background: var(--surface); font-family: inherit; }
+.diary-photo-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; height: 116px; background: var(--cream); color: var(--text-sub); font-size: 15px; font-weight: 600; border-radius: 14px; }
+.diary-note { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 15px; line-height: 1.55; color: var(--text); resize: none; outline: none; background: var(--surface); font-family: inherit; }
 .diary-note::placeholder { color: var(--text-sub); }
 
 /* 오늘 뭐 해먹지 */
 .today-card { display: flex; align-items: stretch; margin-top: 16px; background: var(--today-grad); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-soft); }
 .today-main { flex: 1; display: flex; align-items: center; gap: 14px; padding: 13px; min-width: 0; }
-.today-label { font-size: 12px; font-weight: 800; color: var(--brown); opacity: 0.85; }
-.today-title { font-size: 16.5px; font-weight: 800; color: var(--text); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.02em; }
-.today-reason { font-size: 12.5px; color: var(--text-sub); margin-top: 3px; }
-.today-refresh { flex: 0 0 auto; padding: 0 15px; font-size: 11.5px; font-weight: 700; line-height: 1.3; color: var(--brown); border-left: 1px solid rgba(107, 79, 58, 0.12); text-align: center; }
+.today-label { font-size: 14px; font-weight: 800; color: var(--brown); opacity: 0.85; }
+.today-title { font-size: 17.5px; font-weight: 800; color: var(--text); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.02em; }
+.today-reason { font-size: 14.5px; color: var(--text-sub); margin-top: 3px; }
+.today-refresh { flex: 0 0 auto; padding: 0 15px; font-size: 14px; font-weight: 700; line-height: 1.3; color: var(--brown); border-left: 1px solid rgba(107, 79, 58, 0.12); text-align: center; }
 .today-refresh:active { background: rgba(107, 79, 58, 0.05); }
 
 /* 탭 사용팁 */
@@ -1795,15 +1812,15 @@ img {
 .tip-btn:active { transform: scale(0.9); }
 .tip-row { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .tip-row:last-child { border-bottom: none; }
-.tip-emoji { font-size: 22px; flex: 0 0 auto; width: 30px; text-align: center; }
-.tip-head { font-size: 14.5px; font-weight: 700; color: var(--text); }
-.tip-body { font-size: 13px; line-height: 1.5; color: var(--text-sub); margin-top: 3px; }
+.tip-emoji { font-size: 23px; flex: 0 0 auto; width: 30px; text-align: center; }
+.tip-head { font-size: 15.5px; font-weight: 700; color: var(--text); }
+.tip-body { font-size: 15px; line-height: 1.5; color: var(--text-sub); margin-top: 3px; }
 
 /* 가져오기 도움말 */
 .imp-tip { padding: 13px 0; border-bottom: 1px solid var(--line); }
 .imp-tip:last-child { border-bottom: none; }
-.imp-tip-h { font-size: 14.5px; font-weight: 700; color: var(--brown); }
-.imp-tip-b { font-size: 13px; line-height: 1.7; color: var(--text); margin-top: 6px; }
+.imp-tip-h { font-size: 15.5px; font-weight: 700; color: var(--brown); }
+.imp-tip-b { font-size: 15px; line-height: 1.7; color: var(--text); margin-top: 6px; }
 
 /* 당겨서 새로고침(=스크롤 시 홈으로 튕김) 방지 */
 html, body { overscroll-behavior: none; }
@@ -2792,7 +2809,7 @@ html, body { overscroll-behavior: none; }
   0% { box-shadow: 0 0 0 0 rgba(255, 205, 110, 0.75), 0 0 18px rgba(255, 210, 120, 0.55); }
   100% { box-shadow: 0 0 0 14px rgba(255, 205, 110, 0), 0 0 18px rgba(255, 210, 120, 0.55); }
 }
-.coach-spark { font-size: 20px; animation: coachTwinkle 1.15s ease-in-out infinite; }
+.coach-spark { font-size: 21px; animation: coachTwinkle 1.15s ease-in-out infinite; }
 @keyframes coachTwinkle {
   0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
   50% { transform: scale(1.45) rotate(18deg); opacity: 0.75; }
@@ -3008,12 +3025,12 @@ html, body { overscroll-behavior: none; }
   flex: 0 0 auto;
   background: var(--brown); color: var(--surface);
   border-radius: 999px; padding: 3px 9px;
-  font-size: 11.5px; font-weight: 800; opacity: 1;
+  font-size: 14px; font-weight: 800; opacity: 1;
 }
 /* 🔢 대비 8.41 — 기준(4.5)의 **두 배**다. 창업자 걱정 *"너무 안읽히려나 싶고"* 에 숫자로 답한 자리 */
 .next-title {
   flex: 1; min-width: 0; margin: 0;
-  font-size: 15.5px; font-weight: 800; color: var(--text);
+  font-size: 16.5px; font-weight: 800; color: var(--text);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.02em;
 }
 /* ⛔ 「이유」·「보기」는 접는다 — 한 줄로 눕히면 들어갈 자리가 없다.
@@ -3025,7 +3042,7 @@ html, body { overscroll-behavior: none; }
       ⛔ 흰 채움(옛 값)은 베이지 위에서 카드보다 밝아 단추가 배경처럼 떠 보였다. */
 .next-cta {
   width: 100%; margin-top: 9px; padding: 9px 12px;
-  font-size: 13px; font-weight: 800; color: var(--surface);
+  font-size: 15px; font-weight: 800; color: var(--surface);
   background: var(--brown); border-radius: 10px; border: none;
 }
 .next-cta:active { transform: scale(0.98); }
@@ -3037,28 +3054,28 @@ html, body { overscroll-behavior: none; }
 .one-sheet { padding: 0 18px calc(14px + var(--safe-bottom)); }
 .one-head { display: flex; align-items: center; gap: 10px; padding: 4px 0 12px; }
 .one-title {
-  flex: 1; min-width: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.02em;
+  flex: 1; min-width: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.02em;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.one-close { flex: 0 0 auto; font-size: 14px; font-weight: 600; color: var(--text-sub); padding: 6px 2px; }
+.one-close { flex: 0 0 auto; font-size: 15px; font-weight: 600; color: var(--text-sub); padding: 6px 2px; }
 .one-note {
   width: 100%; margin-top: 12px; padding: 13px 14px;
   border: 1.5px solid var(--line); border-radius: 13px; background: var(--surface);
-  font: inherit; font-size: 15.5px; line-height: 1.5; color: var(--text); resize: none;
+  font: inherit; font-size: 16.5px; line-height: 1.5; color: var(--text); resize: none;
 }
 .one-note:focus { outline: none; border-color: var(--brown); }
 .one-note::placeholder { color: var(--sand); }
 /* ⭐ 별점은 메모 «아래»에 조용히 — 「한 줄」이 주인공이다 */
 .one-stars { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; }
-.one-stars-label { font-size: 12.5px; color: var(--text-sub); font-weight: 600; }
+.one-stars-label { font-size: 14.5px; color: var(--text-sub); font-weight: 600; }
 .one-foot { display: flex; gap: 9px; margin-top: 16px; }
 .one-later {
   flex: 1; padding: 14px; border-radius: 13px; background: var(--cream);
-  color: var(--text-sub); font-weight: 700; font-size: 14.5px;
+  color: var(--text-sub); font-weight: 700; font-size: 15.5px;
 }
 .one-save {
   flex: 1.7; padding: 14px; border-radius: 13px; background: var(--brown);
-  color: var(--surface); font-weight: 800; font-size: 15px; border: none;
+  color: var(--surface); font-weight: 800; font-size: 16px; border: none;
 }
 /* ⛔ 빈 채로 저장하면 카드가 안 사라져 「고장인가?」가 된다 — 못 누르는 걸 «보여준다» */
 .one-save:disabled { opacity: 0.42; }
@@ -3072,8 +3089,8 @@ html, body { overscroll-behavior: none; }
   padding: 10px 12px;
   margin-bottom: 14px;
 }
-.oneline-hint-head { font-size: 13.5px; font-weight: 800; color: var(--text); }
-.oneline-hint-sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+.oneline-hint-head { font-size: 15.5px; font-weight: 800; color: var(--text); }
+.oneline-hint-sub { font-size: 14px; color: var(--text-sub); margin-top: 2px; }
 
 /* 📌📌 지난번 메모 = «포스트잇처럼» 자동으로 붙는다 (창업자 2026-08-19)
    📮 창업자 = *"약간 포스트잇 붙이듯이. **자동으로 붙여주면 유저는 편하겠지**"*
@@ -3210,8 +3227,8 @@ html, body { overscroll-behavior: none; }
   border: none;
   text-align: left;
 }
-.news-title { font-size: 13.5px; font-weight: 800; color: var(--text); }
-.news-sub { font-size: 11.5px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.news-title { font-size: 15.5px; font-weight: 800; color: var(--text); }
+.news-sub { font-size: 14px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* ⚠️ `.today-card` 의 `margin-top: 16px` 을 지운다 — 이제 `.home-pair` 의 gap 이 간격을 만든다.
    안 지우면 두 칸이 세로로 어긋난다(왼쪽만 위로 붙는다). */
 .home-pair > .today-card { margin-top: 0; }
@@ -3223,11 +3240,17 @@ html, body { overscroll-behavior: none; }
   margin-top: 14px;
   padding: 13px 14px 12px;
   border-radius: 16px;
-  background: var(--cream);
+  /* 🎨 [창업자 확정 2026-08-21 · 톤D] `--cream` → `--surface`
+   * ⭐ 홈에서 «제일 넓은» 카드다(실측 199k px² · 배경 다음으로 크다). 그런데 `--cream` 은
+   *    배경보다 **어두웠다**(0.749 vs 0.831) → 카드가 배경에 «가라앉아» 한 덩어리로 읽혔다.
+   *    그게 창업자가 말한 「칙칙함」의 정체다.
+   * ⛔ `--cream` 자체를 밝히지 «않았다» — 버튼·칩·알약 110곳이 그 색을 쓰고,
+   *    그것들은 배경과 «달라야» 눌리는 것으로 보인다. 그래서 **이 카드만** 갈아끼운다. */
+  background: var(--surface);
 }
-.weekly-kicker { font-size: 12px; font-weight: 800; color: var(--brown); letter-spacing: 0.02em; }
-.weekly-title { font-size: 17px; font-weight: 800; margin-top: 5px; }
-.weekly-why { font-size: 12.5px; margin-top: 3px; line-height: 1.5; }
+.weekly-kicker { font-size: 14px; font-weight: 800; color: var(--brown); letter-spacing: 0.02em; }
+.weekly-title { font-size: 18px; font-weight: 800; margin-top: 5px; }
+.weekly-why { font-size: 14.5px; margin-top: 3px; line-height: 1.5; }
 .weekly-box > .weekly-row { margin-top: 11px; }
 
 @media (min-width: 700px) {
@@ -3307,7 +3330,7 @@ html, body { overscroll-behavior: none; }
     display: block; width: 100%;
     /* 펭펭 30px ＋ gap 9px = 라벨 알약 왼쪽에 딱 맞춰 들여쓴다 */
     margin: 5px 0 0 39px;
-    font-size: 13px; font-weight: 700; color: var(--text-sub);
+    font-size: 15px; font-weight: 700; color: var(--text-sub);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
 
@@ -3320,20 +3343,20 @@ html, body { overscroll-behavior: none; }
   /* ⛔ 여기에 `.week-pair.two` 를 두면 «안 된다» — 아래 가로 블록에 있다. 이유는 그쪽 주석에. */
 
   /* 🔠 글자 키우기 — 칸이 커진 만큼 글도 커져야 한 판으로 읽힌다 */
-  .news-title { font-size: 16.5px; }
-  .news-sub { font-size: 13.5px; }
-  .today-label { font-size: 14px; }
-  .today-title { font-size: 21px; }
-  .today-reason { font-size: 14px; }
+  .news-title { font-size: 17.5px; }
+  .news-sub { font-size: 15.5px; }
+  .today-label { font-size: 15px; }
+  .today-title { font-size: 22px; }
+  .today-reason { font-size: 15px; }
   .today-card { --today-thumb: 88px; }
-  .weekly-kicker { font-size: 13.5px; }
-  .weekly-title { font-size: 24px; }
-  .weekly-why { font-size: 15px; }
+  .weekly-kicker { font-size: 15.5px; }
+  .weekly-title { font-size: 25px; }
+  .weekly-why { font-size: 16px; }
 
   /* 🔠 표지 아래 레시피 이름 — 홈·레시피·레꾸자랑·검색·즐겨찾기·냉장고가 «한 곳»에서 같이 커진다
      (창업자 *"나머지 탭들도 마찬가지"* — `.grid-card`·`.mini-card` 를 다 같이 쓴다) */
-  .grid-card .name { font-size: 17px; }
-  .mini-card .name { font-size: 15px; }
+  .grid-card .name { font-size: 18px; }
+  .mini-card .name { font-size: 16px; }
 
   /* 🔠🔠 [창업자 확정 2026-08-21] **패드는 «글씨크기만» 키운다.**
      📮 창업자 = *"**패드는 글씨크기만 키우면 좋겠어**"*
@@ -3346,14 +3369,23 @@ html, body { overscroll-behavior: none; }
      ⛔ **폰은 한 글자도 안 바뀐다** — 여기는 `min-width: 700px` 안이다.
      ⚠️ 괄호 안은 **실측한 폰 값**이다 — ⛔CSS 파일에서 옮겨 적지 말 것.
         (파일에 적힌 값과 화면에 그려진 값이 다르다. `.t-sub` 는 파일엔 13px 인데 화면은 11.5px 다) */
-  .t-sub { font-size: 14.5px; }                 /* 폰 11.5 — 다섯 탭 전부에 나오는 보조 글자 */
-  .seg { font-size: 15px; }                     /* 폰 13.5 — 탭 안 칸막이 단추 */
-  .pill { font-size: 14.5px; }                  /* 폰 13   — 칩 */
-  .shop-chip .nm { font-size: 14.5px; }         /* 폰 12   — 장보기 제품 이름(84% 의 주범) */
-  .grid-card .date { font-size: 13px; }         /* 폰 11.5 — 레시피 카드 날짜(52덩이로 제일 많다) */
-  .news-sub { font-size: 14.5px; }              /* ⬆위 줄 13.5 에서 올린다 */
-  .weekly-kicker { font-size: 14.5px; }         /* ⬆위 줄 13.5 에서 올린다 (화면 실측 12) */
-  .next-label { font-size: 12.5px; }            /* 폰 11.5 — 알약 라벨이라 조금만(창업자 확정 「라벨알약」) */
+  /* 🔁🔁 [2026-08-21 저녁 · 「글자 2단」을 넣으면서 다시 잡았다]
+     ⛔⛔ **「글자 2단」이 이 판정을 «없앨 뻔했다».** 글자2는 폰에 **바닥 14px** 을 깔아 폰을 크게 올렸는데,
+        패드 값은 이미 13 이상이라 ＋1 밖에 안 올랐다 → **패드와 폰 차이가 0.5~1.5px 로 줄었다.**
+        (`.pill` 은 폰 15 · 패드 15.5 = **0.5px 차이** — 창업자가 *"패드는 글씨크기만 키우면 좋겠어"* 라고
+         한 것이 «눈에 안 보이게» 되는 것이다)
+     ✅ 그래서 **창업자가 판정할 때 «보았던 차이»를 그대로 되살린다** — 절대값이 아니라 **«벌어진 폭»**을 지킨다.
+        창업자가 고른 건 「패드가 폰보다 이만큼 크다」이지 「패드가 14.5px 이다」가 아니었다.
+     🔢 괄호 = **화면 실측 폰값(글자2 뒤) ＋ 원래 벌어져 있던 폭**
+     🔒 이 값들은 `_repro-패드글씨-0821.mjs` 가 지킨다 — 어긋나면 배포가 막힌다. */
+  .t-sub { font-size: 17px; }                   /* 폰 14   ＋3.0 — 다섯 탭 전부에 나오는 보조 글자 */
+  .seg { font-size: 17px; }                     /* 폰 15.5 ＋1.5 — 탭 안 칸막이 단추 */
+  .pill { font-size: 16.5px; }                  /* 폰 15   ＋1.5 — 칩 */
+  .shop-chip .nm { font-size: 16.5px; }         /* 폰 14   ＋2.5 — 장보기 제품 이름(84% 의 주범) */
+  .grid-card .date { font-size: 15.5px; }       /* 폰 14   ＋1.5 — 레시피 카드 날짜(52덩이로 제일 많다) */
+  .news-sub { font-size: 17px; }                /* 폰 14   ＋3.0 */
+  .weekly-kicker { font-size: 16.5px; }         /* 폰 14   ＋2.5 */
+  .next-label { font-size: 15.5px; }            /* 폰 14   ＋1.5 — 알약 라벨이라 조금만(창업자 확정 「라벨알약」) */
   /* ⛔ 일기 달력 숫자(`.cal-num`)는 **여기서 안 올린다** — 아래 가로 블록에 이미
      같은 이름의 규칙이 «둘» 더 있어(877·893줄) 여기서 올려도 그쪽이 덮는다.
      ⚠️ 2026-08-21 에 그걸 모르고 올렸다가 재현판이 「11px 그대로」로 잡아냈다(규칙 12 가 값을 했다).
@@ -3474,7 +3506,7 @@ html, body { overscroll-behavior: none; }
   background: var(--surface);
   box-shadow: var(--shadow-talk);
   color: var(--text-sub);
-  font-size: 12.5px;
+  font-size: 14.5px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
