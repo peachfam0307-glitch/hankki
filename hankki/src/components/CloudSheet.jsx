@@ -30,6 +30,7 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
   const [구름, set구름] = useState(null) // { 있나, 언제, 레시피, 일기 }
   const [바쁨, set바쁨] = useState('')
   const [탈, set탈] = useState('')
+  const [자세히, set자세히] = useState(false)   // 「자세히」 접기 — 통상은 닫혀 있다
 
   // ⭐ 시트가 뜨자마자 파이어베이스를 «몰래» 받아 둔다.
   //   ⛔ 안 그러면 [로그인]을 누른 뒤에 받느라 사이가 뜨고, 그 사이에 «누른 손짓»이 끊겨 팝업이 막힌다.
@@ -81,15 +82,38 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
 
             {사람 === null && (
               <>
-                <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.65, marginBottom: 12, whiteSpace: 'pre-line' }}>
-                  지금 레시피는 <b>이 폰 안에만</b> 있어요.{'\n'}구글 계정에 매어 두면 <b>새 폰·패드에서도 그대로</b> 나와요.
+                {/* ⚠️ 안내는 «두 줄»까지만 (창업자 2026-08-21 — *"안내는 심플 명확하게"* · *"통상적인 수준에서 하자"*)
+                    ⛔ 내 첫 안은 「미리 알아둘 것」 세 줄이었고 창업자가 잡았다 —
+                       *"미리알아둘것은 무슨말인지 이해가안된다"* · *"다른앱들 저런거 안내해주는걸 못본거같은데"*
+                    ⭐ 남긴 한 줄 = **사진** 하나뿐이다. 그것만 «기대와 다른 것»이라, 안 알리면
+                       나중에 *"내 음식 사진 어디 갔어"* 가 된다. 나머지는 단추 이름이 이미 말한다.
+                    📌 그리고 창업자 지적대로 **「사진」이 아니라 「내가 넣은 사진」**이다 —
+                       기본 레시피 사진은 «주소»라 그대로 따라온다. 뭉뚱그리면 유저가 반대로 읽는다. */}
+                <div className="t-sub" style={{ fontSize: 13, lineHeight: 1.65, marginBottom: 6, whiteSpace: 'pre-line' }}>
+                  새 폰·패드에 깔아도 레시피가 <b>그대로 따라와요.</b>{'\n'}내가 넣은 사진은 올라가지 않아요.
                 </div>
-                <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 14, fontSize: 12.5, lineHeight: 1.7, whiteSpace: 'pre-line' }}>
-                  <b style={{ color: 'var(--brown)' }}>미리 알아둘 것</b>{'\n'}
-                  · <b>사진은 안 올라가요</b> — 글자만 올려요. 사진은 폰과 백업 파일에 그대로 있어요{'\n'}
-                  · <b>저절로 안 해요</b> — 눌러야 올라가고 눌러야 내려와요{'\n'}
-                  · 잠가둔 일기는 <b>잠긴 채로</b> 올라가요
-                </div>
+                {/* 📖 자세한 것은 «눌러야» 펴진다 — 장보기의 「더보기·접기」와 같은 모양이라 처음 보는 게 아니다
+                    📮 창업자 = *"로그인하면 뭐가바뀌는지 안내버튼을 누르면 자세히 읽어보게한다거나"* */}
+                <button
+                  className="press"
+                  onClick={() => set자세히((v) => !v)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-sub)', fontSize: 12.5, fontWeight: 600, padding: '6px 0', marginBottom: 자세히 ? 8 : 14 }}
+                >
+                  {자세히 ? '접기' : '뭐가 올라가는지 자세히'}
+                  <Icon name={자세히 ? 'chevron-up' : 'chevron-down'} size={15} color="var(--sand)" />
+                </button>
+                {/* 📢 안내문은 «첫 화면(CloudGate)과 한 글자도 다르지 않게» 둔다.
+                    ⛔ 같은 내용을 두 곳에서 다르게 쓰면 유저가 「어느 게 맞지?」가 된다.
+                       (⛓「같은 기능은 탭이 달라도 같은 이름」과 같은 규칙) */}
+                {자세히 && (
+                  <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '14px 15px', marginBottom: 14, fontSize: 12.5, lineHeight: 1.85, whiteSpace: 'pre-line' }}>
+                    · 새 폰이나 패드에 다시 깔아도 레시피 · 일기 · 냉장고 · 장보기가 그대로 이어져요.{'\n'}
+                    · 꾸민 표지도 같이 저장돼요 (스티커 · 글씨 · 배경).{'\n'}
+                    · <b>직접 넣은 사진은 저장되지 않아요.</b> 사진은 이 폰과 백업 파일에 그대로 남아요.{'\n'}
+                    · 저장과 불러오기는 <b>버튼을 눌렀을 때만</b> 돼요.{'\n'}
+                    · 잠가둔 일기는 잠긴 채로 저장돼요.
+                  </div>
+                )}
                 <button className="btn-primary press" disabled={!!바쁨} onClick={눌러로그인}>
                   {바쁨 === '로그인' ? '기다려 주세요…' : '구글로 로그인'}
                 </button>

@@ -13,7 +13,8 @@ import TimerBar from './components/TimerBar'
 import Icon from './components/Icon'
 import { useTimer } from './timer'
 import Onboarding, { needsOnboarding } from './components/Onboarding'
-import { askOpenBackup } from './nudges'
+import CloudGate from './components/CloudGate'
+import { askOpenBackup, needsCloudGate } from './nudges'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
@@ -76,6 +77,10 @@ export default function App() {
   // TWA 는 '히스토리가 다 떨어진 상태에서 시스템 뒤로가기'라야 종료된다 → 아래 exitArm 참고.
   const exitArm = useRef(0)
   const [onboard, setOnboard] = useState(() => needsOnboarding()) // 첫 실행 앱 소개
+  // ☁️ 클라우드 첫 화면 — 소개보다 «앞». 아직 안 본 사람 ＋ 아직 앱을 안 써본 사람에게만.
+  //   ⛔ 이미 쓰고 있던 사람에겐 안 띄운다 — 잘 쓰던 앱이 갑자기 로그인 화면으로 시작하면 그건 «벽»으로 읽힌다.
+  //      그 사람들은 홈 한 줄에서 만난다(규칙 18 ⓙ — 이미 깔린 폰).
+  const [cloudGate, setCloudGate] = useState(() => needsCloudGate() && needsOnboarding())
   const backHandlers = useRef([]) // 화면들이 등록한 '뒤로가기 먼저 처리' 핸들러(비모달 상태·필터용)
   const modalLayers = useRef([]) // 열려 있는 모달·오버레이(각자 진짜 히스토리 칸 1개 소유)
   const pendingBack = useRef(0) // 같은 틱에 버튼으로 동시에 닫힌 모달 칸 수(한 번에 go(-n))
@@ -436,6 +441,11 @@ export default function App() {
 
         {/* 🔁 「이미 다른 기기에서 쓰고 있었어요」 = 설정으로 보내며 «백업 시트를 열라는 쪽지»를 남긴다.
             (`go(tab)` 은 인자를 못 받아서 `nudges.js` 의 쪽지로 넘긴다 — 홈 백업 유도 줄과 같은 길) */}
+        {/* ☁️ 클라우드 첫 화면 — 소개보다 «앞»에 선다.
+            📮 창업자 2026-08-21 = *"새유저는 그냥 첫화면에 로그인하고시작 «왜냐면 온보드는 그냥 건너뛰기할수도있어»"*
+            ⛔ 소개 «마지막 장»에 두려던 내 안을 창업자가 잡았다 — 「건너뛰기」가 매 장 오른쪽 위에 있어 첫 장에서 통째로 넘어간다. */}
+        {cloudGate && <CloudGate onDone={() => setCloudGate(false)} />}
+
         {onboard && (
           <Onboarding
             onDone={() => setOnboard(false)}

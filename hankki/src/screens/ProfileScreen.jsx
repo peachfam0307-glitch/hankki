@@ -17,7 +17,7 @@ import LabSheet from '../components/LabSheet'
 import CloudSheet from '../components/CloudSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { cropSquare } from '../utils'
-import { takeOpenBackup, backupDone } from '../nudges'
+import { takeOpenBackup, backupDone, takeOpenCloud } from '../nudges'
 import { 백업용잠그기, 잠긴장수, 백업풀기 } from '../diaryLock'
 
 // 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
@@ -50,7 +50,8 @@ export default function ProfileScreen() {
   const [checking, setChecking] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
   const [lab, setLab] = useState(false) // 한끼연구소(의견·설문·오류) 시트
-  const [cloud, setCloud] = useState(false) // ☁️ 클라우드 저장 시트 (창업자 확정 「1번」)
+  // ☁️ 홈 한 줄로 들어왔으면 도착하자마자 클라우드 시트를 연다(백업 쪽지와 같은 길)
+  const [cloud, setCloud] = useState(() => takeOpenCloud())
   // ⛔⛔ `useLayerBack` 은 «반드시» 위 `useState` «아래»에 둔다 —
   //   위에 두면 `cloud` 를 선언 «전»에 읽어 `Cannot access before initialization` 으로 **설정 화면이 통째로 죽는다.**
   //   📌 2026-08-21 에 실제로 그렇게 냈다. 빌드도 통과하고 스모크도 통과했다 — **화면을 열어서야 드러났다**(규칙 21).

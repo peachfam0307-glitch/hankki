@@ -85,6 +85,14 @@ function 사람으로(user) {
   return { 번호, 이름: user.displayName || '', 사진: user.photoURL || '' }
 }
 
+// 🏷 «로그인해 둔 적이 있나»를 폰에 작게 적어 둔다.
+//   ⭐⭐ 왜 = 홈 화면이 이걸 물어야 하는데, 진짜로 물으려면 파이어베이스(167KB)를 받아야 한다.
+//      그러면 «로그인 안 한 사람도» 첫 화면에서 167KB 를 받는다 — 늦게 부르기가 통째로 무의미해진다.
+//   ⛔ 이건 «진짜 로그인 상태»가 아니라 «표식»이다 — 로그인 판정에 쓰지 말 것. 홈 한 줄을 띄울지에만 쓴다.
+const 표식칸 = 'hankki:cloud:on'
+export const 로그인해뒀나 = () => { try { return localStorage.getItem(표식칸) === '1' } catch { return false } }
+const 표식쓰기 = (v) => { try { v ? localStorage.setItem(표식칸, '1') : localStorage.removeItem(표식칸) } catch { /* noop */ } }
+
 // 로그인 — ⭐팝업. TWA 안에서 «된다»는 걸 2026-08-21 창업자 폰으로 확인했다.
 //   ⛔ `signInWithRedirect` 는 우리 환경(GitHub Pages)에서 깨진다 — 서드파티 쿠키를 쓴다.
 export async function 로그인() {
@@ -93,12 +101,14 @@ export async function 로그인() {
   const 사람 = 사람으로(r.user)
   // ⛔ 구글 번호가 없으면 «계속하지 않는다» — Firebase UID 로 대신 넣으면 보험 ①이 조용히 깨진다.
   if (!사람) throw new Error('구글 번호를 못 받았어요')
+  표식쓰기(true)
   return 사람
 }
 
 export async function 로그아웃() {
   const { A, auth } = await 붙기()
   await A.signOut(auth)
+  표식쓰기(false)
 }
 
 // 로그인 상태를 지켜본다. 되돌려주는 함수를 부르면 그만 본다.

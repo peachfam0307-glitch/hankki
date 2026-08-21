@@ -1,0 +1,187 @@
+import { useEffect, useState } from 'react'
+import Icon from './Icon'
+import PromptSheet from './PromptSheet'
+import { useStore } from '../store'
+import { APP_TAGLINE } from '../version'
+import { markCloudGateSeen } from '../nudges'
+import { 잠긴장수, 백업풀기 } from '../diaryLock'
+import { 로그인, 요약, 내려받기, 미리붙기 } from '../cloud'
+import duoHi from '../assets/sharepool/duo_hi.png'
+
+// ☁️🚪 클라우드 첫 화면 — 앱을 켜자마자 «맨 처음» 뜬다. 소개보다 앞.
+//
+// 📮 창업자 2026-08-21 = *"새유저는 그냥 첫화면에 로그인하고시작
+//    **왜냐면 온보드는 그냥 건너뛰기할수도있어**"*
+// ⛔⛔ 내 첫 안은 소개 «마지막 장»이었고 창업자가 잡았다 — 「건너뛰기」가 매 장 오른쪽 위에 있어
+//    **첫 장에서 통째로 넘어간다**(`Onboarding.jsx:543` 실측). 마지막 장은 못 보는 사람이 생긴다.
+//
+// ⭐⭐ **벽이 아니다** — 「그냥 둘러볼게요」로 지나간다. 그래도 «안 보고» 지나갈 수는 없다.
+//    📌 이미 깔린 사람도 안 막힌다(그 사람들은 홈 한 줄로 만난다).
+//
+// ⭐ 덤 = 로그인하면 **클라우드에 자기 것이 있는지 우리가 바로 안다** → 「가져올까요?」 한 번이면 끝.
+//    그 전엔 「이미 다른 기기에서 쓰고 있었어요 · 백업 불러오기」를 «찾아서» 눌러야 했고 파일도 있어야 했다.
+//
+// ⚠️ 안내는 «두 줄»까지만 — 창업자 *"안내는 심플 명확하게"* · *"통상적인 수준에서 하자"*
+//    자세한 것은 「자세히」를 눌러야 펴진다(장보기의 「더보기·접기」와 같은 모양).
+
+export default function CloudGate({ onDone }) {
+  const { importAll } = useStore()
+  const [열림, set열림] = useState(false)   // 「자세히」 펼침
+  const [바쁨, set바쁨] = useState('')
+  const [탈, set탈] = useState('')
+  const [찾음, set찾음] = useState(null)     // 클라우드에 있던 것 { 레시피, 일기, 언제 }
+  const [잠금물음, set잠금물음] = useState(null)
+
+  // ⛔ 팝업은 누른 «그 순간» 열려야 브라우저가 안 막는다 → 화면이 뜰 때 미리 받아 둔다.
+  useEffect(() => { 미리붙기() }, [])
+
+  const 지나가기 = () => { markCloudGateSeen(); onDone() }
+
+  const 눌러로그인 = async () => {
+    set탈(''); set바쁨('로그인')
+    try {
+      await 로그인()
+      const r = await 요약()
+      if (r.있나 && (r.레시피 || r.일기)) { set찾음(r); set바쁨(''); return }
+      // 클라우드가 비어 있으면 = 처음 쓰는 사람. 그냥 들어간다(나중에 설정에서 올린다).
+      지나가기()
+    } catch (e) {
+      set탈(고운말(e)); set바쁨('')
+    }
+  }
+
+  const 가져오기 = async () => {
+    set탈(''); set바쁨('가져오기')
+    try {
+      const data = await 내려받기()
+      if (!data) { 지나가기(); return }
+      importAll(data)
+      const n = 잠긴장수(data.diary)
+      // ⭐ 잠긴 일기는 «먼저 담고» 비번을 묻는다 — 비번을 먼저 물으면 「모르겠다」는 사람이 다 못 가져온다.
+      if (n) { set잠금물음({ n, data }); set바쁨(''); return }
+      지나가기()
+    } catch (e) {
+      set탈(고운말(e)); set바쁨('')
+    }
+  }
+
+  const 잠금풀기 = async ({ pin }) => {
+    const p = String(pin || '').trim()
+    const d = 잠금물음
+    set잠금물음(null)
+    if (!p || !d) { 지나가기(); return }
+    try {
+      const { 일기목록, 푼수 } = await 백업풀기(d.data.diary, p)
+      if (푼수) importAll({ ...d.data, diary: 일기목록 })
+    } catch { /* 못 풀면 잠긴 채로 둔다 — 안 지운다 */ }
+    지나가기()
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 210, background: 'var(--bg)',
+      display: 'flex', flexDirection: 'column', justifyContent: 'center',
+      padding: 'calc(var(--safe-top) + 24px) 24px calc(var(--safe-bottom) + 28px)',
+      overflowY: 'auto',
+    }}>
+      <img src={duoHi} alt="" style={{ width: 168, maxWidth: '52%', margin: '0 auto 18px', display: 'block' }} />
+
+      {!찾음 ? (
+        <>
+          {/* ⭐⭐ 통상적인 앱 로그인 화면 그대로 — 이름 · 한 줄 · 단추.
+              📮 창업자 2026-08-21 = *"아니 그냥 «통상적인 앱들 가입하는 창» 있잖아"* · *"매어둘까요 그런거말고"*
+              ⛔ 내 첫 안은 「레시피를 계정에 매어둘까요?」였다 — 우리끼리 쓰는 말이라 처음 온 사람은 못 알아듣는다.
+                 게다가 로그인 화면에서 «기능 설명»을 하면 그 자체로 낯설다. 앱들은 이름과 단추만 둔다.
+              📌 「왜 로그인하나」는 아래 «작은 줄»로 내렸다 — 궁금한 사람만 편다. */}
+          <div style={{ textAlign: 'center', marginBottom: 26 }}>
+            <div style={{ fontSize: 30, fontWeight: 800, color: 'var(--brown)', letterSpacing: '-.02em' }}>한끼</div>
+            <div className="t-sub" style={{ fontSize: 14, marginTop: 7 }}>{APP_TAGLINE}</div>
+          </div>
+
+          <button className="btn-primary press" style={{ width: '100%' }} disabled={!!바쁨} onClick={눌러로그인}>
+            {바쁨 === '로그인' ? '기다려 주세요…' : 'Google로 시작하기'}
+          </button>
+          {/* ⛔ 이 줄을 «버튼»으로 만들지 않는다 — 둘이 같은 무게로 서면 「뭘 눌러야 하나」가 된다.
+              (소개 마지막 장의 「이미 다른 기기에서…」와 같은 이유) */}
+          <button
+            className="press" onClick={지나가기} disabled={!!바쁨}
+            style={{ width: '100%', marginTop: 13, color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600, padding: '6px 0' }}
+          >
+            둘러보기
+          </button>
+
+          {/* 📖 「왜 로그인하나」 — 눌러야 펴진다. 장보기의 「더보기·접기」와 같은 모양이라 처음 보는 게 아니다.
+              📮 창업자 = *"로그인하면 뭐가바뀌는지 안내버튼을 누르면 자세히 읽어보게한다거나"* */}
+          <button
+            className="press"
+            onClick={() => set열림((v) => !v)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%', color: 'var(--text-sub)', fontSize: 12.5, padding: '6px 0', marginTop: 22, marginBottom: 열림 ? 10 : 0 }}
+          >
+            로그인하면 새 폰에서도 이어서 써요
+            <Icon name={열림 ? 'chevron-up' : 'chevron-down'} size={15} color="var(--sand)" />
+          </button>
+
+          {/* 📢 통상적인 «안내문» 형식 — 한 줄에 한 문장. 갈래를 나누지 않는다.
+              📮 창업자 2026-08-21 = *"안내도 «올라가는 것» 이런거 말고 직관적이고 명확하게.
+                 «통상적인 안내문형식»으로 적어"*
+              ⛔ 내 첫 안은 「올라가는 것 / 안 올라가는 것」 두 칸이었다 — 그건 «우리가 코드를 보며 쓰는 틀»이지
+                 안내문이 아니다. 유저는 갈래를 배우려고 이걸 읽지 않는다.
+              ⭐ 문체는 해요체로 통일(절대원칙 30). ⛔「합니다」체를 섞지 않는다. */}
+          {열림 && (
+            <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '14px 15px', marginTop: 2, marginBottom: 4, fontSize: 12.5, lineHeight: 1.85, whiteSpace: 'pre-line' }}>
+              · 새 폰이나 패드에 다시 깔아도 레시피 · 일기 · 냉장고 · 장보기가 그대로 이어져요.{'\n'}
+              · 꾸민 표지도 같이 저장돼요 (스티커 · 글씨 · 배경).{'\n'}
+              · <b>직접 넣은 사진은 저장되지 않아요.</b> 사진은 이 폰과 백업 파일에 그대로 남아요.{'\n'}
+              · 저장과 불러오기는 <b>버튼을 눌렀을 때만</b> 돼요.{'\n'}
+              · 잠가둔 일기는 잠긴 채로 저장돼요.
+            </div>
+          )}
+        </>
+      ) : (
+        // ⭐ 로그인해 보니 클라우드에 «자기 것»이 있었다 — 새 폰에서 제일 반가운 화면이다
+        <>
+          <div style={{ textAlign: 'center', marginBottom: 22 }}>
+            <div style={{ fontSize: 21, fontWeight: 800, lineHeight: 1.4 }}>저장해둔 게 있어요</div>
+            <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.65, marginTop: 9 }}>
+              레시피 <b>{찾음.레시피}</b>개 · 일기 <b>{찾음.일기}</b>장
+            </div>
+          </div>
+          <button className="btn-primary press" style={{ width: '100%' }} disabled={!!바쁨} onClick={가져오기}>
+            {바쁨 === '가져오기' ? '가져오는 중…' : '가져오기'}
+          </button>
+          <button
+            className="press" onClick={지나가기} disabled={!!바쁨}
+            style={{ width: '100%', marginTop: 13, color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600, padding: '6px 0' }}
+          >
+            나중에 할래요
+          </button>
+        </>
+      )}
+
+      {탈 && (
+        <div style={{ marginTop: 16, background: 'var(--cream)', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, lineHeight: 1.6, textAlign: 'center' }}>
+          {탈}
+        </div>
+      )}
+
+      {잠금물음 && (
+        <PromptSheet
+          title="잠가둔 일기가 있어요"
+          fields={[{ key: 'pin', label: `${잠금물음.n}장이 잠겨 있어요 · 비번 네 자리`, value: '', placeholder: '••••' }]}
+          submitLabel="열기"
+          onSubmit={잠금풀기}
+          onClose={() => 잠금풀기({})}
+        />
+      )}
+    </div>
+  )
+}
+
+// ⛔ 파이어베이스 오류 코드를 그대로 보여주지 않는다 — 유저는 그걸 읽고 할 수 있는 게 없다.
+function 고운말(e) {
+  const c = (e && e.code) || ''
+  if (c.includes('popup-blocked')) return '로그인 창이 막혔어요. 다시 눌러 주세요.'
+  if (c.includes('popup-closed') || c.includes('cancelled-popup')) return '로그인 창을 닫으셨어요.'
+  if (c.includes('network')) return '인터넷이 불안해요. 잠시 뒤에 다시 눌러 주세요.'
+  return '잘 안 됐어요. 「그냥 둘러볼게요」로 넘어가도 돼요.'
+}
