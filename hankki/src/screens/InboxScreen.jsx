@@ -32,7 +32,12 @@ export default function InboxScreen() {
           <Icon name="chevron-left" size={24} />
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, fontWeight: 700 }}>
-          <Icon name="inbox" size={20} /> Inbox
+          {/* 🏷 [2026-08-21] 「Inbox」 → 「보관함」. 창업자 = *"**INBOX나도 어딨는지 모르는데**"*
+              ⭐ 못 찾은 이유가 둘이었다 — ⑴입구가 조건부라 사라졌다(홈에서 고쳤다) ⑵**이름이 영어**라
+                 홈에서 「보관함」을 찾아도 화면 제목이 Inbox 라 같은 곳인지 알 수 없었다.
+              ⭐ 「보관함」은 **창업자가 직접 쓴 말**이다(*"그냥 보관함에 담기고"*).
+              ⛔ 화면에 보이는 영어 낱말을 늘리지 않는다(v11.02 「my pick」을 접은 것과 같은 이유). */}
+          <Icon name="inbox" size={20} /> 보관함
         </div>
         <div style={{ width: 40 }} />
       </div>
@@ -50,7 +55,7 @@ export default function InboxScreen() {
           <div className="empty">
             {filter === 'unsorted'
               ? '정리할 레시피가 없어요. 깔끔하네요!'
-              : 'Inbox가 비어 있어요.\n가져오기로 레시피를 모아보세요.'}
+              : '보관함이 비어 있어요.\n가져오기로 레시피를 모아보세요.'}
           </div>
         )}
         {list.map((r, i) => (
