@@ -58,23 +58,37 @@ const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 
 // 💬 탭 넷 × 대사 셋 — ⭐표시가 클로드 추천
+// ✅✅ [창업자 확정 2026-08-21] 말풍선으로 간다 ＋ 꼬리는 «캐릭터 쪽»으로
+//   📮 *"멘트넣는 건 좋은 것 같아. 심심하지 않고.."* · *"말풍선이면 캐릭터방향으로 풍선꼬리가 있어야해"*
+//   ⛔ 첫 판은 꼬리를 «왼쪽 아래»(`14px 14px 14px 4px`)에 줬는데 **캐릭터는 왼쪽 «위»**에 있다 — 반대였다.
+//   ✅ 진짜 삼각 꼬리를 «위쪽»으로 세운다.
+//   📮 홈 = *"오늘 또 뭐 먹지?로 가고"* ✅확정 — 카드 「오늘 뭐 해먹지?」가 «답»이고 이 대사가 «문제»다.
+//   📮 레시피 = *"좀더 고민해줘"* → 후보 넷을 찍는다.
+//
+// 🎭 ⛔⛔ [실물 정정] 레시피 탭 = **꼬르곰**(`gom-header.png`) · 일기 탭 = **펭펭**(`peng_nyam1`)
+//    내가 처음에 「레시피=펭펭」이라 적었는데 **반대**였다(MyRecipesScreen.jsx:31·32).
 const 탭들 = [
-  { 이름: '1-홈', 하단: '홈', 대사: ['냉장고 열고 5분째야.', '또 그거 먹을 뻔했다.', '고민 그만. 여기 있어.'] },
-  { 이름: '2-레시피', 하단: '레시피', 대사: ['남의 요리책 말고.', '다 여기 있어. 안 잃어버려.', '이거 내가 만든 거야!'] },
-  { 이름: '3-일기', 하단: '일기', 대사: ['오늘도 한 끼 해냈다.', '어제 뭐 먹었더라…', '잘한 날은 적어두자.'] },
-  { 이름: '4-장보기', 하단: '장보기', 대사: ['또 두부 샀네.', '없는 것만. 두 번 사지 마.', '뭐 있는지 다 알아… 근데 졸려.'] },
+  { 이름: '1-홈', 하단: '홈', 대사: ['오늘 또 뭐 먹지?'] },
+  { 이름: '2-레시피', 하단: '레시피', 대사: ['한 권에 다 모았어!', '흩어진 거 다 여기.', '이만큼이나 모았네!', '찾던 거 여기 있어!'] },
+  { 이름: '3-일기', 하단: '일기', 대사: ['오늘도 한 끼 해냈다.'] },
+  { 이름: '4-장보기', 하단: '장보기', 대사: ['또 두부 샀네.'] },
 ]
 
-// 🎨 갈래 셋 — 같은 대사를 «어떻게» 놓느냐
-const 갈래 = [
-  { 이름: 'a-지금', 설명: '지금 (대사 없음)', 스타일: null },
-  { 이름: 'b-말풍선', 설명: '말풍선', 스타일: 'bubble' },
-  { 이름: 'c-한줄', 설명: '제목 아래 회색 한 줄', 스타일: 'line' },
-]
+// 🎨 갈래 = 「지금」 ＋ 대사마다 한 장씩(말풍선 확정이라 스타일 비교는 끝났다)
+const 갈래 = [{ 이름: 'a-지금', 설명: '지금 (대사 없음)', 스타일: null }]
+
+// 📋 찍을 목록 = 탭마다 「지금」 한 장 ＋ 대사마다 한 장
+const 목록 = []
+for (const 탭 of 탭들) {
+  목록.push({ 탭, 이름: `${탭.이름}-0-지금`, 대사: null })
+  탭.대사.forEach((m, i) => 목록.push({ 탭, 이름: `${탭.이름}-${i + 1}`, 대사: m }))
+}
 
 const 결과 = []
-for (const 탭 of 탭들) {
-  for (const g of 갈래) {
+{
+  for (const 항 of 목록) {
+    const 탭 = 항.탭
+    const g = { 이름: 항.이름, 설명: 항.대사 || '지금 (대사 없음)', 스타일: 항.대사 ? 'bubble' : null }
     const page = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 })
     await page.addInitScript(SEED_COACH_SEEN)
     await page.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
@@ -110,19 +124,20 @@ for (const 탭 of 탭들) {
       }
 
       const d = document.createElement('div')
-      if (스타일 === 'bubble') {
-        // 💬 말풍선 — 캐릭터가 말하는 것처럼. 제목 «아래», 캐릭터 쪽에 붙여 왼쪽 정렬
-        const s = document.createElement('span')
-        s.textContent = 대사[0]
-        s.style.cssText = 'display:inline-block;padding:6px 12px;border-radius:14px 14px 14px 4px;'
-          + 'background:var(--cream);color:var(--text-sub);font-size:12.5px;font-weight:700;letter-spacing:-.02em'
-        d.appendChild(s)
-        d.style.cssText = 'padding:0 20px;margin:2px 0 6px'
-      } else {
-        // 📏 회색 한 줄 — 가져오기·레꾸자랑과 같은 결
-        d.textContent = 대사[0]
-        d.style.cssText = 'padding:0 20px;margin:0 0 6px;font-size:12.5px;color:var(--text-sub);letter-spacing:-.02em'
-      }
+      // 💬💬 말풍선 — ⭐꼬리는 «캐릭터 쪽»(왼쪽 위)을 향한다 (창업자 2026-08-21)
+      //    ⛔ 첫 판은 `border-radius` 로 왼쪽 «아래»를 깎았는데 캐릭터는 왼쪽 «위»에 있다 — 반대였다.
+      //    ✅ 진짜 삼각 꼬리를 CSS 삼각형으로 세운다.
+      const s = document.createElement('span')
+      s.textContent = 대사
+      s.style.cssText = 'display:inline-block;position:relative;padding:7px 13px;border-radius:14px;'
+        + 'background:var(--cream);color:var(--text-sub);font-size:12.5px;font-weight:700;letter-spacing:-.02em'
+      const 꼬리 = document.createElement('i')
+      꼬리.style.cssText = 'position:absolute;left:14px;top:-6px;width:0;height:0;'
+        + 'border-left:6px solid transparent;border-right:8px solid transparent;'
+        + 'border-bottom:7px solid var(--cream)'
+      s.appendChild(꼬리)
+      d.appendChild(s)
+      d.style.cssText = 'padding:0 20px;margin:5px 0 7px'
       바?.after(d)
 
       return {
@@ -132,7 +147,7 @@ for (const 탭 of 탭들) {
         제목: 제목.textContent.trim(),
         바: 바?.className || '(없음)',
       }
-    }, { 스타일: g.스타일, 대사: 탭.대사 })
+    }, { 스타일: g.스타일, 대사: 항.대사 })
 
     await page.waitForTimeout(250)
     // 상단만 크게 — 창업자가 폰에서 본다
