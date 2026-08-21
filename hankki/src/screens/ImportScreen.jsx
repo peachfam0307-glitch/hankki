@@ -27,18 +27,38 @@ import uiDuoHeart from '../assets/ui/wave/duo_hearthand.png'
 //   ⏳ 「읽어오기」는 죽은 게 아니라 «미뤄둔» 것 — 창업자 *"C는 되면 좋으니까 **서버되면 꼭 하자**"*.
 //      지금은 남의 서버(jina·allorigins) 에 얹혀 있어 우리가 못 고친다. 우리 서버가 서면 되살린다.
 //      🔖 되살릴 자리 = 이 파일의 「⏳ 서버 되면 되살릴 것」 주석 셋 ＋ `src/linkReader.js`(그대로 살아 있다)
+// 💰💰 [2026-08-21 창업자 확정] *"어 다 안내해"* — **다섯 줄 «전부»에 장수를 붙인다.**
+//    ⛔ 처음엔 사진·텍스트 둘에만 붙였는데, 그러면 나머지 셋이 «빈칸»이라
+//       「얘넨 공짜인가?」로 읽힌다. 빈칸은 «0장»으로 읽히지 «모름»으로 안 읽힌다.
+//    ⭐ `costText` 를 «데이터»로 둔다 — 히어로 카드도 이 값을 읽는다.
+//       손으로 두 곳에 적으면 반드시 한쪽이 낡는다(우리가 여러 번 겪은 것).
+//    ⭐ `paid` 가 색을 정한다 — 빨강은 «깎인다»를 말하는 색이다. 안 깎이는 길에 빨강을 쓰면
+//       색이 뜻을 잃고, 그러면 정작 깎이는 줄도 안 보인다.
+//    🔢 실측 = 돈 드는 `ocrImage()` 를 부르는 곳은 셋뿐(EditorScreen·PantryView·App.jsx).
+//       ImportScreen 은 `getOcrLeft`(읽기)만 가져온다 → 텍스트·링크가 «0장»인 것은 짐작이 아니다.
+//    ⚠️ 인스타·유튜브는 «조건부»다 — 흐름 안에서 캡처를 고르면 1장, 붙여넣기를 고르면 0장.
+//       그래서 「캡처는」을 앞에 붙여 조건을 밝힌다. ⛔그냥 「1장」이라 적으면 붙여넣기도 깎이는 줄 안다.
+//       ＋ 흐름 화면의 단추 «셋»에도 각각 정확한 값을 적는다(아래 `방법들`).
 const OPTIONS = [
   // 제일 많이 쓰는 방법이라 맨 위
-  { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A' },
-  { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '캡처해서 담기 (제일 정확)', color: '#C13584' },
-  { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '캡처·설명 붙여넣기로 담기', color: '#E33' },
+  { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A', costText: 'AI 스캔 1장', paid: true },
+  { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '캡처해서 담기 (제일 정확)', color: '#C13584', costText: '캡처는 AI 스캔 1장', paid: true },
+  { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '캡처·설명 붙여넣기로 담기', color: '#E33', costText: '캡처는 AI 스캔 1장', paid: true },
   // ⭐ 링크가 못 하는 일을 «이 줄이» 한다 — 그래서 설명을 키웠다(창업자 ⓐ안의 「텍스트 안내를 키운다」를 여기서 살렸다)
-  // 💰 「0장」을 «캡처 1장»과 나란히 둔다 — 대비가 있어야 값이 값으로 읽힌다.
-  //    ⭐ 여기는 «조용하게» 적는다(빨강 없음). 빨강은 「깎인다」를 말하는 색이고 이 길은 안 깎인다.
-  //    🔢 실측 = ImportScreen 은 `ocr.js` 에서 `getOcrLeft`(읽기)만 가져온다. `ocrImage()` 를 안 부른다.
-  { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 재료·순서까지 자동 정리 · AI 스캔 0장', color: '#B0895E' },
-  { key: 'link', icon: 'link', title: '링크 주소만 담아두기', desc: '주소만 저장해요 · 재료·순서는 안 담겨요', color: '#9B8B79' },
+  { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 재료·순서까지 자동 정리', color: '#B0895E', costText: 'AI 스캔 0장', paid: false },
+  { key: 'link', icon: 'link', title: '링크 주소만 담아두기', desc: '주소만 저장해요 · 재료·순서는 안 담겨요', color: '#9B8B79', costText: 'AI 스캔 0장', paid: false },
 ]
+
+// 💰 장수 꼬리표 — 다섯 줄·히어로·흐름 단추가 «같은 함수»로 그린다.
+//    ⛔ 자리마다 따로 적으면 말이 갈라진다(같은 기능은 같은 이름 원칙).
+function 장수꼬리(costText, paid) {
+  return (
+    // ⛔ `nowrap` — 실물에서 「캡처는 AI / 스캔 1장」으로 갈렸다(규칙 21).
+    //    낱말 잘림은 아니지만 «값»이 두 줄로 흩어지면 한눈에 안 읽힌다. 값은 한 덩어리로 넘어가야 한다.
+    //    🔢 제일 긴 꼬리(「받아적으면 AI 스캔 0장」)도 12.3px 에서 ~150px — 칸 226px 안이라 안 넘친다.
+    <> · <b style={{ fontWeight: 800, color: paid ? 'var(--danger)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{costText}</b></>
+  )
+}
 
 export default function ImportScreen() {
   const { addRecipe } = useStore()
@@ -226,7 +246,7 @@ export default function ImportScreen() {
                      v11.19 에 넣은 그 규칙이 안 걸렸다. 실물에서 「읽어 채워 / 요」로 잘려 있었다(규칙 21).
                      📌 같은 병을 한 화면에서 두 번 고쳤다 — 클래스로 고친 것은 «클래스를 쓰는 줄»만 낫는다. */}
               <div style={{ fontSize: 12.3, lineHeight: 1.5, color: 'var(--text-sub)', wordBreak: 'keep-all' }}>
-                캡처는 재료·만드는 법 칸별로 읽어 채워요 · <b style={{ fontWeight: 800, color: 'var(--danger)' }}>AI 스캔 1장</b>
+                {OPTIONS[0].desc}{장수꼬리(OPTIONS[0].costText, OPTIONS[0].paid)}
               </div>
             </div>
             <Icon name="chevron-right" size={18} color="#c0a986" />
@@ -241,7 +261,7 @@ export default function ImportScreen() {
                   </div>
                   <div className="t">
                     <div className="a">{o.title}</div>
-                    <div className="b">{o.desc}</div>
+                    <div className="b">{o.desc}{장수꼬리(o.costText, o.paid)}</div>
                   </div>
                   <Icon name="chevron-right" size={18} color="var(--sand)" />
                 </button>
@@ -336,18 +356,23 @@ export default function ImportScreen() {
 
           {/* 방법을 카드 몇 장으로 길게 설명하던 걸 '한 줄짜리 선택지'로 바꿨다.
               (창업자 2026-07-29 "설명이 너무 복잡하고 정신없어") 고를 것만 보이게 한다. */}
+          {/* 💰💰 [2026-08-21 창업자 *"어 다 안내해"*] 여기가 «진짜 갈림길»이다 —
+                 목록 줄은 「캡처는 1장」이라고 조건만 말하고, 셋 중 무엇을 고르는지는 이 화면에서 정해진다.
+              ⭐ 그래서 단추마다 «정확한» 값을 적는다. 목록에만 적으면 유저는 여기서 다시 모른다.
+              ⚠️ 「보면서 적기」는 «받아적으면» 0장이다 — 그 화면(editor)에서 캡처를 누르면 1장을 쓴다.
+                 그래서 그냥 「0장」이라 안 적고 조건을 밝힌다. ⛔안 밝히면 캡처를 누른 사람이 «속았다»고 느낀다. */}
           {(flow === 'youtube'
             ? [
-                ['camera', '캡처해서 올리기', '캡처만 하면 재료·순서 자동으로', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } })],
-                ['pen', '설명(더보기) 붙여넣기', '글 복사해 오면 알아서 정리해요', false, () => { setFlow('text'); setText('') }],
-                ['play', '영상 보면서 적기', '영상 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } })],
+                ['camera', '캡처해서 올리기', '캡처만 하면 재료·순서 자동으로', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), 'AI 스캔 1장', true],
+                ['pen', '설명(더보기) 붙여넣기', '글 복사해 오면 알아서 정리해요', false, () => { setFlow('text'); setText('') }, 'AI 스캔 0장', false],
+                ['play', '영상 보면서 적기', '영상 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } }), '받아적으면 AI 스캔 0장', false],
               ]
             : [
-                ['camera', '캡처해서 올리기', '인스타는 글자 복사가 안 돼요', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } })],
-                ['pen', '글을 복사했다면 붙여넣기', '복사한 글을 넣으면 알아서 정리해요', false, () => { setFlow('text'); setText('') }],
-                ['photo', '미리보기 띄우고 적기', '게시물 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } })],
+                ['camera', '캡처해서 올리기', '인스타는 글자 복사가 안 돼요', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), 'AI 스캔 1장', true],
+                ['pen', '글을 복사했다면 붙여넣기', '복사한 글을 넣으면 알아서 정리해요', false, () => { setFlow('text'); setText('') }, 'AI 스캔 0장', false],
+                ['photo', '미리보기 띄우고 적기', '게시물 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } }), '받아적으면 AI 스캔 0장', false],
               ]
-          ).map(([ic, t, d, best, go]) => (
+          ).map(([ic, t, d, best, go, costText, paid]) => (
             <button key={t} className="card press" onClick={go}
               style={{ width: '100%', textAlign: 'left', padding: '14px 15px', marginBottom: 10, border: 'none', background: best ? 'var(--cream)' : 'var(--surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
               <span className="opt-ico" style={{ flexShrink: 0, background: best ? '#fff' : 'var(--cream)' }}>
@@ -358,7 +383,8 @@ export default function ImportScreen() {
                   <span style={{ fontSize: 14.5, fontWeight: 800 }}>{t}</span>
                   {best && <span style={{ fontSize: 10, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px' }}>추천</span>}
                 </span>
-                <span className="t-sub" style={{ display: 'block', fontSize: 12.3, lineHeight: 1.45, marginTop: 3 }}>{d}</span>
+                {/* ⛔ `keep-all` — 꼬리가 붙어 두 줄이 되면 한글 낱말이 가운데서 잘린다(오늘 두 번 겪었다) */}
+                <span className="t-sub" style={{ display: 'block', fontSize: 12.3, lineHeight: 1.45, marginTop: 3, wordBreak: 'keep-all' }}>{d}{장수꼬리(costText, paid)}</span>
               </span>
               <Icon name="chevron-right" size={17} color="var(--sand)" />
             </button>

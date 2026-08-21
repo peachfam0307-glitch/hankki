@@ -117,6 +117,28 @@ const 가져오기잘림 = await page.evaluate(() => {
 })
 chk(`④-d ⛔가져오기 안내도 낱말 가운데서 안 잘린다 (${가져오기잘림.n}줄 중 어긴 것 ${가져오기잘림.나쁨})`,
   가져오기잘림.n >= 2 && 가져오기잘림.나쁨 === 0)
+
+// ⭐⭐⭐ 창업자 = *"어 다 안내해"* — 이 칸이 그 말을 «장치»로 만든다.
+//    ⛔ 「어느 줄에 있나」를 손으로 세지 않는다. 그러면 나중에 옵션을 하나 더 넣을 때
+//       그 줄만 조용히 빠지고 아무도 모른다(빈칸은 «0장»으로 읽힌다).
+//    ✅ 그래서 **줄 수와 꼬리표 수를 대조**한다 — 하나라도 모자라면 배포가 막힌다.
+//       📌 「검사가 있다」와 「검사가 «전부»를 본다」는 다른 말이다(2026-08-05 packleak 교훈).
+const 목록 = await page.evaluate(() => {
+  const 줄 = [...document.querySelectorAll('.opt-row')]
+  return {
+    n: 줄.length,
+    안내: 줄.filter((e) => /AI 스캔 \d장/.test(e.textContent || '')).length,
+    빠진것: 줄.filter((e) => !/AI 스캔 \d장/.test(e.textContent || ''))
+      .map((e) => (e.querySelector('.a')?.textContent || '?').trim()),
+  }
+})
+chk(`⑤-a ⭐목록 «네 줄 전부»가 장수를 말한다 (${목록.안내}/${목록.n}${목록.빠진것.length ? ' · 빠진 것: ' + 목록.빠진것.join(',') : ''})`,
+  목록.n >= 4 && 목록.안내 === 목록.n)
+// ⭐ 히어로(사진·직접 작성)는 `.opt-row` 밖이라 위에서 따로 봤다(④-b). 합치면 다섯이다.
+// ⚠️ 조건부인 둘(인스타·유튜브)은 「캡처는」을 앞에 붙여야 한다 —
+//    그냥 「1장」이라 적으면 «붙여넣기»로 담는 사람도 깎이는 줄 안다.
+chk('⑤-b ⚠️조건부인 줄은 조건을 밝힌다 (「캡처는 AI 스캔 1장」)',
+  (t가져오기.match(/캡처는 AI 스캔 1장/g) || []).length >= 2)
 writeFileSync(join(OUT, '1-가져오기.png'), await page.screenshot({ fullPage: true }))
 
 // ── ② 편집 화면 : ⭐값이 «권유보다 먼저» 나오나 ──
@@ -183,6 +205,35 @@ chk('⑱ 사진을 읽은 뒤 토스트에 「남았어요」를 싣는다', /�
 // ⛔ 서버가 한 번도 답한 적 없으면(unknown) 숫자를 적으면 안 된다 —
 //    그때 숫자를 적으면 «안 써 봤을 때의 기본값 20»을 사실처럼 말하게 된다(규칙 15).
 chk('⑲ ⛔unknown 이면 숫자를 «안» 적는다', /left\.unknown/.test(app))
+
+// ── ⑤ 인스타·유튜브 흐름 : «진짜 갈림길»에도 값이 있나 ──
+//    ⭐ 목록 줄은 「캡처는 1장」이라고 «조건»만 말한다. 셋 중 무엇을 고를지는 이 화면에서 정해진다.
+//       여기가 비면 유저는 목록에서 본 조건을 «다시» 못 맞춘다.
+console.log('\n── ⑤ 인스타·유튜브 흐름 · 갈림길 셋 ──')
+for (const 이름 of ['YouTube', 'Instagram']) {
+  await page.goto('http://127.0.0.1:4409/hankki/', { waitUntil: 'networkidle' })
+  await page.waitForTimeout(600)
+  await page.getByRole('button', { name: '가져오기' }).first().click()
+  await page.waitForTimeout(700)
+  await page.getByText(이름, { exact: true }).first().click()
+  await page.waitForTimeout(700)
+  const 단추 = await page.evaluate(() => {
+    const 것 = [...document.querySelectorAll('button.card')]
+      .filter((e) => /캡처해서 올리기|붙여넣기|적기/.test(e.textContent || ''))
+    return {
+      n: 것.length,
+      안내: 것.filter((e) => /AI 스캔 \d장/.test(e.textContent || '')).length,
+      빠진것: 것.filter((e) => !/AI 스캔 \d장/.test(e.textContent || ''))
+        .map((e) => (e.textContent || '').trim().slice(0, 14)),
+    }
+  })
+  chk(`㉠ ${이름} 흐름 · 단추 «셋 전부»가 장수를 말한다 (${단추.안내}/${단추.n}${단추.빠진것.length ? ' · 빠진 것: ' + 단추.빠진것.join(',') : ''})`,
+    단추.n === 3 && 단추.안내 === 3)
+  const t흐름 = await 글자()
+  // ⭐ 갈림길이라 «둘 다» 보여야 값이 값으로 읽힌다 — 1장짜리 하나, 0장짜리 둘.
+  chk(`㉡ ${이름} 흐름에 「1장」과 「0장」이 «나란히» 있다`, /AI 스캔 1장/.test(t흐름) && /AI 스캔 0장/.test(t흐름))
+  writeFileSync(join(OUT, `4-흐름-${이름}.png`), await page.screenshot({ fullPage: true }))
+}
 
 chk(`⑳ pageerror 0 (${에러.length})`, 에러.length === 0)
 
