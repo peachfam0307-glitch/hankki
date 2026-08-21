@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Icon from './Icon'
 import PromptSheet from './PromptSheet'
+import ConfirmSheet from './ConfirmSheet'
 import { useStore } from '../store'
 import { APP_TAGLINE } from '../version'
 import { markCloudGateSeen } from '../nudges'
@@ -31,6 +32,7 @@ export default function CloudGate({ onDone }) {
   const [탈, set탈] = useState('')
   const [찾음, set찾음] = useState(null)     // 클라우드에 있던 것 { 레시피, 일기, 언제 }
   const [잠금물음, set잠금물음] = useState(null)
+  const [물음, set물음] = useState(false)     // 「나중에 하기」를 누르면 한 번 물어본다
 
   // ⛔ 팝업은 누른 «그 순간» 열려야 브라우저가 안 막는다 → 화면이 뜰 때 미리 받아 둔다.
   useEffect(() => { 미리붙기() }, [])
@@ -103,11 +105,14 @@ export default function CloudGate({ onDone }) {
           </button>
           {/* ⛔ 이 줄을 «버튼»으로 만들지 않는다 — 둘이 같은 무게로 서면 「뭘 눌러야 하나」가 된다.
               (소개 마지막 장의 「이미 다른 기기에서…」와 같은 이유) */}
+          {/* ⛔ 「둘러보기」가 아니다 (창업자 2026-08-21 = *"그냥 둘러보기??"*) —
+              우리 앱은 로그인 없이도 **전부 다 쓴다.** 「둘러보기」는 「구경만 하고 제대로는 못 쓴다」로 읽혀 **사실과 다르다.**
+              ✅ 「나중에 하기」 = 미루는 것이 «로그인»뿐임이 그대로 읽힌다. */}
           <button
-            className="press" onClick={지나가기} disabled={!!바쁨}
+            className="press" onClick={() => set물음(true)} disabled={!!바쁨}
             style={{ width: '100%', marginTop: 13, color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600, padding: '6px 0' }}
           >
-            둘러보기
+            나중에 하기
           </button>
 
           {/* 📖 「왜 로그인하나」 — 눌러야 펴진다. 장보기의 「더보기·접기」와 같은 모양이라 처음 보는 게 아니다.
@@ -132,7 +137,6 @@ export default function CloudGate({ onDone }) {
               · 새 폰이나 패드에 다시 깔아도 레시피 · 일기 · 냉장고 · 장보기가 그대로 이어져요.{'\n'}
               · 꾸민 표지도 같이 저장돼요 (스티커 · 글씨 · 배경).{'\n'}
               · <b>직접 넣은 사진은 저장되지 않아요.</b> 사진은 이 폰과 백업 파일에 그대로 남아요.{'\n'}
-              · 저장과 불러오기는 <b>버튼을 눌렀을 때만</b> 돼요.{'\n'}
               · 잠가둔 일기는 잠긴 채로 저장돼요.
             </div>
           )}
@@ -162,6 +166,24 @@ export default function CloudGate({ onDone }) {
         <div style={{ marginTop: 16, background: 'var(--cream)', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, lineHeight: 1.6, textAlign: 'center' }}>
           {탈}
         </div>
+      )}
+
+      {/* ⚠️ 「나중에 하기」를 누르면 «한 번» 물어본다.
+          📮 창업자 2026-08-21 = *"나중에 하기를 누르면 안내팝업. **모르고 그냥 해볼수있으니까**"*
+          ⛔⛔ 창업자 말 중 「저장이 안 된다」는 «정확히는 틀리다» — 코드로 확인했다(`store.jsx:691`).
+             로그인을 안 해도 **폰 안에는 저장된다.** 안 되는 건 «폰 밖»이다.
+             ✅ 그래서 「저장이 안 돼요」가 아니라 **「이 폰에만 저장돼요」**로 쓴다.
+                📌 이게 더 정확하면서 «더 무서운» 사실이기도 하다 — 폰을 바꾸면 없어진다.
+          ⛔ 겁주지 않는다(`docs/리텐션-설계원칙-2026-07-30.md`) — **사실 ＋ 다음 행동**까지만.
+             그래서 마지막 줄이 「설정에서 언제든 로그인할 수 있어요」다. 막다른 길이 아니라고 말해 준다. */}
+      {물음 && (
+        <ConfirmSheet
+          title="로그인 없이 시작할까요?"
+          message={'레시피와 일기가 이 폰에만 저장돼요.\n폰을 바꾸거나 앱을 지우면 없어져요.\n\n설정에서 언제든 로그인할 수 있어요.'}
+          confirmLabel="그냥 시작하기"
+          onConfirm={() => { set물음(false); 지나가기() }}
+          onClose={() => set물음(false)}
+        />
       )}
 
       {잠금물음 && (

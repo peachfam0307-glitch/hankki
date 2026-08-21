@@ -49,10 +49,18 @@ async function 새창 (init) {
     console.log('✅ ①-b 「자세히」가 펴진다')
   } else console.log('⛔ ①-b 「자세히」를 못 찾았다')
   // 「그냥 둘러볼게요」 → 소개로 넘어가나
-  await pg.getByText('둘러보기').first().click()
+  // 「나중에 하기」 → ⚠️안내 팝업이 «한 번» 뜬다(창업자 2026-08-21 *"모르고 그냥 해볼수있으니까"*)
+  await pg.getByText('나중에 하기').first().click()
+  await pg.waitForTimeout(600)
+  const 팝업 = await pg.textContent('body')
+  const 팝업떴나 = /이 폰에만 저장돼요/.test(팝업)
+  await pg.screenshot({ path: '/tmp/클라우드-나중에팝업.png' })
+  console.log((팝업떴나 ? '✅' : '⛔') + ' ①-c 「나중에 하기」 → 안내 팝업이 뜬다')
+  if (!팝업떴나) console.log('   본문 = ' + 팝업.slice(0, 200))
+  await pg.getByText('그냥 시작하기').first().click()
   await pg.waitForTimeout(700)
   const 다음 = await pg.textContent('body')
-  console.log((/건너뛰기/.test(다음) ? '✅' : '⛔') + ' ①-c 「그냥 둘러볼게요」 → 소개로 넘어간다')
+  console.log((/건너뛰기/.test(다음) ? '✅' : '⛔') + ' ①-d 「그냥 시작하기」 → 소개로 넘어간다')
   await ctx.close()
 }
 
