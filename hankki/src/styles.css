@@ -1702,7 +1702,17 @@ img {
    내가 바로 위에 **「아무도 나빠지지 않는다」**고 적어 놓고 어긴 것이라 뺐다.
    📌 원칙을 적어 두고 어기면, 그 원칙은 다음번에도 안 지켜진다.
    ⭐ 그래서 단은 «둘»뿐이다 — 750px 밑은 **전부 24px 그대로.** */
-@media (min-height: 750px) { .cook-steptext { font-size: 32px; } }   /* 390×844·412×915 → 스크롤 «0개» */
+@media (min-height: 750px) { .cook-steptext { font-size: 28px; } }   /* 390×844·412×915 → 스크롤 «0개» */
+/* 📱💻 [창업자 확정 2026-08-21] 폰 = **28px** · 패드 = **38px**
+   📮 창업자 = *"네 시안에서는 **2번째가 좋아보였어. 1번은 작게 느껴지고 3번은 너무 커..**"*
+      (시안 = 26 / **28** / 32px) ＋ *"**패드는 좀 커도 괜찮을 듯.**"*
+   ⛔ 내가 처음 32px 로 넣었던 건 «제일 긴 걸음 하나»만 보여준 불공정한 판정 위에서였다.
+      길이 셋(24·44·76자)을 나란히 놓고서야 창업자가 제대로 골랐다.
+   🔢 패드 실측(964걸음 전수) — 34/38/42/46px **전부 스크롤 0개**(패드는 넓어 여유가 크다)
+      38px 에서 최다 줄 = 패드 세로 4줄 · 패드 가로 3줄
+   ⛔ **`min-height: 700px` 을 같이 건다** — 안 걸면 «폰 가로»(900×500)가 폭만 보고 38px 를 먹는다.
+      키 500px 짜리 화면에 38px 는 두 줄이면 화면을 다 먹는다. */
+@media (min-width: 700px) and (min-height: 700px) { .cook-steptext { font-size: 38px; } }
 .cook-timer { display: inline-flex; align-items: center; gap: 7px; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 14px; padding: 12px 18px; border-radius: 14px; transition: transform 0.08s ease; }
 .cook-timer:active { transform: scale(0.96); }
 /* ⛔ `flex-shrink` 기본값이 1이라 자리가 모자라면 이 줄부터 눌린다 — 버튼 줄은 절대 안 줄어들게 못 박는다 */

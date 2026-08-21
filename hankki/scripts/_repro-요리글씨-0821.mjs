@@ -44,9 +44,9 @@ const 걸음들 = []
 }))
 
 // ⛔ 기본은 «지금 앱에 박힌 셋»만 잰다 — smoke 에서 8종을 다 쓸면 너무 느리다
-const 크기들 = (process.env.FS || '24,26,32').split(',').map(Number)
+const 크기들 = (process.env.FS || '24,28,38').split(',').map(Number)
 // 📱 좁고 «짧은» 화면이 진짜 시험대다 — 키가 작으면 두 줄만 넘어도 스크롤이 생긴다
-const 화면들 = [[320, 568, '작은 폰'], [360, 640, '보통(짧은)'], [390, 844, '갤럭시'], [412, 915, '큰 폰']]
+const 화면들 = [[320, 568, '작은 폰'], [360, 640, '보통(짧은)'], [390, 844, '갤럭시'], [412, 915, '큰 폰'], [820, 1180, '패드 세로'], [1194, 834, '패드 가로']]
 
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
@@ -148,9 +148,9 @@ if (!process.env.FS) {
   let 실패 = 0
   const chk = (이름, ok) => { console.log(`  ${ok ? '✅' : '⛔'} ${이름}`); if (!ok) 실패++ }
   // 화면마다 «실제로 적용된» 크기 한 줄만 골라 본다
-  const 적용 = { '작은 폰': 24, '보통(짧은)': 24, '갤럭시': 32, '큰 폰': 32 }
+  const 적용 = { '작은 폰': 24, '보통(짧은)': 24, '갤럭시': 28, '큰 폰': 28, '패드 세로': 38, '패드 가로': 38 }
   // 🔢 손보기 «전»(전부 24px) 실측 = 이 값보다 나빠지면 «누군가는 손해»다
-  const 전 = { '작은 폰': 168, '보통(짧은)': 2, '갤럭시': 0, '큰 폰': 0 }
+  const 전 = { '작은 폰': 168, '보통(짧은)': 2, '갤럭시': 0, '큰 폰': 0, '패드 세로': 0, '패드 가로': 0 }
   Object.entries(적용).forEach(([화면, fs]) => {
     const t = 표.find((x) => x.이름 === 화면 && x.fs === fs)
     if (!t) { chk(`  ${화면} ${fs}px 를 재지 못했다`, false); return }
