@@ -86,12 +86,18 @@ const 미정리 = await page.evaluate(() => {
   try { return (JSON.parse(localStorage.getItem('hankki:v1') || '{}').recipes || []).filter((r) => r.status === 'unsorted').length } catch { return -1 }
 })
 console.log(`  · 미정리 ${미정리}개 (0개라야 이 검사가 뜻이 있다)`)
+// 🔁 [2026-08-22 창업자 확정] 입구가 «글자 카드» → «상단바 아이콘»으로 옮겨졌다.
+//    📮 창업자 = *"임시보관함은 저기에 있으면 좀 지저분해보영.."* ＋ *"그옆에 임시보관함 아이콘을 넣던가"*
+//    ⛔⛔ 그래서 이 검사가 빨간불이 됐고 **그게 맞는 동작이다** — 잣대가 «글자»를 보고 있었으니까.
+//    ⭐ 지키려는 것은 «글자»가 아니라 **「입구가 늘 있나」** 다 → 잣대를 «누를 수 있는 자리»로 옮긴다.
+//       (규칙 18 ⓘ — 검사가 «무엇을 보는지». 8/20 별점 검사도 같은 이유로 잣대를 옮겼다)
+const 입구 = 'button[aria-label^="임시보관함"]'
 const 홈글 = await 글자()
-chk('① 미정리가 0개인데도 임시보관함 입구가 «보인다»', /임시보관함|정리 안 한 레시피/.test(홈글))
+chk('① 미정리가 0개인데도 임시보관함 입구가 «있다»(상단바 아이콘)', await page.locator(입구).count() > 0)
 writeFileSync(join(OUT, '1-홈.png'), await page.screenshot())
 
 // 눌러서 진짜 열리나 — 「보인다」와 「간다」는 다른 말이다(규칙 21)
-await page.getByText('임시보관함', { exact: false }).first().click().catch(() => {})
+await page.locator(입구).first().click().catch(() => {})
 await page.waitForTimeout(900)
 const 보관함글 = await 글자()
 chk('② 눌렀더니 임시보관함이 «열린다»', /임시보관함/.test(보관함글))
@@ -196,8 +202,12 @@ chk('⑮ 그 자리에 빈 접시(동심원)가 그려졌다', 접시)
 console.log('\n── ⑥ 상태에 따라 글자가 바뀌나 ──')
 await page.evaluate(() => { const b2 = [...document.querySelectorAll('button')].find((x) => /홈/.test(x.textContent || '')); if (b2) b2.click() })
 await page.waitForTimeout(1100)
-const 홈글2 = await 글자()
-chk('⑯ 담은 뒤엔 「정리 안 한 레시피 1개」로 바뀐다', /정리 안 한 레시피 1개/.test(홈글2))
+// 🔁 [2026-08-22] 글자 카드가 «아이콘＋숫자 뱃지»로 바뀌었다.
+//    ⭐ 지키려는 것은 그대로 = **「몇 개 남았는지 유저가 스스로 안다」**(2026-08-13 잔량 원칙과 같은 생각).
+//       ⛔ 아이콘만 두고 숫자를 안 띄우면 그 원칙이 깨진다 → 뱃지 «숫자»를 직접 읽는다.
+const 뱃지 = await page.locator('button[aria-label^="임시보관함"] span').first().textContent().catch(() => '')
+const 라벨 = await page.locator('button[aria-label^="임시보관함"]').first().getAttribute('aria-label').catch(() => '')
+chk(`⑯ 담은 뒤엔 뱃지에 「1」이 뜬다 (뱃지="${뱃지}" · 라벨="${라벨}")`, String(뱃지).trim() === '1' && /1개/.test(라벨 || ''))
 writeFileSync(join(OUT, '7-홈-1개.png'), await page.screenshot())
 
 console.log(`\n  pageerror = ${에러.length}${에러.length ? ' ⛔ ' + 에러[0] : ''}`)

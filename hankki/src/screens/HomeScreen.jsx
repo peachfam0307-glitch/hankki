@@ -213,19 +213,52 @@ export default function HomeScreen() {
           </div>
           <TabTips tab="home" />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {/* 가져오기 — 제일 자주 쓰는 기능이라 맨 위에 */}
-          <button
-            className="press"
-            data-coach="import"
-            onClick={() => nav.push({ name: 'import' })}
-            aria-label="가져오기"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 700, padding: '8px 13px', borderRadius: 999 }}
-          >
-            <Icon name="plus" size={16} color="#fff" stroke={2.4} /> 가져오기
+        {/* 🏠🏠 [창업자 확정 2026-08-22] 상단바 오른쪽 = 🔍 검색 · 🗃 임시보관함 · ⚙ 설정
+         *
+         * 📮 창업자 = *"가져오기 위에 버튼이 꼭 필요한가?"* → *"가져오기 버튼 없애고 **검색 아이콘을 넣어도** 될 것 같은데"*
+         *    → *"**그옆에 임시보관함 아이콘을 넣던가**"*
+         *
+         * ⛔⛔ **「＋ 가져오기」는 «두 곳»에 있었다** — 여기(홈에서만) ＋ 하단바 파란 원(모든 탭에서).
+         *    둘 다 같은 곳(`import`)으로 간다. 그리고 우리는 **중복인 걸 «알면서» 뒀다** —
+         *    `BottomNav.jsx` 주석에 *"B 안이면 홈으로 갔다 와야 한다(홈 맨 위에 「＋ 가져오기」가 있긴 하다)"*
+         *    라고 적어놓고 하단바 쪽을 채택했다. **그러면 이건 «남은 것»이지 «필요한 것»이 아니다.**
+         *
+         * 🔢 이 셋으로 바꾸면 홈에서 **줄이 «둘» 사라진다**(검색바 47px ＋ 임시보관함 43px).
+         *    실측 = 주간 카드가 471 → 364px = **107px 위로**.
+         *    ⭐ 그리고 **다른 탭과 말이 맞는다** — 일기·레시피는 이미 상단바 돋보기를 쓴다. 홈만 혼자 큰 검색바였다.
+         *
+         * ⛔ 안내코치 첫 단계가 이 자리를 짚고 있었다(*"레시피 가져오기 · 여기서 시작!"*).
+         *    빼기만 하면 **첫 걸음부터 허공을 가리킨다** → `data-coach="import"` 를 **하단바 단추로 옮겼다**.
+         *    ⭐ 오히려 낫다 — 하단바 단추는 «어느 탭에서든» 있다.
+         */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <button className="icon-btn press" onClick={() => nav.go('search')} aria-label="검색">
+            <Icon name="search" size={22} />
           </button>
-          {/* 설정 — 맨 오른쪽 끝(창업자 2026-07-29). 아바타는 왼쪽 브랜드 자리로 옮겼다.
-              미정리 레시피는 설정의 '미정리' 통계로도 계속 열린다. */}
+          {/* 🗃 임시보관함 — 📮 *"INBOX 나도 어딨는지 모르는데"*(2026-08-21) 라 «늘» 보여야 한다.
+           *    ⛔ 그래서 「0개면 숨기기」로 되돌리지 «않는다». 자리만 옮긴 것이다.
+           *    ⭐ 글자를 빼면 «몇 개 남았는지»가 사라진다 → **숫자 뱃지**로 되살린다.
+           *       (2026-08-13 AI 스캔 잔량과 같은 생각 — *"유저가 몇 장 남았는지 스스로 알아야 한다"*) */}
+          <button
+            className="icon-btn press"
+            onClick={() => nav.push({ name: 'inbox' })}
+            aria-label={unsortedN > 0 ? `임시보관함 · 정리 안 한 레시피 ${unsortedN}개` : '임시보관함'}
+            style={{ position: 'relative' }}
+          >
+            <Icon name={unsortedN > 0 ? 'edit' : 'inbox'} size={22} />
+            {unsortedN > 0 && (
+              <span
+                style={{
+                  position: 'absolute', top: 2, right: 0, minWidth: 16, height: 16, padding: '0 4px',
+                  borderRadius: 999, background: 'var(--brown)', color: '#fff',
+                  fontSize: 11, fontWeight: 800, lineHeight: '16px', textAlign: 'center',
+                }}
+              >
+                {unsortedN > 99 ? '99+' : unsortedN}
+              </span>
+            )}
+          </button>
+          {/* 설정 — 맨 오른쪽 끝(창업자 2026-07-29). 아바타는 왼쪽 브랜드 자리로 옮겼다. */}
           <button className="icon-btn press" onClick={() => nav.go('profile')} aria-label="설정">
             <Icon name="settings" size={22} />
           </button>
@@ -237,33 +270,21 @@ export default function HomeScreen() {
       <TabTalk tab="home" />
 
       <div className="pad">
-        {/* 1. 검색 */}
-        <button
-          className="searchbar press"
-          style={{ width: '100%', marginTop: 4 }}
-          onClick={() => nav.go('search')}
-        >
-          <Icon name="search" size={19} color="var(--text-sub)" />
-          <span style={{ fontSize: 15.5 }}>레시피, 재료, 태그를 검색해 보세요.</span>
-        </button>
-
-        {/* 📥📥 [2026-08-21 창업자 제보] *"**INBOX 나도 어딨는지 모르는데**"* → 입구를 «늘» 보이게 했다.
-            ⛔ 전엔 `unsortedN > 0` 이라 **정리를 끝내는 순간 입구가 사라졌다.** 그래서 담아둔 걸
-               다시 보려 해도 갈 길이 없었다(설정 안쪽 통계 숫자 말곤 입구가 없었다).
-            ⭐ 만든 사람이 못 찾으면 유저는 당연히 못 찾는다.
-            ⭐ 글자는 «상태마다» 다르게 — 할 일이 있으면 재촉처럼, 없으면 조용한 서랍처럼.
-               ⛔ 「정리 안 한 레시피 0개」로 늘 띄우면 할 일이 없는데도 할 일처럼 보인다. */}
-        <button
-          className="press"
-          onClick={() => nav.push({ name: 'inbox' })}
-          style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderRadius: 14, background: 'var(--cream)', border: 'none', textAlign: 'left' }}
-        >
-          <Icon name={unsortedN > 0 ? 'edit' : 'inbox'} size={18} color="var(--brown)" stroke={1.9} />
-          <span style={{ flex: 1, fontSize: 15.5, fontWeight: 700 }}>
-            {unsortedN > 0 ? `정리 안 한 레시피 ${unsortedN}개` : '임시보관함'}
-          </span>
-          <Icon name="chevron-right" size={17} color="var(--sand)" />
-        </button>
+        {/* 📏📏 [창업자 확정 2026-08-22] 검색바 줄과 임시보관함 줄을 **상단바 아이콘으로 올렸다**(위 참조).
+         *
+         * 📮 창업자 = *"위에 높이가 낮은 상자들이 몰려있으니까 지저분해 보이지 않아? 눈에도 잘 안들어오고"*
+         *    ＋ *"다닥다닥 붙어있어서"*
+         *
+         * 🔢 손보기 «전» 실측 (390×844 · 홈 위에서부터) — 창업자 말이 숫자로 그대로 나왔다:
+         *    검색바 47 · 임시보관함 43 · 소식 62 · 안해봤어요 48 · 오늘뭐해먹지 98 · 이번주 807
+         *    → **키 110px 이하가 «다섯 연달아»** · 틈은 10~14px
+         *    ⭐⭐ 키가 비슷한 상자가 셋 이상 연달으면 눈이 «하나씩 세지 않고» 한 덩어리로 본다.
+         *       그래서 「눈에 잘 안 들어온다」가 나온 것이다. **여백만으로는 안 풀린다 — 개수를 줄여야 한다.**
+         *    ✅ 둘을 올려 다섯 → 셋. 남은 셋은 키가 62·48·98 로 서로 달라 하나씩 세어진다.
+         *
+         * ⛔ 「임시보관함을 도로 숨기기」가 «아니다» — 창업자 제보(*"INBOX 나도 어딨는지 모르는데"*)로
+         *    되돌아가지 않으려고 «자리만» 옮겼다. 입구는 상단바에 늘 있다.
+         */}
 
         {/* 백업 유도 — 레시피는 이 기기에만 저장된다(방침 그대로). 앱을 지우면 다 사라지므로
             쌓였을 때 한 번씩 조용히 권한다. ⛔겁주지 않는다 — 쌓였다는 사실 + 다음 행동만.

@@ -26,6 +26,9 @@ import Icon from './Icon'
 //    다음에 탭을 더 넣고 싶으면 «무엇과 바꿀지»를 먼저 정한다.
 const ITEMS = [
   { key: 'home', label: '홈', icon: 'home' },
+  // 🧭 [2026-08-22] 안내코치 첫 단계(*"레시피 가져오기 · 여기서 시작!"*)가 **이 단추**를 짚는다.
+  //    ⛔ 전엔 홈 상단바의 「＋ 가져오기」를 짚었는데, 창업자 판정으로 그게 빠졌다(중복이었다).
+  //    ⭐ 오히려 낫다 — 이 단추는 «어느 탭에서든» 있어서 코치가 허공을 가리킬 일이 없다.
   { key: 'import', label: '가져오기', icon: 'plus', action: true },
   { key: 'myrecipes', label: '레시피', icon: 'bookmark' },
   // 📔 「한끼 일기」 (창업자 *"일기쓰려면 레시피에서 한끼일기 또 들어가야 하니까"*)
@@ -51,6 +54,7 @@ export default function BottomNav({ active, onChange, onImport }) {
             <button
               key={it.key}
               className="nav-item nav-item-import press"
+              data-coach="import"
               onClick={onImport}
               aria-label="가져오기"
             >
