@@ -490,6 +490,30 @@ console.log('\n🪤 반복 실수 게이트')
   } else ok(`창업자가 무른 말 ${무른말.length}개 — 화면 글자에 0곳`)
 }
 
+// ═══ ⑭ 개인정보처리방침의 «시행일 자리표시자»가 그대로 나가나 ═══
+// ⛔⛔ 왜 = 방침의 「시행일」은 **실제로 효력이 생기는 날**이라 미리 못 박는다.
+//    그래서 `@@시행일@@` 로 비워 두는데, **그대로 배포되면 유저가 그 글자를 본다.**
+// ⭐ 배포 브랜치에서만 죽인다 — `hold/*` 는 «아직 안 나가는» 판이라 여기서 죽이면
+//    고치는 동안 내내 빨간불이고, **늘 빨간 게이트는 아무도 안 본다**(우리가 여러 번 배운 것).
+{
+  console.log('\n⑭ 방침 시행일 자리표시자')
+  // ⛓ 둘은 «같은 날» 나간다 — 방침만 고치고 삭제 안내를 안 고치면 말이 갈린다
+  const 볼것 = ['privacy.html', 'delete-account.html']
+  const 남은파일 = 볼것.filter((f) => {
+    try { return readFileSync(join(ROOT, 'public', f), 'utf8').includes('@@시행일@@') } catch { return false }
+  })
+  const 남았나 = 남은파일.length > 0
+  let 브랜치 = ''
+  try { 브랜치 = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: REPO, encoding: 'utf8' }).trim() } catch { /* git 없으면 조용히 */ }
+  const 나가는판 = 브랜치 && !브랜치.startsWith('hold/') && !브랜치.startsWith('wip/')
+  if (남았나 && 나가는판) {
+    no(`«시행일»이 아직 @@시행일@@ 인 파일 ${남은파일.length}개 — ${남은파일.join(' · ')} (지금 브랜치 ${브랜치})`)
+    console.log('        ↳ 배포하는 «그날 날짜»로 바꾼다. 예) 2026년 9월 3일')
+  } else if (남았나) {
+    ok(`시행일이 아직 비어 있다 — ${브랜치} 는 안 나가는 판이라 넘어간다 (배포 브랜치에선 막힌다)`)
+  } else ok('시행일이 채워져 있다')
+}
+
 console.log(bad ? `\n⛔⛔ ${bad}건 — 고치고 다시 돌릴 것\n` : '\n✅ 반복 실수 게이트 통과\n')
 console.log('   📖 기계가 «못 잡는» 것들 = docs/실수-패턴-2026-08-07.md\n')
 process.exit(bad ? 1 : 0)

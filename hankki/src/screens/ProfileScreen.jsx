@@ -334,6 +334,14 @@ export default function ProfileScreen() {
     ...(FEEDBACK_URL || LAB_SURVEY_URL || LAB_BUG_URL
       ? [{ icon: 'bulb', label: '한끼연구소', badge: '의견·설문', coach: 'lab', onClick: () => setLab(true) }]
       : []),
+    // 🗑️🗑️ 계정·데이터 삭제 — ⛓**Play 가 요구하는 「앱 «안» 경로」다**(신고 넷 ③).
+    //   📄 공식 = support.google.com/googleplay/android-developer/answer/13327111
+    //      「계정 만들기가 «선택»이어도」 앱 안 경로와 웹 주소를 «둘 다» 요구한다.
+    //   ⭐ 웹 쪽은 2026-08-19 에 미리 만들어 뒀다 → `public/delete-account.html`
+    //   ⛔ 여기서 «바로 지우지» 않는다 — 지우는 단추는 클라우드 시트 안의 ［클라우드 비우기］다.
+    //      이 줄은 «어디서 지우는지 알려주는 길»이고, 그게 Play 가 말하는 「인앱 경로」다.
+    //   ⛔ 로그인 안 한 사람에게도 보인다 — 기기 안 데이터를 지우는 법도 그 페이지에 있다.
+    { icon: 'trash', label: '계정 · 데이터 삭제', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'delete-account.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
     { icon: 'settings', label: '개인정보처리방침', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
     { icon: 'book', label: '오픈소스 라이선스', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'licenses.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
   ]
