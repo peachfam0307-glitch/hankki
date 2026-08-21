@@ -87,6 +87,10 @@
 
   --shadow-soft: 0 1px 2px rgba(107, 79, 58, 0.04);
   --shadow-card: 0 6px 20px rgba(107, 79, 58, 0.06);
+  /* 💬 탭 한마디 말풍선 — 종이 한 장이 «살짝 떠 보이게». 창업자 확정 ⓔ(2026-08-21)
+     ⛔ 판에서 잰 갈색값을 그대로 박으면 «다크에서 안 보인다»(어두운 바탕에 갈색 반투명).
+        그래서 변수로 뺐다 — 크림·그레이지는 여기를 상속하고, 다크만 아래에서 검정으로 갈아낀다. */
+  --shadow-talk: 0 1px 4px rgba(107, 79, 58, 0.13);
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -116,6 +120,7 @@
 
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.32);
+  --shadow-talk: 0 1px 4px rgba(0, 0, 0, 0.35); /* 💬 다크에선 검정 계열이라야 보인다 */
   color-scheme: dark;
 }
 
@@ -2837,59 +2842,90 @@ html, body { overscroll-behavior: none; }
       새 색을 안 만들고도 저절로 튄다. ⛔우리 갈색 그대로 쓴다.
    ⛔ 그림자를 세게 주지 않는다 — 「광고 배너」로 읽히면 오히려 안 본다. */
 
-/* 📐 가로로 밀어서 최대 3장 (창업자 *"레시피 오른쪽 스크롤해서 3개정도까지는 보이게?"*)
-   ⭐ `scroll-padding-left` 를 준다 — 없으면 첫 칸이 padding «바깥»에 맞아 열자마자 20px 밀린다(v10.68 사고).
-   ⛔ 카드가 하나뿐일 땐 밀 것도 없으니 그냥 전폭으로 선다(아래 `:only-child`). */
+/* 📐📐 «한 장만 · 한 줄로» — 창업자 확정 2026-08-20 (시안 4판의 「라 — 라벨 알약」)
+   📮 창업자 = *"뭔가 거기에다 몰려있어서 그런지 **산만해보이고 지저분해 보인달까**.."*
+      ＋ *"다 별로같아 ㅠㅠ **높이도 줄이면 좋겠어**"* → 가로 장수는 **「1장만」**
+   🔢 실측이 그 말을 뒷받침했다 — 카드 97~102px × 가로 3장 ＋ 그 위 소식 60px ＋ 아래 「오늘 뭐 해먹지」 100px
+      = 첫 화면 위쪽이 «결이 다른 덩어리 셋»으로 꽉 찼다. 그게 창업자가 본 「정신없음」이다.
+      → 확정본 실측 = **카드 48px · 위쪽 덩어리 202px**
+   ⛔⛔ 1장만 남길 때 `flex` 인 채로 두면 **폭이 안 따라온다** — 미는 줄이라 카드가 «내용 폭»에
+      맞춰져 오른쪽 끝이 소식·「오늘 뭐 해먹지」와 «어긋난다». 시안 3판에서 실물로 잡았다(절대원칙 21).
+      ✅ 1장이면 밀 이유가 없다 → `display: block` 으로 되돌려 폭이 꽉 차게.
+   ⛔ margin/padding 은 그대로 둔다 — `-20` ↔ `+20` 이 상쇄돼 안쪽 폭이 맞는다.
+   ⛔ 스크롤 속성은 «지우지 않는다» — `scroll-padding-left` 는 v10.68 사고(첫 칸 20px 잘림) 대응이고,
+      여러 장으로 되돌리는 날 그대로 살아난다. 지금은 `display: block` 이라 잠들어 있을 뿐이다. */
+/* ⛔⛔ 세로 여백(옛 `margin-top:10px` ＋ `padding:2px`)을 **0 으로 지운다** — 이제 `.home-pair` 안이라
+   간격은 그 grid 의 `gap:14px` 이 만든다. 남겨두면 두 곳에서 더해져 어긋난다(실물로 잡았다 · 절대원칙 21):
+   · 폰  = 소식↔카드 **24px** vs 카드↔오늘 **16px** — 같은 간격이어야 할 자리가 갈렸다
+   · 패드 = 좌우로 선 두 카드의 **윗변이 12px 어긋났다**
+   ⭐ 좌우 `-20 / +20` 은 그대로 둔다 — 서로 상쇄돼 안쪽 폭이 맞는다(폭 검사 ○). */
 .next-row {
-  display: flex;
+  display: block;
   gap: 10px;
-  margin: 10px -20px 0;
-  padding: 2px 20px;
-  overflow-x: auto;
+  margin: 0 -20px;
+  padding: 0 20px;
+  overflow: visible;
   scroll-snap-type: x proximity;
-  /* ⛔⛔ 이 한 줄이 없으면 **첫 칸이 열자마자 20px 잘린다** — `scroll-snap-align: start` 가
-     첫 칸을 padding «바깥»(스크롤포트)에 맞추기 때문. 2026-08-14 테스터 영상으로 잡은 그 사고다.
-     ✅ 스냅을 죽이지 않고 «기준선만» 패딩 안쪽으로 옮긴다(`.hscroll` 과 같은 해법). */
   scroll-padding-left: 20px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 .next-row::-webkit-scrollbar { display: none; }
+/* ⛔ 둘째부터는 안 그린다 — 「다른 것도 있다」를 알리는 값보다 «조용함»이 크다는 창업자 판정 */
+.next-card:not(:first-child) { display: none; }
 
+/* 🎨🎨 「오늘 뭐 해먹지」와 «한 벌» — 창업자 한 마디가 답을 줬다
+   📮 창업자 = *"보니까 1줄이라 **오늘뭐해먹지랑 같은 색 구성인데 «반대로» 보여**"*
+   ⭐⭐ 나는 「한끼 소식」과 한 벌을 노렸는데, 정작 «구성이 닮은 쪽»은 「오늘 뭐 해먹지」였다
+      (소식 = 그림＋제목＋화살표 / 오늘 = **작은 파란 라벨 ＋ 진한 제목** = 우리 카드와 같은 뼈대).
+      구성이 같은데 **바탕만 뒤집혀** 있어서 「반대로 보여」가 났다.
+   ⛔⛔ 색을 «박아 넣지 않는다» — `--today-grad` 는 **테마마다 다르다**(다크는 `#26262e`).
+      시안 실측값 `#efe9dc` 를 그대로 쓰면 «다크 모드에서 진한 글자가 안 읽힌다».
+      ✅ 변수를 쓰면 테마 셋 전부에서 저절로 한 벌이 된다 — 창업자가 원한 게 정확히 그거다. */
 .next-card {
-  flex: 0 0 86%;              /* 다음 장이 살짝 보여야 «밀 수 있다»를 안다 */
-  scroll-snap-align: start;
-  display: flex;
-  flex-direction: column;     /* 📌 창업자 확정 = 안내가 위, 단추가 아래 */
-  border-radius: 16px;
-  background: var(--brown);
-  padding: 12px 13px 13px;
+  width: 100%;
+  border-radius: 14px;
+  background: var(--today-grad);
+  padding: 10px 13px;
   min-width: 0;
+  /* ⛔ 없으면 왼쪽 막대가 둥근 모서리 «밖»으로 삐져나와 각져 보인다(실물로 잡았다 · 절대원칙 21) */
+  overflow: hidden;
 }
-.next-card:only-child { flex: 0 0 100%; }
-/* 🎨 둘째부터는 옅게 — 「지금 할 건 첫 장」이 분명해지고, 진한 카드 셋이 나란해 시끄러운 것도 막는다 */
-.next-card.sub { background: color-mix(in srgb, var(--brown) 82%, var(--surface)); }
 
-/* 카드 «전체»가 눌려 레시피로 간다 */
-.next-open { display: block; width: 100%; text-align: left; min-width: 0; }
+/* 🔗 한 줄로 눕힌다 — 펭펭 · 라벨 · 제목이 나란히 선다. 카드 «전체»가 눌려 레시피로 간다 */
+.next-open { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; min-width: 0; }
 .next-open:active { opacity: 0.85; }
-.next-head { display: flex; align-items: center; gap: 7px; }
-/* 🐻 곰은 카드 높이를 안 늘린다 — 위아래로 살짝 넘겨 담는다(소식 카드와 같은 수법) */
-.next-gom { flex: 0 0 auto; display: block; width: 30px; height: auto; object-fit: contain; margin: -5px 0; }
-.next-label { font-size: 11.5px; font-weight: 800; color: var(--surface); opacity: 0.75; }
+.next-head { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; margin: 0; }
+/* 🐧 펭펭 — 「한끼 소식」이 꼬르곰 자리라 이 카드는 펭펭이 맡는다
+   📮 창업자 = *"꼬르곰이 한끼소식도 꼬르곰 얘도 꼬르곰이라 좀 정신이없어"*
+   ⛔ 카드 높이를 안 늘린다 — 위아래로 살짝 넘겨 담는다(소식 카드와 같은 수법) */
+.next-peng { flex: 0 0 auto; display: block; width: 30px; height: auto; object-fit: contain; margin: -8px 0 -6px; }
+/* 💊 라벨 = 알약 (창업자 확정 *"라벨알약 말한거야"*)
+   ⭐ 「오늘 뭐 해먹지」의 파란 라벨과 «같은 색»이되 채워서, 이 카드가 첫 번째임을 조용히 말한다.
+   🔢 대비 4.12 — 시안 넷 중 제일 높았다 */
+.next-label {
+  flex: 0 0 auto;
+  background: var(--brown); color: var(--surface);
+  border-radius: 999px; padding: 3px 9px;
+  font-size: 11.5px; font-weight: 800; opacity: 1;
+}
+/* 🔢 대비 8.41 — 기준(4.5)의 **두 배**다. 창업자 걱정 *"너무 안읽히려나 싶고"* 에 숫자로 답한 자리 */
 .next-title {
-  font-size: 17px; font-weight: 800; color: var(--surface); margin-top: 3px;
+  flex: 1; min-width: 0; margin: 0;
+  font-size: 15.5px; font-weight: 800; color: var(--text);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.02em;
 }
-/* 📌 이 줄이 「끌어들이는 말」이다 — 창업자가 *"확 끌리게"* 라고 콕 집은 자리라 흐리지 않는다 */
-.next-reason { font-size: 13.5px; font-weight: 700; color: var(--surface); margin-top: 5px; }
-/* 예시(“간장 반만”) — 뭘 쓸지 바로 떠오르게 하는 줄. 본문보다 한 단 낮춘다 */
-.next-eg { font-size: 11.5px; color: var(--surface); opacity: 0.72; margin-top: 2px; }
-/* 「한 줄 남기기」 — 안내 «아래»에 전폭으로. 눌러야 할 게 있는 갈래에만 붙는다 */
+/* ⛔ 「이유」·「보기」는 접는다 — 한 줄로 눕히면 들어갈 자리가 없다.
+   ⭐ 글자를 «지우는» 게 아니다 — 이 둘은 갈래가 「한줄」일 때 쓰는 안내라, 그 갈래엔
+      아래 「한 줄 남기기」 단추가 대신 말해 준다. 코드·데이터는 그대로 산다. */
+.next-reason, .next-eg { display: none; }
+/* 「한 줄 남기기」 — 눌러야 할 게 있는 갈래에만 붙는다(＝「어제 만든 것」).
+   ⭐ 라벨 알약과 «같은 파랑»으로 채운다 — 베이지 카드 위에서 「누를 것」이 하나로 통일된다.
+      ⛔ 흰 채움(옛 값)은 베이지 위에서 카드보다 밝아 단추가 배경처럼 떠 보였다. */
 .next-cta {
-  width: 100%; margin-top: 11px; padding: 10px 12px;
-  font-size: 13px; font-weight: 800; color: var(--brown);
-  background: var(--surface); border-radius: 11px; border: none;
+  width: 100%; margin-top: 9px; padding: 9px 12px;
+  font-size: 13px; font-weight: 800; color: var(--surface);
+  background: var(--brown); border-radius: 10px; border: none;
 }
 .next-cta:active { transform: scale(0.98); }
 
@@ -3146,6 +3182,33 @@ html, body { overscroll-behavior: none; }
 
   /* ⭐ 소식·오늘이 좌우로 — 넓어지면 «가운데만» 늘어나던 것을 칸으로 나눈다 */
   .home-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }   /* ⚠️ 위와 같은 함정 방지 */
+  /* 📣 소식은 «전폭» — 창업자 확정 순서가 「소식이 제일 위」라서다(2026-08-20).
+     ⭐ 그러면 아래 칸에 [다음에 뭐 할까 | 오늘 뭐 해먹지]가 좌우로 서서
+        예전의 *"한끼소식이랑 오징어가 너무 오른쪽이 휑해보인다.."* 가 되돌아오지 않는다. */
+  .home-pair > .news-card { grid-column: 1 / -1; }
+
+  /* 📐📐 **패드에선 「다음에 뭐 할까」가 «2줄»** — 창업자 2026-08-20
+     📮 창업자 = *"**패드는 2줄로 가야겠는데? 콩국수랑 맞춰서**"*
+     ⭐⭐ 폰에선 한 줄이 옳다(높이를 줄이려고 그렇게 확정했다). 그런데 패드에선 이 카드가
+        「오늘 뭐 해먹지」와 **나란히 선다** — 옆이 썸네일 88px 짜리 두 줄 카드라
+        한 줄(48px)만 서 있으면 «키가 안 맞아» 오히려 빈 자리로 읽힌다.
+        📌 같은 카드라도 «혼자 설 때»와 «옆에 설 때»의 정답이 다르다.
+     ✅ 그래서 접었던 「이유」 줄을 패드에서만 되살려 둘째 줄로 쓰고, `stretch` 로 키를 맞춘다.
+        「이유」는 갈래 셋 모두에 «항상» 있다(`nextUp.js` — 다음엔 뭘 바꿔볼까요? / 저장해두고
+        아직 한 번도 안 만든 거예요 / 또 해볼까요?) → 빈 줄이 생길 일이 없다. */
+  .home-pair > .next-row,
+  .home-pair > .next-row > .next-card { height: 100%; }
+  /* ⭐ 늘어난 카드 «안에서» 내용을 세로 가운데로 — 위로 쏠리면 아래가 텅 빈다 */
+  .next-card { display: flex; flex-direction: column; justify-content: center; }
+  /* ⭐ 「이유」를 둘째 줄로 내리는 장치 = `wrap` ＋ `width:100%`. 한 줄 배치는 그대로 살아 있다 */
+  .next-open { flex-wrap: wrap; }
+  .next-reason {
+    display: block; width: 100%;
+    /* 펭펭 30px ＋ gap 9px = 라벨 알약 왼쪽에 딱 맞춰 들여쓴다 */
+    margin: 5px 0 0 39px;
+    font-size: 13px; font-weight: 700; color: var(--text-sub);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
 
   /* ⭐⭐ 제철도 «같은» 1fr 1fr ＋ «같은» gap — 그래야 오른쪽 요리 셋이
      위 「오늘 뭐 해먹지」 칸과 x 가 딱 맞는다(창업자 *"윗줄 콩국수랑 같은 위치로"*).
@@ -3258,4 +3321,51 @@ html, body { overscroll-behavior: none; }
   /* ⛔ 격자 칸은 기본이 `min-width: auto` 라 «안의 내용»이 칸을 밀어낸다 —
      앨범 카드 줄이 안 줄어들어 2단이 통째로 무너진다. 0 으로 못 박는다. */
   .log-cal, .log-main { min-width: 0; }
+}
+
+/* ---- 💬 탭 상단 캐릭터 한마디 (v11.18 · 2026-08-21) ----
+   📮 창업자 = *"멘트넣는 건 좋은 것 같아. 심심하지 않고.."*
+      ＋ *"말풍선이면 **캐릭터방향으로 풍선꼬리**가 있어야해."*
+   ⛔⛔ **클래스 이름을 재사용하지 않는다** — v11.16 에 `MemoNote` 가 `.paper` 를 빌려 썼다가
+      일기 종이의 배경·inset 선·그림자를 통째로 끌고 와 하루를 태웠다.
+      「더 구체적으로 쓰면 이긴다」가 아니다 — **내가 안 적은 속성은 공용 쪽이 그대로 이긴다.**
+   📐 좌우 여백 20px = `.topbar`(14px 20px 8px) · `.pad`(0 20px) 와 같은 줄에 선다.
+   🎨 색은 «변수만» 쓴다 — `--cream`·`--text-sub` 는 테마 셋(기본·다크·웜)에 다 정의돼 있다.
+      ⛔ 시안에서 잰 색값(#f2ede3)을 박으면 **다크에서 글자가 안 읽힌다**(v11.17 교훈). */
+.tab-talk {
+  padding: 0 20px;
+  margin: 5px 0 7px;
+}
+.tab-talk-b {
+  display: inline-block;
+  position: relative;
+  padding: 7px 13px;
+  border-radius: 14px;
+  /* ✅ [창업자 확정 2026-08-21 = ⓔ] 「흰색 ＋ 살짝 그림자」 — 종이처럼 살짝 떠 보인다.
+     ⛔ 갈래 다섯을 실물 앱에서 찍어 견줬다(scripts/_판-말풍선색-0821.mjs).
+        ⓐ 지금 색(--cream)은 바로 아래 세그먼트와 «색이 완전히 같아»(대비 1.00) 묻혔다.
+     ⚠️ 흰색만 쓰면 이번엔 «홈»에서 검색바와 같아진다(홈 대비 1.00) — 탭마다 아래에 깔린 게 다르다.
+        그래서 그림자가 «필수»다. 색이 같아도 그림자가 갈라 준다. */
+  background: var(--surface);
+  box-shadow: var(--shadow-talk);
+  color: var(--text-sub);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+/* 🔺 꼬리 = 말풍선 «위»로 솟아 상단바의 캐릭터를 가리킨다.
+   📐 left 14px → 꼬리 한가운데가 화면 왼쪽에서 41px.
+      상단바 캐릭터 중심 = 꼬르곰 41px(20+42/2) · 펭펭 37px(20+34/2) · 홈 아바타 42px(20+44/2).
+   🧍‍♀️ 캐릭터는 «무조건 글자 왼쪽»(창업자 확정 2026-08-14 · `check-charside` 게이트)이라
+      꼬리도 왼쪽 하나로 고정된다 — 탭마다 방향이 갈릴 일이 없다. */
+.tab-talk-t {
+  position: absolute;
+  left: 14px;
+  top: -6px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 8px solid transparent;
+  /* ⛔ 꼬리 색도 «같이» 갈아야 한다 — 말풍선만 바꾸면 꼬리가 옛 색으로 남아 두 조각으로 보인다 */
+  border-bottom: 7px solid var(--surface);
 }
