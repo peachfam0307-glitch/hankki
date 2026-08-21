@@ -14,6 +14,7 @@ import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import LabSheet from '../components/LabSheet'
+import CloudSheet from '../components/CloudSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { cropSquare } from '../utils'
 import { takeOpenBackup, backupDone } from '../nudges'
@@ -49,6 +50,11 @@ export default function ProfileScreen() {
   const [checking, setChecking] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
   const [lab, setLab] = useState(false) // 한끼연구소(의견·설문·오류) 시트
+  const [cloud, setCloud] = useState(false) // ☁️ 클라우드 저장 시트 (창업자 확정 「1번」)
+  // ⛔⛔ `useLayerBack` 은 «반드시» 위 `useState` «아래»에 둔다 —
+  //   위에 두면 `cloud` 를 선언 «전»에 읽어 `Cannot access before initialization` 으로 **설정 화면이 통째로 죽는다.**
+  //   📌 2026-08-21 에 실제로 그렇게 냈다. 빌드도 통과하고 스모크도 통과했다 — **화면을 열어서야 드러났다**(규칙 21).
+  useLayerBack(cloud, () => setCloud(false))
   const fileRef = useRef(null)
   const avatarFileRef = useRef(null)
 
@@ -476,6 +482,24 @@ export default function ProfileScreen() {
           <Icon name="chevron-right" size={18} color="var(--brown)" />
         </button>
 
+        {/* ☁️☁️ 클라우드 저장 — 백업 바로 «밑»에 세운다 (창업자 확정 「1번」 · 2026-08-16)
+            ⭐ 왜 여기냐 = 백업과 «같은 걱정»을 푸는 자리다 — 「폰 바꾸면 어떡하지」.
+               떨어뜨려 놓으면 유저가 둘을 다른 기능으로 읽고, 백업만 하고 만다.
+            ⛔ 백업을 «치우지» 않는다 — 사진은 백업에만 들어간다(클라우드는 글자만).
+               📌 둘은 겹치는 게 아니라 «나뉘어» 맡는다. 그래서 부제로 그걸 말해 준다.
+            ⭐ 테두리는 «백업에만» 남긴다 — 둘 다 두르면 둘 다 안 튄다. */}
+        <button
+          className="card press" data-coach="cloud" onClick={() => setCloud(true)}
+          style={{ marginTop: 10, padding: 16, display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left' }}
+        >
+          <Icon name="cloud" size={24} color="var(--brown)" stroke={2} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15.5, fontWeight: 800 }}>클라우드 저장</div>
+            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 2 }}>구글 계정에 매어 두면 새 폰에서도 그대로 나와요 · 글자만</div>
+          </div>
+          <Icon name="chevron-right" size={18} color="var(--sand)" />
+        </button>
+
         {/* 메뉴 */}
         <div className="card" style={{ marginTop: 20, overflow: 'hidden' }}>
           {menu.map((m, i) => (
@@ -701,6 +725,19 @@ export default function ProfileScreen() {
           submitLabel="불러오기"
           onSubmit={(v) => { setPasteOpen(false); importFromText(v) }}
           onClose={() => setPasteOpen(false)}
+        />
+      )}
+
+      {/* ☁️ 클라우드 — ⭐ 내려받기는 백업 불러오기와 «같은 흐름»으로 넘긴다(`불러오기끝`).
+          📌 그래야 잠긴 일기 비번 묻기가 한 자리에만 있다. 두 벌로 나뉘면 한쪽만 고쳐진다. */}
+      {cloud && (
+        <CloudSheet
+          onClose={() => setCloud(false)}
+          백업만들기={buildBackup}
+          불러오기끝={불러오기끝}
+          showToast={nav.showToast}
+          폰레시피={store.recipes.length}
+          폰일기={(store.diary || []).length}
         />
       )}
 
