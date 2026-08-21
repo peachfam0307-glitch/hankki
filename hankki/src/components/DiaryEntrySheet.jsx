@@ -115,6 +115,9 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete, onOpenRecipe
       </div>
 
       {cropSrc && (
+        // 🏷 `doneLabel` 창업자 확정 2026-08-21 = *"일기도 담기로 바꾸고"*
+        //    사진은 «읽는» 게 아니라 «담는» 것이다 (요리 모드 완성 사진과 같은 말)
+        //    ⛔ 주석을 <CropSheet …> «속성 자리»에 넣으면 빌드가 깨진다 — 자식 자리에서만 된다
         <CropSheet
           image={cropSrc}
           title="사진 자르기"
@@ -123,6 +126,7 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete, onOpenRecipe
               모서리를 끌어 <b style={{ color: '#f0ede7' }}>남기고 싶은 부분만</b> 담아주세요.
             </>
           }
+          doneLabel="이 부분만 담기"
           onDone={async (img) => { setCropSrc(null); setPhoto(await downscale(img)) }}
           onSkip={async () => { const s = cropSrc; setCropSrc(null); setPhoto(await downscale(s)) }}
           onCancel={() => setCropSrc(null)}

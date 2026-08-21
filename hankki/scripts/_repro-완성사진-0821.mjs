@@ -148,6 +148,14 @@ console.log('\n② 사진을 찍으면 — 미리보기 ＋ 「표지로도 쓰�
   await page.setInputFiles('.cook-shot input[type=file]', { name: '완성.png', mimeType: 'image/png', buffer: 빨강PNG })
   await page.waitForTimeout(700)
   chk('  자르기 시트가 떴다', await page.evaluate(() => /자르기/.test(document.body.innerText)))
+  // 🏷 창업자 확정 2026-08-21 = *"일기도 담기로 바꾸고"*
+  //    사진은 «읽는» 게 아니라 «담는» 것이다 — 「읽기」는 글자(OCR) 자리 말이다
+  //    ⛔ 소스 grep 이면 주석에 적어둔 옛 문구까지 걸린다 → 화면 글자로 본다(규칙 18 ⓘ)
+  {
+    const 글 = await page.evaluate(() => document.body.innerText)
+    chk('  ⭐ 확인 단추 = 「이 부분만 담기」', /이 부분만 담기/.test(글))
+    chk('  ⛔ 「이 부분만 읽기」는 «없다»', !/이 부분만 읽기/.test(글))
+  }
   // 「그대로 쓰기」(자르기 건너뛰기)
   await page.evaluate(() => {
     // ⛔ 「그대로 쓰기」가 아니다 — 실제 글자는 **「전체 사용」**이다(소스로 확인 · 규칙 18 ⓘ)
@@ -221,6 +229,52 @@ console.log('\n③ ⭐ 꾸민 레시피 — 「표지로도 쓰기」가 기본 
   chk('  ⭐ 표지는 «안» 바뀌었다', r?.thumb !== 'photo', 'true')
   chk('  ⭐ 꾸민 것(decor)이 그대로 살아 있다', r?.decor?.length >= 1, 'true')
   await p2.close()
+}
+
+// ───────────────────────────────────────────────────────────
+// 🏷 창업자 확정 2026-08-21 = *"일기도 담기로 바꾸고"* — 요리 모드만 바꾸면 «말이 갈린다».
+//    ⛓ 같은 기능은 탭이 달라도 같은 이름(CLAUDE.md 「UI 문구」 핀).
+console.log('\n④ 🏷 일기 사진도 «같은 말» — 「이 부분만 담기」')
+{
+  // ⛔ 일기 탭은 «달력»이라 거기선 이 시트가 안 열린다(규칙 18 — 「없다」의 이유를 내가 정하지 않는다).
+  //    실제 입구 = **레시피 상세의 메모지**(`RecipeDetailScreen.jsx:575`) → 그건 «한 줄이 있는» 일기에만 뜬다.
+  const p0 = await 새탭()
+  const 대상 = await p0.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+    const r = (st.recipes || [])[0]
+    if (!r) return null
+    st.diary = [{ id: '검사용', recipeId: r.id, title: r.title, at: Date.now(), rating: 4, note: '검사용 한 줄' }]
+    localStorage.setItem('hankki:v1', JSON.stringify(st))
+    return { id: r.id, title: r.title }
+  })
+  await p0.close()
+  chk('  일기 한 장을 심었다', !!대상)
+
+  const p3 = await 새탭()
+  await p3.evaluate(() => {
+    const bs = [...document.querySelectorAll('nav button, .tabbar button, [class*="tab"] button, footer button')]
+    bs.find((x) => (x.innerText || '').replace(/\s+/g, '').includes('레시피'))?.click()
+  })
+  await p3.waitForTimeout(600)
+  await p3.evaluate((T) => {
+    [...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim().startsWith(T))?.click()
+  }, 대상.title)
+  await p3.waitForTimeout(800)
+  const 열림 = await p3.evaluate(() => {
+    const t = document.querySelector('.memo-note') || [...document.querySelectorAll('button')].find((x) => /검사용 한 줄/.test(x.innerText || ''))
+    if (!t) return false; t.click(); return true
+  })
+  await p3.waitForTimeout(600)
+  chk('  요리 기록 시트가 열렸다', 열림 && /요리 기록 남기기/.test(await p3.evaluate(() => document.body.innerText)))
+  await p3.setInputFiles('.diary-photo input[type=file]', { name: '일기.png', mimeType: 'image/png', buffer: 빨강PNG })
+  await p3.waitForTimeout(800)
+  {
+    const 글 = await p3.evaluate(() => document.body.innerText)
+    chk('  자르기 시트가 떴다', /사진 자르기/.test(글))
+    chk('  ⭐ 확인 단추 = 「이 부분만 담기」', /이 부분만 담기/.test(글))
+    chk('  ⛔ 「이 부분만 읽기」는 «없다»', !/이 부분만 읽기/.test(글))
+  }
+  await p3.close()
 }
 
 await b.close(); srv.close()
