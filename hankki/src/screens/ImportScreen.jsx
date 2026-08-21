@@ -33,7 +33,10 @@ const OPTIONS = [
   { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '캡처해서 담기 (제일 정확)', color: '#C13584' },
   { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '캡처·설명 붙여넣기로 담기', color: '#E33' },
   // ⭐ 링크가 못 하는 일을 «이 줄이» 한다 — 그래서 설명을 키웠다(창업자 ⓐ안의 「텍스트 안내를 키운다」를 여기서 살렸다)
-  { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 복사해 붙여넣으면 재료·순서까지 자동 정리', color: '#B0895E' },
+  // 💰 「0장」을 «캡처 1장»과 나란히 둔다 — 대비가 있어야 값이 값으로 읽힌다.
+  //    ⭐ 여기는 «조용하게» 적는다(빨강 없음). 빨강은 「깎인다」를 말하는 색이고 이 길은 안 깎인다.
+  //    🔢 실측 = ImportScreen 은 `ocr.js` 에서 `getOcrLeft`(읽기)만 가져온다. `ocrImage()` 를 안 부른다.
+  { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 재료·순서까지 자동 정리 · AI 스캔 0장', color: '#B0895E' },
   { key: 'link', icon: 'link', title: '링크 주소만 담아두기', desc: '주소만 저장해요 · 재료·순서는 안 담겨요', color: '#9B8B79' },
 ]
 
@@ -215,8 +218,15 @@ export default function ImportScreen() {
                 <span style={{ fontSize: 14.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap' }}>사진 · 직접 작성하기</span>
                 <span style={{ fontSize: 10, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>제일 많이 써요</span>
               </div>
-              <div style={{ fontSize: 12.3, lineHeight: 1.5, color: 'var(--text-sub)' }}>
-                캡처는 재료·만드는 법 칸별로 읽어 채워요
+              {/* 💰 [2026-08-21] 값을 «고르는 그 줄»에 붙인다 — 창업자가 결제에 대해 정한 원칙과 같다:
+                     *"구매 탭은 안 만든다 — 「쓰려는 순간」 그 자리에서"*. 알리는 것도 같은 자리다.
+                  ⭐ 여기가 **제일 많이 눌리는 길**이고(「제일 많이 써요」) 동시에 **돈이 드는 길**이다.
+                     맨 위 잔량 띠는 「몇 장 남았나」를 말하고, 이 줄은 「이 길이 몇 장을 쓰나」를 말한다 — 다른 말이다.
+                  ⛔ `keep-all` — 이 줄은 `.opt-row .t .b` 가 «아니라» 인라인 style 이라
+                     v11.19 에 넣은 그 규칙이 안 걸렸다. 실물에서 「읽어 채워 / 요」로 잘려 있었다(규칙 21).
+                     📌 같은 병을 한 화면에서 두 번 고쳤다 — 클래스로 고친 것은 «클래스를 쓰는 줄»만 낫는다. */}
+              <div style={{ fontSize: 12.3, lineHeight: 1.5, color: 'var(--text-sub)', wordBreak: 'keep-all' }}>
+                캡처는 재료·만드는 법 칸별로 읽어 채워요 · <b style={{ fontWeight: 800, color: 'var(--danger)' }}>AI 스캔 1장</b>
               </div>
             </div>
             <Icon name="chevron-right" size={18} color="#c0a986" />
@@ -262,9 +272,16 @@ export default function ImportScreen() {
                 <span style={{ fontSize: 9.5, fontWeight: 800, color: '#fff', background: '#7fa06a', borderRadius: 999, padding: '2px 7px', flexShrink: 0 }}>이미 돼요</span>
               </div>
               {/* ⛔ 「캡처·링크 올리면」이었다 — **링크는 자동으로 안 채워진다.**
-                     돈 드는 길(사진)과 안 되는 길(링크)이 한 줄에 묶여 있었다(창업자 확정 ⓑ · 2026-08-21). */}
-              <div style={{ fontSize: 11.6, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2 }}>
-                캡처·글 올리면 재료·순서를 자동으로 채워요
+                     돈 드는 길(사진)과 안 되는 길(링크)이 한 줄에 묶여 있었다(창업자 확정 ⓑ · 2026-08-21).
+                  ⛔⛔ 그걸 「캡처·글」로 고쳤는데 **아직 반쪽이었다** — 이번엔 «돈 드는 길»과 «공짜 길»이 묶였다.
+                     🔢 코드로 갈랐다 = `ocrImage()`(돈 드는 AI 스캔)를 부르는 곳은 **셋뿐**이다 —
+                        캡처(EditorScreen) · 영수증(PantryView) · 공유받기(App.jsx).
+                        **글 붙여넣기·링크 담기는 `ocr.js` 를 아예 import 하지 않는다**(ImportScreen 은 `getOcrLeft` 만 읽는다).
+                     ⭐ 그래서 「0장」은 짐작이 아니라 실측이다.
+                  ⭐ 값을 «숫자 대 숫자»로 놓는다 — 「공짜」라고 쓰면 「되는데 돈만 안 든다」로 읽혀
+                     정작 무엇이 깎이는지가 안 보인다. 1 ↔ 0 이 제일 빠르게 읽힌다. */}
+              <div style={{ fontSize: 11.6, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2, wordBreak: 'keep-all' }}>
+                캡처는 <b style={{ fontWeight: 800, color: 'var(--danger)' }}>AI 스캔 1장씩</b> · 글 붙여넣기는 <b style={{ fontWeight: 800, color: '#4a7a45' }}>0장</b>
               </div>
               {/* ⛔ 남은 장수는 여기 «두지 않는다» — 창업자 *"너무 안보여"* (2026-08-13).
                   스크롤해야 나오는 자리라 「잘 보이게」가 안 된다. → 화면 «맨 위»로 올렸다. */}

@@ -683,16 +683,45 @@ export default function EditorScreen({ id, prefill }) {
         {/* 캡처 안내는 여기 한 곳에만 — 잘 보이게(흩어진 안내 통합) */}
         <div style={{ marginBottom: 14, padding: '13px 16px', borderRadius: 'var(--r-md)', background: 'var(--cream)', border: '1px solid var(--line)' }}>
           <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>캡처는 이렇게 채워요</div>
+
+          {/* 💰💰 [2026-08-21 창업자 지시] «값»을 맨 위·빨강으로 — *"빨강색으로 안내해줘야할 것 같아. 1장 스캔하면 1장 까인다는걸."*
+              ⛔⛔ 옛 판은 **권유가 먼저·값이 나중**이었다 —
+                 「긴 레시피는 여러 장을 한꺼번에 골라도 돼요 — 사진 1장에 AI 스캔 1장씩 써요」
+                 그 줄에 색만 입히면 **「골라도 돼요」가 빨개진다.** 색보다 «순서»가 먼저다.
+              ✅ 그래서 값을 «따로 떼어» 맨 위로 올렸다. 권유(여러 장 골라도 된다)는 뺐다 —
+                 값과 권유를 한 줄에 두면 읽는 사람은 늘 «권유»만 가져간다.
+              ⛔ 색을 숫자로 박지 않는다 — `--danger` 는 테마마다 다르다(기본 #c85a3f · 다크 #e0946a · 크림 #bd5a44).
+                 실측값을 박으면 다크에서 안 읽힌다(v11.17 교훈).
+              ⭐ 예시를 같이 적는다(창업자 *"처음보는 사람도 이해하게 써야해 · 예시를 적어도 좋고"*) —
+                 「1장에 1장」은 규칙이고 「3장 고르면 3장」은 그림이다. 처음 보는 사람은 그림으로 이해한다.
+              ⭐ 「다 써도 기본 인식으로 계속」을 «같은 상자»에 둔다 — 값만 빨갛게 적으면 「막힌다」로 읽힌다.
+                 우리는 진짜로 안 끊긴다(tesseract 무제한). 겁을 주는 게 목적이 아니다. */}
+          <div style={{
+            display: 'flex', gap: 9, alignItems: 'flex-start',
+            paddingLeft: 10, marginBottom: 10,
+            borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
+          }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 13.4, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px' }}>
+                사진 1장에 AI 스캔 1장을 써요
+              </div>
+              <div style={{ fontSize: 12.3, color: 'var(--text-sub)', marginTop: 3, lineHeight: 1.5 }}>
+                3장 고르면 3장을 써요 · 다 써도 <b style={{ fontWeight: 800, color: 'var(--text)' }}>기본 인식</b>으로 계속 읽어 드려요
+              </div>
+            </div>
+          </div>
+
           {[
-            // ⚠️⚠️ 권하는 줄에 «값»을 같이 적는다 — 권해놓고 조용히 깎으면 안 된다.
-            //    ⭐ 굵게 = «값» 쪽. 창업자 *"안내를 정확하게 해야해. 한번에 레시피2장 올리면 2장카운트된다고"*
-            //       ⛔ 첫 판은 「여러 장을 한꺼번에」가 굵었다 — 권하는 말만 눈에 띄고 값은 안 보였다.
-            //    ⏳ worker 를 올리는 날 「몇 장을 골라도 1장만 쓴다」는 쪽으로 바꾼다(코드는 이미 있다).
-            ['긴 레시피는 여러 장을 한꺼번에 골라도 돼요 — ', '사진 1장에 AI 스캔 1장씩', ' 써요.'],
-            ['재료·순서가 섞이면 각 칸의 ', '사진에서 채우기', '로 그 칸만 다시 채워요.'],
-            ['읽은 내용은 ', '초안', '이니 사진 보며 다듬어 주세요.'],
+            // ⛔⛔ [2026-08-21 창업자 지적] *"재료 순서가 섞이면 이게 무슨말이지"* — 맞는 지적이다.
+            //    앱 만든 사람이 못 읽는 문장을 처음 보는 사람이 읽을 리가 없다.
+            //    「재료·순서가 섞이면」 = «무엇이» 섞이는지가 빠졌다 → «어디에 무엇이» 들어갔는지로 바꿨다.
+            ['재료 칸에 만드는 법이 섞여 들어왔다면 그 칸의 ', '사진에서 채우기', '로 다시 채워요.'],
+            ['읽은 글은 ', '초안', '이에요 — 사진 보며 다듬어 주세요.'],
           ].map(([a, b, c], k) => (
-            <div key={k} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text)', lineHeight: 1.5, marginTop: k ? 5 : 0 }}>
+            // ⛔ `keep-all` — 한글은 기본이 «글자» 단위로 끊어서 낱말 가운데가 잘린다.
+            //    실물을 열어보고 잡았다(규칙 21) — 「그 칸의 사 / 진에서 채우기」로 갈라져 있었다.
+            //    📌 v11.19 의 「안 담겨/요」와 «같은 병»이다. 새 문장을 넣을 때마다 다시 난다.
+            <div key={k} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text)', lineHeight: 1.5, marginTop: k ? 5 : 0, wordBreak: 'keep-all' }}>
               <span style={{ flex: '0 0 auto', width: 5, height: 5, borderRadius: 9, background: 'var(--brown)', marginTop: 7 }} />
               <span>{a}<b style={{ color: 'var(--brown)', fontWeight: 700 }}>{b}</b>{c}</span>
             </div>

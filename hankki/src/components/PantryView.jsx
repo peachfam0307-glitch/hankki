@@ -259,6 +259,28 @@ export default function PantryView() {
         <Icon name="photo" size={16} color="var(--brown)" />
         갤러리에서 영수증 고르기
       </button>
+      {/* 💰💰 [2026-08-21] 여기가 «조용히 깎이던» 자리다 — 이 화면에 장수 얘기가 **한 줄도 없었다.**
+          🔢 실측 = `ocrImage()`(돈 드는 AI 스캔)를 부르는 곳은 셋이고 이 화면이 그중 하나다(79줄).
+             그런데 안내는 편집 화면 하나에만 있었다.
+          ⛔⛔ **모르게 깎이는 게 제일 나쁘다** — 창업자 확정(2026-08-13) =
+             *"유저가 몇장남았는지 스스로 알아야해"* · 분쟁·환불 1순위가 «샀는데 어디 갔지» 다.
+             영수증은 여러 장 찍기 쉬운 자리라(장 볼 때마다) 모르면 더 빨리 준다.
+          ⭐ 편집 화면과 «같은 문장 틀»로 쓴다 — 「N장에 AI 스캔 N장」.
+             자리마다 말이 다르면 유저가 «다른 규칙»으로 읽는다(같은 기능은 같은 이름 원칙). */}
+      <div style={{
+        display: 'flex', gap: 9, alignItems: 'flex-start',
+        paddingLeft: 10, marginBottom: 10,
+        borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
+      }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px' }}>
+            영수증 1장에 AI 스캔 1장을 써요
+          </div>
+          <div style={{ fontSize: 12.2, color: 'var(--text-sub)', marginTop: 3, lineHeight: 1.5 }}>
+            다 써도 <b style={{ fontWeight: 800, color: 'var(--text)' }}>기본 인식</b>으로 계속 읽어 드려요
+          </div>
+        </div>
+      </div>
       <div style={{ fontSize: 12.3, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 14 }}>
         영수증은 사진에 따라 인식률이 달라요 · 안 되면 <b style={{ color: 'var(--brown)' }}>＋재료 담기</b>로 직접 넣어도 돼요.
       </div>
