@@ -1675,7 +1675,34 @@ img {
 .cook-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; justify-content: safe center; text-align: center; padding: 20px 26px; gap: 24px; }
 .cook-stepno { font-size: 14px; font-weight: 800; color: var(--brown); letter-spacing: 0.04em; }
 .cook-stepno span { color: var(--sand); }
+/* 🍳🔠🔠 [창업자 확정 2026-08-21] 요리 모드 글씨 = **화면 «키»에 따라 세 단.**
+   📮 창업자 = *"**요리시작모드 글씨는 사실 더 커도돼**"*
+      ＋ *"**요리시작에서 글자 두줄넘어갈때 잘리지않게 확인만 잘하면 되고**"*
+      ＋ (그 앞) *"줄바꿈 잘 되어야해. **전수검사 잘해야해ㅠ**"*
+
+   🔢🔢 **964걸음 «전수» × 크기 8종 × 화면 4종으로 재서 정했다**
+      (`node scripts/_repro-요리글씨-0821.mjs` · 145편의 모든 조리 걸음을 진짜 요리 모드에 넣어 잼)
+      「스크롤 필요」 = 그 걸음이 한눈에 안 들어온다(부엌에선 «잘린 것»과 거의 같다)
+
+      화면            24px    26px    28px    30px    32px    34px
+      320×568 작은    17.4%   22.4%   29.6%   64.1%   69.1%   72.6%
+      360×640 짧은     0.2%    0.5%    6.0%    7.8%   11.8%   33.1%  ← 34 에 절벽
+      390×844 갤럭시   0.0%    0.0%    0.0%    0.0%    0.0%    0.1%  ← 32 까지 «완벽»
+      412×915 큰 폰    0.0%    0.0%    0.0%    0.0%    0.0%    0.0%
+
+   ⭐⭐ **잣대를 「폭」이 아니라 «키»로 잡았다** — 스크롤을 만드는 건 폭이 아니라 **화면 키**다.
+      (좁아도 길면 다 들어가고, 넓어도 짧으면 넘친다. 실측이 그렇게 나왔다)
+   ⭐⭐ **짧은 화면은 «24px 그대로»** → **아무도 나빠지지 않는다.** 키우는 건 여유 있는 화면만.
+   ✅ 가로 넘침 **0개** · 「다음」 단추가 화면 밖으로 밀린 조합 **0개**
+      (2026-08-04 테스터 제보 사고 — `.cook-body` 의 `overflow-y:auto` ＋ `safe center` 가 지킨다)
+   ⛔ **34px 로 올리지 말 것** — 360×640 이 11.8% → 33.1% 로 절벽이고 갤럭시도 거기서 처음 새어 나온다. */
 .cook-steptext { font-size: 24px; line-height: 1.5; font-weight: 600; color: var(--text); word-break: keep-all; }
+/* ⛔⛔ 처음엔 `min-height:620px → 26px` 단을 하나 더 뒀는데 **게이트가 물렸다** —
+   360×640 에서 스크롤이 **2개 → 5개로 «늘었다».** 964개 중 3개(0.3%)라 작아 보이지만
+   내가 바로 위에 **「아무도 나빠지지 않는다」**고 적어 놓고 어긴 것이라 뺐다.
+   📌 원칙을 적어 두고 어기면, 그 원칙은 다음번에도 안 지켜진다.
+   ⭐ 그래서 단은 «둘»뿐이다 — 750px 밑은 **전부 24px 그대로.** */
+@media (min-height: 750px) { .cook-steptext { font-size: 32px; } }   /* 390×844·412×915 → 스크롤 «0개» */
 .cook-timer { display: inline-flex; align-items: center; gap: 7px; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 14px; padding: 12px 18px; border-radius: 14px; transition: transform 0.08s ease; }
 .cook-timer:active { transform: scale(0.96); }
 /* ⛔ `flex-shrink` 기본값이 1이라 자리가 모자라면 이 줄부터 눌린다 — 버튼 줄은 절대 안 줄어들게 못 박는다 */
