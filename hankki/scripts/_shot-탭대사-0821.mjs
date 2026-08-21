@@ -104,10 +104,14 @@ const 재기 = (page) => page.evaluate(() => {
 
 let 실패 = 0
 const 표 = []
-for (const 테마 of ['greige', 'dark']) {
+// 🎨 테마는 «셋 다» 본다 — greige(기본) · dark · cream.
+//    ⛔ 「크림」은 배경이 거의 흰색(#fdfbf7)이라 흰 말풍선(--surface #ffffff)과 색이 거의 같다.
+//       ⓔ 를 고른 «이유»가 그림자인데, 그림자가 없으면 이 테마에서 말풍선이 통째로 사라진다.
+//    📌 v11.17 교훈 = 「시안은 «한 테마»에서 찍은 것이다」. 셋을 안 보면 하나가 조용히 깨진다.
+for (const 테마 of ['greige', 'dark', 'cream']) {
   for (const 탭 of 탭들) {
-    // 🌙 다크는 「색을 변수로만 썼나」를 보는 게 목적이라 «한 탭»(레시피)만 찍으면 충분하다
-    if (테마 === 'dark' && 탭.이름 !== '2-레시피') continue
+    // 🌙 다크·크림은 「색·그림자가 테마를 타나」를 보는 게 목적이라 «한 탭»(레시피)만 찍으면 충분하다
+    if (테마 !== 'greige' && 탭.이름 !== '2-레시피') continue
 
     const page = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 })
     await page.addInitScript(SEED_COACH_SEEN)
@@ -129,7 +133,7 @@ for (const 테마 of ['greige', 'dark']) {
 
     const 덮 = await 덮였나(page)
     const v = await 재기(page)
-    const 이름 = `${테마 === 'dark' ? '다크-' : ''}${탭.이름}`
+    const 이름 = `${테마 === 'greige' ? '' : 테마 === 'dark' ? '다크-' : '크림-'}${탭.이름}`
 
     if (v.오류) { console.log(`⛔ ${이름} — ${v.오류}`); 실패++; await page.close(); continue }
 
