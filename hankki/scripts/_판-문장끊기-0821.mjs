@@ -64,20 +64,24 @@ const 칸 = 대상.map((x, n) => {
     </header>
     <div class="pair">
       <div class="side old">
-        <span class="tag">지금 · <b>${전문}문장</b></span>
+        <span class="tag">🅐 지금 글 · <b>${전문}문장</b></span>
         <p>${esc(x.글)}</p>
       </div>
       <div class="side new">
-        <span class="tag ok">이렇게 · <b>${후문}문장</b></span>
+        <span class="tag ok">🅑 내가 끊은 것 · <b>${후문}문장</b></span>
         <p>${새글 ? esc(새글) : '<i>안 없음</i>'}</p>
       </div>
     </div>
+    <!-- 🏷 단추 글자 — 창업자 되물음 *"좋아가 니가 고친게 좋다는거야?"* 로 고쳤다.
+         ⛔ 「좋아 / 고쳐줘 / 그대로 둬」는 **무엇을 고르는 건지 알 수 없다.**
+            («지금 글»이 좋다는 건지 «내 안»이 좋다는 건지 글자만 봐선 안 갈린다)
+         ✅ 그래서 단추가 **어느 쪽을 고르는지 그대로 말한다.** -->
     <div class="pick">
-      <button type="button" data-v="좋아">좋아</button>
-      <button type="button" data-v="고쳐">고쳐줘</button>
-      <button type="button" data-v="그대로">그대로 둬</button>
+      <button type="button" data-v="새 걸로">✂️ 끊은 걸로</button>
+      <button type="button" data-v="지금 걸로">지금 글 그대로</button>
+      <button type="button" data-v="다르게">다르게 끊어줘</button>
     </div>
-    <textarea rows="1" placeholder="어떻게 고칠까 (안 써도 돼)"></textarea>
+    <textarea rows="1" placeholder="어떻게 끊을까 (안 써도 돼)"></textarea>
   </article>`
 }).join('')
 
