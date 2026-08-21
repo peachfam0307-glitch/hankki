@@ -23,6 +23,14 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // 🔗🧪 «미리보기 판»에서는 서비스워커를 만들지 않는다 (2026-08-21)
+      //   📮 창업자 = 클라우드 로그인을 폰으로 판정하려면 «다른 주소»가 필요하다
+      //      → Cloudflare Pages 에 올리는 판. `HANKKI_PREVIEW=1 npm run build` 로 굽는다.
+      //   ⛔⛔ 왜 끄나 = 서비스워커가 켜져 있으면 **옛 판이 폰에 눌러앉는다.**
+      //      고쳐서 다시 올려도 창업자 폰은 캐시된 옛 화면을 보고, 그러면 「고쳤는데 안 고쳐졌다」로 하루를 태운다.
+      //      판정판은 «지금 올린 것»이 그대로 보여야 한다.
+      //   ⭐ 진짜 배포(HANKKI_PREVIEW 없음)는 «하나도 안 바뀐다** — precache 4473KiB 그대로.
+      disable: process.env.HANKKI_PREVIEW === '1',
       // 커스텀 서비스워커를 써야 '공유받기(share_target)' POST 를 가로챌 수 있어 injectManifest 사용.
       strategies: 'injectManifest',
       srcDir: 'src',
