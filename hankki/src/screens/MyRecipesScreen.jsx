@@ -5,6 +5,7 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
+import TabTalk from '../components/TabTalk'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon, dishCatOf } from '../components/FoodIcon'
@@ -489,6 +490,10 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
           </button>
         </div>
       </div>
+
+      {/* 💬 한 화면에 탭이 둘이라 대사도 갈린다 — 제목·캐릭터·도움말과 «같은 잣대»(`view === 'log'`).
+          ⛔ 여기만 안 가르면 한끼 일기에서 「여기에 다 모았어」가 뜬다(2026-08-18 도움말 사고와 같은 뿌리). */}
+      <TabTalk tab={view === 'log' ? 'log' : 'myrecipes'} />
 
       {/* 세그먼트 — 일지 탭을 '요리 기록'으로 흡수 */}
       <div className="pad">

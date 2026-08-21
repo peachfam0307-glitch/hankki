@@ -3317,3 +3317,43 @@ html, body { overscroll-behavior: none; }
      앨범 카드 줄이 안 줄어들어 2단이 통째로 무너진다. 0 으로 못 박는다. */
   .log-cal, .log-main { min-width: 0; }
 }
+
+/* ---- 💬 탭 상단 캐릭터 한마디 (v11.18 · 2026-08-21) ----
+   📮 창업자 = *"멘트넣는 건 좋은 것 같아. 심심하지 않고.."*
+      ＋ *"말풍선이면 **캐릭터방향으로 풍선꼬리**가 있어야해."*
+   ⛔⛔ **클래스 이름을 재사용하지 않는다** — v11.16 에 `MemoNote` 가 `.paper` 를 빌려 썼다가
+      일기 종이의 배경·inset 선·그림자를 통째로 끌고 와 하루를 태웠다.
+      「더 구체적으로 쓰면 이긴다」가 아니다 — **내가 안 적은 속성은 공용 쪽이 그대로 이긴다.**
+   📐 좌우 여백 20px = `.topbar`(14px 20px 8px) · `.pad`(0 20px) 와 같은 줄에 선다.
+   🎨 색은 «변수만» 쓴다 — `--cream`·`--text-sub` 는 테마 셋(기본·다크·웜)에 다 정의돼 있다.
+      ⛔ 시안에서 잰 색값(#f2ede3)을 박으면 **다크에서 글자가 안 읽힌다**(v11.17 교훈). */
+.tab-talk {
+  padding: 0 20px;
+  margin: 5px 0 7px;
+}
+.tab-talk-b {
+  display: inline-block;
+  position: relative;
+  padding: 7px 13px;
+  border-radius: 14px;
+  background: var(--cream);
+  color: var(--text-sub);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+/* 🔺 꼬리 = 말풍선 «위»로 솟아 상단바의 캐릭터를 가리킨다.
+   📐 left 14px → 꼬리 한가운데가 화면 왼쪽에서 41px.
+      상단바 캐릭터 중심 = 꼬르곰 41px(20+42/2) · 펭펭 37px(20+34/2) · 홈 아바타 42px(20+44/2).
+   🧍‍♀️ 캐릭터는 «무조건 글자 왼쪽»(창업자 확정 2026-08-14 · `check-charside` 게이트)이라
+      꼬리도 왼쪽 하나로 고정된다 — 탭마다 방향이 갈릴 일이 없다. */
+.tab-talk-t {
+  position: absolute;
+  left: 14px;
+  top: -6px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 7px solid var(--cream);
+}
