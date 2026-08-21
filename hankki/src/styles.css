@@ -1655,6 +1655,42 @@ img {
 .cook-timer { display: inline-flex; align-items: center; gap: 7px; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 14px; padding: 12px 18px; border-radius: 14px; transition: transform 0.08s ease; }
 .cook-timer:active { transform: scale(0.96); }
 /* ⛔ `flex-shrink` 기본값이 1이라 자리가 모자라면 이 줄부터 눌린다 — 버튼 줄은 절대 안 줄어들게 못 박는다 */
+/* 📷📷 완성 사진 줄 — 「다 만들었어요」 «위». 창업자 확정 갈래 ⓒ (2026-08-21)
+   ⭐⭐ **아무것도 막지 않는 게 이 줄의 전부다.** 안 누르면 화면 아래가 지금과 똑같이 동작한다.
+      (「끝난 뒤 폼을 띄우기」는 마찰로 이미 접었다 — `RecipeDetailScreen.jsx:170`)
+   ⛔ `.cook-nav` 를 세로로 바꾸지 않는다 — 그러면 «모든 단계»의 이전/다음 줄이 같이 바뀐다. */
+.cook-shot {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
+  padding: 0 16px; margin-bottom: 2px;
+}
+.cook-shot-add {
+  flex: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 7px;
+  border: 1.5px dashed var(--cream-deep); border-radius: 14px; background: none;
+  color: var(--brown); font-size: 14.5px; font-weight: 700; word-break: keep-all;
+  transition: transform 0.08s ease;
+}
+.cook-shot-add:active { transform: scale(0.97); }
+.cook-shot-thumb {
+  flex: 0 0 auto; width: 46px; height: 46px; border-radius: 12px; object-fit: cover;
+  border: 1.5px solid var(--line);
+}
+/* ⭐ 줄 «전체»가 버튼 — 작은 네모를 겨냥할 필요가 없다(재료 체크와 같은 문법) */
+.cook-shot-cover {
+  flex: 1; min-height: 46px; display: flex; align-items: center; gap: 9px;
+  background: none; border: none; text-align: left; padding: 0;
+  font-size: 14px; font-weight: 600; color: var(--text); word-break: keep-all;
+}
+.cook-shot-box {
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: 7px;
+  border: 2px solid var(--line); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+}
+.cook-shot-box.on { border: none; background: var(--brown); }
+.cook-shot-x {
+  flex: 0 0 auto; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  border-radius: 12px; background: none;
+}
+
 .cook-nav { flex: 0 0 auto; display: flex; gap: 10px; padding: 12px 16px calc(16px + var(--safe-bottom)); }
 .cook-navbtn { flex: 1; padding: 16px 0; border-radius: 15px; font-size: 16px; font-weight: 700; background: var(--cream); color: var(--text); transition: transform 0.08s ease; }
 .cook-navbtn.primary { background: var(--brown); color: #fff; flex: 1.4; }

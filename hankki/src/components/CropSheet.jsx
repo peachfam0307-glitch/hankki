@@ -23,6 +23,11 @@ export default function CropSheet({
   onDone,
   onSkip,
   onCancel,
+  // 🏷 확인 단추 글자 — 기본은 «글자 읽기»(OCR)용이다.
+  //    ⛔ 사진을 자를 땐 「읽기」가 틀린 말이다 — 그 사진은 읽는 게 아니라 «담는» 것이다.
+  //       (2026-08-21 완성 사진을 붙이며 드러났다)
+  //    ⚠️ 일기 사진(`DiaryEntrySheet`)도 지금은 기본값을 쓴다 — 창업자 판정 뒤에 같이 바꾼다.
+  doneLabel = '이 부분만 읽기',
   // ⏳⏳ **[2026-08-16] 「앞 장은 지금 읽고 있어요」** — 창업자 *"사진2장스캔은 기다리다 끌 수 있으니
   //   스캔중이다라는 안내가 필요해."*
   //   ⭐⭐ **이건 내가 오늘 만든 구멍이다.** 자르기와 읽기를 떼어놓으면서
@@ -255,7 +260,7 @@ export default function CropSheet({
           전체 사용
         </button>
         <button className="press" onClick={confirm} style={{ flex: 1.6, padding: 14, borderRadius: 14, background: 'var(--brown)', color: '#fff', fontSize: 14.5, fontWeight: 700 }}>
-          이 부분만 읽기
+          {doneLabel}
         </button>
       </div>
     </div>

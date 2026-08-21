@@ -6,7 +6,9 @@ import Portal from './Portal'
 import { useModalBack } from '../useBackHandler'
 
 // 사진을 캔버스로 축소해 저장 공간을 아낀다.
-function downscale(dataUrl, max = 900) {
+// ⭐ `export` 인 이유 = 요리 모드의 「완성 사진」(`CookScreen`)이 «같은 함수»를 쓴다.
+//    ⛔ 복사해 두면 한쪽만 고쳐져 저장 용량이 갈린다(`Stars` 를 내보낸 것과 같은 이유).
+export function downscale(dataUrl, max = 900) {
   return new Promise((resolve) => {
     const img = new Image()
     img.onload = () => {
