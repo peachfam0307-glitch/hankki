@@ -343,7 +343,7 @@ export default function App() {
           ? '사진을 담았어요 · 글자 읽는 중…'
           : link && source !== 'youtube' && source !== 'instagram'
             ? '공유한 링크를 담았어요 · 읽는 중…'
-            : '공유한 레시피를 Inbox에 담았어요'
+            : '공유한 레시피를 임시보관함에 담았어요'
       )
       if (typeof history !== 'undefined' && location.search) {
         history.replaceState({ hankki: 1 }, '', location.pathname) // URL 만 정리, 트랩 표식은 유지

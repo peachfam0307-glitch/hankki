@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import { useBackHandler, useLayerBack } from '../useBackHandler'
 import { guessCategory, openExternal } from '../utils'
 import { parseRecipeText } from '../parseRecipe'
-import { fetchLinkRecipe } from '../linkReader'
+// ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳ 서버 되면 되살릴 것 ①」 참조.
+//    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 공유받기가 쓰고, 되살릴 때 그대로 쓴다.
 import { guessFoodIcon } from '../components/FoodIcon'
 import { getOcrLeft } from '../ocr'
 import Icon from '../components/Icon'
@@ -18,13 +19,22 @@ import uiDuoHeart from '../assets/ui/wave/duo_hearthand.png'
 
 // '사진으로 가져오기'와 '직접 작성하기'는 결국 같은 작성 화면 — 하나로 합쳤다.
 // 캡처는 작성 화면에서 재료/만드는 법 칸별로 읽어 채운다(인식이 훨씬 정확).
+// 🔗🔗 [2026-08-21 창업자 확정 = ⓑ] 링크는 「되는 척」을 걷어내고 «이름이 하는 일과 같게» 바꿨다.
+//   📮 창업자 = *"우리 링크는 아예 안돼 원래"* → *"AI가져오기처럼 링크 넣으면 자동으로 레시피가 작성되는게
+//      아니라 그냥 보관함에 담기고 직접입력해야하잖아. **그건 내가 말한 저장이 아니야 그걸 누가써**"*
+//   ⛔ 옛 설명 = 「블로그 글 읽어오기」 — **안 되는 걸 약속했다.** 그래서 눌러 본 사람에겐 «고장»으로 읽혔다.
+//      실제로 되는 건 「주소를 담아두는 것」 하나뿐인데 그 말이 뒤에 작게 붙어 있었다.
+//   ⏳ 「읽어오기」는 죽은 게 아니라 «미뤄둔» 것 — 창업자 *"C는 되면 좋으니까 **서버되면 꼭 하자**"*.
+//      지금은 남의 서버(jina·allorigins) 에 얹혀 있어 우리가 못 고친다. 우리 서버가 서면 되살린다.
+//      🔖 되살릴 자리 = 이 파일의 「⏳ 서버 되면 되살릴 것」 주석 셋 ＋ `src/linkReader.js`(그대로 살아 있다)
 const OPTIONS = [
   // 제일 많이 쓰는 방법이라 맨 위
   { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A' },
   { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '캡처해서 담기 (제일 정확)', color: '#C13584' },
   { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '캡처·설명 붙여넣기로 담기', color: '#E33' },
-  { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 자동 정리', color: '#B0895E' },
-  { key: 'link', icon: 'link', title: '링크 붙여넣기', desc: '블로그 글 읽어오기 · 바로가기 저장', color: '#9B8B79' },
+  // ⭐ 링크가 못 하는 일을 «이 줄이» 한다 — 그래서 설명을 키웠다(창업자 ⓐ안의 「텍스트 안내를 키운다」를 여기서 살렸다)
+  { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 복사해 붙여넣으면 재료·순서까지 자동 정리', color: '#B0895E' },
+  { key: 'link', icon: 'link', title: '링크 주소만 담아두기', desc: '주소만 저장해요 · 재료·순서는 안 담겨요', color: '#9B8B79' },
 ]
 
 export default function ImportScreen() {
@@ -38,9 +48,7 @@ export default function ImportScreen() {
   const [aiPreview, setAiPreview] = useState(false) // AI 자동정리 '이렇게 돼요' 안내 시트
   // 📢 AI 스캔 남은 장수 — localStorage 를 읽을 뿐이라 가볍다. 화면에 들어올 때마다 최신값이 나온다.
   const ocrLeft = getOcrLeft()
-  const [linkBusy, setLinkBusy] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false) // '링크만 저장'은 접어둔다(화면을 조용하게)
-  const linkCancel = useRef(false)
 
   // 시트(AI 미리보기·도움말)는 히스토리 칸을 쌓아 뒤로가기로 닫는다.
   useLayerBack(aiPreview, () => setAiPreview(false))
@@ -78,46 +86,15 @@ export default function ImportScreen() {
     addRecipe(makeInboxRecipe({ source: flow, title: t, sourceUrl: url.trim() }))
     nav.pop()
     nav.push({ name: 'inbox' })
-    nav.showToast('Inbox에 저장했어요 · 나중에 정리해요')
+    nav.showToast('임시보관함에 담았어요 · 나중에 정리해요')
   }
 
-  // 링크 자동 읽기(베타) — 공개된 블로그 본문을 읽어 재료·순서까지 채운다.
-  // 유튜브·인스타는 읽지 않는다(로그인·동의 벽 → linkReader 에서 바로 null).
-  // 아무리 오래 걸려도 25초 안에는 결과(또는 실패)를 돌려준다.
-  const readLink = async () => {
-    const u = url.trim()
-    if (!u || linkBusy) return
-    linkCancel.current = false
-    setLinkBusy(true)
-    const r = await Promise.race([
-      fetchLinkRecipe(u).catch(() => null),
-      new Promise((res) => setTimeout(() => res(null), 25000)),
-    ])
-    setLinkBusy(false)
-    if (linkCancel.current) return
-    if (r && r.full) {
-      const parsed = parseRecipeText(r.text, { fromOcr: true })
-      const hasContent = parsed.ingredients.length || parsed.steps.length
-      nav.push({
-        name: 'editor',
-        prefill: {
-          source: flow === 'youtube' ? 'youtube' : 'link',
-          title: title.trim() || parsed.title || r.title || '',
-          ingredients: parsed.ingredients,
-          steps: parsed.steps,
-          sourceUrl: u, // 메모는 직접 입력 전용 — 자동으로 채우지 않는다
-        },
-      })
-      nav.showToast(hasContent ? '링크에서 레시피를 읽어왔어요' : '글을 읽어왔어요 · 내용을 확인해 주세요')
-    } else if (r && r.title) {
-      addRecipe(makeInboxRecipe({ source: flow || 'link', title: r.title, sourceUrl: u }))
-      nav.pop()
-      nav.push({ name: 'inbox' })
-      nav.showToast('본문은 못 읽어서 제목만 채웠어요 · Inbox 저장')
-    } else {
-      nav.showToast('이 링크는 자동으로 읽지 못했어요 · 아래 "링크만 저장"을 이용해 주세요')
-    }
-  }
+  // ⏳ 서버 되면 되살릴 것 ① — 여기 `readLink()`(링크 본문 자동 읽기)가 있었다.
+  //    ⛔ 지금 뺀 이유 = 남의 서버 두 곳(`r.jina.ai`·`api.allorigins.win`)에 얹혀 있어서
+  //       **되고 안 되고가 우리 손 밖**이고, 창업자 폰에선 «아예» 안 됐다.
+  //    ✅ 되살리는 법 = ⑴우리 Worker 에 본문 읽기 길을 낸다 ⑵`fetchLinkRecipe` 를 그 길로 바꾼다
+  //       ⑶이 함수와 버튼(②)·기다림 화면(③)을 되돌린다. **`src/linkReader.js` 는 안 지웠다** —
+  //       공유받기(`App.jsx`)가 아직 쓰고 있고, 그쪽은 «백그라운드»라 실패해도 유저를 안 붙잡는다.
 
   const flowMeta = OPTIONS.find((o) => o.key === flow)
 
@@ -131,22 +108,8 @@ export default function ImportScreen() {
         <div style={{ width: 40 }} />
       </div>
 
-      {linkBusy && (
-        <div className="ocr-overlay">
-          <div className="ocr-box">
-            <div className="ocr-spin" />
-            <div style={{ fontSize: 15, fontWeight: 700, marginTop: 14 }}>링크에서 내용을 읽는 중…</div>
-            <div className="t-sub" style={{ marginTop: 5, fontSize: 13 }}>페이지에 따라 10~25초 걸려요</div>
-            <button
-              className="press"
-              onClick={() => { linkCancel.current = true; setLinkBusy(false) }}
-              style={{ marginTop: 16, padding: '9px 22px', borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600 }}
-            >
-              취소
-            </button>
-          </div>
-        </div>
-      )}
+      {/* ⏳ 서버 되면 되살릴 것 ③ — 여기 「링크에서 내용을 읽는 중…」 기다림 화면이 있었다.
+          위 ②를 뺐으니 이 화면을 띄울 사람이 없어져서 같이 뺐다. */}
 
       {!flow ? (
         <div className="pad">
@@ -298,8 +261,10 @@ export default function ImportScreen() {
                 <span style={{ fontSize: 12.5, fontWeight: 800, color: '#4a7a45' }}>AI 자동 정리</span>
                 <span style={{ fontSize: 9.5, fontWeight: 800, color: '#fff', background: '#7fa06a', borderRadius: 999, padding: '2px 7px', flexShrink: 0 }}>이미 돼요</span>
               </div>
+              {/* ⛔ 「캡처·링크 올리면」이었다 — **링크는 자동으로 안 채워진다.**
+                     돈 드는 길(사진)과 안 되는 길(링크)이 한 줄에 묶여 있었다(창업자 확정 ⓑ · 2026-08-21). */}
               <div style={{ fontSize: 11.6, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2 }}>
-                캡처·링크 올리면 재료·순서를 자동으로 채워요
+                캡처·글 올리면 재료·순서를 자동으로 채워요
               </div>
               {/* ⛔ 남은 장수는 여기 «두지 않는다» — 창업자 *"너무 안보여"* (2026-08-13).
                   스크롤해야 나오는 자리라 「잘 보이게」가 안 된다. → 화면 «맨 위»로 올렸다. */}
@@ -412,8 +377,11 @@ export default function ImportScreen() {
             <div className="opt-ico"><Icon name={flowMeta.icon} size={24} color={flowMeta.color} stroke={1.7} /></div>
             <div className="h-title" style={{ fontSize: 22 }}>{flowMeta.title}</div>
           </div>
-          <div className="t-sub" style={{ marginTop: 6, marginBottom: 12, fontSize: 14 }}>
-            링크는 <b>바로가기(북마크)</b>로 저장하는 기능이에요. 레시피 내용까지 담고 싶다면 아래 방법을 추천해요.
+          {/* ⭐ 제일 먼저 «안 되는 것»을 말한다 — 옛 문장은 「바로가기로 저장하는 기능」이라 맞는 말이었지만
+                 「그래서 내용은 안 담긴다」를 유저가 스스로 알아채야 했다. 그 한 걸음이 오해를 만든다. */}
+          <div className="t-sub" style={{ marginTop: 6, marginBottom: 12, fontSize: 14, lineHeight: 1.6 }}>
+            <b style={{ color: 'var(--brown)' }}>주소만 담아둬요.</b> 재료·만드는 법은 <b>안 담겨요.</b><br />
+            내용까지 옮기고 싶다면 아래 방법이 확실해요.
           </div>
 
           {/* 블로그 정직 안내 — 사진이 많아 캡처가 번거로우니 '글 복사 → 텍스트 붙여넣기'를 권한다 */}
@@ -440,17 +408,17 @@ export default function ImportScreen() {
           </div>
 
           <button className="btn-primary press" style={{ marginBottom: 10, opacity: url.trim() ? 1 : 0.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={saveLink} disabled={!url.trim()}>
-            <Icon name="link" size={16} color="#fff" /> 링크를 Inbox에 저장 (바로가기)
+            <Icon name="link" size={16} color="#fff" /> 주소만 담아두기
           </button>
-          <button className="btn-ghost press" style={{ width: '100%', marginBottom: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={readLink} disabled={!url.trim() || linkBusy}>
-            {linkBusy ? '본문 읽는 중…' : <><Icon name="sparkle" size={16} /> 본문 자동 읽기 시도 (베타)</>}
-          </button>
-
+          {/* ⏳ 서버 되면 되살릴 것 ② — 여기 「본문 자동 읽기 시도 (베타)」 버튼이 있었다.
+              ⛔ 뺀 이유 = **거의 언제나 실패했다.** 눌러서 25초를 기다린 끝에 못 읽었다는 말을 듣는 건
+                 「안 되는 기능」이 아니라 «고장난 앱»으로 읽힌다. 그 사이 유저는 아무것도 못 한다.
+              ✅ 되살리는 법 = 우리 서버(Worker)에 본문 읽기 길을 낸 뒤 이 자리에 버튼을 되돌리고
+                 `readLink()`(git 히스토리 · 이 커밋의 부모에 있다)와 `fetchLinkRecipe` import 를 되살린다. */}
           <div className="card" style={{ padding: 14, background: 'var(--cream)', border: 'none', display: 'flex', gap: 10 }}>
             <Icon name="inbox" size={20} color="var(--brown)" />
             <div className="t-sub" style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--brown)' }}>
-              자동 읽기는 블로그에 따라 되기도, 안 되기도 해요(로그인 필요 페이지는 불가).
-              안 되면 링크만 저장해 두고 <b>캡쳐</b>나 <b>텍스트 붙여넣기</b>로 옮겨주세요.
+              담아두면 <b>임시보관함</b>에 들어가요. 나중에 열어 <b>캡처</b>나 <b>텍스트 붙여넣기</b>로 내용을 채워 주세요.
             </div>
           </div>
         </div>
@@ -476,7 +444,9 @@ export default function ImportScreen() {
               <div className="card" style={{ padding: '4px 2px', background: 'var(--cream)', border: 'none' }}>
                 {[
                   ['camera', '캡처 사진 인식', '레시피 화면을 캡처만 하면 재료·순서를 칸칸이 자동으로 채워요.'],
-                  ['link', '블로그 링크 (베타)', '공개된 블로그 글은 붙여넣으면 읽어서 정리해요. 유튜브·인스타는 준비 중이에요.'],
+                  // ⛔ 「블로그 링크 (베타)」였다 — **여기가 제일 세게 약속하던 자리**다(창업자 확정 ⓑ · 2026-08-21).
+                  //    ⏳ 서버 되면 이 줄을 되살린다.
+                  ['pen', '글 붙여넣기', '블로그·유튜브 설명 글을 복사해 붙여넣으면 재료·순서로 정리해요.'],
                   ['clock', '옮겨적기 끝', '손으로 하나하나 타이핑할 필요 없이 몇 초면 완성.'],
                   ['pen', '언제든 손보기', 'AI가 정리한 결과는 마음대로 고치고 다듬을 수 있어요.'],
                 ].map(([ic, t, b]) => (
@@ -493,7 +463,7 @@ export default function ImportScreen() {
               </div>
 
               <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.65, marginTop: 16, textAlign: 'center', color: 'var(--brown)' }}>
-                지금 바로 돼요 — <b>캡처·텍스트</b>는 확실하게,<br /><b>링크</b>는 되는 페이지만(베타)이에요.
+                지금 바로 돼요 — <b>캡처</b>와 <b>붙여넣은 글</b>에서<br />재료·순서를 채워 드려요.
               </div>
               <button
                 className="btn-primary press"

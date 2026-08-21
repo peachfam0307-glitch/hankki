@@ -247,19 +247,23 @@ export default function HomeScreen() {
           <span style={{ fontSize: 14.5 }}>레시피, 재료, 태그를 검색해 보세요.</span>
         </button>
 
-        {/* 아직 정리 안 한 레시피(예전 'Inbox') — 홈·레시피 탭 목록엔 안 뜨는 것들이라
-            입구가 없으면 "저장했는데 사라졌다"가 된다. 0개면 아예 안 보이니 평소 화면은 그대로. */}
-        {unsortedN > 0 && (
-          <button
-            className="press"
-            onClick={() => nav.push({ name: 'inbox' })}
-            style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderRadius: 14, background: 'var(--cream)', border: 'none', textAlign: 'left' }}
-          >
-            <Icon name="edit" size={18} color="var(--brown)" stroke={1.9} />
-            <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700 }}>정리 안 한 레시피 {unsortedN}개</span>
-            <Icon name="chevron-right" size={17} color="var(--sand)" />
-          </button>
-        )}
+        {/* 📥📥 [2026-08-21 창업자 제보] *"**INBOX 나도 어딨는지 모르는데**"* → 입구를 «늘» 보이게 했다.
+            ⛔ 전엔 `unsortedN > 0` 이라 **정리를 끝내는 순간 입구가 사라졌다.** 그래서 담아둔 걸
+               다시 보려 해도 갈 길이 없었다(설정 안쪽 통계 숫자 말곤 입구가 없었다).
+            ⭐ 만든 사람이 못 찾으면 유저는 당연히 못 찾는다.
+            ⭐ 글자는 «상태마다» 다르게 — 할 일이 있으면 재촉처럼, 없으면 조용한 서랍처럼.
+               ⛔ 「정리 안 한 레시피 0개」로 늘 띄우면 할 일이 없는데도 할 일처럼 보인다. */}
+        <button
+          className="press"
+          onClick={() => nav.push({ name: 'inbox' })}
+          style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderRadius: 14, background: 'var(--cream)', border: 'none', textAlign: 'left' }}
+        >
+          <Icon name={unsortedN > 0 ? 'edit' : 'inbox'} size={18} color="var(--brown)" stroke={1.9} />
+          <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700 }}>
+            {unsortedN > 0 ? `정리 안 한 레시피 ${unsortedN}개` : '임시보관함'}
+          </span>
+          <Icon name="chevron-right" size={17} color="var(--sand)" />
+        </button>
 
         {/* 백업 유도 — 레시피는 이 기기에만 저장된다(방침 그대로). 앱을 지우면 다 사라지므로
             쌓였을 때 한 번씩 조용히 권한다. ⛔겁주지 않는다 — 쌓였다는 사실 + 다음 행동만.
