@@ -425,6 +425,9 @@ function Curation() {
     if (u.includes('smartstore.naver')) return '네이버'
     return ''
   }
+  // 🏷 [2026-08-22 창업자] *"브랜드 딱지는 따로 달자 · 제목에서 빼고"* — 셋을 색으로 가른다:
+  //    브랜드(회색) · 분류tag(모래) · 쇼핑몰mall(크림). ⛔같은 색이면 무엇을 말하는 딱지인지 모른다.
+  const brandStyle = { fontSize: 15.5, fontWeight: 700, color: 'var(--text-sub)', background: 'var(--line)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
   const tagStyle = { fontSize: 16, fontWeight: 700, color: '#8a6a3e', background: 'var(--cream)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
   const mallStyle = { fontSize: 16, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream-deep)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
   // 🔴 「조합원만」은 **확 튀게** — 창업자 2026-08-03 *"색깔 확튀게 올려줘."*
@@ -441,16 +444,24 @@ function Curation() {
     // 🔢 `cur-card`·`cur-buy` = 패드에서 폭을 잡으려고 붙인 이름(창업자 2026-08-13
     //    *"담기 사러가기버튼이 너무 크고, 제품설명은 다 왼쪽에 쏠려있어"*). 스타일은 styles.css 에.
     <div key={it.name} className="card cur-card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
-      <div style={{ display: 'flex', gap: 11 }}>
-        <div className="emoji-tile" style={{ width: 46, height: 46, fontSize: 25, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain' }} /> : it.emoji}
+      {/* 🔠 [2026-08-22 창업자] *"아이콘이랑 제목을 같은 줄. 설명은 내려서 아이콘 아래로.
+          그럼 글자가 더 많이 보이잖아. 아이콘은 좀 더 키우고"*
+          ⭐ 설명이 아이콘 «옆」이 아니라 «아래»로 내려와 카드 폭을 다 쓴다 → 한 줄에 들어가는 글자가 늘어난다. */}
+      <div style={{ display: 'flex', gap: 11, alignItems: 'center' }}>
+        <div className="emoji-tile" style={{ width: 58, height: 58, fontSize: 31, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 53, height: 53, objectFit: 'contain' }} /> : it.emoji}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {it.brand && it.brand !== mallLabel(it) && <span style={brandStyle}>{it.brand}</span>}
             <span style={{ fontSize: 19, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
             {it.tag && <span style={tagStyle}>{it.tag}</span>}
             {mallLabel(it) && <span style={mallStyleFor(mallLabel(it))}>{mallLabel(it)}</span>}
           </div>
+        </div>
+      </div>
+      {/* 📄 설명 — 아이콘 «아래», 카드 폭을 다 쓴다 */}
+      <div style={{ marginTop: 8 }}>
           {/* 📏 설명은 «첫 줄만» 보이고 누르면 펼쳐진다 — 창업자 2026-08-05
               *"지금 6-7개까지 아래로 쭉 늘어나는게 좀 불편하지 않을까"*
               ⛔ 자르지 «않는다». 39개를 재보니 **가장 짧은 설명도 41자**(가운데 74 · 최장 127)라
@@ -485,7 +496,6 @@ function Curation() {
               <Icon name={openCard[it.name] ? 'chevron-up' : 'chevron-down'} size={12} />
             </span>
           </button>
-        </div>
       </div>
       <div className="cur-buy" style={{ display: 'flex', gap: 8, marginTop: 11 }}>
         <button className="press" onClick={() => add(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 16.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Icon name="cart" size={14} />담기</button>
@@ -515,7 +525,7 @@ function Curation() {
           문구 적어줘. (원래 지워지는 아래안내판에 있었음)"*. 아래 안내판을 빼면서 그 말만 살렸다.
           ⛔ 이 말은 지우지 말 것 — **재고가 계속 는다는 신호**라 다음에 또 들어올 이유가 된다. */}
       <div className="t-sub" style={{ fontSize: 16.5, marginTop: -2, marginBottom: 6 }}>
-        써보고 좋은 건 꼭 나누는 18년차 주부의 · 첨가물 적은 건강 식재료 · <b style={{ color: 'var(--brown)' }}>앞으로도 하나씩 계속 올라와요</b>
+        써보고 좋은 건 나누고 싶은 <b style={{ color: 'var(--brown)' }}>18년차 주부의 추천 아이템</b> · 계속 올라와요
       </div>
       {/* 💰 제휴(대가성) 고지 — **박스를 빼고 한 줄로 줄였다** (2026-08-03, 창업자 지시 두 번)
           ⒜ *"아래위로 좀 지저분해보여"* → 크림 박스를 없앴다
@@ -525,7 +535,7 @@ function Curation() {
           ⛔ 이 줄을 지우지 말 것. 지우면 `scripts/check-affiliate.mjs` 가 배포를 막는다(제휴 링크가 있을 때).
           ⚠️ 제휴를 «시작하면» 이 문장을 사실에 맞게 고쳐야 한다 — 「받지 않아요」가 그대로면 거짓이 된다. */}
       <div className="t-sub" style={{ fontSize: 16.5, marginTop: -2, marginBottom: 8, lineHeight: 1.5 }}>
-        ‘사러가기’는 외부 쇼핑몰로 이어져요 · <b style={{ color: 'var(--brown)' }}>한끼는 수수료를 받지 않아요</b> (나중에 제휴가 생겨도 여러분은 늘 정가 그대로예요)
+        ‘사러가기’는 외부 쇼핑몰로 이어져요 · 나중에 <b style={{ color: 'var(--brown)' }}>제휴가 연결되면 한끼가 수수료를 받아요</b> · 사는 값은 늘 정가 그대로예요
       </div>
 
       {open && (
