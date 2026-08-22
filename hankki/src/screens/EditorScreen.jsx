@@ -41,7 +41,7 @@ const DIFFS = ['쉬움', '보통', '어려움']
 const fieldOcrBtn = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
   padding: '8px 14px', borderRadius: 999, background: 'var(--brown)',
-  color: '#fff', fontSize: 15, fontWeight: 700,
+  color: '#fff', fontSize: 16, fontWeight: 700,
   boxShadow: '0 2px 8px rgba(90,70,45,0.18)',
 }
 const THUMB_TYPES = [
@@ -454,16 +454,16 @@ export default function EditorScreen({ id, prefill }) {
           <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'var(--kb-inset, 0px)', zIndex: 3000, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
             <div onMouseDown={(e) => e.preventDefault()} style={{ pointerEvents: 'auto', width: '100%', maxWidth: 480, display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', padding: '8px 12px', background: 'var(--surface)', borderTop: '2px solid var(--brown)', boxShadow: '0 -3px 12px rgba(0,0,0,.12)' }}>
               {/* 왼쪽 고정 안내 — 키보드와 색이 비슷해 놓치기 쉬워, "이 버튼으로 단위 넣는다"를 못박는다 */}
-              <span style={{ flex: '0 0 auto', position: 'sticky', left: 0, zIndex: 1, alignSelf: 'stretch', display: 'flex', alignItems: 'center', gap: 5, paddingRight: 9, background: 'var(--surface)', color: 'var(--brown)', fontSize: 15, fontWeight: 800, whiteSpace: 'nowrap', borderRight: '1px solid var(--line)' }}>
+              <span style={{ flex: '0 0 auto', position: 'sticky', left: 0, zIndex: 1, alignSelf: 'stretch', display: 'flex', alignItems: 'center', gap: 5, paddingRight: 9, background: 'var(--surface)', color: 'var(--brown)', fontSize: 16, fontWeight: 800, whiteSpace: 'nowrap', borderRight: '1px solid var(--line)' }}>
                 <Icon name="chevron-right" size={14} stroke={2.6} color="var(--brown)" />단위 톡
               </span>
               {UNITS.map((u) => (
                 <button key={u} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insertUnit(u, focusField === 'steps' ? stepRef : ingRef, focusField)}
-                  style={{ flex: '0 0 auto', padding: '8px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', border: '1px solid var(--line)', fontSize: 15, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
+                  style={{ flex: '0 0 auto', padding: '8px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', border: '1px solid var(--line)', fontSize: 16, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
                   {u}
                 </button>
               ))}
-              <span style={{ flex: '0 0 auto', alignSelf: 'center', fontSize: 14, color: 'var(--text-sub)', paddingRight: 4, whiteSpace: 'nowrap' }}>T=큰술·t=작은술</span>
+              <span style={{ flex: '0 0 auto', alignSelf: 'center', fontSize: 15, color: 'var(--text-sub)', paddingRight: 4, whiteSpace: 'nowrap' }}>T=큰술·t=작은술</span>
             </div>
           </div>
         </Portal>
@@ -472,9 +472,9 @@ export default function EditorScreen({ id, prefill }) {
         {/* 닫기 — 새로 쓰던 내용이 있으면 "이어쓸지 버릴지" 물어본다.
             예전엔 확인 없이 그냥 닫혀서, 버리려면 초안이 계속 되살아나 답답했다(창업자 "작성중 삭제 불편"). */}
         <button className="icon-btn press" onClick={() => (!editing && hasDraftContent ? setDiscardAsk(true) : nav.pop())} aria-label="닫기"><Icon name="x" size={24} /></button>
-        <div style={{ fontSize: 17, fontWeight: 700 }}>{editing ? '레시피 정리' : '직접 작성하기'}</div>
+        <div style={{ fontSize: 18, fontWeight: 700 }}>{editing ? '레시피 정리' : '직접 작성하기'}</div>
         {/* disabled 금지 — 눌러도 무반응이면 "먹통"으로 보인다. 색만 흐리게 두고, 누르면 save()가 안내한다. */}
-        <button className="press" onClick={save} style={{ fontSize: 16, fontWeight: 700, color: canSave ? 'var(--brown)' : 'var(--sand)' }}>
+        <button className="press" onClick={save} style={{ fontSize: 17, fontWeight: 700, color: canSave ? 'var(--brown)' : 'var(--sand)' }}>
           저장
         </button>
       </div>
@@ -488,12 +488,12 @@ export default function EditorScreen({ id, prefill }) {
       {(embed || refs.length > 0) && pin === null && (
         <div style={{ position: 'sticky', top: 0, zIndex: 19, background: 'var(--bg)', display: 'flex', gap: 8, padding: '6px 16px 6px' }}>
           {embed && (
-            <button className="press" onClick={() => setPin('video')} style={{ flex: 1, padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 15, fontWeight: 700 }}>
+            <button className="press" onClick={() => setPin('video')} style={{ flex: 1, padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 16, fontWeight: 700 }}>
               {embed.type === 'youtube' ? '영상 보면서 쓰기' : '인스타 미리보기'}
             </button>
           )}
           {refs.length > 0 && (
-            <button className="press" onClick={() => setPin('photo')} style={{ flex: 1, padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 15, fontWeight: 700 }}>
+            <button className="press" onClick={() => setPin('photo')} style={{ flex: 1, padding: 12, borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 16, fontWeight: 700 }}>
               캡쳐 보면서 쓰기
             </button>
           )}
@@ -516,7 +516,7 @@ export default function EditorScreen({ id, prefill }) {
             }
           />
           {embed.type === 'instagram' && (
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '7px 12px', background: 'rgba(20,19,17,0.78)', color: 'rgba(255,255,255,0.92)', fontSize: 14, fontWeight: 600, textAlign: 'center' }}>
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '7px 12px', background: 'rgba(20,19,17,0.78)', color: 'rgba(255,255,255,0.92)', fontSize: 15, fontWeight: 600, textAlign: 'center' }}>
               인스타 영상은 정책상 앱 안에서 재생되지 않아요 · 캡션·썸네일만 참고할 수 있어요
             </div>
           )}
@@ -525,7 +525,7 @@ export default function EditorScreen({ id, prefill }) {
             onClick={() => setPin(null)}
             aria-label="영상 닫기"
             /* 캡처 닫기와 같은 이유로 안전영역만큼 내린다(sticky top:0 = 상태표시줄 자리) */
-            style={{ position: 'absolute', top: 'calc(8px + var(--safe-top, 0px))', right: 8, padding: '6px 12px', borderRadius: 10, background: 'rgba(20,19,17,0.72)', color: '#fff', fontSize: 14.5, fontWeight: 700 }}
+            style={{ position: 'absolute', top: 'calc(8px + var(--safe-top, 0px))', right: 8, padding: '6px 12px', borderRadius: 10, background: 'rgba(20,19,17,0.72)', color: '#fff', fontSize: 15.5, fontWeight: 700 }}
           >
             ✕ 닫기
           </button>
@@ -544,7 +544,7 @@ export default function EditorScreen({ id, prefill }) {
               className="press"
               onClick={() => setPhotoFold((v) => !v)}
               aria-label={photoFold ? '캡처 사진 펼치기' : '캡처 사진 접기'}
-              style={{ padding: '7px 14px', borderRadius: 999, background: photoFold ? '#ee7f4b' : 'rgba(255,255,255,0.16)', color: '#fff', fontSize: 15.5, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}
+              style={{ padding: '7px 14px', borderRadius: 999, background: photoFold ? '#ee7f4b' : 'rgba(255,255,255,0.16)', color: '#fff', fontSize: 16.5, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}
             >
               {photoFold ? '사진 펼치기 ▼' : '사진 접기 ▲'}
             </button>
@@ -558,15 +558,15 @@ export default function EditorScreen({ id, prefill }) {
                     onClick={() => { setShot(k); if (photoBoxRef.current) photoBoxRef.current.scrollTop = 0 }}
                     aria-label={`${k + 1}번째 캡처 보기`}
                     /* 지금 보는 장 = 주황. 흰색은 «흰 종이 캡처» 위에서 통째로 묻힌다(창업자 폰 2026-08-02) */
-                    style={{ flex: '0 0 auto', minWidth: 32, padding: '5px 10px', borderRadius: 999, background: k === shotIdx ? '#ee7f4b' : 'rgba(255,255,255,0.16)', color: '#fff', fontSize: 14.5, fontWeight: 800, border: k === shotIdx ? '1.5px solid rgba(255,255,255,0.9)' : '1px solid rgba(255,255,255,0.28)' }}
+                    style={{ flex: '0 0 auto', minWidth: 32, padding: '5px 10px', borderRadius: 999, background: k === shotIdx ? '#ee7f4b' : 'rgba(255,255,255,0.16)', color: '#fff', fontSize: 15.5, fontWeight: 800, border: k === shotIdx ? '1.5px solid rgba(255,255,255,0.9)' : '1px solid rgba(255,255,255,0.28)' }}
                   >
                     {k + 1}
                   </button>
                 ))}
-                <span style={{ flex: '0 0 auto', color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: 600, marginLeft: 2 }}>번째 장</span>
+                <span style={{ flex: '0 0 auto', color: 'rgba(255,255,255,0.55)', fontSize: 15, fontWeight: 600, marginLeft: 2 }}>번째 장</span>
               </div>
             ) : (
-              <span style={{ flex: 1, color: 'rgba(255,255,255,0.62)', fontSize: 14, fontWeight: 600 }}>
+              <span style={{ flex: 1, color: 'rgba(255,255,255,0.62)', fontSize: 15, fontWeight: 600 }}>
                 {photoFold ? '가려진 부분을 보고 있어요' : `캡처 ${refs.length}장`}
               </span>
             )}
@@ -574,7 +574,7 @@ export default function EditorScreen({ id, prefill }) {
               className="press"
               onClick={() => setPin(null)}
               aria-label="캡처 사진 닫기"
-              style={{ padding: '7px 12px', borderRadius: 999, background: 'rgba(255,255,255,0.16)', color: '#fff', fontSize: 15, fontWeight: 700 }}
+              style={{ padding: '7px 12px', borderRadius: 999, background: 'rgba(255,255,255,0.16)', color: '#fff', fontSize: 16, fontWeight: 700 }}
             >
               ✕ 닫기
             </button>
@@ -601,14 +601,14 @@ export default function EditorScreen({ id, prefill }) {
               className="press"
               onClick={() => setZoom(shotIdx)}
               aria-label="캡처 크게 보기"
-              style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', padding: '7px 16px', borderRadius: 999, background: 'rgba(20,19,17,0.78)', color: '#fff', fontSize: 14.5, fontWeight: 700 }}
+              style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', padding: '7px 16px', borderRadius: 999, background: 'rgba(20,19,17,0.78)', color: '#fff', fontSize: 15.5, fontWeight: 700 }}
             >
               크게 보기{refs.length > 1 ? ` · ${shotIdx + 1}/${refs.length}장` : ''}
             </button>
           )}
           {!photoFold && photoMore && (
-            <span style={{ position: 'absolute', bottom: 13, right: 12, color: 'rgba(255,255,255,0.92)', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3, pointerEvents: 'none' }}>
-              아래 더 있어요 <span style={{ fontSize: 15, lineHeight: 1 }}>↓</span>
+            <span style={{ position: 'absolute', bottom: 13, right: 12, color: 'rgba(255,255,255,0.92)', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3, pointerEvents: 'none' }}>
+              아래 더 있어요 <span style={{ fontSize: 16, lineHeight: 1 }}>↓</span>
             </span>
           )}
         </div>
@@ -617,7 +617,7 @@ export default function EditorScreen({ id, prefill }) {
       <div className="pad" style={{ paddingBottom: 40 }}>
         {/* 썸네일 — 카드에 보이는 아이콘. 기본은 브랜드 아이콘(통일감), 원하면 글자·사진. */}
         <div className="field">
-          <label>썸네일 <span style={{ fontWeight: 400, color: 'var(--text-sub)', fontSize: 14 }}>· 목록 카드에 보여요</span></label>
+          <label>썸네일 <span style={{ fontWeight: 400, color: 'var(--text-sub)', fontSize: 15 }}>· 목록 카드에 보여요</span></label>
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
             {THUMB_TYPES.map((t) => (
               <button key={t.key} className={`pill press ${f.thumb === t.key ? 'active' : ''}`} onClick={() => set('thumb', t.key)}>{t.label}</button>
@@ -628,11 +628,11 @@ export default function EditorScreen({ id, prefill }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               {/* ⭐ 「직접 골랐다」를 같이 남긴다 — 이게 없으면 제목을 손보는 순간 고른 게 버려진다 */}
               <FoodIconPicker value={f.icon || guessFoodIcon(f.title)} onChange={(k) => { set('icon', k); setIconPicked(true) }} size={74} />
-              <div style={{ fontSize: 15, color: 'var(--text-sub)', lineHeight: 1.55 }}>탭해서 아이콘을 골라요.<br />제목에 맞춰 자동 추천돼요.</div>
+              <div style={{ fontSize: 16, color: 'var(--text-sub)', lineHeight: 1.55 }}>탭해서 아이콘을 골라요.<br />제목에 맞춰 자동 추천돼요.</div>
             </div>
           )}
           {f.thumb === 'none' && (
-            <div style={{ fontSize: 15, color: 'var(--text-sub)', lineHeight: 1.55 }}>표지를 비웠어요. 아이콘 없이 <b>꾸미기</b>로 배경·스티커만 얹어 깔끔하게 만들 수 있어요</div>
+            <div style={{ fontSize: 16, color: 'var(--text-sub)', lineHeight: 1.55 }}>표지를 비웠어요. 아이콘 없이 <b>꾸미기</b>로 배경·스티커만 얹어 깔끔하게 만들 수 있어요</div>
           )}
           {f.thumb === 'label' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -666,7 +666,7 @@ export default function EditorScreen({ id, prefill }) {
                   <Icon name="camera" size={26} color="var(--brown)" />
                 )}
               </button>
-              <div style={{ fontSize: 15, color: 'var(--text-sub)', lineHeight: 1.55 }}>
+              <div style={{ fontSize: 16, color: 'var(--text-sub)', lineHeight: 1.55 }}>
                 {f.image ? '탭해서 사진을 바꿔요.' : '탭해서 음식 사진을 골라요.'}<br />
                 음식이 가운데 오도록 정사각으로 예쁘게 다듬어져요.
               </div>
@@ -677,12 +677,12 @@ export default function EditorScreen({ id, prefill }) {
         {/* 캡처 한 장으로 재료+만드는 법 한 번에 — 사진 두 번 올리는 번거로움 없이(요청 반영).
             잘못 섞이면 아래 각 칸의 📷로 따로 채워 보정한다(안전망 유지). */}
         <button className="press" onClick={() => pickOcr('all')} disabled={ocr.busy}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '15px', marginBottom: 7, borderRadius: 'var(--r-md)', background: 'var(--brown)', color: '#fff', fontSize: 16, fontWeight: 800, boxShadow: 'var(--shadow-soft)', opacity: ocr.busy ? 0.5 : 1 }}>
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '15px', marginBottom: 7, borderRadius: 'var(--r-md)', background: 'var(--brown)', color: '#fff', fontSize: 17, fontWeight: 800, boxShadow: 'var(--shadow-soft)', opacity: ocr.busy ? 0.5 : 1 }}>
           <Icon name="camera" size={18} color="#fff" /> 캡처 사진으로 재료·만드는 법 채우기
         </button>
         {/* 캡처 안내는 여기 한 곳에만 — 잘 보이게(흩어진 안내 통합) */}
         <div style={{ marginBottom: 14, padding: '13px 16px', borderRadius: 'var(--r-md)', background: 'var(--cream)', border: '1px solid var(--line)' }}>
-          <div style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>캡처는 이렇게 채워요</div>
+          <div style={{ fontSize: 16.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>캡처는 이렇게 채워요</div>
 
           {/* 💰 [2026-08-21] 값 한 줄. ⛔더 안 붙인다.
               📮 창업자 = *"AI스캔 1장 뭔말인지 하나도 모르겠어."* · *"다 구구절절이야 헷갈린다고"*
@@ -702,7 +702,7 @@ export default function EditorScreen({ id, prefill }) {
           <div style={{
             paddingLeft: 10, marginBottom: 10,
             borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
-            fontSize: 15.4, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px',
+            fontSize: 16.4, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px',
           }}>
             사진 1장에 AI 스캔 1회가 소모돼요
           </div>
@@ -716,7 +716,7 @@ export default function EditorScreen({ id, prefill }) {
             // ⛔ `keep-all` — 한글은 기본이 «글자» 단위로 끊어서 낱말 가운데가 잘린다.
             //    실물을 열어보고 잡았다(규칙 21) — 「그 칸의 사 / 진에서 채우기」로 갈라져 있었다.
             //    📌 v11.19 의 「안 담겨/요」와 «같은 병»이다. 새 문장을 넣을 때마다 다시 난다.
-            <div key={k} style={{ display: 'flex', gap: 8, fontSize: 15, color: 'var(--text)', lineHeight: 1.5, marginTop: k ? 5 : 0, wordBreak: 'keep-all' }}>
+            <div key={k} style={{ display: 'flex', gap: 8, fontSize: 16, color: 'var(--text)', lineHeight: 1.5, marginTop: k ? 5 : 0, wordBreak: 'keep-all' }}>
               <span style={{ flex: '0 0 auto', width: 5, height: 5, borderRadius: 9, background: 'var(--brown)', marginTop: 7 }} />
               <span>{a}<b style={{ color: 'var(--brown)', fontWeight: 700 }}>{b}</b>{c}</span>
             </div>
@@ -736,7 +736,7 @@ export default function EditorScreen({ id, prefill }) {
             <img src={uiGomPot} alt="" aria-hidden="true" draggable={false} className="hk-m-tongtong"
               width={33} height={47} style={{ flex: '0 0 auto', objectFit: 'contain', margin: '-6px 0' }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15.5, fontWeight: 700 }}>
+              <div style={{ fontSize: 16.5, fontWeight: 700 }}>
                 사진에서 글자 읽는 중… {ocr.total > 1 ? `${ocr.total}장 중 ${ocr.page}장째` : `${ocr.pct}%`}
               </div>
               {/* 📊 전체 진척률 — 여러 장이면 「앞 장들은 다 끝났다」까지 세어야 막대가 뒤로 안 간다 */}
@@ -748,7 +748,7 @@ export default function EditorScreen({ id, prefill }) {
                 }} />
               </div>
               {/* ⏱ 「오래 걸린다」를 «먼저» 말해 준다 — 예고된 기다림은 고장으로 안 읽힌다 */}
-              <div className="t-sub" style={{ fontSize: 14, marginTop: 5, lineHeight: 1.4 }}>
+              <div className="t-sub" style={{ fontSize: 15, marginTop: 5, lineHeight: 1.4 }}>
                 {ocr.total > 1
                   ? <>사진이 {ocr.total}장이라 조금 걸려요 · <b style={{ fontWeight: 800, color: 'var(--brown)' }}>이 화면 그대로 두면 돼요</b></>
                   : '잠깐만요, 다 읽으면 칸을 채워 드려요'}
@@ -853,15 +853,15 @@ export default function EditorScreen({ id, prefill }) {
           <input value={f.sourceUrl} onChange={(e) => set('sourceUrl', e.target.value)} placeholder="https://..." inputMode="url" />
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <button type="button" className="press" onClick={() => openExternal('https://www.instagram.com/')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 13px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15, fontWeight: 700 }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 13px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 16, fontWeight: 700 }}>
               <Icon name="instagram" size={16} color="var(--brown)" /> 인스타 열기
             </button>
             <button type="button" className="press" onClick={() => openExternal('https://www.youtube.com/')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 13px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15, fontWeight: 700 }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 13px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 16, fontWeight: 700 }}>
               <Icon name="youtube" size={16} color="var(--brown)" /> 유튜브 열기
             </button>
           </div>
-          <div style={{ fontSize: 14, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 15, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>
             새 탭으로 열려요 — 링크 복사 후 이 화면으로 돌아오면 쓰던 내용 그대로 있어요.
           </div>
         </div>
@@ -958,7 +958,7 @@ export default function EditorScreen({ id, prefill }) {
               onClick={(e) => { e.stopPropagation(); setZoom(false) }}
               aria-label="닫기"
               /* 캡처가 «흰 종이»면 반투명 흰 버튼은 안 보인다 → 어두운 알약으로 */
-              style={{ position: 'fixed', top: 'calc(10px + var(--safe-top))', right: 12, padding: '8px 15px', borderRadius: 999, background: 'rgba(18,17,16,0.82)', color: '#fff', fontSize: 15.5, fontWeight: 700, backdropFilter: 'blur(4px)' }}
+              style={{ position: 'fixed', top: 'calc(10px + var(--safe-top))', right: 12, padding: '8px 15px', borderRadius: 999, background: 'rgba(18,17,16,0.82)', color: '#fff', fontSize: 16.5, fontWeight: 700, backdropFilter: 'blur(4px)' }}
             >
               ✕ 닫기
             </button>
@@ -977,7 +977,7 @@ export default function EditorScreen({ id, prefill }) {
                         className="press"
                         onClick={(e) => { e.stopPropagation(); setZoom(k) }}
                         aria-label={`${k + 1}번째 캡처 크게 보기`}
-                        style={{ minWidth: 46, padding: '9px 14px', borderRadius: 999, background: on ? '#ee7f4b' : 'rgba(255,255,255,0.18)', color: '#fff', fontSize: 15, fontWeight: 800, border: on ? '2px solid rgba(255,255,255,0.92)' : '1px solid rgba(255,255,255,0.3)', boxShadow: on ? '0 2px 12px rgba(238,127,75,0.55)' : 'none' }}
+                        style={{ minWidth: 46, padding: '9px 14px', borderRadius: 999, background: on ? '#ee7f4b' : 'rgba(255,255,255,0.18)', color: '#fff', fontSize: 16, fontWeight: 800, border: on ? '2px solid rgba(255,255,255,0.92)' : '1px solid rgba(255,255,255,0.3)', boxShadow: on ? '0 2px 12px rgba(238,127,75,0.55)' : 'none' }}
                       >
                         {k + 1}
                       </button>
@@ -985,7 +985,7 @@ export default function EditorScreen({ id, prefill }) {
                   })}
                 </div>
               )}
-              <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 14, fontWeight: 600 }}>
+              <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 15, fontWeight: 600 }}>
                 {refs.length > 1
                   ? `${Math.min(zoom, refs.length - 1) + 1} / ${refs.length}장 · 번호를 눌러 다른 장`
                   : '손가락으로 확대·축소'}

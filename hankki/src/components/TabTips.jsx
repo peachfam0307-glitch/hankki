@@ -104,7 +104,7 @@ export default function TabTips({ tab }) {
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 24 }}>
             <div className="emoji-sheet-head">
               <span>{tip.title}</span>
-              <button className="press" onClick={() => setOpen(false)} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
+              <button className="press" onClick={() => setOpen(false)} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '2px 16px 0' }}>
               {tip.items.map(([head, body], i) => (

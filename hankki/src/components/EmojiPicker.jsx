@@ -27,7 +27,7 @@ export default function EmojiPicker({ value, onChange, size = 56, only }) {
           <div className="sheet emoji-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="emoji-sheet-head">
               <span>이모지 선택</span>
-              <button className="press" onClick={() => setOpen(false)} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
+              <button className="press" onClick={() => setOpen(false)} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
             </div>
             <div className="emoji-scroll">
               {groups.map((g) => (

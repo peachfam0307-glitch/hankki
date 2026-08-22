@@ -31,7 +31,7 @@ export default function InboxScreen() {
         <button className="icon-btn press" onClick={() => nav.pop()} aria-label="뒤로">
           <Icon name="chevron-left" size={24} />
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 700 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 19, fontWeight: 700 }}>
           {/* 🏷 [2026-08-21] 「Inbox」 → 「임시보관함」. 창업자 = *"**INBOX나도 어딨는지 모르는데**"*
               ⭐ 못 찾은 이유가 둘이었다 — ⑴입구가 조건부라 사라졌다(홈에서 고쳤다) ⑵**이름이 영어**라
                  홈에서 찾아도 화면 제목이 Inbox 라 같은 곳인지 알 수 없었다.
@@ -68,7 +68,7 @@ export default function InboxScreen() {
                 <Thumb recipe={r} style={{ width: 60, height: 60, flex: '0 0 auto' }} radius={14} emojiSize="1.5rem" showDecor />
                 <div className="meta" style={{ flex: 1, minWidth: 0 }}>
                   <SourceBadge source={r.source} />
-                  <div className="name" style={{ fontSize: 16, fontWeight: 600, margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div className="name" style={{ fontSize: 17, fontWeight: 600, margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {r.title}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

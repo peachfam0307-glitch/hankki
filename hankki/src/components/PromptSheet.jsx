@@ -31,7 +31,7 @@ export default function PromptSheet({ title, fields, submitLabel = '저장', onS
         <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: compact ? 10 : 22 }}>
           <div className="emoji-sheet-head">
             <span>{title}</span>
-            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
           </div>
           {compact ? (
             // 컴팩트: 라벨 없이 한 줄 입력 + '붙이기'를 옆에 붙여 시트를 낮게 → 표지(배경)가 위로 더 보인다

@@ -134,7 +134,7 @@ export default function CookScreen({ id }) {
               ⭐ 레시피 상세의 것과 «같은» 시트다 — 새로 만든 게 없다.
               ⚠️ 글자 버튼이다(옛 「?」 는 작고 뭔지 몰랐다 — 창업자 *"버튼 물음표 너무작고 모르니까"*). */}
           <button className="press" onClick={() => setGuide(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, margin: '8px auto 0', padding: '7px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, margin: '8px auto 0', padding: '7px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 16, fontWeight: 700, whiteSpace: 'nowrap' }}>
             <Icon name="help" size={14} color="var(--brown)" />
             계량·손질
           </button>
@@ -169,7 +169,7 @@ export default function CookScreen({ id }) {
                 </span>
                 {/* ⭐ 체크한 줄은 «흐리게 ＋ 취소선» — 「했다」가 한눈에 보인다(장보기 목록과 같은 문법) */}
                 <span className="ing" style={{
-                  fontSize: 18, flex: 1, minWidth: 0,
+                  fontSize: 19, flex: 1, minWidth: 0,
                   opacity: checked[k] ? 0.44 : 1,
                   textDecoration: checked[k] ? 'line-through' : 'none',
                 }}>{scaleIngredient(ing, 1)}</span>
@@ -178,11 +178,11 @@ export default function CookScreen({ id }) {
           </div>
           {/* 안내 — 화면 안 꺼짐 · 타이머는 필요할 때 */}
           <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 9, width: '100%', maxWidth: 460 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 15.5, color: 'var(--text-sub)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 16.5, color: 'var(--text-sub)' }}>
               <Icon name="bulb" size={18} color="var(--brown)" stroke={1.8} />
               요리하는 동안 화면이 꺼지지 않아요.
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 15.5, color: 'var(--text-sub)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 16.5, color: 'var(--text-sub)' }}>
               <Icon name="clock" size={18} color="var(--brown)" stroke={1.8} />
               타이머는 필요할 때 단계에서 눌러 쓰세요.
             </div>
@@ -267,7 +267,7 @@ export default function CookScreen({ id }) {
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
             <div className="emoji-sheet-head">
               <span>재료</span>
-              <button className="press" onClick={() => setShowIng(false)} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
+              <button className="press" onClick={() => setShowIng(false)} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '0 16px', maxHeight: '50vh', overflowY: 'auto' }}>
               {(r.ingredients || []).map((ing, k) => (

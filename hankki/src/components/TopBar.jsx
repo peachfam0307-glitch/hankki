@@ -7,7 +7,7 @@ export default function TopBar({ title, onBack, right, transparent }) {
       <button className="icon-btn press" onClick={onBack} aria-label="뒤로">
         <Icon name="chevron-left" size={24} />
       </button>
-      <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.02em' }}>{title}</div>
+      <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{title}</div>
       <div style={{ minWidth: 40, display: 'flex', justifyContent: 'flex-end' }}>{right}</div>
     </div>
   )

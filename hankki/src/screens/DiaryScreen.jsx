@@ -198,8 +198,8 @@ export default function DiaryScreen({ day }) {
       <div className="screen fade" style={{ paddingBottom: 0 }}>
         <div className="detail-bar">
           <button className="bar-btn" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
-          <div style={{ fontSize: 16, fontWeight: 800 }}>
-            {date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 15, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span>
+          <div style={{ fontSize: 17, fontWeight: 800 }}>
+            {date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 16, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span>
           </div>
           <span style={{ width: 36 }} />
         </div>
@@ -207,20 +207,20 @@ export default function DiaryScreen({ day }) {
           <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 76, height: 76, borderRadius: '50%', background: 'var(--cream)', marginBottom: 16 }}>
             <Icon name="lock" size={34} color="var(--brown)" />
           </div>
-          <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 7 }}>잠가 둔 일기예요</div>
-          <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.6, marginBottom: 22 }}>
+          <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 7 }}>잠가 둔 일기예요</div>
+          <div className="t-sub" style={{ fontSize: 16, lineHeight: 1.6, marginBottom: 22 }}>
             비번 네 자리를 넣으면 열려요
           </div>
           <button
             className="press"
             onClick={() => setLockSheet('check')}
-            style={{ padding: '13px 30px', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontSize: 15.5, fontWeight: 800, border: 'none' }}
+            style={{ padding: '13px 30px', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontSize: 16.5, fontWeight: 800, border: 'none' }}
           >
             열기
           </button>
           {/* ⭐ 우리 구조가 여기서 제일 강하다 — 서버가 0개라 «애초에 우리도 못 본다».
               ⛔ 다만 「완전 암호화」라고는 쓰지 않는다(거짓말이 된다). 사실만. */}
-          <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.6, marginTop: 26 }}>
+          <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.6, marginTop: 26 }}>
             일기는 이 폰 안에만 있어요 · 만든 사람도 볼 수 없어요
           </div>
         </div>
@@ -253,8 +253,8 @@ export default function DiaryScreen({ day }) {
     <div className="screen fade" style={{ paddingBottom: 0 }}>
       <div className="detail-bar">
         <button className="bar-btn" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
-        <div style={{ fontSize: 16, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 7 }}>
-          <span>{date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 15, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span></span>
+        <div style={{ fontSize: 17, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 7 }}>
+          <span>{date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 16, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span></span>
           {/* 🏷 **「샘플」** (창업자 2026-08-12 *"자기 일기가 아니니까 지워도 되게(샘플이라고 적어주고)"*)
               ⭐ 제목 «옆»에 둔다 — 종이 위에 얹으면 꾸민 것과 섞여 「이것도 스티커인가」가 된다.
               ⛔⛔ 첫 판은 **연한 크림 바탕에 보조색 글자 11px** 이었다 → 창업자 *"샘플표시가 너무 작아 티도안나"*.
@@ -264,7 +264,7 @@ export default function DiaryScreen({ day }) {
                     이건 눌러도 아무 일 없는 «이름표»다. 스티커 지우기 단추와 같은 잉크색을 쓴다. */}
           {entry?.sample && (
             <span style={{
-              fontSize: 14.5, fontWeight: 800, letterSpacing: '.02em',
+              fontSize: 15.5, fontWeight: 800, letterSpacing: '.02em',
               padding: '4px 11px', borderRadius: 999,
               background: '#3f382e', color: '#fff', flex: '0 0 auto',
             }}>샘플</span>
@@ -348,14 +348,14 @@ export default function DiaryScreen({ day }) {
           className="press"
           onClick={() => setOpen(true)}
           aria-label="꾸미기 열기"
-          style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, padding: '10px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15, fontWeight: 800, border: 'none' }}
+          style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, padding: '10px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 16, fontWeight: 800, border: 'none' }}
         >
           <Icon name="palette" size={15} />
           꾸미기
         </button>
         {/* 📔 속지가 꾸미기 «안»으로 들어갔다 → 어디로 갔는지 한 줄로 알려준다.
             ⛔ 아무 말 없이 옮기면 「없어졌다」로 읽힌다 — 있던 자리에서 사라진 기능이라 더 그렇다. */}
-        <div className="t-sub" style={{ fontSize: 14, textAlign: 'center', marginTop: 6, lineHeight: 1.5 }}>
+        <div className="t-sub" style={{ fontSize: 15, textAlign: 'center', marginTop: 6, lineHeight: 1.5 }}>
           속지(선·종이·틀)도 꾸미기 안에서 골라요
           {/* 🗑 «지워도 된다»를 글자로도 (창업자 2026-08-13 *"샘플이라고(삭제가능) 명시하고"*)
               ⭐ 배지에 「샘플 · 지워도 돼요」를 다 넣지 «않았다» — 320px 폰에서 날짜·휴지통과 한 줄에 안 들어간다.
@@ -369,10 +369,10 @@ export default function DiaryScreen({ day }) {
         {/* 그날 만든 요리 — ⛔자동으로 안 얹는다. 「있다」만 알려주고 붙일지는 본인이 정한다 */}
         {cooked.length > 0 && (
           <div className="card" style={{ marginTop: 16, padding: '11px 13px', background: 'var(--cream)', border: 'none' }}>
-            <div className="t-sub" style={{ fontSize: 14, fontWeight: 700, marginBottom: 7 }}>이 날 만든 요리</div>
+            <div className="t-sub" style={{ fontSize: 15, fontWeight: 700, marginBottom: 7 }}>이 날 만든 요리</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               {cooked.map((e) => (
-                <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14.5, fontWeight: 700 }}>
+                <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15.5, fontWeight: 700 }}>
                   <FoodIcon name={iconOf(e)} size={22} />
                   {e.title}
                 </div>

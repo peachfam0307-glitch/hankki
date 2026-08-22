@@ -13,7 +13,7 @@ const COLOR = {
 export default function SourceBadge({ source, showLabel = true, size = 15 }) {
   const s = SOURCES[source] || SOURCES.link
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--text-sub)', fontSize: 14.5, fontWeight: 500 }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--text-sub)', fontSize: 15.5, fontWeight: 500 }}>
       <Icon name={s.icon} size={size} color={COLOR[source] || '#9B8B79'} stroke={1.7} />
       {showLabel && s.label}
     </span>

@@ -251,7 +251,7 @@ export default function HomeScreen() {
                 style={{
                   position: 'absolute', top: 2, right: 0, minWidth: 16, height: 16, padding: '0 4px',
                   borderRadius: 999, background: 'var(--brown)', color: '#fff',
-                  fontSize: 11, fontWeight: 800, lineHeight: '16px', textAlign: 'center',
+                  fontSize: 12, fontWeight: 800, lineHeight: '16px', textAlign: 'center',
                 }}
               >
                 {unsortedN > 99 ? '99+' : unsortedN}
@@ -299,8 +299,8 @@ export default function HomeScreen() {
               onClick={() => { askOpenBackup(); setBkStep(0); nav.go('profile') }}
               style={{ flex: 1, textAlign: 'left', minWidth: 0 }}
             >
-              <div style={{ fontSize: 15.5, fontWeight: 700 }}>내 레시피가 {myN}개 쌓였어요</div>
-              <div className="t-sub" style={{ fontSize: 14, marginTop: 1 }}>폰을 바꿔도 안 잃게 한 번 저장해둘까요?</div>
+              <div style={{ fontSize: 16.5, fontWeight: 700 }}>내 레시피가 {myN}개 쌓였어요</div>
+              <div className="t-sub" style={{ fontSize: 15, marginTop: 1 }}>폰을 바꿔도 안 잃게 한 번 저장해둘까요?</div>
             </button>
             <button className="press" onClick={() => { dismissBackupNudge(bkStep); setBkStep(0) }} aria-label="닫기" style={{ flex: '0 0 auto', padding: 6 }}>
               <Icon name="x" size={16} color="var(--sand)" />
@@ -337,7 +337,7 @@ export default function HomeScreen() {
                     (인라인은 `!important` 없이는 절대 못 이긴다 · v10.08 에 실제로 당했다) */}
                 <span className="news-title">한끼 소식</span>
                 {news.opened.length > 0 && (
-                  <span style={{ fontSize: 14, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
+                  <span style={{ fontSize: 15, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
                 )}
               </div>
               <div className="t-sub news-sub">{newsLine}</div>
@@ -489,7 +489,7 @@ export default function HomeScreen() {
           onClick={() => nav.go('myrecipes')}
           style={{
             width: '100%', marginTop: 22, padding: 15, borderRadius: 'var(--r-md)',
-            background: 'var(--cream)', color: 'var(--brown)', fontSize: 15.5, fontWeight: 700,
+            background: 'var(--cream)', color: 'var(--brown)', fontSize: 16.5, fontWeight: 700,
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           }}
         >

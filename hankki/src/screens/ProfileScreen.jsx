@@ -356,7 +356,7 @@ export default function ProfileScreen() {
           </button>
           <button className="press" onClick={editProfile} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.02em' }}>{profile.name}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>{profile.name}</div>
               <div className="t-sub" style={{ marginTop: 3 }}>{profile.bio}</div>
             </div>
             <Icon name="edit" size={20} color="var(--sand)" />
@@ -368,16 +368,16 @@ export default function ProfileScreen() {
         {avatarSheet && (
           <div className="card fade" style={{ padding: 16, marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>프로필 아이콘</div>
-              <button className="press" onClick={() => setAvatarSheet(false)} style={{ color: 'var(--text-sub)', fontSize: 15.5, fontWeight: 600 }}>닫기</button>
+              <div style={{ fontSize: 17, fontWeight: 700 }}>프로필 아이콘</div>
+              <button className="press" onClick={() => setAvatarSheet(false)} style={{ color: 'var(--text-sub)', fontSize: 16.5, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {/* 요리사 친구들 — 모자 쓴 동물 캐릭터. 세 가지 그림체를 섹션으로 나눠 보여준다. */}
               <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--brown)', marginBottom: 10 }}>요리사 친구들</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--brown)', marginBottom: 10 }}>요리사 친구들</div>
                 {BUDDY_GROUPS.map((g) => (
                   <div key={g.key} style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--sand)', margin: '0 2px 8px', letterSpacing: '0.02em' }}>{g.label}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--sand)', margin: '0 2px 8px', letterSpacing: '0.02em' }}>{g.label}</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                       {g.items.map((bd) => {
                         const on = profile.avatar?.type === 'buddy' && profile.avatar.value === bd.id
@@ -405,7 +405,7 @@ export default function ProfileScreen() {
                             >
                               <Buddy id={bd.id} size={56} />
                             </div>
-                            <span style={{ fontSize: 14, fontWeight: on ? 800 : 600, color: on ? 'var(--brown)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{bd.name}</span>
+                            <span style={{ fontSize: 15, fontWeight: on ? 800 : 600, color: on ? 'var(--brown)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{bd.name}</span>
                           </button>
                         )
                       })}
@@ -419,7 +419,7 @@ export default function ProfileScreen() {
                   size={56}
                   onChange={(e) => { setProfile({ avatar: { type: 'emoji', value: e } }); nav.showToast('프로필 이모지를 바꿨어요') }}
                 />
-                <div style={{ fontSize: 15, fontWeight: 600 }}>이모지로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>이모지로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <FoodIconPicker
@@ -427,16 +427,16 @@ export default function ProfileScreen() {
                   size={56}
                   onChange={(k) => { setProfile({ avatar: { type: 'icon', value: k } }); nav.showToast('프로필 아이콘을 바꿨어요') }}
                 />
-                <div style={{ fontSize: 15, fontWeight: 600 }}>한끼 아이콘으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>한끼 아이콘으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
               </div>
               <button className="press" onClick={() => avatarFileRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '4px 0', textAlign: 'left' }}>
                 <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
                   <Icon name="camera" size={22} color="var(--brown)" />
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 600 }}>사진으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 동그랗게 잘라드려요</span></div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>사진으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 동그랗게 잘라드려요</span></div>
               </button>
               {profile.avatar && (
-                <button className="press" onClick={() => { setProfile({ avatar: null }); setAvatarSheet(false) }} style={{ padding: 10, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontSize: 15.5, fontWeight: 600 }}>
+                <button className="press" onClick={() => { setProfile({ avatar: null }); setAvatarSheet(false) }} style={{ padding: 10, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontSize: 16.5, fontWeight: 600 }}>
                   기본(이름 첫 글자)으로 돌리기
                 </button>
               )}
@@ -470,8 +470,8 @@ export default function ProfileScreen() {
         >
           <Icon name="cloud" size={24} color="var(--brown)" stroke={2} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 16.5, fontWeight: 800, color: 'var(--brown)' }}>백업 · 내보내기</div>
-            <div className="t-sub" style={{ fontSize: 14, marginTop: 2 }}>폰을 바꾸거나 앱을 지워도 안 잃게 저장해요</div>
+            <div style={{ fontSize: 17.5, fontWeight: 800, color: 'var(--brown)' }}>백업 · 내보내기</div>
+            <div className="t-sub" style={{ fontSize: 15, marginTop: 2 }}>폰을 바꾸거나 앱을 지워도 안 잃게 저장해요</div>
           </div>
           <Icon name="chevron-right" size={18} color="var(--brown)" />
         </button>
@@ -482,7 +482,7 @@ export default function ProfileScreen() {
             <div key={m.label}>
               <button className="opt-row press" onClick={m.onClick} data-coach={m.coach} style={{ padding: '16px' }}>
                 <Icon name={m.icon} size={22} color="var(--brown)" stroke={1.7} />
-                <div className="t" style={{ fontSize: 16, fontWeight: 500 }}>{m.label}</div>
+                <div className="t" style={{ fontSize: 17, fontWeight: 500 }}>{m.label}</div>
                 {m.badge && <span className="badge badge-sorted" style={{ marginRight: 6 }}>{m.badge}</span>}
                 <Icon name="chevron-right" size={18} color="var(--sand)" />
               </button>
@@ -493,8 +493,8 @@ export default function ProfileScreen() {
 
         {/* 테마 — 화면 색(크림·세이지·다크). 다크모드도 여기서 고른다. */}
         <div className="card" style={{ marginTop: 20, padding: 16 }}>
-          <div style={{ fontSize: 16, fontWeight: 700 }}>테마</div>
-          <div className="t-sub" style={{ fontSize: 14.5, marginTop: 3, marginBottom: 14 }}>앱 화면 색을 골라요 · 다크모드도 여기서</div>
+          <div style={{ fontSize: 17, fontWeight: 700 }}>테마</div>
+          <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, marginBottom: 14 }}>앱 화면 색을 골라요 · 다크모드도 여기서</div>
           <div style={{ display: 'flex', gap: 10 }}>
             {THEMES.map((t) => {
               const on = theme === t.key
@@ -513,8 +513,8 @@ export default function ProfileScreen() {
                   <div style={{ width: 44, height: 44, borderRadius: 12, background: t.bg, position: 'relative', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.09)' }}>
                     <span style={{ position: 'absolute', right: 7, bottom: 7, width: 14, height: 14, borderRadius: '50%', background: t.point, boxShadow: '0 1px 2px rgba(0,0,0,.2)' }} />
                   </div>
-                  <span style={{ fontSize: 14.5, fontWeight: on ? 800 : 600, color: on ? 'var(--brown)' : 'var(--text)' }}>{t.label}</span>
-                  <span className="t-sub" style={{ fontSize: 14 }}>{t.desc}</span>
+                  <span style={{ fontSize: 15.5, fontWeight: on ? 800 : 600, color: on ? 'var(--brown)' : 'var(--text)' }}>{t.label}</span>
+                  <span className="t-sub" style={{ fontSize: 15 }}>{t.desc}</span>
                 </button>
               )
             })}
@@ -531,7 +531,7 @@ export default function ProfileScreen() {
               danger: true,
               onConfirm: () => { clearAll(); nav.showToast('깨끗하게 비웠어요 · 이제 내 레시피만 담아요') },
             })}
-            style={{ flex: 1, color: 'var(--brown)', fontSize: 15, fontWeight: 600, padding: 13, background: 'var(--cream)', borderRadius: 'var(--r-md)' }}
+            style={{ flex: 1, color: 'var(--brown)', fontSize: 16, fontWeight: 600, padding: 13, background: 'var(--cream)', borderRadius: 'var(--r-md)' }}
           >
             예시 데이터 비우기
           </button>
@@ -543,7 +543,7 @@ export default function ProfileScreen() {
               confirmLabel: '되돌리기',
               onConfirm: () => { reset(); nav.showToast('초기 예시로 되돌렸어요') },
             })}
-            style={{ flex: 1, color: 'var(--text-sub)', fontSize: 15, fontWeight: 500, padding: 13, background: 'var(--cream)', borderRadius: 'var(--r-md)' }}
+            style={{ flex: 1, color: 'var(--text-sub)', fontSize: 16, fontWeight: 500, padding: 13, background: 'var(--cream)', borderRadius: 'var(--r-md)' }}
           >
             예시 되돌리기
           </button>
@@ -555,7 +555,7 @@ export default function ProfileScreen() {
           disabled={checking}
           style={{
             width: '100%', marginTop: 22, padding: 13, borderRadius: 'var(--r-md)',
-            background: 'var(--cream)', color: 'var(--brown)', fontSize: 15.5, fontWeight: 700,
+            background: 'var(--cream)', color: 'var(--brown)', fontSize: 16.5, fontWeight: 700,
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
             opacity: checking ? 0.6 : 1,
           }}
@@ -563,10 +563,10 @@ export default function ProfileScreen() {
           <Icon name="refresh" size={16} color="var(--brown)" stroke={2} />
           {checking ? '확인 중…' : '최신 버전 확인'}
         </button>
-        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 14, marginTop: 10, lineHeight: 1.5 }}>
+        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 15, marginTop: 10, lineHeight: 1.5 }}>
           설치한 앱이 옛 버전에서 멈췄을 때 눌러요
         </div>
-        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 14, marginTop: 12 }}>
+        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 15, marginTop: 12 }}>
           한끼 · {APP_VERSION} — {APP_TAGLINE}
         </div>
       </div>
@@ -618,7 +618,7 @@ export default function ProfileScreen() {
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
             <div className="emoji-sheet-head">
               <span>백업 · 내보내기</span>
-              <button className="press" onClick={() => setBackup(false)} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
+              <button className="press" onClick={() => setBackup(false)} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '2px 16px 0' }}>
               {/* ⭐ 첫 문장을 「무엇을」에서 «왜»로 바꿨다 (창업자 2026-08-15)
@@ -628,7 +628,7 @@ export default function ProfileScreen() {
                      유저가 모르는 건 «담긴다»가 아니라 **「로그인이 없어서 새 기기엔 아무것도 안 따라온다」**는 사실이다.
                   ⛔ 겁주지 않는다(`docs/리텐션-설계원칙-2026-07-30.md`) — 「사라져요!」가 아니라 **사실 ＋ 다음 행동.**
                   ⚠️ `t-sub` 은 pre-line 이 아니라 {'\n'} 이 안 먹는다 — 여기서 명시한다(옛 문구는 한 줄로 뭉쳐 있었다). */}
-              <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.65, marginBottom: 12, whiteSpace: 'pre-line' }}>
+              <div className="t-sub" style={{ fontSize: 16, lineHeight: 1.65, marginBottom: 12, whiteSpace: 'pre-line' }}>
                 한끼는 <b>로그인이 없어요.</b> 모든 게 이 기기 안에만 있어서, 새 폰·패드에 깔면 처음 쓰는 것처럼 비어 있어요.{'\n'}이 파일 하나면 레시피 · 일지 · 냉장고 · 장보기 · 프로필까지 <b>그대로 옮겨져요.</b>
               </div>
               {/* 📁📁 추천 자리 = 「파일로 저장」 (창업자 2026-08-16 · 셋 다 직접 써보고 말했다)
@@ -645,25 +645,25 @@ export default function ProfileScreen() {
                   ⭐ 파일은 그 갈림길이 없다 — 누르면 파일 하나가 «반드시» 생긴다.
                   ⛔ 나머지 둘을 «지우지» 않는다 — 창업자 *"카톡보내기도 나쁘지않은데"*.
                      순서만 바꾸고, 코드 복사엔 「길다」를 미리 적어 놀라지 않게 한다. */}
-              <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 14, fontSize: 14.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
+              <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 14, fontSize: 15.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
                 <b style={{ color: 'var(--brown)' }}>제일 쉬운 방법 (2단계)</b>{'\n'}
                 <b>1.</b> 아래 <b>폰에 파일로 저장</b> 누르기{'\n'}
                 <b>2.</b> 끝! <b>다운로드 폴더</b>에 파일 하나가 생겨요
               </div>
               <button className="btn-primary press" onClick={downloadBackup}>폰에 파일로 저장 (추천)</button>
-              <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.55, margin: '8px 2px 12px', whiteSpace: 'pre-line' }}>
+              <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.55, margin: '8px 2px 12px', whiteSpace: 'pre-line' }}>
                 파일 앱 → <b>다운로드</b> 에 <b>한끼백업-날짜.json</b> 이 생겨요.{'\n'}폰이 고장나도 남게 하려면 그 파일을 <b>드라이브·카톡 「나에게」</b>에 한 번 더 올려두면 제일 안전해요.
               </div>
               <button className="btn-ghost press" style={{ width: '100%' }} onClick={shareBackup}>백업 보내서 저장하기 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 공유 창으로</span></button>
               {/* ⚠️ 저장한 게 많으면 복사가 «안 되는» 폰이 있다(창업자 폰 247KB 에서 실패).
                   그럴 땐 코드가 알아서 파일로 저장한다 — 그래서 라벨에 「짧을 때」라고 미리 적는다. */}
               <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={copyBackup}>백업 코드 복사 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 저장한 게 적을 때만</span></button>
-              <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.5, margin: '7px 2px 0' }}>
+              <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.5, margin: '7px 2px 0' }}>
                 코드는 저장한 게 많을수록 <b>아주 길어요.</b> 붙여넣기가 번거로우면 위 <b>파일</b>로 하세요.
               </div>
 
               <hr className="divider" style={{ margin: '16px 0' }} />
-              <div style={{ fontSize: 15.5, fontWeight: 700, marginBottom: 10 }}>백업에서 되살리기</div>
+              <div style={{ fontSize: 16.5, fontWeight: 700, marginBottom: 10 }}>백업에서 되살리기</div>
               {/* 🔁🔁 「폰 → 패드」 옮기는 법 (창업자 2026-08-15)
                   📮 *"**패드에 깔아서 핸드폰에 내가 저장한 것들 살리는 법도 안내하고.**"*
                   ⛔ 그 전엔 버튼 둘뿐이고 «어떻게 옮기는지»가 앱 어디에도 없었다 —
@@ -676,13 +676,13 @@ export default function ProfileScreen() {
                            (앱 «화면»으로는 못 열었다 — `checkPin` 이 막는다. 새던 건 «파일»이다)
                         ⭐ 이제 본문만 비번 자국으로 잠가 담고, 불러올 때 비번을 물어 푼다.
                            ⛔ 비번 «자국»을 백업에 넣지 않는다 — 넣으면 파일만으로 풀려서 잠근 의미가 없다. */}
-              <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 12, fontSize: 14.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
+              <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 12, fontSize: 15.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
                 <b style={{ color: 'var(--brown)' }}>새 폰·패드로 옮기기</b>{'\n'}
                 <b>1.</b> 쓰던 기기에서 위 <b>「폰에 파일로 저장」</b>을 눌러요{'\n'}
                 <b>2.</b> 그 파일을 새 기기로 보내요 — 카톡 「나에게」·드라이브·메일 어느 쪽이든 돼요{'\n'}
                 <b>3.</b> 새 기기에서 <b>「이미 다른 기기에서 쓰고 있었어요」</b>(소개 마지막 줄) 또는 <b>홈 오른쪽 위 설정 → 백업</b>에서 그 파일을 열면 끝이에요{'\n'}
                 {'\n'}
-                <span className="t-sub" style={{ fontSize: 14 }}>불러오면 <b>그 기기에 있던 내용은 백업 내용으로 바뀌어요.</b>{'\n'}잠가둔 일기는 <b>잠긴 채로</b> 옮겨가요 — 불러올 때 비번을 물어볼게요.</span>
+                <span className="t-sub" style={{ fontSize: 15 }}>불러오면 <b>그 기기에 있던 내용은 백업 내용으로 바뀌어요.</b>{'\n'}잠가둔 일기는 <b>잠긴 채로</b> 옮겨가요 — 불러올 때 비번을 물어볼게요.</span>
               </div>
               <button className="btn-ghost press" style={{ width: '100%' }} onClick={() => fileRef.current?.click()}>백업 파일 불러오기</button>
               <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={() => setPasteOpen(true)}>코드 붙여넣기로 불러오기</button>

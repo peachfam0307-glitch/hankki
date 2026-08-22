@@ -116,7 +116,7 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconF
     <div className="card cal-card">
       <div className="cal-head">
         <button className="press cal-nav" onClick={() => move(-1)} aria-label="이전 달"><Icon name="chevron-left" size={18} color="var(--text-sub)" /></button>
-        <div className="cal-title">{ym.y}년 {ym.m + 1}월 <span className="t-sub" style={{ fontSize: 14, fontWeight: 600 }}>· {monthCount}번</span></div>
+        <div className="cal-title">{ym.y}년 {ym.m + 1}월 <span className="t-sub" style={{ fontSize: 15, fontWeight: 600 }}>· {monthCount}번</span></div>
         <button className="press cal-nav" onClick={() => move(1)} aria-label="다음 달"><Icon name="chevron-right" size={18} color="var(--text-sub)" /></button>
       </div>
       <div className="cal-grid cal-week">
@@ -467,7 +467,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           {view === 'grid' && (
             <>
-              <button className="t-more press" style={{ marginRight: 2, fontSize: 15 }} onClick={() => (edit ? exitEdit() : setEdit(true))}>
+              <button className="t-more press" style={{ marginRight: 2, fontSize: 16 }} onClick={() => (edit ? exitEdit() : setEdit(true))}>
                 {edit ? '완료' : '편집'}
               </button>
               {/* 크게 보기(2열) ↔ 그리드(3열) 전환 */}
@@ -477,7 +477,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             </>
           )}
           {view === 'log' && entries.length > 0 && (
-            <button className="t-more press" style={{ marginRight: 2, fontSize: 15 }} onClick={() => (logEdit ? exitLogEdit() : setLogEdit(true))}>
+            <button className="t-more press" style={{ marginRight: 2, fontSize: 16 }} onClick={() => (logEdit ? exitLogEdit() : setLogEdit(true))}>
               {logEdit ? '완료' : '편집'}
             </button>
           )}
@@ -538,7 +538,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             className="press"
             data-coach="diary-write"
             onClick={() => nav.push({ name: 'diary', day: dayFilter || dayKey(Date.now()) })}
-            style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 12, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontSize: 15.5, fontWeight: 800, border: 'none' }}
+            style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 12, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontSize: 16.5, fontWeight: 800, border: 'none' }}
           >
             <Icon name="pen" size={16} color="#fff" />
             {/* ⛔ 이미 쓴 날에 「쓰기」라고 하면 «새로 쓴다»로 읽혀 덮어쓸까 봐 안 누른다. */}
@@ -554,7 +554,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               *"아이콘 아래에 속지를 고르고 일지를 쓰고 예쁘게 꾸며요 이런식으로 안내를 해주면 좋을 듯해"*)
               ⛔ 바로 아래 설명은 **요리 아카이브**(별점·사진·팁) 얘기라, 다이어리 버튼을 누르기 전에
                  읽히는 글이 딴 기능 설명이었다. 버튼과 설명이 어긋나면 안 누른다. */}
-          <div className="t-sub" style={{ fontSize: 14.5, textAlign: 'center', marginBottom: 14, lineHeight: 1.55 }}>
+          <div className="t-sub" style={{ fontSize: 15.5, textAlign: 'center', marginBottom: 14, lineHeight: 1.55 }}>
             속지를 고르고 · 일기를 쓰고 · 예쁘게 꾸며요
           </div>
 
@@ -565,7 +565,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               ✅ 요리 기록 «또는» 일기가 하나라도 있으면 그린다 ＋ **일기 수를 칸으로 추가**.
                  ⛔ 요리 기록 수(`entries`)와 일기 수(`diaryDays`)는 «다른 것»이라 합치지 않는다. */}
           {(entries.length > 0 || diaryDays.size > 0) && (
-            <div className="card" style={{ padding: '11px 14px', marginBottom: 12, background: 'var(--cream)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 15, fontWeight: 600 }}>
+            <div className="card" style={{ padding: '11px 14px', marginBottom: 12, background: 'var(--cream)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 16, fontWeight: 600 }}>
               <span>이번 달 <b style={{ color: 'var(--brown)' }}>{thisMonth}</b>번</span>
               <span style={{ color: 'var(--sand)' }}>·</span>
               <span>총 <b style={{ color: 'var(--brown)' }}>{entries.length}</b>개</span>
@@ -584,7 +584,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               {/* 🥘 갈래별 — 「이번 달에 뭘 해먹었나」. 위 줄과 성격이 달라(횟수 vs 종류) 줄을 나눈다.
                   ⭐ 갈래 이름은 픽커 탭 그대로다 — 유저가 아이콘 고를 때 이미 본 말이라 따로 배울 게 없다. */}
               {catTop.length > 0 && (
-                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 14.5, paddingTop: 7, marginTop: 1, borderTop: '1px solid var(--line)' }}>
+                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', fontSize: 15.5, paddingTop: 7, marginTop: 1, borderTop: '1px solid var(--line)' }}>
                   {catTop.map(([label, n], i) => (
                     <Fragment key={label}>
                       {i > 0 && <span style={{ color: 'var(--sand)' }}>·</span>}
@@ -602,7 +602,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               ⚠️ 갓 시작한 사람은 «전부»가 처음이라 이 칸이 앨범과 똑같아진다 → 기록이 5개는 돼야 뜬다. */}
           {firstTimes.length > 0 && entries.length >= 5 && (
             <div className="card" style={{ padding: '10px 12px 11px', marginBottom: 12, background: 'var(--cream)', border: 'none' }}>
-              <div className="t-sub" style={{ fontSize: 14, marginBottom: 8 }}>이번 달 처음 만든 요리</div>
+              <div className="t-sub" style={{ fontSize: 15, marginBottom: 8 }}>이번 달 처음 만든 요리</div>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {firstTimes.map((e) => (
                   <button
@@ -624,7 +624,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                         **띄어쓰기 없는 긴 이름이 «한 낱말»이라 안 꺾여** 두 줄 말줄임이 아예 안 돈다(한 줄에서 싹둑).
                         ⭐ `anywhere` 는 «담을 수 없을 때만» 꺾으므로 「수제 떡갈비」처럼 띄어쓰기 있는 이름은
                            지금처럼 낱말 단위로 그대로 꺾인다. 둘을 같이 두는 게 맞다. */}
-                    <span style={{ width: '100%', fontSize: 14, lineHeight: 1.25, textAlign: 'center', wordBreak: 'keep-all', overflowWrap: 'anywhere', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.title}</span>
+                    <span style={{ width: '100%', fontSize: 15, lineHeight: 1.25, textAlign: 'center', wordBreak: 'keep-all', overflowWrap: 'anywhere', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.title}</span>
                   </button>
                 ))}
               </div>
@@ -632,7 +632,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
           )}
 
           {/* 나의 요리 앨범 — 설명은 앨범 «바로 위»로 내렸다. 달력이 먼저 보여야 해서. */}
-          <div className="t-sub" style={{ fontSize: 14.5, lineHeight: 1.55, marginBottom: 10 }}>
+          <div className="t-sub" style={{ fontSize: 15.5, lineHeight: 1.55, marginBottom: 10 }}>
             {/* ✍️ [2026-08-12] 창업자 *"한끼일기에 나만의 별점~~블라블라 하는거 설명 바꾸면 좋겠어."*
                 ⛔ 옛 문구는 «기능 설명»이었다 — 「별점·사진·나만의 팁을 남겨두면 … 재현해요」.
                    무엇을 «할 수 있는지»만 말하고, 왜 남기고 싶은지는 한 마디도 없었다.
@@ -649,13 +649,13 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               {/* 📅 날짜를 골랐을 때만 «그날» 묶음이 위에 선다. 알약을 누르면 거르기가 풀린다. */}
               {dayFilter && (
                 <>
-                  <button className="press" onClick={() => setDayFilter(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, margin: '2px 0 10px', padding: '6px 12px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 14.5, fontWeight: 700 }}>
+                  <button className="press" onClick={() => setDayFilter(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, margin: '2px 0 10px', padding: '6px 12px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 15.5, fontWeight: 700 }}>
                     {Number(dayFilter.split('-')[1]) + 1}월 {dayFilter.split('-')[2]}일의 요리 {dayList.length}개 <Icon name="x" size={13} color="#fff" stroke={2.4} />
                   </button>
                   {/* ⛔ 요리를 안 한 날에도 일기는 쓴다 — 그때 아래가 통째로 비면 «고장»으로 읽힌다.
                       전엔 앨범이 빈 채로 끝나서 화면에 아무것도 없었다. 이제 그 아래에 그 달이 이어진다. */}
                   {dayList.length === 0 ? (
-                    <div className="t-sub" style={{ fontSize: 14.5, margin: '0 2px 14px' }}>이 날 만든 요리는 없어요.</div>
+                    <div className="t-sub" style={{ fontSize: 15.5, margin: '0 2px 14px' }}>이 날 만든 요리는 없어요.</div>
                   ) : (
                     <div className="album-grid" style={{ marginBottom: 16 }}>{dayList.map(albumTile)}</div>
                   )}
@@ -663,7 +663,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                       ⛔ 이 줄이 없으면 그날 것과 달 것이 한 덩어리로 보여 더 헷갈린다.
                       ⚠️ 「다른」은 **그날 것이 있을 때만** 붙인다 — 일기만 쓴 날엔 뺀 게 없어서
                          「다른」이라고 하면 «어디에 견줘 다른지»가 없는 말이 된다. */}
-                  <div className="t-sub" style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--brown)', margin: '0 2px 8px' }}>
+                  <div className="t-sub" style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--brown)', margin: '0 2px 8px' }}>
                     {Number(dayFilter.split('-')[1]) + 1}월에 만든 {dayList.length > 0 ? '다른 ' : ''}요리 {monthList.length}개
                   </div>
                 </>
@@ -694,7 +694,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             )}
           </div>
           {query && (
-            <div className="t-sub" style={{ margin: '10px 2px 0', fontSize: 14.5 }}>
+            <div className="t-sub" style={{ margin: '10px 2px 0', fontSize: 15.5 }}>
               ‘{q.trim()}’ — 내 레시피 {list.length}개
             </div>
           )}
@@ -739,7 +739,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
           <div className="pad">
             {/* 사용자가 만든 폴더는 여기서 바로 삭제(폴더·태그 탭을 없애 모아보기로 흡수) */}
             {isUserFolder && (
-              <button className="press" onClick={() => setDelFolder(folder)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 10, padding: '6px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--text-sub)', fontSize: 14.5, fontWeight: 600 }}>
+              <button className="press" onClick={() => setDelFolder(folder)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 10, padding: '6px 11px', borderRadius: 999, background: 'var(--cream)', color: 'var(--text-sub)', fontSize: 15.5, fontWeight: 600 }}>
                 <Icon name="x" size={13} color="var(--text-sub)" stroke={2.2} /> ‘{folder}’ 폴더 삭제
               </button>
             )}
@@ -773,7 +773,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                         <div style={on ? { outline: '3px solid var(--brown)', outlineOffset: -3, borderRadius: gridSize === 'big' ? 16 : 12 } : undefined}>
                           <Thumb recipe={r} ratio="1/1" radius={gridSize === 'big' ? 16 : 12} emojiSize={gridSize === 'big' ? undefined : '1.6rem'} showDecor />
                         </div>
-                        <div className="name" style={gridSize === 'small' ? { fontSize: 14, marginTop: 5 } : undefined}>{r.title}</div>
+                        <div className="name" style={gridSize === 'small' ? { fontSize: 15, marginTop: 5 } : undefined}>{r.title}</div>
                         {gridSize === 'big' && <div className="date">{dateLabel(r.savedAt)}</div>}
                       </button>
                       {/* 🔖🔖 [2026-08-17 창업자] **북마크를 목록에서 «바로» 누른다.**
@@ -828,17 +828,17 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       {logEdit && view === 'log' && (
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(var(--nav-h) + 14px + var(--safe-bottom))', zIndex: 40, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
           <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, padding: '9px 12px 9px 18px', boxShadow: '0 8px 26px rgba(60,45,30,0.22)' }}>
-            <span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>
+            <span style={{ fontSize: 16.5, fontWeight: 800, color: 'var(--text)' }}>
               {logSel.size > 0 ? `${logSel.size}개 선택` : '기록을 눌러 선택'}
             </span>
             {/* ⚠️ 「전체」 = **지금 화면에 있는 것**이다(옛 `shown`) — 그날 묶음 ＋ 그 달 묶음.
                 ⛔ 겹침을 없앤 뒤로 둘은 남남이라, 한쪽만 세면 나머지가 선택에서 빠진다. */}
-            <button className="press" style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 8px' }}
+            <button className="press" style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 8px' }}
               onClick={() => setLogSel(logSel.size === shownAll.length ? new Set() : new Set(shownAll.map((e) => e.id)))}>
               {logSel.size === shownAll.length && shownAll.length > 0 ? '전체 해제' : '전체 선택'}
             </button>
             <button className="press" disabled={logSel.size === 0}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 999, background: logSel.size ? 'var(--danger)' : 'var(--cream)', color: logSel.size ? '#fff' : 'var(--text-sub)', fontSize: 15.5, fontWeight: 800 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 999, background: logSel.size ? 'var(--danger)' : 'var(--cream)', color: logSel.size ? '#fff' : 'var(--text-sub)', fontSize: 16.5, fontWeight: 800 }}
               onClick={() => logSel.size && setDelLogAsk(true)}>
               <Icon name="trash" size={15} color={logSel.size ? '#fff' : 'var(--text-sub)'} /> 삭제
             </button>
@@ -866,15 +866,15 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       {edit && view === 'grid' && (
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(var(--nav-h) + 14px + var(--safe-bottom))', zIndex: 40, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
           <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, padding: '9px 12px 9px 18px', boxShadow: '0 8px 26px rgba(60,45,30,0.22)' }}>
-            <span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>
+            <span style={{ fontSize: 16.5, fontWeight: 800, color: 'var(--text)' }}>
               {sel.size > 0 ? `${sel.size}개 선택` : '카드를 눌러 선택'}
             </span>
-            <button className="press" style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 8px' }}
+            <button className="press" style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 8px' }}
               onClick={() => setSel(sel.size === list.length ? new Set() : new Set(list.map((r) => r.id)))}>
               {sel.size === list.length && list.length > 0 ? '전체 해제' : '전체 선택'}
             </button>
             <button className="press" disabled={sel.size === 0}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 999, background: sel.size ? 'var(--danger)' : 'var(--cream)', color: sel.size ? '#fff' : 'var(--text-sub)', fontSize: 15.5, fontWeight: 800 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 999, background: sel.size ? 'var(--danger)' : 'var(--cream)', color: sel.size ? '#fff' : 'var(--text-sub)', fontSize: 16.5, fontWeight: 800 }}
               onClick={() => sel.size && setDelSelAsk(true)}>
               <Icon name="trash" size={15} color={sel.size ? '#fff' : 'var(--text-sub)'} /> 삭제
             </button>

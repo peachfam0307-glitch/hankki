@@ -127,7 +127,7 @@ export default function ImportScreen() {
         <button className="icon-btn press" onClick={() => (flow ? setFlow(null) : nav.pop())} aria-label="닫기">
           <Icon name={flow ? 'chevron-left' : 'x'} size={24} />
         </button>
-        <div style={{ fontSize: 17, fontWeight: 700 }} />
+        <div style={{ fontSize: 18, fontWeight: 700 }} />
         <div style={{ width: 40 }} />
       </div>
 
@@ -137,7 +137,7 @@ export default function ImportScreen() {
       {!flow ? (
         <div className="pad">
           <div className="h-title" style={{ marginTop: 6 }}>가져오기</div>
-          <div className="t-sub" style={{ marginTop: 8, marginBottom: 14, fontSize: 15 }}>
+          <div className="t-sub" style={{ marginTop: 8, marginBottom: 14, fontSize: 16 }}>
             레시피를 가져오는 방법을 선택해 주세요.
           </div>
 
@@ -160,8 +160,8 @@ export default function ImportScreen() {
                 ⛔ 「남음」 같은 명사형은 여기서만 튄다. */}
             {ocrLeft.total > 0 ? (
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 15.5, fontWeight: 800, color: '#3d6b38', letterSpacing: '-.3px' }}>
-                  무료 AI 스캔 <span style={{ fontSize: 19.5 }}>{ocrLeft.total}회</span> 남았어요
+                <div style={{ fontSize: 16.5, fontWeight: 800, color: '#3d6b38', letterSpacing: '-.3px' }}>
+                  무료 AI 스캔 <span style={{ fontSize: 20.5 }}>{ocrLeft.total}회</span> 남았어요
                 </div>
                 {/* ⭐⭐ 작은 줄은 «상태마다 다르다» — 여기서 오해가 나면 곧장 분쟁이 된다.
                     ① 웰컴 중 = 창업자 *"매달 20장씩 주는 줄 알지도 몰라"* → **처음 한 번**이라고 못박는다.
@@ -175,7 +175,7 @@ export default function ImportScreen() {
                   <div style={{
                     display: 'inline-block', marginTop: 5, padding: '4.5px 10px',
                     borderRadius: 9, background: '#fff', border: '1px solid #cfe3c4',
-                    fontSize: 14.6, fontWeight: 700, color: '#4f7d48', lineHeight: 1.4, letterSpacing: '-.2px',
+                    fontSize: 15.6, fontWeight: 700, color: '#4f7d48', lineHeight: 1.4, letterSpacing: '-.2px',
                     // ⛔ 한글 낱말이 잘리면 안 된다 — 첫 판이 「다 쓰면 매 / 달 5장」으로 잘렸다
                     wordBreak: 'keep-all',
                   }}>
@@ -188,17 +188,17 @@ export default function ImportScreen() {
                     다 쓰면 <b style={{ fontWeight: 900, color: '#356131' }}>매달 무료 5회</b>
                   </div>
                 ) : (
-                  <div style={{ fontSize: 14.3, color: 'var(--text-sub)', marginTop: 2 }}>
+                  <div style={{ fontSize: 15.3, color: 'var(--text-sub)', marginTop: 2 }}>
                     {ocrLeft.total <= 3 ? '다 써도 기본 인식으로 계속 읽어 드려요' : '매달 5장씩 채워져요'}
                   </div>
                 )}
               </div>
             ) : (
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#8a6a3a', letterSpacing: '-.3px' }}>이번 달 무료 AI 스캔을 다 썼어요</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#8a6a3a', letterSpacing: '-.3px' }}>이번 달 무료 AI 스캔을 다 썼어요</div>
                 {/* ⭐ 「못 쓴다」가 아니라 「계속 되는데 품질이 바뀐다」 ＋ 언제·«몇 장» 돌아오는지까지.
                     ⛔ 「다시 채워져요」만 두면 몇 장인지 모른다 → 창업자 *"다음달에 무료5장채워져요"* */}
-                <div style={{ fontSize: 14.3, color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.45 }}>
+                <div style={{ fontSize: 15.3, color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.45 }}>
                   기본 인식으로 계속 읽어 드려요<br />다음 달에 <b style={{ fontWeight: 800, color: '#8a6a3a' }}>무료 5회</b> 채워져요
                 </div>
               </div>
@@ -235,8 +235,8 @@ export default function ImportScreen() {
             }}><Icon name="photo" size={25} color="#8a5a37" stroke={1.7} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                <span style={{ fontSize: 15.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap' }}>사진 · 직접 작성하기</span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>제일 많이 써요</span>
+                <span style={{ fontSize: 16.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap' }}>사진 · 직접 작성하기</span>
+                <span style={{ fontSize: 15, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>제일 많이 써요</span>
               </div>
               {/* 💰 [2026-08-21] 값을 «고르는 그 줄»에 붙인다 — 창업자가 결제에 대해 정한 원칙과 같다:
                      *"구매 탭은 안 만든다 — 「쓰려는 순간」 그 자리에서"*. 알리는 것도 같은 자리다.
@@ -245,7 +245,7 @@ export default function ImportScreen() {
                   ⛔ `keep-all` — 이 줄은 `.opt-row .t .b` 가 «아니라» 인라인 style 이라
                      v11.19 에 넣은 그 규칙이 안 걸렸다. 실물에서 「읽어 채워 / 요」로 잘려 있었다(규칙 21).
                      📌 같은 병을 한 화면에서 두 번 고쳤다 — 클래스로 고친 것은 «클래스를 쓰는 줄»만 낫는다. */}
-              <div style={{ fontSize: 14.3, lineHeight: 1.5, color: 'var(--text-sub)', wordBreak: 'keep-all' }}>
+              <div style={{ fontSize: 15.3, lineHeight: 1.5, color: 'var(--text-sub)', wordBreak: 'keep-all' }}>
                 {OPTIONS[0].desc}{장수꼬리(OPTIONS[0].costText, OPTIONS[0].paid)}
               </div>
             </div>
@@ -288,8 +288,8 @@ export default function ImportScreen() {
             }}><Icon name="sparkle" size={19} color="#7fa06a" stroke={1.6} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 14.5, fontWeight: 800, color: '#4a7a45' }}>AI 자동 정리</span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#fff', background: '#7fa06a', borderRadius: 999, padding: '2px 7px', flexShrink: 0 }}>이미 돼요</span>
+                <span style={{ fontSize: 15.5, fontWeight: 800, color: '#4a7a45' }}>AI 자동 정리</span>
+                <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', background: '#7fa06a', borderRadius: 999, padding: '2px 7px', flexShrink: 0 }}>이미 돼요</span>
               </div>
               {/* ⛔ 「캡처·링크 올리면」이었다 — **링크는 자동으로 안 채워진다.**
                      돈 드는 길(사진)과 안 되는 길(링크)이 한 줄에 묶여 있었다(창업자 확정 ⓑ · 2026-08-21).
@@ -300,7 +300,7 @@ export default function ImportScreen() {
                      ⭐ 그래서 「0장」은 짐작이 아니라 실측이다.
                   ⭐ 값을 «숫자 대 숫자»로 놓는다 — 「공짜」라고 쓰면 「되는데 돈만 안 든다」로 읽혀
                      정작 무엇이 깎이는지가 안 보인다. 1 ↔ 0 이 제일 빠르게 읽힌다. */}
-              <div style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2, wordBreak: 'keep-all' }}>
+              <div style={{ fontSize: 15, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2, wordBreak: 'keep-all' }}>
                 캡처는 <b style={{ fontWeight: 800, color: 'var(--danger)' }}>1회 소모</b> · 글 붙여넣기는 <b style={{ fontWeight: 800, color: '#4a7a45' }}>소모 없음</b>
               </div>
               {/* ⛔ 남은 장수는 여기 «두지 않는다» — 창업자 *"너무 안보여"* (2026-08-13).
@@ -315,7 +315,7 @@ export default function ImportScreen() {
             onClick={() => setHelp(true)}
           >
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 600 }}>가져오기가 어렵다면?</div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>가져오기가 어렵다면?</div>
               <div className="t-sub" style={{ marginTop: 3 }}>인스타·유튜브 레시피를 한끼로 옮기는 법 보기</div>
             </div>
             <div className="opt-ico" style={{ background: '#fff' }}>
@@ -329,7 +329,7 @@ export default function ImportScreen() {
             <div className="opt-ico"><Icon name="edit" size={24} color="#B0895E" stroke={1.7} /></div>
             <div className="h-title" style={{ fontSize: 23 }}>텍스트 붙여넣기</div>
           </div>
-          <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 15 }}>
+          <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 16 }}>
             인스타 캡션·블로그·메모의 레시피 글을 그대로 붙여넣으면 제목·재료·순서로 자동 정리해요.
           </div>
           <textarea
@@ -350,7 +350,7 @@ export default function ImportScreen() {
             <div className="opt-ico"><Icon name={flowMeta.icon} size={24} color={flowMeta.color} stroke={1.7} /></div>
             <div className="h-title" style={{ fontSize: 23 }}>{flowMeta.title}</div>
           </div>
-          <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 15.5 }}>
+          <div className="t-sub" style={{ marginTop: 6, marginBottom: 16, fontSize: 16.5 }}>
             {flow === 'instagram' ? '인스타 레시피를 한끼로 옮기는 방법이에요.' : '영상 레시피를 한끼로 옮기는 방법이에요.'}
           </div>
 
@@ -380,11 +380,11 @@ export default function ImportScreen() {
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 15.5, fontWeight: 800 }}>{t}</span>
-                  {best && <span style={{ fontSize: 14, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px' }}>추천</span>}
+                  <span style={{ fontSize: 16.5, fontWeight: 800 }}>{t}</span>
+                  {best && <span style={{ fontSize: 15, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px' }}>추천</span>}
                 </span>
                 {/* ⛔ `keep-all` — 꼬리가 붙어 두 줄이 되면 한글 낱말이 가운데서 잘린다(오늘 두 번 겪었다) */}
-                <span className="t-sub" style={{ display: 'block', fontSize: 14.3, lineHeight: 1.45, marginTop: 3, wordBreak: 'keep-all' }}>{d}{장수꼬리(costText, paid)}</span>
+                <span className="t-sub" style={{ display: 'block', fontSize: 15.3, lineHeight: 1.45, marginTop: 3, wordBreak: 'keep-all' }}>{d}{장수꼬리(costText, paid)}</span>
               </span>
               <Icon name="chevron-right" size={17} color="var(--sand)" />
             </button>
@@ -392,7 +392,7 @@ export default function ImportScreen() {
 
           {/* 링크는 '바로가기 저장'뿐이라 접어둔다 — 펼쳐야 보이게. */}
           <button className="press" onClick={() => setLinkOpen((v) => !v)}
-            style={{ width: '100%', marginTop: 6, padding: '11px 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 15, fontWeight: 700, color: 'var(--text-sub)', background: 'transparent', border: 'none' }}>
+            style={{ width: '100%', marginTop: 6, padding: '11px 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 16, fontWeight: 700, color: 'var(--text-sub)', background: 'transparent', border: 'none' }}>
             <Icon name="link" size={15} color="var(--text-sub)" stroke={1.8} /> 링크만 저장해두기
             {/* 위/아래 화살표 아이콘이 없어서 오른쪽 꺾쇠를 돌려 쓴다 */}
             <Icon name="chevron-right" size={15} color="var(--sand)" style={{ transform: linkOpen ? 'rotate(-90deg)' : 'rotate(90deg)', transition: 'transform .15s' }} />
@@ -403,14 +403,14 @@ export default function ImportScreen() {
               <button className="btn-ghost press" style={{ width: '100%' }} onClick={saveLink} disabled={!url.trim()}>
                 바로가기로 저장
               </button>
-              <div className="t-sub" style={{ fontSize: 14, marginTop: 9, lineHeight: 1.55 }}>
+              <div className="t-sub" style={{ fontSize: 15, marginTop: 9, lineHeight: 1.55 }}>
                 링크에서 <b>재료·순서를 자동으로 가져오는 기능은 준비 중</b>이에요. 지금은 주소만 담아둬요.
               </div>
             </div>
           )}
 
           <button className="press" onClick={() => openExternal(flow === 'instagram' ? 'https://www.instagram.com/' : 'https://www.youtube.com/')}
-            style={{ width: '100%', marginTop: 14, padding: '10px 4px', fontSize: 15, fontWeight: 700, color: flowMeta.color, background: 'transparent', border: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            style={{ width: '100%', marginTop: 14, padding: '10px 4px', fontSize: 16, fontWeight: 700, color: flowMeta.color, background: 'transparent', border: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
             <Icon name={flowMeta.icon} size={16} color={flowMeta.color} stroke={2} /> {flowMeta.title} 열러 가기 ↗
           </button>
         </div>
@@ -422,7 +422,7 @@ export default function ImportScreen() {
           </div>
           {/* ⭐ 제일 먼저 «안 되는 것»을 말한다 — 옛 문장은 「바로가기로 저장하는 기능」이라 맞는 말이었지만
                  「그래서 내용은 안 담긴다」를 유저가 스스로 알아채야 했다. 그 한 걸음이 오해를 만든다. */}
-          <div className="t-sub" style={{ marginTop: 6, marginBottom: 12, fontSize: 15, lineHeight: 1.6 }}>
+          <div className="t-sub" style={{ marginTop: 6, marginBottom: 12, fontSize: 16, lineHeight: 1.6 }}>
             <b style={{ color: 'var(--brown)' }}>주소만 담아둬요.</b> 재료·만드는 법은 <b>안 담겨요.</b><br />
             내용까지 옮기고 싶다면 아래 방법이 확실해요.
           </div>
@@ -435,8 +435,8 @@ export default function ImportScreen() {
           >
             <div className="opt-ico" style={{ background: '#fff', flexShrink: 0 }}><Icon name="edit" size={20} color="var(--brown)" /></div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--brown)', marginBottom: 2 }}>블로그는 글 복사 → 텍스트 붙여넣기 추천</div>
-              <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.5 }}>블로그는 사진이 많아 캡처가 번거로워요. 레시피 글을 <b>복사</b>해서 붙여넣으면 제일 깔끔해요.</div>
+              <div style={{ fontSize: 16.5, fontWeight: 700, color: 'var(--brown)', marginBottom: 2 }}>블로그는 글 복사 → 텍스트 붙여넣기 추천</div>
+              <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.5 }}>블로그는 사진이 많아 캡처가 번거로워요. 레시피 글을 <b>복사</b>해서 붙여넣으면 제일 깔끔해요.</div>
             </div>
             <Icon name="chevron-right" size={18} color="var(--sand)" />
           </button>
@@ -460,7 +460,7 @@ export default function ImportScreen() {
                  `readLink()`(git 히스토리 · 이 커밋의 부모에 있다)와 `fetchLinkRecipe` import 를 되살린다. */}
           <div className="card" style={{ padding: 14, background: 'var(--cream)', border: 'none', display: 'flex', gap: 10 }}>
             <Icon name="inbox" size={20} color="var(--brown)" />
-            <div className="t-sub" style={{ fontSize: 14.5, lineHeight: 1.5, color: 'var(--brown)' }}>
+            <div className="t-sub" style={{ fontSize: 15.5, lineHeight: 1.5, color: 'var(--brown)' }}>
               담아두면 <b>임시보관함</b>에 들어가요. 나중에 열어 <b>캡처</b>나 <b>텍스트 붙여넣기</b>로 내용을 채워 주세요.
             </div>
           </div>
@@ -473,14 +473,14 @@ export default function ImportScreen() {
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 26 }}>
             <div className="emoji-sheet-head">
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="sparkle" size={18} color="var(--brown)" /> AI 자동정리</span>
-              <button className="press" onClick={() => setAiPreview(false)} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
+              <button className="press" onClick={() => setAiPreview(false)} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '4px 18px 0' }}>
               {/* 이미 되는 기능 · 헤드라인 */}
               <div style={{ textAlign: 'center', padding: '8px 0 18px' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 12, padding: '4px 12px', borderRadius: 999, background: '#eef5ea', color: '#4a7a45', fontSize: 14, fontWeight: 800 }}>이미 돼요 <Icon name="sparkle" size={12} color="#4a7a45" /></span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 12, padding: '4px 12px', borderRadius: 999, background: '#eef5ea', color: '#4a7a45', fontSize: 15, fontWeight: 800 }}>이미 돼요 <Icon name="sparkle" size={12} color="#4a7a45" /></span>
                 <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--brown)', lineHeight: 1.3, letterSpacing: '-0.02em' }}>사진 찍으면<br />레시피가 돼요</div>
-                <div className="t-sub" style={{ fontSize: 15, marginTop: 9, lineHeight: 1.6 }}>캡처만 올리면 재료·순서를<br />칸칸이 알아서 정리해드려요.</div>
+                <div className="t-sub" style={{ fontSize: 16, marginTop: 9, lineHeight: 1.6 }}>캡처만 올리면 재료·순서를<br />칸칸이 알아서 정리해드려요.</div>
               </div>
 
               {/* 장점 */}
@@ -498,14 +498,14 @@ export default function ImportScreen() {
                       <Icon name={ic} size={19} color="var(--brown)" stroke={1.7} />
                     </span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{t}</div>
-                      <div className="t-sub" style={{ fontSize: 14.3, lineHeight: 1.5 }}>{b}</div>
+                      <div style={{ fontSize: 16.5, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{t}</div>
+                      <div className="t-sub" style={{ fontSize: 15.3, lineHeight: 1.5 }}>{b}</div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.65, marginTop: 16, textAlign: 'center', color: 'var(--brown)' }}>
+              <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.65, marginTop: 16, textAlign: 'center', color: 'var(--brown)' }}>
                 지금 바로 돼요 — <b>캡처</b>와 <b>붙여넣은 글</b>에서<br />재료·순서를 채워 드려요.
               </div>
               <button
@@ -527,7 +527,7 @@ export default function ImportScreen() {
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 24 }}>
             <div className="emoji-sheet-head">
               <span>레시피 가져오는 법</span>
-              <button className="press" onClick={() => setHelp(false)} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
+              <button className="press" onClick={() => setHelp(false)} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '2px 16px 0' }}>
               <div className="imp-tip">
@@ -536,21 +536,21 @@ export default function ImportScreen() {
                   인스타는 캡션 글자를 복사할 수 없어요.<br />
                   1. 레시피가 보이는 화면을 <b>캡처(스크린샷)</b><br />
                   2. 한끼 → 가져오기 → <b>사진·직접 작성하기</b><br />
-                  → 작성 화면에서 <b>재료 사진·만드는 법 사진</b>을 각각 올리면 정확하게 채워져요. <span className="t-sub" style={{ fontSize: 14 }}>길면 2~3장 나눠서 이어 붙여도 돼요!</span>
+                  → 작성 화면에서 <b>재료 사진·만드는 법 사진</b>을 각각 올리면 정확하게 채워져요. <span className="t-sub" style={{ fontSize: 15 }}>길면 2~3장 나눠서 이어 붙여도 돼요!</span>
                 </div>
               </div>
               <div className="imp-tip">
                 <div className="imp-tip-h" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="pen" size={16} color="var(--brown)" stroke={1.8} /> 유튜브·블로그 — 글자 복사되면 붙여넣기</div>
                 <div className="imp-tip-b">
                   유튜브 <b>설명(더보기)</b>이나 블로그 글은 대개 복사돼요.<br />
-                  복사 → 가져오기 → <b>텍스트 붙여넣기</b> → 자동 정리! <span className="t-sub" style={{ fontSize: 14 }}>복사가 안 되면 캡처해서 사진으로.</span>
+                  복사 → 가져오기 → <b>텍스트 붙여넣기</b> → 자동 정리! <span className="t-sub" style={{ fontSize: 15 }}>복사가 안 되면 캡처해서 사진으로.</span>
                 </div>
               </div>
               <div className="imp-tip">
                 <div className="imp-tip-h" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="share" size={16} color="var(--brown)" stroke={1.8} /> 앱 설치하면 — 공유로 바로 담기</div>
                 <div className="imp-tip-b">
                   앱을 설치하면 인스타·유튜브 <b>공유(↗)</b> 목록에 <b>‘한끼’</b>가 떠요.<br />
-                  <span className="t-sub" style={{ fontSize: 14 }}>단, 인스타 공유는 ‘링크’만 보내져요(캡션은 안 와요). 내용까지 담으려면 캡처가 확실해요.</span>
+                  <span className="t-sub" style={{ fontSize: 15 }}>단, 인스타 공유는 ‘링크’만 보내져요(캡션은 안 와요). 내용까지 담으려면 캡처가 확실해요.</span>
                 </div>
               </div>
             </div>

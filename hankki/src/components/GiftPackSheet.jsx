@@ -42,11 +42,11 @@ export default function GiftPackSheet({ onClose, onGo }) {
         <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 'calc(20px + var(--safe-bottom))' }}>
           <div className="emoji-sheet-head">
             <span>출시 기념 선물</span>
-            <button className="press" onClick={close} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={close} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
           </div>
 
           <div style={{ padding: '2px 16px 0' }}>
-            <div className="t-sub" style={{ fontSize: 15.5, lineHeight: 1.6, margin: '2px 0 12px', textAlign: 'center' }}>
+            <div className="t-sub" style={{ fontSize: 16.5, lineHeight: 1.6, margin: '2px 0 12px', textAlign: 'center' }}>
               한끼가 정식으로 나왔어요.<br />
               <b style={{ color: 'var(--text)' }}>네 가지를 넣어뒀어요.</b><br />
               누르면 바로 그 자리로 가요.
@@ -73,10 +73,10 @@ export default function GiftPackSheet({ onClose, onGo }) {
                     {g.art && <span className={g.motion ? 'hk-m-wave' : ''}><StickerArt id={g.art} size={54} /></span>}
                   </span>
                   <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: 'block', fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>{g.title}</span>
-                    <span className="t-sub" style={{ display: 'block', fontSize: 14.5, marginTop: 2 }}>{g.where}</span>
+                    <span style={{ display: 'block', fontSize: 16.5, fontWeight: 800, color: 'var(--text)' }}>{g.title}</span>
+                    <span className="t-sub" style={{ display: 'block', fontSize: 15.5, marginTop: 2 }}>{g.where}</span>
                   </span>
-                  <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 19, flex: '0 0 auto' }}>›</span>
+                  <span aria-hidden style={{ color: 'var(--text-sub)', fontSize: 20, flex: '0 0 auto' }}>›</span>
                 </button>
               ))}
             </div>
