@@ -181,17 +181,23 @@ if (await 탭(p, '일기')) await 찍자(p, '26-일기-채운달력', '한끼 �
 //    ⭐ 소개글이 «한 줄도» 안 걸리게 — 첫 제품 카드가 화면 «위쪽»에 올 때까지 굴린다.
 await 홈으로(p)
 if (await 탭(p, '장보기')) {
-  for (let n = 0; n < 10; n++) {
+  // 📮 창업자 = *"설명부분 «아예» 빼고 아이템이랑 사러가기만 보이게"*
+  //    → 소개글(「추천 아이템 · 계속 올라와요」·「외부 쇼핑몰로 이어져요…」)이 **화면에서 완전히 사라질 때까지** 굴린다.
+  //    ⛔ 「첫 사러가기가 위쪽에 오면」으로는 부족했다 — 소개글이 여전히 맨 위에 한두 줄 남았다(실측).
+  for (let n = 0; n < 14; n++) {
     const 됐나 = await p.evaluate(() => {
+      const 소개 = [...document.querySelectorAll('div,p,span')]
+        .filter((e) => /제휴 수수료|계속 올라와요/.test(e.innerText || '') && e.innerText.length < 120)
+      const 남았나 = 소개.some((e) => { const r = e.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight })
+      if (남았나) return false
       const 사 = [...document.querySelectorAll('button,a')].filter((e) => /사러가기/.test(e.innerText || ''))
-      if (사.length < 2) return false
-      const r = 사[0].getBoundingClientRect()
-      // 첫 「사러가기」가 화면 위쪽 절반에 오면 소개글은 이미 다 지나간 것이다
-      return r.top > 100 && r.top < innerHeight * 0.5
+      return 사.some((e) => { const r = e.getBoundingClientRect(); return r.top > 80 && r.bottom < innerHeight - 80 })
     })
     if (됐나) break
     await 굴리기(p, 240)
   }
+  // ⛔ 멈춘 자리에 «칩 줄»이 반쯤 잘려 남는다(실측) — 한 칸 더 굴려 깨끗한 자리로
+  await 굴리기(p, 150)
   await 찍자(p, '27-장보기-사러가기', '장보기 — 담기·사러가기가 보이는 자리')
 }
 
