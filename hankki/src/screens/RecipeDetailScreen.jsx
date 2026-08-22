@@ -600,7 +600,7 @@ export default function RecipeDetailScreen({ id }) {
                      이 줄은 좁다(그림 30 ＋ 이름 ＋ 사러가기). 딱지가 둘이면 이름과 뒤엉킨다. */}
                   <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{p.brand ? p.brand + ' ' + p.name : p.name}</span>
                   {mallBadge(p) && (
-                    <span style={{ marginLeft: 6, fontSize: 16, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{mallBadge(p)}</span>
+                    <span style={{ marginLeft: 6, fontSize: 16, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{String(mallBadge(p)).replace(' · 조합원 전용', ' 전용')}</span>
                   )}
                 </div>
                 {/* ⛔ 한살림은 사러가기를 안 그린다 (창업자 2026-08-17 *"링크안달면되고"*) */}
