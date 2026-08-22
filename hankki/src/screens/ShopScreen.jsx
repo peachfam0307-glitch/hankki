@@ -535,7 +535,7 @@ function Curation() {
           ⛔ 이 줄을 지우지 말 것. 지우면 `scripts/check-affiliate.mjs` 가 배포를 막는다(제휴 링크가 있을 때).
           ⚠️ 제휴를 «시작하면» 이 문장을 사실에 맞게 고쳐야 한다 — 「받지 않아요」가 그대로면 거짓이 된다. */}
       <div className="t-sub" style={{ fontSize: 16.5, marginTop: -2, marginBottom: 8, lineHeight: 1.5 }}>
-        ‘사러가기’는 외부 쇼핑몰로 이어져요 · 나중에 <b style={{ color: 'var(--brown)' }}>제휴가 연결되면 한끼가 수수료를 받아요</b> · 사는 값은 늘 정가 그대로예요
+        외부 쇼핑몰로 이어져요 · <b style={{ color: 'var(--brown)' }}>제휴 수수료를 받아도</b> 값은 그대로
       </div>
 
       {open && (
