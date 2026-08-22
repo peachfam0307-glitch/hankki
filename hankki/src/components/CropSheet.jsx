@@ -23,6 +23,13 @@ export default function CropSheet({
   onDone,
   onSkip,
   onCancel,
+  // 🏷 확인 단추 글자 — 기본은 «글자 읽기»(OCR)용이다.
+  //    ⛔ 사진을 자를 땐 「읽기」가 틀린 말이다 — 그 사진은 읽는 게 아니라 «담는» 것이다.
+  //       (2026-08-21 완성 사진을 붙이며 드러났다)
+  //    ✅ 창업자 확정 2026-08-21 = *"일기도 담기로 바꾸고"* → 일기 사진(`DiaryEntrySheet`)도 「담기」다.
+  //       ⛓ 같은 기능은 탭이 달라도 같은 이름 — 사진을 자르는 자리는 «전부» 「담기」로 간다.
+  //    ⚠️ 기본값은 여전히 「읽기」다 — 그게 «글자 읽기»(OCR) 자리의 말이라서다. ⛔바꾸지 말 것.
+  doneLabel = '이 부분만 읽기',
   // ⏳⏳ **[2026-08-16] 「앞 장은 지금 읽고 있어요」** — 창업자 *"사진2장스캔은 기다리다 끌 수 있으니
   //   스캔중이다라는 안내가 필요해."*
   //   ⭐⭐ **이건 내가 오늘 만든 구멍이다.** 자르기와 읽기를 떼어놓으면서
@@ -34,7 +41,7 @@ export default function CropSheet({
   hint = (
     <>
       광고·사진은 빼고 <b style={{ color: '#fff' }}>재료·만드는 법 글자만</b> 남도록 모서리를 끌어 잘라주세요.<br />
-      <span style={{ color: '#d8d4cc', fontSize: 12 }}>밝고 반듯하게 · 딱 맞게 자를수록 정확해요 · 읽은 건 초안이라 사진 보며 다듬으면 돼요</span>
+      <span style={{ color: '#d8d4cc', fontSize: 15 }}>밝고 반듯하게 · 딱 맞게 자를수록 정확해요 · 읽은 건 초안이라 사진 보며 다듬으면 돼요</span>
     </>
   ),
 }) {
@@ -186,14 +193,14 @@ export default function CropSheet({
         부모 시트가 닫히지 않게 한다 — 일지 사진 추가가 조용히 취소되던 버그 방지 */}
     <div onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(20,19,17,0.96)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '14px 18px calc(6px)', paddingTop: 'calc(14px + var(--safe-top, 0px))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <button className="press" onClick={once(onCancel)} style={{ color: '#d8d5cf', fontSize: 14, fontWeight: 600 }}>취소</button>
-        <div style={{ color: '#fff', fontSize: 14.5, fontWeight: 700 }}>
+        <button className="press" onClick={once(onCancel)} style={{ color: '#d8d5cf', fontSize: 16, fontWeight: 600 }}>취소</button>
+        <div style={{ color: '#fff', fontSize: 16.5, fontWeight: 700 }}>
           {title}{total > 1 ? ` · ${index + 1}/${total}장` : ''}
         </div>
         <div style={{ width: 40 }} />
       </div>
       {/* 안내는 한 곳(위)에만 — 예전엔 위·아래로 쪼개져 이미지 사이에 끼어 한눈에 안 들어왔다. */}
-      <div style={{ margin: '2px 16px 10px', padding: '10px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.13)', color: '#f4f1eb', fontSize: 13, textAlign: 'center', lineHeight: 1.6 }}>
+      <div style={{ margin: '2px 16px 10px', padding: '10px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.13)', color: '#f4f1eb', fontSize: 16, textAlign: 'center', lineHeight: 1.6 }}>
         {hint}
       </div>
 
@@ -201,7 +208,7 @@ export default function CropSheet({
           ⭐ 막대까지 같이 둔다 — 글자만 있으면 「멈춘 것」인지 「도는 것」인지 구별이 안 된다. */}
       {reading && (
         <div style={{ margin: '0 16px 10px', padding: '9px 13px', borderRadius: 12, background: 'rgba(255,255,255,0.10)', color: '#f4f1eb' }}>
-          <div style={{ fontSize: 12.5, fontWeight: 700, lineHeight: 1.45 }}>
+          <div style={{ fontSize: 15.5, fontWeight: 700, lineHeight: 1.45 }}>
             {reading.total > 1 ? `${reading.total}장 중 ${reading.page}장째 읽는 중이에요` : '사진에서 글자 읽는 중이에요'}
             <span style={{ color: '#cfcac1', fontWeight: 600 }}> · 자르는 동안 같이 읽고 있어요</span>
           </div>
@@ -251,11 +258,11 @@ export default function CropSheet({
       </div>
 
       <div style={{ display: 'flex', gap: 10, padding: '10px 16px calc(16px + var(--safe-bottom, 0px))' }}>
-        <button className="press" onClick={once(onSkip)} style={{ flex: 1, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.12)', color: '#f0ede7', fontSize: 14.5, fontWeight: 600 }}>
+        <button className="press" onClick={once(onSkip)} style={{ flex: 1, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.12)', color: '#f0ede7', fontSize: 16.5, fontWeight: 600 }}>
           전체 사용
         </button>
-        <button className="press" onClick={confirm} style={{ flex: 1.6, padding: 14, borderRadius: 14, background: 'var(--brown)', color: '#fff', fontSize: 14.5, fontWeight: 700 }}>
-          이 부분만 읽기
+        <button className="press" onClick={confirm} style={{ flex: 1.6, padding: 14, borderRadius: 14, background: 'var(--brown)', color: '#fff', fontSize: 16.5, fontWeight: 700 }}>
+          {doneLabel}
         </button>
       </div>
     </div>

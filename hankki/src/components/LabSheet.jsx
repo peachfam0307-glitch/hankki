@@ -53,7 +53,7 @@ export default function LabSheet({ onClose }) {
         >
           <div className="emoji-sheet-head">
             <span>한끼연구소</span>
-            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
           </div>
 
           <div style={{ overflowY: 'auto', padding: '2px 16px 0' }}>
@@ -64,7 +64,7 @@ export default function LabSheet({ onClose }) {
                 width={62} height={62}
                 style={{ width: 62, height: 62, objectFit: 'contain', flex: '0 0 auto' }}
               />
-              <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.65 }}>
+              <div className="t-sub" style={{ fontSize: 16.5, lineHeight: 1.65 }}>
                 한끼는 아직 만들어지는 중이에요.<br />
                 보내주신 건 하나도 안 빼고 읽어요.
               </div>
@@ -79,18 +79,18 @@ export default function LabSheet({ onClose }) {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                   <Icon name={r.icon} size={19} color="var(--brown)" stroke={1.8} />
-                  <div style={{ flex: 1, fontSize: 14.5, fontWeight: 700, color: 'var(--text)' }}>{r.title}</div>
+                  <div style={{ flex: 1, fontSize: 16.5, fontWeight: 700, color: 'var(--text)' }}>{r.title}</div>
                   {r.badge && <span className="badge badge-sorted">{r.badge}</span>}
                   <Icon name="chevron-right" size={17} color="var(--sand)" />
                 </div>
-                <div className="t-sub" style={{ fontSize: 12.6, lineHeight: 1.5, marginTop: 5, paddingLeft: 28 }}>{r.desc}</div>
+                <div className="t-sub" style={{ fontSize: 15.6, lineHeight: 1.5, marginTop: 5, paddingLeft: 28 }}>{r.desc}</div>
                 {/* 설문은 뭘 묻는지 미리 보여준다 — 모르고 들어가면 안 누른다 */}
                 {r.chips && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8, paddingLeft: 28 }}>
                     {r.chips.map((c) => (
                       <span
                         key={c}
-                        style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-sub)', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 999, padding: '3px 9px' }}
+                        style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-sub)', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 999, padding: '3px 9px' }}
                       >
                         {c}
                       </span>
@@ -101,8 +101,8 @@ export default function LabSheet({ onClose }) {
             ))}
 
             {/* 고친 것 — 말하면 진짜 고쳐진다는 증거. 서버 없이 코드로만 쌓인다. */}
-            <div className="h-section" style={{ fontSize: 14, margin: '18px 0 4px' }}>이렇게 고쳐가고 있어요</div>
-            <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 9 }}>
+            <div className="h-section" style={{ fontSize: 16, margin: '18px 0 4px' }}>이렇게 고쳐가고 있어요</div>
+            <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.5, marginBottom: 9 }}>
               알려주신 게 있으면 여기에 하나씩 쌓아요.
             </div>
             <div className="card" style={{ padding: '4px 14px', background: 'var(--cream)', border: 'none' }}>
@@ -112,7 +112,7 @@ export default function LabSheet({ onClose }) {
                   style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '10px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}
                 >
                   <Icon name="check" size={15} color="var(--brown)" stroke={2.1} />
-                  <span className="t-sub" style={{ fontSize: 12.8, lineHeight: 1.5, flex: 1 }}>{t}</span>
+                  <span className="t-sub" style={{ fontSize: 15.8, lineHeight: 1.5, flex: 1 }}>{t}</span>
                 </div>
               ))}
             </div>

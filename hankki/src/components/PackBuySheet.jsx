@@ -61,14 +61,14 @@ export default function PackBuySheet({ pack, onClose, onBought }) {
         <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 'calc(20px + var(--safe-bottom))' }}>
           <div className="emoji-sheet-head">
             <span>{pack.label} 꾸미기 팩</span>
-            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
           </div>
 
           <div style={{ padding: '4px 16px 0' }}>
-            <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 3 }}>
+            <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 3 }}>
               {pack.items.length}컷이 한 번에 열려요
             </div>
-            <div style={{ fontSize: 12.5, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 9 }}>
+            <div style={{ fontSize: 15.5, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 9 }}>
               {pack.split.map((s) => `${s.kind} ${s.n}`).join(' · ')}
             </div>
 
@@ -88,12 +88,12 @@ export default function PackBuySheet({ pack, onClose, onBought }) {
               ))}
             </div>
 
-            <div style={{ fontSize: 12.5, color: 'var(--text-sub)', lineHeight: 1.6, marginBottom: 11 }}>
+            <div style={{ fontSize: 15.5, color: 'var(--text-sub)', lineHeight: 1.6, marginBottom: 11 }}>
               한 번 사면 계속 쓸 수 있어요. 폰을 바꿔도 같은 구글 계정이면 그대로 있어요.
             </div>
 
             {msg && (
-              <div style={{ background: '#f6ece4', color: '#7a4a2c', fontSize: 12.5, fontWeight: 600, lineHeight: 1.55, borderRadius: 11, padding: '10px 12px', marginBottom: 10 }}>
+              <div style={{ background: '#f6ece4', color: '#7a4a2c', fontSize: 15.5, fontWeight: 600, lineHeight: 1.55, borderRadius: 11, padding: '10px 12px', marginBottom: 10 }}>
                 {msg}
               </div>
             )}
@@ -104,7 +104,7 @@ export default function PackBuySheet({ pack, onClose, onBought }) {
               disabled={busy}
               style={{
                 width: '100%', padding: '13px 12px', borderRadius: 14, border: 'none',
-                background: busy ? '#cbb39f' : '#b5714a', color: '#fff', fontSize: 15, fontWeight: 800,
+                background: busy ? '#cbb39f' : '#b5714a', color: '#fff', fontSize: 17, fontWeight: 800,
                 letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
               }}
             >

@@ -69,7 +69,7 @@ function buyUrlFor(item, shops) {
 }
 
 // 섹션 헤더의 '편집 / 접기·펼치기' 버튼 — 손가락으로 누르기 쉽게 살짝 키운 알약 버튼.
-const secBtnStyle = { fontSize: 13.5, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream)', padding: '7px 14px', borderRadius: 999 }
+const secBtnStyle = { fontSize: 16.5, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream)', padding: '7px 14px', borderRadius: 999 }
 
 export default function ShopScreen() {
   const store = useStore()
@@ -176,7 +176,7 @@ export default function ShopScreen() {
                   onBlur={() => { store.updateShopItem(it.id, 편집.text); set편집(null) }}
                   onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') set편집(null) }}
                   style={{
-                    flex: 1, minWidth: 0, fontSize: 15, fontFamily: 'inherit', color: 'var(--text)',
+                    flex: 1, minWidth: 0, fontSize: 17, fontFamily: 'inherit', color: 'var(--text)',
                     background: 'var(--cream)', border: '1.5px solid var(--brown)', borderRadius: 9,
                     padding: '5px 9px', outline: 'none',
                   }}
@@ -187,7 +187,7 @@ export default function ShopScreen() {
                   onClick={() => set편집({ id: it.id, text: it.name })}
                   aria-label={`${it.name} 고치기`}
                   style={{
-                    flex: 1, minWidth: 0, textAlign: 'left', fontSize: 15, fontFamily: 'inherit',
+                    flex: 1, minWidth: 0, textAlign: 'left', fontSize: 17, fontFamily: 'inherit',
                     background: 'none', border: 'none', padding: '5px 0', cursor: 'pointer',
                     textDecoration: it.done ? 'line-through' : 'none',
                     color: it.done ? 'var(--text-sub)' : 'var(--text)',
@@ -213,7 +213,7 @@ export default function ShopScreen() {
         {/* 💡 **고칠 수 있다는 걸 알려준다** — 누를 수 있어도 «누를 수 있는 줄 모르면» 없는 기능이다.
               ⭐ 예를 «창업자가 말한 그대로» 적는다 — *"양파 1망 돼지고기 600g은 맞지."* */}
         {shoppingList.length > 0 && (
-          <div className="t-sub" style={{ fontSize: 11.5, marginTop: 9, lineHeight: 1.55 }}>
+          <div className="t-sub" style={{ fontSize: 16.5, marginTop: 18, lineHeight: 1.85 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
           </div>
         )}
@@ -273,7 +273,7 @@ export default function ShopScreen() {
             <span className="nm">추가</span>
           </button>
         </div>
-        <div className="t-sub" style={{ fontSize: 12, marginTop: 6 }}>
+        <div className="t-sub" style={{ fontSize: 15, marginTop: 6 }}>
           {editShops ? '아이콘을 눌러 이름·주소·아이콘을 바꿀 수 있어요.' : '쇼핑몰 앱이 깔려 있고 로그인돼 있으면 바로 연결돼요. 한 번 로그인해두면 계속 유지돼 편해요.'}
         </div>
         {/* 🌱 생협 안내 — **긴 안내문을 뺐다.** 창업자 2026-08-03 *"너무 복잡한가..."*
@@ -425,8 +425,11 @@ function Curation() {
     if (u.includes('smartstore.naver')) return '네이버'
     return ''
   }
-  const tagStyle = { fontSize: 11, fontWeight: 700, color: '#8a6a3e', background: 'var(--cream)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
-  const mallStyle = { fontSize: 11, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream-deep)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
+  // 🏷 [2026-08-22 창업자] *"브랜드 딱지는 따로 달자 · 제목에서 빼고"* — 셋을 색으로 가른다:
+  //    브랜드(회색) · 분류tag(모래) · 쇼핑몰mall(크림). ⛔같은 색이면 무엇을 말하는 딱지인지 모른다.
+  const brandStyle = { fontSize: 15.5, fontWeight: 700, color: 'var(--text-sub)', background: 'var(--line)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
+  const tagStyle = { fontSize: 16, fontWeight: 700, color: '#8a6a3e', background: 'var(--cream)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
+  const mallStyle = { fontSize: 16, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream-deep)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
   // 🔴 「조합원만」은 **확 튀게** — 창업자 2026-08-03 *"색깔 확튀게 올려줘."*
   //   다른 배지(구매처)는 그냥 «어디서 사나»인데 이건 **못 살 수도 있다는 주의**라 무게가 다르다.
   //   ⚠️ 우리 톤은 뮤트라 형광색은 안 쓴다 → **진한 테라코타에 흰 글씨**(채운 배지)로 대비를 준다.
@@ -441,16 +444,24 @@ function Curation() {
     // 🔢 `cur-card`·`cur-buy` = 패드에서 폭을 잡으려고 붙인 이름(창업자 2026-08-13
     //    *"담기 사러가기버튼이 너무 크고, 제품설명은 다 왼쪽에 쏠려있어"*). 스타일은 styles.css 에.
     <div key={it.name} className="card cur-card" style={{ padding: '13px 13px 12px', marginBottom: 9 }}>
-      <div style={{ display: 'flex', gap: 11 }}>
-        <div className="emoji-tile" style={{ width: 46, height: 46, fontSize: 24, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain' }} /> : it.emoji}
+      {/* 🔠 [2026-08-22 창업자] *"아이콘이랑 제목을 같은 줄. 설명은 내려서 아이콘 아래로.
+          그럼 글자가 더 많이 보이잖아. 아이콘은 좀 더 키우고"*
+          ⭐ 설명이 아이콘 «옆」이 아니라 «아래»로 내려와 카드 폭을 다 쓴다 → 한 줄에 들어가는 글자가 늘어난다. */}
+      <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
+        <div className="emoji-tile" style={{ width: 58, height: 58, fontSize: 31, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 53, height: 53, objectFit: 'contain' }} /> : it.emoji}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
-            <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {it.brand && it.brand !== mallLabel(it) && <span style={brandStyle}>{it.brand}</span>}
+            <span style={{ fontSize: 21, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
             {it.tag && <span style={tagStyle}>{it.tag}</span>}
             {mallLabel(it) && <span style={mallStyleFor(mallLabel(it))}>{mallLabel(it)}</span>}
           </div>
+        </div>
+      </div>
+      {/* 📄 설명 — 아이콘 «아래», 카드 폭을 다 쓴다 */}
+      <div style={{ marginTop: 8 }}>
           {/* 📏 설명은 «첫 줄만» 보이고 누르면 펼쳐진다 — 창업자 2026-08-05
               *"지금 6-7개까지 아래로 쭉 늘어나는게 좀 불편하지 않을까"*
               ⛔ 자르지 «않는다». 39개를 재보니 **가장 짧은 설명도 41자**(가운데 74 · 최장 127)라
@@ -466,11 +477,11 @@ function Curation() {
               className="t-sub"
               style={{
                 display: openCard[it.name] ? 'block' : '-webkit-box',
-                WebkitLineClamp: openCard[it.name] ? 'none' : 1,
+                WebkitLineClamp: openCard[it.name] ? 'none' : 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
-                fontSize: 13,
-                lineHeight: 1.58,
+                fontSize: 19,
+                lineHeight: 1.75,
               }}
             >
               {it.benefit}
@@ -480,20 +491,19 @@ function Curation() {
                    접으려면 설명 글 자체를 다시 눌러야 하는데 그걸 알려주는 표시가 없었다.
                    → 「펼치기는 보이는데 접기가 안 보인다」가 정확히 이것이다.
                 ✅ 펼쳐도 «같은 자리에» 「접기」를 그린다 ＋ 화살표를 붙여 눌리는 곳임을 보인다. */}
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brown)', display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--brown)', display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
               {openCard[it.name] ? '접기' : '더보기'}
               <Icon name={openCard[it.name] ? 'chevron-up' : 'chevron-down'} size={12} />
             </span>
           </button>
-        </div>
       </div>
       <div className="cur-buy" style={{ display: 'flex', gap: 8, marginTop: 11 }}>
-        <button className="press" onClick={() => add(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 13.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Icon name="cart" size={14} />담기</button>
+        <button className="press" onClick={() => add(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 16.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Icon name="cart" size={14} />담기</button>
         {/* ⛔ 한살림은 「사러가기」를 안 그린다 (창업자 2026-08-17). 대신 «왜 없는지»를 그 자리에 적는다 —
             버튼만 사라지면 「고장인가?」가 되고, 배지는 카드 위쪽이라 여기까지 안 따라온다. */}
         {linkFor(it)
-          ? <button className="press" onClick={() => buy(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 13.5 }}>사러가기</button>
-          : <div style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 700, fontSize: 12, textAlign: 'center', lineHeight: 1.3 }}>매장에서 만나요<br /><span style={{ fontSize: 10.5 }}>온라인은 조합원만</span></div>}
+          ? <button className="press" onClick={() => buy(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 16.5 }}>사러가기</button>
+          : <div style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 700, fontSize: 15, textAlign: 'center', lineHeight: 1.3 }}>매장에서 만나요<br /><span style={{ fontSize: 15 }}>온라인은 조합원만</span></div>}
       </div>
     </div>
   )
@@ -508,14 +518,14 @@ function Curation() {
   return (
     <>
       <div className="sec-head" style={{ marginTop: 6 }}>
-        <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><img src={uiGomShop} alt="" draggable={false} style={{ width: 24, height: 24, objectFit: 'contain', flex: '0 0 auto' }} />주부의 장바구니</div>
+        <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><img src={uiGomShop} alt="" draggable={false} style={{ width: 28, height: 28, objectFit: 'contain', flex: '0 0 auto' }} />주부의 장바구니</div>
         <button className="press" style={secBtnStyle} onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
       </div>
       {/* ⭐ 「계속 올라와요」를 여기로 올렸다 — 창업자 2026-08-03 *"주부의 장바구니옆에 계속 올라오다는
           문구 적어줘. (원래 지워지는 아래안내판에 있었음)"*. 아래 안내판을 빼면서 그 말만 살렸다.
           ⛔ 이 말은 지우지 말 것 — **재고가 계속 는다는 신호**라 다음에 또 들어올 이유가 된다. */}
-      <div className="t-sub" style={{ fontSize: 12, marginTop: -2, marginBottom: 6 }}>
-        써보고 좋은 건 꼭 나누는 18년차 주부의 · 첨가물 적은 건강 식재료 · <b style={{ color: 'var(--brown)' }}>앞으로도 하나씩 계속 올라와요</b>
+      <div className="t-sub" style={{ fontSize: 17.5, marginTop: 12, marginBottom: 14 }}>
+        써보고 좋은 건 나누고 싶은 <b style={{ color: 'var(--brown)' }}>18년차 주부의 추천 아이템</b> · 계속 올라와요
       </div>
       {/* 💰 제휴(대가성) 고지 — **박스를 빼고 한 줄로 줄였다** (2026-08-03, 창업자 지시 두 번)
           ⒜ *"아래위로 좀 지저분해보여"* → 크림 박스를 없앴다
@@ -524,8 +534,8 @@ function Curation() {
                 「안 받는다」가 아니라 **「말 안 하고 받는다」로 읽힌다.** 없는 게 오히려 의심을 산다.
           ⛔ 이 줄을 지우지 말 것. 지우면 `scripts/check-affiliate.mjs` 가 배포를 막는다(제휴 링크가 있을 때).
           ⚠️ 제휴를 «시작하면» 이 문장을 사실에 맞게 고쳐야 한다 — 「받지 않아요」가 그대로면 거짓이 된다. */}
-      <div className="t-sub" style={{ fontSize: 11, marginTop: -2, marginBottom: 8, lineHeight: 1.5 }}>
-        ‘사러가기’는 외부 쇼핑몰로 이어져요 · <b style={{ color: 'var(--brown)' }}>한끼는 수수료를 받지 않아요</b> (나중에 제휴가 생겨도 여러분은 늘 정가 그대로예요)
+      <div className="t-sub" style={{ fontSize: 17.5, marginTop: 12, marginBottom: 16, lineHeight: 1.85 }}>
+        외부 쇼핑몰로 이어져요 · <b style={{ color: 'var(--brown)' }}>제휴 수수료를 받아도</b> 값은 그대로예요
       </div>
 
       {open && (
@@ -544,7 +554,7 @@ function Curation() {
           {/* 카테고리 칩 — 기본은 '이번 주 픽', 필요한 카테고리만 펼쳐 본다 (찾는 중엔 감춘다)
               🔢 `cur-chips` = 패드에서 «줄바꿈»으로 바꾸려고 붙인 이름 (창업자 2026-08-13 *"장보기 잘림"*).
                  좌우 2단이 되면서 왼쪽 칸이 좁아져 마지막 칩이 반쯤 잘려 보였다. 스타일은 styles.css 에. */}
-          <div className="hscroll cur-chips" style={{ paddingBottom: 4, marginBottom: 4, display: curQuery ? 'none' : undefined }}>
+          <div className="hscroll cur-chips" style={{ marginTop: 16, paddingBottom: 4, marginBottom: 4, display: curQuery ? 'none' : undefined }}>
             {chip('pick', '이번 주 픽')}
             {chip('전체', '전체')}
             {groupList.map((c) => chip(c.name, (
@@ -560,7 +570,7 @@ function Curation() {
           {curQuery ? (
             found.length ? (
               <>
-                <div className="t-sub" style={{ fontSize: 12.5, margin: '0 2px 10px' }}>‘{curQuery}’ — {found.length}개</div>
+                <div className="t-sub" style={{ fontSize: 15.5, margin: '0 2px 10px' }}>‘{curQuery}’ — {found.length}개</div>
                 {found.map((it) => Card(it))}
               </>
             ) : (
@@ -573,8 +583,8 @@ function Curation() {
                     ⭐ 픽엔 원래 «소제목이 없어» 카드만 나열됐다 → 다른 갈래와 «같은 문법»으로 소제목 줄을 만들고 거기 붙인다.
                     ⛔ `gom_shop` 은 이 화면 헤더(「주부의 장바구니」)에 이미 있다 — 한 화면에 같은 곰이 두 번이면 어색하다.
                     ✅ `gom_thumbsup`(엄지척) = 「이번 주 픽 ＝ 내가 고른 추천」이라는 뜻이 그대로 읽힌다. */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '2px 2px 8px' }}>
-                  <img src={uiGomThumb} alt="" draggable={false} style={{ width: 26, height: 26, objectFit: 'contain' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 17, fontWeight: 800, color: 'var(--brown)', margin: '16px 2px 14px' }}>
+                  <img src={uiGomThumb} alt="" draggable={false} style={{ width: 30, height: 30, objectFit: 'contain' }} />
                   이번 주 픽
                 </div>
                 {picks.map((it) => Card(it))}
@@ -611,7 +621,7 @@ function Curation() {
                   <button
                     className="press"
                     onClick={() => setOpenG((s) => ({ ...s, [key]: !s[key] }))}
-                    style={{ width: '100%', padding: '9px 0', marginBottom: 4, borderRadius: 11, background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--brown)', fontWeight: 800, fontSize: 13 }}>
+                    style={{ width: '100%', padding: '9px 0', marginBottom: 4, borderRadius: 11, background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--brown)', fontWeight: 800, fontSize: 16 }}>
                     {openG[key] ? `${label} 접기` : `${label} ${n}개 더보기`}
                   </button>
                 )
@@ -622,7 +632,7 @@ function Curation() {
                       const items = whole || cOn ? g.items : g.items.slice(0, FOLD)
                       return (
                         <div key={g.cat}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', margin: '12px 2px 7px' }}>
                             {curIcon(g.icon) ? <img src={curIcon(g.icon)} alt="" draggable={false} style={{ width: 22, height: 22, objectFit: 'contain' }} /> : <span>{g.emoji}</span>}
                             {g.cat}
                           </div>
@@ -700,16 +710,16 @@ function ShopEdit({ shop, onClose }) {
         </div>
       </div>
       <div className="segment" style={{ margin: '0 0 10px' }}>
-        <button type="button" className={`seg ${f.iconType === 'icon' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setF((p) => ({ ...p, iconType: 'icon' }))}>아이콘</button>
-        <button type="button" className={`seg ${f.iconType === 'emoji' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setF((p) => ({ ...p, iconType: 'emoji' }))}>이모지</button>
-        <button type="button" className={`seg ${f.iconType === 'label' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setF((p) => ({ ...p, iconType: 'label' }))}>글자</button>
+        <button type="button" className={`seg ${f.iconType === 'icon' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 15.5 }} onClick={() => setF((p) => ({ ...p, iconType: 'icon' }))}>아이콘</button>
+        <button type="button" className={`seg ${f.iconType === 'emoji' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 15.5 }} onClick={() => setF((p) => ({ ...p, iconType: 'emoji' }))}>이모지</button>
+        <button type="button" className={`seg ${f.iconType === 'label' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 15.5 }} onClick={() => setF((p) => ({ ...p, iconType: 'label' }))}>글자</button>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         {!isNew && (
-          <button className="press" onClick={() => { store.removeShop(shop.id); onClose() }} style={{ padding: '11px 14px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 14 }}>삭제</button>
+          <button className="press" onClick={() => { store.removeShop(shop.id); onClose() }} style={{ padding: '11px 14px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 16 }}>삭제</button>
         )}
-        <button className="press" onClick={onClose} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>취소</button>
-        <button className="press" onClick={save} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 600, fontSize: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Icon name="check" size={14} />{isNew ? '추가' : '저장'}</button>
+        <button className="press" onClick={onClose} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 16 }}>취소</button>
+        <button className="press" onClick={save} style={{ flex: 1, padding: 11, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 600, fontSize: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Icon name="check" size={14} />{isNew ? '추가' : '저장'}</button>
       </div>
     </div>
   )

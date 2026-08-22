@@ -30,16 +30,16 @@ export default function SendNowSheet({ pending, onClose }) {
         style={{ position: 'fixed', inset: 0, zIndex: 320, background: 'rgba(30,26,22,.62)', backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24 }}
       >
         <img src={uiDuoHi} alt="" draggable={false} style={{ width: 64, height: 64, objectFit: 'contain' }} />
-        <div style={{ color: '#fff', fontSize: 16.5, fontWeight: 800 }}>표지가 다 됐어요</div>
-        <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, textAlign: 'center', lineHeight: 1.55 }}>
+        <div style={{ color: '#fff', fontSize: 18.5, fontWeight: 800 }}>표지가 다 됐어요</div>
+        <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 15.5, textAlign: 'center', lineHeight: 1.55 }}>
           그리는 데 시간이 걸려서 한 번 더 눌러야 해요.<br />아래를 누르면 바로 보내집니다.
         </div>
         <button className="press" onClick={send}
-          style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, padding: '15px 34px', borderRadius: 999, background: '#fffdf8', color: '#5d3410', fontWeight: 800, fontSize: 16, border: 'none' }}>
+          style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, padding: '15px 34px', borderRadius: 999, background: '#fffdf8', color: '#5d3410', fontWeight: 800, fontSize: 18, border: 'none' }}>
           <Icon name="share" size={18} stroke={2.2} />지금 보내기
         </button>
         <button className="press" onClick={() => { saveShareFiles(pending.files); onClose() }}
-          style={{ padding: '9px 18px', background: 'transparent', color: 'rgba(255,255,255,.85)', fontSize: 13.5, fontWeight: 700, border: 'none' }}>
+          style={{ padding: '9px 18px', background: 'transparent', color: 'rgba(255,255,255,.85)', fontSize: 16.5, fontWeight: 700, border: 'none' }}>
           사진으로 저장할게요
         </button>
       </div>

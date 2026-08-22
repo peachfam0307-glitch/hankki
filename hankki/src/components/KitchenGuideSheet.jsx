@@ -12,32 +12,32 @@ export default function KitchenGuideSheet({ onClose }) {
         <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 24, maxHeight: '86vh', display: 'flex', flexDirection: 'column' }}>
           <div className="emoji-sheet-head">
             <span>요리 가이드</span>
-            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
           </div>
           <div style={{ overflowY: 'auto', padding: '2px 16px 0' }}>
             {/* 계량 지표 */}
-            <div className="h-section" style={{ fontSize: 14, margin: '6px 0 8px' }}>계량 지표</div>
+            <div className="h-section" style={{ fontSize: 16, margin: '6px 0 8px' }}>계량 지표</div>
             <div className="card" style={{ padding: '4px 14px', background: 'var(--cream)', border: 'none', marginBottom: 20 }}>
               {MEASURE.map(([k, v], i) => (
                 <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
-                  <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)' }}>{k}</span>
-                  <span style={{ fontSize: 13.5, color: 'var(--text-sub)', textAlign: 'right' }}>{v}</span>
+                  <span style={{ fontSize: 16.5, fontWeight: 700, color: 'var(--text)' }}>{k}</span>
+                  <span style={{ fontSize: 16.5, color: 'var(--text-sub)', textAlign: 'right' }}>{v}</span>
                 </div>
               ))}
             </div>
 
             {/* 재료 손질법 */}
-            <div className="h-section" style={{ fontSize: 14, margin: '6px 0 4px' }}>재료 손질법</div>
-            <div className="t-sub" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 10 }}>
+            <div className="h-section" style={{ fontSize: 16, margin: '6px 0 4px' }}>재료 손질법</div>
+            <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.5, marginBottom: 10 }}>
               초보가 자주 막히는 것부터. 계속 더 올라와요.
             </div>
             {PREP.map((g) => (
               <div key={g.cat} style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--brown)', margin: '4px 2px 7px' }}>{g.cat}</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--brown)', margin: '4px 2px 7px' }}>{g.cat}</div>
                 {g.items.map((it) => (
                   <div key={it.name} className="card" style={{ padding: '11px 13px', marginBottom: 7 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)', marginBottom: 3 }}>{it.name}</div>
-                    <div className="t-sub" style={{ fontSize: 12.8, lineHeight: 1.55 }}>{it.tip}</div>
+                    <div style={{ fontSize: 16.5, fontWeight: 800, color: 'var(--text)', marginBottom: 3 }}>{it.name}</div>
+                    <div className="t-sub" style={{ fontSize: 15.8, lineHeight: 1.55 }}>{it.tip}</div>
                   </div>
                 ))}
               </div>

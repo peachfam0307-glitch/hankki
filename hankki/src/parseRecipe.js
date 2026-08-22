@@ -33,6 +33,50 @@ export function mergeQtyOnlyIngredients(list) {
 }
 
 const STEP = /^(\d{1,2}\s*[.)]|[①-⑳❶-❿]|step\s*\d+|스텝\s*\d+|순서\s*\d+)/i
+
+// 🔢🔢 [2026-08-21] 「점 없는 번호」도 걸음 번호로 읽는다 — 창업자 폰 캡처가 잡은 것
+//
+// 📮 창업자 캡처(순살찜닭 · 자기가 담은 레시피) —
+//    STEP 1 = 「닭다리살은 씻지 않고 끓는물에 10분 데친 뒤」  ← 문장이 «중간»에서 끝났다
+//    STEP 4 = 「**3** 10분 뒤 불린 당면, 떡, 대파를 …」       ← 번호가 «글자로» 남았다
+//
+// ⭐⭐ **증상 둘이 «한 뿌리»다.** 위 `STEP` 은 번호 뒤에 «점이나 괄호»를 요구한다(`1.` `1)`).
+//    그런데 사람들은 점 없이 **「1 」「2 」「3 」** 으로도 쓴다. 그러면 파서 눈엔 번호가 아니라 그냥 글자라
+//    ⑴ 번호가 본문에 그대로 남고
+//    ⑵ 그 줄이 «새 걸음의 시작»으로 안 읽혀 **앞 걸음이 다음 걸음을 통째로 삼킨다**(4걸음 → 3걸음).
+//
+// ⛔⛔ **「숫자로 시작하면 무조건 번호」로 하면 «더» 나빠진다** — 「3 큰술 넣어요」·「2 인분 기준」이 잘려나간다.
+// ✅ 그래서 잣대 = **「숫자가 1, 2, 3… 으로 «이어질» 때만」.** 사람이 읽는 방식 그대로다.
+//    · 이어진 줄이 **둘 이상**이라야 한다 (혼자 있는 「3 큰술」은 못 걸린다)
+//    · 뒤가 «단위»면 아예 후보에서 뺀다 (`UNIT_AFTER` — 큰술·컵·개…)
+//    · 뒤가 «인분/인 기준»이면 뺀다
+// ⭐ 하는 일은 **점을 찍어 주는 것뿐**이다(`1 ` → `1. `). 그 뒤는 기존 코드가 다 알아서 한다 —
+//    `WRAP_NEWITEM` 이 새 항목으로 알아보니 ⑵도 같이 풀린다. **고친 자리가 한 곳이라 곁가지가 없다.**
+const BARE_NUM = /^\s*(\d{1,2})\s+(\S.*)$/
+const NOT_BULLET_AFTER = /^(?:인분|인\s|인$|人分|기준)/
+function markBareNumberSteps(lines) {
+  const 후보 = []
+  lines.forEach((l, i) => {
+    if (STEP.test(l)) return // 이미 「1.」 꼴이면 손댈 것 없다
+    const m = BARE_NUM.exec(l)
+    if (!m) return
+    const 뒤 = m[2]
+    if (UNIT_AFTER.test(뒤) || NOT_BULLET_AFTER.test(뒤)) return // 「3 큰술」·「2 인분」
+    후보.push({ i, n: Number(m[1]), 앞: m[1], 뒤 })
+  })
+  // 번호가 «이어지는» 토막을 찾는다 (1,2,3… / 2,3,4…). 둘 이상이라야 번호로 인정한다.
+  const 찍을것 = new Set()
+  let 시작 = 0
+  for (let k = 1; k <= 후보.length; k++) {
+    const 끊김 = k === 후보.length || 후보[k].n !== 후보[k - 1].n + 1
+    if (!끊김) continue
+    if (k - 시작 >= 2) for (let j = 시작; j < k; j++) 찍을것.add(후보[j].i)
+    시작 = k
+  }
+  if (!찍을것.size) return lines
+  const 표 = new Map(후보.map((c) => [c.i, c]))
+  return lines.map((l, i) => (찍을것.has(i) ? `${표.get(i).앞}. ${표.get(i).뒤}` : l))
+}
 const NOISE =
   /^(ingredients?\s*[:：]?$|recipe\b|요리\b|tip\b|instagram|youtube|www\.|https?:|좋아요|댓글|팔로우|공유|저장|더\s?보기|답글)/i
 // 줄 어디에 있어도 잡음인 것 — SNS UI 텍스트(댓글 입력창 등)
@@ -282,6 +326,23 @@ function mergeWrappedLines(lines) {
   return out
 }
 
+// 📥📥 [2026-08-22 · 창업자 확정] **담을 때 «원문»도 같이 저장한다.**
+//   📮 창업자 = *"네가 고쳐도 나한테 반영이 안되니까.."* → 판정 = **「다시 담기 ＋ 앞으로는 원문도 저장」**
+//   ⭐⭐ 왜 = 파서를 고쳐도 **이미 저장된 레시피는 안 고쳐진다**(규칙 18 ⓙ).
+//      뿌리는 「마이그레이션이 없어서」가 아니라 **«다시 읽을 원문이 어디에도 안 남아서»** 다.
+//      순살찜닭 캡처가 그랬다 — 번호가 본문에 남고 4걸음이 3걸음이 됐는데, 되돌릴 재료가 0이었다.
+//   ⛔ 이건 «오늘부터 담는 것»에만 붙는다 — 하루 늦으면 그 하루치는 영영 못 고친다.
+//   ⛔ 통째로 담지 않는다 — `localStorage` 는 좁고(가득 차면 저장이 «통째로» 막힌다 · `store.jsx:698`)
+//      사진(`image`)까지 든 레코드에 긴 글이 더 붙는다. 그래서 상한을 둔다.
+//   ⚠️ 상한을 넘으면 **아예 안 담는다**(자르지 않는다) — 잘린 원문으로 다시 읽으면
+//      뒷부분 걸음이 통째로 사라진 «더 나쁜» 결과가 나온다. 없는 편이 낫다.
+export const RAW_MAX = 4000
+export function keepRaw(text) {
+  const t = String(text || '').trim()
+  if (!t || t.length > RAW_MAX) return null
+  return t
+}
+
 export function parseRecipeText(raw = '', opts = {}) {
   const { fromOcr = false } = opts
   const text = normalizeNumerals(String(raw))
@@ -290,7 +351,9 @@ export function parseRecipeText(raw = '', opts = {}) {
     .trim()
 
   // ⭐ 줄바꿈으로 잘린 문장을 먼저 합친다(인스타 캡션은 한 문장이 여러 줄로 잘림) → 분류 정확도↑
-  const rawLines = mergeWrappedLines(text.split('\n'))
+  // ⭐ 「점 없는 번호」에 점을 먼저 찍는다 — «합치기보다 «먼저»» 라야 한다.
+  //    안 그러면 「…데친 뒤」 가 「2 감자…」 를 꼬리로 삼켜 걸음이 하나 사라진다(창업자 캡처 그것).
+  const rawLines = mergeWrappedLines(markBareNumberSteps(text.split('\n')))
 
   // 불릿(* · - 등)으로 시작하는 줄 = 목록 항목(대부분 재료). 지우기 전에 기억해 둔다.
   const items = []
@@ -333,7 +396,18 @@ export function parseRecipeText(raw = '', opts = {}) {
     !/\d{2,}$/.test(l) && // 숫자 꼬리로 끝나는 건 OCR 잡음("완성588") — 제목 아님
     !/완성|끝\s*$/.test(l) // 마지막 순서의 꼬리("…완성")도 제목이 아니다
 
-  const pushStep = (l) => { steps.push(STEP.test(l) ? l.replace(STEP, '').trim() : l); sawStep = true; lastWasBulletIng = false }
+  // 🔢 [2026-08-21] 「이 줄엔 번호가 붙어 있었다」를 기억해 둔다 — 번호를 떼면 그 사실이 사라진다.
+  //    ⛔ 안 기억하면 `mergeStepFragments` 가 «번호로 시작한 새 걸음»을 앞 걸음 꼬리로 삼킨다.
+  //       실측: 「…데친 뒤 깨끗이 씻어 냄비에 넣고」 + 「2. 감자, 당근, 양파는 큼직하게 잘라줘요」
+  //       → 뒤 줄이 17자(짧다) 라서 붙어 **4걸음이 2걸음**이 됐다.
+  //    ⭐ 사람이 번호를 매겼으면 그건 «여기서부터 새 걸음»이라는 뜻이다. 길이로 뒤집지 않는다.
+  const stepNumbered = []
+  const pushStep = (l) => {
+    const 번호붙음 = STEP.test(l)
+    steps.push(번호붙음 ? l.replace(STEP, '').trim() : l)
+    stepNumbered.push(번호붙음)
+    sawStep = true; lastWasBulletIng = false
+  }
   const pushIng = (l, bullet) => { ingredients.push(l); lastWasBulletIng = bullet; }
 
   for (let idx = 0; idx < items.length; idx++) {
@@ -479,7 +553,7 @@ export function parseRecipeText(raw = '', opts = {}) {
   return {
     title: cleanTitleTail(title),
     ingredients: dedupeLines(ingredients.map(fixIngredientUnits)),
-    steps: dedupeLines(politeSteps(splitParagraphSteps(mergeStepFragments(steps)))),
+    steps: dedupeLines(politeSteps(splitParagraphSteps(mergeStepFragments(steps, stepNumbered)))),
     memo,
   }
 }
@@ -557,11 +631,13 @@ const GLUE_HEAD = /^(?:동안|후에|후|뒤에|뒤|정도|가량|쯤|까지|부
 //   ⛔ 여기 걸려도 «지우지 않는다». 앞 단계 뒤에 붙일 뿐이다.
 const CHATTY = /^(저희|우리|제|내)\s?집|^(저희|우리|제가|저는|남편|애들|아이들)|더라구요|더라고요|더라구용|잘먹|싫어해|좋아해요|맛있대요/
 
-function mergeStepFragments(arr) {
+function mergeStepFragments(arr, numbered = []) {
   const out = []
-  for (const s of arr) {
+  for (let i = 0; i < arr.length; i++) {
+    const s = arr[i]
     const prev = out[out.length - 1]
-    if (prev) {
+    // ⭐ 사람이 번호를 매긴 줄은 «여기서부터 새 걸음»이다 — 짧다고 앞에 붙이지 않는다(2026-08-21)
+    if (prev && !numbered[i]) {
       const bare = stripParens(prev) || prev
       const prevOpen = !STEP_ENDING.test(bare)
       const glue = GLUE_HEAD.test(s.trim())

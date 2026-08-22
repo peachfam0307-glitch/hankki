@@ -299,8 +299,8 @@ export default function RecipeDetailScreen({ id }) {
         <Portal>
           <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(30,26,22,.55)', backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
             <div className="ocr-spin" />
-            <div style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>예쁜 카드 만드는 중…</div>
-            <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5 }}>표지 + 레시피 2장 준비 중이에요</div>
+            <div style={{ color: '#fff', fontSize: 17, fontWeight: 700 }}>예쁜 카드 만드는 중…</div>
+            <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 15.5 }}>표지 + 레시피 2장 준비 중이에요</div>
           </div>
         </Portal>
       )}
@@ -334,7 +334,7 @@ export default function RecipeDetailScreen({ id }) {
             data-coach="share"
             aria-label="친구와 레시피 공유하기"
             // 삭제 바로 옆이라 오탭 안 나게 간격을 벌려둔다(삭제엔 확인 시트도 그대로 있음)
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 36, marginLeft: 10, padding: '0 15px', background: 'var(--brown)', color: '#fffdf8', fontSize: 13.5, fontWeight: 800, borderRadius: 999, border: 'none' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 36, marginLeft: 10, padding: '0 15px', background: 'var(--brown)', color: '#fffdf8', fontSize: 16.5, fontWeight: 800, borderRadius: 999, border: 'none' }}
           >
             <Icon name="share" size={17} color="#fffdf8" stroke={2.3} /> 공유
           </button>
@@ -383,7 +383,7 @@ export default function RecipeDetailScreen({ id }) {
           className="press"
           onClick={() => setIconSheet(true)}
           aria-label="표지 아이콘 바꾸기"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--cream)', color: 'var(--brown)', fontSize: 12.5, fontWeight: 800, padding: '0 13px 0 9px', borderRadius: 999, border: 'none' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15.5, fontWeight: 800, padding: '0 13px 0 9px', borderRadius: 999, border: 'none' }}
         >
           <FoodIcon name={r.icon || guessFoodIcon(r.title)} size={20} />
           아이콘 바꾸기
@@ -393,7 +393,7 @@ export default function RecipeDetailScreen({ id }) {
           onClick={() => setDecorOpen(true)}
           data-coach="decor"
           aria-label="레시피 꾸미기"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--brown)', color: '#fff', fontSize: 12.5, fontWeight: 800, padding: '0 13px', borderRadius: 999, border: 'none' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--brown)', color: '#fff', fontSize: 15.5, fontWeight: 800, padding: '0 13px', borderRadius: 999, border: 'none' }}
         >
           <Icon name="palette" size={14} />
           레시피 꾸미기
@@ -421,15 +421,15 @@ export default function RecipeDetailScreen({ id }) {
           >
             <Icon name="edit" size={20} color="var(--brown)" />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--brown)' }}>아직 정리 전이에요</div>
-              <div className="t-sub" style={{ fontSize: 12.5 }}>제목·재료·태그를 정리하고 레시피로 저장하기</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--brown)' }}>아직 정리 전이에요</div>
+              <div className="t-sub" style={{ fontSize: 15.5 }}>제목·재료·태그를 정리하고 레시피로 저장하기</div>
             </div>
             <Icon name="chevron-right" size={18} color="var(--brown)" />
           </button>
         )}
 
         {/* 즐겨찾기는 상단 오버레이 북마크 하나로 통일 (중복 버튼 정리) */}
-        <div className="h-title" style={{ fontSize: 24, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <div className="h-title" style={{ fontSize: 25, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {r.title}
           {/* 🏷 **「샘플」** — 창업자가 직접 꾸민 표지가 붙은 딱 한 편(콩국수)에만 뜬다.
               📮 창업자 2026-08-13 *"샘플이라고(삭제가능) 명시하고"* — 일기 샘플과 **같은 모양·같은 잉크색**을 쓴다.
@@ -437,7 +437,7 @@ export default function RecipeDetailScreen({ id }) {
               ⛔ 포인트색(파랑)은 안 쓴다 — 우리 앱에서 파랑은 「누르는 것」이라 단추로 읽힌다. 이건 이름표다. */}
           {r.sample && (
             <span style={{
-              fontSize: 12.5, fontWeight: 800, letterSpacing: '.02em',
+              fontSize: 15.5, fontWeight: 800, letterSpacing: '.02em',
               padding: '4px 11px', borderRadius: 999,
               background: '#3f382e', color: '#fff', flex: '0 0 auto',
             }}>샘플</span>
@@ -457,7 +457,7 @@ export default function RecipeDetailScreen({ id }) {
             ✅ 13px ＋ 갈색(우리 주색). ⛔파랑은 안 쓴다 — 우리 앱에서 파랑은 「누르는 것」이다.
             ⭐ 굵은 두 낱말(「보여드리는 샘플」·「레시피 꾸미기」)이 눈에 먼저 들어오게 색을 한 단 더 준다. */}
         {r.sample && (
-          <div style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55, color: 'var(--brown)', letterSpacing: '-.2px' }}>
+          <div style={{ fontSize: 16, marginTop: 6, lineHeight: 1.55, color: 'var(--brown)', letterSpacing: '-.2px' }}>
             표지는 <b style={{ fontWeight: 800, color: '#5b4632' }}>보여드리는 샘플</b>이에요 ·{' '}
             <b style={{ fontWeight: 800, color: '#5b4632' }}>레시피 꾸미기</b>에서 마음대로 바꿔 보세요
           </div>
@@ -532,7 +532,7 @@ export default function RecipeDetailScreen({ id }) {
                     ⚠️ 이 줄 오른쪽엔 「사러가기」가 있다 → 글자를 늘린 만큼 좁은 폰에서 밀릴 수 있어
                        `check-charside.mjs` 와 같이 폭을 재서 확인했다. */}
                 <button className="press" onClick={() => setGuide(true)} aria-label="계량·손질 가이드"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '3px 8px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', flex: '0 0 auto' }}>
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '3px 8px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap', flex: '0 0 auto' }}>
                   <Icon name="help" size={12} color="var(--brown)" />
                   계량·손질
                 </button>
@@ -588,23 +588,26 @@ export default function RecipeDetailScreen({ id }) {
         {/* 🛒 주부의 장바구니 픽 — 이 레시피가 쓴 제품을 바로 사러가기(재료 바로 밑 · 수익 연결) */}
         {pantryPicks.length > 0 && (
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>
-              <Icon name="cart" size={17} color="var(--brown)" />
+            {/* 🔠 [2026-08-22 창업자] *"주부의 장바구니에서하고 재품하고 너무따닥따닥붙어있어"* · *"줄간도 너무 붙어있어"* */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 19, fontWeight: 800, color: 'var(--brown)', marginBottom: 14 }}>
+              <Icon name="cart" size={19} color="var(--brown)" />
               주부의 장바구니에서 고른 재료
             </div>
             {shownPicks.map((p) => (
-              <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
-                {curIcon(p.icon) && <img src={curIcon(p.icon)} alt="" draggable={false} style={{ width: 30, height: 30, objectFit: 'contain', flex: '0 0 auto' }} />}
+              <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 15, padding: '13px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
+                {curIcon(p.icon) && <img src={curIcon(p.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain', flex: '0 0 auto' }} />}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{p.name}</span>
+                  {/* ⛔ [2026-08-22 창업자] 「레시피에 광고는 지금 좀 지저분해. 브랜드 버튼이」 — 브랜드 배지는 «큐레이션에만».
+                     이 줄은 좁다(그림 30 ＋ 이름 ＋ 사러가기). 딱지가 둘이면 이름과 뒤엉킨다. */}
+                  <span style={{ fontSize: 19, fontWeight: 700, color: 'var(--text)' }}>{p.brand ? p.brand + ' ' + p.name : p.name}</span>
                   {mallBadge(p) && (
-                    <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{mallBadge(p)}</span>
+                    <span style={{ marginLeft: 6, fontSize: 16, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{String(mallBadge(p)).replace(' · 조합원 전용', ' 전용')}</span>
                   )}
                 </div>
                 {/* ⛔ 한살림은 사러가기를 안 그린다 (창업자 2026-08-17 *"링크안달면되고"*) */}
                 {isHansalim(p)
-                  ? <span style={{ flex: '0 0 auto', fontSize: 11.5, fontWeight: 700, color: 'var(--text-sub)' }}>매장에서</span>
-                  : <button className="press" onClick={() => openUrl(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>사러가기</button>}
+                  ? <span style={{ flex: '0 0 auto', fontSize: 16, fontWeight: 700, color: 'var(--text-sub)' }}>매장에서</span>
+                  : <button className="press" onClick={() => openUrl(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 15.5 }}>사러가기</button>}
               </div>
             ))}
             {/* 🔽🔼 [2026-08-15] 창업자 *"4칸 넘어가면 접을 수 있게 해줘. 너무 길면 좀 그래."*
@@ -614,12 +617,12 @@ export default function RecipeDetailScreen({ id }) {
                    ⛔ 거기서 냈던 사고를 되풀이하지 않는다 — **펼친 뒤에도 같은 자리에 「접기」를 그린다.**
                 ⭐ 개수를 밝힌다(「3개 더보기」) — 이 카드가 고친 게 «몇 개인지 안 밝힌 것»이라 숨기면 앞뒤가 안 맞는다. */}
             {pantryPicks.length > PICK_FOLD && (
-              <button className="press" onClick={() => setPicksOpen((v) => !v)} aria-label={picksOpen ? '장바구니 재료 접기' : '장바구니 재료 더 보기'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%', marginTop: 2, padding: '9px 0', borderTop: '1px solid rgba(0,0,0,.05)', color: 'var(--brown)', fontWeight: 800, fontSize: 12.5 }}>
+              <button className="press" onClick={() => setPicksOpen((v) => !v)} aria-label={picksOpen ? '장바구니 재료 접기' : '장바구니 재료 더 보기'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%', marginTop: 2, padding: '9px 0', borderTop: '1px solid rgba(0,0,0,.05)', color: 'var(--brown)', fontWeight: 800, fontSize: 15.5 }}>
                 {picksOpen ? '접기' : `${pantryPicks.length - PICK_FOLD}개 더보기`}
                 <Icon name={picksOpen ? 'chevron-up' : 'chevron-down'} size={13} color="var(--brown)" />
               </button>
             )}
-            <button className="press" onClick={addAllPicks} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 14 }}>
+            <button className="press" onClick={addAllPicks} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 16 }}>
               <Icon name="cart" size={16} color="#fff" />
               이 재료 다 담기
             </button>
@@ -629,7 +632,7 @@ export default function RecipeDetailScreen({ id }) {
                 ⭐ 창업자 관찰이 정확했다 — *"주부의 장바구니에서 볼수있다는 내용이 없네"*.
                    카드 어디에도 「주부의 장바구니」라는 말이 없어서 **어디서 온 목록인지 알 방법이 없었다.**
                 ✅ 문구는 창업자 확정 — 제목 ＋ 「계속 추가된다」로 «지금 몇 개뿐인 게 아니다»를 밝힌다. */}
-            <div style={{ fontSize: 11.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>평소에 제가 쓰는 재료들이에요 · 레시피에도 계속 추가돼요</div>
+            <div style={{ fontSize: 16.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>평소에 제가 쓰는 재료들이에요<br />레시피에도 계속 추가돼요</div>
           </div>
         )}
 
@@ -670,7 +673,7 @@ export default function RecipeDetailScreen({ id }) {
         {r.memo && (
           <>
             <div className="h-section" style={{ marginTop: 26, marginBottom: 8 }}>메모</div>
-            <div className="card" style={{ padding: 14, fontSize: 14, lineHeight: 1.6, color: 'var(--text)', background: 'var(--cream)', border: 'none', whiteSpace: 'pre-line' }}>
+            <div className="card" style={{ padding: 14, fontSize: 16, lineHeight: 1.6, color: 'var(--text)', background: 'var(--cream)', border: 'none', whiteSpace: 'pre-line' }}>
               {r.memo}
             </div>
           </>
@@ -681,7 +684,7 @@ export default function RecipeDetailScreen({ id }) {
             <div className="h-section" style={{ marginTop: 26, marginBottom: 8 }}>원본 링크</div>
             <a href={r.sourceUrl} target="_blank" rel="noreferrer" className="card press" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 14, textDecoration: 'none', color: 'var(--text)' }}>
               <Icon name="link" size={20} color="var(--sand)" />
-              <span style={{ flex: 1, fontSize: 13.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sourceUrl}</span>
+              <span style={{ flex: 1, fontSize: 16.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sourceUrl}</span>
               <Icon name="chevron-right" size={18} color="var(--sand)" />
             </a>
           </>
@@ -761,17 +764,17 @@ export default function RecipeDetailScreen({ id }) {
         <Portal>
           <div className="sheet-mask" onClick={() => setShareSheet(false)}>
             <div className="sheet" onClick={(e) => e.stopPropagation()}>
-              <div style={{ fontSize: 16.5, fontWeight: 800, textAlign: 'center', color: 'var(--text)' }}>친구랑 공유하기</div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-sub)', textAlign: 'center', margin: '4px 0 16px' }}>예쁜 카드로 카톡·인스타에 톡 보내요</div>
+              <div style={{ fontSize: 18.5, fontWeight: 800, textAlign: 'center', color: 'var(--text)' }}>친구랑 공유하기</div>
+              <div style={{ fontSize: 15.5, color: 'var(--text-sub)', textAlign: 'center', margin: '4px 0 16px' }}>예쁜 카드로 카톡·인스타에 톡 보내요</div>
               <button className="press" onClick={() => { setShareSheet(false); setDrawOpen(true) }}
                 style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--cream)', border: 'none', marginBottom: 10, textAlign: 'left' }}>
                 <img src={uiGomThumb} alt="" draggable={false} style={{ width: 44, height: 44, objectFit: 'contain', flex: '0 0 auto' }} />
-                <span><span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>랜덤 카드 뽑기</span><br /><span style={{ fontSize: 12.5, color: 'var(--text-sub)' }}>꼬르곰·펭펭이 매번 다르게 · 안 꾸며도 예쁘게</span></span>
+                <span><span style={{ fontSize: 17.5, fontWeight: 800, color: 'var(--text)' }}>랜덤 카드 뽑기</span><br /><span style={{ fontSize: 15.5, color: 'var(--text-sub)' }}>꼬르곰·펭펭이 매번 다르게 · 안 꾸며도 예쁘게</span></span>
               </button>
               <button className="press" onClick={isDecorated ? doShareCover : () => { setShareSheet(false); setDecorOpen(true) }}
                 style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--cream)', border: 'none', textAlign: 'left' }}>
                 <img src={uiGomHeart} alt="" draggable={false} style={{ width: 44, height: 44, objectFit: 'contain', flex: '0 0 auto' }} />
-                <span><span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--text)' }}>내가 꾸민 표지로</span><br /><span style={{ fontSize: 12.5, color: 'var(--text-sub)' }}>{isDecorated ? '배경·스티커·효과 그대로 캡처' : '먼저 예쁘게 꾸며볼까요 →'}</span></span>
+                <span><span style={{ fontSize: 17.5, fontWeight: 800, color: 'var(--text)' }}>내가 꾸민 표지로</span><br /><span style={{ fontSize: 15.5, color: 'var(--text-sub)' }}>{isDecorated ? '배경·스티커·효과 그대로 캡처' : '먼저 예쁘게 꾸며볼까요 →'}</span></span>
               </button>
             </div>
           </div>
