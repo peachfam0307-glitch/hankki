@@ -83,6 +83,31 @@ const 장 = ({ 파일, 머리, 부제, 브랜드, 자리 = 'top' }) => `<style>$
 <div class="cap"><div class="h">${머리}</div><div class="s">${부제}</div></div>
 ${브랜드 ? `<img class="gom" src="${곰}"><div class="mark">${브랜드}</div>` : ''}`
 
+// 🎀🎀 갈래 ㅎ — 「우리 감성 ＋ 앱 화면을 «크게»」
+// 📮 창업자 = *"근데 우리 스샷이 예쁘긴하거든.."* → *"**스샷안에 사진을 더 키우고. 우리앱을 더 잘보여주게 ui를 보통하자**"*
+// ⭐ v4 의 «예쁜 틀»(파스텔 바탕 · 도트 · 우리 서체)은 살리고, 그 안의 그림카드를 **진짜 앱 화면**으로 바꾼다.
+//    ⛔ v4 는 앱 화면이 아예 «없었고», 있던 그림카드도 작았다. 여기선 폭 **92%** 로 크게 흘린다.
+const 감성색 = ['#fbf0e0', '#eef3e6', '#fdeef0', '#eaf1f6', '#f6efe2', '#f9ece2']
+const 장ㅎ = ({ 파일, 머리, 부제, 브랜드, 자리 = 'top' }, i) => `<style>${공통}
+  body{background:${감성색[i % 감성색.length]}}
+  body::before{content:'';position:absolute;inset:0;opacity:.5;
+    background-image:radial-gradient(rgba(93,52,16,.13) 3px,transparent 3px);background-size:34px 34px}
+  .wrap{position:relative;z-index:2;padding:112px 76px 0;text-align:center}
+  .hh{font-family:'Jua','Gowun Dodum',system-ui,sans-serif;color:#5d3410;letter-spacing:-0.02em;
+    font-size:92px;line-height:1.30}
+  .ss{color:rgba(93,52,16,.68);letter-spacing:-0.01em;font-size:40px;line-height:1.5;margin-top:24px}
+  .box{position:absolute;left:44px;right:44px;top:${브랜드 ? 470 : 448}px;z-index:2}
+  /* 📐 «사진을 더 키운다» — 폭 992px(92%). 흰 테를 얇게 둘러 바탕과 갈라 준다 */
+  .big{width:100%;height:1500px;object-fit:cover;object-position:${자리};display:block;
+    border-radius:44px;border:10px solid #fffdf8;
+    box-shadow:0 34px 70px rgba(93,52,16,.22),0 6px 18px rgba(93,52,16,.10)}
+  .gom{position:absolute;right:56px;top:322px;width:170px;z-index:4;
+    filter:drop-shadow(0 10px 20px rgba(93,52,16,.24))}
+</style>
+<div class="wrap"><div class="hh">${머리}</div><div class="ss">${부제}</div></div>
+<div class="box"><img class="big" src="${b64(join(앱화면, 파일))}"></div>
+${브랜드 ? `<img class="gom" src="${곰}">` : ''}`
+
 // 🗂 제안 6장 — ⛔순서가 곧 값어치다(앞 2~3장만 검색결과에 뜬다)
 const 장들 = {
   '1-정리': { 파일: '21-상세-재료순서.png', 머리: '캡처 한 장이면<br>레시피가 정리돼요', 부제: '재료도 순서도 알아서 · 내 요리책이 돼요' },
@@ -98,12 +123,16 @@ const 장들 = {
 const CHROMIUM = process.env.SMOKE_CHROMIUM
 const br = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const p = await br.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 2 })
+let i = 0
 for (const [이름, 값] of Object.entries(장들)) {
-  await p.setContent(`<!doctype html><meta charset="utf-8">${장(값)}`)
-  await p.evaluate(() => document.fonts.ready)
-  await p.waitForTimeout(350)
-  await p.screenshot({ path: join(OUT, `v5-${이름}.png`) })
-  console.log(`  ✅ v5-${이름}`)
+  for (const [꼬리, 그리기] of [['ㄷ', () => 장(값)], ['ㅎ', () => 장ㅎ(값, i)]]) {
+    await p.setContent(`<!doctype html><meta charset="utf-8">${그리기()}`)
+    await p.evaluate(() => document.fonts.ready)
+    await p.waitForTimeout(350)
+    await p.screenshot({ path: join(OUT, `${꼬리}-${이름}.png`) })
+  }
+  console.log(`  ✅ ${이름} (ㄷ·ㅎ 둘 다)`)
+  i++
 }
 console.log(`\n📸 → ${OUT}`)
 await br.close()
