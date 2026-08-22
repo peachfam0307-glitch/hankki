@@ -213,7 +213,7 @@ export default function ShopScreen() {
         {/* 💡 **고칠 수 있다는 걸 알려준다** — 누를 수 있어도 «누를 수 있는 줄 모르면» 없는 기능이다.
               ⭐ 예를 «창업자가 말한 그대로» 적는다 — *"양파 1망 돼지고기 600g은 맞지."* */}
         {shoppingList.length > 0 && (
-          <div className="t-sub" style={{ fontSize: 16.5, marginTop: 9, lineHeight: 1.55 }}>
+          <div className="t-sub" style={{ fontSize: 16.5, marginTop: 9, lineHeight: 1.85 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
           </div>
         )}
@@ -481,7 +481,7 @@ function Curation() {
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 fontSize: 19,
-                lineHeight: 1.55,
+                lineHeight: 1.75,
               }}
             >
               {it.benefit}
@@ -534,7 +534,7 @@ function Curation() {
                 「안 받는다」가 아니라 **「말 안 하고 받는다」로 읽힌다.** 없는 게 오히려 의심을 산다.
           ⛔ 이 줄을 지우지 말 것. 지우면 `scripts/check-affiliate.mjs` 가 배포를 막는다(제휴 링크가 있을 때).
           ⚠️ 제휴를 «시작하면» 이 문장을 사실에 맞게 고쳐야 한다 — 「받지 않아요」가 그대로면 거짓이 된다. */}
-      <div className="t-sub" style={{ fontSize: 17.5, marginTop: -2, marginBottom: 8, lineHeight: 1.5 }}>
+      <div className="t-sub" style={{ fontSize: 17.5, marginTop: -2, marginBottom: 8, lineHeight: 1.85 }}>
         외부 쇼핑몰로 이어져요 · <b style={{ color: 'var(--brown)' }}>제휴 수수료를 받아도</b> 값은 그대로
       </div>
 
