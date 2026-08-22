@@ -454,7 +454,7 @@ function Curation() {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             {it.brand && it.brand !== mallLabel(it) && <span style={brandStyle}>{it.brand}</span>}
-            <span style={{ fontSize: 19, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
+            <span style={{ fontSize: 21, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
             {it.tag && <span style={tagStyle}>{it.tag}</span>}
             {mallLabel(it) && <span style={mallStyleFor(mallLabel(it))}>{mallLabel(it)}</span>}
           </div>
@@ -480,8 +480,8 @@ function Curation() {
                 WebkitLineClamp: openCard[it.name] ? 'none' : 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
-                fontSize: 17.5,
-                lineHeight: 1.58,
+                fontSize: 19,
+                lineHeight: 1.55,
               }}
             >
               {it.benefit}
@@ -518,13 +518,13 @@ function Curation() {
   return (
     <>
       <div className="sec-head" style={{ marginTop: 6 }}>
-        <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><img src={uiGomShop} alt="" draggable={false} style={{ width: 24, height: 24, objectFit: 'contain', flex: '0 0 auto' }} />주부의 장바구니</div>
+        <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><img src={uiGomShop} alt="" draggable={false} style={{ width: 28, height: 28, objectFit: 'contain', flex: '0 0 auto' }} />주부의 장바구니</div>
         <button className="press" style={secBtnStyle} onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
       </div>
       {/* ⭐ 「계속 올라와요」를 여기로 올렸다 — 창업자 2026-08-03 *"주부의 장바구니옆에 계속 올라오다는
           문구 적어줘. (원래 지워지는 아래안내판에 있었음)"*. 아래 안내판을 빼면서 그 말만 살렸다.
           ⛔ 이 말은 지우지 말 것 — **재고가 계속 는다는 신호**라 다음에 또 들어올 이유가 된다. */}
-      <div className="t-sub" style={{ fontSize: 16.5, marginTop: -2, marginBottom: 6 }}>
+      <div className="t-sub" style={{ fontSize: 17.5, marginTop: -2, marginBottom: 6 }}>
         써보고 좋은 건 나누고 싶은 <b style={{ color: 'var(--brown)' }}>18년차 주부의 추천 아이템</b> · 계속 올라와요
       </div>
       {/* 💰 제휴(대가성) 고지 — **박스를 빼고 한 줄로 줄였다** (2026-08-03, 창업자 지시 두 번)
@@ -534,7 +534,7 @@ function Curation() {
                 「안 받는다」가 아니라 **「말 안 하고 받는다」로 읽힌다.** 없는 게 오히려 의심을 산다.
           ⛔ 이 줄을 지우지 말 것. 지우면 `scripts/check-affiliate.mjs` 가 배포를 막는다(제휴 링크가 있을 때).
           ⚠️ 제휴를 «시작하면» 이 문장을 사실에 맞게 고쳐야 한다 — 「받지 않아요」가 그대로면 거짓이 된다. */}
-      <div className="t-sub" style={{ fontSize: 16.5, marginTop: -2, marginBottom: 8, lineHeight: 1.5 }}>
+      <div className="t-sub" style={{ fontSize: 17.5, marginTop: -2, marginBottom: 8, lineHeight: 1.5 }}>
         외부 쇼핑몰로 이어져요 · <b style={{ color: 'var(--brown)' }}>제휴 수수료를 받아도</b> 값은 그대로
       </div>
 
