@@ -213,7 +213,7 @@ export default function ShopScreen() {
         {/* 💡 **고칠 수 있다는 걸 알려준다** — 누를 수 있어도 «누를 수 있는 줄 모르면» 없는 기능이다.
               ⭐ 예를 «창업자가 말한 그대로» 적는다 — *"양파 1망 돼지고기 600g은 맞지."* */}
         {shoppingList.length > 0 && (
-          <div className="t-sub" style={{ fontSize: 16.5, marginTop: 9, lineHeight: 1.85 }}>
+          <div className="t-sub" style={{ fontSize: 16.5, marginTop: 18, lineHeight: 1.85 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
           </div>
         )}
@@ -524,7 +524,7 @@ function Curation() {
       {/* ⭐ 「계속 올라와요」를 여기로 올렸다 — 창업자 2026-08-03 *"주부의 장바구니옆에 계속 올라오다는
           문구 적어줘. (원래 지워지는 아래안내판에 있었음)"*. 아래 안내판을 빼면서 그 말만 살렸다.
           ⛔ 이 말은 지우지 말 것 — **재고가 계속 는다는 신호**라 다음에 또 들어올 이유가 된다. */}
-      <div className="t-sub" style={{ fontSize: 17.5, marginTop: -2, marginBottom: 6 }}>
+      <div className="t-sub" style={{ fontSize: 17.5, marginTop: 12, marginBottom: 14 }}>
         써보고 좋은 건 나누고 싶은 <b style={{ color: 'var(--brown)' }}>18년차 주부의 추천 아이템</b> · 계속 올라와요
       </div>
       {/* 💰 제휴(대가성) 고지 — **박스를 빼고 한 줄로 줄였다** (2026-08-03, 창업자 지시 두 번)
@@ -534,8 +534,8 @@ function Curation() {
                 「안 받는다」가 아니라 **「말 안 하고 받는다」로 읽힌다.** 없는 게 오히려 의심을 산다.
           ⛔ 이 줄을 지우지 말 것. 지우면 `scripts/check-affiliate.mjs` 가 배포를 막는다(제휴 링크가 있을 때).
           ⚠️ 제휴를 «시작하면» 이 문장을 사실에 맞게 고쳐야 한다 — 「받지 않아요」가 그대로면 거짓이 된다. */}
-      <div className="t-sub" style={{ fontSize: 17.5, marginTop: -2, marginBottom: 8, lineHeight: 1.85 }}>
-        외부 쇼핑몰로 이어져요 · <b style={{ color: 'var(--brown)' }}>제휴 수수료를 받아도</b> 값은 그대로
+      <div className="t-sub" style={{ fontSize: 17.5, marginTop: 12, marginBottom: 16, lineHeight: 1.85 }}>
+        외부 쇼핑몰로 이어져요 · <b style={{ color: 'var(--brown)' }}>제휴 수수료를 받아도</b> 값은 그대로예요
       </div>
 
       {open && (
@@ -554,7 +554,7 @@ function Curation() {
           {/* 카테고리 칩 — 기본은 '이번 주 픽', 필요한 카테고리만 펼쳐 본다 (찾는 중엔 감춘다)
               🔢 `cur-chips` = 패드에서 «줄바꿈»으로 바꾸려고 붙인 이름 (창업자 2026-08-13 *"장보기 잘림"*).
                  좌우 2단이 되면서 왼쪽 칸이 좁아져 마지막 칩이 반쯤 잘려 보였다. 스타일은 styles.css 에. */}
-          <div className="hscroll cur-chips" style={{ paddingBottom: 4, marginBottom: 4, display: curQuery ? 'none' : undefined }}>
+          <div className="hscroll cur-chips" style={{ marginTop: 16, paddingBottom: 4, marginBottom: 4, display: curQuery ? 'none' : undefined }}>
             {chip('pick', '이번 주 픽')}
             {chip('전체', '전체')}
             {groupList.map((c) => chip(c.name, (
@@ -583,8 +583,8 @@ function Curation() {
                     ⭐ 픽엔 원래 «소제목이 없어» 카드만 나열됐다 → 다른 갈래와 «같은 문법»으로 소제목 줄을 만들고 거기 붙인다.
                     ⛔ `gom_shop` 은 이 화면 헤더(「주부의 장바구니」)에 이미 있다 — 한 화면에 같은 곰이 두 번이면 어색하다.
                     ✅ `gom_thumbsup`(엄지척) = 「이번 주 픽 ＝ 내가 고른 추천」이라는 뜻이 그대로 읽힌다. */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 15.5, fontWeight: 800, color: 'var(--brown)', margin: '2px 2px 8px' }}>
-                  <img src={uiGomThumb} alt="" draggable={false} style={{ width: 26, height: 26, objectFit: 'contain' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 17, fontWeight: 800, color: 'var(--brown)', margin: '16px 2px 14px' }}>
+                  <img src={uiGomThumb} alt="" draggable={false} style={{ width: 30, height: 30, objectFit: 'contain' }} />
                   이번 주 픽
                 </div>
                 {picks.map((it) => Card(it))}
