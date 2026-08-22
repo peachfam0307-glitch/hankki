@@ -94,8 +94,10 @@ await 찍자(p, '20-레시피목록', '레시피 목록 — 꾸민 표지 격자
 // ② 레시피 상세를 «재료가 보이는 자리»까지 굴린다
 await p.locator('text=콩국수').first().click()
 await p.waitForTimeout(800)
-await 굴리기(p, 700)
-await 찍자(p, '21-상세-재료순서', '레시피 상세 — 재료·사러가기가 보이는 자리')
+// ⛔ 700 이면 잘라낸 뒤 «재료 끝줄»이 카드 밑변에 물린다(창업자 *"재료부분이 잘렸어"*)
+//    → 조금 덜 굴려서 「재료」 머리부터 마지막 줄까지가 한 화면 «위쪽»에 들어오게 한다
+await 굴리기(p, 650)
+await 찍자(p, '21-상세-재료순서', '레시피 상세 — 재료가 통째로 보이는 자리')
 
 // ③ 한 번 더 굴려 「만드는 법」 걸음
 await 굴리기(p, 800)
@@ -190,14 +192,15 @@ if (await 탭(p, '장보기')) {
         .filter((e) => /제휴 수수료|계속 올라와요/.test(e.innerText || '') && e.innerText.length < 120)
       const 남았나 = 소개.some((e) => { const r = e.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight })
       if (남았나) return false
-      const 사 = [...document.querySelectorAll('button,a')].filter((e) => /사러가기/.test(e.innerText || ''))
-      return 사.some((e) => { const r = e.getBoundingClientRect(); return r.top > 80 && r.bottom < innerHeight - 80 })
+      // ⭐ 「사러가기가 보이나」로만 멈추면 **첫 카드가 반쯤 잘린 자리**에 선다(실측).
+      //    → «제품 카드 한 장이 통째로» 화면 위쪽에 들어오는 자리에서 멈춘다.
+      const 카드 = [...document.querySelectorAll('.cur-card')]
+      // ⛔ 창(40~190)이 넓으면 **칩 줄이 반쯤 잘려 위에 남는다**(실측) → 카드가 «거의 맨 위»에 올 때만
+      return 카드.some((e) => { const r = e.getBoundingClientRect(); return r.top > 20 && r.top < 95 && r.bottom < innerHeight })
     })
     if (됐나) break
-    await 굴리기(p, 240)
+    await 굴리기(p, 120)
   }
-  // ⛔ 멈춘 자리에 «칩 줄»이 반쯤 잘려 남는다(실측) — 한 칸 더 굴려 깨끗한 자리로
-  await 굴리기(p, 150)
   await 찍자(p, '27-장보기-사러가기', '장보기 — 담기·사러가기가 보이는 자리')
 }
 
