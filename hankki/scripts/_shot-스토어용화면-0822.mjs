@@ -80,5 +80,24 @@ await 찍자(p, '21-상세-재료순서', '레시피 상세 — 재료·만드�
 await 굴리기(p, 800)
 await 찍자(p, '22-상세-만드는법', '레시피 상세 — 만드는 법 걸음')
 
+// ④ 꾸미기 — ⛔「배경」 탭엔 스티커가 «한 장도» 안 보인다(단추 셋뿐). 데코 탭을 열고 서랍을 굴린다
+await 굴리기(p, -2000)
+const 꾸미기 = p.getByRole('button', { name: /레시피 꾸미기/ }).first()
+if (await 꾸미기.count()) {
+  await 꾸미기.click(); await p.waitForTimeout(1600)
+  // ⛔ 꾸미기를 열면 「출시 기념 선물」 시트가 저절로 떠서 탭 클릭을 가로챈다(0820 판이 겪은 그것)
+  for (const 글자 of ['나중에 볼게요', '닫기']) {
+    const b2 = p.getByRole('button', { name: 글자 }).first()
+    if (await b2.count()) { await b2.click(); await p.waitForTimeout(900); break }
+  }
+  for (const 탭 of ['데코', '친구']) {
+    const t = p.getByRole('button', { name: 탭, exact: true }).first()
+    if (await t.count()) { await t.click(); await p.waitForTimeout(900); break }
+  }
+  // ⛔ 탭만 눌러선 스티커가 안 보인다 — 서랍 맨 위엔 단추 셋이고 격자는 그 «아래»다
+  await p.mouse.move(195, 790); await p.mouse.wheel(0, 260); await p.waitForTimeout(700)
+  await 찍자(p, '23-꾸미기-스티커서랍', '레꾸 — 스티커가 깔린 서랍')
+} else console.log('  ⛔ 「레시피 꾸미기」 단추를 못 찾았다')
+
 console.log(`\n📸 ${찍은것.length}장 → ${OUT}`)
 await b.close(); srv.close()
