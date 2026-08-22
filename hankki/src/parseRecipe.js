@@ -326,6 +326,23 @@ function mergeWrappedLines(lines) {
   return out
 }
 
+// 📥📥 [2026-08-22 · 창업자 확정] **담을 때 «원문»도 같이 저장한다.**
+//   📮 창업자 = *"네가 고쳐도 나한테 반영이 안되니까.."* → 판정 = **「다시 담기 ＋ 앞으로는 원문도 저장」**
+//   ⭐⭐ 왜 = 파서를 고쳐도 **이미 저장된 레시피는 안 고쳐진다**(규칙 18 ⓙ).
+//      뿌리는 「마이그레이션이 없어서」가 아니라 **«다시 읽을 원문이 어디에도 안 남아서»** 다.
+//      순살찜닭 캡처가 그랬다 — 번호가 본문에 남고 4걸음이 3걸음이 됐는데, 되돌릴 재료가 0이었다.
+//   ⛔ 이건 «오늘부터 담는 것»에만 붙는다 — 하루 늦으면 그 하루치는 영영 못 고친다.
+//   ⛔ 통째로 담지 않는다 — `localStorage` 는 좁고(가득 차면 저장이 «통째로» 막힌다 · `store.jsx:698`)
+//      사진(`image`)까지 든 레코드에 긴 글이 더 붙는다. 그래서 상한을 둔다.
+//   ⚠️ 상한을 넘으면 **아예 안 담는다**(자르지 않는다) — 잘린 원문으로 다시 읽으면
+//      뒷부분 걸음이 통째로 사라진 «더 나쁜» 결과가 나온다. 없는 편이 낫다.
+export const RAW_MAX = 4000
+export function keepRaw(text) {
+  const t = String(text || '').trim()
+  if (!t || t.length > RAW_MAX) return null
+  return t
+}
+
 export function parseRecipeText(raw = '', opts = {}) {
   const { fromOcr = false } = opts
   const text = normalizeNumerals(String(raw))

@@ -4,7 +4,7 @@ import { useStore } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft } from './ocr'
-import { parseRecipeText } from './parseRecipe'
+import { parseRecipeText, keepRaw } from './parseRecipe'
 import { fetchLinkRecipe } from './linkReader'
 import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
@@ -332,6 +332,9 @@ export default function App() {
       if (parsed && (parsed.ingredients.length || parsed.steps.length)) {
         rec.ingredients = parsed.ingredients
         rec.steps = parsed.steps
+        // 📥 파서에 넣은 원문도 같이 — 파서를 고친 날 다시 읽을 재료(→ parseRecipe.js `keepRaw`)
+        const raw = keepRaw(caption)
+        if (raw) rec.rawText = raw
       }
       store.addRecipe(rec)
       setStack([{ name: 'inbox' }])
@@ -358,6 +361,8 @@ export default function App() {
           ingredients: r.ingredients,
           steps: r.steps, // 메모는 건드리지 않는다 — 직접 입력 전용
           category: guessCategory((r.title || '') + ' ' + r.memo),
+          // 📥 원문도 — 있을 때만 넣는다(빈 값으로 덮으면 지우는 것이다)
+          ...(keepRaw(text) ? { rawText: keepRaw(text) } : {}),
         })
         // 💰💰 [2026-08-21] 여기도 «조용히 깎이던» 자리다 — 공유로 들어온 사진도 위 353줄에서 AI 스캔을 쓴다.
         //    ⛔⛔ 그런데 유저는 «가져오기를 누른 적이 없다» — 카톡에서 공유만 했는데 장수가 준다.
@@ -399,6 +404,9 @@ export default function App() {
         if (p.ingredients.length) patch.ingredients = p.ingredients
         if (p.steps.length) patch.steps = p.steps
         if (!patch.title && p.title) patch.title = p.title
+        // 📥 원문도 — 파서를 고친 날 다시 읽을 재료
+        const raw = keepRaw(read.text)
+        if (raw) patch.rawText = raw
       }
       if (patch.title === title) delete patch.title
       if (!Object.keys(patch).length) return

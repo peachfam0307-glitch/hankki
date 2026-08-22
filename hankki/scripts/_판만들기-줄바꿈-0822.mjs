@@ -129,7 +129,26 @@ for (const g of 광) {
 await b.close(); srv.close()
 
 // ───────── HTML ─────────
+// 📮 [2026-08-22 · 창업자] *"어려운데ㅠ 일단생각해볼게"* — **판이 어려웠던 게 내 잘못이다.**
+//    ⛔ 첫 판은 **아홉 칸을 세로로 쌓아** 놓고 칸마다 고르라고 했다.
+//       그러면 창업자는 다섯째 칸을 보면서 «둘째 칸이 어땠는지»를 기억해야 한다. 그건 판정이 아니라 암기다.
+//    ✅ 그래서 **자리마다 「지금 ↔ 추천」 «둘만» 나란히** 놓고 A/B 하나로 만든다 — 판정이 아홉 → 둘.
+//       나머지 안은 **접어서** 아래에 둔다(지우지 않는다 · 더 보고 싶으면 펴면 된다).
+//    📌 규칙 8 — 소모적·시행착오 판단을 창업자에게 넘기지 않는다.
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const 맞대기 = (자리, 지금, 추천, 왜) => `
+  <article class="ab" data-k="${esc(자리)}">
+    <div class="two">
+      <figure><figcaption class="now">지금</figcaption>${그림[지금.key] ? `<img src="data:image/png;base64,${그림[지금.key]}" alt="지금">` : '<p class="no">못 찍었다</p>'}</figure>
+      <figure><figcaption class="rec">이렇게 바꾸면</figcaption>${그림[추천.key] ? `<img src="data:image/png;base64,${그림[추천.key]}" alt="바꾼 뒤">` : '<p class="no">못 찍었다</p>'}</figure>
+    </div>
+    <p class="why">${왜}</p>
+    <div class="pick big">
+      <button type="button" data-v="바꿔">이걸로 바꿔</button>
+      <button type="button" data-v="지금이나아">지금이 나아</button>
+      <button type="button" data-v="모르겠어">모르겠어</button>
+    </div>
+  </article>`
 const 칸 = (g) => `
   <article class="c" data-k="${esc(g.key)}">
     <header><span class="tag">${esc(g.key)}</span><div><h3>${esc(g.이름)}</h3><p>${esc(g.설명)}</p></div></header>
@@ -165,17 +184,34 @@ const html = `<title>줄바꿈 시안</title>
   .bar button{flex:1;padding:12px 0;border-radius:10px;border:none;background:var(--pt);color:#fff;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer}
   .bar span{color:var(--sub);font-size:13px}
   #out{position:fixed;left:14px;right:14px;bottom:70px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13.5px;white-space:pre-wrap;display:none;max-height:38vh;overflow:auto}
+  /* 맞대보기 — 「지금」과 「바꾼 뒤」를 «나란히» 둔다. 눈이 두 그림 사이만 오가면 되게. */
+  .ab{background:var(--card);border:2px solid var(--pt);border-radius:14px;padding:12px;margin:0 0 10px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .two figure{margin:0}
+  .two figcaption{font-size:13px;font-weight:800;text-align:center;padding:4px 0 6px;border-radius:7px;margin-bottom:6px}
+  .two .now{background:var(--line);color:var(--sub)}
+  .two .rec{background:var(--ok);color:#fff}
+  .two img{width:100%;height:auto;display:block;border-radius:9px;border:1px solid var(--line)}
+  .why{font-size:14px;margin:11px 2px 0;line-height:1.65}
+  .mini{color:var(--sub);font-size:13px}
+  .pick.big button{padding:12px 0;font-size:14.5px}
+  details{margin:0 0 6px}
+  summary{cursor:pointer;color:var(--sub);font-size:14px;padding:9px 2px;font-weight:700}
+  details[open] summary{margin-bottom:10px}
+  .no{color:var(--sub);font-size:13px;text-align:center;padding:20px 0}
 </style>
 <h1>줄바꿈 시안</h1>
-<p class="lead">글자를 키우면서 줄바꿈이 어색해진 두 자리. 각 칸에서 하나씩 골라 주세요.</p>
+<p class="lead">글자를 키우면서 줄바꿈이 어색해진 두 자리예요. <b>두 번만</b> 골라 주면 돼요 — 「지금」과 「바꾼 뒤」를 나란히 놨어요.</p>
 
 <h2>🛒 장보기 — 「주부의 장바구니」 윗글</h2>
-<p class="h2sub">지금은 소개 2줄 ＋ 수수료 고지 2줄 = <b>넉 줄</b>. 고지는 <b>지울 수 없어요</b>(없으면 「말 안 하고 받는다」로 읽혀요).</p>
-${장.map(칸).join('')}
+<p class="h2sub">지금은 제품 설명이 <b>한 줄</b>로 잘려서 「…어울려요.…」처럼 <b>점이 넷</b>으로 보여요.</p>
+${맞대기('장', 장[0], 장[3], '설명을 <b>두 줄</b>로 풀고, 수수료 고지는 <b>작고 연하게</b> 한 발 물러서게 했어요.<br><span class="mini">⛔ 고지 문장 자체는 지울 수 없어요 — 없으면 「말 안 하고 받는다」로 읽혀요.</span>')}
+<details><summary>다른 안 셋도 볼래요?</summary>${[장[1], 장[2], 장[4]].map(칸).join('')}</details>
 
-<h2>🍳 레시피 상세 — 「주부의 장바구니에서 고른 재료」</h2>
-<p class="h2sub">이름이 두 줄로 갈라지고 「쿠팡」 배지가 둘째 줄 끝에 매달려요.</p>
-${광.map(칸).join('')}
+<h2>🍳 레시피 상세 — 광고(「고른 재료」)</h2>
+<p class="h2sub">제품 이름이 두 줄로 갈라지고 「쿠팡」 배지가 <b>둘째 줄 끝에 혼자 매달려요</b>.</p>
+${맞대기('광', 광[0], 광[1], '배지를 <b>이름 아래</b>로 내렸어요. 이름이 갈리던 칸 <b>셋 → 하나</b>.<br><span class="mini">📏 대신 칸이 <b>30px 길어져요</b>(59 → 83·62·62). 「사러가기」를 아래로 내리는 안은 103px 길어져서 접었어요.<br>⛔ 제품 이름은 안 잘라요 — 이름이 안 보이면 살 수가 없으니까요.</span>')}
+<details><summary>다른 안 둘도 볼래요?</summary>${[광[2], 광[3]].map(칸).join('')}</details>
 
 <div id="out"></div>
 <div class="bar"><span id="n">0개 고름</span><button id="copy">고른 것 복사하기</button></div>
@@ -184,7 +220,7 @@ ${광.map(칸).join('')}
   var 고름 = {}
   try { 고름 = JSON.parse(localStorage.getItem(KEY) || '{}') } catch (e) { 고름 = {} }
   function 그리기(){
-    document.querySelectorAll('.c').forEach(function(c){
+    document.querySelectorAll('.c, .ab').forEach(function(c){
       var k = c.dataset.k
       c.querySelectorAll('.pick button').forEach(function(b){
         b.setAttribute('aria-pressed', 고름[k] === b.dataset.v ? 'true' : 'false')
@@ -194,7 +230,7 @@ ${광.map(칸).join('')}
   }
   document.querySelectorAll('.pick button').forEach(function(b){
     b.addEventListener('click', function(){
-      var k = b.closest('.c').dataset.k
+      var k = b.closest('.c, .ab').dataset.k
       고름[k] = 고름[k] === b.dataset.v ? undefined : b.dataset.v
       if (!고름[k]) delete 고름[k]
       try { localStorage.setItem(KEY, JSON.stringify(고름)) } catch (e) {}
@@ -204,9 +240,10 @@ ${광.map(칸).join('')}
   그리기()
   document.getElementById('copy').addEventListener('click', function(){
     var 줄 = ['[줄바꿈 시안 · 2026-08-22]']
-    document.querySelectorAll('.c').forEach(function(c){
+    document.querySelectorAll('.ab, .c').forEach(function(c){
       var k = c.dataset.k
-      if (고름[k]) 줄.push(k + ' ' + c.querySelector('h3').textContent + ' — ' + 고름[k])
+      var h3 = c.querySelector('h3')
+      if (고름[k]) 줄.push(k + (h3 ? ' ' + h3.textContent : '') + ' — ' + 고름[k])
     })
     var t = 줄.join('\\n')
     var out = document.getElementById('out')

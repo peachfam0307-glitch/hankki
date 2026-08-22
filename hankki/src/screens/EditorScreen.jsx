@@ -18,7 +18,7 @@ import { CATEGORIES } from '../theme'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft } from '../ocr'
-import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk } from '../parseRecipe'
+import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw } from '../parseRecipe'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 // 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
@@ -135,6 +135,10 @@ export default function EditorScreen({ id, prefill }) {
   useEffect(() => { const id = setTimeout(checkPhotoScroll, 80); return () => clearTimeout(id) }, [pin, refs.length, photoFold])
   const [newFolder, setNewFolder] = useState(false)
   const [discardAsk, setDiscardAsk] = useState(false) // 작성 중 나가기 = 버릴지 물어본다
+  // 📥 [2026-08-22] 파서에 넣은 «원문» — 화면엔 안 보이고 저장만 된다.
+  //    파서를 고친 날 「다시 읽기」로 되살릴 재료다(→ `parseRecipe.js` 의 `keepRaw` 주석).
+  //    ⛔ 편집으로 들어왔는데 원문이 없으면 «빈 값으로 덮지» 않는다 — 없는 값으로 덮는 건 지우는 것이다(규칙 18 ⓙ).
+  const [rawText, setRawText] = useState(() => editing?.rawText || prefill?.rawText || '')
 
   const [f, setF] = useState(() => {
     const e = editing
@@ -367,6 +371,7 @@ export default function EditorScreen({ id, prefill }) {
     const combined = ocrAccum.current
     if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + quotaTail, quotaTail ? 6000 : 3200); return }
     const r = parseRecipeText(combined, { fromOcr: true })
+    setRawText(keepRaw(combined) || '') // 📥 읽어들인 글자 그대로 — 파서를 고친 날 다시 읽을 재료
     setF((prev) => ({
       ...prev,
       title: prev.title.trim() || r.title,
@@ -431,6 +436,8 @@ export default function EditorScreen({ id, prefill }) {
       source: f.source || 'manual', // 가져온 경로(사진·유튜브 등) 배지를 잃지 않게 저장
       status: 'sorted',
     }
+    // 📥 원문은 «있을 때만» 넣는다 — 빈 값을 넣으면 편집할 때마다 옛 원문이 지워진다(규칙 18 ⓙ)
+    if (rawText) patch.rawText = rawText
     if (editing) {
       // touched: 사용자가 직접 편집한 레시피 — 이후 기본 레시피 자동 갱신에서 덮어쓰지 않게 표시
       updateRecipe(editing.id, { ...patch, touched: true })

@@ -3,7 +3,7 @@ import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import { useBackHandler, useLayerBack } from '../useBackHandler'
 import { guessCategory, openExternal } from '../utils'
-import { parseRecipeText } from '../parseRecipe'
+import { parseRecipeText, keepRaw } from '../parseRecipe'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳ 서버 되면 되살릴 것 ①」 참조.
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 공유받기가 쓰고, 되살릴 때 그대로 쓴다.
 import { guessFoodIcon } from '../components/FoodIcon'
@@ -88,7 +88,8 @@ export default function ImportScreen() {
     const r = parseRecipeText(t)
     // pop 하지 않고 push → 뒤로가기 시 '가져오기'로 복귀. (저장하면 편집기가 popAll로 홈)
     // 메모는 직접 입력 전용 — 분류 안 된 찌꺼기를 메모에 붙이지 않는다
-    nav.push({ name: 'editor', prefill: { source: 'manual', title: r.title, ingredients: r.ingredients, steps: r.steps } })
+    // 📥 원문도 같이 넘긴다 — 파서를 고친 날 「다시 읽기」로 되살릴 재료(→ parseRecipe.js `keepRaw`)
+    nav.push({ name: 'editor', prefill: { source: 'manual', title: r.title, ingredients: r.ingredients, steps: r.steps, rawText: keepRaw(t) } })
   }
 
   const choose = (key) => {
