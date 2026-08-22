@@ -46,18 +46,7 @@ await p.locator('.app-frame .screen .grid-card, .app-frame .screen .mini-card').
 await p.waitForTimeout(1000)
 // 🔒 진짜 열렸나 — 안 열렸으면 «재지 않고 죽는다»(헛것을 재고 보고하는 게 제일 나쁘다)
 const 제목 = await p.evaluate(() => (document.querySelector('.ing, .step') ? (document.querySelector('h1,.d-title,.detail-title')?.innerText || '열림') : null))
-if (!제목) { console.log('\n⛔ 상세가 «안 열렸다» — 재지 않는다.\n'); // 📸 절대원칙 21 — 숫자만 보고 끝내지 않는다. 찍어서 «열어» 본다.
-// ⛔ 재료·만드는 법은 «첫 화면 아래»에 있다 — 안 굴리고 찍으면 표지만 찍힌다(실제로 그랬다)
-// ⛔ `.app-frame .screen` 에 scrollTop 을 주는 방식은 «안 먹었다»(굴리는 상자가 그게 아니다).
-//    ✅ 마우스 휠로 «진짜» 굴린다 — 어느 상자가 굴러가든 상관없다.
-await p.mouse.move(195, 500)
-await p.mouse.wheel(0, 760)
-await p.waitForTimeout(700)
-const 사진 = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/상세글자.png'
-await p.screenshot({ path: 사진 })
-console.log(`\n📸 ${사진}`)
-
-await b.close(); srv.close(); process.exit(1) }
+if (!제목) { console.log('\n⛔ 상세가 «안 열렸다» — 재지 않는다.\n'); await b.close(); srv.close(); process.exit(1) }
 
 const 잰것 = await p.evaluate(() => {
   const 것 = []
