@@ -19,7 +19,10 @@ import { todayKST } from '../src/data/weekly.js'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const src = readFileSync(join(HERE, '../src/data/curation.js'), 'utf8')
-const PRODUCTS = [...src.matchAll(/\{\s*name:\s*'([^']+)'/g)].map((m) => ({ name: m[1] }))
+// 🏷 [2026-08-22] brand 도 같이 읽는다 — 창업자가 브랜드를 이름에서 뗀 뒤(「자연드림」 배지)
+//    name 만 읽으면 「자연누리 훈제오리」·「무무덕 훈제오리」가 둘 다 '훈제오리' 라 «같은 제품»으로 보인다.
+const PRODUCTS = [...src.matchAll(/\{\s*name:\s*'([^']+)'(?:,\s*brand:\s*'([^']+)')?/g)]
+  .map((m) => ({ name: m[1], brand: m[2] || '' }))
 if (PRODUCTS.length < 20) {
   console.log(`  ⛔ 제품을 ${PRODUCTS.length}개밖에 못 읽었다 — 글자로 읽는 방식이 깨졌다(형식이 바뀌었나)`)
   process.exit(1)
@@ -44,7 +47,10 @@ const 주 = []
 for (let i = 0; i < 26; i++) {
   const ymd = 주더하기(시작, i)
   const picks = pickRotate({ products: PRODUCTS, matched: [], today: ymd })
-  주.push({ ymd, 이름: picks.map((p) => p.name) })
+  // ⛔ [2026-08-22] 「name」만 보면 «다른 제품»이 같아 보인다 — 창업자가 브랜드를 이름에서 떼서
+  //    「자연누리 훈제오리」·「무무덕 훈제오리」가 둘 다 name='훈제오리' 가 됐다.
+  //    ✅ 잣대는 «화면에 보이는 이름»(브랜드 ＋ 이름)으로 본다 — 유저가 구분하는 그 단위다(규칙 18 ⓘ).
+  주.push({ ymd, 이름: picks.map((p) => (p.brand ? p.brand + ' ' + p.name : p.name)) })
 }
 
 // ① 어느 주도 비면 안 된다 — 빈 자리는 「관리 안 하는 앱」으로 읽힌다
