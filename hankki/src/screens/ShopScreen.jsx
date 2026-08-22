@@ -447,7 +447,7 @@ function Curation() {
       {/* 🔠 [2026-08-22 창업자] *"아이콘이랑 제목을 같은 줄. 설명은 내려서 아이콘 아래로.
           그럼 글자가 더 많이 보이잖아. 아이콘은 좀 더 키우고"*
           ⭐ 설명이 아이콘 «옆」이 아니라 «아래»로 내려와 카드 폭을 다 쓴다 → 한 줄에 들어가는 글자가 늘어난다. */}
-      <div style={{ display: 'flex', gap: 11, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
         <div className="emoji-tile" style={{ width: 58, height: 58, fontSize: 31, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 53, height: 53, objectFit: 'contain' }} /> : it.emoji}
         </div>

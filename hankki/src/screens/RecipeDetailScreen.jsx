@@ -588,17 +588,18 @@ export default function RecipeDetailScreen({ id }) {
         {/* 🛒 주부의 장바구니 픽 — 이 레시피가 쓴 제품을 바로 사러가기(재료 바로 밑 · 수익 연결) */}
         {pantryPicks.length > 0 && (
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 17.5, fontWeight: 800, color: 'var(--brown)', marginBottom: 8 }}>
-              <Icon name="cart" size={17} color="var(--brown)" />
+            {/* 🔠 [2026-08-22 창업자] *"주부의 장바구니에서하고 재품하고 너무따닥따닥붙어있어"* · *"줄간도 너무 붙어있어"* */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 19, fontWeight: 800, color: 'var(--brown)', marginBottom: 14 }}>
+              <Icon name="cart" size={19} color="var(--brown)" />
               주부의 장바구니에서 고른 재료
             </div>
             {shownPicks.map((p) => (
-              <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
-                {curIcon(p.icon) && <img src={curIcon(p.icon)} alt="" draggable={false} style={{ width: 30, height: 30, objectFit: 'contain', flex: '0 0 auto' }} />}
+              <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 15, padding: '13px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
+                {curIcon(p.icon) && <img src={curIcon(p.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain', flex: '0 0 auto' }} />}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {/* ⛔ [2026-08-22 창업자] 「레시피에 광고는 지금 좀 지저분해. 브랜드 버튼이」 — 브랜드 배지는 «큐레이션에만».
                      이 줄은 좁다(그림 30 ＋ 이름 ＋ 사러가기). 딱지가 둘이면 이름과 뒤엉킨다. */}
-                  <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{p.brand ? p.brand + ' ' + p.name : p.name}</span>
+                  <span style={{ fontSize: 19, fontWeight: 700, color: 'var(--text)' }}>{p.brand ? p.brand + ' ' + p.name : p.name}</span>
                   {mallBadge(p) && (
                     <span style={{ marginLeft: 6, fontSize: 16, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{String(mallBadge(p)).replace(' · 조합원 전용', ' 전용')}</span>
                   )}
