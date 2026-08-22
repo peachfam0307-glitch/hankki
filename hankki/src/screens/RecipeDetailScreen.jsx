@@ -596,14 +596,14 @@ export default function RecipeDetailScreen({ id }) {
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
                 {curIcon(p.icon) && <img src={curIcon(p.icon)} alt="" draggable={false} style={{ width: 30, height: 30, objectFit: 'contain', flex: '0 0 auto' }} />}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{p.name}</span>
+                  <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{p.name}</span>
                   {mallBadge(p) && (
-                    <span style={{ marginLeft: 6, fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{mallBadge(p)}</span>
+                    <span style={{ marginLeft: 6, fontSize: 16, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{mallBadge(p)}</span>
                   )}
                 </div>
                 {/* ⛔ 한살림은 사러가기를 안 그린다 (창업자 2026-08-17 *"링크안달면되고"*) */}
                 {isHansalim(p)
-                  ? <span style={{ flex: '0 0 auto', fontSize: 15, fontWeight: 700, color: 'var(--text-sub)' }}>매장에서</span>
+                  ? <span style={{ flex: '0 0 auto', fontSize: 16, fontWeight: 700, color: 'var(--text-sub)' }}>매장에서</span>
                   : <button className="press" onClick={() => openUrl(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 15.5 }}>사러가기</button>}
               </div>
             ))}
@@ -629,7 +629,7 @@ export default function RecipeDetailScreen({ id }) {
                 ⭐ 창업자 관찰이 정확했다 — *"주부의 장바구니에서 볼수있다는 내용이 없네"*.
                    카드 어디에도 「주부의 장바구니」라는 말이 없어서 **어디서 온 목록인지 알 방법이 없었다.**
                 ✅ 문구는 창업자 확정 — 제목 ＋ 「계속 추가된다」로 «지금 몇 개뿐인 게 아니다»를 밝힌다. */}
-            <div style={{ fontSize: 15, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>평소에 제가 쓰는 재료들이에요 · 레시피에도 계속 추가돼요</div>
+            <div style={{ fontSize: 16.5, color: 'var(--text-sub)', textAlign: 'center', marginTop: 7, lineHeight: 1.5 }}>평소에 제가 쓰는 재료들이에요<br />레시피에도 계속 추가돼요</div>
           </div>
         )}
 

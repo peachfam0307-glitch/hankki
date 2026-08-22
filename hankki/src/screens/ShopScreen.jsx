@@ -213,7 +213,7 @@ export default function ShopScreen() {
         {/* 💡 **고칠 수 있다는 걸 알려준다** — 누를 수 있어도 «누를 수 있는 줄 모르면» 없는 기능이다.
               ⭐ 예를 «창업자가 말한 그대로» 적는다 — *"양파 1망 돼지고기 600g은 맞지."* */}
         {shoppingList.length > 0 && (
-          <div className="t-sub" style={{ fontSize: 15, marginTop: 9, lineHeight: 1.55 }}>
+          <div className="t-sub" style={{ fontSize: 16.5, marginTop: 9, lineHeight: 1.55 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
           </div>
         )}
@@ -425,8 +425,8 @@ function Curation() {
     if (u.includes('smartstore.naver')) return '네이버'
     return ''
   }
-  const tagStyle = { fontSize: 15, fontWeight: 700, color: '#8a6a3e', background: 'var(--cream)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
-  const mallStyle = { fontSize: 15, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream-deep)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
+  const tagStyle = { fontSize: 16, fontWeight: 700, color: '#8a6a3e', background: 'var(--cream)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
+  const mallStyle = { fontSize: 16, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream-deep)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
   // 🔴 「조합원만」은 **확 튀게** — 창업자 2026-08-03 *"색깔 확튀게 올려줘."*
   //   다른 배지(구매처)는 그냥 «어디서 사나»인데 이건 **못 살 수도 있다는 주의**라 무게가 다르다.
   //   ⚠️ 우리 톤은 뮤트라 형광색은 안 쓴다 → **진한 테라코타에 흰 글씨**(채운 배지)로 대비를 준다.
@@ -447,7 +447,7 @@ function Curation() {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
-            <span style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
+            <span style={{ fontSize: 19, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
             {it.tag && <span style={tagStyle}>{it.tag}</span>}
             {mallLabel(it) && <span style={mallStyleFor(mallLabel(it))}>{mallLabel(it)}</span>}
           </div>
@@ -466,10 +466,10 @@ function Curation() {
               className="t-sub"
               style={{
                 display: openCard[it.name] ? 'block' : '-webkit-box',
-                WebkitLineClamp: openCard[it.name] ? 'none' : 1,
+                WebkitLineClamp: openCard[it.name] ? 'none' : 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
-                fontSize: 16,
+                fontSize: 17.5,
                 lineHeight: 1.58,
               }}
             >
@@ -514,7 +514,7 @@ function Curation() {
       {/* ⭐ 「계속 올라와요」를 여기로 올렸다 — 창업자 2026-08-03 *"주부의 장바구니옆에 계속 올라오다는
           문구 적어줘. (원래 지워지는 아래안내판에 있었음)"*. 아래 안내판을 빼면서 그 말만 살렸다.
           ⛔ 이 말은 지우지 말 것 — **재고가 계속 는다는 신호**라 다음에 또 들어올 이유가 된다. */}
-      <div className="t-sub" style={{ fontSize: 15, marginTop: -2, marginBottom: 6 }}>
+      <div className="t-sub" style={{ fontSize: 16.5, marginTop: -2, marginBottom: 6 }}>
         써보고 좋은 건 꼭 나누는 18년차 주부의 · 첨가물 적은 건강 식재료 · <b style={{ color: 'var(--brown)' }}>앞으로도 하나씩 계속 올라와요</b>
       </div>
       {/* 💰 제휴(대가성) 고지 — **박스를 빼고 한 줄로 줄였다** (2026-08-03, 창업자 지시 두 번)
@@ -524,7 +524,7 @@ function Curation() {
                 「안 받는다」가 아니라 **「말 안 하고 받는다」로 읽힌다.** 없는 게 오히려 의심을 산다.
           ⛔ 이 줄을 지우지 말 것. 지우면 `scripts/check-affiliate.mjs` 가 배포를 막는다(제휴 링크가 있을 때).
           ⚠️ 제휴를 «시작하면» 이 문장을 사실에 맞게 고쳐야 한다 — 「받지 않아요」가 그대로면 거짓이 된다. */}
-      <div className="t-sub" style={{ fontSize: 15, marginTop: -2, marginBottom: 8, lineHeight: 1.5 }}>
+      <div className="t-sub" style={{ fontSize: 16.5, marginTop: -2, marginBottom: 8, lineHeight: 1.5 }}>
         ‘사러가기’는 외부 쇼핑몰로 이어져요 · <b style={{ color: 'var(--brown)' }}>한끼는 수수료를 받지 않아요</b> (나중에 제휴가 생겨도 여러분은 늘 정가 그대로예요)
       </div>
 
