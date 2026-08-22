@@ -76,23 +76,25 @@ const 장 = ({ 파일, 머리, 부제, 자리 = 'top' }, i) => `<style>${공통}
 //    ⛔앱 온보딩(`Onboarding.jsx`)을 안 건드린다(앱 변경은 검수 대상 · 규칙 13).
 const 마지막장 = () => `<style>${공통}
   body{background:#f7e6d2}
-  .wrap{position:relative;z-index:2;padding:100px 76px 0;text-align:center}
-  .hh{font-size:90px;line-height:1.30}
-  .ss{font-size:38px;line-height:1.5;margin-top:20px}
-  .duo{position:absolute;left:50%;transform:translateX(-50%);top:392px;width:640px;z-index:3;
-    filter:drop-shadow(0 18px 34px rgba(93,52,16,.20))}
-  .card{position:absolute;left:72px;right:72px;top:950px;z-index:2;background:#fffdf8;
-    border-radius:40px;padding:54px 52px;box-shadow:0 20px 44px rgba(93,52,16,.14);text-align:left}
-  .card p{color:#5d3410;font-size:39px;line-height:1.62;letter-spacing:-0.01em}
+  /* ⛔ 문단이 셋으로 늘자 카드가 길어져 **알약·마무리를 덮었다**(2026-08-22 · 규칙 21 이 잡았다).
+        → 캐릭터를 줄여 위로 올리고, 카드를 올리고, 글자를 한 호수 줄여 자리를 만든다. */
+  .wrap{position:relative;z-index:2;padding:88px 76px 0;text-align:center}
+  .hh{font-size:88px;line-height:1.30}
+  .ss{font-size:37px;line-height:1.5;margin-top:18px}
+  .duo{position:absolute;left:50%;transform:translateX(-50%);top:300px;width:440px;z-index:3;
+    filter:drop-shadow(0 16px 30px rgba(93,52,16,.20))}
+  .card{position:absolute;left:72px;right:72px;top:772px;z-index:2;background:#fffdf8;
+    border-radius:40px;padding:48px 48px;box-shadow:0 20px 44px rgba(93,52,16,.14);text-align:left}
+  .card p{color:#5d3410;font-size:36px;line-height:1.62;letter-spacing:-0.01em}
   .card .go{color:#c2703a;font-weight:700}
-  .card hr{border:0;border-top:2px dashed rgba(93,52,16,.22);margin:32px 0}
-  .pill{position:absolute;left:50%;transform:translateX(-50%);bottom:242px;z-index:3;
+  .card hr{border:0;border-top:2px dashed rgba(93,52,16,.22);margin:30px 0}
+  .pill{position:absolute;left:50%;transform:translateX(-50%);bottom:214px;z-index:3;
     background:#5d3410;color:#fff8ec;border-radius:999px;padding:20px 44px;font-size:36px;
     font-family:'Jua','Gowun Dodum',system-ui,sans-serif;letter-spacing:-0.01em;white-space:nowrap}
   /* ⭐ 창업자가 콕 집은 자리 — 알약 «아래» 마무리 */
-  .end{position:absolute;left:76px;right:76px;bottom:88px;z-index:3;text-align:center;
+  .end{position:absolute;left:76px;right:76px;bottom:62px;z-index:3;text-align:center;
     font-family:'Jua','Gowun Dodum',system-ui,sans-serif;color:#5d3410;
-    font-size:54px;line-height:1.44;letter-spacing:-0.02em}
+    font-size:50px;line-height:1.42;letter-spacing:-0.02em}
 </style>
 <div class="wrap"><div class="hh">꼬르곰은 저예요</div><div class="ss">펭펭은 제 사춘기 딸이고요</div></div>
 <img class="duo" src="${곰펭}">
