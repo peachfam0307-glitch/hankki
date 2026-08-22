@@ -124,6 +124,80 @@ const 칸검사 = (page, 셀렉터) => page.evaluate((sel) => {
 const 표 = []
 const 줄 = (자리, r, 기대) => 표.push({ 자리, 그려진것: !r.있나 ? '⚠️칸을 못 찾음' : r.사진 ? '📷 사진' : r.음식아이콘 ? '🍽 음식아이콘' : '(빈칸)', 창업자기대: 기대 })
 
+// 🔍🔍 ⛔ 셀렉터를 «짐작하지 않는다» — 화면을 훑어 사진이 «어디에» 그려졌는지 찾아낸다.
+//    📌 2026-08-23 에 내 짐작 셀렉터가 「칸을 못 찾음」 둘 ＋ 엉뚱한 칸 하나를 냈다(규칙 18 ⓘ).
+//       그래서 「그 칸에 있나」가 아니라 **「사진이 어느 칸에 있나」**로 뒤집었다.
+// ⛔⛔ 「data:image 면 유저 사진」이 «아니다» — 빌드가 작은 앱 자산(책갈피 `idx_chef.png` 등)을
+//    base64 로 인라인해서 그것도 data:image 다. 첫 판이 그걸 33개나 「사진」으로 셌다(규칙 18 ⓘ).
+// ✅ 그래서 **localStorage 에 저장된 «그 사진 값»과 글자 그대로 대조**한다. 흉내낼 수가 없다.
+const 사진찾기 = (page, 아는사진들) => page.evaluate((KNOWN) => {
+  // ⛔⛔ 화면을 옮겨도 «앞 화면 DOM 은 남는다»(2026-08-21 에 겪은 함정).
+  //    그래서 크기·opacity 만 보면 일기 탭에서도 레시피 상세 표지가 잡힌다.
+  // ✅ 「그 자리에 «실제로 칠해진» 것이 이 그림인가」를 브라우저에 직접 묻는다.
+  const 보이나 = (el) => {
+    const r = el.getBoundingClientRect()
+    if (r.width < 4 || r.height < 4) return false
+    if (r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) return false
+    const s = getComputedStyle(el)
+    if (s.visibility === 'hidden' || s.display === 'none' || Number(s.opacity) <= 0.05) return false
+    const 위 = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+    return !!위 && (위 === el || el.contains(위) || 위.contains(el))
+  }
+  // 자리를 «사람 말»로 — 조상 넷까지 훑어 클래스와 가까운 글자를 모은다
+  const 자리이름 = (el) => {
+    const 길 = []
+    let p = el
+    for (let i = 0; i < 5 && p && p !== document.body; i++) {
+      const c = (p.className && typeof p.className === 'string') ? p.className.trim().split(/\s+/).slice(0, 3).join('.') : ''
+      if (c) 길.push(c)
+      p = p.parentElement
+    }
+    return 길.join(' ← ') || '(클래스 없음)'
+  }
+  const 가까운글자 = (el) => {
+    let p = el
+    for (let i = 0; i < 5 && p && p !== document.body; i++) {
+      const t = (p.innerText || '').replace(/\s+/g, ' ').trim()
+      if (t.length >= 2) return t.slice(0, 40)
+      p = p.parentElement
+    }
+    return ''
+  }
+  const 아는것 = new Set(KNOWN)
+  const 사진들 = [...document.querySelectorAll('img')]
+    .filter((i) => 아는것.has(i.currentSrc || i.src || ''))
+    .filter(보이나)
+    .map((i) => {
+      const r = i.getBoundingClientRect()
+      return { 자리: 자리이름(i), 글자: 가까운글자(i), 크기: `${Math.round(r.width)}×${Math.round(r.height)}`, y: Math.round(r.top) }
+    })
+  const 아이콘수 = [...document.querySelectorAll('img')]
+    .filter((i) => !아는것.has(i.currentSrc || i.src || ''))
+    .filter(보이나).length
+  return { 사진들, 아이콘수 }
+}, 아는사진들)
+
+const 찍기 = async (page, 화면, 아는사진들) => {
+  const r = await 사진찾기(page, 아는사진들)
+  // ⭐ 「진짜 그 화면에 갔나」를 같이 찍는다 — 안 갔으면 숫자를 읽어도 헛것이다
+  // ⛔ body.innerText 를 쓰면 «맨 위 화면»만 읽혀 레이어가 열려도 안 바뀐다(2026-08-23 에 그걸로 속았다).
+  //    ⭐ 화면 «가운데»에 실제로 칠해진 것에서 글자를 집는다.
+  const 머리 = await page.evaluate(() => {
+    const el = document.elementFromPoint(innerWidth / 2, innerHeight / 2)
+    let p = el
+    for (let i = 0; i < 8 && p && p !== document.body; i++) {
+      const t = (p.innerText || '').replace(/\s+/g, ' ').trim()
+      if (t.length >= 6) return t.slice(0, 34)
+      p = p.parentElement
+    }
+    return '(글자 없음)'
+  })
+  console.log(`   [${화면}] 📷사진 ${r.사진들.length}개 · 🍽아이콘 ${r.아이콘수}개   ← 화면 글자「${머리}」`)
+  r.사진들.sort((a, b) => a.y - b.y).forEach((s) => console.log(`      · ${s.크기}  「${s.글자}」  ${s.자리}`))
+  if (!r.사진들.length) console.log('      (사진 없음 — 아이콘만 그려진다)')
+  return r
+}
+
 console.log('\n📷🔍 완성 사진 — 「어느 자리가 사진으로 바뀌나」 (390×844)')
 console.log('   ⛔ 저장값이 아니라 «화면에 그려진 것»을 잰다\n')
 
@@ -148,45 +222,94 @@ console.log('ⓐ 안 꾸민 레시피 (「표지로도 쓰기」 기본값 그�
   const d = (st.diary || []).find((x) => x.recipeId === 골라둔.id)
   console.log('   💾 저장값 = recipe.thumb:', r?.thumb, '· diary.photo:', String(d?.photo || '').startsWith('data:') ? '있다' : '없다')
 
-  // 🍳 레시피 목록 카드
-  await 탭으로(page, '레시피')
-  const 목록 = await page.evaluate((T) => {
-    const t = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim().startsWith(T))
-    if (!t) return { 있나: false }
-    const imgs = [...t.querySelectorAll('img')]
-    return { 있나: true, 사진: imgs.some((i) => (i.currentSrc || i.src || '').startsWith('data:image')), 음식아이콘: imgs.some((i) => !(i.currentSrc || i.src || '').startsWith('data:image')) || !!t.querySelector('svg') }
-  }, 골라둔.title)
-  줄('🍳 레시피 목록 카드', 목록, '📷 사진')
+  // ⭐ 「이것이 유저 사진이다」의 근거 = 저장된 값 그 자체. 짐작이 아니다.
+  const 아는사진 = [r?.image, d?.photo].filter((x) => String(x || '').startsWith('data:image'))
+  console.log('   🔑 대조할 사진 값 =', 아는사진.length, '개 (recipe.image · diary.photo)')
 
-  // 🍳 레시피 상세 = 레꾸(꾸미기) 표지 자리
-  await page.evaluate((T) => {
+  await page.close()
+
+  // ── 화면을 돌며 «사진이 어디에 그려졌나»를 찾는다 (셀렉터 짐작 없음)
+  // ⛔⛔ 화면마다 «새 탭»으로 들어간다 — 레시피 상세는 «레이어»라 하단바를 덮어서
+  //    한 탭에서 이어 누르면 탭이 «안 바뀐다»(그래도 숫자는 나와서 헛것을 읽게 된다).
+  //    ⭐ localStorage 는 같은 컨텍스트라 그대로 남는다.
+  console.log('\n   🔍 화면마다 사진이 «어디에» 그려졌나 (화면마다 새 탭)')
+
+  const p1 = await 새탭(); await 탭으로(p1, '레시피')
+  const 목록 = await 찍기(p1, '🍳 레시피 목록', 아는사진); await p1.close()
+
+  const p2 = await 새탭(); await 탭으로(p2, '레시피')
+  await p2.evaluate((T) => {
     const t = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim().startsWith(T))
     if (t) t.click()
   }, 골라둔.title)
-  await page.waitForTimeout(900)
-  줄('🎨 레시피 상세 «레꾸 표지»', await 칸검사(page, '.detail-cover, .rd-cover, .cover, .thumb-lg'), '📷 사진 ← 창업자가 원하는 것')
+  await p2.waitForTimeout(1000)
+  const 상세 = await 찍기(p2, '🎨 레시피 상세(레꾸 표지)', 아는사진); await p2.close()
 
-  await page.close()
+  const p3 = await 새탭(); await 탭으로(p3, '일기')
+  const 일기 = await 찍기(p3, '📔 일기 탭', 아는사진); await p3.close()
+
+  const p4 = await 새탭()
+  const 홈 = await 찍기(p4, '🏠 홈', 아는사진); await p4.close()
+
+  줄('🍳 레시피 목록 카드', { 있나: true, 사진: 목록.사진들.length > 0, 음식아이콘: 목록.아이콘수 > 0 }, '📷 사진')
+  줄('🎨 레시피 상세 «레꾸 표지»', { 있나: true, 사진: 상세.사진들.length > 0, 음식아이콘: 상세.아이콘수 > 0 }, '📷 사진 ← 창업자가 원하는 것')
+  줄('📔 일기 탭', { 있나: true, 사진: 일기.사진들.length > 0, 음식아이콘: 일기.아이콘수 > 0 }, '🍽 음식아이콘 (사진이면 안 됨)')
+  줄('🏠 홈', { 있나: true, 사진: 홈.사진들.length > 0, 음식아이콘: 홈.아이콘수 > 0 }, '(참고)')
 }
 
 // ═══════════════════════════════════════════════════════════
-// ⓑ 일기 쪽 — 창업자가 「바뀐다」고 말한 두 자리
+// ⓑ ⭐⭐ 꾸민 레시피 — 「표지로도 쓰기」 기본 «꺼짐». 창업자가 실제로 겪은 경우다
+//    (창업자는 레꾸를 해서 쓴다 → 표지는 안 바뀌고 일기만 바뀐다 = 제보 그대로)
 // ═══════════════════════════════════════════════════════════
-console.log('\nⓑ 일기 탭 — 창업자가 「바뀐다」고 한 자리')
+console.log('\nⓑ ⭐꾸민 레시피 (「표지로도 쓰기」 기본 «꺼짐») — 창업자가 겪은 경우')
 {
+  const p0 = await 새탭()
+  const 꾸민것 = await p0.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+    const r = (st.recipes || []).find((x) => (x.steps || []).length >= 2 && x.thumb !== 'photo')
+    if (!r) return null
+    st.recipes = st.recipes.map((x) => (x.id === r.id ? { ...x, decor: [{ k: 'gp_gomhi', x: 0.5, y: 0.5, s: 0.3 }] } : x))
+    // ⛔⛔ ⓐ 에서 «같은 날» 이미 요리했다 — 안 비우면 달력 칸이 ⓐ 것을 보여줘서
+    //    ⓑ 사진과 대조하면 «0개»가 나온다. 그건 「안 바뀐다」가 아니라 «못 쟀다»는 뜻이다.
+    st.diary = []
+    localStorage.setItem('hankki:v1', JSON.stringify(st))
+    return { id: r.id, title: r.title }
+  })
+  await p0.close()
+  console.log('   레시피 =', 꾸민것?.title, '(꾸민 흔적을 심었다)')
+
   const page = await 새탭()
-  await 탭으로(page, '일기')
-  const 일기글 = await page.evaluate(() => (document.body.innerText || '').replace(/\s+/g, ' ').slice(0, 200))
-  console.log('   일기 탭 =', 일기글.slice(0, 120))
-  줄('📔 일기 달력 칸', await 칸검사(page, '.cal-cell.has, .cal-day.has, [class*="cal"] [class*="has"]'), '🍽 음식아이콘 (사진이면 안 됨)')
-  줄('📔 「이 날 만든 요리」', await 칸검사(page, '.card'), '🍽 음식아이콘 (사진이면 안 됨)')
+  await 요리끝까지(page, 꾸민것.title)
+  const sw = await 사진넣고끝내기(page, null)
+  console.log('   「표지로도 쓰기」 기본 =', sw.기본켜짐, '· 끝낼 때 =', sw.최종)
+  const st = await 저장값(page)
+  const r = (st.recipes || []).find((x) => x.id === 꾸민것.id)
+  const d = (st.diary || []).find((x) => x.recipeId === 꾸민것.id)
+  console.log('   💾 저장값 = recipe.thumb:', r?.thumb, '· diary.photo:', String(d?.photo || '').startsWith('data:') ? '있다' : '없다')
+  const 아는사진B = [r?.image, d?.photo].filter((x) => String(x || '').startsWith('data:image'))
+  console.log('   🔑 대조할 사진 값 =', 아는사진B.length, '개')
   await page.close()
+
+  const q1 = await 새탭(); await 탭으로(q1, '레시피')
+  await q1.evaluate((T) => {
+    const t = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim().startsWith(T))
+    if (t) t.click()
+  }, 꾸민것.title)
+  await q1.waitForTimeout(1000)
+  const 상세B = await 찍기(q1, '🎨 레시피 상세(레꾸 표지)', 아는사진B); await q1.close()
+
+  const q2 = await 새탭(); await 탭으로(q2, '일기')
+  const 일기B = await 찍기(q2, '📔 일기 탭', 아는사진B); await q2.close()
+
+  줄('── 꾸민 레시피 ──', { 있나: true, 사진: false, 음식아이콘: false }, '')
+  줄('🎨 레시피 상세 «레꾸 표지»', { 있나: true, 사진: 상세B.사진들.length > 0, 음식아이콘: 상세B.아이콘수 > 0 }, '📷 사진 ← 창업자가 원하는 것')
+  줄('📔 일기 탭', { 있나: true, 사진: 일기B.사진들.length > 0, 음식아이콘: 일기B.아이콘수 > 0 }, '🍽 음식아이콘 (사진이면 안 됨)')
 }
 
-console.log('\n📋 표 — 자리별로 «지금 무엇이 그려지나»\n')
+console.log('\n📋 표 — 화면마다 «사진이 그려지나»\n')
 console.log('   | 자리 | 지금 | 창업자 기대 |')
 console.log('   |---|---|---|')
 표.forEach((x) => console.log(`   | ${x.자리} | ${x.그려진것} | ${x.창업자기대} |`))
-console.log('')
+console.log('\n   ⛔ 「사진 있음」은 «그 화면 어딘가»라는 뜻이다 — 위 목록의 자리·글자로 어느 칸인지 본다.\n')
 
 await b.close(); srv.close()
