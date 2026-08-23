@@ -98,6 +98,36 @@ for (let i = 0; i < 60; i++) {
 칸(!!카드주인, 카드주인 ? `카드가 표지로 저장됐다 — 「${카드주인.title}」 thumb=${카드주인.thumb} ${카드주인.kb}KB` : '표지 저장 실패')
 if (!카드주인) { await browser.close(); stop(); process.exit(1) }
 
+// ⭐⭐ 창업자 확정(2026-08-23) = *"자랑카드를 표지로 올리면 레꾸스티커는 없어지는게 맞아.
+//    대신 자동등록된 음식아이콘은 살아있어야해."* — 그 둘을 «저장된 값»으로 잰다.
+//    ⛔ 화면으로만 재면 「가려서 안 보이는 것」과 「없는 것」을 못 가른다(오늘 그걸로 하루 헤맸다).
+console.log('\n①-b 카드를 올린 «뒤» 저장된 값 — 스티커는 비고 아이콘은 남나')
+{
+  // 먼저 스티커가 «있는» 레시피를 만들어 두고 다시 카드를 올린다
+  await page.evaluate((id) => {
+    const s = JSON.parse(localStorage.getItem('hankki:v1'))
+    const r = s.recipes.find((x) => x.id === id)
+    r.decor = [{ id: 'z1', key: 'gp_gomhi', x: 40, y: 40, s: 1, r: 0 }, { id: 'z2', key: 'gp_pengv', x: 60, y: 60, s: 1, r: 0 }]
+    localStorage.setItem('hankki:v1', JSON.stringify(s))
+  }, 카드주인.id)
+  await page.goto(url); await page.waitForTimeout(1600)
+  await page.getByText('레꾸자랑', { exact: true }).last().click(); await page.waitForTimeout(1200)
+  await page.locator('.grid-card').filter({ hasText: 카드주인.title }).first().locator('button').first().click()
+  await page.waitForTimeout(600)
+  await page.getByText('랜덤 카드로 뽑기').click(); await page.waitForTimeout(2500)
+  await page.getByText('이 카드를 내 레시피 표지로').click(); await page.waitForTimeout(4000)
+  const 뒤 = await page.evaluate((id) => {
+    const s = JSON.parse(localStorage.getItem('hankki:v1'))
+    const r = s.recipes.find((x) => x.id === id)
+    return { decor: (r.decor || []).length, icon: r.icon || null, thumb: r.thumb, bg: r.decorBg || null, img: !!r.image }
+  }, 카드주인.id)
+  console.log(`     저장값 = ${JSON.stringify(뒤)}`)
+  칸(뒤.decor === 0, `⭐ 레꾸 스티커가 «비었다» (지금 ${뒤.decor}개)`)
+  칸(!!뒤.icon, `⭐ 자동 음식 아이콘이 «살아 있다» (icon=${뒤.icon})`)
+  칸(뒤.thumb === 'photo' && 뒤.img, '카드가 표지 자리에 앉았다')
+  칸(뒤.bg !== undefined, `배경지는 안 건드린다 (decorBg=${뒤.bg})`)
+}
+
 // ⭐ 그 레시피에 «꾸미기»도 심는다 — 창업자 화면이 그 상태다(카드 표지 ＋ 스티커)
 await page.evaluate((id) => {
   const s = JSON.parse(localStorage.getItem('hankki:v1'))

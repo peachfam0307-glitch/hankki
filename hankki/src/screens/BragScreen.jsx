@@ -4,7 +4,7 @@ import { useStore } from '../store'
 import { useNav } from '../App'
 import Thumb from '../components/Thumb'
 import DecorLayer from '../components/DecorLayer'
-import ShareDrawCard, { RecipeCard, 카드표지로 } from '../components/ShareDrawCard'
+import ShareDrawCard, { RecipeCard, 카드표지로, 카드표지토스트 } from '../components/ShareDrawCard'
 import Portal from '../components/Portal'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import Icon from '../components/Icon'
@@ -259,7 +259,7 @@ export default function BragScreen() {
           <ShareDrawCard
             recipe={share}
             onClose={() => setShare(null)}
-            onSaveCover={(img) => { updateRecipe(share.id, 카드표지로(img)); nav.showToast('카드를 표지로 저장했어요') }}
+            onSaveCover={(img) => { const 말 = 카드표지토스트(share); updateRecipe(share.id, 카드표지로(img)); nav.showToast(말) }}
           />
         </Portal>
       )}
