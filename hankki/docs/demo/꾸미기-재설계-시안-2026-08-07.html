@@ -1,0 +1,303 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>꾸미기 재설계 시안 — 2026-08-07</title>
+<!--
+  🔪 꾸미기 탭 대수술 시안 (창업자 2026-08-07 밤 *"대수술이 필요해 나도 정신없고 쓰기 불편해"*)
+  ⛔ 이건 «시안»이다 — 앱 코드가 아니다. 눌러보고 고르라고 만든 것.
+  📐 앱 색 그대로 (styles.css 66~74줄) · 폰 폭 360px 기준
+  📏 잰 값(2026-08-07 · scripts/_measure-꾸미기구조-0807.mjs):
+     종이 바닥→첫 스티커 361px(화면의 46%) · 가로줄 6개
+     알약 29px 7개·31px 5개·35px 4개 = 차이 최대 6px
+     누르는 칸 20개 «전부» 44px 미달
+-->
+<style>
+  :root{
+    --bg:#fdfbf7; --surface:#fff; --cream:#f2ede3; --cream-deep:#ebe1d1;
+    --brown:#5878a0; --text:#3d3830; --text-sub:#8f887b; --line:#efe8dc;
+    --ok:#5E8F72; --no:#A8503A;
+    --f:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17171b; --surface:#1f1f25; --cream:#2a2a31; --cream-deep:#34343d;
+           --brown:#8CAFD6; --text:#ece7de; --text-sub:#9b9488; --line:#2f2f37; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--f);line-height:1.6;
+       word-break:keep-all;-webkit-text-size-adjust:100%}
+  .wrap{max-width:44rem;margin:0 auto;padding:1.6rem 1rem 4rem}
+  h1{font-size:1.7rem;margin:.2rem 0 .3rem;letter-spacing:-.03em;color:var(--brown);font-weight:800}
+  .lede{color:var(--text-sub);font-size:.9rem;margin:0 0 1.2rem}
+  .note{background:var(--cream);border-radius:.6rem;padding:.75rem .9rem;font-size:.82rem;
+        color:var(--text-sub);margin-bottom:1.6rem}
+  .note b{color:var(--brown)}
+
+  h2{font-size:1.2rem;margin:2.2rem 0 .2rem;letter-spacing:-.02em;font-weight:800}
+  .why{font-size:.85rem;color:var(--text-sub);margin:0 0 .8rem}
+  .tag{display:inline-block;font-size:.7rem;font-weight:800;padding:.12rem .5rem;border-radius:999px;
+       background:var(--cream-deep);color:var(--text-sub);margin-left:.35rem;vertical-align:middle}
+  .tag.now{background:#f6e2dc;color:var(--no)}
+
+  /* ── 폰 목업 ── */
+  .phone{width:360px;max-width:100%;margin:0 auto;border:1px solid var(--line);border-radius:20px;
+         overflow:hidden;background:var(--bg);box-shadow:0 6px 20px rgba(60,50,35,.08)}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px;font-size:13px}
+  .top b{font-size:15px}
+  .save{background:var(--brown);color:#fff;border:none;border-radius:999px;padding:8px 16px;font-weight:800;font-size:13px}
+  .paper{margin:0 16px;height:150px;border-radius:14px;background:#f3f5ed;
+         border:1px solid #d9e2dd;display:flex;align-items:center;justify-content:center;position:relative}
+  .star{width:74px;height:70px;background:#e4dcc4;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+        display:flex;align-items:center;justify-content:center;font-size:10px;color:#6b5f4a;text-align:center}
+  .hint{text-align:center;font-size:11px;color:var(--text-sub);padding:7px 0 0}
+
+  .rowlab{font-size:9.5px;font-weight:800;color:var(--no);padding:2px 16px 0;letter-spacing:.02em}
+  .band{background:var(--cream);border-top:1px solid var(--line)}
+  .drawer{background:var(--surface);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding-bottom:10px}
+  .grab{width:38px;height:4px;border-radius:999px;background:var(--line);margin:8px auto 4px}
+  .scroll{display:flex;gap:6px;overflow-x:auto;padding:6px 14px;scrollbar-width:none}
+  .scroll::-webkit-scrollbar{display:none}
+  .sec{font-size:11px;font-weight:800;color:var(--text-sub);padding:6px 16px 2px}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;padding:2px 14px 6px}
+  .cell{aspect-ratio:1;border-radius:9px;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:17px}
+
+  /* 지금 판 — 알약 네 종류가 다 비슷 */
+  .p29{padding:5px 8px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid var(--line);
+       background:var(--surface);color:var(--text-sub);white-space:nowrap;flex:0 0 auto}
+  .p29.on{background:var(--brown);color:#fff;border-color:transparent}
+  .p31{padding:6px 13px;border-radius:999px;font-size:12.5px;font-weight:700;border:1px solid var(--line);
+       background:var(--surface);color:var(--text-sub);white-space:nowrap;flex:0 0 auto}
+  .p31.on{background:var(--brown);color:#fff;border-color:transparent}
+  .seg{display:flex;background:var(--cream-deep);border-radius:999px;padding:3px;margin:6px 14px}
+  .seg button{flex:1;border:none;background:none;border-radius:999px;padding:7px 0;font-size:13px;font-weight:800;color:var(--text-sub)}
+  .seg button.on{background:var(--brown);color:#fff}
+
+  /* ── 시안 공통: 큰 손가락 칸 48px ── */
+  .t48{min-height:48px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+
+  /* 안 B — 층마다 다른 생김새 */
+  .modetabs{display:flex;gap:0;padding:0 12px;border-bottom:1.5px solid var(--line);background:var(--surface)}
+  .modetabs button{flex:1;border:none;background:none;padding:13px 0 11px;font-size:14px;font-weight:800;
+                   color:var(--text-sub);border-bottom:3px solid transparent;margin-bottom:-1.5px}
+  .modetabs button.on{color:var(--brown);border-bottom-color:var(--brown)}
+  .subpills{display:flex;gap:7px;padding:9px 14px}
+  .subpills button{min-height:38px;padding:0 15px;border-radius:999px;border:1px solid var(--line);
+                   background:var(--cream);font-size:13px;font-weight:700;color:var(--text-sub)}
+  .subpills button.on{background:var(--brown);color:#fff;border-color:transparent}
+  .glabs{display:flex;gap:16px;padding:4px 16px 0}
+  .glabs button{border:none;background:none;padding:9px 0 8px;font-size:13px;font-weight:800;color:var(--text-sub);
+                border-bottom:2.5px solid transparent}
+  .glabs button.on{color:var(--text);border-bottom-color:var(--brown)}
+
+  /* 안 A — 겹치기 시트 */
+  .sheetwrap{position:relative}
+  .sheet{background:var(--surface);border-top:2px solid var(--brown);border-radius:16px 16px 0 0;
+         box-shadow:0 -6px 18px rgba(60,50,35,.12);padding-bottom:8px}
+  .sheethead{display:flex;align-items:center;gap:8px;padding:9px 14px 4px}
+  .sheethead .who{font-size:12.5px;font-weight:800;color:var(--brown);flex:1}
+  .sheethead .x{width:32px;height:32px;border-radius:999px;border:1px solid var(--line);background:var(--cream);
+                font-size:15px;color:var(--text-sub);line-height:1}
+
+  /* 안 C — 아이콘 바 */
+  .iconbar{display:flex;gap:4px;overflow-x:auto;padding:6px 12px;scrollbar-width:none}
+  .iconbar::-webkit-scrollbar{display:none}
+  .iconbar button{flex:0 0 auto;min-width:52px;min-height:52px;border:none;background:none;border-radius:12px;
+                  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+                  font-size:10.5px;font-weight:700;color:var(--text-sub);position:relative}
+  .iconbar button.on{background:var(--cream-deep);color:var(--brown)}
+  .iconbar .gl{font-size:17px;line-height:1}
+  .dot{position:absolute;top:6px;right:9px;width:5px;height:5px;border-radius:999px;background:var(--brown)}
+
+  .metrics{display:grid;gap:5px;margin:.7rem 0 0}
+  .m{display:grid;grid-template-columns:1fr auto;gap:.6rem;font-size:.78rem;background:var(--surface);
+     border:1px solid var(--line);border-radius:.4rem;padding:.4rem .65rem}
+  .m .v{font-weight:800;font-variant-numeric:tabular-nums}
+  .m.good .v{color:var(--ok)} .m.bad .v{color:var(--no)}
+  footer{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line);font-size:.78rem;color:var(--text-sub)}
+</style>
+
+<div class="wrap">
+<p style="font-size:.72rem;letter-spacing:.15em;color:var(--text-sub);font-weight:800;margin:0">한끼 · 시안</p>
+<h1>꾸미기 화면 대수술</h1>
+<p class="lede">직접 눌러봐. 네 판을 나란히 놓고 「어느 게 안 헷갈리나」만 보면 돼.</p>
+
+<div class="note">
+  <b>왜 정신없었나 — 잰 값</b><br>
+  종이 바닥에서 첫 스티커까지 <b>361px</b>(화면의 46%) · 그 사이 가로줄 <b>6개</b> ·
+  알약이 <b>29px 7개 · 31px 5개 · 35px 4개</b>라 크기 차이가 <b>최대 6px</b> —
+  네 층이 전부 같은 생김새라 눈이 층을 못 나눠. 그리고 누르는 칸 <b>20개가 전부</b> 손가락 최소(44px) 미달.
+</div>
+
+<!-- ═══════════ 지금 ═══════════ -->
+<h2>지금<span class="tag now">비교용</span></h2>
+<p class="why">알약이 네 층에 다 있어. 위에서부터 갈래·칩·큰칸·서랍탭 — 전부 비슷한 크기.</p>
+<div class="phone">
+  <div class="top"><span>취소</span><b>8월 7일 일기</b><button class="save">저장</button></div>
+  <div class="paper"><div class="star">맛있는<br>김치찌개</div></div>
+  <div class="hint">탭한 걸 여기서 바로 꾸며요 · 드래그로 이동</div>
+  <div class="band">
+    <div class="rowlab">① 갈래 29px</div>
+    <div class="scroll">
+      <button class="p29 on">순서</button><button class="p29">색</button><button class="p29">글씨</button>
+      <button class="p29">무늬</button><button class="p29">모양</button><button class="p29">움직임</button><button class="p29">효과</button>
+    </div>
+    <div class="rowlab">② 칩 31px</div>
+    <div class="scroll"><button class="p31">맨 뒤로</button><button class="p31">맨 앞으로</button><button class="p31">좌우 뒤집기</button></div>
+  </div>
+  <div class="drawer">
+    <div class="grab"></div>
+    <div class="rowlab">③ 큰 칸 35px</div>
+    <div class="seg"><button>속지</button><button>글쓰기</button><button class="on">일꾸</button><button>레꾸</button></div>
+    <div class="rowlab">④ 서랍 탭 31px</div>
+    <div class="scroll"><button class="p31">마테</button><button class="p31 on">데코</button><button class="p31">글자</button></div>
+    <div class="sec">한끼 일기 · 표정</div>
+    <div class="grid"><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span></div>
+  </div>
+</div>
+
+<!-- ═══════════ 안 A ═══════════ -->
+<h2>안 A — 고르면 도구가 «덮고» 올라온다</h2>
+<p class="why">스티커를 안 고르면 <b>서랍만</b> 보여. 고르면 도구 시트가 서랍을 덮어. <b>두 일이 동시에 안 보이니 헷갈릴 게 없어.</b>
+캔바 모바일이 쓰는 방식이야 — 고정 패널을 «대체»해.</p>
+<div class="phone">
+  <div class="top"><span>취소</span><b>8월 7일 일기</b><button class="save">저장</button></div>
+  <div class="paper"><div class="star">맛있는<br>김치찌개</div></div>
+  <div class="hint">별을 고른 상태 — 아래가 「그 별 꾸미기」로 바뀌었어</div>
+  <div class="sheetwrap">
+    <div class="sheet">
+      <div class="sheethead">
+        <span class="who">✦ 포스트잇 꾸미기</span>
+        <button class="x t48" style="min-height:32px">✕</button>
+      </div>
+      <div class="scroll" style="padding-top:2px">
+        <button class="p31 on t48" style="min-height:44px">순서</button>
+        <button class="p31 t48" style="min-height:44px">색</button>
+        <button class="p31 t48" style="min-height:44px">글씨</button>
+        <button class="p31 t48" style="min-height:44px">무늬</button>
+        <button class="p31 t48" style="min-height:44px">모양</button>
+        <button class="p31 t48" style="min-height:44px">움직임</button>
+      </div>
+      <div class="scroll" style="padding-top:0">
+        <button class="p31 t48" style="min-height:44px">맨 뒤로</button>
+        <button class="p31 t48" style="min-height:44px">맨 앞으로</button>
+        <button class="p31 t48" style="min-height:44px">좌우 뒤집기</button>
+      </div>
+      <div style="text-align:center;font-size:11px;color:var(--text-sub);padding:4px 0 2px">✕ 를 누르면 서랍이 돌아와요</div>
+    </div>
+  </div>
+</div>
+<div class="metrics">
+  <div class="m good"><span>줄이 몇 개나 겹치나</span><span class="v">6 → 3</span></div>
+  <div class="m good"><span>도구와 서랍이 같이 보이나</span><span class="v">아니 (한 번에 하나)</span></div>
+  <div class="m bad"><span>다른 스티커를 붙이려면</span><span class="v">✕ 한 번</span></div>
+</div>
+
+<!-- ═══════════ 안 B ═══════════ -->
+<h2>안 B — 층마다 «생김새»를 다르게</h2>
+<p class="why">층 수는 그대로인데 <b>모드=밑줄 탭 · 서랍=알약 · 갈래=글자+밑줄 · 칩=알약</b>으로 갈라.
+교과서가 말한 <b>「중첩 탭은 다른 시각 요소로」</b>·<b>「색·표시자·글자 셋을 같이」</b>를 그대로 쓴 거야. 전부 44px 이상.</p>
+<div class="phone">
+  <div class="top"><span>취소</span><b>8월 7일 일기</b><button class="save">저장</button></div>
+  <div class="paper"><div class="star">맛있는<br>김치찌개</div></div>
+  <div class="hint">탭한 걸 여기서 바로 꾸며요</div>
+  <div class="band">
+    <div class="glabs">
+      <button class="on">순서</button><button>색</button><button>글씨</button><button>무늬</button><button>모양</button>
+    </div>
+    <div class="scroll" style="padding-top:2px;padding-bottom:9px">
+      <button class="p31 t48" style="min-height:46px;padding:0 16px">맨 뒤로</button>
+      <button class="p31 t48" style="min-height:46px;padding:0 16px">맨 앞으로</button>
+      <button class="p31 t48" style="min-height:46px;padding:0 16px">좌우 뒤집기</button>
+    </div>
+  </div>
+  <div class="drawer" style="padding-top:0">
+    <div class="grab"></div>
+    <div class="modetabs">
+      <button>속지</button><button>글쓰기</button><button class="on">일꾸</button><button>레꾸</button>
+    </div>
+    <div class="subpills"><button>마테</button><button class="on">데코</button><button>글자</button></div>
+    <div class="sec">한끼 일기 · 표정</div>
+    <div class="grid"><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span></div>
+  </div>
+</div>
+<div class="metrics">
+  <div class="m good"><span>층이 생김새로 갈리나</span><span class="v">넷 다 다름</span></div>
+  <div class="m good"><span>누르는 칸</span><span class="v">전부 44px+</span></div>
+  <div class="m bad"><span>줄 수</span><span class="v">6 → 5 (조금만 줄어)</span></div>
+</div>
+
+<!-- ═══════════ 안 C ═══════════ -->
+<h2>안 C — 갈래를 «아이콘»으로 ＋ 겹치기</h2>
+<p class="why">A 와 B 를 합치되, 갈래를 <b>글자 알약이 아니라 아이콘</b>으로 바꿔.
+알약이 아니라서 칩과 절대 안 헷갈리고, 한 칸이 <b>52px</b>이라 손이 편해. 일곱이 한 줄에 다 들어와.</p>
+<div class="phone">
+  <div class="top"><span>취소</span><b>8월 7일 일기</b><button class="save">저장</button></div>
+  <div class="paper"><div class="star">맛있는<br>김치찌개</div></div>
+  <div class="hint">별을 고른 상태</div>
+  <div class="sheetwrap">
+    <div class="sheet">
+      <div class="sheethead">
+        <span class="who">✦ 포스트잇 꾸미기</span>
+        <button class="x" style="min-height:36px;min-width:36px">✕</button>
+      </div>
+      <div class="iconbar">
+        <button class="on"><span class="gl">⧉</span>순서</button>
+        <button><span class="gl">◍</span>색</button>
+        <button><span class="gl">Aa</span>글씨</button>
+        <button><span class="gl">▨</span>무늬</button>
+        <button><span class="gl">✿</span>모양</button>
+        <button><span class="gl">〰</span>움직임<span class="dot"></span></button>
+        <button><span class="gl">✧</span>효과<span class="dot"></span></button>
+      </div>
+      <div class="scroll" style="padding-top:0;padding-bottom:10px">
+        <button class="p31 t48" style="min-height:46px;padding:0 16px">맨 뒤로</button>
+        <button class="p31 t48" style="min-height:46px;padding:0 16px">맨 앞으로</button>
+        <button class="p31 t48" style="min-height:46px;padding:0 16px">좌우 뒤집기</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="metrics">
+  <div class="m good"><span>갈래와 칩이 헷갈리나</span><span class="v">안 헷갈림 (아이콘 vs 알약)</span></div>
+  <div class="m good"><span>갈래 한 칸</span><span class="v">52px</span></div>
+  <div class="m good"><span>일곱이 한 줄에</span><span class="v">들어감</span></div>
+</div>
+
+<!-- ═══════════ 안 D ═══════════ -->
+<h2>안 D — 서랍을 위로, 도구를 «맨 아래»로</h2>
+<p class="why">폰은 <b>아래쪽이 엄지가 제일 잘 닿아.</b> 그래서 자주 쓰는 도구를 화면 맨 아래에 두고, 서랍(고르는 곳)을 위로 올려.
+종이도 위로 붙어서 <b>꾸민 게 더 잘 보여.</b></p>
+<div class="phone">
+  <div class="top"><span>취소</span><b>8월 7일 일기</b><button class="save">저장</button></div>
+  <div class="paper"><div class="star">맛있는<br>김치찌개</div></div>
+  <div class="drawer" style="margin-top:8px;border-radius:14px 14px 0 0">
+    <div class="grab"></div>
+    <div class="modetabs">
+      <button>속지</button><button>글쓰기</button><button class="on">일꾸</button><button>레꾸</button>
+    </div>
+    <div class="subpills"><button>마테</button><button class="on">데코</button><button>글자</button></div>
+    <div class="grid" style="padding-top:6px"><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span></div>
+  </div>
+  <div class="band" style="border-top:2px solid var(--brown)">
+    <div class="sheethead"><span class="who">✦ 고른 것 꾸미기</span></div>
+    <div class="iconbar" style="padding-bottom:10px">
+      <button class="on"><span class="gl">⧉</span>순서</button>
+      <button><span class="gl">◍</span>색</button>
+      <button><span class="gl">Aa</span>글씨</button>
+      <button><span class="gl">▨</span>무늬</button>
+      <button><span class="gl">✿</span>모양</button>
+      <button><span class="gl">〰</span>움직임<span class="dot"></span></button>
+      <button><span class="gl">✧</span>효과<span class="dot"></span></button>
+    </div>
+  </div>
+</div>
+<div class="metrics">
+  <div class="m good"><span>엄지가 닿는 곳에 도구</span><span class="v">맨 아래</span></div>
+  <div class="m good"><span>종이가 위로 붙나</span><span class="v">붙음 (꾸민 게 잘 보임)</span></div>
+  <div class="m bad"><span>도구가 «항상» 자리를 먹나</span><span class="v">먹음</span></div>
+</div>
+
+<footer>
+  ⛔ 이건 시안이야 — 앱에 안 들어갔어. 고른 뒤에 진짜로 만들어서 다시 보여줄게.<br>
+  📏 잰 값 = <code>scripts/_measure-꾸미기구조-0807.mjs</code> · 색은 앱 <code>styles.css</code> 그대로
+</footer>
+</div>

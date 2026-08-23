@@ -1,0 +1,23 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.vite
+
+# Python 캐시
+__pycache__/
+*.pyc
+
+# 검수 시트(자동 생성 — 볼 때만 만들고 저장소엔 안 넣는다)
+_검수/
+
+# 🏷 아이콘 대조판 — icon-labels.py 가 언제든 다시 뽑는다(한 번에 2MB+). 기록은 scripts/icon-checked.json 이 갖는다
+docs/_검수판/
+
+# 🗑 커밋 메시지 임시파일 — 훅이 명령줄 안 경로를 잡아서 파일로 넘기는데,
+#    `git add -A` 에 딸려 들어간 적이 있다(2026-08-14). 두 번은 안 되게 여기 박는다.
+.git-msg-tmp
+
+# 🖼 시안 판 — 생성기(scripts/_판-*.mjs)가 언제든 다시 뽑는다. HTML 하나가 1MB 넘어 저장소를 불린다.
+docs/시안/

@@ -1,0 +1,29 @@
+# 클로드 작업용 임시 렌더(카드 시안 캡처 등) — 저장소에 남길 것 아님
+_k_*.png
+_v*.png
+_letter_tab.png
+_deco.png
+_ob*.png
+
+# 표본집 «생성물» — 스크립트로 언제든 다시 만든다. 1.2MB라 커밋하지 않기로 했다
+#   (근거 = hankki/docs/demo/README.md — "생성물은 커밋 안 함")
+#   만드는 법: python3 hankki/docs/demo/bgpack-build.py
+hankki/docs/demo/bgpack-catalog.html
+
+# 코드로 만드는 배경 «생성물» — tools/make-bg.py 로 언제든 다시 만든다
+#   앱에 넣기로 확정된 것만 src/assets/ 로 옮긴다
+hankki/design/promo/배경-코드생성/
+
+# 📸 작업하며 찍는 «판정용» 캡처 — 저장소에 남길 것 아님 (2026-08-18 청소)
+#   2026-08-18 에 27장 5.6MB 가 뿌리에 쌓여 있었고 **코드·문서 어디서도 안 불렀다.**
+#   보여주려고 한 번 찍고 끝나는 것이라 커밋할 이유가 없다.
+#   ⭐ 남길 값어치가 있는 컷이면 `docs/stickers/` 나 그 작업의 문서 폴더로 «이름 붙여» 옮긴다.
+_shots/
+
+# 🔬 일회용 검증 스크립트 — 루트에 만들고 커밋엔 안 딸려가게 (2026-08-01 청소)
+#   여러 번 돌릴 것만 hankki/scripts/검증/ 으로 옮긴다(거기 README 에 한 줄 적기)
+hankki/_*.mjs
+hankki/_*.py
+
+# 스토어 스샷 「최종-N장」 = renders-v* 의 «복사본» — 스크립트로 언제든 다시 만든다(중복 44MB 방지)
+hankki/design/promo/스토어스샷-2507/최종-*/
