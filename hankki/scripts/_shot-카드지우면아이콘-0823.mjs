@@ -43,7 +43,13 @@ const 덮였나 = async (이름) => {
 
 // ── 카드를 표지로 올린다
 await page.getByText('레꾸자랑', { exact: true }).last().click(); await page.waitForTimeout(1200)
-await page.locator('.grid-card button').first().click(); await page.waitForTimeout(600)
+// ⚠️ 어느 레시피로 재느냐가 «배경»을 가른다 — 콩국수는 창업자가 직접 꾸민 «샘플»이라
+//    배경지 sea(여름 물결) ＋ 스티커 7개가 basics.js 에 박혀 있다(전 레시피 중 유일).
+//    RECIPE 를 주면 그 편으로, 안 주면 첫 칸으로 잰다.
+const 고를것 = process.env.RECIPE
+  ? page.locator('.grid-card').filter({ hasText: process.env.RECIPE }).first().locator('button').first()
+  : page.locator('.grid-card button').first()
+await 고를것.click(); await page.waitForTimeout(600)
 await page.getByText('랜덤 카드로 뽑기').click(); await page.waitForTimeout(2500)
 await page.getByText('이 카드를 내 레시피 표지로').click()
 let 주인 = null
