@@ -44,7 +44,10 @@ export function generations(file) {
   lines.forEach((l, i) => {
     if (!/^#{1,3}\s/.test(l)) return
     const d = l.match(/(20\d\d-\d\d-\d\d)/)
-    if (d) gens.push({ line: i + 1, date: d[1], title: l.replace(/^#+\s*/, '').trim() })
+    // ⭐ 단계(#=1 · ##=2 · ###=3)도 같이 돌려준다 — 「선언보다 깊은 제목은 세대가 아니다」를
+    //    check-current 가 판정하려면 이 값이 필요하다(2026-08-23).
+    const lv = l.match(/^#+/)[0].length
+    if (d) gens.push({ line: i + 1, date: d[1], level: lv, title: l.replace(/^#+\s*/, '').trim() })
   })
   return gens
 }
