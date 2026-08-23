@@ -80,10 +80,7 @@ const ymKey = (ts) => {
 //       **눌러도 아무 일도 안 일어난 것처럼** 보였다(창업자 가족이 「먹통」으로 여겼다).
 //    ⭐ 잃는 게 없다 — 일기 화면(`DiaryScreen`)이 그날 «요리 기록»까지 같이 보여준다(47줄 필터).
 //       오히려 목록 거르기보다 더 많이 본다.
-// 🎨 [시안 스위치 · 2026-08-24] 달력 칸에 «레꾸 표지»를 얹어 볼지. ⏳창업자 판정 대기 —
-//    판을 찍을 때만 켠다(`window.__CAL_DECOR`). ⛔기본은 꺼짐이라 지금 앱은 하나도 안 바뀐다.
-const CAL_DECOR = typeof window !== 'undefined' && window.__CAL_DECOR === true
-function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconFor, recipeFor }) {
+function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconFor }) {
   const [ym, setYm] = useState(() => {
     const n = new Date()
     return { y: n.getFullYear(), m: n.getMonth() }
@@ -156,14 +153,10 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconF
               {hasDiary && <span className="cal-diary" aria-label="일기 쓴 날"><Icon name="pen" size={9} /></span>}
               {top && (
                 // 사진을 남겼으면 사진이, 아니면 그날 만든 음식 아이콘이 칸에 뜬다.
-                // 🎨 [시안 ⓐ · 2026-08-24] 레꾸로 꾸민 표지도 달력에 — `Thumb` 이 스티커·배경을 얹어 그린다.
-                //    ⏳창업자 판정 대기. ⛔확정 전엔 이 갈래를 배포하지 않는다.
                 <span className="cal-food">
                   {top.photo
                     ? <img src={top.photo} alt="" loading="lazy" />
-                    : (CAL_DECOR && recipeFor?.(top))
-                      ? <Thumb recipe={recipeFor(top)} size={24} />
-                      : <FoodIcon name={iconFor(top)} size={24} />}
+                    : <FoodIcon name={iconFor(top)} size={24} />}
                 </span>
               )}
               {n > 1 && <span className="cal-more">+{n - 1}</span>}
@@ -531,7 +524,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                  아니라 자리를 잘못 준 것**이었다. 접기 버튼도 같이 없앴다(가릴 이유가 없어졌다). */}
           {(entries.length > 0 || diaryDays.size > 0) && (
             <div data-coach="cal" className="log-cal">
-              <CookCalendar entries={entries} diaryDays={diaryDays} selected={dayFilter} onSelect={setDayFilter} onOpenDay={(k) => nav.push({ name: 'diary', day: k })} iconFor={iconFor} recipeFor={(e) => recipes.find((r) => r.id === e.recipeId)} />
+              <CookCalendar entries={entries} diaryDays={diaryDays} selected={dayFilter} onSelect={setDayFilter} onOpenDay={(k) => nav.push({ name: 'diary', day: k })} iconFor={iconFor} />
             </div>
           )}
 
