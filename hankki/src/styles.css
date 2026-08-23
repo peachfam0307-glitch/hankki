@@ -1893,6 +1893,13 @@ img {
   display: flex; align-items: center; justify-content: center;
 }
 .cook-shot-box.on { border: none; background: var(--brown); }
+/* 📔 [2026-08-24] 「어디에 담기는지」 안내 — 사진을 찍은 «뒤»에만 뜬다(찍기 전엔 알려줄 일이 없다).
+   ⭐ 14px = 「글자2」(v11.21) 의 최소값. 이보다 작으면 안 읽힌다.
+   ⛔ `.cook-shot` «안»에 못 넣는다 — 그건 `display:flex` 가로 한 줄이라 옆에 붙는다. */
+.cook-shot-note {
+  flex: 0 0 auto; padding: 0 16px; margin: 1px 0 6px;
+  font-size: 14px; color: var(--text-sub); word-break: keep-all;
+}
 .cook-shot-x {
   flex: 0 0 auto; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
   border-radius: 12px; background: none;
