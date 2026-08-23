@@ -20,6 +20,7 @@ import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
 import uiHandPoint from '../assets/ui/hand_point.png'
 import uiGomProud from '../assets/ui/wave/gom_proud.png' // 🐻 꼬르곰(뿌듯) — 레꾸자랑 상단
 import TabTips from '../components/TabTips'
+import TabTalk from '../components/TabTalk'
 
 // 🎴 카드자랑 탭 — 바이럴 진입점. 내 레시피를 골라 자랑한다.
 // ⭐ 창업자 방향: 주인공은 '내가 꾸민 표지', 랜덤 카드는 옵션(메인 아님).
@@ -156,6 +157,10 @@ export default function BragScreen() {
           <Icon name={searchOpen ? 'x' : 'search'} size={22} />
         </button>
       </div>
+
+      {/* 💬 [2026-08-24] 꼬리가 왼쪽 위 = 꼬르곰 쪽. 이 탭 상단바 캐릭터는 «꼬르곰»이다(실물 확인).
+          ⛔ 여섯 탭 중 여기만 말풍선이 없었다 — 2026-08-21 에 넷(홈·레시피·일기·장보기)만 넣었다. */}
+      <TabTalk tab="brag" />
 
       {searchOpen && (
         <div className="pad fade" style={{ marginBottom: 10 }}>
