@@ -30,7 +30,7 @@ from PIL import Image
 from scipy.ndimage import binary_dilation, binary_erosion, gaussian_filter, label
 
 
-def 창찾기(rgb, alpha, tol, open_iter):
+def 창찾기(rgb, alpha, tol, open_iter, grow):
     """그릇 «안»의 연회색 덩어리를 찾아 마스크로 돌려준다."""
     h, w = alpha.shape
     보임 = alpha > 128
@@ -77,6 +77,17 @@ def 창찾기(rgb, alpha, tol, open_iter):
         씨 = 덩어리[cys[i], cxs[i]]
     창 = binary_dilation(덩어리 == 씨, iterations=open_iter) & 후보
 
+    # ⛔⛔⛔ **창만 뚫으면 «진갈색 선»이 사진 둘레에 링으로 남는다** (창업자 2026-08-23
+    #    *"내부 선도 다보이고 합성한티가 너무 나"*).
+    #    🔢 실측(주름 접시) = 창 반지름 158px · 진갈색 선 164px → 덮으려면 3.8% 필요한데
+    #       오버스캔이 3%(163px)라 **1px 차이로 못 덮었다.**
+    #    ⭐ 창업자 지피티 합성판을 크게 놓고 보니 거기엔 **선이 아예 없다** — 음식이 선을 덮는다.
+    #    📌 그 선은 «남길 무늬»가 아니라 «자를 때 쓰는 길잡이»였다.
+    # ✅ 그래서 창을 «선 바깥까지» 넓혀 뚫는다.
+    #    ⛔ 앱 오버스캔으로 덮는 길은 접었다 — 프레임마다 필요한 양이 달라 하나는 반드시 어긋난다.
+    if grow > 0:
+        창 = binary_dilation(창, iterations=grow)
+
     # ⛔ 창이 컷의 «거의 전부»면 테까지 먹은 것이다 — 뚫으면 그릇이 사라진다
     if 창.sum() > 보임.sum() * 0.88:
         return None
@@ -87,12 +98,12 @@ def 창찾기(rgb, alpha, tol, open_iter):
     return 창
 
 
-def 뚫기(경로, tol, feather, open_iter):
+def 뚫기(경로, tol, feather, open_iter, grow):
     im = Image.open(경로).convert('RGBA')
     a = np.array(im)
     rgb, alpha = a[..., :3], a[..., 3]
 
-    창 = 창찾기(rgb, alpha, tol, open_iter)
+    창 = 창찾기(rgb, alpha, tol, open_iter, grow)
     if 창 is None:
         return None
 
@@ -127,6 +138,8 @@ def main():
     p.add_argument('--feather', type=float, default=1.2)
     # 테 그늘이 창과 이어지는 «가는 목»을 끊는다 (2026-08-23 · 스캘럽 접시·꽃 접시)
     p.add_argument('--open', type=int, default=4)
+    # 창을 «진갈색 선 바깥»까지 넓힌다 — 안 넓히면 선이 사진 둘레 링으로 남는다
+    p.add_argument('--grow', type=int, default=7)
     args = p.parse_args()
 
     파일들 = sorted(Path(args.폴더).glob('*.png'))
@@ -137,7 +150,7 @@ def main():
     못뚫음 = []
     print(f'\n🍲 창 뚫기 — {len(파일들)}컷\n')
     for f in 파일들:
-        r = 뚫기(f, args.tol, args.feather, args.open)
+        r = 뚫기(f, args.tol, args.feather, args.open, args.grow)
         if r is None:
             못뚫음.append(f.name)
             print(f'  ⛔ {f.stem}  창을 못 찾았다')
