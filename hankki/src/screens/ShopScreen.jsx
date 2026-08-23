@@ -505,6 +505,16 @@ function Curation() {
             onClick={() => setOpenCard((s) => ({ ...s, [it.name]: !s[it.name] }))}
             style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0 }}
           >
+            {/* ↩️ **[2026-08-23 창업자] *"올리고당설명줄바꿈되게"*** — 줄바꿈이 «뜻»을 갈랐다.
+                🔢 실물 = 「어느 요리나 무난하게 잘 어울려요. **꽤**」 / 「오래 사용했던 템이에요」
+                   → 「꽤」 한 글자만 첫 줄 끝에 매달렸다. 「꽤 오래」가 한 덩어리인데 쪼개진다.
+                ⛔ 뿌리 = 브라우저 기본 줄바꿈은 **「한 줄에 최대한 채우고 넘기기」**라
+                   뜻을 안 본다. ＋어제(8/22) `keep-all` 을 뿌리에 걸어 끊을 자리가 «띄어쓰기»뿐이라
+                   매달림이 더 눈에 띈다.
+                ✅ `text-wrap: balance` = 줄 길이를 **고르게** 나눈다 → 실측으로 문장 끝에서 끊긴다:
+                   「어느 요리나 무난하게 잘 어울려요.」 / 「꽤 오래 사용했던 템이에요」
+                ⛔ `pretty` 는 «마지막 줄»의 외톨이만 본다 — 여기 매달림은 첫 줄 끝이라 안 고쳐진다(실측).
+                ⭐ 세 줄짜리 긴 설명(하바티치즈)은 balance 를 걸어도 «한 글자도 안 바뀐다» → 손해가 없다. */}
             <span
               className="t-sub"
               style={{
@@ -514,6 +524,7 @@ function Curation() {
                 overflow: 'hidden',
                 fontSize: 19,
                 lineHeight: 1.75,
+                textWrap: 'balance',
               }}
             >
               {it.benefit}
@@ -562,9 +573,18 @@ function Curation() {
           ✅ 줄간(`lineHeight`)과 위아래 여백을 줄인다.
           ✅ ＋ 창업자 재판정 *"주부의장바구니 설명크기 좀 작게하자 기존크기대로 줄여도될듯"* —
              이 두 줄만 `17.5` 로 덮어쓰고 있었다. 덮어쓰기를 빼서 `.t-sub` 기본(**16px**)으로 되돌린다.
-             ⭐ 새 숫자를 정하지 않는다 — 앱의 다른 설명 줄과 «같은 크기»가 곧 「기존 크기」다. */}
-      <div className="t-sub" style={{ marginTop: 8, marginBottom: 8, lineHeight: 1.45 }}>
-        써보고 좋은 건 나누고 싶은 <b style={{ color: 'var(--brown)' }}>18년차 주부의 추천 아이템</b> · 계속 올라와요
+             ⭐ 새 숫자를 정하지 않는다 — 앱의 다른 설명 줄과 «같은 크기»가 곧 「기존 크기」다.
+          ✅✅ ＋ **[창업자 확정 = ㄱ] *"장바구니 설명줄바꿈없이 크기작게"* → 시안 넷 중 «ㄱ».**
+             🔢 재보니 **그 글 그대로는 한 줄이 안 나온다** — 칸 350px 인데 글이 507px 이라
+                한 줄에 담으려면 글자를 **11px** 까지 줄여야 했다(앱 최소가 14px).
+                그래서 «글자»가 아니라 **«글»을 줄이는 갈래**를 같이 뽑아 판정을 받았다.
+             ✂️ 뺀 말 = 「써보고 좋은 건 나누고 싶은」 · (아래) 「외부 쇼핑몰로 이어져요 ·」
+             ⛔ **「계속 올라와요」는 안 뺐다** — 위 줄에 「지우지 말 것」이라 박혀 있다(재고가 는다는 신호).
+             ⛔ **「제휴」·「수수료」도 안 뺐다** — `check-affiliate.mjs` 가 그 두 낱말을 찾는다(빼면 배포가 막힌다).
+             ⭐ 굵은 말에 `nowrap` — 좁은 폰에서 줄이 넘어가더라도 **덩어리는 안 갈린다**
+                (실측 = 390px 은 한 줄 · 320px 은 두 줄이 되는데 그때도 「추천 아이템」이 안 쪼개진다). */}
+      <div className="t-sub" style={{ fontSize: 15, marginTop: 8, marginBottom: 6, lineHeight: 1.45 }}>
+        <b style={{ color: 'var(--brown)', whiteSpace: 'nowrap' }}>18년차 주부의 추천 아이템</b> · 계속 올라와요
       </div>
       {/* 💰 제휴(대가성) 고지 — **박스를 빼고 한 줄로 줄였다** (2026-08-03, 창업자 지시 두 번)
           ⒜ *"아래위로 좀 지저분해보여"* → 크림 박스를 없앴다
@@ -573,8 +593,8 @@ function Curation() {
                 「안 받는다」가 아니라 **「말 안 하고 받는다」로 읽힌다.** 없는 게 오히려 의심을 산다.
           ⛔ 이 줄을 지우지 말 것. 지우면 `scripts/check-affiliate.mjs` 가 배포를 막는다(제휴 링크가 있을 때).
           ⚠️ 제휴를 «시작하면» 이 문장을 사실에 맞게 고쳐야 한다 — 「받지 않아요」가 그대로면 거짓이 된다. */}
-      <div className="t-sub" style={{ marginTop: 0, marginBottom: 12, lineHeight: 1.45 }}>
-        외부 쇼핑몰로 이어져요 · <b style={{ color: 'var(--brown)' }}>제휴 수수료를 받아도</b> 값은 그대로예요
+      <div className="t-sub" style={{ fontSize: 15, marginTop: 0, marginBottom: 12, lineHeight: 1.45 }}>
+        <b style={{ color: 'var(--brown)', whiteSpace: 'nowrap' }}>제휴 수수료를 받아도</b> 값은 그대로예요
       </div>
 
       {open && (
