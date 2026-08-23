@@ -4,7 +4,15 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
-import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
+// 🥕 **재료 칸은 «재료 규칙»으로** (창업자 할일 4번 · 2026-08-23
+//    📮 *"홈에서 검색하면 아래 음식아이콘 옛날꺼."*)
+//   🔢 뿌리 = 아래 「재료로 찾기」가 `guessFoodIcon`(＝«요리» 규칙)을 불렀다.
+//      「계란」·「두부」를 «요리 이름»으로 판정하니 창업자가 뽑은 재료컷(`ig_`)이 붙을 리가 없었고,
+//      실측하면 8칸이 **전부 옛 SVG 도형**이었다.
+//   ⭐ `guessIngredientIcon` 은 재료표(`ingIcons.js`)를 «먼저» 보고, 없을 때만 요리 규칙으로 내려간다.
+//   ⭐⭐ 같은 뿌리를 2026-08-20 `_repro-재료찾기아이콘-0820.mjs` 가 이미 짚어놨었다(그땐 안 고쳤다).
+//      그 앞엔 v10.96 냉장고 픽커 사고가 있었다 — **재료 칸에 요리 규칙을 쓰면 매번 이 사고가 난다.**
+import FoodIcon, { guessIngredientIcon } from '../components/FoodIcon'
 import { POPULAR_SEARCHES, TAG_LIST, INGREDIENT_CHIPS } from '../data/seed'
 
 export default function SearchScreen() {
@@ -94,7 +102,7 @@ export default function SearchScreen() {
               {INGREDIENT_CHIPS.map((c) => (
                 <button key={c.name} className="press" onClick={() => setQ(c.name)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
                   <div className="emoji-tile" style={{ width: 56, height: 56, borderRadius: '50%' }}>
-                    <FoodIcon name={c.icon || guessFoodIcon(c.name)} size={34} />
+                    <FoodIcon name={c.icon || guessIngredientIcon(c.name)} size={34} />
                   </div>
                   <span style={{ fontSize: 15.5, fontWeight: 500, color: 'var(--text)' }}>{c.name}</span>
                 </button>
