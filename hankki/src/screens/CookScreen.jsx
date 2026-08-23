@@ -201,7 +201,7 @@ export default function CookScreen({ id }) {
 
       {/* 📷 완성 사진 — «마지막 단계에서만». 누르지 않으면 아무 일도 안 일어난다(막지 않는다). */}
       {last && (
-        <div className="cook-shot">
+        <div className={`cook-shot ${photo ? '' : 'empty'}`}>
           <input ref={photoRef} type="file" accept="image/*" onChange={onPhotoFile} style={{ display: 'none' }} />
           {photo ? (
             <>
@@ -224,10 +224,18 @@ export default function CookScreen({ id }) {
               </button>
             </>
           ) : (
-            <button type="button" className="press cook-shot-add" onClick={() => photoRef.current?.click()}>
-              <Icon name="camera" size={19} color="var(--brown)" />
-              완성 사진 남기기
-            </button>
+            // ⭕ [창업자 확정 2026-08-23 = 시안 ㉤] 동그라미 ＋ 아래 글자.
+            //    ⛔ 옛 판(가로 점선 네모)은 «보이는데 안 읽혔다» — 창업자 본인도 이틀을 못 찾았다.
+            //    ⭐ `aria-label` 은 「완성 사진 남기기」 그대로 — 보이는 글자는 원 아래라 짧아야 한다.
+            <>
+              <button
+                type="button" className="press cook-shot-add" aria-label="완성 사진 남기기"
+                onClick={() => photoRef.current?.click()}
+              >
+                <Icon name="camera" size={25} color="#fff" />
+              </button>
+              <span className="cook-shot-label">완성 사진</span>
+            </>
           )}
         </div>
       )}

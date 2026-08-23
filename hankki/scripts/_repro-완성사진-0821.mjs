@@ -110,14 +110,30 @@ console.log('① ⭐⭐ «막지 않는다» — 사진을 안 찍으면 지금�
   const 끝 = await 요리끝까지(page, 제목)
   chk('  마지막 단계까지 걸어왔다 (「다 만들었어요」가 보인다)', 끝)
 
-  const 화면 = await page.evaluate(() => ({
-    사진줄: !!document.querySelector('.cook-shot'),
-    단추글: document.querySelector('.cook-shot-add')?.innerText.replace(/\s+/g, ' ').trim() || '',
-    미리보기: !!document.querySelector('.cook-shot-thumb'),
-    표지칸: !!document.querySelector('.cook-shot-cover'),
-    유니코드이모지: /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(document.querySelector('.cook-shot')?.innerText || ''),
-  }))
-  chk('  「완성 사진 남기기」 단추가 있다', 화면.단추글, '완성 사진 남기기')
+  const 화면 = await page.evaluate(() => {
+    const b = document.querySelector('.cook-shot-add')
+    const r = b?.getBoundingClientRect()
+    const cs = b && getComputedStyle(b)
+    return {
+      사진줄: !!document.querySelector('.cook-shot'),
+      // ⭐ 잣대를 «보이는 글자» → «이름표»로 옮겼다 — 2026-08-23 에 동그라미가 되며 글자가 버튼 밖으로 나갔다.
+      //    지키려는 것은 「그 글자」가 아니라 **「입구가 있고 눌린다」**이다(규칙 18 ⓘ).
+      이름표: b?.getAttribute('aria-label') || '',
+      곁글자: document.querySelector('.cook-shot-label')?.innerText.trim() || '',
+      // ⭕ 창업자 확정(시안 ㉤) — 동그라미 · 손가락 44px · 색이 있다(흰색이면 안 보인다)
+      동그란가: cs ? parseFloat(cs.borderRadius) >= (r.width / 2) - 1 : false,
+      크기: r ? Math.round(Math.min(r.width, r.height)) : 0,
+      바탕있나: cs ? !/rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor) : false,
+      미리보기: !!document.querySelector('.cook-shot-thumb'),
+      표지칸: !!document.querySelector('.cook-shot-cover'),
+      유니코드이모지: /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(document.querySelector('.cook-shot')?.innerText || ''),
+    }
+  })
+  chk('  「완성 사진 남기기」 입구가 있다', 화면.이름표, '완성 사진 남기기')
+  chk('  ⭕ 동그라미다 (창업자 확정 시안 ㉤)', 화면.동그란가)
+  chk('  ⭕ 색이 있다 (⛔흰색·투명이면 안 보인다)', 화면.바탕있나)
+  chk('  ⭕ 곁에 「완성 사진」 글자 (눌러봐야 아는 것을 막는다)', 화면.곁글자, '완성 사진')
+  chk('  손가락 44px 이상', 화면.크기 >= 44)
   chk('  아직 미리보기·표지칸은 «없다» (안 찍었으니까)', !화면.미리보기 && !화면.표지칸)
   chk('  ⛔유니코드 이모지 0개 (우리 아이콘만 · CLAUDE.md 핀)', !화면.유니코드이모지)
 

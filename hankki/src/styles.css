@@ -1811,11 +1811,37 @@ img {
   flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
   padding: 0 16px; margin-bottom: 2px;
 }
+/* ⭕⭕ [창업자 확정 2026-08-23 = 시안 ㉤] 아직 안 찍었을 때 = **동그라미 ＋ 아래 글자**
+   📮 *"완성사진남기기 버튼은 **동그라미로 해서 붙이는게 낫겠다 흰색이고 네모라 안보여.**"*
+      ＋ *"동그라미는 **하얀색말고 색을 입히는게** 좋겠어"* ＋ *"위치는 조금 올리자. **다 만들었어요랑 간섭될 수있어**"*
+   ⛔⛔ 옛 판이 «안 보인 이유» — 실측으로 셋을 확인했다(`_shot-완성사진자리-0823.mjs`)
+      ⑴ `flex:1` 이라 **가로 전체** → 바로 아래 「이전 / 다 만들었어요」와 폭이 같다
+      ⑵ `border: dashed` ＋ `background: none` → 크림 배경에 묻힌다
+      ⑶ 그래서 **「버튼 줄의 일부」**로 읽혀 시선이 그냥 지나간다
+      📌 창업자 본인도 **이틀 동안 못 찾았다**(*"있는거 몰랐어. 버튼이 아래에 붙어있네;;"*).
+         ⛔ 「글이 길어 화면 밖으로 밀린다」는 내 짐작은 **틀렸다** — 712px 로 «멀쩡히 보였다».
+         ⭐ 보이는데 **안 읽힌** 것이다. 그래서 모양을 바꾼다.
+   ⭐ 글자를 남기는 이유 = 원만 두면 「눌러봐야 뭔지 안다」. 13px 라 시끄럽지 않다.
+   ⛔ 사진을 «넣은 뒤»(썸네일 ＋ 「표지로도 쓰기」)는 **가로 줄 그대로** — 그건 읽는 줄이라 세로면 좁다. */
+.cook-shot.empty {
+  flex-direction: column; align-items: flex-end; gap: 3px;
+  margin-bottom: 16px; /* ⬆️ 창업자 *"조금 올리자"* — 「다 만들었어요」와 간섭 안 되게 */
+}
 .cook-shot-add {
   flex: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 7px;
   border: 1.5px dashed var(--cream-deep); border-radius: 14px; background: none;
   color: var(--brown); font-size: 16.5px; font-weight: 700; word-break: keep-all;
   transition: transform 0.08s ease;
+}
+/* ⭕ 동그라미 — 손가락 기준 44px 을 넘긴다(58px 실측) */
+.cook-shot.empty .cook-shot-add {
+  flex: 0 0 auto; width: 58px; height: 58px; min-height: 58px; padding: 0;
+  border: none; border-radius: 50%; background: var(--brown); color: #fff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
+}
+.cook-shot-label {
+  font-size: 13px; font-weight: 700; color: var(--text-sub);
+  margin-right: 5px; word-break: keep-all;
 }
 .cook-shot-add:active { transform: scale(0.97); }
 .cook-shot-thumb {
