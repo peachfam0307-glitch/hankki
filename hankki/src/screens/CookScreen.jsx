@@ -222,6 +222,13 @@ export default function CookScreen({ id }) {
               >
                 <Icon name="x" size={17} color="var(--text-sub)" />
               </button>
+              {/* 📔 [2026-08-24 창업자 제보] **어디에 담기는지 말한다**
+                  📮 *"요리모드→사진→레시피표지로 넣으시겠습니까? 하면 일기탭이랑 달력에자동저장되네..
+                     난 레꾸표지만 되는 줄. **안내가 없어서.**"*
+                  ⛔ 위 체크박스는 **표지만** 말한다. 그런데 사진은 체크와 «무관하게 항상»
+                     일기(`addDiary`/`updateDiary` · 96·101줄)와 달력 칸(`MyRecipesScreen.jsx:157`)에 담긴다.
+                  ⭐ 그래서 「도」를 쓴다 — 「표지로도 쓰기」와 «별개로» 이미 담긴다는 뜻.
+                  ⛔ 체크박스 «안»에 넣지 않는다 — 그러면 「체크를 끄면 일기에도 안 가나?」로 읽힌다. */}
             </>
           ) : (
             // ⭕ [창업자 확정 2026-08-23 = 시안 ㉤] 동그라미 ＋ 아래 글자.
@@ -238,6 +245,9 @@ export default function CookScreen({ id }) {
             </>
           )}
         </div>
+      )}
+      {last && photo && (
+        <div className="cook-shot-note">사진은 한끼 일기·달력에도 담겨요</div>
       )}
 
       <div className="cook-nav">
