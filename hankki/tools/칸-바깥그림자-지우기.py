@@ -66,6 +66,12 @@ for f in sorted(glob.glob(os.path.join(a.folder, '*.png'))):
         살릴 = [i + 1 for i, s in enumerate(sz) if s >= 큰 * a.keep_ratio]
         core = np.isin(lab, 살릴)
     keep = ndimage.binary_dilation(core, structure=K)
+    # ⛔⛔⛔ **접시 «안»은 무조건 보호한다** — 이 줄이 빠져서 2026-08-23 에 «음식을 파먹었다».
+    #    크림·흰밥·하이라이트는 밝기 250 이상이라 `m`(그림)에 안 들어간다.
+    #    그래서 접시 한가운데인데도 「그림이 아닌 것」이 되어 흰색으로 밀렸다.
+    #    📮 창업자 = *"너무 심각하다 ㅠㅠ"* — 맞는 지적이었다.
+    # ⭐ 윤곽을 채우면(fill_holes) 접시 «안»이 통째로 keep 이 된다. 미는 건 바깥뿐이다.
+    keep = ndimage.binary_fill_holes(keep)
     지울 = m & ~keep
     if not 지울.any():
         continue
