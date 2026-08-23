@@ -6,7 +6,7 @@ import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import SourceBadge from '../components/SourceBadge'
 import TimerSheet from '../components/TimerSheet'
-import DiaryEntrySheet, { Stars } from '../components/DiaryEntrySheet'
+import DiaryEntrySheet, { Stars, downscale } from '../components/DiaryEntrySheet'
 import Portal from '../components/Portal'
 import ConfirmSheet from '../components/ConfirmSheet'
 import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
@@ -73,12 +73,20 @@ const isIngHeader = (s) => /^\[[^\]]+\]$/.test(String(s).trim())
 const PICK_FOLD = 4
 
 export default function RecipeDetailScreen({ id }) {
-  const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateRecipe } = useStore()
+  const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateDiary, updateRecipe } = useStore()
   const nav = useNav()
   useWakeLock() // 레시피를 보며 요리할 때 화면이 꺼지지 않게
   const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
   const [timer, setTimer] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
+  // 📷↔📔 [창업자 확정 2026-08-23] 표지 사진 ↔ 일기 사진을 «한 몸»으로
+  //   📮 *"레꾸 화면에서 유저가 내가 만든 음식사진으로 바꾸잖아. 그때! 팝업으로, 일기에도 적용할건가 물으면"*
+  //   📮 *"근데 레꾸이미지에서 **다시 예전 아이콘으로 바꾸면 일기에는 반영이 안돼**"* → 되돌리기도 같이
+  //   ⭐⭐ 「사진을 언제 찍나」를 우리가 «안 정한다» — 표지를 바꾸러 온 사람은 사진이 이미 손에 있다.
+  //      요리 직후엔 아직 접시에 안 담았을 때가 많고, 다음 날 카드는 「어제 것」에만 뜬다.
+  //   ⭐ 이게 「일기 사진만 빼기」도 같이 푼다 — 옛 안(앨범 길게 누르기)은 «숨은 기능»이라 못 찾는다.
+  const [askDiaryPhoto, setAskDiaryPhoto] = useState(null)   // 표지에 넣은 사진 → 일기에도?
+  const [askDiaryRemove, setAskDiaryRemove] = useState(false) // 표지를 아이콘으로 → 일기 사진도 뺄까?
   const [logEntry, setLogEntry] = useState(null)
   const [decorOpen, setDecorOpen] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
@@ -193,7 +201,11 @@ export default function RecipeDetailScreen({ id }) {
   const pickIcon = (k) => {
     // ⭐ iconPicked = 「사람이 직접 골랐다」 — 나중에 제목을 손봐도 이 아이콘을 안 덮는다.
     //   (EditorScreen 의 자동 재추천이 직접 고른 것까지 덮던 것 · 창업자 제보 2026-08-05)
+    const 사진이었다 = r.thumb === 'photo'
     updateRecipe(r.id, { thumb: 'icon', icon: k, iconPicked: true, touched: true })
+    // ③ 사진 → 아이콘으로 «되돌릴» 때 일기 사진도 뺄지 묻는다(창업자 2026-08-23)
+    //    ⛔ 일기에 사진이 있을 때만 — 없으면 물어봐야 할 것이 없다
+    if (사진이었다 && latestEntry?.photo) { setAskDiaryRemove(true); return }
     nav.showToast('표지 아이콘을 바꿨어요')
   }
   // 📷📷 **표지를 «내 사진»으로 — 이 화면에서 바로** (창업자 2026-08-17
@@ -219,6 +231,10 @@ export default function RecipeDetailScreen({ id }) {
       const shrunk = await fitImage(reader.result, 1200)
       updateRecipe(r.id, { thumb: 'photo', image: shrunk, imagePos: '', imageZoom: '', touched: true })
       setIconSheet(false)
+      // ② 일기에도 넣을지 묻는다(창업자 2026-08-23)
+      //    ⛔ 일기가 «없으면» 안 묻는다 — 넣을 데가 없다. 새 기록을 만들면 「만들었어요」를 대신하는 꼴이라 헷갈린다
+      //    ⛔ 이미 사진이 있으면 안 묻는다 — 유저가 넣어둔 걸 말없이 덮지 않는다(`CookScreen.finish()` 와 같은 원칙)
+      if (latestEntry && !latestEntry.photo) { setAskDiaryPhoto(shrunk); return }
       nav.showToast('표지를 내 사진으로 바꿨어요')
     }
     reader.readAsDataURL(file)
@@ -745,6 +761,38 @@ export default function RecipeDetailScreen({ id }) {
           danger
           onConfirm={doDelete}
           onClose={() => setConfirmDel(false)}
+        />
+      )}
+
+      {/* 📷→📔 ② 표지에 넣은 사진을 «일기에도» (창업자 확정 2026-08-23)
+          ⭐ 표지는 1200px 인데 일기는 900px 이다 → `downscale` 을 한 번 태운다(같은 함수를 쓴다) */}
+      {askDiaryPhoto && (
+        <ConfirmSheet
+          title="일기에도 넣을까요?"
+          message={`${dateLabel(latestEntry.at)}에 만든 기록이 있어요.\n넣으면 일기 달력과 앨범에 이 사진으로 떠요.`}
+          confirmLabel="일기에도 넣기"
+          onConfirm={async () => {
+            updateDiary(latestEntry.id, { photo: await downscale(askDiaryPhoto) })
+            nav.showToast('표지와 일기에 담았어요')
+          }}
+          onClose={() => setAskDiaryPhoto(null)}
+        />
+      )}
+
+      {/* 📔✂️ ③ 표지를 아이콘으로 «되돌릴» 때 일기 사진도 뺄지 (창업자 확정 2026-08-23)
+          📮 *"레꾸이미지에서 다시 예전 아이콘으로 바꾸면 일기에는 반영이 안돼"*
+          ⭐⭐ **기록은 그대로 두고 «사진만» 뺀다** — 통째 삭제가 아니다(별점·메모·날짜는 산다) */}
+      {askDiaryRemove && (
+        <ConfirmSheet
+          title="일기 사진도 뺄까요?"
+          message={`${dateLabel(latestEntry.at)} 일기에 이 사진이 들어가 있어요.\n빼면 다시 음식 아이콘으로 떠요. 별점·메모는 그대로 남아요.`}
+          confirmLabel="사진 빼기"
+          onConfirm={() => {
+            updateDiary(latestEntry.id, { photo: null })
+            nav.showToast('표지와 일기를 아이콘으로 바꿨어요')
+          }}
+          // ⛔ 여기서 토스트를 띄우지 않는다 — `ConfirmSheet` 는 확인 뒤에도 `onClose` 를 부른다(토스트가 두 번 뜬다)
+          onClose={() => setAskDiaryRemove(false)}
         />
       )}
 

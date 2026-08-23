@@ -407,9 +407,16 @@ function Curation() {
     nav.showToast('장보기 리스트에 담았어요')
   }
 
+  // 🏬 **「파는 곳」 이름들** — `brand` 칸에 들어 있어도 이건 제조사가 아니라 «쇼핑몰»이다.
+  // ⛔⛔ [2026-08-23 창업자] *"자연드림은 또 왜 바꾼거야"* · *"자연드림도 뒤에 붙어야지 딱지만들어서"*
+  //    → 내가 `brand` 를 전부 «제조사»로 묶어 이름 앞에 붙였는데, **자연드림·한살림은 파는 곳**이다.
+  //    🔢 실측 = brand 값 28가지 중 파는 곳은 **자연드림 1 · 한살림 2** 뿐이고 나머지는 전부 제조사다.
+  //    📌 **한 칸(`brand`)에 두 가지가 섞여 있었다.** 그래서 「이름 앞이냐 딱지냐」를 이 목록으로 가른다.
+  const 파는곳 = ['자연드림', '한살림', '쿠팡', '컬리', '마켓컬리', '오아시스', '네이버', '산지톡']
   // '사러가기' 버튼에 붙는 구매처 배지 라벨
   const mallLabel = (it) => {
     if (it.mall === 'coupang') return '쿠팡'
+    if (it.brand === '자연드림') return '자연드림'
     if (it.mall === 'oasis') return '오아시스'
     const u = it.url || ''
     // ⭐ 한살림만 「조합원만」을 덧붙인다 — 창업자 2026-08-03
@@ -422,12 +429,24 @@ function Curation() {
     //      ⛔ 판정을 `url` 로 하면 안 된다 — url 을 뺐으니 영영 안 걸린다(`mall` 표식으로).
     if (isHansalim(it)) return '한살림 · 조합원 전용'
     if (u.includes('sanjitalk')) return '산지톡'
-    if (u.includes('smartstore.naver')) return '네이버'
+    if (u.includes('smartstore.naver') || u.includes('brand.naver')) return '네이버'
+    // ⛔⛔ [2026-08-23 창업자] *"하바티치즈는 왜 딱지없어? 쇼핑몰"* · *"쿠팡딱지 붙여야해 (하바티)"*
+    //    🔢 실측 = `mall:'coupang'` 26개 · `mall:'oasis'` 2 · `mall:'hansalim'` 7 인데
+    //       **쿠팡 링크는 5개**다 → 「링크는 쿠팡인데 `mall` 표식이 빠진 줄」이 있었다(하바티치즈).
+    //    ⭐ 표식이 «있어야만» 붙는 구조라 **손으로 안 적으면 조용히 빠진다.** 데이터를 고치면
+    //       다음에 제품을 넣을 때 또 빠진다 → **링크를 보고도 알아채게** 한 곳에서 고친다.
+    //    ⚠️ `mall` 표식이 우선이다 — 링크가 바뀌어도 창업자가 적어 둔 값이 이긴다.
+    if (u.includes('coupang.com')) return '쿠팡'
+    if (u.includes('oasis.co.kr')) return '오아시스'
+    if (u.includes('kurly.com')) return '컬리'
     return ''
   }
-  // 🏷 [2026-08-22 창업자] *"브랜드 딱지는 따로 달자 · 제목에서 빼고"* — 셋을 색으로 가른다:
-  //    브랜드(회색) · 분류tag(모래) · 쇼핑몰mall(크림). ⛔같은 색이면 무엇을 말하는 딱지인지 모른다.
-  const brandStyle = { fontSize: 15.5, fontWeight: 700, color: 'var(--text-sub)', background: 'var(--line)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
+  // 🏷 딱지는 이제 **둘**이다 — 분류tag(모래) · 쇼핑몰mall(크림).
+  // ⛔⛔ [2026-08-23] 「브랜드 딱지(회색)」를 **없앴다.** 2026-08-22 에 *"브랜드 딱지는 따로 달자"* 로
+  //    만들었는데, 창업자가 말한 「브랜드」는 **쿠팡·컬리 같은 «파는 곳»**이었고 나는 «제조사»로 읽었다.
+  //    → *"제조사는 딱지붙일필요가 없어."* · *"쇼핑몰 딱지만 붙이자."*
+  //    📌 색으로 가른다고 적어놨지만 회색과 크림은 **둘 다 옅은 배경＋진한 글씨**라 실제로는 안 갈라졌다.
+  //       ⭐ **「색을 달리했다」와 「구분된다」는 다른 말이다.** 눈으로 봤어야 알 수 있었다(규칙 21).
   const tagStyle = { fontSize: 16, fontWeight: 700, color: '#8a6a3e', background: 'var(--cream)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
   const mallStyle = { fontSize: 16, fontWeight: 700, color: 'var(--brown)', background: 'var(--cream-deep)', borderRadius: 6, padding: '2px 7px', flex: '0 0 auto' }
   // 🔴 「조합원만」은 **확 튀게** — 창업자 2026-08-03 *"색깔 확튀게 올려줘."*
@@ -453,8 +472,20 @@ function Curation() {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            {it.brand && it.brand !== mallLabel(it) && <span style={brandStyle}>{it.brand}</span>}
-            <span style={{ fontSize: 21, fontWeight: 800, color: 'var(--text)' }}>{it.name}</span>
+            {/* ⛔⛔ [2026-08-23 창업자] *"장바구니 «브랜드»가 쿠팡, 컬리 이런거 말하는거야..
+                «알라»는 치즈브랜드고..ㅠㅠ"* → 확정 = *"제조사는 딱지붙일필요가 없어."* · *"쇼핑몰 딱지만 붙이자."*
+                ⭐ **딱지 하나가 두 가지를 말하고 있었다.** 딱지 자리 = 「어디서 사나」(쿠팡·오아시스·네이버·한살림)다.
+                   제조사(알라·풀무원·오월햇살…)를 같은 자리·같은 모양으로 놓으니 «파는 곳»으로 읽힌다.
+                   ⚠️ 색으로 갈라 놨었지만(회색 `--line` ↔ 크림 `--cream-deep`) **둘 다 옅은 배경＋진한 글씨**라 안 갈라졌다.
+                ✅ 제조사는 **이름 앞 글자**로 — 같은 날 광고 화면에서 이미 그렇게 정했다
+                   (창업자 *"레시피에 광고는 지금 좀 지저분해. 브랜드 버튼이"* → `RecipeDetailScreen.jsx:602`).
+                📌 **같은 것은 같은 모양으로.** 두 화면이 브랜드를 다르게 그리면 유저는 둘을 다른 것으로 읽는다.
+                ⛔ `curation.js` 의 `brand` 데이터는 **그대로 둔다** — 지우면 「이번 주 픽」 게이트가 다시 눈이 먼다
+                   (v11.21 에서 이름에서 브랜드를 떼자 「자연누리 훈제오리」·「무무덕 훈제오리」가 같은 제품으로 보였다).
+                   ⭐ 화면에서 «합쳐 보여주기만» 한다. */}
+            <span style={{ fontSize: 21, fontWeight: 800, color: 'var(--text)' }}>
+              {it.brand && !파는곳.includes(it.brand) ? `${it.brand} ${it.name}` : it.name}
+            </span>
             {it.tag && <span style={tagStyle}>{it.tag}</span>}
             {mallLabel(it) && <span style={mallStyleFor(mallLabel(it))}>{mallLabel(it)}</span>}
           </div>
