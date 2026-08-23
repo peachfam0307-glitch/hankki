@@ -1,6 +1,7 @@
 import Portal from './Portal'
 import Icon from './Icon'
 import { sharePendingNow, saveShareFiles } from '../shareCover'
+import { useLayerBack } from '../useBackHandler'
 import uiDuoHi from '../assets/stickers/photo/gp_duohi.png'
 
 // 📮📮 **「지금 보내기」 — 다 만들었는데 «공유 허가»가 끊겼을 때 띄운다.**
@@ -16,6 +17,13 @@ import uiDuoHi from '../assets/stickers/photo/gp_duohi.png'
 //   📌 랜덤 카드(`ShareDrawCard`)에도 같은 장치가 있다. **두 곳을 같이 고쳐야 한다** —
 //      한쪽만 고쳐서 오래 남았던 적이 있다(카드 푸터 주소 · v8.41→08-04).
 export default function SendNowSheet({ pending, onClose }) {
+  // ⛔ 랜덤 카드와 «같은 구멍» — 뒤로가기 층에 없어서 뒤로 누르면 홈으로 샌다
+  //    (창업자 2026-08-23 *"뒤로가기할때야. 닫기누르면 그대로있어"*).
+  // ⭐ 이 시트는 «늘 붙어 있고» `pending` 이 없을 때 null 을 돌려준다 → 마운트 ≠ 열림.
+  //    그래서 `useModalBack`(마운트=열림)이 아니라 `useLayerBack`(열릴 때만)이 맞다.
+  // ⛔ 훅은 조건부 `return` «앞»에 둔다 — 뒤에 두면 열릴 때 훅 개수가 달라져 앱이 죽는다
+  //    (2026-08-20 메모지에서 실제로 겪었다).
+  useLayerBack(!!pending, onClose)
   if (!pending) return null
   const send = () => {
     const t = sharePendingNow(pending)

@@ -238,11 +238,12 @@ export default function ShopScreen() {
                 onClick={() => (editShops ? setShopForm(s) : openUrl(s.url))}
               >
                 {s.iconType === 'label' ? (
-                  <TextTile text={s.name} size={54} radius={14} />
+                  <TextTile text={s.name} size={64} radius={16} />
                 ) : s.iconType === 'icon' ? (
                   <>
-                    <div className="emoji-tile" style={{ width: 54, height: 54 }}>
-                      <FoodIcon name={s.icon || 'bag'} size={34} />
+                    {/* 🛍 [2026-08-23 창업자] *"쇼핑몰 바로가기 크기키우기"* — 칩(88×96)에 맞춰 같이 키운다 */}
+                    <div className="emoji-tile" style={{ width: 64, height: 64 }}>
+                      <FoodIcon name={s.icon || 'bag'} size={40} />
                     </div>
                     <span className="nm">{s.name}</span>
                   </>
@@ -555,7 +556,14 @@ function Curation() {
       {/* ⭐ 「계속 올라와요」를 여기로 올렸다 — 창업자 2026-08-03 *"주부의 장바구니옆에 계속 올라오다는
           문구 적어줘. (원래 지워지는 아래안내판에 있었음)"*. 아래 안내판을 빼면서 그 말만 살렸다.
           ⛔ 이 말은 지우지 말 것 — **재고가 계속 는다는 신호**라 다음에 또 들어올 이유가 된다. */}
-      <div className="t-sub" style={{ fontSize: 17.5, marginTop: 12, marginBottom: 14 }}>
+      {/* 📏 [2026-08-23 창업자] *"주부의장바구니 설명 계속올라와요.외부쇼핑몰로이어져요 나시 줄간줄이기."*
+          🔢 이 줄은 폰에서 두 줄로 흐르는데 줄간이 벌어져 «설명이 화면을 먹는다».
+          ⛔ 글자 크기는 안 줄인다 — 8/21 에 「글자2」로 470곳을 키운 판정과 정면으로 부딪친다.
+          ✅ 줄간(`lineHeight`)과 위아래 여백을 줄인다.
+          ✅ ＋ 창업자 재판정 *"주부의장바구니 설명크기 좀 작게하자 기존크기대로 줄여도될듯"* —
+             이 두 줄만 `17.5` 로 덮어쓰고 있었다. 덮어쓰기를 빼서 `.t-sub` 기본(**16px**)으로 되돌린다.
+             ⭐ 새 숫자를 정하지 않는다 — 앱의 다른 설명 줄과 «같은 크기»가 곧 「기존 크기」다. */}
+      <div className="t-sub" style={{ marginTop: 8, marginBottom: 8, lineHeight: 1.45 }}>
         써보고 좋은 건 나누고 싶은 <b style={{ color: 'var(--brown)' }}>18년차 주부의 추천 아이템</b> · 계속 올라와요
       </div>
       {/* 💰 제휴(대가성) 고지 — **박스를 빼고 한 줄로 줄였다** (2026-08-03, 창업자 지시 두 번)
@@ -565,7 +573,7 @@ function Curation() {
                 「안 받는다」가 아니라 **「말 안 하고 받는다」로 읽힌다.** 없는 게 오히려 의심을 산다.
           ⛔ 이 줄을 지우지 말 것. 지우면 `scripts/check-affiliate.mjs` 가 배포를 막는다(제휴 링크가 있을 때).
           ⚠️ 제휴를 «시작하면» 이 문장을 사실에 맞게 고쳐야 한다 — 「받지 않아요」가 그대로면 거짓이 된다. */}
-      <div className="t-sub" style={{ fontSize: 17.5, marginTop: 12, marginBottom: 16, lineHeight: 1.85 }}>
+      <div className="t-sub" style={{ marginTop: 0, marginBottom: 12, lineHeight: 1.45 }}>
         외부 쇼핑몰로 이어져요 · <b style={{ color: 'var(--brown)' }}>제휴 수수료를 받아도</b> 값은 그대로예요
       </div>
 

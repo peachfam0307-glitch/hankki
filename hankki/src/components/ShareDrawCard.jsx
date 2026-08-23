@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toJpeg } from 'html-to-image'
 import { fontCSS, fontOptFrom } from '../fontEmbed'
 import Icon from './Icon'
+import { useModalBack } from '../useBackHandler'
 // ⛔ UI엔 유니코드 이모지를 쓰지 않는다 — 우리 아이콘·스티커만(CLAUDE.md 핀).
 //    v8.63에서 앱 전체를 정리할 때 이 시트는 '보류'로 빠져 🔄💌🖼🐻🐧가 남아 있었다(2026-07-29 정리).
 import uiDuoHi from '../assets/stickers/photo/gp_duohi.png'
@@ -839,6 +840,16 @@ export function RecipeCard({ recipe }) {
 }
 
 export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
+  // ⛔⛔ **뒤로가기가 이 카드를 못 보고 «홈»으로 샜다** (창업자 2026-08-23
+  //    *"레꾸자랑 갑자기 홈가는게 뒤로가기할때야. 닫기누르면 그대로있어"*)
+  //   ⭐⭐ 창업자가 「닫기 ↔ 뒤로가기」로 갈라준 게 답을 줬다 —
+  //      닫기는 `onClose` 를 직접 부르니 멀쩡하고, 뒤로가기는 «층»을 타는데 이 카드가 그 층에 없었다.
+  //      → `App.jsx` 의 4번 갈래(「다른 탭이면 홈으로」)로 떨어진다.
+  //   ⛔ v11.23 에서 고친 건 «선택 시트»(꾸민 표지/랜덤 카드 고르는 창)뿐이라 여기는 그대로 남아 있었다.
+  //   ⭐ 이 컴포넌트는 «열릴 때만» 붙는다(`{share && <ShareDrawCard …>}`) → 마운트 = 열림.
+  //      그래서 `useModalBack` 이 맞다(`useLayerBack` 은 늘 붙어 있는 것용).
+  //   ⭐ 레꾸자랑·레시피 상세 «두 곳»이 이 컴포넌트를 쓴다 — 여기서 고치면 둘 다 고쳐진다.
+  useModalBack(onClose)
   const title = recipe?.title || '오늘의 한 끼'
   const tags = useMemo(() => tagsOf(recipe), [recipe])
   const [draw, setDraw] = useState(drawState)

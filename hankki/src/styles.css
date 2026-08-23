@@ -1452,9 +1452,12 @@ img {
 }
 
 /* 쇼핑몰 바로가기 칩 */
+/* 🛍 [2026-08-23 창업자] *"쇼핑몰 바로가기 크기키우기"*
+ *   🔢 옛 값 = 74×82px. 손가락 기준(44px)은 넘지만 **아이콘이 작아 어느 몰인지 한눈에 안 든다.**
+ *   ✅ 88×96 · 아이콘 자리도 같이 키운다. 가로로 굴리는 줄이라 칸이 커져도 잘리지 않는다. */
 .shop-chip {
-  width: 74px;
-  height: 82px;
+  width: 88px;
+  height: 96px;
   border-radius: var(--r-md);
   background: var(--surface);
   border: 1px solid var(--line);

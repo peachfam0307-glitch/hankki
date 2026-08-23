@@ -12,6 +12,7 @@ import { matchKo } from '../utils'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
 import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
+import { useLayerBack } from '../useBackHandler'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
 // 🐻 엄지척 = **물결 정본**(창업자 2026-08-14 · `gt_01`). 옛 `ui/gom_thumbsup` 은 매끈 곰이었다.
@@ -33,6 +34,16 @@ export default function BragScreen() {
   const { recipes, updateRecipe } = useStore()
   const nav = useNav()
   const [pick, setPick] = useState(null) // 탭한 레시피 → 선택 시트
+  // ⛔⛔ **뒤로가기가 홈으로 샜다** (창업자 할일 1번 · 2026-08-23
+  //    📮 *"레꾸자랑에서 고르고하고 뒤로가면 홈으로 감."*)
+  //   🔢 뿌리 = 아래 선택 시트를 `.sheet-mask` 로 **맨손으로** 그리고 있었다.
+  //      `nav.openModal` 을 안 부르니 시트가 «뒤로가기 층»에 아예 없다
+  //      → 뒤로가기가 시트를 못 보고 `App.jsx:216` 4번 갈래(「다른 탭이면 홈으로」)로 떨어진다.
+  //      ⭐ 시트는 «닫히긴» 했다 — 탭이 홈으로 갈아치워지며 통째로 언마운트된 것뿐이라
+  //         눈으로는 「잘 닫혔는데 왜 홈이지?」로 보인다. 그래서 재현판이 **탭 이름**을 잰다.
+  //   ✅ 답 = 다른 시트들과 «같은 문법». `useLayerBack` 이 열릴 때 히스토리 칸을 쌓고
+  //      뒤로가기가 그 칸을 소비해 시트만 닫는다(＝탭은 그대로).
+  useLayerBack(!!pick, () => setPick(null))
   const [share, setShare] = useState(null) // 랜덤 카드 모달로 보낼 레시피
   const [busy, setBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩 표시)
   const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
