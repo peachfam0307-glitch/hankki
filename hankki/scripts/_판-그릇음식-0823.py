@@ -99,6 +99,7 @@ def 창재기(경로):
         'h': round((wy.max() - wy.min() + 1) / H, 4),
         'cx': round((wx.min() + wx.max()) / 2 - x0, 1) / W,
         'cy': round((wy.min() + wy.max()) / 2 - y0, 1) / H,
+        'W': int(W), 'H': int(H),
         '컷': f'{W}×{H}',
     }
 
@@ -130,11 +131,17 @@ if 못잰것:
 
 def 칸(경로, 음식경로, zoom, px=크기):
     c = 창값[경로]
-    pw, ph = px * c['w'] * OVER, px * c['h'] * OVER
-    left, top = px * c['cx'] - pw / 2, px * c['cy'] - ph / 2
+    # ⛔⛔ **칸을 «정사각»으로 두면 프레임이 눌려 늘어난다** (창업자 2026-08-23
+    #    *"바깥접시라인이 고르게선명하지않아 파먹힌느낌나는데"*).
+    #    🔢 pb_o03 은 566×418 인데 360×360 에 넣으면 세로로 1.35배 늘어난다 —
+    #       1~2px 짜리 진갈색 선이 «방향마다 다른 두께»가 되어 파먹힌 것처럼 보인다.
+    # ✅ 칸을 컷의 «가로세로 그대로» 만든다. 늘리지 않는다.
+    ph_cell = px * c['H'] / c['W']
+    pw, ph = px * c['w'] * OVER, ph_cell * c['h'] * OVER
+    left, top = px * c['cx'] - pw / 2, ph_cell * c['cy'] - ph / 2
     return (
-        f'<div class="cell" style="width:{px}px;height:{px}px">'
-        f'<div class="hole" style="left:0;top:0;width:{px}px;height:{px}px;'
+        f'<div class="cell" style="width:{px}px;height:{ph_cell:.1f}px">'
+        f'<div class="hole" style="left:0;top:0;width:{px}px;height:{ph_cell:.1f}px;'
         f'-webkit-mask-image:url({c["마스크"]});mask-image:url({c["마스크"]});">'
         f'<div class="inner" style="left:{left:.1f}px;top:{top:.1f}px;width:{pw:.1f}px;height:{ph:.1f}px">'
         f'<img class="food" src="{음식uri[음식경로]}" alt="" style="transform:scale({zoom})">'
