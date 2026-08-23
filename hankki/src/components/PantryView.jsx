@@ -401,7 +401,9 @@ export default function PantryView() {
       )}
       {sorted.map((p) => {
         const chip = expiryChip(daysLeft(p.expiry))
-        const sub = [p.expiry ? `유통기한 ${p.expiry.replace(/-/g, '.')}` : '', p.memo].filter(Boolean).join(' · ')
+        // 🧊 [2026-08-23] 옛 판은 둘을 « · »로 «한 덩어리 글자»로 이어 붙였다 → 갈라 둔다(아래 참조)
+        const 기한글 = p.expiry ? `유통기한 ${p.expiry.replace(/-/g, '.')}` : ''
+        const 메모글 = String(p.memo || '').trim()
         return (
           <div key={p.id} className="wish-row">
             {/* 재료를 탭하면 편집(수량·유통기한·이모지·메모) */}
@@ -425,9 +427,30 @@ export default function PantryView() {
                        유통기한이 «없는» 재료는 아랫줄이 통째로 비어서, 줄 전체가 그냥 «읽는 것»처럼 보였다.
                     ⭐ 그래서 빈 자리에 **할 일을 적어 둔다** — 누를 자리와 «눌러서 얻는 것»이 한 곳에 있다.
                     ⭐ 회색이 아니라 포인트색으로 — 회색이면 「설명」으로 읽히고, 색이 있어야 「누르는 것」이 된다. */}
-                {sub
-                  ? <div className="t-sub" style={{ marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>
-                  : (
+                {/* 🧊🧊 **[2026-08-23 창업자] 유통기한·메모가 잘려서 «한눈에» 안 보였다**
+                    📮 *"냉장고재료 유통기한 메모 한눈에보이게수정"*
+                    🔢 실물 = 「유통기한 2026.09.06 · 냉…」 — 보관 메모가 첫 글자만 남고 잘렸다.
+                    ⛔ 뿌리 = 둘을 « · »로 이어 붙여 **한 덩어리 글자**로 만들고 `nowrap` ＋ 말줄임을 걸었다.
+                       칩(D-14)·✕까지 같은 줄에 있어 남는 폭이 좁은데 거기에 둘을 욱여넣었다.
+                    ⛔⛔ **처음 고침(두 줄 흐르게)도 모자랐다** — 실측 「유통기한 2026.09.06 · 냉동실 문쪽 ·
+                       봉지 열었음」이 두 줄에서도 잘렸다. 이어 붙인 채로는 **메모가 길수록 날짜까지 같이 밀린다.**
+                       📌 급한 건 «날짜»인데 덜 급한 메모가 날짜를 밀어내는 구조였다.
+                    ✅ **둘을 갈라 둔다** — 날짜는 «자기 줄»에서 절대 안 잘리고(`nowrap`),
+                       메모만 아래에서 두 줄까지 흐른다. 그래서 날짜는 «언제나» 다 보인다.
+                    ⭐ 높이는 있는 만큼만 는다 — 날짜만 있으면 한 줄(옛 판과 같다), 짧은 메모면 두 줄. */}
+                {기한글 && (
+                  <div className="t-sub" style={{
+                    marginTop: 2, fontWeight: 600, color: 'var(--brown)',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>{기한글}</div>
+                )}
+                {메모글 && (
+                  <div className="t-sub" style={{
+                    marginTop: 기한글 ? 1 : 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: 1.35,
+                  }}>{메모글}</div>
+                )}
+                {!기한글 && !메모글 && (
                     <div style={{ marginTop: 2, fontSize: 15, fontWeight: 600, color: 'var(--brown)', opacity: 0.8, display: 'flex', alignItems: 'center', gap: 3, overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       눌러서 유통기한 · 보관 메모 넣기
                       <Icon name="chevron-right" size={13} stroke={2.4} />

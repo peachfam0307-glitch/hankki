@@ -72,7 +72,11 @@ function WeekBox({ w, 기본, open }) {
       <div className="weekly-row">
         {w.items.map((r) => (
           <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
-            <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
+            {/* 🍱 [2026-08-23 창업자] *"자주해먹는요리 요리이모지들어간 그림 크기 다른칸이비해 작음.
+                조금만더크게수정."* — 맞다. 판은 넓은데 그림만 `56%` 라 가운데가 휑했다.
+                ⛔ 카드 폭을 키우지 않는다 — 한 줄에 세 칸 보이는 게 이 줄의 값어치다.
+                ✅ 판 «안»에서 그림만 키운다(56% → 70%). 이름표 자리도 그대로다. */}
+            <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2.5rem" iconSize="70%" showDecor />
             <div className="name">{r.title}</div>
           </button>
         ))}
@@ -446,7 +450,11 @@ export default function HomeScreen() {
             <div className="hscroll">
               {often.map((r) => (
                 <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
-                  <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
+                  {/* 🍱 [2026-08-23 창업자] *"자주해먹는요리 요리이모지들어간 그림 크기 다른칸이비해 작음.
+                      조금만더크게수정."* — 맞다. 판은 넓은데 그림만 `56%` 라 가운데가 휑했다.
+                      ⛔ 카드 폭을 키우지 않는다 — 한 줄에 세 칸 보이는 게 이 줄의 값어치다.
+                      ✅ 판 «안»에서 그림만 키운다(56% → 70%). 이름표 자리도 그대로다. */}
+                  <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2.5rem" iconSize="70%" showDecor />
                   <div className="name">{r.title}</div>
                 </button>
               ))}

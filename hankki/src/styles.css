@@ -757,9 +757,31 @@ img {
 }
 
 /* 내 레시피 - 그리드 */
+/* 📐📐📐 **[2026-08-23 창업자] 「3장 보기」에서 줄 높이가 무너지던 것 — 뿌리는 «1fr» 이다**
+ *
+ * 📮 창업자 = *"전체레시피 3장보기하면 줄높이 무너짐수정추가"* (＋폰 캡처)
+ *
+ * ⛔⛔ **`1fr` 은 「1/n 로 나눈다」가 아니다 — `minmax(auto, 1fr)` 이다.**
+ *    최소가 `auto`(＝그 칸 «내용»의 최소 너비)라, 내용이 안 줄어들면 **그 칸이 남을 밀어낸다.**
+ *
+ * ⭐⭐ 그런데 이건 **어제(2026-08-22) 우리가 만든 것**이다 — `word-break: keep-all` 을
+ *    **body 뿌리**에 걸었다(위 199줄). 한글은 원래 아무 데서나 끊기는데 `keep-all` 은
+ *    **띄어쓰기에서만** 끊는다 → 「돼지고기김치두루치기」같이 띄어쓰기 없는 이름은
+ *    **통째가 그 칸의 최소 너비**가 되어 칸을 벌린다.
+ *    📌 그 주석엔 *"`anywhere` 는 «최소 너비» 계산을 바꾸니 안 쓴다"* 라고 적어뒀는데,
+ *       **`keep-all` 도 같은 것을 바꾼다는 걸 못 봤다.** 한쪽만 의심했다.
+ *
+ * 🔢 실측(390px · 3열) = 기본 `[111,111,111]` / **`keep-all`＋`1fr` → `[79,150,105]`**
+ *    / `minmax(0,1fr)` → `[111,111,111]`. 앱에서도 그림이 **103·147·82** 로 갈려
+ *    한 줄 안에서 **65px** 어긋났다(창업자 캡처의 그 어긋남과 같은 값).
+ *
+ * ✅ `minmax(0, 1fr)` = 최소를 0 으로 풀어 **칸을 진짜 1/n 로** 나눈다.
+ *    ⭐ 글자는 그대로 `keep-all` 이라 낱말 «가운데»는 여전히 안 잘린다 — 넘치면 `break-word` 가 받는다.
+ * 🔒 재현판 = `scripts/_probe-3장줄높이-0823.mjs` (긴 이름을 «심어서» 잰다 —
+ *    안 심으면 씨앗 데이터엔 그런 이름이 없어 **늘 초록불**이다) */
 .grid2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
 }
 /* 📐📐 **넓은 화면에선 칸이 늘어난다** (창업자 패드 캡처 2026-08-09 밤
@@ -775,9 +797,11 @@ img {
   .grid2 { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 }
 /* 모아보기 '그리드(작게)' — 3열 촘촘하게 */
+/* ⭐ `minmax(0, 1fr)` 이유는 바로 위 `.grid2` 주석에 — 창업자가 제보한 «그 자리»가 여기다.
+ *    3열이라 칸이 좁아 **눈에 제일 크게 드러난다**(2열은 같은 이름이라도 덜 벌어진다). */
 .grid3 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 9px;
 }
 
@@ -1452,9 +1476,12 @@ img {
 }
 
 /* 쇼핑몰 바로가기 칩 */
+/* 🛍 [2026-08-23 창업자] *"쇼핑몰 바로가기 크기키우기"*
+ *   🔢 옛 값 = 74×82px. 손가락 기준(44px)은 넘지만 **아이콘이 작아 어느 몰인지 한눈에 안 든다.**
+ *   ✅ 88×96 · 아이콘 자리도 같이 키운다. 가로로 굴리는 줄이라 칸이 커져도 잘리지 않는다. */
 .shop-chip {
-  width: 74px;
-  height: 82px;
+  width: 88px;
+  height: 96px;
   border-radius: var(--r-md);
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1633,9 +1660,15 @@ img {
 }
 
 /* 커스텀 아이콘 그리드 (재료·요리) */
+/* 📐 [2026-08-23] `.grid3` 와 «같은 구멍» — 아이콘 고르기 창도 이름표를 그린다.
+ *   🔢 실측(390px · 4열) = 「돼지고기김치두루치기」가 끼면 **[51,158,68,51]**(벌어짐 107px)
+ *      → `minmax(0, 1fr)` 로 **[82,82,82,82]**.
+ *   ⭐ 이름표는 원래 `line-clamp: 2` ＋ `overflow: hidden` 이라 «넘치면 자르는» 설계다.
+ *      그러니 칸을 벌릴 이유가 없다 — 벌리는 쪽이 설계와 어긋났다.
+ *   ⛔ 안 고치면 재료 171 · 음식 391 이름 중 «띄어쓰기 없는 긴 것»이 걸릴 때마다 창이 흔들린다. */
 .ficon-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 .ficon-cell {
@@ -1811,11 +1844,37 @@ img {
   flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
   padding: 0 16px; margin-bottom: 2px;
 }
+/* ⭕⭕ [창업자 확정 2026-08-23 = 시안 ㉤] 아직 안 찍었을 때 = **동그라미 ＋ 아래 글자**
+   📮 *"완성사진남기기 버튼은 **동그라미로 해서 붙이는게 낫겠다 흰색이고 네모라 안보여.**"*
+      ＋ *"동그라미는 **하얀색말고 색을 입히는게** 좋겠어"* ＋ *"위치는 조금 올리자. **다 만들었어요랑 간섭될 수있어**"*
+   ⛔⛔ 옛 판이 «안 보인 이유» — 실측으로 셋을 확인했다(`_shot-완성사진자리-0823.mjs`)
+      ⑴ `flex:1` 이라 **가로 전체** → 바로 아래 「이전 / 다 만들었어요」와 폭이 같다
+      ⑵ `border: dashed` ＋ `background: none` → 크림 배경에 묻힌다
+      ⑶ 그래서 **「버튼 줄의 일부」**로 읽혀 시선이 그냥 지나간다
+      📌 창업자 본인도 **이틀 동안 못 찾았다**(*"있는거 몰랐어. 버튼이 아래에 붙어있네;;"*).
+         ⛔ 「글이 길어 화면 밖으로 밀린다」는 내 짐작은 **틀렸다** — 712px 로 «멀쩡히 보였다».
+         ⭐ 보이는데 **안 읽힌** 것이다. 그래서 모양을 바꾼다.
+   ⭐ 글자를 남기는 이유 = 원만 두면 「눌러봐야 뭔지 안다」. 13px 라 시끄럽지 않다.
+   ⛔ 사진을 «넣은 뒤»(썸네일 ＋ 「표지로도 쓰기」)는 **가로 줄 그대로** — 그건 읽는 줄이라 세로면 좁다. */
+.cook-shot.empty {
+  flex-direction: column; align-items: flex-end; gap: 3px;
+  margin-bottom: 16px; /* ⬆️ 창업자 *"조금 올리자"* — 「다 만들었어요」와 간섭 안 되게 */
+}
 .cook-shot-add {
   flex: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 7px;
   border: 1.5px dashed var(--cream-deep); border-radius: 14px; background: none;
   color: var(--brown); font-size: 16.5px; font-weight: 700; word-break: keep-all;
   transition: transform 0.08s ease;
+}
+/* ⭕ 동그라미 — 손가락 기준 44px 을 넘긴다(58px 실측) */
+.cook-shot.empty .cook-shot-add {
+  flex: 0 0 auto; width: 58px; height: 58px; min-height: 58px; padding: 0;
+  border: none; border-radius: 50%; background: var(--brown); color: #fff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
+}
+.cook-shot-label {
+  font-size: 13px; font-weight: 700; color: var(--text-sub);
+  margin-right: 5px; word-break: keep-all;
 }
 .cook-shot-add:active { transform: scale(0.97); }
 .cook-shot-thumb {
