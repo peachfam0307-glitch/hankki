@@ -119,7 +119,8 @@ def 칸(경로, 음식경로, zoom, px=크기):
     return (
         f'<div class="cell" style="width:{px}px;height:{px}px">'
         f'<div class="hole" style="left:{left:.1f}px;top:{top:.1f}px;width:{pw:.1f}px;height:{ph:.1f}px">'
-        f'<img class="food" src="{음식uri[음식경로]}" alt="" style="transform:scale({zoom})"></div>'
+        f'<img class="food" src="{음식uri[음식경로]}" alt="" style="transform:scale({zoom})">'
+        f'<div class="shade"></div></div>'
         f'<img class="frame" src="{프레임uri[경로]}" alt=""></div>'
     )
 
@@ -176,6 +177,11 @@ HTML = f"""<title>그릇에 음식 넣기</title>
   .cell{{position:relative;overflow:hidden}}
   .hole{{position:absolute;overflow:hidden;border-radius:50%}}
   .food{{width:100%;height:100%;object-fit:cover;display:block}}
+  /* 닿는 그림자 — 안쪽 벽이 사진 위로 드리운다.
+     없으면 사진이 «위에 붙인 것»으로 보인다(창업자 "합성한티가 너무 나").
+     그림에 굽지 않고 여기서 얹는다 — 프레임마다 다시 안 그려도 되고 세기를 바꿀 수 있다. */
+  .shade{{position:absolute;inset:0;border-radius:50%;pointer-events:none;
+    box-shadow:inset 0 6px 14px rgba(60,42,28,.34), inset 0 -3px 9px rgba(60,42,28,.16)}}
   .frame{{position:absolute;left:0;top:0;width:100%;height:100%;display:block}}
   .note{{background:var(--cream);border-radius:11px;padding:12px 14px;font-size:13.5px;color:var(--sub)}}
   table{{border-collapse:collapse;width:100%;font-size:13.5px;margin-top:10px}}
