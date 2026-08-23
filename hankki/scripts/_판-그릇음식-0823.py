@@ -15,7 +15,7 @@
 실행: cd /home/user/hankki/hankki && python3 scripts/_판-그릇음식-0823.py
 """
 import base64
-import json
+import io
 from pathlib import Path
 
 import numpy as np
@@ -84,8 +84,17 @@ def 창재기(경로):
     창 = 덩어리 == 창번호
     if 창.sum() < 보임.sum() * 0.05:
         return None
+    # ⭐⭐ 창 «모양» 그대로 마스크를 만든다 — 사각·삼각 접시는 창이 동그라미가 아니다.
+    #    ⛔ border-radius:50% 로 잘라내면 네 귀퉁이가 비어 페이지 바탕이 비친다.
+    마스크 = np.zeros((*창.shape, 4), np.uint8)
+    마스크[창] = (255, 255, 255, 255)
+    buf = io.BytesIO()
+    Image.fromarray(마스크).save(buf, 'PNG')
+    마스크uri = 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()
+
     wy, wx = np.nonzero(창)
     return {
+        '마스크': 마스크uri,
         'w': round((wx.max() - wx.min() + 1) / W, 4),
         'h': round((wy.max() - wy.min() + 1) / H, 4),
         'cx': round((wx.min() + wx.max()) / 2 - x0, 1) / W,
@@ -125,9 +134,11 @@ def 칸(경로, 음식경로, zoom, px=크기):
     left, top = px * c['cx'] - pw / 2, px * c['cy'] - ph / 2
     return (
         f'<div class="cell" style="width:{px}px;height:{px}px">'
-        f'<div class="hole" style="left:{left:.1f}px;top:{top:.1f}px;width:{pw:.1f}px;height:{ph:.1f}px">'
+        f'<div class="hole" style="left:0;top:0;width:{px}px;height:{px}px;'
+        f'-webkit-mask-image:url({c["마스크"]});mask-image:url({c["마스크"]});">'
+        f'<div class="inner" style="left:{left:.1f}px;top:{top:.1f}px;width:{pw:.1f}px;height:{ph:.1f}px">'
         f'<img class="food" src="{음식uri[음식경로]}" alt="" style="transform:scale({zoom})">'
-        f'<div class="shade"></div></div>'
+        f'<div class="shade"></div></div></div>'
         f'<img class="frame" src="{프레임uri[경로]}" alt=""></div>'
     )
 
@@ -182,7 +193,10 @@ HTML = f"""<title>그릇에 음식 넣기</title>
   figure{{margin:0;flex:0 0 auto;text-align:center}}
   figcaption{{font-size:12.5px;color:var(--sub);margin-top:6px}}
   .cell{{position:relative;overflow:hidden}}
-  .hole{{position:absolute;overflow:hidden;border-radius:50%}}
+  /* 창 «모양» 그대로 오려낸다 — 사각·삼각 접시는 동그라미가 아니다 */
+  .hole{{position:absolute;-webkit-mask-size:100% 100%;mask-size:100% 100%;
+    -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}}
+  .inner{{position:absolute;overflow:hidden}}
   .food{{width:100%;height:100%;object-fit:cover;display:block}}
   /* 닿는 그림자 — 안쪽 벽이 사진 위로 드리운다.
      없으면 사진이 «위에 붙인 것»으로 보인다(창업자 "합성한티가 너무 나").
