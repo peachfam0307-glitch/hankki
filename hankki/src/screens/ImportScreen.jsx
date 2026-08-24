@@ -64,7 +64,12 @@ function 장수꼬리(costText, paid) {
     // ⛔ `nowrap` — 실물에서 「캡처는 AI / 스캔 1장」으로 갈렸다(규칙 21).
     //    낱말 잘림은 아니지만 «값»이 두 줄로 흩어지면 한눈에 안 읽힌다. 값은 한 덩어리로 넘어가야 한다.
     //    🔢 제일 긴 꼬리(「받아적으면 AI 스캔 0장」)도 12.3px 에서 ~150px — 칸 226px 안이라 안 넘친다.
-    <> · <b style={{ fontWeight: 800, color: paid ? 'var(--danger)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{costText}</b></>
+    // 🔠 [창업자 2026-08-24] *"빨간색 열쇠1개 이런 글자 조금 작게 하자. 페이지가 정신이 없게 느껴져."*
+    //    ⭐ `em` 으로 준다 — 이 꼬리는 «다섯 자리»(히어로·목록 넷·흐름 단추)에 붙는데
+    //       부모 글자 크기가 15 · 15.3 · 15.5 로 제각각이다. px 로 박으면 자리마다 비율이 갈린다.
+    //    🔢 0.88em → 13.2 ~ 13.6px. 설명글보다 «한 단» 작아 값이 조용히 따라붙는다.
+    //    ⛔ 색은 안 건드린다 — 「돈이 든다」를 알리는 자리다(v11.21 에 1↔0 대비를 일부러 살렸다).
+    <> · <b style={{ fontWeight: 800, fontSize: '0.88em', color: paid ? 'var(--danger)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{costText}</b></>
   )
 }
 
@@ -131,7 +136,10 @@ export default function ImportScreen() {
   const flowMeta = OPTIONS.find((o) => o.key === flow)
 
   return (
-    <div className="screen fade" style={{ paddingBottom: 24 }}>
+    /* 📏 `imp` = 가져오기 화면 «전용» 표식 — 상자 안 줄간을 한 값으로 묶는 데 쓴다(styles.css).
+       ⛔ `.opt-row` 는 설정 화면도 쓴다 → 클래스만 고치면 남의 화면까지 바뀐다.
+          창업자 말의 «범위»를 넓히지 않는다. */
+    <div className="screen fade imp" style={{ paddingBottom: 24 }}>
       <div className="topbar-back">
         <button className="icon-btn press" onClick={() => (flow ? setFlow(null) : nav.pop())} aria-label="닫기">
           <Icon name={flow ? 'chevron-left' : 'x'} size={24} />
@@ -170,13 +178,13 @@ export default function ImportScreen() {
             <img
               src={ocrLeft.total > 0 ? uiKeyOne : uiKeyHole}
               alt="" aria-hidden="true" draggable={false}
-              style={{ height: 22, width: 'auto', marginTop: 1, flexShrink: 0 }}
+              style={{ height: 28, width: 'auto', marginTop: 0, flexShrink: 0 }}
             />
             {/* ✏️ 말투 = 앱 전체와 같은 「~해요」체 (창업자 2026-08-13 *"남았어요나 완곡한표현으로 바꾸자"*)
                 ⛔ 「남음」 같은 명사형은 여기서만 튄다. */}
             {ocrLeft.total > 0 ? (
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 16.5, fontWeight: 800, color: '#3d6b38', letterSpacing: '-.3px' }}>
+                <div style={{ fontSize: 16.5, fontWeight: 800, color: '#3d6b38', letterSpacing: '-.3px', lineHeight: 1.5 }}>
                   무료 {KEY_NAME} <span style={{ fontSize: 20.5 }}>{ocrLeft.total}{KEY_UNIT}</span> 남았어요
                 </div>
                 {/* ⭐⭐ 작은 줄은 «상태마다 다르다» — 여기서 오해가 나면 곧장 분쟁이 된다.
@@ -191,7 +199,7 @@ export default function ImportScreen() {
                   <div style={{
                     display: 'inline-block', marginTop: 5, padding: '4.5px 10px',
                     borderRadius: 9, background: '#fff', border: '1px solid #cfe3c4',
-                    fontSize: 15.6, fontWeight: 700, color: '#4f7d48', lineHeight: 1.4, letterSpacing: '-.2px',
+                    fontSize: 15.6, fontWeight: 700, color: '#4f7d48', lineHeight: 1.5, letterSpacing: '-.2px',
                     // ⛔ 한글 낱말이 잘리면 안 된다 — 첫 판이 「다 쓰면 매 / 달 5장」으로 잘렸다
                     wordBreak: 'keep-all',
                   }}>
@@ -211,10 +219,10 @@ export default function ImportScreen() {
               </div>
             ) : (
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#8a6a3a', letterSpacing: '-.3px' }}>이번 달 무료 {KEY_NAME}를 다 썼어요</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#8a6a3a', letterSpacing: '-.3px', lineHeight: 1.5 }}>이번 달 무료 {KEY_NAME}를 다 썼어요</div>
                 {/* ⭐ 「못 쓴다」가 아니라 「계속 되는데 품질이 바뀐다」 ＋ 언제·«몇 장» 돌아오는지까지.
                     ⛔ 「다시 채워져요」만 두면 몇 장인지 모른다 → 창업자 *"다음달에 무료5장채워져요"* */}
-                <div style={{ fontSize: 15.3, color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.45 }}>
+                <div style={{ fontSize: 15.3, color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.5 }}>
                   기본 인식으로 계속 읽어 드려요<br />다음 달에 <b style={{ fontWeight: 800, color: '#8a6a3a' }}>무료 5{KEY_UNIT}</b> 채워져요
                 </div>
               </div>
@@ -251,7 +259,7 @@ export default function ImportScreen() {
             }}><Icon name="photo" size={25} color="#8a5a37" stroke={1.7} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                <span style={{ fontSize: 16.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap' }}>사진 · 직접 작성하기</span>
+                <span style={{ fontSize: 16.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap', lineHeight: 1.5 }}>사진 · 직접 작성하기</span>
                 <span style={{ fontSize: 15, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>제일 많이 써요</span>
               </div>
               {/* 💰 [2026-08-21] 값을 «고르는 그 줄»에 붙인다 — 창업자가 결제에 대해 정한 원칙과 같다:
@@ -304,7 +312,7 @@ export default function ImportScreen() {
             }}><Icon name="sparkle" size={19} color="#7fa06a" stroke={1.6} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 15.5, fontWeight: 800, color: '#4a7a45' }}>AI 자동 정리</span>
+                <span style={{ fontSize: 15.5, fontWeight: 800, color: '#4a7a45', lineHeight: 1.5 }}>AI 자동 정리</span>
                 <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', background: '#7fa06a', borderRadius: 999, padding: '2px 7px', flexShrink: 0 }}>이미 돼요</span>
               </div>
               {/* ⛔ 「캡처·링크 올리면」이었다 — **링크는 자동으로 안 채워진다.**
@@ -316,7 +324,7 @@ export default function ImportScreen() {
                      ⭐ 그래서 「0장」은 짐작이 아니라 실측이다.
                   ⭐ 값을 «숫자 대 숫자»로 놓는다 — 「공짜」라고 쓰면 「되는데 돈만 안 든다」로 읽혀
                      정작 무엇이 깎이는지가 안 보인다. 1 ↔ 0 이 제일 빠르게 읽힌다. */}
-              <div style={{ fontSize: 15, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2, wordBreak: 'keep-all' }}>
+              <div style={{ fontSize: 15, lineHeight: 1.5, color: 'var(--text-sub)', marginTop: 2, wordBreak: 'keep-all' }}>
                 캡처는 <b style={{ fontWeight: 800, color: 'var(--danger)' }}>{keyCount(1)}</b> · 글 붙여넣기는 <b style={{ fontWeight: 800, color: '#4a7a45' }}>{keyCount(0)}</b>
               </div>
               {/* ⛔ 남은 장수는 여기 «두지 않는다» — 창업자 *"너무 안보여"* (2026-08-13).
@@ -400,7 +408,7 @@ export default function ImportScreen() {
                   {best && <span style={{ fontSize: 15, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px' }}>추천</span>}
                 </span>
                 {/* ⛔ `keep-all` — 꼬리가 붙어 두 줄이 되면 한글 낱말이 가운데서 잘린다(오늘 두 번 겪었다) */}
-                <span className="t-sub" style={{ display: 'block', fontSize: 15.3, lineHeight: 1.45, marginTop: 3, wordBreak: 'keep-all' }}>{d}{장수꼬리(costText, paid)}</span>
+                <span className="t-sub" style={{ display: 'block', fontSize: 15.3, lineHeight: 1.5, marginTop: 3, wordBreak: 'keep-all' }}>{d}{장수꼬리(costText, paid)}</span>
               </span>
               <Icon name="chevron-right" size={17} color="var(--sand)" />
             </button>
