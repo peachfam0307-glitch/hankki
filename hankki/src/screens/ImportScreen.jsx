@@ -16,6 +16,14 @@ import Portal from '../components/Portal'
 //    ⭐ 남음 = **펭펭이 돋보기로 들여다보는 컷** — 이 기능이 하는 일(글자를 찾아 읽어준다)이 그림에 그대로 있다.
 import uiPengSearch from '../assets/ui/wave/pn_search.png'
 import uiDuoHeart from '../assets/ui/wave/duo_hearthand.png'
+// 🔑🔑 「레시피열쇠」의 «그림» (창업자 컷 2026-08-24 · `docs/stickers/창업자-2026-08-24/열쇠/`)
+//    ⭐ v11.30 에서 이름만 「레시피열쇠」로 갈았는데 **그림은 여전히 ✨반짝이**였다.
+//       v11.02 「책갈피」에서 배운 것과 같은 자리 — *"모양이 같아야 누르고 싶다"* ·
+//       이름과 그림이 다르면 유저는 **다른 것**으로 읽는다.
+//    ⭐ 두 컷을 «상태»로 갈랐다 = 남았으면 🔑열쇠 · 다 썼으면 🔒열쇠구멍(잠긴 것).
+//       ⛔ 글자 없이도 「끝났다」가 읽히는 게 목적이다(빈 열쇠구멍 = 꽂을 게 없다).
+import uiKeyOne from '../assets/ui/key_one.png'
+import uiKeyHole from '../assets/ui/key_hole.png'
 
 // '사진으로 가져오기'와 '직접 작성하기'는 결국 같은 작성 화면 — 하나로 합쳤다.
 // 캡처는 작성 화면에서 재료/만드는 법 칸별로 읽어 채운다(인식이 훨씬 정확).
@@ -156,7 +164,14 @@ export default function ImportScreen() {
               : 'linear-gradient(135deg, #faf3e6, #f3e9d6)',
             border: `1px solid ${ocrLeft.total > 0 ? '#cfe3c4' : '#e6d6bd'}`,
           }}>
-            <Icon name="sparkle" size={20} color={ocrLeft.total > 0 ? '#6e9459' : '#b08a52'} stroke={1.7} />
+            {/* 🔑 이름이 「레시피열쇠」니까 그림도 열쇠다. ⛔ 옛 ✨반짝이는 「AI 자동정리」 쪽 표식이라
+                여기 두면 «같은 것»으로 읽힌다 — 이 카드는 «재화»를 말하는 자리다.
+                ⚠️ 높이만 고정하고 폭은 비율대로 둔다(열쇠 115×220 · 열쇠구멍 213×220 로 가로세로가 다르다). */}
+            <img
+              src={ocrLeft.total > 0 ? uiKeyOne : uiKeyHole}
+              alt="" aria-hidden="true" draggable={false}
+              style={{ height: 22, width: 'auto', marginTop: 1, flexShrink: 0 }}
+            />
             {/* ✏️ 말투 = 앱 전체와 같은 「~해요」체 (창업자 2026-08-13 *"남았어요나 완곡한표현으로 바꾸자"*)
                 ⛔ 「남음」 같은 명사형은 여기서만 튄다. */}
             {ocrLeft.total > 0 ? (
