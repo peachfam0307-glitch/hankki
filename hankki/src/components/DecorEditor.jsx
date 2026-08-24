@@ -1801,7 +1801,24 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                    서랍 스크롤 칸을 1px 이라도 되찾는 게 오늘 대수술의 이유다. */}
             {!isDiary && (
               <div className="decor-sec">
-                <button className="press decor-quick-btn" onClick={() => setThumb(thumb === 'none' ? origThumb : 'none')}
+                {/* 🎴🎴 **[창업자 제보 2026-08-23] 카드를 지우면 «자동 음식 아이콘»이 나와야 한다**
+                    📮 *"레꾸자랑카드 지우면 자동입력되는 음식아이콘 없어져.. 확인해봐"* ＋ 폰 캡처 넷
+                    📮 그 앞 확정 = *"대신 자동등록된 음식아이콘은 «살아있어야해»."*
+                    🔢 재현 = 저장값은 `icon:'fe_38'` 로 «살아 있는데» 표지에 그려진 그림이 **0장**이었다
+                       (`_repro-카드지우면아이콘-0823`).
+                    ⛔ 뿌리 = 이 단추가 «두 상태»(카드/아이콘 ↔ 없음)만 오갔다.
+                       카드에서 누르면 곧장 `'none'` → `Thumb.jsx:147` 이 **아무것도 안 그린다**.
+                       ＋ `origThumb` 이 `image` 를 먼저 보니 「되돌리기」를 눌러도 **다시 카드**라
+                       **음식 아이콘으로 갈 길이 아예 없었다.**
+                    ✅ 세 상태로 돈다 — 🎴카드 → 🍚자동 아이콘 → ⬜빈칸 → 🎴카드 …
+                       ⭐ 잃는 게 없다 — 카드도 아이콘도 빈칸도 전부 «세 번 안»에 다시 온다.
+                       ⛔⛔ 빈칸에서 되돌릴 땐 「origThumb」 을 쓰면 «안 된다» — 그건 «저장된» 값이라
+                          한 번 아이콘으로 저장하고 나면 영영 아이콘만 돌아오고 **카드가 갇힌다**
+                          (게이트가 잡았다 — 순환이 아이콘↔빈칸으로 주저앉았다).
+                          → 「recipe.image」 가 있으면 «카드»로 돌아간다.
+                    🏷 이름도 셋이다 — 카드일 땐 「표지 그림 지우기」, 빈칸인데 카드가 있으면 「표지 그림 되돌리기」.
+                       ⭐ 「빈칸」은 원래 뜻(*"깨끗한 판에 꾸미기"* · v7.9)이라 그대로 남긴다. */}
+                <button className="press decor-quick-btn" onClick={() => setThumb(thumb === 'photo' ? 'icon' : thumb !== 'none' ? 'none' : (recipe.image ? 'photo' : origThumb))}
                   style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '10px 13px', marginBottom: 8, borderRadius: 12, background: thumb === 'none' ? 'var(--brown)' : 'var(--cream)', color: thumb === 'none' ? '#fff' : 'var(--text)', border: thumb === 'none' ? 'none' : '1px solid var(--line)', fontWeight: 700, fontSize: 13, textAlign: 'left' }}>
                   {/* 🏷 아이콘 = 창업자 2026-08-07 *"배경음식아이콘지우기앞에도 이모지?아이콘 같은거 넣으면 좋겠어
                       (사진스티커로 붙이기 앞에 있는 이모지처럼)"* — 옆줄과 짝이 맞아야 한 묶음으로 읽힌다.
@@ -1811,7 +1828,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   {/* 🏷 이름 = 창업자 확정 2026-08-07 *"배경음식아이콘지우기로 변경하자. 단어통일하는게 낫겠저"*
                       ⭐ 처음엔 「표지 그림 지우기」였는데, 우리가 부르는 이름이 화면마다 달랐다.
                          유저가 보는 그림은 «표지 배경에 깔린 음식 아이콘»이니 그대로 부른다. */}
-                  {thumb === 'none' ? '배경 음식 아이콘 되돌리기' : '배경 음식 아이콘 지우기'}
+                  {/* 🏷 카드·사진이 떠 있을 땐 지우는 것이 «음식 아이콘»이 아니라 «그 그림»이다.
+                      ⛔ 2026-08-07 확정(*"배경음식아이콘지우기로 변경하자"*)을 «바꾼» 게 아니다 —
+                         그 이름은 아이콘 상태에 그대로 두고, **이름이 없던 세 번째 상태**에만 새로 붙였다.
+                      ⚠️ 이 이름은 내 판단이다 — 창업자가 다른 말을 고르면 여기만 고치면 된다. */}
+                  {thumb === 'none' ? (recipe.image ? '표지 그림 되돌리기' : '배경 음식 아이콘 되돌리기') : thumb === 'photo' ? '표지 그림 지우기' : '배경 음식 아이콘 지우기'}
                 </button>
                 {/* 📌 「사진 붙이기」는 위 «한 줄»로 옮겼다 — 여기 두면 같은 버튼이 두 번 나온다. */}
               </div>

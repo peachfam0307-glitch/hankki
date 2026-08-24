@@ -35,6 +35,20 @@ import { extname, join } from 'node:path'
 const OUT = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/장수안내'
 mkdirSync(OUT, { recursive: true })
 const ROOT = new URL('..', import.meta.url).pathname
+
+// 🔑 ⭐ 이름은 «앱에서 읽는다» — 판이 글자로 박으면 이름이 바뀔 때마다 판이 낡는다(절대원칙 30).
+//    2026-08-24 「AI 스캔 N회」→「레시피열쇠 N개」로 갈 때 이 판이 통째로 죽어서 드러났다.
+//    ⭐ 그때 게이트가 «맞게» 걸린 것이다 — 다만 다음엔 안 죽게 여기서 뽑아 쓴다.
+const OCR봉 = readFileSync(join(ROOT, 'src/ocr.js'), 'utf8')
+const 뽑기 = (이름) => {
+  const m = OCR봉.match(new RegExp(`export const ${이름} = '([^']+)'`))
+  if (!m) { console.log(`⛔ src/ocr.js 에서 ${이름} 을 못 찾았다 — 판을 못 만든다`); process.exit(1) }
+  return m[1]
+}
+const KEY_NAME = 뽑기('KEY_NAME')
+const KEY_SHORT = 뽑기('KEY_SHORT')
+const KEY_UNIT = 뽑기('KEY_UNIT')
+const keyCount = (n) => `${KEY_SHORT} ${n}${KEY_UNIT}`
 const DIST = join(ROOT, 'dist')
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2' }
 const srv = createServer((q, s) => {
@@ -96,25 +110,26 @@ await page.waitForTimeout(900)
 const t가져오기 = await 글자()
 // ⭐ 「1장씩」과 「0장」이 «같은 줄»에 나란히 있어야 뜻이 선다.
 //    한쪽만 적으면 유저는 비교할 게 없어 그냥 지나친다.
-chk('① 캡처가 「1회 소모」라고 적혀 있다', t가져오기.includes('1회 소모'))
-chk('② 글 붙여넣기는 「소모 없음」이라고 «나란히» 적혀 있다', t가져오기.includes('소모 없음'))
-const 캡처값 = await 글자자리('1회 소모')
+chk(`① 캡처가 「${keyCount(1)}」라고 적혀 있다`, t가져오기.includes(keyCount(1)))
+chk(`② 글 붙여넣기는 「${keyCount(0)}」이라고 «나란히» 적혀 있다`, t가져오기.includes(keyCount(0)))
+const 캡처값 = await 글자자리(keyCount(1))
 const 위험 = await 위험색()
 chk(`③ 그 값이 위험색(--danger = ${위험})으로 칠해졌다`, !!캡처값 && 캡처값.color === 위험)
 // ⛔ 잔량 띠는 v10.56 부터 있던 것이다 — 이 판이 그걸 «깨뜨리지 않았나»도 같이 본다.
-chk('④ 맨 위 잔량 띠가 그대로 살아 있다', /무료 AI 스캔.*남았어요|다 썼어요/.test(t가져오기))
+chk('④ 맨 위 잔량 띠가 그대로 살아 있다', new RegExp(`무료 ${KEY_NAME}.*남았어요|다 썼어요`).test(t가져오기))
 // ⭐⭐ 값을 «고르는 그 줄»에도 — 창업자가 결제에 대해 정한 「쓰려는 순간 그 자리에서」와 같은 원칙.
 //    ⛔ 맨 위 잔량 띠로는 못 대신한다 — 그건 「몇 장 남았나」고 이건 「이 길이 몇 장을 쓰나」다.
-chk('④-b 제일 많이 누르는 길(사진·직접 작성)에 「AI 스캔 1회 소모」가 붙어 있다', /직접 작성[\s\S]{0,80}1회 소모/.test(t가져오기))
-chk('④-c 공짜 길(텍스트 붙여넣기)에 「소모 없음」이 나란히 붙어 있다', /텍스트 붙여넣기[\s\S]{0,80}소모 없음/.test(t가져오기))
+chk(`④-b 제일 많이 누르는 길(사진·직접 작성)에 「${keyCount(1)}」가 붙어 있다`, new RegExp(`직접 작성[\\s\\S]{0,80}${keyCount(1)}`).test(t가져오기))
+chk(`④-c 공짜 길(텍스트 붙여넣기)에 「${keyCount(0)}」이 나란히 붙어 있다`, new RegExp(`텍스트 붙여넣기[\\s\\S]{0,80}${keyCount(0)}`).test(t가져오기))
 // ⛔ 히어로 카드 설명은 `.opt-row .t .b` 가 «아니라» 인라인 style 이라 v11.19 의 keep-all 이 안 걸렸다.
 //    실물에서 「읽어 채워 / 요」로 잘려 있었다. 클래스로 고친 것은 클래스를 쓰는 줄만 낫는다.
-const 가져오기잘림 = await page.evaluate(() => {
+const 가져오기잘림 = await page.evaluate((잣대) => {
+  const re = new RegExp(잣대)
   const 값 = [...document.querySelectorAll('body *')]
-    .filter((e) => /캡처는 재료·만드는 법|캡처는 1회 소모/.test(e.textContent || '')
-      && ![...e.children].some((c) => /캡처는 재료·만드는 법|캡처는 1회 소모/.test(c.textContent || '')))
+    .filter((e) => re.test(e.textContent || '')
+      && ![...e.children].some((c) => re.test(c.textContent || '')))
   return { n: 값.length, 나쁨: 값.filter((e) => getComputedStyle(e).wordBreak !== 'keep-all').length }
-})
+}, `캡처는 재료·만드는 법|캡처는 ${keyCount(1)}`)
 chk(`④-d ⛔가져오기 안내도 낱말 가운데서 안 잘린다 (${가져오기잘림.n}줄 중 어긴 것 ${가져오기잘림.나쁨})`,
   가져오기잘림.n >= 2 && 가져오기잘림.나쁨 === 0)
 
@@ -123,22 +138,24 @@ chk(`④-d ⛔가져오기 안내도 낱말 가운데서 안 잘린다 (${가져
 //       그 줄만 조용히 빠지고 아무도 모른다(빈칸은 «0장»으로 읽힌다).
 //    ✅ 그래서 **줄 수와 꼬리표 수를 대조**한다 — 하나라도 모자라면 배포가 막힌다.
 //       📌 「검사가 있다」와 「검사가 «전부»를 본다」는 다른 말이다(2026-08-05 packleak 교훈).
-const 목록 = await page.evaluate(() => {
+const 목록 = await page.evaluate((짧은) => {
+  // ⭐ 「장수를 말하나」의 잣대 = 「열쇠 N개」가 붙어 있나. (옛 잣대는 「소모」였고 2026-08-24 에 낡았다)
+  const re = new RegExp(`${짧은}\\s*\\d`)
   const 줄 = [...document.querySelectorAll('.opt-row')]
   return {
     n: 줄.length,
-    안내: 줄.filter((e) => /소모/.test(e.textContent || '')).length,
-    빠진것: 줄.filter((e) => !/소모/.test(e.textContent || ''))
+    안내: 줄.filter((e) => re.test(e.textContent || '')).length,
+    빠진것: 줄.filter((e) => !re.test(e.textContent || ''))
       .map((e) => (e.querySelector('.a')?.textContent || '?').trim()),
   }
-})
+}, KEY_SHORT)
 chk(`⑤-a ⭐목록 «네 줄 전부»가 장수를 말한다 (${목록.안내}/${목록.n}${목록.빠진것.length ? ' · 빠진 것: ' + 목록.빠진것.join(',') : ''})`,
   목록.n >= 4 && 목록.안내 === 목록.n)
 // ⭐ 히어로(사진·직접 작성)는 `.opt-row` 밖이라 위에서 따로 봤다(④-b). 합치면 다섯이다.
 // ⚠️ 조건부인 둘(인스타·유튜브)은 「캡처는」을 앞에 붙여야 한다 —
 //    그냥 「1장」이라 적으면 «붙여넣기»로 담는 사람도 깎이는 줄 안다.
 chk('⑤-b ⚠️조건부인 줄은 조건을 밝힌다 (「캡처는 AI 스캔 1장」)',
-  (t가져오기.match(/캡처하면 1회 소모/g) || []).length >= 2)
+  (t가져오기.match(new RegExp(`캡처하면 ${keyCount(1)}`, 'g')) || []).length >= 2)
 writeFileSync(join(OUT, '1-가져오기.png'), await page.screenshot({ fullPage: true }))
 
 // ── ② 편집 화면 : ⭐값이 «권유보다 먼저» 나오나 ──
@@ -148,13 +165,13 @@ await page.waitForTimeout(1000)
 const t편집 = await 글자()
 // ⭐⭐ 창업자가 «직접 준» 문구다 — *"무료이용이 1장 소모가 된다던지"*.
 //    ⛔ 내 말로 다듬지 않는다. 핵심 낱말은 **「소모」** — 「써요」는 «한다»는 말이고 「소모돼요」는 «줄어든다»는 말이다.
-chk('⑤ 창업자 문구 그대로 —「사진 1장에 AI 스캔 1회가 소모돼요」', t편집.includes('사진 1장에 AI 스캔 1회가 소모돼요'))
+chk(`⑤ 창업자 문구 그대로 —「사진 1장에 ${keyCount(1)}를 써요」`, t편집.includes(`사진 1장에 ${keyCount(1)}를 써요`))
 // ⛔⛔ 창업자 = *"다 구구절절이야 헷갈린다고"* — 값 줄은 **한 줄**이어야 한다.
 //    옛 판은 둘째 줄에 예시(「3장 고르면 3장」)와 소진 안내(「다 써도 기본 인식」)를 붙여 두 줄이었다.
 //    ⭐ 이 칸이 «다시 늘어나는 것»을 막는다 — 설명은 늘 «하나만 더» 붙이고 싶어진다.
 chk('⑥ ⛔값 줄이 «한 줄»이다 (예시·소진 안내를 미리 안 깐다)',
   !t편집.includes('3장 고르면 3장') && !/다 써도.*기본 인식/.test(t편집))
-const 값줄 = await 글자자리('사진 1장에 AI 스캔 1회가 소모돼요')
+const 값줄 = await 글자자리(`사진 1장에 ${keyCount(1)}를 써요`)
 const 초안줄 = await 글자자리('사진 보며 다듬어')
 chk(`⑧ ⭐⭐값 줄이 안내 목록보다 «위»에 있다 (값 y=${값줄?.y} · 목록 y=${초안줄?.y})`,
   !!값줄 && !!초안줄 && 값줄.y < 초안줄.y)
@@ -169,12 +186,13 @@ chk('⑫ ⛔「섞여 들어왔다면」 안내가 사라졌다', !t편집.inclu
 // ⛔⛔ 한글 낱말 잘림 — 실물을 열어보고서야 잡았다(규칙 21). 「그 칸의 사 / 진에서 채우기」로 갈라져 있었다.
 //    ⭐ 「글자가 있나」로는 «절대» 안 잡힌다 — innerText 는 줄바꿈을 안 알려준다.
 //       그래서 computed style 을 본다. 문장을 새로 넣을 때마다 다시 나는 병이라 못 박는다.
-const 안잘림 = await page.evaluate(() => {
+const 안잘림 = await page.evaluate((잣대) => {
+  const re = new RegExp(잣대)
   const 값 = [...document.querySelectorAll('body *')]
-    .filter((e) => /사진 1장에 AI 스캔|읽은 글은/.test(e.textContent || '')
-      && ![...e.children].some((c) => /사진 1장에 AI 스캔|읽은 글은/.test(c.textContent || '')))
+    .filter((e) => re.test(e.textContent || '')
+      && ![...e.children].some((c) => re.test(c.textContent || '')))
   return { n: 값.length, 나쁨: 값.filter((e) => getComputedStyle(e).wordBreak !== 'keep-all').length }
-})
+}, `사진 1장에 ${KEY_SHORT}|읽은 글은`)
 chk(`⑫-b ⛔안내 줄이 «낱말 가운데»서 안 잘린다 (keep-all · ${안잘림.n}줄 중 어긴 것 ${안잘림.나쁨})`,
   안잘림.n >= 2 && 안잘림.나쁨 === 0)
 writeFileSync(join(OUT, '2-편집.png'), await page.screenshot({ fullPage: true }))
@@ -188,13 +206,13 @@ await page.waitForTimeout(800)
 await page.getByText('냉장고', { exact: false }).first().click().catch(() => {})
 await page.waitForTimeout(800)
 const t냉장고 = await 글자()
-chk('⑬ ⭐영수증 화면에 「영수증 1장에 AI 스캔 1장을 써요」가 있다', t냉장고.includes('영수증 1장에 AI 스캔 1회가 소모돼요'))
+chk(`⑬ ⭐영수증 화면에 「영수증 1장에 ${keyCount(1)}를 써요」가 있다`, t냉장고.includes(`영수증 1장에 ${keyCount(1)}를 써요`))
 chk('⑭ ⛔여기도 둘째 줄을 안 깐다 (구구절절 금지)', !/다 써도.*기본 인식/.test(t냉장고))
-const 영수증값 = await 글자자리('영수증 1장에 AI 스캔 1회가 소모돼요')
+const 영수증값 = await 글자자리(`영수증 1장에 ${keyCount(1)}를 써요`)
 chk(`⑮ 위험색이다 (${영수증값?.color})`, !!영수증값 && 영수증값.color === 위험)
 // ⭐ 셋이 «같은 문장 틀»이라야 유저가 같은 규칙으로 읽는다(같은 기능은 같은 이름 원칙).
 chk('⑯ ⭐편집·영수증이 «같은 문장 틀»이다 (「N장에 AI 스캔 N장을 써요」)',
-  t편집.includes('AI 스캔 1회가 소모돼요') && t냉장고.includes('AI 스캔 1회가 소모돼요'))
+  t편집.includes(`${keyCount(1)}를 써요`) && t냉장고.includes(`${keyCount(1)}를 써요`))
 writeFileSync(join(OUT, '3-냉장고.png'), await page.screenshot({ fullPage: true }))
 
 // ── ④ 공유받기 : 토스트에 잔량이 실리나 (소스로 «불렀나»만 본다) ──
@@ -221,21 +239,22 @@ for (const 이름 of ['YouTube', 'Instagram']) {
   await page.waitForTimeout(700)
   await page.getByText(이름, { exact: true }).first().click()
   await page.waitForTimeout(700)
-  const 단추 = await page.evaluate(() => {
+  const 단추 = await page.evaluate((짧은) => {
+    const re = new RegExp(`${짧은}\\s*\\d`)
     const 것 = [...document.querySelectorAll('button.card')]
       .filter((e) => /캡처해서 올리기|붙여넣기|적기/.test(e.textContent || ''))
     return {
       n: 것.length,
-      안내: 것.filter((e) => /소모/.test(e.textContent || '')).length,
-      빠진것: 것.filter((e) => !/소모/.test(e.textContent || ''))
+      안내: 것.filter((e) => re.test(e.textContent || '')).length,
+      빠진것: 것.filter((e) => !re.test(e.textContent || ''))
         .map((e) => (e.textContent || '').trim().slice(0, 14)),
     }
-  })
+  }, KEY_SHORT)
   chk(`㉠ ${이름} 흐름 · 단추 «셋 전부»가 장수를 말한다 (${단추.안내}/${단추.n}${단추.빠진것.length ? ' · 빠진 것: ' + 단추.빠진것.join(',') : ''})`,
     단추.n === 3 && 단추.안내 === 3)
   const t흐름 = await 글자()
   // ⭐ 갈림길이라 «둘 다» 보여야 값이 값으로 읽힌다 — 1장짜리 하나, 0장짜리 둘.
-  chk(`㉡ ${이름} 흐름에 「1장 소모」와 「소모 없음」이 «나란히» 있다`, /1회 소모/.test(t흐름) && /소모 없음/.test(t흐름))
+  chk(`㉡ ${이름} 흐름에 「${keyCount(1)}」와 「${keyCount(0)}」이 «나란히» 있다`, t흐름.includes(keyCount(1)) && t흐름.includes(keyCount(0)))
   writeFileSync(join(OUT, `4-흐름-${이름}.png`), await page.screenshot({ fullPage: true }))
 }
 

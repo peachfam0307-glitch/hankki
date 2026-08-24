@@ -187,10 +187,21 @@ export default function RecipeDetailScreen({ id }) {
       nav.showToast('오늘은 이미 한끼 일기에 있어요')
       return
     }
-    const entry = { id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: null }
+    // 📷 [2026-08-24 창업자 영상 제보] **표지가 «내 사진»이면 일기도 그 사진으로 시작한다.**
+    //   📮 창업자 = *"레꾸화면에서 사진 넣은건 … 일기나, 달력에 저장되지도 않아"*
+    //   ⛔⛔ 여기가 `photo: null` 로 박혀 있었다 — 표지에 사진이 있어도 일기는 늘 빈손으로 시작했다.
+    //   🔎 왜 v11.22 로 안 잡혔나 = 그 판은 「표지를 바꿀 때 «이미 있는» 일기에 넣을까」를 묻는다
+    //      (`onCoverPhoto` 의 `if (latestEntry && !latestEntry.photo)`).
+    //      **사진을 «먼저» 바꾸고 나중에 「만들었어요」를 누르면** 그때는 일기가 없어 안 묻고,
+    //      뒤늦게 만들어진 일기는 표지를 안 쳐다본다. 영상이 정확히 그 순서였다.
+    //   ⭐ 안 묻고 바로 넣는다 — 「만들었어요」는 한 번 누르고 끝나는 동작이라 팝업이 끼면 시끄럽다.
+    //      `CookScreen.finish()` 도 찍은 사진을 말없이 일기에 담고 토스트로만 알린다. 같은 결이다.
+    //   ⛔ 자랑카드(`imageFit: 'whole'`)는 «사진»이 아니라 완성된 표지 한 장이다 → 일기에 넣지 않는다.
+    const 표지사진 = r.thumb === 'photo' && r.image && r.imageFit !== 'whole' ? r.image : null
+    const entry = { id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: 표지사진 }
     addDiary(entry)
     cook(r.id)
-    nav.showToast('만들었어요! 한끼 일기에 남겼어요')
+    nav.showToast(표지사진 ? '만들었어요! 표지 사진도 일기에 담았어요' : '만들었어요! 한끼 일기에 남겼어요')
   }
 
   const del = () => setConfirmDel(true)

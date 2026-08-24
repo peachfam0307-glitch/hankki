@@ -56,7 +56,8 @@ await page.goto(url); await page.waitForTimeout(1600)
 await page.getByText('레시피', { exact: true }).last().click(); await page.waitForTimeout(1200)
 await page.locator('.grid-card').filter({ hasText: 주인.title }).first().click(); await page.waitForTimeout(1400)
 await page.getByText('레시피 꾸미기').first().click(); await page.waitForTimeout(1600)
-const 버튼 = page.getByText(/배경 음식 아이콘 (지우기|되돌리기)/).first()
+// ⚠️ 이름이 셋이다 — 카드일 땐 「표지 그림 지우기」다(2026-08-23 신설)
+const 버튼 = page.getByText(/(배경 음식 아이콘|표지 그림) (지우기|되돌리기)/).first()
 console.log(`  단추 = 「${(await 버튼.innerText()).trim()}」 → 누른다`)
 await 버튼.click(); await page.waitForTimeout(700)
 await page.getByText('저장', { exact: true }).first().click(); await page.waitForTimeout(2000)
@@ -78,7 +79,30 @@ console.log(`  표지에 그려진 것 = ${JSON.stringify(결과.표지에그려
 
 const 그림수 = (결과.표지에그려진것 || []).length
 칸(!!결과.저장값.icon, `데이터의 icon 은 «남아 있다» (icon=${결과.저장값.icon})`)
-칸(그림수 > 0, `⭐ 카드를 지운 «뒤» 표지에 자동 음식 아이콘이 «보인다» (지금 그려진 그림 ${그림수}장)`)
+칸(결과.저장값.thumb === 'icon', `⭐ 카드를 지우면 «자동 음식 아이콘»으로 간다 (thumb=${결과.저장값.thumb} · 옛 판은 'none' 이었다)`)
+칸(그림수 > 0, `⭐ 표지에 자동 음식 아이콘이 «그려진다» (지금 ${그림수}장 — ${JSON.stringify((결과.표지에그려진것 || [])[0] || null)})`)
+칸(결과.저장값.image있나, '카드 그림은 «안 지운다» — 세 번째 누르면 다시 온다')
+
+// ── 세 상태가 «한 바퀴» 도나 (카드 → 아이콘 → 빈칸 → 카드)
+console.log('\n세 상태 순환 — 잃는 게 없나')
+await page.getByText('레시피 꾸미기').first().click(); await page.waitForTimeout(1500)
+const 돌기 = []
+for (let i = 0; i < 3; i++) {
+  const b = page.getByText(/(배경 음식 아이콘|표지 그림) (지우기|되돌리기)/).first()
+  돌기.push((await b.innerText()).trim())
+  await b.click(); await page.waitForTimeout(700)
+  돌기.push('→ ' + await page.evaluate(() => {
+    const st = document.querySelector('.decor-stage') || document.querySelector('[style*="aspect-ratio"]')
+    if (!st) return '?'
+    const im = [...st.querySelectorAll('img')]
+    if (!im.length) return '⬜빈칸'
+    return (im[0].currentSrc || im[0].src || '').startsWith('data:') ? '🎴카드' : '🍚아이콘'
+  }))
+}
+console.log(`  ${돌기.join('  ')}`)
+const 본것 = 돌기.filter((x) => x.startsWith('→')).join(' ')
+칸(본것.includes('🍚아이콘') && 본것.includes('⬜빈칸') && 본것.includes('🎴카드'),
+  '⭐ 세 번 누르면 🎴카드·🍚아이콘·⬜빈칸을 «전부» 만난다 (잃는 것 0)')
 
 console.log(`\n${죽음 ? `⛔ ${죽음}칸 실패 — 창업자 제보가 재현됐다` : '✅ 전부 통과'}`)
 await browser.close(); stop(); process.exit(죽음 ? 1 : 0)

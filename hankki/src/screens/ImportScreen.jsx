@@ -7,7 +7,7 @@ import { parseRecipeText, keepRaw } from '../parseRecipe'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳ 서버 되면 되살릴 것 ①」 참조.
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 공유받기가 쓰고, 되살릴 때 그대로 쓴다.
 import { guessFoodIcon } from '../components/FoodIcon'
-import { getOcrLeft } from '../ocr'
+import { getOcrLeft, KEY_NAME, KEY_UNIT, keyCount } from '../ocr'
 import Icon from '../components/Icon'
 import Portal from '../components/Portal'
 // 🐻 [2026-08-13 창업자] *"가져오기에 무료스캔 알림에 캐릭터 하나 넣자(오른쪽 비어있는 칸에)"* · *"귀여운 걸로 해줘. 움직이게"*
@@ -16,6 +16,14 @@ import Portal from '../components/Portal'
 //    ⭐ 남음 = **펭펭이 돋보기로 들여다보는 컷** — 이 기능이 하는 일(글자를 찾아 읽어준다)이 그림에 그대로 있다.
 import uiPengSearch from '../assets/ui/wave/pn_search.png'
 import uiDuoHeart from '../assets/ui/wave/duo_hearthand.png'
+// 🔑🔑 「레시피열쇠」의 «그림» (창업자 컷 2026-08-24 · `docs/stickers/창업자-2026-08-24/열쇠/`)
+//    ⭐ v11.30 에서 이름만 「레시피열쇠」로 갈았는데 **그림은 여전히 ✨반짝이**였다.
+//       v11.02 「책갈피」에서 배운 것과 같은 자리 — *"모양이 같아야 누르고 싶다"* ·
+//       이름과 그림이 다르면 유저는 **다른 것**으로 읽는다.
+//    ⭐ 두 컷을 «상태»로 갈랐다 = 남았으면 🔑열쇠 · 다 썼으면 🔒열쇠구멍(잠긴 것).
+//       ⛔ 글자 없이도 「끝났다」가 읽히는 게 목적이다(빈 열쇠구멍 = 꽂을 게 없다).
+import uiKeyOne from '../assets/ui/key_one.png'
+import uiKeyHole from '../assets/ui/key_hole.png'
 
 // '사진으로 가져오기'와 '직접 작성하기'는 결국 같은 작성 화면 — 하나로 합쳤다.
 // 캡처는 작성 화면에서 재료/만드는 법 칸별로 읽어 채운다(인식이 훨씬 정확).
@@ -41,12 +49,12 @@ import uiDuoHeart from '../assets/ui/wave/duo_hearthand.png'
 //       ＋ 흐름 화면의 단추 «셋»에도 각각 정확한 값을 적는다(아래 `방법들`).
 const OPTIONS = [
   // 제일 많이 쓰는 방법이라 맨 위
-  { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A', costText: 'AI 스캔 1회 소모', paid: true },
-  { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '캡처해서 담기 (제일 정확)', color: '#C13584', costText: '캡처하면 1회 소모', paid: true },
-  { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '캡처·설명 붙여넣기로 담기', color: '#E33', costText: '캡처하면 1회 소모', paid: true },
+  { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A', costText: `캡처하면 ${keyCount(1)}`, paid: true },
+  { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '캡처해서 담기 (제일 정확)', color: '#C13584', costText: `캡처하면 ${keyCount(1)}`, paid: true },
+  { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '캡처·설명 붙여넣기로 담기', color: '#E33', costText: `캡처하면 ${keyCount(1)}`, paid: true },
   // ⭐ 링크가 못 하는 일을 «이 줄이» 한다 — 그래서 설명을 키웠다(창업자 ⓐ안의 「텍스트 안내를 키운다」를 여기서 살렸다)
-  { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 재료·순서까지 자동 정리', color: '#B0895E', costText: '소모 없음', paid: false },
-  { key: 'link', icon: 'link', title: '링크 주소만 담아두기', desc: '주소만 저장해요 · 재료·순서는 안 담겨요', color: '#9B8B79', costText: '소모 없음', paid: false },
+  { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 재료·순서까지 자동 정리', color: '#B0895E', costText: keyCount(0), paid: false },
+  { key: 'link', icon: 'link', title: '링크 주소만 담아두기', desc: '주소만 저장해요 · 재료·순서는 안 담겨요', color: '#9B8B79', costText: keyCount(0), paid: false },
 ]
 
 // 💰 장수 꼬리표 — 다섯 줄·히어로·흐름 단추가 «같은 함수»로 그린다.
@@ -56,7 +64,12 @@ function 장수꼬리(costText, paid) {
     // ⛔ `nowrap` — 실물에서 「캡처는 AI / 스캔 1장」으로 갈렸다(규칙 21).
     //    낱말 잘림은 아니지만 «값»이 두 줄로 흩어지면 한눈에 안 읽힌다. 값은 한 덩어리로 넘어가야 한다.
     //    🔢 제일 긴 꼬리(「받아적으면 AI 스캔 0장」)도 12.3px 에서 ~150px — 칸 226px 안이라 안 넘친다.
-    <> · <b style={{ fontWeight: 800, color: paid ? 'var(--danger)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{costText}</b></>
+    // 🔠 [창업자 2026-08-24] *"빨간색 열쇠1개 이런 글자 조금 작게 하자. 페이지가 정신이 없게 느껴져."*
+    //    ⭐ `em` 으로 준다 — 이 꼬리는 «다섯 자리»(히어로·목록 넷·흐름 단추)에 붙는데
+    //       부모 글자 크기가 15 · 15.3 · 15.5 로 제각각이다. px 로 박으면 자리마다 비율이 갈린다.
+    //    🔢 0.88em → 13.2 ~ 13.6px. 설명글보다 «한 단» 작아 값이 조용히 따라붙는다.
+    //    ⛔ 색은 안 건드린다 — 「돈이 든다」를 알리는 자리다(v11.21 에 1↔0 대비를 일부러 살렸다).
+    <> · <b style={{ fontWeight: 800, fontSize: '0.88em', color: paid ? 'var(--danger)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{costText}</b></>
   )
 }
 
@@ -123,7 +136,10 @@ export default function ImportScreen() {
   const flowMeta = OPTIONS.find((o) => o.key === flow)
 
   return (
-    <div className="screen fade" style={{ paddingBottom: 24 }}>
+    /* 📏 `imp` = 가져오기 화면 «전용» 표식 — 상자 안 줄간을 한 값으로 묶는 데 쓴다(styles.css).
+       ⛔ `.opt-row` 는 설정 화면도 쓴다 → 클래스만 고치면 남의 화면까지 바뀐다.
+          창업자 말의 «범위»를 넓히지 않는다. */
+    <div className="screen fade imp" style={{ paddingBottom: 24 }}>
       <div className="topbar-back">
         <button className="icon-btn press" onClick={() => (flow ? setFlow(null) : nav.pop())} aria-label="닫기">
           <Icon name={flow ? 'chevron-left' : 'x'} size={24} />
@@ -156,13 +172,20 @@ export default function ImportScreen() {
               : 'linear-gradient(135deg, #faf3e6, #f3e9d6)',
             border: `1px solid ${ocrLeft.total > 0 ? '#cfe3c4' : '#e6d6bd'}`,
           }}>
-            <Icon name="sparkle" size={20} color={ocrLeft.total > 0 ? '#6e9459' : '#b08a52'} stroke={1.7} />
+            {/* 🔑 이름이 「레시피열쇠」니까 그림도 열쇠다. ⛔ 옛 ✨반짝이는 「AI 자동정리」 쪽 표식이라
+                여기 두면 «같은 것»으로 읽힌다 — 이 카드는 «재화»를 말하는 자리다.
+                ⚠️ 높이만 고정하고 폭은 비율대로 둔다(열쇠 115×220 · 열쇠구멍 213×220 로 가로세로가 다르다). */}
+            <img
+              src={ocrLeft.total > 0 ? uiKeyOne : uiKeyHole}
+              alt="" aria-hidden="true" draggable={false}
+              style={{ height: 28, width: 'auto', marginTop: 0, flexShrink: 0 }}
+            />
             {/* ✏️ 말투 = 앱 전체와 같은 「~해요」체 (창업자 2026-08-13 *"남았어요나 완곡한표현으로 바꾸자"*)
                 ⛔ 「남음」 같은 명사형은 여기서만 튄다. */}
             {ocrLeft.total > 0 ? (
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 16.5, fontWeight: 800, color: '#3d6b38', letterSpacing: '-.3px' }}>
-                  무료 AI 스캔 <span style={{ fontSize: 20.5 }}>{ocrLeft.total}회</span> 남았어요
+                <div style={{ fontSize: 16.5, fontWeight: 800, color: '#3d6b38', letterSpacing: '-.3px', lineHeight: 1.5 }}>
+                  무료 {KEY_NAME} <span style={{ fontSize: 20.5 }}>{ocrLeft.total}{KEY_UNIT}</span> 남았어요
                 </div>
                 {/* ⭐⭐ 작은 줄은 «상태마다 다르다» — 여기서 오해가 나면 곧장 분쟁이 된다.
                     ① 웰컴 중 = 창업자 *"매달 20장씩 주는 줄 알지도 몰라"* → **처음 한 번**이라고 못박는다.
@@ -176,7 +199,7 @@ export default function ImportScreen() {
                   <div style={{
                     display: 'inline-block', marginTop: 5, padding: '4.5px 10px',
                     borderRadius: 9, background: '#fff', border: '1px solid #cfe3c4',
-                    fontSize: 15.6, fontWeight: 700, color: '#4f7d48', lineHeight: 1.4, letterSpacing: '-.2px',
+                    fontSize: 15.6, fontWeight: 700, color: '#4f7d48', lineHeight: 1.5, letterSpacing: '-.2px',
                     // ⛔ 한글 낱말이 잘리면 안 된다 — 첫 판이 「다 쓰면 매 / 달 5장」으로 잘렸다
                     wordBreak: 'keep-all',
                   }}>
@@ -185,22 +208,22 @@ export default function ImportScreen() {
                         · 8월에 17장만 쓴 사람 → 웰컴 3장이 9월로 이월 → 9월에 그 3장을 쓰고 «그 9월에 2장 더» 쓴다
                           (worker: 웰컴을 다 쓴 뒤 `userC(3) < PER_USER_MONTHLY(5)` 라 통과)
                         ⭐ 그래서 「다 쓰면(조건) · 매달(주기)」로만 적는다 — 두 경우 다 맞는 유일한 표현. */}
-                    <b style={{ fontWeight: 900, color: '#356131' }}>처음 한 번만</b> 드리는 20회예요<br />
-                    다 쓰면 <b style={{ fontWeight: 900, color: '#356131' }}>매달 무료 5회</b>
+                    <b style={{ fontWeight: 900, color: '#356131' }}>처음 한 번만</b> 드리는 20{KEY_UNIT}예요<br />
+                    다 쓰면 <b style={{ fontWeight: 900, color: '#356131' }}>매달 무료 5{KEY_UNIT}</b>
                   </div>
                 ) : (
                   <div style={{ fontSize: 15.3, color: 'var(--text-sub)', marginTop: 2 }}>
-                    {ocrLeft.total <= 3 ? '다 써도 기본 인식으로 계속 읽어 드려요' : '매달 5장씩 채워져요'}
+                    {ocrLeft.total <= 3 ? '다 써도 기본 인식으로 계속 읽어 드려요' : `매달 5${KEY_UNIT}씩 채워져요`}
                   </div>
                 )}
               </div>
             ) : (
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#8a6a3a', letterSpacing: '-.3px' }}>이번 달 무료 AI 스캔을 다 썼어요</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#8a6a3a', letterSpacing: '-.3px', lineHeight: 1.5 }}>이번 달 무료 {KEY_NAME}를 다 썼어요</div>
                 {/* ⭐ 「못 쓴다」가 아니라 「계속 되는데 품질이 바뀐다」 ＋ 언제·«몇 장» 돌아오는지까지.
                     ⛔ 「다시 채워져요」만 두면 몇 장인지 모른다 → 창업자 *"다음달에 무료5장채워져요"* */}
-                <div style={{ fontSize: 15.3, color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.45 }}>
-                  기본 인식으로 계속 읽어 드려요<br />다음 달에 <b style={{ fontWeight: 800, color: '#8a6a3a' }}>무료 5회</b> 채워져요
+                <div style={{ fontSize: 15.3, color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.5 }}>
+                  기본 인식으로 계속 읽어 드려요<br />다음 달에 <b style={{ fontWeight: 800, color: '#8a6a3a' }}>무료 5{KEY_UNIT}</b> 채워져요
                 </div>
               </div>
             )}
@@ -235,9 +258,16 @@ export default function ImportScreen() {
               boxShadow: '0 2px 8px rgba(150,110,70,.16)',
             }}><Icon name="photo" size={25} color="#8a5a37" stroke={1.7} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                <span style={{ fontSize: 16.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap' }}>사진 · 직접 작성하기</span>
-                <span style={{ fontSize: 15, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>제일 많이 써요</span>
+              {/* ⛔⛔ [창업자 2026-08-24] *"제일많이 써요가 칸을 벗어났어."* — 맞다. 실측으로 닫았다.
+                  🔢 알약이 «언제나» x 258~372 에 선다(제목 156 nowrap ＋ 틈 6 이 96 에서 시작하니 자리가 고정된다).
+                     카드 오른끝과 견주면  412px −20(안 넘침) · **390px ＋2** · **360px ＋32** · **320px ＋72**
+                  ⭐ 뿌리 = 제목이 `nowrap` 이고 알약이 `flexShrink: 0` 이라 **둘 다 줄어들 수가 없다.**
+                     칸(226px)보다 내용(276px)이 크면 갈 곳이 없어 그냥 삐져나간다.
+                  ⛔ 제목을 줄이거나 말줄임하지 않는다 — 「사진 · 직접 작성하기」가 잘리면 무슨 길인지 모른다.
+                  ✅ `wrap` 을 준다 — 안 들어가면 알약이 «아랫줄»로 내려간다. 어느 폭에서도 안 삐져나간다. */}
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 3 }}>
+                <span style={{ fontSize: 16.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap', lineHeight: 1.5 }}>사진 · 직접 작성하기</span>
+                <span style={{ fontSize: 13.5, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2.5px 8px', flexShrink: 0, whiteSpace: 'nowrap' }}>제일 많이 써요</span>
               </div>
               {/* 💰 [2026-08-21] 값을 «고르는 그 줄»에 붙인다 — 창업자가 결제에 대해 정한 원칙과 같다:
                      *"구매 탭은 안 만든다 — 「쓰려는 순간」 그 자리에서"*. 알리는 것도 같은 자리다.
@@ -289,7 +319,7 @@ export default function ImportScreen() {
             }}><Icon name="sparkle" size={19} color="#7fa06a" stroke={1.6} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 15.5, fontWeight: 800, color: '#4a7a45' }}>AI 자동 정리</span>
+                <span style={{ fontSize: 15.5, fontWeight: 800, color: '#4a7a45', lineHeight: 1.5 }}>AI 자동 정리</span>
                 <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', background: '#7fa06a', borderRadius: 999, padding: '2px 7px', flexShrink: 0 }}>이미 돼요</span>
               </div>
               {/* ⛔ 「캡처·링크 올리면」이었다 — **링크는 자동으로 안 채워진다.**
@@ -301,8 +331,8 @@ export default function ImportScreen() {
                      ⭐ 그래서 「0장」은 짐작이 아니라 실측이다.
                   ⭐ 값을 «숫자 대 숫자»로 놓는다 — 「공짜」라고 쓰면 「되는데 돈만 안 든다」로 읽혀
                      정작 무엇이 깎이는지가 안 보인다. 1 ↔ 0 이 제일 빠르게 읽힌다. */}
-              <div style={{ fontSize: 15, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2, wordBreak: 'keep-all' }}>
-                캡처는 <b style={{ fontWeight: 800, color: 'var(--danger)' }}>1회 소모</b> · 글 붙여넣기는 <b style={{ fontWeight: 800, color: '#4a7a45' }}>소모 없음</b>
+              <div style={{ fontSize: 15, lineHeight: 1.5, color: 'var(--text-sub)', marginTop: 2, wordBreak: 'keep-all' }}>
+                캡처는 <b style={{ fontWeight: 800, color: 'var(--danger)' }}>{keyCount(1)}</b> · 글 붙여넣기는 <b style={{ fontWeight: 800, color: '#4a7a45' }}>{keyCount(0)}</b>
               </div>
               {/* ⛔ 남은 장수는 여기 «두지 않는다» — 창업자 *"너무 안보여"* (2026-08-13).
                   스크롤해야 나오는 자리라 「잘 보이게」가 안 된다. → 화면 «맨 위»로 올렸다. */}
@@ -364,14 +394,14 @@ export default function ImportScreen() {
                  그래서 그냥 「0장」이라 안 적고 조건을 밝힌다. ⛔안 밝히면 캡처를 누른 사람이 «속았다»고 느낀다. */}
           {(flow === 'youtube'
             ? [
-                ['camera', '캡처해서 올리기', '캡처만 하면 재료·순서 자동으로', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), '1회 소모', true],
-                ['pen', '설명(더보기) 붙여넣기', '글 복사해 오면 알아서 정리해요', false, () => { setFlow('text'); setText('') }, '소모 없음', false],
-                ['play', '영상 보면서 적기', '영상 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } }), '받아적으면 소모 없음', false],
+                ['camera', '캡처해서 올리기', '캡처만 하면 재료·순서 자동으로', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), keyCount(1), true],
+                ['pen', '설명(더보기) 붙여넣기', '글 복사해 오면 알아서 정리해요', false, () => { setFlow('text'); setText('') }, keyCount(0), false],
+                ['play', '영상 보면서 적기', '영상 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } }), `받아적으면 ${keyCount(0)}`, false],
               ]
             : [
-                ['camera', '캡처해서 올리기', '인스타는 글자 복사가 안 돼요', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), '1회 소모', true],
-                ['pen', '글을 복사했다면 붙여넣기', '복사한 글을 넣으면 알아서 정리해요', false, () => { setFlow('text'); setText('') }, '소모 없음', false],
-                ['photo', '미리보기 띄우고 적기', '게시물 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } }), '받아적으면 소모 없음', false],
+                ['camera', '캡처해서 올리기', '인스타는 글자 복사가 안 돼요', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), keyCount(1), true],
+                ['pen', '글을 복사했다면 붙여넣기', '복사한 글을 넣으면 알아서 정리해요', false, () => { setFlow('text'); setText('') }, keyCount(0), false],
+                ['photo', '미리보기 띄우고 적기', '게시물 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } }), `받아적으면 ${keyCount(0)}`, false],
               ]
           ).map(([ic, t, d, best, go, costText, paid]) => (
             <button key={t} className="card press" onClick={go}
@@ -385,7 +415,7 @@ export default function ImportScreen() {
                   {best && <span style={{ fontSize: 15, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px' }}>추천</span>}
                 </span>
                 {/* ⛔ `keep-all` — 꼬리가 붙어 두 줄이 되면 한글 낱말이 가운데서 잘린다(오늘 두 번 겪었다) */}
-                <span className="t-sub" style={{ display: 'block', fontSize: 15.3, lineHeight: 1.45, marginTop: 3, wordBreak: 'keep-all' }}>{d}{장수꼬리(costText, paid)}</span>
+                <span className="t-sub" style={{ display: 'block', fontSize: 15.3, lineHeight: 1.5, marginTop: 3, wordBreak: 'keep-all' }}>{d}{장수꼬리(costText, paid)}</span>
               </span>
               <Icon name="chevron-right" size={17} color="var(--sand)" />
             </button>

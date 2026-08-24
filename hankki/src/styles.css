@@ -1178,6 +1178,24 @@ img {
   font-weight: 600;
   letter-spacing: -0.02em;
 }
+/* 📏📏 [창업자 2026-08-24] 가져오기 «네모 박스 안» 줄간을 «한 값»으로 = 1.5
+   📮 창업자 = *"페이지가 정신이 없게 느껴져. 줄간도 균일하게"* → *"네모박스안에 있는 글자 줄간 말한거야."*
+   🔢 실측(`_probe-가져오기줄간-0824`) = 상자 5개 · 글줄 28개에 줄간이 **네 가지**였다
+      — `normal`(대부분) · 1.4(잔량 알약) · 1.45(AI 카드) · 1.5(히어로 설명).
+      ⭐ 「정신없다」의 정체가 색·크기가 아니라 **줄 간격이 상자마다 달랐던 것**이다.
+   ✅ 제일 넉넉한 값(1.5)으로 맞춘다 — 좁은 쪽에 맞추면 두 줄짜리가 답답해진다.
+   ⛔ 알약(「제일 많이 써요」·「이미 돼요」)은 «한 줄 이름표»라 그대로 둔다. 거기에 1.5 를 주면 알약이 길쭉해진다.
+   ⛔ `.imp` 로 «가져오기 화면에만» 건다 — `.opt-row` 는 설정 화면도 쓴다. */
+.imp .opt-row .t .a,
+.imp .opt-row .t .b,
+.imp .card .t-sub,
+.imp .card > div > div {
+  line-height: 1.5;
+}
+/* ⛔ `.t-sub` 는 앱 전체가 쓰고 **줄간 1.85 는 창업자가 「조금 더 시원하게」로 정한 값**이다(styles.css:312).
+   그래서 «가져오기의 상자 안»에서만 1.5 로 눌러 준다 — 그 값 자체는 안 건드린다.
+   ⭐ 상자 «밖»의 설명 줄(「레시피를 가져오는 방법을 선택해 주세요.」)은 1.85 그대로다 —
+      창업자가 말한 건 **「네모박스안에 있는 글자」**다. 범위를 넓히지 않는다. */
 .opt-row .t .b {
   font-size: 15.5px;
   color: var(--text-sub);
@@ -1893,6 +1911,13 @@ img {
   display: flex; align-items: center; justify-content: center;
 }
 .cook-shot-box.on { border: none; background: var(--brown); }
+/* 📔 [2026-08-24] 「어디에 담기는지」 안내 — 사진을 찍은 «뒤»에만 뜬다(찍기 전엔 알려줄 일이 없다).
+   ⭐ 14px = 「글자2」(v11.21) 의 최소값. 이보다 작으면 안 읽힌다.
+   ⛔ `.cook-shot` «안»에 못 넣는다 — 그건 `display:flex` 가로 한 줄이라 옆에 붙는다. */
+.cook-shot-note {
+  flex: 0 0 auto; padding: 0 16px; margin: 1px 0 6px;
+  font-size: 14px; color: var(--text-sub); word-break: keep-all;
+}
 .cook-shot-x {
   flex: 0 0 auto; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
   border-radius: 12px; background: none;

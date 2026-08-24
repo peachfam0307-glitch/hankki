@@ -17,7 +17,7 @@ import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES } from '../theme'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
-import { ocrImage, getOcrNote, getOcrLeft } from '../ocr'
+import { ocrImage, getOcrNote, getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw } from '../parseRecipe'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
@@ -262,8 +262,8 @@ export default function EditorScreen({ id, prefill }) {
         const left = getOcrLeft().total
         nav.showToast(
           left >= urls.length
-            ? `사진 ${urls.length}장이라 AI 스캔 ${urls.length}회가 소모돼요`
-            : `AI 스캔이 ${left}회 남아서 ${left}장만 AI로 읽어요`,
+            ? `사진 ${urls.length}장이라 ${keyCount(urls.length)}를 써요`
+            : `${KEY_SHORT}가 ${left}${KEY_UNIT} 남아서 ${left}장만 AI로 읽어요`,
           5200,
         )
       }
@@ -344,7 +344,7 @@ export default function EditorScreen({ id, prefill }) {
     const note = getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
     const quotaTail =
       note === 'user_quota'
-        ? ' · 무료 AI 스캔을 다 써서 기본 인식이에요'
+        ? ` · 무료 ${KEY_NAME}를 다 써서 기본 인식이에요`
         : note === 'global_quota' || note === 'rate_limited'
           ? ' · 지금 이용이 많아 기본 인식이에요'
           : ''
@@ -357,9 +357,9 @@ export default function EditorScreen({ id, prefill }) {
     const leftTail = quotaTail
       ? ''
       : leftNow.total === 0
-        ? ' · 무료 AI 스캔을 다 썼어요 · 이제 기본 인식으로 계속 돼요'
+        ? ` · 무료 ${KEY_NAME}를 다 썼어요 · 이제 기본 인식으로 계속 돼요`
         : leftNow.total === 1
-          ? ' · 무료 AI 스캔 1회 남았어요'
+          ? ` · 무료 ${KEY_NAME} 1${KEY_UNIT} 남았어요`
           : ''
 
     // 마지막 장 — 결과 반영
@@ -711,7 +711,7 @@ export default function EditorScreen({ id, prefill }) {
             borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
             fontSize: 16.4, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px',
           }}>
-            사진 1장에 AI 스캔 1회가 소모돼요
+            사진 1장에 {keyCount(1)}를 써요
           </div>
 
           {[
