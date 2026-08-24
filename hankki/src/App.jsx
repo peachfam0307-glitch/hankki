@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useStore } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
-import { ocrImage, getOcrLeft } from './ocr'
+import { ocrImage, getOcrLeft, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw } from './parseRecipe'
 import { fetchLinkRecipe } from './linkReader'
 import { guessCategory } from './utils'
@@ -374,7 +374,7 @@ export default function App() {
         showToast(
           left.unknown
             ? '사진에서 글자를 읽어 채웠어요'
-            : `사진에서 글자를 읽어 채웠어요 · 무료 AI 스캔 ${left.total}회 남았어요`,
+            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`,
         )
         return
       }
