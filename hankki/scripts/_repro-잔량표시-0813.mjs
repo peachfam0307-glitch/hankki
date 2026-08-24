@@ -16,8 +16,25 @@
 
 import { readFileSync } from 'node:fs'
 
-const WELCOME_FREE = 20
-const MONTHLY_FREE = 5
+// 🔑 ⭐ 이름은 «앱에서 읽는다» — 2026-08-24 「AI 스캔 N회」→「레시피열쇠 N개」로 갈 때
+//    이 판이 통째로 죽어서 드러났다(게이트가 «맞게» 걸린 것이다). 다음엔 안 죽게 여기서 뽑는다.
+const OCR봉 = readFileSync(new URL('../src/ocr.js', import.meta.url), 'utf8')
+const 뽑기 = (이름) => {
+  const m = OCR봉.match(new RegExp(`export const ${이름} = '([^']+)'`))
+  if (!m) { console.log(`⛔ src/ocr.js 에서 ${이름} 을 못 찾았다`); process.exit(1) }
+  return m[1]
+}
+const KEY_NAME = 뽑기('KEY_NAME')
+const KEY_SHORT = 뽑기('KEY_SHORT')
+const KEY_UNIT = 뽑기('KEY_UNIT')
+// 🔢 숫자도 앱에서 읽는다 — 2026-08-24 에 `export` 로 열었다(한도를 바꾸면 문구만 낡던 것을 막는다)
+const 숫자뽑기 = (이름) => {
+  const m = OCR봉.match(new RegExp(`export const ${이름} = (\\d+)`))
+  if (!m) { console.log(`⛔ src/ocr.js 에서 ${이름} 을 못 찾았다`); process.exit(1) }
+  return Number(m[1])
+}
+const WELCOME_FREE = 숫자뽑기('WELCOME_FREE')
+const MONTHLY_FREE = 숫자뽑기('MONTHLY_FREE')
 const LEFT_KEY = 'hankki:ocrLeft'
 
 // ── localStorage 흉내 ─────────────────────────────────────
@@ -47,22 +64,13 @@ function getOcrLeft() {
   return { ...v, total: v.welcome > 0 ? v.welcome : v.month, unknown: false }
 }
 
-// 🔑 ⭐ 이름은 «앱에서 읽는다» — 2026-08-24 「AI 스캔 N회」→「레시피열쇠 N개」로 갈 때
-//    이 판이 통째로 죽어서 드러났다(게이트가 «맞게» 걸린 것이다). 다음엔 안 죽게 여기서 뽑는다.
-const OCR봉 = readFileSync(new URL('../src/ocr.js', import.meta.url), 'utf8')
-const 뽑기 = (이름) => {
-  const m = OCR봉.match(new RegExp(`export const ${이름} = '([^']+)'`))
-  if (!m) { console.log(`⛔ src/ocr.js 에서 ${이름} 을 못 찾았다`); process.exit(1) }
-  return m[1]
-}
-const KEY_NAME = 뽑기('KEY_NAME')
-const KEY_UNIT = 뽑기('KEY_UNIT')
+
 
 // ── 화면 문구 (ImportScreen 뱃지 · EditorScreen 토스트) ─────
 const badge = (l) =>
   l.total > 0
     ? `무료 ${KEY_NAME} ${l.total}${KEY_UNIT} 남았어요`
-    : `이번 달 무료 ${KEY_NAME}를 다 썼어요 · 기본 인식으로 계속 읽어 드려요 · 다음 달에 무료 5${KEY_UNIT} 채워져요`
+    : `이번 달 무료${KEY_SHORT}를 다 썼어요 · 기본 인식으로 계속 읽어 드려요 · 다음 달에 무료${KEY_SHORT} ${MONTHLY_FREE}${KEY_UNIT} 채워져요`
 // 작은 줄 — 상태마다 다르다. ⛔여기서 오해가 나면 곧장 분쟁이 된다.
 //   웰컴 중 = 창업자 *"매달 20장씩 주는 줄 알지도 몰라"* → 「처음 한 번」이라고 못박는다
 //   3장 이하 = 창업자 *"다쓰면 무료인식되는건 어디서 안내받아?"* → 다 쓰기 «전»에 안심시킨다
@@ -70,10 +78,10 @@ const calm = (l) =>
   l.total <= 0
     ? ''
     : l.welcome > 0
-      ? `처음 한 번만 드리는 20${KEY_UNIT}예요 · 다 쓰면 매달 무료 5${KEY_UNIT}`
+      ? `처음 한 번만 드리는 ${WELCOME_FREE}${KEY_UNIT}예요 · 다 쓰면 매달 무료${KEY_SHORT} ${MONTHLY_FREE}${KEY_UNIT}`
       : l.total <= 3
         ? '다 써도 기본 인식으로 계속 읽어 드려요'
-        : `매달 5${KEY_UNIT}씩 채워져요`
+        : `매달 ${KEY_SHORT} ${MONTHLY_FREE}${KEY_UNIT}씩 채워져요`
 const tail = (l) =>
   l.total === 0
     ? ` · 무료 ${KEY_NAME}를 다 썼어요 · 이제 기본 인식으로 계속 돼요`
@@ -118,7 +126,7 @@ saveOcrLeft({ welcome: 0, month: 0 })
 chk(
   '⑤ 0장이면 「다 썼어요」＋「언제 다시 채워지나」까지 알려준다',
   badge(getOcrLeft()),
-  `이번 달 무료 ${KEY_NAME}를 다 썼어요 · 기본 인식으로 계속 읽어 드려요 · 다음 달에 무료 5${KEY_UNIT} 채워져요`,
+  `이번 달 무료${KEY_SHORT}를 다 썼어요 · 기본 인식으로 계속 읽어 드려요 · 다음 달에 무료${KEY_SHORT} ${MONTHLY_FREE}${KEY_UNIT} 채워져요`,
 )
 chk('⑤-b 마지막 장을 쓴 «그 순간» 토스트가 알려준다', tail(getOcrLeft()), ` · 무료 ${KEY_NAME}를 다 썼어요 · 이제 기본 인식으로 계속 돼요`)
 
@@ -132,18 +140,18 @@ chk('⑥-c 2장일 때도 «안» 알린다', tail(getOcrLeft()), '')
 
 // ⑧ 「다 쓰기 «전»」 안심 문구 — 3장 이하일 때만 (늘 띄우면 잔소리)
 saveOcrLeft({ welcome: 3, month: 5 })
-chk('⑧ 웰컴 3장 남으면 «처음 한 번만»을 알려준다', calm(getOcrLeft()), `처음 한 번만 드리는 20${KEY_UNIT}예요 · 다 쓰면 매달 무료 5${KEY_UNIT}`)
+chk('⑧ 웰컴 3장 남으면 «처음 한 번만»을 알려준다', calm(getOcrLeft()), `처음 한 번만 드리는 ${WELCOME_FREE}${KEY_UNIT}예요 · 다 쓰면 매달 무료${KEY_SHORT} ${MONTHLY_FREE}${KEY_UNIT}`)
 saveOcrLeft({ welcome: 0, month: 3 })
 chk('⑧-b 웰컴을 다 쓰고 3장 이하면 「다 써도 기본 인식으로 계속」', calm(getOcrLeft()), '다 써도 기본 인식으로 계속 읽어 드려요')
 saveOcrLeft({ welcome: 0, month: 5 })
-chk('⑧-c 웰컴을 다 쓰고 넉넉하면 「매달 5개씩 채워져요」', calm(getOcrLeft()), `매달 5${KEY_UNIT}씩 채워져요`)
+chk('⑧-c 웰컴을 다 쓰고 넉넉하면 「매달 열쇠 5개씩 채워져요」', calm(getOcrLeft()), `매달 ${KEY_SHORT} ${MONTHLY_FREE}${KEY_UNIT}씩 채워져요`)
 saveOcrLeft({ welcome: 0, month: 0 })
 chk('⑧-d 0장일 땐 이 줄 대신 «다 썼어요» 쪽이 뜬다', calm(getOcrLeft()), '')
 
 // ⑨⭐ 창업자 *"매달 20장씩 주는 줄 알지도 몰라"* — 웰컴이 «처음 한 번»임이 반드시 보여야 한다
 saveOcrLeft({ welcome: 14, month: 5 })
 chk('⑨ 웰컴이 남아 있는 «내내» 「처음 한 번만」이 보인다', /처음 한 번만/.test(calm(getOcrLeft())), 'true')
-chk(`⑨-b 그 줄이 「매달 무료 5${KEY_UNIT}」까지 같이 말해준다`, new RegExp(`매달 무료 5${KEY_UNIT}`).test(calm(getOcrLeft())), 'true')
+chk(`⑨-b 그 줄이 「매달 무료${KEY_SHORT} ${MONTHLY_FREE}${KEY_UNIT}」까지 같이 말해준다`, new RegExp(`매달 무료${KEY_SHORT} ${MONTHLY_FREE}${KEY_UNIT}`).test(calm(getOcrLeft())), 'true')
 
 // ⑦ 망가진 값이 들어와도 화면이 깨지지 않는다
 localStorage.setItem(LEFT_KEY, '{망가진 값')
@@ -158,8 +166,8 @@ const imp = readFileSync(new URL('../src/screens/ImportScreen.jsx', import.meta.
 // 🔒 화면 문구도 잠근다 — 위 badge()/calm() 은 «옮겨 적은 것»이라 화면만 바뀌면 거짓 초록이 된다.
 chk('🔒 화면이 「~남았어요」체를 쓴다(창업자 지시 · 「남음」 금지)', /\{KEY_UNIT\}<\/span> 남았어요/.test(imp), 'true')
 chk('🔒 화면에 「다 써도 기본 인식으로 계속 읽어 드려요」가 있다', imp.includes('다 써도 기본 인식으로 계속 읽어 드려요'), 'true')
-chk('🔒 화면이 「다음 달에 무료 5개 채워져요」로 «개수를» 밝힌다', imp.includes('다음 달에 <b') && imp.includes('무료 5{KEY_UNIT}'), 'true')
-chk('🔒⭐ 웰컴 알약이 «줄바꿈»으로 두 줄이다(창업자 지시)', /20\{KEY_UNIT\}예요<br \/>/.test(imp), 'true')
+chk('🔒 화면이 「다음 달에 무료열쇠 5개 채워져요」로 «개수를» 밝힌다', imp.includes('다음 달에 <b') && imp.includes('무료{KEY_SHORT} {MONTHLY_FREE}{KEY_UNIT}'), 'true')
+chk('🔒⭐ 웰컴 알약이 «줄바꿈»으로 두 줄이다(창업자 지시)', /\{WELCOME_FREE\}\{KEY_UNIT\}예요<br \/>/.test(imp), 'true')
 chk('🔒 안심 문구 조건이 «3장 이하»다', /ocrLeft\.total <= 3/.test(imp), 'true')
 // ⭐⭐ 창업자가 «제일 중요»하다고 한 줄 — 사라지면 「매달 20장인 줄 알았다」 분쟁이 된다.
 chk('🔒⭐ 화면에 「처음 한 번만」이 있다', imp.includes('처음 한 번만'), 'true')
