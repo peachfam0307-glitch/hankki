@@ -258,9 +258,16 @@ export default function ImportScreen() {
               boxShadow: '0 2px 8px rgba(150,110,70,.16)',
             }}><Icon name="photo" size={25} color="#8a5a37" stroke={1.7} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+              {/* ⛔⛔ [창업자 2026-08-24] *"제일많이 써요가 칸을 벗어났어."* — 맞다. 실측으로 닫았다.
+                  🔢 알약이 «언제나» x 258~372 에 선다(제목 156 nowrap ＋ 틈 6 이 96 에서 시작하니 자리가 고정된다).
+                     카드 오른끝과 견주면  412px −20(안 넘침) · **390px ＋2** · **360px ＋32** · **320px ＋72**
+                  ⭐ 뿌리 = 제목이 `nowrap` 이고 알약이 `flexShrink: 0` 이라 **둘 다 줄어들 수가 없다.**
+                     칸(226px)보다 내용(276px)이 크면 갈 곳이 없어 그냥 삐져나간다.
+                  ⛔ 제목을 줄이거나 말줄임하지 않는다 — 「사진 · 직접 작성하기」가 잘리면 무슨 길인지 모른다.
+                  ✅ `wrap` 을 준다 — 안 들어가면 알약이 «아랫줄»로 내려간다. 어느 폭에서도 안 삐져나간다. */}
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 3 }}>
                 <span style={{ fontSize: 16.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap', lineHeight: 1.5 }}>사진 · 직접 작성하기</span>
-                <span style={{ fontSize: 15, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>제일 많이 써요</span>
+                <span style={{ fontSize: 13.5, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2.5px 8px', flexShrink: 0, whiteSpace: 'nowrap' }}>제일 많이 써요</span>
               </div>
               {/* 💰 [2026-08-21] 값을 «고르는 그 줄»에 붙인다 — 창업자가 결제에 대해 정한 원칙과 같다:
                      *"구매 탭은 안 만든다 — 「쓰려는 순간」 그 자리에서"*. 알리는 것도 같은 자리다.
