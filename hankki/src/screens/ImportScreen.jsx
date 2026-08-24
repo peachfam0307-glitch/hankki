@@ -56,7 +56,12 @@ function 장수꼬리(costText, paid) {
     // ⛔ `nowrap` — 실물에서 「캡처는 AI / 스캔 1장」으로 갈렸다(규칙 21).
     //    낱말 잘림은 아니지만 «값»이 두 줄로 흩어지면 한눈에 안 읽힌다. 값은 한 덩어리로 넘어가야 한다.
     //    🔢 제일 긴 꼬리(「받아적으면 AI 스캔 0장」)도 12.3px 에서 ~150px — 칸 226px 안이라 안 넘친다.
-    <> · <b style={{ fontWeight: 800, color: paid ? 'var(--danger)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{costText}</b></>
+    // ⛔ [창업자 제보 2026-08-24] *"빨간글씨는 조금 작게하자. 전체적으로 정신이 없어보이네.."*
+    //    🔢 실측 = 값 꼬리가 **15 · 15.3 · 15.5** 세 크기로 갈려 있었고(자리마다 부모 크기를 물려받았다)
+    //       게다가 **본문과 같은 크기 ＋ 굵기 800** 이라 설명 줄 전체가 다 도드라졌다. 그게 「정신없다」의 정체다.
+    //    ✅ 여기서 크기를 «못 박는다» — 이 함수가 히어로·목록·흐름 «세 자리»를 다 그리므로 한 곳이면 통일된다.
+    //    ⛔ 14 아래로는 안 내린다 — 「글자2」(v11.21)가 정한 하한이다.
+    <> · <b style={{ fontSize: 14, fontWeight: 800, color: paid ? 'var(--danger)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{costText}</b></>
   )
 }
 
@@ -322,7 +327,7 @@ export default function ImportScreen() {
                   ⭐ 값을 «숫자 대 숫자»로 놓는다 — 「공짜」라고 쓰면 「되는데 돈만 안 든다」로 읽혀
                      정작 무엇이 깎이는지가 안 보인다. 1 ↔ 0 이 제일 빠르게 읽힌다. */}
               <div style={{ fontSize: 15, lineHeight: 1.45, color: 'var(--text-sub)', marginTop: 2, wordBreak: 'keep-all' }}>
-                캡처는 <b style={{ fontWeight: 800, color: 'var(--danger)' }}>{keyCount(1)}</b> · 글 붙여넣기는 <b style={{ fontWeight: 800, color: '#4a7a45' }}>{keyCount(0)}</b>
+                캡처는 <b style={{ fontSize: 14, fontWeight: 800, color: 'var(--danger)' }}>{keyCount(1)}</b> · 글 붙여넣기는 <b style={{ fontSize: 14, fontWeight: 800, color: '#4a7a45' }}>{keyCount(0)}</b>
               </div>
               {/* ⛔ 남은 장수는 여기 «두지 않는다» — 창업자 *"너무 안보여"* (2026-08-13).
                   스크롤해야 나오는 자리라 「잘 보이게」가 안 된다. → 화면 «맨 위»로 올렸다. */}
