@@ -37,6 +37,17 @@ const 옛판 = [
   { id: 'my-7', title: '토마토샐러드', icon: 'fy_y05', thumb: 'icon', ingredients: [], steps: [] },
   // ⑤ 같은 옛 키인데 제목이 「샐러드」 — ⛔이건 안 바뀌어야 한다(범용 샐러드 그림이 맞다)
   { id: 'my-8', title: '샐러드', icon: 'fy_y05', thumb: 'icon', ingredients: [], steps: [] },
+  // ⑥⑥ [2026-08-25 · v11.34] 대응표가 «놓친» 자리 — 31곳을 실측으로 찾았다
+  //   ⛔ 뿌리 = 대응표를 커밋 diff(키가 «바뀐» 규칙)에서 뽑았는데,
+  //      새 규칙 상당수는 **키를 바꾼 게 아니라 옛 규칙 «위»에 새로 얹은 것**이라 diff 에 안 잡혔다.
+  //   ⭐ 그래서 표를 늘리는 대신 「제목을 지금 규칙에 다시 물어본다」를 넣었다. 아래가 그 표본이다.
+  { id: 'my-9', title: '파스타', icon: 'pasta', thumb: 'icon', ingredients: [], steps: [] },
+  { id: 'my-10', title: '초밥', icon: 'sushi', thumb: 'icon', ingredients: [], steps: [] },
+  { id: 'my-11', title: '리조또', icon: 'fe_42', thumb: 'icon', ingredients: [], steps: [] },
+  { id: 'my-12', title: '두루치기', icon: 'fe_129', thumb: 'icon', ingredients: [], steps: [] },
+  { id: 'my-13', title: '뚝배기파스타', icon: 'fe_168', thumb: 'icon', ingredients: [], steps: [] },
+  // ⑦ ⛔ 새 컷이 «없는» 요리는 그대로여야 한다 — 아무 때나 덮으면 유저가 고른 그림을 뺏는다
+  { id: 'my-14', title: '김치찌개', icon: 'fh_k02', thumb: 'icon', ingredients: [], steps: [] },
 ]
 
 const 바랄값 = {
@@ -45,12 +56,14 @@ const 바랄값 = {
   'my-6': 'fe_26',  // 카드 표지 = 그대로
   'my-7': 'fe_444', // 제목으로 잡음
   'my-8': 'fy_y05', // 범용 샐러드 = 그대로
+  'my-9': 'fe_446', 'my-10': 'fe_494', 'my-11': 'fe_432', 'my-12': 'fe_417', 'my-13': 'fe_436',
+  'my-14': 'fh_k02', // 새 컷이 없다 = 그대로
 }
 
 const now = Date.now()
 const state = {
   recipes: 옛판.map((r, i) => ({ ...r, status: 'sorted', savedAt: now - i * 60000 })),
-  seedV: 87, // ⭐ v11.32 까지 받은 폰. 88 미만이라야 마이그레이션이 돈다
+  seedV: 88, // ⭐ v11.33 까지 받은 폰. 89 미만이라야 마이그레이션이 돈다
 }
 
 const PORT = Number(process.env.PORT || 4436)
@@ -90,7 +103,7 @@ for (const r of 옛판) {
   const got = 읽음.m[r.id]
   if (!got) { 칸(r.title, false, '레시피가 사라졌다') ; continue }
   const want = 바랄값[r.id]
-  const 지킴 = ['my-5', 'my-6', 'my-8'].includes(r.id)
+  const 지킴 = ['my-5', 'my-6', 'my-8', 'my-14'].includes(r.id)
   칸(`${r.title}${지킴 ? ' (그대로여야 함)' : ''}`, got.icon === want, `${r.icon} → ${got.icon}  (기대 ${want})`)
 }
 

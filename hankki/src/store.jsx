@@ -336,7 +336,17 @@ function migrateBasics(saved) {
     // ⛔ 직접 넣은 사진·카드·글자 표지는 절대 안 건드린다 (위 v38 패스와 같은 잣대)
     if (r.thumb && r.thumb !== 'icon') return r
     if (r.image && r.thumb !== 'icon') return r
-    const want = ICON_FORCE_V88[(r.title || '').trim()] || ICON_SWAP_V88[r.icon]
+    // ⭐⭐ 셋째 = 「제목을 지금 규칙에 다시 물어서 «새 컷»이 나오면 그걸로」
+    //   ⛔⛔ 왜 필요한가 — v11.33 의 대응표를 **커밋 diff(키가 «바뀐» 규칙)** 에서 뽑았는데,
+    //      새 규칙 상당수는 **키를 바꾼 게 아니라 옛 규칙 «위»에 새로 얹은 것**이라 diff 에 안 잡혔다.
+    //      🔢 실측 = 그렇게 새는 자리가 **31곳**(「파스타」·「수프」·「초밥」·「리조또」·「두루치기」…).
+    //      📮 창업자 = *"안바뀐게 뭔지는 솔직히 모르겠어. 그건 네가 확인해야할 영역같아."* — 맞는 말이라 내가 쟀다.
+    //   ⭐ 표를 늘리는 대신 «뿌리»로 막는다 — 앞으로 새 컷을 넣어도 이 줄이 저절로 데려간다.
+    //   ⛔ 새 컷(fe_389~494)이 나올 때만 바꾼다 — 아무 때나 덮으면 유저가 «고른» 그림을 뺏는다.
+    const 새컷 = guessFoodIcon(r.title || '')
+    const want = ICON_FORCE_V88[(r.title || '').trim()]
+      || ICON_SWAP_V88[r.icon]
+      || (/^fe_(389|39\d|4\d\d)$/.test(새컷) ? 새컷 : null)
     return want && r.icon !== want ? { ...r, icon: want } : r
   })
   return { recipes: [...fixed, ...add], seedV: BASICS_VERSION }
