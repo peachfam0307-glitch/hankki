@@ -9,6 +9,7 @@
 // ⚠️ 통과(exit 0) 쪽은 «일부러» 안 잰다 — 통과하면 `ask-log.json` 에 기록이 쌓여
 //    다음 검사가 「중복」으로 죽는다. 여기서는 **막아야 하는 것만** 잰다.
 import { execFileSync } from 'node:child_process'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -60,10 +61,23 @@ for (const c of cases) {
   console.log(`  ${ok ? '✅' : '⛔'} ${c.이름}  → exit ${code}${ok ? '' : ' (1이라야 막은 것이다)'}`)
 }
 {
-  const code = run([...A, ...PASS.args])
-  const ok = code === 0
-  if (!ok) bad++
-  console.log(`  ${ok ? '✅' : '⛔'} ${PASS.이름}  → exit ${code}${ok ? '' : ' (0이라야 «길이 있는» 것이다)'}`)
+  // ⛔⛔ [2026-08-25 고침] 이 칸은 «일부러 통과»하는 칸이라 통과하는 순간 `ask-log.json` 에 도장이 하나 찍힌다.
+  //    스모크가 돌 때마다 하나씩 쌓여 **115건 중 112건이 같은 가짜 도장**이 돼 있었다.
+  //    ⭐ 그냥 지저분한 게 아니다 — `submission-gate` 는 이 기록을 보고 «이미 물어본 것»을 막는다.
+  //       가짜가 쌓이면 나중에 진짜 질문이 「중복」으로 잘못 막히거나, 반대로 신호가 묻힌다.
+  //    ✅ 그래서 이 칸 앞뒤로 기록 파일을 «떠놨다 되돌린다». 검사는 그대로 돌고 기록만 안 더럽힌다.
+  //    📌 파일 맨 위 주석이 *"통과 쪽은 일부러 안 잰다 — 기록이 쌓여서"* 라고 «이유까지 적어놨는데»
+  //       나중에 PASS 칸을 붙이면서 그 이유를 안 봤다. 주석은 막지 못한다 — 되돌리는 코드가 막는다.
+  const LOG = join(HERE, 'ask-log.json')
+  const 떠둔것 = readFileSync(LOG, 'utf8')
+  try {
+    const code = run([...A, ...PASS.args])
+    const ok = code === 0
+    if (!ok) bad++
+    console.log(`  ${ok ? '✅' : '⛔'} ${PASS.이름}  → exit ${code}${ok ? '' : ' (0이라야 «길이 있는» 것이다)'}`)
+  } finally {
+    writeFileSync(LOG, 떠둔것) // ⛔ 검사가 죽어도 되돌린다
+  }
 }
 
 if (bad) {
