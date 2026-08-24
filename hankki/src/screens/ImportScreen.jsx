@@ -7,7 +7,7 @@ import { parseRecipeText, keepRaw } from '../parseRecipe'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳ 서버 되면 되살릴 것 ①」 참조.
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 공유받기가 쓰고, 되살릴 때 그대로 쓴다.
 import { guessFoodIcon } from '../components/FoodIcon'
-import { getOcrLeft, KEY_NAME, KEY_UNIT, keyCount } from '../ocr'
+import { getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount, WELCOME_FREE, MONTHLY_FREE } from '../ocr'
 import Icon from '../components/Icon'
 import Portal from '../components/Portal'
 // 🐻 [2026-08-13 창업자] *"가져오기에 무료스캔 알림에 캐릭터 하나 넣자(오른쪽 비어있는 칸에)"* · *"귀여운 걸로 해줘. 움직이게"*
@@ -185,22 +185,34 @@ export default function ImportScreen() {
                         · 8월에 17장만 쓴 사람 → 웰컴 3장이 9월로 이월 → 9월에 그 3장을 쓰고 «그 9월에 2장 더» 쓴다
                           (worker: 웰컴을 다 쓴 뒤 `userC(3) < PER_USER_MONTHLY(5)` 라 통과)
                         ⭐ 그래서 「다 쓰면(조건) · 매달(주기)」로만 적는다 — 두 경우 다 맞는 유일한 표현. */}
-                    <b style={{ fontWeight: 900, color: '#356131' }}>처음 한 번만</b> 드리는 20{KEY_UNIT}예요<br />
-                    다 쓰면 <b style={{ fontWeight: 900, color: '#356131' }}>매달 무료 5{KEY_UNIT}</b>
+                    <b style={{ fontWeight: 900, color: '#356131' }}>처음 한 번만</b> 드리는 {WELCOME_FREE}{KEY_UNIT}예요<br />
+                    다 쓰면 <b style={{ fontWeight: 900, color: '#356131' }}>매달 무료{KEY_SHORT} {MONTHLY_FREE}{KEY_UNIT}</b>
                   </div>
                 ) : (
                   <div style={{ fontSize: 15.3, color: 'var(--text-sub)', marginTop: 2 }}>
-                    {ocrLeft.total <= 3 ? '다 써도 기본 인식으로 계속 읽어 드려요' : `매달 5${KEY_UNIT}씩 채워져요`}
+                    {ocrLeft.total <= 3 ? '다 써도 기본 인식으로 계속 읽어 드려요' : `매달 ${KEY_SHORT} ${MONTHLY_FREE}${KEY_UNIT}씩 채워져요`}
                   </div>
                 )}
               </div>
             ) : (
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#8a6a3a', letterSpacing: '-.3px' }}>이번 달 무료 {KEY_NAME}를 다 썼어요</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#8a6a3a', letterSpacing: '-.3px' }}>이번 달 무료{KEY_SHORT}를 다 썼어요</div>
                 {/* ⭐ 「못 쓴다」가 아니라 「계속 되는데 품질이 바뀐다」 ＋ 언제·«몇 장» 돌아오는지까지.
                     ⛔ 「다시 채워져요」만 두면 몇 장인지 모른다 → 창업자 *"다음달에 무료5장채워져요"* */}
+                {/* ⛔ [2026-08-24] 「무료 5개」→「무료열쇠 5개」로 늘리자 **「채워져요」가 혼자 넷째 줄**로 밀렸다.
+                    🔢 실측 = 이 칸은 오른쪽 캐릭터 때문에 **223px 뿐**(390px 폰). 문장은 260px 이 필요하다.
+                    ✅ `text-wrap: balance` 가 두 줄을 «고르게» 나눠 꼬리 낱말을 없앤다 —
+                       ⭐ **문장을 안 바꾸고 모양만 고친다**(창업자 말 그대로 둔다). v11.24 올리고당 설명과 같은 수. */}
+                {/* ⛔⛔ 두 문장을 «한 블록에 `<br/>` 로» 두면 `text-wrap: balance` 가 안 먹는다(2026-08-24 실측 —
+                    값이 한 줄도 안 바뀌었다). `<br>` 은 새 블록을 만들지 않아서 브라우저가 전체를 한 덩어리로 본다.
+                    ✅ 그래서 문장마다 블록을 준다 — 그래야 둘째 문장이 «자기 안에서» 고르게 나뉜다. */}
                 <div style={{ fontSize: 15.3, color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.45 }}>
-                  기본 인식으로 계속 읽어 드려요<br />다음 달에 <b style={{ fontWeight: 800, color: '#8a6a3a' }}>무료 5{KEY_UNIT}</b> 채워져요
+                  기본 인식으로 계속 읽어 드려요
+                </div>
+                <div style={{ fontSize: 15.3, color: 'var(--text-sub)', lineHeight: 1.45, textWrap: 'balance' }}>
+                  {/* ⛔ `nowrap` — 「무료열쇠」와 「5개」가 갈라지면 **값이 한눈에 안 읽힌다**(v11.24 교훈:
+                      *"값이 두 줄로 흩어지면 한눈에 안 읽힌다. 값은 한 덩어리로 넘어가야 한다"*). */}
+                  다음 달에 <b style={{ fontWeight: 800, color: '#8a6a3a', whiteSpace: 'nowrap' }}>무료{KEY_SHORT} {MONTHLY_FREE}{KEY_UNIT}</b> 채워져요
                 </div>
               </div>
             )}
@@ -235,7 +247,15 @@ export default function ImportScreen() {
               boxShadow: '0 2px 8px rgba(150,110,70,.16)',
             }}><Icon name="photo" size={25} color="#8a5a37" stroke={1.7} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+              {/* ⛔⛔ [창업자 제보 2026-08-24] *"제일많이써요 그 줄 넘쳤어"* — **배지가 카드 밖으로 삐져나갔다.**
+                  🔢 실측 = 삐짐 390px **6px** · 360px **36px** · 320px **76px** — 360px 에선 「써**요**」의 「요」가 잘려 나갔다.
+                  ⭐ 뿌리 = 제목은 `nowrap`, 배지는 `flexShrink: 0` ＋ `nowrap` 이라 **둘 다 안 줄어든다.**
+                     부모에 `minWidth: 0` 이 있어도 «줄어들 수 있는 자식»이 없으면 그냥 넘친다.
+                  ✅ `flexWrap: 'wrap'` — 되는 데까지 한 줄, 안 되면 배지가 «아랫줄로 내려간다». 어느 폭에서도 안 잘린다.
+                  ⛔ 글자를 줄이거나(「글자2」 역행) 배지 문구를 자르지 «않았다» — 창업자 문구는 그대로 둔다.
+                  📌 내 이름 변경(v11.30)과 무관하다 — `git log -S` 로 확인 = 이 줄은 **8/21 `ea351d19` 부터** 그랬다.
+                     캡처를 크게 찍어 보내면서 «처음 드러난» 것이다. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 16.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap' }}>사진 · 직접 작성하기</span>
                 <span style={{ fontSize: 15, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2px 7px', flexShrink: 0, whiteSpace: 'nowrap' }}>제일 많이 써요</span>
               </div>
