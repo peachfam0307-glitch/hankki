@@ -167,7 +167,12 @@ chk('🔒 그 묶음을 ocrImage 에 넘긴다', /batch: ocrBatch\.current/.test
 //       모양(어디가 굵나·어느 배열 몇 번째나)은 `_repro-장수안내-0821.mjs` 가
 //       **화면에 그려진 글자와 computed style 로** 잰다 — 그쪽이 훨씬 세다(순서·색까지 본다).
 const ed본문 = ed.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
-chk('🔒⭐ 화면 문구가 아직 «장당 차감»이다 (주석 뺀 진짜 코드에서)', /사진 1장에 AI 스캔 1회가 소모/.test(ed본문), 'true')
+// 🔑 이름은 «앱에서 읽는다» — 2026-08-24 「AI 스캔 1회」→「열쇠 1개」로 갈 때 이 잣대가 죽어서 드러났다.
+//    ⭐ 뜻(＝장당 차감)은 그대로다. 바뀐 건 이름뿐이라 잣대만 옮긴다.
+const OCR봉 = readFileSync(new URL('../src/ocr.js', import.meta.url), 'utf8')
+const KEY_SHORT = (OCR봉.match(/export const KEY_SHORT = '([^']+)'/) || [])[1]
+if (!KEY_SHORT) { console.log('⛔ src/ocr.js 에서 KEY_SHORT 를 못 찾았다'); process.exit(1) }
+chk('🔒⭐ 화면 문구가 아직 «장당 차감»이다 (주석 뺀 진짜 코드에서)', new RegExp(`사진 1장에 \\{keyCount\\(1\\)\\}|사진 1장에 ${KEY_SHORT} 1`).test(ed본문), 'true')
 // ⛔ 서버를 올리는 날 뒤집을 자리 = 이 줄이다. 그때 「몇 장을 골라도 1장」으로 바꾸고 아래를 뒤집는다.
 chk('🔒⛔ 「몇 장을 골라도 1장」은 아직 «안» 적혀 있다 (서버가 옛 판이라 거짓말이 된다)',
   !/몇 장을 골라도|여러 장을 올려도 1장|묶음 1장/.test(ed본문), 'true')

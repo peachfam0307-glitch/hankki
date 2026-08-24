@@ -106,6 +106,25 @@ const WELCOME_FREE = 20 // ⛔ worker.js 의 LIMITS.WELCOME_FREE 와 같아야 �
 const MONTHLY_FREE = 5 // ⛔ worker.js 의 LIMITS.PER_USER_MONTHLY 와 같아야 한다
 const LEFT_KEY = 'hankki:ocrLeft'
 
+// ── 🔑 이 재화의 이름 ────────────────────────────────────────
+// ✅✅ 창업자 확정 2026-08-24 = **「레시피열쇠」 · 세는 말 「개」** (⛔재론 금지)
+//    📮 후보 10개를 실물 화면에 얹어 본 뒤 *"열쇠나 국자..가 젤 나은것같아"* → 근거를 보고 **"가"**
+//    ⭐ 창업자가 콕 집은 장점 = *"횟수제라는 게 자연스럽게 느껴진다"* —
+//       열쇠는 자물쇠 하나에 하나라 **쓰면 없어지는 게 당연**하다. (국자는 백 번 퍼도 그대로라 여기서 갈렸다)
+//
+// ⛔⛔ **이름을 화면 코드에 «글자로» 박지 말 것.** 여기서 읽는다.
+//    📌 v11.02 「책갈피」 때 배운 것 — 같은 기능의 이름이 **일곱 곳**이었고 한 곳만 바꾸자 말이 갈라졌다.
+//    ＋ 이 파일 주석에 내가 이미 적어뒀던 것: *"문구에 숫자 「5회」가 글자로 박혀 있다 → 한도를 바꾸면 문구만 낡는다."*
+//       이름도 똑같다. **한 곳에서 읽으면 다음에 바뀌어도 한 줄만 고친다.**
+//
+// ⭐ 넓은 자리엔 `KEY_NAME`, 좁은 자리(칸·꼬리말)엔 `KEY_SHORT` — 창업자 잣대가
+//    *"좁은 자리에선 줄여 쓸 수 있어야 한다(레시피열쇠 → 열쇠)"* 였다.
+export const KEY_NAME = '레시피열쇠'
+export const KEY_SHORT = '열쇠'
+export const KEY_UNIT = '개'
+// 「열쇠 3개」처럼 세어 준다. 좁은 자리용.
+export const keyCount = (n) => `${KEY_SHORT} ${n}${KEY_UNIT}`
+
 function saveOcrLeft(left) {
   const w = Math.max(0, parseInt(left.welcome, 10) || 0)
   const m = Math.max(0, parseInt(left.month, 10) || 0)
