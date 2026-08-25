@@ -37,10 +37,14 @@ const 옛판 = [
   { id: 'my-7', title: '토마토샐러드', icon: 'fy_y05', thumb: 'icon', ingredients: [], steps: [] },
   // ⑤ 같은 옛 키인데 제목이 「샐러드」 — ⛔이건 안 바뀌어야 한다(범용 샐러드 그림이 맞다)
   { id: 'my-8', title: '샐러드', icon: 'fy_y05', thumb: 'icon', ingredients: [], steps: [] },
-  // ⑥⑥ [2026-08-25 · v11.34] 대응표가 «놓친» 자리 — 31곳을 실측으로 찾았다
-  //   ⛔ 뿌리 = 대응표를 커밋 diff(키가 «바뀐» 규칙)에서 뽑았는데,
-  //      새 규칙 상당수는 **키를 바꾼 게 아니라 옛 규칙 «위»에 새로 얹은 것**이라 diff 에 안 잡혔다.
-  //   ⭐ 그래서 표를 늘리는 대신 「제목을 지금 규칙에 다시 물어본다」를 넣었다. 아래가 그 표본이다.
+  // ⑥⑥⑥ [2026-08-25 · v11.35] ⛔⛔ **v11.34 가 낸 사고를 붙잡는 칸이다. 이게 이 판의 심장이다.**
+  //   📮 창업자 = *"해장파스타에 크림파스타그림이 올라갔어"*
+  //   ⛔ v11.34 는 「제목을 지금 규칙에 다시 물어서 새 컷이면 갈아끼운다」를 넣었다.
+  //      그런데 **`recipe.icon` 이 «박혀 있는 이유»가 바로 「규칙이 틀려서」**다.
+  //      해장 파스타는 `basics.js` 가 **일부러** `fe_443`(스파게티)을 박아뒀는데,
+  //      넓은 「파스타」 규칙이 `fe_446`(크림파스타)을 내놓아 **일부러 박은 값을 덮었다.**
+  //   ⭐ 그래서 그 패스를 통째로 뺐다. 아래 다섯은 **대응표에 없으므로 «그대로 남아야» 한다.**
+  //   🧪 규칙 12 = v11.34 의 셋째 패스를 되살리면 이 다섯이 새 컷으로 갈려 죽는다.
   { id: 'my-9', title: '파스타', icon: 'pasta', thumb: 'icon', ingredients: [], steps: [] },
   { id: 'my-10', title: '초밥', icon: 'sushi', thumb: 'icon', ingredients: [], steps: [] },
   { id: 'my-11', title: '리조또', icon: 'fe_42', thumb: 'icon', ingredients: [], steps: [] },
@@ -48,6 +52,13 @@ const 옛판 = [
   { id: 'my-13', title: '뚝배기파스타', icon: 'fe_168', thumb: 'icon', ingredients: [], steps: [] },
   // ⑦ ⛔ 새 컷이 «없는» 요리는 그대로여야 한다 — 아무 때나 덮으면 유저가 고른 그림을 뺏는다
   { id: 'my-14', title: '김치찌개', icon: 'fh_k02', thumb: 'icon', ingredients: [], steps: [] },
+  // ⑧⑧ [v11.35] 창업자 폰에 **이미 틀린 값이 저장된** 자리 — 제목으로 되돌린다(규칙 18 ⓙ)
+  { id: 'my-15', title: '해장 파스타', icon: 'fe_446', thumb: 'icon', ingredients: [], steps: [] },
+  { id: 'my-16', title: '새우 해장 파스타', icon: 'fe_446', thumb: 'icon', ingredients: [], steps: [] },
+  // ⑨ [v11.35] 「이름표 ↔ 그림」이 어긋난 셋 — 같은 요리를 그린 새 컷이 이미 있었다
+  { id: 'my-17', title: '해물오일파스타', icon: 'fe_451', thumb: 'icon', ingredients: [], steps: [] },
+  { id: 'my-18', title: '간장 제육볶음', icon: 'fh_k13', thumb: 'icon', ingredients: [], steps: [] },
+  { id: 'my-19', title: '샤브샤브', icon: 'fh_k26', thumb: 'icon', ingredients: [], steps: [] },
 ]
 
 const 바랄값 = {
@@ -56,14 +67,20 @@ const 바랄값 = {
   'my-6': 'fe_26',  // 카드 표지 = 그대로
   'my-7': 'fe_444', // 제목으로 잡음
   'my-8': 'fy_y05', // 범용 샐러드 = 그대로
-  'my-9': 'fe_446', 'my-10': 'fe_494', 'my-11': 'fe_432', 'my-12': 'fe_417', 'my-13': 'fe_436',
+  // ⭐ v11.35 — 대응표에 «없는» 것은 그대로 남아야 한다(v11.34 의 셋째 패스를 뺐다)
+  // ⛔ my-9·10 은 «도형» 키(PNG 아님)라 **v34 패스**가 사진으로 올린다 — 원래부터 그랬고 옳다.
+  //    ⭐ v34 는  이면 «그냥 돌아간다» = **일부러 박은 PNG 는 절대 안 건드린다.**
+  //       v11.34 사고는 그 울타리를 넘어 PNG 까지 덮은 것이었다(my-11~13·my-15·16 이 그 증인).
+  'my-9': 'fe_446', 'my-10': 'fe_494', 'my-11': 'fe_42', 'my-12': 'fe_129', 'my-13': 'fe_168',
   'my-14': 'fh_k02', // 새 컷이 없다 = 그대로
+  'my-15': 'fe_443', 'my-16': 'fy_y03',            // v11.34 사고 되돌리기
+  'my-17': 'fe_428', 'my-18': 'fe_418', 'my-19': 'fe_471', // 이름표 ↔ 그림 어긋남
 }
 
 const now = Date.now()
 const state = {
   recipes: 옛판.map((r, i) => ({ ...r, status: 'sorted', savedAt: now - i * 60000 })),
-  seedV: 88, // ⭐ v11.33 까지 받은 폰. 89 미만이라야 마이그레이션이 돈다
+  seedV: 89, // ⭐ v11.34 까지 받은 폰. 90 미만이라야 마이그레이션이 돈다
 }
 
 const PORT = Number(process.env.PORT || 4436)
@@ -103,7 +120,7 @@ for (const r of 옛판) {
   const got = 읽음.m[r.id]
   if (!got) { 칸(r.title, false, '레시피가 사라졌다') ; continue }
   const want = 바랄값[r.id]
-  const 지킴 = ['my-5', 'my-6', 'my-8', 'my-14'].includes(r.id)
+  const 지킴 = ['my-5', 'my-6', 'my-8', 'my-11', 'my-12', 'my-13', 'my-14'].includes(r.id)
   칸(`${r.title}${지킴 ? ' (그대로여야 함)' : ''}`, got.icon === want, `${r.icon} → ${got.icon}  (기대 ${want})`)
 }
 
