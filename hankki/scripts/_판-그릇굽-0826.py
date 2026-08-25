@@ -26,17 +26,17 @@ APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 컷 = {c['key']: c for c in json.load(open(f'{뿌리}/컷목록.json'))}
 
 
-def 체커(im, 배 = 1):
+진한 = (26, 24, 22)
+
+
+def 얹기(im, 배 = 1):
+    """⛔⛔ **흰 접시를 «밝은» 판에 얹으면 가장자리가 안 보인다** — 첫 판이 체커(흰/연회색)였고
+    창업자가 바로 짚었다: *"어두운판에서 잘보여"*.
+    ⭐ 우리가 판정할 것은 «흰 접시의 실루엣»이라 **진한 판이 맞는 눈**이다.
+       (자르기 검수 3단계의 「진한판」과 같은 이유 · 절대원칙 13)"""
     if 배 > 1:
         im = im.resize((im.size[0] * 배, im.size[1] * 배), Image.NEAREST)
-    w, h = im.size
-    bg = Image.new('RGB', (w, h), (255, 255, 255))
-    p = bg.load()
-    칸 = 9 * max(1, 배)
-    for y in range(h):
-        for x in range(w):
-            if ((x // 칸) + (y // 칸)) % 2:
-                p[x, y] = (208, 208, 208)
+    bg = Image.new('RGB', im.size, 진한)
     bg.paste(im, (0, 0), im)
     return bg
 
@@ -61,7 +61,7 @@ def 굽확대(im, 배 = 3):
     아래, cx = int(ys[-1]), (int(xs[0]) + int(xs[-1])) // 2
     x0, x1 = max(0, cx - 62), min(im.size[0], cx + 62)
     y0, y1 = max(0, 아래 - 46), min(im.size[1], 아래 + 5)
-    return 체커(im.crop((x0, y0, x1, y1)), 배)
+    return 얹기(im.crop((x0, y0, x1, y1)), 배)
 
 
 칸들 = []
@@ -81,7 +81,7 @@ for k in 볼것:
     칸들.append(dict(
         key = k, name = c['name'],
         옛크기 = f'{옛.size[0]}×{옛.size[1]}', 새크기 = f'{새.size[0]}×{새.size[1]}',
-        옛 = 담기(체커(옛), 330), 새 = 담기(체커(새), 330),
+        옛 = 담기(얹기(옛), 330), 새 = 담기(얹기(새), 330),
         옛굽 = 담기(굽확대(옛)), 새굽 = 담기(굽확대(새)),
     ))
 
@@ -106,7 +106,7 @@ h1{font-size:24px;margin:0 0 6px;letter-spacing:-.02em}
 .cut h2{font-size:17px;margin:0 0 2px}
 .cut .k{color:var(--sub);font-size:13px;font-variant-numeric:tabular-nums}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 0}
-.pane{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.pane{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#1a1816}
 .pane .cap{font-size:12px;padding:5px 8px;color:var(--sub);border-bottom:1px solid var(--line);background:var(--card);font-variant-numeric:tabular-nums}
 .pane img{display:block;width:100%;height:auto}
 .zoom .cap{color:#b4451f}
