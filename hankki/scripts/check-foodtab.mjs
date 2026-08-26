@@ -41,11 +41,24 @@ if (groups.length !== declared) {
 if (groups.length < 10) { console.error('[foodtab] ❌ 그룹을 못 읽었다 — FOOD_ICON_GROUPS 모양이 바뀌었나?'); process.exit(1) }
 
 // ── 이름표 읽기 (ICON_RULES 첫 키워드 + EXTRA_NAMES) ──
+// ⛔⛔ [2026-08-26 고침] **우선순위가 앱과 «거꾸로»였다** — 그래서 검사가 픽커에 안 뜨는 이름을 재고 있었다.
+//    앱 `FOOD_NAMES` = `{ ...EXTRA_NAMES, ...규칙 }` → **규칙이 EXTRA 를 덮는다**(규칙이 있으면 EXTRA 는 죽는다).
+//    여기는 EXTRA 를 나중에 덮어써서 **17개 키가 앱과 다른 이름으로 잡혔다.**
+//    🔢 그래서 「묵은지볶음」이 픽커에 «두 컷»(fe_325·fe_203) 실려 있는데도 조용했다 —
+//       검사엔 `묵은지 볶음`(EXTRA·띄어쓰기) ↔ `묵은지볶음` 이라 다른 이름으로 보였다.
+//    📌 규칙 18 ⓘ 그대로 — 통과했는데 «앱이 보여주는 것»을 안 재고 있었다.
 const names = {}
 const rBlock = src.slice(src.indexOf('const ICON_RULES = ['))
-for (const m of rBlock.matchAll(/\[\[\s*'([^']+)'[^\]]*\],\s*'([^']+)'\]/g)) if (!names[m[2]]) names[m[2]] = m[1]
 const eStart = src.indexOf('EXTRA_NAMES = {')
 if (eStart > 0) for (const m of src.slice(eStart, src.indexOf('\n}', eStart)).matchAll(/([\w]+)\s*:\s*'([^']+)'/g)) names[m[1]] = m[2]
+{
+  const 규칙본것 = new Set()   // ⭐ 규칙은 «맨 위 첫 줄»이 이름표가 된다(앱과 같다)
+  for (const m of rBlock.matchAll(/\[\[\s*'([^']+)'[^\]]*\],\s*'([^']+)'\]/g)) {
+    if (규칙본것.has(m[2])) continue
+    규칙본것.add(m[2])
+    names[m[2]] = m[1]
+  }
+}
 
 // 🥕🥕 [2026-08-16] 재료 컷(`ig_`)도 «같이 본다» — 이게 없어서 3일 넘게 조용히 샜다.
 //   ⛔ 2026-08-12 에 재료 171컷을 넣었는데 **픽커에 한 컷도 안 실렸고**, 이 검사는
@@ -60,7 +73,7 @@ const ingSrc = readFileSync(path.join(root, 'src/data/ingIcons.js'), 'utf8')
   for (const m of body.matchAll(/\['([^']+)',\s*'([^']+)'\]/g)) if (!names[m[2]]) names[m[2]] = m[1]
 }
 const isIng = (k) => /^ig_/.test(k)
-const isPhoto = (k) => /^(fe|fh|fy|fj|fi|fb)_/.test(k)
+const isPhoto = (k) => /^(fe|fh|fy|fj|fi|fb|gr)_/.test(k)
 const 그림있나 = (k) => (isIng(k) ? existsSync(path.join(ING, `${k}.png`)) : existsSync(path.join(PHOTO, `${k}.png`)))
 let fail = 0
 
@@ -88,7 +101,7 @@ if (noname.length) { console.error(`[foodtab] ❌ 이름표 없는 컷 ${noname.
 else console.log('[foodtab] ✓ 이름표 전부 있다')
 
 // ── ④ 내려둔 것(정보) ──
-const files = readdirSync(PHOTO).filter((f) => /^(fe|fh|fy|fj|fi|fb)_.*\.png$/.test(f)).map((f) => f.replace('.png', ''))
+const files = readdirSync(PHOTO).filter((f) => /^(fe|fh|fy|fj|fi|fb|gr)_.*\.png$/.test(f)).map((f) => f.replace('.png', ''))
 const shelved = files.filter((k) => !home.has(k))
 console.log(`[foodtab] · 픽커에 실린 음식 ${files.length - shelved.length}컷 / 파일 ${files.length}장`)
 console.log(`[foodtab] · 일부러 내려둔 것 ${shelved.length}컷 — 같은 요리를 두 번 그린 뒷세대. 파일은 보존(저장된 레시피 보호)`)
