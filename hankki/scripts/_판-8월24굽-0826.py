@@ -18,7 +18,7 @@
 # ☑️ 절대원칙 = 검수판은 «무조건» 체크 ＋ 복사 (clipboard 실패 대비 Range 폴백까지)
 #
 # 씀:  python3 scripts/_판-8월24굽-0826.py <낼html>
-import base64, io, json, os, sys
+import base64, glob, io, json, os, sys
 
 import numpy as np
 from PIL import Image
@@ -72,7 +72,20 @@ def 굽확대(im, 배 = 4):
     return 얹기(조각, 배)
 
 
+def 한칸(키, 이름, 옛길, 새길, 묶음):
+    옛 = Image.open(옛길).convert('RGBA')
+    새 = Image.open(새길).convert('RGBA')
+    return dict(
+        key = 키, name = 이름, 묶음 = 묶음,
+        옛크기 = f'{옛.size[0]}×{옛.size[1]}', 새크기 = f'{새.size[0]}×{새.size[1]}',
+        옛 = 담기(얹기(옛), 320), 새 = 담기(얹기(새), 320),
+        옛굽 = 담기(굽확대(옛)), 새굽 = 담기(굽확대(새)),
+    )
+
+
 칸들, 못읽음 = [], []
+
+# ── ① 8/24 시트 — 창업자가 「접시 깨짐」이라 한 68컷
 for k in 깨:
     s, i = k.split('_')
     옛길 = f'{뿌리}/낱개/{k}.png'
@@ -80,22 +93,40 @@ for k in 깨:
     if not (os.path.exists(옛길) and os.path.exists(새길)):
         못읽음.append(k)
         continue
-    옛 = Image.open(옛길).convert('RGBA')
-    새 = Image.open(새길).convert('RGBA')
     이름 = 이름표.get(s, [])
     이름 = 이름[int(i) - 1] if len(이름) >= int(i) else k
-    칸들.append(dict(
-        key = k, name = 이름,
-        옛크기 = f'{옛.size[0]}×{옛.size[1]}', 새크기 = f'{새.size[0]}×{새.size[1]}',
-        옛 = 담기(얹기(옛), 320), 새 = 담기(얹기(새), 320),
-        옛굽 = 담기(굽확대(옛)), 새굽 = 담기(굽확대(새)),
-    ))
+    칸들.append(한칸(k, 이름, 옛길, 새길, '8/24 시트'))
+
+# ── ② 8/26 그릇 컷 — 74컷을 갈아낄 때 «건너뛴» 것(＝창업자가 깨졌다고 한 것)
+#    ⭐ 목록을 손으로 적지 않는다 — 「앱에 든 파일과 새 낱개의 해시가 다른 것」이 곧 그 목록이다
+import hashlib
+
+그릇 = f'{APP}/docs/stickers/음식-창업자-2026-08-26'
+앱컷 = f'{APP}/src/assets/stickers/photo'
+if os.path.exists(f'{그릇}/컷목록.json'):
+    def 해시(p):
+        return hashlib.sha1(open(p, 'rb').read()).hexdigest()
+
+    for c in json.load(open(f'{그릇}/컷목록.json')):
+        원래 = f'{APP}/{c["src"]}'
+        앱길 = f'{앱컷}/{c["key"]}.png'
+        if not (os.path.exists(원래) and os.path.exists(앱길)):
+            continue
+        if 해시(원래) == 해시(앱길):        # 이미 갈아낀 74컷 — 창업자가 통과시킨 것
+            continue
+        시트 = c['src'].split('/')[-2]
+        번호 = c['src'].split('/')[-1][-6:-4]
+        새후보 = glob.glob(f'{그릇}/낱개-다시-0826/{시트}/*{번호}.png')
+        if not 새후보:
+            못읽음.append(c['key'])
+            continue
+        칸들.append(한칸(c['key'], c['name'], 앱길, 새후보[0], '8/26 그릇'))
 
 # ⛔ 못 읽은 것을 조용히 빼지 않는다 — 「전부 봤다」로 오해하게 된다
 머리못 = (f'<p class="warn">⚠️ 못 읽어서 판에 못 실은 컷 {len(못읽음)}개: {", ".join(못읽음)}</p>'
           if 못읽음 else '')
 
-html = '''<title>8월 24일 접시 다시 자르기</title>
+html = '''<title>접시 다시 자르기</title>
 <style>
 :root{--bg:#faf8f5;--ink:#241c14;--sub:#6b5d4e;--line:#e2d8ca;--card:#fff;--acc:#8a5a2b;--bad:#b4451f}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#17130f;--ink:#f0e8dd;--sub:#a8988a;--line:#332b23;--card:#211a14;--acc:#d9a066;--bad:#e08a5c}}
@@ -112,6 +143,7 @@ h1{font-size:24px;margin:0 0 6px;letter-spacing:-.02em;text-wrap:balance}
 .cut{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:0 0 14px}
 .cut h2{font-size:19px;margin:0 0 2px;letter-spacing:-.01em}
 .cut .k{color:var(--sub);font-size:13px;font-variant-numeric:tabular-nums}
+.tag{font-size:12px;font-weight:600;color:var(--acc);border:1px solid var(--line);border-radius:999px;padding:2px 8px;vertical-align:middle;white-space:nowrap}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 0}
 .pane{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#1a1816}
 .pane .cap{font-size:12px;padding:5px 8px;color:var(--sub);border-bottom:1px solid var(--line);background:var(--card);font-variant-numeric:tabular-nums}
@@ -130,15 +162,18 @@ h1{font-size:24px;margin:0 0 6px;letter-spacing:-.02em;text-wrap:balance}
 #out{width:100%;max-width:920px;margin:8px auto 0;white-space:pre-wrap;font-size:13px;display:none;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;max-height:34vh;overflow:auto}
 </style>
 <div class="wrap">
-<h1>8/24 접시 다시 자르기</h1>
+<h1>접시 다시 자르기</h1>
 <p class="lead">왼쪽이 <b>네가 「접시 깨짐」이라고 한 컷</b>, 오른쪽이 <b>오늘 다시 자른 것</b>.
-아래 줄은 <b>접시 아래 테두리를 4배로 확대</b>한 거야 — 톱니는 원본 크기로는 안 보여.</p>
+아래 줄은 <b>접시 아래 테두리를 4배로 확대</b>한 거야 — 톱니는 원본 크기로는 안 보여.<br>
+<b>8/24 시트</b> 68컷 ＋ <b>8/26 그릇</b> 33컷 = 네가 깨졌다고 한 것 전부야.</p>
 <div class="box">
 <p><b>무슨 일이었나</b> — 흰 접시의 아래 테두리가 <b>250~253</b>인데 자르는 칼은 <b>246보다 밝으면 배경</b>으로 봐.
 그래서 접시 아래가 배경과 같은 눈에 잡혀 <b>들쭉날쭉 뜯겼어</b>. 시트마다 얼룩이 달라서 갈렸고.</p>
 <p><b>고침</b> — 자르기 <b>전</b>에 접시 아래 테두리만 아주 살짝 눌러서 칼이 「그림」으로 보게 했어.
 누르는 자리는 <b>실루엣 경계에서 안쪽 14px</b>뿐이라 접시 안쪽은 안 건드려.</p>
-<p>14시트 <b>84컷 전부</b> 잘렸고 세로가 <b>355 → 363px</b> 로 늘었어(굽이 8px 더 살아난 거야).</p>
+<p>8/24 시트 14장 · 8/26 그릇 시트 8장 = <b>22장 전부</b> 다시 잘렸어.
+8/24 쪽은 세로가 <b>355 → 363px</b> 로 늘었고(굽이 8px 더 살아난 거야),
+8/26 쪽은 <b>손잡이 옆구리가 네모나게 파이던 것</b>도 같이 고쳐졌어.</p>
 <p class="warn">⚠️ 정직하게 — 내 「매끈함」 숫자는 <b>이 건에서 다섯 번 헛짚었어</b>.
 눈으론 확실히 나은데 숫자가 안 움직여. <b>판정은 네 눈으로 해줘.</b></p>
 <p class="warn">⛔ 자르기로 안 되면 다시 뽑아야 해. 「깨짐」으로 남는 건 <b>다시 뽑을 리스트</b>로 넘길게.</p>
@@ -161,7 +196,7 @@ const box = document.getElementById('cuts');
 DATA.forEach(c => {
   const el = document.createElement('div');
   el.className = 'cut';
-  el.innerHTML = `<h2>${c.name}</h2><div class="k">${c.key} · ${c.옛크기} → ${c.새크기}</div>
+  el.innerHTML = `<h2>${c.name} <span class="tag">${c.묶음}</span></h2><div class="k">${c.key} · ${c.옛크기} → ${c.새크기}</div>
     <div class="pair">
       <div class="pane"><div class="cap">옛컷 (깨짐이라 한 것)</div><img alt="${c.name} 옛 컷" src="${c.옛}"></div>
       <div class="pane"><div class="cap">새로 자른 것</div><img alt="${c.name} 새 컷" src="${c.새}"></div>
