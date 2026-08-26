@@ -278,7 +278,11 @@ export default function PantryView() {
           영수증 1장에 {keyCount(1)}를 써요
         </div>
       </div>
-      <div style={{ fontSize: 15.3, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 14 }}>
+      {/* 🔠 [창업자 확정 2026-08-26] 15.3/1.55 → 16/1.7.
+          📮 창업자 = *"냉장고 한 줄은 올려줘"*
+          ⛔ 로드맵이 이 «한 줄»을 「냉장고 글자」로 적어 놔서 계속 미해결로 남아 있었다 —
+             진짜 재료 글자는 이미 18px 다(`styles.css:1237` · 창업자 2026-08-22 확정). */}
+      <div style={{ fontSize: 16, color: 'var(--text-sub)', lineHeight: 1.7, marginBottom: 14 }}>
         영수증은 사진에 따라 인식률이 달라요 · 안 되면 <b style={{ color: 'var(--brown)' }}>＋재료 담기</b>로 직접 넣어도 돼요.
       </div>
 
