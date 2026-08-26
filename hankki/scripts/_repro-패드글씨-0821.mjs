@@ -30,7 +30,10 @@ const srv = createServer((q, s) => {
   try { body = readFileSync(join(DIST, p)) } catch { body = readFileSync(join(DIST, 'index.html')); type = 'text/html' }
   s.writeHead(200, { 'content-type': type }); s.end(body)
 })
-await new Promise((r) => srv.listen(4419, r))
+// 🔀 2026-08-27 — 고정 포트 4419 → **OS 가 빈 포트를 준다**(`listen(0)`).
+//    ⛔ `_repro-열쇠이름-0824` 도 4419 를 쓰고 있었다 → 병렬로 돌리면 «둘이 다툰다».
+await new Promise((r) => srv.listen(0, r))
+const BASE = `http://127.0.0.1:${srv.address().port}/hankki/`
 
 let 통과 = 0, 실패 = 0
 const chk = (이름, 값, 기대) => {
@@ -50,7 +53,7 @@ const 재기 = async (W, H) => {
   const 결과 = {}
   for (const t of 탭) {
     const p = await ctx.newPage()
-    await p.goto('http://127.0.0.1:4419/hankki/', { waitUntil: 'networkidle' })
+    await p.goto(BASE, { waitUntil: 'networkidle' })
     await p.evaluate(() => document.fonts.ready)
     await p.waitForTimeout(600)
     await p.evaluate((T) => {
@@ -136,7 +139,7 @@ const px재기 = async (W, H, 어느탭) => {
   await ctx.addInitScript(SEED_COACH_SEEN)
   await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
   const p = await ctx.newPage()
-  await p.goto('http://127.0.0.1:4419/hankki/', { waitUntil: 'networkidle' })
+  await p.goto(BASE, { waitUntil: 'networkidle' })
   await p.evaluate(() => document.fonts.ready)
   await p.waitForTimeout(600)
   if (어느탭) {
