@@ -3776,3 +3776,77 @@ html, body { overscroll-behavior: none; }
   }
   .pantry-reco .hscroll > * { flex: none !important; width: auto; }
 }
+
+/* 🫥🫥 [창업자 확정 2026-08-26] **패드에서 「아직 안 해봤어요」를 「오늘 뭐 해먹지」와 «같은 짜임»으로.**
+   📮 창업자 = *"이건 나도 좀 그래보여. 글씨를 크게 해야해? 아님 다른 방법이 있어?"*
+   📮 → *"D에서 표지랑 펭펭 알약까지 들어가니까 정신없어보여"*
+   📮 → *"오늘 뭐해먹지랑 똑같이 만들되 제목을 «아직 안해봤어요»를 알약으로 해봐"* · *"펭펭은 빼자"*
+   📮 → *"넓직한게 좋아. **아직안만들었어요에 맞추자**"* · *"아직안해봤어요 제목은 키우고"*
+   📮 → *"한끼소식도 줄간 띄우자. 제목이랑 설명"*
+
+   ⛔ **글씨만 키우는 안(A)은 답이 아니었다** — 렌더해 보니 «글씨만 크고 오른쪽은 그대로 비었다».
+      뿌리는 **「아직 안 해봤어요」엔 그 요리 «표지»가 없다**는 것이었다(옆 카드엔 있다).
+
+   🔢 실측(패드 가로 1194×834) — 고치기 «전»
+      | | 아직 안 해봤어요 | 오늘 뭐 해먹지 |
+      | 제목 글자 | **17.5px** | 22px |
+      | 라벨 → 제목 틈 | 17px | **8px** |
+      | 제목 → 설명 틈 | 21px | **12px** |
+      ⭐ 창업자 판정 = **넓은 쪽(아직 안 해봤어요)에 맞춘다** → 둘 다 **17 / 21px**
+      ✅ 맞춘 뒤 = 제목 y324 ↔ 321 · 설명 y375 ↔ 372 (3px 안)
+
+   ⛔ **폰은 한 픽셀도 안 건드린다** — `--next-thumb: 0px` 이라 표지가 아예 안 그려진다. */
+@media (min-width: 700px) and (min-height: 700px) {
+  /* 🖼 표지를 켠다(폰에선 0px 이라 안 보인다) · 오늘 카드 표지도 같은 크기로 */
+  .next-card { --next-thumb: 88px; }
+  .today-card { --today-thumb: 88px; }
+
+  /* 🐧 펭펭은 뺀다 — 표지·알약과 셋이 겹쳐 «정신없다»(창업자) */
+  .next-peng { display: none; }
+
+  /* ⭐ 표지 왼쪽 · 오른쪽엔 라벨 ↓ 제목 ↓ 설명 을 «세로»로 — 오늘 카드와 같은 짜임.
+     ⛔ flex 로는 알약과 제목이 «가로»로 붙는다(그래서 짜임이 달라 보였다). grid 로 줄을 못 박는다. */
+  .next-open {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    /* ⛔⛔ `align-items: center` 로는 «안 된다» — 표지가 3줄에 걸쳐 있어서
+       줄 높이가 표지(88px)에 맞춰 «늘어나고», 그 남는 만큼이 줄 사이로 흩어진다.
+       🔢 실측 = 라벨→제목 틈이 **44px** 이 됐다(오늘 카드는 17px).
+       ✅ `align-content: center` = 줄은 «제 높이»로 두고 «세 줄 덩어리»를 가운데로 옮긴다. */
+    align-content: center;
+    align-items: start;
+    column-gap: 14px;
+    /* ⛔⛔ 이 «한 줄»이 없으면 `align-content` 가 «아무 일도 안 한다».
+       `.next-row` 에 `min-height:168px` 이 있어 카드는 168px 인데,
+       `.next-open` 이 `height:auto` 면 «자기 내용 높이»(98px)로만 자란다.
+       그러면 남는 70px 이 카드 쪽에 남아 줄 사이가 벌어진 것처럼 보였다.
+       🔢 실측 = 라벨→제목 틈 44 → 70px 으로 «더 나빠졌다». ✅ 높이를 채우니 세 줄이 붙어 가운데로 간다. */
+    height: 100%;
+  }
+  .next-thumb { grid-row: 1 / span 3; grid-column: 1;
+    width: var(--next-thumb); height: var(--next-thumb); flex: 0 0 auto; align-self: center; }
+  .next-head { grid-row: 1; grid-column: 2; margin: 0 0 8px; }
+  .next-title { grid-row: 2; grid-column: 2; margin: 0 0 12px; font-size: 22px; }
+  .next-reason { grid-row: 3; grid-column: 2; margin: 0; }
+  .next-label { font-size: 16px; }
+
+  /* 🍚 오늘 카드를 «넓은 쪽»에 맞춘다 — 창업자 = "아직안만들었어요에 맞추자"
+     ⛔⛔ ＋ 창업자 = *"오늘 뭐해먹지랑 콩국수 «살짝 올라가있는데» 이건 조절안되나?"*
+        🔢 뿌리 = 왼쪽 라벨은 «알약»이라 27px 인데 오른쪽은 맨 글자라 **21px**. 6px 차이다.
+           가운데로 맞추면 그 절반인 **3px 만큼 오른쪽이 위로** 뜬다.
+        ⚠️ 숫자 잣대는 «어긋남 0px» 이라고 초록불을 줬다 — 덩어리 가운데끼리는 맞았기 때문이다.
+           **가운데에 빨간 선을 긋고 눈으로 보고서야 잡혔다**(규칙 18 ⓘ·21).
+        ✅ 라벨 높이를 알약과 «같게» 맞춘다 — 글자 크기는 안 건드린다. */
+  .today-label { margin-bottom: 17px; min-height: 27px; display: flex; align-items: center; }
+  .today-title { margin-bottom: 21px; }
+  .today-reason { margin: 0; }
+
+  /* 📣 한끼 소식 — 창업자 = "한끼소식도 줄간 띄우자. 제목이랑 설명"
+     ＋ "꼬르곰 좀 키우고. 꼬르곰 이랑 글자 조금 떼고" */
+  .news-title { margin-bottom: 10px; }
+  /* 📮 창업자 = "한끼소식 글자 크기만 좀 더 키워줘" (18.5/18 → 21/19) */
+  .news-title { font-size: 21px; }
+  .news-sub { font-size: 19px; }
+  .news-card { --news-gom: 42px; gap: 18px; padding: 16px 18px; }
+}

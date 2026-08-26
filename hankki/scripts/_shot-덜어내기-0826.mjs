@@ -40,6 +40,38 @@ const 안 = {
      .next-label{ background:none; color:var(--brand,#4a6fa5); padding:0; font-size:15px; font-weight:700 }
      .next-head{ margin-bottom:2px }
    }`, js:표지붙이기},
+ 'J-넓직하게': {css: 표지css+`
+   @media (min-width:700px) and (min-height:700px){
+     /* 📮 창업자 = *"넓직한게 좋아. **아직안만들었어요에 맞추자**"*
+        ⭐ 방향이 반대다 — 좁은 쪽에 맞추는 게 아니라 «넓은 쪽»(아직 안 해봤어요)에 오늘 카드를 맞춘다.
+        🔢 실측 = 아직안해봤어요 설명 위 틈 **16px** ↔ 오늘 3px · 제목 17.5 ↔ 22
+           → 틈은 «16px» 로, 제목은 «22px»(큰 쪽)로 — 둘 다 넓고 크게. */
+     .next-peng{ display:none }
+     .next-open{ display:grid; grid-template-columns:auto minmax(0,1fr);
+       grid-template-rows:auto auto auto; align-items:center; column-gap:0 }
+     .next-thumb-demo{ grid-row:1 / span 3; grid-column:1 }
+     .next-head{ grid-row:1; grid-column:2; margin:0 0 8px }
+     .next-title{ grid-row:2; grid-column:2; margin:0 0 12px; font-size:22px }
+     .next-reason{ grid-row:3; grid-column:2; margin:0 }
+     .next-label{ font-size:16px }
+     /* 오늘 카드를 «넓은 쪽»에 맞춘다 */
+     .today-label{ margin-bottom:8px }
+     .today-title{ margin-bottom:12px }
+     .today-reason{ margin:0 }
+   }`, js:표지붙이기},
+ 'I-줄간까지같게': {css: 표지css+낮춤+`
+   @media (min-width:700px) and (min-height:700px){
+     /* 📮 창업자 = *"아직안해봤어요랑 오늘 뭐해먹지랑 «줄간이 너무 달라». 펭펭은 빼자."*
+        🔢 실측 = 제목 17.5px ↔ 22px · 설명 위 틈 16px ↔ 3px · 라벨 16.5 ↔ 16 */
+     .next-peng{ display:none }
+     .next-open{ display:grid; grid-template-columns:auto minmax(0,1fr);
+       grid-template-rows:auto auto auto; align-items:center; column-gap:0 }
+     .next-thumb-demo{ grid-row:1 / span 3; grid-column:1 }
+     .next-head{ grid-row:1; grid-column:2; margin:0 0 2px }
+     .next-title{ grid-row:2; grid-column:2; margin:0 0 3px; font-size:22px }
+     .next-reason{ grid-row:3; grid-column:2; margin:0 }
+     .next-label{ font-size:16px }
+   }`, js:표지붙이기},
  'H-완전히같게': {css: 표지css+낮춤+`
    @media (min-width:700px) and (min-height:700px){
      /* 📮 창업자 = *"오늘 뭐해먹지랑 «똑같이» 만들되 제목을 아직 안해봤어요를 «알약»으로"*
