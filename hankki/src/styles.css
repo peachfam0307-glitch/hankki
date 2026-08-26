@@ -3846,7 +3846,11 @@ html, body { overscroll-behavior: none; }
      ＋ "꼬르곰 좀 키우고. 꼬르곰 이랑 글자 조금 떼고" */
   .news-title { margin-bottom: 10px; }
   /* 📮 창업자 = "한끼소식 글자 크기만 좀 더 키워줘" (18.5/18 → 21/19) */
+  /* 📮 창업자 = "한끼소식 글자 크기만 좀 더 키워줘" → **제목만** 18.5 → 21px.
+     ⛔⛔ 설명(`.news-sub`)은 «안 건드린다» — 3557줄에 **18px 로 못 박혀 재현판이 지키고 있다**
+        (`_repro-패드글씨-0821`). 게다가 그 줄은 `class="t-sub news-sub"` 라(HomeScreen.jsx:352)
+        여기서 올리면 **홈 다섯 탭의 보조 글자가 «전부» 같이 커진다.**
+     🔢 실제로 19px 로 올렸다가 재현판이 「.t-sub 패드 18 → 19」로 잡아 **26/27** 로 막혔다. 물렀다. */
   .news-title { font-size: 21px; }
-  .news-sub { font-size: 19px; }
   .news-card { --news-gom: 42px; gap: 18px; padding: 16px 18px; }
 }
