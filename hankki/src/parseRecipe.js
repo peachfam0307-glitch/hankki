@@ -558,7 +558,10 @@ export function parseRecipeText(raw = '', opts = {}) {
     }
 
     // 제목 — 조리 문장·수량 줄은 제목이 아니다
-    if (!title && !bullet && !stepLike && l.length <= 22 && !QTY.test(l) && looksLikeTitle(l)) {
+    // ⭐ [2026-08-28] ＋ «절(재료/만드는 법/팁) 안»에서는 제목을 잡지 않는다.
+    //    ⛔ 그 전엔 「■ 재료」 바로 아래의 「소금」이 «제목»이 됐다(재현판 ③이 잡았다).
+    //       절 안의 줄은 그 절의 내용이지 요리 이름이 아니다.
+    if (!title && !mode && !bullet && !stepLike && l.length <= 22 && !QTY.test(l) && looksLikeTitle(l)) {
       title = l
       continue
     }
