@@ -371,7 +371,12 @@ export function parseRecipeText(raw = '', opts = {}) {
   const rawLines = mergeWrappedLines(markBareNumberSteps(text.split('\n')))
 
   // 불릿(* · - 등)으로 시작하는 줄 = 목록 항목(대부분 재료). 지우기 전에 기억해 둔다.
+  // 📄 [2026-08-28] 「앞에 빈 줄이 있었나」를 기억한다 — 인스타 캡션에서 빈 줄은 «문단 나눔»이다.
+  //    ⛔ 그 전엔 빈 줄을 그냥 버려서, 문단이 갈렸다는 사실이 사라졌다.
+  //       그래서 「*매운거 …추가」(재료 문단 끝) 뒤의 「■ 차돌 참나물양배추 파스타」(다음 문단 제목)가
+  //       «줄바꿈으로 이어진 재료 설명»으로 오해돼 한 줄로 붙었다(창업자 실물).
   const items = []
+  let blankAhead = false
   for (const rawLine of rawLines) {
     // 불릿: - * • 등 + 체크표시(✔️☑ — 인스타 재료 목록에 흔함). ✅(초록)은 순서/팁에도 써서 제외.
     const bullet = /^\s*[-*•·▪◦‣●○✔☑]\s*/.test(rawLine)
@@ -387,10 +392,10 @@ export function parseRecipeText(raw = '', opts = {}) {
     //    ⛔줄을 버리지 않는다. 버리면 제목까지 같이 날아간다.
     if (items.length === 0) l = l.replace(IG_HANDLE, '').trim() || l
     l = l.replace(UI_TRAIL, '').trim() // "…끊인다. 간단히 보기" → 뒤 UI 글자 떼기
-    if (!l || DATE_ONLY.test(l)) continue // 빈 줄·날짜만 있는 줄(작성일)은 버린다
+    if (!l || DATE_ONLY.test(l)) { blankAhead = true; continue } // 빈 줄·날짜만 있는 줄(작성일)은 버린다(문단 나눔은 기억한다)
     // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
     const isHeader = SEC_ING.test(l) || SEC_STEP.test(l) || SEC_MEMO.test(l)
-    if (isHeader || (l.length > 1 && !isGibberish(l))) items.push({ l, bullet, emojiHead, stepMarked })
+    if (isHeader || (l.length > 1 && !isGibberish(l))) { items.push({ l, bullet, emojiHead, stepMarked, blankBefore: blankAhead }); blankAhead = false }
   }
 
   let title = ''
@@ -426,7 +431,7 @@ export function parseRecipeText(raw = '', opts = {}) {
   const pushIng = (l, bullet) => { ingredients.push(l); lastWasBulletIng = bullet; }
 
   for (let idx = 0; idx < items.length; idx++) {
-    const { l, bullet, emojiHead, stepMarked } = items[idx]
+    const { l, bullet, emojiHead, stepMarked, blankBefore } = items[idx]
 
     // 첫 줄 제목 — 이모지 붙은 짧은 이름("🍷 양념장")이나 "X 만드는 법/레시피" 배너면 제목으로.
     // 섹션명(양념장)과 겹쳐도 제목을 우선한다. "재료"처럼 신호 없는 헤더는 안 가로챈다.
@@ -458,11 +463,32 @@ export function parseRecipeText(raw = '', opts = {}) {
     //    ⛔ 그 전엔 「■ 재료 (2-3인분 기준)」이 ⑴`■` 때문에 SEC_ING 에 안 걸리고
     //       ⑵ 장식 두 글자가 더해져 17자라 `length <= 16` 에도 걸려 **두 번 막혔다.**
     const head = l.replace(LEAD_DECOR, '')
+
     if (head.length <= 16 && !stepMarked && !DECLARATIVE.test(head)) {
       // 「돼지고기 양념 재료:」 처럼 앞에 수식어가 붙은 재료 헤더도 받는다(끝이 재료/양념).
       if (SEC_ING.test(head) || /(재료|양념)\s*[:：]?$/.test(head)) { mode = 'ing'; lastWasBulletIng = false; continue }
       if (SEC_STEP.test(head) && !SEC_STEP_PORTION.test(head)) { mode = 'step'; sawStep = true; lastWasBulletIng = false; continue }
       if (SEC_MEMO.test(head)) { mode = 'memo'; lastWasBulletIng = false; continue }
+    }
+
+    // 🍳🍳 [2026-08-28] «번호 목록 바로 앞의 짧은 줄» = 요리 이름이다.
+    //    📮 창업자 실물(차돌 파스타) — 캡션 첫머리가 인사말이라 제목이 「간단한데 진짜 맛있으니」로 잡혔고,
+    //       진짜 이름 「■ 차돌 참나물양배추 파스타」는 «재료 칸»으로 샜다.
+    //    ⭐ 인스타 캡션에 아주 흔한 모양이다 — 인사말이 위에 길게 붙고, 요리 이름은 만드는 법 «바로 위»에 온다.
+    //    ⛔⛔ 반드시 «섹션 헤더 판정 뒤»에 와야 한다 — 앞에 두면 「[만드는 법]」까지 제목으로 삼킨다
+    //       (2026-08-28 에 실제로 그렇게 짰다가 기존 회귀 「제목에서 "황금레시피"만 떼어냄」이 잡았다).
+    //    🔒 조건을 좁게 = 앞에 빈 줄(문단 나눔) ＋ 다음 줄이 번호 걸음 ＋ 짧고 ＋ 문장이 아니고 ＋ 분량이 아님.
+    //       「그럼 시작할게요」 같은 인사는 SENTENCE_END 로 걸러진다.
+    if (
+      items[idx + 1] && items[idx + 1].stepMarked &&
+      blankBefore && !stepMarked && !bullet &&
+      head.length <= 32 && /[가-힣]{2,}/.test(head) &&
+      !SENTENCE_END.test(head) && !QTY.test(head)
+    ) {
+      title = head
+      mode = 'step' // 이 줄 «다음»부터는 만드는 법이다 — 재료 절을 닫는다
+      lastWasBulletIng = false
+      continue
     }
     if (NOISE.test(l) || NOISE_ANY.test(l) || NOISE_AD.test(l) || SEC_STEP_PORTION.test(l)) continue
     // 장식용 배너("맛보장 양념 레시피!" 등) — 재료도 순서도 아님.
@@ -484,7 +510,13 @@ export function parseRecipeText(raw = '', opts = {}) {
     }
     // 조언·팁 문구 → 메모. 단, 진짜 계량 재료(QTY)·불릿·조리문장·"이름+숫자"(올리고당2)는 건드리지 않는다.
     // ("15일 숙성시키면 더 맛있으니까"=기간숫자 팁→메모 / "올리고당2 (…더 맛있음)"=재료는 보존)
-    if (!stepLike && !bullet && !QTY.test(l) && !/^[가-힣]{2,}\d/.test(l) && TIP_CUE.test(l)) {
+    // ⭐⭐ [2026-08-28] 「양배추 (생략가능)」은 «팁»이 아니라 «재료 ＋ (괄호 메모)»다.
+    //    📮 창업자 실물(차돌 파스타) — 이 줄이 TIP_CUE 의 「생략 가능」에 걸려 메모로 샜고
+    //       장보기 목록에서 양배추가 통째로 빠졌다(2026-07-29 「분량 없는 재료」 사고와 같은 결).
+    //    ✅ 가르는 법 = **괄호를 떼면 순수 재료 이름이 남는가.** 남으면 재료다.
+    //    ⛔ 「15일 숙성시키면 더 맛있으니까」처럼 괄호가 없는 진짜 팁은 그대로 메모로 간다.
+    const 괄호메모붙은재료 = core !== l && core.length <= 20 && /^[가-힣][가-힣\s]*$/.test(core)
+    if (!stepLike && !bullet && !QTY.test(l) && !/^[가-힣]{2,}\d/.test(l) && !괄호메모붙은재료 && TIP_CUE.test(l)) {
       other.push(l)
       lastWasBulletIng = false
       continue
@@ -506,7 +538,8 @@ export function parseRecipeText(raw = '', opts = {}) {
     //   ✅ **이름 없이 분량만 있는 줄은 «재료가 될 수 없다»** → 무조건 앞 재료에 붙인다.
     //      (「1/2컵」이라는 재료는 세상에 없다. 그러니 오탐 걱정이 없다)
     //   ⚠️ 짧아야 한다(≤12자) — 길면 진짜 설명 줄일 수 있다.
-    if (lastWasBulletIng && !bullet && !stepLike && l.length <= 60 && /[가-힣]{2,}/.test(l) && mode !== 'step') {
+    //    ⭐ [2026-08-28] ＋ 「앞에 빈 줄이 있으면」 이어붙이지 않는다 — 그건 다음 «문단»이다.
+    if (lastWasBulletIng && !bullet && !blankBefore && !stepLike && l.length <= 60 && /[가-힣]{2,}/.test(l) && mode !== 'step') {
       ingredients[ingredients.length - 1] += ' ' + l
       continue
     }
@@ -558,8 +591,11 @@ export function parseRecipeText(raw = '', opts = {}) {
     //    절의 «첫 재료»가 분량 없는 낱말이면 똑같이 막는다.
     //    ⭐ 「재료」라고 «사람이 직접 써 둔 절 안»이라면 그 둘을 물을 이유가 없다.
     //    ⛔ 절이 없을 때(mode !== 'ing')의 동작은 한 글자도 안 바꿨다.
+    // ⭐ [2026-08-28] «모양»은 괄호를 뗀 `core` 로 본다 — 「양배추 (생략가능)」이
+    //    괄호 때문에 순한글 검사를 못 넘고 있었다. 담을 땐 `l` 그대로 담는다
+    //    (「(생략가능)」은 유저에게 쓸모 있는 말이라 지우지 않는다).
     if (!stepLike && (mode === 'ing' || (!sawStep && mode !== 'step' && ingredients.length > 0)) &&
-        l.length <= 20 && /^[가-힣][가-힣\s]*$/.test(l) && !DECLARATIVE.test(l)) {
+        l.length <= 30 && core.length <= 20 && /^[가-힣][가-힣\s]*$/.test(core) && !DECLARATIVE.test(core)) {
       pushIng(l, bullet); continue
     }
     // 4) 순서가 이미 시작됐으면, 남는 줄은 순서의 연속으로 본다("5분간 그대로 둔다" 등)
