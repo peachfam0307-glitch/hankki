@@ -116,13 +116,25 @@ button.ghost{background:transparent;color:var(--new)}
 ⛔ 파일은 안 지운다 — 픽커에서만 내린다(그 열쇠로 저장한 레시피가 깨지니까).</p>
 ${줄}
 <div class="bar"><span id="n">0/${쌍.length} 정했다</span>
-<button class="ghost" onclick="document.querySelectorAll('input:checked').forEach(i=>i.checked=0);세기()">지우기</button>
+<button class="ghost" onclick="처음부터()">처음부터</button>
 <button onclick="복사()">복사하기</button></div>
 <div id="out"><textarea id="t" readonly></textarea><button onclick="document.getElementById('out').style.display='none'">닫기</button></div>
 <script>
+// 💾 절대원칙(창업자 2026-08-18) = 검수판은 «무조건» 고른 것을 기억한다 ＋ 복사가 된다.
+//    ⭐ 폰에서 보다 링크를 잘못 누르면 처음부터 다시 고르게 된다 — 그게 창업자가 삽질한 자리다.
+const KEY='hankki:판:같은이름쌍-0827'
+const 저장=()=>{const o={}
+  document.querySelectorAll('input:checked').forEach(i=>{o[i.name]=i.value})
+  try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+const 되살리기=()=>{let o={}
+  try{o=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return}
+  for(const n in o){const e=document.querySelector('input[name="'+n+'"][value="'+o[n]+'"]');if(e)e.checked=true}}
+const 처음부터=()=>{document.querySelectorAll('input:checked').forEach(i=>i.checked=0)
+  try{localStorage.removeItem(KEY)}catch(e){};세기()}
 const 세기=()=>{document.getElementById('n').textContent=
   document.querySelectorAll('input:checked').length+'/${쌍.length} 정했다'}
-document.addEventListener('change',세기)
+document.addEventListener('change',()=>{저장();세기()})
+되살리기();세기()
 function 글(){const r=[]
   document.querySelectorAll('article').forEach(a=>{
     const c=a.querySelector('input:checked')

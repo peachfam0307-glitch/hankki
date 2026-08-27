@@ -129,16 +129,36 @@ button.ghost{background:transparent;color:var(--new)}
 <nav class="jump">${갈래.map((g) => `<a href="#g-${encodeURIComponent(g.라벨)}">${g.라벨}<em>${g.키.length}</em></a>`).join('')}</nav>
 ${절.join('')}
 <div class="bar"><span id="n">0개 골랐다</span>
-<button class="ghost" onclick="document.querySelectorAll('input:checked').forEach(i=>i.checked=0);세기()">지우기</button>
+<button class="ghost" onclick="처음부터()">처음부터</button>
 <button onclick="복사()">복사하기</button></div>
 <div id="out"><textarea id="t" readonly></textarea><button onclick="document.getElementById('out').style.display='none'">닫기</button></div>
 <script>
+// 💾 절대원칙(창업자 2026-08-18) = 검수판은 «무조건» 고른 것을 기억한다.
+//    *"검수판에 저장기능 안넣어서 내가 삽질했는데 지금 또 안넣었어"*
+//    ⭐ 창업자는 폰에서 본다 — 전화가 오거나 링크를 잘못 누르면 처음부터 다시 골라야 한다.
+const KEY='hankki:판:픽커전수-0827'
+const 저장=()=>{const o={}
+  document.querySelectorAll('.c input[type=checkbox]').forEach(i=>{
+    const mv=i.closest('.c').querySelector('.mv')
+    if(i.checked||mv.value) o[i.dataset.k]=[i.checked?1:0, mv.value]})
+  try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+const 되살리기=()=>{let o={}
+  try{o=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return}
+  document.querySelectorAll('.c input[type=checkbox]').forEach(i=>{
+    const v=o[i.dataset.k]; if(!v)return
+    i.checked=!!v[0]; const mv=i.closest('.c').querySelector('.mv'); if(mv&&v[1])mv.value=v[1]})}
+const 처음부터=()=>{
+  document.querySelectorAll('input:checked').forEach(i=>i.checked=0)
+  document.querySelectorAll('.mv').forEach(m=>m.value='')
+  try{localStorage.removeItem(KEY)}catch(e){}
+  세기()}
 const 세기=()=>{
   document.getElementById('n').textContent=document.querySelectorAll('input:checked').length+'개 골랐다'
   // 갈래마다 몇 개 표시했는지 — 어디까지 봤는지가 한눈에 보인다
   document.querySelectorAll('section').forEach(s=>{
     s.querySelector('h2 u').dataset.c=s.querySelectorAll('input:checked').length})}
-document.addEventListener('change',세기)
+document.addEventListener('change',()=>{저장();세기()})
+되살리기();세기()
 function 글(){const r=[]
   document.querySelectorAll('section').forEach(s=>{
     const c=[...s.querySelectorAll('input:checked')]; if(!c.length)return
