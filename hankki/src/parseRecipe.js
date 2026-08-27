@@ -99,6 +99,13 @@ const UI_TRAIL = /\s*(?:간단히|간략히|자세히|전체|레시피|원문|�
 const TIP_CUE = /(초보자|꿀팁|취향껏|입맛에\s*따라|더\s*맛있|생략\s*가능|없어도\s*(?:돼|되|됩니다)|몸에도?\s*좋|건강에\s*좋|맛있게\s*드세요)/
 
 // 섹션 헤더 — 캡션이 "재료 → 양념 → 팁" 구조로 온 걸 알아채면 분류가 훨씬 정확해진다.
+// 🎀🎀 [2026-08-28] 줄 «앞머리 장식»을 벗기는 «하나뿐인» 자리.
+//   ⛔⛔ 그 전엔 불릿 목록이 «네 군데»에 손으로 복사돼 있었고 서로 달랐다.
+//      실측 = 한국 인스타 캡션에 흔한 장식 30개 중 **18개**가 어느 목록에도 없어서
+//      「■ 재료」·「[재료]」·「◆ 만드는 법」이 헤더로 «안» 잡혔다(주석엔 된다고 적혀 있었다).
+//   ✅ 목록을 늘리지 않는다 — 구두점·기호·이모지는 «전부» 벗긴다.
+//      숫자는 안 벗기니 「1.」 같은 새 항목 표시는 그대로 살아 있다.
+const LEAD_DECOR = /^[\s\p{P}\p{S}]+/u
 const SEC_ING = /^(재료|양념|소스|양념장|재료\s*준비|필요한\s*재료)/
 const SEC_STEP = /^(만드는\s*법|만들기|만드는\s*방법|조리\s*순서|요리\s*순서|조리\s*방법|요리\s*방법|조리법|레시피|순서)/
 // ⚠️⚠️ 「레시피 (3-4인분 기준)」은 «분량 안내»지 「만드는 법」 헤더가 아니다.
@@ -308,7 +315,15 @@ function mergeWrappedLines(lines) {
   const out = []
   for (const raw of lines) {
     const prev = out.length ? out[out.length - 1] : null
-    const bare = String(raw).replace(/^\s*[-*•·▪◦‣●○✅✔☑✓]\s*/, '')
+    // ⛔⛔ [2026-08-28] 여기 «불릿 목록»이 손으로 관리되던 게 사고의 뿌리였다.
+    //    실측 = 한국 인스타 캡션에 흔한 장식 30개 중 **18개**(■ □ ◆ ◇ ▶ ▷ ◈ ▣ ◎ ★ ☆ ※ 🔸 🔹 📌 🍲 [ 【)
+    //    가 목록에 없어서 아래 SEC_ING/SEC_STEP 방어막을 «못 넘고» 앞 문장에 붙었다.
+    //    📮 창업자 실물(차돌 파스타) = 「남편이 오늘도 또 해먹자고 ■ 재료 (2-3인분 기준)」로 뭉쳐
+    //       **재료 절이 한 번도 안 열렸고**, 그 바람에 분량 없는 재료(후추)가 통째로 사라졌다.
+    //    ⛔ 바로 위 주석이 「[재료]·◆ 만드는 법 등 장식도 허용」이라 «적어만» 뒀는데 둘 다 죽어 있었다.
+    //    ✅ 목록을 늘리지 않는다 — **앞머리 장식은 «전부» 벗긴다**(구두점·기호·이모지).
+    //       숫자는 안 벗기므로 「1.」 같은 새 항목은 WRAP_NEWITEM 이 그대로 잡는다.
+    const bare = String(raw).replace(LEAD_DECOR, '')
     const contQty = WRAP_STARTQTY.test(raw) && !WRAP_ENDPUNCT.test(String(prev || '')) && !SENTENCE_END.test(String(prev || ''))
     if (
       prev != null &&
@@ -439,11 +454,15 @@ export function parseRecipeText(raw = '', opts = {}) {
     // ⚠️ 번호가 붙었거나(①·1.) 서술형으로 끝나면 헤더가 아니다. 예전엔 "① 양념장 재료를 모두 섞어둔다"가
     //    sanitize에서 ①이 지워진 뒤 '양념장'으로 시작해 헤더로 잡혀 **줄이 통째로 사라졌다**.
     //    STEP_VERB로 거르면 '조리 순서'·'조리법' 같은 진짜 헤더까지 깨진다('조리'가 동사 목록에 있음).
-    if (l.length <= 16 && !stepMarked && !DECLARATIVE.test(l)) {
+    // 🎀 [2026-08-28] 앞머리 장식을 벗기고 «본문»으로 판단한다 — 길이도 벗긴 뒤로 잰다.
+    //    ⛔ 그 전엔 「■ 재료 (2-3인분 기준)」이 ⑴`■` 때문에 SEC_ING 에 안 걸리고
+    //       ⑵ 장식 두 글자가 더해져 17자라 `length <= 16` 에도 걸려 **두 번 막혔다.**
+    const head = l.replace(LEAD_DECOR, '')
+    if (head.length <= 16 && !stepMarked && !DECLARATIVE.test(head)) {
       // 「돼지고기 양념 재료:」 처럼 앞에 수식어가 붙은 재료 헤더도 받는다(끝이 재료/양념).
-      if (SEC_ING.test(l) || /(재료|양념)\s*[:：]?$/.test(l)) { mode = 'ing'; lastWasBulletIng = false; continue }
-      if (SEC_STEP.test(l) && !SEC_STEP_PORTION.test(l)) { mode = 'step'; sawStep = true; lastWasBulletIng = false; continue }
-      if (SEC_MEMO.test(l)) { mode = 'memo'; lastWasBulletIng = false; continue }
+      if (SEC_ING.test(head) || /(재료|양념)\s*[:：]?$/.test(head)) { mode = 'ing'; lastWasBulletIng = false; continue }
+      if (SEC_STEP.test(head) && !SEC_STEP_PORTION.test(head)) { mode = 'step'; sawStep = true; lastWasBulletIng = false; continue }
+      if (SEC_MEMO.test(head)) { mode = 'memo'; lastWasBulletIng = false; continue }
     }
     if (NOISE.test(l) || NOISE_ANY.test(l) || NOISE_AD.test(l) || SEC_STEP_PORTION.test(l)) continue
     // 장식용 배너("맛보장 양념 레시피!" 등) — 재료도 순서도 아님.
@@ -532,7 +551,14 @@ export function parseRecipeText(raw = '', opts = {}) {
     // 3-2) 분량이 안 적힌 재료("다진마늘", "대파")도 재료로 담는다 — 재료를 줄줄이 적던 중이고
     //      아직 순서가 시작 전이며, 서술형이 아닌 순한글 낱말 줄일 때만.
     //      예전엔 메모로 새서 장보기 목록에서 통째로 빠졌다(창업자 2026-07-29 파서 점검).
-    if (!stepLike && !sawStep && mode !== 'step' && ingredients.length > 0 &&
+    // ⭐⭐ [2026-08-28] **「재료 절 «안»이면」을 더했다** — 창업자 실물(차돌 파스타)에서
+    //    「후추」가 통째로 사라졌다. 인스타 캡션은 «인사말»로 시작하는 게 흔해서
+    //    그 인사말이 걸음 1이 되며 `sawStep` 이 재료 절보다 «먼저» 켜지고,
+    //    그러면 이 줄의 `!sawStep` 이 막아 버린다. `ingredients.length > 0` 도
+    //    절의 «첫 재료»가 분량 없는 낱말이면 똑같이 막는다.
+    //    ⭐ 「재료」라고 «사람이 직접 써 둔 절 안»이라면 그 둘을 물을 이유가 없다.
+    //    ⛔ 절이 없을 때(mode !== 'ing')의 동작은 한 글자도 안 바꿨다.
+    if (!stepLike && (mode === 'ing' || (!sawStep && mode !== 'step' && ingredients.length > 0)) &&
         l.length <= 20 && /^[가-힣][가-힣\s]*$/.test(l) && !DECLARATIVE.test(l)) {
       pushIng(l, bullet); continue
     }
