@@ -102,10 +102,19 @@ for (const rel of 모든파일) {
   담음++; 담은바이트 += statSync(dst).size
 }
 
-// 🔁 못 담은 그림은 «지금 살아 있는 앱»에서 가져오게 한다 — Cloudflare Pages 의 `_redirects`
-//   ⭐ 파일이 있으면 그걸 주고, 없을 때만 이 규칙이 돈다(정적 파일이 먼저 이긴다)
-//   ⚠️ 해시 이름이 어긋나면 그 그림만 안 뜬다 — 앱이 죽지는 않는다
-writeFileSync(join(OUT, '_redirects'), '/assets/* https://peachfam0307-glitch.github.io/hankki/assets/:splat 302\n')
+// ⛔⛔⛔ [2026-08-27] `_redirects` 를 «쓰지 않는다». 여기 있던 한 줄이 화면을 하얗게 만들었다.
+//   옛 줄 = `/assets/* → peachfam0307-glitch.github.io/hankki/assets/:splat 302`
+//   그때 나는 *"해시가 어긋나면 «그 그림만» 안 뜬다 — 앱이 죽지는 않는다"* 고 적었다. **틀렸다.**
+//   🔢 `/assets/` 안에는 그림만 있는 게 아니라 **앱의 심장**이 같은 폴더에 있다 —
+//      index-*.js(1.5MB) · index-*.css · firebase-*.js
+//   👉 규칙이 `/assets/*` 를 통째로 옛 주소로 넘기는데 그 사이 판이 여럿 나가 해시가 다 바뀌어
+//      **JS 가 404 → 앱이 아예 안 그려진다.** 창업자 = *"암것도안떠"* → (10초 확인) *"404나왔어"*
+//   📌 배운 것 = 「이건 X 에만 영향」이라고 적을 때 그 자리에 **X «만»** 있는지 세어봤어야 했다.
+//   ⛔ 빼도 잃는 게 0 이다 — 그 fallback 은 해시가 바뀐 뒤엔 어차피 전부 404 다.
+//      못 담은 그림이 필요하면 «여기서 더 담는다»(걸어 다니는 길을 늘린다). 옛 배포를 가리키지 않는다.
+//   ⛔⛔ 2026-08-27 에 이 판을 다시 열었을 때 이 줄이 «그대로» 있었다 —
+//      그날은 zip 에서 손으로만 뺐고 «판을 안 고쳤다». 규칙만 적고 장치를 안 고치면 반드시 되풀이된다.
+if (existsSync(join(OUT, '_redirects'))) rmSync(join(OUT, '_redirects'))
 
 console.log(`📦 담음 ${담음}개 · ${(담은바이트 / 1048576).toFixed(1)}MB   ⛔뺀 그림 ${뺀것}개`)
 console.log(`   부른 그림 = ${[...부른것].filter((p) => /\.(png|webp)$/i.test(p)).length}개`)
