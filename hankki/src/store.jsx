@@ -391,6 +391,29 @@ function migrateBasics(saved) {
     return want ? { ...r, icon: want } : r
   })
 
+  // 🍱🍱 v11.50 (2026-08-27) — 픽커에서 «내린» 옛 컷을 아직 박고 있던 것들.
+  //   📮 창업자 = *"아직 레시피 김치찌개 아래있는 음식아이콘 안바뀌었어.."* (제육볶음 fh_k13 = 옛 카와이)
+  //   ⛔⛔ 여기엔 «그 요리 전용» 컷만 넣는다 — 범용 컷은 절대 넣지 않는다.
+  //      fe_71(무침) · fe_63(덮밥) · fe_128(소스) · fe_04(솥밥) · fe_10 은 뺐다.
+  //      그 키로 «딴 요리»를 저장한 사람의 그림까지 바뀐다(규칙 18 ⓙ 의 반대편 함정).
+  //      기본 레시피는 위 BASICS_VERSION 재동기화가 «제목»으로 정확히 고친다.
+  const ICON_SWAP_0827 = {
+    fh_k13: 'gr_387', fe_103: 'gr_413', fe_137: 'gr_402', fe_178: 'gr_340',
+    fe_193: 'gr_382', fe_194: 'gr_380', fe_263: 'gr_419', fe_271: 'gr_391',
+    fe_282: 'gr_003', fe_288: 'gr_416', fe_289: 'gr_341', fe_290: 'gr_344',
+    fe_295: 'gr_397', fe_307: 'gr_338', fe_315: 'gr_342', fe_34: 'gr_386',
+    fe_05: 'gr_427', fy_y08: 'gr_399',
+    gr_247: 'gr_048', gr_248: 'gr_001', gr_250: 'gr_439', gr_268: 'gr_053',
+  }
+  fixed = fixed.map((r) => {
+    if (!r) return r
+    // ⛔ 직접 넣은 사진·카드·글자 표지는 절대 안 건드린다
+    if (r.thumb && r.thumb !== 'icon') return r
+    if (r.image && r.thumb !== 'icon') return r
+    const want = ICON_SWAP_0827[r.icon]
+    return want ? { ...r, icon: want } : r
+  })
+
   return { recipes: [...fixed, ...add], seedV: BASICS_VERSION }
 }
 
