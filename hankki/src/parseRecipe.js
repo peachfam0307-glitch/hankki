@@ -380,22 +380,41 @@ export function parseRecipeText(raw = '', opts = {}) {
   for (const rawLine of rawLines) {
     // 불릿: - * • 등 + 체크표시(✔️☑ — 인스타 재료 목록에 흔함). ✅(초록)은 순서/팁에도 써서 제외.
     const bullet = /^\s*[-*•·▪◦‣●○✔☑]\s*/.test(rawLine)
+    // ✔ [2026-08-28] 체크표시로 시작하나 — 「번호 걸음이 끝난 뒤」에 오면 그건 «팁»이다.
+    //    ⚠️ 체크표시 자체로는 못 가른다 — 인스타는 «재료 목록»에도 ✔ 를 흔히 쓴다.
+    //       그래서 「번호 걸음을 이미 봤나」와 «함께» 봐야 한다.
+    const checkMark = /^\s*[✔☑✓✅]/.test(rawLine)
     // 맨 앞 장식 이모지(🍆📌🍷 등) — 첫 줄이면 제목 후보 신호로 쓴다.
     const emojiHead = /^\s*[-*•·▪◦‣●○✅✔☑]*\s*[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}❤]/u.test(rawLine)
     // 번호·동그라미 번호가 붙은 줄인지 원문에서 미리 본다 — sanitize가 ①~⑳을 지워버리기 때문.
     const stepMarked = STEP.test(String(rawLine).replace(/^\s*[-*•·▪◦‣●○✔☑]\s*/, '').trim())
     // 해시태그 줄(#육회 #육회깻잎무침 #묵은지김밥 …)은 재료도 순서도 아님 → 버린다.
     if (/^\s*#\S/.test(rawLine) || (String(rawLine).match(/#[^\s#]+/g) || []).length >= 2) continue
-    let l = cleanTokens(sanitize(rawLine.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•·▪◦‣●○*]/g, ' ')))
+    // 🔢 [2026-08-28] 숫자만 있는 줄 = 인스타 «좋아요·댓글·공유 수» 줄이다(「837 15 91 431」).
+    //    ⛔ 내용이 아니라 화면 UI 다. 게다가 이게 «첫 줄»이 되면 아래 계정명 떼기가 안 돈다.
+    if (/^\s*[\d\s,.]+\s*$/.test(rawLine)) continue
+    const raw0 = items.length === 0 ? String(rawLine).replace(IG_HANDLE, '') || rawLine : rawLine
+    let l = cleanTokens(sanitize(raw0.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•·▪◦‣●○*]/g, ' ')))
     l = stripLeadingOcrJunk(l, fromOcr) // 삐/=/HE/Vv Eel 같은 앞머리 잡음 벗기기
     // 👤 첫 줄에만 — 인스타 아이디를 떼면 그 뒤가 대개 «제목»이다(`emily.at_home 홍콩식 가지볶음`).
     //    ⛔줄을 버리지 않는다. 버리면 제목까지 같이 날아간다.
+    // ⛔⛔ [2026-08-28] 계정명 떼기가 «글자 청소 뒤»에 돌아서 이미 늦었다 —
+    //    `kim_seoul_638` 이 sanitize/cleanTokens 를 거치며 「seoul 638」로 뭉개진 뒤라
+    //    IG_HANDLE 정규식이 못 알아본다. 📮 창업자 실물(강레오 양송이)에서
+    //    제목이 「seoul 638 강레오의 초간단 양송이버섯 볶음」으로 나왔다.
+    //    ✅ 원문 줄에서 «먼저» 뗀다.
     if (items.length === 0) l = l.replace(IG_HANDLE, '').trim() || l
     l = l.replace(UI_TRAIL, '').trim() // "…끊인다. 간단히 보기" → 뒤 UI 글자 떼기
-    if (!l || DATE_ONLY.test(l)) { blankAhead = true; continue } // 빈 줄·날짜만 있는 줄(작성일)은 버린다(문단 나눔은 기억한다)
+    if (!l) { blankAhead = true; continue } // 빈 줄은 버리되 «문단 나눔»은 기억한다
+    // 📅📅 [2026-08-28] «작성일 줄»은 인스타 캡션의 «끝» 표시다 — 그 아래는 «다음 게시물»이다.
+    //    📮 창업자 실물(강레오 양송이) — 스크린샷 한 장에 이 게시물의 끝 ＋ 다음 게시물의 시작이 같이 찍혀
+    //       「2na2jun mom.official BGM」이 «걸음 6»으로 들어갔다. 인스타 피드는 늘 그렇게 생겼다.
+    //    ⭐ 날짜를 «버리기»만 하던 것을 «여기서 끊는다»로 바꾼다.
+    //    🔒 맨 위의 날짜(캡션이 날짜로 시작하는 경우)까지 죽이지 않도록 «이미 몇 줄 모았을 때»만 끊는다.
+    if (DATE_ONLY.test(l)) { if (items.length >= 3) break; blankAhead = true; continue }
     // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
     const isHeader = SEC_ING.test(l) || SEC_STEP.test(l) || SEC_MEMO.test(l)
-    if (isHeader || (l.length > 1 && !isGibberish(l))) { items.push({ l, bullet, emojiHead, stepMarked, blankBefore: blankAhead }); blankAhead = false }
+    if (isHeader || (l.length > 1 && !isGibberish(l))) { items.push({ l, bullet, emojiHead, stepMarked, checkMark, blankBefore: blankAhead }); blankAhead = false }
   }
 
   let title = ''
@@ -404,6 +423,13 @@ export function parseRecipeText(raw = '', opts = {}) {
   const other = []
   let mode = null // 'ing' | 'step' | 'memo' — 섹션 헤더를 만나면 바뀐다
   let sawStep = false // 순서가 한 번 시작되면, 그 뒤 애매한 줄은 순서로 본다(재료는 보통 앞에)
+  let sawNumbered = false // «번호가 붙은» 걸음을 봤나 — 체크표시 팁을 가르는 데 쓴다(sawStep 보다 좁다)
+  // 🙋 [2026-08-28] 글쓴이가 «번호를 매긴» 캡션이면, 첫 번호 «앞»의 조리문장은 걸음이 아니다.
+  //    📮 창업자 실물(차돌 파스타) — 「차돌 느끼함도 싹 잡아줘서 더 맛있어요 / 남편이 오늘도 또 해먹자고」
+  //       라는 «인사말»이 걸음 1 이 됐다. 인스타 캡션은 인사말로 시작하는 게 아주 흔하다.
+  //    ⭐ 사람이 1·2·3 을 매겼다면 «1번 앞»은 소개·재료지 조리 순서가 아니다. 이게 제일 단단한 신호다.
+  //    ⛔ 번호가 없는 캡션(-1)에는 아예 안 걸린다 — 기존 동작 그대로.
+  const firstNumbered = items.findIndex((x) => x.stepMarked)
   let lastWasBulletIng = false // 불릿 재료가 줄바꿈으로 이어지는 경우 합치기 위해
 
   // 제목이 될 자격 — 온전한 한글 단어(2자+)나 진짜 영어 단어가 있어야 하고,
@@ -431,7 +457,7 @@ export function parseRecipeText(raw = '', opts = {}) {
   const pushIng = (l, bullet) => { ingredients.push(l); lastWasBulletIng = bullet; }
 
   for (let idx = 0; idx < items.length; idx++) {
-    const { l, bullet, emojiHead, stepMarked, blankBefore } = items[idx]
+    const { l, bullet, emojiHead, stepMarked, checkMark, blankBefore } = items[idx]
 
     // 첫 줄 제목 — 이모지 붙은 짧은 이름("🍷 양념장")이나 "X 만드는 법/레시피" 배너면 제목으로.
     // 섹션명(양념장)과 겹쳐도 제목을 우선한다. "재료"처럼 신호 없는 헤더는 안 가로챈다.
@@ -490,6 +516,15 @@ export function parseRecipeText(raw = '', opts = {}) {
       lastWasBulletIng = false
       continue
     }
+    // ✔✔ [2026-08-28] «번호 걸음이 끝난 뒤»의 체크표시 줄 = 팁 → 메모로.
+    //    📮 창업자 실물(차돌 파스타) — 「✔참나물은 맨 마지막에 넣어야 향긋해요」·
+    //       「✔대파를 먼저 구우면 단맛과 풍미가 좋아요」가 «걸음 7·8»로 들어갔다.
+    //    ⭐ 한 줄이 걸리면 그 뒤는 전부 팁이다(팁은 보통 줄줄이 온다) → mode 를 바꾼다.
+    //    ⛔ 체크표시만으로 가르지 않는다 — 인스타는 «재료 목록»에도 ✔ 를 흔히 쓴다.
+    if (checkMark && sawNumbered && !stepMarked) {
+      mode = 'memo'; other.push(l); lastWasBulletIng = false; continue
+    }
+    if (stepMarked) sawNumbered = true
     if (NOISE.test(l) || NOISE_ANY.test(l) || NOISE_AD.test(l) || SEC_STEP_PORTION.test(l)) continue
     // 장식용 배너("맛보장 양념 레시피!" 등) — 재료도 순서도 아님.
     // ⚠️ 무조건 버리면 "소고기 미역국 황금레시피" 같은 진짜 요리 이름까지 날아간다(제목이 빈칸이 됨).
@@ -578,6 +613,11 @@ export function parseRecipeText(raw = '', opts = {}) {
     // 1) 팁·메모 섹션에 들어섰으면 그 뒤는 전부 메모 (조리 문장처럼 보여도 팁으로)
     if (mode === 'memo') { if (l.length >= 6) other.push(l); lastWasBulletIng = false; continue }
     // 2) 명백한 조리 문장 → 순서 (섹션 헤더가 없어도 우선 분리)
+    // 🙋 첫 번호 걸음 «앞»의 조리문장은 걸음이 아니다(위 firstNumbered 주석 참조) — 메모로 보낸다.
+    //    ⛔ 재료는 안 건드린다 — 이 가지는 «걸음이 될 뻔한 줄»만 돌린다.
+    if (firstNumbered > 0 && idx < firstNumbered && stepLike && mode !== 'step') {
+      other.push(l); lastWasBulletIng = false; continue
+    }
     if (stepLike) { pushStep(l); continue }
     // 3) 재료다움 → 재료 (재료 섹션이거나, 아직 순서가 시작 전이면)
     if (ingLike && (mode === 'ing' || mode === null || !sawStep)) { pushIng(l, bullet); continue }
