@@ -14,6 +14,8 @@
 // 실행: cd /home/user/hankki/hankki && node scripts/_probe-브랜드없는레시피-0828.mjs
 // 🏷 이름표 = 살아있는 도구
 import { 레시피들 } from './recipe.mjs'
+// ⏰ 「오늘(KST)」은 «한 곳»에서만 만든다(절대원칙 27) — ⛔여기서 직접 짜지 말 것
+import { todayKST } from '../src/today.js'
 
 // ⭐ 「(대체품)」 흔적 — 우리 규칙이 브랜드 줄에만 남기는 자국
 const 대체품흔적 = /어떤\s*것이든|또는|브랜드\s*무관|일반\s*설탕|시판|대신|등\s*·/
@@ -33,7 +35,7 @@ const 상식어 = new Set(`
 
 const 낱말들 = (s) => String(s).replace(/[()[\]·,~/]/g, ' ').split(/\s+/).filter(Boolean)
 
-const 오늘 = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10)   // KST
+const 오늘 = todayKST()
 const 결과 = []
 for (const r of 레시피들()) {
   const 줄 = (r.ingredients || []).map(String)
