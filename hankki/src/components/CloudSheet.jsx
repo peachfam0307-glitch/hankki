@@ -176,17 +176,18 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
 
                 {/* ⭐⭐ 두 판을 «나란히» 보여준다 — 이게 「고르게 한다」의 실체다 */}
                 <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
-                  <판 제목="📱 이 폰" 레시피={폰레시피} 일기={폰일기} 언제="지금" />
+                  <판 아이콘="phone" 제목="이 폰" 레시피={폰레시피} 일기={폰일기} 언제="지금" />
                   <판
-                    제목="☁️ 클라우드"
+                    아이콘="cloud"
+                    제목="클라우드"
                     레시피={구름?.있나 ? 구름.레시피 : 0}
                     일기={구름?.있나 ? 구름.일기 : 0}
                     언제={구름 == null ? '보는 중…' : 구름.있나 ? 때(구름.언제) : '아직 비었어요'}
                   />
                 </div>
 
-                <button className="btn-primary press" disabled={!!바쁨} onClick={올리자}>
-                  {바쁨 === '올리기' ? '올리는 중…' : '📱 이 폰 것으로 클라우드 덮기'}
+                <button className="btn-primary press" disabled={!!바쁨} onClick={올리자} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  {바쁨 === '올리기' ? '올리는 중…' : <><Icon name="phone" size={16} color="#fff" /> 이 폰 것으로 클라우드 덮기</>}
                 </button>
                 <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.5, margin: '7px 2px 12px' }}>
                   {/* ㄱ. 비었으면 「있던 건」이 말이 안 된다 — 처음 올리는 사람에게 맞는 말로 */}
@@ -196,8 +197,8 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
                 </div>
 
                 {/* ⛔ 레시피·일기가 0인 판을 내려받으면 «이 폰이 통째로 비워진다» → 그때도 막는다 */}
-                <button className="btn-ghost press" style={{ width: '100%' }} disabled={!!바쁨 || !구름?.있나 || 비었나} onClick={내려받자}>
-                  {바쁨 === '내려받기' ? '내려받는 중…' : '☁️ 클라우드 것으로 이 폰 덮기'}
+                <button className="btn-ghost press" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} disabled={!!바쁨 || !구름?.있나 || 비었나} onClick={내려받자}>
+                  {바쁨 === '내려받기' ? '내려받는 중…' : <><Icon name="cloud" size={16} color="var(--brown)" /> 클라우드 것으로 이 폰 덮기</>}
                 </button>
                 <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.5, margin: '7px 2px 0' }}>
                   {/* ㄴ. 회색 단추의 «정체»를 말해준다 — 이 말이 없으면 고장으로 읽힌다 */}
@@ -236,10 +237,15 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
   )
 }
 
-function 판({ 제목, 레시피, 일기, 언제 }) {
+function 판({ 아이콘, 제목, 레시피, 일기, 언제 }) {
   return (
     <div style={{ flex: 1, background: 'var(--cream)', borderRadius: 12, padding: '11px 12px' }}>
-      <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--brown)' }}>{제목}</div>
+      {/* ⛔ 여기 「📱」「☁️」 유니코드 이모지가 박혀 있었다 — 창업자가 강력·반복 명시한 금지 항목이다.
+          ＋ 바로 윗줄엔 우리 `cloud` 아이콘이 있어 «한 화면에 구름이 두 종류»였다(2026-08-27 캡처로 잡았다). */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 14.5, fontWeight: 700, color: 'var(--brown)' }}>
+        <Icon name={아이콘} size={15} color="var(--brown)" />
+        <span>{제목}</span>
+      </div>
       <div style={{ fontSize: 15, marginTop: 5, lineHeight: 1.5 }}>
         레시피 <b>{레시피}</b><br />일기 <b>{일기}</b>
       </div>
