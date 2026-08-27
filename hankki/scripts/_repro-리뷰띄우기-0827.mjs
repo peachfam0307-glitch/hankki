@@ -46,10 +46,15 @@ await ctx.addInitScript(SEED_COACH_SEEN)
 await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
 
 // ⛔ page.reload() 금지 — 저장값이 시드로 덮인다(`check-mistakes` ⑧). 새 탭으로 연다.
+//
+// ⛔⛔ **탭이 달라도 저장소는 «하나»다** — 앞 칸이 심어둔 「물어봤음」이 뒤 칸까지 살아남아
+//    리뷰창이 처음부터 안 뜨고, 그러고도 **아무것도 안 잰 채 초록불**이 된다(규칙 18 ⓘ).
+//    → 열 때마다 지운다. ⭐일부러 심어야 하는 칸(⑤)은 «연 뒤에» 심는다.
 const 새탭 = async () => {
   const page = await ctx.newPage()
   page.on('pageerror', (e) => { console.log('  ⚠️ pageerror:', String(e.message || e).split('\n')[0]); 실패++ })
   await page.goto('http://127.0.0.1:4419/hankki/', { waitUntil: 'networkidle' })
+  await page.evaluate(() => { try { localStorage.removeItem('hankki:nudge:review') } catch {} })
   await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(700)
   return page
@@ -75,6 +80,16 @@ const 만들었어요심기 = async (page, N, { note = '', rating = 0 } = {}) =>
 // 🗣 리뷰창이 «화면에» 떠 있나 — 글자로 본다(소스가 아니라 그려진 것)
 const 리뷰창떴나 = (page) => page.evaluate(() =>
   /한마디 남겨주실래요|스토어에 한마디/.test(document.body.innerText || ''))
+
+// ⭐ 「뜰 것」을 잴 땐 «기다린다» — 고정 대기로 재면 흔들린다(오늘 이걸로 한 번 헛돌았다).
+//    ⛔ 「안 뜰 것」에는 쓰지 않는다 — 없는 걸 기다리면 그냥 늦어질 뿐이다.
+const 리뷰창기다리기 = async (page, ms = 4000) => {
+  await page.waitForFunction(
+    () => /한마디 남겨주실래요|스토어에 한마디/.test(document.body.innerText || ''),
+    null, { timeout: ms },
+  ).catch(() => {})
+  return 리뷰창떴나(page)
+}
 
 // 🍱 레시피 탭 → 그 레시피 상세. ⛔「열렸다」를 «제목이 화면에 떴나»로 확인한다(눌렀나가 아니다)
 const 상세열기 = async (page, 제목) => {
@@ -226,7 +241,7 @@ console.log('\n③ ㉠ 레꾸자랑을 «보낸» 사람 — 카드를 닫으면
     chk('⛔ 보낸 «직후»에도 아직 안 뜬다 — 카드를 안 뺏는다(표지로 저장이 남아 있다)', !(await 리뷰창떴나(page)))
 
     await 카드닫기(page)
-    chk('⭐ 카드를 닫자 리뷰창이 뜬다 — 창업자가 말한 「쓰다가 뜬다」', await 리뷰창떴나(page))
+    chk('⭐ 카드를 닫자 리뷰창이 뜬다 — 창업자가 말한 「쓰다가 뜬다」', await 리뷰창기다리기(page))
     chk('머리글이 그 자리에서 «참»이다 — 「레꾸 자랑 보냈어요」', await page.evaluate(() =>
       document.body.innerText.includes('레꾸 자랑 보냈어요') && !document.body.innerText.includes('번째 한 끼예요')))
   }
@@ -255,8 +270,9 @@ console.log('\n⑤ 한 번 물었으면 두 번 안 묻는다 — 거절해도 �
 // ─────────────────────────────────────────────────────────────
 {
   const page = await 새탭()
-  await page.evaluate(() => { try { localStorage.setItem('hankki:nudge:review', '1') } catch {} })
   const p2 = await 새탭()
+  // ⭐ 「이미 물어본 사람」을 여기서 심는다 — 새탭() 이 열 때 지우므로 «연 뒤에» 심어야 한다
+  await p2.evaluate(() => { try { localStorage.setItem('hankki:nudge:review', '1') } catch {} })
   await 공유흉내(p2, true)
   chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(p2))
   chk('자랑 카드가 떴다', await 자랑카드열기(p2))
@@ -265,6 +281,46 @@ console.log('\n⑤ 한 번 물었으면 두 번 안 묻는다 — 거절해도 �
   await 카드닫기(p2)
   chk('⛔ 이미 물어본 사람에겐 «안» 뜬다 — 재촉하지 않는다(설계원칙)', !(await 리뷰창떴나(p2)))
   await page.close(); await p2.close()
+}
+
+// ─────────────────────────────────────────────────────────────
+console.log('\n⑥ ⭐ 「1회만」이 «진짜인가» — 어떻게 닫아도 두 번째 공유엔 안 뜬다')
+// ─────────────────────────────────────────────────────────────
+//   📮 창업자 물음 = *"레꾸자랑을 하면 «1회만» 리뷰써달라는 안내가뜨는거지?"*
+//   ⛔⛔ 처음엔 «아니었다» — `useModalBack(onClose)` 라 **뒤로가기로 닫으면 표시가 안 남았다.**
+//      그러면 공유할 때마다 또 떠서 **조르는 앱**이 된다. 이 칸이 그걸 지킨다.
+{
+  const page = await 새탭()
+  // ⛔⛔ 앞 칸 ⑤ 가 심어둔 「물어봤음」이 **여기까지 살아 있다** — 탭이 달라도 저장소는 하나다.
+  //    지우지 않으면 리뷰창이 처음부터 안 떠서 **아무것도 안 재고 초록불**이 된다(규칙 18 ⓘ · 오늘 세 번째).
+  await page.evaluate(() => { try { localStorage.removeItem('hankki:nudge:review') } catch {} })
+  await 공유흉내(page, true)
+  chk('시작할 때 「물어봤음」이 «없다» — 앞 칸이 남긴 게 없나', await page.evaluate(() => {
+    try { return localStorage.getItem('hankki:nudge:review') !== '1' } catch { return false }
+  }))
+  chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(page))
+  chk('자랑 카드가 떴다', await 자랑카드열기(page))
+  const 첫판 = await 공유누르기(page)
+  chk(`첫 공유가 나갔다 (보냄 ${첫판.보냄})`, 첫판.보냄 > 0)
+  await 카드닫기(page)
+  chk('첫 공유엔 리뷰창이 뜬다', await 리뷰창기다리기(page))
+
+  // ⭐ 「닫기」·「나중에」가 아니라 **뒤로가기**로 닫는다 — 새던 자리가 여기다
+  await page.goBack().catch(() => {})
+  await page.waitForTimeout(900)
+  chk('뒤로가기로 리뷰창이 닫혔다', !(await 리뷰창떴나(page)))
+  chk('⭐ 뒤로가기로 닫아도 「물어봤음」이 남는다', await page.evaluate(() => {
+    try { return localStorage.getItem('hankki:nudge:review') === '1' } catch { return false }
+  }))
+
+  // 두 번째 공유 — 이번엔 안 떠야 한다
+  chk('레꾸자랑 탭으로 돌아왔다', await 자랑탭열기(page))
+  chk('자랑 카드를 다시 열었다', await 자랑카드열기(page))
+  const 둘째 = await 공유누르기(page)
+  chk(`두 번째 공유도 나갔다 (보냄 ${둘째.보냄})`, 둘째.보냄 > 첫판.보냄)
+  await 카드닫기(page)
+  chk('⛔⛔ 두 번째 공유엔 «안» 뜬다 — 조르지 않는다', !(await 리뷰창떴나(page)))
+  await page.close()
 }
 
 console.log(`\n${실패 ? '⛔' : '✅'} ${통과}/${통과 + 실패}\n`)

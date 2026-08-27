@@ -15,8 +15,13 @@ import uiGomHeart from '../assets/ui/gom_heart.png'
 //    ⛔ 예전엔 「N번째 한 끼예요」가 박혀 있었는데, 레꾸자랑 공유 직후(㉠)에 뜨면 **그 말이 거짓이 된다**
 //       (요리를 안 하고 꾸며서 보낸 사람일 수 있다). **자리마다 참인 말**을 준다.
 export default function ReviewAskSheet({ onClose, title }) {
-  useModalBack(onClose)
   const close = () => { markReviewAsked(); onClose() } // 뜬 순간부터 '물어봤음' — 어떻게 닫아도 다시 안 묻는다
+  // ⛔⛔ [2026-08-27] 여기가 `useModalBack(onClose)` 였다 — **뒤로가기로 닫으면 「물어봤음」이 안 남았다.**
+  //    📮 창업자 물음 = *"레꾸자랑을 하면 «1회만» 리뷰써달라는 안내가뜨는거지?"* → 코드를 열어보고 찾았다.
+  //    ⭐ 자리가 «기록 시트 닫는 순간» 하나였을 땐 거의 안 드러났다 — 거기까지 온 사람이 거의 없었으니까.
+  //       공유 직후(㉠)로 자리를 열자 **다음 공유마다 또 뜨는** 길이 된다 = 조르는 앱이 된다(재촉 금지 원칙 위반).
+  //    📌 「어떻게 닫아도」라고 주석에 «적혀 있었는데» 뒤로가기만 예외였다. **적힌 말과 코드가 갈려 있었다.**
+  useModalBack(close)
   return (
     <Portal>
       <div className="sheet-mask" onClick={close}>
