@@ -53,7 +53,12 @@ const 갈래 = (p) => {
   return '있음'
 }
 
+// 🗜 판은 **16MB 상한**이라 원본을 그대로 실으면 못 올린다(40편 = 26.7MB).
+//    `_줄이기-판용컷-0827.py` 가 만든 작은 판이 있으면 그것을 쓴다.
+const 작게 = path.join(낼곳, 'mini')
 const b64 = (k) => {
+  const j = path.join(작게, `${k}.jpg`)
+  if (existsSync(j)) return 'data:image/jpeg;base64,' + readFileSync(j).toString('base64')
   const p = path.join(사진, `${k}.png`)
   return existsSync(p) ? 'data:image/png;base64,' + readFileSync(p).toString('base64') : null
 }
@@ -78,7 +83,7 @@ const 칸 = (x, i) => {
 const 순 = { 있음: 0, 규칙컷도내려감: 1, 없음: 2 }
 목록.sort((a, b) => 순[갈래(a)] - 순[갈래(b)] || a.제목.localeCompare(b.제목))
 
-const HTML = `<title>박힌 컷 갈아끼우기</title>
+const HTML = `<title>옛 그림 남은 ${목록.length}편</title>
 <style>
 :root{--bg:#faf8f4;--ink:#2b2118;--sub:#8a7a68;--line:#e4dccf;--new:#c2703a;--card:#fff;--hit:#ffe9d8;--red:#b8402c}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1713;--ink:#f0e8dc;--sub:#a89684;--line:#3a3229;--card:#241f19;--hit:#3a2416;--red:#e08a72}}
@@ -106,10 +111,11 @@ button.ghost{background:transparent;color:var(--new)}
 #out{position:fixed;inset:12px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:14px;display:none;z-index:9;flex-direction:column;gap:10px}
 #out textarea{flex:1;width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font:13px/1.5 ui-monospace,monospace;background:var(--bg);color:var(--ink);resize:none}
 </style>
-<h1>🍱 아직 «옛 그림»이 뜨는 레시피 ${목록.length}편</h1>
-<p class="lead">어제 옛 컷을 픽커에서 내렸는데, <b>레시피에 박아둔 값은 픽커와 상관없이 그대로 뜬다.</b><br>
-왼쪽 = <b>지금 폰에 뜨는 것</b> · 오른쪽 = 바꾸면 이렇게 된다.<br>
-⛔ 다 바꾸면 안 된다 — <b>고등어김치찜→돼지고기김치찜</b>처럼 «다른 요리»로 가는 것도 섞여 있다.</p>
+<h1>🍱 아직 «옛 그림»이 뜨는 ${목록.length}편</h1>
+<p class="lead">「김치찌개 아래 제육볶음」 제보로 <b>전수로 쟀다.</b> 40편이 나왔고 <b>28편은 이미 갈아끼웠다</b>(v11.51 배포).<br>
+여기 남은 건 <b>내가 못 정하는 것</b>이다 — 갈치국→갈치«구이»처럼 «다른 요리»로 가거나,
+해장파스타처럼 <b>일부러 박아둔 것</b>이거나, 바꿀 그림이 아예 없다.<br>
+왼쪽 = <b>지금 폰에 뜨는 것</b> · 오른쪽 = 바꾸면 이렇게 된다. <b>남길 쪽</b>을 누르면 돼요.</p>
 ${목록.map(칸).join('')}
 <div class="bar"><span id="n">0/${목록.length} 정했다</span>
 <button class="ghost" onclick="처음부터()">처음부터</button>
