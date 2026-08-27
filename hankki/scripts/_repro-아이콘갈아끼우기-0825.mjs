@@ -126,17 +126,7 @@ for (const r of 옛판) {
 
 // ⑥ 화면에 «진짜로» 새 그림 파일이 떠 있나 — 저장값만 보면 그림이 깨져도 모른다
 await page.getByText('레시피', { exact: true }).last().click()
-// ⛔⛔ [2026-08-27] 여기 원래 `waitForTimeout(1500)` 이었는데 «흔들리는 검사»였다.
-//    🔢 실측 = **단독으로 돌리면 깨짐 0 · 스모크 안에서 돌리면 깨짐 8.**
-//       스모크는 판 여럿을 «동시에» 돌려 각자 느려진다 → 1500ms 안에 로딩이 안 끝난다.
-//    ⭐ 그날 가을 자산 19컷을 넣자 그 임계점을 넘었다. **앞으로 자산이 늘 때마다 또 넘는다.**
-//    ✅ 그래서 «시간»이 아니라 **「이미지가 다 로드됐나」**를 기다린다 — 잣대(깨짐 0)는 그대로다.
-//    ⛔ 「flaky 니까 넘어간다」로 덮지 않는다(v11.30 교훈) — 원인이 시간 부족인 걸 확인하고 고쳤다.
-await page.waitForFunction(() => {
-  const 그림들 = [...document.querySelectorAll('img')]
-    .filter((i) => /photo|assets/.test(i.currentSrc || i.src))
-  return 그림들.length > 0 && 그림들.every((i) => i.complete)
-}, null, { timeout: 20000 }).catch(() => {})
+await page.waitForTimeout(1500)
 const 그림 = await page.evaluate(() => {
   const out = { 깨짐: 0, 총: 0 }
   for (const img of document.querySelectorAll('img')) {
