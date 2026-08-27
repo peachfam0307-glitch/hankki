@@ -20,7 +20,7 @@ import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
 import { dateLabel, openExternal as openUrl, ingredientName, fitImage } from '../utils'
 import { photoPanStart } from '../photoPan'
-import { shouldAskReview } from '../nudges'
+import { shouldAskReview, shouldAskReviewNow, REVIEW_AT } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
 import { picksForIngredients, productLink, productMall, curIcon, isHansalim } from '../data/curation'
@@ -93,7 +93,13 @@ export default function RecipeDetailScreen({ id }) {
   const [drawOpen, setDrawOpen] = useState(false) // 공유 뽑기카드
   const [shareSheet, setShareSheet] = useState(false) // 공유 두 갈래 시트
   const [coverBusy, setCoverBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩)
-  const [askReview, setAskReview] = useState(false) // 기록 시트를 직접 열었다 닫을 때 한 번만
+  // 🗣 한마디 청하기 — **뜨는 자리가 둘이다.** 담는 값 = 머리글 글자(null = 안 뜸)
+  //   ⑴ 기록 시트를 «직접 열었다 닫을» 때 (원래 자리)
+  //   ⑵ 🎴 자랑 카드를 «보낸 뒤 카드를 닫을» 때 (㉠ · 창업자 확정 2026-08-27)
+  //   ⛔ 참·거짓이 아니라 «글자»를 담는 이유 = 자리마다 머리글이 달라야 한다.
+  //      「N번째 한 끼예요」를 공유 직후에 띄우면 **거짓말**이 된다(요리를 안 했을 수 있다).
+  const [askReview, setAskReview] = useState(null)
+  const 자랑보냄 = useRef(false)
   // 인라인 오버레이(꾸미기) — 뒤로가기로 닫기.
   // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
   // 🔙 꾸미다가 뒤로가기 → **바로 닫지 않고 물어본다** (창업자 2026-07-30
@@ -762,7 +768,7 @@ export default function RecipeDetailScreen({ id }) {
           ⭐ v9.02 의 원래 의도(*"기록을 막 남긴 뒤, 흐름을 끊지 않는 자리"*)는 그대로다.
              달라진 건 그 자리를 «앱이 정하지 않고 유저가 연다»는 것뿐.
           시트가 스스로 '물어봤음'을 남겨서 어떻게 닫아도 다시 안 묻는다. */}
-      {askReview && !logEntry && <ReviewAskSheet onClose={() => setAskReview(false)} />}
+      {askReview && !logEntry && <ReviewAskSheet title={askReview} onClose={() => setAskReview(null)} />}
 
       {confirmDel && (
         <ConfirmSheet
@@ -812,7 +818,7 @@ export default function RecipeDetailScreen({ id }) {
           entry={logEntry}
           // 닫는 순간 = 기록을 막 남긴 뒤 = 한마디를 청하기 제일 좋은 자리.
           // ⛔ onDelete 는 여기를 안 탄다 — 지우고 나서 리뷰를 청하면 실례다.
-          onClose={() => { setLogEntry(null); if (shouldAskReview(diary.length)) setAskReview(true) }}
+          onClose={() => { setLogEntry(null); if (shouldAskReview(diary.length)) setAskReview(`${REVIEW_AT}번째 한 끼예요`) }}
           onDelete={() => { removeDiary(logEntry.id); setLogEntry(null); nav.showToast('기록을 삭제했어요') }}
         />
       )}
@@ -840,7 +846,21 @@ export default function RecipeDetailScreen({ id }) {
         </Portal>
       )}
 
-      {drawOpen && <Portal><ShareDrawCard recipe={r} onClose={() => setDrawOpen(false)} onSaveCover={(img) => { const 말 = 카드표지토스트(r); updateRecipe(r.id, 카드표지로(img)); nav.showToast(말) }} /></Portal>}
+      {drawOpen && (
+        <Portal>
+          <ShareDrawCard
+            recipe={r}
+            onShared={() => { 자랑보냄.current = true }}
+            onClose={() => {
+              setDrawOpen(false)
+              // 🎴 보낸 사람에게만 · 카드를 «닫는» 순간에(시트 위에 시트가 되지 않게)
+              if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+              자랑보냄.current = false
+            }}
+            onSaveCover={(img) => { const 말 = 카드표지토스트(r); updateRecipe(r.id, 카드표지로(img)); nav.showToast(말) }}
+          />
+        </Portal>
+      )}
 
     </div>
   )

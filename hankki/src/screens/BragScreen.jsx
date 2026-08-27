@@ -12,6 +12,8 @@ import { matchKo } from '../utils'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
 import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
+import ReviewAskSheet from '../components/ReviewAskSheet'
+import { shouldAskReviewNow } from '../nudges'
 import { useLayerBack } from '../useBackHandler'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
@@ -48,6 +50,12 @@ export default function BragScreen() {
   const [share, setShare] = useState(null) // 랜덤 카드 모달로 보낼 레시피
   const [busy, setBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩 표시)
   const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
+  // 🎴 한마디 청하기(㉠ · 창업자 확정 2026-08-27) — 자랑 카드를 «보낸 뒤 카드를 닫는» 순간에 뜬다.
+  //   ⛔ 보내자마자 겹쳐 띄우지 않는다 — 카드가 아직 떠 있어 **시트 위에 시트**가 된다.
+  //   ⛔ 카드를 우리가 대신 닫지도 않는다 — 「표지로 저장」이 아직 거기 있다. **뺏지 않는다.**
+  //   ⭐ `useModalBack(onClose)` 덕에 뒤로가기로 닫아도 `onClose` 를 타므로 새는 길이 없다.
+  const [askReview, setAskReview] = useState(null) // 머리글 글자를 담는다(null = 안 뜸)
+  const 자랑보냄 = useRef(false)
   const [coach, setCoach] = useState(() => needsCoach(BRAG_COACH_KEY))
   const coverRef = useRef(null) // 꾸민 표지 캡처용(화면 밖 숨은 레이어)
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
@@ -263,11 +271,19 @@ export default function BragScreen() {
         <Portal>
           <ShareDrawCard
             recipe={share}
-            onClose={() => setShare(null)}
+            onShared={() => { 자랑보냄.current = true }}
+            onClose={() => {
+              setShare(null)
+              if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+              자랑보냄.current = false
+            }}
             onSaveCover={(img) => { const 말 = 카드표지토스트(share); updateRecipe(share.id, 카드표지로(img)); nav.showToast(말) }}
           />
         </Portal>
       )}
+
+      {/* 🗣 한마디 청하기 — 시트가 스스로 '물어봤음'을 남겨서 어떻게 닫아도 다시 안 묻는다 */}
+      {askReview && <ReviewAskSheet title={askReview} onClose={() => setAskReview(null)} />}
 
       {/* 이미지 만드는 중 로딩 오버레이 — 캡처(표지+레시피)에 몇 초 걸려도 먹통처럼 안 보이게 */}
       {busy && (
