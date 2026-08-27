@@ -5,7 +5,8 @@ import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } f
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw } from './parseRecipe'
-import { fetchLinkRecipe } from './linkReader'
+// ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
+//    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
 import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
 import TabSwipe from './components/TabSwipe'
@@ -344,9 +345,7 @@ export default function App() {
       showToast(
         data.imageDataUrl
           ? '사진을 담았어요 · 글자 읽는 중…'
-          : link && source !== 'youtube' && source !== 'instagram'
-            ? '공유한 링크를 담았어요 · 읽는 중…'
-            : '공유한 레시피를 임시보관함에 담았어요'
+          : '공유한 레시피를 임시보관함에 담았어요'
       )
       if (typeof history !== 'undefined' && location.search) {
         history.replaceState({ hankki: 1 }, '', location.pathname) // URL 만 정리, 트랩 표식은 유지
@@ -379,43 +378,35 @@ export default function App() {
         return
       }
 
-      // 공유로 들어온 링크는 예전엔 주소만 Inbox에 눕혀두고 끝이었다
-      // (창업자 제보 "유튜브 → 링크공유 → 한끼, INBOX 저장만 됨").
-      // 이제 붙여넣기 흐름과 똑같이 읽어서 제목·재료·순서까지 채운다.
-      // 유튜브·인스타는 읽어봐야 안 되는 게 확실하니(로그인·동의 벽) 기다리게 하지 않는다 —
-      // 링크는 바로가기로 담기고 끝. 자동 정리는 '준비 중'으로 안내한다.
-      if (!link || source === 'youtube' || source === 'instagram') return
-      if (parsed && (parsed.ingredients.length || parsed.steps.length)) return
-      const read = await Promise.race([
-        fetchLinkRecipe(link).catch(() => null),
-        new Promise((res) => setTimeout(() => res(null), 25000)),
-      ])
-      if (cancelled || !read) {
-        showToast('링크는 담았어요 · 내용은 자동으로 읽지 못했어요')
-        return
-      }
-      const patch = {}
-      // 읽어온 제목을 우선한다. 이 레코드는 방금 자동으로 만들어진 것이라 사용자가 앱 안에서
-      // 적은 글자가 없다 — 임시 제목은 공유 문구 첫 줄("이거 봐봐" 같은 인사말)일 때가 많아서
-      // 영상·글의 실제 제목이 훨씬 낫다. 쓰레기 제목은 linkReader 쪽에서 이미 걸러져 온다.
-      if (read.title) patch.title = read.title
-      if (read.full && read.text) {
-        const p = parseRecipeText(read.text, { fromOcr: true })
-        if (p.ingredients.length) patch.ingredients = p.ingredients
-        if (p.steps.length) patch.steps = p.steps
-        if (!patch.title && p.title) patch.title = p.title
-        // 📥 원문도 — 파서를 고친 날 다시 읽을 재료
-        const raw = keepRaw(read.text)
-        if (raw) patch.rawText = raw
-      }
-      if (patch.title === title) delete patch.title
-      if (!Object.keys(patch).length) return
-      store.updateRecipe(rec.id, patch)
-      showToast(
-        patch.ingredients || patch.steps
-          ? '링크에서 레시피를 읽어 채웠어요'
-          : '영상 제목을 채웠어요 · 설명은 붙여넣어 주세요'
-      )
+      // ⏳⏳ 서버 되면 되살릴 것 ④ — 공유로 들어온 링크의 «본문 자동 읽기»
+      //
+      // 📮 창업자 확정 2026-08-27 = *"1번으로 하자"* (갈래 셋 중 「그 기능을 끈다」)
+      //
+      // ⛔⛔ 왜 껐나 = 유저가 공유한 «주소»가 우리와 계약이 «0»인 회사 셋으로 나가고 있었다 —
+      //    `r.jina.ai` · `api.allorigins.win` · `noembed.com`
+      //    구글 공식 = *"'공유'란 앱에서 수집한 사용자 데이터를 «서드 파티에 전송»하는 것"* ＋
+      //    «서버 간» 전송도 공유에 포함. → Play 데이터 보안에 「공유됨」을 켜야 할 수 있었다.
+      //    ⛔ 우리가 2026-08-05 에 붙였던 「WebView 예외」는 «여기 안 맞는다» — 유저가 웹을 탐색하는 게
+      //       아니라 «앱 코드가 URL 을 골라 외부 API 로 보내는» 것이다(AI 둘이 같은 결론).
+      //
+      // ⭐⭐ 그런데 «잃는 게 거의 없다» — 우리 문서 실측이 이미 그렇게 적어뒀다:
+      //    *"창업자 폰에서 «거의 언제나 실패»했다"* (`docs/링크읽기-서버되면-2026-08-21.md`)
+      //    ＋ 유튜브·인스타는 바로 아랫줄에서 «원래부터» 시도조차 안 했다.
+      //
+      // ✅ 그대로 사는 것 = 링크 저장 · 캡션(공유 문구) 파싱 · 사진 OCR — 하나도 안 건드렸다.
+      // ⭐ 덤 = 최대 25초 기다리던 것이 사라져 «공유받기가 빨라진다».
+      //
+      // 🔖 되살릴 때 = `src/linkReader.js` 는 «안 지웠다». 우리 Worker 에 본문 읽기 길을 내고
+      //    아래 세 줄을 되돌리면 된다(⏳①②③ 은 `ImportScreen.jsx` 에 있다):
+      //      const read = await Promise.race([ fetchLinkRecipe(link).catch(() => null), 25초 ])
+      //      read.title → patch.title · read.full && read.text → parseRecipeText → 재료·순서
+      //      ＋ 맨 위 `import { fetchLinkRecipe } from './linkReader'`
+      //
+      // ⛔ 문구도 같이 고쳤다 — 옛 실패 문구(「내용은 자동으로 읽지 못했어요」)는 이제 «항상» 뜬다.
+      //    안 하기로 한 일을 매번 사과하면 「고장」으로 읽힌다. 「담았어요」까지만 말한다.
+      //    📌 v11.19 「링크 주소만 담아두기」와 같은 말이 된다 — 가져오기 화면과 말이 맞는다.
+      if (!link) return
+      showToast('링크를 담았어요')
     })
     return () => {
       cancelled = true
