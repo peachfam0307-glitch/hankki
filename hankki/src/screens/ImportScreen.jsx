@@ -5,7 +5,9 @@ import { useBackHandler, useLayerBack } from '../useBackHandler'
 import { guessCategory, openExternal } from '../utils'
 import { parseRecipeText, keepRaw } from '../parseRecipe'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳ 서버 되면 되살릴 것 ①」 참조.
-//    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 공유받기가 쓰고, 되살릴 때 그대로 쓴다.
+//    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다.
+//    🔁 [2026-08-27] 「공유받기가 쓰고」는 «낡았다» — 그쪽도 껐다(창업자 확정 "1번").
+//       이제 `linkReader.js` 를 부르는 곳은 앱 전체에 «0» 이다. → `App.jsx` 「⏳⏳ 되살릴 것 ④」
 import { guessFoodIcon } from '../components/FoodIcon'
 import { getOcrLeft, KEY_NAME, KEY_UNIT, keyCount } from '../ocr'
 import Icon from '../components/Icon'
