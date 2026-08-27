@@ -414,6 +414,7 @@ function migrateBasics(saved) {
     fi_j03: 'fe_503',  // 튀김·새우튀김 → 모듬튀김
     fh_k25: 'gr_225',  // 냉면         → 물냉면
     fj_c03: 'gr_306',  // 필라프       → 볶음밥
+    fe_125: 'gr_441',  // 수육         → 돼지고기수육 (창업자 *"수육은 돼지고기수육(새컷)하면 될 것 같아"*)
   }
   fixed = fixed.map((r) => {
     if (!r) return r
