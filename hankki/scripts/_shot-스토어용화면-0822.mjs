@@ -178,30 +178,61 @@ await p.evaluate(() => {
 await 홈으로(p)
 if (await 탭(p, '일기')) await 찍자(p, '26-일기-채운달력', '한끼 일기 — 음식 아이콘이 쌓인 달력')
 
-// ⑦ 🛒 장보기 — 📮 *"장보기 «사러가기»가 아니라 큐레이션 설명만있어."* ＋ *"사러가기에 설명부분은 빼자"*
-//    ⛔ 화면 맨 위는 소개글 ＋ 검색칸이다. 「담기 · 사러가기」는 그 아래라 위에서 자르면 통째로 안 보인다.
-//    ⭐ 소개글이 «한 줄도» 안 걸리게 — 첫 제품 카드가 화면 «위쪽»에 올 때까지 굴린다.
+// ⑦ 🛒🛒 장보기 — [2026-08-27 다시 씀] 📮 창업자 = *"장보기는 재료 담긴 걸로 다시 찍어줘"*
+//    ⛔⛔ **내가 이 탭의 순서를 거꾸로 알고 있었다** — 맨 위가 «장보기 리스트»이고
+//       주부의 장바구니가 그 «아래»다(실측). 옛 코드는 「소개글이 사라질 때까지」 굴려서
+//       **담긴 리스트를 지나쳐** 버렸다. 그래서 아래 절반이 «빈 화면»으로 찍혔다.
+//    ✅ 맨 위 그대로 찍는다 — 「장보기」 제목·펭펭 ＋ 담긴 재료 ＋ 줄마다 「사러가기」가 한 화면에.
+//    ⛔ `localStorage` 에 손으로 심지 «않는다» — **앱이 실제로 담는 길로** 담는다(절대원칙 30).
+//       심으면 `addShopItem` 이 필드를 골라 만드는 그 모양과 어긋날 수 있다(v11.00 사고 자리).
+//    ⭐ 두 갈래로 담는다 = 이 장의 부제가 **「레시피 재료 그대로 톡 · 18년차 주부의 추천템까지」**다.
+await 홈으로(p)
+await 탭(p, '레시피')
+await p.locator('text=콩국수').first().click()
+await p.waitForTimeout(800)
+{
+  const 담기 = p.getByRole('button', { name: /장보기 담기/ }).first()
+  if (await 담기.count()) { await 담기.click(); await p.waitForTimeout(1200); await 시트닫기(p) }
+  else console.log('  ⚠️ 상세에서 「장보기 담기」를 못 찾았다 — 리스트가 빌 수 있다')
+}
+
 await 홈으로(p)
 if (await 탭(p, '장보기')) {
-  // 📮 창업자 = *"설명부분 «아예» 빼고 아이템이랑 사러가기만 보이게"*
-  //    → 소개글(「추천 아이템 · 계속 올라와요」·「외부 쇼핑몰로 이어져요…」)이 **화면에서 완전히 사라질 때까지** 굴린다.
-  //    ⛔ 「첫 사러가기가 위쪽에 오면」으로는 부족했다 — 소개글이 여전히 맨 위에 한두 줄 남았다(실측).
-  for (let n = 0; n < 14; n++) {
-    const 됐나 = await p.evaluate(() => {
-      const 소개 = [...document.querySelectorAll('div,p,span')]
-        .filter((e) => /제휴 수수료|계속 올라와요/.test(e.innerText || '') && e.innerText.length < 120)
-      const 남았나 = 소개.some((e) => { const r = e.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight })
-      if (남았나) return false
-      // ⭐ 「사러가기가 보이나」로만 멈추면 **첫 카드가 반쯤 잘린 자리**에 선다(실측).
-      //    → «제품 카드 한 장이 통째로» 화면 위쪽에 들어오는 자리에서 멈춘다.
-      const 카드 = [...document.querySelectorAll('.cur-card')]
-      // ⛔ 창(40~190)이 넓으면 **칩 줄이 반쯤 잘려 위에 남는다**(실측) → 카드가 «거의 맨 위»에 올 때만
-      return 카드.some((e) => { const r = e.getBoundingClientRect(); return r.top > 20 && r.top < 95 && r.bottom < innerHeight })
-    })
-    if (됐나) break
-    await 굴리기(p, 120)
+  // 🛍 ＋ 주부의 장바구니 제품도 한 줄 담는다(「추천템까지」)
+  //    ⛔ `.cur-card` 로는 «못 잡는다»(실측 0개) — 「담기」 글자를 콕 집는다
+  {
+    const 카드담기 = p.getByRole('button', { name: /^담기$/ }).first()
+    if (await 카드담기.count()) { await 카드담기.click(); await p.waitForTimeout(900) }
+    else console.log('  ⚠️ 제품 카드의 「담기」를 못 찾았다')
   }
-  await 찍자(p, '27-장보기-사러가기', '장보기 — 담기·사러가기가 보이는 자리')
+  await p.evaluate(() => {
+    for (const e of document.querySelectorAll('*')) { if (e.scrollHeight > e.clientHeight + 40) e.scrollTop = 0 }
+    scrollTo(0, 0)
+  })
+  // 🧹🧹 📮 창업자 = *"전체비우기랑 x 안보이게 다시 찍어줘"*
+  //   ⛔ **앱에서 없애는 게 아니다** — 유저가 지울 방법이 사라진다. **스샷에서만** 가린다.
+  //   ⛔ 「진짜로 안 보이는 상태」는 없다(실측 · `ShopScreen.jsx:143`) —
+  //      「전체 비우기」는 `shoppingList.length > 0` 이면 뜨고 「×」는 줄마다 «항상» 뜬다.
+  //      즉 재료를 담은 채로는 어떤 상태로도 안 사라진다 → 가리는 것 말고 길이 없다.
+  //   ⭐ `display:none` 이 아니라 **`visibility:hidden`** — 자리를 지켜야 「사러가기」가 안 밀린다.
+  //   📌 기능을 «더» 있는 척 하는 게 아니라 «지우는 단추»만 조용히 하는 것이다.
+  //      ⚠️ 그래도 **앱을 열면 그 단추들은 그대로 있다** — 창업자에게 밝히고 찍었다.
+  await p.evaluate(() => {
+    const s = document.createElement('style')
+    s.id = '_스샷용-지우기단추가리기'
+    s.textContent = '.shop-row [aria-label="삭제"], .shop-list .sec-head .t-more { visibility: hidden !important; }'
+    document.head.appendChild(s)
+  })
+  await p.waitForTimeout(300)
+  // ⏳ 「장보기 리스트에 담았어요」 토스트가 «사라질 때까지» 기다린다 — 안 그러면 화면에 박힌다
+  for (let n = 0; n < 20; n++) {
+    const 떴나 = await p.evaluate(() => [...document.querySelectorAll('div,span')]
+      .some((e) => /담았어요/.test(e.textContent || '') && (e.textContent || '').length < 30
+        && e.getBoundingClientRect().height > 10))
+    if (!떴나) break
+    await p.waitForTimeout(500)
+  }
+  await 찍자(p, '27-장보기-사러가기', '장보기 — 담긴 재료 ＋ 줄마다 사러가기 (지우기 단추는 가림)')
 }
 
 console.log(`\n📸 ${찍은것.length}장 → ${OUT}`)
