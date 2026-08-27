@@ -32,12 +32,18 @@ mkdirSync(낼곳, { recursive: true })
 
 // 픽커에 실린 키
 const SRC = readFileSync(path.join(ROOT, 'src/components/FoodIcon.jsx'), 'utf8')
-const gi = SRC.indexOf('const FOOD_ICON_GROUPS')
+// ⛔⛔ **첫 판이 여기서 틀렸다** — 끝을 「다음 `\nexport`」로 잡았는데
+//    `FOOD_ICON_GROUPS`(679~740) 와 다음 export(1525) 사이에 **`ICON_RULES` 780줄이 통째로** 들어 있다.
+//    → 규칙 키까지 「픽커에 있다」로 세어 **픽커가 부풀고 빠진 편이 적게 나왔다**(규칙 18 ⓘ).
+// ✅ 배열의 «닫는 괄호»까지만 자른다 ＋ 아래에서 «규칙이 안 섞였나»를 직접 확인한다.
+const gi = SRC.indexOf('export const FOOD_ICON_GROUPS = [')
 if (gi < 0) { console.error('⛔ FOOD_ICON_GROUPS 를 못 찾았다'); process.exit(1) }
-const ge = SRC.indexOf('\nexport', gi)
-const 픽커 = new Set([...SRC.slice(gi, ge > 0 ? ge : SRC.length)
-  .matchAll(/'((?:fe|fh|fy|fj|fi|fb|gr|ig)_[A-Za-z0-9_]+)'/g)].map((m) => m[1]))
-// ⛔ 상한을 어림으로 잡지 않는다 — 실측 644(2026-08-27). 파서가 깨지면 수십 개로 떨어진다
+const ge = SRC.indexOf('\n]', gi)
+if (ge < 0) { console.error('⛔ FOOD_ICON_GROUPS 의 끝을 못 찾았다'); process.exit(1) }
+const 픽커몸통 = SRC.slice(gi, ge)
+if (픽커몸통.includes('ICON_RULES')) { console.error('⛔ 픽커 범위에 ICON_RULES 가 섞였다 — 잘라내는 자리가 틀렸다'); process.exit(1) }
+const 픽커 = new Set([...픽커몸통.matchAll(/'((?:fe|fh|fy|fj|fi|fb|gr|ig)_[A-Za-z0-9_]+)'/g)].map((m) => m[1]))
+// ⛔ 상한을 어림으로 잡지 않는다 — 실측 619(2026-08-27 · `check-foodtab` 이 세는 값과 같다)
 if (픽커.size < 400) { console.error(`⛔ 픽커를 ${픽커.size}개밖에 못 읽었다 — 파서가 깨졌다`); process.exit(1) }
 
 // 창업자가 2026-08-27 에 «카와이»로 판정해 뺀 컷
