@@ -743,6 +743,9 @@ export default function ProfileScreen() {
           showToast={nav.showToast}
           폰레시피={store.recipes.length}
           폰일기={(store.diary || []).length}
+          // 📷 사진은 클라우드에 안 올라간다 → 백업으로 가는 입구를 시트 안에 낸다 (창업자 확정 2026-08-27)
+          //   ⛔ 시트를 «닫고» 연다 — 시트 위에 시트를 겹치면 뒤로가기 층이 꼬인다
+          백업열기={() => { setCloud(false); setBackup(true) }}
         />
       )}
 

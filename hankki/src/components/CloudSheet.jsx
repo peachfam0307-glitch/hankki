@@ -26,7 +26,12 @@ const 때 = (iso) => {
   } catch { return '' }
 }
 
-export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, showToast, 폰레시피, 폰일기 }) {
+// 🈳 «클라우드가 비었나» — 문서가 아예 없거나, 있어도 레시피·일기가 0이면 비었다.
+//   ⛔ CloudGate 와 «같은 잣대»다(`r.있나 && (r.레시피 || r.일기)`).
+//      첫 화면과 설정이 다르게 판단하면 유저가 「어느 게 맞지?」가 된다.
+const 비었다 = (r) => !(r && r.있나 && (r.레시피 || r.일기))
+
+export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, showToast, 폰레시피, 폰일기, 백업열기 }) {
   const [사람, set사람] = useState(undefined) // undefined = 아직 모름 · null = 로그아웃
   const [구름, set구름] = useState(null) // { 있나, 언제, 레시피, 일기 }
   const [바쁨, set바쁨] = useState('')
@@ -52,14 +57,38 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
   //   ⛔ 게다가 그때 윗단추 설명(「클라우드에 «있던» 건 …」)은 말이 안 된다 — 있던 게 없다.
   //   ⚠️ `구름 == null` 은 «비었다»가 아니라 «아직 모른다»(보는 중)다.
   //      섞으면 시트가 뜨자마자 글자가 한 번 깜빡였다 되돌아온다.
-  const 비었나 = 구름 != null && !구름.있나
+  //   ⭐ 잣대를 «하나»로 뒀다 — 위 `비었다()`. 화면 글자와 ㉠(저절로 올리기)이 같은 판단을 한다.
+  //     ⛔ 둘이 갈리면 「비었다」고 써놓고 안 올리는 화면이 나온다.
+  const 비었나 = 구름 != null && 비었다(구름)
 
   const 감싸기 = async (무엇, 하기) => {
     set탈(''); set바쁨(무엇)
     try { await 하기() } catch (e) { set탈(고운말(e)) } finally { set바쁨('') }
   }
 
-  const 눌러로그인 = () => 감싸기('로그인', async () => { await 로그인() })
+  // ☁️⚡ ㉠ — 로그인하면 «그 자리에서 바로» 올린다 (⛔클라우드가 비어 있을 때만) · 창업자 확정 2026-08-27
+  //   📮 창업자 = *"정리하면 로그인하면 지금까지 쓴거 자동저장된다는거지?? 내가 백업파일 따로 안받아도."*
+  //             → 갈래 ㉠㉡ 중 *"㉠으로 하자"*
+  //   ⛔⛔ 그 전엔 «아니었다» — 안전장치 ②(`받았나`)가 첫 올리기를 막아서
+  //      쓰던 사람은 손으로 「이 폰 것으로 덮기」를 눌러야만 올라갔다.
+  //      ⭐⭐ 그런데 «새로 깐» 사람은 CloudGate 가 알아서 표시해 줘 저절로 올라갔다 — 거꾸로였다.
+  //         레시피가 쌓인 사람일수록 잃을 게 큰데 그 사람만 안 올라갔다.
+  //         (코드 주석엔 그 걱정이 이미 적혀 있었는데 정작 그 경우를 못 막고 있었다)
+  //   ✅ 위험이 0인 근거 = **클라우드가 비었을 때만** 한다. 덮을 게 아예 없다.
+  //      ⛔ 클라우드에 뭐가 있으면 손도 안 댄다 — 두 판을 보여주고 «고르게 한다»(창업자 확정).
+  //      ⛔ 앱을 지웠다 깐 빈 폰이 클라우드를 덮는 길도 그대로 막혀 있다(그땐 클라우드가 «안» 비었다).
+  const 눌러로그인 = () => 감싸기('로그인', async () => {
+    await 로그인()
+    const r = await 요약()
+    set구름(r)
+    if (!비었다(r)) return          // 클라우드에 뭐가 있다 → 유저가 고른다
+    받았다표시()                    // ⭐ 이제부터 앱 켤 때마다 저절로 올라간다(안전장치 ②)
+    const 백업 = await 백업만들기()
+    const 올린결과 = await 올리기(백업)
+    set구름(await 요약())
+    const 뒤 = 올린결과.건너뛴것.length ? ` · ${올린결과.건너뛴것.length}개는 너무 커서 못 올렸어요` : ''
+    showToast(`지금까지 쓴 걸 클라우드에 올렸어요${뒤}`)
+  })
 
   const 올리자 = () => 감싸기('올리기', async () => {
     const 백업 = await 백업만들기()
@@ -166,7 +195,8 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
                     : <>클라우드에 있던 건 <b>이 폰 것으로 바뀌어요.</b></>}
                 </div>
 
-                <button className="btn-ghost press" style={{ width: '100%' }} disabled={!!바쁨 || !구름?.있나} onClick={내려받자}>
+                {/* ⛔ 레시피·일기가 0인 판을 내려받으면 «이 폰이 통째로 비워진다» → 그때도 막는다 */}
+                <button className="btn-ghost press" style={{ width: '100%' }} disabled={!!바쁨 || !구름?.있나 || 비었나} onClick={내려받자}>
                   {바쁨 === '내려받기' ? '내려받는 중…' : '☁️ 클라우드 것으로 이 폰 덮기'}
                 </button>
                 <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.5, margin: '7px 2px 0' }}>
@@ -175,6 +205,22 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
                     ? <>클라우드가 비어서 <b>아직 내려받을 게 없어요.</b></>
                     : <>이 폰에 있던 건 <b>클라우드 것으로 바뀌어요.</b> 남기고 싶은 게 있으면 <b>먼저 위 단추</b>를 눌러 올려두세요.</>}
                 </div>
+
+                {/* 📷 백업 권유 — 창업자 확정 2026-08-27 *"백업받으라는 것도 알려주는게 좋겠어"* ＋ *"심플하게 통상적으로. 구구절절금지"*
+                    ⭐ 클라우드가 있어도 백업이 여전히 필요한 이유는 «하나»뿐 — **사진**(클라우드에 안 올라간다).
+                       폰이 죽으면 사진은 백업 파일에만 남는다. 그래서 이유를 «반 줄»만 붙였다.
+                    ⛔⛔ `nudges.js:135` 는 «클라우드가 이기면 백업 권유를 숨긴다»로 돼 있다 — 사진이 빠지는 걸 그때는 안 봤다.
+                       ⭐ 그 줄은 «안 건드렸다». 홈 쪽지를 되살리면 시끄럽고, 여기가 클라우드를 켠 사람이 보는 자리다. */}
+                {백업열기 && (
+                  <button
+                    className="press"
+                    onClick={백업열기}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, width: '100%', marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--line)', color: 'var(--text-sub)', fontSize: 14.5, lineHeight: 1.5, textAlign: 'left' }}
+                  >
+                    <span>사진은 클라우드에 저장되지 않아요 · <b>백업 받기</b></span>
+                    <Icon name="chevron-right" size={15} color="var(--sand)" />
+                  </button>
+                )}
               </>
             )}
 
