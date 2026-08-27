@@ -38,6 +38,9 @@ const 갈래 = [
   ['ⓒ 4열 → 3열 (칸을 넓힌다)', '.ficon-grid{grid-template-columns:repeat(3,minmax(0,1fr))}'],
   ['ⓓ 긴 이름만 작게 (5자↑ 13px · 8자↑ 12px)', ''],   // JS 로 글자수 보고 준다
   ['ⓔ 세 줄까지 보여준다 (자르지만 않는다)', '.ficon-name{-webkit-line-clamp:3}'],
+  // ⭐ 3열로 간 뒤 «되물어야 하는 것» — 칸이 넓어졌는데도 긴 이름을 줄일 이유가 남아 있나
+  ['ⓧ 긴 이름 축소를 «끈다» (전부 15px)', '.ficon-name.mid,.ficon-name.long{font-size:15px}'],
+  ['ⓨ 축소 문턱을 늦춘다 (8자↑만 13px)', '.ficon-name.mid{font-size:15px}.ficon-name.long{font-size:13px}'],
   ['ⓓ＋ⓔ 같이', '.ficon-name{-webkit-line-clamp:3}'],
 ]
 
