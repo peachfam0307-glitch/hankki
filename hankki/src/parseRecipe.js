@@ -80,7 +80,8 @@ function markBareNumberSteps(lines) {
 const NOISE =
   /^(ingredients?\s*[:：]?$|recipe\b|요리\b|tip\b|instagram|youtube|www\.|https?:|좋아요|댓글|팔로우|공유|저장|더\s?보기|답글)/i
 // 줄 어디에 있어도 잡음인 것 — SNS UI 텍스트(댓글 입력창 등)
-const NOISE_ANY = /(님에게\s*댓글|댓글\s*달기|reels|릴스|shorts|구독|알림\s*설정)/i
+// ＋[2026-08-28] 창업자 실물에서 나온 인스타 화면 글자 — 「회원님의 생각을 남겨보…」·「대화 참여하기…」·「댓글 45」
+const NOISE_ANY = /(님에게\s*댓글|댓글\s*달기|댓글\s*올리기|회원님의\s*생각|생각을\s*남겨|대화\s*참여|^댓글\s*\d+\s*$|reels|릴스|shorts|구독|알림\s*설정)/i
 // 📣 협찬·공동구매 홍보 줄 — 레시피가 아니라 «광고»다. 재료도 순서도 아니니 버린다.
 //    2026-08-02 창업자 폰 사고: `티리난지 피렌체 웍 최저가 공구중!` 이 «만드는 법 1번»으로 들어갔다.
 //    ⚠️ 좁게 잡는다 — 「공구중·최저가·할인코드」처럼 광고에만 쓰는 말만.
@@ -96,6 +97,11 @@ const DATE_ONLY = /^\s*\d{4}\s*[년.\-/]\s*\d{1,2}\s*[월.\-/]\s*\d{1,2}\s*[일�
 // 앱/웹 '더 보기' 류 UI 버튼 글자 — 줄 끝에 붙거나 줄 전체. "…끊인다. 간단히 보기"
 const UI_TRAIL = /\s*(?:간단히|간략히|자세히|전체|레시피|원문|더)\s*보기\s*$/
 // 조언·팁 신호가 뚜렷한 줄(순서 아님) — 메모로 보낸다. 조리 명령과 겹치지 않게 좁게 잡음.
+// 👋 [2026-08-28] SNS «끝인사» — 레시피가 끝난 뒤 붙는 상투구다. 조리 순서가 아니다.
+//    📮 창업자 실물(콩나물무침) — 「도움이 되셨다면 좋아요 한번씩 눌러주시구요」가 «걸음 8»,
+//       「행복한 하루 보내세요!」가 «걸음 9»로 들어갔다.
+//    ⛔ TIP_CUE 로는 못 잡는다 — 그건 !stepLike 일 때만 도는데 이 줄들은 문장으로 끝나 걸음으로 먼저 잡힌다.
+const SNS_OUTRO = /(좋아요\s*(한번씩|눌러|꾸욱|부탁)|눌러주시구요|팔로우\s*(해|부탁|하고)|구독\s*(해|부탁|하고)|행복한\s*하루|맛있는\s*하루|다음에\s*또\s*(만나|봐요))/
 const TIP_CUE = /(초보자|꿀팁|취향껏|입맛에\s*따라|더\s*맛있|생략\s*가능|없어도\s*(?:돼|되|됩니다)|몸에도?\s*좋|건강에\s*좋|맛있게\s*드세요)/
 
 // 섹션 헤더 — 캡션이 "재료 → 양념 → 팁" 구조로 온 걸 알아채면 분류가 훨씬 정확해진다.
@@ -412,6 +418,20 @@ export function parseRecipeText(raw = '', opts = {}) {
     //    ⭐ 날짜를 «버리기»만 하던 것을 «여기서 끊는다»로 바꾼다.
     //    🔒 맨 위의 날짜(캡션이 날짜로 시작하는 경우)까지 죽이지 않도록 «이미 몇 줄 모았을 때»만 끊는다.
     if (DATE_ONLY.test(l)) { if (items.length >= 3) break; blankAhead = true; continue }
+    // 💬💬 [2026-08-28] 「답글 달기」 = 인스타 «댓글 영역»의 시작이다 — 그 아래는 «남의 댓글»이다.
+    //    📮 창업자 실물(콩나물무침) — 남이 쓴 「새로운 방법이네요 시도해볼게요」가 «걸음 10»으로 들어갔다.
+    //    ⭐ 작성일 줄과 같은 성격이다 — 버리는 게 아니라 «여기서 끊는다».
+    if (/^\s*(답글\s*달기|댓글\s*올리기|대화\s*참여|더\s*보기)\s*$/.test(rawLine)) {
+      if (items.length >= 3) break
+      blankAhead = true; continue
+    }
+    // 👤 [2026-08-28] 「계정명 ＋ N시간 ＋ (작성자)」 = 댓글·게시물의 «머리줄»이다. 내용이 아니다.
+    //    📮 창업자 실물 — 「jangnamcook 9시간 • 작성자」가 «제목»이 되고
+    //       「dowo0929 8시간」이 «재료»가 됐다.
+    //    ⛔ IG_HANDLE 로는 못 잡는다 — 그건 아이디에 「.」이나 「_」가 있어야 한다(jangnamcook 은 없다).
+    if (/^\s*[a-z][a-z0-9._]{2,29}\s+\d+\s*(초|분|시간|일|주|개월|년)\s*(전)?\s*[•·]?\s*(작성자)?\s*$/i.test(rawLine)) {
+      blankAhead = true; continue
+    }
     // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
     const isHeader = SEC_ING.test(l) || SEC_STEP.test(l) || SEC_MEMO.test(l)
     if (isHeader || (l.length > 1 && !isGibberish(l))) { items.push({ l, bullet, emojiHead, stepMarked, checkMark, blankBefore: blankAhead }); blankAhead = false }
@@ -458,6 +478,12 @@ export function parseRecipeText(raw = '', opts = {}) {
 
   for (let idx = 0; idx < items.length; idx++) {
     const { l, bullet, emojiHead, stepMarked, checkMark, blankBefore } = items[idx]
+
+    // 🧹🧹 [2026-08-28] 인스타 «화면 글자»는 제목도 재료도 순서도 될 수 없다 — 제일 먼저 버린다.
+    //    📮 창업자 실물(차돌짬뽕) — 화면 맨 위의 「댓글 45」가 «제목»이 됐다.
+    //    ⛔ NOISE 검사는 원래 «제목 판정 뒤»에 있어서 한 발 늦었다.
+    //       제목은 한 번 잡히면 안 바뀌므로, 화면 글자는 그보다 «먼저» 걸러야 한다.
+    if (NOISE_ANY.test(l)) { lastWasBulletIng = false; continue }
 
     // 첫 줄 제목 — 이모지 붙은 짧은 이름("🍷 양념장")이나 "X 만드는 법/레시피" 배너면 제목으로.
     // 섹션명(양념장)과 겹쳐도 제목을 우선한다. "재료"처럼 신호 없는 헤더는 안 가로챈다.
@@ -621,6 +647,8 @@ export function parseRecipeText(raw = '', opts = {}) {
     if (firstNumbered > 0 && idx < firstNumbered && stepLike && mode !== 'step') {
       other.push(l); lastWasBulletIng = false; continue
     }
+    // 👋 SNS 끝인사는 걸음이 아니다(위 SNS_OUTRO 주석 참조) — 메모로 보낸다.
+    if (SNS_OUTRO.test(l)) { other.push(l); lastWasBulletIng = false; continue }
     if (stepLike) { pushStep(l); continue }
     // 3) 재료다움 → 재료 (재료 섹션이거나, 아직 순서가 시작 전이면)
     if (ingLike && (mode === 'ing' || mode === null || !sawStep)) { pushIng(l, bullet); continue }
