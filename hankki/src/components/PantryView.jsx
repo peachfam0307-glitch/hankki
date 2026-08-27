@@ -207,7 +207,15 @@ export default function PantryView() {
       {/* ⭐⭐ **결과를 «먼저» 보여준다** — 그래야 「왜 넣는지」가 설명 없이 전해진다.
           예전엔 파먹기가 재료 목록 «아래»라, 재료가 쌓일수록 화면 밖으로 밀려나 아무도 못 봤다
           (창업자도 오늘 처음 봤다 — *"아.. 아래 있구나"*). */}
-      {추천칸}
+      {/* 🧊📐 [창업자 2026-08-26] *"패드 냉장고쪽이 지금 가로야. **장보기처럼 이분할로 만들어야해.**"*
+          ⭐ 짜임을 «장보기와 같게» 맞춘다 — 왼쪽 = 추천(파먹기) · 오른쪽 = 재료함.
+             둘은 성격이 다르다(보는 것 ↔ 넣고 지우는 것)라 나란히 두면 오가지 않아도 된다.
+          ⛔ DOM 순서는 «추천 먼저»로 둔다 — 폰에선 1열이라 그대로 위아래가 되고,
+             「결과를 먼저 보여준다」(창업자 2026-08-10)가 폰에서 안 깨진다.
+             📌 장보기()가 쓴 방법과 같다. */}
+      <div className="pantry-pair">
+      <div className="pantry-reco">{추천칸}</div>
+      <div className="pantry-box">
 
       {/* ⚠️ 추천 카드 바로 밑이라 여백이 없으면 «카드에 붙은 글»처럼 읽힌다(검수판에서 보였다) */}
       <div className="sec-head" style={{ marginTop: 18 }}>
@@ -278,7 +286,11 @@ export default function PantryView() {
           영수증 1장에 {keyCount(1)}를 써요
         </div>
       </div>
-      <div style={{ fontSize: 15.3, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 14 }}>
+      {/* 🔠 [창업자 확정 2026-08-26] 15.3/1.55 → 16/1.7.
+          📮 창업자 = *"냉장고 한 줄은 올려줘"*
+          ⛔ 로드맵이 이 «한 줄»을 「냉장고 글자」로 적어 놔서 계속 미해결로 남아 있었다 —
+             진짜 재료 글자는 이미 18px 다(`styles.css:1237` · 창업자 2026-08-22 확정). */}
+      <div style={{ fontSize: 16, color: 'var(--text-sub)', lineHeight: 1.7, marginBottom: 14 }}>
         영수증은 사진에 따라 인식률이 달라요 · 안 되면 <b style={{ color: 'var(--brown)' }}>＋재료 담기</b>로 직접 넣어도 돼요.
       </div>
 
@@ -468,6 +480,8 @@ export default function PantryView() {
 
       {/* ⛔ 「가진 재료로 만들 수 있어요」·「한끼 추천」은 **맨 위로 옮겼다**(위 `추천칸`).
           여기 아래에 두면 재료가 쌓일수록 화면 밖으로 밀려 아무도 못 본다. */}
+      </div>{/* .pantry-box */}
+      </div>{/* .pantry-pair */}
     </div>
   )
 }

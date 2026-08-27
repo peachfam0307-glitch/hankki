@@ -26,7 +26,37 @@ jobs:
       run:
         working-directory: hankki
     steps:
+      # 🐢➡️🐇 [2026-08-27] 스티커 «원본 그림»은 받지 않는다 — checkout 이 45분까지 늘어났다.
+      #
+      #   📮 창업자 = *"파일지워도돼 폐기할건폐기해야지 앞으로계속쌓일텐데"* → 갈래 둘 중 **"b"**
+      #      ⭐ ⓐ「지운다」가 아니라 ⓑ「CI 만 안 받는다」다. **파일은 하나도 안 지운다** —
+      #         2026-08-27 에 «원본을 다시 열어» 시트23 잘림이 「원본 문제」임을 확정했다.
+      #         원본이 없으면 「자르기가 깎았나 원본이 그런가」를 영영 못 가린다.
+      #
+      #   🔢 실측 = 뺀 파일 **5,169개 · 1.7GB** (워킹트리 4.02GB → 1.3GB)
+      #      ⛔ 빠지면 안 되는 것은 «한 건도» 안 걸린다 — 앱 자산 2,696장 · design 150 ·
+      #         public 41 · 문서(.md/.json) 443 · scripts 640 전부 그대로 받는다.
+      #
+      #   ✅ 흉내가 아니라 **진짜 sparse worktree 를 만들어** 확인했다:
+      #      · `git ls-files -v` 의 SKIP_WORKTREE 5,169개가 패턴 계산과 정확히 일치
+      #      · 그중 스티커 폴더 «밖» 0건 · 그림이 «아닌» 것 0건
+      #      · 그 상태에서 **build exit 0 · smoke exit 0**(게이트 88개 전부)
+      #
+      #   ⚠️ 반쪽만 보게 되는 검사 셋 — **전부 «경고·현황»이고 배포를 막는 게이트가 아니다**
+      #      `check-packprefix`(재고 접두어 겹침) · `doc-guard --stale`(끝난 걸 대기로 둠) ·
+      #      `asset-map`(재고 컷 수). 셋 다 **로컬에서 돌 때는 제대로 일한다** —
+      #      우리는 배포 전에 늘 로컬 스모크를 돌리므로 실질 손실이 없다.
+      #      ⛔ 나중에 `docs/stickers` 그림을 «배포를 막는» 게이트에 쓰게 되면 이 설정을 다시 볼 것.
+      #
+      #   ⛔ `cone-mode: false` 가 필수다 — cone 모드는 «디렉터리 단위»라 「PNG만 빼기」를 못 한다.
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            /*
+            !/hankki/docs/stickers/**/*.png
+            !/hankki/docs/stickers/**/*.jpg
+            !/hankki/docs/stickers/**/*.jpeg
+          sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
           node-version: 20

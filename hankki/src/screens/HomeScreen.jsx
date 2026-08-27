@@ -333,8 +333,13 @@ export default function HomeScreen() {
                 ⭐ 선물 아이콘을 «치우는» 게 아니라 **그 자리를 꼬르곰이 대신한다** — 새 소식은 오른쪽 「새로」 뱃지가
                    이미 말하고 있어서 선물 그림은 같은 말을 두 번 하고 있었다.
                 ⛔ 첫 판은 `ui/gom_clap`(옛 매끈 곰)이었다 → 창업자가 한 번에 잡았다. **물결 정본으로 교체.** */}
-            <img src={uiGomWow} alt="" draggable={false} width={26} height={45} className="hk-m-tongtong"
-              style={{ flex: '0 0 auto', display: 'block', objectFit: 'contain', margin: '-9px 0' }} />
+            {/* 🐻 [창업자 2026-08-26] *"꼬르곰 좀 키우고. 꼬르곰 이랑 글자 조금 떼고"*
+                ⛔⛔ 크기가 `width={26}` «인라인»이라 CSS 로는 못 이긴다(v10.08 에 당했다).
+                   ✅ 그래서 크기를 **CSS 변수**로 읽게 한다 — 폰은 26px 그대로, 패드에서만 `.news-gom` 이 키운다.
+                   ⭐ 「한끼 소식」 글자 크기를 클래스로 뺀 것과 «같은 처방»이다(바로 아래 주석). */}
+            <img src={uiGomWow} alt="" draggable={false} className="hk-m-tongtong news-gom"
+              style={{ flex: '0 0 auto', display: 'block', objectFit: 'contain', margin: '-9px 0',
+                width: 'var(--news-gom, 26px)', height: 'auto' }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {/* 🔠 크기는 인라인이 아니라 클래스로 — 넓은 화면에서 키우려면 CSS 가 이겨야 한다
@@ -376,6 +381,23 @@ export default function HomeScreen() {
                         찾는 포즈(`pn_search`)가 「다음에 뭐 할까」와 뜻이 맞는다.
                         ⛔ 펭펭을 웃기지 않는다(정본 규칙) — `pn_search` 는 무표정이라 그대로 쓴다. */}
                     <img src={uiPengSearch} alt="" draggable={false} className="next-peng hk-m-tongtong" />
+                    {/* 🖼 [창업자 확정 2026-08-26] **패드에서만** 그 요리 «표지»를 왼쪽에 세운다.
+                        📮 창업자 = *"D에서 표지랑 펭펭 알약까지 들어가니까 정신없어보여"* →
+                           *"오늘 뭐해먹지랑 똑같이 만들되 제목을 아직 안해봤어요를 알약으로"* · *"펭펭은 빼자"*
+                        ⭐ 옆 「오늘 뭐 해먹지」엔 표지가 있는데 여기만 없어서 **짝이 안 맞고 휑했다**(패드 가로).
+                        ⛔ 폰에선 «안 그린다» — 카드가 좁아 표지가 들어가면 글이 밀린다(CSS 가 숨긴다).
+                        ⛔⛔ 크기를 클래스로만 주면 «안 먹는다» —  이  를 **인라인**으로 넣는다.
+                           그래서 인라인이 CSS 변수를 읽게 한다( 가 쓰는 방법과 «같은 처방»). */}
+                    {it.recipe && (
+                      /* ⛔⛔ 이름표(`next-thumb`)가 «반드시» 있어야 한다 — 없으면 CSS 가 표지를 못 집는다.
+                         🔢 2026-08-26 실측 = `:first-child` 로 집었더니 **`display:none` 인 펭펭이 첫 자식**이라
+                            펭펭이 잡히고 표지는 흐름대로 1행에 들어가 라벨→제목 틈이 **70px** 로 벌어졌다.
+                         📌 `display:none` 은 «자식 자리»를 없애지 않는다. 위치로 집지 말고 «이름»으로 집는다. */
+                      <span className="next-thumb">
+                        <Thumb recipe={it.recipe} radius={16} showDecor
+                          style={{ width: '100%', height: '100%', display: 'block' }} />
+                      </span>
+                    )}
                     <div className="next-head">
                       <span className="next-label">{it.라벨}</span>
                     </div>

@@ -108,6 +108,12 @@ console.log('\n①-b 카드를 올린 «뒤» 저장된 값 — 스티커는 비
     const s = JSON.parse(localStorage.getItem('hankki:v1'))
     const r = s.recipes.find((x) => x.id === id)
     r.decor = [{ id: 'z1', key: 'gp_gomhi', x: 40, y: 40, s: 1, r: 0 }, { id: 'z2', key: 'gp_pengv', x: 60, y: 60, s: 1, r: 0 }]
+    // ⭐⭐ ①이 남긴 표지를 «되돌린다» — 안 그러면 아래 칸들이 «①의 잔재»를 보고 통과한다.
+    //    ⛔ 전엔 `thumb=photo`·`image` 가 ①에서 이미 저장돼 있어서 「카드가 표지 자리에 앉았다」 칸이
+    //       ①-b 가 아무 일도 안 해도 초록불이었다 — **통과했는데 아무것도 안 쟀다**(규칙 18 ⓘ).
+    //    ⭐ 되돌려 두면 「image 가 다시 생겼나」가 곧 **「이번 저장이 도착했나」**가 된다.
+    //       ＋ 이게 창업자가 겪은 상태와도 같다(스티커는 있고 카드 표지는 아직 없다).
+    delete r.image; delete r.thumb; delete r.imageFit; delete r.imagePos; delete r.imageZoom
     localStorage.setItem('hankki:v1', JSON.stringify(s))
   }, 카드주인.id)
   await page.goto(url); await page.waitForTimeout(1600)
@@ -115,12 +121,27 @@ console.log('\n①-b 카드를 올린 «뒤» 저장된 값 — 스티커는 비
   await page.locator('.grid-card').filter({ hasText: 카드주인.title }).first().locator('button').first().click()
   await page.waitForTimeout(600)
   await page.getByText('랜덤 카드로 뽑기').click(); await page.waitForTimeout(2500)
-  await page.getByText('이 카드를 내 레시피 표지로').click(); await page.waitForTimeout(4000)
-  const 뒤 = await page.evaluate((id) => {
-    const s = JSON.parse(localStorage.getItem('hankki:v1'))
-    const r = s.recipes.find((x) => x.id === id)
-    return { decor: (r.decor || []).length, icon: r.icon || null, thumb: r.thumb, bg: r.decorBg || null, img: !!r.image }
-  }, 카드주인.id)
+  await page.getByText('이 카드를 내 레시피 표지로').click()
+
+  // ⏳⏳ **「4초 지났나」가 아니라 «이번 저장이 도착했나»를 기다린다.** (2026-08-27)
+  //   ⛔⛔ 고정 4초였을 때 **흔들렸다** — 2026-08-24 순차에서 한 번, 08-27 병렬 3회 검증에서 또.
+  //      뿌리 = 표지 저장이 `toJpeg`(pixelRatio 1.5)로 카드를 통째로 캡처하는데,
+  //      **JS 는 단일 스레드라 그동안 저장도 못 되고 `evaluate` 응답도 못 온다.**
+  //      🔢 실측(`_probe-레꾸겹침흔들림-0827` · CPU 경쟁) = **1.6 · 8.3 · 8.9 · 11.6초**
+  //         → 4초를 넘긴 셋이 정확히 실패한 셋이었다. **앱은 멀쩡했고 잣대가 흔들렸다.**
+  //   ⭐ `카드표지로()` 는 **한 객체**를 통째로 patch 한다 → `image` 가 들어갔으면 `decor: []` 도 들어갔다.
+  //      그래서 `image` 를 «도착 신호»로 쓰면 아래 네 칸이 전부 «이번 저장»을 잰다.
+  //      ⛔ 「decor 가 빌 때까지」로 기다리면 검사가 «자기 답»을 기다리는 꼴이라 버그를 영영 못 잡는다.
+  let 뒤 = null
+  for (let i = 0; i < 120; i++) {
+    await page.waitForTimeout(500)
+    뒤 = await page.evaluate((id) => {
+      const s = JSON.parse(localStorage.getItem('hankki:v1'))
+      const r = s.recipes.find((x) => x.id === id)
+      return { decor: (r.decor || []).length, icon: r.icon || null, thumb: r.thumb, bg: r.decorBg || null, img: !!r.image }
+    }, 카드주인.id)
+    if (뒤.img) break
+  }
   console.log(`     저장값 = ${JSON.stringify(뒤)}`)
   칸(뒤.decor === 0, `⭐ 레꾸 스티커가 «비었다» (지금 ${뒤.decor}개)`)
   칸(!!뒤.icon, `⭐ 자동 음식 아이콘이 «살아 있다» (icon=${뒤.icon})`)
