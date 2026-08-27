@@ -113,6 +113,9 @@ const TIP_CUE = /(초보자|꿀팁|취향껏|입맛에\s*따라|더\s*맛있|생
 //      숫자는 안 벗기니 「1.」 같은 새 항목 표시는 그대로 살아 있다.
 const LEAD_DECOR = /^[\s\p{P}\p{S}]+/u
 const SEC_ING = /^(재료|양념|소스|양념장|재료\s*준비|필요한\s*재료)/
+// 🍳 「○○ 재료」 헤더에서 ○○ 를 제목으로 삼을 때, «요리 이름이 아닌» 수식어를 막는 목록.
+//    ⛔ 목록을 늘려서 푸는 자리가 아니다 — 이건 「절 이름」이라 몇 개 안 된다.
+const GENERIC_ING_HEAD = /^(기본|주|주요|메인|필요한|준비|추가|기타|전체|나머지|공통|밑|겉|속|위|아래)$/
 const SEC_STEP = /^(만드는\s*법|만들기|만드는\s*방법|조리\s*순서|요리\s*순서|조리\s*방법|요리\s*방법|조리법|레시피|순서)/
 // ⚠️⚠️ 「레시피 (3-4인분 기준)」은 «분량 안내»지 「만드는 법」 헤더가 아니다.
 //    2026-08-02 창업자 폰 사고 — 인스타 캡션 첫머리의 `✨레시피 (3-4인분 기준)✨` 가
@@ -518,7 +521,26 @@ export function parseRecipeText(raw = '', opts = {}) {
 
     if (head.length <= 16 && !stepMarked && !DECLARATIVE.test(head)) {
       // 「돼지고기 양념 재료:」 처럼 앞에 수식어가 붙은 재료 헤더도 받는다(끝이 재료/양념).
-      if (SEC_ING.test(head) || /(재료|양념)\s*[:：]?$/.test(head)) { mode = 'ing'; lastWasBulletIng = false; continue }
+      if (SEC_ING.test(head) || /(재료|양념)\s*[:：]?$/.test(head)) {
+        // 🍳🍳 [2026-08-28] 「차돌 짬뽕 재료」처럼 «앞에 요리 이름이 붙은» 재료 헤더면 그 이름이 제목이다.
+        //    📮 창업자 실물(차돌짬뽕 · 댓글45 캡처) — 캡션에 제목 줄이 따로 없고
+        //       ★ 두 절을 다 지난 뒤 「차돌 짬뽕 재료」 한 줄이 나온다. 그게 유일한 요리 이름이었다.
+        //    ⛔ 「기본 재료」·「양념 재료」·「필요한 재료」는 «절 이름»이지 요리 이름이 아니다 → 막는다.
+        //       (안 막으면 ⑥의 첫 헤더 「★ 기본 재료」가 제목을 「기본」으로 채워 진짜 이름을 덮는다)
+        if (!title) {
+          const 이름 = head.replace(/\s*재료\s*[:：]?\s*$/, '').trim()
+          if (
+            이름 !== head && 이름.length >= 2 &&
+            /[가-힣]{2,}/.test(이름) &&
+            !GENERIC_ING_HEAD.test(이름) &&
+            !/(재료|양념|소스|장|육수)$/.test(이름) &&
+            !QTY.test(이름)
+          ) {
+            title = 이름
+          }
+        }
+        mode = 'ing'; lastWasBulletIng = false; continue
+      }
       if (SEC_STEP.test(head) && !SEC_STEP_PORTION.test(head)) { mode = 'step'; sawStep = true; lastWasBulletIng = false; continue }
       if (SEC_MEMO.test(head)) { mode = 'memo'; lastWasBulletIng = false; continue }
     }
