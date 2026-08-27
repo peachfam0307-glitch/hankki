@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom'
 import { useStore } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
-import { ocrImage } from './ocr'
-import { parseRecipeText } from './parseRecipe'
+import { ocrImage, getOcrLeft, KEY_NAME, KEY_UNIT } from './ocr'
+import { parseRecipeText, keepRaw } from './parseRecipe'
 import { fetchLinkRecipe } from './linkReader'
 import { guessCategory } from './utils'
 import BottomNav from './components/BottomNav'
@@ -367,6 +367,9 @@ export default function App() {
       if (parsed && (parsed.ingredients.length || parsed.steps.length)) {
         rec.ingredients = parsed.ingredients
         rec.steps = parsed.steps
+        // 📥 파서에 넣은 원문도 같이 — 파서를 고친 날 다시 읽을 재료(→ parseRecipe.js `keepRaw`)
+        const raw = keepRaw(caption)
+        if (raw) rec.rawText = raw
       }
       store.addRecipe(rec)
       setStack([{ name: 'inbox' }])
@@ -378,7 +381,7 @@ export default function App() {
           ? '사진을 담았어요 · 글자 읽는 중…'
           : link && source !== 'youtube' && source !== 'instagram'
             ? '공유한 링크를 담았어요 · 읽는 중…'
-            : '공유한 레시피를 Inbox에 담았어요'
+            : '공유한 레시피를 임시보관함에 담았어요'
       )
       if (typeof history !== 'undefined' && location.search) {
         history.replaceState({ hankki: 1 }, '', location.pathname) // URL 만 정리, 트랩 표식은 유지
@@ -393,8 +396,21 @@ export default function App() {
           ingredients: r.ingredients,
           steps: r.steps, // 메모는 건드리지 않는다 — 직접 입력 전용
           category: guessCategory((r.title || '') + ' ' + r.memo),
+          // 📥 원문도 — 있을 때만 넣는다(빈 값으로 덮으면 지우는 것이다)
+          ...(keepRaw(text) ? { rawText: keepRaw(text) } : {}),
         })
-        showToast('사진에서 글자를 읽어 채웠어요')
+        // 💰💰 [2026-08-21] 여기도 «조용히 깎이던» 자리다 — 공유로 들어온 사진도 위 353줄에서 AI 스캔을 쓴다.
+        //    ⛔⛔ 그런데 유저는 «가져오기를 누른 적이 없다» — 카톡에서 공유만 했는데 장수가 준다.
+        //       세 자리(캡처·영수증·공유받기) 중 **여기가 제일 안 보이는 자리**다.
+        //    ⭐ 그래서 잔량을 «그 자리에서» 알린다. 미리 못 막는 대신 «썼다는 사실»은 알아야 한다.
+        //    ⛔ `unknown` 이면 숫자를 안 적는다 — 서버가 아직 답한 적이 없다는 뜻이라
+        //       그때 숫자를 적으면 «안 써 봤을 때의 기본값 20»을 사실처럼 말하게 된다(규칙 15).
+        const left = getOcrLeft()
+        showToast(
+          left.unknown
+            ? '사진에서 글자를 읽어 채웠어요'
+            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`,
+        )
         return
       }
 
@@ -423,6 +439,9 @@ export default function App() {
         if (p.ingredients.length) patch.ingredients = p.ingredients
         if (p.steps.length) patch.steps = p.steps
         if (!patch.title && p.title) patch.title = p.title
+        // 📥 원문도 — 파서를 고친 날 다시 읽을 재료
+        const raw = keepRaw(read.text)
+        if (raw) patch.rawText = raw
       }
       if (patch.title === title) delete patch.title
       if (!Object.keys(patch).length) return

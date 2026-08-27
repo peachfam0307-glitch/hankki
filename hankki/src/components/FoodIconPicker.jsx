@@ -24,6 +24,16 @@ function pushRecent(key) {
   }
 }
 
+// 🔠 [2026-08-27] 긴 이름만 한 칸씩 줄인다 — 창업자 *"긴 이름들은 두줄로 이상하게 잘리거든?"*
+//   ⭐ 이름표 폭이 73px 이라 15px 이면 한 줄에 4.8자다. 「참치김치감태주먹밥」은 세 줄이 되고
+//      `line-clamp: 2` 에 **마지막 「밥」이 통째로 잘려 나갔다**(390px 에서 11개).
+//   ⭐ 여기서 «글자 수»를 세는 이유 = CSS 만으론 못 한다. 그리고 **짧은 이름은 15px 그대로** 둬야
+//      v11.21 「글자2」가 지킨 게 안 깨진다(499개가 그대로 크다).
+//   ⛔ 라벨 «글자»로 가르지 않는다 — 길이는 표시용이 아니라 «사실»이라 이건 분류가 아니다.
+//   🔢 문턱은 실측으로 골랐다(`scripts/_판-픽커이름줄-0827.mjs`) — 5자↑ 13px · 8자↑ 12px 이면
+//      잘림이 11 → 0 이 되고 칸 키도 90 → 85px 로 줄어든다.
+const 긴이름 = (nm = '') => (nm.length >= 8 ? 'long' : nm.length >= 5 ? 'mid' : '')
+
 // 아이콘 고르는 바텀시트만 따로 — 표지처럼 "자기 버튼 없이 시트만 열고 싶은 곳"에서 쓴다.
 // (레시피 상세에서 표지 아이콘 바꾸기 — 창업자 2026-07-28 "사진 바꾸기가 갤러리 말고 음식아이콘으로 가야 해")
 // 🥕 mode='ing' = 「재료를 고르는 자리」 (냉장고 재료 담기). 재료 갈래가 맨 위로 온다.
@@ -53,7 +63,7 @@ export function FoodIconSheet({ value, onChange, onClose, mode = 'dish', onPhoto
       aria-label={FOOD_NAMES[k] || k}
     >
       <FoodIcon name={k} size={36} />
-      <span className="ficon-name">{FOOD_NAMES[k] || ''}</span>
+      <span className={`ficon-name ${긴이름(FOOD_NAMES[k])}`}>{FOOD_NAMES[k] || ''}</span>
     </button>
   )
 
@@ -63,7 +73,7 @@ export function FoodIconSheet({ value, onChange, onClose, mode = 'dish', onPhoto
         <div className="sheet emoji-sheet" onClick={(e) => e.stopPropagation()}>
           <div className="emoji-sheet-head">
             <span>아이콘 선택</span>
-            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
           </div>
 
           {/* 🔎 찾기 — 아이콘이 300개 가까워 스크롤로는 못 찾는다(창업자 2026-07-29).
@@ -90,7 +100,7 @@ export function FoodIconSheet({ value, onChange, onClose, mode = 'dish', onPhoto
             <button
               className="press"
               onClick={onPhoto}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: 'calc(100% - 32px)', margin: '0 16px 10px', padding: '10px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 13.5, fontWeight: 800, border: 'none' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: 'calc(100% - 32px)', margin: '0 16px 10px', padding: '10px 0', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 16.5, fontWeight: 800, border: 'none' }}
             >
               <Icon name="camera" size={17} color="var(--brown)" />
               내 사진으로 하기
@@ -107,7 +117,7 @@ export function FoodIconSheet({ value, onChange, onClose, mode = 'dish', onPhoto
               ) : (
                 <div className="empty" style={{ padding: '38px 20px' }}>
                   ‘{q}’으로 찾은 아이콘이 없어요.<br />
-                  <span className="t-sub" style={{ fontSize: 12.5 }}>다른 이름으로 찾거나, 아래 목록에서 골라주세요.</span>
+                  <span className="t-sub" style={{ fontSize: 15.5 }}>다른 이름으로 찾거나, 아래 목록에서 골라주세요.</span>
                 </div>
               )
             ) : (

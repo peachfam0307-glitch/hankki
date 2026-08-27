@@ -55,11 +55,11 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
             margin: '4px 14px 0', borderRadius: 20, padding: '18px 16px 16px', textAlign: 'center',
             background: 'linear-gradient(180deg, var(--cream) 0%, var(--surface) 100%)',
           }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 900, color: 'var(--brown)', letterSpacing: '0.06em' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 15, fontWeight: 900, color: 'var(--brown)', letterSpacing: '0.06em' }}>
               <Icon name="sparkle" size={13} color="var(--brown)" stroke={2.2} /> NEW
             </div>
-            <div style={{ fontSize: 20, fontWeight: 900, marginTop: 6, letterSpacing: '-0.03em', lineHeight: 1.3 }}>{h.title}</div>
-            <div className="t-sub" style={{ fontSize: 12.5, marginTop: 3 }}>{h.sub}</div>
+            <div style={{ fontSize: 21, fontWeight: 900, marginTop: 6, letterSpacing: '-0.03em', lineHeight: 1.3 }}>{h.title}</div>
+            <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3 }}>{h.sub}</div>
 
             {/* 히어로 한 컷 크게 — 작은 것 여럿보다 «하나 큰 것»이 눈에 남는다 */}
             {hero && (
@@ -80,7 +80,7 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
           <div style={{ padding: '13px 18px 0', display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
             {items.map((it, i) => (
               <span key={i} style={{
-                fontSize: 11.5, fontWeight: 800, color: 'var(--text)', background: 'var(--cream)',
+                fontSize: 15, fontWeight: 800, color: 'var(--text)', background: 'var(--cream)',
                 borderRadius: 999, padding: '5px 11px',
               }}>
                 {it.title} <span style={{ color: 'var(--brown)' }}>{it.count}</span>
@@ -91,7 +91,7 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
           {/* ⭐ 새 친구 데뷔는 «한 번밖에 못 쓰는 카드» — 있으면 반드시 짚는다 */}
           {h.debut && (
             <div style={{ padding: '11px 18px 0', textAlign: 'center' }}>
-              <span style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--brown)' }}>
+              <span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--brown)' }}>
                 {h.debut}이 처음 놀러 왔어요
               </span>
             </div>
@@ -101,7 +101,7 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
             <button
               className="press"
               onClick={onOpenNews}
-              style={{ width: '100%', padding: '14px', borderRadius: 15, border: 'none', background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 800 }}
+              style={{ width: '100%', padding: '14px', borderRadius: 15, border: 'none', background: 'var(--brown)', color: '#fff', fontSize: 17, fontWeight: 800 }}
             >
               구경하기
             </button>
@@ -109,7 +109,7 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
             <button
               className="press"
               onClick={onClose}
-              style={{ width: '100%', padding: '11px', borderRadius: 14, border: 'none', background: 'transparent', color: 'var(--text-sub)', fontSize: 14, fontWeight: 700 }}
+              style={{ width: '100%', padding: '11px', borderRadius: 14, border: 'none', background: 'transparent', color: 'var(--text-sub)', fontSize: 16, fontWeight: 700 }}
             >
               닫기
             </button>

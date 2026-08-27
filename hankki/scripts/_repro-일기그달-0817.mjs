@@ -30,7 +30,12 @@ const srv = createServer((q, s) => {
   try { body = readFileSync(join(DIST, p)) } catch { body = readFileSync(join(DIST, 'index.html')); type = 'text/html' }
   s.writeHead(200, { 'content-type': type }); s.end(body)
 })
-await new Promise((r) => srv.listen(4361, r))
+// 🔀 2026-08-27 — 고정 포트 4361 → **OS 가 빈 포트를 준다**(`listen(0)`).
+//    ⛔ `_repro-감정컷-0815` 도 4361 을 쓰고 있었다 → 병렬로 돌리면 «둘이 다툰다».
+//    ⭐ `_repro-백업일기샘-0819` 가 이미 이 방식이다(그 판을 따랐다).
+await new Promise((r) => srv.listen(0, r))
+const PORT = srv.address().port
+const BASE = `http://127.0.0.1:${PORT}/hankki/`
 
 const { BASICS_VERSION } = await import('../src/data/basics.js')
 
@@ -92,7 +97,7 @@ await page.addInitScript((s) => {
   localStorage.setItem('hankki:nudge:giftpack', '1')
   const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
 }, state)
-await page.goto('http://127.0.0.1:4361/hankki/', { waitUntil: 'networkidle' })
+await page.goto(BASE, { waitUntil: 'networkidle' })
 await page.waitForTimeout(1200)
 await page.getByText('레시피', { exact: true }).last().click(); await page.waitForTimeout(700)
 await page.locator('.seg', { hasText: '한끼 일기' }).first().click(); await page.waitForTimeout(800)

@@ -76,11 +76,35 @@ const 개수 = await 판들.count()
 console.log(`  · DOM 에 있는 스테이지 = ${개수}장`)
 if (개수 !== 이름.length) console.log(`  ⚠️ 이름표는 ${이름.length}개인데 스테이지는 ${개수}장 — 장이 늘었나 확인할 것`)
 
+// ⛔⛔ [2026-08-26] 요소째 찍으면 **2160×3842** 가 나온다 — 9:16 이 «아니다».
+//   뿌리 = `zoom` 이 걸린 요소의 실측 높이가 1920.x 로 잡혀 반올림된다(deviceScaleFactor 2 라 2px).
+//   ⭐ 그래서 요소가 아니라 **자리(clip)를 콕 집어** 찍는다 — 요소 크기가 어떻든 규격이 보장된다.
+//   📌 창업자가 *"우리 바뀐거 없나?? 레이아웃같은거"* 라고 물어 다시 찍다가 드러났다.
+const 규격 = { w: 1080, h: 1920 }
 let 찍음 = 0
 for (let i = 0; i < Math.min(개수, 이름.length); i++) {
-  await 판들.nth(i).screenshot({ path: join(OUT, `${이름[i]}.png`) })
+  // ⛔ 스테이지 열 장이 세로로 이어져 있어 «둘째 장부터는 뷰포트 밖»이다 —
+  //    스크롤을 안 하면 `Clipped area is … outside the resulting image` 로 죽는다(2026-08-26 실제로).
+  await 판들.nth(i).scrollIntoViewIfNeeded()
+  await page.waitForTimeout(120)
+  const 칸 = await 판들.nth(i).boundingBox()
+  await page.screenshot({
+    path: join(OUT, `${이름[i]}.png`),
+    clip: { x: Math.round(칸.x), y: Math.round(칸.y), width: 규격.w, height: 규격.h },
+  })
   찍음++
 }
+
+// 🔒 규격 게이트 — 한 장이라도 2160×3840 이 아니면 죽는다(스토어가 비율로 막는다)
+for (const n of 이름.slice(0, 찍음)) {
+  const 바이트 = fs.readFileSync(join(OUT, `${n}.png`))
+  const w = 바이트.readUInt32BE(16), h = 바이트.readUInt32BE(20)   // PNG IHDR
+  if (w !== 규격.w * 2 || h !== 규격.h * 2) {
+    console.log(`  ⛔ ${n}.png = ${w}×${h} — ${규격.w * 2}×${규격.h * 2} 이어야 한다`)
+    await b.close(); srv.close(); process.exit(1)
+  }
+}
+console.log(`  ✅ 10장 모두 ${규격.w * 2}×${규격.h * 2} (9:16)`)
 
 console.log(`\n  ✅ ${찍음}장 찍음 → ${OUT}`)
 console.log(errors.length ? `  ⛔ pageerror ${errors.length}건 — ${errors[0]}` : '  ✅ pageerror 0')

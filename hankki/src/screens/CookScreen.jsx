@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -6,6 +6,8 @@ import TimerSheet from '../components/TimerSheet'
 import CookBuddy from '../components/CookBuddy'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import MemoNote from '../components/MemoNote'
+import CropSheet from '../components/CropSheet'
+import { downscale } from '../components/DiaryEntrySheet'
 import Portal from '../components/Portal'
 import { scaleIngredient } from '../scale'
 import { useWakeLock } from '../useWakeLock'
@@ -14,7 +16,7 @@ import { useLayerBack } from '../useBackHandler'
 // 요리 모드 — 풀스크린. 큰 글씨 · 화면 안 꺼짐 · 단계 타이머.
 // 흐름: 0단계 = 재료 준비(요리의 시작) → 1~N단계 = 조리 단계.
 export default function CookScreen({ id }) {
-  const { recipes, cook, addDiary, diary } = useStore()
+  const { recipes, cook, addDiary, updateDiary, updateRecipe, diary } = useStore()
   const nav = useNav()
   const r = recipes.find((x) => x.id === id)
   const steps = r?.steps || []
@@ -41,6 +43,28 @@ export default function CookScreen({ id }) {
   //       레시피 상세와 설정에서만 열리던 걸 **재료를 꺼내는 «바로 그 자리»** 에도 놓는다.
   //    📌 여기가 제일 필요한 자리다 — 손질법은 «읽을 때»가 아니라 «칼 잡을 때» 찾는다.
   const [guide, setGuide] = useState(false)
+  // 📷📷 **완성 사진** — 창업자 2026-08-21 갈래 ⓒ 확정
+  //    📮 *"음식앱인데 생동감이 부족하달까.. 음식사진이나 영상이 하나도 없으니까"*
+  //    🔢 실측 = 앱이 쓰는 기본 레시피 **145편 · 진짜 사진 0편**(표지 icon 144 · none 1).
+  //
+  //    ⭐⭐ **사진이 «없는» 게 아니라 «버리고» 있었다** — 여기 `finish()` 가 `photo: null` 로 담았다.
+  //       「다 만들었어요」를 누르는 그 순간이 **음식이 눈앞에 있는 유일한 순간**인데 안 물어봤다.
+  //
+  //    ⛔⛔ **「끝난 뒤 기록 시트를 띄우기」는 «이미 접은 길»이다** — `RecipeDetailScreen.jsx:170`
+  //       *"별점·메모·사진을 묻는 폼이 앞을 막아서, 그게 요리 기록 탭이 죽은 이유 중 하나였다(마찰)"*
+  //       ＋ 창업자가 「한 줄 남기기」에서도 사진 칸을 뺐다(*"이거 사진추가가 의미가 있어?"* · `OneLineSheet.jsx:9`).
+  //    ✅ 그래서 **끝난 «뒤»가 아니라 끝나기 «전»에 «선택지»로 둔다.**
+  //       안 누르면 화면도 흐름도 지금과 «한 글자도» 안 다르다 — 막는 게 없으니 그 마찰이 안 생긴다.
+  //
+  //    ⛔ 유니코드 이모지 금지(CLAUDE.md 핀) → 우리 `Icon name="camera"`.
+  const [photo, setPhoto] = useState(null)
+  const [cropSrc, setCropSrc] = useState(null)
+  const photoRef = useRef(null)
+  // 🎴 「표지로도 쓰기」 기본값 — **꾸민 표지가 있으면 «꺼짐»**.
+  //    ⭐ 유저가 레꾸로 꾸며 둔 레시피를 내가 말없이 덮으면 «잃은 것»으로 읽힌다.
+  //       (실제로 `decor` 는 안 지워지지만 아이콘 자리가 사진으로 바뀌어 «달라 보인다»)
+  //    ⛔ 훅은 조건부 `return` «앞»에 — 뒤에 두면 훅 개수가 갈려 앱이 죽는다(v11.16 교훈).
+  const [asCover, setAsCover] = useState(() => !(recipes.find((x) => x.id === id)?.decor?.length > 0))
 
   if (!r || steps.length === 0) {
     return (
@@ -54,16 +78,38 @@ export default function CookScreen({ id }) {
   }
 
   const last = i >= steps.length // 마지막 조리 단계 (i는 1..steps.length)
+
+  const onPhotoFile = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => setCropSrc(reader.result) // 자르기부터 (일기 사진과 같은 흐름)
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
   const finish = () => {
     // 오늘 이미 이 레시피 기록이 있으면(상세의 '만들었어요' 등) 중복으로 쌓지 않는다
     const today = new Date().toDateString()
-    const dup = diary.some((d) => d.recipeId === r.id && new Date(d.at).toDateString() === today)
-    if (!dup) {
-      addDiary({ id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: null })
+    const 오늘것 = diary.find((d) => d.recipeId === r.id && new Date(d.at).toDateString() === today)
+    if (!오늘것) {
+      addDiary({ id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo })
       cook(r.id)
+    } else if (photo && !오늘것.photo) {
+      // ⭐ 오늘 이미 기록이 있어도 **찍은 사진은 안 버린다** — 그 기록에 사진만 채운다.
+      //    ⛔ 이미 사진이 있으면 안 건드린다(유저가 넣어둔 걸 덮지 않는다).
+      updateDiary(오늘것.id, { photo })
     }
+    // 🎴 표지로도 — 유저가 켰을 때만. `decor`(레꾸 스티커)는 별개 층이라 안 죽는다(`Thumb.jsx:165`).
+    //    ⛔ `imageFit` 은 «안» 넣는다 — 그건 자랑카드(판 전체가 그림)용이고,
+    //       내 음식 사진은 창업자 확정대로 «이모지처럼 동그랗게»가 맞다(2026-08-17).
+    if (photo && asCover) updateRecipe(r.id, { image: photo, thumb: 'photo' })
     nav.popAll()
-    nav.showToast('완성! 한끼 일기에 담았어요 별점·팁은 레시피 화면에서')
+    nav.showToast(
+      photo
+        ? (asCover ? '완성! 사진을 일기와 표지에 담았어요' : '완성! 사진과 함께 한끼 일기에 담았어요')
+        : '완성! 한끼 일기에 담았어요 별점·팁은 레시피 화면에서',
+    )
   }
 
   return (
@@ -88,7 +134,7 @@ export default function CookScreen({ id }) {
               ⭐ 레시피 상세의 것과 «같은» 시트다 — 새로 만든 게 없다.
               ⚠️ 글자 버튼이다(옛 「?」 는 작고 뭔지 몰랐다 — 창업자 *"버튼 물음표 너무작고 모르니까"*). */}
           <button className="press" onClick={() => setGuide(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, margin: '8px auto 0', padding: '7px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, margin: '8px auto 0', padding: '7px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 16, fontWeight: 700, whiteSpace: 'nowrap' }}>
             <Icon name="help" size={14} color="var(--brown)" />
             계량·손질
           </button>
@@ -123,7 +169,7 @@ export default function CookScreen({ id }) {
                 </span>
                 {/* ⭐ 체크한 줄은 «흐리게 ＋ 취소선» — 「했다」가 한눈에 보인다(장보기 목록과 같은 문법) */}
                 <span className="ing" style={{
-                  fontSize: 17, flex: 1, minWidth: 0,
+                  fontSize: 19, flex: 1, minWidth: 0,
                   opacity: checked[k] ? 0.44 : 1,
                   textDecoration: checked[k] ? 'line-through' : 'none',
                 }}>{scaleIngredient(ing, 1)}</span>
@@ -132,11 +178,11 @@ export default function CookScreen({ id }) {
           </div>
           {/* 안내 — 화면 안 꺼짐 · 타이머는 필요할 때 */}
           <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 9, width: '100%', maxWidth: 460 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--text-sub)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 16.5, color: 'var(--text-sub)' }}>
               <Icon name="bulb" size={18} color="var(--brown)" stroke={1.8} />
               요리하는 동안 화면이 꺼지지 않아요.
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--text-sub)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 16.5, color: 'var(--text-sub)' }}>
               <Icon name="clock" size={18} color="var(--brown)" stroke={1.8} />
               타이머는 필요할 때 단계에서 눌러 쓰세요.
             </div>
@@ -153,6 +199,57 @@ export default function CookScreen({ id }) {
         </div>
       )}
 
+      {/* 📷 완성 사진 — «마지막 단계에서만». 누르지 않으면 아무 일도 안 일어난다(막지 않는다). */}
+      {last && (
+        <div className={`cook-shot ${photo ? '' : 'empty'}`}>
+          <input ref={photoRef} type="file" accept="image/*" onChange={onPhotoFile} style={{ display: 'none' }} />
+          {photo ? (
+            <>
+              <img src={photo} alt="완성 사진" className="cook-shot-thumb" />
+              {/* ⭐ 「표지로도 쓰기」 — 줄 전체가 버튼이라 손가락이 작은 네모를 겨냥할 필요가 없다(최소 높이 44) */}
+              <button
+                type="button" className="press cook-shot-cover" aria-pressed={asCover}
+                onClick={() => setAsCover((v) => !v)}
+              >
+                <span className={`cook-shot-box ${asCover ? 'on' : ''}`}>
+                  {asCover && <Icon name="check" size={15} color="#fff" stroke={2.6} />}
+                </span>
+                레시피 표지로도 쓰기
+              </button>
+              <button
+                type="button" className="press cook-shot-x" aria-label="완성 사진 지우기"
+                onClick={() => setPhoto(null)}
+              >
+                <Icon name="x" size={17} color="var(--text-sub)" />
+              </button>
+              {/* 📔 [2026-08-24 창업자 제보] **어디에 담기는지 말한다**
+                  📮 *"요리모드→사진→레시피표지로 넣으시겠습니까? 하면 일기탭이랑 달력에자동저장되네..
+                     난 레꾸표지만 되는 줄. **안내가 없어서.**"*
+                  ⛔ 위 체크박스는 **표지만** 말한다. 그런데 사진은 체크와 «무관하게 항상»
+                     일기(`addDiary`/`updateDiary` · 96·101줄)와 달력 칸(`MyRecipesScreen.jsx:157`)에 담긴다.
+                  ⭐ 그래서 「도」를 쓴다 — 「표지로도 쓰기」와 «별개로» 이미 담긴다는 뜻.
+                  ⛔ 체크박스 «안»에 넣지 않는다 — 그러면 「체크를 끄면 일기에도 안 가나?」로 읽힌다. */}
+            </>
+          ) : (
+            // ⭕ [창업자 확정 2026-08-23 = 시안 ㉤] 동그라미 ＋ 아래 글자.
+            //    ⛔ 옛 판(가로 점선 네모)은 «보이는데 안 읽혔다» — 창업자 본인도 이틀을 못 찾았다.
+            //    ⭐ `aria-label` 은 「완성 사진 남기기」 그대로 — 보이는 글자는 원 아래라 짧아야 한다.
+            <>
+              <button
+                type="button" className="press cook-shot-add" aria-label="완성 사진 남기기"
+                onClick={() => photoRef.current?.click()}
+              >
+                <Icon name="camera" size={25} color="#fff" />
+              </button>
+              <span className="cook-shot-label">완성 사진</span>
+            </>
+          )}
+        </div>
+      )}
+      {last && photo && (
+        <div className="cook-shot-note">사진은 한끼 일기·달력에도 담겨요</div>
+      )}
+
       <div className="cook-nav">
         <button className="cook-navbtn press" disabled={i === 0} onClick={() => setI((v) => Math.max(0, v - 1))}>
           이전
@@ -167,6 +264,18 @@ export default function CookScreen({ id }) {
       </div>
 
       {showTimer && <TimerSheet label={`${r.title} · STEP ${i}`} onClose={() => setShowTimer(false)} />}
+      {/* ✂️ 자르기 — 일기 사진과 «같은» 시트·같은 축소 함수를 쓴다(새로 만든 게 0이다) */}
+      {cropSrc && (
+        <CropSheet
+          image={cropSrc}
+          title="완성 사진 자르기"
+          hint={<>모서리를 끌어 <b style={{ color: '#f0ede7' }}>음식만</b> 담아주세요.</>}
+          doneLabel="이 부분만 담기"
+          onDone={async (img) => { setCropSrc(null); setPhoto(await downscale(img)) }}
+          onSkip={async () => { const s = cropSrc; setCropSrc(null); setPhoto(await downscale(s)) }}
+          onCancel={() => setCropSrc(null)}
+        />
+      )}
       {/* 📖 요리 가이드(계량·손질) — 재료 준비 화면의 버튼이 연다 (테스터 의견 2026-08-14) */}
       {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
 
@@ -176,7 +285,7 @@ export default function CookScreen({ id }) {
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
             <div className="emoji-sheet-head">
               <span>재료</span>
-              <button className="press" onClick={() => setShowIng(false)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+              <button className="press" onClick={() => setShowIng(false)} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '0 16px', maxHeight: '50vh', overflowY: 'auto' }}>
               {(r.ingredients || []).map((ing, k) => (

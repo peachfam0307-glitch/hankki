@@ -4,7 +4,11 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
-import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
+// 🥕 [2026-08-23 창업자 제보 「홈에서 검색하면 아래 음식아이콘 옛날꺼」]
+//   ⛔ 뿌리 = 「재료로 찾기」 칩인데 «요리» 규칙(`guessFoodIcon`)을 불렀다.
+//      재료 이름이 요리 규칙에 안 걸리면 옛 SVG 도형으로 떨어진다.
+//   ✅ 재료는 «재료» 규칙(`guessIngredientIcon`)을 본다 — 그게 못 찾으면 스스로 요리 규칙으로 넘긴다.
+import FoodIcon, { guessIngredientIcon } from '../components/FoodIcon'
 import { POPULAR_SEARCHES, TAG_LIST, INGREDIENT_CHIPS } from '../data/seed'
 
 export default function SearchScreen() {
@@ -94,9 +98,9 @@ export default function SearchScreen() {
               {INGREDIENT_CHIPS.map((c) => (
                 <button key={c.name} className="press" onClick={() => setQ(c.name)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
                   <div className="emoji-tile" style={{ width: 56, height: 56, borderRadius: '50%' }}>
-                    <FoodIcon name={c.icon || guessFoodIcon(c.name)} size={34} />
+                    <FoodIcon name={c.icon || guessIngredientIcon(c.name)} size={34} />
                   </div>
-                  <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text)' }}>{c.name}</span>
+                  <span style={{ fontSize: 15.5, fontWeight: 500, color: 'var(--text)' }}>{c.name}</span>
                 </button>
               ))}
             </div>

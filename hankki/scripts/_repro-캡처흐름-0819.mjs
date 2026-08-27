@@ -14,12 +14,24 @@
 //    ⚠️ 그래도 «말»이 아니라 «재서» 확인한다(규칙 7).
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { SEED_COACH_SEEN } from '../src/coach.js'
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PORT = Number(process.env.REPRO_PORT || 4377)
+
+// 🔑 이름은 «앱에서 읽는다» — 판이 글자로 박으면 이름이 바뀔 때마다 판이 낡는다(절대원칙 30).
+//    2026-08-24 「AI 스캔 N회」→「열쇠 N개」로 갈 때 이 판이 죽어서 드러났다.
+const OCR봉 = readFileSync(path.join(root, 'src/ocr.js'), 'utf8')
+const 뽑기 = (이름) => {
+  const m = OCR봉.match(new RegExp(`export const ${이름} = '([^']+)'`))
+  if (!m) { console.log(`⛔ src/ocr.js 에서 ${이름} 을 못 찾았다`); process.exit(1) }
+  return m[1]
+}
+const KEY_SHORT = 뽑기('KEY_SHORT')
+const KEY_UNIT = 뽑기('KEY_UNIT')
 let bad = 0
 const ok = (m) => console.log('   ✅', m)
 const no = (m) => { bad++; console.log('   ⛔', m) }
@@ -121,7 +133,13 @@ try {
       await chooser.setFiles(사진)
       await page.waitForTimeout(1800)
       const 글 = await page.evaluate(() => document.body.innerText)
-      const 숫자안내 = /2\s*장/.test(글) && /(스캔|사용|써요|소진|장을)/.test(글)
+      // ⛔ [2026-08-21] 잣대를 조였다 — 옛 잣대(스캔·사용·써요·소진·장을 중 아무거나)는 «너무 넓어»
+      //    화면 어딘가에 「스캔」만 있어도 통과했다. 물어야 할 건 «몇 회가 줄어드나»다.
+      //    ⭐ 창업자 낱말 = 「소모」(2026-08-21 *"무료이용이 1장 소모가 된다던지"*).
+      // ⭐ [2026-08-24] 이름이 「AI 스캔 N회」→「열쇠 N개」로 바뀌며 잣대도 옮겼다(창업자 확정).
+      //    ⛔ 낱말을 글자로 박지 않는다 — `src/ocr.js` 에서 읽는다(다음에 또 바뀌어도 안 낡게).
+      //    📌 물어야 할 건 여전히 같다 = «몇 장을 골랐고 몇 개가 줄어드나»가 한 줄에 있나.
+      const 숫자안내 = /2\s*장/.test(글) && new RegExp(`${KEY_SHORT}\\s*2${KEY_UNIT}`).test(글)
       if (숫자안내) ok('「2장」이 들어간 안내가 떴다 — 몇 장 쓰는지 알려준다')
       else no(`두 장을 골랐는데 「2장」 안내가 없다 — 화면 글자에서 못 찾았다`)
       // 자르기 시트까지 이어지나 (사슬의 둘째 고리)

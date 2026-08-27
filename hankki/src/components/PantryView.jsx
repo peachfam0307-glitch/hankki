@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
-import { ocrImage } from '../ocr'
+import { ocrImage, keyCount } from '../ocr'
 import { extractReceiptItems } from '../receipt'
 import Icon from './Icon'
 import Thumb from './Thumb'
@@ -173,7 +173,7 @@ export default function PantryView() {
     // 재료는 있는데 딱 맞는 게 없을 때 — 빈 자리를 두지 않는다
     <>
       <div className="sec-head" style={{ marginTop: 2 }}><div className="h-section">한끼 추천</div></div>
-      <div className="t-sub" style={{ fontSize: 12.5, marginTop: -2, marginBottom: 12 }}>
+      <div className="t-sub" style={{ fontSize: 15.5, marginTop: -2, marginBottom: 12 }}>
         가진 재료로 딱 맞는 레시피가 없네요. 실패 없는 기본 메뉴는 어때요?
       </div>
       <div className="grid2" style={{ marginBottom: 4 }}>
@@ -207,7 +207,15 @@ export default function PantryView() {
       {/* ⭐⭐ **결과를 «먼저» 보여준다** — 그래야 「왜 넣는지」가 설명 없이 전해진다.
           예전엔 파먹기가 재료 목록 «아래»라, 재료가 쌓일수록 화면 밖으로 밀려나 아무도 못 봤다
           (창업자도 오늘 처음 봤다 — *"아.. 아래 있구나"*). */}
-      {추천칸}
+      {/* 🧊📐 [창업자 2026-08-26] *"패드 냉장고쪽이 지금 가로야. **장보기처럼 이분할로 만들어야해.**"*
+          ⭐ 짜임을 «장보기와 같게» 맞춘다 — 왼쪽 = 추천(파먹기) · 오른쪽 = 재료함.
+             둘은 성격이 다르다(보는 것 ↔ 넣고 지우는 것)라 나란히 두면 오가지 않아도 된다.
+          ⛔ DOM 순서는 «추천 먼저»로 둔다 — 폰에선 1열이라 그대로 위아래가 되고,
+             「결과를 먼저 보여준다」(창업자 2026-08-10)가 폰에서 안 깨진다.
+             📌 장보기()가 쓴 방법과 같다. */}
+      <div className="pantry-pair">
+      <div className="pantry-reco">{추천칸}</div>
+      <div className="pantry-box">
 
       {/* ⚠️ 추천 카드 바로 밑이라 여백이 없으면 «카드에 붙은 글»처럼 읽힌다(검수판에서 보였다) */}
       <div className="sec-head" style={{ marginTop: 18 }}>
@@ -221,7 +229,7 @@ export default function PantryView() {
           style={{
             flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             padding: '13px 14px', borderRadius: 'var(--r-md)',
-            background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 700,
+            background: 'var(--brown)', color: '#fff', fontSize: 17, fontWeight: 700,
             boxShadow: '0 3px 10px rgba(90,70,45,0.18)',
           }}
         >
@@ -233,13 +241,13 @@ export default function PantryView() {
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             padding: '13px 14px', borderRadius: 'var(--r-md)',
-            background: 'var(--cream)', color: 'var(--brown)', fontSize: 14.5, fontWeight: 700,
+            background: 'var(--cream)', color: 'var(--brown)', fontSize: 16.5, fontWeight: 700,
           }}
         >
           <Icon name="camera" size={16} color="var(--brown)" />
           영수증
           {/* 베타 = 영수증«만» 베타다. 화면 전체가 베타로 읽히면 안 된다 */}
-          <span style={{ fontSize: 10.5, fontWeight: 800, color: '#fff', background: '#c79553', borderRadius: 999, padding: '2px 6px' }}>베타</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', background: '#c79553', borderRadius: 999, padding: '2px 6px' }}>베타</span>
         </button>
       </div>
       {/* 📮📮 2026-08-15 창업자 *"갤러리에 저장된 영수증을 불러올 수 있는 기능이없음. 매번 새로 찍어야함."*
@@ -253,13 +261,36 @@ export default function PantryView() {
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           width: '100%', padding: '13px 14px', borderRadius: 'var(--r-md)', marginBottom: 9,
-          background: 'var(--cream)', color: 'var(--brown)', fontSize: 14.5, fontWeight: 700,
+          background: 'var(--cream)', color: 'var(--brown)', fontSize: 16.5, fontWeight: 700,
         }}
       >
         <Icon name="photo" size={16} color="var(--brown)" />
         갤러리에서 영수증 고르기
       </button>
-      <div style={{ fontSize: 12.3, color: 'var(--text-sub)', lineHeight: 1.55, marginBottom: 14 }}>
+      {/* 💰💰 [2026-08-21] 여기가 «조용히 깎이던» 자리다 — 이 화면에 장수 얘기가 **한 줄도 없었다.**
+          🔢 실측 = `ocrImage()`(돈 드는 AI 스캔)를 부르는 곳은 셋이고 이 화면이 그중 하나다(79줄).
+             그런데 안내는 편집 화면 하나에만 있었다.
+          ⛔⛔ **모르게 깎이는 게 제일 나쁘다** — 창업자 확정(2026-08-13) =
+             *"유저가 몇장남았는지 스스로 알아야해"* · 분쟁·환불 1순위가 «샀는데 어디 갔지» 다.
+             영수증은 여러 장 찍기 쉬운 자리라(장 볼 때마다) 모르면 더 빨리 준다.
+          ⭐ 편집 화면과 «같은 문장 틀»로 쓴다 — 「N장에 AI 스캔 N장」.
+             자리마다 말이 다르면 유저가 «다른 규칙»으로 읽는다(같은 기능은 같은 이름 원칙). */}
+      <div style={{
+        paddingLeft: 10, marginBottom: 10,
+        borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
+      }}>
+        {/* ⛔ 둘째 줄(「다 써도 기본 인식으로 계속」)을 뺐다 — 창업자 *"다 구구절절이야 헷갈린다고"*.
+               «다 썼을 때» 할 말을 쓰기도 전에 깔아 두면 한 번에 둘을 읽어야 한다.
+               ⭐ 소진 안내는 그때 이미 나간다(`ocr.js` note → 편집 화면 꼬리). */}
+        <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px' }}>
+          영수증 1장에 {keyCount(1)}를 써요
+        </div>
+      </div>
+      {/* 🔠 [창업자 확정 2026-08-26] 15.3/1.55 → 16/1.7.
+          📮 창업자 = *"냉장고 한 줄은 올려줘"*
+          ⛔ 로드맵이 이 «한 줄»을 「냉장고 글자」로 적어 놔서 계속 미해결로 남아 있었다 —
+             진짜 재료 글자는 이미 18px 다(`styles.css:1237` · 창업자 2026-08-22 확정). */}
+      <div style={{ fontSize: 16, color: 'var(--text-sub)', lineHeight: 1.7, marginBottom: 14 }}>
         영수증은 사진에 따라 인식률이 달라요 · 안 되면 <b style={{ color: 'var(--brown)' }}>＋재료 담기</b>로 직접 넣어도 돼요.
       </div>
 
@@ -280,14 +311,14 @@ export default function PantryView() {
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8,
                 background: 'rgba(240,180,90,0.18)', border: '1px solid rgba(240,180,90,0.55)',
-                color: '#f6c886', borderRadius: 999, padding: '5px 12px', fontSize: 12.5, fontWeight: 800,
+                color: '#f6c886', borderRadius: 999, padding: '5px 12px', fontSize: 15.5, fontWeight: 800,
               }}>
                 베타 · 영수증에 따라 잘못 읽을 수 있어요
               </span>
               <br />
               위·아래 매장 정보·합계는 빼고 <b style={{ color: '#f0ede7' }}>상품명·가격이 적힌 부분만</b> 남겨주세요.
               <br />
-              <span style={{ color: '#8f8b83', fontSize: 11.5 }}>딱 맞게 자를수록 · 반듯하고 밝을수록 정확해요 · 담기 전에 한 번 더 확인해요</span>
+              <span style={{ color: '#8f8b83', fontSize: 15 }}>딱 맞게 자를수록 · 반듯하고 밝을수록 정확해요 · 담기 전에 한 번 더 확인해요</span>
             </>
           }
           onDone={scanReceipt}
@@ -301,7 +332,7 @@ export default function PantryView() {
       {scanPct !== null && (
         <div className="card" style={{ padding: 16, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
           <div className="ocr-spin" style={{ width: 26, height: 26, borderWidth: 3, margin: 0 }} />
-          <div style={{ fontSize: 13.5, fontWeight: 600 }}>영수증에서 식재료 찾는 중… {scanPct}%</div>
+          <div style={{ fontSize: 16.5, fontWeight: 600 }}>영수증에서 식재료 찾는 중… {scanPct}%</div>
         </div>
       )}
 
@@ -311,10 +342,10 @@ export default function PantryView() {
           <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
             <div className="emoji-sheet-head">
               <span>영수증에서 찾은 재료</span>
-              <button className="press" onClick={() => setFound(null)} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+              <button className="press" onClick={() => setFound(null)} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ padding: '2px 16px 0', maxHeight: '48vh', overflowY: 'auto' }}>
-              <div className="t-sub" style={{ fontSize: 12.5, marginBottom: 10 }}>
+              <div className="t-sub" style={{ fontSize: 15.5, marginBottom: 10 }}>
                 아닌 것은 체크를 풀고, 이름은 눌러서 고칠 수 있어요.
               </div>
               {found.map((f, i) => (
@@ -374,15 +405,17 @@ export default function PantryView() {
       {pantry.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', marginBottom: 9, borderRadius: 'var(--r-md)', background: 'var(--cream)' }}>
           <span style={{ flex: '0 0 auto', marginTop: 1 }}><Icon name="clock" size={15} color="var(--brown)" stroke={2.2} /></span>
-          <span style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--text)' }}>
-            <b style={{ color: 'var(--brown)', fontWeight: 700 }}>유통기한을 대신 세어 드려요</b> — 기한이 가까우면 재료 옆에 <span className="exp-chip exp-soon" style={{ fontSize: 10.5, padding: '1px 6px' }}>D-3</span> 처럼 표시돼요.
+          <span style={{ fontSize: 15.5, lineHeight: 1.55, color: 'var(--text)' }}>
+            <b style={{ color: 'var(--brown)', fontWeight: 700 }}>유통기한을 대신 세어 드려요</b> — 기한이 가까우면 재료 옆에 <span className="exp-chip exp-soon" style={{ fontSize: 15, padding: '1px 6px' }}>D-3</span> 처럼 표시돼요.
             <br />재료를 <b style={{ color: 'var(--brown)', fontWeight: 700 }}>누르면</b> 유통기한 · 수량 · 보관 메모를 적을 수 있어요.
           </span>
         </div>
       )}
       {sorted.map((p) => {
         const chip = expiryChip(daysLeft(p.expiry))
-        const sub = [p.expiry ? `유통기한 ${p.expiry.replace(/-/g, '.')}` : '', p.memo].filter(Boolean).join(' · ')
+        // 🧊 [2026-08-23] 옛 판은 둘을 « · »로 «한 덩어리 글자»로 이어 붙였다 → 갈라 둔다(아래 참조)
+        const 기한글 = p.expiry ? `유통기한 ${p.expiry.replace(/-/g, '.')}` : ''
+        const 메모글 = String(p.memo || '').trim()
         return (
           <div key={p.id} className="wish-row">
             {/* 재료를 탭하면 편집(수량·유통기한·이모지·메모) */}
@@ -392,11 +425,11 @@ export default function PantryView() {
                      이라, 좁은 폰(360px)에서 이름 칸이 눌려 «말줄임(…)»으로 잘렸다.
                   ✅ 타일 46→**38** · 아이콘 28→**24** · gap 12→**10** → 이름 칸이 **10px** 넓어진다.
                   ⛔ 더 줄이지 않는다 — 38 은 영수증 확인 시트(`:284`)와 같은 값이라 앱 안에서 결이 맞는다. */}
-              <div className="emoji-tile" style={{ width: 38, height: 38, flex: '0 0 auto', fontSize: 22 }}>
+              <div className="emoji-tile" style={{ width: 38, height: 38, flex: '0 0 auto', fontSize: 23 }}>
                 {p.thumb === 'emoji' && p.emoji ? p.emoji : <FoodIcon name={재료그림(p)} size={24} />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: 16.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {p.name}{p.qty ? <span style={{ color: 'var(--text-sub)', fontWeight: 500 }}> · {p.qty}</span> : null}
                 </div>
                 {/* 👆👆 **[2026-08-16] 「누르면 열린다」를 «줄 안»에서 보여준다** — 창업자 제보
@@ -406,10 +439,31 @@ export default function PantryView() {
                        유통기한이 «없는» 재료는 아랫줄이 통째로 비어서, 줄 전체가 그냥 «읽는 것»처럼 보였다.
                     ⭐ 그래서 빈 자리에 **할 일을 적어 둔다** — 누를 자리와 «눌러서 얻는 것»이 한 곳에 있다.
                     ⭐ 회색이 아니라 포인트색으로 — 회색이면 「설명」으로 읽히고, 색이 있어야 「누르는 것」이 된다. */}
-                {sub
-                  ? <div className="t-sub" style={{ marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>
-                  : (
-                    <div style={{ marginTop: 2, fontSize: 11.5, fontWeight: 600, color: 'var(--brown)', opacity: 0.8, display: 'flex', alignItems: 'center', gap: 3, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {/* 🧊🧊 **[2026-08-23 창업자] 유통기한·메모가 잘려서 «한눈에» 안 보였다**
+                    📮 *"냉장고재료 유통기한 메모 한눈에보이게수정"*
+                    🔢 실물 = 「유통기한 2026.09.06 · 냉…」 — 보관 메모가 첫 글자만 남고 잘렸다.
+                    ⛔ 뿌리 = 둘을 « · »로 이어 붙여 **한 덩어리 글자**로 만들고 `nowrap` ＋ 말줄임을 걸었다.
+                       칩(D-14)·✕까지 같은 줄에 있어 남는 폭이 좁은데 거기에 둘을 욱여넣었다.
+                    ⛔⛔ **처음 고침(두 줄 흐르게)도 모자랐다** — 실측 「유통기한 2026.09.06 · 냉동실 문쪽 ·
+                       봉지 열었음」이 두 줄에서도 잘렸다. 이어 붙인 채로는 **메모가 길수록 날짜까지 같이 밀린다.**
+                       📌 급한 건 «날짜»인데 덜 급한 메모가 날짜를 밀어내는 구조였다.
+                    ✅ **둘을 갈라 둔다** — 날짜는 «자기 줄»에서 절대 안 잘리고(`nowrap`),
+                       메모만 아래에서 두 줄까지 흐른다. 그래서 날짜는 «언제나» 다 보인다.
+                    ⭐ 높이는 있는 만큼만 는다 — 날짜만 있으면 한 줄(옛 판과 같다), 짧은 메모면 두 줄. */}
+                {기한글 && (
+                  <div className="t-sub" style={{
+                    marginTop: 2, fontWeight: 600, color: 'var(--brown)',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>{기한글}</div>
+                )}
+                {메모글 && (
+                  <div className="t-sub" style={{
+                    marginTop: 기한글 ? 1 : 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: 1.35,
+                  }}>{메모글}</div>
+                )}
+                {!기한글 && !메모글 && (
+                    <div style={{ marginTop: 2, fontSize: 15, fontWeight: 600, color: 'var(--brown)', opacity: 0.8, display: 'flex', alignItems: 'center', gap: 3, overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       눌러서 유통기한 · 보관 메모 넣기
                       <Icon name="chevron-right" size={13} stroke={2.4} />
                     </div>
@@ -426,6 +480,8 @@ export default function PantryView() {
 
       {/* ⛔ 「가진 재료로 만들 수 있어요」·「한끼 추천」은 **맨 위로 옮겼다**(위 `추천칸`).
           여기 아래에 두면 재료가 쌓일수록 화면 밖으로 밀려 아무도 못 본다. */}
+      </div>{/* .pantry-box */}
+      </div>{/* .pantry-pair */}
     </div>
   )
 }
@@ -478,7 +534,7 @@ function PantryForm({ item, onClose }) {
       <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 0 }}>
         <div className="emoji-sheet-head">
           <span>{editing ? '재료 편집' : '재료 담기'}</span>
-          <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+          <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
         </div>
         <div style={{ padding: '2px 16px 0' }}>
           <div style={{ display: 'flex', gap: 12, marginBottom: 10, alignItems: 'flex-start' }}>
@@ -495,11 +551,11 @@ function PantryForm({ item, onClose }) {
 
           {/* 썸네일 방식 — 아이콘(재료 그림) / 이모지(식재료만) */}
           <div className="segment" style={{ margin: '0 0 10px' }}>
-            <button type="button" className={`seg ${thumb === 'icon' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setThumb('icon')}>아이콘</button>
-            <button type="button" className={`seg ${thumb === 'emoji' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 12.5 }} onClick={() => setThumb('emoji')}>이모지</button>
+            <button type="button" className={`seg ${thumb === 'icon' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 15.5 }} onClick={() => setThumb('icon')}>아이콘</button>
+            <button type="button" className={`seg ${thumb === 'emoji' ? 'on' : ''}`} style={{ flex: 1, padding: 8, fontSize: 15.5 }} onClick={() => setThumb('emoji')}>이모지</button>
           </div>
 
-          <div className="t-sub" style={{ fontSize: 12, marginBottom: 6 }}>유통기한</div>
+          <div className="t-sub" style={{ fontSize: 15, marginBottom: 6 }}>유통기한</div>
           <input className="wa-inp" style={{ color: expiry ? 'var(--text)' : 'var(--text-sub)' }} type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
           <div style={{ display: 'flex', gap: 6, margin: '8px 0 10px' }}>
             {[['+3일', 3], ['+7일', 7], ['+2주', 14]].map(([label, d]) => (
@@ -512,10 +568,10 @@ function PantryForm({ item, onClose }) {
         </div>
         <div style={{ position: 'sticky', bottom: 0, background: 'var(--surface)', display: 'flex', gap: 8, padding: '10px 16px calc(6px + var(--safe-bottom))' }}>
           {editing && (
-            <button className="press" onClick={() => { removePantry(item.id); nav.showToast('냉장고에서 뺐어요'); onClose() }} style={{ padding: '13px 15px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 14 }}>삭제</button>
+            <button className="press" onClick={() => { removePantry(item.id); nav.showToast('냉장고에서 뺐어요'); onClose() }} style={{ padding: '13px 15px', borderRadius: 12, background: 'var(--cream)', color: 'var(--danger)', fontWeight: 600, fontSize: 16 }}>삭제</button>
           )}
-          <button className="press" onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 14 }}>취소</button>
-          <button className="press" onClick={save} style={{ flex: 1.4, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 14.5 }}>{editing ? '저장' : '넣기'}</button>
+          <button className="press" onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontWeight: 600, fontSize: 16 }}>취소</button>
+          <button className="press" onClick={save} style={{ flex: 1.4, padding: 13, borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 700, fontSize: 16.5 }}>{editing ? '저장' : '넣기'}</button>
         </div>
       </div>
     </div>

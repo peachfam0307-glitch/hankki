@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>한끼 — 계정·데이터 삭제 요청</title>
+<meta name="description" content="한끼(HANKKI) 앱의 계정 및 데이터 삭제를 요청하는 방법 안내" />
+<!--
+  🗑 계정·데이터 삭제 요청 페이지 — 2026-08-19
+  ⭐ 왜 있나 = Play 정책. 공식 요건 넷(support.google.com/googleplay/android-developer/answer/13327111):
+     ①오류 없이 열린다 ②삭제 요청 경로가 «눈에 잘 띈다» ③**앱 또는 개발자 이름을 참조**한다
+     ④Play Console 의 지정된 URL 칸에 이 주소를 넣는다
+  ⭐ ＋ *"정당한 사유로 데이터를 보관해야 하면 보관 관행을 «명확히 알려야» 한다"* → 아래 3번
+  ⛔ `mailto:` 만 제출하면 «거절»된다 — 반드시 `https://` 페이지여야 한다. 그래서 이 파일이 있다.
+  ⛔ 앱(`src/`)을 한 줄도 안 건드린다. `privacy.html` 과 같은 «따로 선» 정적 페이지다.
+  📌 여기 적힌 보관 기간은 `privacy.html` ＋ `ocr-proxy/worker.js` 의 «실제 값»이다. 지어낸 게 아니다.
+-->
+<style>
+  :root {
+    --bg: #f5f6f4; --card: #ffffff; --ink: #3d3830; --sub: #6b6a63; --faint: #9a9990;
+    --brown: #6b4f3a; --line: #e8e9e4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16180f; --card: #1e2118; --ink: #ecebdf; --sub: #aab0a0; --faint: #7c8274; --brown: #ca9d70; --line: #2b3026; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+    line-height: 1.75; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 22px 80px; }
+  .eyebrow { font-size: 13px; letter-spacing: .04em; color: var(--brown); font-weight: 700; margin: 0 0 8px; }
+  h1 { font-size: 26px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.02em; }
+  .updated { font-size: 13px; color: var(--faint); margin: 0 0 26px; }
+  .lead {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 18px 20px; font-size: 15px; color: var(--ink); margin-bottom: 30px;
+  }
+  .lead b { color: var(--brown); }
+  h2 { font-size: 17px; font-weight: 800; margin: 30px 0 8px; letter-spacing: -.01em; }
+  p, li { font-size: 14.5px; color: var(--sub); }
+  ul { margin: 6px 0; padding-left: 20px; }
+  li { margin: 4px 0; }
+  b { color: var(--ink); }
+  a { color: var(--brown); }
+  .act {
+    background: var(--card); border: 2px solid var(--brown); border-radius: 16px;
+    padding: 20px; margin: 22px 0 8px;
+  }
+  .act h2 { margin-top: 0; }
+  .mail {
+    display: block; text-align: center; background: var(--brown); color: #fffdf8;
+    padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 800;
+    text-decoration: none; margin: 14px 0 6px;
+  }
+  .did {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; font-size: 13px; margin: 10px 0 0; word-break: break-all;
+  }
+  /* ⛔ 2026-08-19 창업자 폰에서 잡힘 — 번호가 두 줄로 넘어가면 «단추가 마지막 줄에 겹쳤다».
+     원인 = 단추가 글자 흐름에 붙는 인라인 요소였다. `block` 으로 줄을 바꿔 아래로 내린다. */
+  .did code { font-size: 14px; color: var(--brown); font-weight: 700; display: block; margin: 4px 0 0; }
+  button.copy {
+    display: block; margin-top: 12px; padding: 11px 16px; font-size: 13.5px; font-weight: 700;
+    border: 1px solid var(--line); border-radius: 9px; background: var(--card); color: var(--ink);
+  }
+  footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--faint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">HANKKI · 한끼</p>
+  <h1>계정 및 데이터 삭제</h1>
+  <p class="updated">한끼(HANKKI) · 2026년 8월 19일</p>
+
+  <div class="lead">
+    한끼는 <b>회원가입·로그인이 없어</b> 별도의 계정을 만들지 않습니다.
+    앱에서 저장한 데이터(레시피·냉장고·장보기·요리 기록·일기 등)는 <b>사용자 기기에만</b> 저장되며,
+    <b>앱을 삭제하면 함께 삭제</b>됩니다.<br /><br />
+    글자 인식(AI 스캔) 기능을 이용한 경우, 무료 이용 횟수 확인을 위한 <b>임의의 기기 식별자</b>가
+    서버에 저장됩니다. 아래 절차로 삭제를 요청하실 수 있습니다.
+  </div>
+
+  <div class="act">
+    <h2>1. 삭제 요청 방법</h2>
+    <p>아래 이메일로 삭제를 요청해 주세요. 별도 양식은 없습니다.</p>
+    <a class="mail" href="mailto:annyeong.hankki@gmail.com?subject=%5B%ED%95%9C%EB%81%BC%5D%20%EB%8D%B0%EC%9D%B4%ED%84%B0%20%EC%82%AD%EC%A0%9C%20%EC%9A%94%EC%B2%AD">annyeong.hankki@gmail.com</a>
+    <p>아래 기기 식별자를 함께 보내 주시면 더 빠르게 처리됩니다.</p>
+    <div class="did" id="didBox">기기 식별자를 확인하는 중…</div>
+  </div>
+
+  <h2>2. 삭제되는 데이터</h2>
+  <ul>
+    <li><b>기기에 저장된 데이터</b> — 레시피·냉장고·장보기·요리 기록·일기·꾸미기·프로필. 앱 삭제 시 함께 삭제됩니다</li>
+    <li><b>서버에 저장된 데이터</b> — 임의의 기기 식별자 및 이용 횟수. 요청 시 즉시 삭제합니다</li>
+  </ul>
+  <p>한끼는 이름·이메일·전화번호·위치 등 개인식별정보를 <b>수집하지 않습니다.</b></p>
+
+  <h2>3. 앱에서 직접 삭제</h2>
+  <p>계정이 없으므로 <b>앱 삭제가 곧 전체 데이터 삭제</b>입니다.
+    보관이 필요한 데이터는 삭제 전 앱의 <b>설정 → 백업</b>에서 파일로 저장해 주세요.</p>
+
+  <h2>4. 보관 기간</h2>
+  <p>삭제를 요청하지 않으셔도 아래 기간 경과 후 자동으로 삭제됩니다.</p>
+  <ul>
+    <li><b>사진</b> — 저장하지 않습니다(글자 인식 후 즉시 폐기)</li>
+    <li><b>기기 식별자 및 이용 횟수</b> — 40일</li>
+    <li><b>무료 이용권 잔여 횟수</b> — 잔여 횟수가 남아 있는 동안 최대 1년</li>
+    <li><b>접속 IP</b> — 2분(과도한 요청 방지 목적)</li>
+  </ul>
+  <p>자세한 내용은 <a href="./privacy.html">개인정보처리방침</a>을 참고해 주세요.</p>
+
+  <h2>5. 처리 기간</h2>
+  <p>요청 접수 후 지체 없이 처리하며, <b>10일 이내</b>에 처리 결과를 회신드립니다.</p>
+
+  <footer>
+    © 2026 한끼(HANKKI) · 문의 <a href="mailto:annyeong.hankki@gmail.com">annyeong.hankki@gmail.com</a>
+  </footer>
+</div>
+
+<script>
+// 기기 식별자를 화면에 표시한다 — 사용자가 앱 안에서 이 값을 볼 방법이 없다.
+//   ⭐ 같은 주소(origin)라 앱이 저장해 둔 값을 이 페이지가 그대로 읽는다.
+//   ⛔ 어디로도 전송하지 않는다. 화면에 보여주기만 한다.
+(function () {
+  var box = document.getElementById('didBox')
+  var id = null
+  try { id = localStorage.getItem('hankki:did') } catch (e) { id = null }
+  if (!id) {
+    box.innerHTML = '<b>기기 식별자</b><br />이 브라우저에서는 확인되지 않습니다. 식별자 없이 요청하셔도 됩니다.'
+    return
+  }
+  box.innerHTML = '<b>기기 식별자</b><code id="didVal">' + id + '</code>'
+  var btn = document.createElement('button')
+  btn.className = 'copy'; btn.textContent = '복사'
+  btn.onclick = async function () {
+    try { await navigator.clipboard.writeText(id); btn.textContent = '복사됨 ✓' }
+    catch (e) { btn.textContent = '길게 눌러 복사해 주세요' }
+  }
+  box.appendChild(btn)
+})()
+</script>
+</body>
+</html>

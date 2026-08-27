@@ -41,11 +41,24 @@ if (groups.length !== declared) {
 if (groups.length < 10) { console.error('[foodtab] ❌ 그룹을 못 읽었다 — FOOD_ICON_GROUPS 모양이 바뀌었나?'); process.exit(1) }
 
 // ── 이름표 읽기 (ICON_RULES 첫 키워드 + EXTRA_NAMES) ──
+// ⛔⛔ [2026-08-26 고침] **우선순위가 앱과 «거꾸로»였다** — 그래서 검사가 픽커에 안 뜨는 이름을 재고 있었다.
+//    앱 `FOOD_NAMES` = `{ ...EXTRA_NAMES, ...규칙 }` → **규칙이 EXTRA 를 덮는다**(규칙이 있으면 EXTRA 는 죽는다).
+//    여기는 EXTRA 를 나중에 덮어써서 **17개 키가 앱과 다른 이름으로 잡혔다.**
+//    🔢 그래서 「묵은지볶음」이 픽커에 «두 컷»(fe_325·fe_203) 실려 있는데도 조용했다 —
+//       검사엔 `묵은지 볶음`(EXTRA·띄어쓰기) ↔ `묵은지볶음` 이라 다른 이름으로 보였다.
+//    📌 규칙 18 ⓘ 그대로 — 통과했는데 «앱이 보여주는 것»을 안 재고 있었다.
 const names = {}
 const rBlock = src.slice(src.indexOf('const ICON_RULES = ['))
-for (const m of rBlock.matchAll(/\[\[\s*'([^']+)'[^\]]*\],\s*'([^']+)'\]/g)) if (!names[m[2]]) names[m[2]] = m[1]
 const eStart = src.indexOf('EXTRA_NAMES = {')
 if (eStart > 0) for (const m of src.slice(eStart, src.indexOf('\n}', eStart)).matchAll(/([\w]+)\s*:\s*'([^']+)'/g)) names[m[1]] = m[2]
+{
+  const 규칙본것 = new Set()   // ⭐ 규칙은 «맨 위 첫 줄»이 이름표가 된다(앱과 같다)
+  for (const m of rBlock.matchAll(/\[\[\s*'([^']+)'[^\]]*\],\s*'([^']+)'\]/g)) {
+    if (규칙본것.has(m[2])) continue
+    규칙본것.add(m[2])
+    names[m[2]] = m[1]
+  }
+}
 
 // 🥕🥕 [2026-08-16] 재료 컷(`ig_`)도 «같이 본다» — 이게 없어서 3일 넘게 조용히 샜다.
 //   ⛔ 2026-08-12 에 재료 171컷을 넣었는데 **픽커에 한 컷도 안 실렸고**, 이 검사는
@@ -60,7 +73,7 @@ const ingSrc = readFileSync(path.join(root, 'src/data/ingIcons.js'), 'utf8')
   for (const m of body.matchAll(/\['([^']+)',\s*'([^']+)'\]/g)) if (!names[m[2]]) names[m[2]] = m[1]
 }
 const isIng = (k) => /^ig_/.test(k)
-const isPhoto = (k) => /^(fe|fh|fy|fj|fi|fb)_/.test(k)
+const isPhoto = (k) => /^(fe|fh|fy|fj|fi|fb|gr)_/.test(k)
 const 그림있나 = (k) => (isIng(k) ? existsSync(path.join(ING, `${k}.png`)) : existsSync(path.join(PHOTO, `${k}.png`)))
 let fail = 0
 
@@ -88,7 +101,7 @@ if (noname.length) { console.error(`[foodtab] ❌ 이름표 없는 컷 ${noname.
 else console.log('[foodtab] ✓ 이름표 전부 있다')
 
 // ── ④ 내려둔 것(정보) ──
-const files = readdirSync(PHOTO).filter((f) => /^(fe|fh|fy|fj|fi|fb)_.*\.png$/.test(f)).map((f) => f.replace('.png', ''))
+const files = readdirSync(PHOTO).filter((f) => /^(fe|fh|fy|fj|fi|fb|gr)_.*\.png$/.test(f)).map((f) => f.replace('.png', ''))
 const shelved = files.filter((k) => !home.has(k))
 console.log(`[foodtab] · 픽커에 실린 음식 ${files.length - shelved.length}컷 / 파일 ${files.length}장`)
 console.log(`[foodtab] · 일부러 내려둔 것 ${shelved.length}컷 — 같은 요리를 두 번 그린 뒷세대. 파일은 보존(저장된 레시피 보호)`)
@@ -169,8 +182,12 @@ console.log('✅ 음식 탭 통과 — 중복 0 · 깨진 참조 0 · 빈 이름
 //       📌 CLAUDE.md 그대로 = **«두 번 밟은 것»만 사전에 넣는다.**
 const 못박기 = [
   ['탕수육', 'fe_91'],      // ⛔ 「수육」에 먹혀 보쌈 고기가 떴다
-  ['찹쌀탕수육', 'fe_47'],   // ⛔ 꿔바로우가 맞다 — 「탕수육」보다 구체적이라 위에 있어야 한다
-  ['수육', 'fe_125'],       // ✅ 이건 그대로여야 한다(고치다 반대로 깨뜨리지 않게)
+  ['찹쌀탕수육', 'gr_425'],  // ⛔ 꿔바로우가 맞다 — 「탕수육」보다 구체적이라 위에 있어야 한다 (2026-08-27 fe_47 → gr_425 로 갈아끼움)
+  // ✅ 이건 «먹히지 않아야» 한다는 뜻의 못박기다(고치다 반대로 깨뜨리지 않게).
+  //    ⭐ 2026-08-27 = fe_125(옛 일러스트) → gr_441(돼지고기수육 사진)로 갈아끼웠다.
+  //       📮 창업자 = *"수육은 돼지고기수육(새컷)하면 될 것 같아"*
+  //       ⛔ 이 게이트가 «맞게» 잡았다 — 키를 갈면서 못박기를 안 옮겼다. 뜻은 그대로, 값만 옮긴다.
+  ['수육', 'gr_441'],
   // 🍲 2026-08-18 — 창업자 *"누룽지 삼계탕에 이모지같은게 들어있어"* 를 파다 나왔다.
   //    「누룽지삼계탕」이 «누룽지»(fe_114 오징어누룽지)에 먹혀 엉뚱한 그림이 붙고 있었다.
   //    📌 「탕수육 ↔ 수육」과 **같은 모양**이라 사전에 넣는다(두 번 밟은 자리다).
@@ -182,14 +199,14 @@ const 못박기 = [
   //    📌 「탕수육←수육」·「누룽지삼계탕←누룽지」와 한 뿌리다.
   ['꽃게간장조림', 'fe_306'],
   // 🍱 2026-08-18 시트2 — 넓은 낱말에 먹히기 쉬운 여섯. 반대 방향까지 함께 못 박는다.
-  ['항정살간장조림', 'fe_308'], ['닭고기데리야끼조림', 'fe_309'], ['백순대볶음', 'fe_313'],
-  ['오이샌드위치', 'fe_311'], ['오픈샌드위치', 'fe_312'], ['뼈없는양념돼지갈비구이', 'fe_310'],
+  ['항정살간장조림', 'gr_053'], ['닭고기데리야끼조림', 'gr_054'], ['백순대볶음', 'gr_091'],
+  ['오이샌드위치', 'gr_072'], ['오픈샌드위치', 'gr_085'], ['뼈없는양념돼지갈비구이', 'gr_108'],
   ['꽃게조림', 'fe_306'],    // 창업자가 줄여 부를 수 있어 같이 못 박는다
-  ['장조림', 'fe_34'],       // ✅ 이건 그대로여야 한다 — 꽃게 규칙이 장조림을 통째로 밀어내지 않게
+  ['장조림', 'gr_386'],      // ✅ 이건 그대로여야 한다 — 꽃게 규칙이 장조림을 통째로 밀어내지 않게 (2026-08-27 fe_34 → gr_386)
   // 🍚 2026-08-18 — 「나물비빔밥」이 «비빔밥»(fh_k01 돌솥비빔밥)에 먹혀 **둘이 같은 그림**이었다.
   //    같은 9월에 둘 다 열리는데 카드가 똑같아 보였다. 창업자 전용 컷으로 갈랐다.
-  ['나물비빔밥', 'fe_307'],
-  ['돌솥비빔밥', 'fh_k01'],  // ✅ 이건 그대로여야 한다 — 나물 규칙이 비빔밥을 통째로 밀어내지 않게
+  ['나물비빔밥', 'gr_338'],   // 2026-08-27 fe_307 → gr_338 로 갈아끼움
+  ['돌솥비빔밥', 'gr_048'],  // ✅ 이건 그대로여야 한다 — 나물 규칙이 비빔밥을 통째로 밀어내지 않게
 ]
 {
   const body = src.slice(src.indexOf('const ICON_RULES = ['), src.indexOf('export function guessFoodIcon'))

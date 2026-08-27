@@ -80,11 +80,11 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
         <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
           <div className="emoji-sheet-head">
             <span>클라우드 저장</span>
-            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 600 }}>닫기</button>
+            <button className="press" onClick={onClose} style={{ color: 'var(--text-sub)', fontSize: 15, fontWeight: 600 }}>닫기</button>
           </div>
 
           <div style={{ padding: '2px 16px 0' }}>
-            {사람 === undefined && <div className="t-sub" style={{ fontSize: 13, padding: '10px 0' }}>준비하는 중…</div>}
+            {사람 === undefined && <div className="t-sub" style={{ fontSize: 15, padding: '10px 0' }}>준비하는 중…</div>}
 
             {사람 === null && (
               <>
@@ -105,7 +105,7 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
                 <button
                   className="press"
                   onClick={() => set자세히((v) => !v)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-sub)', fontSize: 12.5, fontWeight: 600, padding: '6px 0', marginBottom: 자세히 ? 8 : 14 }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-sub)', fontSize: 14.5, fontWeight: 600, padding: '6px 0', marginBottom: 자세히 ? 8 : 14 }}
                 >
                   {자세히 ? '접기' : '로그인하면 새 폰에서도 이어서 써요'}
                   <Icon name={자세히 ? 'chevron-up' : 'chevron-down'} size={15} color="var(--sand)" />
@@ -114,7 +114,7 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
                     ⛔ 같은 내용을 두 곳에서 다르게 쓰면 유저가 「어느 게 맞지?」가 된다.
                        (⛓「같은 기능은 탭이 달라도 같은 이름」과 같은 규칙) */}
                 {자세히 && (
-                  <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '14px 15px', marginBottom: 14, fontSize: 12.5, lineHeight: 1.85, whiteSpace: 'pre-line' }}>
+                  <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '14px 15px', marginBottom: 14, fontSize: 14.5, lineHeight: 1.85, whiteSpace: 'pre-line' }}>
                     · 새 폰이나 패드에 다시 깔아도 레시피 · 일기 · 냉장고 · 장보기가 그대로 이어져요.{'\n'}
                     · 꾸민 표지도 같이 저장돼요 (스티커 · 글씨 · 배경).{'\n'}
                     · <b>직접 넣은 사진은 저장되지 않아요.</b> 사진은 이 폰과 백업 파일에 그대로 남아요.{'\n'}
@@ -130,10 +130,10 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                   <Icon name="cloud" size={20} color="var(--brown)" stroke={2} />
-                  <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ flex: 1, minWidth: 0, fontSize: 15.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {사람.이름 || '로그인됨'}
                   </div>
-                  <button className="press" disabled={!!바쁨} onClick={나가자} style={{ color: 'var(--text-sub)', fontSize: 12.5, fontWeight: 600 }}>로그아웃</button>
+                  <button className="press" disabled={!!바쁨} onClick={나가자} style={{ color: 'var(--text-sub)', fontSize: 14.5, fontWeight: 600 }}>로그아웃</button>
                 </div>
 
                 {/* ⭐⭐ 두 판을 «나란히» 보여준다 — 이게 「고르게 한다」의 실체다 */}
@@ -150,21 +150,21 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
                 <button className="btn-primary press" disabled={!!바쁨} onClick={올리자}>
                   {바쁨 === '올리기' ? '올리는 중…' : '📱 이 폰 것으로 클라우드 덮기'}
                 </button>
-                <div className="t-sub" style={{ fontSize: 11.5, lineHeight: 1.5, margin: '7px 2px 12px' }}>
+                <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.5, margin: '7px 2px 12px' }}>
                   클라우드에 있던 건 <b>이 폰 것으로 바뀌어요.</b>
                 </div>
 
                 <button className="btn-ghost press" style={{ width: '100%' }} disabled={!!바쁨 || !구름?.있나} onClick={내려받자}>
                   {바쁨 === '내려받기' ? '내려받는 중…' : '☁️ 클라우드 것으로 이 폰 덮기'}
                 </button>
-                <div className="t-sub" style={{ fontSize: 11.5, lineHeight: 1.5, margin: '7px 2px 0' }}>
+                <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.5, margin: '7px 2px 0' }}>
                   이 폰에 있던 건 <b>클라우드 것으로 바뀌어요.</b> 남기고 싶은 게 있으면 <b>먼저 위 단추</b>를 눌러 올려두세요.
                 </div>
               </>
             )}
 
             {탈 && (
-              <div style={{ marginTop: 12, background: 'var(--cream)', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, lineHeight: 1.6, color: 'var(--text)' }}>
+              <div style={{ marginTop: 12, background: 'var(--cream)', borderRadius: 10, padding: '10px 12px', fontSize: 14.5, lineHeight: 1.6, color: 'var(--text)' }}>
                 {탈}
               </div>
             )}
@@ -178,11 +178,11 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
 function 판({ 제목, 레시피, 일기, 언제 }) {
   return (
     <div style={{ flex: 1, background: 'var(--cream)', borderRadius: 12, padding: '11px 12px' }}>
-      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--brown)' }}>{제목}</div>
-      <div style={{ fontSize: 13, marginTop: 5, lineHeight: 1.5 }}>
+      <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--brown)' }}>{제목}</div>
+      <div style={{ fontSize: 15, marginTop: 5, lineHeight: 1.5 }}>
         레시피 <b>{레시피}</b><br />일기 <b>{일기}</b>
       </div>
-      <div className="t-sub" style={{ fontSize: 11, marginTop: 4 }}>{언제}</div>
+      <div className="t-sub" style={{ fontSize: 14, marginTop: 4 }}>{언제}</div>
     </div>
   )
 }

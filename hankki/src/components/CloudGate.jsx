@@ -109,8 +109,8 @@ export default function CloudGate({ onDone }) {
                  게다가 로그인 화면에서 «기능 설명»을 하면 그 자체로 낯설다. 앱들은 이름과 단추만 둔다.
               📌 「왜 로그인하나」는 아래 «작은 줄»로 내렸다 — 궁금한 사람만 편다. */}
           <div style={{ textAlign: 'center', marginBottom: 26 }}>
-            <div style={{ fontSize: 30, fontWeight: 800, color: 'var(--brown)', letterSpacing: '-.02em' }}>한끼</div>
-            <div className="t-sub" style={{ fontSize: 14, marginTop: 7 }}>{APP_TAGLINE}</div>
+            <div style={{ fontSize: 31, fontWeight: 800, color: 'var(--brown)', letterSpacing: '-.02em' }}>한끼</div>
+            <div className="t-sub" style={{ fontSize: 15, marginTop: 7 }}>{APP_TAGLINE}</div>
           </div>
 
           {/* 🔵🔴🟡🟢 구글 규정 단추 — 창업자가 보내 준 다른 앱 캡처 그대로(2026-08-21).
@@ -123,7 +123,7 @@ export default function CloudGate({ onDone }) {
               ✅ 「나중에 하기」 = 미루는 것이 «로그인»뿐임이 그대로 읽힌다. */}
           <button
             className="press" onClick={() => set물음(true)} disabled={!!바쁨}
-            style={{ width: '100%', marginTop: 13, color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600, padding: '6px 0' }}
+            style={{ width: '100%', marginTop: 13, color: 'var(--text-sub)', fontSize: 15.5, fontWeight: 600, padding: '6px 0' }}
           >
             나중에 하기
           </button>
@@ -133,7 +133,7 @@ export default function CloudGate({ onDone }) {
           <button
             className="press"
             onClick={() => set열림((v) => !v)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%', color: 'var(--text-sub)', fontSize: 12.5, padding: '6px 0', marginTop: 22, marginBottom: 열림 ? 10 : 0 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%', color: 'var(--text-sub)', fontSize: 14.5, padding: '6px 0', marginTop: 22, marginBottom: 열림 ? 10 : 0 }}
           >
             로그인하면 새 폰에서도 이어서 써요
             <Icon name={열림 ? 'chevron-up' : 'chevron-down'} size={15} color="var(--sand)" />
@@ -146,7 +146,7 @@ export default function CloudGate({ onDone }) {
                  안내문이 아니다. 유저는 갈래를 배우려고 이걸 읽지 않는다.
               ⭐ 문체는 해요체로 통일(절대원칙 30). ⛔「합니다」체를 섞지 않는다. */}
           {열림 && (
-            <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '14px 15px', marginTop: 2, marginBottom: 4, fontSize: 12.5, lineHeight: 1.85, whiteSpace: 'pre-line' }}>
+            <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '14px 15px', marginTop: 2, marginBottom: 4, fontSize: 14.5, lineHeight: 1.85, whiteSpace: 'pre-line' }}>
               · 새 폰이나 패드에 다시 깔아도 레시피 · 일기 · 냉장고 · 장보기가 그대로 이어져요.{'\n'}
               · 꾸민 표지도 같이 저장돼요 (스티커 · 글씨 · 배경).{'\n'}
               · <b>직접 넣은 사진은 저장되지 않아요.</b> 사진은 이 폰과 백업 파일에 그대로 남아요.{'\n'}
@@ -158,8 +158,8 @@ export default function CloudGate({ onDone }) {
         // ⭐ 로그인해 보니 클라우드에 «자기 것»이 있었다 — 새 폰에서 제일 반가운 화면이다
         <>
           <div style={{ textAlign: 'center', marginBottom: 22 }}>
-            <div style={{ fontSize: 21, fontWeight: 800, lineHeight: 1.4 }}>저장해둔 게 있어요</div>
-            <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.65, marginTop: 9 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.4 }}>저장해둔 게 있어요</div>
+            <div className="t-sub" style={{ fontSize: 15.5, lineHeight: 1.65, marginTop: 9 }}>
               레시피 <b>{찾음.레시피}</b>개 · 일기 <b>{찾음.일기}</b>장
             </div>
           </div>
@@ -168,7 +168,7 @@ export default function CloudGate({ onDone }) {
           </button>
           <button
             className="press" onClick={지나가기} disabled={!!바쁨}
-            style={{ width: '100%', marginTop: 13, color: 'var(--text-sub)', fontSize: 13.5, fontWeight: 600, padding: '6px 0' }}
+            style={{ width: '100%', marginTop: 13, color: 'var(--text-sub)', fontSize: 15.5, fontWeight: 600, padding: '6px 0' }}
           >
             나중에 할래요
           </button>
@@ -176,7 +176,7 @@ export default function CloudGate({ onDone }) {
       )}
 
       {탈 && (
-        <div style={{ marginTop: 16, background: 'var(--cream)', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, lineHeight: 1.6, textAlign: 'center' }}>
+        <div style={{ marginTop: 16, background: 'var(--cream)', borderRadius: 10, padding: '10px 12px', fontSize: 14.5, lineHeight: 1.6, textAlign: 'center' }}>
           {탈}
         </div>
       )}

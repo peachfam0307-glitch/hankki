@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toJpeg } from 'html-to-image'
 import { fontCSS, fontOptFrom } from '../fontEmbed'
 import Icon from './Icon'
+import { useModalBack } from '../useBackHandler'
 // ⛔ UI엔 유니코드 이모지를 쓰지 않는다 — 우리 아이콘·스티커만(CLAUDE.md 핀).
 //    v8.63에서 앱 전체를 정리할 때 이 시트는 '보류'로 빠져 🔄💌🖼🐻🐧가 남아 있었다(2026-07-29 정리).
 import uiDuoHi from '../assets/stickers/photo/gp_duohi.png'
@@ -387,7 +388,27 @@ const 찬높이 = (el) => {
 //   ⚠️ `imagePos`·`imageZoom` 을 비운다 — 옛 사진 기준 좌표는 새 그림에서 뜻이 없다
 //      (`RecipeDetailScreen.onCoverPhoto` 가 같은 이유로 같은 일을 한다).
 //   📌 부르는 화면이 둘(레시피 상세 · 레꾸자랑)이라 **여기 한 곳**에서만 만든다.
-export const 카드표지로 = (img) => ({ thumb: 'photo', image: img, imageFit: 'whole', imagePos: '', imageZoom: '', touched: true })
+//
+// 🎴🎴 **[창업자 확정 2026-08-23] 카드를 표지로 올리면 «레꾸 스티커는 없앤다».**
+//   📮 창업자 = *"자랑카드를 표지로 올리면 레꾸스티커는 없어지는게 맞아.
+//      대신 자동등록된 음식아이콘은 살아있어야해."*
+//   📮 그 앞 제보(영상) = *"배경되돌리기?지우기를 하면 백지가 되어야해. 그런데 안바뀌고 겹겹히 쌓이잖아."*
+//
+//   ⭐⭐ **표지는 «세 겹»인데 카드가 오면 셋 중 둘이 뜻을 잃는다.**
+//      ① 배경 음식 아이콘(`icon` · 제목에서 자동) — ②와 «같은 자리». 카드가 덮는다
+//      ② 표지 사진·카드(`image`)                  — 카드가 여기 앉는다
+//      ③ 레꾸 스티커(`decor`)                      — 늘 «위»에 얹힌다 → **카드 위에 그대로 겹친다**
+//      🔢 실측(창업자 영상 · `_repro-레꾸겹침-0823`) = 카드가 판 전체(374×374)에 깔리고
+//         그 위에 옛 스티커가 그대로 그려져 **제목이 두 번** 보였다.
+//   ✅ 그래서 ③을 비운다 — 카드는 **이미 완성된 한 장**이라 그 위에 옛 스티커를 얹을 이유가 없다.
+//
+//   ⛔⛔ **`icon` 은 «절대» 안 건드린다** (창업자가 콕 집었다) —
+//      카드를 지우면(「배경 음식 아이콘 되돌리기」·아이콘 고르기) **자동 음식 아이콘이 도로 나와야 한다.**
+//      `decorBg`(배경지)도 그대로 둔다 — 카드를 지웠을 때 깔려 있어야 할 바닥이다.
+//   ⚠️ 스티커는 «되돌릴 수 없다» → 부르는 쪽에서 토스트로 알린다(`카드표지토스트`). 조용히 없애지 않는다.
+export const 카드표지로 = (img) => ({ thumb: 'photo', image: img, imageFit: 'whole', imagePos: '', imageZoom: '', decor: [], touched: true })
+// 🔔 잃은 것을 «말한다» — 스티커가 있었을 때만. 없었으면 군말이 된다.
+export const 카드표지토스트 = (r) => (r?.decor?.length ? '카드를 표지로 저장했어요 · 레꾸 스티커는 치웠어요' : '카드를 표지로 저장했어요')
 
 function Card({ char, no, title, tags, cover, recipe, skin }) {
   const K = skin
@@ -839,6 +860,16 @@ export function RecipeCard({ recipe }) {
 }
 
 export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
+  // ⛔⛔ **뒤로가기가 이 카드를 못 보고 «홈»으로 샜다** (창업자 2026-08-23
+  //    *"레꾸자랑 갑자기 홈가는게 뒤로가기할때야. 닫기누르면 그대로있어"*)
+  //   ⭐⭐ 창업자가 「닫기 ↔ 뒤로가기」로 갈라준 게 답을 줬다 —
+  //      닫기는 `onClose` 를 직접 부르니 멀쩡하고, 뒤로가기는 «층»을 타는데 이 카드가 그 층에 없었다.
+  //      → `App.jsx` 의 4번 갈래(「다른 탭이면 홈으로」)로 떨어진다.
+  //   ⛔ v11.23 에서 고친 건 «선택 시트»(꾸민 표지/랜덤 카드 고르는 창)뿐이라 여기는 그대로 남아 있었다.
+  //   ⭐ 이 컴포넌트는 «열릴 때만» 붙는다(`{share && <ShareDrawCard …>}`) → 마운트 = 열림.
+  //      그래서 `useModalBack` 이 맞다(`useLayerBack` 은 늘 붙어 있는 것용).
+  //   ⭐ 레꾸자랑·레시피 상세 «두 곳»이 이 컴포넌트를 쓴다 — 여기서 고치면 둘 다 고쳐진다.
+  useModalBack(onClose)
   const title = recipe?.title || '오늘의 한 끼'
   const tags = useMemo(() => tagsOf(recipe), [recipe])
   const [draw, setDraw] = useState(drawState)

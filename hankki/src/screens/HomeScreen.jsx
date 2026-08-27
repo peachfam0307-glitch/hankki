@@ -73,7 +73,11 @@ function WeekBox({ w, 기본, open }) {
       <div className="weekly-row">
         {w.items.map((r) => (
           <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
-            <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
+            {/* 🍱 [2026-08-23 창업자] *"자주해먹는요리 요리이모지들어간 그림 크기 다른칸이비해 작음.
+                조금만더크게수정."* — 맞다. 판은 넓은데 그림만 `56%` 라 가운데가 휑했다.
+                ⛔ 카드 폭을 키우지 않는다 — 한 줄에 세 칸 보이는 게 이 줄의 값어치다.
+                ✅ 판 «안»에서 그림만 키운다(56% → 70%). 이름표 자리도 그대로다. */}
+            <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2.5rem" iconSize="70%" showDecor />
             <div className="name">{r.title}</div>
           </button>
         ))}
@@ -222,19 +226,52 @@ export default function HomeScreen() {
           </div>
           <TabTips tab="home" />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {/* 가져오기 — 제일 자주 쓰는 기능이라 맨 위에 */}
-          <button
-            className="press"
-            data-coach="import"
-            onClick={() => nav.push({ name: 'import' })}
-            aria-label="가져오기"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--brown)', color: '#fff', fontSize: 13, fontWeight: 700, padding: '8px 13px', borderRadius: 999 }}
-          >
-            <Icon name="plus" size={16} color="#fff" stroke={2.4} /> 가져오기
+        {/* 🏠🏠 [창업자 확정 2026-08-22] 상단바 오른쪽 = 🔍 검색 · 🗃 임시보관함 · ⚙ 설정
+         *
+         * 📮 창업자 = *"가져오기 위에 버튼이 꼭 필요한가?"* → *"가져오기 버튼 없애고 **검색 아이콘을 넣어도** 될 것 같은데"*
+         *    → *"**그옆에 임시보관함 아이콘을 넣던가**"*
+         *
+         * ⛔⛔ **「＋ 가져오기」는 «두 곳»에 있었다** — 여기(홈에서만) ＋ 하단바 파란 원(모든 탭에서).
+         *    둘 다 같은 곳(`import`)으로 간다. 그리고 우리는 **중복인 걸 «알면서» 뒀다** —
+         *    `BottomNav.jsx` 주석에 *"B 안이면 홈으로 갔다 와야 한다(홈 맨 위에 「＋ 가져오기」가 있긴 하다)"*
+         *    라고 적어놓고 하단바 쪽을 채택했다. **그러면 이건 «남은 것»이지 «필요한 것»이 아니다.**
+         *
+         * 🔢 이 셋으로 바꾸면 홈에서 **줄이 «둘» 사라진다**(검색바 47px ＋ 임시보관함 43px).
+         *    실측 = 주간 카드가 471 → 364px = **107px 위로**.
+         *    ⭐ 그리고 **다른 탭과 말이 맞는다** — 일기·레시피는 이미 상단바 돋보기를 쓴다. 홈만 혼자 큰 검색바였다.
+         *
+         * ⛔ 안내코치 첫 단계가 이 자리를 짚고 있었다(*"레시피 가져오기 · 여기서 시작!"*).
+         *    빼기만 하면 **첫 걸음부터 허공을 가리킨다** → `data-coach="import"` 를 **하단바 단추로 옮겼다**.
+         *    ⭐ 오히려 낫다 — 하단바 단추는 «어느 탭에서든» 있다.
+         */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <button className="icon-btn press" onClick={() => nav.go('search')} aria-label="검색">
+            <Icon name="search" size={22} />
           </button>
-          {/* 설정 — 맨 오른쪽 끝(창업자 2026-07-29). 아바타는 왼쪽 브랜드 자리로 옮겼다.
-              미정리 레시피는 설정의 '미정리' 통계로도 계속 열린다. */}
+          {/* 🗃 임시보관함 — 📮 *"INBOX 나도 어딨는지 모르는데"*(2026-08-21) 라 «늘» 보여야 한다.
+           *    ⛔ 그래서 「0개면 숨기기」로 되돌리지 «않는다». 자리만 옮긴 것이다.
+           *    ⭐ 글자를 빼면 «몇 개 남았는지»가 사라진다 → **숫자 뱃지**로 되살린다.
+           *       (2026-08-13 AI 스캔 잔량과 같은 생각 — *"유저가 몇 장 남았는지 스스로 알아야 한다"*) */}
+          <button
+            className="icon-btn press"
+            onClick={() => nav.push({ name: 'inbox' })}
+            aria-label={unsortedN > 0 ? `임시보관함 · 정리 안 한 레시피 ${unsortedN}개` : '임시보관함'}
+            style={{ position: 'relative' }}
+          >
+            <Icon name={unsortedN > 0 ? 'edit' : 'inbox'} size={22} />
+            {unsortedN > 0 && (
+              <span
+                style={{
+                  position: 'absolute', top: 2, right: 0, minWidth: 16, height: 16, padding: '0 4px',
+                  borderRadius: 999, background: 'var(--brown)', color: '#fff',
+                  fontSize: 12, fontWeight: 800, lineHeight: '16px', textAlign: 'center',
+                }}
+              >
+                {unsortedN > 99 ? '99+' : unsortedN}
+              </span>
+            )}
+          </button>
+          {/* 설정 — 맨 오른쪽 끝(창업자 2026-07-29). 아바타는 왼쪽 브랜드 자리로 옮겼다. */}
           <button className="icon-btn press" onClick={() => nav.go('profile')} aria-label="설정">
             <Icon name="settings" size={22} />
           </button>
@@ -246,29 +283,21 @@ export default function HomeScreen() {
       <TabTalk tab="home" />
 
       <div className="pad">
-        {/* 1. 검색 */}
-        <button
-          className="searchbar press"
-          style={{ width: '100%', marginTop: 4 }}
-          onClick={() => nav.go('search')}
-        >
-          <Icon name="search" size={19} color="var(--text-sub)" />
-          <span style={{ fontSize: 14.5 }}>레시피, 재료, 태그를 검색해 보세요.</span>
-        </button>
-
-        {/* 아직 정리 안 한 레시피(예전 'Inbox') — 홈·레시피 탭 목록엔 안 뜨는 것들이라
-            입구가 없으면 "저장했는데 사라졌다"가 된다. 0개면 아예 안 보이니 평소 화면은 그대로. */}
-        {unsortedN > 0 && (
-          <button
-            className="press"
-            onClick={() => nav.push({ name: 'inbox' })}
-            style={{ width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderRadius: 14, background: 'var(--cream)', border: 'none', textAlign: 'left' }}
-          >
-            <Icon name="edit" size={18} color="var(--brown)" stroke={1.9} />
-            <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700 }}>정리 안 한 레시피 {unsortedN}개</span>
-            <Icon name="chevron-right" size={17} color="var(--sand)" />
-          </button>
-        )}
+        {/* 📏📏 [창업자 확정 2026-08-22] 검색바 줄과 임시보관함 줄을 **상단바 아이콘으로 올렸다**(위 참조).
+         *
+         * 📮 창업자 = *"위에 높이가 낮은 상자들이 몰려있으니까 지저분해 보이지 않아? 눈에도 잘 안들어오고"*
+         *    ＋ *"다닥다닥 붙어있어서"*
+         *
+         * 🔢 손보기 «전» 실측 (390×844 · 홈 위에서부터) — 창업자 말이 숫자로 그대로 나왔다:
+         *    검색바 47 · 임시보관함 43 · 소식 62 · 안해봤어요 48 · 오늘뭐해먹지 98 · 이번주 807
+         *    → **키 110px 이하가 «다섯 연달아»** · 틈은 10~14px
+         *    ⭐⭐ 키가 비슷한 상자가 셋 이상 연달으면 눈이 «하나씩 세지 않고» 한 덩어리로 본다.
+         *       그래서 「눈에 잘 안 들어온다」가 나온 것이다. **여백만으로는 안 풀린다 — 개수를 줄여야 한다.**
+         *    ✅ 둘을 올려 다섯 → 셋. 남은 셋은 키가 62·48·98 로 서로 달라 하나씩 세어진다.
+         *
+         * ⛔ 「임시보관함을 도로 숨기기」가 «아니다» — 창업자 제보(*"INBOX 나도 어딨는지 모르는데"*)로
+         *    되돌아가지 않으려고 «자리만» 옮겼다. 입구는 상단바에 늘 있다.
+         */}
 
         {/* 백업 유도 — 레시피는 이 기기에만 저장된다(방침 그대로). 앱을 지우면 다 사라지므로
             쌓였을 때 한 번씩 조용히 권한다. ⛔겁주지 않는다 — 쌓였다는 사실 + 다음 행동만.
@@ -307,8 +336,8 @@ export default function HomeScreen() {
               onClick={() => { askOpenBackup(); setBkStep(0); nav.go('profile') }}
               style={{ flex: 1, textAlign: 'left', minWidth: 0 }}
             >
-              <div style={{ fontSize: 13.5, fontWeight: 700 }}>내 레시피가 {myN}개 쌓였어요</div>
-              <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>폰을 바꿔도 안 잃게 한 번 저장해둘까요?</div>
+              <div style={{ fontSize: 16.5, fontWeight: 700 }}>내 레시피가 {myN}개 쌓였어요</div>
+              <div className="t-sub" style={{ fontSize: 15, marginTop: 1 }}>폰을 바꿔도 안 잃게 한 번 저장해둘까요?</div>
             </button>
             <button className="press" onClick={() => { dismissBackupNudge(bkStep); setBkStep(0) }} aria-label="닫기" style={{ flex: '0 0 auto', padding: 6 }}>
               <Icon name="x" size={16} color="var(--sand)" />
@@ -337,15 +366,20 @@ export default function HomeScreen() {
                 ⭐ 선물 아이콘을 «치우는» 게 아니라 **그 자리를 꼬르곰이 대신한다** — 새 소식은 오른쪽 「새로」 뱃지가
                    이미 말하고 있어서 선물 그림은 같은 말을 두 번 하고 있었다.
                 ⛔ 첫 판은 `ui/gom_clap`(옛 매끈 곰)이었다 → 창업자가 한 번에 잡았다. **물결 정본으로 교체.** */}
-            <img src={uiGomWow} alt="" draggable={false} width={26} height={45} className="hk-m-tongtong"
-              style={{ flex: '0 0 auto', display: 'block', objectFit: 'contain', margin: '-9px 0' }} />
+            {/* 🐻 [창업자 2026-08-26] *"꼬르곰 좀 키우고. 꼬르곰 이랑 글자 조금 떼고"*
+                ⛔⛔ 크기가 `width={26}` «인라인»이라 CSS 로는 못 이긴다(v10.08 에 당했다).
+                   ✅ 그래서 크기를 **CSS 변수**로 읽게 한다 — 폰은 26px 그대로, 패드에서만 `.news-gom` 이 키운다.
+                   ⭐ 「한끼 소식」 글자 크기를 클래스로 뺀 것과 «같은 처방»이다(바로 아래 주석). */}
+            <img src={uiGomWow} alt="" draggable={false} className="hk-m-tongtong news-gom"
+              style={{ flex: '0 0 auto', display: 'block', objectFit: 'contain', margin: '-9px 0',
+                width: 'var(--news-gom, 26px)', height: 'auto' }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {/* 🔠 크기는 인라인이 아니라 클래스로 — 넓은 화면에서 키우려면 CSS 가 이겨야 한다
                     (인라인은 `!important` 없이는 절대 못 이긴다 · v10.08 에 실제로 당했다) */}
                 <span className="news-title">한끼 소식</span>
                 {news.opened.length > 0 && (
-                  <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
+                  <span style={{ fontSize: 15, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
                 )}
               </div>
               <div className="t-sub news-sub">{newsLine}</div>
@@ -380,6 +414,23 @@ export default function HomeScreen() {
                         찾는 포즈(`pn_search`)가 「다음에 뭐 할까」와 뜻이 맞는다.
                         ⛔ 펭펭을 웃기지 않는다(정본 규칙) — `pn_search` 는 무표정이라 그대로 쓴다. */}
                     <img src={uiPengSearch} alt="" draggable={false} className="next-peng hk-m-tongtong" />
+                    {/* 🖼 [창업자 확정 2026-08-26] **패드에서만** 그 요리 «표지»를 왼쪽에 세운다.
+                        📮 창업자 = *"D에서 표지랑 펭펭 알약까지 들어가니까 정신없어보여"* →
+                           *"오늘 뭐해먹지랑 똑같이 만들되 제목을 아직 안해봤어요를 알약으로"* · *"펭펭은 빼자"*
+                        ⭐ 옆 「오늘 뭐 해먹지」엔 표지가 있는데 여기만 없어서 **짝이 안 맞고 휑했다**(패드 가로).
+                        ⛔ 폰에선 «안 그린다» — 카드가 좁아 표지가 들어가면 글이 밀린다(CSS 가 숨긴다).
+                        ⛔⛔ 크기를 클래스로만 주면 «안 먹는다» —  이  를 **인라인**으로 넣는다.
+                           그래서 인라인이 CSS 변수를 읽게 한다( 가 쓰는 방법과 «같은 처방»). */}
+                    {it.recipe && (
+                      /* ⛔⛔ 이름표(`next-thumb`)가 «반드시» 있어야 한다 — 없으면 CSS 가 표지를 못 집는다.
+                         🔢 2026-08-26 실측 = `:first-child` 로 집었더니 **`display:none` 인 펭펭이 첫 자식**이라
+                            펭펭이 잡히고 표지는 흐름대로 1행에 들어가 라벨→제목 틈이 **70px** 로 벌어졌다.
+                         📌 `display:none` 은 «자식 자리»를 없애지 않는다. 위치로 집지 말고 «이름»으로 집는다. */
+                      <span className="next-thumb">
+                        <Thumb recipe={it.recipe} radius={16} showDecor
+                          style={{ width: '100%', height: '100%', display: 'block' }} />
+                      </span>
+                    )}
                     <div className="next-head">
                       <span className="next-label">{it.라벨}</span>
                     </div>
@@ -454,7 +505,11 @@ export default function HomeScreen() {
             <div className="hscroll">
               {often.map((r) => (
                 <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
-                  <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2rem" showDecor />
+                  {/* 🍱 [2026-08-23 창업자] *"자주해먹는요리 요리이모지들어간 그림 크기 다른칸이비해 작음.
+                      조금만더크게수정."* — 맞다. 판은 넓은데 그림만 `56%` 라 가운데가 휑했다.
+                      ⛔ 카드 폭을 키우지 않는다 — 한 줄에 세 칸 보이는 게 이 줄의 값어치다.
+                      ✅ 판 «안»에서 그림만 키운다(56% → 70%). 이름표 자리도 그대로다. */}
+                  <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2.5rem" iconSize="70%" showDecor />
                   <div className="name">{r.title}</div>
                 </button>
               ))}
@@ -497,7 +552,7 @@ export default function HomeScreen() {
           onClick={() => nav.go('myrecipes')}
           style={{
             width: '100%', marginTop: 22, padding: 15, borderRadius: 'var(--r-md)',
-            background: 'var(--cream)', color: 'var(--brown)', fontSize: 14.5, fontWeight: 700,
+            background: 'var(--cream)', color: 'var(--brown)', fontSize: 16.5, fontWeight: 700,
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           }}
         >

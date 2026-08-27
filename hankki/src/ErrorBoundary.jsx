@@ -38,14 +38,14 @@ export default class ErrorBoundary extends React.Component {
     if (!this.state.err) return this.props.children
     return (
       <div className="screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: '0 34px', textAlign: 'center' }}>
-        <div style={{ fontSize: 17, fontWeight: 800 }}>화면을 그리다 멈췄어요</div>
-        <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.65 }}>
+        <div style={{ fontSize: 19, fontWeight: 800 }}>화면을 그리다 멈췄어요</div>
+        <div className="t-sub" style={{ fontSize: 16.5, lineHeight: 1.65 }}>
           저장한 레시피는 그대로 있어요.<br />아래를 누르면 다시 열려요.
         </div>
         <button
           className="press"
           onClick={() => window.location.reload()}
-          style={{ marginTop: 6, padding: '13px 30px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 14.5, fontWeight: 800, border: 0 }}
+          style={{ marginTop: 6, padding: '13px 30px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 16.5, fontWeight: 800, border: 0 }}
         >
           다시 열기
         </button>

@@ -31,8 +31,15 @@ export default function InboxScreen() {
         <button className="icon-btn press" onClick={() => nav.pop()} aria-label="뒤로">
           <Icon name="chevron-left" size={24} />
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, fontWeight: 700 }}>
-          <Icon name="inbox" size={20} /> Inbox
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 19, fontWeight: 700 }}>
+          {/* 🏷 [2026-08-21] 「Inbox」 → 「임시보관함」. 창업자 = *"**INBOX나도 어딨는지 모르는데**"*
+              ⭐ 못 찾은 이유가 둘이었다 — ⑴입구가 조건부라 사라졌다(홈에서 고쳤다) ⑵**이름이 영어**라
+                 홈에서 찾아도 화면 제목이 Inbox 라 같은 곳인지 알 수 없었다.
+              ⛔ 처음엔 「보관함」으로 했는데 창업자가 물렸다 — *"**임시보관함으로 바꾸던가.. 그냥 보관함은 애매**"*
+              ⭐⭐ 맞는 지적이다. 「보관함」은 **오래 두는 곳**으로 읽혀서 «레시피 탭»과 뜻이 겹친다.
+                 여기는 **「담아만 두고 나중에 정리할 곳」**이라 「임시」가 그 성격을 그대로 말한다.
+              ⛔ 화면에 보이는 영어 낱말을 늘리지 않는다(v11.02 「my pick」을 접은 것과 같은 이유). */}
+          <Icon name="inbox" size={20} /> 임시보관함
         </div>
         <div style={{ width: 40 }} />
       </div>
@@ -50,7 +57,7 @@ export default function InboxScreen() {
           <div className="empty">
             {filter === 'unsorted'
               ? '정리할 레시피가 없어요. 깔끔하네요!'
-              : 'Inbox가 비어 있어요.\n가져오기로 레시피를 모아보세요.'}
+              : '임시보관함이 비어 있어요.\n가져오기로 레시피를 모아보세요.'}
           </div>
         )}
         {list.map((r, i) => (
@@ -61,7 +68,7 @@ export default function InboxScreen() {
                 <Thumb recipe={r} style={{ width: 60, height: 60, flex: '0 0 auto' }} radius={14} emojiSize="1.5rem" showDecor />
                 <div className="meta" style={{ flex: 1, minWidth: 0 }}>
                   <SourceBadge source={r.source} />
-                  <div className="name" style={{ fontSize: 15, fontWeight: 600, margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div className="name" style={{ fontSize: 17, fontWeight: 600, margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {r.title}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
