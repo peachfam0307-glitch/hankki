@@ -1,6 +1,10 @@
 node_modules
 dist
 dist-ssr
+# 📦 미리보기 판 — `scripts/_판-미리보기묶기-0821.mjs` 가 언제든 다시 뽑는 «빌드 결과물»이다.
+#   ⛔ 저장소에 담지 않는다 — 2026-08-27 에 이게 «담긴 채»로 27MB 가 들어 있던 걸 찾아 빼냈다
+#      (.gitignore 에 적혀 있었는데 «먼저 커밋된 뒤»라 안 먹고 있었다).
+dist-preview/
 *.local
 .DS_Store
 .vite
