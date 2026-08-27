@@ -92,8 +92,67 @@ const 상세열기 = async (page, 제목) => {
   return page.evaluate((T) => document.body.innerText.includes(T) && /재료|만드는 법/.test(document.body.innerText), 제목)
 }
 
-// 📌 메모지(포스트잇) — 리뷰창으로 가는 «유일한» 문이다
+// 📌 메모지(포스트잇) — 고치기 «전» 리뷰창으로 가는 유일한 문이었다
 const 메모지있나 = (page) => page.evaluate(() => !!document.querySelector('.memo-note'))
+
+// ─── ㉠ 레꾸자랑 길 ──────────────────────────────────────────
+const 자랑탭열기 = async (page) => {
+  await page.evaluate(() => {
+    const bs = [...document.querySelectorAll('nav button, .tabbar button, [class*="tab"] button, footer button')]
+    bs.find((x) => (x.innerText || '').replace(/\s+/g, '').includes('레꾸자랑'))?.click()
+  })
+  await page.waitForTimeout(700)
+  return page.evaluate(() => /레꾸자랑/.test(document.body.innerText || ''))
+}
+
+// 레시피 하나 → 선택 시트 → 「랜덤 카드로 뽑기」 → 자랑 카드
+const 자랑카드열기 = async (page) => {
+  await page.evaluate(() => {
+    const t = [...document.querySelectorAll('button[aria-label$="자랑하기"]')][0]
+    t?.click()
+  })
+  await page.waitForTimeout(600)
+  await page.evaluate(() => {
+    const t = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('랜덤 카드로 뽑기'))
+    t?.click()
+  })
+  await page.waitForTimeout(1500)   // 카드를 그린다
+  return page.evaluate(() => [...document.querySelectorAll('button')].some((x) => /공유하기|만드는 중/.test(x.innerText || '')))
+}
+
+// 🎭 `navigator.share` 흉내 — 헤드리스엔 공유창이 없다.
+//    ⛔ 흉내는 «브라우저가 하는 일»까지다. 앱이 그 뒤에 무엇을 하는지는 앱 코드가 그대로 판정한다.
+//    ⭐ 부른 «횟수»와 «보낸» 횟수를 갈라 센다 — 안 그러면 「부르지도 않았는데 안 떴다」를
+//       「안 보냈으니 안 떴다」로 잘못 읽는다(④⑤가 아무것도 안 재고 초록불이 된다).
+const 공유흉내 = (page, 보내지나) => page.evaluate((ok) => {
+  navigator.canShare = () => true
+  navigator.share = () => {
+    window.__부름 = (window.__부름 || 0) + 1
+    if (!ok) return Promise.reject(Object.assign(new Error('cancel'), { name: 'AbortError' }))
+    window.__보냄 = (window.__보냄 || 0) + 1
+    return Promise.resolve()
+  }
+}, 보내지나)
+
+// 「공유하기」 → 카드 캡처(최대 35초)를 «기다린다»
+//    ⛔ 고정 대기(2.5초)로는 캡처가 안 끝나 한 번도 안 불렸다 — 그러고도 뒤 칸이 초록불이었다.
+const 공유누르기 = async (page) => {
+  await page.evaluate(() => {
+    const t = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('공유하기'))
+    t?.click()
+  })
+  await page.waitForFunction(() => (window.__부름 || 0) > 0, null, { timeout: 45000 }).catch(() => {})
+  await page.waitForTimeout(500)
+  return page.evaluate(() => ({ 부름: window.__부름 || 0, 보냄: window.__보냄 || 0 }))
+}
+
+const 카드닫기 = async (page) => {
+  await page.evaluate(() => {
+    const bs = [...document.querySelectorAll('button')].filter((x) => (x.innerText || '').trim() === '닫기')
+    bs[bs.length - 1]?.click()
+  })
+  await page.waitForTimeout(900)
+}
 
 console.log('\n🗣 「리뷰 자동으로 띄우기」 — 지금 상태를 잰다\n')
 
@@ -148,10 +207,69 @@ console.log('\n② 한 줄까지 «직접 써넣은» 사람 — 그제서야 �
   await page.close(); await p2.close()
 }
 
+// ─────────────────────────────────────────────────────────────
+console.log('\n③ ㉠ 레꾸자랑을 «보낸» 사람 — 카드를 닫으면 뜬다 (창업자 확정 2026-08-27)')
+// ─────────────────────────────────────────────────────────────
+{
+  const page = await 새탭()
+
+  await 공유흉내(page, true)
+
+  chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(page))
+  chk('자랑 카드가 떴다', await 자랑카드열기(page))
+  chk('⛔ 카드가 떠 있는 «동안»엔 리뷰창이 안 뜬다 — 시트 위에 시트 금지', !(await 리뷰창떴나(page)))
+
+  const { 부름, 보냄 } = await 공유누르기(page)
+  chk(`공유가 실제로 나갔다 (부름 ${부름} · 보냄 ${보냄})`, 보냄 > 0)
+  if (!보냄) { console.log('  ⛔⛔ 공유가 안 불렸다 — 아래는 «재지 않은 것»이므로 판정하지 않는다'); 실패 += 2 }
+  else {
+    chk('⛔ 보낸 «직후»에도 아직 안 뜬다 — 카드를 안 뺏는다(표지로 저장이 남아 있다)', !(await 리뷰창떴나(page)))
+
+    await 카드닫기(page)
+    chk('⭐ 카드를 닫자 리뷰창이 뜬다 — 창업자가 말한 「쓰다가 뜬다」', await 리뷰창떴나(page))
+    chk('머리글이 그 자리에서 «참»이다 — 「레꾸 자랑 보냈어요」', await page.evaluate(() =>
+      document.body.innerText.includes('레꾸 자랑 보냈어요') && !document.body.innerText.includes('번째 한 끼예요')))
+  }
+
+  await page.close()
+}
+
+// ─────────────────────────────────────────────────────────────
+console.log('\n④ 안 보낸 사람에겐 «안» 뜬다 — 공유창을 그냥 닫은 경우')
+// ─────────────────────────────────────────────────────────────
+{
+  const page = await 새탭()
+  await 공유흉내(page, false)   // 유저가 공유창을 닫음 → AbortError
+  chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(page))
+  chk('자랑 카드가 떴다', await 자랑카드열기(page))
+  const { 부름, 보냄 } = await 공유누르기(page)
+  // ⛔ 「부르지도 않았는데 안 떴다」를 「안 보냈으니 안 떴다」로 읽지 않는다
+  chk(`공유창까지는 갔다 (부름 ${부름} · 보냄 ${보냄})`, 부름 > 0 && 보냄 === 0)
+  await 카드닫기(page)
+  chk('⛔ 안 보냈으니 리뷰창도 «안» 뜬다', !(await 리뷰창떴나(page)))
+  await page.close()
+}
+
+// ─────────────────────────────────────────────────────────────
+console.log('\n⑤ 한 번 물었으면 두 번 안 묻는다 — 거절해도 마찬가지')
+// ─────────────────────────────────────────────────────────────
+{
+  const page = await 새탭()
+  await page.evaluate(() => { try { localStorage.setItem('hankki:nudge:review', '1') } catch {} })
+  const p2 = await 새탭()
+  await 공유흉내(p2, true)
+  chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(p2))
+  chk('자랑 카드가 떴다', await 자랑카드열기(p2))
+  const { 보냄 } = await 공유누르기(p2)
+  chk(`이번엔 «진짜로 보냈다» (보냄 ${보냄})`, 보냄 > 0)   // ⛔ 안 보냈으면 아래가 헛방이다
+  await 카드닫기(p2)
+  chk('⛔ 이미 물어본 사람에겐 «안» 뜬다 — 재촉하지 않는다(설계원칙)', !(await 리뷰창떴나(p2)))
+  await page.close(); await p2.close()
+}
+
 console.log(`\n${실패 ? '⛔' : '✅'} ${통과}/${통과 + 실패}\n`)
-console.log('📌 ①이 전부 통과 = 「코드는 있는데 보통 유저에겐 영영 안 뜬다」가 사실이다.')
-console.log('   리뷰창으로 가려면 ⑴기록 3장 ⑵그 레시피에 «한 줄을 직접 써넣기»')
-console.log('   ⑶그 상세로 가기 ⑷포스트잇을 «누르기» ⑸시트를 «닫기» — 다섯을 다 밟아야 한다.\n')
+console.log('📌 ①② = 고치기 «전» 상태(문이 사실상 닫혀 있다) · ③④⑤ = ㉠ 으로 연 문.')
+console.log('   ③이 죽으면 리뷰창이 다시 0명에게 뜬다. ④가 죽으면 «안 보낸 사람»에게 조른다.\n')
 
 await b.close(); srv.close()
 process.exit(실패 ? 1 : 0)

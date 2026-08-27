@@ -859,7 +859,7 @@ export function RecipeCard({ recipe }) {
   )
 }
 
-export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
+export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }) {
   // ⛔⛔ **뒤로가기가 이 카드를 못 보고 «홈»으로 샜다** (창업자 2026-08-23
   //    *"레꾸자랑 갑자기 홈가는게 뒤로가기할때야. 닫기누르면 그대로있어"*)
   //   ⭐⭐ 창업자가 「닫기 ↔ 뒤로가기」로 갈라준 게 답을 줬다 —
@@ -974,13 +974,19 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   }
 
   // ⭐ 준비돼 있으면 **await 없이 곧바로** 공유창을 연다 — 사이에 기다림을 두면 허가가 깨진다.
+  //
+  // 🎴 [2026-08-27] 공유가 «성공한» 순간에 `onShared` 를 부른다 — 한마디 청하기(㉠)의 방아쇠다.
+  //    ⭐⭐ **여기 «한 곳»만 감싼다.** 공유가 성공하는 자리가 셋인데(빠른 길 · 느린 길 · 「지금 보내기」)
+  //       셋 다 이 `go()` 가 돌려준 약속을 쓴다. 부르는 쪽마다 붙이면 **언젠가 하나를 빠뜨린다.**
+  //    ⛔ `AbortError`(유저가 공유창을 닫음)면 `.then` 이 안 돈다 — **안 보낸 사람에게는 안 청한다.**
   const go = useCallback((files) => {
     const text = (n) => `『${title}』 오늘의 한 끼 🧡${n > 1 ? ' · 재료·레시피 같이!' : ''}\nPlay스토어에서 '한끼' 검색 🔍`
+    const 보낸다 = (opt) => navigator.share(opt).then((v) => { onShared?.(); return v })
     if (!(navigator.canShare && navigator.share)) return null
-    if (navigator.canShare({ files })) return navigator.share({ files, title, text: text(files.length), url: APP_URL })
-    if (files.length > 1 && navigator.canShare({ files: [files[0]] })) return navigator.share({ files: [files[0]], title, text: text(1), url: APP_URL })
+    if (navigator.canShare({ files })) return 보낸다({ files, title, text: text(files.length), url: APP_URL })
+    if (files.length > 1 && navigator.canShare({ files: [files[0]] })) return 보낸다({ files: [files[0]], title, text: text(1), url: APP_URL })
     return null
-  }, [title])
+  }, [title, onShared])
 
   // 📮📮 **「지금 보내기」 — 2026-08-05 창업자 제보의 답.**
   //   창업자 *"이번엔 둘다 (다운로드로 떨어진다)"* · *"너무오래걸려서 저렇게뜨는거같애"* — 맞다.
