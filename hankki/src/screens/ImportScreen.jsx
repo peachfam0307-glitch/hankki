@@ -201,11 +201,29 @@ export default function ImportScreen() {
 
   // 📖 네 갈래의 안내 내용 — «데이터»로 둔다. 화면 마크업은 한 벌뿐이라 한쪽만 예뻐질 일이 없다.
   //   ⛔ 「」 안이 **누르는 것**이다(창업자 = *"눌러야하는 것 강조"*). 굵게는 `강조()` 가 붙인다.
-  const 강조 = (s) => s.split(/(「[^」]+」)/).map((p, i) => (
-    p.startsWith('「')
-      ? <b key={i} style={{ fontWeight: 900, color: 'var(--brown)' }}>{p}</b>
-      : <span key={i}>{p}</span>
-  ))
+  //   🗓 [창업자 2026-08-28] *"**줄바꿈도 이상**"* — 실물로 보니 **「한끼」／를 찾아요** 로 갈려 있었다.
+  //   ⭐ 뿌리 = `word-break: keep-all` 은 «낱말 안»만 지킨다. **닫는 따옴표 「」 «뒤»는 줄바꿈이 허용된다** —
+  //      그래서 조사(를·이·가·에서)만 다음 줄로 떨어져 「한끼」가 문장에서 잘려 보였다.
+  //   ✅ 「」 와 **바로 뒤에 붙은 글자**(다음 띄어쓰기 전까지)를 한 덩어리(`nowrap`)로 묶는다.
+  //   ⛔ 뒤 글자를 `[^\s]*` 로 잡으면 안 된다 — 「재료」·「만드는 법」 처럼 «따옴표가 이어질 때»
+  //      다음 「 까지 삼켜 **괄호 «안»의 띄어쓰기에서 끊긴다**(실측). 그래서 `「` 도 멈춤 글자에 넣는다.
+  const 강조 = (s) => {
+    const 조각 = []
+    const re = /「[^」]+」[^\s「]*/g
+    let 앞 = 0, m
+    while ((m = re.exec(s))) {
+      if (m.index > 앞) 조각.push(<span key={조각.length}>{s.slice(앞, m.index)}</span>)
+      const 끝 = m[0].indexOf('」') + 1
+      조각.push(
+        <span key={조각.length} style={{ whiteSpace: 'nowrap' }}>
+          <b style={{ fontWeight: 900, color: 'var(--brown)' }}>{m[0].slice(0, 끝)}</b>{m[0].slice(끝)}
+        </span>,
+      )
+      앞 = m.index + m[0].length
+    }
+    if (앞 < s.length) 조각.push(<span key={조각.length}>{s.slice(앞)}</span>)
+    return 조각
+  }
   const 안내들 = {
     share: {
       lead: '인스타·유튜브를 보다가 캡처하면, 그 자리에서 한끼로 보낼 수 있어요.',
@@ -487,7 +505,10 @@ export default function ImportScreen() {
                   background: 'var(--cream)', color: 'var(--brown)',
                   fontSize: 15, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>{i + 1}</span>
-                <span style={{ fontSize: 16.5, lineHeight: 1.42, wordBreak: 'keep-all', textWrap: 'pretty', flex: 1, minWidth: 0 }}>{s}</span>
+                {/* ✍️ 줄바꿈 = `balance`(⛔`pretty` 아님) — 실측으로 갈렸다.
+                    `pretty` 는 마지막 줄에 낱말 «하나»만 남을 때만 손대서 「…사진을／열어요」·「…「한끼」를／찾아요」를
+                    그대로 뒀다. `balance` 는 **두 줄 길이를 비슷하게** 잘라 걸음이 「반 줄 ＋ 꼬리」로 안 보인다. */}
+                <span style={{ fontSize: 16.5, lineHeight: 1.42, wordBreak: 'keep-all', textWrap: 'balance', flex: 1, minWidth: 0 }}>{s}</span>
               </div>
             ))}
           </div>
