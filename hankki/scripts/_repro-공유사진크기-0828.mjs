@@ -188,8 +188,15 @@ console.log('\n③ OCR 은 원본으로 읽나 (소스)')
 const app = readFileSync(join(ROOT, 'src/App.jsx'), 'utf8')
 // ⛔ 주석까지 세면 «고쳐놓고도 실패»로 나온다(규칙 18 ⓘ) → 주석 줄을 걷어내고 «진짜 호출»만 본다
 const 코드줄 = app.split('\n').filter((l) => !l.trim().startsWith('//'))
-chk('`ocrImage(data.imageDataUrl)` = 원본으로 읽는다',
-  코드줄.some((l) => l.includes('ocrImage(data.imageDataUrl)')))
+// ⛔⛔ [2026-08-28] 잣대를 «글자»에서 «뜻»으로 옮겼다.
+//    앞 판은 `ocrImage(data.imageDataUrl)` 이라는 «글자»를 찾았는데, 2장짜리 레시피를 받으려고
+//    `for (const 장 of 장들) ocrImage(장)` 으로 바뀌자 **뜻은 그대로인데 글자가 없어져** 죽었다.
+//    ⭐ 이 칸이 «진짜로» 지키려는 것 = **줄인 사진(`shrunk`)으로 읽지 않는다.** 그걸 본다.
+//    (`장들` 은 `data.imageDataUrls` = 원본 dataURL 이다 — 줄이는 건 저장할 때뿐)
+chk('OCR 을 «줄인 사진»으로 돌리지 않는다',
+  !코드줄.some((l) => /ocrImage\(\s*shrunk/.test(l)))
+chk('OCR 을 부르는 자리가 있다',
+  코드줄.some((l) => /ocrImage\(/.test(l)))
 chk('`image:` 에는 줄인 것을 담는다',
   코드줄.some((l) => /image:\s*shrunk/.test(l)))
 chk('원본을 그대로 담는 옛 줄이 없다',

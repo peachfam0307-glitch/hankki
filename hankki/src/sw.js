@@ -105,16 +105,25 @@ async function handleShare(req) {
       ts: Date.now(),
       hasImage: false,
     }
-    const image = form.get('image')
+    // 📄📄 [2026-08-28] **여러 장을 «전부» 받는다.**
+    //   📮 창업자 실물 = 두 장짜리 레시피(탕수육)를 «한 번에» 공유했는데 **둘째 장만** 담겼다.
+    //      첫 장의 재료 6개와 걸음 1~7 이 통째로 사라져서 제목이 「풀리게 저어주다가」가 됐다.
+    //   ⛔⛔ 뿌리가 «둘»이었다 —
+    //      ⑴ `form.get('image')` 는 **첫 장 하나**만 준다(`getAll` 이 아니다)
+    //      ⑵ 담는 자리가 `'shared-image'` **고정 키 하나**라, 설령 여러 장을 꺼내도 **서로 덮는다**
+    //   ⭐ 안드로이드 인텐트는 «이미» 도착하고 있다 — 창업자가 두 장을 한 번에 공유했을 때 앱이 열렸다.
+    //      그러니 받는 쪽만 고치면 된다(⛔AAB 를 다시 굽는 일이 아니다).
+    const images = form.getAll('image').filter((f) => f && typeof f !== 'string' && f.size > 0)
     const cache = await caches.open(SHARE_CACHE)
-    if (image && typeof image !== 'string' && image.size > 0) {
-      const buf = await image.arrayBuffer()
+    for (let i = 0; i < images.length; i++) {
+      const buf = await images[i].arrayBuffer()
       await cache.put(
-        'shared-image',
-        new Response(buf, { headers: { 'Content-Type': image.type || 'image/*' } })
+        `shared-image-${i}`,
+        new Response(buf, { headers: { 'Content-Type': images[i].type || 'image/*' } })
       )
-      meta.hasImage = true
     }
+    meta.hasImage = images.length > 0
+    meta.imageCount = images.length
     await cache.put(
       'shared-meta',
       new Response(JSON.stringify(meta), { headers: { 'Content-Type': 'application/json' } })

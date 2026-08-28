@@ -374,10 +374,15 @@ export default function App() {
       // inbox 레이어에 해당하는 히스토리 칸(트랩)을 보충 — 없으면 뒤로가기가 base 트랩을 대신
       // 소비해 다음 back 이 앱 종료로 샜다. (공유로 앱을 처음 열었을 때 경로)
       try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
+      // 📄 [2026-08-28] «몇 장»을 받았는지 말한다 — 두 장짜리 레시피가 반쪽만 담기던 걸 고치며 넣었다.
+      //    ⭐ 유저 안내이자 «진단»이다 — 안드로이드가 몇 장을 보내는지 이 문구가 그 자리에서 알려준다.
+      const 장수 = (data.imageDataUrls && data.imageDataUrls.length) || (data.imageDataUrl ? 1 : 0)
       showToast(
-        data.imageDataUrl
-          ? '사진을 담았어요 · 글자 읽는 중…'
-          : '공유한 레시피를 임시보관함에 담았어요'
+        장수 > 1
+          ? `사진 ${장수}장을 담았어요 · 글자 읽는 중…`
+          : 장수 === 1
+            ? '사진을 담았어요 · 글자 읽는 중…'
+            : '공유한 레시피를 임시보관함에 담았어요'
       )
       if (typeof history !== 'undefined' && location.search) {
         history.replaceState({ hankki: 1 }, '', location.pathname) // URL 만 정리, 트랩 표식은 유지
@@ -387,7 +392,21 @@ export default function App() {
       //    저장은 줄여서 하고(위 `shrunk`) **읽기는 원본으로** 한다 — 글자 크기가 곧 인식률이다.
       //    원본은 이 줄이 끝나면 아무 데도 안 남는다(메모리에만 있었다).
       if (data.imageDataUrl) {
-        const text = await ocrImage(data.imageDataUrl)
+        // 📄📄 [2026-08-28] **여러 장을 «순서대로» 읽어 «이어붙인다».**
+        //   📮 창업자 실물 = 두 장짜리 레시피를 한 번에 공유했는데 둘째 장만 담겼다.
+        //   ⭐ 이어붙이는 방식은 «이미 있던 것»을 그대로 쓴다 — 레시피 편집 화면의 캡처 단추가
+        //      `EditorScreen.jsx` 에서 여러 장을 `lines.join('\n')` 으로 잇는다. 같은 규칙이라야
+        //      「공유로 담은 것」과 「앱에서 고른 것」이 같은 결과를 낸다.
+        //   ⛔ 한 장이 안 읽혀도 나머지는 살린다 — 통째로 버리면 유저는 「고장」으로 읽는다.
+        //   💰 열쇠는 장수만큼 쓴다(`ocrImage` 를 장수만큼 부른다) — 편집 화면과 같다.
+        const 장들 = (data.imageDataUrls && data.imageDataUrls.length ? data.imageDataUrls : [data.imageDataUrl])
+        const 읽은글 = []
+        for (const 장 of 장들) {
+          const t = await ocrImage(장)
+          if (cancelled) return
+          if (t && t.trim()) 읽은글.push(t.trim())
+        }
+        const text = 읽은글.join('\n')
         if (cancelled || !text.trim()) return
         const r = parseRecipeText(text, { fromOcr: true })
         store.updateRecipe(rec.id, {
