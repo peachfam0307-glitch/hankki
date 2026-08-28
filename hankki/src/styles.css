@@ -1206,6 +1206,184 @@ img {
   word-break: keep-all;
 }
 
+/* 🔑🔑 [창업자 2026-08-28] 가져오기 상단바 오른쪽 «열쇠 잔량»
+   📮 *"무료레시피열쇠 몇개 남았어요. **오른쪽 상단에 크게!** 설명 필요없이
+      열쇠그림 옆에 남은 숫자 (알약으로 매달 무료5개)적으면 될 듯."*
+   ⭐ 숫자를 «크게» — 이 화면에서 제일 큰 글자다. 상태는 한눈에 읽혀야 재촉이 아니라 정보가 된다.
+   🔢 폭 실측 = 열쇠 15 ＋ 숫자 27 ＋ 알약 84 ＋ 틈 12 ≈ 138px.
+      상단바에서 닫기 단추(40)를 빼면 320px 폰에서도 240px 이 남아 안 넘친다.
+   ⛔ 알약은 «한 줄 이름표»라 `nowrap` — 「매달 무 / 료 5개」로 잘리면 뜻이 무너진다. */
+.imp-key {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.imp-key img {
+  height: 26px;
+  width: auto;
+  flex: 0 0 auto;
+}
+.imp-key b {
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--brown);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.imp-key span {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #4f7d48;
+  background: #eaf4e4;
+  border: 1px solid #cfe3c4;
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+/* 🔔 젤 윗단 알림 — 「다 써도 끊기지 않는다」 한 가지만 말하는 박스 */
+.imp-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 15px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #eef7e7, #e2eed7);
+  border: 1px solid #cfe3c4;
+  margin-bottom: 20px;
+}
+.imp-notice > svg { flex: 0 0 auto; margin-top: 1px; }
+.imp-notice > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.imp-notice b {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #3d6b38;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+}
+.imp-notice span {
+  font-size: 15.5px;
+  color: var(--text-sub);
+  line-height: 1.5;
+  word-break: keep-all;
+}
+.imp-notice span b { font-size: inherit; font-weight: 800; color: #4f7d48; }
+
+/* 📦📦 [창업자 2026-08-28] 네 갈래 = «각각 박스» ＋ 넉넉한 간격
+   📮 *"박스에 글자가 좀 작고 줄바꿈도 어색해서 바로 안 읽혀.
+      제목. 설명 박스와 박스 사이 간격을 넉넉하게 하자."*
+   ⭐⭐ 「박스와 박스 사이」라는 말 자체가 구조를 정한다 — 갈래가 «각각 박스»라야 성립한다.
+      옛 판은 ①만 박스고 ②③④는 «한 카드 안의 줄»이라 선으로만 갈렸다.
+      그래서 ①과 나머지가 다른 무게로 읽혔고, 셋은 서로 붙어 보여 «바로 안 읽혔다».
+   ⭐ 이제 넷이 대등한 박스다. ①만 바탕색으로 도드라진다(창업자가 「제일 많이 써요」를 남겼다).
+   🔠 글자 = 제목 17 → **18.5px** · 설명 15.5 → **16.5px** (창업자 *"글자가 좀 작고"*)
+   ↩️ 줄바꿈 = 제목·설명 둘 다 `keep-all` — 옛 판은 설명에만 걸려 있어 «제목»이 낱말 가운데서 잘렸다
+      (v11.19 에 같은 병을 설명 줄에서만 고쳤던 그 자리다). */
+.imp-opts { display: flex; flex-direction: column; gap: 12px; }
+.imp-opt {
+  display: flex;
+  /* ⚠️ «위쪽» 정렬 — 글이 서너 줄이 되면 가운데 정렬은 아이콘이 붕 떠 보인다(실물로 확인 · 규칙 21) */
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+.imp-opt:active { transform: scale(0.99); }
+.imp-opt.is-top {
+  border-color: #ecdccb;
+  background: linear-gradient(135deg, #fbf3e9, #f6ead8);
+}
+.imp-opt .imp-opt-ico {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  flex: 0 0 auto;
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.imp-opt.is-top .imp-opt-ico {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(150, 110, 70, 0.16);
+}
+.imp-opt .imp-opt-t { flex: 1; min-width: 0; }
+.imp-opt .imp-opt-a {
+  font-size: 18.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  word-break: keep-all;
+  /* ⛔ 줄이 갈릴 때 「SNS 보다가 캡처해서 바로 / 한끼로」처럼 꼬리만 남지 않게 */
+  text-wrap: pretty;
+}
+.imp-opt.is-top .imp-opt-a { color: #8a5a37; font-weight: 800; }
+.imp-opt .imp-opt-b {
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: var(--text-sub);
+  /* 📏 [창업자 2026-08-28] *"제목. 설명 … 간격을 넉넉하게"* — 2 → 6px */
+  margin-top: 6px;
+  word-break: keep-all;
+  /* ⭐ `balance` — 설명은 짧은 덩어리라 줄 길이를 «고르게» 나누는 쪽이 낫다.
+     `pretty` 는 마지막 줄의 외톨이만 보는데, 여기 어색함은 «줄마다 길이가 들쭉날쭉»한 것이었다
+     (실물 = 「이미 저장된 사진들 / 갤러리에서 바로 / 한끼로 공유해요」). */
+  text-wrap: balance;
+}
+/* ➡️ 화살표는 «가운데» — 위쪽 정렬이면 알약 옆에 붙어 떠 보인다(실물로 확인) */
+.imp-opt > svg:last-child { align-self: center; flex: 0 0 auto; }
+/* 🏅 「제일 많이 써요」 — 제목 «위» 눈썹.
+   ⛔ 제목 «옆»에 두지 않는다: 제목이 두 줄이 되는 순간 알약이 제목과 설명 사이로 끼어든다
+      (실물로 찍어 보고서야 보였다 — 숫자 검사는 「가로넘침 0」이라 통과시켰다 · 규칙 21).
+   ⭐ 눈썹은 제목 길이와 무관해서 어느 폭에서도 자리가 안 흔들린다.
+      v11.31 의 「칸을 벗어남」이 여기선 구조적으로 못 난다(둘이 같은 줄을 다투지 않는다). */
+.imp-opt-pill {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #8a5a37;
+  background: #f0dcc7;
+  border-radius: 999px;
+  padding: 2.5px 9px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+/* 💰 값 = 자기 줄. 설명 문장에 섞으면 둘 다 안 읽힌다(창업자 *"줄바꿈도 어색해서 바로 안 읽혀"*) */
+.imp-opt-c { margin-top: 7px; font-size: 15px; line-height: 1.4; }
+
+/* 📸 안내 화면 — 단계 아래 실제 화면 사진 한 장 (창업자 *"이게 제일 직관적이야"*)
+   ⭐ 폰 캡처는 세로로 길다 — `max-height` 로 눌러 두지 않으면 사진 한 장이 화면을 통째로 먹고
+      아래 「그래서 어떻게 되나」·단추가 스크롤 밖으로 밀린다.
+   ⛔ `object-fit: cover` 로 자르지 않는다 — 잘린 조각은 안내가 아니다. 통째로 보여준다. */
+.imp-shot {
+  margin: 0 0 16px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--cream);
+  display: flex;
+  justify-content: center;
+}
+.imp-shot img {
+  display: block;
+  max-width: 100%;
+  max-height: 46vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
 /* Inbox 행 */
 .inbox-row {
   display: flex;
@@ -3388,16 +3566,28 @@ html, body { overscroll-behavior: none; }
 .memo-note.stick .memo-in { display: flex; flex-direction: column; }
 /* ⭐ 글자를 «종이 폭»에 매단다 — 자리가 좁아지면 같이 작아져서 안 넘친다.
    ⛔ 작은 자리(157px)에서 머리줄이 한 줄에 안 들어간다 → 감기게 두고 별점도 가운데로. */
-.memo-note.stick .memo-note-head { font-size: clamp(7.5px, 5.4cqw, 11px); flex-wrap: wrap; justify-content: center; row-gap: 1px; word-break: keep-all; }
+/* 🔠🔠 [창업자 제보 2026-08-28] *"한줄남기기 포스트잇은 큰데 «글자, 별점이 작아»."*
+   🔢 실측(390px 폰 · 재료 칸 350px → 포스트잇 154px) —
+      옛 판 = 머리줄 8.3px · 본문 12.9px · 별 **11px 고정**
+   ⭐⭐ 뿌리 = **본문만 종이 폭에 매달고(`cqw`) 별은 px 로 박아 뒀다.**
+      그래서 두 손가락으로 종이를 키워도(34~68%) **별만 그대로 11px** 이라
+      키울수록 «더» 작아 보인다. 창업자가 본 게 정확히 그거다.
+   ✅ 셋 다 종이 폭에 매단다 — 본문 8.4 → **10.5cqw** · 머리줄 5.4 → **6.2cqw** ·
+      별은 CSS 로 `svg` 크기를 덮어 **8cqw**(＝ 11 → 12.3px, 크게 키우면 18px 까지).
+   ⛔ 천장을 둔다 — 두 손가락으로 68% 까지 키웠을 때 글자가 종이를 넘치면 안 된다.
+   ⛔ 붙임이 «아닌» 자리(요리 모드 0단계)의 값은 안 건드린다 — 거기는 폭이 넉넉하다. */
+.memo-note.stick .memo-note-head { font-size: clamp(10px, 7.2cqw, 13px); flex-wrap: wrap; justify-content: center; row-gap: 1px; word-break: keep-all; }
 .memo-note.stick .memo-note-stars { margin-left: 0; }
+/* ⭐ 별도 «종이 폭»에 매단다 — `Icon` 이 width/height 를 속성으로 주지만 CSS 가 이긴다. */
+.memo-note.stick .memo-note-stars svg { width: clamp(12.5px, 9cqw, 19px); height: clamp(12.5px, 9cqw, 19px); }
 .memo-note.stick .memo-note-body {
-  font-size: clamp(10.5px, 8.4cqw, 15px); line-height: 1.3; margin-top: 2px;
+  font-size: clamp(12px, 10.5cqw, 19px); line-height: 1.3; margin-top: 2px;
   /* ✂️ 줄바꿈 = **낱말 단위로** (창업자 2026-08-20 *"줄바꿈이랑…"*)
      ⛔ 기본값은 한국어를 «글자 단위»로 끊는다 → 「고추장 한 술 줄이/기」처럼 한 글자가 혼자 떨어진다.
      ✅ `keep-all` 이 어절을 안 쪼갠다. ⚠️ 대신 아주 긴 낱말은 넘칠 수 있어 `break-word` 를 같이 준다. */
   word-break: keep-all; overflow-wrap: break-word;
 }
-.memo-note.stick .memo-note-more { font-size: clamp(8px, 5cqw, 11px); margin-top: 3px; }
+.memo-note.stick .memo-note-more { font-size: clamp(8.5px, 5.8cqw, 12px); margin-top: 3px; }
 .memo-note-head { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; opacity: 0.62; }
 /* ⭐ 별점 = 포스트잇 «머리줄 오른쪽 끝»에. 창업자 *"별점은 넣어도 괜찮겠다 포스트잇에 보이면 되니까"*
    ⛔ 안 매겼으면 아예 안 그린다(컴포넌트에서 막는다) — 빈 별은 재촉이 된다 */
@@ -3880,3 +4070,24 @@ html, body { overscroll-behavior: none; }
   .news-title { font-size: 21px; }
   .news-card { --news-gom: 42px; gap: 18px; padding: 16px 18px; }
 }
+
+/* 📔📔 일기 「넘겨 보기」 화살표 — 날짜 «양옆»에 (창업자 2026-08-28)
+   📮 *"일기를 넘겨가며 볼수있으면 좋겠어(지금은 날짜하나하나 눌러야함)"*
+   ⭐ 자리 = 제목 옆. 상단바 오른쪽은 이미 자물쇠·휴지통이 차 있고,
+      무엇보다 **넘기는 대상이 「날짜」**라 날짜 옆에 있어야 무슨 뜻인지 안 배워도 안다.
+   ⛔ 더 갈 데가 없으면 «지운다»가 아니라 «흐리게 두고 못 누르게» 한다 —
+      한쪽만 사라지면 제목이 좌우로 흔들려 넘길 때마다 글자가 움직인다.
+   ⛔ 손가락 자리는 32px 을 지킨다(상단바가 낮아 38px 은 못 준다 — 대신 좌우 여백으로 넓힌다). */
+.diary-flip {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: none;
+  background: var(--cream);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.diary-flip:disabled { opacity: 0.28; }

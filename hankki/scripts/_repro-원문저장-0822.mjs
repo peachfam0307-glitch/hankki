@@ -98,7 +98,13 @@ async function 붙여넣어담기(글, 제목표시) {
   }
   await page.getByRole('button', { name: '가져오기' }).first().click()
   await page.waitForTimeout(700)
-  await page.getByText('텍스트 붙여넣기', { exact: false }).first().click()
+  // 🗓 [2026-08-28] 목록이 «네 갈래»로 줄면서 「텍스트 붙여넣기」가 목록에서 내려갔다(⛔기능은 살아 있다).
+  //    가는 길 = SNS 보다가 캡처해서 바로 한끼로 → Instagram 에서 담는 다른 방법 → 글을 복사했다면 붙여넣기
+  await page.getByText('SNS 보다가 캡처해서 바로 한끼로', { exact: true }).first().click()
+  await page.waitForTimeout(600)
+  await page.getByText('Instagram 에서 담는 다른 방법', { exact: false }).first().click()
+  await page.waitForTimeout(600)
+  await page.getByText('글을 복사했다면 붙여넣기', { exact: false }).first().click()
   await page.waitForTimeout(700)
   await page.locator('textarea').first().fill(글)
   await page.waitForTimeout(200)

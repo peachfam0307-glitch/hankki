@@ -10,20 +10,30 @@ import { timeAgo } from '../utils'
 export default function InboxScreen() {
   const { recipes, removeRecipe } = useStore()
   const nav = useNav()
-  const [filter, setFilter] = useState('all') // all | unsorted | sorted
   // 미정리함은 "버릴 것"이 쌓이는 곳 — 상세까지 안 들어가고 여기서 바로 지운다(창업자 요청).
   const [delAsk, setDelAsk] = useState(null)
 
-  const inbox = useMemo(() => [...recipes].sort((a, b) => b.savedAt - a.savedAt), [recipes])
-  const unsorted = inbox.filter((r) => r.status === 'unsorted')
-  const sorted = inbox.filter((r) => r.status === 'sorted')
-  const list = filter === 'unsorted' ? unsorted : filter === 'sorted' ? sorted : inbox
-
-  const pills = [
-    { key: 'all', label: '전체', n: inbox.length },
-    { key: 'unsorted', label: '미정리', n: unsorted.length },
-    { key: 'sorted', label: '정리됨', n: sorted.length },
-  ]
+  // 🗃🗃 [창업자 확정 2026-08-28 = ㉠] **정리 끝난 레시피는 여기 «안» 보인다.**
+  //
+  // 📮 창업자 = *"보관함에 있는 반영된 레시피는 따로 보관해야지.
+  //    **유저들이 모르고 지울 수도 있을 것 같아. 미정리랑 같이있으니까..**"*
+  //
+  // ⛔⛔ **맞는 걱정이었고 실물이 그랬다** — 전엔 `[...recipes]` 를 «필터 없이» 그대로 썼다.
+  //    창업자 폰 = 「전체 248 · 미정리 6 · **정리됨 242**」 인데 그 242 는
+  //    **「내 레시피」 탭이 보여주는 바로 그 목록이다**(`MyRecipesScreen.jsx` = `status === 'sorted'`).
+  //    ⭐ 같은 것을 두 곳에서 보고 있었고, **여기엔 줄마다 휴지통이 있다.**
+  //       미정리인 줄 알고 누르면 `removeRecipe` 가 `recipes` 에서 통째로 빼서
+  //       **「내 레시피」에서도 사라진다**(`store.jsx` `case 'remove'`). 기본 레시피까지 지워진다.
+  //
+  // ⭐ 그래서 「전체 비우기」를 «만들지 않았다» — 만들었으면 그게 사고였다.
+  //    이름이 **「임시」**보관함이니 **임시인 것만** 둔다. 정리가 끝나면 「내 레시피」로 졸업한다.
+  // ⛔ 잃는 것 0 — 정리된 레시피는 「내 레시피」 탭에 그대로 있다(지우는 게 아니라 «안 보이게» 한다).
+  // ⛔ 칩 셋(전체/미정리/정리됨)도 같이 뺐다 — 목록이 한 갈래뿐이라 고를 게 없다.
+  //    「정리됨」 개수는 설정 통계와 「내 레시피」가 이미 보여준다.
+  const list = useMemo(
+    () => recipes.filter((r) => r.status === 'unsorted').sort((a, b) => b.savedAt - a.savedAt),
+    [recipes]
+  )
 
   return (
     <div className="screen fade">
@@ -44,20 +54,12 @@ export default function InboxScreen() {
         <div style={{ width: 40 }} />
       </div>
 
-      <div className="hscroll" style={{ marginTop: 4, marginBottom: 6 }}>
-        {pills.map((p) => (
-          <button key={p.key} className={`pill press ${filter === p.key ? 'active' : ''}`} onClick={() => setFilter(p.key)}>
-            {p.label} {p.n}
-          </button>
-        ))}
-      </div>
-
       <div className="pad">
         {list.length === 0 && (
+          // ⭐ 「정리 끝난 건 여기 없다」를 «빈 화면»에서 알려준다 — 정리하고 나서
+          //    「내가 담은 게 어디 갔지」가 되지 않게. ⛔놀라게 하지 않는 게 이 줄의 일이다.
           <div className="empty">
-            {filter === 'unsorted'
-              ? '정리할 레시피가 없어요. 깔끔하네요!'
-              : '임시보관함이 비어 있어요.\n가져오기로 레시피를 모아보세요.'}
+            {'정리할 레시피가 없어요. 깔끔하네요!\n정리 끝난 레시피는 「레시피」 탭에 있어요.'}
           </div>
         )}
         {list.map((r, i) => (
@@ -71,11 +73,11 @@ export default function InboxScreen() {
                   <div className="name" style={{ fontSize: 17, fontWeight: 600, margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {r.title}
                   </div>
+                  {/* ⛔ 「미정리」 배지를 뺐다 — 이제 이 화면엔 «미정리만» 있어서
+                      줄마다 같은 배지가 뜨면 그냥 노이즈다(창업자가 여러 번 짚은 「정신없다」).
+                      ⭐ 배지는 «갈릴 때» 뜻이 있다. 다 같으면 아무것도 안 알려준다. */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span className="t-sub">{timeAgo(r.savedAt)}</span>
-                    <span className={`badge ${r.status === 'sorted' ? 'badge-sorted' : 'badge-unsorted'}`}>
-                      {r.status === 'sorted' ? '정리됨' : '미정리'}
-                    </span>
                   </div>
                 </div>
               </button>
