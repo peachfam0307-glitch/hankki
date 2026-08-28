@@ -381,6 +381,64 @@ console.log('\n⑦ 🚨 「내가 꾸민 표지 그대로」로 보내도 뜨나
   await page.close()
 }
 
+// ─── ⑧ 🚨🚨 「지금 보내기」 — 창업자 폰이 실제로 지나가는 길 ─────────────
+//
+// 📮 창업자 2026-08-28 = *"리뷰 안떠..ㅠㅠ"* — **⑦을 고쳐 배포한 «뒤»에도.**
+//
+// ⛔⛔ **⑦은 공유가 «바로» 성공하는 길만 밟는다.** 그런데 창업자 폰은 표지 캡처가 십수 초 걸려
+//    **누른 순간의 허가(user activation)가 끊긴다** — 그때 앱은 「지금 보내기」 시트를 띄운다
+//    (창업자가 08-03「먹통」·08-04「다운로드」·08-05「내가만든표지는안돼」 로 세 번 제보한 그 증상).
+//    → 그 단추로 공유는 **진짜로 나가는데**, `sendCover` 의 `finally` 는 이미 지나가서
+//      `자랑보냄` 이 false 로 되돌려진 뒤였다. **보냈는데 아무도 안 물어본다.**
+// 📌 어제 내가 적은 *"「한 곳만 감쌌다」가 참이려면 모든 길이 그 한 곳을 지나가야 한다"* 를
+//    **바로 다음 길에서 또 어겼다.** `ShareDrawCard` 는 「지금 보내기」까지 `go()` 를 지나가 멀쩡한데,
+//    `sendCover` 쪽은 `SendNowSheet` 가 `sharePendingNow` 를 «직접» 불러 빠져나갔다.
+//
+// 🎭 흉내 = **첫 번째 share 만 `NotAllowedError`** (＝허가 끊김) · 두 번째부터 성공.
+//    ⛔ `AbortError`(＝유저가 닫음)와 다른 이름이라야 한다 — 코드가 그 둘을 갈라 처리한다.
+console.log('\n⑧ 🚨 허가가 끊겨 「지금 보내기」로 나간 경우에도 뜨나 — 창업자 폰이 가는 길')
+{
+  const page = await 새탭()
+  await page.evaluate(() => {
+    navigator.canShare = () => true
+    let 첫번 = true
+    navigator.share = () => {
+      window.__부름 = (window.__부름 || 0) + 1
+      if (첫번) { 첫번 = false; return Promise.reject(Object.assign(new Error('user activation'), { name: 'NotAllowedError' })) }
+      window.__보냄 = (window.__보냄 || 0) + 1
+      return Promise.resolve()
+    }
+  })
+  chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(page))
+  await page.evaluate(() => { [...document.querySelectorAll('button[aria-label$="자랑하기"]')][0]?.click() })
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('내가 꾸민 표지 그대로')),
+    null, { timeout: 20000 },
+  ).catch(() => {})
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('내가 꾸민 표지 그대로'))?.click()
+  })
+  // ⭐ 여기가 이 칸의 «전제» — 허가가 끊겨 「지금 보내기」 시트가 떠야 한다.
+  //   ⛔ 안 뜨면 아래 두 칸은 아무것도 안 재고 초록불이 된다(규칙 18 ⓘ) → 전제부터 잰다.
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('지금 보내기')),
+    null, { timeout: 45000 },
+  ).catch(() => {})
+  const 시트떴나 = await page.evaluate(() =>
+    [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('지금 보내기')))
+  chk('허가가 끊겨 「지금 보내기」 시트가 떴다 (＝이 칸의 전제)', 시트떴나)
+
+  const 전보냄 = await page.evaluate(() => window.__보냄 || 0)
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('지금 보내기'))?.click()
+  })
+  await page.waitForFunction((n) => (window.__보냄 || 0) > n, 전보냄, { timeout: 20000 }).catch(() => {})
+  const 보냄8 = await page.evaluate(() => window.__보냄 || 0)
+  chk(`「지금 보내기」로 «진짜» 나갔다 (보냄 ${보냄8})`, 보냄8 > 전보냄)
+  chk('⭐⭐ 그 길에서도 리뷰창이 뜬다', await 리뷰창기다리기(page, 6000))
+  await page.close()
+}
+
 console.log(`\n${실패 ? '⛔' : '✅'} ${통과}/${통과 + 실패}\n`)
 console.log('📌 ①② = 고치기 «전» 상태(문이 사실상 닫혀 있다) · ③④⑤ = ㉠ 으로 연 문.')
 console.log('   ③이 죽으면 리뷰창이 다시 0명에게 뜬다. ④가 죽으면 «안 보낸 사람»에게 조른다.\n')

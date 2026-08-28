@@ -330,8 +330,18 @@ export default function RecipeDetailScreen({ id }) {
         </div>
       )}
       {/* 🎨 꾸민 표지 이미지 만드는 중 — 로딩 오버레이(먹통처럼 안 보이게) */}
-      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다 */}
-      <SendNowSheet pending={pending} onClose={() => setPending(null)} />
+      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다
+          🗣 [2026-08-28] 여기서 «진짜로» 나갔을 때도 한마디를 청한다 — BragScreen 과 «같은 구멍»이었다
+             (창업자 = *"리뷰 안떠..ㅠㅠ"*). 자세한 경위는 `SendNowSheet.jsx` 머리 주석에. */}
+      <SendNowSheet
+        pending={pending}
+        onShared={() => { 자랑보냄.current = true }}
+        onClose={() => {
+          setPending(null)
+          if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+          자랑보냄.current = false
+        }}
+      />
 
       {coverBusy && (
         <Portal>

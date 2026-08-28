@@ -16,7 +16,18 @@ import uiDuoHi from '../assets/stickers/photo/gp_duohi.png'
 //
 //   📌 랜덤 카드(`ShareDrawCard`)에도 같은 장치가 있다. **두 곳을 같이 고쳐야 한다** —
 //      한쪽만 고쳐서 오래 남았던 적이 있다(카드 푸터 주소 · v8.41→08-04).
-export default function SendNowSheet({ pending, onClose }) {
+//   🗣🗣 **[2026-08-28] `onShared` 를 붙였다 — 여기가 「리뷰가 안 뜬다」의 «네 번째» 구멍이었다.**
+//      📮 창업자 = *"리뷰 안떠..ㅠㅠ"* (v11.74 로 `sendCover` 를 고친 «뒤»에도)
+//      ⛔ 그날 낮에 고친 건 `sendCover` 가 «바로» 공유에 성공하는 길뿐이었다.
+//         그런데 창업자 폰은 캡처가 십수 초 걸려 **허가가 끊기는 쪽**으로 간다 —
+//         그게 이 시트다(창업자가 08-03·08-04·08-05 세 번 제보한 그 증상).
+//         → 「지금 보내기」로 **공유는 진짜로 성공하는데** `sendCover` 의 `finally` 는 벌써 지나가서
+//           `자랑보냄` 이 false 로 되돌려진 뒤였다. **보냈는데 아무도 안 물어본다.**
+//      📌 어제 내가 이 파일 옆에 *"「한 곳만 감쌌다」는 말이 맞으려면 그 한 곳을 «모든 길»이 지나가야 한다"*
+//         라고 적어놓고 **이 길을 안 셌다.** `ShareDrawCard` 는 「지금 보내기」까지 `go()` 를 지나가서 멀쩡한데,
+//         `sendCover` 쪽은 이 시트가 `sharePendingNow` 를 «직접» 불러서 빠져나갔다.
+//      ⛔ 취소(AbortError)·「사진으로 저장」은 «안» 부른다 — 안 보낸 사람에게는 안 청한다.
+export default function SendNowSheet({ pending, onClose, onShared }) {
   // ⛔ 랜덤 카드와 «같은 구멍» — 뒤로가기 층에 없어서 뒤로 누르면 홈으로 샌다
   //    (창업자 2026-08-23 *"뒤로가기할때야. 닫기누르면 그대로있어"*).
   // ⭐ 이 시트는 «늘 붙어 있고» `pending` 이 없을 때 null 을 돌려준다 → 마운트 ≠ 열림.
@@ -27,7 +38,7 @@ export default function SendNowSheet({ pending, onClose }) {
   if (!pending) return null
   const send = () => {
     const t = sharePendingNow(pending)
-    if (t) { t.then(onClose).catch((e) => { if (e && e.name === 'AbortError') onClose() }); return }
+    if (t) { t.then(() => { onShared?.(); onClose() }).catch((e) => { if (e && e.name === 'AbortError') onClose() }); return }
     saveShareFiles(pending.files) // 이 폰은 파일 공유 자체가 안 된다
     onClose()
   }

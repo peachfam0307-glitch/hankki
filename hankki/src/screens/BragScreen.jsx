@@ -276,8 +276,19 @@ export default function BragScreen() {
         </Portal>
       )}
 
-      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다 */}
-      <SendNowSheet pending={pending} onClose={() => setPending(null)} />
+      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다
+          🗣 [2026-08-28] 여기서 «진짜로» 나갔을 때도 한마디를 청한다 — 이 길이 빠져 있었다.
+             ⛔ `sendCover` 의 `finally` 는 이 시트가 뜨는 순간 이미 지나갔다 → 거기선 못 잡는다.
+             ⭐ 랜덤 카드(`ShareDrawCard`)와 «같은 모양»으로 맞췄다 — 보낼 때 표시하고, 닫을 때 청한다. */}
+      <SendNowSheet
+        pending={pending}
+        onShared={() => { 자랑보냄.current = true }}
+        onClose={() => {
+          setPending(null)
+          if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+          자랑보냄.current = false
+        }}
+      />
 
       {/* 랜덤 카드 모달 — 공유(💌) + 표지로 저장(🖼) */}
       {share && (
