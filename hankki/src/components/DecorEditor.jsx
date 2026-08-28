@@ -948,6 +948,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    ⭐ 기억은 이미 있는 `folded` 를 그대로 쓴다 — 저장 자리를 새로 만들지 않는다.
   const PICKS_FOLD = 'sec_picks'
   const picksFold = mode === 'decor' && folded.has(PICKS_FOLD)
+  // 🔺🔺 **접을 게 «있을 때»만 세모를 띄운다** (창업자 폰 제보 2026-08-28
+  //    *"그리고 저거 먹통익던데 **친구들옆에 세모있자나**"*)
+  // ⛔⛔ 이 세모가 접는 것은 «셋»뿐이다 — ⑴속지·글쓰기 칩 ⑵글씨체 ⑶글씨 크기(1590·1615·1653줄).
+  //    🔎 그런데 `canPickPaper = isDiary && …` 이고 `paperEdit` 도 «일기 전용 값»이다
+  //       → **레꾸(레시피 꾸미기)에는 접을 줄이 «아예 없다».**
+  //    🔢 실측(`_repro-접기세모먹통-0828`) = 눌러도 서랍이 **0px** 움직인다.
+  //       ⛔ 그런데 세모 «그림»은 뒤집히고 `aria-expanded` 도 바뀐다 —
+  //          그래서 「눌렸나」로 재면 멀쩡해 보인다(절대원칙 18 ⓘ). 재현판 첫 판이 그렇게 초록불이었다.
+  // 📌 고장난 게 아니라 **「할 일이 없는데 단추가 서 있던 것」**이다. 유저는 그 둘을 못 가른다.
+  //    ✅ 안 되는 단추는 «없는 게» 낫다 — 일기에선 그대로 뜨고, 레꾸에선 안 뜬다.
+  // ⛔ `picksFold` 를 조건에 넣지 않는다 — 아래 값들은 접힘과 무관하게 계산되므로
+  //    접어 둔 채 돌아와도 세모가 그대로 있다(막다른 길이 안 생긴다).
+  const canFoldPicks = !!(canPickPaper || paperEdit || (showWriteTools && (onWriteFont || onWriteSize)))
   const PickFoldIco = ({ open }) => (
     <span aria-hidden style={{ display: 'inline-flex', transform: open ? 'rotate(180deg)' : 'none' }}>
       <svg width="18" height="18" viewBox="0 0 20 20"><path d="M2 6 L18 6 L10 16 Z" fill="currentColor" /></svg>
@@ -1018,9 +1031,20 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             ⛔ 접두어(`rs_`·`tw_`)로 가르지 않는다 — 표시용 이름·키로 분류하면 언젠가 어긋난다
                (v9.07 에 라벨로 분류했다가 자산 도구가 깨졌다). 데이터에 표시를 단다.
             ⛔⛔ 아래 조건 «뒤»에 JSX 주석을 넣지 말 것 — 거긴 표현식 여는 자리라 빌드가 깨진다.
-               2026-08-12 에 또 밟았다(CLAUDE.md 에 적힌 함정인데 이번이 여섯 번째다). */}
+               2026-08-12 에 또 밟았다(CLAUDE.md 에 적힌 함정인데 이번이 여섯 번째다).
+
+            🐻🐧 `bigCell` = **글자는 없지만 칸을 크게 줘야 하는 그룹**(꼬르곰·펭펭).
+            📮 창업자 2026-08-28 = *"레꾸에서 친구들에 꼬르곰 펭펭을 «글자에 있는 꼬르곰 펭펭만큼»
+               크기를 키웠으면 좋겠어. **잘 안보여.**"*
+            ⭐ 같은 애들이 두 탭에 있는데 칸이 **52px ↔ 110px = 2.1배**로 갈려 있었다 —
+               글자 탭(rs_)은 캡션 때문에 크게 줬고, 친구들 탭은 그 이유가 없어 작은 채였다.
+               ⛔ 그런데 **작은 칸에서 안 보이는 건 캡션만이 아니다** — 표정·포즈로 고르는
+                  캐릭터야말로 52px 에선 뭐가 뭔지 못 가른다. 이유가 달랐을 뿐 증상은 같다.
+            ⛔⛔ **`wordy` 를 돌려 쓰지 않는다** — 그 이름은 «그림 안에 글자가 있다»는 뜻이라
+               캡션 없는 곰펭에 붙이면 **이름이 거짓말을 한다**(v9.07 에 표시용 라벨로 분류했다가
+               자산 도구가 통째로 깨졌다). 뜻이 다르면 표시도 따로 단다. 칸 크기만 같이 쓴다. */}
         {!folded.has(g.key) && (
-          <div className={g.wordy ? 'decor-grid wordy' : 'decor-grid'}>{g.items.map(renderCell)}</div>
+          <div className={g.wordy || g.bigCell ? 'decor-grid wordy' : 'decor-grid'}>{g.items.map(renderCell)}</div>
         )}
       </div>
     )
@@ -1678,12 +1702,14 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               )
             })}
           </div>
+            {canFoldPicks && (
             <button type="button" className="press decor-pickfold"
               onClick={() => { dropCaret(true); toggleFold(PICKS_FOLD) }}
               aria-expanded={!picksFold}
               aria-label={picksFold ? '고르는 줄 펴기' : '고르는 줄 접기'}>
               <PickFoldIco open={!picksFold} />
             </button>
+            )}
           </div>
           )}
           <VHint boxRef={drawerRef} />
