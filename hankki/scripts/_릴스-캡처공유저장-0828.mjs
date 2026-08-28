@@ -74,6 +74,15 @@ const 공유자리 = [공유x, 공유y, 공유r]
 //      ⑵ **멈춤**: 줌을 앞쪽에서 «끝내고» 뒤는 세워 둔다. 내내 움직이면 눈이 어디서 멈출지 모른다.
 //         → `멈춤` 값 = 그 장면의 뒤 몇 할을 정지로 둘 것인가.
 const 장면들 = [
+  // 🪝🪝 첫 장 = 훅. 📮창업자 = *"첫장에 시선을 끌 한장이 필요해"* · *"쌓아둔 레시피 많은거를.."*
+  //    ⭐ 릴스는 첫 1초가 전부다 — 스크롤을 멈추게 못 하면 나머지 20초는 아무도 안 본다.
+  //       「많다」는 정지 그림으로 전달이 약한데 **흘러가면** 한 번에 읽힌다.
+  //    🛠 재료 = `_shot-목록훅-0828.mjs` 가 스크롤 자리를 달리해 찍은 여섯 장
+  {
+    id: 's0',
+    그림들: 'abcdef'.split('').map((c) => `${앱화면}/28${c}-목록훅.png`),
+    초: 2.0, 자막: '이거 다 <b>캡처</b>로 담은 거예요', 줌: [1.04, 1.0], 초점: [540, 900], 멈춤: 0.22, 큰자막: true,
+  },
   { id: 's1', 그림: `${원본}/2-인스타-깨끗-가림.png`, 초: 2.0, 자막: '인스타에서 본 레시피', 줌: [1.0, 1.06], 초점: [540, 820], 멈춤: 0.30 },
   { id: 's2', 그림: `${원본}/인스타-도구띠-합성.png`, 초: 2.9, 자막: '캡처하면 아래에 <b>공유</b>', 동그라미: 공유자리, 줌: [1.05, 1.5], 초점: [공유자리[0], 공유자리[1] - 46], 멈춤: 0.48 },
   { id: 's3', 그림: `${원본}/3-공유시트-가림.png`, 초: 2.9, 자막: '한끼가 안 보이면 <b>더보기</b>', 동그라미: [907, 1708, 106], 줌: [1.0, 1.45], 초점: [907, 1700], 멈춤: 0.48 },
@@ -85,9 +94,15 @@ const 장면들 = [
   { id: 's7', 그림: `${앱화면}/22-상세-만드는법.png`, 초: 2.6, 자막: '만드는 법까지', 줌: [1.0, 1.08], 초점: [540, 900], 멈춤: 0.36 },
 ]
 
-for (const s of 장면들) if (!existsSync(s.그림)) { console.error('⛔ 재료가 없다 →', s.그림); process.exit(1) }
+// 🖼 장면은 그림 «하나»(`그림`) 이거나 «여러 장을 넘기는 것»(`그림들`)이다
+const 그림목록 = (s) => s.그림들 ?? [s.그림]
+for (const s of 장면들) {
+  for (const g of 그림목록(s)) {
+    if (!existsSync(g)) { console.error('⛔ 재료가 없다 →', g); process.exit(1) }
+  }
+}
 
-const IMG = Object.fromEntries(장면들.map((s) => [s.id, b64(s.그림)]))
+const IMG = Object.fromEntries(장면들.map((s) => [s.id, 그림목록(s).map(b64)]))
 const IMG곰펭 = b64(곰펭)
 
 // 📐 9:16 = 1080×1920. 폰 캡처(1080×2340)는 세로가 더 길어 «가운데를 채워» 쓴다.
@@ -111,6 +126,9 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#fbf0e0}
   background:rgba(52,26,6,.86);color:#fffdf8;white-space:nowrap;
   box-shadow:0 16px 44px rgba(40,20,4,.38)}
 #cap b{color:#ffd98a}
+/* 🪝 첫 장(훅)은 더 크게 — 스크롤을 멈추게 하는 게 일이다 */
+#cap.big{font-size:80px;bottom:250px}
+#cap.big .pill{padding:24px 50px}
 #capbg{position:absolute;left:0;right:0;bottom:0;height:660px;z-index:8;
   background:linear-gradient(to top,rgba(60,30,8,.46),rgba(60,30,8,0))}
 /* 🐻🐧 아웃트로 */
@@ -144,7 +162,9 @@ window.__그리기 = (o) => {
   if (o.outro) return
   if (shot.src !== o.src) shot.src = o.src
   // 🏷 자막은 «알약»으로 감싼다 — 앱 화면 글자 위에서 그림자만으론 안 읽힌다
-  document.getElementById('cap').innerHTML = o.cap ? '<span class="pill">' + o.cap + '</span>' : ''
+  const cap = document.getElementById('cap')
+  cap.className = o.big ? 'big' : ''   // 🪝 첫 장(훅)만 더 크게
+  cap.innerHTML = o.cap ? '<span class="pill">' + o.cap + '</span>' : ''
   // 📐 초점(fx,fy)이 화면 가운데로 오도록 옮기고 z 배로 키운다 — 그림 좌표 그대로 쓴다
   const z = o.z
   shot.style.transform = 'translate(-50%,-50%) scale(' + z + ')'
@@ -165,11 +185,12 @@ window.__그리기 = (o) => {
 })
 
 // 📏 그림마다 세로 길이가 다르다(폰 2340 · 잘라낸 시트 2002) → 실제 값을 읽어 초점 계산에 쓴다
+//    ⭐ 여러 장을 넘기는 장면은 «같은 화면을 굴려 찍은 것»이라 첫 장 하나만 재면 된다
 const 높이 = {}
 for (const s of 장면들) {
   높이[s.id] = await p.evaluate((src) => new Promise((r) => {
     const i = new Image(); i.onload = () => r(i.naturalHeight * (1080 / i.naturalWidth)); i.src = src
-  }), IMG[s.id])
+  }), IMG[s.id][0])
 }
 
 const 부드럽게 = (t) => t * t * (3 - 2 * t) // ease-in-out
@@ -197,9 +218,12 @@ for (const s of 장면들) {
     const 초 = i / FPS
     const 등장 = 초 < 0.30 ? 1 + 0.55 * (1 - 초 / 0.30) ** 2 : 1
     const 맥 = s.동그라미 ? 등장 * (1 + 0.085 * Math.sin(초 * Math.PI * 2.4)) : 1
+    // 🪝 여러 장을 넘기는 장면 — 「멈춤」 구간에 닿기 «전»에 다 넘겨서 마지막 장에 눈이 머물게 한다
+    const 장 = IMG[s.id].length
+    const 몇번째 = 장 === 1 ? 0 : Math.min(장 - 1, Math.floor((진행 / Math.max(0.01, 1 - 멈춤)) * 장))
     await 찍기({
-      src: IMG[s.id], cap: s.자막, z, fx: s.초점[0], fy: s.초점[1], imgH: 높이[s.id],
-      ring: s.동그라미 || null, pulse: 맥, ringOp: 1,
+      src: IMG[s.id][몇번째], cap: s.자막, z, fx: s.초점[0], fy: s.초점[1], imgH: 높이[s.id],
+      ring: s.동그라미 || null, pulse: 맥, ringOp: 1, big: !!s.큰자막,
     })
   }
 }
