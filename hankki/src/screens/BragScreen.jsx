@@ -123,6 +123,9 @@ export default function BragScreen() {
     setBusy(true) // 로딩 오버레이(먹통처럼 안 보이게)
     const info = infoOf(r)
     await new Promise((res) => setTimeout(res, 60)) // 숨은 표지 레이아웃(글자 크기 기준 폭)이 잡힐 시간
+    // 📱 [2026-08-28 ⓑ] 시트를 띄우게 되면 «리뷰는 그 시트가 닫힐 때» 청한다.
+    //    ⛔ 아래 `finally` 에서 바로 청하면 **시트 위에 시트가 겹친다**(2026-08-27 에 지킨 것 ⑴).
+    let 띄울시트 = null
     try {
       // 재료·만드는 법이 있으면 레시피카드도 2장째로 함께(친구가 진짜 해먹게)
       // ⭐ 미리 캡처가 다 됐으면 여기서 «기다림 없이» 공유창이 열린다
@@ -130,7 +133,9 @@ export default function BragScreen() {
       // ⛔ 공유가 «저장»으로 떨어지면 그 이유를 말해준다 — 창업자 2026-08-03
       //    *"내 레시피꾸민거 보내려고하면 다운로드하라고 뜨고"*. 갑자기 다운로드 창이 뜨면
       //    유저는 «고장»으로 읽는다. 저장된 것 자체는 정상 동작이니 **한 줄만 붙이면 오해가 안 생긴다.**
-      if (res && res.pending) setPending(res.pending)   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
+      if (res && res.pending) 띄울시트 = res.pending   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
+      // 📱 표지가 나갔고 레시피가 한 장 남았다 → 「레시피도 보내기」를 한 번 더 청한다(창업자 "ㄴ으로 하자")
+      else if (res && res.shared === true && res.다음) 띄울시트 = { ...res.다음, 이어보내기: true }
       else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
       // 🗣🗣 **여기가 빠져 있었다** — 창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 «아예» 못봤어"*
@@ -147,8 +152,11 @@ export default function BragScreen() {
       setBusy(false)
       setPick(null)
       // ⛔ 시트를 닫은 «뒤»에 띄운다 — 시트 위에 시트를 겹치지 않는다(2026-08-27 에 지킨 것 ⑴)
-      if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-      자랑보냄.current = false
+      if (띄울시트) setPending(띄울시트) // 📱 리뷰는 이 시트의 `onClose` 가 청한다(아래)
+      else {
+        if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+        자랑보냄.current = false
+      }
     }
   }
 
@@ -283,7 +291,10 @@ export default function BragScreen() {
       <SendNowSheet
         pending={pending}
         onShared={() => { 자랑보냄.current = true }}
-        onClose={() => {
+        onClose={(다음) => {
+          // 📱 [2026-08-28 ⓑ] 「지금 보내기」로 표지가 나갔고 레시피가 남았으면 **한 장 더**를 먼저 청한다.
+          //    ⛔ 리뷰는 그다음이다 — 시트 위에 시트를 겹치지 않는다.
+          if (다음) { setPending({ ...다음, 이어보내기: true }); return }
           setPending(null)
           if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
           자랑보냄.current = false
