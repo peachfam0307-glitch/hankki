@@ -40,6 +40,9 @@ const chk = (이름, 값, 기대) => {
 }
 
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
+// ⏰ 절대원칙 27 — 「오늘」은 today.js 한 곳에서만 만든다(여기서 만들지 않는다)
+const { todayKST } = await import('../src/today.js')
+const 오늘KST = todayKST()
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
 await ctx.addInitScript(SEED_COACH_SEEN)
@@ -293,7 +296,10 @@ console.log('\n⑤ 한 번 물었으면 두 번 안 묻는다 — 거절해도 �
   const page = await 새탭()
   const p2 = await 새탭()
   // ⭐ 「이미 물어본 사람」을 여기서 심는다 — 새탭() 이 열 때 지우므로 «연 뒤에» 심어야 한다
-  await p2.evaluate(() => { try { localStorage.setItem('hankki:nudge:review', '1') } catch {} })
+  // 🗓 [2026-08-28] 「물어봤음」은 이제 **'1' 이 아니라 «물어본 날짜»**다(30일 뒤 한 번 더 · 창업자 확정).
+  //    ⛔ 옛 판은 '1' 을 심었는데, 그 값은 이제 **「언제인지 모른다 → 다시 묻는다」**로 읽혀 이 칸이 죽었다.
+  //       게이트가 «맞게» 걸린 것이다 — 규칙이 바뀌면 그 규칙을 지키는 검사도 같이 바뀌어야 한다.
+  await p2.evaluate((오늘) => { try { localStorage.setItem('hankki:nudge:review', 오늘) } catch {} }, 오늘KST)
   await 공유흉내(p2, true)
   chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(p2))
   chk('자랑 카드가 떴다', await 자랑카드열기(p2))
@@ -317,7 +323,7 @@ console.log('\n⑥ ⭐ 「1회만」이 «진짜인가» — 어떻게 닫아도
   await page.evaluate(() => { try { localStorage.removeItem('hankki:nudge:review') } catch {} })
   await 공유흉내(page, true)
   chk('시작할 때 「물어봤음」이 «없다» — 앞 칸이 남긴 게 없나', await page.evaluate(() => {
-    try { return localStorage.getItem('hankki:nudge:review') !== '1' } catch { return false }
+    try { return !localStorage.getItem('hankki:nudge:review') } catch { return false }
   }))
   chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(page))
   chk('자랑 카드가 떴다', await 자랑카드열기(page))
@@ -331,7 +337,8 @@ console.log('\n⑥ ⭐ 「1회만」이 «진짜인가» — 어떻게 닫아도
   await page.waitForTimeout(900)
   chk('뒤로가기로 리뷰창이 닫혔다', !(await 리뷰창떴나(page)))
   chk('⭐ 뒤로가기로 닫아도 「물어봤음」이 남는다', await page.evaluate(() => {
-    try { return localStorage.getItem('hankki:nudge:review') === '1' } catch { return false }
+    // ⭐ 「날짜가 박혔나」로 본다 — '1' 이 아니라 YYYY-MM-DD 라야 30일 셈이 된다
+    try { return /^\d{4}-\d{2}-\d{2}$/.test(localStorage.getItem('hankki:nudge:review') || '') } catch { return false }
   }))
 
   // 두 번째 공유 — 이번엔 안 떠야 한다
