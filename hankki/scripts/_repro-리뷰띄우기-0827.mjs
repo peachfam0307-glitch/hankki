@@ -163,12 +163,21 @@ const 공유흉내 = (page, 보내지나) => page.evaluate((ok) => {
 
 // 「공유하기」 → 카드 캡처(최대 35초)를 «기다린다»
 //    ⛔ 고정 대기(2.5초)로는 캡처가 안 끝나 한 번도 안 불렸다 — 그러고도 뒤 칸이 초록불이었다.
+// ⛔⛔ [2026-08-28] 여기가 **타이밍이 아니라 «진짜 논리 버그»** 였다 — 스모크에서 계속 흔들렸다.
+//   옛 코드 = `waitForFunction(() => (window.__부름 || 0) > 0)` = **「부른 적이 «있나»」**.
+//   ⭐ 그런데 ⑥칸은 «두 번» 공유한다. 두 번째엔 첫 번째 때문에 이미 1이라
+//      **조건이 «처음부터 참»이라 기다리지 않고 바로 돌아왔다** — 공유가 나가기도 전에.
+//   📌 평소엔 빨라서 우연히 맞았고, 스모크(93개 동시)에서 느려지면 드러났다.
+//      증상 = 「두 번째 공유도 나갔다 (보냄 1)」 ⛔ (2가 나와야 한다)
+//   ✅ 「있나」가 아니라 **「눌렀을 때보다 «늘었나»」**를 기다린다.
+//   🧪 규칙 12 = CPU 에 부하를 걸고 돌리면 옛 코드는 32/33 · 이 코드는 33/33.
 const 공유누르기 = async (page) => {
+  const 전 = await page.evaluate(() => window.__부름 || 0)
   await page.evaluate(() => {
     const t = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('공유하기'))
     t?.click()
   })
-  await page.waitForFunction(() => (window.__부름 || 0) > 0, null, { timeout: 45000 }).catch(() => {})
+  await page.waitForFunction((n) => (window.__부름 || 0) > n, 전, { timeout: 45000 }).catch(() => {})
   await page.waitForTimeout(500)
   return page.evaluate(() => ({ 부름: window.__부름 || 0, 보냄: window.__보냄 || 0 }))
 }
