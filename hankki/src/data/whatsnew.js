@@ -32,6 +32,8 @@ import { SEASON_CUTS } from './cardSeasons'
 // ⭐⭐ [2026-08-17] 공식을 여기서 «없앴다» — `src/today.js` 한 곳에만 둔다(창업자 절대원칙).
 import { todayKST } from '../today.js'   // ⛔ re-export 만 하면 이 파일 안에서 못 쓴다
 export { todayKST }
+// 🗓 [2026-08-28] 갈래마다 열리는 «요일»이 다르다 — 소식이 홈과 같은 날을 보게 한다.
+import { openYmd, openedOn } from '../openday.js'
 
 const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000)
 
@@ -133,30 +135,43 @@ export function whatsNew(today = todayKST()) {
   //      「매주 올라간다」는 «열리는 것»과 «알리는 것»이 짝이라야 완성된다.
   //   ⭐ 제철을 먼저 넣고 우리집을 그 앞에 unshift 한다 → 화면엔 **우리집이 위**로 온다.
   //      우리집레시피가 «우리만 가진 것»이라 먼저 말한다.
-  for (const [LIST, 이름] of [[WEEKLY, '이번 주 레시피'], [HOMEMADE, '우리집레시피']]) {
-    const w = weekOpen(today, LIST)
-    if (w && days(w.from, today) <= 6) {
-      opened.unshift({ when: w.from, kind: 이름, title: w.title, count: w.ids.length, why: w.why })
+  // 🗓 [2026-08-28] **갈래마다 요일이 다르다** — 제철은 수요일, 우리집은 월요일(`src/openday.js`).
+  //   ⛔⛔ 여기서 `today` 를 그대로 쓰면 **소식은 「열렸어요」라는데 홈엔 아직 없는** 상태가 된다
+  //      (제철은 월·화엔 아직 지난 줄이다). 2026-08-12 에 정확히 그 모양으로 한 번 데였다.
+  //   ✅ 홈이 보는 「오늘」과 **같은 값**으로 판정한다.
+  for (const [LIST, 이름, 갈래] of [[WEEKLY, '이번 주 레시피', 'season'], [HOMEMADE, '우리집레시피', 'homemade']]) {
+    const t = openYmd(갈래, today)
+    const w = weekOpen(t, LIST)
+    if (w && days(w.from, t) <= 6) {
+      // ⛔ `when` 은 **실제로 열린 날**이라야 한다 — `from`(월요일)을 그대로 쓰면
+      //    수요일에 열린 제철이 「이틀 전에 열렸어요」로 보인다. 밀린 만큼 되돌려 적는다.
+      opened.unshift({ when: openedOn(갈래, w.from), kind: 이름, title: w.title, count: w.ids.length, why: w.why })
     }
   }
 
   const nextDate = all.filter((g) => g.when > today).map((g) => g.when).sort()[0] || null
-  const 다음줄 = (LIST) => LIST.filter((x) => x.from > today).sort((a, b) => a.from.localeCompare(b.from))[0] || null
-  const nextWeek = 다음줄(WEEKLY)
-  const nextHome = 다음줄(HOMEMADE)   // 🏠 우리집레시피도 «곧 열릴 것»에 나와야 한다
+  // 🗓 [2026-08-28] 곧 열릴 것도 «그 갈래의 요일»로 잰다 —
+  //    `from` 은 월요일이지만 제철은 그 주 수요일에 열린다. `열림` 이 실제 날짜다.
+  const 다음줄 = (LIST, 갈래) => {
+    const t = openYmd(갈래, today)
+    const x = LIST.filter((w) => w.from > t).sort((a, b) => a.from.localeCompare(b.from))[0]
+    return x ? { ...x, 열림: openedOn(갈래, x.from) } : null
+  }
+  const nextWeek = 다음줄(WEEKLY, 'season')
+  const nextHome = 다음줄(HOMEMADE, 'homemade')   // 🏠 우리집레시피도 «곧 열릴 것»에 나와야 한다
 
   let upcoming = []
   let when = null
   // 다음 «문»과 다음 «주» 중 **먼저 오는 날짜**를 고른다.
-  const cand = [nextDate, nextWeek?.from, nextHome?.from].filter(Boolean).sort()
+  const cand = [nextDate, nextWeek?.열림, nextHome?.열림].filter(Boolean).sort()
   if (cand.length) {
     when = cand[0]
     upcoming = all.filter((g) => g.when === when)
-    if (nextWeek && nextWeek.from === when) {
+    if (nextWeek && nextWeek.열림 === when) {
       upcoming = [{ when, kind: '이번 주 레시피', title: nextWeek.title, count: nextWeek.ids.length }, ...upcoming]
     }
     // ⭐ 우리집을 «맨 앞»에 — 열린 것과 같은 차례로 보이게 한다
-    if (nextHome && nextHome.from === when) {
+    if (nextHome && nextHome.열림 === when) {
       upcoming = [{ when, kind: '우리집레시피', title: nextHome.title, count: nextHome.ids.length }, ...upcoming]
     }
   }

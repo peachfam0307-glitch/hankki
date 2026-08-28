@@ -119,8 +119,10 @@ chk(`③ 그 값이 위험색(--danger = ${위험})으로 칠해졌다`, !!캡�
 chk('④ 맨 위 잔량 띠가 그대로 살아 있다', new RegExp(`무료 ${KEY_NAME}.*남았어요|다 썼어요`).test(t가져오기))
 // ⭐⭐ 값을 «고르는 그 줄»에도 — 창업자가 결제에 대해 정한 「쓰려는 순간 그 자리에서」와 같은 원칙.
 //    ⛔ 맨 위 잔량 띠로는 못 대신한다 — 그건 「몇 장 남았나」고 이건 「이 길이 몇 장을 쓰나」다.
-chk(`④-b 제일 많이 누르는 길(사진·직접 작성)에 「${keyCount(1)}」가 붙어 있다`, new RegExp(`직접 작성[\\s\\S]{0,80}${keyCount(1)}`).test(t가져오기))
-chk(`④-c 공짜 길(텍스트 붙여넣기)에 「${keyCount(0)}」이 나란히 붙어 있다`, new RegExp(`텍스트 붙여넣기[\\s\\S]{0,80}${keyCount(0)}`).test(t가져오기))
+// 🗓 [2026-08-28] 히어로가 「보다가 캡처해서 담기」로, 공짜 길이 「직접 입력하기」로 바뀌었다(창업자 네 갈래).
+//    ⭐ 지키는 것은 그대로 = **제일 많이 누르는 길에 값이 붙어 있나 · 공짜 길과 «나란히» 보이나.**
+chk(`④-b 제일 많이 누르는 길(보다가 캡처)에 「${keyCount(1)}」가 붙어 있다`, new RegExp(`보다가 캡처해서 담기[\\s\\S]{0,120}${keyCount(1)}`).test(t가져오기))
+chk(`④-c 공짜 길(직접 입력하기)에 「${keyCount(0)}」이 나란히 붙어 있다`, new RegExp(`직접 입력하기[\\s\\S]{0,80}${keyCount(0)}`).test(t가져오기))
 // ⛔ 히어로 카드 설명은 `.opt-row .t .b` 가 «아니라» 인라인 style 이라 v11.19 의 keep-all 이 안 걸렸다.
 //    실물에서 「읽어 채워 / 요」로 잘려 있었다. 클래스로 고친 것은 클래스를 쓰는 줄만 낫는다.
 const 가져오기잘림 = await page.evaluate((잣대) => {
@@ -129,7 +131,7 @@ const 가져오기잘림 = await page.evaluate((잣대) => {
     .filter((e) => re.test(e.textContent || '')
       && ![...e.children].some((c) => re.test(c.textContent || '')))
   return { n: 값.length, 나쁨: 값.filter((e) => getComputedStyle(e).wordBreak !== 'keep-all').length }
-}, `캡처는 재료·만드는 법|캡처는 ${keyCount(1)}`)
+}, `인스타·유튜브 캡처를|이미 찍어둔 사진을|앱을 안 나가고`)
 chk(`④-d ⛔가져오기 안내도 낱말 가운데서 안 잘린다 (${가져오기잘림.n}줄 중 어긴 것 ${가져오기잘림.나쁨})`,
   가져오기잘림.n >= 2 && 가져오기잘림.나쁨 === 0)
 
@@ -150,17 +152,24 @@ const 목록 = await page.evaluate((짧은) => {
   }
 }, KEY_SHORT)
 chk(`⑤-a ⭐목록 «네 줄 전부»가 장수를 말한다 (${목록.안내}/${목록.n}${목록.빠진것.length ? ' · 빠진 것: ' + 목록.빠진것.join(',') : ''})`,
-  목록.n >= 4 && 목록.안내 === 목록.n)
+  // 🗓 [2026-08-28] 목록이 다섯 줄 → **네 갈래**로 줄었다(창업자 확정).
+  //    히어로가 `.opt-row` 밖이라 여기 세는 것은 **셋**이다. ⭐지키는 것은 그대로 = 「빠짐없이 말하나」.
+  목록.n >= 3 && 목록.안내 === 목록.n)
 // ⭐ 히어로(사진·직접 작성)는 `.opt-row` 밖이라 위에서 따로 봤다(④-b). 합치면 다섯이다.
 // ⚠️ 조건부인 둘(인스타·유튜브)은 「캡처는」을 앞에 붙여야 한다 —
 //    그냥 「1장」이라 적으면 «붙여넣기»로 담는 사람도 깎이는 줄 안다.
-chk('⑤-b ⚠️조건부인 줄은 조건을 밝힌다 (「캡처는 AI 스캔 1장」)',
-  (t가져오기.match(new RegExp(`캡처하면 ${keyCount(1)}`, 'g')) || []).length >= 2)
+// 🗓 [2026-08-28] 인스타·유튜브 줄이 목록에서 내려가면서 조건부인 줄은 **히어로 하나**가 됐다.
+//    ⭐ 나머지 조건부 값은 그 «흐름 화면 안»의 단추 셋이 각각 말한다(거기서 진짜 갈림길이 생긴다).
+chk('⑤-b ⚠️조건부인 줄은 조건을 밝힌다 (「캡처하면 …」)',
+  (t가져오기.match(new RegExp(`캡처하면 ${keyCount(1)}`, 'g')) || []).length >= 1)
 writeFileSync(join(OUT, '1-가져오기.png'), await page.screenshot({ fullPage: true }))
 
 // ── ② 편집 화면 : ⭐값이 «권유보다 먼저» 나오나 ──
 console.log('\n── ② 편집 화면 · 값이 먼저인가 ──')
-await page.getByText('사진 · 직접 작성하기', { exact: false }).first().click()
+// 🗓 [2026-08-28] 「사진 · 직접 작성하기」 → **「직접 입력하기」 ＋ 안내 한 단계**
+await page.getByText('직접 입력하기', { exact: true }).first().click()
+await page.waitForTimeout(800)
+await page.getByRole('button', { name: '빈 종이 열기' }).first().click()
 await page.waitForTimeout(1000)
 const t편집 = await 글자()
 // ⭐⭐ 창업자가 «직접 준» 문구다 — *"무료이용이 1장 소모가 된다던지"*.
@@ -237,7 +246,10 @@ for (const 이름 of ['YouTube', 'Instagram']) {
   await page.waitForTimeout(600)
   await page.getByRole('button', { name: '가져오기' }).first().click()
   await page.waitForTimeout(700)
-  await page.getByText(이름, { exact: true }).first().click()
+  // 🗓 [2026-08-28] 인스타·유튜브는 목록에서 내려가고 「보다가 캡처해서 담기」 안내 «안»으로 들어갔다
+  await page.getByText('보다가 캡처해서 담기', { exact: true }).first().click()
+  await page.waitForTimeout(600)
+  await page.getByRole('button', { name: new RegExp(이름 + ' 에서 담는 다른 방법') }).first().click()
   await page.waitForTimeout(700)
   const 단추 = await page.evaluate((짧은) => {
     const re = new RegExp(`${짧은}\\s*\\d`)

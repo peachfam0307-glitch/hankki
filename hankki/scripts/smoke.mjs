@@ -116,7 +116,9 @@ try {
   // ── 커버리지 B) 신규 작성 → 저장 (addRecipe 경로) · 앱 내에서만 이동 ──
   await tour('신규 레시피 작성 → 저장', async () => {
     await page.getByRole('button', { name: '가져오기' }).first().click(); await page.waitForTimeout(700)
-    await page.getByText('직접 작성', { exact: false }).first().click(); await page.waitForTimeout(800)
+    // 🗓 [2026-08-28] 목록이 «네 갈래»로 — 「직접 작성」 → 「직접 입력하기」 ＋ 안내 한 단계
+    await page.getByText('직접 입력하기', { exact: true }).first().click(); await page.waitForTimeout(700)
+    await page.getByRole('button', { name: '빈 종이 열기' }).first().click(); await page.waitForTimeout(800)
     await page.getByPlaceholder('예) 명란 크림 파스타').fill('스모크 신규 레시피'); await page.waitForTimeout(200)
     await page.getByRole('button', { name: '저장', exact: true }).first().click(); await page.waitForTimeout(1300)
     if (await editorOpen()) stepFails.push('신규 저장 — 저장 후에도 에디터가 안 닫힘(저장 실패)') // 하드 승격

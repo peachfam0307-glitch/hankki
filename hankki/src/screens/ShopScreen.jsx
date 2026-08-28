@@ -31,7 +31,8 @@ import TabTalk from '../components/TabTalk'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { openExternal, matchKo } from '../utils'
 import { CURATION, curIcon, weeklyPicks, isHansalim } from '../data/curation'
-import { weeklyNow, todayKST } from '../data/weekly'
+import { weeklyNow } from '../data/weekly'
+import { rotateTodayKST } from '../openday'
 
 // 외부 쇼핑몰 열기 — 정식 새 탭(설치된 앱 있으면 App Link 로 앱)으로 연다.
 // (features 문자열을 주면 팝업 창으로 열려 모바일에서 세로로 깨지고 두 번 열린 듯 보였음)
@@ -337,7 +338,12 @@ function Curation() {
   //   ⛔ 예전엔 `it.pick` 이 박힌 «둘»을 그대로 보여줘 **영영 안 바뀌었다**(창업자 *"예시야 된장."*).
   //   ⭐ 1순위 = 이번 주 레시피가 쓰는 제품 → 홈의 「이번 주 제철」과 **한 이야기**가 된다.
   //      모자라면 주차 번호로 돌려 채운다(어느 주에도 안 빈다). 자세한 건 `curation.js` 의 `weeklyPicks`.
-  const picks = weeklyPicks(weeklyNow(recipes), todayKST())
+  //   🗓 [2026-08-28] **금요일에 바뀐다** (창업자 = *"금-주부의 장바구니 … 요일도 딱 박고"*).
+  //      ⛔ `todayKST()` 를 그대로 쓰면 주 경계가 «월요일»이라 제철과 같은 날 바뀐다 →
+  //         일주일 내내 앱이 안 변한다는 창업자 지적이 그 자리다. → `src/openday.js`
+  //      ⛔ 제철 줄도 **픽의 요일 기준**으로 읽는다 — 안 그러면 수요일에 제철이 바뀔 때 픽도 같이 바뀐다.
+  //      ⚠️ 회전은 `rotateTodayKST`(목요일 경계) — 자세한 이유는 `src/openday.js` 에 적어 뒀다.
+  const picks = weeklyPicks(weeklyNow(recipes, new Date(), 'pick'), rotateTodayKST('pick'))
   // 🗂🗂 칩은 «큰 칸»만 보여준다 — 창업자 2026-08-03
   //   *"장바구니 종류탭이 너무 길어지네... 지금 종류가 더 늘텐데 옆으로 계속 길어지면 불편할 것 같아."*
   //   🔎 재보니 카테고리 23개 · 칩 줄 길이 ≈2,227px = **화면 폭의 5.7배**(다섯 번 넘게 밀어야 끝).

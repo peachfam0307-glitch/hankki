@@ -1,4 +1,5 @@
 import { allBasicRecipes } from './basics.js'
+import { openTodayKST } from '../openday.js'
 
 // 🗓 이번 주 레시피 — «미리 채워두고 날짜가 열게 한다».
 //
@@ -366,8 +367,10 @@ const 제목표 = new Map(allBasicRecipes.map((r) => [r.id, (r.title || '').trim
 const 제목of = (id) => 제목표.get(id) || ''
 
 // ⭐ 제철·우리집이 «같은 방식»으로 열린다 — 고르는 규칙을 한 곳에만 둔다.
-const 열린줄 = (LIST, recipes, now) => {
-  const t = todayKST(now)
+// 🗓 [2026-08-28] `갈래` 가 붙었다 — **요일이 갈린다**(제철 수 · 우리집 월 · 픽 금 · `src/openday.js`).
+//    ⛔ `from` 은 여전히 «월요일»이다. 미루는 것은 «비교하는 오늘»뿐이라 데이터가 안 바뀐다.
+const 열린줄 = (LIST, recipes, now, 갈래 = 'homemade') => {
+  const t = openTodayKST(갈래, now)
   // `from` 이 오늘 이하인 것 중 가장 늦은 것. (배열 순서에 기대지 않는다)
   let pick = null
   for (const w of LIST) if (w.from <= t && (!pick || w.from > pick.from)) pick = w
@@ -401,11 +404,16 @@ const 열린줄 = (LIST, recipes, now) => {
   return { ...pick, items }
 }
 
-export const weeklyNow = (recipes = [], now = new Date()) => 열린줄(WEEKLY, recipes, now)
+// 🗓 `갈래` 는 «어느 요일 기준으로 볼 것인가»다 — 기본은 제철 자신(수요일).
+//   ⛔ 장보기 「이번 주 픽」은 **`'pick'`(금요일) 로 부른다** — 안 그러면 픽이 «수요일에도» 바뀐다
+//      (픽 목록의 앞자리가 「이번 주 제철이 쓰는 제품」이라 제철이 바뀌면 같이 바뀐다).
+//      그러면 창업자가 원한 「요일마다 하나씩」이 깨진다. ⚠️수·목 이틀은 제철과 픽이 어긋나는데,
+//      금요일부터는 다시 같은 주를 가리킨다. **어긋남 이틀 < 변화 없는 엿새**라 이쪽을 골랐다.
+export const weeklyNow = (recipes = [], now = new Date(), 갈래 = 'season') => 열린줄(WEEKLY, recipes, now, 갈래)
 
 // ⛔ 재고가 없으면 `null` — 홈에서 그 박스를 «아예 안 그린다»(빈 자리 금지).
 export const homemadeNow = (recipes = [], now = new Date()) => {
-  const r = 열린줄(HOMEMADE, recipes, now)
+  const r = 열린줄(HOMEMADE, recipes, now, 'homemade')
   return r && { ...r, kicker: r.kicker || '우리집레시피' }
 }
 

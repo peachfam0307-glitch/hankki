@@ -113,6 +113,18 @@ export default function App() {
     setStack((s) => [...s, screen])
     try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
   }, [])
+  // 🔁🔁 **같은 자리에서 «갈아끼우기»** — 히스토리 칸을 «안» 쌓는다. (2026-08-28 일기 넘겨보기)
+  //
+  // 📮 창업자 = *"일기를 넘겨가며 볼수있으면 좋겠어(**지금은 날짜하나하나 눌러야함**)"*
+  //
+  // ⛔⛔ 넘길 때마다 `push` 를 쓰면 **뒤로가기가 지옥이 된다** — 일기 열 장을 넘겨 보고 나서
+  //    뒤로가기를 누르면 열 번을 눌러야 달력으로 돌아온다. 유저는 「앱이 고장났다」로 읽는다.
+  // ⭐ 넘기기는 «새 화면을 여는 것»이 아니라 «보던 화면의 내용이 바뀌는 것»이다.
+  //    그래서 스택 맨 위 한 칸만 갈아끼우고 히스토리는 건드리지 않는다 → 뒤로가기 한 번에 달력.
+  // ⛔ 스택이 비었으면(＝탭 화면) 아무 일도 안 한다 — 갈아끼울 칸이 없다.
+  const replace = useCallback((screen) => {
+    setStack((s) => (s.length ? [...s.slice(0, -1), screen] : s))
+  }, [])
   // 화면 안 화살표(뒤로) 버튼도 브라우저 뒤로가기로 통일 → 버튼/스와이프 동작 일치.
   const pop = useCallback(() => {
     try { history.back() } catch { setStack((s) => s.slice(0, -1)) }
@@ -482,7 +494,7 @@ export default function App() {
   }, [])
 
   const showOnboarding = useCallback(() => setOnboard(true), [])
-  const nav = { push, pop, popAll, go, showToast, tab, setTab, registerBack, openModal, showOnboarding }
+  const nav = { push, replace, pop, popAll, go, showToast, tab, setTab, registerBack, openModal, showOnboarding }
 
   const TabScreen = TABS[tab]
   const top = stack[stack.length - 1]

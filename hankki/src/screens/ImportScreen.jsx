@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import { useBackHandler, useLayerBack } from '../useBackHandler'
@@ -47,15 +47,44 @@ import uiKeyHole from '../assets/ui/key_hole.png'
 //    ⚠️ 인스타·유튜브는 «조건부»다 — 흐름 안에서 캡처를 고르면 1장, 붙여넣기를 고르면 0장.
 //       그래서 「캡처는」을 앞에 붙여 조건을 밝힌다. ⛔그냥 「1장」이라 적으면 붙여넣기도 깎이는 줄 안다.
 //       ＋ 흐름 화면의 단추 «셋»에도 각각 정확한 값을 적는다(아래 `방법들`).
+// 📋📋 [창업자 확정 2026-08-28] **목록은 네 갈래.** 창업자가 «구성까지» 줬다.
+//
+// 📮 창업자 원문 = *"가져오기 화면 깔끔하게 정리하기.
+//    (인스타나 유튜브보다가 캡쳐 한끼로 공유/ 이미 저장되어있는 사진(갤러리) 한끼로 공유/
+//     한끼앱에 가져오기에서 사진 가져오기/ 직접입력하기) **이렇게 4개만 남겨도 좋을 것 같아.**
+//    **각각의 화면을 누르면 안내+가져오기가 되면 좋겠고.**"*
+// 📮 그 앞(같은 날) = *"우리는 다 비슷비슷하게 적어놓고 **구별이 안가서** 직관적으로 쓰기엔 좀 불편해"*
+//    ＋ 많이 쓰는 순서 = *"**오늘 발견한 것? 그거 제일 많이 쓸거고** … 그다음 **저장된 사진 우리앱에서 올리기**/
+//    3번은 거의 안쓸 듯.. **4번.5번은 없애고** 각각 케이스별로 안내해주는게 나을 것 같아"*
+//
+// ⭐⭐ **뿌리 = 축이 섞여 있었다.** 옛 다섯 줄은 「방법 축」(사진·글·주소)과 「출처 축」(Instagram·YouTube)이
+//    한 줄에 나란히 있었다. 그래서 다섯 줄이 서로 «다른 것을 재는 자»가 되어 구별이 안 됐다
+//    (CLAUDE.md 「분류 원칙 ②」와 같은 병 — 축이 섞이면 중복은 필연이다).
+// ✅ 이제 축이 하나다 — **「그 사진이 «어디서 오나»」** ①보다가 캡처 ②갤러리에 이미 있음 ③앱에서 고름 ④없음(직접).
+//
+// ⛔⛔ **「기능을 지운다」가 아니다** — Instagram·YouTube·텍스트·링크 흐름은 **그대로 살아 있고**
+//    목록에서만 내렸다(v11.00 한살림과 «같은 방식»). 아래 `HIDDEN` 참고.
+//    ⭐ 그럴 수밖에 없다 — 인스타·유튜브 흐름 «안»의 「붙여넣기」 단추가 `setFlow('text')` 로 가고,
+//       2026-08-21 확정(*"C는 되면 좋으니까 서버되면 꼭 하자"*)이 아직 살아 있다.
 const OPTIONS = [
-  // 제일 많이 쓰는 방법이라 맨 위
-  { key: 'write', icon: 'photo', title: '사진 · 직접 작성하기', desc: '캡처는 재료·만드는 법 칸별로 읽어 채워요', color: '#8AA07A', costText: `캡처하면 ${keyCount(1)}`, paid: true },
+  // ⭐ 창업자가 콕 집은 1순위 — *"그거 제일 많이 쓸거고. 진짜편하더라고 ㅎㅎ"*
+  { key: 'share', icon: 'instagram', title: '보다가 캡처해서 담기', desc: '인스타·유튜브 캡처를 「한끼」로 공유하면 담겨요', color: '#C13584', costText: `캡처하면 ${keyCount(1)}`, paid: true },
+  { key: 'gallery', icon: 'photo', title: '갤러리에 있는 사진 담기', desc: '이미 찍어둔 사진을 「한끼」로 공유해요', color: '#8AA07A', costText: `사진 1장에 ${keyCount(1)}`, paid: true },
+  { key: 'photo', icon: 'camera', title: '여기서 사진 고르기', desc: '앱을 안 나가고 바로 골라 읽어요', color: '#B0895E', costText: keyCount(1), paid: true },
+  { key: 'write', icon: 'edit', title: '직접 입력하기', desc: '빈 종이에 내가 적어요', color: '#9B8B79', costText: keyCount(0), paid: false },
+]
+
+// 🫥 **목록에서 내렸을 뿐, 흐름은 살아 있다** (⛔지우지 않는다)
+//    · `instagram`·`youtube` = 위 ①의 안내 화면에서 「인스타 열기 / 유튜브 열기」로 들어간다
+//    · `text` = 인스타·유튜브 흐름 «안»의 「붙여넣기」 단추가 여기로 온다
+//    · `link` = 그 흐름 안 「링크만 저장해두기」가 여기로 온다
+const HIDDEN = [
   { key: 'instagram', icon: 'instagram', title: 'Instagram', desc: '캡처해서 담기 (제일 정확)', color: '#C13584', costText: `캡처하면 ${keyCount(1)}`, paid: true },
   { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '캡처·설명 붙여넣기로 담기', color: '#E33', costText: `캡처하면 ${keyCount(1)}`, paid: true },
-  // ⭐ 링크가 못 하는 일을 «이 줄이» 한다 — 그래서 설명을 키웠다(창업자 ⓐ안의 「텍스트 안내를 키운다」를 여기서 살렸다)
   { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 재료·순서까지 자동 정리', color: '#B0895E', costText: keyCount(0), paid: false },
   { key: 'link', icon: 'link', title: '링크 주소만 담아두기', desc: '주소만 저장해요 · 재료·순서는 안 담겨요', color: '#9B8B79', costText: keyCount(0), paid: false },
 ]
+const ALL_FLOWS = [...OPTIONS, ...HIDDEN]
 
 // 💰 장수 꼬리표 — 다섯 줄·히어로·흐름 단추가 «같은 함수»로 그린다.
 //    ⛔ 자리마다 따로 적으면 말이 갈라진다(같은 기능은 같은 이름 원칙).
@@ -105,17 +134,36 @@ export default function ImportScreen() {
     nav.push({ name: 'editor', prefill: { source: 'manual', title: r.title, ingredients: r.ingredients, steps: r.steps, rawText: keepRaw(t) } })
   }
 
+  // 📷 「여기서 사진 고르기」 — 앱을 안 나가고 바로 고른다 (창업자 ③)
+  //   ⭐⭐ **파일 고르기는 «누른 그 손짓»으로 열어야 한다.** 다음 화면에 가서 저절로 열려고 하면
+  //      브라우저가 「손짓 없이 연 창」으로 보고 막을 수 있다. 그래서 여기서 «먼저» 고르고,
+  //      고른 사진을 편집 화면에 들려 보낸다.
+  //   ⛔ 실패해도 유저는 안 막힌다 — 안 고르면 아무 일도 안 일어나고, 편집 화면의 큰 단추가 그대로 있다.
+  const photoInRef = useRef(null)
+  const onPickedPhotos = (e) => {
+    const files = [...(e.target.files || [])]
+    e.target.value = ''
+    if (!files.length) return
+    Promise.all(files.map((f) => new Promise((res) => {
+      const r = new FileReader()
+      r.onload = () => res(r.result)
+      r.readAsDataURL(f)
+    }))).then((urls) => {
+      // ⛔ 여기서 읽지 «않는다» — 자르기·인식·합치기는 편집 화면이 이미 다 갖고 있다.
+      //    두 곳에 적으면 한쪽만 고치는 사고가 난다(우리가 여러 번 겪은 것).
+      nav.push({ name: 'editor', prefill: { source: 'photo', ocrImages: urls } })
+    })
+  }
+
+  // ⭐ [창업자 2026-08-28] **네 갈래 «전부» 안내 화면을 거친다** — *"각각의 화면을 누르면 안내+가져오기"*.
+  //    ⛔ 예전엔 「사진·직접 작성하기」가 목록에서 곧장 편집 화면으로 갔다. 그러면
+  //       «어떻게 쓰는지»를 말할 자리가 없어서, 안내가 전부 편집 화면 안으로 밀려 들어가 있었다.
+  //    ⚠️ 직접 입력도 예외로 두지 않는다 — 한 갈래만 다르게 굴면 「이건 왜 바로 열리지」가 된다.
   const choose = (key) => {
-    if (key === 'write') {
-      // 사진·직접 작성 — 작성 화면에서 재료/만드는 법 칸별 📷 로 채운다.
-      // pop 하지 않고 그대로 push → 뒤로가기 시 '가져오기' 초기 화면으로 돌아온다.
-      nav.push({ name: 'editor' })
-    } else {
-      setFlow(key)
-      setUrl('')
-      setTitle('')
-      setLinkOpen(false)
-    }
+    setFlow(key)
+    setUrl('')
+    setTitle('')
+    setLinkOpen(false)
   }
 
   const saveLink = () => {
@@ -133,13 +181,91 @@ export default function ImportScreen() {
   //       ⑶이 함수와 버튼(②)·기다림 화면(③)을 되돌린다. **`src/linkReader.js` 는 안 지웠다** —
   //       공유받기(`App.jsx`)가 아직 쓰고 있고, 그쪽은 «백그라운드»라 실패해도 유저를 안 붙잡는다.
 
-  const flowMeta = OPTIONS.find((o) => o.key === flow)
+  const flowMeta = ALL_FLOWS.find((o) => o.key === flow)
+
+  // 📖 네 갈래의 안내 내용 — «데이터»로 둔다. 화면 마크업은 한 벌뿐이라 한쪽만 예뻐질 일이 없다.
+  //   ⛔ 「」 안이 **누르는 것**이다(창업자 = *"눌러야하는 것 강조"*). 굵게는 `강조()` 가 붙인다.
+  const 강조 = (s) => s.split(/(「[^」]+」)/).map((p, i) => (
+    p.startsWith('「')
+      ? <b key={i} style={{ fontWeight: 900, color: 'var(--brown)' }}>{p}</b>
+      : <span key={i}>{p}</span>
+  ))
+  const 안내들 = {
+    share: {
+      lead: '인스타·유튜브를 보다가 캡처하면, 그 자리에서 한끼로 보낼 수 있어요.',
+      steps: [
+        강조('레시피가 보이는 화면을 「캡처」해요'),
+        강조('캡처한 사진에서 「공유」를 눌러요'),
+        // 📸 [창업자 실물 확정 2026-08-28] 갤럭시 공유 시트엔 「한끼」가 첫 줄에 안 뜬다 —
+        //    *"**더보기  점세개 누르면 앱들 보이고 한끼 찾으면 돼.**"* ⛔이 한 줄이 빠지면 유저는 여기서 막힌다.
+        강조('앱 줄 맨 오른쪽 「더보기」(점 세 개) → 「한끼」'),
+      ],
+      result: '임시보관함에 담기고, 제목·재료를 자동으로 읽어 드려요.',
+      buttons: [
+        // ⛔ 「열러 가기」라고 쓰지 않는다 — **앱을 여는 게 아니라 «우리 안내 화면»으로 간다.**
+        //    이름이 하는 일과 달라지면 그게 곧 「되는 척」이다(v11.19 링크 정직과 같은 자리).
+        //    ⭐ 그 화면 안에 「글 붙여넣기」·「보면서 적기」·「링크만 저장」이 있고, 진짜 앱 열기 단추도 맨 아래 있다.
+        { label: 'Instagram 에서 담는 다른 방법', ghost: true, onClick: () => setFlow('instagram') },
+        { label: 'YouTube 에서 담는 다른 방법', ghost: true, onClick: () => setFlow('youtube') },
+        // 🔗 목록에서 내렸을 뿐 «죽이지 않았다» — 여기로 들어간다.
+        //    ⛔ 어디서도 못 들어가면 그건 「목록에서 내린 것」이 아니라 «지운 것»이다.
+        //       그 화면(v11.19 링크 정직)이 「주소만 담아둬요 · 재료·순서는 안 담겨요」를 말하는 자리다.
+        { label: '링크 주소만 담아두기', ghost: true, onClick: () => setFlow('link') },
+      ],
+    },
+    gallery: {
+      lead: '이미 갤러리에 저장해 둔 레시피 사진도 똑같이 보내면 돼요.',
+      steps: [
+        강조('폰의 「갤러리」에서 사진을 골라요'),
+        강조('「공유」를 눌러요'),
+        강조('앱 줄 맨 오른쪽 「더보기」(점 세 개) → 「한끼」'),
+      ],
+      result: '임시보관함에 담기고, 제목·재료를 자동으로 읽어 드려요.',
+      buttons: [
+        // ⭐ 갤러리를 여는 길은 폰마다 달라 우리가 못 연다 → 대신 «앱 안에서 고르는 길»을 준다.
+        //    ⛔ 「갤러리 앱을 여세요」라고만 하고 끝내면 막다른 길이 된다.
+        { label: '앱을 안 나가고 여기서 고르기', onClick: () => setFlow('photo') },
+      ],
+    },
+    photo: {
+      lead: '앱을 나가지 않고 여기서 바로 사진을 고를 수 있어요.',
+      steps: [
+        강조('아래 「사진 고르기」를 눌러요'),
+        강조('레시피 캡처를 골라요 (여러 장도 돼요)'),
+        강조('보일 부분을 정하면 「재료」·「만드는 법」이 채워져요'),
+      ],
+      result: '읽은 내용은 바로 고칠 수 있어요. 잘못 읽힌 줄만 손보면 돼요.',
+      buttons: [
+        // ⭐⭐ **여기서 «누른 손짓»으로 고르기 창을 연다** — 다음 화면에서 저절로 열려고 하면
+        //    브라우저가 「손짓 없이 연 창」으로 보고 막을 수 있다.
+        { label: '사진 고르기', onClick: () => photoInRef.current?.click() },
+      ],
+    },
+    write: {
+      lead: '가져올 게 없어도 괜찮아요. 빈 종이에 그냥 적으면 돼요.',
+      steps: [
+        강조('「빈 종이 열기」를 눌러요'),
+        강조('제목·「재료」·「만드는 법」을 적어요'),
+        강조('중간에 사진에서 읽어오고 싶으면 칸 옆 「카메라」를 눌러요'),
+      ],
+      result: '적는 도중에도 저장돼요. 나가도 안 날아가요.',
+      buttons: [
+        { label: '빈 종이 열기', onClick: () => nav.push({ name: 'editor' }) },
+      ],
+    },
+  }
 
   return (
     /* 📏 `imp` = 가져오기 화면 «전용» 표식 — 상자 안 줄간을 한 값으로 묶는 데 쓴다(styles.css).
        ⛔ `.opt-row` 는 설정 화면도 쓴다 → 클래스만 고치면 남의 화면까지 바뀐다.
           창업자 말의 «범위»를 넓히지 않는다. */
     <div className="screen fade imp" style={{ paddingBottom: 24 }}>
+      {/* 📷 「여기서 사진 고르기」가 쓰는 숨은 칸 — 화면 어디에 있든 손짓이 살아 있을 때 열린다 */}
+      <input
+        ref={photoInRef} type="file" accept="image/*" multiple
+        onChange={onPickedPhotos}
+        style={{ display: 'none' }}
+      />
       <div className="topbar-back">
         <button className="icon-btn press" onClick={() => (flow ? setFlow(null) : nav.pop())} aria-label="닫기">
           <Icon name={flow ? 'chevron-left' : 'x'} size={24} />
@@ -241,10 +367,12 @@ export default function ImportScreen() {
             />
           </div>
 
-          {/* 제일 많이 쓰는 방법 — 히어로(진짜 동작). 첫 유저가 큰 걸 눌러도 바로 되는 기능. */}
+          {/* 제일 많이 쓰는 방법 — 히어로.
+              🥇 [창업자 2026-08-28] 1순위가 «바뀌었다» — *"오늘 발견한 것? **그거 제일 많이 쓸거고. 진짜편하더라고**"*
+                 = 「보다가 캡처해서 한끼로 공유」. 옛 히어로(사진·직접 작성)는 세 번째로 내려갔다. */}
           <button
             className="press"
-            onClick={() => choose('write')}
+            onClick={() => choose('share')}
             style={{
               width: '100%', textAlign: 'left', marginBottom: 16, padding: '15px 16px',
               borderRadius: 18, border: '1px solid #ecdccb',
@@ -256,7 +384,7 @@ export default function ImportScreen() {
               width: 46, height: 46, borderRadius: 14, flexShrink: 0,
               background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 2px 8px rgba(150,110,70,.16)',
-            }}><Icon name="photo" size={25} color="#8a5a37" stroke={1.7} /></div>
+            }}><Icon name={OPTIONS[0].icon} size={25} color="#8a5a37" stroke={1.7} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
               {/* ⛔⛔ [창업자 2026-08-24] *"제일많이 써요가 칸을 벗어났어."* — 맞다. 실측으로 닫았다.
                   🔢 알약이 «언제나» x 258~372 에 선다(제목 156 nowrap ＋ 틈 6 이 96 에서 시작하니 자리가 고정된다).
@@ -266,7 +394,7 @@ export default function ImportScreen() {
                   ⛔ 제목을 줄이거나 말줄임하지 않는다 — 「사진 · 직접 작성하기」가 잘리면 무슨 길인지 모른다.
                   ✅ `wrap` 을 준다 — 안 들어가면 알약이 «아랫줄»로 내려간다. 어느 폭에서도 안 삐져나간다. */}
               <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 3 }}>
-                <span style={{ fontSize: 16.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap', lineHeight: 1.5 }}>사진 · 직접 작성하기</span>
+                <span style={{ fontSize: 16.5, fontWeight: 800, color: '#8a5a37', whiteSpace: 'nowrap', lineHeight: 1.5 }}>{OPTIONS[0].title}</span>
                 <span style={{ fontSize: 13.5, fontWeight: 800, color: '#8a5a37', background: '#f0dcc7', borderRadius: 999, padding: '2.5px 8px', flexShrink: 0, whiteSpace: 'nowrap' }}>제일 많이 써요</span>
               </div>
               {/* 💰 [2026-08-21] 값을 «고르는 그 줄»에 붙인다 — 창업자가 결제에 대해 정한 원칙과 같다:
@@ -284,7 +412,7 @@ export default function ImportScreen() {
           </button>
 
           <div className="card" style={{ overflow: 'hidden' }}>
-            {OPTIONS.filter((o) => o.key !== 'write').map((o, i, arr) => (
+            {OPTIONS.filter((o) => o.key !== OPTIONS[0].key).map((o, i, arr) => (
               <div key={o.key}>
                 <button className="opt-row press" onClick={() => choose(o.key)}>
                   <div className="opt-ico">
@@ -353,6 +481,49 @@ export default function ImportScreen() {
               <Icon name="help" size={22} color="var(--sand)" />
             </div>
           </button>
+        </div>
+      ) : 안내들[flow] ? (
+        // 📖📖 [창업자 2026-08-28] **네 갈래의 「안내 ＋ 가져오기」 화면** — *"각각의 화면을 누르면 안내+가져오기"*
+        //   ✍️ 문체 = 창업자 규칙 그대로 = *"알아듣기 쉽고 간단하게 설명(**구구절절금지**) 딱딱 포인트만 집어서.
+        //      **눌러야하는 것 강조.**"* → 한 단계 = 한 줄 · 누르는 것은 「」 로 감싸 굵게.
+        //   ⏳ 그림(5컷)은 아직 «창업자 캡처 대기»다 — 글로 먼저 세워 두고, 컷이 오면 단계마다 끼운다
+        //      (📄 `docs/캡처공유-안내-2026-08-28.md`). ⛔남의 인스타 게시물 캡처는 안 쓴다.
+        <div className="pad fade">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, marginBottom: 4 }}>
+            <div className="opt-ico"><Icon name={flowMeta.icon} size={24} color={flowMeta.color} stroke={1.7} /></div>
+            <div className="h-title" style={{ fontSize: 23 }}>{flowMeta.title}</div>
+          </div>
+          <div className="t-sub" style={{ marginTop: 6, marginBottom: 18, fontSize: 16, lineHeight: 1.6, wordBreak: 'keep-all' }}>
+            {안내들[flow].lead}
+          </div>
+
+          {/* 1·2·3 — ⛔ 번호는 «진짜 순서»일 때만 쓴다. 여기는 실제로 차례대로 해야 하는 일이다. */}
+          <div className="card" style={{ padding: '6px 0', marginBottom: 16 }}>
+            {안내들[flow].steps.map((s, i) => (
+              <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '11px 16px' }}>
+                <span style={{
+                  flex: '0 0 auto', width: 25, height: 25, borderRadius: '50%',
+                  background: 'var(--cream)', color: 'var(--brown)',
+                  fontSize: 15, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>{i + 1}</span>
+                <span style={{ fontSize: 16.5, lineHeight: 1.55, wordBreak: 'keep-all', flex: 1, minWidth: 0 }}>{s}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ✅ 결과 — 「그래서 어떻게 되나」. ⛔없으면 유저가 «담긴 뒤»를 못 그린다. */}
+          <div style={{
+            padding: '12px 15px', borderRadius: 14, marginBottom: 18,
+            background: 'linear-gradient(135deg, #eef7e7, #e2eed7)', border: '1px solid #cfe3c4',
+            fontSize: 16, fontWeight: 700, color: '#3d6b38', lineHeight: 1.55, wordBreak: 'keep-all',
+          }}>{안내들[flow].result}</div>
+
+          {안내들[flow].buttons.map((b) => (
+            <button key={b.label} className={b.ghost ? 'btn-ghost press' : 'btn-primary press'}
+              style={{ width: '100%', marginBottom: 10 }} onClick={b.onClick}>
+              {b.label}
+            </button>
+          ))}
         </div>
       ) : flow === 'text' ? (
         <div className="pad fade">

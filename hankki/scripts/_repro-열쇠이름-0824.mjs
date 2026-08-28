@@ -72,9 +72,15 @@ const 가져오기 = await page.evaluate(() => document.body.innerText || '')
 }
 
 // ── ⑵ 레시피 편집(캡처) ───────────────────────────────────
-// ⛔ 「사진 · 직접 작성하기」 카드로 들어간다 — 이 화면이 캡처 소모 안내를 그린다
+// ⛔ 편집 화면으로 들어간다 — 이 화면이 캡처 소모 안내를 그린다
+// 🗓 [2026-08-28] 목록이 «네 갈래»로 바뀌었다 — 「사진 · 직접 작성하기」 → 「직접 입력하기」 ＋ 안내 한 단계
 await page.evaluate(() => {
-  const t = [...document.querySelectorAll('button')].find((x) => /사진\s*·\s*직접 작성하기/.test(x.innerText || ''))
+  const t = [...document.querySelectorAll('button')].find((x) => /직접 입력하기/.test(x.innerText || ''))
+  t?.click()
+})
+await page.waitForTimeout(800)
+await page.evaluate(() => {
+  const t = [...document.querySelectorAll('button')].find((x) => /빈 종이 열기/.test(x.innerText || ''))
   t?.click()
 })
 await page.waitForTimeout(1300)
