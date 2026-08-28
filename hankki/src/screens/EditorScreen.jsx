@@ -238,14 +238,12 @@ export default function EditorScreen({ id, prefill }) {
     ocrTargetRef.current = target
     ocrRef.current?.click()
   }
-  // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
-  const onOcrFile = (e) => {
-    const files = [...(e.target.files || [])]
-    if (!files.length) return
-    e.target.value = ''
-    Promise.all(
-      files.map((f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f) })),
-    ).then((urls) => {
+  // 📥📥 고른 사진들로 «읽기 흐름»을 시작한다 — 자르기 → 인식 → 합치기.
+  //   ⭐ 파일 고르기와 갈라 뒀다 — 「가져오기」 화면에서 «먼저» 고른 사진도 같은 길로 들어와야 하는데
+  //      (창업자 ③ 「여기서 사진 고르기」), 흐름을 두 번 적으면 한쪽만 고치는 사고가 난다.
+  const startOcr = (urls) => {
+    if (!urls || !urls.length) return
+    {
       ocrAccum.current = ''
       ocrTotal.current = urls.length
       ocrQueue.current = urls.slice(1) // 첫 장은 지금 자르고, 나머지는 자르기 대기열
@@ -270,8 +268,33 @@ export default function EditorScreen({ id, prefill }) {
       }
       ocrCropOpen.current = true
       setCropImg(urls[0])
-    })
+    }
   }
+
+  // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
+  const onOcrFile = (e) => {
+    const files = [...(e.target.files || [])]
+    if (!files.length) return
+    e.target.value = ''
+    Promise.all(
+      files.map((f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f) })),
+    ).then(startOcr)
+  }
+
+  // 📷 「가져오기 → 여기서 사진 고르기」로 들어온 경우 — 이미 고른 사진이 딸려 온다.
+  //   ⭐ 창업자 ③ = *"한끼앱에 가져오기에서 사진 가져오기"*. 고르기는 그 화면에서 «손짓»으로 끝냈고
+  //      여기서는 읽기만 이어받는다.
+  //   ⛔ 딱 한 번만 — `ocrTargetRef` 를 'all' 로 두고 시작한다(재료·만드는 법 자동 분류).
+  const 딸려온사진Ref = useRef(false)
+  useEffect(() => {
+    if (딸려온사진Ref.current) return
+    const urls = prefill?.ocrImages
+    if (!urls || !urls.length) return
+    딸려온사진Ref.current = true
+    ocrTargetRef.current = 'all'
+    startOcr(urls)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 한 칸에만 이어붙이기 — 이미 내용이 있으면 아래에 덧붙인다(2단·긴 레시피 대응).
   const appendLines = (prevText, lines) => {
