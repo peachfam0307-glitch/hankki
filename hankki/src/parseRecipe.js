@@ -82,6 +82,18 @@ const NOISE =
 // 줄 어디에 있어도 잡음인 것 — SNS UI 텍스트(댓글 입력창 등)
 // ＋[2026-08-28] 창업자 실물에서 나온 인스타 화면 글자 — 「회원님의 생각을 남겨보…」·「대화 참여하기…」·「댓글 45」
 const NOISE_ANY = /(님에게\s*댓글|댓글\s*달기|댓글\s*올리기|회원님의\s*생각|생각을\s*남겨|대화\s*참여|^댓글\s*\d*\s*$|다시\s*보기|더\s*보기\s*$|간단히\s*보기|^\s*광고\s*\d*\s*$|^\s*\d+\s*(초|분|시간|일|주|개월|년)\s*전\s*$|reels|릴스|shorts|구독|알림\s*설정)/i
+// 📱📱 [2026-08-28] **폰 화면 자체의 글자** — 스크린샷에는 «항상» 붙어 오는데 레시피가 아니다.
+//   📮 창업자 실물(공심채볶음 3:34): 제목이 「2:49 9 나였으면 다」가 됐다 =
+//      「KT 2:49」(통신사＋시계) ＋ 「나였으면 다」(재생 중인 노래 알림)를 통째로 읽은 것.
+//      스크린샷마다 무조건 있으니 이건 **모든 레시피에 걸리는** 뿌리였다.
+//   📮 같은 캡처의 「게시물」(뒤로가기 옆 화면 이름)도 제목이 됐다(2:36 판).
+//   ⚠️ 좁게 잡는다 — 통신사 이름으로 «시작»하거나, 시계·재생시간만 있는 줄이거나,
+//      인스타 화면 단추 이름 «그 자체»인 줄만. 레시피 본문에 나올 말이 아니다.
+const SCREEN_CHROME =
+  /^\s*(KT|SKT|LGU\+?|LG\s?U\+|U\+|olleh|SK\s?텔레콤)\b|^\s*\d{1,2}\s*:\s*\d{2}\s*[a-zA-Z]{0,2}\s*$|^\s*(게시물|게시물\s*홍보하기|인사이트\s*보기|프로필\s*보기|메시지\s*보내기|팔로우|팔로잉|팔로워)\s*$/i
+// ⏱ 시계가 «앞»에 서고 뒤에 알림 글자가 붙은 줄 — 머리(첫 몇 줄)에서만 버린다.
+//   ⛔ 아무 데서나 버리면 「1:2 비율로 섞어」 같은 본문을 잡을 위험이 있다.
+const SCREEN_CLOCK_HEAD = /^\s*\d{1,2}\s*:\s*\d{2}\b/
 // 📣 협찬·공동구매 홍보 줄 — 레시피가 아니라 «광고»다. 재료도 순서도 아니니 버린다.
 //    2026-08-02 창업자 폰 사고: `티리난지 피렌체 웍 최저가 공구중!` 이 «만드는 법 1번»으로 들어갔다.
 //    ⚠️ 좁게 잡는다 — 「공구중·최저가·할인코드」처럼 광고에만 쓰는 말만.
@@ -166,10 +178,58 @@ const SEC_MEMO = /(팁|포인트|tip)/i
 // 요리 단위로 흔한 영문 약어 — 토큰 청소에서 살려둔다.
 const UNIT_TOKENS = new Set(['g', 'kg', 'ml', 'l', 'L', 'cc', 't', 'T', 'ts', 'tsp', 'tbsp', 'oz'])
 
+// 🔗🔗 [2026-08-28] **OCR 이 재료 «두 줄»을 한 줄로 붙여 온다** — 그러면 한 칸에 두 재료가 들어간다.
+//   📮 창업자 실물(공심채볶음 3:34) = 「아우노슈가 3/4작은술 (일반설탕 1/2작은술) 굴소스 1/2큰술」
+//   📮 창업자 실물(골쫄면) = 「오이 1개 깻잎 10장 청양고추 5개」 — 세 재료가 한 칸에.
+//   ⭐ 잣대 = **괄호 «밖»에 분량이 둘 이상이면 쪼갠다.**
+//   ⛔⛔ 괄호 «안»의 분량은 세지 않는다 — 안 그러면 「아우노슈가 3/4작은술 (일반설탕 1/2작은술)」이
+//      쪼개져 **없던 재료 「일반설탕」이 생긴다**. 그건 지금보다 나쁘다.
+//   ⛔ 쪼갠 조각이 «전부 한글로 시작»해야만 쪼갠다 — 「우유 200ml 3팩」처럼 한 재료의 분량이
+//      둘인 줄을 「우유 200ml」＋「3팩」으로 찢지 않으려고.
+const ING_QTY_TOKEN =
+  /\d+(?:\s*\/\s*\d+)?(?:[.,]\d+)?\s*(?:g|kg|ml|리터|cc|개|알|쪽|봉지|봉|모|장|대|톨|줄기|컵|큰\s?술|작은\s?술|스푼|티스푼|숟가락|숟갈|줌|꼬집|줄|캔|팩|조각|마리|공기|스틱)/gi
+function splitMergedIng(s) {
+  const 원 = String(s)
+  if (!/[가-힣]/.test(원)) return [원]
+  // 괄호 «안»을 같은 길이의 공백으로 덮는다 — 자리(index)가 원문과 어긋나면 안 되니까.
+  let 깊이 = 0
+  const 덮음 = [...원].map((c) => {
+    if (c === '(' || c === '（') { 깊이++; return c }
+    if (c === ')' || c === '）') { 깊이 = Math.max(0, 깊이 - 1); return c }
+    return 깊이 > 0 ? ' ' : c
+  }).join('')
+  const 자리 = []
+  ING_QTY_TOKEN.lastIndex = 0
+  let m
+  while ((m = ING_QTY_TOKEN.exec(덮음))) 자리.push(m.index + m[0].length)
+  if (자리.length < 2) return [원]
+  const 조각들 = []
+  let 앞 = 0
+  for (let i = 0; i < 자리.length - 1; i++) {
+    let 끝 = 자리[i]
+    // 분량 바로 뒤에 붙은 괄호(「1큰술 (대충 으깬 것)」)는 그 재료의 것이다 — 같이 데려간다.
+    while (끝 < 원.length && /\s/.test(원[끝])) 끝++
+    if (원[끝] === '(' || 원[끝] === '（') {
+      let d = 0
+      while (끝 < 원.length) { const c = 원[끝++]; if (c === '(' || c === '（') d++; else if (c === ')' || c === '）') { d--; if (d === 0) break } }
+    }
+    조각들.push(원.slice(앞, 끝).trim())
+    앞 = 끝
+  }
+  조각들.push(원.slice(앞).trim())
+  if (조각들.length < 2) return [원]
+  if (!조각들.every((x) => /^[가-힣]/.test(x) && x.length >= 2)) return [원]
+  return 조각들
+}
+
 // 특수문자·기호(외계어의 원인)를 제거 — 완성형 한글·영문·숫자 + 요리에 흔한 문장부호만 남긴다.
 function sanitize(s) {
   return String(s)
-    .replace(/[^가-힣a-zA-Z0-9\s.,()/%°~:!+×\-]/g, ' ')
+    // ⭐ [2026-08-28] 「·」를 살린다 — 창업자 실물(공심채볶음)에서 「국간장·일반 액젓」이
+    //    「국간장 일반 액젓」이 되어 **두 가지 재료로 읽혔다**. 가운뎃점은 한국 레시피에서
+    //    「이거 아니면 저거」·「A·B·C 를 섞어」로 늘 쓰는 글자다. 줄 «맨 앞»의 · 는
+    //    LEAD_DECOR/JUNK_SYM 이 그대로 벗기니 불릿 오독은 안 늘어난다.
+    .replace(/[^가-힣a-zA-Z0-9\s.,()/%°~:!+×·\-]/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim()
 }
@@ -455,7 +515,10 @@ export function parseRecipeText(raw = '', opts = {}) {
     //       그래서 「첫 줄이면」 조건이 안 맞아 계정명이 제목에 붙었다(부대찌개 = 「ttaracook 김형석 부대찌개」).
     const 머리 = items.length < 6
     const raw0 = 머리 ? String(rawLine).replace(IG_HANDLE, '') || rawLine : rawLine
-    let l = cleanTokens(sanitize(raw0.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•·▪◦‣●○*]/g, ' ')))
+    // ⭐ [2026-08-28] 줄 «가운데»의 「·」는 안 지운다 — 창업자 실물(공심채볶음)에서
+    //    「국간장·일반 액젓」이 「국간장 일반 액젓」이 되어 **두 가지 재료로 읽혔다**.
+    //    맨 앞의 「·」는 위 첫 replace 가 불릿으로 그대로 벗긴다 — 불릿 처리는 안 약해졌다.
+    let l = cleanTokens(sanitize(raw0.replace(/^\s*[-*•·▪◦‣●○]\s*/, '').replace(/[•▪◦‣●○*]/g, ' ')))
     l = stripLeadingOcrJunk(l, fromOcr) // 삐/=/HE/Vv Eel 같은 앞머리 잡음 벗기기
     // 👤 첫 줄에만 — 인스타 아이디를 떼면 그 뒤가 대개 «제목»이다(`emily.at_home 홍콩식 가지볶음`).
     //    ⛔줄을 버리지 않는다. 버리면 제목까지 같이 날아간다.
@@ -533,7 +596,10 @@ export function parseRecipeText(raw = '', opts = {}) {
     stepNumbered.push(번호붙음)
     sawStep = true; lastWasBulletIng = false
   }
-  const pushIng = (l, bullet) => { ingredients.push(l); lastWasBulletIng = bullet; }
+  const pushIng = (l, bullet) => {
+    for (const 조각 of splitMergedIng(l)) ingredients.push(조각)
+    lastWasBulletIng = bullet
+  }
 
   for (let idx = 0; idx < items.length; idx++) {
     const { l, bullet, emojiHead, stepMarked, checkMark, blankBefore } = items[idx]
@@ -543,6 +609,11 @@ export function parseRecipeText(raw = '', opts = {}) {
     //    ⛔ NOISE 검사는 원래 «제목 판정 뒤»에 있어서 한 발 늦었다.
     //       제목은 한 번 잡히면 안 바뀌므로, 화면 글자는 그보다 «먼저» 걸러야 한다.
     if (NOISE_ANY.test(l)) { lastWasBulletIng = false; continue }
+
+    // 📱 폰 화면 자체의 글자(상태표시줄·화면 이름·영상 재생시간) — 위와 같은 이유로 먼저 버린다.
+    //    ⏱ 시계＋알림 글자(「2:49 9 나였으면 다」)는 «머리»에서만 버린다 — 상태표시줄은 늘 맨 위다.
+    if (SCREEN_CHROME.test(l)) { lastWasBulletIng = false; continue }
+    if (idx < 4 && SCREEN_CLOCK_HEAD.test(l)) { lastWasBulletIng = false; continue }
 
     // 🔤🔤 [2026-08-28] 한글이 «한 자도 없는 짧은 줄» = 계정명·워터마크·하단바를 읽은 것이다.
     //    📮 창업자 실물 — 골쫄면 걸음 6 「L4D TVHHE THIN」(폰 하단바) · 부대찌개 걸음 8 「ourraring」(다음 게시물 계정)
@@ -777,6 +848,11 @@ export function parseRecipeText(raw = '', opts = {}) {
     if (sawStep && mode !== 'ing' && l.length >= 5) { pushStep(l); continue }
     // 5) 그 밖의 긴 줄은 순서, 수량 줄은 재료, 나머지는 메모 후보
     if (l.length >= 20) { pushStep(l); continue }
+    // 🗑 [2026-08-28] **이름 없이 분량만 있는 줄은 재료가 아니다** — 여기까지 왔다는 건
+    //    위의 «앞 재료에 이어붙이기»가 못 붙였다는 뜻이다(앞에 재료가 없거나 이미 걸음 절이거나).
+    //    📮 창업자 실물(공심채볶음 3:34) — 겹쳐 찍힌 미리보기 썸네일 글자 「150g」이
+    //       마지막 재료로 들어가 있었다. 「150g」이라는 재료는 세상에 없다.
+    if (QTY_ONLY.test(l)) { lastWasBulletIng = false; continue }
     if (QTY.test(l)) { pushIng(l, bullet); continue }
     other.push(l)
     lastWasBulletIng = false
