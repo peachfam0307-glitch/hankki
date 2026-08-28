@@ -282,8 +282,13 @@ export default function RecipeDetailScreen({ id }) {
       if (res && res.pending) setPending(res.pending)   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
       else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
+      // 🗣 「꾸민 표지 그대로」 공유도 리뷰를 청한다 — BragScreen `sendCover` 와 «같은 구멍»이었다
+      //   (창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 아예 못봤어"*). 자세한 경위는 그쪽 주석에.
+      if (res && res.shared === true) 자랑보냄.current = true
     } finally {
       setCoverBusy(false)
+      if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+      자랑보냄.current = false
     }
   }
 

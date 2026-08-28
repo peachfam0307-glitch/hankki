@@ -344,6 +344,43 @@ console.log('\n⑥ ⭐ 「1회만」이 «진짜인가» — 어떻게 닫아도
   await page.close()
 }
 
+// ─── ⑦ 🚨 「내가 꾸민 표지 그대로」 — 창업자가 «아예 못 본» 그 길 ────────────
+//
+// 📮 창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 **아예** 못봤어..ㅠ"*
+//
+// ⛔⛔ **③~⑥은 전부 「랜덤 카드로 뽑기」만 밟았다.** 그런데 선택 시트의 «주인공»은
+//    맨 위 갈색 단추 **「내가 꾸민 표지 그대로」**(`sendCover`)다. 랜덤 카드는 그 아래 «옵션»이다.
+//    → **보통 유저가 누르는 길에서는 리뷰창이 영영 안 떴다.**
+// 📌 앞 판 주석은 *"공유 성공 자리가 셋인데 셋 다 그 약속을 쓴다"* 였는데
+//    그 「셋」은 `ShareDrawCard` «안»의 셋이었고 `sendCover` 는 그 컴포넌트를 «안 거친다».
+//    ⭐ 「한 곳만 감쌌다」가 참이려면 **모든 길이 그 한 곳을 지나가야** 한다 — 안 지나갔다.
+console.log('\n⑦ 🚨 「내가 꾸민 표지 그대로」로 보내도 뜨나 — 창업자가 못 본 그 길')
+{
+  const page = await 새탭()
+  await 공유흉내(page, true)
+  chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(page))
+  // 레시피 하나 → 선택 시트
+  await page.evaluate(() => { [...document.querySelectorAll('button[aria-label$="자랑하기"]')][0]?.click() })
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('내가 꾸민 표지 그대로')),
+    null, { timeout: 20000 },
+  ).catch(() => {})
+  const 주인공있나 = await page.evaluate(() =>
+    [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('내가 꾸민 표지 그대로')))
+  chk('선택 시트에 «주인공» 단추가 있다', 주인공있나)
+
+  const 전 = await page.evaluate(() => window.__보냄 || 0)
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('내가 꾸민 표지 그대로'))?.click()
+  })
+  // ⛔ 고정 대기로 재지 않는다 — 표지 캡처가 오래 걸린다. «보냈나»가 늘 때까지 기다린다
+  await page.waitForFunction((n) => (window.__보냄 || 0) > n, 전, { timeout: 45000 }).catch(() => {})
+  const 보냄 = await page.evaluate(() => window.__보냄 || 0)
+  chk(`꾸민 표지가 «나갔다» (보냄 ${보냄})`, 보냄 > 전)
+  chk('⭐⭐ 그 길에서도 리뷰창이 뜬다', await 리뷰창기다리기(page))
+  await page.close()
+}
+
 console.log(`\n${실패 ? '⛔' : '✅'} ${통과}/${통과 + 실패}\n`)
 console.log('📌 ①② = 고치기 «전» 상태(문이 사실상 닫혀 있다) · ③④⑤ = ㉠ 으로 연 문.')
 console.log('   ③이 죽으면 리뷰창이 다시 0명에게 뜬다. ④가 죽으면 «안 보낸 사람»에게 조른다.\n')

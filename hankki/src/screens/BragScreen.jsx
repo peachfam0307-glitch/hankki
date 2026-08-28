@@ -133,9 +133,22 @@ export default function BragScreen() {
       if (res && res.pending) setPending(res.pending)   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
       else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
+      // 🗣🗣 **여기가 빠져 있었다** — 창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 «아예» 못봤어"*
+      //   ⛔⛔ 리뷰 청하기가 «랜덤 카드» 길에만 붙어 있었다(`ShareDrawCard` 의 `onShared`).
+      //      그런데 이 화면의 «주인공» 단추는 「내가 꾸민 표지 그대로」(갈색·맨 위)다 —
+      //      **보통 유저가 누르는 그 길에서는 리뷰창이 영영 안 떴다.**
+      //   📌 2026-08-27 판 주석에 *"공유 성공 자리가 셋인데 셋 다 그 약속을 쓴다"* 라고 적었는데
+      //      그 「셋」은 **`ShareDrawCard` «안»의 셋**이었다. `sendCover` 는 그 컴포넌트를 안 거친다.
+      //      ⭐ 「한 곳만 감쌌다」는 말이 맞으려면 **그 한 곳을 모든 길이 지나가야** 한다.
+      //   ✅ 조건 = **`shared === true` 일 때만**(`shareCover.js` 206·210줄).
+      //      취소(AbortError)·사진 저장·허가 끊김은 전부 `shared: false` 라 저절로 걸러진다.
+      if (res && res.shared === true) 자랑보냄.current = true
     } finally {
       setBusy(false)
       setPick(null)
+      // ⛔ 시트를 닫은 «뒤»에 띄운다 — 시트 위에 시트를 겹치지 않는다(2026-08-27 에 지킨 것 ⑴)
+      if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+      자랑보냄.current = false
     }
   }
 
