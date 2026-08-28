@@ -135,6 +135,7 @@ export default function EditorScreen({ id, prefill }) {
   useEffect(() => { const id = setTimeout(checkPhotoScroll, 80); return () => clearTimeout(id) }, [pin, refs.length, photoFold])
   const [newFolder, setNewFolder] = useState(false)
   const [discardAsk, setDiscardAsk] = useState(false) // 작성 중 나가기 = 버릴지 물어본다
+  const [rawOpen, setRawOpen] = useState(false) // 📥 「사진에서 읽은 원문」 접힘/펼침
   // 📥 [2026-08-22] 파서에 넣은 «원문» — 화면엔 안 보이고 저장만 된다.
   //    파서를 고친 날 「다시 읽기」로 되살릴 재료다(→ `parseRecipe.js` 의 `keepRaw` 주석).
   //    ⛔ 편집으로 들어왔는데 원문이 없으면 «빈 값으로 덮지» 않는다 — 없는 값으로 덮는 건 지우는 것이다(규칙 18 ⓙ).
@@ -877,6 +878,66 @@ export default function EditorScreen({ id, prefill }) {
           <label>메모 (선택)</label>
           <textarea rows={3} value={f.memo} onChange={(e) => set('memo', e.target.value)} placeholder="나만의 팁이나 변형 아이디어" />
         </div>
+
+        {/* 📥📥 [2026-08-28 · 창업자 「A가자 테스트를 해봐야하니까」] **사진에서 읽은 원문**
+            📮 창업자 = *"근데 그럼 나머지는 어떻게 잡아? 다른 케이스 테스트해서 계속 보내?"*
+            ⭐ 스크린샷만 보내면 나는 OCR 이 «뭐라고 읽었을지»를 추측해서 다시 쳐야 한다.
+               추측이 빗나가면 못 고친다(콩나물 걸음 1 「jangnamcook 21시간 작성자」가 그랬다).
+               원문 글자를 그대로 받으면 추측이 0이 된다.
+            ⭐ 원문은 2026-08-22 부터 «이미 저장되고 있었다»(parseRecipe.js `keepRaw` · 상한 4,000자).
+               꺼낼 입구가 없었을 뿐이다 — 로드맵 7순위 「다시 읽기 단추(자리는 창업자 판정)」가 이것이다.
+            ⭐ 용량은 한 글자도 안 는다 — 저장은 이미 하고 있고 여기선 «보여주기»만 한다.
+            ⛔ 원문이 없는 레시피(8/22 이전에 담은 것)엔 아예 안 그린다 — 없는 걸 있는 척하지 않는다. */}
+        {rawText && (
+          <div className="field">
+            <button
+              type="button"
+              className="press"
+              onClick={() => setRawOpen((v) => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '12px 14px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 16, fontWeight: 700, textAlign: 'left' }}
+            >
+              <Icon name={rawOpen ? 'chevron-down' : 'chevron-right'} size={16} color="var(--brown)" />
+              사진에서 읽은 원문
+              <span style={{ marginLeft: 'auto', fontSize: 15, fontWeight: 600, color: 'var(--text-sub)' }}>{rawText.length}자</span>
+            </button>
+            {rawOpen && (
+              <>
+                {/* ⛔⛔ 글자를 «화면에 그대로» 띄운다 — 복사가 막힌 기기에서도 손으로 긁을 수 있게.
+                    2026-08-16 사고 = `clipboard.writeText()` 가 «성공으로 resolve 되고도» 실제 복사는 실패했다.
+                    그때 배운 것 = **확인할 수 없는 것을 성공이라고 말하지 않는다.** 여기선 눈에 보이는 길을 같이 둔다. */}
+                <textarea
+                  data-raw="1"
+                  readOnly
+                  rows={8}
+                  value={rawText}
+                  onFocus={(e) => e.target.select()}
+                  style={{ marginTop: 8, fontSize: 15, lineHeight: 1.55, fontFamily: 'var(--mono, monospace)' }}
+                />
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button
+                    type="button"
+                    className="press"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(rawText)
+                        // ⛔ 「복사했어요」로 끝내지 않는다 — 됐는지 확인할 방법이 없다(2026-08-16).
+                        nav.showToast('원문을 복사했어요 붙여넣어 «들어갔는지» 꼭 확인하세요', 5200)
+                      } catch {
+                        nav.showToast('복사가 막힌 기기예요 위 글자를 길게 눌러 «전체 선택»으로 복사하세요', 6000)
+                      }
+                    }}
+                    style={{ padding: '10px 16px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 16, fontWeight: 700 }}
+                  >
+                    복사
+                  </button>
+                </div>
+                <div style={{ fontSize: 15, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>
+                  레시피가 이상하게 담겼을 때 이 글자를 그대로 보내주시면 원인을 찾을 수 있어요.
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {/* disabled 금지 — 위 상단 저장 버튼과 같은 이유(무반응=먹통으로 보임). 누르면 save()가 안내한다. */}
         <button className="btn-primary press" onClick={save} style={{ opacity: canSave ? 1 : 0.5 }}>
