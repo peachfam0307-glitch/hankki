@@ -29,9 +29,9 @@ on:
   workflow_dispatch:
     inputs:
       versionCode:
-        description: '버전코드 — 콘솔에 올라간 최신보다 커야 함. ✅2026-08-20 확인(굽기 실물 run 32117415820 로그: versionCode 16 · versionName 11.08 · 8/18): 마지막 = 16 → 다음은 17'
+        description: '버전코드 — 콘솔에 올라간 최신보다 커야 함. ✅2026-08-28 확인(굽기 실물 run 32328806704 · 아티팩트 hankki-aab-11.15-17 · 8/20 정식출시 판): 마지막 = 17 → 다음은 18'
         required: true
-        default: '17'
+        default: '18'
       versionName:
         description: '버전 이름 — 비워두면 hankki/src/version.js 에서 자동으로 읽는다'
         required: false
