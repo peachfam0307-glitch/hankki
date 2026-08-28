@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef } from 'react'
 import { COACH } from '../coach'
+import { todayKST } from '../today'
 import { nextUpList } from '../nextUp'
 import OneLineSheet from '../components/OneLineSheet'
 import { useStore } from '../store'
@@ -106,7 +107,18 @@ export default function HomeScreen() {
   // 📔 diary = 「만들었어요」가 쌓는 요리 일기 — 「한 줄 안 쓴 것」을 세는 데 쓴다(`nextUp.js`)
   const { recipes, profile, pantry, diary, removeRecipe } = useStore()
   const nav = useNav()
-  const [pick, setPick] = useState(0)
+  // 🗓🗓 「오늘 뭐 해먹지」를 **날짜로 돌린다** (창업자 확정 2026-08-28 = *"날짜로 돌리자"*)
+  //
+  // ⛔⛔ **이름이 「오늘」인데 날짜로 안 바뀌고 있었다.** `useState(0)` 이라 늘 맨 앞 하나였고,
+  //    앱을 껐다 켜면 「다른 추천」으로 넘긴 것도 도로 처음으로 왔다. **매일 같은 게 떴다.**
+  // 📮 경위 = 창업자 = *"월요일로 맞추면 일주일간 너무 암것도 없이 조용하지 않아?"*
+  //    → 재보니 저절로 바뀌는 건 **월(제철·우리집레시피) · 목(장바구니)** 둘뿐이었고,
+  //       정작 「오늘」이라는 카드가 안 바뀌고 있었다.
+  // ⛔ 「상위 몇 개 안에서만 돌리기」는 접었다 — 창업자 = *"냉장고에 암것도 없으면 똑같은거만 보니까.."*
+  //    맞다. 냉장고가 비면 목록이 «전체»가 되는데 그 상위 N개는 고정이라 그게 그거다.
+  // ⭐ 「다른 추천」 단추는 그대로다 — 오늘 것에서 «한 칸씩» 더 넘긴다.
+  // ⛔ 날짜는 `todayKST()` 로만 받는다(절대원칙 27) — 여기서 만들지 않는다.
+  const [pick, setPick] = useState(() => Math.floor(Date.parse(`${todayKST()}T00:00:00Z`) / 86400000))
   const [preview, setPreview] = useState(false)
   // 최근 저장 카드 길게 눌러 삭제 — 지우려고 상세까지 들어가 ⋯메뉴를 여는 게 번거롭다(창업자 요청).
   const [delAsk, setDelAsk] = useState(null) // 삭제 확인 중인 레시피
