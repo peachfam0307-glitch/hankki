@@ -51,6 +51,45 @@ export default function DiaryScreen({ day }) {
   )
   const iconOf = (e) => (recipes.find((r) => r.id === e.recipeId) || {}).icon || guessFoodIcon(e.title)
 
+  // 📔📔 **넘겨 보기** — 달력으로 안 돌아가고 옆 일기로 바로 간다 (창업자 2026-08-28)
+  //
+  // 📮 창업자 = *"일기를 넘겨가며 볼수있으면 좋겠어(**지금은 날짜하나하나 눌러야함**)"*
+  //
+  // ⭐⭐ **「하루씩」이 아니라 「쓴 날끼리」 넘긴다.** 하루씩 넘기면 안 쓴 날이 대부분이라
+  //    빈 종이만 계속 나오고, 지난달 일기를 보려면 서른 번을 눌러야 한다.
+  //    창업자가 불편해한 것이 바로 «많이 눌러야 하는 것»이라 하루씩은 답이 아니다.
+  // ⛔ 그래서 **일기가 있는 날만** 목록에 담는다 — 요리 기록(`kind` 없음)은 «일기»가 아니라 뺀다
+  //    (`entry` 를 고르는 잣대와 «같은 잣대»라야 「화살표는 있는데 빈 종이가 나온다」가 안 생긴다).
+  // ⭐ 옛것 → 새것 순으로 세운다 — 왼쪽(‹)이 «지난 일기», 오른쪽(›)이 «다음 일기».
+  //    달력이 위에서 아래로 흐르는 방향과 같아서 따로 배울 게 없다.
+  // ⚠️ 지금 날이 목록에 없을 수 있다(아직 한 글자도 안 쓴 새 일기) → 그때는 화살표를 안 그린다.
+  const 일기날들 = useMemo(() => {
+    const 본 = new Set()
+    return diary
+      .filter((d) => d && d.kind === 'diary')
+      .sort((a, b) => (a.at || 0) - (b.at || 0))
+      .map((d) => dayKey(d.at))
+      .filter((k) => (본.has(k) ? false : (본.add(k), true)))
+  }, [diary])
+  const 내자리 = 일기날들.indexOf(day)
+  const 옆날 = (걸음) => (내자리 < 0 ? null : 일기날들[내자리 + 걸음] || null)
+  const 지난일기 = 옆날(-1)
+  const 다음일기 = 옆날(1)
+  // ⛔ `push` 가 아니라 `replace` — 열 장을 넘겨 보고 뒤로가기를 «열 번» 누르게 하지 않는다.
+  const 넘기기 = (k) => { if (k) nav.replace({ name: 'diary', day: k }) }
+  // 📅 화살표에 붙는 말 — 「이전」이 아니라 «며칠 일기인지»를 읽어 준다(눈으로 못 보고 누르는 자리다).
+  const 날말 = (k) => { const d = fromDayKey(k); return `${d.getMonth() + 1}월 ${d.getDate()}일 일기` }
+  const 넘김단추 = (k, 쪽) => (
+    <button
+      className="press diary-flip"
+      onClick={() => 넘기기(k)}
+      disabled={!k}
+      aria-label={k ? `${쪽 === 'prev' ? '지난' : '다음'} 일기 — ${날말(k)}` : `${쪽 === 'prev' ? '지난' : '다음'} 일기 없음`}
+    >
+      <Icon name={쪽 === 'prev' ? 'chevron-left' : 'chevron-right'} size={20} />
+    </button>
+  )
+
   // 📄📄 **처음 열면 전부 「맨 왼쪽」** (창업자 2026-08-06
   //   *"처음에 일기쓰기 클릭하면 다 왼쪽껄로 고르게 해줘. 없음이랑 아이보리.."*)
   //   틀 = 없음 · 종이 = 아이보리 · 선 = **무지**. 서랍에 보이는 순서 그대로 첫 칸이다.
@@ -198,8 +237,11 @@ export default function DiaryScreen({ day }) {
       <div className="screen fade" style={{ paddingBottom: 0 }}>
         <div className="detail-bar">
           <button className="bar-btn" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
-          <div style={{ fontSize: 17, fontWeight: 800 }}>
-            {date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 16, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span>
+          {/* 📔 잠긴 날에서도 넘어갈 수 있어야 한다 — 여기서 막히면 «달력으로 되돌아가는» 그 불편이 그대로다 */}
+          <div style={{ fontSize: 17, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 7 }}>
+            {내자리 >= 0 && (지난일기 || 다음일기) && 넘김단추(지난일기, 'prev')}
+            <span>{date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 16, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span></span>
+            {내자리 >= 0 && (지난일기 || 다음일기) && 넘김단추(다음일기, 'next')}
           </div>
           <span style={{ width: 36 }} />
         </div>
@@ -254,7 +296,10 @@ export default function DiaryScreen({ day }) {
       <div className="detail-bar">
         <button className="bar-btn" onClick={() => nav.pop()} aria-label="뒤로"><Icon name="chevron-left" size={22} /></button>
         <div style={{ fontSize: 17, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 7 }}>
+          {/* ‹ › = 넘겨 보기. ⛔ 하나도 없으면 아예 안 그린다(빈 자리 금지 · 우리 규칙) */}
+          {내자리 >= 0 && (지난일기 || 다음일기) && 넘김단추(지난일기, 'prev')}
           <span>{date.getMonth() + 1}월 {date.getDate()}일 <span className="t-sub" style={{ fontSize: 16, fontWeight: 700 }}>{WEEK[date.getDay()]}요일</span></span>
+          {내자리 >= 0 && (지난일기 || 다음일기) && 넘김단추(다음일기, 'next')}
           {/* 🏷 **「샘플」** (창업자 2026-08-12 *"자기 일기가 아니니까 지워도 되게(샘플이라고 적어주고)"*)
               ⭐ 제목 «옆»에 둔다 — 종이 위에 얹으면 꾸민 것과 섞여 「이것도 스티커인가」가 된다.
               ⛔⛔ 첫 판은 **연한 크림 바탕에 보조색 글자 11px** 이었다 → 창업자 *"샘플표시가 너무 작아 티도안나"*.

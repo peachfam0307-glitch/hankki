@@ -3388,16 +3388,28 @@ html, body { overscroll-behavior: none; }
 .memo-note.stick .memo-in { display: flex; flex-direction: column; }
 /* ⭐ 글자를 «종이 폭»에 매단다 — 자리가 좁아지면 같이 작아져서 안 넘친다.
    ⛔ 작은 자리(157px)에서 머리줄이 한 줄에 안 들어간다 → 감기게 두고 별점도 가운데로. */
-.memo-note.stick .memo-note-head { font-size: clamp(7.5px, 5.4cqw, 11px); flex-wrap: wrap; justify-content: center; row-gap: 1px; word-break: keep-all; }
+/* 🔠🔠 [창업자 제보 2026-08-28] *"한줄남기기 포스트잇은 큰데 «글자, 별점이 작아»."*
+   🔢 실측(390px 폰 · 재료 칸 350px → 포스트잇 154px) —
+      옛 판 = 머리줄 8.3px · 본문 12.9px · 별 **11px 고정**
+   ⭐⭐ 뿌리 = **본문만 종이 폭에 매달고(`cqw`) 별은 px 로 박아 뒀다.**
+      그래서 두 손가락으로 종이를 키워도(34~68%) **별만 그대로 11px** 이라
+      키울수록 «더» 작아 보인다. 창업자가 본 게 정확히 그거다.
+   ✅ 셋 다 종이 폭에 매단다 — 본문 8.4 → **10.5cqw** · 머리줄 5.4 → **6.2cqw** ·
+      별은 CSS 로 `svg` 크기를 덮어 **8cqw**(＝ 11 → 12.3px, 크게 키우면 18px 까지).
+   ⛔ 천장을 둔다 — 두 손가락으로 68% 까지 키웠을 때 글자가 종이를 넘치면 안 된다.
+   ⛔ 붙임이 «아닌» 자리(요리 모드 0단계)의 값은 안 건드린다 — 거기는 폭이 넉넉하다. */
+.memo-note.stick .memo-note-head { font-size: clamp(10px, 7.2cqw, 13px); flex-wrap: wrap; justify-content: center; row-gap: 1px; word-break: keep-all; }
 .memo-note.stick .memo-note-stars { margin-left: 0; }
+/* ⭐ 별도 «종이 폭»에 매단다 — `Icon` 이 width/height 를 속성으로 주지만 CSS 가 이긴다. */
+.memo-note.stick .memo-note-stars svg { width: clamp(12.5px, 9cqw, 19px); height: clamp(12.5px, 9cqw, 19px); }
 .memo-note.stick .memo-note-body {
-  font-size: clamp(10.5px, 8.4cqw, 15px); line-height: 1.3; margin-top: 2px;
+  font-size: clamp(12px, 10.5cqw, 19px); line-height: 1.3; margin-top: 2px;
   /* ✂️ 줄바꿈 = **낱말 단위로** (창업자 2026-08-20 *"줄바꿈이랑…"*)
      ⛔ 기본값은 한국어를 «글자 단위»로 끊는다 → 「고추장 한 술 줄이/기」처럼 한 글자가 혼자 떨어진다.
      ✅ `keep-all` 이 어절을 안 쪼갠다. ⚠️ 대신 아주 긴 낱말은 넘칠 수 있어 `break-word` 를 같이 준다. */
   word-break: keep-all; overflow-wrap: break-word;
 }
-.memo-note.stick .memo-note-more { font-size: clamp(8px, 5cqw, 11px); margin-top: 3px; }
+.memo-note.stick .memo-note-more { font-size: clamp(8.5px, 5.8cqw, 12px); margin-top: 3px; }
 .memo-note-head { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; opacity: 0.62; }
 /* ⭐ 별점 = 포스트잇 «머리줄 오른쪽 끝»에. 창업자 *"별점은 넣어도 괜찮겠다 포스트잇에 보이면 되니까"*
    ⛔ 안 매겼으면 아예 안 그린다(컴포넌트에서 막는다) — 빈 별은 재촉이 된다 */
@@ -3880,3 +3892,24 @@ html, body { overscroll-behavior: none; }
   .news-title { font-size: 21px; }
   .news-card { --news-gom: 42px; gap: 18px; padding: 16px 18px; }
 }
+
+/* 📔📔 일기 「넘겨 보기」 화살표 — 날짜 «양옆»에 (창업자 2026-08-28)
+   📮 *"일기를 넘겨가며 볼수있으면 좋겠어(지금은 날짜하나하나 눌러야함)"*
+   ⭐ 자리 = 제목 옆. 상단바 오른쪽은 이미 자물쇠·휴지통이 차 있고,
+      무엇보다 **넘기는 대상이 「날짜」**라 날짜 옆에 있어야 무슨 뜻인지 안 배워도 안다.
+   ⛔ 더 갈 데가 없으면 «지운다»가 아니라 «흐리게 두고 못 누르게» 한다 —
+      한쪽만 사라지면 제목이 좌우로 흔들려 넘길 때마다 글자가 움직인다.
+   ⛔ 손가락 자리는 32px 을 지킨다(상단바가 낮아 38px 은 못 준다 — 대신 좌우 여백으로 넓힌다). */
+.diary-flip {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: none;
+  background: var(--cream);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.diary-flip:disabled { opacity: 0.28; }
