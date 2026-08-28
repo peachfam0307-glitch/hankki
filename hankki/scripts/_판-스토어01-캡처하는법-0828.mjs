@@ -120,14 +120,20 @@ const 겹침A = `<style>${공통}
   .front{position:absolute;right:44px;top:700px;width:470px;height:972px}
   .shot{width:100%;height:100%}
   .front .shot{border-width:11px}
-  .arrow{left:590px;top:1090px;font-size:104px;line-height:1}
 </style>
 ${머리}
 <div class="back"><img class="shot" src="${IMG.인스타}"></div>
-<div class="arrow">›</div>
 <div class="front"><img class="shot" src="${IMG.한끼}"></div>
 ${흐름띠}`
+// ⛔ 화살표(›)를 **뺐다** — 겹치는 50px 띠에 놓여 있어 한끼 화면의 「소스」 글자를 덮었다(실물로 봤다).
+//    ⭐ 자리를 옮기는 대신 «없앴다» — 아래 흐름 띠가 이미 › 로 흐름을 말한다. 두 번 말할 이유가 없다.
+//    ⚠️ ㉢은 화살표가 두 폰 «사이 빈 자리»에 떨어져 있어 안 겹친다 → 거긴 그대로 둔다.
 
+// ✅✅✅ [창업자 확정 2026-08-28] **㉢ 으로 간다 — 이게 스토어 01장이다.**
+//    📮 *"레시피 저장되는걸 보여줘야하니까 난 2번째가 좋은 것 같아."* → *"아 **ㄷ는 아래가 시원한**"* → *"**ㄷ하자 ㅋㅋㅋ**"*
+//    ⭐ 창업자가 짚은 것 = ㉢은 폰 아래에 «여백»이 있어 흐름 띠가 답답하게 안 붙는다.
+//       ＋ 한끼 화면이 제일 커서 「레시피가 저장된 모습」이 그대로 읽힌다(창업자가 먼저 댄 이유도 그것이다).
+//    ⛔ ㉠㉡ 은 지우지 않는다 — 나중에 다시 견줄 때 «다시 만들» 필요가 없다.
 // ㉢ 겹침 반대 — 한끼가 «주인공»(크게) · 인스타는 「어디서 왔나」로 작게
 const 겹침B = `<style>${공통}
   .back{position:absolute;left:44px;top:520px;width:430px;height:892px}
