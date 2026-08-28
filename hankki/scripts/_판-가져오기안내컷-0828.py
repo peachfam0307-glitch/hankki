@@ -47,6 +47,9 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 갈래 = sys.argv[3] if len(sys.argv) > 3 else 'share'
 
 # 📁 창업자 폰 캡처 (2026-08-28)
+# ⛔ 자르기 시작을 640 → **770** 으로 내렸다 — 창업자 *"1번 인사이트보기 지우자;;"*
+#    「인사이트 보기 · 게시물 홍보하기」는 **글 올린 사람에게만 보이는 줄**이다.
+#    유저 화면엔 없는 것을 안내에 넣으면 「내 화면엔 왜 없지?」가 된다.
 인스타깨끗 = f'{원본}/fbef5ea5-image.jpg'   # 도구 띠가 «없는» 깨끗한 인스타 게시물 (글이 다 읽힌다)
 인스타띠 = f'{원본}/9824a71f-image.jpg'   # 그 화면 아래 도구 띠 — 여기 「공유」가 있다
 인스타시트 = f'{원본}/35aae191-image.jpg'  # 그 공유 시트 — 앱 줄 오른쪽 끝에 「더보기」
@@ -111,13 +114,34 @@ def 맞춰넣기(im, w, h):
 
 
 def 폰트(크기):
+    # ⚠️ 이 컨테이너엔 한글 폰트가 «하나뿐»이다 — `wqy-zenhei` 만 한글을 그린다.
+    #    ⛔ `fonts-japanese-gothic` 는 이름이 비슷한데 한글이 두부(□)로 나온다.
+    #       그냥 truetype() 이 열린다고 믿으면 안 되고 **실제로 그려 보고** 골라야 한다(규칙 21).
     for p in ('/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf',
+              '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',
               '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'):
         try:
             return ImageFont.truetype(p, 크기)
         except OSError:
             continue
     return ImageFont.load_default()
+
+
+def 말풍선(d, cx, 바닥y, 글, 글자=40):
+    """💬 [창업자 2026-08-28] *"1번에 캡쳐 하면 아래 공유버튼이 뜬다는거 말풍선같은걸로 적을까."*
+       ⭐ 그림만으로는 «언제» 그 띠가 뜨는지 모른다 — 캡처한 «직후»에만 잠깐 뜬다.
+          그 한 마디가 없으면 유저는 인스타 화면을 아무리 봐도 그 띠를 못 찾는다.
+       ⛔ 꼬리가 «공유 단추 쪽»을 가리켜야 한다 — 그냥 네모면 무엇에 대한 말인지 안 붙는다."""
+    f = 폰트(글자)
+    tb = d.textbbox((0, 0), 글, font=f)
+    tw, th = tb[2] - tb[0], tb[3] - tb[1]
+    가로여백, 세로여백, 꼬리 = 26, 18, 20
+    w, h = tw + 가로여백 * 2, th + 세로여백 * 2
+    x0, y0 = cx - w // 2, 바닥y - 꼬리 - h
+    d.rounded_rectangle([x0, y0, x0 + w, y0 + h], radius=h // 2, fill=(255, 246, 233), outline=빨강, width=5)
+    d.polygon([(cx - 17, y0 + h - 2), (cx + 17, y0 + h - 2), (cx, 바닥y)], fill=(255, 246, 233))
+    d.line([(cx - 17, y0 + h - 2), (cx, 바닥y), (cx + 17, y0 + h - 2)], fill=빨강, width=5)
+    d.text((x0 + 가로여백 - tb[0], y0 + 세로여백 - tb[1]), 글, font=f, fill=(150, 60, 45))
 
 
 def 띠칸(바탕, 바탕crop, 띠, 띠범위, 표시):
@@ -134,7 +158,9 @@ def 띠칸(바탕, 바탕crop, 띠, 띠범위, 표시):
     im.paste(바, (0, 0)); im.paste(바띠, (0, 바.height))
     cx, cy, r = 표시
     y = 바.height + (cy - ty0)
-    ImageDraw.Draw(im).ellipse([cx - r, y - r, cx + r, y + r], outline=빨강, width=10)
+    d = ImageDraw.Draw(im)
+    d.ellipse([cx - r, y - r, cx + r, y + r], outline=빨강, width=10)
+    말풍선(d, min(cx, 1080 - 300), 바.height - 6, '캡처하면 여기 떠요')
     return im
 
 
@@ -174,9 +200,9 @@ def 목록칸():
 
 if 갈래 == 'gallery':
     # ⭐ 갤러리도 «깨끗한 사진»을 바탕으로 쓴다 — 창업자 캡처의 위쪽엔 작은 미리보기 띠가 겹쳐 있다.
-    칸들 = [띠칸(인스타깨끗, (640, 1900), 갤러리띠, 띠범위_갤러리, 공유_갤러리), 시트칸(갤러리시트), 목록칸()]
+    칸들 = [띠칸(인스타깨끗, (770, 1900), 갤러리띠, 띠범위_갤러리, 공유_갤러리), 시트칸(갤러리시트), 목록칸()]
 else:
-    칸들 = [띠칸(인스타깨끗, (640, 1900), 인스타띠, 띠범위_인스타, 공유_인스타), 시트칸(인스타시트), 목록칸()]
+    칸들 = [띠칸(인스타깨끗, (770, 1900), 인스타띠, 띠범위_인스타, 공유_인스타), 시트칸(인스타시트), 목록칸()]
 
 W, H = 칸폭 * 3 + 틈 * 2, 위여백 + 칸높
 판 = Image.new('RGB', (W, H), 바탕)
