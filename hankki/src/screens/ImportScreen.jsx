@@ -459,24 +459,35 @@ export default function ImportScreen() {
         //   ⏳ 그림(5컷)은 아직 «창업자 캡처 대기»다 — 글로 먼저 세워 두고, 컷이 오면 단계마다 끼운다
         //      (📄 `docs/캡처공유-안내-2026-08-28.md`). ⛔남의 인스타 게시물 캡처는 안 쓴다.
         <div className="pad fade">
+          {/* 🗓 [창업자 2026-08-28] *"제목 줄바꿈, 줄간격 조절하자. **제목이랑 설명사이는 조금 띄우고**"*
+              ⭐ 제목은 «두 줄»이 되는 게 정상이다(「SNS 보다가 캡처해서 바로 한끼로」) — 줄이지 않고
+                 `text-wrap: balance` 로 **두 줄 길이를 비슷하게** 나눈다. ⛔`keep-all` 만으론 낱말이 한쪽에 몰린다. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, marginBottom: 4 }}>
             <div className="opt-ico"><Icon name={flowMeta.icon} size={24} color={flowMeta.color} stroke={1.7} /></div>
-            <div className="h-title" style={{ fontSize: 23 }}>{flowMeta.title}</div>
+            <div className="h-title" style={{ fontSize: 23, wordBreak: 'keep-all', textWrap: 'balance', lineHeight: 1.35 }}>{flowMeta.title}</div>
           </div>
-          <div className="t-sub" style={{ marginTop: 6, marginBottom: 18, fontSize: 16, lineHeight: 1.6, wordBreak: 'keep-all' }}>
+          <div className="t-sub" style={{ marginTop: 12, marginBottom: 18, fontSize: 16, lineHeight: 1.6, wordBreak: 'keep-all', textWrap: 'pretty' }}>
             {안내들[flow].lead}
           </div>
 
           {/* 1·2·3 — ⛔ 번호는 «진짜 순서»일 때만 쓴다. 여기는 실제로 차례대로 해야 하는 일이다. */}
-          <div className="card" style={{ padding: '6px 0', marginBottom: 16 }}>
+          {/* 🗓 [창업자 2026-08-28] *"**1.2.3번은 너무 띄웠어 (글자가 작은데 줄간이 넓음)** 줄바꿈도 이상"*
+              🔢 전 = 줄 사이 `padding 11px` ＋ 글줄 `lineHeight 1.55` → 한 줄짜리 걸음도 키가 49px 이라
+                 셋이 서면 «목록»이 아니라 «따로 떨어진 세 덩어리»로 보인다.
+              ✅ 줄 사이를 8px, 글줄을 1.42 로. **글자 크기(16.5)는 안 건드린다** — 창업자가 지적한 건
+                 「글자가 작은데」가 아니라 «작은 글자에 비해 줄간이 넓다»이므로 좁히는 쪽이 맞다.
+              ⛔ v11.31 의 「가져오기 상자 줄간 1.5 통일」과 부딪히지 않는다 — 그건 `.imp` 안(목록 화면)이고
+                 여기는 «안내 화면»이라 그 CSS 가 안 걸린다(실측 = 이 값은 인라인이 정한다).
+              ✍️ 줄바꿈 = `text-wrap: pretty` — 마지막 줄에 한 낱말만 떨어지는 것(외톨이)을 없앤다. */}
+          <div className="card" style={{ padding: '4px 0', marginBottom: 16 }}>
             {안내들[flow].steps.map((s, i) => (
-              <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '11px 16px' }}>
+              <div key={i} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: '8px 16px' }}>
                 <span style={{
                   flex: '0 0 auto', width: 25, height: 25, borderRadius: '50%',
                   background: 'var(--cream)', color: 'var(--brown)',
                   fontSize: 15, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>{i + 1}</span>
-                <span style={{ fontSize: 16.5, lineHeight: 1.55, wordBreak: 'keep-all', flex: 1, minWidth: 0 }}>{s}</span>
+                <span style={{ fontSize: 16.5, lineHeight: 1.42, wordBreak: 'keep-all', textWrap: 'pretty', flex: 1, minWidth: 0 }}>{s}</span>
               </div>
             ))}
           </div>
