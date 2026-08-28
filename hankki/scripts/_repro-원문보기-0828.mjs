@@ -78,12 +78,15 @@ await ctx.addInitScript(() => {
 
 console.log('\n📥 「사진에서 읽은 원문」 단추 — 재현판\n')
 
-const page = await ctx.newPage()
-page.on('pageerror', (e) => { if (!남의탓(e.message)) { 실패++; 실패목록.push('pageerror: ' + e.message) } })
-await page.goto('http://127.0.0.1:4462/hankki/', { waitUntil: 'networkidle' })
+// ⛔⛔ **`reload()` 로 다시 열지 않는다** — `addInitScript` 는 reload 때도 «다시» 돌아서
+//    방금 심은 저장값을 시드로 덮어쓴다(check-mistakes.mjs 가 잡는 옛 함정이다).
+//    ✅ 심은 탭은 닫고 **새 탭**으로 연다 — 저장값은 남고 시드는 다시 안 덮는다.
+const seed = await ctx.newPage()
+seed.on('pageerror', (e) => { if (!남의탓(e.message)) { 실패++; 실패목록.push('pageerror(심기): ' + e.message) } })
+await seed.goto('http://127.0.0.1:4462/hankki/', { waitUntil: 'networkidle' })
 
 // ① 원문이 «있는» 레시피와 «없는» 레시피를 심는다
-await page.evaluate((raw) => {
+await seed.evaluate((raw) => {
   const cur = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
   cur.recipes = [
     { id: 'r-raw', title: '공심채볶음', ingredients: ['공심채 150g'], steps: ['손질해요.'], tags: [], folder: '전체', savedAt: Date.now(), rawText: raw },
@@ -92,11 +95,12 @@ await page.evaluate((raw) => {
   ]
   localStorage.setItem('hankki:v1', JSON.stringify(cur))
 }, 원문)
-await page.reload({ waitUntil: 'networkidle' })
+await seed.close()
 console.log('① 원문 있는 레시피 · 없는 레시피를 심었다')
 
 // ② 편집 화면에 「사진에서 읽은 원문」 입구가 있나
-await page.evaluate(() => { location.hash = '' })
+const page = await ctx.newPage()
+page.on('pageerror', (e) => { if (!남의탓(e.message)) { 실패++; 실패목록.push('pageerror: ' + e.message) } })
 await page.goto('http://127.0.0.1:4462/hankki/', { waitUntil: 'networkidle' })
 await page.getByText('공심채볶음', { exact: false }).first().click()
 await page.waitForTimeout(400)
