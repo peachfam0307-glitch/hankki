@@ -57,14 +57,32 @@ const FPS = 12
 //    ⭐ 그래서 「깨끗판 ＋ 도구 띠만 오려 붙이기」로 만든다 — 도구 띠(＝「방금 캡처했다」는 신호)는 남고
 //       그보다 위에 뜨는 캡처 썸네일 작은 상자는 안 딸려온다.
 //    ⛔ 동그라미가 «구워지지 않은» 판을 쓴다 — 여기서는 맥박치게 그려야 한다.
+// ⭕ 공유 단추 자리 = 합성판이 «계산해서 넘겨준 값»을 읽는다
+//    ⛔ 손으로 옮겨 적지 않는다 — 원본이 바뀌면(인사이트 줄을 자르는 등) 자리가 밀리는데
+//       그때 여기만 낡아서 동그라미가 엉뚱한 곳에 뜬다.
+const 공유자리JSON = join(원본, '인스타-공유자리.json')
+if (!existsSync(공유자리JSON)) {
+  console.error('⛔ 공유 자리를 모른다 → 먼저 `python3 scripts/_판-인스타공유동그라미-0828.py` 를 돌린다')
+  process.exit(1)
+}
+const { x: 공유x, y: 공유y, r: 공유r } = JSON.parse(readFileSync(공유자리JSON, 'utf8'))
+const 공유자리 = [공유x, 공유y, 공유r]
+
+// ⏱⏱ 창업자 = *"**너무 빠르게 지나가지 않게 강조 딱딱해서** 만들어줘"*
+//    ⭐ 두 가지를 같이 한다 —
+//      ⑴ **길게**: 누를 자리를 보여주는 장면(⭕있는 셋)을 제일 길게 준다. 14.3초 → 20초 안팎.
+//      ⑵ **멈춤**: 줌을 앞쪽에서 «끝내고» 뒤는 세워 둔다. 내내 움직이면 눈이 어디서 멈출지 모른다.
+//         → `멈춤` 값 = 그 장면의 뒤 몇 할을 정지로 둘 것인가.
 const 장면들 = [
-  { id: 's1', 그림: `${원본}/2-인스타-깨끗-가림.png`, 초: 1.5, 자막: '인스타에서 본 레시피', 줌: [1.0, 1.06], 초점: [540, 900] },
-  { id: 's2', 그림: `${원본}/인스타-도구띠-합성.png`, 초: 1.8, 자막: '캡처하면 아래에 <b>공유</b>', 동그라미: [720, 2196, 92], 줌: [1.05, 1.5], 초점: [720, 2150] },
-  { id: 's3', 그림: `${원본}/3-공유시트-가림.png`, 초: 1.8, 자막: '한끼가 안 보이면 <b>더보기</b>', 동그라미: [907, 1708, 106], 줌: [1.0, 1.45], 초점: [907, 1700] },
-  { id: 's4', 그림: `${원본}/4-앱목록-가림.png`, 초: 1.8, 자막: '<b>한끼</b>를 누르면', 동그라미: [412, 478, 112], 줌: [1.0, 1.5], 초점: [412, 520] },
-  { id: 's5', 그림: `${앱화면}/20-레시피목록.png`, 초: 1.5, 자막: '레시피가 담겼어요', 줌: [1.06, 1.0], 초점: [540, 800] },
-  { id: 's6', 그림: `${앱화면}/21-상세-재료순서.png`, 초: 2.0, 자막: '재료가 알아서 정리돼요', 줌: [1.0, 1.08], 초점: [540, 900] },
-  { id: 's7', 그림: `${앱화면}/22-상세-만드는법.png`, 초: 1.8, 자막: '만드는 법까지', 줌: [1.0, 1.08], 초점: [540, 900] },
+  { id: 's1', 그림: `${원본}/2-인스타-깨끗-가림.png`, 초: 2.0, 자막: '인스타에서 본 레시피', 줌: [1.0, 1.06], 초점: [540, 820], 멈춤: 0.30 },
+  { id: 's2', 그림: `${원본}/인스타-도구띠-합성.png`, 초: 2.9, 자막: '캡처하면 아래에 <b>공유</b>', 동그라미: 공유자리, 줌: [1.05, 1.5], 초점: [공유자리[0], 공유자리[1] - 46], 멈춤: 0.48 },
+  { id: 's3', 그림: `${원본}/3-공유시트-가림.png`, 초: 2.9, 자막: '한끼가 안 보이면 <b>더보기</b>', 동그라미: [907, 1708, 106], 줌: [1.0, 1.45], 초점: [907, 1700], 멈춤: 0.48 },
+  { id: 's4', 그림: `${원본}/4-앱목록-가림.png`, 초: 2.7, 자막: '<b>한끼</b>를 누르면', 동그라미: [412, 478, 112], 줌: [1.0, 1.5], 초점: [412, 520], 멈춤: 0.48 },
+  // ⭐ 초점을 「공심채 볶음」 카드에 맞춘다 — 자막(bottom 290px)이 그 이름표를 덮으면
+  //    「무엇이 담겼는지」가 안 읽혀서 앞 장면들과 흐름이 끊긴다(창업자가 잡은 그 자리).
+  { id: 's5', 그림: `${앱화면}/20-레시피목록.png`, 초: 2.4, 자막: '레시피가 담겼어요', 줌: [1.06, 1.0], 초점: [540, 960], 멈춤: 0.36 },
+  { id: 's6', 그림: `${앱화면}/21-상세-재료순서.png`, 초: 2.8, 자막: '재료가 알아서 정리돼요', 줌: [1.0, 1.08], 초점: [540, 900], 멈춤: 0.36 },
+  { id: 's7', 그림: `${앱화면}/22-상세-만드는법.png`, 초: 2.6, 자막: '만드는 법까지', 줌: [1.0, 1.08], 초점: [540, 900], 멈춤: 0.36 },
 ]
 
 for (const s of 장면들) if (!existsSync(s.그림)) { console.error('⛔ 재료가 없다 →', s.그림); process.exit(1) }
@@ -79,8 +97,10 @@ ${폰트}
 html,body{width:1080px;height:1920px;overflow:hidden;background:#fbf0e0}
 #stage{position:absolute;inset:0;overflow:hidden}
 #shot{position:absolute;left:50%;top:50%;width:1080px;transform-origin:center center;display:block}
-/* ⭕ 누르는 자리 — 그림과 «같은 좌표계»에 얹어야 줌을 따라간다 */
-#ring{position:absolute;border:14px solid #d63c3c;border-radius:50%;box-sizing:border-box;display:none}
+/* ⭕ 누르는 자리 — 그림과 «같은 좌표계»에 얹어야 줌을 따라간다
+   ⭐ 16px = 「강조 딱딱」(창업자). 밝은 화면에서도 획이 끊겨 보이지 않는 굵기 */
+#ring{position:absolute;border:16px solid #d63c3c;border-radius:50%;box-sizing:border-box;display:none;
+  box-shadow:0 0 0 4px rgba(255,255,255,.55), 0 6px 20px rgba(150,20,20,.28)}
 /* 🏷 자막 — 릴스는 소리 없이 본다. 글자가 커야 한다
    ⛔⛔ 그림자만으로는 «앱 화면 글자» 위에서 안 읽힌다 — s5~s7 은 바탕이 크림색에 검은 글씨라
       흰 자막이 재료 목록과 겹쳐 뭉갰다(확인판으로 봤다). → 진한 «알약»을 깔아 바탕과 끊는다.
@@ -160,24 +180,69 @@ const 찍기 = async (o) => {
   n++
 }
 
+// 🔎 장면마다 «가운데 프레임» 번호를 적어 둔다 — 확인판을 손으로 세지 않으려고(장면 길이가 바뀌면 어긋난다)
+const 가운데 = []
+
 for (const s of 장면들) {
   const 컷수 = Math.round(s.초 * FPS)
+  가운데.push({ id: s.id, f: n + Math.floor(컷수 / 2) })
+  const 멈춤 = s.멈춤 ?? 0.3
   for (let i = 0; i < 컷수; i++) {
-    const t = 부드럽게(i / Math.max(1, 컷수 - 1))
+    // ⏱ 줌을 앞쪽에서 «끝내고» 뒤는 세워 둔다 — 내내 움직이면 눈이 멈출 자리가 없다
+    const 진행 = i / Math.max(1, 컷수 - 1)
+    const t = 부드럽게(Math.min(1, 진행 / (1 - 멈춤)))
     const z = s.줌[0] + (s.줌[1] - s.줌[0]) * t
-    // ⭕ 동그라미는 «커졌다 작아지는» 맥박 — 「여기를 누른다」가 눈에 든다
-    const 맥 = s.동그라미 ? 1 + 0.10 * Math.sin(i / FPS * Math.PI * 2.2) : 1
+    // ⭕ 동그라미 = 「탁」 하고 크게 나타났다 제자리로 ＋ 잔잔한 맥박
+    //    ⭐ 등장을 세게 준 이유 = 정지 그림이라 «나타나는 순간»이 없으면 있는 줄도 모른다.
+    const 초 = i / FPS
+    const 등장 = 초 < 0.30 ? 1 + 0.55 * (1 - 초 / 0.30) ** 2 : 1
+    const 맥 = s.동그라미 ? 등장 * (1 + 0.085 * Math.sin(초 * Math.PI * 2.4)) : 1
     await 찍기({
       src: IMG[s.id], cap: s.자막, z, fx: s.초점[0], fy: s.초점[1], imgH: 높이[s.id],
       ring: s.동그라미 || null, pulse: 맥, ringOp: 1,
     })
   }
 }
-// ⑧ 아웃트로
-for (let i = 0; i < Math.round(2.0 * FPS); i++) await 찍기({ outro: true })
+// ⑧ 아웃트로 — 마지막 글자를 읽을 시간을 준다(창업자 = *"너무 빠르게 지나가지 않게"*)
+const 아웃트로컷 = Math.round(2.6 * FPS)
+가운데.push({ id: '아웃트로', f: n + Math.floor(아웃트로컷 / 2) })
+for (let i = 0; i < 아웃트로컷; i++) await 찍기({ outro: true })
+
+console.log(`🎞 프레임 ${n}장 (${(n / FPS).toFixed(1)}초)`)
+
+// 🔎🔎 확인판 — 창업자에게 보내기 «전»에 내가 눈으로 본다(절대원칙 21)
+//    ⛔ 프레임 번호를 손으로 세지 않는다. 위 `가운데` 가 장면 길이에서 저절로 나온다.
+// ⛔ `setContent` 로 그리면 «그림이 안 뜬다» — 그 페이지는 `about:blank` 라 `file://` 이 막힌다.
+//    (2026-08-28 실제로 텅 빈 판이 나왔고 절대원칙 21 덕에 잡았다)
+//    → HTML 을 «프레임 폴더 안»에 써서 `goto` 로 연다. 그러면 상대경로 그림이 그대로 뜬다.
+const 확인 = join(OUT, '_확인-장면.png')
+const 확인HTML = join(프레임, '_확인.html')
+const 칸 = 가운데
+  .map(({ id, f }) => `<div class="c"><img src="${String(f).padStart(4, '0')}.png"><b>${id}</b></div>`)
+  .join('')
+writeFileSync(
+  확인HTML,
+  `<!doctype html><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#faf6ee;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:10px;
+  font-family:system-ui,sans-serif}
+.c{position:relative}.c img{width:100%;display:block;border-radius:8px}
+.c b{position:absolute;left:8px;top:8px;background:rgba(52,26,6,.86);color:#fffdf8;
+  font-size:22px;padding:4px 12px;border-radius:999px}
+</style>${칸}`,
+)
+await p.setViewportSize({ width: 1600, height: 1200 })
+await p.goto('file://' + 확인HTML)
+await p.waitForTimeout(600)
+// 🔒 스스로 검사 — 그림이 진짜 떴나(안 뜨면 텅 빈 판을 「만들었다」고 넘긴다)
+const 안뜬것 = await p.evaluate(() =>
+  [...document.images].filter((i) => !i.naturalWidth).map((i) => i.getAttribute('src')),
+)
+if (안뜬것.length) { console.error('⛔ 확인판 그림이 안 떴다 →', 안뜬것); process.exit(1) }
+await p.screenshot({ path: 확인, fullPage: true })
+console.log(`🔎 확인판 → ${확인}`)
 
 await br.close()
-console.log(`🎞 프레임 ${n}장 (${(n / FPS).toFixed(1)}초)`)
 
 // 🎬 이어붙이기 — ⛔yuv420p 를 안 주면 인스타·카톡에서 «안 열리는» 폰이 있다
 const mp4 = join(OUT, '한끼-릴스-캡처공유저장-2026-08-28.mp4')
