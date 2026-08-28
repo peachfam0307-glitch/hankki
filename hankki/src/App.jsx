@@ -7,7 +7,7 @@ import { ocrImage, getOcrLeft, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw } from './parseRecipe'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
-import { guessCategory } from './utils'
+import { guessCategory, fitImage } from './utils'
 import BottomNav from './components/BottomNav'
 import TabSwipe from './components/TabSwipe'
 import TimerBar from './components/TimerBar'
@@ -323,12 +323,32 @@ export default function App() {
         (parsed && parsed.title) ||
         firstLine(caption) ||
         (data.imageDataUrl ? '사진 레시피' : '공유된 레시피')
+      // 📦📦 [2026-08-28 · 창업자 폰 「저장 공간이 가득 찼어요」] **저장할 사진은 «줄여서» 담는다.**
+      //
+      // ⛔⛔ 여기가 우리 앱에서 **사진을 «원본 그대로» 저장하던 마지막 자리**였다.
+      //    사진이 들어오는 문이 열 곳인데 아홉은 이미 줄이고 있었다 —
+      //    일기 `fitImage(1200)` · 표지 `fitImage(1200)` · 편집 `cropSquare(800)` ·
+      //    아바타 `cropSquare(256)` · 꾸미기 `cropRatio(700)` · 자르기 시트 `2400` 제한.
+      //    **공유받기만 `blobToDataUrl` 결과를 그대로 넣었다**(`shareIntake.js:17`).
+      //
+      // 🔢 창업자 폰 실측 = 캡처 504KB → base64 **672KB** → **미정리 6장에 4MB** →
+      //    localStorage 한도(5MB)를 넘겨 **저장이 통째로 막혔다**(`store.jsx:830` 이 throw).
+      //    ⭐ 「248편이나 있는데 6개에 꽉 찼다」의 답 = **사진 1장 ≈ 레시피 글 400편**.
+      //
+      // ⭐⭐ **OCR 은 «원본»으로 돌린다** — 아래 `ocrImage(data.imageDataUrl)` 는 안 건드렸다.
+      //    글자를 읽는 정확도는 원본이 제일 좋고, 그 원본은 **메모리에만 잠깐 있다가 버려진다.**
+      //    📌 줄인 걸로 읽게 만들면 용량은 줄지만 «레시피가 덜 읽힌다» — 그건 바꿔 먹을 게 아니다.
+      //
+      // ⛔ `fitImage` 는 **작은 사진은 안 건드린다**(`Math.min(1, max/…)`) ＋ 실패하면 **원본을 돌려준다**.
+      //    그래서 이 한 줄이 사진을 «잃게» 만들 길이 없다.
+      // ⚠️ 이미 담긴 사진은 안 줄어든다 — 앞으로 담는 것만이다(규칙 18 ⓙ).
+      const shrunk = data.imageDataUrl ? await fitImage(data.imageDataUrl, 1600, 0.85) : null
       // 메모는 직접 입력 전용 — 캡션 찌꺼기를 자동으로 붙이지 않는다
       const rec = makeInboxRecipe({
         source,
         title,
         sourceUrl: link,
-        image: data.imageDataUrl || null,
+        image: shrunk,
       })
       if (parsed && (parsed.ingredients.length || parsed.steps.length)) {
         rec.ingredients = parsed.ingredients
@@ -351,6 +371,9 @@ export default function App() {
         history.replaceState({ hankki: 1 }, '', location.pathname) // URL 만 정리, 트랩 표식은 유지
       }
       // 공유된 사진이면 글자를 읽어 재료·순서를 자동으로 채운다.
+      // ⛔⛔ **여기는 `shrunk` 가 아니라 «원본»이다. 바꾸지 말 것.**
+      //    저장은 줄여서 하고(위 `shrunk`) **읽기는 원본으로** 한다 — 글자 크기가 곧 인식률이다.
+      //    원본은 이 줄이 끝나면 아무 데도 안 남는다(메모리에만 있었다).
       if (data.imageDataUrl) {
         const text = await ocrImage(data.imageDataUrl)
         if (cancelled || !text.trim()) return
