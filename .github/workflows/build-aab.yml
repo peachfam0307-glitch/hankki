@@ -165,6 +165,21 @@ jobs:
             *) echo "✅ 나온 값도 세로 잠금 없음" ;;
           esac
 
+      # 🔎 2026-08-28 신설 — R8(코드 축소)을 켜기 «전»에 «실물을 본다».
+      #   왜 = build.gradle 은 저장소에 없다(bubblewrap 이 여기서 만든다).
+      #        안 보고 sed 를 짜면 «못 찾아도 조용히 지나가고» 「켰다」고 말하게 된다(2026-08-18 가로모드 사고).
+      #   ⛔ 이 단계는 «읽기만» 한다 — 아무것도 안 바꾼다.
+      - name: build.gradle 실물 찍기 (R8 준비)
+        working-directory: build
+        run: |
+          echo "────────── app/build.gradle 전문 ──────────"
+          cat -n app/build.gradle
+          echo "────────── buildTypes 만 ──────────"
+          grep -nE "buildTypes|release|debug|minifyEnabled|shrinkResources|proguard" app/build.gradle || echo "(한 줄도 없다)"
+          echo "────────── Android Gradle 플러그인 판 ──────────"
+          grep -rnE "com[.]android[.]tools[.]build:gradle" build.gradle 2>/dev/null | head -3 || echo "(못 찾음)"
+          grep -nE "distributionUrl" gradle/wrapper/gradle-wrapper.properties 2>/dev/null || echo "(gradle wrapper 못 찾음)"
+
       - name: 연습 실행이면 여기서 끝
         if: ${{ inputs.dryRun }}
         run: |
