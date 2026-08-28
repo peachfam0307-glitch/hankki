@@ -34,7 +34,7 @@
 // 실행: cd /home/user/hankki/hankki && node scripts/_판-스토어01-캡처하는법-0828.mjs
 import './_fresh.mjs'
 import { chromium } from 'playwright'
-import { readFileSync, mkdirSync, existsSync } from 'node:fs'
+import { readFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const SCR = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad'
@@ -45,12 +45,17 @@ const ROOT = new URL('..', import.meta.url).pathname
 const b64 = (p) => `data:image/png;base64,${readFileSync(p).toString('base64')}`
 const 폰트 = readFileSync(join(ROOT, 'design/promo/fonts-embed.css'), 'utf8')
 
+// ⛔⛔ 재료는 «저장소»에서 가져온다 — 전엔 scratchpad(`${OUT}`)를 가리켰다.
+//    2026-08-28 사고 = 창업자가 인스타 게시물을 고쳐(식용유→올리브유) 저장소 원본을 새로 만들었는데
+//    이 판은 scratchpad 에 남아 있던 «옛 합성본»을 그대로 써서 **상단바도 「식용유」도 옛 판 그대로** 나왔다.
+//    📌 갱신한 자리와 읽는 자리가 다르면 조용히 낡는다. 재료는 저장소, 결과만 scratchpad.
+const 원본 = join(ROOT, 'design/promo/가져오기안내-원본캡처-2508')
 const 있어야 = {
-  인스타: `${OUT}/인스타-공유동그라미.png`,
-  한끼: `${SCR}/홍보/앱화면/21-상세-재료순서.png`,
-  i공유: `${OUT}/i-공유.png`,
-  i더보기: `${OUT}/i-더보기.png`,
-  i한끼: `${OUT}/i-한끼.png`,
+  인스타: `${원본}/인스타-공유동그라미.png`,
+  한끼: `${SCR}/홍보/앱화면/21-상세-재료순서.png`, // ⭐앱 화면은 돌릴 때마다 새로 찍으므로 여기가 맞다
+  i공유: `${원본}/i-공유.png`,
+  i더보기: `${원본}/i-더보기.png`,
+  i한끼: `${원본}/i-한끼.png`,
 }
 for (const [k, p] of Object.entries(있어야)) {
   if (!existsSync(p)) { console.error(`⛔ 재료가 없다 (${k}) →`, p); process.exit(1) }
@@ -169,3 +174,10 @@ for (const [이름, 몸] of Object.entries(판들)) {
 }
 console.log(`\n📸 → ${OUT}`)
 await br.close()
+
+// 📦 확정 시안을 «저장소로» 옮긴다 — 창업자 확정 = 「ㄷ」(*"ㄷ하자 ㅋㅋㅋ"*)
+//    ⛔ 전엔 손으로 복사했다 → 오늘 인스타 원본이 바뀌었을 때 «저장소 판만 낡을» 뻔했다.
+//       판 생성기가 끝까지 내야 다음에도 안 어긋난다(절대원칙 30).
+const 확정 = join(ROOT, 'design/promo/스토어스샷-2508/v7-01-캡처하는법.png')
+copyFileSync(join(OUT, '시안ㄷ-겹침-한끼주인공.png'), 확정)
+console.log(`📦 확정본 → ${확정}`)
