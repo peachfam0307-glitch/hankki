@@ -1548,6 +1548,22 @@ export function guessFoodIcon(name = '') {
   return 'default'
 }
 
+// 🔤🔤 [2026-08-28 · 창업자] **OCR 이 읽은 제목**에 쓰는 «깐깐한» 판 — 한 글자 낱말엔 안 걸린다.
+//   📮 창업자 = *"제목이 잘 안들어가면 아이콘도 이상한거 붙자나"* — 실물로 재보니 정확했다:
+//      「게시물」 → 「물」에 걸려 **물 그림** · 「2:49 9 나였으면 다」 → 「면」에 걸려 **국수 그림**
+//   🔢 한 글자 규칙 21개(회·면·죽·쌀·밥·떡·빵·쌈·파·콘·콩·닭·굴·꿀·잼·귤·물·김·잣·국·탕)는
+//      사람이 «직접 친» 제목엔 필요하다(「떡」·「빵」). 그래서 **위 `guessFoodIcon` 은 안 건드린다** —
+//      편집 화면에서 손으로 고친 제목은 그대로 한 글자도 쓴다. 사람이 쓴 말은 믿는다.
+//   ⭐ 순서는 위와 «똑같다» — 같은 `ICON_RULES` 를 같은 차례로 훑는다. 규칙을 새로 만들지 않았다.
+export function guessFoodIconStrict(name = '') {
+  const s = String(name)
+  if (!s.trim()) return 'default'
+  for (const [keys, key] of ICON_RULES) {
+    if (keys.some((k) => k.length >= 2 && s.includes(k))) return key
+  }
+  return 'default'
+}
+
 // 🥕🥕 [2026-08-12] «재료» 이름에 붙일 아이콘 — 창업자 제보
 //   *"9번 내가 잘못썼는데 냉장고 재료얘기였어. 재료 하나만 담아도 큰 이미지가 생겨서 재료가 안보였어."*
 //   ⛔⛔ `guessFoodIcon` 은 «요리 제목»용이다. 냉장고에 「애호박」을 담으면
