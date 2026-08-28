@@ -351,6 +351,29 @@ console.log('\n⑥ ⭐ 「1회만」이 «진짜인가» — 어떻게 닫아도
   await page.close()
 }
 
+// 📱📱 **[2026-08-28 ⓑ] 「한 장씩 따로따로」가 들어와 리뷰가 «한 칸» 뒤로 밀렸다 — 잣대를 옮긴다.**
+//    📮 창업자 = *"폰처럼 한장씩 따로따로는 못들어가?"* → **"ㄴ으로 하자"**
+//    ⭐ 표지가 나가면 **「레시피도 보내기」가 «먼저»** 뜨고, 그걸 닫아야 리뷰를 청한다
+//       (⛔시트 위에 시트를 겹치지 않는다 — 2026-08-27 에 지킨 것 ⑴).
+//    ⭐⭐ 지키려는 뜻은 **하나도 안 바뀌었다** = 「그 길로 보낸 사람에게 리뷰를 청하나」.
+//    ⛔⛔ 그냥 「닫고 나서 본다」로 두면 **시트가 «안 떠도» 통과한다**(규칙 18 ⓘ).
+//       → 「떴나」를 «돌려주게» 해서 그것도 한 칸으로 «센다». 안 뜨면 그 칸이 죽는다.
+//    🔒 한 장씩 자체는 `_repro-한장씩-0828.mjs` 가 «넘긴 장수»로 따로 잰다.
+const 한장더닫기 = async (page) => {
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('레시피도 보내기')),
+    null, { timeout: 20000 },
+  ).catch(() => {})
+  const 떴나 = await page.evaluate(() =>
+    [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('레시피도 보내기')))
+  if (!떴나) return false
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim() === '괜찮아요')?.click()
+  })
+  await page.waitForTimeout(700)
+  return true
+}
+
 // ─── ⑦ 🚨 「내가 꾸민 표지 그대로」 — 창업자가 «아예 못 본» 그 길 ────────────
 //
 // 📮 창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 **아예** 못봤어..ㅠ"*
@@ -384,6 +407,7 @@ console.log('\n⑦ 🚨 「내가 꾸민 표지 그대로」로 보내도 뜨나
   await page.waitForFunction((n) => (window.__보냄 || 0) > n, 전, { timeout: 45000 }).catch(() => {})
   const 보냄 = await page.evaluate(() => window.__보냄 || 0)
   chk(`꾸민 표지가 «나갔다» (보냄 ${보냄})`, 보냄 > 전)
+  chk('📱 레시피 한 장을 «먼저» 청한다 (ⓑ)', await 한장더닫기(page))
   chk('⭐⭐ 그 길에서도 리뷰창이 뜬다', await 리뷰창기다리기(page))
   await page.close()
 }
@@ -442,6 +466,7 @@ console.log('\n⑧ 🚨 허가가 끊겨 「지금 보내기」로 나간 경우
   await page.waitForFunction((n) => (window.__보냄 || 0) > n, 전보냄, { timeout: 20000 }).catch(() => {})
   const 보냄8 = await page.evaluate(() => window.__보냄 || 0)
   chk(`「지금 보내기」로 «진짜» 나갔다 (보냄 ${보냄8})`, 보냄8 > 전보냄)
+  chk('📱 레시피 한 장을 «먼저» 청한다 (ⓑ)', await 한장더닫기(page))
   chk('⭐⭐ 그 길에서도 리뷰창이 뜬다', await 리뷰창기다리기(page, 6000))
   await page.close()
 }
