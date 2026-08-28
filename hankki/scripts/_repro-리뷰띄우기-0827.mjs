@@ -126,12 +126,24 @@ const 자랑카드열기 = async (page) => {
     const t = [...document.querySelectorAll('button[aria-label$="자랑하기"]')][0]
     t?.click()
   })
-  await page.waitForTimeout(600)
+  // ⛔⛔ [2026-08-28] 여기가 «고정 대기»라 스모크에서 흔들렸다 — 세 번 중 두 번 죽었다.
+  //    93개가 동시에 도는 스모크에선 카드 그리는 데 1.5초를 넘긴다.
+  //    📌 이 파일 «안»에 이미 *"고정 대기(2.5초)로는 캡처가 안 끝나…"* 라고 적어놓고
+  //       바로 아랫자리(공유누르기)만 고치고 «이 자리»를 남겼다.
+  //    ✅ 잣대는 시간이 아니라 «그려졌나» 다 — 단추가 나타날 때까지 기다린다.
+  //    🧪 규칙 12 = 1500 → 150 으로 줄이면 32/33 으로 죽는다(스모크에서 죽은 그 칸과 같다).
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('랜덤 카드로 뽑기')),
+    null, { timeout: 20000 },
+  ).catch(() => {})
   await page.evaluate(() => {
     const t = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('랜덤 카드로 뽑기'))
     t?.click()
   })
-  await page.waitForTimeout(1500)   // 카드를 그린다
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => /공유하기|만드는 중/.test(x.innerText || '')),
+    null, { timeout: 45000 },
+  ).catch(() => {})
   return page.evaluate(() => [...document.querySelectorAll('button')].some((x) => /공유하기|만드는 중/.test(x.innerText || '')))
 }
 
