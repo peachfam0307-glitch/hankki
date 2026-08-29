@@ -1693,12 +1693,14 @@ export const STICKER_GROUPS = [
   { key: 'deco_dy_frame_b', tab: 'frame', diary: true, from: '2026-10-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
   { key: 'deco_dy_frame_c', tab: 'frame', diary: true, from: '2026-11-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
 
-  { key: 'deco_dy_flower_a', tab: 'deco', diary: true, from: '2026-09-01', label: '꽃다발', items: ['dyf01', 'dyf02', 'dyf03', 'dyf07'] },
+  // ⛔ [창업자 검수 2026-08-29] 9/1 「꽃다발」 4컷 = **다 뺐다** (*"꽃다발 4컷도 다빼고"*).
+  //    ⛔ PNG(`dyf01`·`dyf02`·`dyf03`·`dyf07`)·`PHOTO_RATIO` 는 «지우지 않는다» — 10/1·11/1 세트와 한 가족이다.
   { key: 'deco_dy_flower_b', tab: 'deco', diary: true, from: '2026-10-01', label: '들꽃', items: ['dyf04', 'dyf05', 'dyf06', 'dyf11'] },
   { key: 'deco_dy_flower_c', tab: 'deco', diary: true, from: '2026-11-01', label: '화분·잎', items: ['dyf08', 'dyf09', 'dyf10', 'dyf12'] },
 
-  // ✂️ [창업자 검수 2026-08-29] *"3번 뺀다"* → `dys05`(꽃 우표) 내림. ⛔파일은 남긴다
-  { key: 'deco_dy_stamp_a', tab: 'deco', diary: true, from: '2026-09-01', label: '도장·씰', items: ['dys03', 'dys04', 'dys11'] },
+  // ⛔ [창업자 검수 2026-08-29] 9/1 「도장·씰」 = **다 뺐다** (*"도장씰도 다 빼자."*).
+  //    처음엔 *"3번 뺀다"*(`dys05`) 였는데 서랍을 다시 보고 넷 다 내렸다.
+  //    ⛔ PNG(`dys03`·`dys04`·`dys05`·`dys11`)·`PHOTO_RATIO` 는 «지우지 않는다» — 10/1·11/1 세트와 한 가족이다.
   { key: 'deco_dy_stamp_b', tab: 'deco', diary: true, from: '2026-10-01', label: '선·화살표', items: ['dys01', 'dys02', 'dys07', 'dys08'] },
   { key: 'deco_dy_stamp_c', tab: 'deco', diary: true, from: '2026-11-01', label: '붓칠·햇살', items: ['dys06', 'dys09', 'dys10', 'dys12'] },
 
@@ -1810,7 +1812,12 @@ export const STICKER_GROUPS = [
   //    · 넣은 것 = 창업자 시트 `가을곰펭-창업자-2026-08-27` **8컷**(`au_b23`~`au_b30`)
   //      ⛔ 이 여덟도 PNG 는 앱에 있었는데 그룹·`PHOTO_RATIO` 에 한 줄이 없어 **유령**이었다.
   //      창업자 = *"9/1 에 같이"* → 카롱 데뷔와 «같은 날» 곰펭 가을도 온다.
-  { key: 'buddies_autumn_a', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 가을', items: ['au_b20', 'au_b09', 'au_b23', 'au_b24', 'au_b25', 'au_b26', 'au_b27', 'au_b28', 'au_b29', 'au_b30'] },
+  //    ⛔ 그중 둘은 창업자가 서랍을 보고 바로 잡아 **뺐다** (*"저 홀로있는 밤송이와 혼자 누워있는 펭펭은 뭐야?"* → *"빼자"*)
+  //       · `au_b25`(밤송이) = **캐릭터가 한 마리도 없다.** 게다가 그림체가 혼자 사실적(명암·하이라이트)이라 튄다.
+  //         ⭐ 내가 여덟 장을 «어디에 넣을지»는 안 묻고 통째로 친구들 그룹에 넣은 게 뿌리다.
+  //       · `au_b23`(펭펭 혼자 낙엽 더미) = 낙엽 더미 컷이 셋이라 겹쳤다(`au_b26`·`au_b30` 이 남는다).
+  //    ⛔ 둘 다 PNG·`PHOTO_RATIO` 는 지우지 않는다 — 나중에 딴 자리에 쓸 수 있다.
+  { key: 'buddies_autumn_a', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 가을', items: ['au_b20', 'au_b09', 'au_b24', 'au_b26', 'au_b27', 'au_b28', 'au_b29', 'au_b30'] },
   // 🍁 유료팩과 겹치는 6컷(au_i02·05·06·07·09·18)을 내렸다 → 10 → 4컷 (위 2026-08-03 주석 참고)
   { key: 'deco_autumn_b', tab: 'deco', season: 'autumn', from: '2026-10-01', label: '가을 열매·수확', items: ['au_i08', 'au_i26', 'au_i32', 'au_i23', 'au_i35', 'au_i36', 'au_i37', 'au_i33', 'au_t03', 'au_t04', 'au_s01'] },
   // 🦫🐧 **친구 데뷔 ①** — 가을은 카롱이다(꼬르곰은 겨울·봄 친구와 짝을 짓는다).
