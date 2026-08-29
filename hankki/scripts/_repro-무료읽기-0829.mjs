@@ -169,6 +169,30 @@ async function 안내까지(ctx) {
   await ctx.close()
 }
 
+// ⑥ [창업자 확정 2026-08-29] 많이 고르면 «확인 팝업» — ⛔막는 게 아니라 되돌릴 자리를 만든다
+//    📮 *"5장 올리면 팝업으로 열쇠다섯개가 사용된다고 확인받는건?"* · *"10장이든 20장이든 유저가 선택하면 되니깐"*
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 860 } })
+  await ctx.addInitScript(SEED_COACH_SEEN)
+  await ctx.addInitScript(() => {
+    try {
+      localStorage.setItem('hankki:onboarded', '1')
+      localStorage.setItem('hankki:ocrLeft', JSON.stringify({ welcome: 20, month: 5, total: 20 }))
+    } catch { /* noop */ }
+  })
+  const { p, 횟수 } = await 안내까지(ctx)
+  p.on('pageerror', () => { /* tesseract CDN */ })
+  await p.locator('.pad.fade button', { hasText: 'AI로' }).click()
+  await p.locator('input[type=file]').first().setInputFiles(
+    Array.from({ length: 5 }, (_, i) => ({ name: `r${i}.png`, mimeType: 'image/png', buffer: 사진 })))
+  await p.waitForTimeout(1500)
+  const 글 = await p.locator('body').innerText()
+  재기('⭐ 5장 고르면 «확인 팝업»이 뜬다', /사진 5장을 골랐어요/.test(글) && /5개를 써요/.test(글), 글.includes('5장을 골랐어요') ? 'ok' : '안 뜸')
+  // ⛔⛔ 심장 = **확인하기 «전»엔 프록시를 안 부른다.** 안 그러면 팝업이 장식일 뿐이다.
+  재기('⭐ 확인 전엔 열쇠를 «안» 쓴다 (프록시 0번)', 횟수() === 0, `${횟수()}번`)
+  await ctx.close()
+}
+
 await b.close(); srv.close()
 const 통과 = 칸.filter((c) => c.됐나).length
 console.log(`\n${통과}/${칸.length} 통과`)

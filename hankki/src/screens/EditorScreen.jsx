@@ -248,9 +248,21 @@ export default function EditorScreen({ id, prefill }) {
   // 📥📥 고른 사진들로 «읽기 흐름»을 시작한다 — 자르기 → 인식 → 합치기.
   //   ⭐ 파일 고르기와 갈라 뒀다 — 「가져오기」 화면에서 «먼저» 고른 사진도 같은 길로 들어와야 하는데
   //      (창업자 ③ 「여기서 사진 고르기」), 흐름을 두 번 적으면 한쪽만 고치는 사고가 난다.
+  // 🔢🔢 [창업자 확정 2026-08-29] **여러 장은 되게 두고, 많으면 «확인»을 받는다.**
+  //   📮 창업자 = *"여러장 할 수 있지만 열쇠가 소모된다는걸 적어주면 좋지않을까?
+  //      아니면 5장 올리면 팝업으로 열쇠다섯개가 사용된다고 확인받는건?"*
+  //   ⭐ 상한으로 «막지» 않는다 — 긴 레시피는 진짜로 여러 장이 필요하다(2~3컷이 흔하다).
+  //   ⛔⛔ 지금까지는 고른 «뒤» 토스트뿐이라 **되돌릴 길이 없었다.** 20장을 고르면 20개가 그냥 깎인다.
+  //      팝업은 그 «되돌릴 자리»를 만든다.
+  //   ⭐ 2~4장은 지금처럼 토스트로 가볍게 — 매번 물으면 그게 잔소리가 된다(창업자 잣대: ⛔재촉·잔소리 금지).
+  const 확인문턱 = 5
+  const [manyAsk, setManyAsk] = useState(null) // { urls } — 확인 기다리는 중
   const startOcr = (urls) => {
     if (!urls || !urls.length) return
-    {
+    if (urls.length >= 확인문턱 && !ocrNoVision.current) { setManyAsk({ urls }); return }
+    시작하기(urls)
+  }
+  const 시작하기 = (urls) => {
       ocrAccum.current = ''
       ocrTotal.current = urls.length
       ocrQueue.current = urls.slice(1) // 첫 장은 지금 자르고, 나머지는 자르기 대기열
@@ -275,7 +287,6 @@ export default function EditorScreen({ id, prefill }) {
       }
       ocrCropOpen.current = true
       setCropImg(urls[0])
-    }
   }
 
   // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
@@ -994,6 +1005,28 @@ export default function EditorScreen({ id, prefill }) {
           {editing ? '정리 완료' : '레시피 저장'}
         </button>
       </div>
+
+      {/* 🔢🔢 [창업자 확정 2026-08-29] **많이 골랐을 때 «확인»** — ⛔막는 게 아니다.
+          📮 창업자 = *"여러장 할 수 있지만 열쇠가 소모된다는걸 적어주면 좋지않을까?
+             아니면 5장 올리면 팝업으로 열쇠다섯개가 사용된다고 확인받는건?"*
+             → *"웅 10장이든 20장이든 유저가 선택하면 되니깐"*
+          ⭐ 상한이 «없다» — 긴 레시피는 진짜로 여러 장이 필요하다. 대신 **되돌릴 자리**를 만든다.
+             지금까지는 고른 «뒤» 토스트뿐이라 20장이면 열쇠 20개가 그냥 깎였다.
+          ⭐ 잔량이 모자라면 그 사실을 «먼저» 말한다 — 「5장인데 3개뿐」을 모르고 누르면 그게 분쟁이다. */}
+      {manyAsk && (
+        <ConfirmSheet
+          title={`사진 ${manyAsk.urls.length}장을 골랐어요`}
+          message={(() => {
+            const n = manyAsk.urls.length
+            const left = getOcrLeft()
+            if (left.unknown || left.total >= n) return `${KEY_NAME} ${n}${KEY_UNIT}를 써요.\n사진 1장에 1${KEY_UNIT}씩 들어요.`
+            return `${KEY_NAME}가 ${left.total}${KEY_UNIT} 남아서 ${left.total}장만 AI로 읽어요.\n나머지 ${n - left.total}장은 기본 인식으로 읽어 드려요.`
+          })()}
+          confirmLabel={`${manyAsk.urls.length}장 읽기`}
+          onConfirm={() => { const u = manyAsk.urls; setManyAsk(null); 시작하기(u) }}
+          onClose={() => setManyAsk(null)}
+        />
+      )}
 
       {/* 작성 중 나가기 — 이어쓰기(그냥 닫기) vs 버리기(임시저장까지 삭제) */}
       {discardAsk && (
