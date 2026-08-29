@@ -129,11 +129,21 @@ export default {
       out = r && (r.response ?? r.result ?? r)
     } catch (e) {
       // ⛔ 실패를 «감추지 않는다» — 앱이 규칙 파서로 떨어지려면 실패를 알아야 한다.
+      // 📋📋 [2026-08-29] **로그로도 남긴다** — 창업자 폰에서 502 가 두 번 났는데
+      //    이유(`why`)가 «응답 본문»에만 있어서 대시보드에서 볼 방법이 없었다.
+      //    Observability 로그엔 「POST … HTTP 502」만 찍히고 «왜»가 안 보였다.
+      //    ⭐ 한 줄이면 다음부터는 대시보드에서 바로 읽는다. 개인정보는 안 찍는다(모델·메시지만).
+      console.log('AI_FAILED', model, String((e && e.message) || e).slice(0, 300))
       return json({ error: 'ai_failed', why: String((e && e.message) || e).slice(0, 200) }, 502, cors)
     }
 
     const parsed = pickJson(out)
-    if (!parsed) return json({ error: 'bad_ai_output' }, 502, cors)
+    if (!parsed) {
+      // ⭐ AI 가 «답은 줬는데» JSON 이 아니었다 — 어떤 모양이었는지 앞부분만 찍는다.
+      //   ⛔ 통째로 찍지 않는다(레시피 원문이 로그에 남는다). 300자면 모양을 아는 데 충분하다.
+      console.log('BAD_AI_OUTPUT', model, typeof out, String(out ?? '').slice(0, 300))
+      return json({ error: 'bad_ai_output' }, 502, cors)
+    }
 
     if (kv) {
       await Promise.all([
