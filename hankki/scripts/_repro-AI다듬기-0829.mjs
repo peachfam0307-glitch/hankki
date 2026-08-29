@@ -98,8 +98,17 @@ chk('② 실패해도 오류를 «안 던진다»(null 을 준다)',
 //    (그날 「사진 읽는 문이 셋인데 한 곳에만 AI 를 붙인」 사고를 겪고 함수로 뽑았다)
 chk('⑥ AI 가 준 것만 골라 덮는다',
   /ai\.ingredients\.length\s*\?\s*ai\.ingredients\s*:\s*r\.ingredients/.test(tidySrc) &&
-  /ai\.steps\.length\s*\?\s*ai\.steps\s*:\s*r\.steps/.test(tidySrc),
+  /ai\.steps\.length\s*\?[^:]*:\s*r\.steps/.test(tidySrc),
   '(AI 가 제목만 줘도 재료·걸음은 규칙 파서 것이 남는다)')
+
+// ✍️ [2026-08-29 · 창업자가 오타로 찾아낸 구멍] AI 걸음도 «문체 다듬기»를 거치나
+//   📮 창업자 = *"오타 한번 정도? 꺼줘요를 끄줘요"*
+//   ⛔⛔ 규칙 파서 결과는 `politeSteps` 를 거치는데(`parseRecipe.js`) **AI 결과만 그 밖에 있었다.**
+//      우리 앱엔 해요체 표준도 배포 게이트(`check-steps`)도 있는데 AI 가 그걸 통째로 비껴갔다.
+//   ⭐ 얹는 자리가 한 곳이라 여기서 지키면 두 문(공유받기·편집 캡처)이 같이 지켜진다.
+chk('⑥-c AI 걸음도 «해요체 다듬기»를 거친다',
+  /politeSteps\s*\(\s*ai\.steps\s*\)/.test(tidySrc),
+  '(AI 만 문체 표준 밖에 있으면 화면에서 말투가 갈린다)')
 chk('⑥-b 레시피를 담는 «모든» 문이 그 한 곳을 쓴다',
   /mergeTidy\s*\(/.test(edSrc) && /mergeTidy\s*\(/.test(appSrc),
   '(편집 캡처 ＋ 공유받기·갤러리 — 둘 다)')
@@ -159,6 +168,10 @@ if (!시간줄.test(tidySrc)) {
 }
 const 판만들기 = (파일, 주소, 시간) => {
   let src = tidySrc.replace(주소줄, `const TIDY_URL = '${주소}'`)
+  // ⛔ 이 판은 tidy.js 를 «scripts/» 로 베껴서 돌린다 — 그러면 tidy.js 안의 상대경로가 깨진다.
+  //   (2026-08-29 실측 = mergeTidy 가 문체 다듬기를 부르게 되면서 './polish.js' 를 못 찾아 죽었다)
+  //   ⭐ 베끼는 자리가 바뀐 만큼 «경로도 같이» 옮긴다.
+  src = src.replace(/from '\.\/([^']+)'/g, "from '../src/$1'")
   if (시간) src = src.replace(시간줄, `const TIMEOUT_MS = ${시간}`)
   writeFileSync(ROOT + 'scripts/' + 파일, src)
   return 파일
