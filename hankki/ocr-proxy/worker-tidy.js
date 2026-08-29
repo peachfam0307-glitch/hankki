@@ -137,13 +137,19 @@ export default {
       //   ⑵ 8/28 놀이터에서 잘 됐던 건 **놀이터가 알아서 풀어줬기 때문**이다. 바인딩으로 부르면 날것이 온다.
       //   ⭐ 그래서 흔한 모양을 «전부» 훑는다 — 하나라도 맞으면 글자가 나온다.
       //   ⛔ 못 찾으면 «버리지 않고» 통째로 넘긴다(`r`) — 아래 pickJson 이 stringify 해서 다시 판다.
-      out =
-        r?.response ??
-        r?.result?.response ??
-        r?.result ??
-        r?.choices?.[0]?.message?.content ??
-        r?.output_text ??
-        r
+      // ⛔⛔ [2026-08-29 오후 정정] **`??` 를 쓰면 «빈 글자»에서 멈춘다.**
+      //   `''` 는 null·undefined 가 아니라 `??` 를 «통과»한다 → 뒤 후보를 하나도 안 본다.
+      //   ⭐ 생각하는 모델은 `{response:'', reasoning_content:'…'}` 처럼 «response 가 비어 있는» 답을 준다.
+      //      그때 옛 코드는 빈 글자를 붙들고 아래로 내려가 아무것도 못 찾았다.
+      //   ✅ 「값이 «있는» 첫 번째」를 고른다.
+      out = 첫값(
+        r?.response,
+        r?.result?.response,
+        r?.result,
+        r?.choices?.[0]?.message?.content,
+        r?.output_text,
+        r,
+      )
     } catch (e) {
       // ⛔ 실패를 «감추지 않는다» — 앱이 규칙 파서로 떨어지려면 실패를 알아야 한다.
       // 📋📋 [2026-08-29] **로그로도 남긴다** — 창업자 폰에서 502 가 두 번 났는데
@@ -174,13 +180,34 @@ export default {
       ])
     }
 
-    return json({
+    const 답 = {
       title: str(parsed.title),
       ingredients: arr(parsed.ingredients),
       steps: arr(parsed.steps),
       memo: str(parsed.memo),
       model,
-    }, 200, cors)
+    }
+
+    // 🕳🕳 [2026-08-29 오후] **여기가 «눈이 없던» 자리다.**
+    //   📮 창업자 폰 = `기본 정리예요(empty_result)` — 앱이 「재료도 걸음도 없다」며 안 쓴 것이다.
+    //   ⛔⛔ 그런데 이 길은 **200 으로 나가서 로그가 한 줄도 안 남았다.**
+    //      위 `BAD_AI_OUTPUT` 은 「JSON 이 아닐 때」만 찍는다 — **「JSON 인데 비었을 때」는 아무도 안 본다.**
+    //      📌 규칙 18 ⓘ — 「로그가 있다」와 「로그가 «그것»을 본다」는 다른 말이다.
+    //   ⭐ 이 한 줄이 갈래 둘을 가른다:
+    //      Ⓐ 껍데기를 덜 벗겼다 → `keys` 에 title·ingredients 가 «없고» response·reasoning 같은 게 보인다
+    //      Ⓑ AI 가 진짜 빈 답을 줬다 → `keys` 에 title·ingredients 가 «있는데» 배열이 비어 있다
+    //   ⛔ 원문을 통째로 안 찍는다 — 열쇠 이름과 앞 300자면 갈래를 가르는 데 충분하다.
+    if (!답.ingredients.length && !답.steps.length) {
+      let 모양; try { 모양 = JSON.stringify(parsed) } catch { 모양 = '(못 읽음)' }
+      console.log(
+        'EMPTY_RESULT', model, (Date.now() - 시작) + 'ms',
+        'keys=' + Object.keys(parsed || {}).join(','),
+        'title=' + JSON.stringify(답.title).slice(0, 60),
+        String(모양).slice(0, 300),
+      )
+    }
+
+    return json(답, 200, cors)
   },
 }
 
@@ -203,6 +230,14 @@ function pickJson(out) {
   //   AI 는 답을 «줬는데» 모양이 우리 예상과 달라 위 줄을 못 통과했고,
   //   그다음 `String(out)` 이 **「[object Object]」** 로 만들어 통째로 잃었다.
   //   ⭐ 객체는 `JSON.stringify` 로 펼친다 — 어느 겹에 들어 있든 아래 ①②③이 찾아낸다.
+  // ⛔⛔ [2026-08-29 오후] **「객체면 통과」가 «가짜 성공»을 만들고 있었다.**
+  //   AI 응답이 `{"response":"{\"title\":…}"}` 처럼 «한 겹 싸여» 오면
+  //   아래 ②(첫 { ~ 마지막 })가 **바깥 껍데기를 통째로** 떠서 JSON.parse 에 성공한다.
+  //   그러면 `{response:'…'}` 가 «레시피»로 통과하고 → title·ingredients 가 전부 없어
+  //   워커는 **200 으로 빈 레시피**를 내보낸다(창업자 폰 = `empty_result`).
+  //   📌 「파싱에 성공했다」와 「레시피를 찾았다」는 다른 말이다(규칙 18 ⓘ).
+  //   ✅ 그래서 **우리 칸(title·ingredients·steps)이 «있는» 객체만** 받는다.
+  //      못 찾으면 껍데기 «안»을 한 겹씩 더 판다(아래 ④).
   const s = typeof out === 'object' ? JSON.stringify(out) : String(out)
   const cand = []
   const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/)   // ① 울타리 안
@@ -210,11 +245,47 @@ function pickJson(out) {
   const a = s.indexOf('{'), b = s.lastIndexOf('}')        // ② 첫 { ~ 마지막 }
   if (a >= 0 && b > a) cand.push(s.slice(a, b + 1))
   cand.push(s)                                            // ③ 통째로
+  const 껍데기 = []
   for (const c of cand) {
     try {
       const o = JSON.parse(c)
-      if (o && typeof o === 'object') return o
+      if (!o || typeof o !== 'object') continue
+      if (레시피인가(o)) return o
+      껍데기.push(o)     // 객체이긴 한데 우리 칸이 없다 → 안을 더 판다
     } catch { /* 다음 후보 */ }
+  }
+  // ④ 껍데기 안의 «글자·객체» 값을 한 겹 더 판다 (`{response:"{…}"}` · `{result:{response:"{…}"}}`)
+  //   ⛔ 깊이를 2로 묶는다 — 끝없이 파면 엉뚱한 것을 레시피라 우기게 된다.
+  for (const o of 껍데기) {
+    for (const v of Object.values(o)) {
+      if (v && typeof v === 'object') {
+        if (레시피인가(v)) return v
+        const 안 = pickJson(v)   // ⭐ 두 겹(`{result:{response:"…"}}`)도 판다
+        if (안) return 안
+        continue
+      }
+      if (typeof v !== 'string' || v.length < 10) continue
+      const 속 = pickJson(v)
+      if (속) return 속
+    }
+  }
+  return null
+}
+
+// ⭐ 「레시피 모양인가」 — 우리 칸이 하나라도 «진짜로» 들어 있어야 한다.
+//   ⛔ 열쇠만 있고 값이 없는 것(`{title:undefined}`)은 통과시키지 않는다.
+function 레시피인가(o) {
+  if (!o || typeof o !== 'object') return false
+  return (typeof o.title === 'string' && o.title.trim() !== '') ||
+    Array.isArray(o.ingredients) || Array.isArray(o.steps)
+}
+
+// ⭐ 「값이 있는 첫 번째」 — `??` 는 «빈 글자»를 통과시켜 뒤 후보를 못 보게 만든다(2026-08-29).
+function 첫값(...vs) {
+  for (const v of vs) {
+    if (v === null || v === undefined) continue
+    if (typeof v === 'string' && v.trim() === '') continue
+    return v
   }
   return null
 }
