@@ -193,6 +193,35 @@ async function 안내까지(ctx) {
   await ctx.close()
 }
 
+// ⑦ [창업자 제보 2026-08-29] 예시 사진 «크게 보기» — 안 보이면 안내가 안내를 못 한다
+//    📮 *"예시이미지가 확대도 안되고 작아서 잘 안보여 특히 빨강동그라미부분.."*
+//       → *"ㄱㄱ (눌러서 크게보기 되는거 표시도 해주는거지?)"*
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 860 } })
+  await ctx.addInitScript(SEED_COACH_SEEN)
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch { /* noop */ } })
+  const p = await ctx.newPage()
+  await p.goto('http://127.0.0.1:4477/hankki/', { waitUntil: 'networkidle' })
+  await p.waitForTimeout(2200)
+  await p.locator('.nav-item', { hasText: '가져오기' }).first().click()
+  await p.waitForTimeout(900)
+  await p.locator('.imp-opt').nth(1).click() // ② 갤러리
+  await p.waitForTimeout(800)
+  재기('예시 사진에 「눌러서 크게 보기」 표시가 있다',
+    (await p.locator('.imp-shot-hint').count()) === 1 && /눌러서 크게 보기/.test(await p.locator('.imp-shot-hint').innerText()))
+  await p.locator('.imp-shot button').click()
+  await p.waitForTimeout(700)
+  // ⭐⭐ 심장 = **원본 폭(1060) 그대로** 떴나. 화면에 맞춰 줄면 «크게 보기»가 아니다.
+  const z = await p.evaluate(() => {
+    const i = [...document.querySelectorAll('img')].find((x) => x.naturalWidth > 800 && x.getBoundingClientRect().width > 500)
+    if (!i) return { 폭: 0, 굴릴양: 0 }
+    return { 폭: Math.round(i.getBoundingClientRect().width), 굴릴양: i.parentElement.scrollWidth - i.parentElement.clientWidth }
+  })
+  재기('⭐ 크게 보기가 «원본 폭»으로 뜬다 (줄이지 않는다)', z.폭 >= 1000, `${z.폭}px`)
+  재기('가로로 굴러 2·3번 칸도 볼 수 있다', z.굴릴양 > 300, `${z.굴릴양}px`)
+  await ctx.close()
+}
+
 await b.close(); srv.close()
 const 통과 = 칸.filter((c) => c.됐나).length
 console.log(`\n${통과}/${칸.length} 통과`)

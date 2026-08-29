@@ -136,6 +136,8 @@ export default function ImportScreen() {
   const { addRecipe } = useStore()
   const nav = useNav()
   const [flow, setFlow] = useState(null) // instagram | youtube | link | text
+  // 🔍 예시 사진 크게 보기 — 창업자 제보 2026-08-29(*"확대도 안되고 작아서 잘 안보여"*)
+  const [shotZoom, setShotZoom] = useState(null)
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
@@ -636,9 +638,20 @@ export default function ImportScreen() {
               ⏳ 사진은 창업자가 찍는 중(*"나는 인스타에 사진 찍는거 해볼게"*) →
                  오면 `src/assets/guide/` 에 넣고 위 `안내들` 의 `shot` 한 줄만 채우면 붙는다.
                  ⛔ 없으면 «아무것도 안 그린다» — 빈 자리·「준비 중」 딱지를 두지 않는다(그게 고장으로 읽힌다). */}
+          {/* 🔍🔍 [창업자 제보 2026-08-29] **눌러서 크게 보기** — ⛔그냥 그림이면 아무 일도 안 난다.
+              📮 창업자 = *"예시이미지가 확대도 안되고 작아서 잘 안보여 **특히 빨강동그라미부분..**"*
+                 → *"ㄱㄱ (눌러서 크게보기 되는거 **표시도 해주는거지?**)"*
+              🔢 실측 = 원본 1060×524 → 화면 348×172(**3.05배 축소**) · 한 칸 116px.
+                 그 안의 빨간 동그라미는 폰 캡처(1080px)에서 또 줄어 **총 9.7배 → 지름 15px**.
+                 ⭐ 창업자가 콕 집은 게 맞다 — 정작 «가리키는 표시»가 제일 작아졌다.
+              ⭐ 알약을 «사진 위»에 얹는다 — 눌러도 되는 줄 모르면 이 기능은 없는 것과 같다
+                 (v11.22 「완성 사진 단추」 교훈 = 보이는데 «안 읽힌» 것이 제일 나쁘다). */}
           {안내들[flow].shot && (
             <figure className="imp-shot">
-              <img src={안내들[flow].shot} alt={안내들[flow].shotAlt || ''} draggable={false} />
+              <button type="button" className="press" onClick={() => setShotZoom(안내들[flow])} aria-label="예시 사진 크게 보기">
+                <img src={안내들[flow].shot} alt={안내들[flow].shotAlt || ''} draggable={false} />
+                <span className="imp-shot-hint"><Icon name="search" size={14} stroke={2.2} /> 눌러서 크게 보기</span>
+              </button>
             </figure>
           )}
 
@@ -798,6 +811,34 @@ export default function ImportScreen() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 🔍🔍 예시 사진 «크게 보기» — 창업자 제보 2026-08-29
+          ⭐⭐ **원본 폭(1060px) 그대로 가로로 굴린다.** ⛔화면에 맞춰 줄이면
+             폰 폭 390 에 1060 이 들어가 2.7배 축소라 «크게 보기»가 아니게 된다.
+             원본 폭이면 한 칸이 340px = 폰 폭에 거의 꽉 차고 빨간 동그라미가 15 → 148px 이 된다.
+          ⭐ 배경을 어둡게 — 사진이 흰 바탕이라 어두운 판 위에서 훨씬 또렷하다.
+          ⭐ 「◀ 옆으로 밀어 보세요」를 적는다 — 가로로 굴러야 다 보이는 걸 모르면 첫 칸만 보고 닫는다. */}
+      {shotZoom && (
+       <Portal>
+        <div className="sheet-mask" /* ⛔ 반투명이 아니라 «불투명» — 0.975 로 뒀더니 뒤 제목이 비쳐 «제목이 둘»로 보였다(규칙 21) */
+          style={{ background: '#17140f' }} onClick={() => setShotZoom(null)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', color: '#f2ede4', flex: '0 0 auto' }}>
+              <span style={{ fontSize: 16.5, fontWeight: 700, wordBreak: 'keep-all' }}>{shotZoom.lead ? '이렇게 하면 돼요' : '예시'}</span>
+              <button className="press" onClick={() => setShotZoom(null)} style={{ color: '#f2ede4', fontSize: 16.5, fontWeight: 700, padding: '4px 8px' }}>닫기</button>
+            </div>
+            <div style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', display: 'flex', alignItems: 'center', WebkitOverflowScrolling: 'touch' }}>
+              {/* ⛔ width 를 «원본 픽셀»로 박는다 — % 나 100vw 로 두면 다시 줄어든다 */}
+              <img src={shotZoom.shot} alt={shotZoom.shotAlt || ''} draggable={false}
+                style={{ width: 1060, maxWidth: 'none', height: 'auto', display: 'block' }} />
+            </div>
+            <div style={{ padding: '12px 16px calc(18px + var(--safe-bottom, 0px))', color: '#c8bfb1', fontSize: 14.5, textAlign: 'center', flex: '0 0 auto', wordBreak: 'keep-all' }}>
+              옆으로 밀면 2·3번도 보여요
+            </div>
+          </div>
+        </div>
+       </Portal>
       )}
 
       {aiPreview && (

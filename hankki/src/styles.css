@@ -1388,14 +1388,47 @@ img {
   display: flex;
   justify-content: center;
 }
+.imp-shot button {
+  display: block;
+  position: relative;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
 .imp-shot img {
   display: block;
   max-width: 100%;
   max-height: 46vh;
   width: auto;
   height: auto;
+  margin: 0 auto;
   object-fit: contain;
 }
+/* 🔍 [창업자 2026-08-29] *"눌러서 크게보기 되는거 표시도 해주는거지?"*
+   ⭐ 사진 «위»에 얹는다 — 밖에 두면 사진과 따로 놀아 「이 사진 얘기」인 줄 모른다.
+   ⭐ 오른쪽 아래 = 그림을 제일 덜 가리는 자리(왼쪽 위엔 1번 칸의 번호 뱃지가 있다).
+   ⛔ 반투명이 아니라 «거의 불투명»이다 — 흰 사진 위에서 옅으면 그대로 묻힌다. */
+.imp-shot-hint {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(38, 32, 26, 0.86);
+  color: #f7f3ec;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.imp-shot-hint svg { stroke: #f7f3ec; }
 
 /* Inbox 행 */
 .inbox-row {
