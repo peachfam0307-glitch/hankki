@@ -19,6 +19,7 @@ import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw } from '../parseRecipe'
+import { tidyRecipe } from '../tidy'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 // 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
@@ -337,7 +338,9 @@ export default function EditorScreen({ id, prefill }) {
   }
 
   // 🏁 다 읽었다 — 모아둔 글자를 칸에 넣고 안내한다.
-  const finishOcr = () => {
+  // ⚠️ 2026-08-29 부터 async — 안에서 🤖AI 다듬기를 기다린다(실패하면 규칙 파서 그대로).
+  //   ⭐ 부르는 두 곳(337줄·1025줄) 다 결과를 안 쓰므로 await 를 안 붙여도 된다.
+  const finishOcr = async () => {
     const target = ocrTargetRef.current || 'all'
     ocrAccum.current = ocrParts.current.filter((t) => t && t.trim()).join('\n').trim()
 
@@ -371,7 +374,22 @@ export default function EditorScreen({ id, prefill }) {
     }
     const combined = ocrAccum.current
     if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + quotaTail, quotaTail ? 6000 : 3200); return }
-    const r = parseRecipeText(combined, { fromOcr: true })
+    // 🤖 AI 다듬기 — ⭐**규칙 파서를 «먼저» 돌려놓는다.**
+    //   AI 가 안 되든 느리든 이상하든 이 `r` 이 그대로 쓰인다(3층 구조 1층 · 앱은 절대 안 죽는다).
+    //   ⛔ 순서를 뒤집지 말 것 — AI 를 먼저 기다렸다가 실패하면 그때 파싱하면, 실패한 만큼 유저가 더 기다린다.
+    let r = parseRecipeText(combined, { fromOcr: true })
+    // ⛔ 열쇠는 여기서 «안» 깎는다 — 위에서 `ocrImage` 가 이미 깎았다(카운트는 한 곳에서만).
+    const ai = await tidyRecipe(combined)
+    if (ai) {
+      // ⭐ AI 가 준 것만 골라 덮는다 — 빈 칸은 규칙 파서 것을 남긴다(둘 중 «있는» 쪽이 이긴다)
+      r = {
+        ...r,
+        title: ai.title || r.title,
+        ingredients: ai.ingredients.length ? ai.ingredients : r.ingredients,
+        steps: ai.steps.length ? ai.steps : r.steps,
+        memo: ai.memo || r.memo,
+      }
+    }
     setRawText(keepRaw(combined) || '') // 📥 읽어들인 글자 그대로 — 파서를 고친 날 다시 읽을 재료
     setF((prev) => ({
       ...prev,
