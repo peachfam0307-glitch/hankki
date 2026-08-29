@@ -1213,19 +1213,32 @@ img {
    🔢 폭 실측 = 열쇠 15 ＋ 숫자 27 ＋ 알약 84 ＋ 틈 12 ≈ 138px.
       상단바에서 닫기 단추(40)를 빼면 320px 폰에서도 240px 이 남아 안 넘친다.
    ⛔ 알약은 «한 줄 이름표»라 `nowrap` — 「매달 무 / 료 5개」로 잘리면 뜻이 무너진다. */
+/* 🔑 [창업자 2026-08-29] 두 줄 — 위에 알약(「매달 무료 5개」), 아래에 «크게» 열쇠 ＋ 숫자.
+   📮 *"매달무료 5개 아래에 열쇠크게 숫자 넣으면?"* · *"열쇠그림 좀 더 크게"*
+   ⭐ 한 줄일 땐 열쇠를 키우면 알약이 밀려 320px 에서 넘쳤다.
+      두 줄로 쪼개니 **가로가 138 → 84px 로 줄어** 열쇠를 26 → 40px 로 키워도 여유가 크다. */
 .imp-key {
   display: flex;
+  flex-direction: column;
+  /* 📮 [창업자 2026-08-29] *"열쇠 가운데 정렬해줘.. 알약아래 오른쪽에 너무 치우쳐있어"*
+     ⭐ 알약(84px)이 열쇠 줄(69px)보다 넓어서, 오른쪽 맞춤이면 열쇠가 알약 «오른쪽 끝»에 몰린다.
+        가운데 맞춤이면 알약 아래 한가운데에 앉는다. */
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex: 0 0 auto;
 }
+.imp-key-now {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
 .imp-key img {
-  height: 26px;
+  height: 40px;
   width: auto;
   flex: 0 0 auto;
 }
 .imp-key b {
-  font-size: 25px;
+  font-size: 30px;
   font-weight: 900;
   line-height: 1;
   color: var(--brown);

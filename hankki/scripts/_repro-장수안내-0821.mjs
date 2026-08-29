@@ -120,7 +120,8 @@ const 박스값 = await page.evaluate((말) => [...document.querySelectorAll('.i
   .filter((e) => (e.textContent || '').includes(말)).length, keyCount(1))
 chk(`① 고르는 네 박스엔 값 꼬리가 «없다» (창업자 확정 · 걸린 박스 ${박스값})`, 박스값 === 0)
 chk('② 초록 박스가 「다 써도 계속 무료」를 말한다',
-  /기본 인식으로 바뀌어요/.test(t가져오기) && /계속 무료로/.test(t가져오기))
+  // ✍️ [창업자 2026-08-29] 문구가 짧아졌다 — 「바뀌어요」·「계속 무료로」는 앞판 글자다
+  /기본 인식으로/.test(t가져오기) && /무료로 계속/.test(t가져오기))
 // ⭐ 「크게」가 이 칸의 심장이다 — 창업자 *"오른쪽 상단에 크게!"*.
 //    작게 두면 상태 표시가 아니라 장식이 된다.
 const 잔량크기 = await page.evaluate(() => {

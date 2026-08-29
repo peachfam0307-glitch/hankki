@@ -84,6 +84,13 @@ export default function EditorScreen({ id, prefill }) {
       : Math.random().toString(36).slice(2) + Date.now().toString(36)
     ).replace(/-/g, '').slice(0, 32),
   )
+  // 🆓🆓 [창업자 확정 2026-08-29] **이 화면이 「무료로 읽기」로 열렸나** — 열쇠를 안 쓴다.
+  //   ⭐ 가져오기의 「그냥 읽기」 단추가 `prefill.noVision` 을 실어 보낸다(`ImportScreen.jsx`).
+  //   ⚠️ `useRef` 라 화면을 여는 «그 순간»에 굳는다 — 읽는 도중에 바뀌지 않는다.
+  //      ⛔ state 로 두면 다시 그려질 때마다 흔들려서, 여러 장을 읽는 «중간»에 갈래가 바뀔 수 있다.
+  //   ⛔ 편집 화면 «안»의 캡처 단추는 이걸 안 탄다(`prefill` 이 없다) — 거긴 지금처럼 열쇠를 쓴다.
+  //      창업자 확정 = 열쇠 쓰는 길과 공짜 길이 «둘 다» 살아 있어야 한다.
+  const ocrNoVision = useRef(!!prefill?.noVision)
   const ingRef = useRef(null) // 재료 입력칸
   const stepRef = useRef(null) // 만드는 법 입력칸
   const titleRef = useRef(null) // 제목 입력칸 — 제목 없이 저장 누르면 여기로 데려간다
@@ -336,7 +343,8 @@ export default function EditorScreen({ id, prefill }) {
         setOcr({ busy: true, pct: 0, page, total })
         let text = ''
         try {
-          text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current })
+          // 🆓 `noVision` 이면 구글 AI 를 건너뛰고 기본 인식으로만 읽는다 = 열쇠가 안 깎인다
+          text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current, noVision: ocrNoVision.current })
         } catch {
           // ⛔ 한 장이 실패해도 «남은 장은 계속 간다».
           text = ''
@@ -364,8 +372,25 @@ export default function EditorScreen({ id, prefill }) {
     const target = ocrTargetRef.current || 'all'
     ocrAccum.current = ocrParts.current.filter((t) => t && t.trim()).join('\n').trim()
 
+    // 🆓🆓 [창업자 확정 2026-08-29] **「그냥 읽기」로 들어왔으면 «열쇠 얘기를 아예 안 한다».**
+    //   📮 창업자 = *"3번은 열쇠다썼지만 무료로 쓰고싶은 사용자들이 거의 쓰겠네 **안내도 잘해줘야 할 듯.**"*
+    //
+    //   ⛔⛔ 이 줄이 없으면 **안 썼는데 잔량 얘기가 뜬다.** 프록시를 안 불렀으니
+    //      `getOcrNote()` 는 null 이고 `getOcrLeft()` 는 «남은 장수 그대로»라
+    //      「무료 레시피열쇠 1개 남았어요」가 붙는다 → 유저는 **「어? 열쇠 썼나?」** 로 읽는다.
+    //      📌 공짜라고 해놓고 돈 얘기를 꺼내는 게 제일 나쁘다(분쟁 1순위 = *"샀는데 어디 갔지"*).
+    //
+    //   ⭐ 대신 창업자가 콕 집은 «두 가지»를 말한다 —
+    //      ⑴ **열쇠를 안 썼다**(고른 대로 됐다는 확인) ⑵ **덜 읽힐 수 있다**(인식률 차이)
+    //      📮 어제 창업자 = *"기본인식이라 **인식률의 차이가 잇으니까 이부분을 집어줘야해**
+    //         그래야 무료유저도 안떠나"*
+    //   ⭐ 「사진 보며 고쳐 주세요」로 닫는 게 핵심이다 — 이 길은 사진이 **저절로 떠 있어서**
+    //      바로 고칠 수 있다. 「덜 읽혔다」만 말하고 끝내면 그건 그냥 나쁜 소식이다.
+    const freeTail = ocrNoVision.current ? ' · 열쇠 안 쓰고 읽어서 덜 정확해요' : ''
+
     // (마지막 장) 프록시 한도 안내 — 무료 소진 등이면 "기본 인식으로 진행됐어요" 꼬리를 붙인다.
-    const note = getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
+    //   ⛔ `noVision` 이면 프록시를 «안 불렀으므로» 이 값들은 이번 읽기와 무관하다 → 통째로 죽인다.
+    const note = ocrNoVision.current ? null : getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
     const quotaTail =
       note === 'user_quota'
         ? ` · 무료 ${KEY_NAME}를 다 써서 기본 인식이에요`
@@ -378,7 +403,7 @@ export default function EditorScreen({ id, prefill }) {
     //   ⭐⭐ 미리 알림은 «1장 남았을 때 한 번만** (창업자 *"어차피 유저도 알잖아 쓰면서 몇장남았는지"*)
     //      ⛔ 3장·1장 두 번은 안 한다 — 가져오기 화면 뱃지가 이미 잔량을 보여줘서 잔소리가 된다.
     const leftNow = getOcrLeft()
-    const leftTail = quotaTail
+    const leftTail = quotaTail || ocrNoVision.current // 🆓 안 썼으면 잔량 얘기를 꺼내지 않는다
       ? ''
       : leftNow.total === 0
         ? ` · 무료 ${KEY_NAME}를 다 썼어요 · 이제 기본 인식으로 계속 돼요`
@@ -389,11 +414,11 @@ export default function EditorScreen({ id, prefill }) {
     // 마지막 장 — 결과 반영
     if (target === 'ingredients' || target === 'steps') {
       const base = target === 'ingredients' ? '재료 초안을 담았어요' : '만드는 법 초안을 담았어요'
-      nav.showToast(base + (quotaTail || leftTail || ' · 다듬어 주세요'), quotaTail || leftTail ? 6500 : 4800)
+      nav.showToast(base + (freeTail || quotaTail || leftTail || ' · 다듬어 주세요'), freeTail || quotaTail || leftTail ? 6500 : 4800)
       return
     }
     const combined = ocrAccum.current
-    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + quotaTail, quotaTail ? 6000 : 3200); return }
+    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + (freeTail || quotaTail), freeTail || quotaTail ? 6000 : 3200); return }
     const r = parseRecipeText(combined, { fromOcr: true })
     setRawText(keepRaw(combined) || '') // 📥 읽어들인 글자 그대로 — 파서를 고친 날 다시 읽을 재료
     setF((prev) => ({
@@ -409,12 +434,14 @@ export default function EditorScreen({ id, prefill }) {
           : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
     }))
     nav.showToast(
-      quotaTail
-        ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
-        : leftTail
-          ? '초안을 채웠어요' + leftTail
-          : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
-      quotaTail || leftTail ? 6500 : 4800,
+      freeTail
+        ? '초안을 채웠어요' + freeTail + ' · 사진 보며 고쳐 주세요'
+        : quotaTail
+          ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
+          : leftTail
+            ? '초안을 채웠어요' + leftTail
+            : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
+      freeTail || quotaTail || leftTail ? 6500 : 4800,
     )
   }
 

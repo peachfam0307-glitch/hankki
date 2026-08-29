@@ -7,7 +7,7 @@ import { parseRecipeText, keepRaw } from '../parseRecipe'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳ 서버 되면 되살릴 것 ①」 참조.
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 공유받기가 쓰고, 되살릴 때 그대로 쓴다.
 import { guessFoodIcon } from '../components/FoodIcon'
-import { getOcrLeft, KEY_NAME, KEY_UNIT, keyCount } from '../ocr'
+import { getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import Icon from '../components/Icon'
 import Portal from '../components/Portal'
 // 🐻 [2026-08-28] 잔량 띠의 캐릭터(펭펭 돋보기 · 둘이 하트)를 **뺐다** — 창업자 *"그림 박스하나 없어져"*.
@@ -79,10 +79,24 @@ import 안내컷Gallery from '../assets/guide/gallery-flow.webp'
 //       (같은 기능은 같은 이름 원칙 · 여기만 다르면 검사·안내문과 말이 갈린다).
 const OPTIONS = [
   // ⭐ 창업자가 콕 집은 1순위 — *"그거 제일 많이 쓸거고. 진짜편하더라고 ㅎㅎ"*
-  { key: 'share', icon: 'instagram', title: 'SNS 보다가 캡처해서 바로 한끼로', desc: '인스타·유튜브 보다 캡처 후 바로 한끼로 공유해요', color: '#C13584', costText: `캡처하면 ${keyCount(1)}`, paid: true },
+  { key: 'share', icon: 'instagram', title: 'SNS 보다가 캡처해서 바로 한끼로', desc: '인스타·유튜브 보다 캡처 후 바로 한끼로 공유해요', color: '#C13584', costText: `캡처하면 ${keyCount(1)}`, paid: true, pill: '제일 많이 써요' },
   { key: 'gallery', icon: 'photo', title: '갤러리에 있는 사진 바로 한끼로', desc: '이미 저장된 사진들 갤러리에서 바로 한끼로 공유해요', color: '#8AA07A', costText: `사진 1장에 ${keyCount(1)}`, paid: true },
-  { key: 'photo', icon: 'camera', title: '한끼 앱에서 사진 가져오기', desc: '앱을 안 나가고 바로 골라 읽어요', color: '#B0895E', costText: keyCount(1), paid: true },
-  { key: 'write', icon: 'edit', title: '직접 입력하기', desc: '빈 종이에 내가 적어요', color: '#9B8B79', costText: keyCount(0), paid: false },
+  // 🆓🆓 [창업자 확정 2026-08-29] **이 길만 「열쇠 안 쓰고 읽기」를 고를 수 있다.**
+  //   📮 *"한끼앱에서 사진가져오기 / **무료 사용시 추천. 사진을 보면서 수정할 수 있어요.**"*
+  //   📮 *"3번은 열쇠다썼지만 **무료로 쓰고싶은 사용자들이 거의 쓰겠네** 안내도 잘해줘야 할 듯."*
+  //   ⭐ 왜 이 길만인가 = ①② 는 카톡·인스타에서 사진이 «바로 날아 들어와» 물어볼 화면이 없다.
+  //      ③ 만 앱 «안»이라 고르는 자리를 둘 수 있다.
+  //   ⭐ 그리고 이 길만 **사진이 저절로 떠 있다**(`EditorScreen` 이 `setPin('photo')`) —
+  //      기본 인식이 덜 읽어도 «그 자리에서» 보고 고친다. 그래서 무료 유저의 집이 될 자리다.
+  //   ⛔ `costText` 는 «열쇠로 읽을 때»의 값이라 그대로 둔다(안내 화면의 AI 단추가 이 값을 쓴다).
+  { key: 'photo', icon: 'camera', title: '한끼 앱에서 사진 가져오기', desc: '사진을 보면서 고칠 수 있어요', color: '#B0895E', costText: keyCount(1), paid: true, pill: `${KEY_SHORT}가 없어도` },
+  // ⛔⛔ 첫 판은 「앱을 안 나가고 골라요 · 사진 보면서 고쳐요」였는데 **찍어 보니 줄이 갈리며
+  //    가운뎃점이 다음 줄 «맨 앞»에 섰다**(규칙 21 — 숫자는 「가로넘침 0」이라 통과시켰다).
+  //    📌 우리가 이미 적어둔 함정이다: *"「 · 」는 앞 문장에 이어 붙일 때의 이음표다.
+  //       줄 맨 앞에 남으면 글머리표처럼 보인다"*(위 `장수꼬리` 주석).
+  //    ⭐ 그리고 「앱을 안 나가고」는 **제목이 이미 말한다**(「한끼 앱에서」) — 겹쳐서 뺐다.
+  //       제목이 «어디서», 알약이 «값», 설명이 «뭐가 좋은지». 셋이 다른 말을 한다.
+  { key: 'write', icon: 'edit', title: '직접 입력하기', desc: '빈 종이에 내가 적어요', color: '#9B8B79', costText: keyCount(0), paid: false, pill: `${KEY_SHORT}가 없어도` },
 ]
 
 // 🫥 **목록에서 내렸을 뿐, 흐름은 살아 있다** (⛔지우지 않는다)
@@ -156,6 +170,10 @@ export default function ImportScreen() {
   //      고른 사진을 편집 화면에 들려 보낸다.
   //   ⛔ 실패해도 유저는 안 막힌다 — 안 고르면 아무 일도 안 일어나고, 편집 화면의 큰 단추가 그대로 있다.
   const photoInRef = useRef(null)
+  // 🆓🆓 [창업자 확정 2026-08-29] **어느 단추로 열었나** — 「그냥 읽기」면 열쇠를 안 쓴다.
+  //   ⛔ state 가 아니라 ref 다 — 사진 고르기 창은 «다시 그리기» 없이 바로 열리고,
+  //      `onPickedPhotos` 는 그 창이 닫힌 «뒤»에 불린다. state 면 그 사이에 낡은 값을 읽을 수 있다.
+  const noVisionRef = useRef(false)
   const onPickedPhotos = (e) => {
     const files = [...(e.target.files || [])]
     e.target.value = ''
@@ -167,9 +185,12 @@ export default function ImportScreen() {
     }))).then((urls) => {
       // ⛔ 여기서 읽지 «않는다» — 자르기·인식·합치기는 편집 화면이 이미 다 갖고 있다.
       //    두 곳에 적으면 한쪽만 고치는 사고가 난다(우리가 여러 번 겪은 것).
-      nav.push({ name: 'editor', prefill: { source: 'photo', ocrImages: urls } })
+      // 🆓 `noVision` 이면 편집 화면이 구글 AI 를 건너뛰고 기본 인식으로만 읽는다(`ocr.js`)
+      nav.push({ name: 'editor', prefill: { source: 'photo', ocrImages: urls, noVision: noVisionRef.current } })
     })
   }
+  // 🆓 사진 고르기 창을 «누른 손짓 그대로» 연다 — 갈래만 먼저 적어 둔다.
+  const 사진고르기 = (무료) => { noVisionRef.current = !!무료; photoInRef.current?.click() }
 
   // ⭐ [창업자 2026-08-28] **네 갈래 «전부» 안내 화면을 거친다** — *"각각의 화면을 누르면 안내+가져오기"*.
   //    ⛔ 예전엔 「사진·직접 작성하기」가 목록에서 곧장 편집 화면으로 갔다. 그러면
@@ -318,16 +339,45 @@ export default function ImportScreen() {
     photo: {
       lead: '앱을 나가지 않고 여기서 바로 사진을 고를 수 있어요.',
       steps: [
-        강조('아래 「사진 고르기」를 눌러요'),
+        // ⛔⛔ 옛 글 = 「아래 «사진 고르기»를 눌러요」. **단추 이름이 둘로 갈리면서 허공을 가리켰다**
+        //    (열쇠가 있으면 단추가 「AI로 정확하게 읽기」·「그냥 읽기」다 · 규칙 21 로 찍어 보고 잡았다).
+        //    ⭐ 그래서 «어느 갈래에서도 맞는 말»로 바꿨다 — 잔량에 따라 글까지 갈면 관리가 두 배가 된다.
+        //    📌 우리 원칙 그대로 = **글과 그림이 같은 것을 가리켜야 한다**(갤러리 안내의 빨간 동그라미와 같은 결).
+        강조('아래 단추를 눌러요'),
         강조('레시피 캡처를 골라요 (여러 장도 돼요)'),
         강조('보일 부분을 정하면 「재료」·「만드는 법」이 채워져요'),
       ],
-      result: '읽은 내용은 바로 고칠 수 있어요. 잘못 읽힌 줄만 손보면 돼요.',
-      buttons: [
+      // ⭐⭐ [창업자 지시 2026-08-28] **「덜 읽힌다」를 «반드시» 집어 준다.**
+      //   📮 *"**기본인식이라 인식률의 차이가 잇으니까 이부분을 집어줘야해 그래야 무료유저도 안떠나**"*
+      //   ⛔ 「공짜」만 말하면 유저는 다 공짜를 고르고, 결과가 나쁘면 **앱이 나쁘다고 읽는다.**
+      //   ⭐ 그래서 「덜 읽혀요」 다음에 **곧바로 「그래서 괜찮다」**를 붙인다 —
+      //      이 길은 사진이 «저절로 떠 있어서» 그 자리에서 고친다. 나쁜 소식으로 끝내지 않는다.
+      //   ⛔ 「열쇠를 «안 쓰면»」이라고 썼다가 고쳤다 — 열쇠가 0개인 사람에겐 **선택처럼 들린다**
+      //      (그 사람은 «안 쓰는» 게 아니라 «없는» 것이다 · 실물로 두 화면을 나란히 찍어 보고 잡았다).
+      //      ⭐ 「기본 인식」은 초록 박스가 이미 쓴 말이라 **어느 쪽 유저에게도 그대로 맞는다.**
+      result: '기본 인식은 덜 읽혀요. 대신 사진이 위에 떠서 보면서 고칠 수 있어요.',
+      // 🆓🆓🆓 [창업자 확정 2026-08-29] **이 길만 「열쇠를 쓸지」 고를 수 있다.**
+      //   📮 창업자 = *"한끼에서 가져오기를 무료ocr로 읽게하면 안돼??"* →
+      //      갈래 둘(ⓐ무조건 공짜 / ⓑ고르게)을 대고 **ⓑ** — *"열쇠가능하면 그렇게 하면 좋지"*
+      //
+      //   ⭐⭐ **왜 ⓐ(무조건 공짜)가 아닌가** — ③ 은 우리 앱에서 **제일 편한 길**이다
+      //      (앱을 안 나가고 고르고, 사진이 저절로 떠 있다). 그걸 무조건 기본 인식으로 만들면
+      //      **열쇠를 산 사람이 좋은 걸 쓰려고 앱을 나갔다 와야 한다.**
+      //      📮 창업자 확정(2026-08-29) = *"**열쇠는 무조건 둘다 잘되어야해 돈이니까.**"*
+      //
+      //   ⛔⛔ **열쇠가 0개면 위 단추를 «아예 안 그린다».** 흐리게 두지 않는다 —
+      //      0개면 어느 단추를 눌러도 기본 인식이라, 고르라고 두면 그게 «거짓 선택지»다.
+      //      (「disabled 금지」 원칙과도 같은 결 — 눌러도 같은 일이 나면 먹통으로 읽힌다.)
+      //   ⚠️ `unknown` = 서버가 아직 답한 적이 없다는 뜻이라 «있다» 쪽으로 본다
+      //      (안 써 본 사람은 웰컴 20개가 있다). ⛔여기서 0으로 넘겨짚으면 열쇠 있는 사람이 길을 잃는다.
+      buttons: (ocrLeft.unknown || ocrLeft.total > 0
+        ? [
+            { label: `AI로 정확하게 읽기 · ${keyCount(1)}`, onClick: () => 사진고르기(false) },
+            { label: `그냥 읽기 · ${KEY_SHORT} 안 써요`, ghost: true, onClick: () => 사진고르기(true) },
+          ]
         // ⭐⭐ **여기서 «누른 손짓»으로 고르기 창을 연다** — 다음 화면에서 저절로 열려고 하면
         //    브라우저가 「손짓 없이 연 창」으로 보고 막을 수 있다.
-        { label: '사진 고르기', onClick: () => photoInRef.current?.click() },
-      ],
+        : [{ label: '사진 고르기', onClick: () => 사진고르기(true) }]),
     },
     write: {
       lead: '가져올 게 없어도 괜찮아요. 빈 종이에 그냥 적으면 돼요.',
@@ -373,10 +423,18 @@ export default function ImportScreen() {
             role="img"
             aria-label={`무료 ${KEY_NAME} ${ocrLeft.total}${KEY_UNIT} 남았어요 · 매달 무료 5${KEY_UNIT}`}
           >
-            {/* ⚠️ 높이만 고정하고 폭은 비율대로 — 열쇠 115×220 · 열쇠구멍 213×220 으로 가로세로가 다르다 */}
-            <img src={ocrLeft.total > 0 ? uiKeyOne : uiKeyHole} alt="" aria-hidden="true" draggable={false} />
-            <b aria-hidden="true">{ocrLeft.total}</b>
+            {/* 🔑🔑 [창업자 2026-08-29] **알약을 «위»로 올리고 그 아래 열쇠를 크게.**
+                📮 *"그리고 위에 열쇠그림 좀 더 크게 만들어줘."* · *"매달무료 5개 아래에 열쇠크게 숫자 넣으면?"*
+                ⭐ 한 줄로 나란히 두면 열쇠를 키우는 순간 알약이 밀려 320px 에서 넘친다.
+                   두 줄로 쪼개면 **가로가 오히려 좁아져서** 열쇠를 마음껏 키울 수 있다.
+                ⛔ 알약이 «위»다 — 창업자가 그 순서로 말했고, 뜻으로도 「매달 얼마」가 조건이고
+                   「지금 몇 개」가 결과라 위→아래로 읽힌다. */}
             <span aria-hidden="true">매달 무료 5{KEY_UNIT}</span>
+            <div className="imp-key-now">
+              {/* ⚠️ 높이만 고정하고 폭은 비율대로 — 열쇠 107×220 · 열쇠구멍 213×220 으로 가로세로가 다르다 */}
+              <img src={ocrLeft.total > 0 ? uiKeyOne : uiKeyHole} alt="" aria-hidden="true" draggable={false} />
+              <b aria-hidden="true">{ocrLeft.total}</b>
+            </div>
           </div>
         ) : <div style={{ width: 40 }} />}
       </div>
@@ -404,8 +462,12 @@ export default function ImportScreen() {
           <div className="imp-notice">
             <Icon name="sparkles" size={20} color="#4f7d48" stroke={1.8} />
             <div>
-              <b>{KEY_NAME}를 다 쓰면 기본 인식으로 바뀌어요</b>
-              <span>그때도 <b>계속 무료로</b> 쓸 수 있어요</span>
+              {/* ✍️ [창업자 2026-08-29] 문구를 창업자가 «직접» 줄여 줬다 — 그대로 쓴다.
+                  📮 *"초록박스-레시피열쇠를 다쓰면 기본인식으로. 다음줄 그래도 무료로 계속 쓸 수 있어요."*
+                  ⭐ 앞판(「바뀌어요」/「그때도 계속 무료로 쓸 수 있어요」)보다 짧다 —
+                     「바뀌어요」를 빼니 «상태»가 되고, 「그래도」가 앞줄을 곧장 받는다. */}
+              <b>{KEY_NAME}를 다 쓰면 기본 인식으로</b>
+              <span>그래도 <b>무료로 계속</b> 쓸 수 있어요</span>
             </div>
           </div>
 
@@ -435,7 +497,9 @@ export default function ImportScreen() {
                          실물로 찍어 보고서야 보였다(규칙 21 · 숫자는 「가로넘침 0」이라 통과시켰다).
                       ⭐ 눈썹 자리는 제목 길이와 무관해서 어느 폭에서도 안 흔들린다.
                          v11.31 의 「칸을 벗어남」도 여기선 구조적으로 못 난다. */}
-                  {i === 0 && <div className="imp-opt-pill">제일 많이 써요</div>}
+                  {/* 🏅 [2026-08-29] 알약을 «데이터»로 뺐다 — 전엔 `i === 0` 이 하드코딩이라
+                      ③ 「무료로도 돼요」를 붙일 수가 없었다. 줄 순서를 바꿔도 안 흔들린다. */}
+                  {o.pill && <div className="imp-opt-pill">{o.pill}</div>}
                   <div className="imp-opt-a">{o.title}</div>
                   <div className="imp-opt-b">{o.desc}</div>
                   {/* 💰💰 [창업자 2026-08-28] 값 꼬리(「캡처하면 열쇠 1개」)를 **목록에서 뺐다**

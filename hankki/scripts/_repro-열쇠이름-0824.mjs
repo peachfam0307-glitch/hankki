@@ -140,8 +140,22 @@ void 박힌곳
 const 소스 = ['src/screens/ImportScreen.jsx', 'src/screens/EditorScreen.jsx', 'src/components/PantryView.jsx', 'src/App.jsx']
   .filter((f) => {
     const t = readFileSync(join(ROOT, f), 'utf8')
-    // 주석 줄은 뺀다 — 경위를 적어 두는 건 정상이다
-    return t.split('\n').some((l) => !/^\s*(\/\/|\*|\/\*)/.test(l) && /'[^']*레시피열쇠[^']*'|"[^"]*레시피열쇠[^"]*"/.test(l))
+    // 주석은 뺀다 — 경위를 적어 두는 건 정상이다.
+    // ⛔⛔ [2026-08-29 고침] 옛 판은 «줄 시작»만 봤다(`//`·`*`·`/*`).
+    //    그래서 JSX 주석 블록(`{/* … */}`)의 **가운데 줄**을 코드로 오해했다 —
+    //    창업자 원문을 인용한 `📮 *"초록박스-레시피열쇠를 …"*` 한 줄에 거짓 경보가 났다.
+    //    📌 **시끄러운 게이트는 죽은 게이트다.** 느슨하게 만든 게 아니라 «정확하게» 고쳤다:
+    //       블록 주석 안인지 «상태»를 따라가며 읽는다.
+    let 블록 = false
+    return t.split('\n').some((l) => {
+      const 열림 = /\{?\/\*/.test(l)
+      const 닫힘 = /\*\/\}?/.test(l)
+      const 주석안 = 블록 || 열림
+      if (열림 && !닫힘) 블록 = true
+      if (닫힘) 블록 = false
+      if (주석안 || /^\s*(\/\/|\*)/.test(l)) return false
+      return /'[^']*레시피열쇠[^']*'|"[^"]*레시피열쇠[^"]*"/.test(l)
+    })
   })
 재기(`이름을 화면 코드에 «글자로» 안 박았다 ${소스.length ? `(${소스.join(', ')})` : ''}`, 소스.length === 0)
 
