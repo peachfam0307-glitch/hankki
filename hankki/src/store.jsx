@@ -2,7 +2,10 @@ import { createContext, useContext, useEffect, useReducer, useCallback } from 'r
 import { seedRecipes } from './data/seed'
 import { basicRecipes, BASICS_VERSION } from './data/basics'
 import { makeSampleDiary, SAMPLE_DIARY_ID, SAMPLE_READY } from './data/sampleDiary'
-import { guessFoodIcon } from './components/FoodIcon'
+// ⛔ `FOOD_ICON_GROUPS` 를 빠뜨리면 v96 패스가 ReferenceError 로 죽고
+//    **그 앞의 v13·v34·v38·v88 마이그레이션까지 통째로 안 돈다**(같은 함수 안이라서).
+//    ⚠️ 빌드는 «통과한다» — 런타임 에러라서. 2026-08-29 에 실제로 그랬고 스모크가 잡았다.
+import { guessFoodIcon, FOOD_ICON_GROUPS } from './components/FoodIcon'
 import { cleanMemo, mergeQtyOnlyIngredients } from './parseRecipe'
 import { politeSteps, politeFormalSteps } from './polish'
 import { pickPaper } from './memoPaper'
@@ -423,6 +426,73 @@ function migrateBasics(saved) {
     if (r.image && r.thumb !== 'icon') return r
     const want = ICON_SWAP_0827[r.icon]
     return want ? { ...r, icon: want } : r
+  })
+  // 🍜🍜 v96 (2026-08-29) — 「이미 내린 옛 카와이」가 박힌 레시피를 «제목으로 다시 판정»한다.
+  //   📮 창업자 = *"레시피 기본인식했는데 남편폰. 또 카와이 아이콘이 자동인식됐어. **카와이 다 내린거 맞아?**"*
+  //      → v11.95 로 규칙을 고쳤는데 *"**차돌볶음 그대로야..**"* → *"**짬뽕도 카와이컷 남아있더라..**"*
+  //      → 방향 확정 = *"**그리고 카와이 컷을 아예 폐기해버리자.**"*
+  //   ⭐⭐ 뿌리 = 위 v88·0827 표와 «같은 자리»인데, **손으로 적은 대응표는 매번 몇 개씩 빠진다.**
+  //      🔢 실측 = 옛 컷 파일 650장 중 **픽커에서 내린 것이 478장**이고, 표본 75장을 눈으로 보니
+  //         90% 넘게 얼굴이 달려 있었다. 478쌍을 손으로 적을 수는 없다 → **잣대로 잡는다.**
+  //   🔑 잣대 = **「픽커(FOOD_ICON_GROUPS)에 없는 옛 접두어 컷」 = 앞선 판들에서 내린 옛 카와이**
+  //      실측으로 셋 다 걸리는 것을 확인했다 —
+  //      `fe_64`(차돌볶음이 부르던 것) · `fj_jsk01`(짬뽕) · `fh_k13`(제육 · v100 제보).
+  //   ⛔⛔ **v11.34 사고를 되풀이하지 않는다** — 그때 「제목을 규칙에 다시 물어본다」가
+  //      `basics.js` 에 **일부러 박아둔** 값까지 덮었다(창업자 *"해장파스타에 크림파스타그림이 올라갔어"*).
+  //      📌 그 사고의 뿌리 = 「모든 레시피」에 물어본 것. 여기는 **「내려간 컷을 쓰는 것」만** 묻는다.
+  //      ✅ ＋ 안전장치 = **시드(`basicRecipes`)가 쓰는 아이콘 값은 통째로 보호한다.** 그건 우리가
+  //         «일부러» 정한 값이다. 🔢 실측으로 보호되는 편 6개 =
+  //         해장 파스타·뚝배기 파스타(`fe_436`) · 새우 해장 파스타(`fy_y03`) ·
+  //         해물오일파스타(`fe_451`) · 버섯 솥밥(`fe_04`) · 순두부조림(`fe_35`).
+  //   ⛔ 결과가 «픽커에 있는 컷»일 때만 갈아끼운다 — 규칙이 못 찾으면 도형(빈 접시)으로 떨어져 더 나빠진다.
+  //   ⛔ 파일은 **안 지운다** — 이 패스가 실제로 다 잡는 것을 본 뒤에 지운다(순서를 뒤집으면 그림이 빈칸이 된다).
+  //
+  //   ⛔⛔⛔ **첫 판이 너무 넓었고 «게이트가 잡았다»**(`_repro-아이콘갈아끼우기-0825` 10/21 · 2026-08-29)
+  //      「픽커에 없는 옛 컷」만으로 잡으니 **위 표들이 «일부러 보낸 도착지»까지 다시 덮었다** —
+  //      베이컨크림파스타 `fe_453` → gr_297 · 해물오일파스타 `fe_451` → gr_295 · 샤브샤브 `fe_471` → gr_314 …
+  //      📌 v11.35 주석이 경고한 그 사고를 **잣대만 바꿔서 똑같이** 되풀이할 뻔했다.
+  //   ✅ 그래서 **위 표들에 «이름이 오르는 키»는 전부 보호한다**(출발지·도착지 둘 다).
+  //      그건 우리가 이미 «판정해서 정해 둔» 자리다. v96 은 **아무 표에도 없는 컷**만 맡는다.
+  //      ⭐ `fe_64`(차돌볶음) · `fj_jsk01`(짬뽕) 은 어느 표에도 없다 → v96 이 잡는다.
+  const 픽커키_V96 = new Set()
+  for (const g of FOOD_ICON_GROUPS) for (const k of (g.items || [])) 픽커키_V96.add(k)
+  const 시드아이콘_V96 = new Set()
+  for (const s of basicRecipes) if (s && s.icon) 시드아이콘_V96.add(s.icon)
+  // ⭐ 앞선 표에 이름이 오른 키 전부 — 출발지도 도착지도 「우리가 정한 자리」다
+  const 표에있음_V96 = new Set([
+    ...Object.values(ICON_FORCE_V38), ...Object.keys(ICON_SWAP_V88), ...Object.values(ICON_SWAP_V88),
+    ...Object.values(ICON_FORCE_V88), ...Object.keys(ICON_SWAP_GR), ...Object.values(ICON_SWAP_GR),
+    ...Object.keys(ICON_SWAP_0827), ...Object.values(ICON_SWAP_0827),
+  ])
+  // ⛔⛔ **둘째 판도 아직 넓었다 — 게이트가 또 잡았다(18/21).**
+  //    「픽커에 없다」를 카와이의 증거로 삼았는데, 픽커에서 내려간 이유가 «카와이만은 아니다» —
+  //    `fy_y05`(샐러드) · `fe_168`(뚝배기파스타) 은 **범용이라, 중복이라** 내린 것이고 얼굴이 없다.
+  //    📌 실측 근거가 표본이었다 = 픽커 밖 478장 중 «75장만» 보고 「90% 카와이」라고 넓혔다.
+  // ✅ 그래서 **「카와이라고 «확인된» 키」만** 맡는다. 목록에 없으면 손대지 않는다.
+  //    ⑴ 창업자 전수 판정 36장 (2026-08-29 · 175장을 직접 보고 고름)
+  //    ⑵ 창업자 폰에서 실물로 확인된 둘 — `fe_64`(차돌박이 볶음) · `fj_jsk01`(짬뽕)
+  //    ⏳ 픽커 밖 나머지는 **전수 검사를 마친 뒤 여기에 더한다**(⛔짐작으로 넓히지 않는다).
+  const 카와이_V96 = new Set([
+    'fb_b06','fb_b08','fe_100','fe_110','fe_126','fe_128','fe_129','fe_142','fe_144','fe_145',
+    'fe_149','fe_15','fe_154','fe_159','fe_160','fe_164','fe_185','fe_191','fe_203','fe_220',
+    'fe_265','fe_29','fe_36','fe_39','fe_51','fe_67','fe_68','fe_82','fe_83','fe_84',
+    'fe_86','fe_87','fh_k03','fh_k33','fi_j09','fj_jsk15',
+    'fe_64',      // 📮 *"또 카와이 아이콘이 자동인식됐어"* — 「차돌박이 볶음」(남편 폰 캡처)
+    'fj_jsk01',   // 📮 *"짬뽕도 카와이컷 남아있더라.."*
+  ])
+  const 옛접두_V96 = /^(fh_|fy_|fj_|fi_|fb_|fe_)/
+  fixed = fixed.map((r) => {
+    if (!r || !r.icon) return r
+    // ⛔ 직접 넣은 사진·카드·글자 표지는 절대 안 건드린다 (위 패스들과 같은 잣대)
+    if (r.thumb && r.thumb !== 'icon') return r
+    if (r.image && r.thumb !== 'icon') return r
+    if (!옛접두_V96.test(r.icon)) return r        // 새 세대 컷(gr_·n…)이면 그대로
+    if (!카와이_V96.has(r.icon)) return r         // ⭐ 카와이라고 «확인된» 것만
+    if (픽커키_V96.has(r.icon)) return r          // 아직 고를 수 있는 컷 = 안 내려간 것
+    if (시드아이콘_V96.has(r.icon)) return r      // ⭐ 우리가 «일부러» 박은 값
+    if (표에있음_V96.has(r.icon)) return r        // ⭐ 앞선 표가 이미 판정한 자리
+    const g = guessFoodIcon(r.title || '')
+    return g && g !== r.icon && 픽커키_V96.has(g) ? { ...r, icon: g } : r
   })
 
   return { recipes: [...fixed, ...add], seedV: BASICS_VERSION }
