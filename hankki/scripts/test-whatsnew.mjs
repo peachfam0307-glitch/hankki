@@ -37,7 +37,10 @@ console.log('\n── 안내 페이지(한끼 소식) ──')
 
 // ⒜ 안내가 읽는 출처가 살아 있나 ─────────────────────────────
 const NEWS = read('src/data/whatsnew.js')
-for (const need of ["from './weekly'", "from '../components/Stickers'", "from './cardSeasons'"]) {
+// ⛔ [2026-08-29] `from './curation'` 이 추가됐다 — 장바구니도 소식에 뜬다(창업자 확정).
+//    ⚠️ **`CURATION`(걸러진 판)이라야 한다.** 원본(`CURATION_ALL`)을 읽으면 아직 안 열린 제품이 소식에 샌다
+//       → 그건 `check-cartopen.mjs` ⑤ 가 막는다.
+for (const need of ["from './weekly'", "from '../components/Stickers'", "from './cardSeasons'", "from './curation'"]) {
   if (NEWS.includes(need)) ok(`출처 살아 있음 — ${need}`)
   else fail(`⛔ 안내가 ${need} 를 더는 안 읽는다 — 손으로 적은 목록으로 되돌아간 것 아닌지 볼 것`)
 }
@@ -50,30 +53,39 @@ else ok('손으로 적은 목록 0')
 //    둘이 다르면 한쪽이 낡은 것이다.
 const drawerDates = [...read('src/components/Stickers.jsx').matchAll(/from:\s*'(\d{4}-\d{2}-\d{2})'/g)].map((m) => m[1])
 const cardDates = [...read('src/data/cardSeasons.js').matchAll(/from:\s*'(\d{4}-\d{2}-\d{2})'/g)].map((m) => m[1])
-const mine = [...new Set([...drawerDates, ...cardDates])].sort()
+// 🛒 [2026-08-29] 장바구니 — ⛔주석 줄은 건너뛴다(달력 `cart()` 와 같은 이유: 「유령 그룹」 사고 2026-08-10)
+const cartDates = read('src/data/curation.js')
+  .split('\n')
+  .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+  .map((l) => (l.match(/from:\s*'(\d{4}-\d{2}-\d{2})'/) || [])[1])
+  .filter(Boolean)
+const mine = [...new Set([...drawerDates, ...cardDates, ...cartDates])].sort()
 // ⚠️ 달력엔 «우리 할 일»(`paidPacks.recheck` → `todo: true`)도 같이 실린다 — 잊지 않으려고 한 데 모은 것.
 //    ⛔ 그건 «유저에게 새로 열리는 것»이 아니라 안내 페이지엔 안 나간다. 여기선 빼고 센다.
 //    (2026-08-03 실제로 이 검사가 막았다 — 9/30 「효과 다시 보기」 약속을 넣자마자 걸렸다. 옳게 걸린 것.)
 // ⛔ [2026-08-17] 달력에 «레시피»도 실리기 시작했다(전날 검수가 새던 자리) — 여기선 빼고 센다.
 //    이 검사가 보는 건 «꾸미기 서랍 ＋ 레꾸자랑 카드» 두 출처뿐이다.
-// ⛔ [2026-08-29] 「주부의 장바구니」(`kind: 'cart'`)도 달력에 실리기 시작했다 — 1주에 3개씩 열린다.
-//    ⏳ **소식에 띄울지는 창업자 판정이다**(규칙 11) — 내가 정해서 `whatsnew.js` 에 넣지 않는다.
-//    ⭐ 띄우기로 하면 ⑴`whatsnew.js` 가 `curation.js` 를 읽게 하고 ⑵여기 `kind !== 'cart'` 를 뺀다.
-//       그 둘을 «같이» 해야 한다 — 한쪽만 하면 이 검사가 바로 잡는다(그게 이 검사가 하는 일이다).
-const theirs = [
-  ...new Set(calendarGates().filter((g) => !g.todo && g.kind !== 'recipe' && g.kind !== 'cart').map((g) => g.date)),
-].sort()
+// ✅ [2026-08-29 창업자 확정 *"소식에 띄우자"*] 「주부의 장바구니」(`kind: 'cart'`)도 여기서 «센다».
+//    ⭐ 소식 페이지 목록에 뜨므로 안내와 달력이 «같은 날짜»를 봐야 한다.
+//    ⛔ 단 「곧 열려요」엔 «안» 나온다 — 그건 아래 ⒞ 가 따로 본다(창업자 *"곧 안내하는거에서 빼면되겠다"*).
+const theirs = [...new Set(calendarGates().filter((g) => !g.todo && g.kind !== 'recipe').map((g) => g.date))].sort()
 if (mine.join() === theirs.join()) ok(`여는 날짜가 달력과 같다 — ${theirs.length}개 (${theirs.join(' · ')})`)
 else fail(`⛔ 안내 ${mine.join(' · ')} ≠ 달력 ${theirs.join(' · ')}`)
 
 // ⒞ 「곧 열려요」 = 오늘 이후 «가장 가까운 한 날짜» ───────────
 const weeklyFroms = [...read('src/data/weekly.js').matchAll(/from:\s*'(\d{4}-\d{2}-\d{2})'/g)].map((m) => m[1]).sort()
-const nextAll = [...mine, ...weeklyFroms].filter((d) => d > today).sort()
+// ⛔ [2026-08-29] 「곧 열려요」에서 **장바구니를 뺀다** (창업자 *"곧 안내하는거에서 빼면되겠다"*).
+//    ⭐ `whatsnew.js` 는 장바구니를 `gates()` 에 «안» 넣고 `opened` 에만 push 해서 그걸 이룬다.
+//       여기서도 같은 잣대를 써야 «안내와 검사»가 어긋나지 않는다.
+const 예고 = [...new Set([...drawerDates, ...cardDates])].sort()
+const nextAll = [...예고, ...weeklyFroms].filter((d) => d > today).sort()
 if (!nextAll.length) {
   fail('⛔ 앞으로 열릴 게 하나도 없다 — 안내가 영영 조용해진다(재고를 채울 것)')
 } else {
   const next = nextAll[0]
-  const n = [...mine, ...weeklyFroms].filter((d) => d === next).length
+  // ⛔ 여기도 `예고`(장바구니 뺀 것)로 센다 — `mine` 으로 세면 그날 장바구니가 겹칠 때
+  //    개수가 어긋나 «없는 사고»로 배포가 막힌다.
+  const n = [...예고, ...weeklyFroms].filter((d) => d === next).length
   ok(`다음에 열리는 날 = ${next} (${Math.round((Date.parse(next) - Date.parse(today)) / 86400000)}일 뒤 · ${n}건)`)
   if (nextAll.filter((d) => d === next).length !== n) fail('⛔ 같은 날짜인데 개수가 안 맞는다')
 }

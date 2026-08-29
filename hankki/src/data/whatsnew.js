@@ -22,6 +22,9 @@
 import { WEEKLY, HOMEMADE } from './weekly'
 import { STICKER_GROUPS, PHOTO_IDS } from '../components/Stickers'
 import { SEASON_CUTS } from './cardSeasons'
+// 🛒 [2026-08-29] 주부의 장바구니 — ⛔**걸러진 `CURATION`** 을 쓴다. `CURATION_ALL`(원본) 금지.
+//    원본을 보면 «아직 안 열린» 제품이 소식에 새어 나간다(v11.00 「한살림」이 넷으로 샜던 그 모양).
+import { CURATION } from './curation'
 
 // ⏰ 오늘(KST). ⚠️ **함수로 둔다** — 모듈 상수로 굳히면 앱을 켜둔 채 자정을 넘길 때 안 바뀐다
 //    (`ShareDrawCard` 의 `seasonCuts` 가 상수 아닌 함수인 것과 같은 이유).
@@ -62,6 +65,41 @@ function gates() {
     })
     .filter((c) => c.count > 0)
   return [...drawer, ...cards].sort((a, b) => a.when.localeCompare(b.when))
+}
+
+// 🛒🛒 **주부의 장바구니 — 소식에 «띄우되» 조용히** (창업자 확정 2026-08-29)
+//   📮 창업자 원문 = *"**소식에 띄우자. 대신 아래 나중에. 곧 안내하는거에서 빼면되겠다**"*
+//
+//   ⭐⭐ 그래서 «층»을 갈랐다 — 이 한 줄이 설계 전부다:
+//      ✅ **소식 페이지 목록**엔 나온다 — 맨 «아래»에
+//      ⛔ **알림 층엔 안 나온다** = 「곧 열려요」 · 홈 「새로」 뱃지 · 홈 한 줄 · 새 소식 팝업
+//         (아래 `openedAlert` 가 그걸 맡는다)
+//
+//   ⛔ **`gates()` 에 «안» 넣는 것이 핵심이다** — `gates()` 는 `opened` 와 `upcoming` 을 «둘 다» 먹인다.
+//      거기 넣으면 「곧 열려요」에 저절로 딸려 들어간다. 여기서 `opened` 에만 `push` 하면
+//      ⑴「곧 열려요」에서 빠지고 ⑵`push` 라서 맨 아래로 간다 — **창업자 말 두 가지가 한 번에 지켜진다.**
+//
+//   ⏳ **「방금」의 길이가 «7일»이다** — 위 `FRESH_DAYS`(21일)와 «일부러» 다르다.
+//      꾸미기는 «달마다» 열려 21일이라야 한 번은 보지만, 장바구니는 **주마다** 열린다.
+//      21일로 두면 세 줄이 쌓여 「아래에 조용히」가 깨진다. 주기가 다르면 창도 달라야 한다.
+const CART_FRESH_DAYS = 7
+export const CART_KIND = '장바구니'
+
+function cartOpened(today) {
+  const 날짜별 = new Map()
+  for (const g of CURATION) {
+    for (const it of g.items || []) {
+      if (!it.from || it.from > today || days(it.from, today) > CART_FRESH_DAYS) continue
+      const 이름 = it.brand ? `${it.brand} ${it.name}` : it.name
+      날짜별.set(it.from, [...(날짜별.get(it.from) || []), 이름])
+    }
+  }
+  return [...날짜별]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([when, 이름들]) => ({
+      when, kind: CART_KIND, title: '새로 담은 살림템',
+      count: 이름들.length, why: 이름들.join(' · '),
+    }))
 }
 
 // 🍂 한 날짜에 열리는 것들을 «한 마디»로 — 팝업 제목에 쓴다.
@@ -161,9 +199,19 @@ export function whatsNew(today = todayKST()) {
     }
   }
 
+  // 🛒 장바구니는 **맨 아래**(`push`) — 창업자 *"대신 아래 나중에"*
+  //    ⛔ 위 `opened` 는 `unshift` 로 레시피가 앞에 붙는다. 여기서 `push` 라서 자연히 꼬리가 된다.
+  opened.push(...cartOpened(today))
+
   return {
     today,
     opened,
+    // 🔔 **알림 층이 쓰는 목록** — 소식 페이지 «본문»만 위 `opened`(전체)를 쓴다.
+    //   ⛔ 장바구니는 «주마다» 열려서 알림에 넣으면 홈 「새로」 뱃지가 **늘 켜져 있다.**
+    //      이 파일 옆 `HomeScreen` 주석에 우리가 이미 적어둔 원칙 = *"늘 떠 있으면 아무도 안 본다."*
+    //   ⛔ 팝업도 마찬가지다 — 9/1 꾸미기로 한 번 뜬 팝업이 9/5 장바구니 때문에 **또** 뜬다
+    //      (`newsSignature` 가 달라져서). 같은 소식을 두 번 보여주는 셈이다.
+    openedAlert: opened.filter((o) => o.kind !== CART_KIND),
     upcoming: upcoming.length ? { when, dday: days(today, when), items: upcoming } : null,
   }
 }
@@ -172,6 +220,8 @@ export function whatsNew(today = todayKST()) {
 //   ⭐ 날짜＋제목으로 만든다 → 같은 소식이면 절대 두 번 안 뜨고,
 //      새 소식이 열리면 값이 달라져 «그때 한 번» 뜬다.
 //   ⛔ 날짜만 쓰면 안 된다 — 같은 날 두 가지가 열릴 때 하나만 보고 넘어간다.
+//   ⛔ [2026-08-29] **장바구니는 뺀다**(`openedAlert`) — 주마다 열려서 넣으면
+//      「9/1 꾸미기」 팝업이 9/5·9/12 에 **똑같은 내용으로 또** 뜬다(값만 달라지니까).
 export const newsSignature = (news) =>
-  (news?.opened || []).map((o) => `${o.when}:${o.title}`).join('|')
+  (news?.openedAlert || []).map((o) => `${o.when}:${o.title}`).join('|')
 

@@ -22,8 +22,9 @@ import { StickerArt } from './Stickers'
 const KEY = 'hankki:news:seen'
 
 // 팝업을 띄울 «만한» 소식인가 — ⛔주간 레시피만 바뀐 주엔 안 띄운다(매주 팝업 = 재촉).
+// ⛔ [2026-08-29] `openedAlert` = 장바구니가 빠진 목록 — 팝업은 «알림 층»이다(창업자 *"대신 아래 나중에"*).
 const worthPopup = (news) =>
-  (news?.opened || []).some((o) => o.kind === '꾸미기' || o.kind === '레꾸자랑 카드')
+  (news?.openedAlert || []).some((o) => o.kind === '꾸미기' || o.kind === '레꾸자랑 카드')
 
 export function needsNewsPopup(news) {
   if (!worthPopup(news)) return false
@@ -35,7 +36,9 @@ export function markNewsSeen(news) {
 
 export default function NewsPopup({ news, onClose, onOpenNews }) {
   useModalBack(onClose) // 뒤로가기 → 닫기 (이때도 '봤음'으로 친다 — onClose 안에서 표시)
-  const items = (news?.opened || []).filter((o) => o.kind !== '이번 주 레시피')
+  // ⛔ [2026-08-29] `openedAlert` = **장바구니가 빠진 목록**(창업자 *"대신 아래 나중에"*).
+  //    장바구니는 소식 «페이지»에만 나오고 팝업엔 안 온다 — 주마다 열려서 팝업이 재촉이 된다.
+  const items = (news?.openedAlert || []).filter((o) => o.kind !== '이번 주 레시피')
   const h = headline(items)
   // 🎨 골고루 여섯 컷 — 캐릭터가 앞자리. ⛔한 그룹에서 다 뽑으면 낙엽만 다섯 개가 된다.
   const keys = spread(items, 6)

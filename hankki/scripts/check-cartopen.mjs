@@ -51,10 +51,19 @@ else 좋음('날짜 = `todayKST()`')
 // ④ ⭐ 화면이 «원본»을 직접 보지 않나 — 여기가 제일 위험한 자리다
 if (/CURATION_ALL/.test(shop)) 나쁨('`ShopScreen` 이 `CURATION_ALL`(원본)을 본다 — 안 열린 제품이 화면에 샌다')
 else 좋음('`ShopScreen` 은 걸러진 `CURATION` 만 본다')
-for (const [f, p] of Object.entries({ 'src/data/curation.js': null })) void f, p
+// ⛔ [2026-08-29] `whatsnew.js` 도 여기 들어왔다 — 창업자 확정 *"소식에 띄우자"*.
+//    소식이 «원본»을 읽으면 **아직 안 열린 제품이 소식에 먼저 뜬다**(제일 나쁜 새는 자리다).
+// ⛔⛔ **주석은 빼고 본다** — 안 그러면 *"`CURATION_ALL`(원본) 금지"* 라고 «적어둔 경고»가 걸려
+//    고쳐놓고도 빨간불이 난다(규칙 18 ⓘ · 2026-08-29 실제로 여기서 한 번 났다).
+const 코드만 = (s) =>
+  s
+    .split('\n')
+    .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+    .map((l) => l.replace(/\/\/.*$/, ''))
+    .join('\n')
 const 새는곳 = []
-for (const f of ['src/screens/ShopScreen.jsx', 'src/screens/RecipeDetailScreen.jsx', 'src/components/PantryView.jsx'])
-  if (/CURATION_ALL|PRODUCTS_ALL/.test(읽기(f))) 새는곳.push(f)
+for (const f of ['src/screens/ShopScreen.jsx', 'src/screens/RecipeDetailScreen.jsx', 'src/components/PantryView.jsx', 'src/data/whatsnew.js'])
+  if (/CURATION_ALL|PRODUCTS_ALL/.test(코드만(읽기(f)))) 새는곳.push(f)
 if (새는곳.length) 나쁨(`원본을 직접 보는 화면 ${새는곳.length}개 — ${새는곳.join(' · ')}`)
 
 // ⑤ 달력이 이 통로를 세나 (절대원칙 28)
