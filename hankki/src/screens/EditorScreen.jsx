@@ -19,7 +19,7 @@ import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw } from '../parseRecipe'
-import { tidyRecipe } from '../tidy'
+import { tidyRecipe, mergeTidy, tidyTail } from '../tidy'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 // 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
@@ -379,17 +379,8 @@ export default function EditorScreen({ id, prefill }) {
     //   ⛔ 순서를 뒤집지 말 것 — AI 를 먼저 기다렸다가 실패하면 그때 파싱하면, 실패한 만큼 유저가 더 기다린다.
     let r = parseRecipeText(combined, { fromOcr: true })
     // ⛔ 열쇠는 여기서 «안» 깎는다 — 위에서 `ocrImage` 가 이미 깎았다(카운트는 한 곳에서만).
-    const ai = await tidyRecipe(combined)
-    if (ai) {
-      // ⭐ AI 가 준 것만 골라 덮는다 — 빈 칸은 규칙 파서 것을 남긴다(둘 중 «있는» 쪽이 이긴다)
-      r = {
-        ...r,
-        title: ai.title || r.title,
-        ingredients: ai.ingredients.length ? ai.ingredients : r.ingredients,
-        steps: ai.steps.length ? ai.steps : r.steps,
-        memo: ai.memo || r.memo,
-      }
-    }
+    // ⭐ 얹는 규칙은 `mergeTidy` 한 곳에 있다 — 여기와 `App.jsx`(공유받기)가 «같은 말»이라야 한다
+    r = mergeTidy(r, await tidyRecipe(combined))
     setRawText(keepRaw(combined) || '') // 📥 읽어들인 글자 그대로 — 파서를 고친 날 다시 읽을 재료
     setF((prev) => ({
       ...prev,
@@ -403,13 +394,15 @@ export default function EditorScreen({ id, prefill }) {
           ? prev.category
           : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
     }))
+    // 🤖 「AI 가 정리했나」를 «보이게» 붙인다 — 문구는 `tidy.js` 의 `tidyTail()` 한 곳에서 정한다
+    //   (여기와 App.jsx 공유받기가 «같은 말»이라야 유저가 두 경로를 같은 기능으로 읽는다)
     nav.showToast(
-      quotaTail
+      (quotaTail
         ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
         : leftTail
           ? '초안을 채웠어요' + leftTail
-          : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
-      quotaTail || leftTail ? 6500 : 4800,
+          : '초안을 채웠어요 · 사진 보며 다듬어 주세요') + tidyTail(),
+      6500,
     )
   }
 

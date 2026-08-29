@@ -44,12 +44,13 @@ function chk(이름, 조건, 덧말 = '') {
 const ROOT = new URL('..', import.meta.url).pathname
 const tidySrc = readFileSync(ROOT + 'src/tidy.js', 'utf8')
 const edSrc = readFileSync(ROOT + 'src/screens/EditorScreen.jsx', 'utf8')
+const appSrc = readFileSync(ROOT + 'src/App.jsx', 'utf8')   // ⭐창업자가 실제로 쓰는 문(공유받기·갤러리)
 
 console.log('\n── ⓐ 소스가 지켜야 할 약속 ──')
 
 // ① 배포해도 안전한가 — 주소가 비어 있으면 아무 일도 안 한다
 chk('① TIDY_URL 이 비면 fetch 를 안 부른다',
-  /if\s*\(!TIDY_URL[^)]*\)\s*return null/.test(tidySrc),
+  /if\s*\(!TIDY_URL\)/.test(tidySrc) && /return null/.test(tidySrc),
   '(주소를 안 넣은 채 배포해도 지금과 똑같이 돈다)')
 
 // ⑦ 열쇠를 여기서 안 깎는다 — ⭐카운트가 한 곳에서만 돌아야 한다
@@ -77,10 +78,15 @@ chk('② 실패해도 오류를 «안 던진다»(null 을 준다)',
   !/throw\s/.test(tidySrc), '(던지면 편집 화면이 통째로 죽는다)')
 
 // ⑥ 있는 쪽이 이긴다
+// ⛔ 2026-08-29 부터 이 규칙은 «tidy.js 의 mergeTidy» 한 곳에 산다 — 화면마다 복붙하면 조용히 갈린다.
+//    (그날 「사진 읽는 문이 셋인데 한 곳에만 AI 를 붙인」 사고를 겪고 함수로 뽑았다)
 chk('⑥ AI 가 준 것만 골라 덮는다',
-  /ai\.ingredients\.length\s*\?\s*ai\.ingredients\s*:\s*r\.ingredients/.test(edSrc) &&
-  /ai\.steps\.length\s*\?\s*ai\.steps\s*:\s*r\.steps/.test(edSrc),
+  /ai\.ingredients\.length\s*\?\s*ai\.ingredients\s*:\s*r\.ingredients/.test(tidySrc) &&
+  /ai\.steps\.length\s*\?\s*ai\.steps\s*:\s*r\.steps/.test(tidySrc),
   '(AI 가 제목만 줘도 재료·걸음은 규칙 파서 것이 남는다)')
+chk('⑥-b 레시피를 담는 «모든» 문이 그 한 곳을 쓴다',
+  /mergeTidy\s*\(/.test(edSrc) && /mergeTidy\s*\(/.test(appSrc),
+  '(편집 캡처 ＋ 공유받기·갤러리 — 둘 다)')
 
 // ⭐ 순서 — 규칙 파서를 «먼저» 돌린다
 const 파서줄 = edSrc.indexOf('let r = parseRecipeText(combined')
