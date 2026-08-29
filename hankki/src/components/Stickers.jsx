@@ -1717,7 +1717,9 @@ export const STICKER_GROUPS = [
   //    ⛔⛔ **`season` 을 «일부러» 안 붙였다** — 창업자 = *"가을팩에 끼워넣지말고 단독으로"*
   //       `season` 은 서랍 «정렬 순서»에만 쓰인다(`DecorEditor.jsx:653` `seasonRank`).
   //       붙이면 가을 세트 사이에 끼어 「가을팩의 일부」로 보인다. 안 붙이면 **선물 택이 붙은 단독 세트**로 선다.
-  { key: 'deco_gift_dish_autumn', tab: 'frame', gift: true, from: '2026-09-01', label: '가을 접시 세트 (9월 선물)', items: ['pf_ad01', 'pf_ad04', 'pf_ad05', 'pf_ad08'] },
+  //    🎁 **택 = 「오픈 기념 선물」** (창업자 = *"접시를 오픈기념 특별선물로 예쁘게 만들어서 올리자."*)
+  //       `giftLabel` 이 없으면 그냥 「선물」로 뜬다 — 이 그룹만 특별한 글자를 준다.
+  { key: 'deco_gift_dish_autumn', tab: 'frame', gift: true, giftLabel: '오픈 기념 선물', from: '2026-09-01', label: '가을 접시 세트', items: ['pf_ad01', 'pf_ad04', 'pf_ad05', 'pf_ad08'] },
   { key: 'deco_dy_frame_b', tab: 'frame', diary: true, from: '2026-10-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
   { key: 'deco_dy_frame_c', tab: 'frame', diary: true, from: '2026-11-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
 

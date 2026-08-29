@@ -196,8 +196,18 @@ for (const t of 탭들) {
   //    ⛔ 서랍 맨 위 한 장으로는 아래에 깔린 그룹이 아예 안 찍힌다(첫 판이 그랬다).
   for (const g of 새그룹.filter((x) => x.탭라벨 === t)) {
     const 있나 = await page.evaluate((이름) => {
+      // 🏷 이름표 «단추» 안엔 이름 말고도 붙는 게 있다 — 선물 택(`decor-gift-tag`)과
+      //    접었을 때 뜨는 개수(`decor-sec-n`). 그대로 읽으면 「가을 접시 세트오픈 기념 선물」이 된다.
+      //    ⛔ 2026-08-29 에 실제로 이걸로 죽었다 — 그룹은 «멀쩡히 떠 있는데» 대조만 실패했다(규칙 18 ⓘ).
+      //    ⭐ 잣대를 «느슨하게»(startsWith) 하지 않는다 — 「가을」이 「가을 프레임」에 걸린다. 떼고 정확히 맞춘다.
+      const 이름만 = (el) => {
+        if (!el) return null
+        const c = el.cloneNode(true)
+        c.querySelectorAll('.decor-gift-tag, .decor-sec-n').forEach((x) => x.remove())
+        return c.textContent.trim()
+      }
       for (const s of document.querySelectorAll('.decor-scroll .decor-sec')) {
-        if (s.querySelector('.decor-sec-label')?.textContent?.trim() === 이름) {
+        if (이름만(s.querySelector('.decor-sec-label')) === 이름) {
           s.setAttribute('data-검수', '1'); s.scrollIntoView({ block: 'center' }); return true
         }
       }

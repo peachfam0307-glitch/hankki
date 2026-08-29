@@ -898,11 +898,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   }
   // 🎁 「선물」 택 — 출시기념으로 준 것에 붙는다. ⛔유니코드 이모지 금지라 글자＋색으로만.
   //    ⚠️ 「한정」이라고 쓰지 않는다 — 빼앗을 계획이 없다(*"한 번 준 것은 빼앗지 않는다"*).
-  const GiftTag = () => (
-    <span style={{
+  // 🎁 선물 택 — 기본은 「선물」이고, 그룹이 `giftLabel` 을 주면 그 글자로 바뀐다.
+  //    📮 창업자 2026-08-29 = *"접시를 오픈기념 특별선물로 예쁘게 만들어서 올리자."*
+  //    ⛔ **색을 새로 박지 않는다** — `--brown` 은 테마마다 값이 다르다(v11.17 사고 = 시안 실측값을
+  //       그대로 박았으면 다크에서 글자가 안 읽혔다). 특별함은 «글자»로 낸다.
+  //    ⛔ 유니코드 이모지 금지라 그림은 안 붙인다.
+  //    🏷 `decor-gift-tag` 클래스는 «검사가 이름에서 떼어내려고» 붙인 것이다.
+  //       ⛔ 없으면 검수판이 이름을 「가을 접시 세트오픈 기념 선물」로 읽어 대조가 죽는다(2026-08-29 실제로 죽었다).
+  const GiftTag = ({ text = '선물' }) => (
+    <span className="decor-gift-tag" style={{
       marginLeft: 6, padding: '1.5px 7px', borderRadius: 999, fontSize: 11, fontWeight: 800,
       background: 'var(--brown)', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
-    }}>선물</span>
+      whiteSpace: 'nowrap',
+    }}>{text}</span>
   )
   // 🔒 자물쇠 — ⛔유니코드 이모지 금지라 SVG 로 그린다
   const LockIcon = ({ size = 13 }) => (
@@ -1017,7 +1025,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           <button type="button" className="press decor-sec-label" onClick={() => toggleFold(g.key)}
             aria-expanded={!folded.has(g.key)} aria-label={`${g.label} ${folded.has(g.key) ? '펼치기' : '접기'}`}>
             <FoldIco open={!folded.has(g.key)} />
-            {g.label}{g.gift && <GiftTag />}
+            {g.label}{g.gift && <GiftTag text={g.giftLabel} />}
             {folded.has(g.key) && <span className="decor-sec-n">{g.items.length}</span>}
           </button>
         )}
