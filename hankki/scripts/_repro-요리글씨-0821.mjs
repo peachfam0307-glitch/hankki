@@ -61,7 +61,11 @@ const 요리모드열기 = async (page) => {
   await page.waitForTimeout(500)
   await page.evaluate((T) => [...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim().startsWith(T))?.click(), 제목)
   await page.waitForTimeout(600)
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('요리 시작'))?.click())
+  // ⛔⛔ [2026-08-29] 옛 판은 «글자»(「요리 시작」)로 이 버튼을 찾았다 →
+  //    창업자가 「요리모드 시작」으로 이름을 바꾸자 **6칸이 통째로 죽었다**(게이트가 «맞게» 걸린 것).
+  //    v11.30 「레시피열쇠」 때 게이트 넷이 같은 이유로 죽은 자리와 판박이다.
+  // ✅ `data-coach="cook"` 을 콕 집는다 — 이름이 또 바뀌어도 안 죽는다.
+  await page.evaluate(() => document.querySelector('[data-coach="cook"]')?.click())
   await page.waitForTimeout(600)
   // 재료 준비 → 첫 조리 걸음
   await page.evaluate(() => [...document.querySelectorAll('.cook-navbtn')].find((x) => /시작 →|다음 →/.test(x.innerText || ''))?.click())

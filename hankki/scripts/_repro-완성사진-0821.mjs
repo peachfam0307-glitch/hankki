@@ -75,13 +75,16 @@ const 요리끝까지 = async (page, 제목) => {
   }, 제목)
   if (!열림) { console.log('     ↳ 카드를 못 눌렀다'); return false }
   await page.waitForTimeout(700)
+  // ⛔⛔ [2026-08-29] 옛 판은 «글자»(「요리 시작」)로 찾았다 → 창업자가 「요리모드 시작」으로
+  //    이름을 바꾸자 여기서 못 들어가 **뒤 칸이 통째로 죽었다**(게이트가 «맞게» 걸린 것).
+  // ✅ `data-coach="cook"` 을 콕 집는다 — 이름이 또 바뀌어도 안 죽는다.
   const 시작 = await page.evaluate(() => {
-    const t = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('요리 시작'))
+    const t = document.querySelector('[data-coach="cook"]')
     if (!t) return false; t.click(); return true
   })
   if (!시작) {
     // ⛔ 「없다」의 «이유»를 내가 정하지 않는다(규칙 18) — 그 화면에 무엇이 있었는지 찍는다
-    console.log('     ↳ 「요리 시작」을 못 찾았다 · 그 화면 단추 =',
+    console.log('     ↳ 요리모드 시작 버튼을 못 찾았다 · 그 화면 단추 =',
       await page.evaluate(() => [...document.querySelectorAll('button')].map((x) => (x.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean).slice(0, 14).join(' / ')))
     return false
   }
