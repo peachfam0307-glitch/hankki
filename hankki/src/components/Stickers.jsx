@@ -1696,7 +1696,8 @@ export const STICKER_GROUPS = [
   //    ⛔ 시트를 받아만 두고 «자르지 않아» 앱에 없었다(`가을-창업자-2026-08-26/원본시트`).
   //    🕳 자르는 길 = **시트가 이미 투명이라 흰 테가 안 붙었다** → 흰 배경으로 한 번 눌러 굽고(`/tmp/프레임-흰배경`)
   //       `--grid 2x2 --diecut auto --punch 0.02` 로 창을 뚫었다. 절대원칙 셋(흰 테·조각·해상도) 다 통과.
-  { key: 'deco_autumn_frame', tab: 'frame', season: 'autumn', from: '2026-09-01', label: '가을 프레임', items: ['pf_au01', 'pf_au02', 'pf_au03', 'pf_au04'] },
+  //    ✂️ 창업자 판정 = *"1.3.4번 3개하자"* → `pf_au02`(리본 넝쿨) 뺌. ⛔PNG·`PHOTO_RATIO` 는 남긴다
+  { key: 'deco_autumn_frame', tab: 'frame', season: 'autumn', from: '2026-09-01', label: '가을 프레임', items: ['pf_au01', 'pf_au03', 'pf_au04'] },
   { key: 'deco_dy_frame_b', tab: 'frame', diary: true, from: '2026-10-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
   { key: 'deco_dy_frame_c', tab: 'frame', diary: true, from: '2026-11-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
 
