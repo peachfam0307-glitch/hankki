@@ -110,9 +110,25 @@ if (await 팝업.count()) {
   const 글 = (await 팝업.first().innerText()).replace(/\n+/g, ' / ')
   await page.screenshot({ path: `${방}/0-첫화면-한끼소식.png` })
   칸(글.includes('가을'), '첫 화면 = 한끼 소식 팝업', 글.slice(0, 60))
-  // 팝업이 말한 컷 수가 달력과 같은가 — 유저가 읽는 숫자다
+  // 팝업이 말한 컷 수 — 유저가 읽는 숫자라 «틀리면 안 된다».
+  // ⛔⛔ **[2026-08-29 고침] 이 칸이 «거짓 경보»를 냈다 — 잣대가 틀렸다.**
+  //    「팝업 80 ≠ 달력 78」로 실패를 냈는데 **둘은 서로 다른 것을 센다**:
+  //    · 달력(`gates()`) = **그 «날짜»에 열리는 것**
+  //    · 팝업(`whatsNew`) = **최근 `FRESH_DAYS`(21일) 안에 열린 것 전부**
+  //      (`whatsnew.js:163` — 유저가 며칠 만에 앱을 열어도 그동안 열린 걸 놓치지 않게 한 설계다)
+  //    📌 규칙 18 ⓘ 그대로 — **「통과했나」가 아니라 «무엇을 보고 통과했나»**.
+  // ✅ 그래서 **같은 21일 창으로 세어** 견준다. 이래야 «진짜» 어긋남만 잡는다.
+  const 창 = (d, n) => { const t = new Date(`${d}T00:00:00Z`); t.setUTCDate(t.getUTCDate() - n); return t.toISOString().slice(0, 10) }
+  const 창시작 = 창(그날, 21)
+  const 창안 = gates().filter((g) => g.date > 창시작 && g.date <= 그날)
+  const 창합 = 창안.reduce((s, g) => s + g.keys.length, 0)
   const 적힌수 = Number((글.match(/(\d+)컷/) || [])[1] || 0)
-  칸(적힌수 === 서랍약속.size + 카드약속.length, '팝업에 적힌 컷 수 = 달력과 같다', `팝업 ${적힌수} · 달력 ${서랍약속.size +카드약속.length}`)
+  // ⚠️ 달력은 «같은 키»가 두 갈래에 겹쳐 들어가기도 한다(실측 = au_b09·au_b13) → 딱 맞기를 요구하지 않는다.
+  //    그날 열리는 것보다 «적으면» 그건 진짜 사고다(유저에게 실제보다 작게 말하는 것).
+  const 그날합 = 서랍약속.size + 카드약속.length
+  칸(적힌수 >= 그날합 && 적힌수 <= 창합 + 5,
+    '팝업 컷 수가 말이 된다(그날 이상 · 21일 창 이하)',
+    `팝업 ${적힌수} · 그날 ${그날합} · 21일창 ${창합}`)
   const 닫기 = page.getByRole('button', { name: '닫기', exact: true })
   if (await 닫기.count()) await 닫기.first().click()
   else await page.keyboard.press('Escape')
