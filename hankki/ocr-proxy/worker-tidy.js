@@ -118,6 +118,12 @@ export default {
 
     // ── AI 부르기 ──
     const model = String(env.TIDY_MODEL || DEFAULT_MODEL)
+    // ⏱⏱ [2026-08-29] **걸린 시간을 «반드시» 찍는다.**
+    //   앱이 12초에 끊는데(`src/tidy.js` TIMEOUT_MS) 창업자 폰에서 timeout 이 났다.
+    //   그런데 «13초인지 40초인지»를 아무도 몰라 시간을 얼마로 늘릴지 정할 수가 없었다.
+    //   ⛔ Cloudflare 대시보드의 Wall Time·CPU Time 은 이걸 안 알려준다(AI 대기는 CPU 가 아니다).
+    //   ⭐ 이 한 줄이 그 답을 준다 — 성공이든 실패든 찍힌다.
+    const 시작 = Date.now()
     let out
     try {
       const r = await env.AI.run(model, {
@@ -133,15 +139,18 @@ export default {
       //    이유(`why`)가 «응답 본문»에만 있어서 대시보드에서 볼 방법이 없었다.
       //    Observability 로그엔 「POST … HTTP 502」만 찍히고 «왜»가 안 보였다.
       //    ⭐ 한 줄이면 다음부터는 대시보드에서 바로 읽는다. 개인정보는 안 찍는다(모델·메시지만).
-      console.log('AI_FAILED', model, String((e && e.message) || e).slice(0, 300))
+      console.log('AI_FAILED', model, (Date.now() - 시작) + 'ms', String((e && e.message) || e).slice(0, 300))
       return json({ error: 'ai_failed', why: String((e && e.message) || e).slice(0, 200) }, 502, cors)
     }
+
+    // ⭐ 성공했을 때도 찍는다 — 「몇 초 걸리나」를 알아야 앱의 TIMEOUT_MS 를 정할 수 있다
+    console.log('AI_OK', model, (Date.now() - 시작) + 'ms')
 
     const parsed = pickJson(out)
     if (!parsed) {
       // ⭐ AI 가 «답은 줬는데» JSON 이 아니었다 — 어떤 모양이었는지 앞부분만 찍는다.
       //   ⛔ 통째로 찍지 않는다(레시피 원문이 로그에 남는다). 300자면 모양을 아는 데 충분하다.
-      console.log('BAD_AI_OUTPUT', model, typeof out, String(out ?? '').slice(0, 300))
+      console.log('BAD_AI_OUTPUT', model, (Date.now() - 시작) + 'ms', typeof out, String(out ?? '').slice(0, 300))
       return json({ error: 'bad_ai_output' }, 502, cors)
     }
 
