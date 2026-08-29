@@ -15,8 +15,6 @@
 //   ⭐ 안 쓰는 것은 보내지 않는다 — Play 데이터 보안 신고가 그만큼 단순해진다.
 //   ⏳ 2단계(붙여넣기 AI ＋ 보너스 열쇠)에서 열쇠를 세게 되면 그때 uid 를 싣는다.
 
-import { politeSteps } from './polish.js'
-
 // ✅ 2026-08-29 워커를 세우고 주소를 넣었다.
 //   실물 확인 = 창업자가 주소창에 쳐서 {"error":"method_not_allowed"} 를 봤다(= 우리 코드가 살아 있다).
 //   ⛔ 내가 있는 곳의 네트워크는 workers.dev 로 나가는 걸 막는다(403 policy denial · 실측) — **눈으로 보는 건 창업자 쪽뿐이다.**
@@ -138,14 +136,7 @@ export function mergeTidy(r, ai) {
     ...r,
     title: ai.title || r.title,
     ingredients: ai.ingredients.length ? ai.ingredients : r.ingredients,
-    // ✍️✍️ **[2026-08-29 · 창업자가 오타로 찾아낸 구멍] AI 걸음도 «문체 다듬기»를 거친다.**
-    //   📮 창업자 = *"오타 한번 정도? 꺼줘요를 끄줘요"*
-    //   ⛔⛔ 그 한 글자가 진짜 구멍을 알려줬다 — **규칙 파서 결과는 「politeSteps」 를 거치는데
-    //      (parseRecipe.js:910) AI 결과는 여기서 «그대로» 얹혀 한 번도 안 거쳤다.**
-    //      우리 앱엔 해요체 표준도 있고 배포 게이트(check-steps.mjs)까지 있는데 **AI 만 그 밖에 있었다.**
-    //   ⭐ 얹는 자리가 «한 곳»이라 여기 한 줄이면 두 문(공유받기·편집 캡처)이 같이 고쳐진다.
-    //   ⛔ 사전에 없는 말은 «안 건드린다» — 안 바꾸는 게 잘못 바꾸는 것보다 낫다(polish.js 원칙).
-    steps: ai.steps.length ? politeSteps(ai.steps) : r.steps,
+    steps: ai.steps.length ? ai.steps : r.steps,
     memo: ai.memo || r.memo,
   }
 }
