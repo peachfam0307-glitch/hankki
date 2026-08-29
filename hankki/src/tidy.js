@@ -30,7 +30,6 @@ const TIMEOUT_MS = 12000
 
 // 🔢 마지막 결과 — 앱이 「AI가 정리했어요」를 보여줄 때 쓴다
 let _마지막 = null
-export function lastTidyInfo() { const v = _마지막; return v }
 
 /**
  * 글자를 레시피로 정리한다.
@@ -39,9 +38,11 @@ export function lastTidyInfo() { const v = _마지막; return v }
 export async function tidyRecipe(text) {
   _마지막 = null
   const t = String(text || '').trim()
-  if (!TIDY_URL || !t) return null
+  // ⛔ 「안 불렀다」와 「불렀는데 실패했다」를 «갈라서» 남긴다 — 처방이 다르다(2026-08-29).
+  if (!TIDY_URL) { _마지막 = { ok: false, why: '꺼짐' }; return null }
+  if (!t) { _마지막 = { ok: false, why: '글자없음' }; return null }
   // ⛔ 너무 짧으면 AI 를 부를 값어치가 없다(＋우리 무료 통을 아낀다)
-  if (t.length < 40) return null
+  if (t.length < 40) { _마지막 = { ok: false, why: '짧음' }; return null }
 
   const headers = { 'Content-Type': 'application/json', 'x-hankki-token': APP_TOKEN }
   try {
@@ -97,5 +98,50 @@ export async function tidyRecipe(text) {
   return 결과
 }
 
+/**
+ * 규칙 파서 결과에 AI 결과를 «골라» 얹는다 — 빈 칸은 규칙 파서 것을 남긴다(둘 중 «있는» 쪽이 이긴다).
+ *
+ * ⭐⭐ **이 함수가 «한 곳»에 있는 이유** — 2026-08-29 사고.
+ *   사진에서 글자를 읽는 문이 «셋»(편집 캡처 · 공유받기/갤러리 · 냉장고 영수증)인데
+ *   AI 를 «편집 캡처» 한 곳에만 붙여서, 창업자가 실제로 쓰는 「가져오기 → 사진」에선
+ *   **워커가 한 번도 안 불렸다**(Cloudflare Invocations 0 · 실측).
+ *   ⛔ 그때 재현판 16칸이 «전부 초록불»이었다 — 검사가 붙인 자리만 봤기 때문이다(규칙 18 ⓘ).
+ *   📌 얹는 규칙을 복붙하면 두 경로가 조용히 갈린다. 그래서 함수로 뽑았다.
+ *
+ * ⛔ 영수증(`PantryView`)엔 «안» 쓴다 — AI 지시가 레시피용이라 재료 목록에 쓰면 오히려 나빠진다.
+ */
+export function mergeTidy(r, ai) {
+  if (!ai) return r
+  return {
+    ...r,
+    title: ai.title || r.title,
+    ingredients: ai.ingredients.length ? ai.ingredients : r.ingredients,
+    steps: ai.steps.length ? ai.steps : r.steps,
+    memo: ai.memo || r.memo,
+  }
+}
+
+/**
+ * 화면에 붙일 «한 줄 꼬리» — 「AI 가 정리했나」를 유저가 «볼 수 있게» 한다.
+ *
+ * ⭐⭐ **왜 만들었나 (2026-08-29)** — 표시가 없어서 창업자도 나도 «AI 가 돌았는지» 몰랐다.
+ *   제목이 잘 나온 것을 보고 내가 「AI 가 됐다」고 단정했는데, Cloudflare 대시보드를 보니
+ *   **워커 호출이 0** 이었다(붙인 자리가 창업자가 쓰는 자리가 아니었다).
+ *   ⛔ 그걸 알아내는 데 30분이 걸렸다. **이 한 줄이면 5초다.**
+ *
+ * ⭐ 유저에겐 단순하게, 창업자(운영자)에겐 «이유»까지 —
+ *   운영자 통로(`hankki:founder`)가 이미 있으니 그걸 그대로 쓴다.
+ *   ⛔ 유저에게 `http_429`·`timeout` 같은 말을 보이지 않는다.
+ */
+export function tidyTail() {
+  const v = _마지막
+  let 운영자 = false
+  try { 운영자 = !!localStorage.getItem('hankki:founder') } catch { /* noop */ }
+  if (v && v.ok) return 운영자 ? ` · AI가 정리했어요(${v.model || 'AI'})` : ' · AI가 정리했어요'
+  // 실패·안 부름 — 유저에겐 「기본 정리」 하나로 묶는다(⛔「실패」라고 쓰지 않는다. 결과는 멀쩡하다)
+  return 운영자 ? ` · 기본 정리예요(${(v && v.why) || '안부름'})` : ' · 기본 정리예요'
+}
+
 const str = (v) => (typeof v === 'string' ? v.trim() : '')
+
 const arr = (v) => (Array.isArray(v) ? v.map(str).filter(Boolean) : [])
