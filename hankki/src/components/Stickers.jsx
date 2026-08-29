@@ -1719,7 +1719,10 @@ export const STICKER_GROUPS = [
   //       붙이면 가을 세트 사이에 끼어 「가을팩의 일부」로 보인다. 안 붙이면 **선물 택이 붙은 단독 세트**로 선다.
   //    🎁 **택 = 「오픈 기념 선물」** (창업자 = *"접시를 오픈기념 특별선물로 예쁘게 만들어서 올리자."*)
   //       `giftLabel` 이 없으면 그냥 「선물」로 뜬다 — 이 그룹만 특별한 글자를 준다.
-  { key: 'deco_gift_dish_autumn', tab: 'frame', gift: true, giftLabel: '오픈 기념 선물', from: '2026-09-01', label: '가을 접시 세트', items: ['pf_ad01', 'pf_ad04', 'pf_ad05', 'pf_ad08'] },
+  //    💬 `hint` = 서랍에 뜨는 한 줄 안내. 창업자 = *"처음보는 사람들은 저 구멍뚤린게 뭔가 할 것 같은데 ㅋ"*
+  //    📐 `bigCell` = 칸을 크게. 창업자 = *"크기가 작아서 다른 건줄알았어"*
+  //       ⭐ 접시는 «납작한 고리»라 정사각 칸에 넣으면 위아래가 비어 실제보다 작아 보인다.
+  { key: 'deco_gift_dish_autumn', tab: 'frame', gift: true, giftLabel: '오픈 기념 선물', bigCell: true, from: '2026-09-01', label: '가을 접시 세트', hint: '사진 위에 얹으면 접시에 담겨요', items: ['pf_ad01', 'pf_ad04', 'pf_ad05', 'pf_ad08'] },
   { key: 'deco_dy_frame_b', tab: 'frame', diary: true, from: '2026-10-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
   { key: 'deco_dy_frame_c', tab: 'frame', diary: true, from: '2026-11-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
 

@@ -3908,6 +3908,14 @@ html, body { overscroll-behavior: none; }
   background: var(--cream); color: var(--text-sub); font-size: 11px; font-weight: 800;
 }
 
+/* 💬 그룹 «한 줄 안내» — 창업자 2026-08-29 *"처음보는 사람들은 저 구멍뚤린게 뭔가 할 것 같은데 ㅋ"*
+   ⛔ 색을 박지 않는다 — `--text-sub` 는 테마마다 값이 다르다(v11.17 사고).
+   ⛔ 14px 아래로 내리지 않는다 — 「글자2」(v11.21)로 앱 최소를 14px 로 올려놨다. */
+.decor-sec-hint {
+  margin: -2px 0 8px 26px; font-size: 14px; line-height: 1.45;
+  color: var(--text-sub); word-break: keep-all;
+}
+
 /* 📏📏 **서랍 고정 줄 깎기** (창업자 2026-08-12 *"글씨(높이줄이고) 프레임데코..얘네들도 높이줄이자"*)
    🔢 실측 = 일꾸 서랍 373px 중 굴칸이 253px 뿐이었다. 나머지 120px 을 고정 줄이 먹는다:
       탭 줄(속지·글쓰기·일꾸·레꾸) 44 ＋ 갈래 줄(마테·데코·글자·기록) 56 ＋ 손잡이 4 ＋ 안내문 24~52

@@ -648,7 +648,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     // ⭐ `tabDiary` = 일기 화면에선 «다른 탭»에 둔다 — 꼬르곰 32컷은 레꾸 「글자」 / 일꾸 「기록」.
     //    ⛔ 두 탭에 «동시에» 두면 일꾸에서 글자·기록 양쪽에 같은 게 나온다(실측으로 잡았다).
     .filter((x) => ((isDiary && x.tabDiary) || x.tab) === t && isReleased(x.from) && (!x.only || x.only === where) && onShelf(x))
+    // 🎁 선물끼리는 **새로 온 것이 위**. 창업자 2026-08-29 = *"오픈기념 특별선물로 예쁘게 만들어서 올리자."*
+    //    ⛔ 안 넣으면 9/1 새 선물이 「출시기념 여름」(12컷) «아래»에 깔려 굴려야 나온다 — 실물로 봤다.
+    //    ⭐ `from` 없는 옛 선물은 빈 문자열이라 저절로 뒤로 간다(비교 한 줄로 끝난다).
     .sort((a, b) => ((b.gift ? 1 : 0) - (a.gift ? 1 : 0))
+      || (a.gift && b.gift ? String(b.from || '').localeCompare(String(a.from || '')) : 0)
       || ((b.locked ? 1 : 0) - (a.locked ? 1 : 0))
       || (seasonRank(a.season) - seasonRank(b.season))
       || ((b.recolor ? 1 : 0) - (a.recolor ? 1 : 0)))
@@ -905,11 +909,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    ⛔ 유니코드 이모지 금지라 그림은 안 붙인다.
   //    🏷 `decor-gift-tag` 클래스는 «검사가 이름에서 떼어내려고» 붙인 것이다.
   //       ⛔ 없으면 검수판이 이름을 「가을 접시 세트오픈 기념 선물」로 읽어 대조가 죽는다(2026-08-29 실제로 죽었다).
+  //    ⭐ 「특별해 보이지 않는다」(창업자 2026-08-29) → **띄운다**. 글자를 키우지 않고
+  //       ⑴크림 테를 둘러 바탕에서 떼고 ⑵옅은 그림자로 들어올린다. 목록의 한 줄이 아니라 «배지»로 읽힌다.
+  //    ⛔ 그림자는 진하게 주지 않는다 — 서랍은 칸이 촘촘해서 진하면 시끄럽다.
   const GiftTag = ({ text = '선물' }) => (
     <span className="decor-gift-tag" style={{
-      marginLeft: 6, padding: '1.5px 7px', borderRadius: 999, fontSize: 11, fontWeight: 800,
+      marginLeft: 7, padding: '2.5px 9px', borderRadius: 999, fontSize: 11, fontWeight: 800,
       background: 'var(--brown)', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
       whiteSpace: 'nowrap',
+      border: '1.5px solid var(--surface)', boxShadow: '0 1.5px 4px rgba(70,60,45,.28)',
     }}>{text}</span>
   )
   // 🔒 자물쇠 — ⛔유니코드 이모지 금지라 SVG 로 그린다
@@ -1028,6 +1036,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             {g.label}{g.gift && <GiftTag text={g.giftLabel} />}
             {folded.has(g.key) && <span className="decor-sec-n">{g.items.length}</span>}
           </button>
+        )}
+        {/* 💬 그룹 «한 줄 안내» — 그림만으로는 안 읽히는 묶음에만 붙인다.
+            📮 창업자 2026-08-29 = *"처음보는 사람들은 저 구멍뚤린게 뭔가 할 것 같은데 ㅋ"*
+            ⭐ 접시·프레임은 «가운데가 뚫린 고리»라 서랍에서 보면 「구멍 뚫린 그림」으로 보인다.
+               탭해서 사진 위에 얹어 봐야 비로소 뜻을 안다 — 그 «한 번»을 안 하면 영영 모른다.
+            ⛔ 모든 그룹에 붙이지 않는다 — 줄이 늘면 서랍이 길어지고 아무도 안 읽는다(시끄러운 게이트와 같은 이치).
+            ⛔ 접었을 땐 안 보인다 — 접은 건 「지금 안 쓰는 것」이다. */}
+        {g.hint && !folded.has(g.key) && (
+          <div className="decor-sec-hint">{g.hint}</div>
         )}
         {/* 🔠 `wordy` = **그림 안에 글자(캡션)가 그려진 그룹.** 칸을 크게 준다.
             📮 창업자 2026-08-12 *"좀작네 글자가."* · 앞서 *"글자가 너무 작아서 (그림도) 잘 안보여"*
