@@ -151,23 +151,35 @@ function recipes() {
 //       정확히 이걸 막으라고 있는 것이다. 2026-08-16 에 레시피가 그렇게 새서 사고가 났다.
 //    ⛔ `curation.js` 는 노드가 **못 연다**(`import.meta.glob` = Vite 전용) → 위 ①②처럼 **글자로 읽는다.**
 //    ⛔ 주석 줄은 건너뛴다 — ① 의 「유령 그룹」 사고(2026-08-10)와 같은 자리다.
-function cart() {
+//    ⭐⭐ 파싱은 **여기 한 곳**이다 — 검수판·달력이 «같은 값»을 본다(절대원칙 30).
+//       ⛔ 판을 만들 때 `curation.js` 를 «또» 글자로 뜯지 말 것. `cartItems()` 를 부른다.
+/** 장바구니 제품 «전부»(127개). `from` 이 없으면 이미 열려 있는 것이다. */
+export function cartItems() {
   const out = []
   let cat = ''
   for (const line of read('src/data/curation.js').split('\n')) {
     if (/^\s*(\/\/|\*|\/\*)/.test(line)) continue
     const c = line.match(/^\s*cat:\s*'([^']+)'/)
     if (c) cat = c[1]
-    const from = line.match(/from:\s*'(\d{4}-\d{2}-\d{2})'/)
     const name = line.match(/^\s*\{\s*name:\s*'([^']+)'/)
-    if (!from || !name) continue
-    const brand = line.match(/brand:\s*'([^']+)'/)
+    if (!name) continue
+    // ⛔ 값에 작은따옴표가 없다는 보장이 없어 큰따옴표 판도 같이 본다(2026-08-29 `benefit` 실측에서 겪었다)
+    const f = (k) => (line.match(new RegExp(`${k}:\\s*'([^']*)'`)) || line.match(new RegExp(`${k}:\\s*"([^"]*)"`)) || [])[1] || ''
     out.push({
-      date: from[1], where: `주부의 장바구니 · ${cat}`, kind: 'cart',
-      what: brand ? `${brand[1]} ${name[1]}` : name[1], keys: [],
+      name: name[1], brand: f('brand'), cat, mall: f('mall') || (/url:/.test(line) ? '직접' : ''),
+      benefit: f('benefit'), tag: f('tag'), from: f('from') || null,
     })
   }
   return out
+}
+
+function cart() {
+  return cartItems()
+    .filter((it) => it.from)
+    .map((it) => ({
+      date: it.from, where: `주부의 장바구니 · ${it.cat}`, kind: 'cart',
+      what: it.brand ? `${it.brand} ${it.name}` : it.name, keys: [],
+    }))
 }
 
 export const gates = () =>
