@@ -152,7 +152,10 @@ export default function HomeScreen() {
   //    새로 열린 게 있으면 그걸 먼저 말하고, 없으면 다음에 열릴 것을, 그것도 없으면 예고 목록을 말한다.
   const news = useMemo(() => whatsNew(), [])
   const newsLine = useMemo(() => {
-    const o = news.opened
+    // ⛔ [2026-08-29] `openedAlert` = **장바구니가 빠진 목록**(창업자 *"대신 아래 나중에"*).
+    //    장바구니는 «주마다» 열려서 이 줄에 넣으면 홈이 늘 장바구니 얘기만 한다.
+    //    소식 페이지를 열면 맨 아래에 있다 — 거기서 보면 된다.
+    const o = news.openedAlert
     if (o.length) {
       const head = `${o[0].title} ${o[0].count}개 새로 열렸어요`
       return o.length > 1 ? `${head} 외 ${o.length - 1}건` : head
@@ -389,7 +392,9 @@ export default function HomeScreen() {
                 {/* 🔠 크기는 인라인이 아니라 클래스로 — 넓은 화면에서 키우려면 CSS 가 이겨야 한다
                     (인라인은 `!important` 없이는 절대 못 이긴다 · v10.08 에 실제로 당했다) */}
                 <span className="news-title">한끼 소식</span>
-                {news.opened.length > 0 && (
+                {/* ⛔ [2026-08-29] `openedAlert` — 장바구니는 «주마다» 열려서 넣으면 이 뱃지가 늘 켜져 있다.
+                    바로 위 주석에 우리가 적어둔 원칙 그대로 = *"늘 떠 있으면 아무도 안 본다."* */}
+                {news.openedAlert.length > 0 && (
                   <span style={{ fontSize: 15, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
                 )}
               </div>

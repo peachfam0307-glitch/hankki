@@ -1383,11 +1383,21 @@ img {
 }
 
 /* 하단 고정 액션 바 */
+/* 🍳🏁 [2026-08-29] 창업자 제보 = *"요리시작버튼이 다됐어요버튼이랑만 겹쳐져. 확인해줄래"*
+   ⭐ 「다 됐어요」 = **완성 칸(꼬르곰)**이다 — 창업자가 그렇게 부른다
+      (근거 = `RecipeDetailScreen.jsx` 의 창업자 원문 *"꼬르곰(다 됐어요)이 안뜨는거야"*).
+   🔢 실측(`_repro-요리버튼겹침-0829.mjs`) = 스크롤 **80% 지점에서 완성 칸이 21px 겹쳐 지나간다.**
+   ⛔⛔ **겹치는 것 «자체»는 sticky 라 필연이다** — 내용은 원래 바 뒤로 지나간다.
+      진짜 문제는 **배경 위쪽 28% 가 투명**이라 지나가는 글자가 «반쯤 읽히는» 것이었다.
+      (옛 값 `var(--bg) 72%` → 84px 중 **23.5px** 이 비쳤다. 완성 칸이 딱 그 안으로 들어온다)
+   ✅ 92% 로 올려 비치는 구간을 **6.7px** 로 줄인다 — 딱 끊긴 선은 안 생기고(부드러움 유지)
+      글자가 읽힐 만큼 비치지도 않는다.
+   ⛔ 100%(단색)로 안 한 이유 = 경계선이 칼같이 생겨 화면이 두 동강 나 보인다. */
 .action-bar {
   position: sticky;
   bottom: 0;
   padding: 14px 20px calc(14px + var(--safe-bottom));
-  background: linear-gradient(to top, var(--bg) 72%, transparent);
+  background: linear-gradient(to top, var(--bg) 92%, transparent);
 }
 
 /* 상세 상단 원형 버튼 (이미지 위) */
@@ -1751,10 +1761,17 @@ img {
 }
 
 /* 토스트 */
+/* 📍📍 [2026-08-29 · 창업자 제보] **위로 옮겼다** — *"안내가 너무 아래에서 뜨고 금방사라져서 식별어려워"*
+   ⛔ 전엔 `bottom: nav-h + 24px` = **하단바 바로 위**였다. 그 자리가 나쁜 이유 셋 —
+      ⑴ 목록 화면에서 **손가락이 늘 그 근처에 있어** 제 손에 가린다
+      ⑵ 안드로이드에서 «알림»은 위에서 온다 — 아래는 눈이 안 가는 자리다
+      ⑶ 네 줄짜리 안내(잔량 ＋ AI 상태)가 붙으면서 **읽을 게 늘었는데 자리는 제일 안 보이는 곳**이었다
+   ⭐ 위쪽은 목록 내용이 시작되기 «전»이라 덜 가린다. 상단바(56px)는 피해서 그 아래에 띄운다.
+   ⛔ 화면 «한가운데»로는 안 갔다 — 거긴 방금 담긴 레시피가 보이는 자리라 정작 결과를 덮는다. */
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--nav-h) + 24px + var(--safe-bottom));
+  top: calc(var(--safe-top, 0px) + 68px);
   transform: translateX(-50%);
   background: var(--brown);
   color: #fff;
@@ -1767,10 +1784,29 @@ img {
         창업자 *"나 방금 2장 올렸는데 암것도 안떴어"* — 떴는데 검은 화면 뒤에 깔려 있었던 것.
      ⭐ 앱에서 제일 높은 층이 3000(계량 바)이라 그보다 위로 둔다. 새 층을 만들면 여기도 확인할 것. */
   z-index: 3500;
-  box-shadow: 0 8px 24px rgba(107, 79, 58, 0.28);
-  animation: fadeUp 0.22s ease both;
+  box-shadow: 0 10px 28px rgba(107, 79, 58, 0.32);
+  /* ⛔⛔ [2026-08-29 · 실물 버그] **`fadeUp` 을 쓰면 안 된다 — 가운데 정렬이 깨진다.**
+     그 애니메이션은 `transform: translateY(6px)` → `transform: none` 인데,
+     토스트는 가운데 정렬을 `transform: translateX(-50%)` 로 한다.
+     `both` 라서 끝난 «뒤»에도 `none` 이 남아 **−50% 가 사라지고 토스트가 오른쪽으로 밀린다.**
+     🔢 창업자 화면 녹화(11:17)에서 토스트가 오른쪽 끝에 붙어 글자가 잘려 보였다 —
+        「금방 사라져서 식별 어렵다」의 절반이 이것이었다(자리가 나쁜 게 아니라 «어긋나» 있었다).
+     ⭐ 그래서 토스트 «전용» 키프레임을 쓴다 — 옮기는 동안에도 −50% 를 계속 들고 간다. */
+  animation: toastIn 0.22s ease both;
   max-width: 88%;
   text-align: center;
+  line-height: 1.5;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 /* ── 요리 타이머 바 ── */

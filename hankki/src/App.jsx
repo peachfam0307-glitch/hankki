@@ -5,7 +5,7 @@ import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } f
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw } from './parseRecipe'
-import { tidyRecipe, mergeTidy, tidyTail } from './tidy'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder } from './tidy'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
 import { guessCategory, fitImage } from './utils'
@@ -289,10 +289,26 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const showToast = useCallback((msg, ms = 1900) => {
+  // ⏱⏱ **안내가 떠 있는 시간 — 글자 길이에 맞춘다** (창업자 2026-08-29 *"이것도 눈깜짝할사이에 사라져;; 겨우찍음"*)
+  //
+  // ⛔⛔ **v11.84 에서 창업자 지시 「시간도 늘리자」를 «반쪽만» 지켰다.**
+  //   편집 화면 캡처 쪽엔 6500 을 줬는데 **공유받기·갤러리(＝창업자가 실제로 쓰는 문)는 기본값 1900 그대로**였다.
+  //   그 문은 안내가 제일 긴데(잔량 ＋ AI 꼬리 = 다섯 줄) 시간은 제일 짧았다.
+  //   📌 2026-08-29 아침 AI 다듬기 사고와 «똑같은 모양»이다 — 문이 셋인데 한 곳만 고쳤다.
+  //
+  // ⭐⭐ **그래서 「부르는 쪽마다 숫자를 준다」를 그만둔다** — 그러면 새 안내가 생길 때마다 또 빠뜨린다.
+  //   **기본값이 글자 수를 보고 스스로 늘어난다.** 짧은 안내는 지금처럼 빨리 사라지고 긴 것만 오래 남는다.
+  //   🔢 2600ms(눈이 가는 데 걸리는 시간) ＋ 글자당 90ms · 최대 8000ms
+  //      · 「링크를 담았어요」 8자 → 3.3초   · 위 다섯 줄짜리 46자 → 6.7초
+  //   ⛔ 상한을 둔다 — 안내가 8초를 넘게 떠 있으면 그건 안내가 아니라 «가리는 것»이다.
+  //   ⛔ 부르는 쪽이 `ms` 를 «직접» 주면 그 값이 이긴다(나가기 안내처럼 시간이 뜻을 가진 자리).
+  const toastMs = (msg) => Math.min(8000, 2600 + String(msg || '').length * 90)
+
+  const showToast = useCallback((msg, ms) => {
+    const 뜰시간 = typeof ms === 'number' ? ms : toastMs(msg)
     setToast(msg)
     if (toastTimer.current) clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToast(null), ms)
+    toastTimer.current = setTimeout(() => setToast(null), 뜰시간)
   }, [])
   showToastRef.current = showToast
 
@@ -420,27 +436,50 @@ export default function App() {
         //      레시피인 앞의 둘에만 붙인다(영수증은 재료 목록이라 AI 지시가 안 맞는다).
         //   ⭐ 규칙 파서를 «먼저» 돌려놓는다 — AI 가 안 되든 느리든 이 `기본` 이 그대로 쓰인다.
         const 기본 = parseRecipeText(text, { fromOcr: true })
-        const r = mergeTidy(기본, await tidyRecipe(text))
-        if (cancelled) return
-        const 새제목 = rec.title && rec.title !== '사진 레시피' ? rec.title : r.title || rec.title
-        // 🍱🍱 [2026-08-28 · 창업자 제보] **이름이 여기서 처음 정해지니, 아이콘도 여기서 다시 찾는다.**
-        //   📮 창업자 = *"sns나 갤러리는 자동으로 안붙어. 이거 자동으로 붙게할 수있어?"*
-        //   ⭐ 뿌리 = `makeInboxRecipe` 가 «글자를 읽기 전»에 `icon` 을 굳혀서, 나중에 제목이
-        //      「골쫄면」이 돼도 아이콘은 빈 접시(`default`) 그대로였다. 화면은 `icon` 이 있으면
-        //      자동찾기를 안 돌리므로(Thumb.jsx) 영영 안 바뀐다.
-        //   ⛔ 창업자가 «직접 고른» 아이콘은 안 덮는다 — 판정과 두 겹 막이는 `shareIcon.js` 에 있다.
-        const 새아이콘 = 공유아이콘(rec, 새제목, guessFoodIconStrict)
-        store.updateRecipe(rec.id, {
-          title: 새제목,
-          ingredients: r.ingredients,
-          steps: r.steps, // 메모는 건드리지 않는다 — 직접 입력 전용
-          category: guessCategory((r.title || '') + ' ' + r.memo),
-          // ⭐ 자동으로 추천한 것이니 `iconPicked: false` 로 «자동» 표를 남긴다 —
-          //    EditorScreen 이 쓰는 규칙과 «같은 말»이라야 한쪽만 낡지 않는다(v9.77 · check-thumb.mjs).
-          ...(새아이콘 ? { icon: 새아이콘, iconPicked: false } : {}),
-          // 📥 원문도 — 있을 때만 넣는다(빈 값으로 덮으면 지우는 것이다)
-          ...(keepRaw(text) ? { rawText: keepRaw(text) } : {}),
-        })
+
+        // ⏱⏱⏱ **[2026-08-29 오후 · 창업자 갈래 ⓒ] 「AI 를 기다리지 않는다」**
+        //   📮 창업자 폰 실측 13:44 = `기본 정리예요(timeout)` — **30초를 세워두고 아무것도 못 줬다.**
+        //   ⛔⛔ 뿌리는 숫자가 아니라 **차례**였다. `await tidyRecipe()` 가 앞을 막고 있어서
+        //      **이미 손에 쥔 규칙 파서 결과를 AI 가 끝날 때까지 화면에 안 내놨다.**
+        //      12초든 30초든 60초든 «기다리는 구조»인 한 유저는 늘 그만큼 빈 화면을 본다.
+        //   ⭐⭐ 그래서 두 판으로 나눈다 — **①규칙 파서로 «즉시» 채우고 ②AI 가 오면 조용히 갈아끼운다.**
+        //      · 유저가 기다리는 시간 = **0초**  · AI 가 죽어도 잃는 게 없다(①이 이미 화면에 있다)
+        //      · 그래서 `tidy.js` 의 기다림을 60초까지 «늘릴 수 있게» 됐다(아무도 안 기다리니까)
+        //   ⛔ `await` 를 되살리지 말 것 — 되살리는 순간 위 사고가 그대로 돌아온다.
+        //      🔒 `scripts/_repro-AI다듬기-0829.mjs` 가 이 자리를 잰다.
+
+        // 🧷 지금 화면에 들어가 있는 값 — 두 판이 같은 자리를 만지므로 «내가 뭘 넣었는지»를 들고 간다.
+        //   ⛔ `rec` 는 담을 때의 «옛 값»이라 두 번째 판에서 그대로 쓰면 첫 판이 넣은 것을 모른다.
+        const 현재 = { title: rec.title, icon: rec.icon, iconPicked: rec.iconPicked }
+
+        // 채우는 일은 «한 곳»에 — 규칙 파서 판과 AI 판이 갈리면 결과가 두 가지가 된다.
+        const 채우기 = (r) => {
+          const 새제목 = 현재.title && 현재.title !== '사진 레시피' ? 현재.title : r.title || 현재.title
+          // 🍱🍱 [2026-08-28 · 창업자 제보] **이름이 여기서 처음 정해지니, 아이콘도 여기서 다시 찾는다.**
+          //   📮 창업자 = *"sns나 갤러리는 자동으로 안붙어. 이거 자동으로 붙게할 수있어?"*
+          //   ⭐ 뿌리 = `makeInboxRecipe` 가 «글자를 읽기 전»에 `icon` 을 굳혀서, 나중에 제목이
+          //      「골쫄면」이 돼도 아이콘은 빈 접시(`default`) 그대로였다. 화면은 `icon` 이 있으면
+          //      자동찾기를 안 돌리므로(Thumb.jsx) 영영 안 바뀐다.
+          //   ⛔ 창업자가 «직접 고른» 아이콘은 안 덮는다 — 판정과 두 겹 막이는 `shareIcon.js` 에 있다.
+          const 새아이콘 = 공유아이콘(현재, 새제목, guessFoodIconStrict)
+          store.updateRecipe(rec.id, {
+            title: 새제목,
+            ingredients: r.ingredients,
+            steps: r.steps, // 메모는 건드리지 않는다 — 직접 입력 전용
+            category: guessCategory((r.title || '') + ' ' + r.memo),
+            // ⭐ 자동으로 추천한 것이니 `iconPicked: false` 로 «자동» 표를 남긴다 —
+            //    EditorScreen 이 쓰는 규칙과 «같은 말»이라야 한쪽만 낡지 않는다(v9.77 · check-thumb.mjs).
+            ...(새아이콘 ? { icon: 새아이콘, iconPicked: false } : {}),
+            // 📥 원문도 — 있을 때만 넣는다(빈 값으로 덮으면 지우는 것이다)
+            ...(keepRaw(text) ? { rawText: keepRaw(text) } : {}),
+          })
+          현재.title = 새제목
+          if (새아이콘) { 현재.icon = 새아이콘; 현재.iconPicked = false }
+          return 새제목
+        }
+
+        // ① 규칙 파서 — «즉시»
+        채우기(기본)
         // 💰💰 [2026-08-21] 여기도 «조용히 깎이던» 자리다 — 공유로 들어온 사진도 위 353줄에서 AI 스캔을 쓴다.
         //    ⛔⛔ 그런데 유저는 «가져오기를 누른 적이 없다» — 카톡에서 공유만 했는데 장수가 준다.
         //       세 자리(캡처·영수증·공유받기) 중 **여기가 제일 안 보이는 자리**다.
@@ -449,10 +488,24 @@ export default function App() {
         //       그때 숫자를 적으면 «안 써 봤을 때의 기본값 20»을 사실처럼 말하게 된다(규칙 15).
         const left = getOcrLeft()
         showToast(
-          (left.unknown
+          left.unknown
             ? '사진에서 글자를 읽어 채웠어요'
-            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`) + tidyTail(),
+            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`,
         )
+
+        // ② AI — «뒤에서». 오면 갈아끼우고, 안 오면 아무 일도 안 난다.
+        tidyRecipe(text).then((ai) => {
+          if (cancelled) return
+          if (ai) {
+            채우기(mergeTidy(기본, ai))
+            showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
+            return
+          }
+          // ⛔ 실패는 «유저에게 안 알린다» — 이미 채워져 있어 유저가 할 일이 0이다.
+          //    알리면 멀쩡한 결과를 두고 「고장났나」로 읽게 만든다.
+          //    ⭐ 창업자(운영자)만 이유를 본다 — 이 한 줄이 8/29 아침에 30분을 5초로 줄였다.
+          if (tidyFounder()) showToast('AI 다듬기는 못 했어요' + tidyTail())
+        })
         return
       }
 

@@ -15,6 +15,8 @@
 //   ⭐ 안 쓰는 것은 보내지 않는다 — Play 데이터 보안 신고가 그만큼 단순해진다.
 //   ⏳ 2단계(붙여넣기 AI ＋ 보너스 열쇠)에서 열쇠를 세게 되면 그때 uid 를 싣는다.
 
+import { politeSteps } from './polish.js'
+
 // ✅ 2026-08-29 워커를 세우고 주소를 넣었다.
 //   실물 확인 = 창업자가 주소창에 쳐서 {"error":"method_not_allowed"} 를 봤다(= 우리 코드가 살아 있다).
 //   ⛔ 내가 있는 곳의 네트워크는 workers.dev 로 나가는 걸 막는다(403 policy denial · 실측) — **눈으로 보는 건 창업자 쪽뿐이다.**
@@ -23,10 +25,30 @@
 const TIDY_URL = 'https://hankki-tidy.annyeong-hankki.workers.dev'
 const APP_TOKEN = '0VRNDSjHBhwniTzIDAbnRaJygyfGJ2K2'   // OCR 프록시와 같은 값
 
-// ⏱ 얼마나 기다리나 — ⛔이 값이 «유저 체감»을 정한다.
-//   AI 응답 속도를 아직 실측 못 했다(다른 제공자 기준 첫 글자 0.75초 · 초당 200토큰대).
-//   우리 출력이 750토큰쯤이라 **몇 초** 예상. 12초를 넘으면 «기다리느니 규칙 파서»가 낫다.
-const TIMEOUT_MS = 12000
+// ⏱⏱ 얼마나 기다리나 — ⛔이 값이 «유저 체감»을 정한다.
+//
+// 🔢🔢 **[2026-08-29 실측 · 창업자 폰 → Cloudflare 로그] 24,333ms.**
+//   `AI_OK @cf/zai-org/glm-4.7-flash 24333ms` · Wall 24,334ms · **CPU 3ms**
+//   → 24초가 통째로 «AI 를 기다린 시간»이다. 우리 코드는 3ms 만 돈다.
+//   ⭐ 이 모델은 «생각하고 답하는» 판이라 느리다. 8/28 놀이터에서 빨라 보인 건
+//      놀이터가 스트리밍으로 첫 글자를 바로 뿌려서다 — 다 끝나는 시간은 그때도 길었다.
+//
+// ⛔⛔ **12초는 «최악의 값»이었다** — 24초짜리 일을 12초에 끊으니
+//   ⑴유저는 12초를 기다리고도 «아무것도 못 얻고» ⑵워커는 24초까지 계속 돌아 **무료 통은 그대로 먹는다.**
+//   즉 **잃기만 하는 12초**였다. 끊을 거면 훨씬 일찍, 기다릴 거면 끝까지여야 한다.
+//
+// ✅✅ **[2026-08-29 오후] 60초로 «늘렸다» — 늘릴 수 있게 된 이유가 먼저다.**
+//   ⭐⭐ 같은 판에서 **「기다리지 않기」(창업자 갈래 ⓒ)를 만들었다**(`App.jsx` 공유받기 · `EditorScreen`).
+//      규칙 파서 결과로 화면을 «먼저» 채우고 AI 는 뒤에서 돈다 → **유저가 기다리는 시간이 0초다.**
+//      그러니 이 숫자는 이제 「유저를 얼마나 세워두나」가 아니라 **「AI 에게 얼마나 주나」**다.
+//
+//   ⛔⛔ **30초는 «또» 잃기만 하는 값이었다** — 창업자 폰 실측 2026-08-29 13:44 = `기본 정리예요(timeout)`.
+//      워커는 살아 있는데(502 였으면 `http_502` 가 떴다) 30초 안에 못 끝냈다.
+//      실측 24.3초는 **한 번 잰 값**이고 이 모델은 «생각하고 답하는» 판이라 편차가 크다.
+//      📌 **한 번 잰 값에 여유를 조금 얹는 것으로는 부족하다** — 그게 12 → 30 에서 배운 것이고 또 밟았다.
+//
+//   ⚠️ 60초를 넘기면 그냥 포기한다 — 그때는 규칙 파서 결과가 이미 화면에 있어 **잃는 게 없다.**
+const TIMEOUT_MS = 60000
 
 // 🔢 마지막 결과 — 앱이 「AI가 정리했어요」를 보여줄 때 쓴다
 let _마지막 = null
@@ -116,7 +138,14 @@ export function mergeTidy(r, ai) {
     ...r,
     title: ai.title || r.title,
     ingredients: ai.ingredients.length ? ai.ingredients : r.ingredients,
-    steps: ai.steps.length ? ai.steps : r.steps,
+    // ✍️✍️ **[2026-08-29 · 창업자가 오타로 찾아낸 구멍] AI 걸음도 «문체 다듬기»를 거친다.**
+    //   📮 창업자 = *"오타 한번 정도? 꺼줘요를 끄줘요"*
+    //   ⛔⛔ 그 한 글자가 진짜 구멍을 알려줬다 — **규칙 파서 결과는 「politeSteps」 를 거치는데
+    //      (parseRecipe.js:910) AI 결과는 여기서 «그대로» 얹혀 한 번도 안 거쳤다.**
+    //      우리 앱엔 해요체 표준도 있고 배포 게이트(check-steps.mjs)까지 있는데 **AI 만 그 밖에 있었다.**
+    //   ⭐ 얹는 자리가 «한 곳»이라 여기 한 줄이면 두 문(공유받기·편집 캡처)이 같이 고쳐진다.
+    //   ⛔ 사전에 없는 말은 «안 건드린다» — 안 바꾸는 게 잘못 바꾸는 것보다 낫다(polish.js 원칙).
+    steps: ai.steps.length ? politeSteps(ai.steps) : r.steps,
     memo: ai.memo || r.memo,
   }
 }
@@ -133,10 +162,13 @@ export function mergeTidy(r, ai) {
  *   운영자 통로(`hankki:founder`)가 이미 있으니 그걸 그대로 쓴다.
  *   ⛔ 유저에게 `http_429`·`timeout` 같은 말을 보이지 않는다.
  */
+export function tidyFounder() {
+  try { return !!localStorage.getItem('hankki:founder') } catch { return false }
+}
+
 export function tidyTail() {
   const v = _마지막
-  let 운영자 = false
-  try { 운영자 = !!localStorage.getItem('hankki:founder') } catch { /* noop */ }
+  const 운영자 = tidyFounder()
   if (v && v.ok) return 운영자 ? ` · AI가 정리했어요(${v.model || 'AI'})` : ' · AI가 정리했어요'
   // 실패·안 부름 — 유저에겐 「기본 정리」 하나로 묶는다(⛔「실패」라고 쓰지 않는다. 결과는 멀쩡하다)
   return 운영자 ? ` · 기본 정리예요(${(v && v.why) || '안부름'})` : ' · 기본 정리예요'

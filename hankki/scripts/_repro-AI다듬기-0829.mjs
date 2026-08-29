@@ -63,8 +63,24 @@ chk('⑦ tidy.js 가 열쇠를 «안» 깎는다', !열쇠흔적,
   '(사진 경로는 ocr.js 가 이미 깎았다 — 두 곳에서 세면 반드시 어긋난다)')
 
 // ④ 시간 제한이 있다
+// ⛔⛔ 상한을 20초로 «손으로» 적어뒀다가 2026-08-29 에 게이트가 맞게 걸렸다 —
+//    실측이 24.3초(Cloudflare 로그)라 30초로 올리자 이 칸이 죽었다.
+//    ⭐ 그때 「검사가 시끄럽다」고 상한을 없애지 않았다. 이 칸이 지키려는 건 «값»이 아니라
+//       **「유저를 하염없이 기다리게 하지 않는다」**이고 그건 여전히 옳다.
+//    ✅ 실측(24.3초)에 여유를 얹어 **35초**로 올렸다.
+//
+// ⭐⭐ **[2026-08-29 오후 · 이 칸의 «뜻»이 바뀌었다 — 90초로 올린다]**
+//    같은 날 오후에 30초짜리도 죽었다(창업자 폰 = `기본 정리예요(timeout)`). 그때 또 숫자만 올렸으면
+//    다음에 또 걸렸을 것이다 — **뿌리는 숫자가 아니라 「기다린다」는 구조였다.**
+//    ✅ 그래서 두 문(`App.jsx` 공유받기 · `EditorScreen` 캡처)을 **기다리지 않게** 고쳤다
+//       (규칙 파서로 «즉시» 채우고 AI 는 뒤에서 → 갈아끼운다).
+//    📌 그러니 이 값은 이제 **「유저를 얼마나 세워두나」가 아니라 「AI 에게 얼마나 주나」**다.
+//       세워두는 시간이 0초라 90초까지 줘도 유저가 잃는 게 없다.
+//    ⛔ **그래도 상한은 «안» 없앤다** — 안 끊으면 요청이 영영 안 닫히고 워커 통만 먹는다.
+//    ⛔⛔ **이 칸이 또 죽으면 숫자를 올리기 «전»에 아래 ⑧을 먼저 본다** — 「기다리지 않나」가 참인데도
+//       90초를 넘긴다면 그건 시간 문제가 아니라 모델·워커 문제다.
 const m = tidySrc.match(/TIMEOUT_MS\s*=\s*(\d+)/)
-chk('④ 시간 제한이 있고 20초 이하다', !!m && Number(m[1]) <= 20000, m ? `(${m[1]}ms)` : '(없다)')
+chk('④ 시간 제한이 있고 90초 이하다', !!m && Number(m[1]) <= 90000, m ? `(${m[1]}ms)` : '(없다)')
 chk('④-b 끊는 장치를 실제로 쓴다(AbortController)',
   /AbortController/.test(tidySrc) && /signal:/.test(tidySrc))
 
@@ -82,17 +98,41 @@ chk('② 실패해도 오류를 «안 던진다»(null 을 준다)',
 //    (그날 「사진 읽는 문이 셋인데 한 곳에만 AI 를 붙인」 사고를 겪고 함수로 뽑았다)
 chk('⑥ AI 가 준 것만 골라 덮는다',
   /ai\.ingredients\.length\s*\?\s*ai\.ingredients\s*:\s*r\.ingredients/.test(tidySrc) &&
-  /ai\.steps\.length\s*\?\s*ai\.steps\s*:\s*r\.steps/.test(tidySrc),
+  /ai\.steps\.length\s*\?[^:]*:\s*r\.steps/.test(tidySrc),
   '(AI 가 제목만 줘도 재료·걸음은 규칙 파서 것이 남는다)')
+
+// ✍️ [2026-08-29 · 창업자가 오타로 찾아낸 구멍] AI 걸음도 «문체 다듬기»를 거치나
+//   📮 창업자 = *"오타 한번 정도? 꺼줘요를 끄줘요"*
+//   ⛔⛔ 규칙 파서 결과는 `politeSteps` 를 거치는데(`parseRecipe.js`) **AI 결과만 그 밖에 있었다.**
+//      우리 앱엔 해요체 표준도 배포 게이트(`check-steps`)도 있는데 AI 가 그걸 통째로 비껴갔다.
+//   ⭐ 얹는 자리가 한 곳이라 여기서 지키면 두 문(공유받기·편집 캡처)이 같이 지켜진다.
+chk('⑥-c AI 걸음도 «해요체 다듬기»를 거친다',
+  /politeSteps\s*\(\s*ai\.steps\s*\)/.test(tidySrc),
+  '(AI 만 문체 표준 밖에 있으면 화면에서 말투가 갈린다)')
 chk('⑥-b 레시피를 담는 «모든» 문이 그 한 곳을 쓴다',
   /mergeTidy\s*\(/.test(edSrc) && /mergeTidy\s*\(/.test(appSrc),
   '(편집 캡처 ＋ 공유받기·갤러리 — 둘 다)')
 
 // ⭐ 순서 — 규칙 파서를 «먼저» 돌린다
 const 파서줄 = edSrc.indexOf('let r = parseRecipeText(combined')
-const AI줄 = edSrc.indexOf('await tidyRecipe(combined)')
+const AI줄 = edSrc.indexOf('tidyRecipe(combined)')
 chk('⭐ 규칙 파서를 «먼저» 돌린다', 파서줄 > 0 && AI줄 > 파서줄,
   '(AI 를 먼저 기다렸다 실패하면 그만큼 유저가 더 기다린다)')
+
+// ⑧⑧ ⭐⭐ **[2026-08-29 오후 · 이 판에서 제일 중요한 칸] 「AI 를 «기다리지» 않는다」**
+//   📮 창업자 폰 실측 13:44 = 30초를 세워두고 `기본 정리예요(timeout)` — **기다리고도 아무것도 못 얻었다.**
+//   ⛔⛔ 그날 아침 12초 → 30초로 «숫자만» 올렸는데 같은 자리에서 또 죽었다.
+//      뿌리는 **`await tidyRecipe()` 가 앞을 막아 «이미 손에 쥔 규칙 파서 결과»를 안 내놓은 것**이었다.
+//      숫자를 아무리 올려도 이 구조인 한 유저는 늘 그만큼 빈 화면을 본다.
+//   ⭐ 위 「⭐ 순서」 칸만으로는 이걸 «못 잡는다» — 파서가 먼저 돌아도 결과를 화면에 안 내면 같은 일이다.
+//      📌 규칙 18 ⓘ — 「검사가 있다」와 「검사가 «그것»을 본다」는 다른 말이다.
+//   ⛔ `await tidyRecipe(` 가 «한 글자라도» 되살아나면 여기서 죽는다.
+for (const [이름, src] of [['EditorScreen', edSrc], ['App(공유받기)', appSrc]]) {
+  const 코드 = src.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
+  chk(`⑧ ${이름} 이 AI 를 «기다리지» 않는다`,
+    !/await\s+tidyRecipe\s*\(/.test(코드) && /tidyRecipe\s*\([^)]*\)\s*\.then\s*\(/.test(코드),
+    '(기다리면 규칙 파서 결과를 손에 쥐고도 안 내놓는다 — 창업자 폰 30초 timeout)')
+}
 
 console.log('\n── ⓑ 진짜로 그렇게 도나 (tidy.js 를 실제로 실행) ──')
 
@@ -115,13 +155,30 @@ if (!주소줄.test(tidySrc)) {
   console.error('\n⛔ tidy.js 에서 TIDY_URL 줄을 못 찾았다 — 검사를 먼저 고쳐야 한다')
   process.exit(1)
 }
-const 판만들기 = (파일, 주소) => {
-  writeFileSync(ROOT + 'scripts/' + 파일, tidySrc.replace(주소줄, `const TIDY_URL = '${주소}'`))
+// ⏱⏱ **시간 제한도 «바꿔치기»한다** (2026-08-29)
+//   ⛔ 전엔 앱의 TIMEOUT_MS 를 그대로 두고 「14초 기다려 본다」로 쟀다.
+//      그래서 실측(24.3초) 뒤 12초 → 30초로 올리자 **이 칸이 죽었다** — 30초를 진짜로 기다려야 하니까.
+//   ⭐ 값에 기대지 않는다 — 시험판에선 1.2초로 줄여 «끊기는 동작»만 본다.
+//      → 앱이 몇 초로 잡든 검사가 안 죽고, 스모크도 30초 느려지지 않는다.
+//   📌 위 ④ 칸이 「값이 35초 이하인가」를 따로 지키므로 둘이 겹치지 않는다.
+const 시간줄 = /^const TIMEOUT_MS = \d+/m
+if (!시간줄.test(tidySrc)) {
+  console.error('\n⛔ tidy.js 에서 TIMEOUT_MS 줄을 못 찾았다 — 검사를 먼저 고쳐야 한다')
+  process.exit(1)
+}
+const 판만들기 = (파일, 주소, 시간) => {
+  let src = tidySrc.replace(주소줄, `const TIDY_URL = '${주소}'`)
+  // ⛔ 이 판은 tidy.js 를 «scripts/» 로 베껴서 돌린다 — 그러면 tidy.js 안의 상대경로가 깨진다.
+  //   (2026-08-29 실측 = mergeTidy 가 문체 다듬기를 부르게 되면서 './polish.js' 를 못 찾아 죽었다)
+  //   ⭐ 베끼는 자리가 바뀐 만큼 «경로도 같이» 옮긴다.
+  src = src.replace(/from '\.\/([^']+)'/g, "from '../src/$1'")
+  if (시간) src = src.replace(시간줄, `const TIMEOUT_MS = ${시간}`)
+  writeFileSync(ROOT + 'scripts/' + 파일, src)
   return 파일
 }
 const 비운판 = 판만들기('.tmp-tidy-비움.mjs', '')
 const 임시 = ROOT + 'scripts/.tmp-tidy-test.mjs'
-판만들기('.tmp-tidy-test.mjs', 'https://x.invalid/tidy')
+판만들기('.tmp-tidy-test.mjs', 'https://x.invalid/tidy', 1200)   // ⏱ 1.2초로 줄여 «끊기는지»만 본다
 
 // ① 주소가 비어 있으면 fetch 를 아예 안 부른다
 let 부른횟수 = 0
@@ -171,11 +228,11 @@ await 실험2('② -c 이상한 답(502) 이면 null', 응답({ error: 'bad_ai_o
   })
   const mod = await import(`./.tmp-tidy-test.mjs?t=${Date.now()}x`)
   const 시작 = Date.now()
-  // 시간 제한을 잠깐 줄이는 대신, 끊기는지만 본다(12초를 진짜로 기다리면 스모크가 느려진다)
+  // ⭐ 시험판은 TIMEOUT_MS 가 1.2초로 바꿔치기돼 있다 — 앱이 몇 초로 잡든 여기선 빨리 끝난다
   const p = mod.tidyRecipe('된장크림파스타\n스파게티 200g\n된장 1큰술\n1. 면을 삶는다\n2. 팬에 된장을 풀고 생크림을 넣는다')
-  const 결과 = await Promise.race([p, new Promise((r) => setTimeout(() => r('아직'), 14000))])
+  const 결과 = await Promise.race([p, new Promise((r) => setTimeout(() => r('아직'), 4000))])
   const 걸린 = Date.now() - 시작
-  chk('④-c 답이 없으면 «스스로 끊고» null 을 준다', 결과 === null && 걸린 < 13500, `(${(걸린 / 1000).toFixed(1)}초)`)
+  chk('④-c 답이 없으면 «스스로 끊고» null 을 준다', 결과 === null && 걸린 < 3500, `(${(걸린 / 1000).toFixed(1)}초)`)
 }
 
 try { unlinkSync(임시) } catch { /* noop */ }
