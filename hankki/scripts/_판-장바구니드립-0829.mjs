@@ -41,8 +41,20 @@ const 몰이름 = {
   hansalim: '한살림 · 조합원 전용', 직접: '직접 링크', '': '네이버(기본)',
 }
 
+// ✍️ **창업자 1차 판정(2026-08-29)을 반영한 주** — 「내가 말한 대로 됐나」를 그 자리에서 보게 한다.
+//    ⭐ 레시피 36편 검수판에서 배운 것 = 창업자가 볼 것은 「예쁜가」가 아니라 **「내가 말한 대로 됐나」**다.
+//    ⛔ 창업자 원문을 한 글자도 안 고친다.
+const 반영 = {
+  '2026-08-29': ['"미소된장이랑 바다숲 뿌려먹는 감태랑 해물이랑 바꾸자,"', '미소된장 → 9/26 로 보내고 감태를 여기로'],
+  '2026-09-26': ['"미소된장이랑 바다숲 뿌려먹는 감태랑 해물이랑 바꾸자,"', '감태가 8/29 로 가고 미소된장이 여기로'],
+  '2026-09-05': ['"밍글은 지금 품절이라 몇달 뒤로 보내자," ＋ "밍글이랑 베이비브로콜리바꾸면 되겠다."', '밍글 → 2027-03-13 · 베이비 브로콜리가 여기로'],
+  '2027-03-13': ['"밍글이랑 베이비브로콜리바꾸면 되겠다."', '밍글이 여기로 왔다 — 품절이 풀릴 시간'],
+  '2026-10-24': ['"그라도스커피 콜롬비아 디카페인 원두 이랑 기리쉬케이크랑 바꾸자.,"', '기리쉬케이크 → 2027-02-06 · 원두가 여기로'],
+  '2027-02-06': ['"그라도스커피 콜롬비아 디카페인 원두 이랑 기리쉬케이크랑 바꾸자.,"', '원두가 10/24 로 가고 기리쉬케이크가 여기로'],
+}
+
 const 데이터 = {
-  오늘,
+  오늘, 반영,
   주차: 주차.map((w) => ({
     d: w.날, n: w.번호, dd: w.dday, cx: w.갈래겹침, mx: w.몰겹침,
     it: w.목록.map((x) => ({ n: x.name, b: x.brand, c: x.cat, m: 몰이름[x.mall] ?? x.mall, t: x.benefit, h: x.mall === 'hansalim' })),
@@ -150,6 +162,11 @@ input[type=search]{flex:1; min-width:130px; font:inherit; font-size:14px; paddin
 .b-now{background:var(--open-soft); color:var(--open)}
 .b-dup{background:var(--warn-soft); color:var(--warn)}
 
+.applied{margin:0; padding:11px 16px; background:var(--accent-soft); border-bottom:1px solid var(--line-soft)}
+.ap-t{font-size:11.5px; font-weight:700; letter-spacing:.05em; color:var(--accent)}
+.ap-q{margin:4px 0 0; font-family:var(--serif); font-size:14px; line-height:1.6; color:var(--ink)}
+.ap-a{margin:4px 0 0; font-size:13px; color:var(--ink2)}
+
 .items{list-style:none; margin:0; padding:4px 0}
 .item{padding:10px 16px; border-top:1px solid var(--line-soft)}
 .item:first-child{border-top:0}
@@ -209,6 +226,8 @@ footer{margin:40px 0 0; padding:18px 0 0; border-top:1px solid var(--line); font
      운영 방침이 <b>“양보다 엄선 · 아무거나 잔뜩 = 신뢰 희석”</b>이라 그 반대로 간 거예요.</p>
   <p class="note">🔀 <b>섞임</b> — 한 주에 같은 갈래나 같은 몰이 몰리지 않게 두 축을 동시에 폈어요.
      갈래가 겹친 주 <b>${갈래겹친주}/${주차.length}</b> · 몰이 겹친 주 <b>${몰겹친주}/${주차.length}</b>. 겹친 주엔 <span class="badge b-dup">겹침</span> 표를 달아 뒀어요.</p>
+  <p class="note">✍️ <b>1차 판정 ${Object.keys(반영).length / 2}건을 반영했어요</b> — 바뀐 주에는 <b>창업자가 쓴 말 그대로</b>가 붙어 있어요.
+     「내가 말한 대로 됐나」만 보면 돼요. <b>8/29 · 9/5 · 9/26 · 10/24 · 2027-02-06 · 2027-03-13</b> 여섯 주가 바뀌었어요.</p>
   <p class="note">🌱 <b>한살림 ${대기.filter((i) => i.mall === 'hansalim').length}개</b>는 <span class="badge b-dup">한살림 · 조합원 전용</span> 으로 표시돼요 —
      조합원이 아니면 어디로 보내도 못 사서 <b>사러가기를 아예 안 답니다</b>(v11.00 확정). 대신 “매장에서 만나요”가 떠요.</p>
   <p class="note">✍️ <b>어제 창업자가 써 준 넷</b> — 성가정 우리콩 진간장은 <b>이미 열려 있는 제품</b>이라 문구만 바뀌어 바로 나가요.
@@ -282,6 +301,16 @@ function 주차칸(w) {
   if (w.cx || w.mx) h.append(el('span', 'badge b-dup', (w.cx ? '갈래' : '몰') + ' 겹침'));
   h.append(el('span', 'wdd', w.dd <= 0 ? '지금' : 'D-' + w.dd));
   sec.append(h);
+
+  // ✍️ 창업자 판정을 반영한 주면 «원문 그대로» 보여준다 — 「내가 말한 대로 됐나」
+  const r = DATA.반영[w.d];
+  if (r) {
+    const box = el('div', 'applied');
+    box.append(el('div', 'ap-t', '✍️ 창업자 판정 반영'));
+    box.append(el('div', 'ap-q', r[0]));
+    box.append(el('div', 'ap-a', '→ ' + r[1]));
+    sec.append(box);
+  }
 
   const ul = el('ul', 'items');
   w.it.forEach((it) => ul.append(제품칸(it)));
