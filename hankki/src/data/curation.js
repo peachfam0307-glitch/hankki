@@ -35,7 +35,7 @@ export const CURATION = [
       { name: '쌀누룩 맛간장', matches: ['맛간장'], tag: '맛간장', benefit: '100% 국산콩에 무방부제·무첨가물, 원당과 과일로 건강한 단맛과 감칠맛을 냈어요. 무침·비빔·계란간장밥처럼 바로 먹는 요리에 딱. 통째로 구비해두는 저의 주문템이에요', q: '쌀누룩 맛간장', url: 'https://smartstore.naver.com/thebat/products/5788851801' },
       // 🫗 [2026-08-29 창업자 제공] *"국산콩으로 만들어 성분도 좋고, 색, 감칠맛, 염도가 있는 편이에요."*
       //    ⭐ 성가정 진간장(염도 낮음·두루두루)과 «역할이 갈린다» — 이건 색·감칠맛·염도가 필요한 자리다.
-      { name: '우리콩 양조간장', brand: '샘표', matches: ['양조간장'], tag: '양조간장', benefit: '국산콩으로 만들어 성분도 좋고, 색·감칠맛·염도가 있는 편이에요. 찜이나 색 내는 볶음 요리할 때 많이 사용해요', q: '샘표 우리콩 양조간장' },
+      { name: '우리콩 양조간장', brand: '샘표', matches: ['양조간장'], tag: '양조간장', benefit: '국산콩으로 만들어 성분도 좋고, 색·감칠맛·염도가 있는 편이에요. 찜이나 색 내는 볶음 요리할 때 많이 사용해요', q: '샘표 우리콩 양조간장', mall: 'coupang' },
       { name: '붉은대게 백간장', brand: '홍영의', matches: ['백간장'], tag: '백간장', benefit: '붉은대게즙으로 만들어 깔끔하고 깊은 감칠맛이 나요. 국간장보다 색이 옅어 국물색을 해치지 않으면서 간을 맞춰줘서, 맑은국·나물무침·계란찜, 김치찌개 간 맞출 때 살짝 둘러요', q: '홍영의 붉은대게 백간장', mall: 'coupang' },
       // 🥄 2026-08-14 창업자 요청 — *"연두 우리콩 요리에센스야. 노랑뚜껑이고, 성분이 깔끔해 국산콩, 국산채소로 만들었어.
       //    이것도 주부의 장바구니에 없으면 넣자. 내가 자주쓰는거라."* ＋ 링크를 직접 줬다.
@@ -474,11 +474,14 @@ export const PRODUCTS = CURATION.flatMap((g) => g.items.map((it) => ({ ...it, ca
 //      ⭐ 검색어가 들어가는 칸 = `sword`. ⛔`&page=1` 은 **일부러 남긴다** —
 //         빼도 되는지 «확인할 방법이 없고»(이 환경은 컬리를 못 연다) 창업자가 준 그대로가 확실히 돈다.
 //      🔢 이 두 줄이 컬리 제품 **21개**를 한꺼번에 직접 링크로 만든다.
-//   ⏳ **자연드림은 아직** — 창업자가 준 건 «상품» 주소(`smartstore.naver.com/innaturedream/products/…`)라
-//      검색 틀이 안 나온다. 받을 때까지 네이버 통합검색으로 폴백한다(제품은 나온다).
+//   ✅✅ [2026-08-29] **자연드림도 들어왔다** — 📮원문 = `…/innaturedream/search?q=%EC%A0%A4%EB%A6%AC` (＝「젤리」로 검색)
+//      ⭐⭐ 자연드림은 «자사몰이 아니라» **네이버 스마트스토어**를 쓴다 — 그래서 칸 이름이 `q` 다.
+//      🔢 이 한 줄이 자연드림 제품 **11개**를 직접 링크로 만든다.
+//   📌 이제 몰 넷이 다 직접 링크다 — 쿠팡·컬리·자연드림·오아시스. 남은 폴백(네이버 통합검색)은 «몰이 없는» 제품용이다.
 const MALL_SEARCH = {
   coupang: 'https://www.coupang.com/np/search?q={q}',
   kurly: 'https://www.kurly.com/search?sword={q}&page=1',
+  icoop: 'https://smartstore.naver.com/innaturedream/search?q={q}',
   oasis: 'https://www.oasis.co.kr/product/search?keyword={q}',
   naver: 'https://search.shopping.naver.com/search/all?query={q}',
 }
