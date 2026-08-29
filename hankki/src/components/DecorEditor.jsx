@@ -912,13 +912,22 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    ⭐ 「특별해 보이지 않는다」(창업자 2026-08-29) → **띄운다**. 글자를 키우지 않고
   //       ⑴크림 테를 둘러 바탕에서 떼고 ⑵옅은 그림자로 들어올린다. 목록의 한 줄이 아니라 «배지»로 읽힌다.
   //    ⛔ 그림자는 진하게 주지 않는다 — 서랍은 칸이 촘촘해서 진하면 시끄럽다.
+  //    🎁 ＋ **선물 상자 그림을 알약 «안»에** — 창업자 2026-08-29 = *"알약색을 바꾸거나 옆에 뭐라도 붙이자"*
+  //       ⛔ **색을 바꾸는 쪽은 안 골랐다** — 테마 안전한 강조 토큰이 «없다»(실측 = `--pt`·`--accent`·`--gold` 전부 0건).
+  //          없는 색을 새로 박으면 다크에서 글자가 죽는다(v11.17 사고). 그래서 «그림»으로 갔다.
+  //       ⛔ 유니코드 이모지 금지 → 우리 `Icon` 의 `gift`(SVG). 같은 그림이 「선물 네 가지」 단추에도 이미 쓰인다
+  //          → 유저가 **두 자리에서 같은 그림을 보고** 「선물이구나」를 저절로 배운다.
   const GiftTag = ({ text = '선물' }) => (
     <span className="decor-gift-tag" style={{
-      marginLeft: 7, padding: '2.5px 9px', borderRadius: 999, fontSize: 11, fontWeight: 800,
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      marginLeft: 7, padding: '2.5px 9px 2.5px 7px', borderRadius: 999, fontSize: 11, fontWeight: 800,
       background: 'var(--brown)', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
       whiteSpace: 'nowrap',
       border: '1.5px solid var(--surface)', boxShadow: '0 1.5px 4px rgba(70,60,45,.28)',
-    }}>{text}</span>
+    }}>
+      <Icon name="gift" size={13} color="#fff" />
+      {text}
+    </span>
   )
   // 🔒 자물쇠 — ⛔유니코드 이모지 금지라 SVG 로 그린다
   const LockIcon = ({ size = 13 }) => (
