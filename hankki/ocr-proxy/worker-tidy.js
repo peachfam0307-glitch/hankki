@@ -47,10 +47,36 @@ const LIMITS = {
   MAX_TEXT: 8000,   // ⭐앱 rawText 상한이 4,000자라 그 두 배
 }
 
-// ⭐ 모델 = 설정값. ⛔코드에 박지 않는다(값이 오르면 대시보드에서 한 줄로 갈아탄다)
-//   기본값 = 2026-08-28 창업자 실물 판정에서 11/12 를 낸 모델 (지금 파서는 6/12)
-//   ID 근거 = developers.cloudflare.com/ai/models/@cf/zai-org/glm-4.7-flash/
-const DEFAULT_MODEL = '@cf/zai-org/glm-4.7-flash'
+// 🤖🤖 **모델 차례 — 위에서부터 시도하고, 빈손이면 다음으로.**
+//
+// ⛔⛔ **[2026-08-29 실물] `glm-4.7-flash` 를 «맨 앞»에서 내렸다.**
+//   창업자 폰 로그 = `30556ms` · `"content": null` · `"reasoning": "1. **Analyze the Request:** …"`
+//   → **생각만 하다가 답 길이를 다 써서 레시피를 한 글자도 안 냈다.** 30초를 태우고 빈손이다.
+//   ⭐ 8/28 실물 판정에서 **11/12** 를 낸 건 사실이고(지금 파서는 6/12) 그래서 «지우지 않고 뒤로» 뒀다.
+//      앞 모델이 실패하면 이 판이 받는다. ⚠️단 답 길이를 넉넉히 줘도 안 끝날 수 있다 — 그건 실물로 본다.
+//
+// ⭐ 맨 앞 = **생각을 «안» 하는 판**. 레시피 정리는 추론이 아니라 「글자를 칸에 나눠 담는」 일이라
+//   생각하는 모델의 값어치가 낮고 비용(시간·토큰)만 크다.
+//   ID 근거 = developers.cloudflare.com/workers-ai/models/llama-3.3-70b-instruct-fp8-fast/
+//   ⚠️ **한국어 품질은 아직 실물로 못 쟀다** — 창업자 판정 대기(8/28 과 같은 방식으로).
+//
+// ⛔ 최대 두 판까지만 돈다(아래 `모델차례`) — 무료 통도 시간도 유한하다.
+const DEFAULT_MODELS = [
+  '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+  '@cf/zai-org/glm-4.7-flash',
+]
+
+// ⭐ `TIDY_MODEL` 을 넣으면 **그것부터** 시도한다(대시보드에서 한 줄로 실험할 수 있게).
+//   ⛔ 넣어도 «뒤 후보를 지우지는» 않는다 — 실험이 실패해도 앱은 계속 돌아야 한다.
+function 모델차례(env) {
+  const 앞 = String((env && env.TIDY_MODEL) || '').trim()
+  const 목록 = 앞 ? [앞, ...DEFAULT_MODELS] : [...DEFAULT_MODELS]
+  return [...new Set(목록)].slice(0, 2)
+}
+
+// ⏳ 답 길이 상한. ⛔2000 이 오늘 사고의 절반이었다 — 생각하는 모델이 이걸 «생각»에 다 썼다.
+//   ⭐ 늘려도 «쓴 만큼만» 값이 나가고, 지금은 기다리는 사람이 없어 시간도 손해가 아니다.
+const MAX_TOKENS = 4000
 
 // 🧪 이 지시로 실물 11/12 가 나왔다 (docs/AI다듬기-실물판정-2026-08-28.md 7️⃣)
 // ⛔ 1번(지어내지 마라)이 «맨 앞»이다 — 오픈 모델은 긴 지시를 잘 못 따르므로 제일 위험한 것을 먼저.
@@ -116,96 +142,99 @@ export default {
       if (!founder && ipC >= LIMITS.PER_IP_PER_MIN) return json({ error: 'too_fast' }, 429, cors)
     }
 
-    // ── AI 부르기 ──
-    const model = String(env.TIDY_MODEL || DEFAULT_MODEL)
-    // ⏱⏱ [2026-08-29] **걸린 시간을 «반드시» 찍는다.**
-    //   앱이 12초에 끊는데(`src/tidy.js` TIMEOUT_MS) 창업자 폰에서 timeout 이 났다.
-    //   그런데 «13초인지 40초인지»를 아무도 몰라 시간을 얼마로 늘릴지 정할 수가 없었다.
-    //   ⛔ Cloudflare 대시보드의 Wall Time·CPU Time 은 이걸 안 알려준다(AI 대기는 CPU 가 아니다).
-    //   ⭐ 이 한 줄이 그 답을 준다 — 성공이든 실패든 찍힌다.
-    const 시작 = Date.now()
-    let out
-    try {
-      const r = await env.AI.run(model, {
-        messages: [{ role: 'user', content: PROMPT + text }],
-        // ⭐ 0.2 = 창업자 실물 판정 뒤 권장값. 1.0 에서도 안 지어냈지만 낮을수록 안정적이다.
-        temperature: 0.2,
-        max_tokens: 2000,
-      })
-      // ⛔⛔ [2026-08-29 실물] **꺼내는 자리를 넓혔다** — 창업자 폰 로그에 `BAD_AI_OUTPUT … object [object Object]`.
-      //   ⑴ 이 모델은 «생각하고 답하는» 판이라 응답이 `{response, usage, …}` 한 겹이 아닐 수 있다.
-      //   ⑵ 8/28 놀이터에서 잘 됐던 건 **놀이터가 알아서 풀어줬기 때문**이다. 바인딩으로 부르면 날것이 온다.
-      //   ⭐ 그래서 흔한 모양을 «전부» 훑는다 — 하나라도 맞으면 글자가 나온다.
-      //   ⛔ 못 찾으면 «버리지 않고» 통째로 넘긴다(`r`) — 아래 pickJson 이 stringify 해서 다시 판다.
-      // ⛔⛔ [2026-08-29 오후 정정] **`??` 를 쓰면 «빈 글자»에서 멈춘다.**
-      //   `''` 는 null·undefined 가 아니라 `??` 를 «통과»한다 → 뒤 후보를 하나도 안 본다.
-      //   ⭐ 생각하는 모델은 `{response:'', reasoning_content:'…'}` 처럼 «response 가 비어 있는» 답을 준다.
-      //      그때 옛 코드는 빈 글자를 붙들고 아래로 내려가 아무것도 못 찾았다.
-      //   ✅ 「값이 «있는» 첫 번째」를 고른다.
-      out = 첫값(
-        r?.response,
-        r?.result?.response,
-        r?.result,
-        r?.choices?.[0]?.message?.content,
-        r?.output_text,
-        r,
-      )
-    } catch (e) {
-      // ⛔ 실패를 «감추지 않는다» — 앱이 규칙 파서로 떨어지려면 실패를 알아야 한다.
-      // 📋📋 [2026-08-29] **로그로도 남긴다** — 창업자 폰에서 502 가 두 번 났는데
-      //    이유(`why`)가 «응답 본문»에만 있어서 대시보드에서 볼 방법이 없었다.
-      //    Observability 로그엔 「POST … HTTP 502」만 찍히고 «왜»가 안 보였다.
-      //    ⭐ 한 줄이면 다음부터는 대시보드에서 바로 읽는다. 개인정보는 안 찍는다(모델·메시지만).
-      console.log('AI_FAILED', model, (Date.now() - 시작) + 'ms', String((e && e.message) || e).slice(0, 300))
-      return json({ error: 'ai_failed', why: String((e && e.message) || e).slice(0, 200) }, 502, cors)
+    // ── AI 부르기 ── ⭐⭐ **모델을 «차례로» 시도한다 (2026-08-29 오후)**
+    //
+    // 📮 창업자 = 대시보드에서 변수 넣고 Deploy 누르고 로그 새로고침하는 왕복이 반나절 갔다.
+    //    ⛔ 그건 규칙 8 위반이다 — **시행착오는 창업자가 아니라 우리가 한다.**
+    //
+    // 🔬 **실물로 확정된 사고 (창업자 폰 로그 14:25:37)**
+    //    `BAD_AI_OUTPUT @cf/zai-org/glm-4.7-flash 30556ms` ＋ 응답 안이
+    //    `"content": null` · `"reasoning": "1. **Analyze the Request:** …"`
+    //    → **모델이 30.5초 동안 «생각만» 하다가 `max_tokens` 를 다 쓰고 답을 한 글자도 못 냈다.**
+    //    ⭐ 오늘 하루의 사슬(502 → timeout → empty_result)이 전부 이 «하나»의 증상이었다.
+    //
+    // ✅ 그래서 «고르는 일»을 코드가 한다 — 빠른 모델부터 부르고, 빈손이면 다음 모델로.
+    //    ⛔ 무한 재시도는 안 한다(최대 두 판) — 무료 통도 시간도 유한하다.
+    //    ⭐ 지금은 **기다리는 사람이 0명**이라(v11.85 = 규칙 파서가 먼저 채운다) 재시도가 공짜다.
+    //       ⛔ 만약 앱이 다시 «기다리는» 구조로 돌아가면 이 재시도를 줄여야 한다.
+    const 모델들 = 모델차례(env)
+    const 시작전체 = Date.now()
+    let 답 = null
+    let 마지막오류 = ''
+
+    for (const model of 모델들) {
+      const 시작 = Date.now()
+      let out
+      try {
+        const r = await env.AI.run(model, {
+          messages: [{ role: 'user', content: PROMPT + text }],
+          // ⭐ 0.2 = 창업자 실물 판정 뒤 권장값. 1.0 에서도 안 지어냈지만 낮을수록 안정적이다.
+          temperature: 0.2,
+          max_tokens: MAX_TOKENS,
+        })
+        // ⭐ 흔한 응답 모양을 «전부» 훑는다. ⛔`??` 가 아니라 `첫값` 이다 — `''` 에서 멈추면 안 된다.
+        out = 첫값(
+          r?.response,
+          r?.result?.response,
+          r?.result,
+          r?.choices?.[0]?.message?.content,
+          r?.output_text,
+          r,
+        )
+        // 🧠 **「생각만 하고 답을 안 준 것」에 이름을 붙인다** — 이게 오늘 범인이었다.
+        //   이름이 없으면 다음에 또 `BAD_AI_OUTPUT` 안에 숨어 안 보인다.
+        const m0 = r?.choices?.[0]?.message
+        if (m0 && m0.content == null && (m0.reasoning || m0.reasoning_content)) {
+          console.log('THINKING_ONLY', model, (Date.now() - 시작) + 'ms', '(생각하다 답 길이를 다 썼다)')
+        }
+      } catch (e) {
+        마지막오류 = String((e && e.message) || e).slice(0, 200)
+        console.log('AI_FAILED', model, (Date.now() - 시작) + 'ms', 마지막오류.slice(0, 300))
+        await 통세기(kv, ymd)
+        continue
+      }
+      await 통세기(kv, ymd)   // ⛔ 실패해도 뉴런은 나갔다 — 성공만 세면 통이 조용히 샌다
+
+      const parsed = pickJson(out)
+      if (!parsed) {
+        // ⛔ 통째로 찍지 않는다(레시피 원문이 로그에 남는다). 400자면 모양을 아는 데 충분하다.
+        let 모양; try { 모양 = typeof out === 'object' ? JSON.stringify(out) : String(out ?? '') } catch { 모양 = '(못 읽음)' }
+        console.log('BAD_AI_OUTPUT', model, (Date.now() - 시작) + 'ms', typeof out, String(모양).slice(0, 400))
+        continue
+      }
+
+      const 후보 = {
+        title: str(parsed.title),
+        ingredients: arr(parsed.ingredients),
+        steps: arr(parsed.steps),
+        memo: str(parsed.memo),
+        model,
+      }
+
+      // 🕳 「JSON 인데 비었다」 — 200 으로 나가던 길이라 로그가 한 줄도 없던 자리다(2026-08-29).
+      //   📌 규칙 18 ⓘ — 「로그가 있다」와 「로그가 «그것»을 본다」는 다른 말이다.
+      if (!후보.ingredients.length && !후보.steps.length) {
+        let 모양; try { 모양 = JSON.stringify(parsed) } catch { 모양 = '(못 읽음)' }
+        console.log(
+          'EMPTY_RESULT', model, (Date.now() - 시작) + 'ms',
+          'keys=' + Object.keys(parsed || {}).join(','),
+          String(모양).slice(0, 300),
+        )
+        continue
+      }
+
+      console.log('AI_OK', model, (Date.now() - 시작) + 'ms')
+      답 = 후보
+      break
     }
 
-    // ⭐ 성공했을 때도 찍는다 — 「몇 초 걸리나」를 알아야 앱의 TIMEOUT_MS 를 정할 수 있다
-    console.log('AI_OK', model, (Date.now() - 시작) + 'ms')
-
-    const parsed = pickJson(out)
-    if (!parsed) {
-      // ⭐ AI 가 «답은 줬는데» JSON 이 아니었다 — 어떤 모양이었는지 앞부분만 찍는다.
-      //   ⛔ 통째로 찍지 않는다(레시피 원문이 로그에 남는다). 300자면 모양을 아는 데 충분하다.
-      // ⛔ String(객체) 는 「[object Object]」가 되어 아무것도 안 알려준다(2026-08-29 실측) → stringify 로 찍는다
-      let 모양; try { 모양 = typeof out === 'object' ? JSON.stringify(out) : String(out ?? '') } catch { 모양 = '(못 읽음)' }
-      console.log('BAD_AI_OUTPUT', model, (Date.now() - 시작) + 'ms', typeof out, String(모양).slice(0, 400))
-      return json({ error: 'bad_ai_output' }, 502, cors)
+    if (!답) {
+      // ⭐ 「어느 모델을 어떤 차례로 시도했나」를 한 줄로 — 다음 사람이 이 줄만 봐도 다 안다.
+      console.log('ALL_MODELS_FAILED', 모델들.join(' → '), (Date.now() - 시작전체) + 'ms')
+      return json({ error: 마지막오류 ? 'ai_failed' : 'bad_ai_output', why: 마지막오류 || '' }, 502, cors)
     }
 
-    if (kv) {
-      await Promise.all([
-        inc(kv, `td:${ymd}`, 60 * 60 * 48),
-        inc(kv, `ti:${ip}:${minute}`, 120),
-      ])
-    }
-
-    const 답 = {
-      title: str(parsed.title),
-      ingredients: arr(parsed.ingredients),
-      steps: arr(parsed.steps),
-      memo: str(parsed.memo),
-      model,
-    }
-
-    // 🕳🕳 [2026-08-29 오후] **여기가 «눈이 없던» 자리다.**
-    //   📮 창업자 폰 = `기본 정리예요(empty_result)` — 앱이 「재료도 걸음도 없다」며 안 쓴 것이다.
-    //   ⛔⛔ 그런데 이 길은 **200 으로 나가서 로그가 한 줄도 안 남았다.**
-    //      위 `BAD_AI_OUTPUT` 은 「JSON 이 아닐 때」만 찍는다 — **「JSON 인데 비었을 때」는 아무도 안 본다.**
-    //      📌 규칙 18 ⓘ — 「로그가 있다」와 「로그가 «그것»을 본다」는 다른 말이다.
-    //   ⭐ 이 한 줄이 갈래 둘을 가른다:
-    //      Ⓐ 껍데기를 덜 벗겼다 → `keys` 에 title·ingredients 가 «없고» response·reasoning 같은 게 보인다
-    //      Ⓑ AI 가 진짜 빈 답을 줬다 → `keys` 에 title·ingredients 가 «있는데» 배열이 비어 있다
-    //   ⛔ 원문을 통째로 안 찍는다 — 열쇠 이름과 앞 300자면 갈래를 가르는 데 충분하다.
-    if (!답.ingredients.length && !답.steps.length) {
-      let 모양; try { 모양 = JSON.stringify(parsed) } catch { 모양 = '(못 읽음)' }
-      console.log(
-        'EMPTY_RESULT', model, (Date.now() - 시작) + 'ms',
-        'keys=' + Object.keys(parsed || {}).join(','),
-        'title=' + JSON.stringify(답.title).slice(0, 60),
-        String(모양).slice(0, 300),
-      )
-    }
+    if (kv) await inc(kv, `ti:${ip}:${minute}`, 120)
 
     return json(답, 200, cors)
   },
@@ -297,6 +326,12 @@ async function num(kv, key) {
   const v = await kv.get(key)
   return v ? parseInt(v, 10) || 0 : 0
 }
+// 🔢 무료 통 세기 — ⛔실패해도 «뉴런은 나갔다». 성공만 세면 통이 조용히 샌다.
+async function 통세기(kv, ymd) {
+  if (!kv) return
+  await inc(kv, `td:${ymd}`, 60 * 60 * 48)
+}
+
 async function inc(kv, key, ttl) {
   const v = (await num(kv, key)) + 1
   await kv.put(key, String(v), { expirationTtl: ttl })
