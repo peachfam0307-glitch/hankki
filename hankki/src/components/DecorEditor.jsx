@@ -913,15 +913,21 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //       ⑴크림 테를 둘러 바탕에서 떼고 ⑵옅은 그림자로 들어올린다. 목록의 한 줄이 아니라 «배지»로 읽힌다.
   //    ⛔ 그림자는 진하게 주지 않는다 — 서랍은 칸이 촘촘해서 진하면 시끄럽다.
   //    🎁 ＋ **선물 상자 그림을 알약 «안»에** — 창업자 2026-08-29 = *"알약색을 바꾸거나 옆에 뭐라도 붙이자"*
-  //       ⛔ **색을 바꾸는 쪽은 안 골랐다** — 테마 안전한 강조 토큰이 «없다»(실측 = `--pt`·`--accent`·`--gold` 전부 0건).
-  //          없는 색을 새로 박으면 다크에서 글자가 죽는다(v11.17 사고). 그래서 «그림»으로 갔다.
   //       ⛔ 유니코드 이모지 금지 → 우리 `Icon` 의 `gift`(SVG). 같은 그림이 「선물 네 가지」 단추에도 이미 쓰인다
   //          → 유저가 **두 자리에서 같은 그림을 보고** 「선물이구나」를 저절로 배운다.
+  //    🎨 ＋ **알약을 오렌지로** — 창업자 2026-08-29 = *"알약색은 안바꿩?"*
+  //       ⛔ 그날 낮엔 *"테마 안전한 강조 토큰이 없다"*(실측 = `--pt`·`--accent`·`--gold` 전부 0건)는 이유로
+  //          그림만 붙였는데, 그건 **「이미 있는 토큰」에서만 찾은 것**이었다. 살구 테마를 만들며 오렌지 대비를
+  //          다 재놨으니 **`--gift` 토큰을 새로 만들면 된다**(값·근거 = `styles.css` 의 `--gift`).
+  //       ⭐ 왜 오렌지가 「특별해 보이게」 하나 = **`--brown` 이 사실 더스티 블루라 앱 포인트가 전부 파랑이다.**
+  //          그 사이에서 오렌지 알약 하나만 튄다. ⛔`--brown` 이면 파란 것들 사이에 묻힌다(그게 창업자가 본 그 문제).
+  //       ⚠️ **다른 선물 그룹(「출시 축하」·「출시기념 여름」)도 같이 오렌지가 된다** — 일부러 그렇게 뒀다.
+  //          「선물 = 오렌지」가 색 하나로 읽혀야 값을 한다(그룹마다 다르면 그냥 알록달록한 목록이 된다).
   const GiftTag = ({ text = '선물' }) => (
     <span className="decor-gift-tag" style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
       marginLeft: 7, padding: '2.5px 9px 2.5px 7px', borderRadius: 999, fontSize: 11, fontWeight: 800,
-      background: 'var(--brown)', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
+      background: 'var(--gift)', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
       whiteSpace: 'nowrap',
       border: '1.5px solid var(--surface)', boxShadow: '0 1.5px 4px rgba(70,60,45,.28)',
     }}>
