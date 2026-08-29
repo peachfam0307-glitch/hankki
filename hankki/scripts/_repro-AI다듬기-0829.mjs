@@ -94,27 +94,40 @@ console.log('\n── ⓑ 진짜로 그렇게 도나 (tidy.js 를 실제로 실�
 //   앱 코드는 진짜 tidy.js 를 그대로 쓴다(절대원칙 30).
 globalThis.localStorage = { getItem: () => null, setItem: () => {} }
 
-async function 실험(이름, fetch흉내, 기대) {
-  globalThis.fetch = fetch흉내
-  // ⭐ 모듈을 매번 새로 읽어 상태가 안 섞이게(쿼리로 캐시 우회)
-  const mod = await import(`../src/tidy.js?t=${Date.now()}${Math.random()}`)
-  const 결과 = await mod.tidyRecipe('된장크림파스타\n스파게티 200g\n된장 1큰술\n1. 면을 삶는다\n2. 팬에 된장을 풀고 생크림을 넣는다')
-  return chk(이름, 기대(결과), 결과 ? '(값이 왔다)' : '(null — 규칙 파서로 간다)')
+const 맛보기 = '된장크림파스타\n스파게티 200g\n된장 1큰술\n1. 면을 삶는다\n2. 팬에 된장을 풀고 생크림을 넣는다'
+
+// ⛔⛔ **검사가 「그날의 설정값」에 기대면 안 된다** — 2026-08-29 사고.
+//   처음엔 진짜 `src/tidy.js` 를 그대로 불러 ①(주소가 비면 안 부른다)을 쟀다.
+//   그날 워커를 세우고 주소를 «채우자» ①-b 가 죽었다 — **코드는 멀쩡한데 검사가 죽었다.**
+//   ⭐ 그래서 두 판을 «직접 만들어» 잰다. 실제 파일에 주소가 있든 없든 둘 다 재진다.
+//      ⑴ 비운 판 = 주소 ''        → fetch 를 «한 번도» 안 부르나
+//      ⑵ 채운 판 = 가짜 주소      → 바깥 세계가 죽었을 때 어떻게 되나
+const { writeFileSync, unlinkSync } = await import('node:fs')
+const 주소줄 = /^const TIDY_URL = '[^']*'/m
+// ⛔ 못 찾으면 «죽는다». 조용히 지나가면 채운 판이 «진짜 워커 주소»를 들고 돌게 된다.
+if (!주소줄.test(tidySrc)) {
+  console.error('\n⛔ tidy.js 에서 TIDY_URL 줄을 못 찾았다 — 검사를 먼저 고쳐야 한다')
+  process.exit(1)
+}
+const 판만들기 = (파일, 주소) => {
+  writeFileSync(ROOT + 'scripts/' + 파일, tidySrc.replace(주소줄, `const TIDY_URL = '${주소}'`))
+  return 파일
+}
+const 비운판 = 판만들기('.tmp-tidy-비움.mjs', '')
+const 임시 = ROOT + 'scripts/.tmp-tidy-test.mjs'
+판만들기('.tmp-tidy-test.mjs', 'https://x.invalid/tidy')
+
+// ① 주소가 비어 있으면 fetch 를 아예 안 부른다
+let 부른횟수 = 0
+globalThis.fetch = () => { 부른횟수++; return Promise.reject(new Error('network')) }
+{
+  const mod = await import(`./${비운판}?t=${Date.now()}${Math.random()}`)
+  const 결과 = await mod.tidyRecipe(맛보기)
+  chk('① 주소가 비면 null (규칙 파서로 간다)', 결과 === null)
+  chk('①-b 진짜로 fetch 를 «한 번도» 안 불렀다', 부른횟수 === 0, `(${부른횟수}번)`)
 }
 
-let 부른횟수 = 0
-const 세는fetch = (...a) => { 부른횟수++; return Promise.reject(new Error('network')) }
-
-// ① 주소가 비어 있으니 fetch 를 아예 안 부른다
-await 실험('① 주소가 비면 fetch 를 «한 번도» 안 부른다', 세는fetch, (r) => r === null)
-chk('①-b 진짜로 안 불렀다', 부른횟수 === 0, `(${부른횟수}번)`)
-
-console.log('\n  ⚠️ 아래는 TIDY_URL 을 채운 판으로 잰다 — 실제 파일은 안 고친다')
-
-// TIDY_URL 을 채운 «임시 판»을 만들어 같은 코드를 돌린다
-const 임시 = ROOT + 'scripts/.tmp-tidy-test.mjs'
-const { writeFileSync, unlinkSync } = await import('node:fs')
-writeFileSync(임시, tidySrc.replace("const TIDY_URL = ''", "const TIDY_URL = 'https://x.invalid/tidy'"))
+console.log('\n  ⚠️ 아래는 TIDY_URL 을 «가짜 주소»로 채운 판으로 잰다 — 실제 파일은 안 고친다')
 
 async function 실험2(이름, fetch흉내, 기대, 덧말) {
   globalThis.fetch = fetch흉내
@@ -160,6 +173,7 @@ await 실험2('② -c 이상한 답(502) 이면 null', 응답({ error: 'bad_ai_o
 }
 
 try { unlinkSync(임시) } catch { /* noop */ }
+try { unlinkSync(ROOT + 'scripts/' + 비운판) } catch { /* noop */ }
 
 console.log(`\n${실패 ? '⛔' : '✅'} ${통과}/${통과 + 실패}`)
 if (실패) { console.log('실패:', 실패목록.join(' · ')); process.exit(1) }
