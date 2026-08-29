@@ -1,4 +1,4 @@
-import { isSeason, inCardWindow, seasonsNow } from '../season'
+import { isSeason, isPeakSeason, inCardWindow, seasonsNow } from '../season'
 import { SEASON_CUTS } from '../data/cardSeasons'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toJpeg } from 'html-to-image'
@@ -134,15 +134,15 @@ function tagsOf(recipe) {
 // 스타일별 카테고리 규칙(적재적소): 콤비는 넓은 스타일(홀로·팝·여름)에만.
 function drawState() {
   // ⚠️ 스티커는 철이 지나도 순서만 밀리지만, **카드 스킨은 뽑기 풀에서 아예 빠진다**(한정 수집감).
-  //    그래서 전환기 겹침이 여기서 특히 크다 — 9월 첫 2주까지는 여름 스킨이 계속 나온다.
-  //    (`src/season.js` — 창업자 2026-07-30 "여름에 준비한 아이템들은 며칠 못하고…")
-  //    ✅✅ **[2026-08-29 실측으로 확인 — 이 줄이 맞다]** 창업자 물음 = *"레꾸자랑은 9월에는 여름꺼는 빠지는거 아냐?"*
-  //       🔢 `isSeason` 을 «실제로 돌려» 잰 값 —
-  //          8/31 여름✅가을⛔ ／ **9/01~9/14 여름✅가을✅(둘 다)** ／ **9/15 여름⛔가을✅**
-  //       ⭐ 뿌리 = `season.js` 의 **`OVERLAP_DAYS = 14`**(새 계절 첫 달 1~14일은 두 계절이 겹친다).
-  //       ⛔⛔ **내가 한 번 「이 줄이 낡았다」고 고쳤다가 되돌렸다** — `SEASON_AT`(월 기준 `m>=9 → autumn`)만
-  //          읽고 «9/1부터 가을이니 여름은 빠진다»고 단정했다. **`isSeason` 을 안 돌렸다**(규칙 18 — 확인 방식).
-  //          📌 상수 하나만 보고 함수의 답을 짐작하지 말 것. 겹침 로직이 그 위에 한 겹 더 있었다.
+  //    ✅✅ **[창업자 확정 2026-08-29] 카드 스킨은 «전환기 겹침을 안 쓴다» — 계절 첫날에 바로 갈아탄다.**
+  //       📮 창업자 = *"레꾸자랑은 9월에는 여름꺼는 빠지는거 아냐?"* → *"**9월1일에 빼야지 가을시작이니까.**"*
+  //       🔢 고치기 «전» 실측 = 8/31 여름✅ ／ **9/01~9/14 여름✅가을✅(둘 다)** ／ 9/15 여름⛔
+  //          → 아래 `isPeakSeason` 으로 바꿔서 **9/1 에 여름이 빠진다.**
+  //       ⭐ 스티커는 **겹침을 그대로 둔다** — 창업자 2026-07-30 *"여름에 준비한 아이템들은 며칠 못하고…"*
+  //          갈래가 다르다: **스티커 = 손에 남겨두는 것 / 카드 스킨 = 한정이라 계절이 바뀌면 갈아탄다.**
+  //       ⛔⛔ **내가 여기서 두 번 틀렸다** — ①`SEASON_AT`(월 기준)만 읽고 「9/1에 빠진다」고 단정
+  //          (`isSeason` 을 안 돌렸다) ②그래서 이 주석을 「낡았다」며 고쳤다가 되돌렸다.
+  //          📌 상수만 보고 함수의 답을 짐작하지 말 것 — 겹침 로직이 그 위에 한 겹 더 있었다(규칙 18).
   // ⭐ **뼈대 6종은 항상 같고, 옷만 계절마다 갈아입는다**(위 옷장 주석 참고).
   //    그래서 "기본 카드 / 계절 카드" 구분이 없다 — 9월엔 6장이 전부 가을 옷이다.
   //    카드 수가 안 늘어 뽑기 확률도 안 묽어진다(6장 = 각 17%).
@@ -153,7 +153,9 @@ function drawState() {
   const seasonOpen = (k) => SEASON_CUTS.some((s) => s.key === k && inCardWindow(s))
   const hwOpen = seasonOpen('hw'), csOpen = seasonOpen('cs')
   const pool = ['warm', 'panel', 'pola', 'mag', 'arch', 'night',
-    ...(isSeason('summer') ? ['summer'] : []),
+    // 🍂 `isPeakSeason` = 전환기 겹침을 «안» 센다 → **9/1 에 여름 스킨이 바로 빠진다**
+    //    (창업자 확정 2026-08-29 = *"9월1일에 빼야지 가을시작이니까."* · ⛔`isSeason` 이면 9/14 까지 남는다)
+    ...(isPeakSeason('summer') ? ['summer'] : []),
     ...(hwOpen ? ['halloween'] : []), ...(csOpen ? ['chuseok'] : [])]
   const key = (() => {
     try { const v = new URLSearchParams(location.search).get('card'); if (v && SKINS[v]) return v } catch { /* noop */ }
