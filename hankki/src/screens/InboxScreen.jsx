@@ -6,12 +6,16 @@ import Thumb from '../components/Thumb'
 import SourceBadge from '../components/SourceBadge'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { timeAgo } from '../utils'
+import { getOcrLeft, KEY_NAME, KEY_UNIT } from '../ocr'
+import uiKeyOne from '../assets/ui/key_one.png'
+import uiKeyHole from '../assets/ui/key_hole.png'
 
 export default function InboxScreen() {
   const { recipes, removeRecipe } = useStore()
   const nav = useNav()
   // 미정리함은 "버릴 것"이 쌓이는 곳 — 상세까지 안 들어가고 여기서 바로 지운다(창업자 요청).
   const [delAsk, setDelAsk] = useState(null)
+  const ocrLeft = getOcrLeft()   // 🔑 상단바 오른쪽 잔량 — 화면을 열 때마다 새로 읽는다
 
   // 🗃🗃 [창업자 확정 2026-08-28 = ㉠] **정리 끝난 레시피는 여기 «안» 보인다.**
   //
@@ -51,7 +55,29 @@ export default function InboxScreen() {
               ⛔ 화면에 보이는 영어 낱말을 늘리지 않는다(v11.02 「my pick」을 접은 것과 같은 이유). */}
           <Icon name="inbox" size={20} /> 임시보관함
         </div>
-        <div style={{ width: 40 }} />
+        {/* 🔑🔑 [2026-08-29 · 창업자 지시] *"임시보관함 위에 열쇠랑 숫자표시도 해줘야 할 듯"*
+            ⭐⭐ **여기가 열쇠를 «쓴 결과»가 쌓이는 곳이다** — 사진으로 담은 것이 전부 이 목록으로 온다.
+               가져오기 화면엔 큰 잔량 띠가 있는데(v11.30), 담고 «나온 뒤»엔 잔량을 볼 자리가 없었다.
+               창업자가 그날 토스트로만 「0개 남았어요」를 보고 놀란 자리가 정확히 여기다.
+            ⭐ 자리 = 상단바 오른쪽. 원래 `width: 40` 짜리 **빈 칸**이라 새로 밀어낼 것이 0이다.
+            ⛔ 큰 띠를 그대로 옮기지 않았다 — 여기는 «목록»이라 위가 두꺼우면 정작 레시피가 밀린다.
+            ⛔ 이름·단위는 `ocr.js` 한 곳에서 읽는다(v11.30 — 이름이 또 바뀌어도 여기가 안 낡는다). */}
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 40, justifyContent: 'flex-end' }}
+          aria-label={`무료 ${KEY_NAME} ${ocrLeft.total}${KEY_UNIT} 남았어요`}
+        >
+          <img
+            src={ocrLeft.total > 0 ? uiKeyOne : uiKeyHole}
+            alt="" aria-hidden="true" draggable={false}
+            style={{ height: 22, width: 'auto', flexShrink: 0 }}
+          />
+          <span style={{
+            fontSize: 16, fontWeight: 800, letterSpacing: '-.3px',
+            color: ocrLeft.total > 0 ? '#3d6b38' : '#b4442f',
+          }}>
+            {ocrLeft.total}
+          </span>
+        </div>
       </div>
 
       <div className="pad">
