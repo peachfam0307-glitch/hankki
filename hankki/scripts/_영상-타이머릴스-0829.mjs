@@ -20,7 +20,7 @@
 // 실행: node /home/user/hankki/hankki/scripts/_영상-타이머릴스-0829.mjs
 import './_fresh.mjs'
 import { chromium } from 'playwright'
-import { readFileSync, mkdirSync, renameSync, readdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, renameSync, readdirSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { extname, join } from 'node:path'
 
@@ -42,7 +42,19 @@ const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const CHROMIUM = process.env.SMOKE_CHROMIUM
 const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 
-// 📐 9:16 세로 — 인스타 릴스 규격(1080×1920 의 절반인 540×960 로 찍고 2배 스케일)
+// 📐 세로 — 앱 레이아웃 기준은 390×844(폰 폭) 그대로 두고, 녹화만 «2배»로 받는다.
+// ⛔⛔ [2026-08-29 창업자 제보 ①] *"처음에 화면이 지지직? 거려."*
+//    🔢 앞 4초를 0.5초마다 뽑아 보니 = 0.0s **백지** · 0.5~1.5s 와 2.0~2.5s 의 **화면 폭이 서로 다르다.**
+//    ⭐ 뿌리 = `deviceScaleFactor: 2` 라 브라우저는 **780×1688** 로 그리는데
+//       녹화판을 **390×844** 로 받아 매 프레임 «절반으로 줄이고» 있었다.
+//       줄이는 계산이 프레임마다 미세하게 갈려 «지지직»으로 보인다.
+//    ✅ **진짜 범인은 그게 아니라 「앱이 뜨는 동안」이었다** — 그 구간을 통째로 잘라내면 사라진다.
+//
+// ⛔⛔ **녹화 크기를 780×1688 로 키워 봤다가 «더 나빠졌다»** (2026-08-29 실측 · 규칙 21 이 잡았다)
+//    Playwright 의 `recordVideo.size` 는 **CSS 픽셀 기준**이라 `deviceScaleFactor` 를 곱하면 안 된다.
+//    390×844 짜리 화면을 780×1688 판 **왼쪽 위에 1:1로 놓고 나머지를 회색으로 채워** 버렸다
+//    → 릴스에서 앱이 화면 1/3 크기로 쪼그라들었다.
+//    📌 **「크게 찍으면 선명하겠지」가 틀렸다.** 녹화 크기 = viewport 그대로.
 const ctx = await b.newContext({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 2,
@@ -50,6 +62,7 @@ const ctx = await b.newContext({
 })
 await ctx.addInitScript(SEED_COACH_SEEN)
 await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+const 녹화시작 = Date.now()      // ⏱ webm 은 «컨텍스트를 만든 순간»부터 찍힌다
 const p = await ctx.newPage()
 
 const 컷 = []
@@ -75,7 +88,14 @@ for (let i = 0; i < Math.min(await 카드.count(), 14); i++) {
   await p.goBack().catch(() => {}); await p.waitForTimeout(600)
 }
 if (!들어감) { console.error('✗ 요리모드 버튼이 있는 레시피를 못 찾았다'); await b.close(); srv.close(); process.exit(1) }
-await p.waitForTimeout(900)
+
+// ⏱⏱ **여기가 「진짜 릴스가 시작되는 자리」다** — 위쪽(앱 로딩 · 팝업 닫기 · 레시피 찾기)은 버린다.
+// 📮 창업자 = *"처음에 화면이 지지직? 거려."* → *"**번쩍번쩍 거렸어 초반에**"*
+//    ⭐ 「번쩍」 = 앱이 뜨기 «전» 흰 화면과 화면이 번갈아 나오는 로딩 구간이다.
+//    ⛔ 그 구간은 «앱의 잘못»이 아니라 **녹화가 너무 일찍 시작된 것**이라 자르면 그만이다.
+// 🔢 화면이 완전히 멎을 때까지 넉넉히 기다린 «뒤»에 자를 지점을 찍는다.
+await p.waitForTimeout(1800)
+const 잘라낼초 = (Date.now() - 녹화시작) / 1000
 await 찍기('상세')
 
 // ── ② 요리모드 시작 ──
@@ -84,9 +104,20 @@ await p.waitForTimeout(1400)
 await 찍기('요리모드')
 
 // 재료 준비 → 첫 조리 걸음
-await p.evaluate(() => [...document.querySelectorAll('.cook-navbtn')].find((x) => /시작 →|다음 →/.test(x.innerText || ''))?.click())
-await p.waitForTimeout(1100)
+const 다음걸음 = async () => {
+  const 눌림 = await p.evaluate(() =>
+    !![...document.querySelectorAll('.cook-navbtn')].find((x) => /시작 →|다음 →/.test(x.innerText || ''))?.click() || true)
+  await p.waitForTimeout(1100)
+  return 눌림
+}
+await 다음걸음()
 await 찍기('첫걸음')
+
+// ⭐ 📮 창업자 = *"**요리모드에서 몇번은 넘겨서 다음화면 보여주고**, 2번으로 진행"*
+//    → 걸음을 «두 번 더» 넘겨 「단계마다 넘어간다」를 눈으로 보여준 뒤 타이머로 간다.
+//    ⛔ 여기서 컷을 남기지 않는다 — 릴스에 쓰는 건 «움직임»이고, 낱장은 이미 첫걸음으로 찍었다.
+for (let i = 0; i < 2; i++) await 다음걸음()
+await 찍기('걸음넘김')
 
 // ── ③ 타이머 열기 ──
 // ⛔ 요리 모드 안의 버튼 글자는 **「이 단계 타이머 맞추기」** 다(`CookScreen.jsx:197`).
@@ -125,9 +156,10 @@ await p.waitForTimeout(800)
 await 찍기('요리모드-타이머돎')
 
 // ── ⑤ ⭐⭐ 심장 — 다른 화면으로 나가도 타이머가 따라온다 ──
+// 📮 창업자 = *"**군더더기 장면은 버리고**"* → 상세를 거쳐 나가긴 하지만 **머물지 않는다.**
+//    ⛔ 상세는 바로 앞에서 이미 보여준 화면이라 또 세우면 릴스가 늘어진다.
 await p.goBack().catch(() => {})
-await p.waitForTimeout(1200)
-await 찍기('상세인데-타이머가-따라옴')
+await p.waitForTimeout(700)
 
 // ⛔⛔ **상세 화면엔 하단바가 없다**(액션바 「요리모드 시작 / 만들었어요」만 있다) —
 //    첫 판이 여기서 홈 탭을 눌렀다고 «이름만» 붙이고 실제론 상세에 머물렀다.
@@ -162,7 +194,10 @@ await b.close(); srv.close()
 if (영상) {
   const 새이름 = join(OUT, '4화-타이머-앱실사.webm')
   try { renameSync(영상, 새이름) } catch {}
+  // ⭐ 편집판이 읽을 「어디부터가 진짜인가」 — 손으로 옮겨 적지 않는다(옮기면 낡는다)
+  writeFileSync(join(OUT, '자를지점.json'), JSON.stringify({ 잘라낼초: Number(잘라낼초.toFixed(2)) }, null, 2))
   console.log(`\n🎥 영상 = ${새이름}`)
+  console.log(`✂️  앞 ${잘라낼초.toFixed(2)}초 = 로딩·준비 구간 (편집판이 잘라낸다)`)
 }
 console.log(`🖼 낱장 ${컷.length}컷 = ${OUT}`)
 console.log(`   ${컷.join(' → ')}\n`)
