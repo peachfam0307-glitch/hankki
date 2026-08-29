@@ -74,7 +74,10 @@ const 재기 = (page) => page.evaluate(() => {
 
   // 🧍‍♀️ 상단바 캐릭터 = 왼쪽 첫 그림(꼬르곰·펭펭) 또는 아바타 단추(홈).
   //    ⛔ 「캐릭터는 무조건 글자 왼쪽」이 확정이라(2026-08-14 · check-charside) 늘 첫 번째다.
-  const 캐 = 바.querySelector('img') || 바.querySelector('button[aria-label="프로필"]')
+  // ⛔ 2026-08-30 — 홈은 상단바에  가 «없고»(아바타는 글자 배지 div) 그래서 옛 잣대가
+  //    44px 손가락 «칸»을 쟀다. 칸은 아바타를 키워도 그대로라 **변화를 아예 못 본다**(규칙 18 ⓘ).
+  //    ✅ 칸이 아니라 «칸 안의 그림»을 잰다.
+  const 캐 = 바.querySelector('img') || 바.querySelector('button[aria-label="프로필"]')?.firstElementChild
   const cr = 캐?.getBoundingClientRect()
   const mr = 말.getBoundingClientRect()
   const tr = 꼬리.getBoundingClientRect()

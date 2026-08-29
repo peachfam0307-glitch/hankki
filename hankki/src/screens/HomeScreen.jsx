@@ -253,12 +253,21 @@ export default function HomeScreen() {
           {/* 곰 자리에 내 아바타를 넣었다(창업자 2026-07-29). 인사하는 곰은 '레시피' 탭으로 옮김.
               오른쪽에 아바타·톱니가 나란히 있어 눌러야 할 게 둘로 보이던 것도 정리된다. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* ♿ 아바타 그림은 38px 그대로, «손가락 닿는 자리»만 44px (2026-08-03 접근성).
+            {/* ♿ «손가락 닿는 자리»는 44px (2026-08-03 접근성).
                 ⚠️ `.tap-ok` 클래스로 했을 땐 브라우저가 min-width 를 `auto` 로 계산해 안 먹었다
-                   (CSS 는 분명히 들어가 있는데 — 이유는 못 밝혔다). 인라인은 확실히 먹는다. */}
+                   (CSS 는 분명히 들어가 있는데 — 이유는 못 밝혔다). 인라인은 확실히 먹는다.
+                🏠💬 [✅창업자 확정 2026-08-30 = 시안 «B»] 그림을 **38 → 43px**.
+                📮 창업자 = *"홈 프로필 사진이 작아서 그런지 말풍선이 홈만 아래로 내려가 보여.."* → *"b"*
+                🔢 실측 = 아바타 38px(하단 55) ↔ 레시피 꼬르곰 43px(하단 57) · 말풍선 top 은 둘 다 64
+                   → 홈만 **9px**, 레시피는 6.5px 떨어졌다. ＋아바타는 «원»이라 꼬리가 닿는 왼쪽에서
+                     곡선만큼 더 파여 실제보다 멀어 보인다.
+                ⭐⭐ 말풍선 값(`--tab-talk` margin)은 **다섯 탭이 하나를 쓴다** — 홈만 캐릭터가 작아서 벌어진 것이다.
+                   그래서 «말풍선을 홈에서만 더 올리는» 길(시안 C)은 접었다. 값이 갈리면 반드시 어긋난다.
+                ✅ 43px 로 맞추니 말풍선까지 **6.5px = 레시피와 같아졌다.** 말풍선은 한 줄도 안 건드렸다.
+                ⛔ 43 을 넘기지 말 것 — 손가락 칸이 44px 이라 여백이 0.5px 밖에 안 남는다. */}
             <button className="press" onClick={() => nav.go('profile')} aria-label="프로필"
               style={{ display: 'flex', flex: '0 0 auto', minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-              <Avatar name={profile.name} avatar={profile.avatar} size={38} />
+              <Avatar name={profile.name} avatar={profile.avatar} size={43} />
             </button>
             <div className="h-title">한끼</div>
           </div>
