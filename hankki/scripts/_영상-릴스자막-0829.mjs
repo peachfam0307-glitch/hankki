@@ -19,7 +19,8 @@
 //    ⛔ 화면마다 말투가 갈리면 병맛이 «어설픔»으로 읽힌다. 한 사람이 무전하는 것처럼.
 //
 // 실행: node scripts/_영상-릴스자막-0829.mjs
-import './_fresh.mjs'
+// ⛔ `_fresh.mjs`(dist 신선도 검사)를 부르지 «않는다» — 이 판은 **앱을 띄우지 않는다.**
+//    글자를 그린 HTML 만 찍으므로 dist 와 아무 상관이 없고, 부르면 엉뚱한 이유로 막힌다.
 import { chromium } from 'playwright'
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -48,10 +49,30 @@ export const 자막들 = [
   { 초: 13.6, 끝: 99,   머리: '장 보는 중에도',   본문: '아래에서 째깍째깍' },
 ]
 
-const 판 = (머리, 본문) => `<!doctype html><meta charset="utf-8">
-<style>
+// 🧩 **두 갈래** — 📮창업자 *"자막이 저렇게 위에 2개가 붙어??"*
+//    ⓐ 두 줄(빨간 머리 ＋ 흰 본문) = 무전 보고 결이 살지만 위가 무거워진다
+//    ⓑ 한 줄(빨간 띠 안에 다 넣기) = 가볍고 한눈에 읽히지만 담을 수 있는 글자가 준다
+const 한줄 = process.argv.includes('--한줄')
+
+const 글꼴 = `
   @font-face { font-family:'Jua'; src:url('file://${join(ROOT, 'design/promo/fonts/jua-korean-400.woff2')}') format('woff2'); }
-  @font-face { font-family:'Gowun'; src:url('file://${join(ROOT, 'design/promo/fonts/gowun-dodum-korean-400.woff2')}') format('woff2'); }
+  @font-face { font-family:'Gowun'; src:url('file://${join(ROOT, 'design/promo/fonts/gowun-dodum-korean-400.woff2')}') format('woff2'); }`
+
+const 판 = (머리, 본문) => 한줄 ? `<!doctype html><meta charset="utf-8">
+<style>
+  ${글꼴}
+  html,body { margin:0; width:${W}px; height:${H}px; background:transparent; }
+  .wrap { width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+  .one { display:inline-flex; align-items:baseline; gap:22px; max-width:${W - 60}px;
+         background:#c0261f; color:#fff; font-family:'Jua',sans-serif; font-size:54px; line-height:1;
+         padding:24px 44px 30px; border-radius:24px;
+         border:5px solid #fff; box-shadow:0 10px 0 rgba(0,0,0,.28); white-space:nowrap; }
+  .sub { font-family:'Gowun',sans-serif; font-size:36px; color:#ffe2c4; }
+</style>
+<div class="wrap"><div class="one">${머리}<span class="sub">${본문}</span></div></div>`
+: `<!doctype html><meta charset="utf-8">
+<style>
+  ${글꼴}
   html,body { margin:0; width:${W}px; height:${H}px; background:transparent; }
   .wrap { width:100%; height:100%; display:flex; flex-direction:column;
           align-items:center; justify-content:center; gap:14px; font-family:'Jua',sans-serif; }
