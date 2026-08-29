@@ -19,7 +19,7 @@ import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw } from '../parseRecipe'
-import { tidyRecipe, mergeTidy, tidyTail } from '../tidy'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder } from '../tidy'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 // 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
@@ -379,31 +379,58 @@ export default function EditorScreen({ id, prefill }) {
     //   ⛔ 순서를 뒤집지 말 것 — AI 를 먼저 기다렸다가 실패하면 그때 파싱하면, 실패한 만큼 유저가 더 기다린다.
     let r = parseRecipeText(combined, { fromOcr: true })
     // ⛔ 열쇠는 여기서 «안» 깎는다 — 위에서 `ocrImage` 가 이미 깎았다(카운트는 한 곳에서만).
-    // ⭐ 얹는 규칙은 `mergeTidy` 한 곳에 있다 — 여기와 `App.jsx`(공유받기)가 «같은 말»이라야 한다
-    r = mergeTidy(r, await tidyRecipe(combined))
     setRawText(keepRaw(combined) || '') // 📥 읽어들인 글자 그대로 — 파서를 고친 날 다시 읽을 재료
-    setF((prev) => ({
-      ...prev,
-      title: prev.title.trim() || r.title,
-      ingredients: prev.ingredients.trim() || r.ingredients.join('\n'),
-      steps: prev.steps.trim() || r.steps.join('\n'),
-      // 메모는 직접 입력 전용 — 사진에서 읽은 내용을 자동으로 붙이지 않는다.
-      memo: prev.memo,
-      category:
-        prev.category && prev.category !== '한식'
-          ? prev.category
-          : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
-    }))
+
+    // ⏱⏱⏱ **[2026-08-29 오후 · 창업자 갈래 ⓒ] 「AI 를 기다리지 않는다」**
+    //   ⛔⛔ 전엔 `await tidyRecipe()` 가 여기를 막아서, **이미 손에 쥔 규칙 파서 결과를**
+    //      AI 가 끝날 때까지 화면에 안 내놨다(창업자 폰 실측 = 30초를 세워두고 `timeout`).
+    //   ⭐⭐ 이제 ①규칙 파서로 «즉시» 채우고 ②AI 가 오면 조용히 갈아끼운다.
+    //   ⭐ **유저가 그 사이에 손으로 고친 칸은 안 건드린다** — ②는 「①이 넣은 값 그대로인 칸」만 바꾼다.
+    //      (빈 칸을 안 덮는 규칙 `prev.x || r.x` 만으로는 ②가 영영 못 들어온다 — ①이 이미 채웠으니까)
+    //   ⛔ `await` 를 되살리지 말 것 · 🔒 `scripts/_repro-AI다듬기-0829.mjs` 가 이 자리를 잰다.
+    let 내가넣은 = null
+    const 채우기 = (r2) => {
+      setF((prev) => {
+        const 안건드린 = (키, 값) => !prev[키].trim() || (내가넣은 && prev[키] === 내가넣은[키]) ? 값 : prev[키]
+        const next = {
+          ...prev,
+          title: 안건드린('title', r2.title || prev.title),
+          ingredients: 안건드린('ingredients', r2.ingredients.join('\n')),
+          steps: 안건드린('steps', r2.steps.join('\n')),
+          // 메모는 직접 입력 전용 — 사진에서 읽은 내용을 자동으로 붙이지 않는다.
+          memo: prev.memo,
+          category:
+            prev.category && prev.category !== '한식' && !(내가넣은 && prev.category === 내가넣은.category)
+              ? prev.category
+              : guessCategory((prev.title || r2.title || '') + ' ' + r2.memo),
+        }
+        내가넣은 = { title: next.title, ingredients: next.ingredients, steps: next.steps, category: next.category }
+        return next
+      })
+    }
+
+    // ① 규칙 파서 — «즉시»
+    채우기(r)
     // 🤖 「AI 가 정리했나」를 «보이게» 붙인다 — 문구는 `tidy.js` 의 `tidyTail()` 한 곳에서 정한다
     //   (여기와 App.jsx 공유받기가 «같은 말»이라야 유저가 두 경로를 같은 기능으로 읽는다)
     nav.showToast(
-      (quotaTail
+      quotaTail
         ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
         : leftTail
           ? '초안을 채웠어요' + leftTail
-          : '초안을 채웠어요 · 사진 보며 다듬어 주세요') + tidyTail(),
-      6500,
+          : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
     )
+
+    // ② AI — «뒤에서». ⭐ 얹는 규칙은 `mergeTidy` 한 곳에 있다(여기와 `App.jsx` 가 «같은 말»)
+    tidyRecipe(combined).then((ai) => {
+      if (ai) {
+        채우기(mergeTidy(r, ai))
+        nav.showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
+        return
+      }
+      // ⛔ 실패는 «유저에게 안 알린다» — 이미 채워져 있어 할 일이 0이다. 창업자(운영자)만 이유를 본다.
+      if (tidyFounder()) nav.showToast('AI 다듬기는 못 했어요' + tidyTail())
+    })
   }
 
   const canSave = f.title.trim().length > 0
