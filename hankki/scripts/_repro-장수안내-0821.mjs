@@ -108,19 +108,33 @@ console.log('── ① 가져오기 · 돈 드는 길 ↔ 공짜 길 ──')
 await page.getByRole('button', { name: '가져오기' }).first().click()
 await page.waitForTimeout(900)
 const t가져오기 = await 글자()
-// ⭐ 「1장씩」과 「0장」이 «같은 줄»에 나란히 있어야 뜻이 선다.
-//    한쪽만 적으면 유저는 비교할 게 없어 그냥 지나친다.
-chk(`① 캡처가 「${keyCount(1)}」라고 적혀 있다`, t가져오기.includes(keyCount(1)))
-chk(`② 글 붙여넣기는 「${keyCount(0)}」이라고 «나란히» 적혀 있다`, t가져오기.includes(keyCount(0)))
-const 캡처값 = await 글자자리(keyCount(1))
+// 🗓🗓 [창업자 확정 2026-08-28] 값 꼬리를 **목록에서 뺐다**
+//    📮 *"캡쳐하면 열쇠1개 **다 빼자. 초록박스에 설명했으니까.**"*
+//    ⭐⭐ 지키려는 것은 «안 바뀌었다» = **「돈이 드는지 유저가 쓰기 «전»에 아는가」**.
+//       말하는 «자리»만 옮겼다: 목록의 네 줄 → ⑴상단바 잔량 ⑵초록 박스 ⑶안내 화면 단추.
+//    ⛔ 그래서 칸을 «지우지 않고 옮겼다». 지우면 셋 중 하나가 조용히 빠져도 아무도 모른다
+//       (v11.00 에서 `noBuy` 가 말없이 버려졌을 때 게이트 50개가 전부 초록불이었다).
+// ⛔ 화면 «전체»로 재면 아래 「AI 자동정리」 카드가 걸린다 — 거긴 값이 «그대로 살아 있고 그게 맞다».
+//    창업자가 뺀 것은 **고르는 네 박스**다. 잣대도 딱 거기여야 한다(규칙 18 ⓘ).
+const 박스값 = await page.evaluate((말) => [...document.querySelectorAll('.imp-opt')]
+  .filter((e) => (e.textContent || '').includes(말)).length, keyCount(1))
+chk(`① 고르는 네 박스엔 값 꼬리가 «없다» (창업자 확정 · 걸린 박스 ${박스값})`, 박스값 === 0)
+chk('② 초록 박스가 「다 써도 계속 무료」를 말한다',
+  // ✍️ [창업자 2026-08-29] 문구가 짧아졌다 — 「바뀌어요」·「계속 무료로」는 앞판 글자다
+  /기본 인식으로/.test(t가져오기) && /무료로 계속/.test(t가져오기))
+// ⭐ 「크게」가 이 칸의 심장이다 — 창업자 *"오른쪽 상단에 크게!"*.
+//    작게 두면 상태 표시가 아니라 장식이 된다.
+const 잔량크기 = await page.evaluate(() => {
+  const b = document.querySelector('.imp-key b')
+  return b ? parseFloat(getComputedStyle(b).fontSize) : 0
+})
+chk(`③ 상단바 잔량 숫자가 «크게» 있다 (${잔량크기}px ≥ 20)`, 잔량크기 >= 20)
+// ⛔ 눈으로만 크면 안 된다 — 숫자만 덩그러니 있으면 읽어주기로는 「20」 하나다.
+// ⛔ 이 값은 «아래 편집 화면 칸»(⑨)이 쓴다 — 목록에서 값이 빠져도 위험색 자체는 그대로 산다.
+//    처음에 이 줄을 옛 블록과 함께 지웠다가 게이트가 통째로 뻗었다.
 const 위험 = await 위험색()
-chk(`③ 그 값이 위험색(--danger = ${위험})으로 칠해졌다`, !!캡처값 && 캡처값.color === 위험)
-// ⛔ 잔량 띠는 v10.56 부터 있던 것이다 — 이 판이 그걸 «깨뜨리지 않았나»도 같이 본다.
-chk('④ 맨 위 잔량 띠가 그대로 살아 있다', new RegExp(`무료 ${KEY_NAME}.*남았어요|다 썼어요`).test(t가져오기))
-// ⭐⭐ 값을 «고르는 그 줄»에도 — 창업자가 결제에 대해 정한 「쓰려는 순간 그 자리에서」와 같은 원칙.
-//    ⛔ 맨 위 잔량 띠로는 못 대신한다 — 그건 「몇 장 남았나」고 이건 「이 길이 몇 장을 쓰나」다.
-chk(`④-b 제일 많이 누르는 길(사진·직접 작성)에 「${keyCount(1)}」가 붙어 있다`, new RegExp(`직접 작성[\\s\\S]{0,80}${keyCount(1)}`).test(t가져오기))
-chk(`④-c 공짜 길(텍스트 붙여넣기)에 「${keyCount(0)}」이 나란히 붙어 있다`, new RegExp(`텍스트 붙여넣기[\\s\\S]{0,80}${keyCount(0)}`).test(t가져오기))
+const 잔량말 = await page.evaluate(() => document.querySelector('.imp-key')?.getAttribute('aria-label') || '')
+chk(`④ 잔량을 «말»로도 읽어 준다 (${잔량말.slice(0, 30)})`, new RegExp(`무료 ${KEY_NAME}[\\s\\S]*남았어요`).test(잔량말))
 // ⛔ 히어로 카드 설명은 `.opt-row .t .b` 가 «아니라» 인라인 style 이라 v11.19 의 keep-all 이 안 걸렸다.
 //    실물에서 「읽어 채워 / 요」로 잘려 있었다. 클래스로 고친 것은 클래스를 쓰는 줄만 낫는다.
 const 가져오기잘림 = await page.evaluate((잣대) => {
@@ -129,7 +143,7 @@ const 가져오기잘림 = await page.evaluate((잣대) => {
     .filter((e) => re.test(e.textContent || '')
       && ![...e.children].some((c) => re.test(c.textContent || '')))
   return { n: 값.length, 나쁨: 값.filter((e) => getComputedStyle(e).wordBreak !== 'keep-all').length }
-}, `캡처는 재료·만드는 법|캡처는 ${keyCount(1)}`)
+}, `인스타·유튜브 보다|이미 저장된 사진들|앱을 안 나가고`)
 chk(`④-d ⛔가져오기 안내도 낱말 가운데서 안 잘린다 (${가져오기잘림.n}줄 중 어긴 것 ${가져오기잘림.나쁨})`,
   가져오기잘림.n >= 2 && 가져오기잘림.나쁨 === 0)
 
@@ -138,29 +152,32 @@ chk(`④-d ⛔가져오기 안내도 낱말 가운데서 안 잘린다 (${가져
 //       그 줄만 조용히 빠지고 아무도 모른다(빈칸은 «0장»으로 읽힌다).
 //    ✅ 그래서 **줄 수와 꼬리표 수를 대조**한다 — 하나라도 모자라면 배포가 막힌다.
 //       📌 「검사가 있다」와 「검사가 «전부»를 본다」는 다른 말이다(2026-08-05 packleak 교훈).
-const 목록 = await page.evaluate((짧은) => {
-  // ⭐ 「장수를 말하나」의 잣대 = 「열쇠 N개」가 붙어 있나. (옛 잣대는 「소모」였고 2026-08-24 에 낡았다)
-  const re = new RegExp(`${짧은}\\s*\\d`)
-  const 줄 = [...document.querySelectorAll('.opt-row')]
+// 🗓🗓 [창업자 확정 2026-08-28] 목록은 «네 갈래»이고 값은 거기 «없다».
+//    ⭐ 그래도 지키는 것은 그대로다 — 「빠짐없이」. 다만 무엇을 빠짐없이 보느냐가 바뀌었다:
+//       옛 잣대 = 「모든 줄에 값이 붙었나」  →  새 잣대 = 「네 갈래가 다 있나 · 값은 다 빠졌나」
+//    ⛔ 값이 «어디에도» 없으면 그건 잃은 것이다 → ⑤-b 가 「AI 카드가 대신 말하나」를 본다.
+const 목록 = await page.evaluate((말) => {
+  const 줄 = [...document.querySelectorAll('.imp-opt')]
   return {
     n: 줄.length,
-    안내: 줄.filter((e) => re.test(e.textContent || '')).length,
-    빠진것: 줄.filter((e) => !re.test(e.textContent || ''))
-      .map((e) => (e.querySelector('.a')?.textContent || '?').trim()),
+    값붙은것: 줄.filter((e) => (e.textContent || '').includes(말)).length,
+    제목들: 줄.map((e) => (e.querySelector('.imp-opt-a')?.textContent || '?').trim()),
   }
-}, KEY_SHORT)
-chk(`⑤-a ⭐목록 «네 줄 전부»가 장수를 말한다 (${목록.안내}/${목록.n}${목록.빠진것.length ? ' · 빠진 것: ' + 목록.빠진것.join(',') : ''})`,
-  목록.n >= 4 && 목록.안내 === 목록.n)
-// ⭐ 히어로(사진·직접 작성)는 `.opt-row` 밖이라 위에서 따로 봤다(④-b). 합치면 다섯이다.
-// ⚠️ 조건부인 둘(인스타·유튜브)은 「캡처는」을 앞에 붙여야 한다 —
-//    그냥 「1장」이라 적으면 «붙여넣기»로 담는 사람도 깎이는 줄 안다.
-chk('⑤-b ⚠️조건부인 줄은 조건을 밝힌다 (「캡처는 AI 스캔 1장」)',
-  (t가져오기.match(new RegExp(`캡처하면 ${keyCount(1)}`, 'g')) || []).length >= 2)
+}, keyCount(1))
+chk(`⑤-a ⭐목록이 «네 갈래» 그대로다 (${목록.n}개 · ${목록.제목들.join(' / ').slice(0, 60)})`, 목록.n === 4)
+// ⭐⭐ 값이 «사라진» 게 아니라 «옮겨간» 것이다 — 그걸 확인하는 칸이다.
+//    창업자 = *"초록박스에 설명했으니까"* → 초록 박스 ＋ AI 카드 ＋ 흐름 단추가 나눠 말한다.
+//    ⛔ 이 칸이 없으면 「다 빼자」가 「돈 얘기를 아예 안 한다」로 굴러가도 아무도 못 잡는다.
+chk(`⑤-b ⚠️값은 «다른 자리»가 말한다 (AI 카드에 「캡처는 ${keyCount(1)}」)`,
+  (t가져오기.match(new RegExp(`캡처는 ${keyCount(1)}`, 'g')) || []).length >= 1)
 writeFileSync(join(OUT, '1-가져오기.png'), await page.screenshot({ fullPage: true }))
 
 // ── ② 편집 화면 : ⭐값이 «권유보다 먼저» 나오나 ──
 console.log('\n── ② 편집 화면 · 값이 먼저인가 ──')
-await page.getByText('사진 · 직접 작성하기', { exact: false }).first().click()
+// 🗓 [2026-08-28] 「사진 · 직접 작성하기」 → **「직접 입력하기」 ＋ 안내 한 단계**
+await page.getByText('직접 입력하기', { exact: true }).first().click()
+await page.waitForTimeout(800)
+await page.getByRole('button', { name: '빈 종이 열기' }).first().click()
 await page.waitForTimeout(1000)
 const t편집 = await 글자()
 // ⭐⭐ 창업자가 «직접 준» 문구다 — *"무료이용이 1장 소모가 된다던지"*.
@@ -237,7 +254,10 @@ for (const 이름 of ['YouTube', 'Instagram']) {
   await page.waitForTimeout(600)
   await page.getByRole('button', { name: '가져오기' }).first().click()
   await page.waitForTimeout(700)
-  await page.getByText(이름, { exact: true }).first().click()
+  // 🗓 [2026-08-28] 인스타·유튜브는 목록에서 내려가고 「SNS 보다가 캡처해서 바로 한끼로」 안내 «안»으로 들어갔다
+  await page.getByText('SNS 보다가 캡처해서 바로 한끼로', { exact: true }).first().click()
+  await page.waitForTimeout(600)
+  await page.getByRole('button', { name: new RegExp(이름 + ' 에서 담는 다른 방법') }).first().click()
   await page.waitForTimeout(700)
   const 단추 = await page.evaluate((짧은) => {
     const re = new RegExp(`${짧은}\\s*\\d`)

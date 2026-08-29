@@ -85,6 +85,13 @@ export default function EditorScreen({ id, prefill }) {
       : Math.random().toString(36).slice(2) + Date.now().toString(36)
     ).replace(/-/g, '').slice(0, 32),
   )
+  // 🆓🆓 [창업자 확정 2026-08-29] **이 화면이 「무료로 읽기」로 열렸나** — 열쇠를 안 쓴다.
+  //   ⭐ 가져오기의 「그냥 읽기」 단추가 `prefill.noVision` 을 실어 보낸다(`ImportScreen.jsx`).
+  //   ⚠️ `useRef` 라 화면을 여는 «그 순간»에 굳는다 — 읽는 도중에 바뀌지 않는다.
+  //      ⛔ state 로 두면 다시 그려질 때마다 흔들려서, 여러 장을 읽는 «중간»에 갈래가 바뀔 수 있다.
+  //   ⛔ 편집 화면 «안»의 캡처 단추는 이걸 안 탄다(`prefill` 이 없다) — 거긴 지금처럼 열쇠를 쓴다.
+  //      창업자 확정 = 열쇠 쓰는 길과 공짜 길이 «둘 다» 살아 있어야 한다.
+  const ocrNoVision = useRef(!!prefill?.noVision)
   const ingRef = useRef(null) // 재료 입력칸
   const stepRef = useRef(null) // 만드는 법 입력칸
   const titleRef = useRef(null) // 제목 입력칸 — 제목 없이 저장 누르면 여기로 데려간다
@@ -239,14 +246,24 @@ export default function EditorScreen({ id, prefill }) {
     ocrTargetRef.current = target
     ocrRef.current?.click()
   }
-  // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
-  const onOcrFile = (e) => {
-    const files = [...(e.target.files || [])]
-    if (!files.length) return
-    e.target.value = ''
-    Promise.all(
-      files.map((f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f) })),
-    ).then((urls) => {
+  // 📥📥 고른 사진들로 «읽기 흐름»을 시작한다 — 자르기 → 인식 → 합치기.
+  //   ⭐ 파일 고르기와 갈라 뒀다 — 「가져오기」 화면에서 «먼저» 고른 사진도 같은 길로 들어와야 하는데
+  //      (창업자 ③ 「여기서 사진 고르기」), 흐름을 두 번 적으면 한쪽만 고치는 사고가 난다.
+  // 🔢🔢 [창업자 확정 2026-08-29] **여러 장은 되게 두고, 많으면 «확인»을 받는다.**
+  //   📮 창업자 = *"여러장 할 수 있지만 열쇠가 소모된다는걸 적어주면 좋지않을까?
+  //      아니면 5장 올리면 팝업으로 열쇠다섯개가 사용된다고 확인받는건?"*
+  //   ⭐ 상한으로 «막지» 않는다 — 긴 레시피는 진짜로 여러 장이 필요하다(2~3컷이 흔하다).
+  //   ⛔⛔ 지금까지는 고른 «뒤» 토스트뿐이라 **되돌릴 길이 없었다.** 20장을 고르면 20개가 그냥 깎인다.
+  //      팝업은 그 «되돌릴 자리»를 만든다.
+  //   ⭐ 2~4장은 지금처럼 토스트로 가볍게 — 매번 물으면 그게 잔소리가 된다(창업자 잣대: ⛔재촉·잔소리 금지).
+  const 확인문턱 = 5
+  const [manyAsk, setManyAsk] = useState(null) // { urls } — 확인 기다리는 중
+  const startOcr = (urls) => {
+    if (!urls || !urls.length) return
+    if (urls.length >= 확인문턱 && !ocrNoVision.current) { setManyAsk({ urls }); return }
+    시작하기(urls)
+  }
+  const 시작하기 = (urls) => {
       ocrAccum.current = ''
       ocrTotal.current = urls.length
       ocrQueue.current = urls.slice(1) // 첫 장은 지금 자르고, 나머지는 자르기 대기열
@@ -271,8 +288,32 @@ export default function EditorScreen({ id, prefill }) {
       }
       ocrCropOpen.current = true
       setCropImg(urls[0])
-    })
   }
+
+  // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
+  const onOcrFile = (e) => {
+    const files = [...(e.target.files || [])]
+    if (!files.length) return
+    e.target.value = ''
+    Promise.all(
+      files.map((f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f) })),
+    ).then(startOcr)
+  }
+
+  // 📷 「가져오기 → 여기서 사진 고르기」로 들어온 경우 — 이미 고른 사진이 딸려 온다.
+  //   ⭐ 창업자 ③ = *"한끼앱에 가져오기에서 사진 가져오기"*. 고르기는 그 화면에서 «손짓»으로 끝냈고
+  //      여기서는 읽기만 이어받는다.
+  //   ⛔ 딱 한 번만 — `ocrTargetRef` 를 'all' 로 두고 시작한다(재료·만드는 법 자동 분류).
+  const 딸려온사진Ref = useRef(false)
+  useEffect(() => {
+    if (딸려온사진Ref.current) return
+    const urls = prefill?.ocrImages
+    if (!urls || !urls.length) return
+    딸려온사진Ref.current = true
+    ocrTargetRef.current = 'all'
+    startOcr(urls)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 한 칸에만 이어붙이기 — 이미 내용이 있으면 아래에 덧붙인다(2단·긴 레시피 대응).
   const appendLines = (prevText, lines) => {
@@ -314,7 +355,8 @@ export default function EditorScreen({ id, prefill }) {
         setOcr({ busy: true, pct: 0, page, total })
         let text = ''
         try {
-          text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current })
+          // 🆓 `noVision` 이면 구글 AI 를 건너뛰고 기본 인식으로만 읽는다 = 열쇠가 안 깎인다
+          text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current, noVision: ocrNoVision.current })
         } catch {
           // ⛔ 한 장이 실패해도 «남은 장은 계속 간다».
           text = ''
@@ -344,8 +386,25 @@ export default function EditorScreen({ id, prefill }) {
     const target = ocrTargetRef.current || 'all'
     ocrAccum.current = ocrParts.current.filter((t) => t && t.trim()).join('\n').trim()
 
+    // 🆓🆓 [창업자 확정 2026-08-29] **「그냥 읽기」로 들어왔으면 «열쇠 얘기를 아예 안 한다».**
+    //   📮 창업자 = *"3번은 열쇠다썼지만 무료로 쓰고싶은 사용자들이 거의 쓰겠네 **안내도 잘해줘야 할 듯.**"*
+    //
+    //   ⛔⛔ 이 줄이 없으면 **안 썼는데 잔량 얘기가 뜬다.** 프록시를 안 불렀으니
+    //      `getOcrNote()` 는 null 이고 `getOcrLeft()` 는 «남은 장수 그대로»라
+    //      「무료 레시피열쇠 1개 남았어요」가 붙는다 → 유저는 **「어? 열쇠 썼나?」** 로 읽는다.
+    //      📌 공짜라고 해놓고 돈 얘기를 꺼내는 게 제일 나쁘다(분쟁 1순위 = *"샀는데 어디 갔지"*).
+    //
+    //   ⭐ 대신 창업자가 콕 집은 «두 가지»를 말한다 —
+    //      ⑴ **열쇠를 안 썼다**(고른 대로 됐다는 확인) ⑵ **덜 읽힐 수 있다**(인식률 차이)
+    //      📮 어제 창업자 = *"기본인식이라 **인식률의 차이가 잇으니까 이부분을 집어줘야해**
+    //         그래야 무료유저도 안떠나"*
+    //   ⭐ 「사진 보며 고쳐 주세요」로 닫는 게 핵심이다 — 이 길은 사진이 **저절로 떠 있어서**
+    //      바로 고칠 수 있다. 「덜 읽혔다」만 말하고 끝내면 그건 그냥 나쁜 소식이다.
+    const freeTail = ocrNoVision.current ? ' · 열쇠 안 쓰고 읽어서 덜 정확해요' : ''
+
     // (마지막 장) 프록시 한도 안내 — 무료 소진 등이면 "기본 인식으로 진행됐어요" 꼬리를 붙인다.
-    const note = getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
+    //   ⛔ `noVision` 이면 프록시를 «안 불렀으므로» 이 값들은 이번 읽기와 무관하다 → 통째로 죽인다.
+    const note = ocrNoVision.current ? null : getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
     const quotaTail =
       note === 'user_quota'
         ? ` · 무료 ${KEY_NAME}를 다 써서 기본 인식이에요`
@@ -358,7 +417,7 @@ export default function EditorScreen({ id, prefill }) {
     //   ⭐⭐ 미리 알림은 «1장 남았을 때 한 번만** (창업자 *"어차피 유저도 알잖아 쓰면서 몇장남았는지"*)
     //      ⛔ 3장·1장 두 번은 안 한다 — 가져오기 화면 뱃지가 이미 잔량을 보여줘서 잔소리가 된다.
     const leftNow = getOcrLeft()
-    const leftTail = quotaTail
+    const leftTail = quotaTail || ocrNoVision.current // 🆓 안 썼으면 잔량 얘기를 꺼내지 않는다
       ? ''
       : leftNow.total === 0
         ? ` · 무료 ${KEY_NAME}를 다 썼어요 · 이제 기본 인식으로 계속 돼요`
@@ -369,11 +428,12 @@ export default function EditorScreen({ id, prefill }) {
     // 마지막 장 — 결과 반영
     if (target === 'ingredients' || target === 'steps') {
       const base = target === 'ingredients' ? '재료 초안을 담았어요' : '만드는 법 초안을 담았어요'
-      nav.showToast(base + (quotaTail || leftTail || ' · 다듬어 주세요'), quotaTail || leftTail ? 6500 : 4800)
+      nav.showToast(base + (freeTail || quotaTail || leftTail || ' · 다듬어 주세요'), freeTail || quotaTail || leftTail ? 6500 : 4800)
       return
     }
     const combined = ocrAccum.current
-    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + quotaTail, quotaTail ? 6000 : 3200); return }
+    // 🆓 freeTail = 「그냥 읽기」로 왔다(열쇠를 안 썼다) — 열쇠 얘기보다 «먼저» 말한다
+    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + (freeTail || quotaTail), freeTail || quotaTail ? 6000 : 3200); return }
     // 🤖 AI 다듬기 — ⭐**규칙 파서를 «먼저» 돌려놓는다.**
     //   AI 가 안 되든 느리든 이상하든 이 `r` 이 그대로 쓰인다(3층 구조 1층 · 앱은 절대 안 죽는다).
     //   ⛔ 순서를 뒤집지 말 것 — AI 를 먼저 기다렸다가 실패하면 그때 파싱하면, 실패한 만큼 유저가 더 기다린다.
@@ -414,11 +474,15 @@ export default function EditorScreen({ id, prefill }) {
     // 🤖 「AI 가 정리했나」를 «보이게» 붙인다 — 문구는 `tidy.js` 의 `tidyTail()` 한 곳에서 정한다
     //   (여기와 App.jsx 공유받기가 «같은 말»이라야 유저가 두 경로를 같은 기능으로 읽는다)
     nav.showToast(
-      quotaTail
-        ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
-        : leftTail
-          ? '초안을 채웠어요' + leftTail
-          : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
+      // 🆓 freeTail 이 맨 앞이다 — 「그냥 읽기」로 온 사람에게 열쇠 얘기를 하면 안 된다
+      // ⛔ 길이(ms)는 «안» 준다 — 바로 뒤에 AI 다듬기 토스트가 또 뜬다(HEAD 판단을 그대로 둔다)
+      freeTail
+        ? '초안을 채웠어요' + freeTail + ' · 사진 보며 고쳐 주세요'
+        : quotaTail
+          ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
+          : leftTail
+            ? '초안을 채웠어요' + leftTail
+            : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
     )
 
     // ② AI — «뒤에서». ⭐ 얹는 규칙은 `mergeTidy` 한 곳에 있다(여기와 `App.jsx` 가 «같은 말»)
@@ -982,6 +1046,28 @@ export default function EditorScreen({ id, prefill }) {
           {editing ? '정리 완료' : '레시피 저장'}
         </button>
       </div>
+
+      {/* 🔢🔢 [창업자 확정 2026-08-29] **많이 골랐을 때 «확인»** — ⛔막는 게 아니다.
+          📮 창업자 = *"여러장 할 수 있지만 열쇠가 소모된다는걸 적어주면 좋지않을까?
+             아니면 5장 올리면 팝업으로 열쇠다섯개가 사용된다고 확인받는건?"*
+             → *"웅 10장이든 20장이든 유저가 선택하면 되니깐"*
+          ⭐ 상한이 «없다» — 긴 레시피는 진짜로 여러 장이 필요하다. 대신 **되돌릴 자리**를 만든다.
+             지금까지는 고른 «뒤» 토스트뿐이라 20장이면 열쇠 20개가 그냥 깎였다.
+          ⭐ 잔량이 모자라면 그 사실을 «먼저» 말한다 — 「5장인데 3개뿐」을 모르고 누르면 그게 분쟁이다. */}
+      {manyAsk && (
+        <ConfirmSheet
+          title={`사진 ${manyAsk.urls.length}장을 골랐어요`}
+          message={(() => {
+            const n = manyAsk.urls.length
+            const left = getOcrLeft()
+            if (left.unknown || left.total >= n) return `${KEY_NAME} ${n}${KEY_UNIT}를 써요.\n사진 1장에 1${KEY_UNIT}씩 들어요.`
+            return `${KEY_NAME}가 ${left.total}${KEY_UNIT} 남아서 ${left.total}장만 AI로 읽어요.\n나머지 ${n - left.total}장은 기본 인식으로 읽어 드려요.`
+          })()}
+          confirmLabel={`${manyAsk.urls.length}장 읽기`}
+          onConfirm={() => { const u = manyAsk.urls; setManyAsk(null); 시작하기(u) }}
+          onClose={() => setManyAsk(null)}
+        />
+      )}
 
       {/* 작성 중 나가기 — 이어쓰기(그냥 닫기) vs 버리기(임시저장까지 삭제) */}
       {discardAsk && (
