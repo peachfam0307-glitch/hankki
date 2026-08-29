@@ -56,7 +56,13 @@ const mine = [...new Set([...drawerDates, ...cardDates])].sort()
 //    (2026-08-03 실제로 이 검사가 막았다 — 9/30 「효과 다시 보기」 약속을 넣자마자 걸렸다. 옳게 걸린 것.)
 // ⛔ [2026-08-17] 달력에 «레시피»도 실리기 시작했다(전날 검수가 새던 자리) — 여기선 빼고 센다.
 //    이 검사가 보는 건 «꾸미기 서랍 ＋ 레꾸자랑 카드» 두 출처뿐이다.
-const theirs = [...new Set(calendarGates().filter((g) => !g.todo && g.kind !== 'recipe').map((g) => g.date))].sort()
+// ⛔ [2026-08-29] 「주부의 장바구니」(`kind: 'cart'`)도 달력에 실리기 시작했다 — 1주에 3개씩 열린다.
+//    ⏳ **소식에 띄울지는 창업자 판정이다**(규칙 11) — 내가 정해서 `whatsnew.js` 에 넣지 않는다.
+//    ⭐ 띄우기로 하면 ⑴`whatsnew.js` 가 `curation.js` 를 읽게 하고 ⑵여기 `kind !== 'cart'` 를 뺀다.
+//       그 둘을 «같이» 해야 한다 — 한쪽만 하면 이 검사가 바로 잡는다(그게 이 검사가 하는 일이다).
+const theirs = [
+  ...new Set(calendarGates().filter((g) => !g.todo && g.kind !== 'recipe' && g.kind !== 'cart').map((g) => g.date)),
+].sort()
 if (mine.join() === theirs.join()) ok(`여는 날짜가 달력과 같다 — ${theirs.length}개 (${theirs.join(' · ')})`)
 else fail(`⛔ 안내 ${mine.join(' · ')} ≠ 달력 ${theirs.join(' · ')}`)
 

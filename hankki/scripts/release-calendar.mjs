@@ -145,7 +145,33 @@ function recipes() {
   })
 }
 
-export const gates = () => [...drawer(), ...cards(), ...promises(), ...recipes()].sort((a, b) => a.date.localeCompare(b.date))
+// ── ⑤ 🛒 주부의 장바구니 — `curation.js` 의 `from:` ──────────────────
+//    [2026-08-29 신설] 창업자 확정 = **"1주에 3개씩 올리자"** — 85개가 29주에 걸쳐 저절로 열린다.
+//    ⛔⛔ **이 통로가 없으면 「조용히」 열린다** — 절대원칙 28(날짜가 저절로 여는 문은 전날 검수)이
+//       정확히 이걸 막으라고 있는 것이다. 2026-08-16 에 레시피가 그렇게 새서 사고가 났다.
+//    ⛔ `curation.js` 는 노드가 **못 연다**(`import.meta.glob` = Vite 전용) → 위 ①②처럼 **글자로 읽는다.**
+//    ⛔ 주석 줄은 건너뛴다 — ① 의 「유령 그룹」 사고(2026-08-10)와 같은 자리다.
+function cart() {
+  const out = []
+  let cat = ''
+  for (const line of read('src/data/curation.js').split('\n')) {
+    if (/^\s*(\/\/|\*|\/\*)/.test(line)) continue
+    const c = line.match(/^\s*cat:\s*'([^']+)'/)
+    if (c) cat = c[1]
+    const from = line.match(/from:\s*'(\d{4}-\d{2}-\d{2})'/)
+    const name = line.match(/^\s*\{\s*name:\s*'([^']+)'/)
+    if (!from || !name) continue
+    const brand = line.match(/brand:\s*'([^']+)'/)
+    out.push({
+      date: from[1], where: `주부의 장바구니 · ${cat}`, kind: 'cart',
+      what: brand ? `${brand[1]} ${name[1]}` : name[1], keys: [],
+    })
+  }
+  return out
+}
+
+export const gates = () =>
+  [...drawer(), ...cards(), ...promises(), ...recipes(), ...cart()].sort((a, b) => a.date.localeCompare(b.date))
 export const nextGate = (from = todayKST()) => {
   const up = gates().filter((g) => g.date >= from)
   return up.length ? up.filter((g) => g.date === up[0].date) : []
