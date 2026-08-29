@@ -27,14 +27,14 @@ const 임시 = ROOT + 'scripts/.tmp-worker-tidy.mjs'
 
 // ⭐ 워커 파일을 «고치지 않고» 이름만 내보내 불러온다 — 흉내가 아니라 그 코드 자체다(절대원칙 30).
 const src = readFileSync(SRC, 'utf8')
-for (const 이름 of ['function pickJson', 'function 첫값', 'function 레시피인가']) {
+for (const 이름 of ['function pickJson', 'function 첫값', 'function 레시피인가', 'function 모델차례']) {
   if (!src.includes(이름)) {
     console.error(`\n⛔ 워커에서 「${이름}」 을 못 찾았다 — 검사를 먼저 고쳐야 한다`)
     process.exit(1)
   }
 }
-writeFileSync(임시, src + '\nexport { pickJson, 첫값, 레시피인가 }\n')
-const { pickJson, 첫값 } = await import(임시 + '?v=' + Date.now())
+writeFileSync(임시, src + '\nexport { pickJson, 첫값, 레시피인가, 모델차례, DEFAULT_MODELS }\n')
+const { pickJson, 첫값, 모델차례, DEFAULT_MODELS } = await import(임시 + '?v=' + Date.now())
 
 let 실패 = 0
 const chk = (이름, ok, 꼬리 = '') => {
@@ -90,6 +90,21 @@ chk('⑭ 옛 판은 ⑤에서 «껍데기»를 레시피라 우긴다', 옛판(�
   '(그래서 200 · 빈 레시피 → 앱에 empty_result)')
 chk('⑮ 옛 판은 ⑧에서도 객체를 돌려준다', 옛판({ response: '', reasoning_content: '음…' }) !== null)
 
+console.log('\n── 모델 차례 ──')
+chk('⑯ 맨 앞은 «생각 안 하는» 판', !/glm|thinking|reason/i.test(DEFAULT_MODELS[0]),
+  '(' + DEFAULT_MODELS[0] + ')')
+chk('⑰ 뒤 후보가 «살아 있다»', DEFAULT_MODELS.length >= 2,
+  '(앞이 죽어도 앱이 계속 돈다)')
+chk('⑱ TIDY_MODEL 을 넣으면 그것부터', 모델차례({ TIDY_MODEL: '@cf/시험' })[0] === '@cf/시험')
+chk('⑲ 넣어도 뒤 후보를 «안» 지운다', 모델차례({ TIDY_MODEL: '@cf/시험' }).length === 2,
+  '(실험이 실패해도 앱은 돌아야 한다)')
+chk('⑳ 최대 두 판까지만', 모델차례({}).length <= 2 && 모델차례({ TIDY_MODEL: '@cf/시험' }).length <= 2,
+  '(무료 통도 시간도 유한하다)')
+chk('㉑ 같은 이름을 두 번 안 부른다',
+  모델차례({ TIDY_MODEL: DEFAULT_MODELS[0] })[0] === DEFAULT_MODELS[0] &&
+  모델차례({ TIDY_MODEL: DEFAULT_MODELS[0] })[1] !== DEFAULT_MODELS[0])
+chk('㉒ 빈 값·공백은 무시', 모델차례({ TIDY_MODEL: '  ' })[0] === DEFAULT_MODELS[0])
+
 try { unlinkSync(임시) } catch { /* noop */ }
-console.log(실패 ? `\n⛔ ${실패}칸 실패` : '\n✅ 15/15 통과')
+console.log(실패 ? `\n⛔ ${실패}칸 실패` : '\n✅ 22/22 통과')
 process.exit(실패 ? 1 : 0)
