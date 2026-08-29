@@ -103,47 +103,13 @@ for (let i = 0; i < 자막들.length; i++) {
   console.log(`  ${String(s.초).padStart(5)}s ~ ${String(s.끝).padStart(5)}s  y=${s.y}  「${s.글}」 (${Math.round(잰값.폭)}px)`)
 }
 
-// ── 📣 선언 카드 — 인트로(시안) «다음»에 한 장 박고 앱으로 들어간다 ──
-// 📮 창업자 = *"한끼에는 요리모드에 타이머도 있다!!! 한장 박고 시작할까"*
-// ⭐⭐ 맞는 판단이다 — 시안만으론 *"그래서 무슨 앱인데?"* 가 안 닫힌다.
-//    이 한 장이 **릴스의 주제를 못 박고**, 뒤에 나오는 앱 화면이 전부 그 증거가 된다.
-// ⏳⏳ **창업자가 «직접 뽑아 온다»고 했다**(*"잠깐만 내가 하가 뽑아올게 선언카드"*).
-//    → 아래는 **그때까지 쓰는 임시판**이다. 창업자 그림이 오면 `자막/선언카드.png` 를 그걸로 갈아끼운다.
-//    ⛔ 갈아끼울 때 크기만 1080×1920 으로 맞추면 된다 — 합성판은 파일만 읽는다.
-const 카드 = `<!doctype html><meta charset="utf-8">
-<style>
-  @font-face { font-family:'Gowun'; src:url('file://${join(ROOT, 'src/assets/fonts/gowun-dodum-korean-400.woff2')}') format('woff2'); }
-  html,body { margin:0; width:1080px; height:1920px; background:#ecd1b4;
-              font-family:'Gowun',sans-serif; color:${앱색.진한글자}; }
-  .wrap { width:100%; height:100%; display:flex; flex-direction:column;
-          align-items:center; justify-content:center; gap:40px; }
-  .small { font-size:64px; }
-  .big { font-size:96px; font-weight:700; line-height:1.35; text-align:center; }
-  .big em { font-style:normal; color:${앱색.포인트}; }
-  .bang { font-size:112px; font-weight:700; color:${앱색.포인트}; letter-spacing:6px; }
-  img { width:420px; }
-</style>
-<div class="wrap">
-  <div class="small">한끼에는</div>
-  <div class="big">요리모드에 <em>타이머</em>도<br>있다</div>
-  <div class="bang">!!!</div>
-  <img src="data:image/png;base64,${readFileSync(join(ROOT, 'src/assets/ui/wave/gom_pot.png')).toString('base64')}">
-</div>`
-
-await p.setViewportSize({ width: 1080, height: 1920 })
-await p.setContent(카드)
-await p.evaluate(() => document.fonts.ready)
-await p.waitForTimeout(400)
-// ⛔⛔ **`<img src="file://…">` 는 안 뜬다** — `setContent` 로 만든 페이지는 `about:blank` 라
-//    브라우저가 로컬 파일 읽기를 막는다. 첫 판에서 꼬르곰이 «통째로 사라진» 채로 나왔다(규칙 21 이 잡았다).
-//    ✅ 그래서 **base64 로 심는다.** ＋ 「진짜 떴나」를 여기서 잰다(0이면 안 뜬 것).
-const 그림떴나 = await p.evaluate(() => { const i = document.querySelector('img'); return i ? i.naturalWidth : -1 })
-if (그림떴나 <= 0) { console.error(`✗ 선언 카드의 꼬르곰이 안 떴다 (naturalWidth=${그림떴나})`); process.exit(1) }
-const 카드길 = join(OUT, '선언카드.png')
-await p.screenshot({ path: 카드길 })
-console.log(`  📣 선언 카드(임시) = ${카드길}  · 꼬르곰 ${그림떴나}px`)
-
+// 📣 **선언 카드는 여기서 안 만든다** — 📮창업자가 «직접 뽑아 왔다»
+//    *"잠깐만 내가 하가 뽑아올게 선언카드"* → *"이걸 제일먼저넣고 … 네가만든꼬르곰한장짜리 빼고"*
+//    → `design/promo/병맛시리즈-창업자-2026-08-28/난리났습니다-8화/4화-0장-선언카드-….png`
+//    ⛔ 내가 만들었던 임시 카드(꼬르곰 한 장)는 **뺐다.** 합성판이 창업자 그림을 바로 읽는다.
+//    ⚠️ 그때 배운 것 하나는 남긴다 — **`<img src="file://…">` 는 `setContent` 페이지에서 안 뜬다**
+//       (`about:blank` 라 로컬 파일 읽기가 막힌다). 그림을 넣어야 하면 **base64 로 심고 `naturalWidth` 로 확인**할 것.
 await b.close()
 
 writeFileSync(join(OUT, '자막목록.json'), JSON.stringify(만든것, null, 2))
-console.log(`\n✅ 말풍선 ${만든것.length}장 ＋ 선언 카드 = ${OUT}\n`)
+console.log(`\n✅ 말풍선 ${만든것.length}장 = ${OUT}\n`)
