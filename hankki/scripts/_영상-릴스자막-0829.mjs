@@ -5,22 +5,26 @@
 //    *"자막이 저렇게 위에 2개가 붙어??"* → *"두개가 같이 있으니까 정신이 없고 무슨말인지 모르겠어;;"*
 //    *"유저가 **이 앱은 저런 기능이있구나 편하겠네** 생각을 해야하니까 **재밌게** … 센스있게"*
 //    *"**근데 자막 빨간색이 글자도 너무 안예뻐 우리앱이랑 안어울려**"*
-//    *"**ui에 자막을 바로 넣어도 되지않아? 말풍선이나 알약이나.**"*
+//    *"**ui에 자막을 바로 넣어도 되지않아? 말풍선이나 알약이나.**"* · *"말풍선은 잘보이게 넣어줘."*
 //
 // ⭐⭐ **창업자 안이 내 것보다 낫다 — 말풍선은 「어디를 말하는지」까지 알려준다.**
 //    위쪽 자막 띠는 화면 밖에 떠 있어 **무엇을 가리키는지 모른다.** 게다가 띠만큼 앱이 작아졌다.
 //    ＋ 4화 시안에 이미 말풍선이 있다(*"몇 분 남았어?!"* · *"8초. 국부터 줄여."*) → **시안과 한 몸이 된다.**
 //
+// ⛔⛔ **그 전에 두 번을 «반쪽»으로 냈다** —
+//    ⑴ 병맛만 = 「② 기폭 장치 세팅」이라 써놓고 **「타이머」라는 낱말을 한 번도 안 썼다.**
+//    ⑵ 설명만 = 「단계마다 타이머 · 1분~30분」. 맞는 말인데 **아무 느낌이 없다.**
+//    ✅ **잣대 = 「그래서 뭐가 편한데?」에 그 줄이 스스로 답하나.**
+//
 // 🎨 **색·글꼴을 앱에서 «꺼내 왔다»**(짐작하지 않았다 · `src/styles.css` 실측)
-//    ⛔⛔ **`--brown` 은 갈색이 아니라 «더스티 블루» `#5878a0`** 다 — **이름만 brown 이다.**
-//       *"포인트 = 더스티 블루(전 테마 통일 포인트) … 주황 남용 탈피"*
+//    ⛔⛔ **`--brown` 은 갈색이 아니라 «더스티 블루» `#5878a0`** — **이름만 brown 이다.**
 //    ⛔ 내가 쓰던 **주아체(Jua)는 앱에 «없는» 글꼴**이라 어색했다 → 앱 본문 글꼴 **고운돋움**으로.
-//    ✅ 그래서 말풍선 = **앱의 「다음 →」 버튼과 같은 결**(블루 채움 · 흰 글씨 · 둥근 모서리).
+//    ✅ 말풍선 = **앱의 「다음 →」 버튼과 같은 결**(블루 채움 · 흰 글씨 · 둥근 모서리).
 //
 // 실행: node scripts/_영상-릴스자막-0829.mjs
 // ⛔ `_fresh.mjs`(dist 신선도 검사)를 부르지 «않는다» — 이 판은 앱을 띄우지 않는다.
 import { chromium } from 'playwright'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = new URL('..', import.meta.url).pathname
@@ -31,10 +35,10 @@ mkdirSync(OUT, { recursive: true })
 const W = 1080, H = 210
 const 앱색 = { 포인트: '#5878a0', 글자: '#ffffff', 흰: '#fdfbf7', 진한글자: '#3d3830' }
 
-// 🚨🚨 **스토리보드** — `초` 는 «앱 실사 구간이 시작된 뒤» 몇 초.
-//    `y` = 앱 화면 세로에서 말풍선 «위끝»이 놓일 비율(0~1).
+// 🚨🚨 **스토리보드** — `초` 는 «앱 실사 구간이 시작된 뒤» 몇 초. `y` = 앱 세로에서 말풍선 위끝 비율.
 //
 // ⛔⛔ **첫 판이 화면과 어긋났다 — 「프레임 차이가 큰 순간」을 «무슨 화면인지 안 보고» 해석했다.**
+//    5.13s 를 「재료준비→STEP1」이라 단정했는데 실제로는 **STEP 3 → 타이머 시트**였다.
 //    📌 차이가 «크다»는 건 뭔가 바뀌었다는 뜻일 뿐, **무엇으로 바뀌었는지는 안 알려준다**(규칙 18).
 // ✅ 본편을 **0.5초마다 뽑아 전부 눈으로 봤다**(절대원칙 21) — 아래가 그 실측이다:
 //    0.0~1.4 재료 준비 / 1.4~4.8 STEP 1→2→3 / 4.8~6.3 타이머 시트 /
@@ -65,7 +69,7 @@ const 판 = (글) => `<!doctype html><meta charset="utf-8">
          font-size:54px; line-height:1.25; font-weight:700; padding:26px 46px 30px;
          border-radius:36px; white-space:nowrap; border:6px solid ${앱색.흰};
          box-shadow:0 16px 34px rgba(61,56,48,.42); }
-  /* 꼬리 = 같은 색 삼각형(흰 테두리 위에 겹쳐 올려 이음매를 덮는다) */
+  /* 꼬리 = 흰 테두리 삼각형 위에 블루 삼각형을 겹쳐 이음매를 덮는다 */
   .tail { width:0; height:0; margin-top:-8px;
           border-left:24px solid transparent; border-right:24px solid transparent;
           border-top:30px solid ${앱색.흰}; }
@@ -90,7 +94,7 @@ for (let i = 0; i < 자막들.length; i++) {
   const 잰값 = await p.evaluate(() => {
     const r = document.querySelector('.bub').getBoundingClientRect()
     const t = document.querySelector('.tail').getBoundingClientRect()
-    return { 폭: r.width, 키: t.bottom - r.top, 위: r.top }
+    return { 폭: r.width, 키: t.bottom - r.top }
   })
   if (잰값.폭 > 900) { console.error(`✗ 「${s.글}」 말풍선이 ${Math.round(잰값.폭)}px — 앱 폭(약 887px)을 넘는다. 글을 줄일 것`); process.exit(1) }
   const 길 = join(OUT, `${String(i).padStart(2, '0')}.png`)
@@ -98,40 +102,14 @@ for (let i = 0; i < 자막들.length; i++) {
   만든것.push({ ...s, 파일: 길, 키: Math.round(잰값.키) })
   console.log(`  ${String(s.초).padStart(5)}s ~ ${String(s.끝).padStart(5)}s  y=${s.y}  「${s.글}」 (${Math.round(잰값.폭)}px)`)
 }
-// ── 📣 선언 카드 — 인트로(시안) «다음»에 한 장 박고 앱으로 들어간다 ──
-// 📮 창업자 = *"**한끼에는 요리모드에 타이머도 있다!!! 한장 박고 시작할까**"*
-// ⭐⭐ 맞는 판단이다 — 시안만으론 *"그래서 무슨 앱인데?"* 가 안 닫힌다.
-//    이 한 장이 **릴스의 주제를 못 박고**, 뒤에 나오는 앱 화면이 전부 그 증거가 된다.
-// 🎨 배경은 시안 바탕색을 이어받아 인트로에서 «툭» 끊기지 않게. 꼬르곰은 냄비 든 컷.
-const 카드 = `<!doctype html><meta charset="utf-8">
-<style>
-  @font-face { font-family:'Gowun'; src:url('file://${join(ROOT, 'src/assets/fonts/gowun-dodum-korean-400.woff2')}') format('woff2'); }
-  html,body { margin:0; width:1080px; height:1920px; background:#ecd1b4;
-              font-family:'Gowun',sans-serif; color:${앱색.진한글자}; }
-  .wrap { width:100%; height:100%; display:flex; flex-direction:column;
-          align-items:center; justify-content:center; gap:40px; }
-  .small { font-size:64px; }
-  .big { font-size:96px; font-weight:700; line-height:1.35; text-align:center; }
-  .big em { font-style:normal; color:${앱색.포인트}; }
-  .bang { font-size:112px; font-weight:700; color:${앱색.포인트}; letter-spacing:6px; }
-  img { width:420px; }
-</style>
-<div class="wrap">
-  <div class="small">한끼에는</div>
-  <div class="big">요리모드에 <em>타이머</em>도<br>있다</div>
-  <div class="bang">!!!</div>
-  <img src="file://${join(ROOT, 'src/assets/ui/wave/gom_pot.png')}">
-</div>`
 
-await p.setViewportSize({ width: 1080, height: 1920 })
-await p.setContent(카드)
-await p.evaluate(() => document.fonts.ready)
-await p.waitForTimeout(400)
-const 카드길 = join(OUT, '선언카드.png')
-await p.screenshot({ path: 카드길 })
-console.log(`  📣 선언 카드 = ${카드길}`)
-
+// 📣 **선언 카드는 여기서 안 만든다** — 📮창업자가 «직접 뽑아 왔다»
+//    *"잠깐만 내가 하가 뽑아올게 선언카드"* → *"이걸 제일먼저넣고 … 네가만든꼬르곰한장짜리 빼고"*
+//    → `design/promo/병맛시리즈-창업자-2026-08-28/난리났습니다-8화/4화-0장-선언카드-….png`
+//    ⛔ 내가 만들었던 임시 카드(꼬르곰 한 장)는 **뺐다.** 합성판이 창업자 그림을 바로 읽는다.
+//    ⚠️ 그때 배운 것 하나는 남긴다 — **`<img src="file://…">` 는 `setContent` 페이지에서 안 뜬다**
+//       (`about:blank` 라 로컬 파일 읽기가 막힌다). 그림을 넣어야 하면 **base64 로 심고 `naturalWidth` 로 확인**할 것.
 await b.close()
 
 writeFileSync(join(OUT, '자막목록.json'), JSON.stringify(만든것, null, 2))
-console.log(`\n✅ 말풍선 ${만든것.length}장 ＋ 선언 카드 = ${OUT}\n`)
+console.log(`\n✅ 말풍선 ${만든것.length}장 = ${OUT}\n`)
