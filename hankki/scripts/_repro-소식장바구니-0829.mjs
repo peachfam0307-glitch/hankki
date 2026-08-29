@@ -32,7 +32,12 @@ const srv = createServer((q, s) => {
   try { body = readFileSync(join(DIST, p)) } catch { body = readFileSync(join(DIST, 'index.html')); type = 'text/html' }
   s.writeHead(200, { 'content-type': type }); s.end(body)
 })
-await new Promise((r) => srv.listen(4419, r))
+// ⛔⛔ **포트를 손으로 박지 않는다** — 2026-08-29 smoke 에서 `EADDRINUSE 4419` 로 죽었다.
+//    앞서도 같은 사고가 있었다(v11.31 `EADDRINUSE 4413` — 끊긴 판이 포트를 물고 있었다).
+//    ⭐ `listen(0)` = **비어 있는 포트를 운영체제가 골라 준다** → 이 사고가 «날 수가 없다».
+//    📌 「하지 마라」를 적는 것보다 «할 수 없게» 만드는 게 낫다(규칙 19의 뿌리).
+await new Promise((r) => srv.listen(0, r))
+const PORT = srv.address().port
 
 let 죽음 = 0
 const 나쁨 = (m) => { console.error(`  ✗ ${m}`); 죽음++ }
@@ -45,7 +50,7 @@ const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceSc
 await ctx.addInitScript(SEED_COACH_SEEN)
 await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
 const p = await ctx.newPage()
-await p.goto('http://127.0.0.1:4419/', { waitUntil: 'networkidle' })
+await p.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' })
 await p.waitForTimeout(1200)
 
 console.log('\n── 🛒 소식 · 주부의 장바구니 ──')
