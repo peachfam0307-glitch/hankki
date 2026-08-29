@@ -62,7 +62,10 @@ const COACH_STEPS = [
   //    ⚠️ 없는 자리를 짚는 코치는 **오버레이만 뜨고 아무것도 안 가리킨다**(빈 화면 반짝임).
   { sel: '[data-coach="share"]', label: '친구와 레시피 공유하기', desc: '재료·만드는 법이 담긴 예쁜 카드로 보내요' },
   { sel: '[data-coach="decor"]', label: '레시피 꾸미기', desc: '스티커·마스킹테이프·손글씨로 나만의 표지!' },
-  { sel: '[data-coach="cook"]', label: '요리 시작', desc: '큰 글씨 요리모드 · 화면 안 꺼짐 · 단계 타이머' },
+  // ⛓ [2026-08-29] label 은 «그 버튼에 적힌 글자»와 같아야 한다(v11.02 「책갈피」 교훈 — 한 곳만 바꾸면 말이 갈린다).
+  //    ⚠️ desc 에서 「요리모드」를 뺐다 — 이름이 「요리모드 시작」이 되어 한 줄에 같은 말이 두 번 나왔다.
+  //       ⛔ 창업자가 시킨 건 «버튼 이름»이고 이건 거기 «딸려온» 것이라 밝혀 둔다.
+  { sel: '[data-coach="cook"]', label: '요리모드 시작', desc: '큰 글씨 · 화면 안 꺼짐 · 단계 타이머' },
 ]
 
 // 재료 목록에서 '[양념]'·'[소스]'·'[드레싱]'처럼 대괄호만 있는 줄은 소제목(헤더)으로 그린다.
@@ -754,7 +757,7 @@ export default function RecipeDetailScreen({ id }) {
         {r.steps?.length > 0 && (
           <button className="btn-primary press" data-coach="cook" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }} onClick={() => nav.push({ name: 'cook', id: r.id })}>
             <Icon name="play" size={16} />
-            요리 시작
+            요리모드 시작
           </button>
         )}
         <button

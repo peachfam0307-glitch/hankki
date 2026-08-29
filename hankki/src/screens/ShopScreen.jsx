@@ -522,7 +522,10 @@ function Curation() {
                 WebkitLineClamp: openCard[it.name] ? 'none' : 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
-                fontSize: 19,
+                /* 🔠 [2026-08-29] 창업자 = *"장바구니 설명도 글자 1-2포인트만 작게해도 될 것 같고"*
+                   → 19 → **17px**(2pt). v11.21 「글자2」가 470곳을 키울 때 여기도 같이 커졌는데,
+                   설명 글은 «훑는» 글이라 제품 이름(16.5px)보다 커 보이면 무게가 뒤집힌다. */
+                fontSize: 17,
                 lineHeight: 1.75,
                 textWrap: 'balance',
               }}
@@ -534,13 +537,21 @@ function Curation() {
                    접으려면 설명 글 자체를 다시 눌러야 하는데 그걸 알려주는 표시가 없었다.
                    → 「펼치기는 보이는데 접기가 안 보인다」가 정확히 이것이다.
                 ✅ 펼쳐도 «같은 자리에» 「접기」를 그린다 ＋ 화살표를 붙여 눌리는 곳임을 보인다. */}
-            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--brown)', display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
+            {/* 👆 [2026-08-29] 창업자 = *"그거랑 담기가 너무 붙어있어. 접기. 누르려다 담기를 누르게돼."*
+                🔢 옛 실측 = 「더보기」 글자 아래끝 ↔ 「담기」 위끝이 **11px** 뿐이었다.
+                ⭐⭐ 오터치를 막는 건 «완충 지대»다 — 아무 버튼도 아닌 «빈 공간»이라야
+                   손가락이 빗나가도 아무 일이 안 난다(아래 `.cur-buy` marginTop 11 → 18).
+                ⛔ 「더보기」 쪽만 키우면 안 된다 — 이 span 의 부모가 «설명 전체 버튼»이라
+                   아래로 키울수록 **담기 바로 위까지 버튼 영역**이 되어 반대 사고(담기 누르려다 더보기)가 난다.
+                ✅ 그래서 둘 다 조금씩 = 「더보기」는 눌리기 쉽게 살짝 키우고(paddingBottom 4),
+                   그 «아래»는 빈 공간으로 벌린다 → 실제 간격 11 → **22px**. */}
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--brown)', display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 6, paddingBottom: 4 }}>
               {openCard[it.name] ? '접기' : '더보기'}
               <Icon name={openCard[it.name] ? 'chevron-up' : 'chevron-down'} size={12} />
             </span>
           </button>
       </div>
-      <div className="cur-buy" style={{ display: 'flex', gap: 8, marginTop: 11 }}>
+      <div className="cur-buy" style={{ display: 'flex', gap: 8, marginTop: 18 }}>
         <button className="press" onClick={() => add(it)} style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 16.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Icon name="cart" size={14} />담기</button>
         {/* ⛔ 한살림은 「사러가기」를 안 그린다 (창업자 2026-08-17). 대신 «왜 없는지»를 그 자리에 적는다 —
             버튼만 사라지면 「고장인가?」가 되고, 배지는 카드 위쪽이라 여기까지 안 따라온다. */}
