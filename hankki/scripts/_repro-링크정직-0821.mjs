@@ -114,22 +114,10 @@ await page.getByRole('button', { name: '가져오기' }).first().click()
 await page.waitForTimeout(800)
 const 남은1 = await 없나(금지)
 chk(`③ 금지 문구 0개 (남은 것: ${남은1.join(' / ') || '없음'})`, 남은1.length === 0)
-// 🗓 [2026-08-28] 목록이 «네 갈래»로 줄었다(창업자 확정) — 링크·텍스트는 «목록에서만» 내려갔고 흐름은 산다.
-//    ⭐ 그래서 이 판이 재는 자리도 «그 흐름이 사는 곳»으로 옮긴다.
-//    ⛔ 지키려는 것은 그대로다 = **「안 되는 걸 약속하는 글자가 남아 있나」**.
-await page.getByText('SNS 보다가 캡처해서 바로 한끼로', { exact: true }).first().click()
-await page.waitForTimeout(700)
 const t1 = await 글자()
-chk('④ 「링크 주소만 담아두기」로 들어가는 길이 살아 있다', t1.includes('링크 주소만 담아두기'))
-chk('⑤ 안내에 「더보기」(점 세 개)가 있다 — 갤럭시 공유 시트의 그 한 걸음', /더보기/.test(t1))
-await page.getByRole('button', { name: /Instagram 에서 담는 다른 방법/ }).first().click()
-await page.waitForTimeout(700)
-const t1b = await 글자()
-chk('⑥ 텍스트 붙여넣기로 가는 길이 살아 있다', t1b.includes('글을 복사했다면 붙여넣기'))
-const 남은1b = await 없나(금지)
-chk(`⑥-2 그 화면에도 금지 문구 0개 (남은 것: ${남은1b.join(' / ') || '없음'})`, 남은1b.length === 0)
-await page.getByRole('button', { name: '닫기' }).first().click()
-await page.waitForTimeout(600)
+chk('④ 「링크 주소만 담아두기」로 이름이 바뀌었다', t1.includes('링크 주소만 담아두기'))
+chk('⑤ 「재료·순서는 안 담겨요」가 목록에서 바로 보인다', t1.includes('안 담겨요'))
+chk('⑥ 텍스트 붙여넣기 설명이 커졌다(재료·순서까지)', t1.includes('재료·순서까지 자동 정리'))
 writeFileSync(join(OUT, '3-가져오기.png'), await page.screenshot())
 
 // ── ③ AI 자동정리 시트 — 여기가 제일 세게 약속하던 자리 ──
@@ -144,10 +132,7 @@ await page.waitForTimeout(600)
 
 // ── ④ 링크 화면 ──
 console.log('\n── ④ 링크 화면 ──')
-// 🗓 [2026-08-28] 링크 화면은 목록이 아니라 「SNS 보다가 캡처해서 바로 한끼로」 안내 «안»에서 들어간다
-await page.getByText('SNS 보다가 캡처해서 바로 한끼로', { exact: true }).first().click()
-await page.waitForTimeout(700)
-await page.getByRole('button', { name: '링크 주소만 담아두기' }).first().click()
+await page.getByText('링크 주소만 담아두기', { exact: false }).first().click()
 await page.waitForTimeout(800)
 const t2 = await 글자()
 const 남은3 = await 없나(금지)

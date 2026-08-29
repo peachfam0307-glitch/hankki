@@ -2,14 +2,19 @@
 //
 // ⛔ 설계원칙 = `docs/리텐션-설계원칙-2026-07-30.md`
 //    · 평가하지 않는다 (점수·달성률·"잘했어요" 금지)
-//    · 재촉하지 않는다 (한 번 닫으면 다시 묻지 않는다)
+//    · 재촉하지 않는다 (한 번 닫으면 «한 달» 안엔 다시 묻지 않는다 — 창업자 확정 2026-08-28)
 //    · 겁주지 않는다 (공포 마케팅은 신뢰를 깎는다 — 쌓였다는 사실 + 다음 행동만)
 //
 // localStorage 를 못 쓰는 환경(사파리 프라이빗 등)에서도 앱이 안 죽게 전부 try 로 감싼다.
 // 못 읽으면 "안 봤음"이 되어 안내가 한 번 더 뜰 뿐, 기능은 그대로 돌아간다.
 
+// ⏰ 절대원칙 27 — 「오늘」은 `today.js` 한 곳에서만 만든다
+import { todayKST } from './today.js'  // ⛔ 확장자를 붙인다 — 게이트가 «노드»로 이 파일을 열 수 있다
+
 const K_BACKUP = 'hankki:nudge:backup' // 마지막으로 닫았거나 실제로 백업한 문턱
-const K_REVIEW = 'hankki:nudge:review' // '1' = 한 번 물어봤음 (거절 포함)
+// 🗓 [2026-08-28] **물어본 «날짜»(YYYY-MM-DD)** 를 담는다 — 30일 뒤 한 번 더 묻기 위해.
+//    ⛔ 2026-08-28 «전»에는 `'1'` 만 담았다(언제인지 모른다) → 아래 `shouldAskReviewNow` 가 그 값을 다룬다.
+const K_REVIEW = 'hankki:nudge:review'
 const K_OPENBK = 'hankki:nudge:openBackup' // 설정 화면에 도착하면 백업 시트를 바로 열라는 쪽지
 
 const read = (k) => { try { return localStorage.getItem(k) } catch { return null } }
@@ -86,7 +91,15 @@ export const REVIEW_AT = 3
 //    === 로 두면 그 사람에겐 영영 안 물어보게 된다.
 //    (한 번 물으면 K_REVIEW 가 막으니 >= 로 둬도 두 번 묻지 않는다)
 export const shouldAskReview = (diaryN) => diaryN >= REVIEW_AT && shouldAskReviewNow()
-export const markReviewAsked = () => write(K_REVIEW, '1')
+// 🗓🗓 [창업자 확정 2026-08-28] **한 번 묻고 끝이 아니다 — 「1개월 뒤에 한 번 더」.**
+//   📮 창업자 = *"1개월 뒤에 한 번 물어보기로하자(리뷰)"*
+//   ⛔⛔ **왜 바뀌었나 — 옛 규칙(평생 한 번)이 «창업자 기기 둘 다»를 영영 막고 있었다.**
+//      `REVIEW_AT = 3` 이라 일기 3개만 넘으면 뜨는데, 창업자는 폰·패드 둘 다 한참 전에 넘겼다.
+//      → 몇 달 전에 한 번 뜬 뒤 「물어봤음」이 박혀서 **v11.74·v11.77 로 길을 고쳐도 안 떴다.**
+//      📌 내가 그걸 세 번 놓쳤다 — 코드를 읽고도 「창업자가 못 봤다니까 표시는 없겠지」로 넘겼다.
+//   ⭐ 「조르지 않는다」는 그대로다 — **한 달에 한 번은 조르는 게 아니다.**
+//      그리고 초기 유저가 리뷰 기회를 «평생 한 번»만 받던 것도 같이 풀린다.
+export const markReviewAsked = () => write(K_REVIEW, todayKST())
 
 // 🎴🎴 [창업자 확정 2026-08-27 = ㉠] 레꾸자랑을 «실제로 보낸» 순간에도 청한다.
 //
@@ -109,7 +122,20 @@ export const markReviewAsked = () => write(K_REVIEW, '1')
 //
 // ⛔ 「리뷰를 쓰면 열쇠 1개」 같은 걸 **여기 붙이지 말 것** — 정책 위반이고 «앱 자체»가 조치받는다
 //    (말뚝 2026-08-22 · `docs/바깥갈래-ABCD-조사-2026-08-22.md`).
-export const shouldAskReviewNow = () => read(K_REVIEW) !== '1'
+// ⏳ 한 달(30일)이 지났나. 저장값은 **물어본 날짜**(YYYY-MM-DD)다.
+//   ⛔⛔ 옛 판은 `'1'` 만 저장했다 — **언제 물었는지 모른다.**
+//      ⭐ 그건 «아주 오래전»으로 친다(다시 묻는다). 실제로 옛 값을 가진 사람은
+//         2026-08-28 «전»에 본 사람이고, 그 뒤로 한 달 넘게 지난 경우가 대부분이다.
+//      ⚠️ 어제 본 사람이 오늘 한 번 더 볼 수 있다 — 그 한 번만 감수한다.
+//         한 번 뜨면 그때 «날짜»가 박혀서 그다음부터는 정확히 30일 간격이 된다.
+export const REVIEW_AGAIN_DAYS = 30
+export const shouldAskReviewNow = () => {
+  const v = read(K_REVIEW)
+  if (!v) return true                 // 한 번도 안 물었다
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return true  // 옛 값('1') — 언제인지 모른다 → 다시 묻는다
+  const 지난날 = Math.floor((Date.parse(`${todayKST()}T00:00:00Z`) - Date.parse(`${v}T00:00:00Z`)) / 86400000)
+  return 지난날 >= REVIEW_AGAIN_DAYS
+}
 
 // 스토어 리뷰 주소 — 패키지명은 `CLAUDE.md` 고정 메모 기준.
 export const STORE_URL = 'https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa'

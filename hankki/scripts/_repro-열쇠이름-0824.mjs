@@ -62,20 +62,8 @@ await 탭가기('가져오기')
 await page.screenshot({ path: '/tmp/열쇠-1가져오기.png', clip: { x: 0, y: 96, width: 390, height: 470 } })
 const 가져오기 = await page.evaluate(() => document.body.innerText || '')
 재기('가져오기 화면을 열었다', /레시피를 가져오는 방법/.test(가져오기))
-// 🗓🗓 [창업자 2026-08-28] 잔량이 «본문 띠» → **상단바 오른쪽**으로 갔다
-//    📮 *"무료레시피열쇠 몇개 남았어요. **오른쪽 상단에 크게!** 설명 필요없이
-//       열쇠그림 옆에 남은 숫자 (알약으로 매달 무료5개)적으면 될 듯."*
-//    ⭐ 지키는 것은 그대로 = **「이 재화의 이름이 화면에 제대로 쓰이나」**.
-//       ⛔ 그런데 이제 이름은 «눈에 보이는 글자»가 아니라 **읽어주기(aria-label)** 에 있다 —
-//          숫자만 크게 두고 설명을 뺐기 때문이다. 그래서 거기서 잰다.
-//    ⛔ 「20개예요」는 사라진 게 맞다(창업자가 「설명 필요없이」라 했다) →
-//       그 자리를 **알약 「매달 무료 5개」**가 대신한다. 오해(「매달 20개」)를 그게 막는다.
-const 잔량표 = await page.evaluate(() => {
-  const e = document.querySelector('.imp-key')
-  return { 말: e?.getAttribute('aria-label') || '', 글: (e?.innerText || '').replace(/\s+/g, ' ').trim() }
-})
-재기('상단바 잔량이 「무료 레시피열쇠 20개 남았어요」로 읽힌다', /무료\s*레시피열쇠\s*20개\s*남았어요/.test(잔량표.말.replace(/\s+/g, ' ')))
-재기('알약이 「매달 무료 5개」라 «매달 20개»로 안 읽힌다', /매달\s*무료\s*5개/.test(잔량표.글))
+재기('잔량 줄이 「무료 레시피열쇠 20개 남았어요」', /무료\s*레시피열쇠\s*20개\s*남았어요/.test(가져오기.replace(/\s+/g, ' ')))
+재기('작은 줄도 「20개예요 · 매달 무료 5개」', /드리는\s*20개예요/.test(가져오기) && /매달\s*무료\s*5개/.test(가져오기))
 재기('방법 카드 꼬리가 「열쇠 1개」', /열쇠\s*1개/.test(가져오기))
 재기('안 드는 길은 「열쇠 0개」', /열쇠\s*0개/.test(가져오기))
 {
@@ -84,15 +72,9 @@ const 잔량표 = await page.evaluate(() => {
 }
 
 // ── ⑵ 레시피 편집(캡처) ───────────────────────────────────
-// ⛔ 편집 화면으로 들어간다 — 이 화면이 캡처 소모 안내를 그린다
-// 🗓 [2026-08-28] 목록이 «네 갈래»로 바뀌었다 — 「사진 · 직접 작성하기」 → 「직접 입력하기」 ＋ 안내 한 단계
+// ⛔ 「사진 · 직접 작성하기」 카드로 들어간다 — 이 화면이 캡처 소모 안내를 그린다
 await page.evaluate(() => {
-  const t = [...document.querySelectorAll('button')].find((x) => /직접 입력하기/.test(x.innerText || ''))
-  t?.click()
-})
-await page.waitForTimeout(800)
-await page.evaluate(() => {
-  const t = [...document.querySelectorAll('button')].find((x) => /빈 종이 열기/.test(x.innerText || ''))
+  const t = [...document.querySelectorAll('button')].find((x) => /사진\s*·\s*직접 작성하기/.test(x.innerText || ''))
   t?.click()
 })
 await page.waitForTimeout(1300)

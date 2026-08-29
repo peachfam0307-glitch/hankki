@@ -30,6 +30,9 @@ const read = (p) => { try { return readFileSync(join(APP, p), 'utf8') } catch { 
 // ⏰ 오늘은 **무조건 KST** — 컨테이너는 UTC라 그냥 쓰면 하루 어긋난다.
 //    ⭐ [2026-08-17] 여기서 «만들지» 않는다 — 날짜는 `src/today.js` 한 곳에서만(게이트 `check-kst`).
 import { todayKST, tomorrowKST } from '../src/today.js'
+// 🗓 요일 세기용 — `weekly.js` 는 노드가 그대로 열 수 있다(Vite 전용 문법이 없다).
+//    ⛔ 못 열려도 달력 본체는 돌아야 하므로 실패하면 `null` 로 두고 요일 절만 건너뛴다.
+const 주간 = await import('../src/data/weekly.js').catch(() => null)
 export { todayKST }
 const dday = (d, from = todayKST()) => Math.round((Date.parse(d) - Date.parse(from)) / 86400000)
 const items = (s) => [...s.matchAll(/'([a-z0-9_]+)'/gi)].map((m) => m[1])
@@ -267,4 +270,51 @@ for (const g of gates()) {
 }
 console.log(`\n오늘(KST) = ${todayKST()}`)
 console.log('⛔ 절대원칙 = **자동 공개 전날에 고화질 전수 검수하고 내보낸다** (창업자 2026-08-01)')
+요일박기()
+}
+
+// 🗓🗓 **매주 «무슨 요일»에 바뀌나** (창업자 2026-08-28 = *"이번주제철, 우리집레시피, 장바구니 나가는 요일 달력에 박자."*)
+//
+// ⛔⛔ **손으로 「월요일」이라고 적지 않는다** — 값이 바뀌면 그 글자만 낡는다.
+//    ⭐ 실제 `from` 날짜와 회전 공식에서 «세어서» 말한다. 어긋나면 그 자리에서 드러난다.
+// 🔢 실측(2026-08-28) = 제철 19주·우리집 25주가 «전부 월요일» · 장바구니는 에폭 주차라 «목요일»
+function 요일박기 () {
+  const 요일 = ['일', '월', '화', '수', '목', '금', '토']
+  const 요일글 = (ymd) => 요일[new Date(`${ymd}T00:00:00Z`).getUTCDay()]
+  const 세기 = (froms) => {
+    const c = {}
+    for (const f of froms) { const d = 요일글(f); c[d] = (c[d] || 0) + 1 }
+    const 줄 = Object.entries(c).sort((a, b) => b[1] - a[1])
+    return { 대표: 줄[0]?.[0] || '?', 몇: 줄[0]?.[1] || 0, 전부: froms.length, 섞임: 줄.length > 1 ? 줄.map(([k, v]) => `${k}${v}`).join('·') : '' }
+  }
+  // ⛔⛔ **글자로 가르지 않는다** — 처음엔 「HOMEMADE」 낱말 자리로 파일을 잘라 셌는데
+  //    그 낱말이 주석에도 나와서 **19/25 를 16/28 로 잘못 셌다.** 요일 결론은 같았지만
+  //    «찍히는 숫자»가 틀리면 그걸 근거로 다음 판단을 하게 된다(절대원칙 18).
+  //    ✅ `weekly.js` 는 노드가 그대로 열 수 있다 → 배열을 직접 읽는다.
+  const { WEEKLY, HOMEMADE } = 주간 || {}
+  if (!WEEKLY || !HOMEMADE) { console.log('\n⚠️ weekly.js 를 못 읽어 요일을 못 센다'); return }
+  const 제철 = 세기(WEEKLY.map((w) => w.from).filter(Boolean))
+  const 우리집 = 세기(HOMEMADE.map((w) => w.from).filter(Boolean))
+  // 🛒 장바구니 = `weekNo` 가 에폭 주차(1970-01-01 목요일 기준)라 «목요일»에 넘어간다.
+  //    ⛔ 「목요일이다」라고 적지 말고 돌려서 찾는다 — 공식이 바뀌면 여기도 같이 바뀐다.
+  const weekNo = (ymd) => Math.floor(Date.parse(`${ymd}T00:00:00Z`) / 604800000)
+  let 픽요일 = '?', 앞 = null, 밑 = todayKST()
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(`${밑}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + i)
+    const ymd = d.toISOString().slice(0, 10)
+    const w = weekNo(ymd)
+    if (앞 !== null && w !== 앞) { 픽요일 = 요일글(ymd); break }
+    앞 = w
+  }
+  console.log('\n🗓 매주 «무슨 요일»에 바뀌나')
+  console.log(`   🌾 이번 주 제철      ${제철.대표}요일  (${제철.전부}주 중 ${제철.몇}주${제철.섞임 ? ` · 섞임 ${제철.섞임}` : ''})`)
+  console.log(`   🍚 우리집 레시피     ${우리집.대표}요일  (${우리집.전부}주 중 ${우리집.몇}주${우리집.섞임 ? ` · 섞임 ${우리집.섞임}` : ''})`)
+  console.log(`   🛒 장바구니 이번 주 픽 ${픽요일}요일  (에폭 주차 — weeklypick.js 의 weekNo)`)
+  if (픽요일 !== 제철.대표) {
+    console.log(`   ⭐ **요일이 다른 건 «일부러»다** (창업자 확정 2026-08-28) —`)
+    console.log(`      ${제철.대표}요일에 셋을 다 몰면 나머지 엿새가 조용해진다.`)
+    console.log(`      📮 창업자 = *"월요일로 맞추면 일주일간 너무 암것도 없이 조용하지 않아?"*`)
+    console.log(`      🔢 3주치를 하루씩 재 보니 픽은 이미 «${제철.대표}·${픽요일}» 두 번 바뀐다 — 결함이 아니라 신선함이다.`)
+    console.log(`      ⛔ 「맞추자」로 되돌리지 말 것.`)
+  }
 }

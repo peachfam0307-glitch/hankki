@@ -40,6 +40,9 @@ const chk = (이름, 값, 기대) => {
 }
 
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
+// ⏰ 절대원칙 27 — 「오늘」은 today.js 한 곳에서만 만든다(여기서 만들지 않는다)
+const { todayKST } = await import('../src/today.js')
+const 오늘KST = todayKST()
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
 await ctx.addInitScript(SEED_COACH_SEEN)
@@ -126,12 +129,24 @@ const 자랑카드열기 = async (page) => {
     const t = [...document.querySelectorAll('button[aria-label$="자랑하기"]')][0]
     t?.click()
   })
-  await page.waitForTimeout(600)
+  // ⛔⛔ [2026-08-28] 여기가 «고정 대기»라 스모크에서 흔들렸다 — 세 번 중 두 번 죽었다.
+  //    93개가 동시에 도는 스모크에선 카드 그리는 데 1.5초를 넘긴다.
+  //    📌 이 파일 «안»에 이미 *"고정 대기(2.5초)로는 캡처가 안 끝나…"* 라고 적어놓고
+  //       바로 아랫자리(공유누르기)만 고치고 «이 자리»를 남겼다.
+  //    ✅ 잣대는 시간이 아니라 «그려졌나» 다 — 단추가 나타날 때까지 기다린다.
+  //    🧪 규칙 12 = 1500 → 150 으로 줄이면 32/33 으로 죽는다(스모크에서 죽은 그 칸과 같다).
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('랜덤 카드로 뽑기')),
+    null, { timeout: 20000 },
+  ).catch(() => {})
   await page.evaluate(() => {
     const t = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('랜덤 카드로 뽑기'))
     t?.click()
   })
-  await page.waitForTimeout(1500)   // 카드를 그린다
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => /공유하기|만드는 중/.test(x.innerText || '')),
+    null, { timeout: 45000 },
+  ).catch(() => {})
   return page.evaluate(() => [...document.querySelectorAll('button')].some((x) => /공유하기|만드는 중/.test(x.innerText || '')))
 }
 
@@ -151,12 +166,21 @@ const 공유흉내 = (page, 보내지나) => page.evaluate((ok) => {
 
 // 「공유하기」 → 카드 캡처(최대 35초)를 «기다린다»
 //    ⛔ 고정 대기(2.5초)로는 캡처가 안 끝나 한 번도 안 불렸다 — 그러고도 뒤 칸이 초록불이었다.
+// ⛔⛔ [2026-08-28] 여기가 **타이밍이 아니라 «진짜 논리 버그»** 였다 — 스모크에서 계속 흔들렸다.
+//   옛 코드 = `waitForFunction(() => (window.__부름 || 0) > 0)` = **「부른 적이 «있나»」**.
+//   ⭐ 그런데 ⑥칸은 «두 번» 공유한다. 두 번째엔 첫 번째 때문에 이미 1이라
+//      **조건이 «처음부터 참»이라 기다리지 않고 바로 돌아왔다** — 공유가 나가기도 전에.
+//   📌 평소엔 빨라서 우연히 맞았고, 스모크(93개 동시)에서 느려지면 드러났다.
+//      증상 = 「두 번째 공유도 나갔다 (보냄 1)」 ⛔ (2가 나와야 한다)
+//   ✅ 「있나」가 아니라 **「눌렀을 때보다 «늘었나»」**를 기다린다.
+//   🧪 규칙 12 = CPU 에 부하를 걸고 돌리면 옛 코드는 32/33 · 이 코드는 33/33.
 const 공유누르기 = async (page) => {
+  const 전 = await page.evaluate(() => window.__부름 || 0)
   await page.evaluate(() => {
     const t = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('공유하기'))
     t?.click()
   })
-  await page.waitForFunction(() => (window.__부름 || 0) > 0, null, { timeout: 45000 }).catch(() => {})
+  await page.waitForFunction((n) => (window.__부름 || 0) > n, 전, { timeout: 45000 }).catch(() => {})
   await page.waitForTimeout(500)
   return page.evaluate(() => ({ 부름: window.__부름 || 0, 보냄: window.__보냄 || 0 }))
 }
@@ -272,7 +296,10 @@ console.log('\n⑤ 한 번 물었으면 두 번 안 묻는다 — 거절해도 �
   const page = await 새탭()
   const p2 = await 새탭()
   // ⭐ 「이미 물어본 사람」을 여기서 심는다 — 새탭() 이 열 때 지우므로 «연 뒤에» 심어야 한다
-  await p2.evaluate(() => { try { localStorage.setItem('hankki:nudge:review', '1') } catch {} })
+  // 🗓 [2026-08-28] 「물어봤음」은 이제 **'1' 이 아니라 «물어본 날짜»**다(30일 뒤 한 번 더 · 창업자 확정).
+  //    ⛔ 옛 판은 '1' 을 심었는데, 그 값은 이제 **「언제인지 모른다 → 다시 묻는다」**로 읽혀 이 칸이 죽었다.
+  //       게이트가 «맞게» 걸린 것이다 — 규칙이 바뀌면 그 규칙을 지키는 검사도 같이 바뀌어야 한다.
+  await p2.evaluate((오늘) => { try { localStorage.setItem('hankki:nudge:review', 오늘) } catch {} }, 오늘KST)
   await 공유흉내(p2, true)
   chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(p2))
   chk('자랑 카드가 떴다', await 자랑카드열기(p2))
@@ -296,7 +323,7 @@ console.log('\n⑥ ⭐ 「1회만」이 «진짜인가» — 어떻게 닫아도
   await page.evaluate(() => { try { localStorage.removeItem('hankki:nudge:review') } catch {} })
   await 공유흉내(page, true)
   chk('시작할 때 「물어봤음」이 «없다» — 앞 칸이 남긴 게 없나', await page.evaluate(() => {
-    try { return localStorage.getItem('hankki:nudge:review') !== '1' } catch { return false }
+    try { return !localStorage.getItem('hankki:nudge:review') } catch { return false }
   }))
   chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(page))
   chk('자랑 카드가 떴다', await 자랑카드열기(page))
@@ -310,7 +337,8 @@ console.log('\n⑥ ⭐ 「1회만」이 «진짜인가» — 어떻게 닫아도
   await page.waitForTimeout(900)
   chk('뒤로가기로 리뷰창이 닫혔다', !(await 리뷰창떴나(page)))
   chk('⭐ 뒤로가기로 닫아도 「물어봤음」이 남는다', await page.evaluate(() => {
-    try { return localStorage.getItem('hankki:nudge:review') === '1' } catch { return false }
+    // ⭐ 「날짜가 박혔나」로 본다 — '1' 이 아니라 YYYY-MM-DD 라야 30일 셈이 된다
+    try { return /^\d{4}-\d{2}-\d{2}$/.test(localStorage.getItem('hankki:nudge:review') || '') } catch { return false }
   }))
 
   // 두 번째 공유 — 이번엔 안 떠야 한다
@@ -320,6 +348,126 @@ console.log('\n⑥ ⭐ 「1회만」이 «진짜인가» — 어떻게 닫아도
   chk(`두 번째 공유도 나갔다 (보냄 ${둘째.보냄})`, 둘째.보냄 > 첫판.보냄)
   await 카드닫기(page)
   chk('⛔⛔ 두 번째 공유엔 «안» 뜬다 — 조르지 않는다', !(await 리뷰창떴나(page)))
+  await page.close()
+}
+
+// 📱📱 **[2026-08-28 ⓑ] 「한 장씩 따로따로」가 들어와 리뷰가 «한 칸» 뒤로 밀렸다 — 잣대를 옮긴다.**
+//    📮 창업자 = *"폰처럼 한장씩 따로따로는 못들어가?"* → **"ㄴ으로 하자"**
+//    ⭐ 표지가 나가면 **「레시피도 보내기」가 «먼저»** 뜨고, 그걸 닫아야 리뷰를 청한다
+//       (⛔시트 위에 시트를 겹치지 않는다 — 2026-08-27 에 지킨 것 ⑴).
+//    ⭐⭐ 지키려는 뜻은 **하나도 안 바뀌었다** = 「그 길로 보낸 사람에게 리뷰를 청하나」.
+//    ⛔⛔ 그냥 「닫고 나서 본다」로 두면 **시트가 «안 떠도» 통과한다**(규칙 18 ⓘ).
+//       → 「떴나」를 «돌려주게» 해서 그것도 한 칸으로 «센다». 안 뜨면 그 칸이 죽는다.
+//    🔒 한 장씩 자체는 `_repro-한장씩-0828.mjs` 가 «넘긴 장수»로 따로 잰다.
+const 한장더닫기 = async (page) => {
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('레시피도 보내기')),
+    null, { timeout: 20000 },
+  ).catch(() => {})
+  const 떴나 = await page.evaluate(() =>
+    [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('레시피도 보내기')))
+  if (!떴나) return false
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim() === '괜찮아요')?.click()
+  })
+  await page.waitForTimeout(700)
+  return true
+}
+
+// ─── ⑦ 🚨 「내가 꾸민 표지 그대로」 — 창업자가 «아예 못 본» 그 길 ────────────
+//
+// 📮 창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 **아예** 못봤어..ㅠ"*
+//
+// ⛔⛔ **③~⑥은 전부 「랜덤 카드로 뽑기」만 밟았다.** 그런데 선택 시트의 «주인공»은
+//    맨 위 갈색 단추 **「내가 꾸민 표지 그대로」**(`sendCover`)다. 랜덤 카드는 그 아래 «옵션»이다.
+//    → **보통 유저가 누르는 길에서는 리뷰창이 영영 안 떴다.**
+// 📌 앞 판 주석은 *"공유 성공 자리가 셋인데 셋 다 그 약속을 쓴다"* 였는데
+//    그 「셋」은 `ShareDrawCard` «안»의 셋이었고 `sendCover` 는 그 컴포넌트를 «안 거친다».
+//    ⭐ 「한 곳만 감쌌다」가 참이려면 **모든 길이 그 한 곳을 지나가야** 한다 — 안 지나갔다.
+console.log('\n⑦ 🚨 「내가 꾸민 표지 그대로」로 보내도 뜨나 — 창업자가 못 본 그 길')
+{
+  const page = await 새탭()
+  await 공유흉내(page, true)
+  chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(page))
+  // 레시피 하나 → 선택 시트
+  await page.evaluate(() => { [...document.querySelectorAll('button[aria-label$="자랑하기"]')][0]?.click() })
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('내가 꾸민 표지 그대로')),
+    null, { timeout: 20000 },
+  ).catch(() => {})
+  const 주인공있나 = await page.evaluate(() =>
+    [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('내가 꾸민 표지 그대로')))
+  chk('선택 시트에 «주인공» 단추가 있다', 주인공있나)
+
+  const 전 = await page.evaluate(() => window.__보냄 || 0)
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('내가 꾸민 표지 그대로'))?.click()
+  })
+  // ⛔ 고정 대기로 재지 않는다 — 표지 캡처가 오래 걸린다. «보냈나»가 늘 때까지 기다린다
+  await page.waitForFunction((n) => (window.__보냄 || 0) > n, 전, { timeout: 45000 }).catch(() => {})
+  const 보냄 = await page.evaluate(() => window.__보냄 || 0)
+  chk(`꾸민 표지가 «나갔다» (보냄 ${보냄})`, 보냄 > 전)
+  chk('📱 레시피 한 장을 «먼저» 청한다 (ⓑ)', await 한장더닫기(page))
+  chk('⭐⭐ 그 길에서도 리뷰창이 뜬다', await 리뷰창기다리기(page))
+  await page.close()
+}
+
+// ─── ⑧ 🚨🚨 「지금 보내기」 — 창업자 폰이 실제로 지나가는 길 ─────────────
+//
+// 📮 창업자 2026-08-28 = *"리뷰 안떠..ㅠㅠ"* — **⑦을 고쳐 배포한 «뒤»에도.**
+//
+// ⛔⛔ **⑦은 공유가 «바로» 성공하는 길만 밟는다.** 그런데 창업자 폰은 표지 캡처가 십수 초 걸려
+//    **누른 순간의 허가(user activation)가 끊긴다** — 그때 앱은 「지금 보내기」 시트를 띄운다
+//    (창업자가 08-03「먹통」·08-04「다운로드」·08-05「내가만든표지는안돼」 로 세 번 제보한 그 증상).
+//    → 그 단추로 공유는 **진짜로 나가는데**, `sendCover` 의 `finally` 는 이미 지나가서
+//      `자랑보냄` 이 false 로 되돌려진 뒤였다. **보냈는데 아무도 안 물어본다.**
+// 📌 어제 내가 적은 *"「한 곳만 감쌌다」가 참이려면 모든 길이 그 한 곳을 지나가야 한다"* 를
+//    **바로 다음 길에서 또 어겼다.** `ShareDrawCard` 는 「지금 보내기」까지 `go()` 를 지나가 멀쩡한데,
+//    `sendCover` 쪽은 `SendNowSheet` 가 `sharePendingNow` 를 «직접» 불러 빠져나갔다.
+//
+// 🎭 흉내 = **첫 번째 share 만 `NotAllowedError`** (＝허가 끊김) · 두 번째부터 성공.
+//    ⛔ `AbortError`(＝유저가 닫음)와 다른 이름이라야 한다 — 코드가 그 둘을 갈라 처리한다.
+console.log('\n⑧ 🚨 허가가 끊겨 「지금 보내기」로 나간 경우에도 뜨나 — 창업자 폰이 가는 길')
+{
+  const page = await 새탭()
+  await page.evaluate(() => {
+    navigator.canShare = () => true
+    let 첫번 = true
+    navigator.share = () => {
+      window.__부름 = (window.__부름 || 0) + 1
+      if (첫번) { 첫번 = false; return Promise.reject(Object.assign(new Error('user activation'), { name: 'NotAllowedError' })) }
+      window.__보냄 = (window.__보냄 || 0) + 1
+      return Promise.resolve()
+    }
+  })
+  chk('레꾸자랑 탭이 열렸다', await 자랑탭열기(page))
+  await page.evaluate(() => { [...document.querySelectorAll('button[aria-label$="자랑하기"]')][0]?.click() })
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('내가 꾸민 표지 그대로')),
+    null, { timeout: 20000 },
+  ).catch(() => {})
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('내가 꾸민 표지 그대로'))?.click()
+  })
+  // ⭐ 여기가 이 칸의 «전제» — 허가가 끊겨 「지금 보내기」 시트가 떠야 한다.
+  //   ⛔ 안 뜨면 아래 두 칸은 아무것도 안 재고 초록불이 된다(규칙 18 ⓘ) → 전제부터 잰다.
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('지금 보내기')),
+    null, { timeout: 45000 },
+  ).catch(() => {})
+  const 시트떴나 = await page.evaluate(() =>
+    [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('지금 보내기')))
+  chk('허가가 끊겨 「지금 보내기」 시트가 떴다 (＝이 칸의 전제)', 시트떴나)
+
+  const 전보냄 = await page.evaluate(() => window.__보냄 || 0)
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('지금 보내기'))?.click()
+  })
+  await page.waitForFunction((n) => (window.__보냄 || 0) > n, 전보냄, { timeout: 20000 }).catch(() => {})
+  const 보냄8 = await page.evaluate(() => window.__보냄 || 0)
+  chk(`「지금 보내기」로 «진짜» 나갔다 (보냄 ${보냄8})`, 보냄8 > 전보냄)
+  chk('📱 레시피 한 장을 «먼저» 청한다 (ⓑ)', await 한장더닫기(page))
+  chk('⭐⭐ 그 길에서도 리뷰창이 뜬다', await 리뷰창기다리기(page, 6000))
   await page.close()
 }
 

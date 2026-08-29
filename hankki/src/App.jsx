@@ -5,9 +5,13 @@ import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } f
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw } from './parseRecipe'
+import { tidyRecipe, mergeTidy, tidyTail } from './tidy'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
 import { guessCategory, fitImage } from './utils'
+// 🍱 [2026-08-28] 공유로 담으면 아이콘이 빈 접시로 굳던 것 — 뿌리·막이 설명은 `shareIcon.js` 주석에.
+import { 공유아이콘 } from './shareIcon'
+import { guessFoodIconStrict } from './components/FoodIcon'
 import BottomNav from './components/BottomNav'
 import TabSwipe from './components/TabSwipe'
 import TimerBar from './components/TimerBar'
@@ -408,12 +412,32 @@ export default function App() {
         }
         const text = 읽은글.join('\n')
         if (cancelled || !text.trim()) return
-        const r = parseRecipeText(text, { fromOcr: true })
+        // 🤖🤖 [2026-08-29] **AI 다듬기 — ⭐여기가 창업자가 실제로 쓰는 문이다.**
+        //   ⛔⛔ 8/29 아침에 AI 를 `EditorScreen`(편집 화면 캡처 단추) «한 곳»에만 붙여서
+        //      「가져오기 → 사진」·공유받기로 담은 것은 **워커를 한 번도 안 불렀다**
+        //      (Cloudflare Invocations 0 · 창업자 대시보드 실측). 그날 재현판 16칸은 전부 초록불이었다.
+        //   📌 `ocrImage()` 를 부르는 곳은 셋 — 편집 캡처 · **여기** · 냉장고 영수증.
+        //      레시피인 앞의 둘에만 붙인다(영수증은 재료 목록이라 AI 지시가 안 맞는다).
+        //   ⭐ 규칙 파서를 «먼저» 돌려놓는다 — AI 가 안 되든 느리든 이 `기본` 이 그대로 쓰인다.
+        const 기본 = parseRecipeText(text, { fromOcr: true })
+        const r = mergeTidy(기본, await tidyRecipe(text))
+        if (cancelled) return
+        const 새제목 = rec.title && rec.title !== '사진 레시피' ? rec.title : r.title || rec.title
+        // 🍱🍱 [2026-08-28 · 창업자 제보] **이름이 여기서 처음 정해지니, 아이콘도 여기서 다시 찾는다.**
+        //   📮 창업자 = *"sns나 갤러리는 자동으로 안붙어. 이거 자동으로 붙게할 수있어?"*
+        //   ⭐ 뿌리 = `makeInboxRecipe` 가 «글자를 읽기 전»에 `icon` 을 굳혀서, 나중에 제목이
+        //      「골쫄면」이 돼도 아이콘은 빈 접시(`default`) 그대로였다. 화면은 `icon` 이 있으면
+        //      자동찾기를 안 돌리므로(Thumb.jsx) 영영 안 바뀐다.
+        //   ⛔ 창업자가 «직접 고른» 아이콘은 안 덮는다 — 판정과 두 겹 막이는 `shareIcon.js` 에 있다.
+        const 새아이콘 = 공유아이콘(rec, 새제목, guessFoodIconStrict)
         store.updateRecipe(rec.id, {
-          title: rec.title && rec.title !== '사진 레시피' ? rec.title : r.title || rec.title,
+          title: 새제목,
           ingredients: r.ingredients,
           steps: r.steps, // 메모는 건드리지 않는다 — 직접 입력 전용
           category: guessCategory((r.title || '') + ' ' + r.memo),
+          // ⭐ 자동으로 추천한 것이니 `iconPicked: false` 로 «자동» 표를 남긴다 —
+          //    EditorScreen 이 쓰는 규칙과 «같은 말»이라야 한쪽만 낡지 않는다(v9.77 · check-thumb.mjs).
+          ...(새아이콘 ? { icon: 새아이콘, iconPicked: false } : {}),
           // 📥 원문도 — 있을 때만 넣는다(빈 값으로 덮으면 지우는 것이다)
           ...(keepRaw(text) ? { rawText: keepRaw(text) } : {}),
         })
@@ -425,9 +449,9 @@ export default function App() {
         //       그때 숫자를 적으면 «안 써 봤을 때의 기본값 20»을 사실처럼 말하게 된다(규칙 15).
         const left = getOcrLeft()
         showToast(
-          left.unknown
+          (left.unknown
             ? '사진에서 글자를 읽어 채웠어요'
-            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`,
+            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`) + tidyTail(),
         )
         return
       }

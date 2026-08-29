@@ -21,8 +21,28 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const src = readFileSync(join(HERE, '../src/data/curation.js'), 'utf8')
 // 🏷 [2026-08-22] brand 도 같이 읽는다 — 창업자가 브랜드를 이름에서 뗀 뒤(「자연드림」 배지)
 //    name 만 읽으면 「자연누리 훈제오리」·「무무덕 훈제오리」가 둘 다 '훈제오리' 라 «같은 제품»으로 보인다.
-const PRODUCTS = [...src.matchAll(/\{\s*name:\s*'([^']+)'(?:,\s*brand:\s*'([^']+)')?/g)]
-  .map((m) => ({ name: m[1], brand: m[2] || '' }))
+// 🧺 [2026-08-28] `cat`·`mall` 도 같이 읽는다 — 「섞였나」(⑤)를 재려면 필요하다.
+//   ⛔⛔ 그 전엔 `name`·`brand` 만 읽었다. 그 상태로 ⑤를 얹었더니 갈래가 «전부 빈 문자열»이 되어
+//      `갈래섞기` 가 한 통으로 묶고, 검사도 「갈래 1가지」만 보게 된다 — **아무것도 안 재는 검사**(규칙 18 ⓘ).
+//   ⭐ 줄 단위로 훑는다: `cat:` 을 만나면 지금 갈래를 갈아끼우고, `{ name:` 줄에서 제품을 뽑는다.
+const PRODUCTS = []
+{
+  let 갈래 = ''
+  for (const 줄 of src.split('\n')) {
+    const c = 줄.match(/^\s*cat:\s*'([^']+)'/)
+    if (c) { 갈래 = c[1]; continue }
+    const m = 줄.match(/\{\s*name:\s*'([^']+)'(?:,\s*brand:\s*'([^']+)')?/)
+    if (!m) continue
+    const mall = (줄.match(/mall:\s*'([^']+)'/) || [])[1] || ''
+    const url = /\burl:\s*'/.test(줄)
+    PRODUCTS.push({ name: m[1], brand: m[2] || '', cat: 갈래, mall, url })
+  }
+}
+// ⛔ 갈래를 못 읽으면 ⑤가 조용히 눈이 먼다 → 그 자리에서 죽인다
+if (PRODUCTS.some((p) => !p.cat)) {
+  console.log(`  ⛔ 갈래(cat)를 못 읽은 제품이 ${PRODUCTS.filter((p) => !p.cat).length}개 — 글자로 읽는 방식이 깨졌다`)
+  process.exit(1)
+}
 if (PRODUCTS.length < 20) {
   console.log(`  ⛔ 제품을 ${PRODUCTS.length}개밖에 못 읽었다 — 글자로 읽는 방식이 깨졌다(형식이 바뀌었나)`)
   process.exit(1)
@@ -84,6 +104,23 @@ else ok(`한 바퀴 ${한바퀴}주 (제품 ${PRODUCTS.length}개 ÷ 매주 ${�
 const 중복주 = 주.filter((w) => new Set(w.이름).size !== w.이름.length)
 if (중복주.length) no(`한 주에 같은 제품이 두 번 (${중복주[0].ymd})`)
 else ok('한 주 안에 같은 제품이 겹치지 않는다')
+
+// ⑤ 🧺🧺 **한 주 4개가 «섞여» 있나** — 창업자 2026-08-28 *"87개 다 넣어줘(섞어서)"*
+//   ⛔⛔ 제품이 갈래별로 뭉쳐 있어서, 섞기 전에는 한 주가 통째로 한 갈래였다
+//      (8/28 = 순두부·도토리묵·연두부·낫또 = 전부 「두부·낫또」 · 9/18 = 한살림2＋자연드림2).
+//   ⭐ 「섞였다」를 말이 아니라 **숫자로** 잰다 = 그 주 4개가 몇 «갈래»·몇 «몰»에서 왔나.
+//   ⚠️ 잣대를 4로 잡지 않는다 — 갈래 수가 적은 몰(그 외 등)이 끼면 4가 안 나올 수 있고,
+//      **못 지킬 기준은 기준이 아니다**(③에서 이미 겪었다). 「갈래 3 이상 · 몰 2 이상」이면 뭉침이 깨진다.
+const 몰이름 = (p) => p.mall || (p.url ? '직접' : '네이버')
+const 주갈래 = []
+for (let i = 0; i < 26; i++) {
+  const ymd = 주더하기(시작, i)
+  const picks = pickRotate({ products: PRODUCTS, matched: [], today: ymd })
+  주갈래.push({ ymd, 갈래: new Set(picks.map((p) => p.cat)).size, 몰: new Set(picks.map(몰이름)).size, 개: picks.length })
+}
+const 뭉친주 = 주갈래.filter((w) => w.개 >= 3 && (w.갈래 < 3 || w.몰 < 2))
+if (뭉친주.length) no(`한 갈래·한 몰로 뭉친 주가 ${뭉친주.length}개 — ${뭉친주.slice(0, 3).map((w) => `${w.ymd}(갈래${w.갈래}·몰${w.몰})`).join(' ')}`)
+else ok(`26주 내내 한 주가 «섞여» 나온다 (갈래 최소 ${Math.min(...주갈래.map((w) => w.갈래))}가지 · 몰 최소 ${Math.min(...주갈래.map((w) => w.몰))}곳)`)
 
 console.log('\n  🗓 앞 4주 미리보기')
 for (const w of 주.slice(0, 4)) console.log(`     ${w.ymd}  ${w.이름.join(' · ')}`)

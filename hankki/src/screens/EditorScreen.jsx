@@ -19,6 +19,7 @@ import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw } from '../parseRecipe'
+import { tidyRecipe, mergeTidy, tidyTail } from '../tidy'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 // 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
@@ -135,6 +136,7 @@ export default function EditorScreen({ id, prefill }) {
   useEffect(() => { const id = setTimeout(checkPhotoScroll, 80); return () => clearTimeout(id) }, [pin, refs.length, photoFold])
   const [newFolder, setNewFolder] = useState(false)
   const [discardAsk, setDiscardAsk] = useState(false) // 작성 중 나가기 = 버릴지 물어본다
+  const [rawOpen, setRawOpen] = useState(false) // 📥 「사진에서 읽은 원문」 접힘/펼침
   // 📥 [2026-08-22] 파서에 넣은 «원문» — 화면엔 안 보이고 저장만 된다.
   //    파서를 고친 날 「다시 읽기」로 되살릴 재료다(→ `parseRecipe.js` 의 `keepRaw` 주석).
   //    ⛔ 편집으로 들어왔는데 원문이 없으면 «빈 값으로 덮지» 않는다 — 없는 값으로 덮는 건 지우는 것이다(규칙 18 ⓙ).
@@ -237,12 +239,14 @@ export default function EditorScreen({ id, prefill }) {
     ocrTargetRef.current = target
     ocrRef.current?.click()
   }
-  // 📥📥 고른 사진들로 «읽기 흐름»을 시작한다 — 자르기 → 인식 → 합치기.
-  //   ⭐ 파일 고르기와 갈라 뒀다 — 「가져오기」 화면에서 «먼저» 고른 사진도 같은 길로 들어와야 하는데
-  //      (창업자 ③ 「여기서 사진 고르기」), 흐름을 두 번 적으면 한쪽만 고치는 사고가 난다.
-  const startOcr = (urls) => {
-    if (!urls || !urls.length) return
-    {
+  // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
+  const onOcrFile = (e) => {
+    const files = [...(e.target.files || [])]
+    if (!files.length) return
+    e.target.value = ''
+    Promise.all(
+      files.map((f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f) })),
+    ).then((urls) => {
       ocrAccum.current = ''
       ocrTotal.current = urls.length
       ocrQueue.current = urls.slice(1) // 첫 장은 지금 자르고, 나머지는 자르기 대기열
@@ -267,33 +271,8 @@ export default function EditorScreen({ id, prefill }) {
       }
       ocrCropOpen.current = true
       setCropImg(urls[0])
-    }
+    })
   }
-
-  // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
-  const onOcrFile = (e) => {
-    const files = [...(e.target.files || [])]
-    if (!files.length) return
-    e.target.value = ''
-    Promise.all(
-      files.map((f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f) })),
-    ).then(startOcr)
-  }
-
-  // 📷 「가져오기 → 여기서 사진 고르기」로 들어온 경우 — 이미 고른 사진이 딸려 온다.
-  //   ⭐ 창업자 ③ = *"한끼앱에 가져오기에서 사진 가져오기"*. 고르기는 그 화면에서 «손짓»으로 끝냈고
-  //      여기서는 읽기만 이어받는다.
-  //   ⛔ 딱 한 번만 — `ocrTargetRef` 를 'all' 로 두고 시작한다(재료·만드는 법 자동 분류).
-  const 딸려온사진Ref = useRef(false)
-  useEffect(() => {
-    if (딸려온사진Ref.current) return
-    const urls = prefill?.ocrImages
-    if (!urls || !urls.length) return
-    딸려온사진Ref.current = true
-    ocrTargetRef.current = 'all'
-    startOcr(urls)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // 한 칸에만 이어붙이기 — 이미 내용이 있으면 아래에 덧붙인다(2단·긴 레시피 대응).
   const appendLines = (prevText, lines) => {
@@ -359,7 +338,9 @@ export default function EditorScreen({ id, prefill }) {
   }
 
   // 🏁 다 읽었다 — 모아둔 글자를 칸에 넣고 안내한다.
-  const finishOcr = () => {
+  // ⚠️ 2026-08-29 부터 async — 안에서 🤖AI 다듬기를 기다린다(실패하면 규칙 파서 그대로).
+  //   ⭐ 부르는 두 곳(337줄·1025줄) 다 결과를 안 쓰므로 await 를 안 붙여도 된다.
+  const finishOcr = async () => {
     const target = ocrTargetRef.current || 'all'
     ocrAccum.current = ocrParts.current.filter((t) => t && t.trim()).join('\n').trim()
 
@@ -393,7 +374,13 @@ export default function EditorScreen({ id, prefill }) {
     }
     const combined = ocrAccum.current
     if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + quotaTail, quotaTail ? 6000 : 3200); return }
-    const r = parseRecipeText(combined, { fromOcr: true })
+    // 🤖 AI 다듬기 — ⭐**규칙 파서를 «먼저» 돌려놓는다.**
+    //   AI 가 안 되든 느리든 이상하든 이 `r` 이 그대로 쓰인다(3층 구조 1층 · 앱은 절대 안 죽는다).
+    //   ⛔ 순서를 뒤집지 말 것 — AI 를 먼저 기다렸다가 실패하면 그때 파싱하면, 실패한 만큼 유저가 더 기다린다.
+    let r = parseRecipeText(combined, { fromOcr: true })
+    // ⛔ 열쇠는 여기서 «안» 깎는다 — 위에서 `ocrImage` 가 이미 깎았다(카운트는 한 곳에서만).
+    // ⭐ 얹는 규칙은 `mergeTidy` 한 곳에 있다 — 여기와 `App.jsx`(공유받기)가 «같은 말»이라야 한다
+    r = mergeTidy(r, await tidyRecipe(combined))
     setRawText(keepRaw(combined) || '') // 📥 읽어들인 글자 그대로 — 파서를 고친 날 다시 읽을 재료
     setF((prev) => ({
       ...prev,
@@ -407,13 +394,15 @@ export default function EditorScreen({ id, prefill }) {
           ? prev.category
           : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
     }))
+    // 🤖 「AI 가 정리했나」를 «보이게» 붙인다 — 문구는 `tidy.js` 의 `tidyTail()` 한 곳에서 정한다
+    //   (여기와 App.jsx 공유받기가 «같은 말»이라야 유저가 두 경로를 같은 기능으로 읽는다)
     nav.showToast(
-      quotaTail
+      (quotaTail
         ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
         : leftTail
           ? '초안을 채웠어요' + leftTail
-          : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
-      quotaTail || leftTail ? 6500 : 4800,
+          : '초안을 채웠어요 · 사진 보며 다듬어 주세요') + tidyTail(),
+      6500,
     )
   }
 
@@ -900,6 +889,66 @@ export default function EditorScreen({ id, prefill }) {
           <label>메모 (선택)</label>
           <textarea rows={3} value={f.memo} onChange={(e) => set('memo', e.target.value)} placeholder="나만의 팁이나 변형 아이디어" />
         </div>
+
+        {/* 📥📥 [2026-08-28 · 창업자 「A가자 테스트를 해봐야하니까」] **사진에서 읽은 원문**
+            📮 창업자 = *"근데 그럼 나머지는 어떻게 잡아? 다른 케이스 테스트해서 계속 보내?"*
+            ⭐ 스크린샷만 보내면 나는 OCR 이 «뭐라고 읽었을지»를 추측해서 다시 쳐야 한다.
+               추측이 빗나가면 못 고친다(콩나물 걸음 1 「jangnamcook 21시간 작성자」가 그랬다).
+               원문 글자를 그대로 받으면 추측이 0이 된다.
+            ⭐ 원문은 2026-08-22 부터 «이미 저장되고 있었다»(parseRecipe.js `keepRaw` · 상한 4,000자).
+               꺼낼 입구가 없었을 뿐이다 — 로드맵 7순위 「다시 읽기 단추(자리는 창업자 판정)」가 이것이다.
+            ⭐ 용량은 한 글자도 안 는다 — 저장은 이미 하고 있고 여기선 «보여주기»만 한다.
+            ⛔ 원문이 없는 레시피(8/22 이전에 담은 것)엔 아예 안 그린다 — 없는 걸 있는 척하지 않는다. */}
+        {rawText && (
+          <div className="field">
+            <button
+              type="button"
+              className="press"
+              onClick={() => setRawOpen((v) => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '12px 14px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 16, fontWeight: 700, textAlign: 'left' }}
+            >
+              <Icon name={rawOpen ? 'chevron-down' : 'chevron-right'} size={16} color="var(--brown)" />
+              사진에서 읽은 원문
+              <span style={{ marginLeft: 'auto', fontSize: 15, fontWeight: 600, color: 'var(--text-sub)' }}>{rawText.length}자</span>
+            </button>
+            {rawOpen && (
+              <>
+                {/* ⛔⛔ 글자를 «화면에 그대로» 띄운다 — 복사가 막힌 기기에서도 손으로 긁을 수 있게.
+                    2026-08-16 사고 = `clipboard.writeText()` 가 «성공으로 resolve 되고도» 실제 복사는 실패했다.
+                    그때 배운 것 = **확인할 수 없는 것을 성공이라고 말하지 않는다.** 여기선 눈에 보이는 길을 같이 둔다. */}
+                <textarea
+                  data-raw="1"
+                  readOnly
+                  rows={8}
+                  value={rawText}
+                  onFocus={(e) => e.target.select()}
+                  style={{ marginTop: 8, fontSize: 15, lineHeight: 1.55, fontFamily: 'var(--mono, monospace)' }}
+                />
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button
+                    type="button"
+                    className="press"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(rawText)
+                        // ⛔ 「복사했어요」로 끝내지 않는다 — 됐는지 확인할 방법이 없다(2026-08-16).
+                        nav.showToast('원문을 복사했어요 붙여넣어 «들어갔는지» 꼭 확인하세요', 5200)
+                      } catch {
+                        nav.showToast('복사가 막힌 기기예요 위 글자를 길게 눌러 «전체 선택»으로 복사하세요', 6000)
+                      }
+                    }}
+                    style={{ padding: '10px 16px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 16, fontWeight: 700 }}
+                  >
+                    복사
+                  </button>
+                </div>
+                <div style={{ fontSize: 15, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>
+                  레시피가 이상하게 담겼을 때 이 글자를 그대로 보내주시면 원인을 찾을 수 있어요.
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {/* disabled 금지 — 위 상단 저장 버튼과 같은 이유(무반응=먹통으로 보임). 누르면 save()가 안내한다. */}
         <button className="btn-primary press" onClick={save} style={{ opacity: canSave ? 1 : 0.5 }}>

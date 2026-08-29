@@ -561,8 +561,19 @@ export function parseRecipeText(raw = '', opts = {}) {
     //       「dowo0929 8시간」이 «재료»가 됐다.
     //    ⛔ IG_HANDLE 로는 못 잡는다 — 그건 아이디에 「.」이나 「_」가 있어야 한다(jangnamcook 은 없다).
     if (/^\s*[a-z][a-z0-9._]{2,29}\s+\d+\s*(초|분|시간|일|주|개월|년)\s*(전)?\s*[•·]?\s*(작성자)?\s*$/i.test(rawLine)) {
+      // 👤👤 [2026-08-28] **버리는 데서 그치지 않고 «그 앞»을 지운다** — 캡션은 계정줄에서 시작한다.
+      //    📮 창업자 진짜 원문(콩나물무침) 맨 위 = 「KT 1:54 O F」/「항상」/「건강하세요」/「jangnamcook 9시간 • 작성자」
+      //       → **「항상」이 제목이 됐다.** 릴스 화면에 얹힌 글자(프로필 문구·스티커)다.
+      //    ⭐ 낱말을 하나씩 막는 길은 끝이 없다 — 「어디부터가 캡션인가」를 잡으면 한 번에 풀린다.
+      //    🔒 «머리»에서만 지운다 — 아래쪽 「남의 댓글 머리줄」에서 지우면 본문이 통째로 날아간다.
+      if (items.length < 8) items.length = 0
       blankAhead = true; continue
     }
+    // ⛔ [2026-08-28 · 규칙 12로 지웠다] 여기 「계정줄이 시간 없이 요리 이름만 달고 오면 앞을 지운다」를
+    //    넣었는데 **되돌려도 아무 칸도 안 죽었다** = 한 번도 안 도는 코드였다.
+    //    🔢 꼬마김밥 원문의 화면 글자는 «이미 다른 규칙들이» 버리고 있었다 —
+    //       「KT 7:45」=상태표시줄 · 「HD Doll 59」·「1,228 56 46 86」=한글 없는 짧은 줄 · 「☑」=불릿.
+    //    📌 안 도는 고침을 남기면 나중에 누가 지워도 아무도 모른다.
     // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
     const isHeader = SEC_ING.test(l) || SEC_STEP.test(l) || SEC_MEMO.test(l)
     if (isHeader || (l.length > 1 && !isGibberish(l))) { items.push({ l, bullet, emojiHead, stepMarked, checkMark, blankBefore: blankAhead }); blankAhead = false }
@@ -666,7 +677,14 @@ export function parseRecipeText(raw = '', opts = {}) {
       //    ⚠️ looksLikeStep 으로 거르면 안 된다 — 「가지 볶음」·「제육 볶음」처럼
       //       요리 «이름»에 조리 동사가 들어가는 게 오히려 흔하다. 문장 종결(SENTENCE_END)만 배제하면 충분.
       const plainName = !QTY.test(asTitle) && /[가-힣]{2,}/.test(asTitle) && asTitle.length <= 32
-      if ((emojiHead || isBanner || plainName) && !QTY.test(asTitle) && asTitle.length >= 2 && !SENTENCE_END.test(asTitle)) {
+      // ⛔⛔ [2026-08-28 · 창업자 진짜 원문] **절 이름을 제목으로 채가지 않는다.**
+      //    📮 진미채볶음 캡션이 「[재료]」로 «바로 시작»해서 제목이 **「재료」**가 됐다.
+      //    ⭐ 뿌리 = 이 「첫 줄 제목」 가지가 아래 «절 헤더» 판정보다 **먼저 돌고 continue 한다** —
+      //       그래서 SEC_ING 가 볼 기회조차 없었다.
+      //    📌 절 이름(재료·만드는 법·양념·팁)은 «무엇이 적혔나»이지 «무슨 요리인가»가 아니다.
+      const 절이름 = SEC_ING.test(asTitle) || SEC_STEP.test(asTitle) || SEC_MEMO.test(asTitle) ||
+        /^(재료|양념|소스|양념장|육수|만드는\s*법|만드는\s*방법|만들기|조리법|순서|팁|포인트)$/.test(asTitle)
+      if (!절이름 && (emojiHead || isBanner || plainName) && !QTY.test(asTitle) && asTitle.length >= 2 && !SENTENCE_END.test(asTitle)) {
         title = asTitle
         continue
       }
@@ -683,7 +701,11 @@ export function parseRecipeText(raw = '', opts = {}) {
 
     if (head.length <= 16 && !stepMarked && !DECLARATIVE.test(head)) {
       // 「돼지고기 양념 재료:」 처럼 앞에 수식어가 붙은 재료 헤더도 받는다(끝이 재료/양념).
-      if (SEC_ING.test(head) || /(재료|양념)\s*[:：]?$/.test(head)) {
+      // 🥣 [2026-08-28 · 창업자 진짜 원문] 「고당추 조림소스」처럼 «소스·양념장으로 끝나는 소제목»도 절 이름이다.
+      //    📮 꼬마김밥 원문의 「[고당추 조림소스]」가 **재료 6번**으로 들어갔다.
+      //    ⛔ 「굴소스 2큰술」 같은 진짜 재료와 갈라야 한다 → **분량이 붙어 있으면 재료다**(QTY 로 막는다).
+      if (SEC_ING.test(head) || /(재료|양념)\s*[:：]?$/.test(head) ||
+          (!QTY.test(head) && /(소스|양념장|육수|드레싱|장)\s*[:：]?$/.test(head))) {
         // 🍳🍳 [2026-08-28] 「차돌 짬뽕 재료」처럼 «앞에 요리 이름이 붙은» 재료 헤더면 그 이름이 제목이다.
         //    📮 창업자 실물(차돌짬뽕 · 댓글45 캡처) — 캡션에 제목 줄이 따로 없고
         //       ★ 두 절을 다 지난 뒤 「차돌 짬뽕 재료」 한 줄이 나온다. 그게 유일한 요리 이름이었다.
@@ -849,9 +871,19 @@ export function parseRecipeText(raw = '', opts = {}) {
     // ⭐ [2026-08-28] «모양»은 괄호를 뗀 `core` 로 본다 — 「양배추 (생략가능)」이
     //    괄호 때문에 순한글 검사를 못 넘고 있었다. 담을 땐 `l` 그대로 담는다
     //    (「(생략가능)」은 유저에게 쓸모 있는 말이라 지우지 않는다).
+    // 🧂 [2026-08-28 · 창업자 진짜 원문] **「참깨, 참기름」처럼 «분량 없이 쉼표로 묶인 재료»**도 받는다.
+    //    📮 꼬마김밥 원문의 「참깨, 참기름」이 **통째로 사라졌다**(메모로도 안 갔다).
+    //    ⛔ 위 쉼표 나열 규칙(0번)은 «셋 이상 ＋ 대부분 분량 있음»을 요구해서 이 줄을 못 받는다.
+    //    ⭐ 조건은 그대로 좁게 두고 «쉼표만» 허용한다 — 담을 땐 쪼개서 각각 재료로.
     if (!stepLike && (mode === 'ing' || (!sawStep && mode !== 'step' && ingredients.length > 0)) &&
-        l.length <= 30 && core.length <= 20 && /^[가-힣][가-힣\s]*$/.test(core) && !DECLARATIVE.test(core)) {
-      pushIng(l, bullet); continue
+        l.length <= 30 && core.length <= 20 && /^[가-힣][가-힣\s,·]*$/.test(core) && !DECLARATIVE.test(core)) {
+      if (/[,·]/.test(l)) {
+        for (const 조각 of l.split(/\s*[,·]\s*/)) {
+          const v = 조각.trim()
+          if (v.length >= 2) pushIng(v, bullet)
+        }
+      } else pushIng(l, bullet)
+      continue
     }
     // 4) 순서가 이미 시작됐으면, 남는 줄은 순서의 연속으로 본다("5분간 그대로 둔다" 등)
     if (sawStep && mode !== 'ing' && l.length >= 5) { pushStep(l); continue }

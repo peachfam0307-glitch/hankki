@@ -274,16 +274,28 @@ export default function RecipeDetailScreen({ id }) {
     setShareSheet(false)
     const appUrl = location.origin + location.pathname.replace(/[^/]*$/, '')
     await new Promise((res) => setTimeout(res, 60)) // 레시피카드 마운트 시간
+    // 📱 [2026-08-28 ⓑ] 시트를 띄우게 되면 «리뷰는 그 시트가 닫힐 때» 청한다(⛔시트 위에 시트 금지).
+    let 띄울시트 = null
     try {
       // 꾸민 표지 + 재료·만드는 법(레시피카드) 2장 함께 — 친구가 진짜 해먹게(랜덤 카드와 동일)
       // ⭐ 시트가 뜰 때 시작한 「미리 캡처」가 있으면 그걸 쓴다 — 다 돼 있으면 즉시 공유창이 열린다
       const res = await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe ? recipeCardRef.current : null, prepared })
       // ⛔ 공유가 «저장»으로 떨어졌으면 이유를 말한다 (BragScreen 과 같은 처리 — 창업자 2026-08-03)
-      if (res && res.pending) setPending(res.pending)   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
+      if (res && res.pending) 띄울시트 = res.pending   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
+      // 📱 표지가 나갔고 레시피가 한 장 남았다 → 「레시피도 보내기」를 한 번 더 청한다(창업자 "ㄴ으로 하자")
+      else if (res && res.shared === true && res.다음) 띄울시트 = { ...res.다음, 이어보내기: true }
       else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
+      // 🗣 「꾸민 표지 그대로」 공유도 리뷰를 청한다 — BragScreen `sendCover` 와 «같은 구멍»이었다
+      //   (창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 아예 못봤어"*). 자세한 경위는 그쪽 주석에.
+      if (res && res.shared === true) 자랑보냄.current = true
     } finally {
       setCoverBusy(false)
+      if (띄울시트) setPending(띄울시트) // 📱 리뷰는 이 시트의 `onClose` 가 청한다(아래)
+      else {
+        if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+        자랑보냄.current = false
+      }
     }
   }
 
@@ -325,8 +337,20 @@ export default function RecipeDetailScreen({ id }) {
         </div>
       )}
       {/* 🎨 꾸민 표지 이미지 만드는 중 — 로딩 오버레이(먹통처럼 안 보이게) */}
-      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다 */}
-      <SendNowSheet pending={pending} onClose={() => setPending(null)} />
+      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다
+          🗣 [2026-08-28] 여기서 «진짜로» 나갔을 때도 한마디를 청한다 — BragScreen 과 «같은 구멍»이었다
+             (창업자 = *"리뷰 안떠..ㅠㅠ"*). 자세한 경위는 `SendNowSheet.jsx` 머리 주석에. */}
+      <SendNowSheet
+        pending={pending}
+        onShared={() => { 자랑보냄.current = true }}
+        onClose={(다음) => {
+          // 📱 [2026-08-28 ⓑ] 표지가 나갔고 레시피가 남았으면 **한 장 더**를 먼저 청한다. 리뷰는 그다음.
+          if (다음) { setPending({ ...다음, 이어보내기: true }); return }
+          setPending(null)
+          if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+          자랑보냄.current = false
+        }}
+      />
 
       {coverBusy && (
         <Portal>
