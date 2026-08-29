@@ -132,7 +132,18 @@ export default {
         temperature: 0.2,
         max_tokens: 2000,
       })
-      out = r && (r.response ?? r.result ?? r)
+      // ⛔⛔ [2026-08-29 실물] **꺼내는 자리를 넓혔다** — 창업자 폰 로그에 `BAD_AI_OUTPUT … object [object Object]`.
+      //   ⑴ 이 모델은 «생각하고 답하는» 판이라 응답이 `{response, usage, …}` 한 겹이 아닐 수 있다.
+      //   ⑵ 8/28 놀이터에서 잘 됐던 건 **놀이터가 알아서 풀어줬기 때문**이다. 바인딩으로 부르면 날것이 온다.
+      //   ⭐ 그래서 흔한 모양을 «전부» 훑는다 — 하나라도 맞으면 글자가 나온다.
+      //   ⛔ 못 찾으면 «버리지 않고» 통째로 넘긴다(`r`) — 아래 pickJson 이 stringify 해서 다시 판다.
+      out =
+        r?.response ??
+        r?.result?.response ??
+        r?.result ??
+        r?.choices?.[0]?.message?.content ??
+        r?.output_text ??
+        r
     } catch (e) {
       // ⛔ 실패를 «감추지 않는다» — 앱이 규칙 파서로 떨어지려면 실패를 알아야 한다.
       // 📋📋 [2026-08-29] **로그로도 남긴다** — 창업자 폰에서 502 가 두 번 났는데
@@ -150,7 +161,9 @@ export default {
     if (!parsed) {
       // ⭐ AI 가 «답은 줬는데» JSON 이 아니었다 — 어떤 모양이었는지 앞부분만 찍는다.
       //   ⛔ 통째로 찍지 않는다(레시피 원문이 로그에 남는다). 300자면 모양을 아는 데 충분하다.
-      console.log('BAD_AI_OUTPUT', model, (Date.now() - 시작) + 'ms', typeof out, String(out ?? '').slice(0, 300))
+      // ⛔ String(객체) 는 「[object Object]」가 되어 아무것도 안 알려준다(2026-08-29 실측) → stringify 로 찍는다
+      let 모양; try { 모양 = typeof out === 'object' ? JSON.stringify(out) : String(out ?? '') } catch { 모양 = '(못 읽음)' }
+      console.log('BAD_AI_OUTPUT', model, (Date.now() - 시작) + 'ms', typeof out, String(모양).slice(0, 400))
       return json({ error: 'bad_ai_output' }, 502, cors)
     }
 
@@ -185,7 +198,12 @@ function kstDay(d) {
 function pickJson(out) {
   if (!out) return null
   if (typeof out === 'object' && (out.title || out.steps || out.ingredients)) return out
-  const s = String(out)
+  // ⛔⛔ [2026-08-29 실물] **객체를 «버리지 않는다».**
+  //   창업자 폰 로그 = `BAD_AI_OUTPUT … object [object Object]` (24,333ms · Wall 24,334ms · CPU 3ms).
+  //   AI 는 답을 «줬는데» 모양이 우리 예상과 달라 위 줄을 못 통과했고,
+  //   그다음 `String(out)` 이 **「[object Object]」** 로 만들어 통째로 잃었다.
+  //   ⭐ 객체는 `JSON.stringify` 로 펼친다 — 어느 겹에 들어 있든 아래 ①②③이 찾아낸다.
+  const s = typeof out === 'object' ? JSON.stringify(out) : String(out)
   const cand = []
   const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/)   // ① 울타리 안
   if (fence) cand.push(fence[1])

@@ -63,8 +63,14 @@ chk('⑦ tidy.js 가 열쇠를 «안» 깎는다', !열쇠흔적,
   '(사진 경로는 ocr.js 가 이미 깎았다 — 두 곳에서 세면 반드시 어긋난다)')
 
 // ④ 시간 제한이 있다
+// ⛔⛔ 상한을 20초로 «손으로» 적어뒀다가 2026-08-29 에 게이트가 맞게 걸렸다 —
+//    실측이 24.3초(Cloudflare 로그)라 30초로 올리자 이 칸이 죽었다.
+//    ⭐ 그때 「검사가 시끄럽다」고 상한을 없애지 않았다. 이 칸이 지키려는 건 «값»이 아니라
+//       **「유저를 하염없이 기다리게 하지 않는다」**이고 그건 여전히 옳다.
+//    ✅ 실측(24.3초)에 여유를 얹어 **35초**로 올린다. 그보다 길면 그건 「기다림」이 아니라 「멈춤」이다.
+//    ⛔ 다음에 또 걸리면 «숫자를 올리기 전에» 왜 그렇게 오래 걸리는지부터 본다.
 const m = tidySrc.match(/TIMEOUT_MS\s*=\s*(\d+)/)
-chk('④ 시간 제한이 있고 20초 이하다', !!m && Number(m[1]) <= 20000, m ? `(${m[1]}ms)` : '(없다)')
+chk('④ 시간 제한이 있고 35초 이하다', !!m && Number(m[1]) <= 35000, m ? `(${m[1]}ms)` : '(없다)')
 chk('④-b 끊는 장치를 실제로 쓴다(AbortController)',
   /AbortController/.test(tidySrc) && /signal:/.test(tidySrc))
 
@@ -115,13 +121,26 @@ if (!주소줄.test(tidySrc)) {
   console.error('\n⛔ tidy.js 에서 TIDY_URL 줄을 못 찾았다 — 검사를 먼저 고쳐야 한다')
   process.exit(1)
 }
-const 판만들기 = (파일, 주소) => {
-  writeFileSync(ROOT + 'scripts/' + 파일, tidySrc.replace(주소줄, `const TIDY_URL = '${주소}'`))
+// ⏱⏱ **시간 제한도 «바꿔치기»한다** (2026-08-29)
+//   ⛔ 전엔 앱의 TIMEOUT_MS 를 그대로 두고 「14초 기다려 본다」로 쟀다.
+//      그래서 실측(24.3초) 뒤 12초 → 30초로 올리자 **이 칸이 죽었다** — 30초를 진짜로 기다려야 하니까.
+//   ⭐ 값에 기대지 않는다 — 시험판에선 1.2초로 줄여 «끊기는 동작»만 본다.
+//      → 앱이 몇 초로 잡든 검사가 안 죽고, 스모크도 30초 느려지지 않는다.
+//   📌 위 ④ 칸이 「값이 35초 이하인가」를 따로 지키므로 둘이 겹치지 않는다.
+const 시간줄 = /^const TIMEOUT_MS = \d+/m
+if (!시간줄.test(tidySrc)) {
+  console.error('\n⛔ tidy.js 에서 TIMEOUT_MS 줄을 못 찾았다 — 검사를 먼저 고쳐야 한다')
+  process.exit(1)
+}
+const 판만들기 = (파일, 주소, 시간) => {
+  let src = tidySrc.replace(주소줄, `const TIDY_URL = '${주소}'`)
+  if (시간) src = src.replace(시간줄, `const TIMEOUT_MS = ${시간}`)
+  writeFileSync(ROOT + 'scripts/' + 파일, src)
   return 파일
 }
 const 비운판 = 판만들기('.tmp-tidy-비움.mjs', '')
 const 임시 = ROOT + 'scripts/.tmp-tidy-test.mjs'
-판만들기('.tmp-tidy-test.mjs', 'https://x.invalid/tidy')
+판만들기('.tmp-tidy-test.mjs', 'https://x.invalid/tidy', 1200)   // ⏱ 1.2초로 줄여 «끊기는지»만 본다
 
 // ① 주소가 비어 있으면 fetch 를 아예 안 부른다
 let 부른횟수 = 0
@@ -171,11 +190,11 @@ await 실험2('② -c 이상한 답(502) 이면 null', 응답({ error: 'bad_ai_o
   })
   const mod = await import(`./.tmp-tidy-test.mjs?t=${Date.now()}x`)
   const 시작 = Date.now()
-  // 시간 제한을 잠깐 줄이는 대신, 끊기는지만 본다(12초를 진짜로 기다리면 스모크가 느려진다)
+  // ⭐ 시험판은 TIMEOUT_MS 가 1.2초로 바꿔치기돼 있다 — 앱이 몇 초로 잡든 여기선 빨리 끝난다
   const p = mod.tidyRecipe('된장크림파스타\n스파게티 200g\n된장 1큰술\n1. 면을 삶는다\n2. 팬에 된장을 풀고 생크림을 넣는다')
-  const 결과 = await Promise.race([p, new Promise((r) => setTimeout(() => r('아직'), 14000))])
+  const 결과 = await Promise.race([p, new Promise((r) => setTimeout(() => r('아직'), 4000))])
   const 걸린 = Date.now() - 시작
-  chk('④-c 답이 없으면 «스스로 끊고» null 을 준다', 결과 === null && 걸린 < 13500, `(${(걸린 / 1000).toFixed(1)}초)`)
+  chk('④-c 답이 없으면 «스스로 끊고» null 을 준다', 결과 === null && 걸린 < 3500, `(${(걸린 / 1000).toFixed(1)}초)`)
 }
 
 try { unlinkSync(임시) } catch { /* noop */ }
