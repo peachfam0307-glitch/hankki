@@ -89,8 +89,15 @@ const html = `<title>가을 공개 검수 ${키전부.size}컷</title>
   .item img{width:100%;border-radius:10px;display:block;background:#f4f1ea}
   .pick{display:flex;gap:8px;margin-top:12px}
   .pick button{flex:1;padding:11px 6px;border-radius:11px;border:1.5px solid var(--line);
-    background:#fff;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer}
+    background:var(--card);color:var(--text);font-size:14px;font-family:inherit;cursor:pointer}
   .pick button[aria-pressed="true"]{background:var(--pt);border-color:var(--pt);color:#fff;font-weight:700}
+  /* ✍️ 📮창업자 *"검수판은 내가 적을 공간이 필요해. 뺄거빼고 할 공간"*
+     ⭐ 특히 카드 16컷은 «한 장»에 다 있어서 버튼만으론 「이건 빼자」를 짚을 수가 없다. */
+  .memo{width:100%;margin-top:10px;padding:11px 12px;border-radius:11px;
+    border:1.5px solid var(--line);background:var(--card);color:var(--text);
+    font-family:inherit;font-size:14px;line-height:1.5;resize:vertical;min-height:64px}
+  .memo::placeholder{color:var(--sub)}
+  .memo:focus{outline:none;border-color:var(--pt)}
   .bar{position:fixed;left:0;right:0;bottom:0;background:rgba(253,251,247,.97);
     border-top:1px solid var(--line);padding:12px 14px calc(12px + env(safe-area-inset-bottom))}
   .bar .in{max-width:820px;margin:0 auto;display:flex;gap:10px;align-items:center}
@@ -127,7 +134,9 @@ ${칸들.map((c) => `<div class="item" data-id="${c.id}">
     <button data-v="좋다">좋다</button>
     <button data-v="다시">다시 뽑자</button>
     <button data-v="모름">모르겠다</button>
-  </div></div>`).join('\n')}
+  </div>
+  <textarea class="memo" placeholder="뺄 것 · 고칠 것을 적어주세요 (예: 왼쪽 위 하나 빼고, 세 번째는 색이 진해요)"></textarea>
+  </div>`).join('\n')}
 
 <div id="out"></div>
 </div>
