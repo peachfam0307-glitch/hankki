@@ -1704,8 +1704,10 @@ export const STICKER_GROUPS = [
   { key: 'deco_dy_stamp_b', tab: 'deco', diary: true, from: '2026-10-01', label: '선·화살표', items: ['dys01', 'dys02', 'dys07', 'dys08'] },
   { key: 'deco_dy_stamp_c', tab: 'deco', diary: true, from: '2026-11-01', label: '붓칠·햇살', items: ['dys06', 'dys09', 'dys10', 'dys12'] },
 
-  // ✂️ [창업자 검수 2026-08-29] *"3번,4번 뺀다."* → `dyl06`·`dyl10` 내림. ⛔파일은 남긴다
-  { key: 'deco_dy_label_a', tab: 'deco', diary: true, from: '2026-09-01', label: '메모지', items: ['dyl01', 'dyl05'] },
+  // ⛔ [창업자 검수 2026-08-29] 9/1 「메모지」 = **다 뺐다** (*"메모지도 다빼자."*).
+  //    처음엔 *"3번,4번 뺀다."*(`dyl06`·`dyl10`) 였는데 서랍을 다시 보고 넷 다 내렸다.
+  //    ⭐ 이로써 9/1 에 열리는 일기 세트(`dy*`)는 **「무늬 테이프」 하나만** 남는다.
+  //    ⛔ PNG(`dyl01`·`dyl05`·`dyl06`·`dyl10`)·`PHOTO_RATIO` 는 «지우지 않는다» — 10/1·11/1 세트와 한 가족이다.
   { key: 'deco_dy_label_b', tab: 'deco', diary: true, from: '2026-10-01', label: '이름표·태그', items: ['dyl03', 'dyl09', 'dyl11', 'dyl08'] },
   { key: 'deco_dy_label_c', tab: 'deco', diary: true, from: '2026-11-01', label: '띠·배너', items: ['dyl02', 'dyl04', 'dyl07', 'dyl12'] },
 
