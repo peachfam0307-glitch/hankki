@@ -24,7 +24,7 @@
 // 실행: node scripts/_영상-릴스자막-0829.mjs
 // ⛔ `_fresh.mjs`(dist 신선도 검사)를 부르지 «않는다» — 이 판은 앱을 띄우지 않는다.
 import { chromium } from 'playwright'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = new URL('..', import.meta.url).pathname
@@ -127,16 +127,21 @@ const 카드 = `<!doctype html><meta charset="utf-8">
   <div class="small">한끼에는</div>
   <div class="big">요리모드에 <em>타이머</em>도<br>있다</div>
   <div class="bang">!!!</div>
-  <img src="file://${join(ROOT, 'src/assets/ui/wave/gom_pot.png')}">
+  <img src="data:image/png;base64,${readFileSync(join(ROOT, 'src/assets/ui/wave/gom_pot.png')).toString('base64')}">
 </div>`
 
 await p.setViewportSize({ width: 1080, height: 1920 })
 await p.setContent(카드)
 await p.evaluate(() => document.fonts.ready)
 await p.waitForTimeout(400)
+// ⛔⛔ **`<img src="file://…">` 는 안 뜬다** — `setContent` 로 만든 페이지는 `about:blank` 라
+//    브라우저가 로컬 파일 읽기를 막는다. 첫 판에서 꼬르곰이 «통째로 사라진» 채로 나왔다(규칙 21 이 잡았다).
+//    ✅ 그래서 **base64 로 심는다.** ＋ 「진짜 떴나」를 여기서 잰다(0이면 안 뜬 것).
+const 그림떴나 = await p.evaluate(() => { const i = document.querySelector('img'); return i ? i.naturalWidth : -1 })
+if (그림떴나 <= 0) { console.error(`✗ 선언 카드의 꼬르곰이 안 떴다 (naturalWidth=${그림떴나})`); process.exit(1) }
 const 카드길 = join(OUT, '선언카드.png')
 await p.screenshot({ path: 카드길 })
-console.log(`  📣 선언 카드(임시) = ${카드길}`)
+console.log(`  📣 선언 카드(임시) = ${카드길}  · 꼬르곰 ${그림떴나}px`)
 
 await b.close()
 
