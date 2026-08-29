@@ -91,6 +91,15 @@ const html = `<title>가을 공개 검수 ${키전부.size}컷</title>
   .pick button{flex:1;padding:11px 6px;border-radius:11px;border:1.5px solid var(--line);
     background:#fff;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer}
   .pick button[aria-pressed="true"]{background:var(--pt);border-color:var(--pt);color:#fff;font-weight:700}
+  /* 📝 창업자가 적을 자리 — 「뺄 것 · 고칠 것」(창업자 2026-08-29) */
+  .memo{width:100%;box-sizing:border-box;margin-top:10px;padding:10px 11px;font:inherit;font-size:14px;
+    line-height:1.5;color:var(--text);background:var(--bg);border:1.5px dashed var(--line);
+    border-radius:11px;resize:vertical;min-height:44px}
+  .memo:focus{outline:none;border-color:var(--pt);border-style:solid}
+  .memo::placeholder{color:var(--sub)}
+  .allmemo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:16px}
+  .allmemo h2{font-size:16px;margin:0 0 4px}
+  .allmemo p{color:var(--sub);font-size:13px;margin:0}
   .bar{position:fixed;left:0;right:0;bottom:0;background:rgba(253,251,247,.97);
     border-top:1px solid var(--line);padding:12px 14px calc(12px + env(safe-area-inset-bottom))}
   .bar .in{max-width:820px;margin:0 auto;display:flex;gap:10px;align-items:center}
@@ -127,7 +136,17 @@ ${칸들.map((c) => `<div class="item" data-id="${c.id}">
     <button data-v="좋다">좋다</button>
     <button data-v="다시">다시 뽑자</button>
     <button data-v="모름">모르겠다</button>
-  </div></div>`).join('\n')}
+  </div>
+  <textarea class="memo" data-id="${c.id}" rows="1"
+    placeholder="뺄 것 · 고칠 것을 적어주세요 (안 적어도 돼요)"></textarea>
+  </div>`).join('\n')}
+
+<div class="allmemo">
+  <h2>📝 통째로 하고 싶은 말</h2>
+  <p>칸마다 적기 애매한 것 · 전체에 걸친 것</p>
+  <textarea class="memo" data-id="__전체__" rows="3"
+    placeholder="예) 가을 컷은 다 좋은데 카롱은 한 주 미루자"></textarea>
+</div>
 
 <div id="out"></div>
 </div>
@@ -152,12 +171,31 @@ ${칸들.map((c) => `<div class="item" data-id="${c.id}">
     });
   });
   cnt();
+
+  // 📝 메모 — 고르기와 «따로» 저장한다(판정 없이 메모만 적을 수도 있어야 한다)
+  var MKEY='hankki-검수메모-${그날}';
+  var memo={}; try{ memo=JSON.parse(localStorage.getItem(MKEY)||'{}') }catch(e){}
+  function grow(t){ t.style.height='auto'; t.style.height=(t.scrollHeight+2)+'px' }
+  document.querySelectorAll('.memo').forEach(function(t){
+    var id=t.dataset.id;
+    if(memo[id]){ t.value=memo[id] }
+    grow(t);
+    t.oninput=function(){
+      var v=t.value.trim();
+      if(v){ memo[id]=v } else { delete memo[id] }
+      try{ localStorage.setItem(MKEY,JSON.stringify(memo)) }catch(e){}
+      grow(t);
+    };
+  });
+
   document.getElementById('copy').onclick=function(){
     var lines=['9/1 공개 검수 결과 (${키전부.size}컷)'];
     document.querySelectorAll('.item').forEach(function(it){
       var id=it.dataset.id, t=it.querySelector('h2').textContent;
       lines.push('· '+t+' → '+(saved[id]||'(안 고름)'));
+      if(memo[id]) lines.push('   ↳ '+memo[id]);
     });
+    if(memo['__전체__']){ lines.push(''); lines.push('[통째로 하고 싶은 말]'); lines.push(memo['__전체__']) }
     var txt=lines.join('\\n'), out=document.getElementById('out');
     out.style.display='block'; out.textContent=txt;
     // ⛔ writeText 는 «성공으로 resolve 되고도» 복사가 안 되는 폰이 있다 → 실패하면 글자를 골라 준다
