@@ -644,6 +644,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // ⭐ `both` = 일꾸·레꾸 «두 선반 다»에 두는 그룹(꼬르곰 32컷).
   //    ⛔ `diary` 만 주면 일꾸엔 뜨지만 **레꾸 선반에서 사라진다** — 창업자가 보던 그 화면이 레꾸였다.
   const onShelf = (x) => !isDiary || x.both || (shelf === 'diary' ? !!x.diary : !x.diary)
+  // 🎁 «지금 제철»인 선물만 맨 위 대접. 계절이 안 붙은 선물(출시기념)은 늘 위.
+  const giftUp = (x) => !!x.gift && (!x.season || seasonRank(x.season) === 0)
   const groupsByTab = (t) => drawerGroups()
     // ⭐ `tabDiary` = 일기 화면에선 «다른 탭»에 둔다 — 꼬르곰 32컷은 레꾸 「글자」 / 일꾸 「기록」.
     //    ⛔ 두 탭에 «동시에» 두면 일꾸에서 글자·기록 양쪽에 같은 게 나온다(실측으로 잡았다).
@@ -651,8 +653,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     // 🎁 선물끼리는 **새로 온 것이 위**. 창업자 2026-08-29 = *"오픈기념 특별선물로 예쁘게 만들어서 올리자."*
     //    ⛔ 안 넣으면 9/1 새 선물이 「출시기념 여름」(12컷) «아래»에 깔려 굴려야 나온다 — 실물로 봤다.
     //    ⭐ `from` 없는 옛 선물은 빈 문자열이라 저절로 뒤로 간다(비교 한 줄로 끝난다).
-    .sort((a, b) => ((b.gift ? 1 : 0) - (a.gift ? 1 : 0))
-      || (a.gift && b.gift ? String(b.from || '').localeCompare(String(a.from || '')) : 0)
+    // 🎁 [창업자 확정 2026-08-30] **지난 계절 선물은 «선물 우대»에서 뺀다.**
+    //    ⛔ 그전엔 `gift` 가 계절보다 먼저라 9월에도 「출시기념 여름」(12컷)이
+    //       **가을 프레임 «위»**에 남았다(실물로 확인).
+    //    ⭐ 계절이 안 붙은 선물(가을의 정원 세트 = 출시기념)은 그대로 위 — 계절 물건이 아니다.
+    .sort((a, b) => ((giftUp(b) ? 1 : 0) - (giftUp(a) ? 1 : 0))
+      || (giftUp(a) && giftUp(b) ? String(b.from || '').localeCompare(String(a.from || '')) : 0)
       || ((b.locked ? 1 : 0) - (a.locked ? 1 : 0))
       || (seasonRank(a.season) - seasonRank(b.season))
       || ((b.recolor ? 1 : 0) - (a.recolor ? 1 : 0)))

@@ -69,7 +69,9 @@ function gates() {
       when: g.from, kind: '꾸미기', title: g.label, count: g.items.length,
       peek: drawable(g.items).slice(0, PEEK), tab: g.tab, season: g.season,
       // 🎁 `gift`·`giftLabel` 은 서랍이 쓰는 «그 필드»를 그대로 읽는다(⛔이름을 따로 적지 않는다).
-      ...(g.gift ? { gift: true, giftLabel: g.giftLabel || '선물', giftKeys: drawable(g.items).slice(0, GIFT_MAX) } : {}),
+      // 💬 `hint` = 서랍에 뜨는 «쓰는 법» 한 줄. 창업자 2026-08-30 = *"접시 사용법도 아래 적어줘"*
+      //    ⭐ 문구를 여기 새로 쓰지 «않는다» — 서랍과 안내가 갈리면 둘 중 하나가 낡는다.
+      ...(g.gift ? { gift: true, giftLabel: g.giftLabel || '선물', hint: g.hint, giftKeys: drawable(g.items).slice(0, GIFT_MAX) } : {}),
     }))
   const cards = SEASON_CUTS
     .filter((s) => s.from)
@@ -128,6 +130,11 @@ export function headline(items = []) {
   const n = items.reduce((s, i) => s + i.count, 0)
   const onlyWeek = items.every((i) => i.kind === '이번 주 레시피')
   if (onlyWeek) return { title: '이번 주 레시피가 올라왔어요', sub: items[0]?.title || '' }
+  // 🎴 꾸미기가 하나도 안 열리고 카드만 열리는 달이 있다(12/1 = 크리스마스 카드 2컷).
+  //    ⛔ 그때 「새 꾸미기가 열렸어요」라고 하면 서랍을 열어보고 아무것도 없어 «고장»으로 읽힌다.
+  if (items.length && items.every((i) => i.kind === '레꾸자랑 카드')) {
+    return { title: '레꾸자랑 카드가 새로 나왔어요', sub: `${n}컷 · 전부 무료예요` }
+  }
 
   const seasons = [...new Set(items.map((i) => i.season).filter(Boolean))]
   const ko = seasons.length === 1 ? SEASON_KO[seasons[0]] : null

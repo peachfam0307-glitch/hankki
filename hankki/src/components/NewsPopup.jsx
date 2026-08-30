@@ -38,7 +38,20 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
   useModalBack(onClose) // 뒤로가기 → 닫기 (이때도 '봤음'으로 친다 — onClose 안에서 표시)
   // ⛔ [2026-08-29] `openedAlert` = **장바구니가 빠진 목록**(창업자 *"대신 아래 나중에"*).
   //    장바구니는 소식 «페이지»에만 나오고 팝업엔 안 온다 — 주마다 열려서 팝업이 재촉이 된다.
-  const items = (news?.openedAlert || []).filter((o) => o.kind !== '이번 주 레시피')
+  // 🧮🧮 **팝업은 «꾸미기»만 센다** (창업자 2026-08-30
+  //    *"가을카드 추석카드는 레꾸자랑이야? 레꾸자랑 맞으면 저기서 빼자.
+  //      컷수 부풀리면 10월부터는 무료갯수가 확 주는 느낌이 들어"*)
+  //    ⭐⭐ 창업자 말이 숫자로도 맞다 — 9월에 카드까지 세면 **66 → 47 → 43** 으로 떨어지는데
+  //       꾸미기만 세면 **51 → 44 → 43** 이다. **부풀린 첫 달이 그다음 달을 초라하게 만든다.**
+  //    ⭐ ＋ 제목이 「꾸미기에 …이 왔어요」인데 목록에 «서랍에 없는 것»이 섞여 있었다.
+  //       레꾸자랑 카드 컷은 **뽑기 풀**이라 서랍을 열어도 없다 — 세면 유저가 못 찾는다.
+  //    ⛔ 카드를 «없애는» 게 아니다 — 소식 «페이지»엔 「레꾸자랑 카드」 줄로 그대로 있다
+  //       (창업자 2026-08-03 *"새로 열릴때 꼭 안내페이지에 올라오도록 해"* 는 거기서 지켜진다).
+  //    ⚠️ 꾸미기가 «하나도» 안 열리는 달이 있다(12/1 = 크리스마스 카드 2컷뿐) →
+  //       그때는 카드로 채운다. 안 그러면 「0컷」 팝업이 뜬다.
+  const alerts = (news?.openedAlert || []).filter((o) => o.kind !== '이번 주 레시피')
+  const 꾸미기 = alerts.filter((o) => o.kind === '꾸미기')
+  const items = 꾸미기.length ? 꾸미기 : alerts.filter((o) => o.kind === '레꾸자랑 카드')
   const h = headline(items)
   // 🎨 골고루 여섯 컷 — 캐릭터가 앞자리. ⛔한 그룹에서 다 뽑으면 낙엽만 다섯 개가 된다.
   // 🎁 선물은 «아래 선물 칸»에서 컷을 전부 편다 → 여기서 빼야 같은 그림이 두 번 안 뜬다
@@ -107,6 +120,14 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
                 <div style={{ fontSize: 16.5, fontWeight: 800, marginTop: 4, wordBreak: 'keep-all' }}>
                   {h.gift.title} <span style={{ color: 'var(--brown)' }}>{h.gift.count}컷</span>을 넣어뒀어요
                 </div>
+                {/* 💬 쓰는 법 한 줄 (창업자 2026-08-30 *"접시 사용법도 아래 적어줘"*)
+                    ⭐ 서랍에 뜨는 `hint` 를 그대로 쓴다 — 두 곳에 따로 적으면 하나가 낡는다.
+                    ⚠️ 창업자 = *"처음보는 사람들은 저 구멍뚤린게 뭔가 할 것 같은데 ㅋ"* — 그 물음에 답하는 줄이다. */}
+                {h.gift.hint && (
+                  <div className="t-sub" style={{ fontSize: 15, marginTop: 3, lineHeight: 1.45, wordBreak: 'keep-all' }}>
+                    {h.gift.hint}
+                  </div>
+                )}
                 {h.gift.giftKeys?.length > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Peek keys={h.gift.giftKeys} size={58} />

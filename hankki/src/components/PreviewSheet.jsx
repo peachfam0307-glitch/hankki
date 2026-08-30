@@ -80,7 +80,8 @@ function NewsRow({ it, tone }) {
           </span>
         </div>
         {it.why && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.why}</div>}
-        {it.gift && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>이번 달 선물이에요. 그냥 쓰시면 돼요.</div>}
+        {/* 💬 쓰는 법 = 서랍의 `hint` 를 그대로 (창업자 2026-08-30 *"접시 사용법도 아래 적어줘"*) */}
+        {it.gift && it.hint && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.hint}</div>}
         <Peek keys={it.gift ? it.giftKeys : it.peek} />
       </div>
     </div>
