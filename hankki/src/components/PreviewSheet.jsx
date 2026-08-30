@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
-import { whatsNew } from '../data/whatsnew'
+import { whatsNew, unitOf } from '../data/whatsnew'
 import { StickerArt } from './Stickers'
 
 // 📣 한끼 소식 — «방금 열렸어요» · «곧 열려요» · «그다음엔».
@@ -77,7 +77,7 @@ function NewsRow({ it, tone }) {
           <span style={{ fontSize: 16.5, fontWeight: 800 }}>{it.title}</span>
           <span style={{ fontSize: 15, fontWeight: 800, color: tone, background: 'var(--surface)', borderRadius: 999, padding: '2px 8px' }}>
             {/* 🔢 단위 = 「종」 (창업자 2026-08-30 *"다른 것들도 숫자 옆에 종을 붙여줘"*) */}
-            {it.gift ? it.giftLabel : it.kind} {it.count}종
+            {it.gift ? it.giftLabel : it.kind} {it.count}{unitOf(it.kind)}
           </span>
         </div>
         {it.why && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.why}</div>}

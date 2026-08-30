@@ -1,7 +1,7 @@
 import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
-import { headline, newsSignature, spread } from '../data/whatsnew'
+import { headline, newsSignature, spread, unitOf } from '../data/whatsnew'
 import { Peek } from './PreviewSheet'
 import { StickerArt } from './Stickers'
 
@@ -101,7 +101,7 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
                 fontSize: 15, fontWeight: 800, color: 'var(--text)', background: 'var(--cream)',
                 borderRadius: 999, padding: '5px 11px',
               }}>
-                {it.title} <span style={{ color: 'var(--brown)' }}>{it.count}종</span>
+                {it.title} <span style={{ color: 'var(--brown)' }}>{it.count}{unitOf(it.kind)}</span>
               </span>
             ))}
           </div>
@@ -120,7 +120,7 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
                 <div style={{ fontSize: 16.5, fontWeight: 800, marginTop: 4, wordBreak: 'keep-all' }}>
                   {/* 🔢 단위 = 「종」 (창업자 2026-08-30 *"4종이라고 적어야지"* ·
                       *"다른 것들도 숫자 옆에 종을 붙여줘"*) — 접시는 «조각»이 아니라 «가짓수»다. */}
-                  {h.gift.title} <span style={{ color: 'var(--brown)' }}>{h.gift.count}종</span>을 넣어뒀어요
+                  {h.gift.title} <span style={{ color: 'var(--brown)' }}>{h.gift.count}{unitOf(h.gift.kind)}</span>을 넣어뒀어요
                 </div>
                 {/* 💬 쓰는 법 한 줄 (창업자 2026-08-30 *"접시 사용법도 아래 적어줘"*)
                     ⭐ 서랍에 뜨는 `hint` 를 그대로 쓴다 — 두 곳에 따로 적으면 하나가 낡는다.
