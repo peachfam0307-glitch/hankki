@@ -53,10 +53,24 @@ const PEEK = 5
 //   ⚠️ 개수(`count`)는 줄이지 않는다 — 그건 «몇 컷 열리나»라 그림 유무와 상관없다.
 const drawable = (keys = []) => keys.filter((k) => PHOTO_IDS.has(k))
 
+// 🎁🎁 **그달 선물은 «전부» 보여준다** (창업자 2026-08-30
+//   *"가을의정원접시세트도 특별한 선물로 한 줄적어줘. 안내판에 그달 주는 선물 이미지가 다들어가면 좋겠는데..."*)
+//   ⭐ 위 `PEEK`(5컷)는 **광고용 맛보기**라 일부러 잘라 보여준다.
+//      선물은 성격이 다르다 — **「이만큼 드려요」가 곧 값어치**라 자르면 그만큼 덜 준 것처럼 보인다.
+//   ⛔ 그래서 `peek` 를 늘리지 «않고» 선물용 목록을 따로 둔다. 둘을 한 값으로 합치면
+//      선물 아닌 그룹까지 다 펼쳐져 안내가 목록이 된다(위 `PEEK` 주석의 이유가 그대로 살아 있다).
+//   ⚠️ 그래도 상한은 둔다 — 언젠가 30컷짜리 선물이 오면 팝업이 화면을 넘긴다.
+const GIFT_MAX = 12
+
 function gates() {
   const drawer = STICKER_GROUPS
     .filter((g) => g.from && g.items?.length)
-    .map((g) => ({ when: g.from, kind: '꾸미기', title: g.label, count: g.items.length, peek: drawable(g.items).slice(0, PEEK), tab: g.tab, season: g.season }))
+    .map((g) => ({
+      when: g.from, kind: '꾸미기', title: g.label, count: g.items.length,
+      peek: drawable(g.items).slice(0, PEEK), tab: g.tab, season: g.season,
+      // 🎁 `gift`·`giftLabel` 은 서랍이 쓰는 «그 필드»를 그대로 읽는다(⛔이름을 따로 적지 않는다).
+      ...(g.gift ? { gift: true, giftLabel: g.giftLabel || '선물', giftKeys: drawable(g.items).slice(0, GIFT_MAX) } : {}),
+    }))
   const cards = SEASON_CUTS
     .filter((s) => s.from)
     .map((s) => {
@@ -118,11 +132,14 @@ export function headline(items = []) {
   const seasons = [...new Set(items.map((i) => i.season).filter(Boolean))]
   const ko = seasons.length === 1 ? SEASON_KO[seasons[0]] : null
   const debut = NEW_FRIENDS.find((f) => items.some((i) => (i.title || '').includes(f))) || null
+  // 🎁 그달 선물 — 여럿이면 «새로 온 것» 하나만 짚는다(둘을 나란히 놓으면 특별해 보이지 않는다).
+  const gift = items.filter((i) => i.gift).sort((a, b) => String(b.when).localeCompare(String(a.when)))[0] || null
 
   return {
     title: ko ? `꾸미기에 ${ko}이 왔어요` : '새 꾸미기가 열렸어요',
     sub: `${n}컷 · 전부 무료예요`,
     debut,
+    gift,
   }
 }
 

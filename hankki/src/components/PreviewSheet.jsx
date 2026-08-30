@@ -64,20 +64,24 @@ export function Peek({ keys = [], size = 46 }) {
 }
 
 function NewsRow({ it, tone }) {
+  // 🎁 선물이면 «선물»이라고 말하고 컷을 전부 편다 (창업자 2026-08-30
+  //    *"가을의정원접시세트도 특별한 선물로 한 줄적어줘. 안내판에 그달 주는 선물 이미지가 다들어가면 좋겠는데..."*)
+  //    ⛔ 아이콘도 갈아 끼운다 — 나머지와 같은 팔레트 아이콘이면 목록에 묻힌다.
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--cream)', borderRadius: 14, padding: '12px 13px' }}>
       <span style={{ flex: '0 0 auto', width: 26, display: 'inline-flex', justifyContent: 'center', paddingTop: 1 }}>
-        <Icon name={KIND_ICON[it.kind] || 'sparkle'} size={22} color={tone} stroke={1.7} />
+        <Icon name={it.gift ? 'gift' : (KIND_ICON[it.kind] || 'sparkle')} size={22} color={tone} stroke={1.7} />
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 16.5, fontWeight: 800 }}>{it.title}</span>
           <span style={{ fontSize: 15, fontWeight: 800, color: tone, background: 'var(--surface)', borderRadius: 999, padding: '2px 8px' }}>
-            {it.kind} {it.count}
+            {it.gift ? it.giftLabel : it.kind} {it.count}
           </span>
         </div>
         {it.why && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.why}</div>}
-        <Peek keys={it.peek} />
+        {it.gift && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>이번 달 선물이에요. 그냥 쓰시면 돼요.</div>}
+        <Peek keys={it.gift ? it.giftKeys : it.peek} />
       </div>
     </div>
   )

@@ -41,7 +41,9 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
   const items = (news?.openedAlert || []).filter((o) => o.kind !== '이번 주 레시피')
   const h = headline(items)
   // 🎨 골고루 여섯 컷 — 캐릭터가 앞자리. ⛔한 그룹에서 다 뽑으면 낙엽만 다섯 개가 된다.
-  const keys = spread(items, 6)
+  // 🎁 선물은 «아래 선물 칸»에서 컷을 전부 편다 → 여기서 빼야 같은 그림이 두 번 안 뜬다
+  //    (실물로 보고 잡았다 — 맛보기 줄에 접시가 하나 끼어 바로 아래 접시 넷과 겹쳐 보였다).
+  const keys = spread(items.filter((i) => !i.gift), 6)
   const hero = keys[0]
   const rest = keys.slice(1, 6)
 
@@ -90,6 +92,29 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
               </span>
             ))}
           </div>
+
+          {/* 🎁🎁 그달 선물 — «한 줄 ＋ 컷 전부» (창업자 2026-08-30
+              *"가을의정원접시세트도 특별한 선물로 한 줄적어줘. 안내판에 그달 주는 선물 이미지가 다들어가면 좋겠는데..."*)
+              ⭐ 칩 목록에 이미 「가을의 정원 세트 4」가 있는데 «또» 적는다 — 데뷔 줄과 같은 이유다.
+                 목록에 섞이면 그냥 한 줄이고, 따로 세워야 «선물»로 읽힌다.
+              ⛔ 여기만 컷을 «전부» 편다(`giftKeys`) — 나머지 그룹은 맛보기 5컷 그대로(위 `PEEK`). */}
+          {h.gift && (
+            <div style={{ padding: '13px 18px 0' }}>
+              <div style={{ background: 'var(--cream)', borderRadius: 16, padding: '13px 14px 15px', textAlign: 'center' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13.5, fontWeight: 900, color: 'var(--brown)', letterSpacing: '0.02em' }}>
+                  <Icon name="gift" size={14} color="var(--brown)" stroke={2} /> {h.gift.giftLabel}
+                </span>
+                <div style={{ fontSize: 16.5, fontWeight: 800, marginTop: 4, wordBreak: 'keep-all' }}>
+                  {h.gift.title} <span style={{ color: 'var(--brown)' }}>{h.gift.count}컷</span>을 넣어뒀어요
+                </div>
+                {h.gift.giftKeys?.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <Peek keys={h.gift.giftKeys} size={58} />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ⭐ 새 친구 데뷔는 «한 번밖에 못 쓰는 카드» — 있으면 반드시 짚는다 */}
           {h.debut && (
