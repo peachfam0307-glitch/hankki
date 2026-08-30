@@ -133,7 +133,7 @@ export function headline(items = []) {
   // 🎴 꾸미기가 하나도 안 열리고 카드만 열리는 달이 있다(12/1 = 크리스마스 카드 2컷).
   //    ⛔ 그때 「새 꾸미기가 열렸어요」라고 하면 서랍을 열어보고 아무것도 없어 «고장»으로 읽힌다.
   if (items.length && items.every((i) => i.kind === '레꾸자랑 카드')) {
-    return { title: '레꾸자랑 카드가 새로 나왔어요', sub: `${n}컷 · 전부 무료예요` }
+    return { title: '레꾸자랑 카드가 새로 나왔어요', sub: `${n}종 · 전부 무료예요` }
   }
 
   const seasons = [...new Set(items.map((i) => i.season).filter(Boolean))]
@@ -144,7 +144,7 @@ export function headline(items = []) {
 
   return {
     title: ko ? `꾸미기에 ${ko}이 왔어요` : '새 꾸미기가 열렸어요',
-    sub: `${n}컷 · 전부 무료예요`,
+    sub: `${n}종 · 전부 무료예요`,
     debut,
     gift,
   }
