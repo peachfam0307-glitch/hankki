@@ -132,12 +132,50 @@ export async function tidyRecipe(text) {
  *
  * ⛔ 영수증(`PantryView`)엔 «안» 쓴다 — AI 지시가 레시피용이라 재료 목록에 쓰면 오히려 나빠진다.
  */
+// 🥄🥄 **AI 가 재료에서 «분량»을 떼어버린다 — 규칙 파서 것으로 되살린다** (창업자 제보 2026-08-31)
+//
+// 📮 창업자 = *"재료에 용량이 안떠"* (삼치간장조림 · 폰 캡처)
+//
+// 🔢 **실물로 갈랐다 — 파서가 아니라 AI 였다**
+//    · 규칙 파서(같은 원문) = 「무 1/3개 · 식용유 2스푼 · 물 200ml …」 ✅
+//    · 화면(AI 거친 판)      = 「무 · 식용유 · 물」 ⛔
+//    · 그리고 걸음 말투가 「구워요」였다 — 그건 **AI 결과에만 나오는 말**이다(파서는 「구워줘요」).
+//
+// ⛔ 뿌리 = 워커 프롬프트 규칙 5(`ingredients 에는 … "이름 분량"만`)가 **「이름만」으로도 읽힌다.**
+//    바로 위 규칙 4에 「분량이 없으면 이름만 적어라」가 있어 더 그쪽으로 기운다.
+//    ⭐ 걸음(규칙 6)엔 「분량을 지우지 마라」가 콕 박혀 있어서 **걸음엔 2스푼·3분이 살아 있었다.**
+//    → 프롬프트도 고쳤다(`ocr-proxy/worker-tidy.js`). ⚠️단 그건 창업자가 대시보드에 붙여야 산다.
+//
+// ⭐⭐ **그래서 앱에서도 막는다** — AI 는 다음에 또 기분 따라 뗄 수 있다.
+//    우리는 «규칙 파서 결과»를 손에 쥐고 있으니 그걸로 메운다. 워커를 못 만지는 날에도 지켜진다.
+// ⛔ **지어내지 않는다** — 파서에 짝이 없으면 AI 것 그대로 둔다.
+// ⛔ 이미 분량이 있는 줄은 «안» 건드린다.
+const 분량꼴 = /\d|[½⅓⅔¼¾]|조금|약간|적당|톨|줌|취향|기호/
+const 분량있나 = (줄) => 분량꼴.test(String(줄 || ''))
+
+export function 분량되살리기 (ai재료 = [], 파서재료 = []) {
+  if (!Array.isArray(ai재료) || !ai재료.length) return ai재료
+  const 남은 = (Array.isArray(파서재료) ? 파서재료 : []).map((x) => String(x || ''))
+  return ai재료.map((줄) => {
+    const a = String(줄 || '').trim()
+    if (!a || 분량있나(a)) return 줄
+    // ⭐ 「이름 ＋ 빈칸 ＋ 분량」 꼴로 «시작이 같은» 줄만 짝으로 본다
+    //   ⛔ 「무」가 「무말랭이 100g」을 물지 않는다 — 빈칸을 요구하기 때문이다(실측으로 확인).
+    const i = 남은.findIndex((p) => p.startsWith(a + ' ') && 분량있나(p.slice(a.length)))
+    if (i < 0) return 줄
+    const 되살린 = 남은[i]
+    남은.splice(i, 1)   // 한 줄은 한 번만 쓴다 — 같은 이름이 둘이면 둘 다 채워진다
+    return 되살린
+  })
+}
+
 export function mergeTidy(r, ai) {
   if (!ai) return r
   return {
     ...r,
     title: ai.title || r.title,
-    ingredients: ai.ingredients.length ? ai.ingredients : r.ingredients,
+    // 🥄 AI 재료를 쓰되 «분량은 규칙 파서 것으로 되살려서» 쓴다 (창업자 제보 2026-08-31 · 위 주석)
+    ingredients: ai.ingredients.length ? 분량되살리기(ai.ingredients, r.ingredients) : r.ingredients,
     // ✍️✍️ **[2026-08-29 · 창업자가 오타로 찾아낸 구멍] AI 걸음도 «문체 다듬기»를 거친다.**
     //   📮 창업자 = *"오타 한번 정도? 꺼줘요를 끄줘요"*
     //   ⛔⛔ 그 한 글자가 진짜 구멍을 알려줬다 — **규칙 파서 결과는 「politeSteps」 를 거치는데
