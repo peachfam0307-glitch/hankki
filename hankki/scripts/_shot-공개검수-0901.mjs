@@ -74,7 +74,12 @@ page.on('pageerror', (e) => errs.push(String(e)))
 
 const url = `http://127.0.0.1:${PORT}/`
 await page.goto(url)
-await page.evaluate((s) => { localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') }, state)
+// ⛔⛔ **[2026-09-01] 여기에 `hankki:news:off` 를 «넣지 않는다» — 넣으면 자가당착이 된다.**
+//    9/1 소식 팝업이 배포를 두 번 죽여(run #1975·#1976) 「팝업 끄기」를 판 210개에 «일괄로» 심었는데,
+//    **정작 팝업을 검수 대상으로 삼는 이 판에도 들어가** 자기가 꺼놓고 아래 ②에서 「왜 안 뜨냐」고 실패를 냈다.
+//    ⛔ 그렇다고 «영영 켜두면» 팝업 위에 「출시 기념 선물」 시트가 겹쳐 서랍 탭 클릭을 가로막는다(배포를 죽인 그 자리).
+//    ✅ 그래서 «순서»로 푼다 — ⑴켠 채로 열어 팝업만 검수하고 ⑵그다음 끄고 다시 열어 서랍을 본다(아래 ⑵).
+await page.evaluate((s) => { localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1') }, state)
 await page.goto(url)
 await page.waitForTimeout(1600)
 
@@ -122,19 +127,31 @@ if (await 팝업.count()) {
   const 창시작 = 창(그날, 21)
   const 창안 = gates().filter((g) => g.date > 창시작 && g.date <= 그날)
   const 창합 = 창안.reduce((s, g) => s + g.keys.length, 0)
-  const 적힌수 = Number((글.match(/(\d+)컷/) || [])[1] || 0)
+  // ⛔⛔ **[2026-09-01 고침] 잣대가 «창업자 확정»을 안 따라와 또 헛경보를 냈다(팝업 0).**
+  //    ⑴ 팝업은 **「N종」**이라 쓰는데 여기선 **「N컷」**을 찾고 있었다 → 늘 0
+  //    ⑵ 기대값이 **서랍＋카드(66)** 였는데, 2026-08-30 창업자 확정 =
+  //       **「팝업은 «꾸미기»만 센다 — 68 → 51종」**(레꾸자랑 카드는 «뽑기 풀»이라 서랍을 열어도 없다.
+  //       📮 창업자 = *"컷수 부풀리면 10월부터는 무료갯수가 확 주는 느낌이 들어"*)
+  //    📌 **결정이 바뀌면 그 결정을 재는 잣대도 같이 바꾼다**(규칙 12ⓑ). 안 하면 게이트가 늑대를 외친다.
+  const 적힌수 = Number((글.match(/(\d+)\s*종/) || [])[1] || 0)
   // ⚠️ 달력은 «같은 키»가 두 갈래에 겹쳐 들어가기도 한다(실측 = au_b09·au_b13) → 딱 맞기를 요구하지 않는다.
-  //    그날 열리는 것보다 «적으면» 그건 진짜 사고다(유저에게 실제보다 작게 말하는 것).
-  const 그날합 = 서랍약속.size + 카드약속.length
+  //    그날 열리는 «꾸미기»보다 적으면 그건 진짜 사고다(유저에게 실제보다 작게 말하는 것).
+  const 그날합 = 서랍약속.size
   칸(적힌수 >= 그날합 && 적힌수 <= 창합 + 5,
-    '팝업 컷 수가 말이 된다(그날 이상 · 21일 창 이하)',
+    '팝업 종 수가 말이 된다(그날 꾸미기 이상 · 21일 창 이하)',
     `팝업 ${적힌수} · 그날 ${그날합} · 21일창 ${창합}`)
   const 닫기 = page.getByRole('button', { name: '닫기', exact: true })
-  if (await 닫기.count()) await 닫기.first().click()
+  if (await 닫기.count()) await 닫기.first().click().catch(() => {})
   else await page.keyboard.press('Escape')
   await page.waitForTimeout(600)
-} else 칸(false, '한끼 소식 팝업이 안 떴다 — 78컷이 열리는 날인데 아무 말이 없다')
-칸((await page.locator('.sheet-mask').count()) === 0, '팝업이 닫혔다')
+// ⛔ 「78컷」이 글자로 박혀 있었다 — 손으로 적은 개수는 반드시 낡는다(실측 66컷). 달력이 센 값을 쓴다.
+} else 칸(false, `한끼 소식 팝업이 안 떴다 — ${서랍약속.size + 카드약속.length}컷이 열리는 날인데 아무 말이 없다`)
+// ⑵ 팝업 검수는 끝났다 → 이제 «끄고» 다시 연다. 안 끄면 겹친 시트가 서랍 탭 클릭을 가로막는다.
+//    ⭐ 여기서부터는 「서랍에 컷이 다 떴나」를 보는 구간이라 팝업이 할 일이 없다.
+await page.evaluate(() => localStorage.setItem('hankki:news:off', '1'))
+await page.goto(url)
+await page.waitForTimeout(1600)
+칸((await page.locator('.sheet-mask').count()) === 0, '팝업을 끄고 다시 열었다 — 앞이 비었다')
 
 // ③ 레시피 상세 → 꾸미기 판
 await page.getByText('레시피', { exact: true }).last().click()
