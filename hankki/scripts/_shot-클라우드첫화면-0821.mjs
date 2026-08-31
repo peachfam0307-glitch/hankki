@@ -42,12 +42,21 @@ async function 새창 (init) {
   console.log((맞나 ? '✅' : '⛔') + ' ① 새로 깐 사람 — 첫 화면이 클라우드다')
   if (!맞나) console.log('   본문 = ' + 글.slice(0, 160))
   // 「자세히」 펴 보기
-  const 자세히 = pg.getByText('로그인하면 새 폰에서도 이어서 써요')
-  if (await 자세히.count()) {
-    await 자세히.first().click(); await pg.waitForTimeout(400)
+  // ⛔⛔ 2026-08-31 고침 — getByText 가 «단추 «안»의 글자 div»를 집어 부모가 클릭을 가로챘고(30초 타임아웃),
+  //    게다가 화면 «전체»에서 찾으면 설정의 「클라우드 저장」 시트에 «같은 글자의 단추»가 또 있다.
+  //    → 이 화면(곰펭 그림의 부모) «안»에서 그 단추를 콕 집는다(규칙 18 ⓘ).
+  const 자세히있나 = await pg.evaluate(() => {
+    const img = document.querySelector('img[src*="duo_hi"]')
+    if (!img) return false
+    const b = [...img.parentElement.querySelectorAll('button')].find((x) => /로그인하면 새 폰에서도/.test(x.textContent))
+    if (!b) return false
+    b.click(); return true
+  })
+  if (자세히있나) {
+    await pg.waitForTimeout(400)
     await pg.screenshot({ path: '/tmp/클라우드첫화면-자세히.png' })
     console.log('✅ ①-b 「자세히」가 펴진다')
-  } else console.log('⛔ ①-b 「자세히」를 못 찾았다')
+  } else { console.log('⛔ ①-b 「자세히」 단추를 이 화면에서 못 찾았다'); process.exitCode = 1 }
   // 「그냥 둘러볼게요」 → 소개로 넘어가나
   // 「나중에 하기」 → ⚠️안내 팝업이 «한 번» 뜬다(창업자 2026-08-21 *"모르고 그냥 해볼수있으니까"*)
   await pg.getByText('나중에 하기').first().click()
@@ -77,7 +86,7 @@ async function 새창 (init) {
   })
   const 글 = await pg.textContent('body')
   const 첫화면없나 = !/Google로 시작하기/.test(글)
-  const 한줄있나 = /레시피를 계정에 매어둘까요/.test(글)
+  const 한줄있나 = /지금은 레시피·일기가 이 폰에만 있어요/.test(글)
   console.log((첫화면없나 ? '✅' : '⛔') + ' ② 이미 쓰던 사람 — 첫 화면이 «안» 뜬다(벽 아님)')
   console.log((한줄있나 ? '✅' : '⛔') + ' ②-b 홈에 한 줄이 뜬다')
   await pg.screenshot({ path: '/tmp/홈-클라우드한줄.png', fullPage: true })
@@ -98,7 +107,7 @@ async function 새창 (init) {
     localStorage.setItem('hankki:coach:home', '1')
   })
   const 글 = await pg.textContent('body')
-  console.log((!/레시피를 계정에 매어둘까요/.test(글) ? '✅' : '⛔') + ' ③ 이미 로그인한 사람 — 한 줄이 «안» 뜬다')
+  console.log((!/지금은 레시피·일기가 이 폰에만 있어요/.test(글) ? '✅' : '⛔') + ' ③ 이미 로그인한 사람 — 한 줄이 «안» 뜬다')
   await ctx.close()
 }
 
