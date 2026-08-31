@@ -155,6 +155,10 @@ export function headline(items = []) {
   return {
     title: ko ? `꾸미기에 ${ko}이 왔어요` : '새 꾸미기가 열렸어요',
     sub: `${n}종 · 전부 무료예요`,
+    // 🔢 팝업이 «숫자를 크게» 세우려고 따로 받는다 (창업자 2026-08-31
+    //   *"이대로 앱에도 넣으면 좋겠어 팝업으로 띄워서"* — 인스타 판에서 51 이 주인공이었다)
+    //   ⛔ 위 `sub` 는 그대로 둔다 — 소식 «페이지»도 그 문장을 쓴다. 갈라 놓아야 한 쪽이 안 낡는다.
+    count: n,
     debut,
     gift,
   }
@@ -172,6 +176,70 @@ export function spread(items = [], max = 6) {
     if (!added) break
   }
   return out
+}
+
+// 📦📦 **소식 «페이지»에서 팩 줄을 «갈래마다 한 줄»로 접는다** (창업자 확정 2026-08-31)
+//
+//   📮 창업자 원문 = *"장바구니는 소식에 띄워야지. 근데 **지금 너무 길어서(가을팩안내땜에)**
+//      그래서 가을팩 안내는 선물이니까 **팝업으로 띄우고**(저대로)"*
+//
+//   🔢 **실측이 창업자 말과 정확히 맞았다** (`scripts/_probe-소식길이-0831.mjs` · 390×844)
+//      · 9/1  「방금 열렸어요」 = **1365px · 13줄** — 그중 열 줄이 가을팩이고
+//        **장바구니는 맨 아래**라 열 줄을 다 지나야 나온다. 창업자가 본 그대로다.
+//      · 8/31 「곧 열려요」 = **1113px · 10줄** (같은 열 줄이 하루 먼저 여기 서 있다)
+//
+//   ⭐⭐ **없애는 게 아니라 «접는다»** — 2026-08-03 창업자 지시 *"새로 열릴때 꼭 안내페이지에
+//      올라오도록 해"* 가 아직 살아 있다. 통째로 빼면 그 지시가 깨지고,
+//      「앞으로 열지 않기」로 팝업을 끈 사람은 **가을팩이 왔다는 걸 어디서도 못 듣는다.**
+//      ⭐ 접으면 둘 다 지켜진다 — 소식엔 «있고», 자세한 것(선물 칸·컷 전부)은 «팝업»에 있다.
+//
+//   ⛔⛔ **꾸미기와 카드를 «한 덩어리로 합치지 않는다»** — 창업자 2026-08-30
+//      *"컷수 부풀리면 10월부터는 무료갯수가 확 주는 느낌이 들어"*.
+//      합치면 9월 66 → 10월 47 로 떨어진다. 갈래를 나눠 세면 51 → 44 다.
+//      📌 팝업이 이미 그 규칙으로 센다(`NewsPopup` 의 `items`) — **소식도 같은 잣대라야 한다.**
+//
+//   ⛔ 한 갈래에 줄이 하나뿐이면 «안 접는다** — 접어봐야 같은 한 줄인데 이름만 두루뭉술해진다.
+const PACK_KINDS = ['꾸미기', '레꾸자랑 카드']
+
+export function foldPacks(opened = []) {
+  const 뭉치 = new Map()
+  for (const o of opened) if (PACK_KINDS.includes(o.kind)) 뭉치.set(o.kind, [...(뭉치.get(o.kind) || []), o])
+
+  const 접을것 = new Set([...뭉치].filter(([, v]) => v.length > 1).map(([k]) => k))
+  if (!접을것.size) return opened
+
+  const 한줄 = (kind, gs) => {
+    const seasons = [...new Set(gs.map((g) => g.season).filter(Boolean))]
+    const ko = seasons.length === 1 ? SEASON_KO[seasons[0]] : null
+    return {
+      when: gs[0].when, kind,
+      // 🏷 제목이 배지와 같은 말을 되풀이하지 않게 «갈래마다 다르게» 짓는다
+      //    · 꾸미기 → 「가을이 왔어요」  [꾸미기 51종]
+      //    · 카드   → 「가을·추석」      [레꾸자랑 카드 15종]   (라벨에서 ' 카드' 를 뗀다)
+      title: kind === '꾸미기'
+        ? (ko ? `${ko}이 왔어요` : '새 꾸미기가 열렸어요')
+        : [...new Set(gs.map((g) => String(g.title).replace(/\s*카드$/, '')))].join('·'),
+      count: gs.reduce((s, g) => s + g.count, 0),
+      // 💬 무엇무엇이 들어 있는지 — 장바구니 줄이 제품 이름을 늘어놓는 것과 «같은 방식».
+      //    ⛔ 다만 **셋까지만** — 여덟을 다 적으면 네 줄이 되어 «줄이려고 접은 것»이 도로 늘어난다
+      //       (실측 191px → 125px). 나머지는 홈 한 줄과 같은 말투로 「외 N」.
+      //    ⭐ 전부 보고 싶으면 팝업에 칩으로 다 있다 — 창업자 *"가을팩 안내는 … 팝업으로 띄우고"*
+      why: gs.length > 3
+        ? `${gs.slice(0, 3).map((g) => g.title).join(' · ')} 외 ${gs.length - 3}`
+        : gs.map((g) => g.title).join(' · '),
+      peek: spread(gs, PEEK),
+      tab: gs[0].tab, season: gs[0].season,
+      folded: true,
+    }
+  }
+
+  const 썼다 = new Set()
+  return opened.flatMap((o) => {
+    if (!접을것.has(o.kind)) return [o]
+    if (썼다.has(o.kind)) return []
+    썼다.add(o.kind)
+    return [한줄(o.kind, 뭉치.get(o.kind))]
+  })
 }
 
 // 🍳 이번 주 레시피 = 오늘 이하 중 «가장 최근» 한 줄 (weeklyNow 와 같은 규칙).

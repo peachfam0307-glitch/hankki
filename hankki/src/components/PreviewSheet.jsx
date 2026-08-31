@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
-import { whatsNew, unitOf } from '../data/whatsnew'
+import { whatsNew, unitOf, foldPacks } from '../data/whatsnew'
 import { StickerArt } from './Stickers'
 
 // 📣 한끼 소식 — «방금 열렸어요» · «곧 열려요» · «그다음엔».
@@ -93,6 +93,11 @@ export default function PreviewSheet({ onClose }) {
   useModalBack(onClose) // 뒤로가기 → 닫기
   // ⚠️ 시트를 여는 순간 한 번만 센다 — 열어둔 채 숫자가 흔들리면 안 된다.
   const news = useMemo(() => whatsNew(), [])
+  // 📦 팩 줄은 «갈래마다 한 줄»로 접는다 — 안 접으면 9/1 에 열 줄이 깔려
+  //    맨 아래 장바구니가 파묻힌다(창업자 2026-08-31 *"너무 길어서(가을팩안내땜에)"*).
+  //    ⛔ 「곧 열려요」도 같이 접는다 — 하루 전엔 그 열 줄이 «거기»에 서 있다(8/31 실측 1113px).
+  const opened = useMemo(() => foldPacks(news.opened), [news])
+  const soon = useMemo(() => (news.upcoming ? foldPacks(news.upcoming.items) : []), [news])
   const hasNews = news.opened.length > 0 || !!news.upcoming
   const dday = news.upcoming
     ? (news.upcoming.dday === 0 ? '오늘' : news.upcoming.dday === 1 ? '내일' : `${news.upcoming.dday}일 뒤`)
@@ -142,7 +147,7 @@ export default function PreviewSheet({ onClose }) {
                   <span style={{ fontSize: 16.5, fontWeight: 900, color: 'var(--brown)' }}>방금 열렸어요</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {news.opened.map((it, i) => <NewsRow key={`o${i}`} it={it} tone="var(--brown)" />)}
+                  {opened.map((it, i) => <NewsRow key={`o${i}`} it={it} tone="var(--brown)" />)}
                 </div>
               </>
             )}
@@ -156,7 +161,7 @@ export default function PreviewSheet({ onClose }) {
                   <span className="t-sub" style={{ fontSize: 15, marginLeft: 'auto', fontWeight: 700 }}>{dday}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {news.upcoming.items.map((it, i) => <NewsRow key={`u${i}`} it={it} tone="var(--tease-ic)" />)}
+                  {soon.map((it, i) => <NewsRow key={`u${i}`} it={it} tone="var(--tease-ic)" />)}
                 </div>
               </>
             )}
