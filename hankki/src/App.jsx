@@ -372,11 +372,16 @@ export default function App() {
     let 죽었나 = false
     const 해보기 = async () => {
       try {
-        const { 저절로올리기 } = await import('./cloud')
+        const { 저절로올리기, 새판알림글 } = await import('./cloud')
         const { 백업만들기 } = await import('./backupData')
         const r = await 저절로올리기(() => 백업만들기(storeRef.current))
         if (죽었나) return
-        if (!r.했나 && r.왜 === '다른기기') set덮을까(r)
+        // ☁️🔔 글은 «그 자리에서» 만든다 — `cloud.js` 를 맨 위에서 import 하면
+        //    로그인 안 한 사람의 첫 화면에도 딸려 들어간다(늦게 부르기가 무의미해진다).
+        if (!r.했나 && r.왜 === '다른기기') {
+          const s = storeRef.current
+          set덮을까({ ...r, 글: 새판알림글({ 클라우드: r, 폰: { 레시피: s.recipes.length, 일기: (s.diary || []).length } }) })
+        }
       } catch { /* 조용히 — 다음에 켤 때 또 해 본다 */ }
     }
     const idle = window.requestIdleCallback
@@ -700,9 +705,9 @@ export default function App() {
                — 잊고 지나가면 데이터가 갈린 채로 굳는다. */}
         {덮을까 && (
           <ConfirmSheet
-            title="다른 기기에서 저장한 게 있어요"
-            message={`레시피 ${덮을까.레시피}개 · 일기 ${덮을까.일기}장이 클라우드에 있어요.\n\n이 기기 것과 어느 쪽을 남길지 골라 주세요.\n고르기 전까지는 아무것도 덮지 않아요.`}
-            confirmLabel="보러 가기"
+            title="클라우드에 새 판이 있어요"
+            message={덮을까.글}
+            confirmLabel="고르러 가기"
             onConfirm={() => { set덮을까(null); askOpenCloud(); go('profile') }}
             onClose={() => set덮을까(null)}
           />
