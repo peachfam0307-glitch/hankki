@@ -313,7 +313,9 @@ export default function RecipeDetailScreen({ id }) {
   //      여기도 같은 배지를 쓴다 → **막다른 길이 안 생기니 뺄 이유가 없다.**
   //   ⚠️ 자연드림(아이쿱)은 **실버회원 가입으로 누구나 온라인 구매 가능**(조합원과 가격만 다르다)
   //      → 아무 표시도 안 붙인다. 창업자 확인 2026-08-10.
-  const pantryPicks = picksForIngredients([...(r?.ingredients || []), r?.memo || ''])
+  // ⛔ 재료와 메모를 «갈라서» 넘긴다 — 한 자루에 섞으면 메모의 설명 문장에서 광고가 걸린다
+  //    (2026-08-31 「누룽지」 사고 — `curation.js` `picksForIngredients` 주석 참고)
+  const pantryPicks = picksForIngredients(r?.ingredients || [], r?.memo || '')
   // 🔽 4칸까지만 보이고 나머지는 접는다(창업자 2026-08-15 *"너무 길면 좀 그래"*)
   const shownPicks = picksOpen ? pantryPicks : pantryPicks.slice(0, PICK_FOLD)
   // ⭐ 「다 담기」는 접혀 있어도 «전부» 담는다 — 「다」라고 써 놓고 보이는 것만 담으면 거짓말이 된다.
