@@ -130,6 +130,30 @@ export default {
     const cors = corsHeaders(origin)
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
+
+    // 📊📊 **[창업자 확정 2026-08-31] 「오늘 몇 편 / 200」을 볼 수 있게 한다** — *"tidy도 붙여줘"*
+    //   ⭐ OCR 워커에 붙인 것과 **같은 모양·같은 열쇠**다(두 워커가 다르면 창업자가 두 번 배운다).
+    //   ⛔ 그 전엔 이 통도 아무도 못 봤다 — 200 이 차면 AI 다듬기가 조용히 멎고
+    //      유저는 「기본 정리예요」만 본다. 우리는 그게 «통이 찬 것»인지 «AI 가 죽은 것»인지 몰랐다.
+    //   🔒 운영자 열쇠(FOUNDER_SECRET)가 맞아야 한다. 폰 브라우저로 열 수 있게 **GET ＋ `?key=`** 도 받는다.
+    //   ⛔ AI 를 «안» 부른다 — 세는 값만 읽는다.
+    //   ⚠️ KV(`TIDY_KV`)가 안 붙어 있으면 셀 수가 없다 → 그때는 «모른다»고 정직하게 답한다(0 이라고 하지 않는다).
+    //   📖 쓰는 법 = `https://<이 워커 주소>/?quota=1&key=<FOUNDER_SECRET>`
+    //      ⛔ 그 주소를 채팅·저장소에 적지 않는다(열쇠가 딸려 간다).
+    if (new URL(request.url).searchParams.get('quota') === '1') {
+      if (!env.FOUNDER_SECRET) return json({ error: 'no_secret' }, 500, cors)
+      const 준열쇠 = request.headers.get('x-hankki-founder') || new URL(request.url).searchParams.get('key') || ''
+      if (준열쇠 !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      const kvq = env.TIDY_KV
+      const 날 = kstDay(new Date())   // ⭐ 세는 쪽과 «같은 잣대»(KST) — 여긴 카운터도 KST 다
+      if (!kvq) return json({ 날, 오늘: null, 왜: 'KV 가 안 붙어 있어 셀 수가 없어요', 상한: LIMITS.DAILY_GLOBAL }, 200, cors)
+      const 오늘 = await num(kvq, `td:${날}`)
+      return json({
+        날,
+        오늘: { 쓴것: 오늘, 상한: LIMITS.DAILY_GLOBAL, 남음: Math.max(0, LIMITS.DAILY_GLOBAL - 오늘), 퍼센트: Math.round((오늘 / LIMITS.DAILY_GLOBAL) * 100) },
+      }, 200, cors)
+    }
+
     if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, cors)
 
     // ── 문 지키기 (OCR 워커와 «같은» 방식) ──
