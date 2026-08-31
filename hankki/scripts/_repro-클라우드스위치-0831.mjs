@@ -13,7 +13,9 @@ import { readFileSync, statSync } from 'node:fs'
 import { extname, join } from 'node:path'
 import { SEED_COACH_SEEN } from '../src/coach.js'
 
-const ROOT = '/home/user/hankki/hankki/dist'
+// ⛔⛔ 뿌리를 «이 컨테이너 경로»로 박으면 CI 에선 그 폴더가 없어 전부 404 → 화면이 영영 빈칸이 된다.
+//    2026-08-31 배포가 두 번 그렇게 막혔다(#1965 · #1966). 다른 판들처럼 «이 파일 자리»에서 찾는다.
+const ROOT = join(new URL('..', import.meta.url).pathname, 'dist')
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.webp': 'image/webp', '.webmanifest': 'application/manifest+json' }
 const srv = http.createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0])
