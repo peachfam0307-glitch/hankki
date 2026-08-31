@@ -145,7 +145,12 @@ const CURATION_ALL = [
   {
     cat: '고춧가루', group: '양념', emoji: '🌶️', icon: 'cu_gochugaru',
     items: [
-      { name: '고춧가루', brand: '복이네먹거리', matches: ['고춧가루'], benefit: '국내산 고추로 만들어요. 순한맛·보통매운맛에 용량·입자 크기까지 골라 살 수 있어 내 요리에 딱 맞춰 쓰기 좋아요', q: '복이네먹거리 고춧가루', mall: 'coupang' },
+      // 🚫🚫 2026-08-31 창업자 — *"고춧가루는 빼기로 했던 것 같은데 광고에"* → *"**레시피 광고에서만 뺀다고**"*
+      //   ⭐ `noRecipePick` = 레시피 상세의 「주부의 장바구니에서 고른 재료」 카드에만 안 뜬다.
+      //      ✅ 장보기 탭 큐레이션 목록엔 **그대로 있다**(올리브유 때와 같은 뜻 — 목록에서 지우는 게 아니다).
+      //   ⛔ `matches` 만 떼면 안 빠진다 — 재료 줄에 「복이네먹거리 고춧가루」 풀네임이 박힌 편이 6편,
+      //      메모 「제가 쓰는 양념 —」 줄에 박힌 편이 12편이라 풀네임 매칭으로 계속 붙는다.
+      { name: '고춧가루', brand: '복이네먹거리', matches: ['고춧가루'], noRecipePick: true, benefit: '국내산 고추로 만들어요. 순한맛·보통매운맛에 용량·입자 크기까지 골라 살 수 있어 내 요리에 딱 맞춰 쓰기 좋아요', q: '복이네먹거리 고춧가루', mall: 'coupang' },
     ],
   },
   {
@@ -540,8 +545,22 @@ export const productMall = (it) => {
 // 문자열들(재료 + 메모)에서 '주부의 장바구니' 제품이 쓰였는지 찾는다.
 // 재료에 제품명을 그대로 적으면 픽 카드에 뜬다. 특화 제품만 재료에 이름을 남기고
 // 나머지 내 제품은 메모로 옮겼으므로, 호출부에서 메모도 함께 넣어 스캔한다(RecipeDetailScreen).
-export const picksForIngredients = (ingredients = []) => {
-  const text = (ingredients || []).join('  ')
+//
+// ⛔⛔ **메모와 재료는 «다르게» 본다** (창업자 폰 제보 2026-08-31 — 「뚝딱 버섯 볶음밥」)
+//   📮 창업자 = *"누룽지는 재료에 없어. 만드는법에 밥을 눌리면 누룽지가 된다는건데 광고에 들어가있어"*
+//   🔬 뿌리 = 그 레시피 메모 셋째 줄이 *"바닥에 **누룽지**가 생기면서 고소해져요"* 인데
+//      옛 판은 재료와 메모를 **한 자루에 섞어** 낱말을 훑어서 「자연다음 현미누룽지」가 걸렸다.
+//   ⭐⭐ **메모는 «설명하는 글»이지 «장 보는 목록»이 아니다.** 요리 이야기에 나온 낱말로 광고를 붙이면
+//      「밥을 눌리면 누룽지가 된다」는 설명이 「누룽지를 사세요」가 된다 — 유저가 헛것을 산다.
+//   ✅ 그래서 갈랐다 — **`matches` 낱말은 «재료 줄»에서만, 제품 «풀네임»은 메모까지** 본다.
+//      ⛔ 메모를 통째로 뺄 수는 없다: 메모 맨 아랫줄 「제가 쓰는 양념 — 간장 「성가정 우리콩 진간장」…」이
+//      창업자가 «이 제품» 이라고 콕 집어 적은 지정이라 그게 풀네임 매칭으로 붙고 있다(68편).
+//   📌 같은 눈이 게이트엔 이미 있었다 — `scripts/check-picks.mjs` ⑤ *"재료 줄만 본다 —
+//      메모의 설명 문장까지 막으면 시끄럽다"*. 규칙만 여기에 없었다.
+//   🧪 재현판 = `scripts/_repro-누룽지광고-0831.mjs`
+export const picksForIngredients = (ingredients = [], notes = '') => {
+  // 풀네임(direct)은 메모까지 본다 — 창업자가 «이 제품» 이라고 콕 집어 적은 자리라서.
+  const text = [...(ingredients || []), notes || ''].join('  ')
   // ⭐ 두 갈래로 찾는다.
   //   ① 제품 «풀네임» 이 글에 그대로 있으면 = 창업자가 "이거 쓴다"고 직접 적은 것 → 항상 «앞»에 온다.
   //   ② `matches` 의 낱말이 있으면 = 재료 이름만 적어도 붙는 안전망(`순두부 1팩` → 한살림 몽글이 순두부).
@@ -552,10 +571,17 @@ export const picksForIngredients = (ingredients = []) => {
   //   **노두유(老抽)는 중국 진간장이지 두유가 아니다.** 「노두유」 속에 「두유」가 들어 있어서 걸렸다.
   //   같은 꼴이 얼마든지 있다 — 「간장게장」↔간장 · 「참치액」↔참치 · 「고추장아찌」↔고추장.
   //   ⭐ 한국어는 조사가 «뒤»에 붙으니 «앞»을 기준으로 본다: `두유를`·`두유 200ml` ✅ / `노두유` ⛔
+  // ⛔ 여기에 `notes` 를 섞지 않는다 — 그게 위 「누룽지」 사고의 자리다.
   const tokens = (ingredients || []).flatMap((i) => String(i).split(/[\s,()·/]+/)).filter(Boolean)
   const startsWithAny = (w) => tokens.some((t) => t.startsWith(w))
   const direct = [], byWord = []
   for (const p of PRODUCTS) {
+    // 🚫 «레시피 광고에서만» 뺀 제품 — 장보기 큐레이션 목록엔 그대로 남는다.
+    //    📮 창업자 2026-08-31 = *"레시피 광고에서만 뺀다고"* (고춧가루)
+    //    ⛔ `matches` 만 떼는 걸로는 못 뺀다 — 재료 줄에 «풀네임»이 박힌 편이 6편,
+    //       메모에 박힌 편이 12편이라 풀네임 매칭(direct)으로 계속 붙는다.
+    //       (올리브유 때는 `matches` 만 떼도 됐다 — 풀네임을 아무 데도 안 적었으니까)
+    if (p.noRecipePick) continue
     if (p.name && text.includes(p.name)) direct.push(p)
     else if ((p.matches || []).some((w) => w && startsWithAny(w))) byWord.push(p)
   }
@@ -581,7 +607,10 @@ export const picksForIngredients = (ingredients = []) => {
 export const weeklyPicks = (weekly = null, today = '', n = 4) => pickRotate({
   products: PRODUCTS,
   matched: weekly
-    ? picksForIngredients((weekly.items || []).flatMap((r) => [...(r.ingredients || []), r.memo || '']))
+    ? picksForIngredients(
+      (weekly.items || []).flatMap((r) => r.ingredients || []),
+      (weekly.items || []).map((r) => r.memo || '').join('  '),
+    )
     : [],
   today,
   n,

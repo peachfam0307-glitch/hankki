@@ -65,7 +65,7 @@ const 일기열기 = async (ctx) => {
   const page = await ctx.newPage()
   await page.goto(URL, { waitUntil: 'networkidle' })
   await 잠깐(500)
-  await page.getByRole('button', { name: '일기', exact: true }).first().click()
+  await page.getByRole('button', { name: '일기' }).first().click()
   await 잠깐(600)
   await page.getByRole('button', { name: /^오늘 일기 (보기|쓰기)$/ }).click()
   await 잠깐(800)

@@ -43,8 +43,7 @@ import uiPengSearch from '../assets/ui/wave/pn_search.png'
 //    ⛔ ui 컷 다섯(hand_point·thumbsup·shop·heart·clap)은 이미 다른 단계가 다 쓰고 있어 정본 콤비에서 가져왔다.
 import gpDuoHeart from '../assets/stickers/photo/gp_duoht.png'
 import { needsOnboarding } from '../components/Onboarding'
-import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount, needsCloudHome, markCloudHomeSeen, askOpenCloud } from '../nudges'
-import { 로그인해뒀나 } from '../cloud'
+import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount } from '../nudges'
 import { weeklyNow, homemadeNow } from '../data/weekly'
 import { whatsNew } from '../data/whatsnew'
 import { pantryScore } from '../pantryMatch'
@@ -141,14 +140,6 @@ export default function HomeScreen() {
   // ⚠️ 「내 것」 개수로 센다 — 기본 레시피 50편을 세면 깔자마자 백업하라고 뜬다(2026-08-03 창업자 제보)
   const myN = myRecipeCount(recipes)
   const [bkStep, setBkStep] = useState(() => backupNudgeStep(myRecipeCount(recipes)))
-
-  // ☁️ 클라우드 한 줄 — «이미 쓰고 있던 사람»이 클라우드를 만나는 유일한 자리.
-  //   📮 창업자 2026-08-21 = *"지금쓰는사람들은 로그인 안해놓으면 레시피 잃을수도 있는데.
-  //      백업하는지도 모르고 폰바꿀수있어"* · *"테스터들한테도 더 늦기전에 선택권을 주는게 맞다고 봐"*
-  //   ⛔ 첫 화면(CloudGate)은 «새로 깐 사람»만 본다 — 이미 쓰던 사람은 소개를 이미 지나갔다.
-  //   ⚠️ 「내 것」이 하나라도 있을 때만 — 갓 깐 사람에게 권하면 아직 «잃을 게» 없다(백업 줄과 같은 규칙).
-  //   ⭐ 로그인 여부는 «작은 표식»으로 본다 — 진짜로 물으면 파이어베이스 167KB 를 첫 화면에서 받는다.
-  const [cloudRow, setCloudRow] = useState(() => needsCloudHome() && !로그인해뒀나() && myRecipeCount(recipes) >= 1)
 
   // 🗓 이번 주 레시피 — 달력이 여는 줄. ⛔재고가 없으면 `null` 이라 **줄을 아예 안 그린다**
   //    (빈 「이번 주」 자리를 남기지 않는다 · `LAB_*_URL` 이 비면 그 칸을 안 그리는 것과 같은 방식).
@@ -359,31 +350,7 @@ export default function HomeScreen() {
             쌓였을 때 한 번씩 조용히 권한다. ⛔겁주지 않는다 — 쌓였다는 사실 + 다음 행동만.
             강제 팝업이 아니라 닫을 수 있는 한 줄이고, 닫으면 그 문턱은 다시 안 뜬다.
             설계원칙 = docs/리텐션-설계원칙-2026-07-30.md */}
-        {/* ☁️ 클라우드 한 줄 — 백업 줄과 «같은 자리»를 쓴다(같은 걱정을 푸는 줄이라서).
-            ⛔ 둘이 같이 뜨면 시끄러우니 **클라우드가 이긴다** — 백업보다 나은 답이다.
-            ⛔ 벽이 아니다. 닫으면 다시 안 뜨고, 나중엔 설정에서 만난다. */}
-        {cloudRow && (
-          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, padding: '11px 12px 11px 14px', borderRadius: 14, background: 'var(--cream)' }}>
-            <Icon name="cloud" size={18} color="var(--brown)" stroke={1.9} />
-            <button
-              className="press"
-              onClick={() => { markCloudHomeSeen(); askOpenCloud(); setCloudRow(false); nav.go('profile') }}
-              style={{ flex: 1, textAlign: 'left', minWidth: 0 }}
-            >
-              {/* ⛔⛔ 「계정에 매어둘까요?」로 두지 말 것 — 창업자 2026-08-21 = *"매어둘까요 그런거말고"*.
-                  📌 그때 첫 화면(CloudGate)만 고치고 «이 줄과 설정 카드»를 안 고쳐서 같은 말이 살아남았다.
-                     같은 기능은 화면이 달라도 같은 말로(v11.02 「책갈피」가 일곱 곳이었던 것과 같은 뿌리).
-                  ⭐ 첫 화면의 안내 줄과 «한 글자도 다르지 않게» 맞춘다. */}
-              <div style={{ fontSize: 13.5, fontWeight: 700 }}>로그인하면 새 폰에서도 이어서 써요</div>
-              <div className="t-sub" style={{ fontSize: 11.5, marginTop: 1 }}>지금은 레시피·일기가 이 폰에만 있어요</div>
-            </button>
-            <button className="press" onClick={() => { markCloudHomeSeen(); setCloudRow(false) }} aria-label="닫기" style={{ flex: '0 0 auto', padding: 6 }}>
-              <Icon name="x" size={16} color="var(--sand)" />
-            </button>
-          </div>
-        )}
-
-        {!cloudRow && bkStep > 0 && (
+        {bkStep > 0 && (
           <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 9, padding: '11px 12px 11px 14px', borderRadius: 14, background: 'var(--cream)' }}>
             {/* 설정의 '백업 · 내보내기' 줄과 같은 아이콘(cloud)으로 — 눌러 도착한 곳과 그림이 맞아야 헷갈리지 않는다 */}
             <Icon name="cloud" size={18} color="var(--brown)" stroke={1.9} />

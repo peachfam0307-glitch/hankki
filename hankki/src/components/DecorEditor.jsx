@@ -801,6 +801,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       { k: 'color', label: '색', ic: 'palette' },
       // 📏 여기가 창업자 제보의 자리 — 글 상자는 손잡이로 키우면 «그림까지» 커졌다.
       { k: 'size', label: '크기', ic: 'textSize' },
+      // ⛔⛔ **「굵기」가 여기 «없었다»** (창업자 2026-08-31
+      //   *"글씨 두께도 너무 얇아서 레꾸해놓으면 제목이 잘 안보여."*)
+      //   🔢 글자 스티커(`text`)엔 위 줄에 굵기가 있는데 **포스트잇·글 상자엔 빠져 있었다.**
+      //      `TEXT_WEIGHTS`(얇게·보통·굵게)는 멀쩡히 있는데 이 갈래를 안 줘서 **쓸 수가 없었다.**
+      { k: 'width', label: '굵기', ic: 'weight' },
       { k: 'font', label: '글씨', ic: 'textA' },
       ...(selPlainNote ? [{ k: 'pattern', label: '무늬', ic: 'grid4' }, { k: 'shape', label: '모양', ic: 'shape' }] : []),
     ] : []),
@@ -1546,7 +1551,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ))}
               </div>
             )}
-            {ctxCur === 'width' && selItem.type === 'text' && (
+            {/* ✍️ 굵기 — 글자 스티커와 «포스트잇·글 상자»가 같은 표(TEXT_WEIGHTS)를 쓴다.
+                ⛔ `note` 를 여기 안 넣으면 위에서 갈래만 뜨고 «눌러도 아무것도 안 나온다». */}
+            {ctxCur === 'width' && (selItem.type === 'text' || selItem.type === 'note') && (
               <div style={ctxScroll}>
                 {TEXT_WEIGHTS.map((w) => (
                   <button key={w.key} className="press" onClick={() => patchRec(sel, { w: w.key })}

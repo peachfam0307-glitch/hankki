@@ -73,20 +73,6 @@ await page.goto('http://127.0.0.1:4406/hankki/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(900)
 
 const 글자 = () => page.evaluate(() => document.body.innerText || '')
-
-// 🚪 **맨 위 층의 「닫기」** — 화면을 옮겨도 앞 화면 DOM 은 남으므로 «이 화면의 그 단추»를 콕 집는다.
-//    ⛔ `page.getByRole(...).first()` 는 밑에 깔린 것을 집어 「다른 게 클릭을 가로챈다」로 죽는다.
-//    ⛔ 맨 위가 «층»일 때도 있고 «시트»일 때도 있다 — 시트가 떠 있으면 `.sheet-mask` 가 층을 통째로 덮는다.
-const 맨위층닫기 = async () => {
-  const 시트 = page.locator('.sheet-mask:visible .sheet')
-  const 층 = page.locator('.stack-layer')
-  let 어디
-  if (await 시트.count()) 어디 = 시트.last()
-  else { const 몇 = await 층.count(); 어디 = 몇 ? 층.nth(몇 - 1) : page.locator('body') }
-  const 단추 = 어디.getByRole('button', { name: /닫기/ })
-  if (await 단추.count()) return 단추.last().click()
-  return 어디.getByText('닫기', { exact: false }).last().click()
-}
 const 없나 = async (말들) => {
   const t = await 글자()
   return 말들.filter((m) => t.includes(m))
@@ -142,10 +128,7 @@ const t1b = await 글자()
 chk('⑥ 텍스트 붙여넣기로 가는 길이 살아 있다', t1b.includes('글을 복사했다면 붙여넣기'))
 const 남은1b = await 없나(금지)
 chk(`⑥-2 그 화면에도 금지 문구 0개 (남은 것: ${남은1b.join(' / ') || '없음'})`, 남은1b.length === 0)
-// ⛔⛔ [2026-08-31] `.first()` 를 쓰면 «밑에 깔린» 닫기를 집는다 — 앞 화면 DOM 이 그대로 남아서다.
-//    2026-08-28 에 가져오기가 «네 갈래»로 늘며 층이 하나 더 생겨 이 검사가 죽었다.
-//    ⭐ 맨 위 층(`.stack-layer` 마지막)에서만 찾는다 — v11.19 에 적어둔 그 함정이다.
-await 맨위층닫기()
+await page.getByRole('button', { name: '닫기' }).first().click()
 await page.waitForTimeout(600)
 writeFileSync(join(OUT, '3-가져오기.png'), await page.screenshot())
 
@@ -156,7 +139,7 @@ await page.waitForTimeout(800)
 const 남은2 = await 없나(금지)
 chk(`⑦ 시트에도 금지 문구 0개 (남은 것: ${남은2.join(' / ') || '없음'})`, 남은2.length === 0)
 writeFileSync(join(OUT, '4-AI시트.png'), await page.screenshot())
-await 맨위층닫기()
+await page.getByText('닫기', { exact: false }).first().click()
 await page.waitForTimeout(600)
 
 // ── ④ 링크 화면 ──

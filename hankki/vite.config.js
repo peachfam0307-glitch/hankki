@@ -6,31 +6,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 // or a GitHub Pages sub-path (e.g. /-/).
 export default defineConfig({
   base: './',
-  build: {
-    rollupOptions: {
-      output: {
-        // ☁️ 파이어베이스를 «이름이 있는 한 덩어리»로 묶는다.
-        //   ⭐ 왜 = 위 `globIgnores` 가 precache 에서 빼려면 «이름»이 있어야 한다.
-        //      기본 이름은 `index.esm-<해시>.js` 라 다른 조각과 구별이 안 된다.
-        //   📌 셋을 따로 나누지 않는다 — 로그인하면 곧바로 창고도 읽어서 어차피 같이 필요하다.
-        manualChunks(id) {
-          if (id.includes('node_modules/@firebase') || id.includes('node_modules/firebase')) return 'firebase'
-          return undefined
-        },
-      },
-    },
-  },
   plugins: [
     react(),
     VitePWA({
-      // 🔗🧪 «미리보기 판»에서는 서비스워커를 만들지 않는다 (2026-08-21)
-      //   📮 창업자 = 클라우드 로그인을 폰으로 판정하려면 «다른 주소»가 필요하다
-      //      → Cloudflare Pages 에 올리는 판. `HANKKI_PREVIEW=1 npm run build` 로 굽는다.
-      //   ⛔⛔ 왜 끄나 = 서비스워커가 켜져 있으면 **옛 판이 폰에 눌러앉는다.**
-      //      고쳐서 다시 올려도 창업자 폰은 캐시된 옛 화면을 보고, 그러면 「고쳤는데 안 고쳐졌다」로 하루를 태운다.
-      //      판정판은 «지금 올린 것»이 그대로 보여야 한다.
-      //   ⭐ 진짜 배포(HANKKI_PREVIEW 없음)는 «하나도 안 바뀐다** — precache 4473KiB 그대로.
-      disable: process.env.HANKKI_PREVIEW === '1',
       // 커스텀 서비스워커를 써야 '공유받기(share_target)' POST 를 가로챌 수 있어 injectManifest 사용.
       strategies: 'injectManifest',
       srcDir: 'src',
@@ -58,17 +36,7 @@ export default defineConfig({
         //   ⚠️ `icons/`(앱 아이콘 16장)·`recipe-photos/`(기본 레시피 사진 17장)는 **남긴다** —
         //      아이콘은 매니페스트가 참조하고, 레시피 사진은 홈 첫 화면에 바로 뜬다. 둘 다 작다.
         //   🔒 다시 커지면 `scripts/check-precache.mjs` 가 배포를 막는다.
-        // ☁️⛔⛔ **파이어베이스도 precache 에서 뺀다** (2026-08-21)
-        //
-        //   `src/cloud.js` 를 `import()` 로 «늦게» 부르게 짰다 — 로그인 안 한 사람은 0KB 이어야 한다.
-        //   ⛔ 그런데 **빌드하고 재 보니 precache 가 4460KB → 5359KB 로 뛰었다**(실측).
-        //      서비스워커가 「나눠 놓은 조각」까지 **미리 다 받아** 버려서, 늦게 부르기가 **무의미해졌다.**
-        //      📌 **「늦게 부르게 짰다」와 「늦게 받는다」는 다른 말이다.** 재 보기 전엔 모른다 —
-        //         스티커 212MB 때(2026-08-05)와 «똑같은 모양»의 사고다.
-        //   ✅ 빼면 «로그인을 누른 그 순간»에 받는다. 그 뒤론 브라우저 캐시에 남는다.
-        //   ⚠️ 이름을 못 박아야 뺄 수 있다 — 그래서 아래 `manualChunks` 로 `firebase-*` 로 이름을 고정했다
-        //      (기본 이름은 `index.esm-<해시>.js` 라 다른 조각과 구별이 안 된다).
-        globIgnores: ['assets/**/*.png', 'assets/**/*.webp', 'assets/firebase-*.js'],
+        globIgnores: ['assets/**/*.png', 'assets/**/*.webp'],
       },
       includeAssets: ['favicon.svg', 'icons/icon-192-v7.png', 'icons/icon-512-v7.png'],
       manifest: {

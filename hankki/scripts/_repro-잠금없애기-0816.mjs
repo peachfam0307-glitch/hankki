@@ -47,7 +47,7 @@ const 일기열기 = async (ctx) => {
   const page = await ctx.newPage()
   await page.goto(URL, { waitUntil: 'networkidle' })
   await 잠깐(500)
-  await page.getByRole('button', { name: '일기', exact: true }).first().click()
+  await page.getByRole('button', { name: '일기' }).first().click()
   await 잠깐(600)
   await page.getByRole('button', { name: /^오늘 일기 (보기|쓰기)$/ }).click()
   await 잠깐(800)
@@ -111,7 +111,7 @@ try {
   page = await ctx.newPage()
   await page.goto(URL, { waitUntil: 'networkidle' })
   await 잠깐(700)
-  await page.getByRole('button', { name: '일기', exact: true }).first().click()
+  await page.getByRole('button', { name: '일기' }).first().click()
   await 잠깐(800)
   칸('⭐⭐⭐ 비번을 모르는 사람이 본문을 못 본다', !(await page.content()).includes(본문),
     '옛 판은 여기서 다 보였다 — 그게 창업자가 말한 「정문」이다')

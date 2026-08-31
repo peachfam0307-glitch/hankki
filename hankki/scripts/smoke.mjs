@@ -115,9 +115,7 @@ try {
 
   // ── 커버리지 B) 신규 작성 → 저장 (addRecipe 경로) · 앱 내에서만 이동 ──
   await tour('신규 레시피 작성 → 저장', async () => {
-    // ⛔ `exact: true` 를 빼지 말 것 — Playwright 는 기본이 «부분일치»라
-    //    홈에 「…가져오기…」가 든 다른 글이 있으면 그걸 눌러 엉뚱한 화면으로 간다(2026-08-21 실제 사고).
-    await page.getByRole('button', { name: '가져오기', exact: true }).first().click(); await page.waitForTimeout(700)
+    await page.getByRole('button', { name: '가져오기' }).first().click(); await page.waitForTimeout(700)
     // 🗓 [2026-08-28] 목록이 «네 갈래»로 — 「직접 작성」 → 「직접 입력하기」 ＋ 안내 한 단계
     await page.getByText('직접 입력하기', { exact: true }).first().click(); await page.waitForTimeout(700)
     await page.getByRole('button', { name: '빈 종이 열기' }).first().click(); await page.waitForTimeout(800)

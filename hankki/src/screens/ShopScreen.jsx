@@ -13,6 +13,11 @@ import uiGomShop from '../assets/ui/gom_shop.png' // 🐻 장보기 꼬르곰(�
 //         (시장 컷은 배경 진열대가 붙어 38px 에선 뭉치고, 카트 컷은 가로로 길어 상단바에 안 맞는다)
 import uiPengShop from '../assets/ui/wave/pn_shoplist.png'
 import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png' // 👍 「이번 주 픽」 소제목 (창업자 2026-08-17)
+// ⭐ 「이번 주 픽」 «칩»에 붙는 별 (창업자 2026-08-31 *"픽 위에 별이나 뭐 ... 서랍에서 딱 보이게."*)
+//   ⛔ 유니코드 이모지(★)를 쓰지 않는다 — 앱 화면 글자는 우리 스티커다(CLAUDE.md).
+//   ✅ 후보 셋을 실제 칩에 얹어 찍어 보고 창업자가 골랐다 = `ta_star`(크림 별).
+//      「얼굴 있는 별」·「반짝이」보다 **크림톤 칩·배경에 제일 잘 붙는다.**
+import uiPickStar from '../assets/stickers/photo/ta_star.png'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 
 // 장보기 탭 첫 방문 코치마크 — 숨은 기능 안내(창업자 딸 아이디어 ⭐)
@@ -561,12 +566,33 @@ function Curation() {
       </div>
     </div>
   )
+  // ⭐ 「이번 주 픽」 칩에만 별을 얹는다 — 서랍(칩 줄)에서 «딱 보이게» (창업자 2026-08-31)
+  //   ⛔⛔ 별이 칩 «위»로 삐져나가는데 칩 줄(`.hscroll`)이 `overflow-x: auto` 라 **잘린다.**
+  //      (창업자가 첫 시안을 보고 *"잘려보이는데"* 라고 바로 잡아냈다)
+  //      ✅ `styles.css` 의 `.hscroll.cur-chips` 에 **위 여백**을 주고 여기 `marginTop` 을 그만큼 줄였다
+  //         → **자리는 그대로, 별만 산다.**
+  //   ⛔ 별을 칩 «안»(인라인)으로 넣지 않았다 — 그러면 칩이 넓어져 다른 칩들이 밀린다.
   const chip = (key, label) => (
     <button
       key={key}
       className={`pill press ${curCat === key ? 'active' : ''}`}
       onClick={() => setCurCat(key)}
-    >{label}</button>
+      style={key === 'pick' ? { position: 'relative', overflow: 'visible' } : undefined}
+    >
+      {key === 'pick' && (
+        <img
+          src={uiPickStar} alt="" draggable={false}
+          style={{
+            position: 'absolute', left: '50%', top: -16,
+            transform: 'translateX(-50%) rotate(-12deg)',
+            width: 34, height: 34, objectFit: 'contain',
+            pointerEvents: 'none', // ⛔ 별이 칩 누르기를 가로채면 안 된다
+            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.18))',
+          }}
+        />
+      )}
+      {label}
+    </button>
   )
 
   return (
@@ -624,7 +650,9 @@ function Curation() {
           {/* 카테고리 칩 — 기본은 '이번 주 픽', 필요한 카테고리만 펼쳐 본다 (찾는 중엔 감춘다)
               🔢 `cur-chips` = 패드에서 «줄바꿈»으로 바꾸려고 붙인 이름 (창업자 2026-08-13 *"장보기 잘림"*).
                  좌우 2단이 되면서 왼쪽 칸이 좁아져 마지막 칩이 반쯤 잘려 보였다. 스타일은 styles.css 에. */}
-          <div className="hscroll cur-chips" style={{ marginTop: 16, paddingBottom: 4, marginBottom: 4, display: curQuery ? 'none' : undefined }}>
+          {/* ⭐ marginTop 16 → 0 — 「이번 주 픽」 별이 설 자리를 `.hscroll.cur-chips` 의 위 패딩(20px)이 만든다.
+              둘을 맞바꾼 것이라 **칩 줄이 서는 자리는 그대로다**(16+2 ≈ 20). */}
+          <div className="hscroll cur-chips" style={{ marginTop: 0, paddingBottom: 4, marginBottom: 4, display: curQuery ? 'none' : undefined }}>
             {chip('pick', '이번 주 픽')}
             {chip('전체', '전체')}
             {groupList.map((c) => chip(c.name, (
