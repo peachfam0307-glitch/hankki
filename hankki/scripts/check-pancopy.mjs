@@ -36,7 +36,10 @@ const htmlBlocks = (t) =>
 const 고를것 = /<input[^>]*type=["']?(radio|checkbox)/i
 const 복사 = /결과 복사|clipboard|execCommand\(\s*['"]copy/i
 const 남기기 = /localStorage|sessionStorage|indexedDB/i
-const 폴백 = /fallback|textarea|out\.value|select\(\)/i
+// ⚠️ [2026-08-31] `Range` + `getSelection()` 도 «진짜» 폴백이다 — 글을 골라 줘서 길게 눌러 복사한다.
+//    카와이 전수 판정판이 그 방식인데 이 잣대가 몰라서 걸렸다. **폴백이 없던 게 아니라 패턴이 모자랐다.**
+//    ⛔ 그렇다고 넓히기만 하면 이빨이 빠진다 → `selectNodeContents` 처럼 «콕 집는» 말만 더한다.
+const 폴백 = /fallback|textarea|out\.value|select\(\)|selectNodeContents/i
 
 // ⛔⛔ **첫 판은 «아무것도 안 재는 게이트»였다 — 규칙 12 로 바로 잡혔다.**
 //    파일 «전체»로 판정했더니 **내가 주석에 적어둔 "clipboard.writeText"·"localStorage"** 에 걸려

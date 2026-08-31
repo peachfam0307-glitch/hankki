@@ -7,7 +7,7 @@ import { extname, join } from 'node:path'
 // ⭐ 코치마크를 「이미 다 본」 상태로 만드는 조각 — 저장소에 이미 있다(규칙 17: 만들기 «전»에 찾는다).
 //   ⛔ 안 쓰면 코치가 화면을 덮어 «홈 한 줄이 있는데도 안 보인다»(2026-08-21 실제로 그랬다).
 import { SEED_COACH_SEEN } from '../src/coach.js'
-const ROOT = '/home/user/hankki/hankki/dist'
+const ROOT = join(new URL('..', import.meta.url).pathname, 'dist')  // ⛔ 절대경로를 박지 않는다(CI 에선 그 길이 없다 · 2026-08-31)
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.webp': 'image/webp', '.webmanifest': 'application/manifest+json' }
 const srv = http.createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0])
@@ -27,6 +27,10 @@ async function 새창 (init) {
   const pg = await ctx.newPage()
   pg.on('pageerror', (e) => errs.push('PAGEERROR ' + e.message))
   await pg.addInitScript(SEED_COACH_SEEN)
+  // 🔑 **운영자 스위치를 켜 둔다** (2026-08-31 v12.04 부터) —
+  //   `nudges.js` 의 `클라우드보임()` 이 꺼져 있으면 클라우드 입구가 **아예 안 그려진다.**
+  //   ⛔ 이걸 안 넣으면 이 판이 「첫 화면이 안 뜬다」로 죽는데, 그건 «고장»이 아니라 «꺼둔 것»이다(규칙 18 ⓘ).
+  await pg.addInitScript(() => { try { localStorage.setItem('hankki:founder', '1') } catch { /* noop */ } })
   if (init) await pg.addInitScript(init)
   await pg.goto('http://localhost:4605/hankki/', { waitUntil: 'domcontentloaded' })
   await pg.waitForTimeout(1600)
@@ -37,7 +41,7 @@ async function 새창 (init) {
 {
   const { ctx, pg } = await 새창()
   const 글 = await pg.textContent('body')
-  const 맞나 = /Google로 시작하기/.test(글)
+  const 맞나 = /Google 계정으로 시작하기/.test(글)
   await pg.screenshot({ path: '/tmp/클라우드첫화면.png' })
   console.log((맞나 ? '✅' : '⛔') + ' ① 새로 깐 사람 — 첫 화면이 클라우드다')
   if (!맞나) console.log('   본문 = ' + 글.slice(0, 160))
@@ -85,7 +89,7 @@ async function 새창 (init) {
     localStorage.setItem('hankki:coach:home', '1')
   })
   const 글 = await pg.textContent('body')
-  const 첫화면없나 = !/Google로 시작하기/.test(글)
+  const 첫화면없나 = !/Google 계정으로 시작하기/.test(글)
   const 한줄있나 = /지금은 레시피·일기가 이 폰에만 있어요/.test(글)
   console.log((첫화면없나 ? '✅' : '⛔') + ' ② 이미 쓰던 사람 — 첫 화면이 «안» 뜬다(벽 아님)')
   console.log((한줄있나 ? '✅' : '⛔') + ' ②-b 홈에 한 줄이 뜬다')

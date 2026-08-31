@@ -36,12 +36,20 @@ import { StickerArt } from './Stickers'
 //       「계속 늘어나요」는 말로 하는 것보다 **매주 3개씩 뜨는 게 훨씬 세다.**
 const UPCOMING = [
   { icon: 'book', title: '내 레시피북, PDF로 소장', desc: '꾸민 표지 그대로 예쁜 책 한 권.', tag: '나중에' },
-  { icon: 'chat', title: '내 꾸민 레시피 자랑', desc: '취향 비슷한 사람들과 구경하고 나눠요.', tag: '나중에' },
+  // 💬 [2026-08-31 창업자] *"맨 마지막에 내 꾸민레시피자랑? 이건 말이 좀 이상해. **한끼커뮤니티 생기는거 잖아??**"*
+  //   ⭐ 맞다 — 로드맵에 있는 건 «자랑 기능»이 아니라 **커뮤니티**다
+  //      (`docs/아이디어-로드맵.md` 「🔵 커뮤니티·확장」 = *"레시피 공유 … 판만 깔아주자"*).
+  //   ⛔ 「자랑」은 이미 앱에 있는 «레꾸자랑»(카드 뽑기)과 이름이 겹쳐서 «그게 또 오나»로 읽힌다.
+  //   ⛔ 「한끼 머니」는 안 적는다 — 로드맵에 있지만 확정이 아니다(이 파일 정직 원칙: 없는 걸 약속하지 않는다).
+  { icon: 'chat', title: '한끼 커뮤니티', desc: '꾸민 레시피를 서로 구경하고 나눠요.', tag: '나중에' },
 ]
 
 // 종류마다 아이콘 하나 — 글자를 안 읽어도 «뭐가 늘었는지»가 보인다.
 // ⚠️ 우리 세트에 없는 이름을 쓰면 아무것도 안 그려진다 → 전체 목록 = `Icon.jsx`.
-const KIND_ICON = { '이번 주 레시피': 'diary', '꾸미기': 'palette', '레꾸자랑 카드': 'star', '장바구니': 'cart' }
+// 🍑 배경(테마) = `settings` — ⭐그림이 «어디서 바꾸는지»를 말해준다(설정 → 테마).
+//    ⛔ `palette` 는 꾸미기가 이미 쓴다. 한 화면에 같은 그림이 두 번 뜨면 둘 다 안 읽힌다
+//       (2026-08-29 창업자 지적 = 장바구니 아이콘이 `cart` 로 두 번 떴다).
+const KIND_ICON = { '이번 주 레시피': 'diary', '꾸미기': 'palette', '레꾸자랑 카드': 'star', '장바구니': 'cart', '배경': 'settings' }
 
 // 🖼 미리보기 한 줄 — ⭐**글자만 있으면 광고가 안 된다** (창업자 2026-08-03 *"가을 이모지팩도 광고해야하지 않아?"*).
 //    ⛔ `StickerArt` 는 우리 그림을 그린다(유니코드 이모지 아님).
@@ -69,8 +77,20 @@ function NewsRow({ it, tone }) {
   //    ⛔ 아이콘도 갈아 끼운다 — 나머지와 같은 팔레트 아이콘이면 목록에 묻힌다.
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--cream)', borderRadius: 14, padding: '12px 13px' }}>
+      {/* 🎨 배경(테마) 줄은 «아이콘 자리»가 곧 그 색이다 (창업자 2026-08-31
+          *"한끼소식 살구 동그라미 혼자 덩그러니 자리차지하고 있어"*)
+          ⛔ 처음엔 색 동그라미를 «본문 아래»에 따로 뒀는데 한 줄을 통째로 먹었다(135px).
+             그림이 하나뿐이라 나란히 설 짝도 없어서 정말 덩그러니 떠 보였다 — 창업자 말이 맞다.
+          ⭐ 아이콘 자리로 옮기면 ⑴줄이 안 늘고 ⑵「무슨 색인지」를 아이콘보다 더 잘 말한다.
+          ⚠️ 살구(#fdf1e8)는 크림 바탕과 거의 같아서 «테두리»가 있어야 보인다 —
+             `--line` 은 다크에서 rgba(255,255,255,.08) 이라 묻힌다 → 글자색을 옅게 쓴다. */}
       <span style={{ flex: '0 0 auto', width: 26, display: 'inline-flex', justifyContent: 'center', paddingTop: 1 }}>
-        <Icon name={it.gift ? 'gift' : (KIND_ICON[it.kind] || 'sparkle')} size={22} color={tone} stroke={1.7} />
+        {it.swatch
+          ? <span style={{
+              width: 24, height: 24, borderRadius: 999, background: it.swatch,
+              border: '1.5px solid color-mix(in srgb, var(--text) 22%, transparent)',
+            }} />
+          : <Icon name={it.gift ? 'gift' : (KIND_ICON[it.kind] || 'sparkle')} size={22} color={tone} stroke={1.7} />}
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>

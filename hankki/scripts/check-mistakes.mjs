@@ -405,8 +405,14 @@ console.log('\n🪤 반복 실수 게이트')
 {
   console.log('\n🖥 배포 체인 — 이 컨테이너에만 있는 경로')
   const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'))
-  const 체인 = [...(pkg.scripts.smoke || '').matchAll(/node (scripts\/[^\s]+\.mjs)/g)].map((m) => m[1])
+  // ⛔⛔ [2026-08-31] 여기가 `pkg.scripts.smoke` «하나»만 봤다 — 그건 `smoke-par.mjs` 한 줄이라
+  //    **검사하는 판이 «1개»뿐이었다.** 진짜 목록은 `smoke:seq` 에 있다(100개 넘는다).
+  //    그래서 오늘 내 새 판(박힌 경로)이 이 게이트를 그대로 통과했고 배포가 두 번 죽었다.
+  //    📌 규칙 18 ⓘ — 「통과했나」가 아니라 «무엇을 보고 통과했나».
+  const 체인글 = `${pkg.scripts.smoke || ''} ${pkg.scripts['smoke:seq'] || ''}`
+  const 체인 = [...new Set([...체인글.matchAll(/node (scripts\/[^\s]+\.mjs)/g)].map((m) => m[1]))]
   const 박힘 = []
+  const 박힘2 = []   // «이 컨테이너 저장소 경로»를 박은 판
   for (const rel of 체인) {
     let src = ''
     try { src = readFileSync(join(ROOT, rel), 'utf8') } catch { continue }
@@ -414,9 +420,17 @@ console.log('\n🪤 반복 실수 게이트')
     //    «브라우저를 그 경로로 여는 줄»만 본다 — 주석은 떼고, `executablePath` 가 같은 줄에 있어야 한다.
     const 코드 = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n')
     if (/executablePath[^\n]*\/opt\/pw-browsers/.test(코드)) 박힘.push(rel)
+    // ⛔⛔ [2026-08-31 추가] «이 컨테이너의 저장소 경로»를 박은 것도 같은 사고다 — 배포가 두 번 막혔다.
+    //    새 판이 dist 자리를 「/home/user/hankki/hankki/dist」 로 박았는데 CI 체크아웃은 「/home/runner/…」 라
+    //    그 폴더가 없다 → 모든 요청이 404 → 화면이 «영영 빈칸» → 검사가 헛것을 재고 죽는다(#1965 · #1966).
+    //    ⭐ 무서운 건 죽는 쪽이 아니다 — 「입구가 없다 = 통과」처럼 **빈 화면이 초록불로 읽히는** 칸이다.
+    //    👉 「new URL('..', import.meta.url).pathname」 으로 «이 파일 자리»에서 찾는다(다른 판들이 다 그렇게 한다).
+    if (/['`"]\/home\/(user|runner)\//.test(코드)) 박힘2.push(rel)
   }
   if (박힘.length) no(`배포 체인 ${박힘.length}개가 /opt/pw-browsers 를 «박아» 쓴다 — CI 엔 그 파일이 없다: ${박힘.join(' ')}\n     👉 chromium.launch() 로 두거나 process.env.SMOKE_CHROMIUM 이 있을 때만 executablePath 를 준다`)
   else ok(`배포 체인 ${체인.length}개 — 박힌 브라우저 경로 0`)
+  if (박힘2.length) no(`배포 체인 ${박힘2.length}개가 «이 컨테이너 저장소 경로»를 박아 쓴다 — CI 엔 그 자리가 없다: ${박힘2.join(' ')}\n     👉 new URL('..', import.meta.url).pathname 으로 이 파일 자리에서 찾는다`)
+  else ok(`배포 체인 ${체인.length}개 — 박힌 저장소 경로 0`)
 }
 
 // 🎴🎴 자랑카드를 표지로 저장할 때 «카드라는 표시»가 붙나 (창업자 2026-08-18)

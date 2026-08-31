@@ -25,6 +25,8 @@ import { SEASON_CUTS } from './cardSeasons'
 // 🛒 [2026-08-29] 주부의 장바구니 — ⛔**걸러진 `CURATION`** 을 쓴다. `CURATION_ALL`(원본) 금지.
 //    원본을 보면 «아직 안 열린» 제품이 소식에 새어 나간다(v11.00 「한살림」이 넷으로 샜던 그 모양).
 import { CURATION } from './curation'
+// 🍑 배경(테마) 이름·설명은 «설정 화면이 쓰는 그 값»을 그대로 읽는다 — 여기 새로 적으면 낡는다.
+import { THEMES } from '../theme'
 
 // ⏰ 오늘(KST). ⚠️ **함수로 둔다** — 모듈 상수로 굳히면 앱을 켜둔 채 자정을 넘길 때 안 바뀐다
 //    (`ShareDrawCard` 의 `seasonCuts` 가 상수 아닌 함수인 것과 같은 이유).
@@ -100,6 +102,50 @@ function gates() {
 //      21일로 두면 세 줄이 쌓여 「아래에 조용히」가 깨진다. 주기가 다르면 창도 달라야 한다.
 const CART_FRESH_DAYS = 7
 export const CART_KIND = '장바구니'
+
+// 🍑🍑 **앱에서 «배포로» 열린 것 — 날짜 게이트가 아니라 우리가 내보내서 열린 것** (창업자 2026-08-31)
+//
+//   📮 창업자 원문 = *"우리 **살구배경오픈 한것도 안내에 남겨야해**"*
+//
+//   ⭐⭐ **소식에 구멍이 하나 있었다** — 이 파일은 «날짜가 여는 문»(꾸미기·카드·레시피)만 본다.
+//      그런데 **배포로 열리는 것**(테마·큰 화면·기능)은 그 문을 안 지나서 **소식이 한마디도 못 한다.**
+//      🔢 실측 = 살구 테마는 **2026-08-29 11:09 KST 에 배포됐는데**(커밋 `235c1cc1`)
+//         `PreviewSheet`·이 파일에 「살구」·「테마」가 **0건**이었다. 유저는 배경이 는 걸 알 방법이 없었다.
+//
+//   ⭐ **날짜를 붙이는 것이 이 설계의 전부다** — `PreviewSheet` 의 「패드·폴드에서도 써요」 카드가
+//      같은 성격인데 **날짜가 없어서 영영 남는다.** 여기 것은 `FRESH_DAYS`(21일)가 지나면 **저절로 사라진다.**
+//      📌 이 파일 머리의 *"손으로 적은 목록은 반드시 낡는다"* 를 «날짜»로 막는 방법이다.
+//
+//   ⛔ **알림 층엔 안 올린다**(아래 `openedAlert` 에서 뺀다) — 창업자가 「**안내**에 남겨야해」라고 콕 집었고,
+//      알림 층은 「오늘 새로 열린 컷」 자리다. 이틀 지난 테마로 홈 뱃지가 켜지면
+//      「새 꾸미기 왔나」 하고 열었다가 김이 샌다. 장바구니와 «같은 층»이다.
+//
+//   ⛔ **문구를 여기 새로 쓰지 않는다** — 이름·설명은 `theme.js` 의 `THEMES` 에서 읽는다.
+//      두 곳에 적으면 테마 이름을 바꿀 때 한쪽이 낡는다(설정 화면 스와치가 실제로 그렇게 어긋난 적이 있다).
+export const APP_KIND = '배경'
+const APP_FEATURES = [
+  { when: '2026-08-29', theme: 'apricot' },   // 🍑 네 번째 배경 (창업자 확정 *"살구로"*)
+]
+
+function appOpened(today) {
+  return APP_FEATURES
+    .filter((f) => f.when <= today && days(f.when, today) <= FRESH_DAYS)
+    .sort((a, b) => b.when.localeCompare(a.when))
+    .map((f) => {
+      const t = THEMES.find((x) => x.key === f.theme)
+      if (!t) return null   // ⛔ 테마를 지웠는데 여기 이름이 남아 있으면 «빈 줄»이 된다 → 아예 안 그린다
+      return {
+        when: f.when, kind: APP_KIND, count: 1,
+        title: t.label,
+        // 💬 `desc` 는 설정 화면이 쓰는 «그 문장» 그대로 ＋ 어디서 바꾸는지 한 줄
+        // ⛔ 「설정 → 테마」를 «안 깨지게» 묶는다(  = 안 끊기는 빈칸).
+        //    그냥 두면 「설정 →」 에서 줄이 끊겨 화살표가 줄 끝에 매달린다(실물로 보고 잡았다).
+        why: `${t.desc} · 설정 → 테마에서 골라요`,
+        swatch: t.bg,   // 🎨 색 동그라미 — ⭐글자만 있으면 무슨 색인지 모른다(이 파일 `PEEK` 와 같은 생각)
+      }
+    })
+    .filter(Boolean)
+}
 
 // 🔢🔢 **세는 말 — 한 곳에서만 정한다** (창업자 확정 2026-08-30
 //    *"레시피는 편이 맞아. 나머지는 종으로 통일하자(종을 붙였을때 자연스러운 것만)"*)
@@ -303,6 +349,9 @@ export function whatsNew(today = todayKST()) {
 
   // 🛒 장바구니는 **맨 아래**(`push`) — 창업자 *"대신 아래 나중에"*
   //    ⛔ 위 `opened` 는 `unshift` 로 레시피가 앞에 붙는다. 여기서 `push` 라서 자연히 꼬리가 된다.
+  // 🍑 앱에서 열린 것(배경 등)은 장바구니 «앞» — 장바구니가 맨 아래라는 창업자 확정을 안 깬다
+  //    (게이트 `_repro-소식장바구니-0829` 가 「장바구니가 맨 아래인가」를 실제로 잰다)
+  opened.push(...appOpened(today))
   opened.push(...cartOpened(today))
 
   return {
@@ -313,7 +362,8 @@ export function whatsNew(today = todayKST()) {
     //      이 파일 옆 `HomeScreen` 주석에 우리가 이미 적어둔 원칙 = *"늘 떠 있으면 아무도 안 본다."*
     //   ⛔ 팝업도 마찬가지다 — 9/1 꾸미기로 한 번 뜬 팝업이 9/5 장바구니 때문에 **또** 뜬다
     //      (`newsSignature` 가 달라져서). 같은 소식을 두 번 보여주는 셈이다.
-    openedAlert: opened.filter((o) => o.kind !== CART_KIND),
+    //   🍑 배경도 «소식 페이지에만» — 창업자가 「안내에 남겨야해」라고 콕 집었다(위 `APP_FEATURES` 주석)
+    openedAlert: opened.filter((o) => o.kind !== CART_KIND && o.kind !== APP_KIND),
     upcoming: upcoming.length ? { when, dday: days(today, when), items: upcoming } : null,
   }
 }

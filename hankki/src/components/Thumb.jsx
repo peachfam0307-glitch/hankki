@@ -5,6 +5,9 @@ import { bgStyle, bgIsDark, bgAnim } from './Stickers'
 import { graphemes } from '../utils'
 // 🔍 사진 자리·배율 규칙 = 일기 속지 사진과 «같은 곳»에서 온다 (src/photoPan.js)
 import { clampZoom, photoImgStyle } from '../photoPan'
+// 🎴 「이 그림은 자랑카드다」의 문턱 = 화면과 클라우드가 **한 곳**을 쓴다 (2026-08-31)
+//   ⛔ 값을 두 곳에 적으면 «화면은 카드로 그리는데 클라우드는 사진으로 털어버리는» 일이 난다.
+import { 카드높이문턱 } from '../cardCover'
 
 // 카드 썸네일. recipe.thumb 로 표시 방식을 고른다:
 //   'icon'  — 브랜드 커스텀 아이콘(이름 자동매칭 or 직접 선택)  ← 기본
@@ -24,7 +27,7 @@ import { clampZoom, photoImgStyle } from '../photoPan'
 //      · 내 사진  = `cropSquare(800)` · `fitImage(1200)` → **긴 변이 1200 을 넘을 수 없다** (`utils.js`)
 //      실측으로도 확인했다(재현판이 원본을 `1620×2025` 로 찍었다).
 //   ⚠️ 틀려도 안전한 쪽이다 — 어쩌다 걸리면 «8/17 이전 모습»(네모 꽉 참)이 될 뿐이다.
-const 카드높이문턱 = 1600
+// ⭐ 문턱 값은 `src/cardCover.js` 에 있다 — 클라우드도 «같은 값»을 쓴다(창업자 확정 2026-08-31 ⓑ)
 
 // `className` = 크기를 «CSS 로» 정하고 싶을 때 쓴다 (넓은 화면에서 키우려면 인라인이면 못 이긴다).
 // ⚠️ 안에서 쓰는 움직임 클래스(`anim`)와 «합쳐서» 넘긴다 — 덮어쓰면 움직이는 배경이 죽는다.
