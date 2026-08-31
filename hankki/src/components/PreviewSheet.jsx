@@ -41,7 +41,10 @@ const UPCOMING = [
 
 // 종류마다 아이콘 하나 — 글자를 안 읽어도 «뭐가 늘었는지»가 보인다.
 // ⚠️ 우리 세트에 없는 이름을 쓰면 아무것도 안 그려진다 → 전체 목록 = `Icon.jsx`.
-const KIND_ICON = { '이번 주 레시피': 'diary', '꾸미기': 'palette', '레꾸자랑 카드': 'star', '장바구니': 'cart' }
+// 🍑 배경(테마) = `settings` — ⭐그림이 «어디서 바꾸는지»를 말해준다(설정 → 테마).
+//    ⛔ `palette` 는 꾸미기가 이미 쓴다. 한 화면에 같은 그림이 두 번 뜨면 둘 다 안 읽힌다
+//       (2026-08-29 창업자 지적 = 장바구니 아이콘이 `cart` 로 두 번 떴다).
+const KIND_ICON = { '이번 주 레시피': 'diary', '꾸미기': 'palette', '레꾸자랑 카드': 'star', '장바구니': 'cart', '배경': 'settings' }
 
 // 🖼 미리보기 한 줄 — ⭐**글자만 있으면 광고가 안 된다** (창업자 2026-08-03 *"가을 이모지팩도 광고해야하지 않아?"*).
 //    ⛔ `StickerArt` 는 우리 그림을 그린다(유니코드 이모지 아님).
@@ -83,6 +86,20 @@ function NewsRow({ it, tone }) {
         {it.why && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.why}</div>}
         {/* 💬 쓰는 법 = 서랍의 `hint` 를 그대로 (창업자 2026-08-30 *"접시 사용법도 아래 적어줘"*) */}
         {it.gift && it.hint && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.hint}</div>}
+        {/* 🎨 배경(테마)은 컷이 아니라 «색»이다 — 동그라미로 보여준다.
+            ⭐ 글자만 두면 「살구」가 무슨 색인지 모른다(이 파일 `Peek` 주석과 같은 이유).
+            ⛔ 색을 여기 박지 않는다 — `theme.js` 의 `bg`(설정 화면 스와치와 «같은 값») 를 받아 쓴다. */}
+        {it.swatch && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8 }}>
+            {/* ⛔ 옆에 「살구 배경」이라고 또 적지 않는다 — 제목이 이미 「살구」다(실물로 보고 뺐다).
+                ⛔ 테두리는 `--line` 이 아니라 «글자색을 옅게» 쓴다 — 다크에서 `--line` 이
+                   `rgba(255,255,255,.08)` 이라 어두운 색 스와치가 배경에 묻힌다. */}
+            <span style={{
+              width: 34, height: 34, borderRadius: 999, background: it.swatch,
+              border: '1.5px solid color-mix(in srgb, var(--text) 22%, transparent)', flex: '0 0 auto',
+            }} />
+          </div>
+        )}
         <Peek keys={it.gift ? it.giftKeys : it.peek} />
       </div>
     </div>
