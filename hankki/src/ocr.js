@@ -102,7 +102,7 @@ async function ocrViaProxy(dataUrl, onProgress, batch) {
 //   welcome = 🎁 웰컴 20장의 잔량(첫 1회·달이 바뀌어도 남는다) · month = 웰컴을 다 쓴 뒤의 그 달 잔량
 // ⭐ note 와 달리 «읽어도 지우지 않는다» — 화면에 상시 떠 있어야 하니까.
 // ⚠️ 아직 한 번도 안 써 본 사람은 서버 응답이 없다 → 웰컴 20장이 «그대로»인 게 맞으므로 그 값으로 시작한다.
-const WELCOME_FREE = 20 // ⛔ worker.js 의 LIMITS.WELCOME_FREE 와 같아야 한다
+const WELCOME_FREE = 30 // ⛔ worker.js 의 LIMITS.WELCOME_FREE 와 같아야 한다 (창업자 확정 2026-08-31 · 20→30)
 const MONTHLY_FREE = 5 // ⛔ worker.js 의 LIMITS.PER_USER_MONTHLY 와 같아야 한다
 const LEFT_KEY = 'hankki:ocrLeft'
 
