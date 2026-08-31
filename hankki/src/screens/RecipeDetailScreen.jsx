@@ -721,12 +721,20 @@ export default function RecipeDetailScreen({ id }) {
               <button className="mini-buy press" onClick={() => setTimer(true)}>타이머</button>
             </div>
             <div>
-              {r.steps.map((s, i) => (
-                <div key={i} className="step">
-                  <div className="n">{i + 1}</div>
-                  <div className="txt">{s}</div>
-                </div>
-              ))}
+              {/* ※ [2026-09-01 창업자 판정 ⓐ] 「※」로 시작하던 줄은 «걸음»이 아니라 앞 걸음의 «곁말»이다.
+                  파서가 `\n` 으로 접어 보내므로 여기선 첫 줄만 그대로 두고 나머지를 작게 깐다. */}
+              {r.steps.map((s, i) => {
+                const [첫줄, ...곁말] = String(s).split('\n')
+                return (
+                  <div key={i} className="step">
+                    <div className="n">{i + 1}</div>
+                    <div className="txt">
+                      {첫줄}
+                      {곁말.map((t, j) => <div key={j} className="step-tip">{t}</div>)}
+                    </div>
+                  </div>
+                )
+              })}
               {/* 🏁 다 읽고 «도착하는» 자리 — 줄은 하나도 안 건드리고 마지막 단계 뒤에만 붙는다 */}
               <DetailDecor where="done" text={r.title} />
             </div>
