@@ -157,7 +157,12 @@ const px재기 = async (W, H, 어느탭) => {
   //    ⚠️ 그런 놈이 없으면 `null` → 검사가 실패한다. 그게 맞다 — 못 재면 «모른다»이지 «통과»가 아니다.
   const r = await p.evaluate((sels) => sels.map((s) => {
     const 낱말 = s.split(' ').pop().replace('.', '')
-    const 후보 = [...document.querySelectorAll(s)]
+    // 🔁 [2026-08-27 · 🏛바깥 갈래] 클라우드 화면이 들어오며 잣대가 «딴 놈»을 재기 시작했다.
+  //    CloudGate·CloudSheet 가 t-sub 클래스에 «인라인으로» 크기를 박아서,
+  //    화면에 먼저 오른 그 놈이 잡혀 홈의 15px 대신 11.5px 가 나왔다(규칙 18 ⓘ).
+  // ✅ 인라인 크기가 박힌 놈은 «그 클래스가 하는 일»이 아니다 → 뺀다.
+  //    ⛔ 느슨하게 한 게 아니다 — 클래스가 주는 값을 «정확히» 묻게 됐다.
+  const 후보 = [...document.querySelectorAll(s)].filter((e) => !e.style.fontSize)
     const 딱그것 = 후보.find((e) => (e.className || '').trim().split(/\s+/).filter((c) => c && c !== 'press').join(' ') === 낱말)
     const el = 딱그것 || 후보[0]
     return el ? Math.round(parseFloat(getComputedStyle(el).fontSize) * 10) / 10 : null

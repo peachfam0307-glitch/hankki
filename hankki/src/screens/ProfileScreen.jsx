@@ -14,10 +14,12 @@ import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import LabSheet from '../components/LabSheet'
+import CloudSheet from '../components/CloudSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { cropSquare } from '../utils'
-import { takeOpenBackup, backupDone } from '../nudges'
-import { 백업용잠그기, 잠긴장수, 백업풀기 } from '../diaryLock'
+import { takeOpenBackup, backupDone, takeOpenCloud, 클라우드보임 } from '../nudges'
+import { 잠긴장수, 백업풀기 } from '../diaryLock'
+import { 백업만들기 } from '../backupData'
 
 // 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
 const PROFILE_COACH_KEY = COACH.profile
@@ -49,6 +51,12 @@ export default function ProfileScreen() {
   const [checking, setChecking] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
   const [lab, setLab] = useState(false) // 한끼연구소(의견·설문·오류) 시트
+  // ☁️ 홈 한 줄로 들어왔으면 도착하자마자 클라우드 시트를 연다(백업 쪽지와 같은 길)
+  const [cloud, setCloud] = useState(() => takeOpenCloud())
+  // ⛔⛔ `useLayerBack` 은 «반드시» 위 `useState` «아래»에 둔다 —
+  //   위에 두면 `cloud` 를 선언 «전»에 읽어 `Cannot access before initialization` 으로 **설정 화면이 통째로 죽는다.**
+  //   📌 2026-08-21 에 실제로 그렇게 냈다. 빌드도 통과하고 스모크도 통과했다 — **화면을 열어서야 드러났다**(규칙 21).
+  useLayerBack(cloud, () => setCloud(false))
   const fileRef = useRef(null)
   const avatarFileRef = useRef(null)
 
@@ -122,16 +130,10 @@ export default function ProfileScreen() {
   //   ⚠️ `crypto.subtle` 이 없으면 **평문으로 담지 않고 본문을 뺀다** — 새는 것보다 잃는 게 낫다
   //      (원본은 그 폰에 그대로 있다).
   //   📌 글씨체(`font`·`size`)는 글이 아니라서 안 잠근다.
-  const 일기글자칸 = ['title', 'note', 'line', 'weather', 'note2', 'note3', 'note4']
-
-  // ⚠️ 잠그는 데 시간이 걸려 «비동기»가 됐다 — 부르는 쪽 셋 다 await 로 바꿨다.
-  const buildBackup = async () => ({
-    _app: 'hankki', _v: 2, _at: new Date().toISOString(),
-    recipes: store.recipes, folders: store.folders, profile: store.profile,
-    shops: store.shops, wishlist: store.wishlist, shoppingList: store.shoppingList, pantry: store.pantry,
-    diary: await 백업용잠그기(store.diary, 일기글자칸),
-    seedV: store.seedV, memoCleanV: store.memoCleanV, removedSeedIds: store.removedSeedIds,
-  })
+  // ⭐⭐ 만드는 코드는 «한 곳»에 있다 → `src/backupData.js`
+  //   ⛔ 여기와 클라우드가 따로 만들면 «백업 파일엔 들어가는데 클라우드엔 안 들어가는 칸»이 생긴다.
+  //      그건 폰을 바꾼 «뒤에야» 드러난다 — 제일 늦게 발견되는 사고다.
+  const buildBackup = () => 백업만들기(store)
 
   // 📁 파일 이름에 «시각»까지 넣는다 (2026-08-16 창업자 캡처)
   //   ⛔ 날짜만 넣었더니 같은 날 두 번째 저장에서 안드로이드가
@@ -332,6 +334,14 @@ export default function ProfileScreen() {
     ...(FEEDBACK_URL || LAB_SURVEY_URL || LAB_BUG_URL
       ? [{ icon: 'bulb', label: '한끼연구소', badge: '의견·설문', coach: 'lab', onClick: () => setLab(true) }]
       : []),
+    // 🗑️🗑️ 계정·데이터 삭제 — ⛓**Play 가 요구하는 「앱 «안» 경로」다**(신고 넷 ③).
+    //   📄 공식 = support.google.com/googleplay/android-developer/answer/13327111
+    //      「계정 만들기가 «선택»이어도」 앱 안 경로와 웹 주소를 «둘 다» 요구한다.
+    //   ⭐ 웹 쪽은 2026-08-19 에 미리 만들어 뒀다 → `public/delete-account.html`
+    //   ⛔ 여기서 «바로 지우지» 않는다 — 지우는 단추는 클라우드 시트 안의 ［클라우드 비우기］다.
+    //      이 줄은 «어디서 지우는지 알려주는 길»이고, 그게 Play 가 말하는 「인앱 경로」다.
+    //   ⛔ 로그인 안 한 사람에게도 보인다 — 기기 안 데이터를 지우는 법도 그 페이지에 있다.
+    { icon: 'trash', label: '계정 · 데이터 삭제', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'delete-account.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
     { icon: 'settings', label: '개인정보처리방침', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
     { icon: 'book', label: '오픈소스 라이선스', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'licenses.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
   ]
@@ -475,6 +485,28 @@ export default function ProfileScreen() {
           </div>
           <Icon name="chevron-right" size={18} color="var(--brown)" />
         </button>
+
+        {/* ☁️☁️ 클라우드 저장 — 백업 바로 «밑»에 세운다 (창업자 확정 「1번」 · 2026-08-16)
+            ⭐ 왜 여기냐 = 백업과 «같은 걱정»을 푸는 자리다 — 「폰 바꾸면 어떡하지」.
+               떨어뜨려 놓으면 유저가 둘을 다른 기능으로 읽고, 백업만 하고 만다.
+            ⛔ 백업을 «치우지» 않는다 — 사진은 백업에만 들어간다(클라우드는 글자만).
+               📌 둘은 겹치는 게 아니라 «나뉘어» 맡는다. 그래서 부제로 그걸 말해 준다.
+            ⭐ 테두리는 «백업에만» 남긴다 — 둘 다 두르면 둘 다 안 튄다. */}
+        {/* 🔀 공개 스위치 — 켜는 날까지 창업자 폰에서만 보인다(근거 = `nudges.js` 머리주석 · 창업자 확정 2026-08-31) */}
+        {클라우드보임() && (
+        <button
+          className="card press" data-coach="cloud" onClick={() => setCloud(true)}
+          style={{ marginTop: 10, padding: 16, display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left' }}
+        >
+          <Icon name="cloud" size={24} color="var(--brown)" stroke={2} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15.5, fontWeight: 800 }}>클라우드 저장</div>
+            {/* ⛔ 「매어 두면」 금지 (창업자 2026-08-21) · ⭐ 첫 화면·홈 한 줄과 «같은 말»로 */}
+            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 2 }}>로그인하면 새 폰에서도 이어서 써요</div>
+          </div>
+          <Icon name="chevron-right" size={18} color="var(--sand)" />
+        </button>
+        )}
 
         {/* 메뉴 */}
         <div className="card" style={{ marginTop: 20, overflow: 'hidden' }}>
@@ -710,6 +742,22 @@ export default function ProfileScreen() {
           submitLabel="불러오기"
           onSubmit={(v) => { setPasteOpen(false); importFromText(v) }}
           onClose={() => setPasteOpen(false)}
+        />
+      )}
+
+      {/* ☁️ 클라우드 — ⭐ 내려받기는 백업 불러오기와 «같은 흐름»으로 넘긴다(`불러오기끝`).
+          📌 그래야 잠긴 일기 비번 묻기가 한 자리에만 있다. 두 벌로 나뉘면 한쪽만 고쳐진다. */}
+      {cloud && (
+        <CloudSheet
+          onClose={() => setCloud(false)}
+          백업만들기={buildBackup}
+          불러오기끝={불러오기끝}
+          showToast={nav.showToast}
+          폰레시피={store.recipes.length}
+          폰일기={(store.diary || []).length}
+          // 📷 사진은 클라우드에 안 올라간다 → 백업으로 가는 입구를 시트 안에 낸다 (창업자 확정 2026-08-27)
+          //   ⛔ 시트를 «닫고» 연다 — 시트 위에 시트를 겹치면 뒤로가기 층이 꼬인다
+          백업열기={() => { setCloud(false); setBackup(true) }}
         />
       )}
 

@@ -62,7 +62,7 @@ for (const t of 시험) {
   await page.goto('http://127.0.0.1:4404/hankki/', { waitUntil: 'networkidle' })
   await page.waitForTimeout(700)
 
-  await page.getByRole('button', { name: '가져오기' }).first().click()
+  await page.getByRole('button', { name: '가져오기', exact: true }).first().click()
   await page.waitForTimeout(700)
   await page.getByText('링크 붙여넣기', { exact: false }).first().click()
   await page.waitForTimeout(800)

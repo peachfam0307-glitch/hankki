@@ -18,7 +18,9 @@ import TimerBar from './components/TimerBar'
 import Icon from './components/Icon'
 import { useTimer } from './timer'
 import Onboarding, { needsOnboarding } from './components/Onboarding'
-import { askOpenBackup } from './nudges'
+import CloudGate from './components/CloudGate'
+import ConfirmSheet from './components/ConfirmSheet'
+import { askOpenBackup, needsCloudGate, askOpenCloud, 클라우드보임 } from './nudges'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
@@ -81,6 +83,11 @@ export default function App() {
   // TWA 는 '히스토리가 다 떨어진 상태에서 시스템 뒤로가기'라야 종료된다 → 아래 exitArm 참고.
   const exitArm = useRef(0)
   const [onboard, setOnboard] = useState(() => needsOnboarding()) // 첫 실행 앱 소개
+  // ☁️ 클라우드 첫 화면 — 소개보다 «앞». 아직 안 본 사람 ＋ 아직 앱을 안 써본 사람에게만.
+  //   ⛔ 이미 쓰고 있던 사람에겐 안 띄운다 — 잘 쓰던 앱이 갑자기 로그인 화면으로 시작하면 그건 «벽»으로 읽힌다.
+  //      그 사람들은 홈 한 줄에서 만난다(규칙 18 ⓙ — 이미 깔린 폰).
+  //   🔀 ＋ 공개 스위치(`클라우드보임`) — 켜는 날까지 창업자 폰에서만. 근거는 `nudges.js` 머리주석.
+  const [cloudGate, setCloudGate] = useState(() => 클라우드보임() && needsCloudGate() && needsOnboarding())
   const backHandlers = useRef([]) // 화면들이 등록한 '뒤로가기 먼저 처리' 핸들러(비모달 상태·필터용)
   const modalLayers = useRef([]) // 열려 있는 모달·오버레이(각자 진짜 히스토리 칸 1개 소유)
   const pendingBack = useRef(0) // 같은 틱에 버튼으로 동시에 닫힌 모달 칸 수(한 번에 go(-n))
@@ -347,6 +354,35 @@ export default function App() {
 
   // '공유받기' — 인스타/갤러리에서 한끼로 공유된 링크·사진을 앱 시작 시 받아 Inbox 로.
   const store = useStore()
+  // ⭐ 아래 「저절로 올리기」가 «한 번만» 도는데 그 안에서 최신 store 를 봐야 한다 — 그래서 ref 로 들고 있는다.
+  const storeRef = useRef(store)
+  storeRef.current = store
+
+  // ☁️🔄 저절로 저장하기 — 앱을 켤 때 «한 번». (창업자 확정 2026-08-21 = ⓒ)
+  //   📮 창업자 = *"좋아 그럼 C지."* · *"그래 좋아 나도 폰 패드 같이쓰거든."* · *"2번도 기변하는 사람들 많으니까"*
+  //   ⭐ 왜 자동인가 = 로그인만 하고 「올리기」를 안 누르면 클라우드에 아무것도 안 간다.
+  //      유저는 「로그인했으니 안전하겠지」 하고 넘어가고, 폰을 바꾸면 아무것도 없다.
+  //   ⛔⛔ 첫 화면이 뜨는 길목이다 — **여기서 절대 멈추거나 던지면 안 된다.**
+  //      `저절로올리기` 는 스스로 try 로 감싸 «항상» 값을 돌려준다(던지지 않는다).
+  //   ⏳ 홈이 다 그려진 «뒤» 한가할 때만 — 첫 화면 속도를 안 건드린다(글꼴 데우기와 같은 방식).
+  //   🛡 안전장치 둘은 `cloud.js` 안에 있다 — ①다른 기기가 마지막이면 안 올린다 ②안 가져왔으면 안 올린다.
+  //      여기서는 ①이 걸렸을 때 «물어보는 것»만 한다(⛔자동으로 합치지 않는다 — 창업자 확정).
+  const [덮을까, set덮을까] = useState(null) // { 언제, 레시피, 일기 } — 다른 기기가 먼저 올렸다
+  useEffect(() => {
+    let 죽었나 = false
+    const 해보기 = async () => {
+      try {
+        const { 저절로올리기 } = await import('./cloud')
+        const { 백업만들기 } = await import('./backupData')
+        const r = await 저절로올리기(() => 백업만들기(storeRef.current))
+        if (죽었나) return
+        if (!r.했나 && r.왜 === '다른기기') set덮을까(r)
+      } catch { /* 조용히 — 다음에 켤 때 또 해 본다 */ }
+    }
+    const idle = window.requestIdleCallback
+    const t = setTimeout(() => (idle ? idle(해보기, { timeout: 6000 }) : 해보기()), 3000)
+    return () => { 죽었나 = true; clearTimeout(t) }
+  }, [])
   useEffect(() => {
     let cancelled = false
     consumeSharedIntake().then(async (data) => {
@@ -651,6 +687,27 @@ export default function App() {
 
         {/* 🔁 「이미 다른 기기에서 쓰고 있었어요」 = 설정으로 보내며 «백업 시트를 열라는 쪽지»를 남긴다.
             (`go(tab)` 은 인자를 못 받아서 `nudges.js` 의 쪽지로 넘긴다 — 홈 백업 유도 줄과 같은 길) */}
+        {/* ☁️ 클라우드 첫 화면 — 소개보다 «앞»에 선다.
+            📮 창업자 2026-08-21 = *"새유저는 그냥 첫화면에 로그인하고시작 «왜냐면 온보드는 그냥 건너뛰기할수도있어»"*
+            ⛔ 소개 «마지막 장»에 두려던 내 안을 창업자가 잡았다 — 「건너뛰기」가 매 장 오른쪽 위에 있어 첫 장에서 통째로 넘어간다. */}
+        {cloudGate && <CloudGate onDone={() => setCloudGate(false)} />}
+
+        {/* ☁️⚖️ 다른 기기가 먼저 올렸다 — ⛔자동으로 합치지 않는다. **고르는 화면으로 데려간다**(창업자 확정).
+            📮 창업자 2026-08-21 = *"나도 폰 패드 같이쓰거든."* ← 이게 바로 그 자리다.
+            ⛔ 여기서 「덮기」 단추를 주지 않는다 — 두 판을 «나란히 보지 않고» 고르면 그건 고른 게 아니다.
+               설정의 클라우드 화면이 두 판(📱 이 폰 / ☁️ 클라우드)을 보여주고 거기서 고른다.
+            ⭐ 「나중에」로 닫으면 이번엔 안 올린다. 다음에 켜면 또 물어본다
+               — 잊고 지나가면 데이터가 갈린 채로 굳는다. */}
+        {덮을까 && (
+          <ConfirmSheet
+            title="다른 기기에서 저장한 게 있어요"
+            message={`레시피 ${덮을까.레시피}개 · 일기 ${덮을까.일기}장이 클라우드에 있어요.\n\n이 기기 것과 어느 쪽을 남길지 골라 주세요.\n고르기 전까지는 아무것도 덮지 않아요.`}
+            confirmLabel="보러 가기"
+            onConfirm={() => { set덮을까(null); askOpenCloud(); go('profile') }}
+            onClose={() => set덮을까(null)}
+          />
+        )}
+
         {onboard && (
           <Onboarding
             onDone={() => setOnboard(false)}

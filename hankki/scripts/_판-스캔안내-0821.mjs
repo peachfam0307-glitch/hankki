@@ -178,7 +178,7 @@ for (const 테마 of 테마들) {
     await page.waitForTimeout(700)
 
     // ── 화면 1) 가져오기 ──
-    await page.getByRole('button', { name: '가져오기' }).first().click()
+    await page.getByRole('button', { name: '가져오기', exact: true }).first().click()
     await page.waitForTimeout(800)
     await page.evaluate(바꾸기(g), g)
     await page.waitForTimeout(250)

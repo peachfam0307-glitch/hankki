@@ -20,7 +20,7 @@ try {
   const p = await ctx.newPage()
   await p.goto(URL, { waitUntil: 'networkidle' })
   await 잠깐(600)
-  await p.getByRole('button', { name: '일기' }).first().click(); await 잠깐(600)
+  await p.getByRole('button', { name: '일기', exact: true }).first().click(); await 잠깐(600)
   await p.getByRole('button', { name: /^오늘 일기 (보기|쓰기)$/ }).click(); await 잠깐(800)
   await p.getByPlaceholder('여기에 써요').fill('오늘은 비가 왔다'); await 잠깐(700)
   await p.locator('.detail-bar').screenshot({ path: `${OUT}-1-상단바.png` })
