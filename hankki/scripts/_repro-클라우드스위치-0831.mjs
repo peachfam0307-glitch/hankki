@@ -50,7 +50,11 @@ async function 창 (운영자, init) {
   if (운영자) await pg.addInitScript(() => localStorage.setItem('hankki:founder', '테스트열쇠'))
   if (init) await pg.addInitScript(init)
   await pg.goto('http://localhost:4632/hankki/', { waitUntil: 'domcontentloaded' })
-  await pg.waitForTimeout(1500)
+  // ⛔⛔ 고정 대기(1.5초)로 재면 «내 컴퓨터에선 통과하고 CI 에선 죽는다» — 2026-08-31 배포가 실제로 그렇게 막혔다.
+  //    CI 러너가 느려 화면이 아직 비었는데 글자를 읽고 「입구가 없다」로 판정했다(도착 확인 칸이 그걸 잡아 줬다).
+  // ✅ 시간이 아니라 «화면이 그려졌나»를 기다린다.
+  await pg.waitForFunction(() => (document.body?.innerText || '').trim().length > 30, null, { timeout: 30000 })
+  await pg.waitForTimeout(600)   // 첫 그림 뒤 상태가 한 번 더 도는 여유
   return { ctx, pg }
 }
 
@@ -60,7 +64,8 @@ async function 설정에클라우드있나 (pg) {
     const b = [...document.querySelectorAll('button')].find((x) => /설정/.test(x.getAttribute('aria-label') || ''))
     if (b) b.click()
   })
-  await pg.waitForTimeout(900)
+  // ⭐ 여기도 시간이 아니라 «설정 화면이 그려졌나»를 기다린다(CI 느림 대비)
+  await pg.waitForFunction(() => /백업|테마|의견 보내기/.test(document.body?.innerText || ''), null, { timeout: 15000 }).catch(() => {})
   const 글 = await pg.textContent('body')
   const 도착 = /백업|테마|의견 보내기/.test(글)
   return { 도착, 있나: /클라우드 저장/.test(글) }
