@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
-import { StickerArt, StickerFx, motionClass, stickerRatio, NOTE_COLORS, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, textSizeV, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
+import { StickerArt, StickerFx, motionClass, stickerRatio, NOTE_COLORS, NOTE_FAT, NOTE_HAND_FAT, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, textSizeV, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -478,6 +478,34 @@ function TextDeco({ it, editable, coverW = 0, typing, onText }) {
   )
 }
 
+// ✍️✍️ 포스트잇·글 상자 글자 «외곽선 굵기» — 두 곳(Note·ArtBox)이 «같은 함수»를 쓴다.
+//
+// 📮 창업자 2026-08-31 = *"글씨 두께도 너무 얇아서 레꾸해놓으면 제목이 잘 안보여."*
+//    → 실물 후보를 보고 *"5번은 뭉게져 보여."* → **④(0.105em)가 「굵게」 상한**
+//    → *"글자는 다 저렇게 되게 해줘.."* → **기본을 「보통」으로 올린다**
+//
+// ⛔⛔ **기본이 「얇게」면 이 일을 한 값이 없다** — 유저가 굵기 갈래를 «찾아 눌러야» 굵어지는데,
+//    창업자 불만은 *"레꾸해놓으면 안 보인다"* 였다. 안 누른 사람이 대부분이다.
+//    ⚠️ 그래서 **이미 꾸며둔 레꾸의 글자도 같이 굵어진다.** 창업자가 「다 저렇게」라고 한 그대로다.
+//       (글자 스티커도 기본이 `mid` 라 결이 맞는다 — 포스트잇만 예외였다)
+//
+// ⛔ 값은 `NOTE_FAT` 에 있다(글자 스티커가 쓰는 `TEXT_WEIGHTS` 와 «따로» — 그쪽을 건드리면
+//    이미 만든 글자 스티커까지 얇아진다). 근거·실측은 그 상수 주석에.
+// ⛔⛔ **글씨체마다 `fw` 를 곱한다 — 안 곱했다가 실물에서 «펜글씨·임팩트»가 뭉갰다.**
+//    🔢 `fw` = 펜글씨 **0.5**(획 간격이 좁다) · 임팩트 **0.45**(원래 굵다) · 나머지 0.8~1.0
+//    📌 `TEXT_FONTS` 주석에 이 함정이 **이미 적혀 있었다** —
+//       *"펜글씨는 얇아서 bw 를 2로 줬는데 획이 서로 붙어 초록 덩어리가 됐다.
+//         얇다고 살을 많이 붙이면 안 된다. 획 간격이 좁은 글씨는 오히려 «적게» 붙여야 한다."*
+//    ⭐ 글자 스티커 쪽은 이미 `fatPx = fontPx * wt.fat * (f.fw ?? 1)` 로 곱하고 있었다.
+//       **같은 파일 안에 답이 있었는데 안 따랐다.**
+const noteStroke = (it, color) => {
+  const f = TEXT_FONTS.find((t) => t.key === it.font) || TEXT_FONTS[0]
+  const 손글씨 = it.font === 'gaegu' || it.font === 'nanumpen'
+  const 두께 = ((손글씨 ? NOTE_HAND_FAT : 0) + (NOTE_FAT[it.w || 'mid'] ?? NOTE_FAT.mid)) * (f.fw ?? 1)
+  if (!(두께 > 0)) return null
+  return { WebkitTextStroke: `${두께.toFixed(3)}em ${color}`, paintOrder: 'stroke fill' }
+}
+
 function Note({ it, editable, typing, onText }) {
   const c = NOTE_COLORS.find((n) => n.key === it.key) || NOTE_COLORS[0]
   // 🏷 **글 상자** = 배경이 벡터 색판이 아니라 «우리 그림»인 포스트잇 (창업자 2026-08-07)
@@ -539,13 +567,15 @@ function Note({ it, editable, typing, onText }) {
           // 포스트잇 글자 = 웜브라운 본연의 부드러움(밝은 종이라 외곽선 없어도 잘 읽힘).
           // 단, 얇은 손글씨(귀염체·펜글씨)만 동색 얇은 외곽선(0.4px)으로 살짝 두껍게(창업자 요청). 색은 그대로.
           fontFamily: nf.family, fontWeight: nf.weight, letterSpacing: nf.ls || 'normal',
-          ...((it.font === 'gaegu' || it.font === 'nanumpen') ? { WebkitTextStroke: `0.4px ${c.text}`, paintOrder: 'stroke fill' } : {}),
+          // ✍️ 굵기 — 그림 글 상자(ArtBox)와 «같은 함수»를 쓴다. 두 곳이 갈리면 하나가 낡는다.
+          ...(noteStroke(it, c.text) || {}),
           // 📏 **14cqw** — 「여섯 자가 한 줄에 들어가게」 (창업자 2026-08-07 *"예쁜크기 네가 정해줘"*)
           //   ⭐ 눈대중이 아니라 **글씨체 열둘 전부로 재서** 골랐다(scripts/_measure-포스트잇글씨-0807.mjs).
           //      15cqw = 귀염체·몽글체·또박체가 「오늘 김치찌개」에서 쪼개진다 · 14.5 = 또박체만 쪼개짐
           //      **14 = 열둘 전부 한 줄** ← 여기가 「한 줄이 되는 가장 큰 값」이라 제일 안 작아 보인다.
           //   ⛔ 더 낮추지 말 것 — 14 에서 이미 요구가 충족돼 그 아래는 글씨만 작아진다.
-          fontSize: `clamp(6px, ${noteCqw}cqw, 72px)`, lineHeight: 1.4,
+          // ⬆️ 72 → 200 (창업자 2026-08-31 *"포스잇 키워도 글자크기는 변함이 없어"* · 위 ArtBox 주석에 실측)
+          fontSize: `clamp(6px, ${noteCqw}cqw, 200px)`, lineHeight: 1.4,
           // ⭐ 「크게」 이상이면 «안 자른다» — 창업자가 싫다 한 건 「잘림」이고, 넘치는 건 다 보인다.
           overflow: textSizeV(it.tz) > 1 ? 'visible' : 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
           // ⌨️ `safe` — 글이 칸보다 커지면 치는 칸과 같은 「위 정렬」이 되어 글자가 안 튄다(위 ArtBox 주석 참조)
@@ -655,7 +685,15 @@ function ArtBox({ it, editable, typing, onText }) {
     //   ⛔⛔ 처음엔 `Note` 쪽만 고치고 여기를 빠뜨려 **재현이 「글자가 안 커졌다」로 잡았다.**
     //      창업자가 쓴 말풍선은 `it.art` 가 있어 **`ArtBox`(여기)** 로 온다 — 두 함수를 «같이» 고쳐야 한다.
     // 📏 배율은 「커질 수 있는 한도」에 건다 — 그림(상자)은 그대로, 글자만 커진다.
-    fontSize: `clamp(6px, ${autoCqw(text, 13, 100 - pad[1] - pad[3], (100 - pad[0] - pad[2]) / (stickerRatio(it.art) || 1), 1.35) * textSizeV(it.tz)}cqw, 64px)`,
+    // ⛔⛔ **상한이 64px 이라 큰 종이에서 「크게」와 「아주 크게」가 «같아졌다»** (창업자 2026-08-31)
+    //   📮 *"포스잇 키워도 글자크기는 변함이 없어. 이게 너무 불편하거든."*
+    //   🔢 실측(`scripts/_probe-글자크기-0831.mjs`) — 종이 420px 에서
+    //      크게 64.0px · 아주 크게 64.0px → **둘 다 상한에 걸려 갈래를 눌러도 아무 일이 안 난다.**
+    //      (종이 300px 까지는 49.9 / 62.4 로 제대로 갈린다)
+    //   ⚠️ 옛 값의 «이유»가 주석 어디에도 없었다 — 안전장치로 둔 값으로 보인다.
+    //   ✅ 200px 로 올린다. 글자는 `cqw`(종이 폭 대비)라 종이 밖으로 나갈 수 없고,
+    //      패드에서 종이를 가득(800px) 키워도 아주 크게가 166px 이라 안 걸린다.
+    fontSize: `clamp(6px, ${autoCqw(text, 13, 100 - pad[1] - pad[3], (100 - pad[0] - pad[2]) / (stickerRatio(it.art) || 1), 1.35) * textSizeV(it.tz)}cqw, 200px)`,
     lineHeight: 1.35,
     whiteSpace: 'pre-wrap', wordBreak: 'keep-all', overflowWrap: 'break-word',
     textAlign: 'center',
@@ -672,7 +710,8 @@ function ArtBox({ it, editable, typing, onText }) {
           // ⭐ 「크게」 이상이면 «안 자른다»(위 Note 와 같은 규칙)
           ...inner, overflow: textSizeV(it.tz) > 1 ? 'visible' : 'hidden',
           // 얇은 손글씨만 동색 얇은 외곽선 — 포스트잇과 같은 규칙(창업자 요청)
-          ...((it.font === 'gaegu' || it.font === 'nanumpen') ? { WebkitTextStroke: `0.4px ${ink}`, paintOrder: 'stroke fill' } : {}),
+          // ✍️ 굵기 (창업자 2026-08-31) — 값과 근거는 `Stickers.jsx` 의 `NOTE_FAT` 주석에
+          ...(noteStroke(it, ink) || {}),
           // ⌨️ `safe` 가 핵심 — **글이 칸보다 크면** 그냥 `center` 는 위아래로 똑같이 밀어내는데
           //    치는 칸(`textarea`)은 «위에서부터» 쌓인다 → 다 치고 커서를 빼는 순간 글자가 툭 내려앉는다.
           //    🔢 실측(라벨지 · 칸 20px 에 글 35px) — **8px 튀었다.** `safe` 면 넘칠 때 둘 다 위 정렬이라 0px.
