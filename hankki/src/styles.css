@@ -529,6 +529,16 @@ img {
 .hscroll::-webkit-scrollbar {
   height: 0;
 }
+/* ⭐ 「이번 주 픽」 칩 위에 별이 선다 (창업자 2026-08-31 *"픽 위에 별이나 뭐 ... 서랍에서 딱 보이게."*)
+   ⛔⛔ `.hscroll` 은 `overflow-x: auto` 다 — CSS 규칙상 한 축이 visible 이 아니면
+      **다른 축의 visible 도 auto 로 바뀐다.** 그래서 칩 위로 삐져나간 별이 «잘린다».
+      (창업자가 첫 시안에서 *"잘려보이는데"* 로 잡아냈다)
+   ✅ 자를 수 없으니 **안쪽에 자리를 만든다** — 위 패딩 20px.
+      ShopScreen 의 인라인 `marginTop` 을 16 → 0 으로 줄여 맞바꿨으니 **줄이 서는 자리는 그대로다.**
+   ⛔ `.hscroll` 을 통째로 고치지 않는다 — 홈 최근저장·레시피 줄까지 위가 벌어진다. */
+.hscroll.cur-chips {
+  padding-top: 20px;
+}
 .hscroll > * {
   scroll-snap-align: start;
   flex: 0 0 auto;
