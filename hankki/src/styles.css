@@ -1635,6 +1635,19 @@ img {
   color: var(--text);
   padding-top: 2px;
 }
+/* ※ [2026-09-01 창업자 판정 ⓐ] 곁말 — 「※」로 시작하던 줄이 «앞 걸음 아래»에 작게 깔린다.
+   📮 창업자 = *"ⓐ 걸음 1 아래 작은 곁말로 (요리모드에서 빈 칸이 안 생김"*
+   ⭐ 크기를 `em` 으로 준다 — 이 클래스가 «두 화면»에 쓰이는데 글자 크기가 다르다
+      (상세 18px · 요리모드 24~38px). px 로 박으면 요리모드에서 좁쌀이 된다.
+   🔢 상세 = 18 × 0.8 = **14.4px**(앱 최소 14px 위) · 요리모드 = 24~38 × 0.65 = 15.6~24.7px */
+.step-tip {
+  margin-top: 4px;
+  font-size: 0.8em;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text-sub);
+}
+.cook-steptext .step-tip { margin-top: 10px; font-size: 0.65em; }
 
 /* 폼 */
 .field {

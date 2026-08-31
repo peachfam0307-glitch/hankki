@@ -190,9 +190,17 @@ export default function CookScreen({ id }) {
         </div>
       ) : (
         <div className="cook-body">
-          <CookBuddy stepText={steps[i - 1]} />
+          {/* ※ [2026-09-01 창업자 판정 ⓐ] 곁말은 «빈 걸음»을 만들지 않고 이 걸음 아래 작게 붙는다.
+              ⛔ 꼬르곰 판정(`CookBuddy`)엔 «첫 줄»만 준다 — 곁말은 시킬 일이 아니라 참고라서
+                 거기 든 낱말(「돌려깎기」 등)로 캐릭터가 정해지면 안 된다. */}
+          <CookBuddy stepText={String(steps[i - 1] || '').split('\n')[0]} />
           <div className="cook-stepno">STEP {i} <span>/ {steps.length}</span></div>
-          <div className="cook-steptext">{steps[i - 1]}</div>
+          <div className="cook-steptext">
+            {String(steps[i - 1] || '').split('\n')[0]}
+            {String(steps[i - 1] || '').split('\n').slice(1).map((t, j) => (
+              <div key={j} className="step-tip">{t}</div>
+            ))}
+          </div>
           <button className="cook-timer press" onClick={() => setShowTimer(true)}>
             <Icon name="clock" size={19} color="var(--brown)" /> 이 단계 타이머 맞추기
           </button>
