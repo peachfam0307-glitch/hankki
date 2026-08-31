@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
-import { whatsNew } from '../data/whatsnew'
+import { whatsNew, unitOf } from '../data/whatsnew'
 import { StickerArt } from './Stickers'
 
 // 📣 한끼 소식 — «방금 열렸어요» · «곧 열려요» · «그다음엔».
@@ -26,15 +26,22 @@ import { StickerArt } from './Stickers'
 //    실제 운영은 매달 드립(재고 300컷+) — 그건 로드맵 문서에만 적고 UI엔 약속하지 않는다.
 // ⚠️ '새 꾸미기팩' 줄은 뺐다 — 이제 «곧 열려요»가 **언제 몇 컷인지 콕 집어** 말한다.
 //    두 군데서 같은 얘기를 하면 아래 것이 겉돌고, 오히려 두루뭉술해 보인다.
+// ⚠️⚠️ [2026-08-29] '주부의 장바구니 확장' 줄도 **같은 이유로** 뺐다.
+//    📮 창업자가 폰 캡처로 잡았다 = *"젤 아래 주부의장바구니 확장은 겹치지않아?"*
+//    ⭐ v11.83 부터 «방금 열렸어요»가 「새로 담은 살림템 3」 ＋ **제품 이름 셋까지** 콕 집어 말한다.
+//       그런데 아래에서 「계속 채워가요」로 또 말하니 두루뭉술한 쪽이 겉돈다 — 위 꾸미기팩과 판박이다.
+//    ⭐ 게다가 **아이콘이 둘 다 `cart`** 라 한 화면에 같은 그림이 두 번 떴다.
+//    📌 이 칸의 일 = 「아직 «없는» 것」을 예고하는 것. 장바구니는 이제 **매주 실제로 열린다** —
+//       예고가 아니라 «하고 있는 일»이라 여기 있을 자리가 아니다.
+//       「계속 늘어나요」는 말로 하는 것보다 **매주 3개씩 뜨는 게 훨씬 세다.**
 const UPCOMING = [
-  { icon: 'cart', title: '주부의 장바구니 확장', desc: '18년 안목의 살림템을 계속 채워가요.', tag: '계속' },
   { icon: 'book', title: '내 레시피북, PDF로 소장', desc: '꾸민 표지 그대로 예쁜 책 한 권.', tag: '나중에' },
   { icon: 'chat', title: '내 꾸민 레시피 자랑', desc: '취향 비슷한 사람들과 구경하고 나눠요.', tag: '나중에' },
 ]
 
 // 종류마다 아이콘 하나 — 글자를 안 읽어도 «뭐가 늘었는지»가 보인다.
 // ⚠️ 우리 세트에 없는 이름을 쓰면 아무것도 안 그려진다 → 전체 목록 = `Icon.jsx`.
-const KIND_ICON = { '이번 주 레시피': 'diary', '꾸미기': 'palette', '레꾸자랑 카드': 'star' }
+const KIND_ICON = { '이번 주 레시피': 'diary', '꾸미기': 'palette', '레꾸자랑 카드': 'star', '장바구니': 'cart' }
 
 // 🖼 미리보기 한 줄 — ⭐**글자만 있으면 광고가 안 된다** (창업자 2026-08-03 *"가을 이모지팩도 광고해야하지 않아?"*).
 //    ⛔ `StickerArt` 는 우리 그림을 그린다(유니코드 이모지 아님).
@@ -57,20 +64,26 @@ export function Peek({ keys = [], size = 46 }) {
 }
 
 function NewsRow({ it, tone }) {
+  // 🎁 선물이면 «선물»이라고 말하고 컷을 전부 편다 (창업자 2026-08-30
+  //    *"가을의정원접시세트도 특별한 선물로 한 줄적어줘. 안내판에 그달 주는 선물 이미지가 다들어가면 좋겠는데..."*)
+  //    ⛔ 아이콘도 갈아 끼운다 — 나머지와 같은 팔레트 아이콘이면 목록에 묻힌다.
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--cream)', borderRadius: 14, padding: '12px 13px' }}>
       <span style={{ flex: '0 0 auto', width: 26, display: 'inline-flex', justifyContent: 'center', paddingTop: 1 }}>
-        <Icon name={KIND_ICON[it.kind] || 'sparkle'} size={22} color={tone} stroke={1.7} />
+        <Icon name={it.gift ? 'gift' : (KIND_ICON[it.kind] || 'sparkle')} size={22} color={tone} stroke={1.7} />
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 16.5, fontWeight: 800 }}>{it.title}</span>
           <span style={{ fontSize: 15, fontWeight: 800, color: tone, background: 'var(--surface)', borderRadius: 999, padding: '2px 8px' }}>
-            {it.kind} {it.count}
+            {/* 🔢 단위 = 「종」 (창업자 2026-08-30 *"다른 것들도 숫자 옆에 종을 붙여줘"*) */}
+            {it.gift ? it.giftLabel : it.kind} {it.count}{unitOf(it.kind)}
           </span>
         </div>
         {it.why && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.why}</div>}
-        <Peek keys={it.peek} />
+        {/* 💬 쓰는 법 = 서랍의 `hint` 를 그대로 (창업자 2026-08-30 *"접시 사용법도 아래 적어줘"*) */}
+        {it.gift && it.hint && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.hint}</div>}
+        <Peek keys={it.gift ? it.giftKeys : it.peek} />
       </div>
     </div>
   )

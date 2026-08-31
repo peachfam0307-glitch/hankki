@@ -20,7 +20,7 @@ import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
 import { dateLabel, openExternal as openUrl, ingredientName, fitImage } from '../utils'
 import { photoPanStart } from '../photoPan'
-import { shouldAskReview } from '../nudges'
+import { shouldAskReview, shouldAskReviewNow, REVIEW_AT } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
 import { picksForIngredients, productLink, productMall, curIcon, isHansalim } from '../data/curation'
@@ -62,7 +62,10 @@ const COACH_STEPS = [
   //    ⚠️ 없는 자리를 짚는 코치는 **오버레이만 뜨고 아무것도 안 가리킨다**(빈 화면 반짝임).
   { sel: '[data-coach="share"]', label: '친구와 레시피 공유하기', desc: '재료·만드는 법이 담긴 예쁜 카드로 보내요' },
   { sel: '[data-coach="decor"]', label: '레시피 꾸미기', desc: '스티커·마스킹테이프·손글씨로 나만의 표지!' },
-  { sel: '[data-coach="cook"]', label: '요리 시작', desc: '큰 글씨 요리모드 · 화면 안 꺼짐 · 단계 타이머' },
+  // ⛓ [2026-08-29] label 은 «그 버튼에 적힌 글자»와 같아야 한다(v11.02 「책갈피」 교훈 — 한 곳만 바꾸면 말이 갈린다).
+  //    ⚠️ desc 에서 「요리모드」를 뺐다 — 이름이 「요리모드 시작」이 되어 한 줄에 같은 말이 두 번 나왔다.
+  //       ⛔ 창업자가 시킨 건 «버튼 이름»이고 이건 거기 «딸려온» 것이라 밝혀 둔다.
+  { sel: '[data-coach="cook"]', label: '요리모드 시작', desc: '큰 글씨 · 화면 안 꺼짐 · 단계 타이머' },
 ]
 
 // 재료 목록에서 '[양념]'·'[소스]'·'[드레싱]'처럼 대괄호만 있는 줄은 소제목(헤더)으로 그린다.
@@ -93,7 +96,13 @@ export default function RecipeDetailScreen({ id }) {
   const [drawOpen, setDrawOpen] = useState(false) // 공유 뽑기카드
   const [shareSheet, setShareSheet] = useState(false) // 공유 두 갈래 시트
   const [coverBusy, setCoverBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩)
-  const [askReview, setAskReview] = useState(false) // 기록 시트를 직접 열었다 닫을 때 한 번만
+  // 🗣 한마디 청하기 — **뜨는 자리가 둘이다.** 담는 값 = 머리글 글자(null = 안 뜸)
+  //   ⑴ 기록 시트를 «직접 열었다 닫을» 때 (원래 자리)
+  //   ⑵ 🎴 자랑 카드를 «보낸 뒤 카드를 닫을» 때 (㉠ · 창업자 확정 2026-08-27)
+  //   ⛔ 참·거짓이 아니라 «글자»를 담는 이유 = 자리마다 머리글이 달라야 한다.
+  //      「N번째 한 끼예요」를 공유 직후에 띄우면 **거짓말**이 된다(요리를 안 했을 수 있다).
+  const [askReview, setAskReview] = useState(null)
+  const 자랑보냄 = useRef(false)
   // 인라인 오버레이(꾸미기) — 뒤로가기로 닫기.
   // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
   // 🔙 꾸미다가 뒤로가기 → **바로 닫지 않고 물어본다** (창업자 2026-07-30
@@ -268,16 +277,28 @@ export default function RecipeDetailScreen({ id }) {
     setShareSheet(false)
     const appUrl = location.origin + location.pathname.replace(/[^/]*$/, '')
     await new Promise((res) => setTimeout(res, 60)) // 레시피카드 마운트 시간
+    // 📱 [2026-08-28 ⓑ] 시트를 띄우게 되면 «리뷰는 그 시트가 닫힐 때» 청한다(⛔시트 위에 시트 금지).
+    let 띄울시트 = null
     try {
       // 꾸민 표지 + 재료·만드는 법(레시피카드) 2장 함께 — 친구가 진짜 해먹게(랜덤 카드와 동일)
       // ⭐ 시트가 뜰 때 시작한 「미리 캡처」가 있으면 그걸 쓴다 — 다 돼 있으면 즉시 공유창이 열린다
       const res = await shareDecoratedCover({ coverEl: coverRef.current, title: r.title, info, appUrl, recipeEl: hasRecipe ? recipeCardRef.current : null, prepared })
       // ⛔ 공유가 «저장»으로 떨어졌으면 이유를 말한다 (BragScreen 과 같은 처리 — 창업자 2026-08-03)
-      if (res && res.pending) setPending(res.pending)   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
+      if (res && res.pending) 띄울시트 = res.pending   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
+      // 📱 표지가 나갔고 레시피가 한 장 남았다 → 「레시피도 보내기」를 한 번 더 청한다(창업자 "ㄴ으로 하자")
+      else if (res && res.shared === true && res.다음) 띄울시트 = { ...res.다음, 이어보내기: true }
       else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
+      // 🗣 「꾸민 표지 그대로」 공유도 리뷰를 청한다 — BragScreen `sendCover` 와 «같은 구멍»이었다
+      //   (창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 아예 못봤어"*). 자세한 경위는 그쪽 주석에.
+      if (res && res.shared === true) 자랑보냄.current = true
     } finally {
       setCoverBusy(false)
+      if (띄울시트) setPending(띄울시트) // 📱 리뷰는 이 시트의 `onClose` 가 청한다(아래)
+      else {
+        if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+        자랑보냄.current = false
+      }
     }
   }
 
@@ -319,8 +340,20 @@ export default function RecipeDetailScreen({ id }) {
         </div>
       )}
       {/* 🎨 꾸민 표지 이미지 만드는 중 — 로딩 오버레이(먹통처럼 안 보이게) */}
-      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다 */}
-      <SendNowSheet pending={pending} onClose={() => setPending(null)} />
+      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다
+          🗣 [2026-08-28] 여기서 «진짜로» 나갔을 때도 한마디를 청한다 — BragScreen 과 «같은 구멍»이었다
+             (창업자 = *"리뷰 안떠..ㅠㅠ"*). 자세한 경위는 `SendNowSheet.jsx` 머리 주석에. */}
+      <SendNowSheet
+        pending={pending}
+        onShared={() => { 자랑보냄.current = true }}
+        onClose={(다음) => {
+          // 📱 [2026-08-28 ⓑ] 표지가 나갔고 레시피가 남았으면 **한 장 더**를 먼저 청한다. 리뷰는 그다음.
+          if (다음) { setPending({ ...다음, 이어보내기: true }); return }
+          setPending(null)
+          if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+          자랑보냄.current = false
+        }}
+      />
 
       {coverBusy && (
         <Portal>
@@ -724,7 +757,7 @@ export default function RecipeDetailScreen({ id }) {
         {r.steps?.length > 0 && (
           <button className="btn-primary press" data-coach="cook" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }} onClick={() => nav.push({ name: 'cook', id: r.id })}>
             <Icon name="play" size={16} />
-            요리 시작
+            요리모드 시작
           </button>
         )}
         <button
@@ -762,7 +795,7 @@ export default function RecipeDetailScreen({ id }) {
           ⭐ v9.02 의 원래 의도(*"기록을 막 남긴 뒤, 흐름을 끊지 않는 자리"*)는 그대로다.
              달라진 건 그 자리를 «앱이 정하지 않고 유저가 연다»는 것뿐.
           시트가 스스로 '물어봤음'을 남겨서 어떻게 닫아도 다시 안 묻는다. */}
-      {askReview && !logEntry && <ReviewAskSheet onClose={() => setAskReview(false)} />}
+      {askReview && !logEntry && <ReviewAskSheet title={askReview} onClose={() => setAskReview(null)} />}
 
       {confirmDel && (
         <ConfirmSheet
@@ -812,7 +845,7 @@ export default function RecipeDetailScreen({ id }) {
           entry={logEntry}
           // 닫는 순간 = 기록을 막 남긴 뒤 = 한마디를 청하기 제일 좋은 자리.
           // ⛔ onDelete 는 여기를 안 탄다 — 지우고 나서 리뷰를 청하면 실례다.
-          onClose={() => { setLogEntry(null); if (shouldAskReview(diary.length)) setAskReview(true) }}
+          onClose={() => { setLogEntry(null); if (shouldAskReview(diary.length)) setAskReview(`${REVIEW_AT}번째 한 끼예요`) }}
           onDelete={() => { removeDiary(logEntry.id); setLogEntry(null); nav.showToast('기록을 삭제했어요') }}
         />
       )}
@@ -840,7 +873,21 @@ export default function RecipeDetailScreen({ id }) {
         </Portal>
       )}
 
-      {drawOpen && <Portal><ShareDrawCard recipe={r} onClose={() => setDrawOpen(false)} onSaveCover={(img) => { const 말 = 카드표지토스트(r); updateRecipe(r.id, 카드표지로(img)); nav.showToast(말) }} /></Portal>}
+      {drawOpen && (
+        <Portal>
+          <ShareDrawCard
+            recipe={r}
+            onShared={() => { 자랑보냄.current = true }}
+            onClose={() => {
+              setDrawOpen(false)
+              // 🎴 보낸 사람에게만 · 카드를 «닫는» 순간에(시트 위에 시트가 되지 않게)
+              if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+              자랑보냄.current = false
+            }}
+            onSaveCover={(img) => { const 말 = 카드표지토스트(r); updateRecipe(r.id, 카드표지로(img)); nav.showToast(말) }}
+          />
+        </Portal>
+      )}
 
     </div>
   )

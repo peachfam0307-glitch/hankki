@@ -19,6 +19,7 @@ import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw } from '../parseRecipe'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder } from '../tidy'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 // 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
@@ -84,6 +85,13 @@ export default function EditorScreen({ id, prefill }) {
       : Math.random().toString(36).slice(2) + Date.now().toString(36)
     ).replace(/-/g, '').slice(0, 32),
   )
+  // 🆓🆓 [창업자 확정 2026-08-29] **이 화면이 「무료로 읽기」로 열렸나** — 열쇠를 안 쓴다.
+  //   ⭐ 가져오기의 「그냥 읽기」 단추가 `prefill.noVision` 을 실어 보낸다(`ImportScreen.jsx`).
+  //   ⚠️ `useRef` 라 화면을 여는 «그 순간»에 굳는다 — 읽는 도중에 바뀌지 않는다.
+  //      ⛔ state 로 두면 다시 그려질 때마다 흔들려서, 여러 장을 읽는 «중간»에 갈래가 바뀔 수 있다.
+  //   ⛔ 편집 화면 «안»의 캡처 단추는 이걸 안 탄다(`prefill` 이 없다) — 거긴 지금처럼 열쇠를 쓴다.
+  //      창업자 확정 = 열쇠 쓰는 길과 공짜 길이 «둘 다» 살아 있어야 한다.
+  const ocrNoVision = useRef(!!prefill?.noVision)
   const ingRef = useRef(null) // 재료 입력칸
   const stepRef = useRef(null) // 만드는 법 입력칸
   const titleRef = useRef(null) // 제목 입력칸 — 제목 없이 저장 누르면 여기로 데려간다
@@ -135,6 +143,7 @@ export default function EditorScreen({ id, prefill }) {
   useEffect(() => { const id = setTimeout(checkPhotoScroll, 80); return () => clearTimeout(id) }, [pin, refs.length, photoFold])
   const [newFolder, setNewFolder] = useState(false)
   const [discardAsk, setDiscardAsk] = useState(false) // 작성 중 나가기 = 버릴지 물어본다
+  const [rawOpen, setRawOpen] = useState(false) // 📥 「사진에서 읽은 원문」 접힘/펼침
   // 📥 [2026-08-22] 파서에 넣은 «원문» — 화면엔 안 보이고 저장만 된다.
   //    파서를 고친 날 「다시 읽기」로 되살릴 재료다(→ `parseRecipe.js` 의 `keepRaw` 주석).
   //    ⛔ 편집으로 들어왔는데 원문이 없으면 «빈 값으로 덮지» 않는다 — 없는 값으로 덮는 건 지우는 것이다(규칙 18 ⓙ).
@@ -237,14 +246,24 @@ export default function EditorScreen({ id, prefill }) {
     ocrTargetRef.current = target
     ocrRef.current?.click()
   }
-  // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
-  const onOcrFile = (e) => {
-    const files = [...(e.target.files || [])]
-    if (!files.length) return
-    e.target.value = ''
-    Promise.all(
-      files.map((f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f) })),
-    ).then((urls) => {
+  // 📥📥 고른 사진들로 «읽기 흐름»을 시작한다 — 자르기 → 인식 → 합치기.
+  //   ⭐ 파일 고르기와 갈라 뒀다 — 「가져오기」 화면에서 «먼저» 고른 사진도 같은 길로 들어와야 하는데
+  //      (창업자 ③ 「여기서 사진 고르기」), 흐름을 두 번 적으면 한쪽만 고치는 사고가 난다.
+  // 🔢🔢 [창업자 확정 2026-08-29] **여러 장은 되게 두고, 많으면 «확인»을 받는다.**
+  //   📮 창업자 = *"여러장 할 수 있지만 열쇠가 소모된다는걸 적어주면 좋지않을까?
+  //      아니면 5장 올리면 팝업으로 열쇠다섯개가 사용된다고 확인받는건?"*
+  //   ⭐ 상한으로 «막지» 않는다 — 긴 레시피는 진짜로 여러 장이 필요하다(2~3컷이 흔하다).
+  //   ⛔⛔ 지금까지는 고른 «뒤» 토스트뿐이라 **되돌릴 길이 없었다.** 20장을 고르면 20개가 그냥 깎인다.
+  //      팝업은 그 «되돌릴 자리»를 만든다.
+  //   ⭐ 2~4장은 지금처럼 토스트로 가볍게 — 매번 물으면 그게 잔소리가 된다(창업자 잣대: ⛔재촉·잔소리 금지).
+  const 확인문턱 = 5
+  const [manyAsk, setManyAsk] = useState(null) // { urls } — 확인 기다리는 중
+  const startOcr = (urls) => {
+    if (!urls || !urls.length) return
+    if (urls.length >= 확인문턱 && !ocrNoVision.current) { setManyAsk({ urls }); return }
+    시작하기(urls)
+  }
+  const 시작하기 = (urls) => {
       ocrAccum.current = ''
       ocrTotal.current = urls.length
       ocrQueue.current = urls.slice(1) // 첫 장은 지금 자르고, 나머지는 자르기 대기열
@@ -269,8 +288,32 @@ export default function EditorScreen({ id, prefill }) {
       }
       ocrCropOpen.current = true
       setCropImg(urls[0])
-    })
   }
+
+  // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
+  const onOcrFile = (e) => {
+    const files = [...(e.target.files || [])]
+    if (!files.length) return
+    e.target.value = ''
+    Promise.all(
+      files.map((f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f) })),
+    ).then(startOcr)
+  }
+
+  // 📷 「가져오기 → 여기서 사진 고르기」로 들어온 경우 — 이미 고른 사진이 딸려 온다.
+  //   ⭐ 창업자 ③ = *"한끼앱에 가져오기에서 사진 가져오기"*. 고르기는 그 화면에서 «손짓»으로 끝냈고
+  //      여기서는 읽기만 이어받는다.
+  //   ⛔ 딱 한 번만 — `ocrTargetRef` 를 'all' 로 두고 시작한다(재료·만드는 법 자동 분류).
+  const 딸려온사진Ref = useRef(false)
+  useEffect(() => {
+    if (딸려온사진Ref.current) return
+    const urls = prefill?.ocrImages
+    if (!urls || !urls.length) return
+    딸려온사진Ref.current = true
+    ocrTargetRef.current = 'all'
+    startOcr(urls)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 한 칸에만 이어붙이기 — 이미 내용이 있으면 아래에 덧붙인다(2단·긴 레시피 대응).
   const appendLines = (prevText, lines) => {
@@ -312,7 +355,8 @@ export default function EditorScreen({ id, prefill }) {
         setOcr({ busy: true, pct: 0, page, total })
         let text = ''
         try {
-          text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current })
+          // 🆓 `noVision` 이면 구글 AI 를 건너뛰고 기본 인식으로만 읽는다 = 열쇠가 안 깎인다
+          text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current, noVision: ocrNoVision.current })
         } catch {
           // ⛔ 한 장이 실패해도 «남은 장은 계속 간다».
           text = ''
@@ -336,12 +380,31 @@ export default function EditorScreen({ id, prefill }) {
   }
 
   // 🏁 다 읽었다 — 모아둔 글자를 칸에 넣고 안내한다.
-  const finishOcr = () => {
+  // ⚠️ 2026-08-29 부터 async — 안에서 🤖AI 다듬기를 기다린다(실패하면 규칙 파서 그대로).
+  //   ⭐ 부르는 두 곳(337줄·1025줄) 다 결과를 안 쓰므로 await 를 안 붙여도 된다.
+  const finishOcr = async () => {
     const target = ocrTargetRef.current || 'all'
     ocrAccum.current = ocrParts.current.filter((t) => t && t.trim()).join('\n').trim()
 
+    // 🆓🆓 [창업자 확정 2026-08-29] **「그냥 읽기」로 들어왔으면 «열쇠 얘기를 아예 안 한다».**
+    //   📮 창업자 = *"3번은 열쇠다썼지만 무료로 쓰고싶은 사용자들이 거의 쓰겠네 **안내도 잘해줘야 할 듯.**"*
+    //
+    //   ⛔⛔ 이 줄이 없으면 **안 썼는데 잔량 얘기가 뜬다.** 프록시를 안 불렀으니
+    //      `getOcrNote()` 는 null 이고 `getOcrLeft()` 는 «남은 장수 그대로»라
+    //      「무료 레시피열쇠 1개 남았어요」가 붙는다 → 유저는 **「어? 열쇠 썼나?」** 로 읽는다.
+    //      📌 공짜라고 해놓고 돈 얘기를 꺼내는 게 제일 나쁘다(분쟁 1순위 = *"샀는데 어디 갔지"*).
+    //
+    //   ⭐ 대신 창업자가 콕 집은 «두 가지»를 말한다 —
+    //      ⑴ **열쇠를 안 썼다**(고른 대로 됐다는 확인) ⑵ **덜 읽힐 수 있다**(인식률 차이)
+    //      📮 어제 창업자 = *"기본인식이라 **인식률의 차이가 잇으니까 이부분을 집어줘야해**
+    //         그래야 무료유저도 안떠나"*
+    //   ⭐ 「사진 보며 고쳐 주세요」로 닫는 게 핵심이다 — 이 길은 사진이 **저절로 떠 있어서**
+    //      바로 고칠 수 있다. 「덜 읽혔다」만 말하고 끝내면 그건 그냥 나쁜 소식이다.
+    const freeTail = ocrNoVision.current ? ' · 열쇠 안 쓰고 읽어서 덜 정확해요' : ''
+
     // (마지막 장) 프록시 한도 안내 — 무료 소진 등이면 "기본 인식으로 진행됐어요" 꼬리를 붙인다.
-    const note = getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
+    //   ⛔ `noVision` 이면 프록시를 «안 불렀으므로» 이 값들은 이번 읽기와 무관하다 → 통째로 죽인다.
+    const note = ocrNoVision.current ? null : getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
     const quotaTail =
       note === 'user_quota'
         ? ` · 무료 ${KEY_NAME}를 다 써서 기본 인식이에요`
@@ -354,7 +417,7 @@ export default function EditorScreen({ id, prefill }) {
     //   ⭐⭐ 미리 알림은 «1장 남았을 때 한 번만** (창업자 *"어차피 유저도 알잖아 쓰면서 몇장남았는지"*)
     //      ⛔ 3장·1장 두 번은 안 한다 — 가져오기 화면 뱃지가 이미 잔량을 보여줘서 잔소리가 된다.
     const leftNow = getOcrLeft()
-    const leftTail = quotaTail
+    const leftTail = quotaTail || ocrNoVision.current // 🆓 안 썼으면 잔량 얘기를 꺼내지 않는다
       ? ''
       : leftNow.total === 0
         ? ` · 무료 ${KEY_NAME}를 다 썼어요 · 이제 기본 인식으로 계속 돼요`
@@ -365,33 +428,73 @@ export default function EditorScreen({ id, prefill }) {
     // 마지막 장 — 결과 반영
     if (target === 'ingredients' || target === 'steps') {
       const base = target === 'ingredients' ? '재료 초안을 담았어요' : '만드는 법 초안을 담았어요'
-      nav.showToast(base + (quotaTail || leftTail || ' · 다듬어 주세요'), quotaTail || leftTail ? 6500 : 4800)
+      nav.showToast(base + (freeTail || quotaTail || leftTail || ' · 다듬어 주세요'), freeTail || quotaTail || leftTail ? 6500 : 4800)
       return
     }
     const combined = ocrAccum.current
-    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + quotaTail, quotaTail ? 6000 : 3200); return }
-    const r = parseRecipeText(combined, { fromOcr: true })
+    // 🆓 freeTail = 「그냥 읽기」로 왔다(열쇠를 안 썼다) — 열쇠 얘기보다 «먼저» 말한다
+    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + (freeTail || quotaTail), freeTail || quotaTail ? 6000 : 3200); return }
+    // 🤖 AI 다듬기 — ⭐**규칙 파서를 «먼저» 돌려놓는다.**
+    //   AI 가 안 되든 느리든 이상하든 이 `r` 이 그대로 쓰인다(3층 구조 1층 · 앱은 절대 안 죽는다).
+    //   ⛔ 순서를 뒤집지 말 것 — AI 를 먼저 기다렸다가 실패하면 그때 파싱하면, 실패한 만큼 유저가 더 기다린다.
+    let r = parseRecipeText(combined, { fromOcr: true })
+    // ⛔ 열쇠는 여기서 «안» 깎는다 — 위에서 `ocrImage` 가 이미 깎았다(카운트는 한 곳에서만).
     setRawText(keepRaw(combined) || '') // 📥 읽어들인 글자 그대로 — 파서를 고친 날 다시 읽을 재료
-    setF((prev) => ({
-      ...prev,
-      title: prev.title.trim() || r.title,
-      ingredients: prev.ingredients.trim() || r.ingredients.join('\n'),
-      steps: prev.steps.trim() || r.steps.join('\n'),
-      // 메모는 직접 입력 전용 — 사진에서 읽은 내용을 자동으로 붙이지 않는다.
-      memo: prev.memo,
-      category:
-        prev.category && prev.category !== '한식'
-          ? prev.category
-          : guessCategory((prev.title || r.title || '') + ' ' + r.memo),
-    }))
+
+    // ⏱⏱⏱ **[2026-08-29 오후 · 창업자 갈래 ⓒ] 「AI 를 기다리지 않는다」**
+    //   ⛔⛔ 전엔 `await tidyRecipe()` 가 여기를 막아서, **이미 손에 쥔 규칙 파서 결과를**
+    //      AI 가 끝날 때까지 화면에 안 내놨다(창업자 폰 실측 = 30초를 세워두고 `timeout`).
+    //   ⭐⭐ 이제 ①규칙 파서로 «즉시» 채우고 ②AI 가 오면 조용히 갈아끼운다.
+    //   ⭐ **유저가 그 사이에 손으로 고친 칸은 안 건드린다** — ②는 「①이 넣은 값 그대로인 칸」만 바꾼다.
+    //      (빈 칸을 안 덮는 규칙 `prev.x || r.x` 만으로는 ②가 영영 못 들어온다 — ①이 이미 채웠으니까)
+    //   ⛔ `await` 를 되살리지 말 것 · 🔒 `scripts/_repro-AI다듬기-0829.mjs` 가 이 자리를 잰다.
+    let 내가넣은 = null
+    const 채우기 = (r2) => {
+      setF((prev) => {
+        const 안건드린 = (키, 값) => !prev[키].trim() || (내가넣은 && prev[키] === 내가넣은[키]) ? 값 : prev[키]
+        const next = {
+          ...prev,
+          title: 안건드린('title', r2.title || prev.title),
+          ingredients: 안건드린('ingredients', r2.ingredients.join('\n')),
+          steps: 안건드린('steps', r2.steps.join('\n')),
+          // 메모는 직접 입력 전용 — 사진에서 읽은 내용을 자동으로 붙이지 않는다.
+          memo: prev.memo,
+          category:
+            prev.category && prev.category !== '한식' && !(내가넣은 && prev.category === 내가넣은.category)
+              ? prev.category
+              : guessCategory((prev.title || r2.title || '') + ' ' + r2.memo),
+        }
+        내가넣은 = { title: next.title, ingredients: next.ingredients, steps: next.steps, category: next.category }
+        return next
+      })
+    }
+
+    // ① 규칙 파서 — «즉시»
+    채우기(r)
+    // 🤖 「AI 가 정리했나」를 «보이게» 붙인다 — 문구는 `tidy.js` 의 `tidyTail()` 한 곳에서 정한다
+    //   (여기와 App.jsx 공유받기가 «같은 말»이라야 유저가 두 경로를 같은 기능으로 읽는다)
     nav.showToast(
-      quotaTail
-        ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
-        : leftTail
-          ? '초안을 채웠어요' + leftTail
-          : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
-      quotaTail || leftTail ? 6500 : 4800,
+      // 🆓 freeTail 이 맨 앞이다 — 「그냥 읽기」로 온 사람에게 열쇠 얘기를 하면 안 된다
+      // ⛔ 길이(ms)는 «안» 준다 — 바로 뒤에 AI 다듬기 토스트가 또 뜬다(HEAD 판단을 그대로 둔다)
+      freeTail
+        ? '초안을 채웠어요' + freeTail + ' · 사진 보며 고쳐 주세요'
+        : quotaTail
+          ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
+          : leftTail
+            ? '초안을 채웠어요' + leftTail
+            : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
     )
+
+    // ② AI — «뒤에서». ⭐ 얹는 규칙은 `mergeTidy` 한 곳에 있다(여기와 `App.jsx` 가 «같은 말»)
+    tidyRecipe(combined).then((ai) => {
+      if (ai) {
+        채우기(mergeTidy(r, ai))
+        nav.showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
+        return
+      }
+      // ⛔ 실패는 «유저에게 안 알린다» — 이미 채워져 있어 할 일이 0이다. 창업자(운영자)만 이유를 본다.
+      if (tidyFounder()) nav.showToast('AI 다듬기는 못 했어요' + tidyTail())
+    })
   }
 
   const canSave = f.title.trim().length > 0
@@ -878,11 +981,93 @@ export default function EditorScreen({ id, prefill }) {
           <textarea rows={3} value={f.memo} onChange={(e) => set('memo', e.target.value)} placeholder="나만의 팁이나 변형 아이디어" />
         </div>
 
+        {/* 📥📥 [2026-08-28 · 창업자 「A가자 테스트를 해봐야하니까」] **사진에서 읽은 원문**
+            📮 창업자 = *"근데 그럼 나머지는 어떻게 잡아? 다른 케이스 테스트해서 계속 보내?"*
+            ⭐ 스크린샷만 보내면 나는 OCR 이 «뭐라고 읽었을지»를 추측해서 다시 쳐야 한다.
+               추측이 빗나가면 못 고친다(콩나물 걸음 1 「jangnamcook 21시간 작성자」가 그랬다).
+               원문 글자를 그대로 받으면 추측이 0이 된다.
+            ⭐ 원문은 2026-08-22 부터 «이미 저장되고 있었다»(parseRecipe.js `keepRaw` · 상한 4,000자).
+               꺼낼 입구가 없었을 뿐이다 — 로드맵 7순위 「다시 읽기 단추(자리는 창업자 판정)」가 이것이다.
+            ⭐ 용량은 한 글자도 안 는다 — 저장은 이미 하고 있고 여기선 «보여주기»만 한다.
+            ⛔ 원문이 없는 레시피(8/22 이전에 담은 것)엔 아예 안 그린다 — 없는 걸 있는 척하지 않는다. */}
+        {rawText && (
+          <div className="field">
+            <button
+              type="button"
+              className="press"
+              onClick={() => setRawOpen((v) => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '12px 14px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', fontSize: 16, fontWeight: 700, textAlign: 'left' }}
+            >
+              <Icon name={rawOpen ? 'chevron-down' : 'chevron-right'} size={16} color="var(--brown)" />
+              사진에서 읽은 원문
+              <span style={{ marginLeft: 'auto', fontSize: 15, fontWeight: 600, color: 'var(--text-sub)' }}>{rawText.length}자</span>
+            </button>
+            {rawOpen && (
+              <>
+                {/* ⛔⛔ 글자를 «화면에 그대로» 띄운다 — 복사가 막힌 기기에서도 손으로 긁을 수 있게.
+                    2026-08-16 사고 = `clipboard.writeText()` 가 «성공으로 resolve 되고도» 실제 복사는 실패했다.
+                    그때 배운 것 = **확인할 수 없는 것을 성공이라고 말하지 않는다.** 여기선 눈에 보이는 길을 같이 둔다. */}
+                <textarea
+                  data-raw="1"
+                  readOnly
+                  rows={8}
+                  value={rawText}
+                  onFocus={(e) => e.target.select()}
+                  style={{ marginTop: 8, fontSize: 15, lineHeight: 1.55, fontFamily: 'var(--mono, monospace)' }}
+                />
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button
+                    type="button"
+                    className="press"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(rawText)
+                        // ⛔ 「복사했어요」로 끝내지 않는다 — 됐는지 확인할 방법이 없다(2026-08-16).
+                        nav.showToast('원문을 복사했어요 붙여넣어 «들어갔는지» 꼭 확인하세요', 5200)
+                      } catch {
+                        nav.showToast('복사가 막힌 기기예요 위 글자를 길게 눌러 «전체 선택»으로 복사하세요', 6000)
+                      }
+                    }}
+                    style={{ padding: '10px 16px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 16, fontWeight: 700 }}
+                  >
+                    복사
+                  </button>
+                </div>
+                <div style={{ fontSize: 15, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>
+                  레시피가 이상하게 담겼을 때 이 글자를 그대로 보내주시면 원인을 찾을 수 있어요.
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* disabled 금지 — 위 상단 저장 버튼과 같은 이유(무반응=먹통으로 보임). 누르면 save()가 안내한다. */}
         <button className="btn-primary press" onClick={save} style={{ opacity: canSave ? 1 : 0.5 }}>
           {editing ? '정리 완료' : '레시피 저장'}
         </button>
       </div>
+
+      {/* 🔢🔢 [창업자 확정 2026-08-29] **많이 골랐을 때 «확인»** — ⛔막는 게 아니다.
+          📮 창업자 = *"여러장 할 수 있지만 열쇠가 소모된다는걸 적어주면 좋지않을까?
+             아니면 5장 올리면 팝업으로 열쇠다섯개가 사용된다고 확인받는건?"*
+             → *"웅 10장이든 20장이든 유저가 선택하면 되니깐"*
+          ⭐ 상한이 «없다» — 긴 레시피는 진짜로 여러 장이 필요하다. 대신 **되돌릴 자리**를 만든다.
+             지금까지는 고른 «뒤» 토스트뿐이라 20장이면 열쇠 20개가 그냥 깎였다.
+          ⭐ 잔량이 모자라면 그 사실을 «먼저» 말한다 — 「5장인데 3개뿐」을 모르고 누르면 그게 분쟁이다. */}
+      {manyAsk && (
+        <ConfirmSheet
+          title={`사진 ${manyAsk.urls.length}장을 골랐어요`}
+          message={(() => {
+            const n = manyAsk.urls.length
+            const left = getOcrLeft()
+            if (left.unknown || left.total >= n) return `${KEY_NAME} ${n}${KEY_UNIT}를 써요.\n사진 1장에 1${KEY_UNIT}씩 들어요.`
+            return `${KEY_NAME}가 ${left.total}${KEY_UNIT} 남아서 ${left.total}장만 AI로 읽어요.\n나머지 ${n - left.total}장은 기본 인식으로 읽어 드려요.`
+          })()}
+          confirmLabel={`${manyAsk.urls.length}장 읽기`}
+          onConfirm={() => { const u = manyAsk.urls; setManyAsk(null); 시작하기(u) }}
+          onClose={() => setManyAsk(null)}
+        />
+      )}
 
       {/* 작성 중 나가기 — 이어쓰기(그냥 닫기) vs 버리기(임시저장까지 삭제) */}
       {discardAsk && (

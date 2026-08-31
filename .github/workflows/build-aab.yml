@@ -29,9 +29,9 @@ on:
   workflow_dispatch:
     inputs:
       versionCode:
-        description: '버전코드 — 콘솔에 올라간 최신보다 커야 함. ✅2026-08-20 확인(굽기 실물 run 32117415820 로그: versionCode 16 · versionName 11.08 · 8/18): 마지막 = 16 → 다음은 17'
+        description: '버전코드 — 콘솔에 올라간 최신보다 커야 함. ✅2026-08-28 확인(굽기 실물 run 32328806704 · 아티팩트 hankki-aab-11.15-17 · 8/20 정식출시 판): 마지막 = 17 → 다음은 18'
         required: true
-        default: '17'
+        default: '18'
       versionName:
         description: '버전 이름 — 비워두면 hankki/src/version.js 에서 자동으로 읽는다'
         required: false
@@ -164,6 +164,66 @@ jobs:
             "") echo "ℹ️ bubblewrap 이 방향 줄을 «안 적었다». 넣은 값이 default 라 덮어쓸 게 없어서일 수 있는데 ⛔확인한 적은 없다." ;;
             *) echo "✅ 나온 값도 세로 잠금 없음" ;;
           esac
+
+      # 🔎 2026-08-28 신설 — R8(코드 축소)을 켜기 «전»에 «실물을 본다».
+      #   왜 = build.gradle 은 저장소에 없다(bubblewrap 이 여기서 만든다).
+      #        안 보고 sed 를 짜면 «못 찾아도 조용히 지나가고» 「켰다」고 말하게 된다(2026-08-18 가로모드 사고).
+      #   ⛔ 이 단계는 «읽기만» 한다 — 아무것도 안 바꾼다.
+      - name: build.gradle 실물 찍기 (R8 준비)
+        working-directory: build
+        run: |
+          echo "────────── app/build.gradle 전문 ──────────"
+          cat -n app/build.gradle
+          echo "────────── buildTypes 만 ──────────"
+          grep -nE "buildTypes|release|debug|minifyEnabled|shrinkResources|proguard" app/build.gradle || echo "(한 줄도 없다)"
+          echo "────────── Android Gradle 플러그인 판 ──────────"
+          grep -rnE "com[.]android[.]tools[.]build:gradle" build.gradle 2>/dev/null | head -3 || echo "(못 찾음)"
+          grep -nE "distributionUrl" gradle/wrapper/gradle-wrapper.properties 2>/dev/null || echo "(gradle wrapper 못 찾음)"
+
+      # 🚨🚨 2026-08-29 신설 — 구글 「새 품질 요구사항」(마감 2027-02) 대응.
+      #
+      #   📮 콘솔 권장 조치(17판 · 11.15 기준) 세 줄 = ①최적화 안 됨 ②리소스 축소 안 됨 ③AGP 9.0 이상으로
+      #
+      #   ⭐⭐ **연습 실행 #16(2026-08-29) 로그로 실물을 보고서야 알았다 — 셋 중 하나가 예상과 달랐다.**
+      #      · `minifyEnabled true` 는 **이미 켜져 있었다**(156~160줄) → 「R8 을 켜면 된다」로 끝날 일이 아니다
+      #      · `shrinkResources` · `proguardFiles` 는 **0건** (grep 이 3줄만 잡았다)
+      #      · AGP **8.9.1** · Gradle 8.11.1 · androidbrowserhelper **2.6.2**
+      #      📌 **17판도 minifyEnabled true 로 구워졌는데 콘솔이 「최적화 안 됨」이라 했다.**
+      #         → 「최적화」의 뜻이 minify 가 아니다. 제일 유력한 답이 «proguardFiles 가 없어서»다(⛔확정 아님).
+      #
+      #   ⛔⛔ **AGP 9.0 은 «일부러» 안 올린다** — bubblewrap 이 낸 이 파일이 옛 DSL
+      #      (`compileSdkVersion`·`targetSdkVersion`·`lintOptions`)을 쓰는데 AGP 9 는 major 라 removed functionality 가 있다.
+      #      ⭐ 결정적 근거 = **최신 bubblewrap 이 아직 8.9.1 을 쓴다** = 그쪽이 아직 준비가 안 됐다.
+      #      → classpath 만 9.0 으로 올리면 빌드가 통째로 깨질 가능성이 크다. **bubblewrap 이 올려줘야 하는 일이다.**
+      #
+      #   🔒 **못 찾으면 «그 자리에서 죽인다»** — 조용히 지나가면 「됐겠지」가 된다(2026-08-18 가로모드 사고).
+      - name: R8 최적화 · 리소스 축소 켜기
+        working-directory: build
+        run: |
+          echo "── 고치기 «전» ──"
+          grep -nE "minifyEnabled|shrinkResources|proguard|androidbrowserhelper" app/build.gradle || echo "(한 줄도 없다)"
+
+          # ① 리소스 축소 ＋ ② 최적화 규칙 — `minifyEnabled true` 줄 «뒤»에 같은 들여쓰기로 붙인다.
+          #    ⛔ 새 블록을 만들지 않는다 — 이미 buildTypes.release 가 있고 거기 minifyEnabled 가 산다.
+          #    ⚠️ proguard-rules.pro 는 «참조하지 않는다» — 없는 파일을 적으면 gradle 이 죽는다.
+          sed -i 's|^\( *\)minifyEnabled true|\1minifyEnabled true\n\1shrinkResources true\n\1proguardFiles getDefaultProguardFile("proguard-android-optimize.txt")|' app/build.gradle
+
+          # ③ TWA 라이브러리 — 콘솔이 짚은 지원 중단 API 의 «시작 위치»가 이 라이브러리다
+          #    (WebViewFallbackActivity.onCreate → setStatusBarColor).
+          #    ⚠️ 2.7.1 이 «있는» 것은 확인했고, 우리 문제를 고치는지는 ⛔확정 못 했다. 다음 판 콘솔이 답한다.
+          sed -i 's|androidbrowserhelper:2\.[0-9][0-9.]*|androidbrowserhelper:2.7.1|' app/build.gradle
+
+          echo "── 고친 «뒤» ──"
+          grep -nE "minifyEnabled|shrinkResources|proguard|androidbrowserhelper" app/build.gradle || echo "(한 줄도 없다)"
+
+          echo "── 진짜 들어갔나 ──"
+          ok=1
+          grep -q "minifyEnabled true"                 app/build.gradle || { echo "⛔ minifyEnabled 가 사라졌다"; ok=0; }
+          grep -q "shrinkResources true"               app/build.gradle || { echo "⛔ shrinkResources 가 «안» 들어갔다 — buildTypes 모양이 바뀐 것 같다"; ok=0; }
+          grep -q "proguard-android-optimize.txt"      app/build.gradle || { echo "⛔ proguardFiles 가 «안» 들어갔다"; ok=0; }
+          grep -q "androidbrowserhelper:2.7.1"         app/build.gradle || { echo "⛔ androidbrowserhelper 판이 «안» 올라갔다 — dependencies 줄 모양을 볼 것"; ok=0; }
+          [ "$ok" = 1 ] || { echo "⛔⛔ 위 중 하나라도 실패하면 굽지 않는다 — 「됐겠지」로 넘어가지 않는다."; exit 1; }
+          echo "✅ 넷 다 확인됐다"
 
       - name: 연습 실행이면 여기서 끝
         if: ${{ inputs.dryRun }}

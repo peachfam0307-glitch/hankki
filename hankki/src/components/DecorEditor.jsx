@@ -644,11 +644,21 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // ⭐ `both` = 일꾸·레꾸 «두 선반 다»에 두는 그룹(꼬르곰 32컷).
   //    ⛔ `diary` 만 주면 일꾸엔 뜨지만 **레꾸 선반에서 사라진다** — 창업자가 보던 그 화면이 레꾸였다.
   const onShelf = (x) => !isDiary || x.both || (shelf === 'diary' ? !!x.diary : !x.diary)
+  // 🎁 «지금 제철»인 선물만 맨 위 대접. 계절이 안 붙은 선물(출시기념)은 늘 위.
+  const giftUp = (x) => !!x.gift && (!x.season || seasonRank(x.season) === 0)
   const groupsByTab = (t) => drawerGroups()
     // ⭐ `tabDiary` = 일기 화면에선 «다른 탭»에 둔다 — 꼬르곰 32컷은 레꾸 「글자」 / 일꾸 「기록」.
     //    ⛔ 두 탭에 «동시에» 두면 일꾸에서 글자·기록 양쪽에 같은 게 나온다(실측으로 잡았다).
     .filter((x) => ((isDiary && x.tabDiary) || x.tab) === t && isReleased(x.from) && (!x.only || x.only === where) && onShelf(x))
-    .sort((a, b) => ((b.gift ? 1 : 0) - (a.gift ? 1 : 0))
+    // 🎁 선물끼리는 **새로 온 것이 위**. 창업자 2026-08-29 = *"오픈기념 특별선물로 예쁘게 만들어서 올리자."*
+    //    ⛔ 안 넣으면 9/1 새 선물이 「출시기념 여름」(12컷) «아래»에 깔려 굴려야 나온다 — 실물로 봤다.
+    //    ⭐ `from` 없는 옛 선물은 빈 문자열이라 저절로 뒤로 간다(비교 한 줄로 끝난다).
+    // 🎁 [창업자 확정 2026-08-30] **지난 계절 선물은 «선물 우대»에서 뺀다.**
+    //    ⛔ 그전엔 `gift` 가 계절보다 먼저라 9월에도 「출시기념 여름」(12컷)이
+    //       **가을 프레임 «위»**에 남았다(실물로 확인).
+    //    ⭐ 계절이 안 붙은 선물(가을의 정원 세트 = 출시기념)은 그대로 위 — 계절 물건이 아니다.
+    .sort((a, b) => ((giftUp(b) ? 1 : 0) - (giftUp(a) ? 1 : 0))
+      || (giftUp(a) && giftUp(b) ? String(b.from || '').localeCompare(String(a.from || '')) : 0)
       || ((b.locked ? 1 : 0) - (a.locked ? 1 : 0))
       || (seasonRank(a.season) - seasonRank(b.season))
       || ((b.recolor ? 1 : 0) - (a.recolor ? 1 : 0)))
@@ -898,11 +908,38 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   }
   // 🎁 「선물」 택 — 출시기념으로 준 것에 붙는다. ⛔유니코드 이모지 금지라 글자＋색으로만.
   //    ⚠️ 「한정」이라고 쓰지 않는다 — 빼앗을 계획이 없다(*"한 번 준 것은 빼앗지 않는다"*).
-  const GiftTag = () => (
-    <span style={{
-      marginLeft: 6, padding: '1.5px 7px', borderRadius: 999, fontSize: 11, fontWeight: 800,
-      background: 'var(--brown)', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
-    }}>선물</span>
+  // 🎁 선물 택 — 기본은 「선물」이고, 그룹이 `giftLabel` 을 주면 그 글자로 바뀐다.
+  //    📮 창업자 2026-08-29 = *"접시를 오픈기념 특별선물로 예쁘게 만들어서 올리자."*
+  //    ⛔ **색을 새로 박지 않는다** — `--brown` 은 테마마다 값이 다르다(v11.17 사고 = 시안 실측값을
+  //       그대로 박았으면 다크에서 글자가 안 읽혔다). 특별함은 «글자»로 낸다.
+  //    ⛔ 유니코드 이모지 금지라 그림은 안 붙인다.
+  //    🏷 `decor-gift-tag` 클래스는 «검사가 이름에서 떼어내려고» 붙인 것이다.
+  //       ⛔ 없으면 검수판이 이름을 「가을 접시 세트오픈 기념 선물」로 읽어 대조가 죽는다(2026-08-29 실제로 죽었다).
+  //    ⭐ 「특별해 보이지 않는다」(창업자 2026-08-29) → **띄운다**. 글자를 키우지 않고
+  //       ⑴크림 테를 둘러 바탕에서 떼고 ⑵옅은 그림자로 들어올린다. 목록의 한 줄이 아니라 «배지»로 읽힌다.
+  //    ⛔ 그림자는 진하게 주지 않는다 — 서랍은 칸이 촘촘해서 진하면 시끄럽다.
+  //    🎁 ＋ **선물 상자 그림을 알약 «안»에** — 창업자 2026-08-29 = *"알약색을 바꾸거나 옆에 뭐라도 붙이자"*
+  //       ⛔ 유니코드 이모지 금지 → 우리 `Icon` 의 `gift`(SVG). 같은 그림이 「선물 네 가지」 단추에도 이미 쓰인다
+  //          → 유저가 **두 자리에서 같은 그림을 보고** 「선물이구나」를 저절로 배운다.
+  //    🎨 ＋ **알약을 오렌지로** — 창업자 2026-08-29 = *"알약색은 안바꿩?"*
+  //       ⛔ 그날 낮엔 *"테마 안전한 강조 토큰이 없다"*(실측 = `--pt`·`--accent`·`--gold` 전부 0건)는 이유로
+  //          그림만 붙였는데, 그건 **「이미 있는 토큰」에서만 찾은 것**이었다. 살구 테마를 만들며 오렌지 대비를
+  //          다 재놨으니 **`--gift` 토큰을 새로 만들면 된다**(값·근거 = `styles.css` 의 `--gift`).
+  //       ⭐ 왜 오렌지가 「특별해 보이게」 하나 = **`--brown` 이 사실 더스티 블루라 앱 포인트가 전부 파랑이다.**
+  //          그 사이에서 오렌지 알약 하나만 튄다. ⛔`--brown` 이면 파란 것들 사이에 묻힌다(그게 창업자가 본 그 문제).
+  //       ⚠️ **다른 선물 그룹(「출시 축하」·「출시기념 여름」)도 같이 오렌지가 된다** — 일부러 그렇게 뒀다.
+  //          「선물 = 오렌지」가 색 하나로 읽혀야 값을 한다(그룹마다 다르면 그냥 알록달록한 목록이 된다).
+  const GiftTag = ({ text = '선물' }) => (
+    <span className="decor-gift-tag" style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      marginLeft: 7, padding: '2.5px 9px 2.5px 7px', borderRadius: 999, fontSize: 11, fontWeight: 800,
+      background: 'var(--gift)', color: '#fff', letterSpacing: '-0.01em', verticalAlign: '1px',
+      whiteSpace: 'nowrap',
+      border: '1.5px solid var(--surface)', boxShadow: '0 1.5px 4px rgba(70,60,45,.28)',
+    }}>
+      <Icon name="gift" size={13} color="#fff" />
+      {text}
+    </span>
   )
   // 🔒 자물쇠 — ⛔유니코드 이모지 금지라 SVG 로 그린다
   const LockIcon = ({ size = 13 }) => (
@@ -948,6 +985,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    ⭐ 기억은 이미 있는 `folded` 를 그대로 쓴다 — 저장 자리를 새로 만들지 않는다.
   const PICKS_FOLD = 'sec_picks'
   const picksFold = mode === 'decor' && folded.has(PICKS_FOLD)
+  // 🔺🔺 **접을 게 «있을 때»만 세모를 띄운다** (창업자 폰 제보 2026-08-28
+  //    *"그리고 저거 먹통익던데 **친구들옆에 세모있자나**"*)
+  // ⛔⛔ 이 세모가 접는 것은 «셋»뿐이다 — ⑴속지·글쓰기 칩 ⑵글씨체 ⑶글씨 크기(1590·1615·1653줄).
+  //    🔎 그런데 `canPickPaper = isDiary && …` 이고 `paperEdit` 도 «일기 전용 값»이다
+  //       → **레꾸(레시피 꾸미기)에는 접을 줄이 «아예 없다».**
+  //    🔢 실측(`_repro-접기세모먹통-0828`) = 눌러도 서랍이 **0px** 움직인다.
+  //       ⛔ 그런데 세모 «그림»은 뒤집히고 `aria-expanded` 도 바뀐다 —
+  //          그래서 「눌렸나」로 재면 멀쩡해 보인다(절대원칙 18 ⓘ). 재현판 첫 판이 그렇게 초록불이었다.
+  // 📌 고장난 게 아니라 **「할 일이 없는데 단추가 서 있던 것」**이다. 유저는 그 둘을 못 가른다.
+  //    ✅ 안 되는 단추는 «없는 게» 낫다 — 일기에선 그대로 뜨고, 레꾸에선 안 뜬다.
+  // ⛔ `picksFold` 를 조건에 넣지 않는다 — 아래 값들은 접힘과 무관하게 계산되므로
+  //    접어 둔 채 돌아와도 세모가 그대로 있다(막다른 길이 안 생긴다).
+  const canFoldPicks = !!(canPickPaper || paperEdit || (showWriteTools && (onWriteFont || onWriteSize)))
   const PickFoldIco = ({ open }) => (
     <span aria-hidden style={{ display: 'inline-flex', transform: open ? 'rotate(180deg)' : 'none' }}>
       <svg width="18" height="18" viewBox="0 0 20 20"><path d="M2 6 L18 6 L10 16 Z" fill="currentColor" /></svg>
@@ -1004,9 +1054,18 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           <button type="button" className="press decor-sec-label" onClick={() => toggleFold(g.key)}
             aria-expanded={!folded.has(g.key)} aria-label={`${g.label} ${folded.has(g.key) ? '펼치기' : '접기'}`}>
             <FoldIco open={!folded.has(g.key)} />
-            {g.label}{g.gift && <GiftTag />}
+            {g.label}{g.gift && <GiftTag text={g.giftLabel} />}
             {folded.has(g.key) && <span className="decor-sec-n">{g.items.length}</span>}
           </button>
+        )}
+        {/* 💬 그룹 «한 줄 안내» — 그림만으로는 안 읽히는 묶음에만 붙인다.
+            📮 창업자 2026-08-29 = *"처음보는 사람들은 저 구멍뚤린게 뭔가 할 것 같은데 ㅋ"*
+            ⭐ 접시·프레임은 «가운데가 뚫린 고리»라 서랍에서 보면 「구멍 뚫린 그림」으로 보인다.
+               탭해서 사진 위에 얹어 봐야 비로소 뜻을 안다 — 그 «한 번»을 안 하면 영영 모른다.
+            ⛔ 모든 그룹에 붙이지 않는다 — 줄이 늘면 서랍이 길어지고 아무도 안 읽는다(시끄러운 게이트와 같은 이치).
+            ⛔ 접었을 땐 안 보인다 — 접은 건 「지금 안 쓰는 것」이다. */}
+        {g.hint && !folded.has(g.key) && (
+          <div className="decor-sec-hint">{g.hint}</div>
         )}
         {/* 🔠 `wordy` = **그림 안에 글자(캡션)가 그려진 그룹.** 칸을 크게 준다.
             📮 창업자 2026-08-12 *"좀작네 글자가."* · 앞서 *"글자가 너무 작아서 (그림도) 잘 안보여"*
@@ -1018,9 +1077,20 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             ⛔ 접두어(`rs_`·`tw_`)로 가르지 않는다 — 표시용 이름·키로 분류하면 언젠가 어긋난다
                (v9.07 에 라벨로 분류했다가 자산 도구가 깨졌다). 데이터에 표시를 단다.
             ⛔⛔ 아래 조건 «뒤»에 JSX 주석을 넣지 말 것 — 거긴 표현식 여는 자리라 빌드가 깨진다.
-               2026-08-12 에 또 밟았다(CLAUDE.md 에 적힌 함정인데 이번이 여섯 번째다). */}
+               2026-08-12 에 또 밟았다(CLAUDE.md 에 적힌 함정인데 이번이 여섯 번째다).
+
+            🐻🐧 `bigCell` = **글자는 없지만 칸을 크게 줘야 하는 그룹**(꼬르곰·펭펭).
+            📮 창업자 2026-08-28 = *"레꾸에서 친구들에 꼬르곰 펭펭을 «글자에 있는 꼬르곰 펭펭만큼»
+               크기를 키웠으면 좋겠어. **잘 안보여.**"*
+            ⭐ 같은 애들이 두 탭에 있는데 칸이 **52px ↔ 110px = 2.1배**로 갈려 있었다 —
+               글자 탭(rs_)은 캡션 때문에 크게 줬고, 친구들 탭은 그 이유가 없어 작은 채였다.
+               ⛔ 그런데 **작은 칸에서 안 보이는 건 캡션만이 아니다** — 표정·포즈로 고르는
+                  캐릭터야말로 52px 에선 뭐가 뭔지 못 가른다. 이유가 달랐을 뿐 증상은 같다.
+            ⛔⛔ **`wordy` 를 돌려 쓰지 않는다** — 그 이름은 «그림 안에 글자가 있다»는 뜻이라
+               캡션 없는 곰펭에 붙이면 **이름이 거짓말을 한다**(v9.07 에 표시용 라벨로 분류했다가
+               자산 도구가 통째로 깨졌다). 뜻이 다르면 표시도 따로 단다. 칸 크기만 같이 쓴다. */}
         {!folded.has(g.key) && (
-          <div className={g.wordy ? 'decor-grid wordy' : 'decor-grid'}>{g.items.map(renderCell)}</div>
+          <div className={g.wordy || g.bigCell ? 'decor-grid wordy' : 'decor-grid'}>{g.items.map(renderCell)}</div>
         )}
       </div>
     )
@@ -1678,12 +1748,14 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               )
             })}
           </div>
+            {canFoldPicks && (
             <button type="button" className="press decor-pickfold"
               onClick={() => { dropCaret(true); toggleFold(PICKS_FOLD) }}
               aria-expanded={!picksFold}
               aria-label={picksFold ? '고르는 줄 펴기' : '고르는 줄 접기'}>
               <PickFoldIco open={!picksFold} />
             </button>
+            )}
           </div>
           )}
           <VHint boxRef={drawerRef} />

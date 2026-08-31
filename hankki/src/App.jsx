@@ -5,9 +5,13 @@ import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } f
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw } from './parseRecipe'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder } from './tidy'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
-import { guessCategory } from './utils'
+import { guessCategory, fitImage } from './utils'
+// 🍱 [2026-08-28] 공유로 담으면 아이콘이 빈 접시로 굳던 것 — 뿌리·막이 설명은 `shareIcon.js` 주석에.
+import { 공유아이콘 } from './shareIcon'
+import { guessFoodIconStrict } from './components/FoodIcon'
 import BottomNav from './components/BottomNav'
 import TabSwipe from './components/TabSwipe'
 import TimerBar from './components/TimerBar'
@@ -89,6 +93,8 @@ export default function App() {
   const backScheduled = useRef(false)
   const suppressPop = useRef(0) // popAll·모달버튼닫기 가 만든 popstate 무시용
   const toastTimer = useRef(null)
+  // 🔽 닫히는 «동안»에도 글자가 남아 있어야 띠가 스르르 접힌다(비면 그 자리에서 툭 사라진다)
+  const 지난토스트 = useRef('')
   const showToastRef = useRef(null) // 뒤로가기 핸들러(위에서 만들어짐)가 아래 showToast 를 쓰기 위한 통로
   const tabRef = useRef(tab)
   const stackRef = useRef(stack)
@@ -118,6 +124,18 @@ export default function App() {
   const push = useCallback((screen) => {
     setStack((s) => [...s, screen])
     try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
+  }, [])
+  // 🔁🔁 **같은 자리에서 «갈아끼우기»** — 히스토리 칸을 «안» 쌓는다. (2026-08-28 일기 넘겨보기)
+  //
+  // 📮 창업자 = *"일기를 넘겨가며 볼수있으면 좋겠어(**지금은 날짜하나하나 눌러야함**)"*
+  //
+  // ⛔⛔ 넘길 때마다 `push` 를 쓰면 **뒤로가기가 지옥이 된다** — 일기 열 장을 넘겨 보고 나서
+  //    뒤로가기를 누르면 열 번을 눌러야 달력으로 돌아온다. 유저는 「앱이 고장났다」로 읽는다.
+  // ⭐ 넘기기는 «새 화면을 여는 것»이 아니라 «보던 화면의 내용이 바뀌는 것»이다.
+  //    그래서 스택 맨 위 한 칸만 갈아끼우고 히스토리는 건드리지 않는다 → 뒤로가기 한 번에 달력.
+  // ⛔ 스택이 비었으면(＝탭 화면) 아무 일도 안 한다 — 갈아끼울 칸이 없다.
+  const replace = useCallback((screen) => {
+    setStack((s) => (s.length ? [...s.slice(0, -1), screen] : s))
   }, [])
   // 화면 안 화살표(뒤로) 버튼도 브라우저 뒤로가기로 통일 → 버튼/스와이프 동작 일치.
   const pop = useCallback(() => {
@@ -279,10 +297,30 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const showToast = useCallback((msg, ms = 1900) => {
+  // ⏱⏱ **안내가 떠 있는 시간 — 글자 길이에 맞춘다** (창업자 2026-08-29 *"이것도 눈깜짝할사이에 사라져;; 겨우찍음"*)
+  //
+  // ⛔⛔ **v11.84 에서 창업자 지시 「시간도 늘리자」를 «반쪽만» 지켰다.**
+  //   편집 화면 캡처 쪽엔 6500 을 줬는데 **공유받기·갤러리(＝창업자가 실제로 쓰는 문)는 기본값 1900 그대로**였다.
+  //   그 문은 안내가 제일 긴데(잔량 ＋ AI 꼬리 = 다섯 줄) 시간은 제일 짧았다.
+  //   📌 2026-08-29 아침 AI 다듬기 사고와 «똑같은 모양»이다 — 문이 셋인데 한 곳만 고쳤다.
+  //
+  // ⭐⭐ **그래서 「부르는 쪽마다 숫자를 준다」를 그만둔다** — 그러면 새 안내가 생길 때마다 또 빠뜨린다.
+  //   **기본값이 글자 수를 보고 스스로 늘어난다.** 짧은 안내는 지금처럼 빨리 사라지고 긴 것만 오래 남는다.
+  //   🔢 2200ms(눈이 가는 데 걸리는 시간) ＋ 글자당 70ms · 최대 4800ms
+  //      · 「링크를 담았어요」 8자 → 2.8초   · AI 다듬기 안내 38자 → 4.8초
+  //   ⛔ 상한을 둔다 — 안내가 오래 떠 있으면 그건 안내가 아니라 «가리는 것»이다.
+  //   ⛔⛔ **[2026-08-31 · 창업자 제보] 8000 → 4800 으로 내렸다** — *"길게 떠있어"*.
+  //      🔢 옛 셈으로는 AI 다듬기 안내(운영자 화면 70자)가 9080ms 로 나와 **상한 8초를 꽉 채웠다.**
+  //      ⭐ 같은 날 «글자»도 줄였다(`tidy.js` 짧은모델 · 44자→10자) — 둘이 곱해져서 8.0초 → 4.8초가 된다.
+  //   ⛔ 부르는 쪽이 `ms` 를 «직접» 주면 그 값이 이긴다(나가기 안내처럼 시간이 뜻을 가진 자리).
+  const toastMs = (msg) => Math.min(4800, 2200 + String(msg || '').length * 70)
+
+  const showToast = useCallback((msg, ms) => {
+    const 뜰시간 = typeof ms === 'number' ? ms : toastMs(msg)
+    if (msg) 지난토스트.current = msg
     setToast(msg)
     if (toastTimer.current) clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToast(null), ms)
+    toastTimer.current = setTimeout(() => setToast(null), 뜰시간)
   }, [])
   showToastRef.current = showToast
 
@@ -358,12 +396,32 @@ export default function App() {
         (parsed && parsed.title) ||
         firstLine(caption) ||
         (data.imageDataUrl ? '사진 레시피' : '공유된 레시피')
+      // 📦📦 [2026-08-28 · 창업자 폰 「저장 공간이 가득 찼어요」] **저장할 사진은 «줄여서» 담는다.**
+      //
+      // ⛔⛔ 여기가 우리 앱에서 **사진을 «원본 그대로» 저장하던 마지막 자리**였다.
+      //    사진이 들어오는 문이 열 곳인데 아홉은 이미 줄이고 있었다 —
+      //    일기 `fitImage(1200)` · 표지 `fitImage(1200)` · 편집 `cropSquare(800)` ·
+      //    아바타 `cropSquare(256)` · 꾸미기 `cropRatio(700)` · 자르기 시트 `2400` 제한.
+      //    **공유받기만 `blobToDataUrl` 결과를 그대로 넣었다**(`shareIntake.js:17`).
+      //
+      // 🔢 창업자 폰 실측 = 캡처 504KB → base64 **672KB** → **미정리 6장에 4MB** →
+      //    localStorage 한도(5MB)를 넘겨 **저장이 통째로 막혔다**(`store.jsx:830` 이 throw).
+      //    ⭐ 「248편이나 있는데 6개에 꽉 찼다」의 답 = **사진 1장 ≈ 레시피 글 400편**.
+      //
+      // ⭐⭐ **OCR 은 «원본»으로 돌린다** — 아래 `ocrImage(data.imageDataUrl)` 는 안 건드렸다.
+      //    글자를 읽는 정확도는 원본이 제일 좋고, 그 원본은 **메모리에만 잠깐 있다가 버려진다.**
+      //    📌 줄인 걸로 읽게 만들면 용량은 줄지만 «레시피가 덜 읽힌다» — 그건 바꿔 먹을 게 아니다.
+      //
+      // ⛔ `fitImage` 는 **작은 사진은 안 건드린다**(`Math.min(1, max/…)`) ＋ 실패하면 **원본을 돌려준다**.
+      //    그래서 이 한 줄이 사진을 «잃게» 만들 길이 없다.
+      // ⚠️ 이미 담긴 사진은 안 줄어든다 — 앞으로 담는 것만이다(규칙 18 ⓙ).
+      const shrunk = data.imageDataUrl ? await fitImage(data.imageDataUrl, 1600, 0.85) : null
       // 메모는 직접 입력 전용 — 캡션 찌꺼기를 자동으로 붙이지 않는다
       const rec = makeInboxRecipe({
         source,
         title,
         sourceUrl: link,
-        image: data.imageDataUrl || null,
+        image: shrunk,
       })
       if (parsed && (parsed.ingredients.length || parsed.steps.length)) {
         rec.ingredients = parsed.ingredients
@@ -377,29 +435,92 @@ export default function App() {
       // inbox 레이어에 해당하는 히스토리 칸(트랩)을 보충 — 없으면 뒤로가기가 base 트랩을 대신
       // 소비해 다음 back 이 앱 종료로 샜다. (공유로 앱을 처음 열었을 때 경로)
       try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
+      // 📄 [2026-08-28] «몇 장»을 받았는지 말한다 — 두 장짜리 레시피가 반쪽만 담기던 걸 고치며 넣었다.
+      //    ⭐ 유저 안내이자 «진단»이다 — 안드로이드가 몇 장을 보내는지 이 문구가 그 자리에서 알려준다.
+      const 장수 = (data.imageDataUrls && data.imageDataUrls.length) || (data.imageDataUrl ? 1 : 0)
       showToast(
-        data.imageDataUrl
-          ? '사진을 담았어요 · 글자 읽는 중…'
-          : link && source !== 'youtube' && source !== 'instagram'
-            ? '공유한 링크를 담았어요 · 읽는 중…'
+        장수 > 1
+          ? `사진 ${장수}장을 담았어요 · 글자 읽는 중…`
+          : 장수 === 1
+            ? '사진을 담았어요 · 글자 읽는 중…'
             : '공유한 레시피를 임시보관함에 담았어요'
       )
       if (typeof history !== 'undefined' && location.search) {
         history.replaceState({ hankki: 1 }, '', location.pathname) // URL 만 정리, 트랩 표식은 유지
       }
       // 공유된 사진이면 글자를 읽어 재료·순서를 자동으로 채운다.
+      // ⛔⛔ **여기는 `shrunk` 가 아니라 «원본»이다. 바꾸지 말 것.**
+      //    저장은 줄여서 하고(위 `shrunk`) **읽기는 원본으로** 한다 — 글자 크기가 곧 인식률이다.
+      //    원본은 이 줄이 끝나면 아무 데도 안 남는다(메모리에만 있었다).
       if (data.imageDataUrl) {
-        const text = await ocrImage(data.imageDataUrl)
+        // 📄📄 [2026-08-28] **여러 장을 «순서대로» 읽어 «이어붙인다».**
+        //   📮 창업자 실물 = 두 장짜리 레시피를 한 번에 공유했는데 둘째 장만 담겼다.
+        //   ⭐ 이어붙이는 방식은 «이미 있던 것»을 그대로 쓴다 — 레시피 편집 화면의 캡처 단추가
+        //      `EditorScreen.jsx` 에서 여러 장을 `lines.join('\n')` 으로 잇는다. 같은 규칙이라야
+        //      「공유로 담은 것」과 「앱에서 고른 것」이 같은 결과를 낸다.
+        //   ⛔ 한 장이 안 읽혀도 나머지는 살린다 — 통째로 버리면 유저는 「고장」으로 읽는다.
+        //   💰 열쇠는 장수만큼 쓴다(`ocrImage` 를 장수만큼 부른다) — 편집 화면과 같다.
+        const 장들 = (data.imageDataUrls && data.imageDataUrls.length ? data.imageDataUrls : [data.imageDataUrl])
+        const 읽은글 = []
+        for (const 장 of 장들) {
+          const t = await ocrImage(장)
+          if (cancelled) return
+          if (t && t.trim()) 읽은글.push(t.trim())
+        }
+        const text = 읽은글.join('\n')
         if (cancelled || !text.trim()) return
-        const r = parseRecipeText(text, { fromOcr: true })
-        store.updateRecipe(rec.id, {
-          title: rec.title && rec.title !== '사진 레시피' ? rec.title : r.title || rec.title,
-          ingredients: r.ingredients,
-          steps: r.steps, // 메모는 건드리지 않는다 — 직접 입력 전용
-          category: guessCategory((r.title || '') + ' ' + r.memo),
-          // 📥 원문도 — 있을 때만 넣는다(빈 값으로 덮으면 지우는 것이다)
-          ...(keepRaw(text) ? { rawText: keepRaw(text) } : {}),
-        })
+        // 🤖🤖 [2026-08-29] **AI 다듬기 — ⭐여기가 창업자가 실제로 쓰는 문이다.**
+        //   ⛔⛔ 8/29 아침에 AI 를 `EditorScreen`(편집 화면 캡처 단추) «한 곳»에만 붙여서
+        //      「가져오기 → 사진」·공유받기로 담은 것은 **워커를 한 번도 안 불렀다**
+        //      (Cloudflare Invocations 0 · 창업자 대시보드 실측). 그날 재현판 16칸은 전부 초록불이었다.
+        //   📌 `ocrImage()` 를 부르는 곳은 셋 — 편집 캡처 · **여기** · 냉장고 영수증.
+        //      레시피인 앞의 둘에만 붙인다(영수증은 재료 목록이라 AI 지시가 안 맞는다).
+        //   ⭐ 규칙 파서를 «먼저» 돌려놓는다 — AI 가 안 되든 느리든 이 `기본` 이 그대로 쓰인다.
+        const 기본 = parseRecipeText(text, { fromOcr: true })
+
+        // ⏱⏱⏱ **[2026-08-29 오후 · 창업자 갈래 ⓒ] 「AI 를 기다리지 않는다」**
+        //   📮 창업자 폰 실측 13:44 = `기본 정리예요(timeout)` — **30초를 세워두고 아무것도 못 줬다.**
+        //   ⛔⛔ 뿌리는 숫자가 아니라 **차례**였다. `await tidyRecipe()` 가 앞을 막고 있어서
+        //      **이미 손에 쥔 규칙 파서 결과를 AI 가 끝날 때까지 화면에 안 내놨다.**
+        //      12초든 30초든 60초든 «기다리는 구조»인 한 유저는 늘 그만큼 빈 화면을 본다.
+        //   ⭐⭐ 그래서 두 판으로 나눈다 — **①규칙 파서로 «즉시» 채우고 ②AI 가 오면 조용히 갈아끼운다.**
+        //      · 유저가 기다리는 시간 = **0초**  · AI 가 죽어도 잃는 게 없다(①이 이미 화면에 있다)
+        //      · 그래서 `tidy.js` 의 기다림을 60초까지 «늘릴 수 있게» 됐다(아무도 안 기다리니까)
+        //   ⛔ `await` 를 되살리지 말 것 — 되살리는 순간 위 사고가 그대로 돌아온다.
+        //      🔒 `scripts/_repro-AI다듬기-0829.mjs` 가 이 자리를 잰다.
+
+        // 🧷 지금 화면에 들어가 있는 값 — 두 판이 같은 자리를 만지므로 «내가 뭘 넣었는지»를 들고 간다.
+        //   ⛔ `rec` 는 담을 때의 «옛 값»이라 두 번째 판에서 그대로 쓰면 첫 판이 넣은 것을 모른다.
+        const 현재 = { title: rec.title, icon: rec.icon, iconPicked: rec.iconPicked }
+
+        // 채우는 일은 «한 곳»에 — 규칙 파서 판과 AI 판이 갈리면 결과가 두 가지가 된다.
+        const 채우기 = (r) => {
+          const 새제목 = 현재.title && 현재.title !== '사진 레시피' ? 현재.title : r.title || 현재.title
+          // 🍱🍱 [2026-08-28 · 창업자 제보] **이름이 여기서 처음 정해지니, 아이콘도 여기서 다시 찾는다.**
+          //   📮 창업자 = *"sns나 갤러리는 자동으로 안붙어. 이거 자동으로 붙게할 수있어?"*
+          //   ⭐ 뿌리 = `makeInboxRecipe` 가 «글자를 읽기 전»에 `icon` 을 굳혀서, 나중에 제목이
+          //      「골쫄면」이 돼도 아이콘은 빈 접시(`default`) 그대로였다. 화면은 `icon` 이 있으면
+          //      자동찾기를 안 돌리므로(Thumb.jsx) 영영 안 바뀐다.
+          //   ⛔ 창업자가 «직접 고른» 아이콘은 안 덮는다 — 판정과 두 겹 막이는 `shareIcon.js` 에 있다.
+          const 새아이콘 = 공유아이콘(현재, 새제목, guessFoodIconStrict)
+          store.updateRecipe(rec.id, {
+            title: 새제목,
+            ingredients: r.ingredients,
+            steps: r.steps, // 메모는 건드리지 않는다 — 직접 입력 전용
+            category: guessCategory((r.title || '') + ' ' + r.memo),
+            // ⭐ 자동으로 추천한 것이니 `iconPicked: false` 로 «자동» 표를 남긴다 —
+            //    EditorScreen 이 쓰는 규칙과 «같은 말»이라야 한쪽만 낡지 않는다(v9.77 · check-thumb.mjs).
+            ...(새아이콘 ? { icon: 새아이콘, iconPicked: false } : {}),
+            // 📥 원문도 — 있을 때만 넣는다(빈 값으로 덮으면 지우는 것이다)
+            ...(keepRaw(text) ? { rawText: keepRaw(text) } : {}),
+          })
+          현재.title = 새제목
+          if (새아이콘) { 현재.icon = 새아이콘; 현재.iconPicked = false }
+          return 새제목
+        }
+
+        // ① 규칙 파서 — «즉시»
+        채우기(기본)
         // 💰💰 [2026-08-21] 여기도 «조용히 깎이던» 자리다 — 공유로 들어온 사진도 위 353줄에서 AI 스캔을 쓴다.
         //    ⛔⛔ 그런데 유저는 «가져오기를 누른 적이 없다» — 카톡에서 공유만 했는데 장수가 준다.
         //       세 자리(캡처·영수증·공유받기) 중 **여기가 제일 안 보이는 자리**다.
@@ -412,6 +533,20 @@ export default function App() {
             ? '사진에서 글자를 읽어 채웠어요'
             : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`,
         )
+
+        // ② AI — «뒤에서». 오면 갈아끼우고, 안 오면 아무 일도 안 난다.
+        tidyRecipe(text).then((ai) => {
+          if (cancelled) return
+          if (ai) {
+            채우기(mergeTidy(기본, ai))
+            showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
+            return
+          }
+          // ⛔ 실패는 «유저에게 안 알린다» — 이미 채워져 있어 유저가 할 일이 0이다.
+          //    알리면 멀쩡한 결과를 두고 「고장났나」로 읽게 만든다.
+          //    ⭐ 창업자(운영자)만 이유를 본다 — 이 한 줄이 8/29 아침에 30분을 5초로 줄였다.
+          if (tidyFounder()) showToast('AI 다듬기는 못 했어요' + tidyTail())
+        })
         return
       }
 
@@ -451,15 +586,82 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // 🧹🧹 [창업자 확정 2026-08-28 = ②] **이미 담긴 «큰» 사진도 «한 번» 줄인다.**
+  //
+  // 📮 창업자 폰이 지금 「저장 공간이 가득 찼어요」로 **저장이 막혀 있다**(미정리 6장 = 4MB).
+  //    ⛔ v11.64 의 고침은 «앞으로 담는 것»만 줄인다 — **이미 담긴 6장은 그대로**다(규칙 18 ⓙ).
+  //       그래서 이 한 번이 필요하다. 이게 돌면 창업자 폰에서 **약 4MB 가 그 자리에서 빈다.**
+  //
+  // ⛔⛔ **창업자 걱정 = *"2번을 하면 앱에서 사진이 뿌옇게 보이는거 아냐?"* — 실측으로 답이 나왔다.**
+  //    🔢 이미 1200px 로 줄여 담긴 일기 사진을 «또» 구우면 —
+  //       크기 554×1200 그대로 · 용량 **95KB → 95KB(안 준다)** · 화질만 RMSE 0.36 깎인다.
+  //       **얻는 게 0이고 잃기만 한다.**
+  //    ✅ 그래서 **큰 것만 고른다.** 문턱을 넘는 것만 건드리니 «뿌예질 일이 구조적으로 없다».
+  //
+  // ⭐ 문턱을 «dataURL 글자 수»로 먼저 거른다 — 문자열 길이는 즉시 알 수 있어 248편을 훑어도 순식간이다.
+  //    ⛔ 사진을 다 열어 픽셀을 재면 느리고 배터리를 먹는다. 열어보는 건 «걸린 것»만.
+  //    🔢 자릿값 근거(실물 캡처 실측) — 원본 1172KB / 줄인 것 197KB / 일기 127KB / 편집 표지 150KB
+  //       → 260,000자(≈254KB)면 **원본만** 걸리고 나머지는 다 빠져나간다.
+  const SHRINK_OVER = 260000
+  useEffect(() => {
+    let cancelled = false
+    // ⛔ 첫 화면이 다 그려진 뒤에 시작한다 — 앱을 여는 순간 캔버스를 돌리면 «느린 앱»이 된다.
+    const t = setTimeout(async () => {
+      const 큰것 = store.recipes.filter((r) => typeof r.image === 'string' && r.image.length > SHRINK_OVER)
+      if (!큰것.length) return // ⭐ 없으면 아무 일도 안 한다 → 다음 실행부터 비용 0
+      let 줄인수 = 0
+      let 아낀양 = 0
+      for (const r of 큰것) {
+        if (cancelled) return
+        const 작게 = await fitImage(r.image, 1600, 0.85)
+        // ⛔ **진짜로 작아진 것만 저장한다.** `fitImage` 는 실패하면 원본을 그대로 돌려주는데,
+        //    그걸 그냥 덮으면 «아무것도 안 하고 저장만» 하게 된다(무의미한 쓰기 = 용량이 또 찬다).
+        if (cancelled || !작게 || 작게.length >= r.image.length) continue
+        아낀양 += r.image.length - 작게.length
+        줄인수++
+        store.updateRecipe(r.id, { image: 작게 })
+        // ⛔ 한 장씩 넘기며 숨을 쉰다 — 6장을 한 번에 구우면 화면이 얼어붙는다
+        await new Promise((res) => setTimeout(res, 60))
+      }
+      if (cancelled || !줄인수) return
+      showToast(`사진 ${줄인수}장을 정리해 ${Math.round(아낀양 / 1024 / 1024 * 10) / 10}MB 를 비웠어요`, 5000)
+    }, 2500)
+    return () => { cancelled = true; clearTimeout(t) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const showOnboarding = useCallback(() => setOnboard(true), [])
-  const nav = { push, pop, popAll, go, showToast, tab, setTab, registerBack, openModal, showOnboarding }
+  const nav = { push, replace, pop, popAll, go, showToast, tab, setTab, registerBack, openModal, showOnboarding }
 
   const TabScreen = TABS[tab]
   const top = stack[stack.length - 1]
 
   return (
     <NavCtx.Provider value={nav}>
-      <div className="app-frame">
+      <div className={'app-frame' + (toast ? ' toast-on' : '')}>
+        {/* 📢📢 **안내 띠 — 「떠 있는 상자」가 아니라 «비워둔 자리»다** (창업자 확정 2026-08-31)
+            🐛 제보 = *"레시피를 너무가리고 박스크기도 크고 길게 떠있어"* → 자리를 옮겨봐도
+               `position: fixed` 인 이상 **무엇을 덮든 상관하지 않는다**. 그래서 흐름 안으로 들여왔다.
+            ⛔ 상단바에 «붙일» 수도 없었다 — `.topbar-back` 은 `.screen`(스크롤 통) 안이라
+               목록과 같이 밀려 올라간다. 붙여두면 스크롤한 순간 상자만 허공에 남는다.
+            ⭐ `.app-frame` 이 이미 세로 flex 라 여기 칸을 하나 두면 화면이 그만큼 «내려간다» —
+               겹침이 «구조적으로» 0 이 된다. 창업자 말 *"상자를 고정해놓고 거기 띄운다"* 가 이것이다.
+            ⛔ 화면 파일은 하나도 안 건드렸다. 이 한 칸이 전 화면에 같이 듣는다. */}
+        <div className="toast-slot" aria-live="polite">
+          <div className="toast-clip">
+            <div className="toast">{toast || 지난토스트.current}</div>
+          </div>
+        </div>
+
+        {/* ⛔⛔ **이 `.frame-body` 를 지우지 말 것 — 띠를 넣자마자 난 실물 버그의 해결책이다.**
+            🐛 2026-08-31 첫 판: 띠는 잘 떴는데 **임시보관함 상단바(뒤로·제목)가 통째로 사라졌다.**
+               `StackLayer`(아래)는 `absolute; inset:0` 인데 그 기준이 `.app-frame` 이라
+               **띠를 «따라 내려오지 않고» 띠 밑에 깔렸다.** 띠는 z-index 3500 이라 제목을 덮었다.
+            🔢 그때 잰 값은 「가린 초안 0줄」로 **통과**였다 — 목록은 정말 안 가렸으니까.
+               ⭐ 숫자는 통과인데 화면은 망가진 것이다. 절대원칙 21(뽑아서 «열어본다»)이 잡았다.
+            ⭐ 그래서 담는 칸을 하나 둔다 — 여기가 `position: relative` 라
+               쌓인 화면의 `inset:0` 이 **띠 «아래»부터** 시작한다. */}
+        <div className="frame-body">
         <div key={tab} className="screen fade">
           <TabScreen />
         </div>
@@ -479,7 +681,8 @@ export default function App() {
         <TabSwipe tab={tab} go={go} enabled={!top && modalLayers.current.length === 0 && !onboard} />
         {!top && <BottomNav active={tab} onChange={go} onImport={() => push({ name: 'import' })} />}
         <TimerBar bottom={top ? 'calc(84px + var(--safe-bottom))' : 'calc(66px + var(--safe-bottom))'} />
-        {toast && <div className="toast">{toast}</div>}
+        {/* 📢 안내 띠는 **맨 위 칸**으로 옮겼다(2026-08-31) — 여기 `fixed` 로 두면 목록을 덮는다. */}
+        </div>
 
         {/* 🔁 「이미 다른 기기에서 쓰고 있었어요」 = 설정으로 보내며 «백업 시트를 열라는 쪽지»를 남긴다.
             (`go(tab)` 은 인자를 못 받아서 `nudges.js` 의 쪽지로 넘긴다 — 홈 백업 유도 줄과 같은 길) */}

@@ -1,4 +1,4 @@
-import { isSeason, inCardWindow, seasonsNow } from '../season'
+import { isSeason, isPeakSeason, inCardWindow, seasonsNow } from '../season'
 import { SEASON_CUTS } from '../data/cardSeasons'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toJpeg } from 'html-to-image'
@@ -134,8 +134,15 @@ function tagsOf(recipe) {
 // 스타일별 카테고리 규칙(적재적소): 콤비는 넓은 스타일(홀로·팝·여름)에만.
 function drawState() {
   // ⚠️ 스티커는 철이 지나도 순서만 밀리지만, **카드 스킨은 뽑기 풀에서 아예 빠진다**(한정 수집감).
-  //    그래서 전환기 겹침이 여기서 특히 크다 — 9월 첫 2주까지는 여름 스킨이 계속 나온다.
-  //    (`src/season.js` — 창업자 2026-07-30 "여름에 준비한 아이템들은 며칠 못하고…")
+  //    ✅✅ **[창업자 확정 2026-08-29] 카드 스킨은 «전환기 겹침을 안 쓴다» — 계절 첫날에 바로 갈아탄다.**
+  //       📮 창업자 = *"레꾸자랑은 9월에는 여름꺼는 빠지는거 아냐?"* → *"**9월1일에 빼야지 가을시작이니까.**"*
+  //       🔢 고치기 «전» 실측 = 8/31 여름✅ ／ **9/01~9/14 여름✅가을✅(둘 다)** ／ 9/15 여름⛔
+  //          → 아래 `isPeakSeason` 으로 바꿔서 **9/1 에 여름이 빠진다.**
+  //       ⭐ 스티커는 **겹침을 그대로 둔다** — 창업자 2026-07-30 *"여름에 준비한 아이템들은 며칠 못하고…"*
+  //          갈래가 다르다: **스티커 = 손에 남겨두는 것 / 카드 스킨 = 한정이라 계절이 바뀌면 갈아탄다.**
+  //       ⛔⛔ **내가 여기서 두 번 틀렸다** — ①`SEASON_AT`(월 기준)만 읽고 「9/1에 빠진다」고 단정
+  //          (`isSeason` 을 안 돌렸다) ②그래서 이 주석을 「낡았다」며 고쳤다가 되돌렸다.
+  //          📌 상수만 보고 함수의 답을 짐작하지 말 것 — 겹침 로직이 그 위에 한 겹 더 있었다(규칙 18).
   // ⭐ **뼈대 6종은 항상 같고, 옷만 계절마다 갈아입는다**(위 옷장 주석 참고).
   //    그래서 "기본 카드 / 계절 카드" 구분이 없다 — 9월엔 6장이 전부 가을 옷이다.
   //    카드 수가 안 늘어 뽑기 확률도 안 묽어진다(6장 = 각 17%).
@@ -146,7 +153,9 @@ function drawState() {
   const seasonOpen = (k) => SEASON_CUTS.some((s) => s.key === k && inCardWindow(s))
   const hwOpen = seasonOpen('hw'), csOpen = seasonOpen('cs')
   const pool = ['warm', 'panel', 'pola', 'mag', 'arch', 'night',
-    ...(isSeason('summer') ? ['summer'] : []),
+    // 🍂 `isPeakSeason` = 전환기 겹침을 «안» 센다 → **9/1 에 여름 스킨이 바로 빠진다**
+    //    (창업자 확정 2026-08-29 = *"9월1일에 빼야지 가을시작이니까."* · ⛔`isSeason` 이면 9/14 까지 남는다)
+    ...(isPeakSeason('summer') ? ['summer'] : []),
     ...(hwOpen ? ['halloween'] : []), ...(csOpen ? ['chuseok'] : [])]
   const key = (() => {
     try { const v = new URLSearchParams(location.search).get('card'); if (v && SKINS[v]) return v } catch { /* noop */ }
@@ -859,7 +868,7 @@ export function RecipeCard({ recipe }) {
   )
 }
 
-export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
+export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }) {
   // ⛔⛔ **뒤로가기가 이 카드를 못 보고 «홈»으로 샜다** (창업자 2026-08-23
   //    *"레꾸자랑 갑자기 홈가는게 뒤로가기할때야. 닫기누르면 그대로있어"*)
   //   ⭐⭐ 창업자가 「닫기 ↔ 뒤로가기」로 갈라준 게 답을 줬다 —
@@ -884,6 +893,8 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   const [page, setPage] = useState(1)
   const [scale, setScale] = useState(0.3)
   const [ready, setReady] = useState(null) // 📮 다 만들었는데 허가가 끊긴 카드 — 「지금 보내기」 버튼용
+  // 📱 [2026-08-28 ⓑ] 카드 한 장이 나갔고 «레시피 한 장»이 남았다 — 「레시피도 보내기」로 따로 보낸다
+  const [남은레시피, set남은레시피] = useState(null)
   // 레시피 내용(재료·단계)이 있어야 2장째(레시피카드)를 붙인다. 없으면 1장만.
   const hasRecipe = !!((recipe?.ingredients || []).length || (recipe?.steps || []).length)
 
@@ -974,13 +985,45 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
   }
 
   // ⭐ 준비돼 있으면 **await 없이 곧바로** 공유창을 연다 — 사이에 기다림을 두면 허가가 깨진다.
+  //
+  // 🎴 [2026-08-27] 공유가 «성공한» 순간에 `onShared` 를 부른다 — 한마디 청하기(㉠)의 방아쇠다.
+  //    ⭐⭐ **여기 «한 곳»만 감싼다.** 공유가 성공하는 자리가 셋인데(빠른 길 · 느린 길 · 「지금 보내기」)
+  //       셋 다 이 `go()` 가 돌려준 약속을 쓴다. 부르는 쪽마다 붙이면 **언젠가 하나를 빠뜨린다.**
+  //    ⛔ `AbortError`(유저가 공유창을 닫음)면 `.then` 이 안 돈다 — **안 보낸 사람에게는 안 청한다.**
+  //
+  // 📱📱📱 **[창업자 확정 2026-08-28 · ⓑ] «한 장씩» 보낸다 — ⛔두 장을 한 번에 넘기지 않는다.**
+  //    📮 창업자 = *"내꾸, 레꾸 **둘다 저렇게 작게떠.** … **폰처럼 한장씩 따로따로는 못들어가?**"* → **"ㄴ으로 하자"**
+  //    🔎 뿌리 = 여기서 `share({files:[카드, 레시피]})` 로 두 장을 한 번에 넘겨, 받는 앱(카톡)이
+  //       **앨범 격자**로 묶어 한 칸씩 작게 그렸다.
+  //    ⭐ 폰에서 커 보였던 건 폰이 나아서가 아니라 **두 장 공유가 안 되는 폰이라 아랫줄 폴백으로
+  //       한 장만 갔기** 때문이다 — 그 폴백이 이제 «기본»이 됐고, 갈림길 자체가 사라졌다.
+  //    ⛔ 문구의 「· 재료·레시피 같이!」도 뺐다 — 한 장만 가는데 그렇게 적으면 거짓말이다.
+  //    ⭐ 남은 레시피는 **버리지 않는다** — `남은레시피` 에 담아 아래 시트가 한 번 더 청한다.
+  //       ⛔ 여기서 이어서 또 `share` 를 부르면 안 된다 — 허가(user activation)가 이미 소진돼 폰이 거절한다.
   const go = useCallback((files) => {
-    const text = (n) => `『${title}』 오늘의 한 끼 🧡${n > 1 ? ' · 재료·레시피 같이!' : ''}\nPlay스토어에서 '한끼' 검색 🔍`
     if (!(navigator.canShare && navigator.share)) return null
-    if (navigator.canShare({ files })) return navigator.share({ files, title, text: text(files.length), url: APP_URL })
-    if (files.length > 1 && navigator.canShare({ files: [files[0]] })) return navigator.share({ files: [files[0]], title, text: text(1), url: APP_URL })
-    return null
-  }, [title])
+    const 표지 = [files[0]]
+    const 레시피 = files.length > 1 ? files[1] : null
+    if (!navigator.canShare({ files: 표지 })) return null
+    return navigator
+      .share({ files: 표지, title, text: `『${title}』 오늘의 한 끼 🧡\nPlay스토어에서 '한끼' 검색 🔍`, url: APP_URL })
+      .then((v) => { onShared?.(); if (레시피) set남은레시피(레시피); return v })
+  }, [title, onShared])
+
+  // 📱 남은 레시피 한 장을 «따로» 보낸다 — 이 버튼이 «새 터치»라 허가가 살아 있다.
+  const 레시피보내기 = useCallback(() => {
+    const f = 남은레시피
+    if (!f) return
+    const opt = { files: [f], title, text: `『${title}』 재료·만드는 법이에요 🍳\nPlay스토어에서 '한끼' 검색 🔍`, url: APP_URL }
+    if (navigator.canShare && navigator.share && navigator.canShare({ files: [f] })) {
+      navigator.share(opt)
+        .then(() => set남은레시피(null))
+        .catch((e) => { if (e && e.name === 'AbortError') set남은레시피(null) })
+      return
+    }
+    saveFile(f) // 이 폰은 파일 공유 자체가 안 된다
+    set남은레시피(null)
+  }, [남은레시피, title])
 
   // 📮📮 **「지금 보내기」 — 2026-08-05 창업자 제보의 답.**
   //   창업자 *"이번엔 둘다 (다운로드로 떨어진다)"* · *"너무오래걸려서 저렇게뜨는거같애"* — 맞다.
@@ -1110,6 +1153,30 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
           </button>
         </div>
       )}
+      {/* 📱 [2026-08-28 ⓑ] 카드 한 장이 나갔다 → 레시피 한 장을 «따로» 보낼지 청한다.
+          📮 창업자 = *"폰처럼 한장씩 따로따로는 못들어가?"* → **"ㄴ으로 하자"**
+          ⛔ `ready`(허가 끊김)와 겹치지 않게 막아 둔다 — 둘 다 z-index 310 이라 겹치면 뭐가 뭔지 모른다.
+          ⛔ 여기엔 «사진으로 저장»을 안 붙였다 — 방금 보낸 사람에게 물을 건 「한 장 더 보낼까」뿐이다. */}
+      {남은레시피 && !ready && !busy && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{ position: 'fixed', inset: 0, zIndex: 310, background: 'rgba(30,26,22,.62)', backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24 }}
+        >
+          <img src={uiDuoHi} alt="" draggable={false} style={{ width: 64, height: 64, objectFit: 'contain' }} />
+          <div style={{ color: '#fff', fontSize: 16.5, fontWeight: 800 }}>카드를 보냈어요</div>
+          <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, textAlign: 'center', lineHeight: 1.5 }}>
+            재료·만드는 법도 한 장 더 있어요.<br />따로 보내야 크게 보여요.
+          </div>
+          <button className="press" onClick={레시피보내기}
+            style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, padding: '15px 34px', borderRadius: 999, background: '#fffdf8', color: '#5d3410', fontWeight: 800, fontSize: 16, border: 'none' }}>
+            <Icon name="share" size={18} stroke={2.2} />레시피도 보내기
+          </button>
+          <button className="press" onClick={() => set남은레시피(null)}
+            style={{ padding: '9px 18px', background: 'transparent', color: 'rgba(255,255,255,.85)', fontSize: 13.5, fontWeight: 700, border: 'none' }}>
+            괜찮아요
+          </button>
+        </div>
+      )}
       <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {/* 미리보기(스케일). 두 장 다 렌더(캡처용) — 안 보는 장은 opacity 0(랩퍼에만). 캡처 ref는 원본 카드에. */}
         <div style={{ width: 1080 * scale, height: 1350 * scale, position: 'relative', borderRadius: 18, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,.4)' }}>
@@ -1129,7 +1196,9 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover }) {
         )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 12.5, color: 'rgba(255,255,255,.82)', marginTop: 9 }}>
           {hasRecipe
-            ? <>공유하면 2장(카드+레시피)이 함께 가요<img src={uiDuoHi} alt="" draggable={false} style={{ width: 24, height: 24, objectFit: 'contain' }} /></>
+            /* 📱 [2026-08-28 ⓑ] 옛 글 = 「공유하면 2장(카드+레시피)이 «함께» 가요」 → 이제 **거짓말**이다.
+               한 장씩 따로 보낸다(창업자 "ㄴ으로 하자"). ⛔되는 척하는 글자를 남기지 않는다(v11.19 「링크 정직」). */
+            ? <>카드 먼저, 레시피는 한 장 더 보내요<img src={uiDuoHi} alt="" draggable={false} style={{ width: 24, height: 24, objectFit: 'contain' }} /></>
             : <><Icon name="refresh" size={14} stroke={2} />다시 뽑기로 마음에 들 때까지</>}
         </div>
         {/* 버튼 */}

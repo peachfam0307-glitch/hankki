@@ -12,6 +12,8 @@ import { matchKo } from '../utils'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
 import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
+import ReviewAskSheet from '../components/ReviewAskSheet'
+import { shouldAskReviewNow } from '../nudges'
 import { useLayerBack } from '../useBackHandler'
 // 🐻 UI 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지)
 import uiGomHeart from '../assets/ui/gom_heart.png'
@@ -48,6 +50,12 @@ export default function BragScreen() {
   const [share, setShare] = useState(null) // 랜덤 카드 모달로 보낼 레시피
   const [busy, setBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩 표시)
   const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
+  // 🎴 한마디 청하기(㉠ · 창업자 확정 2026-08-27) — 자랑 카드를 «보낸 뒤 카드를 닫는» 순간에 뜬다.
+  //   ⛔ 보내자마자 겹쳐 띄우지 않는다 — 카드가 아직 떠 있어 **시트 위에 시트**가 된다.
+  //   ⛔ 카드를 우리가 대신 닫지도 않는다 — 「표지로 저장」이 아직 거기 있다. **뺏지 않는다.**
+  //   ⭐ `useModalBack(onClose)` 덕에 뒤로가기로 닫아도 `onClose` 를 타므로 새는 길이 없다.
+  const [askReview, setAskReview] = useState(null) // 머리글 글자를 담는다(null = 안 뜸)
+  const 자랑보냄 = useRef(false)
   const [coach, setCoach] = useState(() => needsCoach(BRAG_COACH_KEY))
   const coverRef = useRef(null) // 꾸민 표지 캡처용(화면 밖 숨은 레이어)
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
@@ -115,6 +123,9 @@ export default function BragScreen() {
     setBusy(true) // 로딩 오버레이(먹통처럼 안 보이게)
     const info = infoOf(r)
     await new Promise((res) => setTimeout(res, 60)) // 숨은 표지 레이아웃(글자 크기 기준 폭)이 잡힐 시간
+    // 📱 [2026-08-28 ⓑ] 시트를 띄우게 되면 «리뷰는 그 시트가 닫힐 때» 청한다.
+    //    ⛔ 아래 `finally` 에서 바로 청하면 **시트 위에 시트가 겹친다**(2026-08-27 에 지킨 것 ⑴).
+    let 띄울시트 = null
     try {
       // 재료·만드는 법이 있으면 레시피카드도 2장째로 함께(친구가 진짜 해먹게)
       // ⭐ 미리 캡처가 다 됐으면 여기서 «기다림 없이» 공유창이 열린다
@@ -122,12 +133,30 @@ export default function BragScreen() {
       // ⛔ 공유가 «저장»으로 떨어지면 그 이유를 말해준다 — 창업자 2026-08-03
       //    *"내 레시피꾸민거 보내려고하면 다운로드하라고 뜨고"*. 갑자기 다운로드 창이 뜨면
       //    유저는 «고장»으로 읽는다. 저장된 것 자체는 정상 동작이니 **한 줄만 붙이면 오해가 안 생긴다.**
-      if (res && res.pending) setPending(res.pending)   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
+      if (res && res.pending) 띄울시트 = res.pending   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
+      // 📱 표지가 나갔고 레시피가 한 장 남았다 → 「레시피도 보내기」를 한 번 더 청한다(창업자 "ㄴ으로 하자")
+      else if (res && res.shared === true && res.다음) 띄울시트 = { ...res.다음, 이어보내기: true }
       else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
+      // 🗣🗣 **여기가 빠져 있었다** — 창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 «아예» 못봤어"*
+      //   ⛔⛔ 리뷰 청하기가 «랜덤 카드» 길에만 붙어 있었다(`ShareDrawCard` 의 `onShared`).
+      //      그런데 이 화면의 «주인공» 단추는 「내가 꾸민 표지 그대로」(갈색·맨 위)다 —
+      //      **보통 유저가 누르는 그 길에서는 리뷰창이 영영 안 떴다.**
+      //   📌 2026-08-27 판 주석에 *"공유 성공 자리가 셋인데 셋 다 그 약속을 쓴다"* 라고 적었는데
+      //      그 「셋」은 **`ShareDrawCard` «안»의 셋**이었다. `sendCover` 는 그 컴포넌트를 안 거친다.
+      //      ⭐ 「한 곳만 감쌌다」는 말이 맞으려면 **그 한 곳을 모든 길이 지나가야** 한다.
+      //   ✅ 조건 = **`shared === true` 일 때만**(`shareCover.js` 206·210줄).
+      //      취소(AbortError)·사진 저장·허가 끊김은 전부 `shared: false` 라 저절로 걸러진다.
+      if (res && res.shared === true) 자랑보냄.current = true
     } finally {
       setBusy(false)
       setPick(null)
+      // ⛔ 시트를 닫은 «뒤»에 띄운다 — 시트 위에 시트를 겹치지 않는다(2026-08-27 에 지킨 것 ⑴)
+      if (띄울시트) setPending(띄울시트) // 📱 리뷰는 이 시트의 `onClose` 가 청한다(아래)
+      else {
+        if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+        자랑보냄.current = false
+      }
     }
   }
 
@@ -255,19 +284,41 @@ export default function BragScreen() {
         </Portal>
       )}
 
-      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다 */}
-      <SendNowSheet pending={pending} onClose={() => setPending(null)} />
+      {/* 📮 표지가 다 됐는데 공유 허가가 끊긴 경우 — 한 번 더 누르면 진짜로 나간다
+          🗣 [2026-08-28] 여기서 «진짜로» 나갔을 때도 한마디를 청한다 — 이 길이 빠져 있었다.
+             ⛔ `sendCover` 의 `finally` 는 이 시트가 뜨는 순간 이미 지나갔다 → 거기선 못 잡는다.
+             ⭐ 랜덤 카드(`ShareDrawCard`)와 «같은 모양»으로 맞췄다 — 보낼 때 표시하고, 닫을 때 청한다. */}
+      <SendNowSheet
+        pending={pending}
+        onShared={() => { 자랑보냄.current = true }}
+        onClose={(다음) => {
+          // 📱 [2026-08-28 ⓑ] 「지금 보내기」로 표지가 나갔고 레시피가 남았으면 **한 장 더**를 먼저 청한다.
+          //    ⛔ 리뷰는 그다음이다 — 시트 위에 시트를 겹치지 않는다.
+          if (다음) { setPending({ ...다음, 이어보내기: true }); return }
+          setPending(null)
+          if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+          자랑보냄.current = false
+        }}
+      />
 
       {/* 랜덤 카드 모달 — 공유(💌) + 표지로 저장(🖼) */}
       {share && (
         <Portal>
           <ShareDrawCard
             recipe={share}
-            onClose={() => setShare(null)}
+            onShared={() => { 자랑보냄.current = true }}
+            onClose={() => {
+              setShare(null)
+              if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+              자랑보냄.current = false
+            }}
             onSaveCover={(img) => { const 말 = 카드표지토스트(share); updateRecipe(share.id, 카드표지로(img)); nav.showToast(말) }}
           />
         </Portal>
       )}
+
+      {/* 🗣 한마디 청하기 — 시트가 스스로 '물어봤음'을 남겨서 어떻게 닫아도 다시 안 묻는다 */}
+      {askReview && <ReviewAskSheet title={askReview} onClose={() => setAskReview(null)} />}
 
       {/* 이미지 만드는 중 로딩 오버레이 — 캡처(표지+레시피)에 몇 초 걸려도 먹통처럼 안 보이게 */}
       {busy && (

@@ -74,7 +74,10 @@ const 재기 = (page) => page.evaluate(() => {
 
   // 🧍‍♀️ 상단바 캐릭터 = 왼쪽 첫 그림(꼬르곰·펭펭) 또는 아바타 단추(홈).
   //    ⛔ 「캐릭터는 무조건 글자 왼쪽」이 확정이라(2026-08-14 · check-charside) 늘 첫 번째다.
-  const 캐 = 바.querySelector('img') || 바.querySelector('button[aria-label="프로필"]')
+  // ⛔ 2026-08-30 — 홈은 상단바에  가 «없고»(아바타는 글자 배지 div) 그래서 옛 잣대가
+  //    44px 손가락 «칸»을 쟀다. 칸은 아바타를 키워도 그대로라 **변화를 아예 못 본다**(규칙 18 ⓘ).
+  //    ✅ 칸이 아니라 «칸 안의 그림»을 잰다.
+  const 캐 = 바.querySelector('img') || 바.querySelector('button[aria-label="프로필"]')?.firstElementChild
   const cr = 캐?.getBoundingClientRect()
   const mr = 말.getBoundingClientRect()
   const tr = 꼬리.getBoundingClientRect()
@@ -87,7 +90,12 @@ const 재기 = (page) => page.evaluate(() => {
 
   return {
     대사: 말.textContent.trim(),
-    아래로갔나: +(mr.top - br.bottom).toFixed(1),      // 0 이상이라야 «아래»다
+    아래로갔나: +(mr.top - br.bottom).toFixed(1),      // 참고값 — 판정엔 안 쓴다(아래 「캐릭터아래」)
+    // ⭐ 2026-08-30 — 진짜 잣대는 **「캐릭터 아래에 있고 안 겹치나」**다.
+    //    ⛔ 옛 잣대(상단바 아래 0 이상)는 **상단바 하단이 캐릭터보다 아래라서**
+    //       0 을 지키면 말풍선이 캐릭터에서 반드시 12px 넘게 떨어진다 → 꼬리가 안 닿는다.
+    //       창업자가 *"넘 아래로 내려와있어"* 라고 한 게 바로 그 상태였다(2026-08-30).
+    캐릭터아래: cr ? +(mr.top - cr.bottom).toFixed(1) : null,
     말풍선왼쪽: +mr.left.toFixed(1),
     말풍선키: +mr.height.toFixed(1),
     캐릭터중심: cr ? +(cr.left + cr.width / 2).toFixed(1) : null,
@@ -142,14 +150,17 @@ for (const 테마 of ['greige', 'dark', 'cream']) {
     const 대비 = v.바탕색 ? 대비율(v.글자색, v.말풍선색) : null
     const 판정 = []
     if (v.대사 !== 탭.기대) { 판정.push(`대사가 다르다(${v.대사})`); 실패++ }
-    if (v.아래로갔나 < 0) { 판정.push(`상단바 «옆»에 붙었다(${v.아래로갔나})`); 실패++ }
+    // ⛔ 옛 잣대 `v.아래로갔나 < 0` 은 **창업자 확정(2026-08-30 시안 B = −2px)을 죽인다** → 갈아탔다.
+    //    ✅ 지키려는 것 = 「말풍선이 캐릭터 «아래»에 있고 캐릭터를 «안 가린다»」.
+    //       0 미만이면 캐릭터를 파고들어 곰 발이 가려진다(시안 C·D 를 실물로 견줘서 접은 이유).
+    if (v.캐릭터아래 != null && v.캐릭터아래 < 0) { 판정.push(`캐릭터를 가린다(${v.캐릭터아래})`); 실패++ }
     if (v.꼬리가위로 <= 0) { 판정.push('꼬리가 위로 안 솟았다'); 실패++ }
     if (어긋 != null && Math.abs(어긋) > 12) { 판정.push(`꼬리가 캐릭터를 안 가리킨다(${어긋}px)`); 실패++ }
     if (v.말풍선넘침 > 0) { 판정.push(`말풍선이 화면 밖으로 ${v.말풍선넘침}px`); 실패++ }
     if (대비 != null && 대비 < 3) { 판정.push(`대비 ${대비} (3 미만)`); 실패++ }
     if (오류.length) { 판정.push(`pageerror ${오류.length}`); 실패++ }
 
-    표.push({ 이름, 대사: v.대사, 아래로: v.아래로갔나, 꼬리어긋: 어긋, 줄높이: v.줄높이, 대비, 덮: 덮 || '-', 판정: 판정.length ? '⛔ ' + 판정.join(' · ') : '✅' })
+    표.push({ 이름, 대사: v.대사, 아래로: v.아래로갔나, 캐아래: v.캐릭터아래, 꼬리어긋: 어긋, 줄높이: v.줄높이, 대비, 덮: 덮 || '-', 판정: 판정.length ? '⛔ ' + 판정.join(' · ') : '✅' })
 
     await page.screenshot({ path: join(OUT, `${이름}.png`) })
     // 🔍 꼬리·캐릭터를 눈으로도 볼 수 있게 위쪽만 크게 (숫자만 믿지 않는다)

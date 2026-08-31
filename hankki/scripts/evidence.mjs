@@ -42,11 +42,13 @@ const OUTSIDE = [
   ['사업자|세무|홈택스|통신판매|건보|부가세', '국세청·정부 민원 화면'],
   ['pg|토스|포트원|정산|계좌|결제', 'PG 관리자 화면'],
   ['특허로|kipris|출원|상표|등록료', '특허청 화면'],
-  ['유튜브|팔로워|구독자|인스타', '창업자 계정 화면'],
+  // ⚠️ 2026-08-27 좁혔다 — 「유튜브」한 낱말이 «공개 약관 문서» 주제까지 잡아
+  //    창업자에게 «있지도 않은 계정 화면 캡처»를 요구했다. 이 칸이 노리는 건 «우리 계정의 숫자»다.
+  ['팔로워|구독자|인스타|유튜브 채널|유튜브 계정|조회수', '창업자 계정 화면'],
 ]
 
 // 공식·원문으로 쳐주는 곳. ⚠️ 개인 블로그·요약글은 **근거가 아니다**(오늘 새벽 네이버가 그거였다).
-const OFFICIAL = /(support\.google\.com|developer\.android\.com|play\.google\.com|android-developers|\.go\.kr|law\.go\.kr|kipris|ftc\.go\.kr|partners\.coupang\.com|kurly\.com|naver\.com|apple\.com|w3\.org|developer\.mozilla)/i
+const OFFICIAL = /(support\.google\.com|developer\.android\.com|play\.google\.com|developers\.google\.com|youtube\.com\/t\/|android-developers|\.go\.kr|law\.go\.kr|kipris|ftc\.go\.kr|partners\.coupang\.com|kurly\.com|naver\.com|apple\.com|w3\.org|developer\.mozilla)/i
 
 const KINDS = ['창업자행동', '내작업', '사실보고']
 

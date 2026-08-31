@@ -22,6 +22,9 @@
 import { WEEKLY, HOMEMADE } from './weekly'
 import { STICKER_GROUPS, PHOTO_IDS } from '../components/Stickers'
 import { SEASON_CUTS } from './cardSeasons'
+// 🛒 [2026-08-29] 주부의 장바구니 — ⛔**걸러진 `CURATION`** 을 쓴다. `CURATION_ALL`(원본) 금지.
+//    원본을 보면 «아직 안 열린» 제품이 소식에 새어 나간다(v11.00 「한살림」이 넷으로 샜던 그 모양).
+import { CURATION } from './curation'
 
 // ⏰ 오늘(KST). ⚠️ **함수로 둔다** — 모듈 상수로 굳히면 앱을 켜둔 채 자정을 넘길 때 안 바뀐다
 //    (`ShareDrawCard` 의 `seasonCuts` 가 상수 아닌 함수인 것과 같은 이유).
@@ -50,10 +53,26 @@ const PEEK = 5
 //   ⚠️ 개수(`count`)는 줄이지 않는다 — 그건 «몇 컷 열리나»라 그림 유무와 상관없다.
 const drawable = (keys = []) => keys.filter((k) => PHOTO_IDS.has(k))
 
+// 🎁🎁 **그달 선물은 «전부» 보여준다** (창업자 2026-08-30
+//   *"가을의정원접시세트도 특별한 선물로 한 줄적어줘. 안내판에 그달 주는 선물 이미지가 다들어가면 좋겠는데..."*)
+//   ⭐ 위 `PEEK`(5컷)는 **광고용 맛보기**라 일부러 잘라 보여준다.
+//      선물은 성격이 다르다 — **「이만큼 드려요」가 곧 값어치**라 자르면 그만큼 덜 준 것처럼 보인다.
+//   ⛔ 그래서 `peek` 를 늘리지 «않고» 선물용 목록을 따로 둔다. 둘을 한 값으로 합치면
+//      선물 아닌 그룹까지 다 펼쳐져 안내가 목록이 된다(위 `PEEK` 주석의 이유가 그대로 살아 있다).
+//   ⚠️ 그래도 상한은 둔다 — 언젠가 30컷짜리 선물이 오면 팝업이 화면을 넘긴다.
+const GIFT_MAX = 12
+
 function gates() {
   const drawer = STICKER_GROUPS
     .filter((g) => g.from && g.items?.length)
-    .map((g) => ({ when: g.from, kind: '꾸미기', title: g.label, count: g.items.length, peek: drawable(g.items).slice(0, PEEK), tab: g.tab, season: g.season }))
+    .map((g) => ({
+      when: g.from, kind: '꾸미기', title: g.label, count: g.items.length,
+      peek: drawable(g.items).slice(0, PEEK), tab: g.tab, season: g.season,
+      // 🎁 `gift`·`giftLabel` 은 서랍이 쓰는 «그 필드»를 그대로 읽는다(⛔이름을 따로 적지 않는다).
+      // 💬 `hint` = 서랍에 뜨는 «쓰는 법» 한 줄. 창업자 2026-08-30 = *"접시 사용법도 아래 적어줘"*
+      //    ⭐ 문구를 여기 새로 쓰지 «않는다» — 서랍과 안내가 갈리면 둘 중 하나가 낡는다.
+      ...(g.gift ? { gift: true, giftLabel: g.giftLabel || '선물', hint: g.hint, giftKeys: drawable(g.items).slice(0, GIFT_MAX) } : {}),
+    }))
   const cards = SEASON_CUTS
     .filter((s) => s.from)
     .map((s) => {
@@ -62,6 +81,51 @@ function gates() {
     })
     .filter((c) => c.count > 0)
   return [...drawer, ...cards].sort((a, b) => a.when.localeCompare(b.when))
+}
+
+// 🛒🛒 **주부의 장바구니 — 소식에 «띄우되» 조용히** (창업자 확정 2026-08-29)
+//   📮 창업자 원문 = *"**소식에 띄우자. 대신 아래 나중에. 곧 안내하는거에서 빼면되겠다**"*
+//
+//   ⭐⭐ 그래서 «층»을 갈랐다 — 이 한 줄이 설계 전부다:
+//      ✅ **소식 페이지 목록**엔 나온다 — 맨 «아래»에
+//      ⛔ **알림 층엔 안 나온다** = 「곧 열려요」 · 홈 「새로」 뱃지 · 홈 한 줄 · 새 소식 팝업
+//         (아래 `openedAlert` 가 그걸 맡는다)
+//
+//   ⛔ **`gates()` 에 «안» 넣는 것이 핵심이다** — `gates()` 는 `opened` 와 `upcoming` 을 «둘 다» 먹인다.
+//      거기 넣으면 「곧 열려요」에 저절로 딸려 들어간다. 여기서 `opened` 에만 `push` 하면
+//      ⑴「곧 열려요」에서 빠지고 ⑵`push` 라서 맨 아래로 간다 — **창업자 말 두 가지가 한 번에 지켜진다.**
+//
+//   ⏳ **「방금」의 길이가 «7일»이다** — 위 `FRESH_DAYS`(21일)와 «일부러» 다르다.
+//      꾸미기는 «달마다» 열려 21일이라야 한 번은 보지만, 장바구니는 **주마다** 열린다.
+//      21일로 두면 세 줄이 쌓여 「아래에 조용히」가 깨진다. 주기가 다르면 창도 달라야 한다.
+const CART_FRESH_DAYS = 7
+export const CART_KIND = '장바구니'
+
+// 🔢🔢 **세는 말 — 한 곳에서만 정한다** (창업자 확정 2026-08-30
+//    *"레시피는 편이 맞아. 나머지는 종으로 통일하자(종을 붙였을때 자연스러운 것만)"*)
+//    ⭐ 「종」 = 가짓수. 접시 4개는 서로 «다른 물건»이지 한 그림의 조각이 아니다.
+//       ⛔ 「컷」은 우리끼리 자산 셀 때 쓰는 말이라 유저 눈엔 낯설다(자르기·검수 용어).
+//    ⭐ 레시피만 「편」 — 「레시피 2종」은 어색하고 「2편」이 우리가 늘 쓰는 말이다.
+//    ⛔ 컴포넌트마다 따로 적지 않는다 — 팝업과 소식 페이지가 갈리면 한쪽이 낡는다
+//       (「책갈피」 이름이 일곱 곳이라 말이 갈라졌던 v11.02 와 같은 자리).
+const UNIT = { '이번 주 레시피': '편', '우리집레시피': '편' }
+export const unitOf = (kind) => UNIT[kind] || '종'
+
+function cartOpened(today) {
+  const 날짜별 = new Map()
+  for (const g of CURATION) {
+    for (const it of g.items || []) {
+      if (!it.from || it.from > today || days(it.from, today) > CART_FRESH_DAYS) continue
+      const 이름 = it.brand ? `${it.brand} ${it.name}` : it.name
+      날짜별.set(it.from, [...(날짜별.get(it.from) || []), 이름])
+    }
+  }
+  return [...날짜별]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([when, 이름들]) => ({
+      when, kind: CART_KIND, title: '새로 담은 살림템',
+      count: 이름들.length, why: 이름들.join(' · '),
+    }))
 }
 
 // 🍂 한 날짜에 열리는 것들을 «한 마디»로 — 팝업 제목에 쓴다.
@@ -76,15 +140,23 @@ export function headline(items = []) {
   const n = items.reduce((s, i) => s + i.count, 0)
   const onlyWeek = items.every((i) => i.kind === '이번 주 레시피')
   if (onlyWeek) return { title: '이번 주 레시피가 올라왔어요', sub: items[0]?.title || '' }
+  // 🎴 꾸미기가 하나도 안 열리고 카드만 열리는 달이 있다(12/1 = 크리스마스 카드 2컷).
+  //    ⛔ 그때 「새 꾸미기가 열렸어요」라고 하면 서랍을 열어보고 아무것도 없어 «고장»으로 읽힌다.
+  if (items.length && items.every((i) => i.kind === '레꾸자랑 카드')) {
+    return { title: '레꾸자랑 카드가 새로 나왔어요', sub: `${n}종 · 전부 무료예요` }
+  }
 
   const seasons = [...new Set(items.map((i) => i.season).filter(Boolean))]
   const ko = seasons.length === 1 ? SEASON_KO[seasons[0]] : null
   const debut = NEW_FRIENDS.find((f) => items.some((i) => (i.title || '').includes(f))) || null
+  // 🎁 그달 선물 — 여럿이면 «새로 온 것» 하나만 짚는다(둘을 나란히 놓으면 특별해 보이지 않는다).
+  const gift = items.filter((i) => i.gift).sort((a, b) => String(b.when).localeCompare(String(a.when)))[0] || null
 
   return {
     title: ko ? `꾸미기에 ${ko}이 왔어요` : '새 꾸미기가 열렸어요',
-    sub: `${n}컷 · 전부 무료예요`,
+    sub: `${n}종 · 전부 무료예요`,
     debut,
+    gift,
   }
 }
 
@@ -161,9 +233,19 @@ export function whatsNew(today = todayKST()) {
     }
   }
 
+  // 🛒 장바구니는 **맨 아래**(`push`) — 창업자 *"대신 아래 나중에"*
+  //    ⛔ 위 `opened` 는 `unshift` 로 레시피가 앞에 붙는다. 여기서 `push` 라서 자연히 꼬리가 된다.
+  opened.push(...cartOpened(today))
+
   return {
     today,
     opened,
+    // 🔔 **알림 층이 쓰는 목록** — 소식 페이지 «본문»만 위 `opened`(전체)를 쓴다.
+    //   ⛔ 장바구니는 «주마다» 열려서 알림에 넣으면 홈 「새로」 뱃지가 **늘 켜져 있다.**
+    //      이 파일 옆 `HomeScreen` 주석에 우리가 이미 적어둔 원칙 = *"늘 떠 있으면 아무도 안 본다."*
+    //   ⛔ 팝업도 마찬가지다 — 9/1 꾸미기로 한 번 뜬 팝업이 9/5 장바구니 때문에 **또** 뜬다
+    //      (`newsSignature` 가 달라져서). 같은 소식을 두 번 보여주는 셈이다.
+    openedAlert: opened.filter((o) => o.kind !== CART_KIND),
     upcoming: upcoming.length ? { when, dday: days(today, when), items: upcoming } : null,
   }
 }
@@ -172,6 +254,8 @@ export function whatsNew(today = todayKST()) {
 //   ⭐ 날짜＋제목으로 만든다 → 같은 소식이면 절대 두 번 안 뜨고,
 //      새 소식이 열리면 값이 달라져 «그때 한 번» 뜬다.
 //   ⛔ 날짜만 쓰면 안 된다 — 같은 날 두 가지가 열릴 때 하나만 보고 넘어간다.
+//   ⛔ [2026-08-29] **장바구니는 뺀다**(`openedAlert`) — 주마다 열려서 넣으면
+//      「9/1 꾸미기」 팝업이 9/5·9/12 에 **똑같은 내용으로 또** 뜬다(값만 달라지니까).
 export const newsSignature = (news) =>
-  (news?.opened || []).map((o) => `${o.when}:${o.title}`).join('|')
+  (news?.openedAlert || []).map((o) => `${o.when}:${o.title}`).join('|')
 

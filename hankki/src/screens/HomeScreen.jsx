@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef } from 'react'
 import { COACH } from '../coach'
+import { todayKST } from '../today'
 import { nextUpList } from '../nextUp'
 import OneLineSheet from '../components/OneLineSheet'
 import { useStore } from '../store'
@@ -107,7 +108,18 @@ export default function HomeScreen() {
   // 📔 diary = 「만들었어요」가 쌓는 요리 일기 — 「한 줄 안 쓴 것」을 세는 데 쓴다(`nextUp.js`)
   const { recipes, profile, pantry, diary, removeRecipe } = useStore()
   const nav = useNav()
-  const [pick, setPick] = useState(0)
+  // 🗓🗓 「오늘 뭐 해먹지」를 **날짜로 돌린다** (창업자 확정 2026-08-28 = *"날짜로 돌리자"*)
+  //
+  // ⛔⛔ **이름이 「오늘」인데 날짜로 안 바뀌고 있었다.** `useState(0)` 이라 늘 맨 앞 하나였고,
+  //    앱을 껐다 켜면 「다른 추천」으로 넘긴 것도 도로 처음으로 왔다. **매일 같은 게 떴다.**
+  // 📮 경위 = 창업자 = *"월요일로 맞추면 일주일간 너무 암것도 없이 조용하지 않아?"*
+  //    → 재보니 저절로 바뀌는 건 **월(제철·우리집레시피) · 목(장바구니)** 둘뿐이었고,
+  //       정작 「오늘」이라는 카드가 안 바뀌고 있었다.
+  // ⛔ 「상위 몇 개 안에서만 돌리기」는 접었다 — 창업자 = *"냉장고에 암것도 없으면 똑같은거만 보니까.."*
+  //    맞다. 냉장고가 비면 목록이 «전체»가 되는데 그 상위 N개는 고정이라 그게 그거다.
+  // ⭐ 「다른 추천」 단추는 그대로다 — 오늘 것에서 «한 칸씩» 더 넘긴다.
+  // ⛔ 날짜는 `todayKST()` 로만 받는다(절대원칙 27) — 여기서 만들지 않는다.
+  const [pick, setPick] = useState(() => Math.floor(Date.parse(`${todayKST()}T00:00:00Z`) / 86400000))
   const [preview, setPreview] = useState(false)
   // 최근 저장 카드 길게 눌러 삭제 — 지우려고 상세까지 들어가 ⋯메뉴를 여는 게 번거롭다(창업자 요청).
   const [delAsk, setDelAsk] = useState(null) // 삭제 확인 중인 레시피
@@ -149,7 +161,10 @@ export default function HomeScreen() {
   //    새로 열린 게 있으면 그걸 먼저 말하고, 없으면 다음에 열릴 것을, 그것도 없으면 예고 목록을 말한다.
   const news = useMemo(() => whatsNew(), [])
   const newsLine = useMemo(() => {
-    const o = news.opened
+    // ⛔ [2026-08-29] `openedAlert` = **장바구니가 빠진 목록**(창업자 *"대신 아래 나중에"*).
+    //    장바구니는 «주마다» 열려서 이 줄에 넣으면 홈이 늘 장바구니 얘기만 한다.
+    //    소식 페이지를 열면 맨 아래에 있다 — 거기서 보면 된다.
+    const o = news.openedAlert
     if (o.length) {
       const head = `${o[0].title} ${o[0].count}개 새로 열렸어요`
       return o.length > 1 ? `${head} 외 ${o.length - 1}건` : head
@@ -182,10 +197,42 @@ export default function HomeScreen() {
       .filter((x) => x.n > 0)
       .sort((a, b) => b.n - a.n)
     if (withPantry.length) return { list: withPantry.map((x) => x.r), fromFridge: true }
-    const cooked = pool.filter((r) => (r.cooked || 0) > 0)
-    return { list: cooked.length ? cooked : pool, fromFridge: false }
+    // 🍳🍳 **만든 것 ＋ 나머지를 «섞어서» 돌린다** (창업자 확정 2026-08-28 = *"섞어서 돌리자"*)
+    //
+    // ⛔⛔ **옛 코드 = `cooked.length ? cooked : pool` — 만든 게 하나라도 있으면 «만든 것만» 돌았다.**
+    //    🔢 실측(`_probe-오늘추천풀-0828`) = 세 편만 만든 사람은 **21일 내내 3가지**만 봤다
+    //       (국물 떡볶이 · 잡채 · 김치볶음밥 · 국물 떡볶이 …). 갓 깐 사람은 19가지를 보는데.
+    //    📌 **거꾸로다** — 앱을 쓸수록 추천이 «넓어지는 게 아니라 좁아졌다».
+    //       세 개 만들면 평생 그 셋만 돈다. 새 레시피를 영영 안 만난다.
+    //    ⚠️ 어제까진 늘 «같은 하나»만 떠서(`useState(0)`) 이게 안 보였다.
+    //       날짜로 돌리기 시작하니 드러났다 — **고친 뒤에야 보이는 종류의 흠**이다.
+    //
+    // ⭐ 원래 뜻(「자주 해먹는 것 우선」)은 살린다 — **우선이지 «전부»가 아니다.**
+    //    만든 것을 나머지 사이사이에 끼워 **대략 두 배 자주** 오게 하고, 나머지도 전부 한 바퀴 돈다.
+    // ⛔ 그냥 앞에 이어 붙이면(`[...만든것, ...나머지]`) 한 바퀴에 «한 번씩»이라 자주 오지 않는다.
+    // ⛔⛔ **「사이사이 끼워 넣기」도 안 먹혔다 — 실측 0.7배(오히려 «덜» 왔다).**
+    //    🔢 뿌리 = **목록 길이가 날마다 바뀐다.** 매주 월요일에 새 레시피가 열려 57 → 90+ 로 늘어나는데,
+    //       `pick % 목록.length` 는 길이가 바뀌면 «자리»가 통째로 튄다. 끼워 둔 순서가 그대로 흩어진다.
+    //    ✅ 그래서 «섞은 목록의 자리»가 아니라 **날짜가 «갈래»를 고르게** 한다(아래 `todayPick`).
+    //       갈래를 고르는 건 개수만 보므로 목록이 길어져도 비율이 안 흔들린다.
+    const 만든것 = pool.filter((r) => (r.cooked || 0) > 0)
+    const 나머지 = pool.filter((r) => !((r.cooked || 0) > 0))
+    return { list: 나머지.length ? 나머지 : pool, 만든것, fromFridge: false }
   }, [recipes, pantry])
-  const todayPick = today.list.length ? today.list[pick % today.list.length] : null
+
+  // 🍚 오늘 뜰 한 편 — **날짜가 갈래를 고르고, 그 갈래 안에서 또 날짜가 고른다.**
+  //    ⭐ 「만든 것」 갈래에 걸리는 날 = 전체 대비 **두 배쯤**(그래서 `2 *`).
+  //       예) 만든 것 3편 · 전체 57편 → 열흘에 한 번 만들었던 것이 온다(3편이 60일에 두 번씩).
+  //    ⛔ 최소 2 로 막는다 — 만든 게 많아져도 «매일» 만든 것만 뜨지는 않게.
+  const todayPick = useMemo(() => {
+    const { list, 만든것 = [] } = today
+    if (!list.length && !만든것.length) return null
+    const 몫 = 만든것.length && list.length
+      ? Math.max(2, Math.round((list.length + 만든것.length) / (2 * 만든것.length)))
+      : 0
+    if (몫 && pick % 몫 === 0) return 만든것[Math.floor(pick / 몫) % 만든것.length]
+    return list.length ? list[pick % list.length] : 만든것[pick % 만든것.length]
+  }, [today, pick])
 
   // 🍳 「다음에 뭐 할까」 — 홈 맨 위 한 줄이 상황을 보고 «할 일»을 꺼낸다 (창업자 확정 2026-08-19 · 안 ⓐ)
   //    ⭐ 고르는 법은 `src/nextUp.js` **한 곳**에 있다 — 여기선 «그리기»만 한다.
@@ -215,12 +262,21 @@ export default function HomeScreen() {
           {/* 곰 자리에 내 아바타를 넣었다(창업자 2026-07-29). 인사하는 곰은 '레시피' 탭으로 옮김.
               오른쪽에 아바타·톱니가 나란히 있어 눌러야 할 게 둘로 보이던 것도 정리된다. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* ♿ 아바타 그림은 38px 그대로, «손가락 닿는 자리»만 44px (2026-08-03 접근성).
+            {/* ♿ «손가락 닿는 자리»는 44px (2026-08-03 접근성).
                 ⚠️ `.tap-ok` 클래스로 했을 땐 브라우저가 min-width 를 `auto` 로 계산해 안 먹었다
-                   (CSS 는 분명히 들어가 있는데 — 이유는 못 밝혔다). 인라인은 확실히 먹는다. */}
+                   (CSS 는 분명히 들어가 있는데 — 이유는 못 밝혔다). 인라인은 확실히 먹는다.
+                🏠💬 [✅창업자 확정 2026-08-30 = 시안 «B»] 그림을 **38 → 43px**.
+                📮 창업자 = *"홈 프로필 사진이 작아서 그런지 말풍선이 홈만 아래로 내려가 보여.."* → *"b"*
+                🔢 실측 = 아바타 38px(하단 55) ↔ 레시피 꼬르곰 43px(하단 57) · 말풍선 top 은 둘 다 64
+                   → 홈만 **9px**, 레시피는 6.5px 떨어졌다. ＋아바타는 «원»이라 꼬리가 닿는 왼쪽에서
+                     곡선만큼 더 파여 실제보다 멀어 보인다.
+                ⭐⭐ 말풍선 값(`--tab-talk` margin)은 **다섯 탭이 하나를 쓴다** — 홈만 캐릭터가 작아서 벌어진 것이다.
+                   그래서 «말풍선을 홈에서만 더 올리는» 길(시안 C)은 접었다. 값이 갈리면 반드시 어긋난다.
+                ✅ 43px 로 맞추니 말풍선까지 **6.5px = 레시피와 같아졌다.** 말풍선은 한 줄도 안 건드렸다.
+                ⛔ 43 을 넘기지 말 것 — 손가락 칸이 44px 이라 여백이 0.5px 밖에 안 남는다. */}
             <button className="press" onClick={() => nav.go('profile')} aria-label="프로필"
               style={{ display: 'flex', flex: '0 0 auto', minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-              <Avatar name={profile.name} avatar={profile.avatar} size={38} />
+              <Avatar name={profile.name} avatar={profile.avatar} size={43} />
             </button>
             <div className="h-title">한끼</div>
           </div>
@@ -378,7 +434,9 @@ export default function HomeScreen() {
                 {/* 🔠 크기는 인라인이 아니라 클래스로 — 넓은 화면에서 키우려면 CSS 가 이겨야 한다
                     (인라인은 `!important` 없이는 절대 못 이긴다 · v10.08 에 실제로 당했다) */}
                 <span className="news-title">한끼 소식</span>
-                {news.opened.length > 0 && (
+                {/* ⛔ [2026-08-29] `openedAlert` — 장바구니는 «주마다» 열려서 넣으면 이 뱃지가 늘 켜져 있다.
+                    바로 위 주석에 우리가 적어둔 원칙 그대로 = *"늘 떠 있으면 아무도 안 본다."* */}
+                {news.openedAlert.length > 0 && (
                   <span style={{ fontSize: 15, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
                 )}
               </div>

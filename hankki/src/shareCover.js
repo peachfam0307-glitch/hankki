@@ -175,16 +175,41 @@ export async function buildCoverPayload({ coverEl, title, info = [], appUrl, rec
   do { ctx.font = `${pf}px ${BODY}`; if (ctx.measureText(pillLabel).width <= pillW - 60) break; pf -= 1 } while (pf > 22)
   ctx.fillText(pillLabel, W / 2, footerTop + 72)
 
-  // ── 3) 2장째(레시피카드)를 함께 — 친구가 진짜 해먹을 수 있게(랜덤 카드와 동일) ──
+  // ── 3) 2장째(레시피카드)는 «따로» 담는다 — 한 번에 두 장을 주면 앨범 격자로 묶여 작아진다 ──
   // 🚀 PNG → JPEG. 표지는 «그림»이라 무손실일 이유가 없는데 1.38MB 였다(창업자 캡처).
   const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.92))
   if (!blob) return null
   const file = new File([blob], 'hankki-cover.jpg', { type: 'image/jpeg' })
   const recipeFile = recipeFilePromise ? await recipeFilePromise : null // 이미 병렬로 뜨는 중 → 거의 즉시
-  const files = recipeFile ? [file, recipeFile] : [file]
-  const has2 = files.length > 1
-  return { files, title, text: `『${title}』 · 내가 꾸민 레시피 🧡 한끼${has2 ? ' · 재료·레시피 같이!' : ''}\n나도 만들기 → ${url}`, url }
+  // ⭐ `다음` = 「보내고 나서 한 장 더 청할 것」. ⛔`files` 에 같이 넣지 않는다(위 📱 절 참조).
+  return {
+    files: [file],
+    title,
+    text: `『${title}』 · 내가 꾸민 레시피 🧡 한끼\n나도 만들기 → ${url}`,
+    url,
+    다음: recipeFile
+      ? { files: [recipeFile], title, text: `『${title}』 재료·만드는 법이에요 🍳 한끼\n나도 만들기 → ${url}`, url }
+      : null,
+  }
 }
+
+// 📱📱📱 **[창업자 확정 2026-08-28] «한 장씩» 보낸다 — ⛔두 장을 한 번에 넘기지 않는다.**
+//
+//   📮 창업자 = *"내꾸, 레꾸 **둘다 저렇게 작게떠.** 어쩔수 없는거야?? **폰처럼 한장씩 따로따로는 못들어가?**"*
+//      → 갈래 둘(ⓐ그냥 둔다 / ⓑ한 장 보내고 「레시피도 보낼까요?」로 한 번 더) 중 **"ㄴ으로 하자"**
+//
+//   🔎 **뿌리** = 여기서 `navigator.share({ files: [표지, 레시피] })` 로 **두 장을 한 번에** 넘겼다.
+//      받는 앱(카톡)이 사진 두 장을 **앨범 격자**로 묶어 한 칸씩 작게 그린다.
+//      ⭐ 폰에서 커 보였던 건 «폰이 나아서»가 아니라 **두 장 공유가 안 되는 폰이라 한 장으로 떨어졌기** 때문이다
+//         (옛 코드의 `canShare({files:[file]})` 폴백). **「작게 뜬다」와 「한 장씩」이 같은 뿌리였다.**
+//
+//   ⛔ **「두 장을 한 번에」 폴백은 죽었다** — 이제 늘 한 장이라 그 갈림길 자체가 없다.
+//   ⛔ 문구에서도 「· 재료·레시피 같이!」를 뺐다 — 한 장만 가는데 그렇게 적으면 **거짓말**이 된다.
+//   ⚠️ `navigator.share` 에 `다음` 같은 모르는 칸을 넘기지 않는다 → `보낼것()` 으로 걸러서 넘긴다.
+//      (규격상 무시되는 게 맞지만 폰마다 다를 수 있고, 걸러 넘기는 값은 0원이다)
+export const 보낼것 = (p) => ({ files: p.files, title: p.title, text: p.text, url: p.url })
+// 💾 파일 공유가 «아예» 안 되는 폰 → 저장은 둘 다 한다(한 장씩 보내는 것과 상관없는 길이다)
+export const 모든파일 = (p) => [...((p && p.files) || []), ...((p && p.다음 && p.다음.files) || [])]
 
 // 📤 「내가 꾸민 표지 그대로」 보내기.
 //   `prepared` = 미리 캡처가 돌려준 약속(Promise). 있으면 그걸 기다린다 — 이미 끝나 있으면 «즉시» 공유창이 열린다.
@@ -197,17 +222,11 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
   }
   if (!payload) payload = await buildCoverPayload({ coverEl, title, info, appUrl, recipeEl })
   if (!payload) return { ok: false, error: 'capture' }
-  const { files, url } = payload
-  const file = files[0]
-  const has2 = files.length > 1
   try {
-    if (navigator.canShare && navigator.canShare({ files })) {
-      await navigator.share(payload)
-      return { ok: true, shared: true }
-    }
-    if (has2 && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ ...payload, files: [file] })
-      return { ok: true, shared: true }
+    // 📱 표지 «한 장»만 보낸다 — 레시피는 `다음` 으로 돌려줘서 화면이 한 번 더 청한다(위 📱 절)
+    if (navigator.canShare && navigator.canShare({ files: payload.files })) {
+      await navigator.share(보낼것(payload))
+      return { ok: true, shared: true, 다음: payload.다음 }
     }
   } catch (e) {
     if (e && e.name === 'AbortError') return { ok: true, shared: false }
@@ -218,17 +237,16 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
     return { ok: true, shared: false, pending: payload }
   }
   // 이 폰은 파일 공유 자체가 안 된다 → 저장 (표지＋레시피 둘 다)
-  saveShareFiles(files)
+  saveShareFiles(모든파일(payload))
   return { ok: true, shared: false }
 }
 
 // 📮 다 만들어 둔 파일을 «지금» 보낸다 — 반드시 «사용자가 누른 순간»에 부를 것.
+//   📱 여기도 한 장씩이다 — 넘어온 `payload.files` 가 이미 한 장이라 갈림길이 없어졌다.
 export function sharePendingNow(payload) {
-  const { files } = payload
   if (!(navigator.canShare && navigator.share)) return null
-  if (navigator.canShare({ files })) return navigator.share(payload)
-  if (files.length > 1 && navigator.canShare({ files: [files[0]] })) return navigator.share({ ...payload, files: [files[0]] })
-  return null
+  if (!navigator.canShare({ files: payload.files })) return null
+  return navigator.share(보낼것(payload))
 }
 
 // 💾 저장 — ⛔ `<a>` 를 DOM 에 «붙여야» click 이 먹는다(안 붙이면 아무 일도 안 일어난다).

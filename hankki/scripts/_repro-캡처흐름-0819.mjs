@@ -56,7 +56,10 @@ try {
   await page.waitForTimeout(1800)
   await page.getByRole('button', { name: '가져오기', exact: true }).first().click()
   await page.waitForTimeout(700)
-  await page.getByText('직접 작성', { exact: false }).first().click()
+  // 🗓 [2026-08-28] 목록이 «네 갈래»로 바뀌었다 — 「직접 작성」 → 「직접 입력하기」 ＋ 안내 한 단계
+  await page.getByText('직접 입력하기', { exact: true }).first().click()
+  await page.waitForTimeout(900)
+  await page.getByRole('button', { name: '빈 종이 열기' }).first().click()
   await page.waitForTimeout(1000)
 
   // ── ① 캡처 버튼이 «있고 눌리나» ──
@@ -102,8 +105,10 @@ try {
   // 🔁 캡처 시험은 «맨 마지막»에 — 자르기 시트가 뜨면 아래 칸·저장 버튼을 덮는다.
   //    첫 판이 그래서 ⑤ 저장이 「12초 타임아웃」으로 실패했다 — 앱이 아니라 «판»의 문제였다(규칙 18).
   console.log('— 편집 화면을 다시 열어 캡처를 시험한다 —')
+  // ⛔ `exact: true` 를 빼지 말 것 — 부분일치라 홈의 다른 글을 누른다(2026-08-21 사고)
   await page.getByRole('button', { name: '가져오기', exact: true }).first().click(); await page.waitForTimeout(700)
-  await page.getByText('직접 작성', { exact: false }).first().click(); await page.waitForTimeout(1000)
+  await page.getByText('직접 입력하기', { exact: true }).first().click(); await page.waitForTimeout(900)
+  await page.getByRole('button', { name: '빈 종이 열기' }).first().click(); await page.waitForTimeout(1000)
   // ⭐ `cap` 을 그대로 쓴다 — Playwright locator 는 «쓸 때» 다시 찾으므로 새 화면에서도 맞다.
 
   // ── ② 버튼이 «파일 고르기»를 여나 — 사슬의 첫 고리 ──

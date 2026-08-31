@@ -1,7 +1,7 @@
 import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
-import { headline, newsSignature, spread } from '../data/whatsnew'
+import { headline, newsSignature, spread, unitOf } from '../data/whatsnew'
 import { Peek } from './PreviewSheet'
 import { StickerArt } from './Stickers'
 
@@ -22,8 +22,9 @@ import { StickerArt } from './Stickers'
 const KEY = 'hankki:news:seen'
 
 // 팝업을 띄울 «만한» 소식인가 — ⛔주간 레시피만 바뀐 주엔 안 띄운다(매주 팝업 = 재촉).
+// ⛔ [2026-08-29] `openedAlert` = 장바구니가 빠진 목록 — 팝업은 «알림 층»이다(창업자 *"대신 아래 나중에"*).
 const worthPopup = (news) =>
-  (news?.opened || []).some((o) => o.kind === '꾸미기' || o.kind === '레꾸자랑 카드')
+  (news?.openedAlert || []).some((o) => o.kind === '꾸미기' || o.kind === '레꾸자랑 카드')
 
 export function needsNewsPopup(news) {
   if (!worthPopup(news)) return false
@@ -35,10 +36,27 @@ export function markNewsSeen(news) {
 
 export default function NewsPopup({ news, onClose, onOpenNews }) {
   useModalBack(onClose) // 뒤로가기 → 닫기 (이때도 '봤음'으로 친다 — onClose 안에서 표시)
-  const items = (news?.opened || []).filter((o) => o.kind !== '이번 주 레시피')
+  // ⛔ [2026-08-29] `openedAlert` = **장바구니가 빠진 목록**(창업자 *"대신 아래 나중에"*).
+  //    장바구니는 소식 «페이지»에만 나오고 팝업엔 안 온다 — 주마다 열려서 팝업이 재촉이 된다.
+  // 🧮🧮 **팝업은 «꾸미기»만 센다** (창업자 2026-08-30
+  //    *"가을카드 추석카드는 레꾸자랑이야? 레꾸자랑 맞으면 저기서 빼자.
+  //      컷수 부풀리면 10월부터는 무료갯수가 확 주는 느낌이 들어"*)
+  //    ⭐⭐ 창업자 말이 숫자로도 맞다 — 9월에 카드까지 세면 **66 → 47 → 43** 으로 떨어지는데
+  //       꾸미기만 세면 **51 → 44 → 43** 이다. **부풀린 첫 달이 그다음 달을 초라하게 만든다.**
+  //    ⭐ ＋ 제목이 「꾸미기에 …이 왔어요」인데 목록에 «서랍에 없는 것»이 섞여 있었다.
+  //       레꾸자랑 카드 컷은 **뽑기 풀**이라 서랍을 열어도 없다 — 세면 유저가 못 찾는다.
+  //    ⛔ 카드를 «없애는» 게 아니다 — 소식 «페이지»엔 「레꾸자랑 카드」 줄로 그대로 있다
+  //       (창업자 2026-08-03 *"새로 열릴때 꼭 안내페이지에 올라오도록 해"* 는 거기서 지켜진다).
+  //    ⚠️ 꾸미기가 «하나도» 안 열리는 달이 있다(12/1 = 크리스마스 카드 2컷뿐) →
+  //       그때는 카드로 채운다. 안 그러면 「0컷」 팝업이 뜬다.
+  const alerts = (news?.openedAlert || []).filter((o) => o.kind !== '이번 주 레시피')
+  const 꾸미기 = alerts.filter((o) => o.kind === '꾸미기')
+  const items = 꾸미기.length ? 꾸미기 : alerts.filter((o) => o.kind === '레꾸자랑 카드')
   const h = headline(items)
   // 🎨 골고루 여섯 컷 — 캐릭터가 앞자리. ⛔한 그룹에서 다 뽑으면 낙엽만 다섯 개가 된다.
-  const keys = spread(items, 6)
+  // 🎁 선물은 «아래 선물 칸»에서 컷을 전부 편다 → 여기서 빼야 같은 그림이 두 번 안 뜬다
+  //    (실물로 보고 잡았다 — 맛보기 줄에 접시가 하나 끼어 바로 아래 접시 넷과 겹쳐 보였다).
+  const keys = spread(items.filter((i) => !i.gift), 6)
   const hero = keys[0]
   const rest = keys.slice(1, 6)
 
@@ -83,10 +101,43 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
                 fontSize: 15, fontWeight: 800, color: 'var(--text)', background: 'var(--cream)',
                 borderRadius: 999, padding: '5px 11px',
               }}>
-                {it.title} <span style={{ color: 'var(--brown)' }}>{it.count}</span>
+                {it.title} <span style={{ color: 'var(--brown)' }}>{it.count}{unitOf(it.kind)}</span>
               </span>
             ))}
           </div>
+
+          {/* 🎁🎁 그달 선물 — «한 줄 ＋ 컷 전부» (창업자 2026-08-30
+              *"가을의정원접시세트도 특별한 선물로 한 줄적어줘. 안내판에 그달 주는 선물 이미지가 다들어가면 좋겠는데..."*)
+              ⭐ 칩 목록에 이미 「가을의 정원 세트 4」가 있는데 «또» 적는다 — 데뷔 줄과 같은 이유다.
+                 목록에 섞이면 그냥 한 줄이고, 따로 세워야 «선물»로 읽힌다.
+              ⛔ 여기만 컷을 «전부» 편다(`giftKeys`) — 나머지 그룹은 맛보기 5컷 그대로(위 `PEEK`). */}
+          {h.gift && (
+            <div style={{ padding: '13px 18px 0' }}>
+              <div style={{ background: 'var(--cream)', borderRadius: 16, padding: '13px 14px 15px', textAlign: 'center' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13.5, fontWeight: 900, color: 'var(--brown)', letterSpacing: '0.02em' }}>
+                  <Icon name="gift" size={14} color="var(--brown)" stroke={2} /> {h.gift.giftLabel}
+                </span>
+                <div style={{ fontSize: 16.5, fontWeight: 800, marginTop: 4, wordBreak: 'keep-all' }}>
+                  {/* 🔢 단위 = 「종」 (창업자 2026-08-30 *"4종이라고 적어야지"* ·
+                      *"다른 것들도 숫자 옆에 종을 붙여줘"*) — 접시는 «조각»이 아니라 «가짓수»다. */}
+                  {h.gift.title} <span style={{ color: 'var(--brown)' }}>{h.gift.count}{unitOf(h.gift.kind)}</span>을 넣어뒀어요
+                </div>
+                {/* 💬 쓰는 법 한 줄 (창업자 2026-08-30 *"접시 사용법도 아래 적어줘"*)
+                    ⭐ 서랍에 뜨는 `hint` 를 그대로 쓴다 — 두 곳에 따로 적으면 하나가 낡는다.
+                    ⚠️ 창업자 = *"처음보는 사람들은 저 구멍뚤린게 뭔가 할 것 같은데 ㅋ"* — 그 물음에 답하는 줄이다. */}
+                {h.gift.hint && (
+                  <div className="t-sub" style={{ fontSize: 15, marginTop: 3, lineHeight: 1.45, wordBreak: 'keep-all' }}>
+                    {h.gift.hint}
+                  </div>
+                )}
+                {h.gift.giftKeys?.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <Peek keys={h.gift.giftKeys} size={58} />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ⭐ 새 친구 데뷔는 «한 번밖에 못 쓰는 카드» — 있으면 반드시 짚는다 */}
           {h.debut && (

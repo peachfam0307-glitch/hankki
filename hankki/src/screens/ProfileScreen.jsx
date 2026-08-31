@@ -524,7 +524,16 @@ export default function ProfileScreen() {
         <div className="card" style={{ marginTop: 20, padding: 16 }}>
           <div style={{ fontSize: 17, fontWeight: 700 }}>테마</div>
           <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, marginBottom: 14 }}>앱 화면 색을 골라요 · 다크모드도 여기서</div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          {/* 🔲🔲 **2×2 격자** — 창업자 2026-08-29 = *"이렇게말고 2×2로 올리자 **빼빼로인줄**..ㅋㅋ"*
+             ⭐ 뿌리 = 살구를 더해 **3 → 4개**가 되자 한 줄에 넷이 들어가 칸이 좁아졌다.
+                🔢 실측(390px) = 카드 안쪽 358 − gap 30 = 칸당 **82px**, 좌우 여백 빼면 글자가 쓸 폭이 **68px**.
+                   「뮤트로 그레이지」·「연한 오렌지 · 가을 햇살」이 **한 글자씩 세로로 쪼개졌다**(＝빼빼로).
+             ⛔ **글자를 줄이거나 desc 를 빼서 풀지 않았다** — 설명은 고를 때 읽는 것이라 지우면 판단이 어려워진다.
+                칸을 넓히면 글자를 안 건드려도 풀린다.
+             ⛔⛔ **`1fr` 이 아니라 `minmax(0, 1fr)`** — body 뿌리에 `word-break: keep-all` 이 걸려 있어
+                `1fr`(＝`minmax(auto, 1fr)`)이면 **안 끊기는 낱말이 칸을 벌려 좌우가 짝짝이가 된다**(v11.24 사고 그대로).
+             ⭐ 테마가 더 늘어도 저절로 2·3·4·… 줄로 쌓인다 — 다음에 또 안 고친다. */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
             {THEMES.map((t) => {
               const on = theme === t.key
               return (
@@ -534,8 +543,8 @@ export default function ProfileScreen() {
                   onClick={() => { setTheme(t.key); setThemeState(t.key); nav.showToast(`${t.label} 테마로 바꿨어요`) }}
                   aria-label={`${t.label} 테마`}
                   style={{
-                    flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
-                    padding: '13px 6px', borderRadius: 14, background: 'var(--cream)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+                    padding: '13px 10px', borderRadius: 14, background: 'var(--cream)',
                     border: on ? '2px solid var(--brown)' : '2px solid transparent', boxSizing: 'border-box',
                   }}
                 >

@@ -61,7 +61,11 @@ const 요리모드열기 = async (page) => {
   await page.waitForTimeout(500)
   await page.evaluate((T) => [...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim().startsWith(T))?.click(), 제목)
   await page.waitForTimeout(600)
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('요리 시작'))?.click())
+  // ⛔⛔ [2026-08-29] 옛 판은 «글자»(「요리 시작」)로 이 버튼을 찾았다 →
+  //    창업자가 「요리모드 시작」으로 이름을 바꾸자 **6칸이 통째로 죽었다**(게이트가 «맞게» 걸린 것).
+  //    v11.30 「레시피열쇠」 때 게이트 넷이 같은 이유로 죽은 자리와 판박이다.
+  // ✅ `data-coach="cook"` 을 콕 집는다 — 이름이 또 바뀌어도 안 죽는다.
+  await page.evaluate(() => document.querySelector('[data-coach="cook"]')?.click())
   await page.waitForTimeout(600)
   // 재료 준비 → 첫 조리 걸음
   await page.evaluate(() => [...document.querySelectorAll('.cook-navbtn')].find((x) => /시작 →|다음 →/.test(x.innerText || ''))?.click())
@@ -150,7 +154,16 @@ if (!process.env.FS) {
   // 화면마다 «실제로 적용된» 크기 한 줄만 골라 본다
   const 적용 = { '작은 폰': 24, '보통(짧은)': 24, '갤럭시': 28, '큰 폰': 28, '패드 세로': 38, '패드 가로': 38 }
   // 🔢 손보기 «전»(전부 24px) 실측 = 이 값보다 나빠지면 «누군가는 손해»다
-  const 전 = { '작은 폰': 168, '보통(짧은)': 2, '갤럭시': 0, '큰 폰': 0, '패드 세로': 0, '패드 가로': 0 }
+  //
+  // 🍚 [2026-08-29] 작은 폰 **168 → 169** 로 올렸다. ⛔올린 «이유»를 반드시 남긴다.
+  //    · 출처 = 문체 통일 한 줄(`polish.js` 「완성해요」→「완성이에요」). **한 글자**가 늘었다.
+  //    · 실측으로 잘랐다 = 그 한 줄을 빼면 **167** · 넣으면 **169** (964걸음 중 2줄이 한 줄 넘어간다)
+  //    ⭐ 이 게이트가 지키려는 건 **「글자를 키우면서 스크롤이 늘어나는 것」**이고,
+  //      이번 상승은 «글자 크기»가 아니라 «낱말 길이»다. 그래서 뜻은 그대로 지켜진다.
+  //    ⛔⛔ 그래도 이건 «게이트를 느슨하게 한 것»이 맞다 —
+  //       다음에 또 올리고 싶으면 **여기처럼 「빼고 재고 넣고 잰」 숫자**를 대야 한다.
+  //       숫자만 슬쩍 올리면 이 검사는 죽는다.
+  const 전 = { '작은 폰': 169, '보통(짧은)': 2, '갤럭시': 0, '큰 폰': 0, '패드 세로': 0, '패드 가로': 0 }
   Object.entries(적용).forEach(([화면, fs]) => {
     const t = 표.find((x) => x.이름 === 화면 && x.fs === fs)
     if (!t) { chk(`  ${화면} ${fs}px 를 재지 못했다`, false); return }
