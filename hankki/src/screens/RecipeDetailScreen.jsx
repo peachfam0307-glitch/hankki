@@ -313,7 +313,9 @@ export default function RecipeDetailScreen({ id }) {
   //      여기도 같은 배지를 쓴다 → **막다른 길이 안 생기니 뺄 이유가 없다.**
   //   ⚠️ 자연드림(아이쿱)은 **실버회원 가입으로 누구나 온라인 구매 가능**(조합원과 가격만 다르다)
   //      → 아무 표시도 안 붙인다. 창업자 확인 2026-08-10.
-  const pantryPicks = picksForIngredients([...(r?.ingredients || []), r?.memo || ''])
+  // ⛔ 재료와 메모를 «갈라서» 넘긴다 — 한 자루에 섞으면 메모의 설명 문장에서 광고가 걸린다
+  //    (2026-08-31 「누룽지」 사고 — `curation.js` `picksForIngredients` 주석 참고)
+  const pantryPicks = picksForIngredients(r?.ingredients || [], r?.memo || '')
   // 🔽 4칸까지만 보이고 나머지는 접는다(창업자 2026-08-15 *"너무 길면 좀 그래"*)
   const shownPicks = picksOpen ? pantryPicks : pantryPicks.slice(0, PICK_FOLD)
   // ⭐ 「다 담기」는 접혀 있어도 «전부» 담는다 — 「다」라고 써 놓고 보이는 것만 담으면 거짓말이 된다.
@@ -325,7 +327,13 @@ export default function RecipeDetailScreen({ id }) {
   }
   // 구매처 배지 — 장보기 화면 `mallLabel()` 과 «같은 규칙»이라야 한다(한쪽만 고치면 앞뒤가 안 맞는다)
   //   ⭐ 이제 판정이 `productMall()` «한 곳»에 모였다 — 전엔 여기서 url 로 한 번 더 봐서 두 벌이었다.
-  const mallBadge = (p) => productMall(p)
+  // 🏪 구매처 배지. ⛔ **브랜드와 몰 이름이 같으면 안 그린다** — 「자연드림」처럼 브랜드이자 몰인 곳이 있다.
+  //    2026-08-31 실물에서 「자연드림 / 우리밀 올리고당 [자연드림]」으로 **한 줄에 두 번** 나왔고,
+  //    그 배지가 자리를 먹어 이름이 두 줄로 접혔다. 같은 말을 두 번 하려고 줄을 늘릴 이유가 없다.
+  const mallBadge = (p) => {
+    const m = productMall(p)
+    return m && p.brand && m === p.brand ? '' : m
+  }
 
   return (
     <div className="screen fade" style={{ paddingBottom: 0 }}>
@@ -659,7 +667,14 @@ export default function RecipeDetailScreen({ id }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {/* ⛔ [2026-08-22 창업자] 「레시피에 광고는 지금 좀 지저분해. 브랜드 버튼이」 — 브랜드 배지는 «큐레이션에만».
                      이 줄은 좁다(그림 30 ＋ 이름 ＋ 사러가기). 딱지가 둘이면 이름과 뒤엉킨다. */}
-                  <span style={{ fontSize: 19, fontWeight: 700, color: 'var(--text)' }}>{p.brand ? p.brand + ' ' + p.name : p.name}</span>
+                  {/* 🔠 [2026-08-31 창업자] *"아니면 이름을줄이자 너무길어"* — 실물에서 다섯 줄이 «전부» 두 줄로 접혔다
+                     (「성가정 우리콩 / 진간장」처럼 낱말 가운데가 아니라 «브랜드 가운데»에서 끊긴다).
+                     ⭐ 브랜드를 «작은 윗줄»로 빼면 아랫줄이 제품 이름만 남아 한 줄에 들어간다.
+                        ⛔ 브랜드를 «지우지» 않는다 — 어느 회사 것인지가 이 큐레이션의 값어치다.
+                     📌 브랜드 «배지»(딱지)는 여전히 큐레이션에만 (2026-08-22 *"레시피에 광고는 지금 좀 지저분해"*).
+                        이건 딱지가 아니라 그냥 작은 글씨다. */}
+                  {p.brand && <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-sub)', lineHeight: 1.15, marginBottom: 1 }}>{p.brand}</div>}
+                  <span style={{ fontSize: 19, fontWeight: 700, color: 'var(--text)' }}>{p.name}</span>
                   {mallBadge(p) && (
                     <span style={{ marginLeft: 6, fontSize: 16, fontWeight: 700, whiteSpace: 'nowrap', borderRadius: 5, padding: '1px 6px', ...(mallBadge(p).includes('조합원') ? { color: '#fff', background: '#c2703f' } : { color: 'var(--brown)', background: 'var(--cream-deep)' }) }}>{String(mallBadge(p)).replace(' · 조합원 전용', ' 전용')}</span>
                   )}

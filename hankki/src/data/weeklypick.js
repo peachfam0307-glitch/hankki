@@ -92,19 +92,44 @@ export const 갈래섞기 = (products = []) => {
   return out.length === products.length ? out.map((x) => x.p) : products
 }
 
+// 🆕🆕🆕 [창업자 확정 2026-08-31] *"**이번주픽에는 무조건 새거 3개씩 올리기.**"*
+//
+// ⛔⛔ **그 전엔 «안 올라가고 있었다» — 필드가 어긋나 있었다.**
+//   · `새것인가` 는 **`since`** 를 본다 → 실측 **2개**뿐(둘 다 2026-08-17)
+//   · 2026-08-29 에 「1주에 3개씩」을 만들며 박은 건 **`from`** 이다 → 실측 **54개**
+//   📌 **두 필드가 각각 다른 것을 잰다** — `from`=「언제 열리나」 · `since`=「언제 새로 올렸나」.
+//      그래서 매주 토요일 새로 열리는 3개가 **픽에 한 번도 «새것»으로 안 섰다.**
+//      (창업자가 화면에서 본 1번이 「알라 하바티치즈」였던 이유다)
+//
+// ⛔ **주차(weekNo)로 재면 «무조건»이 안 된다** — 여는 날이 **토요일**인데 에폭 주차는 **목요일**에 넘어간다.
+//    → 목·금 이틀은 「이번 주에 열린 것」이 **0개**가 된다. 창업자 말은 «무조건»이다.
+// ✅ 그래서 **「가장 최근에 열린 날짜」의 것**을 집는다 — 한 번에 3개씩 열리므로 저절로 3개이고,
+//    다음 회차가 열리기 전까지 **어느 날에 열어도 그 3개가 선다.**
+export const 갓열린것 = (products = [], today = '', k = 3) => {
+  if (!today) return []
+  const 열림 = products.filter((p) => p && p.from && p.from <= today)
+  if (!열림.length) return []
+  const 최근 = 열림.reduce((a, p) => (p.from > a ? p.from : a), '')
+  return 열림.filter((p) => p.from === 최근).slice(0, k)
+}
+
 export const pickRotate = ({ products = [], matched = [], today = '', n = 4 } = {}) => {
   const 담김 = new Set(matched.map((p) => p && p.name).filter(Boolean))
   const 안담김 = products.filter((p) => p && !담김.has(p.name))
-  const 새것 = 안담김.filter((p) => 새것인가(p.since, today))
+  // 🆕 «무조건» 맨 앞 = 가장 최근 회차에 열린 것 (창업자 2026-08-31)
+  //    ⛔ `matched` 에 이미 담긴 것과 겹치지 않게 `안담김` 에서 고른다
+  const 갓열림 = 갓열린것(안담김, today)
+  const 갓이름 = new Set(갓열림.map((p) => p.name))
+  const 새것 = 안담김.filter((p) => !갓이름.has(p.name) && 새것인가(p.since, today))
   // ⭐ 돌릴 것 = 「이번 주 레시피가 쓰는 것」 ＋ 나머지 전부. **새 것만 맨 앞 고정이고 그 밖엔 고정이 없다.**
   //   ⛔ 예전엔 `matched` 를 여기 «밖»에 두고 항상 앞에 붙였다 → 풀네임이 박힌 제품이 영영 1번이었다.
   // 🧺 갈래가 뭉쳐 오지 않게 «돌아가며» 한 개씩 (창업자 *"섞어서"* · 위 `갈래섞기` 주석)
-  const 돌릴것 = [...matched, ...갈래섞기(안담김.filter((p) => !새것인가(p.since, today)))]
-  if (!돌릴것.length) return 새것.slice(0, n)
+  const 돌릴것 = [...matched, ...갈래섞기(안담김.filter((p) => !갓이름.has(p.name) && !새것인가(p.since, today)))]
+  if (!돌릴것.length) return [...갓열림, ...새것].slice(0, n)
   // ⭐⭐ **한 주에 `n` 칸씩 민다** — 한 칸씩 밀면 4개 중 3개가 다음 주에도 그대로 남는다.
   //    창업자가 *"매주 꼭 바꿔줘"* 라고 한 건 «다른 게 뜬다»는 뜻이지 «하나만 바뀐다»가 아니다.
   //    🔢 실측 = 한 칸씩일 때 앞뒤 주가 3개씩 겹쳤다(2026-08-10 게이트 미리보기에서 드러났다).
   // ⚠️ `%` 는 음수에서 음수를 내니 한 번 더 더해 양수로 만든다(1970 이전 날짜·이상값 방어).
   const off = today ? ((((weekNo(today) * n) % 돌릴것.length) + 돌릴것.length) % 돌릴것.length) : 0
-  return [...새것, ...돌릴것.slice(off), ...돌릴것.slice(0, off)].slice(0, n)
+  return [...갓열림, ...새것, ...돌릴것.slice(off), ...돌릴것.slice(0, off)].slice(0, n)
 }
