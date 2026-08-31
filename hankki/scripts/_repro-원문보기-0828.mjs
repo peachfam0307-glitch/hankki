@@ -123,7 +123,15 @@ seed.on('pageerror', (e) => { if (!남의탓(e.message)) { 실패++; 실패목�
 await seed.goto('http://127.0.0.1:4462/hankki/', { waitUntil: 'networkidle' })
 
 // ① 원문이 «있는» 레시피와 «없는» 레시피를 심는다
-await seed.evaluate((raw) => {
+//
+// ⛔⛔ **[2026-08-31 CI 죽음] 심어놓고 «앱이 덮었다».** 배포 #1972 가 이걸로 막혔다.
+//    화면에 찍힌 증거 = `저장된 레시피 = 콩국수 · 돼지고기 김치찌개 …` — **우리가 심은 둘이 아예 없다.**
+//    ⭐ 뿌리 = 앱이 첫 화면을 그리며 «자기 씨앗»을 저장하는데 그게 «비동기»라,
+//       느린 CI 러너에선 **우리 글씨 뒤에 앱 글씨가 늦게 도착해** 통째로 덮인다.
+//       (내 컴퓨터에선 앱이 먼저 끝나서 안 겪는다 — 그래서 로컬 111/111 이고 CI 만 죽었다)
+//    ⛔ 「기다리는 시간을 늘린다」로 풀지 않는다 — 그건 느린 날 또 진다.
+//    ✅ **남았나를 «확인»하고, 덮였으면 다시 심는다.** 두 번 연달아 남아 있어야 넘어간다.
+const 심기 = (raw) => {
   const cur = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
   cur.recipes = [
     { id: 'r-raw', title: '공심채볶음', ingredients: ['공심채 150g'], steps: ['손질해요.'], tags: [], folder: '전체', savedAt: Date.now(), rawText: raw },
@@ -131,9 +139,24 @@ await seed.evaluate((raw) => {
     ...(cur.recipes || []).filter((r) => r.id !== 'r-raw' && r.id !== 'r-noraw'),
   ]
   localStorage.setItem('hankki:v1', JSON.stringify(cur))
-}, 원문)
+}
+const 남았나 = () => {
+  try {
+    const ids = (JSON.parse(localStorage.getItem('hankki:v1') || '{}').recipes || []).map((r) => r.id)
+    return ids.includes('r-raw') && ids.includes('r-noraw')
+  } catch { return false }
+}
+let 굳었나 = false
+for (let i = 0; i < 8 && !굳었나; i++) {
+  await seed.evaluate(심기, 원문)
+  await seed.waitForTimeout(400)
+  if (!(await seed.evaluate(남았나))) continue      // 앱이 덮었다 → 다시 심는다
+  await seed.waitForTimeout(600)
+  굳었나 = await seed.evaluate(남았나)              // 두 번 연달아 남아 있어야 «굳은» 것이다
+}
 await seed.close()
-console.log('① 원문 있는 레시피 · 없는 레시피를 심었다')
+if (!굳었나) { chk('① 심은 레시피가 «굳었다»', false, '앱 씨앗이 계속 덮는다 — 여기서 멈춘다'); }
+console.log('① 원문 있는 레시피 · 없는 레시피를 심었다' + (굳었나 ? '' : ' ⛔(못 굳혔다)'))
 
 // ② 편집 화면에 「사진에서 읽은 원문」 입구가 있나
 const page = await ctx.newPage()
