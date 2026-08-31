@@ -1727,31 +1727,31 @@ export const STICKER_GROUPS = [
   //    📐 `bigCell` = 칸을 크게. 창업자 = *"크기가 작아서 다른 건줄알았어"*
   //       ⭐ 접시는 «납작한 고리»라 정사각 칸에 넣으면 위아래가 비어 실제보다 작아 보인다.
   { key: 'deco_gift_dish_autumn', tab: 'frame', gift: true, giftLabel: '출시기념 선물', bigCell: true, from: '2026-09-01', label: '가을의 정원 세트', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_ad01', 'pf_ad04', 'pf_ad05', 'pf_ad08'] },
-  { key: 'deco_dy_frame_b', tab: 'frame', diary: true, from: '2026-10-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
-  { key: 'deco_dy_frame_c', tab: 'frame', diary: true, from: '2026-11-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
+  { key: 'deco_dy_frame_b', tab: 'frame', diary: true, from: '2027-01-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
+  { key: 'deco_dy_frame_c', tab: 'frame', diary: true, from: '2027-01-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
 
   // ⛔ [창업자 검수 2026-08-29] 9/1 「꽃다발」 4컷 = **다 뺐다** (*"꽃다발 4컷도 다빼고"*).
   //    ⛔ PNG(`dyf01`·`dyf02`·`dyf03`·`dyf07`)·`PHOTO_RATIO` 는 «지우지 않는다» — 10/1·11/1 세트와 한 가족이다.
-  { key: 'deco_dy_flower_b', tab: 'deco', diary: true, from: '2026-10-01', label: '들꽃', items: ['dyf04', 'dyf05', 'dyf06', 'dyf11'] },
-  { key: 'deco_dy_flower_c', tab: 'deco', diary: true, from: '2026-11-01', label: '화분·잎', items: ['dyf08', 'dyf09', 'dyf10', 'dyf12'] },
+  { key: 'deco_dy_flower_b', tab: 'deco', diary: true, from: '2026-11-01', label: '들꽃', items: ['dyf04', 'dyf05', 'dyf06', 'dyf11'] },
+  { key: 'deco_dy_flower_c', tab: 'deco', diary: true, from: '2027-01-01', label: '화분·잎', items: ['dyf08', 'dyf09', 'dyf10', 'dyf12'] },
 
   // ⛔ [창업자 검수 2026-08-29] 9/1 「도장·씰」 = **다 뺐다** (*"도장씰도 다 빼자."*).
   //    처음엔 *"3번 뺀다"*(`dys05`) 였는데 서랍을 다시 보고 넷 다 내렸다.
   //    ⛔ PNG(`dys03`·`dys04`·`dys05`·`dys11`)·`PHOTO_RATIO` 는 «지우지 않는다» — 10/1·11/1 세트와 한 가족이다.
-  { key: 'deco_dy_stamp_b', tab: 'deco', diary: true, from: '2026-10-01', label: '선·화살표', items: ['dys01', 'dys02', 'dys07', 'dys08'] },
-  { key: 'deco_dy_stamp_c', tab: 'deco', diary: true, from: '2026-11-01', label: '붓칠·햇살', items: ['dys06', 'dys09', 'dys10', 'dys12'] },
+  { key: 'deco_dy_stamp_b', tab: 'deco', diary: true, from: '2027-01-01', label: '선·화살표', items: ['dys01', 'dys02', 'dys07', 'dys08'] },
+  { key: 'deco_dy_stamp_c', tab: 'deco', diary: true, from: '2027-01-01', label: '붓칠·햇살', items: ['dys06', 'dys09', 'dys10', 'dys12'] },
 
   // ⛔ [창업자 검수 2026-08-29] 9/1 「메모지」 = **다 뺐다** (*"메모지도 다빼자."*).
   //    처음엔 *"3번,4번 뺀다."*(`dyl06`·`dyl10`) 였는데 서랍을 다시 보고 넷 다 내렸다.
   //    ⭐ 이로써 9/1 에 열리는 일기 세트(`dy*`)는 **「무늬 테이프」 하나만** 남는다.
   //    ⛔ PNG(`dyl01`·`dyl05`·`dyl06`·`dyl10`)·`PHOTO_RATIO` 는 «지우지 않는다» — 10/1·11/1 세트와 한 가족이다.
-  { key: 'deco_dy_label_b', tab: 'deco', diary: true, from: '2026-10-01', label: '이름표·태그', items: ['dyl03', 'dyl09', 'dyl11', 'dyl08'] },
-  { key: 'deco_dy_label_c', tab: 'deco', diary: true, from: '2026-11-01', label: '띠·배너', items: ['dyl02', 'dyl04', 'dyl07', 'dyl12'] },
+  { key: 'deco_dy_label_b', tab: 'deco', diary: true, from: '2027-01-01', label: '이름표·태그', items: ['dyl03', 'dyl09', 'dyl11', 'dyl08'] },
+  { key: 'deco_dy_label_c', tab: 'deco', diary: true, from: '2027-01-01', label: '띠·배너', items: ['dyl02', 'dyl04', 'dyl07', 'dyl12'] },
 
   // ⛔ [창업자 검수 2026-08-29] 9/1 「강조 표시」 4컷 = **다 뺐다** (*"4개다 뺀다."*).
   //    ⛔ PNG(`dyh01`·`dyh03`·`dyh12`·`dyh06`)·`PHOTO_RATIO` 는 «지우지 않는다» — 10/1·11/1 세트와 한 가족이다.
-  { key: 'deco_dy_hand_b', tab: 'deco', diary: true, from: '2026-10-01', label: '손그림 도장', items: ['dyh07', 'dyh08', 'dyh09', 'dyh05'] },
-  { key: 'deco_dy_hand_c', tab: 'deco', diary: true, from: '2026-11-01', label: '점·붓칠', items: ['dyh02', 'dyh04', 'dyh10', 'dyh11'] },
+  { key: 'deco_dy_hand_b', tab: 'deco', diary: true, from: '2027-01-01', label: '손그림 도장', items: ['dyh07', 'dyh08', 'dyh09', 'dyh05'] },
+  { key: 'deco_dy_hand_c', tab: 'deco', diary: true, from: '2027-01-01', label: '점·붓칠', items: ['dyh02', 'dyh04', 'dyh10', 'dyh11'] },
 
   // ✂️ [창업자 검수 2026-08-29] *"1.2.3번 뺀다."* → `wt_dy02`·`wt_dy04`·`wt_dy03` 내림
   //    ➕ 그리고 「가을 단풍·낙엽」에 섞여 있던 **테이프 두 줄을 이리로 옮겼다**
@@ -1763,8 +1763,8 @@ export const STICKER_GROUPS = [
   //      길이만 달랐다(1.49 ↔ 2.89). 눈으로 보고 골랐다 —
   //      ⭐ **짧은 한지는 `wt_dy08`(갈색)이 대신한다.** 긴 크림 한지는 `wt_dy16` 하나뿐이라 빼면 그 자리가 빈다.
   //   ⛔ **파일은 안 지운다.** 서랍에서만 내린다 — 이미 이 마테로 꾸며 저장한 일기가 깨지면 안 된다.
-  { key: 'deco_dy_tape_b', tab: 'tape', diary: true, from: '2026-10-01', label: '민무늬·종이', items: ['wt_dy01', 'wt_dy11', 'wt_dy14', 'wt_dy18', 'wt_dy08', 'wt_dy16'] },
-  { key: 'deco_dy_tape_c', tab: 'tape', diary: true, from: '2026-11-01', label: '격자·도트·겹침', items: ['wt_dy12', 'wt_dy13', 'wt_dy15', 'wt_dy17', 'wt_dy19', 'wt_dy20'] },
+  { key: 'deco_dy_tape_b', tab: 'tape', diary: true, from: '2026-11-01', label: '민무늬·종이', items: ['wt_dy01', 'wt_dy11', 'wt_dy14', 'wt_dy18', 'wt_dy08', 'wt_dy16'] },
+  { key: 'deco_dy_tape_c', tab: 'tape', diary: true, from: '2027-01-01', label: '격자·도트·겹침', items: ['wt_dy12', 'wt_dy13', 'wt_dy15', 'wt_dy17', 'wt_dy19', 'wt_dy20'] },
 
   // ── 여름 (2026-07-29 재제작) ── 제철(6~8월)이면 데코 탭 맨 위로 올라간다.
   //   ⚠️ 철이 지나도 **숨기지 않는다** — 순서만 밀린다. 유저가 쓰던 걸 못 찾게 되는 게 더 나쁘다.
@@ -1858,7 +1858,7 @@ export const STICKER_GROUPS = [
   //    ⛔ 둘 다 PNG·`PHOTO_RATIO` 는 지우지 않는다 — 나중에 딴 자리에 쓸 수 있다.
   { key: 'buddies_autumn_a', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 가을', items: ['au_b20', 'au_b09', 'au_b24', 'au_b26', 'au_b27', 'au_b28', 'au_b29', 'au_b30'] },
   // 🍁 유료팩과 겹치는 6컷(au_i02·05·06·07·09·18)을 내렸다 → 10 → 4컷 (위 2026-08-03 주석 참고)
-  { key: 'deco_autumn_b', tab: 'deco', season: 'autumn', from: '2026-10-01', label: '가을 열매·수확', items: ['au_i08', 'au_i26', 'au_i32', 'au_i23', 'au_i35', 'au_i36', 'au_i37', 'au_i33', 'au_t03', 'au_t04', 'au_s01'] },
+  { key: 'deco_autumn_b', tab: 'deco', season: 'autumn', from: '2026-10-01', label: '가을 열매·수확', items: [ 'au_i08', 'au_i26', 'au_i32', 'au_i23', 'au_i35', 'au_i36', 'au_i37', 'au_i33', 'au_s01' ] },
   // 🦫🐧 **친구 데뷔 ①** — 가을은 카롱이다(꼬르곰은 겨울·봄 친구와 짝을 짓는다).
   //    창업자 *"둘이 덩치가 있어서 케미가 별루야… 카롱이랑 꼬르곰둘은 별로 안어울림"* → 짝을 펭펭으로 바꿨다.
   //    ⛔ 5명을 한꺼번에 안 내보낸다 — 「새 친구 등장」은 한 번밖에 못 쓰는 카드라 셋으로 쪼갠다.
@@ -1873,7 +1873,7 @@ export const STICKER_GROUPS = [
   //    ⭐ 고른 넷 = 성격(요가·아령 = 「여유로운 체력왕」) 반 ＋ 요리(볶기·엄지척) 반.
   //       ⛔ 남은 4컷(매트 들기·물 마시기·손질·소스)은 파일에 그대로 있다 — 나중에 단독팩 재료.
   { key: 'buddies_karong_solo', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-09-01', label: '카롱', items: ['ka_g02', 'ka_g03', 'ka_c02', 'ka_c04'] },
-  { key: 'buddies_autumn_b', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-10-01', label: '꼬르곰·펭펭의 가을 나들이', items: ['au_b02', 'au_b03', 'au_b19', 'au_b21', 'au_b10', 'au_b11', 'au_b12'] },
+  { key: 'buddies_autumn_b', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-10-01', label: '꼬르곰·펭펭의 가을 나들이', items: [ 'au_b02', 'au_b03', 'au_b19', 'au_b21', 'au_b12' ] },
   // 🍁 유료팩과 겹치는 6컷(au_i10·11·13·14·17·20)을 내렸다 → 10 → 4컷 (위 2026-08-03 주석 참고)
   { key: 'deco_autumn_c', tab: 'deco', season: 'autumn', from: '2026-11-01', label: '늦가을 소품', items: ['au_i22', 'au_i25', 'au_i27', 'au_i31', 'au_i34', 'au_i40', 'au_i41', 'au_t01', 'au_t05', 'au_s03', 'au_s04'] },
   { key: 'buddies_autumn_c', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-11-01', label: '꼬르곰·펭펭의 늦가을', items: ['au_b07', 'au_b08', 'au_b22', 'au_b15', 'au_b16', 'au_b17'] },
