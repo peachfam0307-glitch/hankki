@@ -104,7 +104,7 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
     const data = await 내려받기()
     if (!data) { set탈('클라우드에 아직 아무것도 없어요'); return }
     받았다표시() // ⭐ 가져왔다 → 이제부터 저절로 올려도 안전하다(안전장치 ②)
-    불러오기끝(data) // ⭐ 백업 불러오기와 «같은 흐름» — 잠긴 일기 비번 묻기까지 여기서 처리된다
+    불러오기끝(data, '클라우드') // ⭐ 백업 불러오기와 «같은 흐름» — 잠긴 일기 비번 묻기까지 여기서 처리된다
     onClose()
   })
 
@@ -154,13 +154,18 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
                 {자세히 && (
                   <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '14px 15px', marginBottom: 14, fontSize: 14.5, lineHeight: 1.85, whiteSpace: 'pre-line' }}>
                     · 새 폰이나 패드에 다시 깔아도 레시피 · 일기 · 냉장고 · 장보기가 그대로 이어져요.{'\n'}
-                    · 꾸민 표지도 같이 저장돼요 (스티커 · 글씨 · 배경).{'\n'}
+                    · 꾸민 표지도 같이 저장돼요 (스티커 · 글씨 · 배경 · 레꾸자랑 카드).{'\n'}
                     · <b>직접 넣은 사진은 저장되지 않아요.</b> 사진은 이 폰과 백업 파일에 그대로 남아요.{'\n'}
                     · 잠가둔 일기는 잠긴 채로 저장돼요.
                   </div>
                 )}
                 {/* 🔵🔴🟡🟢 첫 화면과 «같은 단추»를 쓴다 — 같은 기능은 화면이 달라도 같은 모양 */}
                 <GoogleButton label="Google 계정으로 로그인" busy={바쁨 === '로그인'} disabled={!!바쁨} onClick={눌러로그인} />
+                {/* 📷 **첫 화면(CloudGate)과 한 글자도 다르지 않은 한 줄** (창업자 2026-08-31 *"잘보이게 적어줘"*)
+                    ⛔ 접힌 안내 «안»에만 두면 안 읽는다 — 그런데 이건 나중에 알면 늦는 말이다. */}
+                <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.6, textAlign: 'center', textWrap: 'balance', marginTop: 10 }}>
+                  직접 넣은 사진은 저장되지 않아요 · 백업 파일로 남겨요
+                </div>
               </>
             )}
 
