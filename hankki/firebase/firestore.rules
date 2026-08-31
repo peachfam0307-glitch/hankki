@@ -1,0 +1,47 @@
+rules_version = '2';
+
+// ☁️ 한끼 — Firestore 보안 규칙 (2026-08-21)
+//
+// ⭐ 한 줄 = **로그인한 사람이 «자기 칸»만 읽고 쓴다.** 그 밖은 전부 막는다.
+//
+// 🔑 열쇠 = **구글 고유번호(sub)** — ⛔Firebase 전용 UID 가 «아니다».
+//    왜 = 갈아타기 보험 ①. 나중에 Firebase 를 떠나도 구글 번호는 그대로라
+//    데이터를 다른 집(D1 등)으로 그대로 옮길 수 있다. Firebase UID 는 Firebase 를 떠나면 죽는다.
+//
+// ⚠️⚠️ **이름이 겹치는 함정** — 규칙 안의 `request.auth.token.sub` 은 «구글 sub 가 아니라»
+//    **Firebase UID** 다. 진짜 구글 번호는 아래 `googleId()` 자리에 있다.
+//    (근거: Firebase 공식 «Security Rules and Firebase Authentication» —
+//     `firebase.identities` = 그 계정에 붙은 모든 신원의 map · `google.com` 키의 [0] 이 구글 번호)
+//
+// ⛔ 이름은 «영문»으로 쓴다 — 규칙 언어가 한글 이름을 받는지 확인 못 했다. 설명만 한글.
+//
+// 🧪 이 규칙이 «진짜로» 막는지는 `public/fbtest.html` ③④가 실물로 잰다
+//    (내 칸 = 써진다 ✅ / 남의 칸 = 막힌다 ⛔ — **둘 다** 봐야 증명이다)
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 구글로 로그인한 사람인가
+    function isGoogleUser() {
+      return request.auth != null
+          && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    // 이 사람의 구글 고유번호
+    function googleId() {
+      return request.auth.token.firebase.identities['google.com'][0];
+    }
+
+    // 👤 users/{구글번호} 문서 하나 = 그 사람의 «meta»
+    //    (profile · folders · shops · wishlist · shoppingList · pantry · seedV …)
+    //    그 아래 recipes/{id} · diary/{id} 는 한 편·한 장이 문서 하나다.
+    match /users/{gid} {
+      allow read, write: if isGoogleUser() && googleId() == gid;
+
+      // ⭐ `{doc=**}` = 그 아래 «몇 겹이든» 전부 같은 조건
+      match /{doc=**} {
+        allow read, write: if isGoogleUser() && googleId() == gid;
+      }
+    }
+  }
+}

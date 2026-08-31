@@ -1,0 +1,42 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
+@font-face{font-family:'Jua';src:url('file:///home/user/hankki/hankki/src/assets/fonts/jua-korean-400.woff2') format('woff2');font-display:block}
+@font-face{font-family:'GowunDodum';src:url('file:///home/user/hankki/hankki/src/assets/fonts/gowun-dodum-korean-400.woff2') format('woff2');font-display:block}
+@font-face{font-family:'Gaegu';src:url('file:///home/user/hankki/hankki/src/assets/fonts/gaegu-korean-400.woff2') format('woff2');font-display:block}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1080px;height:1350px}
+body{font-family:'GowunDodum',sans-serif;background:#eef3f6;color:#2f4459;padding:60px 64px;position:relative;overflow:hidden}
+.grain{position:absolute;inset:0;background-image:radial-gradient(rgba(80,110,140,.06) 1px,transparent 1px);background-size:7px 7px;pointer-events:none}
+.blob{position:absolute;right:-160px;bottom:-160px;width:920px;height:920px;border-radius:50%;background:radial-gradient(120% 120% at 34% 30%,#9ccbe6,#6fb2d6 55%,#5a9ec6);box-shadow:0 30px 60px -30px rgba(50,90,120,.5)}
+.blob .dot{position:absolute;inset:0;border-radius:50%;background-image:radial-gradient(rgba(255,255,255,.15) 5px,transparent 6px);background-size:60px 60px}
+.arc{position:absolute;left:-150px;top:-150px;width:360px;height:360px;border-radius:50%;border:26px solid #cbe1ee;opacity:.7}
+.brand{position:relative;font-family:'Jua';font-size:34px;color:#4a6a86;letter-spacing:1px;z-index:5}.brand .h{color:#5aa6c9}
+.kick{position:relative;margin-top:44px;font-family:'Gaegu';font-weight:700;font-size:44px;color:#5a9ec6;z-index:5}
+.head{position:relative;margin-top:4px;font-family:'Jua';font-size:142px;line-height:.98;letter-spacing:-3px;color:#2f4459;z-index:5}
+.head .p{position:relative;display:inline-block;color:#4f9ec8}
+.head .p::after{content:'';position:absolute;left:-4px;right:-4px;bottom:6px;height:20px;background:rgba(111,178,214,.28);border-radius:6px;z-index:-1}
+.sub{position:relative;margin-top:30px;font-family:'GowunDodum';font-size:30px;color:#5f7d92;line-height:1.5;z-index:5}
+.chip{position:relative;margin-top:26px;display:inline-flex;align-items:center;gap:12px;padding:13px 30px;border-radius:999px;background:#fff;box-shadow:0 8px 20px -12px rgba(50,90,120,.5),inset 0 0 0 2px rgba(111,178,214,.28);font-family:'Jua';font-size:29px;color:#3a5570;z-index:5}
+.chip .dot{width:12px;height:12px;border-radius:50%;background:#6fb2d6}
+.stamp{position:absolute;top:70px;right:64px;width:138px;height:138px;transform:rotate(11deg);z-index:6}
+.stamp .txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Jua';color:#5a9ec6;line-height:1.05;text-align:center}
+.stamp .txt b{font-size:31px}.stamp .txt s{font-size:18px;text-decoration:none;letter-spacing:3px;margin-top:3px}
+.hero{position:absolute;right:-2px;bottom:130px;width:452px;z-index:7;
+ filter:drop-shadow(3px 0 0 #fffdf8) drop-shadow(-3px 0 0 #fffdf8) drop-shadow(0 3px 0 #fffdf8) drop-shadow(0 -3px 0 #fffdf8) drop-shadow(3px 3px 0 #fffdf8) drop-shadow(-3px 3px 0 #fffdf8) drop-shadow(3px -3px 0 #fffdf8) drop-shadow(-3px -3px 0 #fffdf8) drop-shadow(0 22px 20px rgba(45,80,110,.32))}
+.foot{position:absolute;left:64px;bottom:56px;z-index:6}
+.foot .wm{font-family:'Jua';font-size:26px;color:#4a6a86}
+.foot .url{display:block;margin-top:7px;font-size:19px;color:#7f97ac}
+</style></head><body>
+<div class="grain"></div>
+<div class="arc"></div>
+<div class="blob"><div class="dot"></div></div>
+<div class="brand">한끼 <span class="h">❄</span></div>
+<div class="stamp">
+  <svg viewBox="0 0 100 100"><path d="M50 3 L61 13 L75 9 L79 24 L93 30 L88 45 L96 58 L84 66 L85 81 L70 82 L61 94 L50 86 L39 94 L30 82 L15 81 L16 66 L4 58 L12 45 L7 30 L21 24 L25 9 L39 13 Z" fill="none" stroke="#5a9ec6" stroke-width="3.2"/></svg>
+  <div class="txt"><b>오늘의</b><s>한 끼</s></div>
+</div>
+<div class="kick">오늘도 무사히,</div>
+<div class="head">한 끼<br><span class="p">해냈다</span></div>
+<div class="sub">애쓴 하루 끝에<br>따뜻한 한 그릇이면 돼.</div>
+<div class="chip"><span class="dot"></span>오늘의 한 끼 · 소고기 미역국</div>
+<img class="hero" src="file:///tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/heroes/hero4.png">
+<div class="foot"><div class="wm">한끼</div><div class="url">peachfam0307-glitch.github.io/hankki</div></div>
+</body></html>
