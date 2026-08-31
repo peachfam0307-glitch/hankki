@@ -26,7 +26,35 @@ const OUT = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b
 mkdirSync(OUT, { recursive: true })
 
 const 옛 = /^(fe_|fh_|fy_|fj_|fi_|fb_)/
-const keys = readdirSync(PHOTO).filter((f) => f.endsWith('.png') && 옛.test(f)).map((f) => f.slice(0, -4)).sort()
+let keys = readdirSync(PHOTO).filter((f) => f.endsWith('.png') && 옛.test(f)).map((f) => f.slice(0, -4)).sort()
+
+// 🔁🔁 **2차 전수 — 「안 켠 것」만 다시 본다** (창업자 2026-08-31 *"전수할게 보여줘"*)
+//
+//   ⭐⭐ 왜 또 보나 — 창업자가 `fy_y05`(샐러드)를 **카와이라고 했다**. 그 컷은 «얼굴이 없다».
+//      그릇에 **분홍 하트**가 있을 뿐이다. 📌 **창업자 잣대는 「얼굴」보다 넓다 — 옛 파스텔 일러스트 세대 전체다.**
+//      그러면 1차에서 「얼굴 없음」이라 안 켠 219장에도 같은 게 남아 있다.
+//   ⛔ 기계로는 못 가른다 — 볼터치·평평함 둘 다 재봤는데 사진과 «완전히 겹친다»(9~27 vs 9~27).
+//      그래서 이번엔 **기본값을 전부 꺼두고** 창업자가 켜는 쪽으로 뒤집는다.
+//   ⛔ 저장 열쇠도 갈라 둔다 — 1차 결과 위에 덮어쓰면 431장이 날아간다.
+const 둘째판 = process.argv.includes('--안켠것')
+let 켤것 = (p) => p >= 4
+let 열쇠 = 'hankki:kawaii:0831'
+let 제목 = '카와이 전수 판정'
+let 안내 = '얼굴(눈·볼터치)이 있으면 <b>카와이</b>. 볼터치가 진한 순으로 세웠어요.<br>'
+  + '⓵ 스크롤하다 <b>「카와이가 끝나는 자리」</b>에서 <b>↥ 여기까지</b>를 한 번 누르면 앞은 전부 켜지고 뒤는 꺼져요.<br>'
+  + '⓶ 그다음 <b>어긋난 것만</b> 눌러서 고쳐요 — <b>아래쪽에도 카와이가 섞여 있어요</b>(볼이 옅으면 기계가 못 잡아요).'
+let 파일 = '카와이전수.html'
+if (둘째판) {
+  const 이미 = new Set(JSON.parse(readFileSync(join(ROOT, 'docs/stickers/카와이-전수판정-2026-08-31.json'), 'utf8')).카와이)
+  keys = keys.filter((k) => !이미.has(k))
+  켤것 = () => false            // ⛔ 전부 꺼둔 채로 — 1차에서 「아니다」로 본 것들이라 «켜는» 쪽이 손이 덜 간다
+  열쇠 = 'hankki:kawaii:0831b'  // ⛔ 1차와 갈라 둔다
+  제목 = '카와이 2차 — 안 켠 것만'
+  안내 = '1차에서 <b>안 켠 것</b>만 모았어요. <b>카와이인 것만 눌러서 켜면</b> 돼요.<br>'
+    + '⭐ <b>얼굴이 없어도</b> 옛 파스텔 일러스트면 카와이예요 — <b>fy_y05(샐러드)</b>가 그랬어요(그릇에 분홍 하트).<br>'
+    + '<b>↥ 여기까지</b>를 누르면 앞이 한 번에 켜져요.'
+  파일 = '카와이2차.html'
+}
 
 // 🔬 볼터치 재기 ＋ 썸네일 굽기 — ⛔원본을 그대로 심으면 130MB 라 판이 안 열린다(상한 16MB)
 const py = `
@@ -67,13 +95,13 @@ const 칸 = rows.map((r, i) => {
   const 태그 = [r.k in Object.fromEntries([...씨앗].map((x) => [x, 1])) ? '씨앗' : null,
     픽커.has(r.k) ? '서랍' : null, 규칙.has(r.k) ? '규칙' : null].filter(Boolean)
   return `<label class="c" data-k="${r.k}" data-p="${r.p}">
-  <input type="checkbox" ${r.p >= 4 ? 'checked' : ''}>
+  <input type="checkbox" ${켤것(r.p) ? 'checked' : ''}>
   <img loading="lazy" src="data:image/jpeg;base64,${r.img}" alt="">
   <b>${r.k}</b><i>${r.p}%</i>${태그.length ? `<u>${태그.join(' · ')}</u>` : ''}
   <s>${i + 1}</s><button class="upto" type="button" data-i="${i}" title="여기까지 전부 카와이로">↥ 여기까지</button></label>`
 }).join('\n')
 
-const html = `<title>카와이 전수 판정</title>
+const html = `<title>${제목}</title>
 <style>
 :root{--bg:#faf7f2;--ink:#2b2620;--sub:#8a7f70;--line:#e9e0d2;--hit:#c2410c;--no:#8a99a6;--card:#fff}
 :root:not([data-theme="light"]){}
@@ -110,10 +138,8 @@ footer button{flex:1;padding:13px;border-radius:13px;background:var(--hit);borde
 #out{position:fixed;inset:auto 12px 76px;max-height:42vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px;font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;word-break:break-all;display:none}
 </style>
 <header>
-  <h1>카와이 전수 판정 · 옛 컷 ${rows.length}장</h1>
-  <p class="lead">얼굴(눈·볼터치)이 있으면 <b>카와이</b>. 볼터치가 진한 순으로 세웠어요.<br>
-  ⓵ 스크롤하다 <b>「카와이가 끝나는 자리」</b>에서 <b>↥ 여기까지</b>를 한 번 누르면 앞은 전부 켜지고 뒤는 꺼져요.<br>
-  ⓶ 그다음 <b>어긋난 것만</b> 눌러서 고쳐요 — <b>아래쪽에도 카와이가 섞여 있어요</b>(볼이 옅으면 기계가 못 잡아요).</p>
+  <h1>${제목} · ${rows.length}장</h1>
+  <p class="lead">${안내}</p>
   <div class="bar">
     <button id="f-all" class="on">전체</button>
     <button id="f-on">카와이만</button>
@@ -132,7 +158,7 @@ ${칸}
 <script>
 const g = document.getElementById('g'), n = document.getElementById('n');
 const boxes = () => [...g.querySelectorAll('input')];
-const KEY = 'hankki:kawaii:0831';
+const KEY = '${열쇠}';
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(boxes().filter(b=>b.checked).map(b=>b.closest('.c').dataset.k))) }catch(e){} }
 function load(){
   let v = null; try{ v = JSON.parse(localStorage.getItem(KEY)||'null') }catch(e){}
@@ -170,6 +196,6 @@ document.getElementById('copy').addEventListener('click', async () => {
 });
 </script>`
 
-const p = join(OUT, '카와이전수.html')
+const p = join(OUT, 파일)
 writeFileSync(p, html)
 console.log(`📇 ${p}  (${rows.length}장 · 볼터치 4%↑ 로 켜둔 것 ${큼}장 · ${(html.length / 1048576).toFixed(1)}MB)`)
