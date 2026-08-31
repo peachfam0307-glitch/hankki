@@ -43,7 +43,7 @@ import uiPengSearch from '../assets/ui/wave/pn_search.png'
 //    ⛔ ui 컷 다섯(hand_point·thumbsup·shop·heart·clap)은 이미 다른 단계가 다 쓰고 있어 정본 콤비에서 가져왔다.
 import gpDuoHeart from '../assets/stickers/photo/gp_duoht.png'
 import { needsOnboarding } from '../components/Onboarding'
-import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount, needsCloudHome, markCloudHomeSeen, askOpenCloud } from '../nudges'
+import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount, needsCloudHome, markCloudHomeSeen, askOpenCloud, 클라우드보임 } from '../nudges'
 import { 로그인해뒀나 } from '../cloud'
 import { weeklyNow, homemadeNow } from '../data/weekly'
 import { whatsNew } from '../data/whatsnew'
@@ -148,7 +148,8 @@ export default function HomeScreen() {
   //   ⛔ 첫 화면(CloudGate)은 «새로 깐 사람»만 본다 — 이미 쓰던 사람은 소개를 이미 지나갔다.
   //   ⚠️ 「내 것」이 하나라도 있을 때만 — 갓 깐 사람에게 권하면 아직 «잃을 게» 없다(백업 줄과 같은 규칙).
   //   ⭐ 로그인 여부는 «작은 표식»으로 본다 — 진짜로 물으면 파이어베이스 167KB 를 첫 화면에서 받는다.
-  const [cloudRow, setCloudRow] = useState(() => needsCloudHome() && !로그인해뒀나() && myRecipeCount(recipes) >= 1)
+  //   🔀 ＋ 공개 스위치(`클라우드보임`) — 켜는 날까지 창업자 폰에서만(근거 = `nudges.js` 머리주석)
+  const [cloudRow, setCloudRow] = useState(() => 클라우드보임() && needsCloudHome() && !로그인해뒀나() && myRecipeCount(recipes) >= 1)
 
   // 🗓 이번 주 레시피 — 달력이 여는 줄. ⛔재고가 없으면 `null` 이라 **줄을 아예 안 그린다**
   //    (빈 「이번 주」 자리를 남기지 않는다 · `LAB_*_URL` 이 비면 그 칸을 안 그리는 것과 같은 방식).

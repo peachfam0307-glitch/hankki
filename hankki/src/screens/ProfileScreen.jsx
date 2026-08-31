@@ -17,7 +17,7 @@ import LabSheet from '../components/LabSheet'
 import CloudSheet from '../components/CloudSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import { cropSquare } from '../utils'
-import { takeOpenBackup, backupDone, takeOpenCloud } from '../nudges'
+import { takeOpenBackup, backupDone, takeOpenCloud, 클라우드보임 } from '../nudges'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
 import { 백업만들기 } from '../backupData'
 
@@ -492,6 +492,8 @@ export default function ProfileScreen() {
             ⛔ 백업을 «치우지» 않는다 — 사진은 백업에만 들어간다(클라우드는 글자만).
                📌 둘은 겹치는 게 아니라 «나뉘어» 맡는다. 그래서 부제로 그걸 말해 준다.
             ⭐ 테두리는 «백업에만» 남긴다 — 둘 다 두르면 둘 다 안 튄다. */}
+        {/* 🔀 공개 스위치 — 켜는 날까지 창업자 폰에서만 보인다(근거 = `nudges.js` 머리주석 · 창업자 확정 2026-08-31) */}
+        {클라우드보임() && (
         <button
           className="card press" data-coach="cloud" onClick={() => setCloud(true)}
           style={{ marginTop: 10, padding: 16, display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left' }}
@@ -504,6 +506,7 @@ export default function ProfileScreen() {
           </div>
           <Icon name="chevron-right" size={18} color="var(--sand)" />
         </button>
+        )}
 
         {/* 메뉴 */}
         <div className="card" style={{ marginTop: 20, overflow: 'hidden' }}>

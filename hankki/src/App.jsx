@@ -20,7 +20,7 @@ import { useTimer } from './timer'
 import Onboarding, { needsOnboarding } from './components/Onboarding'
 import CloudGate from './components/CloudGate'
 import ConfirmSheet from './components/ConfirmSheet'
-import { askOpenBackup, needsCloudGate, askOpenCloud } from './nudges'
+import { askOpenBackup, needsCloudGate, askOpenCloud, 클라우드보임 } from './nudges'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
@@ -86,7 +86,8 @@ export default function App() {
   // ☁️ 클라우드 첫 화면 — 소개보다 «앞». 아직 안 본 사람 ＋ 아직 앱을 안 써본 사람에게만.
   //   ⛔ 이미 쓰고 있던 사람에겐 안 띄운다 — 잘 쓰던 앱이 갑자기 로그인 화면으로 시작하면 그건 «벽»으로 읽힌다.
   //      그 사람들은 홈 한 줄에서 만난다(규칙 18 ⓙ — 이미 깔린 폰).
-  const [cloudGate, setCloudGate] = useState(() => needsCloudGate() && needsOnboarding())
+  //   🔀 ＋ 공개 스위치(`클라우드보임`) — 켜는 날까지 창업자 폰에서만. 근거는 `nudges.js` 머리주석.
+  const [cloudGate, setCloudGate] = useState(() => 클라우드보임() && needsCloudGate() && needsOnboarding())
   const backHandlers = useRef([]) // 화면들이 등록한 '뒤로가기 먼저 처리' 핸들러(비모달 상태·필터용)
   const modalLayers = useRef([]) // 열려 있는 모달·오버레이(각자 진짜 히스토리 칸 1개 소유)
   const pendingBack = useRef(0) // 같은 틱에 버튼으로 동시에 닫힌 모달 칸 수(한 번에 go(-n))
