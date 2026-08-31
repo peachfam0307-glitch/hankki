@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
@@ -21,6 +22,21 @@ import { StickerArt } from './Stickers'
 //     팝업은 **꾸미기·카드가 열린 날**에만 띄운다(달마다 한 번꼴). 매주 뜨면 그게 재촉이다.
 const KEY = 'hankki:news:seen'
 
+// 🚫🚫 **「앞으로 열지 않기」** (창업자 2026-08-31 *"앞으로 열지않기 하면 안열리게. 할 수 있어?"*)
+//   ⭐ 이게 있어야 팝업에 «선물 안내»를 실을 수 있다 — 안 그러면 달마다 뜨는 게 재촉이 된다.
+//      우리 리텐션 원칙(`docs/리텐션-설계원칙-2026-07-30.md`)이 그대로 걸리는 자리다.
+//   ⭐ **끄면 아무것도 잃지 않는다** — 소식 «페이지」는 그대로 있고 홈 카드로 언제든 열린다.
+//      그래서 설정에 되돌리는 줄을 따로 안 만들었다(끈 사람은 「한끼 소식」에서 다 본다).
+//   ⛔ 체크하는 «그 순간» 저장한다 — 닫기·구경하기·뒤로가기 중 어느 길로 나가도 남게.
+//      (`onClose` 에서만 저장하면 「구경하기」로 나간 사람은 안 꺼진다)
+const OFF = 'hankki:news:off'
+export const isNewsPopupOff = () => {
+  try { return localStorage.getItem(OFF) === '1' } catch { return false }
+}
+const setNewsPopupOff = (on) => {
+  try { on ? localStorage.setItem(OFF, '1') : localStorage.removeItem(OFF) } catch { /* 저장 못 해도 화면은 돈다 */ }
+}
+
 // 팝업을 띄울 «만한» 소식인가 — ⛔주간 레시피만 바뀐 주엔 안 띄운다(매주 팝업 = 재촉).
 // ⛔ [2026-08-29] `openedAlert` = 장바구니가 빠진 목록 — 팝업은 «알림 층»이다(창업자 *"대신 아래 나중에"*).
 const worthPopup = (news) =>
@@ -28,6 +44,7 @@ const worthPopup = (news) =>
 
 export function needsNewsPopup(news) {
   if (!worthPopup(news)) return false
+  if (isNewsPopupOff()) return false   // 🚫 「앞으로 열지 않기」를 켠 사람
   try { return localStorage.getItem(KEY) !== newsSignature(news) } catch { return false }
 }
 export function markNewsSeen(news) {
@@ -36,6 +53,7 @@ export function markNewsSeen(news) {
 
 export default function NewsPopup({ news, onClose, onOpenNews }) {
   useModalBack(onClose) // 뒤로가기 → 닫기 (이때도 '봤음'으로 친다 — onClose 안에서 표시)
+  const [off, setOff] = useState(isNewsPopupOff)
   // ⛔ [2026-08-29] `openedAlert` = **장바구니가 빠진 목록**(창업자 *"대신 아래 나중에"*).
   //    장바구니는 소식 «페이지»에만 나오고 팝업엔 안 온다 — 주마다 열려서 팝업이 재촉이 된다.
   // 🧮🧮 **팝업은 «꾸미기»만 센다** (창업자 2026-08-30
@@ -59,6 +77,16 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
   const keys = spread(items.filter((i) => !i.gift), 6)
   const hero = keys[0]
   const rest = keys.slice(1, 6)
+  // 🍁🍁 배경에 옅게 흩뿌릴 컷 — ⛔`rest` 를 그대로 쓰면 «안 된다**(실물로 잡았다 · 규칙 21)
+  //   ⑴ `spread` 는 **캐릭터(buddies) 탭을 앞으로** 보내므로 배경이 곰펭 «유령»이 된다
+  //   ⑵ 바로 아래 맛보기 줄과 **같은 그림이 두 번** 뜬다 — 인스타 안내판에서 고쳤던 그 자리다
+  //   ✅ 그래서 **캐릭터가 아닌 그룹**(낙엽·소품·테이프)에서, **위에 안 쓴 컷**으로만 고른다.
+  //      ⚠️ 캐릭터 그룹밖에 없는 달을 대비해 모자라면 남은 컷으로 채운다(빈 배경도 괜찮다).
+  const 쓴것 = new Set(keys)
+  const bg = [
+    ...spread(items.filter((i) => !i.gift && i.tab !== 'buddies'), 12),
+    ...spread(items.filter((i) => !i.gift), 12),
+  ].filter((k, i, a) => !쓴것.has(k) && a.indexOf(k) === i).slice(0, 3)
 
   return (
     <Portal>
@@ -68,16 +96,53 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
           onClick={(e) => e.stopPropagation()}
           style={{ paddingBottom: 'calc(18px + var(--safe-bottom))', maxHeight: 'calc(100dvh - 40px)' }}
         >
-          {/* 🍂 계절 판 — 히어로 컷을 얹는 자리. 우리 테마 변수만 쓴다(테마 바뀌어도 안 깨진다) */}
+          {/* 🍂 계절 판 — 히어로 컷을 얹는 자리. 우리 테마 변수만 쓴다(테마 바뀌어도 안 깨진다)
+              ⭐⭐ [창업자 2026-08-31] *"이대로 앱에도 넣으면 좋겠어 팝업으로 띄워서"*
+                 인스타 안내판에서 먹힌 것을 옮겼다 — **숫자를 주인공으로** ＋ 배경에 우리 컷을 옅게.
+              ⛔ **색은 안 박는다** — 테마가 셋(그레이지·살구·다크)이라 주황을 박으면 다크에서 뜬다.
+                 그래서 «그림»으로 계절감을 준다(그림은 테마와 무관하다) ＋ 색은 토큰만. */}
           <div style={{
+            position: 'relative', overflow: 'hidden',
             margin: '4px 14px 0', borderRadius: 20, padding: '18px 16px 16px', textAlign: 'center',
             background: 'linear-gradient(180deg, var(--cream) 0%, var(--surface) 100%)',
           }}>
+            {/* 🍁 배경에 그날 열리는 컷 셋을 옅게 — 「목록」이 아니라 「장면」으로 보이게 한다.
+                ⛔ `pointerEvents:none` — 닫기·구경하기를 가로채면 안 된다. */}
+            {bg.map((k, i) => (
+              <span key={`bg-${k}`} aria-hidden style={{
+                position: 'absolute', pointerEvents: 'none', opacity: 0.13,
+                width: [92, 74, 66][i], height: [92, 74, 66][i],
+                left: ['-14px', 'auto', '18%'][i], right: [ 'auto', '-10px', 'auto'][i],
+                top: ['52%', '4px', '-16px'][i],
+                transform: `rotate(${[-18, 20, 8][i]}deg)`,
+              }}>
+                <StickerArt id={k} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+              </span>
+            ))}
+            <div style={{ position: 'relative' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 15, fontWeight: 900, color: 'var(--brown)', letterSpacing: '0.06em' }}>
               <Icon name="sparkle" size={13} color="var(--brown)" stroke={2.2} /> NEW
             </div>
             <div style={{ fontSize: 21, fontWeight: 900, marginTop: 6, letterSpacing: '-0.03em', lineHeight: 1.3 }}>{h.title}</div>
-            <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3 }}>{h.sub}</div>
+            {/* 🔢 숫자를 크게 — 「51종·전부 무료예요」 한 줄에 묻혀 있던 것을 세웠다.
+                ⚠️ `count` 가 없는 갈래(이번 주 레시피만 열리는 날)엔 옛 한 줄을 그대로 쓴다. */}
+            {h.count ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 4 }}>
+                {/* 🎨 숫자 색 = `--gift` — 알약과 «한 벌»로 묶는다.
+                    ⛔ `--brown` 이면 그레이지 테마에서 «파란 숫자 ＋ 갈색 알약»으로 갈라진다(실물로 봤다).
+                    ⭐ `--gift` 는 네 테마의 대비를 이미 재 둔 토큰이다(`styles.css:88~96`) —
+                       46px 굵은 글자라 큰 글자 기준(3.0)을 넉넉히 넘는다. ⛔주황을 여기 박지 말 것. */}
+                <span style={{ fontSize: 46, fontWeight: 900, lineHeight: 1, color: 'var(--gift)', letterSpacing: '-0.04em' }}>
+                  {h.count}<span style={{ fontSize: 21, marginLeft: 1 }}>종</span>
+                </span>
+                <span style={{
+                  fontSize: 14, fontWeight: 900, color: '#fff', background: 'var(--gift)',
+                  borderRadius: 999, padding: '5px 13px', whiteSpace: 'nowrap',
+                }}>전부 무료</span>
+              </div>
+            ) : (
+              <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3 }}>{h.sub}</div>
+            )}
 
             {/* 히어로 한 컷 크게 — 작은 것 여럿보다 «하나 큰 것»이 눈에 남는다 */}
             {hero && (
@@ -92,6 +157,7 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
                 <Peek keys={rest} size={50} />
               </div>
             )}
+            </div>
           </div>
 
           {/* 무엇이 왔는지 — 칩으로. ⛔체크리스트는 «할 일»처럼 읽힌다 */}
@@ -164,6 +230,36 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
             >
               닫기
             </button>
+            {/* 🚫 「앞으로 열지 않기」 (창업자 2026-08-31)
+                ⛔ 「닫기」보다 «아래»에 둔다 — 위에 두면 닫으러 온 손가락이 실수로 켠다.
+                ⛔ 유니코드 이모지 금지 → 체크는 우리 `Icon`(check) 으로 그린다.
+                ⭐ 누르는 순간 저장한다(위 `setNewsPopupOff` 주석) ＋ 켜면 «무슨 일이 나는지»를 한 줄로 말한다 —
+                   조용히 사라지면 「고장났나」가 된다. */}
+            <button
+              className="press"
+              onClick={() => { const v = !off; setOff(v); setNewsPopupOff(v) }}
+              aria-pressed={off}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                width: '100%', padding: '8px 4px 2px', border: 'none', background: 'transparent',
+                color: 'var(--text-sub)', fontSize: 15, fontWeight: 700,
+              }}
+            >
+              <span style={{
+                width: 19, height: 19, borderRadius: 6, flex: '0 0 auto',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                border: off ? 'none' : '1.8px solid var(--sand)',
+                background: off ? 'var(--brown)' : 'transparent',
+              }}>
+                {off && <Icon name="check" size={12} color="#fff" stroke={3} />}
+              </span>
+              앞으로 열지 않기
+            </button>
+            {off && (
+              <div className="t-sub" style={{ fontSize: 14, textAlign: 'center', color: 'var(--sand)', lineHeight: 1.45 }}>
+                이 팝업은 이제 안 떠요. 새로 열린 건 홈의 <b>한끼 소식</b>에서 볼 수 있어요.
+              </div>
+            )}
           </div>
         </div>
       </div>
