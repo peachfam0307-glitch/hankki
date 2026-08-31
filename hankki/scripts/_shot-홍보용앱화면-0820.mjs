@@ -78,7 +78,8 @@ const 새페이지 = async (씨앗넣기 = false) => {
   // ⭐ deviceScaleFactor 3 = 폰 실물 해상도(1170×2532). 홍보물에 크게 얹어도 안 뭉갠다
   const page = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 })
   await page.addInitScript(SEED_COACH_SEEN)
-  await page.addInitScript((k) => { try { localStorage.setItem(k, '1') } catch {} }, ONBOARD_KEY || 'hankki:onboarded')
+  // 📰 [2026-09-01] 소식 팝업도 끈다 — 안 끄면 홍보용 화면에 팝업이 얹혀 찍힌다
+  await page.addInitScript((k) => { try { localStorage.setItem(k, '1'); localStorage.setItem('hankki:news:off', '1') } catch {} }, ONBOARD_KEY || 'hankki:onboarded')
   await page.goto('http://127.0.0.1:4381/hankki/', { waitUntil: 'networkidle' })
   await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(900)

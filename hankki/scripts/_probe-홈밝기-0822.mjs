@@ -32,7 +32,7 @@ await ctx.addInitScript(SEED_COACH_SEEN)
 // 🎨 테마를 골라 잰다 — 배경을 바꾸면 그 위의 것을 «전부» 다시 재야 한다(v11.21 톤D 교훈).
 //    THEME=apricot node scripts/_probe-홈밝기-0822.mjs
 const 테마 = process.env.THEME || ''
-await ctx.addInitScript((t) => { try { localStorage.setItem('hankki:onboarded', '1'); if (t) localStorage.setItem('hankki-theme', t) } catch {} }, 테마)
+await ctx.addInitScript((t) => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1'); if (t) localStorage.setItem('hankki-theme', t) } catch {} }, 테마)
 const p = await ctx.newPage()
 await p.goto('http://127.0.0.1:4437/hankki/', { waitUntil: 'networkidle' })
 await p.evaluate(() => document.fonts.ready)

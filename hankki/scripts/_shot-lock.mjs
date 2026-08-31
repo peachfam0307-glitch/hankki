@@ -14,7 +14,8 @@ const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
 await ctx.addInitScript(() => {
   ;['hankki:onboarded', 'hankki:coach:home2', 'hankki:coach:detail', 'hankki:coach:decor',
-    'hankki:coach:myrecipes', 'hankki:coach:editor', 'hankki:giftpack:seen'].forEach((k) => {
+    'hankki:coach:myrecipes', 'hankki:coach:editor', 'hankki:giftpack:seen',
+    'hankki:news:off'].forEach((k) => {   // 📰 [2026-09-01] 소식 팝업이 화면을 덮는다
     try { localStorage.setItem(k, '1') } catch { /* */ }
   })
 })

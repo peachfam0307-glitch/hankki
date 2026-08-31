@@ -31,7 +31,7 @@ let 탈 = 0
 for (const [이름, W, H, 바람] of 기기들) {
   const page = await b.newPage({ viewport:{width:W,height:H}, deviceScaleFactor:2 })
   await page.addInitScript(SEED_COACH_SEEN)
-  await page.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1')}catch{}})
+  await page.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')}catch{}})
   await page.goto('http://127.0.0.1:4394/hankki/',{waitUntil:'networkidle'})
   await page.evaluate(()=>document.fonts.ready); await page.waitForTimeout(900)
   const v = await page.evaluate(()=>{

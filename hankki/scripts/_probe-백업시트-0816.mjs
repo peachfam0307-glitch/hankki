@@ -29,7 +29,7 @@ let 나쁨 = 0
 for (const vh of [900, 740, 640]) {
   const page = await b.newPage({ viewport: { width: 390, height: vh } })
   await page.addInitScript(SEED_COACH_SEEN)
-  await page.addInitScript(() => localStorage.setItem('hankki:onboarded', '1'))
+  await page.addInitScript(() => localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1'))
   await page.goto('http://127.0.0.1:4374/hankki/', { waitUntil: 'networkidle' })
   await page.waitForTimeout(1100)
   // ⛔ 설정은 하단 탭에 «없다» — 홈 오른쪽 위 아이콘이다(2026-08-16 실측). 라벨로 집는다.

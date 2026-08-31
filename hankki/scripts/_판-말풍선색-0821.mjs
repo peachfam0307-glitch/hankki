@@ -70,7 +70,7 @@ for (const 탭 of 탭들) {
     // 🔍 dsf 2 — 아티팩트에 통째로 담을 거라 3배는 너무 무겁고, 2배면 폰에서 또렷하다
     const page = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
     await page.addInitScript(SEED_COACH_SEEN)
-    await page.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+    await page.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
     await page.goto('http://127.0.0.1:4399/hankki/', { waitUntil: 'networkidle' })
     await page.evaluate(() => document.fonts.ready)
     await page.waitForTimeout(700)

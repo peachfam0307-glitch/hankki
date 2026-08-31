@@ -48,7 +48,7 @@ try {
   if (!(await 서버뜰때까지())) { console.log('  ⛔ preview 서버가 안 떴다'); process.exit(1) }
   const browser = await chromium.launch()
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
-  await ctx.addInitScript(`${SEED_COACH_SEEN}\ntry { localStorage.setItem('hankki:onboarded','1') } catch(e){}`)
+  await ctx.addInitScript(`${SEED_COACH_SEEN}\ntry { localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1') } catch(e){}`)
   const page = await ctx.newPage()
   page.setDefaultTimeout(15000)
   await page.goto(URL, { waitUntil: 'networkidle' })

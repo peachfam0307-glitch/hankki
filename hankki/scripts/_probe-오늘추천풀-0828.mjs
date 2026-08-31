@@ -42,7 +42,7 @@ const 며칠돌려보기 = async (날수, 준비) => {
     const ymd = d.toISOString().slice(0, 10)
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } })
     await ctx.addInitScript(SEED_COACH_SEEN)
-    await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+    await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
     await ctx.addInitScript((고정) => {
       const 진짜 = Date, 밀리 = 진짜.parse(고정)
       // eslint-disable-next-line no-global-assign

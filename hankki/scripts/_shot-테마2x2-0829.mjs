@@ -43,7 +43,7 @@ for (const w of [320, 360, 390, 412]) {
   await page.goto(url)
   await page.evaluate((s) => {
     localStorage.setItem('hankki:v1', JSON.stringify(s))
-    localStorage.setItem('hankki:onboarded', '1')
+    localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
   }, state)
   await page.goto(url)
   await page.waitForTimeout(1500)

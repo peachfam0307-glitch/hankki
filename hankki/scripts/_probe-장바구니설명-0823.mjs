@@ -29,7 +29,7 @@ const CHROMIUM = process.env.SMOKE_CHROMIUM
 const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const page = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
 await page.addInitScript(SEED_COACH_SEEN)
-await page.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+await page.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 await page.goto('http://127.0.0.1:4395/hankki/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(900)
 await page.locator('.bottom-nav .nav-item').filter({ hasText: '장보기' }).first().click()

@@ -58,7 +58,7 @@ for (const t of 시험) {
     if (!u.includes('127.0.0.1')) 나간요청.push(u.slice(0, 70))
   })
   await page.addInitScript(SEED_COACH_SEEN)
-  await page.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch { /* noop */ } })
+  await page.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch { /* noop */ } })
   await page.goto('http://127.0.0.1:4404/hankki/', { waitUntil: 'networkidle' })
   await page.waitForTimeout(700)
 

@@ -73,6 +73,26 @@ function markBareNumberSteps(lines) {
     if (k - 시작 >= 2) for (let j = 시작; j < k; j++) 찍을것.add(후보[j].i)
     시작 = k
   }
+  // 🔢🔢 **[2026-08-31 · 창업자 삼치 원문] OCR 이 번호를 잘못 읽으면 그 뒤가 통째로 죽는다.**
+  //   📮 창업자 화면 = 「**13** 중약불로 줄이고…」 · 「**4** 무가 거의 다 익으면…」 — 번호가 본문에 남았다.
+  //   🔎 뿌리 = ③의 왼쪽 회색 번호 배지를 OCR 이 **13** 으로 읽어 **1,2,13,4 로 차례가 깨졌다.**
+  //      위 잣대는 «딱 이어질 때»만 인정하므로 13 에서 끊기고, 그 뒤 4 도 혼자 남아 둘 다 번호가 아니게 된다.
+  //   ⭐ 사람은 그래도 읽는다 — 1,2 를 봤으면 «다음은 3» 을 기대하고, 「13」을 3 으로 읽는다.
+  //      그래서 **이미 선 토막을 «기대 번호»로 이어간다**:
+  //        · 기대와 «똑같으면» 번호다            (4 == 4)
+  //        · 기대 숫자로 «끝나면» 번호다          (13 → 끝이 3 · OCR 이 앞에 한 글자를 덧붙여 읽은 것)
+  //   ⛔ 여기서도 「숫자면 무조건」은 아니다 — 뒤가 단위·인분이면 애초에 후보에서 빠져 있다(위 `UNIT_AFTER`).
+  //   ⛔ **토막이 «선 뒤»에만** 이어간다. 아무 숫자에서 시작하지 않는다.
+  if (찍을것.size) {
+    let 기대 = null
+    for (const c of 후보) {
+      if (찍을것.has(c.i)) { 기대 = c.n + 1; continue }
+      if (기대 == null) continue
+      const 같다 = c.n === 기대
+      const 끝이같다 = String(c.n).length > String(기대).length && String(c.n).endsWith(String(기대))
+      if (같다 || 끝이같다) { 찍을것.add(c.i); 기대 = 기대 + 1 }
+    }
+  }
   if (!찍을것.size) return lines
   const 표 = new Map(후보.map((c) => [c.i, c]))
   return lines.map((l, i) => (찍을것.has(i) ? `${표.get(i).앞}. ${표.get(i).뒤}` : l))
@@ -161,10 +181,19 @@ const LEAD_LATIN = /^[A-Za-z]{1,2}\s+(?=[가-힣])/
 function stripLead(s) {
   return String(s).replace(LEAD_DECOR, '').replace(LEAD_LATIN, '')
 }
-const SEC_ING = /^(재료|양념|소스|양념장|재료\s*준비|필요한\s*재료)/
+// 🥄 [2026-09-01 · 창업자 삼치 원문] **「계량」도 재료 절이다.**
+//   📮 창업자 = *"계량은 재료로 가야지 **원문에도 재료에 있었잖아**"*
+//   ⛔ 그 전엔 `[계량]` 이 절 이름이 아니라서 그 아래 「밥숟가락 기준」이 **어디에도 안 담겼다**
+//      (스푼이 뭔지 알려주는 줄인데 통째로 사라졌다).
+//   ⛔⛔ **「계량」 뒤에 한글이 붙으면 안 걸리게 한다** — 안 그러면 「계량컵 200ml」이
+//      «절 이름»으로 읽혀 그 재료가 통째로 사라진다(고치려던 것과 똑같은 사고가 난다).
+const SEC_ING = /^(재료|양념|소스|양념장|재료\s*준비|필요한\s*재료|계량법|계량(?![가-힣]))/
 // 🍳 「○○ 재료」 헤더에서 ○○ 를 제목으로 삼을 때, «요리 이름이 아닌» 수식어를 막는 목록.
 //    ⛔ 목록을 늘려서 푸는 자리가 아니다 — 이건 「절 이름」이라 몇 개 안 된다.
 const GENERIC_ING_HEAD = /^(기본|주|주요|메인|필요한|준비|추가|기타|전체|나머지|공통|밑|겉|속|위|아래)$/
+// ※ 곁말 표시 — 파이프라인을 통과시키려고 «글자에» 남기는 임시 표식이다.
+//   ⛔ 맨 끝 `곁말접기()` 가 반드시 걷어낸다 — 화면에 「※」가 남으면 안 된다.
+const TIP_MARK = '※ '
 const SEC_STEP = /^(만드는\s*법|만들기|만드는\s*방법|조리\s*순서|요리\s*순서|조리\s*방법|요리\s*방법|조리법|레시피|순서)/
 // ⚠️⚠️ 「레시피 (3-4인분 기준)」은 «분량 안내»지 「만드는 법」 헤더가 아니다.
 //    2026-08-02 창업자 폰 사고 — 인스타 캡션 첫머리의 `✨레시피 (3-4인분 기준)✨` 가
@@ -510,12 +539,31 @@ export function parseRecipeText(raw = '', opts = {}) {
     //    ⚠️ 체크표시 자체로는 못 가른다 — 인스타는 «재료 목록»에도 ✔ 를 흔히 쓴다.
     //       그래서 「번호 걸음을 이미 봤나」와 «함께» 봐야 한다.
     const checkMark = /^\s*[✔☑✓✅]/.test(rawLine)
+    // ※ [2026-09-01 · 창업자 판정 ⓐ] **「※」로 시작하는 줄은 «새 걸음»이 아니라 «앞 걸음의 곁말»이다.**
+    //   📮 창업자 = *"ⓐ 걸음 1 아래 작은 곁말로 (요리모드에서 빈 칸이 안 생김"*
+    //   ⛔ 삼치 원문의 「※무의 각진 모서리는 돌려깎기 했어요」가 **걸음 2번**이 되어
+    //      요리모드에서 «할 일이 없는 칸»이 생겼다(다음을 눌렀는데 시킬 게 없다).
+    //   ⛔⛔ 여기서 «기억»해 둬야 한다 — 바로 아래 `stripLead` 가 앞머리 장식을 «전부» 벗겨서
+    //      그 다음부터는 「※ 였다」는 사실이 사라진다(`stepMarked` 를 미리 재는 이유와 같다).
+    const tipMarked = /^\s*※/.test(rawLine)
     // 맨 앞 장식 이모지(🍆📌🍷 등) — 첫 줄이면 제목 후보 신호로 쓴다.
     const emojiHead = /^\s*[-*•·▪◦‣●○✅✔☑]*\s*[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}❤]/u.test(rawLine)
     // 번호·동그라미 번호가 붙은 줄인지 원문에서 미리 본다 — sanitize가 ①~⑳을 지워버리기 때문.
     const stepMarked = STEP.test(String(rawLine).replace(/^\s*[-*•·▪◦‣●○✔☑]\s*/, '').trim())
     // 해시태그 줄(#육회 #육회깻잎무침 #묵은지김밥 …)은 재료도 순서도 아님 → 버린다.
-    if (/^\s*#\S/.test(rawLine) || (String(rawLine).match(/#[^\s#]+/g) || []).length >= 2) continue
+    // #️⃣ **[2026-08-31 · 창업자 삼치 원문] 단 «첫 줄에 태그 하나»면 그게 제목이다 — 안 버린다.**
+    //   📮 창업자 캡처 = `#삼치간장조림 레시피` → 제목이 **「계량」**이 됐다(다음 줄을 집었다).
+    //   🔢 실측으로 갈랐다 — 이 줄이 «버려져서» 아래 제목 가지까지 가지도 못했다.
+    //      `#` 만 빼고 넣으면 「삼치간장조림」이 제대로 잡힌다.
+    //   ⭐ 인스타 캡션은 요리 이름을 **첫 줄 해시태그**로 다는 게 흔하다.
+    //   ⛔ **첫 줄 ＋ 태그가 «하나»일 때만** 살린다 — 「#오늘의집밥 #저녁 #맛스타」 같은 태그 더미는
+    //      그대로 버린다(그건 제목이 아니라 꼬리표다). 태그가 둘 이상이면 예전 그대로.
+    const 태그수 = (String(rawLine).match(/#[^\s#]+/g) || []).length
+    //   ⚠️ 「첫 줄」은 «지금까지 담은 게 화면 찌꺼기뿐일 때»다 — 스크린샷은 맨 위가 늘 「KT 11:27」이라
+    //      그걸 세면 진짜 첫 줄이 둘째가 되어 제목 가지가 영영 안 돈다(창업자 원문이 그 경우였다).
+    const 아직내용없다 = items.every((it) => SCREEN_CHROME.test(it.l))
+    const 첫줄태그제목 = 아직내용없다 && 태그수 === 1 && /^\s*#\S/.test(rawLine)
+    if (!첫줄태그제목 && (/^\s*#\S/.test(rawLine) || 태그수 >= 2)) continue
     // 🔢 [2026-08-28] 숫자만 있는 줄 = 인스타 «좋아요·댓글·공유 수» 줄이다(「837 15 91 431」).
     //    ⛔ 내용이 아니라 화면 UI 다. 게다가 이게 «첫 줄»이 되면 아래 계정명 떼기가 안 돈다.
     if (/^\s*[\d\s,.]+\s*$/.test(rawLine)) continue
@@ -576,7 +624,7 @@ export function parseRecipeText(raw = '', opts = {}) {
     //    📌 안 도는 고침을 남기면 나중에 누가 지워도 아무도 모른다.
     // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
     const isHeader = SEC_ING.test(l) || SEC_STEP.test(l) || SEC_MEMO.test(l)
-    if (isHeader || (l.length > 1 && !isGibberish(l))) { items.push({ l, bullet, emojiHead, stepMarked, checkMark, blankBefore: blankAhead }); blankAhead = false }
+    if (isHeader || (l.length > 1 && !isGibberish(l))) { items.push({ l, bullet, emojiHead, stepMarked, checkMark, tipMarked, blankBefore: blankAhead }); blankAhead = false }
   }
 
   let title = ''
@@ -610,9 +658,14 @@ export function parseRecipeText(raw = '', opts = {}) {
   //       → 뒤 줄이 17자(짧다) 라서 붙어 **4걸음이 2걸음**이 됐다.
   //    ⭐ 사람이 번호를 매겼으면 그건 «여기서부터 새 걸음»이라는 뜻이다. 길이로 뒤집지 않는다.
   const stepNumbered = []
-  const pushStep = (l) => {
+  // ※ [2026-09-01] 곁말이면 «표시를 글자에 남겨» 담는다 — 자리 번호로 짝지으면
+  //   `mergeStepFragments`·`splitParagraphSteps` 를 지나며 개수가 달라져 어긋난다.
+  //   맨 끝 `곁말접기()` 가 이 표시를 보고 앞 걸음에 접는다.
+  const pushStep = (l, tip = false) => {
     const 번호붙음 = STEP.test(l)
-    steps.push(번호붙음 ? l.replace(STEP, '').trim() : l)
+    const 몸 = 번호붙음 ? l.replace(STEP, '').trim() : l
+    if (tip) { steps.push(TIP_MARK + 몸); stepNumbered.push(false); sawStep = true; lastWasBulletIng = false; return }
+    steps.push(몸)
     stepNumbered.push(번호붙음)
     sawStep = true; lastWasBulletIng = false
   }
@@ -621,8 +674,15 @@ export function parseRecipeText(raw = '', opts = {}) {
     lastWasBulletIng = bullet
   }
 
+  // 🕐 **[2026-08-31] «진짜 첫 줄»이 몇 번째인가** — 스크린샷은 맨 위가 늘 화면 찌꺼기(「KT 11:27」)다.
+  //   ⛔ 그걸 첫 줄로 세면 아래 제목 가지()가 **한 번도 안 돈다.**
+  //      창업자 삼치 원문이 정확히 그 경우였다 — 0번이 「KT 11:27 F」라 제목 줄이 1번으로 밀렸다.
+  //   ⭐ 버리는 줄과 «같은 잣대»(SCREEN_CHROME)를 쓴다 — 둘이 갈리면 또 어긋난다.
+  let 첫내용 = 0
+  while (첫내용 < items.length && SCREEN_CHROME.test(items[첫내용].l)) 첫내용++
+
   for (let idx = 0; idx < items.length; idx++) {
-    const { l, bullet, emojiHead, stepMarked, checkMark, blankBefore } = items[idx]
+    const { l, bullet, emojiHead, stepMarked, checkMark, tipMarked, blankBefore } = items[idx]
 
     // 🧹🧹 [2026-08-28] 인스타 «화면 글자»는 제목도 재료도 순서도 될 수 없다 — 제일 먼저 버린다.
     //    📮 창업자 실물(차돌짬뽕) — 화면 맨 위의 「댓글 45」가 «제목»이 됐다.
@@ -664,8 +724,16 @@ export function parseRecipeText(raw = '', opts = {}) {
     // 첫 줄 제목 — 이모지 붙은 짧은 이름("🍷 양념장")이나 "X 만드는 법/레시피" 배너면 제목으로.
     // 섹션명(양념장)과 겹쳐도 제목을 우선한다. "재료"처럼 신호 없는 헤더는 안 가로챈다.
     // ⚠️ 24자는 「시아버지가 전수해준 홍콩식 가지 볶음」(25자) 같은 실제 인스타 제목을 놓친다 → 32자까지.
-    if (idx === 0 && !title && /[가-힣]/.test(l) && l.length <= 32 && !bullet) {
-      const core0 = l.replace(/\s*[(（][^()（）]*[)）]\s*$/, '').trim() // 뒤 괄호(300g 기준·2인분) 떼고 판단
+    if (idx === 첫내용 && !title && /[가-힣]/.test(l) && l.length <= 32 && !bullet) {
+      // #️⃣ **[2026-08-31 · 창업자 삼치 원문] 해시태그 하나로 시작하는 첫 줄이 제목이다.**
+      //   📮 창업자 캡처 = `#삼치간장조림 레시피` → 제목이 **「계량」**이 됐다(그 다음 줄을 집었다).
+      //   🔢 실측으로 갈랐다 — `#` 만 빼면 「삼치간장조림」이 제대로 잡힌다. 즉 «해시태그가 범인»이다.
+      //      (인스타 캡션은 요리 이름을 해시태그로 다는 게 흔하다)
+      //   ⛔ **`#` 이 «하나»일 때만 벗긴다** — 「#오늘의집밥 #저녁 #맛스타」 같은 «태그 더미»는 제목이 아니다.
+      //      태그가 둘 이상이면 손대지 않아 예전처럼 그냥 흘러간다.
+      const 태그수 = (l.match(/#/g) || []).length
+      const l0 = 태그수 === 1 ? l.replace(/^\s*#/, '').trim() : l
+      const core0 = l0.replace(/\s*[(（][^()（）]*[)）]\s*$/, '').trim() // 뒤 괄호(300g 기준·2인분) 떼고 판단
       // ⚠️ 낱말 경계를 지킨다 — 예전엔 "소고기 미역국 황금레시피"가 "…황금"으로 잘렸다.
       //    앞에 공백이 있거나 줄 전체일 때만 뗀다("김치찌개 레시피"→"김치찌개", "황금레시피"→그대로).
       const TAIL = /(?:^|\s)(만드는\s*법|만드는\s*방법|만들기|레시피)\s*[!！~]*\s*$/
@@ -683,7 +751,9 @@ export function parseRecipeText(raw = '', opts = {}) {
       //       그래서 SEC_ING 가 볼 기회조차 없었다.
       //    📌 절 이름(재료·만드는 법·양념·팁)은 «무엇이 적혔나»이지 «무슨 요리인가»가 아니다.
       const 절이름 = SEC_ING.test(asTitle) || SEC_STEP.test(asTitle) || SEC_MEMO.test(asTitle) ||
-        /^(재료|양념|소스|양념장|육수|만드는\s*법|만드는\s*방법|만들기|조리법|순서|팁|포인트)$/.test(asTitle)
+        // 🥄 [2026-08-31] 「계량」·「분량」도 절 이름이다 — 창업자 삼치 원문이 「[계량] 밥숟가락 기준」으로
+        //    시작해서 **제목이 「계량」**이 됐다(해시태그 때문에 진짜 제목이 비었을 때 그 자리를 채웠다).
+        /^(재료|양념|소스|양념장|육수|만드는\s*법|만드는\s*방법|만들기|조리법|순서|팁|포인트|계량|분량|계량법)$/.test(asTitle)
       if (!절이름 && (emojiHead || isBanner || plainName) && !QTY.test(asTitle) && asTitle.length >= 2 && !SENTENCE_END.test(asTitle)) {
         title = asTitle
         continue
@@ -855,7 +925,7 @@ export function parseRecipeText(raw = '', opts = {}) {
     }
     // 👋 SNS 끝인사는 걸음이 아니다(위 SNS_OUTRO 주석 참조) — 메모로 보낸다.
     if (SNS_OUTRO.test(l)) { other.push(l); lastWasBulletIng = false; continue }
-    if (stepLike) { pushStep(l); continue }
+    if (stepLike) { pushStep(l, tipMarked); continue }
     // 3) 재료다움 → 재료 (재료 섹션이거나, 아직 순서가 시작 전이면)
     if (ingLike && (mode === 'ing' || mode === null || !sawStep)) { pushIng(l, bullet); continue }
     // 3-2) 분량이 안 적힌 재료("다진마늘", "대파")도 재료로 담는다 — 재료를 줄줄이 적던 중이고
@@ -886,9 +956,9 @@ export function parseRecipeText(raw = '', opts = {}) {
       continue
     }
     // 4) 순서가 이미 시작됐으면, 남는 줄은 순서의 연속으로 본다("5분간 그대로 둔다" 등)
-    if (sawStep && mode !== 'ing' && l.length >= 5) { pushStep(l); continue }
+    if (sawStep && mode !== 'ing' && l.length >= 5) { pushStep(l, tipMarked); continue }
     // 5) 그 밖의 긴 줄은 순서, 수량 줄은 재료, 나머지는 메모 후보
-    if (l.length >= 20) { pushStep(l); continue }
+    if (l.length >= 20) { pushStep(l, tipMarked); continue }
     // 🗑 [2026-08-28] **이름 없이 분량만 있는 줄은 재료가 아니다** — 여기까지 왔다는 건
     //    위의 «앞 재료에 이어붙이기»가 못 붙였다는 뜻이다(앞에 재료가 없거나 이미 걸음 절이거나).
     //    📮 창업자 실물(공심채볶음 3:34) — 겹쳐 찍힌 미리보기 썸네일 글자 「150g」이
@@ -907,7 +977,7 @@ export function parseRecipeText(raw = '', opts = {}) {
   return {
     title: cleanTitleTail(title),
     ingredients: dedupeLines(ingredients.map(fixIngredientUnits)),
-    steps: dedupeLines(politeSteps(splitParagraphSteps(mergeStepFragments(steps, stepNumbered)))),
+    steps: 곁말접기(dedupeLines(politeSteps(splitParagraphSteps(mergeStepFragments(steps, stepNumbered))))),
     memo,
   }
 }

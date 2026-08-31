@@ -80,7 +80,7 @@ async function 새창 (init) {
 // ── ② 이미 쓰던 사람 = 첫 화면 «안» 뜨고 홈에 한 줄 ───────────────────
 {
   const { ctx, pg } = await 새창(() => {
-    localStorage.setItem('hankki:onboarded', '1')          // 소개를 이미 봤다
+    localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')          // 소개를 이미 봤다
     localStorage.setItem('hankki:v1', JSON.stringify({
       recipes: [{ id: 'u1', title: '내가 쓴 레시피', ingredients: [], steps: [] }],
       folders: [], profile: { name: '한끼러버', bio: '' }, shops: [], wishlist: [],
@@ -101,7 +101,7 @@ async function 새창 (init) {
 // ── ③ 이미 로그인해 둔 사람 = 한 줄이 «안» 뜬다 ──────────────────────
 {
   const { ctx, pg } = await 새창(() => {
-    localStorage.setItem('hankki:onboarded', '1')
+    localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
     localStorage.setItem('hankki:cloud:on', '1')            // 로그인해 둔 표식
     localStorage.setItem('hankki:v1', JSON.stringify({
       recipes: [{ id: 'u1', title: '내가 쓴 레시피', ingredients: [], steps: [] }],

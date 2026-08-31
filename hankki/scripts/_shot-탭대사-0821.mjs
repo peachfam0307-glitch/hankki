@@ -124,7 +124,7 @@ for (const 테마 of ['greige', 'dark', 'cream']) {
 
     const page = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 })
     await page.addInitScript(SEED_COACH_SEEN)
-    await page.addInitScript((t) => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki-theme', t) } catch {} }, 테마)
+    await page.addInitScript((t) => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1'); localStorage.setItem('hankki-theme', t) } catch {} }, 테마)
     const 오류 = []
     page.on('pageerror', (e) => 오류.push(String(e.message || e).split('\n')[0]))
     await page.goto('http://127.0.0.1:4397/hankki/', { waitUntil: 'networkidle' })

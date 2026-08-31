@@ -107,7 +107,7 @@ for (const 테마 of 테마들) {
     await page.addInitScript(SEED_COACH_SEEN)
     await page.addInitScript((t) => {
       try {
-        localStorage.setItem('hankki:onboarded', '1')
+        localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
         // ⛔⛔ 키는 «하이픈» 이다 — `hankki-theme` (`src/theme.js:15` THEME_KEY).
         //    첫 판에서 `hankki:theme`(콜론)로 써서 **세 테마가 전부 기본으로 찍혔다.**
         //    숫자가 셋 다 똑같이 나온 게 신호였다(규칙 18 — 검사부터 의심).

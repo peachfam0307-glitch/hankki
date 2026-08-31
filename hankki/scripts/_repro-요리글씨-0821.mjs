@@ -79,7 +79,7 @@ const 표 = []
 for (const [W, H, 이름] of 화면들) {
   const ctx = await b.newContext({ viewport: { width: W, height: H } })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
   const p = await ctx.newPage()
   await p.goto('http://127.0.0.1:4422/hankki/', { waitUntil: 'networkidle' })
   await p.evaluate(() => document.fonts.ready)

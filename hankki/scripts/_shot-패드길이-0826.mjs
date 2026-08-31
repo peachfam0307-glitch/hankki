@@ -15,7 +15,7 @@ const 탭 = ['홈','레시피','일기','장보기','레꾸자랑']
 for (const [이름,W,H] of [['폰   411×914',411,914],['패드 834×1194',834,1194]]) {
   const page=await b.newPage({viewport:{width:W,height:H},deviceScaleFactor:1})
   await page.addInitScript(SEED_COACH_SEEN)
-  await page.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1')}catch{}})
+  await page.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')}catch{}})
   await page.goto('http://127.0.0.1:4396/hankki/',{waitUntil:'networkidle'})
   await page.evaluate(()=>document.fonts.ready); await page.waitForTimeout(800)
   const 줄=[]

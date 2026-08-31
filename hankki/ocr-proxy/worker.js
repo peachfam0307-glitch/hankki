@@ -56,7 +56,10 @@ const LIMITS = {
   DAILY_GLOBAL: 120,     // 전체 일 상한
   PER_USER_MONTHLY: 5,   // 유저당 «월» 무료 횟수 (웰컴을 다 쓴 뒤부터)
   PER_IP_PER_MIN: 6,     // IP당 분당 상한
-  WELCOME_FREE: 20,      // 🎁 웰컴 — 첫 1회만. 다 쓸 때까지 «달이 바뀌어도» 남는다
+  WELCOME_FREE: 30,      // 🎁 웰컴 — 첫 1회만. 다 쓸 때까지 «달이 바뀌어도» 남는다
+  //   ✅✅ **[창업자 확정 2026-08-31] 20 → 30** — *"30장으로 하자 넉넉하게 지금 유저 얼마 없으니까"*
+  //      ⭐ 마진을 안 깎는다 — 웰컴은 **1회성**이고 «매월 반복량 5」는 그대로다(그게 창업자가 정한 유일한 레버).
+  //      ⭐ 원가도 전역 월 900 이 막는다. ⛔ 「매월 5장」은 «건드리지 않았다».
 }
 
 // 🎁🎁 웰컴 20장 (창업자 2026-07-26 확정 · 2026-08-13 «드디어» 구현)
@@ -86,6 +89,52 @@ export default {
     const cors = corsHeaders(origin)
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
+
+    // 📊📊 **[창업자 확정 2026-08-31] 「이번 달 몇 건 / 900」을 볼 수 있게 한다 — *"이건 꼭 해야해"***
+    //
+    //   ⛔⛔ 그 전엔 **통이 얼마나 찼는지 아무도 못 봤다.** 900이 차면 유저는 조용히 기본 인식으로
+    //      떨어지고 우리는 그 사실조차 모른다. 그러면 「무료 열쇠를 더 줄까 · 카드를 붙일까」를
+    //      **감으로** 정하게 된다 — 그게 제일 비싼 판정이다. 이 길 하나면 그 판정이 «숫자»가 된다.
+    //
+    //   ❓ 창업자 물음 = *"이거는 호출아니라 정확히 사용한 열쇠갯수는 보는거지?"*
+    //   ✅ **지금 구조에선 그 둘이 «같은 수»다.** 창업자 최종 확정이 「사진 1장 = 열쇠 1개」라서
+    //      Vision 을 부른 횟수가 곧 유저가 쓴 열쇠 개수다(묶음 코드는 안 올렸다 · 맨 위 경고).
+    //      ⚠️ 다만 이 값은 **온 앱을 통틀어 «전역»**이다 — 「누가 몇 개」가 아니라 「다 합쳐 몇 개」.
+    //      ⚠️ 그리고 **창업자 폰이 쓴 것도 포함**된다(운영자는 개인 한도만 우회하고 전역엔 센다).
+    //         그게 맞다 — 통은 «실제로 나간 양»을 세야 하니까.
+    //      ⛔ 「묶음 1장」을 나중에 켜면 그날부터 이 둘이 갈린다. 그때 이 주석도 같이 고칠 것.
+    //
+    //   🔒 **운영자만 본다** — 열쇠(FOUNDER_SECRET)가 맞아야 한다. 없으면 401.
+    //      ⭐ 창업자가 «폰 브라우저로» 열어 보는 길이라 **GET 도 받고**, 헤더 대신 `?key=` 로도 받는다.
+    //         (폰 브라우저는 헤더를 못 붙인다 — 그래서 이 길만 예외로 열어 둔다)
+    //      ⛔ 그래서 아래 method·오리진 검사보다 «먼저» 온다.
+    //   ⛔ 이 길은 **Vision 을 안 부른다** — 세는 값만 읽는다. 통을 축내지 않는다.
+    //   ⛔ 유저별 값은 안 준다 — 볼 이유가 없고, 보면 그게 곧 개인정보가 된다.
+    //
+    //   📖 쓰는 법 = `https://<워커주소>/?quota=1&key=<FOUNDER_SECRET>`
+    //      ⛔ 그 주소를 채팅·저장소에 적지 않는다(열쇠가 딸려 간다).
+    if (new URL(request.url).searchParams.get('quota') === '1') {
+      if (!env.FOUNDER_SECRET) return json({ error: 'no_secret' }, 500, cors)
+      const 준열쇠 = request.headers.get('x-hankki-founder') || new URL(request.url).searchParams.get('key') || ''
+      if (준열쇠 !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      const kvq = env.OCR_KV
+      if (!kvq) return json({ error: 'no_kv' }, 500, cors)
+      // ⏰⏰ **세는 쪽과 «같은 잣대»를 쓴다** — 아래 카운터가 `new Date().toISOString()`(UTC)으로 키를 만든다.
+      //   ⛔ 여기만 한국시간으로 바꾸면 **달이 바뀌는 자정 무렵에 «다른 칸»을 읽어** 0으로 보인다.
+      //      («맞는 시간»보다 «같은 칸»이 먼저다 — 우리가 볼 것은 「그 카운터가 얼마나 찼나」다)
+      const t = new Date()
+      const ymq = t.toISOString().slice(0, 7)
+      const ymdq = t.toISOString().slice(0, 10)
+      const [월, 일] = await Promise.all([num(kvq, `m:${ymq}`), num(kvq, `d:${ymdq}`)])
+      return json({
+        달: ymq,
+        월: { 쓴것: 월, 상한: LIMITS.MONTHLY_GLOBAL, 남음: Math.max(0, LIMITS.MONTHLY_GLOBAL - 월), 퍼센트: Math.round((월 / LIMITS.MONTHLY_GLOBAL) * 100) },
+        오늘: { 쓴것: 일, 상한: LIMITS.DAILY_GLOBAL, 남음: Math.max(0, LIMITS.DAILY_GLOBAL - 일) },
+        웰컴: LIMITS.WELCOME_FREE,
+        매월: LIMITS.PER_USER_MONTHLY,
+      }, 200, cors)
+    }
+
     if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, cors)
 
     // ⑤-a 오리진 체크

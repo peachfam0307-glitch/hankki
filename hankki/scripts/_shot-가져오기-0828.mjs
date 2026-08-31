@@ -16,7 +16,7 @@ const OUT = process.env.SHOT_OUT || '/tmp'
 for (const [이름, W] of [['390', 390], ['320', 320]]) {
   const ctx = await b.newContext({ viewport: { width: W, height: 860 }, deviceScaleFactor: 2 })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch { /* noop */ } })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch { /* noop */ } })
   const p = await ctx.newPage()
   await p.goto('http://127.0.0.1:4471/hankki/', { waitUntil: 'networkidle' })
   await p.waitForTimeout(2500)

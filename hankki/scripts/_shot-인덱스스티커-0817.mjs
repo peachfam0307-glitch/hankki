@@ -121,7 +121,7 @@ for (const [놓기이름, 묶음이름, 격자] of 찍기) {
     const page = await b.newPage({ viewport: { width: 360, height: 880 }, deviceScaleFactor: 3 })
     page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
     await page.addInitScript(({ s, g }) => {
-      localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
+      localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
       localStorage.setItem('hankki:nudge:giftpack', '1'); localStorage.setItem('hankki:gridSize', g)
       const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
     }, { s: state, g: 격자 })

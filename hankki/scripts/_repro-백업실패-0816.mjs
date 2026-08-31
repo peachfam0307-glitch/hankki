@@ -55,7 +55,7 @@ const ctx = await b.newContext({ viewport: { width: 390, height: 860 } })
 const 열기 = async () => {
   const p = await ctx.newPage()
   await p.addInitScript(SEED_COACH_SEEN)
-  await p.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1') })
+  await p.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') })
   await p.addInitScript(HOOKS)
   await p.goto('http://127.0.0.1:4389/hankki/', { waitUntil: 'networkidle' })
   await p.waitForTimeout(1100)

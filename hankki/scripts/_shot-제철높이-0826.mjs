@@ -17,7 +17,7 @@ const 상한 = [null, 210, 185, 160]
 for (const cap of 상한) {
   const page=await b.newPage({viewport:{width:834,height:1194},deviceScaleFactor:2})
   await page.addInitScript(SEED_COACH_SEEN)
-  await page.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1')}catch{}})
+  await page.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')}catch{}})
   await page.goto('http://127.0.0.1:4395/hankki/',{waitUntil:'networkidle'})
   if (cap) await page.addStyleTag({content:
     `@media (min-width:700px) and (min-height:700px){

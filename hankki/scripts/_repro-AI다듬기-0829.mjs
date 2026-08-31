@@ -97,7 +97,8 @@ chk('② 실패해도 오류를 «안 던진다»(null 을 준다)',
 // ⛔ 2026-08-29 부터 이 규칙은 «tidy.js 의 mergeTidy» 한 곳에 산다 — 화면마다 복붙하면 조용히 갈린다.
 //    (그날 「사진 읽는 문이 셋인데 한 곳에만 AI 를 붙인」 사고를 겪고 함수로 뽑았다)
 chk('⑥ AI 가 준 것만 골라 덮는다',
-  /ai\.ingredients\.length\s*\?\s*ai\.ingredients\s*:\s*r\.ingredients/.test(tidySrc) &&
+  // 🥄 2026-08-31 부터 재료는 «분량을 되살려서» 얹는다 — 그래도 「AI 가 안 주면 파서 것」은 그대로다
+  /ai\.ingredients\.length\s*\?\s*분량되살리기\(ai\.ingredients, r\.ingredients\)\s*:\s*r\.ingredients/.test(tidySrc) &&
   /ai\.steps\.length\s*\?[^:]*:\s*r\.steps/.test(tidySrc),
   '(AI 가 제목만 줘도 재료·걸음은 규칙 파서 것이 남는다)')
 

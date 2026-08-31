@@ -118,7 +118,7 @@ console.log('\n🎬 ① 온보딩 (첫 실행 · 설정 → 「앱 소개 다시
 // ── ② 나머지 화면 ──────────────────────────────────────────
 const ctx = await b.newContext({ viewport: { width: VW, height: VH }, deviceScaleFactor: 4, timezoneId: 'Asia/Seoul' })
 await ctx.addInitScript(() => {
-  localStorage.setItem('hankki:onboarded', '1')
+  localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
   localStorage.setItem('hankki:giftSheetSeen', '1')
 })

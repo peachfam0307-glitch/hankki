@@ -27,7 +27,7 @@ const page = await b.newPage({ viewport: { width: 390, height: 900 }, deviceScal
 const errors = []
 page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
 await page.addInitScript(SEED_COACH_SEEN)
-await page.addInitScript(() => localStorage.setItem('hankki:onboarded', '1'))
+await page.addInitScript(() => localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1'))
 await page.goto('http://127.0.0.1:4372/hankki/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(1500)
 

@@ -41,7 +41,7 @@ const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: p
 const W = Number(process.env.W || 390), H = Number(process.env.H || 844)
 const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 2 })
 await ctx.addInitScript(SEED_COACH_SEEN)
-await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 const page = await ctx.newPage()
 page.on('pageerror', (e) => console.log('  ⚠️ pageerror:', String(e.message || e).split('\n')[0]))
 await page.goto('http://127.0.0.1:4397/hankki/', { waitUntil: 'networkidle' })

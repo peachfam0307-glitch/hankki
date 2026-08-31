@@ -54,7 +54,7 @@ try {
   if (!(await 서버뜰때까지())) { console.log('  ⛔ preview 서버가 30초 안에 안 떴다 (포트 ' + PORT + ')'); process.exit(1) }
   const browser = await chromium.launch()
   const ctx = await browser.newContext()
-  await ctx.addInitScript(`${SEED_COACH_SEEN}\ntry { localStorage.setItem('hankki:onboarded','1') } catch(e){}`)
+  await ctx.addInitScript(`${SEED_COACH_SEEN}\ntry { localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1') } catch(e){}`)
   const errs = []
   ctx.on('weberror', (e) => errs.push(String(e.error())))
 

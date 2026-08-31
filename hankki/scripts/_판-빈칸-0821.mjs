@@ -58,7 +58,7 @@ const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: p
 const 찍기 = async (c) => {
   const ctx = await b.newContext({ viewport: { width: 390, height: 900 }, deviceScaleFactor: 3 })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 
   // 레꾸를 심는다 — 창업자가 짚은 *"레꾸화면이 더 잘보이겠다"* 를 같이 본다
   const p0 = await ctx.newPage()

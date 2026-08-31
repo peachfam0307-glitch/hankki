@@ -26,7 +26,7 @@ for (const [키,이름] of 후보) {
   const url=별주소(키)
   if(!url){ console.log(`⛔ ${키} 를 dist 에서 못 찾았다`); continue }
   const ctx=await b.newContext({viewport:{width:411,height:891},deviceScaleFactor:3,timezoneId:'Asia/Seoul'})
-  await ctx.addInitScript(()=>{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:nudge:giftpack','1');localStorage.setItem('hankki:giftSheetSeen','1')})
+  await ctx.addInitScript(()=>{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1');localStorage.setItem('hankki:nudge:giftpack','1');localStorage.setItem('hankki:giftSheetSeen','1')})
   await ctx.addInitScript({content:SEED_COACH_SEEN})
   const pg=await ctx.newPage()
   await pg.goto('http://127.0.0.1:4492/hankki/',{waitUntil:'networkidle'});await pg.waitForTimeout(1200)

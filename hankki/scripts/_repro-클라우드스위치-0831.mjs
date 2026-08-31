@@ -34,7 +34,7 @@ const srv = http.createServer((req, res) => {
 await new Promise((r) => srv.listen(4632, r))
 
 const 씨앗쓰던사람 = () => {
-  localStorage.setItem('hankki:onboarded', '1')
+  localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
   localStorage.setItem('hankki:coach:home', '1')
   localStorage.setItem('hankki:v1', JSON.stringify({
     recipes: [{ id: 'u1', title: '내가 쓴 레시피', ingredients: [], steps: [] }],

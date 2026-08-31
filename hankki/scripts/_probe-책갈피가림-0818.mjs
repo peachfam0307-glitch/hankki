@@ -47,7 +47,7 @@ console.log('격자        책갈피  칩줄에 가림  이름표 덮음  화면
 for (const [격자, 이름] of [['big', '큰(2열)'], ['small', '작은(3열)']]) {
   const page = await b.newPage({ viewport: { width: 360, height: 880 }, deviceScaleFactor: 2 })
   await page.addInitScript(({ s, g }) => {
-    localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
+    localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
     localStorage.setItem('hankki:nudge:giftpack', '1'); localStorage.setItem('hankki:gridSize', g)
     const _g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { return (typeof k === 'string' && k.startsWith('hankki:coach:')) ? '1' : _g.call(this, k) }
   }, { s: state, g: 격자 })

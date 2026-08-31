@@ -30,7 +30,7 @@ const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
 await ctx.addInitScript(SEED_COACH_SEEN)
-await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded','1'); localStorage.setItem('hankki:founder','1') } catch {} })
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1'); localStorage.setItem('hankki:founder','1') } catch {} })
 
 // ── 창업자 폰과 «같은» 초안을 심는다 (계란·공심채 「17시간 전」이 보이게)
 const p0 = await ctx.newPage()

@@ -39,7 +39,7 @@ for (const theme of ['greige', 'apricot', 'dark']) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
   await ctx.addInitScript(SEED_COACH_SEEN)
   await ctx.addInitScript(([k, t]) => {
-    try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem(k, t) } catch { /* 저장 못 해도 화면은 돈다 */ }
+    try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1'); localStorage.setItem(k, t) } catch { /* 저장 못 해도 화면은 돈다 */ }
   }, [THEME_KEY, theme])
   await ctx.clock.setFixedTime(new Date('2026-09-01T03:00:00Z'))
   const p = await ctx.newPage()

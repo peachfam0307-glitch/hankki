@@ -54,7 +54,7 @@ const 재기 = async ({ 이름, 프록시 }) => {
   const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
   const ctx = await b.newContext({ viewport: { width: 411, height: 891 }, deviceScaleFactor: 2, timezoneId: 'Asia/Seoul' })
   await ctx.addInitScript(() => {
-    localStorage.setItem('hankki:onboarded', '1')
+    localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
     localStorage.setItem('hankki:nudge:giftpack', '1')
     localStorage.setItem('hankki:giftSheetSeen', '1')
   })

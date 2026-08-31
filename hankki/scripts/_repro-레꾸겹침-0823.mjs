@@ -45,7 +45,7 @@ const url = `http://127.0.0.1:${PORT}/`
 await page.goto(url)
 await page.evaluate(({ s, keys }) => {
   localStorage.setItem('hankki:v1', JSON.stringify(s))
-  localStorage.setItem('hankki:onboarded', '1')
+  localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
   keys.forEach((k) => localStorage.setItem(k, '1'))
 }, { s: state, keys: 코치키들 })

@@ -75,7 +75,7 @@ for (const s of 화면들) {
   const 오류 = []
   page.on('pageerror', (e) => 오류.push(String(e.message || e).split('\n')[0]))
   await page.addInitScript(SEED_COACH_SEEN)
-  await page.addInitScript(() => localStorage.setItem('hankki:onboarded', '1'))
+  await page.addInitScript(() => localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1'))
   await page.addInitScript(() => localStorage.setItem('hankki:nudge:giftpack', '1'))
   await page.goto('http://127.0.0.1:4396/hankki/', { waitUntil: 'networkidle' })
   await page.waitForTimeout(1600)

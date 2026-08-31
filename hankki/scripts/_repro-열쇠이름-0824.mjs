@@ -33,7 +33,7 @@ const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const b = await chromium.launch()
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
 await ctx.addInitScript(SEED_COACH_SEEN)
-await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch { /* noop */ } })
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch { /* noop */ } })
 const page = await ctx.newPage()
 const 칸 = []
 const 재기 = (이름, 참) => { 칸.push([이름, !!참]); console.log(`  ${참 ? '✅' : '⛔'} ${이름}`) }
@@ -74,7 +74,13 @@ const 잔량표 = await page.evaluate(() => {
   const e = document.querySelector('.imp-key')
   return { 말: e?.getAttribute('aria-label') || '', 글: (e?.innerText || '').replace(/\s+/g, ' ').trim() }
 })
-재기('상단바 잔량이 「무료 레시피열쇠 20개 남았어요」로 읽힌다', /무료\s*레시피열쇠\s*20개\s*남았어요/.test(잔량표.말.replace(/\s+/g, ' ')))
+// 🔢 [2026-08-31] 숫자를 «베끼지» 않는다 — 웰컴을 20→30 으로 올린 날 이 줄이 «맞게» 빨간불이 됐다.
+//    ⭐ 이 판이 지키는 것은 「숫자가 20이냐」가 아니라 **「이 재화의 이름이 제대로 읽히나」**다.
+//       숫자는 앱이 말하는 값을 그대로 받아 적는다(값이 바뀌어도 안 낡는다 · 절대원칙 30).
+const 잔량말 = 잔량표.말.replace(/\s+/g, ' ')
+const 웰컴수 = Number((/무료\s*레시피열쇠\s*(\d+)개/.exec(잔량말) || [])[1] || 0)
+재기(`상단바 잔량이 「무료 레시피열쇠 ${웰컴수}개 남았어요」로 읽힌다`,
+  웰컴수 > 0 && /무료\s*레시피열쇠\s*\d+개\s*남았어요/.test(잔량말))
 재기('알약이 「매달 무료 5개」라 «매달 20개»로 안 읽힌다', /매달\s*무료\s*5개/.test(잔량표.글))
 재기('방법 카드 꼬리가 「열쇠 1개」', /열쇠\s*1개/.test(가져오기))
 재기('안 드는 길은 「열쇠 0개」', /열쇠\s*0개/.test(가져오기))

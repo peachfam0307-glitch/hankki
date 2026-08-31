@@ -65,7 +65,7 @@ const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 for (const 판 of 판들) {
   const ctx = await b.newContext({ viewport: { width: 판.w, height: 판.h }, deviceScaleFactor: 2, timezoneId: 'Asia/Seoul' })
   await ctx.addInitScript(() => {
-    localStorage.setItem('hankki:onboarded', '1')
+    localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
     localStorage.setItem('hankki:nudge:giftpack', '1')
     localStorage.setItem('hankki:giftSheetSeen', '1')
   })

@@ -37,7 +37,7 @@ const 안 = {
 for (const [이름, css] of Object.entries(안)) {
   const page=await b.newPage({viewport:{width:834,height:1194},deviceScaleFactor:2})
   await page.addInitScript(SEED_COACH_SEEN)
-  await page.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1')}catch{}})
+  await page.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')}catch{}})
   await page.goto('http://127.0.0.1:4398/hankki/',{waitUntil:'networkidle'})
   if (css) await page.addStyleTag({content:css})
   await page.evaluate(()=>document.fonts.ready); await page.waitForTimeout(900)

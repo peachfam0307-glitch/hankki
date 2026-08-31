@@ -60,7 +60,7 @@ const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 } })
 await ctx.addInitScript(SEED_COACH_SEEN)
-await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 // 🍞 토스트는 «떴다 사라진다» — 폴링으로 잡으면 놓친다(첫 판이 그래서 빈손이었다).
 //    DOM 이 바뀔 때마다 «전부 적어두는» 감시자를 붙인다. 놓칠 수가 없다.
 await ctx.addInitScript(() => {

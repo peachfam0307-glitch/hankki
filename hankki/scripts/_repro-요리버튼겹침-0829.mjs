@@ -52,7 +52,7 @@ const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 async function 상세로(폭) {
   const ctx = await b.newContext({ viewport: { width: 폭, height: 844 }, deviceScaleFactor: 2 })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
   const p = await ctx.newPage()
   await p.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' })
   await p.waitForTimeout(1200)

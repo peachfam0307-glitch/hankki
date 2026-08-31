@@ -36,7 +36,7 @@ const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 // ⛔ 창업자 폰 폭(390)으로 잰다 — 칸 수가 폭에 따라 갈려서 넓은 화면으로 재면 딴 결과가 나온다
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 })
 await ctx.addInitScript(SEED_COACH_SEEN)
-await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 
 const p = await ctx.newPage()
 await p.goto('http://127.0.0.1:4393/', { waitUntil: 'networkidle' })

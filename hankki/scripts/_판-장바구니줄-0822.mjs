@@ -85,7 +85,7 @@ console.log('\n🛒 「주부의 장바구니」 윗글 — 시안 다섯 (390×
 for (const g of 갈래) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
   const p = await ctx.newPage()
   await p.goto('http://127.0.0.1:4441/hankki/', { waitUntil: 'networkidle' })
   await p.evaluate(() => document.fonts.ready)

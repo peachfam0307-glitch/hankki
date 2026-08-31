@@ -61,7 +61,7 @@ const ctx = await b.newContext({
   recordVideo: { dir: OUT, size: { width: 390, height: 844 } },
 })
 await ctx.addInitScript(SEED_COACH_SEEN)
-await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 const 녹화시작 = Date.now()      // ⏱ webm 은 «컨텍스트를 만든 순간»부터 찍힌다
 const p = await ctx.newPage()
 

@@ -34,7 +34,7 @@ const pg = await b.newPage({ viewport: { width: 390, height: 844 } })
 //      **제품은 멀쩡히 들어가 있었다.** ✅ 저장소에 표준이 이미 있다 → `src/coach.js` 의 `SEED_COACH_SEEN`.
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 await pg.addInitScript(SEED_COACH_SEEN)
-await pg.addInitScript(() => localStorage.setItem('hankki:onboarded', '1'))
+await pg.addInitScript(() => localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1'))
 await pg.goto(`http://localhost:${port}/hankki/`)
 await pg.waitForTimeout(1500)
 

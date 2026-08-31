@@ -79,7 +79,7 @@ async function 안내까지(ctx) {
 {
   const ctx = await b.newContext({ viewport: { width: 390, height: 860 } })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch { /* noop */ } })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch { /* noop */ } })
   const p = await ctx.newPage()
   await p.goto('http://127.0.0.1:4477/hankki/', { waitUntil: 'networkidle' })
   await p.waitForTimeout(2200)
@@ -101,7 +101,7 @@ async function 안내까지(ctx) {
   await ctx.addInitScript(SEED_COACH_SEEN)
   await ctx.addInitScript(() => {
     try {
-      localStorage.setItem('hankki:onboarded', '1')
+      localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
       localStorage.setItem('hankki:ocrLeft', JSON.stringify({ welcome: 20, month: 5, total: 20 }))
     } catch { /* noop */ }
   })
@@ -122,7 +122,7 @@ async function 안내까지(ctx) {
   await ctx.addInitScript(SEED_COACH_SEEN)
   await ctx.addInitScript(() => {
     try {
-      localStorage.setItem('hankki:onboarded', '1')
+      localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
       localStorage.setItem('hankki:ocrLeft', JSON.stringify({ welcome: 20, month: 5, total: 20 }))
     } catch { /* noop */ }
   })
@@ -140,7 +140,7 @@ async function 안내까지(ctx) {
   await ctx.addInitScript(SEED_COACH_SEEN)
   await ctx.addInitScript(() => {
     try {
-      localStorage.setItem('hankki:onboarded', '1')
+      localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
       localStorage.setItem('hankki:ocrLeft', JSON.stringify({ welcome: 20, month: 5, total: 20 }))
     } catch { /* noop */ }
   })
@@ -158,7 +158,7 @@ async function 안내까지(ctx) {
   await ctx.addInitScript(SEED_COACH_SEEN)
   await ctx.addInitScript(() => {
     try {
-      localStorage.setItem('hankki:onboarded', '1')
+      localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
       localStorage.setItem('hankki:ocrLeft', JSON.stringify({ welcome: 0, month: 0, total: 0 }))
     } catch { /* noop */ }
   })
@@ -176,7 +176,7 @@ async function 안내까지(ctx) {
   await ctx.addInitScript(SEED_COACH_SEEN)
   await ctx.addInitScript(() => {
     try {
-      localStorage.setItem('hankki:onboarded', '1')
+      localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
       localStorage.setItem('hankki:ocrLeft', JSON.stringify({ welcome: 20, month: 5, total: 20 }))
     } catch { /* noop */ }
   })
@@ -199,7 +199,7 @@ async function 안내까지(ctx) {
 {
   const ctx = await b.newContext({ viewport: { width: 390, height: 860 } })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch { /* noop */ } })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch { /* noop */ } })
   const p = await ctx.newPage()
   await p.goto('http://127.0.0.1:4477/hankki/', { waitUntil: 'networkidle' })
   await p.waitForTimeout(2200)

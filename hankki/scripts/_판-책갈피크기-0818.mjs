@@ -38,7 +38,7 @@ for (const 격자 of ['big', 'small']) {
     const page = await ctx.newPage()
     await page.goto(url)
     await page.evaluate(({ s, keys, g }) => {
-      localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
+      localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
       localStorage.setItem('hankki:nudge:giftpack', '1'); localStorage.setItem('hankki:gridSize', g)
       keys.forEach((k) => localStorage.setItem(k, '1'))
     }, { s: state, keys: Object.values(COACH), g: 격자 })
