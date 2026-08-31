@@ -154,6 +154,38 @@ export default {
       }, 200, cors)
     }
 
+    // 👁👁👁 **[2026-09-01 · 재는 판] `?vision=1` — 시험용 길이다. ⛔앱은 이 길을 안 쓴다.**
+    //
+    //   📮 창업자 = *"해먹으리랑 레시피브로는 정확하던데 왜 우리는 ai를 넣어도 부정확할까..ㅠ"*
+    //   ⭐⭐ 천장을 찾았다 — **우리 AI 는 사진을 «못 본다».** 깨진 글자만 받고 뜻을 짐작한다.
+    //      그래서 프롬프트로 「오독을 고쳐라」를 시켰더니 멀쩡한 말까지 바꿨다
+    //      (「끼얹어가며」→「끓여가며」 · 「찐득해질」→「걸릴」). **그날 바로 되돌렸다.**
+    //   📌 그러니 다음은 «만드는 일»이 아니라 **«재는 일»**이다(규칙 15 — 숫자를 보고 움직인다).
+    //
+    //   ⛔⛔ **본 경로(`POST /`)는 한 글자도 안 건드렸다** — 이 길이 통째로 실패해도 앱은 그대로 돈다.
+    //   🔒 운영자 열쇠(`FOUNDER_SECRET`)가 있어야 한다. ⛔그 주소를 채팅·저장소에 적지 않는다.
+    //
+    //   받는 것 = { image: "data:image/...;base64,…", text?: "Vision 이 읽은 글자", model?, budget? }
+    //   돌려주는 것 = 모델 답 ＋ **응답의 `usage` 그대로**(⭐추정이 아니라 진짜 토큰 수) ＋ 걸린 시간
+    //                 ＋ **어느 「보내는 모양」이 통했나**
+    //
+    //   ⛔⛔ **모르는 것을 «모른다»고 적어 둔다** — Cloudflare 가 이 모델에 사진을 받는 «요청 모양»을
+    //      확인하지 못했다(문서를 열 수 없는 자리에서 만들었다).
+    //      ✅ 그래서 짐작해서 하나만 넣지 않고 **흔한 네 모양을 차례로 시도하고 통한 것을 알려준다.**
+    //      ⭐ 시행착오는 창업자가 아니라 코드가 한다(규칙 8) — **복붙은 한 번으로 끝난다.**
+    if (new URL(request.url).searchParams.get('vision') === '1') {
+      if (!env.FOUNDER_SECRET) return json({ error: 'no_secret' }, 500, cors)
+      const 눈열쇠 = request.headers.get('x-hankki-founder') || new URL(request.url).searchParams.get('key') || ''
+      if (눈열쇠 !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      if (request.method !== 'POST') {
+        return json({ error: 'post_only', 쓰는법: 'POST { image, text?, model?, budget? }' }, 405, cors)
+      }
+      if (!env.AI) return json({ error: 'no_ai_binding' }, 500, cors)
+      let 눈몸
+      try { 눈몸 = await request.json() } catch { return json({ error: 'bad_json' }, 400, cors) }
+      return await 눈시험(env, 눈몸, cors)
+    }
+
     if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, cors)
 
     // ── 문 지키기 (OCR 워커와 «같은» 방식) ──
@@ -285,6 +317,125 @@ export default {
 
     return json(답, 200, cors)
   },
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 👁 눈 시험 — 사진을 «직접» 주고 재는 길 (2026-09-01)
+// ⛔ 여기 아래는 전부 «시험용»이다. 본 경로는 이 함수를 부르지 않는다.
+// ═══════════════════════════════════════════════════════════════
+
+// 후보 모델 — 공식 문구에 `screen and UI understanding` ＋ `OCR (including multilingual)` 가 있다.
+// ⛔ 죽은 후보 재론 금지 = Gemma 3 12B(Deprecated) · Llama 4 Scout · Llama 3.2 11B Vision(영어 전용)
+const VISION_MODEL = '@cf/google/gemma-4-26b-a4b-it'
+
+// ⭐⭐ 지시문은 **본 경로와 «같은 규칙»을 쓴다** — 안 그러면 ⓐ와 ⓑⓒ 를 나란히 못 놓는다.
+//   (규칙 7개는 창업자 실물 판정을 거친 것이다 — 여기서 새로 쓰면 그 판정이 날아간다)
+const 규칙본문 = PROMPT.slice(PROMPT.indexOf('규칙:'))
+
+// ⓑ 사진만 준다
+const 눈지시_사진만 = `너는 요리 레시피 정리기다. 아래 사진은 인스타그램 요리 레시피 화면 캡처다.
+사진의 글자를 «직접 읽어» 정리해라. 화면 글자(통신사·시계·계정명·좋아요 수·댓글)는 버려라.
+
+` + 규칙본문.replace('--- 원문 ---', '--- 사진 ---')
+
+// ⓒ 사진 ＋ Vision 이 읽은 글자를 «같이» 준다 (⭐내 추천 방향)
+//   ⛔ 「오독을 고쳐라」를 넓게 시키면 멀쩡한 말까지 바꾼다(2026-08-31 사고).
+//      그래서 **«사진과 다를 때만»** 이라고 못 박는다.
+const 눈지시_둘다 = `너는 요리 레시피 정리기다. 사진 한 장과, 그 사진을 기계가 글자로 읽은 것을 같이 준다.
+글자는 군데군데 잘못 읽혔다. ⛔글자가 «사진과 다를 때만» 사진을 보고 고쳐라.
+사진으로 확인이 안 되면 글자를 그대로 둬라 — 말이 어색해 보여도 고치지 마라.
+
+` + 규칙본문
+
+// data URL → 바이트 배열 (모양 ⓑ·ⓓ 가 이걸 쓴다)
+function 바이트로(dataUrl) {
+  const s = String(dataUrl || '')
+  const i = s.indexOf('base64,')
+  const b64 = i >= 0 ? s.slice(i + 7) : s
+  const bin = atob(b64)
+  const out = new Uint8Array(bin.length)
+  for (let k = 0; k < bin.length; k++) out[k] = bin.charCodeAt(k)
+  return out
+}
+
+async function 눈시험(env, 몸, cors) {
+  const image = String(몸.image || '')
+  if (!image) return json({ error: 'no_image' }, 400, cors)
+  const text = String(몸.text || '')
+  const model = String(몸.model || '').trim() || VISION_MODEL
+  const budget = 몸.budget ? Number(몸.budget) : null
+  const 지시 = text ? (눈지시_둘다 + '\n\n--- 기계가 읽은 글자 ---\n' + text) : 눈지시_사진만
+
+  let 바이트
+  try { 바이트 = 바이트로(image) } catch (e) { return json({ error: 'bad_image', why: String(e && e.message || e) }, 400, cors) }
+
+  // 🧪 «보내는 모양» 네 가지 — 위에서부터 시도하고 처음 통한 것을 쓴다.
+  //   ⛔ 어느 것이 맞는지 확인 못 했다(문서를 못 열었다) → 그래서 코드가 대신 찾는다.
+  //   ⚠️ `budget` 도 «이름을 모른다» — 주면 흔한 두 자리에 같이 실어 보내고, 실패하면 그 사실이 드러난다.
+  const 모양들 = [
+    ['① OpenAI 꼴 image_url', {
+      messages: [{ role: 'user', content: [
+        { type: 'text', text: 지시 },
+        { type: 'image_url', image_url: { url: image } },
+      ] }],
+      max_tokens: MAX_TOKENS, temperature: 0.2,
+      ...(budget ? { budget } : {}),
+    }],
+    ['② Cloudflare 꼴 image 바이트', {
+      image: [...바이트],
+      prompt: 지시,
+      max_tokens: MAX_TOKENS, temperature: 0.2,
+      ...(budget ? { budget } : {}),
+    }],
+    ['③ input_image 꼴', {
+      messages: [{ role: 'user', content: [
+        { type: 'text', text: 지시 },
+        { type: 'input_image', image_url: image },
+      ] }],
+      max_tokens: MAX_TOKENS, temperature: 0.2,
+      ...(budget ? { budget } : {}),
+    }],
+    ['④ messages ＋ 바깥 image', {
+      messages: [{ role: 'user', content: 지시 }],
+      image: [...바이트],
+      max_tokens: MAX_TOKENS, temperature: 0.2,
+      ...(budget ? { budget } : {}),
+    }],
+  ]
+
+  const 시도 = []
+  for (const [이름, 입력] of 모양들) {
+    const 시작 = Date.now()
+    let r
+    try {
+      r = await env.AI.run(model, 입력)
+    } catch (e) {
+      시도.push({ 모양: 이름, 결과: '오류', 왜: String((e && e.message) || e).slice(0, 300), ms: Date.now() - 시작 })
+      continue
+    }
+    const out = 첫값(r?.response, r?.result?.response, r?.result, r?.choices?.[0]?.message?.content, r?.output_text)
+    if (!out) {
+      let 모습; try { 모습 = JSON.stringify(r) } catch { 모습 = '(못 읽음)' }
+      시도.push({ 모양: 이름, 결과: '빈손', 왜: String(모습).slice(0, 400), ms: Date.now() - 시작 })
+      continue
+    }
+    const 파싱 = pickJson(out)
+    // ⭐⭐ **여기가 이 길의 값어치다** — 추정이 아니라 «워커가 돌려준 진짜 usage» 를 그대로 얹는다.
+    return json({
+      ok: true,
+      model,
+      모양: 이름,
+      ms: Date.now() - 시작,
+      budget: budget || null,
+      갈래: text ? 'ⓒ 사진＋글자' : 'ⓑ 사진만',
+      usage: r?.usage || r?.result?.usage || null,
+      결과: 파싱 || null,
+      원문답: 파싱 ? null : String(typeof out === 'object' ? JSON.stringify(out) : out).slice(0, 2000),
+      앞선시도: 시도,
+    }, 200, cors)
+  }
+  // ⛔ 네 모양이 다 실패하면 «무엇이 왜 실패했는지»를 전부 돌려준다 — 그래야 다음 판을 한 번에 짠다.
+  return json({ ok: false, error: 'all_shapes_failed', model, 시도 }, 502, cors)
 }
 
 // ── ⭐ 「오늘」은 «한국시간» 기준 (CLAUDE.md 절대원칙 27) ──

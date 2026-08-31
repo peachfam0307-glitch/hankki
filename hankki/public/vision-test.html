@@ -1,0 +1,171 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>한끼 · 눈 시험판</title>
+<!--
+  👁 사진을 «직접» 보는 AI 를 재는 판 (2026-09-01)
+  ⛔ 이 페이지는 «시험용»이다. 앱 화면 어디서도 이 페이지로 가지 않는다.
+  ⛔ 열쇠는 입력칸으로 받는다 — 저장소·주소에 박지 않는다(이 폰 안에만 저장된다).
+  📄 계획 = docs/사진읽는AI-조사-2026-09-01.md
+-->
+<style>
+  :root { --cream:#faf7f1; --brown:#5d3410; --line:#e5ddd0; --sub:#877e70; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  body { margin:0; padding:16px 14px 60px; background:var(--cream); color:#3a352e;
+         font:15px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; }
+  h1 { font-size:19px; margin:0 0 4px }
+  .sub { color:var(--sub); font-size:13px; margin:0 0 16px }
+  label { display:block; font-weight:700; font-size:13px; margin:14px 0 5px }
+  input,textarea,select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:10px;
+                          font:inherit; background:#fff; }
+  textarea { min-height:96px; resize:vertical }
+  button { border:0; border-radius:11px; padding:13px 14px; font:inherit; font-weight:700;
+           background:var(--brown); color:#fff; width:100%; margin-top:9px }
+  button.ghost { background:#fff; color:var(--brown); border:1px solid var(--line) }
+  .row { display:flex; gap:8px } .row > * { flex:1 }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:13px; margin-top:14px }
+  .k { font-size:12px; color:var(--sub) }
+  pre { white-space:pre-wrap; word-break:break-all; font-size:12.5px; background:#f6f2ea;
+        border-radius:9px; padding:10px; margin:8px 0 0 }
+  .ok { color:#2b6b3f; font-weight:700 } .bad { color:#a33; font-weight:700 }
+  .chk { display:flex; gap:9px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--line) }
+  .chk input { width:22px; height:22px; flex:0 0 auto; margin-top:2px }
+  img#미리 { max-width:100%; border-radius:10px; margin-top:9px; display:none }
+</style>
+
+<h1>👁 눈 시험판</h1>
+<p class="sub">사진을 <b>직접 보는 AI</b>가 지금보다 나은지 재는 판이야. ⛔앱은 이 길을 안 써.</p>
+
+<label>워커 주소</label>
+<input id="url" placeholder="https://…workers.dev">
+
+<label>운영자 열쇠 <span class="k">(이 폰 안에만 저장돼요)</span></label>
+<input id="key" type="password" placeholder="FOUNDER_SECRET">
+
+<label>사진 (레시피 캡처 한 장)</label>
+<input id="pic" type="file" accept="image/*">
+<img id="미리" alt="">
+
+<label>사진에서 읽은 글자 <span class="k">(넣으면 ⓒ · 비우면 ⓑ)</span></label>
+<textarea id="txt" placeholder="비워두면 «사진만» 주는 ⓑ 로 잰다"></textarea>
+
+<label>보낼 크기</label>
+<select id="size">
+  <option value="0">원본 그대로</option>
+  <option value="1536">긴 변 1536px</option>
+  <option value="1024">긴 변 1024px</option>
+  <option value="768">긴 변 768px</option>
+</select>
+
+<label>모델 <span class="k">(비우면 gemma-4)</span></label>
+<input id="model" placeholder="@cf/google/gemma-4-26b-a4b-it">
+
+<button id="go">▶ 한 번 재기</button>
+<button id="go3" class="ghost">▶▶ 세 크기로 잇달아 (원본 · 1024 · 768)</button>
+
+<div id="out"></div>
+
+<div class="card" id="판정" style="display:none">
+  <b>👀 볼 것 넷</b>
+  <div class="chk"><input type="checkbox" id="c1"><label for="c1" style="margin:0;font-weight:400">「휴/퓨삼치」가 <b>삼치간장조림</b>이 되나</label></div>
+  <div class="chk"><input type="checkbox" id="c2"><label for="c2" style="margin:0;font-weight:400">「= 200ml」가 <b>물 200ml</b>가 되나</label></div>
+  <div class="chk"><input type="checkbox" id="c3"><label for="c3" style="margin:0;font-weight:400">「생가즈 조그」가 <b>생강즙 조금</b>이 되나</label></div>
+  <div class="chk"><input type="checkbox" id="c4"><label for="c4" style="margin:0;font-weight:400">⛔「끼얹어」·「15스푼」을 <b>안</b> 건드리나</label></div>
+  <button class="ghost" id="복사">📋 결과 복사하기</button>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id)
+const S = { url: 'hankki:vt:url', key: 'hankki:vt:key' }
+try { $('url').value = localStorage.getItem(S.url) || 'https://hankki-tidy.annyeong-hankki.workers.dev'
+      $('key').value = localStorage.getItem(S.key) || '' } catch {}
+const 저장 = () => { try { localStorage.setItem(S.url, $('url').value.trim()); localStorage.setItem(S.key, $('key').value) } catch {} }
+$('url').addEventListener('change', 저장); $('key').addEventListener('change', 저장)
+
+let 원본 = ''
+$('pic').addEventListener('change', (e) => {
+  const f = e.target.files && e.target.files[0]; if (!f) return
+  const r = new FileReader()
+  r.onload = () => { 원본 = String(r.result); $('미리').src = 원본; $('미리').style.display = 'block' }
+  r.readAsDataURL(f)
+})
+
+// 긴 변을 max 로 줄인다. ⭐ 0 이면 원본 그대로 보낸다.
+//   ⛔ 이게 이 판의 «두 번째 미지수»를 잰다 — 작은 한글이 줄이면 뭉개지나.
+function 줄이기(dataUrl, max) {
+  if (!max) return Promise.resolve(dataUrl)
+  return new Promise((res) => {
+    const im = new Image()
+    im.onload = () => {
+      const 긴 = Math.max(im.width, im.height)
+      if (긴 <= max) return res(dataUrl)
+      const s = max / 긴
+      const c = document.createElement('canvas')
+      c.width = Math.round(im.width * s); c.height = Math.round(im.height * s)
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height)
+      res(c.toDataURL('image/jpeg', 0.92))
+    }
+    im.onerror = () => res(dataUrl)
+    im.src = dataUrl
+  })
+}
+
+const 결과들 = []
+
+function 그리기(제목, r, 잰크기) {
+  const d = document.createElement('div'); d.className = 'card'
+  const 좋 = r && r.ok
+  const 요약 = r && r.결과
+  d.innerHTML = '<b>' + 제목 + '</b> <span class="' + (좋 ? 'ok' : 'bad') + '">' + (좋 ? '통했다' : '실패') + '</span>'
+    + '<div class="k">' + (잰크기 || '') + (r && r.모양 ? ' · ' + r.모양 : '') + (r && r.ms ? ' · ' + r.ms + 'ms' : '') + '</div>'
+    + (r && r.usage ? '<div class="k">usage = ' + JSON.stringify(r.usage) + '</div>' : '<div class="k">usage 없음</div>')
+    + (요약 ? '<pre>' + 안전(
+        '제목: ' + (요약.title || '') + '\n\n재료\n· ' + (요약.ingredients || []).join('\n· ')
+        + '\n\n만드는 법\n' + (요약.steps || []).map((s, i) => (i + 1) + '. ' + s).join('\n')
+        + (요약.memo ? '\n\n메모: ' + 요약.memo : '')) + '</pre>'
+      : '<pre>' + 안전(JSON.stringify(r, null, 1).slice(0, 3000)) + '</pre>')
+  $('out').appendChild(d)
+  결과들.push(제목 + ' ' + (잰크기 || '') + '\n' + JSON.stringify(r, null, 1))
+  $('판정').style.display = 'block'
+}
+const 안전 = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+
+async function 한번(max) {
+  if (!원본) { alert('사진을 먼저 골라줘'); return }
+  const url = $('url').value.trim().replace(/\/$/, '')
+  const key = $('key').value
+  if (!url || !key) { alert('주소와 열쇠를 넣어줘'); return }
+  저장()
+  const 사진 = await 줄이기(원본, Number(max) || 0)
+  const 갈래 = $('txt').value.trim() ? 'ⓒ 사진＋글자' : 'ⓑ 사진만'
+  const 잰크기 = (max ? '긴 변 ' + max + 'px' : '원본') + ' · ' + Math.round(사진.length / 1024) + 'KB'
+  const 대기 = document.createElement('div'); 대기.className = 'card'; 대기.textContent = '재는 중… ' + 잰크기
+  $('out').appendChild(대기)
+  let r
+  try {
+    const resp = await fetch(url + '/?vision=1', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-hankki-founder': key },
+      body: JSON.stringify({ image: 사진, text: $('txt').value.trim(), model: $('model').value.trim() || undefined }),
+    })
+    r = await resp.json()
+  } catch (e) { r = { ok: false, error: '못 보냈다', why: String(e && e.message || e) } }
+  대기.remove()
+  그리기(갈래, r, 잰크기)
+}
+
+$('go').onclick = () => 한번($('size').value)
+$('go3').onclick = async () => { for (const m of [0, 1024, 768]) await 한번(m) }
+
+// ⛔ clipboard 는 «성공으로 resolve 되고도» 실제 복사가 안 되는 폰이 있다(2026-08-16 사고).
+//   ✅ 실패하면 글자를 골라 준다 — 길게 눌러 복사할 수 있게.
+$('복사').onclick = async () => {
+  const 체크 = ['c1', 'c2', 'c3', 'c4'].map((id, i) => ($(id).checked ? '✅' : '⬜') + ' ' + $(id).nextElementSibling.textContent).join('\n')
+  const 글 = '👁 눈 시험 결과\n\n' + 체크 + '\n\n' + 결과들.join('\n\n──────\n\n')
+  const p = document.createElement('pre'); p.textContent = 글; p.id = '복사판'
+  const 옛 = document.getElementById('복사판'); if (옛) 옛.remove()
+  $('판정').appendChild(p)
+  try { await navigator.clipboard.writeText(글); alert('복사했어 — 붙여넣어 확인해줘') }
+  catch { const r = document.createRange(); r.selectNodeContents(p); const s = getSelection(); s.removeAllRanges(); s.addRange(r); alert('아래 글자를 길게 눌러 복사해줘') }
+}
+</script>
