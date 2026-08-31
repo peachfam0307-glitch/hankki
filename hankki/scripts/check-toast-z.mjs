@@ -15,8 +15,15 @@ const SRC = new URL('../src/', import.meta.url).pathname
 const CSS = join(SRC, 'styles.css')
 
 // 토스트 z 읽기
+// ⛔⛔ [2026-08-31] 읽는 자리를 `.toast` → **`.toast-slot`** 으로 옮겼다.
+//   그날 토스트가 「떠 있는 상자」에서 «비워둔 띠»로 바뀌며(창업자 제보 *"너무가리고… 길게 떠있어"*)
+//   층을 갖는 쪽이 바깥칸(`.toast-slot`)이 됐다. `.toast` 를 계속 읽으니 **z 를 못 찾아 0 이 되고**,
+//   그 밑 엉뚱한 규칙의 `z-index: 40` 을 집어 「토스트가 20곳에 가린다」고 «잘못» 막았다.
+//   ⭐ 검사가 지키려는 뜻은 그대로다 — **토스트 층 > 앱의 모든 층.**
 const css = readFileSync(CSS, 'utf8')
-const block = css.slice(css.indexOf('\n.toast {'))
+const 시작 = css.indexOf('\n.toast-slot {')
+if (시작 < 0) { console.error('⛔ `.toast-slot` 규칙을 못 찾았다 — 토스트 층을 확인할 수 없다'); process.exit(1) }
+const block = css.slice(시작)
 const toastZ = parseInt(/z-index:\s*(\d+)/.exec(block)?.[1] || '0', 10)
 
 // src 전체에서 z-index / zIndex 를 긁는다 (.toast 자신은 뺀다)

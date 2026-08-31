@@ -166,10 +166,26 @@ export function tidyFounder() {
   try { return !!localStorage.getItem('hankki:founder') } catch { return false }
 }
 
+/**
+ * 🔢🔢 모델 이름을 «한 조각»으로 — `@cf/meta/llama-3.3-70b-instruct-fp8-fast` → `llama3.3`
+ *
+ * ⛔⛔ **[2026-08-31 · 창업자 제보] 이 44자가 안내 상자를 키운 주범이었다.**
+ *   *"레시피를 너무가리고 박스크기도 크고 길게 떠있어"* — 상자에 든 글자가 70자라
+ *   ⑴ 여섯 줄로 접혀 높이 168px 이 되고 ⑵ 뜰 시간이 «글자 수»로 정해져 상한 8초를 꽉 채웠다.
+ *   ⭐ 알고 싶은 건 «어느 모델이 돌았나» 하나뿐이다 — 판올림 번호까지면 그게 다 된다.
+ *   ⛔ 아주 지우진 않는다. 이 표시를 만든 이유가 「워커가 도는지 몰라 30분을 태운 것」이었다.
+ */
+export function 짧은모델(m) {
+  const 조각 = String(m || '').split('/').pop()          // meta/llama-3.3-70b-… → llama-3.3-70b-…
+  const 짚 = 조각.match(/^([a-z]+)-?(\d+(?:\.\d+)?)/i)   // 이름 ＋ 판올림 번호까지만
+  if (짚) return 짚[1] + 짚[2]                            // llama3.3
+  return 조각.slice(0, 12) || 'AI'                        // 못 알아보면 잘라서라도 짧게
+}
+
 export function tidyTail() {
   const v = _마지막
   const 운영자 = tidyFounder()
-  if (v && v.ok) return 운영자 ? ` · AI가 정리했어요(${v.model || 'AI'})` : ' · AI가 정리했어요'
+  if (v && v.ok) return 운영자 ? ` · AI가 정리했어요(${v.model ? 짧은모델(v.model) : 'AI'})` : ' · AI가 정리했어요'
   // 실패·안 부름 — 유저에겐 「기본 정리」 하나로 묶는다(⛔「실패」라고 쓰지 않는다. 결과는 멀쩡하다)
   return 운영자 ? ` · 기본 정리예요(${(v && v.why) || '안부름'})` : ' · 기본 정리예요'
 }

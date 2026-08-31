@@ -87,6 +87,8 @@ export default function App() {
   const backScheduled = useRef(false)
   const suppressPop = useRef(0) // popAll·모달버튼닫기 가 만든 popstate 무시용
   const toastTimer = useRef(null)
+  // 🔽 닫히는 «동안»에도 글자가 남아 있어야 띠가 스르르 접힌다(비면 그 자리에서 툭 사라진다)
+  const 지난토스트 = useRef('')
   const showToastRef = useRef(null) // 뒤로가기 핸들러(위에서 만들어짐)가 아래 showToast 를 쓰기 위한 통로
   const tabRef = useRef(tab)
   const stackRef = useRef(stack)
@@ -298,14 +300,18 @@ export default function App() {
   //
   // ⭐⭐ **그래서 「부르는 쪽마다 숫자를 준다」를 그만둔다** — 그러면 새 안내가 생길 때마다 또 빠뜨린다.
   //   **기본값이 글자 수를 보고 스스로 늘어난다.** 짧은 안내는 지금처럼 빨리 사라지고 긴 것만 오래 남는다.
-  //   🔢 2600ms(눈이 가는 데 걸리는 시간) ＋ 글자당 90ms · 최대 8000ms
-  //      · 「링크를 담았어요」 8자 → 3.3초   · 위 다섯 줄짜리 46자 → 6.7초
-  //   ⛔ 상한을 둔다 — 안내가 8초를 넘게 떠 있으면 그건 안내가 아니라 «가리는 것»이다.
+  //   🔢 2200ms(눈이 가는 데 걸리는 시간) ＋ 글자당 70ms · 최대 4800ms
+  //      · 「링크를 담았어요」 8자 → 2.8초   · AI 다듬기 안내 38자 → 4.8초
+  //   ⛔ 상한을 둔다 — 안내가 오래 떠 있으면 그건 안내가 아니라 «가리는 것»이다.
+  //   ⛔⛔ **[2026-08-31 · 창업자 제보] 8000 → 4800 으로 내렸다** — *"길게 떠있어"*.
+  //      🔢 옛 셈으로는 AI 다듬기 안내(운영자 화면 70자)가 9080ms 로 나와 **상한 8초를 꽉 채웠다.**
+  //      ⭐ 같은 날 «글자»도 줄였다(`tidy.js` 짧은모델 · 44자→10자) — 둘이 곱해져서 8.0초 → 4.8초가 된다.
   //   ⛔ 부르는 쪽이 `ms` 를 «직접» 주면 그 값이 이긴다(나가기 안내처럼 시간이 뜻을 가진 자리).
-  const toastMs = (msg) => Math.min(8000, 2600 + String(msg || '').length * 90)
+  const toastMs = (msg) => Math.min(4800, 2200 + String(msg || '').length * 70)
 
   const showToast = useCallback((msg, ms) => {
     const 뜰시간 = typeof ms === 'number' ? ms : toastMs(msg)
+    if (msg) 지난토스트.current = msg
     setToast(msg)
     if (toastTimer.current) clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(null), 뜰시간)
@@ -597,7 +603,30 @@ export default function App() {
 
   return (
     <NavCtx.Provider value={nav}>
-      <div className="app-frame">
+      <div className={'app-frame' + (toast ? ' toast-on' : '')}>
+        {/* 📢📢 **안내 띠 — 「떠 있는 상자」가 아니라 «비워둔 자리»다** (창업자 확정 2026-08-31)
+            🐛 제보 = *"레시피를 너무가리고 박스크기도 크고 길게 떠있어"* → 자리를 옮겨봐도
+               `position: fixed` 인 이상 **무엇을 덮든 상관하지 않는다**. 그래서 흐름 안으로 들여왔다.
+            ⛔ 상단바에 «붙일» 수도 없었다 — `.topbar-back` 은 `.screen`(스크롤 통) 안이라
+               목록과 같이 밀려 올라간다. 붙여두면 스크롤한 순간 상자만 허공에 남는다.
+            ⭐ `.app-frame` 이 이미 세로 flex 라 여기 칸을 하나 두면 화면이 그만큼 «내려간다» —
+               겹침이 «구조적으로» 0 이 된다. 창업자 말 *"상자를 고정해놓고 거기 띄운다"* 가 이것이다.
+            ⛔ 화면 파일은 하나도 안 건드렸다. 이 한 칸이 전 화면에 같이 듣는다. */}
+        <div className="toast-slot" aria-live="polite">
+          <div className="toast-clip">
+            <div className="toast">{toast || 지난토스트.current}</div>
+          </div>
+        </div>
+
+        {/* ⛔⛔ **이 `.frame-body` 를 지우지 말 것 — 띠를 넣자마자 난 실물 버그의 해결책이다.**
+            🐛 2026-08-31 첫 판: 띠는 잘 떴는데 **임시보관함 상단바(뒤로·제목)가 통째로 사라졌다.**
+               `StackLayer`(아래)는 `absolute; inset:0` 인데 그 기준이 `.app-frame` 이라
+               **띠를 «따라 내려오지 않고» 띠 밑에 깔렸다.** 띠는 z-index 3500 이라 제목을 덮었다.
+            🔢 그때 잰 값은 「가린 초안 0줄」로 **통과**였다 — 목록은 정말 안 가렸으니까.
+               ⭐ 숫자는 통과인데 화면은 망가진 것이다. 절대원칙 21(뽑아서 «열어본다»)이 잡았다.
+            ⭐ 그래서 담는 칸을 하나 둔다 — 여기가 `position: relative` 라
+               쌓인 화면의 `inset:0` 이 **띠 «아래»부터** 시작한다. */}
+        <div className="frame-body">
         <div key={tab} className="screen fade">
           <TabScreen />
         </div>
@@ -617,7 +646,8 @@ export default function App() {
         <TabSwipe tab={tab} go={go} enabled={!top && modalLayers.current.length === 0 && !onboard} />
         {!top && <BottomNav active={tab} onChange={go} onImport={() => push({ name: 'import' })} />}
         <TimerBar bottom={top ? 'calc(84px + var(--safe-bottom))' : 'calc(66px + var(--safe-bottom))'} />
-        {toast && <div className="toast">{toast}</div>}
+        {/* 📢 안내 띠는 **맨 위 칸**으로 옮겼다(2026-08-31) — 여기 `fixed` 로 두면 목록을 덮는다. */}
+        </div>
 
         {/* 🔁 「이미 다른 기기에서 쓰고 있었어요」 = 설정으로 보내며 «백업 시트를 열라는 쪽지»를 남긴다.
             (`go(tab)` 은 인자를 못 받아서 `nudges.js` 의 쪽지로 넘긴다 — 홈 백업 유도 줄과 같은 길) */}

@@ -46,6 +46,10 @@ await p0.evaluate(() => {
     ['들기름 막국수', 21],
     ['오이 무침', 30],
     ['된장 찌개', 44],
+    // ⬇ 여기부터는 «스크롤이 실제로 되게» 하려고 채운다 — 다섯 줄만 있으면 한 화면에 다 들어가
+    //    「스크롤 내린 뒤」 판이 굴러가지도 않고 그냥 통과해 버린다(헛통과).
+    ['배추 겉절이', 50], ['감자 조림', 55], ['미역국', 60],
+    ['제육 볶음', 66], ['콩나물국', 72], ['호박전', 80], ['멸치 볶음', 90],
   ]
   const s = JSON.parse(localStorage.getItem('hankki:v1')||'{}')
   const 이제 = Date.now()
@@ -68,22 +72,15 @@ const 유저문구 = 'AI가 레시피를 더 다듬었어요 · AI가 정리했�
 const 지금ms = (m) => Math.min(8000, 2600 + m.length * 90)
 const 새ms   = (m) => Math.min(4800, 2200 + m.length * 70)
 
-// ── 상자 줄이기 (셋 다 공통) — z-index·toastIn 은 손대지 않는다
-// 🔢🔢 [2026-08-31 실측] 지금 상자는 **화면 폭의 절반(195px)밖에 못 쓴다** —
-//    `left:50%` 로 가운데를 잡는데 `right` 가 없어서 쓸 수 있는 폭이 50% 로 잘리고,
-//    `max-width:88%` 는 그보다 크니까 **아예 일을 안 한다.** 그래서 70자가 6줄로 접혔다.
-//    ⭐ `width:max-content` 로 «글자만큼» 잡고 `max-width` 로만 묶는다. 이게 「상자가 크다」의 진짜 뿌리다.
-const 작게 = 'font-size:15px;padding:9px 14px;width:max-content;max-width:92vw;line-height:1.4;'
-// 폭만 고치고 나머지는 지금 그대로 — 「폭 하나로 얼마나 주나」를 보여주는 판
-const 폭만 = 'width:max-content;max-width:92vw;'
-
+// ── ⛔⛔ **CSS 를 «심지» 않는다.** 8/31 오후엔 시안이라 `<style>` 을 끼워 넣었는데,
+//    이제 띠가 진짜로 앱에 들어갔으니 **앱의 진짜 CSS·진짜 배치**를 그대로 재야 한다.
+//    (심어서 재면 「고쳤다」가 아니라 「내가 심은 걸 봤다」가 된다 — 그게 거짓 통과다)
+//    👉 하는 일 = `.app-frame` 에 `toast-on` 을 켜고 `.toast` 에 문구를 넣는 것뿐.
 const 판들 = [
-  { 이름:'0-지금',          문구:긴문구,   css:'' },
-  { 이름:'1-폭만고침',       문구:긴문구,   css:폭만 },
-  { 이름:'A-상단바에붙임',   문구:짧은문구, css:작게+'top:__DOCK__px;border-radius:0 0 18px 18px;' },
-  { 이름:'B-자리그대로',     문구:짧은문구, css:작게 },
-  { 이름:'C-아래로',        문구:짧은문구, css:작게+'top:auto;bottom:calc(var(--nav-h) + var(--safe-bottom, 0px) + 24px);' },
-  { 이름:'D-일반유저-B자리', 문구:유저문구, css:작게 },
+  { 이름:'가-띠-창업자',    문구:짧은문구 },
+  { 이름:'가-스크롤내린뒤', 문구:짧은문구, 스크롤:420 },
+  { 이름:'가-일반유저',     문구:유저문구 },
+  { 이름:'가-짧은토스트',   문구:'링크를 담았어요' },
 ]
 
 const 잰것 = []
@@ -92,37 +89,62 @@ for (const 판 of 판들) {
   await p.goto('http://127.0.0.1:4457/hankki/', { waitUntil:'networkidle' }); await p.waitForTimeout(4000)
   await p.getByRole('button',{name:/임시보관함/}).first().click(); await p.waitForTimeout(900)
 
-  // 상단바가 «실제로» 어디서 끝나는지 재서 A 시안의 자리로 쓴다 (값을 손으로 넣지 않는다)
-  const 상단바끝 = await p.evaluate(() => {
-    const el = document.querySelector('.topbar-back') || document.querySelector('.topbar')
-    return el ? Math.round(el.getBoundingClientRect().bottom) : 56
-  })
+  if (판.스크롤) {
+    // ⛔ `.screen` 을 «첫 번째»로 잡으면 탭 화면을 굴린다 — 임시보관함은 «쌓인» 화면이라 맨 뒤다.
+    //    (첫 판이 그래서 0px 만 굴러가고 그냥 통과했다)
+    const 굴린만큼 = await p.evaluate((y) => {
+      const 통 = [...document.querySelectorAll('.screen')].pop()
+      통.scrollTo(0, y); return Math.round(통.scrollTop)
+    }, 판.스크롤)
+    await p.waitForTimeout(400)
+    if (굴린만큼 < 100) { console.error(`⛔ 스크롤이 ${굴린만큼}px 밖에 안 됐다 — 이 판은 못 믿는다`); process.exitCode = 1 }
+  }
 
-  const 결과 = await p.evaluate(({ 문구, css, 상단바끝 }) => {
-    const st = document.createElement('style')
-    st.textContent = css ? `.toast{${css.replace('__DOCK__', String(상단바끝))}}` : ''
-    document.head.appendChild(st)
-    const d = document.createElement('div')
-    d.className = 'toast'; d.textContent = 문구
-    document.body.appendChild(d)
-    const r = d.getBoundingClientRect()
-    // ⛔ grep 이 아니라 «화면에 그려진 글자»를 잰다 (규칙 18ⓘ)
-    const 글자 = d.innerText
-    const 줄높이 = parseFloat(getComputedStyle(d).lineHeight) || 24
-    const 안쪽 = parseFloat(getComputedStyle(d).paddingTop) * 2
-    const 줄수 = Math.max(1, Math.round((r.height - 안쪽) / 줄높이))
-    // 이 상자에 «가려진» 초안 줄이 몇 개인가
-    const 가림 = [...document.querySelectorAll('.inbox-row')].filter(x => {
-      const q = x.getBoundingClientRect()
-      return q.bottom > r.top && q.top < r.bottom
-    }).map(x => (x.innerText || '').split('\n')[0].slice(0, 14))
-    return { 글자, 글자수: 글자.length, 높이: Math.round(r.height), 폭: Math.round(r.width), 줄수, 위: Math.round(r.top), 가림 }
-  }, { 문구: 판.문구, css: 판.css, 상단바끝 })
+  // 띠를 «앱이 켜는 방식 그대로» 켠다 — `.app-frame.toast-on` ＋ `.toast` 안의 글자
+  const 결과 = await p.evaluate((문구) => {
+    const frame = document.querySelector('.app-frame')
+    const d = document.querySelector('.toast')
+    if (!d) return { 없음: true }
+    d.textContent = 문구
+    frame.classList.add('toast-on')
+    return new Promise((resolve) => setTimeout(() => {
+      const r = d.getBoundingClientRect()
+      // ⛔ grep 이 아니라 «화면에 그려진 글자»를 잰다 (규칙 18ⓘ)
+      const 글자 = d.innerText
+      const cs = getComputedStyle(d)
+      const 줄높이 = parseFloat(cs.lineHeight) || 21
+      const 안쪽 = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
+      const 줄수 = Math.max(1, Math.round((r.height - 안쪽) / 줄높이))
+      // ⛔⛔ **`getBoundingClientRect` 는 «스크롤 통이 잘라낸» 부분을 모른다.**
+      //    2026-08-31: 목록을 420px 내린 판에서 「가림 2줄·상단바 420px 가림」이라고 «잘못» 울렸다.
+      //    통 위로 올라간 줄은 사실 안 보이는데 좌표만 남아 있어서다. 그래서 통에 «잘라서» 잰다.
+      const 통 = [...document.querySelectorAll('.screen')].pop()
+      const 통칸 = 통.getBoundingClientRect()
+      const 보이는가 = (q) => q.bottom > 통칸.top + 1 && q.top < 통칸.bottom - 1
+      // 🎯 이 판의 «합격 조건» — 띠에 «실제로 보이면서» 걸친 초안 줄이 하나라도 있으면 실패다
+      //    ⭐ 「보이나」로만 거르면 통 «가장자리에 걸친» 줄이 또 잘못 걸린다(반쯤 잘려 나간 줄).
+      //       그래서 줄을 통에 «잘라서» 남는 부분만 띠와 견준다.
+      const 가림 = [...document.querySelectorAll('.inbox-row')].filter(x => {
+        const q = x.getBoundingClientRect()
+        if (!보이는가(q)) return false
+        const 보이는윗변 = Math.max(q.top, 통칸.top)
+        const 보이는아랫변 = Math.min(q.bottom, 통칸.bottom)
+        return 보이는아랫변 > r.top + 1 && 보이는윗변 < r.bottom - 1
+      }).map(x => (x.innerText || '').split('\n')[0].slice(0, 14))
+      // 🎯🎯 [2026-08-31 추가] **상단바가 살아 있나** — 「가린 초안 0줄」은 통과인데
+      //    띠가 제목·뒤로 버튼을 덮고 있던 실물 버그를 숫자가 못 잡았다. 그래서 이걸 잰다.
+      const bar = document.querySelector('.topbar-back') || document.querySelector('.topbar')
+      const q = bar && bar.getBoundingClientRect()
+      const 상단바 = !q ? '못 찾음'
+        : !보이는가(q) ? '· 스크롤로 올라감(가림 아님)'
+        : (q.top < r.bottom - 1 ? `⛔ 띠에 ${Math.round(r.bottom - q.top)}px 가림`
+        : `✅ 무사 (띠 아래 ${Math.round(q.top - r.bottom)}px)`)
+      resolve({ 글자, 글자수: 글자.length, 높이: Math.round(r.height), 폭: Math.round(r.width), 줄수, 위: Math.round(r.top), 가림, 상단바 })
+    }, 500))
+  }, 판.문구)
 
-  await p.waitForTimeout(200)
   await p.screenshot({ path: join(OUT, 판.이름 + '.png') })
-  const ms = /^[01]-/.test(판.이름) ? 지금ms(판.문구) : 새ms(판.문구)
-  잰것.push({ ...판.이름 && { 판: 판.이름 }, ...결과, 초: (ms/1000).toFixed(1) })
+  잰것.push({ 판: 판.이름, ...결과, 초: (새ms(판.문구)/1000).toFixed(1) })
   await p.close()
 }
 
@@ -130,7 +152,7 @@ console.log('\n📸 ' + OUT + ' 에 ' + 판들.length + '장\n')
 for (const r of 잰것) {
   console.log(`── ${r.판}`)
   console.log(`   글자 ${r.글자수}자 · ${r.줄수}줄 · 상자 ${r.폭}×${r.높이}px · 위에서 ${r.위}px · ${r.초}초`)
-  console.log(`   가린 초안 ${r.가림.length}줄 ${r.가림.length ? '→ ' + r.가림.join(' / ') : '✅ 없음'}`)
+  console.log(`   가린 초안 ${r.가림.length}줄 ${r.가림.length ? '→ ' + r.가림.join(' / ') : '✅ 없음'}   ·   상단바 ${r.상단바}`)
 }
 console.log('\n⛔ 절대원칙 21 — 이 숫자만 보고 보내지 말 것. PNG 를 «열어서» 본다.')
 

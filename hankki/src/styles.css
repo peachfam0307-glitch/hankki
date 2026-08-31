@@ -2045,46 +2045,78 @@ img {
       ⑶ 네 줄짜리 안내(잔량 ＋ AI 상태)가 붙으면서 **읽을 게 늘었는데 자리는 제일 안 보이는 곳**이었다
    ⭐ 위쪽은 목록 내용이 시작되기 «전»이라 덜 가린다. 상단바(56px)는 피해서 그 아래에 띄운다.
    ⛔ 화면 «한가운데»로는 안 갔다 — 거긴 방금 담긴 레시피가 보이는 자리라 정작 결과를 덮는다. */
+/* 📢📢 [2026-08-31 · 창업자 제보] **떠 있는 상자를 그만뒀다 — 자리를 «비워두고» 거기 띄운다.**
+   제보 = *"레시피를 너무가리고 박스크기도 크고 길게 떠있어"* ／ *"상자를 고정해놓고 거깅 띄운다거나"*
+   ⛔ 위 8/29 판(자리 옮기기)으로는 못 고친다 — `position: fixed` 인 이상 **무엇을 덮든 상관하지 않는다.**
+   ⛔ 상단바에 «붙이는» 것도 안 된다 — `.topbar-back` 은 `.screen`(스크롤 통) 안이라 목록과 같이
+      밀려 올라간다. 붙여두면 스크롤한 순간 상단바는 사라지고 상자만 허공에 남는다.
+   ⭐ 그래서 `.app-frame`(세로 flex)의 **맨 위 칸**으로 들여왔다 → 화면이 그만큼 내려간다 = 겹침 0.
+
+   🔢🔢 **여기서 옛 버그도 같이 죽었다** — 전엔 `left:50%` 인데 `right` 가 없어 쓸 수 있는 폭이
+      **화면의 절반(390px 폰에서 195px)** 으로 잘렸다. `max-width:88%`(343px)는 그보다 커서
+      **아예 일을 안 하고 있었다.** 그래서 70자짜리 안내가 **여섯 줄로 접혀 높이 168px** 이 됐다.
+      (창업자 캡처의 「파란 덩어리」가 이것이다 — 자리 문제가 아니라 «폭» 문제였다) */
+.toast-slot {
+  /* 0fr → 1fr 로 «높이»를 스르르 연다. 화면이 툭 튀지 않게. */
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.22s ease;
+  flex: 0 0 auto;
+  /* ⛔⛔ 토스트는 «무조건 맨 위»여야 한다 — 흐름으로 들어와도 이건 그대로다.
+     🔢 2026-08-13 실측 사고: z-index 100 이라 자르기 화면(CropSheet 400)에 «가려졌다». */
+  position: relative;
+  z-index: 3500;
+}
+.app-frame.toast-on .toast-slot { grid-template-rows: 1fr; }
+.toast-clip {
+  overflow: hidden;
+  min-height: 0; /* grid 칸이 0 까지 접히게 — 없으면 안 닫힌다 */
+}
+/* 🧱🧱 띠 «아래»를 담는 칸 — 쌓인 화면(`StackLayer`)의 `inset:0` 기준을 여기로 옮긴다.
+   ⛔ 없으면 쌓인 화면이 `.app-frame` 전체를 덮어 **띠가 그 화면의 상단바를 가린다**
+      (2026-08-31 실물 버그 — 「가린 초안 0줄」로 «통과»가 떴는데 제목이 사라져 있었다). */
+.frame-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 .toast {
-  position: fixed;
-  left: 50%;
-  top: calc(var(--safe-top, 0px) + 68px);
-  transform: translateX(-50%);
   background: var(--brown);
   color: #fff;
-  padding: 12px 20px;
-  border-radius: var(--r-pill);
-  font-size: 16px;
+  /* 🛡 위쪽 여백에 «안전영역»을 얹는다 — 띠가 맨 위라 노치 밑으로 파고들면 글자가 잘린다.
+     ⛔ 대신 아래 상단바에서 그만큼 «빼줘야» 한다(안 그러면 빈 칸이 두 번 생긴다).
+        `index.html` 에 `viewport-fit=cover` 가 있어 노치 폰에선 실제로 0 이 아니다. */
+  padding: calc(9px + var(--safe-top, 0px)) 14px 9px;
+  border-radius: 0 0 18px 18px;
+  font-size: 15px;
   font-weight: 500;
-  /* ⛔⛔ 토스트는 «무조건 맨 위»여야 한다 — 안 보이는 토스트는 없는 것과 같다.
-     🔢 2026-08-13 실측 사고: z-index 가 100 이라 자르기 화면(CropSheet, zIndex 400)에 «가려졌다».
-        창업자 *"나 방금 2장 올렸는데 암것도 안떴어"* — 떴는데 검은 화면 뒤에 깔려 있었던 것.
-     ⭐ 앱에서 제일 높은 층이 3000(계량 바)이라 그보다 위로 둔다. 새 층을 만들면 여기도 확인할 것. */
-  z-index: 3500;
-  box-shadow: 0 10px 28px rgba(107, 79, 58, 0.32);
-  /* ⛔⛔ [2026-08-29 · 실물 버그] **`fadeUp` 을 쓰면 안 된다 — 가운데 정렬이 깨진다.**
-     그 애니메이션은 `transform: translateY(6px)` → `transform: none` 인데,
-     토스트는 가운데 정렬을 `transform: translateX(-50%)` 로 한다.
-     `both` 라서 끝난 «뒤»에도 `none` 이 남아 **−50% 가 사라지고 토스트가 오른쪽으로 밀린다.**
-     🔢 창업자 화면 녹화(11:17)에서 토스트가 오른쪽 끝에 붙어 글자가 잘려 보였다 —
-        「금방 사라져서 식별 어렵다」의 절반이 이것이었다(자리가 나쁜 게 아니라 «어긋나» 있었다).
-     ⭐ 그래서 토스트 «전용» 키프레임을 쓴다 — 옮기는 동안에도 −50% 를 계속 들고 간다. */
-  animation: toastIn 0.22s ease both;
-  max-width: 88%;
+  box-shadow: 0 6px 18px rgba(107, 79, 58, 0.22);
   text-align: center;
-  line-height: 1.5;
+  line-height: 1.4;
+  /* 글자는 띠가 열리는 «동안» 같이 밝아진다 — 접힐 땐 반대로 */
+  opacity: 0;
+  /* ⛔⛔ [2026-08-31 · 스모크가 잡음] **접힌 뒤엔 «진짜로» 숨어야 한다.**
+     띠는 이제 «항상» DOM 에 있고 접히는 동안 보이려고 지난 문구를 들고 있다.
+     그런데 바깥칸만 0 높이로 접으면 글자는 넘쳐난 채 남아 있어서
+     `test-exit` 가 지난 「한 번 더 누르면 나가요」를 **아직 떠 있다**고 읽고 배포를 막았다.
+     (사람 눈엔 안 보이는데 기계엔 보이는 자리 — 접근성 낭독기도 똑같이 읽는다)
+     ⭐ `visibility` 를 «접히고 «난 뒤»» 끄면 접히는 모습은 그대로 보이면서 뒷정리가 된다. */
+  visibility: hidden;
+  transition: opacity 0.18s ease, visibility 0s linear 0.22s;
 }
-
-@keyframes toastIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+.app-frame.toast-on .toast {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.18s ease, visibility 0s;
 }
+/* ⛔ 짝꿍 규칙 — 위 `--safe-top` 을 띠가 먹었으니 상단바는 그만큼 뺀다 */
+.app-frame.toast-on .topbar { padding-top: 14px; }
+.app-frame.toast-on .topbar-back { padding-top: 10px; }
+/* 🗑 [2026-08-31] `@keyframes toastIn` 을 지웠다 — 그건 `translateX(-50%)`(가운데 정렬)를
+   애니메이션 내내 들고 가려고 만든 것이다. 이제 흐름 안의 띠라 −50% 자체가 없다.
+   ⛔ 남겨두면 다음 사람이 「토스트는 fixed 구나」로 잘못 읽는다. */
 
 /* ── 요리 타이머 바 ── */
 .timer-bar {
