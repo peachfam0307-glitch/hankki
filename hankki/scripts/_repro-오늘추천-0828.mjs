@@ -40,7 +40,7 @@ const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: p
 const 그날에열기 = async (ymd) => {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 } })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
   await ctx.addInitScript((고정) => {
     const 진짜 = Date
     const 밀리 = 진짜.parse(고정)

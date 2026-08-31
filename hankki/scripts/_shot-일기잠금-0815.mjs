@@ -16,7 +16,7 @@ try {
   for (let i = 0; i < 60; i++) { try { const r = await fetch(URL); if (r.ok) break } catch { /* */ } await 잠깐(500) }
   const b = await chromium.launch()
   const ctx = await b.newContext({ viewport: { width: 412, height: 900 }, deviceScaleFactor: 3 })
-  await ctx.addInitScript(`${SEED_COACH_SEEN}\ntry { localStorage.setItem('hankki:onboarded','1') } catch(e){}`)
+  await ctx.addInitScript(`${SEED_COACH_SEEN}\ntry { localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1') } catch(e){}`)
   const p = await ctx.newPage()
   await p.goto(URL, { waitUntil: 'networkidle' })
   await 잠깐(600)

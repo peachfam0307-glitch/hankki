@@ -51,7 +51,7 @@ const 캐릭터자리 = `(() => {
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const ctx = await b.newContext({ viewport: { width: 411, height: 891 }, deviceScaleFactor: 2, timezoneId: 'Asia/Seoul' })
-await ctx.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:nudge:giftpack', '1'); localStorage.setItem('hankki:giftSheetSeen', '1') })
+await ctx.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1'); localStorage.setItem('hankki:nudge:giftpack', '1'); localStorage.setItem('hankki:giftSheetSeen', '1') })
 await ctx.addInitScript({ content: SEED_COACH_SEEN })
 const pg = await ctx.newPage()
 const 터짐 = []

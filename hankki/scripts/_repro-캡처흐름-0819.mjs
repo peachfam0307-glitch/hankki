@@ -45,7 +45,7 @@ const CHROMIUM = process.env.SMOKE_CHROMIUM
 const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 } })
 await ctx.addInitScript({ content: SEED_COACH_SEEN })
-await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch { /* noop */ } })
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch { /* noop */ } })
 const page = await ctx.newPage()
 page.setDefaultTimeout(12000)
 const errs = []

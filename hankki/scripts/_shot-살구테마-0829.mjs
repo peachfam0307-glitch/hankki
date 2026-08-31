@@ -14,7 +14,7 @@ await ctx.addInitScript({content:SEED_COACH_SEEN})
 const p=await ctx.newPage()
 const errs=[]; p.on('pageerror',e=>errs.push(String(e)))
 await p.goto(`http://127.0.0.1:${P}/`)
-await p.evaluate(s=>{localStorage.setItem('hankki:v1',JSON.stringify(s));localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki-theme','apricot')},state)
+await p.evaluate(s=>{localStorage.setItem('hankki:v1',JSON.stringify(s));localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1');localStorage.setItem('hankki-theme','apricot')},state)
 await p.goto(`http://127.0.0.1:${P}/`)
 await p.waitForTimeout(1800)
 for(let i=0;i<3;i++){const m=p.locator('.sheet-mask'); if(!(await m.count()))break

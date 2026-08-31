@@ -41,7 +41,7 @@ const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 //    클릭을 가로챈다(2026-08-22 실제로 그랬다 · 규칙 18 ⓘ). 0820 판과 «같은 방식»으로 넘긴다.
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 })
 await ctx.addInitScript(SEED_COACH_SEEN)
-await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 
 const 찍은것 = []
 const 찍자 = async (p, 이름, 설명) => {

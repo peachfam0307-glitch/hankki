@@ -39,7 +39,7 @@ await ctx.addInitScript(`{
 }`)
 const p = await ctx.newPage()
 await p.goto(`http://127.0.0.1:${PORT}/`)
-await p.evaluate((s) => { localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1') }, state)
+await p.evaluate((s) => { localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') }, state)
 await p.goto(`http://127.0.0.1:${PORT}/`)
 await p.waitForTimeout(1800)
 

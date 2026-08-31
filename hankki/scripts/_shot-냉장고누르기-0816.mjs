@@ -32,7 +32,7 @@ const 칸 = (이름, ok, 덧말 = '') => { if (!ok) bad++; console.log(`  ${ok ?
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, timezoneId: 'Asia/Seoul' })
 await ctx.addInitScript(() => {
-  localStorage.setItem('hankki:onboarded', '1')
+  localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
   localStorage.setItem('hankki:giftSheetSeen', '1')
 })

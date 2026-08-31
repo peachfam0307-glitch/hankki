@@ -56,7 +56,7 @@ for (const 테마 of ['greige', 'apricot', 'dark']) {
   await page.goto(url)
   await page.evaluate(([s, t]) => {
     localStorage.setItem('hankki:v1', JSON.stringify(s))
-    localStorage.setItem('hankki:onboarded', '1')
+    localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
     localStorage.setItem('hankki-theme', t)
   }, [state, 테마])
   await page.goto(url)

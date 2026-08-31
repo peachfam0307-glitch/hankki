@@ -55,7 +55,7 @@ const 꾸미기심기 = () => {
 const 찍기 = async (css, 꾸밈) => {
   const ctx = await b.newContext({ viewport: { width: 390, height: 900 }, deviceScaleFactor: 3 })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 
   if (꾸밈) {
     const p0 = await ctx.newPage()

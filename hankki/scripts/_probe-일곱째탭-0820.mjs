@@ -13,7 +13,7 @@ console.log('화면폭  지금6칸    일곱째넣으면   44px?')
 for (const w of [320, 360, 390, 412]) {
   const p = await b.newPage({ viewport:{width:w,height:800}, deviceScaleFactor:2 })
   await p.addInitScript(SEED_COACH_SEEN)
-  await p.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1')}catch{}})
+  await p.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')}catch{}})
   await p.goto('http://127.0.0.1:4395/hankki/',{waitUntil:'networkidle'})
   await p.waitForTimeout(700)
   const r = await p.evaluate(()=>{

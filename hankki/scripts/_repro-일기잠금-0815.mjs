@@ -79,7 +79,7 @@ try {
   }
   const browser = await chromium.launch()
   const ctx = await browser.newContext()
-  await ctx.addInitScript(`${SEED_COACH_SEEN}\ntry { localStorage.setItem('hankki:onboarded','1') } catch(e){}`)
+  await ctx.addInitScript(`${SEED_COACH_SEEN}\ntry { localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1') } catch(e){}`)
   const errs = []
   ctx.on('weberror', (e) => errs.push(String(e.error())))
 

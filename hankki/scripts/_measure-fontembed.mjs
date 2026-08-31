@@ -67,7 +67,7 @@ const url = `http://127.0.0.1:${PORT}/`
 await page.goto(url)
 await page.evaluate((s) => {
   localStorage.setItem('hankki:v1', JSON.stringify(s))
-  localStorage.setItem('hankki:onboarded', '1')
+  localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
   for (const k of ['hankki:coach:home2', 'hankki:coach:my', 'hankki:coach:search', 'hankki:coach:shop', 'hankki:coach:brag']) localStorage.setItem(k, '1')
 }, state)
 await page.goto(url)

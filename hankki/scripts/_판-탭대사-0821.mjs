@@ -92,7 +92,7 @@ const 결과 = []
     const g = { 이름: 항.이름, 설명: 항.대사 || '지금 (대사 없음)', 스타일: 항.대사 ? 'bubble' : null }
     const page = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 })
     await page.addInitScript(SEED_COACH_SEEN)
-    await page.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+    await page.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
     page.on('pageerror', (e) => console.log('  ⚠️', String(e.message || e).split('\n')[0]))
     await page.goto('http://127.0.0.1:4396/hankki/', { waitUntil: 'networkidle' })
     await page.evaluate(() => document.fonts.ready)

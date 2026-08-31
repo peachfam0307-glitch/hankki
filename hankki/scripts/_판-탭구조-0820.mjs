@@ -94,7 +94,7 @@ const 결과 = []
 for (const g of 갈래) {
   const page = await b.newPage({ viewport: { width: 폭, height: 844 }, deviceScaleFactor: 3 })
   await page.addInitScript(SEED_COACH_SEEN)
-  await page.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+  await page.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
   page.on('pageerror', (e) => console.log('  ⚠️', String(e.message || e).split('\n')[0]))
   await page.goto('http://127.0.0.1:4394/hankki/', { waitUntil: 'networkidle' })
   await page.evaluate(() => document.fonts.ready)

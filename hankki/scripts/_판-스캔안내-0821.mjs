@@ -169,7 +169,7 @@ for (const 테마 of 테마들) {
     await page.addInitScript(SEED_COACH_SEEN)
     await page.addInitScript((t) => {
       try {
-        localStorage.setItem('hankki:onboarded', '1')
+        localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
         if (t !== 'greige') localStorage.setItem('hankki-theme', t)   // ⛔ 키는 하이픈 (theme.js:15)
       } catch { /* noop */ }
     }, 테마.키)

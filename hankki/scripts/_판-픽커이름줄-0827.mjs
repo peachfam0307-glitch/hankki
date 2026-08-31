@@ -51,7 +51,7 @@ const 폭들 = (process.env.W || '390,360').split(',').map(Number)
 for (const W of 폭들) {
   const ctx = await b.newContext({ viewport: { width: W, height: 844 }, deviceScaleFactor: 2 })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch { /* noop */ } })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch { /* noop */ } })
   const page = await ctx.newPage()
   await page.goto(`http://127.0.0.1:${PORT}/hankki/`, { waitUntil: 'networkidle' })
   await page.evaluate(() => document.fonts.ready)

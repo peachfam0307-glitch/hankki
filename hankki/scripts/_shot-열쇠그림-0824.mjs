@@ -20,7 +20,7 @@ for (const [딱지, l] of [['남음', { welcome: 20, month: 5 }], ['다씀', { w
   await page.goto(url)
   await page.evaluate(({ s, keys, ll }) => {
     localStorage.setItem('hankki:v1', JSON.stringify(s))
-    localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:nudge:giftpack', '1')
+    localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1'); localStorage.setItem('hankki:nudge:giftpack', '1')
     keys.forEach((k) => localStorage.setItem(k, '1'))
     localStorage.setItem('hankki:ocrLeft', JSON.stringify(ll))
   }, { s: state, keys: Object.values(COACH), ll: l })

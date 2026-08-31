@@ -11,7 +11,7 @@ const {SEED_COACH_SEEN}=await import('../src/coach.js')
 const b=await chromium.launch(process.env.SMOKE_CHROMIUM?{executablePath:process.env.SMOKE_CHROMIUM}:{})
 const page=await b.newPage({viewport:{width:834,height:1194},deviceScaleFactor:1})
 await page.addInitScript(SEED_COACH_SEEN)
-await page.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1')}catch{}})
+await page.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')}catch{}})
 await page.goto('http://127.0.0.1:4399/hankki/',{waitUntil:'networkidle'})
 await page.evaluate(()=>document.fonts.ready); await page.waitForTimeout(900)
 console.log(await page.evaluate(()=>{

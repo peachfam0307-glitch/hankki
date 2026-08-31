@@ -69,7 +69,7 @@ for (const 시안 of ['A', 'B']) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 1500 }, timezoneId: 'Asia/Seoul', deviceScaleFactor: 2 })
     const p = await ctx.newPage()
     await p.addInitScript(SEED_COACH_SEEN)
-    await p.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1') })
+    await p.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') })
     const 오류 = []
     p.on('pageerror', (e) => 오류.push(String(e)))
     await p.goto('http://127.0.0.1:4392/', { waitUntil: 'networkidle' })

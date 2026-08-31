@@ -31,7 +31,7 @@ const 찍기 = async (tz, 이름) => {
   const ctx = await b.newContext({ viewport: { width: 390, height: 1400 }, timezoneId: tz, deviceScaleFactor: 2 })
   const p = await ctx.newPage()
   await p.addInitScript(SEED_COACH_SEEN)
-  await p.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1') })
+  await p.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') })
   // ⏰ 시계를 그 순간으로 고정 — 「아침 8시」라야 이 버그가 드러난다
   await p.addInitScript(`{
     const 고정 = ${그순간}

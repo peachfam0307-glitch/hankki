@@ -129,7 +129,7 @@ const 덮였나 = (page) => page.evaluate(() => {
 
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
 await ctx.addInitScript(SEED_COACH_SEEN)
-await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 
 const 컷 = []
 const 찍기 = async ({ 이름, 톤, 글자, 탭 }) => {

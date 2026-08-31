@@ -31,7 +31,7 @@ const 잰다 = `(() => {
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const ctx = await b.newContext({ viewport:{width:411,height:891}, deviceScaleFactor:2, timezoneId:'Asia/Seoul' })
-await ctx.addInitScript(()=>{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:nudge:giftpack','1');localStorage.setItem('hankki:giftSheetSeen','1')})
+await ctx.addInitScript(()=>{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1');localStorage.setItem('hankki:nudge:giftpack','1');localStorage.setItem('hankki:giftSheetSeen','1')})
 await ctx.addInitScript({ content: SEED_COACH_SEEN })
 // 🧪 규칙 12 — 옛 값으로 «진짜 걸리는지» 확인하는 스위치. `HK_OLD=1` 이면 고치기 «전» 상태로 되돌린다.
 if (process.env.HK_OLD) await ctx.addInitScript(() => {

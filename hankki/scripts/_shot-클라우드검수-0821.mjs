@@ -48,7 +48,7 @@ async function 창 (init) {
 // ④ 홈 한 줄 ⑤ 설정 카드 ⑥ 설정 시트 ⑦ 시트 자세히
 {
   const { ctx, pg } = await 창(() => {
-    localStorage.setItem('hankki:onboarded', '1')
+    localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
     localStorage.setItem('hankki:nudge:cloudgate', '1')
     localStorage.setItem('hankki:v1', JSON.stringify({ recipes: [{ id: 'u1', title: '내가 쓴 레시피', ingredients: [], steps: [] }], folders: [], profile: { name: '한끼러버', bio: '맛있는 한 끼로 행복한 하루 :)' }, shops: [], wishlist: [], shoppingList: [], pantry: [], diary: [], seedV: 999, memoCleanV: 9, removedSeedIds: [] }))
   })

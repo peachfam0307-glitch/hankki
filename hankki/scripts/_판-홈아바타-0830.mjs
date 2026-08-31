@@ -29,7 +29,7 @@ console.log('─'.repeat(52))
 for (const a of 안) {
   const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:3})
   await p.addInitScript(SEED_COACH_SEEN)
-  await p.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1')}catch{}})
+  await p.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')}catch{}})
   await p.goto('http://127.0.0.1:4403/hankki/',{waitUntil:'networkidle'})
   await p.evaluate(()=>document.fonts.ready); await p.waitForTimeout(700)
   const r = await p.evaluate(({아바타,말풍선})=>{

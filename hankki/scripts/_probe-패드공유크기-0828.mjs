@@ -46,7 +46,7 @@ const 결과 = []
 for (const 기기 of 기기들) {
   const ctx = await b.newContext({ viewport: { width: 기기.w, height: 기기.h }, deviceScaleFactor: 기기.dpr })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
   // 🎭 공유를 가로채 «넘어온 파일»을 그대로 잰다 — 흉내는 브라우저가 하는 일까지다
   await ctx.addInitScript(() => {
     window.__잰것 = []

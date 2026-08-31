@@ -34,7 +34,9 @@ const ONBOARD_KEY = readFileSync(new URL('../src/components/Onboarding.jsx', imp
   .match(/ONBOARD_KEY\s*=\s*'([^']+)'/)[1]
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 await p.addInitScript(new Function(SEED_COACH_SEEN))
-await p.addInitScript((k) => { localStorage.setItem(k, '1') }, ONBOARD_KEY)
+// 📰 [2026-09-01] 소식 팝업도 끈다 — 9/1 에 꾸미기 51종이 «저절로» 열리며 팝업이 화면을
+//    통째로 덮어(`sheet-mask` z=300) 밀기가 전부 「홈 → 홈」이 됐다. 앱이 아니라 판의 구멍이다.
+await p.addInitScript((k) => { localStorage.setItem(k, '1'); localStorage.setItem('hankki:news:off', '1') }, ONBOARD_KEY)
 // ⛔ base 가 './' 라 preview 는 «뿌리»로 뜬다 — '/hankki/' 로 가면 «빈 화면»이고 pageerror 도 안 난다.
 //    📌 그러면 검사가 «아무것도 못 읽고» 전부 실패로 나온다(2026-08-15 에 그랬다).
 await p.goto(BASE)

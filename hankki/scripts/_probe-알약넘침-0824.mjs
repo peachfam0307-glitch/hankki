@@ -15,7 +15,7 @@ for (const W of [390, 360, 320, 412]) {
   page.setDefaultTimeout(15000)
   const url=`http://127.0.0.1:${PORT}/`
   await page.goto(url)
-  await page.evaluate(({s,keys})=>{localStorage.setItem('hankki:v1',JSON.stringify(s));localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:nudge:giftpack','1');keys.forEach(k=>localStorage.setItem(k,'1'));localStorage.setItem('hankki:ocrLeft',JSON.stringify({welcome:20,month:5}))},{s:state,keys:Object.values(COACH)})
+  await page.evaluate(({s,keys})=>{localStorage.setItem('hankki:v1',JSON.stringify(s));localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1');localStorage.setItem('hankki:nudge:giftpack','1');keys.forEach(k=>localStorage.setItem(k,'1'));localStorage.setItem('hankki:ocrLeft',JSON.stringify({welcome:20,month:5}))},{s:state,keys:Object.values(COACH)})
   await page.goto(url); await page.waitForTimeout(1600)
   try { await page.locator('[data-coach="import"]').first().click({timeout:8000}) } catch { await page.getByText('가져오기',{exact:true}).last().click({timeout:8000}) }
   await page.waitForTimeout(1300)

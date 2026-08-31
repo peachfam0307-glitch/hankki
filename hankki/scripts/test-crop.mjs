@@ -76,7 +76,7 @@ try {
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ text: '재료\n가지 5개' }) }))
 
   await page.addInitScript((safe) => {
-    localStorage.setItem('hankki:onboarded', '1')
+    localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
     for (const k of ['hankki:coach:home', 'hankki:coach:home2', 'hankki:coach:myrecipes', 'hankki:coach:editor', 'hankki:coach:shop', 'hankki:coach:brag']) localStorage.setItem(k, '1')
     addEventListener('DOMContentLoaded', () => document.documentElement.style.setProperty('--safe-top', safe + 'px'))
   }, SAFE_TOP)

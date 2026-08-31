@@ -17,7 +17,7 @@ await new Promise(r=>srv.listen(4401,r))
 const {SEED_COACH_SEEN}=await import('/home/user/hankki/hankki/src/coach.js')
 const b=await chromium.launch(); const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:3})
 await p.addInitScript(SEED_COACH_SEEN)
-await p.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1')}catch{}})
+await p.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')}catch{}})
 await p.goto('http://127.0.0.1:4401/hankki/',{waitUntil:'networkidle'}); await p.waitForTimeout(900)
 for (const [탭,이름] of [[null,'홈'],['레시피','레시피']]) {
   if (탭) { await p.evaluate((n)=>{const c=[...document.querySelectorAll('.bottom-nav .nav-item')].find(e=>([...e.querySelectorAll('span')].pop()?.textContent||'').trim()===n); if(c)c.click()},탭); await p.waitForTimeout(600) }

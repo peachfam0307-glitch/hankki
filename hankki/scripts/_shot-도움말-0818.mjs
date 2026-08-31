@@ -34,7 +34,7 @@ const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
 const p = await ctx.newPage()
 // ⭐ 온보딩·코치마크를 꺼야 화면이 안 가려진다(규칙 21 — 「가려진 것을 숫자는 모른다」)
-await p.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+await p.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 await p.addInitScript(SEED_COACH_SEEN)
 // ⛔ 첫 판이 `/hankki/` 를 붙여 **JS 가 404** 였다(index.html 만 SPA 폴백으로 와서 화면이 텅 빔).
 //    `scripts/smoke.mjs` 가 쓰는 주소는 `http://127.0.0.1:<PORT>/` 다 — 그게 「지금 도는 것」이라 그걸 따른다.

@@ -38,7 +38,7 @@ for (const a of 안) {
   await p.goto('http://localhost:4399/hankki/'); await p.waitForTimeout(1200)
   // ⛔ 온보딩을 «반드시» 끈다 — 안 끄면 온보딩 화면이 찍히고 그걸 말풍선인 줄 알고 보낸다
   //    (2026-08-11 사고 · 절대원칙 21 로 잡았다)
-  await p.evaluate(() => { try { localStorage.setItem('hankki:onboarded','1') } catch(e){} })
+  await p.evaluate(() => { try { localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1') } catch(e){} })
   await p.reload(); await p.waitForTimeout(1500)
   // ⭐ 찍기 «전»에 상단바가 실제로 있나 본다 — 없으면 그 판은 거짓말이다
   const 상단바있나 = await p.evaluate(() => !!document.querySelector('.topbar'))

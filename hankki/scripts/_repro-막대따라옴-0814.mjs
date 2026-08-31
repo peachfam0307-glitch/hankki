@@ -58,7 +58,7 @@ const 잰다 = `(async () => {
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const ctx = await b.newContext({ viewport:{width:411,height:891}, deviceScaleFactor:2, timezoneId:'Asia/Seoul' })
-await ctx.addInitScript(()=>{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:nudge:giftpack','1');localStorage.setItem('hankki:giftSheetSeen','1')})
+await ctx.addInitScript(()=>{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1');localStorage.setItem('hankki:nudge:giftpack','1');localStorage.setItem('hankki:giftSheetSeen','1')})
 await ctx.addInitScript({ content: SEED_COACH_SEEN })
 const pg = await ctx.newPage()
 await pg.goto('http://127.0.0.1:4457/hankki/',{waitUntil:'networkidle'}); await pg.waitForTimeout(900)

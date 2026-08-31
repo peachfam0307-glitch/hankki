@@ -37,7 +37,7 @@ const 결과 = []
 const 새탭 = async () => {
   const p = await ctx.newPage()
   await p.addInitScript(SEED_COACH_SEEN)
-  await p.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1') })
+  await p.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') })
   p.on('pageerror', (e) => 오류.push(String(e)))
   await p.goto('http://127.0.0.1:4393/', { waitUntil: 'networkidle' })
   // ⛔ 시간으로 기다리지 않는다 — 저장은 렌더 «뒤»라 800ms 가 모자랄 때가 있다(실제로 null 이 나왔다)

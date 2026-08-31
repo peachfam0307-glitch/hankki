@@ -60,7 +60,7 @@ const ctx = await b.newContext({ viewport: { width: 390, height: 860 }, timezone
 // 준비 — 어제 만들고 한 줄을 써 둔 상태
 const p0 = await ctx.newPage()
 await p0.addInitScript(SEED_COACH_SEEN)
-await p0.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1') })
+await p0.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') })
 await p0.goto('http://127.0.0.1:4401/', { waitUntil: 'networkidle' })
 await p0.waitForFunction(() => !!localStorage.getItem('hankki:v1'), null, { timeout: 15000 })
 const 준비 = await p0.evaluate(() => {

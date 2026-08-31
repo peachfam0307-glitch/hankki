@@ -49,7 +49,7 @@ const 탭 = ['홈', '레시피', '일기', '장보기', '레꾸자랑']
 const 재기 = async (W, H) => {
   const ctx = await b.newContext({ viewport: { width: W, height: H } })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
   const 결과 = {}
   for (const t of 탭) {
     const p = await ctx.newPage()
@@ -137,7 +137,7 @@ const 클래스 = [
 const px재기 = async (W, H, 어느탭) => {
   const ctx = await b.newContext({ viewport: { width: W, height: H } })
   await ctx.addInitScript(SEED_COACH_SEEN)
-  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
   await p.evaluate(() => document.fonts.ready)

@@ -19,7 +19,7 @@ const ctx = await b.newContext({ viewport:{width:390,height:900}, timezoneId:'As
 
 const 심기 = async () => {
   const p = await ctx.newPage(); await p.addInitScript(SEED_COACH_SEEN)
-  await p.addInitScript(()=>{localStorage.setItem('hankki:onboarded','1')})
+  await p.addInitScript(()=>{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')})
   await p.goto('http://127.0.0.1:4415/',{waitUntil:'networkidle'})
   await p.waitForFunction(()=>!!localStorage.getItem('hankki:v1'),null,{timeout:15000})
   await p.evaluate(()=>{const s=JSON.parse(localStorage.getItem('hankki:v1'))

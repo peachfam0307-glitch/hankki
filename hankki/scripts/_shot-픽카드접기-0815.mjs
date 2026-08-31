@@ -32,7 +32,7 @@ const { SEED_COACH_SEEN } = await import('/home/user/hankki/hankki/src/coach.js'
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const ctx = await b.newContext({ viewport: { width: VW, height: VH }, deviceScaleFactor: 4, timezoneId: 'Asia/Seoul' })
 await ctx.addInitScript(() => {
-  localStorage.setItem('hankki:onboarded', '1')
+  localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
   localStorage.setItem('hankki:giftSheetSeen', '1')
 })

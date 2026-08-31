@@ -63,7 +63,7 @@ page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 await page.addInitScript(SEED_COACH_SEEN)
 await page.addInitScript((s) => {
-  localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1')
+  localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
   localStorage.setItem('hankki:nudge:giftpack', '1')
 }, state)
 await page.goto('http://127.0.0.1:4361/hankki/', { waitUntil: 'networkidle' })

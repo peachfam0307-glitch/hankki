@@ -62,7 +62,7 @@ const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 } })
 await ctx.addInitScript(SEED_COACH_SEEN)
-await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 
 // 📸 큰 사진을 «브라우저 안에서» 만든다 — **폰 스크린샷처럼** 생기게.
 //    ⛔⛔ 첫 판은 8px 격자에 랜덤 색을 칠했다. 그건 **노이즈 덩어리**라 JPEG 가 못 눌러

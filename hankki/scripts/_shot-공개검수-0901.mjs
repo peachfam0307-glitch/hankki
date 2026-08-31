@@ -74,7 +74,7 @@ page.on('pageerror', (e) => errs.push(String(e)))
 
 const url = `http://127.0.0.1:${PORT}/`
 await page.goto(url)
-await page.evaluate((s) => { localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1') }, state)
+await page.evaluate((s) => { localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') }, state)
 await page.goto(url)
 await page.waitForTimeout(1600)
 
