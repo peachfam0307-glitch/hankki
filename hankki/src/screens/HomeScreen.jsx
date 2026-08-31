@@ -12,7 +12,7 @@ import Buddy from '../components/Buddies'
 import TabTips from '../components/TabTips'
 import TabTalk from '../components/TabTalk'
 import PreviewSheet from '../components/PreviewSheet'
-import NewsPopup, { needsNewsPopup, markNewsSeen } from '../components/NewsPopup'
+import NewsPopup, { needsNewsPopup, markNewsSeen, isNewsUnread } from '../components/NewsPopup'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import ConfirmSheet from '../components/ConfirmSheet'
 // 🐻 코치 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지 규칙)
@@ -183,8 +183,15 @@ export default function HomeScreen() {
   const [newsPop, setNewsPop] = useState(
     () => needsNewsPopup(news) && !needsOnboarding() && !needsCoach(HOME_COACH_KEY)
   )
+  // 🔵 「새로」 뱃지 — ✅창업자 확정 2026-08-31 (시안 넷 중 **㉣ 둘 다**)
+  //   📮 창업자 = *"한끼소식에 알약은 색을 다르게 하거나, 새로 올라온게 있으면 표시가 있으면 좋겠어."* → 판정 *"ㄹ하자"*
+  //   ⭐ **읽으면 꺼지고, 새것이 오면 다시 뜬다** — 판정은 `isNewsUnread`(팝업과 같은 열쇠) 한 곳에서.
+  //   ⛔ `useState` 로 «한 번만» 읽는다 — 그리는 중에 localStorage 를 매번 읽으면
+  //      표시를 하고도 화면이 안 바뀐다(리액트는 저장소를 안 본다).
+  const [unread, setUnread] = useState(() => isNewsUnread(news))
+  const 소식봤음 = () => { markNewsSeen(news); setUnread(false) }
   // ⚠️ 어떻게 닫든 «봤음»으로 친다 — 안 그러면 뒤로가기로 닫은 사람에게 매번 뜬다.
-  const closeNews = () => { markNewsSeen(news); setNewsPop(false) }
+  const closeNews = () => { 소식봤음(); setNewsPop(false) }
 
   // 오늘의 추천 — 냉장고 재료로 만들 수 있는 요리 우선, 없으면 자주 해먹는/전체
   // ⭐ 맞추기·점수는 `src/pantryMatch.js` **한 곳**에서 한다 —
@@ -416,7 +423,7 @@ export default function HomeScreen() {
         <div className="home-pair">
           <button
             className="press news-card"
-            onClick={() => setPreview(true)}
+            onClick={() => { 소식봤음(); setPreview(true) }}
             data-coach="preview"
           >
             {/* 🐻 [2026-08-13 창업자] *"한끼소식 옆에 캐릭터 하나 넣으면 되겠다"*
@@ -437,8 +444,15 @@ export default function HomeScreen() {
                 <span className="news-title">한끼 소식</span>
                 {/* ⛔ [2026-08-29] `openedAlert` — 장바구니는 «주마다» 열려서 넣으면 이 뱃지가 늘 켜져 있다.
                     바로 위 주석에 우리가 적어둔 원칙 그대로 = *"늘 떠 있으면 아무도 안 본다."* */}
-                {news.openedAlert.length > 0 && (
-                  <span style={{ fontSize: 15, fontWeight: 900, color: 'var(--surface)', background: 'var(--brown)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
+                {/* 🟠 색 = `--gift` (창업자 확정 2026-08-31 ㉣)
+                    ⛔ 그 전엔 `--brown` 이라 **바로 아래 「아직 안 해봤어요」와 판박이**였다
+                       (실측 = 둘 다 rgb(88,120,160) ＋ 흰 글자). 알림이 아니라 «이름표»로 읽힌다.
+                    ⭐ 새 색을 만든 게 «아니다» — 소식 팝업이 이미 쓰는 선물 색이라 한 벌이 된다.
+                       `styles.css:96` = *"앱 포인트가 전부 파랑이라 오렌지 알약 하나만 «유일하게 튄다»"*
+                       ＋ 흰 글자 대비 4.84 로 이미 재둔 값이다. ⛔색을 여기 박지 말 것(그 한 줄만 고친다).
+                    ⛔ `unread` 를 «같이» 본다 — 없으면 늘 켜져 있어 「새로」가 새것을 못 뜻한다. */}
+                {news.openedAlert.length > 0 && unread && (
+                  <span style={{ fontSize: 15, fontWeight: 900, color: 'var(--surface)', background: 'var(--gift)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
                 )}
               </div>
               <div className="t-sub news-sub">{newsLine}</div>

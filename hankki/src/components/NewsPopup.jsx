@@ -51,6 +51,20 @@ export function markNewsSeen(news) {
   try { localStorage.setItem(KEY, newsSignature(news)) } catch { /* 저장 못 해도 화면은 돌아간다 */ }
 }
 
+// 🔵 홈 「새로」 뱃지가 물어보는 것 — **아직 안 본 소식인가**
+//   📮 창업자 2026-08-31 = *"한끼소식에 알약은 색을 다르게 하거나, **새로 올라온게 있으면 표시**가 있으면 좋겠어."*
+//   ⛔⛔ 그 전엔 뱃지가 `openedAlert.length > 0` «만» 봤다 → 실측하니 **8/29~9/8 일곱 날 전부 켜져** 있었다.
+//      우리집레시피가 주마다 열려 `FRESH_DAYS`(21일) 안이 늘 차 있기 때문이다.
+//      📌 `HomeScreen.jsx` 에 우리가 직접 적어둔 원칙이 그대로 깨져 있었다 —
+//         *"뱃지는 «새로 열린 게 있을 때만» 뜬다 — 늘 떠 있으면 아무도 안 본다."*
+//   ⭐ **팝업과 «같은 열쇠»를 쓴다** — 새 열쇠를 만들면 「팝업은 봤는데 뱃지는 켜져 있다」가 된다.
+//      팝업을 닫아도, 소식을 열어 봐도 «봤음»이다. 그리고 **새것이 오면 서명이 달라져 저절로 다시 뜬다.**
+//   ⛔ `worthPopup`·`isNewsPopupOff` 는 «안» 본다 — 그건 팝업을 띄울지 정하는 잣대다.
+//      「앞으로 열지 않기」를 켠 사람도 **뱃지는 봐야 한다**(끄면 아무것도 잃지 않는다고 우리가 약속했다).
+export function isNewsUnread(news) {
+  try { return localStorage.getItem(KEY) !== newsSignature(news) } catch { return false }
+}
+
 export default function NewsPopup({ news, onClose, onOpenNews }) {
   useModalBack(onClose) // 뒤로가기 → 닫기 (이때도 '봤음'으로 친다 — onClose 안에서 표시)
   const [off, setOff] = useState(isNewsPopupOff)
