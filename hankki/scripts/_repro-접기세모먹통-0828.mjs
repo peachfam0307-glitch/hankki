@@ -38,6 +38,17 @@ const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const CHROMIUM = process.env.SMOKE_CHROMIUM
 const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
+const _N = new Date()
+
+// 🗓🗓 **시계를 「이번 달 15일 낮」으로 고정한다** (2026-09-01 · 달이 바뀌는 날 셋이 한꺼번에 죽었다)
+//   ⛔ 뿌리 = 씨앗 날짜를 `Date.now()` 에서 «며칠 빼서» 만드는데, **달 초에 돌리면 지난달로 떨어진다.**
+//      일기·달력 화면은 «이번 달»을 열므로 화면이 텅 비고, 찾던 것이 영영 안 나온다.
+//      🔢 실측(2026-09-01 = 1일) — `_repro-일기그달`·`_repro-접기세모먹통`·`_repro-일기포스트잇` **셋 다 실패**.
+//         손 안 댄 배포 갈래에서도 똑같이 죽었다 = **앱이 아니라 검사가 낡은 것**이다(절대원칙 18 ⓘ).
+//   ⛔ 「1 로 눌러 담기」(`Math.max(1, T-10)`)는 답이 아니었다 — 1일엔 **엿새가 한 날로 뭉쳐**
+//      「제육볶음이 3번 뜬다」·「요리 안 한 날이 없다」처럼 **재려던 상황 자체가 사라진다.**
+//   ✅ 15일이면 앞뒤로 열흘씩 여유가 있어 **어느 달, 어느 날에 돌려도 같은 그림**이 나온다.
+await ctx.clock.install({ time: new Date(_N.getFullYear(), _N.getMonth(), 15, 12, 0, 0) })
 await ctx.addInitScript(SEED_COACH_SEEN)
 await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
 

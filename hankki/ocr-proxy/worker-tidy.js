@@ -328,36 +328,37 @@ export default {
 // ⛔ 죽은 후보 재론 금지 = Gemma 3 12B(Deprecated) · Llama 4 Scout · Llama 3.2 11B Vision(영어 전용)
 const VISION_MODEL = '@cf/google/gemma-4-26b-a4b-it'
 
+// ⏳ 눈 시험 전용 답 길이 — 본 경로(4000)보다 넉넉하다.
+//   ⛔⛔ [2026-09-01 실물] ⓒ(사진＋글자)가 `finish_reason: "length"` 로 잘렸다.
+//      모델이 «내 지시문을 분석»하느라 4,000 토큰을 다 쓰고 레시피를 한 글자도 못 냈다.
+//      📌 2026-08-29 `THINKING_ONLY`(glm 이 30초 생각만 하다 빈손)와 **같은 모양**이다 — 또 밟았다.
+const VISION_MAX_TOKENS = 8000
+
+// ⭐⭐⭐ [2026-09-01] **맨 앞에 「생각하지 마라」를 박는다** — 이게 위 사고의 직접 처방이다.
+//   ⛔ 규칙 목록 «뒤»에 두면 늦다. 모델은 앞부터 읽고 거기서 「분석 모드」를 켠다.
+const 즉답못박기 = `⛔ 생각·분석·계획을 글로 쓰지 마라. 설명하지 마라.
+⛔ 아래 JSON «한 덩어리»만 즉시 출력해라. 다른 글자는 한 자도 쓰지 마라.
+
+`
+
 // ⭐⭐ 지시문은 **본 경로와 «같은 규칙»을 쓴다** — 안 그러면 ⓐ와 ⓑⓒ 를 나란히 못 놓는다.
 //   (규칙 7개는 창업자 실물 판정을 거친 것이다 — 여기서 새로 쓰면 그 판정이 날아간다)
 const 규칙본문 = PROMPT.slice(PROMPT.indexOf('규칙:'))
 
-// ⓑ 사진만 준다
-const 눈지시_사진만 = `너는 요리 레시피 정리기다. 아래 사진은 인스타그램 요리 레시피 화면 캡처다.
+// ⓑ 사진만 준다 — ✅2026-09-01 실물 18.5초 · 62 뉴런 · 볼 것 넷 중 셋 통과
+const 눈지시_사진만 = 즉답못박기 + `너는 요리 레시피 정리기다. 아래 사진은 인스타그램 요리 레시피 화면 캡처다.
 사진의 글자를 «직접 읽어» 정리해라. 화면 글자(통신사·시계·계정명·좋아요 수·댓글)는 버려라.
 
 ` + 규칙본문.replace('--- 원문 ---', '--- 사진 ---')
 
-// ⓒ 사진 ＋ Vision 이 읽은 글자를 «같이» 준다 (⭐내 추천 방향)
-//   ⛔ 「오독을 고쳐라」를 넓게 시키면 멀쩡한 말까지 바꾼다(2026-08-31 사고).
-//      그래서 **«사진과 다를 때만»** 이라고 못 박는다.
-const 눈지시_둘다 = `너는 요리 레시피 정리기다. 사진 한 장과, 그 사진을 기계가 글자로 읽은 것을 같이 준다.
-글자는 군데군데 잘못 읽혔다. ⛔글자가 «사진과 다를 때만» 사진을 보고 고쳐라.
-사진으로 확인이 안 되면 글자를 그대로 둬라 — 말이 어색해 보여도 고치지 마라.
+// ⓒ 사진 ＋ Vision 이 읽은 글자를 «같이» 준다
+//   ⛔ 「오독을 고쳐라」를 넓게 시키면 멀쩡한 말까지 바꾼다(2026-08-31 사고) → «사진과 다를 때만»으로 못 박는다.
+//   ⛔⛔ 여기 설명을 길게 쓰면 모델이 그걸 «분석»한다(2026-09-01 사고) → **두 줄로 줄였다.**
+const 눈지시_둘다 = 즉답못박기 + `너는 요리 레시피 정리기다. 사진과, 그 사진을 기계가 읽은 글자를 같이 준다.
+⛔ 글자가 «사진과 다를 때만» 고쳐라. 사진으로 확인이 안 되면 어색해도 그대로 둬라.
 
 ` + 규칙본문
-
-// data URL → 바이트 배열 (모양 ⓑ·ⓓ 가 이걸 쓴다)
-function 바이트로(dataUrl) {
-  const s = String(dataUrl || '')
-  const i = s.indexOf('base64,')
-  const b64 = i >= 0 ? s.slice(i + 7) : s
-  const bin = atob(b64)
-  const out = new Uint8Array(bin.length)
-  for (let k = 0; k < bin.length; k++) out[k] = bin.charCodeAt(k)
-  return out
-}
-
+// ⛔ [2026-09-01] 바이트로 보내는 모양이 죽어서 이 함수도 쓸 데가 없어졌다 — 아래 「죽은 모양 셋」 참조.
 async function 눈시험(env, 몸, cors) {
   const image = String(몸.image || '')
   if (!image) return json({ error: 'no_image' }, 400, cors)
@@ -366,43 +367,24 @@ async function 눈시험(env, 몸, cors) {
   const budget = 몸.budget ? Number(몸.budget) : null
   const 지시 = text ? (눈지시_둘다 + '\n\n--- 기계가 읽은 글자 ---\n' + text) : 눈지시_사진만
 
-  let 바이트
-  try { 바이트 = 바이트로(image) } catch (e) { return json({ error: 'bad_image', why: String(e && e.message || e) }, 400, cors) }
-
-  // 🧪 «보내는 모양» 네 가지 — 위에서부터 시도하고 처음 통한 것을 쓴다.
-  //   ⛔ 어느 것이 맞는지 확인 못 했다(문서를 못 열었다) → 그래서 코드가 대신 찾는다.
-  //   ⚠️ `budget` 도 «이름을 모른다» — 주면 흔한 두 자리에 같이 실어 보내고, 실패하면 그 사실이 드러난다.
+  // 🧪🧪 **[2026-09-01 실물로 닫혔다] 사진이 진짜로 가는 모양은 «하나»뿐이다.**
+  //   ⛔⛔ 죽은 셋 — ⛔재론 금지(창업자 폰에서 한 번에 다 재봤다)
+  //     ② Cloudflare 꼴 `image` 바이트 → 사진을 «안 본다». 응답이 `text` 로 와서
+  //        채팅이 아니라 «이어쓰기»로 처리됐다(「퓨삼치…」 뒤에 "de de de…" 헛소리)
+  //     ③ `input_image` 꼴 → 0.03초 만에 **5006 스키마 오류**. 이 모델이 안 받는다
+  //     ④ `messages` ＋ 바깥 `image` → 모델이 «직접» 말했다: *"One image (not provided in text…)"*
+  //   ⭐ 넷을 다 돌면 **74초 ＋ 뉴런 네 배**다. 하나만 남겨 시간도 값도 1/4로 줄인다.
+  //   ⚠️ `budget` 은 «이름을 모른다» — 주면 그대로 실어 보내고, 안 먹으면 그 사실이 드러난다.
   const 모양들 = [
     ['① OpenAI 꼴 image_url', {
       messages: [{ role: 'user', content: [
         { type: 'text', text: 지시 },
         { type: 'image_url', image_url: { url: image } },
       ] }],
-      max_tokens: MAX_TOKENS, temperature: 0.2,
-      ...(budget ? { budget } : {}),
-    }],
-    ['② Cloudflare 꼴 image 바이트', {
-      image: [...바이트],
-      prompt: 지시,
-      max_tokens: MAX_TOKENS, temperature: 0.2,
-      ...(budget ? { budget } : {}),
-    }],
-    ['③ input_image 꼴', {
-      messages: [{ role: 'user', content: [
-        { type: 'text', text: 지시 },
-        { type: 'input_image', image_url: image },
-      ] }],
-      max_tokens: MAX_TOKENS, temperature: 0.2,
-      ...(budget ? { budget } : {}),
-    }],
-    ['④ messages ＋ 바깥 image', {
-      messages: [{ role: 'user', content: 지시 }],
-      image: [...바이트],
-      max_tokens: MAX_TOKENS, temperature: 0.2,
+      max_tokens: VISION_MAX_TOKENS, temperature: 0.2,
       ...(budget ? { budget } : {}),
     }],
   ]
-
   const 시도 = []
   for (const [이름, 입력] of 모양들) {
     const 시작 = Date.now()
@@ -415,6 +397,19 @@ async function 눈시험(env, 몸, cors) {
     }
     const out = 첫값(r?.response, r?.result?.response, r?.result, r?.choices?.[0]?.message?.content, r?.output_text)
     if (!out) {
+      // 🧠🧠 [2026-09-01] **「생각만 하다 길이를 다 썼다」에 이름을 붙인다.**
+      //   ⛔ 그 전엔 `빈손` 안에 숨어서, 로그를 한참 읽어야 범인이 보였다.
+      //      (2026-08-29 `THINKING_ONLY` 와 같은 사고인데 이름이 없어 또 못 알아봤다)
+      const ch = r?.choices?.[0] || {}
+      const 생각 = ch?.message?.reasoning || ch?.message?.reasoning_content || ch?.reasoning || ''
+      if (ch.finish_reason === 'length') {
+        시도.push({
+          모양: 이름, 결과: '생각만 하다 잘림',
+          왜: `답 길이 ${VISION_MAX_TOKENS} 토큰을 «생각»에 다 썼다(finish_reason=length). 생각 앞머리: ` + String(생각).slice(0, 200),
+          ms: Date.now() - 시작,
+        })
+        continue
+      }
       let 모습; try { 모습 = JSON.stringify(r) } catch { 모습 = '(못 읽음)' }
       시도.push({ 모양: 이름, 결과: '빈손', 왜: String(모습).slice(0, 400), ms: Date.now() - 시작 })
       continue

@@ -41,7 +41,9 @@ const { BASICS_VERSION } = await import('../src/data/basics.js')
 
 // 🗓 날짜는 «지금 달»을 기준으로 — 달력이 늘 이번 달을 연다(`CookCalendar` 의 `ym` 초기값).
 //    ⚠️ 앞날은 달력이 막으므로 오늘보다 뒤로만. 달 초에 돌려도 안 깨지게 1 로 눌러 담는다.
-const N = new Date(), Y = N.getFullYear(), M = N.getMonth(), T = N.getDate()
+const N = new Date(), Y = N.getFullYear(), M = N.getMonth()
+// 🗓 시계를 「이번 달 15일」로 고정하므로 T 는 «그 15일»이다 (아래 clock.install 참조)
+const T = 15
 const at = (y, m, d) => new Date(y, m, d, 12, 0, 0).getTime()
 const dA = T                       // 요리 2개 (겹치는 날)
 const dB = Math.max(1, T - 2)      // 제육볶음 ①
@@ -89,7 +91,18 @@ const no = (m) => { bad++; console.log('   ⛔', m) }
 //    플레이라이트가 알아서 찾게 두고, 이 컨테이너에서만 env 로 알려준다.
 const CHROMIUM = process.env.SMOKE_CHROMIUM
 const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
-const page = await b.newPage({ viewport: { width: 360, height: 880 }, deviceScaleFactor: 2 })
+const _ctx = await b.newContext({ viewport: { width: 360, height: 880 }, deviceScaleFactor: 2 })
+
+// 🗓🗓 **시계를 「이번 달 15일 낮」으로 고정한다** (2026-09-01 · 달이 바뀌는 날 셋이 한꺼번에 죽었다)
+//   ⛔ 뿌리 = 씨앗 날짜를 `Date.now()` 에서 «며칠 빼서» 만드는데, **달 초에 돌리면 지난달로 떨어진다.**
+//      일기·달력 화면은 «이번 달»을 열므로 화면이 텅 비고, 찾던 것이 영영 안 나온다.
+//      🔢 실측(2026-09-01 = 1일) — `_repro-일기그달`·`_repro-접기세모먹통`·`_repro-일기포스트잇` **셋 다 실패**.
+//         손 안 댄 배포 갈래에서도 똑같이 죽었다 = **앱이 아니라 검사가 낡은 것**이다(절대원칙 18 ⓘ).
+//   ⛔ 「1 로 눌러 담기」(`Math.max(1, T-10)`)는 답이 아니었다 — 1일엔 **엿새가 한 날로 뭉쳐**
+//      「제육볶음이 3번 뜬다」·「요리 안 한 날이 없다」처럼 **재려던 상황 자체가 사라진다.**
+//   ✅ 15일이면 앞뒤로 열흘씩 여유가 있어 **어느 달, 어느 날에 돌려도 같은 그림**이 나온다.
+await _ctx.clock.install({ time: new Date(Y, M, 15, 12, 0, 0) })
+const page = await _ctx.newPage()
 const errors = []
 page.on('pageerror', (e) => errors.push(String(e.message || e).split('\n')[0]))
 await page.addInitScript((s) => {
