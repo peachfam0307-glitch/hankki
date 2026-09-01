@@ -1363,7 +1363,15 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 ⭐ 46 은 손가락 최소(44)보다 크다. 세로도 52 → **46** (창업자 2026-08-08 *"아래탭이 너무커"* —
                    빈 안내 바와 «같은 키»로 맞춰야 골랐다 풀 때 화면이 안 튄다).
                 🛟 그래도 넘치면 잘리는 대신 **두 줄이 되게**(`wrap`) — 새 갈래가 늘어도 안 잘린다. */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, rowGap: 0 }}>
+            {/* 📱📱 **작은 폰에서 안 넘치게** (창업자 2026-09-01 *"작은 폰에서 안 넘치게 만들어"*)
+                🔢 실측 = 갈래 일곱 × 44px = **308px** 인데 320px 폰의 쓸 폭은 **304px** — **4px 모자라 줄이 갈라진다.**
+                ⭐ 고침 = ⑴이 줄만 바 양옆 여백(8px)을 **되물려** 화면 폭을 다 쓰고
+                          ⑵칸을 `flex: 1 1 0` 로 **나눠 갖게** 한다.
+                🔢 그러면 320→45.7 · 360→51.4 · 390→55.7 · 412→56.6px — **네 폭 모두 손가락 최소(44)를 넘는다.**
+                   (이 숫자는 하단바 일곱째 탭을 실제로 넣어 재본 값과 같다 — CLAUDE.md 2026-08-20)
+                ⛔ `minWidth: 44` 는 «남겨 둔다» — 여덟째 갈래가 생기면 44 밑으로 쪼그라드는 대신
+                   `wrap` 으로 두 줄이 되게 하려는 것이다(작아져서 못 누르는 것보다 낫다). */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, rowGap: 0, margin: '0 -8px' }}>
               {ctxTabs.map((t) => {
                 const on = ctxCur === t.k && ctxOpen
                 return (
@@ -1372,7 +1380,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   <button key={t.k} className="press" aria-pressed={on} aria-expanded={on} data-ctxtab={t.k}
                     aria-label={on ? `${t.label} 접기` : t.label}
                     onClick={() => { if (ctxCur === t.k && ctxOpen) setCtxOpen(false); else { setCtxTab(t.k); setCtxOpen(true) } }}
-                    style={{ position: 'relative', flex: '0 0 auto', minWidth: 44, minHeight: 44, borderRadius: 13, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--cream-deep)' : 'transparent', color: on ? 'var(--brown)' : 'var(--text-sub)', border: 'none' }}>
+                    style={{ position: 'relative', flex: '1 1 0', minWidth: 44, minHeight: 44, borderRadius: 13, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--cream-deep)' : 'transparent', color: on ? 'var(--brown)' : 'var(--text-sub)', border: 'none' }}>
                     <Icon name={t.ic} size={19} color={on ? 'var(--brown)' : 'var(--text-sub)'} />
                     {t.label}
                     {t.lit && <span style={{ position: 'absolute', top: 7, right: 10, width: 5, height: 5, borderRadius: 999, background: 'var(--brown)' }} />}
