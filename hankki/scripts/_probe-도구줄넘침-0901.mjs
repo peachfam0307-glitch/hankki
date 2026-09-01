@@ -117,6 +117,21 @@ for (const W of 폭들) {
     }
   }
   await p.waitForTimeout(500)
+  // 📐 창업자 물음 = "D 를 하면 서랍이 차지하는 양이 너무 커서 아이콘들이 잘 안 보일까봐"
+  const 서랍 = await p.evaluate(() => {
+    const dr = document.querySelector('.decor-drawer')
+    const bar = document.querySelector('.decor-tools')
+    const H = window.innerHeight
+    const 보임 = (e) => { const r = e.getBoundingClientRect(); return r.height > 8 && r.top < H && r.bottom > 0 }
+    // 🍰 서랍 «안»을 층층이 쪼갠다 — 무엇이 스티커 자리를 먹나
+    const 층 = dr ? [...dr.children].map((c) => ({ h: Math.round(c.getBoundingClientRect().height),
+        글: (c.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 22) || '(그림)' })).filter((x) => x.h > 2) : []
+    return { 층, 서랍키: dr ? Math.round(dr.getBoundingClientRect().height) : 0,
+             바키: bar ? Math.round(bar.getBoundingClientRect().height) : 0,
+             보이는칸: dr ? [...dr.querySelectorAll('img')].filter(보임).length : 0, 화면: H }
+  })
+  console.log(`  📐 서랍 ${서랍.서랍키}px · 도구 바 ${서랍.바키}px · 보이는 스티커 ${서랍.보이는칸}칸 (화면 ${서랍.화면}px)`)
+  서랍.층.forEach((L) => console.log(`      ${String(L.h).padStart(4)}px  ${L.글}`))
   const 종류들 = await p.evaluate(() => [...document.querySelectorAll('[data-decor-item]')].map((e) => e.dataset.decorItem).join(','))
   console.log(`  🔎 붙은 것 = ${종류들 || '(없다)'} · 최다갈래 ${최다}(${최다종류})`)
 
