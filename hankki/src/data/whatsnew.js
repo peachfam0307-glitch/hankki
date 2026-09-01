@@ -73,7 +73,9 @@ function gates() {
       // 🎁 `gift`·`giftLabel` 은 서랍이 쓰는 «그 필드»를 그대로 읽는다(⛔이름을 따로 적지 않는다).
       // 💬 `hint` = 서랍에 뜨는 «쓰는 법» 한 줄. 창업자 2026-08-30 = *"접시 사용법도 아래 적어줘"*
       //    ⭐ 문구를 여기 새로 쓰지 «않는다» — 서랍과 안내가 갈리면 둘 중 하나가 낡는다.
-      ...(g.gift ? { gift: true, giftLabel: g.giftLabel || '선물', hint: g.hint, giftKeys: drawable(g.items).slice(0, GIFT_MAX) } : {}),
+      // 🎁 `giftNote` = 「매달 오는 게 아니다」 한 줄 (창업자 2026-09-02 *"매달주는거 아니라는 걸 잘 안내해줘"*)
+      //    ⛔ 문구를 여기 새로 쓰지 «않는다» — `hint` 와 같은 이유로 서랍 데이터에서 그대로 읽는다.
+      ...(g.gift ? { gift: true, giftLabel: g.giftLabel || '선물', hint: g.hint, giftNote: g.giftNote, giftKeys: drawable(g.items).slice(0, GIFT_MAX) } : {}),
     }))
   const cards = SEASON_CUTS
     .filter((s) => s.from)

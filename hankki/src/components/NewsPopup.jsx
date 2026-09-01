@@ -202,6 +202,15 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
                     {h.gift.hint}
                   </div>
                 )}
+                {/* 🎁 **「매달 오는 게 아니다」 한 줄** (창업자 2026-09-02 *"매달주는거 아니라는 걸 잘 안내해줘"*)
+                    ⭐ 위 `hint`(쓰는 법)와 «성격이 다르다» — 그래서 한 칸 띄우고 살짝 작게 둔다.
+                       붙여 놓으면 사용법의 둘째 줄로 읽혀 안내가 안 된다.
+                    ⛔ 더 작게 하지 말 것 — 창업자가 «잘» 안내하라고 했다(13.5px 아래로 내리면 안 읽힌다). */}
+                {h.gift.giftNote && (
+                  <div className="t-sub" style={{ fontSize: 13.5, marginTop: 8, lineHeight: 1.45, wordBreak: 'keep-all', opacity: 0.9 }}>
+                    {h.gift.giftNote}
+                  </div>
+                )}
                 {h.gift.giftKeys?.length > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Peek keys={h.gift.giftKeys} size={58} />

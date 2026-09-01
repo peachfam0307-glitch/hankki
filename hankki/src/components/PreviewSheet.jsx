@@ -121,6 +121,9 @@ function NewsRow({ it, tone }) {
         {it.why && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.why}</div>}
         {/* 💬 쓰는 법 = 서랍의 `hint` 를 그대로 (창업자 2026-08-30 *"접시 사용법도 아래 적어줘"*) */}
         {it.gift && it.hint && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.hint}</div>}
+        {/* 🎁 「매달 오는 게 아니다」 한 줄 — ⛔팝업과 «같은 값»을 쓴다(`Stickers.jsx` 의 `giftNote`).
+            두 곳에 따로 적으면 하나가 낡는다(이 파일이 이미 그걸로 데었다 · 머리 주석 참조). */}
+        {it.gift && it.giftNote && <div className="t-sub" style={{ fontSize: 14, marginTop: 6, lineHeight: 1.4, opacity: 0.9 }}>{it.giftNote}</div>}
         <Peek keys={it.gift ? it.giftKeys : it.peek} />
       </div>
     </div>
