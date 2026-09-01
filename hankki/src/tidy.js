@@ -52,6 +52,8 @@ const TIMEOUT_MS = 60000
 
 // 🔢 마지막 결과 — 앱이 「AI가 정리했어요」를 보여줄 때 쓴다
 let _마지막 = null
+// 📷 마지막 판에서 «사진을 실었나» — 창업자 화면에만 붙는다(`tidyTail`)
+let _사진 = ''
 
 // 👁 [2026-09-01] 사진 상한 — 워커 상한(3MB)보다 «조금 좁게» 잡는다.
 //   ⛔ 워커에서 걸리면 이미 올린 뒤라 데이터가 버려진다. 여기서 걸러야 유저 데이터가 안 샌다.
@@ -69,6 +71,7 @@ const 사진최대 = 2_800_000
  */
 export async function tidyRecipe(text, 사진) {
   _마지막 = null
+  _사진 = ''
   const t = String(text || '').trim()
   // ⛔ 「안 불렀다」와 「불렀는데 실패했다」를 «갈라서» 남긴다 — 처방이 다르다(2026-08-29).
   if (!TIDY_URL) { _마지막 = { ok: false, why: '꺼짐' }; return null }
@@ -84,31 +87,64 @@ export async function tidyRecipe(text, 사진) {
 
   // 👁 사진은 «있을 때만» 싣는다. ⛔모양이 다르거나 너무 크면 조용히 빼고 «글자만» 보낸다.
   //   막지 않는다 — 사진 때문에 정리 자체가 안 되면 그게 더 나쁘다(새 기능이 옛 기능을 죽이지 않는다).
+  // 📷 [2026-09-01] «왜» 안 실었는지를 남긴다 — 창업자 화면에만 뜬다(`tidyTail`).
+  //   ⛔⛔ 이걸 안 남겨서 오늘 실물에서 막혔다 — 워커 `?quota=1` 이 「눈: 사진까지본것 0」이라
+  //      «사진이 안 갔다»까지는 알았는데 **어디서 빠졌는지**를 알 길이 없었다(앱 안은 조용하다).
+  //   ⭐ 시행착오는 코드가 한다(규칙 8) — 다음 한 번이면 답이 나온다.
+  let 사진왜 = '없음'
   const 실을사진 = (() => {
     const v = String(사진 || '')
-    if (!v.startsWith('data:image/')) return ''
-    if (v.length > 사진최대) return ''
+    if (!v) { 사진왜 = '없음'; return '' }
+    if (!v.startsWith('data:image/')) { 사진왜 = '모양아님(' + v.slice(0, 12) + ')'; return '' }
+    if (v.length > 사진최대) { 사진왜 = '너무큼(' + Math.round(v.length / 1000) + 'k)'; return '' }
+    사진왜 = '실음(' + Math.round(v.length / 1000) + 'k)'
     return v
   })()
+  _사진 = 사진왜
 
   // ⏱ 오래 걸리면 끊는다 — ⛔안 끊으면 유저가 빈 화면을 하염없이 본다
   const ac = typeof AbortController !== 'undefined' ? new AbortController() : null
   const timer = ac ? setTimeout(() => ac.abort(), TIMEOUT_MS) : null
 
-  let data = null
-  try {
+  // 🔁🔁 [2026-09-01 · 창업자 「되다 안 되다」] **`network` 일 때만 «한 번» 더 시도한다.**
+  //
+  //   🔢 실물 = 창업자 폰에서 3번 중 2번만 됐고, 실패 하나가 `기본 정리예요(network) · 📷실음(382k)`.
+  //      `network` = **fetch 자체가 거절**된 것이다. 워커가 답을 줬으면 `http_5xx` 로 떴다.
+  //      → 우리 요청이 «워커에 닿지도 못했을» 가능성이 크다 ＝ 다시 걸면 된다.
+  //
+  //   ⛔⛔ **`timeout`·`http_5xx` 는 «절대» 재시도하지 않는다** — 그건 워커가 이미 돌아서
+  //      뉴런을 썼다는 뜻이다. 다시 걸면 무료 통을 두 배로 먹는다(하루 10,000 뉴런 · ⓒ 82.5/편).
+  //
+  //   ⚠️ 정직하게 = `network` 가 「요청은 갔는데 응답만 못 받은 것」일 수도 있다. 그때는 한 번 더 먹는다.
+  //      그래도 **최대 1회**라 손해가 유한하고, 유저가 얻는 건 「되다 안 되다」가 줄어드는 것이다.
+  const 한판 = async () => {
     const resp = await fetch(TIDY_URL, {
       method: 'POST',
       headers,
       body: JSON.stringify(실을사진 ? { text: t, image: 실을사진 } : { text: t }),
       signal: ac ? ac.signal : undefined,
     })
-    if (!resp.ok) {
+    if (!resp.ok) return { 실패: 'http_' + resp.status }
+    return { data: await resp.json() }
+  }
+
+  let data = null
+  try {
+    let r
+    try {
+      r = await 한판()
+    } catch (e) {
+      // 끊긴 것(AbortError)은 «시간»이 다한 것이라 다시 걸어도 또 끊긴다 — 그대로 포기
+      if (e && e.name === 'AbortError') throw e
+      await new Promise((r2) => setTimeout(r2, 1200))   // 잠깐 쉬고 한 번만 더
+      r = await 한판()                                    // 여기서 또 죽으면 아래 catch 가 받는다
+    }
+    if (r.실패) {
       // 429 = 그날 통이 찼다 · 502 = AI 가 이상한 답 → 둘 다 «조용히» 규칙 파서로
-      _마지막 = { ok: false, why: 'http_' + resp.status }
+      _마지막 = { ok: false, why: r.실패 }
       return null
     }
-    data = await resp.json()
+    data = r.data
   } catch (e) {
     _마지막 = { ok: false, why: (e && e.name === 'AbortError') ? 'timeout' : 'network' }
     return null
@@ -242,9 +278,11 @@ export function 짧은모델(m) {
 export function tidyTail() {
   const v = _마지막
   const 운영자 = tidyFounder()
-  if (v && v.ok) return 운영자 ? ` · AI가 정리했어요(${v.model ? 짧은모델(v.model) : 'AI'})` : ' · AI가 정리했어요'
+  // 📷 창업자에게만 «사진이 실렸나»를 같이 보여준다 — ⓒ 가 진짜로 도는지 이 한 조각이 답한다
+  const 사진표 = _사진 ? ' · 📷' + _사진 : ''
+  if (v && v.ok) return 운영자 ? ` · AI가 정리했어요(${v.model ? 짧은모델(v.model) : 'AI'})${사진표}` : ' · AI가 정리했어요'
   // 실패·안 부름 — 유저에겐 「기본 정리」 하나로 묶는다(⛔「실패」라고 쓰지 않는다. 결과는 멀쩡하다)
-  return 운영자 ? ` · 기본 정리예요(${(v && v.why) || '안부름'})` : ' · 기본 정리예요'
+  return 운영자 ? ` · 기본 정리예요(${(v && v.why) || '안부름'})${사진표}` : ' · 기본 정리예요'
 }
 
 const str = (v) => (typeof v === 'string' ? v.trim() : '')

@@ -59,6 +59,17 @@
   <button class="ghost" id="열쇠확인" style="margin-top:6px">🔑 열쇠만 먼저 확인</button>
   <button class="ghost" id="열쇠지움" style="margin-top:6px">🗑 열쇠 지우기</button>
 </div>
+<!-- 🔐 [2026-09-01] 이 열쇠를 «한끼 앱에도» 넣는다 — 창업자가 값을 손으로 옮길 필요가 없다.
+     📮 창업자 = *"열쇠 자리에 FOUNDER_SECRET 값?? 이게 뭔지모르겠어"* → *"만들어줘"*
+     ⭐⭐ 되는 이유 = 이 페이지와 앱이 **같은 주소(origin)** 다
+        (`…github.io/hankki/vision-test.html` ↔ `…github.io/hankki/`) → localStorage 를 같이 쓴다.
+     ⛔ 그래서 여기서 `hankki:founder` 를 써 넣으면 앱이 그대로 읽는다(`src/App.jsx:60` 이 넣는 그 열쇠).
+     ⛔ 값은 화면에 안 띄운다 — 넣었다는 말만 한다. -->
+<div class="row">
+  <button class="ghost" id="앱에넣기" style="margin-top:6px">🔐 이 열쇠를 한끼 앱에도 넣기</button>
+  <button class="ghost" id="앱에서빼기" style="margin-top:6px">🚪 한끼 앱에서 빼기</button>
+</div>
+<div class="k" id="앱열쇠" style="margin-top:5px"></div>
 
 <label>사진 (레시피 캡처 한 장)</label>
 <input id="pic" type="file" accept="image/*">
@@ -124,6 +135,36 @@ $('key').addEventListener('input', 열쇠수보이기)
 $('key').addEventListener('change', () => { $('key').value = 열쇠(); 저장(); 열쇠수보이기() })
 열쇠수보이기()
 $('열쇠지움').onclick = () => { $('key').value = ''; 저장(); 열쇠수보이기(); 말('열쇠를 지웠어 — 다시 넣어줘', true) }
+
+// 🔐 한끼 앱의 «운영자 열쇠» — 이 페이지와 앱이 같은 주소라 저장소를 같이 쓴다.
+//   ⛔ 이름을 바꾸면 안 된다 — 앱이 이 이름으로만 읽는다(`src/App.jsx:60` · `src/tidy.js:81` · `src/ocr.js:68`).
+const 앱열쇠칸 = 'hankki:founder'
+const 앱열쇠보이기 = () => {
+  let v = ''
+  try { v = localStorage.getItem(앱열쇠칸) || '' } catch {}
+  // ⛔ 값은 «절대» 안 띄운다 — 들어 있나 · 지금 칸과 같나만 말한다
+  $('앱열쇠').textContent = !v
+    ? '앱에 열쇠 없음 — 지금은 「유저」로 세고 AI 실패 이유도 안 보여요'
+    : (v === 열쇠()
+        ? '✅ 앱에 들어 있어요 (' + v.length + '자 · 위 칸과 같아요)'
+        : '⚠️ 앱에 «다른» 열쇠가 들어 있어요 (' + v.length + '자) — 다시 넣으면 덮어써요')
+}
+$('앱에넣기').onclick = () => {
+  const k = 열쇠()
+  // ⛔ 빈 값으로 덮지 않는다 — 없는 값으로 덮는 건 «지우는 것»이다(규칙 18 ⓙ)
+  if (!k) { 말('위 칸에 열쇠를 먼저 넣어줘 — 빈 값으로 덮지 않을게', true); 앱열쇠보이기(); return }
+  try { localStorage.setItem(앱열쇠칸, k) } catch (e) { 말('못 넣었어: ' + String(e && e.message || e), true); return }
+  저장()
+  앱열쇠보이기()
+  말('🔐 한끼 앱에도 넣었어 — 이제 앱이 나를 「창업자」로 세고, AI 가 실패하면 이유를 화면에 보여줘')
+}
+$('앱에서빼기').onclick = () => {
+  try { localStorage.removeItem(앱열쇠칸) } catch {}
+  앱열쇠보이기()
+  말('🚪 앱에서 뺐어 — 이제 앱이 나를 «보통 유저»로 봐 (여기 시험판 열쇠는 그대로야)')
+}
+$('key').addEventListener('input', 앱열쇠보이기)
+앱열쇠보이기()
 
 // 🔑 열쇠만 먼저 본다 — GET `?vision=1&key=…` 는 열쇠가 «맞으면» post_only 를 준다.
 //   ⭐ 그래서 사진을 안 보내고도 열쇠 하나만 딱 가를 수 있다.

@@ -35,16 +35,14 @@ export default function CookBuddy({ stepText = '' }) {
   const pick = KINDS.find((k) => k.re.test(s)) || FALLBACK
   return (
     <div className="buddy">
-      {/* 📏 크기는 **CSS 가 정한다**(`styles.css` 의 `.buddy img`) — 폰 104px · 패드 160px.
-          ⛔ 여기 `style={{ height: … }}` 로 박으면 **인라인이 CSS 를 이겨서** 패드 media query 가 영영 안 먹는다.
-             (2026-09-01 창업자 *"꼬르곰 크기 조금 키우고 … 자리많으니까"* 를 넣다가 그래서 CSS 로 옮겼다)
-          🖼 원본 키 546~599px 이라 패드 160px 도 **3.4~3.7배 «축소»다**(검수 절대원칙 ③ 해상도) */}
+      {/* 소스 368~599px → 표시 104px = 4~6배 축소라 선명하다(확대가 아니다) */}
       <img
         src={pick.img}
         alt=""
         aria-hidden="true"
         draggable={false}
         className={pick.motion}
+        style={{ height: 104, width: 'auto', objectFit: 'contain', display: 'block' }}
       />
     </div>
   )

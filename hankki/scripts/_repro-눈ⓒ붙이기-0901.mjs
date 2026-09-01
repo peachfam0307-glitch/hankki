@@ -101,6 +101,68 @@ const 에디터 = readFileSync(join(앱, 'src/screens/EditorScreen.jsx'), 'utf8'
 const 앱제이 = readFileSync(join(앱, 'src/App.jsx'), 'utf8')
 잰다(/tidyRecipe\(text, 장들\[0\]\)/.test(앱제이),
   '④-6 ⭐공유받기(창업자 1순위 길)에도 사진이 붙었다')
+// 🏷 [2026-09-01 저녁 · 창업자 실물] AI 제목이 버려지던 자리 — 잣대를 «한 번만» 정하고 안 흔든다
+//   ⚠️ 정직하게 = 이건 «소스 모양»을 보는 칸이다(공유받기 경로는 브라우저 없이 못 돌린다).
+//      그래도 옛 줄이 되살아나면 여기서 죽는다 — 그게 이 칸이 하는 일이다.
+잰다(/const 자동제목인가 = !처음제목 \|\| 처음제목 === '사진 레시피'/.test(앱제이),
+  '④-7 ⭐제목 잣대를 «담을 때» 한 번만 정한다')
+잰다(/const 새제목 = 자동제목인가 \? \(r\.title \|\| 현재\.title\) : 처음제목/.test(앱제이),
+  '④-8 ⭐⭐자동으로 붙인 제목이면 AI 것이 이긴다 (＝ⓒ 답이 화면까지 온다)')
+잰다(!/현재\.title && 현재\.title !== '사진 레시피' \?/.test(앱제이),
+  '④-9 ⛔옛 줄(첫 판이 제목을 굳혀 AI 를 막던 것)이 안 남았다')
+
+// ── ⑤ 📷 «사진이 실렸나»를 창업자 화면이 말해주나 (2026-09-01 저녁 신설) ──
+//   ⛔⛔ 왜 필요한가 = 실물에서 워커 quota 가 「눈: 사진까지본것 0」이라 «안 갔다»까지는 알았는데
+//      **앱 어디서 빠졌는지**를 알 길이 없었다. 앱 안이 조용해서 창업자도 나도 못 봤다.
+//   ⭐ 이 꼬리 한 조각이면 다음 한 번에 답이 나온다(규칙 8 — 시행착오는 코드가 한다).
+console.log('\n  ── ⑤ 사진이 실렸나를 «말해주나» ──')
+globalThis.localStorage = { getItem: () => '열쇠있다', setItem: () => {} }
+const { tidyTail: 꼬리 } = await import(join(앱, 'src/tidy.js'))
+globalThis.fetch = async (url, opt) => {
+  마지막몸통 = JSON.parse(opt.body)
+  return { ok: true, json: async () => ({ title: 'ㄱ', ingredients: ['무 1개'], steps: ['구워요.'], model: '@cf/google/gemma-4-26b-a4b-it' }) }
+}
+await tidyRecipe(긴글, 사진)
+const 꼬리1 = 꼬리()
+잰다(/📷실음\(/.test(꼬리1), '⑤-1 ⭐사진을 실었으면 「📷실음(N k)」이 붙는다', 꼬리1)
+await tidyRecipe(긴글)
+const 꼬리2 = 꼬리()
+잰다(/📷없음/.test(꼬리2), '⑤-2 사진이 없었으면 「📷없음」', 꼬리2)
+await tidyRecipe(긴글, 'data:image/jpeg;base64,' + 'A'.repeat(3_000_000))
+const 꼬리3 = 꼬리()
+잰다(/📷너무큼\(/.test(꼬리3), '⑤-3 ⭐너무 커서 뺐으면 «크기까지» 말한다', 꼬리3)
+await tidyRecipe(긴글, 'https://남의주소/사진.jpg')
+잰다(/📷모양아님/.test(꼬리()), '⑤-4 dataURL 이 아니면 「모양아님」')
+globalThis.localStorage = { getItem: () => null, setItem: () => {} }
+잰다(!/📷/.test(꼬리()), '⑤-5 ⛔열쇠 없는 «유저»에겐 안 보인다')
+// ── ⑥ 🔁 「되다 안 되다」를 줄이는 둘 (2026-09-01 저녁 · 창업자 «1.2 둘다하자») ──
+//   ⭐ 심장 = **network 일 때만 다시 건다.** timeout·5xx 는 워커가 이미 뉴런을 썼으므로 ⛔재시도 금지.
+console.log('\n  ── ⑥ network 만 다시 걸기 ──')
+let 부른수 = 0
+globalThis.fetch = async () => { 부른수++; throw new TypeError('Failed to fetch') }
+await tidyRecipe(긴글)
+잰다(부른수 === 2, '⑥-1 ⭐network 면 «한 번» 더 건다', '부른 수 ' + 부른수)
+
+부른수 = 0
+globalThis.fetch = async () => { 부른수++; return { ok: false, status: 502, json: async () => ({}) } }
+await tidyRecipe(긴글)
+잰다(부른수 === 1, '⑥-2 ⛔502 는 다시 안 건다 (워커가 이미 뉴런을 썼다)', '부른 수 ' + 부른수)
+
+부른수 = 0
+globalThis.fetch = async () => { 부른수++; const e = new Error('aborted'); e.name = 'AbortError'; throw e }
+await tidyRecipe(긴글)
+잰다(부른수 === 1, '⑥-3 ⛔timeout 도 다시 안 건다 (시간이 다한 것이라 또 끊긴다)', '부른 수 ' + 부른수)
+
+// 🤖 「AI로 다시 다듬기」 단추 — ⚠️정직하게 = 소스 모양 칸이다(편집 화면은 브라우저가 있어야 돈다)
+const 에디터2 = readFileSync(join(앱, 'src/screens/EditorScreen.jsx'), 'utf8')
+잰다(/const 다시다듬기 = async \(\) => \{/.test(에디터2), '⑥-4 「다시 다듬기」가 있다')
+잰다(/if \(다듬는중 \|\| !rawText\) return/.test(에디터2), '⑥-5 ⛔두 번 눌러 두 판이 겹치지 않는다')
+잰다(/'AI로 다시 다듬기'/.test(에디터2), '⑥-6 단추 글자가 있다')
+잰다(!/'🤖 AI로 다시 다듬기'/.test(에디터2) && !/<br \/>🤖/.test(에디터2),
+  '⑥-6b ⛔화면 글자에 유니코드 이모지가 없다 (창업자 절대 금지 · 우리 스티커만)')
+잰다(/열쇠를 안 써요/.test(에디터2), '⑥-7 ⭐열쇠가 «안» 든다고 화면에 적혀 있다')
+
+globalThis.fetch = 원본fetch
 
 console.log(`\n${실패 ? '⛔⛔ ' + 실패 + '건 어긋남' : '✅ 전부 통과'}  ${통과}/${통과 + 실패}\n`)
 process.exit(실패 ? 1 : 0)
