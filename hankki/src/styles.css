@@ -2506,11 +2506,11 @@ html, body { overscroll-behavior: none; }
    📄 왜 이 값인가·실측 여덟 칸 = `.cook-timer` 옆의 긴 주석. ⛔여기엔 «숫자»만 둔다.
    ⛔ 이 블록이 `.buddy img` 바로 «뒤»에 있어야 한다 — 앞에 두면 위 104px 이 이겨서 곰이 안 커진다. */
 @media (min-width: 700px) and (min-height: 700px) {
-  .buddy img { height: 160px; }
-  .cook-timer { font-size: 20px; padding: 16px 24px; border-radius: 18px; gap: 9px; }
+  .buddy img { height: 190px; }
+  .cook-timer { font-size: 22px; padding: 18px 27px; border-radius: 20px; gap: 10px; }
   /* ⭐ 시계 그림도 글자를 따라간다 — `<Icon size={19}>` 이 «SVG 표현 속성»이라 CSS 가 이긴다.
         그래서 `CookScreen.jsx` 를 손대지 않고 여기서만 키운다(폰은 19px 그대로). */
-  .cook-timer svg { width: 23px; height: 23px; flex-shrink: 0; }
+  .cook-timer svg { width: 25px; height: 25px; flex-shrink: 0; }
 }
 .buddy-pot .steam { animation: steamRise 2.6s ease-in-out infinite; transform-origin: center bottom; }
 .buddy-pot .steam.s2 { animation-delay: 0.9s; }
