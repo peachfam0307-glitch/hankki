@@ -185,7 +185,14 @@ const SEASON_KO = { spring: '봄', summer: '여름', autumn: '가을', winter: '
 const NEW_FRIENDS = ['카롱', '뾰미', '꼬비']
 
 export function headline(items = []) {
-  const n = items.reduce((s, i) => s + i.count, 0)
+  // 🎁🎁 **[창업자 확정 2026-09-02] 선물은 머릿수에서 «뺀다» — 딴 셈이다.**
+  //   📮 검수판 ⑥ 「선물 4종을 머릿수에서 뺄까요?」 → 창업자 = **"23으로 줄이기"**
+  //   ⭐⭐ 왜 = 선물은 바로 아래 «자기 칸»에서 이름·숫자·컷을 전부 편다.
+  //      머릿수에도 들어가면 **같은 4종을 두 번 세는 셈**이고, 「27인데 칩은 23」으로 안 맞아 보인다.
+  //      📌 위 「칩에서 선물 빼기」(`NewsPopup`)와 «한 몸»이다 — 한쪽만 하면 또 어긋난다.
+  //   ⛔ 선물을 «안 준다»는 말이 아니다. 세는 칸이 다를 뿐이고 컷은 그대로 다 나간다.
+  const 셈 = items.filter((i) => !i.gift)
+  const n = 셈.reduce((s, i) => s + i.count, 0)
   const onlyWeek = items.every((i) => i.kind === '이번 주 레시피')
   if (onlyWeek) return { title: '이번 주 레시피가 올라왔어요', sub: items[0]?.title || '' }
   // 🎴 꾸미기가 하나도 안 열리고 카드만 열리는 달이 있다(12/1 = 크리스마스 카드 2컷).
@@ -206,14 +213,18 @@ export function headline(items = []) {
   //      ⛔ 한 곳만 고치면 **소식과 팝업이 다른 숫자를 말한다**(242줄 주석이 이미 그걸 못 박고 있다).
   //   ⛔ `n`(합계)을 지우지 «않는다** — `sub` 는 「이번 주 레시피」만 열리는 날에도 쓰이고,
   //      캐릭터가 0인 달(10·11월)엔 `buddy` 가 0이라 **저절로 옛 모습 그대로**가 된다.
-  const buddy = items.filter((i) => packKind(i) === BUDDY_KIND).reduce((s, i) => s + i.count, 0)
+  const buddy = 셈.filter((i) => packKind(i) === BUDDY_KIND).reduce((s, i) => s + i.count, 0)
   return {
     title: ko ? `꾸미기에 ${ko}이 왔어요` : '새 꾸미기가 열렸어요',
     // 🔢 **캐릭터가 같이 열린 달만 갈라 적는다** — 안 열린 달(10·11월)엔 `buddy` 가 0이라
     //    옛 문장이 그대로 나온다. ⛔「친구들 0종」이 뜨지 않는다.
-    sub: buddy
-      ? `꾸미기 ${n - buddy}종 · 친구들 ${buddy}종 · 전부 무료예요`
-      : `${n}종 · 전부 무료예요`,
+    // ⛔ **선물뿐인 달이면 `n` 이 0이다** — 「0종」이라고 말하지 않는다.
+    //    그 달엔 바로 아래 선물 칸이 무엇이 왔는지 다 말한다.
+    sub: n === 0
+      ? (gift ? '전부 무료예요' : '')
+      : buddy
+        ? `꾸미기 ${n - buddy}종 · 친구들 ${buddy}종 · 전부 무료예요`
+        : `${n}종 · 전부 무료예요`,
     debut,
     gift,
   }
@@ -280,9 +291,16 @@ const PACK_KINDS = ['꾸미기', '레꾸자랑 카드']
 export const BUDDY_KIND = '친구들'
 export const packKind = (o) => (o.kind === '꾸미기' && o.tab === 'buddies' ? BUDDY_KIND : o.kind)
 
+// 🎁 **선물은 «안» 접는다** (창업자 확정 2026-09-02 · 위 `headline` 의 「선물은 딴 셈」과 한 몸)
+//   ⛔ 접으면 선물이 「꾸미기 N종」 줄 «안»에 삼켜져 소식 페이지에서 **택도 안내 한 줄도 사라진다**
+//      (실측 2026-09-02 — 소식 페이지에서 `giftNote` 가 «한 번도» 안 그려지고 있었다).
+//   ⭐ 따로 두면 `PreviewSheet` 의 선물 줄이 살아난다 = 「특별 선물 4종」 ＋ 쓰는 법 ＋ 「매달 아님」.
+//      팝업의 선물 칸과 **같은 말**이 된다(⛔팝업과 소식이 갈리면 한쪽이 낡는다 · 위 242줄).
+const 접히나 = (o) => PACK_KINDS.includes(o.kind) && !o.gift
+
 export function foldPacks(opened = []) {
   const 뭉치 = new Map()
-  for (const o of opened) if (PACK_KINDS.includes(o.kind)) {
+  for (const o of opened) if (접히나(o)) {
     const k = packKind(o)
     뭉치.set(k, [...(뭉치.get(k) || []), o])
   }
@@ -322,6 +340,7 @@ export function foldPacks(opened = []) {
 
   const 썼다 = new Set()
   return opened.flatMap((o) => {
+    if (!접히나(o)) return [o]   // 🎁 선물은 «제 줄»로 그대로 지나간다(위 `접히나` 주석)
     const k = packKind(o)
     if (!접을것.has(k)) return [o]
     if (썼다.has(k)) return []
