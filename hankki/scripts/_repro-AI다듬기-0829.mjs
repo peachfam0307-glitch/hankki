@@ -90,8 +90,14 @@ chk('③ 재료도 걸음도 없으면 «안 쓴다»',
   '(AI 가 빈 JSON 을 주면 규칙 파서가 낫다)')
 
 // ② 실패해도 안 던진다
+// ⛔ [2026-09-01] 재시도가 들어오면서 «안에서만» 다시 던지는 자리가 하나 생겼다
+//    (network 는 다시 걸고, AbortError 는 바로 포기 — 둘 다 바깥 catch 가 받아 null 이 된다).
+//    ⭐ 그래서 「throw 가 0개」가 아니라 **「그 하나 말고는 없다」**로 잰다. 새 throw 가 생기면 여기서 죽는다.
+//    ⛔ 느슨해진 게 아니다 — 「던지지 않는다」는 ⓑ② 가 «실제로 돌려서» 다시 증명한다.
+const throw수 = (tidySrc.match(/\bthrow\b/g) || []).length
 chk('② 실패해도 오류를 «안 던진다»(null 을 준다)',
-  !/throw\s/.test(tidySrc), '(던지면 편집 화면이 통째로 죽는다)')
+  throw수 <= 1 && /if \(e && e\.name === 'AbortError'\) throw e/.test(tidySrc),
+  '(던지면 편집 화면이 통째로 죽는다 · throw ' + throw수 + '개)')
 
 // ⑥ 있는 쪽이 이긴다
 // ⛔ 2026-08-29 부터 이 규칙은 «tidy.js 의 mergeTidy» 한 곳에 산다 — 화면마다 복붙하면 조용히 갈린다.
@@ -150,7 +156,10 @@ chk('⭐ 규칙 파서를 «먼저» 돌린다', 파서줄 > 0 && AI줄 > 파서
 for (const [이름, src] of [['EditorScreen', edSrc], ['App(공유받기)', appSrc]]) {
   const 코드 = src.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
   chk(`⑧ ${이름} 이 AI 를 «기다리지» 않는다`,
-    !/await\s+tidyRecipe\s*\(/.test(코드) && /tidyRecipe\s*\([^)]*\)\s*\.then\s*\(/.test(코드),
+    // ⛔ [2026-09-01] 잣대를 «담는 길»로 좁혔다 — (편집 캡처)·(공유받기)가 그 길이다.
+    //    ⭐ 창업자가 «직접 누르는» 「AI로 다시 다듬기」는 기다려야 맞다(단추가 「다듬는 중…」으로 바뀐다).
+    //       거기까지 막으면 이 칸이 «지키려는 것»(담을 때 유저를 세워두지 않는다)과 상관없는 걸 막게 된다.
+    !/await\s+tidyRecipe\s*\(\s*(combined|text)\b/.test(코드) && /tidyRecipe\s*\([^)]*\)\s*\.then\s*\(/.test(코드),
     '(기다리면 규칙 파서 결과를 손에 쥐고도 안 내놓는다 — 창업자 폰 30초 timeout)')
 }
 

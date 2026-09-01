@@ -152,6 +152,7 @@ export default function EditorScreen({ id, prefill }) {
   const [newFolder, setNewFolder] = useState(false)
   const [discardAsk, setDiscardAsk] = useState(false) // 작성 중 나가기 = 버릴지 물어본다
   const [rawOpen, setRawOpen] = useState(false) // 📥 「사진에서 읽은 원문」 접힘/펼침
+  const [다듬는중, set다듬는중] = useState(false) // 🤖 「AI로 다시 다듬기」가 도는 동안
   // 📥 [2026-08-22] 파서에 넣은 «원문» — 화면엔 안 보이고 저장만 된다.
   //    파서를 고친 날 「다시 읽기」로 되살릴 재료다(→ `parseRecipe.js` 의 `keepRaw` 주석).
   //    ⛔ 편집으로 들어왔는데 원문이 없으면 «빈 값으로 덮지» 않는다 — 없는 값으로 덮는 건 지우는 것이다(규칙 18 ⓙ).
@@ -511,6 +512,41 @@ export default function EditorScreen({ id, prefill }) {
       // ⛔ 실패는 «유저에게 안 알린다» — 이미 채워져 있어 할 일이 0이다. 창업자(운영자)만 이유를 본다.
       if (tidyFounder()) nav.showToast('AI 다듬기는 못 했어요' + tidyTail())
     })
+  }
+
+  // 🤖🤖 [2026-09-01] **AI 로 «다시» 다듬기** — 원문(rawText)을 그대로 다시 보낸다.
+  //   ⭐ 왜 이 자리인가 = 원문은 2026-08-22 부터 이미 저장되고 있었고(`keepRaw`),
+  //      「꺼낼 입구가 없다」가 로드맵에 남아 있던 그 자리다. 원문 «옆»이 제일 자연스럽다.
+  //   💰 열쇠 0개 — 사진에서 글자 읽기(`ocr.js`)만 열쇠를 센다. 여긴 글자를 다시 보내기만 한다.
+  //   ⛔ 두 번 눌러 두 판이 겹치지 않게 `다듬는중` 으로 막는다(뉴런이 두 배로 나간다).
+  const 다시다듬기 = async () => {
+    if (다듬는중 || !rawText) return
+    set다듬는중(true)
+    nav.showToast('AI가 다시 다듬는 중이에요 · 20~60초 걸려요', 6000)
+    // ⭐ 규칙 파서를 «먼저» 돌려둔다 — AI 가 분량을 떼먹으면 이걸로 되살린다(`mergeTidy`).
+    const 기본 = parseRecipeText(rawText, { fromOcr: true })
+    // 👁 사진도 같이(ⓒ) — 방금 자른 캡처가 있으면 그것, 없으면 저장된 표지.
+    //   ⛔ dataURL 이 아니면 안 보낸다(`tidy.js` 가 또 한 번 거른다).
+    const 표지 = typeof editing?.image === 'string' ? editing.image : ''
+    const 사진 = shotAccum.current || (표지.startsWith('data:image/') ? 표지 : '')
+    const ai = await tidyRecipe(rawText, 사진)
+    set다듬는중(false)
+    if (!ai) {
+      // ⛔ 여기선 실패를 «유저에게도» 알린다 — 유저가 «직접 눌렀으니» 결과를 알 권리가 있다.
+      //    (공유받기 때 조용한 것과 다르다. 거긴 유저가 부른 적이 없다)
+      nav.showToast('AI 다듬기는 못 했어요 · 한 번 더 눌러 보세요' + (tidyFounder() ? tidyTail() : ''), 6000)
+      return
+    }
+    const m = mergeTidy(기본, ai)
+    setF((prev) => ({
+      ...prev,
+      title: m.title || prev.title,
+      ingredients: m.ingredients.join('\n'),
+      steps: m.steps.join('\n'),
+      memo: prev.memo,   // ⛔ 메모는 직접 입력 전용 — 여기서도 안 건드린다
+      category: guessCategory((m.title || '') + ' ' + m.memo),
+    }))
+    nav.showToast('AI가 다시 다듬었어요' + tidyTail(), 5200)
   }
 
   const canSave = f.title.trim().length > 0
@@ -1048,9 +1084,28 @@ export default function EditorScreen({ id, prefill }) {
                   >
                     복사
                   </button>
+                  {/* 🤖🤖 [2026-09-01 · 창업자 「되다 안 되다」] **AI 로 «다시» 다듬기**
+                      📮 창업자 = *"지금 너무 편차가 크잖아. ai가 되다 안되다.."* → *"1.2 둘다하자"*
+                      ⭐⭐ 실패를 «없애는» 대신 **되돌릴 수 있게** 만든다 —
+                         지금은 AI 가 한 번 실패하면 그 레시피는 영영 규칙 파서 결과로 남는다.
+                         이 단추 하나로 「되다 안 되다」가 **「안 되면 한 번 더」**가 된다.
+                      💰 **열쇠 0개** — 사진에서 글자 읽기는 이미 끝났고 그것만 열쇠를 센다(`ocr.js` 한 곳).
+                      ⭐ 사진도 같이 준다(ⓒ) — 방금 자른 캡처가 있으면 그것, 없으면 저장된 표지.
+                         ⛔ 없으면 글자만으로 돈다(그래도 규칙 파서보단 낫다).
+                      ⛔ 이 단추는 «누른 사람이 원해서» 칸을 갈아끼운다 — 손으로 고친 것도 덮인다.
+                         그래서 아래에 그렇게 적어 둔다(모르고 눌러 잃는 일이 없게). */}
+                  <button
+                    type="button"
+                    className="press"
+                    onClick={다시다듬기}
+                    style={{ padding: '10px 16px', borderRadius: 999, background: 다듬는중 ? 'var(--cream)' : 'var(--blue, #5b7aa8)', color: 다듬는중 ? 'var(--text-sub)' : '#fff', fontSize: 16, fontWeight: 700 }}
+                  >
+                    {다듬는중 ? 'AI가 다듬는 중…' : 'AI로 다시 다듬기'}
+                  </button>
                 </div>
                 <div style={{ fontSize: 15, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>
                   레시피가 이상하게 담겼을 때 이 글자를 그대로 보내주시면 원인을 찾을 수 있어요.
+                  <br />다시 다듬기는 <b>열쇠를 안 써요</b> · 20~60초 걸리고 <b>제목·재료·만드는 법이 AI 결과로 바뀌어요</b>.
                 </div>
               </>
             )}

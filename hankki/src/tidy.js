@@ -106,20 +106,45 @@ export async function tidyRecipe(text, 사진) {
   const ac = typeof AbortController !== 'undefined' ? new AbortController() : null
   const timer = ac ? setTimeout(() => ac.abort(), TIMEOUT_MS) : null
 
-  let data = null
-  try {
+  // 🔁🔁 [2026-09-01 · 창업자 「되다 안 되다」] **`network` 일 때만 «한 번» 더 시도한다.**
+  //
+  //   🔢 실물 = 창업자 폰에서 3번 중 2번만 됐고, 실패 하나가 `기본 정리예요(network) · 📷실음(382k)`.
+  //      `network` = **fetch 자체가 거절**된 것이다. 워커가 답을 줬으면 `http_5xx` 로 떴다.
+  //      → 우리 요청이 «워커에 닿지도 못했을» 가능성이 크다 ＝ 다시 걸면 된다.
+  //
+  //   ⛔⛔ **`timeout`·`http_5xx` 는 «절대» 재시도하지 않는다** — 그건 워커가 이미 돌아서
+  //      뉴런을 썼다는 뜻이다. 다시 걸면 무료 통을 두 배로 먹는다(하루 10,000 뉴런 · ⓒ 82.5/편).
+  //
+  //   ⚠️ 정직하게 = `network` 가 「요청은 갔는데 응답만 못 받은 것」일 수도 있다. 그때는 한 번 더 먹는다.
+  //      그래도 **최대 1회**라 손해가 유한하고, 유저가 얻는 건 「되다 안 되다」가 줄어드는 것이다.
+  const 한판 = async () => {
     const resp = await fetch(TIDY_URL, {
       method: 'POST',
       headers,
       body: JSON.stringify(실을사진 ? { text: t, image: 실을사진 } : { text: t }),
       signal: ac ? ac.signal : undefined,
     })
-    if (!resp.ok) {
+    if (!resp.ok) return { 실패: 'http_' + resp.status }
+    return { data: await resp.json() }
+  }
+
+  let data = null
+  try {
+    let r
+    try {
+      r = await 한판()
+    } catch (e) {
+      // 끊긴 것(AbortError)은 «시간»이 다한 것이라 다시 걸어도 또 끊긴다 — 그대로 포기
+      if (e && e.name === 'AbortError') throw e
+      await new Promise((r2) => setTimeout(r2, 1200))   // 잠깐 쉬고 한 번만 더
+      r = await 한판()                                    // 여기서 또 죽으면 아래 catch 가 받는다
+    }
+    if (r.실패) {
       // 429 = 그날 통이 찼다 · 502 = AI 가 이상한 답 → 둘 다 «조용히» 규칙 파서로
-      _마지막 = { ok: false, why: 'http_' + resp.status }
+      _마지막 = { ok: false, why: r.실패 }
       return null
     }
-    data = await resp.json()
+    data = r.data
   } catch (e) {
     _마지막 = { ok: false, why: (e && e.name === 'AbortError') ? 'timeout' : 'network' }
     return null

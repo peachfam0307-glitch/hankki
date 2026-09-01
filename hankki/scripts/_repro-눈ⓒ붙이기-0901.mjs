@@ -135,6 +135,33 @@ await tidyRecipe(긴글, 'https://남의주소/사진.jpg')
 잰다(/📷모양아님/.test(꼬리()), '⑤-4 dataURL 이 아니면 「모양아님」')
 globalThis.localStorage = { getItem: () => null, setItem: () => {} }
 잰다(!/📷/.test(꼬리()), '⑤-5 ⛔열쇠 없는 «유저»에겐 안 보인다')
+// ── ⑥ 🔁 「되다 안 되다」를 줄이는 둘 (2026-09-01 저녁 · 창업자 «1.2 둘다하자») ──
+//   ⭐ 심장 = **network 일 때만 다시 건다.** timeout·5xx 는 워커가 이미 뉴런을 썼으므로 ⛔재시도 금지.
+console.log('\n  ── ⑥ network 만 다시 걸기 ──')
+let 부른수 = 0
+globalThis.fetch = async () => { 부른수++; throw new TypeError('Failed to fetch') }
+await tidyRecipe(긴글)
+잰다(부른수 === 2, '⑥-1 ⭐network 면 «한 번» 더 건다', '부른 수 ' + 부른수)
+
+부른수 = 0
+globalThis.fetch = async () => { 부른수++; return { ok: false, status: 502, json: async () => ({}) } }
+await tidyRecipe(긴글)
+잰다(부른수 === 1, '⑥-2 ⛔502 는 다시 안 건다 (워커가 이미 뉴런을 썼다)', '부른 수 ' + 부른수)
+
+부른수 = 0
+globalThis.fetch = async () => { 부른수++; const e = new Error('aborted'); e.name = 'AbortError'; throw e }
+await tidyRecipe(긴글)
+잰다(부른수 === 1, '⑥-3 ⛔timeout 도 다시 안 건다 (시간이 다한 것이라 또 끊긴다)', '부른 수 ' + 부른수)
+
+// 🤖 「AI로 다시 다듬기」 단추 — ⚠️정직하게 = 소스 모양 칸이다(편집 화면은 브라우저가 있어야 돈다)
+const 에디터2 = readFileSync(join(앱, 'src/screens/EditorScreen.jsx'), 'utf8')
+잰다(/const 다시다듬기 = async \(\) => \{/.test(에디터2), '⑥-4 「다시 다듬기」가 있다')
+잰다(/if \(다듬는중 \|\| !rawText\) return/.test(에디터2), '⑥-5 ⛔두 번 눌러 두 판이 겹치지 않는다')
+잰다(/'AI로 다시 다듬기'/.test(에디터2), '⑥-6 단추 글자가 있다')
+잰다(!/'🤖 AI로 다시 다듬기'/.test(에디터2) && !/<br \/>🤖/.test(에디터2),
+  '⑥-6b ⛔화면 글자에 유니코드 이모지가 없다 (창업자 절대 금지 · 우리 스티커만)')
+잰다(/열쇠를 안 써요/.test(에디터2), '⑥-7 ⭐열쇠가 «안» 든다고 화면에 적혀 있다')
+
 globalThis.fetch = 원본fetch
 
 console.log(`\n${실패 ? '⛔⛔ ' + 실패 + '건 어긋남' : '✅ 전부 통과'}  ${통과}/${통과 + 실패}\n`)
