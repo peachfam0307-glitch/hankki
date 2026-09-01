@@ -35,10 +35,21 @@ const p0 = await ctx.newPage()
 await p0.goto('http://127.0.0.1:4472/hankki/', { waitUntil: 'networkidle' })
 await p0.waitForTimeout(1200)
 await p0.evaluate(() => {
+  // 📸 진짜 폰 캡처 크기(1080×2340)로 «글자 사진»을 만든다 — 표지로 쓰면 안 되는 바로 그 그림
+  const 캡처 = () => {
+    const c = document.createElement('canvas'); c.width = 1080; c.height = 2340
+    const x = c.getContext('2d')
+    x.fillStyle = '#fff'; x.fillRect(0, 0, 1080, 2340)
+    x.fillStyle = '#222'; x.font = '34px sans-serif'
+    const 줄 = ['[재료]', '항정살 400g', '간장 3큰술', '설탕 1큰술', '', '[만드는 법]',
+      '1. 항정살은 한입 크기로 썰어 핏물을 뺀다.', '2. 센 불에 겉면을 굽는다.', '3. 양념을 붓고 15분 조린다.']
+    줄.forEach((t, k) => x.fillText(t, 70, 220 + k * 62))
+    return c.toDataURL('image/jpeg', 0.9)
+  }
   const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
   const 이제 = Date.now()
   s.recipes = [
-    { id: 'zz-full', title: '항정살조림', status: 'unsorted', source: 'photo', savedAt: 이제,
+    { id: 'zz-full', title: '항정살조림', status: 'unsorted', source: 'photo', savedAt: 이제, image: 캡처(),
       ingredients: ['항정살 400g', '간장 3큰술', '설탕 1큰술'], steps: ['핏물을 빼요', '양념에 조려요', '깨를 뿌려요'], favorite: false, cooked: 0 },
     { id: 'zz-half', title: '들기름 콩나물무침', status: 'unsorted', source: 'photo', savedAt: 이제 - 1000,
       ingredients: ['콩나물 300g', '들기름 1큰술'], steps: [], favorite: false, cooked: 0 },
