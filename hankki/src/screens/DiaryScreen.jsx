@@ -15,6 +15,7 @@ import { useLayerBack } from '../useBackHandler'
 import { fitImage } from '../utils'
 import LockSheet from '../components/LockSheet'
 import { isDayOpen, unlockDay, forgetDay, hasPin } from '../diaryLock'
+import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 
 // 📔📔 다이어리 — 「그날」 한 장. (창업자 확정 2026-08-06)
 //
@@ -115,6 +116,8 @@ export default function DiaryScreen({ day }) {
   const save = (patch) => {
     if (entry) { updateDiary(entry.id, patch); return }
     addDiary({ id: newId(), kind: 'diary', at: date.getTime(), paper: pick, decor: [], note: '', ...patch })
+    // 🎁 일기를 처음 썼다 — 평생 1회(서버가 판정)
+    열쇠받기(EARN.일기).then((받음) => { if (받음) nav.showToast(`일기를 처음 썼어요 · ${KEY_NAME} 1${KEY_UNIT}를 더 받았어요`, 5200) })
   }
   const choose = (next) => { setPick(next); save({ paper: next }) }
 

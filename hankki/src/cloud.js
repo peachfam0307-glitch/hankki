@@ -102,6 +102,16 @@ const 표식칸 = 'hankki:cloud:on'
 export const 로그인해뒀나 = () => { try { return localStorage.getItem(표식칸) === '1' } catch { return false } }
 const 표식쓰기 = (v) => { try { v ? localStorage.setItem(표식칸, '1') : localStorage.removeItem(표식칸) } catch { /* noop */ } }
 
+// 🔑🔑 **구글 번호도 폰에 적어 둔다** — 열쇠 통이 「누구 것인가」를 이걸로 가른다(2026-09-01).
+//   📮 창업자 확정 = 비로그인 10 · 로그인 30 → 서버가 «누구»인지 알아야 상한을 가른다.
+//   ⭐ 왜 여기 두나 = `사람지켜보기` 는 파이어베이스가 «뜬 뒤»에야 답을 준다.
+//      OCR 을 부르는 순간엔 아직 안 떠 있을 수 있어서, **지난번 값을 폰에서 바로 읽어야** 한다.
+//   ⛔ 이건 «구글 고유번호»다 — Firebase UID 가 아니다(보험 ① · 위 `구글번호()` 주석 참조).
+//   ⛔ 개인정보가 아니다 — 우리가 이미 Play 데이터 보안에 「사용자 ID」로 신고해 둔 그 값이다.
+const 번호칸 = 'hankki:cloud:sub'
+const 번호쓰기 = (n) => { try { n ? localStorage.setItem(번호칸, n) : localStorage.removeItem(번호칸) } catch { /* noop */ } }
+export const 내구글번호 = () => { try { return localStorage.getItem(번호칸) || '' } catch { return '' } }
+
 // 로그인 — ⭐팝업. TWA 안에서 «된다»는 걸 2026-08-21 창업자 폰으로 확인했다.
 //   ⛔ `signInWithRedirect` 는 우리 환경(GitHub Pages)에서 깨진다 — 서드파티 쿠키를 쓴다.
 export async function 로그인() {
@@ -111,6 +121,7 @@ export async function 로그인() {
   // ⛔ 구글 번호가 없으면 «계속하지 않는다» — Firebase UID 로 대신 넣으면 보험 ①이 조용히 깨진다.
   if (!사람) throw new Error('구글 번호를 못 받았어요')
   표식쓰기(true)
+  번호쓰기(사람.번호)
   return 사람
 }
 
@@ -118,6 +129,7 @@ export async function 로그아웃() {
   const { A, auth } = await 붙기()
   await A.signOut(auth)
   표식쓰기(false)
+  번호쓰기('')
 }
 
 // 로그인 상태를 지켜본다. 되돌려주는 함수를 부르면 그만 본다.
@@ -126,7 +138,12 @@ export function 사람지켜보기(알림) {
   let 죽었나 = false
   붙기().then(({ A, auth }) => {
     if (죽었나) return
-    그만 = A.onAuthStateChanged(auth, (u) => 알림(u ? 사람으로(u) : null))
+    그만 = A.onAuthStateChanged(auth, (u) => {
+      const 사람 = u ? 사람으로(u) : null
+      // 🔑 열쇠 통이 쓸 번호를 «여기서도» 맞춰 둔다 — 앱을 다시 열었을 때가 이 자리다
+      번호쓰기(사람 ? 사람.번호 : '')
+      알림(사람)
+    })
   }).catch(() => 알림(null))
   return () => { 죽었나 = true; if (그만) 그만() }
 }
