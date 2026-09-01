@@ -93,8 +93,18 @@ const 심은값 = await p0.evaluate(() => {
     { id: 'zz-big', title: '판정용 큰사진', status: 'unsorted', source: 'photo', image: 큰사진, savedAt: 이제, ingredients: [], steps: [], favorite: false, cooked: 0 },
     { id: 'zz-small', title: '판정용 작은사진', status: 'unsorted', source: 'photo', image: 작은사진, savedAt: 이제 - 1000, ingredients: [], steps: [], favorite: false, cooked: 0 },
     { id: 'zz-sorted', title: '판정용 정리끝난것', status: 'sorted', source: 'manual', savedAt: 이제 - 2000, ingredients: ['콩나물 300g'], steps: ['씻어요'], favorite: false, cooked: 0 },
+    // 🗃 2026-09-01 창업자 제보 — 「AI 가 다 읽었는데 임시보관함에 갇혀 레시피 탭에 안 보인다」
+    { id: 'zz-full', title: '판정용 다읽은것', status: 'unsorted', source: 'photo', savedAt: 이제 - 3000,
+      ingredients: ['콩나물 300g', '들기름 1큰술', '소금 조금'], steps: ['씻어요', '데쳐요', '무쳐요'], favorite: false, cooked: 0 },
+    { id: 'zz-half', title: '판정용 반쪽만읽은것', status: 'unsorted', source: 'photo', savedAt: 이제 - 4000,
+      ingredients: ['콩나물 300g', '들기름 1큰술'], steps: [], favorite: false, cooked: 0 },
     ...(s.recipes || []),
   ]
+  // ⛔⛔ **「옛 폰」을 흉내내려면 이사 표식을 지워야 한다.**
+  //    앱이 한 번 뜨면 `initialState` 가 «처음 켠 사람»으로 보고 `inboxV` 를 박아 둔다.
+  //    그대로 두고 씨앗만 심으면 **이사가 «이미 끝난 것»으로 건너뛰어** 아무것도 안 옮겨진다
+  //    (그러면 판은 초록불인데 창업자 폰은 그대로 — 제일 나쁜 거짓 초록불이다).
+  delete s.inboxV
   localStorage.setItem('hankki:v1', JSON.stringify(s))
   return { 큰: 큰사진.length, 작은: 작은사진.length }
 })
@@ -171,6 +181,47 @@ const 아직있나 = await p2.evaluate(() => {
   try { return (JSON.parse(localStorage.getItem('hankki:v1') || '{}').recipes || []).some((r) => r.id === 'zz-sorted') } catch { return false }
 })
 chk('⭐ 정리된 레시피가 «저장소에 그대로» 있다(안 잃었다)', 아직있나)
+
+// ─────────────────────────────────────────────
+// 🗃 2026-09-01 — 「다 읽었으면 끝난 것」은 레시피 탭으로 졸업한다 (창업자 제보)
+//   📮 창업자 = *"최근저장에는 뜨는데 레시피탭에 가면 안보여."*
+//             · *"ai다 다 읽었으면 끝난거잖아. 그럼 수동으로 옮겨야해?"*
+//   ⭐⭐ 이 칸의 심장 = **«화면에» 보이나** 다. 저장소만 보면 v11.00 사고를 또 밟는다
+//      (`addShopItem` 이 필드를 골라 버려서 넘겼는데 저장이 안 됐고 게이트 50개가 전부 초록불이었다).
+// ─────────────────────────────────────────────
+console.log('\n🗃 다 읽은 것은 «레시피 탭»으로 졸업한다 (2026-09-01)')
+const s3 = await 저장소(p2)
+const 다읽은 = (s3.recipes || []).find((r) => r.id === 'zz-full')
+const 반쪽 = (s3.recipes || []).find((r) => r.id === 'zz-half')
+chk('⭐ 다 읽은 것이 «정리 끝»으로 옮겨졌다', !!다읽은 && 다읽은.status === 'sorted', 다읽은 ? 다읽은.status : '(못 찾음)')
+chk('반쪽만 읽은 것은 임시보관함에 «남는다»', !!반쪽 && 반쪽.status === 'unsorted', 반쪽 ? 반쪽.status : '(못 찾음)')
+chk('임시보관함 목록에 «다 읽은 것»이 없다', !목록글.includes('판정용 다읽은것'))
+chk('임시보관함 목록에 «반쪽»은 그대로 있다', 목록글.includes('판정용 반쪽만읽은것'))
+
+// ⭐ 화면으로 확인 — 잣대를 «레시피 격자의 이름표»(.grid2/.grid3 안 .name)로 콕 집는다.
+//   ⛔ `document.body.innerText` 로 재면 «앞 화면 DOM» 까지 걸려 늘 초록불이 된다(이 판이 이미 밟은 함정).
+// ⛔ 임시보관함은 «전체화면»이라 하단바가 없다 — 거기서 탭을 누르려다 30초를 기다렸다(v11.30 함정).
+//    ⭐ 새 탭에서 연다. 옮기기는 이미 저장까지 끝났으므로 새로 열어도 그대로다.
+const p3 = await ctx.newPage()
+에러받기(p3, '레시피탭')
+await p3.goto('http://127.0.0.1:4452/hankki/', { waitUntil: 'networkidle' })
+await p3.waitForTimeout(1500)
+await p3.getByRole('button', { name: '레시피', exact: true }).first().click()
+await p3.waitForTimeout(1200)
+const 레시피탭 = await p3.evaluate(() => {
+  const 격자 = document.querySelector('.grid2, .grid3')
+  if (!격자) return { 열렸나: false, 이름들: [] }
+  return { 열렸나: true, 이름들: [...격자.querySelectorAll('.name')].map((e) => e.innerText.trim()) }
+})
+if (chk('레시피 탭이 열렸다', 레시피탭.열렸나, `카드 ${레시피탭.이름들.length}장`)) {
+  chk('⭐⭐ 다 읽은 것이 «레시피 탭 화면에» 뜬다 (창업자가 못 보던 그것)',
+    레시피탭.이름들.includes('판정용 다읽은것'))
+  chk('반쪽은 레시피 탭에 «안» 뜬다 (임시보관함이 제자리다)',
+    !레시피탭.이름들.includes('판정용 반쪽만읽은것'))
+} else {
+  실패 += 2; 실패목록.push('레시피 탭을 못 열어 화면 칸을 «판정하지 않았다»(규칙 18 ⓘ)')
+  console.log('  ⛔ 못 열어서 뒤 칸을 «판정하지 않는다»')
+}
 
 await b.close(); srv.close()
 console.log(`\n${실패 ? '❌' : '✅'} ${통과}/${통과 + 실패}`)

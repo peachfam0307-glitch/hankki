@@ -379,13 +379,33 @@ export default function App() {
     let 죽었나 = false
     const 해보기 = async () => {
       try {
-        const { 저절로올리기, 새판알림글 } = await import('./cloud')
+        const { 저절로올리기, 저절로받기, 새판알림글, 사진안내봤나, 사진안내봤다 } = await import('./cloud')
         const { 백업만들기 } = await import('./backupData')
-        const r = await 저절로올리기(() => 백업만들기(storeRef.current))
+        const 백업 = () => 백업만들기(storeRef.current)
+        const r = await 저절로올리기(백업)
         if (죽었나) return
         // ☁️🔔 글은 «그 자리에서» 만든다 — `cloud.js` 를 맨 위에서 import 하면
         //    로그인 안 한 사람의 첫 화면에도 딸려 들어간다(늦게 부르기가 무의미해진다).
         if (!r.했나 && r.왜 === '다른기기') {
+          // ⬇️⚡ **다른 기기가 먼저 올렸다 → 이제는 «저절로 받아온다»** (창업자 확정 2026-09-01 = ⓐ)
+          //   📮 창업자 = *"자동동기화는 꼭 필요해."* — 그 전엔 여기서 물어보기만 했고,
+          //      눌러도 설정 화면으로 데려갈 뿐이라 거기서 **한 번 더** 눌러야 왔다.
+          //   ⛔ 받아도 «안전할 때»만 한다 — 이 기기에 안 올린 변경이 있으면 `저절로받기` 가
+          //      스스로 «양쪽이바뀜»으로 물러난다. 그때는 아래처럼 «물어본다»(사람이 고른다).
+          //   ⭐ 사진은 `저절로받기` 안에서 «폰 것을 그 자리에 되돌려» 지킨다(용량 0).
+          const 받 = await 저절로받기(백업)
+          if (죽었나) return
+          if (받.했나) {
+            storeRef.current.importAll(받.판)
+            // 📷 「사진은 기기마다 따로」는 **처음 한 번만** 자세히 — 매번이면 잔소리가 된다(창업자 확정)
+            if (사진안내봤나()) {
+              showToast(`받아왔어요 · 레시피 ${받.레시피}개`)
+            } else {
+              사진안내봤다()
+              showToast('다른 기기에서 한 걸 받아왔어요 · 직접 넣은 사진은 기기마다 따로 있어요', 5000)
+            }
+            return
+          }
           const s = storeRef.current
           set덮을까({ ...r, 글: 새판알림글({ 클라우드: r, 폰: { 레시피: s.recipes.length, 일기: (s.diary || []).length } }) })
         }
@@ -439,12 +459,26 @@ export default function App() {
       if (parsed && (parsed.ingredients.length || parsed.steps.length)) {
         rec.ingredients = parsed.ingredients
         rec.steps = parsed.steps
+        // 🗃🗃 **다 읽었으면 「정리 끝」이다 — 임시보관함에 가두지 않는다** (창업자 2026-09-01)
+        //   📮 창업자 = *"최근저장에는 뜨는데 레시피탭에 가면 안보여."*
+        //             · *"ai다 다 읽었으면 끝난거잖아. 그럼 수동으로 옮겨야해?"*
+        //   ⛔⛔ 그 전엔 **AI 가 재료·순서를 다 뽑아와도** `makeInboxRecipe` 가 박은
+        //      `status:'unsorted'` 를 그대로 두어 **레시피 탭에서 안 보였다**
+        //      (`MyRecipesScreen.jsx` = `status === 'sorted'` 만 보여준다).
+        //      그런데 홈 「최근 저장」은 status 를 «안» 가려서(`HomeScreen.jsx`) 거기엔 떴다 —
+        //      **두 화면이 서로 다른 말을 해서** 「저장했는데 없다」로 읽혔다.
+        //   ⭐ 잣대 = **재료·순서가 «둘 다» 2줄 이상**. 하나만 있거나 한 줄뿐이면 반쪽이라
+        //      그건 여전히 임시보관함에 남는다(＝거기가 원래 그런 곳이다).
+        //      ⚠️ 이 숫자는 «내 판단»이다 — 창업자에게 밝혔다. 바꾸려면 여기 한 줄만 고친다.
+        if (parsed.ingredients.length >= 2 && parsed.steps.length >= 2) rec.status = 'sorted'
         // 📥 파서에 넣은 원문도 같이 — 파서를 고친 날 다시 읽을 재료(→ parseRecipe.js `keepRaw`)
         const raw = keepRaw(caption)
         if (raw) rec.rawText = raw
       }
       store.addRecipe(rec)
-      setStack([{ name: 'inbox' }])
+      // ⛔ 정리가 끝난 것을 임시보관함으로 보내면 «거기 없다» — 그 화면은 미정리만 보여준다.
+      //    그래서 정리된 것은 «그 레시피»를 바로 연다(방금 담은 걸 눈으로 확인하게).
+      setStack([rec.status === 'sorted' ? { name: 'detail', id: rec.id } : { name: 'inbox' }])
       // inbox 레이어에 해당하는 히스토리 칸(트랩)을 보충 — 없으면 뒤로가기가 base 트랩을 대신
       // 소비해 다음 back 이 앱 종료로 샜다. (공유로 앱을 처음 열었을 때 경로)
       try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }
