@@ -12,6 +12,7 @@ import Portal from '../components/Portal'
 import { scaleIngredient } from '../scale'
 import { useWakeLock } from '../useWakeLock'
 import { useLayerBack } from '../useBackHandler'
+import { 항목묶어 } from '../stepBreak'
 
 // 요리 모드 — 풀스크린. 큰 글씨 · 화면 안 꺼짐 · 단계 타이머.
 // 흐름: 0단계 = 재료 준비(요리의 시작) → 1~N단계 = 조리 단계.
@@ -196,7 +197,9 @@ export default function CookScreen({ id }) {
           <CookBuddy stepText={String(steps[i - 1] || '').split('\n')[0]} />
           <div className="cook-stepno">STEP {i} <span>/ {steps.length}</span></div>
           <div className="cook-steptext">
-            {String(steps[i - 1] || '').split('\n')[0]}
+            {/* ✂️· 「다진 마늘」처럼 «한 항목»이 줄에서 갈리지 않게 — 끊는 자리는 가운뎃점
+                (창업자 2026-09-01 *"3큰술 · 다진마늘이잖아. 그럼 다진마늘부터 줄이 바뀌어야지"* · 왜·어떻게 = src/stepBreak.jsx) */}
+            {항목묶어(String(steps[i - 1] || '').split('\n')[0])}
             {String(steps[i - 1] || '').split('\n').slice(1).map((t, j) => (
               <div key={j} className="step-tip">{t}</div>
             ))}
