@@ -113,13 +113,21 @@ for (const s of 화면들) {
       if (레일) {
         const rr = 레일.getBoundingClientRect()
         레일모양 = rr.height > rr.width * 1.5 ? `세로 ${Math.round(rr.width)}×${Math.round(rr.height)}` : `가로 ${Math.round(rr.width)}×${Math.round(rr.height)}`
-        const 알약 = [...레일.querySelectorAll('button')]
+        // ⛔⛔ 첫 판이 «접기(▲) 단추»까지 갈래로 셌다 — 일꾸에서 「6/6 다 보인다」로 나왔는데
+        //    그림엔 갈래가 다섯뿐이고 여섯째는 접기였다(절대원칙 21 이 잡았다).
+        //    ⭐ 갈래는 «.decor-cats 안»에 있다. 접기는 그 바깥(.decor-pickfold)이다.
+        const 칸 = 레일.querySelector('.decor-cats') || 레일
+        const 알약 = [...칸.querySelectorAll('button')]
         갈래전체 = 알약.length
-        갈래보임 = 알약.filter((x) => {
+        const 보이는것 = 알약.filter((x) => {
           const q = x.getBoundingClientRect()
           return q.height > 4 && q.top >= rr.top - 1 && q.bottom <= rr.bottom + 1
-        }).length
+        })
+        갈래보임 = 보이는것.length
         칸키 = 알약[0] ? Math.round(알약[0].getBoundingClientRect().height) : 0
+        // ⭐ 이름을 같이 찍는다 — 「몇 개」만 보면 «무엇이 안 보이는지»를 모른다
+        레일모양 += ` [보임 ${보이는것.map((x) => (x.innerText || '').trim()).join('·')}`
+          + ` / 굴려야 ${알약.filter((x) => !보이는것.includes(x)).map((x) => (x.innerText || '').trim()).join('·') || '없음'}]`
       }
       // 스티커 = 굴림칸 «안»에 실제로 보이는 그림
       let 스티커 = 0
