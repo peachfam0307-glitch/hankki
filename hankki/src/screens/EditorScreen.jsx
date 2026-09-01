@@ -19,7 +19,7 @@ import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw } from '../parseRecipe'
-import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from '../tidy'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder } from '../tidy'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 // 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
@@ -492,30 +492,17 @@ export default function EditorScreen({ id, prefill }) {
     nav.showToast(
       // 🆓 freeTail 이 맨 앞이다 — 「그냥 읽기」로 온 사람에게 열쇠 얘기를 하면 안 된다
       // ⛔ 길이(ms)는 «안» 준다 — 바로 뒤에 AI 다듬기 토스트가 또 뜬다(HEAD 판단을 그대로 둔다)
-      // 📢 ⭐ 「AI 가 더 다듬는 중」을 **같은 줄에** 붙인다 — 따로 띄우면 이 안내(열쇠 잔량)를
-      //    즉시 덮어 못 보게 된다. 문구는 `tidy.js` 한 곳에서만 고친다.
-      (freeTail
+      freeTail
         ? '초안을 채웠어요' + freeTail + ' · 사진 보며 고쳐 주세요'
         : quotaTail
           ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
           : leftTail
             ? '초안을 채웠어요' + leftTail
-            : '초안을 채웠어요 · 사진 보며 다듬어 주세요') + AI다듬는중,
-      20000,
+            : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
     )
 
     // ② AI — «뒤에서». ⭐ 얹는 규칙은 `mergeTidy` 한 곳에 있다(여기와 `App.jsx` 가 «같은 말»)
     //   👁 [ⓒ] 글자와 «함께 사진»을 준다. ⛔사진이 없으면(붙여넣기·직접 작성) 지금과 똑같이 돈다.
-    // 📢📢 **[2026-09-01 · 창업자 지적] 「다듬는 중」이라고 «먼저» 말한다.**
-    //   📮 창업자 = *"ai로 읽으니까 시간이 좀 걸리거든 … 유저들이 이게뭐야 할 것 같아.
-    //      너무 오래걸리니까 **이상하게 읽힌거 혹은 안읽힌거 잘못된 걸로 오해**할수도있어"*
-    //   ⛔⛔ 그 전엔 **끝나야** 「AI가 레시피를 더 다듬었어요」가 떴다. 그 사이는 조용해서,
-    //      유저는 «덜 정리된 화면»(댓글·「모두 보기」·홍보문구가 걸음에 들어간 것)을 보고
-    //      **그게 최종인 줄 알고 나간다.** 실물 = 2026-09-01 항정살조림.
-    //   ⭐ 오래 걸리는 걸 없앨 순 없다 — **「기다리는 중」이라고 말해주는 것**이 답이다.
-    //   ⛔ 20초로 둔다 — 실패해도 조용히 사라진다(실패는 유저에게 안 알린다는 원칙 그대로).
-    //      성공하면 아래 결과 토스트가 덮는다.
-    //   ⭐ 문구는 위 「초안을 채웠어요」 토스트에 «같은 줄로» 붙였다(`AI다듬는중`).
     tidyRecipe(combined, shotAccum.current).then((ai) => {
       if (ai) {
         채우기(mergeTidy(r, ai))

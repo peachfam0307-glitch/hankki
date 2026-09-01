@@ -4614,4 +4614,23 @@ html, body { overscroll-behavior: none; }
    ══════════════════════════════════════════════════════════════════════════ */
 @media (min-width: 700px) and (min-height: 700px) {
   .decor-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)) !important; }
+
+  /* 📷 완성 사진 단추 — 패드에선 «가운데»로 (2026-09-01)
+     📮 창업자 = *"사진올리는게 너무 오른쪽끝이라 안보여."*
+     ⛔ 뿌리 = `.cook-shot-empty` 가 `align-items: flex-end` 라 «화면 오른쪽 끝»에 붙는다.
+        폰(390px)에선 손이 닿는 자리지만 패드는 2000px 라 **눈이 가는 자리 밖**이다.
+        (2026-08-23 에 「보이는데 안 읽힌다」로 네모→동그라미로 바꾼 그 단추다 — 이번엔 «자리»다)
+     ⭐ 화면 가운데 = 요리 글·꼬르곰이 서 있는 그 줄이라 저절로 눈에 든다.
+     ⛔ 폰은 안 건드린다 — 창업자가 「패드에서 고칠거」로 묶어 말했다. */
+  .cook-shot.cook-shot-empty { align-items: center; }
+  .cook-shot.cook-shot-empty .cook-shot-add { width: 76px; height: 76px; min-height: 76px; }
+  .cook-shot.cook-shot-empty .cook-shot-label { margin-right: 0; font-size: 15px; }
+
+  /* 🎨 배경지 견본 — 패드에선 크게 (2026-09-01)
+     📮 창업자 = *"패드 배경고르는거 이미지 커지면 좋겠어."*
+     ⛔ 42px 은 «폰» 기준이고 인라인 style 로 박혀 있다 → `!important` 라야 이긴다.
+     ⭐ 42 → 64px(＋52%) = 서랍 칸을 52 → 76px 로 키운 그 비율과 같게 맞췄다.
+     ⚠️ 움직이는 배경은 «그 자리에서 진짜 움직여» 알린다(뱃지가 없다) → 크면 더 잘 보인다. */
+  .decor-bgsw { width: 64px !important; height: 64px !important; border-radius: 14px !important; }
+  .decor-bgpick > span:last-child { font-size: 12.5px !important; }
 }

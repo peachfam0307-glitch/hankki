@@ -5,7 +5,7 @@ import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } f
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw } from './parseRecipe'
-import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from './tidy'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder } from './tidy'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
 import { guessCategory, fitImage } from './utils'
@@ -585,13 +585,10 @@ export default function App() {
         //    ⛔ `unknown` 이면 숫자를 안 적는다 — 서버가 아직 답한 적이 없다는 뜻이라
         //       그때 숫자를 적으면 «안 써 봤을 때의 기본값 20»을 사실처럼 말하게 된다(규칙 15).
         const left = getOcrLeft()
-        // 📢 ⭐ 「다듬는 중」을 **같은 줄에** 붙인다 — 따로 띄우면 «열쇠 잔량»을 바로 덮어 못 보게 된다
         showToast(
-          (left.unknown
+          left.unknown
             ? '사진에서 글자를 읽어 채웠어요'
-            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`)
-            + AI다듬는중,
-          20000,
+            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`,
         )
 
         // ② AI — «뒤에서». 오면 갈아끼우고, 안 오면 아무 일도 안 난다.
@@ -599,15 +596,6 @@ export default function App() {
         //   ⭐⭐ **여기가 창업자가 1순위로 꼽은 길이다** — ImportScreen 「제일 많이 써요」 = SNS 공유.
         //      그러니 ⓒ 를 여기에 안 붙이면 «제일 많이 쓰는 길»만 옛 정확도로 남는다.
         //   ⛔ 첫 장만 준다 — 여러 장이면 뉴런이 장 수만큼 나간다(실측 82.5/장).
-        // 📢📢 **[2026-09-01 · 창업자 지적] 「다듬는 중」이라고 «먼저» 말한다 — ⭐여기가 첫인상이다.**
-        //   📮 창업자 = *"인스타로 유입 될 것 같거든 **첫인상**이니까"*
-        //      ＋ *"너무 오래걸리니까 이상하게 읽힌거 혹은 안읽힌거 **잘못된 걸로 오해**할수도있어"*
-        //   ⭐⭐ **인스타 공유가 「제일 많이 써요」 길이다** — 처음 들어온 사람이 «덜 정리된 화면»을
-        //      보고 그게 최종인 줄 알면 그대로 나간다. 실물 = 2026-09-01 항정살조림
-        //      (걸음에 홍보문구·재료·**댓글**·「모두 보기」가 그대로 들어가 있었다).
-        //   ⛔ 20초 — 실패해도 조용히 사라진다(실패는 유저에게 안 알린다는 원칙 그대로).
-        //   ⭐ 문구는 위 「채웠어요」 토스트에 «같은 줄로» 붙였다(`AI다듬는중`) — 따로 띄우면
-        //      열쇠 잔량 안내를 즉시 덮어서 못 보게 된다.
         tidyRecipe(text, 장들[0]).then((ai) => {
           if (cancelled) return
           if (ai) {
