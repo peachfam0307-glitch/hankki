@@ -52,6 +52,8 @@ const TIMEOUT_MS = 60000
 
 // 🔢 마지막 결과 — 앱이 「AI가 정리했어요」를 보여줄 때 쓴다
 let _마지막 = null
+// 📷 마지막 판에서 «사진을 실었나» — 창업자 화면에만 붙는다(`tidyTail`)
+let _사진 = ''
 
 // 👁 [2026-09-01] 사진 상한 — 워커 상한(3MB)보다 «조금 좁게» 잡는다.
 //   ⛔ 워커에서 걸리면 이미 올린 뒤라 데이터가 버려진다. 여기서 걸러야 유저 데이터가 안 샌다.
@@ -69,6 +71,7 @@ const 사진최대 = 2_800_000
  */
 export async function tidyRecipe(text, 사진) {
   _마지막 = null
+  _사진 = ''
   const t = String(text || '').trim()
   // ⛔ 「안 불렀다」와 「불렀는데 실패했다」를 «갈라서» 남긴다 — 처방이 다르다(2026-08-29).
   if (!TIDY_URL) { _마지막 = { ok: false, why: '꺼짐' }; return null }
@@ -84,12 +87,20 @@ export async function tidyRecipe(text, 사진) {
 
   // 👁 사진은 «있을 때만» 싣는다. ⛔모양이 다르거나 너무 크면 조용히 빼고 «글자만» 보낸다.
   //   막지 않는다 — 사진 때문에 정리 자체가 안 되면 그게 더 나쁘다(새 기능이 옛 기능을 죽이지 않는다).
+  // 📷 [2026-09-01] «왜» 안 실었는지를 남긴다 — 창업자 화면에만 뜬다(`tidyTail`).
+  //   ⛔⛔ 이걸 안 남겨서 오늘 실물에서 막혔다 — 워커 `?quota=1` 이 「눈: 사진까지본것 0」이라
+  //      «사진이 안 갔다»까지는 알았는데 **어디서 빠졌는지**를 알 길이 없었다(앱 안은 조용하다).
+  //   ⭐ 시행착오는 코드가 한다(규칙 8) — 다음 한 번이면 답이 나온다.
+  let 사진왜 = '없음'
   const 실을사진 = (() => {
     const v = String(사진 || '')
-    if (!v.startsWith('data:image/')) return ''
-    if (v.length > 사진최대) return ''
+    if (!v) { 사진왜 = '없음'; return '' }
+    if (!v.startsWith('data:image/')) { 사진왜 = '모양아님(' + v.slice(0, 12) + ')'; return '' }
+    if (v.length > 사진최대) { 사진왜 = '너무큼(' + Math.round(v.length / 1000) + 'k)'; return '' }
+    사진왜 = '실음(' + Math.round(v.length / 1000) + 'k)'
     return v
   })()
+  _사진 = 사진왜
 
   // ⏱ 오래 걸리면 끊는다 — ⛔안 끊으면 유저가 빈 화면을 하염없이 본다
   const ac = typeof AbortController !== 'undefined' ? new AbortController() : null
@@ -242,9 +253,11 @@ export function 짧은모델(m) {
 export function tidyTail() {
   const v = _마지막
   const 운영자 = tidyFounder()
-  if (v && v.ok) return 운영자 ? ` · AI가 정리했어요(${v.model ? 짧은모델(v.model) : 'AI'})` : ' · AI가 정리했어요'
+  // 📷 창업자에게만 «사진이 실렸나»를 같이 보여준다 — ⓒ 가 진짜로 도는지 이 한 조각이 답한다
+  const 사진표 = _사진 ? ' · 📷' + _사진 : ''
+  if (v && v.ok) return 운영자 ? ` · AI가 정리했어요(${v.model ? 짧은모델(v.model) : 'AI'})${사진표}` : ' · AI가 정리했어요'
   // 실패·안 부름 — 유저에겐 「기본 정리」 하나로 묶는다(⛔「실패」라고 쓰지 않는다. 결과는 멀쩡하다)
-  return 운영자 ? ` · 기본 정리예요(${(v && v.why) || '안부름'})` : ' · 기본 정리예요'
+  return 운영자 ? ` · 기본 정리예요(${(v && v.why) || '안부름'})${사진표}` : ' · 기본 정리예요'
 }
 
 const str = (v) => (typeof v === 'string' ? v.trim() : '')

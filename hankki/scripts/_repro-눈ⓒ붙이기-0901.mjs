@@ -102,5 +102,31 @@ const 앱제이 = readFileSync(join(앱, 'src/App.jsx'), 'utf8')
 잰다(/tidyRecipe\(text, 장들\[0\]\)/.test(앱제이),
   '④-6 ⭐공유받기(창업자 1순위 길)에도 사진이 붙었다')
 
+// ── ⑤ 📷 «사진이 실렸나»를 창업자 화면이 말해주나 (2026-09-01 저녁 신설) ──
+//   ⛔⛔ 왜 필요한가 = 실물에서 워커 quota 가 「눈: 사진까지본것 0」이라 «안 갔다»까지는 알았는데
+//      **앱 어디서 빠졌는지**를 알 길이 없었다. 앱 안이 조용해서 창업자도 나도 못 봤다.
+//   ⭐ 이 꼬리 한 조각이면 다음 한 번에 답이 나온다(규칙 8 — 시행착오는 코드가 한다).
+console.log('\n  ── ⑤ 사진이 실렸나를 «말해주나» ──')
+globalThis.localStorage = { getItem: () => '열쇠있다', setItem: () => {} }
+const { tidyTail: 꼬리 } = await import(join(앱, 'src/tidy.js'))
+globalThis.fetch = async (url, opt) => {
+  마지막몸통 = JSON.parse(opt.body)
+  return { ok: true, json: async () => ({ title: 'ㄱ', ingredients: ['무 1개'], steps: ['구워요.'], model: '@cf/google/gemma-4-26b-a4b-it' }) }
+}
+await tidyRecipe(긴글, 사진)
+const 꼬리1 = 꼬리()
+잰다(/📷실음\(/.test(꼬리1), '⑤-1 ⭐사진을 실었으면 「📷실음(N k)」이 붙는다', 꼬리1)
+await tidyRecipe(긴글)
+const 꼬리2 = 꼬리()
+잰다(/📷없음/.test(꼬리2), '⑤-2 사진이 없었으면 「📷없음」', 꼬리2)
+await tidyRecipe(긴글, 'data:image/jpeg;base64,' + 'A'.repeat(3_000_000))
+const 꼬리3 = 꼬리()
+잰다(/📷너무큼\(/.test(꼬리3), '⑤-3 ⭐너무 커서 뺐으면 «크기까지» 말한다', 꼬리3)
+await tidyRecipe(긴글, 'https://남의주소/사진.jpg')
+잰다(/📷모양아님/.test(꼬리()), '⑤-4 dataURL 이 아니면 「모양아님」')
+globalThis.localStorage = { getItem: () => null, setItem: () => {} }
+잰다(!/📷/.test(꼬리()), '⑤-5 ⛔열쇠 없는 «유저»에겐 안 보인다')
+globalThis.fetch = 원본fetch
+
 console.log(`\n${실패 ? '⛔⛔ ' + 실패 + '건 어긋남' : '✅ 전부 통과'}  ${통과}/${통과 + 실패}\n`)
 process.exit(실패 ? 1 : 0)
