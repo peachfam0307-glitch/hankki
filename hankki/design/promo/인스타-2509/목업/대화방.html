@@ -1,0 +1,158 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>한끼 목업 대화방</title>
+<style>
+  /* 🐧🐻 한끼 목업 대화방 — 인스타 릴스용 (1080×1920)
+     ⛔ 카카오톡 UI 를 흉내내지 않는다 — 노란 브랜드바·TALK 로고·특유 말풍선 전부 안 쓴다.
+        남의 회사 인터페이스를 우리 광고에 재현하는 게 되기 때문이다(상표 조심).
+     ✅ 대신 우리 그림체·우리 팔레트로 «메신저처럼 읽히게»만 만든다.
+        말풍선 좌우·아바타·입력줄은 어느 메신저에나 있는 일반 관습이라 누구 것도 아니다.
+     🎨 팔레트 = 앱 톤D (styles.css:162~170) 그대로
+     🐧 캐릭터 = 5인 라인업 «확정본» 얼굴컷(av_peng·av_gom)
+        ⛔ 앱에 든 gp_penghi 는 옛 컷이라 안 쓴다(창업자 = "벨트있는 트렌치코트가 정본") */
+  @font-face { font-family: 'Gowun Dodum'; src: url('./자산/gowun-dodum-latin-400.woff2') format('woff2'); }
+  @font-face { font-family: 'Gowun Dodum'; src: url('./자산/gowun-dodum-korean-400.woff2') format('woff2'); }
+  @font-face { font-family: 'Gaegu'; src: url('./자산/gaegu-latin-400.woff2') format('woff2'); font-weight: 700; }
+  @font-face { font-family: 'Gaegu'; src: url('./자산/gaegu-korean-400.woff2') format('woff2'); font-weight: 700; }
+
+  :root {
+    --bg: #f4f1ea;          /* 톤D 바탕 */
+    --cream: #e6e0d4;
+    --line: #eae2d5;
+    --ink: #3b3229;
+    --room: #c3b7a7;        /* 대화방 바닥 — 크림 카드가 뜨게 한 단 진한 웜그레이지 */
+    --mine: #5878a0;        /* 앱 포인트색(더스티 블루) = 내 말풍선 */
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; }
+  body {
+    font-family: 'Gowun Dodum', sans-serif;
+    background: var(--room);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── 위 띠 ─────────────────────────────── */
+  .top {
+    height: 150px; background: var(--bg);
+    border-bottom: 2px solid var(--line);
+    display: flex; align-items: center; gap: 22px; padding: 0 40px;
+  }
+  .back { width: 30px; height: 52px; flex: none; }
+  .back path { fill: none; stroke: var(--ink); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+  .top .face { width: 86px; height: 86px; }
+  .top .name { font-family: 'Gaegu', sans-serif; font-weight: 700; font-size: 46px; letter-spacing: .5px; }
+
+  /* ── 얼굴 동그라미 ──────────────────────── */
+  /* ⚠️ 둘의 «얼굴 자리»가 다르다 — 꼬르곰은 요리사 모자가 위를 먹어서 같은 값을 주면 턱이 잘린다 */
+  .face { border-radius: 50%; background: var(--cream); overflow: hidden; flex: none; position: relative; }
+  .face img { position: absolute; width: 128%; left: -14%; top: -4%; }
+  .face.gom img { width: 118%; left: -9%; top: 4%; }
+
+  /* ── 대화 ──────────────────────────────── */
+  /* ⛔ 아래 padding 250px = 인스타가 덮는 자리를 «비워둔다».
+     📮 창업자 = "인스타에 올리면 늘 아래는 잘려서 잘 안보이더라고"
+     → 제일 마지막 말풍선(앱 이름이 나오는 줄)이 그 밑으로 내려가면 안 읽힌다.
+     빈 자리는 그냥 「대화방 여백」으로 읽혀서 이상하지 않다. */
+  .room { height: 1620px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 36px 250px; }
+  .wrap { overflow: hidden; flex: none; }
+  .row { display: flex; align-items: flex-end; gap: 18px; padding-top: 26px; }
+  .row.me { flex-direction: row-reverse; }
+  .row .face { width: 78px; height: 78px; }
+
+  .bub {
+    max-width: 660px; padding: 26px 34px; border-radius: 30px;
+    font-size: 40px; line-height: 1.42; word-break: keep-all;
+    background: #fffdf8; box-shadow: 0 3px 0 rgba(59,50,41,.07);
+    border-bottom-left-radius: 10px;
+  }
+  .me .bub {
+    background: var(--mine); color: #fff;
+    border-bottom-left-radius: 30px; border-bottom-right-radius: 10px;
+  }
+  /* 사진 말풍선 = 카드를 그대로, 테만 둥글게 */
+  .shot { border-radius: 26px; overflow: hidden; display: block; box-shadow: 0 6px 18px rgba(59,50,41,.18); }
+  .shot img { display: block; width: 540px; }
+
+  /* ── 아래 입력줄 ────────────────────────── */
+  .bottom {
+    height: 150px; background: var(--bg); border-top: 2px solid var(--line);
+    display: flex; align-items: center; gap: 24px; padding: 0 40px;
+  }
+  .plus { width: 68px; height: 68px; border-radius: 50%; background: var(--cream); flex: none; position: relative; }
+  .plus::before, .plus::after { content: ''; position: absolute; background: var(--ink); opacity: .55; border-radius: 3px; }
+  .plus::before { left: 20px; right: 20px; top: 32px; height: 5px; }
+  .plus::after { top: 20px; bottom: 20px; left: 32px; width: 5px; }
+  .field { flex: 1; height: 76px; border-radius: 38px; background: var(--cream); display: flex; align-items: center; padding: 0 32px; font-size: 34px; opacity: .5; }
+</style>
+
+<div class="top">
+  <svg class="back" viewBox="0 0 30 52"><path d="M24 4 L6 26 L24 48"/></svg>
+  <div class="face"><img src="./자산/av_peng.png" alt=""></div>
+  <div class="name">펭펭</div>
+</div>
+
+<div class="room" id="room"></div>
+
+<div class="bottom">
+  <div class="plus"></div>
+  <div class="field">메시지 입력</div>
+</div>
+
+<script>
+// ⭐ 시간을 «내가» 준다 — CSS 애니메이션은 헤드리스에서 박자가 흔들려서
+//    setFrame(t) 로 프레임마다 «계산해» 그린다. 30fps 가 정확히 맞는다.
+// 📮 창업자 = "이거 맛있는데 레시피 보내주는 상황은?" · "우리 레꾸커버랑 레시피가 같이 가니까"
+//    → 자랑(레꾸 커버) → 「레시피 좀」 → 레시피 한 장 더. 앱이 실제로 하는 그 흐름 그대로다.
+// ⭐ at: null = «처음부터 있던 대화» — 방이 텅 빈 채로 시작하면 광고에서 허전하다.
+const MSGS = [
+  { who: 'peng', kind: 'text', text: '오늘 뭐 해먹었어?',              at: null },
+  { who: 'gom',  kind: 'text', text: '돌솥비빔밥!',                    at: null },
+  { who: 'gom',  kind: 'shot', src: './자산/카드-레꾸.png',            at: 0.20 },
+  { who: 'peng', kind: 'text', text: '헐 이거 맛있겠다 레시피 좀!',     at: 2.00 },
+  { who: 'gom',  kind: 'shot', src: './자산/카드-레시피.png',          at: 3.30 },
+  { who: 'peng', kind: 'text', text: '오 레시피까지 같이 오네?',        at: 5.40 },
+  { who: 'gom',  kind: 'text', text: '한끼에서 보내면 같이 가',         at: 6.40 },
+]
+const GROW = 0.34   // 말풍선이 자라며 위로 밀리는 시간
+const FACE = { peng: './자산/av_peng.png', gom: './자산/av_gom.png' }
+
+const room = document.getElementById('room')
+const wraps = []
+for (const m of MSGS) {
+  const wrap = document.createElement('div'); wrap.className = 'wrap'
+  const row = document.createElement('div'); row.className = 'row' + (m.who === 'gom' ? ' me' : '')
+  const face = document.createElement('div'); face.className = 'face' + (m.who === 'gom' ? ' gom' : '')
+  const fimg = document.createElement('img'); fimg.src = FACE[m.who]; face.appendChild(fimg)
+  row.appendChild(face)
+  if (m.kind === 'text') {
+    const b = document.createElement('div'); b.className = 'bub'; b.textContent = m.text; row.appendChild(b)
+  } else {
+    const b = document.createElement('div'); b.className = 'shot'
+    const i = document.createElement('img'); i.src = m.src; b.appendChild(i); row.appendChild(b)
+  }
+  wrap.appendChild(row); room.appendChild(wrap); wraps.push(wrap)
+}
+
+let H = []
+const ease = (p) => 1 - Math.pow(1 - p, 3)
+
+window.준비 = async function () {
+  await document.fonts.ready
+  await Promise.all([...document.images].map((i) => (i.complete ? 0 : i.decode().catch(() => 0))))
+  H = wraps.map((w) => w.getBoundingClientRect().height)   // 자연 높이를 «한 번만» 잰다
+  setFrame(0)
+  return H
+}
+
+window.setFrame = function (t) {
+  MSGS.forEach((m, i) => {
+    // at 이 null 이면 «처음부터 있던 대화» → 늘 다 자란 상태
+    const p = m.at == null ? 1 : ease(Math.max(0, Math.min(1, (t - m.at) / GROW)))
+    wraps[i].style.height = (p * H[i]) + 'px'
+    const row = wraps[i].firstChild
+    row.style.opacity = p
+    row.style.transform = 'translateY(' + ((1 - p) * 22) + 'px)'
+  })
+}
+</script>
