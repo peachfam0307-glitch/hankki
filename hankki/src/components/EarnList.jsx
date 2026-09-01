@@ -14,7 +14,8 @@
 // ⛔⛔ **옛 워커는 `earned` 를 안 준다** — 그때는 `null` 이라 **줄을 하나도 안 긋고**
 //    「N개 중 M개」만 적는다. ⚠️개수만큼 «위에서부터» 긋지 않는다 — 그건 거짓말이 된다.
 // ⛔ 유니코드 이모지 금지 — 우리 그림만(절대원칙).
-import { getOcrLeft, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
+import { EARN, KEY_NAME, KEY_UNIT } from '../ocr'
+import useKeyLeft from './useKeyLeft'
 import uiKeyOne from '../assets/ui/key_one.png'
 
 const 줄들 = [
@@ -26,7 +27,7 @@ const 줄들 = [
 ]
 
 export default function EarnList() {
-  const left = getOcrLeft()
+  const left = useKeyLeft()
   const 받은수 = Number.isFinite(left.bonus) ? left.bonus : 0
   // ⭐ 사라지는 판정은 «개수»로 한다 — 옛 워커에서도 맞게 돈다(목록은 없어도 개수는 준다).
   if (받은수 >= 줄들.length) return null

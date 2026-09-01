@@ -120,6 +120,10 @@ const WELCOME_ANON = 10 // ⛔ worker.js 의 LIMITS.WELCOME_ANON 과 같아야 �
 const WELCOME_ACCT = 30 // ⛔ worker.js 의 LIMITS.WELCOME_ACCT 과 같아야 한다
 const MONTHLY_FREE = 5 // ⛔ worker.js 의 LIMITS.PER_USER_MONTHLY 와 같아야 한다
 const LEFT_KEY = 'hankki:ocrLeft'
+// 📢 「열쇠 값이 바뀌었다」 신호 — 알약과 가져오기 목록이 이걸 듣고 다시 그린다.
+//   ⛔ 없으면 서버 답을 새로 받아도 **화면이 그대로다**(부품이 값을 한 번만 읽으니까).
+//      2026-09-01 에 정확히 그래서 줄이 안 그어졌다.
+export const LEFT_EVENT = 'hankki:left'
 
 // ── 🔑 이 재화의 이름 ────────────────────────────────────────
 // ✅✅ 창업자 확정 2026-08-24 = **「레시피열쇠」 · 세는 말 「개」** (⛔재론 금지)
@@ -160,6 +164,8 @@ function saveOcrLeft(left) {
       acct: 수(left.acct, null),
       signed: left.signed === true,
     }))
+    // 📢 값이 바뀌었다고 알린다 — 알약·가져오기 목록이 듣고 다시 그린다.
+    try { window.dispatchEvent(new Event(LEFT_EVENT)) } catch { /* noop */ }
   } catch {
     /* noop */
   }
@@ -216,6 +222,29 @@ export async function 밀린열쇠보내기() {
     try { await 한번보내기(행동) } catch { 남은.push(행동) }
   }
   큐쓰기(남은)
+}
+
+// 🔎 서버에 «내 상태»를 물어 폰에 있는 값을 새로 맞춘다.
+//   📮 창업자 2026-09-01 = 워커를 붙였는데도 줄이 안 그어졌다.
+//   ⛔⛔ 그 전엔 서버 답을 «열쇠를 쓸 때»와 «행동할 때»만 받았다 →
+//      화면은 폰에 저장된 «옛 답»을 그렸다. 서버를 고쳐도 «묻지 않으면» 안 바뀐다.
+//   ⛔ 아무것도 주지도 깎지도 않는다(서버가 `조회` 를 그렇게 받는다).
+//   ⛔ 실패해도 던지지 않는다 — 곁일이라 이것 때문에 화면이 멈추면 안 된다.
+//      (못 받으면 폰에 있던 값을 그대로 쓴다 — 「모른다」로 덮지 않는다 · 규칙 18 ⓙ)
+export async function 열쇠새로고침() {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    try { const f = localStorage.getItem('hankki:founder'); if (f) headers['x-hankki-founder'] = f } catch { /* noop */ }
+    const resp = await fetch(OCR_PROXY_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ 조회: 1, uid: deviceId(), ...(내구글번호() ? { sub: 내구글번호() } : {}) }),
+    })
+    if (!resp.ok) return false
+    const d = await resp.json().catch(() => null)
+    if (d && d.left) { saveOcrLeft(d.left); return true }
+  } catch { /* noop */ }
+  return false
 }
 
 // 🎁 「로그인하면 몇 개 더 받나」 — ⛔문구에 «20» 을 글자로 박지 않는다.

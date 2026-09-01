@@ -10,13 +10,15 @@
 //    ⭐ 모양(CSS `.imp-key`)도 그대로 쓴다 — 새로 만들 게 0이다.
 //
 // ⛔ 숫자를 여기서 «세지» 않는다 — `getOcrLeft()` 가 서버가 준 값을 그대로 돌려준다.
-import { getOcrLeft, KEY_NAME, KEY_UNIT } from '../ocr'
+import { KEY_NAME, KEY_UNIT } from '../ocr'
+import useKeyLeft from './useKeyLeft'
 import { tidyFounder } from '../tidy'
 import uiKeyOne from '../assets/ui/key_one.png'
 import uiKeyHole from '../assets/ui/key_hole.png'
 
 export default function KeyBadge() {
-  const left = getOcrLeft()
+  // 🔎 서버에 물어보고, 값이 바뀌면 다시 그린다(useKeyLeft 주석에 왜 필요한지 적어 뒀다)
+  const left = useKeyLeft()
   // 🔓 창업자는 개인 한도를 지나간다(worker.js) — 그런데 «표시»는 유저와 똑같이 깎여서
   //    0 이 되면 「고장인가」로 읽힌다(2026-09-01 창업자가 실제로 그렇게 읽었다).
   //    ⛔ 서버 동작은 한 글자도 안 바꾼다. **보이는 것만** 고친다.

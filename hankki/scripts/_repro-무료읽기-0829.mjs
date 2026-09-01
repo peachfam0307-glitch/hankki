@@ -3,7 +3,9 @@
 // 📮 창업자 = *"한끼에서 가져오기를 무료ocr로 읽게하면 안돼??"* → 갈래 둘 중 **ⓑ**(고르게)
 //    *"3번은 열쇠다썼지만 무료로 쓰고싶은 사용자들이 거의 쓰겠네 안내도 잘해줘야 할 듯."*
 //
-// ⭐⭐⭐ **심장 = 「OCR 프록시로 요청이 나갔나」.** 그게 곧 열쇠 차감이다.
+// ⭐⭐⭐ **심장 = 「사진을 실어 프록시로 요청이 나갔나」.** 그게 곧 열쇠 차감이다.
+//    ⛔ 「프록시를 불렀나」로 재지 않는다 — 2026-09-01 부터 «묻기만 하는 길»(조회)이 생겨
+//       부르고도 안 깎는 요청이 있다. 아래 route 주석에 경위를 적어 뒀다.
 //    ⛔ 「문구에 «열쇠 안 써요»가 적혀 있나」를 재면 **안 된다** — 적어놓고 깎으면 그게 제일 나쁜 사고다
 //       (v11.00 사고와 같은 자리: 「넘겼다」와 「저장됐다」는 다른 말이다 · 규칙 18 ⓘ).
 //    ✅ 그래서 «네트워크»를 가로채 **부른 횟수**를 센다. 0 이라야 통과다.
@@ -58,13 +60,32 @@ async function 사진넣고자르기(p) {
 }
 
 // 🚪 가져오기 → ③ 「한끼 앱에서 사진 가져오기」 안내 화면까지
-async function 안내까지(ctx) {
+async function 안내까지(ctx, 남은 = 19) {
   const p = await ctx.newPage()
-  let 프록시호출 = 0
+  let 열쇠쓴호출 = 0
   // 🕸 프록시를 가로채 «횟수»를 센다. 실제로 나가게 두지 않는다(이 환경은 workers.dev 를 막는다).
+  //
+  // ⛔⛔ **잣대를 옮겼다 (2026-09-01)** — 전엔 «프록시를 불렀나»를 셌고 그게 곧 열쇠 차감이었다.
+  //    그날 «묻기만 하는 길»(`조회`)이 생겼다 — 화면이 뜰 때 「내 상태가 뭐예요」를 물어본다.
+  //    그건 아무것도 주지도 깎지도 않는데 **호출 수는 는다** → 이 판이 «맞게» 죽었다(0번 기대 · 2번).
+  //    ✅ 그래서 「사진을 실어 보냈나(`image`)」로 옮긴다 — **그게 진짜로 열쇠를 쓰는 요청**이다.
+  //       ⛔ 느슨하게 만든 게 아니라 «더 정확하게» 만든 것이다. 조회를 실수로 차감하게 바꾸면
+  //          몸통에 image 가 실리므로 여전히 잡힌다.
   await p.route('**/hankki-ocr.annyeong-hankki.workers.dev/**', async (route) => {
-    프록시호출 += 1
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ text: '가짜', left: { welcome: 19, month: 5, total: 19 } }) })
+    let 몸 = {}
+    try { 몸 = JSON.parse(route.request().postData() || '{}') } catch { /* noop */ }
+    if (몸.image) 열쇠쓴호출 += 1
+    // ⭐ 조회 답도 «이 판이 심어둔 상태»와 같아야 한다 — 안 그러면 서버 답이 씨앗을 덮어
+    //    「열쇠 0개」 시험이 19개짜리 화면을 재게 된다(그것도 2026-09-01 에 실제로 났다).
+    const left = {
+      welcome: 남은, month: 남은 > 0 ? 5 : 0, cap: 남은, bonus: 0, earned: [],
+      anon: 10, acct: 30, monthly: 5, signed: false,
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(몸.image ? { text: '가짜', left } : { ok: true, left }),
+    })
   })
   await p.goto('http://127.0.0.1:4477/hankki/', { waitUntil: 'networkidle' })
   await p.waitForTimeout(2200)
@@ -72,7 +93,7 @@ async function 안내까지(ctx) {
   await p.waitForTimeout(900)
   await p.locator('.imp-opt').nth(2).click() // ③
   await p.waitForTimeout(700)
-  return { p, 횟수: () => 프록시호출 }
+  return { p, 횟수: () => 열쇠쓴호출 }
 }
 
 // ① 목록에 「무료로도 돼요」 알약이 붙었나
@@ -162,7 +183,9 @@ async function 안내까지(ctx) {
       localStorage.setItem('hankki:ocrLeft', JSON.stringify({ welcome: 0, month: 0, total: 0 }))
     } catch { /* noop */ }
   })
-  const { p } = await 안내까지(ctx)
+  // ⭐ 서버도 «0개»라고 답하게 한다 — 화면이 뜰 때 물어보므로(2026-09-01~) 씨앗만 심으면 덮인다.
+  //    📌 폰에 심어둔 값과 서버 답이 다르면 «서버가 이긴다». 그게 맞는 동작이라 판을 거기 맞춘다.
+  const { p } = await 안내까지(ctx, 0)
   const 단추 = await p.locator('.pad.fade button').allInnerTexts()
   const AI단추 = 단추.filter((t) => t.includes('AI로'))
   재기('열쇠 0개면 AI 단추를 아예 안 그린다', AI단추.length === 0 && 단추.some((t) => t.includes('사진 고르기')), JSON.stringify(단추.filter((t) => t.includes('고르기') || t.includes('읽기'))))

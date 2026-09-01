@@ -200,6 +200,36 @@ console.log('  ── ⑧ 받은 목록 ──')
     '⑧-4 ⭐사진 읽는 길의 답에도 목록이 실린다', JSON.stringify(d.body.left.earned))
 }
 
+// ── ⑧-b 🔎 «물어보기»만 — 아무것도 주지도 깎지도 않는다 ─────────────
+//   ⛔ 이 길로 열쇠를 주면 **행동을 안 한 사람도 다섯을 다 받는다**(기능이 통째로 죽는다).
+console.log('  ── ⑧-b 물어보기 ──')
+{
+  const kv = mkKv()
+  const 물 = async (o = {}) => {
+    const req = new Request('https://hankki-ocr.example/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-hankki-token': APP_TOKEN, Origin: ORIGIN, 'CF-Connecting-IP': 'ip' + (++ip번호) },
+      body: JSON.stringify({ 조회: 1, uid: 'q9', ...o }),
+    })
+    const res = await worker.fetch(req, ENV(kv))
+    return { status: res.status, body: await res.json() }
+  }
+  const a = await 물()
+  잰다(a.status === 200 && a.body.left.welcome === 10, '⑧b-1 안 쓴 사람에게 10 을 알려준다', '남은 ' + a.body.left.welcome)
+  잰다(a.body.left.bonus === 0 && a.body.left.earned.length === 0, '⑧b-2 ⭐⭐물어보기만으론 «하나도 안 준다»', '보너스 ' + a.body.left.bonus)
+  await 물(); await 물(); await 물()
+  const b = await 물()
+  잰다(b.body.left.bonus === 0, '⑧b-3 여러 번 물어도 그대로다')
+  잰다(앞글자(kv, 'm:') === 0 && 앞글자(kv, 'd:') === 0, '⑧b-4 ⛔전역 통을 «안» 축낸다(Vision 을 안 불렀다)')
+  잰다(앞글자(kv, 'q:') === 0, '⑧b-5 ⛔「막힘」에도 «안» 센다(막힌 게 아니다)')
+  잰다(앞글자(kv, 'wu:') === 0, '⑧b-6 ⛔쓴 수도 «안» 는다(열쇠를 안 썼다)')
+  // 받은 뒤에 물으면 그 목록이 그대로 와야 한다 — 화면이 이걸로 줄을 긋는다
+  await 받기(kv, '일기', { uid: 'q9' })
+  const c = await 물()
+  잰다(c.body.left.earned.includes('일기') && c.body.left.bonus === 1,
+    '⑧b-7 ⭐받은 뒤에 물으면 목록이 그대로 온다(화면이 이걸로 줄을 긋는다)', JSON.stringify(c.body.left.earned))
+}
+
 // ── ⑨ 🕳🕳 로그인하면 다섯을 «또» 받던 구멍 (2026-09-01 에 찾아 막았다) ──
 //   ⛔ 표식이 `earn:<통>:<행동>` 인데 로그인하면 통이 `d:uid` → `a:sub` 로 바뀐다.
 //      옛 표식을 못 찾아 **전부 다시 줬다** — 보너스가 5 → 10.
@@ -241,6 +271,11 @@ console.log('  ── ⑩ 냉장고 두 길 ──')
   잰다(직접, '⑩-2 ⭐«직접 넣기» 갈래 안에 있다(창업자가 쓴 그 길)')
   const 영수증 = /store\.addPantry\(\{[\s\S]{0,400}?열쇠받기\(EARN\.냉장고\)/.test(src)
   잰다(영수증, '⑩-3 영수증 스캔 갈래도 그대로 살아 있다')
+  // ⛔⛔ 창업자 2026-09-01 = *"냉장고 안받았었는데 안내사라졌어"* — **받은 게 맞았는데 몰랐다.**
+  //    토스트를 뺐더니, 그게 마침 다섯째라 안내 카드까지 사라져 「없어졌다」로만 보였다.
+  //    📌 받은 것은 반드시 «받았다»고 말한다. 특히 그게 마지막 하나일 때.
+  const 알림수 = (src.match(/열쇠받기\(EARN\.냉장고\)\.then\(\(받음\)/g) || []).length
+  잰다(알림수 === 2, '⑩-3b ⭐냉장고도 «받았다고 말한다»(두 길 모두)', '알리는 자리 ' + 알림수)
   // 나머지 넷도 여전히 붙어 있나 — 하나를 고치다 다른 걸 떨어뜨리지 않게
   const 자리 = {
     레꾸: 'src/screens/RecipeDetailScreen.jsx', 자랑: 'src/screens/BragScreen.jsx',
@@ -258,6 +293,21 @@ console.log('  ── ⑪ 가져오기 목록 화면 ──')
 {
   const s = fs.readFileSync(path.join(여기, '../src/components/EarnList.jsx'), 'utf8')
   잰다(/left\.earned/.test(s), '⑪-1 서버가 준 «목록»을 읽는다')
+  // ⛔⛔ 「서버가 준다」 · 「앱이 받는다」 · 「화면이 그린다」는 셋 다 다른 말이다(2026-09-01 사고).
+  //    워커를 고쳤는데도 줄이 안 그어졌다 — 물어보는 길이 없었고, 부품이 값을 한 번만 읽었다.
+  // ⛔⛔ **주석을 세면 안 된다** — 이 파일 머리주석에 `열쇠새로고침()` 이라 적어 뒀다.
+  //    첫 판이 그걸 세는 바람에 **부르는 줄을 지워도 초록불**이었다(규칙 12 로 잡았다 · 2026-09-01).
+  //    📌 검사가 «무엇을 보는지»를 본다(규칙 18 ⓘ). 그래서 «코드 줄»만 남기고 센다.
+  const 코드줄 = (p) => fs.readFileSync(path.join(여기, p), 'utf8')
+    .split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n')
+  const hook = 코드줄('../src/components/useKeyLeft.js')
+  잰다(/열쇠새로고침\(\)/.test(hook), '⑪-1b ⭐화면이 뜰 때 서버에 «물어본다»')
+  잰다(/addEventListener\(LEFT_EVENT/.test(hook), '⑪-1c ⭐값이 바뀌면 «다시 그린다»')
+  잰다(/useKeyLeft/.test(s), '⑪-1d 가져오기 목록이 그 갈고리를 쓴다')
+  const badge = fs.readFileSync(path.join(여기, '../src/components/KeyBadge.jsx'), 'utf8')
+  잰다(/useKeyLeft/.test(badge), '⑪-1e 열쇠 알약도 그 갈고리를 쓴다(숫자가 안 낡는다)')
+  const ocr = fs.readFileSync(path.join(여기, '../src/ocr.js'), 'utf8')
+  잰다(/dispatchEvent\(new Event\(LEFT_EVENT\)\)/.test(ocr), '⑪-1f 값을 저장하면 신호를 쏜다')
   잰다(/받은수 >= 줄들\.length\) return null/.test(s), '⑪-2 ⭐다섯을 다 받으면 카드가 «사라진다»(창업자 확정)')
   잰다(/slice\(0,\s*받은수\)|index <\s*받은수|i <\s*받은수/.test(s) === false,
     '⑪-3 ⛔개수만큼 «위에서부터» 긋지 않는다(그건 거짓말이다)')
