@@ -1773,14 +1773,18 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           <div className="decor-catsrow" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 0, flex: '0 0 54px', width: 54, minWidth: 54, overflowY: 'auto', overflowX: 'hidden' }}>
           {/* 🗂 접기 단추 — **갈래칩 줄에 붙여 둔다.** 접어도 이 줄은 남으니 «돌아올 길»이 늘 보인다.
               ⛔ 접힌 상태에서 사라지는 자리에 두면 다시 펼 수가 없다. */}
-          <div className="decor-cats" onClick={dropBodyOnTap} style={{ display: 'flex', flexDirection: 'column', gap: 3, overflowX: 'hidden', padding: '2px 3px 4px', flex: '0 0 auto', minWidth: 0 }}>
+          {/* 🔢 틈 0 · 칸 44px 인 까닭 = 재서 맞췄다.
+                 띠가 **226px** 인데 46px＋틈3 으로 두니 6칸(갈래 5 ＋ 접기) 중 **4칸만 보였다**(291px 필요).
+                 44×5 = **220px** 라 갈래 다섯이 «딱» 들어간다.
+              ⛔ 44 밑으로는 안 내린다 — 손가락 최소다. 더 줄여야 하면 칸이 아니라 «다른 줄»을 줄인다. */}
+          <div className="decor-cats" onClick={dropBodyOnTap} style={{ display: 'flex', flexDirection: 'column', gap: 0, overflowX: 'hidden', padding: '0 3px', flex: '0 0 auto', minWidth: 0 }}>
             {visCats.map((c) => {
               const on = cat === c.key
               return (
                 <button key={c.key} className="press" onClick={() => setCat(c.key)}
                   /* 📐 세로 레일 칸 — 폭은 레일(54)을 꽉 채우고 키는 손가락 최소(44)를 넘긴다.
                      ⛔ `nowrap` 을 빼고 `normal` 로 — 「친구들」처럼 세 글자가 54px 에 안 들어가면 두 줄로 앉아야 한다. */
-                  style={{ width: '100%', minHeight: 46, padding: '4px 2px', borderRadius: 12, fontSize: 11.5, fontWeight: 700, lineHeight: 1.15, whiteSpace: 'normal', background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)' }}>
+                  style={{ width: '100%', minHeight: 44, padding: '3px 2px', borderRadius: 12, fontSize: 11.5, fontWeight: 700, lineHeight: 1.15, whiteSpace: 'normal', background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)' }}>
                   {c.label}
                 </button>
               )
