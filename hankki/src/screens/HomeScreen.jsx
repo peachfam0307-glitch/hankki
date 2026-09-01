@@ -7,6 +7,7 @@ import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
+import { hasFrameDecor } from '../components/Stickers'
 import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
 import TabTips from '../components/TabTips'
@@ -15,6 +16,13 @@ import PreviewSheet from '../components/PreviewSheet'
 import NewsPopup, { needsNewsPopup, markNewsSeen, isNewsUnread } from '../components/NewsPopup'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import ConfirmSheet from '../components/ConfirmSheet'
+
+// 🍽🍽 **홈 「자주 해먹는」 칸의 음식 그림 크기** (창업자 확정 2026-09-01 = 갈래 「라」)
+//   · 프레임(접시·액자)을 «얹은» 레시피 → **56%** = 레꾸 캔버스와 «같은 값»이라 접시 안에 그대로 담긴다
+//   · 그 밖 → **70%** = 2026-08-23 창업자 지시(*"조금만더크게수정"*) 그대로 살아 있다
+//   ⭐ 두 지시가 부딪치는 건 **프레임을 쓸 때뿐**이다 → 그때만 양보한다. 어느 쪽도 안 되돌린다.
+//   ⛔ 이 판정은 `Stickers.jsx` 에 한 곳으로 둔다 — 홈에 이 칸이 «둘»이라 여기 적으면 갈라진다.
+const 홈그림크기 = (r) => (hasFrameDecor(r) ? '56%' : '70%')
 // 🐻 코치 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지 규칙)
 import uiHandPoint from '../assets/ui/hand_point.png'
 // 🐻 엄지척·박수 = **물결 정본**(창업자 2026-08-14 제공 · `…-08-14/낱개/gt_01`·`gt_c01`)
@@ -77,8 +85,9 @@ function WeekBox({ w, 기본, open }) {
             {/* 🍱 [2026-08-23 창업자] *"자주해먹는요리 요리이모지들어간 그림 크기 다른칸이비해 작음.
                 조금만더크게수정."* — 맞다. 판은 넓은데 그림만 `56%` 라 가운데가 휑했다.
                 ⛔ 카드 폭을 키우지 않는다 — 한 줄에 세 칸 보이는 게 이 줄의 값어치다.
-                ✅ 판 «안»에서 그림만 키운다(56% → 70%). 이름표 자리도 그대로다. */}
-            <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2.5rem" iconSize="70%" showDecor />
+                ✅ 판 «안»에서 그림만 키운다(56% → 70%). 이름표 자리도 그대로다.
+                🍽 [2026-09-01 창업자 = 갈래 「라」] 단 **프레임을 얹은 레시피는 56%** — `홈그림크기()` 참조 */}
+            <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2.5rem" iconSize={홈그림크기(r)} showDecor />
             <div className="name">{r.title}</div>
           </button>
         ))}
@@ -581,8 +590,9 @@ export default function HomeScreen() {
                   {/* 🍱 [2026-08-23 창업자] *"자주해먹는요리 요리이모지들어간 그림 크기 다른칸이비해 작음.
                       조금만더크게수정."* — 맞다. 판은 넓은데 그림만 `56%` 라 가운데가 휑했다.
                       ⛔ 카드 폭을 키우지 않는다 — 한 줄에 세 칸 보이는 게 이 줄의 값어치다.
-                      ✅ 판 «안»에서 그림만 키운다(56% → 70%). 이름표 자리도 그대로다. */}
-                  <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2.5rem" iconSize="70%" showDecor />
+                      ✅ 판 «안»에서 그림만 키운다(56% → 70%). 이름표 자리도 그대로다.
+                      🍽 [2026-09-01 창업자 = 갈래 「라」] 단 **프레임을 얹은 레시피는 56%** — `홈그림크기()` 참조 */}
+                  <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2.5rem" iconSize={홈그림크기(r)} showDecor />
                   <div className="name">{r.title}</div>
                 </button>
               ))}
