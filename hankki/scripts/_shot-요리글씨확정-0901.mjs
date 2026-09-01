@@ -36,8 +36,8 @@ const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const 기기 = [
   { id: 'small', 이름: '작은 폰 360×640', 폭: 360, 높이: 640, 바람: { 크기: '24px', 획: '0.7px', 폭최대: null, 곰: 104, 타이머: '16px' } },
   { id: 'phone', 이름: '폰 390×844', 폭: 390, 높이: 844, 바람: { 크기: '28px', 획: '0.85px', 폭최대: null, 곰: 104, 타이머: '16px' } },
-  { id: 'pad', 이름: '패드 세로 820×1180', 폭: 820, 높이: 1180, 바람: { 크기: '38px', 획: '1.6px', 폭최대: null, 곰: 160, 타이머: '20px' } },
-  { id: 'padland', 이름: '패드 가로 1180×820', 폭: 1180, 높이: 820, 바람: { 크기: '38px', 획: '1.6px', 폭최대: 760, 곰: 160, 타이머: '20px' } },
+  { id: 'pad', 이름: '패드 세로 820×1180', 폭: 820, 높이: 1180, 바람: { 크기: '38px', 획: '1.6px', 폭최대: null, 곰: 190, 타이머: '22px' } },
+  { id: 'padland', 이름: '패드 가로 1180×820', 폭: 1180, 높이: 820, 바람: { 크기: '38px', 획: '1.6px', 폭최대: 860, 곰: 190, 타이머: '22px' } },
 ]
 
 let 죽음 = 0
@@ -92,6 +92,25 @@ for (const g of 기기) {
   const 뭉갬 = m.곰원본 && m.곰 > m.곰원본
   console.log(`  꼬르곰 ${m.곰}px ${ok(m.곰, g.바람.곰)} (원본 ${m.곰원본}px${뭉갬 ? (죽음++, ' ⛔ 원본보다 크게 그린다') : ' · 축소라 선명'}) · 타이머 글자 ${m.타이머} ${ok(m.타이머, g.바람.타이머)}`)
   console.log(`  스크롤 ${m.스크롤 ? (죽음++, '⛔ 생겼다') : '✅ 없다'}`)
+
+  // ✂️· ＋ 「항목이 통째로 묶였나」 — **살아 있는 DOM 으로** 본다(흉내가 아니다 · 절대원칙 30)
+  //    ⭐ `·` 가 있는 걸음이 나올 때까지 「다음」을 눌러 본다. 못 만나면 «판정하지 않는다»(초록불로 속이지 않는다)
+  let 점걸음 = null
+  for (let i = 0; i < 12; i++) {
+    점걸음 = await p.evaluate(() => {
+      const el = document.querySelector('.cook-steptext')
+      if (!el || !el.innerText.includes('·')) return null
+      const spans = [...el.querySelectorAll('span')].filter((s) => getComputedStyle(s).whiteSpace === 'nowrap')
+      return { 글: el.innerText.replace(/\s+/g, ' ').slice(0, 40), 묶인항목: spans.length, wbr: el.querySelectorAll('wbr').length }
+    })
+    if (점걸음) break
+    const 다음 = p.locator('button, [role="button"]').filter({ hasText: /^다음/ }).last()
+    if (!(await 다음.count())) break
+    await 다음.click().catch(() => {}); await p.waitForTimeout(300)
+  }
+  if (!점걸음) console.log(`  가운뎃점 묶기 ⚠️ 이 레시피엔 «·가 든 걸음»이 없어 못 쟀다(⛔통과로 세지 않는다)`)
+  else if (점걸음.묶인항목 > 0 && 점걸음.wbr > 0) console.log(`  가운뎃점 묶기 ✅ 항목 ${점걸음.묶인항목}개가 nowrap · 끊을 자리(wbr) ${점걸음.wbr}개 — "${점걸음.글}…"`)
+  else { 죽음++; console.log(`  가운뎃점 묶기 ⛔ 안 붙었다 (nowrap ${점걸음.묶인항목} · wbr ${점걸음.wbr}) — "${점걸음.글}…"`) }
 
   await p.screenshot({ path: join(OUT, `${g.id}.png`) })
   await ctx.close()

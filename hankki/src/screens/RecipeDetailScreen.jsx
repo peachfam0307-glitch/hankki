@@ -38,6 +38,7 @@ import MemoNote from '../components/MemoNote'
 import { hlColor } from '../components/Stickers'
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
 import { FAV_NAME } from '../favName'
+import { 항목묶어 } from '../stepBreak'
 
 // 🖍 절 제목 형광펜 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
 // ✅ **레몬 확정** — 창업자가 판단을 맡겨서(*"형광펜은 잘모르겠다.. 네가 판단해봐"*) «재서» 골랐다.
@@ -731,7 +732,8 @@ export default function RecipeDetailScreen({ id }) {
                   <div key={i} className="step">
                     <div className="n">{i + 1}</div>
                     <div className="txt">
-                      {첫줄}
+                      {/* ✂️· 요리모드와 «같은 규칙» — 항목은 통째로, 끊을 거면 가운뎃점에서 (src/stepBreak.jsx) */}
+                      {항목묶어(첫줄)}
                       {곁말.map((t, j) => <div key={j} className="step-tip">{t}</div>)}
                     </div>
                   </div>
