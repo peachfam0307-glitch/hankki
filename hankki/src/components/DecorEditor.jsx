@@ -1764,10 +1764,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                  재는 판 = `scripts/_판-서랍층-0901.mjs` */}
           <div className="decor-body">
           {/* 카테고리 칩 — ⭐이제 «세로 레일». 클래스 이름은 그대로 둔다(작은 화면 미디어쿼리가 이 이름을 쓴다) */}
-          {mode === 'decor' && (
           {/* ⛔⛔ 인라인 스타일이 stylesheet 를 «이긴다» — 처음엔 CSS 로만 세로로 눕혔더니
-                 알약이 왼쪽으로 잘려 나가고 한 칸이 46px 이 아니라 106px 로 늘어났다(그림으로 잡았다).
-                 → 세로로 세우는 값은 «여기»서 준다. CSS 는 `.decor-body` 의 «나란히 서기»만 맡는다. */}
+              알약이 왼쪽으로 잘려 나가고 한 칸이 46px 이 아니라 106px 로 늘어났다(그림으로 잡았다).
+              → 세로로 세우는 값은 «아래 인라인»에서 준다. CSS 는 `.decor-body` 의 «나란히 서기»만 맡는다.
+              ⛔ 이 주석을 `{mode === 'decor' && (` «바로 뒤»로 옮기지 말 것 — 표현식이 열리는 자리라
+                 객체 리터럴로 파싱돼 `Expected ")"` 로 빌드가 죽는다(2026-09-01 에 실제로 죽였다). */}
+          {mode === 'decor' && (
           <div className="decor-catsrow" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 0, flex: '0 0 54px', width: 54, minWidth: 54, overflowY: 'auto', overflowX: 'hidden' }}>
           {/* 🗂 접기 단추 — **갈래칩 줄에 붙여 둔다.** 접어도 이 줄은 남으니 «돌아올 길»이 늘 보인다.
               ⛔ 접힌 상태에서 사라지는 자리에 두면 다시 펼 수가 없다. */}
