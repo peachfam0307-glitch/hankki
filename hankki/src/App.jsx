@@ -5,7 +5,7 @@ import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } f
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw } from './parseRecipe'
-import { tidyRecipe, mergeTidy, tidyTail, tidyFounder } from './tidy'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from './tidy'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
 import { guessCategory, fitImage } from './utils'
@@ -585,10 +585,16 @@ export default function App() {
         //    ⛔ `unknown` 이면 숫자를 안 적는다 — 서버가 아직 답한 적이 없다는 뜻이라
         //       그때 숫자를 적으면 «안 써 봤을 때의 기본값 20»을 사실처럼 말하게 된다(규칙 15).
         const left = getOcrLeft()
+        // 📢📢 ⭐**여기가 «첫인상»이다** — 인스타 공유가 「제일 많이 써요」 길이다.
+        //   「AI 가 더 다듬는 중」을 **같은 줄에** 붙인다(문구는 `tidy.js` 한 곳).
+        //   ⛔ 따로 띄우면 이 안내(열쇠 잔량)를 즉시 덮어 «정보를 잃는다».
+        //   ⏱ 20초 — 다 되면 아래 결과 토스트가 덮고, 실패하면 조용히 사라진다.
         showToast(
-          left.unknown
+          (left.unknown
             ? '사진에서 글자를 읽어 채웠어요'
-            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`,
+            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`)
+            + AI다듬는중,
+          20000,
         )
 
         // ② AI — «뒤에서». 오면 갈아끼우고, 안 오면 아무 일도 안 난다.
