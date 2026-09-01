@@ -679,6 +679,21 @@ export function 다읽었나(r) {
   return 재료 >= 2 && 걸음 >= 2
 }
 
+// 🖼🖼 **「표지에 뭘 그릴까」 잣대 — ⭐이 저장소에서 «여기 한 곳»뿐이다** (2026-09-02)
+//   📮 창업자 = *"저 자리는 음식아이콘이 들어가야하는데 편집끝나도 사진으로 남는거야?"* → 판정 = **캡처는 표지 안 쓴다**
+//   ⛔⛔ 그 전엔 «똑같은 잣대»가 **세 곳에 복사**돼 있었다 —
+//      `Thumb.jsx:40` ＋ `DecorEditor.jsx:210` ＋ `EditorScreen.jsx:184`.
+//   ⛔ 뿌리 = `image` 만 있으면 무조건 `'photo'` 였다. 그런데 공유받기가 **캡처를 `image` 에 그대로 담아서**
+//      «글자 사진»이 레시피 카드 표지가 됐다 — 콩국수·김치찌개 사이에서 혼자 논다.
+//   ⭐ 사진을 «지우는 게 아니다» — `image` 는 그대로 남아 「보면서 쓰기」에 쓰이고,
+//      유저가 「사진」 칩을 누르면 그때 `thumb: 'photo'` 가 박혀 표지가 된다.
+//   ⚠️ 대신 진짜 «음식 사진»을 공유받아도 아이콘이 된다 — 창업자가 알고 고른 값이다.
+export function 기본표지(r) {
+  if (r?.thumb) return r.thumb                       // 유저가 고른 게 있으면 그게 이긴다
+  if (r?.image && r?.source !== 'photo') return 'photo'
+  return 'icon'
+}
+
 // 🔢 `INBOX_V` — 올리면 **이미 폰에 쌓인 것**을 한 번 더 훑는다.
 //   · 1 (2026-09-01) = 처음. 그때 임시보관함에 있던 것 중 다 읽은 것을 옮겼다.
 //   · 2 (2026-09-02) = ⭐**창업자 판정** *"응, 한 번 더 훑는다"* —
@@ -692,6 +707,27 @@ function migrateInboxSorted(recipes, saved) {
     return 다읽었나(r) ? { ...r, status: 'sorted' } : r
   })
   return { recipes: out, inboxV: INBOX_V }
+}
+
+// 🖼🔢 `COVER_V` — 올리면 **이미 폰에 박힌 캡처 표지**를 한 번 더 훑는다.
+//   ⛔ 왜 필요한가 = `기본표지()` 는 «고른 게 없을 때»만 일한다. 그런데 편집기가 저장할 때
+//      `thumb: 'photo'` 를 **도장처럼 박아둬서** 이미 편집한 적 있는 편은 잣대가 못 건드린다.
+//   ⭐ 그래서 **도장을 지운다** — `'icon'` 을 새로 쓰지 않는다. 지우면 `기본표지()` 하나가 다시 정한다
+//      (나중에 잣대를 바꾸면 그 편들도 같이 따라온다).
+//   ⛔ 건드리는 범위 = **`source: 'photo'`**(＝공유받기·가져오기로 «사진»에서 온 것)뿐이다.
+//      기본 레시피는 `source: 'hankki'` 라 안 걸리고, 손으로 만든 편도 안 걸린다.
+//   ⚠️ 창업자가 알고 고른 값 = *"그것도 같이 고친다"* — 유저가 «일부러» 캡처를 표지로 둔 편도 바뀐다.
+//      ⭐ 사진은 안 지우니 「사진」 칩을 다시 누르면 그대로 돌아온다.
+//   · 1 (2026-09-02) = 처음.
+const COVER_V = 1
+function migrateCoverThumb(recipes, saved) {
+  if ((saved.coverV || 0) >= COVER_V) return { recipes, coverV: saved.coverV }
+  const out = recipes.map((r) => {
+    if (!r || r.source !== 'photo' || r.thumb !== 'photo') return r
+    const { thumb, ...나머지 } = r
+    return 나머지
+  })
+  return { recipes: out, coverV: COVER_V }
 }
 
 // 📔📔 **샘플 일기 한 장** (창업자 2026-08-12 *"샘플레시피는 지울 수 있게도 해줘
@@ -719,14 +755,16 @@ function initialState() {
     const politeMig = migratePolite(memoMig.recipes, saved)
     const qtyMig = migrateQtyOnly(politeMig.recipes, saved)
     const inboxMig = migrateInboxSorted(qtyMig.recipes, saved)
+    const coverMig = migrateCoverThumb(inboxMig.recipes, saved)
     const diary = withSample(saved)
     return {
-      recipes: reconcileCooked(inboxMig.recipes, diary),
+      recipes: reconcileCooked(coverMig.recipes, diary),
       seedV: mig.seedV,
       memoCleanV: memoMig.memoCleanV,
       politeV: politeMig.politeV,
       qtyOnlyV: qtyMig.qtyOnlyV,
       inboxV: inboxMig.inboxV,
+      coverV: coverMig.coverV,
       removedSeedIds: saved.removedSeedIds || [],
       folders: saved.folders
         ? (saved.folders.includes('아시안') ? saved.folders : [...saved.folders, '아시안'])
@@ -747,6 +785,7 @@ function initialState() {
     politeV: POLITE_V,
     qtyOnlyV: QTY_ONLY_V, // 처음 켠 사람은 고칠 게 없다 — 이사를 «이미 한 것»으로 둔다
     inboxV: INBOX_V,      // 〃 (임시보관함에 쌓인 게 아예 없다)
+    coverV: COVER_V,      // 〃 (캡처 표지가 박힌 게 아예 없다)
     removedSeedIds: [],
     folders: ['한식', '양식', '일식', '간식', '아시안'],
     profile: PROFILE_DEFAULT,

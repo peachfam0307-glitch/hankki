@@ -10,6 +10,7 @@ import GiftPackSheet, { giftRows } from './GiftPackSheet'
 import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
 import { cropRatio, imageRatio } from '../utils'
+import { 기본표지 } from '../store'
 import { FRAME_WINDOW } from '../data/frameWindows'
 import { StickerArt, stickerRatio, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, TEXT_SIZES, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
 
@@ -207,7 +208,7 @@ function loadDraft(id) {
 // ✍️ `writeFont`·`onWriteFont` = **본문 글씨체** 두 짝. 값은 부모(다이어리 화면)가 쥔다 —
 //   여기서 들고 있으면 종이에 그려지는 글씨와 서랍이 어긋난다(속지 고르기와 같은 이유).
 export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio = '1/1', paper = null, paperOverlay = null, paperEdit = null, title = '레시피 꾸미기', paperPick = null, onPaperPick = null, writeFont = '', onWriteFont = null, writeSize = '', onWriteSize = null }) {
-  const savedThumb = recipe.thumb || (recipe.image ? 'photo' : 'icon')
+  const savedThumb = 기본표지(recipe) // ⭐ 잣대는 `store.js` 한 곳
   // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
   const draft = loadDraft(recipe.id)
   const [items, setItemsRaw] = useState(() => (draft?.items || recipe.decor || []).map((d) => ({ ...d })))

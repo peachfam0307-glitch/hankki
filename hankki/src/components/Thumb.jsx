@@ -3,6 +3,7 @@ import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
 import { bgStyle, bgIsDark, bgAnim } from './Stickers'
 import { graphemes } from '../utils'
+import { 기본표지 } from '../store'
 // 🔍 사진 자리·배율 규칙 = 일기 속지 사진과 «같은 곳»에서 온다 (src/photoPan.js)
 import { clampZoom, photoImgStyle } from '../photoPan'
 // 🎴 「이 그림은 자랑카드다」의 문턱 = 화면과 클라우드가 **한 곳**을 쓴다 (2026-08-31)
@@ -37,7 +38,8 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
   //   ⭐ 값에 **그림 자체**를 담는다(참/거짓이 아니라) — 표지를 바꾸면 저절로 무효가 된다.
   //      (목록에서 카드 하나가 다른 레시피를 그리게 될 때 옛 판정이 남는 것을 막는다)
   const [카드였던그림, set카드였던그림] = useState(null)
-  const thumb = recipe.thumb || (recipe.image ? 'photo' : 'icon') // 예전 레시피 호환
+  // ⭐ 잣대는 `store.js` 의 `기본표지()` 하나 — 예전 레시피 호환도 그 안에 있다
+  const thumb = 기본표지(recipe)
   const showImg = thumb === 'photo' && recipe.image && !failed
   // 🎴🎴 **「사진」과 「이미 완성된 표지 한 장(자랑카드)」은 다른 물건이다.** (창업자 2026-08-18)
   //   📮 *"레꾸자랑카드를 표지로바꾼거 이렇게돼"* → *"아니 **원래 자랑카드전체가 표지여야하는데** 동그랗게됐다고"*

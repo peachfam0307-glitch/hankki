@@ -111,5 +111,46 @@ await p4.screenshot({ path: join(OUT, '4-레시피탭.png') })
 const 상태 = await p4.evaluate(() => JSON.parse(localStorage.getItem('hankki:v1')).recipes.filter((r) => /^zz-/.test(r.id)).map((r) => r.id + '=' + r.status))
 console.log('  씨앗 상태 =', 상태.join(' · '))
 
+// ⑤⑤ ⭐ 창업자가 콕 집은 자리 — 「사진 있는 덜 읽힌 것」을 열면 캡처가 «이미 펼쳐져» 있나
+const p5 = await ctx.newPage()
+await p5.goto('http://127.0.0.1:4472/hankki/', { waitUntil: 'networkidle' })
+await p5.waitForTimeout(1500)
+await p5.evaluate(() => {
+  const 그리기 = (w, h) => {
+    const c = document.createElement('canvas'); c.width = w; c.height = h
+    const x = c.getContext('2d')
+    x.fillStyle = '#101014'; x.fillRect(0, 0, w, h)
+    x.fillStyle = '#1c1c22'; x.fillRect(16, 60, w - 32, h - 120)
+    x.fillStyle = '#e8e8ee'; x.font = 'bold ' + Math.round(w / 18) + 'px sans-serif'
+    const 줄 = ['항정살 400g', '간장 3큰술', '설탕 1큰술', '', '1 핏물을 뺀다', '2 양념에 조린다', '3 깨를 뿌린다']
+    줄.forEach((t, k) => x.fillText(t, 34, 140 + k * Math.round(h / 10)))
+    return c.toDataURL('image/jpeg', 0.9)
+  }
+  const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+  s.recipes = [{ id: 'zz-shot', title: '사진 있는 덜 읽힌 것', status: 'unsorted', source: 'photo',
+    image: 그리기(760, 1400), savedAt: Date.now() + 5000, ingredients: ['항정살 400g'], steps: [], favorite: false, cooked: 0 },
+    ...(s.recipes || [])]
+  localStorage.setItem('hankki:v1', JSON.stringify(s))
+})
+await p5.close()
+const p6 = await ctx.newPage()
+await p6.goto('http://127.0.0.1:4472/hankki/', { waitUntil: 'networkidle' })
+await p6.waitForTimeout(3000)
+await p6.getByRole('button', { name: /임시보관함/ }).first().click()
+await p6.waitForTimeout(900)
+await p6.evaluate(() => {
+  const 줄 = [...document.querySelectorAll('.inbox-row')].find((e) => /사진 있는 덜 읽힌 것/.test(e.innerText))
+  const 칸 = 줄?.parentElement?.parentElement
+  ;[...(칸?.querySelectorAll('button') || [])].find((b) => /채우러 가기/.test(b.innerText))?.click()
+})
+await p6.waitForTimeout(1500)
+await p6.screenshot({ path: join(OUT, '5-사진있는것-편집.png') })
+const 사진칸 = await p6.evaluate(() => {
+  const img = [...document.querySelectorAll('img')].find((e) => /^data:image/.test(e.src) && e.getBoundingClientRect().height > 80)
+  const r = img?.getBoundingClientRect()
+  return { 사진뜸: !!img, 위: r ? Math.round(r.top) : null, 키: r ? Math.round(r.height) : null }
+})
+console.log('  펼쳐진 캡처 =', JSON.stringify(사진칸))
+
 await b.close(); srv.close()
 console.log('\n📸 찍었다 →', OUT)

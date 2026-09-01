@@ -104,7 +104,20 @@ const 심은값 = await p0.evaluate(() => {
   //    앱이 한 번 뜨면 `initialState` 가 «처음 켠 사람»으로 보고 `inboxV` 를 박아 둔다.
   //    그대로 두고 씨앗만 심으면 **이사가 «이미 끝난 것»으로 건너뛰어** 아무것도 안 옮겨진다
   //    (그러면 판은 초록불인데 창업자 폰은 그대로 — 제일 나쁜 거짓 초록불이다).
+  // 🖼 2026-09-02 창업자 판정 — 「캡처는 표지 안 쓴다」
+  //   ⓐ `zz-big` = 도장(`thumb`)이 «없는» 편 → 잣대(`기본표지`)가 바로 아이콘으로 그린다
+  //   ⓑ 아래 `zz-stamp` = 편집기가 이미 `thumb: 'photo'` 를 «박아둔» 옛 폰 흉내 → 이사가 도장을 지워야 한다
+  s.recipes.push({ id: 'zz-stamp', title: '판정용 캡처표지', status: 'sorted', source: 'photo',
+    thumb: 'photo', image: 작은사진, savedAt: 이제 - 5000,
+    ingredients: ['콩나물 300g', '들기름 1큰술'], steps: ['씻어요', '무쳐요'], favorite: false, cooked: 0 })
+  //   ⓐ 도장이 «없는» 편 — 잣대가 바로 아이콘으로 그려야 한다
+  //   ⛔ `zz-big` 을 쓰면 안 된다 — 그건 끝까지 `unsorted` 라 «레시피 탭 격자에 아예 없다»(못 재고 빨간불)
+  s.recipes.push({ id: 'zz-nostamp', title: '판정용 도장없는캡처', status: 'sorted', source: 'photo',
+    image: 작은사진, savedAt: 이제 - 6000,
+    ingredients: ['콩나물 300g', '들기름 1큰술'], steps: ['씻어요', '무쳐요'], favorite: false, cooked: 0 })
   delete s.inboxV
+  // ⛔ 이것도 지워야 이사가 돈다 — 안 지우면 «이미 끝난 것»으로 건너뛰어 거짓 초록불이 된다
+  delete s.coverV
   localStorage.setItem('hankki:v1', JSON.stringify(s))
   return { 큰: 큰사진.length, 작은: 작은사진.length }
 })
@@ -274,16 +287,27 @@ const 편집 = await p2.evaluate(() => {
     큰단추: (큰?.innerText || '').trim(),
     옛이름: /정리 완료/.test(document.body.innerText),
     붙었나: 띠 ? getComputedStyle(띠).position === 'sticky' : false,
-    // 📷 덜 정리된 것 ＋ 사진이 있으면 «이미 고정된 채로» 열려야 한다
-    사진고정: !!document.querySelector('img[alt="캡처 원본"], .shot-pin, img[src^="data:image"]'),
+    // 📷📷 덜 정리된 것 ＋ 사진이 있으면 «이미 고정된 채로» 열려야 한다 (창업자 2026-09-02)
+    //   ⛔⛔ 옛 잣대 = `img[src^="data:image"]` — **썸네일 미리보기 한 장만 있어도 초록불**이었다.
+    //      「고정 창이 열렸나」를 물어야 하는데 「그림이 화면에 있나」를 물었다(규칙 18 ⓘ).
+    //   ✅ 이제 «접기 손잡이»를 본다 — 그 단추는 `pin === 'photo'` 일 때만 그려진다.
+    사진고정: !!document.querySelector('button[aria-label="캡처 사진 접기"]'),
+    //   ＋ 진짜로 «크게» 그려졌나(썸네일은 폭 100px 대다)
+    사진폭: Math.round([...document.querySelectorAll('img')]
+      .filter((e) => /^data:image/.test(e.src))
+      .reduce((m, e) => Math.max(m, e.getBoundingClientRect().width), 0)),
   }
 })
 if (chk('「채우러 가기」로 편집기가 열렸다', 갔나 && 편집.열렸나, 편집.큰단추 ? `큰 단추 = 「${편집.큰단추}」` : '(못 열림)')) {
   chk('⭐⭐ 큰 단추가 «「저장」»이다 (창업자가 못 찾던 그것)', 편집.큰단추 === '저장', `「${편집.큰단추}」`)
   chk('⭐ 「정리 완료」가 화면에 «한 글자도» 없다', !편집.옛이름)
   chk('⭐ 상단바가 «붙어 있다» (스크롤해도 「저장」이 안 떠내려간다)', 편집.붙었나)
+  // 📷📷 창업자가 콕 집은 자리 — *"임시보관함에 제대로 안읽은 레시피를 네가 편집할때 사진띄워놓겠다며"*
+  //   ⛔⛔ 이 값은 2026-09-02 까지 «계산만 하고 판정을 안 했다» — 지키는 줄이 0이었다(규칙 18 ⓘ).
+  chk('⭐⭐ 캡처가 «이미 펼쳐진 채로» 열린다 (덜 읽힌 것 ＋ 사진 있음)', 편집.사진고정)
+  chk('⭐ 그 캡처가 «크게» 그려졌다 (썸네일이 아니다)', 편집.사진폭 >= 300, `${편집.사진폭}px`)
 } else {
-  실패 += 3; 실패목록.push('편집기를 못 열어 「저장」 칸을 «판정하지 않았다»(규칙 18 ⓘ)')
+  실패 += 5; 실패목록.push('편집기를 못 열어 「저장」·「사진」 칸을 «판정하지 않았다»(규칙 18 ⓘ)')
 }
 
 // ── 「그대로 저장」을 누르면 «레시피 탭 화면»에 뜨나 (반쪽도 유저가 정하면 나간다) ──
@@ -311,6 +335,35 @@ if (chk('「그대로 저장」을 눌렀고 레시피 탭이 열렸다', 밀었
   chk('⭐⭐ 유저가 «직접 민» 반쪽이 레시피 탭 화면에 뜬다', 탭2.includes('판정용 반쪽만읽은것'))
 } else {
   실패++; 실패목록.push('「그대로 저장」 결과를 «판정하지 않았다»(규칙 18 ⓘ)')
+}
+
+// ── 🖼 캡처가 «표지»가 되지 않는다 (창업자 판정 2026-09-02) ──
+//   📮 창업자 = *"저 자리는 음식아이콘이 들어가야하는데 편집끝나도 사진으로 남는거야?"* → **캡처는 표지 안 쓴다**
+//   ⭐ 화면으로 잰다 — 저장소만 보면 「도장이 지워졌나」까지밖에 못 말한다(⛔그건 「카드가 아이콘이다」가 아니다)
+const 표지 = await p4.evaluate(() => {
+  const 저장소 = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+  const 재기 = (제목, id) => {
+    const 이름 = [...document.querySelectorAll('.name')].find((e) => e.innerText.trim() === 제목)
+    const 카드 = 이름?.closest('.grid-card') || 이름?.parentElement
+    if (!카드) return null
+    // ⛔⛔ 「data: 그림이 있나」로 재면 «안 된다» — 빌드가 작은 아이콘 PNG 를 `data:` 로 인라인한다.
+    //    음식 아이콘도 data: 라서 늘 빨간불이 된다(규칙 18 ⓘ · 2026-09-02 에 실제로 밟았다).
+    // ✅ 「그 레시피의 «사진 그 자체»가 쓰였나」를 본다 — 그게 곧 「캡처가 표지다」이다.
+    const 사진 = (저장소.recipes || []).find((r) => r.id === id)?.image || ''
+    const 그림들 = [...카드.querySelectorAll('img')].map((e) => e.src)
+    return { 사진쓰나: !!사진 && 그림들.some((s) => s === 사진), 그림수: 그림들.length }
+  }
+  const st = (저장소.recipes || []).find((r) => r.id === 'zz-stamp')
+  return { 도장없음: 재기('판정용 도장없는캡처', 'zz-nostamp'), 도장있던것: 재기('판정용 캡처표지', 'zz-stamp'),
+    저장된도장: st ? (st.thumb ?? '(지워짐)') : '(못 찾음)', 사진남았나: !!st?.image }
+})
+if (chk('표지 칸을 잴 카드 둘을 찾았다', !!표지.도장없음 && !!표지.도장있던것)) {
+  chk('⭐⭐ 캡처가 «표지»가 아니다 (도장 없던 편)', 표지.도장없음.사진쓰나 === false)
+  chk('⭐⭐ 이미 박힌 캡처 표지도 «풀렸다» (규칙 18 ⓙ · 창업자 판정)', 표지.도장있던것.사진쓰나 === false,
+    `저장된 thumb = ${표지.저장된도장}`)
+  chk('⭐ 사진을 «지우지는» 않았다 — 「사진」 칩으로 되돌릴 수 있다', 표지.사진남았나)
+} else {
+  실패 += 3; 실패목록.push('표지 카드를 못 찾아 «판정하지 않았다»(규칙 18 ⓘ)')
 }
 
 // ─────────────────────────────────────────────

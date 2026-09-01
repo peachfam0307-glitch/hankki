@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from 'react'
 // 새 레시피 작성 중 내용을 자동 임시저장하는 키 — 앱이 껐다 켜져도(인스타 링크 따러 갔다 오는 등)
 // 쓰던 내용이 날아가지 않게 한다. 저장 완료하면 지운다.
 const DRAFT_KEY = 'hankki:editorDraft'
-import { useStore, newId } from '../store'
+import { useStore, newId, 기본표지 } from '../store'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
@@ -181,7 +181,8 @@ export default function EditorScreen({ id, prefill }) {
       title,
       // 썸네일 표시 방식: 기본은 아이콘(사진은 '글자 읽기'용으로 분리).
       // 예전 레시피는 이미지가 있으면 사진 유지.
-      thumb: e?.thumb || (e?.image ? 'photo' : 'icon'),
+      // ⭐ 잣대는 `store.js` 의 `기본표지()` 하나 — 캡처(source: 'photo')는 표지로 안 쓴다
+      thumb: 기본표지(e || {}),
       icon: e?.icon || '',
       label: e?.label || '',
       image: e?.image ?? p.image ?? null,
