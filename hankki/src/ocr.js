@@ -4,10 +4,6 @@
 // 3순위: tesseract.js (어디서나 동작·오프라인). LSTM 엔진 + 전처리.
 import Tesseract, { createWorker } from 'tesseract.js'
 import { normalizeNumerals } from './ocrCorrect'
-// 🏷 「로그인해 둔 적이 있나」 표식만 읽는다 — ⛔파이어베이스를 «안» 받는다.
-//   cloud.js 는 파이어베이스를 `await import` 로 늦게 부르고, 이 함수는 localStorage 한 줄만 본다.
-//   (로그인 안 한 사람에게 167KB 를 지우지 않으려고 cloud.js:102 가 바로 그 목적으로 만든 것)
-import { 로그인해뒀나, 내구글번호 } from './cloud'
 
 // ── Google Vision OCR 프록시 ──────────────────────────────────
 // 서버(Cloudflare Worker)가 API 키를 숨기고 Vision을 호출해 '텍스트'만 돌려준다.
@@ -79,9 +75,7 @@ async function ocrViaProxy(dataUrl, onProgress, batch) {
     resp = await fetch(OCR_PROXY_URL, {
       method: 'POST',
       headers,
-      // 🔑 로그인했으면 «구글 번호»를 같이 보낸다 — 서버가 그걸로 상한(10 ↔ 30)을 가른다.
-      //   ⛔ 없으면 아예 «안 보낸다» — 빈 값을 보내면 서버가 「로그인했는데 번호가 빈 사람」으로 오해한다.
-      body: JSON.stringify({ image: dataUrl, uid: deviceId(), batch: batch || '', ...(내구글번호() ? { sub: 내구글번호() } : {}) }),
+      body: JSON.stringify({ image: dataUrl, uid: deviceId(), batch: batch || '' }),
     })
   } catch (e) {
     그만기어() // ⛔ 던지기 전에 반드시 멈춘다 — 안 그러면 폴백이 도는 내내 막대가 혼자 기어간다
@@ -104,20 +98,11 @@ async function ocrViaProxy(dataUrl, onProgress, batch) {
 }
 
 // ── 📢 AI 스캔 남은 장수 ────────────────────────────────────
-// 서버(worker)가 응답에 `left` 를 실어 보낸다 — 남은 수 ＋ **상한까지**.
-//   welcome = 🎁 웰컴 잔량(달이 바뀌어도 남는다) · month = 웰컴을 다 쓴 뒤의 그 달 잔량
-//   cap/anon/acct/signed = 지금 상한 · 비로그인 상한 · 로그인 상한 · 로그인했나
+// 서버(worker)가 응답에 { left: { welcome, month } } 를 실어 보낸다.
+//   welcome = 🎁 웰컴 20장의 잔량(첫 1회·달이 바뀌어도 남는다) · month = 웰컴을 다 쓴 뒤의 그 달 잔량
 // ⭐ note 와 달리 «읽어도 지우지 않는다» — 화면에 상시 떠 있어야 하니까.
-//
-// ✅✅ **[창업자 확정 2026-09-01] 비로그인 10 · 로그인 30** — *"10 30 그렇게 가자"*
-//   ⭐ 유저가 보는 말 = **「로그인하면 열쇠 20개를 더 드려요」** (못 받는 게 아니라 «받는» 말)
-//
-// ⛔⛔ **숫자를 여기에 «글자로» 박지 않는다 — 서버가 알려주는 값을 쓴다.**
-//   📌 그 전엔 앱과 워커가 «각자» 30 을 적어 두고 손으로 맞췄다. 10/30 이 되며 어긋날 자리가 두 배가 됐다.
-//   ⭐ 아래 둘은 **서버 답을 한 번도 못 받았을 때만** 쓰는 «첫 화면용» 값이다.
-//      ⛔ 차감·한도 판정에는 절대 안 쓴다 — 그건 언제나 서버가 정한다.
-const WELCOME_ANON = 10 // ⛔ worker.js 의 LIMITS.WELCOME_ANON 과 같아야 한다
-const WELCOME_ACCT = 30 // ⛔ worker.js 의 LIMITS.WELCOME_ACCT 과 같아야 한다
+// ⚠️ 아직 한 번도 안 써 본 사람은 서버 응답이 없다 → 웰컴 20장이 «그대로»인 게 맞으므로 그 값으로 시작한다.
+const WELCOME_FREE = 30 // ⛔ worker.js 의 LIMITS.WELCOME_FREE 와 같아야 한다 (창업자 확정 2026-08-31 · 20→30)
 const MONTHLY_FREE = 5 // ⛔ worker.js 의 LIMITS.PER_USER_MONTHLY 와 같아야 한다
 const LEFT_KEY = 'hankki:ocrLeft'
 
@@ -143,84 +128,11 @@ export const keyCount = (n) => `${KEY_SHORT} ${n}${KEY_UNIT}`
 function saveOcrLeft(left) {
   const w = Math.max(0, parseInt(left.welcome, 10) || 0)
   const m = Math.max(0, parseInt(left.month, 10) || 0)
-  // 🔢 상한도 같이 담는다 — 서버가 준 값이 언제나 이긴다(앱이 따로 세지 않는다)
-  const 수 = (v, 기본) => (Number.isFinite(parseInt(v, 10)) ? Math.max(0, parseInt(v, 10)) : 기본)
   try {
-    localStorage.setItem(LEFT_KEY, JSON.stringify({
-      welcome: w,
-      month: m,
-      cap: 수(left.cap, null),
-      bonus: 수(left.bonus, null),   // 🎁 행동으로 받은 개수 — 가져오기 목록이 「몇 개 받았나」에 쓴다
-      anon: 수(left.anon, null),
-      acct: 수(left.acct, null),
-      signed: left.signed === true,
-    }))
+    localStorage.setItem(LEFT_KEY, JSON.stringify({ welcome: w, month: m }))
   } catch {
     /* noop */
   }
-}
-
-// ── 🎁🎁 행동으로 받는 열쇠 다섯 (창업자 확정 2026-08-31) ─────────────
-// 📮 창업자 = *"4개 왜냐면 우리 기능을 하나씩 써봤으면 좋겠어서"* · *"다 1회한정으로"*
-// ⭐ 이건 「열쇠를 주는 일」이 아니라 **「앱을 안내하는 일」**이다.
-//
-// ⛔⛔ **「처음인가」를 폰이 판정하지 않는다.** 폰은 «했다»만 보내고 처음인지는 **서버가 정한다.**
-//    폰이 세면 앱을 지웠다 깔 때마다 다시 받고, 폰 저장소를 만지면 그대로 조작된다.
-// ⭐ 서버는 **멱등**이다 — 같은 행동을 몇 번 보내도 한 번만 준다. 그래서 «막 보내도 안전»하다.
-export const EARN = { 자랑: '자랑', 레꾸: '레꾸', 일기: '일기', 요리: '요리', 냉장고: '냉장고' }
-const 큐칸 = 'hankki:earnQ'
-const 큐읽기 = () => { try { const v = JSON.parse(localStorage.getItem(큐칸) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } }
-const 큐쓰기 = (a) => { try { localStorage.setItem(큐칸, JSON.stringify(a.slice(0, 20))) } catch { /* noop */ } }
-
-async function 한번보내기(행동) {
-  const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
-  try { const f = localStorage.getItem('hankki:founder'); if (f) headers['x-hankki-founder'] = f } catch { /* noop */ }
-  const resp = await fetch(OCR_PROXY_URL, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ earn: 행동, uid: deviceId(), ...(내구글번호() ? { sub: 내구글번호() } : {}) }),
-  })
-  if (!resp.ok) throw new Error('earn_http_' + resp.status)
-  const d = await resp.json().catch(() => null)
-  if (d && d.left) saveOcrLeft(d.left)
-  return d
-}
-
-// 🎁 행동 하나를 알린다. 되돌려주는 값 = 「방금 받았나」(true 면 토스트를 띄운다).
-//   ⛔ 실패해도 «절대 던지지 않는다» — 이건 곁일이라, 이것 때문에 유저 흐름이 끊기면 안 된다.
-//   ⭐ 못 보내면 폰에 쌓아 두고 다음에 다시 보낸다(🕳6 — 오프라인·비행기모드).
-export async function 열쇠받기(행동) {
-  if (!EARN[행동]) return false
-  try {
-    const d = await 한번보내기(행동)
-    return !!(d && d.준것)
-  } catch {
-    const q = 큐읽기()
-    if (!q.includes(행동)) 큐쓰기([...q, 행동])
-    return false
-  }
-}
-
-// 🔁 쌓아둔 것을 다시 보낸다 — 앱을 열 때·OCR 을 부를 때 조용히 돈다.
-//   ⛔ 결과를 화면에 안 띄운다 — 유저는 이미 그 행동을 잊었다. 숫자만 조용히 맞춘다.
-export async function 밀린열쇠보내기() {
-  const q = 큐읽기()
-  if (!q.length) return
-  const 남은 = []
-  for (const 행동 of q) {
-    try { await 한번보내기(행동) } catch { 남은.push(행동) }
-  }
-  큐쓰기(남은)
-}
-
-// 🎁 「로그인하면 몇 개 더 받나」 — ⛔문구에 «20» 을 글자로 박지 않는다.
-//   서버가 두 상한을 다 주므로 그 차이를 쓴다. 숫자를 바꿔도 문구가 안 낡는다.
-export function 로그인보너스() {
-  let v = null
-  try { v = JSON.parse(localStorage.getItem(LEFT_KEY) || 'null') } catch { v = null }
-  const a = v && Number.isFinite(v.anon) ? v.anon : WELCOME_ANON
-  const b = v && Number.isFinite(v.acct) ? v.acct : WELCOME_ACCT
-  return Math.max(0, b - a)
 }
 
 // 남은 장수 = { welcome, month, total, unknown }
@@ -234,12 +146,7 @@ export function getOcrLeft() {
     v = null
   }
   if (!v || typeof v.welcome !== 'number') {
-    // ⚠️ 서버 답을 «한 번도» 못 받았다(＝아직 안 써 봤다) → 첫 화면에 보여줄 값을 고른다.
-    //   ⭐ 로그인해 뒀으면 30, 아니면 10. `로그인해뒀나()` 는 파이어베이스를 안 받고 판정하는 «표식»이라
-    //      로그인 안 한 사람에게 167KB 를 지우지 않는다(cloud.js:102 가 그 목적으로 만든 것).
-    //   ⛔⛔ **표시에만 쓴다. 차감·한도 판정에는 절대 안 쓴다** — 그건 언제나 서버가 정한다.
-    const 첫값 = 로그인해뒀나() ? WELCOME_ACCT : WELCOME_ANON
-    return { welcome: 첫값, month: MONTHLY_FREE, total: 첫값, unknown: true }
+    return { welcome: WELCOME_FREE, month: MONTHLY_FREE, total: WELCOME_FREE, unknown: true }
   }
   return { ...v, total: v.welcome > 0 ? v.welcome : v.month, unknown: false }
 }

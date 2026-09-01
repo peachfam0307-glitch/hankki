@@ -10,8 +10,6 @@ import { parseRecipeText, keepRaw } from '../parseRecipe'
 //       이제 `linkReader.js` 를 부르는 곳은 앱 전체에 «0» 이다. → `App.jsx` 「⏳⏳ 되살릴 것 ④」
 import { guessFoodIcon } from '../components/FoodIcon'
 import { getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
-import KeyBadge from '../components/KeyBadge'
-import EarnList from '../components/EarnList'
 import Icon from '../components/Icon'
 import Portal from '../components/Portal'
 // 🐻 [2026-08-28] 잔량 띠의 캐릭터(펭펭 돋보기 · 둘이 하트)를 **뺐다** — 창업자 *"그림 박스하나 없어져"*.
@@ -423,12 +421,28 @@ export default function ImportScreen() {
                (그러면 5개가 되는 달에 「속았다」가 된다) 옆에 「매달 무료 5개」가 붙어 있어 저절로 갈린다.
                그래서 옛 「처음 한 번만 드리는 20개예요」 문장을 뺄 수 있었다.
             ⛔ 안내 화면(flow)에선 안 띄운다 — 거기선 「무엇을 누르나」가 주인공이다. */}
-        {/* 🔑 [2026-09-01] 알약을 «부품»으로 뺐다 — 설정 화면도 «같은 것»을 쓴다(창업자 지시).
-            ⛔ 복사해 두면 한쪽만 고쳤을 때 갈라진다. 모양·문구·창업자 ∞ 가 한 곳에 있다. */}
         {!flow ? (
-          <KeyBadge />
+          <div
+            className="imp-key"
+            role="img"
+            aria-label={`무료 ${KEY_NAME} ${ocrLeft.total}${KEY_UNIT} 남았어요 · 매달 무료 5${KEY_UNIT}`}
+          >
+            {/* 🔑🔑 [창업자 2026-08-29] **알약을 «위»로 올리고 그 아래 열쇠를 크게.**
+                📮 *"그리고 위에 열쇠그림 좀 더 크게 만들어줘."* · *"매달무료 5개 아래에 열쇠크게 숫자 넣으면?"*
+                ⭐ 한 줄로 나란히 두면 열쇠를 키우는 순간 알약이 밀려 320px 에서 넘친다.
+                   두 줄로 쪼개면 **가로가 오히려 좁아져서** 열쇠를 마음껏 키울 수 있다.
+                ⛔ 알약이 «위»다 — 창업자가 그 순서로 말했고, 뜻으로도 「매달 얼마」가 조건이고
+                   「지금 몇 개」가 결과라 위→아래로 읽힌다. */}
+            <span aria-hidden="true">매달 무료 5{KEY_UNIT}</span>
+            <div className="imp-key-now">
+              {/* ⚠️ 높이만 고정하고 폭은 비율대로 — 열쇠 107×220 · 열쇠구멍 213×220 으로 가로세로가 다르다 */}
+              <img src={ocrLeft.total > 0 ? uiKeyOne : uiKeyHole} alt="" aria-hidden="true" draggable={false} />
+              <b aria-hidden="true">{ocrLeft.total}</b>
+            </div>
+          </div>
         ) : <div style={{ width: 40 }} />}
       </div>
+
       {/* ⏳ 서버 되면 되살릴 것 ③ — 여기 「링크에서 내용을 읽는 중…」 기다림 화면이 있었다.
           위 ②를 뺐으니 이 화면을 띄울 사람이 없어져서 같이 뺐다. */}
 
@@ -460,10 +474,6 @@ export default function ImportScreen() {
               <span>그래도 <b>무료로 계속</b> 쓸 수 있어요</span>
             </div>
           </div>
-
-          {/* 🎁 [창업자 판정 2026-09-01] 행동 열쇠 다섯 — 「토스트 ＋ 가져오기 목록」 중 목록 쪽.
-              ⭐ 안 해본 기능이 눈에 보여야 「해볼까」가 된다 — 창업자가 열쇠를 주려는 이유가 그거였다. */}
-          <EarnList />
 
 
           {/* 📦📦 네 갈래 — [창업자 2026-08-28] «각각 박스» ＋ 넉넉한 간격

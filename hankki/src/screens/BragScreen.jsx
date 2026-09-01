@@ -23,7 +23,6 @@ import uiHandPoint from '../assets/ui/hand_point.png'
 import uiGomProud from '../assets/ui/wave/gom_proud.png' // 🐻 꼬르곰(뿌듯) — 레꾸자랑 상단
 import TabTips from '../components/TabTips'
 import TabTalk from '../components/TabTalk'
-import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 
 // 🎴 카드자랑 탭 — 바이럴 진입점. 내 레시피를 골라 자랑한다.
 // ⭐ 창업자 방향: 주인공은 '내가 꾸민 표지', 랜덤 카드는 옵션(메인 아님).
@@ -137,9 +136,6 @@ export default function BragScreen() {
       if (res && res.pending) 띄울시트 = res.pending   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
       // 📱 표지가 나갔고 레시피가 한 장 남았다 → 「레시피도 보내기」를 한 번 더 청한다(창업자 "ㄴ으로 하자")
       else if (res && res.shared === true && res.다음) 띄울시트 = { ...res.다음, 이어보내기: true }
-      // 🎁 레꾸자랑을 «진짜로» 보냈다 — 평생 1회(서버가 판정)
-      //   ⛔ 실패·저장 폴백에는 안 준다 — 「보내기」를 해본 게 아니다
-      if (res && res.shared === true) 열쇠받기(EARN.자랑).then((받음) => { if (받음) nav.showToast(`레꾸자랑을 처음 보냈어요 · ${KEY_NAME} 1${KEY_UNIT}를 더 받았어요`, 5200) })
       else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
       // 🗣🗣 **여기가 빠져 있었다** — 창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 «아예» 못봤어"*

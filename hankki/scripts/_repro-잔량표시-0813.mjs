@@ -203,16 +203,11 @@ chk('🔒 원본의 total 규칙 = 웰컴이 남으면 웰컴', /v\.welcome > 0 
 chk('🔒 원본은 읽어도 «지우지 않는다»(note 처럼 소비하면 뱃지가 사라진다)', /_ocrLeft = null/.test(src), 'false')
 
 // ⭐⭐ 앱과 서버가 «같은 숫자»를 봐야 한다 — 어긋나면 유저에게 «거짓 잔량»을 보여준다.
-// ✅✅ [2026-09-01] 웰컴이 «둘»이 됐다 — 비로그인 10 · 로그인 30(창업자 확정 «10 30 그렇게 가자»)
-//   ⛔ 그래서 «두 값 다» 대조한다. 하나만 보면 나머지 하나가 조용히 어긋난다.
-const appA = /const WELCOME_ANON = (\d+)/.exec(src)?.[1]
-const appC = /const WELCOME_ACCT = (\d+)/.exec(src)?.[1]
+const appW = /const WELCOME_FREE = (\d+)/.exec(src)?.[1]
 const appM = /const MONTHLY_FREE = (\d+)/.exec(src)?.[1]
-const wkA = /WELCOME_ANON:\s*(\d+)/.exec(wk)?.[1]
-const wkC = /WELCOME_ACCT:\s*(\d+)/.exec(wk)?.[1]
+const wkW = /WELCOME_FREE:\s*(\d+)/.exec(wk)?.[1]
 const wkM = /PER_USER_MONTHLY:\s*(\d+)/.exec(wk)?.[1]
-chk(`🔒⭐ 비로그인 웰컴이 앱(${appA})과 서버(${wkA})에서 같다`, appA, wkA)
-chk(`🔒⭐ 로그인 웰컴이 앱(${appC})과 서버(${wkC})에서 같다`, appC, wkC)
+chk(`🔒⭐ 웰컴 장수가 앱(${appW})과 서버(${wkW})에서 같다`, appW, wkW)
 chk(`🔒⭐ 월 무료 장수가 앱(${appM})과 서버(${wkM})에서 같다`, appM, wkM)
 
 console.log(`\n   ── ${ok}칸 통과 · ${ng}칸 어긋남 ──\n`)

@@ -1,4 +1,9 @@
-// 🚨🚨🚨 ═══ 이 파일을 «그대로» Cloudflare 에 올리지 말 것 ═══════════
+// ✅✅✅ ═══ 이 파일이 «올리는 판»이다 (자동 생성 · 손으로 고치지 말 것) ═══
+//   📌 원본 = ocr-proxy/worker.js · 만드는 법 = node scripts/_워커올릴판-만들기.mjs
+//   ⭐ 원본과 다른 곳은 «한 곳»뿐 — 「묶음 1장」을 껐다(창업자 확정 2026-08-13).
+// ═══════════════════════════════════════════════════════════════════
+// (아래는 원본 경고 그대로 — 왜 껐는지가 적혀 있다)
+// 🚨 ═══ 원본 파일은 «그대로» Cloudflare 에 올리지 말 것 ═══════════
 //
 //   ⛔ **이 파일 ≠ 지금 도는 서버.** 아래 「한 묶음 = 1장」(batch) 코드는
 //      **만들어만 두고 서버엔 «안 올렸다».** 창업자가 리스크를 듣고 물렸다.
@@ -125,23 +130,11 @@ export default {
       const t = new Date()
       const ymq = t.toISOString().slice(0, 7)
       const ymdq = t.toISOString().slice(0, 10)
-      // 👤 [창업자 지시 2026-09-01] 창업자 몫을 갈라 보여준다 — 그래야 「유저가 얼마나 쓰나」가 보인다.
-      //   ⛔ 유저 «개인별»은 여전히 안 준다(바로 위 주석 그대로).
-      const [월, 일, 월창, 일창] = await Promise.all([
-        num(kvq, `m:${ymq}`), num(kvq, `d:${ymdq}`),
-        num(kvq, `mf:${ymq}`), num(kvq, `df:${ymdq}`),
-      ])
+      const [월, 일] = await Promise.all([num(kvq, `m:${ymq}`), num(kvq, `d:${ymdq}`)])
       return json({
         달: ymq,
-        월: {
-          쓴것: 월, 상한: LIMITS.MONTHLY_GLOBAL, 남음: Math.max(0, LIMITS.MONTHLY_GLOBAL - 월),
-          퍼센트: Math.round((월 / LIMITS.MONTHLY_GLOBAL) * 100),
-          창업자: 월창, 유저: Math.max(0, 월 - 월창),   // ⭐ 여기가 창업자가 물은 그 칸이다
-        },
-        오늘: {
-          쓴것: 일, 상한: LIMITS.DAILY_GLOBAL, 남음: Math.max(0, LIMITS.DAILY_GLOBAL - 일),
-          창업자: 일창, 유저: Math.max(0, 일 - 일창),
-        },
+        월: { 쓴것: 월, 상한: LIMITS.MONTHLY_GLOBAL, 남음: Math.max(0, LIMITS.MONTHLY_GLOBAL - 월), 퍼센트: Math.round((월 / LIMITS.MONTHLY_GLOBAL) * 100) },
+        오늘: { 쓴것: 일, 상한: LIMITS.DAILY_GLOBAL, 남음: Math.max(0, LIMITS.DAILY_GLOBAL - 일) },
         웰컴: LIMITS.WELCOME_FREE,
         매월: LIMITS.PER_USER_MONTHLY,
       }, 200, cors)
@@ -198,9 +191,11 @@ export default {
     //   ⚠️ KV 는 최종 일관성이라 방금 쓴 값이 바로 안 보일 수 있다. 다만 우리 앱은 장마다
     //      «사람이 자르는 화면»이 끼어 요청 사이에 초 단위 간격이 있어 실제로는 거의 문제되지 않는다.
     //      설령 못 읽어도 그 묶음이 1장 더 세질 뿐 — 지금(장당 차감)보다 나빠지지 않는다.
-    const batch = String(body.batch || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40)
-    let sameBatch = false
-    if (kv && batch) sameBatch = (await kv.get(`b:${uid}:${batch}`)) !== null
+    // 🔒 [올릴 판] 「묶음 1장」을 «끈다» — 창업자 확정 2026-08-13 = "그냥 1장당 1장 카운트하기로 정했어".
+    //   ⛔ 이 두 줄을 되살리지 말 것. 되살리면 화면 문구가 거짓말이 되고 전역 900이 빨리 찬다.
+    //   (원본은 저장소 ocr-proxy/worker.js · 이 판은 scripts/_워커올릴판-만들기.mjs 가 만든다)
+    const batch = ''
+    const sameBatch = false
 
     if (kv) {
       const [ipC, dayC, monC, userC] = await Promise.all([
@@ -227,16 +222,6 @@ export default {
         inc(kv, `ip:${ip}:${minute}`, 120),          // 2분 뒤 만료
         inc(kv, `d:${ymd}`, 60 * 60 * 26),           // ~26시간
         inc(kv, `m:${ym}`, 60 * 60 * 24 * 40),       // ~40일
-        // 👤👤 **[창업자 지시 2026-09-01] 창업자 몫을 «따로» 센다.**
-        //   📮 *"나와 유저들을 분리해서 얼마나 어떻게 사용하는지를 볼 수 있어야 정확한 판단이돼."*
-        //   ⭐ 새로 «모으는» 정보가 0이다 — 열쇠(FOUNDER_SECRET)로 이미 갈라 알고 있다(위 `founder`).
-        //      칸을 하나 더 셀 뿐이라 Play 데이터 보안 신고를 안 건드린다.
-        //   ⛔ 전체(`d:`·`m:`)는 «그대로» 둔다 — 상한이 그 값을 보므로 잣대를 흔들면 안 된다.
-        //   ⛔ 유저 개인별은 안 본다(`u:` 는 한도용이지 «보려고» 만든 게 아니다 — 위 주석 참조).
-        ...(founder ? [
-          inc(kv, `df:${ymd}`, 60 * 60 * 26),
-          inc(kv, `mf:${ym}`, 60 * 60 * 24 * 40),
-        ] : []),
         // ⭐ 웰컴을 쓰는 동안에도 «월 카운터를 같이» 올린다 —
         //    그래야 웰컴 20장을 다 쓴 순간 월 카운터가 5를 넘어 「그 달은 끝」이 된다.
         //    (창업자 확정: *"웰컴20장 다쓰면 무료5장은 소진한거니까 기본인식으로"*)

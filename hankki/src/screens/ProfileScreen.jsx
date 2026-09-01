@@ -5,7 +5,6 @@ import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL, LAB_SURVEY_URL, LAB_BUG_URL } from '../version'
 import Icon from '../components/Icon'
-import KeyBadge from '../components/KeyBadge'
 import TabTips from '../components/TabTips'
 import EmojiPicker from '../components/EmojiPicker'
 import FoodIconPicker from '../components/FoodIconPicker'
@@ -362,9 +361,6 @@ export default function ProfileScreen() {
           <div className="h-title">설정</div>
           <TabTips tab="profile" />
         </div>
-        {/* 🔑 [창업자 2026-09-01] *"설정에도 열쇠를 크게 하나 붙이면 좋겠어. **가져오기랑 같은 자리에**"*
-            ⭐ 가져오기와 «같은 부품»이다 — 모양도 숫자도 어긋날 수가 없다. */}
-        <KeyBadge />
       </div>
 
       <div className="pad">
