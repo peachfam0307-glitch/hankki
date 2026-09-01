@@ -4505,3 +4505,61 @@ html, body { overscroll-behavior: none; }
   justify-content: center;
 }
 .diary-flip:disabled { opacity: 0.28; }
+
+/* 🎁 로그인 화면의 「열쇠 20개 더」 한 줄 — 창업자 2026-09-01 *"잘보이게에~@@"*
+   ⭐ 초록 알약(`.imp-key span`)과 «같은 결»로 둔다 — 앱 안에서 「좋은 소식」은 늘 이 색이다.
+   ⛔ 단추보다 크게 만들지 않는다 — 주인공은 구글 단추다. */
+.cg-gift {
+  display: flex;
+  /* ⛔ 가운데 정렬이면 두 줄일 때 열쇠가 «줄 사이»에 뜬다 — 첫 줄에 맞춘다(규칙 21 로 보고 잡았다) */
+  align-items: flex-start;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 13px;
+  padding: 11px 14px;
+  /* ⛔ 알약(999px)이 아니라 «상자»다 — 2026-09-01 부터 두 줄이 되어 알약이면 옆이 뾰족해진다
+     (창업자가 「지금 10개 · 로그인하면 20개 더」까지 적으라고 했다) */
+  border-radius: 14px;
+  background: #eaf4e4;
+  border: 1px solid #cfe3c4;
+}
+.cg-gift img { height: 24px; width: auto; flex: 0 0 auto }
+.cg-gift > div { min-width: 0 }
+.cg-gift span { display: block; font-size: 14.5px; font-weight: 700; color: #3f6b39; line-height: 1.35 }
+.cg-gift b { font-weight: 900 }
+/* ⭐ 둘째 줄 — 「지금 몇 개 · 얼마나 더」. 첫 줄보다 작고 연하게 둔다(주인공은 첫 줄이다) */
+.cg-gift em { display: block; margin-top: 3px; font-style: normal; font-size: 13px; font-weight: 600; color: #5a7d52; line-height: 1.45 }
+
+/* 🎁 「이거 해보면 열쇠 1개」 목록 — 가져오기 화면
+   ⭐ 위 초록 박스(`.imp-notice`)와 «다른» 결로 둔다 — 그건 「안심」이고 이건 「해보세요」다.
+   ⛔ 초록을 또 쓰면 두 상자가 한 덩어리로 읽혀 둘 다 안 읽힌다. */
+.earn-list {
+  margin: 12px 0 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.earn-head { display: flex; align-items: center; gap: 8px }
+.earn-head img { height: 26px; width: auto; flex: 0 0 auto }
+.earn-head b { font-size: 15px; font-weight: 800; color: var(--brown); line-height: 1.35 }
+.earn-list ul { margin: 9px 0 0; padding: 0 0 0 3px; list-style: none }
+.earn-list li {
+  font-size: 14.5px; line-height: 1.75; color: var(--text);
+  padding-left: 15px; position: relative;
+}
+.earn-list li::before {
+  content: ''; position: absolute; left: 2px; top: 11px;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--brown); opacity: .5;
+}
+/* ✅ 이미 받은 줄 — 창업자 2026-09-01 *"받은건 줄이 그어지면 좋겠어. 뭘로 받은지 모르니까"*
+   ⭐ 줄 «하나»로만 알리지 않는다 — 흐림(0.5) ＋ 줄 ＋ 「받았어요」 이름표 셋이 같이 간다.
+      취소선만 주면 다크 테마·작은 글씨에서 잘 안 보이고, 색맹인 사람에게도 흐림만으론 약하다. */
+.earn-list li.done { color: var(--text-sub); opacity: .55; text-decoration: line-through; text-decoration-thickness: 1.5px }
+.earn-list li.done::before { opacity: .25 }
+/* ⛔ 이름표엔 줄이 안 그어져야 읽힌다 — 부모의 취소선을 여기서 끊는다 */
+.earn-got {
+  margin-left: 7px; font-size: 12px; font-weight: 700; color: var(--brown);
+  text-decoration: none; display: inline-block; opacity: .9;
+}
+.earn-foot { margin-top: 8px; font-size: 13px; color: var(--text-sub); line-height: 1.5 }

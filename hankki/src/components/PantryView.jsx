@@ -13,6 +13,7 @@ import Portal from './Portal'
 import { useLayerBack } from '../useBackHandler'
 import { guessEmoji } from '../emoji'
 import { pantryScore, countPantryHits } from '../pantryMatch'
+import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 
 // 🥕 냉장고 한 줄에 붙일 그림. 창업자 제보 *"재료 하나만 담아도 큰 이미지가 생겨서 재료가 안보였어."*
 //   ⛔⛔ **이미 담아둔 재료도 같이 고쳐져야 한다**(규칙 18 ⓙ) — 담을 때 `icon` 이 굳어 저장되기 때문에
@@ -92,6 +93,12 @@ export default function PantryView() {
     names.forEach((nm) => {
       if (!pantry.some((p) => p.name === nm)) {
         store.addPantry({ id: newId(), name: nm, icon: guessIngredientIcon(nm), expiry: null, addedAt: Date.now() })
+        // 🎁 냉장고를 처음 채웠다 — 평생 1회(서버가 판정)
+        //   ⛔ 전엔 여기서 토스트를 안 띄웠다(*"장보기 흐름 한가운데다"*) — 그 판단이 틀렸다.
+        //      받고도 모르면 「안 받았다」가 된다(창업자 2026-09-01).
+        열쇠받기(EARN.냉장고).then((받음) => {
+          if (받음) nav.showToast(`냉장고를 처음 채웠어요 · ${KEY_NAME} 1${KEY_UNIT}를 더 받았어요`, 5200)
+        })
         added++
       }
     })
@@ -524,7 +531,21 @@ function PantryForm({ item, onClose }) {
       memo: memo.trim(),
     }
     if (editing) { updatePantry(item.id, data); nav.showToast('재료를 수정했어요') }
-    else { addPantry({ id: newId(), addedAt: Date.now(), ...data }); nav.showToast('냉장고에 넣었어요') }
+    else {
+      addPantry({ id: newId(), addedAt: Date.now(), ...data })
+      nav.showToast('냉장고에 넣었어요')
+      // 🎁 냉장고를 처음 채웠다 — 평생 1회(서버가 판정)
+      //   ⛔⛔ 2026-09-01 창업자 제보 ① = *"냉장고에 재료 넣어도 열쇠 안차. 다른거 4개는 다 되고"*
+      //      영수증 스캔 길(saveFound)에만 붙이고 **여기(직접 넣기)를 빠뜨렸다.**
+      //      📌 유저가 쓰는 길이 «둘»인데 한쪽만 봤다. 넣는 자리는 `addPantry` 를 «전수»로 찾는다.
+      //   ⛔⛔ 창업자 제보 ② = *"냉장고 안받았었는데 안내사라졌어"* — **받은 게 맞았는데 몰랐다.**
+      //      내가 *"장보기 흐름 한가운데라"*며 토스트를 일부러 뺐는데, 마침 이게 다섯째라
+      //      **안내 카드까지 소리 없이 사라져** 「없어졌다」로만 보였다.
+      //      📌 **받은 것은 반드시 «받았다»고 말한다** — 특히 그게 마지막 하나일 때.
+      열쇠받기(EARN.냉장고).then((받음) => {
+        if (받음) nav.showToast(`냉장고를 처음 채웠어요 · ${KEY_NAME} 1${KEY_UNIT}를 더 받았어요`, 5200)
+      })
+    }
     onClose()
   }
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Portal from './Portal'
 import Icon from './Icon'
 import GoogleButton from './GoogleButton'
+import KeyGift from './KeyGift'
 import { 로그인, 로그아웃, 사람지켜보기, 요약, 올리기, 내려받기, 미리붙기, 받았다표시, 받았다지우기 } from '../cloud'
 
 // ☁️ 클라우드 저장 시트 — 「새 폰에서도 그대로 나오게」
@@ -161,6 +162,10 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
                 )}
                 {/* 🔵🔴🟡🟢 첫 화면과 «같은 단추»를 쓴다 — 같은 기능은 화면이 달라도 같은 모양 */}
                 <GoogleButton label="Google 계정으로 로그인" busy={바쁨 === '로그인'} disabled={!!바쁨} onClick={눌러로그인} />
+                {/* 🎁 선물 안내 — 첫 화면(CloudGate)과 «같은 부품»
+                    ⛔⛔ 2026-09-01 까지 이 줄이 «첫 화면에만» 있었다. 그런데 첫 화면은 «새로 깐 사람»만 본다
+                       → 이미 쓰던 사람은 설정에서 열어도 선물 얘기를 한 글자도 못 봤다(창업자가 잡았다). */}
+                <KeyGift />
                 {/* 📷 **첫 화면(CloudGate)과 한 글자도 다르지 않은 한 줄** (창업자 2026-08-31 *"잘보이게 적어줘"*)
                     ⛔ 접힌 안내 «안»에만 두면 안 읽는다 — 그런데 이건 나중에 알면 늦는 말이다. */}
                 <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.6, textAlign: 'center', textWrap: 'balance', marginTop: 10 }}>

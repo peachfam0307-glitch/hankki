@@ -8,6 +8,7 @@ import { APP_TAGLINE } from '../version'
 import { markCloudGateSeen } from '../nudges'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
 import { 로그인, 요약, 내려받기, 미리붙기, 받았다표시 } from '../cloud'
+import KeyGift from './KeyGift'
 import duoHi from '../assets/sharepool/duo_hi.png'
 
 // ☁️🚪 클라우드 첫 화면 — 앱을 켜자마자 «맨 처음» 뜬다. 소개보다 앞.
@@ -136,6 +137,17 @@ export default function CloudGate({ onDone }) {
               ⭐ 오늘 ⓑ(자랑카드는 올린다) 덕에 알릴 말이 **하나로 줄었다** — 짧아야 읽힌다.
               📌 자리 = **단추 «바로 밑»**. 「나중에 하기」 아래에 두면 그 단추를 설명하는 말로 읽힌다.
               ⛔ 문구는 아래 「자세히」·설정 시트와 **한 몸**이다. 고칠 땐 세 곳을 같이 고친다. */}
+          {/* 🎁🎁 [창업자 2026-09-01] **「로그인하면 열쇠 20개 더」를 «잘 보이게».**
+              📮 *"유저한테 화면에안내도 적어줘(로그인화면에)"* → *"**잘보이게에~@@**"*
+              ⭐⭐ 이건 **「왜 로그인하나」의 답**이다 — 위 주석의 *"로그인 화면에서 «기능 설명»을 하면 낯설다"*
+                 와 어긋나지 않는다. 기능 설명이 아니라 **혜택 한 줄**이고, 앱들이 흔히 두는 자리다.
+              ⛔ **한 줄로 둔다** — 길어지면 다시 「낯선 화면」이 된다(그 판단은 그대로 살아 있다).
+              ⛔⛔ **숫자를 «글자로» 박지 않는다** — `로그인보너스()` 가 서버가 준 두 상한의 차를 준다.
+                 📌 상한을 바꾸는 날 문구만 낡는 사고를 여기서 미리 막는다(`ocr.js` 의 「5회」 교훈).
+              ⛔ 유니코드 이모지 금지 — 우리 열쇠 그림(`key_one.png`)을 쓴다(절대원칙). */}
+          {/* ⭐ 설정 시트(CloudSheet)와 «같은 부품» — 복사하면 한쪽만 고쳐져 갈라진다 */}
+          <KeyGift />
+
           <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.6, textAlign: 'center', textWrap: 'balance', marginTop: 11 }}>
             직접 넣은 사진은 저장되지 않아요 · 백업 파일로 남겨요
           </div>
