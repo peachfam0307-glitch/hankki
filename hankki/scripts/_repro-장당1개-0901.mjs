@@ -39,6 +39,16 @@ const mkKv = () => {
   }
 }
 const num = async (kv, k) => { const v = await kv.get(k); return v ? parseInt(v, 10) || 0 : 0 }
+// 🔑🔑 **워커가 «실제로 쓴» 키를 앞글자로 찾는다 — 날짜를 여기서 다시 «계산하지» 않는다.**
+//   ⛔ 처음엔 `d:${new Date().toISOString().slice(0,10)}` 로 키를 만들어 읽었는데 두 가지가 나빴다:
+//      ⑴ 그건 **워커를 흉내내는 것**이다 — 워커가 키 모양을 바꾸면 이 판이 «못 찾고 0» 을 읽어 조용히 통과한다
+//      ⑵ 절대원칙 27(「오늘」은 `today.js` 한 곳에서만)에 걸린다 — `check-kst` 게이트가 «맞게» 잡았다
+//   ✅ 앞글자로 찾으면 **워커가 무슨 이름으로 쓰든 그 값을 그대로 읽는다.** 날짜 계산이 0줄이다.
+const 앞글자 = async (kv, 앞) => {
+  let 합 = 0
+  for (const [k, v] of kv._m) if (k.startsWith(앞)) 합 += parseInt(v, 10) || 0
+  return 합
+}
 
 // ── Vision 을 «부르지 않는다» — 전역 fetch 를 가로챈다 ───────────
 // ⛔ 진짜로 부르면 돈이 나가고, 이 판이 통을 축낸다
@@ -77,7 +87,7 @@ console.log('  ── ① 사진 3장 = 열쇠 3개 ──')
 {
   const kv = mkKv()
   for (let i = 0; i < 3; i++) await 부르기(kv, { uid: 'u1', batch: 'BATCH1' })
-  const 유저 = await num(kv, `u:u1:${new Date().toISOString().slice(0, 7)}`)
+  const 유저 = await 앞글자(kv, 'u:u1:')
   잰다(유저 === 3, '①-1 ⭐⭐같은 묶음으로 3장을 읽어도 «3개» 깎인다', '깎인 수 ' + 유저)
   const 웰컴남음 = parseInt(await kv.get('w:u1'), 10)
   잰다(웰컴남음 === 27, '①-2 웰컴이 30 → 27 이 된다', '남은 ' + 웰컴남음)
@@ -88,36 +98,38 @@ console.log('  ── ① 사진 3장 = 열쇠 3개 ──')
 console.log('  ── ② 전역 방어벽은 호출당 ──')
 {
   const kv = mkKv()
-  const t = new Date()
   for (let i = 0; i < 3; i++) await 부르기(kv, { uid: 'u2', batch: 'b' })
-  잰다(await num(kv, `m:${t.toISOString().slice(0, 7)}`) === 3, '②-1 전역 «월» 카운터 3')
-  잰다(await num(kv, `d:${t.toISOString().slice(0, 10)}`) === 3, '②-2 전역 «일» 카운터 3')
+  잰다(await 앞글자(kv, 'm:') === 3, '②-1 전역 «월» 카운터 3')
+  잰다(await 앞글자(kv, 'd:') === 3, '②-2 전역 «일» 카운터 3')
 }
 
 // ── ③ 웰컴을 다 쓰면 그 달 5장으로 넘어가고, 그 뒤엔 막힌다 ───────
 console.log('  ── ③ 웰컴을 다 쓴 뒤 ──')
+// ⭐ 「이미 다 쓴 사람」을 만들 때도 키를 손으로 짓지 않는다 —
+//   **웰컴을 0으로 두고 «진짜로 5번 부른다».** 그러면 워커가 자기 키 모양으로 알아서 쌓는다.
 {
   const kv = mkKv()
-  const ym = new Date().toISOString().slice(0, 7)
-  await kv.put('w:u3', '0')                 // 웰컴을 이미 다 쓴 사람
-  await kv.put(`u:u3:${ym}`, '5')           // 그 달 5장도 다 썼다
-  const r = await 부르기(kv, { uid: 'u3' })
+  await kv.put('w:u3', '0')                       // 웰컴을 이미 다 쓴 사람
+  for (let i = 0; i < 5; i++) await 부르기(kv, { uid: 'u3' })   // 그 달 5장도 다 쓴다
+  잰다(await 앞글자(kv, 'u:u3:') === 5, '③-0 다섯 번 부르면 그 달 몫이 5가 된다')
+  const 막히기전 = await 앞글자(kv, 'm:')
+  const r = await 부르기(kv, { uid: 'u3' })       // 여섯 번째 — 막혀야 한다
   잰다(r.status === 429 && r.body.error === 'user_quota', '③-1 다 쓰면 user_quota 로 막는다', r.status + ' ' + r.body.error)
   // ⭐ 막혔을 때 «카운터가 안 오른다» — 안 그러면 막힌 사람이 남의 통을 축낸다
-  잰다(await num(kv, `m:${ym}`) === 0, '③-2 ⭐막힌 요청은 전역 통을 «안» 축낸다')
+  잰다(await 앞글자(kv, 'm:') === 막히기전, '③-2 ⭐막힌 요청은 전역 통을 «안» 축낸다', '전역 ' + 막히기전 + ' 그대로')
 }
 
 // ── ④ 창업자는 개인 한도만 우회하고 전역엔 «센다» ───────────────
 console.log('  ── ④ 창업자 통로 ──')
 {
   const kv = mkKv()
-  const ym = new Date().toISOString().slice(0, 7)
   await kv.put('w:f1', '0')
-  await kv.put(`u:f1:${ym}`, '99')
+  for (let i = 0; i < 5; i++) await 부르기(kv, { uid: 'f1' })   // 개인 한도를 다 쓴다
+  const 전역 = await 앞글자(kv, 'm:')
   const r = await 부르기(kv, { uid: 'f1', founder: true })
-  잰다(r.status === 200, '④-1 창업자는 개인 한도를 지나간다', String(r.status))
-  잰다(await num(kv, `m:${ym}`) === 1, '④-2 ⛔그래도 전역엔 센다(통은 실제로 나간 양을 센다)')
-  잰다(await num(kv, `mf:${ym}`) === 1, '④-3 창업자 몫을 따로도 센다(?quota 가 갈라 보여준다)')
+  잰다(r.status === 200, '④-1 창업자는 개인 한도를 지나간다(유저면 막힐 자리)', String(r.status))
+  잰다(await 앞글자(kv, 'm:') === 전역 + 1, '④-2 ⛔그래도 전역엔 센다(통은 실제로 나간 양을 센다)')
+  잰다(await 앞글자(kv, 'mf:') === 1, '④-3 창업자 몫을 따로도 센다(?quota 가 갈라 보여준다)')
 }
 
 // ── ⑤ 🔒 소스 잠금 — 묶음 코드가 «되살아나지» 않았나 ──────────────
