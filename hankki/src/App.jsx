@@ -541,7 +541,11 @@ export default function App() {
         )
 
         // ② AI — «뒤에서». 오면 갈아끼우고, 안 오면 아무 일도 안 난다.
-        tidyRecipe(text).then((ai) => {
+        //   👁 [창업자 판정 2026-09-01 = ⓒ] 글자와 «함께 사진»을 준다.
+        //   ⭐⭐ **여기가 창업자가 1순위로 꼽은 길이다** — ImportScreen 「제일 많이 써요」 = SNS 공유.
+        //      그러니 ⓒ 를 여기에 안 붙이면 «제일 많이 쓰는 길»만 옛 정확도로 남는다.
+        //   ⛔ 첫 장만 준다 — 여러 장이면 뉴런이 장 수만큼 나간다(실측 82.5/장).
+        tidyRecipe(text, 장들[0]).then((ai) => {
           if (cancelled) return
           if (ai) {
             채우기(mergeTidy(기본, ai))

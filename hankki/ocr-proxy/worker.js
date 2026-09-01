@@ -125,11 +125,23 @@ export default {
       const t = new Date()
       const ymq = t.toISOString().slice(0, 7)
       const ymdq = t.toISOString().slice(0, 10)
-      const [월, 일] = await Promise.all([num(kvq, `m:${ymq}`), num(kvq, `d:${ymdq}`)])
+      // 👤 [창업자 지시 2026-09-01] 창업자 몫을 갈라 보여준다 — 그래야 「유저가 얼마나 쓰나」가 보인다.
+      //   ⛔ 유저 «개인별»은 여전히 안 준다(바로 위 주석 그대로).
+      const [월, 일, 월창, 일창] = await Promise.all([
+        num(kvq, `m:${ymq}`), num(kvq, `d:${ymdq}`),
+        num(kvq, `mf:${ymq}`), num(kvq, `df:${ymdq}`),
+      ])
       return json({
         달: ymq,
-        월: { 쓴것: 월, 상한: LIMITS.MONTHLY_GLOBAL, 남음: Math.max(0, LIMITS.MONTHLY_GLOBAL - 월), 퍼센트: Math.round((월 / LIMITS.MONTHLY_GLOBAL) * 100) },
-        오늘: { 쓴것: 일, 상한: LIMITS.DAILY_GLOBAL, 남음: Math.max(0, LIMITS.DAILY_GLOBAL - 일) },
+        월: {
+          쓴것: 월, 상한: LIMITS.MONTHLY_GLOBAL, 남음: Math.max(0, LIMITS.MONTHLY_GLOBAL - 월),
+          퍼센트: Math.round((월 / LIMITS.MONTHLY_GLOBAL) * 100),
+          창업자: 월창, 유저: Math.max(0, 월 - 월창),   // ⭐ 여기가 창업자가 물은 그 칸이다
+        },
+        오늘: {
+          쓴것: 일, 상한: LIMITS.DAILY_GLOBAL, 남음: Math.max(0, LIMITS.DAILY_GLOBAL - 일),
+          창업자: 일창, 유저: Math.max(0, 일 - 일창),
+        },
         웰컴: LIMITS.WELCOME_FREE,
         매월: LIMITS.PER_USER_MONTHLY,
       }, 200, cors)
@@ -215,6 +227,16 @@ export default {
         inc(kv, `ip:${ip}:${minute}`, 120),          // 2분 뒤 만료
         inc(kv, `d:${ymd}`, 60 * 60 * 26),           // ~26시간
         inc(kv, `m:${ym}`, 60 * 60 * 24 * 40),       // ~40일
+        // 👤👤 **[창업자 지시 2026-09-01] 창업자 몫을 «따로» 센다.**
+        //   📮 *"나와 유저들을 분리해서 얼마나 어떻게 사용하는지를 볼 수 있어야 정확한 판단이돼."*
+        //   ⭐ 새로 «모으는» 정보가 0이다 — 열쇠(FOUNDER_SECRET)로 이미 갈라 알고 있다(위 `founder`).
+        //      칸을 하나 더 셀 뿐이라 Play 데이터 보안 신고를 안 건드린다.
+        //   ⛔ 전체(`d:`·`m:`)는 «그대로» 둔다 — 상한이 그 값을 보므로 잣대를 흔들면 안 된다.
+        //   ⛔ 유저 개인별은 안 본다(`u:` 는 한도용이지 «보려고» 만든 게 아니다 — 위 주석 참조).
+        ...(founder ? [
+          inc(kv, `df:${ymd}`, 60 * 60 * 26),
+          inc(kv, `mf:${ym}`, 60 * 60 * 24 * 40),
+        ] : []),
         // ⭐ 웰컴을 쓰는 동안에도 «월 카운터를 같이» 올린다 —
         //    그래야 웰컴 20장을 다 쓴 순간 월 카운터가 5를 넘어 「그 달은 끝」이 된다.
         //    (창업자 확정: *"웰컴20장 다쓰면 무료5장은 소진한거니까 기본인식으로"*)

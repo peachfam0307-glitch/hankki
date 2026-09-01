@@ -23,7 +23,11 @@ console.log('\n📊 「통 보는 눈」 — 두 워커\n')
 
 // ── ① 열쇠 없이는 못 본다 (제일 중요) ────────────────────────────────
 for (const [이름, 글] of [['OCR', OCR], ['다듬기', TIDY]]) {
-  const 칸 = 글.slice(글.indexOf("quota") - 400, 글.indexOf("quota") + 1600)
+  // ⛔⛔ [2026-09-01] 잣대를 옮겼다 — 전엔 「quota 라는 «낱말»이 처음 나오는 자리」로 창을 잘랐는데
+  // 워커 «머리말»에 그 낱말이 들어가자 창이 통째로 주석으로 미끄러져 셋이 죽었다(규칙 18 ⓘ).
+  // ✅ 이제 «진짜 길»(searchParams 로 quota 를 읽는 그 줄)에 못 박는다 — 주석이 늘어도 안 흔들린다.
+  const 길 = 글.indexOf("searchParams.get(\x27quota\x27)")
+  const 칸 = 글.slice(길 - 400, 길 + 1600)
   chk(`① ${이름} — 열쇠가 틀리면 401 로 막는다`,
     /준열쇠 !== env\.FOUNDER_SECRET.*401/s.test(칸))
   chk(`①-b ${이름} — 열쇠가 «서버 비밀»과 대조된다 (앱 토큰이 아니다)`,
@@ -55,7 +59,7 @@ chk('③-b 다듬기 — 이 길에서 AI 를 안 부른다', !/env\.AI\.run|\.r
 // ── ④ 폰에서 열 수 있나 (GET ＋ ?key=) ───────────────────────────────
 //    ⛔ 폰 브라우저는 헤더를 못 붙인다 — 그래서 이 길만 예외로 열어 뒀다.
 for (const [이름, 글] of [['OCR', OCR], ['다듬기', TIDY]]) {
-  const i = 글.indexOf("quota")
+  const i = 글.indexOf("searchParams.get(\x27quota\x27)")   // ⭐ 위와 «같은» 잣대
   const 앞 = 글.slice(0, i)
   chk(`④ ${이름} — method 검사보다 «먼저» 온다 (GET 으로 열린다)`,
     !/if \(request\.method !== 'POST'\)/.test(앞.slice(앞.lastIndexOf('async fetch'))))

@@ -28,7 +28,12 @@
 //        Secret `FOUNDER_SECRET` = (기존 OCR 워커와 «같은» 값 · 운영자 통로)
 //        (선택) Variable `TIDY_MODEL` = 모델 이름 — ⛔코드에 박지 않는다
 //   5. 나온 주소를 앱 `src/tidy.js` 의 `TIDY_URL` 에 넣는다
-//   ⛔ **KV 도 D1 도 필요 없다** — 이 워커는 아무것도 저장하지 않는다.
+//   6. 📊 **[2026-09-01 신설] Settings → Bindings → KV 네임스페이스 · 변수 이름 `TIDY_KV`**
+//      📮 창업자 = *"나와 유저들을 분리해서 얼마나 어떻게 사용하는지를 볼 수 있어야 정확한 판단이돼."*
+//      ⭐ 이걸 붙여야 `?quota=1` 이 **「전체 / 창업자 / 유저 / 사진까지 본 것」**을 갈라 보여준다.
+//      ⛔ 안 붙여도 «앱은 그대로 돈다» — 세는 것만 못 한다(정직하게 「셀 수가 없어요」라고 답한다).
+//      ⛔ D1 은 여전히 필요 없다.
+//   ⚠️ 위 3번(`AI` 바인딩)이 **사진까지 본다** — 2026-09-01 부터 이 워커는 ⓒ(사진＋글자)를 쓴다.
 // ═══════════════════════════════════════════════════════════════
 
 const ALLOWED_ORIGINS = [
@@ -45,6 +50,9 @@ const LIMITS = {
   DAILY_GLOBAL: 200,
   PER_IP_PER_MIN: 10,
   MAX_TEXT: 8000,   // ⭐앱 rawText 상한이 4,000자라 그 두 배
+  // 👁 [2026-09-01] 사진(ⓒ)이 붙는다. 창업자 실측 캡처가 **485KB** 였고 base64 는 약 4/3 로 부푼다.
+  //   ⛔ 너무 좁게 잡으면 «큰 캡처만 조용히 ⓒ가 안 되는» 사고가 난다 → 넉넉히 3MB(base64 글자 수).
+  MAX_IMAGE: 3_000_000,
 }
 
 // 🤖🤖 **모델 차례 — 위에서부터 시도하고, 빈손이면 다음으로.**
@@ -147,10 +155,24 @@ export default {
       const kvq = env.TIDY_KV
       const 날 = kstDay(new Date())   // ⭐ 세는 쪽과 «같은 잣대»(KST) — 여긴 카운터도 KST 다
       if (!kvq) return json({ 날, 오늘: null, 왜: 'KV 가 안 붙어 있어 셀 수가 없어요', 상한: LIMITS.DAILY_GLOBAL }, 200, cors)
-      const 오늘 = await num(kvq, `td:${날}`)
+      // 👤👤 **[창업자 지시 2026-09-01] 창업자 몫과 유저 몫을 «갈라» 본다.**
+      //   📮 *"나와 유저들을 분리해서 얼마나 어떻게 사용하는지를 볼 수 있어야 정확한 판단이돼."*
+      //   ⭐ 새로 «모으는» 정보는 0이다 — 이 워커는 어차피 열쇠로 창업자를 알아본다(아래 `founder`).
+      //      칸을 하나 더 셀 뿐이라 Play 데이터 보안 신고를 안 건드린다.
+      //   ⛔ 유저 «개인별»은 세지 않는다 — 그건 곧 개인정보가 된다(OCR 워커와 같은 원칙).
+      const [오늘, 오늘창] = await Promise.all([num(kvq, `td:${날}`), num(kvq, `tdf:${날}`)])
+      const 눈오늘 = await num(kvq, `tv:${날}`)
       return json({
         날,
-        오늘: { 쓴것: 오늘, 상한: LIMITS.DAILY_GLOBAL, 남음: Math.max(0, LIMITS.DAILY_GLOBAL - 오늘), 퍼센트: Math.round((오늘 / LIMITS.DAILY_GLOBAL) * 100) },
+        오늘: {
+          쓴것: 오늘, 상한: LIMITS.DAILY_GLOBAL, 남음: Math.max(0, LIMITS.DAILY_GLOBAL - 오늘),
+          퍼센트: Math.round((오늘 / LIMITS.DAILY_GLOBAL) * 100),
+          // ⭐ 여기가 창업자가 물은 그 칸이다
+          창업자: 오늘창,
+          유저: Math.max(0, 오늘 - 오늘창),
+        },
+        // 👁 그중 «사진까지 본」 편수(ⓒ). 나머지는 글자만 본 것이다.
+        눈: { 사진까지본것: 눈오늘, 글자만: Math.max(0, 오늘 - 눈오늘) },
       }, 200, cors)
     }
 
@@ -203,6 +225,22 @@ export default {
     if (!text.trim()) return json({ error: 'no_text' }, 400, cors)
     if (text.length > LIMITS.MAX_TEXT) return json({ error: 'too_long' }, 400, cors)
 
+    // 👁👁 **[창업자 판정 2026-09-01] ⓒ — 사진을 «같이» 준다.**
+    //   📮 창업자 = *"c로 하되 …"* (삼치 실물 대조에서 ⓒ가 ④「멀쩡한 말 안 건드리기」를 유일하게 지켰다)
+    //   ⛔⛔ **사진은 «덤»이다 — 없으면 지금과 «한 글자도 다르지 않게» 돈다.**
+    //      사진이 커서 못 받는 경우에도 «막지 않고» 글자만으로 간다(아래에서 그냥 비운다).
+    //      📌 새 기능이 옛 기능을 죽이면 안 된다 — 그게 v11.00 `noBuy` 사고의 모양이었다.
+    const image = (() => {
+      const v = String(body.image || '')
+      if (!v) return ''
+      if (!v.startsWith('data:image/')) return ''          // ⛔모르는 모양은 안 보낸다
+      if (v.length > LIMITS.MAX_IMAGE) {
+        console.log('IMAGE_TOO_BIG', v.length)             // ⭐조용히 버리지 않는다 — 로그로 남긴다
+        return ''
+      }
+      return v
+    })()
+
     if (!env.AI) return json({ error: 'no_ai_binding' }, 500, cors)
 
     // ── 상한 (KV 가 «있으면» 센다. 없어도 돌아간다) ──
@@ -236,16 +274,33 @@ export default {
     //    ⛔ 무한 재시도는 안 한다(최대 두 판) — 무료 통도 시간도 유한하다.
     //    ⭐ 지금은 **기다리는 사람이 0명**이라(v11.85 = 규칙 파서가 먼저 채운다) 재시도가 공짜다.
     //       ⛔ 만약 앱이 다시 «기다리는» 구조로 돌아가면 이 재시도를 줄여야 한다.
-    const 모델들 = 모델차례(env)
+    // 👁 **차례 = 사진이 있으면 «눈 모델»을 맨 앞에 세운다.**
+    //   ⭐⭐ 그 뒤에 «지금 쓰던 글자 전용 모델»이 그대로 남는다 —
+    //      눈이 실패해도 **오늘까지와 똑같은 결과**로 떨어진다. ⛔ⓒ가 앱을 나쁘게 만들 길이 없다.
+    const 차례 = [
+      ...(image ? [{ model: VISION_MODEL, 눈: true }] : []),
+      ...모델차례(env).map((m) => ({ model: m, 눈: false })),
+    ]
+    const 모델들 = 차례.map((c) => c.model)
     const 시작전체 = Date.now()
     let 답 = null
     let 마지막오류 = ''
 
-    for (const model of 모델들) {
+    for (const { model, 눈 } of 차례) {
       const 시작 = Date.now()
       let out
       try {
-        const r = await env.AI.run(model, {
+        const r = await env.AI.run(model, 눈 ? {
+          // 👁 ⛔ **모양은 ①(OpenAI 꼴 image_url) «하나»뿐이다** — 2026-09-01 에 넷을 다 재서 닫았다.
+          //   ②바이트 꼴 = 사진을 안 본다 · ③input_image = 5006 스키마 오류 · ④바깥 image = 모델이 «못 받았다»고 말했다
+          //   ⛔재론 금지.
+          messages: [{ role: 'user', content: [
+            { type: 'text', text: 눈지시_둘다 + '\n\n--- 기계가 읽은 글자 ---\n' + text },
+            { type: 'image_url', image_url: { url: image } },
+          ] }],
+          temperature: 0.2,
+          max_tokens: VISION_MAX_TOKENS,
+        } : {
           messages: [{ role: 'user', content: PROMPT + text }],
           // ⭐ 0.2 = 창업자 실물 판정 뒤 권장값. 1.0 에서도 안 지어냈지만 낮을수록 안정적이다.
           temperature: 0.2,
@@ -269,10 +324,10 @@ export default {
       } catch (e) {
         마지막오류 = String((e && e.message) || e).slice(0, 200)
         console.log('AI_FAILED', model, (Date.now() - 시작) + 'ms', 마지막오류.slice(0, 300))
-        await 통세기(kv, ymd)
+        await 통세기(kv, ymd, founder, 눈)
         continue
       }
-      await 통세기(kv, ymd)   // ⛔ 실패해도 뉴런은 나갔다 — 성공만 세면 통이 조용히 샌다
+      await 통세기(kv, ymd, founder, 눈)   // ⛔ 실패해도 뉴런은 나갔다 — 성공만 세면 통이 조용히 샌다
 
       const parsed = pickJson(out)
       if (!parsed) {
@@ -520,9 +575,14 @@ async function num(kv, key) {
   return v ? parseInt(v, 10) || 0 : 0
 }
 // 🔢 무료 통 세기 — ⛔실패해도 «뉴런은 나갔다». 성공만 세면 통이 조용히 샌다.
-async function 통세기(kv, ymd) {
+//   👤 [2026-09-01] 창업자 몫(`tdf:`)과 «사진까지 본」 편수(`tv:`)를 «따로» 센다.
+//      ⭐ 전체(`td:`)는 그대로 둔다 — 상한이 그 값을 보므로 잣대를 흔들면 안 된다.
+//      ⛔ 유저 개인별은 안 센다(그건 곧 개인정보가 된다).
+async function 통세기(kv, ymd, founder, 눈) {
   if (!kv) return
   await inc(kv, `td:${ymd}`, 60 * 60 * 48)
+  if (founder) await inc(kv, `tdf:${ymd}`, 60 * 60 * 48)
+  if (눈) await inc(kv, `tv:${ymd}`, 60 * 60 * 48)
 }
 
 async function inc(kv, key, ttl) {

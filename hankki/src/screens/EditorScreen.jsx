@@ -73,6 +73,14 @@ export default function EditorScreen({ id, prefill }) {
   const ocrCropped = useRef(0) // 지금까지 자른 장 수 = 다음 장의 자리(idx)
   const ocrCropOpen = useRef(false) // 자르기 화면이 지금 떠 있나 — 마무리를 미룰지 판단
   const ocrAccum = useRef('') // 'all' 자동분류용 — 여러 장의 인식 텍스트를 모아 한 번에 파싱
+  // 👁👁 [창업자 판정 2026-09-01 = ⓒ] AI 에게 «글자와 함께 사진»을 준다.
+  //   ⛔ 그 전엔 사진을 읽고 «버렸다» — 그래서 AI 가 「생가즈 조그」를 짐작으로 고쳤고
+  //      멀쩡한 말까지 바꿨다(2026-08-31 사고 · 「끼얹어」→「끓여」).
+  //   ⭐ 첫 장 «한 장»만 들고 있는다 — 레시피 캡처는 첫 장에 제목·재료가 있고,
+  //      여러 장을 보내면 뉴런이 장 수만큼 나간다.
+  //   ⛔⛔ **`localStorage` 에 넣지 않는다** — 좁아서 저장이 통째로 막힌다(store.jsx:698).
+  //      화면에 머무는 «동안»만 `useRef` 로 들고 있다가 정리가 끝나면 버린다.
+  const shotAccum = useRef('')
   const ocrBusy = useRef(false) // 지금 읽는 중인가 — 화면 표시는 ocr.busy, «판단»은 이 ref 로
   const ocrTotal = useRef(1) // 이번에 고른 장 수 — 「2장 중 1장째」를 알려주려고(창업자: "시간은 좀 걸림")
   // 🔢🔢 «한 묶음 = 1장» — 이 편집 화면 한 번(=레시피 하나)이 한 묶음이다.
@@ -265,6 +273,9 @@ export default function EditorScreen({ id, prefill }) {
   }
   const 시작하기 = (urls) => {
       ocrAccum.current = ''
+      // 👁 [ⓒ] 새로 고르면 «앞 판의 사진»을 버린다 — 안 버리면 옛 사진과 새 글자를 짝지어 준다.
+      //   ⛔ 그게 제일 나쁜 종류다: AI 가 「사진과 다르다」며 멀쩡한 글자를 고쳐 버린다.
+      shotAccum.current = ''
       ocrTotal.current = urls.length
       ocrQueue.current = urls.slice(1) // 첫 장은 지금 자르고, 나머지는 자르기 대기열
       ocrJobs.current = []
@@ -327,6 +338,10 @@ export default function EditorScreen({ id, prefill }) {
   //   ⭐⭐ 여기가 이번 고침의 핵심이다. 예전엔 이 자리에서 `await` 로 읽기를 끝까지 기다렸다.
   const onCropped = (img) => {
     if (!img) return
+    // 👁 [ⓒ] **잘라낸 «첫 장»을 들고 있는다** — 이따 AI 에게 글자와 «같이» 준다.
+    //   ⭐ 자른 뒤라서 화면 글자(통신사·시계·댓글)가 이미 빠져 있다 = 모델이 볼 것이 깨끗하다.
+    //   ⛔ 첫 장만이다 — 여러 장을 보내면 뉴런이 장 수만큼 나간다(실측 82.5/장).
+    if (!shotAccum.current && typeof img === 'string') shotAccum.current = img
     ocrJobs.current.push({ img, idx: ocrCropped.current })
     ocrCropped.current += 1
     if (ocrQueue.current.length) {
@@ -486,7 +501,8 @@ export default function EditorScreen({ id, prefill }) {
     )
 
     // ② AI — «뒤에서». ⭐ 얹는 규칙은 `mergeTidy` 한 곳에 있다(여기와 `App.jsx` 가 «같은 말»)
-    tidyRecipe(combined).then((ai) => {
+    //   👁 [ⓒ] 글자와 «함께 사진»을 준다. ⛔사진이 없으면(붙여넣기·직접 작성) 지금과 똑같이 돈다.
+    tidyRecipe(combined, shotAccum.current).then((ai) => {
       if (ai) {
         채우기(mergeTidy(r, ai))
         nav.showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
