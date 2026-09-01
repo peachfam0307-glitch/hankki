@@ -107,6 +107,63 @@ console.log('  ── ⑥ 앱이 읽는 이름과 같나 ──')
 const 앱소스 = ['src/App.jsx', 'src/tidy.js', 'src/ocr.js'].map((f) => readFileSync(join(ROOT, f), 'utf8')).join('\n')
 잰다((앱소스.match(/hankki:founder/g) || []).length >= 3, '⑥-1 앱 세 파일이 `hankki:founder` 로 읽는다')
 
+// ── ⑦ 📊 통 보기 단추 (2026-09-01) ──────────────────────────────
+//   📮 창업자 = *"어떻게 하는지 알려주면 할게 «간단히 말하면 모르겠어»"*
+//   ⭐⭐ 이 칸의 심장 = **「완성된 주소가 화면에 안 나오나」** — 나오면 캡처 한 장에 열쇠가 샌다.
+//      ⛔ 「단추가 있다」가 아니다. 단추는 있는데 주소를 띄우면 그게 더 나쁘다.
+console.log('  ── ⑦ 통 보기 단추 ──')
+const 통열쇠 = 'TESTKEY_' + 'q'.repeat(20)
+const 부른주소 = []
+// ⭐ 진짜 워커를 부르지 않는다 — 가로채서 «무엇을 불렀나»를 본다(절대원칙 30: 흉내가 아니라 실제 요청을 잰다)
+await page.route('https://hankki-ocr.annyeong-hankki.workers.dev/**', (route) => {
+  부른주소.push(route.request().url())
+  route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ 웰컴: 30, 매월: 5 }) })
+})
+await page.route('https://hankki-tidy.annyeong-hankki.workers.dev/**', (route) => {
+  부른주소.push(route.request().url())
+  route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'unauthorized' }) })
+})
+
+잰다(await page.locator('#통OCR').count() === 1 && await page.locator('#통AI').count() === 1, '⑦-1 통 보기 단추 둘이 있다')
+
+// 👁👁 **글자가 «스쳐 지나가는» 것까지 잡는다** — ⛔여기서 한 번 틀렸다(2026-09-01).
+//   첫 판은 다 끝난 «뒤»에 화면 글자를 한 번 읽었는데, 주소를 「보는 중…」에 띄워도
+//   곧 답으로 덮여서 **초록불이 그대로 나왔다**(규칙 18 ⓘ — 통과했는데 아무것도 안 쟀다).
+//   ✅ 그래서 «지켜본다» — 바뀔 때마다 글자를 모아 두고, 그 «전부»에서 열쇠를 찾는다.
+await page.evaluate(() => {
+  window.__본글자 = []
+  const 모으기 = () => { try { window.__본글자.push(document.body.innerText) } catch {} }
+  모으기()
+  new MutationObserver(모으기).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true })
+})
+
+// ⑦-2 ⭐빈 열쇠로 누르면 «부르지도 않는다» (401 만 받고 끝날 요청을 아예 안 만든다)
+await page.fill('#key', '')
+await page.locator('#통OCR').click()
+await page.waitForTimeout(200)
+잰다(부른주소.length === 0, '⑦-2 ⭐열쇠가 비면 «부르지 않는다»')
+잰다(/열쇠.*채워/.test(await page.locator('#통결과').innerText()), '⑦-3 왜 안 불렀는지 말해준다')
+
+// ⑦-4 열쇠를 넣고 누르면 «부르고», 주소에 열쇠가 실린다
+await page.fill('#key', 통열쇠)
+await page.locator('#통OCR').click()
+await page.waitForTimeout(400)
+잰다(부른주소.length === 1 && 부른주소[0].includes('quota=1') && 부른주소[0].includes(통열쇠), '⑦-4 quota=1 ＋ 열쇠를 실어 부른다')
+
+// ⑦-5 ⭐⭐ 이 판의 심장 — 화면에 그 주소·열쇠가 «한 순간도» 안 보였다
+//   ⛔ 「지금 안 보인다」가 아니라 «지켜본 동안 한 번도 안 보였다»를 잰다
+const 본글자 = await page.evaluate(() => (window.__본글자 || []).join('\n'))
+잰다(본글자.length > 0, '⑦-5a 지켜보기가 «실제로 돌았다»(글자를 모았다)', 본글자.length + '자')
+잰다(!본글자.includes(통열쇠), '⑦-5 ⭐⭐열쇠가 화면에 «한 순간도» 안 떴다')
+잰다(!본글자.includes('quota=1'), '⑦-6 ⭐⭐완성된 주소가 화면에 «한 순간도» 안 떴다')
+잰다(/웰컴/.test(await page.locator('#통결과').innerText()), '⑦-7 답(JSON)은 보여준다')
+잰다(await page.locator('#통결과 button').count() === 1, '⑦-8 「이 답 복사하기」 단추가 붙는다')
+
+// ⑦-9 401 이면 «열쇠가 틀렸다»고 갈라 말한다 (「안 된다」와 처방이 다르다)
+await page.locator('#통AI').click()
+await page.waitForTimeout(400)
+잰다(/열쇠가 안 맞아/.test(await page.locator('#통결과').innerText()), '⑦-9 401 을 「열쇠가 안 맞아」로 가른다')
+
 잰다(오류.length === 0, '⑥-2 페이지 오류 0개', 오류.join(' / ').slice(0, 120))
 
 await b.close(); srv.close()
