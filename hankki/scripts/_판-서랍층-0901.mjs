@@ -59,7 +59,11 @@ const 갈래 = [
 ]
 const 잰값 = []
 
+// 🗂 「데코」= 스티커 격자 · 「글자」= 글씨체 목록 — 생김새가 달라서 레일이 어떻게 보이는지도 갈린다
+const 탭들 = ['데코', '글자']
+
 for (const W of 폭들) {
+  for (const 탭이름 of 탭들) {
   for (const g of 갈래) {
     const ctx = await b.newContext({ viewport: { width: W, height: 780 }, deviceScaleFactor: 2 })
     await ctx.addInitScript(SEED_COACH_SEEN)
@@ -104,12 +108,15 @@ for (const W of 폭들) {
     //    ① 씨앗 일기의 첫 갈래(마테)에 스티커가 5개뿐이라 어느 갈래든 서랍이 텅 비어 보였다
     //    ② 폰 «전체»를 찍어서 화면 3분의 2가 안 바뀌는 일기 종이였다
     //    → ①은 «스티커가 제일 많은 갈래»를 눌러서, ②는 «서랍만 잘라서» 푼다.
-    await p.evaluate(() => {
+    // 📮 창업자 = *"글자 탭 열면 어떻게 되는지 보여줄수있어?"*
+    //    ⭐ 「글자」는 스티커 격자가 아니라 «글씨체 목록»이라 생김새가 다르다 — 레일이 거기서
+    //       어떻게 보이는지가 진짜 판정 거리다. 그래서 갈래마다 «데코»와 «글자»를 둘 다 찍는다.
+    await p.evaluate((탭) => {
       const 알약 = [...document.querySelectorAll('.decor-drawer button')]
         .filter((x) => /^(마테|데코|글자|기록|친구들|프레임|배경)$/.test((x.innerText || '').trim()))
-      const 데코 = 알약.find((x) => (x.innerText || '').trim() === '데코') || 알약[1]
-      데코?.click()
-    })
+      const 고를것 = 알약.find((x) => (x.innerText || '').trim() === 탭) || 알약[1]
+      고를것?.click()
+    }, 탭이름)
     await p.waitForTimeout(900)
 
     // ⭐ 갈래를 «얹는다» — 소스를 안 고치고 그 화면의 요소를 옮긴다
@@ -198,7 +205,11 @@ for (const W of 폭들) {
       const dRect = dr.getBoundingClientRect()
       const 보임 = (e) => { const r = e.getBoundingClientRect()
         return r.height > 8 && r.top >= dRect.top - 1 && r.bottom <= dRect.bottom + 1 && r.top < H && r.bottom > 0 }
+      // 📐 「한 칸이 작아지나」 — 창업자가 ㉡을 고르려는 참이라 여기가 갈린다.
+      //    레일이 폭을 먹어도 «칸 수»가 같이 줄면 한 칸 크기는 그대로일 수 있다. 짐작 말고 잰다.
+      const 첫칸 = [...dr.querySelectorAll('img')].map((e) => e.parentElement).find((e) => e && e.getBoundingClientRect().width > 20)
       return {
+        칸폭: 첫칸 ? Math.round(첫칸.getBoundingClientRect().width) : 0,
         서랍키: Math.round(dr.getBoundingClientRect().height),
         보이는칸: [...dr.querySelectorAll('img')].filter(보임).length,
         머리: 줄.filter((c) => c !== 내용).reduce((s, c) => s + Math.round(c.getBoundingClientRect().height), 0),
@@ -213,19 +224,22 @@ for (const W of 폭들) {
       return { x: 0, y: Math.max(0, Math.round(r.top) - 8), width: window.innerWidth,
                height: Math.min(window.innerHeight - Math.round(r.top) + 8, Math.round(r.height) + 16) }
     })
-    await p.screenshot({ path: join(OUT, `${W}-${g.id}.png`), ...(상자 ? { clip: 상자 } : {}) })
-    잰값.push({ W, 이름: g.이름, ...m })
+    await p.screenshot({ path: join(OUT, `${W}-${탭이름}-${g.id}.png`), ...(상자 ? { clip: 상자 } : {}) })
+    잰값.push({ W, 탭: 탭이름, 이름: g.이름, ...m })
     await ctx.close()
+  }
   }
 }
 await b.close(); srv.close()
 
 console.log('\n🗄 서랍 층 — 갈래 셋을 실제 화면에 얹어 재고 찍었다')
 for (const W of 폭들) {
-  console.log(`\n── ${W}px ──`)
-  잰값.filter((x) => x.W === W).forEach((x) => {
+ for (const T of 탭들) {
+  console.log(`\n── ${W}px · 「${T}」 ──`)
+  잰값.filter((x) => x.W === W && x.탭 === T).forEach((x) => {
     if (x.못잼) return console.log(`  ${x.이름}  ⚠️ ${x.못잼}`)
-    console.log(`  ${x.이름.padEnd(12, ' ')} 서랍 ${String(x.서랍키).padStart(3)}px · 머리(스티커 전) ${String(x.머리).padStart(3)}px · 보이는 스티커 ${x.보이는칸}칸`)
+    console.log(`  ${x.이름.padEnd(14, ' ')} 머리 ${String(x.머리).padStart(3)}px · 한 칸 ${String(x.칸폭).padStart(3)}px · 보이는 ${x.보이는칸}칸`)
   })
+ }
 }
 console.log(`\n🖼 ${OUT}`)
