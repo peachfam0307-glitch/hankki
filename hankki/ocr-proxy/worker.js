@@ -213,15 +213,30 @@ export default {
     const sub = String(body.sub || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64)
     const 로그인 = !!sub
     const 통 = 로그인 ? `a:${sub}` : `d:${uid}`
+    // 🎁🎁 행동 열쇠 표식을 찾을 통들 — 로그인했으면 «기기 통»도 같이 본다.
+    //   ⛔⛔ **이게 없으면 로그인만 하면 다섯을 «또» 받는다** — 통 이름이 `d:` → `a:` 로 바뀌어
+    //      옛 표식을 못 찾기 때문이다. 🔢 비로그인으로 다섯 받고 로그인하면 보너스 5 → 10.
+    //      (무한은 아니다 — 통이 둘뿐이라 최대 두 벌. 그래도 「1회 한정」 약속이 깨진다.)
+    //      2026-09-01 에 「어느 것을 받았나」를 붙이다 드러났다.
+    const 통들 = 로그인 ? [통, `d:${uid}`] : [통]
 
     let 웰컴상한 = 로그인 ? LIMITS.WELCOME_ACCT : LIMITS.WELCOME_ANON
     let 쓴수 = 0
     let 보너스 = 0
+    let 받은행동 = []            // 다섯 중 «어느 것»을 받았나 — 화면이 그 줄에 줄을 긋는다(창업자 2026-09-01)
     let 옛표식 = null            // 옛 키 `w:<uid>` 의 값 — 있으면 「이 판 전부터 쓰던 사람」
     if (kv) {
-      const [rawWu, rawBo, 옛남음] = await Promise.all([
+      // ⭐⭐ 표식을 «그대로» 읽는다 — 「받은 목록」을 따로 한 키에 캐시해 두지 않는다.
+      //    캐시는 표식과 어긋날 수 있고, 어긋나면 **둘 중 하나는 반드시 틀린 값**이 된다.
+      //    🔢 읽는 수 = 다섯(비로그인) / 열(로그인). 한 번에 병렬이라 왕복은 그대로다.
+      const 표식키 = []
+      for (const t of 통들) for (const 행동 of LIMITS.EARN_ACTIONS) 표식키.push(`earn:${t}:${행동}`)
+      const [rawWu, rawBo, 옛남음, ...표식값] = await Promise.all([
         kv.get(`wu:${통}`), kv.get(`bo:${통}`), kv.get(`w:${uid}`),
+        ...표식키.map((k) => kv.get(k)),
       ])
+      받은행동 = LIMITS.EARN_ACTIONS.filter((행동, i) =>
+        통들.some((_, t) => 표식값[t * LIMITS.EARN_ACTIONS.length + i] !== null))
       보너스 = rawBo === null ? 0 : (parseInt(rawBo, 10) || 0)
       옛표식 = 옛남음
       if (rawWu !== null) {
@@ -257,15 +272,17 @@ export default {
       const 행동 = String(body.earn || '')
       if (!LIMITS.EARN_ACTIONS.includes(행동)) return json({ error: 'bad_earn' }, 400, cors)
       if (!kv) return json({ error: 'no_kv' }, 500, cors)
-      const 표식 = `earn:${통}:${행동}`
-      const 이미 = await kv.get(표식)
+      // ⭐⭐ 「이미 받았나」는 위에서 «통들 전부»를 훑어 만든 `받은행동` 이 정한다.
+      //    ⛔ `earn:${통}:${행동}` «하나»만 보면 로그인하는 순간 또 준다(위 통들 주석 참조).
       let 준것 = 0
-      if (이미 === null) {
+      if (!받은행동.includes(행동)) {
         준것 = 1
         보너스 += 1
+        받은행동 = 받은행동.concat([행동])
         await Promise.all([
           // ⛔ 표식엔 만료를 안 준다 — **평생 1회**라 영원히 남아야 한다.
-          kv.put(표식, '1'),
+          // 🔗 로그인 중이면 «두 통 모두»에 찍는다 — 로그아웃해서 또 받지 못하게.
+          ...통들.map((t) => kv.put(`earn:${t}:${행동}`, '1')),
           kv.put(`bo:${통}`, String(보너스), { expirationTtl: 60 * 60 * 24 * 365 }),
           // 🔗 로그인 중이면 기기 통에도 같이 — 로그아웃해도 숫자가 안 헛돈다
           ...(로그인 ? [kv.put(`bo:d:${uid}`, String(보너스), { expirationTtl: 60 * 60 * 24 * 365 })] : []),
@@ -278,6 +295,7 @@ export default {
         left: {
           welcome: 남음, month: LIMITS.PER_USER_MONTHLY,
           cap: 웰컴상한 + 보너스, bonus: 보너스,
+          earned: 받은행동,                     // 다섯 중 «어느 것»을 받았나(화면이 줄을 긋는다)
           anon: LIMITS.WELCOME_ANON, acct: LIMITS.WELCOME_ACCT,
           monthly: LIMITS.PER_USER_MONTHLY, signed: 로그인,
         },
@@ -406,6 +424,7 @@ export default {
         month: leftMonth,
         cap: 웰컴상한 + 보너스,   // 지금 이 사람의 웰컴 상한(＋행동으로 받은 것)
         bonus: 보너스,
+        earned: 받은행동,         // 다섯 중 «어느 것»을 받았나(화면이 그 줄에 줄을 긋는다)
         anon: LIMITS.WELCOME_ANON,
         acct: LIMITS.WELCOME_ACCT,
         monthly: LIMITS.PER_USER_MONTHLY,

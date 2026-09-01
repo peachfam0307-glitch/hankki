@@ -44,6 +44,11 @@ globalThis.fetch = async (url) => {
 }
 
 const worker = (await import('../ocr-proxy/worker.js')).default
+// ⑩⑪ 칸은 «앱 소스»를 읽는다 — 워커만 맞고 앱이 안 부르면 유저에겐 아무 일도 안 난다(창업자 냉장고 제보).
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+const 여기 = path.dirname(fileURLToPath(import.meta.url))
 const APP_TOKEN = 'TESTTOKEN'
 const ORIGIN = 'https://peachfam0307-glitch.github.io'
 const ENV = (kv) => ({ VISION_KEY: 'k', APP_TOKEN, FOUNDER_SECRET: 'FOUNDERKEY', OCR_KV: kv })
@@ -172,6 +177,93 @@ console.log('  ── ⑦ IP 분당 6회 ──')
   }
   잰다(막힌수 === 2, '⑦-1 여덟 번 두들기면 일곱·여덟 번째가 막힌다', '막힌 수 ' + 막힌수)
   잰다(앞글자(kv, 'q:') === 0, '⑦-2 ⛔IP 로 막힌 건 「막힘」에 «안» 센다(그건 무료 한도가 아니다)')
+}
+
+// ── ⑧ 🎁 «어느 것»을 받았나 — 화면이 줄을 긋는 근거 ──────────────
+//   📮 창업자 2026-09-01 = *"받은건 줄이 그어지면 좋겠어. 뭘로 받은지 모르니까"*
+//   ⛔ 개수(bonus)만으론 못 긋는다 — 위에서부터 개수만큼 긋는 건 «거짓말»이다.
+console.log('  ── ⑧ 받은 목록 ──')
+{
+  const kv = mkKv()
+  const a = await 받기(kv, '일기', { uid: 'g1' })
+  잰다(Array.isArray(a.body.left.earned) && a.body.left.earned.length === 1 && a.body.left.earned[0] === '일기',
+    '⑧-1 받으면 그 행동 이름이 목록에 온다', JSON.stringify(a.body.left.earned))
+  await 받기(kv, '냉장고', { uid: 'g1' })
+  const c = await 받기(kv, '레꾸', { uid: 'g1' })
+  잰다(['일기', '냉장고', '레꾸'].every((x) => c.body.left.earned.includes(x)) && c.body.left.earned.length === 3,
+    '⑧-2 셋을 받으면 셋 다 들어 있다', JSON.stringify(c.body.left.earned))
+  잰다(!c.body.left.earned.includes('요리') && !c.body.left.earned.includes('자랑'),
+    '⑧-3 ⛔안 받은 것은 «안» 들어간다(안 그러면 화면이 줄을 잘못 긋는다)')
+  // ⭐ 사진을 읽는 «보통 길»에서도 와야 한다 — 가져오기 화면은 이 답으로 줄을 긋는다
+  const d = await 담기(kv, { uid: 'g1' })
+  잰다(Array.isArray(d.body.left.earned) && d.body.left.earned.length === 3,
+    '⑧-4 ⭐사진 읽는 길의 답에도 목록이 실린다', JSON.stringify(d.body.left.earned))
+}
+
+// ── ⑨ 🕳🕳 로그인하면 다섯을 «또» 받던 구멍 (2026-09-01 에 찾아 막았다) ──
+//   ⛔ 표식이 `earn:<통>:<행동>` 인데 로그인하면 통이 `d:uid` → `a:sub` 로 바뀐다.
+//      옛 표식을 못 찾아 **전부 다시 줬다** — 보너스가 5 → 10.
+//   ⭐ 「1회 한정」은 창업자가 못 박은 약속이라(*"다 1회한정으로"*) 개수가 아니라 «약속»이 깨지는 자리다.
+console.log('  ── ⑨ 로그인 재수령 구멍 ──')
+{
+  const kv = mkKv()
+  // 비로그인으로 다섯을 다 받는다
+  for (const 행동 of ['일기', '레꾸', '요리', '자랑', '냉장고']) await 받기(kv, 행동, { uid: 'h1' })
+  const 전 = await 담기(kv, { uid: 'h1' })
+  잰다(전.body.left.bonus === 5, '⑨-1 비로그인으로 다섯을 받았다(보너스 5)', '보너스 ' + 전.body.left.bonus)
+  // 같은 기기에서 로그인 — 통 이름이 바뀐다
+  const a = await 받기(kv, '일기', { uid: 'h1', sub: 'HSUB' })
+  잰다(a.body.준것 === 0, '⑨-2 ⭐⭐로그인 뒤 같은 행동을 보내도 «안 준다»(구멍 막힘)', '준것 ' + a.body.준것)
+  for (const 행동 of ['레꾸', '요리', '자랑', '냉장고']) await 받기(kv, 행동, { uid: 'h1', sub: 'HSUB' })
+  const 후 = await 담기(kv, { uid: 'h1', sub: 'HSUB' })
+  잰다(후.body.left.bonus === 5, '⑨-3 다섯을 또 보내도 보너스는 5 그대로(10 이 아니다)', '보너스 ' + 후.body.left.bonus)
+  잰다(후.body.left.earned.length === 5, '⑨-4 로그인해도 받은 목록 다섯이 그대로 보인다', '목록 ' + 후.body.left.earned.length)
+  // 🔁 되돌아가는 길도 막혔나 — 로그인해서 받고 로그아웃하면?
+  const kv2 = mkKv()
+  await 받기(kv2, '일기', { uid: 'h2', sub: 'HSUB2' })
+  const 아웃 = await 받기(kv2, '일기', { uid: 'h2' })
+  잰다(아웃.body.준것 === 0, '⑨-5 ⭐로그인해서 받고 «로그아웃»해도 또 안 준다(양쪽에 찍는다)', '준것 ' + 아웃.body.준것)
+}
+
+// ── ⑩ 🧊 냉장고 — 유저가 쓰는 길이 «둘»이다 (창업자 제보 2026-09-01) ──
+//   📮 창업자 = *"냉장고에 재료 넣어도 열쇠 안차. 다른거 4개는 다 되고"*
+//   ⛔⛔ 원인 = 영수증 스캔 길(saveFound)에만 붙이고 **직접 넣기(PantryForm.save)를 빠뜨렸다.**
+//      📌 「붙였다」와 「유저가 가는 길에 붙였다」는 다른 말이다.
+//   ⭐ 그래서 여기서 재는 것은 워커가 아니라 **앱 소스에 부르는 자리가 «둘 다» 있나**이다.
+console.log('  ── ⑩ 냉장고 두 길 ──')
+{
+  const src = fs.readFileSync(path.join(여기, '../src/components/PantryView.jsx'), 'utf8')
+  // 주석에 적어둔 것까지 세면 고쳐놓고도 통과한다 → «코드 줄»만 센다(규칙 18 ⓘ)
+  const 부르는줄 = src.split('\n').filter((l) => /열쇠받기\(EARN\.냉장고\)/.test(l) && !/^\s*\/\//.test(l))
+  잰다(부르는줄.length === 2, '⑩-1 ⭐냉장고 열쇠를 부르는 자리가 «둘»이다(영수증 ＋ 직접 넣기)', '자리 ' + 부르는줄.length)
+  // 직접 넣기 자리인가 — `addPantry` 를 부른 갈래 안에 있어야 한다
+  const 직접 = /addPantry\(\{ id: newId\(\), addedAt: Date\.now\(\), \.\.\.data \}\)[\s\S]{0,700}?열쇠받기\(EARN\.냉장고\)/.test(src)
+  잰다(직접, '⑩-2 ⭐«직접 넣기» 갈래 안에 있다(창업자가 쓴 그 길)')
+  const 영수증 = /store\.addPantry\(\{[\s\S]{0,400}?열쇠받기\(EARN\.냉장고\)/.test(src)
+  잰다(영수증, '⑩-3 영수증 스캔 갈래도 그대로 살아 있다')
+  // 나머지 넷도 여전히 붙어 있나 — 하나를 고치다 다른 걸 떨어뜨리지 않게
+  const 자리 = {
+    레꾸: 'src/screens/RecipeDetailScreen.jsx', 자랑: 'src/screens/BragScreen.jsx',
+    일기: 'src/screens/DiaryScreen.jsx', 요리: 'src/screens/CookScreen.jsx',
+  }
+  for (const [행동, 파일] of Object.entries(자리)) {
+    const s = fs.readFileSync(path.join(여기, '..', 파일), 'utf8')
+    잰다(new RegExp(`열쇠받기\\(EARN\\.${행동}\\)`).test(s), `⑩-4 ${행동} 부르는 자리가 살아 있다 (${파일.split('/').pop()})`)
+  }
+}
+
+// ── ⑪ 🖥 화면이 «개수»가 아니라 «목록»으로 줄을 긋나 ────────────────
+//   ⛔ 개수만큼 위에서부터 긋는 코드가 되살아나면 화면이 거짓말을 한다.
+console.log('  ── ⑪ 가져오기 목록 화면 ──')
+{
+  const s = fs.readFileSync(path.join(여기, '../src/components/EarnList.jsx'), 'utf8')
+  잰다(/left\.earned/.test(s), '⑪-1 서버가 준 «목록»을 읽는다')
+  잰다(/받은수 >= 줄들\.length\) return null/.test(s), '⑪-2 ⭐다섯을 다 받으면 카드가 «사라진다»(창업자 확정)')
+  잰다(/slice\(0,\s*받은수\)|index <\s*받은수|i <\s*받은수/.test(s) === false,
+    '⑪-3 ⛔개수만큼 «위에서부터» 긋지 않는다(그건 거짓말이다)')
+  const css = fs.readFileSync(path.join(여기, '../src/styles.css'), 'utf8')
+  잰다(/\.earn-list li\.done[^}]*line-through/.test(css), '⑪-4 받은 줄에 «줄»이 그어진다')
+  잰다(/\.earn-got[^}]*text-decoration:\s*none/.test(css), '⑪-5 「받았어요」 이름표엔 줄이 안 그어진다(읽혀야 한다)')
 }
 
 globalThis.fetch = 진짜fetch

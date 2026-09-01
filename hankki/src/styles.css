@@ -4493,4 +4493,14 @@ html, body { overscroll-behavior: none; }
   content: ''; position: absolute; left: 2px; top: 11px;
   width: 5px; height: 5px; border-radius: 50%; background: var(--brown); opacity: .5;
 }
+/* ✅ 이미 받은 줄 — 창업자 2026-09-01 *"받은건 줄이 그어지면 좋겠어. 뭘로 받은지 모르니까"*
+   ⭐ 줄 «하나»로만 알리지 않는다 — 흐림(0.5) ＋ 줄 ＋ 「받았어요」 이름표 셋이 같이 간다.
+      취소선만 주면 다크 테마·작은 글씨에서 잘 안 보이고, 색맹인 사람에게도 흐림만으론 약하다. */
+.earn-list li.done { color: var(--text-sub); opacity: .55; text-decoration: line-through; text-decoration-thickness: 1.5px }
+.earn-list li.done::before { opacity: .25 }
+/* ⛔ 이름표엔 줄이 안 그어져야 읽힌다 — 부모의 취소선을 여기서 끊는다 */
+.earn-got {
+  margin-left: 7px; font-size: 12px; font-weight: 700; color: var(--brown);
+  text-decoration: none; display: inline-block; opacity: .9;
+}
 .earn-foot { margin-top: 8px; font-size: 13px; color: var(--text-sub); line-height: 1.5 }

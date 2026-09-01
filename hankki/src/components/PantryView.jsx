@@ -527,7 +527,15 @@ function PantryForm({ item, onClose }) {
       memo: memo.trim(),
     }
     if (editing) { updatePantry(item.id, data); nav.showToast('재료를 수정했어요') }
-    else { addPantry({ id: newId(), addedAt: Date.now(), ...data }); nav.showToast('냉장고에 넣었어요') }
+    else {
+      addPantry({ id: newId(), addedAt: Date.now(), ...data })
+      nav.showToast('냉장고에 넣었어요')
+      // 🎁 냉장고를 처음 채웠다 — 평생 1회(서버가 판정)
+      //   ⛔⛔ 2026-09-01 창업자 제보 = *"냉장고에 재료 넣어도 열쇠 안차. 다른거 4개는 다 되고"*
+      //      영수증 스캔 길(saveFound)에만 붙이고 **여기(직접 넣기)를 빠뜨렸다.**
+      //      📌 유저가 쓰는 길이 «둘»인데 한쪽만 봤다. 넣는 자리는 `addPantry` 를 «전수»로 찾는다.
+      열쇠받기(EARN.냉장고)
+    }
     onClose()
   }
 

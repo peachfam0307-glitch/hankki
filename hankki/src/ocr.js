@@ -151,6 +151,11 @@ function saveOcrLeft(left) {
       month: m,
       cap: 수(left.cap, null),
       bonus: 수(left.bonus, null),   // 🎁 행동으로 받은 개수 — 가져오기 목록이 「몇 개 받았나」에 쓴다
+      // 🎁 «어느 것»을 받았나 — 창업자 2026-09-01 *"받은건 줄이 그어지면 좋겠어. 뭘로 받은지 모르니까"*
+      //   ⛔ 폰이 «정하지» 않는다. 서버가 표식을 읽어 준 목록을 그대로 담는다.
+      //   ⛔ 서버가 안 주면(옛 워커) **빈 배열이 아니라 `null`** 로 둔다 —
+      //      빈 배열이면 「하나도 안 받았다」가 되어 **다 받은 사람 화면이 거짓말**을 한다.
+      earned: Array.isArray(left.earned) ? left.earned.map(String) : null,
       anon: 수(left.anon, null),
       acct: 수(left.acct, null),
       signed: left.signed === true,
