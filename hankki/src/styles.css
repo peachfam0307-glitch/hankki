@@ -3189,11 +3189,11 @@ html, body { overscroll-behavior: none; }
    🔢 손잡이 38 → 24px · 띠 위아래 여백 10 → 5px
    ⛔ 폭이 100% 라 짧아져도 손가락은 닿는다 — 세로만 깎는다. */
 .decor-grab {
-  display: block; width: 100%; min-height: 24px; padding: 0; flex: 0 0 auto;
+  display: block; width: 100%; min-height: 18px; padding: 0; flex: 0 0 auto;
   background: none; border: none; cursor: pointer;
 }
 .decor-grab::before {
-  content: ''; display: block; width: 56px; height: 5px; margin: 5px auto;
+  content: ''; display: block; width: 52px; height: 4px; margin: 4px auto;
   border-radius: 999px; background: var(--line);
 }
 /* 🫳 내린 상태 — 손잡이만 남기고 다 감춘다. 다시 누르면 올라온다.
@@ -3230,7 +3230,7 @@ html, body { overscroll-behavior: none; }
       *"여기 값들은 손가락 최소(44px)를 깬다 — 44 를 지키면 스티커가 «한 줄»뿐이다."*
       ＋ 이 줄은 모드가 넷이라 한 칸이 «가로로 97px» 이다. 세로가 짧아도 잘 눌린다. */
 .decor-drawer .segment .seg {
-  min-height: 32px; border-radius: 0; background: none; box-shadow: none;
+  min-height: 26px; border-radius: 0; background: none; box-shadow: none;
   font-size: 13px; font-weight: 700; color: var(--text-sub);
   border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
 }

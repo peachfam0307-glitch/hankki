@@ -213,8 +213,15 @@ for (const W of 폭들) {
       const 레일칸 = 레일 ? [...레일.querySelectorAll('button')] : []
       const 레일r = 레일 ? 레일.getBoundingClientRect() : null
       const 레일보임 = 레일r ? 레일칸.filter((e) => { const r = e.getBoundingClientRect(); return r.top >= 레일r.top - 1 && r.bottom <= 레일r.bottom + 1 }).length : 0
+      // 🔎 「아직도 여백이 많다」 — 어디에 얼마가 있는지 «전부» 뽑는다. 짐작으로 깎지 않는다.
+      const 재기 = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e)
+        return { h: Math.round(r.height), 위: cs.marginTop, 아래: cs.marginBottom, 안: cs.padding,
+                 글: (e.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 18) || '(그림)' } }
+      const 층덤프 = [...dr.children].filter((c) => c.getBoundingClientRect().height > 0).map(재기)
+      const 굴림 = dr.querySelector('.decor-scroll')
+      const 속덤프 = 굴림 ? [...굴림.children].slice(0, 4).filter((c) => c.getBoundingClientRect().height > 0).map(재기) : []
       return {
-        레일칸수: 레일칸.length, 레일보임, 레일한칸: 레일칸[0] ? Math.round(레일칸[0].getBoundingClientRect().height) : 0,
+        층덤프, 속덤프, 레일칸수: 레일칸.length, 레일보임, 레일한칸: 레일칸[0] ? Math.round(레일칸[0].getBoundingClientRect().height) : 0,
         레일키: 레일r ? Math.round(레일r.height) : 0,
         칸폭: 첫칸 ? Math.round(첫칸.getBoundingClientRect().width) : 0,
         서랍키: Math.round(dr.getBoundingClientRect().height),
@@ -246,6 +253,10 @@ for (const W of 폭들) {
   잰값.filter((x) => x.W === W && x.탭 === T).forEach((x) => {
     if (x.못잼) return console.log(`  ${x.이름}  ⚠️ ${x.못잼}`)
     console.log(`  ${x.이름.padEnd(14, ' ')} 머리 ${String(x.머리).padStart(3)}px · 한 칸 ${String(x.칸폭).padStart(3)}px · 스티커 ${x.보이는칸}칸 · 레일 ${x.레일보임}/${x.레일칸수}갈래(칸 ${x.레일한칸}px · 띠 ${x.레일키}px)`)
+    if (x.층덤프 && x.W === 390 && x.탭 === '데코') {
+      x.층덤프.forEach((L) => console.log(`        서랍 ${String(L.h).padStart(3)}px  안여백 ${L.안}  아래 ${L.아래}  ${L.글}`))
+      x.속덤프.forEach((L) => console.log(`        굴림 ${String(L.h).padStart(3)}px  안여백 ${L.안}  아래 ${L.아래}  ${L.글}`))
+    }
   })
  }
 }
