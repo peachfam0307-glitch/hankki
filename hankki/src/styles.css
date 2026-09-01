@@ -4458,18 +4458,24 @@ html, body { overscroll-behavior: none; }
    ⛔ 단추보다 크게 만들지 않는다 — 주인공은 구글 단추다. */
 .cg-gift {
   display: flex;
-  align-items: center;
+  /* ⛔ 가운데 정렬이면 두 줄일 때 열쇠가 «줄 사이»에 뜬다 — 첫 줄에 맞춘다(규칙 21 로 보고 잡았다) */
+  align-items: flex-start;
   justify-content: center;
-  gap: 7px;
+  gap: 9px;
   margin-top: 13px;
-  padding: 9px 13px;
-  border-radius: 999px;
+  padding: 11px 14px;
+  /* ⛔ 알약(999px)이 아니라 «상자»다 — 2026-09-01 부터 두 줄이 되어 알약이면 옆이 뾰족해진다
+     (창업자가 「지금 10개 · 로그인하면 20개 더」까지 적으라고 했다) */
+  border-radius: 14px;
   background: #eaf4e4;
   border: 1px solid #cfe3c4;
 }
-.cg-gift img { height: 22px; width: auto; flex: 0 0 auto }
-.cg-gift span { font-size: 14px; font-weight: 700; color: #3f6b39; line-height: 1.3 }
+.cg-gift img { height: 24px; width: auto; flex: 0 0 auto }
+.cg-gift > div { min-width: 0 }
+.cg-gift span { display: block; font-size: 14.5px; font-weight: 700; color: #3f6b39; line-height: 1.35 }
 .cg-gift b { font-weight: 900 }
+/* ⭐ 둘째 줄 — 「지금 몇 개 · 얼마나 더」. 첫 줄보다 작고 연하게 둔다(주인공은 첫 줄이다) */
+.cg-gift em { display: block; margin-top: 3px; font-style: normal; font-size: 13px; font-weight: 600; color: #5a7d52; line-height: 1.45 }
 
 /* 🎁 「이거 해보면 열쇠 1개」 목록 — 가져오기 화면
    ⭐ 위 초록 박스(`.imp-notice`)와 «다른» 결로 둔다 — 그건 「안심」이고 이건 「해보세요」다.

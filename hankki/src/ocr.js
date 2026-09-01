@@ -247,6 +247,18 @@ export async function 열쇠새로고침() {
   return false
 }
 
+// 🎁 「그냥 깔면 몇 개 · 로그인하면 몇 개」 — 서버가 준 두 상한을 그대로 돌려준다.
+//   📮 창업자 2026-09-01 = *"로그인화면에서 10개 주고 로그인하면 20개준다는 것도 안내붙였어?"*
+//      ＋ *"그거 다하면 무료30개 제공(첫 유저 선물) 안내도 적어야 할 것 같아."*
+//   ⛔ 숫자를 화면에 «글자로» 박지 않는다 — 상한을 바꾸는 날 문구만 낡는다(`ocr.js` 의 「5회」 교훈).
+export function 무료열쇠상한() {
+  let v = null
+  try { v = JSON.parse(localStorage.getItem(LEFT_KEY) || 'null') } catch { v = null }
+  const 비로그인 = v && Number.isFinite(v.anon) ? v.anon : WELCOME_ANON
+  const 로그인 = v && Number.isFinite(v.acct) ? v.acct : WELCOME_ACCT
+  return { 비로그인, 로그인, 더: Math.max(0, 로그인 - 비로그인) }
+}
+
 // 🎁 「로그인하면 몇 개 더 받나」 — ⛔문구에 «20» 을 글자로 박지 않는다.
 //   서버가 두 상한을 다 주므로 그 차이를 쓴다. 숫자를 바꿔도 문구가 안 낡는다.
 export function 로그인보너스() {

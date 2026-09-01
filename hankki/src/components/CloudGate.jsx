@@ -8,9 +8,8 @@ import { APP_TAGLINE } from '../version'
 import { markCloudGateSeen } from '../nudges'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
 import { 로그인, 요약, 내려받기, 미리붙기, 받았다표시 } from '../cloud'
-import { 로그인보너스, KEY_NAME, KEY_UNIT } from '../ocr'
+import KeyGift from './KeyGift'
 import duoHi from '../assets/sharepool/duo_hi.png'
-import uiKeyOne from '../assets/ui/key_one.png'
 
 // ☁️🚪 클라우드 첫 화면 — 앱을 켜자마자 «맨 처음» 뜬다. 소개보다 앞.
 //
@@ -146,10 +145,8 @@ export default function CloudGate({ onDone }) {
               ⛔⛔ **숫자를 «글자로» 박지 않는다** — `로그인보너스()` 가 서버가 준 두 상한의 차를 준다.
                  📌 상한을 바꾸는 날 문구만 낡는 사고를 여기서 미리 막는다(`ocr.js` 의 「5회」 교훈).
               ⛔ 유니코드 이모지 금지 — 우리 열쇠 그림(`key_one.png`)을 쓴다(절대원칙). */}
-          <div className="cg-gift">
-            <img src={uiKeyOne} alt="" aria-hidden="true" draggable={false} />
-            <span>로그인하면 <b>{KEY_NAME} {로그인보너스()}{KEY_UNIT}</b>를 더 드려요</span>
-          </div>
+          {/* ⭐ 설정 시트(CloudSheet)와 «같은 부품» — 복사하면 한쪽만 고쳐져 갈라진다 */}
+          <KeyGift />
 
           <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.6, textAlign: 'center', textWrap: 'balance', marginTop: 11 }}>
             직접 넣은 사진은 저장되지 않아요 · 백업 파일로 남겨요
