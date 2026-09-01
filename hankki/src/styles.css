@@ -3185,12 +3185,15 @@ html, body { overscroll-behavior: none; }
 /* 🫳 손잡이 = «내리는 단추». 창업자 2026-08-12 *"가운데 두꺼운 버튼같이 만들어서 … 탭 전체가 내려가게"*
    ⭐ 막대만 두껍게(4 → 6px · 40 → 56px) 하고 **닿는 칸은 38px** 로 넉넉히 — 손가락이 겨냥할 게 막대다.
    ⛔ 막대를 44px 로 키우면 「가로줄」로 보여 서랍 테두리와 헷갈린다. 막대는 작게, 칸만 크게. */
+/* 📏 2026-09-01 창업자 = *"속지 글쓰기 영역이 자리를 너무 차지에 «흰 여백»도 그렇고. 줄여줘."*
+   🔢 손잡이 38 → 24px · 띠 위아래 여백 10 → 5px
+   ⛔ 폭이 100% 라 짧아져도 손가락은 닿는다 — 세로만 깎는다. */
 .decor-grab {
-  display: block; width: 100%; min-height: 38px; padding: 0; flex: 0 0 auto;
+  display: block; width: 100%; min-height: 24px; padding: 0; flex: 0 0 auto;
   background: none; border: none; cursor: pointer;
 }
 .decor-grab::before {
-  content: ''; display: block; width: 56px; height: 6px; margin: 10px auto;
+  content: ''; display: block; width: 56px; height: 5px; margin: 5px auto;
   border-radius: 999px; background: var(--line);
 }
 /* 🫳 내린 상태 — 손잡이만 남기고 다 감춘다. 다시 누르면 올라온다.
@@ -3221,11 +3224,18 @@ html, body { overscroll-behavior: none; }
    ⛔ 위 주석의 *"44px 밑으로는 못 내린다"* 는 «내가 정한 잣대»였고 창업자가 풀어줬다.
       우리 앱은 「배경 음식 아이콘 되돌리기」가 이미 38px 로 돌고 있다 = **실질 최소치는 38.**
    🔢 44 → 38 = 서랍 굴칸 6px 확보. 작아 보이지 않게 밑줄은 그대로 둔다(위치를 알려주는 건 밑줄이다). */
+/* 📏 2026-09-01 창업자 = *"속지 글쓰기 영역이 자리를 너무 차지"* — 38 → 32px
+   ⛔ 손가락 최소(44)를 깬다. 일부러다 — 이 앱은 같은 자리를 이미 32px 로 내려둔 전례가 있고
+      (`@media (max-width:500px) and (max-height:700px)`), 그 주석이 이유를 적어뒀다:
+      *"여기 값들은 손가락 최소(44px)를 깬다 — 44 를 지키면 스티커가 «한 줄»뿐이다."*
+      ＋ 이 줄은 모드가 넷이라 한 칸이 «가로로 97px» 이다. 세로가 짧아도 잘 눌린다. */
 .decor-drawer .segment .seg {
-  min-height: 38px; border-radius: 0; background: none; box-shadow: none;
+  min-height: 32px; border-radius: 0; background: none; box-shadow: none;
   font-size: 13px; font-weight: 700; color: var(--text-sub);
   border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
 }
+/* 🤍 흰 여백 — 알약 통이 위아래로 4px 씩 먹는다. 서랍에선 2px 이면 된다 */
+.decor-drawer .segment { padding: 2px; }
 .decor-drawer .segment .seg.on { font-weight: 800; }
 .decor-drawer .segment .seg.on {
   background: none; color: var(--brown); border-bottom-color: var(--brown);
@@ -3260,8 +3270,8 @@ html, body { overscroll-behavior: none; }
   padding: 0 3px 4px; margin-bottom: 0; flex: 0 0 auto;
 }
 .decor-body > .decor-catsrow .decor-cats button {
-  width: 100%; min-height: 44px; border-radius: 12px;
-  white-space: normal; line-height: 1.15; padding: 3px 2px; font-size: 11.5px;
+  width: 100%; min-height: 38px; border-radius: 11px;
+  white-space: normal; line-height: 1.15; padding: 2px 2px; font-size: 11.5px;
 }
 /* 🗂 접기 단추 = 레일 «맨 아래». 가로 줄일 땐 오른쪽 끝이었다 — 세로에선 그 자리가 아래다 */
 .decor-body > .decor-catsrow .decor-pickfold { align-self: center; margin: 2px auto 0; }

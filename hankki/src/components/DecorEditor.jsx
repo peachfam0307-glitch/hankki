@@ -1777,14 +1777,18 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                  띠가 **226px** 인데 46px＋틈3 으로 두니 6칸(갈래 5 ＋ 접기) 중 **4칸만 보였다**(291px 필요).
                  44×5 = **220px** 라 갈래 다섯이 «딱» 들어간다.
               ⛔ 44 밑으로는 안 내린다 — 손가락 최소다. 더 줄여야 하면 칸이 아니라 «다른 줄»을 줄인다. */}
-          <div className="decor-cats" onClick={dropBodyOnTap} style={{ display: 'flex', flexDirection: 'column', gap: 0, overflowX: 'hidden', padding: '0 3px', flex: '0 0 auto', minWidth: 0 }}>
+          {/* 📏 2026-09-01 창업자 = *"세로줄 맡테 데코또 회섹 네모칸이 너무 커. 이부분도 줄여줘
+                 (네모칸끼리 붙지않게)"* → 칸 44 → **38px** · 틈 0 → **4px**
+              🔢 왜 이제 되나 = 위에서 손잡이(38→24)·모드줄(38→32)을 깎아 띠가 그만큼 커졌다.
+                 5칸 × 38 ＋ 틈 4×4 = **206px** — 갈래 다섯 ＋ 접기 단추까지 들어간다. */}
+          <div className="decor-cats" onClick={dropBodyOnTap} style={{ display: 'flex', flexDirection: 'column', gap: 4, overflowX: 'hidden', padding: '2px 3px', flex: '0 0 auto', minWidth: 0 }}>
             {visCats.map((c) => {
               const on = cat === c.key
               return (
                 <button key={c.key} className="press" onClick={() => setCat(c.key)}
                   /* 📐 세로 레일 칸 — 폭은 레일(54)을 꽉 채우고 키는 손가락 최소(44)를 넘긴다.
                      ⛔ `nowrap` 을 빼고 `normal` 로 — 「친구들」처럼 세 글자가 54px 에 안 들어가면 두 줄로 앉아야 한다. */
-                  style={{ width: '100%', minHeight: 44, padding: '3px 2px', borderRadius: 12, fontSize: 11.5, fontWeight: 700, lineHeight: 1.15, whiteSpace: 'normal', background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)' }}>
+                  style={{ width: '100%', minHeight: 38, padding: '2px 2px', borderRadius: 11, fontSize: 11.5, fontWeight: 700, lineHeight: 1.15, whiteSpace: 'normal', background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)' }}>
                   {c.label}
                 </button>
               )
