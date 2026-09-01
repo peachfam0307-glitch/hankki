@@ -131,11 +131,11 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
 const 후보칸 = 후보들.map((c) => {
   const 셋 = 표본.map((t) => {
     const v = 컷.find((x) => x.폭 === c.w && x.표본 === t.id)
-    return `<figure><figcaption>${esc(t.이름)} <b>${v.줄}줄</b></figcaption><img src="${b64(v.파일)}" alt=""></figure>`
+    return `<figure><figcaption><span>${esc(t.이름)}</span> <b>${v.줄}줄</b></figcaption><img src="${b64(v.파일)}" alt="${esc(t.이름)} — ${v.줄}줄"></figure>`
   }).join('')
-  const id = `w${c.w || 'now'}`
-  return `<section class="cand">
-    <h3>${esc(c.이름)}</h3><p class="sub">${esc(c.설명)}</p>
+  return `<section class="cand${c.w === 580 ? ' here' : ''}">
+    <h3>${esc(c.이름.replace(' ⭐지금 넣어 둔 값', ''))}${c.w === 580 ? '<span class="tag">지금 넣어 둔 값</span>' : ''}</h3>
+    <p class="sub">${esc(c.설명).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</p>
     <div class="shots">${셋}</div>
     <div class="pick" data-q="폭">
       <button data-v="${esc(c.이름)}|좋다">이게 좋다</button>
@@ -145,60 +145,92 @@ const 후보칸 = 후보들.map((c) => {
 }).join('')
 
 const html = `<title>패드 가로 글줄 폭 고르기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Gowun+Dodum&display=swap">
 <style>
-:root{--bg:#f7f5f0;--fg:#2f2a24;--sub:#7a6f60;--line:#e2dbcf;--card:#fffdf9;--accent:#5d7fa8}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1a18;--fg:#efeae2;--sub:#a89d8d;--line:#39352f;--card:#232120;--accent:#8fb0d6}}
-:root[data-theme="dark"]{--bg:#1b1a18;--fg:#efeae2;--sub:#a89d8d;--line:#39352f;--card:#232120;--accent:#8fb0d6}
-body{background:var(--bg);color:var(--fg);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;padding:20px 16px 60px;max-width:820px;margin:0 auto}
-h1{font-size:23px;margin:0 0 6px}h2{font-size:19px;margin:34px 0 10px;padding-top:16px;border-top:2px solid var(--line)}
-h3{font-size:17px;margin:0 0 2px}
-.q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:14px 0}
-.sub{color:var(--sub);font-size:14px;margin:0 0 10px}
-.shots{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
-figure{margin:0;flex:0 0 auto;width:250px}
-figure img{width:100%;border:1px solid var(--line);border-radius:10px;display:block}
-figcaption{font-size:12.5px;color:var(--sub);margin-bottom:5px}
-.cand{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
-.pick{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.pick button{flex:1;min-width:110px;padding:11px 8px;border:1.5px solid var(--line);border-radius:11px;background:transparent;color:var(--fg);font-size:15px;font-weight:600;cursor:pointer}
-.pick button.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.ab{display:flex;gap:10px;overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
-th,td{border:1px solid var(--line);padding:6px 8px;text-align:right}th:first-child,td:first-child{text-align:left}
-th{background:var(--card)}
-#copy{position:sticky;bottom:12px;width:100%;padding:15px;border:none;border-radius:13px;background:var(--accent);color:#fff;font-size:17px;font-weight:700;cursor:pointer;margin-top:22px}
-#out{width:100%;min-height:120px;margin-top:10px;font:13px/1.5 ui-monospace,monospace;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--card);color:var(--fg)}
-.note{font-size:14px;color:var(--sub)}
+/* 🎨 색·글씨체를 «앱에서 그대로» 가져왔다 — 판이 앱을 흉내 내면 조용히 어긋난다(절대원칙 30).
+   크림 바탕·따뜻한 먹색·「다음」 단추의 파랑, 그리고 지금 판정 중인 그 손글씨(귀염체)를 제목에 쓴다. */
+:root{
+  --bg:#f2efe8; --card:#fffdf9; --ink:#332c22; --muted:#8b7f6e;
+  --line:#e3dccf; --accent:#5d7fa8; --accent-ink:#fffdf9; --star:#b8763a;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1c1a17; --card:#252220; --ink:#efe9df; --muted:#a1958a;
+  --line:#3a352e; --accent:#93b3d8; --accent-ink:#1c1a17; --star:#dda26a;
+}}
+:root[data-theme="dark"]{
+  --bg:#1c1a17; --card:#252220; --ink:#efe9df; --muted:#a1958a;
+  --line:#3a352e; --accent:#93b3d8; --accent-ink:#1c1a17; --star:#dda26a;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);
+  font:16px/1.7 "Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  padding:22px 16px 64px;max-width:760px;margin:0 auto}
+h1{font-family:Gaegu,"Gowun Dodum",sans-serif;font-size:34px;line-height:1.25;margin:0 0 4px;text-wrap:balance;letter-spacing:.01em}
+h2{font-family:Gaegu,"Gowun Dodum",sans-serif;font-size:26px;margin:38px 0 8px;padding-top:18px;border-top:1px solid var(--line);text-wrap:balance}
+h3{font-size:17px;font-weight:700;margin:0}
+.lede{color:var(--muted);font-size:14.5px;margin:0 0 18px}
+.q{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px 13px 13px 4px;padding:14px 16px;margin:16px 0}
+.q i{font-style:normal;color:var(--ink)}
+.sub{color:var(--muted);font-size:14px;margin:2px 0 12px}
+.shots{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
+figure{margin:0;flex:0 0 auto;width:250px;scroll-snap-align:start}
+figure img{width:100%;border:1px solid var(--line);border-radius:9px;display:block;background:var(--bg)}
+figcaption{font-size:12.5px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;gap:8px}
+figcaption b{color:var(--ink);font-variant-numeric:tabular-nums}
+.cand{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px;margin:14px 0}
+.cand.here{border-color:var(--accent)}
+.tag{display:inline-block;font-size:11.5px;letter-spacing:.06em;color:var(--accent-ink);background:var(--accent);padding:2px 8px;border-radius:999px;vertical-align:2px;margin-left:6px}
+.pick{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.pick button{flex:1;min-width:112px;padding:11px 8px;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-size:15px;cursor:pointer}
+.pick button:hover{border-color:var(--accent)}
+.pick button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pick button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ab{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.scroller{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:430px;font-size:14px;margin:10px 0;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:12.5px;letter-spacing:.04em}
+tr.here td{color:var(--star);font-weight:700}
+#copy{position:sticky;bottom:12px;width:100%;padding:15px;border:none;border-radius:12px;background:var(--accent);color:var(--accent-ink);font:inherit;font-size:17px;cursor:pointer;margin-top:24px}
+#copy:focus-visible{outline:2px solid var(--star);outline-offset:2px}
+#out{width:100%;min-height:118px;margin-top:10px;font:13px/1.6 ui-monospace,SFMono-Regular,monospace;border:1px solid var(--line);border-radius:10px;padding:11px;background:var(--card);color:var(--ink)}
+.note{font-size:14px;color:var(--muted)}
 </style>
-<h1>🖥 패드 가로 — 글줄이 꺾이는 자리</h1>
-<p class="sub">아래 그림은 <b>지금 앱 그대로</b>다(귀염체 38px · 획 1.6px). 글줄이 꺾이는 폭만 갈아끼워 찍었다.</p>
+<h1>패드 가로, 글줄을 어디서 꺾을까</h1>
+<p class="lede">아래 그림은 <b>지금 앱 그대로</b>다 — 귀염체 38px · 획 1.6px. 글줄이 꺾이는 폭만 갈아끼워 찍었다.</p>
 
 <div class="q">
-  <b>📮 창업자</b> — <i>"패드 가로 요리모드에서 글자가 너무 한줄로 길어. 이건 적당하게 두 줄로 할 순 없어?"</i><br>
-  <span class="note">964걸음을 전수로 재니 <b>80.7%가 한 줄</b>이었다. 창업자 말이 맞다.<br>
-  지금 <b>580px</b> 로 넣어 뒀다. 다른 게 나으면 골라 주면 한 줄만 고친다.</span>
+  <i>“패드 가로 요리모드에서 글자가 너무 한줄로 길어. 이건 적당하게 두 줄로 할 순 없어?”</i>
+  <p class="note" style="margin:8px 0 0">964걸음을 전수로 재니 <b>80.7%가 한 줄</b>이었다. 말이 맞다.<br>
+  지금 <b>580px</b> 로 넣어 뒀다 — 다른 게 나으면 골라 주면 한 줄만 고친다.</p>
 </div>
 
+<div class="scroller">
 <table>
-<tr><th>글줄 폭</th><th>1줄</th><th>2줄</th><th>3줄</th><th>4줄+</th><th>평균</th><th>스크롤</th></tr>
+<thead><tr><th>글줄 폭</th><th>1줄</th><th>2줄</th><th>3줄</th><th>4줄+</th><th>평균</th><th>스크롤</th></tr></thead>
+<tbody>
 <tr><td>지금 1128</td><td>80.7%</td><td>19.2%</td><td>0.1%</td><td>0%</td><td>1.19줄</td><td>0</td></tr>
 <tr><td>760</td><td>50.6%</td><td>43.3%</td><td>6.0%</td><td>0.1%</td><td>1.56줄</td><td>0</td></tr>
 <tr><td>700</td><td>45.2%</td><td>45.3%</td><td>9.0%</td><td>0.4%</td><td>1.65줄</td><td>0</td></tr>
 <tr><td>640</td><td>39.5%</td><td>45.7%</td><td>13.7%</td><td>1.0%</td><td>1.76줄</td><td>0</td></tr>
-<tr><td><b>580</b></td><td>29.3%</td><td><b>50.0%</b></td><td>17.5%</td><td>3.2%</td><td><b>1.95줄</b></td><td>0</td></tr>
+<tr class="here"><td>580</td><td>29.3%</td><td>50.0%</td><td>17.5%</td><td>3.2%</td><td>1.95줄</td><td>0</td></tr>
 <tr><td>520</td><td>21.9%</td><td>50.0%</td><td>20.9%</td><td>7.3%</td><td>2.14줄</td><td>0</td></tr>
+</tbody>
 </table>
-<p class="note">⭐ 어느 값에서도 <b>스크롤 0 · 가로 넘침 0</b> — 제일 긴 걸음(78자)도 580px 에서 다 들어간다.<br>
+</div>
+<p class="note">어느 값에서도 <b>스크롤 0 · 가로 넘침 0</b> — 제일 긴 걸음(78자)도 580px 에서 다 들어간다.<br>
 ＋ 둘째 줄이 「비벼요.」 하나만 남는 <b>외톨이는 224 → 0개</b>로 없앴다(줄을 고르게 나눈다).</p>
 
 <h2>① 어느 폭이 좋아?</h2>
 ${후보칸}
 
 <h2>② STEP 줄도 손글씨로 갈까?</h2>
-<p class="sub">지금은 <b>원래 글씨체 그대로</b> 뒀다. 귀염체로 가면 <b>60.4% 얇아진다</b>(잉크 19.2 → 7.6 · 획을 더해도 −38%라 못 되돌린다).</p>
+<p class="sub">두께 판에서는 이 줄까지 손글씨로 찍어 보여줬는데, 넣고 열어 보니 <b>이 줄만 유난히 흐렸다</b>.
+재보니 <b>60.4% 얇아진다</b>(잉크 19.2 → 7.6). 획을 더해도 −38%라 못 되돌려서 <b>원래 글씨체로 되돌려 뒀다</b>.</p>
 <div class="ab">
-  <figure><figcaption>지금 — 원래 글씨체 ⭐넣어 둔 것</figcaption><img src="${b64(step컷[0].파일)}" alt=""></figure>
-  <figure><figcaption>손글씨로 바꾸면</figcaption><img src="${b64(step컷[1].파일)}" alt=""></figure>
+  <figure><figcaption><span>지금 — 원래 글씨체</span> <b>넣어 둔 것</b></figcaption><img src="${b64(step컷[0].파일)}" alt="STEP 줄이 원래 글씨체인 화면"></figure>
+  <figure><figcaption><span>손글씨로 바꾸면</span> <b>−60.4%</b></figcaption><img src="${b64(step컷[1].파일)}" alt="STEP 줄이 손글씨인 화면"></figure>
 </div>
 <div class="pick" data-q="STEP">
   <button data-v="지금 그대로">지금 그대로</button>
