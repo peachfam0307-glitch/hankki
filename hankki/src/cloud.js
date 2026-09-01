@@ -556,6 +556,180 @@ export async function 저절로올리기(백업만들기) {
     return { 했나: false, 왜: '인터넷', 탈: (e && e.code) || '' }
   }
 }
+// ─────────────────────────────────────────────────────────────────────────
+// ⬇️⚡ 저절로 받기 — 폰에서 한 것이 패드에 «저절로» 온다 (창업자 확정 2026-09-01 = ⓐ)
+// ─────────────────────────────────────────────────────────────────────────
+//
+// 📮 창업자 = *"자동동기화는 꼭 필요해."* · *"폰에서 레꾸한거 패드에서는 안보이거든?"*
+//    → 갈래 셋(ⓐ사진 지키며 자동 / ⓑ그냥 자동 / ⓒ물음만 고침) 중 **"a가자"**
+//
+// ⛔⛔ **그 전엔 «올리기»만 자동이었다.** 받는 쪽은 「덮을까요?」를 띄우고, 눌러도 «설정 화면»으로
+//    데려갈 뿐이라 거기서 **한 번 더** 눌러야 왔다. 창업자 = *"매번 동기화시키기 불편한데.."*
+//
+// 🚨 **그냥 자동으로 켜면 «사진이 사라진다»** — 클라우드엔 사진을 안 올리는데(`사진털기`)
+//    받아온 판으로 통째로 덮으면 폰에 있던 사진 자리가 «빈 채로» 덮인다.
+//    지금은 유저가 「덮기」라는 말을 보고 «각오하고» 누르니 괜찮지만, 자동엔 각오가 없다.
+//    ✅ 그래서 받아온 판에 **폰에만 있던 사진을 그 자리에 되돌린 뒤** 적용한다.
+//    ⭐ 사진을 «보내는» 게 아니다 — 폰 안에 있는 걸 «안 지우는» 것이라 용량이 0이다.
+//    ⚠️ 그러니 **사진이 기기를 건너가지는 않는다**(창업자 확정 「글자부터」). 그건 «알려준다» ↓
+
+// 📷 「직접 넣은 사진은 기기마다 따로」 안내를 «처음 한 번만» 자세히 (창업자 확정 2026-09-01)
+//   ⛔ 매번 띄우면 잔소리가 된다 — 상시 안내와 겹치면 하나는 잔소리가 된다(2026-08-13 과 같은 결).
+const 사진안내칸 = 'hankki:cloud:photonote'
+export const 사진안내봤나 = () => { try { return localStorage.getItem(사진안내칸) === '1' } catch { return false } }
+export const 사진안내봤다 = () => { try { localStorage.setItem(사진안내칸, '1') } catch { /* noop */ } }
+
+// 📷 받은 판(사진 없음)에 폰 판의 사진을 되돌린다.
+//   ⭐ 칸 이름(`image`·`photo`)으로 찾지 않는다 — `사진털기` 와 «같은 잣대»(`data:`)를 쓴다.
+//      이름으로 찾으면 일기 속지·꾸미기처럼 사진 칸이 늘어날 때마다 여기가 낡는다.
+//   ⛔ 클라우드에 «없는» 값을 함부로 되살리면 «유저가 지운 것»이 살아난다.
+//      그래서 되살리는 것은 **`data:` 로 시작하는 값 하나뿐**이고, 그나마도
+//      「안 올린 변경 0」일 때만 이 길로 온다(＝폰과 클라우드가 사진 빼고 같다).
+function 사진되살리기(받은것, 폰것) {
+  let 살림 = 0
+  const 가기 = (a, b) => {
+    if (b == null) return a
+    if (typeof b === 'string') {
+      if (a === undefined && b.startsWith('data:')) { 살림++; return b }
+      return a
+    }
+    if (Array.isArray(b)) {
+      if (!Array.isArray(a)) return a
+      // ⭐ 꾸민 것(decor)은 «순서가 바뀔 수 있어» id 로 맞춘다. id 가 없으면 자리로.
+      const 짝지도 = new Map()
+      for (const it of b) if (it && it.id != null) 짝지도.set(String(it.id), it)
+      return a.map((it, i) => {
+        const 짝 = (it && it.id != null && 짝지도.get(String(it.id))) || b[i]
+        return 짝 === undefined ? it : 가기(it, 짝)
+      })
+    }
+    if (typeof b === 'object') {
+      if (!a || typeof a !== 'object' || Array.isArray(a)) return a
+      const 나온것 = { ...a }
+      for (const [k, v] of Object.entries(b)) {
+        const r = 가기(a[k], v)
+        // ⛔ 받은 판에 없던 «사진 아닌» 칸을 새로 만들지 않는다(undefined 키가 생긴다)
+        if (r !== undefined) 나온것[k] = r
+      }
+      return 나온것
+    }
+    return a
+  }
+  return { 값: 가기(받은것, 폰것), 살림 }
+}
+
+// 받은 판 전체에 위를 돌린다. 되돌려주는 값 = { 판, 살린사진 }
+function 사진살려합치기(판, 폰백업) {
+  const 지도 = (목록) => {
+    const m = new Map()
+    for (const x of Array.isArray(목록) ? 목록 : []) if (x && x.id != null) m.set(String(x.id), x)
+    return m
+  }
+  let 살린사진 = 0
+  const 고치기 = (목록, 폰지도) => (Array.isArray(목록) ? 목록 : []).map((x) => {
+    if (!x || x.id == null) return x
+    const 옛 = 폰지도.get(String(x.id))
+    if (!옛) return x
+    const { 값, 살림 } = 사진되살리기(x, 옛)
+    살린사진 += 살림
+    return 값
+  })
+  const 판2 = {
+    ...판,
+    recipes: 고치기(판.recipes, 지도(폰백업.recipes)),
+    diary: 고치기(판.diary, 지도(폰백업.diary)),
+  }
+  return { 판: 판2, 살린사진 }
+}
+
+// ☁️ **이 기기가 마지막으로 올린 뒤로 «안 올린 변경»이 있나** — 자동으로 받아도 되는지 가르는 잣대.
+//   ⭐ 없다 = 이 기기엔 «잃을 게 0» → 다른 기기 것을 받아도 안전하다.
+//      있다 = 두 기기가 각각 고쳤다 → ⛔자동으로 정하지 않는다. 사람이 고른다.
+//   ⛔ 지문이 비어 있으면(이 기기가 한 번도 안 올렸다) «있다»로 나온다 — 폰에 쌓인 것을
+//      한 번도 안 올린 채 클라우드로 덮는 게 제일 나쁜 사고라, 그쪽으로 기울여 둔다.
+//   ⭐ 사진은 셈에 «안» 들어간다 — `문서로` 가 사진을 턴 뒤에 재기 때문이다.
+//      그래야 「사진만 다른 것」이 자동 동기화를 영영 막지 않는다.
+export function 안올린변경있나(백업) {
+  const 옛 = 지문읽기()
+  const 지금 = new Set()
+  const 훑기 = (갈래, 목록) => {
+    for (const x of Array.isArray(목록) ? 목록 : []) {
+      if (!x || x.id == null) continue
+      const 글 = 문서로(x)
+      if (글.length > 한덩어리) continue // 애초에 못 올리는 것은 셈에 안 넣는다
+      const 열쇠 = 갈래 + ':' + x.id
+      지금.add(열쇠)
+      if (옛[열쇠] !== 지문(글)) return true // 새로 생겼거나 바뀌었다
+    }
+    return false
+  }
+  if (훑기('recipes', 백업.recipes)) return true
+  if (훑기('diary', 백업.diary)) return true
+  // 🗑 지운 것도 «변경»이다 — 안 그러면 지운 게 클라우드에서 되살아난다
+  // ⛔⛔ 단 `meta` 는 «레시피도 일기도 아니다» — 개수·시각을 담는 요약 문서다.
+  //    이걸 같이 세면 **늘 「지운 게 있다」가 되어 자동 받기가 영영 안 돈다.**
+  //    🧪 재현판 ㉓ 이 이걸 잡았다(2026-09-01) — 만들자마자 걸렸다.
+  for (const 열쇠 of Object.keys(옛)) {
+    if (!열쇠.startsWith('recipes:') && !열쇠.startsWith('diary:')) continue
+    if (!지금.has(열쇠)) return true
+  }
+  return false
+}
+
+// 받은 판을 «방금 올린 것»으로 쳐서 지문을 맞춘다.
+//   ⛔ 이게 없으면 받고 «난 다음»에 `안올린변경있나` 가 계속 참이 되어
+//      두 번째부터 자동 받기가 영영 막힌다(＝창업자가 또 손으로 눌러야 한다).
+function 지문맞추기(판) {
+  const m = {}
+  const 담기 = (갈래, 목록) => {
+    for (const x of Array.isArray(목록) ? 목록 : []) {
+      if (!x || x.id == null) continue
+      const 글 = 문서로(x)
+      if (글.length > 한덩어리) continue
+      m[갈래 + ':' + x.id] = 지문(글)
+    }
+  }
+  담기('recipes', 판.recipes)
+  담기('diary', 판.diary)
+  지문쓰기(m)
+}
+
+export async function 저절로받기(백업만들기) {
+  try {
+    if (!로그인해뒀나()) return { 했나: false, 왜: '로그인안함' }
+    const { F, auth, db } = await 붙기()
+    const 사람 = 사람으로(auth.currentUser)
+    if (!사람) return { 했나: false, 왜: '로그인안함' }
+
+    const 문서 = await F.getDoc(F.doc(db, 'users', 사람.번호))
+    if (!문서.exists()) return { 했나: false, 왜: '클라우드비었음' }
+    const d = 문서.data() || {}
+
+    // ⛔ 마지막으로 올린 게 «내 기기»면 받을 게 없다(내가 올린 걸 도로 받는 꼴)
+    if (!d.기기 || d.기기 === 내기기()) return { 했나: false, 왜: '내가마지막' }
+
+    const 백업 = await 백업만들기()
+    // ⛔⛔ 안전장치 — 이 기기에도 안 올린 변경이 있으면 «자동으로 정하지 않는다»
+    if (안올린변경있나(백업)) {
+      return { 했나: false, 왜: '양쪽이바뀜', 언제: d.at || '', 레시피: d.n레시피 || 0, 일기: d.n일기 || 0 }
+    }
+
+    const 받은판 = await 내려받기()
+    if (!받은판) return { 했나: false, 왜: '클라우드비었음' }
+
+    const { 판, 살린사진 } = 사진살려합치기(받은판, 백업)
+    받았다표시()   // ⭐ 가져왔다 → 이제부터 저절로 올려도 안전하다(안전장치 ②)
+    지문맞추기(판) // ⭐ 다음에도 저절로 받으려면 «지금 상태»가 기준이 돼야 한다
+    return {
+      했나: true, 왜: '됨', 판, 살린사진,
+      레시피: (판.recipes || []).length, 일기: (판.diary || []).length, 언제: d.at || '',
+    }
+  } catch (e) {
+    // 인터넷이 없거나 잠깐 안 될 때 — 조용히. 다음에 켤 때 또 해 본다.
+    return { 했나: false, 왜: '인터넷', 탈: (e && e.code) || '' }
+  }
+}
+
 // 🧪 재현판 전용 — `scripts/_repro-클라우드동기화-0821.mjs`
 //
 // ⭐ 왜 문을 하나 낸다 = **진짜 파이어베이스 없이** 올리기·내려받기를 통째로 돌려보기 위해서다.
@@ -563,4 +737,4 @@ export async function 저절로올리기(백업만들기) {
 //    ⛔ 이 문이 없으면 잴 수 있는 게 「글자 바꾸기」뿐이고, 버그는 늘 그 «바깥»에 있다.
 // ⛔ 앱 코드는 이 둘을 부르지 않는다.
 export function _가짜창고물리기(것) { 붙은것 = 것 }
-export const _내부 = { 사진털기, 문서로, 이름으로, 지문, 메타칸, 한덩어리, 묶음, 묶음바이트, 묶어쓰기 }
+export const _내부 = { 사진털기, 문서로, 이름으로, 지문, 메타칸, 한덩어리, 묶음, 묶음바이트, 묶어쓰기, 사진되살리기, 사진살려합치기, 지문맞추기 }
