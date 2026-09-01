@@ -39,6 +39,7 @@ import { hlColor } from '../components/Stickers'
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
 import { FAV_NAME } from '../favName'
 import { 항목묶어 } from '../stepBreak'
+import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 
 // 🖍 절 제목 형광펜 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
 // ✅ **레몬 확정** — 창업자가 판단을 맡겨서(*"형광펜은 잘모르겠다.. 네가 판단해봐"*) «재서» 골랐다.
@@ -806,6 +807,8 @@ export default function RecipeDetailScreen({ id }) {
           recipe={r}
           onSave={(items, bg, thumb) => {
             updateRecipe(r.id, { decor: items, decorBg: bg || 'none', thumb })
+            // 🎁 레꾸(꾸미기)를 저장했다 — 평생 1회(서버가 판정)
+            열쇠받기(EARN.레꾸).then((받음) => { if (받음) nav.showToast(`레시피를 처음 꾸며봤어요 · ${KEY_NAME} 1${KEY_UNIT}를 더 받았어요`, 5200) })
             setDecorOpen(false)
             const dressed = items.length || (bg && bg !== 'none') || thumb === 'none'
             nav.showToast(dressed ? '표지를 예쁘게 꾸몄어요' : '꾸미기를 비웠어요')

@@ -59,10 +59,22 @@ const LIMITS = {
   DAILY_GLOBAL: 120,     // 전체 일 상한
   PER_USER_MONTHLY: 5,   // 유저당 «월» 무료 횟수 (웰컴을 다 쓴 뒤부터)
   PER_IP_PER_MIN: 6,     // IP당 분당 상한
-  WELCOME_FREE: 30,      // 🎁 웰컴 — 첫 1회만. 다 쓸 때까지 «달이 바뀌어도» 남는다
-  //   ✅✅ **[창업자 확정 2026-08-31] 20 → 30** — *"30장으로 하자 넉넉하게 지금 유저 얼마 없으니까"*
-  //      ⭐ 마진을 안 깎는다 — 웰컴은 **1회성**이고 «매월 반복량 5」는 그대로다(그게 창업자가 정한 유일한 레버).
-  //      ⭐ 원가도 전역 월 900 이 막는다. ⛔ 「매월 5장」은 «건드리지 않았다».
+  // 🎁🎁 웰컴 — 첫 1회만. 다 쓸 때까지 «달이 바뀌어도» 남는다
+  //   ✅✅ **[창업자 확정 2026-09-01] 비로그인 10 · 로그인 30** — *"10 30 그렇게 가자"*
+  //      📮 창업자 걱정 = *"앱지웠다가 깔면 또 가져가고 그렇게 되지 않을까;;"*
+  //      ⭐ 유저가 보는 말은 **「로그인하면 열쇠 20개를 더 드려요」** — 못 받는 게 아니라 «받는» 말이다.
+  //      ⭐ 지웠다 깔아도 10개뿐이라 어뷰징이 줄고, 로그인하면 계정에 묶여 리셋이 안 된다.
+  //      ⛔ 창업자 첫 안은 「비로그인 5」였는데 접었다 — 30 → 5는 여섯 배 낙차라
+  //         「한 번 준 것은 빼앗지 않는다」에 닿고, 5개면 AI 가 한두 번 실패하면 앱을 겪어보지도 못한다.
+  //   ✅✅ [옛 확정 2026-08-31] 20 → 30 — *"30장으로 하자 넉넉하게 지금 유저 얼마 없으니까"*
+  //      ⭐ 마진을 안 깎는다 — 웰컴은 **1회성**이고 «매월 반복량 5»는 그대로다(창업자가 정한 유일한 레버).
+  WELCOME_ANON: 10,      // 그냥 깐 사람
+  WELCOME_ACCT: 30,      // 로그인한 사람 (＝＋20)
+  // 🎁 행동으로 받는 열쇠 — 각 **평생 1회** (창업자 확정 2026-08-31)
+  //   📮 *"4개 왜냐면 우리 기능을 하나씩 써봤으면 좋겠어서"* · *"냉장고 써보면 1개 더 줄까 싶기도"* · *"다 1회한정으로"*
+  //   ⭐ 이건 「열쇠를 주는 일」이 아니라 **「앱을 안내하는 일」**이다 — 창업자 이유가 그거였다.
+  //   ⛔ 서버는 「진짜 했는지」 확인할 길이 없다. **상한(다섯 × 1개 = 5)이 그 자리를 막는다.**
+  EARN_ACTIONS: ['자랑', '레꾸', '일기', '요리', '냉장고'],
 }
 
 // 🎁🎁 웰컴 20장 (창업자 2026-07-26 확정 · 2026-08-13 «드디어» 구현)
@@ -130,9 +142,10 @@ export default {
       const ymdq = t.toISOString().slice(0, 10)
       // 👤 [창업자 지시 2026-09-01] 창업자 몫을 갈라 보여준다 — 그래야 「유저가 얼마나 쓰나」가 보인다.
       //   ⛔ 유저 «개인별»은 여전히 안 준다(바로 위 주석 그대로).
-      const [월, 일, 월창, 일창] = await Promise.all([
+      const [월, 일, 월창, 일창, 막힘] = await Promise.all([
         num(kvq, `m:${ymq}`), num(kvq, `d:${ymdq}`),
         num(kvq, `mf:${ymq}`), num(kvq, `df:${ymdq}`),
+        num(kvq, `q:${ymq}`),
       ])
       return json({
         달: ymq,
@@ -145,8 +158,14 @@ export default {
           쓴것: 일, 상한: LIMITS.DAILY_GLOBAL, 남음: Math.max(0, LIMITS.DAILY_GLOBAL - 일),
           창업자: 일창, 유저: Math.max(0, 일 - 일창),
         },
-        웰컴: LIMITS.WELCOME_FREE,
+        웰컴: { 비로그인: LIMITS.WELCOME_ANON, 로그인: LIMITS.WELCOME_ACCT },
         매월: LIMITS.PER_USER_MONTHLY,
+        // 🚧🚧 **「막힘」 = 무료 한도에 부딪힌 횟수** — 유료를 «언제» 켤지 정하는 숫자다.
+        //   ⭐ 「유저 몇 명」이 아니라 **「더 쓰고 싶은데 막힌 횟수」**가 살 사람의 직접 증거다.
+        //   📌 잣대(창업자와 정할 것) = **한 달 20번**쯤이면 켤 때가 된 것.
+        //      ⚠️ 20 은 «추정»이다(한 사람이 막히면 보통 2~4번 부딪힌다 → 5~10명). 실측이 아니다.
+        //   ⛔ 누가 막혔는지는 «안» 센다 — 전역 숫자 하나뿐이다.
+        막힘: { 이번달: 막힘, 켤때: 20 },
       }, 200, cors)
     }
 
@@ -166,8 +185,6 @@ export default {
     // 본문 파싱: { image: dataURL, uid: 기기식별자 }
     let body
     try { body = await request.json() } catch { return json({ error: 'bad_json' }, 400, cors) }
-    const b64 = String(body.image || '').replace(/^data:image\/\w+;base64,/, '')
-    if (!b64 || b64.length > MAX_B64) return json({ error: 'bad_image' }, 400, cors) // ⑤-c 크기 제한
     const uid = String(body.uid || 'anon').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40) || 'anon'
 
     const kv = env.OCR_KV
@@ -180,13 +197,96 @@ export default {
     // ── 방어벽 검사(막혔으면 Vision 호출 없이 즉시 반려) ──
     // 운영자(founder)는 '개인 한도'(IP·유저)만 우회하고, '전역 상한'(비용 $0 보장)은 그대로 존중한다.
     // → 비밀키가 새더라도 전역 900에서 막혀 비용은 여전히 $0. (모든 한도 우회보다 이게 안전)
-    // 🎁 웰컴 잔량 — KV 에 «없으면» 아직 안 받은 사람이라 WELCOME_FREE 로 시작한다.
-    //    ⭐ 그래서 이미 쓰던 유저·테스터도 이 판이 올라가는 순간 웰컴을 받는다(창업자 「바로 열자」 취지).
-    let welcomeLeft = 0
+    // ── 🔑🔑 열쇠 통 — 「남은 수」가 아니라 «쓴 수»를 센다 ───────────────
+    //
+    // ⭐⭐ **왜 «쓴 수»인가** — 「남은 수」로 저장하면 10↔30 전환이 깨진다.
+    //    비로그인으로 7개 쓰고(남은 3) 로그인하면 계정 통을 30으로 «새로» 만들게 되어
+    //    **총 37개**가 되고, 로그아웃·로그인을 되풀이하면 **무한**이다.
+    //    ✅ 쓴 수로 두면 `남은 = 상한 + 보너스 − 쓴수` 라 **로그인하는 순간 상한만 바뀌어 저절로 ＋20** 된다.
+    //       로그아웃도 저절로 맞는다(상한이 10으로 돌아가고 쓴 수는 그대로라 «잃는 게 없다»).
+    //
+    // ⛔ **로그인했다는 걸 서버가 «확인하지는» 못한다**(앱이 보낸 번호를 믿는다).
+    //    제대로 막으려면 Firebase ID 토큰을 RS256 으로 검증해야 한다.
+    //    이번 판엔 안 넣는다 — ⑴무료라 돈이 안 걸렸고 ⑵기기 번호를 갈면 10개씩 받는 더 큰 구멍이 이미 있고
+    //    ⑶전역 월 900·일 120 이 청구를 0원으로 막는다.
+    //    🚨 **결제를 켜는 날엔 «반드시» 넣는다.** 그날 이 줄을 다시 읽는다.
+    const sub = String(body.sub || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64)
+    const 로그인 = !!sub
+    const 통 = 로그인 ? `a:${sub}` : `d:${uid}`
+
+    let 웰컴상한 = 로그인 ? LIMITS.WELCOME_ACCT : LIMITS.WELCOME_ANON
+    let 쓴수 = 0
+    let 보너스 = 0
+    let 옛표식 = null            // 옛 키 `w:<uid>` 의 값 — 있으면 「이 판 전부터 쓰던 사람」
     if (kv) {
-      const raw = await kv.get(`w:${uid}`)
-      welcomeLeft = raw === null ? LIMITS.WELCOME_FREE : (parseInt(raw, 10) || 0)
+      const [rawWu, rawBo, 옛남음] = await Promise.all([
+        kv.get(`wu:${통}`), kv.get(`bo:${통}`), kv.get(`w:${uid}`),
+      ])
+      보너스 = rawBo === null ? 0 : (parseInt(rawBo, 10) || 0)
+      옛표식 = 옛남음
+      if (rawWu !== null) {
+        쓴수 = parseInt(rawWu, 10) || 0
+      } else if (옛남음 !== null) {
+        // 🔁 옛 판에서 갈아타기 — 옛 키 `w:<uid>` 엔 «남은 수»가 들어 있다.
+        //   ⛔ **한 개도 줄면 안 된다**(창업자 절대 규칙 「한 번 준 것은 빼앗지 않는다」).
+        쓴수 = Math.max(0, LIMITS.WELCOME_ACCT - (parseInt(옛남음, 10) || 0))
+      }
+      // ⭐⭐ **이 판 «전»에 열쇠를 써 본 사람은 상한 30 을 그대로 지킨다.**
+      //    안 그러면 「남은 25」이던 사람이 상한 10 에 걸려 **남은 5** 가 된다 = 뺏는 것이다.
+      //    ⛔ 옛 키 `w:` 는 이 판부터 «더는 쓰지 않으므로» 그 사람 집합은 더 늘지 않는다(닫힌 집합).
+      if (옛남음 !== null) 웰컴상한 = LIMITS.WELCOME_ACCT
+      // 🔗 로그인했으면 «기기 통»과 큰 쪽으로 맞춘다 — 폰·패드를 갈아가며 안 쓴 척 못 하게.
+      if (로그인) {
+        const [기기Wu, 기기Bo] = await Promise.all([kv.get(`wu:d:${uid}`), kv.get(`bo:d:${uid}`)])
+        if (기기Wu !== null) 쓴수 = Math.max(쓴수, parseInt(기기Wu, 10) || 0)
+        if (기기Bo !== null) 보너스 = Math.max(보너스, parseInt(기기Bo, 10) || 0)
+      }
     }
+    const welcomeLeft = Math.max(0, 웰컴상한 + 보너스 - 쓴수)
+
+    // ── 🎁🎁 행동으로 받는 열쇠 (창업자 확정 2026-08-31) ───────────────
+    //   📮 *"4개 왜냐면 우리 기능을 하나씩 써봤으면 좋겠어서"* · *"다 1회한정으로"*
+    //   ⭐ 이건 「열쇠를 주는 일」이 아니라 **「앱을 안내하는 일」**이다.
+    //
+    //   ⛔⛔ **여기가 사진 검사보다 «앞»이어야 한다** — 이 요청엔 사진이 없다.
+    //   ⛔ **멱등(idempotent)** = 같은 행동을 몇 번 보내도 «한 번만» 준다.
+    //      ⭐ 그래야 앱이 «못 보낸 것을 나중에 다시 보내도» 안전하다(오프라인 대비).
+    //   ⛔ **Vision 을 안 부른다 → 전역 통(`d:`·`m:`)을 «안» 올린다.** 실제로 나간 양이 아니니까.
+    //   ⛔ 「진짜 일기를 썼나」는 서버가 확인할 길이 없다 — **상한(다섯 × 1개)이 그 자리를 막는다.**
+    if (body.earn !== undefined) {
+      const 행동 = String(body.earn || '')
+      if (!LIMITS.EARN_ACTIONS.includes(행동)) return json({ error: 'bad_earn' }, 400, cors)
+      if (!kv) return json({ error: 'no_kv' }, 500, cors)
+      const 표식 = `earn:${통}:${행동}`
+      const 이미 = await kv.get(표식)
+      let 준것 = 0
+      if (이미 === null) {
+        준것 = 1
+        보너스 += 1
+        await Promise.all([
+          // ⛔ 표식엔 만료를 안 준다 — **평생 1회**라 영원히 남아야 한다.
+          kv.put(표식, '1'),
+          kv.put(`bo:${통}`, String(보너스), { expirationTtl: 60 * 60 * 24 * 365 }),
+          // 🔗 로그인 중이면 기기 통에도 같이 — 로그아웃해도 숫자가 안 헛돈다
+          ...(로그인 ? [kv.put(`bo:d:${uid}`, String(보너스), { expirationTtl: 60 * 60 * 24 * 365 })] : []),
+        ])
+      }
+      const 남음 = Math.max(0, 웰컴상한 + 보너스 - 쓴수)
+      return json({
+        ok: true,
+        준것,                                   // 1 = 방금 받았다 · 0 = 이미 받았던 행동이다
+        left: {
+          welcome: 남음, month: LIMITS.PER_USER_MONTHLY,
+          cap: 웰컴상한 + 보너스, bonus: 보너스,
+          anon: LIMITS.WELCOME_ANON, acct: LIMITS.WELCOME_ACCT,
+          monthly: LIMITS.PER_USER_MONTHLY, signed: 로그인,
+        },
+      }, 200, cors)
+    }
+
+    // ⑤-c 사진 크기 제한 — ⛔행동 열쇠 길을 지난 «뒤»에 본다(그 길엔 사진이 없다)
+    const b64 = String(body.image || '').replace(/^data:image\/\w+;base64,/, '')
+    if (!b64 || b64.length > MAX_B64) return json({ error: 'bad_image' }, 400, cors)
 
     // 🔢 **사진 «한 장마다» 열쇠 1개** (창업자 최종 확정 2026-08-13 밤)
     //   ⛔ 앱이 아직 `body.batch` 를 실어 보내지만 **여기서 안 본다** — 무시한다.
@@ -205,6 +305,19 @@ export default {
       if (dayC >= LIMITS.DAILY_GLOBAL) return json({ error: 'global_quota' }, 429, cors)                // ② 운영자도 존중
       // ③ 유저 한도 — ⭐**웰컴이 남아 있으면 월 한도를 안 본다.** 웰컴을 다 쓴 뒤부터 월 5장이다.
       if (!founder && welcomeLeft <= 0 && userC >= LIMITS.PER_USER_MONTHLY) {
+        // 🚧🚧 **[2026-09-01] 「막힘」을 센다 — 유료를 «언제» 켤지 판정하는 숫자다.**
+        //   ⭐⭐ 「유저 몇 명」은 잘못된 잣대다 — 100명이어도 아무도 무료 한도를 안 넘으면 팔 게 없고,
+        //      30명인데 다섯이 매달 넘으면 그게 시장이다.
+        //      **「더 쓰고 싶은데 막힌 횟수」가 곧 「돈 낼 이유가 생긴 사람」의 직접 증거다.**
+        //   ⛔ 그 전엔 막을 때 «아무것도 안 남겨서» 이 숫자가 존재하지 않았다.
+        //   ⛔ **전역 숫자 하나뿐이다** — 누가 막혔는지는 안 센다(그건 개인정보다 · worker.js:112 취지 그대로).
+        //   ⛔ 전역 통(`d:`·`m:`)은 «안» 올린다 — Vision 을 안 불렀으니 실제로 나간 양이 아니다.
+        await Promise.all([
+          inc(kv, `q:${ym}`, 60 * 60 * 24 * 40),
+          // ⏳ 막힌 사람의 「쓴 수」를 같은 값으로 다시 써서 만료를 민다(🕳1 — 1년마다 리필되던 구멍).
+          //    ⭐ 안 그러면 «계속 쓰려다 계속 막히는 사람»의 기록만 조용히 만료돼 웰컴이 되살아난다.
+          kv.put(`wu:${통}`, String(쓴수), { expirationTtl: 60 * 60 * 24 * 365 }),
+        ])
         return json({ error: 'user_quota' }, 429, cors)
       }
     }
@@ -231,9 +344,19 @@ export default {
         //    (창업자 확정: *"웰컴20장 다쓰면 무료5장은 소진한거니까 기본인식으로"*)
         // 🔢 유저 몫 — **사진 한 장마다** 깎는다(창업자 최종 확정 2026-08-13 밤)
         inc(kv, `u:${uid}:${ym}`, 60 * 60 * 24 * 40),
-        // 🎁 웰컴 차감 — ⚠️만료를 «1년»으로 둔다(달이 바뀌어도 남아야 하니까 · 창업자 Ⓐ)
+        // 🎁 웰컴 차감 = 「쓴 수」를 하나 올린다. ⚠️만료 «1년»(달이 바뀌어도 남아야 한다 · 창업자 Ⓐ)
+        //   ⭐ **웰컴이 남아 있을 때만 올린다** — 다 쓴 뒤의 「월 5장」은 여기서 안 센다.
+        //      안 그러면 나중에 로그인해서 상한이 30 이 될 때 월 몫까지 웰컴에서 깎인 셈이 된다.
+        //   🔗 로그인 중이면 **계정 통과 기기 통에 «둘 다»** 쓴다 — 로그아웃해도 숫자가 안 헛돈다(🕳9·🕳10).
         ...(welcomeLeft > 0
-          ? [kv.put(`w:${uid}`, String(welcomeLeft - 1), { expirationTtl: 60 * 60 * 24 * 365 })]
+          ? [
+            kv.put(`wu:${통}`, String(쓴수 + 1), { expirationTtl: 60 * 60 * 24 * 365 }),
+            ...(로그인 ? [kv.put(`wu:d:${uid}`, String(쓴수 + 1), { expirationTtl: 60 * 60 * 24 * 365 })] : []),
+            // 🔁 옛 표식은 «같은 값으로» 다시 써서 살려 둔다 — 이게 「상한 30 을 지킬 사람」의 표식이다.
+            //    ⚠️ 1년 넘게 아예 안 쓰면 이 표식과 쓴 수가 «같이» 사라진다 → 그때는 새 사람처럼 10 부터.
+            //       둘이 같이 사라지므로 «남은 수가 줄어드는» 일은 없다(손해가 아니다).
+            ...(옛표식 !== null ? [kv.put(`w:${uid}`, 옛표식, { expirationTtl: 60 * 60 * 24 * 365 })] : []),
+          ]
           : []),
       ])
     }
@@ -271,7 +394,24 @@ export default {
     if (kv && leftWelcome <= 0) {
       leftMonth = Math.max(0, LIMITS.PER_USER_MONTHLY - (await num(kv, `u:${uid}:${ym}`)))
     }
-    return json({ text, left: { welcome: leftWelcome, month: leftMonth } }, 200, cors)
+    // 🔢🔢 **상한을 «같이» 실어 보낸다** — 앱이 숫자를 따로 안 갖게(🕳7).
+    //   ⛔ 그 전엔 앱(`src/ocr.js`)과 워커가 «각자» 30 을 적어 두고 손으로 맞췄다.
+    //      10/30 이 되면서 어긋날 자리가 두 배가 됐다 — 서버가 알려주면 어긋날 수가 없다.
+    //   ⭐ `anon`·`acct` 도 준다 — 앱이 「로그인하면 몇 개 더 받나」를 스스로 계산해 문구를 만든다
+    //      (문구에 20 을 «글자로» 박으면 숫자를 바꿀 때 문구만 낡는다).
+    return json({
+      text,
+      left: {
+        welcome: leftWelcome,
+        month: leftMonth,
+        cap: 웰컴상한 + 보너스,   // 지금 이 사람의 웰컴 상한(＋행동으로 받은 것)
+        bonus: 보너스,
+        anon: LIMITS.WELCOME_ANON,
+        acct: LIMITS.WELCOME_ACCT,
+        monthly: LIMITS.PER_USER_MONTHLY,
+        signed: 로그인,
+      },
+    }, 200, cors)
   },
 }
 
