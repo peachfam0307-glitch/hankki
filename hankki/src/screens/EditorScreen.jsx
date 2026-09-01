@@ -133,7 +133,20 @@ export default function EditorScreen({ id, prefill }) {
     if (editing?.image) return [editing.image]
     return []
   })
-  const [pin, setPin] = useState(prefill?.watch ? 'video' : prefill?.refImages?.length ? 'photo' : null)
+  // 📌📌 **덜 정리된 레시피를 열면 캡처를 «이미 고정된 채로» 띄운다** (창업자 2026-09-02)
+  //   📮 창업자 = *"그 원본은 맨 아래에 있잖아. **그걸 스크롤하면서 보고 채워??**"*
+  //   ⛔ 그 전엔 `pin` 이 `null` 이라 **「보면서 쓰기」를 «눌러야»** 사진이 떴다.
+  //      덜 읽힌 걸 채우러 온 사람은 **원본을 볼 게 확실한데** 한 번 더 누르게 하고 있었다.
+  //   ⭐ 조건 = 「아직 정리 전(`unsorted`) ＋ 사진이 있다」 — 그 둘이면 «보러 온 것»이 확실하다.
+  //      임시보관함 「채우러 가기」로 오든 상세 편집으로 오든 같으므로 **길을 안 나눈다.**
+  //   ⛔ 정리 끝난 레시피는 안 띄운다 — 그건 «고치러» 온 게 아니라 손보러 온 것이라 화면을 뺏으면 안 된다.
+  //   ⏳ 사진이 «없는» 편(붙여넣기)은 글자 원문이 아직 맨 아래에 있다 — 별건으로 남긴다.
+  const [pin, setPin] = useState(
+    prefill?.watch ? 'video'
+      : prefill?.refImages?.length ? 'photo'
+        : (editing?.status === 'unsorted' && editing?.image) ? 'photo'
+          : null
+  )
   const [zoom, setZoom] = useState(false) // 캡처 원본 전체화면으로 크게 보기
   const [photoFold, setPhotoFold] = useState(false) // 사진만 접기 — 손잡이 줄은 남는다(가려진 입력칸 보기)
   // ⭐ 여러 장일 때 «몇 번째 장을 보고 있나». 예전엔 두 장을 세로로 쌓아놨는데,
@@ -633,13 +646,24 @@ export default function EditorScreen({ id, prefill }) {
           </div>
         </Portal>
       )}
-      <div className="topbar-back">
+      {/* 📌📌 **상단바를 화면에 붙여둔다 — 「저장」이 스크롤에 떠내려가던 것** (창업자 2026-09-02)
+          📮 창업자 = *"작은 정리는 아직도 어디있는지 모름"*
+          ⛔⛔ 뿌리 = `.topbar-back` 에 `position: sticky` 가 **없었다**(코드로 확인).
+             편집 화면은 «재료·순서를 채우려고 아래로 내려가는» 화면인데, 내려가는 순간
+             위 「저장」이 화면 밖으로 나가고 바닥엔 다른 이름의 단추가 있었다
+             → **둘이 동시에 보이는 순간이 아예 없었다.** 못 찾은 게 당연하다.
+          ⛔ `.topbar-back` 은 화면 다섯이 같이 쓴다(임시보관함·상세·가져오기·TopBar) →
+             **여기서만** 붙는 클래스를 따로 준다. 남의 화면을 안 건드린다. */}
+      <div className="topbar-back topbar-stick">
         {/* 닫기 — 새로 쓰던 내용이 있으면 "이어쓸지 버릴지" 물어본다.
             예전엔 확인 없이 그냥 닫혀서, 버리려면 초안이 계속 되살아나 답답했다(창업자 "작성중 삭제 불편"). */}
         <button className="icon-btn press" onClick={() => (!editing && hasDraftContent ? setDiscardAsk(true) : nav.pop())} aria-label="닫기"><Icon name="x" size={24} /></button>
         <div style={{ fontSize: 18, fontWeight: 700 }}>{editing ? '레시피 정리' : '직접 작성하기'}</div>
         {/* disabled 금지 — 눌러도 무반응이면 "먹통"으로 보인다. 색만 흐리게 두고, 누르면 save()가 안내한다. */}
-        <button className="press" onClick={save} style={{ fontSize: 17, fontWeight: 700, color: canSave ? 'var(--brown)' : 'var(--sand)' }}>
+        {/* ⛔ 못 누르는 상태(제목 없음)라도 «읽히는» 색으로 둔다 —
+            옛 `--sand`(#cdbfa8)는 크림 배경 위에서 거의 묻혀 **단추가 없는 것처럼** 보였다.
+            📌 무반응도 안 되고(먹통으로 읽힌다) 안 보이는 것도 안 된다 — 보이되 «흐리게». */}
+        <button className="press" onClick={save} style={{ fontSize: 17, fontWeight: 700, color: canSave ? 'var(--brown)' : 'var(--text-sub)' }}>
           저장
         </button>
       </div>
@@ -1116,8 +1140,17 @@ export default function EditorScreen({ id, prefill }) {
         )}
 
         {/* disabled 금지 — 위 상단 저장 버튼과 같은 이유(무반응=먹통으로 보임). 누르면 save()가 안내한다. */}
+        {/* 🏷🏷 **이름은 「저장」 하나** (창업자 확정 2026-09-02)
+            📮 창업자 = *"저장 못찾았어. 그냥 저장. 자동저장이아니라 ㅋ"* → 갈래 셋 중 **「저장」 하나로**
+            ⛔⛔ 그 전엔 **편집 중일 때만** 「정리 완료」였다 — 같은 단추가 상황에 따라 이름을 갈았다.
+               창업자는 이 큰 단추를 보고도 **저장인 줄 몰랐다.** 위 상단바엔 「저장」이라 적혀 있는데
+               둘이 다른 말이라 «같은 기능인 줄» 알 수가 없었다.
+            📌 v11.02 「책갈피」와 **같은 자리** — *"모양(말)이 같아야 누르고 싶다."*
+               CLAUDE.md 에도 이미 있다: **「같은 기능은 탭이 달라도 같은 이름」**.
+            ⛔ 「정리 완료」가 담던 뜻(＝임시보관함에서 나간다)은 **버리는 게 아니다** —
+               같은 날 만든 임시보관함 「그대로 저장」·「채우러 가기」가 그 말을 대신 한다. */}
         <button className="btn-primary press" onClick={save} style={{ opacity: canSave ? 1 : 0.5 }}>
-          {editing ? '정리 완료' : '레시피 저장'}
+          저장
         </button>
       </div>
 

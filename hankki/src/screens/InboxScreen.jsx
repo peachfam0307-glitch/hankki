@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useStore } from '../store'
+import { useStore, 다읽었나 } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
@@ -10,8 +10,28 @@ import { getOcrLeft, KEY_NAME, KEY_UNIT } from '../ocr'
 import uiKeyOne from '../assets/ui/key_one.png'
 import uiKeyHole from '../assets/ui/key_hole.png'
 
+// 🔎🔎 **「왜 아직 여기 있나」를 «줄마다» 말해준다** (창업자 확정 2026-09-02)
+//
+//   📮 창업자 = *"자동으로 보내기가 되면 결국 남아있는건 제대로 못읽은 레시피라는거잖아.
+//      **이걸 우리는 아는데 유저들은 모르고, 얘는 왜 자동으로 안가고 여기있지? 할 것 같은데**"*
+//
+//   ⭐⭐ 정확한 지적이다 — 저절로 졸업시키는 순간 이 화면은 **「덜 읽힌 것만 남는 곳」**이 되는데
+//      화면이 그 이유를 **한 마디도 안 했다.** 그러면 남은 줄이 «고장»으로 읽힌다.
+//   ⭐ 이유는 **저장된 값만 세면 나온다** — AI 를 다시 부르지 않는다(⛔열쇠 0개).
+//   ⛔ 잣대는 `store.js` 의 `다읽었나()` 와 «같은 말»이라야 한다 —
+//      「왜 남았나」가 「왜 졸업 못 했나」와 갈리면 그게 더 나쁜 거짓말이다.
+function 남은까닭(r) {
+  const 재료 = Array.isArray(r?.ingredients) ? r.ingredients.length : 0
+  const 걸음 = Array.isArray(r?.steps) ? r.steps.length : 0
+  if (재료 < 2 && 걸음 < 2) return '재료·순서를 덜 읽었어요'
+  if (재료 < 2) return '재료를 덜 읽었어요'
+  if (걸음 < 2) return '순서를 덜 읽었어요'
+  // 둘 다 넉넉한데 남아 있다 = 유저가 일부러 뒀거나 손으로 지운 것. 「고장」이 아니라고 말해준다.
+  return '저장만 하면 돼요'
+}
+
 export default function InboxScreen() {
-  const { recipes, removeRecipe } = useStore()
+  const { recipes, removeRecipe, updateRecipe } = useStore()
   const nav = useNav()
   // 미정리함은 "버릴 것"이 쌓이는 곳 — 상세까지 안 들어가고 여기서 바로 지운다(창업자 요청).
   const [delAsk, setDelAsk] = useState(null)
@@ -88,6 +108,16 @@ export default function InboxScreen() {
             {'정리할 레시피가 없어요. 깔끔하네요!\n정리 끝난 레시피는 「레시피」 탭에 있어요.'}
           </div>
         )}
+        {/* 🪧🪧 **「왜 이것들만 남았나」를 «맨 위에서» 한 번 말한다** (창업자 확정 2026-09-02)
+            📮 창업자 = *"얘는 왜 자동으로 안가고 여기있지? 할 것 같은데"*
+            ⭐ 줄마다 붙는 까닭(`남은까닭`)은 «이 줄» 얘기고, 이 한 줄은 «이 화면 전체»가 무슨 곳인지를 말한다.
+               둘이 층이 달라서 겹치지 않는다.
+            ⛔ 목록이 비었을 땐 안 띄운다 — 빈 화면엔 이미 제 안내가 있다(바로 위). */}
+        {list.length > 0 && (
+          <div className="t-sub" style={{ padding: '2px 4px 12px', lineHeight: 1.5 }}>
+            다 읽은 레시피는 「레시피」 탭으로 갔어요 · 여기 있는 건 덜 읽힌 거예요
+          </div>
+        )}
         {list.map((r, i) => (
           <div key={r.id}>
             {/* 행 전체=열기, 오른쪽 휴지통=바로 삭제(상세 ⋯메뉴까지 안 가게) */}
@@ -102,13 +132,54 @@ export default function InboxScreen() {
                   {/* ⛔ 「미정리」 배지를 뺐다 — 이제 이 화면엔 «미정리만» 있어서
                       줄마다 같은 배지가 뜨면 그냥 노이즈다(창업자가 여러 번 짚은 「정신없다」).
                       ⭐ 배지는 «갈릴 때» 뜻이 있다. 다 같으면 아무것도 안 알려준다. */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span className="t-sub">{timeAgo(r.savedAt)}</span>
+                    {/* 🔎 왜 아직 여기 있나 — 저장된 값만 세서 만든다(⛔AI 안 부른다 · 열쇠 0개) */}
+                    <span className="t-sub" style={{ color: 'var(--brown)' }}>· {남은까닭(r)}</span>
                   </div>
                 </div>
               </button>
               <button className="icon-btn press" aria-label={`${r.title} 삭제`} onClick={() => setDelAsk(r)} style={{ flex: '0 0 auto' }}>
                 <Icon name="trash" size={18} color="var(--text-sub)" />
+              </button>
+            </div>
+            {/* 🚪🚪 **나가는 길 둘 — 여기서 «바로»** (창업자 확정 2026-09-02)
+                📮 창업자 = *"임시보관함 자체에 선택해서 저장하는 기능을 넣어야해"* ·
+                   *"레시피를 내가 편집하지 않는이상 큰 정리완료 단추는 못찾고"* · *"그럼 유저가 그걸 어떻게 고쳐??"*
+                ⛔ 그 전엔 나가는 길이 **편집기 안에만** 있었다 — 줄 누르기 → 상세 → 「아직 정리 전이에요」 → 편집 → 저장.
+                   **세 화면**을 지나야 했고, 그 끝의 단추엔 「저장」이란 말도 없었다(「정리 완료」).
+                ⭐ 그래서 둘로 갈랐다 — **고칠 사람**은 곧장 편집기로, **이대로 쓸 사람**은 여기서 끝낸다.
+                ⛔ 「채우러 가기」는 **열쇠를 안 쓴다** — `prefill.ocrImages` 가 없으면 편집기는 OCR 을 안 돈다
+                   (`EditorScreen.jsx` 딸려온사진Ref). 이미 저장된 캡처·원문을 «보여줄» 뿐이다.
+                ⛔ 「그대로 저장」을 **다 읽힌 것에만 띄우지 않는다** — 반쪽만 읽혀도
+                   *"난 이대로 쓸래"* 하는 사람이 있다. 고를 자유를 뺏지 않는다.
+                ⛔ 휴지통과 헷갈리면 안 된다 — 이 줄은 **글자 단추**라 아이콘(🗑)과 모양부터 다르다. */}
+            <div style={{ display: 'flex', gap: 8, padding: '0 4px 10px 70px' }}>
+              {!다읽었나(r) && (
+                <button
+                  className="press"
+                  onClick={() => nav.push({ name: 'editor', id: r.id })}
+                  style={{
+                    flex: 1, padding: '9px 10px', borderRadius: 'var(--r-md)', border: 'none',
+                    background: 'var(--cream)', color: 'var(--brown)', fontSize: 15.5, fontWeight: 700,
+                  }}
+                >
+                  채우러 가기
+                </button>
+              )}
+              <button
+                className="press"
+                onClick={() => {
+                  updateRecipe(r.id, { status: 'sorted' })
+                  // ⭐ «어디로 갔는지»를 말한다 — 안 말하면 목록에서 사라진 게 「지워졌다」로 읽힌다.
+                  nav.showToast('「레시피」 탭으로 옮겼어요')
+                }}
+                style={{
+                  flex: 1, padding: '9px 10px', borderRadius: 'var(--r-md)', border: 'none',
+                  background: 'var(--brown)', color: '#fff', fontSize: 15.5, fontWeight: 700,
+                }}
+              >
+                {다읽었나(r) ? '레시피로 저장' : '그대로 저장'}
               </button>
             </div>
             {i < list.length - 1 && <hr className="divider" />}

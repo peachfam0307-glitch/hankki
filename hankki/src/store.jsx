@@ -663,14 +663,33 @@ function migrateQtyOnly(recipes, saved) {
 //      ⛔ 두 자리가 갈라지면 그때부터 「담을 땐 되는데 이미 담긴 건 안 되는」 상태가 된다.
 //   ⚠️ 한 번만 돈다(`inboxV`) — 유저가 일부러 임시보관함으로 되돌렸다면 두 번 손대지 않는다.
 //   ⭐ 잃는 게 0이다 — 레시피가 «보이는 자리»만 바뀌고 내용은 한 글자도 안 건드린다.
-const INBOX_V = 1
+// 📏📏 **「다 읽었나」 잣대 — ⭐이 저장소에서 «여기 한 곳»뿐이다** (2026-09-02)
+//
+//   ⛔⛔ 그 전엔 «똑같은 잣대»가 **두 곳에 복사**돼 있었다 —
+//      아래 `migrateInboxSorted` ＋ `App.jsx` 공유받기 저장.
+//      2026-09-02 에 `App.jsx` 의 `채우기()` 에도 같은 판정이 필요해져 **셋이 될 뻔했다.**
+//   ⭐ 셋이 갈리면 그때부터 **「담을 땐 되는데 AI 가 채우면 안 되는」** 상태가 된다 —
+//      바로 창업자가 겪은 그 모양이다(*"최근저장에는 뜨는데 레시피탭에 가면 안보여."*).
+//   📌 그래서 잣대를 **바깥으로 내보내** 부르는 쪽이 셋이어도 «말이 하나»가 되게 한다.
+//
+//   ⚠️ 이 값을 고치면 **세 자리가 한꺼번에** 바뀐다 — 그게 목적이다. 한 곳만 바꾸지 말 것.
+export function 다읽었나(r) {
+  const 재료 = Array.isArray(r?.ingredients) ? r.ingredients.length : 0
+  const 걸음 = Array.isArray(r?.steps) ? r.steps.length : 0
+  return 재료 >= 2 && 걸음 >= 2
+}
+
+// 🔢 `INBOX_V` — 올리면 **이미 폰에 쌓인 것**을 한 번 더 훑는다.
+//   · 1 (2026-09-01) = 처음. 그때 임시보관함에 있던 것 중 다 읽은 것을 옮겼다.
+//   · 2 (2026-09-02) = ⭐**창업자 판정** *"응, 한 번 더 훑는다"* —
+//        1 이 돈 «뒤»에 AI 가 채운 것들(창업자 폰의 **항정살조림**)이 그대로 갇혀 있었다.
+//        `채우기()` 고침은 «앞으로»만 고치므로 이 번호를 올려야 이미 갇힌 게 나온다(규칙 18 ⓙ).
+const INBOX_V = 2
 function migrateInboxSorted(recipes, saved) {
   if ((saved.inboxV || 0) >= INBOX_V) return { recipes, inboxV: saved.inboxV }
   const out = recipes.map((r) => {
     if (!r || r.status !== 'unsorted') return r
-    const 재료 = Array.isArray(r.ingredients) ? r.ingredients.length : 0
-    const 걸음 = Array.isArray(r.steps) ? r.steps.length : 0
-    return 재료 >= 2 && 걸음 >= 2 ? { ...r, status: 'sorted' } : r
+    return 다읽었나(r) ? { ...r, status: 'sorted' } : r
   })
   return { recipes: out, inboxV: INBOX_V }
 }

@@ -223,6 +223,121 @@ if (chk('레시피 탭이 열렸다', 레시피탭.열렸나, `카드 ${레시�
   console.log('  ⛔ 못 열어서 뒤 칸을 «판정하지 않는다»')
 }
 
+// ─────────────────────────────────────────────
+// 🚪 2026-09-02 — 「나가는 길」이 임시보관함 «안»에 있나 (창업자 확정)
+//
+//   📮 창업자 = *"임시보관함 자체에 선택해서 저장하는 기능을 넣어야해"*
+//             · *"레시피를 내가 편집하지 않는이상 큰 정리완료 단추는 못찾고"*
+//             · *"그럼 유저가 그걸 어떻게 고쳐??"*
+//             · *"얘는 왜 자동으로 안가고 여기있지? 할 것 같은데"*
+//   ⭐⭐ 이 절의 심장 = **「이유 ＋ 고칠 길」이 «화면에» 같이 있나.**
+//      이유만 있으면 잔소리고, 길만 있으면 왜 눌러야 하는지 모른다. 둘이 한 벌이다.
+// ─────────────────────────────────────────────
+console.log('\n🚪 임시보관함에서 «바로» 나가는 길 (2026-09-02)')
+const 길 = await p2.evaluate(() => {
+  const 화면 = document.querySelector('.inbox-row')?.closest('.screen')
+  if (!화면) return null
+  const 글 = 화면.innerText
+  const 단추 = [...화면.querySelectorAll('button')].map((b) => b.innerText.trim())
+  return {
+    머리말: /덜 읽힌/.test(글),
+    까닭: (글.match(/덜 읽었어요/g) || []).length,
+    채우러: 단추.filter((t) => t === '채우러 가기').length,
+    저장: 단추.filter((t) => t === '그대로 저장' || t === '레시피로 저장').length,
+    줄수: 화면.querySelectorAll('.inbox-row').length,
+  }
+})
+if (chk('임시보관함 화면을 읽었다', !!길, 길 ? `줄 ${길.줄수}개` : '(못 읽음)')) {
+  chk('⭐ 「왜 여기 있나」 머리말이 있다', 길.머리말)
+  chk('⭐ 줄마다 «까닭»이 붙는다', 길.까닭 >= 1, `${길.까닭}줄`)
+  chk('⭐ 「채우러 가기」가 있다 (편집 안 거치고 고치러 간다)', 길.채우러 >= 1, `${길.채우러}개`)
+  chk('⭐ 「저장」 단추가 줄마다 있다 (여기서 바로 내보낸다)', 길.저장 === 길.줄수, `${길.저장}/${길.줄수}`)
+} else {
+  실패 += 4; 실패목록.push('임시보관함을 못 읽어 나가는 길 칸을 «판정하지 않았다»(규칙 18 ⓘ)')
+}
+
+// ── 「채우러 가기」를 누르면 «편집기»로 가고, 거기 단추가 「저장」인가 ──
+//   ⛔ 창업자가 못 찾은 그 단추다 — 옛 이름은 편집 중일 때만 「정리 완료」였다.
+const 갔나 = await p2.evaluate((제목) => {
+  const 줄 = [...document.querySelectorAll('.inbox-row')].find((e) => e.innerText.includes(제목))
+  const 칸 = 줄?.parentElement?.parentElement
+  const b = [...(칸?.querySelectorAll('button') || [])].find((x) => x.innerText.trim() === '채우러 가기')
+  if (!b) return false
+  b.click(); return true
+}, '판정용 큰사진')
+await p2.waitForTimeout(1100)
+const 편집 = await p2.evaluate(() => {
+  const 큰 = document.querySelector('button.btn-primary')
+  const 띠 = document.querySelector('.topbar-stick')
+  return {
+    열렸나: !!큰,
+    큰단추: (큰?.innerText || '').trim(),
+    옛이름: /정리 완료/.test(document.body.innerText),
+    붙었나: 띠 ? getComputedStyle(띠).position === 'sticky' : false,
+    // 📷 덜 정리된 것 ＋ 사진이 있으면 «이미 고정된 채로» 열려야 한다
+    사진고정: !!document.querySelector('img[alt="캡처 원본"], .shot-pin, img[src^="data:image"]'),
+  }
+})
+if (chk('「채우러 가기」로 편집기가 열렸다', 갔나 && 편집.열렸나, 편집.큰단추 ? `큰 단추 = 「${편집.큰단추}」` : '(못 열림)')) {
+  chk('⭐⭐ 큰 단추가 «「저장」»이다 (창업자가 못 찾던 그것)', 편집.큰단추 === '저장', `「${편집.큰단추}」`)
+  chk('⭐ 「정리 완료」가 화면에 «한 글자도» 없다', !편집.옛이름)
+  chk('⭐ 상단바가 «붙어 있다» (스크롤해도 「저장」이 안 떠내려간다)', 편집.붙었나)
+} else {
+  실패 += 3; 실패목록.push('편집기를 못 열어 「저장」 칸을 «판정하지 않았다»(규칙 18 ⓘ)')
+}
+
+// ── 「그대로 저장」을 누르면 «레시피 탭 화면»에 뜨나 (반쪽도 유저가 정하면 나간다) ──
+await p2.evaluate(() => document.querySelector('button[aria-label="닫기"]')?.click())
+await p2.waitForTimeout(900)
+const 밀었나 = await p2.evaluate((제목) => {
+  const 줄 = [...document.querySelectorAll('.inbox-row')].find((e) => e.innerText.includes(제목))
+  const 칸 = 줄?.parentElement?.parentElement
+  const b = [...(칸?.querySelectorAll('button') || [])].find((x) => x.innerText.trim() === '그대로 저장')
+  if (!b) return false
+  b.click(); return true
+}, '판정용 반쪽만읽은것')
+await p2.waitForTimeout(1100)
+const p4 = await ctx.newPage()
+에러받기(p4, '레시피탭2')
+await p4.goto('http://127.0.0.1:4452/hankki/', { waitUntil: 'networkidle' })
+await p4.waitForTimeout(1500)
+await p4.getByRole('button', { name: '레시피', exact: true }).first().click()
+await p4.waitForTimeout(1200)
+const 탭2 = await p4.evaluate(() => {
+  const 격자 = document.querySelector('.grid2, .grid3')
+  return 격자 ? [...격자.querySelectorAll('.name')].map((e) => e.innerText.trim()) : null
+})
+if (chk('「그대로 저장」을 눌렀고 레시피 탭이 열렸다', 밀었나 && !!탭2, 탭2 ? `카드 ${탭2.length}장` : '(못 열림)')) {
+  chk('⭐⭐ 유저가 «직접 민» 반쪽이 레시피 탭 화면에 뜬다', 탭2.includes('판정용 반쪽만읽은것'))
+} else {
+  실패++; 실패목록.push('「그대로 저장」 결과를 «판정하지 않았다»(규칙 18 ⓘ)')
+}
+
+// ─────────────────────────────────────────────
+// 🤖 2026-09-02 — 「AI 가 «나중에» 채우면 그때 졸업하나」 (창업자 제보의 뿌리)
+//
+//   ⚠️⚠️ **이 두 칸만 «소스»를 읽는다. 화면으로 못 재는 이유를 적어 둔다** —
+//      그 길(`App.jsx` 공유받기 → `채우기()`)은 `if (data.imageDataUrl)` 안에 있고
+//      **`await ocrImage()` 를 지나야** 닿는다. 이 판은 OCR 이 막혀(tesseract·Vision 둘 다)
+//      글자가 빈 채로 `return` 하므로 **거기까지 갈 수가 없다.**
+//   ⛔ 그러니 이 칸은 위 화면 칸들보다 «약하다». 「코드에 있다」까지만 말하고
+//      「진짜 도나」는 말하지 않는다 — 그걸 섞어 말하면 그게 거짓 초록불이다(규칙 18 ⓘ).
+//   ⛔ 주석을 걷어내고 «코드»만 본다 — 안 그러면 위에 적어둔 설명 글자를 세어
+//      고침을 지워도 초록불이 된다(이 저장소가 이미 두 번 밟은 함정).
+// ─────────────────────────────────────────────
+console.log('\n🤖 AI 가 «나중에» 채우면 그때 졸업한다 (⚠️소스 검사 — 위 칸들보다 약하다)')
+const 주석뺀다 = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n')
+const App소스 = 주석뺀다(readFileSync(join(ROOT, 'src/App.jsx'), 'utf8'))
+const store소스 = 주석뺀다(readFileSync(join(ROOT, 'src/store.jsx'), 'utf8'))
+const 채우기몸통 = (App소스.split('const 채우기 = (r) =>')[1] || '').split('현재.title = 새제목')[0]
+chk('⭐⭐ `채우기()` 가 «다 읽었으면» status 를 올린다 (창업자 폰 항정살조림이 갇힌 자리)',
+  /다읽었나\(r\)/.test(채우기몸통) && /status:\s*'sorted'/.test(채우기몸통))
+chk('⭐ 잣대가 «한 곳»이다 — 세 자리가 `다읽었나()` 를 부른다 (갈리면 또 어긋난다)',
+  /export function 다읽었나/.test(store소스) && (App소스.match(/다읽었나\(/g) || []).length >= 2,
+  `App.jsx 안 ${(App소스.match(/다읽었나\(/g) || []).length}번`)
+chk('⭐ `INBOX_V` 가 2 이상이다 — 이미 폰에 갇힌 것을 한 번 더 꺼낸다 (창업자 판정)',
+  /const INBOX_V = ([2-9]|\d{2,})/.test(store소스), (store소스.match(/const INBOX_V = \d+/) || ['?'])[0])
+
 await b.close(); srv.close()
 console.log(`\n${실패 ? '❌' : '✅'} ${통과}/${통과 + 실패}`)
 if (실패) { console.log('  실패:', 실패목록.join(' · ')); process.exit(1) }

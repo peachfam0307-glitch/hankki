@@ -115,7 +115,10 @@ async function 붙여넣어담기(글, 제목표시) {
   const 제목칸 = page.locator('input[placeholder^="예) 명란"]')
   await 제목칸.fill(제목표시)
   await page.waitForTimeout(200)
-  await page.getByText('레시피 저장', { exact: false }).first().click()
+  // 🏷 [2026-09-02] 큰 단추 이름이 「레시피 저장」·「정리 완료」 → **「저장」 하나**로 통일됐다.
+  //   ⛔ `getByText('저장')` 으로 잡으면 **상단바 「저장」까지** 걸려 어느 걸 눌렀는지 모른다 →
+  //      «맨 아래 큰 단추»를 콕 집는다(`button.btn-primary`).
+  await page.locator('button.btn-primary', { hasText: '저장' }).first().click()
   await page.waitForTimeout(1100)
 }
 
@@ -146,7 +149,8 @@ if (열림) {
   if (await 제목칸.count()) {
     await 제목칸.fill('순살찜닭 검사판2')
     await page.waitForTimeout(200)
-    await page.getByText('정리 완료', { exact: false }).first().click().catch(() => {})
+    // 🏷 [2026-09-02] 편집 중에도 이름이 「저장」 하나다(옛 「정리 완료」). 위와 같은 잣대를 쓴다.
+    await page.locator('button.btn-primary', { hasText: '저장' }).first().click().catch(() => {})
     await page.waitForTimeout(1100)
   }
 }

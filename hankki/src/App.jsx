@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useStore } from './store'
+import { useStore, 다읽었나 } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
@@ -466,8 +466,10 @@ export default function App() {
         //      **두 화면이 서로 다른 말을 해서** 「저장했는데 없다」로 읽혔다.
         //   ⭐ 잣대 = **재료·순서가 «둘 다» 2줄 이상**. 하나만 있거나 한 줄뿐이면 반쪽이라
         //      그건 여전히 임시보관함에 남는다(＝거기가 원래 그런 곳이다).
-        //      ⚠️ 이 숫자는 «내 판단»이다 — 창업자에게 밝혔다. 바꾸려면 여기 한 줄만 고친다.
-        if (parsed.ingredients.length >= 2 && parsed.steps.length >= 2) rec.status = 'sorted'
+        //      ⚠️ 이 숫자는 «내 판단»이다 — 창업자에게 밝혔다.
+        //   📏 [2026-09-02] 잣대를 `store.js` 의 `다읽었나()` **한 곳**으로 옮겼다 —
+        //      같은 판정을 여기 ＋ 마이그레이션 ＋ 아래 `채우기()` **셋**이 쓰기 때문이다.
+        if (다읽었나(parsed)) rec.status = 'sorted'
         // 📥 파서에 넣은 원문도 같이 — 파서를 고친 날 다시 읽을 재료(→ parseRecipe.js `keepRaw`)
         const raw = keepRaw(caption)
         if (raw) rec.rawText = raw
@@ -570,6 +572,16 @@ export default function App() {
             ...(새아이콘 ? { icon: 새아이콘, iconPicked: false } : {}),
             // 📥 원문도 — 있을 때만 넣는다(빈 값으로 덮으면 지우는 것이다)
             ...(keepRaw(text) ? { rawText: keepRaw(text) } : {}),
+            // 🗃🗃 [2026-09-02 · 창업자 제보] **다 채웠으면 임시보관함에서 «졸업»시킨다.**
+            //   📮 창업자 = *"최근저장에는 뜨는데 레시피탭에 가면 안보여."*
+            //   ⛔⛔ 뿌리 = 이 함수가 제목·재료·순서·아이콘은 다 갱신하면서 **`status` 만 안 건드렸다.**
+            //      담을 때(위 `if (다읽었나(parsed))`)는 졸업시키는데, **AI 가 «나중에» 채운 건 갇혔다.**
+            //      화면은 `status === 'sorted'` 만 그리므로(`MyRecipesScreen`) 영영 안 보인다.
+            //      🔢 창업자 폰의 **항정살조림**이 그 상태였다(이미 갇힌 것은 `INBOX_V` 2 가 꺼낸다).
+            //   ⛔ **올리기만 한다 — 절대 내리지 않는다.** 이 함수는 규칙 파서 판·AI 판으로
+            //      **두 번** 불린다. 둘째 판이 첫째의 졸업을 깎으면 레시피가 도로 사라진다.
+            //   ⭐ 잣대는 `store.js` 의 `다읽었나()` 하나 — 담을 때와 «같은 말»이라야 안 갈린다.
+            ...(다읽었나(r) ? { status: 'sorted' } : {}),
           })
           현재.title = 새제목
           if (새아이콘) { 현재.icon = 새아이콘; 현재.iconPicked = false }
