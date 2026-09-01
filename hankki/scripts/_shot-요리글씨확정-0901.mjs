@@ -15,7 +15,10 @@ import { readFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { extname, join } from 'node:path'
 
-const OUT = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/확정판'
+// ⛔ 이 판은 **smoke 체인(배포 게이트)** 이라 «이 컨테이너에만 있는 길»을 박으면 안 된다.
+//    2026-08-14 에 재현판에 `/opt/pw-browsers/chromium` 을 박아 **배포가 죽은 적이 있다**(run #1416).
+//    → 기본값은 어디서나 되는 자리로 두고, 보고 싶으면 `OUT=... node …` 로 바꾼다.
+const OUT = process.env.OUT || '/tmp/hankki-요리글씨확정'
 mkdirSync(OUT, { recursive: true })
 const ROOT = new URL('..', import.meta.url).pathname
 const DIST = join(ROOT, 'dist')
