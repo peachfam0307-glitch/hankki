@@ -247,6 +247,47 @@ export async function 열쇠새로고침() {
   return false
 }
 
+// ── 📊📊 「기본 인식으로 읽었다」를 서버에 알린다 (창업자 지시 2026-09-01) ────
+//
+// 📮 창업자 = *"기본인식을 얼마나 썼는지도 알아야 하지 않을까"*
+//    ＋ *"우리ai기능 유료 켤때 무료이용률도 알아야 가격이나 장수를 수정하니까"*
+//
+// ⛔⛔ **그 전엔 셀 방법이 «없었다»** — 기본 인식은 폰 «안»에서 도니까 서버를 안 거친다.
+//    그래서 우리가 아는 건 「AI로 읽은 수」와 「막힌 수」뿐이었고 **무료 이용률은 숫자가 없었다.**
+//
+// ⛔ 보내는 것 = **갈래 하나뿐**이다. 기기 번호도, 사진도, 글자도 «안» 보낸다.
+//    📌 「유저 «개인별» 사용량은 안 센다」를 그대로 지킨다 — 서버에도 전역 숫자만 쌓인다.
+// ⛔ 실패해도 던지지 않는다 — 이건 곁일이라 유저 흐름을 못 막는다.
+// ⭐ 못 보내면 쌓아 뒀다 다음에 보낸다 — ⚠️**오프라인일 때가 곧 「실패」 갈래**라
+//    큐가 없으면 하필 그 갈래만 조용히 빠진다(＝값을 정할 때 제일 틀리기 쉬운 자리).
+const 기본큐칸 = 'hankki:baseQ'
+const 기본큐읽기 = () => { try { const v = JSON.parse(localStorage.getItem(기본큐칸) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } }
+// ⛔ 상한 50 — 오래 오프라인이어도 저장소를 안 먹는다(localStorage 가 차면 저장이 «통째로» 막힌다).
+const 기본큐쓰기 = (a) => { try { localStorage.setItem(기본큐칸, JSON.stringify(a.slice(-50))) } catch { /* noop */ } }
+
+async function 기본한번(갈래) {
+  const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+  try { const f = localStorage.getItem('hankki:founder'); if (f) headers['x-hankki-founder'] = f } catch { /* noop */ }
+  const resp = await fetch(OCR_PROXY_URL, { method: 'POST', headers, body: JSON.stringify({ 기본: 갈래 }) })
+  if (!resp.ok) throw new Error('base_http_' + resp.status)
+}
+
+export function 기본인식알림(갈래) {
+  기본한번(갈래).catch(() => { 기본큐쓰기([...기본큐읽기(), 갈래]) })
+}
+
+// 🔁 쌓아둔 것을 다시 보낸다 — 앱을 열 때 조용히 돈다(밀린열쇠보내기 와 같은 자리).
+export async function 밀린기본보내기() {
+  const q = 기본큐읽기()
+  if (!q.length) return
+  기본큐쓰기([])                       // ⛔ 먼저 비운다 — 보내는 중에 새로 쌓이는 것과 안 섞이게
+  const 남은 = []
+  for (const 갈래 of q) {
+    try { await 기본한번(갈래) } catch { 남은.push(갈래) }
+  }
+  if (남은.length) 기본큐쓰기([...기본큐읽기(), ...남은])
+}
+
 // 🎁 「그냥 깔면 몇 개 · 로그인하면 몇 개」 — 서버가 준 두 상한을 그대로 돌려준다.
 //   📮 창업자 2026-09-01 = *"로그인화면에서 10개 주고 로그인하면 20개준다는 것도 안내붙였어?"*
 //      ＋ *"그거 다하면 무료30개 제공(첫 유저 선물) 안내도 적어야 할 것 같아."*
@@ -567,6 +608,20 @@ export async function ocrImage(image, onProgress, opts = {}) {
     } catch {
       /* 폴백 계속 (오프라인·한도·오류) */
     }
+  }
+  // 📊📊 **여기부터는 «열쇠를 안 쓰는» 길이다** — 유료를 켤 때 「무료로 얼마나 읽히나」의 잣대가 된다.
+  //   📮 창업자 2026-09-01 = *"우리ai기능 유료 켤때 무료이용률도 알아야 가격이나 장수를 수정하니까"*
+  //   ⭐ 갈래를 «여기서» 가른다 — 여기가 이유를 아는 유일한 자리다(더 아래로 가면 왜 떨어졌는지 잊는다).
+  //      **고름** = 유저가 「그냥 읽기」를 골랐다 · **막힘** = 열쇠가 모자라 서버가 429 를 줬다 ·
+  //      **실패** = 그 밖(오프라인 · AI 오류 · 결과가 외계어)
+  //   ⛔ `getOcrNote()` 를 부르지 않는다 — 그건 «읽으면 지우는» 값이라 화면 안내가 사라진다.
+  //      모듈 안이라 `_ocrNote` 를 그냥 들여다본다.
+  //   ⛔ 사진이 아닌 것(Blob·Canvas)으로 부른 경우엔 세지 않는다 — 그건 유저가 담는 흐름이 아니다.
+  //   ⚠️⚠️ **정직하게 — 이건 「읽으려 한 횟수」이지 「읽어낸 횟수」가 아니다.**
+  //      여기서 세는 이유 = **왜 떨어졌는지 아는 자리가 여기뿐**이다(더 아래로 가면 이유를 잊는다).
+  //      ⭐ 값을 정하는 데는 이게 맞다 — 우리가 알고 싶은 건 「열쇠 없이 읽으려 한 일이 얼마나 잦나」다.
+  if (typeof image === 'string') {
+    기본인식알림(opts.noVision ? '고름' : (_ocrNote === 'user_quota' ? '막힘' : '실패'))
   }
   // 1) 폰 내장 OCR (있으면 정확, 요즘 크롬은 기본 비활성이라 대개 건너뜀)
   if (typeof image === 'string') {
