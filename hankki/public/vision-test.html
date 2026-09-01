@@ -208,6 +208,26 @@ async function 통보기(갈래) {
   try { d = await r.json() } catch { 칸.textContent = '⛔ 답이 JSON 이 아니야 (' + r.status + ')'; return }
   const 글 = JSON.stringify(d, null, 1)
   칸.textContent = ''
+  // 📊📊 [2026-09-01 창업자 지시] **한 줄 요약을 «먼저» 보여준다** — JSON 을 읽으라는 건 불친절하다.
+  //   📮 창업자 = *"이걸 눈으로 어떻게 확인하는지 궁금해"* · *"유료 켤때 무료이용률도 알아야"*
+  //   ⛔ 값을 여기서 «계산하지» 않는다 — 서버가 준 것만 옮긴다(두 곳에서 세면 반드시 갈라진다).
+  //   ⛔ 없는 값이면 그 줄을 «안 그린다» — 0 으로 채우면 거짓말이 된다.
+  if (d && d.무료이용률) {
+    const s = document.createElement('div')
+    s.style.cssText = 'margin:0 0 8px;padding:9px 11px;border-radius:10px;background:#eef4ff;line-height:1.6;font-weight:600'
+    const g = (d.기본인식 && d.기본인식.갈래) || {}
+    s.textContent =
+      '📊 유저가 ' + d.무료이용률.읽은것 + '장 읽었고 — AI ' + d.무료이용률.AI + '% · 기본 인식 ' + d.무료이용률.기본 + '%\n'
+      + '   기본 인식 갈래 = 막힘 ' + (g.막힘 || 0) + ' · 스스로 고름 ' + (g.고름 || 0) + ' · AI 실패 ' + (g.실패 || 0) + '\n'
+      + '   막힘 이번달 ' + ((d.막힘 && d.막힘.이번달) || 0) + ' (켤 때 ≈ ' + ((d.막힘 && d.막힘.켤때) || 20) + ')'
+    s.style.whiteSpace = 'pre-wrap'
+    칸.appendChild(s)
+  } else if (d && d.기본인식) {
+    const s = document.createElement('div')
+    s.style.cssText = 'margin:0 0 8px;padding:9px 11px;border-radius:10px;background:#f3f3f3;line-height:1.6'
+    s.textContent = '📊 아직 유저가 읽은 게 0장이라 비율을 안 낸다 (0% 라고 적으면 거짓말이라서)'
+    칸.appendChild(s)
+  }
   const p = document.createElement('pre')
   p.textContent = 글
   p.style.whiteSpace = 'pre-wrap'

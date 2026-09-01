@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useStore } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
-import { ocrImage, getOcrLeft, 밀린열쇠보내기, KEY_NAME, KEY_UNIT } from './ocr'
+import { ocrImage, getOcrLeft, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw } from './parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder } from './tidy'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
@@ -111,7 +111,9 @@ export default function App() {
   // 🔁 못 보낸 «행동 열쇠»를 앱을 열 때 조용히 다시 보낸다(🕳6 — 오프라인·비행기모드).
   //   ⛔ 결과를 화면에 안 띄운다 — 유저는 이미 그 행동을 잊었다. 숫자만 조용히 맞춘다.
   //   ⭐ 서버가 멱등이라 몇 번을 보내도 안전하다.
-  useEffect(() => { 밀린열쇠보내기() }, [])
+  // 🔁 못 보낸 신호를 앱 열 때 조용히 다시 보낸다 — 행동 열쇠 ＋ 「기본 인식으로 읽었다」 둘 다.
+  //   ⛔ 화면에 아무것도 안 띄운다. 숫자만 맞춘다.
+  useEffect(() => { 밀린열쇠보내기(); 밀린기본보내기() }, [])
 
   // 🔤 카드·표지를 사진으로 뽑을 때 쓰는 «글꼴 꾸러미»를 앱이 한가할 때 미리 만들어 둔다.
   //   ⛔⛔ 안 데워두면 유저가 「공유하기」를 누른 «뒤에» 글꼴 8개·1.7MB 를 만들기 시작해

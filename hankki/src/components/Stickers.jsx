@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import Buddy from './Buddies'
 import { packDrawerGroups } from '../data/paidPacks'
-// 🎁 선물 목록이 «지금 열린 것·지금 제철인 것»을 스스로 안다(아래 `giftGroups`).
-import { isReleased, seasonRank } from '../season'
 // 🌧 가을 유료팩 배경 — 우리 배경 중 «첫 사진». 표지가 1:1 이라 미리 1:1 로 잘라 뒀다.
 import RAIN_STREET from '../assets/decorbg/rain-street.webp'
 
@@ -1122,25 +1120,6 @@ export const pickableFx = (owned = ownedPacks()) => FX_KINDS.filter((f) => f.bas
 //   ⛔ `sellable` 이 false 인 팩은 `packDrawerGroups` 가 아예 안 준다 → **지금은 화면이 안 바뀐다.**
 //   ⚠️ `STICKER_GROUPS` 를 직접 쓰지 말고 이걸 쓴다 — 직접 쓰면 유료팩이 조용히 빠진다.
 export const drawerGroups = (owned = ownedPacks()) => [...STICKER_GROUPS, ...packDrawerGroups(owned)]
-
-// 🎁🎁 **지금 열려 있는 «선물» 묶음** — 서랍 맨 위 「선물 …가지」 단추와 그 안내 시트가 같이 쓴다.
-//   📮 창업자 2026-09-01 = *"글자에 선물네가지 (없애거나 가을 것으로 반영)"*
-//   ⛔⛔ 뿌리 = **안내 시트가 여름 넷을 «글자로» 박아두고 있었다**(`GiftPackSheet` 옛 `GIFTS`).
-//      9/1 에 「가을의 정원 세트」가 선물로 열렸는데 시트는 여름만 말했고,
-//      단추 이름에도 **「네 가지」라는 숫자가 박혀** 있어 선물이 늘거나 줄면 그대로 낡았다.
-//      📌 `ocr.js` 의 `KEY_NAME`·문구 「5회」와 «같은 사고»다 — 숫자·계절을 글자로 박으면 반드시 낡는다.
-//   ✅ 그래서 **선물 목록을 «데이터에서» 만든다** — `gift: true` 를 붙이면 시트·단추가 저절로 따라온다.
-//   ⭐ 순서는 서랍과 «똑같이» 맞춘다(`DecorEditor` 의 `giftUp` 과 같은 규칙) —
-//      시트가 「어디 있는지」를 가리키는 자리라 **시트 순서와 서랍 순서가 갈리면 못 찾는다.**
-//      ⑴지금 제철인 선물(계절이 안 붙은 출시기념 포함)이 위 ⑵그 안에서 새것(`from` 최신)이 위
-//   ⛔ 아직 공개일이 안 된 선물은 뺀다(`isReleased`) — 없는 것을 가리키면 막다른 길이다.
-export const giftGroups = (now = new Date()) => {
-  const 제철선물 = (g) => !!g.gift && (!g.season || seasonRank(g.season, now) === 0)
-  return drawerGroups()
-    .filter((g) => g.gift && !g.locked && isReleased(g.from, now))
-    .sort((a, b) => ((제철선물(b) ? 1 : 0) - (제철선물(a) ? 1 : 0))
-      || String(b.from || '').localeCompare(String(a.from || '')))
-}
 
 // 🕗🕗 「최근 쓴 것」 — 서랍이 400컷을 넘어가면서 **찾는 게 일이 됐다.**
 //   ⭐ 우리는 이 문제를 이미 한 번 풀었다 — 음식 아이콘 299개일 때 v8.81 의 「최근 쓴 것 8개 맨 위」.

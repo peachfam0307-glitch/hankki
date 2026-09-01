@@ -63,6 +63,7 @@ async function 사진넣고자르기(p) {
 async function 안내까지(ctx, 남은 = 19) {
   const p = await ctx.newPage()
   let 열쇠쓴호출 = 0
+  const 기본신호 = []
   // 🕸 프록시를 가로채 «횟수»를 센다. 실제로 나가게 두지 않는다(이 환경은 workers.dev 를 막는다).
   //
   // ⛔⛔ **잣대를 옮겼다 (2026-09-01)** — 전엔 «프록시를 불렀나»를 셌고 그게 곧 열쇠 차감이었다.
@@ -75,6 +76,9 @@ async function 안내까지(ctx, 남은 = 19) {
     let 몸 = {}
     try { 몸 = JSON.parse(route.request().postData() || '{}') } catch { /* noop */ }
     if (몸.image) 열쇠쓴호출 += 1
+    // 📊 [2026-09-01] 「기본 인식으로 읽었다」 신호를 모은다 — 갈래가 «갈리는지»를 아래서 잰다.
+    //   ⭐ 갈래가 틀리면 숫자는 있는데 «처방»이 틀린다(막힘↑ = 팔 때 / 고름↑ = 값이 비싸다 / 실패↑ = 우리 문제).
+    if (몸.기본) 기본신호.push(몸)
     // ⭐ 조회 답도 «이 판이 심어둔 상태»와 같아야 한다 — 안 그러면 서버 답이 씨앗을 덮어
     //    「열쇠 0개」 시험이 19개짜리 화면을 재게 된다(그것도 2026-09-01 에 실제로 났다).
     const left = {
@@ -93,7 +97,7 @@ async function 안내까지(ctx, 남은 = 19) {
   await p.waitForTimeout(900)
   await p.locator('.imp-opt').nth(2).click() // ③
   await p.waitForTimeout(700)
-  return { p, 횟수: () => 열쇠쓴호출 }
+  return { p, 횟수: () => 열쇠쓴호출, 기본신호 }
 }
 
 // ① 목록에 「무료로도 돼요」 알약이 붙었나
@@ -147,11 +151,22 @@ async function 안내까지(ctx, 남은 = 19) {
       localStorage.setItem('hankki:ocrLeft', JSON.stringify({ welcome: 20, month: 5, total: 20 }))
     } catch { /* noop */ }
   })
-  const { p, 횟수 } = await 안내까지(ctx)
+  const { p, 횟수, 기본신호 } = await 안내까지(ctx)
   p.on('pageerror', () => { /* tesseract CDN 이 막혀 터진다 — 판정과 무관 */ })
   await p.locator('.pad.fade button', { hasText: '그냥 읽기' }).click()
   await 사진넣고자르기(p)
   재기('⭐ 「그냥 읽기」 → 프록시 호출 0번 (＝열쇠 안 깎임)', 횟수() === 0, `${횟수()}번`)
+  // 📊📊 [2026-09-01 창업자 지시] 「무료로 얼마나 읽히나」를 세려면 앱이 «알려줘야» 한다.
+  //   📮 *"기본인식을 얼마나 썼는지도 알아야 하지 않을까"* · *"유료 켤때 무료이용률도 알아야 가격이나 장수를 수정하니까"*
+  //   ⭐⭐ 재는 것은 개수가 아니라 **갈래가 갈리나** — 갈래가 틀리면 숫자는 있는데 «처방»이 정반대가 된다
+  //      (막힘↑ = 팔 때다 / 고름↑ = 값이 비싸다 / 실패↑ = 우리 문제다).
+  await p.waitForTimeout(600)
+  재기('📊 「그냥 읽기」는 «고름»으로 알린다', 기본신호.length >= 1 && 기본신호[0].기본 === '고름',
+    JSON.stringify(기본신호.map((x) => x.기본)))
+  // ⛔ 이 신호가 «열쇠를 쓰는 요청»으로 세지면 안 된다 — 위 「0번」과 같이 봐야 뜻이 있다
+  재기('📊 ⛔알림은 열쇠를 «안» 쓴다(위 0번이 그대로다)', 횟수() === 0, `${횟수()}번`)
+  재기('📊 ⛔기기 번호도 사진도 «안» 보낸다(전역 숫자만 · 개인별은 안 센다)',
+    기본신호.every((x) => !x.uid && !x.image && !x.sub), JSON.stringify(기본신호[0] || null))
   await ctx.close()
 }
 

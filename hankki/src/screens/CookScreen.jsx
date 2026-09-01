@@ -171,11 +171,8 @@ export default function CookScreen({ id }) {
                 }}>
                   {checked[k] && <Icon name="check" size={15} color="#fff" stroke={2.6} />}
                 </span>
-                {/* ⭐ 체크한 줄은 «흐리게 ＋ 취소선» — 「했다」가 한눈에 보인다(장보기 목록과 같은 문법)
-                    ✍️ [창업자 2026-09-01] *"요리모드 첨에 재료나오는 화면도 글씨체 귀염체?로 바꿔야함."*
-                       → `cook-ing` 이 귀염체를 준다. ⛔`.ing` 자체는 «안» 건드린다 —
-                          레시피 «상세»의 재료 줄이 같은 클래스라 거기까지 손글씨가 된다(창업자가 말한 화면이 아니다). */}
-                <span className="ing cook-ing" style={{
+                {/* ⭐ 체크한 줄은 «흐리게 ＋ 취소선» — 「했다」가 한눈에 보인다(장보기 목록과 같은 문법) */}
+                <span className="ing" style={{
                   fontSize: 19, flex: 1, minWidth: 0,
                   opacity: checked[k] ? 0.44 : 1,
                   textDecoration: checked[k] ? 'line-through' : 'none',
