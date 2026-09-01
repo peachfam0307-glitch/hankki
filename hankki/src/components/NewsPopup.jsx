@@ -140,23 +140,15 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
             <div style={{ fontSize: 21, fontWeight: 900, marginTop: 6, letterSpacing: '-0.03em', lineHeight: 1.3 }}>{h.title}</div>
             {/* 🔢 숫자를 크게 — 「51종·전부 무료예요」 한 줄에 묻혀 있던 것을 세웠다.
                 ⚠️ `count` 가 없는 갈래(이번 주 레시피만 열리는 날)엔 옛 한 줄을 그대로 쓴다. */}
-            {h.count ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 4 }}>
-                {/* 🎨 숫자 색 = `--gift` — 알약과 «한 벌»로 묶는다.
-                    ⛔ `--brown` 이면 그레이지 테마에서 «파란 숫자 ＋ 갈색 알약»으로 갈라진다(실물로 봤다).
-                    ⭐ `--gift` 는 네 테마의 대비를 이미 재 둔 토큰이다(`styles.css:88~96`) —
-                       46px 굵은 글자라 큰 글자 기준(3.0)을 넉넉히 넘는다. ⛔주황을 여기 박지 말 것. */}
-                <span style={{ fontSize: 46, fontWeight: 900, lineHeight: 1, color: 'var(--gift)', letterSpacing: '-0.04em' }}>
-                  {h.count}<span style={{ fontSize: 21, marginLeft: 1 }}>종</span>
-                </span>
-                <span style={{
-                  fontSize: 14, fontWeight: 900, color: '#fff', background: 'var(--gift)',
-                  borderRadius: 999, padding: '5px 13px', whiteSpace: 'nowrap',
-                }}>전부 무료</span>
-              </div>
-            ) : (
-              <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3 }}>{h.sub}</div>
-            )}
+            {/* 🔢🔢 **[창업자 확정 2026-09-02] 큰 숫자를 «뺀다».** ⛔되살리지 말 것
+                📮 창업자 원문 = *"**큰 숫자는 넣지말자 계속 그렇게 줘야할 것 같아서**"*
+                ⭐⭐ **8/31 에 «창업자가 넣자고 해서» 세운 것을 «창업자가 다시 뺀다».**
+                   그때 근거(*"인스타 판에서 51 이 주인공이었다"*)는 **한 장짜리 홍보**엔 맞았는데,
+                   앱 팝업은 **매달 같은 자리에 다시 뜬다** — 46px 로 51 을 세워 두면
+                   10월에 같은 자리에 17 이 뜨는 순간 **그 자체가 「줄었다」는 신호**가 된다.
+                   📌 숫자를 크게 세우는 순간 «그만큼이 기준»이 되어 버린다. 그게 창업자가 짚은 것이다.
+                ⭐ 대신 아래 한 줄(`sub`)이 조용히 말한다 — 갈래별 개수는 아래 «칩 목록»에 이미 다 있다. */}
+            <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3 }}>{h.sub}</div>
 
             {/* 히어로 한 컷 크게 — 작은 것 여럿보다 «하나 큰 것»이 눈에 남는다 */}
             {hero && (
