@@ -1747,17 +1747,38 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           {/* 📌 2026-08-07 — 되돌리기는 **맨 아래 도구 바**로 옮겼다(안 D).
               ⭐ 여기 있을 땐 «혼자 한 줄»을 먹었고, 그 줄이 서랍 스크롤 칸을 그만큼 눌렀다.
               ⭐ 도구 바는 고른 게 없을 때 비어 있으므로 그 자리를 되돌리기가 채운다 — 줄 하나를 회수한 셈. */}
-          {/* 카테고리 칩 — 가로로 골라 그 카테고리만(세로 스크롤 최소화) */}
+          {/* 🗄🗄 **갈래를 «왼쪽 세로 띠»로** (창업자 확정 2026-09-01 「ㄴ가자」)
+              📮 창업자 = *"지금 폰에서 우리 꾸미기가 서랍버튼이(알약)이 차지하는 공간이 너무 커서
+                 아이콘이 잘 안보여. 답답하게 느껴지거든"*
+              🔢 실측이 그대로였다(390px) — 스티커가 나오기 «전»에 **156px** 이 깔렸다:
+                 손잡이 38 · 모드탭 38 · **갈래 알약 56** · 선물·사진 62 → **머리 156 → 66px**
+              ⭐ 왜 «세로 띠»인가 = 갈래는 «가로 한 줄»을 통째로 먹는데, 세로로 세우면 그 줄이 사라진다.
+                 Gboard 가 2026-09 기준 최신 개편(2024)에서 이모지·스티커에 쓴 방식이 이것이다.
+              ⛔ 「가로 한 칸을 잃는다」가 손해처럼 보이지만 **칸 크기는 그대로다**(실측 30 → 31px) —
+                 레일이 54px 을 가져가는 만큼 «칸 수»가 하나 줄어서 서로 상쇄된다.
+                 🔢 320px 폰에서 «보이는 스티커»는 오히려 **5 → 6칸**으로 늘었다.
+              ⛔ 「글자」 탭도 확인했다(창업자 물음) — 오히려 ㉡이 낫다.
+                 지금 판은 글씨체가 6개/줄 두 줄인데 **「글자 넣기」 단추가 잘려 나가고**,
+                 레일 판은 5개/줄 세 줄이지만 **단추와 안내 문구까지 다 보인다.**
+              📄 판 = https://claude.ai/code/artifact/1705ed05-66c9-4613-a9bf-0b2f905576d6
+                 재는 판 = `scripts/_판-서랍층-0901.mjs` */}
+          <div className="decor-body">
+          {/* 카테고리 칩 — ⭐이제 «세로 레일». 클래스 이름은 그대로 둔다(작은 화면 미디어쿼리가 이 이름을 쓴다) */}
           {mode === 'decor' && (
-          <div className="decor-catsrow" style={{ display: 'flex', alignItems: 'flex-start', gap: 4, flex: '0 0 auto' }}>
+          {/* ⛔⛔ 인라인 스타일이 stylesheet 를 «이긴다» — 처음엔 CSS 로만 세로로 눕혔더니
+                 알약이 왼쪽으로 잘려 나가고 한 칸이 46px 이 아니라 106px 로 늘어났다(그림으로 잡았다).
+                 → 세로로 세우는 값은 «여기»서 준다. CSS 는 `.decor-body` 의 «나란히 서기»만 맡는다. */}
+          <div className="decor-catsrow" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 0, flex: '0 0 54px', width: 54, minWidth: 54, overflowY: 'auto', overflowX: 'hidden' }}>
           {/* 🗂 접기 단추 — **갈래칩 줄에 붙여 둔다.** 접어도 이 줄은 남으니 «돌아올 길»이 늘 보인다.
               ⛔ 접힌 상태에서 사라지는 자리에 두면 다시 펼 수가 없다. */}
-          <div className="decor-cats" onClick={dropBodyOnTap} style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '2px 2px 10px', flex: '1 1 auto', minWidth: 0 }}>
+          <div className="decor-cats" onClick={dropBodyOnTap} style={{ display: 'flex', flexDirection: 'column', gap: 3, overflowX: 'hidden', padding: '2px 3px 4px', flex: '0 0 auto', minWidth: 0 }}>
             {visCats.map((c) => {
               const on = cat === c.key
               return (
                 <button key={c.key} className="press" onClick={() => setCat(c.key)}
-                  style={{ flex: '0 0 auto', padding: '7px 13px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap', background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)' }}>
+                  /* 📐 세로 레일 칸 — 폭은 레일(54)을 꽉 채우고 키는 손가락 최소(44)를 넘긴다.
+                     ⛔ `nowrap` 을 빼고 `normal` 로 — 「친구들」처럼 세 글자가 54px 에 안 들어가면 두 줄로 앉아야 한다. */
+                  style={{ width: '100%', minHeight: 46, padding: '4px 2px', borderRadius: 12, fontSize: 11.5, fontWeight: 700, lineHeight: 1.15, whiteSpace: 'normal', background: on ? 'var(--brown)' : 'var(--cream)', color: on ? '#fff' : 'var(--text-sub)' }}>
                   {c.label}
                 </button>
               )
@@ -2124,6 +2145,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             {cat === 'record' && groupsByTab('record').map(renderStickerGroup)}
             </>)}
           </div>
+          </div>{/* .decor-body — 레일 ＋ 굴림칸이 «나란히» 선다 */}
         </div>
 
         {/* ⌨️⌨️ **「따로 창 떠서 쓰고 붙이기」는 없앴다** (창업자 2026-08-07

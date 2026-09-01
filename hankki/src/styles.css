@@ -3236,6 +3236,35 @@ html, body { overscroll-behavior: none; }
    ⛔ 이 줄은 «고르는 것»이지 «붙이는 것»이 아니다 — 자리를 먹으면 스티커가 밀린다. */
 .decor-cats button { min-height: 38px; }
 .decor-cats { margin-bottom: 6px; }
+
+/* 🗄🗄🗄 **갈래 = «왼쪽 세로 레일»** (창업자 확정 2026-09-01 「ㄴ가자」)
+   📮 창업자 = *"서랍버튼이(알약)이 차지하는 공간이 너무 커서 아이콘이 잘 안보여. 답답하게 느껴지거든"*
+   ⭐ 위 두 줄(2026-08-12)이 같은 문제를 «칩을 낮춰서» 막았던 자리다 — 그건 12px 을 돌려줬고,
+      세로로 세우면 **그 줄이 통째로 사라진다**(390px 실측 머리 156 → 66px).
+   ⛔ 클래스 이름(`.decor-cats`)은 «그대로 둔다» — 작은 화면 미디어쿼리 둘이 이 이름으로 칩을 눌러
+      스티커 줄을 벌어 놓았다(`@media (max-width:500px) and (max-height:700px)` 의 32px !important).
+      이름을 바꾸면 그 장치가 조용히 죽는다.
+   🔢 레일 54px 인 까닭 = 320px 폰에서 남는 250px 를 5칸으로 나누면 «한 칸 50px»이라
+      지금(304÷6=51px)과 거의 같다. **칸이 작아지지 않는다**(실측 30 → 31px). */
+.decor-body { display: flex; flex-direction: row; align-items: stretch; flex: 1 1 auto; min-height: 0; }
+.decor-body > .decor-scroll { flex: 1 1 auto; min-width: 0; }
+.decor-body > .decor-catsrow {
+  flex: 0 0 54px; width: 54px;
+  flex-direction: column; align-items: stretch; gap: 0;
+  overflow-y: auto; overflow-x: hidden;   /* 갈래가 늘거나 화면이 낮으면 레일이 굴러간다 */
+  padding: 2px 0 0;
+}
+.decor-body > .decor-catsrow .decor-cats {
+  flex-direction: column; gap: 3px;
+  overflow-x: hidden; overflow-y: visible;
+  padding: 0 3px 4px; margin-bottom: 0; flex: 0 0 auto;
+}
+.decor-body > .decor-catsrow .decor-cats button {
+  width: 100%; min-height: 46px; border-radius: 12px;
+  white-space: normal; line-height: 1.15; padding: 4px 2px; font-size: 11.5px;
+}
+/* 🗂 접기 단추 = 레일 «맨 아래». 가로 줄일 땐 오른쪽 끝이었다 — 세로에선 그 자리가 아래다 */
+.decor-body > .decor-catsrow .decor-pickfold { align-self: center; margin: 2px auto 0; }
 /* 🗂🗂 **「고르는 줄」 접기 단추** (창업자 2026-08-13 *"고르는게 너무많아. 고르고나서 탭접기가능한버튼 생기면안되나.."*)
    ⭐ 갈래칩 줄 «오른쪽 끝»에 붙는다 — 접으면 탭줄·글씨·크기가 사라지고 이 줄만 남으니
       **돌아올 길이 늘 같은 자리에 보인다.**
