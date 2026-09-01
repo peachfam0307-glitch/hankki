@@ -6,7 +6,7 @@ import DecorLayer from './DecorLayer'
 import { PaperBox, WRITE_SIZES } from './PaperSheet'
 import { PAPER_RULES, PAPER_SKINS, PAPER_ARTS, paperStyle } from '../data/papers'
 import { seasonRank, isReleased } from '../season'
-import GiftPackSheet from './GiftPackSheet'
+import GiftPackSheet, { giftRows } from './GiftPackSheet'
 import PackBuySheet from './PackBuySheet'
 import { needsGiftPack } from '../nudges'
 import { cropRatio, imageRatio } from '../utils'
@@ -1858,7 +1858,11 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: '0 0 auto', minWidth: 0, minHeight: 38, padding: '0 10px',
                   borderRadius: 12, background: 'var(--cream)', border: '1px solid var(--line)' }}>
                 <Icon name="gift" size={17} color="var(--brown)" />
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap' }}>선물 네 가지</span>
+                {/* 🔢 [2026-09-01] 「선물 네 가지」에서 **숫자를 뺐다** — 창업자 = *"글자에 선물네가지
+                    (없애거나 가을 것으로 반영)"*. 9/1 에 「가을의 정원 세트」가 열려 넷이 아니게 됐는데
+                    이름은 여름 넷 그대로였다. 📌 `ocr.js` 문구의 「5회」와 같은 사고다 — 숫자를 글자로 박으면 낡는다.
+                    ⭐ 이제 `giftRows()`(＝`gift: true` 붙은 묶음 ＋ 배경·모션)가 세어 준다. */}
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap' }}>선물 {giftRows().length}가지</span>
               </button>
               <button className="press" onClick={() => photoRef.current?.click()}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, minWidth: 0, minHeight: 38, padding: '0 8px',
