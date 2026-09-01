@@ -2275,6 +2275,18 @@ img {
       값을 안 주면 패드를 돌릴 때마다 글씨 굵기가 바뀐다. 그건 고장으로 읽힌다.
       📌 창업자 말의 범위를 넓힌 게 아니라 **같은 칸을 비워 둘 수 없어서** 채운 것이고, 그렇다고 밝혀 뒀다. */
 .cook-steptext { font-size: 24px; line-height: 1.6; font-weight: 600; color: var(--text); word-break: keep-all; font-family: 'Gaegu', 'Pretendard', sans-serif; -webkit-text-stroke: 0.7px currentColor; }
+/* ✍️✍️ [창업자 2026-09-01] **요리모드 «재료 준비» 화면도 귀염체**
+   📮 창업자 원문 = *"요리모드 첨에 재료나오는 화면도 글씨체 귀염체?로 바꿔야함."*
+      ⭐ *"…도"* = 걸음 화면(`.cook-steptext`)이 이미 귀염체다. **같은 요리모드 안에서 글씨체가 둘이었다** —
+         0단계(재료)는 본문체, 1단계부터 손글씨. 넘기는 순간 글씨가 바뀌어 «다른 앱»처럼 읽힌다.
+   ⛔ `.ing` 를 고치지 «않는다» — 그 클래스는 레시피 «상세»의 재료 목록과 한 몸이다.
+      거기까지 손글씨가 되면 창업자가 말하지 않은 화면을 바꾸는 것이다(v11.17 「말의 범위를 넓히지 않는다」).
+   🔢 획(`-webkit-text-stroke`) = **0.58px** — 짐작이 아니라 «창업자가 고른 비율»에서 나온 값이다.
+      창업자 판정 = 폰 28px 에 0.85px → 0.85 ÷ 28 = **0.0304**. 재료 줄 19px × 0.0304 ≈ **0.58px**.
+      ⭐ 같은 비율이라 «글자 하나가 먹는 잉크»가 걸음 글자와 같아진다(`_probe-귀염체작은화면-0901` 의 그 잣대).
+   ⛔ 글자 «크기»는 안 건드렸다(19px 그대로) — 창업자가 말한 건 «글씨체» 하나다.
+      ⚠️ 귀염체는 같은 px 에서 본문체보다 작아 보인다. 작게 느껴지면 그때 창업자가 정한다(규칙 11). */
+.cook-ing { font-family: 'Gaegu', 'Pretendard', sans-serif; font-weight: 700; -webkit-text-stroke: 0.58px currentColor; }
 /* ↕️↕️ [창업자 2026-09-01] **줄간을 늘렸다 — 1.5 → 폰 1.6 · 그 위 1.7**
    📮 창업자 원문 = *"만드는 법 줄간을 좀 더 늘리자."*
       ⭐ 「만드는 법」은 레시피 «상세»의 절 이름이기도 해서 **어느 화면인지 물었고**(규칙 25),
@@ -2857,12 +2869,7 @@ html, body { overscroll-behavior: none; }
      ⑴ `min-height: 38px` 을 줬다가 오히려 «커졌다»(42→46). 📌 줄이려면 «바닥»이 아니라 «여백»을 만진다.
      ⑵ 고친 뒤에도 44 그대로였다 — 아래 1860줄 `.decor-drawer .segment .seg`(0,3,0)가 «더 세고 뒤에» 있었다.
         📌 **오늘 여섯 번째 우선순위 사고다.** 이 파일에서 같은 이름을 여러 번 잡고 있으면 «전부» 찾아본다. */
-  /* 📏 2026-09-01 창업자 = *"이거 레꾸에도 적용되지? 패드랑."*
-     🔢 재 보니 **가로에서만 모드줄이 40px** 이었다(세로는 30px) — 이 줄이 아래 «서랍 안» 규칙보다
-        세서(0,3,0 > 0,2,0) 여백 트림을 이겼다. 머리도 46 ↔ **56px** 로 갈렸다.
-     ✅ 세로와 «같은 값»으로 맞춘다 — 36/6 → 26/4. 가로에선 한 칸이 «가로로 140px» 이라 더 잘 눌린다.
-     📌 창업자 말의 범위를 넓힌 게 아니다 — 같은 지시를 «빠뜨린 방향»에 마저 적용한 것이다. */
-  .decor-editor .decor-drawer .segment .seg { min-height: 26px; padding: 4px; }
+  .decor-editor .decor-drawer .segment .seg { min-height: 36px; padding: 6px; }
   /* ⛔ 서랍을 넓혔는데 스티커가 더 많이 보이지 «않았다» — 칸이 `repeat(5, 1fr)` 로 못 박혀 있어서
      넓어진 만큼 **칸만 커졌다**(66 → 77px). 📌 「넓혔다」와 「많이 보인다」는 다른 말이다.
      ⭐ 가로에선 칸 «크기»를 정하고 개수는 폭이 정하게 한다 → 폰 6칸 · 폴드·패드 7칸. */
@@ -3014,8 +3021,7 @@ html, body { overscroll-behavior: none; }
   /* 🔢 실측(360×640 · 검수판을 눈으로 보고 다시 잼) — 서랍 225px 중 **「고르는 것」이 153px · 스티커는 49px**.
      창업자 말이 정확하다: *"나머지는 고르기버튼이 다 잡아먹음."* → **종이 말고 「고르는 것」을 줄인다.**
      ⚠️ 여기 값들은 손가락 최소(44px)를 깬다 — 640px 화면에선 44 를 지키면 스티커가 «한 줄»뿐이다. */
-  /* 📏 2026-09-01 — 여기도 세로와 «같은 값»으로(32/5 → 26/4). 이 화면은 세로가 제일 귀하다. */
-  .decor-editor .decor-drawer .segment .seg { min-height: 26px; padding: 4px; }
+  .decor-editor .decor-drawer .segment .seg { min-height: 32px; padding: 5px; }
   .decor-drawer .segment { margin-bottom: 5px !important; }
   .decor-cats button { min-height: 32px !important; }
   .decor-cats { margin-bottom: 5px !important; }
@@ -3191,15 +3197,12 @@ html, body { overscroll-behavior: none; }
 /* 🫳 손잡이 = «내리는 단추». 창업자 2026-08-12 *"가운데 두꺼운 버튼같이 만들어서 … 탭 전체가 내려가게"*
    ⭐ 막대만 두껍게(4 → 6px · 40 → 56px) 하고 **닿는 칸은 38px** 로 넉넉히 — 손가락이 겨냥할 게 막대다.
    ⛔ 막대를 44px 로 키우면 「가로줄」로 보여 서랍 테두리와 헷갈린다. 막대는 작게, 칸만 크게. */
-/* 📏 2026-09-01 창업자 = *"속지 글쓰기 영역이 자리를 너무 차지에 «흰 여백»도 그렇고. 줄여줘."*
-   🔢 손잡이 38 → 24px · 띠 위아래 여백 10 → 5px
-   ⛔ 폭이 100% 라 짧아져도 손가락은 닿는다 — 세로만 깎는다. */
 .decor-grab {
-  display: block; width: 100%; min-height: 12px; padding: 0; flex: 0 0 auto;
+  display: block; width: 100%; min-height: 38px; padding: 0; flex: 0 0 auto;
   background: none; border: none; cursor: pointer;
 }
 .decor-grab::before {
-  content: ''; display: block; width: 52px; height: 4px; margin: 4px auto;
+  content: ''; display: block; width: 56px; height: 6px; margin: 10px auto;
   border-radius: 999px; background: var(--line);
 }
 /* 🫳 내린 상태 — 손잡이만 남기고 다 감춘다. 다시 누르면 올라온다.
@@ -3230,26 +3233,11 @@ html, body { overscroll-behavior: none; }
    ⛔ 위 주석의 *"44px 밑으로는 못 내린다"* 는 «내가 정한 잣대»였고 창업자가 풀어줬다.
       우리 앱은 「배경 음식 아이콘 되돌리기」가 이미 38px 로 돌고 있다 = **실질 최소치는 38.**
    🔢 44 → 38 = 서랍 굴칸 6px 확보. 작아 보이지 않게 밑줄은 그대로 둔다(위치를 알려주는 건 밑줄이다). */
-/* 📏 2026-09-01 창업자 = *"속지 글쓰기 영역이 자리를 너무 차지"* — 38 → 32px
-   ⛔ 손가락 최소(44)를 깬다. 일부러다 — 이 앱은 같은 자리를 이미 32px 로 내려둔 전례가 있고
-      (`@media (max-width:500px) and (max-height:700px)`), 그 주석이 이유를 적어뒀다:
-      *"여기 값들은 손가락 최소(44px)를 깬다 — 44 를 지키면 스티커가 «한 줄»뿐이다."*
-      ＋ 이 줄은 모드가 넷이라 한 칸이 «가로로 97px» 이다. 세로가 짧아도 잘 눌린다. */
 .decor-drawer .segment .seg {
-  min-height: 26px; border-radius: 0; background: none; box-shadow: none;
+  min-height: 38px; border-radius: 0; background: none; box-shadow: none;
   font-size: 13px; font-weight: 700; color: var(--text-sub);
   border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
 }
-/* 🤍🤍 흰 여백 — 창업자 = *"아직도 여백이 너무 많아보여"*
-   🔢 뽑아 보니 범인이 «글자»가 아니라 «안쪽 여백»이었다 —
-      글자는 18px 인데 모드줄이 **40px** 을 먹고 있었다.
-      뿌리 = 공용 «.seg» 의 padding 9px(위아래 18px). 통(.segment)의 4px 은 그다음이었다.
-   ⛔ 공용 «.seg» 는 «모아보기·요리 기록»도 쓴다 — 서랍 안에서만 좁힌다.
-   🔢 모드줄 40 → 30px · 머리(손잡이＋모드줄) 58 → 42px
-   ⛔⛔ 이 줄을 쓸 때 «백틱»을 쓰지 말 것 — 셸이 삼켜서 «.seg»·«padding 9px» 이 통째로 사라졌다.
-      (2026-09-01 · 하루에 네 번째다. 낫표«»로 쓴다) */
-.decor-drawer .segment { padding: 2px; }
-.decor-drawer .segment .seg { padding: 4px; }
 .decor-drawer .segment .seg.on { font-weight: 800; }
 .decor-drawer .segment .seg.on {
   background: none; color: var(--brown); border-bottom-color: var(--brown);
@@ -3260,35 +3248,6 @@ html, body { overscroll-behavior: none; }
    ⛔ 이 줄은 «고르는 것»이지 «붙이는 것»이 아니다 — 자리를 먹으면 스티커가 밀린다. */
 .decor-cats button { min-height: 38px; }
 .decor-cats { margin-bottom: 6px; }
-
-/* 🗄🗄🗄 **갈래 = «왼쪽 세로 레일»** (창업자 확정 2026-09-01 「ㄴ가자」)
-   📮 창업자 = *"서랍버튼이(알약)이 차지하는 공간이 너무 커서 아이콘이 잘 안보여. 답답하게 느껴지거든"*
-   ⭐ 위 두 줄(2026-08-12)이 같은 문제를 «칩을 낮춰서» 막았던 자리다 — 그건 12px 을 돌려줬고,
-      세로로 세우면 **그 줄이 통째로 사라진다**(390px 실측 머리 156 → 66px).
-   ⛔ 클래스 이름(`.decor-cats`)은 «그대로 둔다» — 작은 화면 미디어쿼리 둘이 이 이름으로 칩을 눌러
-      스티커 줄을 벌어 놓았다(`@media (max-width:500px) and (max-height:700px)` 의 32px !important).
-      이름을 바꾸면 그 장치가 조용히 죽는다.
-   🔢 레일 54px 인 까닭 = 320px 폰에서 남는 250px 를 5칸으로 나누면 «한 칸 50px»이라
-      지금(304÷6=51px)과 거의 같다. **칸이 작아지지 않는다**(실측 30 → 31px). */
-.decor-body { display: flex; flex-direction: row; align-items: stretch; flex: 1 1 auto; min-height: 0; }
-.decor-body > .decor-scroll { flex: 1 1 auto; min-width: 0; }
-.decor-body > .decor-catsrow {
-  flex: 0 0 54px; width: 54px;
-  flex-direction: column; align-items: stretch; gap: 0;
-  overflow-y: auto; overflow-x: hidden;   /* 갈래가 늘거나 화면이 낮으면 레일이 굴러간다 */
-  padding: 2px 0 0;
-}
-.decor-body > .decor-catsrow .decor-cats {
-  flex-direction: column; gap: 3px;
-  overflow-x: hidden; overflow-y: visible;
-  padding: 0 3px 4px; margin-bottom: 0; flex: 0 0 auto;
-}
-.decor-body > .decor-catsrow .decor-cats button {
-  width: 100%; min-height: 38px; border-radius: 11px;
-  white-space: normal; line-height: 1.15; padding: 2px 2px; font-size: 11.5px;
-}
-/* 🗂 접기 단추 = 레일 «맨 아래». 가로 줄일 땐 오른쪽 끝이었다 — 세로에선 그 자리가 아래다 */
-.decor-body > .decor-catsrow .decor-pickfold { align-self: center; margin: 2px auto 0; }
 /* 🗂🗂 **「고르는 줄」 접기 단추** (창업자 2026-08-13 *"고르는게 너무많아. 고르고나서 탭접기가능한버튼 생기면안되나.."*)
    ⭐ 갈래칩 줄 «오른쪽 끝»에 붙는다 — 접으면 탭줄·글씨·크기가 사라지고 이 줄만 남으니
       **돌아올 길이 늘 같은 자리에 보인다.**
@@ -4563,3 +4522,32 @@ html, body { overscroll-behavior: none; }
   text-decoration: none; display: inline-block; opacity: .9;
 }
 .earn-foot { margin-top: 8px; font-size: 13px; color: var(--text-sub); line-height: 1.5 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   🎨📐 **패드에선 스티커 칸을 키운다** (창업자 2026-09-01)
+   📮 창업자 원문 = *"패드는 스티커가 좀 더 커도 되겠다 **자리가 많이 남네**"*
+
+   🔢 **재서 정했다** (`scripts/_probe-패드스티커크기-0901.mjs` · 살아 있는 앱에 갈아끼워 측정)
+        최소칸    패드 세로(800×1280)        패드 가로(1280×800)        폰 세로(390×844)
+        52px      7칸 · 52.0px · 30개        9칸 · 52.3px · 50개        6칸 · 53.7px · 6개
+        64px      5칸 · 76.0px · 19개        7칸 · 69.6px · 30개        5칸 · 66.0px · 6개
+     ⭐ 72px      5칸 · 76.0px · 19개        6칸 · 82.5px · 30개        4칸 · 84.5px · 6개
+        84px      4칸 · 97.0px · 14개        5칸 · 100.6px · 19개       4칸 · 84.5px · 6개
+
+   ⭐ **72px 를 고른 이유** = 칸이 **52 → 76·82px(＋46~58%)** 로 커지는데 «보이는 스티커»는
+      패드 세로 19개 · 가로 30개로 **폰(6개)의 3~5배가 그대로 남는다.**
+      ⛔ 84px 은 14개까지 줄어 «고르는 일»이 되레 힘들어진다 — 창업자 말은 *"좀 더"* 였다.
+
+   ⛔⛔ **폰은 한 글자도 안 바뀐다** — `min-height: 700px` 을 같이 걸어서
+      **폰 가로(900×500)·폴드(717×512)가 폭만 보고 이 값을 먹지 않는다.**
+      (요리모드 38px 규칙이 같은 함정을 이미 겪었다 · `.cook-steptext` 주석)
+
+   ⛔⛔ **반드시 파일 «맨 끝»이다.** `.decor-grid` 를 «!important 로» 잡는 미디어쿼리가 둘 있고
+      그중 하나가 `@media (orientation: landscape) and (min-width: 500px)` 라 **패드 가로에 같이 걸린다.**
+      앞에 두면 조용히 진다(v10.19 에 같은 함정으로 하루 여섯 번 당했다).
+   ⛔ 선택자를 `.decor-grid`(0,1,0)로 «둔다» — `:not(.wordy)`(0,2,0)로 쓰면 바로 위
+      `.decor-grid.wordy`(0,2,0 · 캡션 110px)를 이겨서 **글자 스티커 칸까지 줄어든다.**
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 700px) and (min-height: 700px) {
+  .decor-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)) !important; }
+}

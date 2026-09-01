@@ -260,10 +260,6 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
         return (
           <div
             key={it.id}
-            /* 🔖 `data-decor-item` = 재현 검사가 «붙은 스티커»를 집게 하는 표식.
-               ⛔ 클래스도 표식도 없어서 판이 «못 집고» 죽었다(2026-09-01) — 도구 줄은 스티커를 골라야 나오니
-                  집을 방법이 없으면 그 줄을 영영 못 잰다. `data-ctxtab` 을 단 것과 같은 이유다. */
-            data-decor-item={it.type || 'sticker'}
             style={base}
             onPointerDown={onItemDown(it)}
             onPointerMove={onItemMove}
