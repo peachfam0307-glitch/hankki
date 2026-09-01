@@ -208,7 +208,14 @@ for (const W of 폭들) {
       // 📐 「한 칸이 작아지나」 — 창업자가 ㉡을 고르려는 참이라 여기가 갈린다.
       //    레일이 폭을 먹어도 «칸 수»가 같이 줄면 한 칸 크기는 그대로일 수 있다. 짐작 말고 잰다.
       const 첫칸 = [...dr.querySelectorAll('img')].map((e) => e.parentElement).find((e) => e && e.getBoundingClientRect().width > 20)
+      // 🚏 레일 — 갈래가 «다» 보이나. 마지막 갈래가 잘리면 유저는 그게 있는 줄 모른다.
+      const 레일 = dr.querySelector('.decor-catsrow')
+      const 레일칸 = 레일 ? [...레일.querySelectorAll('button')] : []
+      const 레일r = 레일 ? 레일.getBoundingClientRect() : null
+      const 레일보임 = 레일r ? 레일칸.filter((e) => { const r = e.getBoundingClientRect(); return r.top >= 레일r.top - 1 && r.bottom <= 레일r.bottom + 1 }).length : 0
       return {
+        레일칸수: 레일칸.length, 레일보임, 레일한칸: 레일칸[0] ? Math.round(레일칸[0].getBoundingClientRect().height) : 0,
+        레일키: 레일r ? Math.round(레일r.height) : 0,
         칸폭: 첫칸 ? Math.round(첫칸.getBoundingClientRect().width) : 0,
         서랍키: Math.round(dr.getBoundingClientRect().height),
         보이는칸: [...dr.querySelectorAll('img')].filter(보임).length,
@@ -238,7 +245,7 @@ for (const W of 폭들) {
   console.log(`\n── ${W}px · 「${T}」 ──`)
   잰값.filter((x) => x.W === W && x.탭 === T).forEach((x) => {
     if (x.못잼) return console.log(`  ${x.이름}  ⚠️ ${x.못잼}`)
-    console.log(`  ${x.이름.padEnd(14, ' ')} 머리 ${String(x.머리).padStart(3)}px · 한 칸 ${String(x.칸폭).padStart(3)}px · 보이는 ${x.보이는칸}칸`)
+    console.log(`  ${x.이름.padEnd(14, ' ')} 머리 ${String(x.머리).padStart(3)}px · 한 칸 ${String(x.칸폭).padStart(3)}px · 스티커 ${x.보이는칸}칸 · 레일 ${x.레일보임}/${x.레일칸수}갈래(칸 ${x.레일한칸}px · 띠 ${x.레일키}px)`)
   })
  }
 }
