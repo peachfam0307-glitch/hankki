@@ -51,6 +51,9 @@ let ip번호 = 0
 function 요청({ uid = 'u1', batch = '', ip = null, origin = 'https://peachfam0307-glitch.github.io' } = {}) {
   const h = new Map([['Origin', origin], ['CF-Connecting-IP', ip || `10.0.0.${++ip번호}`]])
   return {
+    // ⛔ url 이 없으면 워커가 `new URL(request.url)` 에서 죽는다(?quota 판정 자리).
+    //    2026-09-01 에 이 판이 그래서 «돌지도 않았다» — 「버그가 있다」가 아니라 「판이 깨졌다」였다.
+    url: 'https://hankki-ocr.example/',
     method: 'POST',
     headers: { get: (k) => h.get(k) ?? h.get(k.toLowerCase()) ?? null },
     async json() { return { image: 'data:image/png;base64,AAAA', uid, batch } },
