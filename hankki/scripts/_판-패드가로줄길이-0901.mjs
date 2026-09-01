@@ -44,7 +44,9 @@ for (const r of 레시피들()) for (const s of (r.steps || [])) {
 console.log(`🍳 걸음 ${걸음들.length}개를 잰다`)
 
 // 후보 = 「글줄이 꺾이는 폭」. 0 = 지금(안 건드림)
-const 후보들 = [0, 980, 900, 820, 760, 700, 640, 580, 520, 460]
+// ⛔ **1128 을 «값으로» 박아 둔다** — 2026-09-01 에 760 을 넣은 뒤로 `0`(지금) 이 760 이 되어
+//    「고치기 전엔 어땠나」가 표에서 사라졌다. 기준선이 없으면 표를 다시 읽을 수 없다.
+const 후보들 = [0, 1128, 980, 900, 820, 760, 700, 640, 580, 520, 460]
 
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const CHROMIUM = process.env.SMOKE_CHROMIUM
@@ -93,16 +95,24 @@ for (const g of 기기) {
   if (!됐나) { console.error(`✗ ${g.이름} — 요리모드 글자를 못 찾았다(아무것도 못 잰다)`); await ctx.close(); continue }
 
   // ⚠️ 스스로 검사 — 이 화면이 정말 38px 인가(아니면 다른 화면을 재고 있는 것이다)
-  const 기본 = await p.evaluate(() => {
+  const 기본 = await p.evaluate(async () => {
     const e = document.querySelector('.cook-steptext'), body = document.querySelector('.cook-body')
     const cs = getComputedStyle(e)
+    // ⛔⛔ **글씨체가 실렸나부터 본다** — 2026-09-01 에 이 판이 «귀염체가 안 실린 채» 재서
+    //    표가 통째로 틀렸다(Pretendard 가 Gaegu 보다 14.7% 넓어 줄 수가 다 어긋났다).
+    //    ⭐ 「이름이 적혀 있나」(fontFamily)로는 못 잡는다 — CSS 엔 늘 적혀 있고 «내려받았나»가 다른 일이다.
+    try { await document.fonts.ready } catch {}
+    let 귀염체 = false
+    try { 귀염체 = document.fonts.check(`${cs.fontSize} Gaegu`) } catch {}
     return {
-      크기: cs.fontSize, 줄높이: cs.lineHeight, 끊기: cs.wordBreak,
+      크기: cs.fontSize, 줄높이: cs.lineHeight, 끊기: cs.wordBreak, 글씨체: cs.fontFamily, 귀염체,
       쓸폭: Math.round(e.getBoundingClientRect().width),
       본문키: body ? Math.round(body.clientHeight) : 0,
     }
   })
   console.log(`\n── ${g.이름} ── 글자 ${기본.크기} · 줄높이 ${기본.줄높이} · 끊기 ${기본.끊기} · 지금 글줄 폭 ${기본.쓸폭}px · 본문 키 ${기본.본문키}px`)
+  console.log(`   글씨체 = ${기본.귀염체 ? '✅ 귀염체(Gaegu) 실렸다' : '⛔ 귀염체가 «안» 실렸다 — 판정 금지'} (${기본.글씨체})`)
+  if (!기본.귀염체) { console.error('⛔ 글씨체가 안 실린 채로는 아무것도 재지 않는다(2026-09-01 사고)'); await ctx.close(); await b.close(); srv.close(); process.exit(1) }
 
   // 🔬 한 번의 evaluate 안에서 «살아 있는 그 요소»에 걸음을 넣어 가며 잰다
   const 결과 = await p.evaluate(({ 걸음들, 후보들 }) => {

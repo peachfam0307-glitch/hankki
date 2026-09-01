@@ -1,7 +1,12 @@
-// 📸 **넣은 뒤 «눈으로» 본다** — 요리모드 귀염체 ＋ 획 ＋ 패드 가로 글줄 폭 (2026-09-01)
+// 📸 **넣은 뒤 «눈으로» 본다** — 요리모드 귀염체 ＋ 획 ＋ 패드 가로 글줄 폭 ＋ 곰·타이머 크기 (2026-09-01)
 //
 // ⛔ 절대원칙 21 = 창업자에게 보여주기 «전»에 내가 열어서 본다. 숫자만 보고 보내지 않는다.
-// ⚠️ 스스로 검사도 같이 — 크기(24/28/38) · 획(0.7/0.85/1.6) · 글줄 폭 · 스크롤 0
+// ⚠️ 스스로 검사도 같이 — 크기(24/28/38) · 획(0.7/0.85/1.6) · 글줄 폭 · **곰 키** · **타이머 글자** · 스크롤 0
+//
+// 🐻 곰·타이머가 여기 들어온 까닭 = 창업자 *"꼬르곰 크기 조금 키우고, 스탭 타이머도 … 자리많으니까"*(2026-09-01).
+//    ⭐ **패드에서만** 커진다(160px·20px) — 폰은 그대로(104px·16px). 「패드면 다 같이 커진다」가 한 규칙이다.
+//    ⛔ 이 칸이 없던 사이에 실제로 사고가 났다 — media query 를 `.buddy img` «앞»에 둬서
+//       타이머만 커지고 곰은 104px 그대로였는데 **아무 검사도 안 걸렸다.** 그래서 여기에 못 박는다.
 //
 // 실행: node /home/user/hankki/hankki/scripts/_shot-요리글씨확정-0901.mjs
 import './_fresh.mjs'
@@ -29,10 +34,10 @@ const CHROMIUM = process.env.SMOKE_CHROMIUM
 const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 
 const 기기 = [
-  { id: 'small', 이름: '작은 폰 360×640', 폭: 360, 높이: 640, 바람: { 크기: '24px', 획: '0.7px', 폭최대: null } },
-  { id: 'phone', 이름: '폰 390×844', 폭: 390, 높이: 844, 바람: { 크기: '28px', 획: '0.85px', 폭최대: null } },
-  { id: 'pad', 이름: '패드 세로 820×1180', 폭: 820, 높이: 1180, 바람: { 크기: '38px', 획: '1.6px', 폭최대: null } },
-  { id: 'padland', 이름: '패드 가로 1180×820', 폭: 1180, 높이: 820, 바람: { 크기: '38px', 획: '1.6px', 폭최대: 580 } },
+  { id: 'small', 이름: '작은 폰 360×640', 폭: 360, 높이: 640, 바람: { 크기: '24px', 획: '0.7px', 폭최대: null, 곰: 104, 타이머: '16px' } },
+  { id: 'phone', 이름: '폰 390×844', 폭: 390, 높이: 844, 바람: { 크기: '28px', 획: '0.85px', 폭최대: null, 곰: 104, 타이머: '16px' } },
+  { id: 'pad', 이름: '패드 세로 820×1180', 폭: 820, 높이: 1180, 바람: { 크기: '38px', 획: '1.6px', 폭최대: null, 곰: 160, 타이머: '20px' } },
+  { id: 'padland', 이름: '패드 가로 1180×820', 폭: 1180, 높이: 820, 바람: { 크기: '38px', 획: '1.6px', 폭최대: 760, 곰: 160, 타이머: '20px' } },
 ]
 
 let 죽음 = 0
@@ -64,12 +69,17 @@ for (const g of 기기) {
 
   const m = await p.evaluate(() => {
     const e = document.querySelector('.cook-steptext'), no = document.querySelector('.cook-stepno'), body = document.querySelector('.cook-body')
+    const img = document.querySelector('.buddy img'), t = document.querySelector('.cook-timer')
     const cs = getComputedStyle(e), cn = getComputedStyle(no)
     return {
       크기: cs.fontSize, 획: cs.webkitTextStrokeWidth, 글씨체: cs.fontFamily.split(',')[0].replace(/['"]/g, ''),
       폭최대: cs.maxWidth, 고르게: cs.textWrap || cs.textWrapStyle || '',
       쓸폭: Math.round(e.getBoundingClientRect().width),
       번호글씨체: cn.fontFamily.split(',')[0].replace(/['"]/g, ''), 번호굵기: cn.fontWeight,
+      // ⛔ 곰은 `getBoundingClientRect()` 로 재면 «모션의 scale 까지» 같이 잰다(132 → 153). 레이아웃 키를 본다.
+      곰: img ? Math.round(parseFloat(getComputedStyle(img).height)) : 0,
+      곰원본: img ? img.naturalHeight : 0,
+      타이머: t ? getComputedStyle(t).fontSize : '',
       스크롤: body.scrollHeight > body.clientHeight + 1,
     }
   })
@@ -78,6 +88,9 @@ for (const g of 기기) {
   console.log(`  글자 ${m.크기} ${ok(m.크기, g.바람.크기)} · 획 ${m.획} ${ok(m.획, g.바람.획)} · 글씨체 ${m.글씨체} ${ok(m.글씨체, 'Gaegu')}`)
   console.log(`  글줄 폭 ${m.쓸폭}px (max-width ${m.폭최대}) ${g.바람.폭최대 ? ok(m.폭최대, `${g.바람.폭최대}px`) : (m.폭최대 === 'none' ? '✅ 안 걸림' : (죽음++, '⛔ 걸리면 안 되는데 걸렸다'))}`)
   console.log(`  고르게 나누기 ${m.고르게 || '(없음)'} · STEP 줄 ${m.번호글씨체}/${m.번호굵기} ${m.번호글씨체 !== 'Gaegu' ? '✅ 원래 글씨체(60% 얇아져서 접었다)' : (죽음++, '⛔ 귀염체가 남았다')}`)
+  // 🖼 ＋ 원본보다 크게 그리면 뭉갠다(검수 절대원칙 ③ 해상도) — 값이 바뀌어도 이 줄이 잡는다
+  const 뭉갬 = m.곰원본 && m.곰 > m.곰원본
+  console.log(`  꼬르곰 ${m.곰}px ${ok(m.곰, g.바람.곰)} (원본 ${m.곰원본}px${뭉갬 ? (죽음++, ' ⛔ 원본보다 크게 그린다') : ' · 축소라 선명'}) · 타이머 글자 ${m.타이머} ${ok(m.타이머, g.바람.타이머)}`)
   console.log(`  스크롤 ${m.스크롤 ? (죽음++, '⛔ 생겼다') : '✅ 없다'}`)
 
   await p.screenshot({ path: join(OUT, `${g.id}.png`) })
