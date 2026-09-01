@@ -218,7 +218,7 @@ export default function CookScreen({ id }) {
 
       {/* 📷 완성 사진 — «마지막 단계에서만». 누르지 않으면 아무 일도 안 일어난다(막지 않는다). */}
       {last && (
-        <div className={`cook-shot ${photo ? '' : 'empty'}`}>
+        <div className={`cook-shot ${photo ? '' : 'cook-shot-empty'}`}>
           <input ref={photoRef} type="file" accept="image/*" onChange={onPhotoFile} style={{ display: 'none' }} />
           {photo ? (
             <>
