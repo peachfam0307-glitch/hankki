@@ -36,6 +36,9 @@ import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
 import DetailDecor from '../components/DetailDecor'
 import MemoNote from '../components/MemoNote'
 import { hlColor } from '../components/Stickers'
+// 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
+import { FAV_NAME } from '../favName'
+import { 항목묶어 } from '../stepBreak'
 
 // 🖍 절 제목 형광펜 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
 // ✅ **레몬 확정** — 창업자가 판단을 맡겨서(*"형광펜은 잘모르겠다.. 네가 판단해봐"*) «재서» 골랐다.
@@ -388,7 +391,7 @@ export default function RecipeDetailScreen({ id }) {
               ⏳ **그림은 아직 북마크 아이콘이다** — 목록은 요리사모자 클립으로 갔다.
                  말은 같은데 그림이 달라 「같은 기능인 줄 모른다」가 될 수 있다 → 창업자 판정 대기.
                  ⛔ 창업자가 지목한 건 「칩」이라 여기까지 그림을 넓히지 않았다. */}
-          <button className="bar-btn" onClick={() => toggleFavorite(r.id)} aria-label="책갈피">
+          <button className="bar-btn" onClick={() => toggleFavorite(r.id)} aria-label={FAV_NAME}>
             <Icon name="bookmark" size={20} color={r.favorite ? '#c2703f' : 'currentColor'} style={{ fill: r.favorite ? '#c2703f' : 'none' }} />
           </button>
           {/* 삭제 — 예전엔 '⋯ 더보기' 뒤에 숨겨뒀는데 메뉴 안에 삭제 하나뿐이라
@@ -729,7 +732,8 @@ export default function RecipeDetailScreen({ id }) {
                   <div key={i} className="step">
                     <div className="n">{i + 1}</div>
                     <div className="txt">
-                      {첫줄}
+                      {/* ✂️· 요리모드와 «같은 규칙» — 항목은 통째로, 끊을 거면 가운뎃점에서 (src/stepBreak.jsx) */}
+                      {항목묶어(첫줄)}
                       {곁말.map((t, j) => <div key={j} className="step-tip">{t}</div>)}
                     </div>
                   </div>

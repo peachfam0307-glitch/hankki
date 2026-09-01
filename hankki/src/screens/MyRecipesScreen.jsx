@@ -31,6 +31,8 @@ import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
 import pengNyam from '../assets/ui/wave/peng_nyam1.png' // 🐧 펭펭(한 술) — 한끼 일기 상단
+// 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
+import { FAV_NAME, FAV_ADD, FAV_REMOVE } from '../favName'
 
 // 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
 const MYRECIPES_COACH_KEY = COACH.myrecipes
@@ -725,7 +727,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             {favCount > 0 && (
               <button className={`pill press ${folder === '__fav' ? 'active' : ''}`} onClick={() => setFolder('__fav')}>
                 <img src={idxChef} alt="" className="pill-chef" />
-                책갈피 {favCount}
+                {FAV_NAME} {favCount}
               </button>
             )}
             {oftenCount > 0 && (
@@ -788,7 +790,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                       {!edit && (
                         <button
                           className={`fav-dot press${r.favorite ? ' on' : ''}`}
-                          aria-label={r.favorite ? `${r.title} 책갈피 빼기` : `${r.title} 책갈피 꽂기`}
+                          aria-label={r.favorite ? `${r.title} ${FAV_REMOVE}` : `${r.title} ${FAV_ADD}`}
                           aria-pressed={!!r.favorite}
                           onClick={(ev) => { ev.stopPropagation(); toggleFavorite(r.id) }}
                         >

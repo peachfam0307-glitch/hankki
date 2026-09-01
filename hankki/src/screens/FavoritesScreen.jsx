@@ -3,6 +3,8 @@ import { useNav } from '../App'
 import TopBar from '../components/TopBar'
 import Thumb from '../components/Thumb'
 import Icon from '../components/Icon'
+// 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`) — 이 자리는 벌써 두 번 이름이 바뀌었다
+import { FAV_NAME } from '../favName'
 
 export default function FavoritesScreen() {
   const { recipes } = useStore()
@@ -16,10 +18,10 @@ export default function FavoritesScreen() {
              2026-08-17 에 창업자 *"북마크를 밖으로 빼면 되겠다"* 로 **목록에서 바로 누르게** 바꿨다.
           ⚠️ 이 주석을 아래 `favs.length === 0 ? (` **안**에 넣었다가 빌드를 죽였다 —
              삼항연산자 괄호 안은 «표현식» 자리라 JSX 주석이 객체 리터럴로 파싱된다(CLAUDE.md 함정). */}
-      <TopBar title="책갈피" onBack={() => nav.pop()} />
+      <TopBar title={FAV_NAME} onBack={() => nav.pop()} />
       <div className="pad">
         {favs.length === 0 ? (
-          <div className="empty">{'아직 책갈피를 꽂은 레시피가 없어요.\n레시피 카드 오른쪽 위를 눌러보세요.'}</div>
+          <div className="empty">{`아직 ${FAV_NAME}에 꽂은 레시피가 없어요.\n레시피 카드 오른쪽 위를 눌러보세요.`}</div>
         ) : (
           <div className="grid2" style={{ marginTop: 8 }}>
             {favs.map((r) => (
