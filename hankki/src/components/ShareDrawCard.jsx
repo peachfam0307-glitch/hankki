@@ -203,6 +203,12 @@ const SKINS = {
   summer: { key: 'summer' },
   halloween: { key: 'halloween' },   // 🎃 10/01~11/02 에만 얹는 한 장 (펠트 배경 ＋ 핼러윈 애들만)
   chuseok: { key: 'chuseok' },       // 🏮 09/01~10/15 에만 얹는 한 장 (조각보 배경 ＋ 한복만)
+  // 🍂❄️ **11월 뼈대 시안 셋 (2026-09-02 · ⏳창업자 판정 대기)**
+  //   ⛔ `drawState` 의 `pool` 엔 «안» 넣었다 — 고르기 전엔 유저에게 안 나온다(규칙 13).
+  //      지금은 `?card=post` 처럼 **주소로만** 열린다. 고른 것만 나중에 풀에 올린다.
+  post: { key: 'post' },       // ✉️ 엽서 — 우표 안에 캐릭터 ＋ 소인 ＋ 주소 줄
+  ticket: { key: 'ticket' },   // 🎟 티켓 — 절취선 ＋ 좌우 펀치 홈 ＋ 위 스텁
+  snow: { key: 'snow' },       // ❄️ 첫눈 — 눈 언덕 두 겹 ＋ 밝은 하늘
 }
 
 // ── 1080×1350 카드 (캡처 대상) ──
@@ -328,6 +334,19 @@ const BASE_WEAR = {
   //      기본을 물들이면 나머지 세 계절이 조용히 틀어지고, 그 계절이 와야 드러난다.
   arch: { blob: '#8fa8c4,#5878a0 52%,#3d5a80', pt: '#5878a0', ink: '#2b3646', kick: '창가에 앉아, 한 끼', sub: '#6d87a8', brand: '#3d5a80', badge: '#8fa8c4,#5878a0', chipRing: 'rgba(110,140,180,.3)', chipInk: '#456a90', footWm: '#3d5a80', footUrl: '#8ea3ba', bg: 'linear-gradient(170deg,#f9f7f1,#eef2f7 58%,#e3eaf1)' },
   night: { pt: '#ffd98a', ink: '#f0e4d0', kick: '오늘 밤은, 이걸로', sub: '#ffcf8a', brand: '#f0e4d0', metaInk: '#cbbfa8', footWm: '#e8dcc9', footUrl: '#a99d88', bg: 'radial-gradient(circle at 26% 16%,#343c52,#262b3b 60%,#1c2029)' },
+
+  // 🍂❄️ **11월 뼈대 시안 셋의 옷** (2026-09-02 · ⏳판정 대기)
+  //   ⚠️ `post`·`ticket` 은 배경색으로 «구멍을 파낸다»(우표 톱니 · 티켓 펀치) →
+  //      `bg` 가 **반드시 납작한 한 색**이라야 한다. 그라데를 넣으면 구멍 색이 어긋나 지저분해진다.
+  //   ⚠️ `onBlob` = 색 띠 «위»에 얹는 글자색. 티켓 스텁이 진한 색이라 흰 글자가 필요하다.
+  // ✉️ 엽서 = **노랑(은행잎) 결** — 창업자 2026-09-02 *"1번은 색이 노랑계열로 가면 좋겠어"*
+  //   ⭐ 늦가을과도 맞는다 — 단풍이 붉다면 은행은 노랗다. 그리고 붉은 계열은
+  //      `warm`(와인)·`arch`(주황)·`ticket`(김장 붉은) 셋이 이미 쓰고 있어 **노랑이 안 겹친다.**
+  post: { blob: '#f0c25c,#dda032 52%,#b0761c', paper: '#fffdf3', pt: '#a8761a', ink: '#3a3120', kick: '늦가을에서, 한 끼 보냅니다', sub: '#9c7a2e', brand: '#7d5c16', chipRing: 'rgba(200,160,70,.34)', chipInk: '#8a6516', metaInk: '#7d6c46', metaDot: '#dcc78e', footWm: '#7d5c16', footUrl: '#ab9765', bg: '#f9f1d9', tex: 'kraft', texC: '150,112,36' },
+  // 🥬 김장 결 — 고춧가루 붉은색 ＋ 크라프트. ⛔주황(arch·warm)과 갈리게 «붉게» 간다
+  ticket: { blob: '#c8543c,#a83521 58%,#83240f', paper: '#fffaf2', onBlob: '#fff6ec', pt: '#a83521', ink: '#38211a', kick: '김장하는 날, 한 끼', sub: '#a8543c', brand: '#7d2c1c', metaInk: '#7a5a4c', metaDot: '#d9b6a6', footWm: '#7d2c1c', footUrl: '#ad8878', bg: '#f3e6d4', tex: 'linen', texC: '140,64,42' },
+  // ❄️ 첫눈 — `night` 의 반대짝(밝다). 언덕은 «두 겹»이라 뒤가 회색빛, 앞이 흰색
+  snow: { pt: '#5b7fa8', ink: '#2c3a4c', kick: '첫눈 오는 날, 한 끼', sub: '#7793b4', brand: '#4a6d94', chipRing: 'rgba(110,150,190,.32)', chipInk: '#456a90', metaInk: '#66809c', metaDot: '#b8cbdd', footWm: '#4a6d94', footUrl: '#93a8bd', bg: 'linear-gradient(178deg,#dceaf6 0%,#eef5fb 46%,#f7fafd 100%)', hillBack: '#e4edf5', hillFront: '#ffffff' },
 }
 const WARDROBE = {
   autumn: {
@@ -782,6 +801,145 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
         </div>
       )}
       {foot(W.footWm, W.footUrl)}
+    </>)
+  }
+
+  // ═══════════ 🍂❄️ 11월 뼈대 «시안» 셋 — ⏳창업자 판정 대기 (2026-09-02) ═══════════
+  //
+  // 📮 창업자 = *"뼈대를 추가할 필요가 있겠다. … a,b둘다 가자"* → *"뽑아줘. **뼈대 예쁜걸루**"*
+  //
+  // ⭐⭐ **왜 11월인가** — 11/3 부터 덤(추석·핼러윈)이 다 빠져 **기본 6장만 남는다.**
+  //    그런데 6장은 9월과 «똑같은 옷»이라 석 달 내내 같은 카드가 돈다.
+  //
+  // ⛔⛔ **셋 다 «구조»가 다르다** — 2026-07-29 에 「색만 바꾼 6장」이 *"다 똑같다"* 판정을 받았다.
+  //    지금 쓰고 있는 구조 = blob · 컬러패널 · 폴라로이드 · 매거진 · 아치창 · 홀로원판.
+  //    그래서 새것은 **엽서 · 티켓 · 눈언덕** — 앞의 여섯과 겹치는 게 하나도 없다.
+  //
+  // ⛔ **뽑기 풀엔 «안» 넣었다**(`drawState` 의 `pool` 을 안 건드렸다) — 창업자가 고르기 «전»엔
+  //    유저 화면에 안 나온다. 지금은 `?card=post` 처럼 주소로만 열린다(규칙 13).
+  // ⛔ 고른 뒤에 할 일 = ⑴`pool` 에 한 줄 ⑵`cardSeasons.js` 에 날짜 창 ⑶`check-cardcuts` 재확인.
+
+  // ═══ 🅐 엽서(post) — 우표 안에 캐릭터 · 소인 · 주소 줄 ═══
+  //    ⭐ 「부치는 종이」라 한끼의 일기·메모 결과 한 세트다. 우표가 캐릭터를 «액자»처럼 세운다.
+  //    ⚠️ 우표 톱니는 **배경색 동그라미**로 파낸다 — 그래서 `W.bg` 는 «납작한 한 색»이라야 한다
+  //       (그라데면 톱니 색이 어긋나 테두리가 지저분해진다).
+  if (K.key === 'post') {
+    const hs = headSize([l1, l2], 128, 1080 - PAD * 2 - 40)
+    const notch = (side) => ({
+      position: 'absolute', zIndex: 3, pointerEvents: 'none',
+      ...(side === 'top' ? { left: -13, right: -13, top: -13, height: 26 }
+        : side === 'bottom' ? { left: -13, right: -13, bottom: -13, height: 26 }
+          : side === 'left' ? { top: -13, bottom: -13, left: -13, width: 26 }
+            : { top: -13, bottom: -13, right: -13, width: 26 }),
+      backgroundImage: `radial-gradient(circle,${W.bg} 11px,transparent 11.5px)`,
+      backgroundSize: '26px 26px',
+    })
+    return shell(W.bg, <>
+      <Tex k={W.tex} c={W.texC} z={0} />
+      {grain}
+      {/* ✉️ 우표 — 캐릭터가 여기 산다. 카드에서 제일 큰 덩어리라 히어로 규격(496~648)을 지킨다 */}
+      <div style={{ position: 'absolute', right: PAD + 6, top: 128, width: 452, height: 566, transform: 'rotate(-2.2deg)', zIndex: 4 }}>
+        <div style={{ position: 'absolute', inset: 0, background: W.paper, boxShadow: '0 30px 54px -28px rgba(90,52,26,.55)' }} />
+        <div style={{ position: 'absolute', inset: 18, background: `radial-gradient(120% 120% at 34% 26%,${W.blob})`, overflow: 'hidden' }}>
+          <Tex k={W.tex} c={W.texC} z={1} o={0.8} />
+        </div>
+        <img src={char.url} alt="" crossOrigin="anonymous" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 26, height: 496, maxWidth: 'none', objectFit: 'contain', zIndex: 2, filter: die8('#fffdf8') }} />
+        {/* 우표 액면가 — 진짜 우표엔 반드시 있다. 없으면 그냥 「네모 사진」이 된다 */}
+        <div style={{ position: 'absolute', left: 30, top: 26, zIndex: 3, fontFamily: 'Jua, sans-serif', fontSize: 30, color: W.paper, textShadow: '0 2px 6px rgba(60,34,18,.5)' }}>한끼</div>
+        <div style={notch('top')} /><div style={notch('bottom')} /><div style={notch('left')} /><div style={notch('right')} />
+      </div>
+      {brand(W.brand)}
+      {/* ✍️ 받는 사람 줄 — 엽서의 문법. 글자를 안 쓰고 «줄»만 그어야 배경으로 물러난다.
+          ⚠️ 자리 = 우표 «왼쪽». 첫 판엔 아래(top 742)에 뒀는데 제목·CTA와 겹쳐 안 보였다(눈으로 잡음). */}
+      <div style={{ position: 'absolute', left: PAD, top: 236, width: 452, zIndex: 5 }}>
+        {[0, 1, 2].map((i) => <div key={i} style={{ height: 3, background: W.pt, opacity: 0.26, margin: '0 0 46px', width: `${100 - i * 13}%` }} />)}
+      </div>
+      {/* 🔖 소인(도장) — 제목 «오른쪽 아래»에 걸친다. 우표(우상) → 제목(좌하) → 소인(우하) 대각선.
+          ⛔ 첫 판은 우표 위에 겹쳐 뒀는데 우표의 「한끼」와 부딪히고 글자가 뭉갰다(눈으로 잡음). */}
+      <div style={{ position: 'absolute', right: PAD + 8, top: 790, width: 268, height: 268, borderRadius: '50%', border: `6px solid ${W.pt}`, opacity: 0.8, transform: 'rotate(-11deg)', zIndex: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: W.pt, fontFamily: 'Jua, sans-serif' }}>
+        <div style={{ fontSize: 25, letterSpacing: 5 }}>HANKKI</div>
+        <div style={{ width: 178, height: 3, background: W.pt, margin: '11px 0' }} />
+        <div style={{ fontSize: 46, lineHeight: 1 }}>늦가을</div>
+        <div style={{ fontSize: 22, letterSpacing: 4, marginTop: 8 }}>11 · NOV</div>
+      </div>
+      <div style={{ position: 'absolute', left: PAD, top: 726, right: 330, zIndex: 6 }}>
+        <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 42, color: W.sub }}>{W.kick}</div>
+        <div style={{ marginTop: 2, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.98, letterSpacing: -3, color: W.ink, wordBreak: 'keep-all' }}>
+          {l1}{l2 && <><br /><span style={{ color: W.pt }}>{l2}</span></>}
+        </div>
+        <div style={{ marginTop: 26 }}>{chips(W.chipRing, W.chipInk)}</div>
+      </div>
+      {more(W.ink, W.sub)}{foot(W.footWm)}
+    </>)
+  }
+
+  // ═══ 🅑 티켓(ticket) — 절취선 · 좌우 펀치 홈 · 위 스텁 ═══
+  //    ⭐ 「오늘 한 끼를 해냈다」는 **입장권**. 수집카드(night)와 달리 «쓰고 버리는 종이»의 결이다.
+  //    ⚠️ 펀치 홈은 배경색 원이라 여기도 `W.bg` 가 납작한 한 색이라야 한다.
+  if (K.key === 'ticket') {
+    const hs = headSize([`${l1} ${l2}`.trim()], 118, 1080 - PAD * 2 - 80)
+    const CUT = 392   // 절취선 y — 스텁과 본판을 가르는 자리
+    return shell(W.bg, <>
+      <Tex k={W.tex} c={W.texC} z={0} />
+      {grain}
+      <div style={{ position: 'absolute', inset: 46, borderRadius: 28, background: W.paper, boxShadow: '0 34px 60px -30px rgba(90,44,28,.5)', overflow: 'hidden', zIndex: 2 }}>
+        <Tex k={W.tex} c={W.texC} z={1} o={0.7} />
+        {/* 🎟 위 스텁 = 색 띠. 큰 색면이 이 시스템의 심장이다 */}
+        <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: CUT - 46, background: `linear-gradient(158deg,${W.blob})`, zIndex: 2 }}>
+          <Tex k={W.tex} c={W.texC} z={1} o={0.55} />
+        </div>
+      </div>
+      {/* ✂️ 절취선 ＋ 좌우 펀치 홈 */}
+      <div style={{ position: 'absolute', left: 96, right: 96, top: CUT, height: 4, zIndex: 6, backgroundImage: `repeating-linear-gradient(90deg,${W.pt} 0 16px,transparent 16px 34px)`, opacity: 0.5 }} />
+      <div style={{ position: 'absolute', left: 46 - 34, top: CUT - 34, width: 68, height: 68, borderRadius: '50%', background: W.bg, zIndex: 7 }} />
+      <div style={{ position: 'absolute', right: 46 - 34, top: CUT - 34, width: 68, height: 68, borderRadius: '50%', background: W.bg, zIndex: 7 }} />
+      {/* 스텁 글자 — 흰 글자를 색 띠 위에 */}
+      <div style={{ position: 'absolute', left: 96, top: 104, right: 96, zIndex: 8, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontFamily: 'Jua, sans-serif', fontSize: 34, color: W.onBlob, letterSpacing: 1 }}>한끼</div>
+          <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 44, color: W.onBlob, opacity: 0.92, marginTop: 10 }}>{W.kick}</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontFamily: 'Jua, sans-serif', fontSize: 56, lineHeight: 0.92, color: W.onBlob }}>No.{String(no).padStart(2, '0')}</div>
+          <div style={{ fontSize: 20, letterSpacing: 5, color: W.onBlob, opacity: 0.78, marginTop: 6 }}>ADMIT ONE</div>
+        </div>
+      </div>
+      {hero({ left: '50%', transform: 'translateX(-50%)', top: CUT + 26, height: 528, filter: die8('#fffdf8') })}
+      <div style={{ position: 'absolute', left: 96, right: 96, top: 992, textAlign: 'center', zIndex: 8 }}>
+        <div style={{ fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 1.0, letterSpacing: -2, color: W.ink, wordBreak: 'keep-all' }}>{l1} {l2}</div>
+        <div style={{ marginTop: 20 }}>{metabar(W.metaInk, W.metaDot)}</div>
+      </div>
+      {more(W.ink, W.sub)}{foot(W.footWm)}
+    </>)
+  }
+
+  // ═══ 🅒 첫눈(snow) — 눈 언덕 두 겹 · 밝은 하늘 ═══
+  //    ⭐ `night`(어두운 밤)의 «반대짝». 겨울 카드가 다 어두우면 서랍이 무거워진다.
+  //    ⛔ 눈송이를 많이 뿌리지 않는다 — 카드 디자인시스템 §0 *"소품을 많이 붙여 채우려 한 게 실수"*.
+  if (K.key === 'snow') {
+    const hs = headSize([l1, l2], 138, 1080 - PAD * 2 - 40)
+    return shell(W.bg, <>
+      {grain}
+      {[[112, 250, 7], [318, 168, 5], [846, 214, 8], [700, 120, 5], [206, 430, 5], [960, 366, 6], [438, 300, 4], [92, 596, 5], [906, 560, 4]].map((s, i) => (
+        <div key={i} style={{ position: 'absolute', left: s[0], top: s[1], width: s[2] * 2, height: s[2] * 2, borderRadius: '50%', background: '#ffffff', opacity: 0.9, boxShadow: '0 0 14px rgba(255,255,255,.9)', zIndex: 2 }} />
+      ))}
+      {/* ⛰ 눈 언덕 두 겹 — 뒤가 회색빛, 앞이 흰색이라야 «쌓인» 느낌이 난다(한 겹이면 그냥 흰 띠) */}
+      <div style={{ position: 'absolute', left: -180, right: -180, top: 760, height: 900, borderRadius: '50% 50% 0 0 / 42% 42% 0 0', background: W.hillBack, zIndex: 3 }} />
+      <div style={{ position: 'absolute', left: -260, right: -60, top: 892, height: 900, borderRadius: '50% 50% 0 0 / 38% 38% 0 0', background: W.hillFront, boxShadow: '0 -14px 34px -18px rgba(90,110,140,.35)', zIndex: 4 }} />
+      {/* 🌤 옅은 해 — 하늘 위쪽이 텅 비어 보였다(눈으로 잡음). 소품을 «더» 붙이는 대신 큰 면 하나로 채운다 */}
+      <div style={{ position: 'absolute', right: -120, top: -110, width: 520, height: 520, borderRadius: '50%', background: 'radial-gradient(circle at 40% 42%,rgba(255,255,255,.95),rgba(255,255,255,0) 70%)', zIndex: 1 }} />
+      {brand(W.brand)}{stamp(W.pt, '첫눈', '한 끼')}
+      <div style={{ position: 'absolute', left: PAD, top: 168, right: 330, zIndex: 6 }}>
+        <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 44, color: W.sub }}>{W.kick}</div>
+        <div style={{ marginTop: 2, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.98, letterSpacing: -3, color: W.ink, wordBreak: 'keep-all' }}>
+          {l1}{l2 && <><br /><span style={{ position: 'relative', display: 'inline-block', color: W.pt }}>
+            <span style={{ position: 'absolute', left: -4, right: -4, bottom: 6, height: 20, background: W.pt, opacity: 0.2, borderRadius: 6 }} />
+            <span style={{ position: 'relative' }}>{l2}</span></span></>}
+        </div>
+        <div style={{ marginTop: 28 }}>{chips(W.chipRing, W.chipInk)}</div>
+      </div>
+      {hero({ left: '50%', transform: 'translateX(-50%)', bottom: 300, height: 560, filter: die8('#fffdf8') })}
+      {more(W.ink, W.sub)}{foot(W.footWm)}
     </>)
   }
 
