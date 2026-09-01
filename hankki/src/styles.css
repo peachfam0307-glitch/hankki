@@ -3237,9 +3237,11 @@ html, body { overscroll-behavior: none; }
 /* 🤍🤍 흰 여백 — 창업자 = *"아직도 여백이 너무 많아보여"*
    🔢 뽑아 보니 범인이 «글자»가 아니라 «안쪽 여백»이었다 —
       글자는 18px 인데 모드줄이 **40px** 을 먹고 있었다.
-      뿌리 = 공용  의 (위아래 18px). 통(.segment)의 4px 은 그다음이었다.
-   ⛔ 공용  는 «모아보기·요리 기록»도 쓴다 — 서랍 안에서만 좁힌다.
-   🔢 40 → 30px */
+      뿌리 = 공용 «.seg» 의 padding 9px(위아래 18px). 통(.segment)의 4px 은 그다음이었다.
+   ⛔ 공용 «.seg» 는 «모아보기·요리 기록»도 쓴다 — 서랍 안에서만 좁힌다.
+   🔢 모드줄 40 → 30px · 머리(손잡이＋모드줄) 58 → 42px
+   ⛔⛔ 이 줄을 쓸 때 «백틱»을 쓰지 말 것 — 셸이 삼켜서 «.seg»·«padding 9px» 이 통째로 사라졌다.
+      (2026-09-01 · 하루에 네 번째다. 낫표«»로 쓴다) */
 .decor-drawer .segment { padding: 2px; }
 .decor-drawer .segment .seg { padding: 4px; }
 .decor-drawer .segment .seg.on { font-weight: 800; }
