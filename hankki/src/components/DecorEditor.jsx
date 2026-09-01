@@ -1062,7 +1062,14 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           <button type="button" className="press decor-sec-label" onClick={() => toggleFold(g.key)}
             aria-expanded={!folded.has(g.key)} aria-label={`${g.label} ${folded.has(g.key) ? '펼치기' : '접기'}`}>
             <FoldIco open={!folded.has(g.key)} />
-            {g.label}{g.gift && <GiftTag text={g.giftLabel} />}
+            {/* 🎁 알약은 «제철 선물»에만 (창업자 확정 2026-09-02 = ⓑ 「철 지난 선물만 내린다」)
+                📮 그 앞 = *"한꺼번에 하니까 너무 많이 주는 것 같아 보여."* · *"서랍에 선물 넣는 것도 뺄지 고민해보자."*
+                ⛔ 그전엔 «계절과 무관하게» 붙어서, 9월인데 「출시기념 여름」(12컷)에 오렌지 알약이 그대로 있었다.
+                   순서는 2026-08-30 에 이미 내렸는데(`giftUp` 정렬) **알약만 안 따라 내려왔다.**
+                ⭐ `giftUp` 을 그대로 쓴다 — 순서와 알약이 «한 잣대»라야 갈리지 않는다.
+                ⛔ **뺏는 게 아니다** — 컷도 그대로고 「받은 선물」 시트에도 그대로 남는다(한 번 준 것은 빼앗지 않는다).
+                   여기서 없어지는 건 «지금 제철인 척»뿐이다. */}
+            {g.label}{giftUp(g) && <GiftTag text={g.giftLabel} />}
             {folded.has(g.key) && <span className="decor-sec-n">{g.items.length}</span>}
           </button>
         )}
