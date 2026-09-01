@@ -44,13 +44,18 @@ const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const 폭들 = [390, 320]
 const 갈래 = [
   { id: '가-지금', 이름: '㉠ 지금' },
-  { id: '나-레일', 이름: '㉡ 세로 레일' },
-  { id: '다-레일정리', 이름: '㉢ 레일 ＋ 정리' },
+  // ⛔⛔ 옛 ㉡「세로 레일만」을 «뺐다» — 창업자 = *"ㄴ ㄷ의 다른점이 뭔지 모르겠다"*. 맞는 말이다.
+  //    ㉡↔㉢ 차이는 «손잡이 38→4px ＋ 섹션 제목 줄 없애기» 뿐이라 34px 이다.
+  //    ⭐ 그건 «갈래»가 아니라 어느 쪽을 골라도 같이 하는 «덤»이다 → 갈래에서 빼고 둘 다에 넣는다.
+  { id: '다-레일정리', 이름: '㉡ 세로 레일' },
   // ⛔⛔ ㉣「격자 5칸」은 «뺐다» — 얹어 봤더니 **스티커가 통째로 비었다**(그림으로 잡았다 · 절대원칙 21).
   //    칸 구조를 밖에서 display:grid 로 덮으면 안쪽 그림이 죽는다.
   //    ⭐ 그래도 알아낸 건 남는다 = **머리를 90px 줄여도 3→5칸뿐**이라 다음 지렛대는 «격자 밀도»다.
   //       그건 얹기(injection)로는 못 보여준다 — 진짜 코드에서 고쳐야 한다.
   // { id: '라-격자5', 이름: '㉣ ＋ 격자 5칸' },
+  //    ⛔⛔ ＋ 「격자가 3칸이라 좁다」는 내 말도 «틀렸다» — 잘라 보니 **원래 6칸**이다.
+  //       3칸으로 보인 건 씨앗 일기의 첫 갈래(마테)에 스티커가 3개뿐이었기 때문이다.
+  { id: '마-줄만줄임', 이름: '㉢ 레일 없이 줄만 줄임' },
 ]
 const 잰값 = []
 
@@ -95,6 +100,18 @@ for (const W of 폭들) {
     }
     await 시트닫기()
 
+    // ⛔⛔ 첫 판은 창업자가 «차이를 못 봤다» — 이유가 둘이었다.
+    //    ① 씨앗 일기의 첫 갈래(마테)에 스티커가 5개뿐이라 어느 갈래든 서랍이 텅 비어 보였다
+    //    ② 폰 «전체»를 찍어서 화면 3분의 2가 안 바뀌는 일기 종이였다
+    //    → ①은 «스티커가 제일 많은 갈래»를 눌러서, ②는 «서랍만 잘라서» 푼다.
+    await p.evaluate(() => {
+      const 알약 = [...document.querySelectorAll('.decor-drawer button')]
+        .filter((x) => /^(마테|데코|글자|기록|친구들|프레임|배경)$/.test((x.innerText || '').trim()))
+      const 데코 = 알약.find((x) => (x.innerText || '').trim() === '데코') || 알약[1]
+      데코?.click()
+    })
+    await p.waitForTimeout(900)
+
     // ⭐ 갈래를 «얹는다» — 소스를 안 고치고 그 화면의 요소를 옮긴다
     const m = await p.evaluate((어느) => {
       const dr = document.querySelector('.decor-drawer')
@@ -106,7 +123,8 @@ for (const W of 폭들) {
       const 손잡이 = 줄[0]
       const 내용 = 줄[줄.length - 1]
 
-      if (어느 !== '가-지금' && 알약줄) {
+      // ⛔ 조건이 「지금이 아니면 전부」였다 — 그러면 ㉢(레일 없이)에도 레일이 붙는다. 콕 집는다.
+      if (어느 === '다-레일정리' && 알약줄) {
         // ㉡ 갈래 알약 → 왼쪽 «세로 레일»
         const 이름들 = [...알약줄.querySelectorAll('button')].map((x) => (x.innerText || '').trim()).filter(Boolean)
         const 켜진 = [...알약줄.querySelectorAll('button')].findIndex((x) => x.getAttribute('aria-pressed') === 'true' || /rgb\(88, 120, 160\)|var\(--brown\)/.test(x.style.background || ''))
@@ -147,7 +165,23 @@ for (const W of 폭들) {
           box.style.gap = '6px'
         })
       }
-      if (어느 === '다-레일정리' || 어느 === '라-격자5') {
+      if (어느 === '마-줄만줄임') {
+        // ㉢ 레일을 «안» 쓴다 — 레일은 54px 을 먹어 한 줄이 6칸 → 5칸으로 준다(가로를 깎는다).
+        //    대신 «줄 키»만 줄인다: 갈래 알약 56→42 · 선물·사진 줄 62→46
+        //    ⭐ 그러면 격자가 6칸 그대로다.
+        if (알약줄) {
+          알약줄.style.paddingTop = '2px'; 알약줄.style.paddingBottom = '2px'
+          알약줄.querySelectorAll('button').forEach((x) => { x.style.minHeight = '38px'; x.style.paddingTop = '0'; x.style.paddingBottom = '0' })
+        }
+        // 선물·사진 같은 «큰 단추 줄» — 스티커가 아니라 매번 자리를 먹는다
+        내용.querySelectorAll(':scope > *').forEach((c) => {
+          const bs = [...c.querySelectorAll('button')]
+          if (bs.length >= 1 && bs.length <= 3 && /선물|사진/.test(c.innerText || '')) {
+            bs.forEach((x) => { x.style.minHeight = '40px'; x.style.paddingTop = '0'; x.style.paddingBottom = '0'; x.style.fontSize = '13px' })
+          }
+        })
+      }
+      if (어느 === '다-레일정리' || 어느 === '라-격자5' || 어느 === '마-줄만줄임') {
         // ㉢ ＋ 손잡이를 얇은 선으로 · 섹션 제목을 격자에 붙인다
         if (손잡이) { 손잡이.style.height = '4px'; 손잡이.style.minHeight = '4px'; 손잡이.style.padding = '0'; 손잡이.style.overflow = 'hidden' }
         줄.forEach((c) => {
@@ -172,7 +206,14 @@ for (const W of 폭들) {
     }, g.id)
 
     await p.waitForTimeout(400)
-    await p.screenshot({ path: join(OUT, `${W}-${g.id}.png`) })
+    // ✂️ 서랍만 잘라 찍는다 — 안 바뀌는 일기 종이가 화면을 다 먹으면 «차이가 안 보인다»
+    const 상자 = await p.evaluate(() => {
+      const dr = document.querySelector('.decor-drawer'); if (!dr) return null
+      const r = dr.getBoundingClientRect()
+      return { x: 0, y: Math.max(0, Math.round(r.top) - 8), width: window.innerWidth,
+               height: Math.min(window.innerHeight - Math.round(r.top) + 8, Math.round(r.height) + 16) }
+    })
+    await p.screenshot({ path: join(OUT, `${W}-${g.id}.png`), ...(상자 ? { clip: 상자 } : {}) })
     잰값.push({ W, 이름: g.이름, ...m })
     await ctx.close()
   }
