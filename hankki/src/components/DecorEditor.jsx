@@ -249,10 +249,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // 🙈 잠깐 숨기기 (창업자 폰 제보 2026-08-07 *"위에 설정(색, 무늬 모양)부분이 너무 길어
   //    이거 접는거나 잠깐 숨기기나 그런게 필요햐"*) — 접으면 갈래 줄만 남고 칩 줄이 사라진다.
   const [ctxOpen, setCtxOpen] = useState(true)
-  // 🔤 새로 넣는 글자의 «첫» 글씨체 = 귀염체(손글씨 톤).
-  //    ⛔ 고르는 칩은 서랍에서 뺐다(2026-09-01 · 아래 2060줄 주석) → 여기서 «고를 일»이 없어 상수다.
-  //    ⭐ 바꾸는 자리는 «아래 편집바»다 — 넣은 글자를 톡 하면 거기서 바꾼다.
-  const textFont = 'gaegu'
+  const [textFont, setTextFont] = useState('gaegu') // 글자 스티커 글씨체 기본 = 귀염체(손글씨 톤)
   const [bg, setBg] = useState(draft?.bg ?? recipe.decorBg ?? 'none') // 표지 배경(배경지)
   // 되돌리기용 실제 표지 — 저장값이 'none'이어도 아이콘/사진으로 되살릴 수 있게
   const origThumb = savedThumb !== 'none' ? savedThumb : (recipe.image ? 'photo' : 'icon')
@@ -2009,12 +2006,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                       const on = bg === b.key
                       const sw = { ...(b.style || { background: 'linear-gradient(135deg,#eef0ec,#e1e5de)' }), ...(b.swatch || {}) }
                       return (
-                        // 🏷 `decor-bgpick`·`decor-bgsw` = **패드에서 크게 키우려고** 붙인 이름표(창업자 2026-09-01
-                        //    *"패드 배경고르는거 이미지 커지면 좋겠어"*). 크기는 `styles.css` 맨 끝 미디어쿼리가 정한다.
-                        //    ⛔ 여기 42px 을 «키우지» 말 것 — 그러면 폰에서도 커진다.
-                        <button key={b.key} className="press decor-bgpick" onClick={() => setBg(b.key)} aria-label={`배경 ${b.label}${b.anim ? ' (움직임)' : ''}`}
+                        <button key={b.key} className="press" onClick={() => setBg(b.key)} aria-label={`배경 ${b.label}${b.anim ? ' (움직임)' : ''}`}
                           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                          <span className={`${bgAnim(b.key)} decor-bgsw`} style={{ width: 42, height: 42, borderRadius: 10, ...sw, border: on ? '2.5px solid var(--brown)' : '1.5px solid var(--line)', boxShadow: on ? '0 0 0 2px var(--surface) inset' : 'none' }} />
+                          <span className={bgAnim(b.key)} style={{ width: 42, height: 42, borderRadius: 10, ...sw, border: on ? '2.5px solid var(--brown)' : '1.5px solid var(--line)', boxShadow: on ? '0 0 0 2px var(--surface) inset' : 'none' }} />
                           <span style={{ fontSize: 10.5, fontWeight: 700, color: on ? 'var(--brown)' : 'var(--text-sub)' }}>{b.label}</span>
                         </button>
                       )
@@ -2065,15 +2059,14 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 <div className="decor-sec">
                   <SecFold k="sec_text" label="글자 직접 쓰기" />
                   {!folded.has('sec_text') && (<>
-                  {/* ⛔⛔ **글씨체 칩을 여기서 뺐다** (창업자 확정 2026-09-01 · 폰·패드 둘 다)
-                      📮 창업자 = *"글자 겹치는 부분이랑(폰, 패드 전부 수정)"* → 갈래 둘을 물었고 답이 **「b」**
-                         = **똑같은 글씨체 칩이 «서랍»에도 있고 «아래 편집바»에도 있었다.** 한 벌만 남긴다.
-                      ⭐ 흐름이 안 끊긴다 — 「글자 넣기」를 누르면 글자가 «그 자리에서» 뽑혀 바로 선택되고,
-                         아래 편집바의 「글씨」 칸에 같은 칩이 그대로 있다.
-                         ＋ 바로 아래 안내가 이미 그렇게 말하고 있었다(*"넣은 뒤 톡 하면 … 글씨체를 바꿀 수 있어요"*).
-                      ⭐ 덤 = 「글자」 탭 굴칸을 12칸이 통째로 먹던 문제가 같이 풀린다
-                         (2026-08-12 에 «꼬르곰이 1298px 아래로 밀린» 그 자리다 — 위 주석 참조).
-                      ⛔ 편집바 쪽(1699줄)은 안 건드린다 — 거기가 «남기는 한 벌»이다. */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '0 0 10px' }}>
+                    {TEXT_FONTS.map((f) => (
+                      <button key={f.key} className="press" onClick={() => setTextFont(f.key)}
+                        style={{ padding: '5px 12px', borderRadius: 999, fontSize: 13, fontWeight: 700, fontFamily: chipFamily(f), background: textFont === f.key ? 'var(--brown)' : 'var(--cream)', color: textFont === f.key ? '#fff' : 'var(--text-sub)' }}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
                   {/* ⭐ 색 15칸을 다 늘어놓지 않는다 — 예전엔 색마다 칸이 있어서 **고른 색으로 바로 추가**됐고,
                       바꾸려면 지웠다 다시 넣어야 했다. 이제 **넣고 나서 편집 바에서 색·굵기**를 바꾼다. */}
                   <button className="press" onClick={() => addText('charcoal')}

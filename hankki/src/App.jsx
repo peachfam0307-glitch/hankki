@@ -5,7 +5,7 @@ import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } f
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw } from './parseRecipe'
-import { tidyRecipe, mergeTidy, tidyTail, tidyFounder } from './tidy'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from './tidy'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
 import { guessCategory, fitImage } from './utils'
@@ -393,19 +393,16 @@ export default function App() {
           //   ⛔ 받아도 «안전할 때»만 한다 — 이 기기에 안 올린 변경이 있으면 `저절로받기` 가
           //      스스로 «양쪽이바뀜»으로 물러난다. 그때는 아래처럼 «물어본다»(사람이 고른다).
           //   ⭐ 사진은 `저절로받기` 안에서 «폰 것을 그 자리에 되돌려» 지킨다(용량 0).
-          const 받 = await 저절로받기(백업)
-          if (죽었나) return
-          if (받.했나) {
-            storeRef.current.importAll(받.판)
-            // 📷 「사진은 기기마다 따로」는 **처음 한 번만** 자세히 — 매번이면 잔소리가 된다(창업자 확정)
-            if (사진안내봤나()) {
-              showToast(`받아왔어요 · 레시피 ${받.레시피}개`)
-            } else {
-              사진안내봤다()
-              showToast('다른 기기에서 한 걸 받아왔어요 · 직접 넣은 사진은 기기마다 따로 있어요', 5000)
-            }
-            return
-          }
+          // 🚨🚨 **[2026-09-01 23:51 · 즉시 껐다] 자동 받기가 «방금 담은 레시피»를 덮었다.**
+          //   📮 창업자 실물 = 항정살조림을 담아 열쇠가 5→4 로 깎였는데, 잠시 뒤 **레시피가 사라졌다.**
+          //      검색해도 안 나온다(전체 255 그대로 · 담았으면 256 이라야 한다).
+          //   ⛔⛔ **열쇠는 썼는데 물건이 없다 — 제일 나쁜 모양이다.** 원인을 파기 «전에» 먼저 막는다.
+          //   ⭐ `저절로받기` 는 `cloud.js` 에 그대로 살아 있다(재현판 30/30 도 그대로 돈다).
+          //      여기서 **부르지만 않는다** — 원인이 확정되면 안전장치를 고쳐서 다시 켠다.
+          //   ❓ 아직 «확정 못 한» 것 = 어느 길로 덮였나.
+          //      안전장치(`안올린변경있나`)가 있는데도 뚫렸다 = 지문이 «담긴 직후» 맞춰지는 창이 있다는 뜻.
+          //   ⛔ 원인이 확정되기 전엔 이 줄을 되살리지 말 것.
+          if (false) { /* 자동 받기 — 원인 확정 전까지 잠금 */ }
           const s = storeRef.current
           set덮을까({ ...r, 글: 새판알림글({ 클라우드: r, 폰: { 레시피: s.recipes.length, 일기: (s.diary || []).length } }) })
         }
@@ -588,10 +585,13 @@ export default function App() {
         //    ⛔ `unknown` 이면 숫자를 안 적는다 — 서버가 아직 답한 적이 없다는 뜻이라
         //       그때 숫자를 적으면 «안 써 봤을 때의 기본값 20»을 사실처럼 말하게 된다(규칙 15).
         const left = getOcrLeft()
+        // 📢 ⭐ 「다듬는 중」을 **같은 줄에** 붙인다 — 따로 띄우면 «열쇠 잔량»을 바로 덮어 못 보게 된다
         showToast(
-          left.unknown
+          (left.unknown
             ? '사진에서 글자를 읽어 채웠어요'
-            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`,
+            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`)
+            + AI다듬는중,
+          20000,
         )
 
         // ② AI — «뒤에서». 오면 갈아끼우고, 안 오면 아무 일도 안 난다.
@@ -599,6 +599,15 @@ export default function App() {
         //   ⭐⭐ **여기가 창업자가 1순위로 꼽은 길이다** — ImportScreen 「제일 많이 써요」 = SNS 공유.
         //      그러니 ⓒ 를 여기에 안 붙이면 «제일 많이 쓰는 길»만 옛 정확도로 남는다.
         //   ⛔ 첫 장만 준다 — 여러 장이면 뉴런이 장 수만큼 나간다(실측 82.5/장).
+        // 📢📢 **[2026-09-01 · 창업자 지적] 「다듬는 중」이라고 «먼저» 말한다 — ⭐여기가 첫인상이다.**
+        //   📮 창업자 = *"인스타로 유입 될 것 같거든 **첫인상**이니까"*
+        //      ＋ *"너무 오래걸리니까 이상하게 읽힌거 혹은 안읽힌거 **잘못된 걸로 오해**할수도있어"*
+        //   ⭐⭐ **인스타 공유가 「제일 많이 써요」 길이다** — 처음 들어온 사람이 «덜 정리된 화면»을
+        //      보고 그게 최종인 줄 알면 그대로 나간다. 실물 = 2026-09-01 항정살조림
+        //      (걸음에 홍보문구·재료·**댓글**·「모두 보기」가 그대로 들어가 있었다).
+        //   ⛔ 20초 — 실패해도 조용히 사라진다(실패는 유저에게 안 알린다는 원칙 그대로).
+        //   ⭐ 문구는 위 「채웠어요」 토스트에 «같은 줄로» 붙였다(`AI다듬는중`) — 따로 띄우면
+        //      열쇠 잔량 안내를 즉시 덮어서 못 보게 된다.
         tidyRecipe(text, 장들[0]).then((ai) => {
           if (cancelled) return
           if (ai) {
