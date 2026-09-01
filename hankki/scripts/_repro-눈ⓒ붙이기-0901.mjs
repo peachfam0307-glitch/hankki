@@ -1,0 +1,106 @@
+#!/usr/bin/env node
+// ═══════════════════════════════════════════════════════════════
+// 👁 ⓒ(사진＋글자) 붙이기 재현판 — 2026-09-01
+//
+// 📮 창업자 판정 = *"c로 하되 …"* (삼치 실물 대조에서 ⓒ만 ④「멀쩡한 말 안 건드리기」를 지켰다)
+//
+// ⭐⭐ **이 판의 심장 = 「사진이 «진짜로» 실려 나가나」 ＋ 「없어도 옛 길이 그대로 도나」**
+//    ⛔ 소스를 grep 하면 «주석에 적어둔 말»까지 걸려 고쳐놓고도 통과한다(규칙 18 ⓘ).
+//       그래서 **워커에 실제로 나가는 body 를 가로채서** 본다.
+//
+// ⛔ 여기서 «안» 재는 것 = AI 답의 품질. 그건 창업자 실물 판정 몫이다(규칙 11).
+//    이 판은 «배관»만 본다 — 사진이 실리나 · 안 실릴 때 옛 길인가 · 통계가 갈리나.
+// ═══════════════════════════════════════════════════════════════
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+
+const __dir = dirname(fileURLToPath(import.meta.url))
+const 앱 = join(__dir, '..')
+let 통과 = 0, 실패 = 0
+const ok = (m, v) => { console.log('  ✅ ' + m + (v !== undefined ? '  ' + v : '')); 통과++ }
+const no = (m, v) => { console.log('  ⛔ ' + m + (v !== undefined ? '  ' + v : '')); 실패++ }
+const 잰다 = (조건, m, v) => (조건 ? ok(m, v) : no(m, v))
+
+console.log('\n👁 ⓒ(사진＋글자) 붙이기 — 배관을 잰다\n')
+
+// ── ① tidy.js 가 사진을 «진짜로» 싣나 ────────────────────────────
+// ⭐ 흉내내지 않고 «그 파일»을 불러 fetch 를 가로챈다(절대원칙 30 — 앱과 같은 코드)
+console.log('  ── ① 앱 → 워커로 나가는 몸통 ──')
+const 원본fetch = globalThis.fetch
+let 마지막몸통 = null
+globalThis.fetch = async (url, opt) => {
+  마지막몸통 = JSON.parse(opt.body)
+  return { ok: true, json: async () => ({ title: '삼치간장조림', ingredients: ['무 1/3개'], steps: ['구워요.'], memo: '' }) }
+}
+globalThis.localStorage = { getItem: () => null, setItem: () => {} }
+
+const { tidyRecipe } = await import(join(앱, 'src/tidy.js'))
+const 긴글 = '삼치간장조림 레시피\n[재료]\n무 1/3개\n비비고 순살 삼치 2팩\n식용유 2스푼\n물 200ml\n[만드는 법]\n팬에 식용유를 두르고 무를 구워주세요.'
+const 사진 = 'data:image/jpeg;base64,' + 'A'.repeat(500)
+
+마지막몸통 = null
+await tidyRecipe(긴글, 사진)
+잰다(마지막몸통 && 마지막몸통.image === 사진, '①-1 사진을 주면 «몸통에 실려» 나간다')
+잰다(마지막몸통 && 마지막몸통.text === 긴글.trim(), '①-2 글자도 그대로 같이 간다')
+
+마지막몸통 = null
+await tidyRecipe(긴글)
+잰다(마지막몸통 && !('image' in 마지막몸통), '①-3 ⛔사진이 없으면 image 칸이 «아예 없다»(옛 길 그대로)')
+
+마지막몸통 = null
+await tidyRecipe(긴글, 'https://남의주소/사진.jpg')
+잰다(마지막몸통 && !('image' in 마지막몸통), '①-4 ⛔dataURL 이 아니면 «안 싣는다»(모르는 모양은 안 보낸다)')
+
+마지막몸통 = null
+await tidyRecipe(긴글, 'data:image/jpeg;base64,' + 'A'.repeat(3_000_000))
+잰다(마지막몸통 && !('image' in 마지막몸통), '①-5 ⛔너무 크면 «빼고 글자만» 보낸다(막지 않는다)')
+잰다(마지막몸통 && 마지막몸통.text === 긴글.trim(), '①-6 ⭐그때도 정리는 «된다» — 새 기능이 옛 기능을 안 죽인다')
+globalThis.fetch = 원본fetch
+
+// ── ② 워커가 사진을 받아 «눈 모델»을 맨 앞에 세우나 ──────────────
+console.log('\n  ── ② 워커(hankki-tidy) ──')
+const 티디 = readFileSync(join(앱, 'ocr-proxy/worker-tidy.js'), 'utf8')
+잰다(/const image = \(\(\) => \{/.test(티디), '②-1 본 경로가 body.image 를 받는다')
+잰다(/\.\.\.\(image \? \[\{ model: VISION_MODEL, 눈: true \}\] : \[\]\)/.test(티디),
+  '②-2 사진이 있으면 «눈 모델»이 맨 앞에 선다')
+잰다(/\.\.\.모델차례\(env\)\.map/.test(티디),
+  '②-3 ⭐그 «뒤»에 글자 전용 모델이 그대로 남는다 — 눈이 실패해도 오늘까지와 같은 결과')
+잰다(/MAX_IMAGE/.test(티디), '②-4 사진 크기 상한이 있다')
+잰다(/IMAGE_TOO_BIG/.test(티디), '②-5 ⭐너무 크면 «조용히 버리지 않고» 로그로 남긴다')
+잰다(/type: 'image_url'/.test(티디) && !/type: 'input_image'/.test(티디),
+  '②-6 ⛔모양은 ①(image_url) 하나뿐 — 죽은 셋을 되살리지 않았다')
+
+// ── ③ 창업자 ↔ 유저 갈라 세기 ────────────────────────────────
+console.log('\n  ── ③ 창업자 ↔ 유저 (창업자 지시 2026-09-01) ──')
+잰다(/async function 통세기\(kv, ymd, founder, 눈\)/.test(티디), '③-1 통세기가 창업자·눈을 받는다')
+잰다(/if \(founder\) await inc\(kv, `tdf:\$\{ymd\}`/.test(티디), '③-2 창업자 몫을 «따로» 센다')
+잰다(/if \(눈\) await inc\(kv, `tv:\$\{ymd\}`/.test(티디), '③-3 «사진까지 본」 편수를 따로 센다')
+잰다(!/await 통세기\(kv, ymd\)(?!,)/.test(티디), '③-4 ⛔옛 호출(인자 둘)이 안 남았다')
+잰다(/창업자: 오늘창/.test(티디) && /유저: Math\.max\(0, 오늘 - 오늘창\)/.test(티디),
+  '③-5 quota 가 창업자·유저를 갈라 답한다')
+
+const 옥알 = readFileSync(join(앱, 'ocr-proxy/worker.js'), 'utf8')
+잰다(/inc\(kv, `df:\$\{ymd\}`/.test(옥알) && /inc\(kv, `mf:\$\{ym\}`/.test(옥알),
+  '③-6 OCR 워커도 창업자 몫을 따로 센다')
+잰다(/창업자: 월창, 유저: Math\.max\(0, 월 - 월창\)/.test(옥알), '③-7 OCR quota 도 갈라 답한다')
+잰다(/inc\(kv, `d:\$\{ymd\}`, 60 \* 60 \* 26\)/.test(옥알),
+  '③-8 ⛔전체 카운터는 «안 건드렸다» — 상한이 그 값을 본다')
+
+// ── ④ 앱이 «사진을 들고 있다가» 넘기나 ──────────────────────────
+console.log('\n  ── ④ 앱 두 길 (편집 캡처 · 공유받기) ──')
+const 에디터 = readFileSync(join(앱, 'src/screens/EditorScreen.jsx'), 'utf8')
+잰다(/const shotAccum = useRef\(''\)/.test(에디터), '④-1 사진을 들 자리가 있다(useRef)')
+잰다(/if \(!shotAccum\.current && typeof img === 'string'\) shotAccum\.current = img/.test(에디터),
+  '④-2 자른 «첫 장»만 들고 있는다')
+잰다(/tidyRecipe\(combined, shotAccum\.current\)/.test(에디터), '④-3 정리할 때 사진을 같이 넘긴다')
+잰다(/shotAccum\.current = ''/.test(에디터), '④-4 ⭐새로 고르면 앞 판 사진을 버린다(옛 사진 ✕ 새 글자 방지)')
+잰다(!/localStorage[\s\S]{0,80}shotAccum/.test(에디터) && !/shotAccum[\s\S]{0,80}localStorage/.test(에디터),
+  '④-5 ⛔사진을 localStorage 에 넣지 않는다 (store.jsx:698 — 저장이 통째로 막힌다)')
+
+const 앱제이 = readFileSync(join(앱, 'src/App.jsx'), 'utf8')
+잰다(/tidyRecipe\(text, 장들\[0\]\)/.test(앱제이),
+  '④-6 ⭐공유받기(창업자 1순위 길)에도 사진이 붙었다')
+
+console.log(`\n${실패 ? '⛔⛔ ' + 실패 + '건 어긋남' : '✅ 전부 통과'}  ${통과}/${통과 + 실패}\n`)
+process.exit(실패 ? 1 : 0)

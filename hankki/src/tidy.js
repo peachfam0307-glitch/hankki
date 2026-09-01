@@ -53,11 +53,21 @@ const TIMEOUT_MS = 60000
 // 🔢 마지막 결과 — 앱이 「AI가 정리했어요」를 보여줄 때 쓴다
 let _마지막 = null
 
+// 👁 [2026-09-01] 사진 상한 — 워커 상한(3MB)보다 «조금 좁게» 잡는다.
+//   ⛔ 워커에서 걸리면 이미 올린 뒤라 데이터가 버려진다. 여기서 걸러야 유저 데이터가 안 샌다.
+const 사진최대 = 2_800_000
+
 /**
  * 글자를 레시피로 정리한다.
+ * @param {string} text  사진에서 읽은 글자(또는 붙여넣은 글)
+ * @param {string} [사진]  ⭐그 글자를 읽은 «원본 캡처»(dataURL). 주면 AI 가 사진도 «같이» 본다(ⓒ).
+ *   ⛔⛔ **없어도 지금과 «한 글자도 다르지 않게» 돈다** — 사진은 덤이다.
+ *   📮 창업자 판정 2026-09-01 = ⓒ(사진＋글자). 삼치 실물에서 ⓒ만 「멀쩡한 말을 안 건드렸다」.
+ *   ⛔ 사진을 `localStorage` 에 저장하지 않는다 — 좁아서 저장이 통째로 막힌다(store.jsx:698).
+ *      화면에 머무는 동안 `useRef` 로만 들고 있다가 여기로 넘긴다.
  * @returns {Promise<null | {title, ingredients, steps, memo}>}  못 하면 null (⛔던지지 않는다)
  */
-export async function tidyRecipe(text) {
+export async function tidyRecipe(text, 사진) {
   _마지막 = null
   const t = String(text || '').trim()
   // ⛔ 「안 불렀다」와 「불렀는데 실패했다」를 «갈라서» 남긴다 — 처방이 다르다(2026-08-29).
@@ -72,6 +82,15 @@ export async function tidyRecipe(text) {
     if (f) headers['x-hankki-founder'] = f
   } catch { /* noop */ }
 
+  // 👁 사진은 «있을 때만» 싣는다. ⛔모양이 다르거나 너무 크면 조용히 빼고 «글자만» 보낸다.
+  //   막지 않는다 — 사진 때문에 정리 자체가 안 되면 그게 더 나쁘다(새 기능이 옛 기능을 죽이지 않는다).
+  const 실을사진 = (() => {
+    const v = String(사진 || '')
+    if (!v.startsWith('data:image/')) return ''
+    if (v.length > 사진최대) return ''
+    return v
+  })()
+
   // ⏱ 오래 걸리면 끊는다 — ⛔안 끊으면 유저가 빈 화면을 하염없이 본다
   const ac = typeof AbortController !== 'undefined' ? new AbortController() : null
   const timer = ac ? setTimeout(() => ac.abort(), TIMEOUT_MS) : null
@@ -81,7 +100,7 @@ export async function tidyRecipe(text) {
     const resp = await fetch(TIDY_URL, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ text: t }),
+      body: JSON.stringify(실을사진 ? { text: t, image: 실을사진 } : { text: t }),
       signal: ac ? ac.signal : undefined,
     })
     if (!resp.ok) {

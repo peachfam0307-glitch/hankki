@@ -134,7 +134,8 @@ chk('⑥-b 레시피를 담는 «모든» 문이 그 한 곳을 쓴다',
 
 // ⭐ 순서 — 규칙 파서를 «먼저» 돌린다
 const 파서줄 = edSrc.indexOf('let r = parseRecipeText(combined')
-const AI줄 = edSrc.indexOf('tidyRecipe(combined)')
+// ⛔ [2026-09-01] 인자가 늘어도(사진이 붙었다) 안 죽게 «앞머리»만 본다 — 지키려는 건 «차례»다
+const AI줄 = edSrc.indexOf('tidyRecipe(combined')
 chk('⭐ 규칙 파서를 «먼저» 돌린다', 파서줄 > 0 && AI줄 > 파서줄,
   '(AI 를 먼저 기다렸다 실패하면 그만큼 유저가 더 기다린다)')
 
