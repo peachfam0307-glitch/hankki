@@ -172,11 +172,12 @@ for (const W of 폭들) {
         //    ⛔ 한 가지만 바꾼다. 여기서 제목 줄·알약까지 같이 만지면 **뭐가 달라졌는지 못 알아본다**
         //       (창업자 = *"시안으로는 다른점을 모르겠어"* · 2026-09-01).
         //    ⭐ 그림을 감싼 «span» 이 크기를 정한다(DecorEditor renderCell) → 그 폭만 92% 로.
-        // ⛔⛔ 첫 판이 «한 겹 안쪽»을 집었다 — 구조가 세 겹이다:
+        // ⛔⛔ 첫 판이 «한 겹 안쪽»을 집었다 — 칸이 세 겹이다:
         //    button.decor-cell > span(크기를 정하는 것 · 70%) > span(StickerArt · 100%) > img
-        //    `img.parentElement` 는 «안쪽» 이라 100% → 92% 로 **오히려 줄였다.**
+        //    «im.parentElement» 는 안쪽이라 100% → 92% 로 **오히려 줄였다**(그림에서 티가 안 나 하마터면 못 볼 뻔했다).
         //    📌 이 파일 라-격자5 주석에 *"짐작하지 말고 «스티커 그림의 부모»를 직접 집는다"* 라고
         //       적혀 있는데 같은 자리를 또 틀렸다. **부모의 부모**다.
+        // 🔢 고친 뒤 실측 = 그림 390px 31 → 38px · 320px 30 → 49px
         내용.querySelectorAll('img').forEach((im) => {
           const sp = im.parentElement?.parentElement
           if (sp && sp.tagName === 'SPAN') { sp.style.width = '92%'; sp.style.maxWidth = '92%' }
