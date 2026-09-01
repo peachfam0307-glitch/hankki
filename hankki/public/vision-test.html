@@ -36,6 +36,16 @@
 <h1>👁 눈 시험판</h1>
 <p class="sub">사진을 <b>직접 보는 AI</b>가 지금보다 나은지 재는 판이야. ⛔앱은 이 길을 안 써.</p>
 
+<!-- 📌 [2026-09-01] 창업자 = *"테스트링크 리셋하는 법 없어? 계속 붙여넣어야하니 불편쓰"*
+     ⭐ 고치는 건 페이지가 아니라 «찾아오는 길»이다 — 홈 화면에 한 번 박으면 끝난다. -->
+<div class="card" style="padding:11px 12px">
+  <b>📌 이 페이지를 홈 화면에 박아두면 다시 안 찾아도 돼요</b>
+  <div class="k" style="margin-top:5px">크롬 오른쪽 위 <b>⋮</b> → <b>홈 화면에 추가</b> → 아이콘이 생겨요(한 번만 하면 끝)</div>
+  <div class="row" style="margin-top:8px">
+    <button class="ghost" id="주소복사">🔗 이 페이지 주소 복사</button>
+  </div>
+</div>
+
 <label>워커 주소</label>
 <input id="url" placeholder="https://…workers.dev">
 
@@ -139,6 +149,21 @@ function 말(글, 나쁨, 조용히) {
   el.innerHTML = '<b class="' + (나쁨 ? 'bad' : 'ok') + '">' + String(글).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</b>'
   // ⛔ 처음 열 때는 굴리지 않는다 — 알림이 단추 «아래»라 페이지가 대뜸 내려가 버린다
   if (!조용히) el.scrollIntoView({ block: 'nearest' })
+}
+
+// 🔗 이 페이지 주소 복사 — ⛔ clipboard 는 «성공으로 resolve 되고도» 실제 복사가 안 되는 폰이 있다(v10.97)
+//    그래서 실패하면 글자를 골라 준다(길게 눌러 복사).
+$('주소복사').onclick = async () => {
+  const 여기 = location.href.split('#')[0]
+  try { await navigator.clipboard.writeText(여기); 말('복사했어 — 붙여넣어 «들어갔는지» 꼭 확인해줘') }
+  catch {
+    const p = document.createElement('pre'); p.textContent = 여기; p.id = '주소판'
+    const 옛 = document.getElementById('주소판'); if (옛) 옛.remove()
+    $('알림').after(p)
+    const r = document.createRange(); r.selectNodeContents(p)
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r)
+    말('복사가 막힌 폰이야 — 아래 주소를 길게 눌러 복사해줘', true)
+  }
 }
 
 // 📝 붙여넣은 글자도 저장한다 — 원문을 붙여넣고 앱에 갔다 오면 통째로 날아갔다(2026-09-01 창업자 실물)
