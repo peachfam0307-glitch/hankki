@@ -3189,7 +3189,7 @@ html, body { overscroll-behavior: none; }
    🔢 손잡이 38 → 24px · 띠 위아래 여백 10 → 5px
    ⛔ 폭이 100% 라 짧아져도 손가락은 닿는다 — 세로만 깎는다. */
 .decor-grab {
-  display: block; width: 100%; min-height: 18px; padding: 0; flex: 0 0 auto;
+  display: block; width: 100%; min-height: 12px; padding: 0; flex: 0 0 auto;
   background: none; border: none; cursor: pointer;
 }
 .decor-grab::before {
@@ -3234,8 +3234,14 @@ html, body { overscroll-behavior: none; }
   font-size: 13px; font-weight: 700; color: var(--text-sub);
   border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
 }
-/* 🤍 흰 여백 — 알약 통이 위아래로 4px 씩 먹는다. 서랍에선 2px 이면 된다 */
+/* 🤍🤍 흰 여백 — 창업자 = *"아직도 여백이 너무 많아보여"*
+   🔢 뽑아 보니 범인이 «글자»가 아니라 «안쪽 여백»이었다 —
+      글자는 18px 인데 모드줄이 **40px** 을 먹고 있었다.
+      뿌리 = 공용  의 (위아래 18px). 통(.segment)의 4px 은 그다음이었다.
+   ⛔ 공용  는 «모아보기·요리 기록»도 쓴다 — 서랍 안에서만 좁힌다.
+   🔢 40 → 30px */
 .decor-drawer .segment { padding: 2px; }
+.decor-drawer .segment .seg { padding: 4px; }
 .decor-drawer .segment .seg.on { font-weight: 800; }
 .decor-drawer .segment .seg.on {
   background: none; color: var(--brown); border-bottom-color: var(--brown);

@@ -1662,7 +1662,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
               ✍️ 「글쓰기」는 **한 장을 만드는 세 단계 그대로**다 — 종이를 깔고 · 쓰고 · 꾸민다.
                  ⛔ 예전엔 셋째 단계가 「저장하고 나가기」였다. 그게 창업자가 말한 불편이다. */}
           {!picksFold && (canPickPaper || paperEdit) && (
-            <div className="segment" style={{ margin: '0 2px 6px' }}>
+            <div className="segment" style={{ margin: '0 2px 3px' }}>
               {canPickPaper && <button className={`seg ${mode === 'paper' ? 'on' : ''}`} onClick={() => { dropCaret(); setMode('paper') }}>{isDiary ? '속지' : '속지 고르기'}</button>}
               {paperEdit && <button className={`seg ${writing ? 'on' : ''}`} onClick={() => setMode('write')}>글쓰기</button>}
               {isDiary ? (
