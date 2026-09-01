@@ -459,12 +459,26 @@ export default function App() {
       if (parsed && (parsed.ingredients.length || parsed.steps.length)) {
         rec.ingredients = parsed.ingredients
         rec.steps = parsed.steps
+        // 🗃🗃 **다 읽었으면 「정리 끝」이다 — 임시보관함에 가두지 않는다** (창업자 2026-09-01)
+        //   📮 창업자 = *"최근저장에는 뜨는데 레시피탭에 가면 안보여."*
+        //             · *"ai다 다 읽었으면 끝난거잖아. 그럼 수동으로 옮겨야해?"*
+        //   ⛔⛔ 그 전엔 **AI 가 재료·순서를 다 뽑아와도** `makeInboxRecipe` 가 박은
+        //      `status:'unsorted'` 를 그대로 두어 **레시피 탭에서 안 보였다**
+        //      (`MyRecipesScreen.jsx` = `status === 'sorted'` 만 보여준다).
+        //      그런데 홈 「최근 저장」은 status 를 «안» 가려서(`HomeScreen.jsx`) 거기엔 떴다 —
+        //      **두 화면이 서로 다른 말을 해서** 「저장했는데 없다」로 읽혔다.
+        //   ⭐ 잣대 = **재료·순서가 «둘 다» 2줄 이상**. 하나만 있거나 한 줄뿐이면 반쪽이라
+        //      그건 여전히 임시보관함에 남는다(＝거기가 원래 그런 곳이다).
+        //      ⚠️ 이 숫자는 «내 판단»이다 — 창업자에게 밝혔다. 바꾸려면 여기 한 줄만 고친다.
+        if (parsed.ingredients.length >= 2 && parsed.steps.length >= 2) rec.status = 'sorted'
         // 📥 파서에 넣은 원문도 같이 — 파서를 고친 날 다시 읽을 재료(→ parseRecipe.js `keepRaw`)
         const raw = keepRaw(caption)
         if (raw) rec.rawText = raw
       }
       store.addRecipe(rec)
-      setStack([{ name: 'inbox' }])
+      // ⛔ 정리가 끝난 것을 임시보관함으로 보내면 «거기 없다» — 그 화면은 미정리만 보여준다.
+      //    그래서 정리된 것은 «그 레시피»를 바로 연다(방금 담은 걸 눈으로 확인하게).
+      setStack([rec.status === 'sorted' ? { name: 'detail', id: rec.id } : { name: 'inbox' }])
       // inbox 레이어에 해당하는 히스토리 칸(트랩)을 보충 — 없으면 뒤로가기가 base 트랩을 대신
       // 소비해 다음 back 이 앱 종료로 샜다. (공유로 앱을 처음 열었을 때 경로)
       try { history.pushState({ hankki: 1 }, '') } catch { /* noop */ }

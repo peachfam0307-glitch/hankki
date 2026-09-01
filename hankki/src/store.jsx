@@ -649,6 +649,32 @@ function migrateQtyOnly(recipes, saved) {
   return { recipes: out, qtyOnlyV: QTY_ONLY_V }
 }
 
+// 🗃🗃 **이미 임시보관함에 쌓인 것 중 «다 읽은 것»을 레시피 탭으로 옮긴다** (창업자 2026-09-01)
+//
+//   📮 창업자 = *"최근저장에는 뜨는데 레시피탭에 가면 안보여."*
+//             · *"ai다 다 읽었으면 끝난거잖아. 그럼 수동으로 옮겨야해?"*
+//
+//   ⛔⛔ **앞으로 담는 것만 고치면 «이미 폰에 쌓인 것»은 영영 안 보인다**(규칙 18 ⓙ).
+//      창업자가 본 삼치간장조림·투움바파스타가 바로 그 «이미 담긴» 것들이다.
+//      화면(`MyRecipesScreen`)은 `status === 'sorted'` 만 보여주고, 홈 「최근 저장」은
+//      status 를 «안» 가려서 — 두 화면이 서로 다른 말을 하고 있었다.
+//
+//   ⭐ 잣대는 `App.jsx` 공유받기와 **똑같다** — 재료·순서가 «둘 다» 2줄 이상.
+//      ⛔ 두 자리가 갈라지면 그때부터 「담을 땐 되는데 이미 담긴 건 안 되는」 상태가 된다.
+//   ⚠️ 한 번만 돈다(`inboxV`) — 유저가 일부러 임시보관함으로 되돌렸다면 두 번 손대지 않는다.
+//   ⭐ 잃는 게 0이다 — 레시피가 «보이는 자리»만 바뀌고 내용은 한 글자도 안 건드린다.
+const INBOX_V = 1
+function migrateInboxSorted(recipes, saved) {
+  if ((saved.inboxV || 0) >= INBOX_V) return { recipes, inboxV: saved.inboxV }
+  const out = recipes.map((r) => {
+    if (!r || r.status !== 'unsorted') return r
+    const 재료 = Array.isArray(r.ingredients) ? r.ingredients.length : 0
+    const 걸음 = Array.isArray(r.steps) ? r.steps.length : 0
+    return 재료 >= 2 && 걸음 >= 2 ? { ...r, status: 'sorted' } : r
+  })
+  return { recipes: out, inboxV: INBOX_V }
+}
+
 // 📔📔 **샘플 일기 한 장** (창업자 2026-08-12 *"샘플레시피는 지울 수 있게도 해줘
 //   자기 일기가 아니니까 지워도 되게(샘플이라고 적어주고)"*)
 //
@@ -673,13 +699,15 @@ function initialState() {
     const memoMig = migrateMemos(mig.recipes, saved)
     const politeMig = migratePolite(memoMig.recipes, saved)
     const qtyMig = migrateQtyOnly(politeMig.recipes, saved)
+    const inboxMig = migrateInboxSorted(qtyMig.recipes, saved)
     const diary = withSample(saved)
     return {
-      recipes: reconcileCooked(qtyMig.recipes, diary),
+      recipes: reconcileCooked(inboxMig.recipes, diary),
       seedV: mig.seedV,
       memoCleanV: memoMig.memoCleanV,
       politeV: politeMig.politeV,
       qtyOnlyV: qtyMig.qtyOnlyV,
+      inboxV: inboxMig.inboxV,
       removedSeedIds: saved.removedSeedIds || [],
       folders: saved.folders
         ? (saved.folders.includes('아시안') ? saved.folders : [...saved.folders, '아시안'])
@@ -699,6 +727,7 @@ function initialState() {
     memoCleanV: MEMO_CLEAN_V,
     politeV: POLITE_V,
     qtyOnlyV: QTY_ONLY_V, // 처음 켠 사람은 고칠 게 없다 — 이사를 «이미 한 것»으로 둔다
+    inboxV: INBOX_V,      // 〃 (임시보관함에 쌓인 게 아예 없다)
     removedSeedIds: [],
     folders: ['한식', '양식', '일식', '간식', '아시안'],
     profile: PROFILE_DEFAULT,
