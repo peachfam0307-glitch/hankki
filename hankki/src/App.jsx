@@ -11,6 +11,8 @@ import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from './
 import { guessCategory, fitImage, imageSize } from './utils'
 // 🍱 [2026-08-28] 공유로 담으면 아이콘이 빈 접시로 굳던 것 — 뿌리·막이 설명은 `shareIcon.js` 주석에.
 import { 공유아이콘 } from './shareIcon'
+// 🎴 축소 루프가 «자랑카드 표지»를 건드리지 않게 — 잣대는 화면·클라우드와 «같은 한 곳»(2026-09-02)
+import { 카드표지인가 } from './cardCover'
 import { guessFoodIconStrict } from './components/FoodIcon'
 import BottomNav from './components/BottomNav'
 import TabSwipe from './components/TabSwipe'

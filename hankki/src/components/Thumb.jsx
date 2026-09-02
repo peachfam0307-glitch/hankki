@@ -10,7 +10,7 @@ import { 기본표지 } from '../store'
 import { clampZoom, photoImgStyle } from '../photoPan'
 // 🎴 「이 그림은 자랑카드다」의 문턱 = 화면과 클라우드가 **한 곳**을 쓴다 (2026-08-31)
 //   ⛔ 값을 두 곳에 적으면 «화면은 카드로 그리는데 클라우드는 사진으로 털어버리는» 일이 난다.
-import { 카드높이문턱 } from '../cardCover'
+import { 카드높이문턱, 카드비율, 카드비율허용 } from '../cardCover'
 
 // 카드 썸네일. recipe.thumb 로 표시 방식을 고른다:
 //   'icon'  — 브랜드 커스텀 아이콘(이름 자동매칭 or 직접 선택)  ← 기본
@@ -144,7 +144,13 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
             loading="lazy"
             draggable={false}
             onError={() => setFailed(true)}
-            onLoad={(e) => { if (e.currentTarget.naturalHeight >= 카드높이문턱) set카드였던그림(그림) }}
+            // 🎴 옛 카드(표시 없던 시절) 알아보기 = 세로 ＋ «비율». 잣대는 `cardCover.js` 와 같은 값이다.
+            //    ⛔ [2026-09-02] 세로만 보면 폰 캡처(1080×2340)가 카드로 잡혀 표지 칸을 통째로 쓴다.
+            onLoad={(e) => {
+              const el = e.currentTarget
+              if (el.naturalHeight >= 카드높이문턱 &&
+                  Math.abs(el.naturalWidth / el.naturalHeight - 카드비율) <= 카드비율허용) set카드였던그림(그림)
+            }}
             style={{
               ...photoImgStyle(pos, z),
               // 🎴 카드는 **한 군데도 안 자른다**(`contain`) — 좌우에 여백이 생겨도 다 보이는 게 먼저다.

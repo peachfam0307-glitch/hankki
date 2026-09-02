@@ -17,6 +17,7 @@ import './_fresh.mjs'
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
+import { 사진값 } from './_창고사진.mjs'   // 🗄 사진이 창고(IndexedDB)에 있으면 꺼내서 잰다
 
 const OUT = process.env.OUT || '/tmp/레꾸겹침'
 mkdirSync(OUT, { recursive: true })
@@ -85,15 +86,23 @@ await page.waitForTimeout(600)
 await page.getByText('랜덤 카드로 뽑기').click()
 await page.waitForTimeout(2500)
 await page.getByText('이 카드를 내 레시피 표지로').click()
+// 🗄 [2026-09-02] 사진이 「큰 창고」로 이사해서 서랍엔 **쪽지**(`idb://…`)가 남는다.
+//    ⛔ 옛 잣대(`image.startsWith('data:image')`)로 찾으면 **표지가 멀쩡히 저장돼도 「저장 실패」**가 된다.
+//    ✅ 「표지 자리에 무언가 붙었나」로 찾고, 크기는 **창고에서 꺼낸 진짜 사진**으로 잰다.
 let 카드주인 = null
 for (let i = 0; i < 60; i++) {
   await page.waitForTimeout(500)
-  카드주인 = await page.evaluate(() => {
+  const 후보 = await page.evaluate(() => {
     const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
-    const r = (s.recipes || []).find((x) => typeof x.image === 'string' && x.image.startsWith('data:image'))
-    return r ? { id: r.id, title: r.title, thumb: r.thumb, kb: Math.round(r.image.length / 1024) } : null
+    const r = (s.recipes || []).find((x) => typeof x.image === 'string' &&
+      (x.image.startsWith('data:image') || x.image.startsWith('idb://')))
+    return r ? { id: r.id, title: r.title, thumb: r.thumb, image: r.image } : null
   })
-  if (카드주인) break
+  if (!후보) continue
+  const 그림 = await 사진값(page, 후보.image)
+  if (!그림.startsWith('data:image')) continue   // 아직 창고에 안 들어갔다 — 조금 더 기다린다
+  카드주인 = { ...후보, kb: Math.round(그림.length / 1024) }
+  break
 }
 칸(!!카드주인, 카드주인 ? `카드가 표지로 저장됐다 — 「${카드주인.title}」 thumb=${카드주인.thumb} ${카드주인.kb}KB` : '표지 저장 실패')
 if (!카드주인) { await browser.close(); stop(); process.exit(1) }

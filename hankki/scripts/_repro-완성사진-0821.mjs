@@ -18,6 +18,8 @@ import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { extname, join } from 'node:path'
+// 🗄 [2026-09-02] 사진은 「큰 창고」(IndexedDB)로 간다 — 서랍엔 쪽지만 남아서 그것만 보면 «늘 빨간불»이 된다
+import { 사진있나 } from './_창고사진.mjs'
 
 const ROOT = new URL('..', import.meta.url).pathname
 const DIST = join(ROOT, 'dist')
@@ -204,9 +206,9 @@ console.log('\n② 사진을 찍으면 — 미리보기 ＋ 「표지로도 쓰�
   const st = await 저장값(page)
   const d = (st.diary || []).find((x) => x.recipeId === 골라둔.id)
   const r = (st.recipes || []).find((x) => x.id === 골라둔.id)
-  chk('  ⭐⭐ 일기에 «사진»이 저장됐다', String(d?.photo || '').startsWith('data:image'))
+  chk('  ⭐⭐ 일기에 «사진»이 저장됐다', await 사진있나(page, d?.photo))
   chk('  ⭐⭐ 레시피 표지가 사진이 됐다', r?.thumb, 'photo')
-  chk('  표지 그림도 들어갔다', String(r?.image || '').startsWith('data:image'))
+  chk('  표지 그림도 들어갔다', await 사진있나(page, r?.image))
   chk('  ⛔ imageFit 은 «안» 붙었다 (자랑카드용이라 · 창업자 2026-08-18)', r?.imageFit ?? '없음', '없음')
   await page.close()
 }
@@ -244,7 +246,7 @@ console.log('\n③ ⭐ 꾸민 레시피 — 「표지로도 쓰기」가 기본 
   const st = await 저장값(p2)
   const r = (st.recipes || []).find((x) => x.id === 꾸민것.id)
   const d = (st.diary || []).find((x) => x.recipeId === 꾸민것.id)
-  chk('  사진은 일기에 담겼다', String(d?.photo || '').startsWith('data:image'))
+  chk('  사진은 일기에 담겼다', await 사진있나(p2, d?.photo))
   chk('  ⭐ 표지는 «안» 바뀌었다', r?.thumb !== 'photo', 'true')
   chk('  ⭐ 꾸민 것(decor)이 그대로 살아 있다', r?.decor?.length >= 1, 'true')
   await p2.close()

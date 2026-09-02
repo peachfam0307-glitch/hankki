@@ -33,6 +33,8 @@ import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사)
 import pengNyam from '../assets/ui/wave/peng_nyam1.png' // 🐧 펭펭(한 술) — 한끼 일기 상단
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
 import { FAV_NAME, FAV_ADD, FAV_REMOVE } from '../favName'
+// 🖼 일기 사진이 「큰 창고」에 있으면 쪽지(`idb://…`)다 — 달력·앨범도 꺼내서 그려야 한다
+import StoredImg from '../photoView'
 
 // 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
 const MYRECIPES_COACH_KEY = COACH.myrecipes
@@ -157,7 +159,7 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconF
                 // 사진을 남겼으면 사진이, 아니면 그날 만든 음식 아이콘이 칸에 뜬다.
                 <span className="cal-food">
                   {top.photo
-                    ? <img src={top.photo} alt="" loading="lazy" />
+                    ? <StoredImg src={top.photo} alt="" loading="lazy" />
                     : <FoodIcon name={iconFor(top)} size={24} />}
                 </span>
               )}
@@ -418,7 +420,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
         }}
       >
         {e.photo ? (
-          <img src={e.photo} alt="" loading="lazy" />
+          <StoredImg src={e.photo} alt="" loading="lazy" />
         ) : (
           <div className="album-icon"><FoodIcon name={iconFor(e)} size={34} /></div>
         )}

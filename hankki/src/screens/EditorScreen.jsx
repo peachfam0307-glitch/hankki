@@ -22,6 +22,8 @@ import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw }
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from '../tidy'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
+// 🗄 저장된 사진은 「큰 창고」(IndexedDB)에 있고 상태엔 쪽지만 남는다 — 편집기는 열 때 꺼내 온다
+import { 창고에있나, 창고표시, 꺼내기 } from '../photoStore'
 // 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
 //    ⛔ `ui/gom_clap` 은 **옛 매끈 곰**이라 안 쓴다(창업자 2026-08-13 *"쟤 옛날 곰이야"*) → 물결 정본.
 //    ⭐ 냄비 젓는 컷 — 「멈춰 있지 않고 뭔가 «하고 있다»」가 그림으로 보인다(동그라미 하나보다 세다).
@@ -220,6 +222,30 @@ export default function EditorScreen({ id, prefill }) {
   })
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }))
+
+  // 🗄🗄 **편집기는 사진을 «펼쳐서» 다룬다 — 열 때 창고에서 꺼내 온다** (2026-09-02)
+  //
+  //   ⛔⛔ 앱을 껐다 켜면 `editing.image` 는 **쪽지**(`idb://…`)다. 그대로 두면 이 화면에서 셋이 깨진다 —
+  //      ⑴ 74px 표지 칸이 빈 칸 ⑵ **「캡처 보면서 쓰기」가 아무것도 안 보여준다**(refs)
+  //      ⑶ 「AI 로 다시 다듬기」가 사진을 못 보낸다(`data:` 가 아니라 안 보낸다)
+  //   ⭐ 여긴 목록이 아니라 **한 편만 여는 화면**이라 «한 장»만 꺼내면 된다 — 값이 싸다.
+  //   ⭐ 꺼낸 뒤 그대로 저장해도 안전하다 — 저장할 때 `store.jsx` 가 **같은 열쇠**로 다시 창고에 넣는다.
+  useEffect(() => {
+    const 쪽지 = 창고에있나(f.image) ? f.image : null
+    if (!쪽지) return
+    let 살아있나 = true
+    ;(async () => {
+      try {
+        const 진짜 = await 꺼내기(쪽지.slice(창고표시.length))
+        if (!살아있나 || !진짜) return
+        setF((p) => (p.image === 쪽지 ? { ...p, image: 진짜 } : p))
+        // 👁 보면서 쓰기 창도 같은 쪽지를 들고 있으면 같이 갈아 끼운다
+        setRefs((전) => 전.map((v) => (v === 쪽지 ? 진짜 : v)))
+      } catch { /* 못 꺼내면 지금까지처럼 «사진 없이» 편집한다 — 글자는 그대로 산다 */ }
+    })()
+    return () => { 살아있나 = false }
+  }, [f.image])
+
   const [focusField, setFocusField] = useState(null) // 'ingredients'|'steps' — 계량 바를 띄울 대상
   // 지금 포커스된 요소가 재료/순서 칸일 때만 계량 바를 띄운다.
   // focusin/out 으로만 판단 → 깜빡임(리마운트·blur 타이머) 없이 안정적.

@@ -65,6 +65,27 @@ const 재기 = (page, du) => page.evaluate((d) => new Promise((res) => {
   const im = new Image(); im.onload = () => res({ w: im.naturalWidth, h: im.naturalHeight }); im.onerror = () => res({ w: 0, h: 0 }); im.src = d
 }), du)
 
+// 🗄🗄 **[2026-09-02] 사진이 「큰 창고」(IndexedDB)로 이사했다 — 서랍만 보면 «쪽지»를 잰다**
+//   ⛔⛔ 이 판은 `localStorage` 의 `r.image` 길이로 「줄었나」를 쟀는데, 이사 뒤 그 값은
+//      `idb://recipes/zz-big/image` 같은 **서른 글자짜리 쪽지**다.
+//      → 「큰 사진이 줄었다」는 «늘» 초록불이 되고(1,000,000 → 30) 「작은 건 안 바뀌었다」는 «늘» 빨간불이 된다.
+//      **둘 다 사진을 안 재고 있다**(규칙 18 ⓘ).
+//   ✅ 그래서 쪽지면 **창고에서 진짜 사진을 꺼내** 그것을 잰다. 잣대가 「사진 그 자체」로 돌아온다.
+const 사진값 = (page, v) => page.evaluate((val) => new Promise((res) => {
+  if (typeof val !== 'string' || !val.startsWith('idb://')) return res(val || '')
+  const 길 = val.slice(6)
+  const req = indexedDB.open('hankki-photos', 1)
+  req.onerror = () => res('')
+  req.onsuccess = () => {
+    const db = req.result
+    try {
+      const g = db.transaction('img', 'readonly').objectStore('img').get(길)
+      g.onsuccess = () => { res(typeof g.result === 'string' ? g.result : ''); db.close() }
+      g.onerror = () => { res(''); db.close() }
+    } catch { res(''); db.close() }
+  }
+}), v)
+
 console.log('\n🗃 임시보관함 정리 ＋ 이미 담긴 사진 줄이기 — 재현판\n')
 
 // ─────────────────────────────────────────────
@@ -137,21 +158,26 @@ console.log('🧹 ② 이미 담긴 사진 줄이기')
 const s1 = await 저장소(p1)
 const 큰 = (s1.recipes || []).find((r) => r.id === 'zz-big')
 const 작은 = (s1.recipes || []).find((r) => r.id === 'zz-small')
+// 🗄 서랍엔 쪽지만 남을 수 있다 → «진짜 사진»을 꺼내서 잰다(위 `사진값` 주석 참조)
+const 큰그림 = 큰 ? await 사진값(p1, 큰.image) : ''
+const 작은그림 = 작은 ? await 사진값(p1, 작은.image) : ''
 if (chk('심은 레시피가 살아 있다', !!큰 && !!작은)) {
-  chk('큰 사진이 «줄었다»', 큰.image.length < 심은값.큰,
-    `${심은값.큰.toLocaleString()} → ${큰.image.length.toLocaleString()}자`)
-  const k = await 재기(p1, 큰.image)
-  chk('큰 사진 긴 변이 1600 이하', Math.max(k.w, k.h) <= 1600, `${k.w}×${k.h}`)
+  chk('⭐ 사진을 «창고에서든 서랍에서든» 찾았다', !!큰그림 && !!작은그림,
+    `큰 ${큰그림.length.toLocaleString()}자 · 작은 ${작은그림.length.toLocaleString()}자`)
+  chk('큰 사진이 «줄었다»', 큰그림.length > 0 && 큰그림.length < 심은값.큰,
+    `${심은값.큰.toLocaleString()} → ${큰그림.length.toLocaleString()}자`)
+  const k = await 재기(p1, 큰그림)
+  chk('큰 사진 긴 변이 1600 이하', k.w > 0 && Math.max(k.w, k.h) <= 1600, `${k.w}×${k.h}`)
   // ⭐⭐ 창업자 걱정 그 자리 — 작은 건 «건드리지도» 않아야 한다(다시 구우면 화질만 깎인다)
-  chk('작은 사진은 «한 글자도» 안 바뀌었다', 작은.image.length === 심은값.작은,
+  chk('작은 사진은 «한 글자도» 안 바뀌었다', 작은그림.length === 심은값.작은,
     `${심은값.작은.toLocaleString()}자 그대로`)
 } else {
-  실패 += 3; 실패목록.push('심은 레시피를 못 찾아 사진 칸을 못 쟀다')
+  실패 += 4; 실패목록.push('심은 레시피를 못 찾아 사진 칸을 못 쟀다')
   console.log('  ⛔ 못 찾아서 뒤 칸을 «판정하지 않는다»(규칙 18 ⓘ)')
 }
 
 // ⑦ 두 번째로 열어도 «또» 굽지 않는다 — 재압축이 쌓이면 뿌예진다
-const 줄인길이 = 큰 ? 큰.image.length : 0
+const 줄인길이 = 큰그림.length
 await p1.close()
 const p2 = await ctx.newPage()
 에러받기(p2, '두번째')
@@ -159,8 +185,9 @@ await p2.goto('http://127.0.0.1:4452/hankki/', { waitUntil: 'networkidle' })
 await p2.waitForTimeout(6000)
 const s2 = await 저장소(p2)
 const 큰2 = (s2.recipes || []).find((r) => r.id === 'zz-big')
-chk('다시 열어도 «또 굽지» 않는다', !!큰2 && 큰2.image.length === 줄인길이,
-  큰2 ? `${큰2.image.length.toLocaleString()}자 그대로` : '(못 찾음)')
+const 큰2그림 = 큰2 ? await 사진값(p2, 큰2.image) : ''
+chk('다시 열어도 «또 굽지» 않는다', !!큰2 && 큰2그림.length === 줄인길이 && 줄인길이 > 0,
+  큰2 ? `${큰2그림.length.toLocaleString()}자 그대로` : '(못 찾음)')
 
 // ─────────────────────────────────────────────
 // ㉠ 임시보관함 — 정리된 것은 «안 보인다», 그런데 «안 잃었다»

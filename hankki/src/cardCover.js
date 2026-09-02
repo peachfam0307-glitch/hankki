@@ -19,14 +19,18 @@
 //    카드가 사진으로 잡히면 «지금과 똑같이» 안 올라갈 뿐이다. 잃는 쪽으로는 안 기운다.
 
 export const 카드높이문턱 = 1600
+// 🎴 자랑카드는 «늘» 1080×1350 = 가로/세로 **0.8**. 몇 배로 찍어도 그대로다.
+//    폰 캡처(1080×2340 ≈ 0.46)와 멀찍이 떨어져 있어 이 하나로 갈린다.
+export const 카드비율 = 0.8
+export const 카드비율허용 = 0.06
 
-// 📏 **JPEG 의 «세로»를 그림을 풀지 않고 읽는다** — 머리말(SOF 표시)에 적혀 있다.
+// 📏 **JPEG 의 «가로·세로»를 그림을 풀지 않고 읽는다** — 머리말(SOF 표시)에 적혀 있다.
 //   ⭐ 왜 이렇게 하나 = `cloud.js` 는 올릴 «글자»를 만드는 자리라 **기다릴 수가 없다**(동기).
 //      `new Image()` 로 재려면 비동기라 그 흐름을 통째로 바꿔야 한다.
 //   ⭐ 앞부분만 푼다 — 캔버스가 만든 JPEG 은 EXIF 가 없어 SOF 가 몇 백 바이트 안에 나온다.
 //      (368KB 를 통째로 풀면 올릴 때마다 레시피 수만큼 헛일을 한다)
 //   ⛔ 못 읽으면 **0** 을 준다 — 「크다」가 아니라 「모른다」다. 모르면 위 ① 표시로만 판정한다.
-export function jpeg세로 (데이터주소) {
+export function jpeg크기 (데이터주소) {
   try {
     if (typeof 데이터주소 !== 'string') return 0
     const 자리 = 데이터주소.indexOf(';base64,')
@@ -45,13 +49,20 @@ export function jpeg세로 (데이터주소) {
       const 길이 = (bin.charCodeAt(p + 2) << 8) | bin.charCodeAt(p + 3)
       // SOF0~SOF15 = 크기가 적힌 칸. ⛔ C4(허프만)·C8(예약)·CC(산술)는 SOF 가 아니다.
       const SOF = 표시 >= 0xc0 && 표시 <= 0xcf && 표시 !== 0xc4 && 표시 !== 0xc8 && 표시 !== 0xcc
-      if (SOF) return (bin.charCodeAt(p + 5) << 8) | bin.charCodeAt(p + 6)
+      if (SOF) {
+        const 세로 = (bin.charCodeAt(p + 5) << 8) | bin.charCodeAt(p + 6)
+        const 가로 = (bin.charCodeAt(p + 7) << 8) | bin.charCodeAt(p + 8)
+        return { w: 가로, h: 세로 }
+      }
       if (길이 < 2) return 0
       p += 2 + 길이
     }
     return 0
   } catch { return 0 }
 }
+
+/** 세로만 필요할 때(옛 이름 그대로 — 부르는 데가 있다) */
+export function jpeg세로 (데이터주소) { return jpeg크기(데이터주소)?.h || 0 }
 
 /** 이 레시피의 표지가 «자랑카드»인가 (＝사진이 아니라 완성된 표지 한 장인가) */
 export function 카드표지인가 (레시피) {
@@ -61,5 +72,17 @@ export function 카드표지인가 (레시피) {
   if (typeof 그림 !== 'string' || !그림.startsWith('data:image/')) return false
   if (r.thumb && r.thumb !== 'photo') return false
   if (r.imageFit === 'whole') return true                 // ① 저장할 때 박은 표시
-  return jpeg세로(그림) >= 카드높이문턱                    // ② 표시가 없던 시절의 카드
+  // ② 표시가 없던 시절의 카드 — **세로 ＋ «비율»** 로 본다
+  //
+  // ⛔⛔ [2026-09-02 좁혔다] 세로만 보면 **폰 캡처가 카드로 잡힌다**.
+  //    갤럭시 캡처가 1080×**2340** 이라 문턱(1600)을 우습게 넘는다.
+  //    그러면 ⑴공간 회수(`App.jsx` 축소 루프)가 그 사진을 «영영 안 줄이고»
+  //    ⑵창업자 확정 「글자부터」를 어기고 **캡처가 클라우드로 올라간다.**
+  // ⭐ 자랑카드는 **언제나 1080×1350(＝4:5 · 0.8)** 이다 — 몇 배로 찍든 비율은 안 변한다.
+  //    캡처는 0.46 안팎이라 **겹치지 않는다.** 그래서 비율 하나로 갈린다.
+  // ⛔ 못 읽으면(0) 「모른다」이므로 ①에만 기댄다 — 예전과 같다.
+  const 크기 = jpeg크기(그림)
+  if (!크기 || !크기.w || !크기.h) return false
+  if (크기.h < 카드높이문턱) return false
+  return Math.abs(크기.w / 크기.h - 카드비율) <= 카드비율허용
 }

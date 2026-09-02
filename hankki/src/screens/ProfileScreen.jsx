@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { COACH, COACH_KEYS } from '../coach'
-import { useStore } from '../store'
+import { useStore, 서랍한도, 서랍다시재기 } from '../store'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL, LAB_SURVEY_URL, LAB_BUG_URL } from '../version'
@@ -498,6 +498,10 @@ export default function ProfileScreen() {
           <Icon name="chevron-right" size={18} color="var(--brown)" />
         </button>
 
+        {/* 📊 저장 공간 — 백업 «바로 밑»에 둔다.
+            ⭐ 거의 찼을 때 유저가 할 일이 「백업해 두기」라서, 그 단추 옆에 있어야 말이 이어진다. */}
+        <StorageRow />
+
         {/* ☁️☁️ 클라우드 저장 — 백업 바로 «밑»에 세운다 (창업자 확정 「1번」 · 2026-08-16)
             ⭐ 왜 여기냐 = 백업과 «같은 걱정»을 푸는 자리다 — 「폰 바꾸면 어떡하지」.
                떨어뜨려 놓으면 유저가 둘을 다른 기능으로 읽고, 백업만 하고 만다.
@@ -779,6 +783,64 @@ export default function ProfileScreen() {
       {/* 첫 방문 코치마크 — 백업·의견 보내기 안내 */}
       {coach && <CoachMarks storageKey={PROFILE_COACH_KEY} steps={PROFILE_COACH_STEPS} onDone={() => setCoach(false)} />}
     </>
+  )
+}
+
+// 📊📊 **저장 공간 — 계기판이 «둘»이다** (2026-09-02)
+//
+//   ⛔⛔ 하나로 재면 «초록불인 채로 잃는다». 실측(`scripts/_probe-계기판-0902.mjs`) =
+//      `navigator.storage.estimate()` 에 1MB 를 localStorage 로 넣어도 **0KB** 로 나온다.
+//      즉 그 값만 그리면 **터지는 순간에도 「3%」**라고 말한다. 창업자가 2026-09-02 아침에
+//      레시피를 잃은 그 벽(서랍 4.56MB/5MB = 91%)이 정확히 estimate() 가 «안 보는» 자리다.
+//
+//   ⭐ 그래서 갈라 그린다 —
+//      ① **서랍**(글자) = 우리가 쓰기 직전에 «직접 센» 글자 수(`store.jsx` 쓰기())
+//      ② **사진 창고**(IndexedDB) = `estimate()` — 여긴 estimate 가 «진짜로» 센다
+//
+//   ⛔ 창고 값은 **없을 수 있다**(브라우저가 estimate 를 안 주거나 0). 그러면 **그 줄을 아예 안 그린다** —
+//      「0MB」라고 적으면 사진이 없어진 줄 안다.
+function 자릿수(n) { return n >= 100 ? Math.round(n) : Math.round(n * 10) / 10 }
+function StorageRow() {
+  // ⭐ 화면에 «들어올 때» 다시 잰다 — 앱을 켜고 아직 한 번도 안 썼으면 0 이라 「0%」로 거짓말한다
+  const [찬비율, set찬비율] = useState(() => Math.min(1, 서랍다시재기() / 서랍한도))
+  const [창고, set창고] = useState(null)
+  useEffect(() => {
+    set찬비율(Math.min(1, 서랍다시재기() / 서랍한도))
+    let 살아있나 = true
+    ;(async () => {
+      try {
+        const e = await navigator.storage?.estimate?.()
+        if (살아있나 && e && e.usage > 0) set창고({ 쓴것: e.usage, 한도: e.quota || 0 })
+      } catch { /* 못 재는 브라우저면 그 줄을 안 그린다 */ }
+    })()
+    return () => { 살아있나 = false }
+  }, [])
+  const 퍼센트 = Math.round(찬비율 * 100)
+  // ⛔ 색은 «세 단」 — 다 찬 뒤에 빨개지면 늦다. 80% 에서 경보가 뜨니 색도 거기서 갈린다.
+  const 색 = 퍼센트 >= 90 ? '#c0392b' : 퍼센트 >= 80 ? '#c77b30' : 'var(--brown)'
+  return (
+    <div className="card" data-probe="storage" style={{ marginTop: 10, padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <div style={{ fontSize: 15.5, fontWeight: 800, flex: 1 }}>저장 공간</div>
+        <div style={{ fontSize: 15.5, fontWeight: 800, color: 색 }}>{퍼센트}%</div>
+      </div>
+      <div style={{ height: 8, borderRadius: 99, background: 'var(--line)', marginTop: 8, overflow: 'hidden' }}>
+        <div style={{ width: `${Math.max(2, 퍼센트)}%`, height: '100%', background: 색, borderRadius: 99 }} />
+      </div>
+      <div className="t-sub" style={{ fontSize: 13.5, marginTop: 6 }}>
+        레시피·일기 글자 {자릿수(서랍한도 * 찬비율 / 1024 / 1024)}MB / 약 {Math.round(서랍한도 / 1024 / 1024)}MB
+      </div>
+      {창고 && (
+        <div className="t-sub" style={{ fontSize: 13.5, marginTop: 2 }}>
+          사진 {자릿수(창고.쓴것 / 1024 / 1024)}MB{창고.한도 ? ` / 약 ${자릿수(창고.한도 / 1024 / 1024 / 1024)}GB` : ''}
+        </div>
+      )}
+      {퍼센트 >= 80 && (
+        <div className="t-sub" style={{ fontSize: 13.5, marginTop: 6, color: 색, fontWeight: 700 }}>
+          거의 다 찼어요 · 위에서 백업해 두는 게 좋아요
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -4,6 +4,8 @@ import Icon from './Icon'
 import CropSheet from './CropSheet'
 import Portal from './Portal'
 import { useModalBack } from '../useBackHandler'
+// 🖼 사진이 「큰 창고」에 있으면 쪽지(`idb://…`)라 그냥 그리면 빈 칸이 된다 → `photoView.jsx` 한 곳을 지난다
+import StoredImg from '../photoView'
 
 // 사진을 캔버스로 축소해 저장 공간을 아낀다.
 // ⭐ `export` 인 이유 = 요리 모드의 「완성 사진」(`CookScreen`)이 «같은 함수»를 쓴다.
@@ -85,7 +87,7 @@ export default function DiaryEntrySheet({ entry, onClose, onDelete, onOpenRecipe
 
           <label className="diary-photo press">
             {photo ? (
-              <img src={photo} alt="" />
+              <StoredImg src={photo} alt="" />
             ) : (
               <div className="diary-photo-empty">
                 <Icon name="camera" size={24} color="var(--sand)" />
