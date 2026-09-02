@@ -18,6 +18,8 @@ import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { extname, join } from 'node:path'
+// 🗄 [2026-09-02] 사진은 「큰 창고」(IndexedDB)로 간다 — 서랍엔 쪽지만 남아서 그것만 보면 «늘 빨간불»이 된다
+import { 사진있나 } from './_창고사진.mjs'
 
 const ROOT = new URL('..', import.meta.url).pathname
 const DIST = join(ROOT, 'dist')
@@ -59,6 +61,31 @@ const 새탭 = async () => {
   return page
 }
 const 저장값 = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('hankki:v1') || '{}'))
+
+// ⏳⏳ **[2026-09-02] 「다 만들었어요」 뒤 저장은 «비동기»다 — 시계가 아니라 «상태»를 기다린다.**
+//   ⛔ 전엔 `waitForTimeout(900)` 으로 시계만 보고 «한 번» 읽었다. 사진 이사(v12.24) 뒤로
+//      사진이 창고(IndexedDB)로 가면서 저장이 한 박자 늦어졌고, 스모크에서 브라우저 넷이
+//      «동시에» 돌 때 900ms 안에 못 끝나 **「사진은 일기에 담겼다」가 false** 로 났다.
+//      🔢 실측 = 이 판을 «혼자» 돌리면 4/4 통과다. 앱이 아니라 **판이 성급했다.**
+//   ⛔ 창고 읽기에 기다림을 넣는 것만으론 «안 풀렸다» — `d?.photo` 가 아직 `undefined` 면
+//      꺼낼 쪽지 자체가 없어 폴링이 아예 안 돈다. **기다려야 할 것은 「일기 줄」이었다.**
+//   ⭐ 찾으면 그 자리에서 끝난다 — 멀쩡할 땐 예전과 같은 속도다.
+//   ⭐ 못 찾으면 «무엇이 없었는지»를 들고 온다(줄이 없나 / 줄은 있는데 사진이 비었나) —
+//      그래야 다음에 이 칸이 빨간불일 때 「앱이 안 썼다」와 「판이 성급했다」를 가른다(규칙 18 ⓘ).
+const 일기줄기다리기 = async (page, 레시피id, 제한 = 12000) => {
+  const 끝 = Date.now() + 제한
+  let 본것 = { st: {}, d: undefined }
+  for (;;) {
+    const st = await 저장값(page)
+    const d = (st.diary || []).find((x) => x.recipeId === 레시피id)
+    본것 = { st, d }
+    if (d && d.photo) return 본것
+    if (Date.now() >= 끝) return 본것
+    await new Promise((r) => setTimeout(r, 250))
+  }
+}
+const 왜없나 = (본것) => !본것.d ? '(일기 줄 자체가 없다 — 앱이 아직 안 썼다)'
+  : !본것.d.photo ? '(일기 줄은 있는데 photo 가 비었다)' : '(쪽지는 있는데 창고에서 못 꺼냈다)'
 
 // 🍳 요리 모드를 «마지막 단계»까지 연다 — 앱을 실제로 눌러서(흉내 아님)
 const 요리끝까지 = async (page, 제목) => {
@@ -200,13 +227,14 @@ console.log('\n② 사진을 찍으면 — 미리보기 ＋ 「표지로도 쓰�
   chk('  손가락 닿는 높이 ≥44px', 후.손가락 >= 44, 'true')
 
   await page.evaluate(() => [...document.querySelectorAll('.cook-navbtn')].find((x) => /다 만들었어요/.test(x.innerText))?.click())
-  await page.waitForTimeout(900)
-  const st = await 저장값(page)
-  const d = (st.diary || []).find((x) => x.recipeId === 골라둔.id)
+  const 본것 = await 일기줄기다리기(page, 골라둔.id)
+  const st = 본것.st
+  const d = 본것.d
   const r = (st.recipes || []).find((x) => x.id === 골라둔.id)
-  chk('  ⭐⭐ 일기에 «사진»이 저장됐다', String(d?.photo || '').startsWith('data:image'))
+  chk(`  ⭐⭐ 일기에 «사진»이 저장됐다 ${(await 사진있나(page, d?.photo)) ? '' : 왜없나(본것)}`,
+    await 사진있나(page, d?.photo))
   chk('  ⭐⭐ 레시피 표지가 사진이 됐다', r?.thumb, 'photo')
-  chk('  표지 그림도 들어갔다', String(r?.image || '').startsWith('data:image'))
+  chk('  표지 그림도 들어갔다', await 사진있나(page, r?.image))
   chk('  ⛔ imageFit 은 «안» 붙었다 (자랑카드용이라 · 창업자 2026-08-18)', r?.imageFit ?? '없음', '없음')
   await page.close()
 }
@@ -240,11 +268,12 @@ console.log('\n③ ⭐ 꾸민 레시피 — 「표지로도 쓰기」가 기본 
   chk('  ⭐⭐ 꾸민 레시피 → 기본 «꺼짐» (내가 말없이 안 덮는다)', await p2.evaluate(() => document.querySelector('.cook-shot-cover')?.getAttribute('aria-pressed')), 'false')
 
   await p2.evaluate(() => [...document.querySelectorAll('.cook-navbtn')].find((x) => /다 만들었어요/.test(x.innerText))?.click())
-  await p2.waitForTimeout(900)
-  const st = await 저장값(p2)
+  const 본것2 = await 일기줄기다리기(p2, 꾸민것.id)
+  const st = 본것2.st
   const r = (st.recipes || []).find((x) => x.id === 꾸민것.id)
-  const d = (st.diary || []).find((x) => x.recipeId === 꾸민것.id)
-  chk('  사진은 일기에 담겼다', String(d?.photo || '').startsWith('data:image'))
+  const d = 본것2.d
+  chk(`  사진은 일기에 담겼다 ${(await 사진있나(p2, d?.photo)) ? '' : 왜없나(본것2)}`,
+    await 사진있나(p2, d?.photo))
   chk('  ⭐ 표지는 «안» 바뀌었다', r?.thumb !== 'photo', 'true')
   chk('  ⭐ 꾸민 것(decor)이 그대로 살아 있다', r?.decor?.length >= 1, 'true')
   await p2.close()

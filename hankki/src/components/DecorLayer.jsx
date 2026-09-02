@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
+import StoredImg from '../photoView'
 import { StickerArt, StickerFx, motionClass, stickerRatio, NOTE_COLORS, NOTE_FAT, NOTE_HAND_FAT, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, textSizeV, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
 
 // ── 꾸미기 레이어 ──
@@ -323,7 +324,8 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
               //    흰 테 ＋ 그림자 = 인화한 사진을 얹은 느낌(다꾸의 기본 문법).
               <>
                 <span className={motionClass(it.motion)} style={{ position: 'absolute', inset: 0, borderRadius: '2%', overflow: 'hidden', background: '#fff', padding: '3.5%', boxShadow: '0 3px 7px rgba(60,50,35,.28)' }}>
-                  <img src={it.src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  {/* 🖼 붙인 사진도 「큰 창고」로 간다 — 쪽지면 꺼내서 그린다(`photoView.jsx`) */}
+                  <StoredImg src={it.src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </span>
                 <StickerFx kind={it.fx} />
               </>

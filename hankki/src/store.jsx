@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
+import { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react'
 import { seedRecipes } from './data/seed'
 import { basicRecipes, BASICS_VERSION } from './data/basics'
 import { makeSampleDiary, SAMPLE_DIARY_ID, SAMPLE_READY } from './data/sampleDiary'
@@ -9,9 +9,42 @@ import { guessFoodIcon, FOOD_ICON_GROUPS } from './components/FoodIcon'
 import { cleanMemo, mergeQtyOnlyIngredients } from './parseRecipe'
 import { politeSteps, politeFormalSteps } from './polish'
 import { pickPaper } from './memoPaper'
+// 🗄 사진은 「큰 창고」로 — 서랍(localStorage 5MB)엔 글자만 남긴다
+import { 나누기, 여럿넣기, 지우기 as 창고에서지우기, 쪽지열쇠모으기, 열쇠들 as 창고열쇠들 } from './photoStore'
 
 const KEY = 'hankki:v1'
-let lastFullWarn = 0 // 저장공간 초과 경고 throttle(모듈 스코프)
+// 💾💾 **「저장이 진짜로 됐나」 — 화면이 물어볼 수 있게 밖으로 낸다** (창업자 확정 2026-09-02)
+//   📮 창업자 = *"방금 하나 저장한거 흔적도 없이 증발함"* · *"채우고 있다고 했는데 레시피는 없어"*
+//   ⛔⛔ 뿌리 = 아래 `catch` 가 저장 실패를 «삼켰다». 메모리엔 그대로라 화면은 「저장됐다」고 말하고,
+//      다시 그리는 순간 사라진다. ＋ 60초 침묵 때문에 두 번째부터는 **안내조차 없었다.**
+//   ⭐ 그래서 값을 «두 개» 둔다 — 마지막으로 저장이 «성공/실패»한 시각.
+//      화면(편집 저장 등)이 저장 뒤에 이걸 보고 «성공이라 말할지»를 정한다.
+export let 마지막저장실패 = 0
+export let 마지막저장성공 = 0
+
+// 📊📊 **서랍 계기판** — 「지금 얼마나 찼나」를 «쓰기 직전»에 재서 여기 남긴다 (2026-09-02)
+//   🔢 창업자 폰 2026-09-02 = **4.56MB / 5MB = 91%** 였고, 그날 아침 레시피 하나를 잃었다.
+//   ⛔⛔ **`navigator.storage.estimate()` 로는 이 벽을 «못 잰다»** — localStorage 를 안 센다
+//      (실측 `_probe-계기판-0902`: 1MB 를 넣어도 0KB). 그걸로 재면 **터지는 순간에도 「3%」**라고 말한다.
+//   ⭐ 그래서 벽이 «둘»이고 계기판도 «둘»이다 — ①서랍 = 여기(글자 수) ②창고 = `estimate()`
+export const 서랍한도 = 5 * 1024 * 1024   // 브라우저마다 다르지만 제일 좁은 쪽(iOS ~5MB)에 맞춘다
+export let 서랍글자수 = 0
+let 마지막경고 = 0
+/** 서랍이 몇 % 찼나 (0~1). 화면이 이걸로 「저장 공간」 줄을 그린다. */
+export function 서랍찬비율 () { return Math.min(1, 서랍글자수 / 서랍한도) }
+/** 서랍을 «지금» 다시 잰다.
+ *  ⛔ 앱을 켜고 아직 한 번도 «쓰지» 않았으면 `서랍글자수` 가 0 이라 화면이 **「0%」라고 거짓말**을 한다.
+ *     설정 화면처럼 «보여주기 전»에 이걸 한 번 부른다. */
+export function 서랍다시재기 () {
+  try { 서랍글자수 = (localStorage.getItem(KEY) || '').length } catch { /* 못 읽으면 마지막에 쓴 값을 그대로 쓴다 */ }
+  return 서랍글자수
+}
+// ⛔ 「방금 저장이 됐나」 — 기준 시각 «뒤»에 성공이 찍혔는지 본다.
+//    ⚠️ 실패가 안 찍혔다고 «성공»이라 하지 않는다(아직 안 돌았을 수도 있다 · 규칙 18 ⓘ).
+export function 방금저장됐나(기준) {
+  if (마지막저장실패 >= 기준) return false
+  return 마지막저장성공 >= 기준
+}
 const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행복한 하루 :)' }
 
 // 장보기 쇼핑몰 바로가기 기본 목록. url = 홈, search = 재료 검색(‘{q}’에 재료명 치환).
@@ -663,16 +696,71 @@ function migrateQtyOnly(recipes, saved) {
 //      ⛔ 두 자리가 갈라지면 그때부터 「담을 땐 되는데 이미 담긴 건 안 되는」 상태가 된다.
 //   ⚠️ 한 번만 돈다(`inboxV`) — 유저가 일부러 임시보관함으로 되돌렸다면 두 번 손대지 않는다.
 //   ⭐ 잃는 게 0이다 — 레시피가 «보이는 자리»만 바뀌고 내용은 한 글자도 안 건드린다.
-const INBOX_V = 1
+// 📏📏 **「다 읽었나」 잣대 — ⭐이 저장소에서 «여기 한 곳»뿐이다** (2026-09-02)
+//
+//   ⛔⛔ 그 전엔 «똑같은 잣대»가 **두 곳에 복사**돼 있었다 —
+//      아래 `migrateInboxSorted` ＋ `App.jsx` 공유받기 저장.
+//      2026-09-02 에 `App.jsx` 의 `채우기()` 에도 같은 판정이 필요해져 **셋이 될 뻔했다.**
+//   ⭐ 셋이 갈리면 그때부터 **「담을 땐 되는데 AI 가 채우면 안 되는」** 상태가 된다 —
+//      바로 창업자가 겪은 그 모양이다(*"최근저장에는 뜨는데 레시피탭에 가면 안보여."*).
+//   📌 그래서 잣대를 **바깥으로 내보내** 부르는 쪽이 셋이어도 «말이 하나»가 되게 한다.
+//
+//   ⚠️ 이 값을 고치면 **세 자리가 한꺼번에** 바뀐다 — 그게 목적이다. 한 곳만 바꾸지 말 것.
+export function 다읽었나(r) {
+  const 재료 = Array.isArray(r?.ingredients) ? r.ingredients.length : 0
+  const 걸음 = Array.isArray(r?.steps) ? r.steps.length : 0
+  return 재료 >= 2 && 걸음 >= 2
+}
+
+// 🖼🖼 **「표지에 뭘 그릴까」 잣대 — ⭐이 저장소에서 «여기 한 곳»뿐이다** (2026-09-02)
+//   📮 창업자 = *"저 자리는 음식아이콘이 들어가야하는데 편집끝나도 사진으로 남는거야?"* → 판정 = **캡처는 표지 안 쓴다**
+//   ⛔⛔ 그 전엔 «똑같은 잣대»가 **세 곳에 복사**돼 있었다 —
+//      `Thumb.jsx:40` ＋ `DecorEditor.jsx:210` ＋ `EditorScreen.jsx:184`.
+//   ⛔ 뿌리 = `image` 만 있으면 무조건 `'photo'` 였다. 그런데 공유받기가 **캡처를 `image` 에 그대로 담아서**
+//      «글자 사진»이 레시피 카드 표지가 됐다 — 콩국수·김치찌개 사이에서 혼자 논다.
+//   ⭐ 사진을 «지우는 게 아니다» — `image` 는 그대로 남아 「보면서 쓰기」에 쓰이고,
+//      유저가 「사진」 칩을 누르면 그때 `thumb: 'photo'` 가 박혀 표지가 된다.
+//   ⚠️ 대신 진짜 «음식 사진»을 공유받아도 아이콘이 된다 — 창업자가 알고 고른 값이다.
+export function 기본표지(r) {
+  if (r?.thumb) return r.thumb                       // 유저가 고른 게 있으면 그게 이긴다
+  if (r?.image && r?.source !== 'photo') return 'photo'
+  return 'icon'
+}
+
+// 🔢 `INBOX_V` — 올리면 **이미 폰에 쌓인 것**을 한 번 더 훑는다.
+//   · 1 (2026-09-01) = 처음. 그때 임시보관함에 있던 것 중 다 읽은 것을 옮겼다.
+//   · 2 (2026-09-02) = ⭐**창업자 판정** *"응, 한 번 더 훑는다"* —
+//        1 이 돈 «뒤»에 AI 가 채운 것들(창업자 폰의 **항정살조림**)이 그대로 갇혀 있었다.
+//        `채우기()` 고침은 «앞으로»만 고치므로 이 번호를 올려야 이미 갇힌 게 나온다(규칙 18 ⓙ).
+const INBOX_V = 2
 function migrateInboxSorted(recipes, saved) {
   if ((saved.inboxV || 0) >= INBOX_V) return { recipes, inboxV: saved.inboxV }
   const out = recipes.map((r) => {
     if (!r || r.status !== 'unsorted') return r
-    const 재료 = Array.isArray(r.ingredients) ? r.ingredients.length : 0
-    const 걸음 = Array.isArray(r.steps) ? r.steps.length : 0
-    return 재료 >= 2 && 걸음 >= 2 ? { ...r, status: 'sorted' } : r
+    return 다읽었나(r) ? { ...r, status: 'sorted' } : r
   })
   return { recipes: out, inboxV: INBOX_V }
+}
+
+// 🖼🔢 `COVER_V` — 올리면 **이미 폰에 박힌 캡처 표지**를 한 번 더 훑는다.
+//   ⛔ 왜 필요한가 = `기본표지()` 는 «고른 게 없을 때»만 일한다. 그런데 편집기가 저장할 때
+//      `thumb: 'photo'` 를 **도장처럼 박아둬서** 이미 편집한 적 있는 편은 잣대가 못 건드린다.
+//   ⭐ 그래서 **도장을 지운다** — `'icon'` 을 새로 쓰지 않는다. 지우면 `기본표지()` 하나가 다시 정한다
+//      (나중에 잣대를 바꾸면 그 편들도 같이 따라온다).
+//   ⛔ 건드리는 범위 = **`source: 'photo'`**(＝공유받기·가져오기로 «사진»에서 온 것)뿐이다.
+//      기본 레시피는 `source: 'hankki'` 라 안 걸리고, 손으로 만든 편도 안 걸린다.
+//   ⚠️ 창업자가 알고 고른 값 = *"그것도 같이 고친다"* — 유저가 «일부러» 캡처를 표지로 둔 편도 바뀐다.
+//      ⭐ 사진은 안 지우니 「사진」 칩을 다시 누르면 그대로 돌아온다.
+//   · 1 (2026-09-02) = 처음.
+const COVER_V = 1
+function migrateCoverThumb(recipes, saved) {
+  if ((saved.coverV || 0) >= COVER_V) return { recipes, coverV: saved.coverV }
+  const out = recipes.map((r) => {
+    if (!r || r.source !== 'photo' || r.thumb !== 'photo') return r
+    const { thumb, ...나머지 } = r
+    return 나머지
+  })
+  return { recipes: out, coverV: COVER_V }
 }
 
 // 📔📔 **샘플 일기 한 장** (창업자 2026-08-12 *"샘플레시피는 지울 수 있게도 해줘
@@ -700,14 +788,16 @@ function initialState() {
     const politeMig = migratePolite(memoMig.recipes, saved)
     const qtyMig = migrateQtyOnly(politeMig.recipes, saved)
     const inboxMig = migrateInboxSorted(qtyMig.recipes, saved)
+    const coverMig = migrateCoverThumb(inboxMig.recipes, saved)
     const diary = withSample(saved)
     return {
-      recipes: reconcileCooked(inboxMig.recipes, diary),
+      recipes: reconcileCooked(coverMig.recipes, diary),
       seedV: mig.seedV,
       memoCleanV: memoMig.memoCleanV,
       politeV: politeMig.politeV,
       qtyOnlyV: qtyMig.qtyOnlyV,
       inboxV: inboxMig.inboxV,
+      coverV: coverMig.coverV,
       removedSeedIds: saved.removedSeedIds || [],
       folders: saved.folders
         ? (saved.folders.includes('아시안') ? saved.folders : [...saved.folders, '아시안'])
@@ -728,6 +818,7 @@ function initialState() {
     politeV: POLITE_V,
     qtyOnlyV: QTY_ONLY_V, // 처음 켠 사람은 고칠 게 없다 — 이사를 «이미 한 것»으로 둔다
     inboxV: INBOX_V,      // 〃 (임시보관함에 쌓인 게 아예 없다)
+    coverV: COVER_V,      // 〃 (캡처 표지가 박힌 게 아예 없다)
     removedSeedIds: [],
     folders: ['한식', '양식', '일식', '간식', '아시안'],
     profile: PROFILE_DEFAULT,
@@ -965,12 +1056,27 @@ function reducer(state, action) {
     }
 
     // 백업 불러오기 — 저장된 데이터로 전체 교체(기본값과 병합해 누락 방지)
+    //
+    // 🔢🔢 **[2026-09-02] 「이사 도장」을 «같이» 넘긴다 — 안 넘기면 복원할 때마다 전부 다시 돈다.**
+    //   ⛔⛔ 그 전엔 `politeV·qtyOnlyV·inboxV·coverV·sampleGone` 이 **하나도 안 넘어갔다.**
+    //      그래서 백업을 되살리면 이사 다섯이 **처음부터 또** 돌았다 —
+    //      · `inboxV` = 임시보관함에 «일부러» 남겨둔 것이 통째로 졸업한다
+    //      · `coverV` = 유저가 「사진」 칩으로 도로 세운 표지 도장이 또 지워진다
+    //      · `sampleGone` = **지운 샘플 일기가 되살아난다**(창업자 2026-08-12 *"지워도 되게"* 가 깨진다)
+    //   ⭐ 값은 **큰 쪽으로** 고른다 — 옛 백업(도장 없음)을 되살려도 «지금 폰이 이미 한 이사»를 다시 하지 않는다.
+    //   📌 규칙 18 ⓙ 의 짝이다 — 「새로 까는 사람」이 아니라 **「되살리는 사람」**을 본 것.
     case 'importAll': {
       const d = action.data || {}
       if (!Array.isArray(d.recipes)) return state
       return {
         seedV: Math.max(state.seedV || 0, d.seedV || 0, BASICS_VERSION),
         memoCleanV: Math.max(state.memoCleanV || 0, d.memoCleanV || 0),
+        politeV: Math.max(state.politeV || 0, d.politeV || 0),
+        qtyOnlyV: Math.max(state.qtyOnlyV || 0, d.qtyOnlyV || 0),
+        inboxV: Math.max(state.inboxV || 0, d.inboxV || 0),
+        coverV: Math.max(state.coverV || 0, d.coverV || 0),
+        // 🧹 샘플은 «둘 중 하나라도» 지웠으면 지운 것이다(되살아나면 안 된다)
+        sampleGone: !!(state.sampleGone || d.sampleGone),
         removedSeedIds: d.removedSeedIds || state.removedSeedIds || [],
         recipes: d.recipes,
         folders: d.folders || defaultFolders(d.recipes),
@@ -993,19 +1099,113 @@ const Ctx = createContext(null)
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState)
 
+  // 🧷🧷 **[2026-09-02 · 창업자 제보로 잡은 사고] 「지금 상태」를 참조로 들고 있는다.**
+  //   ⛔⛔ 아래 「주인 없는 사진 청소」가 `[]` 로 걸려 있어 **8초 뒤에 도는 코드가
+  //      «앱을 켠 순간»의 `state` 를 봤다**(stale closure). 그 사이에 담은 사진은
+  //      「살아있는 열쇠」 명단에 없어 **주인 없는 것으로 잡혀 지워졌다.**
+  //   🔢 실측(`_repro-청소가새사진지움-0902.mjs`) = 창고를 1초마다 찍으니
+  //      0~3초 있다 ✅ → 4초 없다 ⛔ (페이지 연 지 ~8초). **들어갔다가 지워진다.**
+  //   📮 창업자 = *"채우러가기 눌렀는데 이래"* — 캡처가 깨진 아이콘이었던 그 뿌리다.
+  //   ⛔ 안전장치(`살아있는열쇠.size === 0`)는 **처음부터 사진이 하나도 없을 때만** 막아서
+  //      창업자 폰(사진 11.8MB)엔 안 걸렸다.
+  //   📌 오늘 아침 축소 루프에서 고친 것과 **똑같은 병**이다 — 같은 파일에 하나 더 있었다.
+  const 지금state = useRef(state)
+  지금state.current = state
+
+  // 🗄🗄 **사진은 «큰 창고»(IndexedDB)에, 글자만 서랍에** (2026-09-02 · 창업자 폰 실물 확인 뒤)
+  //
+  //   🔢 창업자 폰 = **4.56MB / 5MB = 91%** · 창고 한도 **10,731MB**(2,000배)
+  //   🚨 **순서가 목숨이다** — 창고에 «먼저» 넣고, **성공했을 때만** 서랍에서 뺀다.
+  //      뒤집으면 「서랍에도 없고 창고에도 없는」 창이 생기고, 그때 서비스워커가 새로고침하면 사진을 잃는다.
+  //   ⛔ 창고가 안 되면(못 열림·꽉 참) **사진을 안 뺀다** — 지금과 «같아질 뿐» 나빠지지 않는다.
+  //   ⭐ 사진 자리엔 `null` 이 아니라 **쪽지**(`idb://…`)를 남긴다 —
+  //      `null` 이면 「사진이 없다」와 구별이 안 돼서, 일기 연동·자랑카드 올리기가 조용히 깨진다.
   useEffect(() => {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(state))
-    } catch {
-      // 저장 공간 초과(특히 iOS ~5MB) — 조용히 사라지면 안 되므로(핵심 약속: 레시피 보관)
-      // 사용자에게 알린다. 매 변경마다 반복되지 않게 60초에 한 번만.
-      const now = Date.now()
-      if (now - lastFullWarn > 60000) {
-        lastFullWarn = now
-        try { window.dispatchEvent(new CustomEvent('hankki:storagefull')) } catch { /* noop */ }
-      }
-    }
+    let 취소 = false
+    ;(async () => {
+      let 저장할판 = state
+      try {
+        const { 판, 사진들 } = 나누기(지금state.current)
+        if (사진들.length) {
+          // ⭐ 한 거래로 묶어 넣는다 — 100장에 8ms(한 장씩이면 183ms · 실측)
+          const 됐나 = await 여럿넣기(사진들)
+          if (취소) return
+          if (됐나) 저장할판 = 판   // ✅ 창고에 «들어간 뒤에만» 서랍에서 뺀다
+        } else {
+          저장할판 = 판
+        }
+      } catch { /* 창고가 말썽이면 지금까지처럼 통째로 저장한다 */ }
+      if (취소) return
+      쓰기(저장할판)
+    })()
+    return () => { 취소 = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state])
+
+  // 🧹🧹 **주인 없는 사진을 쓸어담는다** — 레시피·일기·꾸미기를 지웠는데 창고에 사진만 남는 것 방지
+  //
+  //   ⛔⛔ **지우는 자리를 하나씩 고치면 «반드시» 빠뜨린다** — 레시피 삭제(`remove`)·전체 비우기(`clear`)·
+  //      초기화(`reset`) 말고도 **꾸미기 스티커 하나 떼기 · 일기 한 장 지우기 · 표지 바꾸기**가 다 사진을 버린다.
+  //      ⭐ 그래서 «지우는 곳»이 아니라 **«남아 있는 것»을 기준**으로 판단한다. 새 삭제 경로가 생겨도 저절로 걸린다.
+  //   🔒 `public/delete-account.html` 이 「앱에서 직접 삭제」를 약속하고 있다 — 안 지우면 그 신고와 어긋난다.
+  //
+  //   🚨 **안전장치 = 「지금 상태가 쓸 열쇠」를 «둘 다» 센다.**
+  //      아직 이사 전이라 사진이 `data:` 로 들어 있어도 `나누기()` 가 «쓰게 될 열쇠»를 알려준다.
+  //      ⛔ 쪽지만 세면 이사 «직전»에 쓸어담아 **멀쩡한 사진을 통째로 지운다.**
+  //   ⏰ 앱을 켜고 8초 뒤 «한 번만» — 첫 화면을 먼저 그리고, 매 저장마다 훑지 않는다(절대원칙 32).
+  useEffect(() => {
+    const t = setTimeout(async () => {
+      try {
+        // 🧷 «지금» 상태로 센다 — `state` 를 그대로 쓰면 켠 순간 값에 굳어 새 사진을 지운다(위 주석)
+        const 살아있는열쇠지금 = () => {
+          const { 판, 사진들 } = 나누기(지금state.current)
+          return new Set([...사진들.map(([k]) => k), ...쪽지열쇠모으기(판)])
+        }
+        const 살아있는열쇠 = 살아있는열쇠지금()
+        const 창고열쇠 = await 창고열쇠들()
+        // ⏳⏳ **창고를 읽는 «동안»에도 사진이 들어온다** — 그 사이에 담긴 것을 지우면 같은 사고다.
+        //   ⭐ 그래서 지우기 «직전»에 한 번 더 세고, **두 번 다 주인이 없는 것만** 지운다.
+        //      한 번이라도 살아 있었으면 놔둔다 — 「살릴 쪽으로 기운다」(사진을 잃는 건 되돌릴 수 없다).
+        const 살아있는열쇠2 = 살아있는열쇠지금()
+        const 주인없는 = 창고열쇠.filter((k) => !살아있는열쇠.has(k) && !살아있는열쇠2.has(k))
+        // ⛔ 「전부 주인이 없다」면 **뭔가 잘못 읽은 것**이다(상태가 아직 안 왔을 수 있다) — 그때는 손대지 않는다
+        if (!주인없는.length || (창고열쇠.length && 주인없는.length === 창고열쇠.length && 살아있는열쇠2.size === 0)) return
+        await 창고에서지우기(주인없는)
+      } catch { /* 청소는 «있으면 좋은 것» — 실패해도 앱은 그대로 돈다 */ }
+    }, 8000)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function 쓰기 (저장할판) {
+    try {
+      const 글 = JSON.stringify(저장할판)
+      // 📊📊 **서랍이 얼마나 찼나 — 「쓰기 «직전»」에 잰다** (2026-09-02)
+      //   ⛔⛔ `navigator.storage.estimate()` 로는 **못 잰다** — 그건 localStorage 를 «안 센다»
+      //      (실측: 1MB 를 넣어도 0KB · `scripts/_probe-계기판-0902.mjs`).
+      //      그걸로 계기판을 만들면 **꽉 차서 터지는 순간에도 「3%」라고 말한다** — 지금보다 나쁘다.
+      //   ⭐ 그래서 **우리가 쓰는 글자 수**를 직접 센다. 그게 진짜 벽에 닿는 값이다.
+      //   ⏰ 재는 시점이 「설정 화면」이면 늦다 — 자랑카드 한 장에 **한 방에** 넘어간다.
+      //      쓰기 직전에 재야 **차기 «전»에** 말할 수 있다.
+      서랍글자수 = 글.length
+      if (글.length > 서랍한도 * 0.8) {
+        const 이제 = Date.now()
+        if (이제 - 마지막경고 > 5 * 60 * 1000) {   // 5분에 한 번 — 매 저장마다 뜨면 잔소리가 된다
+          마지막경고 = 이제
+          try { window.dispatchEvent(new CustomEvent('hankki:storagewarn', { detail: { 쓴것: 글.length, 한도: 서랍한도 } })) } catch { /* noop */ }
+        }
+      }
+      localStorage.setItem(KEY, 글)
+      마지막저장성공 = Date.now()
+    } catch {
+      // 저장 공간 초과(특히 iOS ~5MB) — 조용히 사라지면 안 된다(핵심 약속: 레시피 보관)
+      마지막저장실패 = Date.now()
+      // ⛔⛔ [2026-09-02] **60초 침묵을 없앴다.** 창업자가 8:41·8:42 에 잇달아 담았는데
+      //    첫 번째가 경고를 써버려서 **두 번째는 완전히 조용히 사라졌다** — 그게 「흔적도 없이」의 정체다.
+      //    📌 실패는 «매번» 말한다. 시끄러운 게 잃는 것보다 낫다.
+      try { window.dispatchEvent(new CustomEvent('hankki:storagefull')) } catch { /* noop */ }
+    }
+  }
 
   const api = {
     ...state,

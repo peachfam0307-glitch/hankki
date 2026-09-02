@@ -31,6 +31,8 @@ const INK = '#5b4436' // 우리 진갈색 — 속지 선(#e2d8c6)보다 진해 �
 //    ⭐ 레시피 표지 사진도 «같은 손짓»이라야 해서 갈라 냈다 — 복사하면 한쪽이 반드시 낡는다.
 //    (상한 3 = 폰 사진이라도 그 위로 가면 뭉갠다 · 하한 0.5 = 1 밑은 「전체 보기」)
 import { clampZoom, photoImgStyle, photoPanStart } from '../photoPan'
+// 🖼 사진칸 값이 「큰 창고」 쪽지(`idb://…`)일 수 있다 — `photoView.jsx` 가 꺼내서 그린다
+import StoredImg from '../photoView'
 
 // 줄·모눈·도트를 «쓰는 칸 안에만» 그릴 때 쓰는 배경. `.paper.lined` 등과 같은 그림이다.
 const ruleBg = (cls) => {
@@ -184,7 +186,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
         <div key={`photo${pi}`} style={{ ...box(p), overflow: 'hidden' }}>
           {value[pk]
             ? (!canShot
-              ? <img src={value[pk]} alt="" style={imgStyle} />
+              ? <StoredImg src={value[pk]} alt="" style={imgStyle} />
               : (
                 <>
                   <button type="button" className="press" aria-label="사진 — 끌어서 위치 조정 · 두 손가락으로 확대·축소 · 누르면 바꾸기"
@@ -196,7 +198,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
                       onPickPhoto(pk)
                     }}
                     style={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'none', display: 'block', touchAction: 'none' }}>
-                    <img src={value[pk]} alt="" draggable={false} style={{ ...imgStyle, pointerEvents: 'none' }} />
+                    <StoredImg src={value[pk]} alt="" draggable={false} style={{ ...imgStyle, pointerEvents: 'none' }} />
                   </button>
                   {/* 🗑🗑 **사진 지우기** (창업자 폰 제보 2026-08-07 *"하나추가 사진지우는게 없어."*)
                       ⛔ 이건 «사진 스티커»가 아니라 **틀의 사진칸**(`value.photo`)이라

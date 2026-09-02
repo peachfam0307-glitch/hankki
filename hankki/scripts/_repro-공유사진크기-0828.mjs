@@ -30,6 +30,7 @@ import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { extname, join } from 'node:path'
+import { 사진값 } from './_창고사진.mjs'   // 🗄 사진이 창고(IndexedDB)로 갔으면 꺼내서 잰다
 
 const ROOT = new URL('..', import.meta.url).pathname
 const DIST = join(ROOT, 'dist')
@@ -131,7 +132,11 @@ const 담긴 = (s1.recipes || []).find((r) => r.source === 'photo' && r.image)
 chk('큰 사진이 담겼다', !!담긴, 담긴 ? `「${담긴.title}」` : '(못 찾음)')
 
 if (담긴) {
-  const 줄인길이 = 담긴.image.length
+  // 🗄 [2026-09-02] 서랍엔 쪽지(`idb://…`)만 남는다 → **창고에서 꺼낸 진짜 사진**을 잰다(규칙 18 ⓘ)
+  const 담긴그림 = await 사진값(p1, 담긴.image)
+  chk('사진을 «창고에서든 서랍에서든» 찾았다', 담긴그림.startsWith('data:image'),
+    `${담긴그림.length.toLocaleString()}자`)
+  const 줄인길이 = 담긴그림.length
   const 비율 = 줄인길이 / 원본.length
   chk('저장된 사진이 «원본보다 작다»', 줄인길이 < 원본.length,
     `${원본.length.toLocaleString()} → ${줄인길이.toLocaleString()}자 (${Math.round(비율 * 100)}%)`)
@@ -143,7 +148,7 @@ if (담긴) {
   //       이 칸은 「아예 안 줄었다(100%)」를 잡는 그물이다. 원본으로 되돌리면 여기서 죽는다.
   chk('원본보다 확실히 작다', 비율 < 0.7,
     `아끼는 양 ≈ ${Math.round((원본.length - 줄인길이) / 1024)}KB / 장`)
-  const 크기 = await 재기(p1, 담긴.image)
+  const 크기 = await 재기(p1, 담긴그림)
   chk('긴 변이 1600 이하다', Math.max(크기.w, 크기.h) <= 1600, `${크기.w}×${크기.h}`)
   chk('사진이 안 깨졌다(픽셀이 있다)', 크기.w > 0 && 크기.h > 0)
 } else {
@@ -173,7 +178,7 @@ const s3 = await 저장소(p3)
 const 사진들 = (s3.recipes || []).filter((r) => r.source === 'photo' && r.image)
 const 작은담긴 = [...사진들].sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0))[0]
 if (작은담긴) {
-  const k = await 재기(p3, 작은담긴.image)
+  const k = await 재기(p3, await 사진값(p3, 작은담긴.image))
   chk('작은 사진은 크기가 그대로다', k.w === 400 && k.h === 400, `${k.w}×${k.h}`)
 } else {
   실패++; 실패목록.push('작은 사진이 안 담겼다')

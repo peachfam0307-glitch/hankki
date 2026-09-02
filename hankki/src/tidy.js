@@ -16,6 +16,8 @@
 //   ⏳ 2단계(붙여넣기 AI ＋ 보너스 열쇠)에서 열쇠를 세게 되면 그때 uid 를 싣는다.
 
 import { politeSteps } from './polish.js'
+// 🥄 「계량 기준」 잣대는 «한 곳»에서 온다 — 규칙 파서와 AI 결과가 같은 말을 써야 한다.
+import { KIJUN_LINE, collapseRepeatedSyllables } from './parseRecipe.js'
 
 // ✅ 2026-08-29 워커를 세우고 주소를 넣었다.
 //   실물 확인 = 창업자가 주소창에 쳐서 {"error":"method_not_allowed"} 를 봤다(= 우리 코드가 살아 있다).
@@ -105,6 +107,29 @@ export async function tidyRecipe(text, 사진) {
   // ⏱ 오래 걸리면 끊는다 — ⛔안 끊으면 유저가 빈 화면을 하염없이 본다
   const ac = typeof AbortController !== 'undefined' ? new AbortController() : null
   const timer = ac ? setTimeout(() => ac.abort(), TIMEOUT_MS) : null
+  // ⏱⏱⏱ **[2026-09-02 · 창업자 「기본 정리예요(timeout)」] 앱과 워커가 «예산»을 나눠 쓴다.**
+  //
+  // 📮 창업자 = *"불안정하다.. ai가 읽을때가 있고 못읽을때가 있고"* → 실물 이유 = `timeout`
+  // 📮 그리고 못 박았다 = *"**땜빵하는 설계는 절대금지**"* · *"**절대원칙이야. 그때그때 땜빵금지야.**"*
+  //
+  // ⛔⛔ **그래서 「60초 → 150초」를 안 한다** — 그건 절대원칙 34 의 잣대 셋에 다 걸린다
+  //    (①숫자만 바꾼다 ②왜 150인지 잰 근거가 없다 ③175초 걸리면 똑같이 잃는다).
+  //
+  // 🔎 **진짜 뿌리 = 둘이 예산을 «안 나눈다»**
+  //    · 앱  = 60초 세고 끊는다
+  //    · 워커 = 모델을 차례로 최대 셋 부른다. **남은 시간을 모른다** →
+  //      앱이 이미 끊은 «뒤»에도 다음 모델을 부른다 = **아무도 못 받는 답에 뉴런을 태운다**
+  //      (전역 하루 통이 우리 돈이다 · 절대원칙 32)
+  //
+  // ✅ 그래서 **「내가 기다릴 수 있는 시간」을 요청에 실어 보낸다.**
+  //    워커는 다음 모델을 부르기 «전»에 남은 예산을 보고, 모자라면 «안 부른다».
+  //    ⛔ 이걸로 «유저 화면»이 좋아지지는 «않는다** — 답이 없는 건 그대로다. 정직하게 적어 둔다.
+  //       유저 쪽은 짝으로 만든 「실패 만회」가 맡는다(레시피를 다시 열 때 한 번 더).
+  //    ⭐ 대신 워커가 **왜 못 했는지(`budget_out`)를 돌려주므로** 그 만회가 «언제» 필요한지 알 수 있다.
+  //
+  // ⛔ 워커가 이 값을 «모르면» 예전과 똑같이 돈다(옛 워커와 섞여도 안전하다).
+  //    📌 워커는 창업자가 대시보드에 붙여넣어야 살아난다 — 앱만 나가도 나빠지지 않는다.
+  const 보낸때 = Date.now()
 
   // 🔁🔁 [2026-09-01 · 창업자 「되다 안 되다」] **`network` 일 때만 «한 번» 더 시도한다.**
   //
@@ -121,7 +146,12 @@ export async function tidyRecipe(text, 사진) {
     const resp = await fetch(TIDY_URL, {
       method: 'POST',
       headers,
-      body: JSON.stringify(실을사진 ? { text: t, image: 실을사진 } : { text: t }),
+      // ⏱ `budgetMs` = **지금 이 순간 남은 예산**(재시도로 두 번째 부를 땐 그만큼 줄어 있다).
+      body: JSON.stringify({
+        text: t,
+        ...(실을사진 ? { image: 실을사진 } : {}),
+        budgetMs: Math.max(0, TIMEOUT_MS - (Date.now() - 보낸때)),
+      }),
       signal: ac ? ac.signal : undefined,
     })
     if (!resp.ok) return { 실패: 'http_' + resp.status }
@@ -153,7 +183,17 @@ export async function tidyRecipe(text, 사진) {
   }
 
   if (!data || data.error) {
-    _마지막 = { ok: false, why: (data && data.error) || 'empty' }
+    // 📢📢 **[2026-09-02 · 창업자 「매번 저걸 켜둬야해??」] 「어디서 멈췄나」를 토스트에 붙인다.**
+    //   ⛔ 그 전엔 «어느 모델이 몇 초 먹었나»가 **워커 로그에만** 있어서,
+    //      창업자가 그걸 보려면 **로그 스트림을 켜 놓고 기다려야** 했다 — 규칙 8 위반이다.
+    //   ✅ 워커가 응답에 `model`·`ms` 를 실어 주므로 그대로 들고 있다가 `tidyTail()` 이 꼬리로 붙인다.
+    //   ⛔ 옛 워커는 이 둘을 «안 준다» → 그땐 예전처럼 이유만 뜬다(섞여도 안전).
+    _마지막 = {
+      ok: false,
+      why: (data && data.error) || 'empty',
+      model: (data && data.model) || '',
+      ms: (data && Number(data.ms)) || 0,
+    }
     return null
   }
 
@@ -224,11 +264,25 @@ export function 분량되살리기 (ai재료 = [], 파서재료 = []) {
   })
 }
 
+/** 🥄 AI 걸음에서 걸러낸 「계량 기준」 줄을 «메모 끝»에 옮겨 붙인다.
+ *   ⛔ 이미 메모에 있으면 또 넣지 않는다 — 규칙 파서가 먼저 같은 줄을 메모로 보내 놨을 수 있다
+ *      (그대로 두면 창업자 메모에 같은 줄이 두 번 뜬다). */
+function 계량줄옮기기 (메모, 걸음들) {
+  const 있던것 = String(메모 || '')
+  const 옮길것 = (걸음들 || [])
+    .map((s) => String(s).trim())
+    .filter((s) => s && KIJUN_LINE.test(s) && !있던것.includes(s))
+  if (!옮길것.length) return 메모
+  return [있던것, ...옮길것].filter(Boolean).join('\n')
+}
+
 export function mergeTidy(r, ai) {
   if (!ai) return r
   return {
     ...r,
-    title: ai.title || r.title,
+    // 🏷 AI 가 제목을 못 주면 **규칙 파서 제목이 살아난다** — 창업자 짬뽕밥에서 이 자리가 값을 했다
+    //    (AI 는 제목을 안 줬고 규칙 파서가 `#짬뽕밥` 을 잡았다).
+    title: collapseRepeatedSyllables(ai.title || '') || r.title,
     // 🥄 AI 재료를 쓰되 «분량은 규칙 파서 것으로 되살려서» 쓴다 (창업자 제보 2026-08-31 · 위 주석)
     ingredients: ai.ingredients.length ? 분량되살리기(ai.ingredients, r.ingredients) : r.ingredients,
     // ✍️✍️ **[2026-08-29 · 창업자가 오타로 찾아낸 구멍] AI 걸음도 «문체 다듬기»를 거친다.**
@@ -238,8 +292,13 @@ export function mergeTidy(r, ai) {
     //      우리 앱엔 해요체 표준도 있고 배포 게이트(check-steps.mjs)까지 있는데 **AI 만 그 밖에 있었다.**
     //   ⭐ 얹는 자리가 «한 곳»이라 여기 한 줄이면 두 문(공유받기·편집 캡처)이 같이 고쳐진다.
     //   ⛔ 사전에 없는 말은 «안 건드린다» — 안 바꾸는 게 잘못 바꾸는 것보다 낫다(polish.js 원칙).
-    steps: ai.steps.length ? politeSteps(ai.steps) : r.steps,
-    memo: ai.memo || r.memo,
+    // 🥄🥄 **[2026-09-02 · 창업자 짬뽕밥] AI 는 「계량 기준」 줄을 «걸음 1번»으로 준다.**
+    //   📮 창업자 폰 화면 = 1번 「계랑스푼 기준(1T:15ml, 1t:5ml)」 — 규칙 파서는 메모로 보냈는데
+    //      **AI 결과가 그 위에 도로 얹혔다.** 잣대가 한쪽에만 있으면 이렇게 «고친 게 되돌아온다».
+    //   ⭐ 그래서 규칙 파서와 «같은 잣대»(`KIJUN_LINE`)를 여기서도 쓴다.
+    //   ⛔ 버리지 않고 **메모로 옮긴다** — 「1T 가 15ml」는 진짜 필요한 정보다.
+    steps: ai.steps.length ? politeSteps(ai.steps.filter((s) => !KIJUN_LINE.test(String(s)))) : r.steps,
+    memo: 계량줄옮기기(ai.memo || r.memo, ai.steps),
   }
 }
 
@@ -302,7 +361,10 @@ export function tidyTail() {
   const 사진표 = _사진 ? ' · 📷' + _사진 : ''
   if (v && v.ok) return 운영자 ? ` · AI가 정리했어요(${v.model ? 짧은모델(v.model) : 'AI'})${사진표}` : ' · AI가 정리했어요'
   // 실패·안 부름 — 유저에겐 「기본 정리」 하나로 묶는다(⛔「실패」라고 쓰지 않는다. 결과는 멀쩡하다)
-  return 운영자 ? ` · 기본 정리예요(${(v && v.why) || '안부름'})${사진표}` : ' · 기본 정리예요'
+  // 📢 운영자에겐 «어디서 몇 초» 까지 — 로그를 안 열어도 되게(창업자 2026-09-02 *"매번 저걸 켜둬야해??"*)
+  //   ⛔ 워커가 안 주면(옛 판·타임아웃·네트워크) 조용히 빠진다 — 예전 문구 그대로다.
+  const 어디서 = v && v.model ? ` · ${짧은모델(v.model)}${v.ms ? ' ' + (v.ms / 1000).toFixed(1) + '초' : ''}` : ''
+  return 운영자 ? ` · 기본 정리예요(${(v && v.why) || '안부름'}${어디서})${사진표}` : ' · 기본 정리예요'
 }
 
 const str = (v) => (typeof v === 'string' ? v.trim() : '')

@@ -65,6 +65,27 @@ const 재기 = (page, du) => page.evaluate((d) => new Promise((res) => {
   const im = new Image(); im.onload = () => res({ w: im.naturalWidth, h: im.naturalHeight }); im.onerror = () => res({ w: 0, h: 0 }); im.src = d
 }), du)
 
+// 🗄🗄 **[2026-09-02] 사진이 「큰 창고」(IndexedDB)로 이사했다 — 서랍만 보면 «쪽지»를 잰다**
+//   ⛔⛔ 이 판은 `localStorage` 의 `r.image` 길이로 「줄었나」를 쟀는데, 이사 뒤 그 값은
+//      `idb://recipes/zz-big/image` 같은 **서른 글자짜리 쪽지**다.
+//      → 「큰 사진이 줄었다」는 «늘» 초록불이 되고(1,000,000 → 30) 「작은 건 안 바뀌었다」는 «늘» 빨간불이 된다.
+//      **둘 다 사진을 안 재고 있다**(규칙 18 ⓘ).
+//   ✅ 그래서 쪽지면 **창고에서 진짜 사진을 꺼내** 그것을 잰다. 잣대가 「사진 그 자체」로 돌아온다.
+const 사진값 = (page, v) => page.evaluate((val) => new Promise((res) => {
+  if (typeof val !== 'string' || !val.startsWith('idb://')) return res(val || '')
+  const 길 = val.slice(6)
+  const req = indexedDB.open('hankki-photos', 1)
+  req.onerror = () => res('')
+  req.onsuccess = () => {
+    const db = req.result
+    try {
+      const g = db.transaction('img', 'readonly').objectStore('img').get(길)
+      g.onsuccess = () => { res(typeof g.result === 'string' ? g.result : ''); db.close() }
+      g.onerror = () => { res(''); db.close() }
+    } catch { res(''); db.close() }
+  }
+}), v)
+
 console.log('\n🗃 임시보관함 정리 ＋ 이미 담긴 사진 줄이기 — 재현판\n')
 
 // ─────────────────────────────────────────────
@@ -104,7 +125,20 @@ const 심은값 = await p0.evaluate(() => {
   //    앱이 한 번 뜨면 `initialState` 가 «처음 켠 사람»으로 보고 `inboxV` 를 박아 둔다.
   //    그대로 두고 씨앗만 심으면 **이사가 «이미 끝난 것»으로 건너뛰어** 아무것도 안 옮겨진다
   //    (그러면 판은 초록불인데 창업자 폰은 그대로 — 제일 나쁜 거짓 초록불이다).
+  // 🖼 2026-09-02 창업자 판정 — 「캡처는 표지 안 쓴다」
+  //   ⓐ `zz-big` = 도장(`thumb`)이 «없는» 편 → 잣대(`기본표지`)가 바로 아이콘으로 그린다
+  //   ⓑ 아래 `zz-stamp` = 편집기가 이미 `thumb: 'photo'` 를 «박아둔» 옛 폰 흉내 → 이사가 도장을 지워야 한다
+  s.recipes.push({ id: 'zz-stamp', title: '판정용 캡처표지', status: 'sorted', source: 'photo',
+    thumb: 'photo', image: 작은사진, savedAt: 이제 - 5000,
+    ingredients: ['콩나물 300g', '들기름 1큰술'], steps: ['씻어요', '무쳐요'], favorite: false, cooked: 0 })
+  //   ⓐ 도장이 «없는» 편 — 잣대가 바로 아이콘으로 그려야 한다
+  //   ⛔ `zz-big` 을 쓰면 안 된다 — 그건 끝까지 `unsorted` 라 «레시피 탭 격자에 아예 없다»(못 재고 빨간불)
+  s.recipes.push({ id: 'zz-nostamp', title: '판정용 도장없는캡처', status: 'sorted', source: 'photo',
+    image: 작은사진, savedAt: 이제 - 6000,
+    ingredients: ['콩나물 300g', '들기름 1큰술'], steps: ['씻어요', '무쳐요'], favorite: false, cooked: 0 })
   delete s.inboxV
+  // ⛔ 이것도 지워야 이사가 돈다 — 안 지우면 «이미 끝난 것»으로 건너뛰어 거짓 초록불이 된다
+  delete s.coverV
   localStorage.setItem('hankki:v1', JSON.stringify(s))
   return { 큰: 큰사진.length, 작은: 작은사진.length }
 })
@@ -124,21 +158,26 @@ console.log('🧹 ② 이미 담긴 사진 줄이기')
 const s1 = await 저장소(p1)
 const 큰 = (s1.recipes || []).find((r) => r.id === 'zz-big')
 const 작은 = (s1.recipes || []).find((r) => r.id === 'zz-small')
+// 🗄 서랍엔 쪽지만 남을 수 있다 → «진짜 사진»을 꺼내서 잰다(위 `사진값` 주석 참조)
+const 큰그림 = 큰 ? await 사진값(p1, 큰.image) : ''
+const 작은그림 = 작은 ? await 사진값(p1, 작은.image) : ''
 if (chk('심은 레시피가 살아 있다', !!큰 && !!작은)) {
-  chk('큰 사진이 «줄었다»', 큰.image.length < 심은값.큰,
-    `${심은값.큰.toLocaleString()} → ${큰.image.length.toLocaleString()}자`)
-  const k = await 재기(p1, 큰.image)
-  chk('큰 사진 긴 변이 1600 이하', Math.max(k.w, k.h) <= 1600, `${k.w}×${k.h}`)
+  chk('⭐ 사진을 «창고에서든 서랍에서든» 찾았다', !!큰그림 && !!작은그림,
+    `큰 ${큰그림.length.toLocaleString()}자 · 작은 ${작은그림.length.toLocaleString()}자`)
+  chk('큰 사진이 «줄었다»', 큰그림.length > 0 && 큰그림.length < 심은값.큰,
+    `${심은값.큰.toLocaleString()} → ${큰그림.length.toLocaleString()}자`)
+  const k = await 재기(p1, 큰그림)
+  chk('큰 사진 긴 변이 1600 이하', k.w > 0 && Math.max(k.w, k.h) <= 1600, `${k.w}×${k.h}`)
   // ⭐⭐ 창업자 걱정 그 자리 — 작은 건 «건드리지도» 않아야 한다(다시 구우면 화질만 깎인다)
-  chk('작은 사진은 «한 글자도» 안 바뀌었다', 작은.image.length === 심은값.작은,
+  chk('작은 사진은 «한 글자도» 안 바뀌었다', 작은그림.length === 심은값.작은,
     `${심은값.작은.toLocaleString()}자 그대로`)
 } else {
-  실패 += 3; 실패목록.push('심은 레시피를 못 찾아 사진 칸을 못 쟀다')
+  실패 += 4; 실패목록.push('심은 레시피를 못 찾아 사진 칸을 못 쟀다')
   console.log('  ⛔ 못 찾아서 뒤 칸을 «판정하지 않는다»(규칙 18 ⓘ)')
 }
 
 // ⑦ 두 번째로 열어도 «또» 굽지 않는다 — 재압축이 쌓이면 뿌예진다
-const 줄인길이 = 큰 ? 큰.image.length : 0
+const 줄인길이 = 큰그림.length
 await p1.close()
 const p2 = await ctx.newPage()
 에러받기(p2, '두번째')
@@ -146,8 +185,9 @@ await p2.goto('http://127.0.0.1:4452/hankki/', { waitUntil: 'networkidle' })
 await p2.waitForTimeout(6000)
 const s2 = await 저장소(p2)
 const 큰2 = (s2.recipes || []).find((r) => r.id === 'zz-big')
-chk('다시 열어도 «또 굽지» 않는다', !!큰2 && 큰2.image.length === 줄인길이,
-  큰2 ? `${큰2.image.length.toLocaleString()}자 그대로` : '(못 찾음)')
+const 큰2그림 = 큰2 ? await 사진값(p2, 큰2.image) : ''
+chk('다시 열어도 «또 굽지» 않는다', !!큰2 && 큰2그림.length === 줄인길이 && 줄인길이 > 0,
+  큰2 ? `${큰2그림.length.toLocaleString()}자 그대로` : '(못 찾음)')
 
 // ─────────────────────────────────────────────
 // ㉠ 임시보관함 — 정리된 것은 «안 보인다», 그런데 «안 잃었다»
@@ -222,6 +262,161 @@ if (chk('레시피 탭이 열렸다', 레시피탭.열렸나, `카드 ${레시�
   실패 += 2; 실패목록.push('레시피 탭을 못 열어 화면 칸을 «판정하지 않았다»(규칙 18 ⓘ)')
   console.log('  ⛔ 못 열어서 뒤 칸을 «판정하지 않는다»')
 }
+
+// ─────────────────────────────────────────────
+// 🚪 2026-09-02 — 「나가는 길」이 임시보관함 «안»에 있나 (창업자 확정)
+//
+//   📮 창업자 = *"임시보관함 자체에 선택해서 저장하는 기능을 넣어야해"*
+//             · *"레시피를 내가 편집하지 않는이상 큰 정리완료 단추는 못찾고"*
+//             · *"그럼 유저가 그걸 어떻게 고쳐??"*
+//             · *"얘는 왜 자동으로 안가고 여기있지? 할 것 같은데"*
+//   ⭐⭐ 이 절의 심장 = **「이유 ＋ 고칠 길」이 «화면에» 같이 있나.**
+//      이유만 있으면 잔소리고, 길만 있으면 왜 눌러야 하는지 모른다. 둘이 한 벌이다.
+// ─────────────────────────────────────────────
+console.log('\n🚪 임시보관함에서 «바로» 나가는 길 (2026-09-02)')
+const 길 = await p2.evaluate(() => {
+  const 화면 = document.querySelector('.inbox-row')?.closest('.screen')
+  if (!화면) return null
+  const 글 = 화면.innerText
+  const 단추 = [...화면.querySelectorAll('button')].map((b) => b.innerText.trim())
+  return {
+    머리말: /덜 읽힌/.test(글),
+    까닭: (글.match(/덜 읽었어요/g) || []).length,
+    채우러: 단추.filter((t) => t === '채우러 가기').length,
+    저장: 단추.filter((t) => t === '그대로 저장' || t === '레시피로 저장').length,
+    줄수: 화면.querySelectorAll('.inbox-row').length,
+  }
+})
+if (chk('임시보관함 화면을 읽었다', !!길, 길 ? `줄 ${길.줄수}개` : '(못 읽음)')) {
+  chk('⭐ 「왜 여기 있나」 머리말이 있다', 길.머리말)
+  chk('⭐ 줄마다 «까닭»이 붙는다', 길.까닭 >= 1, `${길.까닭}줄`)
+  chk('⭐ 「채우러 가기」가 있다 (편집 안 거치고 고치러 간다)', 길.채우러 >= 1, `${길.채우러}개`)
+  chk('⭐ 「저장」 단추가 줄마다 있다 (여기서 바로 내보낸다)', 길.저장 === 길.줄수, `${길.저장}/${길.줄수}`)
+} else {
+  실패 += 4; 실패목록.push('임시보관함을 못 읽어 나가는 길 칸을 «판정하지 않았다»(규칙 18 ⓘ)')
+}
+
+// ── 「채우러 가기」를 누르면 «편집기»로 가고, 거기 단추가 「저장」인가 ──
+//   ⛔ 창업자가 못 찾은 그 단추다 — 옛 이름은 편집 중일 때만 「정리 완료」였다.
+const 갔나 = await p2.evaluate((제목) => {
+  const 줄 = [...document.querySelectorAll('.inbox-row')].find((e) => e.innerText.includes(제목))
+  const 칸 = 줄?.parentElement?.parentElement
+  const b = [...(칸?.querySelectorAll('button') || [])].find((x) => x.innerText.trim() === '채우러 가기')
+  if (!b) return false
+  b.click(); return true
+}, '판정용 큰사진')
+await p2.waitForTimeout(1100)
+const 편집 = await p2.evaluate(() => {
+  const 큰 = document.querySelector('button.btn-primary')
+  const 띠 = document.querySelector('.topbar-stick')
+  return {
+    열렸나: !!큰,
+    큰단추: (큰?.innerText || '').trim(),
+    옛이름: /정리 완료/.test(document.body.innerText),
+    붙었나: 띠 ? getComputedStyle(띠).position === 'sticky' : false,
+    // 📷📷 덜 정리된 것 ＋ 사진이 있으면 «이미 고정된 채로» 열려야 한다 (창업자 2026-09-02)
+    //   ⛔⛔ 옛 잣대 = `img[src^="data:image"]` — **썸네일 미리보기 한 장만 있어도 초록불**이었다.
+    //      「고정 창이 열렸나」를 물어야 하는데 「그림이 화면에 있나」를 물었다(규칙 18 ⓘ).
+    //   ✅ 이제 «접기 손잡이»를 본다 — 그 단추는 `pin === 'photo'` 일 때만 그려진다.
+    사진고정: !!document.querySelector('button[aria-label="캡처 사진 접기"]'),
+    //   ＋ 진짜로 «크게» 그려졌나(썸네일은 폭 100px 대다)
+    사진폭: Math.round([...document.querySelectorAll('img')]
+      .filter((e) => /^data:image/.test(e.src))
+      .reduce((m, e) => Math.max(m, e.getBoundingClientRect().width), 0)),
+  }
+})
+if (chk('「채우러 가기」로 편집기가 열렸다', 갔나 && 편집.열렸나, 편집.큰단추 ? `큰 단추 = 「${편집.큰단추}」` : '(못 열림)')) {
+  chk('⭐⭐ 큰 단추가 «「저장」»이다 (창업자가 못 찾던 그것)', 편집.큰단추 === '저장', `「${편집.큰단추}」`)
+  chk('⭐ 「정리 완료」가 화면에 «한 글자도» 없다', !편집.옛이름)
+  chk('⭐ 상단바가 «붙어 있다» (스크롤해도 「저장」이 안 떠내려간다)', 편집.붙었나)
+  // 📷📷 창업자가 콕 집은 자리 — *"임시보관함에 제대로 안읽은 레시피를 네가 편집할때 사진띄워놓겠다며"*
+  //   ⛔⛔ 이 값은 2026-09-02 까지 «계산만 하고 판정을 안 했다» — 지키는 줄이 0이었다(규칙 18 ⓘ).
+  chk('⭐⭐ 캡처가 «이미 펼쳐진 채로» 열린다 (덜 읽힌 것 ＋ 사진 있음)', 편집.사진고정)
+  chk('⭐ 그 캡처가 «크게» 그려졌다 (썸네일이 아니다)', 편집.사진폭 >= 300, `${편집.사진폭}px`)
+} else {
+  실패 += 5; 실패목록.push('편집기를 못 열어 「저장」·「사진」 칸을 «판정하지 않았다»(규칙 18 ⓘ)')
+}
+
+// ── 「그대로 저장」을 누르면 «레시피 탭 화면»에 뜨나 (반쪽도 유저가 정하면 나간다) ──
+await p2.evaluate(() => document.querySelector('button[aria-label="닫기"]')?.click())
+await p2.waitForTimeout(900)
+const 밀었나 = await p2.evaluate((제목) => {
+  const 줄 = [...document.querySelectorAll('.inbox-row')].find((e) => e.innerText.includes(제목))
+  const 칸 = 줄?.parentElement?.parentElement
+  const b = [...(칸?.querySelectorAll('button') || [])].find((x) => x.innerText.trim() === '그대로 저장')
+  if (!b) return false
+  b.click(); return true
+}, '판정용 반쪽만읽은것')
+await p2.waitForTimeout(1100)
+const p4 = await ctx.newPage()
+에러받기(p4, '레시피탭2')
+await p4.goto('http://127.0.0.1:4452/hankki/', { waitUntil: 'networkidle' })
+await p4.waitForTimeout(1500)
+await p4.getByRole('button', { name: '레시피', exact: true }).first().click()
+await p4.waitForTimeout(1200)
+const 탭2 = await p4.evaluate(() => {
+  const 격자 = document.querySelector('.grid2, .grid3')
+  return 격자 ? [...격자.querySelectorAll('.name')].map((e) => e.innerText.trim()) : null
+})
+if (chk('「그대로 저장」을 눌렀고 레시피 탭이 열렸다', 밀었나 && !!탭2, 탭2 ? `카드 ${탭2.length}장` : '(못 열림)')) {
+  chk('⭐⭐ 유저가 «직접 민» 반쪽이 레시피 탭 화면에 뜬다', 탭2.includes('판정용 반쪽만읽은것'))
+} else {
+  실패++; 실패목록.push('「그대로 저장」 결과를 «판정하지 않았다»(규칙 18 ⓘ)')
+}
+
+// ── 🖼 캡처가 «표지»가 되지 않는다 (창업자 판정 2026-09-02) ──
+//   📮 창업자 = *"저 자리는 음식아이콘이 들어가야하는데 편집끝나도 사진으로 남는거야?"* → **캡처는 표지 안 쓴다**
+//   ⭐ 화면으로 잰다 — 저장소만 보면 「도장이 지워졌나」까지밖에 못 말한다(⛔그건 「카드가 아이콘이다」가 아니다)
+const 표지 = await p4.evaluate(() => {
+  const 저장소 = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+  const 재기 = (제목, id) => {
+    const 이름 = [...document.querySelectorAll('.name')].find((e) => e.innerText.trim() === 제목)
+    const 카드 = 이름?.closest('.grid-card') || 이름?.parentElement
+    if (!카드) return null
+    // ⛔⛔ 「data: 그림이 있나」로 재면 «안 된다» — 빌드가 작은 아이콘 PNG 를 `data:` 로 인라인한다.
+    //    음식 아이콘도 data: 라서 늘 빨간불이 된다(규칙 18 ⓘ · 2026-09-02 에 실제로 밟았다).
+    // ✅ 「그 레시피의 «사진 그 자체»가 쓰였나」를 본다 — 그게 곧 「캡처가 표지다」이다.
+    const 사진 = (저장소.recipes || []).find((r) => r.id === id)?.image || ''
+    const 그림들 = [...카드.querySelectorAll('img')].map((e) => e.src)
+    return { 사진쓰나: !!사진 && 그림들.some((s) => s === 사진), 그림수: 그림들.length }
+  }
+  const st = (저장소.recipes || []).find((r) => r.id === 'zz-stamp')
+  return { 도장없음: 재기('판정용 도장없는캡처', 'zz-nostamp'), 도장있던것: 재기('판정용 캡처표지', 'zz-stamp'),
+    저장된도장: st ? (st.thumb ?? '(지워짐)') : '(못 찾음)', 사진남았나: !!st?.image }
+})
+if (chk('표지 칸을 잴 카드 둘을 찾았다', !!표지.도장없음 && !!표지.도장있던것)) {
+  chk('⭐⭐ 캡처가 «표지»가 아니다 (도장 없던 편)', 표지.도장없음.사진쓰나 === false)
+  chk('⭐⭐ 이미 박힌 캡처 표지도 «풀렸다» (규칙 18 ⓙ · 창업자 판정)', 표지.도장있던것.사진쓰나 === false,
+    `저장된 thumb = ${표지.저장된도장}`)
+  chk('⭐ 사진을 «지우지는» 않았다 — 「사진」 칩으로 되돌릴 수 있다', 표지.사진남았나)
+} else {
+  실패 += 3; 실패목록.push('표지 카드를 못 찾아 «판정하지 않았다»(규칙 18 ⓘ)')
+}
+
+// ─────────────────────────────────────────────
+// 🤖 2026-09-02 — 「AI 가 «나중에» 채우면 그때 졸업하나」 (창업자 제보의 뿌리)
+//
+//   ⚠️⚠️ **이 두 칸만 «소스»를 읽는다. 화면으로 못 재는 이유를 적어 둔다** —
+//      그 길(`App.jsx` 공유받기 → `채우기()`)은 `if (data.imageDataUrl)` 안에 있고
+//      **`await ocrImage()` 를 지나야** 닿는다. 이 판은 OCR 이 막혀(tesseract·Vision 둘 다)
+//      글자가 빈 채로 `return` 하므로 **거기까지 갈 수가 없다.**
+//   ⛔ 그러니 이 칸은 위 화면 칸들보다 «약하다». 「코드에 있다」까지만 말하고
+//      「진짜 도나」는 말하지 않는다 — 그걸 섞어 말하면 그게 거짓 초록불이다(규칙 18 ⓘ).
+//   ⛔ 주석을 걷어내고 «코드»만 본다 — 안 그러면 위에 적어둔 설명 글자를 세어
+//      고침을 지워도 초록불이 된다(이 저장소가 이미 두 번 밟은 함정).
+// ─────────────────────────────────────────────
+console.log('\n🤖 AI 가 «나중에» 채우면 그때 졸업한다 (⚠️소스 검사 — 위 칸들보다 약하다)')
+const 주석뺀다 = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n')
+const App소스 = 주석뺀다(readFileSync(join(ROOT, 'src/App.jsx'), 'utf8'))
+const store소스 = 주석뺀다(readFileSync(join(ROOT, 'src/store.jsx'), 'utf8'))
+const 채우기몸통 = (App소스.split('const 채우기 = (r) =>')[1] || '').split('현재.title = 새제목')[0]
+chk('⭐⭐ `채우기()` 가 «다 읽었으면» status 를 올린다 (창업자 폰 항정살조림이 갇힌 자리)',
+  /다읽었나\(r\)/.test(채우기몸통) && /status:\s*'sorted'/.test(채우기몸통))
+chk('⭐ 잣대가 «한 곳»이다 — 세 자리가 `다읽었나()` 를 부른다 (갈리면 또 어긋난다)',
+  /export function 다읽었나/.test(store소스) && (App소스.match(/다읽었나\(/g) || []).length >= 2,
+  `App.jsx 안 ${(App소스.match(/다읽었나\(/g) || []).length}번`)
+chk('⭐ `INBOX_V` 가 2 이상이다 — 이미 폰에 갇힌 것을 한 번 더 꺼낸다 (창업자 판정)',
+  /const INBOX_V = ([2-9]|\d{2,})/.test(store소스), (store소스.match(/const INBOX_V = \d+/) || ['?'])[0])
 
 await b.close(); srv.close()
 console.log(`\n${실패 ? '❌' : '✅'} ${통과}/${통과 + 실패}`)

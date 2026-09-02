@@ -17,8 +17,6 @@ const OUT = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b
 //    ⭐ 이제 recipe.mjs 를 부른다 — 흉내가 아니라 앱과 «같은 모듈»이라 어긋날 수가 없다.
 //    ⛔ 여기서 다시 파싱하지 말 것.
 import { 레시피들 } from './recipe.mjs'
-// 🛒 주부의 장바구니 제품 — 「우리 양념」을 재료 줄에서 짚어 주려고 읽는다(아래 `내양념`)
-import { cartItems } from './release-calendar.mjs'
 const 편들 = new Map(레시피들().map((r) => [r.id, r]))
 
 // ── 어느 날짜에 열리는 편을 뽑을까 — 날짜를 «인자»로 받는다 ─────────
@@ -40,7 +38,7 @@ if (!날짜들.length) {
 }
 
 // 🏷 줄 이름(「여름 시원한 것」·「우리집레시피」)은 **weekly.js 에서 온다** — 손으로 적지 않는다.
-const { gates } = await import('./release-calendar.mjs')
+const { gates, cartItems } = await import('./release-calendar.mjs')
 const 줄이름 = new Map()
 for (const g of gates()) {
   if (g.kind !== 'recipe') continue
@@ -86,14 +84,25 @@ const 그림 = (key) => {
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-// 🧂 **「우리 양념」이 어느 줄인가 — `curation.js`(주부의 장바구니)에서 «읽어» 온다.**
-//   ⛔ 낱말 목록을 여기 손으로 적지 않는다 — 반드시 낡는다(절대원칙 22).
-//   ⭐ 잣대 = 그 제품의 **갈래 이름(tag)** 이나 **브랜드**가 재료 줄에 들어 있나.
-//      (「해물가루육수」는 tag 가 「가루육수」라 그대로 걸린다)
+// ── 「우리 양념」에 띠를 두른다 ────────────────────────────────────
+//
+// 📮 창업자 2026-09-02 = *"또 넣자는 뜻 아니야. **있는거 못봤아**"*
+//    꽃게탕·전찌개의 해물가루육수는 «이미» 있었는데 판에서 안 보였다.
+//    재료가 열몇 줄이라 우리 것이 그 사이에 묻힌다 — 검수판이 읽히게 만드는 게 내 일이다.
+//
+// ⛔ 낱말을 손으로 적지 않는다(절대원칙 22) — 장바구니 제품에서 «읽어» 온다.
+//
+// ⛔⛔ 첫 판은 tag·brand 만 봤다 — 그래서 **「초피액젓」이 띠를 못 받았다.**
+//    실물을 열어 보고서야 알았다(절대원칙 21): 와촌식품 초피액젓은 **tag 가 «비어 있고»**
+//    제품 «이름» 쪽에 「초피액젓」이 있다. → 브랜드를 안 적은 재료 줄이 통째로 샜다.
+//    🔢 name 까지 보니 재료 1516줄 중 **146 → 299줄**. 새로 잡힌 건 전부 우리 것이다
+//       (초피액젓 · 아우노슈가 · 굴소스 · 맛술 · 고춧가루 · 맥된장 · 백합된장).
+//    📌 창업자가 「없네」 하는 자리가 바로 **브랜드 안 붙은 줄**이다 — 거기가 제일 안 보인다.
+//    손으로 적으면 제품이 늘 때마다 낡고, 그러면 또 「있는데 안 보인다」가 난다.
 const 내양념 = (() => {
   try {
     const it = cartItems()
-    return [...new Set(it.flatMap((x) => [x.tag, x.brand]).filter((s) => s && s.length >= 2))]
+    return [...new Set(it.flatMap((x) => [x.tag, x.brand, x.name]).filter((s) => s && s.length >= 2))]
   } catch { return [] }
 })()
 const 내것인가 = (t) => 내양념.some((w) => t.includes(w))
@@ -104,7 +113,7 @@ const 재료줄 = (t) => {
   if (h) return `<li class="ig-h">${esc(h[1])}</li>`
   // 「제품이름 (대체품)」의 괄호는 흐리게
   const html = esc(t).replace(/\(([^)]*)\)/g, '<span class="sub">($1)</span>')
-  return `<li${내것인가(t) ? ' class="mine"' : ''}>${html}</li>`
+  return `<li${내것인가(t) ? ' class="pick"' : ''}>${html}</li>`
 }
 
 const 카드 = (r, meta, i) => {
@@ -191,6 +200,7 @@ const html = `<title>레시피 검수판 ${이름}</title>
   :root{
     --paper:#FAF6EF; --card:#FFFFFF; --ink:#2E1C0C; --dim:#7A6852; --faint:#9C8B76;
     --line:#E7DCCB; --brand:#5D3410;
+    --pick-bg:#F4EADA;
     --cool:#0E6B72; --cool-bg:#E6F1F1;
     --home:#8A4B2A; --home-bg:#F6EAE1;
     --mine:#B4472F; --mine-bg:#FBEAE5;
@@ -200,6 +210,7 @@ const html = `<title>레시피 검수판 ${이름}</title>
     :root:not([data-theme="light"]){
       --paper:#191410; --card:#221B15; --ink:#F2E9DC; --dim:#B6A692; --faint:#8D7E6C;
       --line:#3A2F26; --brand:#E8C9A4;
+      --pick-bg:#33271B;
       --cool:#7FD3D8; --cool-bg:#12312F;
       --home:#E3A87C; --home-bg:#33221A;
       --mine:#F09A82; --mine-bg:#3A211B;
@@ -209,6 +220,7 @@ const html = `<title>레시피 검수판 ${이름}</title>
   :root[data-theme="dark"]{
     --paper:#191410; --card:#221B15; --ink:#F2E9DC; --dim:#B6A692; --faint:#8D7E6C;
     --line:#3A2F26; --brand:#E8C9A4;
+    --pick-bg:#33271B;
     --cool:#7FD3D8; --cool-bg:#12312F;
     --home:#E3A87C; --home-bg:#33221A;
     --mine:#F09A82; --mine-bg:#3A211B;
@@ -297,18 +309,18 @@ const html = `<title>레시피 검수판 ${이름}</title>
   }
   ul.ig li.ig-h::before{display:none}
   ul.ig li:first-child.ig-h{margin-top:0}
+  /* 우리 양념 = 왼쪽에 띠. ⛔색을 여기 박지 말 것 — 다크에서 안 읽힌다. 위 세 벌에서 온다 */
+  ul.ig li.pick{
+    font-weight:700; background:var(--pick-bg); padding-left:18px;
+    border-radius:0 7px 7px 0; box-shadow:inset 3px 0 0 var(--brand);
+  }
+  ul.ig li.pick::before{display:none}
+  .tip-pick{
+    display:inline-block; padding:1px 9px; margin-right:2px;
+    border-radius:0 7px 7px 0; background:var(--pick-bg);
+    box-shadow:inset 3px 0 0 var(--brand); font-weight:700; color:var(--ink);
+  }
   .sub{color:var(--faint); font-size:13.5px}
-
-  /* 🔎🔎 **[2026-09-02] 「있는 걸 못 봤다」를 고치는 자리**
-     📮 창업자 = *"해물가루육수1봉 추가"* (꽃게탕·전찌개) → 확인해 보니 **둘 다 이미 들어 있었다.**
-        → *"또 넣자는 뜻 아니야. **있는거 못봤어**"*
-     ⭐⭐ **판이 「보여줬다」와 「보였다」는 다른 말이다.** 재료가 13~18줄인데 줄이 다 똑같이 생겨서
-        찾는 낱말 하나가 그 사이에 묻힌다 — 창업자가 헛일을 두 번 했다(규칙 18 의 사촌).
-     ✅ 그래서 **우리 양념**(주부의 장바구니에 있는 것)만 살짝 굵게 ＋ 왼쪽에 띠를 준다.
-        ⛔ 색을 새로 만들지 않는다 — 이미 쓰는 「--accent」 하나로. 알록달록하면 그게 또 안 보인다. */
-  ul.ig li.mine{font-weight:700; background:color-mix(in srgb, var(--accent) 7%, transparent);
-    border-radius:0 6px 6px 0; box-shadow:inset 3px 0 0 var(--accent); padding-left:18px}
-  ul.ig li.mine::before{display:none}
 
   ol.st{margin:0; padding:0; list-style:none; counter-reset:s}
   ol.st li{
@@ -397,6 +409,7 @@ const html = `<title>레시피 검수판 ${이름}</title>
       <li>순서에 <b>빠지거나 이상한 걸음</b>이 있나</li>
       <li>시간·인분·난이도가 <b>말이 되나</b></li>
     </ol>
+    <p class="no"><span class="tip-pick">해물가루육수 1봉</span> 이렇게 <b>띠가 그어진 줄</b>은 <b>주부의 장바구니에 이미 있는 것</b>이야. 「없네」 싶으면 여기부터 훑어봐 줘.</p>
     <p class="no">고쳐 쓰지 말고 <b>요리 이름이랑 어디가 이상한지만</b> 짚어줘 — 고치는 건 내가 할게.</p>
     <p class="no"><b>편마다 아래에 체크칸이 있어.</b> 거기 체크하거나 한 줄 적으면 <b>내가 바로 봐</b> — 채팅에 다시 안 옮겨도 돼.</p>
   </div>

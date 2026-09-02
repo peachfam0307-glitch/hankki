@@ -322,6 +322,7 @@ export default {
         left: {
           welcome: welcomeLeft, month: LIMITS.PER_USER_MONTHLY,
           cap: 웰컴상한 + 보너스, bonus: 보너스,
+          무제한: founder,                      // 🔓 아래 OCR 길의 주석 참조 — 세 곳이 같은 말을 해야 한다
           earned: 받은행동,
           anon: LIMITS.WELCOME_ANON, acct: LIMITS.WELCOME_ACCT,
           monthly: LIMITS.PER_USER_MONTHLY, signed: 로그인,
@@ -365,6 +366,7 @@ export default {
         left: {
           welcome: 남음, month: LIMITS.PER_USER_MONTHLY,
           cap: 웰컴상한 + 보너스, bonus: 보너스,
+          무제한: founder,                      // 🔓 아래 OCR 길의 주석 참조
           earned: 받은행동,                     // 다섯 중 «어느 것»을 받았나(화면이 줄을 긋는다)
           anon: LIMITS.WELCOME_ANON, acct: LIMITS.WELCOME_ACCT,
           monthly: LIMITS.PER_USER_MONTHLY, signed: 로그인,
@@ -521,6 +523,15 @@ export default {
     return json({
       text,
       left: {
+        // 🔓🔓 **[2026-09-02 · 창업자 제보 ＋ 확정 ⓐ] 운영자면 「무제한」이라고 «말해» 준다.**
+        //   📮 창업자 폰 = 토스트 「무료 레시피열쇠 **0개** 남았어요」인데 설정은 「운영자 · **∞**」.
+        //   ⛔⛔ 뿌리 = 이 워커가 «막을 때»만 운영자를 알았다(위 `!founder` 두 줄).
+        //      «알려줄 때»엔 `founder` 가 한 글자도 없어서, 실제로 쓴 만큼 깎인 0 을 그대로 보냈다.
+        //      → 한도는 안 걸리는데 숫자만 0 이라 창업자가 「고장인가」로 읽었다.
+        //   ⭐ 숫자는 «그대로» 보낸다 — 지우면 창업자가 「유저에게 얼마로 보이나」를 못 잰다.
+        //      앱이 이 표식을 보고 **∞ 로 그릴 뿐**이다(`src/ocr.js` 의 `getOcrLeft`).
+        //   ⛔ 차감·한도 판정은 한 글자도 안 바뀐다 — 이건 «보여 주는 값»에만 붙는다.
+        무제한: founder,
         welcome: leftWelcome,
         month: leftMonth,
         cap: 웰컴상한 + 보너스,   // 지금 이 사람의 웰컴 상한(＋행동으로 받은 것)

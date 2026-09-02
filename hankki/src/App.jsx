@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useStore } from './store'
+import { useStore, 다읽었나 } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
@@ -8,9 +8,11 @@ import { parseRecipeText, keepRaw } from './parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from './tidy'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
-import { guessCategory, fitImage } from './utils'
+import { guessCategory, fitImage, imageSize } from './utils'
 // 🍱 [2026-08-28] 공유로 담으면 아이콘이 빈 접시로 굳던 것 — 뿌리·막이 설명은 `shareIcon.js` 주석에.
 import { 공유아이콘 } from './shareIcon'
+// 🎴 축소 루프가 «자랑카드 표지»를 건드리지 않게 — 잣대는 화면·클라우드와 «같은 한 곳»(2026-09-02)
+import { 카드표지인가 } from './cardCover'
 import { guessFoodIconStrict } from './components/FoodIcon'
 import BottomNav from './components/BottomNav'
 import TabSwipe from './components/TabSwipe'
@@ -355,8 +357,20 @@ export default function App() {
   // 저장 공간이 가득 차서 저장이 실패하면(특히 iOS ~5MB) 조용히 사라지지 않게 알린다.
   useEffect(() => {
     const onFull = () => showToast('저장 공간이 가득 찼어요 · 설정에서 백업 후 오래된 사진을 정리해 주세요', 5000)
+    // 📊📊 **차기 «전»에 말한다** (2026-09-02 · 창업자 폰이 4.56MB/5MB = 91% 였다)
+    //   ⛔⛔ 그 전엔 **100% 에서, 그것도 «잃고 나서»** 알았다. 그게 오늘 아침 사고다.
+    //   ⭐ 80% 를 넘으면 미리 알린다 — 자랑카드 한 장이 0.5~0.9MB 라 **한 방에** 넘어갈 수 있다.
+    //   ⏰ 5분에 한 번만(`store.jsx` 가 조절) — 매 저장마다 뜨면 잔소리가 되어 아무도 안 본다.
+    const onWarn = (e) => {
+      const 퍼센트 = Math.round(((e?.detail?.쓴것 || 0) / (e?.detail?.한도 || 1)) * 100)
+      showToast(`저장 공간이 ${퍼센트}% 찼어요 · 설정에서 백업해 두는 게 좋아요`, 6000)
+    }
     window.addEventListener('hankki:storagefull', onFull)
-    return () => window.removeEventListener('hankki:storagefull', onFull)
+    window.addEventListener('hankki:storagewarn', onWarn)
+    return () => {
+      window.removeEventListener('hankki:storagefull', onFull)
+      window.removeEventListener('hankki:storagewarn', onWarn)
+    }
   }, [showToast])
 
   // '공유받기' — 인스타/갤러리에서 한끼로 공유된 링크·사진을 앱 시작 시 받아 Inbox 로.
@@ -445,7 +459,12 @@ export default function App() {
       // ⛔ `fitImage` 는 **작은 사진은 안 건드린다**(`Math.min(1, max/…)`) ＋ 실패하면 **원본을 돌려준다**.
       //    그래서 이 한 줄이 사진을 «잃게» 만들 길이 없다.
       // ⚠️ 이미 담긴 사진은 안 줄어든다 — 앞으로 담는 것만이다(규칙 18 ⓙ).
-      const shrunk = data.imageDataUrl ? await fitImage(data.imageDataUrl, 1600, 0.85) : null
+      // 📦 [2026-09-02 창업자 확정] **1600 → 900px** — *"둘 다 — 작게 먼저, 이사는 다음"*
+      //   🔢 실측(폰 캡처 1080×2340) = 원본 397KB · 1600px **202KB** · **900px 78KB** · 700px 52KB
+      //      → 5MB 한도에 **25장 → 65장**. 창업자 폰이 «캡처 스물몇 장»으로 4.88MB 가 찼다.
+      //   ⭐ 「캡쳐 보면서 쓰기」는 그대로 산다 — 900px 면 34vh 창(≈390px 폭)의 2.3배라 글자가 안 뭉갠다.
+      //   ⛔ 이건 «임시 방편»이다. 정석은 사진을 IndexedDB 로 옮기는 것(창업자 확정 = 다음 판).
+      const shrunk = data.imageDataUrl ? await fitImage(data.imageDataUrl, 900, 0.75) : null
       // 메모는 직접 입력 전용 — 캡션 찌꺼기를 자동으로 붙이지 않는다
       const rec = makeInboxRecipe({
         source,
@@ -466,8 +485,10 @@ export default function App() {
         //      **두 화면이 서로 다른 말을 해서** 「저장했는데 없다」로 읽혔다.
         //   ⭐ 잣대 = **재료·순서가 «둘 다» 2줄 이상**. 하나만 있거나 한 줄뿐이면 반쪽이라
         //      그건 여전히 임시보관함에 남는다(＝거기가 원래 그런 곳이다).
-        //      ⚠️ 이 숫자는 «내 판단»이다 — 창업자에게 밝혔다. 바꾸려면 여기 한 줄만 고친다.
-        if (parsed.ingredients.length >= 2 && parsed.steps.length >= 2) rec.status = 'sorted'
+        //      ⚠️ 이 숫자는 «내 판단»이다 — 창업자에게 밝혔다.
+        //   📏 [2026-09-02] 잣대를 `store.js` 의 `다읽었나()` **한 곳**으로 옮겼다 —
+        //      같은 판정을 여기 ＋ 마이그레이션 ＋ 아래 `채우기()` **셋**이 쓰기 때문이다.
+        if (다읽었나(parsed)) rec.status = 'sorted'
         // 📥 파서에 넣은 원문도 같이 — 파서를 고친 날 다시 읽을 재료(→ parseRecipe.js `keepRaw`)
         const raw = keepRaw(caption)
         if (raw) rec.rawText = raw
@@ -570,6 +591,16 @@ export default function App() {
             ...(새아이콘 ? { icon: 새아이콘, iconPicked: false } : {}),
             // 📥 원문도 — 있을 때만 넣는다(빈 값으로 덮으면 지우는 것이다)
             ...(keepRaw(text) ? { rawText: keepRaw(text) } : {}),
+            // 🗃🗃 [2026-09-02 · 창업자 제보] **다 채웠으면 임시보관함에서 «졸업»시킨다.**
+            //   📮 창업자 = *"최근저장에는 뜨는데 레시피탭에 가면 안보여."*
+            //   ⛔⛔ 뿌리 = 이 함수가 제목·재료·순서·아이콘은 다 갱신하면서 **`status` 만 안 건드렸다.**
+            //      담을 때(위 `if (다읽었나(parsed))`)는 졸업시키는데, **AI 가 «나중에» 채운 건 갇혔다.**
+            //      화면은 `status === 'sorted'` 만 그리므로(`MyRecipesScreen`) 영영 안 보인다.
+            //      🔢 창업자 폰의 **항정살조림**이 그 상태였다(이미 갇힌 것은 `INBOX_V` 2 가 꺼낸다).
+            //   ⛔ **올리기만 한다 — 절대 내리지 않는다.** 이 함수는 규칙 파서 판·AI 판으로
+            //      **두 번** 불린다. 둘째 판이 첫째의 졸업을 깎으면 레시피가 도로 사라진다.
+            //   ⭐ 잣대는 `store.js` 의 `다읽었나()` 하나 — 담을 때와 «같은 말»이라야 안 갈린다.
+            ...(다읽었나(r) ? { status: 'sorted' } : {}),
           })
           현재.title = 새제목
           if (새아이콘) { 현재.icon = 새아이콘; 현재.iconPicked = false }
@@ -590,7 +621,10 @@ export default function App() {
         //   ⛔ 따로 띄우면 이 안내(열쇠 잔량)를 즉시 덮어 «정보를 잃는다».
         //   ⏱ 20초 — 다 되면 아래 결과 토스트가 덮고, 실패하면 조용히 사라진다.
         showToast(
-          (left.unknown
+          // 🔓 [2026-09-02] 운영자에겐 숫자를 안 붙인다 — 서버가 «실제로 쓴 만큼» 깎인 0 을 주는데
+          //    한도는 안 걸리므로 「0개 남았어요」가 거짓말이 된다(창업자 폰 실물).
+          //    잣대는 `getOcrLeft().무제한` 하나 — 설정 알약·임시보관함도 같은 것을 본다.
+          (left.unknown || left.무제한
             ? '사진에서 글자를 읽어 채웠어요'
             : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`)
             + AI다듬는중,
@@ -612,6 +646,15 @@ export default function App() {
           // ⛔ 실패는 «유저에게 안 알린다» — 이미 채워져 있어 유저가 할 일이 0이다.
           //    알리면 멀쩡한 결과를 두고 「고장났나」로 읽게 만든다.
           //    ⭐ 창업자(운영자)만 이유를 본다 — 이 한 줄이 8/29 아침에 30분을 5초로 줄였다.
+          // 🔁🔁 **[2026-09-02 · 창업자 「불안정하다」] 실패를 «기억»해 둔다 — 나중에 만회한다.**
+          //   📮 창업자 = *"불안정하다.. ai가 읽을때가 있고 못읽을때가 있고.. 열쇠는 차감안된거지?"*
+          //   ⭐⭐ 창업자가 열쇠를 물은 게 핵심이다 — **OCR 몫 열쇠는 이미 나갔다.**
+          //      그러니 「이번엔 안 됐다」로 끝내면 **돈은 내고 값의 절반만 받는다**
+          //      (창업자 확정 2026-08-29 = *"열쇠는 무조건 둘다 잘되어야해 돈이니까"*).
+          //   ⛔ 지금 다시 걸지 않는다 — 방금 실패한 조건 그대로라 또 실패할 확률이 높고,
+          //      그러면 무료 통만 두 배로 먹는다. **표만 남기고 «다음에» 만회한다.**
+          //   📌 표를 지우는 것도 여기서 안 한다 — 만회한 쪽(상세 화면)이 지운다.
+          store.updateRecipe(rec.id, { tidyFail: 1 })
           if (tidyFounder()) showToast('AI 다듬기는 못 했어요' + tidyTail())
         })
         return
@@ -669,24 +712,56 @@ export default function App() {
   //    ⛔ 사진을 다 열어 픽셀을 재면 느리고 배터리를 먹는다. 열어보는 건 «걸린 것»만.
   //    🔢 자릿값 근거(실물 캡처 실측) — 원본 1172KB / 줄인 것 197KB / 일기 127KB / 편집 표지 150KB
   //       → 260,000자(≈254KB)면 **원본만** 걸리고 나머지는 다 빠져나간다.
-  const SHRINK_OVER = 260000
+  // ⛔⛔ [2026-09-02] **260,000 → 100,000 으로 내렸다** — 그 값은 «1600px 판»을 통과시켰다.
+  //    창업자 폰 4.88MB 의 정체가 바로 그 통과한 것들이다(1600px ≈ 202KB ≈ 207,000자).
+  //    ⭐ 900px 결과는 ≈78KB(≈80,000자)라 문턱 아래 → **다시 굽지 않는다**(게이트가 그걸 잰다).
+  //    ⚠️ 대신 일기·표지 사진(≈127~150KB)도 걸려 900px 로 줄어든다.
+  //       표지는 화면에서 374px 로 그려지니 900px 은 2.4배 — 눈으로는 차이가 안 난다.
+  const SHRINK_OVER = 100000
   useEffect(() => {
     let cancelled = false
     // ⛔ 첫 화면이 다 그려진 뒤에 시작한다 — 앱을 여는 순간 캔버스를 돌리면 «느린 앱»이 된다.
     const t = setTimeout(async () => {
-      const 큰것 = store.recipes.filter((r) => typeof r.image === 'string' && r.image.length > SHRINK_OVER)
+      // 🎴🎴 **자랑카드 표지는 «건드리지 않는다»** (2026-09-02 · 전수 조사로 찾음)
+      //   ⛔⛔ 이 루프가 카드까지 900px 로 다시 구우면 **두 가지가 동시에 망가진다** —
+      //      ⑴ 카드가 뭉개진다(카드는 «판 전체가 그림»이라 사진과 다르다)
+      //      ⑵ ⭐**옛 카드는 «카드인 줄 모르게 된다»** — 8/18 «전»에 저장한 표지엔 `imageFit:'whole'`
+      //         표시가 없어서 **세로 1600px 로만** 알아본다(`cardCover.js` ②). 900 으로 줄이면 그 잣대를 못 넘어
+      //         **⒜ 표지가 동그랗게 그려지고**(창업자 2026-08-18 *"자랑카드전체가 표지여야하는데 동그랗게됐다고"*)
+      //         **⒝ 클라우드가 사진으로 알고 털어버린다**(창업자 2026-08-31 *"레꾸자랑에서 뽑은카드로 레꾸한거는 사라졌어."*)
+      //      즉 이 줄이 없으면 **이미 고친 사고 둘이 되살아난다.**
+      //   ⭐ 잣대는 `cardCover.js` 의 `카드표지인가()` 하나 — 화면·클라우드와 «같은 값»을 쓴다.
+      //
+      // 🕳🕳 **`store` 가 아니라 `storeRef.current` 를 읽는다** (2026-09-02 · 사진 창고 이사와 한 몸)
+      //   ⛔⛔ 이 `useEffect` 는 `[]` 라 **첫 렌더 클로저**를 평생 들고 있다. 그런데 사진이
+      //      창고(IndexedDB)로 옮겨간 뒤로 첫 렌더의 `r.image` 는 **쪽지**(`idb://…`)일 수 있다.
+      //      쪽지는 서른 글자쯤이라 문턱(100,000)을 절대 못 넘는다 →
+      //      **`큰것.length === 0` → 곧바로 return → 공간 회수 장치가 «조용히 죽는다».**
+      //   ⭐ `storeRef` 는 렌더마다 갱신되니(377줄) 2.5초 뒤엔 «지금 값»을 본다.
+      //      저장(`updateRecipe`)도 같은 곳에서 꺼낸다 — 옛 클로저에 쓰면 낡은 판 위에 덮어쓴다.
+      const 지금store = storeRef.current
+      const 큰것 = 지금store.recipes.filter(
+        (r) => typeof r.image === 'string' && r.image.length > SHRINK_OVER && !카드표지인가(r)
+      )
       if (!큰것.length) return // ⭐ 없으면 아무 일도 안 한다 → 다음 실행부터 비용 0
       let 줄인수 = 0
       let 아낀양 = 0
       for (const r of 큰것) {
         if (cancelled) return
-        const 작게 = await fitImage(r.image, 1600, 0.85)
+        // 📐📐 **「치수」로 거른다 — 글자 수로만 보면 «화질만 깎는» 짓을 한다** (2026-09-02)
+        //   ⛔ 문턱을 내리니 스모크가 잡았다 = 「작은 사진은 한 글자도 안 바뀌었다」가 죽었다.
+        //      360×640 사진은 900px 안에 이미 들어가는데, 다시 구우면 **크기만 줄고 화질이 깎인다.**
+        //   ⭐ 그러니 **긴 변이 900 을 넘을 때만** 손댄다. 치수가 작으면 «건드리지 않는다».
+        const 치수 = await imageSize(r.image)
+        if (cancelled) return
+        if (!치수 || Math.max(치수.w, 치수.h) <= 900) continue
+        const 작게 = await fitImage(r.image, 900, 0.75)
         // ⛔ **진짜로 작아진 것만 저장한다.** `fitImage` 는 실패하면 원본을 그대로 돌려주는데,
         //    그걸 그냥 덮으면 «아무것도 안 하고 저장만» 하게 된다(무의미한 쓰기 = 용량이 또 찬다).
         if (cancelled || !작게 || 작게.length >= r.image.length) continue
         아낀양 += r.image.length - 작게.length
         줄인수++
-        store.updateRecipe(r.id, { image: 작게 })
+        지금store.updateRecipe(r.id, { image: 작게 })
         // ⛔ 한 장씩 넘기며 숨을 쉰다 — 6장을 한 번에 구우면 화면이 얼어붙는다
         await new Promise((res) => setTimeout(res, 60))
       }
