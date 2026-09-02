@@ -64,6 +64,25 @@ const pickPool = (re, withSummer) => {
 const SCENES = Object.entries(import.meta.glob('../assets/scenepool/*.png', { eager: true, query: '?url', import: 'default' }))
   .map(([k, url]) => ({ name: k.split('/').pop(), url, scene: true }))
 
+// 🏖🏖 **[창업자 2026-09-02] 여름 씬은 여름에만 나온다** — *"여름씬은 이제 빼도 될 것 같아."*
+//
+//   ⛔⛔ **씬 풀엔 계절이 «아예» 없었다.** 폴라로이드는 65% 확률로 여기서 뽑는데,
+//      11/15 카드를 찍었더니 **모래성 쌓는 바닷가**가 나왔다(실물로 잡았다 · 절대원칙 21).
+//      🔢 계산하면 11월 폴라로이드의 약 26% 가 여름 씬이었다(0.65 × 4/10).
+//   📌 2026-08-04 창업자 제보 *"자랑카드 여름가을같이돌아감"* 과 **같은 모양**이다 —
+//      그때는 아치 뼈대의 «기본 옷»이 통째로 가을이었고, 이번은 씬 풀이다.
+//
+//   🔍 **10장을 다 열어 보고 골랐다**(눈으로 · 규칙 21). 잣대 = **옷차림 ＋ 여름 물건**
+//      · `pool` 수영복·튜브·야자수 ／ `sandcastle` 바다·모래성 ／
+//        `picnic` **수박** ／ `night_market` 민소매·반바지
+//   ⭐ **`camp` 는 «안» 뺐다** — 밤 모닥불 ＋ 담요 ＋ 뜨거운 컵이라 **오히려 가을에 맞다.**
+//      ⏳ `walk`(반팔 ＋ 아이스 음료)는 애매해서 남겼다 — 창업자가 빼라고 하면 이 정규식에 한 낱말만 더한다.
+//   ⛔ 파일을 지우지 «않는다» — 여름이 오면 그대로 다시 나온다(한 번 만든 것을 버리지 않는다).
+const SUMMER_SCENE = /^scene_(pool|sandcastle|picnic|night_market)\./
+// ⭐ `isPeakSeason` = 전환기 겹침을 «안» 센다 → 카드 스킨(`summer`)과 «같은 잣대»로 9/1 에 같이 빠진다.
+//    ⛔ `isSeason` 을 쓰면 9/14 까지 남아 「여름 스킨은 빠졌는데 여름 사진은 나온다」가 된다.
+const scenesNow = (now) => (isPeakSeason('summer', now) ? SCENES : SCENES.filter((s) => !SUMMER_SCENE.test(s.name)))
+
 const GOM = pickPool(/^gom_/)
 const PENG = pickPool(/^(peng_|pn_)/)
 const DUO = pickPool(/^duo_/)
@@ -156,7 +175,13 @@ function drawState() {
     // 🍂 `isPeakSeason` = 전환기 겹침을 «안» 센다 → **9/1 에 여름 스킨이 바로 빠진다**
     //    (창업자 확정 2026-08-29 = *"9월1일에 빼야지 가을시작이니까."* · ⛔`isSeason` 이면 9/14 까지 남는다)
     ...(isPeakSeason('summer') ? ['summer'] : []),
-    ...(hwOpen ? ['halloween'] : []), ...(csOpen ? ['chuseok'] : [])]
+    ...(hwOpen ? ['halloween'] : []), ...(csOpen ? ['chuseok'] : []),
+    // 🍂🍂 **[창업자 확정 2026-09-02] 11월엔 «둘 다» 얹는다** — *"11월은 둘가추가하자."*
+    //   ⭐ 11/3 부터 덤(추석·핼러윈)이 다 빠져 **기본 6장만 남던 자리**다. 이제 11월이 **8장**이 된다.
+    //   ⛔ 날짜를 여기 또 적지 «않는다» — `isLateAutumn`(LATE_AUTUMN_MONTH) 한 곳이 늦가을의 유일한 정의다.
+    //      그래서 **옷(늦가을)과 뼈대(둘)가 «같은 날» 같이 온다** — 11월 1일에 화면이 확 바뀐다.
+    //   🔢 뽑기 확률 = 6장 각 16.7% → **8장 각 12.5%**(창업자가 그 값을 보고 「둘 다」로 정했다)
+    ...(isLateAutumn() ? ['post', 'ticket'] : [])]
   const key = (() => {
     try { const v = new URLSearchParams(location.search).get('card'); if (v && SKINS[v]) return v } catch { /* noop */ }
     return rnd(pool)
@@ -170,7 +195,8 @@ function drawState() {
     : key === 'halloween' ? [hwOnly('gom'), hwOnly('peng'), hwOnly('duo')]
       : key === 'chuseok' ? [csOnly('gom'), csOnly('peng'), csOnly('duo')]
       : [gomPool(), pengPool(), duoPool()]
-  const cat = key === 'pola' && SCENES.length && r < 0.65 ? SCENES     // 폴라로이드는 씬 사진 위주
+  const 씬 = scenesNow()   // 🏖 여름 씬은 여름에만 (위 `scenesNow` 주석 참고)
+  const cat = key === 'pola' && 씬.length && r < 0.65 ? 씬     // 폴라로이드는 씬 사진 위주
     : (key === 'night' || key === 'summer' || key === 'arch')
       ? (r < 0.5 ? g : r < 0.78 ? p : (d.length ? d : g))
       : (key === 'halloween' || key === 'chuseok')
