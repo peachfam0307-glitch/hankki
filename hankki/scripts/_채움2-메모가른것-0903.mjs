@@ -204,9 +204,17 @@ const 채움 = [
 ]
 
 // ── 굴린다 ────────────────────────────────────────────────────────
+// ⭐ 「불러오기」로 들어오면 굴리지 않는다 — 검수판이 이 목록을 그대로 읽어 그린다(1차와 같은 까닭).
+// ⛔ 「인자가 있나」로 가르면 안 된다 — 판의 인자를 «자기 것»으로 읽고 엉뚱한 파일을 덮어쓴다(1차 머리주석 참조).
+import { pathToFileURL } from 'node:url'
+const 내가시작 = import.meta.url === pathToFileURL(process.argv[1] || '/dev/null').href
 const 넣을것 = process.argv[2], 낼것 = process.argv[3]
-if (!넣을것 || !낼것) { console.error('⛔ 쓰기: node scripts/_채움2-메모가른것-0903.mjs <넣을백업.json> <낼백업.json>'); process.exit(1) }
+if (내가시작) {
+  if (!넣을것 || !낼것) { console.error('⛔ 쓰기: node scripts/_채움2-메모가른것-0903.mjs <넣을백업.json> <낼백업.json>'); process.exit(1) }
+  굴리기(넣을것, 낼것)
+}
 
+function 굴리기(넣을것, 낼것) {
 const d = JSON.parse(readFileSync(넣을것, 'utf8'))
 const 편수전 = d.recipes.length
 const 손댈칸 = new Set(['ingredients', 'steps'])
@@ -247,5 +255,6 @@ if (탈.length) {
 }
 writeFileSync(낼것, JSON.stringify(d))
 console.log(`\n💾 ${낼것}`)
+}
 
 export { 채움 }

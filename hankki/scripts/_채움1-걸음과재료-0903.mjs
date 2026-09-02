@@ -181,9 +181,22 @@ const 안채움 = [
 ]
 
 // ── 굴린다 ────────────────────────────────────────────────────────
+// ⭐ 「불러오기」로 들어오면 굴리지 않는다 — 검수판(`_판-채움23-0903.mjs`)이 이 목록을 그대로 읽어 그린다.
+//    ⛔ 판이 목록을 «다시 적으면» 둘이 갈리고, 그러면 하나는 반드시 틀린 값이 된다(2026-08-13).
+//
+// ⛔⛔ **「인자가 있나」로 가르면 안 된다 — 2026-09-03 에 실제로 당했다.**
+//    판을 `node _판-채움23 <백업> <낼HTML>` 로 돌리자 **불러온 이 파일이 그 인자를 «자기 것»으로 읽고**
+//    백업 JSON 을 «HTML 자리»에 써 버렸다. 판이 마지막에 덮어써서 눈엔 안 보였을 뿐이다.
+//    📌 **인자는 「누가 나를 불렀나」를 말해 주지 않는다.** 그건 `process.argv[1]` 이 말한다.
+import { pathToFileURL } from 'node:url'
+const 내가시작 = import.meta.url === pathToFileURL(process.argv[1] || '/dev/null').href
 const 넣을것 = process.argv[2], 낼것 = process.argv[3]
-if (!넣을것 || !낼것) { console.error('⛔ 쓰기: node scripts/_채움1-걸음과재료-0903.mjs <넣을백업.json> <낼백업.json>'); process.exit(1) }
+if (내가시작) {
+  if (!넣을것 || !낼것) { console.error('⛔ 쓰기: node scripts/_채움1-걸음과재료-0903.mjs <넣을백업.json> <낼백업.json>'); process.exit(1) }
+  굴리기(넣을것, 낼것)
+}
 
+function 굴리기(넣을것, 낼것) {
 const d = JSON.parse(readFileSync(넣을것, 'utf8'))
 const 편수전 = d.recipes.length
 const 찾기 = (t) => d.recipes.filter((r) => (r.title || '').trim() === t)
@@ -247,5 +260,6 @@ if (탈.length) {
 
 writeFileSync(낼것, JSON.stringify(d))
 console.log(`\n💾 ${낼것}`)
+}
 
 export { 채움, 안채움 }
