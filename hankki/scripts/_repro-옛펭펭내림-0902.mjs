@@ -17,8 +17,13 @@ import './_fresh.mjs'
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 
-const 옛펭펭 = /^(peng_|pn_)/          // ⛔ 카드에 한 번도 나오면 안 되는 것
-const 정본펭펭 = /^(pj_|pjs_|au_b08)/   // ✅ 나와야 하는 것(가을 창에서)
+// ⛔ 카드에 한 번도 나오면 안 되는 것
+//   ⛔⛔ **`duo_` 를 여기 늦게 넣었다**(2026-09-02 저녁 · 창업자 = *"둘이 장보는 컷에 펭펭이 옛컷이네.."*).
+//      낮엔 «솔로» 펭펭만 잣대에 넣어서, **같은 옛 펭펭이 들어 있는 콤비 12컷은 통과시켰다.**
+//      📌 잣대를 「그 파일 이름」이 아니라 **「그 그림이 나오나」**로 세웠어야 했다.
+//      ✅ `au_b15`·`au_b16`(가을 콤비)은 정본이라 여기 «안» 넣는다 — 열어서 확인했다.
+const 옛펭펭 = /^(peng_|pn_|duo_)/
+const 정본펭펭 = /^(pj_|pjs_|duos_|au_b08)/   // ✅ 나와야 하는 것(가을 창에서)
 const 뽑기수 = Number(process.env.N || 90)
 
 const { basicRecipes, BASICS_VERSION } = await import('../src/data/basics.js')
