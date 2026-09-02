@@ -39,7 +39,11 @@ await ctx.addInitScript(`{
 }`)
 const p = await ctx.newPage()
 await p.goto(`http://127.0.0.1:${PORT}/`)
-await p.evaluate((s) => { localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') }, state)
+// ⛔⛔ [2026-09-02 고침] `hankki:news:off` 를 여기서 켜면 **팝업이 영영 안 뜬다.**
+//   이 판의 ①번 칸이 「9/1 첫 화면 팝업」인데 그걸 «끄고» 찍고 있었다 —
+//   그래서 `1-팝업.png` 가 8/30 판인 채로 남아 며칠 낡은 그림을 보고 있었다.
+//   ⭐ 아래 ②에서 팝업을 «닫으므로» 끌 필요가 없다. 규칙 18 ⓘ — 판이 «무엇을 보는지».
+await p.evaluate((s) => { localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1') }, state)
 await p.goto(`http://127.0.0.1:${PORT}/`)
 await p.waitForTimeout(1800)
 

@@ -19,7 +19,7 @@ import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw } from '../parseRecipe'
-import { tidyRecipe, mergeTidy, tidyTail, tidyFounder } from '../tidy'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from '../tidy'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 // 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
@@ -491,14 +491,17 @@ export default function EditorScreen({ id, prefill }) {
     //   (여기와 App.jsx 공유받기가 «같은 말»이라야 유저가 두 경로를 같은 기능으로 읽는다)
     nav.showToast(
       // 🆓 freeTail 이 맨 앞이다 — 「그냥 읽기」로 온 사람에게 열쇠 얘기를 하면 안 된다
-      // ⛔ 길이(ms)는 «안» 준다 — 바로 뒤에 AI 다듬기 토스트가 또 뜬다(HEAD 판단을 그대로 둔다)
-      freeTail
+      // 📢📢 「AI 가 더 다듬는 중」을 **같은 줄에** 붙인다 (창업자 2026-09-01)
+      //   ⛔ 따로 띄우면 이 안내(열쇠 잔량)를 «즉시» 덮어 못 보게 된다 — 그래서 꼬리로 «더한다».
+      //   ⏱ 그래서 길이(ms)를 «준다» — 20초. 다 되면 아래 결과 토스트가 덮는다.
+      (freeTail
         ? '초안을 채웠어요' + freeTail + ' · 사진 보며 고쳐 주세요'
         : quotaTail
           ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
           : leftTail
             ? '초안을 채웠어요' + leftTail
-            : '초안을 채웠어요 · 사진 보며 다듬어 주세요',
+            : '초안을 채웠어요 · 사진 보며 다듬어 주세요') + AI다듬는중,
+      20000,
     )
 
     // ② AI — «뒤에서». ⭐ 얹는 규칙은 `mergeTidy` 한 곳에 있다(여기와 `App.jsx` 가 «같은 말»)

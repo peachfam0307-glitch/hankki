@@ -647,8 +647,20 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // ⭐ `both` = 일꾸·레꾸 «두 선반 다»에 두는 그룹(꼬르곰 32컷).
   //    ⛔ `diary` 만 주면 일꾸엔 뜨지만 **레꾸 선반에서 사라진다** — 창업자가 보던 그 화면이 레꾸였다.
   const onShelf = (x) => !isDiary || x.both || (shelf === 'diary' ? !!x.diary : !x.diary)
-  // 🎁 «지금 제철»인 선물만 맨 위 대접. 계절이 안 붙은 선물(출시기념)은 늘 위.
-  const giftUp = (x) => !!x.gift && (!x.season || seasonRank(x.season) === 0)
+  // 🎁 «지금 제철»이면서 «열린 날이 있는» 선물만 맨 위 대접 ＋ 알약.
+  //
+  // ✅✅ [창업자 확정 2026-09-02 · 검수판 ⑦] *"「출시 축하」 3컷 알약은요?"* → **"이것도 내린다"**
+  //   ⛔ 그전엔 `!x.season` 이라 **계절이 안 붙은 선물은 «영원히» 맨 위 ＋ 알약**이었다.
+  //      「출시 축하」(친구들 3컷)가 그랬다 — 출시는 2026-08-21 에 지났는데 표시는 안 늙는다.
+  //   ⭐ **`from` 이 답이다** — 이 저장소는 이미 `from` 없는 그룹을 «처음부터 있던 것»으로 본다
+  //      (`whatsnew.js` `gates()` = *"`from` 이 없는 그룹(사철 기본)은 «열리는 사건»이 아니다"*).
+  //      선물도 같은 잣대를 쓴다: **`from` 이 있어야 「이번에 새로 온 선물」**이다.
+  //   🔢 지금 값 = 가을의 정원 세트(`from 2026-09-01`·계절 없음) **O** ／
+  //      출시기념 여름(계절 여름 · 지났다) **X** ／ 출시 축하(`from` 없음) **X**
+  //   ⛔ **뺏는 게 아니다** — 컷도 「받은 선물」 시트 목록도 그대로다. 내려가는 건 «자리와 알약»뿐이다.
+  //   ⛔ **알약과 순서는 «한 잣대»로 둔다** — 2026-08-30 에 순서만 내리고 알약을 안 내려서
+  //      사흘 동안 9월인데 「출시기념 여름」에 알약이 붙어 있었다. 갈라 쓰면 그 사고가 되돌아온다.
+  const giftUp = (x) => !!x.gift && !!x.from && (!x.season || seasonRank(x.season) === 0)
   const groupsByTab = (t) => drawerGroups()
     // ⭐ `tabDiary` = 일기 화면에선 «다른 탭»에 둔다 — 꼬르곰 32컷은 레꾸 「글자」 / 일꾸 「기록」.
     //    ⛔ 두 탭에 «동시에» 두면 일꾸에서 글자·기록 양쪽에 같은 게 나온다(실측으로 잡았다).
@@ -1062,7 +1074,14 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
           <button type="button" className="press decor-sec-label" onClick={() => toggleFold(g.key)}
             aria-expanded={!folded.has(g.key)} aria-label={`${g.label} ${folded.has(g.key) ? '펼치기' : '접기'}`}>
             <FoldIco open={!folded.has(g.key)} />
-            {g.label}{g.gift && <GiftTag text={g.giftLabel} />}
+            {/* 🎁 알약은 «제철 선물»에만 (창업자 확정 2026-09-02 = ⓑ 「철 지난 선물만 내린다」)
+                📮 그 앞 = *"한꺼번에 하니까 너무 많이 주는 것 같아 보여."* · *"서랍에 선물 넣는 것도 뺄지 고민해보자."*
+                ⛔ 그전엔 «계절과 무관하게» 붙어서, 9월인데 「출시기념 여름」(12컷)에 오렌지 알약이 그대로 있었다.
+                   순서는 2026-08-30 에 이미 내렸는데(`giftUp` 정렬) **알약만 안 따라 내려왔다.**
+                ⭐ `giftUp` 을 그대로 쓴다 — 순서와 알약이 «한 잣대»라야 갈리지 않는다.
+                ⛔ **뺏는 게 아니다** — 컷도 그대로고 「받은 선물」 시트에도 그대로 남는다(한 번 준 것은 빼앗지 않는다).
+                   여기서 없어지는 건 «지금 제철인 척»뿐이다. */}
+            {g.label}{giftUp(g) && <GiftTag text={g.giftLabel} />}
             {folded.has(g.key) && <span className="decor-sec-n">{g.items.length}</span>}
           </button>
         )}

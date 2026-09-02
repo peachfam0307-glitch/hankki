@@ -140,23 +140,16 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
             <div style={{ fontSize: 21, fontWeight: 900, marginTop: 6, letterSpacing: '-0.03em', lineHeight: 1.3 }}>{h.title}</div>
             {/* 🔢 숫자를 크게 — 「51종·전부 무료예요」 한 줄에 묻혀 있던 것을 세웠다.
                 ⚠️ `count` 가 없는 갈래(이번 주 레시피만 열리는 날)엔 옛 한 줄을 그대로 쓴다. */}
-            {h.count ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 4 }}>
-                {/* 🎨 숫자 색 = `--gift` — 알약과 «한 벌»로 묶는다.
-                    ⛔ `--brown` 이면 그레이지 테마에서 «파란 숫자 ＋ 갈색 알약»으로 갈라진다(실물로 봤다).
-                    ⭐ `--gift` 는 네 테마의 대비를 이미 재 둔 토큰이다(`styles.css:88~96`) —
-                       46px 굵은 글자라 큰 글자 기준(3.0)을 넉넉히 넘는다. ⛔주황을 여기 박지 말 것. */}
-                <span style={{ fontSize: 46, fontWeight: 900, lineHeight: 1, color: 'var(--gift)', letterSpacing: '-0.04em' }}>
-                  {h.count}<span style={{ fontSize: 21, marginLeft: 1 }}>종</span>
-                </span>
-                <span style={{
-                  fontSize: 14, fontWeight: 900, color: '#fff', background: 'var(--gift)',
-                  borderRadius: 999, padding: '5px 13px', whiteSpace: 'nowrap',
-                }}>전부 무료</span>
-              </div>
-            ) : (
-              <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3 }}>{h.sub}</div>
-            )}
+            {/* 🔢🔢 **[창업자 확정 2026-09-02] 큰 숫자를 «뺀다».** ⛔되살리지 말 것
+                📮 창업자 원문 = *"**큰 숫자는 넣지말자 계속 그렇게 줘야할 것 같아서**"*
+                ⭐⭐ **8/31 에 «창업자가 넣자고 해서» 세운 것을 «창업자가 다시 뺀다».**
+                   그때 근거(*"인스타 판에서 51 이 주인공이었다"*)는 **한 장짜리 홍보**엔 맞았는데,
+                   앱 팝업은 **매달 같은 자리에 다시 뜬다** — 46px 로 51 을 세워 두면
+                   10월에 같은 자리에 17 이 뜨는 순간 **그 자체가 「줄었다」는 신호**가 된다.
+                   📌 숫자를 크게 세우는 순간 «그만큼이 기준»이 되어 버린다. 그게 창업자가 짚은 것이다.
+                ⭐ 대신 아래 한 줄(`sub`)이 조용히 말한다 — 갈래별 개수는 아래 «칩 목록»에 이미 다 있다. */}
+            {/* ⛔ 빈 줄을 그리지 않는다 — 선물뿐인 달엔 `sub` 가 비고, 그대로 두면 «빈 칸»만 남는다 */}
+            {h.sub && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3 }}>{h.sub}</div>}
 
             {/* 히어로 한 컷 크게 — 작은 것 여럿보다 «하나 큰 것»이 눈에 남는다 */}
             {hero && (
@@ -174,9 +167,15 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
             </div>
           </div>
 
-          {/* 무엇이 왔는지 — 칩으로. ⛔체크리스트는 «할 일»처럼 읽힌다 */}
+          {/* 무엇이 왔는지 — 칩으로. ⛔체크리스트는 «할 일»처럼 읽힌다
+              🎁 **선물은 칩에서 뺀다** (창업자 2026-09-02 *"가을의 정원은 아래에 크게 안내하니까 윗줄에는 빼자"*)
+                 ⭐ 바로 아래 선물 칸이 **같은 이름 · 같은 숫자 · 컷 전부**를 크게 편다 → 칩에 또 두면 두 번 말하는 것이다.
+                 ✅ **[창업자 확정 2026-09-02 · 검수판 ⑥] 머릿수에서도 뺐다** — *"23으로 줄이기"*
+                    → 이제 칩과 머릿수가 «같은 것»을 센다(꾸미기 23종). 선물은 아래 칸이 따로 맡는다.
+                    ⛔ 한쪽만 빼면 「27인데 칩은 23」으로 어긋난다 — 둘은 «한 몸»이다(`headline()` 참조).
+                 ⚠️ 선물뿐인 달이면 칩이 통째로 빈다 — 그때도 선물 칸이 목록 노릇을 한다(빈 줄은 안 그려진다). */}
           <div style={{ padding: '13px 18px 0', display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
-            {items.map((it, i) => (
+            {items.filter((it) => !it.gift).map((it, i) => (
               <span key={i} style={{
                 fontSize: 15, fontWeight: 800, color: 'var(--text)', background: 'var(--cream)',
                 borderRadius: 999, padding: '5px 11px',
@@ -188,8 +187,10 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
 
           {/* 🎁🎁 그달 선물 — «한 줄 ＋ 컷 전부» (창업자 2026-08-30
               *"가을의정원접시세트도 특별한 선물로 한 줄적어줘. 안내판에 그달 주는 선물 이미지가 다들어가면 좋겠는데..."*)
-              ⭐ 칩 목록에 이미 「가을의 정원 세트 4」가 있는데 «또» 적는다 — 데뷔 줄과 같은 이유다.
-                 목록에 섞이면 그냥 한 줄이고, 따로 세워야 «선물»로 읽힌다.
+              ⭐ 목록에 섞이면 그냥 한 줄이고, 따로 세워야 «선물»로 읽힌다 — 데뷔 줄과 같은 이유다.
+              ⛔ [2026-09-02] 그 전엔 **칩에도 「가을의 정원 세트 4종」이 있어 두 번 말하고 있었다.**
+                 창업자 = *"가을의 정원은 아래에 크게 안내하니까 윗줄에는 빼자"* → 위 칩 줄에서 뺐다.
+                 📌 그러니 **이 칸이 그 선물의 «유일한» 안내다** — 지우거나 조건을 좁히지 말 것.
               ⛔ 여기만 컷을 «전부» 편다(`giftKeys`) — 나머지 그룹은 맛보기 5컷 그대로(위 `PEEK`). */}
           {h.gift && (
             <div style={{ padding: '13px 18px 0' }}>
@@ -208,6 +209,15 @@ export default function NewsPopup({ news, onClose, onOpenNews }) {
                 {h.gift.hint && (
                   <div className="t-sub" style={{ fontSize: 15, marginTop: 3, lineHeight: 1.45, wordBreak: 'keep-all' }}>
                     {h.gift.hint}
+                  </div>
+                )}
+                {/* 🎁 **「매달 오는 게 아니다」 한 줄** (창업자 2026-09-02 *"매달주는거 아니라는 걸 잘 안내해줘"*)
+                    ⭐ 위 `hint`(쓰는 법)와 «성격이 다르다» — 그래서 한 칸 띄우고 살짝 작게 둔다.
+                       붙여 놓으면 사용법의 둘째 줄로 읽혀 안내가 안 된다.
+                    ⛔ 더 작게 하지 말 것 — 창업자가 «잘» 안내하라고 했다(13.5px 아래로 내리면 안 읽힌다). */}
+                {h.gift.giftNote && (
+                  <div className="t-sub" style={{ fontSize: 13.5, marginTop: 8, lineHeight: 1.45, wordBreak: 'keep-all', opacity: 0.9 }}>
+                    {h.gift.giftNote}
                   </div>
                 )}
                 {h.gift.giftKeys?.length > 0 && (
