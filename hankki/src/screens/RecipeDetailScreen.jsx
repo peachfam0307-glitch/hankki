@@ -20,7 +20,7 @@ import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
 import { dateLabel, openExternal as openUrl, ingredientName, fitImage } from '../utils'
 import { photoPanStart } from '../photoPan'
-import { shouldAskReview, shouldAskReviewNow, REVIEW_AT } from '../nudges'
+import { shouldAskReviewNow } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
 // 🔁 AI 정리 실패 만회(아래 「만회한적」 절) — 잣대는 앱이 쓰는 그 모듈 그대로다(절대원칙 30).
@@ -925,9 +925,13 @@ export default function RecipeDetailScreen({ id }) {
       {logEntry && (
         <DiaryEntrySheet
           entry={logEntry}
-          // 닫는 순간 = 기록을 막 남긴 뒤 = 한마디를 청하기 제일 좋은 자리.
-          // ⛔ onDelete 는 여기를 안 탄다 — 지우고 나서 리뷰를 청하면 실례다.
-          onClose={() => { setLogEntry(null); if (shouldAskReview(diary.length)) setAskReview(`${REVIEW_AT}번째 한 끼예요`) }}
+          // ⛔⛔ [2026-09-03] 여기 있던 「한마디 청하기」를 **뺐다** — 창업자 확정으로 자리가 옮겨갔다.
+          //   📮 창업자 = *"일기를 3개나 쓰는 건 좀 무리같아"* → *"ㄱㄱ 2개??ㅋㅋ"*(내 레시피 2개)
+          //   🔢 이 문은 다섯을 다 밟아야 열렸다 — 기록 3장 · 그 레시피에 한 줄 «직접» 써넣기 ·
+          //      상세로 가기 · 포스트잇 누르기 · 시트 닫기. 「만들었어요」가 만드는 기록은 메모가 빈 칸이라
+          //      둘째 걸음이 저절로는 절대 안 채워졌다(`_repro-리뷰띄우기-0827` 실측).
+          //   ⭐ 새 자리 = **레시피를 저장한 직후**(`EditorScreen` → `App`). 사람들이 실제로 지나가는 길이다.
+          onClose={() => setLogEntry(null)}
           onDelete={() => { removeDiary(logEntry.id); setLogEntry(null); nav.showToast('기록을 삭제했어요') }}
         />
       )}

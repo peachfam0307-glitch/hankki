@@ -8,6 +8,13 @@
 //       그런데 **부르는 자리가 하나뿐**이고 그 자리가 거의 안 닿는다.
 //       📌 규칙 18 ⓘ — 「있나」와 「닿나」는 다른 말이다.
 //
+// 📮📮 [창업자 확정 2026-09-03] **문턱과 자리를 둘 다 옮겼다.**
+//    창업자 = *"일기를 3개나 쓰는 건 좀 무리같아"* · *"레시피를 3개 올리면 모를까"* → *"ㄱㄱ 2개??ㅋㅋ"*
+//    · 문턱 = 「일기 3개」 → **「내 레시피 2개」**(`myRecipeCount`)
+//    · 자리 = 「일기 시트를 닫는 순간」 → **「레시피를 저장한 직후」**(`EditorScreen` → `App`)
+//    ⛔ 숫자만 낮추면 땜빵이다(절대원칙 34) — 그래서 ①② 는 「옛 문이 닫혔나」로 뒤집었고
+//       ⑨⑩ 을 새로 만들어 **새 문이 진짜로 열리나**를 잰다.
+//
 // 🔢 「보통으로 쓰는 사람」의 정의 = **「만들었어요」만 누른 사람.**
 //    그게 만드는 기록은 `note: ''` · `rating: 0` 이다
 //    (`CookScreen.jsx:96` · `RecipeDetailScreen.jsx:201` — 둘 다 빈 메모).
@@ -30,7 +37,12 @@ const srv = createServer((q, s) => {
   try { body = readFileSync(join(DIST, p)) } catch { body = readFileSync(join(DIST, 'index.html')); type = 'text/html' }
   s.writeHead(200, { 'content-type': type }); s.end(body)
 })
-await new Promise((r) => srv.listen(4419, r))
+// 🔀 [2026-09-03] 고정 포트 4419 → **OS 가 빈 포트를 준다**(`listen(0)`).
+//    ⛔⛔ 이 판이 길어지자(⑨⑩⑪ 추가) 스모크에서 `EADDRINUSE 4419` 로 «남의 판»이 죽었다.
+//       4419 를 쓰는 판이 넷이었다 — 포트 번호를 바꾸는 건 땜빵이다(절대원칙 34).
+//       📌 `_repro-패드글씨-0821` 이 2026-08-27 에 이미 이렇게 고쳐 놓고 «주석에만» 적어 뒀다.
+await new Promise((r) => srv.listen(0, r))
+const BASE = `http://127.0.0.1:${srv.address().port}/hankki/`
 
 let 통과 = 0, 실패 = 0
 const chk = (이름, 값, 기대) => {
@@ -56,7 +68,7 @@ await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '
 const 새탭 = async () => {
   const page = await ctx.newPage()
   page.on('pageerror', (e) => { console.log('  ⚠️ pageerror:', String(e.message || e).split('\n')[0]); 실패++ })
-  await page.goto('http://127.0.0.1:4419/hankki/', { waitUntil: 'networkidle' })
+  await page.goto(BASE, { waitUntil: 'networkidle' })
   await page.evaluate(() => { try { localStorage.removeItem('hankki:nudge:review') } catch {} })
   await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(700)
@@ -110,8 +122,56 @@ const 상세열기 = async (page, 제목) => {
   return page.evaluate((T) => document.body.innerText.includes(T) && /재료|만드는 법/.test(document.body.innerText), 제목)
 }
 
-// 📌 메모지(포스트잇) — 고치기 «전» 리뷰창으로 가는 유일한 문이었다
+// 📌 메모지(포스트잇) — 2026-09-03 «전»까지 리뷰창으로 가는 유일한 문이었다
 const 메모지있나 = (page) => page.evaluate(() => !!document.querySelector('.memo-note'))
+
+// ─── 📥 「내 레시피」를 실제로 담는다 (2026-09-03 새 문턱·새 자리) ──────────
+//
+// ⛔ 저장값을 심지 «않는다» — 이 판이 재려는 건 「담는 행동 뒤에 뜨나」다.
+//    localStorage 에 레시피를 꽂아 넣으면 «담는 행동»이 없어서 아무것도 안 재게 된다(규칙 18 ⓘ).
+// 🚶 밟는 길 = 하단바 「가져오기」 → 「직접 입력하기」 → 「빈 종이 열기」 → 제목 → 「저장」.
+//    ⭐ 사람이 실제로 지나가는 길 그대로다.
+const 담기 = async (page, 제목) => {
+  await page.evaluate(() => document.querySelector('button[aria-label="가져오기"]')?.click())
+  await page.waitForTimeout(600)
+  await page.evaluate(() => {
+    ;[...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('직접 입력하기'))?.click()
+  })
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').includes('빈 종이 열기')),
+    null, { timeout: 15000 },
+  ).catch(() => {})
+  await page.evaluate(() => {
+    ;[...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('빈 종이 열기'))?.click()
+  })
+  await page.waitForSelector('input[placeholder="예) 명란 크림 파스타"]', { timeout: 15000 }).catch(() => {})
+  const 열렸나 = await page.evaluate(() => !!document.querySelector('input[placeholder="예) 명란 크림 파스타"]'))
+  if (!열렸나) return false
+  await page.fill('input[placeholder="예) 명란 크림 파스타"]', 제목)
+  await page.evaluate(() => {
+    ;[...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim() === '저장')?.click()
+  })
+  // 저장은 «쓰기가 진짜 돌 때까지» 기다렸다 나간다(EditorScreen 「나갈까」) → 담긴 것을 보고 판정한다
+  await page.waitForFunction((T) => {
+    try {
+      const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+      return (s.recipes || []).some((r) => r && r.title === T)
+    } catch { return false }
+  }, 제목, { timeout: 15000 }).catch(() => {})
+  await page.waitForTimeout(600)
+  return page.evaluate((T) => {
+    try {
+      const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+      return (s.recipes || []).some((r) => r && r.title === T)
+    } catch { return false }
+  }, 제목)
+}
+
+// 🔢 「내 레시피 수」 — 앱이 쓰는 «그 함수»로 센다(절대원칙 30 · 흉내가 아니다)
+const { myRecipeCount } = await import('../src/nudges.js')
+const 내레시피수 = async (page) => myRecipeCount(await page.evaluate(() => {
+  try { return JSON.parse(localStorage.getItem('hankki:v1') || '{}').recipes || [] } catch { return [] }
+}))
 
 // ─── ㉠ 레꾸자랑 길 ──────────────────────────────────────────
 const 자랑탭열기 = async (page) => {
@@ -204,7 +264,9 @@ console.log('① 보통으로 쓰는 사람 — 「만들었어요」만 세 번
   const p2 = await 새탭()   // 저장값을 읽은 채로 새로 연다
 
   const 기록수 = await p2.evaluate(() => (JSON.parse(localStorage.getItem('hankki:v1') || '{}').diary || []).length)
-  chk('기록이 3장 넘게 쌓였다 — 리뷰 문턱(3)을 넘었다', 기록수 >= 3)
+  chk('기록이 3장 넘게 쌓였다 — 옛 문턱(일기 3)을 넘었다', 기록수 >= 3)
+  // ⛔ [2026-09-03] 문턱이 «일기»가 아니게 됐다 — 일기가 아무리 쌓여도 그것만으론 안 뜬다
+  chk('⛔ 그런데 내 레시피는 0이다 — 새 문턱(레시피 2)에는 안 닿았다', await 내레시피수(p2), 0)
 
   // ⛔ 여기부터가 «진짜 잣대»다 — 상세가 «안 열리면» 뒤 칸을 초록불로 만들지 않는다(규칙 18 ⓘ)
   const 열림 = await 상세열기(p2, 제목)
@@ -219,7 +281,7 @@ console.log('① 보통으로 쓰는 사람 — 「만들었어요」만 세 번
 }
 
 // ─────────────────────────────────────────────────────────────
-console.log('\n② 한 줄까지 «직접 써넣은» 사람 — 그제서야 문이 생긴다')
+console.log('\n② ⛔ 옛 문(일기 시트를 닫는 순간)은 «닫혔다» — 자리를 옮겼다 (2026-09-03)')
 // ─────────────────────────────────────────────────────────────
 {
   const page = await 새탭()
@@ -240,7 +302,12 @@ console.log('\n② 한 줄까지 «직접 써넣은» 사람 — 그제서야 �
       t?.click()
     })
     await p2.waitForTimeout(800)
-    chk('그때서야 리뷰창이 뜬다 — 다섯을 다 밟아야 열린다', await 리뷰창떴나(p2))
+    // ⛔⛔ [2026-09-03] 여기가 옛 판에선 «뜬다»였다. 이제는 «안 뜬다»가 맞는 값이다.
+    //   📮 창업자 = *"일기를 3개나 쓰는 건 좀 무리같아"* → 문턱·자리를 둘 다 옮겼다.
+    //   🔢 이 문이 얼마나 좁았나 = 다섯을 다 밟아야 열렸다(기록 3장 · 한 줄 직접 쓰기 ·
+    //      상세 · 포스트잇 · 시트 닫기). 「만들었어요」는 메모가 빈 칸이라 둘째가 저절로 안 채워진다.
+    //   ⭐ 그러니 이 칸이 죽으면 = 「옛 좁은 문이 되살아났다」는 뜻이다.
+    chk('⛔ 이제는 «안» 뜬다 — 이 좁은 문은 닫았다', !(await 리뷰창떴나(p2)))
   }
 
   await page.close(); await p2.close()
@@ -471,9 +538,107 @@ console.log('\n⑧ 🚨 허가가 끊겨 「지금 보내기」로 나간 경우
   await page.close()
 }
 
+// ─── ⑨ ⭐⭐ 새 문 — 「내 레시피 2개」를 담으면 뜬다 (창업자 확정 2026-09-03) ──
+//
+// 📮 창업자 = *"일기를 3개나 쓰는 건 좀 무리같아"* · *"레시피를 3개 올리면 모를까"* → *"ㄱㄱ 2개??ㅋㅋ"*
+//
+// ⭐⭐ 이 칸의 심장 = **「사람이 실제로 지나가는 길에서 뜨나」**.
+//    저장값을 심지 않고 «가져오기 → 직접 입력 → 빈 종이 → 제목 → 저장»을 그대로 밟는다.
+// ⛔ 숫자만 3→2 로 낮춘 게 아님을 여기서 증명한다 —
+//    ⑴갓 깐 사람은 0(기본 145편은 안 센다) ⑵1개에선 «안» 뜬다 ⑶2개에서 뜬다 ⑷머리글이 참이다.
+console.log('\n⑨ ⭐ 「내 레시피 2개」를 담으면 뜬다 — 새 문턱·새 자리')
+{
+  const page = await 새탭()
+  chk('갓 깐 사람은 내 레시피가 0이다 — 기본 145편은 안 센다', await 내레시피수(page), 0)
+  chk('시작할 때 리뷰창은 «안» 떠 있다', !(await 리뷰창떴나(page)))
+
+  const 담김1 = await 담기(page, '테스트 레시피 하나')
+  chk('첫 레시피를 «진짜로» 담았다 (＝이 칸의 전제)', 담김1)
+  if (!담김1) { console.log('  ⛔⛔ 저장이 안 됐다 — 아래는 «재지 않은 것»이므로 판정하지 않는다'); 실패 += 4 }
+  else {
+    chk('내 레시피가 1이 됐다', await 내레시피수(page), 1)
+    chk('⛔ 1개에선 «안» 뜬다 — 문턱은 2다', !(await 리뷰창떴나(page)))
+
+    const 담김2 = await 담기(page, '테스트 레시피 둘')
+    chk('둘째 레시피도 담았다', 담김2)
+    chk('⭐⭐ 2개째에서 리뷰창이 뜬다 — 창업자가 말한 「레시피 2개」', await 리뷰창기다리기(page, 6000))
+    chk('머리글이 그 자리에서 «참»이다 — 「내 레시피 2개가 됐어요」', await page.evaluate(() =>
+      document.body.innerText.includes('내 레시피 2개가 됐어요')
+      && !document.body.innerText.includes('번째 한 끼예요')))
+  }
+  await page.close()
+}
+
+// ─── ⑩ 한 번 뜨면 다음 저장엔 «안» 뜬다 — 담을 때마다 조르지 않는다 ────────
+console.log('\n⑩ ⛔ 담을 때마다 조르지 않는다 — 30일에 한 번')
+{
+  const page = await 새탭()
+  await 담기(page, '조름 검사 하나')
+  const 담김 = await 담기(page, '조름 검사 둘')
+  chk('두 편을 담았다 (＝이 칸의 전제)', 담김)
+  chk('두 번째에 리뷰창이 떴다', await 리뷰창기다리기(page, 6000))
+  await page.evaluate(() => {
+    ;[...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim() === '나중에')?.click()
+  })
+  await page.waitForTimeout(700)
+  chk('「나중에」로 닫혔다', !(await 리뷰창떴나(page)))
+  chk('⭐ 「물어봤음」에 «날짜»가 박혔다 — 30일 셈의 근거', await page.evaluate(() => {
+    try { return /^\d{4}-\d{2}-\d{2}$/.test(localStorage.getItem('hankki:nudge:review') || '') } catch { return false }
+  }))
+  await 담기(page, '조름 검사 셋')
+  chk('⛔⛔ 세 번째 저장엔 «안» 뜬다 — 조르는 앱이 되지 않는다', !(await 리뷰창떴나(page)))
+  await page.close()
+}
+
+// ─── ⑪ ⭐⭐ 「라이트하게 써본 사람」도 리뷰를 쓸 수 있나 — 설정의 상시 입구 ──
+//
+// 📮 창업자 2026-09-03 = *"리뷰는 진짜 라이트하게 써봐도 올릴수있게 하면 좋겠다. **리뷰가 좀 시급해**"*
+//
+// ⛔⛔ 위 ①~⑩ 은 전부 «조건이 붙은 문»이다(레시피 2개 · 자랑 보내기 · 30일에 한 번).
+//    그런데 앱품앗이로 온 사람은 **저장을 한 번도 안 한다** — 3~5분 써보고 리뷰를 쓴다.
+//    그 사람에게는 위 문이 하나도 안 열린다. **스스로 갈 수 있는 길**이 따로 있어야 한다.
+// ⭐ 그래서 잣대 = 「내 레시피 0인 «갓 깐» 사람이 설정에서 스토어로 갈 수 있나」.
+// ⛔ 링크를 «누르지» 않는다 — 헤드리스에서 바깥 창을 열 수 없다. 대신 «주소가 그 자리에 있나»를 본다.
+console.log('\n⑪ ⭐ 갓 깐 사람도 설정에서 스토어로 갈 수 있나 — 상시 입구')
+{
+  const page = await 새탭()
+  // ⛔⛔ 앞 칸 ⑨⑩ 이 «진짜로» 담은 레시피 다섯이 여기까지 살아 있다 — 탭이 달라도 저장소는 하나다.
+  //    안 비우면 「갓 깐 사람」이라는 전제가 거짓이 되고, 그러고도 뒤 칸은 초록불이 된다(규칙 18 ⓘ).
+  await page.evaluate(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+      s.recipes = (s.recipes || []).filter((r) => String(r?.id || '').startsWith('basic-'))
+      localStorage.setItem('hankki:v1', JSON.stringify(s))
+    } catch { /* noop */ }
+  })
+  chk('내 레시피가 0이다 — 어떤 문턱에도 안 닿은 사람 (＝이 칸의 전제)', await 내레시피수(page), 0)
+  await page.evaluate(() => document.querySelector('button[aria-label="설정"]')?.click())
+  await page.waitForTimeout(400)
+  // 설정 탭은 하단바에 없을 수 있다 — 상단바 톱니 또는 탭 글자 어느 쪽이든 잡는다
+  await page.evaluate(() => {
+    if (/스토어에 한마디/.test(document.body.innerText || '')) return
+    const bs = [...document.querySelectorAll('button')]
+    bs.find((x) => /설정/.test(x.getAttribute('aria-label') || '') || (x.innerText || '').trim() === '설정')?.click()
+  })
+  await page.waitForFunction(() => /스토어에 한마디/.test(document.body.innerText || ''), null, { timeout: 15000 }).catch(() => {})
+  chk('⭐ 설정에 「스토어에 한마디」 줄이 있다', await page.evaluate(() =>
+    /스토어에 한마디/.test(document.body.innerText || '')))
+  chk('⛔ 눌러도 「물어봤음」을 «안» 남긴다 — 우리가 청한 게 아니라 유저가 스스로 간 것이다',
+    await page.evaluate(() => {
+      const b = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('스토어에 한마디'))
+      if (!b) return false
+      window.open = () => null   // 바깥 창은 헤드리스에서 못 연다 — 여는 시늉만 막는다
+      b.click()
+      try { return !localStorage.getItem('hankki:nudge:review') } catch { return false }
+    }))
+  await page.close()
+}
+
 console.log(`\n${실패 ? '⛔' : '✅'} ${통과}/${통과 + 실패}\n`)
-console.log('📌 ①② = 고치기 «전» 상태(문이 사실상 닫혀 있다) · ③④⑤ = ㉠ 으로 연 문.')
-console.log('   ③이 죽으면 리뷰창이 다시 0명에게 뜬다. ④가 죽으면 «안 보낸 사람»에게 조른다.\n')
+console.log('📌 ①② = 옛 문(일기 3개 · 시트 닫는 순간)이 «닫혀 있나» · ③④⑤⑥⑦⑧ = ㉠ 레꾸자랑 길.')
+console.log('   ⑨⑩ = 새 문(내 레시피 2개 · 저장 직후). ⑨가 죽으면 리뷰창이 다시 0명에게 뜬다.')
+console.log('   ④·⑩ 이 죽으면 «청할 자격이 없는 사람»에게 조른다.')
+console.log('   ⑪ = 설정의 상시 입구(조건 0). 이게 죽으면 «가볍게 써본 사람»은 갈 길이 아예 없다.\n')
 
 await b.close(); srv.close()
 process.exit(실패 ? 1 : 0)
