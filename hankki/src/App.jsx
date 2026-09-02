@@ -696,7 +696,18 @@ export default function App() {
     let cancelled = false
     // ⛔ 첫 화면이 다 그려진 뒤에 시작한다 — 앱을 여는 순간 캔버스를 돌리면 «느린 앱»이 된다.
     const t = setTimeout(async () => {
-      const 큰것 = store.recipes.filter((r) => typeof r.image === 'string' && r.image.length > SHRINK_OVER)
+      // 🎴🎴 **자랑카드 표지는 «건드리지 않는다»** (2026-09-02 · 전수 조사로 찾음)
+      //   ⛔⛔ 이 루프가 카드까지 900px 로 다시 구우면 **두 가지가 동시에 망가진다** —
+      //      ⑴ 카드가 뭉개진다(카드는 «판 전체가 그림»이라 사진과 다르다)
+      //      ⑵ ⭐**옛 카드는 «카드인 줄 모르게 된다»** — 8/18 «전»에 저장한 표지엔 `imageFit:'whole'`
+      //         표시가 없어서 **세로 1600px 로만** 알아본다(`cardCover.js` ②). 900 으로 줄이면 그 잣대를 못 넘어
+      //         **⒜ 표지가 동그랗게 그려지고**(창업자 2026-08-18 *"자랑카드전체가 표지여야하는데 동그랗게됐다고"*)
+      //         **⒝ 클라우드가 사진으로 알고 털어버린다**(창업자 2026-08-31 *"레꾸자랑에서 뽑은카드로 레꾸한거는 사라졌어."*)
+      //      즉 이 줄이 없으면 **이미 고친 사고 둘이 되살아난다.**
+      //   ⭐ 잣대는 `cardCover.js` 의 `카드표지인가()` 하나 — 화면·클라우드와 «같은 값»을 쓴다.
+      const 큰것 = store.recipes.filter(
+        (r) => typeof r.image === 'string' && r.image.length > SHRINK_OVER && !카드표지인가(r)
+      )
       if (!큰것.length) return // ⭐ 없으면 아무 일도 안 한다 → 다음 실행부터 비용 0
       let 줄인수 = 0
       let 아낀양 = 0
