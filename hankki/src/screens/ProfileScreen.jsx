@@ -9,7 +9,7 @@ import KeyBadge from '../components/KeyBadge'
 import TabTips from '../components/TabTips'
 import EmojiPicker from '../components/EmojiPicker'
 import FoodIconPicker from '../components/FoodIconPicker'
-import Buddy, { BUDDY_GROUPS } from '../components/Buddies'
+import Buddy, { BUDDY_GROUPS, BUDDY_TITLE } from '../components/Buddies'
 import Portal from '../components/Portal'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
@@ -394,12 +394,14 @@ export default function ProfileScreen() {
               <button className="press" onClick={() => setAvatarSheet(false)} style={{ color: 'var(--text-sub)', fontSize: 16.5, fontWeight: 600 }}>닫기</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* 요리사 친구들 — 모자 쓴 동물 캐릭터. 세 가지 그림체를 섹션으로 나눠 보여준다. */}
+              {/* 🐻🐧 한끼 친구들 — 정본 5인(꼬르곰·펭펭·카롱·뾰미·꼬비).
+                  ⛔ 이름은 `Buddies.jsx` 의 `BUDDY_TITLE` «한 곳»에만 있다 — 여기 글자로 박지 말 것. */}
               <div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--brown)', marginBottom: 10 }}>요리사 친구들</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--brown)', marginBottom: 10 }}>{BUDDY_TITLE}</div>
                 {BUDDY_GROUPS.map((g) => (
                   <div key={g.key} style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--sand)', margin: '0 2px 8px', letterSpacing: '0.02em' }}>{g.label}</div>
+                    {/* ⛔ 라벨이 비면 «줄 자체를 안 그린다» — 빈 div 가 남으면 위아래 여백만 벌어진다 */}
+                    {g.label && <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--sand)', margin: '0 2px 8px', letterSpacing: '0.02em' }}>{g.label}</div>}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                       {g.items.map((bd) => {
                         const on = profile.avatar?.type === 'buddy' && profile.avatar.value === bd.id
@@ -444,8 +446,18 @@ export default function ProfileScreen() {
                 <div style={{ fontSize: 16, fontWeight: 600 }}>이모지로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                {/* 🍜🍜 [2026-09-02 창업자 제보] *"한끼아이콘으로 하기에 아이콘이 **뚝배기 카와이스타일**이라고"*
+                    ⛔⛔ 기본값이 **`fe_04`(얼굴 달린 카와이 뚝배기)** 로 박혀 있었다 — 창업자 확정
+                       *"카와이 컷을 아예 폐기해버리자"*(2026-08-29)의 **마지막 남은 자리**였다.
+                    🔢 실측 = `fe_04` 는 픽커(`FOOD_ICON_GROUPS`)에 **0건** — «이미 내려진» 컷인데
+                       **기본 썸네일로만 살아 있었다.** 그래서 픽커를 «열면» 실사만 나오는데
+                       **열기 전 줄에 붙은 그림은 카와이**였다.
+                    ⭐⭐ 그래서 v96 의 카와이 잣대(`store.jsx` = 「픽커에 없는 옛 접두어 컷」)가 **이걸 못 잡았다** —
+                       그 잣대는 «레시피에 박힌 값»만 훑지 **화면에 박아 둔 기본값**은 안 본다(규칙 18 ⓘ).
+                    ✅ `gr_343` = 창업자가 **2026-08-31 전수 판정에서 이 자리에 직접 갈아끼운 실사 컷**
+                       (같은 「버섯 솥밥」 · `basics.js` v105). 내가 고른 게 아니라 «이미 정해진 짝»이다. */}
                 <FoodIconPicker
-                  value={profile.avatar?.type === 'icon' ? profile.avatar.value : 'fe_04'}
+                  value={profile.avatar?.type === 'icon' ? profile.avatar.value : 'gr_343'}
                   size={56}
                   onChange={(k) => { setProfile({ avatar: { type: 'icon', value: k } }); nav.showToast('프로필 아이콘을 바꿨어요') }}
                 />

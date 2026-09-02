@@ -168,8 +168,48 @@ console.log(`[foodtab] · 일부러 내려둔 것 ${shelved.length}컷 — 같�
   }
 }
 
+// ── ⑧ 🍜🍜 «화면에 박아 둔 기본 아이콘»이 픽커에서 내려진 컷인가 (2026-09-02) ──
+//    📮 창업자 = *"한끼아이콘으로 하기에 아이콘이 **뚝배기 카와이스타일**이라고"*
+//    ⛔⛔ 프로필 아이콘 시트의 기본 썸네일이 **`fe_04`(얼굴 달린 카와이 뚝배기)** 로 박혀 있었다.
+//       그 컷은 픽커에 **0건** — 창업자 전수 판정(2026-08-31)에서 이미 «내려진» 컷인데
+//       **기본값으로만 살아남아** 픽커를 «열기 전» 줄에 그대로 떠 있었다.
+//    ⭐⭐ 왜 v96 카와이 폐기가 이걸 못 잡았나 = 그 잣대(`store.jsx`)는 **레시피에 박힌 값**만 훑는다.
+//       «화면 소스에 손으로 박은 기본값»은 아무도 안 보고 있었다(규칙 18 ⓘ).
+//    🔒 그래서 이 자리에 잣대를 둔다 — **화면 파일에 박힌 아이콘 열쇠는 전부 픽커에 있어야 한다.**
+//    ⛔ `FoodIcon.jsx`·`Stickers.jsx` 는 «사전 파일»이라 뺀다 — 넣으면 수백 건이 걸려 시끄러워진다
+//       (시끄러운 게이트는 죽은 게이트).
+{
+  // ⛔⛔ `globSync` 를 쓰지 않는다 — **Node 22 전용**이고 CI 는 **Node 20** 이다.
+  //    2026-08-03 에 `check-hooks.mjs` 가 바로 이걸로 **배포를 세 번 연달아 죽였다**(로컬만 초록불).
+  const 훑기 = (d) => readdirSync(path.join(root, d))
+    .filter((f) => f.endsWith('.jsx') && !/^(FoodIcon|Stickers)\.jsx$/.test(f))
+    .map((f) => path.join(root, d, f))
+  const 화면들 = [...훑기('src/screens'), ...훑기('src/components')]
+  const 실린것 = new Set([...home.keys()])   // 픽커(FOOD_ICON_GROUPS)에 실제로 실린 컷
+  const 박힌것 = []
+  for (const f of 화면들) {
+    const 글 = readFileSync(f, 'utf8')
+    for (const m of 글.matchAll(/'((?:fe|fh|fy|fj|fi|fb|gr|ig)_[0-9a-z_]+)'/g)) {
+      // ⛔ 주석 줄은 세지 않는다 — 「옛 fe_04 였다」 같은 «기록»까지 걸면 고쳐놓고도 빨간불이 된다
+      const 줄시작 = 글.lastIndexOf('\n', m.index) + 1
+      const 끝 = 글.indexOf('\n', m.index)
+      const 줄 = 글.slice(줄시작, 끝 < 0 ? undefined : 끝)
+      if (/^\s*(\/\/|\*|\/\*)/.test(줄)) continue
+      if (!실린것.has(m[1])) 박힌것.push(`${path.basename(f)}: ${m[1]}`)
+    }
+  }
+  if (박힌것.length) {
+    console.error(`\n[foodtab] ❌ 픽커에 «없는» 컷이 화면에 기본값으로 박혀 있다 — ${박힌것.length}건`)
+    박힌것.forEach((x) => console.error(`   ${x}`))
+    console.error('   👉 내려진 컷은 유저에게 보이면 안 된다. 픽커에 실린 컷으로 바꿀 것.')
+    fail = true
+  } else {
+    console.log(`[foodtab] · 화면에 박힌 기본 아이콘 — 전부 픽커에 있다 (${화면들.length}개 파일)`)
+  }
+}
+
 if (fail) { console.error('\n❌ 음식 탭 게이트 실패'); process.exit(1) }
-console.log('✅ 음식 탭 통과 — 중복 0 · 깨진 참조 0 · 빈 이름표 0')
+console.log('✅ 음식 탭 통과 — 중복 0 · 깨진 참조 0 · 빈 이름표 0 · 내려진 컷이 화면 기본값에 0')
 
 // ── ⑦ ⛔ 「구체어 먼저」 — 긴 이름이 짧은 이름에 «먼저» 먹히는 것 (2026-08-15) ──
 //    📮 창업자 *"탕수육1줄은 고치자"*
