@@ -23,6 +23,9 @@ import { photoPanStart } from '../photoPan'
 import { shouldAskReview, shouldAskReviewNow, REVIEW_AT } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
+// 🔁 AI 정리 실패 만회(아래 「만회한적」 절) — 잣대는 앱이 쓰는 그 모듈 그대로다(절대원칙 30).
+import { tidyRecipe, mergeTidy } from '../tidy'
+import { parseRecipeText } from '../parseRecipe'
 import { picksForIngredients, productLink, productMall, curIcon, isHansalim } from '../data/curation'
 
 import { useWakeLock } from '../useWakeLock'
@@ -132,6 +135,55 @@ export default function RecipeDetailScreen({ id }) {
   //    early return 이 걸려 훅 개수가 줄고 React 가 트리째 죽는다(빈 화면).
   //    2026-08-03 창업자 제보 *"홍콩식가지볶음 지웠더니 먹통됨"* 의 정체가 이거였다.
   //    (`picksOpen` 이 뒤쪽 158줄에 있었다 — 큐레이션 픽 4개 상한을 넣으며 8/2 에 들어왔다)
+
+  // 🔁🔁🔁 **[2026-09-02 · 창업자 「불안정하다」] AI 정리에 실패한 편을 «열 때» 한 번 만회한다.**
+  //
+  // 📮 창업자 = *"불안정하다.. ai가 읽을때가 있고 못읽을때가 있고.. 열쇠는 차감안된거지? (못읽으면)"*
+  // 📮 그 앞 확정(2026-08-29) = *"**열쇠는 무조건 둘다 잘되어야해 돈이니까.**"*
+  //
+  // ⛔⛔ **OCR 몫 열쇠는 이미 나갔다** — 정리가 실패하면 돈은 내고 값의 절반만 받는다.
+  //    「이번엔 안 됐네」로 끝내면 그 손해가 «영구»가 된다. 그래서 만회한다.
+  //
+  // ⭐ **왜 「앱 열 때」가 아니라 「그 편을 열 때」인가** — 비용이 «관심»에 비례하게 하려고.
+  //    앱 열 때 돌리면 안 보는 레시피에도 뉴런이 나가고, 유저가 수만 명이면 그게 곧 우리 돈이다
+  //    (절대원칙 32). 여는 순간에만 돌면 **안 보는 편엔 0원**이고, 보는 그 순간 고쳐져 있다.
+  //
+  // ⛔⛔ **빈 칸만 채운다 — 유저가 고친 것을 «절대» 안 덮는다.**
+  //    · 제목  = 비었거나 자리표(「사진 레시피」)일 때만
+  //    · 재료  = 지금 «0줄»일 때만
+  //    · 걸음  = ⛔안 건드린다(규칙 파서 걸음이 이미 쓸 만하고, 유저가 봤을 수 있다)
+  //    📌 이러면 「고쳐주려다 지우는」 길이 구조적으로 없다(v10.86 ⓙ 「없는 값으로 덮으면 지우는 것」).
+  //
+  // ⛔ **한 편에 한 번뿐** — 또 실패하면 표를 2 로 바꿔 다시 안 한다. 무한 재시도는 통을 태운다.
+  // ⛔ 사진은 안 보낸다 — 저장을 안 하므로 손에 없다(글자만으로도 8/29 실측에서 재료 7개가 나왔다).
+  // ⚠️ 훅은 «전부» 아래 `if (!r)` 보다 위에 있어야 한다(바로 아래 주석 참조).
+  const 만회한적 = useRef('')
+  useEffect(() => {
+    if (!r || r.tidyFail !== 1) return
+    const 원문 = String(r.rawText || '')
+    if (원문.length < 40) return          // 원문이 없으면 만회할 재료가 없다
+    if (만회한적.current === r.id) return // ⛔ 이 화면에 머무는 동안 두 번 돌지 않게
+    만회한적.current = r.id
+    let 살아있나 = true
+    ;(async () => {
+      const ai = await tidyRecipe(원문)
+      if (!살아있나) return
+      if (!ai) { updateRecipe(r.id, { tidyFail: 2 }); return }
+      const 기본 = parseRecipeText(원문, { fromOcr: true })
+      const m = mergeTidy(기본, ai)
+      const 자리표 = !r.title || r.title === '사진 레시피'
+      const 재료없다 = !(r.ingredients || []).length
+      updateRecipe(r.id, {
+        tidyFail: 0,
+        ...(자리표 && m.title ? { title: m.title } : {}),
+        ...(재료없다 && m.ingredients.length ? { ingredients: m.ingredients } : {}),
+      })
+      // 🔔 조용하지만 «말은 한다» — 화면이 갑자기 바뀌면 유저는 「고장인가」로 읽는다.
+      if (자리표 || 재료없다) nav.showToast('AI가 레시피를 더 다듬었어요', 4000)
+    })()
+    return () => { 살아있나 = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r?.id, r?.tidyFail])
 
   // ⭐⭐ 미리 캡처 — 공유 두 갈래 시트가 «뜨는 순간» 표지를 백그라운드로 그리기 시작한다.
   //   ⛔ 왜 필요한가 = 폰 공유는 «누른 직후»에만 열리는데 표지 그리기가 20초 넘게 걸린다.
