@@ -8,6 +8,9 @@ import { normalizeNumerals } from './ocrCorrect'
 //   cloud.js 는 파이어베이스를 `await import` 로 늦게 부르고, 이 함수는 localStorage 한 줄만 본다.
 //   (로그인 안 한 사람에게 167KB 를 지우지 않으려고 cloud.js:102 가 바로 그 목적으로 만든 것)
 import { 로그인해뒀나, 내구글번호 } from './cloud'
+// 🔓 운영자 표식 — 「무제한인가」의 잣대를 `getOcrLeft()` 한 곳에 모으려고 여기서 읽는다.
+//    ⛔ 순환 없음(확인) — `tidy.js` 는 `polish`·`parseRecipe` 만 부르고 `ocr.js` 를 안 부른다.
+import { tidyFounder } from './tidy'
 
 // ── Google Vision OCR 프록시 ──────────────────────────────────
 // 서버(Cloudflare Worker)가 API 키를 숨기고 Vision을 호출해 '텍스트'만 돌려준다.
@@ -326,9 +329,26 @@ export function getOcrLeft() {
     //      로그인 안 한 사람에게 167KB 를 지우지 않는다(cloud.js:102 가 그 목적으로 만든 것).
     //   ⛔⛔ **표시에만 쓴다. 차감·한도 판정에는 절대 안 쓴다** — 그건 언제나 서버가 정한다.
     const 첫값 = 로그인해뒀나() ? WELCOME_ACCT : WELCOME_ANON
-    return { welcome: 첫값, month: MONTHLY_FREE, total: 첫값, unknown: true }
+    return { welcome: 첫값, month: MONTHLY_FREE, total: 첫값, 무제한: tidyFounder(), unknown: true }
   }
-  return { ...v, total: v.welcome > 0 ? v.welcome : v.month, unknown: false }
+  // 🔓🔓 **[2026-09-02 · 창업자 제보] 「무제한인가」의 잣대를 «여기 한 곳»으로 모은다.**
+  //   📮 창업자 폰 = 토스트 「무료 레시피열쇠 **0개** 남았어요」 ＋ 임시보관함 🔒**0**
+  //      그런데 같은 폰의 설정은 「운영자 · **∞**」. **같은 것을 두 곳이 다르게 말했다.**
+  //   ⛔⛔ 뿌리 = 워커가 «막을 때»만 운영자를 안다(`worker.js:391·395` 의 `!founder`).
+  //      «알려줄 때»(`left`)엔 `founder` 가 한 글자도 없어서 실제로 쓴 만큼 깎인 0 을 보낸다.
+  //      → 한도는 안 걸리는데 숫자만 0 이라 「고장인가」로 읽힌다.
+  //   ⛔ 그리고 앱에서도 **`KeyBadge` 만** 운영자를 알았다 — 토스트(`App.jsx`)와
+  //      임시보관함(`InboxScreen`)은 몰라서 0 을 그렸다. **표시 자리 셋이 잣대 둘을 봤다.**
+  //   ✅ 이제 셋 다 이 함수의 `무제한` 하나만 본다.
+  //   ⭐ 서버 값(`v.무제한`)을 «먼저» 본다 — 창업자 확정 ⓐ(서버가 말해준다).
+  //      ⚠️ 워커는 창업자가 손으로 복붙해야 도니, 그 전까지는 폰의 운영자 표식이 받쳐 준다.
+  //         둘 중 하나만 참이어도 무제한이다(운영자 아닌 사람에겐 둘 다 거짓이라 안 바뀐다).
+  return {
+    ...v,
+    total: v.welcome > 0 ? v.welcome : v.month,
+    무제한: !!v.무제한 || tidyFounder(),
+    unknown: false,
+  }
 }
 
 function loadImg(dataUrl) {

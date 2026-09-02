@@ -84,18 +84,22 @@ export default function InboxScreen() {
             ⛔ 이름·단위는 `ocr.js` 한 곳에서 읽는다(v11.30 — 이름이 또 바뀌어도 여기가 안 낡는다). */}
         <div
           style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 40, justifyContent: 'flex-end' }}
-          aria-label={`무료 ${KEY_NAME} ${ocrLeft.total}${KEY_UNIT} 남았어요`}
+          aria-label={ocrLeft.무제한
+            ? `운영자 모드 · ${KEY_NAME} 무제한`
+            : `무료 ${KEY_NAME} ${ocrLeft.total}${KEY_UNIT} 남았어요`}
         >
+          {/* 🔓 [2026-09-02] 운영자면 「∞」 — 전엔 여기가 «서버가 준 0»을 그대로 그려서
+              한도는 안 걸리는데 화면만 0 이었다(창업자 폰 실물). 잣대는 `getOcrLeft().무제한` 하나다. */}
           <img
-            src={ocrLeft.total > 0 ? uiKeyOne : uiKeyHole}
+            src={ocrLeft.무제한 || ocrLeft.total > 0 ? uiKeyOne : uiKeyHole}
             alt="" aria-hidden="true" draggable={false}
             style={{ height: 22, width: 'auto', flexShrink: 0 }}
           />
           <span style={{
             fontSize: 16, fontWeight: 800, letterSpacing: '-.3px',
-            color: ocrLeft.total > 0 ? '#3d6b38' : '#b4442f',
+            color: ocrLeft.무제한 || ocrLeft.total > 0 ? '#3d6b38' : '#b4442f',
           }}>
-            {ocrLeft.total}
+            {ocrLeft.무제한 ? '∞' : ocrLeft.total}
           </span>
         </div>
       </div>

@@ -12,7 +12,6 @@
 // ⛔ 숫자를 여기서 «세지» 않는다 — `getOcrLeft()` 가 서버가 준 값을 그대로 돌려준다.
 import { KEY_NAME, KEY_UNIT } from '../ocr'
 import useKeyLeft from './useKeyLeft'
-import { tidyFounder } from '../tidy'
 import uiKeyOne from '../assets/ui/key_one.png'
 import uiKeyHole from '../assets/ui/key_hole.png'
 
@@ -22,7 +21,9 @@ export default function KeyBadge() {
   // 🔓 창업자는 개인 한도를 지나간다(worker.js) — 그런데 «표시»는 유저와 똑같이 깎여서
   //    0 이 되면 「고장인가」로 읽힌다(2026-09-01 창업자가 실제로 그렇게 읽었다).
   //    ⛔ 서버 동작은 한 글자도 안 바꾼다. **보이는 것만** 고친다.
-  const 운영자 = tidyFounder()
+  //   ⭐ [2026-09-02] 잣대를 `getOcrLeft()` 한 곳으로 모았다 — 전엔 여기만 `tidyFounder()` 를 알아서
+  //      토스트·임시보관함은 0 을 그렸다(창업자 폰에서 «같은 것을 두 곳이 다르게» 말했다).
+  const 운영자 = left.무제한
   const 숫자 = 운영자 ? '∞' : left.total
   const 남았나 = 운영자 || left.total > 0
   return (
