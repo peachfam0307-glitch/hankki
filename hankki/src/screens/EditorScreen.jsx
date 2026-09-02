@@ -243,7 +243,13 @@ export default function EditorScreen({ id, prefill }) {
   useEffect(() => {
     if (editing) return
     try {
-      if (hasDraftContent) localStorage.setItem(DRAFT_KEY, JSON.stringify({ ts: Date.now(), f }))
+      // 📝📝 **주석대로 «글자만» 담는다** (2026-09-02 · 코드를 주석에 맞췄다)
+      //   ⛔⛔ 그 전엔 `f` 를 통째로 담아서 **`f.image`(사진 data URL)가 같이 들어갔다.**
+      //      바로 윗줄 주석은 *"텍스트만(사진은 무겁고 텍스트가 핵심)"* 인데 **코드가 딴짓을 하고 있었다.**
+      //      ⚠️ 게다가 **글자 한 자 칠 때마다** 통째로 다시 쓴다 — 사진이 있으면 그만큼 매번 쓴다.
+      //   ⭐ 사진은 원래 초안으로 지킬 값이 아니다(다시 고르면 된다). 글자가 핵심이다.
+      const { image: _사진뺌, ...글자만 } = f
+      if (hasDraftContent) localStorage.setItem(DRAFT_KEY, JSON.stringify({ ts: Date.now(), f: 글자만 }))
       else localStorage.removeItem(DRAFT_KEY)
     } catch { /* noop */ }
   }, [f, editing, hasDraftContent])

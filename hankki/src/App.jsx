@@ -355,8 +355,20 @@ export default function App() {
   // 저장 공간이 가득 차서 저장이 실패하면(특히 iOS ~5MB) 조용히 사라지지 않게 알린다.
   useEffect(() => {
     const onFull = () => showToast('저장 공간이 가득 찼어요 · 설정에서 백업 후 오래된 사진을 정리해 주세요', 5000)
+    // 📊📊 **차기 «전»에 말한다** (2026-09-02 · 창업자 폰이 4.56MB/5MB = 91% 였다)
+    //   ⛔⛔ 그 전엔 **100% 에서, 그것도 «잃고 나서»** 알았다. 그게 오늘 아침 사고다.
+    //   ⭐ 80% 를 넘으면 미리 알린다 — 자랑카드 한 장이 0.5~0.9MB 라 **한 방에** 넘어갈 수 있다.
+    //   ⏰ 5분에 한 번만(`store.jsx` 가 조절) — 매 저장마다 뜨면 잔소리가 되어 아무도 안 본다.
+    const onWarn = (e) => {
+      const 퍼센트 = Math.round(((e?.detail?.쓴것 || 0) / (e?.detail?.한도 || 1)) * 100)
+      showToast(`저장 공간이 ${퍼센트}% 찼어요 · 설정에서 백업해 두는 게 좋아요`, 6000)
+    }
     window.addEventListener('hankki:storagefull', onFull)
-    return () => window.removeEventListener('hankki:storagefull', onFull)
+    window.addEventListener('hankki:storagewarn', onWarn)
+    return () => {
+      window.removeEventListener('hankki:storagefull', onFull)
+      window.removeEventListener('hankki:storagewarn', onWarn)
+    }
   }, [showToast])
 
   // '공유받기' — 인스타/갤러리에서 한끼로 공유된 링크·사진을 앱 시작 시 받아 Inbox 로.
@@ -705,7 +717,16 @@ export default function App() {
       //         **⒝ 클라우드가 사진으로 알고 털어버린다**(창업자 2026-08-31 *"레꾸자랑에서 뽑은카드로 레꾸한거는 사라졌어."*)
       //      즉 이 줄이 없으면 **이미 고친 사고 둘이 되살아난다.**
       //   ⭐ 잣대는 `cardCover.js` 의 `카드표지인가()` 하나 — 화면·클라우드와 «같은 값»을 쓴다.
-      const 큰것 = store.recipes.filter(
+      //
+      // 🕳🕳 **`store` 가 아니라 `storeRef.current` 를 읽는다** (2026-09-02 · 사진 창고 이사와 한 몸)
+      //   ⛔⛔ 이 `useEffect` 는 `[]` 라 **첫 렌더 클로저**를 평생 들고 있다. 그런데 사진이
+      //      창고(IndexedDB)로 옮겨간 뒤로 첫 렌더의 `r.image` 는 **쪽지**(`idb://…`)일 수 있다.
+      //      쪽지는 서른 글자쯤이라 문턱(100,000)을 절대 못 넘는다 →
+      //      **`큰것.length === 0` → 곧바로 return → 공간 회수 장치가 «조용히 죽는다».**
+      //   ⭐ `storeRef` 는 렌더마다 갱신되니(377줄) 2.5초 뒤엔 «지금 값»을 본다.
+      //      저장(`updateRecipe`)도 같은 곳에서 꺼낸다 — 옛 클로저에 쓰면 낡은 판 위에 덮어쓴다.
+      const 지금store = storeRef.current
+      const 큰것 = 지금store.recipes.filter(
         (r) => typeof r.image === 'string' && r.image.length > SHRINK_OVER && !카드표지인가(r)
       )
       if (!큰것.length) return // ⭐ 없으면 아무 일도 안 한다 → 다음 실행부터 비용 0
@@ -726,7 +747,7 @@ export default function App() {
         if (cancelled || !작게 || 작게.length >= r.image.length) continue
         아낀양 += r.image.length - 작게.length
         줄인수++
-        store.updateRecipe(r.id, { image: 작게 })
+        지금store.updateRecipe(r.id, { image: 작게 })
         // ⛔ 한 장씩 넘기며 숨을 쉰다 — 6장을 한 번에 구우면 화면이 얼어붙는다
         await new Promise((res) => setTimeout(res, 60))
       }

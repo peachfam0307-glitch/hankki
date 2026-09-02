@@ -21,6 +21,17 @@ const KEY = 'hankki:v1'
 //      화면(편집 저장 등)이 저장 뒤에 이걸 보고 «성공이라 말할지»를 정한다.
 export let 마지막저장실패 = 0
 export let 마지막저장성공 = 0
+
+// 📊📊 **서랍 계기판** — 「지금 얼마나 찼나」를 «쓰기 직전»에 재서 여기 남긴다 (2026-09-02)
+//   🔢 창업자 폰 2026-09-02 = **4.56MB / 5MB = 91%** 였고, 그날 아침 레시피 하나를 잃었다.
+//   ⛔⛔ **`navigator.storage.estimate()` 로는 이 벽을 «못 잰다»** — localStorage 를 안 센다
+//      (실측 `_probe-계기판-0902`: 1MB 를 넣어도 0KB). 그걸로 재면 **터지는 순간에도 「3%」**라고 말한다.
+//   ⭐ 그래서 벽이 «둘»이고 계기판도 «둘»이다 — ①서랍 = 여기(글자 수) ②창고 = `estimate()`
+export const 서랍한도 = 5 * 1024 * 1024   // 브라우저마다 다르지만 제일 좁은 쪽(iOS ~5MB)에 맞춘다
+export let 서랍글자수 = 0
+let 마지막경고 = 0
+/** 서랍이 몇 % 찼나 (0~1). 화면이 이걸로 「저장 공간」 줄을 그린다. */
+export function 서랍찬비율 () { return Math.min(1, 서랍글자수 / 서랍한도) }
 // ⛔ 「방금 저장이 됐나」 — 기준 시각 «뒤»에 성공이 찍혔는지 본다.
 //    ⚠️ 실패가 안 찍혔다고 «성공»이라 하지 않는다(아직 안 돌았을 수도 있다 · 규칙 18 ⓘ).
 export function 방금저장됐나(기준) {
@@ -1140,7 +1151,23 @@ export function StoreProvider({ children }) {
 
   function 쓰기 (저장할판) {
     try {
-      localStorage.setItem(KEY, JSON.stringify(저장할판))
+      const 글 = JSON.stringify(저장할판)
+      // 📊📊 **서랍이 얼마나 찼나 — 「쓰기 «직전»」에 잰다** (2026-09-02)
+      //   ⛔⛔ `navigator.storage.estimate()` 로는 **못 잰다** — 그건 localStorage 를 «안 센다»
+      //      (실측: 1MB 를 넣어도 0KB · `scripts/_probe-계기판-0902.mjs`).
+      //      그걸로 계기판을 만들면 **꽉 차서 터지는 순간에도 「3%」라고 말한다** — 지금보다 나쁘다.
+      //   ⭐ 그래서 **우리가 쓰는 글자 수**를 직접 센다. 그게 진짜 벽에 닿는 값이다.
+      //   ⏰ 재는 시점이 「설정 화면」이면 늦다 — 자랑카드 한 장에 **한 방에** 넘어간다.
+      //      쓰기 직전에 재야 **차기 «전»에** 말할 수 있다.
+      서랍글자수 = 글.length
+      if (글.length > 서랍한도 * 0.8) {
+        const 이제 = Date.now()
+        if (이제 - 마지막경고 > 5 * 60 * 1000) {   // 5분에 한 번 — 매 저장마다 뜨면 잔소리가 된다
+          마지막경고 = 이제
+          try { window.dispatchEvent(new CustomEvent('hankki:storagewarn', { detail: { 쓴것: 글.length, 한도: 서랍한도 } })) } catch { /* noop */ }
+        }
+      }
+      localStorage.setItem(KEY, 글)
       마지막저장성공 = Date.now()
     } catch {
       // 저장 공간 초과(특히 iOS ~5MB) — 조용히 사라지면 안 된다(핵심 약속: 레시피 보관)

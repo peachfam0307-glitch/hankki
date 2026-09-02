@@ -506,7 +506,17 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   useEffect(() => {
     if (exitedRef.current) return
     const t = setTimeout(() => {
-      try { localStorage.setItem(draftKey(recipe.id), JSON.stringify({ items, bg, thumb, at: Date.now() })) } catch { /* 용량 초과 등 무시 */ }
+      // 📝📝 **초안엔 사진을 안 담는다** (2026-09-02)
+      //   ⛔⛔ 그 전엔 `items` 를 통째로 담아서 **붙인 사진(`type:'photo'` 의 `src`)이 그대로 복사**됐다.
+      //      한 레시피에 여러 장 붙을 수 있고 **초안은 레시피마다 따로** 쌓인다 → 서랍이 조용히 찬다.
+      //   ⭐ 사진 «아이템 자체»를 뺀다 — `src` 만 지우면 되살릴 때 **빈 네모**가 남는다(더 나쁘다).
+      //   ⚠️ 그래서 되살릴 때 「사진은 못 살렸어요」를 말해야 한다(아래 초안 복구 자리).
+      const 사진뺀items = (items || []).filter((it) => !(it && it.type === 'photo'))
+      const 사진뺀수 = (items || []).length - 사진뺀items.length
+      try {
+        localStorage.setItem(draftKey(recipe.id),
+          JSON.stringify({ items: 사진뺀items, bg, thumb, at: Date.now(), 사진뺀수 }))
+      } catch { /* 용량 초과 등 무시 */ }
     }, 350)
     return () => clearTimeout(t)
   }, [items, bg, thumb, recipe.id])
