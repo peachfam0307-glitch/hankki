@@ -84,7 +84,20 @@ const SUMMER_SCENE = /^scene_(pool|sandcastle|picnic|night_market)\./
 const scenesNow = (now) => (isPeakSeason('summer', now) ? SCENES : SCENES.filter((s) => !SUMMER_SCENE.test(s.name)))
 
 const GOM = pickPool(/^gom_/)
-const PENG = pickPool(/^(peng_|pn_)/)
+// 🐧🧥 **옛 펭펭은 카드에서 «전부» 내렸다** (창업자 2026-09-02)
+//   📮 *"연한베이지트렌치랑 트렌치에 벨트없는거."*
+//      *"그건 얼굴도 펭펭이 조금 이상해 다 빼야해"* · *"부족한거 다시뽑아줄게 그펭펭은 다 빼자"*
+//   🔢 코트색을 재니 갈래가 «둘»로 딱 갈렸다 (몸통 아래 밝은 면 평균 · **R−B 가 클수록 진한 베이지**)
+//        사철 `peng_*`·`pn_*` 9컷 = **11~15**(거의 흰색 · 벨트 없음)
+//        정본 `au_b08`·`pj_01`~`04`   = **30~52**(베이지 · 벨트 버클)
+//      → 창업자가 말한 「연한 베이지 · 벨트 없음」이 **사철 9컷에 정확히 걸린다.**
+//   ⛔⛔ **파일은 «안» 지운다** — `LabSheet.jsx` 와 홈 「다음에 뭐 할까」 카드가 같은 그림을 따로 쓴다.
+//      여기서 «카드 뽑기 풀»에서만 내린다.
+//   ⭐ 새 정본 사철 컷이 오면 `sharepool/` 에 **`pjs_` 로 넣기만 하면** 이 줄이 저절로 다시 찬다
+//      (⛔목록을 손으로 적지 않는다 — 폴더가 곧 목록이다).
+//   ⚠️ 그동안 **사철 펭펭 = 0** 이다. 9~11월엔 가을 정본 5컷이 대신하고,
+//      12~8월엔 펭펭이 «안 나온다» → 아래 뽑기에서 곰·콤비로 비켜 가게 막아 뒀다.
+const PENG = pickPool(/^pjs_/)
 const DUO = pickPool(/^duo_/)
 
 // 🍂 계절·이벤트 캐릭터 컷 — **창이 열렸을 때만** 기본 스킨 풀에 얹는다.
@@ -198,14 +211,19 @@ function drawState() {
   const 씬 = scenesNow()   // 🏖 여름 씬은 여름에만 (위 `scenesNow` 주석 참고)
   const cat = key === 'pola' && 씬.length && r < 0.65 ? 씬     // 폴라로이드는 씬 사진 위주
     : (key === 'night' || key === 'summer' || key === 'arch')
-      ? (r < 0.5 ? g : r < 0.78 ? p : (d.length ? d : g))
+      // ⛔ **펭 자리도 비어 있을 수 있다** — 2026-09-02 에 옛 펭펭을 다 내려서 사철 펭 = 0 이 됐다.
+      //    안 막으면 `rnd([])` → 아래 마지막 줄의 폴백이 «전체 풀»로 새어 **방금 내린 컷이 되살아난다.**
+      ? (r < 0.5 ? g : r < 0.78 ? (p.length ? p : (d.length ? d : g)) : (d.length ? d : g))
       : (key === 'halloween' || key === 'chuseok')
         // 곰·펭·콤비 골고루 — ⚠️ **콤비가 없으면 그 몫을 곰에게 몰지 말고 반반으로 나눈다.**
         //   안 그러면 곰 65% · 펭 35% 가 된다(추석은 콤비가 없어서 실제로 5판 중 4판이 곰이었다).
         //   📌 「명단이 2:2니까 반반이겠지」는 «명단»이지 «확률»이 아니다. 뽑아 보고 세야 안다.
         ? (d.length ? (r < 0.4 ? g : r < 0.75 ? p : d) : (r < 0.5 ? g : p))
       : (r < 0.68 ? g : (p.length ? p : g))
-  return { skin, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46) }
+  // ⛔⛔ 마지막 폴백을 `ENTRIES`(폴더 전체)로 두면 **내린 컷이 뒷문으로 되살아난다**(2026-09-02).
+  //    곰 풀로 떨어뜨린다 — 곰은 23컷이라 빌 일이 없다.
+  const 고른풀 = cat.length ? cat : (gomPool().length ? gomPool() : ENTRIES)
+  return { skin, char: rnd(고른풀), no: 2 + Math.floor(Math.random() * 46) }
 }
 
 // 🔆 이 색 «위»에 글자를 얹을 때 흰 글자가 나을까 검은 글자가 나을까.
