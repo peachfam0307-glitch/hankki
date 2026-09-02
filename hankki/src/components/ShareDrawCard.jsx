@@ -383,12 +383,18 @@ const WARDROBE = {
   //   ⛔ **새로 그리는 컷은 0이다.** 색·문구만 바뀐다.
   autumnLate: {
     badge: '늦가을 한정',
-    warm: { blob: '#a85449,#7e2a2c 55%,#511a1f', pt: '#7e2a2c', kick: '서리 내린 아침, 한 끼', sub: '#94473e', chipInk: '#74302a', bg: '#f2e6d6', texC: '70,20,18' },
-    panel: { blob: '#a89a68,#7d6f44 58%,#5a4e28', pt: '#5a4e28', kick: '거둬들이는 계절', sub: '#6e6238', brand: '#4d4426', metaDot: '#c0b58c', bg: '#f1ebd8', texC: '80,70,34' },
-    pola: { pt: '#9c5a24', sub: '#7c4418', brand: '#7c4418', cap: '#7c4418', kick: '감 익는 창가에서', tape1: 'rgba(206,168,124,.78)', tape2: 'rgba(186,126,72,.72)', metaDot: '#cfa878', bg: '#f6ead6', photoBg: 'radial-gradient(circle at 50% 38%,#faefdd,#ead6b8)' },
-    mag: { blob: '#9c7350,#77532e 55%,#4e3418', pt: '#6e4620', ink: '#271d13', sub: '#7a6448', bg: '#ece2cc', side: '#57493a', sideB: '#332920', texC: '96,70,40' },
-    night: { pt: '#ffc978', kick: '길어진 밤, 뜨끈하게', sub: '#e9a07e', metaInk: '#cdb8ac', bg: 'radial-gradient(circle at 26% 16%,#3f2f3e,#2b2029 60%,#1d161b)' },
-    arch: { blob: '#cf7f3a,#a8401f 48%,#71230f', pt: '#a8401f', kick: '낙엽 지는 날, 한 끼', sub: '#96401f', brand: '#6a3018', badge: '#cf7f3a,#a8401f', chipInk: '#7d3616', bg: 'linear-gradient(170deg,#f8efdc,#eeddbe 58%,#e4cfa8)', texC: '150,60,26', leaf: ['#a8401f', '#a8722c'] },
+    // ⛔⛔ **첫 판은 「둘 다 똑같은데??」 판정을 받았다** (창업자 2026-09-02).
+    //    맞는 지적이었다 — 배경을 `#f7efe2` → `#f2e6d6` 로 **밝기 0.02 밖에** 안 내렸다.
+    //    엄지손톱 크기로 보면 그건 «같은 색»이다. 📌 **「짙게」는 마음이 아니라 «수치»로 내려야 한다.**
+    //    ✅ 다시 = 배경 밝기를 **0.10 이상** 내리고, 색면도 «다른 색»으로 옮기고, 질감도 갈았다.
+    //    ⛔ 초가을(`autumn`)은 **안 건드렸다** — 창업자가 9/1 에 이미 보고 통과시킨 판이다.
+    //       벌리는 건 «늦가을 쪽»으로만 한다.
+    warm: { blob: '#8e3a33,#5e1c1c 55%,#340d0f', arc: '#c9a883', pt: '#7a2521', ink: '#33211c', kick: '서리 내린 아침, 한 끼', sub: '#8c3b32', chipRing: 'rgba(140,70,50,.34)', chipInk: '#6e2620', footWm: '#5e2820', footUrl: '#8f7263', bg: '#e3cdb4', tex: 'plaid', texC: '62,16,14' },
+    panel: { blob: '#8a7f4e,#5b5330 58%,#37331a', pt: '#4c4622', ink: '#2b2a16', kick: '거둬들이는 계절', sub: '#615a30', brand: '#403a1e', metaInk: '#5a5434', metaDot: '#a8a37c', footWm: '#403a1e', footUrl: '#8a866a', bg: '#e5dcc0', tex: 'cord', texC: '64,58,26' },
+    pola: { pt: '#8a4416', sub: '#6d3410', brand: '#6d3410', cap: '#6d3410', kick: '감 익는 창가에서', tape1: 'rgba(186,146,96,.84)', tape2: 'rgba(160,96,44,.78)', metaInk: '#6b5432', metaDot: '#bfa16c', footWm: '#6d3410', footUrl: '#9a8055', bg: '#d9c49c', grid: 'rgba(120,84,40,.26)', tex: 'kraft', texC: '104,60,18', photoBg: 'radial-gradient(circle at 50% 38%,#f2e2c4,#d4b58a)' },
+    mag: { blob: '#8a5f3c,#5c3a1c 55%,#341d08', pt: '#6a3f18', ink: '#221a10', brand: '#2e2418', sub: '#6d5a3e', metaInk: '#5a4c36', footWm: '#3f3426', footUrl: '#8a7c66', bg: '#d5c199', side: '#4a3c2c', sideB: '#271d13', tex: 'linen', texC: '84,56,28' },
+    night: { pt: '#ffc978', kick: '길어진 밤, 뜨끈하게', sub: '#e9a07e', metaInk: '#cdb8ac', bg: 'radial-gradient(circle at 26% 16%,#4e2a28,#301819 60%,#1b0f10)' },
+    arch: { blob: '#b45c26,#88300f 48%,#521404', pt: '#8a2f14', ink: '#2f1d14', kick: '낙엽 지는 날, 한 끼', sub: '#8a3a18', brand: '#5e2410', badge: '#b45c26,#88300f', chipRing: 'rgba(150,80,40,.36)', chipInk: '#6e2a10', footWm: '#5e2410', footUrl: '#96755c', bg: 'linear-gradient(170deg,#eddfbe,#dfc396 58%,#cdaa72)', tex: 'plaid', texC: '124,40,16', leaf: ['#8a2f14', '#8a5c1e'] },
   },
 }
 // 🍁 늦가을 = **11월**. ⛔10월은 «핼러윈 덤»이 따로 있어 그 자체로 화면이 바뀐다 —
