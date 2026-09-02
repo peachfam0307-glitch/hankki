@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+// 🗄 사진이 「큰 창고」에 있으면 **화면에 들어올 때** 꺼낸다 (2026-09-02)
+import { 창고에있나, 그릴수있나, 창고표시, 꺼내기 } from '../photoStore'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
 import { bgStyle, bgIsDark, bgAnim } from './Stickers'
@@ -38,9 +40,44 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
   //   ⭐ 값에 **그림 자체**를 담는다(참/거짓이 아니라) — 표지를 바꾸면 저절로 무효가 된다.
   //      (목록에서 카드 하나가 다른 레시피를 그리게 될 때 옛 판정이 남는 것을 막는다)
   const [카드였던그림, set카드였던그림] = useState(null)
+
+  // 🗄🗄 **사진은 「화면에 들어올 때」 창고에서 꺼낸다** (2026-09-02 · 절대원칙 32)
+  //
+  //   ⛔⛔ **「켤 때 전부 꺼내기」는 안 된다** — 사진 수에 «선형»이라 오래 쓸수록 켜는 게 느려진다
+  //      (실측 100장 111ms · **500장 869ms · 65MB** · 1000장이면 1.7초).
+  //   ⛔⛔ **「그릴 때 꺼내기」도 부족하다** — 목록이 **62개를 전부 그린다**(가상 스크롤이 없다 · 실측).
+  //      그러면 62장(나중엔 1000장)을 한꺼번에 꺼내 «같은 선형 문제»가 그대로 남는다.
+  //   ✅ 그래서 **눈에 들어오는 순간**에만 꺼낸다 → 한 번에 **6~12장**. 레시피가 1만 편이어도 값이 같다.
+  //
+  //   ⭐ 못 꺼내도 **안 깨진다** — 아래 `showImg` 가 거짓이 되어 아이콘으로 그린다(원래 그렇게 돼 있다).
+  const 상자 = useRef(null)
+  const [꺼낸사진, set꺼낸사진] = useState(null)
+  const 쪽지 = 창고에있나(recipe.image) ? recipe.image : null
+  useEffect(() => {
+    set꺼낸사진(null)          // 표지가 바뀌면 옛 그림을 버린다(목록에서 칸이 재사용된다)
+    if (!쪽지) return
+    let 살아있나 = true
+    const 가져와 = async () => {
+      const v = await 꺼내기(쪽지.slice(창고표시.length))
+      if (살아있나 && v) set꺼낸사진(v)
+    }
+    const el = 상자.current
+    // 👀 `IntersectionObserver` 가 없는 브라우저면 그냥 바로 꺼낸다(안 보이는 것보단 낫다)
+    if (!el || typeof IntersectionObserver === 'undefined') { 가져와(); return () => { 살아있나 = false } }
+    const 눈 = new IntersectionObserver((줄들) => {
+      if (줄들.some((e) => e.isIntersecting)) { 눈.disconnect(); 가져와() }
+    }, { rootMargin: '300px' })   // ⭐ 조금 «미리» 꺼낸다 — 스크롤할 때 늦게 뜨는 게 안 보이게
+    눈.observe(el)
+    return () => { 살아있나 = false; 눈.disconnect() }
+  }, [쪽지])
+
+  // 📷 화면에 그릴 수 있는 그림 = 「지금 손에 있는 것」 또는 「창고에서 꺼낸 것」
+  const 그림 = 그릴수있나(recipe.image) ? recipe.image : 꺼낸사진
+
   // ⭐ 잣대는 `store.js` 의 `기본표지()` 하나 — 예전 레시피 호환도 그 안에 있다
   const thumb = 기본표지(recipe)
-  const showImg = thumb === 'photo' && recipe.image && !failed
+  // ⭐ 「사진 표지인데 아직 창고에서 안 왔다」면 그리지 않는다 → 그 동안은 아이콘이 뜬다(안 깨진다)
+  const showImg = thumb === 'photo' && 그림 && !failed
   // 🎴🎴 **「사진」과 「이미 완성된 표지 한 장(자랑카드)」은 다른 물건이다.** (창업자 2026-08-18)
   //   📮 *"레꾸자랑카드를 표지로바꾼거 이렇게돼"* → *"아니 **원래 자랑카드전체가 표지여야하는데** 동그랗게됐다고"*
   //      ＋ *"**사진넣기 기능 -일기에서 쓰던거 넣고 변했어**"* ← 창업자가 원인까지 짚었다(맞았다).
@@ -53,7 +90,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
   //   ⛔⛔ 한 번 더 갈렸다 — 내가 「원래」를 «네모로 꽉 채움(cover)»으로 읽고 고쳤더니
   //      창업자가 *"**위에잘렸어**"*. 4:5 카드를 1:1 칸에 채우면 위아래 20% 가 날아간다.
   //      ✅ 그래서 **자르지 않는다**(`contain`) — 좌우에 여백이 생겨도 카드가 다 보이는 게 먼저다.
-  const 카드표지 = recipe.imageFit === 'whole' || 카드였던그림 === recipe.image
+  const 카드표지 = recipe.imageFit === 'whole' || 카드였던그림 === 그림
   // 표지 배경(배경지) — 정하면 기본 그라데이션 대신 그 배경으로. 패턴은 %라 어느 크기든 스케일된다.
   const bg = recipe.decorBg ? bgStyle(recipe.decorBg) : null
   const dark = recipe.decorBg ? bgIsDark(recipe.decorBg) : false // 딥 배경 = 글자·아이콘 밝게
@@ -102,12 +139,12 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
           }}
         >
           <img
-            src={recipe.image}
+            src={그림}
             alt={recipe.title}
             loading="lazy"
             draggable={false}
             onError={() => setFailed(true)}
-            onLoad={(e) => { if (e.currentTarget.naturalHeight >= 카드높이문턱) set카드였던그림(recipe.image) }}
+            onLoad={(e) => { if (e.currentTarget.naturalHeight >= 카드높이문턱) set카드였던그림(그림) }}
             style={{
               ...photoImgStyle(pos, z),
               // 🎴 카드는 **한 군데도 안 자른다**(`contain`) — 좌우에 여백이 생겨도 다 보이는 게 먼저다.
@@ -170,7 +207,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
   const decorated = showDecor && recipe.decor?.length > 0
 
   return (
-    <div className={[anim, className].filter(Boolean).join(' ')} style={base}>
+    <div ref={상자} className={[anim, className].filter(Boolean).join(' ')} style={base}>
       {inner}
       {decorated && <DecorLayer items={recipe.decor} />}
     </div>

@@ -62,6 +62,54 @@ chk('지우면 없어진다', r.지운뒤)
 chk('통째로 비우면 0개', r.비운뒤열쇠수 === 0, r.비운뒤열쇠수 + '개')
 chk('pageerror 0', 오류.length === 0, 오류.join(' · '))
 
+// ── 🪓 사진 갈라내기 ──
+const g = await p.evaluate(async () => {
+  const m = await import('/src/photoStore.js')
+  const 사진 = 'data:image/jpeg;base64,' + 'B'.repeat(50000)
+  const 상태 = {
+    recipes: [
+      { id: 'r1', title: '항정살', image: 사진, decor: [{ id: 'd1', type: 'photo', src: 사진 }, { id: 'd2', type: 'sticker', key: 'fe_04' }] },
+      { id: 'r2', title: '기본편', image: '/recipe-photos/kong.jpg' },
+      { id: 'r3', title: '사진없음', image: null },
+    ],
+    diary: [{ id: 'y1', photo: 사진, ph_l1: 사진, note: '맛있었다' }],
+    profile: { avatar: { type: 'photo', value: 사진 } },
+    inboxV: 2,
+  }
+  const a = m.나누기(상태)
+  const b = m.나누기(상태)
+  const 글자수 = JSON.stringify(상태).length
+  const 뺀뒤 = JSON.stringify(a.판).length
+  const 뒤바꾼 = { ...상태, recipes: [상태.recipes[2], 상태.recipes[0], 상태.recipes[1]] }
+  const c = m.나누기(뒤바꾼)
+  const 표 = Object.fromEntries(a.사진들)
+  const 되돌린 = m.사진끼우기(a.판, 표)
+  return {
+    사진수: a.사진들.length,
+    열쇠들: a.사진들.map(([k]) => k),
+    두번째같나: JSON.stringify(a.사진들.map(([k]) => k)) === JSON.stringify(b.사진들.map(([k]) => k)),
+    순서바꿔도같나: c.사진들.map(([k]) => k).sort().join() === a.사진들.map(([k]) => k).sort().join(),
+    글자수, 뺀뒤,
+    주소는안건드림: a.판.recipes[1].image === '/recipe-photos/kong.jpg',
+    없는건그대로: a.판.recipes[2].image === null,
+    스티커그대로: a.판.recipes[0].decor[1].key === 'fe_04',
+    되돌리면같나: JSON.stringify(되돌린) === JSON.stringify(상태),
+    쪽지수: m.쪽지열쇠모으기(a.판).length,
+  }
+})
+console.log('\n🪓 사진 갈라내기\n')
+chk('사진 다섯을 다 찾았다 (표지·꾸미기·일기 둘·아바타)', g.사진수 === 5, g.사진수 + '개')
+chk('⭐ 두 번 갈라도 «열쇠가 같다» (창고에 쓰레기가 안 쌓인다)', g.두번째같나)
+chk('⭐ 순서를 바꿔도 «열쇠가 같다» (id 로 만든다)', g.순서바꿔도같나)
+chk('서랍에 넣을 판이 «확 작아졌다»', g.뺀뒤 < g.글자수 / 10,
+  Math.round(g.글자수/1024) + 'KB → ' + Math.round(g.뺀뒤/1024) + 'KB')
+chk('«주소» 사진은 안 건드린다 (/recipe-photos/…)', g.주소는안건드림)
+chk('사진 «없는» 것은 null 그대로 (있다/없다를 안 헷갈린다)', g.없는건그대로)
+chk('스티커 열쇠는 그대로', g.스티커그대로)
+chk('⭐⭐ 되돌리면 «원래와 똑같다»', g.되돌리면같나)
+chk('쪽지 열쇠를 다 모은다 (백업·클라우드용)', g.쪽지수 === 5, g.쪽지수 + '개')
+console.log('  열쇠 =', g.열쇠들.join(' · '))
+
 await b.close(); srv.close()
 console.log(`\n${실패?'❌':'✅'} ${통과}/${통과+실패}`)
 process.exit(실패 ? 1 : 0)

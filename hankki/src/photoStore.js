@@ -31,6 +31,71 @@ const VER = 1
 
 let 열린것 = null
 
+// ─────────────────────────────────────────────────────────────
+// 📮 **「창고에 있다」는 표시**
+//
+// ⭐⭐ 사진을 뺀 자리에 `null` 을 넣으면 **「사진이 없다」와 구별이 안 된다.**
+//    그러면 「만들었어요」가 일기에 사진을 안 담고(v11.29 재발), 자랑카드가 클라우드에서 털리고,
+//    지문이 갈려 매번 전부 다시 올라간다. **전부 «조용히» 나빠지는 사고다.**
+// ✅ 그래서 자리에 **「저기 있다」는 쪽지**를 남긴다. 그러면 —
+//    · `null`(없다) ↔ `idb://…`(있는데 아직 안 왔다) ↔ `data:…`(여기 있다) **셋이 갈린다**
+//    · 쪽지는 데이터를 따라 다닌다 — 백업·클라우드·복원 어디서든 「어느 사진인지」를 안 잃는다
+export const 창고표시 = 'idb://'
+export const 창고에있나 = (v) => typeof v === 'string' && v.startsWith(창고표시)
+/** 화면에 바로 그릴 수 있는 사진인가 (＝쪽지가 아니라 진짜 그림) */
+export const 그릴수있나 = (v) => typeof v === 'string' && v.startsWith('data:')
+
+// 🔑 **열쇠는 「어디에 있었나」로 만든다** — 따로 번호를 붙이면 저장할 때마다 새 번호가 생겨
+//    창고에 주인 없는 사진이 쌓인다. 자리로 만들면 **몇 번을 저장해도 같은 열쇠**다.
+//    ⭐ 배열은 «순서»가 아니라 `id` 로 — 순서가 바뀌어도 사진이 안 뒤바뀐다.
+function 자리열쇠 (윗길, 조각) { return 윗길 ? 윗길 + '/' + 조각 : String(조각) }
+
+/**
+ * 🪓 **사진을 갈라낸다** — 서랍에 넣을 «가벼운 판» ＋ 창고에 넣을 «사진 묶음».
+ *
+ * ⭐⭐ 잣대는 `cloud.js` 의 `사진털기` 와 **똑같다 = 「`data:` 로 시작하나」.**
+ *    ⛔ 칸 이름(`image`·`photo`)으로 고르지 않는다 — 일기 속지엔 사진 칸이 **열 개**고 이름이 계속 는다.
+ *       이름으로 고르면 **다음 달에 또 5MB 가 찬다.**
+ * ⚠️ `/recipe-photos/…` 같은 «주소»는 글자 몇 십 자라 그냥 둔다(위 잣대에 안 걸린다).
+ */
+export function 사진갈라내기 (값, 길 = '', 묶음 = []) {
+  if (그릴수있나(값)) { 묶음.push([길, 값]); return 창고표시 + 길 }
+  if (Array.isArray(값)) return 값.map((v, i) => 사진갈라내기(v, 자리열쇠(길, (v && v.id) || i), 묶음))
+  if (값 && typeof 값 === 'object') {
+    const 판 = {}
+    for (const [k, v] of Object.entries(값)) 판[k] = 사진갈라내기(v, 자리열쇠(길, k), 묶음)
+    return 판
+  }
+  return 값
+}
+
+/** 갈라낸 결과를 한 번에 — `{ 판, 사진들 }` */
+export function 나누기 (state) {
+  const 묶음 = []
+  const 판 = 사진갈라내기(state, '', 묶음)
+  return { 판, 사진들: 묶음 }
+}
+
+/** 쪽지(`idb://…`)를 진짜 사진으로 되돌린다. 못 찾은 쪽지는 **그대로 둔다**(＝「아직 안 왔다」). */
+export function 사진끼우기 (값, 표) {
+  if (창고에있나(값)) { const k = 값.slice(창고표시.length); return 표[k] != null ? 표[k] : 값 }
+  if (Array.isArray(값)) return 값.map((v) => 사진끼우기(v, 표))
+  if (값 && typeof 값 === 'object') {
+    const 판 = {}
+    for (const [k, v] of Object.entries(값)) 판[k] = 사진끼우기(v, 표)
+    return 판
+  }
+  return 값
+}
+
+/** 값 안에 든 «쪽지 열쇠»를 다 모은다 — 백업·클라우드처럼 «전부» 필요한 곳이 쓴다. */
+export function 쪽지열쇠모으기 (값, 담을것 = []) {
+  if (창고에있나(값)) { 담을것.push(값.slice(창고표시.length)); return 담을것 }
+  if (Array.isArray(값)) { for (const v of 값) 쪽지열쇠모으기(v, 담을것); return 담을것 }
+  if (값 && typeof 값 === 'object') { for (const v of Object.values(값)) 쪽지열쇠모으기(v, 담을것); return 담을것 }
+  return 담을것
+}
+
 /** 창고를 연다. 못 열면 `null` — 그러면 앱은 «지금까지처럼» 서랍만 쓴다(안 죽는다). */
 export function 창고열기 () {
   if (열린것) return 열린것

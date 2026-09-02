@@ -9,6 +9,8 @@ import { guessFoodIcon, FOOD_ICON_GROUPS } from './components/FoodIcon'
 import { cleanMemo, mergeQtyOnlyIngredients } from './parseRecipe'
 import { politeSteps, politeFormalSteps } from './polish'
 import { pickPaper } from './memoPaper'
+// 🗄 사진은 「큰 창고」로 — 서랍(localStorage 5MB)엔 글자만 남긴다
+import { 나누기, 여럿넣기, 지우기 as 창고에서지우기, 쪽지열쇠모으기, 통째로비우기 } from './photoStore'
 
 const KEY = 'hankki:v1'
 // 💾💾 **「저장이 진짜로 됐나」 — 화면이 물어볼 수 있게 밖으로 낸다** (창업자 확정 2026-09-02)
@@ -1079,9 +1081,39 @@ const Ctx = createContext(null)
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState)
 
+  // 🗄🗄 **사진은 «큰 창고»(IndexedDB)에, 글자만 서랍에** (2026-09-02 · 창업자 폰 실물 확인 뒤)
+  //
+  //   🔢 창업자 폰 = **4.56MB / 5MB = 91%** · 창고 한도 **10,731MB**(2,000배)
+  //   🚨 **순서가 목숨이다** — 창고에 «먼저» 넣고, **성공했을 때만** 서랍에서 뺀다.
+  //      뒤집으면 「서랍에도 없고 창고에도 없는」 창이 생기고, 그때 서비스워커가 새로고침하면 사진을 잃는다.
+  //   ⛔ 창고가 안 되면(못 열림·꽉 참) **사진을 안 뺀다** — 지금과 «같아질 뿐» 나빠지지 않는다.
+  //   ⭐ 사진 자리엔 `null` 이 아니라 **쪽지**(`idb://…`)를 남긴다 —
+  //      `null` 이면 「사진이 없다」와 구별이 안 돼서, 일기 연동·자랑카드 올리기가 조용히 깨진다.
   useEffect(() => {
+    let 취소 = false
+    ;(async () => {
+      let 저장할판 = state
+      try {
+        const { 판, 사진들 } = 나누기(state)
+        if (사진들.length) {
+          // ⭐ 한 거래로 묶어 넣는다 — 100장에 8ms(한 장씩이면 183ms · 실측)
+          const 됐나 = await 여럿넣기(사진들)
+          if (취소) return
+          if (됐나) 저장할판 = 판   // ✅ 창고에 «들어간 뒤에만» 서랍에서 뺀다
+        } else {
+          저장할판 = 판
+        }
+      } catch { /* 창고가 말썽이면 지금까지처럼 통째로 저장한다 */ }
+      if (취소) return
+      쓰기(저장할판)
+    })()
+    return () => { 취소 = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state])
+
+  function 쓰기 (저장할판) {
     try {
-      localStorage.setItem(KEY, JSON.stringify(state))
+      localStorage.setItem(KEY, JSON.stringify(저장할판))
       마지막저장성공 = Date.now()
     } catch {
       // 저장 공간 초과(특히 iOS ~5MB) — 조용히 사라지면 안 된다(핵심 약속: 레시피 보관)
@@ -1091,7 +1123,7 @@ export function StoreProvider({ children }) {
       //    📌 실패는 «매번» 말한다. 시끄러운 게 잃는 것보다 낫다.
       try { window.dispatchEvent(new CustomEvent('hankki:storagefull')) } catch { /* noop */ }
     }
-  }, [state])
+  }
 
   const api = {
     ...state,
