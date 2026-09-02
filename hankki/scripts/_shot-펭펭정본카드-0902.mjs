@@ -37,8 +37,21 @@ await ctx.addInitScript(`{
   const O = Date
   class F extends O { constructor(...a){ return a.length ? new O(...a) : new O(그날) } static now(){ return 그날 } }
   Date = F
-  let s = 20260902
-  Math.random = () => { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648 }
+  // 🎲 씨앗 고정 난수 = mulberry32.
+  // ⛔⛔ 첫 판은 「s*1103515245+12345」 로 짰다가 **페이지가 통째로 멈췄다** —
+  //    ⛔ 이 주석에 «백틱»을 쓰면 안 된다 — 이 블록 자체가 백틱 템플릿이라 거기서 «닫힌다».
+  //       (2026-09-02 에 실제로 그렇게 죽었다. 낫표「」로 쓴다 · CLAUDE.md 백틱 함정과 같은 자리)
+  //    곱이 2.4e18 이라 자바스크립트 안전 정수(9e15)를 넘어 정밀도가 깨지고
+  //    수열이 한 값에 눌러앉는다 → 「앞이랑 다른 걸 뽑을 때까지」 도는 자리에서 무한 고리.
+  //    📌 **씨앗 난수는 반드시 32비트 안에서 돈다(Math.imul)**.
+  let s = 20260902 >>> 0
+  Math.random = () => {
+    s = (s + 0x6D2B79F5) >>> 0
+    let t = s
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
 }`)
 const p = await ctx.newPage()
 await p.goto(`http://127.0.0.1:${PORT}/`)
@@ -58,42 +71,79 @@ const 치우기 = async () => {
   }
 }
 
+// ⛔⛔ **클릭마다 timeout 을 «짧게» 준다** — `.catch(()=>{})` 만 붙이면 기본 30초를 꽉 기다린다.
+//    2026-09-02 첫 판이 그래서 100초를 넘겨 죽었다(원인은 「막힌 것」이 아니라 «기다린 것»이었다).
+const 눌러 = async (loc, 라벨) => {
+  const ok = await loc.click({ timeout: 5000 }).then(() => true).catch(() => false)
+  console.log(`  ${ok ? '·' : '⚠️'} ${라벨}${ok ? '' : ' — 못 눌렀다'}`)
+  return ok
+}
+
 await p.goto(`http://127.0.0.1:${PORT}/`)
 await p.waitForTimeout(1400)
 await 치우기()
-await p.getByText('레꾸자랑', { exact: true }).last().click().catch(() => {})
+await 눌러(p.getByText('레꾸자랑', { exact: true }).last(), '레꾸자랑 탭')
 await p.waitForTimeout(800)
 await 치우기()
-// ⛔ 레시피를 먼저 골라야 카드가 뜬다
-await p.locator('.grid-card button, .grid-card').first().click().catch(() => {})
-await p.waitForTimeout(1200)
+// ⛔⛔ **길이 «두 단»이다** — 레시피를 고르면 카드가 바로 뜨는 게 아니라 시트가 하나 더 뜬다:
+//    「간장게장 자랑하기 · 어떻게 보낼까요?」 → ⑴내가 꾸민 표지 그대로 ⑵**랜덤 카드로 뽑기**
+//    ⑵를 눌러야 카드가 나온다. (2026-09-02 에 이걸 몰라 「자랑할 레시피를 눌러주세요」에서 헛돌았다)
+await 눌러(p.locator('.grid-card button, .grid-card').first(), '레시피 고르기')
+await p.waitForTimeout(1000)
+await 눌러(p.getByRole('button', { name: /랜덤 카드로 뽑기/ }).first(), '랜덤 카드로 뽑기')
+await p.waitForTimeout(2200)
 
-const 카드안그림 = () => p.evaluate(() => {
-  const el = document.querySelector('.draw-card') || document.querySelector('[data-card]')
-  if (!el) return null
-  return [...el.querySelectorAll('img')].map((i) => (i.currentSrc || i.src || '').split('/').pop())
+// 🔎 카드 상자 찾기 — `.draw-card` 같은 열쇠가 «없다». 히어로 그림에서 위로 올라가며 찾는다.
+//    ⛔ 화면 전체를 찍으면 뒤에 깔린 레시피 격자까지 들어와 판정이 흐려진다.
+const 카드정보 = () => p.evaluate(() => {
+  const 큰것 = [...document.querySelectorAll('img')]
+    .map((i) => ({ i, r: i.getBoundingClientRect() }))
+    .filter((x) => x.r.width > 120 && x.r.height > 120)
+    .sort((a, b) => b.r.width * b.r.height - a.r.width * a.r.height)[0]
+  if (!큰것) return null
+  let el = 큰것.i
+  while (el.parentElement) {
+    const r = el.parentElement.getBoundingClientRect()
+    if (r.width >= 300 && r.height >= 400) { el = el.parentElement; break }
+    el = el.parentElement
+  }
+  const r = el.getBoundingClientRect()
+  el.setAttribute('data-shot', '1')
+  return {
+    그림: [...el.querySelectorAll('img')].map((i) => (i.currentSrc || i.src || '').split('/').pop()),
+    폭: Math.round(r.width), 키: Math.round(r.height),
+    히어로: Math.round(큰것.r.width) + 'x' + Math.round(큰것.r.height),
+  }
 })
 
-const 뽑기 = p.getByRole('button', { name: /랜덤|뽑/ })
+const 뽑기 = p.getByRole('button', { name: /다시 뽑기/ })
 const 찾음 = new Map()
 let 눌렀다 = 0
 for (let i = 0; i < 최대 && 찾음.size < 찾을것.length; i += 1) {
-  const imgs = (await 카드안그림()) || []
+  const 정보 = await 카드정보()
+  const imgs = 정보 ? 정보.그림 : []
+  if (i === 0) console.log(`  카드 상자 = ${정보 ? `${정보.폭}x${정보.키} · 히어로 ${정보.히어로}` : '못 찾음'}`)
   for (const k of 찾을것) {
     if (찾음.has(k)) continue
     if (imgs.some((f) => f.startsWith(`${k}-`) || f === `${k}.png`)) {
-      const 카드 = p.locator('.draw-card, [data-card]').first()
-      await 카드.screenshot({ path: `${방}/${k}.png` }).catch(() => {})
-      const w = await p.evaluate(() => Math.round((document.querySelector('.draw-card') || document.querySelector('[data-card]')).getBoundingClientRect().width))
-      찾음.set(k, { 폭: w, 그림: imgs.join(' ') })
-      console.log(`  ✅ ${k}  ${i}번째 뽑기에서 나왔다 · 카드 ${w}px`)
+      await p.locator('[data-shot="1"]').first().screenshot({ path: `${방}/${k}.png` }).catch(() => {})
+      찾음.set(k, 정보)
+      console.log(`  ✅ ${k}  ${i}번째 뽑기 · 카드 ${정보.폭}x${정보.키} · 히어로 ${정보.히어로}`)
     }
   }
   if (찾음.size >= 찾을것.length) break
   if (!(await 뽑기.count())) { console.log('  ⛔ 「다시 뽑기」 단추를 못 찾았다'); break }
-  await 뽑기.first().click().catch(() => {})
+  // ⛔ 뽑고 나서 카드가 다시 그려지는 «동안»엔 단추가 안 눌린다 → 한 번 실패하면 쉬었다 다시.
+  let 됐다 = await 뽑기.first().click({ timeout: 3000 }).then(() => true).catch(() => false)
+  if (!됐다) { await p.waitForTimeout(1200); 됐다 = await 뽑기.first().click({ timeout: 5000 }).then(() => true).catch(() => false) }
+  if (!됐다) {
+    await p.screenshot({ path: `${방}/막힌화면.png` })
+    console.log(`  ⛔ ${i}번째에서 뽑기 단추가 두 번 다 안 눌린다 — 막힌화면.png 를 볼 것`)
+    console.log('     본문 =', (await p.evaluate(() => (document.body.innerText || '').replace(/\n+/g, ' / ').slice(0, 160))))
+    break
+  }
   눌렀다 += 1
-  await p.waitForTimeout(320)
+  await p.waitForTimeout(650)
 }
 
 console.log(`\n🔁 뽑기 ${눌렀다}번 · 찾은 컷 ${찾음.size}/${찾을것.length}`)
