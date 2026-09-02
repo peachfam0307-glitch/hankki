@@ -21,7 +21,7 @@ const chk=(이름,조건,덧말='')=>{조건?통과++:(실패++,실패목록.pus
 
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM?{executablePath:process.env.SMOKE_CHROMIUM}:{})
-const ctx = await b.newContext({ viewport:{width:390,height:844} })
+const ctx = await b.newContext({ viewport:{width:390,height:844}, acceptDownloads: true })
 await ctx.addInitScript(SEED_COACH_SEEN)
 await ctx.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')}catch{}})
 
@@ -99,6 +99,62 @@ const 다시 = await p2.evaluate(()=>{
 })
 chk('⭐⭐ 껐다 켜도 사진이 «그대로 보인다»', 다시)
 chk('pageerror 0', 오류.length===0, 오류.join(' · '))
+
+// ── 💾 백업 — ⭐제일 조용히 깨지는 자리 ──
+//    ⛔ 백업에 «쪽지»가 담기면 파일은 멀쩡히 생기고, 폰을 바꾼 «뒤에야» 사진이 없는 걸 안다.
+//    ⭐ **유저가 하는 그대로** 잰다 — 설정 → 백업 → 파일로 저장 → «그 파일»을 연다.
+//       ⛔ 모듈을 직접 부르면 「진짜 그 길」을 안 재는 판이 된다(규칙 18 ⓘ · 절대원칙 30).
+const 백업글 = await (async () => {
+  try {
+    // 홈 → 상단바 ⚙(aria-label="설정") → 「백업 · 내보내기」 → 「폰에 파일로 저장」
+    await p1.evaluate(()=>{const 바=document.querySelector('.bottom-nav')||document.querySelector('nav');[...(바?.querySelectorAll('button')||[])].find(x=>(x.innerText||'').trim()==='홈')?.click()})
+    await p1.waitForTimeout(700)
+    await p1.evaluate(()=>{[...document.querySelectorAll('button')].find(x=>x.getAttribute('aria-label')==='설정')?.click()})
+    await p1.waitForTimeout(1000)
+    await p1.evaluate(()=>{[...document.querySelectorAll('button')].find(x=>/백업 · 내보내기/.test(x.innerText||''))?.click()})
+    await p1.waitForTimeout(1000)
+    const [down] = await Promise.all([
+      p1.waitForEvent('download', { timeout: 15000 }),
+      p1.evaluate(()=>{[...document.querySelectorAll('button')].find(x=>/파일로 저장/.test(x.innerText||''))?.click()}),' '.trim(),
+    ])
+    const 길 = await down.path()
+    const b = JSON.parse(readFileSync(길, 'utf8'))
+    const 글 = JSON.stringify(b)
+    return { 글자수: 글.length, 사진수: b._photos, 못담김: b._photosMissing,
+      data있나: 글.includes('data:image/'), 도장: [b.inboxV, b.coverV], 판: b }
+  } catch (e) { console.log('  (백업 길:', String(e.message).slice(0,60), ')'); return null }
+})()
+if (백업글) {
+  chk('⭐⭐ 백업에 «진짜 사진»이 들어 있다', 백업글.data있나 && 백업글.사진수 >= 3,
+    `사진 ${백업글.사진수}장 · 못 담은 것 ${백업글.못담김}장`)
+  chk('백업에 «못 담은 사진」이 0장', 백업글.못담김 === 0)
+  chk('백업이 이사 도장을 담는다 (복원해도 이사가 다시 안 돈다)',
+    백업글.도장[0] != null, 'inboxV=' + 백업글.도장[0])
+} else { 실패 += 3; 실패목록.push('백업을 못 만들었다'); console.log('  ❌ 백업을 못 만들었다') }
+
+// ── 🔁 복원 — 백업으로 되살려도 사진이 살아남나 ──
+const p3 = await ctx.newPage()
+await p3.goto('http://127.0.0.1:4495/hankki/',{waitUntil:'networkidle'}); await p3.waitForTimeout(2000)
+// ⭐ 「폰을 바꾼 셈」 — 창고를 통째로 비우고 **방금 내려받은 그 백업 파일**만 남긴다
+const 복원 = 백업글 ? await p3.evaluate(async (백업) => {
+  await new Promise((ok) => { const q = indexedDB.deleteDatabase('hankki-photos'); q.onsuccess = () => ok(); q.onerror = () => ok(); q.onblocked = () => ok() })
+  localStorage.setItem('hankki:v1', JSON.stringify(백업))
+  return { 백업에사진: JSON.stringify(백업).includes('data:image/') }
+}, 백업글.판) : { 백업에사진: false }
+chk('복원할 백업에 사진이 들어 있다 (앞 단계 확인)', 복원.백업에사진)
+await p3.close()
+
+const p4 = await ctx.newPage()
+await p4.goto('http://127.0.0.1:4495/hankki/',{waitUntil:'networkidle'}); await p4.waitForTimeout(3000)
+await p4.evaluate(()=>{const 바=document.querySelector('.bottom-nav')||document.querySelector('nav');[...(바?.querySelectorAll('button')||[])].find(x=>(x.innerText||'').trim()==='레시피')?.click()})
+await p4.waitForTimeout(1800)
+const 살았나 = await p4.evaluate(()=>{
+  const e=[...document.querySelectorAll('.grid-card')].find(x=>x.innerText.includes('사진표지 하나'))
+  return { 보이나: !!e?.querySelector('img[src^="data:image/"]'),
+    서랍에data: (localStorage.getItem('hankki:v1')||'').includes('data:image/') }
+})
+chk('⭐⭐ 「복원 = 삭제」가 아니다 — 되살린 뒤에도 사진이 보인다', 살았나.보이나)
+chk('되살린 뒤에도 서랍은 «가볍다»(사진이 도로 안 들어온다)', !살았나.서랍에data)
 
 await b.close(); srv.close()
 console.log(`\n${실패?'❌':'✅'} ${통과}/${통과+실패}`)

@@ -10,7 +10,7 @@ import { cleanMemo, mergeQtyOnlyIngredients } from './parseRecipe'
 import { politeSteps, politeFormalSteps } from './polish'
 import { pickPaper } from './memoPaper'
 // 🗄 사진은 「큰 창고」로 — 서랍(localStorage 5MB)엔 글자만 남긴다
-import { 나누기, 여럿넣기, 지우기 as 창고에서지우기, 쪽지열쇠모으기, 통째로비우기 } from './photoStore'
+import { 나누기, 여럿넣기, 지우기 as 창고에서지우기, 쪽지열쇠모으기, 열쇠들 as 창고열쇠들 } from './photoStore'
 
 const KEY = 'hankki:v1'
 // 💾💾 **「저장이 진짜로 됐나」 — 화면이 물어볼 수 있게 밖으로 낸다** (창업자 확정 2026-09-02)
@@ -1110,6 +1110,33 @@ export function StoreProvider({ children }) {
     return () => { 취소 = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state])
+
+  // 🧹🧹 **주인 없는 사진을 쓸어담는다** — 레시피·일기·꾸미기를 지웠는데 창고에 사진만 남는 것 방지
+  //
+  //   ⛔⛔ **지우는 자리를 하나씩 고치면 «반드시» 빠뜨린다** — 레시피 삭제(`remove`)·전체 비우기(`clear`)·
+  //      초기화(`reset`) 말고도 **꾸미기 스티커 하나 떼기 · 일기 한 장 지우기 · 표지 바꾸기**가 다 사진을 버린다.
+  //      ⭐ 그래서 «지우는 곳»이 아니라 **«남아 있는 것»을 기준**으로 판단한다. 새 삭제 경로가 생겨도 저절로 걸린다.
+  //   🔒 `public/delete-account.html` 이 「앱에서 직접 삭제」를 약속하고 있다 — 안 지우면 그 신고와 어긋난다.
+  //
+  //   🚨 **안전장치 = 「지금 상태가 쓸 열쇠」를 «둘 다» 센다.**
+  //      아직 이사 전이라 사진이 `data:` 로 들어 있어도 `나누기()` 가 «쓰게 될 열쇠»를 알려준다.
+  //      ⛔ 쪽지만 세면 이사 «직전»에 쓸어담아 **멀쩡한 사진을 통째로 지운다.**
+  //   ⏰ 앱을 켜고 8초 뒤 «한 번만» — 첫 화면을 먼저 그리고, 매 저장마다 훑지 않는다(절대원칙 32).
+  useEffect(() => {
+    const t = setTimeout(async () => {
+      try {
+        const { 판, 사진들 } = 나누기(state)
+        const 살아있는열쇠 = new Set([...사진들.map(([k]) => k), ...쪽지열쇠모으기(판)])
+        const 창고열쇠 = await 창고열쇠들()
+        const 주인없는 = 창고열쇠.filter((k) => !살아있는열쇠.has(k))
+        // ⛔ 「전부 주인이 없다」면 **뭔가 잘못 읽은 것**이다(상태가 아직 안 왔을 수 있다) — 그때는 손대지 않는다
+        if (!주인없는.length || (창고열쇠.length && 주인없는.length === 창고열쇠.length && 살아있는열쇠.size === 0)) return
+        await 창고에서지우기(주인없는)
+      } catch { /* 청소는 «있으면 좋은 것» — 실패해도 앱은 그대로 돈다 */ }
+    }, 8000)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function 쓰기 (저장할판) {
     try {
