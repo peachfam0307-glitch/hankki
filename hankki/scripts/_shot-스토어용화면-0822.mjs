@@ -192,6 +192,55 @@ if (await 요리시작.count()) {
     await 다음.click(); await p.waitForTimeout(800)
   }
   await 찍자(p, '25-요리모드-걸음', '요리 모드 — 끓이는 걸음 ＋ 타이머')
+
+  // 🕐 [2026-09-02 창업자] *"요리모드에 타이머도 «펼친거» 넣어주면 좋겠다"*
+  //    ⭐ 위 25 장은 「타이머 맞추기」가 **단추 한 줄**로만 보인다 — 눌렀을 때 뭐가 나오는지는 안 보인다.
+  //       스토어에서 「걸음마다 타이머」라고 써 놓고 정작 «타이머 생김새»가 한 장도 없었다.
+  //    ⛔ 글자로 찾지 않는다 — 25 장을 죽였던 그 사고(단추 이름이 바뀌면 조용히 못 찾는다)를 되풀이하지 않는다.
+  //       `.cook-timer` 는 CookScreen 이 이 단추에만 쓰는 클래스라 이름이 바뀌어도 안 죽는다.
+  //    ⛔ 못 찾으면 **죽는다** — 「조용히 8장」이 다시 나오지 않게(규칙 18 ⓘ)
+  const 타이머단추 = p.locator('.cook-timer').first()
+  if (!(await 타이머단추.count())) {
+    console.error('⛔ 요리 모드에 「이 단계 타이머 맞추기」 단추가 없다 — CookScreen 의 .cook-timer 를 확인할 것')
+    process.exit(1)
+  }
+  // ⭐ 그 걸음이 말하는 «분»을 먼저 읽어 둔다 — 시트 기본값은 늘 5분이라
+  //    걸음이 「15분 끓여요」인데 단추가 「5분 시작」이면 **한 화면 안에서 말이 어긋난다.**
+  //    ⛔ 숫자를 박지 않는다 — 걸음이 바뀌면 그대로 낡는다.
+  const 걸음분 = await p.evaluate(() => {
+    const 후보 = [...document.querySelectorAll('div,section')]
+      .filter((e) => /STEP\s*\d+\s*\/\s*\d+/.test(e.innerText || '') && e.innerText.length < 300)
+    if (!후보.length) return 0
+    const 글 = 후보.reduce((a, c) => (c.innerText.length > a.innerText.length ? c : a)).innerText
+    const m = 글.match(/(\d+)\s*분/)
+    return m ? Number(m[1]) : 0
+  })
+  await 타이머단추.click()
+  // ⭐ 시트가 «다 올라온 뒤»에 찍는다 — 올라오는 중에 찍으면 아래가 잘린 채로 나온다.
+  //   ⛔ 「보이나」로 재면 반쯤 올라온 것도 보인다 → 시트 «높이»가 두 번 연달아 같을 때까지 기다린다.
+  await p.waitForSelector('.sheet-mask .sheet', { timeout: 5000 })
+  let 앞키 = -1
+  for (let n = 0; n < 20; n++) {
+    const 키 = await p.evaluate(() => {
+      const s = document.querySelector('.sheet-mask .sheet')
+      return s ? Math.round(s.getBoundingClientRect().height) : -1
+    })
+    if (키 > 0 && 키 === 앞키) break
+    앞키 = 키
+    await p.waitForTimeout(150)
+  }
+  // 🕐 걸음이 말한 분으로 «손으로 누르듯» 맞춘다(기본 5분)
+  //   ⛔ 프리셋(「15분」)을 누르면 «타이머가 시작되고 시트가 닫힌다»(`go()` → `start()` ＋ `onClose()`).
+  //      그래서 프리셋이 아니라 **＋/－ 를 누른다** — 실제 유저가 하는 그대로다.
+  //   ⛔ 60번 넘게 누를 일이면 그냥 둔다(걸음 글에서 엉뚱한 숫자를 읽었을 수 있다)
+  if (걸음분 > 0 && Math.abs(걸음분 - 5) <= 60) {
+    const 늘 = p.locator('.timer-custom [aria-label="늘리기"]').first()
+    const 줄 = p.locator('.timer-custom [aria-label="줄이기"]').first()
+    for (let n = 5; n < 걸음분; n++) await 늘.click()
+    for (let n = 5; n > 걸음분; n--) await 줄.click()
+    await p.waitForTimeout(250)
+  }
+  await 찍자(p, '25b-요리모드-타이머', `요리 모드 — 타이머 펼친 화면 (${걸음분 || 5}분 · 프리셋·알림음)`)
 } else {
   // ⛔ 예전엔 여기서 console.log 만 하고 지나갔다 — 그래서 «모자란 채로 끝났다».
   //    스토어에 나갈 8장은 하나라도 빠지면 안 된다. 못 찍으면 판이 죽는다.
@@ -227,21 +276,49 @@ if (await 꾸미기.count()) {
 //    ⭐ 요리 기록 = `kind` 없는 diary 항목. 아이콘은 `recipe.icon || guessFoodIcon(title)` 이라
 //       **제목만 있어도 음식 그림이 붙는다**(`DiaryScreen.jsx:52`).
 //    ⚠️ 날짜는 «이번 달»로 만든다 — 달력은 늘 이번 달을 연다(고정 날짜를 박으면 다음 달에 텅 빈다).
+//
+// ⛔⛔ [2026-09-02 고침] 그 「이번 달만 남긴다」 필터가 **달 초에 달력을 텅 비웠다.**
+//    🔢 오늘이 9/2 라 1·3·5·8·11·14·17일 «전» 중 살아남는 게 **1일 하나뿐** →
+//       스토어에 「기록 한 개짜리 달력」이 얹혔다. 헤드라인은 「달력에 하나씩 쌓여요」인데 **말과 그림이 어긋난다.**
+//    ⭐⭐ 이 판 머리주석에 *"갓 깐 앱의 달력은 텅 비어 있다 … 「아무것도 없는 앱」이 첫인상이 된다"* 라고
+//       **내가 적어두고**, 그걸 막으려던 필터가 정확히 그 일을 했다. 매달 1~5일이면 늘 이랬다.
+// ✅ 고침 둘 —
+//    ⑴ 필터를 없앤다(지난달까지 자연스럽게 걸친다 — 진짜 유저의 기록이 그렇다)
+//    ⑵ **이번 달이 허전하면 달력을 «지난달»로 넘긴다** — ‹ 단추는 앱에 이미 있다(흉내 아님 · 절대원칙 30)
 await 홈으로(p)
-await p.evaluate(() => {
+const 이번달기록 = await p.evaluate(() => {
   const st = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
   const 오늘 = new Date(); 오늘.setHours(12, 0, 0, 0)
   const 달첫날 = new Date(오늘.getFullYear(), 오늘.getMonth(), 1).getTime()
   const 날 = (d) => { const x = new Date(오늘); x.setDate(x.getDate() - d); return x.getTime() }
   const 기록 = [['콩국수', 1], ['돼지고기 김치찌개', 3], ['제육볶음', 5], ['된장찌개', 8],
     ['소고기 미역국', 11], ['국물 떡볶이', 14], ['비빔국수', 17]]
-    .filter(([, d]) => 날(d) >= 달첫날)
     .map(([t, d], i) => ({ id: `cz${i}`, title: t, at: 날(d) }))
   st.diary = [...(st.diary || []), ...기록]
   localStorage.setItem('hankki:v1', JSON.stringify(st))
+  return 기록.filter((r) => r.at >= 달첫날).length
 })
 await 홈으로(p)
-if (await 탭(p, '일기')) await 찍자(p, '26-일기-채운달력', '한끼 일기 — 음식 아이콘이 쌓인 달력')
+if (await 탭(p, '일기')) {
+  // ⭐ 넷은 있어야 「쌓인다」로 읽힌다 — 그 아래면 지난달을 연다
+  if (이번달기록 < 4) {
+    const 앞달 = p.getByRole('button', { name: /지난달|이전 달|앞달/ }).first()
+    if (await 앞달.count()) { await 앞달.click(); await p.waitForTimeout(700) }
+    else {
+      // ⛔ 이름을 못 찾으면 «달 제목 왼쪽» 단추를 누른다(달력 머리에 ‹ › 둘뿐이다)
+      const 눌렸나 = await p.evaluate(() => {
+        const 머리 = [...document.querySelectorAll('div')]
+          .filter((e) => /\d{4}년\s*\d{1,2}월/.test(e.innerText || '') && e.querySelectorAll('button').length === 2)
+        if (!머리.length) return false
+        const b = 머리[머리.length - 1].querySelectorAll('button')[0]
+        b.click(); return true
+      })
+      if (!눌렸나) console.log('  ⚠️ 달력에서 「지난달」 단추를 못 찾았다 — 달력이 허전할 수 있다')
+      await p.waitForTimeout(700)
+    }
+  }
+  await 찍자(p, '26-일기-채운달력', '한끼 일기 — 음식 아이콘이 쌓인 달력')
+}
 
 // ⑦ 🛒🛒 장보기 — [2026-08-27 다시 씀] 📮 창업자 = *"장보기는 재료 담긴 걸로 다시 찍어줘"*
 //    ⛔⛔ **내가 이 탭의 순서를 거꾸로 알고 있었다** — 맨 위가 «장보기 리스트»이고

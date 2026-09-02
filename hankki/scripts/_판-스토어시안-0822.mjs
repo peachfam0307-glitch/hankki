@@ -62,6 +62,33 @@ const 장 = ({ 파일, 머리, 부제, 자리 = 'top' }, i) => `<style>${공통}
 <div class="wrap"><div class="hh">${머리}</div><div class="ss">${부제}</div></div>
 <div class="box"><img class="big" src="${b64(join(앱화면, 파일))}"></div>`
 
+// 📐📐 [2026-09-02 창업자] *"요리모드에 타이머도 «펼친거» 넣어주면 좋겠다"*
+//   ⛔ 스토어 한도가 **8장**이라(위 리서치 ④) 한 장을 그냥 더 붙일 수가 없다.
+//   ⛔ 그리고 타이머 시트를 열면 **걸음 글이 통째로 가린다**(시트가 화면 아래 3분의 2를 덮는다 · 실물 확인).
+//      → 타이머만 넣으면 「걸음마다 큰 글씨」가 스토어에서 사라진다.
+//   ✅ 그래서 **한 장에 두 화면** — 뒤에 걸음, 앞에 타이머. 잃는 장 0, 잃는 기능 0.
+//   ⭐ 화면을 «자르지 않고» 통째로 넣는다 — 이 장만 유일하게 아래 단추까지 다 보인다.
+const 두장 = ({ 파일, 파일2, 머리, 부제 }, i) => `<style>${공통}
+  body{background:${감성색[i % 감성색.length]}}
+  .wrap{position:relative;z-index:2;padding:112px 76px 0;text-align:center}
+  .hh{font-size:92px;line-height:1.30}
+  .ss{font-size:40px;line-height:1.5;margin-top:24px}
+  .box{position:absolute;left:44px;right:44px;top:470px;height:1420px;z-index:2}
+  /* 🔢 폭을 «겹침»으로 정했다 — 560px 이면 두 장이 128px 겹쳐 **걸음 글 끝이 잘렸다**
+        (「중불로 줄여 1|5분」 · 실물로 봤다 · 절대원칙 21).
+        520px 이면 겹침이 48px 로 줄어 **걸음 글이 한 자도 안 잘린다.** */
+  .ph{position:absolute;width:520px;border-radius:38px;border:9px solid #fffdf8;display:block;
+    box-shadow:0 30px 62px rgba(93,52,16,.22),0 6px 16px rgba(93,52,16,.10)}
+  /* ⛔ 뒤 화면을 «옅게» 만들지 않는다 — 스토어 축소판에서 「흐린 스샷」으로 읽힌다 */
+  .ph.back{left:0;top:0;transform:rotate(-3deg)}
+  .ph.front{right:0;top:230px;transform:rotate(2.5deg);z-index:3}
+</style>
+<div class="wrap"><div class="hh">${머리}</div><div class="ss">${부제}</div></div>
+<div class="box">
+  <img class="ph back" src="${b64(join(앱화면, 파일))}">
+  <img class="ph front" src="${b64(join(앱화면, 파일2))}">
+</div>`
+
 // 🐻🐧 마지막 장 — 「꼬르곰은 저예요」 ＋ **마무리**
 // 📮 창업자 = *"마지막 장이 소개를 «여는» 장같이 느껴져. 글 마무리가."* ·
 //    *"«18년차주부가 만든앱» 다음이나 아래에 — 한끼에서 만나자는 설명 들어가면 좋겠다."* ·
@@ -115,7 +142,8 @@ const 장들 = {
   '03-레꾸': { 파일: '23-꾸미기-스티커서랍.png', 머리: '레시피 정리? 우린<br>레시피 레꾸해요', 부제: '꼬르곰·펭펭 스티커 붙이고 배경 깔고 · 한 끼가 추억이 돼요', 자리: 'center' },
   // ⛔ 굴리기로는 «칩 줄 조각»이 맨 위에 남는다(칸이 그 높이로 안 떨어진다) → 자를 때 조금 내려서 시작
   '04-장보기': { 파일: '27-장보기-사러가기.png', 머리: '재료는 한 번에<br>사러가기', 부제: '레시피 재료 그대로 톡 · 18년차 주부의 추천템까지', 자리: '50% 6%' },
-  '05-요리모드': { 파일: '25-요리모드-걸음.png', 머리: '불 앞에서도<br>편하게', 부제: '걸음마다 타이머 · 요리하는 동안 화면도 안 꺼져요', 자리: 'center' },
+  // 🕐 파일2 가 있으면 «두 화면» 틀로 그린다(위 `두장` 참조)
+  '05-요리모드': { 파일: '25-요리모드-걸음.png', 파일2: '25b-요리모드-타이머.png', 머리: '불 앞에서도<br>편하게', 부제: '걸음마다 큰 글씨 ＋ 타이머 · 요리하는 동안 화면도 안 꺼져요', 자리: 'center' },
   '06-일기': { 파일: '26-일기-채운달력.png', 머리: '오늘의 한 끼가<br>일기가 돼요', 부제: '달력에 하나씩 쌓여요 · 사진 한 장, 한 줄이면 충분해요' },
   // ⛔ 자랑 카드는 시트라 «뒤가 어둡다» — 너무 아래를 남기면 어두운 띠가 들어와 다른 장과 톤이 튄다
   '07-자랑': { 파일: '10-랜덤카드.png', 머리: '오늘의 한 끼를<br>카드 한 장으로', // ⛔ 42% 면 아래 「이 카드를 내 레시피 표지로」가 반쯤 잘린다(창업자 지적) → 위로 당긴다
@@ -127,13 +155,29 @@ const br = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const p = await br.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 2 })
 let i = 0
 for (const [이름, 값] of Object.entries(장들)) {
-  await p.setContent(`<!doctype html><meta charset="utf-8">${장(값, i)}`)
+  await p.setContent(`<!doctype html><meta charset="utf-8">${값.파일2 ? 두장(값, i) : 장(값, i)}`)
   await p.evaluate(() => document.fonts.ready)
   await p.waitForTimeout(350)
   await p.screenshot({ path: join(OUT, `${이름}.png`) })
   console.log(`  ✅ ${이름}`)
   i++
 }
+// 🕐 05 갈래 둘을 «따로» 뽑아 둔다 — 고르는 건 창업자다(규칙 11)
+//    ⛔ 최종 8장 폴더에 섞지 않는다. 섞으면 9장이 되어 「어느 게 나가는 건지」가 흐려진다.
+const 갈래OUT = join(OUT, '갈래05')
+mkdirSync(갈래OUT, { recursive: true })
+const 갈래05 = {
+  'ㄱ-걸음만': { 파일: '25-요리모드-걸음.png', 머리: '불 앞에서도<br>편하게', 부제: '걸음마다 타이머 · 요리하는 동안 화면도 안 꺼져요', 자리: 'center' },
+  'ㄴ-타이머만': { 파일: '25b-요리모드-타이머.png', 머리: '불 앞에서도<br>편하게', 부제: '걸음마다 타이머 · 소리와 진동으로 알려드려요', 자리: '50% 100%' },
+}
+for (const [이름, 값] of Object.entries(갈래05)) {
+  await p.setContent(`<!doctype html><meta charset="utf-8">${장(값, 4)}`)
+  await p.evaluate(() => document.fonts.ready)
+  await p.waitForTimeout(350)
+  await p.screenshot({ path: join(갈래OUT, `${이름}.png`) })
+  console.log(`  ☑️ 갈래05/${이름}`)
+}
+
 // 🐻🐧 마지막 장은 앱 화면이 없다 — 따로 그린다
 await p.setContent(`<!doctype html><meta charset="utf-8">${마지막장()}`)
 await p.evaluate(() => document.fonts.ready)
