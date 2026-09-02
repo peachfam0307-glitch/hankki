@@ -13,6 +13,8 @@
 // 실행: node scripts/_판-문서함-0902.mjs
 //   → 낼 파일을 그대로 «같은 URL»(a2125399-…)로 다시 올린다. ⛔새 주소를 만들지 않는다.
 import { readFileSync, writeFileSync } from 'node:fs'
+// ⏰ 「오늘(KST)」은 «한 곳»에서만 만든다(절대원칙 27). ⛔여기서 짜면 그 한 곳이 둘이 된다.
+import { todayKST } from '../src/today.js'
 
 const SCRATCH = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad'
 const 옛판 = `${SCRATCH}/문서함.html`
@@ -117,12 +119,15 @@ const 절들 = [
 ]
 
 const 개수 = 절들.reduce((s, x) => s + x.줄.length, 0)
-// ⏰ 날짜는 **KST** 로 짠다(절대원칙 27) — `Date.now()` 는 이미 UTC 라 «＋9시간»만 더한다.
-//    ⛔ `getTimezoneOffset()` 을 더하지 않는다 — 그게 2026-08-17 사고의 뿌리였다.
-const 서울 = new Date(Date.now() + 9 * 3600 * 1000)
-const 오늘 = 서울.toISOString().slice(0, 10)
-const 머리날짜 = `${서울.getUTCFullYear()}년 ${서울.getUTCMonth() + 1}월 ${서울.getUTCDate()}일`
-const 요일 = ['일', '월', '화', '수', '목', '금', '토'][서울.getUTCDay()]
+// ⏰ 날짜는 `todayKST()` «하나»에서만 받는다(절대원칙 27).
+//    ⛔ 여기서 `Date.now() + 9시간` 을 다시 짜면 «오늘을 만드는 곳»이 둘이 된다 —
+//       공식이 맞아도 규칙이 깨진다(2026-09-02 배포 게이트 `check-kst` 가 실제로 막았다).
+//    ⭐ 나머지(년·월·일·요일)는 **그 글자에서 파생**시킨다. 「지금」을 두 번 읽지 않는다.
+const 오늘 = todayKST()
+const [Y, M, D] = 오늘.split('-').map(Number)
+const 머리날짜 = `${Y}년 ${M}월 ${D}일`
+// 날짜 글자만으로 요일을 낸다(UTC 자정으로 못 박아 시간대와 무관하게 같은 답이 나온다)
+const 요일 = ['일', '월', '화', '수', '목', '금', '토'][new Date(`${오늘}T00:00:00Z`).getUTCDay()]
 
 const 줄HTML = ([id, 이름, chip, 배지, 설명]) => `
     <a class="item${chip === 'now' ? ' hot' : ''}" href="${A(id)}">
