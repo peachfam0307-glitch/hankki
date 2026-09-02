@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
+import { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react'
 import { seedRecipes } from './data/seed'
 import { basicRecipes, BASICS_VERSION } from './data/basics'
 import { makeSampleDiary, SAMPLE_DIARY_ID, SAMPLE_READY } from './data/sampleDiary'
@@ -1099,6 +1099,19 @@ const Ctx = createContext(null)
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState)
 
+  // 🧷🧷 **[2026-09-02 · 창업자 제보로 잡은 사고] 「지금 상태」를 참조로 들고 있는다.**
+  //   ⛔⛔ 아래 「주인 없는 사진 청소」가 `[]` 로 걸려 있어 **8초 뒤에 도는 코드가
+  //      «앱을 켠 순간»의 `state` 를 봤다**(stale closure). 그 사이에 담은 사진은
+  //      「살아있는 열쇠」 명단에 없어 **주인 없는 것으로 잡혀 지워졌다.**
+  //   🔢 실측(`_repro-청소가새사진지움-0902.mjs`) = 창고를 1초마다 찍으니
+  //      0~3초 있다 ✅ → 4초 없다 ⛔ (페이지 연 지 ~8초). **들어갔다가 지워진다.**
+  //   📮 창업자 = *"채우러가기 눌렀는데 이래"* — 캡처가 깨진 아이콘이었던 그 뿌리다.
+  //   ⛔ 안전장치(`살아있는열쇠.size === 0`)는 **처음부터 사진이 하나도 없을 때만** 막아서
+  //      창업자 폰(사진 11.8MB)엔 안 걸렸다.
+  //   📌 오늘 아침 축소 루프에서 고친 것과 **똑같은 병**이다 — 같은 파일에 하나 더 있었다.
+  const 지금state = useRef(state)
+  지금state.current = state
+
   // 🗄🗄 **사진은 «큰 창고»(IndexedDB)에, 글자만 서랍에** (2026-09-02 · 창업자 폰 실물 확인 뒤)
   //
   //   🔢 창업자 폰 = **4.56MB / 5MB = 91%** · 창고 한도 **10,731MB**(2,000배)
@@ -1112,7 +1125,7 @@ export function StoreProvider({ children }) {
     ;(async () => {
       let 저장할판 = state
       try {
-        const { 판, 사진들 } = 나누기(state)
+        const { 판, 사진들 } = 나누기(지금state.current)
         if (사진들.length) {
           // ⭐ 한 거래로 묶어 넣는다 — 100장에 8ms(한 장씩이면 183ms · 실측)
           const 됐나 = await 여럿넣기(사진들)
@@ -1143,12 +1156,20 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     const t = setTimeout(async () => {
       try {
-        const { 판, 사진들 } = 나누기(state)
-        const 살아있는열쇠 = new Set([...사진들.map(([k]) => k), ...쪽지열쇠모으기(판)])
+        // 🧷 «지금» 상태로 센다 — `state` 를 그대로 쓰면 켠 순간 값에 굳어 새 사진을 지운다(위 주석)
+        const 살아있는열쇠지금 = () => {
+          const { 판, 사진들 } = 나누기(지금state.current)
+          return new Set([...사진들.map(([k]) => k), ...쪽지열쇠모으기(판)])
+        }
+        const 살아있는열쇠 = 살아있는열쇠지금()
         const 창고열쇠 = await 창고열쇠들()
-        const 주인없는 = 창고열쇠.filter((k) => !살아있는열쇠.has(k))
+        // ⏳⏳ **창고를 읽는 «동안»에도 사진이 들어온다** — 그 사이에 담긴 것을 지우면 같은 사고다.
+        //   ⭐ 그래서 지우기 «직전»에 한 번 더 세고, **두 번 다 주인이 없는 것만** 지운다.
+        //      한 번이라도 살아 있었으면 놔둔다 — 「살릴 쪽으로 기운다」(사진을 잃는 건 되돌릴 수 없다).
+        const 살아있는열쇠2 = 살아있는열쇠지금()
+        const 주인없는 = 창고열쇠.filter((k) => !살아있는열쇠.has(k) && !살아있는열쇠2.has(k))
         // ⛔ 「전부 주인이 없다」면 **뭔가 잘못 읽은 것**이다(상태가 아직 안 왔을 수 있다) — 그때는 손대지 않는다
-        if (!주인없는.length || (창고열쇠.length && 주인없는.length === 창고열쇠.length && 살아있는열쇠.size === 0)) return
+        if (!주인없는.length || (창고열쇠.length && 주인없는.length === 창고열쇠.length && 살아있는열쇠2.size === 0)) return
         await 창고에서지우기(주인없는)
       } catch { /* 청소는 «있으면 좋은 것» — 실패해도 앱은 그대로 돈다 */ }
     }, 8000)

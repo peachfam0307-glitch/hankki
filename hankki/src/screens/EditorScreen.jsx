@@ -23,7 +23,7 @@ import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from '..
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 // 🗄 저장된 사진은 「큰 창고」(IndexedDB)에 있고 상태엔 쪽지만 남는다 — 편집기는 열 때 꺼내 온다
-import { 창고에있나, 창고표시, 꺼내기 } from '../photoStore'
+import { 창고에있나, 창고표시, 꺼내기, 그릴수있나 } from '../photoStore'
 // 🐻 읽는 중 — 기다리는 자리엔 «움직이는» 애가 있어야 안 끈다.
 //    ⛔ `ui/gom_clap` 은 **옛 매끈 곰**이라 안 쓴다(창업자 2026-08-13 *"쟤 옛날 곰이야"*) → 물결 정본.
 //    ⭐ 냄비 젓는 컷 — 「멈춰 있지 않고 뭔가 «하고 있다»」가 그림으로 보인다(동그라미 하나보다 세다).
@@ -835,14 +835,25 @@ export default function EditorScreen({ id, prefill }) {
               높이를 줄여(34vh) 입력칸을 넉넉히 남기고, 사진이 길면 안에서 세로 스크롤한다. */}
           <div ref={photoBoxRef} onScroll={checkPhotoScroll} style={{ maxHeight: photoFold ? 0 : '34vh', overflowY: photoFold ? 'hidden' : 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
             {/* 한 번에 «한 장»만 — 쌓아두면 둘째 장이 850px 아래로 밀려 못 찾는다(위 shot 주석) */}
-            <img
-              key={shotIdx}
-              src={refs[shotIdx]}
-              alt={`캡처 ${shotIdx + 1}`}
-              onClick={() => setZoom(shotIdx)}
-              onLoad={checkPhotoScroll}
-              style={{ display: 'block', width: '100%', height: 'auto', cursor: 'zoom-in' }}
-            />
+            {/* 🖼🖼 [2026-09-02 · 창업자 제보] **쪽지를 «날것»으로 `<img>` 에 넣지 않는다.**
+                📮 창업자 = *"채우러가기 눌렀는데 이래"* — 사진 자리에 «깨진 이미지 아이콘»만 있었다.
+                ⛔ 창고에서 못 꺼내면 `refs` 에 `idb://…` 가 그대로 남는데, 그걸 그리면 브라우저가
+                   깨진 아이콘을 그린다. 유저는 그걸 **「앱이 고장났다」**로 읽는다.
+                ⭐ 못 그릴 값이면 «조용히 말로» 알린다 — 글자는 그대로 살아 있으니 편집은 계속된다. */}
+            {그릴수있나(refs[shotIdx]) ? (
+              <img
+                key={shotIdx}
+                src={refs[shotIdx]}
+                alt={`캡처 ${shotIdx + 1}`}
+                onClick={() => setZoom(shotIdx)}
+                onLoad={checkPhotoScroll}
+                style={{ display: 'block', width: '100%', height: 'auto', cursor: 'zoom-in' }}
+              />
+            ) : (
+              <div className="t-sub" style={{ padding: '18px 4px', textAlign: 'center', fontSize: 13.5 }}>
+                사진을 못 불러왔어요 · 글자는 그대로 있어요
+              </div>
+            )}
           </div>
           {/* 더 스크롤할 게 있을 때만 하단 fade + 안내 — '잘림/고정' 오해 방지 */}
           {!photoFold && photoMore && (
@@ -1313,7 +1324,14 @@ export default function EditorScreen({ id, prefill }) {
             onClick={() => setZoom(false)}
           >
             <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10, padding: '56px 0' }}>
-              <img src={refs[Math.min(zoom, refs.length - 1)]} alt={`캡처 ${Math.min(zoom, refs.length - 1) + 1}`} style={{ display: 'block', width: '100%', height: 'auto' }} />
+              {/* 🖼 위 「보면서 쓰기」와 «같은 잣대» — 못 그릴 값이면 깨진 아이콘 대신 말로 알린다 */}
+              {그릴수있나(refs[Math.min(zoom, refs.length - 1)]) ? (
+                <img src={refs[Math.min(zoom, refs.length - 1)]} alt={`캡처 ${Math.min(zoom, refs.length - 1) + 1}`} style={{ display: 'block', width: '100%', height: 'auto' }} />
+              ) : (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: '#e8e2d8', fontSize: 14, lineHeight: 1.6 }}>
+                  사진을 못 불러왔어요<br />글자는 그대로 있어요
+                </div>
+              )}
             </div>
             <button
               className="press"
