@@ -116,7 +116,7 @@ const 카드정보 = () => p.evaluate(() => {
   }
 })
 
-const 뽑기 = p.getByRole('button', { name: /다시 뽑기/ })
+// ⛔ 손잡이(locator)를 미리 잡아 두지 않는다 — 아래에서 «누를 때마다» 브라우저 안에서 찾는다.
 const 찾음 = new Map()
 let 눌렀다 = 0
 for (let i = 0; i < 최대 && 찾음.size < 찾을것.length; i += 1) {
@@ -132,10 +132,17 @@ for (let i = 0; i < 최대 && 찾음.size < 찾을것.length; i += 1) {
     }
   }
   if (찾음.size >= 찾을것.length) break
-  if (!(await 뽑기.count())) { console.log('  ⛔ 「다시 뽑기」 단추를 못 찾았다'); break }
-  // ⛔ 뽑고 나서 카드가 다시 그려지는 «동안»엔 단추가 안 눌린다 → 한 번 실패하면 쉬었다 다시.
-  let 됐다 = await 뽑기.first().click({ timeout: 3000 }).then(() => true).catch(() => false)
-  if (!됐다) { await p.waitForTimeout(1200); 됐다 = await 뽑기.first().click({ timeout: 5000 }).then(() => true).catch(() => false) }
+  // ⛔⛔ **브라우저 «안»에서 직접 누른다.**
+  //    플레이라이트 `click()` 은 `force: true` 를 줘도 2·3·8·15번째에서 제각각 멈췄다.
+  //    막힌 화면을 찍어 봤더니(절대원칙 21) **단추가 멀쩡히 보이고 가린 것도 없다** —
+  //    뽑을 때마다 리액트가 단추를 새로 그려서 손잡이가 «중간에 떨어져 나가는» 것이다.
+  //    📌 여기서 재는 건 「눌리나」가 아니라 「컷이 어떻게 보이나」다 → 그 자리에서 찾아 그 자리에서 누른다.
+  const 됐다 = await p.evaluate(() => {
+    const b = [...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('다시 뽑기'))
+    if (!b) return false
+    b.click()
+    return true
+  })
   if (!됐다) {
     await p.screenshot({ path: `${방}/막힌화면.png` })
     console.log(`  ⛔ ${i}번째에서 뽑기 단추가 두 번 다 안 눌린다 — 막힌화면.png 를 볼 것`)
