@@ -810,7 +810,13 @@ function StorageRow() {
     ;(async () => {
       try {
         const e = await navigator.storage?.estimate?.()
-        if (살아있나 && e && e.usage > 0) set창고({ 쓴것: e.usage, 한도: e.quota || 0 })
+        if (!살아있나 || !e) return
+        // ⭐ 크롬은 «어디에» 얼마를 썼는지까지 알려준다 → 사진 창고(IndexedDB)만 콕 집는다.
+        //    ⛔ 통째로 그리면 **앱 파일 캐시(4.7MB)까지 「사진」이라고 말하게 된다**(실측 23.6MB).
+        //    ⚠️ 없는 브라우저면 통째로 보여주되 **이름을 정직하게** 「앱·사진」이라고 쓴다.
+        const 사진만 = e.usageDetails?.indexedDB
+        const 쓴것 = 사진만 != null ? 사진만 : e.usage
+        if (쓴것 > 0) set창고({ 쓴것, 한도: e.quota || 0, 사진만: 사진만 != null })
       } catch { /* 못 재는 브라우저면 그 줄을 안 그린다 */ }
     })()
     return () => { 살아있나 = false }
@@ -832,7 +838,7 @@ function StorageRow() {
       </div>
       {창고 && (
         <div className="t-sub" style={{ fontSize: 13.5, marginTop: 2 }}>
-          사진 {자릿수(창고.쓴것 / 1024 / 1024)}MB{창고.한도 ? ` / 약 ${자릿수(창고.한도 / 1024 / 1024 / 1024)}GB` : ''}
+          {창고.사진만 ? '사진' : '앱 · 사진'} {자릿수(창고.쓴것 / 1024 / 1024)}MB{창고.한도 ? ` / 약 ${자릿수(창고.한도 / 1024 / 1024 / 1024)}GB` : ''}
         </div>
       )}
       {퍼센트 >= 80 && (

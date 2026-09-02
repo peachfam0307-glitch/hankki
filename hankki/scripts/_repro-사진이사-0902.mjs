@@ -41,9 +41,9 @@ const 심은 = await p0.evaluate(() => {
     { id:'zz-1', title:'사진표지 하나', status:'sorted', source:'manual', thumb:'photo', image:사진, savedAt:t, ingredients:['콩나물 300g','들기름'], steps:['씻어요','무쳐요'], favorite:false, cooked:0 },
     { id:'zz-2', title:'사진표지 둘', status:'sorted', source:'manual', thumb:'photo', image:사진, savedAt:t-1, ingredients:['두부'], steps:['부쳐요','뒤집어요'], favorite:false, cooked:0 },
     ...(s.recipes||[])]
-  s.diary = [{ id:'zz-d1', date:'2026-09-02', note:'맛있었다', photo:사진 }, ...(s.diary||[])]
+  s.diary = [{ id:'zz-d1', at:t, date:'2026-09-02', title:'사진표지 하나', recipeId:'zz-1', rating:5, note:'맛있었다', photo:사진 }, ...(s.diary||[])]
   localStorage.setItem('hankki:v1', JSON.stringify(s))
-  return { 서랍전: (localStorage.getItem('hankki:v1')||'').length, 사진길이: 사진.length }
+  return { 서랍전: (localStorage.getItem('hankki:v1')||'').length, 사진길이: 사진.length, 사진 }
 })
 console.log(`   심은 뒤 서랍 = ${(심은.서랍전/1048576).toFixed(2)}MB (사진 한 장 ${Math.round(심은.사진길이/1024)}KB × 3)`)
 await p0.close()
@@ -98,24 +98,44 @@ const 다시 = await p2.evaluate(()=>{
   return !!e?.querySelector('img[src^="data:image/"]')
 })
 chk('⭐⭐ 껐다 켜도 사진이 «그대로 보인다»', 다시)
+
+// 📔📔 **일기 사진도 «화면에» 돌아오나** (2026-09-02 · `photoView.jsx` 가 지키는 자리)
+//   ⛔⛔ 표지(`Thumb`)만 고치면 반쪽이다 — 일기 사진은 달력·앨범·일기 시트·속지가 «따로» 그린다.
+//      쪽지를 그대로 `<img src>` 에 넣으면 **빈 칸**이 되고, 유저 눈엔 「사진이 사라졌다」로 보인다.
+//   ⛔ 잣대를 「data: 그림이 있나」로 잡으면 «안 된다» — 빌드가 음식 아이콘 PNG 를 data: 로 인라인한다.
+//      ✅ 그래서 **우리가 심은 그 사진**(JPEG · 가로 900)을 콕 집는다.
+await p2.evaluate(()=>{const 바=document.querySelector('.bottom-nav')||document.querySelector('nav');[...(바?.querySelectorAll('button')||[])].find(x=>(x.innerText||'').trim().includes('일기'))?.click()})
+await p2.waitForTimeout(1800)
+const 일기화면 = await p2.evaluate(()=>{
+  const 그림들=[...document.querySelectorAll('img')].filter(e=>/^data:image\/jpe?g/.test(e.src))
+  return { 개수: 그림들.length, 심은것: 그림들.some(e=>e.naturalWidth===900) }
+})
+chk('⭐⭐ 껐다 켜도 «일기 사진»이 화면에 보인다 (달력·앨범)', 일기화면.심은것, `jpeg ${일기화면.개수}장`)
+
 chk('pageerror 0', 오류.length===0, 오류.join(' · '))
 
 // ── 💾 백업 — ⭐제일 조용히 깨지는 자리 ──
 //    ⛔ 백업에 «쪽지»가 담기면 파일은 멀쩡히 생기고, 폰을 바꾼 «뒤에야» 사진이 없는 걸 안다.
 //    ⭐ **유저가 하는 그대로** 잰다 — 설정 → 백업 → 파일로 저장 → «그 파일»을 연다.
 //       ⛔ 모듈을 직접 부르면 「진짜 그 길」을 안 재는 판이 된다(규칙 18 ⓘ · 절대원칙 30).
+// ⛔⛔ **백업을 «갓 켠 폰»에서 만든다 — 이걸 p1 에서 하면 판이 «아무것도 안 잰다».**
+//    p1 은 이사를 «방금 한» 탭이라 화면이 든 값에 아직 «진짜 사진»이 그대로 있다(서랍만 갈렸다).
+//    거기서 백업하면 되살리는 코드를 통째로 지워도 초록불이 뜬다(2026-09-02 규칙 12 로 실제로 드러났다).
+//    ✅ 새 탭 = 서랍에서 읽으니 손에 든 값이 «쪽지»뿐 → 창고에서 꺼내 담는 그 길을 진짜로 걷는다.
+const pb = await ctx.newPage()
+await pb.goto('http://127.0.0.1:4495/hankki/',{waitUntil:'networkidle'}); await pb.waitForTimeout(3000)
 const 백업글 = await (async () => {
   try {
     // 홈 → 상단바 ⚙(aria-label="설정") → 「백업 · 내보내기」 → 「폰에 파일로 저장」
-    await p1.evaluate(()=>{const 바=document.querySelector('.bottom-nav')||document.querySelector('nav');[...(바?.querySelectorAll('button')||[])].find(x=>(x.innerText||'').trim()==='홈')?.click()})
-    await p1.waitForTimeout(700)
-    await p1.evaluate(()=>{[...document.querySelectorAll('button')].find(x=>x.getAttribute('aria-label')==='설정')?.click()})
-    await p1.waitForTimeout(1000)
-    await p1.evaluate(()=>{[...document.querySelectorAll('button')].find(x=>/백업 · 내보내기/.test(x.innerText||''))?.click()})
-    await p1.waitForTimeout(1000)
+    await pb.evaluate(()=>{const 바=document.querySelector('.bottom-nav')||document.querySelector('nav');[...(바?.querySelectorAll('button')||[])].find(x=>(x.innerText||'').trim()==='홈')?.click()})
+    await pb.waitForTimeout(700)
+    await pb.evaluate(()=>{[...document.querySelectorAll('button')].find(x=>x.getAttribute('aria-label')==='설정')?.click()})
+    await pb.waitForTimeout(1000)
+    await pb.evaluate(()=>{[...document.querySelectorAll('button')].find(x=>/백업 · 내보내기/.test(x.innerText||''))?.click()})
+    await pb.waitForTimeout(1000)
     const [down] = await Promise.all([
-      p1.waitForEvent('download', { timeout: 15000 }),
-      p1.evaluate(()=>{[...document.querySelectorAll('button')].find(x=>/파일로 저장/.test(x.innerText||''))?.click()}),' '.trim(),
+      pb.waitForEvent('download', { timeout: 15000 }),
+      pb.evaluate(()=>{[...document.querySelectorAll('button')].find(x=>/파일로 저장/.test(x.innerText||''))?.click()}),' '.trim(),
     ])
     const 길 = await down.path()
     const b = JSON.parse(readFileSync(길, 'utf8'))
@@ -131,6 +151,24 @@ if (백업글) {
   chk('백업이 이사 도장을 담는다 (복원해도 이사가 다시 안 돈다)',
     백업글.도장[0] != null, 'inboxV=' + 백업글.도장[0])
 } else { 실패 += 3; 실패목록.push('백업을 못 만들었다'); console.log('  ❌ 백업을 못 만들었다') }
+
+// ── 📊 계기판 — 설정에 「저장 공간」이 «숫자로» 뜨나 ──
+//   ⛔⛔ 2026-09-02 아침 사고의 절반은 **「얼마나 찼는지 아무도 몰랐다」**는 것이다(4.56MB/5MB=91%).
+//      벽이 있는데 계기판이 없으면 «터지고 나서» 안다.
+//   ⛔ `navigator.storage.estimate()` 로 그리면 안 된다 — localStorage 를 «안 센다»(실측 1MB→0KB).
+//      그래서 이 줄은 **우리가 쓰기 직전에 «직접 센» 글자 수**를 보여준다.
+await pb.evaluate(()=>{[...document.querySelectorAll('button')].find(x=>x.getAttribute('aria-label')==='닫기')?.click()})
+await pb.waitForTimeout(900)
+const 계기판 = await pb.evaluate(()=>{
+  const 칸 = document.querySelector('[data-probe="storage"]')
+  if (!칸) return null
+  const 글 = 칸.innerText || ''
+  const m = 글.match(/(\d+)%/)
+  return { 글, 퍼센트: m ? Number(m[1]) : -1, 메가있나: /MB/.test(글) }
+})
+chk('⭐ 설정에 「저장 공간」 줄이 있다', !!계기판 && /저장 공간/.test(계기판.글))
+chk('⭐⭐ 그 줄이 «진짜로 잰 값»을 보여준다 (0% 가 아니다)', !!계기판 && 계기판.퍼센트 > 0 && 계기판.메가있나,
+  계기판 ? 계기판.글.replace(/\n/g, ' · ') : '(줄이 없다)')
 
 // ── 🔁 복원 — 백업으로 되살려도 사진이 살아남나 ──
 const p3 = await ctx.newPage()
@@ -155,6 +193,42 @@ const 살았나 = await p4.evaluate(()=>{
 })
 chk('⭐⭐ 「복원 = 삭제」가 아니다 — 되살린 뒤에도 사진이 보인다', 살았나.보이나)
 chk('되살린 뒤에도 서랍은 «가볍다»(사진이 도로 안 들어온다)', !살았나.서랍에data)
+
+// ── 🧯 창고가 «고장 나도» 글자를 안 잃는다 ──
+//   ⛔⛔ 제일 무서운 경우 = **사진은 창고에 못 넣었는데 서랍에서는 빼는 것.** 그러면 사진이 «증발»한다.
+//      (2026-09-02 아침 창업자 폰에서 레시피가 사라진 그 모양이다)
+//   ⭐ 그래서 `store.jsx` 는 **창고에 «들어간 뒤에만»** 서랍에서 뺀다. 못 넣으면 예전처럼 통째로 저장한다.
+//   🧪 그 길을 진짜로 걷게 한다 — `indexedDB.open` 이 **늘 실패**하는 판을 만든다.
+console.log('\n🧯 창고가 고장 난 폰')
+const 고장 = await b.newContext({ viewport:{width:390,height:844} })
+await 고장.addInitScript(SEED_COACH_SEEN)
+await 고장.addInitScript(()=>{ try{ localStorage.setItem('hankki:onboarded','1'); localStorage.setItem('hankki:news:off','1') }catch{}
+  try { indexedDB.open = () => { const r = { onerror:null, onsuccess:null, onblocked:null }
+    setTimeout(()=>{ try { r.error = new Error('창고 고장 흉내'); r.onerror && r.onerror({ target:r }) } catch {} }, 0); return r } } catch {} })
+const q0 = await 고장.newPage()
+await q0.goto('http://127.0.0.1:4495/hankki/',{waitUntil:'networkidle'}); await q0.waitForTimeout(1500)
+await q0.evaluate((사진)=>{
+  const s = JSON.parse(localStorage.getItem('hankki:v1')||'{}')
+  s.recipes = [{ id:'zz-9', title:'창고고장 레시피', status:'sorted', source:'manual', thumb:'photo', image:사진,
+    savedAt:Date.now(), ingredients:['콩나물 300g'], steps:['씻어요','무쳐요'], favorite:false, cooked:0 }, ...(s.recipes||[])]
+  localStorage.setItem('hankki:v1', JSON.stringify(s))
+}, 심은.사진)
+await q0.close()
+
+const q1 = await 고장.newPage()
+const 고장오류=[]; q1.on('pageerror', e=>{ if(!/tesseract|importScripts|cdn\.jsdelivr|Failed to fetch/i.test(e.message)) 고장오류.push(e.message) })
+await q1.goto('http://127.0.0.1:4495/hankki/',{waitUntil:'networkidle'}); await q1.waitForTimeout(5000)
+const 고장뒤 = await q1.evaluate(()=>{
+  const 글 = localStorage.getItem('hankki:v1')||''
+  const s = JSON.parse(글||'{}')
+  const r = (s.recipes||[]).find(x=>x.id==='zz-9')
+  return { 글자살았나: !!r && r.steps?.length === 2, 사진살았나: typeof r?.image==='string' && r.image.startsWith('data:'),
+    쪽지로바뀌었나: typeof r?.image==='string' && r.image.startsWith('idb://') }
+})
+chk('⭐⭐ 창고가 고장 나도 «글자»를 안 잃는다', 고장뒤.글자살았나)
+chk('⭐⭐ 창고에 못 넣었으면 서랍에서 «빼지 않는다» (사진 증발 금지)', 고장뒤.사진살았나 && !고장뒤.쪽지로바뀌었나)
+chk('창고 고장에도 pageerror 0', 고장오류.length===0, 고장오류.join(' · '))
+await 고장.close()
 
 await b.close(); srv.close()
 console.log(`\n${실패?'❌':'✅'} ${통과}/${통과+실패}`)
