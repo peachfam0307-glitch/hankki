@@ -1,0 +1,45 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
+@font-face{font-family:'Jua';src:url('file:///home/user/hankki/hankki/src/assets/fonts/jua-korean-400.woff2') format('woff2');font-display:block}
+@font-face{font-family:'GowunDodum';src:url('file:///home/user/hankki/hankki/src/assets/fonts/gowun-dodum-korean-400.woff2') format('woff2');font-display:block}
+@font-face{font-family:'Gaegu';src:url('file:///home/user/hankki/hankki/src/assets/fonts/gaegu-korean-400.woff2') format('woff2');font-display:block}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1080px;height:1350px}
+body{font-family:'GowunDodum',sans-serif;background:#f5f1e9;color:#43392f;padding:44px 46px;position:relative;overflow:hidden}
+.grain{position:absolute;inset:0;background-image:radial-gradient(rgba(150,120,80,.06) 1px,transparent 1px);background-size:7px 7px;pointer-events:none}
+.brand{position:relative;text-align:center;font-family:'Jua';font-size:38px;color:#8a6a3a;letter-spacing:1px;z-index:5}.brand .h{color:#e0a94f}
+.pop{position:absolute;left:46px;right:46px;top:150px;height:690px;border-radius:60px;background:radial-gradient(120% 130% at 50% 8%,#f0cd82,#e4b25a 55%,#d69a3f);box-shadow:0 34px 60px -24px rgba(150,105,40,.48),inset 0 3px 0 rgba(255,255,255,.32)}
+.pop .dot{position:absolute;inset:0;border-radius:60px;overflow:hidden;background-image:radial-gradient(rgba(255,255,255,.16) 5px,transparent 6px);background-size:64px 64px;background-position:20px 20px}
+.pop .ray{position:absolute;left:50%;top:52%;width:720px;height:720px;transform:translate(-50%,-50%);background:radial-gradient(42% 42% at 50% 50%,rgba(255,248,225,.55),transparent 70%)}
+.stamp{position:absolute;top:196px;left:96px;width:150px;height:150px;transform:rotate(-13deg);z-index:6}
+.stamp .txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Jua';color:#fff;line-height:1.05;text-align:center}
+.stamp .txt b{font-size:34px}.stamp .txt s{font-size:19px;text-decoration:none;opacity:.94;letter-spacing:2px;margin-top:3px}
+.hero{position:absolute;left:50%;bottom:398px;transform:translateX(-50%);width:612px;z-index:7;
+ filter:drop-shadow(3px 0 0 #fffdf8) drop-shadow(-3px 0 0 #fffdf8) drop-shadow(0 3px 0 #fffdf8) drop-shadow(0 -3px 0 #fffdf8) drop-shadow(3px 3px 0 #fffdf8) drop-shadow(-3px 3px 0 #fffdf8) drop-shadow(3px -3px 0 #fffdf8) drop-shadow(-3px -3px 0 #fffdf8) drop-shadow(0 22px 20px rgba(150,105,40,.32))}
+.speech{position:absolute;top:392px;right:150px;width:96px;z-index:8;filter:drop-shadow(0 6px 8px rgba(150,105,40,.22))}
+.info{position:absolute;left:0;right:0;bottom:150px;text-align:center;z-index:5}
+.kick{font-family:'Gaegu';font-weight:700;font-size:34px;color:#c98f2e;letter-spacing:1px}
+.title{font-family:'Jua';font-size:82px;color:#3a3128;letter-spacing:-1.5px;line-height:1;margin-top:6px}
+.title .p{color:#cf972f}
+.metabar{display:inline-flex;gap:10px;align-items:center;margin-top:18px;font-size:24px;color:#8a7256}
+.metabar .d{width:5px;height:5px;border-radius:50%;background:#cbb083}
+.more{margin-top:16px;font-size:26px;color:#c98f2e;font-weight:700}
+.foot{position:absolute;left:0;right:0;bottom:52px;text-align:center;z-index:5}
+.foot .wm{font-family:'Jua';font-size:27px;color:#8a6a3a}
+.foot .url{display:inline-block;margin-left:12px;padding:6px 18px;border-radius:999px;background:rgba(207,151,47,.16);color:#b3822c;font-size:18px}
+</style></head><body>
+<div class="grain"></div>
+<div class="brand">한끼 <span class="h">♡</span></div>
+<div class="pop"><div class="dot"></div><div class="ray"></div></div>
+<div class="stamp">
+  <svg viewBox="0 0 100 100"><path d="M50 3 L61 13 L75 9 L79 24 L93 30 L88 45 L96 58 L84 66 L85 81 L70 82 L61 94 L50 86 L39 94 L30 82 L15 81 L16 66 L4 58 L12 45 L7 30 L21 24 L25 9 L39 13 Z" fill="none" stroke="#fff" stroke-width="3.4" opacity=".95"/></svg>
+  <div class="txt"><b>같이</b><s>먹어요</s></div>
+</div>
+<img class="hero" src="file:///tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/heroes/hero5.png">
+<img class="speech" src="file:///tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/emo/heartbubble.png">
+<div class="info">
+  <div class="kick">같이 먹어야 맛있지</div>
+  <div class="title">딸기 <span class="p">팬케이크</span></div>
+  <div class="metabar"><span>30분</span><span class="d"></span><span>2인분</span><span class="d"></span><span>주말 브런치</span></div>
+  <div class="more">전체 레시피는 한끼 앱에서 →</div>
+</div>
+<div class="foot"><span class="wm">한끼</span><span class="url">peachfam0307-glitch.github.io/hankki</span></div>
+</body></html>

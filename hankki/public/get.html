@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>한끼 받기</title>
+<meta name="robots" content="noindex">
+<!--
+  🔗🔗 **인스타 프로필 링크가 스토어로 가게 하는 «징검다리» 페이지**
+
+  📮 창업자 2026-08-29 = *"인스타 프로필에 주소 클릭이 안돼"* → *"남편폰으로 …눌러봤는데 안눌러져"*
+     → (웹앱 주소로 바꿔 보고) *"이제 눌리거든? 근데 누르면 웹 한끼로 바로 가 스토어로 가는게 아니라"*
+     → *"남편폰은 이미 깔려있어서 그런가"*
+
+  ⭐⭐ **실물로 갈린 것 = 인스타는 «물음표 뒤 쿼리»가 붙은 주소를 링크로 안 만든다.**
+     · `play.google.com/store/apps/details?id=…`  → 파랗게 보이는데 **눌리지 않는다**(남편 폰에서도)
+     · `peachfam0307-glitch.github.io/hankki/`     → **눌린다**
+     ⛔ 그런데 Play 스토어 주소는 **`?id=` 가 필수**라 뺄 수가 없다.
+
+  ⛔ 그래서 웹앱 주소를 넣었더니 이번엔 **설치로 안 이어진다** —
+     · 이미 깐 사람 → TWA(App Links)라 **앱이 열린다** ✅ (창업자 짐작이 맞았다)
+     · **안 깐 사람 → 그냥 웹 한끼가 열린다** ⛔ ← 정작 우리가 잡아야 할 사람
+
+  ✅ **이 페이지가 그 사이를 잇는다** — 주소에 물음표가 없어 인스타에서 눌리고, 열리면 스토어로 보낸다.
+
+  ⛔⛔ **자동 이동만 믿지 않는다** — 인스타 «인앱 브라우저»가 스크립트 이동을 막는 일이 있다.
+     그래서 **큰 버튼을 같이** 둔다. 자동이 실패해도 유저가 한 번 누르면 간다.
+  ⚠️ 그리고 **1.2초 기다렸다가** 보낸다 — 곧바로 튕기면 유저는 «뭐가 지나갔는지» 모른 채 스토어에 떨어진다.
+
+  📌 주소는 `src/nudges.js` 의 `STORE_URL` 과 «같아야» 한다. 여기 손으로 적혀 있으니
+     스토어 주소가 바뀌면 **두 곳을 같이** 고친다(⛔이 페이지는 빌드에 안 섞이는 정적 파일이라 import 를 못 쓴다).
+-->
+<style>
+  :root { color-scheme: light dark;
+    --bg:#fdfbf7; --card:#fff; --line:#efe8dc; --text:#3d3830; --sub:#8f887b; --pt:#5878a0; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#17171b; --card:#202026; --line:rgba(255,255,255,.10);
+            --text:#ecebf1; --sub:#9a97a2; --pt:#7093c0; } }
+  * { box-sizing:border-box }
+  body { margin:0; min-height:100dvh; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    display:flex; align-items:center; justify-content:center; padding:24px; line-height:1.6 }
+  .box { width:100%; max-width:420px; text-align:center }
+  .logo { width:104px; height:104px; border-radius:26px; margin:0 auto 18px; display:block }
+  h1 { font-size:24px; margin:0 0 6px; letter-spacing:-.4px }
+  .sub { color:var(--sub); font-size:15px; margin:0 0 26px }
+  .btn { display:block; width:100%; padding:17px; border-radius:15px; background:var(--pt);
+    color:#fff; text-decoration:none; font-size:17px; font-weight:700; margin-bottom:10px }
+  .ghost { display:block; width:100%; padding:15px; border-radius:15px; background:transparent;
+    color:var(--sub); text-decoration:none; font-size:14px; border:1.5px solid var(--line) }
+  .note { color:var(--sub); font-size:13px; margin-top:18px }
+</style>
+</head>
+<body>
+  <div class="box">
+    <img class="logo" src="./icons/icon-512-v7.png" alt="한끼">
+    <h1>한끼 받으러 가는 중…</h1>
+    <p class="sub">잠시 뒤 Play 스토어가 열려요</p>
+    <a class="btn" id="go" href="https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa">Play 스토어에서 받기</a>
+    <a class="ghost" href="./">앱 없이 웹으로 먼저 볼래요</a>
+    <!-- ⛔ 유니코드 이모지를 쓰지 않는다(절대원칙) — 위 앱 아이콘이 이미 꼬르곰이라 그림은 충분하다 -->
+    <p class="note">꼬르곰 · 펭펭과 레꾸해요</p>
+  </div>
+<script>
+  // ⛔ `location.href` 대신 `replace` — 뒤로가기를 눌렀을 때 이 페이지로 다시 튕기지 않게.
+  // ⚠️ 인앱 브라우저가 막으면 아무 일도 안 일어난다 → 위 버튼이 그때를 위한 길이다.
+  setTimeout(function () {
+    try { location.replace(document.getElementById('go').href) } catch (e) {}
+  }, 1200)
+</script>
+</body>
+</html>

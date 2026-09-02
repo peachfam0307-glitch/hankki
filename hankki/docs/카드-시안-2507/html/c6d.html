@@ -1,0 +1,55 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
+@font-face{font-family:'Jua';src:url('file:///home/user/hankki/hankki/src/assets/fonts/jua-korean-400.woff2') format('woff2');font-display:block}
+@font-face{font-family:'GowunDodum';src:url('file:///home/user/hankki/hankki/src/assets/fonts/gowun-dodum-korean-400.woff2') format('woff2');font-display:block}
+@font-face{font-family:'Gaegu';src:url('file:///home/user/hankki/hankki/src/assets/fonts/gaegu-korean-400.woff2') format('woff2');font-display:block}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1080px;height:1350px}
+body{font-family:'GowunDodum',sans-serif;background:#e9f3ee;color:#2f5346;padding:50px 56px;position:relative;overflow:hidden}
+.grain{position:absolute;inset:0;background-image:radial-gradient(rgba(60,110,90,.06) 1px,transparent 1px);background-size:7px 7px;pointer-events:none}
+/* masthead */
+.top{position:relative;text-align:center;z-index:5}
+.eyebrow{display:flex;align-items:center;justify-content:center;gap:16px;font-family:'GowunDodum';font-size:20px;letter-spacing:5px;color:#5c8a78}
+.eyebrow::before,.eyebrow::after{content:'';height:2px;width:150px;background:#8fbaa8}
+.mast{font-family:'Jua';font-size:172px;line-height:.9;color:#2f6a53;letter-spacing:-2px;margin-top:8px}
+.issue{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px;font-family:'Jua';font-size:23px;letter-spacing:2px;color:#4c8570}
+.issue .bar{width:7px;height:7px;border-radius:50%;background:#6aa88f}
+/* cover star */
+.hero{position:absolute;left:50%;top:392px;transform:translateX(-50%);width:604px;z-index:6;
+ filter:drop-shadow(3px 0 0 #fbfefc) drop-shadow(-3px 0 0 #fbfefc) drop-shadow(0 3px 0 #fbfefc) drop-shadow(0 -3px 0 #fbfefc) drop-shadow(3px 3px 0 #fbfefc) drop-shadow(-3px 3px 0 #fbfefc) drop-shadow(3px -3px 0 #fbfefc) drop-shadow(-3px -3px 0 #fbfefc) drop-shadow(0 24px 22px rgba(40,90,70,.3))}
+.disc{position:absolute;left:50%;top:470px;transform:translateX(-50%);width:560px;height:560px;border-radius:50%;background:radial-gradient(circle at 42% 34%,#d3e8dd,#bcdccd);z-index:4}
+.disc .dot{position:absolute;inset:0;border-radius:50%;background-image:radial-gradient(rgba(255,255,255,.4) 4px,transparent 5px);background-size:52px 52px}
+/* coverlines */
+.cl{position:absolute;font-family:'Gaegu';font-weight:700;font-size:30px;color:#3f7a64;z-index:7;line-height:1.15}
+.cl.l{left:46px;top:560px;text-align:left}
+.cl.r{right:46px;top:700px;text-align:right}
+.cl b{display:block;font-family:'Jua';font-size:22px;color:#79a693;font-weight:400;letter-spacing:1px}
+/* cover title */
+.cover{position:absolute;left:0;right:0;bottom:196px;text-align:center;z-index:7}
+.cover .t{font-family:'Jua';font-size:96px;color:#274c3e;letter-spacing:-2px;line-height:1}
+.cover .t .p{position:relative;display:inline-block;color:#2f8a68}
+.cover .t .p::after{content:'';position:absolute;left:-2px;right:-2px;bottom:8px;height:20px;background:rgba(47,138,104,.2);border-radius:6px;z-index:-1}
+.cover .s{margin-top:16px;font-size:27px;color:#57806f}
+/* bottom bar */
+.barcode{position:absolute;left:56px;bottom:60px;z-index:7;display:flex;flex-direction:column;gap:5px}
+.barcode .bars{height:44px;width:172px;background:repeating-linear-gradient(90deg,#2f5346 0 3px,transparent 3px 5px,#2f5346 5px 9px,transparent 9px 12px,#2f5346 12px 14px,transparent 14px 19px)}
+.barcode .n{font-family:'Jua';font-size:16px;letter-spacing:3px;color:#4c8570}
+.foot{position:absolute;right:56px;bottom:64px;text-align:right;z-index:7}
+.foot .wm{font-family:'Jua';font-size:26px;color:#3f7a64}
+.foot .url{display:block;margin-top:6px;font-size:18px;color:#6a9787}
+</style></head><body>
+<div class="grain"></div>
+<div class="top">
+  <div class="eyebrow">EST. 2026 · 오늘도 한 끼</div>
+  <div class="mast">한끼</div>
+  <div class="issue"><span>MARKET ISSUE</span><span class="bar"></span><span>vol.6</span><span class="bar"></span><span>오늘의 장바구니</span></div>
+</div>
+<div class="disc"><div class="dot"></div></div>
+<div class="cl l">제철 재료<b>200% 활용법</b></div>
+<div class="cl r">냉장고 털어<b>15분 집밥</b></div>
+<img class="hero" src="file:///tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/heroes/hero6_gomjang.png">
+<div class="cover">
+  <div class="t">이번 주, <span class="p">장보기</span></div>
+  <div class="s">냉장고를 채우는 가장 다정한 방법</div>
+</div>
+<div class="barcode"><div class="bars"></div><div class="n">한끼 no.06</div></div>
+<div class="foot"><div class="wm">한끼</div><div class="url">peachfam0307-glitch.github.io/hankki</div></div>
+</body></html>
