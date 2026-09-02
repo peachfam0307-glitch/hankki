@@ -38,7 +38,7 @@ if (!날짜들.length) {
 }
 
 // 🏷 줄 이름(「여름 시원한 것」·「우리집레시피」)은 **weekly.js 에서 온다** — 손으로 적지 않는다.
-const { gates } = await import('./release-calendar.mjs')
+const { gates, cartItems } = await import('./release-calendar.mjs')
 const 줄이름 = new Map()
 for (const g of gates()) {
   if (g.kind !== 'recipe') continue
@@ -84,13 +84,29 @@ const 그림 = (key) => {
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
+// ── 「우리 양념」에 띠를 두른다 ────────────────────────────────────
+//
+// 📮 창업자 2026-09-02 = *"또 넣자는 뜻 아니야. **있는거 못봤아**"*
+//    꽃게탕·전찌개의 해물가루육수는 «이미» 있었는데 판에서 안 보였다.
+//    재료가 열몇 줄이라 우리 것이 그 사이에 묻힌다 — 검수판이 읽히게 만드는 게 내 일이다.
+//
+// ⛔ 낱말을 손으로 적지 않는다(절대원칙 22) — 장바구니 제품에서 «읽어» 온다.
+//    손으로 적으면 제품이 늘 때마다 낡고, 그러면 또 「있는데 안 보인다」가 난다.
+const 내양념 = (() => {
+  try {
+    const it = cartItems()
+    return [...new Set(it.flatMap((x) => [x.tag, x.brand]).filter((s) => s && s.length >= 2))]
+  } catch { return [] }
+})()
+const 내것인가 = (t) => 내양념.some((w) => t.includes(w))
+
 // 재료 줄에서 「[소스]」 같은 묶음 머리를 갈라낸다
 const 재료줄 = (t) => {
   const h = t.match(/^\[(.+)\]$/)
   if (h) return `<li class="ig-h">${esc(h[1])}</li>`
   // 「제품이름 (대체품)」의 괄호는 흐리게
   const html = esc(t).replace(/\(([^)]*)\)/g, '<span class="sub">($1)</span>')
-  return `<li>${html}</li>`
+  return `<li${내것인가(t) ? ' class="pick"' : ''}>${html}</li>`
 }
 
 const 카드 = (r, meta, i) => {
@@ -177,6 +193,7 @@ const html = `<title>레시피 검수판 ${이름}</title>
   :root{
     --paper:#FAF6EF; --card:#FFFFFF; --ink:#2E1C0C; --dim:#7A6852; --faint:#9C8B76;
     --line:#E7DCCB; --brand:#5D3410;
+    --pick-bg:#F4EADA;
     --cool:#0E6B72; --cool-bg:#E6F1F1;
     --home:#8A4B2A; --home-bg:#F6EAE1;
     --mine:#B4472F; --mine-bg:#FBEAE5;
@@ -186,6 +203,7 @@ const html = `<title>레시피 검수판 ${이름}</title>
     :root:not([data-theme="light"]){
       --paper:#191410; --card:#221B15; --ink:#F2E9DC; --dim:#B6A692; --faint:#8D7E6C;
       --line:#3A2F26; --brand:#E8C9A4;
+      --pick-bg:#33271B;
       --cool:#7FD3D8; --cool-bg:#12312F;
       --home:#E3A87C; --home-bg:#33221A;
       --mine:#F09A82; --mine-bg:#3A211B;
@@ -195,6 +213,7 @@ const html = `<title>레시피 검수판 ${이름}</title>
   :root[data-theme="dark"]{
     --paper:#191410; --card:#221B15; --ink:#F2E9DC; --dim:#B6A692; --faint:#8D7E6C;
     --line:#3A2F26; --brand:#E8C9A4;
+    --pick-bg:#33271B;
     --cool:#7FD3D8; --cool-bg:#12312F;
     --home:#E3A87C; --home-bg:#33221A;
     --mine:#F09A82; --mine-bg:#3A211B;
@@ -283,6 +302,17 @@ const html = `<title>레시피 검수판 ${이름}</title>
   }
   ul.ig li.ig-h::before{display:none}
   ul.ig li:first-child.ig-h{margin-top:0}
+  /* 우리 양념 = 왼쪽에 띠. ⛔색을 여기 박지 말 것 — 다크에서 안 읽힌다. 위 세 벌에서 온다 */
+  ul.ig li.pick{
+    font-weight:700; background:var(--pick-bg); padding-left:18px;
+    border-radius:0 7px 7px 0; box-shadow:inset 3px 0 0 var(--brand);
+  }
+  ul.ig li.pick::before{display:none}
+  .tip-pick{
+    display:inline-block; padding:1px 9px; margin-right:2px;
+    border-radius:0 7px 7px 0; background:var(--pick-bg);
+    box-shadow:inset 3px 0 0 var(--brand); font-weight:700; color:var(--ink);
+  }
   .sub{color:var(--faint); font-size:13.5px}
 
   ol.st{margin:0; padding:0; list-style:none; counter-reset:s}
@@ -372,6 +402,7 @@ const html = `<title>레시피 검수판 ${이름}</title>
       <li>순서에 <b>빠지거나 이상한 걸음</b>이 있나</li>
       <li>시간·인분·난이도가 <b>말이 되나</b></li>
     </ol>
+    <p class="no"><span class="tip-pick">해물가루육수 1봉</span> 이렇게 <b>띠가 그어진 줄</b>은 <b>주부의 장바구니에 이미 있는 것</b>이야. 「없네」 싶으면 여기부터 훑어봐 줘.</p>
     <p class="no">고쳐 쓰지 말고 <b>요리 이름이랑 어디가 이상한지만</b> 짚어줘 — 고치는 건 내가 할게.</p>
     <p class="no"><b>편마다 아래에 체크칸이 있어.</b> 거기 체크하거나 한 줄 적으면 <b>내가 바로 봐</b> — 채팅에 다시 안 옮겨도 돼.</p>
   </div>
