@@ -365,9 +365,50 @@ const WARDROBE = {
     //       달라지는 건 여름·겨울·봄뿐이다(그때는 이제 중립 하늘색 아치가 나온다).
     arch: { blob: '#e0a24e,#c2632f 48%,#8f3a26', pt: '#b8532c', ink: '#3b2a1f', kick: '바람 불면, 가을 한 끼', sub: '#a8532c', brand: '#7a4326', badge: '#e0913f,#c2632f', chipRing: 'rgba(200,130,80,.3)', chipInk: '#8c4a24', footWm: '#7a4326', footUrl: '#ad8b6c', bg: 'linear-gradient(170deg,#fbf5e6,#f3e6cc 58%,#ecdab9)', tex: 'plaid', texC: '150,74,40', leaf: ['#c2632f', '#b8823a'] },
   },
+
+  // 🍁🍁 **[창업자 확정 2026-09-02 = ⓑ] 가을 옷을 «두 벌»로 — 늦가을(11월)판**
+  //
+  //   📮 창업자 = *"뼈대를 추가할 필요가 있겠다. 기존에 심심한 걸 하나 바꾸거나... **a,b둘다 가자**"*
+  //
+  //   ⭐⭐ **왜** — 실측 = 같은 뼈대를 9/15·10/20·11/15 에 찍어 나란히 보니
+  //      **배경·색·문구가 석 달 내내 똑같았다.** 바뀌는 건 곰펭 컷 하나뿐.
+  //      바로 위 주석이 *"옷만 «계절마다» 갈아입는다"* 라고 적고 있는데, 그 「계절」이
+  //      봄/여름/가을/겨울 단위라 **가을 «안»에서는 한 번도 안 갈아입는다.**
+  //
+  //   ⭐ **이건 «덧입는» 판이다** — `autumn` 위에 얹는다. 그래서 **달라지는 것만** 적는다.
+  //      ⛔ 여섯 벌을 통째로 다시 적지 말 것 — 두 벌이 갈라져 한쪽이 반드시 낡는다.
+  //   🎨 결 = 초가을(9~10월) **밝은 갈색·억새** ↔ 늦가을(11월) **짙은 붉은·낙엽**
+  //      ⛔ 여섯을 다 같은 붉은색으로 칠하지 않는다 — 그게 2026-07-29 *"다 똑같다"* 판정의 뿌리였다.
+  //         뼈대마다 «다른 방향»으로 짙어진다: 와인 / 낙엽갈색 / 감빛 / 커피 / 단풍 / 서리밤.
+  //   ⛔ **새로 그리는 컷은 0이다.** 색·문구만 바뀐다.
+  autumnLate: {
+    badge: '늦가을 한정',
+    warm: { blob: '#a85449,#7e2a2c 55%,#511a1f', pt: '#7e2a2c', kick: '서리 내린 아침, 한 끼', sub: '#94473e', chipInk: '#74302a', bg: '#f2e6d6', texC: '70,20,18' },
+    panel: { blob: '#a89a68,#7d6f44 58%,#5a4e28', pt: '#5a4e28', kick: '거둬들이는 계절', sub: '#6e6238', brand: '#4d4426', metaDot: '#c0b58c', bg: '#f1ebd8', texC: '80,70,34' },
+    pola: { pt: '#9c5a24', sub: '#7c4418', brand: '#7c4418', cap: '#7c4418', kick: '감 익는 창가에서', tape1: 'rgba(206,168,124,.78)', tape2: 'rgba(186,126,72,.72)', metaDot: '#cfa878', bg: '#f6ead6', photoBg: 'radial-gradient(circle at 50% 38%,#faefdd,#ead6b8)' },
+    mag: { blob: '#9c7350,#77532e 55%,#4e3418', pt: '#6e4620', ink: '#271d13', sub: '#7a6448', bg: '#ece2cc', side: '#57493a', sideB: '#332920', texC: '96,70,40' },
+    night: { pt: '#ffc978', kick: '길어진 밤, 뜨끈하게', sub: '#e9a07e', metaInk: '#cdb8ac', bg: 'radial-gradient(circle at 26% 16%,#3f2f3e,#2b2029 60%,#1d161b)' },
+    arch: { blob: '#cf7f3a,#a8401f 48%,#71230f', pt: '#a8401f', kick: '낙엽 지는 날, 한 끼', sub: '#96401f', brand: '#6a3018', badge: '#cf7f3a,#a8401f', chipInk: '#7d3616', bg: 'linear-gradient(170deg,#f8efdc,#eeddbe 58%,#e4cfa8)', texC: '150,60,26', leaf: ['#a8401f', '#a8722c'] },
+  },
 }
+// 🍁 늦가을 = **11월**. ⛔10월은 «핼러윈 덤»이 따로 있어 그 자체로 화면이 바뀐다 —
+//    거기까지 갈아입히면 10월이 두 번 바뀌고 11월의 「새로 왔다」가 묻힌다.
+//    ⛔ 날짜를 여기저기 적지 말 것 — 이 한 줄이 늦가을의 «유일한» 정의다.
+const LATE_AUTUMN_MONTH = 11
+const isLateAutumn = (now = new Date()) => seasonsNow(now)[0] === 'autumn' && now.getMonth() + 1 === LATE_AUTUMN_MONTH
+
 // 뼈대 하나가 지금 입을 옷. 계절 옷이 없으면 기본 옷 그대로.
-const wearOf = (k, now) => ({ ...BASE_WEAR[k], ...(WARDROBE[seasonsNow(now)[0]]?.[k] || {}), badge: WARDROBE[seasonsNow(now)[0]]?.badge })
+// 🍁 늦가을이면 «가을 위에» 한 겹 더 덧입는다(달라지는 것만 적혀 있다).
+const wearOf = (k, now) => {
+  const s = seasonsNow(now)[0]
+  const 늦 = isLateAutumn(now)
+  return {
+    ...BASE_WEAR[k],
+    ...(WARDROBE[s]?.[k] || {}),
+    ...(늦 ? (WARDROBE.autumnLate?.[k] || {}) : {}),
+    badge: (늦 && WARDROBE.autumnLate?.badge) || WARDROBE[s]?.badge,
+  }
+}
 
 // 📏📏 **표지로 저장할 때 「아래 빈 자리」를 잘라낸다.** (창업자 2026-08-18
 //   *"저 이미지는 **위아래여백이달라서** 표지적용하니 **아래가 너무 휑해**"*)
