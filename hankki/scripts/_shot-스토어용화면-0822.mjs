@@ -378,5 +378,112 @@ if (await 탭(p, '장보기')) {
   await 찍자(p, '27-장보기-사러가기', '장보기 — 담긴 재료 ＋ 줄마다 사러가기 (지우기 단추는 가림)')
 }
 
+// ⑧ 📚📚 [2026-09-02 창업자] *"요리책도 내가 어제꾸민거 예쁜거 많으니까 그걸로 하고"* ＋ *"내 레시피 꾸민거 필요하면 써"*
+//
+// ⭐⭐ 「요리책」 장의 값어치는 **표지가 «진짜로» 꾸며져 있는 것**이다.
+//    씨앗 레시피는 음식 아이콘만 붙어서 「꾸몄다」가 안 보인다 — 창업자가 그걸 짚었다.
+// ⛔⛔ **창업자 백업은 저장소에 «절대» 안 넣는다** — 진짜 개인 데이터이고 이 저장소는 공개다.
+//    `BACKUP=<파일>` 로 «그때만» 읽어 쓰고, 저장소엔 **찍힌 그림만** 남는다.
+// ⛔ 서랍(localStorage)은 **5MB 벽**이 있다 — 백업 전체가 4,976KB 라 그대로 넣으면 저장이 통째로 막힌다.
+//    ✅ 그래서 **꾸민 편만 골라** 넣는다(스티커 ×2 ＋ 표지 3 ＋ 배경지 2 로 점수를 매겨 위에서부터).
+// ⛔ 이 칸은 **맨 마지막**이다 — 서랍을 갈아엎으므로 앞 화면들이 영향을 받으면 안 된다.
+if (process.env.BACKUP) {
+  const 백업 = JSON.parse(readFileSync(process.env.BACKUP, 'utf8'))
+  // ⛔⛔ [실물로 잡았다 ②] 「표지 사진이 있으면 뽑는다」로 골랐더니 **안 꾸민 편이 맨 윗줄에 왔다.**
+  //    📮 창업자 = *"예쁘게 꾸민 부분 잘 찍어줘. **테스트한다고 레시피 몇개 추가해서 위쪽은 안꾸몄어.**"*
+  //    ⭐ 이 장이 파는 것은 「사진이 예쁘다」가 아니라 **「내가 꾸몄다」**다 →
+  //       **스티커나 배경지가 «실제로» 얹힌 편만** 남긴다(표지 사진만 있는 편은 뺀다).
+  // ⛔⛔ [실물로 잡았다 ④ · 창업자가 세 번 잡아 줬다] *"내가꾸민거 그거 아니야"* → *"**가을 프레임으로 꾸민거** 있잖아.."*
+  //    🔢 백업을 열어 보니 진짜 가을 프레임은 **`pf_au01`(돌솥비빔밥) · `pf_au04`(차돌짬뽕)** 둘이었다.
+  //    ⛔ 내가 **스티커 «개수»로만** 점수를 매겨서 — 차돌짬뽕(스티커 3개)이 11번째로 밀려 **화면에 아예 안 나왔다.**
+  //    📌 개수는 「얼마나 붙였나」를 재지 **「무엇으로 꾸몄나」를 못 잰다.** 창업자가 본 건 뒤쪽이다.
+  // ✅ 그래서 **가을로 꾸민 편만** 남긴다 — 프레임 `pf_` 나 가을 컷 `au_` 가 실제로 얹힌 편.
+  //    ⭐ 편 수가 줄어드는 게 «이득»이다 — 6편이면 첫 화면에 거의 다 들어와 굴릴 필요가 없다.
+  // ⛔⛔⛔ [실물로 닫혔다 ⑤] 창업자가 **자기 폰 화면을 찍어 보내 줬다** — 그게 답이다.
+  //    📌 나는 점수를 세 번 고쳐 가며(개수 → 꾸밈 여부 → 가을 요소) 창업자가 원한 걸 «맞히려» 했고 세 번 다 틀렸다.
+  //    ⭐⭐ **고르는 건 창업자다(규칙 11).** 점수로 «맞히지» 말고 **고른 것을 그대로 받는다.**
+  //       → `PICK="제목,제목,…"` 이 있으면 그 순서·그 편만 쓴다. 없을 때만 점수로 고른다(예비).
+  const 키들 = (r) => (r.decor || []).map((d) => String(d.key || d.k || d.id || ''))
+  const 점수 = (r) => 키들(r).reduce((s, k) => s + (k.startsWith('pf_') ? 5 : k.startsWith('au_') ? 3 : 2), 0)
+    + (r.image ? 3 : 0) + (r.decorBg && r.decorBg !== 'none' ? 2 : 0)
+  let 뽑힘
+  if (process.env.PICK) {
+    const 고른것 = process.env.PICK.split(',').map((s) => s.trim()).filter(Boolean)
+    // ⛔⛔ [또 실물이 잡았다] `find` 로 첫 편을 집었더니 **「가지덮밥」이 «안 꾸민» 쪽으로 나왔다.**
+    //    🔢 같은 제목이 백업에 «둘» 있었다 — 7/27(맨몸) · 8/30(배경지 ＋ 스티커 2).
+    //    📌 **같은 이름이 하나뿐이라고 가정하지 않는다** — 유저는 같은 요리를 두 번 담는다.
+    //    ✅ 이름이 겹치면 **제일 많이 꾸민 편**을 고른다.
+    뽑힘 = 고른것.map((t) => (백업.recipes || []).filter((r) => (r.title || '').trim() === t)
+      .sort((a, b) => 점수(b) - 점수(a))[0]).filter(Boolean)
+    const 못찾음 = 고른것.filter((t) => !(백업.recipes || []).some((r) => (r.title || '').trim() === t))
+    // ⛔ 조용히 빠뜨리지 않는다 — 「여섯을 골랐는데 넷만 나왔다」가 제일 나쁘다
+    if (못찾음.length) console.log(`  ⚠️ 백업에서 못 찾은 편 ${못찾음.length} — ${못찾음.join(' · ')}`)
+  } else {
+    뽑힘 = (백업.recipes || []).filter((r) => 키들(r).length || (r.decorBg && r.decorBg !== 'none'))
+      .sort((a, b) => 점수(b) - 점수(a)).slice(0, 12)
+  }
+  // ⛔ 격자는 «최근 저장순»으로 그린다 — 고른 편들끼리의 진짜 순서를 그대로 둔다(날짜를 지어내지 않는다)
+  // ⛔⛔ [실물로 잡았다] 첫 판은 **창업자 것이 한 편도 안 보였다** — 씨앗이 다시 심겨 밀어냈다.
+  //    🔢 「전체 70」에 돼지고기 김치찌개·된장찌개…가 **2026.09.02** 로 맨 위에 깔렸다.
+  //    ⭐ 뿌리 둘 — ⑴백업의 `seedV` 가 낡아서 `store.jsx:162` 의 「다시 심지 않는다」에 못 걸린다
+  //       ⑵ 걸리더라도 **날짜가 돼서 새로 열린 편**은 그래도 들어오고, 그때 `savedAt = 지금` 이라
+  //          **격자 맨 위를 차지한다**(창업자 = *"위쪽은 안꾸몄어"* 가 정확히 이 자리다)
+  //    ✅ 그래서 ⓐ`seedV` 를 앱의 «지금» 판으로 ⓑ기본 편 아이디를 전부 「지운 것」으로 적어 둔다
+  const { basicRecipes, BASICS_VERSION } = await import('../src/data/basics.js')
+  const 고른것 = new Set(뽑힘.map((r) => r.id))
+  const 상태 = {
+    recipes: 뽑힘.map((r) => ({ ...r, status: 'sorted' })),
+    folders: 백업.folders || [],
+    seedV: BASICS_VERSION,
+    removedSeedIds: [...new Set([...(백업.removedSeedIds || []),
+      ...basicRecipes.map((r) => r.id).filter((id) => !고른것.has(id))])],
+    sampleGone: true,
+  }
+  const KB = Math.round(Buffer.byteLength(JSON.stringify(상태)) / 1024)
+  console.log(`  📚 창업자 요리책 ${뽑힘.length}편 (${KB}KB) — ${뽑힘.slice(0, 6).map((r) => r.title).join(' · ')} …`)
+  if (KB > 4600) console.log('  ⚠️ 4.6MB 를 넘는다 — 서랍 벽(5MB)에 걸릴 수 있다')
+  await 홈으로(p)
+  await p.evaluate((s) => { localStorage.setItem('hankki:v1', JSON.stringify(s)) }, 상태)
+  await 홈으로(p)
+  if (await 탭(p, '레시피')) {
+    await p.waitForTimeout(1200)
+    // ⛔ 「사진 N장을 정리해 …MB 를 비웠어요」 파란 띠가 맨 위를 덮는다(v12.24 공간 회수).
+    //    ⭐ 고장이 아니라 «제 일을 한 것»이다 — 사라질 때까지 기다렸다 찍는다.
+    for (let n = 0; n < 24; n++) {
+      const 떴나 = await p.evaluate(() => [...document.querySelectorAll('div,span')]
+        .some((e) => /비웠어요|정리해/.test(e.textContent || '') && (e.textContent || '').length < 40
+          && e.getBoundingClientRect().height > 10))
+      if (!떴나) break
+      await p.waitForTimeout(500)
+    }
+    // ⛔⛔ [실물로 잡았다 ③] 「제일 많이 꾸민 편으로 굴린다」를 넣었더니 **상단바가 통째로 사라지고
+    //    맨 윗줄 카드가 잘렸다.** 스토어 장에서 상단바가 없으면 「무슨 화면인지」가 안 읽힌다.
+    // ✅ 안 굴린다 — 위 ②에서 «안 꾸민 편»을 걸러냈으므로 **맨 위가 이미 꾸민 표지**다.
+    //    📌 문제를 «찍는 자리»로 풀려다 두 번 헛돌았다. 진짜 답은 «무엇을 담느냐»였다.
+    await 찍자(p, '20b-요리책-창업자', '레시피 목록 — ⭐창업자가 «직접 꾸민» 표지들')
+  }
+}
+
+// ⑨ 🎴🍂 [2026-09-02 창업자] *"레꾸자랑도 가을꺼로하자 예쁜걸로"*
+//
+// ⛔⛔ **이 화면은 이 판이 «한 번도» 안 찍고 있었다** — 스토어 07장이 쓰던 `10-랜덤카드.png` 는
+//    **2026-08-22 파일**이라 여름 카드였다. 앱이 바뀌어도 안 따라오는 그 함정 그대로다(2026-07-31).
+// ⭐ 스킨은 `?card=<키>` 로 «지정»한다 — 뽑기 운에 맡기면 매번 다른 게 나와 판정을 못 한다.
+//    🍂 가을 컷(`au`)은 09-01 에 열렸으므로 **어느 스킨을 골라도 캐릭터가 가을 옷을 입는다.**
+// ⛔ 카드만 오려내지 «않는다» — 스토어 장에 필요한 건 「다시 뽑기 · 공유하기」까지 든 «화면»이다.
+for (const 카드키 of (process.env.CARDS || 'warm,mag,arch,night,post,ticket').split(',')) {
+  await p.goto(`http://127.0.0.1:4382/?card=${카드키}`, { waitUntil: 'networkidle' })
+  await p.waitForTimeout(1200)
+  await 시트닫기(p)
+  if (!(await 탭(p, '레꾸자랑'))) { console.log('  ⛔ 레꾸자랑 탭을 못 찾았다'); break }
+  await 시트닫기(p)
+  // ⛔ 레꾸자랑은 「자랑할 레시피를 눌러주세요」가 먼저다 — 안 고르면 카드가 아예 안 뜬다
+  await p.locator('.grid-card button, .grid-card').first().click().catch(() => {})
+  await p.waitForTimeout(1200)
+  const 뽑기 = p.getByRole('button', { name: /랜덤|뽑/ }).first()
+  if (await 뽑기.count()) { await 뽑기.click().catch(() => {}); await p.waitForTimeout(1700) }
+  await 찍자(p, `40-자랑-${카드키}`, `레꾸자랑 — 가을 카드 (${카드키})`)
+}
+
 console.log(`\n📸 ${찍은것.length}장 → ${OUT}`)
 await b.close(); srv.close()
