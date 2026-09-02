@@ -16,7 +16,10 @@
 //
 // 쓰기:  node scripts/_세기-요리와소스-0902.mjs <백업.json>
 //        (백업은 scratchpad 에서만 읽는다 — ⛔저장소에 두지 않는다)
+// ⭐⭐ 판정 규칙은 **`_갈래-요리와양념-0902.mjs` 한 곳에만** 있다 —
+//    검수판 도구(`_판-요리33-0903.mjs`)가 «같은 것»을 부른다. 각자 판정하면 반드시 어긋난다.
 import { readFileSync } from 'node:fs'
+import { 재료수, 걸음수, 갈래, 상태, 앱에든것, 내가넣은편 } from './_갈래-요리와양념-0902.mjs'
 
 const 백업 = process.argv[2]
 if (!백업) {
@@ -24,61 +27,18 @@ if (!백업) {
   process.exit(1)
 }
 
-const 줄 = (a) => (a || []).map(String).filter((x) => x.trim())
-const 재료수 = (r) => 줄(r.ingredients).filter((x) => !x.startsWith('[')).length
-const 걸음수 = (r) => 줄(r.steps).length
+const 앱에 = 앱에든것(new URL('../src/data/basics.js', import.meta.url))
 
-// ── ① 손판정 (낱말 규칙이 못 가르는 것) ─────────────────────────────
-const 손판정 = new Map([
-  ['달래장', '양념'],            // 비벼 먹는 장이다
-  ['마늘간장 계란장', '요리'],   // 밑반찬 — 「장」이 붙었지만 계란 요리다
-  ['꼬막장', '요리'],            // 밑반찬
-  ['장똑똑이', '요리'],          // 소고기 조림 반찬
-  ['물회육수', '양념'],          // 요리에 «들어가는» 국물
-  ['전 반죽', '양념'],           // 요리에 «들어가는» 것
-  ['피클초', '양념'],
-  ['고기 소분 기준', '메모'],    // ⛔레시피가 아니다 — 고기 나누는 기준을 적어둔 것
-  // ⛔ 낱말 규칙에 «잘못» 걸린 것 — 「양념구이」는 굽는 요리지 양념이 아니다
-  //    📌 처음 돌렸을 때 이게 양념 칸에 들어가 있었고, 목록을 눈으로 훑어서 잡았다(규칙 21).
-  ['한우채끝 소고기양념구이', '요리'],
-])
-
-// ── ② 낱말 규칙 ─────────────────────────────────────────────────
-const 양념낱말 = /소스|양념|밑간|다래|늑맘|마요간장/
-
-const 갈래 = (r) => {
-  const t = (r.title || '').trim()
-  if (손판정.has(t)) return 손판정.get(t)
-  return 양념낱말.test(t) ? '양념' : '요리'
-}
-
-// ── ③ 앱에 이미 나갔나 = `basics.js` 의 `origin: '창업자'` 이름표 ──────
-//    ⛔ 재료로 더듬지 않는다(`_판-내레시피.mjs` 와 같은 이유 — 셀 때마다 숫자가 달라진다)
-const src = readFileSync(new URL('../src/data/basics.js', import.meta.url), 'utf8')
-const 앱에 = new Set()
-for (const b of src.split('\n  {\n').slice(1)) {
-  if (!/origin: *'창업자'/.test(b)) continue
-  const t = (b.match(/title: '([^']+)'/) || [])[1]
-  const 원 = (b.match(/원래 이름 「([^」]+)」/) || [])[1]
-  if (t) 앱에.add(원 || t)
-  if (원 && t) 앱에.add(t)
-}
-
-// ── ④ 세기 ──────────────────────────────────────────────────────
 const d = JSON.parse(readFileSync(백업, 'utf8'))
-const 내것 = d.recipes.filter((r) => !String(r.id || '').startsWith('basic-'))
+const 내것 = 내가넣은편(d)
 
-const 편 = 내것.map((r) => {
-  const 재 = 재료수(r)
-  const 걸 = 걸음수(r)
-  return {
-    제목: (r.title || '(제목없음)').trim(),
-    재, 걸,
-    갈래: 갈래(r),
-    // 🅰 바로 낼 수 있다(걸음 3↑ ＋ 재료 있음) · 🅱 순서가 1~2걸음 · 🅲 재료만 · 🅾 재료도 없음
-    상태: 걸 >= 3 && 재 > 0 ? '🅰' : 걸 >= 1 ? '🅱' : 재 > 0 ? '🅲' : '🅾',
-  }
-})
+const 편 = 내것.map((r) => ({
+  제목: (r.title || '(제목없음)').trim(),
+  재: 재료수(r),
+  걸: 걸음수(r),
+  갈래: 갈래(r),
+  상태: 상태(r),
+}))
 편.forEach((p) => { p.앱 = 앱에.has(p.제목) })
 
 const 셈 = (조건) => 편.filter(조건).length
