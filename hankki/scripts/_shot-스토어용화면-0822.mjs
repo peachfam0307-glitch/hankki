@@ -159,7 +159,15 @@ await 홈으로(p); await 탭(p, '레시피')
 await p.locator('text=돼지고기 김치찌개').first().click()
 await p.waitForTimeout(1000)
 await 굴리기(p, 900)
-const 요리시작 = p.getByRole('button', { name: /요리 시작/ }).first()
+// ⛔⛔ [2026-09-02 고침] 여기가 «조용히» 죽어 있었다 — 단추 이름이 「요리 시작」 → **「요리모드 시작」**으로
+//    바뀌었는데 정규식이 `/요리 시작/` 이라 «모드» 두 글자에 걸려 못 찾았다.
+//    그런데도 판은 «6장 완료»라고 말하며 exit 0 을 냈다 → 스토어에 넣을 8장 중 **둘이 영영 안 찍혔다**(규칙 18 ⓘ).
+// ✅ 그래서 둘을 고쳤다 —
+//    ⑴ 글자가 아니라 **`data-coach="cook"`** 를 먼저 본다(이름이 또 바뀌어도 안 죽는다) · 글자는 예비로
+//    ⑵ 못 찾으면 **죽는다**(아래 exit 1) — 「조용히 6장」이 다시는 안 나오게
+const 요리시작 = (await p.locator('[data-coach="cook"]').count())
+  ? p.locator('[data-coach="cook"]').first()
+  : p.getByRole('button', { name: /요리\s*(모드\s*)?시작/ }).first()
 if (await 요리시작.count()) {
   await 요리시작.click(); await p.waitForTimeout(1500)
   await 찍자(p, '24-요리모드', '요리 모드 — 재료 준비')
@@ -184,7 +192,12 @@ if (await 요리시작.count()) {
     await 다음.click(); await p.waitForTimeout(800)
   }
   await 찍자(p, '25-요리모드-걸음', '요리 모드 — 끓이는 걸음 ＋ 타이머')
-} else console.log('  ⛔ 「요리 시작」 단추를 못 찾았다')
+} else {
+  // ⛔ 예전엔 여기서 console.log 만 하고 지나갔다 — 그래서 «모자란 채로 끝났다».
+  //    스토어에 나갈 8장은 하나라도 빠지면 안 된다. 못 찍으면 판이 죽는다.
+  console.error('⛔ 요리모드 입구를 못 찾았다 — 단추 이름이 또 바뀌었는지 상세 화면을 열어 확인할 것')
+  process.exit(1)
+}
 
 // ⑤ 🎨 꾸미기 — 📮 *"레꾸꾸미기에서 «더 귀여운 스티커들» 있는 부분으로"*
 //    ⛔ 요리 모드에서 «뒤로»가 상세로 안 돌아올 때가 있다 → 앱을 다시 열고 처음부터 들어간다
