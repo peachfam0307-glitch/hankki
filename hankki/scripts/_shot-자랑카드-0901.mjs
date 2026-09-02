@@ -63,14 +63,28 @@ for (const k of 키들) {
   const 뽑기 = p.getByRole('button', { name: /랜덤|뽑/ })
   if (await 뽑기.count()) { await 뽑기.first().click().catch(() => {}); await p.waitForTimeout(1600) }
   else console.log(`     ⚠️ ${k}: 「랜덤/뽑기」 단추를 못 찾았다`)
-  const 카드 = p.locator('.draw-card, [data-card], canvas').first()
+  // ⛔⛔ **`.draw-card` 라는 열쇠는 «없다»** — 이 판은 2026-09-02 까지 늘 「카드 못 찾음」이라 말하며
+  //    화면 «전체»를 찍고 있었다(뒤에 깔린 레시피 격자까지 들어와 판정이 흐려진다).
+  //    ✅ 히어로 그림에서 «위로» 올라가며 카드 상자를 찾는다(300×400 이상인 첫 조상).
   const 잰것 = await p.evaluate(() => {
-    const el = document.querySelector('.draw-card') || document.querySelector('[data-card]')
-    return el ? { w: Math.round(el.getBoundingClientRect().width), 글: (el.innerText || '').replace(/\n+/g, ' / ').slice(0, 50) } : null
+    const 큰것 = [...document.querySelectorAll('img')]
+      .map((i) => ({ i, r: i.getBoundingClientRect() }))
+      .filter((x) => x.r.width > 120 && x.r.height > 120)
+      .sort((a, b) => b.r.width * b.r.height - a.r.width * a.r.height)[0]
+    if (!큰것) return null
+    let el = 큰것.i
+    while (el.parentElement) {
+      const r = el.parentElement.getBoundingClientRect()
+      if (r.width >= 300 && r.height >= 400) { el = el.parentElement; break }
+      el = el.parentElement
+    }
+    el.setAttribute('data-shot', '1')
+    const r = el.getBoundingClientRect()
+    return { w: Math.round(r.width), h: Math.round(r.height), 글: (el.innerText || '').replace(/\n+/g, ' / ').slice(0, 50) }
   })
-  if (await 카드.count()) { await 카드.screenshot({ path: `${방}/${k}.png` }).catch(() => {}) }
+  if (잰것) await p.locator('[data-shot="1"]').first().screenshot({ path: `${방}/${k}.png` }).catch(() => {})
   else await p.screenshot({ path: `${방}/${k}-화면.png` })
-  console.log(`  ${k.padEnd(9)} ${잰것 ? `카드 ${잰것.w}px · ${잰것.글}` : '(카드 못 찾음 — 화면 전체를 찍었다)'}`)
+  console.log(`  ${k.padEnd(9)} ${잰것 ? `카드 ${잰것.w}x${잰것.h} · ${잰것.글}` : '(카드 못 찾음 — 화면 전체를 찍었다)'}`)
   찍음++
 }
 console.log(`\n📸 ${찍음}장 · ${방}`)
