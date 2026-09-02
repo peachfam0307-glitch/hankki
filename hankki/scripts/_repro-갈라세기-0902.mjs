@@ -17,9 +17,16 @@
 // 🧪 규칙 12 = `packKind` 를 지우면 ②③이, 큰 숫자를 되살리면 ④가, 선물 글자를 되돌리면 ⑤가 죽는다.
 import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
+import { createServer } from 'node:http'
 
 const 그날 = '2026-09-01'   // 카롱 데뷔 ＋ 가을 소품이 «같은 날» 열린 날 = 갈라 셀 이유가 생긴 날
-const PORT = 4419
+// 🔀 [2026-09-03] 고정 4419 → «빈 포트를 잡아서» 쓴다 — 판 넷이 그 번호를 같이 썼다(EADDRINUSE).
+//    ⛔ `http.server` 는 포트를 «미리» 정해야 해서 `listen(0)` 을 못 쓴다
+//       → 임시 서버로 빈 번호를 하나 받아 «닫고» 그 번호를 넘긴다.
+const PORT = await new Promise((r) => {
+  const t = createServer()
+  t.listen(0, () => { const p = t.address().port; t.close(() => r(p)) })
+})
 let bad = 0
 const 적기 = (ok, m) => { console.log(`  ${ok ? 'ok ' : '✗'} ${m}`); if (!ok) bad++ }
 

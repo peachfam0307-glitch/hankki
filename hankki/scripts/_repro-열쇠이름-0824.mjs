@@ -27,7 +27,10 @@ const srv = createServer((q, s) => {
   try { body = readFileSync(join(DIST, p)) } catch { body = readFileSync(join(DIST, 'index.html')); type = 'text/html' }
   s.writeHead(200, { 'content-type': type }); s.end(body)
 })
-await new Promise((r) => srv.listen(4419, r))
+// 🔀 [2026-09-03] 고정 포트 → OS 가 빈 포트를 준다. `_repro-패드글씨-0821` 주석이
+//    *"`_repro-열쇠이름-0824` 도 4419 를 쓰고 있었다"* 라고 콕 집어 뒀는데 «이 파일은 안 고쳤다».
+await new Promise((r) => srv.listen(0, r))
+const BASE = `http://127.0.0.1:${srv.address().port}/hankki/`
 
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const b = await chromium.launch()
@@ -54,7 +57,7 @@ const 탭가기 = async (이름) => {
   await page.waitForTimeout(1100)
 }
 
-await page.goto('http://127.0.0.1:4419/hankki/', { waitUntil: 'networkidle' })
+await page.goto(BASE, { waitUntil: 'networkidle' })
 await page.waitForTimeout(900)
 
 // ── ⑴ 가져오기 ────────────────────────────────────────────
@@ -119,7 +122,7 @@ const 편집 = await page.evaluate(() => document.body.innerText || '')
 // ⛔ 「가져오기」는 «전체화면»이라 하단바가 없다(왼쪽 위 ✕ 하나뿐) — goBack 으로 돌아와도 탭을 못 누른다.
 //    (2026-08-24 실측 · 화면을 찍어 보고서야 알았다 — 절대원칙 21)
 //    ✅ 그래서 아예 처음부터 다시 연다. 홈에서 출발해야 하단바가 있다.
-await page.goto('http://127.0.0.1:4419/hankki/', { waitUntil: 'networkidle' })
+await page.goto(BASE, { waitUntil: 'networkidle' })
 await page.waitForTimeout(900)
 await 탭가기('장보기')
 await 탭가기('냉장고')

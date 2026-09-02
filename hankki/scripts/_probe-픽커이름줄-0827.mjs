@@ -33,8 +33,10 @@ const srv = createServer((q, s) => {
   try { body = readFileSync(join(DIST, p)) } catch { body = readFileSync(join(DIST, 'index.html')); type = 'text/html' }
   s.writeHead(200, { 'content-type': type }); s.end(body)
 })
-const PORT = Number(process.env.PORT || 4419)
-await new Promise((r) => srv.listen(PORT, r))
+// 🔀 [2026-09-03] 기본값 4419 를 «지웠다» — 그 번호를 판 넷이 같이 쓰고 있었다(EADDRINUSE).
+//    PORT 를 주면 그것을, 안 주면 OS 가 빈 포트를 준다.
+await new Promise((r) => srv.listen(Number(process.env.PORT || 0), r))
+const PORT = srv.address().port
 
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})

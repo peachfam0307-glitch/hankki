@@ -17,8 +17,8 @@ import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import LabSheet from '../components/LabSheet'
 import CloudSheet from '../components/CloudSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
-import { cropSquare } from '../utils'
-import { takeOpenBackup, backupDone, takeOpenCloud, 클라우드보임 } from '../nudges'
+import { cropSquare, openExternal } from '../utils'
+import { takeOpenBackup, backupDone, takeOpenCloud, 클라우드보임, STORE_URL } from '../nudges'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
 import { 백업만들기 } from '../backupData'
 
@@ -320,6 +320,18 @@ export default function ProfileScreen() {
   // '만들었어요! 기록'은 하단 '일지' 탭과 겹쳐서 뺐고, '설정' 행은 프로필 편집을 여는 잘못된 항목이라 뺐다.
   // (프로필 편집은 맨 위 프로필 카드를 누르면 열린다)
   const menu = [
+    // ⭐⭐ [창업자 2026-09-03] 「스토어에 한마디」 — **언제든 스스로 갈 수 있는 상시 입구.**
+    //   📮 창업자 = *"리뷰는 진짜 라이트하게 써봐도 올릴수있게 하면 좋겠다. **리뷰가 좀 시급해**"*
+    //   ⛔⛔ **그 전엔 스토어로 가는 길이 앱 안에 «리뷰창 시트» 하나뿐이었다**(실측 = `STORE_URL` 참조가 1곳).
+    //      그 시트는 조건이 붙는다(내 레시피 2개 · 자랑 보내기 · 30일에 한 번).
+    //      → **가볍게 써보고 리뷰를 남기려는 사람에게는 길이 «아예 없었다».**
+    //        앱품앗이로 온 사람이 딱 그 사람이다 — 설치하고 3~5분 써보고 리뷰를 쓰려는데
+    //        어디로 가야 하는지 앱이 안 알려준다. 스스로 스토어를 찾아가야 했다.
+    //   ⛔ 「물어봤음」을 **남기지 않는다** — 이건 우리가 «청한 것»이 아니라 유저가 «스스로 누른 것»이다.
+    //      여기서 날짜를 박으면 정작 청해야 할 자리(저장 직후·자랑 직후)가 30일 막힌다.
+    //   ⛔ 홈·첫 화면에 두지 않는다 — 상시로 눈에 띄면 그건 조르는 것이다(재촉 금지 원칙).
+    //      설정은 «찾아오는» 자리라 조름이 아니다.
+    { icon: 'star', label: '스토어에 한마디', badge: '리뷰 남기기', onClick: () => openExternal(STORE_URL) },
     // 🔖 [2026-08-18] 「즐겨찾기」 → **「책갈피」** (창업자 확정 · 유저에게 보이는 여섯 곳을 같이 바꿨다)
     { icon: 'heart', label: FAV_NAME, onClick: () => nav.push({ name: 'favorites' }) },
     // 💾 백업은 이 목록에서 «꺼냈다» — 아래 독립 카드로. (창업자 2026-08-16)
