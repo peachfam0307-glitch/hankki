@@ -20,13 +20,16 @@
 //
 // ⭐ 절대원칙 30 = 앱 쪽은 «앱과 같은 모듈»(`allBasicRecipes`)을 부른다. 파싱해서 흉내내지 않는다.
 //
-// 쓰기:  node scripts/_채움-B41-0903.mjs <백업.json> [낼곳.md]
+// 쓰기:  node scripts/_채움-B41-0903.mjs <백업.json> [낼곳.md] [🅱|🅲]
+//   ⭐ 세 번째 인자로 «어느 무리»를 볼지 고른다(기본 🅱). 🅲 = 재료만 있고 걸음이 0인 편.
+//      ⛔ 무리마다 도구를 새로 만들지 않는다 — 그러면 판정 규칙이 갈리고 하나는 반드시 틀려진다.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { 줄, 재료줄, 재료수, 걸음수, 갈래, 상태, 앱에든것 } from './_갈래-요리와양념-0902.mjs'
 
 const 백업경로 = process.argv[2]
 if (!백업경로) { console.error('⛔ 백업 파일 경로를 준다'); process.exit(1) }
-const 낼곳 = process.argv[3] || null
+const 낼곳 = process.argv[3] && process.argv[3] !== '-' ? process.argv[3] : null
+const 볼무리 = process.argv[4] || '🅱'
 
 const d = JSON.parse(readFileSync(백업경로, 'utf8'))
 const { allBasicRecipes } = await import('../src/data/basics.js')
@@ -36,7 +39,7 @@ const 내편 = d.recipes.filter((r) => !String(r.id || '').startsWith('basic-'))
 
 // ── 🅱 이면서 아직 안 나간 «요리» ────────────────────────────────
 const 대상 = 내편.filter(
-  (r) => 갈래(r) === '요리' && 상태(r) === '🅱' && !나간것.has((r.title || '').trim()),
+  (r) => 갈래(r) === '요리' && 상태(r) === 볼무리 && !나간것.has((r.title || '').trim()),
 )
 
 // ── 세 무리로 가른다 ────────────────────────────────────────────
@@ -45,6 +48,7 @@ const 대상 = 내편.filter(
 //    ㉢ 1걸음 ＋ 재료 0          → 둘 다 없다 — 앱 대조부터
 const 무리 = (r) => {
   const 재 = 재료수(r), 걸 = 걸음수(r)
+  if (걸 === 0) return '㉣'          // 🅲 — 재료만 있고 걸음이 «아예» 0
   if (재 === 0 && 걸 >= 3) return '㉠'
   if (재 > 0) return '㉡'
   return '㉢'
@@ -120,15 +124,20 @@ const 결과 = 대상.map((r) => ({
   짝: 짝찾기(r),
 }))
 
-const 셈 = { '㉠': 0, '㉡': 0, '㉢': 0 }
+const 셈 = { '㉠': 0, '㉡': 0, '㉢': 0, '㉣': 0 }
 for (const x of 결과) 셈[x.무리]++
 
 console.log(`📂 ${백업경로.split('/').pop()}`)
-console.log(`🅱 아직 안 나간 요리 — ${결과.length}편  (㉠ ${셈['㉠']} · ㉡ ${셈['㉡']} · ㉢ ${셈['㉢']})\n`)
+console.log(`${볼무리} 아직 안 나간 요리 — ${결과.length}편  (㉠ ${셈['㉠']} · ㉡ ${셈['㉡']} · ㉢ ${셈['㉢']} · ㉣ ${셈['㉣']})\n`)
 
-const 이름 = { '㉠': '㉠ 걸음은 있는데 «재료»가 0 — 재료만 채우면 🅰', '㉡': '㉡ 재료는 있고 «걸음»이 1~2 — 걸음을 채운다', '㉢': '㉢ 둘 다 거의 없다 — ⚠️앱 대조부터' }
+const 이름 = {
+  '㉠': '㉠ 걸음은 있는데 «재료»가 0 — 재료만 채우면 🅰',
+  '㉡': '㉡ 재료는 있고 «걸음»이 1~2 — 걸음을 채운다',
+  '㉢': '㉢ 둘 다 거의 없다 — ⚠️앱 대조부터',
+  '㉣': '㉣ 재료만 있고 «걸음»이 0 — 만드는 법을 채운다',
+}
 
-for (const g of ['㉠', '㉢', '㉡']) {
+for (const g of ['㉣', '㉠', '㉢', '㉡']) {
   const 목 = 결과.filter((x) => x.무리 === g)
   if (!목.length) continue
   console.log(`\n━━━ ${이름[g]} (${목.length}편) ━━━`)
@@ -152,8 +161,8 @@ console.log(`  ✍️ 밑감으로 초안을 쓸 수 있는 편 — ${결과.len
 
 // ── 내용 덤프는 scratchpad 로만 ────────────────────────────────
 if (낼곳) {
-  const 줄들 = ['# 🅱 채우기 — 밑감 전문 (⛔저장소에 넣지 말 것)', '']
-  for (const g of ['㉠', '㉢', '㉡']) {
+  const 줄들 = [`# ${볼무리} 채우기 — 밑감 전문 (⛔저장소에 넣지 말 것)`, '']
+  for (const g of ['㉣', '㉠', '㉢', '㉡']) {
     const 목 = 결과.filter((x) => x.무리 === g)
     if (!목.length) continue
     줄들.push(`## ${이름[g]} — ${목.length}편`, '')
