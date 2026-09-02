@@ -8,7 +8,7 @@ import { parseRecipeText, keepRaw } from './parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from './tidy'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
-import { guessCategory, fitImage } from './utils'
+import { guessCategory, fitImage, imageSize } from './utils'
 // 🍱 [2026-08-28] 공유로 담으면 아이콘이 빈 접시로 굳던 것 — 뿌리·막이 설명은 `shareIcon.js` 주석에.
 import { 공유아이콘 } from './shareIcon'
 import { guessFoodIconStrict } from './components/FoodIcon'
@@ -702,6 +702,13 @@ export default function App() {
       let 아낀양 = 0
       for (const r of 큰것) {
         if (cancelled) return
+        // 📐📐 **「치수」로 거른다 — 글자 수로만 보면 «화질만 깎는» 짓을 한다** (2026-09-02)
+        //   ⛔ 문턱을 내리니 스모크가 잡았다 = 「작은 사진은 한 글자도 안 바뀌었다」가 죽었다.
+        //      360×640 사진은 900px 안에 이미 들어가는데, 다시 구우면 **크기만 줄고 화질이 깎인다.**
+        //   ⭐ 그러니 **긴 변이 900 을 넘을 때만** 손댄다. 치수가 작으면 «건드리지 않는다».
+        const 치수 = await imageSize(r.image)
+        if (cancelled) return
+        if (!치수 || Math.max(치수.w, 치수.h) <= 900) continue
         const 작게 = await fitImage(r.image, 900, 0.75)
         // ⛔ **진짜로 작아진 것만 저장한다.** `fitImage` 는 실패하면 원본을 그대로 돌려주는데,
         //    그걸 그냥 덮으면 «아무것도 안 하고 저장만» 하게 된다(무의미한 쓰기 = 용량이 또 찬다).

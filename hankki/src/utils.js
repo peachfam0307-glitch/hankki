@@ -264,3 +264,16 @@ export async function cropRatio(dataUrl, ar = 1, outW = 800, quality = 0.85) {
     return dataUrl
   }
 }
+
+// 📐 사진의 «치수»만 잰다 — 다시 굽기 «전»에 「이미 작나」를 보려고.
+//   ⛔ 글자 수(용량)로는 못 가른다 — 치수는 작은데 화질만 높아 무거운 사진이 있다.
+export async function imageSize(dataUrl) {
+  try {
+    const img = new Image()
+    await new Promise((res) => { img.onload = res; img.onerror = res; img.src = dataUrl })
+    if (img.decode) { try { await img.decode() } catch {} }
+    const w = img.naturalWidth || img.width
+    const h = img.naturalHeight || img.height
+    return w && h ? { w, h } : null
+  } catch { return null }
+}
