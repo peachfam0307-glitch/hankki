@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from 'react'
 // 새 레시피 작성 중 내용을 자동 임시저장하는 키 — 앱이 껐다 켜져도(인스타 링크 따러 갔다 오는 등)
 // 쓰던 내용이 날아가지 않게 한다. 저장 완료하면 지운다.
 const DRAFT_KEY = 'hankki:editorDraft'
-import { useStore, newId, 기본표지 } from '../store'
+import { useStore, newId, 기본표지, 방금저장됐나 } from '../store'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
@@ -165,6 +165,8 @@ export default function EditorScreen({ id, prefill }) {
   const [newFolder, setNewFolder] = useState(false)
   const [discardAsk, setDiscardAsk] = useState(false) // 작성 중 나가기 = 버릴지 물어본다
   const [rawOpen, setRawOpen] = useState(false) // 📥 「사진에서 읽은 원문」 접힘/펼침
+  // 🚨 저장이 «실패»했다 — 화면에 빨간 띠로 남긴다(토스트는 지나가면 못 본다)
+  const [saveFailed, setSaveFailed] = useState(false)
   const [다듬는중, set다듬는중] = useState(false) // 🤖 「AI로 다시 다듬기」가 도는 동안
   // 📥 [2026-08-22] 파서에 넣은 «원문» — 화면엔 안 보이고 저장만 된다.
   //    파서를 고친 날 「다시 읽기」로 되살릴 재료다(→ `parseRecipe.js` 의 `keepRaw` 주석).
@@ -610,19 +612,39 @@ export default function EditorScreen({ id, prefill }) {
     }
     // 📥 원문은 «있을 때만» 넣는다 — 빈 값을 넣으면 편집할 때마다 옛 원문이 지워진다(규칙 18 ⓙ)
     if (rawText) patch.rawText = rawText
+    // 💾💾 **저장이 «진짜로» 됐는지 보고 나서 성공이라 말한다** (창업자 확정 2026-09-02)
+    //   📮 창업자 = *"방금 하나 저장한거 흔적도 없이 증발함"* → 판정 = *"저장 안 됐다고 분명히"*
+    //   ⛔⛔ 그 전엔 `nav.pop()` ＋ 「저장했어요」를 **바로** 했다. 그런데 저장 공간이 꽉 차면
+    //      `store.jsx` 의 쓰기가 실패하고 **메모리에만 남는다** → 화면은 성공이라 말하고 데이터는 사라진다.
+    //   ⭐ 그래서 «쓰기가 돌 때까지» 몇 번 물어보고, 성공했을 때만 나간다.
+    //      ⛔ 실패면 **화면에 그대로 머문다** — 나가버리면 적던 내용까지 같이 잃는다.
+    const 기준 = Date.now()
+    const 나갈까 = (성공했을때) => {
+      let 남은판 = 12   // 약 480ms — React 가 그리고 저장 effect 가 돌 시간
+      const 물어본다 = () => {
+        if (방금저장됐나(기준)) { 성공했을때(); return }
+        if (--남은판 > 0) { setTimeout(물어본다, 40); return }
+        // ⛔ 여기까지 왔으면 «저장이 안 된 것»이다 — 성공이라 말하지 않는다
+        setSaveFailed(true)
+        nav.showToast('저장 공간이 가득 차서 «저장되지 않았어요» · 설정에서 백업한 뒤 사진을 정리해 주세요', 8000)
+      }
+      setTimeout(물어본다, 40)
+    }
     if (editing) {
       // touched: 사용자가 직접 편집한 레시피 — 이후 기본 레시피 자동 갱신에서 덮어쓰지 않게 표시
       updateRecipe(editing.id, { ...patch, touched: true })
-      nav.pop()
-      nav.showToast('레시피를 정리했어요')
+      나갈까(() => { nav.pop(); nav.showToast('레시피를 정리했어요') })
     } else {
       const rec = { id: newId(), favorite: false, cooked: 0, savedAt: Date.now(), ...patch }
       addRecipe(rec)
-      try { localStorage.removeItem(DRAFT_KEY) } catch { /* noop */ } // 저장 완료 → 임시저장 삭제
-      // 새 레시피 저장 후엔 열려있던 화면(가져오기 등)을 모두 닫고 홈/현재 탭으로.
-      // (뒤로가기로 작성 중이던 빈 편집기가 다시 나오지 않게)
-      nav.popAll()
-      nav.showToast('레시피를 저장했어요')
+      나갈까(() => {
+        // ⛔ 임시저장은 «성공한 뒤»에만 지운다 — 실패했는데 지우면 적던 것까지 잃는다
+        try { localStorage.removeItem(DRAFT_KEY) } catch { /* noop */ }
+        // 새 레시피 저장 후엔 열려있던 화면(가져오기 등)을 모두 닫고 홈/현재 탭으로.
+        // (뒤로가기로 작성 중이던 빈 편집기가 다시 나오지 않게)
+        nav.popAll()
+        nav.showToast('레시피를 저장했어요')
+      })
     }
   }
 
@@ -646,6 +668,14 @@ export default function EditorScreen({ id, prefill }) {
             </div>
           </div>
         </Portal>
+      )}
+      {/* 🚨🚨 **저장이 실패했다** — 토스트는 지나가면 못 보니 화면에 «남겨» 둔다 (창업자 확정 2026-09-02)
+          ⛔ 화면을 안 닫았으니 적던 내용은 그대로 있다. 자리를 비운 뒤 다시 「저장」을 누르면 된다. */}
+      {saveFailed && (
+        <div style={{ position: 'sticky', top: 0, zIndex: 30, padding: '10px 14px', background: '#b3261e', color: '#fff', fontSize: 15.5, fontWeight: 700, lineHeight: 1.45 }}>
+          저장되지 않았어요 — 폰 저장 공간이 가득 찼어요.
+          <div style={{ fontWeight: 500, marginTop: 3 }}>적은 내용은 그대로 있어요 · 설정에서 백업한 뒤 자리를 비우고 다시 「저장」을 눌러 주세요.</div>
+        </div>
       )}
       {/* 📌📌 **상단바를 화면에 붙여둔다 — 「저장」이 스크롤에 떠내려가던 것** (창업자 2026-09-02)
           📮 창업자 = *"작은 정리는 아직도 어디있는지 모름"*

@@ -13,7 +13,7 @@
 //    ⛔ 「토스트가 떴나」만 재면 안 된다 — 그건 메모리 얘기다(규칙 18 ⓘ)
 //
 // 실행: node scripts/_repro-저장꽉참-0902.mjs
-// 🏷 이름표 = 판정대기 (고치기 «전»이라 지금은 «일부러» 빨간불이 나야 맞다)
+// 🏷 이름표 = 반영됨 (배포 게이트 후보 · smoke 등록은 창업자 배포 뒤)
 import './_fresh.mjs'
 import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
@@ -81,22 +81,36 @@ await p.waitForTimeout(400)
 await p.evaluate(()=>[...document.querySelectorAll('button.btn-primary')].find(x=>x.innerText.trim()==='저장')?.click())
 await p.waitForTimeout(1500)
 
+// ⭐⭐ 여기가 이 판의 심장 — **꽉 찼을 때 지켜야 할 약속 넷**
+//    ⛔ 「저장이 됐나」를 재면 안 된다. 자리가 없으면 «저장은 원래 안 된다».
+//       재야 하는 건 **「안 됐다는 걸 유저가 아나 · 적던 걸 안 잃나」** 다.
 const 화면이한말 = await p.evaluate(()=>document.body.innerText)
-chk('⚠️ 화면은 «성공»처럼 굴었다 (편집 화면을 빠져나왔다)', !/레시피 정리/.test(화면이한말))
+chk('⭐⭐ 「저장했어요」라고 «말하지 않았다» (창업자가 속은 그 자리)',
+  !/레시피를 저장했어요|레시피를 정리했어요/.test(화면이한말))
+chk('⭐⭐ 저장이 안 됐다고 «화면에 남겨» 말했다 (토스트는 지나가면 못 본다)',
+  /저장되지 않았어요/.test(화면이한말))
+chk('⭐⭐ 편집 화면에 «머물렀다» — 적던 내용을 안 잃는다',
+  await p.evaluate(()=>[...document.querySelectorAll('input')].some(e=>e.value==='증발판정용 고친제목')))
 
+// ⏱ 60초 침묵이 사라졌나 — 창업자가 «두 번째»에 아무 말도 못 들은 그 자리
+await p.evaluate(()=>[...document.querySelectorAll('button.btn-primary')].find(x=>x.innerText.trim()==='저장')?.click())
+await p.waitForTimeout(1200)
+chk('⭐ 잇달아 또 눌러도 «또» 알린다 (60초 침묵을 없앴다)',
+  /저장되지 않았어요/.test(await p.evaluate(()=>document.body.innerText)))
+
+// ── 자리를 비우면 «정상으로 저장»되나 (회귀 방지) ──
+await p.evaluate(()=>{ Object.keys(localStorage).filter(k=>k.startsWith('zz-pad-')).forEach(k=>localStorage.removeItem(k)) })
+await p.evaluate(()=>[...document.querySelectorAll('button.btn-primary')].find(x=>x.innerText.trim()==='저장')?.click())
+await p.waitForTimeout(1500)
 const p2 = await ctx.newPage()
 await p2.goto('http://127.0.0.1:4482/hankki/',{waitUntil:'networkidle'}); await p2.waitForTimeout(2500)
 const 남았나 = await p2.evaluate(()=>{
   const s = JSON.parse(localStorage.getItem('hankki:v1')||'{}')
   const r = (s.recipes||[]).find(x=>x.id==='zz-full')
-  return { 있나: !!r, 제목: r?.title ?? '(없음)' }
+  return { 제목: r?.title ?? '(없음)' }
 })
-console.log(`   새 탭에서 본 값 = ${JSON.stringify(남았나)}`)
-chk('⭐⭐ 고친 것이 «진짜로» 저장됐다 (＝증발하지 않았다)', 남았나.제목 === '증발판정용 고친제목', `제목 = ${남았나.제목}`)
-
-const 알렸나 = /가득|저장 공간|저장하지 못/.test(화면이한말)
-chk('⭐⭐ 저장이 안 됐으면 화면이 그걸 «말했다»', 남았나.제목 === '증발판정용 고친제목' || 알렸나,
-  알렸나 ? '알렸다' : '⛔ 아무 말도 안 했다')
+chk('⭐ 자리를 비우면 «정상으로» 저장된다 (고침이 평소 저장을 안 망쳤다)',
+  남았나.제목 === '증발판정용 고친제목', `제목 = ${남았나.제목}`)
 
 await b.close(); srv.close()
 console.log(`\n${실패?'❌':'✅'} ${통과}/${통과+실패}`)

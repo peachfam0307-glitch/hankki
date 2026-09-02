@@ -445,7 +445,12 @@ export default function App() {
       // ⛔ `fitImage` 는 **작은 사진은 안 건드린다**(`Math.min(1, max/…)`) ＋ 실패하면 **원본을 돌려준다**.
       //    그래서 이 한 줄이 사진을 «잃게» 만들 길이 없다.
       // ⚠️ 이미 담긴 사진은 안 줄어든다 — 앞으로 담는 것만이다(규칙 18 ⓙ).
-      const shrunk = data.imageDataUrl ? await fitImage(data.imageDataUrl, 1600, 0.85) : null
+      // 📦 [2026-09-02 창업자 확정] **1600 → 900px** — *"둘 다 — 작게 먼저, 이사는 다음"*
+      //   🔢 실측(폰 캡처 1080×2340) = 원본 397KB · 1600px **202KB** · **900px 78KB** · 700px 52KB
+      //      → 5MB 한도에 **25장 → 65장**. 창업자 폰이 «캡처 스물몇 장»으로 4.88MB 가 찼다.
+      //   ⭐ 「캡쳐 보면서 쓰기」는 그대로 산다 — 900px 면 34vh 창(≈390px 폭)의 2.3배라 글자가 안 뭉갠다.
+      //   ⛔ 이건 «임시 방편»이다. 정석은 사진을 IndexedDB 로 옮기는 것(창업자 확정 = 다음 판).
+      const shrunk = data.imageDataUrl ? await fitImage(data.imageDataUrl, 900, 0.75) : null
       // 메모는 직접 입력 전용 — 캡션 찌꺼기를 자동으로 붙이지 않는다
       const rec = makeInboxRecipe({
         source,
@@ -681,7 +686,12 @@ export default function App() {
   //    ⛔ 사진을 다 열어 픽셀을 재면 느리고 배터리를 먹는다. 열어보는 건 «걸린 것»만.
   //    🔢 자릿값 근거(실물 캡처 실측) — 원본 1172KB / 줄인 것 197KB / 일기 127KB / 편집 표지 150KB
   //       → 260,000자(≈254KB)면 **원본만** 걸리고 나머지는 다 빠져나간다.
-  const SHRINK_OVER = 260000
+  // ⛔⛔ [2026-09-02] **260,000 → 100,000 으로 내렸다** — 그 값은 «1600px 판»을 통과시켰다.
+  //    창업자 폰 4.88MB 의 정체가 바로 그 통과한 것들이다(1600px ≈ 202KB ≈ 207,000자).
+  //    ⭐ 900px 결과는 ≈78KB(≈80,000자)라 문턱 아래 → **다시 굽지 않는다**(게이트가 그걸 잰다).
+  //    ⚠️ 대신 일기·표지 사진(≈127~150KB)도 걸려 900px 로 줄어든다.
+  //       표지는 화면에서 374px 로 그려지니 900px 은 2.4배 — 눈으로는 차이가 안 난다.
+  const SHRINK_OVER = 100000
   useEffect(() => {
     let cancelled = false
     // ⛔ 첫 화면이 다 그려진 뒤에 시작한다 — 앱을 여는 순간 캔버스를 돌리면 «느린 앱»이 된다.
@@ -692,7 +702,7 @@ export default function App() {
       let 아낀양 = 0
       for (const r of 큰것) {
         if (cancelled) return
-        const 작게 = await fitImage(r.image, 1600, 0.85)
+        const 작게 = await fitImage(r.image, 900, 0.75)
         // ⛔ **진짜로 작아진 것만 저장한다.** `fitImage` 는 실패하면 원본을 그대로 돌려주는데,
         //    그걸 그냥 덮으면 «아무것도 안 하고 저장만» 하게 된다(무의미한 쓰기 = 용량이 또 찬다).
         if (cancelled || !작게 || 작게.length >= r.image.length) continue

@@ -11,7 +11,20 @@ import { politeSteps, politeFormalSteps } from './polish'
 import { pickPaper } from './memoPaper'
 
 const KEY = 'hankki:v1'
-let lastFullWarn = 0 // 저장공간 초과 경고 throttle(모듈 스코프)
+// 💾💾 **「저장이 진짜로 됐나」 — 화면이 물어볼 수 있게 밖으로 낸다** (창업자 확정 2026-09-02)
+//   📮 창업자 = *"방금 하나 저장한거 흔적도 없이 증발함"* · *"채우고 있다고 했는데 레시피는 없어"*
+//   ⛔⛔ 뿌리 = 아래 `catch` 가 저장 실패를 «삼켰다». 메모리엔 그대로라 화면은 「저장됐다」고 말하고,
+//      다시 그리는 순간 사라진다. ＋ 60초 침묵 때문에 두 번째부터는 **안내조차 없었다.**
+//   ⭐ 그래서 값을 «두 개» 둔다 — 마지막으로 저장이 «성공/실패»한 시각.
+//      화면(편집 저장 등)이 저장 뒤에 이걸 보고 «성공이라 말할지»를 정한다.
+export let 마지막저장실패 = 0
+export let 마지막저장성공 = 0
+// ⛔ 「방금 저장이 됐나」 — 기준 시각 «뒤»에 성공이 찍혔는지 본다.
+//    ⚠️ 실패가 안 찍혔다고 «성공»이라 하지 않는다(아직 안 돌았을 수도 있다 · 규칙 18 ⓘ).
+export function 방금저장됐나(기준) {
+  if (마지막저장실패 >= 기준) return false
+  return 마지막저장성공 >= 기준
+}
 const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행복한 하루 :)' }
 
 // 장보기 쇼핑몰 바로가기 기본 목록. url = 홈, search = 재료 검색(‘{q}’에 재료명 치환).
@@ -1054,14 +1067,14 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(state))
+      마지막저장성공 = Date.now()
     } catch {
-      // 저장 공간 초과(특히 iOS ~5MB) — 조용히 사라지면 안 되므로(핵심 약속: 레시피 보관)
-      // 사용자에게 알린다. 매 변경마다 반복되지 않게 60초에 한 번만.
-      const now = Date.now()
-      if (now - lastFullWarn > 60000) {
-        lastFullWarn = now
-        try { window.dispatchEvent(new CustomEvent('hankki:storagefull')) } catch { /* noop */ }
-      }
+      // 저장 공간 초과(특히 iOS ~5MB) — 조용히 사라지면 안 된다(핵심 약속: 레시피 보관)
+      마지막저장실패 = Date.now()
+      // ⛔⛔ [2026-09-02] **60초 침묵을 없앴다.** 창업자가 8:41·8:42 에 잇달아 담았는데
+      //    첫 번째가 경고를 써버려서 **두 번째는 완전히 조용히 사라졌다** — 그게 「흔적도 없이」의 정체다.
+      //    📌 실패는 «매번» 말한다. 시끄러운 게 잃는 것보다 낫다.
+      try { window.dispatchEvent(new CustomEvent('hankki:storagefull')) } catch { /* noop */ }
     }
   }, [state])
 
