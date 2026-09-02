@@ -10,6 +10,8 @@ const 파일 = fs.readdirSync('src/assets/sharepool').filter(f => f.endsWith('.p
 const src = fs.readFileSync('src/components/ShareDrawCard.jsx', 'utf8')
 const 뽑기 = (이름) => new RegExp(src.match(new RegExp(`const ${이름} = (/\\^.*?/)`))[1].slice(1, -1))
 const COOK = 뽑기('COOK'), SUMMER = 뽑기('SUMMER'), HALLOWEEN = 뽑기('HALLOWEEN'), HANBOK = 뽑기('HANBOK')
+// 🐧 사철 펭펭 풀의 정규식도 «소스에서» 읽는다 (⛔손으로 박지 말 것 — 아래 주석 참고)
+const 펭정규식 = new RegExp(src.match(/const PENG = pickPool\((\/\^[^/]*\/)\)/)[1].slice(1, -1))
 
 const 날 = (s) => new Date(s + 'T09:00:00+09:00')
 for (const 날짜 of ['2026-08-31', '2026-09-01', '2026-09-20', '2026-10-05', '2026-11-15']) {
@@ -25,7 +27,11 @@ for (const 날짜 of ['2026-08-31', '2026-09-01', '2026-09-20', '2026-10-05', '2
   const 계절 = (kind) => 열린세트.flatMap(s => s[kind]).filter(k => fs.existsSync(`src/assets/stickers/photo/${k}.png`))
   const notHw = (a) => a.filter(k => !HALLOWEEN.test(k) && !HANBOK.test(k))
   const gom = [...기본(/^gom_/), ...notHw(계절('gom'))]
-  const peng = [...기본(/^(peng_|pn_)/), ...notHw(계절('peng'))]
+  // ⛔⛔ 여기에 `/^(peng_|pn_)/` 를 «손으로» 박아 두었다가 2026-09-02 에 거짓말을 했다 —
+  //    그날 옛 펭펭을 카드에서 내려 `const PENG = pickPool(/^pjs_/)` 가 됐는데
+  //    이 판만 옛 정규식을 들고 「펭 14」라고 말했다(절대원칙 30 — 판이 앱을 «흉내» 내면 조용히 어긋난다).
+  //    ✅ 이제 소스에서 «그 줄의 정규식»을 읽어 온다.
+  const peng = [...기본(펭정규식), ...notHw(계절('peng'))]
   const duo = [...기본(/^duo_/), ...notHw(계절('duo'))]
   const 여름섞임 = [...gom, ...peng, ...duo].filter(k => SUMMER.test(k))
 
