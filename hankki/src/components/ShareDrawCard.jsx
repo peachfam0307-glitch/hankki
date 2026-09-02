@@ -64,9 +64,51 @@ const pickPool = (re, withSummer) => {
 const SCENES = Object.entries(import.meta.glob('../assets/scenepool/*.png', { eager: true, query: '?url', import: 'default' }))
   .map(([k, url]) => ({ name: k.split('/').pop(), url, scene: true }))
 
+// 🏖🏖 **[창업자 2026-09-02] 여름 씬은 여름에만 나온다** — *"여름씬은 이제 빼도 될 것 같아."*
+//
+//   ⛔⛔ **씬 풀엔 계절이 «아예» 없었다.** 폴라로이드는 65% 확률로 여기서 뽑는데,
+//      11/15 카드를 찍었더니 **모래성 쌓는 바닷가**가 나왔다(실물로 잡았다 · 절대원칙 21).
+//      🔢 계산하면 11월 폴라로이드의 약 26% 가 여름 씬이었다(0.65 × 4/10).
+//   📌 2026-08-04 창업자 제보 *"자랑카드 여름가을같이돌아감"* 과 **같은 모양**이다 —
+//      그때는 아치 뼈대의 «기본 옷»이 통째로 가을이었고, 이번은 씬 풀이다.
+//
+//   🔍 **10장을 다 열어 보고 골랐다**(눈으로 · 규칙 21). 잣대 = **옷차림 ＋ 여름 물건**
+//      · `pool` 수영복·튜브·야자수 ／ `sandcastle` 바다·모래성 ／
+//        `picnic` **수박** ／ `night_market` 민소매·반바지
+//   ⭐ **`camp` 는 «안» 뺐다** — 밤 모닥불 ＋ 담요 ＋ 뜨거운 컵이라 **오히려 가을에 맞다.**
+//      ⏳ `walk`(반팔 ＋ 아이스 음료)는 애매해서 남겼다 — 창업자가 빼라고 하면 이 정규식에 한 낱말만 더한다.
+//   ⛔ 파일을 지우지 «않는다» — 여름이 오면 그대로 다시 나온다(한 번 만든 것을 버리지 않는다).
+const SUMMER_SCENE = /^scene_(pool|sandcastle|picnic|night_market)\./
+// ⭐ `isPeakSeason` = 전환기 겹침을 «안» 센다 → 카드 스킨(`summer`)과 «같은 잣대»로 9/1 에 같이 빠진다.
+//    ⛔ `isSeason` 을 쓰면 9/14 까지 남아 「여름 스킨은 빠졌는데 여름 사진은 나온다」가 된다.
+const scenesNow = (now) => (isPeakSeason('summer', now) ? SCENES : SCENES.filter((s) => !SUMMER_SCENE.test(s.name)))
+
 const GOM = pickPool(/^gom_/)
-const PENG = pickPool(/^(peng_|pn_)/)
-const DUO = pickPool(/^duo_/)
+// 🐧🧥 **옛 펭펭은 카드에서 «전부» 내렸다** (창업자 2026-09-02)
+//   📮 *"연한베이지트렌치랑 트렌치에 벨트없는거."*
+//      *"그건 얼굴도 펭펭이 조금 이상해 다 빼야해"* · *"부족한거 다시뽑아줄게 그펭펭은 다 빼자"*
+//   🔢 코트색을 재니 갈래가 «둘»로 딱 갈렸다 (몸통 아래 밝은 면 평균 · **R−B 가 클수록 진한 베이지**)
+//        사철 `peng_*`·`pn_*` 9컷 = **11~15**(거의 흰색 · 벨트 없음)
+//        정본 `au_b08`·`pj_01`~`04`   = **30~52**(베이지 · 벨트 버클)
+//      → 창업자가 말한 「연한 베이지 · 벨트 없음」이 **사철 9컷에 정확히 걸린다.**
+//   ⛔⛔ **파일은 «안» 지운다** — `LabSheet.jsx` 와 홈 「다음에 뭐 할까」 카드가 같은 그림을 따로 쓴다.
+//      여기서 «카드 뽑기 풀»에서만 내린다.
+//   ⭐ 새 정본 사철 컷이 오면 `sharepool/` 에 **`pjs_` 로 넣기만 하면** 이 줄이 저절로 다시 찬다
+//      (⛔목록을 손으로 적지 않는다 — 폴더가 곧 목록이다).
+//   ⚠️ 그동안 **사철 펭펭 = 0** 이다. 9~11월엔 가을 정본 5컷이 대신하고,
+//      12~8월엔 펭펭이 «안 나온다» → 아래 뽑기에서 곰·콤비로 비켜 가게 막아 뒀다.
+const PENG = pickPool(/^pjs_/)
+// 🐻🐧🧥 **콤비도 «전부» 내렸다** (창업자 2026-09-02 저녁 · 갈래 셋 중 「콤비 12컷을 다 내린다」)
+//   📮 창업자 = *"둘이 장보는 컷에 펭펭이 옛컷이네.."*
+//   ⛔⛔ **장보는 둘만이 아니었다 — 12컷을 다 열어보니 «전부» 그 옛 펭펭이다**(연한 베이지 트렌치 · 벨트 없음).
+//      한 세트로 그려진 것이라 당연한데, 낮에 「솔로 펭펭」만 내리고 **콤비는 안 봤다.**
+//      📌 **같은 그림이 «둘이 있는 컷»에도 들어 있다** — 한쪽만 내리면 절반만 고친 것이다.
+//   🔢 그래서 낮의 고침이 오히려 눈에 더 띄게 만들었다 — 솔로 펭 자리(28%)가 콤비로 흘러
+//      **사철 카드의 약 절반이 콤비 = 전부 옛 펭펭**이 됐다.
+//   ⭐ 새 정본 콤비가 오면 `sharepool/` 에 **`duos_` 로 넣기만 하면** 이 줄이 저절로 다시 찬다
+//   ⚠️ 그동안 **사철 콤비 = 0** 이다 → 사철 카드는 꼬르곰만 나온다(가을엔 정본 펭펭 넷 ＋ `au_b15`·`au_b16`).
+//   ✅ **가을 콤비 `au_b15`·`au_b16` 은 그대로 둔다** — 열어보니 «벨트 버클 있는 진한 베이지»라 정본 쪽이다.
+const DUO = pickPool(/^duos_/)
 
 // 🍂 계절·이벤트 캐릭터 컷 — **창이 열렸을 때만** 기본 스킨 풀에 얹는다.
 //
@@ -109,8 +151,13 @@ const summerOnly = (re) => {
   return hit.length ? hit : pickPool(re)
 }
 const S_GOM = summerOnly(/^(gom_|sm_gom_)/)
-const S_PENG = summerOnly(/^(peng_|pn_|sm_peng_)/)
-const S_DUO = summerOnly(/^(duo_|sm_duo_)/)
+// ⛔⛔ **여기가 «뒷문»이었다** — 낮에 `PENG` 만 고치고 이 줄을 안 봐서
+//    여름 스킨에선 옛 펭펭(`peng_`·`pn_`)과 옛 콤비(`duo_`)가 그대로 나오고 있었다.
+//    📌 같은 것을 고르는 자리가 «둘»이면 둘 다 고쳐야 한다(2026-09-02).
+//    ✅ `sm_peng_`·`sm_duo_` 는 남긴다 — 여름 «원피스» 차림이라 이번 잣대(트렌치·벨트)에 안 걸린다.
+//       ⏳ 그 넷을 어떻게 할지는 창업자 판정 대기(여름 카드는 지금 안 뜬다 — 급하지 않다).
+const S_PENG = summerOnly(/^(pjs_|sm_peng_)/)
+const S_DUO = summerOnly(/^(duos_|sm_duo_)/)
 // 🎃 핼러윈 전용 풀 — `seasonCuts()` 가 창이 열렸을 때만 넣어주므로 그 안에서 hw_ 만 걸러낸다.
 //   ⛔ 상수로 굳히지 말 것(창이 열리고 닫힌다) → 함수다.
 const hwOnly = (kind) => seasonCuts(kind).filter((e) => HALLOWEEN.test(e.name))
@@ -156,7 +203,13 @@ function drawState() {
     // 🍂 `isPeakSeason` = 전환기 겹침을 «안» 센다 → **9/1 에 여름 스킨이 바로 빠진다**
     //    (창업자 확정 2026-08-29 = *"9월1일에 빼야지 가을시작이니까."* · ⛔`isSeason` 이면 9/14 까지 남는다)
     ...(isPeakSeason('summer') ? ['summer'] : []),
-    ...(hwOpen ? ['halloween'] : []), ...(csOpen ? ['chuseok'] : [])]
+    ...(hwOpen ? ['halloween'] : []), ...(csOpen ? ['chuseok'] : []),
+    // 🍂🍂 **[창업자 확정 2026-09-02] 11월엔 «둘 다» 얹는다** — *"11월은 둘가추가하자."*
+    //   ⭐ 11/3 부터 덤(추석·핼러윈)이 다 빠져 **기본 6장만 남던 자리**다. 이제 11월이 **8장**이 된다.
+    //   ⛔ 날짜를 여기 또 적지 «않는다» — `isLateAutumn`(LATE_AUTUMN_MONTH) 한 곳이 늦가을의 유일한 정의다.
+    //      그래서 **옷(늦가을)과 뼈대(둘)가 «같은 날» 같이 온다** — 11월 1일에 화면이 확 바뀐다.
+    //   🔢 뽑기 확률 = 6장 각 16.7% → **8장 각 12.5%**(창업자가 그 값을 보고 「둘 다」로 정했다)
+    ...(isLateAutumn() ? ['post', 'ticket'] : [])]
   const key = (() => {
     try { const v = new URLSearchParams(location.search).get('card'); if (v && SKINS[v]) return v } catch { /* noop */ }
     return rnd(pool)
@@ -170,16 +223,22 @@ function drawState() {
     : key === 'halloween' ? [hwOnly('gom'), hwOnly('peng'), hwOnly('duo')]
       : key === 'chuseok' ? [csOnly('gom'), csOnly('peng'), csOnly('duo')]
       : [gomPool(), pengPool(), duoPool()]
-  const cat = key === 'pola' && SCENES.length && r < 0.65 ? SCENES     // 폴라로이드는 씬 사진 위주
+  const 씬 = scenesNow()   // 🏖 여름 씬은 여름에만 (위 `scenesNow` 주석 참고)
+  const cat = key === 'pola' && 씬.length && r < 0.65 ? 씬     // 폴라로이드는 씬 사진 위주
     : (key === 'night' || key === 'summer' || key === 'arch')
-      ? (r < 0.5 ? g : r < 0.78 ? p : (d.length ? d : g))
+      // ⛔ **펭 자리도 비어 있을 수 있다** — 2026-09-02 에 옛 펭펭을 다 내려서 사철 펭 = 0 이 됐다.
+      //    안 막으면 `rnd([])` → 아래 마지막 줄의 폴백이 «전체 풀»로 새어 **방금 내린 컷이 되살아난다.**
+      ? (r < 0.5 ? g : r < 0.78 ? (p.length ? p : (d.length ? d : g)) : (d.length ? d : g))
       : (key === 'halloween' || key === 'chuseok')
         // 곰·펭·콤비 골고루 — ⚠️ **콤비가 없으면 그 몫을 곰에게 몰지 말고 반반으로 나눈다.**
         //   안 그러면 곰 65% · 펭 35% 가 된다(추석은 콤비가 없어서 실제로 5판 중 4판이 곰이었다).
         //   📌 「명단이 2:2니까 반반이겠지」는 «명단»이지 «확률»이 아니다. 뽑아 보고 세야 안다.
         ? (d.length ? (r < 0.4 ? g : r < 0.75 ? p : d) : (r < 0.5 ? g : p))
       : (r < 0.68 ? g : (p.length ? p : g))
-  return { skin, char: rnd(cat.length ? cat : ENTRIES), no: 2 + Math.floor(Math.random() * 46) }
+  // ⛔⛔ 마지막 폴백을 `ENTRIES`(폴더 전체)로 두면 **내린 컷이 뒷문으로 되살아난다**(2026-09-02).
+  //    곰 풀로 떨어뜨린다 — 곰은 23컷이라 빌 일이 없다.
+  const 고른풀 = cat.length ? cat : (gomPool().length ? gomPool() : ENTRIES)
+  return { skin, char: rnd(고른풀), no: 2 + Math.floor(Math.random() * 46) }
 }
 
 // 🔆 이 색 «위»에 글자를 얹을 때 흰 글자가 나을까 검은 글자가 나을까.
@@ -203,6 +262,12 @@ const SKINS = {
   summer: { key: 'summer' },
   halloween: { key: 'halloween' },   // 🎃 10/01~11/02 에만 얹는 한 장 (펠트 배경 ＋ 핼러윈 애들만)
   chuseok: { key: 'chuseok' },       // 🏮 09/01~10/15 에만 얹는 한 장 (조각보 배경 ＋ 한복만)
+  // 🍂❄️ **11월 뼈대 시안 셋 (2026-09-02 · ⏳창업자 판정 대기)**
+  //   ⛔ `drawState` 의 `pool` 엔 «안» 넣었다 — 고르기 전엔 유저에게 안 나온다(규칙 13).
+  //      지금은 `?card=post` 처럼 **주소로만** 열린다. 고른 것만 나중에 풀에 올린다.
+  post: { key: 'post' },       // ✉️ 엽서 — 우표 안에 캐릭터 ＋ 소인 ＋ 주소 줄
+  ticket: { key: 'ticket' },   // 🎟 티켓 — 절취선 ＋ 좌우 펀치 홈 ＋ 위 스텁
+  snow: { key: 'snow' },       // ❄️ 첫눈 — 눈 언덕 두 겹 ＋ 밝은 하늘
 }
 
 // ── 1080×1350 카드 (캡처 대상) ──
@@ -328,6 +393,19 @@ const BASE_WEAR = {
   //      기본을 물들이면 나머지 세 계절이 조용히 틀어지고, 그 계절이 와야 드러난다.
   arch: { blob: '#8fa8c4,#5878a0 52%,#3d5a80', pt: '#5878a0', ink: '#2b3646', kick: '창가에 앉아, 한 끼', sub: '#6d87a8', brand: '#3d5a80', badge: '#8fa8c4,#5878a0', chipRing: 'rgba(110,140,180,.3)', chipInk: '#456a90', footWm: '#3d5a80', footUrl: '#8ea3ba', bg: 'linear-gradient(170deg,#f9f7f1,#eef2f7 58%,#e3eaf1)' },
   night: { pt: '#ffd98a', ink: '#f0e4d0', kick: '오늘 밤은, 이걸로', sub: '#ffcf8a', brand: '#f0e4d0', metaInk: '#cbbfa8', footWm: '#e8dcc9', footUrl: '#a99d88', bg: 'radial-gradient(circle at 26% 16%,#343c52,#262b3b 60%,#1c2029)' },
+
+  // 🍂❄️ **11월 뼈대 시안 셋의 옷** (2026-09-02 · ⏳판정 대기)
+  //   ⚠️ `post`·`ticket` 은 배경색으로 «구멍을 파낸다»(우표 톱니 · 티켓 펀치) →
+  //      `bg` 가 **반드시 납작한 한 색**이라야 한다. 그라데를 넣으면 구멍 색이 어긋나 지저분해진다.
+  //   ⚠️ `onBlob` = 색 띠 «위»에 얹는 글자색. 티켓 스텁이 진한 색이라 흰 글자가 필요하다.
+  // ✉️ 엽서 = **노랑(은행잎) 결** — 창업자 2026-09-02 *"1번은 색이 노랑계열로 가면 좋겠어"*
+  //   ⭐ 늦가을과도 맞는다 — 단풍이 붉다면 은행은 노랗다. 그리고 붉은 계열은
+  //      `warm`(와인)·`arch`(주황)·`ticket`(김장 붉은) 셋이 이미 쓰고 있어 **노랑이 안 겹친다.**
+  post: { blob: '#f0c25c,#dda032 52%,#b0761c', paper: '#fffdf3', pt: '#a8761a', ink: '#3a3120', kick: '늦가을에서, 한 끼 보냅니다', sub: '#9c7a2e', brand: '#7d5c16', chipRing: 'rgba(200,160,70,.34)', chipInk: '#8a6516', metaInk: '#7d6c46', metaDot: '#dcc78e', footWm: '#7d5c16', footUrl: '#ab9765', bg: '#f9f1d9', tex: 'kraft', texC: '150,112,36' },
+  // 🥬 김장 결 — 고춧가루 붉은색 ＋ 크라프트. ⛔주황(arch·warm)과 갈리게 «붉게» 간다
+  ticket: { blob: '#c8543c,#a83521 58%,#83240f', paper: '#fffaf2', onBlob: '#fff6ec', pt: '#a83521', ink: '#38211a', kick: '김장하는 날, 한 끼', sub: '#a8543c', brand: '#7d2c1c', metaInk: '#7a5a4c', metaDot: '#d9b6a6', footWm: '#7d2c1c', footUrl: '#ad8878', bg: '#f3e6d4', tex: 'linen', texC: '140,64,42' },
+  // ❄️ 첫눈 — `night` 의 반대짝(밝다). 언덕은 «두 겹»이라 뒤가 회색빛, 앞이 흰색
+  snow: { pt: '#5b7fa8', ink: '#2c3a4c', kick: '첫눈 오는 날, 한 끼', sub: '#7793b4', brand: '#4a6d94', chipRing: 'rgba(110,150,190,.32)', chipInk: '#456a90', metaInk: '#66809c', metaDot: '#b8cbdd', footWm: '#4a6d94', footUrl: '#93a8bd', bg: 'linear-gradient(178deg,#dceaf6 0%,#eef5fb 46%,#f7fafd 100%)', hillBack: '#e4edf5', hillFront: '#ffffff' },
 }
 const WARDROBE = {
   autumn: {
@@ -346,9 +424,56 @@ const WARDROBE = {
     //       달라지는 건 여름·겨울·봄뿐이다(그때는 이제 중립 하늘색 아치가 나온다).
     arch: { blob: '#e0a24e,#c2632f 48%,#8f3a26', pt: '#b8532c', ink: '#3b2a1f', kick: '바람 불면, 가을 한 끼', sub: '#a8532c', brand: '#7a4326', badge: '#e0913f,#c2632f', chipRing: 'rgba(200,130,80,.3)', chipInk: '#8c4a24', footWm: '#7a4326', footUrl: '#ad8b6c', bg: 'linear-gradient(170deg,#fbf5e6,#f3e6cc 58%,#ecdab9)', tex: 'plaid', texC: '150,74,40', leaf: ['#c2632f', '#b8823a'] },
   },
+
+  // 🍁🍁 **[창업자 확정 2026-09-02 = ⓑ] 가을 옷을 «두 벌»로 — 늦가을(11월)판**
+  //
+  //   📮 창업자 = *"뼈대를 추가할 필요가 있겠다. 기존에 심심한 걸 하나 바꾸거나... **a,b둘다 가자**"*
+  //
+  //   ⭐⭐ **왜** — 실측 = 같은 뼈대를 9/15·10/20·11/15 에 찍어 나란히 보니
+  //      **배경·색·문구가 석 달 내내 똑같았다.** 바뀌는 건 곰펭 컷 하나뿐.
+  //      바로 위 주석이 *"옷만 «계절마다» 갈아입는다"* 라고 적고 있는데, 그 「계절」이
+  //      봄/여름/가을/겨울 단위라 **가을 «안»에서는 한 번도 안 갈아입는다.**
+  //
+  //   ⭐ **이건 «덧입는» 판이다** — `autumn` 위에 얹는다. 그래서 **달라지는 것만** 적는다.
+  //      ⛔ 여섯 벌을 통째로 다시 적지 말 것 — 두 벌이 갈라져 한쪽이 반드시 낡는다.
+  //   🎨 결 = 초가을(9~10월) **밝은 갈색·억새** ↔ 늦가을(11월) **짙은 붉은·낙엽**
+  //      ⛔ 여섯을 다 같은 붉은색으로 칠하지 않는다 — 그게 2026-07-29 *"다 똑같다"* 판정의 뿌리였다.
+  //         뼈대마다 «다른 방향»으로 짙어진다: 와인 / 낙엽갈색 / 감빛 / 커피 / 단풍 / 서리밤.
+  //   ⛔ **새로 그리는 컷은 0이다.** 색·문구만 바뀐다.
+  autumnLate: {
+    badge: '늦가을 한정',
+    // ⛔⛔ **첫 판은 「둘 다 똑같은데??」 판정을 받았다** (창업자 2026-09-02).
+    //    맞는 지적이었다 — 배경을 `#f7efe2` → `#f2e6d6` 로 **밝기 0.02 밖에** 안 내렸다.
+    //    엄지손톱 크기로 보면 그건 «같은 색»이다. 📌 **「짙게」는 마음이 아니라 «수치»로 내려야 한다.**
+    //    ✅ 다시 = 배경 밝기를 **0.10 이상** 내리고, 색면도 «다른 색»으로 옮기고, 질감도 갈았다.
+    //    ⛔ 초가을(`autumn`)은 **안 건드렸다** — 창업자가 9/1 에 이미 보고 통과시킨 판이다.
+    //       벌리는 건 «늦가을 쪽»으로만 한다.
+    warm: { blob: '#8e3a33,#5e1c1c 55%,#340d0f', arc: '#c9a883', pt: '#7a2521', ink: '#33211c', kick: '서리 내린 아침, 한 끼', sub: '#8c3b32', chipRing: 'rgba(140,70,50,.34)', chipInk: '#6e2620', footWm: '#5e2820', footUrl: '#8f7263', bg: '#e3cdb4', tex: 'plaid', texC: '62,16,14' },
+    panel: { blob: '#8a7f4e,#5b5330 58%,#37331a', pt: '#4c4622', ink: '#2b2a16', kick: '거둬들이는 계절', sub: '#615a30', brand: '#403a1e', metaInk: '#5a5434', metaDot: '#a8a37c', footWm: '#403a1e', footUrl: '#8a866a', bg: '#e5dcc0', tex: 'cord', texC: '64,58,26' },
+    pola: { pt: '#8a4416', sub: '#6d3410', brand: '#6d3410', cap: '#6d3410', kick: '감 익는 창가에서', tape1: 'rgba(186,146,96,.84)', tape2: 'rgba(160,96,44,.78)', metaInk: '#6b5432', metaDot: '#bfa16c', footWm: '#6d3410', footUrl: '#9a8055', bg: '#d9c49c', grid: 'rgba(120,84,40,.26)', tex: 'kraft', texC: '104,60,18', photoBg: 'radial-gradient(circle at 50% 38%,#f2e2c4,#d4b58a)' },
+    mag: { blob: '#8a5f3c,#5c3a1c 55%,#341d08', pt: '#6a3f18', ink: '#221a10', brand: '#2e2418', sub: '#6d5a3e', metaInk: '#5a4c36', footWm: '#3f3426', footUrl: '#8a7c66', bg: '#d5c199', side: '#4a3c2c', sideB: '#271d13', tex: 'linen', texC: '84,56,28' },
+    night: { pt: '#ffc978', kick: '길어진 밤, 뜨끈하게', sub: '#e9a07e', metaInk: '#cdb8ac', bg: 'radial-gradient(circle at 26% 16%,#4e2a28,#301819 60%,#1b0f10)' },
+    arch: { blob: '#b45c26,#88300f 48%,#521404', pt: '#8a2f14', ink: '#2f1d14', kick: '낙엽 지는 날, 한 끼', sub: '#8a3a18', brand: '#5e2410', badge: '#b45c26,#88300f', chipRing: 'rgba(150,80,40,.36)', chipInk: '#6e2a10', footWm: '#5e2410', footUrl: '#96755c', bg: 'linear-gradient(170deg,#eddfbe,#dfc396 58%,#cdaa72)', tex: 'plaid', texC: '124,40,16', leaf: ['#8a2f14', '#8a5c1e'] },
+  },
 }
+// 🍁 늦가을 = **11월**. ⛔10월은 «핼러윈 덤»이 따로 있어 그 자체로 화면이 바뀐다 —
+//    거기까지 갈아입히면 10월이 두 번 바뀌고 11월의 「새로 왔다」가 묻힌다.
+//    ⛔ 날짜를 여기저기 적지 말 것 — 이 한 줄이 늦가을의 «유일한» 정의다.
+const LATE_AUTUMN_MONTH = 11
+const isLateAutumn = (now = new Date()) => seasonsNow(now)[0] === 'autumn' && now.getMonth() + 1 === LATE_AUTUMN_MONTH
+
 // 뼈대 하나가 지금 입을 옷. 계절 옷이 없으면 기본 옷 그대로.
-const wearOf = (k, now) => ({ ...BASE_WEAR[k], ...(WARDROBE[seasonsNow(now)[0]]?.[k] || {}), badge: WARDROBE[seasonsNow(now)[0]]?.badge })
+// 🍁 늦가을이면 «가을 위에» 한 겹 더 덧입는다(달라지는 것만 적혀 있다).
+const wearOf = (k, now) => {
+  const s = seasonsNow(now)[0]
+  const 늦 = isLateAutumn(now)
+  return {
+    ...BASE_WEAR[k],
+    ...(WARDROBE[s]?.[k] || {}),
+    ...(늦 ? (WARDROBE.autumnLate?.[k] || {}) : {}),
+    badge: (늦 && WARDROBE.autumnLate?.badge) || WARDROBE[s]?.badge,
+  }
+}
 
 // 📏📏 **표지로 저장할 때 「아래 빈 자리」를 잘라낸다.** (창업자 2026-08-18
 //   *"저 이미지는 **위아래여백이달라서** 표지적용하니 **아래가 너무 휑해**"*)
@@ -782,6 +907,145 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
         </div>
       )}
       {foot(W.footWm, W.footUrl)}
+    </>)
+  }
+
+  // ═══════════ 🍂❄️ 11월 뼈대 «시안» 셋 — ⏳창업자 판정 대기 (2026-09-02) ═══════════
+  //
+  // 📮 창업자 = *"뼈대를 추가할 필요가 있겠다. … a,b둘다 가자"* → *"뽑아줘. **뼈대 예쁜걸루**"*
+  //
+  // ⭐⭐ **왜 11월인가** — 11/3 부터 덤(추석·핼러윈)이 다 빠져 **기본 6장만 남는다.**
+  //    그런데 6장은 9월과 «똑같은 옷»이라 석 달 내내 같은 카드가 돈다.
+  //
+  // ⛔⛔ **셋 다 «구조»가 다르다** — 2026-07-29 에 「색만 바꾼 6장」이 *"다 똑같다"* 판정을 받았다.
+  //    지금 쓰고 있는 구조 = blob · 컬러패널 · 폴라로이드 · 매거진 · 아치창 · 홀로원판.
+  //    그래서 새것은 **엽서 · 티켓 · 눈언덕** — 앞의 여섯과 겹치는 게 하나도 없다.
+  //
+  // ⛔ **뽑기 풀엔 «안» 넣었다**(`drawState` 의 `pool` 을 안 건드렸다) — 창업자가 고르기 «전»엔
+  //    유저 화면에 안 나온다. 지금은 `?card=post` 처럼 주소로만 열린다(규칙 13).
+  // ⛔ 고른 뒤에 할 일 = ⑴`pool` 에 한 줄 ⑵`cardSeasons.js` 에 날짜 창 ⑶`check-cardcuts` 재확인.
+
+  // ═══ 🅐 엽서(post) — 우표 안에 캐릭터 · 소인 · 주소 줄 ═══
+  //    ⭐ 「부치는 종이」라 한끼의 일기·메모 결과 한 세트다. 우표가 캐릭터를 «액자»처럼 세운다.
+  //    ⚠️ 우표 톱니는 **배경색 동그라미**로 파낸다 — 그래서 `W.bg` 는 «납작한 한 색»이라야 한다
+  //       (그라데면 톱니 색이 어긋나 테두리가 지저분해진다).
+  if (K.key === 'post') {
+    const hs = headSize([l1, l2], 128, 1080 - PAD * 2 - 40)
+    const notch = (side) => ({
+      position: 'absolute', zIndex: 3, pointerEvents: 'none',
+      ...(side === 'top' ? { left: -13, right: -13, top: -13, height: 26 }
+        : side === 'bottom' ? { left: -13, right: -13, bottom: -13, height: 26 }
+          : side === 'left' ? { top: -13, bottom: -13, left: -13, width: 26 }
+            : { top: -13, bottom: -13, right: -13, width: 26 }),
+      backgroundImage: `radial-gradient(circle,${W.bg} 11px,transparent 11.5px)`,
+      backgroundSize: '26px 26px',
+    })
+    return shell(W.bg, <>
+      <Tex k={W.tex} c={W.texC} z={0} />
+      {grain}
+      {/* ✉️ 우표 — 캐릭터가 여기 산다. 카드에서 제일 큰 덩어리라 히어로 규격(496~648)을 지킨다 */}
+      <div style={{ position: 'absolute', right: PAD + 6, top: 128, width: 452, height: 566, transform: 'rotate(-2.2deg)', zIndex: 4 }}>
+        <div style={{ position: 'absolute', inset: 0, background: W.paper, boxShadow: '0 30px 54px -28px rgba(90,52,26,.55)' }} />
+        <div style={{ position: 'absolute', inset: 18, background: `radial-gradient(120% 120% at 34% 26%,${W.blob})`, overflow: 'hidden' }}>
+          <Tex k={W.tex} c={W.texC} z={1} o={0.8} />
+        </div>
+        <img src={char.url} alt="" crossOrigin="anonymous" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 26, height: 496, maxWidth: 'none', objectFit: 'contain', zIndex: 2, filter: die8('#fffdf8') }} />
+        {/* 우표 액면가 — 진짜 우표엔 반드시 있다. 없으면 그냥 「네모 사진」이 된다 */}
+        <div style={{ position: 'absolute', left: 30, top: 26, zIndex: 3, fontFamily: 'Jua, sans-serif', fontSize: 30, color: W.paper, textShadow: '0 2px 6px rgba(60,34,18,.5)' }}>한끼</div>
+        <div style={notch('top')} /><div style={notch('bottom')} /><div style={notch('left')} /><div style={notch('right')} />
+      </div>
+      {brand(W.brand)}
+      {/* ✍️ 받는 사람 줄 — 엽서의 문법. 글자를 안 쓰고 «줄»만 그어야 배경으로 물러난다.
+          ⚠️ 자리 = 우표 «왼쪽». 첫 판엔 아래(top 742)에 뒀는데 제목·CTA와 겹쳐 안 보였다(눈으로 잡음). */}
+      <div style={{ position: 'absolute', left: PAD, top: 236, width: 452, zIndex: 5 }}>
+        {[0, 1, 2].map((i) => <div key={i} style={{ height: 3, background: W.pt, opacity: 0.26, margin: '0 0 46px', width: `${100 - i * 13}%` }} />)}
+      </div>
+      {/* 🔖 소인(도장) — 제목 «오른쪽 아래»에 걸친다. 우표(우상) → 제목(좌하) → 소인(우하) 대각선.
+          ⛔ 첫 판은 우표 위에 겹쳐 뒀는데 우표의 「한끼」와 부딪히고 글자가 뭉갰다(눈으로 잡음). */}
+      <div style={{ position: 'absolute', right: PAD + 8, top: 790, width: 268, height: 268, borderRadius: '50%', border: `6px solid ${W.pt}`, opacity: 0.8, transform: 'rotate(-11deg)', zIndex: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: W.pt, fontFamily: 'Jua, sans-serif' }}>
+        <div style={{ fontSize: 25, letterSpacing: 5 }}>HANKKI</div>
+        <div style={{ width: 178, height: 3, background: W.pt, margin: '11px 0' }} />
+        <div style={{ fontSize: 46, lineHeight: 1 }}>늦가을</div>
+        <div style={{ fontSize: 22, letterSpacing: 4, marginTop: 8 }}>11 · NOV</div>
+      </div>
+      <div style={{ position: 'absolute', left: PAD, top: 726, right: 330, zIndex: 6 }}>
+        <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 42, color: W.sub }}>{W.kick}</div>
+        <div style={{ marginTop: 2, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.98, letterSpacing: -3, color: W.ink, wordBreak: 'keep-all' }}>
+          {l1}{l2 && <><br /><span style={{ color: W.pt }}>{l2}</span></>}
+        </div>
+        <div style={{ marginTop: 26 }}>{chips(W.chipRing, W.chipInk)}</div>
+      </div>
+      {more(W.ink, W.sub)}{foot(W.footWm)}
+    </>)
+  }
+
+  // ═══ 🅑 티켓(ticket) — 절취선 · 좌우 펀치 홈 · 위 스텁 ═══
+  //    ⭐ 「오늘 한 끼를 해냈다」는 **입장권**. 수집카드(night)와 달리 «쓰고 버리는 종이»의 결이다.
+  //    ⚠️ 펀치 홈은 배경색 원이라 여기도 `W.bg` 가 납작한 한 색이라야 한다.
+  if (K.key === 'ticket') {
+    const hs = headSize([`${l1} ${l2}`.trim()], 118, 1080 - PAD * 2 - 80)
+    const CUT = 392   // 절취선 y — 스텁과 본판을 가르는 자리
+    return shell(W.bg, <>
+      <Tex k={W.tex} c={W.texC} z={0} />
+      {grain}
+      <div style={{ position: 'absolute', inset: 46, borderRadius: 28, background: W.paper, boxShadow: '0 34px 60px -30px rgba(90,44,28,.5)', overflow: 'hidden', zIndex: 2 }}>
+        <Tex k={W.tex} c={W.texC} z={1} o={0.7} />
+        {/* 🎟 위 스텁 = 색 띠. 큰 색면이 이 시스템의 심장이다 */}
+        <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: CUT - 46, background: `linear-gradient(158deg,${W.blob})`, zIndex: 2 }}>
+          <Tex k={W.tex} c={W.texC} z={1} o={0.55} />
+        </div>
+      </div>
+      {/* ✂️ 절취선 ＋ 좌우 펀치 홈 */}
+      <div style={{ position: 'absolute', left: 96, right: 96, top: CUT, height: 4, zIndex: 6, backgroundImage: `repeating-linear-gradient(90deg,${W.pt} 0 16px,transparent 16px 34px)`, opacity: 0.5 }} />
+      <div style={{ position: 'absolute', left: 46 - 34, top: CUT - 34, width: 68, height: 68, borderRadius: '50%', background: W.bg, zIndex: 7 }} />
+      <div style={{ position: 'absolute', right: 46 - 34, top: CUT - 34, width: 68, height: 68, borderRadius: '50%', background: W.bg, zIndex: 7 }} />
+      {/* 스텁 글자 — 흰 글자를 색 띠 위에 */}
+      <div style={{ position: 'absolute', left: 96, top: 104, right: 96, zIndex: 8, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontFamily: 'Jua, sans-serif', fontSize: 34, color: W.onBlob, letterSpacing: 1 }}>한끼</div>
+          <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 44, color: W.onBlob, opacity: 0.92, marginTop: 10 }}>{W.kick}</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontFamily: 'Jua, sans-serif', fontSize: 56, lineHeight: 0.92, color: W.onBlob }}>No.{String(no).padStart(2, '0')}</div>
+          <div style={{ fontSize: 20, letterSpacing: 5, color: W.onBlob, opacity: 0.78, marginTop: 6 }}>ADMIT ONE</div>
+        </div>
+      </div>
+      {hero({ left: '50%', transform: 'translateX(-50%)', top: CUT + 26, height: 528, filter: die8('#fffdf8') })}
+      <div style={{ position: 'absolute', left: 96, right: 96, top: 992, textAlign: 'center', zIndex: 8 }}>
+        <div style={{ fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 1.0, letterSpacing: -2, color: W.ink, wordBreak: 'keep-all' }}>{l1} {l2}</div>
+        <div style={{ marginTop: 20 }}>{metabar(W.metaInk, W.metaDot)}</div>
+      </div>
+      {more(W.ink, W.sub)}{foot(W.footWm)}
+    </>)
+  }
+
+  // ═══ 🅒 첫눈(snow) — 눈 언덕 두 겹 · 밝은 하늘 ═══
+  //    ⭐ `night`(어두운 밤)의 «반대짝». 겨울 카드가 다 어두우면 서랍이 무거워진다.
+  //    ⛔ 눈송이를 많이 뿌리지 않는다 — 카드 디자인시스템 §0 *"소품을 많이 붙여 채우려 한 게 실수"*.
+  if (K.key === 'snow') {
+    const hs = headSize([l1, l2], 138, 1080 - PAD * 2 - 40)
+    return shell(W.bg, <>
+      {grain}
+      {[[112, 250, 7], [318, 168, 5], [846, 214, 8], [700, 120, 5], [206, 430, 5], [960, 366, 6], [438, 300, 4], [92, 596, 5], [906, 560, 4]].map((s, i) => (
+        <div key={i} style={{ position: 'absolute', left: s[0], top: s[1], width: s[2] * 2, height: s[2] * 2, borderRadius: '50%', background: '#ffffff', opacity: 0.9, boxShadow: '0 0 14px rgba(255,255,255,.9)', zIndex: 2 }} />
+      ))}
+      {/* ⛰ 눈 언덕 두 겹 — 뒤가 회색빛, 앞이 흰색이라야 «쌓인» 느낌이 난다(한 겹이면 그냥 흰 띠) */}
+      <div style={{ position: 'absolute', left: -180, right: -180, top: 760, height: 900, borderRadius: '50% 50% 0 0 / 42% 42% 0 0', background: W.hillBack, zIndex: 3 }} />
+      <div style={{ position: 'absolute', left: -260, right: -60, top: 892, height: 900, borderRadius: '50% 50% 0 0 / 38% 38% 0 0', background: W.hillFront, boxShadow: '0 -14px 34px -18px rgba(90,110,140,.35)', zIndex: 4 }} />
+      {/* 🌤 옅은 해 — 하늘 위쪽이 텅 비어 보였다(눈으로 잡음). 소품을 «더» 붙이는 대신 큰 면 하나로 채운다 */}
+      <div style={{ position: 'absolute', right: -120, top: -110, width: 520, height: 520, borderRadius: '50%', background: 'radial-gradient(circle at 40% 42%,rgba(255,255,255,.95),rgba(255,255,255,0) 70%)', zIndex: 1 }} />
+      {brand(W.brand)}{stamp(W.pt, '첫눈', '한 끼')}
+      <div style={{ position: 'absolute', left: PAD, top: 168, right: 330, zIndex: 6 }}>
+        <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 44, color: W.sub }}>{W.kick}</div>
+        <div style={{ marginTop: 2, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.98, letterSpacing: -3, color: W.ink, wordBreak: 'keep-all' }}>
+          {l1}{l2 && <><br /><span style={{ position: 'relative', display: 'inline-block', color: W.pt }}>
+            <span style={{ position: 'absolute', left: -4, right: -4, bottom: 6, height: 20, background: W.pt, opacity: 0.2, borderRadius: 6 }} />
+            <span style={{ position: 'relative' }}>{l2}</span></span></>}
+        </div>
+        <div style={{ marginTop: 28 }}>{chips(W.chipRing, W.chipInk)}</div>
+      </div>
+      {hero({ left: '50%', transform: 'translateX(-50%)', bottom: 300, height: 560, filter: die8('#fffdf8') })}
+      {more(W.ink, W.sub)}{foot(W.footWm)}
     </>)
   }
 
