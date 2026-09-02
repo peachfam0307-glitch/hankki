@@ -16,6 +16,8 @@
 //   ⏳ 2단계(붙여넣기 AI ＋ 보너스 열쇠)에서 열쇠를 세게 되면 그때 uid 를 싣는다.
 
 import { politeSteps } from './polish.js'
+// 🥄 「계량 기준」 잣대는 «한 곳»에서 온다 — 규칙 파서와 AI 결과가 같은 말을 써야 한다.
+import { KIJUN_LINE, collapseRepeatedSyllables } from './parseRecipe.js'
 
 // ✅ 2026-08-29 워커를 세우고 주소를 넣었다.
 //   실물 확인 = 창업자가 주소창에 쳐서 {"error":"method_not_allowed"} 를 봤다(= 우리 코드가 살아 있다).
@@ -224,11 +226,25 @@ export function 분량되살리기 (ai재료 = [], 파서재료 = []) {
   })
 }
 
+/** 🥄 AI 걸음에서 걸러낸 「계량 기준」 줄을 «메모 끝»에 옮겨 붙인다.
+ *   ⛔ 이미 메모에 있으면 또 넣지 않는다 — 규칙 파서가 먼저 같은 줄을 메모로 보내 놨을 수 있다
+ *      (그대로 두면 창업자 메모에 같은 줄이 두 번 뜬다). */
+function 계량줄옮기기 (메모, 걸음들) {
+  const 있던것 = String(메모 || '')
+  const 옮길것 = (걸음들 || [])
+    .map((s) => String(s).trim())
+    .filter((s) => s && KIJUN_LINE.test(s) && !있던것.includes(s))
+  if (!옮길것.length) return 메모
+  return [있던것, ...옮길것].filter(Boolean).join('\n')
+}
+
 export function mergeTidy(r, ai) {
   if (!ai) return r
   return {
     ...r,
-    title: ai.title || r.title,
+    // 🏷 AI 가 제목을 못 주면 **규칙 파서 제목이 살아난다** — 창업자 짬뽕밥에서 이 자리가 값을 했다
+    //    (AI 는 제목을 안 줬고 규칙 파서가 `#짬뽕밥` 을 잡았다).
+    title: collapseRepeatedSyllables(ai.title || '') || r.title,
     // 🥄 AI 재료를 쓰되 «분량은 규칙 파서 것으로 되살려서» 쓴다 (창업자 제보 2026-08-31 · 위 주석)
     ingredients: ai.ingredients.length ? 분량되살리기(ai.ingredients, r.ingredients) : r.ingredients,
     // ✍️✍️ **[2026-08-29 · 창업자가 오타로 찾아낸 구멍] AI 걸음도 «문체 다듬기»를 거친다.**
@@ -238,8 +254,13 @@ export function mergeTidy(r, ai) {
     //      우리 앱엔 해요체 표준도 있고 배포 게이트(check-steps.mjs)까지 있는데 **AI 만 그 밖에 있었다.**
     //   ⭐ 얹는 자리가 «한 곳»이라 여기 한 줄이면 두 문(공유받기·편집 캡처)이 같이 고쳐진다.
     //   ⛔ 사전에 없는 말은 «안 건드린다» — 안 바꾸는 게 잘못 바꾸는 것보다 낫다(polish.js 원칙).
-    steps: ai.steps.length ? politeSteps(ai.steps) : r.steps,
-    memo: ai.memo || r.memo,
+    // 🥄🥄 **[2026-09-02 · 창업자 짬뽕밥] AI 는 「계량 기준」 줄을 «걸음 1번»으로 준다.**
+    //   📮 창업자 폰 화면 = 1번 「계랑스푼 기준(1T:15ml, 1t:5ml)」 — 규칙 파서는 메모로 보냈는데
+    //      **AI 결과가 그 위에 도로 얹혔다.** 잣대가 한쪽에만 있으면 이렇게 «고친 게 되돌아온다».
+    //   ⭐ 그래서 규칙 파서와 «같은 잣대»(`KIJUN_LINE`)를 여기서도 쓴다.
+    //   ⛔ 버리지 않고 **메모로 옮긴다** — 「1T 가 15ml」는 진짜 필요한 정보다.
+    steps: ai.steps.length ? politeSteps(ai.steps.filter((s) => !KIJUN_LINE.test(String(s)))) : r.steps,
+    memo: 계량줄옮기기(ai.memo || r.memo, ai.steps),
   }
 }
 

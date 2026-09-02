@@ -261,6 +261,24 @@ function splitMergedIng(s) {
 }
 
 // 특수문자·기호(외계어의 원인)를 제거 — 완성형 한글·영문·숫자 + 요리에 흔한 문장부호만 남긴다.
+// 🌶🌶 **[2026-09-02 · 창업자 확정] 같은 글자가 세 번 넘게 이어지면 한 번으로 줄인다.**
+//   📮 창업자 = *"제목이랑 후추추추추ㅋ"* — 사진에서 가져온 재료 줄이 **「후추추추추」** 였다.
+//   ⭐ 이건 OCR 오독이 아니라 **원 글쓴이가 그렇게 쓴 것**(강조). 그래도 «재료 이름»으로는 못 쓴다 —
+//      장보기 담기·검색이 낱말로 걸리는데 「후추추추추」로는 **「후추」 제품에 안 닿는다.**
+//   ⛔ 원문을 잃지 않는다 — `rawText` 에 통째로 남는다(2026-08-22 부터). 여기서 줄이는 건 «보이는 줄»뿐이다.
+//   🔢 **넣기 «전»에 우리 레시피 전수로 오탐을 쟀다** = 3,197줄 중 **0건**(3·4·5번 반복 전부 0).
+//      그러니 이 규칙이 기존 레시피를 건드릴 일은 없다.
+//   ⚠️ 정직하게 — 「팍팍팍」 같은 «맛깔나는 반복»도 「팍」이 된다. 창업자가 갈래 셋 중
+//      「재료 줄에서만」이 아니라 **「정리한다」**를 골랐다(2026-09-02). 그 판정대로 재료·걸음 둘 다 적용.
+//   ⛔ 한글 «한 글자»가 이어질 때만 본다 — 「아주아주」(두 글자 되풀이)·「ㅋㅋㅋ」(자모)는 안 건드린다.
+export function collapseRepeatedSyllables(s) {
+  return String(s).replace(/([가-힣])\1{2,}/g, '$1')
+}
+
+/** 🥄 「계량 기준」 줄 — 제목도 걸음도 아니고 «메모»다. 쓰는 곳이 둘(규칙 파서 · AI 결과)이라 여기 한 곳에 둔다.
+ *   ⛔ 잣대가 둘로 갈리면 **규칙 파서는 걸러내는데 AI 판이 도로 얹는다**(창업자 폰이 그 상태였다). */
+export const KIJUN_LINE = /(계량|계랑)[^\n]{0,10}기준/
+
 function sanitize(s) {
   return String(s)
     // ⭐ [2026-08-28] 「·」를 살린다 — 창업자 실물(공심채볶음)에서 「국간장·일반 액젓」이
@@ -515,7 +533,9 @@ export function keepRaw(text) {
 
 export function parseRecipeText(raw = '', opts = {}) {
   const { fromOcr = false } = opts
-  const text = normalizeNumerals(String(raw))
+  // 🌶 같은 글자 되풀이(「후추추추추」)를 여기서 한 번에 줄인다 — 재료·걸음·메모·제목이 다 이 물을 탄다.
+  //    ⛔ `rawText`(원문 보관)는 이 함수를 «안» 거친다(`keepRaw` 가 원문을 그대로 받는다) → 원문은 안 상한다.
+  const text = collapseRepeatedSyllables(normalizeNumerals(String(raw)))
     .replace(/\r/g, '')
     .replace(/(\d)\s*<\s*9/g, '$1kg') // OCR 단골 오독: "1kg" → "1<9"
     .trim()
@@ -562,7 +582,18 @@ export function parseRecipeText(raw = '', opts = {}) {
     //   ⚠️ 「첫 줄」은 «지금까지 담은 게 화면 찌꺼기뿐일 때»다 — 스크린샷은 맨 위가 늘 「KT 11:27」이라
     //      그걸 세면 진짜 첫 줄이 둘째가 되어 제목 가지가 영영 안 돈다(창업자 원문이 그 경우였다).
     const 아직내용없다 = items.every((it) => SCREEN_CHROME.test(it.l))
-    const 첫줄태그제목 = 아직내용없다 && 태그수 === 1 && /^\s*#\S/.test(rawLine)
+    //   ⛔⛔ **[2026-09-02 · 창업자 짬뽕밥 원문] 「첫 줄」만 보면 놓친다.**
+    //      📮 창업자 폰 = 사진에서 가져오니 제목이 **「사진 레시피」** 그대로였다.
+    //      🔢 원문 첫 줄이 「계랑스푼 기준(1T:15ml, 1t:5ml)」이라 **`#짬뽕밥` 이 «둘째 줄»**이었다
+    //         → `아직내용없다` 가 거짓이 되어 이 줄이 **통째로 버려졌다**(제목 가지까지 못 갔다).
+    //      ⭐ 인스타 캡션은 계량 기준·인분 같은 «머리말»을 태그 앞에 다는 일이 흔하다.
+    //         그래서 **첫 줄이 아니라 «머리 몇 줄»** 로 넓힌다 — 계정명 떼기(`머리`)와 같은 잣대다.
+    //      ⛔ 넓히는 대신 조건은 그대로 세게 둔다 = **태그가 «하나»** ＋ **줄이 태그로 시작** ＋
+    //         **아직 제목이 없을 때**(아래 `tagTitle` 가 그 신호를 들고 간다).
+    //         꼬리에 붙는 태그 더미(「#집밥 #저녁」)는 태그수 ≥ 2 라 예전처럼 버려진다.
+    const 머리태그 = items.length < 4
+    const 태그하나 = 태그수 === 1 && /^\s*#\S/.test(rawLine)
+    const 첫줄태그제목 = 태그하나 && (아직내용없다 || 머리태그)
     if (!첫줄태그제목 && (/^\s*#\S/.test(rawLine) || 태그수 >= 2)) continue
     // 🔢 [2026-08-28] 숫자만 있는 줄 = 인스타 «좋아요·댓글·공유 수» 줄이다(「837 15 91 431」).
     //    ⛔ 내용이 아니라 화면 UI 다. 게다가 이게 «첫 줄»이 되면 아래 계정명 떼기가 안 돈다.
@@ -624,7 +655,10 @@ export function parseRecipeText(raw = '', opts = {}) {
     //    📌 안 도는 고침을 남기면 나중에 누가 지워도 아무도 모른다.
     // 짧은 섹션 헤더("팁" 1글자 등)는 잡음 필터에서 살려둔다 — 재료/순서 구분의 기준점.
     const isHeader = SEC_ING.test(l) || SEC_STEP.test(l) || SEC_MEMO.test(l)
-    if (isHeader || (l.length > 1 && !isGibberish(l))) { items.push({ l, bullet, emojiHead, stepMarked, checkMark, tipMarked, blankBefore: blankAhead }); blankAhead = false }
+    // 🏷 `tagTitle` = 「머리에 홀로 선 해시태그」 표시. **여기서 기억해 두지 않으면 사라진다** —
+    //    아래 `stripLead`·`sanitize` 가 `#` 을 벗겨서 그 뒤로는 태그였다는 사실을 알 길이 없다
+    //    (`stepMarked`·`tipMarked` 를 미리 재 두는 것과 같은 이유다).
+    if (isHeader || (l.length > 1 && !isGibberish(l))) { items.push({ l, bullet, emojiHead, stepMarked, checkMark, tipMarked, tagTitle: 첫줄태그제목, blankBefore: blankAhead }); blankAhead = false }
   }
 
   let title = ''
@@ -682,7 +716,7 @@ export function parseRecipeText(raw = '', opts = {}) {
   while (첫내용 < items.length && SCREEN_CHROME.test(items[첫내용].l)) 첫내용++
 
   for (let idx = 0; idx < items.length; idx++) {
-    const { l, bullet, emojiHead, stepMarked, checkMark, tipMarked, blankBefore } = items[idx]
+    const { l, bullet, emojiHead, stepMarked, checkMark, tipMarked, tagTitle, blankBefore } = items[idx]
 
     // 🧹🧹 [2026-08-28] 인스타 «화면 글자»는 제목도 재료도 순서도 될 수 없다 — 제일 먼저 버린다.
     //    📮 창업자 실물(차돌짬뽕) — 화면 맨 위의 「댓글 45」가 «제목»이 됐다.
@@ -703,6 +737,18 @@ export function parseRecipeText(raw = '', opts = {}) {
 
     // 📚 「레시피 출처: …」 은 밝히는 줄이라 메모로 보낸다(걸음이 아니다).
     if (SOURCE_LINE.test(l)) { other.push(l); lastWasBulletIng = false; continue }
+
+    // 🥄🥄 **[2026-09-02 · 창업자 짬뽕밥 원문] 「계량 기준」 줄은 제목도 걸음도 아니다 → 메모로.**
+    //   📮 창업자 원문 첫 줄 = `계랑스푼 기준(1T:15ml, 1t:5ml)`
+    //   ⛔ 실측 = 규칙 파서는 이 줄을 **제목**으로 삼았고(「계랑스푼 기준」),
+    //      AI 판은 **걸음 1번**으로 삼았다(창업자 폰 화면). **둘 다 틀렸다.**
+    //   ⭐ 이건 「무슨 요리인가」도 「무엇을 하는가」도 아니고 **「어떤 잣대로 쟀나」**다 → 메모 자리다.
+    //   ⛔ 이미 있던 절이름 목록(`계량`·`분량`·`계량법`)으로는 못 잡는다 — 그건 **그 낱말 하나일 때만**이라
+    //      「계«랑»스푼 기준」처럼 **오타가 섞이고 뒷말이 붙으면** 안 걸린다(실측).
+    //   ⚠️ 「계랑」은 OCR 오독이 아니라 **원문에 그렇게 적혀 있다** — 그래서 둘 다 받는다.
+    //   ⛔ 좁게 잡는다 = **「계량/계랑」 ＋ 「기준」이 «한 줄에» 있을 때만.**
+    //      「계량컵으로 물을 담아요」 같은 조리 문장은 「기준」이 없어 안 걸린다.
+    if (KIJUN_LINE.test(l)) { other.push(l); lastWasBulletIng = false; continue }
     if (PORTION_ONLY.test(l)) { lastWasBulletIng = false; continue }
 
     // 🧾🧾 [2026-08-28] 「재료: A, B, C」 «한 줄 나열»형 — 콤마로 쪼개 재료로 담는다.
@@ -724,7 +770,9 @@ export function parseRecipeText(raw = '', opts = {}) {
     // 첫 줄 제목 — 이모지 붙은 짧은 이름("🍷 양념장")이나 "X 만드는 법/레시피" 배너면 제목으로.
     // 섹션명(양념장)과 겹쳐도 제목을 우선한다. "재료"처럼 신호 없는 헤더는 안 가로챈다.
     // ⚠️ 24자는 「시아버지가 전수해준 홍콩식 가지 볶음」(25자) 같은 실제 인스타 제목을 놓친다 → 32자까지.
-    if (idx === 첫내용 && !title && /[가-힣]/.test(l) && l.length <= 32 && !bullet) {
+    // ⭐ [2026-09-02] 「첫 줄」이 아니어도 **머리에 홀로 선 해시태그**면 제목 가지를 태운다.
+    //    ⛔ 넓힌 건 «태그가 붙은 줄» 하나뿐이다 — 신호 없는 줄이 셋째·넷째에서 제목을 채가지 않는다.
+    if ((idx === 첫내용 || tagTitle) && !title && /[가-힣]/.test(l) && l.length <= 32 && !bullet) {
       // #️⃣ **[2026-08-31 · 창업자 삼치 원문] 해시태그 하나로 시작하는 첫 줄이 제목이다.**
       //   📮 창업자 캡처 = `#삼치간장조림 레시피` → 제목이 **「계량」**이 됐다(그 다음 줄을 집었다).
       //   🔢 실측으로 갈랐다 — `#` 만 빼면 「삼치간장조림」이 제대로 잡힌다. 즉 «해시태그가 범인»이다.
