@@ -1036,12 +1036,27 @@ function reducer(state, action) {
     }
 
     // 백업 불러오기 — 저장된 데이터로 전체 교체(기본값과 병합해 누락 방지)
+    //
+    // 🔢🔢 **[2026-09-02] 「이사 도장」을 «같이» 넘긴다 — 안 넘기면 복원할 때마다 전부 다시 돈다.**
+    //   ⛔⛔ 그 전엔 `politeV·qtyOnlyV·inboxV·coverV·sampleGone` 이 **하나도 안 넘어갔다.**
+    //      그래서 백업을 되살리면 이사 다섯이 **처음부터 또** 돌았다 —
+    //      · `inboxV` = 임시보관함에 «일부러» 남겨둔 것이 통째로 졸업한다
+    //      · `coverV` = 유저가 「사진」 칩으로 도로 세운 표지 도장이 또 지워진다
+    //      · `sampleGone` = **지운 샘플 일기가 되살아난다**(창업자 2026-08-12 *"지워도 되게"* 가 깨진다)
+    //   ⭐ 값은 **큰 쪽으로** 고른다 — 옛 백업(도장 없음)을 되살려도 «지금 폰이 이미 한 이사»를 다시 하지 않는다.
+    //   📌 규칙 18 ⓙ 의 짝이다 — 「새로 까는 사람」이 아니라 **「되살리는 사람」**을 본 것.
     case 'importAll': {
       const d = action.data || {}
       if (!Array.isArray(d.recipes)) return state
       return {
         seedV: Math.max(state.seedV || 0, d.seedV || 0, BASICS_VERSION),
         memoCleanV: Math.max(state.memoCleanV || 0, d.memoCleanV || 0),
+        politeV: Math.max(state.politeV || 0, d.politeV || 0),
+        qtyOnlyV: Math.max(state.qtyOnlyV || 0, d.qtyOnlyV || 0),
+        inboxV: Math.max(state.inboxV || 0, d.inboxV || 0),
+        coverV: Math.max(state.coverV || 0, d.coverV || 0),
+        // 🧹 샘플은 «둘 중 하나라도» 지웠으면 지운 것이다(되살아나면 안 된다)
+        sampleGone: !!(state.sampleGone || d.sampleGone),
         removedSeedIds: d.removedSeedIds || state.removedSeedIds || [],
         recipes: d.recipes,
         folders: d.folders || defaultFolders(d.recipes),

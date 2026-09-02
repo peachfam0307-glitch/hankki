@@ -22,5 +22,15 @@ export async function 백업만들기(store) {
     shops: store.shops, wishlist: store.wishlist, shoppingList: store.shoppingList, pantry: store.pantry,
     diary: await 백업용잠그기(store.diary, 일기글자칸),
     seedV: store.seedV, memoCleanV: store.memoCleanV, removedSeedIds: store.removedSeedIds,
+    // 🔢🔢 **[2026-09-02] 「이사 도장」도 담는다 — 안 담으면 되살릴 때 이사가 «처음부터 또» 돈다.**
+    //   ⛔⛔ 그 전엔 이 다섯이 백업에도 없고 `importAll` 도 안 넘겨서, 백업을 되살리면
+    //      · 임시보관함에 «일부러» 남겨둔 것이 통째로 졸업하고(`inboxV`)
+    //      · 유저가 「사진」 칩으로 세운 표지 도장이 또 지워지고(`coverV`)
+    //      · **지운 샘플 일기가 되살아났다**(`sampleGone` · 창업자 2026-08-12 *"지워도 되게"*)
+    //   ⭐ 되살리는 쪽(`store.jsx` `importAll`)은 **큰 값으로** 고른다 —
+    //      도장이 없던 «옛 백업»을 되살려도 지금 폰이 이미 한 이사를 다시 하지 않는다.
+    //   📌 이 파일 머리말이 말하는 그대로다 — **한 곳에서 만들어야 한쪽만 낡지 않는다.**
+    politeV: store.politeV, qtyOnlyV: store.qtyOnlyV, inboxV: store.inboxV,
+    coverV: store.coverV, sampleGone: store.sampleGone,
   }
 }
