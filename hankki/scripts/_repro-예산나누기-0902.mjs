@@ -21,7 +21,7 @@
 // 실행: node scripts/_repro-예산나누기-0902.mjs   (exit 0 = 통과)
 // 🏷 이름표 = 반영됨
 import worker from '../ocr-proxy/worker-tidy.js'
-import { tidyRecipe } from '../src/tidy.js'
+import { tidyRecipe, tidyTail } from '../src/tidy.js'
 
 let 통과 = 0
 let 실패 = 0
@@ -70,6 +70,9 @@ console.log('② 예산이 모자라면 «다음» 모델을 안 부른다')
   const b = await 워커돌리기({ budgetMs: 600 })
   칸('부른 모델이 «하나»뿐이다', b.부른모델.length === 1, b.부른모델)
   칸('이유가 「budget_out」이다', b.몸 && b.몸.error === 'budget_out', b.몸)
+  // 📢 창업자가 «로그를 안 켜고도» 알 수 있어야 한다(2026-09-02 *"매번 저걸 켜둬야해??"* · 규칙 8)
+  칸('어느 모델에서 멈췄는지 «응답»에 실려 온다', b.몸 && typeof b.몸.model === 'string' && b.몸.model.length > 0, b.몸 && b.몸.model)
+  칸('몇 ms 썼는지도 실려 온다', b.몸 && Number(b.몸.ms) > 0, b.몸 && b.몸.ms)
 }
 
 console.log('③ ⛔ 예산이 아무리 적어도 «첫» 모델은 부른다')
@@ -96,6 +99,39 @@ console.log('④ 앱이 「남은 예산」을 실어 보낸다')
     칸('앱이 기다리는 시간을 안 넘는다', b.budgetMs <= 60000, b.budgetMs)
     칸('글자도 같이 보낸다(옛 칸을 안 깨뜨렸다)', typeof b.text === 'string' && b.text.length > 0)
   } finally { globalThis.fetch = 옛fetch }
+}
+
+console.log('⑤ 창업자가 «로그를 안 켜고» 화면에서 안다')
+{
+  // 📮 창업자 = *"매번 저걸 켜둬야해??"* → ⛔로그 스트림을 상시로 켜두게 하지 않는다(규칙 8).
+  //   워커가 준 「어디서·몇 초」가 운영자 토스트 꼬리에 그대로 붙어야 한다.
+  const 옛fetch = globalThis.fetch
+  const 옛localStorage = globalThis.localStorage
+  globalThis.localStorage = { getItem: (k) => (k === 'hankki:founder' ? 'x' : null), setItem() {}, removeItem() {} }
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({ error: 'budget_out', why: '', model: '@cf/google/gemma-4-26b-a4b-it', ms: 41200 }),
+  })
+  try {
+    await tidyRecipe(글)
+    const 꼬리 = tidyTail()
+    칸('토스트에 이유가 뜬다', /budget_out/.test(꼬리), 꼬리)
+    칸('토스트에 «모델 이름»이 뜬다', /gemma/.test(꼬리), 꼬리)
+    칸('토스트에 «걸린 초»가 뜬다', /41\.2초/.test(꼬리), 꼬리)
+  } finally { globalThis.fetch = 옛fetch; globalThis.localStorage = 옛localStorage }
+}
+
+console.log('⑥ ⛔ 옛 워커와 섞여도 안 깨진다')
+{
+  const 옛fetch = globalThis.fetch
+  const 옛localStorage = globalThis.localStorage
+  globalThis.localStorage = { getItem: (k) => (k === 'hankki:founder' ? 'x' : null), setItem() {}, removeItem() {} }
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ error: 'timeout' }) }) // model·ms 를 «안» 주는 옛 워커
+  try {
+    await tidyRecipe(글)
+    const 꼬리 = tidyTail()
+    칸('이유만 뜨고 «undefined」 같은 게 안 샌다', /timeout/.test(꼬리) && !/undefined|NaN/.test(꼬리), 꼬리)
+  } finally { globalThis.fetch = 옛fetch; globalThis.localStorage = 옛localStorage }
 }
 
 console.log(`\n${통과}/${통과 + 실패} 통과`)
