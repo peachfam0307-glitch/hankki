@@ -27,6 +27,8 @@ import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 //    앨범을 누르면 «그날 일기»로 가고(화면 이름이 「한끼 일기」다), 둘 다 «레시피 상세»에 그대로 있다.
 //    (DiaryEntrySheet · ReviewAskSheet · shouldAskReview import 제거)
 import { dateLabel, matchKo } from '../utils'
+// 📺 「영상」 칩이 쓰는 잣대 — 상세에서 재생하는 것과 «같은 자»다(절대원칙 30)
+import { embedUrl } from '../embed'
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
@@ -247,6 +249,13 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   // 스마트 폴더 — ★즐겨찾기 / 🍳자주 해먹는. 실제 폴더와 안 겹치게 '__' 접두 키를 쓴다.
   const favCount = sorted.filter((r) => r.favorite).length
   const oftenCount = sorted.filter((r) => (r.cooked || 0) > 0).length
+  // 📺 [창업자 확정 2026-09-03] 「영상」 칩 — 유튜브 영상이 붙은 레시피만 모아 본다.
+  //   📮 창업자 = *"홈 화면에 SNS레시피 해서 추가하면 되니까"* → *"탭을 따로 만들필요가 있을까??"* → **"칩으로 하자"**
+  //   ⛔ 탭을 새로 만들지 않는다 — 하단바가 이미 여섯이고, 무엇보다 **레시피가 두 군데로 갈리면**
+  //      검색·책갈피·장보기 담기가 전부 두 벌이 된다. 칩은 «같은 목록»을 거르기만 한다.
+  //   ⭐ 잣대는  — **상세에서 실제로 재생되는 것과 «같은 자»다**(절대원칙 30).
+  //      ⛔ 「sourceUrl 에 youtube 가 들었나」로 세면 안 된다 — 그러면 칩엔 뜨는데 영상은 안 나오는 편이 생긴다.
+  const 영상수 = useMemo(() => sorted.filter((r) => embedUrl(r.sourceUrl || '')?.type === 'youtube').length, [sorted])
   // 🔖🔖 [2026-08-18] 책갈피가 카드 «위로 14px» 나가므로 그만큼 자리를 비운다.
   //   ⛔ 안 비웠더니 **맨 윗줄 책갈피가 필터 칩 줄에 가렸다**(실측 = 큰 2건 · 작은 3건).
   //   ⭐ 줄 사이도 같은 이유로 벌린다 — 아랫줄 책갈피가 «윗줄 이름표 «글자»»를 덮었다.
@@ -271,9 +280,11 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     : folder === '전체' ? sorted
       : folder === '__fav' ? sorted.filter((r) => r.favorite)
       : folder === '__often' ? sorted.filter((r) => (r.cooked || 0) > 0).sort((a, b) => (b.cooked || 0) - (a.cooked || 0))
+      : folder === '__video' ? sorted.filter((r) => embedUrl(r.sourceUrl || '')?.type === 'youtube')
       : sorted.filter((r) => (r.folder || r.category) === folder)
   const countIn = (name) => sorted.filter((r) => (r.folder || r.category) === name).length
-  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__often' && !DEFAULT_FOLDERS.has(folder)
+  // ⛔ 새 칩 열쇠()를 여기 «안» 넣으면 「폴더 삭제」 단추가 뜬다 — 폴더가 아닌데 폴더로 읽힌다
+  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__often' && folder !== '__video' && !DEFAULT_FOLDERS.has(folder)
 
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
   // 📔📔 **요리 기록과 다이어리를 가른다** — 둘 다 `diary` 배열에 살고 `kind` 로만 구분된다.
@@ -734,6 +745,12 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             )}
             {oftenCount > 0 && (
               <button className={`pill press ${folder === '__often' ? 'active' : ''}`} onClick={() => setFolder('__often')}>자주 {oftenCount}</button>
+            )}
+            {영상수 > 0 && (
+              <button className={`pill press ${folder === '__video' ? 'active' : ''}`} onClick={() => setFolder('__video')}>
+                <Icon name="play" size={13} />
+                영상 {영상수}
+              </button>
             )}
             {folders.map((c) => (
               <button key={c} className={`pill press ${folder === c ? 'active' : ''}`} onClick={() => setFolder(c)}>{c} {countIn(c)}</button>
