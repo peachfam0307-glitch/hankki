@@ -207,4 +207,103 @@ if (전) {
   console.log(`   ${후 && 후.w < 전.w ? `✅ 줄었다 (${전.w} → ${후.w})` : '⛔ 안 줄었다 — 손잡이 자리를 다시 봐야 한다'}`)
 }
 
+// ── ⑥ 🎨 배경 「클레이」 — 창업자 표지의 그 갈색(#c2a288 · 색값을 대봤다)
+//    ⛔ 「크라프트」가 아니다 — 그건 #eee2d0 으로 훨씬 밝다.
+//       ⭐ 이름 느낌으로 고르지 않는다 — 배경 13개의 색값을 전부 뽑아 대봤다.
+결과.배경탭 = await 탭누르기('배경')
+await p.waitForTimeout(800)
+결과.배경 = await p.evaluate(() => {
+  const b = [...document.querySelectorAll('button, [role="button"]')]
+    .find((x) => (x.innerText || '').trim() === '클레이')
+  if (!b) return false
+  b.scrollIntoView({ block: 'center' }); b.click(); return true
+})
+await p.waitForTimeout(900)
+await 찍기('배경-클레이')
+
+// ── ⑦ 🌰 데코 — 솔방울(au_i29) · 창업자 표지에 있던 그것
+//    ⭐ 「가을 소품」이 아니라 «가을 단풍·낙엽» 묶음에 있었다(컨택트시트를 열어서 찾았다).
+결과.데코탭 = await 탭누르기('데코')
+await p.waitForTimeout(800)
+결과.솔방울 = await 열쇠로누르기('au_i29')
+await p.waitForTimeout(900)
+await 찍기('데코-솔방울')
+
+// ── ⑧ 🐻🐧 친구들 — 고구마 든 꼬르곰(au_b28) · 밤송이 든 펭펭(au_b29)
+//    ⭐ 컨택트시트를 «열어서» 눈으로 골랐다(절대원칙 21) — 열쇠 이름만으론 누가 뭘 들었는지 모른다.
+결과.친구탭 = await 탭누르기('친구들')
+await p.waitForTimeout(800)
+결과.꼬르곰 = await 열쇠로누르기('au_b28')
+await p.waitForTimeout(900)
+결과.펭펭 = await 열쇠로누르기('au_b29')
+await p.waitForTimeout(1000)
+await 찍기('친구들-붙임')
+
+// ── ⑨ 🤏 자리 옮기기 — 붙이면 «전부 가운데»라 접시를 덮는다
+//    ⛔ 창업자 표지는 꼬르곰이 아래 왼쪽, 펭펭이 아래 오른쪽, 솔방울이 제목 옆이었다.
+//    ⭐ 끌어서 옮긴다 — 상태를 코드로 찌르지 않는다(절대원칙 30). 끄는 장면도 릴스에 쓴다.
+// ⛔⛔ **2026-09-03 사고: 「판」이라고 잡은 게 «레시피 목록 카드»였다.**
+//    `gr_440` 그림은 화면에 «둘» 있다 — 꾸미기 판 위 하나, 목록 카드 하나(y≈4530 · 화면 밖).
+//    첫 판이 뒤엣것을 잡아 좌표가 통째로 엉뚱했고, 스티커가 판 밖으로 밀려 잘렸다.
+//    ✅ **화면 «안»에 보이는 것만 고른다** — 아래 `보이는것()` 을 모든 자리에서 쓴다.
+//    📌 규칙 18 그대로 — 「없다」가 아니라 «내 확인 방식»이 틀렸다.
+const 보이는것 = (열쇠) => {
+  const 안 = (r) => r.width > 4 && r.height > 4 && r.bottom > 0 && r.top < window.innerHeight
+  return [...document.querySelectorAll('img')]
+    .filter((x) => new RegExp(`/${열쇠}[-.]`).test(x.currentSrc || x.src || ''))
+    .find((x) => 안(x.getBoundingClientRect()))
+}
+const 판재기 = async () => p.evaluate((소스) => {
+  // eslint-disable-next-line no-new-func
+  const 보이는것 = new Function('열쇠', `return (${소스})(열쇠)`)
+  const 음식 = 보이는것('gr_440')
+  let e = 음식
+  // 위로 올라가며 «가장 큰» 조상을 판으로 본다(판이 스티커보다 훨씬 크다)
+  let 판 = 음식 ? 음식.getBoundingClientRect() : document.body.getBoundingClientRect()
+  for (let k = 0; k < 6 && e; k++) {
+    const r = e.getBoundingClientRect()
+    if (r.width > 판.width && r.width < window.innerWidth) 판 = r
+    e = e.parentElement
+  }
+  return { x: 판.x, y: 판.y, w: 판.width, h: 판.height }
+}, 보이는것.toString())
+const 옮기기 = async (열쇠, 가로, 세로) => {
+  const 자리 = await p.evaluate(({ k, 소스 }) => {
+    // eslint-disable-next-line no-new-func
+    const 보이는것 = new Function('열쇠', `return (${소스})(열쇠)`)
+    const i = 보이는것(k)
+    if (!i) return null
+    const r = i.getBoundingClientRect()
+    return { cx: Math.round(r.x + r.width / 2), cy: Math.round(r.y + r.height / 2) }
+  }, { k: 열쇠, 소스: 보이는것.toString() })
+  if (!자리) return false
+  const 판 = await 판재기()
+  const tx = Math.round(판.x + 판.w * 가로)
+  const ty = Math.round(판.y + 판.h * 세로)
+  await p.mouse.move(자리.cx, 자리.cy)
+  await p.mouse.down()
+  for (let k = 1; k <= 10; k++) {
+    await p.mouse.move(자리.cx + (tx - 자리.cx) * k / 10, 자리.cy + (ty - 자리.cy) * k / 10)
+    await p.waitForTimeout(45)
+  }
+  await p.mouse.up()
+  await p.waitForTimeout(500)
+  return true
+}
+
+결과.옮김 = {}
+// ⚠️ 세로는 0.72 로 갔다가 «판 밖으로 잘렸다» — 스티커 자체가 높아서 중심이 0.72 면 아래가 넘친다.
+//    0.66 으로 당긴다(창업자 표지도 접시 «바로 아래»지 바닥이 아니었다).
+결과.옮김.꼬르곰 = await 옮기기('au_b28', 0.26, 0.66)   // 아래 왼쪽
+await 찍기('옮김-꼬르곰')
+결과.옮김.펭펭 = await 옮기기('au_b29', 0.74, 0.66)     // 아래 오른쪽
+await 찍기('옮김-펭펭')
+결과.옮김.솔방울 = await 옮기기('au_i29', 0.76, 0.20)   // 위 오른쪽(제목 옆)
+await 찍기('옮김-솔방울')
+console.log(`   옮김 = 꼬르곰 ${결과.옮김.꼬르곰 ? '✅' : '⛔'} · 펭펭 ${결과.옮김.펭펭 ? '✅' : '⛔'} · 솔방울 ${결과.옮김.솔방울 ? '✅' : '⛔'}`)
+
+결과.판위끝 = await 판위에()
+console.log(`   배경 ${결과.배경 ? '✅클레이' : '⛔'} · 솔방울 ${결과.솔방울 ? '✅' : '⛔'} · 꼬르곰 ${결과.꼬르곰 ? '✅' : '⛔'} · 펭펭 ${결과.펭펭 ? '✅' : '⛔'}`)
+console.log(`   판 위 = ${(결과.판위끝 || []).join(' · ')}`)
+
 await ctx.close(); await b.close(); srv.close()
