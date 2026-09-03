@@ -714,43 +714,72 @@ export default function RecipeDetailScreen({ id }) {
                ⭐ 맞는 말이다 — 조항이 막는 건 **«임베드(앱 안에서 틀기)»**이고, 그림은 임베드가 아니다.
                ⛔ 그래서 이 자리는 **`<img>` 하나 ＋ ▶ 표시**다. **`<iframe>` 을 다시 넣지 말 것.**
                ⛔ 그림이 안 오면(`onError`) 이 칸을 **통째로 감춘다** — 깨진 네모를 보여주지 않는다. */}
-        {영상 && 영상.type === 'youtube' && 영상.thumb && !썸네일깨짐 && (
+        {/* 📷📷 [창업자 확정 2026-09-04 · ⓐ] **인스타 편도 «같은 자리·같은 크기» 카드를 받는다.**
+            📮 창업자 = *"꽈리는 뜨고 광어는 안떠"* → 갈래 물으니 **ⓐ 그림 없는 같은 크기 카드**
+
+            🔢 왜 인스타엔 그림이 «없나» (실측 · 고장이 아니다)
+               · 유튜브 = `i.ytimg.com/vi/<영상id>/hqdefault.jpg` — **누구나 받을 수 있는 공개 주소**
+               · 인스타 = **그런 공개 주소가 없다.** 받으려면 앱 심사 ＋ 토큰 ＋ 서버가 붙는다
+                 (⛔우리 강점 「앱이 폰 안에서 다 돈다」를 깨는 값이다 · 절대원칙 32)
+               → 그래서 **그림을 지어내지 않는다.** 그 자리에 «매체 표»를 크게 놓는다.
+
+            ⭐ 카드 하나로 유튜브·인스타를 «같이» 그린다 — 두 벌로 적으면 한쪽이 반드시 낡는다
+               (2026-08-11 「마크업 두 번 안 적는다」와 같은 결)
+            ⛔ 인스타에 ▶ 를 안 붙인다 — 목록 표에서 이미 갈라 둔 잣대다(유튜브 ▶ · 그 밖 🔗).
+               앱에서 «재생»되는 건 없지만, ▶ 는 「영상 그림」 위에 얹힐 때만 말이 맞는다.
+            ⛔ 유튜브인데 그림이 안 오면(`onError`) **칸을 감추지 않고** 이 「그림 없는 판」으로 물러난다 —
+               감추면 문이 통째로 사라진다(2026-09-03 첫 판이 그랬다). */}
+        {영상 && (영상.type === 'youtube' || 영상.type === 'instagram') && (
           <>
             <div className="sec-head" style={{ marginTop: 14, marginBottom: 6 }}>
-              <SecTitle>영상으로 보기</SecTitle>
+              <SecTitle>{영상.type === 'youtube' ? '영상으로 보기' : '원본 보기'}</SecTitle>
             </div>
-            {/* ⛔ 카드 «전체»가 하나의 문이다 — 눌러서 유튜브 앱·웹으로 나간다(앱 안에서 안 튼다) */}
+            {/* ⛔ 카드 «전체»가 하나의 문이다 — 눌러서 그 앱·웹으로 나간다(앱 안에서 안 튼다) */}
             <button
               className="card press"
               onClick={() => openUrl(r.sourceUrl)}
               style={{ display: 'block', width: '100%', overflow: 'hidden', padding: 0, textAlign: 'left', border: 0 }}
             >
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: 'var(--cream)' }}>
-                <img
-                  src={영상.thumb}
-                  alt=""
-                  onError={() => set썸네일깨짐(true)}
-                  style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                {/* ▶ = 「누르면 영상으로 간다」는 표시.
-                    ⛔ 「플레이어를 가리지 마라」 조항은 여기 해당 없다 — 가릴 플레이어가 없다(그림이다). */}
-                <span
-                  aria-hidden="true"
-                  style={{
-                    position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    width: 54, height: 38, borderRadius: 10, background: 'rgba(0,0,0,.72)', color: '#fff',
-                  }}
-                >
-                  <Icon name="play" size={20} />
-                </span>
+              <div style={{
+                position: 'relative', width: '100%', aspectRatio: '16/9', background: 'var(--cream)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {영상.type === 'youtube' && 영상.thumb && !썸네일깨짐 ? (
+                  <>
+                    <img
+                      src={영상.thumb}
+                      alt=""
+                      onError={() => set썸네일깨짐(true)}
+                      style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    {/* ▶ = 「누르면 영상으로 간다」는 표시.
+                        ⛔ 「플레이어를 가리지 마라」 조항은 여기 해당 없다 — 가릴 플레이어가 없다(그림이다). */}
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 54, height: 38, borderRadius: 10, background: 'rgba(0,0,0,.72)', color: '#fff',
+                      }}
+                    >
+                      <Icon name="play" size={20} />
+                    </span>
+                  </>
+                ) : (
+                  /* 🖼 그림이 «없는» 자리 — 빈 칸으로 두지 않고 매체 표를 크게 놓는다.
+                     ⭐ 이게 「그림을 못 받았다」는 사실을 그대로 말한다(가짜 그림을 깔지 않는다). */
+                  <Icon name={영상.type === 'youtube' ? 'youtube' : 'instagram'} size={46} color="var(--sand)" />
+                )}
               </div>
               <div className="opt-row" style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}>
-                <Icon name="youtube" size={19} color="var(--brown)" />
+                <Icon name={영상.type === 'youtube' ? 'youtube' : 'instagram'} size={19} color="var(--brown)" />
                 <div className="t" style={{ fontSize: 16, minWidth: 0 }}>
-                  {r.sourceName
-                    ? <><b style={{ fontWeight: 700 }}>{r.sourceName}</b> · YouTube에서 보기</>
-                    : 'YouTube에서 보기'}
+                  {(() => {
+                    const 어디 = 영상.type === 'youtube' ? 'YouTube에서 보기' : '인스타그램에서 보기'
+                    return r.sourceName
+                      ? <><b style={{ fontWeight: 700 }}>{r.sourceName}</b> · {어디}</>
+                      : 어디
+                  })()}
                 </div>
                 <Icon name="chevron-right" size={17} color="var(--sand)" />
               </div>
