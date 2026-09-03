@@ -43,6 +43,8 @@ import { hlColor } from '../components/Stickers'
 import { FAV_NAME } from '../favName'
 import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
+// 📺 링크 → 앱 안에서 재생할 수 있는 «공식» 임베드 주소 (유튜브·인스타)
+import { embedUrl } from '../embed'
 
 // 🖍 절 제목 형광펜 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
 // ✅ **레몬 확정** — 창업자가 판단을 맡겨서(*"형광펜은 잘모르겠다.. 네가 판단해봐"*) «재서» 골랐다.
@@ -267,7 +269,17 @@ export default function RecipeDetailScreen({ id }) {
     addDiary(entry)
     cook(r.id)
     nav.showToast(표지사진 ? '만들었어요! 표지 사진도 일기에 담았어요' : '만들었어요! 한끼 일기에 남겼어요')
+    // 🚪 리뷰 문 — 「한 끼 해냈다」 (창업자 확정 2026-09-03)
+    //   ⛔⛔ 이건 **창업자 2026-08-06 확정(「토스트만, 시트 안 뜬다」)을 «뒤집은» 것**이다.
+    //      📮 창업자 2026-09-03 = *"각각 뭐라도 쓰면 리뷰쓰는 페이지가 나오게"* → 「만들었어요」를 콕 골랐다.
+    //   ⭐ 그래도 그때 없앤 마찰이 안 돌아오는 이유 = **30일에 한 번**이라 매번이 아니다.
+    //      그때 없앤 건 «누를 때마다 뜨던 기록 시트»이고 이건 한 달에 한 번이다.
+    //   ⛔ **토스트는 그대로 둔다** — 시트가 토스트를 대신하지 않는다.
+    nav.askReviewSoon?.('요리')
   }
+
+  // 📺 원본이 유튜브·인스타면 앱 안에서 재생할 수 있는 주소를 만든다(아니면 null)
+  const 영상 = embedUrl(r?.sourceUrl || '')
 
   const del = () => setConfirmDel(true)
 
@@ -642,6 +654,37 @@ export default function RecipeDetailScreen({ id }) {
             📌 창업자가 두 번 짚은 *"레시피마다 붙일 수 있는 자리가 다르다"* 의 답이 여기였다 —
                «새 자리를 찾는 것»이 아니라 «이미 있는 자리를 바꾸는 것».
             ✅ 그래서 「내 요리 기록」 카드 자체를 메모지 모양으로 만들었다(위 참조). */}
+        {/* 📺📺 [시안 2026-09-03] 원본이 유튜브면 **여기서 바로 재생한다** — 재료 «위».
+            📮 창업자 = *"유튜브 영상을 저렇게 바로 볼 수 있게 해둔거 좋은 것 같아. 우리도 할 수 있으면"*
+               → *"유튜브영상아래 재료랑 만드는법도 넣을 수 있어?"* → **자리를 여기로 두면 그 순서가 된다.**
+            ⭐ 새로 만든 게 0이다 — `embed.js`(공식 임베드 주소) ＋ 편집 화면에서 검증된 iframe 속성 그대로.
+            ⚖️ 약관 = **IFrame Player 재생은 공식이고 위험 0**
+               (`docs/유튜브가져오기-약관조사답-2026-08-27.md:46·172`). 죽은 길은 «AI로 읽는 것»이지 «보여주는 것»이 아니다.
+            ⛔⛔ 지킬 것 셋 (YouTube Developer Policies · 2026-09-03 리서치)
+               ⑴ **플레이어 위에 아무것도 얹지 않는다** — 컨트롤을 가리면 위반이다
+               ⑵ **자동재생 안 한다** — 반 이상 보이기 전 자동재생 금지(우리는 유저가 눌러야 시작한다)
+               ⑶ `Referrer-Policy` 를 막지 않는다 — 앱은 Referer 로 신원을 밝혀야 한다
+                  ✅ 우리는 따로 안 걸어서 크롬 기본값(`strict-origin-when-cross-origin`) = 유튜브 권장값이다
+            ⛔ `allow-top-navigation`·`allow-popups` 를 넣지 않는다 — 넣으면 임베드를 눌렀을 때
+               앱이 유튜브 앱으로 튕겨 나간다(편집 화면 주석에 이미 박혀 있는 이유). */}
+        {영상 && 영상.type === 'youtube' && (
+          <>
+            <div className="sec-head" style={{ marginTop: 14, marginBottom: 6 }}>
+              <SecTitle>영상으로 보기</SecTitle>
+            </div>
+            <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
+              <iframe
+                src={영상.src}
+                title="원본 영상"
+                allow="encrypted-media; picture-in-picture"
+                allowFullScreen
+                sandbox="allow-scripts allow-same-origin allow-presentation"
+                style={{ display: 'block', width: '100%', aspectRatio: '16/9', border: 0 }}
+              />
+            </div>
+          </>
+        )}
+
         {r.ingredients?.length > 0 && (
           <>
             <div className="sec-head" style={{ marginTop: 14, marginBottom: 6 }}>
@@ -864,6 +907,8 @@ export default function RecipeDetailScreen({ id }) {
             setDecorOpen(false)
             const dressed = items.length || (bg && bg !== 'none') || thumb === 'none'
             nav.showToast(dressed ? '표지를 예쁘게 꾸몄어요' : '꾸미기를 비웠어요')
+            // 🚪 리뷰 문 — 「레꾸를 «꾸민»」 사람에게만. ⛔비운 사람에겐 안 청한다(그건 되돌린 것이다)
+            if (dressed) nav.askReviewSoon?.('레꾸')
           }}
           onClose={() => setDecorOpen(false)}
         />

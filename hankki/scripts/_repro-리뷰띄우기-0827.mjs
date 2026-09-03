@@ -634,6 +634,222 @@ console.log('\n⑪ ⭐ 갓 깐 사람도 설정에서 스토어로 갈 수 있�
   await page.close()
 }
 
+// ─── ⑫⑬⑭ ⭐⭐ 문을 여러 갈래로 — 「뭐라도 하면 뜬다」 (창업자 확정 2026-09-03) ──
+//
+// 📮 창업자 = *"각각 다르게 레시피 2번 저장해보거나 레꾸자랑을 해보거나 등등...
+//    **각각 뭐라도 쓰면 리뷰쓰는 페이지가 나오게**"* · *"**리뷰가 되게 크다...ㅠ**"*
+// 📮 ＋ *"근데 뭘 하든 1회만 열리는거지? **제일 먼저한걸루**"* → **그렇다** — 아래 ⑮가 그걸 잰다.
+//
+// ⛔ 문턱을 더 낮춘 게 아니다(절대원칙 34) — **문의 «개수»를 늘렸다.**
+//    ⑫레꾸 저장 · ⑬「만들었어요」 · ⑭일기 꾸미기. 각각 «그 하나만» 해도 뜬다.
+
+// 🧹 앞 칸이 심어둔 «오늘» 기록을 비운다.
+//   ⛔⛔ 안 비우면 `onCook` 의 가드(「오늘 이미 기록이 있으면 새로 만들지 않는다」
+//      · `RecipeDetailScreen.jsx:249`)에 걸려 **토스트만 「오늘은 이미 한끼 일기에 있어요」로 뜨고
+//      조기 return** 한다 → 리뷰 문이 안 열린다. 그게 «맞는 동작»이다(새로 해낸 게 아니다).
+//   📌 탭이 달라도 저장소는 하나다 — 이 파일이 이미 세 번 밟은 함정이다.
+//   ⛔⛔ **저장소만 지우면 «화면»은 안 바뀐다** — 앱이 이미 메모리에 옛 diary 를 들고 있다.
+//      그래서 지운 «뒤에» 탭을 새로 연다. (⛔`page.reload()` 금지 — 시드가 저장값을 덮는다 · `check-mistakes` ⑧)
+//      📌 첫 판에서 이걸 빠뜨려 ⑬ 이 두 번 죽었다.
+const 기록비운새탭 = async () => {
+  const p = await 새탭()
+  await p.evaluate(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+      s.diary = []
+      localStorage.setItem('hankki:v1', JSON.stringify(s))
+    } catch { /* noop */ }
+  })
+  await p.close()
+  return 새탭()
+}
+
+// 🎨 상세로 들어가 레꾸(표지 꾸미기)를 저장한다
+const 레꾸저장 = async (page, 제목) => {
+  const 열림 = await 상세열기(page, 제목)
+  if (!열림) return false
+  await page.evaluate(() => {
+    ;[...document.querySelectorAll('button')].find((x) => /꾸미기|레꾸/.test(x.innerText || ''))?.click()
+  })
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').trim() === '저장'),
+    null, { timeout: 20000 },
+  ).catch(() => {})
+  // ⛔ 「받은 선물」 안내가 먼저 뜬다(첫 1회) → 닫고, 「꾸미기」 칸으로 옮긴다
+  await page.evaluate(() => {
+    ;[...document.querySelectorAll('button')].find((x) => /나중에 볼게요/.test(x.innerText || ''))?.click()
+  })
+  await page.waitForTimeout(600)
+  await page.evaluate(() => {
+    ;[...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim() === '꾸미기')?.click()
+  })
+  await page.waitForTimeout(600)
+  // 스티커 하나를 얹어야 «꾸민 것»이 된다 — 비우면 안 청하는 게 맞는 동작이다
+  await page.evaluate(() => {
+    // ⛔ 셀렉터를 짐작하지 않는다 — 서랍의 스티커 칸은 `button.decor-cell` 이다(DecorEditor.jsx:929)
+    document.querySelector('button.decor-cell')?.click()
+  })
+  await page.waitForTimeout(500)
+  await page.evaluate(() => {
+    ;[...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim() === '저장')?.click()
+  })
+  await page.waitForTimeout(900)
+  return page.evaluate(() => /표지를 예쁘게 꾸몄어요|꾸미기를 비웠어요/.test(document.body.innerText || ''))
+}
+
+console.log('\n⑫ ⭐ 레꾸(표지 꾸미기)를 저장하면 뜬다')
+{
+  const page = await 새탭()
+  const 제목 = await page.evaluate(() => {
+    try { return (JSON.parse(localStorage.getItem('hankki:v1') || '{}').recipes || [])[0]?.title || '' } catch { return '' }
+  })
+  const 됐나 = await 레꾸저장(page, 제목)
+  chk(`레꾸 저장까지 갔다 (${제목}) (＝이 칸의 전제)`, 됐나)
+  if (!됐나) { console.log('  ⛔⛔ 못 갔다 — 아래는 «재지 않은 것»이므로 판정하지 않는다'); 실패 += 2 }
+  else {
+    chk('⭐ 리뷰창이 뜬다 — 레시피를 한 편도 안 담은 사람인데도', await 리뷰창기다리기(page, 6000))
+    chk('머리글이 그 자리에서 «참»이다 — 「표지를 예쁘게 꾸몄어요」', await page.evaluate(() =>
+      document.body.innerText.includes('표지를 예쁘게 꾸몄어요')))
+  }
+  await page.close()
+}
+
+console.log('\n⑬ ⭐ 「만들었어요」를 누르면 뜬다 (창업자가 옛 확정을 뒤집었다)')
+{
+  const page = await 기록비운새탭()   // ⛔ 앞 칸의 «오늘» 기록이 남으면 onCook 이 조기 return 한다
+  const 제목 = await page.evaluate(() => {
+    try { return (JSON.parse(localStorage.getItem('hankki:v1') || '{}').recipes || [])[0]?.title || '' } catch { return '' }
+  })
+  const 열림 = await 상세열기(page, 제목)
+  chk(`상세가 열렸다 (${제목}) (＝이 칸의 전제)`, 열림)
+  if (!열림) { console.log('  ⛔⛔ 판정하지 않는다'); 실패 += 3 }
+  else {
+    await page.evaluate(() => {
+      ;[...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('만들었어요'))?.click()
+    })
+    await page.waitForTimeout(900)
+    chk('「만들었어요」 토스트가 그대로 뜬다 — 시트가 토스트를 대신하지 않는다', await page.evaluate(() =>
+      /만들었어요! /.test(document.body.innerText || '')))
+    chk('⭐ 리뷰창이 뜬다', await 리뷰창기다리기(page, 6000))
+    chk('머리글 = 「오늘도 한 끼 해냈어요」', await page.evaluate(() =>
+      document.body.innerText.includes('오늘도 한 끼 해냈어요')))
+  }
+  await page.close()
+}
+
+console.log('\n⑭ ⭐ 일기를 꾸며 저장하면 뜬다')
+//   ⭐ 왜 «본문 저장»이 아니라 «꾸미기 저장»인가 = 본문은 350ms 디바운스 자동저장이라
+//      「저장한 순간」이 없다(`DiaryScreen.jsx:117`·`:163`). 타이핑 «중»에 시트가 뜨면 최악이다.
+{
+  const page = await 새탭()
+  // 일기 탭 → 오늘 일기 열기
+  await page.evaluate(() => {
+    const bs = [...document.querySelectorAll('nav button, .tabbar button, [class*="tab"] button, footer button')]
+    bs.find((x) => (x.innerText || '').replace(/\s+/g, '') === '일기')?.click()
+  })
+  await page.waitForTimeout(800)
+  await page.evaluate(() => {
+    ;[...document.querySelectorAll('button')].find((x) => /일기 쓰기|오늘 일기/.test(x.innerText || ''))?.click()
+  })
+  await page.waitForFunction(
+    () => !!document.querySelector('button[aria-label="꾸미기 열기"]'),
+    null, { timeout: 15000 },
+  ).catch(() => {})
+  const 일기열림 = await page.evaluate(() => !!document.querySelector('button[aria-label="꾸미기 열기"]'))
+  chk('오늘 일기 화면이 열렸다 (＝이 칸의 전제)', 일기열림)
+  if (!일기열림) { console.log('  ⛔⛔ 못 갔다 — 판정하지 않는다'); 실패 += 2 }
+  else {
+    // ✍️ 먼저 «글»을 쓴다 — 문 조건이 「스티커 ‖ 본문」이라 글만 써도 열려야 한다.
+    //   ⭐ 이게 창업자 뜻에 더 가깝다(*"일기 쓴 직후"*) — 스티커는 꾸민 것이지 «쓴» 것이 아니다.
+    //   ⛔ 스티커로 재려다 세 번 헛돌았다: ⑴셀렉터를 짐작 ⑵서랍 첫 탭이 「속지 고르기」
+    //      ⑶꾸미기 판을 열면 「받은 선물」 안내가 먼저 뜬다. 전부 «찍어서 열어 보고» 알았다.
+    await page.evaluate(() => {
+      const el = document.querySelector('[contenteditable="true"], textarea')
+      if (!el) return
+      el.focus()
+      if (el.tagName === 'TEXTAREA') {
+        const set = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set
+        set.call(el, '오늘 콩국수를 했다')
+        el.dispatchEvent(new Event('input', { bubbles: true }))
+      } else {
+        el.textContent = '오늘 콩국수를 했다'
+        el.dispatchEvent(new InputEvent('input', { bubbles: true }))
+      }
+    })
+    await page.waitForTimeout(900)   // 본문은 350ms 디바운스 자동저장
+    chk('일기 본문이 «저장됐다» (＝이 칸의 전제)', await page.evaluate(() => {
+      try {
+        const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+        return (s.diary || []).some((d) => d && d.kind === 'diary' && String(d.note || '').trim())
+      } catch { return false }
+    }))
+    await page.evaluate(() => document.querySelector('button[aria-label="꾸미기 열기"]')?.click())
+    await page.waitForFunction(
+      () => [...document.querySelectorAll('button')].some((x) => (x.innerText || '').trim() === '저장'),
+      null, { timeout: 20000 },
+    ).catch(() => {})
+    // ⛔⛔ **꾸미기 판을 열면 「받은 선물」 안내가 «먼저» 뜬다**(첫 1회 · `needsGiftPack()`).
+    //    그게 서랍을 통째로 가려서 스티커 칸이 0개로 보인다.
+    //    🔢 화면을 «찍어서 열어 보고서야» 알았다(절대원칙 21) — 단추 이름만 훑어서는
+    //       「모아보기·1·2·3…」(달력)이 보여 판이 아예 안 열린 줄 알았다.
+    //    ⭐ 진짜 유저도 똑같이 겪는다 — 정상 동작이라 «닫고» 진행하는 게 맞다.
+    await page.evaluate(() => {
+      ;[...document.querySelectorAll('button')].find((x) => /나중에 볼게요|닫기/.test(x.innerText || ''))?.click()
+    })
+    await page.waitForTimeout(600)
+    // 서랍은 큰 두 칸(속지 고르기 ／ 꾸미기)으로 갈려 있다 — 스티커는 「꾸미기」 쪽이다
+    await page.evaluate(() => {
+      ;[...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim() === '꾸미기')?.click()
+    })
+    await page.waitForFunction(() => document.querySelectorAll('button.decor-cell').length > 0,
+      null, { timeout: 20000 }).catch(() => {})
+    // ⛔ 스티커는 «없어도 된다» — 문 조건이 「스티커 ‖ 본문」이라 글만으로 열려야 한다
+    // 스티커 하나를 얹어야 «꾸민 것»이 된다 — 비우면 안 청하는 게 맞는 동작이다
+    await page.evaluate(() => {
+      // ⛔ 셀렉터를 짐작하지 않는다 — `button.decor-cell`(DecorEditor.jsx:929)
+      //    ⚠️ 첫 판은 셋을 «짐작»으로 늘어놨는데 하나도 안 맞았다 → 일기는 스티커가 0이라
+      //       `if (items.length)` 에 걸려 문이 안 열렸다. ⑫는 콩국수가 «원래» 꾸며져 있어 통과했다
+      //       = **아무것도 안 재고 초록불**이었을 수 있다(규칙 18 ⓘ).
+      document.querySelector('button.decor-cell')?.click()
+    })
+    await page.waitForTimeout(500)
+    await page.evaluate(() => {
+      ;[...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim() === '저장')?.click()
+    })
+    await page.waitForTimeout(900)
+    chk('⭐ 리뷰창이 뜬다 — 레시피를 한 편도 안 담은 사람인데도', await 리뷰창기다리기(page, 6000))
+    chk('머리글 = 「오늘 일기를 남겼어요」', await page.evaluate(() =>
+      document.body.innerText.includes('오늘 일기를 남겼어요')))
+  }
+  await page.close()
+}
+
+console.log('\n⑮ ⭐⭐ 「뭘 하든 «한 번»만」 — 먼저 한 문에서 뜨고 나머지는 닫힌다')
+//   📮 창업자 = *"근데 뭘 하든 1회만 열리는거지? 제일 먼저한걸루"*
+{
+  const page = await 기록비운새탭()
+  const 제목 = await page.evaluate(() => {
+    try { return (JSON.parse(localStorage.getItem('hankki:v1') || '{}').recipes || [])[0]?.title || '' } catch { return '' }
+  })
+  // ① 먼저 «만들었어요» 로 연다
+  const 열림 = await 상세열기(page, 제목)
+  chk('상세가 열렸다 (＝이 칸의 전제)', 열림)
+  await page.evaluate(() => {
+    ;[...document.querySelectorAll('button')].find((x) => (x.innerText || '').includes('만들었어요'))?.click()
+  })
+  chk('먼저 한 문(「만들었어요」)에서 뜬다', await 리뷰창기다리기(page, 6000))
+  await page.evaluate(() => {
+    ;[...document.querySelectorAll('button')].find((x) => (x.innerText || '').trim() === '나중에')?.click()
+  })
+  await page.waitForTimeout(700)
+  chk('닫혔다', !(await 리뷰창떴나(page)))
+  // ② 이제 «다른» 문(레시피 담기)을 두 번 지나도 안 떠야 한다
+  await 담기(page, '한번만 검사 하나')
+  await 담기(page, '한번만 검사 둘')
+  chk('⛔⛔ 다른 문(레시피 2개)을 지나도 «안» 뜬다 — 뭘 하든 한 번이다', !(await 리뷰창떴나(page)))
+  await page.close()
+}
+
 console.log(`\n${실패 ? '⛔' : '✅'} ${통과}/${통과 + 실패}\n`)
 console.log('📌 ①② = 옛 문(일기 3개 · 시트 닫는 순간)이 «닫혀 있나» · ③④⑤⑥⑦⑧ = ㉠ 레꾸자랑 길.')
 console.log('   ⑨⑩ = 새 문(내 레시피 2개 · 저장 직후). ⑨가 죽으면 리뷰창이 다시 0명에게 뜬다.')
