@@ -20,7 +20,7 @@ import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
 import { dateLabel, openExternal as openUrl, ingredientName, fitImage } from '../utils'
 import { photoPanStart } from '../photoPan'
-import { shouldAskReview, shouldAskReviewNow, REVIEW_AT } from '../nudges'
+import { shouldAskReviewNow } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
 // 🔁 AI 정리 실패 만회(아래 「만회한적」 절) — 잣대는 앱이 쓰는 그 모듈 그대로다(절대원칙 30).
@@ -43,6 +43,8 @@ import { hlColor } from '../components/Stickers'
 import { FAV_NAME } from '../favName'
 import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
+// 📺 링크 → 앱 안에서 재생할 수 있는 «공식» 임베드 주소 (유튜브·인스타)
+import { embedUrl } from '../embed'
 
 // 🖍 절 제목 형광펜 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
 // ✅ **레몬 확정** — 창업자가 판단을 맡겨서(*"형광펜은 잘모르겠다.. 네가 판단해봐"*) «재서» 골랐다.
@@ -267,7 +269,17 @@ export default function RecipeDetailScreen({ id }) {
     addDiary(entry)
     cook(r.id)
     nav.showToast(표지사진 ? '만들었어요! 표지 사진도 일기에 담았어요' : '만들었어요! 한끼 일기에 남겼어요')
+    // 🚪 리뷰 문 — 「한 끼 해냈다」 (창업자 확정 2026-09-03)
+    //   ⛔⛔ 이건 **창업자 2026-08-06 확정(「토스트만, 시트 안 뜬다」)을 «뒤집은» 것**이다.
+    //      📮 창업자 2026-09-03 = *"각각 뭐라도 쓰면 리뷰쓰는 페이지가 나오게"* → 「만들었어요」를 콕 골랐다.
+    //   ⭐ 그래도 그때 없앤 마찰이 안 돌아오는 이유 = **30일에 한 번**이라 매번이 아니다.
+    //      그때 없앤 건 «누를 때마다 뜨던 기록 시트»이고 이건 한 달에 한 번이다.
+    //   ⛔ **토스트는 그대로 둔다** — 시트가 토스트를 대신하지 않는다.
+    nav.askReviewSoon?.('요리')
   }
+
+  // 📺 원본이 유튜브·인스타면 앱 안에서 재생할 수 있는 주소를 만든다(아니면 null)
+  const 영상 = embedUrl(r?.sourceUrl || '')
 
   const del = () => setConfirmDel(true)
 
@@ -642,6 +654,68 @@ export default function RecipeDetailScreen({ id }) {
             📌 창업자가 두 번 짚은 *"레시피마다 붙일 수 있는 자리가 다르다"* 의 답이 여기였다 —
                «새 자리를 찾는 것»이 아니라 «이미 있는 자리를 바꾸는 것».
             ✅ 그래서 「내 요리 기록」 카드 자체를 메모지 모양으로 만들었다(위 참조). */}
+        {/* 📺📺 [창업자 확정 2026-09-03 = ㄷ] 원본이 유튜브면 **여기서 바로 재생한다** — 재료 «위».
+            📮 창업자 = *"유튜브 영상을 저렇게 바로 볼 수 있게 해둔거 좋은 것 같아"*
+               → *"유튜브영상아래 재료랑 만드는법도 넣을 수 있어?"* → *"ㄷ으로 가자"*
+            ⭐⭐ **ㄷ = 「우리가 큐레이션한 것」과 「유저가 담은 것」 둘 다.** 코드는 «하나»다 —
+               `sourceUrl` 이 유튜브면 재생한다. 우리 레시피는 그 칸을 채우기만 하면 저절로 붙는다.
+               📮 창업자 = *"그럼 우리가 힘들게 레시피를 짜낼 필요가 없엉 · 유튜브나 인스타에서 데려오면 되니까"*
+            ⚖️ 레시피를 «데려오는» 것 자체는 저작권과 무관하다 —
+               문체부 「저작권 들리ZIP」 = *"레시피는 **아이디어로서 저작권법의 보호대상이 되지 않으며**"*
+               ⛔ 단 **글·사진·영상을 그대로 베끼면 안 된다** — 재료·순서는 우리 문체로 다시 쓴다
+               (`docs/레시피-저작권-확인-2026-08-01.md`).
+            ⛔ **인스타는 여기 안 걸린다** — `embed.type === 'youtube'` 로 막았다.
+               인스타는 정책상 앱 안에서 «재생이 안 된다»(`EditorScreen.jsx:785` 에 실물로 적혀 있다).
+               인스타 레시피는 영상 없이 재료·순서만 온다.
+            ⭐ 새로 만든 게 0이다 — `embed.js`(공식 임베드 주소) ＋ 편집 화면에서 검증된 iframe 속성 그대로.
+            ⚖️ 약관 = **IFrame Player 재생은 공식이고 위험 0**
+               (`docs/유튜브가져오기-약관조사답-2026-08-27.md:46·172`). 죽은 길은 «AI로 읽는 것»이지 «보여주는 것»이 아니다.
+            ⛔⛔ 지킬 것 셋 (YouTube Developer Policies · 2026-09-03 리서치)
+               ⑴ **플레이어 위에 아무것도 얹지 않는다** — 컨트롤을 가리면 위반이다
+               ⑵ **자동재생 안 한다** — 반 이상 보이기 전 자동재생 금지(우리는 유저가 눌러야 시작한다)
+               ⑶ `Referrer-Policy` 를 막지 않는다 — 앱은 Referer 로 신원을 밝혀야 한다
+                  ✅ 우리는 따로 안 걸어서 크롬 기본값(`strict-origin-when-cross-origin`) = 유튜브 권장값이다
+            ⛔ `allow-top-navigation`·`allow-popups` 를 넣지 않는다 — 넣으면 임베드를 눌렀을 때
+               앱이 유튜브 앱으로 튕겨 나간다(편집 화면 주석에 이미 박혀 있는 이유). */}
+        {영상 && 영상.type === 'youtube' && (
+          <>
+            <div className="sec-head" style={{ marginTop: 14, marginBottom: 6 }}>
+              <SecTitle>영상으로 보기</SecTitle>
+            </div>
+            <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
+              <iframe
+                src={영상.src}
+                title="원본 영상"
+                allow="encrypted-media; picture-in-picture"
+                allowFullScreen
+                sandbox="allow-scripts allow-same-origin allow-presentation"
+                style={{ display: 'block', width: '100%', aspectRatio: '16/9', border: 0 }}
+              />
+              {/* ⛔⛔ 이 줄을 **플레이어 «위»에 얹지 않는다** — 아래에 «따로» 둔다.
+                  YouTube Developer Policies = *"must not use overlays, frames or other visual
+                  elements to obscure any part of an embedded player, including player controls"*
+                  📌 인스타 안내띠(`EditorScreen.jsx:784`)는 `position:absolute` 로 «위에» 얹는데,
+                     그건 인스타 전용이라 유튜브엔 안 붙는다. 여기서 그걸 따라 하면 위반이 된다. */}
+              <button
+                className="opt-row press"
+                onClick={() => openUrl(r.sourceUrl)}
+                style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}
+              >
+                <Icon name="youtube" size={19} color="var(--brown)" />
+                {/* 🏷 원작자를 «있을 때만» 앞에 붙인다 — 한 줄로 「누가 만들었나 ＋ 원본 가기」가 끝난다.
+                    📮 창업자 = *"그 사람껄 내꺼처럼 재생산하는게 더 문제 아닌가"*
+                    ⛔ 없으면 그냥 「YouTube에서 보기」 — 유저가 담은 레시피는 이 칸이 비어 있다. */}
+                <div className="t" style={{ fontSize: 16, minWidth: 0 }}>
+                  {r.sourceName
+                    ? <><b style={{ fontWeight: 700 }}>{r.sourceName}</b> · YouTube에서 보기</>
+                    : 'YouTube에서 보기'}
+                </div>
+                <Icon name="chevron-right" size={17} color="var(--sand)" />
+              </button>
+            </div>
+          </>
+        )}
+
         {r.ingredients?.length > 0 && (
           <>
             <div className="sec-head" style={{ marginTop: 14, marginBottom: 6 }}>
@@ -819,12 +893,16 @@ export default function RecipeDetailScreen({ id }) {
           </>
         )}
 
-        {r.sourceUrl && (
+        {/* ⛔ 유튜브면 이 절을 감춘다 — 위 영상 칸에 「YouTube에서 보기」가 이미 있다.
+            같은 곳으로 가는 문이 둘이면 헷갈린다(하단바에서 「내 레시피·장보기」를 뺀 것과 같은 이유).
+            ⭐ 인스타·블로그 등 «재생이 안 되는» 원본은 여기가 유일한 문이라 그대로 둔다. */}
+        {r.sourceUrl && !(영상 && 영상.type === 'youtube') && (
           <>
             <div className="h-section" style={{ marginTop: 26, marginBottom: 8 }}>원본 링크</div>
             <a href={r.sourceUrl} target="_blank" rel="noreferrer" className="card press" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 14, textDecoration: 'none', color: 'var(--text)' }}>
               <Icon name="link" size={20} color="var(--sand)" />
-              <span style={{ flex: 1, fontSize: 16.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sourceUrl}</span>
+              {/* 🏷 원작자가 있으면 «주소 대신» 이름을 보여준다 — 주소는 읽어도 누군지 모른다 */}
+              <span style={{ flex: 1, fontSize: 16.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sourceName || r.sourceUrl}</span>
               <Icon name="chevron-right" size={18} color="var(--sand)" />
             </a>
           </>
@@ -864,6 +942,8 @@ export default function RecipeDetailScreen({ id }) {
             setDecorOpen(false)
             const dressed = items.length || (bg && bg !== 'none') || thumb === 'none'
             nav.showToast(dressed ? '표지를 예쁘게 꾸몄어요' : '꾸미기를 비웠어요')
+            // 🚪 리뷰 문 — 「레꾸를 «꾸민»」 사람에게만. ⛔비운 사람에겐 안 청한다(그건 되돌린 것이다)
+            if (dressed) nav.askReviewSoon?.('레꾸')
           }}
           onClose={() => setDecorOpen(false)}
         />
@@ -925,9 +1005,13 @@ export default function RecipeDetailScreen({ id }) {
       {logEntry && (
         <DiaryEntrySheet
           entry={logEntry}
-          // 닫는 순간 = 기록을 막 남긴 뒤 = 한마디를 청하기 제일 좋은 자리.
-          // ⛔ onDelete 는 여기를 안 탄다 — 지우고 나서 리뷰를 청하면 실례다.
-          onClose={() => { setLogEntry(null); if (shouldAskReview(diary.length)) setAskReview(`${REVIEW_AT}번째 한 끼예요`) }}
+          // ⛔⛔ [2026-09-03] 여기 있던 「한마디 청하기」를 **뺐다** — 창업자 확정으로 자리가 옮겨갔다.
+          //   📮 창업자 = *"일기를 3개나 쓰는 건 좀 무리같아"* → *"ㄱㄱ 2개??ㅋㅋ"*(내 레시피 2개)
+          //   🔢 이 문은 다섯을 다 밟아야 열렸다 — 기록 3장 · 그 레시피에 한 줄 «직접» 써넣기 ·
+          //      상세로 가기 · 포스트잇 누르기 · 시트 닫기. 「만들었어요」가 만드는 기록은 메모가 빈 칸이라
+          //      둘째 걸음이 저절로는 절대 안 채워졌다(`_repro-리뷰띄우기-0827` 실측).
+          //   ⭐ 새 자리 = **레시피를 저장한 직후**(`EditorScreen` → `App`). 사람들이 실제로 지나가는 길이다.
+          onClose={() => setLogEntry(null)}
           onDelete={() => { removeDiary(logEntry.id); setLogEntry(null); nav.showToast('기록을 삭제했어요') }}
         />
       )}

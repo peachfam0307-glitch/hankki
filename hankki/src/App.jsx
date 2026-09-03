@@ -22,7 +22,8 @@ import { useTimer } from './timer'
 import Onboarding, { needsOnboarding } from './components/Onboarding'
 import CloudGate from './components/CloudGate'
 import ConfirmSheet from './components/ConfirmSheet'
-import { askOpenBackup, needsCloudGate, askOpenCloud, 클라우드보임 } from './nudges'
+import { askOpenBackup, needsCloudGate, askOpenCloud, 클라우드보임, shouldAskReview, shouldAskReviewNow, myRecipeCount, 문머리글 } from './nudges'
+import ReviewAskSheet from './components/ReviewAskSheet'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
 import MyRecipesScreen from './screens/MyRecipesScreen'
@@ -90,6 +91,23 @@ export default function App() {
   //      그 사람들은 홈 한 줄에서 만난다(규칙 18 ⓙ — 이미 깔린 폰).
   //   🔀 ＋ 공개 스위치(`클라우드보임`) — 켜는 날까지 창업자 폰에서만. 근거는 `nudges.js` 머리주석.
   const [cloudGate, setCloudGate] = useState(() => 클라우드보임() && needsCloudGate() && needsOnboarding())
+  // 🙏 한마디 청하기 — 「레시피를 저장한 직후」 (창업자 확정 2026-09-03 · 내 레시피 2개부터)
+  //   ⛔⛔ **왜 «화면»이 아니라 여기서 띄우나** — `EditorScreen` 은 저장에 성공하면 `nav.popAll()` 로
+  //      스스로 사라진다. 거기서 시트를 그리면 같은 틱에 언마운트돼 **아무것도 안 뜬다.**
+  //   ⛔ **판정도 여기서 한다** — 편집 화면이 들고 있는 `recipes` 는 «저장 전» 값이라
+  //      거기서 세면 방금 담은 한 편이 빠진다. 여기는 store 를 구독하니 늘 최신이다.
+  //      📌 「+1 해서 센다」로 때우지 않는다 — 그러면 세는 자가 둘이 된다(절대원칙 34).
+  const [리뷰청하기, set리뷰청하기] = useState(null) // 머리글 글자(null = 안 뜸)
+  // 🚪🚪 [창업자 확정 2026-09-03] 문을 «여러 갈래»로 — 어느 하나만 해도 뜬다(OR).
+  //   📮 창업자 = *"각각 다르게 레시피 2번 저장해보거나 레꾸자랑을 해보거나 등등...
+  //      **각각 뭐라도 쓰면 리뷰쓰는 페이지가 나오게**"* · *"**리뷰가 되게 크다...ㅠ**"*
+  //   ⛔ 문턱 숫자를 더 낮추는 게 아니다(절대원칙 34) — **문의 «개수»를 늘린다.**
+  //   ⭐⭐ 「뭘 하든 «한 번»만」 (창업자 물음 = *"제일 먼저한걸루"*) —
+  //      모든 문이 `shouldAskReviewNow()` 를 «함께» 보고, 시트가 뜨는 순간
+  //      `markReviewAsked()` 가 날짜를 박아 **나머지 문이 전부 같이 닫힌다.**
+  //      ⛔ 문마다 따로 세는 표식을 만들지 않는다 — 그러면 「한 번」이 「문 개수만큼」이 된다.
+  //   ⚠️ 정확히는 「평생 1회」가 아니라 **「30일에 1회」**다(창업자 확정 2026-08-28).
+  const [리뷰신호, set리뷰신호] = useState(null)     // { 씨: 신호마다 +1, 까닭: 어느 문인가 }
   const backHandlers = useRef([]) // 화면들이 등록한 '뒤로가기 먼저 처리' 핸들러(비모달 상태·필터용)
   const modalLayers = useRef([]) // 열려 있는 모달·오버레이(각자 진짜 히스토리 칸 1개 소유)
   const pendingBack = useRef(0) // 같은 틱에 버튼으로 동시에 닫힌 모달 칸 수(한 번에 go(-n))
@@ -378,6 +396,33 @@ export default function App() {
   // ⭐ 아래 「저절로 올리기」가 «한 번만» 도는데 그 안에서 최신 store 를 봐야 한다 — 그래서 ref 로 들고 있는다.
   const storeRef = useRef(store)
   storeRef.current = store
+
+  // 🙏 저장 신호가 올라오면 «최신 레시피 수»로 판정한다 (위 `리뷰신호` 주석 참고).
+  //   ⛔ 소개 화면·클라우드 첫 화면이 떠 있으면 안 띄운다 — 시트가 겹치면 둘 다 못 읽는다.
+  //      (갓 깐 사람은 내 레시피가 0이라 어차피 안 걸리지만, 겹침은 «없게» 막아 둔다)
+  useEffect(() => {
+    if (!리뷰신호) return
+    const 까닭 = 리뷰신호.까닭
+    set리뷰신호(null)
+    if (onboard || cloudGate) return
+    // ⭐ 여기가 「한 번」을 지키는 자리 — 문이 몇이든 이 한 줄을 «다 같이» 지난다
+    if (!shouldAskReviewNow()) return
+    // 🍱 레시피 문만 문턱이 있다(창업자 확정 = 2개). 나머지 문은 한 번이면 된다.
+    // ⛔ 이미 떠 있으면 «덮어쓰지 않는다» — 시트 위에 시트 금지(2026-08-27 에 지킨 것).
+    //    함수꼴로 넣는 이유 = 이 effect 는 `리뷰신호` 만 보고 돌아서
+    //    `리뷰청하기` 를 그냥 읽으면 «낡은 값»을 본다.
+    if (까닭 === '레시피') {
+      if (!shouldAskReview(store.recipes)) return
+      const 글 = `내 레시피 ${myRecipeCount(store.recipes)}개가 됐어요`
+      set리뷰청하기((앞) => 앞 || 글)
+      return
+    }
+    // 🏷 머리글은 «그 자리에서 참인 말»이어야 한다(v11.61 에 정한 것) —
+    //    자랑 안 하고 꾸미기만 한 사람에게 「자랑 보냈어요」가 뜨면 거짓말이 된다.
+    // ⛔ 「대단해요」·「축하합니다」 금지 — 우리 톤은 조용한 위로다(리텐션 설계원칙).
+    set리뷰청하기((앞) => 앞 || 문머리글[까닭] || '한끼를 쓰고 계시네요')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [리뷰신호])
 
   // ☁️🔄 저절로 저장하기 — 앱을 켤 때 «한 번». (창업자 확정 2026-08-21 = ⓒ)
   //   📮 창업자 = *"좋아 그럼 C지."* · *"그래 좋아 나도 폰 패드 같이쓰거든."* · *"2번도 기변하는 사람들 많으니까"*
@@ -773,7 +818,9 @@ export default function App() {
   }, [])
 
   const showOnboarding = useCallback(() => setOnboard(true), [])
-  const nav = { push, replace, pop, popAll, go, showToast, tab, setTab, registerBack, openModal, showOnboarding }
+  // 🙏 레시피를 «저장에 성공한» 화면이 부른다 — 판정·띄우기는 위 effect 가 한다(최신 값으로).
+  const askReviewSoon = useCallback((까닭 = '레시피') => set리뷰신호((v) => ({ 씨: (v ? v.씨 : 0) + 1, 까닭 })), [])
+  const nav = { push, replace, pop, popAll, go, showToast, tab, setTab, registerBack, openModal, showOnboarding, askReviewSoon }
 
   const TabScreen = TABS[tab]
   const top = stack[stack.length - 1]
@@ -832,6 +879,10 @@ export default function App() {
             📮 창업자 2026-08-21 = *"새유저는 그냥 첫화면에 로그인하고시작 «왜냐면 온보드는 그냥 건너뛰기할수도있어»"*
             ⛔ 소개 «마지막 장»에 두려던 내 안을 창업자가 잡았다 — 「건너뛰기」가 매 장 오른쪽 위에 있어 첫 장에서 통째로 넘어간다. */}
         {cloudGate && <CloudGate onDone={() => setCloudGate(false)} />}
+
+        {/* 🙏 한마디 청하기 — 레시피를 저장한 직후(내 레시피 2개부터 · 30일에 한 번).
+            ⛔ 자리는 «여기»라야 한다 — 편집 화면은 저장에 성공하면 popAll 로 스스로 사라진다. */}
+        {리뷰청하기 && <ReviewAskSheet title={리뷰청하기} onClose={() => set리뷰청하기(null)} />}
 
         {/* ☁️⚖️ 다른 기기가 먼저 올렸다 — ⛔자동으로 합치지 않는다. **고르는 화면으로 데려간다**(창업자 확정).
             📮 창업자 2026-08-21 = *"나도 폰 패드 같이쓰거든."* ← 이게 바로 그 자리다.

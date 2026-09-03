@@ -664,8 +664,15 @@ export default function EditorScreen({ id, prefill }) {
     }
     if (editing) {
       // touched: 사용자가 직접 편집한 레시피 — 이후 기본 레시피 자동 갱신에서 덮어쓰지 않게 표시
+      const 임시보관함이었나 = editing.status !== 'sorted'
       updateRecipe(editing.id, { ...patch, touched: true })
-      나갈까(() => { nav.pop(); nav.showToast('레시피를 정리했어요') })
+      나갈까(() => {
+        nav.pop()
+        nav.showToast('레시피를 정리했어요')
+        // 🙏 «임시보관함에서 막 꺼낸 것»만 한마디를 청한다 — 그게 「담기를 끝낸」 순간이다.
+        //   ⛔ 이미 정리된 편을 고칠 때는 안 청한다 — 오타 하나 고쳤는데 리뷰를 물으면 조르는 앱이 된다.
+        if (임시보관함이었나) nav.askReviewSoon?.()
+      })
     } else {
       const rec = { id: newId(), favorite: false, cooked: 0, savedAt: Date.now(), ...patch }
       addRecipe(rec)
@@ -676,6 +683,12 @@ export default function EditorScreen({ id, prefill }) {
         // (뒤로가기로 작성 중이던 빈 편집기가 다시 나오지 않게)
         nav.popAll()
         nav.showToast('레시피를 저장했어요')
+        // 🙏 한마디 청하기 — 「내 레시피 2개」부터 (창업자 확정 2026-09-03)
+        //   ⛔ 여기서 «판정하지 않는다» — 이 화면이 든 `recipes` 는 저장 «전» 값이다.
+        //      신호만 올리고 App 이 최신 store 로 센다(App.jsx 「리뷰신호」).
+        //   ⭐ 왜 이 자리인가 = 담기는 우리 앱의 첫 걸음이고, 저장이 «성공한» 순간이
+        //      「해냈다」가 되는 자리다. 실패하면 이 콜백 자체가 안 불린다.
+        nav.askReviewSoon?.()
       })
     }
   }

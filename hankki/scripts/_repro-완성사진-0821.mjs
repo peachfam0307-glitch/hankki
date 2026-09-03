@@ -172,7 +172,21 @@ console.log('① ⭐⭐ «막지 않는다» — 사진을 안 찍으면 지금�
   await page.waitForTimeout(800)
   const st = await 저장값(page)
   const d = (st.diary || [])[0]
-  chk('  ⭐ 눌렀더니 «막는 창 없이» 바로 끝났다', await page.evaluate(() => !document.querySelector('.cook-nav') && !document.querySelector('.sheet-mask')))
+  // 🔀🔀 [2026-09-03] 잣대를 «좁혔다» — 창업자가 옛 확정을 뒤집었다.
+  //   📮 창업자 = *"각각 뭐라도 쓰면 리뷰쓰는 페이지가 나오게"* → 「만들었어요」에도 리뷰 문을 열었다.
+  //   ⭐ 이 칸이 «진짜로» 지키던 것 = **별점·메모를 묻는 「기록 시트」가 안 뜬다**
+  //      (창업자 확정 2026-08-06 = *"만들었어요 → 토스트만, 시트 안 뜬다"*).
+  //      그건 «저장이 이미 끝났는데 폼이 앞을 막던» 마찰이었고 그건 그대로 막는다.
+  //   ⛔ 그런데 잣대가 `.sheet-mask` «전부»여서 **리뷰창까지 같이 걸렸다** — 그건 다른 것이다.
+  //      리뷰창은 한 달에 한 번이고, 묻는 게 아니라 청하는 것이며, 저장을 안 막는다.
+  //   📌 규칙이 바뀌면 그 규칙을 지키는 검사도 같이 바뀌어야 한다(규칙 12 ⓑ).
+  chk('  ⭐ 눌렀더니 «요리 모드»가 바로 끝났다', await page.evaluate(() => !document.querySelector('.cook-nav')))
+  //   ⛔ 글자로 재면 안 된다 — 완료 토스트가 「…**별점**·팁은 레시피 화면에서」라 저절로 걸린다.
+  //      **떠 있는 시트가 «무엇인지»**로 잰다: 시트가 있는데 리뷰창이 아니면 그게 막는 창이다.
+  chk('  ⛔ 별점·메모를 묻는 «기록 시트»는 안 뜬다 (창업자 확정 2026-08-06)', await page.evaluate(() => {
+    if (!document.querySelector('.sheet-mask')) return true          // 시트가 아예 없다
+    return /한마디 남겨주실래요|스토어에 한마디/.test(document.body.innerText || '')  // 떠 있는 건 리뷰창뿐
+  }))
   chk('  일기에 담겼다', !!d && d.title === 제목)
   chk('  사진은 없다 (안 찍었으니 null)', d?.photo ?? 'null', 'null')
   await page.close()
