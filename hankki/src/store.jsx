@@ -799,8 +799,15 @@ function initialState() {
       inboxV: inboxMig.inboxV,
       coverV: coverMig.coverV,
       removedSeedIds: saved.removedSeedIds || [],
+      // 🗂 기본 폴더가 «늘어날 때» — 이미 깔린 폰에도 넣어 준다.
+      //    ⛔⛔ 기본값(아래 `folders: [...]`)만 고치면 «새로 까는 사람»만 받는다.
+      //       이미 쓰던 사람은 `saved.folders` 를 그대로 쓰기 때문에 칩이 영영 안 생긴다
+      //       (v10.76 사고와 같은 병 · 규칙 18 ⓙ = 「새로 까는 사람」 말고 «이미 깔린 폰»을 본다).
+      //    ⭐ 「아시안」 때 이렇게 했고, 2026-09-03 「중식」도 같은 자리에 얹는다.
+      //    ⛔ 유저가 «지운» 폴더까지 되살리는 셈이지만, 기본 폴더는 애초에 지울 수 없다
+      //       (`DEFAULT_FOLDERS` = 삭제 불가). 그래서 되살아나는 일이 없다.
       folders: saved.folders
-        ? (saved.folders.includes('아시안') ? saved.folders : [...saved.folders, '아시안'])
+        ? ['아시안', '중식'].reduce((목록, 새것) => (목록.includes(새것) ? 목록 : [...목록, 새것]), saved.folders)
         : defaultFolders(mig.recipes),
       profile: { ...PROFILE_DEFAULT, ...(saved.profile || {}) },
       shops: migrateShops(saved.shops),
@@ -820,7 +827,7 @@ function initialState() {
     inboxV: INBOX_V,      // 〃 (임시보관함에 쌓인 게 아예 없다)
     coverV: COVER_V,      // 〃 (캡처 표지가 박힌 게 아예 없다)
     removedSeedIds: [],
-    folders: ['한식', '양식', '일식', '간식', '아시안'],
+    folders: [...기본폴더],
     profile: PROFILE_DEFAULT,
     shops: DEFAULT_SHOPS,
     wishlist: [],
@@ -833,8 +840,22 @@ function initialState() {
   }
 }
 
+// 🗂🗂 **기본 폴더 = «여기 한 곳»에서만 적는다.** (2026-09-03 · 중식 넣으며 모았다)
+//
+// ⛔⛔ 그 전엔 같은 목록이 «네 곳»에 흩어져 있었다 —
+//    ⑴ 처음 켠 사람 ⑵ 이미 쓰던 사람(마이그레이션) ⑶ 「초기화」 ⑷ 이 함수.
+//    그래서 하나를 고치면 나머지가 낡았다. 실제로 ⑶은 «아시안»조차 빠져 있어서
+//    **초기화를 누르면 폴더가 다섯에서 넷으로 줄었다.**
+//    📌 「현행이 둘이면 하나는 반드시 틀린 값이 된다」(2026-08-13)와 같은 병이다.
+//
+// 🥟 순서 = 한식→중식→일식→양식→아시안→간식 (창업자 확정 2026-09-03 *"중식칩을 만들자."*)
+//    ⭐ 가까운 나라끼리 붙여 눈이 덜 튄다. `theme.js` 의 `CATEGORIES` 와 «같은 순서»다.
+// ⛔ 여기에 폴더를 더할 땐 위 마이그레이션의 목록에도 그 이름을 넣어야
+//    **이미 깔린 폰**이 받는다(규칙 18 ⓙ).
+export const 기본폴더 = ['한식', '중식', '일식', '양식', '아시안', '간식']
+
 function defaultFolders(recipes) {
-  const set = new Set(['한식', '양식', '일식', '간식', '아시안'])
+  const set = new Set(기본폴더)
   recipes.forEach((r) => r.folder && set.add(r.folder))
   return [...set]
 }
@@ -907,7 +928,10 @@ function reducer(state, action) {
         recipes: seedRecipes,
         seedV: BASICS_VERSION,
         removedSeedIds: [],
-        folders: ['한식', '양식', '일식', '간식'],
+        // ⛔ 여기는 «아시안»조차 빠진 채 낡아 있었다 — 「초기화」를 누르면 폴더가 넷으로 줄었다.
+        //    📌 같은 목록이 세 곳에 흩어져 있어서 하나를 고칠 때마다 나머지가 낡았다.
+        //       그래서 `기본폴더` 한 곳으로 모았다(2026-09-03 · 중식 넣으며).
+        folders: [...기본폴더],
         profile: PROFILE_DEFAULT,
       }
     }
