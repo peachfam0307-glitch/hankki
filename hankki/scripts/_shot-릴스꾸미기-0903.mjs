@@ -170,4 +170,41 @@ console.log(`   판 위 그림 = ${(결과.판위 || []).join(' · ') || '(없�
 console.log(`   ${맞나 ? '✅ 목도리 타원이 판에 얹혔다' : '⛔ 판에 pf_au01 이 없다 — 다른 게 붙었거나 안 붙었다'}`)
 console.log(`\n   📁 ${OUT}  (${n}장)\n`)
 
+
+// ── ⑤ 📏 프레임 크기 맞추기 — 손잡이를 «실제로 끈다»
+//    ⭐ 끄는 장면 자체가 릴스에 쓸 만하다(유저가 하는 그 동작이다).
+//    ⛔ 상태(`s`)를 코드로 찔러 넣지 않는다 — 앱이 하는 일과 달라지면 릴스가 «거짓»이 된다(절대원칙 30).
+const 프레임재기 = async () => p.evaluate(() => {
+  const img = [...document.querySelectorAll('img')]
+    .find((i) => /\/pf_au01[-.]/.test(i.currentSrc || i.src || ''))
+  if (!img) return null
+  const r = img.getBoundingClientRect()
+  return { w: Math.round(r.width), h: Math.round(r.height), cx: Math.round(r.x + r.width / 2), cy: Math.round(r.y + r.height / 2), x2: Math.round(r.right), y2: Math.round(r.bottom) }
+})
+
+const 전 = await 프레임재기()
+console.log(`   프레임 크기(전) = ${전 ? `${전.w}×${전.h}` : '⛔ 못 잼'}`)
+
+if (전) {
+  // ↻ 손잡이 = 고른 상자의 «오른아래». 상자는 그림보다 살짝 크다 → 그림 오른아래에서 조금 바깥.
+  const hx = 전.x2 - 2
+  const hy = 전.y2 - 2
+  // 가운데 쪽으로 18% 끌어 줄인다
+  const tx = Math.round(전.cx + (hx - 전.cx) * 0.82)
+  const ty = Math.round(전.cy + (hy - 전.cy) * 0.82)
+  await p.mouse.move(hx, hy)
+  await p.mouse.down()
+  // ⭐ 여러 걸음으로 나눠 끈다 — 한 번에 뛰면 앱이 «끌기»로 안 읽는 수가 있다
+  for (let k = 1; k <= 8; k++) {
+    await p.mouse.move(hx + (tx - hx) * k / 8, hy + (ty - hy) * k / 8)
+    await p.waitForTimeout(60)
+  }
+  await p.mouse.up()
+  await p.waitForTimeout(700)
+  await 찍기('프레임-크기맞춤')
+  const 후 = await 프레임재기()
+  console.log(`   프레임 크기(후) = ${후 ? `${후.w}×${후.h}` : '⛔ 못 잼'}`)
+  console.log(`   ${후 && 후.w < 전.w ? `✅ 줄었다 (${전.w} → ${후.w})` : '⛔ 안 줄었다 — 손잡이 자리를 다시 봐야 한다'}`)
+}
+
 await ctx.close(); await b.close(); srv.close()
