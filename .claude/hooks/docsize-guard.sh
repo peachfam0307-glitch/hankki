@@ -12,7 +12,17 @@
 # ⚠️ **넘었을 때만 말한다.** 멀쩡하면 한 글자도 안 찍는다 —
 #    세션 시작 안내가 길어지면 그것 자체가 대화 창을 먹는다(고치려는 병을 훅이 앓으면 안 된다).
 set -u
-cd "${CLAUDE_PROJECT_DIR:-.}" 2>/dev/null || exit 0
+# ⛔⛔ **[2026-09-03 · 재현판이 잡음] `CLAUDE_PROJECT_DIR` «만» 믿으면 안 된다.**
+#    첫 판이 `cd "${CLAUDE_PROJECT_DIR:-.}"` 였다. 그 변수가 없거나 cwd 가 다르면
+#    `hankki/scripts/check-docsize.mjs` 를 «못 찾고 조용히 exit 0» 한다.
+#    📌 이 저장소가 두 번 당한 그 꼴이다 — **「훅이 조용히 통과」가 제일 나쁘다**(규칙 18 ⓘ).
+#       게이트가 없는 것보다, 있다고 «믿는데» 안 도는 게 나쁘다.
+#    ✅ 그래서 **자기 파일 위치**에서 뿌리를 찾는다(.claude/hooks → 두 칸 위). 변수는 «참고»만.
+HERE=$(cd "$(dirname "$0")" && pwd)
+for R in "${CLAUDE_PROJECT_DIR:-}" "$HERE/../.." "$PWD" "$PWD/.."; do
+  [ -n "$R" ] || continue
+  if [ -f "$R/hankki/scripts/check-docsize.mjs" ]; then cd "$R" && break; fi
+done
 [ -f hankki/scripts/check-docsize.mjs ] || exit 0
 
 OUT=$(node hankki/scripts/check-docsize.mjs 2>/dev/null)

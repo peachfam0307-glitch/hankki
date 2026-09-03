@@ -37,13 +37,19 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, appendFileSync } fr
 import { join, dirname } from 'node:path'
 import { todayKST } from '../src/today.js'
 
-const APP = existsSync('hankki/docs') ? 'hankki' : '.'      // 뿌리가 둘이다(cwd-guard 와 같은 판정)
-const ROOT = APP === 'hankki' ? '.' : '..'
-const HANDOVER = join(ROOT, 'HANDOVER.md')
+const APP0 = existsSync('hankki/docs') ? 'hankki' : '.'      // 뿌리가 둘이다(cwd-guard 와 같은 판정)
+const ROOT = APP0 === 'hankki' ? '.' : '..'
 
 const 인자 = process.argv.slice(2)
+const 값 = (이름) => { const i = 인자.indexOf(이름); return i >= 0 ? 인자[i + 1] : '' }
 const 실행 = 인자.includes('--옮김')
-const 남길날 = Number(인자[인자.indexOf('--남길날') + 1]) || 1
+const 남길날 = Number(값('--남길날')) || 1
+
+// ⭐ [2026-09-03] `--파일`·`--내보낼곳` = **재현판이 이 도구를 «진짜로» 돌려보게** 하려고 뚫었다.
+//    ⛔ 없으면 시험이 «진짜 HANDOVER.md» 를 건드려야 한다 — 그건 시험이 아니라 사고다.
+//    📌 규칙 19 = 회귀·함정은 «규칙»이 아니라 «장치»가 잡는다. 장치를 재려면 장치가 시험 가능해야 한다.
+const HANDOVER = 값('--파일') || join(ROOT, 'HANDOVER.md')
+const APP = 값('--내보낼곳') || APP0
 
 // ── 갈래 이름 뽑기 — 파일 이름이 갈리면 두 세션이 같은 파일을 안 건드린다(충돌 0) ──
 //   ⚠️ 못 알아보면 「기타」. ⛔알아보는 척하고 엉뚱한 파일에 합치면 그게 충돌이다.

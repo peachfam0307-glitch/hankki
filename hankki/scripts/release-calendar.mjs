@@ -299,6 +299,23 @@ if (mode === '--brief' || mode === '--check') {
   process.exit(0)
 }
 
+// ⭐⭐ [2026-09-03] **인자 없이 부르면 «짧게».** 전문은 `--전부`.
+//    📮 창업자 = *"토큰도 너무 빨리 닳고, 대화 진행도 안되고 스트레스받더라고..."*
+//    🔢 실측 = 인자 없는 전문이 **17,384 B**. 그런데 실제로 필요한 건 거의 언제나 좁은 쪽이다 —
+//       `--tomorrow` 54 B · `--pending` · `--month` · `--on`. 전문은 «훑어볼» 때만 쓴다.
+//    ⛔ 「좁혀 쓰라」를 규칙으로 적지 않는다 (창업자 *"규칙만 만들면 뭐해 안지키는데"*) —
+//       **안 붙여도 짧게 나오게** 한다. 넓게 보려면 `--전부` 를 일부러 친다.
+//    ✅ 파싱하는 곳 없음(2026-09-03 확인) — `--tomorrow`·`--check` 는 게이트라 그대로 둔다.
+if (!(process.argv.includes('--전부') || process.argv.includes('--all'))) {
+  console.log('📅 날짜가 저절로 여는 문 — 좁혀서 보는 게 맞다(전문 17KB 라서)\n')
+  console.log('   --tomorrow          내일 저절로 열리는 것 (🔒게이트 · /잘자 가 먼저 돌린다)')
+  console.log('   --pending           앞으로 열릴 것 중 «검수 안 된» 것만')
+  console.log('   --month 2026-09     그 달에 열리는 것')
+  console.log('   --on 2026-09-01     그날 열리는 것')
+  console.log('   --brief             짧은 요약')
+  console.log('\n   --전부              달력 전체 (17KB · 대화 창을 먹는다)\n')
+  process.exit(0)
+}
 console.log('📅 날짜가 저절로 여는 문 (푸시 안 해도 열린다)\n')
 let last = ''
 for (const g of gates()) {
