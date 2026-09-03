@@ -26,9 +26,9 @@ const K_CLOUDGATE = (readFileSync(join(뿌리, 'src/nudges.js'), 'utf8')
 if (!K_CLOUDGATE) { console.error('⛔ src/nudges.js 에서 K_CLOUDGATE 를 못 찾았다 — 이름이 바뀌었다'); process.exit(1) }
 
 const PORT = Number(process.env.SMOKE_PORT || 4188)
-// ⛔ 기본값을 «박지 않는다» — '/opt/pw-browsers/chromium' 은 «내 방»에만 있는 자리다.
-//    CI 는 `npx playwright install chromium` 으로 «자기 자리»에 깐다.
-//    2026-09-03 배포 run #2054 가 정확히 이 한 줄 때문에 죽었다(다른 판들은 다 기본값이 없다).
+// ⛔⛔ 여기에 브라우저 «경로를 박지 마라» — 그 자리는 이 컨테이너에만 있고 CI 엔 없다.
+//    2026-09-03 에 내가 박아서 **배포를 죽였다**(run #2054). v10.90(run #1416)과 «같은» 사고다.
+//    ⭐ 없으면 플레이라이트가 알아서 찾는다 — 양쪽에서 다 돈다.
 const CHROMIUM = process.env.SMOKE_CHROMIUM
 
 let bad = 0
