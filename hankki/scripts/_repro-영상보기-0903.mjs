@@ -225,6 +225,41 @@ console.log('\n④ ⛔ 인스타·링크없음엔 «안» 뜬다 — 인스타�
   await page.context().close()
 }
 
+// ─────────────────────────────────────────────────────────────
+console.log('\n⑤ ⭐ 레시피 탭 「영상」 칩 — 영상 있는 것만 걸러진다 (창업자 확정 = 칩)')
+// ─────────────────────────────────────────────────────────────
+//   📮 창업자 = *"탭을 따로 만들필요가 있을까?? SNS레시피를?"* → **"칩으로 하자"**
+//   ⛔ 탭을 새로 만들지 않는다 — 레시피가 두 군데로 갈리면 검색·책갈피·장보기가 두 벌이 된다.
+{
+  const page = await 새탭()
+  await page.evaluate(() => {
+    const bs = [...document.querySelectorAll('nav button, .tabbar button, [class*="tab"] button, footer button')]
+    bs.find((x) => (x.innerText || '').replace(/\s+/g, '').includes('레시피'))?.click()
+  })
+  await page.waitForTimeout(800)
+  const 칩 = await page.evaluate(() =>
+    [...document.querySelectorAll('button.pill')].map((x) => (x.innerText || '').trim()).filter(Boolean))
+  chk(`「영상」 칩이 있다 (${칩.join(' · ')})`, 칩.some((t) => /^영상 \d+$/.test(t)))
+  // 🔢 심은 것 = 유튜브 둘(원작자 있음·없음) ＋ 인스타 하나 ＋ 링크없음 하나 → 영상은 «둘»이라야 한다
+  chk('⭐ 숫자가 맞다 — 유튜브 둘만 센다(인스타·링크없음은 안 센다)',
+    칩.some((t) => t === '영상 2'))
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button.pill')].find((x) => /^영상 /.test((x.innerText || '').trim()))?.click()
+  })
+  await page.waitForTimeout(700)
+  const 걸러진것 = await page.evaluate(() => {
+    const t = document.body.innerText || ''
+    return { 유튜브1: t.includes('가짜유튜브전'), 유튜브2: t.includes('가짜유튜브둘'), 인스타: t.includes('가짜인스타전'), 링크없음: t.includes('가짜링크없음') }
+  })
+  chk('⭐ 유튜브 둘이 보인다', 걸러진것.유튜브1 && 걸러진것.유튜브2)
+  chk('⛔ 인스타는 «안» 보인다 — 재생이 안 되니 「영상」이 아니다', !걸러진것.인스타)
+  chk('⛔ 원본 없는 것도 «안» 보인다', !걸러진것.링크없음)
+  // ⛔ 폴더가 아닌데 폴더로 읽히면 「폴더 삭제」가 뜬다 — 실제로 빠뜨리기 쉬운 자리
+  chk('⛔ 「폴더 삭제」 단추가 «안» 뜬다 — 칩은 폴더가 아니다', await page.evaluate(() =>
+    ![...document.querySelectorAll('button')].some((x) => /폴더 삭제|이 폴더 지우기/.test(x.innerText || ''))))
+  await page.context().close()
+}
+
 console.log(`\n${실패 ? '⛔' : '✅'} ${통과}/${통과 + 실패}\n`)
 console.log('📌 ① = 창업자가 물은 배치(영상 → 재료 → 만드는 법)가 «진짜로» 그러한가.')
 console.log('   ②③ = YouTube Developer Policies. 죽으면 정책 위반이다 — 「보기 나쁨」이 아니다.')
