@@ -20,6 +20,19 @@ const 편들 = new Map(레시피들().map((r) => [r.id, r]))
 // ── 세 편 · 어디서 왔나 · 무엇을 봐줘야 하나 ────────────────────────────
 const 목록 = [
   {
+    id: 'basic-kkwari-myeolchi-bokkeum',
+    창구: '유튜브',
+    확정: [
+      '창업자가 «원출처 채널에서 직접» 가져왔다 — 옮긴 계정을 안 거쳐서 출처가 한 겹이다',
+      '2인분',
+    ],
+    볼것: [
+      { 무엇: '제목 = 「꽈리고추 멸치볶음」', 왜: '⛔ 사람 이름을 제목에 «안» 넣었다 — 출처로 밝히는 건 되지만 이름으로 파는 건 다른 문제다(퍼블리시티권). 채널명은 출처 칸에 그대로 뜬다' },
+      { 무엇: '시간 15분', 왜: '⏳ 원본에 시간이 «없다» — 내가 제안한 값이다' },
+      { 무엇: '「물 100ml」를 양념 칸에 뒀다', 왜: '원본이 «볶음 양념»에 같이 적어놔서 그대로 뒀다. 재료 쪽으로 뺄까?' },
+    ],
+  },
+  {
     id: 'basic-gyeran-hurai-jorim',
     창구: '유튜브',
     확정: [
@@ -133,7 +146,7 @@ const 카드 = (m) => {
 
 const 카드들 = 목록.map(카드).join('\n')
 
-const HTML = `<title>영상에서 온 세 편</title>
+const HTML = `<title>영상에서 온 네 편</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Gowun+Batang:wght@700&display=swap">
 <style>
 :root{
@@ -231,7 +244,7 @@ h3 .n{color:var(--faint);font-weight:400;margin-left:4px}
 
 <div class="wrap">
 <header class="top">
-  <h1>영상에서 온 세 편</h1>
+  <h1>영상에서 온 네 편</h1>
   <p>유튜브·인스타에서 <b>보고</b> 우리 문장으로 적은 첫 레시피들이야. 아직 <b>아무한테도 안 나갔어.</b></p>
   <div class="how">
     <b>보는 법</b> — 편마다 「좋다 / 고칠 것 / 나중에」를 누르고, 고칠 게 있으면 아래 칸에 적어줘.
@@ -298,7 +311,7 @@ ${카드들}
 
   document.getElementById('copy').addEventListener('click', function(){
     var o = 읽기()
-    var 줄 = ['[영상에서 온 세 편 — 검수 결과]', '']
+    var 줄 = ['[영상에서 온 네 편 — 검수 결과]', '']
     memos.forEach(function(t){
       var k = t.dataset.k
       var p = o['pick:'+k] || '아직'
