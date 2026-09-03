@@ -596,8 +596,9 @@ export default function ProfileScreen() {
         {/* 메뉴 — 갈래마다 «상자 하나». 사이가 벌어져야 눈이 갈래를 읽는다. */}
         {갈래들.map((g) => (
           <div key={g.title || '기본'} style={{ marginTop: 20 }}>
-            {/* ⛔ 첫 갈래엔 이름표를 안 붙인다 — 늘 쓰는 줄이라 이름이 필요 없고,
-                붙이면 백업 카드 바로 밑에 글자가 두 겹으로 쌓인다. */}
+            {/* ⛔⛔ [2026-09-04 정정] 여기 「첫 갈래엔 이름표를 안 붙인다」고 적혀 있었다 — **되돌리기 «전»의 말**이다.
+                실제로는 402줄에서 「자주 여는 것」 이름표를 다시 붙였다(그 갈래만 붕 떠 보여서 창업자가 스샷으로 잡았다).
+                📌 주석대로 떼면 그 문제로 그대로 돌아간다. 이름표는 «줄 전체»가 정한다 — 하나만 빼면 그게 튄다. */}
             {g.title && (
               <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--sand)', margin: '0 4px 8px', letterSpacing: '0.02em' }}>{g.title}</div>
             )}
@@ -692,7 +693,8 @@ export default function ProfileScreen() {
         </div>
 
         {/* 🏷 앱 자체에 대한 것 — 예시 데이터 · 버전 · 꼬리말. 갈래 중 «마지막»이다. */}
-        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--sand)', margin: '22px 4px 8px', letterSpacing: '0.02em' }}>앱 정보</div>
+        {/* ⛔ 위 여백이 여기만 22px 이었다 — 다른 이름표는 전부 20px 이라 마지막 칸만 벌어져 보였다(2026-09-04). */}
+        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--sand)', margin: '20px 4px 8px', letterSpacing: '0.02em' }}>앱 정보</div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button
             className="press"
