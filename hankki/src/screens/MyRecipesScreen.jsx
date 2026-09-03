@@ -60,7 +60,9 @@ const DIARY_COACH_STEPS = [
 ]
 
 // 카테고리와 연결된 기본 폴더 — 삭제 불가(사용자가 만든 폴더만 지울 수 있게)
-const DEFAULT_FOLDERS = new Set(['한식', '양식', '일식', '간식', '아시안'])
+// ⛔⛔ 여기와 `theme.js` 의 `CATEGORIES` 는 «같이» 고쳐야 한다 — 하나만 고치면
+//    칩엔 있는데 폴더가 «지워지는» 갈래가 생긴다. 2026-09-03 에 중식을 넣으며 둘 다 고쳤다.
+const DEFAULT_FOLDERS = new Set(['한식', '중식', '양식', '일식', '간식', '아시안'])
 
 const dayKey = (ts) => {
   const d = new Date(ts)

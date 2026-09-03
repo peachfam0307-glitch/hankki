@@ -23,8 +23,18 @@ const ROOT = new URL('..', import.meta.url).pathname
 const src = readFileSync(join(ROOT, 'src/data/basics.js'), 'utf8')
 
 // 한 편 = `{ ...base, ... }` 한 덩어리. `title` 과 `from` 과 `review` 를 뽑는다.
+//
+// ⛔⛔ **[2026-09-03] 여기가 «조용히» 뚫려 있었다 — 주석 한 줄이 한 편을 통째로 감췄다.**
+//    옛 잣대 = `/\{\s*\.\.\.base,/` — `{` 와 `...base,` «사이»에 공백만 허용했다.
+//    그래서 새 레시피에 설명 주석을 `...base,` «위»에 달았더니 그 편이 **안 세어졌다**
+//    (실측: 실제 146편인데 관문은 **145** 로 셌고, 그 편은 목록에 한 줄도 안 떴다).
+//    ⭐⭐ **검수를 안 받은 편이 «검수 관문에서 안 보이는» 것** — 이 관문이 막으려던 바로 그 일이다.
+//       초록불이 떴으니 아무도 모른 채 나갔을 것이다(규칙 18 ⓘ = 「통과했나」가 아니라 «무엇을 보고 통과했나»).
+//    ✅ 이제 `{` 와 `...base,` 사이의 **주석(`//`·`/* */`)을 건너뛴다.**
+//    🔒 ＋ 아래 「센 편 수 = 파일의 `id:` 수」 대조를 붙였다 — 잣대가 또 새면 **그때 죽는다.**
+const 사이주석 = String.raw`(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*`
 const 편들 = []
-for (const m of src.matchAll(/\{\s*\.\.\.base,([\s\S]*?)\n  \},/g)) {
+for (const m of src.matchAll(new RegExp(String.raw`\{${사이주석}\.\.\.base,([\s\S]*?)\n  \},`, 'g'))) {
   const body = m[1]
   const t = body.match(/title:\s*'([^']+)'/)
   const f = body.match(/from:\s*'(\d{4}-\d{2}-\d{2})'/)
@@ -34,6 +44,19 @@ for (const m of src.matchAll(/\{\s*\.\.\.base,([\s\S]*?)\n  \},/g)) {
 
 if (!편들.length) {
   console.log('⛔ 검수 관문 — 레시피를 한 편도 못 읽었다. 검사가 죽은 것이니 고칠 것.')
+  process.exit(1)
+}
+
+// 🔒🔒 **잣대가 «새는지»를 잣대가 스스로 잰다** (2026-09-03 신설)
+//    위 정규식이 한 편이라도 놓치면 그 편은 **검수 없이 조용히 나간다.**
+//    ⭐ 그래서 «다른 방법»으로 한 번 더 세어 대조한다 — `id: 'basic-…'` 의 개수.
+//    ⛔ 두 값이 다르면 **막는다.** 「몇 편인지도 모르는 관문」은 관문이 아니다.
+const id수 = (src.match(/^\s*id:\s*'/gm) || []).length
+if (id수 !== 편들.length) {
+  console.log(`⛔⛔ 검수 관문이 «새고 있다» — 뽑은 편 ${편들.length} ≠ 파일의 id ${id수}`)
+  console.log('   📌 2026-09-03 사고 = `...base,` «위»에 주석을 달았더니 그 편이 통째로 안 보였다.')
+  console.log('   👉 basics.js 에서 그 모양을 찾아 고치거나, 위 정규식을 넓힐 것.')
+  console.log('   ⛔ 이 대조를 지워서 통과시키지 말 것 — 그게 관문을 끄는 것이다.')
   process.exit(1)
 }
 
