@@ -73,7 +73,11 @@ export default {
       'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
       'Access-Control-Allow-Methods': 'GET,OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
-      'Cache-Control': 'public, max-age=3600',
+      // ⛔⛔ [2026-09-04] 여기에 한 시간 캐시를 걸어놨다가 «재보기가 막혔다» —
+      //    코드를 고쳐 올려도 폰이 옛 답을 그대로 보여줘서 「안 고쳐졌다」로 보였다.
+      //    ⭐ 성공한 답은 담아둘 값이 있지만 **실패한 답을 물고 있으면 안 된다** — 고칠 길이 막힌다.
+      //       (성공 답은 아래에서 따로 캐시를 붙인다)
+      'Cache-Control': 'no-store',
     }
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
 
