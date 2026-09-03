@@ -4,7 +4,7 @@ import { useStore, 다읽었나 } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
-import { parseRecipeText, keepRaw } from './parseRecipe'
+import { parseRecipeText, keepRaw, 자리표제목 } from './parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from './tidy'
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
@@ -614,7 +614,9 @@ export default function App() {
         //      · 우리가 «몰라서» 붙인 자리표(`사진 레시피`) = ①이 채우고 ②가 덮어도 된다
         //   ⭐ 잣대를 «자동인가»로 한 번만 정하고 안 흔든다 — 이게 어제 사고의 모양이었다.
         const 처음제목 = String(rec.title || '')
-        const 자동제목인가 = !처음제목 || 처음제목 === '사진 레시피'
+        // 🏷 [2026-09-03] 자리표 판정을 «파서 한 곳»에서 가져온다 — 「제목없음」이 새 자리표로 들어왔다.
+        //    ⛔ 여기에 문자열을 박아 두면 자리표가 늘 때 이 줄만 낡는다(그러면 그 제목이 영영 안 고쳐진다).
+        const 자동제목인가 = 자리표제목(처음제목)
 
         // 채우는 일은 «한 곳»에 — 규칙 파서 판과 AI 판이 갈리면 결과가 두 가지가 된다.
         const 채우기 = (r) => {
