@@ -63,6 +63,11 @@ const ALLOWED_ORIGINS = [
   'https://peachfam0307-glitch.github.io',
 ]
 
+// 🔖🔖 **어느 판이 도는지 답에 찍는다** — 2026-09-04 에 이것 때문에 세 번 헛돌았다.
+//   코드를 고쳐 올렸는데 옛 답이 나와서 「안 올라갔나 · 캐시인가 · 내 규칙이 틀렸나」를 구분 못 했다.
+//   ⭐ 창업자 폰이 유일한 계기판인데 그 계기판이 «어느 판을 재는지»를 안 알려주고 있었다.
+//   ⛔ 판을 고칠 때마다 이 글자도 «같이» 올린다. 안 올리면 이 장치가 거짓말을 한다.
+const 판 = '0904-4'
 const 담는기간 = 7 * 24 * 3600   // 초 — 인스타 표지 주소가 만료되는 결을 따라간다
 const 기다림 = 8000              // ms — 인스타가 늘어져도 우리 화면은 안 늘어지게
 
@@ -173,7 +178,8 @@ export default {
 }
 
 function json (o, status, cors) {
-  return new Response(JSON.stringify(o), {
+  // 🔖 모든 답에 판 번호를 붙인다 — 「지금 도는 게 어느 코드인가」를 한눈에 본다.
+  return new Response(JSON.stringify({ 판, ...o }), {
     status,
     headers: { ...cors, 'Content-Type': 'application/json; charset=utf-8' },
   })
