@@ -254,9 +254,20 @@ console.log('\n⑦ ask·evidence 훅 — 「무조건 뜬다」가 지켜지나'
 console.log('\n⑧ 좁은 판 — 짧아졌지만 개수·이름은 다 보이나')
 {
   const 크기 = (a) => B(돌림('node', a).out)
-  const lm = 크기(['scripts/latest-map.mjs']), lmAll = 크기(['scripts/latest-map.mjs', '--전부'])
-  재기('latest-map 기본이 3KB 아래', lm < 3000, true)
-  재기('latest-map --전부 는 다 나온다', lmAll > 10000, true)
+  const 접힌 = 돌림('node', ['scripts/latest-map.mjs']).out
+  const 펼친 = 돌림('node', ['scripts/latest-map.mjs', '--전부']).out
+  재기('latest-map 기본이 3KB 아래', B(접힌) < 3000, true)
+  // ⭐⭐ [2026-09-04] 이 칸은 「10KB 넘나」로 재고 있었다 — 그건 «주제가 111개이던 날»의 숫자다.
+  //    창업자가 7·8월 문서를 보관소로 내리자 주제가 30개가 되어 전문이 5KB 로 줄었고 이 칸이 «가짜로» 죽었다.
+  //    ⛔ 10000 을 5000 으로 낮추는 건 땜빵이다(절대원칙 34) — 주제가 더 줄면 또 같은 자리에서 죽는다.
+  //    ✅ 재는 «대상»을 바꾼다 = 접힌 판이 «이름만» 적어 둔 주제를 펼친 판이 하나도 안 빼먹었나.
+  //       그게 「다 나온다」의 원래 뜻이고, 주제가 몇 개가 되든 안 낡는다.
+  const 이름들 = (접힌.split('\n').find((l) => l.includes(' · ')) || '')
+    .split('·').map((s) => s.trim()).filter(Boolean)
+  재기('접힌 판이 주제 이름을 적어 둔다', 이름들.length > 0, true)
+  재기('latest-map --전부 가 접힌 판의 주제를 하나도 안 빼먹는다',
+       이름들.filter((n) => !펼친.includes(n)).length, 0)
+  재기('latest-map --전부 가 접힌 판보다 넓다', B(펼친) > B(접힌), true)
   재기('latest-map --check 게이트는 그대로 돈다', 돌림('node', ['scripts/latest-map.mjs', '--check']).code, 0)
   재기('latest-map --for 는 아주 짧다', 크기(['scripts/latest-map.mjs', '--for', '카드']) < 1000, true)
 

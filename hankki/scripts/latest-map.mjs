@@ -214,7 +214,8 @@ if (arg === '--check') {
 if (!MAIN) { /* 훅이 불러 쓴 것 — 출력하지 않는다 */ } else {
 // ⭐⭐ [2026-09-03] **인자 없이 부르면 «짧게».** 전문은 `--전부`.
 //    📮 창업자 = *"토큰도 너무 빨리 닳고, 대화 진행도 안되고 스트레스받더라고..."*
-//    🔢 실측 = 인자 없는 전문이 **17,193 B**. 그런데 `--for "카드"` 는 **194 B** — **88배**다.
+//    🔢 2026-09-03 실측 = 인자 없는 전문이 **17,193 B**. 그런데 `--for "카드"` 는 **194 B** — **88배**다.
+//       ⚠️ 그 값은 «그날의» 것이다 — 지금 크기는 아래에서 «재서» 말한다(2026-09-04 에 5KB 로 줄었다).
 //       ⛔ `--for` 는 2026-08 부터 «이미 있었는데» `ask-guard` 가 전문을 돌리라고 시키고 있었다.
 //          그래서 물어볼 때마다 17KB 가 대화에 쌓였다. 만들어 놓고 안 쓴 것이다.
 //    ⛔ 「--for 를 붙여라」를 «규칙»으로 적지 않는다 — 창업자 원칙(*"규칙만 만들면 뭐해 안지키는데"*).
@@ -222,25 +223,35 @@ if (!MAIN) { /* 훅이 불러 쓴 것 — 출력하지 않는다 */ } else {
 //    ⚠️ `hello-read.mjs` 는 이 출력을 «파싱»한다 — 그래서 거기서는 `--전부` 로 부른다(안 그러면 표가 빈다).
 const 전부 = process.argv.includes('--전부') || process.argv.includes('--all')
 const t = byTopic()
+// ⭐⭐ [2026-09-04] **전문 크기는 «재서» 말한다 — 손으로 적으면 반드시 낡는다.**
+//    ⛔ 여기 「17KB」가 박혀 있었다. 창업자가 7·8월 문서를 보관소로 내리자 주제가 111 → 30 이 되어
+//       실제 전문은 **5KB** 가 됐는데 화면은 계속 「17KB」라고 말했다.
+//    📌 같은 뿌리를 이 저장소에서 여러 번 밟았다(CLAUDE.md ④ *"개수·현황을 문서에서 읽어 말하지 말 것"*).
+//       ✅ 그래서 «전문을 실제로 만들어 바이트를 잰다» — 주제가 몇 개가 되든 다시는 안 낡는다.
+const 전문줄 = () => {
+  const L = ['📌 주제별 최신 문서\n']
+  for (const [k, v] of [...t].sort((a, b) => b[1][0].date.localeCompare(a[1][0].date))) {
+    L.push(`${k}`)
+    v.forEach((d, i) => L.push(`   ${i === 0 ? '✅ 최신' : '   옛것'}  ${d.date}  ${d.path}`))
+  }
+  if (pins.length) {
+    L.push('\n📍 핀 (사람만 아는 확정본)')
+    for (const p of pins) {
+      L.push(`${p.name}`)
+      p.now.forEach((n) => L.push(`   ✅ ${n}`))
+      p.outside.forEach((o) => L.push(`   ⚠️ 저장소 밖 — ${o}`))
+    }
+  }
+  return L
+}
 if (!전부) {
   const 주제 = [...t].sort((a, b) => b[1][0].date.localeCompare(a[1][0].date))
-  console.log(`📌 주제 ${주제.length}개 — 이름만 보여준다(전문 17KB 라서).\n`)
+  const KB = (Buffer.byteLength(전문줄().join('\n') + '\n') / 1024).toFixed(1)
+  console.log(`📌 주제 ${주제.length}개 — 이름만 보여준다(전문 ${KB}KB 라서).\n`)
   console.log('   ' + 주제.map(([k]) => k).join(' · '))
-  console.log(`\n👉 **찾는 게 있으면** node scripts/latest-map.mjs --for "<핵심어>"   ← 이게 맞는 쓰임(194 B)`)
-  console.log(`   전부 펼치려면 --전부 (17KB · 대화 창을 먹는다)\n`)
+  console.log(`\n👉 **찾는 게 있으면** node scripts/latest-map.mjs --for "<핵심어>"   ← 이게 맞는 쓰임(1KB 아래)`)
+  console.log(`   전부 펼치려면 --전부 (${KB}KB · 대화 창을 먹는다)\n`)
   process.exit(0)
 }
-console.log('📌 주제별 최신 문서\n')
-for (const [k, v] of [...t].sort((a, b) => b[1][0].date.localeCompare(a[1][0].date))) {
-  console.log(`${k}`)
-  v.forEach((d, i) => console.log(`   ${i === 0 ? '✅ 최신' : '   옛것'}  ${d.date}  ${d.path}`))
-}
-if (pins.length) {
-  console.log('\n📍 핀 (사람만 아는 확정본)')
-  for (const p of pins) {
-    console.log(`${p.name}`)
-    p.now.forEach((n) => console.log(`   ✅ ${n}`))
-    p.outside.forEach((o) => console.log(`   ⚠️ 저장소 밖 — ${o}`))
-  }
-}
+for (const line of 전문줄()) console.log(line)
 }
