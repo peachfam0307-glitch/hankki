@@ -46,6 +46,19 @@ import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 // 📺 링크 → 앱 안에서 재생할 수 있는 «공식» 임베드 주소 (유튜브·인스타)
 import { embedUrl } from '../embed'
 
+// 🏷 출처(어디서 왔나) — 주소에서 «읽어» 낸다 (창업자 2026-09-03 *"원본링크에-출처도 붙이자"*)
+//   ⛔ 손으로 적는 칸을 새로 만들지 않는다 — 손으로 적으면 반드시 낡는다(규칙 12ⓑ).
+//   ⛔ 모르는 곳이면 **아무 말도 안 붙인다** — 「기타」·「웹」 같은 말을 지어내지 않는다.
+//   ⛔ 유저가 보는 글자다 — 「인스타그램」·「유튜브」로 적는다(영문 약자·상표 변형 금지).
+const 출처이름 = (url = '') => {
+  const u = String(url)
+  if (/(?:^|\/\/|\.)instagram\.com/i.test(u)) return '인스타그램'
+  if (/(?:^|\/\/|\.)(?:youtube\.com|youtu\.be)/i.test(u)) return '유튜브'
+  if (/(?:^|\/\/|\.)(?:blog\.naver\.com|naver\.me)/i.test(u)) return '네이버 블로그'
+  if (/(?:^|\/\/|\.)tiktok\.com/i.test(u)) return '틱톡'
+  return ''
+}
+
 // 🖍 절 제목 형광펜 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
 // ✅ **레몬 확정** — 창업자가 판단을 맡겨서(*"형광펜은 잘모르겠다.. 네가 판단해봐"*) «재서» 골랐다.
 //   ⑴ 바탕과의 대비 ΔE **30.2** = 2위 라임(23.1)보다 또렷하고 꼴찌 자몽(13.3)의 2.3배
@@ -90,6 +103,8 @@ export default function RecipeDetailScreen({ id }) {
   useWakeLock() // 레시피를 보며 요리할 때 화면이 꺼지지 않게
   const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
   const [timer, setTimer] = useState(false)
+  // 🖼 유튜브 미리보기 그림이 안 올 때 — 그 칸을 통째로 감춘다(깨진 네모 금지)
+  const [썸네일깨짐, set썸네일깨짐] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
   // 📷↔📔 [창업자 확정 2026-08-23] 표지 사진 ↔ 일기 사진을 «한 몸»으로
   //   📮 *"레꾸 화면에서 유저가 내가 만든 음식사진으로 바꾸잖아. 그때! 팝업으로, 일기에도 적용할건가 물으면"*
@@ -678,42 +693,68 @@ export default function RecipeDetailScreen({ id }) {
                   ✅ 우리는 따로 안 걸어서 크롬 기본값(`strict-origin-when-cross-origin`) = 유튜브 권장값이다
             ⛔ `allow-top-navigation`·`allow-popups` 를 넣지 않는다 — 넣으면 임베드를 눌렀을 때
                앱이 유튜브 앱으로 튕겨 나간다(편집 화면 주석에 이미 박혀 있는 이유). */}
-        {영상 && 영상.type === 'youtube' && (
+        {/* ⛔⛔⛔ [창업자 확정 2026-09-03] **앱 «안»에서 유튜브를 «재생하지 않는다».** 📮 = *"ⓐ로 가자"*
+            📮 그 앞에 창업자가 이미 말했다 = *"출처는 무조건 적고 영상 바로가기도 만들어야해. **우리앱에서 재생시키는게 아니라**"*
+
+            🔎 **왜 뺐나 — Developer Policies III.E.4.j** (창업자가 조사해 온 답 · 2026-09-03)
+              > *"API Clients must look up the Made For Kids status of **each YouTube video that it embeds** on its site or app"*
+              ⛔ 잣대가 **앱 등급이 아니라 «임베드하는 영상 하나하나»**다 — 「우리 앱은 어린이 앱이 아니다」로 안 빠진다.
+              ⛔ 지키려면 영상마다 「videos.list(part=status)」 로 「status.madeForKids」 를 물어야 하는데,
+                 그 순간 **진짜 API Client** 가 되어 다른 조항이 줄줄이 붙는다(30일 저장 제한 등 · 2026-08-27 문서).
+              ✅ **안 틀면 이 조항 자체가 해당 없어진다.** 그래서 재생을 뺐다.
+
+            ⭐ 대신 아래 「원본 링크」 칸 하나로 모았다 — 인스타 편과 «같은 모양»이 된다.
+            ⛔⛔ 이 자리에 iframe 플레이어를 다시 넣지 말 것. 넣으면 위 조항이 되살아난다.
+            ⚠️ 정직하게 — 정책 원문을 내가 «내 눈으로» 못 봤다(이 환경은 유튜브·구글 문서를 못 연다).
+               창업자가 가져다준 답을 근거로 한 것이다.
+
+            ✅✅ [창업자 확정 2026-09-03] **대신 «미리보기 그림»은 보여준다.**
+               📮 = *"재생창은 보이게 하고 누르면 앱으로 가게해야지"*
+                  · *"우리앱에서 직접 재생만 안하면 되자나 미리보기정도는 보여줘도 되지"*
+               ⭐ 맞는 말이다 — 조항이 막는 건 **«임베드(앱 안에서 틀기)»**이고, 그림은 임베드가 아니다.
+               ⛔ 그래서 이 자리는 **`<img>` 하나 ＋ ▶ 표시**다. **`<iframe>` 을 다시 넣지 말 것.**
+               ⛔ 그림이 안 오면(`onError`) 이 칸을 **통째로 감춘다** — 깨진 네모를 보여주지 않는다. */}
+        {영상 && 영상.type === 'youtube' && 영상.thumb && !썸네일깨짐 && (
           <>
             <div className="sec-head" style={{ marginTop: 14, marginBottom: 6 }}>
               <SecTitle>영상으로 보기</SecTitle>
             </div>
-            <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
-              <iframe
-                src={영상.src}
-                title="원본 영상"
-                allow="encrypted-media; picture-in-picture"
-                allowFullScreen
-                sandbox="allow-scripts allow-same-origin allow-presentation"
-                style={{ display: 'block', width: '100%', aspectRatio: '16/9', border: 0 }}
-              />
-              {/* ⛔⛔ 이 줄을 **플레이어 «위»에 얹지 않는다** — 아래에 «따로» 둔다.
-                  YouTube Developer Policies = *"must not use overlays, frames or other visual
-                  elements to obscure any part of an embedded player, including player controls"*
-                  📌 인스타 안내띠(`EditorScreen.jsx:784`)는 `position:absolute` 로 «위에» 얹는데,
-                     그건 인스타 전용이라 유튜브엔 안 붙는다. 여기서 그걸 따라 하면 위반이 된다. */}
-              <button
-                className="opt-row press"
-                onClick={() => openUrl(r.sourceUrl)}
-                style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}
-              >
+            {/* ⛔ 카드 «전체»가 하나의 문이다 — 눌러서 유튜브 앱·웹으로 나간다(앱 안에서 안 튼다) */}
+            <button
+              className="card press"
+              onClick={() => openUrl(r.sourceUrl)}
+              style={{ display: 'block', width: '100%', overflow: 'hidden', padding: 0, textAlign: 'left', border: 0 }}
+            >
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: 'var(--cream)' }}>
+                <img
+                  src={영상.thumb}
+                  alt=""
+                  onError={() => set썸네일깨짐(true)}
+                  style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                {/* ▶ = 「누르면 영상으로 간다」는 표시.
+                    ⛔ 「플레이어를 가리지 마라」 조항은 여기 해당 없다 — 가릴 플레이어가 없다(그림이다). */}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 54, height: 38, borderRadius: 10, background: 'rgba(0,0,0,.72)', color: '#fff',
+                  }}
+                >
+                  <Icon name="play" size={20} />
+                </span>
+              </div>
+              <div className="opt-row" style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}>
                 <Icon name="youtube" size={19} color="var(--brown)" />
-                {/* 🏷 원작자를 «있을 때만» 앞에 붙인다 — 한 줄로 「누가 만들었나 ＋ 원본 가기」가 끝난다.
-                    📮 창업자 = *"그 사람껄 내꺼처럼 재생산하는게 더 문제 아닌가"*
-                    ⛔ 없으면 그냥 「YouTube에서 보기」 — 유저가 담은 레시피는 이 칸이 비어 있다. */}
                 <div className="t" style={{ fontSize: 16, minWidth: 0 }}>
                   {r.sourceName
                     ? <><b style={{ fontWeight: 700 }}>{r.sourceName}</b> · YouTube에서 보기</>
                     : 'YouTube에서 보기'}
                 </div>
                 <Icon name="chevron-right" size={17} color="var(--sand)" />
-              </button>
-            </div>
+              </div>
+            </button>
           </>
         )}
 
@@ -894,16 +935,24 @@ export default function RecipeDetailScreen({ id }) {
           </>
         )}
 
-        {/* ⛔ 유튜브면 이 절을 감춘다 — 위 영상 칸에 「YouTube에서 보기」가 이미 있다.
-            같은 곳으로 가는 문이 둘이면 헷갈린다(하단바에서 「내 레시피·장보기」를 뺀 것과 같은 이유).
-            ⭐ 인스타·블로그 등 «재생이 안 되는» 원본은 여기가 유일한 문이라 그대로 둔다. */}
-        {r.sourceUrl && !(영상 && 영상.type === 'youtube') && (
+        {/* ⭐⭐ [창업자 확정 2026-09-03 · ⓐ] **여기가 이제 «유일한» 문이다.**
+            ⛔ 전엔 *"유튜브면 이 절을 감춘다 — 위 영상 칸에 「YouTube에서 보기」가 이미 있다"* 였다.
+               그 영상 칸을 통째로 뺐으므로(위 III.E.4.j 절 참조) **감출 이유가 사라졌다.**
+               감춘 채로 두면 유튜브 편은 **원본으로 가는 문이 아예 없어진다.**
+            ⭐ 이제 유튜브·인스타·블로그가 «같은 모양»이다 — 눌러서 밖에서 본다. */}
+        {r.sourceUrl && (
           <>
             <div className="h-section" style={{ marginTop: 26, marginBottom: 8 }}>원본 링크</div>
             <a href={r.sourceUrl} target="_blank" rel="noreferrer" className="card press" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 14, textDecoration: 'none', color: 'var(--text)' }}>
               <Icon name="link" size={20} color="var(--sand)" />
-              {/* 🏷 원작자가 있으면 «주소 대신» 이름을 보여준다 — 주소는 읽어도 누군지 모른다 */}
-              <span style={{ flex: 1, fontSize: 16.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sourceName || r.sourceUrl}</span>
+              {/* 🏷 원작자가 있으면 «주소 대신» 이름을 보여준다 — 주소는 읽어도 누군지 모른다
+                  🏷🏷 [창업자 2026-09-03] *"원본링크에-출처도 붙이자"* — 이름만 있으면 «어디»서 왔는지 모른다.
+                    ⭐ 주소에서 «읽어» 붙인다 — 손으로 적는 칸을 새로 만들지 않는다(손으로 적으면 반드시 낡는다).
+                    ⛔ 모르는 곳이면 아무 말도 안 붙인다(「기타」 같은 말을 지어내지 않는다). */}
+              <span style={{ flex: 1, fontSize: 16.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {출처이름(r.sourceUrl) && <span style={{ color: 'var(--text-sub)' }}>{출처이름(r.sourceUrl)} · </span>}
+                {r.sourceName || r.sourceUrl}
+              </span>
               <Icon name="chevron-right" size={18} color="var(--sand)" />
             </a>
           </>

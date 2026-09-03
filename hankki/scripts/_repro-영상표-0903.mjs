@@ -63,7 +63,15 @@ try {
     r[1].sourceUrl = 'https://youtu.be/bbbbbbbbbbb'
     r[2].sourceUrl = 'https://blog.example.com/x'
     localStorage.setItem('hankki:v1', JSON.stringify(s))
-    return { 영상: [r[0].title, r[1].title], 글: [r[2].title] }
+    // ⛔⛔ [2026-09-03 고침] 전엔 「심은 셋만 출처가 있다」고 «가정»하고 그 셋을 기대치로 썼다.
+    //   그날 진짜 SNS 레시피(꽈리고추·계란후라이조림·광어깻잎무침)가 앱에 들어오자 **전제가 깨져** 3칸이 죽었다.
+    //   ⭐ 판이 옳고 «가정»이 낡았던 것이다 → 이제 **앱의 실제 값에서** 기대치를 뽑는다(앞으로 안 낡는다).
+    const 유튜브 = (u) => /(?:youtube\.com|youtu\.be)/i.test(u || '')
+    const 출처있음 = r.filter((x) => (x.sourceUrl || '').trim())
+    return {
+      영상: 출처있음.filter((x) => 유튜브(x.sourceUrl)).map((x) => x.title),
+      글: 출처있음.filter((x) => !유튜브(x.sourceUrl)).map((x) => x.title),
+    }
   })
   if (!심은) { no('레시피가 3편도 없다 — 여기서 멈춘다'); throw new Error('seed') }
   영상편.push(...심은.영상); 글편.push(...심은.글)
@@ -77,7 +85,7 @@ try {
   await page.waitForTimeout(1200)
 
   // ⑴ 칩이 떴나 — 안 떴으면 여기서 멈춘다(안 떴는데 초록불 방지 · 규칙 18 ⓘ)
-  const 칩 = page.locator('button.pill', { hasText: '영상' })
+  const 칩 = page.locator('button.pill', { hasText: 'SNS' })
   if (await 칩.count() === 0) {
     const 진단 = await page.evaluate(() => ({
       알약: [...document.querySelectorAll('button.pill')].map((b) => b.innerText.trim()),
@@ -85,39 +93,61 @@ try {
       저장: (localStorage.getItem('hankki:v1') || '').slice(0, 160),
     }))
     console.log('  🔎 진단 =', JSON.stringify(진단))
-    no('「영상 N」 칩이 안 떴다 — 여기서 멈춘다'); throw new Error('chip')
+    no('「SNS N」 칩이 안 떴다 — 여기서 멈춘다'); throw new Error('chip')
   }
   const 칩글 = (await 칩.first().innerText()).trim()
   const 칩수 = Number((칩글.match(/(\d+)/) || [])[1] || 0)
-  칩수 === 영상편.length ? ok('칩이 영상 편을 맞게 셌다', `「${칩글}」`) : no('칩 개수가 다르다', `${칩글} ≠ ${영상편.length}`)
+  // ⭐⭐ [창업자 확정 2026-09-03] 칩 이름 = 「SNS」 — 잣대가 «출처 링크가 붙었나»라 **블로그 편도 센다.**
+  //   ⛔ 아래 ▶ 표와 **다른 자**다 — ▶ 는 «앱에서 재생되는» 유튜브만. 그래서 이 숫자가 더 크다.
+  //   📌 이 판이 그 차이를 지킨다 — 둘을 같은 자로 되돌리면 여기서 죽는다.
+  const SNS편 = [...영상편, ...글편]
+  칩수 === SNS편.length ? ok('칩이 SNS 편을 맞게 셌다', `「${칩글}」 = ${SNS편.length}`) : no('칩 개수가 다르다', `${칩글} ≠ ${SNS편.length}`)
 
-  // ⑵⑶⑷ ▶ 표가 «어느 카드»에 붙었나 — 이름표로 확인한다
-  const 붙은이름 = await page.evaluate(() => {
-    const out = []
+  // ⑵⑶⑷ 표가 «어느 카드»에, «어떤 모양»으로 붙었나 — 이름표로 확인한다
+  //
+  // ⭐⭐ [창업자 2026-09-03] *"광어깻잎무침에 영상마크 안붙었어"* → 표를 **둘로** 나눴다.
+  //   · 유튜브 = ▶ (빨강) — 눌러서 «재생»
+  //   · 그 밖의 SNS(인스타·블로그) = 🔗 (갈색) — 눌러서 «나가서 보기»
+  //   ⛔ 인스타에 ▶ 를 붙이면 「누르면 재생된다」는 거짓 약속이 된다(앱에서 재생이 안 된다).
+  //
+  // ⛔⛔ 옛 판은 **「표가 붙었나」**만 봤다 — 그래서 모양이 바뀌어도 못 잡는다.
+  //   ✅ 이제 **「어떤 표가 붙었나」**를 본다(규칙 18 ⓘ · 검사가 «무엇을» 보는가).
+  const 붙은표 = await page.evaluate(() => {
+    const out = { 재생: [], 링크: [], 없음: [] }
     document.querySelectorAll('.name').forEach((n) => {
       const 카드 = n.parentElement
-      const 표 = 카드?.querySelector('svg')
-      // 썸네일 위 절대배치 표식만 센다(이름표 옆 아이콘이 아니라)
-      const 뱃지 = [...(카드?.querySelectorAll('span') || [])].find((s) => getComputedStyle(s).position === 'absolute' && s.querySelector('svg'))
-      if (뱃지) out.push(n.textContent.trim())
-      void 표
+      // ⛔ 색·자리로 찾지 않는다 — 「꾸민 표지」의 스티커도 절대배치 span 이라 헷갈린다
+      //    (2026-09-03 에 콩국수가 실제로 그렇게 잘못 잡혔다). 표에 붙인 이름표를 읽는다.
+      const 뱃지 = 카드?.querySelector('[data-sns]')
+      const 제목 = n.textContent.trim()
+      if (!뱃지) { out.없음.push(제목); return }
+      ;(뱃지.getAttribute('data-sns') === 'play' ? out.재생 : out.링크).push(제목)
     })
     return out
   })
+  const 붙은이름 = [...붙은표.재생, ...붙은표.링크]
   // 👀 숫자만 보면 「가려진 것」을 놓친다 — 찍어서 눈으로도 본다(절대원칙 21)
   if (process.env.SHOT) { await page.screenshot({ path: process.env.SHOT }); console.log('  📸', process.env.SHOT) }
 
   const 같나 = (a, b) => a.length === b.length && [...a].sort().every((v, i) => v === [...b].sort()[i])
-  같나(붙은이름, 영상편)
-    ? ok('▶ 표가 «영상 편에만» 붙었다', 붙은이름.join(' · '))
-    : no('▶ 표가 붙은 카드가 다르다', `${붙은이름.join(' · ') || '(없다)'} ↔ ${영상편.join(' · ')}`)
-  붙은이름.some((t) => 글편.includes(t)) ? no('⛔ 글 편에도 ▶ 가 붙었다') : ok('글 편엔 안 붙었다')
+  // ⛔⛔ [창업자 확정 2026-09-03 · ⓐ] **표는 🔗 하나뿐이고, ▶ 는 «어디에도» 없어야 한다.**
+  //   앱 «안»에서 재생하지 않기로 했다(Developer Policies III.E.4.j · 상세 화면 주석 참조).
+  //   ⭐ 그래서 이 판의 심장이 바뀌었다 — 전엔 「▶ 가 «맞는 카드»에 붙었나」였고,
+  //      이제는 **「▶ 가 «하나도» 없나」 ＋ 「SNS 편 전부에 🔗 가 붙었나」**다.
+  //   🧪 규칙 12 = ▶ 를 되살리면(유튜브에 data-sns="play") 첫 칸에서 죽는다.
+  같나(붙은표.재생, 영상편)
+    ? ok('▶ 표가 «유튜브 편에만» 붙었다', 붙은표.재생.join(' · '))
+    : no('▶ 표가 붙은 카드가 다르다', `${붙은표.재생.join(' · ') || '(없다)'} ↔ ${영상편.join(' · ')}`)
+  같나(붙은표.링크, 글편)
+    ? ok('🔗 표가 «인스타·블로그 편에만» 붙었다', 붙은표.링크.join(' · '))
+    : no('🔗 표가 붙은 카드가 다르다', `${붙은표.링크.join(' · ') || '(없다)'} ↔ ${글편.join(' · ')}`)
+  같나(붙은이름, SNS편) ? ok('SNS 편 전부에 표가 붙었다', `${붙은이름.length}개`) : no('표가 빠진 SNS 편이 있다', `${붙은이름.join(' · ')} ↔ ${SNS편.join(' · ')}`)
 
   // ⑸ 칩을 눌러 거르면 영상 편만 남나
   await 칩.first().click({ force: true })
   await page.waitForTimeout(700)
   const 남은 = await page.evaluate(() => [...document.querySelectorAll('.name')].map((n) => n.textContent.trim()))
-  같나(남은, 영상편) ? ok('칩으로 거르면 영상 편만 남는다', 남은.join(' · ')) : no('걸러진 목록이 다르다', 남은.join(' · '))
+  같나(남은, SNS편) ? ok('칩으로 거르면 SNS 편만 남는다', 남은.join(' · ')) : no('걸러진 목록이 다르다', `${남은.join(' · ')} ↔ ${SNS편.join(' · ')}`)
 } catch (e) {
   no('판이 도중에 죽었다', String(e.message || e))
 } finally {
