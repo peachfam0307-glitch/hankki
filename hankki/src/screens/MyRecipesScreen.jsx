@@ -29,7 +29,20 @@ import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 import { dateLabel, matchKo } from '../utils'
 // 📺 「영상」 칩이 쓰는 잣대 — 상세에서 재생하는 것과 «같은 자»다(절대원칙 30)
 import { embedUrl } from '../embed'
-// 📺 이 화면에서 「영상 편인가」를 묻는 자리는 셋(칩 개수·거르기·썸네일 ▶ 표) — 자는 여기 하나뿐이다.
+// 📺 이 화면에서 묻는 것은 «둘»이고, 자도 «둘»이다 — 이름으로 갈라 둔다(⛔같은 걸로 착각하지 말 것).
+//
+// ⭐⭐ [창업자 확정 2026-09-03] 칩 이름 = **「SNS」**. 📮 창업자 = *"ⓐ로 가자"*
+//   ⛔ 왜 「영상」이 아닌가 — 우리가 고르는 잣대는 **「출처 링크가 붙었나」**지 「재생되나」가 아니다.
+//      **인스타 편은 앱에서 재생이 «안 된다»**(정책상 · `RecipeDetailScreen.jsx` 참조) → 원본 링크로 나간다.
+//      그런데도 SNS 요리다. 「영상」으로 이름 붙이면 **인스타 편이 뜨는 순간 이름이 틀려진다.**
+//   ⭐ 앱이 이미 그렇게 쓴다 — 가져오기 화면 「SNS 보다가 캡처해서 바로 한끼로」(`ImportScreen.jsx:86`).
+//   ⭐ 홈의 「SNS 요리」 상자와 **같은 말**이다(창업자 = *"홈에도 이름 통일해야하는데"*).
+//   ⛔ 「영상으로 보기」 단추는 «안» 건드린다 — 거긴 진짜 재생되는 자리라 맞는 말이다.
+//
+// ⑴ SNS에서 온 편인가 — 칩 개수·거르기가 쓴다. 매체를 안 가린다(유튜브·인스타·앞으로 뭐든).
+const SNS인가 = (r) => !!(r?.sourceUrl || '').trim()
+// ⑵ 앱에서 «재생»되는가 — 썸네일 ▶ 표가 쓴다. ⛔인스타는 재생이 안 되므로 ▶ 를 붙이지 않는다
+//    (▶ 를 붙여 놓고 눌렀는데 안 나오면 그게 거짓말이다).
 const 영상인가 = (r) => embedUrl(r?.sourceUrl || '')?.type === 'youtube'
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
@@ -261,7 +274,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   //      ⛔ 「sourceUrl 에 youtube 가 들었나」로 세면 안 된다 — 그러면 칩엔 뜨는데 영상은 안 나오는 편이 생긴다.
   //   ⭐⭐ 잣대는 «한 곳»에 둔다 — 칩 개수 · 거르기 · 썸네일 ▶ 표 셋이 같은 자를 쓴다.
   //      ⛔ 같은 식을 세 군데 적으면 하나만 고쳤을 때 「칩엔 3편인데 ▶ 는 5개」처럼 갈린다.
-  const 영상수 = useMemo(() => sorted.filter(영상인가).length, [sorted])
+  const SNS수 = useMemo(() => sorted.filter(SNS인가).length, [sorted])
   // 🔖🔖 [2026-08-18] 책갈피가 카드 «위로 14px» 나가므로 그만큼 자리를 비운다.
   //   ⛔ 안 비웠더니 **맨 윗줄 책갈피가 필터 칩 줄에 가렸다**(실측 = 큰 2건 · 작은 3건).
   //   ⭐ 줄 사이도 같은 이유로 벌린다 — 아랫줄 책갈피가 «윗줄 이름표 «글자»»를 덮었다.
@@ -286,11 +299,11 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     : folder === '전체' ? sorted
       : folder === '__fav' ? sorted.filter((r) => r.favorite)
       : folder === '__often' ? sorted.filter((r) => (r.cooked || 0) > 0).sort((a, b) => (b.cooked || 0) - (a.cooked || 0))
-      : folder === '__video' ? sorted.filter(영상인가)
+      : folder === '__sns' ? sorted.filter(SNS인가)
       : sorted.filter((r) => (r.folder || r.category) === folder)
   const countIn = (name) => sorted.filter((r) => (r.folder || r.category) === name).length
   // ⛔ 새 칩 열쇠()를 여기 «안» 넣으면 「폴더 삭제」 단추가 뜬다 — 폴더가 아닌데 폴더로 읽힌다
-  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__often' && folder !== '__video' && !DEFAULT_FOLDERS.has(folder)
+  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__often' && folder !== '__sns' && !DEFAULT_FOLDERS.has(folder)
 
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
   // 📔📔 **요리 기록과 다이어리를 가른다** — 둘 다 `diary` 배열에 살고 `kind` 로만 구분된다.
@@ -752,10 +765,10 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             {oftenCount > 0 && (
               <button className={`pill press ${folder === '__often' ? 'active' : ''}`} onClick={() => setFolder('__often')}>자주 {oftenCount}</button>
             )}
-            {영상수 > 0 && (
-              <button className={`pill press ${folder === '__video' ? 'active' : ''}`} onClick={() => setFolder('__video')}>
+            {SNS수 > 0 && (
+              <button className={`pill press ${folder === '__sns' ? 'active' : ''}`} onClick={() => setFolder('__sns')}>
                 <Icon name="play" size={13} />
-                영상 {영상수}
+                SNS {SNS수}
               </button>
             )}
             {folders.map((c) => (

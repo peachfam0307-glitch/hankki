@@ -63,7 +63,15 @@ try {
     r[1].sourceUrl = 'https://youtu.be/bbbbbbbbbbb'
     r[2].sourceUrl = 'https://blog.example.com/x'
     localStorage.setItem('hankki:v1', JSON.stringify(s))
-    return { 영상: [r[0].title, r[1].title], 글: [r[2].title] }
+    // ⛔⛔ [2026-09-03 고침] 전엔 「심은 셋만 출처가 있다」고 «가정»하고 그 셋을 기대치로 썼다.
+    //   그날 진짜 SNS 레시피(꽈리고추·계란후라이조림·광어깻잎무침)가 앱에 들어오자 **전제가 깨져** 3칸이 죽었다.
+    //   ⭐ 판이 옳고 «가정»이 낡았던 것이다 → 이제 **앱의 실제 값에서** 기대치를 뽑는다(앞으로 안 낡는다).
+    const 유튜브 = (u) => /(?:youtube\.com|youtu\.be)/i.test(u || '')
+    const 출처있음 = r.filter((x) => (x.sourceUrl || '').trim())
+    return {
+      영상: 출처있음.filter((x) => 유튜브(x.sourceUrl)).map((x) => x.title),
+      글: 출처있음.filter((x) => !유튜브(x.sourceUrl)).map((x) => x.title),
+    }
   })
   if (!심은) { no('레시피가 3편도 없다 — 여기서 멈춘다'); throw new Error('seed') }
   영상편.push(...심은.영상); 글편.push(...심은.글)
@@ -77,7 +85,7 @@ try {
   await page.waitForTimeout(1200)
 
   // ⑴ 칩이 떴나 — 안 떴으면 여기서 멈춘다(안 떴는데 초록불 방지 · 규칙 18 ⓘ)
-  const 칩 = page.locator('button.pill', { hasText: '영상' })
+  const 칩 = page.locator('button.pill', { hasText: 'SNS' })
   if (await 칩.count() === 0) {
     const 진단 = await page.evaluate(() => ({
       알약: [...document.querySelectorAll('button.pill')].map((b) => b.innerText.trim()),
@@ -85,11 +93,15 @@ try {
       저장: (localStorage.getItem('hankki:v1') || '').slice(0, 160),
     }))
     console.log('  🔎 진단 =', JSON.stringify(진단))
-    no('「영상 N」 칩이 안 떴다 — 여기서 멈춘다'); throw new Error('chip')
+    no('「SNS N」 칩이 안 떴다 — 여기서 멈춘다'); throw new Error('chip')
   }
   const 칩글 = (await 칩.first().innerText()).trim()
   const 칩수 = Number((칩글.match(/(\d+)/) || [])[1] || 0)
-  칩수 === 영상편.length ? ok('칩이 영상 편을 맞게 셌다', `「${칩글}」`) : no('칩 개수가 다르다', `${칩글} ≠ ${영상편.length}`)
+  // ⭐⭐ [창업자 확정 2026-09-03] 칩 이름 = 「SNS」 — 잣대가 «출처 링크가 붙었나»라 **블로그 편도 센다.**
+  //   ⛔ 아래 ▶ 표와 **다른 자**다 — ▶ 는 «앱에서 재생되는» 유튜브만. 그래서 이 숫자가 더 크다.
+  //   📌 이 판이 그 차이를 지킨다 — 둘을 같은 자로 되돌리면 여기서 죽는다.
+  const SNS편 = [...영상편, ...글편]
+  칩수 === SNS편.length ? ok('칩이 SNS 편을 맞게 셌다', `「${칩글}」 = ${SNS편.length}`) : no('칩 개수가 다르다', `${칩글} ≠ ${SNS편.length}`)
 
   // ⑵⑶⑷ ▶ 표가 «어느 카드»에 붙었나 — 이름표로 확인한다
   const 붙은이름 = await page.evaluate(() => {
@@ -117,7 +129,7 @@ try {
   await 칩.first().click({ force: true })
   await page.waitForTimeout(700)
   const 남은 = await page.evaluate(() => [...document.querySelectorAll('.name')].map((n) => n.textContent.trim()))
-  같나(남은, 영상편) ? ok('칩으로 거르면 영상 편만 남는다', 남은.join(' · ')) : no('걸러진 목록이 다르다', 남은.join(' · '))
+  같나(남은, SNS편) ? ok('칩으로 거르면 SNS 편만 남는다', 남은.join(' · ')) : no('걸러진 목록이 다르다', `${남은.join(' · ')} ↔ ${SNS편.join(' · ')}`)
 } catch (e) {
   no('판이 도중에 죽었다', String(e.message || e))
 } finally {
