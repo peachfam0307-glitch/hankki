@@ -76,6 +76,14 @@ const dk = (ts) => { const d = new Date(ts); return `${d.getFullYear()}-${d.getM
 const ymk = (ts) => { const d = new Date(ts); return `${d.getFullYear()}-${d.getMonth()}` }
 const 종류 = (list) => new Set(list.map((e) => e.title)).size
 const 전체 = cooks.length
+// 🗓🗓 **[창업자 확정 2026-09-03] 앨범도 «달마다 나누고 겹치지 않게».**
+//   📮 창업자 = *"일기에서 8월에 만든 음식이 계속 누적으로 뜬다"* → 「달마다 나누고 겹치지 않게」
+//   ⛔ 그 전까지 이 판은 **「거르기 없으면 전체 다 쌓는다」를 «지키고» 있었다** — 8/17 결정이 그랬으니까.
+//      그래서 9/3 고침을 넣자마자 이 판이 죽었다. **앱이 아니라 판이 옛 결정을 붙들고 있던 것이다.**
+//      📌 결정이 바뀌면 판도 바꾼다 — ⛔숫자만 늘려 통과시키지 않는다.
+//   ✅ 새 기대값 = **달마다 «같은 요리 한 번»** 의 합. 손으로 적지 않고 씨앗에서 센다.
+const 달묶음전체 = [...new Set(cooks.map((e) => ymk(e.at)))]
+  .reduce((합, 달) => 합 + 종류(cooks.filter((e) => ymk(e.at) === 달)), 0)
 const 이번달 = cooks.filter((e) => ymk(e.at) === `${Y}-${M}`)
 const 그날 = cooks.filter((e) => dk(e.at) === `${Y}-${M}-${dA}`).length
 // ⭐ 그 달 묶음 = 이번 달에서 «그날 것을 빼고» «같은 요리는 한 번만»
@@ -119,16 +127,20 @@ const 타일 = () => page.locator('.album-tile').count()
 const 그리드 = () => page.locator('.album-grid').count()
 const 달소제목 = () => page.getByText(/월에 만든 (다른 )?요리 \d+개/).count()
 const 날알약 = () => page.getByText(/월 \d+일의 요리 \d+개/).count()
+// 🗓 달 머리글 = 「2026년 9월 4개」 (⛔위 (그날 거르기용)과 «다른 글자»다 — 섞지 말 것)
+const 달머리글 = () => page.getByText(/\d{4}년 \d{1,2}월/).count()
 const 칸 = (d) => page.locator('.cal-day').filter({ has: page.locator('.cal-num', { hasText: new RegExp(`^${d}$`) }) }).first()
 const 뒤로 = async () => { await page.getByRole('button', { name: '뒤로' }).first().click(); await page.waitForTimeout(800) }
 const 이름들 = async () => (await page.locator('.album-cap').allInnerTexts()).map((s) => s.trim())
 
-// ① 처음 = 거르기 없음 → 앨범에 전체(지금 모습 그대로 · 앨범은 한 장씩 쌓이는 자리라 안 묶는다)
+// ① 처음 = 거르기 없음 → **달마다 갈라서** 같은 요리는 한 번만 (창업자 2026-09-03)
 let n = await 타일()
-if (n === 전체) ok(`처음 열면 앨범에 전체 ${전체}개 (안 묶는다 — 여긴 「쌓이는」 자리)`)
-else no(`처음 앨범이 ${n}개 (기대 ${전체})`)
-if (await 달소제목() === 0 && await 날알약() === 0) ok('거르기 전엔 묶음 머리글이 없다')
-else no('거르기 전인데 묶음 머리글이 떴다')
+if (n === 달묶음전체) ok(`처음 열면 달마다 갈라 ${달묶음전체}개 (전체 ${전체}장 중 겹침을 뺀 값)`)
+else no(`처음 앨범이 ${n}개 (기대 ${달묶음전체} — 달마다 같은 요리 한 번)`)
+if (await 달머리글() >= 2) ok(`달 머리글이 ${await 달머리글()}개 (이번 달 ＋ 지난달)`)
+else no(`달 머리글이 ${await 달머리글()}개 — 달마다 서야 한다`)
+if (await 날알약() === 0) ok('거르기 전엔 날짜 알약이 없다')
+else no('거르기 전인데 날짜 알약이 떴다')
 
 // ② 달력 날짜를 누르면 «일기 화면으로 간다» — 기존 동작이 안 깨졌나
 await 칸(dA).click(); await page.waitForTimeout(900)
@@ -176,8 +188,8 @@ else no(`요리 없는 날 타일이 ${n}개 (기대 ${그달_요리없는날})`
 // ⑥ 알약을 누르면 거르기가 풀려 전체로 돌아온다
 await page.getByText(/월 \d+일의 요리 \d+개/).first().click(); await page.waitForTimeout(600)
 n = await 타일()
-if (n === 전체 && await 달소제목() === 0) ok(`알약을 누르면 전체 ${전체}개로 (거르기 풀림)`)
-else no(`알약을 눌렀는데 ${n}개 · 머리글 ${await 달소제목()}개`)
+if (n === 달묶음전체 && await 달소제목() === 0) ok(`알약을 누르면 달 묶음 ${달묶음전체}개로 (거르기 풀림)`)
+else no(`알약을 눌렀는데 ${n}개 (기대 ${달묶음전체}) · 그날 머리글 ${await 달소제목()}개`)
 
 // ⑦ 편집 「전체 선택」 = **화면에 있는 것 전부**(그날 ＋ 그 달). 한쪽만 세면 나머지가 빠진다.
 await 칸(dA).click(); await page.waitForTimeout(900); await 뒤로()

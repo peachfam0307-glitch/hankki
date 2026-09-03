@@ -37,7 +37,23 @@ const BRAG_COACH_STEPS = [
 export default function BragScreen() {
   const { recipes, updateRecipe } = useStore()
   const nav = useNav()
-  const [pick, setPick] = useState(null) // 탭한 레시피 → 선택 시트
+  // 🐛🐛🐛 **[창업자 폰 제보 2026-09-03] 「다시 공유하려니 카드 안 보임 · 카톡에 간 그림이 비었다」**
+  //   📮 창업자 = *"레꾸자랑에서 뽑은 카드로 레꾸한거+스티커붙인거. 다시공유하려고하면 카드 안보임."*
+  //      ＋ 실물 대조 = 상세 화면엔 **뽑은 카드 표지 ＋ 스티커 둘**인데 카톡엔 **옛 음식 사진 ＋ 스티커 하나**가 갔다.
+  //      📮 *"짬뽕밥 이거였는데 저렇게 간거야."*
+  //   ⛔⛔ 뿌리 = **`pick`·`share` 가 목록에서 «복사해 둔» 스냅샷이었다.** store 가 바뀌어도 안 따라간다.
+  //      그래서 이 순서에서 어긋난다 —
+  //        ① 레시피를 탭 → `setPick(r)` (그때의 표지·스티커가 «박힌다»)
+  //        ② 「랜덤 카드로 뽑기」 → 그 카드를 **「레시피 표지로 저장」**
+  //           → `updateRecipe` 로 store 는 «카드 표지»가 되고 `decor` 도 비워진다(`카드표지로()`)
+  //        ③ 그런데 `pick` 은 ①의 옛 물건 → 「내가 꾸민 표지 그대로」가 **옛 표지를 찍어 보낸다**
+  //      ⭐ 탭을 나갔다 오면 화면이 다시 마운트돼 «고쳐진다» — 그래서 「어떨 때만」 그런 것처럼 보였다.
+  //   ✅ 고침 = **id 만 들고 있고 물건은 매번 store 에서 꺼낸다.** 그러면 어긋날 수가 없다.
+  //      ⛔ 「저장한 뒤에 setPick 을 다시 불러 준다」는 땜빵이다 — 갱신되는 자리가 또 생기면 또 어긋난다
+  //         (절대원칙 34 — 숫자·자리를 늘리지 말고 «실패의 모양»을 바꾼다).
+  const [pickId, setPickId] = useState(null) // 탭한 레시피 «id» → 선택 시트
+  const pick = useMemo(() => (pickId ? recipes.find((x) => x.id === pickId) || null : null), [recipes, pickId])
+  const setPick = (r) => setPickId(r ? r.id : null)
   // ⛔⛔ **뒤로가기가 홈으로 샜다** (창업자 할일 1번 · 2026-08-23
   //    📮 *"레꾸자랑에서 고르고하고 뒤로가면 홈으로 감."*)
   //   🔢 뿌리 = 아래 선택 시트를 `.sheet-mask` 로 **맨손으로** 그리고 있었다.
@@ -48,7 +64,11 @@ export default function BragScreen() {
   //   ✅ 답 = 다른 시트들과 «같은 문법». `useLayerBack` 이 열릴 때 히스토리 칸을 쌓고
   //      뒤로가기가 그 칸을 소비해 시트만 닫는다(＝탭은 그대로).
   useLayerBack(!!pick, () => setPick(null))
-  const [share, setShare] = useState(null) // 랜덤 카드 모달로 보낼 레시피
+  // 🎴 랜덤 카드 모달로 보낼 레시피 — 위와 같은 이유로 **id 만** 들고 있는다.
+  //    ⭐ 여기가 특히 중요하다 — 이 모달 «안»에서 「레시피 표지로 저장」이 일어나 store 가 바뀐다.
+  const [shareId, setShareId] = useState(null)
+  const share = useMemo(() => (shareId ? recipes.find((x) => x.id === shareId) || null : null), [recipes, shareId])
+  const setShare = (r) => setShareId(r ? r.id : null)
   const [busy, setBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩 표시)
   const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
   // 🎴 한마디 청하기(㉠ · 창업자 확정 2026-08-27) — 자랑 카드를 «보낸 뒤 카드를 닫는» 순간에 뜬다.
