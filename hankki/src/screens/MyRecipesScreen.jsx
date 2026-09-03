@@ -829,19 +829,20 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                               /* 🔖 판이 «어떤 표인지»를 정확히 읽게 이름표를 단다.
                                  ⛔ 색·자리로 찾으면 «꾸민 표지»의 스티커(절대배치 span)와 헷갈린다 —
                                     실제로 콩국수에서 그렇게 잘못 잡혔다(2026-09-03). */
-                              /* ⛔⛔ [창업자 확정 2026-09-03 · ⓐ] **표는 🔗 하나뿐이다.**
-                                 앱 «안»에서 재생하지 않기로 했으므로(III.E.4.j · 상세 화면 주석 참조)
-                                 유튜브도 인스타도 **눌러서 밖에서 본다** → 표가 갈릴 이유가 없다.
-                                 ⛔ ▶ 를 다시 넣지 말 것 — 재생하지 않는데 ▶ 는 거짓 약속이다. */
-                              data-sns="link"
+                              /* 🔖 [창업자 확정 2026-09-03] 표는 «둘»이다 — 유튜브 ▶ · 그 밖의 SNS 🔗
+                                 ⭐ 앱 «안»에서 재생은 안 하지만(III.E.4.j) **미리보기 그림은 보여준다**
+                                    → 유튜브 편을 누르면 «영상 그림»이 뜨고 거기서 유튜브로 나간다. ▶ 가 맞는 말이다.
+                                 ⛔ 인스타는 그림도 안 뜬다(정책상 미리보기뿐) → 🔗 그대로. */
+                              data-sns={영상인가(r) ? 'play' : 'link'}
                               style={{
                                 position: 'absolute', left: 5, top: 5, pointerEvents: 'none',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 width: gridSize === 'big' ? 24 : 20, height: gridSize === 'big' ? 24 : 20,
-                                borderRadius: 6, background: 'rgba(255,255,255,.92)', color: 'var(--brown)',
+                                borderRadius: 6, background: 'rgba(255,255,255,.92)',
+                                color: 영상인가(r) ? '#e2352a' : 'var(--brown)',
                               }}
                             >
-                              <Icon name="link" size={gridSize === 'big' ? 17 : 14} />
+                              <Icon name={영상인가(r) ? 'youtube' : 'link'} size={gridSize === 'big' ? 17 : 14} />
                             </span>
                           )}
                         </div>

@@ -148,10 +148,12 @@ const 꽈리 = page.locator('.name', { hasText: '꽈리고추' })
 if (await 꽈리.count()) {
   await 꽈리.first().click({ force: true })
   await page.waitForTimeout(1400)
+  // ⭐ 재는 것 둘 = ⑴앱 «안»에서 안 트나(iframe 0) ⑵미리보기 그림은 «보이나»(i.ytimg.com)
   const 플레이어 = await page.locator('iframe').count()
-  const 링크 = page.locator('a[target="_blank"]').filter({ hasText: '유튜브' })
-  console.log(`  🔎 유튜브 편 — 재생창(iframe) = ${플레이어}개 ${플레이어 === 0 ? '✅' : '⛔'} · 「유튜브 · …」 링크 = ${await 링크.count()}개`)
-  if (await 링크.count()) { await 링크.first().scrollIntoViewIfNeeded(); await page.waitForTimeout(600) }
+  const 미리보기 = await page.locator('img[src*="i.ytimg.com"]').count()
+  console.log(`  🔎 유튜브 편 — 재생창(iframe) ${플레이어}개 ${플레이어 === 0 ? '✅' : '⛔'} · 미리보기 그림 ${미리보기}개 ${미리보기 > 0 ? '✅' : '⛔'}`)
+  const 링크 = page.locator('img[src*="i.ytimg.com"]')
+  if (await 링크.count()) { await 링크.first().scrollIntoViewIfNeeded(); await page.waitForTimeout(900) }
   await 찍기('6-상세-유튜브-재생창없음')
 } else {
   console.log('  ⛔ 꽈리고추 카드를 못 찾았다')

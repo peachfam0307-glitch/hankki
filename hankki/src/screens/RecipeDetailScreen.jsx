@@ -103,6 +103,8 @@ export default function RecipeDetailScreen({ id }) {
   useWakeLock() // 레시피를 보며 요리할 때 화면이 꺼지지 않게
   const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
   const [timer, setTimer] = useState(false)
+  // 🖼 유튜브 미리보기 그림이 안 올 때 — 그 칸을 통째로 감춘다(깨진 네모 금지)
+  const [썸네일깨짐, set썸네일깨짐] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
   // 📷↔📔 [창업자 확정 2026-08-23] 표지 사진 ↔ 일기 사진을 «한 몸»으로
   //   📮 *"레꾸 화면에서 유저가 내가 만든 음식사진으로 바꾸잖아. 그때! 팝업으로, 일기에도 적용할건가 물으면"*
@@ -704,7 +706,57 @@ export default function RecipeDetailScreen({ id }) {
             ⭐ 대신 아래 「원본 링크」 칸 하나로 모았다 — 인스타 편과 «같은 모양»이 된다.
             ⛔⛔ 이 자리에 iframe 플레이어를 다시 넣지 말 것. 넣으면 위 조항이 되살아난다.
             ⚠️ 정직하게 — 정책 원문을 내가 «내 눈으로» 못 봤다(이 환경은 유튜브·구글 문서를 못 연다).
-               창업자가 가져다준 답을 근거로 한 것이다. */}
+               창업자가 가져다준 답을 근거로 한 것이다.
+
+            ✅✅ [창업자 확정 2026-09-03] **대신 «미리보기 그림»은 보여준다.**
+               📮 = *"재생창은 보이게 하고 누르면 앱으로 가게해야지"*
+                  · *"우리앱에서 직접 재생만 안하면 되자나 미리보기정도는 보여줘도 되지"*
+               ⭐ 맞는 말이다 — 조항이 막는 건 **«임베드(앱 안에서 틀기)»**이고, 그림은 임베드가 아니다.
+               ⛔ 그래서 이 자리는 **`<img>` 하나 ＋ ▶ 표시**다. **`<iframe>` 을 다시 넣지 말 것.**
+               ⛔ 그림이 안 오면(`onError`) 이 칸을 **통째로 감춘다** — 깨진 네모를 보여주지 않는다. */}
+        {영상 && 영상.type === 'youtube' && 영상.thumb && !썸네일깨짐 && (
+          <>
+            <div className="sec-head" style={{ marginTop: 14, marginBottom: 6 }}>
+              <SecTitle>영상으로 보기</SecTitle>
+            </div>
+            {/* ⛔ 카드 «전체»가 하나의 문이다 — 눌러서 유튜브 앱·웹으로 나간다(앱 안에서 안 튼다) */}
+            <button
+              className="card press"
+              onClick={() => openUrl(r.sourceUrl)}
+              style={{ display: 'block', width: '100%', overflow: 'hidden', padding: 0, textAlign: 'left', border: 0 }}
+            >
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: 'var(--cream)' }}>
+                <img
+                  src={영상.thumb}
+                  alt=""
+                  onError={() => set썸네일깨짐(true)}
+                  style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                {/* ▶ = 「누르면 영상으로 간다」는 표시.
+                    ⛔ 「플레이어를 가리지 마라」 조항은 여기 해당 없다 — 가릴 플레이어가 없다(그림이다). */}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 54, height: 38, borderRadius: 10, background: 'rgba(0,0,0,.72)', color: '#fff',
+                  }}
+                >
+                  <Icon name="play" size={20} />
+                </span>
+              </div>
+              <div className="opt-row" style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}>
+                <Icon name="youtube" size={19} color="var(--brown)" />
+                <div className="t" style={{ fontSize: 16, minWidth: 0 }}>
+                  {r.sourceName
+                    ? <><b style={{ fontWeight: 700 }}>{r.sourceName}</b> · YouTube에서 보기</>
+                    : 'YouTube에서 보기'}
+                </div>
+                <Icon name="chevron-right" size={17} color="var(--sand)" />
+              </div>
+            </button>
+          </>
+        )}
 
         {r.ingredients?.length > 0 && (
           <>
