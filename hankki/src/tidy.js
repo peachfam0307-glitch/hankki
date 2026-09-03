@@ -17,7 +17,7 @@
 
 import { politeSteps } from './polish.js'
 // 🥄 「계량 기준」 잣대는 «한 곳»에서 온다 — 규칙 파서와 AI 결과가 같은 말을 써야 한다.
-import { KIJUN_LINE, collapseRepeatedSyllables } from './parseRecipe.js'
+import { KIJUN_LINE, collapseRepeatedSyllables, 단위통일 } from './parseRecipe.js'
 
 // ✅ 2026-08-29 워커를 세우고 주소를 넣었다.
 //   실물 확인 = 창업자가 주소창에 쳐서 {"error":"method_not_allowed"} 를 봤다(= 우리 코드가 살아 있다).
@@ -284,7 +284,10 @@ export function mergeTidy(r, ai) {
     //    (AI 는 제목을 안 줬고 규칙 파서가 `#짬뽕밥` 을 잡았다).
     title: collapseRepeatedSyllables(ai.title || '') || r.title,
     // 🥄 AI 재료를 쓰되 «분량은 규칙 파서 것으로 되살려서» 쓴다 (창업자 제보 2026-08-31 · 위 주석)
-    ingredients: ai.ingredients.length ? 분량되살리기(ai.ingredients, r.ingredients) : r.ingredients,
+    // 🥄 ＋ 단위를 한 말로 (창업자 확정 2026-09-03 「큰술로 통일 · 스푼 다 빼고」)
+    //   ⛔⛔ **AI 경로는 여태 단위 손질을 «한 번도» 안 거쳤다** — 규칙 파서만 거쳤다.
+    //      그래서 AI 가 낸 「1T」·「반스푼」이 그대로 저장됐다. 위 politeSteps 구멍과 «같은 모양»이다.
+    ingredients: (ai.ingredients.length ? 분량되살리기(ai.ingredients, r.ingredients) : r.ingredients).map(단위통일),
     // ✍️✍️ **[2026-08-29 · 창업자가 오타로 찾아낸 구멍] AI 걸음도 «문체 다듬기»를 거친다.**
     //   📮 창업자 = *"오타 한번 정도? 꺼줘요를 끄줘요"*
     //   ⛔⛔ 그 한 글자가 진짜 구멍을 알려줬다 — **규칙 파서 결과는 「politeSteps」 를 거치는데
@@ -297,7 +300,7 @@ export function mergeTidy(r, ai) {
     //      **AI 결과가 그 위에 도로 얹혔다.** 잣대가 한쪽에만 있으면 이렇게 «고친 게 되돌아온다».
     //   ⭐ 그래서 규칙 파서와 «같은 잣대»(`KIJUN_LINE`)를 여기서도 쓴다.
     //   ⛔ 버리지 않고 **메모로 옮긴다** — 「1T 가 15ml」는 진짜 필요한 정보다.
-    steps: ai.steps.length ? politeSteps(ai.steps.filter((s) => !KIJUN_LINE.test(String(s)))) : r.steps,
+    steps: (ai.steps.length ? politeSteps(ai.steps.filter((s) => !KIJUN_LINE.test(String(s)))) : r.steps).map(단위통일),
     memo: 계량줄옮기기(ai.memo || r.memo, ai.steps),
   }
 }
