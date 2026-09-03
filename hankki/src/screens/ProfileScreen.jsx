@@ -569,13 +569,20 @@ export default function ProfileScreen() {
             <div className="card" style={{ overflow: 'hidden' }}>
               {g.items.map((m, i) => (
                 <div key={m.label}>
-                  <button className="opt-row press" onClick={m.onClick} data-coach={m.coach} style={{ padding: '16px' }}>
-                    <Icon name={m.icon} size={22} color="var(--brown)" stroke={1.7} />
+                  {/* 🔲 [창업자 2026-09-03 · 「그 스샷 참고해서 우리스타일로」] 줄마다 «둥근 타일»에 아이콘.
+                      ⭐ 맨 아이콘은 글자에 붙어 보여서 열 줄이 한 덩어리로 읽혔다 — 타일이 줄을 하나씩 떼어 준다.
+                      ⭐ 새로 만들지 않았다 — `.opt-ico`(styles.css:1237)가 «이미» 있었는데 이 화면만 안 쓰고 있었다.
+                      ⛔ 색색 이모지 타일은 안 쓴다(유니코드 이모지 금지 · 핀) — 크림 바탕에 우리 갈색 아이콘. */}
+                  <button className="opt-row press" onClick={m.onClick} data-coach={m.coach} style={{ padding: '13px 16px' }}>
+                    <span className="opt-ico" style={{ width: 38, height: 38 }}>
+                      <Icon name={m.icon} size={20} color="var(--brown)" stroke={1.7} />
+                    </span>
                     <div className="t" style={{ fontSize: 17, fontWeight: 500 }}>{m.label}</div>
                     {m.badge && <span className="badge badge-sorted" style={{ marginRight: 6 }}>{m.badge}</span>}
                     <Icon name="chevron-right" size={18} color="var(--sand)" />
                   </button>
-                  {i < g.items.length - 1 && <hr className="divider" style={{ marginLeft: 52 }} />}
+                  {/* ⭐ 금이 «타일 오른쪽»에서 시작하게 — 타일 폭 38 ＋ 왼여백 16 ＋ 사이 14 = 68 */}
+                  {i < g.items.length - 1 && <hr className="divider" style={{ marginLeft: 68 }} />}
                 </div>
               ))}
             </div>
