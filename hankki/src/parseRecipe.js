@@ -339,6 +339,42 @@ export function fixIngredientUnits(l) {
   return s
 }
 
+// ── 🥄 단위를 «한 가지 말»로 (2026-09-03) ─────────────────────
+// 📮 창업자 확정 = *"**큰술로 통일하자. 스푼 다 빼고**"*
+//    그 앞 = *"스푼? 큰술? T 이거 앱에서 다 통일하자. 어떤건 T고 어떤건 큰술이고 헷갈려"*
+//
+// ⭐⭐ **「읽을 땐 다 받고, 저장할 땐 한 말로」** — 위 정규식들에서 「스푼·티스푼·T·t」를 «빼지 않는다».
+//    유저가 붙여넣는 글에는 앞으로도 그 글자들이 들어온다. 못 읽으면 재료가 통째로 사라진다.
+//    ⛔ 데이터만 고치면 **내일 담는 레시피에서 또 갈린다**(절대원칙 34 — 땜빵 금지).
+//
+// 🚨 순서가 «전부»다 —
+//    ⑴ **「계량스푼」은 도구 이름**이라 먼저 빼둔다. 안 그러면 「계량큰술」이 된다.
+//    ⑵ **「티스푼」이 「스푼」보다 «먼저»**다. 뒤에 하면 「티큰술」이 되고 **3배 틀린다.**
+//    ⑶ 「스푼」은 «숫자가 붙었을 때만» 단위다. 「스푼으로 떠서」는 도구다 — 안 건드린다.
+//
+// ⚠️ 말 끝 고르기 — 「스푼」은 받침이 ㄴ, 「큰술」은 ㄹ 이라 **「으로」만 「로」로** 바뀐다.
+//    ＋ T·t 를 쓴 사람은 「2t를」처럼 적기도 한다 → 「2작은술을」로 고른다.
+const 계량자리표 = '계량스푼'
+export function 단위통일 (줄) {
+  let s = String(줄)
+  if (!/스푼|[\dT t]/.test(s)) return s
+
+  s = s.replace(/(계량|계랑)\s?스푼/g, 계량자리표)   // ⑴ 도구 이름은 지킨다
+  s = s.replace(/티\s?스푼/g, '작은술')              // ⑵ 티스푼 먼저 (= 작은술)
+  s = s.replace(/(\d)\s*T\b/g, '$1큰술')             // 1T · 1.5T · 0.3T
+  s = s.replace(/(\d)\s*t\b/g, '$1작은술')           // 1t · 0.5t
+  // ⑶ 숫자(분수·기호 포함) ＋ 스푼
+  s = s.replace(/([\d½⅓⅔¼¾](?:[\d./\s]*[\d½⅓⅔¼¾])?)\s*스푼/g, '$1큰술')
+  // 한글 수 ＋ 스푼
+  s = s.replace(/한\s?스푼/g, '1큰술').replace(/반\s?스푼/g, '1/2큰술')
+    .replace(/두\s?스푼/g, '2큰술').replace(/세\s?스푼/g, '3큰술')
+  // 말 끝 고르기 (술 = ㄹ 받침)
+  s = s.replace(/술으로/g, '술로').replace(/술를/g, '술을')
+    .replace(/술가(?=\s|$|[,.·])/g, '술이').replace(/술는/g, '술은').replace(/술와/g, '술과')
+
+  return s.split(계량자리표).join('계량스푼')
+}
+
 // ── 앞머리 OCR 잡음 제거 ──
 // 불릿·아이콘을 오독한 조각(삐 · = · HE · Vv · Eel · \/^ · 를 …)이 유효한 한글 재료명
 // 앞에 붙어 남는 경우가 많다("삐 선복 1<0", "= 쌀 450", "Vv Eel 토핑용"). 한글/숫자가
@@ -1026,8 +1062,11 @@ export function parseRecipeText(raw = '', opts = {}) {
     // 🏷 ⭐ 제목이 «끝내» 비면 원문 머리에서 이름을 집는다 — 사다리의 마지막 칸(위 `머리에서제목`).
     //    ⛔ 규칙 파서가 제목을 잡았으면 그게 이긴다. 여기까지 오는 건 위 가지가 «전부» 실패했을 때뿐.
     title: cleanTitleTail(title) || 머리에서제목(text),
-    ingredients: dedupeLines(ingredients.map(fixIngredientUnits)),
-    steps: 곁말접기(dedupeLines(politeSteps(splitParagraphSteps(mergeStepFragments(steps, stepNumbered))))),
+    // 🥄 단위를 한 말로 = «맨 마지막»에 (창업자 확정 2026-09-03 「큰술로 통일 · 스푼 다 빼고」)
+    //    ⛔ 앞의 정규식들은 「스푼·T·t」를 여전히 «읽는다» — 못 읽으면 재료가 통째로 사라진다.
+    //       읽어서 담은 «뒤»에 말만 고른다.
+    ingredients: dedupeLines(ingredients.map(fixIngredientUnits)).map(단위통일),
+    steps: 곁말접기(dedupeLines(politeSteps(splitParagraphSteps(mergeStepFragments(steps, stepNumbered))))).map(단위통일),
     memo,
   }
 }

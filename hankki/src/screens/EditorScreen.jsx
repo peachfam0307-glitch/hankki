@@ -126,7 +126,12 @@ export default function EditorScreen({ id, prefill }) {
       try { el.setSelectionRange(pos, pos) } catch { /* noop */ }
     })
   }
-  const UNITS = ['g', 'ml', 'T', 't', '큰술', '작은술', '컵', '개', '약간']
+  // 🥄 [창업자 확정 2026-09-03] *"큰술로 통일하자. 스푼 다 빼고"*
+  //   ⛔⛔ 전엔 「T」와 「큰술」이 **둘 다** 있었다 — 같은 뜻인데 «고를 답이 둘»이라 갈릴 수밖에 없었다.
+  //      📮 창업자 = *"어떤건 T고 어떤건 큰술이고 헷갈려"* — 뿌리가 이 줄이다.
+  //   ⭐ 「스푼」은 원래 여기 «없었다» — 그런데 레시피 글엔 21편이 쓰고 있었다(붙여넣기로 들어온 것).
+  //      그건 `parseRecipe.js` 의 `단위통일()` 이 담길 때 큰술로 고른다.
+  const UNITS = ['g', 'ml', '큰술', '작은술', '컵', '개', '약간']
   // (계량 버튼 바는 return 하단에서 Portal 로 body 에 직접 렌더한다 — transform 부모 밖이라 위치가 안정적)
   // 위에 고정해 두고 보면서 쓰기 — 'video'(유튜브·인스타) | 'photo'(캡처 원본) | null
   // 저장된 레시피를 다시 편집할 때도 사진이 있으면 참고용으로 띄울 수 있게 한다.
@@ -709,7 +714,10 @@ export default function EditorScreen({ id, prefill }) {
                   {u}
                 </button>
               ))}
-              <span style={{ flex: '0 0 auto', alignSelf: 'center', fontSize: 15, color: 'var(--text-sub)', paddingRight: 4, whiteSpace: 'nowrap' }}>T=큰술·t=작은술</span>
+              {/* 🥄 [2026-09-03] 「T=큰술·t=작은술」 안내를 뺐다 — T·t 단추가 «없어졌으니»
+                  없는 단추를 설명하는 글이 됐다(창업자 확정 「큰술로 통일 · 스푼 다 빼고」).
+                  ⏳ 이 자리에 「1큰술=15ml · 1작은술=5ml」를 넣을지는 창업자 판정 대기(규칙 11) —
+                     창업자 본인이 레시피 세 편에 그 기준 줄을 손으로 적어 뒀다. */}
             </div>
           </div>
         </Portal>
