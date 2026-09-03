@@ -6,7 +6,7 @@ import OneLineSheet from '../components/OneLineSheet'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
-import { SNS인가, 영상인가 } from '../embed'
+import { SNS인가, SNS표 } from '../embed'
 import Thumb from '../components/Thumb'
 import { hasFrameDecor } from '../components/Stickers'
 import FoodIcon from '../components/FoodIcon'
@@ -101,16 +101,16 @@ function WeekBox({ w, 기본, open }) {
               {SNS인가(r) && (
                 <span
                   aria-hidden="true"
-                  data-sns={영상인가(r) ? 'play' : 'link'}
+                  data-sns={SNS표(r).뜻}
                   style={{
                     position: 'absolute', left: 5, top: 5, pointerEvents: 'none',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     width: 20, height: 20,
                     borderRadius: 6, background: 'rgba(255,255,255,.92)',
-                    color: 영상인가(r) ? '#e2352a' : 'var(--brown)',
+                    color: SNS표(r).color,
                   }}
                 >
-                  <Icon name={영상인가(r) ? 'youtube' : 'link'} size={14} />
+                  <Icon name={SNS표(r).icon} size={14} />
                 </span>
               )}
             </div>

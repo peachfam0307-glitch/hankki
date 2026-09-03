@@ -28,7 +28,7 @@ import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 //    (DiaryEntrySheet · ReviewAskSheet · shouldAskReview import 제거)
 import { dateLabel, matchKo } from '../utils'
 // 📺 「영상」 칩이 쓰는 잣대 — 상세에서 재생하는 것과 «같은 자»다(절대원칙 30)
-import { embedUrl, SNS인가, 영상인가 } from '../embed'
+import { embedUrl, SNS인가, 영상인가, SNS표 } from '../embed'
 // 📺 이 화면에서 묻는 것은 «둘»이고, 자도 «둘»이다 — 이름으로 갈라 둔다(⛔같은 걸로 착각하지 말 것).
 //
 // ⭐⭐ [창업자 확정 2026-09-03] 칩 이름 = **「SNS」**. 📮 창업자 = *"ⓐ로 가자"*
@@ -873,16 +873,16 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                                  ⭐ 앱 «안»에서 재생은 안 하지만(III.E.4.j) **미리보기 그림은 보여준다**
                                     → 유튜브 편을 누르면 «영상 그림»이 뜨고 거기서 유튜브로 나간다. ▶ 가 맞는 말이다.
                                  ⛔ 인스타는 그림도 안 뜬다(정책상 미리보기뿐) → 🔗 그대로. */
-                              data-sns={영상인가(r) ? 'play' : 'link'}
+                              data-sns={SNS표(r).뜻}
                               style={{
                                 position: 'absolute', left: 5, top: 5, pointerEvents: 'none',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 width: gridSize === 'big' ? 24 : 20, height: gridSize === 'big' ? 24 : 20,
                                 borderRadius: 6, background: 'rgba(255,255,255,.92)',
-                                color: 영상인가(r) ? '#e2352a' : 'var(--brown)',
+                                color: SNS표(r).color,
                               }}
                             >
-                              <Icon name={영상인가(r) ? 'youtube' : 'link'} size={gridSize === 'big' ? 17 : 14} />
+                              <Icon name={SNS표(r).icon} size={gridSize === 'big' ? 17 : 14} />
                             </span>
                           )}
                         </div>

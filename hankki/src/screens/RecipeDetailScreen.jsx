@@ -44,7 +44,7 @@ import { FAV_NAME } from '../favName'
 import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 // 📺 링크 → 앱 안에서 재생할 수 있는 «공식» 임베드 주소 (유튜브·인스타)
-import { embedUrl } from '../embed'
+import { embedUrl, SNS표 } from '../embed'
 
 // 🏷 출처(어디서 왔나) — 주소에서 «읽어» 낸다 (창업자 2026-09-03 *"원본링크에-출처도 붙이자"*)
 //   ⛔ 손으로 적는 칸을 새로 만들지 않는다 — 손으로 적으면 반드시 낡는다(규칙 12ⓑ).
@@ -787,7 +787,15 @@ export default function RecipeDetailScreen({ id }) {
                 padding: '12px 14px',
                 borderTop: 표지보임 ? '1px solid var(--line)' : 0,
               }}>
-                <Icon name={영상.type === 'youtube' ? 'youtube' : 'instagram'} size={19} color="var(--brown)" />
+                {/* 🔖 [2026-09-04 창업자] *"레시피상세에 링크란 앞머리에 인스타 로고 넣자"*
+                    ⭐ 로고는 «있었는데» 19px 에 흐린 색이라 눈에 안 들었다 — 창업자가 본 게 그거다.
+                       ⛔ 「없다」가 아니라 «안 보인다»였다. 그래서 «더하는» 게 아니라 «또렷하게» 고친다.
+                    ✅ 설정 화면이 쓰는 동그란 타일(`.opt-ico`)에 담는다 — 앱 안에서 이미 쓰는 모양이라
+                       새 생김새를 만들지 않는다(같은 것은 같게).
+                    ⭐ 표(로고·색)는 `embed.js` 의 `SNS표` 한 곳이 정한다 — 세 화면이 같이 움직인다. */}
+                <span className="opt-ico" style={{ width: 34, height: 34, flex: '0 0 34px' }}>
+                  <Icon name={SNS표(r).icon} size={20} color={SNS표(r).color} />
+                </span>
                 {/* 💬💬 [2026-09-04 창업자] *"근데 저렇게 링크만 떡 있으면 사람들이 안눌러볼거야 아마."*
                     ⭐⭐ 맞다. 그리고 이게 «본질»이다 — 문제는 「그림이 없다」가 아니라 **「눌러야 할 이유가 없다」**.
                        그 전 줄은 「여기 링크가 있다」만 말했다. **유저가 얻는 것을 한 글자도 안 적었다.**
