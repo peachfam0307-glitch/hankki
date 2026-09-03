@@ -419,7 +419,17 @@ console.log('\n🪤 반복 실수 게이트')
     // ⚠️ 「그 글자가 있나」로 보면 **주석과 이 검사 자신까지** 잡는다(첫 판이 그랬다 · 규칙 18 ⓘ).
     //    «브라우저를 그 경로로 여는 줄»만 본다 — 주석은 떼고, `executablePath` 가 같은 줄에 있어야 한다.
     const 코드 = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n')
-    if (/executablePath[^\n]*\/opt\/pw-browsers/.test(코드)) 박힘.push(rel)
+    // ⛔⛔ [2026-09-03 넓힘] 전엔 `executablePath` 와 경로가 **«같은 줄»에 있을 때만** 잡았다.
+    //    그런데 경로를 «변수에 먼저 담으면» 두 줄로 갈려 이 그물을 그대로 빠져나간다:
+    //        const CHROMIUM = process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium'   ← 여기
+    //        chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})                ← 그리고 여기
+    //    🔢 그래서 2026-09-03 에 내 새 판이 이 게이트를 통과하고 **배포가 죽었다**(run #2054).
+    //       v10.90(run #1416)과 «같은» 사고인데 게이트가 못 잡았다 — 규칙 18 ⓘ 그대로다.
+    //    ✅ 이제 «코드 어디에든» 그 경로가 있으면 잡는다(주석은 위에서 이미 뗐다).
+    //    ⚠️ 단 «이 검사 자신»은 뺀다 — 잣대에 그 글자가 들어 있어서 스스로를 잡는다.
+    //       (원래 `executablePath` 를 같이 요구한 이유가 이 자기참조였다. 그 대신 파일 하나만 뺀다.)
+    //       ⛔ 이 판은 브라우저를 열지 않는다 — 그러니 빼도 잃는 게 없다.
+    if (!rel.endsWith('check-mistakes.mjs') && /\/opt\/pw-browsers/.test(코드)) 박힘.push(rel)
     // ⛔⛔ [2026-08-31 추가] «이 컨테이너의 저장소 경로»를 박은 것도 같은 사고다 — 배포가 두 번 막혔다.
     //    새 판이 dist 자리를 「/home/user/hankki/hankki/dist」 로 박았는데 CI 체크아웃은 「/home/runner/…」 라
     //    그 폴더가 없다 → 모든 요청이 404 → 화면이 «영영 빈칸» → 검사가 헛것을 재고 죽는다(#1965 · #1966).

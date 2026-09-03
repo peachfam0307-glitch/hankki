@@ -26,7 +26,10 @@ const K_CLOUDGATE = (readFileSync(join(뿌리, 'src/nudges.js'), 'utf8')
 if (!K_CLOUDGATE) { console.error('⛔ src/nudges.js 에서 K_CLOUDGATE 를 못 찾았다 — 이름이 바뀌었다'); process.exit(1) }
 
 const PORT = Number(process.env.SMOKE_PORT || 4188)
-const CHROMIUM = process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium'
+// ⛔⛔ 여기에 브라우저 «경로를 박지 마라» — 그 자리는 이 컨테이너에만 있고 CI 엔 없다.
+//    2026-09-03 에 내가 박아서 **배포를 죽였다**(run #2054). v10.90(run #1416)과 «같은» 사고다.
+//    ⭐ 없으면 플레이라이트가 알아서 찾는다 — 양쪽에서 다 돈다.
+const CHROMIUM = process.env.SMOKE_CHROMIUM
 
 let bad = 0
 const ok = (m, v) => console.log('  ✅', m, v !== undefined ? ` ${v}` : '')
