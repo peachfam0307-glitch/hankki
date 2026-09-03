@@ -1598,7 +1598,7 @@ const RAW_BASICS = [
     servings: 2,       // 창업자 = "보통 2인기준일거야"
     difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DcFxNyoy6Yu/',
-    sourceName: 'i_doolping.cook',
+    sourceName: '애둘핑',   // 창업자 확인 = 인스타 표시 이름 (계정 = i_doolping.cook)
     ingredients: [
       '광어회 (2인분)',
       '깻잎 15~20장',
@@ -1629,7 +1629,7 @@ const RAW_BASICS = [
     servings: 2,       // 창업자 = "보통 2인기준일거야"
     difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DcFxNyoy6Yu/',
-    sourceName: 'i_doolping.cook',
+    sourceName: '애둘핑',   // 창업자 확인 = 인스타 표시 이름 (계정 = i_doolping.cook)
     ingredients: [
       '밥 1.5공기',
       '김밥김 적당량',
