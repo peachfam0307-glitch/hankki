@@ -29,6 +29,8 @@ import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 import { dateLabel, matchKo } from '../utils'
 // 📺 「영상」 칩이 쓰는 잣대 — 상세에서 재생하는 것과 «같은 자»다(절대원칙 30)
 import { embedUrl } from '../embed'
+// 📺 이 화면에서 「영상 편인가」를 묻는 자리는 셋(칩 개수·거르기·썸네일 ▶ 표) — 자는 여기 하나뿐이다.
+const 영상인가 = (r) => embedUrl(r?.sourceUrl || '')?.type === 'youtube'
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
@@ -255,7 +257,9 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   //      검색·책갈피·장보기 담기가 전부 두 벌이 된다. 칩은 «같은 목록»을 거르기만 한다.
   //   ⭐ 잣대는  — **상세에서 실제로 재생되는 것과 «같은 자»다**(절대원칙 30).
   //      ⛔ 「sourceUrl 에 youtube 가 들었나」로 세면 안 된다 — 그러면 칩엔 뜨는데 영상은 안 나오는 편이 생긴다.
-  const 영상수 = useMemo(() => sorted.filter((r) => embedUrl(r.sourceUrl || '')?.type === 'youtube').length, [sorted])
+  //   ⭐⭐ 잣대는 «한 곳»에 둔다 — 칩 개수 · 거르기 · 썸네일 ▶ 표 셋이 같은 자를 쓴다.
+  //      ⛔ 같은 식을 세 군데 적으면 하나만 고쳤을 때 「칩엔 3편인데 ▶ 는 5개」처럼 갈린다.
+  const 영상수 = useMemo(() => sorted.filter(영상인가).length, [sorted])
   // 🔖🔖 [2026-08-18] 책갈피가 카드 «위로 14px» 나가므로 그만큼 자리를 비운다.
   //   ⛔ 안 비웠더니 **맨 윗줄 책갈피가 필터 칩 줄에 가렸다**(실측 = 큰 2건 · 작은 3건).
   //   ⭐ 줄 사이도 같은 이유로 벌린다 — 아랫줄 책갈피가 «윗줄 이름표 «글자»»를 덮었다.
@@ -280,7 +284,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     : folder === '전체' ? sorted
       : folder === '__fav' ? sorted.filter((r) => r.favorite)
       : folder === '__often' ? sorted.filter((r) => (r.cooked || 0) > 0).sort((a, b) => (b.cooked || 0) - (a.cooked || 0))
-      : folder === '__video' ? sorted.filter((r) => embedUrl(r.sourceUrl || '')?.type === 'youtube')
+      : folder === '__video' ? sorted.filter(영상인가)
       : sorted.filter((r) => (r.folder || r.category) === folder)
   const countIn = (name) => sorted.filter((r) => (r.folder || r.category) === name).length
   // ⛔ 새 칩 열쇠()를 여기 «안» 넣으면 「폴더 삭제」 단추가 뜬다 — 폴더가 아닌데 폴더로 읽힌다
@@ -791,8 +795,27 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                           else nav.push({ name: 'detail', id: r.id })
                         }}
                       >
-                        <div style={on ? { outline: '3px solid var(--brown)', outlineOffset: -3, borderRadius: gridSize === 'big' ? 16 : 12 } : undefined}>
+                        <div style={{ position: 'relative', ...(on ? { outline: '3px solid var(--brown)', outlineOffset: -3, borderRadius: gridSize === 'big' ? 16 : 12 } : null) }}>
                           <Thumb recipe={r} ratio="1/1" radius={gridSize === 'big' ? 16 : 12} emojiSize={gridSize === 'big' ? undefined : '1.6rem'} showDecor />
+                          {/* 📺 [2026-09-03] 썸네일 위 「영상 있음」 표
+                              ⭐ 위 「영상 N」 칩은 «모아 보는» 것이고, 이건 «이 줄이 영상 편인가»를 그 자리에서 알려준다.
+                                 칩을 안 눌러도 목록을 훑다가 보인다.
+                              ⭐ 잣대는 칩·상세와 «같은 자» = embedUrl(...).type === 'youtube' (절대원칙 30)
+                              ⛔ <button> 을 쓰지 않는다 — 카드 전체가 button 이라 중첩 버튼이 된다(북마크 때와 같은 자리).
+                                 pointerEvents: 'none' 이라 눌러도 카드가 눌린다. */}
+                          {영상인가(r) && (
+                            <span
+                              aria-hidden="true"
+                              style={{
+                                position: 'absolute', left: 5, top: 5, pointerEvents: 'none',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                width: gridSize === 'big' ? 24 : 20, height: gridSize === 'big' ? 24 : 20,
+                                borderRadius: 6, background: 'rgba(255,255,255,.92)', color: '#e2352a',
+                              }}
+                            >
+                              <Icon name="youtube" size={gridSize === 'big' ? 17 : 14} />
+                            </span>
+                          )}
                         </div>
                         <div className="name" style={gridSize === 'small' ? { fontSize: 15, marginTop: 5 } : undefined}>{r.title}</div>
                         {gridSize === 'big' && <div className="date">{dateLabel(r.savedAt)}</div>}

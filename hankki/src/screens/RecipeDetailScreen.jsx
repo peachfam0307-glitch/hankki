@@ -25,7 +25,7 @@ import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES } from '../data/seed'
 // 🔁 AI 정리 실패 만회(아래 「만회한적」 절) — 잣대는 앱이 쓰는 그 모듈 그대로다(절대원칙 30).
 import { tidyRecipe, mergeTidy } from '../tidy'
-import { parseRecipeText } from '../parseRecipe'
+import { parseRecipeText, 자리표제목 } from '../parseRecipe'
 import { picksForIngredients, productLink, productMall, curIcon, isHansalim } from '../data/curation'
 
 import { useWakeLock } from '../useWakeLock'
@@ -173,7 +173,8 @@ export default function RecipeDetailScreen({ id }) {
       if (!ai) { updateRecipe(r.id, { tidyFail: 2 }); return }
       const 기본 = parseRecipeText(원문, { fromOcr: true })
       const m = mergeTidy(기본, ai)
-      const 자리표 = !r.title || r.title === '사진 레시피'
+      // 🏷 [2026-09-03] 자리표 판정은 «파서 한 곳»에서 — 「제목없음」도 여기서 같이 걸린다
+      const 자리표 = 자리표제목(r.title)
       const 재료없다 = !(r.ingredients || []).length
       updateRecipe(r.id, {
         tidyFail: 0,

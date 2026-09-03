@@ -18,7 +18,7 @@ import { CATEGORIES } from '../theme'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
-import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw } from '../parseRecipe'
+import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw, NO_TITLE } from '../parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from '../tidy'
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
@@ -605,19 +605,28 @@ export default function EditorScreen({ id, prefill }) {
     nav.showToast('AI가 다시 다듬었어요' + tidyTail(), 5200)
   }
 
-  const canSave = f.title.trim().length > 0
+  // 🏷🏷 **[창업자 확정 2026-09-03] 제목이 없어도 저장된다 — 「제목없음」으로 나간다.**
+  //   📮 창업자 = *"레시피에 제목이 없으면 제목없음으로 나갈 수 밖에 없지않을까.."* → *"차라리 제목없음으로 나가는게 낫겠다."*
+  //   ⛔⛔ 그 전엔 **제목이 없으면 저장이 아예 막혔다.** 같은 날 광고·협찬 줄을 제목에서 걷어내면서
+  //      (`parseRecipe.js` 의 `장사말줄`) **제목이 비는 일이 늘어난다** → 막아두면 그만큼 유저가 막힌다.
+  //   ⭐ 그래도 **아무것도 안 적은 것은 여전히 막는다** — 빈 레시피가 목록에 쌓이면 그게 더 나쁘다.
+  //      잣대는 이미 있는 `hasDraftContent`(제목·재료·순서·메모·주소 중 하나라도)를 그대로 쓴다.
+  const canSave = hasDraftContent
 
   const save = () => {
-    // 제목이 없으면 그냥 무시하지 않는다 — 예전엔 버튼을 disabled로 막아서
+    // 아무것도 안 적었으면 그냥 무시하지 않는다 — 예전엔 버튼을 disabled로 막아서
     // "눌러도 아무 반응 없음 = 저장 먹통"으로 보였다(창업자 제보).
     // 이제는 왜 안 되는지 말해주고 제목 칸으로 직접 데려간다.
     if (!canSave) {
-      nav.showToast('제목을 먼저 적어주세요')
+      nav.showToast('제목이나 재료를 먼저 적어주세요')
       const el = titleRef.current
       if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => el.focus(), 300) }
       return
     }
-    const title = f.title.trim()
+    // 🏷 제목이 비면 «자리표»로 저장한다 — ⛔이름이 아니라 자리표라서, 나중에 AI 가 진짜 이름을 주면
+    //    `자리표제목()` 이 알아보고 덮어쓴다(`App.jsx`·`RecipeDetailScreen.jsx`).
+    const 제목없이저장 = !f.title.trim()
+    const title = f.title.trim() || NO_TITLE
     const ings = splitLines(f.ingredients)
     const stps = splitLines(f.steps)
     // 아이콘을 그대로 둘 것인가 = 직접 골랐거나 · 제목이 그대로거나
@@ -673,7 +682,8 @@ export default function EditorScreen({ id, prefill }) {
       updateRecipe(editing.id, { ...patch, touched: true })
       나갈까(() => {
         nav.pop()
-        nav.showToast('레시피를 정리했어요')
+        // 🏷 제목 없이 저장했으면 «말해 준다» — 목록에서 「제목없음」을 보고 「고장인가?」로 읽지 않게
+        nav.showToast('레시피를 정리했어요' + (제목없이저장 ? ' · 제목은 「제목없음」이에요' : ''))
         // 🙏 «임시보관함에서 막 꺼낸 것»만 한마디를 청한다 — 그게 「담기를 끝낸」 순간이다.
         //   ⛔ 이미 정리된 편을 고칠 때는 안 청한다 — 오타 하나 고쳤는데 리뷰를 물으면 조르는 앱이 된다.
         if (임시보관함이었나) nav.askReviewSoon?.()
@@ -687,7 +697,8 @@ export default function EditorScreen({ id, prefill }) {
         // 새 레시피 저장 후엔 열려있던 화면(가져오기 등)을 모두 닫고 홈/현재 탭으로.
         // (뒤로가기로 작성 중이던 빈 편집기가 다시 나오지 않게)
         nav.popAll()
-        nav.showToast('레시피를 저장했어요')
+        // 🏷 제목 없이 저장했으면 «말해 준다» — 나중에 아무 때나 고칠 수 있다는 것까지
+        nav.showToast('레시피를 저장했어요' + (제목없이저장 ? ' · 제목은 「제목없음」이에요 · 나중에 고칠 수 있어요' : ''))
         // 🙏 한마디 청하기 — 「내 레시피 2개」부터 (창업자 확정 2026-09-03)
         //   ⛔ 여기서 «판정하지 않는다» — 이 화면이 든 `recipes` 는 저장 «전» 값이다.
         //      신호만 올리고 App 이 최신 store 로 센다(App.jsx 「리뷰신호」).

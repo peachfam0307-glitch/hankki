@@ -17,7 +17,7 @@
 
 import { politeSteps } from './polish.js'
 // 🥄 「계량 기준」 잣대는 «한 곳»에서 온다 — 규칙 파서와 AI 결과가 같은 말을 써야 한다.
-import { KIJUN_LINE, collapseRepeatedSyllables, 단위통일 } from './parseRecipe.js'
+import { KIJUN_LINE, collapseRepeatedSyllables, 단위통일, 요리이름만 } from './parseRecipe.js'
 
 // ✅ 2026-08-29 워커를 세우고 주소를 넣었다.
 //   실물 확인 = 창업자가 주소창에 쳐서 {"error":"method_not_allowed"} 를 봤다(= 우리 코드가 살아 있다).
@@ -282,7 +282,10 @@ export function mergeTidy(r, ai) {
     ...r,
     // 🏷 AI 가 제목을 못 주면 **규칙 파서 제목이 살아난다** — 창업자 짬뽕밥에서 이 자리가 값을 했다
     //    (AI 는 제목을 안 줬고 규칙 파서가 `#짬뽕밥` 을 잡았다).
-    title: collapseRepeatedSyllables(ai.title || '') || r.title,
+    // 🛒 [2026-09-03] ⛔AI 가 광고 줄을 제목으로 줘도 안 받는다 — 규칙 파서 쪽과 «같은 잣대»(절대원칙 30).
+    //    ⭐ AI 지시문 2번이 「절 이름·도구·팁 소제목은 제목이 아니다」까지만 막는다 — 장사말은 «안» 막는다.
+    //       그리고 오픈 모델은 규칙을 늘릴수록 맨 앞을 놓친다(worker-tidy.js 주석) → 지시문 대신 «여기»서 거른다.
+    title: 요리이름만(collapseRepeatedSyllables(ai.title || '')) || r.title,
     // 🥄 AI 재료를 쓰되 «분량은 규칙 파서 것으로 되살려서» 쓴다 (창업자 제보 2026-08-31 · 위 주석)
     // 🥄 ＋ 단위를 한 말로 (창업자 확정 2026-09-03 「큰술로 통일 · 스푼 다 빼고」)
     //   ⛔⛔ **AI 경로는 여태 단위 손질을 «한 번도» 안 거쳤다** — 규칙 파서만 거쳤다.
