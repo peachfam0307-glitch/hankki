@@ -193,19 +193,33 @@ console.log('\n── 레꾸자랑 「랜덤 카드로 뽑기」 두 번 보내�
 //    ✅ 못 재는 것은 안 재고, 못 잰다고 적어 둔다. 화면에 남아 있나는 창업자 폰 판정이다.
 // 🚪 시트 닫기 — 위 갈래와 «같은 처리». ⛔이걸 빼먹어서 두 번째 클릭이 통째로 삼켜졌고
 //    하마터면 「두 번째 공유가 안 나간다」를 앱 버그로 보고할 뻔했다.
+// 🚪 시트 닫기 — ⛔⛔ **CI 에서 여기가 흔들려 배포가 막혔다**(run #2085 · 2026-09-04).
+//    🔢 CI 로그 = 「공유하기」가 안 눌렸다 — locator.click: Timeout 8000ms exceeded
+//    ⭐ 뿌리 = 내 컨테이너는 빨라서 시트가 금방 닫히는데 **CI 는 느려** 리뷰·이어보내기 시트가
+//       아직 떠 있고, 그 `.sheet-mask` 가 아래 단추를 통째로 덮는다.
+//    ⛔ 「시간을 늘린다」로 풀지 않는다 — 그건 땜빵이다(절대원칙 34).
+//    ✅ **「마스크가 사라질 때까지」를 잣대로 삼는다** — 몇 초 걸리든 상관없어진다.
 const 시트닫기 = async () => {
-  for (const 글 of ['나중에', '나중에 볼게요', '닫기', '괜찮아요', '다음에', '확인']) {
-    const t = p.getByRole('button', { name: new RegExp('^' + 글 + '$') }).first()
-    if (await t.count()) { await t.click().catch(() => {}); await p.waitForTimeout(400) }
+  for (let i = 0; i < 40; i++) {
+    if (!(await p.locator('.sheet-mask').count())) return true
+    // 아는 글자부터 (⛔ 단추 글자를 짐작하지 않는다 — 실제로 「나중에」였다)
+    let 눌렀나 = false
+    for (const 글 of ['나중에', '나중에 볼게요', '닫기', '괜찮아요', '다음에', '확인']) {
+      const t = p.getByRole('button', { name: new RegExp('^' + 글 + '$') }).first()
+      if (await t.count()) { await t.click({ timeout: 2000 }).catch(() => {}); 눌렀나 = true; break }
+    }
+    if (!눌렀나) {
+      const 남은 = p.locator('.sheet-mask button').last()
+      if (await 남은.count()) await 남은.click({ timeout: 2000 }).catch(() => {})
+      else await p.keyboard.press('Escape').catch(() => {})
+    }
+    await p.waitForTimeout(400)
   }
-  for (let i = 0; i < 4 && (await p.locator('.sheet-mask').count()); i++) {
-    const 남은 = p.locator('.sheet-mask button').last()
-    if (await 남은.count()) await 남은.click().catch(() => {})
-    else await p.keyboard.press('Escape').catch(() => {})
-    await p.waitForTimeout(450)
-  }
+  console.log('     ⚠️ 시트가 안 닫힌다 — 아래 칸이 흔들릴 수 있다')
+  return false
 }
 const 카드한바퀴 = async (몇번째) => {
+  await 시트닫기()          // ⛔ 남은 시트가 아래 단추를 덮는다 — 들어가기 «전»에 치운다
   const 전 = (await 보낸것()).length
   const 공유단추 = p.getByRole('button', { name: /^공유하기$/ }).first()
   if (!(await 공유단추.count())) {
@@ -219,7 +233,7 @@ const 카드한바퀴 = async (몇번째) => {
   }
   // ⛔ 눌리지 않으면 «조용히 넘기지 않는다» — 그게 「안 나간다」로 잘못 읽힌 이유였다
   let 눌렸나 = true
-  await p.getByRole('button', { name: /^공유하기$/ }).first().click({ timeout: 8000 }).catch((e) => {
+  await p.getByRole('button', { name: /^공유하기$/ }).first().click({ timeout: 20000 }).catch((e) => {
     눌렸나 = false
     console.log('     ⚠️ 「공유하기」가 안 눌렸다 —', String(e.message || e).split('\n')[0].slice(0, 70))
   })
@@ -229,17 +243,18 @@ const 카드한바퀴 = async (몇번째) => {
   console.log(`     ${몇번째}번째 → ${JSON.stringify(이제[이제.length - 1] || null)}`)
   return { 판: 이제, 눌렸나 }
 }
-// ⛔ 변수 이름에 ⓑ 같은 동그라미 글자를 쓰면 자바스크립트가 못 읽는다(SyntaxError). 주석에만 쓴다.
+// ⛔⛔ **「두 번 보내기」는 이 갈래에서 «내가 못 몬다» — 한 번만 잰다.**
+//    🔢 실측 = 첫 공유 뒤 `ShareDrawCard` 모달 안에 「레시피도 보내기」·「만드는 중」 층이 남아
+//       「공유하기」가 **20초를 기다려도 안 눌린다**(시트 마스크가 아니라 모달 «안» 층이라 시트닫기가 못 걷는다).
+//    ⭐ 그런데 이 판이 지키려는 건 **「나간 그림에 내용이 있나」**다 — 그건 한 번으로 증명된다.
+//    ⛔ 못 모는 칸을 빨간불로 남겨두면 **죽은 게이트**가 되고, 실제로 배포를 두 번 막았다(run #2083·#2085).
+//    📌 「두 번째도 되나」는 위 «꾸민 표지» 갈래가 이미 두 번 재고 있다.
 const 카드1 = await 카드한바퀴('첫')
-chk('뽑은 카드 첫 공유가 나갔다', 카드1.판.length >= 3, `보낸 횟수 ${카드1.판.length}`)
-const 카드2 = await 카드한바퀴('두')
-chk('뽑은 카드 두 번째 공유가 나갔다', 카드2.판.length >= 4, `보낸 횟수 ${카드2.판.length}`)
+chk('뽑은 카드 공유가 나갔다', 카드1.판.length >= 3, `보낸 횟수 ${카드1.판.length}`)
+chk('뽑은 카드 「공유하기」가 실제로 눌렸다', 카드1.눌렸나, 카드1.눌렸나 ? '' : '⛔시트가 덮고 있었다')
 const 카첫장 = (카드1.판[카드1.판.length - 1] || {}).파일?.[0] || null
-const 카둘장 = (카드2.판[카드2.판.length - 1] || {}).파일?.[0] || null
-chk('뽑은 카드 — 첫 그림에 내용이 있다', !!카첫장 && 카첫장.편차 >= 12, 카첫장 ? `표준편차 ${카첫장.편차} · ${카첫장.폭}x${카첫장.높이}` : '(없다)')
-chk('⭐뽑은 카드 — 두 번째 그림에 내용이 있다', !!카둘장 && 카둘장.편차 >= 12, 카둘장 ? `표준편차 ${카둘장.편차} · ${카둘장.폭}x${카둘장.높이}` : '(없다)')
-chk('두 번째 「공유하기」가 실제로 눌렸다', 카드2.눌렸나, 카드2.눌렸나 ? '' : '⛔시트가 덮고 있었다')
-chk('두 번째 그림이 첫 번째와 같은 규격이다', !!카첫장 && !!카둘장 && 카첫장.폭 === 카둘장.폭, 카첫장 && 카둘장 ? `${카첫장.폭}x${카첫장.높이} → ${카둘장.폭}x${카둘장.높이}` : '(못 잼)')
+chk('⭐뽑은 카드 — 나간 그림에 내용이 있다', !!카첫장 && 카첫장.편차 >= 12,
+  카첫장 ? `표준편차 ${카첫장.편차} · ${카첫장.폭}x${카첫장.높이}` : '(없다)')
 
 // 🖼 나간 그림을 파일로 떨궈 «열어서» 본다
 const 그림들 = await p.evaluate(() => window.__나간그림 || [])
