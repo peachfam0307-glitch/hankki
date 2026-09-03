@@ -40,6 +40,9 @@ import { THEMES, getTheme, setTheme } from '../theme'
 import { Avatar } from './HomeScreen'
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
 import { FAV_NAME } from '../favName'
+// 🏷 갈래 이름도 «한 곳»에서만 온다(`src/settingsGroups.js`) — 화면과 관문이 같은 목록을 본다.
+//    ⛔ 여기에 갈래 이름을 «다시 적지» 말 것. 2026-09-04 에 화면과 관문이 각각 적어서 실제로 갈렸다.
+import { 설정갈래, 설정섹션, 설정이름표스타일 } from '../settingsGroups'
 
 export default function ProfileScreen() {
   const store = useStore()
@@ -399,21 +402,9 @@ export default function ProfileScreen() {
 
   // ⭐ 갈래는 «이름표»로 짠다 — 줄을 다시 적지 않는다. 위에서 한 줄을 지우면 여기서도 저절로 빠진다.
   //   ⛔ 어느 갈래에도 안 적힌 줄은 **버리지 않고** 마지막 갈래 뒤에 붙는다(놓치면 줄이 사라진다).
-  const 갈래정의 = [
-    // ⛔ 처음엔 이 갈래만 이름표를 안 줬다(「늘 쓰는 거라 이름이 필요 없다」).
-    //    그런데 위아래가 «전부» 이름표를 받고 나니 **이 상자만 붕 떠 보였다**(스샷에서 잡았다).
-    //    📌 이름표는 «그 갈래»가 아니라 «줄 전체»가 정한다 — 하나만 빼면 그게 튄다.
-    { title: '자주 여는 것', keys: [FAV_NAME, '요리 가이드'] },
-    { title: '알림과 소식', keys: ['한끼 소식'] },
-    // 🏷 [창업자 2026-09-03] *"「한끼를 도와주기」 말고 다른 말이었음 좋겠어"*
-    //   ⛔ 「도와주기」는 **우리가 아쉬운 소리를 하는 말**이다 — 설정에 들어온 사람에게 부탁부터 하는 셈이다.
-    //   ⭐ 이 셋의 공통점 = «말을 주고받는 자리»(리뷰·의견·문의). 그래서 「함께 만들기」.
-    { title: '함께 만들기', keys: ['스토어에 한마디', '한끼연구소', '도움말 및 문의'] },
-    { title: '다시 보기', keys: ['앱 소개 다시 보기', '기능 안내 다시 보기'] },
-    { title: '계정과 약관', keys: ['계정 · 데이터 삭제', '개인정보처리방침', '오픈소스 라이선스'] },
-  ]
-  const 담긴것 = new Set(갈래정의.flatMap((g) => g.keys))
-  const 갈래들 = 갈래정의
+  // 📄 갈래 정의는 `src/settingsGroups.js` 가 가진다 — 관문(`_repro-설정갈래-0903`)도 거기서 읽어 간다.
+  const 담긴것 = new Set(설정갈래.flatMap((g) => g.keys))
+  const 갈래들 = 설정갈래
     .map((g) => ({ title: g.title, items: g.keys.map((k) => menu.find((m) => m.label === k)).filter(Boolean) }))
     .filter((g) => g.items.length)
   const 남은것 = menu.filter((m) => !담긴것.has(m.label))
@@ -553,7 +544,7 @@ export default function ProfileScreen() {
         {/* 🏷 [창업자 2026-09-03] *"백업 내보내기랑 클라우드 저장공간도 넣어야해"*
             ⭐ 갈래에 «넣되» 목록으로 «되돌리지는» 않는다 — 2026-08-16 「꺼내서 강조하라」는 창업자 확정이 살아 있다.
                이름표만 얹으면 **강조는 그대로 두고 갈래에는 들어간다.** 둘이 안 부딪힌다. */}
-        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--sand)', margin: '20px 4px 8px', letterSpacing: '0.02em' }}>내 것 지키기</div>
+        <div style={설정이름표스타일}>{설정섹션.백업}</div>
         <button
           className="card press" data-coach="backup" onClick={() => setBackup(true)}
           /* ⛔ marginTop 을 뺐다 — 위에 붙은 이름표가 그 간격을 이미 갖는다(20). 두면 두 겹이 된다. */
@@ -595,12 +586,13 @@ export default function ProfileScreen() {
 
         {/* 메뉴 — 갈래마다 «상자 하나». 사이가 벌어져야 눈이 갈래를 읽는다. */}
         {갈래들.map((g) => (
-          <div key={g.title || '기본'} style={{ marginTop: 20 }}>
+          <div key={g.title || '기본'}>
             {/* ⛔⛔ [2026-09-04 정정] 여기 「첫 갈래엔 이름표를 안 붙인다」고 적혀 있었다 — **되돌리기 «전»의 말**이다.
-                실제로는 402줄에서 「자주 여는 것」 이름표를 다시 붙였다(그 갈래만 붕 떠 보여서 창업자가 스샷으로 잡았다).
-                📌 주석대로 떼면 그 문제로 그대로 돌아간다. 이름표는 «줄 전체»가 정한다 — 하나만 빼면 그게 튄다. */}
+                실제로는 「자주 여는 것」 이름표를 다시 붙였다(그 갈래만 붕 떠 보여서 창업자가 스샷으로 잡았다).
+                📌 주석대로 떼면 그 문제로 그대로 돌아간다. 이름표는 «줄 전체»가 정한다 — 하나만 빼면 그게 튄다.
+                ⭐ 여백은 `설정이름표스타일`(위 20px)이 갖는다 — 감싼 칸의 marginTop 을 뺐다(두면 두 겹). */}
             {g.title && (
-              <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--sand)', margin: '0 4px 8px', letterSpacing: '0.02em' }}>{g.title}</div>
+              <div style={설정이름표스타일}>{g.title}</div>
             )}
             <div className="card" style={{ overflow: 'hidden' }}>
               {g.items.map((m, i) => (
@@ -652,7 +644,7 @@ export default function ProfileScreen() {
         ))}
 
         {/* 🏷 [창업자 2026-09-03] *"테마도. 버전확인이랑 넣을게 많네.."* — 갈래 밖에 떠 있던 상자들도 이름표 아래로. */}
-        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--sand)', margin: '20px 4px 8px', letterSpacing: '0.02em' }}>화면 꾸미기</div>
+        <div style={설정이름표스타일}>{설정섹션.테마}</div>
         {/* 테마 — 화면 색(크림·세이지·다크). 다크모드도 여기서 고른다. */}
         <div className="card" style={{ padding: 16 }}>
           <div style={{ fontSize: 17, fontWeight: 700 }}>테마</div>
@@ -693,8 +685,9 @@ export default function ProfileScreen() {
         </div>
 
         {/* 🏷 앱 자체에 대한 것 — 예시 데이터 · 버전 · 꼬리말. 갈래 중 «마지막»이다. */}
-        {/* ⛔ 위 여백이 여기만 22px 이었다 — 다른 이름표는 전부 20px 이라 마지막 칸만 벌어져 보였다(2026-09-04). */}
-        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--sand)', margin: '20px 4px 8px', letterSpacing: '0.02em' }}>앱 정보</div>
+        {/* ⛔ 위 여백이 여기만 22px 이었다 — 값이 네 군데에 따로 적혀 있어서 갈렸다(2026-09-04).
+            ✅ 이제 `설정이름표스타일` 한 곳이라 그렇게 갈릴 수가 없다. */}
+        <div style={설정이름표스타일}>{설정섹션.앱}</div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button
             className="press"

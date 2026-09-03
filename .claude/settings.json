@@ -14,7 +14,7 @@
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/design-guard.sh"
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/design-guard.sh tool"
           }
         ]
       },
@@ -86,6 +86,10 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/report-guard.sh prompt"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/design-guard.sh prompt"
           },
           {
             "type": "command",
