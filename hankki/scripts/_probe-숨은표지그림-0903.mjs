@@ -106,6 +106,32 @@ chk('숨은 캡처 레이어가 붙었다', 잰것.레이어)
 chk('⭐그 안에 «창고에서 꺼낸» 표지 그림이 있다', (잰것.데이터그림 || 0) > 0,
   잰것.레이어 ? `그림 태그 ${잰것.그림수}개 · data: ${잰것.데이터그림}개 · 받아온 것 ${잰것.받아온것}개 · 첫 src "${잰것.첫src}"` : '')
 
+// 🚀 ⭐**끝까지 간다 — 진짜로 공유시켜서 «나간 그림»을 파일로 떨군다.**
+//    ⛔ DOM 만 보고 「됐다」 하지 않는다. 창업자가 보는 건 카톡에 «도착한 그림»이다(절대원칙 21·30).
+await p.evaluate(() => {
+  window.__나간것 = []
+  navigator.canShare = () => true
+  navigator.share = async (opt) => {
+    const f = ((opt && opt.files) || [])[0]
+    if (!f) { window.__나간것.push(null); return }
+    const url = URL.createObjectURL(f)
+    const img = new Image(); await new Promise((r) => { img.onload = r; img.onerror = r; img.src = url })
+    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight
+    c.getContext('2d').drawImage(img, 0, 0)
+    window.__나간것.push({ 폭: img.naturalWidth, 높이: img.naturalHeight, 바이트: f.size, 그림: c.toDataURL('image/jpeg', 0.92) })
+    URL.revokeObjectURL(url)
+  }
+})
+await p.getByText('내가 꾸민 표지 그대로', { exact: false }).first().click().catch(() => {})
+for (let i = 0; i < 80; i++) { await p.waitForTimeout(500); if ((await p.evaluate(() => (window.__나간것 || []).length))) break }
+const 나간것 = (await p.evaluate(() => window.__나간것 || []))[0] || null
+chk('공유가 실제로 나갔다', !!나간것, 나간것 ? `${나간것.폭}x${나간것.높이} · ${나간것.바이트}B` : '(안 나갔다)')
+if (나간것) {
+  const { writeFileSync } = await import('node:fs')
+  writeFileSync('/tmp/나간표지.jpg', Buffer.from(나간것.그림.split(',')[1], 'base64'))
+  console.log('     📁 나간 그림 → /tmp/나간표지.jpg  ⛔여기서 끝내지 말고 «열어서» 볼 것')
+}
+
 // 🔬 ⛔ 대조군(「보이는 표지는 되나」)은 **뺐다** — 내가 상세 화면으로 넘어가는 길을 못 맞춰
 //    「.cover-box」 를 못 찾아 늘 실패했다. 그건 앱이 아니라 «내 계측»이 틀린 것이다(규칙 18).
 //    ⭐ 그리고 없어도 된다 — 위 칸이 **고침 전엔 실패하고 고친 뒤엔 통과**한다(직접 돌려서 확인).
