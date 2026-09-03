@@ -6,6 +6,7 @@ import OneLineSheet from '../components/OneLineSheet'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
+import { SNS인가, 영상인가 } from '../embed'
 import Thumb from '../components/Thumb'
 import { hasFrameDecor } from '../components/Stickers'
 import FoodIcon from '../components/FoodIcon'
@@ -87,7 +88,32 @@ function WeekBox({ w, 기본, open }) {
                 ⛔ 카드 폭을 키우지 않는다 — 한 줄에 세 칸 보이는 게 이 줄의 값어치다.
                 ✅ 판 «안»에서 그림만 키운다(56% → 70%). 이름표 자리도 그대로다.
                 🍽 [2026-09-01 창업자 = 갈래 「라」] 단 **프레임을 얹은 레시피는 56%** — `홈그림크기()` 참조 */}
-            <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2.5rem" iconSize={홈그림크기(r)} showDecor />
+            {/* 📺📷 [2026-09-04 창업자] *"여기에도 안내칩넣어야해 링크? 유튜브? 작은 아이콘상자"*
+                → 처음에 오른쪽 위 동그란 배지로 만들었는데 창업자가 바로 짚었다 = *"왼쪽에 달지 않았어?? (레시피에는??)"*
+                ⭐⭐ 맞다 — **레시피 탭이 이미 왼쪽 위에 같은 표를 달고 있다**(`MyRecipesScreen.jsx` 869줄).
+                   자리·모양·색을 «그대로» 따라간다. 같은 것이 화면마다 다르게 생기면 유저는 다른 것으로 읽는다
+                   (CLAUDE.md 「같은 기능은 탭이 달라도 같은 이름」과 같은 뜻).
+                🔖 표는 «둘» = 유튜브 ▶(붉은색) · 그 밖의 SNS 🔗(갈색) — 잣대도 레시피 탭과 같은 자(`영상인가`).
+                ⛔ 목록을 손으로 적지 않는다 — `sourceUrl` 을 «읽어서» 가른다.
+                   그래서 SNS 상자에만 저절로 붙고, 제철·우리집 상자엔 `sourceUrl` 이 없어 안 붙는다. */}
+            <div style={{ position: 'relative' }}>
+              <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2.5rem" iconSize={홈그림크기(r)} showDecor />
+              {SNS인가(r) && (
+                <span
+                  aria-hidden="true"
+                  data-sns={영상인가(r) ? 'play' : 'link'}
+                  style={{
+                    position: 'absolute', left: 5, top: 5, pointerEvents: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 20, height: 20,
+                    borderRadius: 6, background: 'rgba(255,255,255,.92)',
+                    color: 영상인가(r) ? '#e2352a' : 'var(--brown)',
+                  }}
+                >
+                  <Icon name={영상인가(r) ? 'youtube' : 'link'} size={14} />
+                </span>
+              )}
+            </div>
             <div className="name">{r.title}</div>
           </button>
         ))}

@@ -28,7 +28,7 @@ import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 //    (DiaryEntrySheet · ReviewAskSheet · shouldAskReview import 제거)
 import { dateLabel, matchKo } from '../utils'
 // 📺 「영상」 칩이 쓰는 잣대 — 상세에서 재생하는 것과 «같은 자»다(절대원칙 30)
-import { embedUrl } from '../embed'
+import { embedUrl, SNS인가, 영상인가 } from '../embed'
 // 📺 이 화면에서 묻는 것은 «둘»이고, 자도 «둘»이다 — 이름으로 갈라 둔다(⛔같은 걸로 착각하지 말 것).
 //
 // ⭐⭐ [창업자 확정 2026-09-03] 칩 이름 = **「SNS」**. 📮 창업자 = *"ⓐ로 가자"*
@@ -39,11 +39,8 @@ import { embedUrl } from '../embed'
 //   ⭐ 홈의 「SNS 요리」 상자와 **같은 말**이다(창업자 = *"홈에도 이름 통일해야하는데"*).
 //   ⛔ 「영상으로 보기」 단추는 «안» 건드린다 — 거긴 진짜 재생되는 자리라 맞는 말이다.
 //
-// ⑴ SNS에서 온 편인가 — 칩 개수·거르기가 쓴다. 매체를 안 가린다(유튜브·인스타·앞으로 뭐든).
-const SNS인가 = (r) => !!(r?.sourceUrl || '').trim()
-// ⑵ 앱에서 «재생»되는가 — 썸네일 ▶ 표가 쓴다. ⛔인스타는 재생이 안 되므로 ▶ 를 붙이지 않는다
-//    (▶ 를 붙여 놓고 눌렀는데 안 나오면 그게 거짓말이다).
-const 영상인가 = (r) => embedUrl(r?.sourceUrl || '')?.type === 'youtube'
+// ⑴⑵ 잣대 둘(SNS인가 · 영상인가)은 `embed.js` 로 «옮겼다»(2026-09-04).
+//    홈 SNS 상자도 같은 표를 달게 되면서 두 곳이 됐다 — 베끼지 않고 한 곳을 같이 부른다.
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
