@@ -390,9 +390,9 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   //      ⑴ 같은 요리를 여러 번 (창업자가 짚은 것) ⑵ 그날 것이 그 달에도 또 (내가 물어본 것)
   //   ⚠️ 남기는 것은 «가장 최근» 한 판 — `entries` 가 최신순이라 처음 만난 것이 그것이다.
   //   ⚠️ 같은 요리의 잣대 = **제목**. `recipeId` 는 레시피를 지우면 끊기고, 유저 눈에 보이는 건 제목이다.
-  //   ⛔ 날짜를 «안» 골랐을 땐 손대지 않는다 — 그건 「나의 요리 앨범」이고 한 장씩 쌓이는 게 그 자리의 뜻이다.
+  //   ⚠️ 날짜를 «골랐을 때»의 묶음이다. 안 골랐을 땐 아래 `monthGroups` 가 달마다 갈라 보여준다.
   const monthList = useMemo(() => {
-    if (!pickedYm) return entries
+    if (!pickedYm) return []
     const 본것 = new Set()
     const out = []
     for (const e of entries) {
@@ -404,9 +404,42 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     }
     return out
   }, [entries, pickedYm, dayFilter])
-  // 🖐 「전체 선택」이 잡을 것 = **화면에 실제로 있는 것 전부**(그날 ＋ 그 달).
+  // 🗓🗓 [창업자 제보 2026-09-03] *"일기에서 8월에 만든 음식이 계속 누적으로 뜬다"*
+  //   ⛔ 날짜를 «안» 골랐을 때 이 앨범이 `entries` 를 «그대로» 내놨다 → ⑴지난달 것이 끝없이 이어지고
+  //      ⑵같은 요리가 여러 칸을 먹었다(창업자 폰 실물 = 수제 떡갈비 3칸 · 공심채 볶음 2칸 · 치킨 레터스랩 2칸).
+  //   📌 8/17 에 「그 달 묶음은 안 겹친다」를 정하면서 **이 자리만 일부러 손대지 않았다.**
+  //      그때 *"한 장씩 쌓이는 게 그 자리의 뜻"* 이라고 적었는데 — 넉 달이 쌓이면 그게 «누적»이다.
+  //      ⭐ 규칙이 틀린 게 아니라 **적용 범위가 좁았다.** 같은 규칙을 앨범 전체로 넓힌다.
+  //   ✅ 창업자 확정 = **달마다 나누고 겹치지 않게.** 「2026년 9월」 머리글 아래 그 달 것만,
+  //      한 달 안에서 같은 요리는 «가장 최근» 한 판만.
+  //   ⛔⛔ **기록은 하나도 안 지운다** — 보이는 방식만 바뀐다. 달력에서 날짜를 누르면 그날 것이 다 나온다.
+  //   ⚠️ `entries` 가 최신순이라 **달도 저절로 최신순**이고, 한 달 안에서 처음 만난 것이 «가장 최근» 판이다.
+  //      (`Map` 은 넣은 순서를 지킨다 — 따로 정렬하지 않는다.)
+  const monthGroups = useMemo(() => {
+    if (pickedYm) return []
+    const 묶음 = new Map()
+    for (const e of entries) {
+      const 달 = ymKey(e.at)
+      let g = 묶음.get(달)
+      if (!g) 묶음.set(달, (g = { ym: 달, 본것: new Set(), items: [] }))
+      if (g.본것.has(e.title)) continue
+      g.본것.add(e.title)
+      g.items.push(e)
+    }
+    return [...묶음.values()].map((g) => {
+      const 쪽 = g.ym.split('-')
+      // ⛔ 달 이름을 열쇠로 쓰지 않는다(해가 넘어가면 작년 8월과 섞인다) — 보여줄 때만 글자로 만든다
+      return { ym: g.ym, label: `${쪽[0]}년 ${Number(쪽[1]) + 1}월`, items: g.items }
+    })
+  }, [entries, pickedYm])
+  // 🖐 「전체 선택」이 잡을 것 = **화면에 실제로 있는 것 전부**.
   //    ⛔ `monthList` 하나만 쓰면 그날 묶음이 선택에서 빠진다 — 겹침을 없앤 «뒤»엔 둘이 남남이다.
-  const shownAll = useMemo(() => [...dayList, ...monthList], [dayList, monthList])
+  //    ⛔⛔ 그리고 **안 보이는 것을 잡아선 안 된다** — 겹쳐서 숨긴 판까지 잡으면
+  //       창업자가 «보지도 못한 기록»이 지워진다. 그래서 달 묶음이 실제로 그리는 것만 모은다.
+  const shownAll = useMemo(
+    () => (pickedYm ? [...dayList, ...monthList] : monthGroups.flatMap((g) => g.items)),
+    [dayList, monthList, monthGroups, pickedYm],
+  )
   const openRecipe = (e) => {
     if (recipes.some((r) => r.id === e.recipeId)) nav.push({ name: 'detail', id: e.recipeId })
   }
@@ -687,9 +720,19 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                   <div className="t-sub" style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--brown)', margin: '0 2px 8px' }}>
                     {Number(dayFilter.split('-')[1]) + 1}월에 만든 {dayList.length > 0 ? '다른 ' : ''}요리 {monthList.length}개
                   </div>
+                  <div className="album-grid">{monthList.map(albumTile)}</div>
                 </>
               )}
-              <div className="album-grid">{monthList.map(albumTile)}</div>
+              {/* 🗓 날짜를 안 골랐을 땐 **달마다 갈라서** 보여준다 (창업자 2026-09-03)
+                  ⛔ 전엔 여기서 `entries` 를 통째로 그려 지난달 것이 끝없이 이어졌다. */}
+              {!dayFilter && monthGroups.map((g) => (
+                <div key={g.ym} style={{ marginBottom: 18 }}>
+                  <div className="t-sub" style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--brown)', margin: '0 2px 8px' }}>
+                    {g.label} <span style={{ fontWeight: 700 }}>{g.items.length}개</span>
+                  </div>
+                  <div className="album-grid">{g.items.map(albumTile)}</div>
+                </div>
+              ))}
             </>
           )}
           </div>{/* .log-main */}
