@@ -319,6 +319,13 @@ export default function ProfileScreen() {
   // 하단 탭과 겹치는 항목(내 레시피·장보기)은 뺐다 — 같은 곳으로 가는 문이 두 개면 헷갈린다.
   // '만들었어요! 기록'은 하단 '일지' 탭과 겹쳐서 뺐고, '설정' 행은 프로필 편집을 여는 잘못된 항목이라 뺐다.
   // (프로필 편집은 맨 위 프로필 카드를 누르면 열린다)
+  // 🧹🧹 [창업자 2026-09-03] *"설정 깔끔하게 다시 정리하는거"*
+  //   ⛔ 그 전 = **한 상자에 10줄이 통째로** 붙어 있었다(실측). 「스토어에 한마디」와
+  //      「오픈소스 라이선스」가 «같은 무게»로 읽혔다 — 찾는 사람이 열 줄을 다 읽어야 했다.
+  //   ⭐ 줄은 «하나도» 지우지 않았다. **갈래만 나눴다** — 무엇을 뺄지는 창업자가 정할 일이다.
+  //   ⭐ 갈래를 나누는 기준 = «언제 오는가»
+  //      ⑴ 늘 쓰는 것 ⑵ 한끼를 돕는 것(우리가 받고 싶은 것) ⑶ 다시 보고 싶을 때 ⑷ 법·계정
+  //   ⛔ ⑷를 맨 아래 둔다 — Play 가 요구해서 있는 줄이지, 유저가 찾아오는 줄이 아니다.
   const menu = [
     // ⭐⭐ [창업자 2026-09-03] 「스토어에 한마디」 — **언제든 스스로 갈 수 있는 상시 입구.**
     //   📮 창업자 = *"리뷰는 진짜 라이트하게 써봐도 올릴수있게 하면 좋겠다. **리뷰가 좀 시급해**"*
@@ -366,6 +373,21 @@ export default function ProfileScreen() {
     { icon: 'settings', label: '개인정보처리방침', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
     { icon: 'book', label: '오픈소스 라이선스', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'licenses.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
   ]
+
+  // ⭐ 갈래는 «이름표»로 짠다 — 줄을 다시 적지 않는다. 위에서 한 줄을 지우면 여기서도 저절로 빠진다.
+  //   ⛔ 어느 갈래에도 안 적힌 줄은 **버리지 않고** 마지막 갈래 뒤에 붙는다(놓치면 줄이 사라진다).
+  const 갈래정의 = [
+    { title: '', keys: [FAV_NAME, '요리 가이드'] },
+    { title: '한끼를 도와주기', keys: ['스토어에 한마디', '한끼연구소', '도움말 및 문의'] },
+    { title: '다시 보기', keys: ['앱 소개 다시 보기', '기능 안내 다시 보기'] },
+    { title: '계정과 약관', keys: ['계정 · 데이터 삭제', '개인정보처리방침', '오픈소스 라이선스'] },
+  ]
+  const 담긴것 = new Set(갈래정의.flatMap((g) => g.keys))
+  const 갈래들 = 갈래정의
+    .map((g) => ({ title: g.title, items: g.keys.map((k) => menu.find((m) => m.label === k)).filter(Boolean) }))
+    .filter((g) => g.items.length)
+  const 남은것 = menu.filter((m) => !담긴것.has(m.label))
+  if (남은것.length) 갈래들.push({ title: '그 밖에', items: 남은것 })
 
   return (
     <>
@@ -536,20 +558,29 @@ export default function ProfileScreen() {
         </button>
         )}
 
-        {/* 메뉴 */}
-        <div className="card" style={{ marginTop: 20, overflow: 'hidden' }}>
-          {menu.map((m, i) => (
-            <div key={m.label}>
-              <button className="opt-row press" onClick={m.onClick} data-coach={m.coach} style={{ padding: '16px' }}>
-                <Icon name={m.icon} size={22} color="var(--brown)" stroke={1.7} />
-                <div className="t" style={{ fontSize: 17, fontWeight: 500 }}>{m.label}</div>
-                {m.badge && <span className="badge badge-sorted" style={{ marginRight: 6 }}>{m.badge}</span>}
-                <Icon name="chevron-right" size={18} color="var(--sand)" />
-              </button>
-              {i < menu.length - 1 && <hr className="divider" style={{ marginLeft: 52 }} />}
+        {/* 메뉴 — 갈래마다 «상자 하나». 사이가 벌어져야 눈이 갈래를 읽는다. */}
+        {갈래들.map((g) => (
+          <div key={g.title || '기본'} style={{ marginTop: 20 }}>
+            {/* ⛔ 첫 갈래엔 이름표를 안 붙인다 — 늘 쓰는 줄이라 이름이 필요 없고,
+                붙이면 백업 카드 바로 밑에 글자가 두 겹으로 쌓인다. */}
+            {g.title && (
+              <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--sand)', margin: '0 4px 8px', letterSpacing: '0.02em' }}>{g.title}</div>
+            )}
+            <div className="card" style={{ overflow: 'hidden' }}>
+              {g.items.map((m, i) => (
+                <div key={m.label}>
+                  <button className="opt-row press" onClick={m.onClick} data-coach={m.coach} style={{ padding: '16px' }}>
+                    <Icon name={m.icon} size={22} color="var(--brown)" stroke={1.7} />
+                    <div className="t" style={{ fontSize: 17, fontWeight: 500 }}>{m.label}</div>
+                    {m.badge && <span className="badge badge-sorted" style={{ marginRight: 6 }}>{m.badge}</span>}
+                    <Icon name="chevron-right" size={18} color="var(--sand)" />
+                  </button>
+                  {i < g.items.length - 1 && <hr className="divider" style={{ marginLeft: 52 }} />}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
 
         {/* 테마 — 화면 색(크림·세이지·다크). 다크모드도 여기서 고른다. */}
         <div className="card" style={{ marginTop: 20, padding: 16 }}>
