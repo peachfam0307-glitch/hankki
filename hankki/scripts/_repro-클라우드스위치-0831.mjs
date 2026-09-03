@@ -43,7 +43,7 @@ const 씨앗쓰던사람 = () => {
   }))
 }
 
-const b = await chromium.launch()
+const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const errs = []
 let 통과 = 0, 전체 = 0
 const 칸 = (좋나, 이름, 덧 = '') => { 전체++; if (좋나) 통과++; console.log(`${좋나 ? '✅' : '⛔'} ${이름}${덧 ? ' — ' + 덧 : ''}`) }

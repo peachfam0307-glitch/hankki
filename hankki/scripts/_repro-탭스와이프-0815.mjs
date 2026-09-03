@@ -21,7 +21,7 @@ for (let i = 0; i < 60; i++) {
   await new Promise(r => setTimeout(r, 500))
 }
 
-const b = await chromium.launch()
+const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const p = await b.newPage({ viewport: { width: 412, height: 900 }, hasTouch: true, isMobile: true })
 const errs = []
 p.on('pageerror', e => errs.push(String(e)))
