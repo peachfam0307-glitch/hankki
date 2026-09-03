@@ -44,7 +44,7 @@ import { FAV_NAME } from '../favName'
 import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 // 📺 링크 → 앱 안에서 재생할 수 있는 «공식» 임베드 주소 (유튜브·인스타)
-import { embedUrl } from '../embed'
+import { embedUrl, SNS표 } from '../embed'
 
 // 🏷 출처(어디서 왔나) — 주소에서 «읽어» 낸다 (창업자 2026-09-03 *"원본링크에-출처도 붙이자"*)
 //   ⛔ 손으로 적는 칸을 새로 만들지 않는다 — 손으로 적으면 반드시 낡는다(규칙 12ⓑ).
@@ -296,6 +296,12 @@ export default function RecipeDetailScreen({ id }) {
 
   // 📺 원본이 유튜브·인스타면 앱 안에서 재생할 수 있는 주소를 만든다(아니면 null)
   const 영상 = embedUrl(r?.sourceUrl || '')
+  // 🖼 **「표지 그림을 보일 수 있나」는 «한 곳»에서만 판정한다** (2026-09-04)
+  //   ⛔ 이 잣대가 카드 «세 자리»(그림 칸 · 가르는 선 · 앞으로 붙을 미리보기)에 쓰인다.
+  //      세 곳에 베껴 적으면 하나만 고쳤을 때 «선만 남고 그림은 없는» 화면이 난다.
+  //   ⭐ 지금은 유튜브만 그림이 있다 — 인스타는 표지 주소를 안 준다(Meta 가 oEmbed 에서 뺐다).
+  //      서버로 받아오는 길이 열리면 **이 한 줄만 고치면 카드가 통째로 따라온다.**
+  const 표지보임 = !!(영상 && 영상.type === 'youtube' && 영상.thumb && !썸네일깨짐)
 
   const del = () => setConfirmDel(true)
 
@@ -740,11 +746,20 @@ export default function RecipeDetailScreen({ id }) {
               onClick={() => openUrl(r.sourceUrl)}
               style={{ display: 'block', width: '100%', overflow: 'hidden', padding: 0, textAlign: 'left', border: 0 }}
             >
-              <div style={{
-                position: 'relative', width: '100%', aspectRatio: '16/9', background: 'var(--cream)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {영상.type === 'youtube' && 영상.thumb && !썸네일깨짐 ? (
+              {/* 🖼🖼 [2026-09-04 창업자 확정 ⓐ] **그림이 없으면 그림 «자리»를 아예 안 만든다.**
+                  ⛔ 그 전엔 빈 16:9 칸에 매체 표만 덩그러니 놓았는데, 창업자 폰 실물에서
+                     **「그림이 안 떴다」로 읽혔다**(창업자가 그 화면을 찍어 보냈다).
+                  ⭐ 뿌리 = 인스타는 «표지 주소를 안 준다» — 유튜브처럼 주소를 조합할 수 없고
+                     Meta 가 2025-11-03 부터 oEmbed 응답에서 `thumbnail_url` 을 뺐다.
+                     서버가 대신 열어 집어오는 길은 «따로» 재고 있다(`ocr-proxy/worker.js` 의 `?preview=`).
+                  ⭐⭐ **이 자리는 그 길이 실패했을 때의 «바닥»이기도 하다** — 먼저 깔아두면
+                     인스타가 언제 막아도 화면이 안 깨진다(절대원칙 35 = 안 됐을 때의 모양이 곧 설계다).
+                  ⛔ 가짜 그림·우리 요리 사진을 깔지 않는다 — 「인스타에서 본 장면」으로 오해된다. */}
+              {표지보임 && (
+                <div style={{
+                  position: 'relative', width: '100%', aspectRatio: '16/9', background: 'var(--cream)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
                   <>
                     <img
                       src={영상.thumb}
@@ -765,20 +780,46 @@ export default function RecipeDetailScreen({ id }) {
                       <Icon name="play" size={20} />
                     </span>
                   </>
-                ) : (
-                  /* 🖼 그림이 «없는» 자리 — 빈 칸으로 두지 않고 매체 표를 크게 놓는다.
-                     ⭐ 이게 「그림을 못 받았다」는 사실을 그대로 말한다(가짜 그림을 깔지 않는다). */
-                  <Icon name={영상.type === 'youtube' ? 'youtube' : 'instagram'} size={46} color="var(--sand)" />
-                )}
-              </div>
-              <div className="opt-row" style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}>
-                <Icon name={영상.type === 'youtube' ? 'youtube' : 'instagram'} size={19} color="var(--brown)" />
+                </div>
+              )}
+              {/* ⛔ 윗줄(그림)이 없으면 «가르는 선»도 없다 — 선만 남으면 「뭔가 빠졌다」로 읽힌다 */}
+              <div className="opt-row" style={{
+                padding: '12px 14px',
+                borderTop: 표지보임 ? '1px solid var(--line)' : 0,
+              }}>
+                {/* 🔖 [2026-09-04 창업자] *"레시피상세에 링크란 앞머리에 인스타 로고 넣자"*
+                    ⭐ 로고는 «있었는데» 19px 에 흐린 색이라 눈에 안 들었다 — 창업자가 본 게 그거다.
+                       ⛔ 「없다」가 아니라 «안 보인다»였다. 그래서 «더하는» 게 아니라 «또렷하게» 고친다.
+                    ✅ 설정 화면이 쓰는 동그란 타일(`.opt-ico`)에 담는다 — 앱 안에서 이미 쓰는 모양이라
+                       새 생김새를 만들지 않는다(같은 것은 같게).
+                    ⭐ 표(로고·색)는 `embed.js` 의 `SNS표` 한 곳이 정한다 — 세 화면이 같이 움직인다. */}
+                <span className="opt-ico" style={{ width: 34, height: 34, flex: '0 0 34px' }}>
+                  <Icon name={SNS표(r).icon} size={20} color={SNS표(r).color} />
+                </span>
+                {/* 💬💬 [2026-09-04 창업자] *"근데 저렇게 링크만 떡 있으면 사람들이 안눌러볼거야 아마."*
+                    ⭐⭐ 맞다. 그리고 이게 «본질»이다 — 문제는 「그림이 없다」가 아니라 **「눌러야 할 이유가 없다」**.
+                       그 전 줄은 「여기 링크가 있다」만 말했다. **유저가 얻는 것을 한 글자도 안 적었다.**
+                    ✅ 그래서 «이유»를 한 줄 덧댄다. 원작자 이름은 그대로 둔다(예의이고 정책이다).
+                    ⛔ 「영상」이라고 뭉뜽그리지 않는다 — 사진 글이면 거짓말이 된다.
+                       그래서 `embed.js` 가 내주는 `kind` 로 «데이터가» 말을 고르게 했다.
+                       눌러볼 이유를 만든다고 없는 것을 있다고 하면 그건 미끼지 안내가 아니다. */}
                 <div className="t" style={{ fontSize: 16, minWidth: 0 }}>
                   {(() => {
-                    const 어디 = 영상.type === 'youtube' ? 'YouTube에서 보기' : '인스타그램에서 보기'
-                    return r.sourceName
-                      ? <><b style={{ fontWeight: 700 }}>{r.sourceName}</b> · {어디}</>
-                      : 어디
+                    const 움직이나 = 영상.type === 'youtube' || 영상.kind === 'reel'
+                    const 어디 = 영상.type === 'youtube' ? '영상으로 보기'
+                      : 움직이나 ? '릴스로 보기' : '원본 글 보기'
+                    return (
+                      <>
+                        <div>
+                          {r.sourceName
+                            ? <><b style={{ fontWeight: 700 }}>{r.sourceName}</b> · {어디}</>
+                            : 어디}
+                        </div>
+                        <div className="t-sub" style={{ fontSize: 13, marginTop: 2, fontWeight: 400 }}>
+                          {움직이나 ? '만드는 손이 헷갈릴 때 보면 쉬워요' : '원작자가 올린 글을 그대로 볼 수 있어요'}
+                        </div>
+                      </>
+                    )
                   })()}
                 </div>
                 <Icon name="chevron-right" size={17} color="var(--sand)" />
