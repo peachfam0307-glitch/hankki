@@ -22,8 +22,13 @@ import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
 
+// ⭐⭐ [2026-09-03] 창업자가 **처음부터 9:16 으로 다시 뽑아 왔다** — 그게 답이었다.
+//    📮 창업자 = *"인스타릴스기준으로 뽑아달라면 돼?"* → 그렇다.
+//    🔢 새 시안 = 941×1672 = 비율 1.777 (릴스 1.778) → **자를 것도 남길 것도 없다.**
+//    ⛔ 그 전엔 1003×1568(1.563) 을 억지로 맞추느라 ①여백이 남고 ②띠를 오려 옮겨 짜임이 깨졌다.
+//       📌 **소재를 규격에 맞춰 «다시 받는 것»이 후처리보다 언제나 낫다.**
 const ROOT = new URL('..', import.meta.url).pathname
-const 시안 = join(ROOT, 'design/promo/병맛시리즈-창업자-2026-08-28/단편/한끼-문방구-표지까지-꾸며버림.png')
+const 시안 = process.env.시안 || join(ROOT, 'design/promo/병맛시리즈-창업자-2026-08-28/단편/한끼-문방구-표지까지-꾸며버림.png')
 const OUT = process.env.OUT || '/tmp/hankki-릴스시안'
 mkdirSync(OUT, { recursive: true })
 
