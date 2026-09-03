@@ -41,14 +41,24 @@ const { SEED_COACH_SEEN } = await import('../src/coach.js')
 // 🎨 창업자와 «같은 모양»으로 심는다 — 뽑은 카드에 스티커를 붙인 레시피 하나
 //    ⛔ 안 꾸민 레시피면 `sendCover` 가 상세로 밀어내 이 길을 아예 안 탄다(isDecorated 검사)
 const 밑 = basicRecipes.find((r) => r.title.includes('짬뽕')) || basicRecipes[0]
+// ⭐⭐ 창업자 폰과 «같은 데이터 모양» — 「뽑은 카드를 표지로 저장」한 뒤 스티커를 다시 붙인 것.
+//    🔢 그 모양은 ShareDrawCard 의 「카드표지로()」 가 정한다:
+//       { thumb:'photo', image:(카드 그림), imageFit:'whole', decor:[] }
+//    ⛔ 여기가 핵심 — 카드는 **세로로 긴 그림**(0.78)인데 imageFit:'whole' 이라 «안 잘리게» 넣는다.
+//       그런데 공유 캡처 레이어는 ratio 1/1 로 **네모**를 강제한다(BragScreen).
+const 카드그림 = readFileSync('/tmp/카드표지.txt', 'utf8').trim()
 const 꾸민 = {
   ...밑,
   status: 'sorted',
   savedAt: Date.now(),
-  decorBg: 'clay',
+  thumb: 'photo',
+  image: 카드그림,
+  imageFit: 'whole',
+  imagePos: '',
+  imageZoom: '',
   decor: [
-    { id: 'd1', type: 'sticker', key: 'au_i29', x: 0.28, y: 0.72, s: 0.26, r: -6 },
-    { id: 'd2', type: 'sticker', key: 'au_b28', x: 0.74, y: 0.70, s: 0.28, r: 5 },
+    { id: 'd1', type: 'sticker', key: 'au_i29', x: 0.26, y: 0.78, s: 0.30, r: -6 },
+    { id: 'd2', type: 'sticker', key: 'kp_leafsit', x: 0.70, y: 0.62, s: 0.42, r: 3 },
   ],
 }
 const state = { recipes: [꾸민, ...basicRecipes.slice(0, 5).map((r, i) => ({ ...r, status: 'sorted', savedAt: Date.now() - (i + 2) * 60000 }))], seedV: BASICS_VERSION }
@@ -91,6 +101,14 @@ await p.evaluate(() => {
         평균 = Math.round(s / n)
         편차 = Math.round(Math.sqrt(Math.max(0, ss / n - (s / n) * (s / n))))
       } catch { /* 못 그리면 -1 로 남는다 = 그것도 답이다 */ }
+      // ⭐ 나간 그림을 «남긴다» — 숫자만 보고 판정하지 않는다(절대원칙 21)
+      try {
+        const 캔 = document.createElement('canvas')
+        const im2 = new Image(); await new Promise((r2) => { im2.onload = r2; im2.onerror = r2; im2.src = url })
+        캔.width = im2.naturalWidth || 1; 캔.height = im2.naturalHeight || 1
+        캔.getContext('2d').drawImage(im2, 0, 0)
+        window.__나간그림 = (window.__나간그림 || []).concat(캔.toDataURL('image/jpeg', 0.9))
+      } catch {}
       URL.revokeObjectURL(url)
       잰것.push({ 이름: f.name, 바이트: f.size, 폭, 높이, 평균, 편차 })
     }
@@ -208,6 +226,88 @@ chk('⭐뽑은 카드 — 두 번째 그림에 내용이 있다', !!카둘장 &&
 chk('두 번째 「공유하기」가 실제로 눌렸다', 카드2.눌렸나, 카드2.눌렸나 ? '' : '⛔시트가 덮고 있었다')
 chk('두 번째 그림이 첫 번째와 같은 규격이다', !!카첫장 && !!카둘장 && 카첫장.폭 === 카둘장.폭, 카첫장 && 카둘장 ? `${카첫장.폭}x${카첫장.높이} → ${카둘장.폭}x${카둘장.높이}` : '(못 잼)')
 
+// 🖼 나간 그림을 파일로 떨궈 «열어서» 본다
+const 그림들 = await p.evaluate(() => window.__나간그림 || [])
+const { writeFileSync } = await import('node:fs')
+그림들.forEach((d, i) => writeFileSync(`/tmp/나간그림-${i}.jpg`, Buffer.from(d.split(',')[1], 'base64')))
+console.log(`     📁 나간 그림 ${그림들.length}장 → /tmp/나간그림-0.jpg …`)
+// ─────────────────────────────────────────────────────────────
+// ⛔⛔⛔ **[정직하게 남긴다] 아래 갈래 ⓒ 는 «창업자 버그를 못 가른다» — 지웠다.**
+//    내가 「표지를 바꾼 뒤 공유」를 밟는다면서 **공유 직전에 레시피를 다시 눌렀다.**
+//    다시 누르면 스냅샷이 «새로» 잡혀서 어긋남이 애초에 안 생긴다 —
+//    그래서 고친 판이든 옛 판(스냅샷)이든 **둘 다 통과했다**(R227 G213 B198 · 붉지 않음).
+//    📌 규칙 12 를 안 돌렸으면 이 칸을 「고쳐진 증거」로 보고했을 것이다. 그게 제일 위험한 초록불이다.
+// 🧭 그래서 ②번은 **여전히 재현 못 한 상태**다(규칙 17 — 「없다」가 아니라 «내가 아직 못 찾았다»).
+//    ✅ 남긴 것 = 갈래 ⓐⓑ(나간 그림에 «내용»이 있나 · 두 번 보내도 같은 규격인가) — 이건 값을 한다.
+/* 못 가르는 칸은 아래에 «주석으로» 남긴다 — 다음 사람이 같은 길을 다시 파지 않게.
+// 🐛🐛 갈래 ⓒ — 창업자가 겪은 «그 순서»를 밟으려던 칸(⛔못 가른다).
+//    ① 레시피를 탭한다 → 그 순간의 표지·스티커가 화면 상태에 «박힌다»
+//    ② 「랜덤 카드로 뽑기」 → 「이 카드를 내 레시피 표지로」 → store 의 표지가 «카드»로 바뀐다
+//    ③ 그 자리에서 「내가 꾸민 표지 그대로」 공유
+//    ✅ 고쳐졌으면 ②의 «새 카드»가 나가야 한다. 안 고쳐졌으면 ①의 «옛 표지»가 나간다.
+//    🔴 옛 표지를 **새빨간 판**으로 심어 뒀다 — 나간 그림이 붉으면 «옛 것»이다. 색으로 판정한다.
+console.log('\n── 옛 표지가 나가나 (표지 바꾼 «직후» 공유) ──')
+await 시트닫기()
+await p.evaluate((빨강) => {
+  const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+  s.recipes[0] = { ...s.recipes[0], thumb: 'photo', image: 빨강, imageFit: 'whole', decorBg: 'clay',
+    decor: [{ id: 'x1', type: 'sticker', key: 'au_i29', x: 0.3, y: 0.8, s: 0.25, r: 0 }] }
+  localStorage.setItem('hankki:v1', JSON.stringify(s))
+}, readFileSync('/tmp/옛표지-빨강.txt', 'utf8').trim())
+const p2 = await ctx.newPage()
+await p2.goto(`http://127.0.0.1:${PORT}/hankki/`, { waitUntil: 'networkidle' })
+await p2.evaluate(() => document.fonts.ready)
+await p2.waitForTimeout(1200)
+await p2.evaluate(() => {
+  window.__보낸것 = []
+  navigator.canShare = () => true
+  navigator.share = async (opt) => {
+    const f = ((opt && opt.files) || [])[0]
+    if (!f) { window.__보낸것.push(null); return }
+    const url = URL.createObjectURL(f)
+    const img = new Image(); await new Promise((r) => { img.onload = r; img.onerror = r; img.src = url })
+    const c = document.createElement('canvas'); c.width = 200; c.height = 200
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0, 200, 200)
+    const d = g.getImageData(0, 0, 200, 200).data
+    let R = 0, G = 0, B = 0, n = 0
+    for (let i = 0; i < d.length; i += 4) { R += d[i]; G += d[i + 1]; B += d[i + 2]; n++ }
+    window.__보낸것.push({ R: Math.round(R / n), G: Math.round(G / n), B: Math.round(B / n), 폭: img.naturalWidth, 높이: img.naturalHeight })
+    URL.revokeObjectURL(url)
+  }
+})
+const 보낸2 = () => p2.evaluate(() => window.__보낸것 || [])
+await p2.getByRole('button', { name: /레꾸자랑/ }).first().click()
+await p2.waitForTimeout(800)
+await p2.getByRole('button', { name: new RegExp(`${꾸민.title} 자랑하기`) }).first().click()
+await p2.waitForTimeout(500)
+await p2.getByText('랜덤 카드로 뽑기', { exact: false }).first().click()
+await p2.waitForTimeout(2500)
+await p2.getByRole('button', { name: /이 카드를 내 레시피 표지로/ }).first().click({ timeout: 20000 }).catch((e) => console.log('     ⚠️ 표지로 저장 못 눌렀다:', String(e.message).slice(0, 60)))
+await p2.waitForTimeout(3500)
+for (const 글 of ['닫기', '나중에', '확인']) {
+  const t = p2.getByRole('button', { name: new RegExp('^' + 글 + '$') }).first()
+  if (await t.count()) { await t.click().catch(() => {}); await p2.waitForTimeout(500) }
+}
+// store 가 진짜 바뀌었나 — 안 바뀌었으면 아래 판정이 무의미하다(⛔초록불 만들지 않는다)
+const 표지바뀜 = await p2.evaluate(() => {
+  const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+  const r = (s.recipes || [])[0] || {}
+  return { 그림길이: (r.image || '').length, 앞머리: (r.image || '').slice(0, 46), 스티커: (r.decor || []).length, imageFit: r.imageFit || '',
+    // ⭐ 숨은 캡처 레이어가 «지금 store 것»을 그리고 있나 — 스냅샷 버그를 «직접» 잡는 칸
+    레이어그림: (() => { const im = document.querySelector('[aria-hidden] img[src^="data:"]'); return im ? im.src.slice(0, 46) : '(없다)' })() }
+})
+console.log('     store 표지 =', JSON.stringify(표지바뀜))
+await p2.getByRole('button', { name: new RegExp(`${꾸민.title} 자랑하기`) }).first().click().catch(() => {})
+await p2.waitForTimeout(500)
+await p2.getByText('내가 꾸민 표지 그대로', { exact: false }).first().click().catch(() => {})
+for (let i = 0; i < 70; i++) { await p2.waitForTimeout(500); if ((await 보낸2()).length) break }
+const 나간것 = (await 보낸2())[0] || null
+console.log('     나간 그림 색 =', JSON.stringify(나간것))
+const 붉나 = !!나간것 && 나간것.R - Math.max(나간것.G, 나간것.B) > 40
+chk('⭐표지를 바꾼 «직후» 공유해도 «옛 표지»가 안 나간다', !!나간것 && !붉나,
+  나간것 ? `R${나간것.R} G${나간것.G} B${나간것.B}${붉나 ? ' ⛔붉다 = 옛 빨간 표지가 나갔다' : ''}` : '(안 나갔다)')
+
+*/
 await p.screenshot({ path: '/tmp/재공유-마지막화면.png' }).catch(() => {})
 await ctx.close()
 await b.close()
