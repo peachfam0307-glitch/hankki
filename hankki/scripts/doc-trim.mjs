@@ -221,10 +221,24 @@ for (const [파일, v] of 짐) {
 }
 
 // HANDOVER 에는 «어디로 갔는지» 한 줄만 남긴다 — 나중에 근거를 찾을 수 있게
-const 자국 = ['', '## 🗂 지난 세션 기록 (여기서 덜어냈다)', '']
-for (const [파일, v] of 짐) 자국.push(`- ${v.늙음 ? '🗄' : '📁'} \`${파일}\``)
-자국.push('')
-writeFileSync(HANDOVER, [...남는몸, ...자국].join('\n'))
+// ⛔⛔ **[2026-09-03] 두 번 돌리니 같은 제목의 절이 «둘» 생겼다 — 내 도구가 낸 버그다.**
+//    오늘 진단한 「중복 절 8쌍」(두 세션이 같은 걸 각자 쓴 것)을 이 도구가 그대로 저질렀다.
+//    ✅ 이미 있으면 «그 절에 이어 붙인다». 같은 파일이 또 나오면 한 번만 적는다.
+const 자국제목 = '## 🗂 지난 세션 기록 (여기서 덜어냈다)'
+const 줄목록 = [...짐].map(([파일, v]) => `- ${v.늙음 ? '🗄' : '📁'} \`${파일}\``)
+const 있던자리 = 남는몸.findIndex((l) => l.startsWith(자국제목))
+let 결과
+if (있던자리 >= 0) {
+  // 그 절이 끝나는 자리(다음 `## ` 또는 파일 끝)를 찾아 그 «안»에 넣는다
+  let 끝 = 남는몸.length
+  for (let i = 있던자리 + 1; i < 남는몸.length; i++) if (남는몸[i].startsWith('## ')) { 끝 = i; break }
+  const 이미 = new Set(남는몸.slice(있던자리, 끝).filter((l) => l.startsWith('- ')))
+  const 새것 = 줄목록.filter((l) => !이미.has(l))
+  결과 = [...남는몸.slice(0, 끝), ...(새것.length ? [...새것, ''] : []), ...남는몸.slice(끝)]
+} else {
+  결과 = [...남는몸, '', 자국제목, '', ...줄목록, '']
+}
+writeFileSync(HANDOVER, 결과.join('\n'))
 
 const 뒤 = readFileSync(HANDOVER, 'utf8')
 console.log(`\n✅ 옮겼다 — HANDOVER.md ${Buffer.byteLength(원본).toLocaleString()} → ${Buffer.byteLength(뒤).toLocaleString()} B`)
