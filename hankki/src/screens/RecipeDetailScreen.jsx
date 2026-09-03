@@ -46,6 +46,19 @@ import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 // 📺 링크 → 앱 안에서 재생할 수 있는 «공식» 임베드 주소 (유튜브·인스타)
 import { embedUrl } from '../embed'
 
+// 🏷 출처(어디서 왔나) — 주소에서 «읽어» 낸다 (창업자 2026-09-03 *"원본링크에-출처도 붙이자"*)
+//   ⛔ 손으로 적는 칸을 새로 만들지 않는다 — 손으로 적으면 반드시 낡는다(규칙 12ⓑ).
+//   ⛔ 모르는 곳이면 **아무 말도 안 붙인다** — 「기타」·「웹」 같은 말을 지어내지 않는다.
+//   ⛔ 유저가 보는 글자다 — 「인스타그램」·「유튜브」로 적는다(영문 약자·상표 변형 금지).
+const 출처이름 = (url = '') => {
+  const u = String(url)
+  if (/(?:^|\/\/|\.)instagram\.com/i.test(u)) return '인스타그램'
+  if (/(?:^|\/\/|\.)(?:youtube\.com|youtu\.be)/i.test(u)) return '유튜브'
+  if (/(?:^|\/\/|\.)(?:blog\.naver\.com|naver\.me)/i.test(u)) return '네이버 블로그'
+  if (/(?:^|\/\/|\.)tiktok\.com/i.test(u)) return '틱톡'
+  return ''
+}
+
 // 🖍 절 제목 형광펜 — 창업자 2026-08-08 *"재료랑 만드는 법에 형광펜이나 색을 넣어도 좋을 것 같아"*
 // ✅ **레몬 확정** — 창업자가 판단을 맡겨서(*"형광펜은 잘모르겠다.. 네가 판단해봐"*) «재서» 골랐다.
 //   ⑴ 바탕과의 대비 ΔE **30.2** = 2위 라임(23.1)보다 또렷하고 꼴찌 자몽(13.3)의 2.3배
@@ -902,8 +915,14 @@ export default function RecipeDetailScreen({ id }) {
             <div className="h-section" style={{ marginTop: 26, marginBottom: 8 }}>원본 링크</div>
             <a href={r.sourceUrl} target="_blank" rel="noreferrer" className="card press" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 14, textDecoration: 'none', color: 'var(--text)' }}>
               <Icon name="link" size={20} color="var(--sand)" />
-              {/* 🏷 원작자가 있으면 «주소 대신» 이름을 보여준다 — 주소는 읽어도 누군지 모른다 */}
-              <span style={{ flex: 1, fontSize: 16.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sourceName || r.sourceUrl}</span>
+              {/* 🏷 원작자가 있으면 «주소 대신» 이름을 보여준다 — 주소는 읽어도 누군지 모른다
+                  🏷🏷 [창업자 2026-09-03] *"원본링크에-출처도 붙이자"* — 이름만 있으면 «어디»서 왔는지 모른다.
+                    ⭐ 주소에서 «읽어» 붙인다 — 손으로 적는 칸을 새로 만들지 않는다(손으로 적으면 반드시 낡는다).
+                    ⛔ 모르는 곳이면 아무 말도 안 붙인다(「기타」 같은 말을 지어내지 않는다). */}
+              <span style={{ flex: 1, fontSize: 16.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {출처이름(r.sourceUrl) && <span style={{ color: 'var(--text-sub)' }}>{출처이름(r.sourceUrl)} · </span>}
+                {r.sourceName || r.sourceUrl}
+              </span>
               <Icon name="chevron-right" size={18} color="var(--sand)" />
             </a>
           </>

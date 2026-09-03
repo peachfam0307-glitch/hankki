@@ -818,17 +818,27 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                               ⭐ 잣대는 칩·상세와 «같은 자» = embedUrl(...).type === 'youtube' (절대원칙 30)
                               ⛔ <button> 을 쓰지 않는다 — 카드 전체가 button 이라 중첩 버튼이 된다(북마크 때와 같은 자리).
                                  pointerEvents: 'none' 이라 눌러도 카드가 눌린다. */}
-                          {영상인가(r) && (
+                          {/* 🔗🔗 [창업자 2026-09-03] *"광어깻잎무침에 영상마크 안붙었어"* → *"그거 광어에만 안붙었다고"*
+                              ⛔ 인스타 편엔 ▶ 를 «일부러» 안 붙였었다 — 앱에서 재생이 안 되는데 ▶ 를 붙이면
+                                 「누르면 재생된다」는 거짓 약속이 된다. 하지만 그러면 «SNS 편인 줄도 모른다»(창업자가 짚은 게 그거다).
+                              ✅ 그래서 **표를 둘로** 나눴다 — 유튜브 ▶(재생) · 그 밖의 SNS 🔗(나가서 보기).
+                                 표가 하는 말이 실제와 같아진다. ⛔되돌리려면 이 절만 지우면 된다. */}
+                          {SNS인가(r) && (
                             <span
                               aria-hidden="true"
+                              /* 🔖 판이 «어떤 표인지»를 정확히 읽게 이름표를 단다.
+                                 ⛔ 색·자리로 찾으면 «꾸민 표지»의 스티커(절대배치 span)와 헷갈린다 —
+                                    실제로 콩국수에서 그렇게 잘못 잡혔다(2026-09-03). */
+                              data-sns={영상인가(r) ? 'play' : 'link'}
                               style={{
                                 position: 'absolute', left: 5, top: 5, pointerEvents: 'none',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 width: gridSize === 'big' ? 24 : 20, height: gridSize === 'big' ? 24 : 20,
-                                borderRadius: 6, background: 'rgba(255,255,255,.92)', color: '#e2352a',
+                                borderRadius: 6, background: 'rgba(255,255,255,.92)',
+                                color: 영상인가(r) ? '#e2352a' : 'var(--brown)',
                               }}
                             >
-                              <Icon name="youtube" size={gridSize === 'big' ? 17 : 14} />
+                              <Icon name={영상인가(r) ? 'youtube' : 'link'} size={gridSize === 'big' ? 17 : 14} />
                             </span>
                           )}
                         </div>
