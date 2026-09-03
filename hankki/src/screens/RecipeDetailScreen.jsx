@@ -691,44 +691,20 @@ export default function RecipeDetailScreen({ id }) {
                   ✅ 우리는 따로 안 걸어서 크롬 기본값(`strict-origin-when-cross-origin`) = 유튜브 권장값이다
             ⛔ `allow-top-navigation`·`allow-popups` 를 넣지 않는다 — 넣으면 임베드를 눌렀을 때
                앱이 유튜브 앱으로 튕겨 나간다(편집 화면 주석에 이미 박혀 있는 이유). */}
-        {영상 && 영상.type === 'youtube' && (
-          <>
-            <div className="sec-head" style={{ marginTop: 14, marginBottom: 6 }}>
-              <SecTitle>영상으로 보기</SecTitle>
-            </div>
-            <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
-              <iframe
-                src={영상.src}
-                title="원본 영상"
-                allow="encrypted-media; picture-in-picture"
-                allowFullScreen
-                sandbox="allow-scripts allow-same-origin allow-presentation"
-                style={{ display: 'block', width: '100%', aspectRatio: '16/9', border: 0 }}
-              />
-              {/* ⛔⛔ 이 줄을 **플레이어 «위»에 얹지 않는다** — 아래에 «따로» 둔다.
-                  YouTube Developer Policies = *"must not use overlays, frames or other visual
-                  elements to obscure any part of an embedded player, including player controls"*
-                  📌 인스타 안내띠(`EditorScreen.jsx:784`)는 `position:absolute` 로 «위에» 얹는데,
-                     그건 인스타 전용이라 유튜브엔 안 붙는다. 여기서 그걸 따라 하면 위반이 된다. */}
-              <button
-                className="opt-row press"
-                onClick={() => openUrl(r.sourceUrl)}
-                style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}
-              >
-                <Icon name="youtube" size={19} color="var(--brown)" />
-                {/* 🏷 원작자를 «있을 때만» 앞에 붙인다 — 한 줄로 「누가 만들었나 ＋ 원본 가기」가 끝난다.
-                    📮 창업자 = *"그 사람껄 내꺼처럼 재생산하는게 더 문제 아닌가"*
-                    ⛔ 없으면 그냥 「YouTube에서 보기」 — 유저가 담은 레시피는 이 칸이 비어 있다. */}
-                <div className="t" style={{ fontSize: 16, minWidth: 0 }}>
-                  {r.sourceName
-                    ? <><b style={{ fontWeight: 700 }}>{r.sourceName}</b> · YouTube에서 보기</>
-                    : 'YouTube에서 보기'}
-                </div>
-                <Icon name="chevron-right" size={17} color="var(--sand)" />
-              </button>
-            </div>
-          </>
-        )}
+        {/* ⛔⛔⛔ [창업자 확정 2026-09-03] **앱 «안»에서 유튜브를 «재생하지 않는다».** 📮 = *"ⓐ로 가자"*
+            📮 그 앞에 창업자가 이미 말했다 = *"출처는 무조건 적고 영상 바로가기도 만들어야해. **우리앱에서 재생시키는게 아니라**"*
+
+            🔎 **왜 뺐나 — Developer Policies III.E.4.j** (창업자가 조사해 온 답 · 2026-09-03)
+              > *"API Clients must look up the Made For Kids status of **each YouTube video that it embeds** on its site or app"*
+              ⛔ 잣대가 **앱 등급이 아니라 «임베드하는 영상 하나하나»**다 — 「우리 앱은 어린이 앱이 아니다」로 안 빠진다.
+              ⛔ 지키려면 영상마다 「videos.list(part=status)」 로 「status.madeForKids」 를 물어야 하는데,
+                 그 순간 **진짜 API Client** 가 되어 다른 조항이 줄줄이 붙는다(30일 저장 제한 등 · 2026-08-27 문서).
+              ✅ **안 틀면 이 조항 자체가 해당 없어진다.** 그래서 재생을 뺐다.
+
+            ⭐ 대신 아래 「원본 링크」 칸 하나로 모았다 — 인스타 편과 «같은 모양»이 된다.
+            ⛔⛔ 이 자리에 iframe 플레이어를 다시 넣지 말 것. 넣으면 위 조항이 되살아난다.
+            ⚠️ 정직하게 — 정책 원문을 내가 «내 눈으로» 못 봤다(이 환경은 유튜브·구글 문서를 못 연다).
+               창업자가 가져다준 답을 근거로 한 것이다. */}
 
         {r.ingredients?.length > 0 && (
           <>
@@ -907,10 +883,12 @@ export default function RecipeDetailScreen({ id }) {
           </>
         )}
 
-        {/* ⛔ 유튜브면 이 절을 감춘다 — 위 영상 칸에 「YouTube에서 보기」가 이미 있다.
-            같은 곳으로 가는 문이 둘이면 헷갈린다(하단바에서 「내 레시피·장보기」를 뺀 것과 같은 이유).
-            ⭐ 인스타·블로그 등 «재생이 안 되는» 원본은 여기가 유일한 문이라 그대로 둔다. */}
-        {r.sourceUrl && !(영상 && 영상.type === 'youtube') && (
+        {/* ⭐⭐ [창업자 확정 2026-09-03 · ⓐ] **여기가 이제 «유일한» 문이다.**
+            ⛔ 전엔 *"유튜브면 이 절을 감춘다 — 위 영상 칸에 「YouTube에서 보기」가 이미 있다"* 였다.
+               그 영상 칸을 통째로 뺐으므로(위 III.E.4.j 절 참조) **감출 이유가 사라졌다.**
+               감춘 채로 두면 유튜브 편은 **원본으로 가는 문이 아예 없어진다.**
+            ⭐ 이제 유튜브·인스타·블로그가 «같은 모양»이다 — 눌러서 밖에서 본다. */}
+        {r.sourceUrl && (
           <>
             <div className="h-section" style={{ marginTop: 26, marginBottom: 8 }}>원본 링크</div>
             <a href={r.sourceUrl} target="_blank" rel="noreferrer" className="card press" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 14, textDecoration: 'none', color: 'var(--text)' }}>

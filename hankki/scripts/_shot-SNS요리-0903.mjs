@@ -140,5 +140,22 @@ if (await 광어.count()) {
   console.log('  ⛔ 광어깻잎무침 카드를 못 찾았다')
 }
 
+// ⑤ 상세 — 유튜브 편(꽈리고추)에 «재생 창이 없고» 원본 링크만 있나
+//   ⛔⛔ [창업자 확정 2026-09-03 · ⓐ] 앱 «안»에서 재생하지 않는다(III.E.4.j). 여기서 눈으로 확인한다.
+await page.goBack().catch(() => {})
+await page.waitForTimeout(900)
+const 꽈리 = page.locator('.name', { hasText: '꽈리고추' })
+if (await 꽈리.count()) {
+  await 꽈리.first().click({ force: true })
+  await page.waitForTimeout(1400)
+  const 플레이어 = await page.locator('iframe').count()
+  const 링크 = page.locator('a[target="_blank"]').filter({ hasText: '유튜브' })
+  console.log(`  🔎 유튜브 편 — 재생창(iframe) = ${플레이어}개 ${플레이어 === 0 ? '✅' : '⛔'} · 「유튜브 · …」 링크 = ${await 링크.count()}개`)
+  if (await 링크.count()) { await 링크.first().scrollIntoViewIfNeeded(); await page.waitForTimeout(600) }
+  await 찍기('6-상세-유튜브-재생창없음')
+} else {
+  console.log('  ⛔ 꽈리고추 카드를 못 찾았다')
+}
+
 await b.close(); srv.close()
 console.log('\n✅ 다 찍었다 →', OUT)
