@@ -385,7 +385,14 @@ console.log('\n🪤 반복 실수 게이트')
 {
   console.log('\n📚 CLAUDE.md 옛 버전 기록')
   const cm = readFileSync(join(ROOT, 'CLAUDE.md'), 'utf8')
-  const 옛 = cm.split('\n').filter((l) => l.startsWith('- 옛 기록 ↓')).length
+  // ⛔⛔⛔ **[2026-09-03] 이 한 줄이 «3주 동안 헛것을 세고» 있었다 — 이 게이트의 존재 이유가 무너졌다.**
+  //    세던 글자 = `- 옛 기록 ↓`      → CLAUDE.md 에 **0개**
+  //    실제 쌓인 것 = `- **옛 버전**:` → **9개 · 86,977 B**
+  //    **형식이 바뀌었는데 여기를 안 고쳤다.** 그래서 배포할 때마다 «✅ 옛 기록 0줄»을 찍으면서
+  //    막으라고 만든 그것이 그대로 자랐고, CLAUDE.md 는 461,814 B 가 됐다.
+  //    📌 규칙 18 ⓘ — **「통과했나」가 아니라 «무엇을 보고 통과했나».** 8/31 `pkg.scripts.smoke` 사고와 같은 꼴이다.
+  //    ✅ 그래서 ⓐ **아는 형식을 다 본다** ⓑ **크기 게이트를 따로 세웠다**(`check-docsize.mjs` · 낱말은 배신해도 바이트는 안 한다)
+  const 옛 = cm.split('\n').filter((l) => /^- (?:옛 기록 ↓|\*\*옛 버전\*\*|옛 버전)/.test(l)).length
   const 자 = cm.length
   let 보관 = true
   try { readFileSync(join(ROOT, 'docs/_archive/버전기록-전체.md'), 'utf8') } catch { 보관 = false }
