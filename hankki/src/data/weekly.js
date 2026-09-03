@@ -429,13 +429,31 @@ export const weeksLeft = (now = new Date()) => {
 //      그것도 SNS 요리다. (레시피 탭의 「영상」 칩은 재생되는 것만 세므로 잣대가 다르다 — 일부러다)
 //
 // ⛔ 재고가 없으면 `null` — 홈에서 그 박스를 «아예 안 그린다»(빈 자리 금지 · 위 homemadeNow 와 같다).
-export const snsNow = (recipes = [], now = new Date(), k = 3) => {
+// 🔢 [창업자 확정 2026-09-03] 홈에 보이는 편 = **2편.**
+//   📮 창업자 = *"세편씩하니까 공간이.. 아니면 하나 더 해서 4편하던가"*
+//      → *"2편씩만 하는게 좋을 것 같기도하고.. **내가 너무 많이 찾아야 하니까.** 일단 2개하고 할만하면 4편으로 늘리던가."*
+//   🔢 실측으로 갈렸다 — **폰은 한 줄에 2칸**(창업자 확정 2026-08-21 · `styles.css` 「폰에선 한 줄에 2칸」).
+//      2편 = 한 줄 딱(빈칸 0) · **3편 = 아래 한 칸이 빈다** · 4편 = 두 줄 딱(빈칸 0)
+//      📌 우리집레시피가 「매주 2편」인 것도 같은 이유다 — 같은 리듬이 된다.
+//   ⭐ 못 본 편이 사라지는 게 아니다 — 레시피 탭 「SNS」 칩에 다 있다.
+//   ⛔ 늘리려면 **2 → 4** 로 간다(3 은 빈칸이 생긴다). 창업자가 「할만하면」이라고 했다.
+// 🙋 [창업자 2026-09-03] *"그럼 꽈리랑 광깻무가자"* — 홈에 세울 편을 창업자가 «고른다».
+//   ⭐ 자동(최근 순)으로 두면 꽈리고추·계란후라이조림이 서는데, 창업자는 **꽈리고추 ＋ 광어깻잎무침**을 골랐다.
+//   ⛔ 이건 「목록을 손으로 관리」와 다르다 — **큐레이션**이다(어느 편을 «앞에 세울까»는 취향이라 규칙 11).
+//   ✅ 여기가 비면 저절로 최근 순으로 채운다 — 비워둬도 상자가 안 빈다.
+const SNS_PICK = ['basic-kkwari-myeolchi-bokkeum', 'basic-gwangeo-kkaennip-muchim']
+
+export const snsNow = (recipes = [], now = new Date(), k = 2) => {
   const t = todayKST(now)
-  const 것들 = recipes
-    .filter((r) => r && r.source === 'hankki' && r.sourceUrl && (!r.from || r.from <= t))
-    // 최근에 열린 것부터 — `from` 이 없으면(처음부터 열린 편) 뒤로
-    .sort((a, b) => String(b.from || '').localeCompare(String(a.from || '')))
-    .slice(0, k)
+  const 열린것 = recipes.filter((r) => r && r.source === 'hankki' && r.sourceUrl && (!r.from || r.from <= t))
+  // ⭐ 창업자가 고른 것을 «그 순서대로» 먼저 — 없는 id 는 조용히 건너뛴다(편을 지워도 안 깨진다)
+  const 고른것 = SNS_PICK.map((id) => 열린것.find((r) => r.id === id)).filter(Boolean)
+  const 고른id = new Set(고른것.map((r) => r.id))
+  const 것들 = [
+    ...고른것,
+    // 모자라면 최근에 열린 것부터 채운다 — `from` 이 없으면(처음부터 열린 편) 뒤로
+    ...열린것.filter((r) => !고른id.has(r.id)).sort((a, b) => String(b.from || '').localeCompare(String(a.from || ''))),
+  ].slice(0, k)
   if (!것들.length) return null
   return {
     kicker: 'SNS 요리',
