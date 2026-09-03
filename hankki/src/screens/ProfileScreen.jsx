@@ -17,6 +17,13 @@ import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import LabSheet from '../components/LabSheet'
 import CloudSheet from '../components/CloudSheet'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
+// 📣 [창업자 2026-09-03 · ④⑤ 스샷] 그 앱 설정엔 「정보」 갈래에 «공지사항»이 있다.
+//   🔢 실측 = 우리 「한끼 소식」 입구는 **홈 하나뿐**이었다(`HomeScreen.jsx:440` 만이 `PreviewSheet` 를 연다).
+//      → 홈에서 지나쳐 버리면 **다시 볼 길이 없었다.** 그게 ⑤와의 진짜 빈 칸이다.
+//   ⭐ 새로 만들지 않는다 — 홈이 쓰는 «그 부품 그대로». 두 곳이 어긋날 수가 없다.
+import PreviewSheet from '../components/PreviewSheet'
+import { isNewsUnread, markNewsSeen } from '../components/NewsPopup'
+import { whatsNew } from '../data/whatsnew'
 import { cropSquare, openExternal } from '../utils'
 import { takeOpenBackup, backupDone, takeOpenCloud, 클라우드보임, STORE_URL } from '../nudges'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
@@ -54,6 +61,9 @@ export default function ProfileScreen() {
   const [checking, setChecking] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
   const [lab, setLab] = useState(false) // 한끼연구소(의견·설문·오류) 시트
+  const [소식, set소식] = useState(false) // 한끼 소식(＝공지사항) 시트 — 홈과 «같은 부품»
+  const 소식들 = whatsNew()
+  const 안본소식 = isNewsUnread(소식들)
   // ☁️ 홈 한 줄로 들어왔으면 도착하자마자 클라우드 시트를 연다(백업 쪽지와 같은 길)
   const [cloud, setCloud] = useState(() => takeOpenCloud())
   // ⛔⛔ `useLayerBack` 은 «반드시» 위 `useState` «아래»에 둔다 —
@@ -338,6 +348,13 @@ export default function ProfileScreen() {
     //      여기서 날짜를 박으면 정작 청해야 할 자리(저장 직후·자랑 직후)가 30일 막힌다.
     //   ⛔ 홈·첫 화면에 두지 않는다 — 상시로 눈에 띄면 그건 조르는 것이다(재촉 금지 원칙).
     //      설정은 «찾아오는» 자리라 조름이 아니다.
+    // 📣 한끼 소식 — ⛔홈에서만 열리던 것을 여기서도 연다(창업자 ④⑤ 스샷 = 「정보」 갈래의 공지사항).
+    //   ⭐ 「새로」 알약은 **안 본 소식이 있을 때만** — 늘 켜져 있으면 아무도 안 본다(홈과 같은 원칙·같은 열쇠).
+    // ⛔ `bell` 을 적었다가 **타일이 빈 칸으로 나왔다** — 우리 `Icon.jsx` 엔 없는 이름이다(실측 목록에 0건).
+    //    📌 아이콘 이름을 «기억»으로 적지 않는다. `Icon.jsx` 에 있는 것만 쓴다.
+    //    ⛔ 그다음 `alert` 로 갔더니 **삼각형 경고 표시**라 「나쁜 일」로 읽혔다(열어 보고 잡았다 · 절대원칙 21).
+    //    ✅ `gift` — 소식 팝업이 이미 선물색을 쓰고 「새로」 알약도 `--gift` 라 **한 벌로 읽힌다.**
+    { icon: 'gift', label: '한끼 소식', badge: 안본소식 ? '새로' : '', onClick: () => { markNewsSeen(소식들); set소식(true) } },
     { icon: 'star', label: '스토어에 한마디', badge: '리뷰 남기기', onClick: () => openExternal(STORE_URL) },
     // 🔖 [2026-08-18] 「즐겨찾기」 → **「책갈피」** (창업자 확정 · 유저에게 보이는 여섯 곳을 같이 바꿨다)
     { icon: 'heart', label: FAV_NAME, onClick: () => nav.push({ name: 'favorites' }) },
@@ -378,6 +395,7 @@ export default function ProfileScreen() {
   //   ⛔ 어느 갈래에도 안 적힌 줄은 **버리지 않고** 마지막 갈래 뒤에 붙는다(놓치면 줄이 사라진다).
   const 갈래정의 = [
     { title: '', keys: [FAV_NAME, '요리 가이드'] },
+    { title: '알림과 소식', keys: ['한끼 소식'] },
     { title: '한끼를 도와주기', keys: ['스토어에 한마디', '한끼연구소', '도움말 및 문의'] },
     { title: '다시 보기', keys: ['앱 소개 다시 보기', '기능 안내 다시 보기'] },
     { title: '계정과 약관', keys: ['계정 · 데이터 삭제', '개인정보처리방침', '오픈소스 라이선스'] },
@@ -578,7 +596,11 @@ export default function ProfileScreen() {
                       <Icon name={m.icon} size={20} color="var(--brown)" stroke={1.7} />
                     </span>
                     <div className="t" style={{ fontSize: 17, fontWeight: 500 }}>{m.label}</div>
-                    {m.badge && <span className="badge badge-sorted" style={{ marginRight: 6 }}>{m.badge}</span>}
+                    {/* 🟠 「새로」만 선물색 — 홈 소식 알약과 «같은 색»이라 한 벌로 읽힌다(styles.css:96).
+                        ⛔ 초록 이름표(`badge-sorted`)로 두면 「계량·손질」·「의견·설문」과 판박이라 알림이 아니라 «분류»로 읽힌다. */}
+                    {m.badge && (m.badge === '새로'
+                      ? <span style={{ marginRight: 6, fontSize: 14, fontWeight: 900, color: 'var(--surface)', background: 'var(--gift)', borderRadius: 999, padding: '1px 7px' }}>{m.badge}</span>
+                      : <span className="badge badge-sorted" style={{ marginRight: 6 }}>{m.badge}</span>)}
                     <Icon name="chevron-right" size={18} color="var(--sand)" />
                   </button>
                   {/* ⭐ 금이 «타일 오른쪽»에서 시작하게 — 타일 폭 38 ＋ 왼여백 16 ＋ 사이 14 = 68 */}
@@ -829,6 +851,7 @@ export default function ProfileScreen() {
 
       {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
       {lab && <LabSheet onClose={() => setLab(false)} />}
+      {소식 && <PreviewSheet onClose={() => set소식(false)} />}
 
       {/* 첫 방문 코치마크 — 백업·의견 보내기 안내 */}
       {coach && <CoachMarks storageKey={PROFILE_COACH_KEY} steps={PROFILE_COACH_STEPS} onDone={() => setCoach(false)} />}
