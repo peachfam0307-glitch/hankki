@@ -34,7 +34,15 @@ import { 카드높이문턱, 카드비율, 카드비율허용 } from '../cardCov
 
 // `className` = 크기를 «CSS 로» 정하고 싶을 때 쓴다 (넓은 화면에서 키우려면 인라인이면 못 이긴다).
 // ⚠️ 안에서 쓰는 움직임 클래스(`anim`)와 «합쳐서» 넘긴다 — 덮어쓰면 움직이는 배경이 죽는다.
-export default function Thumb({ recipe, radius = 16, ratio, style, className = '', emojiSize = '2rem', iconSize = '56%', showDecor = false, panProps }) {
+// 🖼 `eager` = **「화면에 안 들어와도 지금 꺼내라」** (2026-09-03 · 창업자 폰 제보의 답)
+//   ⛔⛔ 왜 필요한가 = 공유용 «숨은 캡처 레이어»는 `left: -99999px` 에 있어
+//      `IntersectionObserver` 가 **영영 안 울린다** → 창고 그림을 못 꺼내고 **음식 아이콘으로 떨어진다.**
+//      📮 창업자 = *"다시공유하려고하면 카드 안보임"* → 카톡에 카드가 아니라 «아이콘»이 갔다.
+//      🔢 실측(`scripts/_probe-숨은표지그림-0903.mjs`) = 숨은 레이어의 그림 태그 2개 중 `data:` 는 **0개**,
+//         첫 src 가 `assets/gr_…`(음식 아이콘)였다.
+//   ⭐ 목록은 그대로 «게으르게» 둔다 — 그게 절대원칙 32(수만 명)를 지키는 자리다.
+//      **캡처처럼 「안 보이는데 그림이 꼭 필요한」 자리만** 이 스위치를 켠다.
+export default function Thumb({ recipe, radius = 16, ratio, style, className = '', emojiSize = '2rem', iconSize = '56%', showDecor = false, panProps, eager = false }) {
   const [failed, setFailed] = useState(false)
   // 🎴🎴 「이 그림은 자랑카드다」 — `imageFit` 이 없던 시절에 저장한 표지를 되살리는 자리.
   //   ⭐ 값에 **그림 자체**를 담는다(참/거짓이 아니라) — 표지를 바꾸면 저절로 무효가 된다.
@@ -63,13 +71,14 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     }
     const el = 상자.current
     // 👀 `IntersectionObserver` 가 없는 브라우저면 그냥 바로 꺼낸다(안 보이는 것보단 낫다)
-    if (!el || typeof IntersectionObserver === 'undefined') { 가져와(); return () => { 살아있나 = false } }
+    // 🖼 `eager` 면 «기다리지 않고» 꺼낸다 — 화면 밖 캡처 레이어는 관찰자가 영영 안 울린다(위 주석)
+    if (eager || !el || typeof IntersectionObserver === 'undefined') { 가져와(); return () => { 살아있나 = false } }
     const 눈 = new IntersectionObserver((줄들) => {
       if (줄들.some((e) => e.isIntersecting)) { 눈.disconnect(); 가져와() }
     }, { rootMargin: '300px' })   // ⭐ 조금 «미리» 꺼낸다 — 스크롤할 때 늦게 뜨는 게 안 보이게
     눈.observe(el)
     return () => { 살아있나 = false; 눈.disconnect() }
-  }, [쪽지])
+  }, [쪽지, eager])
 
   // 📷 화면에 그릴 수 있는 그림 = 「지금 손에 있는 것」 또는 「창고에서 꺼낸 것」
   const 그림 = 그릴수있나(recipe.image) ? recipe.image : 꺼낸사진
@@ -141,7 +150,8 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
           <img
             src={그림}
             alt={recipe.title}
-            loading="lazy"
+            // 🖼 캡처용(eager)일 때는 «게으르게» 두면 화면 밖이라 브라우저가 안 불러올 수 있다
+            loading={eager ? 'eager' : 'lazy'}
             draggable={false}
             onError={() => setFailed(true)}
             // 🎴 옛 카드(표시 없던 시절) 알아보기 = 세로 ＋ «비율». 잣대는 `cardCover.js` 와 같은 값이다.

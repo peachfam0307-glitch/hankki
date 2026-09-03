@@ -10,6 +10,8 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import Icon from '../components/Icon'
 import { matchKo } from '../utils'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
+// 🗄 「표지 그림이 큰 창고에 있나」 — 찍기 전에 기다릴지 정하는 잣대(2026-09-03)
+import { 창고에있나 } from '../photoStore'
 import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
 import ReviewAskSheet from '../components/ReviewAskSheet'
@@ -108,12 +110,31 @@ export default function BragScreen() {
   // 🔤 글꼴 꾸러미 미리 데우기 — 캡처보다 «먼저» 끝나 있어야 캡처가 빨라진다(fontEmbed.js)
   useEffect(() => { warmFontCSS() }, [])
 
+  // 🖼🖼 **찍기 «전»에 표지 그림이 창고에서 올 때까지 기다린다.** (2026-09-03)
+  //   ⛔⛔ `eager` 만으로는 부족하다 — 꺼내는 일이 «비동기»라 80ms 뒤엔 아직 안 와 있을 수 있고,
+  //      그러면 그림 태그가 아예 없는 채로 찍혀 **음식 아이콘 판**이 나간다(창업자가 받은 그것).
+  //   ✅ 그래서 「창고에 있는 표지」일 때만 **그림 태그가 실제로 붙을 때까지** 기다린다.
+  //      ⚠️ 무한정 기다리지 않는다 — 4초면 포기하고 그냥 찍는다(멈춰 있는 게 더 나쁘다).
+  //   ⭐ 잣대 = `창고에있나(pick.image)` 하나. ⛔「사진 표지면」으로 넓히지 않는다 —
+  //      이미 `data:` 로 손에 있는 그림은 기다릴 게 없다.
+  const 표지그림기다리기 = async () => {
+    if (!창고에있나(pick?.image)) return
+    for (let i = 0; i < 34; i++) {
+      const el = coverRef.current
+      const img = el && el.querySelector('img[src^="data:"]')
+      if (img && img.complete && img.naturalWidth > 0) return
+      await new Promise((r) => setTimeout(r, 120))
+    }
+  }
+
   const prepRef = useRef(null)
   useEffect(() => {
     prepRef.current = null
     if (!pick || !isDecorated(pick)) return
     let alive = true
-    const t = setTimeout(() => {
+    const t = setTimeout(async () => {
+      if (!alive || !coverRef.current) return
+      await 표지그림기다리기()
       if (!alive || !coverRef.current) return
       const p = buildCoverPayload({
         coverEl: coverRef.current,
@@ -144,6 +165,8 @@ export default function BragScreen() {
     setBusy(true) // 로딩 오버레이(먹통처럼 안 보이게)
     const info = infoOf(r)
     await new Promise((res) => setTimeout(res, 60)) // 숨은 표지 레이아웃(글자 크기 기준 폭)이 잡힐 시간
+    // 🖼 미리 캡처가 없어 «여기서» 찍게 되는 길 — 그림이 올 때까지 기다린다(위 주석)
+    if (!prepared) await 표지그림기다리기()
     // 📱 [2026-08-28 ⓑ] 시트를 띄우게 되면 «리뷰는 그 시트가 닫힐 때» 청한다.
     //    ⛔ 아래 `finally` 에서 바로 청하면 **시트 위에 시트가 겹친다**(2026-08-27 에 지킨 것 ⑴).
     let 띄울시트 = null
@@ -359,7 +382,9 @@ export default function BragScreen() {
       {pick && isDecorated(pick) && (
         <div aria-hidden style={{ position: 'fixed', left: -99999, top: 0, opacity: 0, pointerEvents: 'none' }}>
           <div ref={coverRef} style={{ position: 'relative', width: 380 }}>
-            <Thumb recipe={pick} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} />
+            {/* 🖼 `eager` — 이 레이어는 화면 «밖»이라 관찰자가 안 울린다. 없으면 창고 표지를 못 꺼내
+                    음식 아이콘이 찍혀 나간다(창업자 폰 2026-09-03 · Thumb 머리 주석) */}
+            <Thumb recipe={pick} ratio="1/1" radius={0} emojiSize="4.5rem" style={{ borderRadius: 0 }} eager />
             <DecorLayer items={pick.decor || []} />
           </div>
           {hasRecipe(pick) && <div ref={recipeCardRef}><RecipeCard recipe={pick} /></div>}
