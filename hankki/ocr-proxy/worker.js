@@ -128,6 +128,79 @@ export default {
     //
     //   📖 쓰는 법 = `https://<워커주소>/?quota=1&key=<FOUNDER_SECRET>`
     //      ⛔ 그 주소를 채팅·저장소에 적지 않는다(열쇠가 딸려 간다).
+    // 🖼🖼 **[2026-09-04] SNS 글의 «표지 그림»을 대신 찾아준다 — 인스타 미리보기**
+    //
+    //   📮 창업자 = *"인스타는 유튜브처럼 미리보기 안돼??"* → *"다른앱들은 미리보기 되던데 인스타"*
+    //      ＋ 경쟁 앱 화면을 보여줬다 — **애둘핑 광어깻잎무침 표지가 실제로 떠 있었다.**
+    //      ⭐ 그래서 「인스타가 안 준다」가 아니라 **「서버로 받으면 준다」**가 맞다.
+    //
+    //   ⛔⛔ 유튜브와 «방식이 다르다» — 유튜브는 주소만 조합하면 그림이 나온다
+    //      (`i.ytimg.com/vi/<id>/hqdefault.jpg`). 인스타는 그런 주소가 **없다.**
+    //      ＋ 2025-11-03 부터 Meta 가 oEmbed 응답에서 `thumbnail_url` 을 **빼버렸다**
+    //        (공식 안내 = *"직접 만들어 쓰라"*). 그래서 **글 페이지를 열어 표지를 집는 길**뿐이다.
+    //      ⛔ 브라우저가 직접 열면 막힌다(교차출처) → **여기(서버)가 대신 연다.** 그게 다른 앱이 하는 그것이다.
+    //
+    //   🔒 **SSRF 방어 = 주소를 «받아서 그대로 열지» 않는다.** 인스타 글 번호만 뽑아 우리가 주소를 «만든다».
+    //      ⛔ 받은 주소를 그대로 fetch 하면 이 워커가 «아무 데나 여는 도구»가 된다(사내망·클라우드 메타데이터).
+    //
+    //   💰 **통을 안 축낸다** — Vision 을 안 부른다. Cloudflare 요청은 하루 10만까지 공짜다.
+    //   📦 **KV 에 담아 둔다(7일)** — 인스타 표지 주소는 서명이 붙어 며칠 뒤 만료된다.
+    //      ⭐ 그래서 「영구 저장」이 아니라 «짧게 담기»가 맞다. 수만 명이 봐도 인스타는 글 하나당 7일에 한 번만 연다.
+    //
+    //   🧪 **되는지 재는 법(창업자 폰 브라우저에서 한 번)**
+    //      `https://<워커주소>/?preview=https://www.instagram.com/reel/<글번호>/`
+    //      · `{"ok":true,"thumb":"https://..."}` → 된다. 앱에 붙인다.
+    //      · `{"ok":false,...}` → 인스타가 서버에 안 준다. 그때는 빈 칸 없는 카드로 남긴다.
+    //      ⛔ 내가 있는 곳은 `workers.dev` 도 `instagram.com` 도 막혀 있어 **내가 못 잰다**(실측 = 둘 다 000).
+    if (new URL(request.url).searchParams.get('preview')) {
+      const 준주소 = new URL(request.url).searchParams.get('preview')
+      // ⭐ 인스타 글 번호(shortcode)만 받는다. 다른 건 아예 안 연다.
+      const 번호 = String(준주소).match(/instagram\.com\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]{5,30})/)
+      if (!번호) return json({ ok: false, why: 'not_instagram' }, 400, cors)
+      const 코드 = 번호[1]
+      const 칸 = `prev:ig:${코드}`
+      const kv = env.OCR_KV
+      if (kv) {
+        const 담긴것 = await kv.get(칸)
+        if (담긴것) return json({ ok: true, thumb: 담긴것, cached: true }, 200, cors)
+      }
+      // 🚪 문 둘을 «순서대로» 두드린다 — 하나가 막혀도 다른 하나가 열릴 수 있다.
+      //   ⛔ 둘 다 «우리가 만든» 주소다(받은 주소를 그대로 쓰지 않는다).
+      const 문들 = [
+        `https://www.instagram.com/p/${코드}/embed/captioned/`,
+        `https://www.instagram.com/p/${코드}/`,
+      ]
+      let 그림 = ''
+      let 마지막 = ''
+      for (const 문 of 문들) {
+        try {
+          const r = await fetch(문, {
+            headers: {
+              // 🕵️ 사람이 쓰는 브라우저처럼 물어본다 — 안 그러면 로그인 창을 내민다.
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+              'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+            },
+            cf: { cacheTtl: 3600, cacheEverything: true },
+          })
+          마지막 = `${문.includes('embed') ? 'embed' : 'page'}:${r.status}`
+          if (!r.ok) continue
+          const 글 = await r.text()
+          // og:image 가 정석이고, embed 판은 `display_url`·<img class="EmbeddedAsset..."> 로도 나온다.
+          const m = 글.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+            || 글.match(/"display_url"\s*:\s*"([^"]+)"/)
+            || 글.match(/<img[^>]+class="[^"]*EmbeddedAsset[^"]*"[^>]+src="([^"]+)"/i)
+          if (m) { 그림 = m[1].replace(/\\u0026/g, '&').replace(/&amp;/g, '&'); break }
+          마지막 += ':no_og'
+        } catch (e) {
+          마지막 = `err:${String(e).slice(0, 60)}`
+        }
+      }
+      if (!그림) return json({ ok: false, why: 'no_thumb', last: 마지막 }, 200, cors)
+      // 📦 7일만 담는다 — 인스타 주소는 서명이 붙어 만료된다(오래 담으면 «깨진 그림»을 주게 된다).
+      if (kv) { try { await kv.put(칸, 그림, { expirationTtl: 7 * 24 * 3600 }) } catch { /* 담기 실패는 치명적이지 않다 */ } }
+      return json({ ok: true, thumb: 그림, cached: false }, 200, cors)
+    }
+
     if (new URL(request.url).searchParams.get('quota') === '1') {
       if (!env.FOUNDER_SECRET) return json({ error: 'no_secret' }, 500, cors)
       const 준열쇠 = request.headers.get('x-hankki-founder') || new URL(request.url).searchParams.get('key') || ''
