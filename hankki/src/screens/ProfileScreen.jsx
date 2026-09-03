@@ -355,14 +355,20 @@ export default function ProfileScreen() {
     //    ⛔ 그다음 `alert` 로 갔더니 **삼각형 경고 표시**라 「나쁜 일」로 읽혔다(열어 보고 잡았다 · 절대원칙 21).
     //    ✅ `gift` — 소식 팝업이 이미 선물색을 쓰고 「새로」 알약도 `--gift` 라 **한 벌로 읽힌다.**
     { icon: 'gift', label: '한끼 소식', badge: 안본소식 ? '새로' : '', onClick: () => { markNewsSeen(소식들); set소식(true) } },
-    { icon: 'star', label: '스토어에 한마디', badge: '리뷰 남기기', onClick: () => openExternal(STORE_URL) },
+    { icon: 'star', label: '스토어에 한마디', badge: '리뷰 남기기', 밖: true, onClick: () => openExternal(STORE_URL) },
     // 🔖 [2026-08-18] 「즐겨찾기」 → **「책갈피」** (창업자 확정 · 유저에게 보이는 여섯 곳을 같이 바꿨다)
     { icon: 'heart', label: FAV_NAME, onClick: () => nav.push({ name: 'favorites' }) },
     // 💾 백업은 이 목록에서 «꺼냈다» — 아래 독립 카드로. (창업자 2026-08-16)
     { icon: 'help', label: '요리 가이드', badge: '계량·손질', onClick: () => setGuide(true) },
-    { icon: 'help', label: '앱 소개 다시 보기', onClick: () => nav.showOnboarding && nav.showOnboarding() },
+    // 💬 [창업자 2026-09-03] *"앱소개 다시보기랑 기능안내다시보기는 눌렀을때 어떤 건지 알려주면 좋겠어"*
+    //   ⛔ 이름만으로는 둘이 «똑같이» 읽혔다 — 「소개」와 「안내」의 차이를 유저가 알 리 없다.
+    //   ⭐ 부제 한 줄이 「무엇이 열리나」를 말해 준다. 새 부품 안 만들었다 — `.opt-row .t .a/.b` 가 이미 있다.
+    { icon: 'help', label: '앱 소개 다시 보기', desc: '처음 켰을 때 나오던 소개 화면을 다시 봐요', onClick: () => nav.showOnboarding && nav.showOnboarding() },
     {
       icon: 'sparkle', label: '기능 안내 다시 보기', badge: '반짝 안내',
+      desc: '각 화면에 처음 들어갔을 때 반짝이던 설명을 되살려요',
+      // ⛔ 이 줄은 «아무 데도 안 간다» — 기록만 지우고 토스트를 띄운다. 그래서 화살표를 안 붙인다.
+      제자리: true,
       onClick: () => {
         // 코치마크 본 기록을 지워 각 화면 첫 방문 안내가 다시 나오게 한다(딸 아이디어 ⭐ 후속)
         // ⛔⛔ 🐛 여기 이름을 «손으로» 적어 뒀다가 두 칸이 죽어 있었다 (2026-08-08 발견) —
@@ -372,7 +378,7 @@ export default function ProfileScreen() {
         nav.showToast('각 화면에 들어가면 반짝 안내가 다시 나와요')
       },
     },
-    { icon: 'help', label: '도움말 및 문의', onClick: () => { try { const a = document.createElement('a'); a.href = 'mailto:annyeong.hankki@gmail.com'; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com') } },
+    { icon: 'help', label: '도움말 및 문의', 밖: true, onClick: () => { try { const a = document.createElement('a'); a.href = 'mailto:annyeong.hankki@gmail.com'; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com') } },
     // 🔬 한끼연구소 — 옛 '의견 보내기' 자리를 승격시켰다(창업자 아이디어 2026-07-30).
     // "의견 보내기"는 민원 창구처럼 읽히는데, 연구소는 유저를 연구원으로 만든다 → 참여 동기가 다르다.
     // 창구 셋(의견·설문·오류) 중 주소가 하나라도 있을 때만 노출(전부 비면 빈 방이 된다).
@@ -386,17 +392,23 @@ export default function ProfileScreen() {
     //   ⛔ 여기서 «바로 지우지» 않는다 — 지우는 단추는 클라우드 시트 안의 ［클라우드 비우기］다.
     //      이 줄은 «어디서 지우는지 알려주는 길»이고, 그게 Play 가 말하는 「인앱 경로」다.
     //   ⛔ 로그인 안 한 사람에게도 보인다 — 기기 안 데이터를 지우는 법도 그 페이지에 있다.
-    { icon: 'trash', label: '계정 · 데이터 삭제', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'delete-account.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
-    { icon: 'settings', label: '개인정보처리방침', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
-    { icon: 'book', label: '오픈소스 라이선스', onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'licenses.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
+    { icon: 'trash', label: '계정 · 데이터 삭제', 밖: true, onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'delete-account.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
+    { icon: 'settings', label: '개인정보처리방침', 밖: true, onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
+    { icon: 'book', label: '오픈소스 라이선스', 밖: true, onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'licenses.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
   ]
 
   // ⭐ 갈래는 «이름표»로 짠다 — 줄을 다시 적지 않는다. 위에서 한 줄을 지우면 여기서도 저절로 빠진다.
   //   ⛔ 어느 갈래에도 안 적힌 줄은 **버리지 않고** 마지막 갈래 뒤에 붙는다(놓치면 줄이 사라진다).
   const 갈래정의 = [
-    { title: '', keys: [FAV_NAME, '요리 가이드'] },
+    // ⛔ 처음엔 이 갈래만 이름표를 안 줬다(「늘 쓰는 거라 이름이 필요 없다」).
+    //    그런데 위아래가 «전부» 이름표를 받고 나니 **이 상자만 붕 떠 보였다**(스샷에서 잡았다).
+    //    📌 이름표는 «그 갈래»가 아니라 «줄 전체»가 정한다 — 하나만 빼면 그게 튄다.
+    { title: '자주 여는 것', keys: [FAV_NAME, '요리 가이드'] },
     { title: '알림과 소식', keys: ['한끼 소식'] },
-    { title: '한끼를 도와주기', keys: ['스토어에 한마디', '한끼연구소', '도움말 및 문의'] },
+    // 🏷 [창업자 2026-09-03] *"「한끼를 도와주기」 말고 다른 말이었음 좋겠어"*
+    //   ⛔ 「도와주기」는 **우리가 아쉬운 소리를 하는 말**이다 — 설정에 들어온 사람에게 부탁부터 하는 셈이다.
+    //   ⭐ 이 셋의 공통점 = «말을 주고받는 자리»(리뷰·의견·문의). 그래서 「함께 만들기」.
+    { title: '함께 만들기', keys: ['스토어에 한마디', '한끼연구소', '도움말 및 문의'] },
     { title: '다시 보기', keys: ['앱 소개 다시 보기', '기능 안내 다시 보기'] },
     { title: '계정과 약관', keys: ['계정 · 데이터 삭제', '개인정보처리방침', '오픈소스 라이선스'] },
   ]
@@ -538,9 +550,14 @@ export default function ProfileScreen() {
             ⭐ 부제 한 줄이 색보다 세다 — 다른 줄엔 부제가 없어서 이것만 두 줄이 되고,
                «왜 눌러야 하는지»까지 말해준다.
             ⏰ 창업자 말대로 **클라우드 저장(#87)이 나오면 이 강조는 되돌린다** — 그때는 백업이 저절로 되니까. */}
+        {/* 🏷 [창업자 2026-09-03] *"백업 내보내기랑 클라우드 저장공간도 넣어야해"*
+            ⭐ 갈래에 «넣되» 목록으로 «되돌리지는» 않는다 — 2026-08-16 「꺼내서 강조하라」는 창업자 확정이 살아 있다.
+               이름표만 얹으면 **강조는 그대로 두고 갈래에는 들어간다.** 둘이 안 부딪힌다. */}
+        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--sand)', margin: '20px 4px 8px', letterSpacing: '0.02em' }}>내 것 지키기</div>
         <button
           className="card press" data-coach="backup" onClick={() => setBackup(true)}
-          style={{ marginTop: 20, padding: 16, display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left', border: '1.5px solid var(--brown)' }}
+          /* ⛔ marginTop 을 뺐다 — 위에 붙은 이름표가 그 간격을 이미 갖는다(20). 두면 두 겹이 된다. */
+          style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left', border: '1.5px solid var(--brown)' }}
         >
           <Icon name="cloud" size={24} color="var(--brown)" stroke={2} />
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -595,13 +612,35 @@ export default function ProfileScreen() {
                     <span className="opt-ico" style={{ width: 38, height: 38 }}>
                       <Icon name={m.icon} size={20} color="var(--brown)" stroke={1.7} />
                     </span>
-                    <div className="t" style={{ fontSize: 17, fontWeight: 500 }}>{m.label}</div>
                     {/* 🟠 「새로」만 선물색 — 홈 소식 알약과 «같은 색»이라 한 벌로 읽힌다(styles.css:96).
                         ⛔ 초록 이름표(`badge-sorted`)로 두면 「계량·손질」·「의견·설문」과 판박이라 알림이 아니라 «분류»로 읽힌다. */}
-                    {m.badge && (m.badge === '새로'
+                    {/* ⛔⛔ 부제를 붙였더니 「기능 안내 다시 보기」 부제가 **세 줄로 쪼개졌다**(스샷에서 잡았다).
+                        알약이 줄 «오른쪽»에 서서 부제가 쓸 폭을 통째로 먹었기 때문이다.
+                        ✅ 부제가 있는 줄은 알약을 «제목 옆»으로 올린다 — 부제는 폭을 다 쓴다.
+                        ⛔ 부제를 짧게 줄여서 풀지 않았다 — 그러면 «무엇이 열리나»가 흐려진다(붙인 이유가 그건데). */}
+                    <div className="t" style={{ fontSize: 17, fontWeight: 500 }}>
+                      {m.desc ? (
+                        <>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span className="a">{m.label}</span>
+                            {m.badge && <span className="badge badge-sorted">{m.badge}</span>}
+                          </span>
+                          <span className="b" style={{ display: 'block' }}>{m.desc}</span>
+                        </>
+                      ) : m.label}
+                    </div>
+                    {!m.desc && m.badge && (m.badge === '새로'
                       ? <span style={{ marginRight: 6, fontSize: 14, fontWeight: 900, color: 'var(--surface)', background: 'var(--gift)', borderRadius: 999, padding: '1px 7px' }}>{m.badge}</span>
                       : <span className="badge badge-sorted" style={{ marginRight: 6 }}>{m.badge}</span>)}
-                    <Icon name="chevron-right" size={18} color="var(--sand)" />
+                    {/* ➡️➡️ [창업자 2026-09-03] *"근데 누르면 뭐가 나와? 다 화살표가 있어서..."* — 맞는 말이다.
+                        🔢 **재봤더니 열한 줄 중 화살표가 «맞는» 건 여섯뿐이었다.**
+                          · 밖으로 «나가는» 것 5 = 스토어·문의(메일앱)·계정삭제·방침·라이선스 → 앱을 떠난다
+                          · «아무 데도 안 가는» 것 1 = 기능 안내(기록만 지우고 토스트)
+                        ⛔ 셋을 같은 화살표로 그리면 그건 «거짓말»이다 — 눌러 봐야만 알 수 있게 된다.
+                        ✅ 나가는 줄엔 `link`(⧉), 제자리 줄엔 «아무것도». 화살표는 진짜 다음 화면이 열리는 줄만. */}
+                    {m.제자리 ? null
+                      : m.밖 ? <Icon name="link" size={16} color="var(--sand)" />
+                        : <Icon name="chevron-right" size={18} color="var(--sand)" />}
                   </button>
                   {/* ⭐ 금이 «타일 오른쪽»에서 시작하게 — 타일 폭 38 ＋ 왼여백 16 ＋ 사이 14 = 68 */}
                   {i < g.items.length - 1 && <hr className="divider" style={{ marginLeft: 68 }} />}
@@ -611,8 +650,10 @@ export default function ProfileScreen() {
           </div>
         ))}
 
+        {/* 🏷 [창업자 2026-09-03] *"테마도. 버전확인이랑 넣을게 많네.."* — 갈래 밖에 떠 있던 상자들도 이름표 아래로. */}
+        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--sand)', margin: '20px 4px 8px', letterSpacing: '0.02em' }}>화면 꾸미기</div>
         {/* 테마 — 화면 색(크림·세이지·다크). 다크모드도 여기서 고른다. */}
-        <div className="card" style={{ marginTop: 20, padding: 16 }}>
+        <div className="card" style={{ padding: 16 }}>
           <div style={{ fontSize: 17, fontWeight: 700 }}>테마</div>
           <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, marginBottom: 14 }}>앱 화면 색을 골라요 · 다크모드도 여기서</div>
           {/* 🔲🔲 **2×2 격자** — 창업자 2026-08-29 = *"이렇게말고 2×2로 올리자 **빼빼로인줄**..ㅋㅋ"*
@@ -650,7 +691,9 @@ export default function ProfileScreen() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+        {/* 🏷 앱 자체에 대한 것 — 예시 데이터 · 버전 · 꼬리말. 갈래 중 «마지막»이다. */}
+        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--sand)', margin: '22px 4px 8px', letterSpacing: '0.02em' }}>앱 정보</div>
+        <div style={{ display: 'flex', gap: 10 }}>
           <button
             className="press"
             onClick={() => setConfirmAsk({
