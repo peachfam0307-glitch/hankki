@@ -17,7 +17,10 @@ export function embedUrl(url = '') {
   m = u.match(/instagram\.com\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/)
   if (m) {
     const kind = m[1] === 'p' ? 'p' : 'reel'
-    return { type: 'instagram', src: `https://www.instagram.com/${kind}/${m[2]}/embed`, ratio: '4/5' }
+    // 🎞 `kind` 를 «내보낸다» — 화면이 「릴스로 보기」와 「원본 글 보기」를 가려 말하려면 이게 필요하다.
+    //   ⛔ 「영상」이라고 뭉뜽그리면 사진 글(`p`)일 때 «거짓말»이 된다.
+    //      눌러볼 이유를 만든다고 없는 것을 있다고 하면, 그건 미끼지 안내가 아니다.
+    return { type: 'instagram', kind, id: m[2], src: `https://www.instagram.com/${kind}/${m[2]}/embed`, ratio: '4/5' }
   }
   return null
 }

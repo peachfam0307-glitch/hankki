@@ -788,12 +788,30 @@ export default function RecipeDetailScreen({ id }) {
                 borderTop: 표지보임 ? '1px solid var(--line)' : 0,
               }}>
                 <Icon name={영상.type === 'youtube' ? 'youtube' : 'instagram'} size={19} color="var(--brown)" />
+                {/* 💬💬 [2026-09-04 창업자] *"근데 저렇게 링크만 떡 있으면 사람들이 안눌러볼거야 아마."*
+                    ⭐⭐ 맞다. 그리고 이게 «본질»이다 — 문제는 「그림이 없다」가 아니라 **「눌러야 할 이유가 없다」**.
+                       그 전 줄은 「여기 링크가 있다」만 말했다. **유저가 얻는 것을 한 글자도 안 적었다.**
+                    ✅ 그래서 «이유»를 한 줄 덧댄다. 원작자 이름은 그대로 둔다(예의이고 정책이다).
+                    ⛔ 「영상」이라고 뭉뜽그리지 않는다 — 사진 글이면 거짓말이 된다.
+                       그래서 `embed.js` 가 내주는 `kind` 로 «데이터가» 말을 고르게 했다.
+                       눌러볼 이유를 만든다고 없는 것을 있다고 하면 그건 미끼지 안내가 아니다. */}
                 <div className="t" style={{ fontSize: 16, minWidth: 0 }}>
                   {(() => {
-                    const 어디 = 영상.type === 'youtube' ? 'YouTube에서 보기' : '인스타그램에서 보기'
-                    return r.sourceName
-                      ? <><b style={{ fontWeight: 700 }}>{r.sourceName}</b> · {어디}</>
-                      : 어디
+                    const 움직이나 = 영상.type === 'youtube' || 영상.kind === 'reel'
+                    const 어디 = 영상.type === 'youtube' ? '영상으로 보기'
+                      : 움직이나 ? '릴스로 보기' : '원본 글 보기'
+                    return (
+                      <>
+                        <div>
+                          {r.sourceName
+                            ? <><b style={{ fontWeight: 700 }}>{r.sourceName}</b> · {어디}</>
+                            : 어디}
+                        </div>
+                        <div className="t-sub" style={{ fontSize: 13, marginTop: 2, fontWeight: 400 }}>
+                          {움직이나 ? '만드는 손이 헷갈릴 때 보면 쉬워요' : '원작자가 올린 글을 그대로 볼 수 있어요'}
+                        </div>
+                      </>
+                    )
                   })()}
                 </div>
                 <Icon name="chevron-right" size={17} color="var(--sand)" />
