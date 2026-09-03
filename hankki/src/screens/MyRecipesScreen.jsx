@@ -29,7 +29,20 @@ import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 import { dateLabel, matchKo } from '../utils'
 // 📺 「영상」 칩이 쓰는 잣대 — 상세에서 재생하는 것과 «같은 자»다(절대원칙 30)
 import { embedUrl } from '../embed'
-// 📺 이 화면에서 「영상 편인가」를 묻는 자리는 셋(칩 개수·거르기·썸네일 ▶ 표) — 자는 여기 하나뿐이다.
+// 📺 이 화면에서 묻는 것은 «둘»이고, 자도 «둘»이다 — 이름으로 갈라 둔다(⛔같은 걸로 착각하지 말 것).
+//
+// ⭐⭐ [창업자 확정 2026-09-03] 칩 이름 = **「SNS」**. 📮 창업자 = *"ⓐ로 가자"*
+//   ⛔ 왜 「영상」이 아닌가 — 우리가 고르는 잣대는 **「출처 링크가 붙었나」**지 「재생되나」가 아니다.
+//      **인스타 편은 앱에서 재생이 «안 된다»**(정책상 · `RecipeDetailScreen.jsx` 참조) → 원본 링크로 나간다.
+//      그런데도 SNS 요리다. 「영상」으로 이름 붙이면 **인스타 편이 뜨는 순간 이름이 틀려진다.**
+//   ⭐ 앱이 이미 그렇게 쓴다 — 가져오기 화면 「SNS 보다가 캡처해서 바로 한끼로」(`ImportScreen.jsx:86`).
+//   ⭐ 홈의 「SNS 요리」 상자와 **같은 말**이다(창업자 = *"홈에도 이름 통일해야하는데"*).
+//   ⛔ 「영상으로 보기」 단추는 «안» 건드린다 — 거긴 진짜 재생되는 자리라 맞는 말이다.
+//
+// ⑴ SNS에서 온 편인가 — 칩 개수·거르기가 쓴다. 매체를 안 가린다(유튜브·인스타·앞으로 뭐든).
+const SNS인가 = (r) => !!(r?.sourceUrl || '').trim()
+// ⑵ 앱에서 «재생»되는가 — 썸네일 ▶ 표가 쓴다. ⛔인스타는 재생이 안 되므로 ▶ 를 붙이지 않는다
+//    (▶ 를 붙여 놓고 눌렀는데 안 나오면 그게 거짓말이다).
 const 영상인가 = (r) => embedUrl(r?.sourceUrl || '')?.type === 'youtube'
 import { useBackHandler } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
@@ -261,7 +274,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   //      ⛔ 「sourceUrl 에 youtube 가 들었나」로 세면 안 된다 — 그러면 칩엔 뜨는데 영상은 안 나오는 편이 생긴다.
   //   ⭐⭐ 잣대는 «한 곳»에 둔다 — 칩 개수 · 거르기 · 썸네일 ▶ 표 셋이 같은 자를 쓴다.
   //      ⛔ 같은 식을 세 군데 적으면 하나만 고쳤을 때 「칩엔 3편인데 ▶ 는 5개」처럼 갈린다.
-  const 영상수 = useMemo(() => sorted.filter(영상인가).length, [sorted])
+  const SNS수 = useMemo(() => sorted.filter(SNS인가).length, [sorted])
   // 🔖🔖 [2026-08-18] 책갈피가 카드 «위로 14px» 나가므로 그만큼 자리를 비운다.
   //   ⛔ 안 비웠더니 **맨 윗줄 책갈피가 필터 칩 줄에 가렸다**(실측 = 큰 2건 · 작은 3건).
   //   ⭐ 줄 사이도 같은 이유로 벌린다 — 아랫줄 책갈피가 «윗줄 이름표 «글자»»를 덮었다.
@@ -286,11 +299,11 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     : folder === '전체' ? sorted
       : folder === '__fav' ? sorted.filter((r) => r.favorite)
       : folder === '__often' ? sorted.filter((r) => (r.cooked || 0) > 0).sort((a, b) => (b.cooked || 0) - (a.cooked || 0))
-      : folder === '__video' ? sorted.filter(영상인가)
+      : folder === '__sns' ? sorted.filter(SNS인가)
       : sorted.filter((r) => (r.folder || r.category) === folder)
   const countIn = (name) => sorted.filter((r) => (r.folder || r.category) === name).length
   // ⛔ 새 칩 열쇠()를 여기 «안» 넣으면 「폴더 삭제」 단추가 뜬다 — 폴더가 아닌데 폴더로 읽힌다
-  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__often' && folder !== '__video' && !DEFAULT_FOLDERS.has(folder)
+  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__often' && folder !== '__sns' && !DEFAULT_FOLDERS.has(folder)
 
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
   // 📔📔 **요리 기록과 다이어리를 가른다** — 둘 다 `diary` 배열에 살고 `kind` 로만 구분된다.
@@ -752,10 +765,10 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             {oftenCount > 0 && (
               <button className={`pill press ${folder === '__often' ? 'active' : ''}`} onClick={() => setFolder('__often')}>자주 {oftenCount}</button>
             )}
-            {영상수 > 0 && (
-              <button className={`pill press ${folder === '__video' ? 'active' : ''}`} onClick={() => setFolder('__video')}>
+            {SNS수 > 0 && (
+              <button className={`pill press ${folder === '__sns' ? 'active' : ''}`} onClick={() => setFolder('__sns')}>
                 <Icon name="play" size={13} />
-                영상 {영상수}
+                SNS {SNS수}
               </button>
             )}
             {folders.map((c) => (
@@ -805,17 +818,31 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                               ⭐ 잣대는 칩·상세와 «같은 자» = embedUrl(...).type === 'youtube' (절대원칙 30)
                               ⛔ <button> 을 쓰지 않는다 — 카드 전체가 button 이라 중첩 버튼이 된다(북마크 때와 같은 자리).
                                  pointerEvents: 'none' 이라 눌러도 카드가 눌린다. */}
-                          {영상인가(r) && (
+                          {/* 🔗🔗 [창업자 2026-09-03] *"광어깻잎무침에 영상마크 안붙었어"* → *"그거 광어에만 안붙었다고"*
+                              ⛔ 인스타 편엔 ▶ 를 «일부러» 안 붙였었다 — 앱에서 재생이 안 되는데 ▶ 를 붙이면
+                                 「누르면 재생된다」는 거짓 약속이 된다. 하지만 그러면 «SNS 편인 줄도 모른다»(창업자가 짚은 게 그거다).
+                              ✅ 그래서 **표를 둘로** 나눴다 — 유튜브 ▶(재생) · 그 밖의 SNS 🔗(나가서 보기).
+                                 표가 하는 말이 실제와 같아진다. ⛔되돌리려면 이 절만 지우면 된다. */}
+                          {SNS인가(r) && (
                             <span
                               aria-hidden="true"
+                              /* 🔖 판이 «어떤 표인지»를 정확히 읽게 이름표를 단다.
+                                 ⛔ 색·자리로 찾으면 «꾸민 표지»의 스티커(절대배치 span)와 헷갈린다 —
+                                    실제로 콩국수에서 그렇게 잘못 잡혔다(2026-09-03). */
+                              /* 🔖 [창업자 확정 2026-09-03] 표는 «둘»이다 — 유튜브 ▶ · 그 밖의 SNS 🔗
+                                 ⭐ 앱 «안»에서 재생은 안 하지만(III.E.4.j) **미리보기 그림은 보여준다**
+                                    → 유튜브 편을 누르면 «영상 그림»이 뜨고 거기서 유튜브로 나간다. ▶ 가 맞는 말이다.
+                                 ⛔ 인스타는 그림도 안 뜬다(정책상 미리보기뿐) → 🔗 그대로. */
+                              data-sns={영상인가(r) ? 'play' : 'link'}
                               style={{
                                 position: 'absolute', left: 5, top: 5, pointerEvents: 'none',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 width: gridSize === 'big' ? 24 : 20, height: gridSize === 'big' ? 24 : 20,
-                                borderRadius: 6, background: 'rgba(255,255,255,.92)', color: '#e2352a',
+                                borderRadius: 6, background: 'rgba(255,255,255,.92)',
+                                color: 영상인가(r) ? '#e2352a' : 'var(--brown)',
                               }}
                             >
-                              <Icon name="youtube" size={gridSize === 'big' ? 17 : 14} />
+                              <Icon name={영상인가(r) ? 'youtube' : 'link'} size={gridSize === 'big' ? 17 : 14} />
                             </span>
                           )}
                         </div>

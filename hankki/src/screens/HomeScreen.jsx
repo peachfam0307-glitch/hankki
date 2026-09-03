@@ -53,7 +53,7 @@ import gpDuoHeart from '../assets/stickers/photo/gp_duoht.png'
 import { needsOnboarding } from '../components/Onboarding'
 import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount, needsCloudHome, markCloudHomeSeen, askOpenCloud, 클라우드보임 } from '../nudges'
 import { 로그인해뒀나 } from '../cloud'
-import { weeklyNow, homemadeNow } from '../data/weekly'
+import { weeklyNow, homemadeNow, snsNow } from '../data/weekly'
 import { whatsNew } from '../data/whatsnew'
 import { pantryScore } from '../pantryMatch'
 
@@ -166,6 +166,10 @@ export default function HomeScreen() {
   // 🍳 우리집레시피 — 창업자가 실제로 해먹는 것. 제철과 «별개» 줄이다(창업자 확정 2026-08-11, 안 ⒜).
   //    ⛔ 재고가 없으면 `null` 이라 박스를 아예 안 그린다(제철 줄과 같은 규칙).
   const homemade = useMemo(() => homemadeNow(recipes), [recipes])
+  // 📺 SNS 요리 — 유튜브·인스타에서 보고 우리 말로 정리한 편들 (창업자 확정 2026-09-03).
+  //    ⛔ 손으로 적은 목록이 없다 — `source: 'hankki'` ＋ `sourceUrl` 로 «직접» 고른다(`weekly.js` snsNow).
+  //    ⛔ 재고가 없으면 `null` 이라 박스를 아예 안 그린다(위 둘과 같은 규칙).
+  const sns = useMemo(() => snsNow(recipes), [recipes])
 
   // 📣 소식 한 줄 — ⛔손으로 적지 않는다. 날짜 게이트와 «같은 데이터»를 세어 만든다.
   //    새로 열린 게 있으면 그걸 먼저 말하고, 없으면 다음에 열릴 것을, 그것도 없으면 예고 목록을 말한다.
@@ -574,6 +578,14 @@ export default function HomeScreen() {
             {homemade && <WeekBox w={homemade} 기본="우리집레시피" open={open} />}
           </div>
         )}
+
+        {/* 📺 SNS 요리 — 유튜브·인스타에서 «보고» 우리 말로 정리한 편들 (창업자 확정 2026-09-03)
+            📮 창업자 = *"홈에 하나 더 만들고 이번주레시피같이 상자를.. 상세레시피는 지금처럼 레시피안에 넣고
+               대신 영상칩을 붙이면 좋겠어."*
+            ⭐ 위 두 상자와 «똑같은» `WeekBox` 를 쓴다 — 마크업을 두 번 적지 않는다(2026-08-11 규칙).
+            ⭐ 상세 화면을 따로 만들지 않는다 — 레시피 탭 안에 그대로 있고 「영상」 칩으로 모아 본다.
+            ⛔ 재고가 없으면 `sns` 가 null 이라 이 줄이 통째로 안 그려진다(빈 자리 금지). */}
+        {sns && <div className="week-pair"><WeekBox w={sns} 기본="SNS 요리" open={open} /></div>}
 
         {/* 2. 자주 해먹는 요리 */}
         {often.length > 0 && (

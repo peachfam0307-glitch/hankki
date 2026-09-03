@@ -77,7 +77,7 @@ try {
     console.log('  ⛔ preview 서버가 30초 안에 안 떴다 (포트 ' + PORT + ')')
     process.exit(1)
   }
-  const browser = await chromium.launch()
+  const browser = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
   const ctx = await browser.newContext()
   await ctx.addInitScript(`${SEED_COACH_SEEN}\ntry { localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1') } catch(e){}`)
   const errs = []
