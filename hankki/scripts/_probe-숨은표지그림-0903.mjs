@@ -47,7 +47,22 @@ const 꾸민 = {
   decor: [{ id: 'd1', type: 'sticker', key: 'au_i29', x: 0.26, y: 0.78, s: 0.3, r: -6 }],
 }
 const state = { recipes: [꾸민, ...basicRecipes.slice(0, 4).map((r, i) => ({ ...r, status: 'sorted', savedAt: Date.now() - (i + 2) * 6e4 }))], seedV: BASICS_VERSION }
-const 카드그림 = readFileSync('/tmp/카드표지.txt', 'utf8').trim()
+// 🎴 「뽑은 카드」 흉내 그림 — ⛔⛔ **바깥 파일에 매달리지 않는다.**
+//    처음엔 `/tmp/카드표지.txt`(내가 PIL 로 만든 것)를 읽었는데 **CI 엔 그 파일이 없어**
+//    `ENOENT` 로 죽었다 → 관문이 통째로 실패 → **배포가 막혔다**(run #2083 · 2026-09-03).
+//    📌 판은 «어디서 돌아도 같아야» 한다. 재료가 필요하면 판이 스스로 만든다.
+//    ⭐ SVG 를 data: 로 만든다 — 그림 라이브러리가 필요 없고 브라우저가 바로 그린다.
+const 세로카드SVG = [
+  '<svg xmlns="http://www.w3.org/2000/svg" width="840" height="1080">',
+  '<rect width="840" height="1080" fill="#f3ece0"/>',
+  ...Array.from({ length: 60 }, (_, i) => `<rect x="${i * 14}" y="0" width="6" height="1080" fill="#e8dece"/>`),
+  '<ellipse cx="620" cy="820" rx="330" ry="330" fill="#a83e37"/>',
+  '<rect x="60" y="120" width="460" height="180" fill="#3c2818"/>',
+  '<rect x="60" y="340" width="180" height="60" fill="#ffffff"/>',
+  '</svg>',
+].join('')
+const 카드그림 = 'data:image/svg+xml;base64,' + Buffer.from(세로카드SVG, 'utf8').toString('base64')
+
 
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 411, height: 891 }, deviceScaleFactor: 2, locale: 'ko-KR', timezoneId: 'Asia/Seoul' })
