@@ -654,9 +654,19 @@ export default function RecipeDetailScreen({ id }) {
             📌 창업자가 두 번 짚은 *"레시피마다 붙일 수 있는 자리가 다르다"* 의 답이 여기였다 —
                «새 자리를 찾는 것»이 아니라 «이미 있는 자리를 바꾸는 것».
             ✅ 그래서 「내 요리 기록」 카드 자체를 메모지 모양으로 만들었다(위 참조). */}
-        {/* 📺📺 [시안 2026-09-03] 원본이 유튜브면 **여기서 바로 재생한다** — 재료 «위».
-            📮 창업자 = *"유튜브 영상을 저렇게 바로 볼 수 있게 해둔거 좋은 것 같아. 우리도 할 수 있으면"*
-               → *"유튜브영상아래 재료랑 만드는법도 넣을 수 있어?"* → **자리를 여기로 두면 그 순서가 된다.**
+        {/* 📺📺 [창업자 확정 2026-09-03 = ㄷ] 원본이 유튜브면 **여기서 바로 재생한다** — 재료 «위».
+            📮 창업자 = *"유튜브 영상을 저렇게 바로 볼 수 있게 해둔거 좋은 것 같아"*
+               → *"유튜브영상아래 재료랑 만드는법도 넣을 수 있어?"* → *"ㄷ으로 가자"*
+            ⭐⭐ **ㄷ = 「우리가 큐레이션한 것」과 「유저가 담은 것」 둘 다.** 코드는 «하나»다 —
+               `sourceUrl` 이 유튜브면 재생한다. 우리 레시피는 그 칸을 채우기만 하면 저절로 붙는다.
+               📮 창업자 = *"그럼 우리가 힘들게 레시피를 짜낼 필요가 없엉 · 유튜브나 인스타에서 데려오면 되니까"*
+            ⚖️ 레시피를 «데려오는» 것 자체는 저작권과 무관하다 —
+               문체부 「저작권 들리ZIP」 = *"레시피는 **아이디어로서 저작권법의 보호대상이 되지 않으며**"*
+               ⛔ 단 **글·사진·영상을 그대로 베끼면 안 된다** — 재료·순서는 우리 문체로 다시 쓴다
+               (`docs/레시피-저작권-확인-2026-08-01.md`).
+            ⛔ **인스타는 여기 안 걸린다** — `embed.type === 'youtube'` 로 막았다.
+               인스타는 정책상 앱 안에서 «재생이 안 된다»(`EditorScreen.jsx:785` 에 실물로 적혀 있다).
+               인스타 레시피는 영상 없이 재료·순서만 온다.
             ⭐ 새로 만든 게 0이다 — `embed.js`(공식 임베드 주소) ＋ 편집 화면에서 검증된 iframe 속성 그대로.
             ⚖️ 약관 = **IFrame Player 재생은 공식이고 위험 0**
                (`docs/유튜브가져오기-약관조사답-2026-08-27.md:46·172`). 죽은 길은 «AI로 읽는 것»이지 «보여주는 것»이 아니다.
@@ -681,6 +691,20 @@ export default function RecipeDetailScreen({ id }) {
                 sandbox="allow-scripts allow-same-origin allow-presentation"
                 style={{ display: 'block', width: '100%', aspectRatio: '16/9', border: 0 }}
               />
+              {/* ⛔⛔ 이 줄을 **플레이어 «위»에 얹지 않는다** — 아래에 «따로» 둔다.
+                  YouTube Developer Policies = *"must not use overlays, frames or other visual
+                  elements to obscure any part of an embedded player, including player controls"*
+                  📌 인스타 안내띠(`EditorScreen.jsx:784`)는 `position:absolute` 로 «위에» 얹는데,
+                     그건 인스타 전용이라 유튜브엔 안 붙는다. 여기서 그걸 따라 하면 위반이 된다. */}
+              <button
+                className="opt-row press"
+                onClick={() => openUrl(r.sourceUrl)}
+                style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}
+              >
+                <Icon name="youtube" size={19} color="var(--brown)" />
+                <div className="t" style={{ fontSize: 16 }}>YouTube에서 보기</div>
+                <Icon name="chevron-right" size={17} color="var(--sand)" />
+              </button>
             </div>
           </>
         )}
@@ -862,7 +886,10 @@ export default function RecipeDetailScreen({ id }) {
           </>
         )}
 
-        {r.sourceUrl && (
+        {/* ⛔ 유튜브면 이 절을 감춘다 — 위 영상 칸에 「YouTube에서 보기」가 이미 있다.
+            같은 곳으로 가는 문이 둘이면 헷갈린다(하단바에서 「내 레시피·장보기」를 뺀 것과 같은 이유).
+            ⭐ 인스타·블로그 등 «재생이 안 되는» 원본은 여기가 유일한 문이라 그대로 둔다. */}
+        {r.sourceUrl && !(영상 && 영상.type === 'youtube') && (
           <>
             <div className="h-section" style={{ marginTop: 26, marginBottom: 8 }}>원본 링크</div>
             <a href={r.sourceUrl} target="_blank" rel="noreferrer" className="card press" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 14, textDecoration: 'none', color: 'var(--text)' }}>
