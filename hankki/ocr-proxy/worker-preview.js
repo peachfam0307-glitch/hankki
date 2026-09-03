@@ -67,7 +67,7 @@ const ALLOWED_ORIGINS = [
 //   코드를 고쳐 올렸는데 옛 답이 나와서 「안 올라갔나 · 캐시인가 · 내 규칙이 틀렸나」를 구분 못 했다.
 //   ⭐ 창업자 폰이 유일한 계기판인데 그 계기판이 «어느 판을 재는지»를 안 알려주고 있었다.
 //   ⛔ 판을 고칠 때마다 이 글자도 «같이» 올린다. 안 올리면 이 장치가 거짓말을 한다.
-const 판 = '0904-6'
+const 판 = '0904-7'
 const 담는기간 = 7 * 24 * 3600   // 초 — 인스타 표지 주소가 만료되는 결을 따라간다
 const 기다림 = 8000              // ms — 인스타가 늘어져도 우리 화면은 안 늘어지게
 
@@ -178,7 +178,19 @@ export default {
         if (그림) break
         // 🧭 못 찾았을 때 «왜»를 남긴다 — 다음에 또 짐작하지 않으려고.
         //    (창업자 폰이 유일한 계기판이라, 발자국이 곧 내 눈이다)
-        발자국.push(`og없음(og:image글자=${/og:image/.test(글) ? 'Y' : 'N'} 창고주소=${/cdninstagram|fbcdn/.test(글) ? 'Y' : 'N'} 길이=${글.length})`)
+        // 🔬🔬 [0904-7 · 진단] **이번 한 번으로 「길이 있나 없나」를 끝낸다.**
+        //    📌 여기까지 온 실측 = og:image 없음 · 인스타 주소는 있음 · **622KB**.
+        //       ⭐ 622KB 는 embed 판 치고 «너무 크다» — 진짜 embed 는 그보다 훨씬 작다.
+        //          그래서 우리가 받은 건 embed 가 아니라 **로그인·동의 화면(앱 껍데기)**일 가능성이 크다.
+        //          ＝ `200` 으로 오는 «로그인 벽». 그러면 이 길은 «막힌 것»이지 내가 못 집는 게 아니다.
+        //    ✅ 그걸 가르는 값만 찍는다 — 제목 · 로그인 낱말 · embed 표식 · 실제 주소 종류.
+        //    ⛔ 주소를 통째로 안 찍는다(길고 서명이 붙어 있다) — 앞머리만 모아 센다.
+        const 제목 = (글.match(/<title[^>]*>([^<]{0,60})/i) || [])[1] || '없음'
+        const 로그인벽 = /loginForm|"LoginAndSignupPage"|accounts\/login|로그인|Log in to Instagram/i.test(글)
+        const embed표식 = /EmbeddedAsset|embed_media|instagram-media/i.test(글)
+        const 주소종류 = [...new Set((글.match(/https:\/\/[\w.-]*(?:cdninstagram\.com|fbcdn\.net)\/[^\s"'\\<>]{0,20}/gi) || [])
+          .map((u) => u.replace(/^https:\/\//, '').slice(0, 42)))].slice(0, 4)
+        발자국.push(`못찾음(제목="${제목}" 로그인벽=${로그인벽 ? 'Y' : 'N'} embed표식=${embed표식 ? 'Y' : 'N'} 길이=${글.length} 주소=${주소종류.join(' | ') || '없음'})`)
       } catch (e) {
         발자국.push(`err=${String(e).slice(0, 40)}`)
       }
