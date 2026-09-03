@@ -24,7 +24,8 @@ import { fileURLToPath } from 'node:url'
 
 const APP = join(dirname(fileURLToPath(import.meta.url)), '..')
 const ROOT = join(APP, '..')
-const words = process.argv.slice(2).filter(Boolean)
+// ⚠️ `--전부` 는 «검색어»가 아니다 — 안 걸러내면 그 낱말로 저장소를 뒤져 0건이 나온다.
+const words = process.argv.slice(2).filter((a) => a && !a.startsWith('--'))
 if (!words.length) {
   console.log('쓰기: node hankki/scripts/decided.mjs "캐릭터 정원"')
   process.exit(0)
@@ -92,8 +93,20 @@ if (!hits.length) {
 }
 // ⭐ 숫자 있는 줄을 먼저 — 「결정」은 거의 숫자로 남는다.
 hits.sort((a, b) => (b.hasNum - a.hasNum))
-for (const h of hits.slice(0, 25)) console.log(`  ${h.hasNum ? '🔢' : '  '} ${h.f}:${h.n}\n     ${h.line}`)
-if (hits.length > 25) console.log(`\n  … ${hits.length - 25}줄 더`)
+// ⭐ [2026-09-03] 25줄 × 160자 = 6,477 B. ask-guard 가 «매번» 돌리라는 도구라 대화에 그대로 쌓인다.
+//    📮 창업자 = *"토큰도 너무 빨리 닳고, 대화 진행도 안되고"*
+//    ⭐ 「이미 정했나」를 아는 데는 **자리(파일:줄)와 한 줄**이면 된다 — 전문은 그 자리를 열면 된다.
+//    ⛔ 개수는 그대로 다 알려준다(위 「찾은 것 N줄」). 접는 건 «본문»뿐이고 `--전부` 면 다 나온다.
+//    ⛔⛔ `--전부` 에도 «상한»을 둔다 — 첫 판이 상한 없이 열어 놨더니 «카드»에서 **371,430 B** 가 나왔다.
+//       고치려던 병(대화 창을 먹는 것)을 도구가 그대로 앓는 꼴이다. 넓게 보고 싶으면 «말을 좁혀야» 한다.
+const 전부 = process.argv.includes('--전부') || process.argv.includes('--all')
+const 보일수 = Math.min(전부 ? 150 : 12, hits.length)
+for (const h of hits.slice(0, 보일수)) {
+  console.log(`  ${h.hasNum ? '🔢' : '  '} ${h.f}:${h.n}\n     ${전부 ? h.line : h.line.slice(0, 110)}`)
+}
+if (hits.length > 보일수) {
+  console.log(`\n  … ${hits.length - 보일수}줄 더 — ${전부 ? '**말을 좁혀서 다시 찾을 것**(이게 상한이다)' : '`--전부` (최대 150줄)'}`)
+}
 
 console.log(`
 ⛔ **여기 나온 게 「이미 정한 것」이다. 다시 정하자고 하지 말 것.**

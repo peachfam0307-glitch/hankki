@@ -36,7 +36,7 @@ if [ "$FIRST" != 처음 ]; then
   cat <<'SHORT'
 ⛔ **답하기 전에 «먼저 읽는다». 기억으로 대답하지 말 것.** (전문은 이 세션 첫 판에)
    `decided.mjs "<핵심어>"`(이미 정한 것) · `tools.mjs "<핵심어>"`(그 도구 이미 있나)
-   `npm run assets`(개수·정원) · `latest-map.mjs`(최신 문서) · `recipe.mjs <이름>`(레시피는 파일을 열어서)
+   `npm run assets`(개수·정원) · `latest-map.mjs --for "<핵심어>"`(⛔--for 없으면 17KB) · `recipe.mjs <이름>`
    ⛔ 「없다」·「정한 적 없다」는 위를 돌린 뒤에만. 못 찾았으면 «내가 아직 못 찾았다»다.
 SHORT
   exit 0
@@ -48,7 +48,9 @@ cat <<'EOF'
   1) node hankki/scripts/decided.mjs "<핵심어>"     ← 「이미 정한 것」·「이미 «한» 일」(커밋 로그까지)
   1-b) node hankki/scripts/tools.mjs "<핵심어>"     ← ⭐**그 도구 이미 있나** (179개 · 만들기 «전»에)
   2) npm run assets                                  ← 개수·정원·자산 현황은 **손으로 세지 말 것**
-  3) node hankki/scripts/latest-map.mjs              ← 그 주제의 «최신» 문서
+  3) node hankki/scripts/latest-map.mjs --for "<핵심어>"  ← 그 주제의 «최신» 문서
+     ⭐ ⛔`--for` 를 «꼭» 붙일 것 — 안 붙이면 주제 전부를 찍어 **17,193 B**(붙이면 194 B · 88배).
+        2026-09-03 까지 훅이 전체판을 시켜서, 물어볼 때마다 17KB 가 대화에 쌓이고 있었다.
   4) node hankki/scripts/recipe.mjs <이름조각>        ← 레시피는 **파일을 열어서** (--sample · --from · --unreviewed)
   5) node hankki/scripts/release-calendar.mjs --tomorrow  ← 「내일 저절로 열리는 것」
 

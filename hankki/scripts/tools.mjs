@@ -116,12 +116,29 @@ if (!show.length) {
   process.exit(0)
 }
 
+// ⭐⭐ [2026-09-03] **한 갈래당 몇 개까지만 «설명까지» 찍는다.**
+//    📮 창업자 = *"토큰도 너무 빨리 닳고, 대화 진행도 안되고 스트레스받더라고..."*
+//    🔢 실측 = `tools.mjs "카드"` 가 79개를 설명까지 전부 찍어 **13,031 B**.
+//       ask-guard 가 «매번 돌리라»고 시키는 도구라, 질문 열 번이면 이것만 130KB 가 대화에 쌓인다.
+//    ⭐ 도구를 찾는 데 필요한 건 «이름»이지 설명 전문이 아니다. 넘치면 이름만 줄줄이 준다.
+//    ⛔ 잘라내지 «않는다» — 개수도 이름도 다 보여준다. `--전부` 면 설명까지 그대로.
+const 전부 = args.includes('--전부') || args.includes('--all')
+const 한갈래 = 4
 console.log(`\n🗺 ${show.length}개${words.length ? ` — «${words.join(' ')}»` : ''}${wantGate ? ' (배포를 막는 것)' : ''}\n`)
+let 접힘 = 0
 for (const k of KIND) {
   const g = show.filter((r) => r.name === k.name)
   if (!g.length) continue
   console.log(`  ── ${k.tag} ${k.name} ${g.length}개 — ${k.why}`)
-  for (const r of g) console.log(line(r))
+  const 보일 = 전부 ? g : g.slice(0, 한갈래)
+  for (const r of 보일) console.log(line(r))
+  if (g.length > 보일.length) {
+    const 나머지 = g.slice(보일.length).map((r) => r.f).filter(Boolean)
+    접힘 += 나머지.length
+    console.log(`     … ${나머지.length}개 더 (이름만): ${나머지.join(' · ')}`)
+  }
   console.log('')
 }
-console.log(`  🚦 = smoke 체인(배포를 막는다)\n`)
+console.log(`  🚦 = smoke 체인(배포를 막는다)`)
+if (접힘) console.log(`  📌 설명을 접은 게 ${접힘}개 — 전문이 필요하면 \`--전부\``)
+console.log('')

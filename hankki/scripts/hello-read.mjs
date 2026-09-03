@@ -78,7 +78,9 @@ const 문턱 = todayKST(new Date(Date.now() - DAYS * 86400000))
 const 보일수 = 10
 console.log(`\n② **주제별 «최신» 한 장** — 읽는 목록이 아니라 «찾는 표»다. 지금 하는 일에 걸리는 것만 연다`)
 try {
-  const out = execFileSync(process.execPath, [join(APP, 'scripts/latest-map.mjs')], { encoding: 'utf8', cwd: APP })
+  // ⚠️ [2026-09-03] `--전부` 를 «반드시» 붙인다 — 인자가 없으면 이제 「주제 이름만」 짧게 나와서
+  //    아래 파싱(날짜·경로 줄)이 통째로 빈다. 여기는 사람이 읽는 게 아니라 프로그램이 추리는 자리다.
+  const out = execFileSync(process.execPath, [join(APP, 'scripts/latest-map.mjs'), '--전부'], { encoding: 'utf8', cwd: APP })
   const 줄 = out.split('\n')
   const 최근 = []
   let 옛주제 = 0

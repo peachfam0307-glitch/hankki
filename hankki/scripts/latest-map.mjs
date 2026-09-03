@@ -212,7 +212,24 @@ if (arg === '--check') {
 }
 
 if (!MAIN) { /* 훅이 불러 쓴 것 — 출력하지 않는다 */ } else {
+// ⭐⭐ [2026-09-03] **인자 없이 부르면 «짧게».** 전문은 `--전부`.
+//    📮 창업자 = *"토큰도 너무 빨리 닳고, 대화 진행도 안되고 스트레스받더라고..."*
+//    🔢 실측 = 인자 없는 전문이 **17,193 B**. 그런데 `--for "카드"` 는 **194 B** — **88배**다.
+//       ⛔ `--for` 는 2026-08 부터 «이미 있었는데» `ask-guard` 가 전문을 돌리라고 시키고 있었다.
+//          그래서 물어볼 때마다 17KB 가 대화에 쌓였다. 만들어 놓고 안 쓴 것이다.
+//    ⛔ 「--for 를 붙여라」를 «규칙»으로 적지 않는다 — 창업자 원칙(*"규칙만 만들면 뭐해 안지키는데"*).
+//       **안 붙여도 짧게 나오게** 바꾼다. 넓게 보고 싶으면 그때 `--전부` 를 «일부러» 친다.
+//    ⚠️ `hello-read.mjs` 는 이 출력을 «파싱»한다 — 그래서 거기서는 `--전부` 로 부른다(안 그러면 표가 빈다).
+const 전부 = process.argv.includes('--전부') || process.argv.includes('--all')
 const t = byTopic()
+if (!전부) {
+  const 주제 = [...t].sort((a, b) => b[1][0].date.localeCompare(a[1][0].date))
+  console.log(`📌 주제 ${주제.length}개 — 이름만 보여준다(전문 17KB 라서).\n`)
+  console.log('   ' + 주제.map(([k]) => k).join(' · '))
+  console.log(`\n👉 **찾는 게 있으면** node scripts/latest-map.mjs --for "<핵심어>"   ← 이게 맞는 쓰임(194 B)`)
+  console.log(`   전부 펼치려면 --전부 (17KB · 대화 창을 먹는다)\n`)
+  process.exit(0)
+}
 console.log('📌 주제별 최신 문서\n')
 for (const [k, v] of [...t].sort((a, b) => b[1][0].date.localeCompare(a[1][0].date))) {
   console.log(`${k}`)
