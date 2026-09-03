@@ -296,6 +296,12 @@ export default function RecipeDetailScreen({ id }) {
 
   // 📺 원본이 유튜브·인스타면 앱 안에서 재생할 수 있는 주소를 만든다(아니면 null)
   const 영상 = embedUrl(r?.sourceUrl || '')
+  // 🖼 **「표지 그림을 보일 수 있나」는 «한 곳»에서만 판정한다** (2026-09-04)
+  //   ⛔ 이 잣대가 카드 «세 자리»(그림 칸 · 가르는 선 · 앞으로 붙을 미리보기)에 쓰인다.
+  //      세 곳에 베껴 적으면 하나만 고쳤을 때 «선만 남고 그림은 없는» 화면이 난다.
+  //   ⭐ 지금은 유튜브만 그림이 있다 — 인스타는 표지 주소를 안 준다(Meta 가 oEmbed 에서 뺐다).
+  //      서버로 받아오는 길이 열리면 **이 한 줄만 고치면 카드가 통째로 따라온다.**
+  const 표지보임 = !!(영상 && 영상.type === 'youtube' && 영상.thumb && !썸네일깨짐)
 
   const del = () => setConfirmDel(true)
 
@@ -740,11 +746,20 @@ export default function RecipeDetailScreen({ id }) {
               onClick={() => openUrl(r.sourceUrl)}
               style={{ display: 'block', width: '100%', overflow: 'hidden', padding: 0, textAlign: 'left', border: 0 }}
             >
-              <div style={{
-                position: 'relative', width: '100%', aspectRatio: '16/9', background: 'var(--cream)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {영상.type === 'youtube' && 영상.thumb && !썸네일깨짐 ? (
+              {/* 🖼🖼 [2026-09-04 창업자 확정 ⓐ] **그림이 없으면 그림 «자리»를 아예 안 만든다.**
+                  ⛔ 그 전엔 빈 16:9 칸에 매체 표만 덩그러니 놓았는데, 창업자 폰 실물에서
+                     **「그림이 안 떴다」로 읽혔다**(창업자가 그 화면을 찍어 보냈다).
+                  ⭐ 뿌리 = 인스타는 «표지 주소를 안 준다» — 유튜브처럼 주소를 조합할 수 없고
+                     Meta 가 2025-11-03 부터 oEmbed 응답에서 `thumbnail_url` 을 뺐다.
+                     서버가 대신 열어 집어오는 길은 «따로» 재고 있다(`ocr-proxy/worker.js` 의 `?preview=`).
+                  ⭐⭐ **이 자리는 그 길이 실패했을 때의 «바닥»이기도 하다** — 먼저 깔아두면
+                     인스타가 언제 막아도 화면이 안 깨진다(절대원칙 35 = 안 됐을 때의 모양이 곧 설계다).
+                  ⛔ 가짜 그림·우리 요리 사진을 깔지 않는다 — 「인스타에서 본 장면」으로 오해된다. */}
+              {표지보임 && (
+                <div style={{
+                  position: 'relative', width: '100%', aspectRatio: '16/9', background: 'var(--cream)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
                   <>
                     <img
                       src={영상.thumb}
@@ -765,13 +780,13 @@ export default function RecipeDetailScreen({ id }) {
                       <Icon name="play" size={20} />
                     </span>
                   </>
-                ) : (
-                  /* 🖼 그림이 «없는» 자리 — 빈 칸으로 두지 않고 매체 표를 크게 놓는다.
-                     ⭐ 이게 「그림을 못 받았다」는 사실을 그대로 말한다(가짜 그림을 깔지 않는다). */
-                  <Icon name={영상.type === 'youtube' ? 'youtube' : 'instagram'} size={46} color="var(--sand)" />
-                )}
-              </div>
-              <div className="opt-row" style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}>
+                </div>
+              )}
+              {/* ⛔ 윗줄(그림)이 없으면 «가르는 선»도 없다 — 선만 남으면 「뭔가 빠졌다」로 읽힌다 */}
+              <div className="opt-row" style={{
+                padding: '12px 14px',
+                borderTop: 표지보임 ? '1px solid var(--line)' : 0,
+              }}>
                 <Icon name={영상.type === 'youtube' ? 'youtube' : 'instagram'} size={19} color="var(--brown)" />
                 <div className="t" style={{ fontSize: 16, minWidth: 0 }}>
                   {(() => {
