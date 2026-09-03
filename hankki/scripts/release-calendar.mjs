@@ -182,41 +182,8 @@ function cart() {
     }))
 }
 
-// 🔢🔢 [2026-09-03] 「몇 개가 열리나」를 **한 곳에서만** 센다.
-//
-// ⛔⛔ 그 전엔 네 자리(`--tomorrow`·`--brief`·전체목록·`latest-hook`)가 저마다
-//    `keys.length` 를 세고 뒤에 「컷」을 붙였다. 그런데 문은 세 종류인데 단위가 다르다 —
-//    서랍·카드는 «컷», 레시피는 «편», 주부의 장바구니는 «제품»이라 `keys` 가 아예 비어 있다.
-//    → 장바구니만 열리는 날(2026-09-05)에 이렇게 떴다:
-//         🚨 2026-09-05(D-2) 에 **다시 보기로 한 것**이 있다
-//            · 주부의 장바구니 · 젓갈·액젓 — 양념낙지젓 (0)
-//    ⭐⭐ 「저절로 열린다」가 「다시 보기로 한 것」으로 갈렸다 — **저절로 열리는데 «안 열리는 것»처럼 읽힌다.**
-//       그러면 전날 고화질 전수 검수를 건너뛴다. 절대원칙 28 이 정확히 걸리는 자리다.
-//
-// ⛔ 뿌리 = 「세는 일」이 네 곳에 흩어져 있었다. 2026-09-02 에 `latest-hook` «하나만» 고쳤고
-//    그 훅 주석에 *"--brief 는 이미 문장을 갈라 쓰고 있었다"* 라고 적었는데 **그게 사실이 아니었다.**
-//    같은 주석이 스스로 경고한 그대로다 — *"같은 말을 두 곳에서 만들면 한쪽은 반드시 낡는다."*
-//
-// ✅ 그래서 숫자를 키우거나 예외를 더하지 않고 **모양을 바꿨다**(절대원칙 34) —
-//    문마다 «몇 개»(`n`)와 «무슨 단위»(`unit`)를 스스로 들고 다닌다. 세는 코드는 여기 하나뿐이다.
-const UNIT = { cart: '개', recipe: '편' }        // 그 밖(서랍·카드) = 컷
-const 몇개 = (g) => (g.todo ? 0 : g.kind === 'cart' ? 1 : g.keys.length)
-
 export const gates = () =>
-  [...drawer(), ...cards(), ...promises(), ...recipes(), ...cart()]
-    .map((g) => ({ ...g, n: 몇개(g), unit: UNIT[g.kind] || '컷' }))
-    .sort((a, b) => a.date.localeCompare(b.date))
-
-/**
- * 「저절로 열리는 양」을 사람 말로. 단위가 섞이면 「3개 · 5편」처럼 이어 붙인다.
- * ⛔ 빈 문자열이 나오면 «저절로 열리는 게 하나도 없다»는 뜻이다 — 그때만 「다시 보기로 한 것」이라 쓴다.
- *    (⛔`keys.length` 로 판단하지 말 것 — 그게 위 사고의 뿌리다)
- */
-export const 열리는양 = (gs) => {
-  const m = new Map()
-  for (const g of gs) if (!g.todo && g.n) m.set(g.unit, (m.get(g.unit) || 0) + g.n)
-  return [...m].map(([u, v]) => `${v}${u}`).join(' · ')
-}
+  [...drawer(), ...cards(), ...promises(), ...recipes(), ...cart()].sort((a, b) => a.date.localeCompare(b.date))
 export const nextGate = (from = todayKST()) => {
   const up = gates().filter((g) => g.date >= from)
   return up.length ? up.filter((g) => g.date === up[0].date) : []
@@ -244,7 +211,7 @@ if (mode === '--tomorrow') {
   const g = gates().filter((x) => x.date === 내일)
   if (!g.length) { console.log(`✅ 내일(${내일}) 저절로 열리는 것 없음`); process.exit(0) }
   console.log(`📅📅 **내일(${내일}) 저절로 열린다** — 절대원칙: «오늘» 검수한다\n`)
-  g.forEach((x) => console.log(`   · ${x.where} — ${x.what}${x.todo ? '' : `  (${x.n}${x.unit})`}`))
+  g.forEach((x) => console.log(`   · ${x.where} — ${x.what}${x.todo ? '' : `  (${x.keys.length})`}`))
   const 미검수 = g.filter((x) => x.kind === 'recipe' && /검수 안 받은 것/.test(x.what))
   if (미검수.length) {
     console.log(`\n⛔⛔ 검수 안 받은 레시피가 «내일» 열린다 — 오늘 안에 창업자 검수를 받을 것.`)
@@ -317,16 +284,14 @@ if (mode === '--brief' || mode === '--check') {
   }
   if (!nx.length) process.exit(대기.length && mode === '--check' ? 0 : 0)
   const d = dday(nx[0].date)
-  const 양 = 열리는양(nx)
+  const n = nx.reduce((s, g) => s + g.keys.length, 0)
   const hot = d <= 7
   if (mode === '--check' && !hot) process.exit(0)
   // ⚠️ 「할 일」만 있는 날에 «0컷 저절로 열린다» 라고 하면 거짓말이 된다 — 문장을 갈라 쓴다
-  // ⛔⛔ 갈리는 잣대는 «`todo` 냐»지 «`keys` 가 비었냐»가 아니다(2026-09-03 · gates() 위 주석 참조).
-  //    장바구니 제품은 keys 가 늘 비어 있는데 **저절로 열린다.**
-  console.log(양
-    ? `${hot ? '🚨' : '📅'} ${nx[0].date}(D${d === 0 ? '-DAY' : `-${d}`}) 에 **저절로** 열린다 — ${양}`
+  console.log(n
+    ? `${hot ? '🚨' : '📅'} ${nx[0].date}(D${d === 0 ? '-DAY' : `-${d}`}) 에 **저절로** 열린다 — ${n}컷`
     : `${hot ? '🚨' : '🙋'} ${nx[0].date}(D${d === 0 ? '-DAY' : `-${d}`}) 에 **다시 보기로 한 것**이 있다`)
-  nx.forEach((g) => console.log(`   · ${g.where} — ${g.what}${g.todo ? '' : ` (${g.n}${g.unit})`}`))
+  nx.forEach((g) => console.log(`   · ${g.where} — ${g.what}${g.todo ? '' : ` (${g.keys.length})`}`))
   if (hot) {
     console.log('   ⛔ **절대원칙(창업자 2026-08-01) = 자동 공개 전날에 반드시 고화질 전수 검수.**')
     console.log(`   👉 키 목록: node hankki/scripts/release-calendar.mjs --on ${nx[0].date}`)
@@ -339,7 +304,7 @@ let last = ''
 for (const g of gates()) {
   const d = dday(g.date)
   if (g.date !== last) { console.log(`\n${g.date}  ${d < 0 ? '(이미 열림)' : `D-${d}`}`); last = g.date }
-  console.log(`   ${g.where.padEnd(22)} ${g.what}${g.todo ? '' : `  — ${g.n}${g.unit}`}`)
+  console.log(`   ${g.where.padEnd(22)} ${g.what}${g.todo ? '' : `  — ${g.keys.length}컷`}`)
 }
 console.log(`\n오늘(KST) = ${todayKST()}`)
 console.log('⛔ 절대원칙 = **자동 공개 전날에 고화질 전수 검수하고 내보낸다** (창업자 2026-08-01)')

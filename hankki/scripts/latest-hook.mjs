@@ -100,25 +100,21 @@ try {
     console.log('   전체는 `node hankki/scripts/latest-map.mjs` · 지도는 hankki/docs/최신-지도.md')
     // 📅 날짜가 «저절로» 여는 문 — 푸시 안 해도 열린다 (창업자 2026-08-01 절대원칙)
     try {
-      const { nextGate, todayKST, gates, 열리는양 } = await import('./release-calendar.mjs')
+      const { nextGate, todayKST, gates } = await import('./release-calendar.mjs')
       const 오늘 = todayKST()
       const nx = nextGate()
       if (nx.length) {
         const d = Math.round((Date.parse(nx[0].date) - Date.parse(오늘)) / 86400000)
+        const n = nx.reduce((s, g) => s + g.keys.length, 0)
         // ⛔⛔ **「0컷 저절로 열린다」라고 말하면 «거짓말»이다** (2026-09-02 에 실제로 그렇게 떴다).
         //   레시피·주부의 장바구니 문은 컷이 아니라 «편·제품»이라 `keys` 가 비어 있다.
-        //
-        // ⛔⛔ [2026-09-03 정정] 그때 여기 *"--brief 는 이미 문장을 갈라 쓰고 있었는데 이 훅만 낡아 있었다"*
-        //    라고 적었는데 **그게 사실이 아니었다.** `--brief` 도 `keys.length` 로 갈라서 똑같이 틀렸고,
-        //    그날 «훅 하나만» 고쳤다. → 2026-09-05(장바구니 3개)에 `--brief` 가
-        //    **「다시 보기로 한 것이 있다」**라고 찍고 있었다(저절로 열리는데 «안 열리는 것»처럼 읽힌다).
-        //    ⭐ 바로 이 주석이 스스로 경고한 그대로다 — *"같은 말을 두 곳에서 만들면 한쪽은 반드시 낡는다."*
-        //
-        // ✅ 그래서 **세는 코드를 여기서 없앴다.** 문마다 `n`·`unit` 을 들고 다니고
-        //    `열리는양()` 하나가 센다(`release-calendar.mjs`). 이 훅은 이제 «부르기만» 한다.
-        const 양 = 열리는양(nx)
-        console.log(양
-          ? `\n${d <= 7 ? '🚨' : '📅'} ${nx[0].date}(D-${d}) 에 **저절로** 열린다 — ${양}`
+        //   그래서 컷만 세면 3개가 열리는 날이 **0컷**으로 찍혀 「아무것도 안 열린다」로 읽힌다.
+        //   ⭐ `release-calendar.mjs --brief` 는 이미 문장을 갈라 쓰고 있었는데 **이 훅만 낡아 있었다.**
+        //      📌 같은 말을 두 곳에서 만들면 한쪽은 반드시 낡는다(「현행이 둘이면 하나는 틀린 값」).
+        const 진짜 = nx.filter((g) => !g.todo)          // `todo` = 「그날 같이 볼 것」(약속) — 열리는 게 아니다
+        const 셈 = n ? `${n}컷` : `${진짜.length}개`
+        console.log(진짜.length
+          ? `\n${d <= 7 ? '🚨' : '📅'} ${nx[0].date}(D-${d}) 에 **저절로** 열린다 — ${셈}`
           : `\n${d <= 7 ? '🚨' : '🙋'} ${nx[0].date}(D-${d}) 에 **다시 보기로 한 것**이 있다`)
         // ⭐ 「무엇이」 열리는지까지 적는다 — 개수만 보면 열어보지 않는다(D-3 인데 사흘을 그냥 보냈다)
         nx.slice(0, 3).forEach((g) => console.log(`   · ${g.where} — ${g.what.replace(/\s+⛔검수.*/, '').slice(0, 54)}`))
