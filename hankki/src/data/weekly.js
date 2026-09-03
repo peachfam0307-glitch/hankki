@@ -414,3 +414,33 @@ export const weeksLeft = (now = new Date()) => {
   const t = todayKST(now)
   return WEEKLY.filter((w) => w.from > t).length
 }
+
+// 📺📺 [창업자 확정 2026-09-03] 홈 「SNS 요리」 상자 — 이번 주 레시피 상자와 «같은 모양»
+//
+// 📮 창업자 = *"홈에 하나 더 만들고 이번주레시피같이 상자를.. 상세레시피는 지금처럼 레시피안에 넣고
+//    대신 영상칩을 붙이면 좋겠어."*
+//
+// ⭐ 위 둘(WEEKLY·HOMEMADE)과 달리 **손으로 적은 목록이 없다** — 레시피에서 «직접» 고른다.
+//   ⛔ 목록을 손으로 관리하면 반드시 낡는다(규칙 12ⓑ). 편을 넣을 때마다 여기도 고쳐야 하면 언젠가 안 고친다.
+//   ✅ 잣대 = **우리가 만든 편(`source: 'hankki'`) 중 `sourceUrl` 이 붙은 것.**
+//      ⛔ 유저가 «자기 폰에» 붙여넣어 담은 편에도 `sourceUrl` 이 있다 — 그건 남의 홈에 뜨면 안 된다.
+//         그래서 `source` 로 먼저 거른다.
+//   ⛔ 「유튜브만」으로 좁히지 않는다 — 인스타 편은 앱에서 재생이 «안 되고» 원본 링크로 나가는데,
+//      그것도 SNS 요리다. (레시피 탭의 「영상」 칩은 재생되는 것만 세므로 잣대가 다르다 — 일부러다)
+//
+// ⛔ 재고가 없으면 `null` — 홈에서 그 박스를 «아예 안 그린다»(빈 자리 금지 · 위 homemadeNow 와 같다).
+export const snsNow = (recipes = [], now = new Date(), k = 3) => {
+  const t = todayKST(now)
+  const 것들 = recipes
+    .filter((r) => r && r.source === 'hankki' && r.sourceUrl && (!r.from || r.from <= t))
+    // 최근에 열린 것부터 — `from` 이 없으면(처음부터 열린 편) 뒤로
+    .sort((a, b) => String(b.from || '').localeCompare(String(a.from || '')))
+    .slice(0, k)
+  if (!것들.length) return null
+  return {
+    kicker: 'SNS 요리',
+    title: '영상 보고 만든 한 끼',
+    why: '유튜브·인스타에서 보고 우리 말로 정리했어요. 원본은 레시피 안에서 볼 수 있어요.',
+    items: 것들,
+  }
+}
