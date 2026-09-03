@@ -703,7 +703,8 @@ export default function EditorScreen({ id, prefill }) {
       {focusField && (
         <Portal>
           <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'var(--kb-inset, 0px)', zIndex: 3000, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
-            <div onMouseDown={(e) => e.preventDefault()} style={{ pointerEvents: 'auto', width: '100%', maxWidth: 480, display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', padding: '8px 12px', background: 'var(--surface)', borderTop: '2px solid var(--brown)', boxShadow: '0 -3px 12px rgba(0,0,0,.12)' }}>
+            <div onMouseDown={(e) => e.preventDefault()} style={{ pointerEvents: 'auto', width: '100%', maxWidth: 480, background: 'var(--surface)', borderTop: '2px solid var(--brown)', boxShadow: '0 -3px 12px rgba(0,0,0,.12)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', padding: '8px 12px' }}>
               {/* 왼쪽 고정 안내 — 키보드와 색이 비슷해 놓치기 쉬워, "이 버튼으로 단위 넣는다"를 못박는다 */}
               <span style={{ flex: '0 0 auto', position: 'sticky', left: 0, zIndex: 1, alignSelf: 'stretch', display: 'flex', alignItems: 'center', gap: 5, paddingRight: 9, background: 'var(--surface)', color: 'var(--brown)', fontSize: 16, fontWeight: 800, whiteSpace: 'nowrap', borderRight: '1px solid var(--line)' }}>
                 <Icon name="chevron-right" size={14} stroke={2.6} color="var(--brown)" />단위 톡
@@ -714,10 +715,19 @@ export default function EditorScreen({ id, prefill }) {
                   {u}
                 </button>
               ))}
-              {/* 🥄 [2026-09-03] 「T=큰술·t=작은술」 안내를 뺐다 — T·t 단추가 «없어졌으니»
-                  없는 단추를 설명하는 글이 됐다(창업자 확정 「큰술로 통일 · 스푼 다 빼고」).
-                  ⏳ 이 자리에 「1큰술=15ml · 1작은술=5ml」를 넣을지는 창업자 판정 대기(규칙 11) —
-                     창업자 본인이 레시피 세 편에 그 기준 줄을 손으로 적어 뒀다. */}
+            </div>
+            {/* 🥄🥄 [창업자 확정 2026-09-03] *"그 계량 안내 넣어줘"* — 「1큰술=15ml · 1작은술=5ml」
+                ⛔⛔ **옛 「T=큰술·t=작은술」 안내와 «같은 자리»에 두지 않았다.**
+                   그건 칩들 «맨 뒤»에 있었는데 이 바는 `overflowX: auto` 라 **옆으로 굴려야 보인다.**
+                   🔢 창업자 폰 실물(2026-09-03 10:30 캡처)에서 오른쪽 끝이 「작은…」에서 잘려 있었다
+                      → 그 안내는 **화면 밖**이었다. 있으나 마나였던 것이다.
+                ✅ 그래서 **바 «아래» 한 줄**로 내렸다 — 가로로 안 밀리니 늘 보인다.
+                ⭐ 값은 지어낸 게 아니다 = `src/data/kitchenGuide.js` 의 MEASURE 와 «같은 값»이고,
+                   창업자 본인도 레시피 세 편에 「1T 15ml, 1t 5ml」 기준 줄을 손으로 적어 뒀다.
+                ⛔ 글자 14px — 앱 최소치다(그 아래로 내리지 말 것). */}
+            <div style={{ padding: '0 12px 7px', fontSize: 14, color: 'var(--text-sub)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              1큰술 = 15ml · 1작은술 = 5ml
+            </div>
             </div>
           </div>
         </Portal>
