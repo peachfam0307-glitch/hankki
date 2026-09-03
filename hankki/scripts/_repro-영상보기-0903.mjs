@@ -44,7 +44,8 @@ const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: p
 
 // 🍱 원본 주소가 «다른» 레시피 셋을 심는다 — 앱이 쓰는 그 모양 그대로
 const 심을것 = [
-  { id: 'yt-1', title: '가짜유튜브전', sourceUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+  { id: 'yt-1', title: '가짜유튜브전', sourceUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', sourceName: '가짜채널' },
+  { id: 'yt-2', title: '가짜유튜브둘', sourceUrl: 'https://youtu.be/AbCdEfGhIjK' },   // 원작자 없음(유저가 담은 것)
   { id: 'ig-1', title: '가짜인스타전', sourceUrl: 'https://www.instagram.com/reel/ABCdef123/' },
   { id: 'no-1', title: '가짜링크없음', sourceUrl: '' },
 ]
@@ -116,6 +117,9 @@ console.log('① ⭐ 유튜브 레시피 — 영상이 «재료 위»에 뜬다'
     chk(`⭐⭐ 영상이 «재료보다 위»에 있다 (영상 ${Math.round(잰값.영상y)} < 재료 ${Math.round(잰값.재료y)})`,
       잰값.영상y !== null && 잰값.재료y !== null && 잰값.영상y < 잰값.재료y)
     chk('「YouTube에서 보기」 단추가 있다', 잰값.유튜브단추)
+    // 🏷 [창업자 확정 2026-09-03] 원작자를 밝힌다 — *"그 사람껄 내꺼처럼 재생산하는게 더 문제 아닌가"*
+    chk('⭐ 원작자 이름이 그 줄에 있다 (「가짜채널 · YouTube에서 보기」)', await page.evaluate(() =>
+      [...document.querySelectorAll('button')].some((x) => /가짜채널.*YouTube에서 보기/.test(x.innerText || ''))))
     chk('⛔ 맨 아래 「원본 링크」 절은 «없다» — 같은 문이 둘이면 헷갈린다', !잰값.원본링크절)
     console.log(`     절 차례 = ${잰값.절.join(' → ')}`)
   }
@@ -123,6 +127,22 @@ console.log('① ⭐ 유튜브 레시피 — 영상이 «재료 위»에 뜬다'
 }
 
 // ─────────────────────────────────────────────────────────────
+console.log('\n①-b ⛔ 원작자가 «없으면» 이름 없이 그냥 「YouTube에서 보기」 — 유저가 담은 레시피')
+{
+  const page = await 새탭()
+  const 열림 = await 상세열기(page, '가짜유튜브둘')
+  chk('상세가 열렸다 (＝전제)', 열림)
+  if (!열림) { console.log('  ⛔⛔ 판정하지 않는다'); 실패 += 2 }
+  else {
+    chk('영상은 그대로 뜬다', await page.evaluate(() => !!document.querySelector('iframe[title="원본 영상"]')))
+    chk('⛔ 없는 이름을 지어내지 않는다', await page.evaluate(() => {
+      const b = [...document.querySelectorAll('button')].find((x) => /YouTube에서 보기/.test(x.innerText || ''))
+      return !!b && (b.innerText || '').trim() === 'YouTube에서 보기'
+    }))
+  }
+  await page.context().close()
+}
+
 console.log('\n② ⛔ 자동재생 안 한다 · 앱 밖으로 안 튕긴다 (YouTube Developer Policies)')
 // ─────────────────────────────────────────────────────────────
 {

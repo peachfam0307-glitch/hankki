@@ -702,7 +702,14 @@ export default function RecipeDetailScreen({ id }) {
                 style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}
               >
                 <Icon name="youtube" size={19} color="var(--brown)" />
-                <div className="t" style={{ fontSize: 16 }}>YouTube에서 보기</div>
+                {/* 🏷 원작자를 «있을 때만» 앞에 붙인다 — 한 줄로 「누가 만들었나 ＋ 원본 가기」가 끝난다.
+                    📮 창업자 = *"그 사람껄 내꺼처럼 재생산하는게 더 문제 아닌가"*
+                    ⛔ 없으면 그냥 「YouTube에서 보기」 — 유저가 담은 레시피는 이 칸이 비어 있다. */}
+                <div className="t" style={{ fontSize: 16, minWidth: 0 }}>
+                  {r.sourceName
+                    ? <><b style={{ fontWeight: 700 }}>{r.sourceName}</b> · YouTube에서 보기</>
+                    : 'YouTube에서 보기'}
+                </div>
                 <Icon name="chevron-right" size={17} color="var(--sand)" />
               </button>
             </div>
@@ -894,7 +901,8 @@ export default function RecipeDetailScreen({ id }) {
             <div className="h-section" style={{ marginTop: 26, marginBottom: 8 }}>원본 링크</div>
             <a href={r.sourceUrl} target="_blank" rel="noreferrer" className="card press" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 14, textDecoration: 'none', color: 'var(--text)' }}>
               <Icon name="link" size={20} color="var(--sand)" />
-              <span style={{ flex: 1, fontSize: 16.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sourceUrl}</span>
+              {/* 🏷 원작자가 있으면 «주소 대신» 이름을 보여준다 — 주소는 읽어도 누군지 모른다 */}
+              <span style={{ flex: 1, fontSize: 16.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sourceName || r.sourceUrl}</span>
               <Icon name="chevron-right" size={18} color="var(--sand)" />
             </a>
           </>
