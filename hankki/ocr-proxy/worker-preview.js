@@ -67,7 +67,7 @@ const ALLOWED_ORIGINS = [
 //   코드를 고쳐 올렸는데 옛 답이 나와서 「안 올라갔나 · 캐시인가 · 내 규칙이 틀렸나」를 구분 못 했다.
 //   ⭐ 창업자 폰이 유일한 계기판인데 그 계기판이 «어느 판을 재는지»를 안 알려주고 있었다.
 //   ⛔ 판을 고칠 때마다 이 글자도 «같이» 올린다. 안 올리면 이 장치가 거짓말을 한다.
-const 판 = '0904-4'
+const 판 = '0904-5'
 const 담는기간 = 7 * 24 * 3600   // 초 — 인스타 표지 주소가 만료되는 결을 따라간다
 const 기다림 = 8000              // ms — 인스타가 늘어져도 우리 화면은 안 늘어지게
 
@@ -147,8 +147,15 @@ export default {
             || 글.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i) || [])[1],
           (글.match(/"display_url"\s*:\s*"([^"]+)"/) || [])[1],
           (글.match(/"thumbnail_src"\s*:\s*"([^"]+)"/) || [])[1],
-          // ⓑ ⭐마지막 그물 = 글 어디든 있는 «인스타 그림 창고» 주소를 그냥 집는다
-          (글.match(/https:\/\/[\w.-]*(?:cdninstagram\.com|fbcdn\.net)\/[^\s"'\\<>]+/i) || [])[0],
+          // ⓑ ⭐마지막 그물 = 글 어디든 있는 «올린 사진» 주소를 집는다
+          //    ⛔⛔ [0904-5 로 좁힘] 처음엔 「cdninstagram 이면 다 좋다」로 넓게 잡았는데
+          //       static.cdninstagram.com/rsrc.php/…webp 를 집어 왔다 — 그건 «인스타 화면 부품(로고)»이다.
+          //       📌 창업자 폰 실측이 잡았다: {"판":"0904-4","ok":true,"thumb":".../rsrc.php/yr/r/rzWiSjZRxk5.webp"}
+          //       ⭐ 「되기만 하면 된다」로 넓히면 «엉뚱한 그림이 뜨는» 더 나쁜 실패가 된다.
+          //          안 뜨는 건 유저가 알지만, 로고가 뜨면 «그게 그 요리인 줄» 안다.
+          //    ✅ 유저가 «올린» 사진만 = scontent 서버 ＋ 경로에 /v/t51. 이 있는 자리
+          //       (인스타는 사람이 올린 사진을 scontent-… 서버의 t51 자리에 둔다. 화면 부품은 static 서버다)
+          (글.match(/https:\/\/scontent[\w.-]*\.(?:cdninstagram\.com|fbcdn\.net)\/v\/t51\.[^\s"'\\<>]+/i) || [])[0],
         ].filter(Boolean)
         for (const 후보 of 후보들) {
           const 값 = 후보.replace(/\\u0026/g, '&').replace(/&amp;/g, '&').replace(/\\\//g, '/')
