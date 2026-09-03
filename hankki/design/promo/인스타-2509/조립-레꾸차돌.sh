@@ -17,10 +17,27 @@
 # ✨ [2026-09-03 창업자] *"뾰미 너무 짧아. 2초보여줄래"* · *"처음에 뾰미나올때 효과 가능해? 반짝반짝하게라던가"*
 #    → 훅 1.4 → **2.0초** ＋ **아주 느린 줌인**(100% → 106%).
 #    ⭐ 정지 그림을 2초 세워두면 죽은 화면이 된다. 천천히 밀려 들어오면 «살아 있게» 보인다.
-#    ⛔ 빛 스치기·큰 반짝임은 안 넣는다 — 세서 캐릭터가 묻힌다(창업자 미감 = 「과하지 않게」).
 #    ⛔⛔ **`zoompan` 의 `d` 는 「한 입력 프레임을 몇 장으로 늘릴까」다** — `d=120` 을 줬더니
 #       2초짜리가 **1분 58초**로 터졌다(실측). ✅ `d=1` 이라야 입력 프레임 수 그대로 나온다.
 #       ⭐ 그리고 zoompan 은 «키운 뒤» 잘라내는 방식이라 원본을 **2배로 먼저 키워** 놔야 안 뭉갠다.
+#
+# ✨✨ [2026-09-03 밤 · 창업자가 «두 번» 말했다] *"뾰미 효과 넣어주면 어때? 반짝반짝한거라던가"*
+#      ＋ *"약간 샤랄라느낌있잖아 ㅋㅋ"*
+#    ⛔⛔ 첫 요청 때 내가 *"세서 캐릭터가 묻힌다"* 며 **안 넣고 줌인만** 넣었다 — 그건 «내가 미감을 정한 것»이다.
+#       **절대원칙 11 = 미감·판정은 창업자가 정한다.** 두 번 말하게 만든 것이 잘못이다.
+#    ✅ 이제 넣는다 = **큰 별 11 ＋ 샤랄라 가루 78** (`scripts/_판-반짝임-0903.mjs` 가 낱장 120장을 그린다)
+#       ⭐ 이 ffmpeg 엔 글씨·도형 필터가 없다 → PNG 낱장을 `-framerate 60` 으로 넣고 `overlay` 한다.
+#
+# 🔁🔁 [2026-09-03 밤 · 창업자] *"끝은 다시 처음으로 돌아가면 좋겠어. 뾰미 클로즈 한 게 더 좋아."*
+#    ✅ 끝 = **훅과 «똑같은 그림»**(뾰미 클로즈업) · 줌은 반대로(106% → 100%) · 반짝임도 같이
+#       ⭐ 릴스는 **저절로 돈다** → 마지막 프레임이 첫 프레임과 같으면 **이어짐이 안 보인다.**
+#          그래서 끝 줌을 «정확히 100% 에서» 끝내고, 반짝임 낱장도 첫·끝 장을 완전 투명으로 만들었다.
+#    ⛔⛔ **둘째 시안(전체판)은 «안 쓴다» — 그 판이 바로 뭉개진 그것이었다.**
+#       📮 창업자 = *"마지막 꾸며버림 아래 뭉개진거 그대로 나와. 이거 그대로 올려도 된다고?"*
+#       🔢 원인 = CTA 띠를 안전지대로 올리려고 **325px 들어올리고 아래를 「맨 아랫줄 8줄 늘려」 채웠다.**
+#          그 줄이 하필 **세로 줄무늬 선반**이라 화면 아래 5분의 1이 통째로 늘어난 줄무늬가 됐다.
+#       ⛔⛔ 내가 *"열어서 확인했다 · 티 안 남"* 이라고 «적어놓고» 보냈다. **작게 보고 판정했다**(규칙 13).
+#          📌 늘려 채우기는 **바탕이 «단색»일 때만** 통한다. 무늬가 있으면 반드시 티가 난다.
 #
 # ⌨️ **키보드 구간(20~29초)은 뺀다** — 한글 키보드가 화면 절반을 덮어 6초 동안 주인공이 키보드가 된다.
 #    「제목을 친다」는 **결과(29초~)** 만 보여줘도 전달된다.
@@ -42,36 +59,67 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 APP="$(cd "$HERE/../../.." && pwd)"
 FF="$APP/node_modules/ffmpeg-static/ffmpeg"
 HOOK="${HOOK_PNG:-/tmp/hankki-릴스시안/훅판.png}"
-FULL="${FULL_PNG:-/tmp/hankki-릴스시안/전체판.png}"
+SPARK="${SPARK_DIR:-/tmp/hankki-반짝임}"
 OUTF="${OUT:-/tmp/hankki-릴스-차돌짬뽕.mp4}"
 
-for f in "$V" "$HOOK" "$FULL"; do [ -f "$f" ] || { echo "⛔ 없다: $f"; exit 1; }; done
+for f in "$V" "$HOOK" "$SPARK/000.png" "$SPARK/119.png"; do
+  [ -f "$f" ] || { echo "⛔ 없다: $f  (반짝임은 node scripts/_판-반짝임-0903.mjs)"; exit 1; }
+done
 
 # ⛔ `-ss` 를 `-i` «앞»에 두면 키프레임으로 어긋난다 → trim 필터로 «뒤»에서 자른다(9/1 함정 기록)
 # ⛔ `setpts=PTS-STARTPTS` 를 안 주면 조각 첫 프레임이 «빈 화면»으로 나온다
 # ⛔ concat 은 크기·SAR·픽셀형식이 «전부» 같아야 한다 → 조각마다 format=yuv420p,setsar=1
 CUT="crop=1080:1920:0:130,scale=1080:1920:flags=lanczos,unsharp=5:5:0.5:5:5:0.0,format=yuv420p,setsar=1,fps=60"
 
+# 🧩 **몸통을 「이미 만든 릴스」에서 떼어 쓰는 길** (`BODY_READY=1 BODY_FROM=… BODY_TO=…`)
+#    ⛔⛔ 왜 필요했나 = **창업자가 준 원본 녹화(49.22초)가 컨테이너에서 사라졌다.**
+#       이 환경의 `/tmp` 는 세션이 되살아날 때 남기도 하고 안 남기도 한다 — 믿을 게 못 된다.
+#       📌 **창업자한테서 받은 «원본»은 받는 즉시 저장소나 안전한 자리로 옮겨 둔다**(규칙 20의 결).
+#    ⚠️ 이 길로 만들면 몸통이 **한 세대 더 인코딩**된다 → 그래서 비트레이트를 올려 손실을 줄인다.
+#       ✅ 원본이 다시 오면 `BODY_READY` 없이 돌리는 게 «항상» 낫다.
+if [ "${BODY_READY:-0}" = "1" ]; then
+  # 이미 1080×1920·60fps·속도조절까지 끝난 몸통 — 자르지도 늘리지도 않고 «그 구간만» 떼어낸다
+  BF="${BODY_FROM:-2.0}"
+  BT="${BODY_TO:-17.983}"
+  MID="[1:v]fps=60,format=yuv420p,setsar=1,trim=$BF:$BT,setpts=PTS-STARTPTS[m1];"
+  MIDN=1
+  BV="${BV:-7000k}"; MAXV="${MAXV:-8500k}"; BUFV="${BUFV:-14000k}"
+else
+  # 창업자 폰 녹화(1080×2182·49.22초)에서 다섯 조각을 떼어 «속도»를 다르게 준다
+  MID="[1:v]$CUT[src];
+    [src]split=5[a][b][c][d][e];
+    [a]trim=2.0:8.0,setpts=(PTS-STARTPTS)/2.2[m1];
+    [b]trim=8.0:12.5,setpts=(PTS-STARTPTS)/2.2[m2];
+    [c]trim=12.5:20.0,setpts=(PTS-STARTPTS)/2.6[m3];
+    [d]trim=29.0:46.0,setpts=(PTS-STARTPTS)/3.0[m4];
+    [e]trim=46.0:49.2,setpts=(PTS-STARTPTS)/1.2[m5];"
+  MIDN=5
+  BV="${BV:-5500k}"; MAXV="${MAXV:-6500k}"; BUFV="${BUFV:-11000k}"
+fi
+IN=""; i=1
+while [ "$i" -le "$MIDN" ]; do IN="$IN[m$i]"; i=$((i + 1)); done
+
+# ⛔ 반짝임 낱장은 «120장 = 2.0초» 다 — 훅·끝 길이를 바꾸려면 `_판-반짝임-0903.mjs` 의 `초` 도 같이 고친다
 "$FF" -hide_banner -loglevel error \
   -loop 1 -t 2.0 -i "$HOOK" \
   -i "$V" \
-  -loop 1 -t 2.6 -i "$FULL" \
+  -loop 1 -t 2.0 -i "$HOOK" \
+  -framerate 60 -start_number 0 -i "$SPARK/%03d.png" \
+  -framerate 60 -start_number 0 -i "$SPARK/%03d.png" \
   -filter_complex "
     [0:v]fps=60,scale=2160:3840:flags=lanczos,
-         zoompan=z='1+0.06*in/120':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=60,
-         format=yuv420p,setsar=1[hook];
-    [1:v]$CUT[src];
-    [src]split=5[a][b][c][d][e];
-    [a]trim=2.0:8.0,setpts=(PTS-STARTPTS)/2.2[s1];
-    [b]trim=8.0:12.5,setpts=(PTS-STARTPTS)/2.2[s2];
-    [c]trim=12.5:20.0,setpts=(PTS-STARTPTS)/2.6[s3];
-    [d]trim=29.0:46.0,setpts=(PTS-STARTPTS)/3.0[s4];
-    [e]trim=46.0:49.2,setpts=(PTS-STARTPTS)/1.2[s5];
-    [2:v]scale=1080:1920:flags=lanczos,format=yuv420p,setsar=1,fps=60[end];
-    [hook][s1][s2][s3][s4][s5][end]concat=n=7:v=1:a=0[v]
+         zoompan=z='1+0.06*in/119':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=60[hk0];
+    [hk0][3:v]overlay=0:0:format=auto:eof_action=pass,format=yuv420p,setsar=1[hook];
+    $MID
+    [2:v]fps=60,scale=2160:3840:flags=lanczos,
+         zoompan=z='1.06-0.06*in/119':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=60[ed0];
+    [ed0][4:v]overlay=0:0:format=auto:eof_action=pass,format=yuv420p,setsar=1[end];
+    [hook]$IN[end]concat=n=$((MIDN + 2)):v=1:a=0[v]
   " \
-  -map "[v]" -r 60 -c:v libx264 -preset slow -b:v 5500k -maxrate 6500k -bufsize 11000k \
+  -map "[v]" -r 60 -c:v libx264 -preset slow -b:v "$BV" -maxrate "$MAXV" -bufsize "$BUFV" \
   -pix_fmt yuv420p -movflags +faststart -an -y "$OUTF"
 
 echo "✅ $OUTF"
-"$FF" -hide_banner -i "$OUTF" 2>&1 | grep -E "Duration|Stream #" | sed 's/^/   /'
+# ⛔ `ffmpeg -i` 는 출력 파일이 없으면 «항상 exit 1» 이다 — `set -e`＋`pipefail` 이라 여기서 통째로 죽는다.
+#    실제로 v3 를 만들고 「종료코드 1」이 났다(파일은 멀쩡했다). ✅ `|| true` 로 보고 줄과 판정을 갈라놓는다.
+{ "$FF" -hide_banner -i "$OUTF" 2>&1 || true; } | grep -E "Duration|Stream #" | sed 's/^/   /'
