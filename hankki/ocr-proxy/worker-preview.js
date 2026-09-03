@@ -124,16 +124,35 @@ export default {
         발자국.push(`${문.includes('embed') ? 'embed' : 'page'}=${r.status}`)
         if (!r.ok) continue
         const 글 = await r.text()
-        const m = 글.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-          || 글.match(/"display_url"\s*:\s*"([^"]+)"/)
-          || 글.match(/<img[^>]+class="[^"]*EmbeddedAsset[^"]*"[^>]+src="([^"]+)"/i)
-        if (m) {
-          그림 = m[1].replace(/\\u0026/g, '&').replace(/&amp;/g, '&')
+        // 🔎🔎 [2026-09-04 · 1차 재보기 결과로 고침] 창업자 폰 실측 =
+        //    `{"ok":false,"why":"no_thumb","발자국":["embed=200","og없음","page=200","og없음"]}`
+        //    ⭐⭐ **둘 다 200 이다 — 인스타가 «막지 않았다».** 로그인 창이 아니라
+        //       **내 뽑기 규칙이 못 집은 것**이다. 그러니 이건 「안 되는 길」이 아니라 「내가 틀린 것」이다.
+        //    ⛔ 그래서 «태그 모양»에 기대는 걸 그만둔다 — 인스타는 화면을 자바스크립트로 그리고
+        //       태그 순서·따옴표·클래스 이름을 수시로 바꾼다. 거기에 맞추면 **다음 달에 또 깨진다**(땜빵).
+        //    ✅ 대신 **「인스타 그림 창고 주소가 글 안에 있나」**를 찾는다 — 그건 도메인이라 잘 안 바뀐다.
+        //       ＋ 도메인 검사(`cdninstagram`·`fbcdn`)를 그대로 통과해야 하므로 아무거나 집히지 않는다.
+        const 후보들 = [
+          // ⓐ og:image — 속성 순서가 어떻든(content 가 먼저 와도) 잡히게
+          (글.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
+            || 글.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i) || [])[1],
+          (글.match(/"display_url"\s*:\s*"([^"]+)"/) || [])[1],
+          (글.match(/"thumbnail_src"\s*:\s*"([^"]+)"/) || [])[1],
+          // ⓑ ⭐마지막 그물 = 글 어디든 있는 «인스타 그림 창고» 주소를 그냥 집는다
+          (글.match(/https:\/\/[\w.-]*(?:cdninstagram\.com|fbcdn\.net)\/[^\s"'\\<>]+/i) || [])[0],
+        ].filter(Boolean)
+        for (const 후보 of 후보들) {
+          const 값 = 후보.replace(/\\u0026/g, '&').replace(/&amp;/g, '&').replace(/\\\//g, '/')
           // ⛔ 「그림 주소처럼 생긴 것」이 아니라 «인스타 것»인지 본다 — 아무 주소나 앱에 넘기지 않는다.
-          if (!/^https:\/\/[\w.-]*(cdninstagram\.com|fbcdn\.net)\//.test(그림)) { 발자국.push('낯선주소'); 그림 = ''; continue }
-          break
+          if (!/^https:\/\/[\w.-]*(cdninstagram\.com|fbcdn\.net)\//.test(값)) continue
+          // ⛔ 프로필 사진·아이콘을 표지로 착각하지 않는다 — 그건 «이 요리»가 아니다.
+          if (/\/s150x150\/|profile_pic|\/t51\.2885-19\//.test(값)) continue
+          그림 = 값; break
         }
-        발자국.push('og없음')
+        if (그림) break
+        // 🧭 못 찾았을 때 «왜»를 남긴다 — 다음에 또 짐작하지 않으려고.
+        //    (창업자 폰이 유일한 계기판이라, 발자국이 곧 내 눈이다)
+        발자국.push(`og없음(og:image글자=${/og:image/.test(글) ? 'Y' : 'N'} 창고주소=${/cdninstagram|fbcdn/.test(글) ? 'Y' : 'N'} 길이=${글.length})`)
       } catch (e) {
         발자국.push(`err=${String(e).slice(0, 40)}`)
       }
