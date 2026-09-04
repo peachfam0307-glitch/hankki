@@ -22,7 +22,7 @@ import { useTimer } from './timer'
 import Onboarding, { needsOnboarding } from './components/Onboarding'
 import CloudGate from './components/CloudGate'
 import ConfirmSheet from './components/ConfirmSheet'
-import { askOpenBackup, needsCloudGate, askOpenCloud, 클라우드보임, shouldAskReview, shouldAskReviewNow, myRecipeCount, 문머리글 } from './nudges'
+import { askOpenBackup, needsCloudGate, askOpenCloud, 클라우드보임, 자동받기켤까, shouldAskReview, shouldAskReviewNow, myRecipeCount, 문머리글 } from './nudges'
 import ReviewAskSheet from './components/ReviewAskSheet'
 import HomeScreen from './screens/HomeScreen'
 import SearchScreen from './screens/SearchScreen'
@@ -473,7 +473,13 @@ export default function App() {
           //   🧪 지키는 판 여덟이 전부 초록불이라야 이 줄이 산다 —
           //      합치기10 · 되돌리기11 · 기록9 · 무덤13 · 바뀐것만12 · 붙이기10 ＋ 옛 판 둘(0821·0831)
           //   ⛔ 이 줄을 다시 잠글 일이 생기면 **왜 잠그는지를 여기 적을 것.** 그냥 `if (false)` 로 돌리지 말 것.
-          const 받았나결과 = await 저절로받기(백업)
+          // 🔒🔒 **[2026-09-04] 아직 «창업자 기기에서만» 돈다** (창업자 확정 = ⓐ)
+          //   ⛔ 유저는 이 줄을 못 지나간다 — 아래 «물어보기»로 내려간다(9/1 이전과 «똑같은» 동작).
+          //   📮 왜 = ⑴TWA 라 되돌릴 창이 없다(스토어 심사 하루)
+          //           ⑵「바뀐 것만 읽기」를 아직 안 붙여서 유저 200명이면 무료 읽기치가 터진다
+          //           ⑶ 클라우드 로그인도 «똑같이» 이렇게 폈다(`클라우드보임`)
+          //   🔓 푸는 순서·조건은 `nudges.js` 의 `자동받기_전체공개` 머리주석에 적어뒀다.
+          const 받았나결과 = 자동받기켤까() ? await 저절로받기(백업) : null
           if (죽었나) return
           if (받았나결과?.했나 && 받았나결과.판) {
             // ⭐ **한 번에** 얹는다 — 반만 들어가는 창을 만들지 않는다(구멍 ⑦).

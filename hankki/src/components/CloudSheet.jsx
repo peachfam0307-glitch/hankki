@@ -4,6 +4,7 @@ import Icon from './Icon'
 import GoogleButton from './GoogleButton'
 import KeyGift from './KeyGift'
 import { 로그인, 로그아웃, 사람지켜보기, 요약, 올리기, 내려받기, 미리붙기, 받았다표시, 받았다지우기 } from '../cloud'
+import { 자동받기켤까 } from '../nudges'
 
 // ☁️ 클라우드 저장 시트 — 「새 폰에서도 그대로 나오게」
 //
@@ -232,6 +233,16 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
                     <Icon name="chevron-right" size={15} color="var(--sand)" />
                   </button>
                 )}
+
+                {/* 🔄🔄 [2026-09-04] 저절로 맞추기 «기록 ＋ 되돌리기» — ⛔지금은 창업자 기기에서만 보인다.
+                    📮 창업자 = *"폰-패드는 동기화가 꼬이면 진자 답없어서.."*
+                    ⭐⭐ 이 두 칸이 있는 이유 = **9/1 사고 때 「무슨 일이 있었는지」가 한 줄도 없었다.**
+                       그래서 원인을 못 찾았고, 원인을 못 찾으니 다시 켤 수가 없었다.
+                       · 기록 = 무엇이 오갔나 (＝다음에 꼬여도 원인을 «읽을» 수 있다)
+                       · 되돌리기 = 꼬였을 때 «돌아갈 자리» (얹기 «전»에 뜬 벌이다)
+                    ⛔ 유저에겐 안 보인다 — 자동 받기 자체가 아직 창업자 기기에서만 돌아서(`자동받기켤까`),
+                       유저 폰엔 «기록도 벌도» 안 생긴다. 빈 칸만 보여주는 건 고장으로 읽힌다. */}
+                {자동받기켤까() && <맞춘기록 불러오기끝={불러오기끝} onClose={onClose} showToast={showToast} 지금판={백업만들기} />}
               </>
             )}
 
@@ -244,6 +255,97 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
         </div>
       </div>
     </Portal>
+  )
+}
+
+// 🔄 저절로 맞추기 기록 ＋ 되돌리기 (⛔창업자 기기 전용 — 부르는 쪽에서 이미 걸렀다)
+//   ⭐ 모듈을 «늦게» 들여온다 — 로그인 안 한 사람의 첫 화면에 동기화 코드가 딸려 들어가지 않게.
+function 맞춘기록 ({ 불러오기끝, onClose, showToast, 지금판 }) {
+  const [폄, set폄] = useState(false)
+  const [줄들, set줄들] = useState(null)
+  const [벌들, set벌들] = useState([])
+
+  useEffect(() => {
+    if (!폄) return
+    let 살아있나 = true
+    ;(async () => {
+      try {
+        const [기록, 되돌] = await Promise.all([import('../syncLog'), import('../syncUndo')])
+        const [ㄱ, ㄴ] = await Promise.all([기록.읽기(), 되돌.벌목록()])
+        if (!살아있나) return
+        set줄들(ㄱ.slice(0, 8).map((줄) => ({ 때: 줄.때, 글: 기록.한줄로(줄) })))
+        set벌들(ㄴ)
+      } catch { if (살아있나) set줄들([]) }
+    })()
+    return () => { 살아있나 = false }
+  }, [폄])
+
+  // ⛔ 되돌리기는 «한 번에» 얹는다 — 반만 들어가는 창을 만들지 않는다.
+  //    얹는 길은 클라우드 내려받기가 쓰는 그 함수(`불러오기끝`) 그대로다.
+  const 되돌리자 = async (벌) => {
+    try {
+      const { 되돌리기 } = await import('../syncUndo')
+      const 판 = await 되돌리기(벌.id, { 지금: await 지금판() })
+      if (!판) { showToast('그 자리를 못 찾았어요'); return }
+      try {
+        const { 적기 } = await import('../syncLog')
+        await 적기({ 한일: '되돌림', 되돌린것: (판.recipes || []).length })
+      } catch { /* 기록이 안 남아도 되돌리기는 한다 */ }
+      불러오기끝(판, '되돌리기')
+      onClose()
+    } catch { showToast('되돌리지 못했어요') }
+  }
+
+  return (
+    <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
+      <button
+        className="press"
+        onClick={() => set폄((v) => !v)}
+        style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-sub)', fontSize: 14.5, fontWeight: 600, padding: '2px 0' }}
+      >
+        저절로 맞춘 기록
+        <Icon name={폄 ? 'chevron-up' : 'chevron-down'} size={15} color="var(--sand)" />
+      </button>
+
+      {폄 && (
+        <div style={{ marginTop: 10 }}>
+          {줄들 === null && <div className="t-sub" style={{ fontSize: 14 }}>보는 중…</div>}
+          {줄들 !== null && !줄들.length && (
+            <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.6 }}>아직 저절로 맞춘 적이 없어요.</div>
+          )}
+          {줄들 !== null && !!줄들.length && (
+            <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '10px 12px', fontSize: 14, lineHeight: 1.75 }}>
+              {줄들.map((줄, i) => (
+                <div key={i} style={{ display: 'flex', gap: 8 }}>
+                  <span className="t-sub" style={{ flex: '0 0 auto' }}>{때(줄.때)}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>{줄.글}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ↩️ 되돌리기 — 벌이 있을 때만 보인다(없는 단추를 회색으로 두면 「고장인가」가 된다) */}
+          {!!벌들.length && (
+            <div style={{ marginTop: 12 }}>
+              <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 6 }}>
+                맞추기 <b>바로 전</b>으로 돌아갈 수 있어요.
+              </div>
+              {벌들.map((벌) => (
+                <button
+                  key={벌.id}
+                  className="btn-ghost press"
+                  style={{ width: '100%', marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  onClick={() => 되돌리자(벌)}
+                >
+                  <Icon name="undo" size={15} color="var(--brown)" />
+                  {때(벌.때)}로 되돌리기 (레시피 {벌.레시피})
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
