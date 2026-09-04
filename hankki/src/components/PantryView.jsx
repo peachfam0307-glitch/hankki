@@ -14,6 +14,9 @@ import { useLayerBack } from '../useBackHandler'
 import { guessEmoji } from '../emoji'
 import { pantryScore, countPantryHits } from '../pantryMatch'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
+// 🔑 열쇠 그림 — `KeyBadge`(가져오기·설정)가 쓰는 «바로 그 파일»이다.
+//    ⭐ 새로 만들지 않는다: 같은 것이 앱 안에서 두 모양이면 유저가 다른 것으로 읽는다.
+import uiKeyOne from '../assets/ui/key_one.png'
 
 // 🥕 냉장고 한 줄에 붙일 그림. 창업자 제보 *"재료 하나만 담아도 큰 이미지가 생겨서 재료가 안보였어."*
 //   ⛔⛔ **이미 담아둔 재료도 같이 고쳐져야 한다**(규칙 18 ⓙ) — 담을 때 `icon` 이 굳어 저장되기 때문에
@@ -282,23 +285,42 @@ export default function PantryView() {
              영수증은 여러 장 찍기 쉬운 자리라(장 볼 때마다) 모르면 더 빨리 준다.
           ⭐ 편집 화면과 «같은 문장 틀»로 쓴다 — 「N장에 AI 스캔 N장」.
              자리마다 말이 다르면 유저가 «다른 규칙»으로 읽는다(같은 기능은 같은 이름 원칙). */}
+      {/* 🔑🔑 [창업자 2026-09-04] **빨간 경고 두 줄 → 열쇠 그림 한 칸**
+          📮 창업자 = *"냉장고 재료함에 **빨간글씨 열쇠를 수정**했으면 좋겠어.
+             거기 **설명도 너무 구구절절**이라 심플하게 바꾸면 좋겠고 **우리 열쇠이모티콘있으니까**"*
+
+          ⛔⛔ **지우면 안 되는 것 하나** — 「깎인다」는 사실. 창업자 확정(2026-08-13) =
+             *"유저가 몇장남았는지 스스로 알아야해"* · 분쟁·환불 1순위가 «샀는데 어디 갔지» 다.
+             ✅ 그래서 **없애는 게 아니라 «짧게 ＋ 그림으로»** 바꾼다. 뜻은 그대로 남는다.
+
+          ⛔⛔ **[2026-09-04 정정] 여기 「빨간색을 걷었다」고 적혀 있었다 — 그건 틀린 판단이었다.**
+             ⭐ 창업자가 고쳐달라고 한 건 **「빨간 «글씨»로 쓴 열쇠」**이고, 바로 이어서 답까지 줬다
+                — *"우리 열쇠이모티콘있으니까"*. 즉 **「글씨 대신 그림」**이지 «색을 빼라»가 아니다.
+             🔒 `_repro-장수안내-0821` 이 그걸 잡았다(⑬⑮⑯ 실패) — 그 판은 창업자 2026-08-21
+                *"**빨강색으로** 안내해줘야할 것 같아. **1장 스캔하면 1장 까인다는걸**"* 로 만든 것이다.
+                📌 **미감이 아니라 «돈» 얘기라 색이 곧 뜻이다.** 겁주려는 게 아니라 값을 표시하는 것.
+             ✅ 그래서 셋을 다 지킨다 — **열쇠 그림(창업자 지시) ＋ 한 줄(구구절절 금지) ＋ 위험색(돈)**.
+
+          🔢 두 줄 → 한 줄 (54자 → 38자)
+             전 = 「영수증 1장에 열쇠 1개를 써요」 ＋ 「영수증은 사진에 따라 인식률이 달라요 ·
+                   안 되면 ＋재료 담기로 직접 넣어도 돼요.」
+             후 = 「영수증 1장에 열쇠 1개를 써요 · 안 되면 ＋재료 담기로 직접 넣어도 돼요」
+             ⛔ **「를 써요」를 빼지 않는다** — 편집 화면이 「사진 1장에 열쇠 1개를 써요」라서
+                꼬리를 자르면 **자리마다 말이 갈린다**(⑯ 이 그걸 본다).
+             ⛔ 「사진에 따라 인식률이 달라요」를 뺐다 — 바로 옆 「베타」 딱지가 이미 그 말이고,
+                안 될 때 할 일(＋재료 담기)이 같은 줄에 있으면 «미리» 알 필요가 없다. */}
       <div style={{
-        paddingLeft: 10, marginBottom: 10,
-        borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
+        display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14,
+        padding: '10px 12px', borderRadius: 'var(--r-md)', background: 'var(--cream)',
+        wordBreak: 'keep-all',
       }}>
-        {/* ⛔ 둘째 줄(「다 써도 기본 인식으로 계속」)을 뺐다 — 창업자 *"다 구구절절이야 헷갈린다고"*.
-               «다 썼을 때» 할 말을 쓰기도 전에 깔아 두면 한 번에 둘을 읽어야 한다.
-               ⭐ 소진 안내는 그때 이미 나간다(`ocr.js` note → 편집 화면 꼬리). */}
-        <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px' }}>
-          영수증 1장에 {keyCount(1)}를 써요
+        {/* ⚠️ 열쇠 원본은 107×220 — 높이만 주고 폭은 비율대로(KeyBadge 와 같은 셈법) */}
+        <img src={uiKeyOne} alt="" aria-hidden="true" draggable={false}
+          style={{ height: 30, width: 'auto', flex: '0 0 auto' }} />
+        <div style={{ fontSize: 16, color: 'var(--text-sub)', lineHeight: 1.5 }}>
+          <b style={{ color: 'var(--danger)', fontWeight: 800 }}>영수증 1장에 {keyCount(1)}를 써요</b>
+          {' · 안 되면 '}<b style={{ color: 'var(--brown)' }}>＋재료 담기</b>{'로 직접 넣어도 돼요'}
         </div>
-      </div>
-      {/* 🔠 [창업자 확정 2026-08-26] 15.3/1.55 → 16/1.7.
-          📮 창업자 = *"냉장고 한 줄은 올려줘"*
-          ⛔ 로드맵이 이 «한 줄»을 「냉장고 글자」로 적어 놔서 계속 미해결로 남아 있었다 —
-             진짜 재료 글자는 이미 18px 다(`styles.css:1237` · 창업자 2026-08-22 확정). */}
-      <div style={{ fontSize: 16, color: 'var(--text-sub)', lineHeight: 1.7, marginBottom: 14 }}>
-        영수증은 사진에 따라 인식률이 달라요 · 안 되면 <b style={{ color: 'var(--brown)' }}>＋재료 담기</b>로 직접 넣어도 돼요.
       </div>
 
       <input ref={receiptCamRef} type="file" accept="image/*" capture="environment" onChange={onReceipt} style={{ display: 'none' }} />
@@ -412,9 +434,16 @@ export default function PantryView() {
       {pantry.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', marginBottom: 9, borderRadius: 'var(--r-md)', background: 'var(--cream)' }}>
           <span style={{ flex: '0 0 auto', marginTop: 1 }}><Icon name="clock" size={15} color="var(--brown)" stroke={2.2} /></span>
+          {/* ✂️ [창업자 2026-09-04] *"거기 **설명도 너무 구구절절**이라 심플하게 바꾸면 좋겠고"*
+              🔢 두 줄 62자 → 한 줄 40자.
+              ⭐ **뜻은 둘 다 남겼다** — 이 상자를 만든 이유가 그 둘이기 때문이다(위 주석):
+                 ⑴ 무엇을 해주나(「대신 세어 드려요」＋D-3 표) ⑵ 내가 뭘 하나(「누르면」).
+              ⛔ 「유통기한을 대신 세어 드려요」는 «안» 뺐다 — 맨 위 띠에도 같은 말이 있지만
+                 창업자가 *"꼬리로 붙은 말은 안 읽힌다"* 며 이 상자를 만들게 한 그 문장이다.
+              ✂️ 뺀 것 = 「재료 옆에」·「처럼」·「유통기한·수량·보관 메모를 적을 수 있어요」의 늘어진 부분.
+                 누르면 무엇이 나오는지는 «눌러 보면» 안다 — 미리 다 적으면 그게 구구절절이다. */}
           <span style={{ fontSize: 15.5, lineHeight: 1.55, color: 'var(--text)' }}>
-            <b style={{ color: 'var(--brown)', fontWeight: 700 }}>유통기한을 대신 세어 드려요</b> — 기한이 가까우면 재료 옆에 <span className="exp-chip exp-soon" style={{ fontSize: 15, padding: '1px 6px' }}>D-3</span> 처럼 표시돼요.
-            <br />재료를 <b style={{ color: 'var(--brown)', fontWeight: 700 }}>누르면</b> 유통기한 · 수량 · 보관 메모를 적을 수 있어요.
+            <b style={{ color: 'var(--brown)', fontWeight: 700 }}>유통기한을 대신 세어 드려요</b> — 가까우면 <span className="exp-chip exp-soon" style={{ fontSize: 15, padding: '1px 6px' }}>D-3</span> 표시 · 재료를 <b style={{ color: 'var(--brown)', fontWeight: 700 }}>누르면</b> 고쳐요
           </span>
         </div>
       )}

@@ -30,17 +30,25 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 APP="$(cd "$HERE/../../.." && pwd)"
 FF="$APP/node_modules/ffmpeg-static/ffmpeg"
 SHOT="/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/패드릴스"
-CARDS="${CARD_DIR:-$SHOT/두장쌓기-꽉}"
+# ⛔ [2026-09-04] 기본값이 옛 폴더(`두장쌓기-꽉`)를 가리켜 「카드가 2장뿐」으로 죽었다 —
+#    9/4 오전에 판이 `두장쌓기` 하나로 합쳐졌는데 이 줄만 낡아 있었다. 지금 판이 내는 곳으로 맞춘다.
+CARDS="${CARD_DIR:-$SHOT/두장쌓기}"
 SPARK="${SPARK_DIR:-/tmp/hankki-반짝임-스샷}"
 OUTF="${OUT:-/tmp/hankki-릴스-패드두장.mp4}"
 DUR="${DUR:-2.6}"      # 한 장 머무는 시간 — 두 화면을 한 칸에 담아서 어제(2.2)보다 길게 준다
 TR="${TR:-0.4}"        # 넘김 시간
 
-mapfile -t PICS < <(ls "$CARDS"/*.png | sort)
+# 🎬🎬 **릴스가 «둘»이다 — 갈라서 뽑는다** (2026-09-04)
+#    ⛔ 옛 판은 폴더 안 PNG 를 «전부» 모아 한 영상으로 만들었다. 지금은 R1-*(살구 스크랩북)과
+#       R2-*(짙은 숲 살림노트)가 한 폴더에 있어서, 그대로 돌리면 **옷이 다른 열두 칸이 한 영상**이 된다.
+#    ✅ `PREFIX` 로 고른다 — `PREFIX=R1` · `PREFIX=R2`. 안 주면 전부(옛 동작).
+#    📌 창업자 = *"릴스1번 … 2가지 해보려고"* — 처음부터 둘이었다.
+PREFIX="${PREFIX:-}"
+mapfile -t PICS < <(ls "$CARDS"/${PREFIX}*.png 2>/dev/null | sort)
 N="${#PICS[@]}"
-[ "$N" -ge 3 ] || { echo "⛔ 카드가 ${N}장뿐이다 — FULL=1 node scripts/_판-패드두장-0904.mjs 먼저"; exit 1; }
+[ "$N" -ge 3 ] || { echo "⛔ ${PREFIX:-전체} 카드가 ${N}장뿐이다 — node scripts/_판-패드두장-0904.mjs 먼저"; exit 1; }
 [ -f "$SPARK/000.png" ] || { echo "⛔ 반짝임이 없다 — SET=스샷 node scripts/_판-반짝임-0903.mjs"; exit 1; }
-echo "🎞 카드 ${N}장 · 한 장 ${DUR}초 · 넘김 ${TR}초"
+echo "🎞 ${PREFIX:-전체} 카드 ${N}장 · 한 장 ${DUR}초 · 넘김 ${TR}초 → $OUTF"
 
 INARGS=()
 for p in "${PICS[@]}"; do INARGS+=(-loop 1 -t "$DUR" -i "$p"); done

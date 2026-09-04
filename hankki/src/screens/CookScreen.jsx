@@ -155,49 +155,41 @@ export default function CookScreen({ id }) {
           <div style={{ width: '100%', maxWidth: 460, margin: '14px auto 0' }}>
             <MemoNote recipeId={r?.id} />
           </div>
-          <div style={{ width: '100%', maxWidth: 460, margin: '4px auto 0', textAlign: 'left' }}>
+          {/* 📱📱 [창업자 2026-09-04] *"요리모드 재료는 «글자가 좀 작아 양쪽으로 하고 크게» 보이면 더 좋겠다"*
+              ⭐⭐ **뿌리 = 이 화면만 「폰 규격」에 갇혀 있었다.** 걸음 글자는 이미 화면 키에 따라 24→28→38 로
+                 커지는데(`.cook-steptext`), 0단계 재료 줄은 **19px·460px 고정**이라 패드 가로(1280)에서
+                 가운데에 가느다란 한 줄이 서고 좌우가 텅 빈다. 같은 요리모드 안에서 0단계만 폰이었다.
+              ⛔ 그래서 «릴스 스샷만» 확대하지 않았다 — 그건 증상만 가리는 것이고 실제 패드 유저는 그대로다(절대원칙 34).
+              ✅ 인라인 값을 CSS 로 옮겨 «화면 크기가 정하게» 했다. 폰은 한 글자도 안 바뀐다.
+              🔢 두 열은 **재료가 6개 이상일 때만** — 3~4개짜리가 좌우로 갈라지면 목록으로 안 읽힌다. */}
+          <div className={`cook-ings${ings.length >= 6 ? ' two' : ''}`}>
             {/* ☑️ 눌러서 체크 — 🧪테스터 의견(창업자 전달 2026-08-09) *"준비단계에서 체크박스가 있으면 어떨까. 단순 체크용도로."*
                 ⭐ 재료를 «꺼내면서» 하나씩 지워가는 자리다. 그래서 저장도 계산도 안 한다 — 표시만.
                 ⭐ 줄 전체가 버튼이라 손가락이 작은 네모를 겨냥할 필요가 없다(최소 높이 44).
                 ⛔ 유니코드 ✓ 대신 우리 아이콘(`check`)을 쓴다 — CLAUDE.md 핀. */}
             {ings.length ? ings.map((ing, k) => (
               <button
-                key={k} type="button" className="press" aria-pressed={!!checked[k]}
-                onClick={() => toggle(k)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 11, width: '100%', minHeight: 44,
-                  padding: '6px 4px', background: 'none', border: 'none', textAlign: 'left',
-                }}>
-                <span style={{
-                  flex: '0 0 auto', width: 23, height: 23, borderRadius: 7,
-                  border: checked[k] ? 'none' : '2px solid var(--line)',
-                  background: checked[k] ? 'var(--brown)' : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
+                key={k} type="button" className="press cook-ing-row" aria-pressed={!!checked[k]}
+                onClick={() => toggle(k)}>
+                <span className={`cook-ing-box${checked[k] ? ' on' : ''}`}>
                   {checked[k] && <Icon name="check" size={15} color="#fff" stroke={2.6} />}
                 </span>
                 {/* ⭐ 체크한 줄은 «흐리게 ＋ 취소선» — 「했다」가 한눈에 보인다(장보기 목록과 같은 문법)
                     ✍️ [창업자 2026-09-01] *"요리모드 첨에 재료나오는 화면도 글씨체 귀염체?로 바꿔야함."*
                        → `cook-ing` 이 귀염체를 준다. ⛔`.ing` 자체는 «안» 건드린다 —
                           레시피 «상세»의 재료 줄이 같은 클래스라 거기까지 손글씨가 된다(창업자가 말한 화면이 아니다). */}
-                <span className="ing cook-ing" style={{
-                  fontSize: 19, flex: 1, minWidth: 0,
-                  opacity: checked[k] ? 0.44 : 1,
-                  textDecoration: checked[k] ? 'line-through' : 'none',
-                }}>{scaleIngredient(ing, 1)}</span>
+                <span className={`ing cook-ing${checked[k] ? ' done' : ''}`}>{scaleIngredient(ing, 1)}</span>
               </button>
             )) : <div className="empty">재료 정보가 없어요.</div>}
           </div>
-          {/* 안내 — 화면 안 꺼짐 · 타이머는 필요할 때 */}
-          <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 9, width: '100%', maxWidth: 460 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 16.5, color: 'var(--text-sub)' }}>
-              <Icon name="bulb" size={18} color="var(--brown)" stroke={1.8} />
-              요리하는 동안 화면이 꺼지지 않아요.
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 16.5, color: 'var(--text-sub)' }}>
-              <Icon name="clock" size={18} color="var(--brown)" stroke={1.8} />
-              타이머는 필요할 때 단계에서 눌러 쓰세요.
-            </div>
+          {/* 안내 — 화면 안 꺼짐 · 타이머는 필요할 때
+              📐 [2026-09-04] 패드 «가로»에서는 이 둘이 **좌우로 나란히** 선다(CSS `.cook-tips`).
+                 🔢 왜 = 가로 패드는 키가 800px 뿐이라 세로가 제일 귀하다. 두 줄을 한 줄로 접으면
+                    **재료에 쓸 자리가 그만큼 는다** — 재료 글씨를 키울 수 있는 «자리»를 여기서 만든다.
+                 ⛔ 글자를 줄여서 맞추지 않았다 — 안내가 작아지면 안 읽힌다(절대원칙 34: 모양을 바꾼다). */}
+          <div className="cook-tips">
+            <div><Icon name="bulb" size={18} color="var(--brown)" stroke={1.8} />요리하는 동안 화면이 꺼지지 않아요.</div>
+            <div><Icon name="clock" size={18} color="var(--brown)" stroke={1.8} />타이머는 필요할 때 단계에서 눌러 쓰세요.</div>
           </div>
         </div>
       ) : (
