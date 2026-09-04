@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { COACH } from '../coach'
-import { useStore, newId } from '../store'
+import { useStore, newId, 다읽었나 } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
@@ -191,11 +191,24 @@ export default function RecipeDetailScreen({ id }) {
       // 🏷 [2026-09-03] 자리표 판정은 «파서 한 곳»에서 — 「제목없음」도 여기서 같이 걸린다
       const 자리표 = 자리표제목(r.title)
       const 재료없다 = !(r.ingredients || []).length
-      updateRecipe(r.id, {
+      const 바꿀것 = {
         tidyFail: 0,
         ...(자리표 && m.title ? { title: m.title } : {}),
         ...(재료없다 && m.ingredients.length ? { ingredients: m.ingredients } : {}),
-      })
+      }
+      // 🗃🤖 **[2026-09-05] 만회에 성공했으면 «여기서» 졸업시킨다 — 이 줄이 「영영 안 나오는」 것을 막는다.**
+      //   ⛔⛔ 왜 필요한가 = 같은 날 `App.jsx` 가 **「AI 가 성공했을 때만 졸업」**으로 바뀌었다(창업자 확정).
+      //      그러면 담을 때 AI 가 실패한 편은 임시보관함에 남는데, **나중에 이 화면이 만회에 성공해도**
+      //      예전엔 `tidyFail` 만 지우고 `status` 는 안 건드려서 **그대로 갇혀 있었다.**
+      //      ＝ 창업자가 2026-09-01 에 겪은 그 모양(*"최근저장에는 뜨는데 레시피탭에 가면 안보여"*)이
+      //        **다른 문으로 되살아난다.** 그래서 두 자리를 «같이» 고쳐야 한다.
+      //   ⭐ 잣대는 `store.jsx` 의 `다읽었나()` 하나 — App.jsx 와 «같은 말»이라야 안 갈린다.
+      //      ⚠️ 판정은 **바뀐 뒤의 값**으로 한다(방금 AI 가 재료를 채웠을 수 있다).
+      //   ⛔ **올리기만 한다 — 절대 내리지 않는다.** 이미 `sorted` 인 것은 손대지 않는다.
+      //      (그래서 «유저가 손으로 옮긴 것»을 이 자동 만회가 도로 보관함에 넣는 일이 없다.)
+      //   ⛔ 걸음은 위 규칙대로 여기서 «안» 채운다 → 걸음이 1줄뿐이면 졸업 안 한다. 그게 맞다(반쪽이다).
+      if (r.status !== 'sorted' && 다읽었나({ ...r, ...바꿀것 })) 바꿀것.status = 'sorted'
+      updateRecipe(r.id, 바꿀것)
       // 🔔 조용하지만 «말은 한다» — 화면이 갑자기 바뀌면 유저는 「고장인가」로 읽는다.
       if (자리표 || 재료없다) nav.showToast('AI가 레시피를 더 다듬었어요', 4000)
     })()

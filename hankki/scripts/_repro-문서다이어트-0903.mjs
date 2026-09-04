@@ -28,7 +28,7 @@
 //       `HANDOVER.md`·`CLAUDE.md` 만 복사본을 둔다. 그러면 체인에 물려도 안전하다.
 //    📌 「손으로만 돌리는 재현판」은 결국 안 돌아서 낡는다 — 그게 오늘 잡은 ⑫번 사고의 뿌리다.
 import { execFileSync } from 'node:child_process'
-import { readFileSync, writeFileSync, mkdtempSync, rmSync, existsSync, copyFileSync, mkdirSync, symlinkSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdtempSync, rmSync, existsSync, copyFileSync, mkdirSync, symlinkSync, statSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -87,7 +87,13 @@ console.log('\n① 크기 게이트 (check-docsize)')
   재기('진짜 저장소는 지금 통과한다', 돌림('node', [게이트]).code, 0)
   재기('임시 나무(복사본)도 통과한다', 돌림('node', [게이트], { cwd: 나무 }).code, 0)
 
-  부풀리기(join(나무, 'HANDOVER.md'), 60000)          // 막음(110KB) 넘김 — ⛔진짜 파일이 아니다
+  // ⛔ [2026-09-05 고침] 「60KB 더하기」는 HANDOVER 가 82KB 일 때만 막음(110KB)을 넘겼다.
+  //    그날 아침 HANDOVER 를 35KB 로 줄이자 95KB 가 되어 **이 칸이 거짓 빨간불**을 켰다.
+  //    ⭐ 잣대는 「지금 크기」가 아니라 «막음 문턱»이다 — 문턱을 넘기는 데 필요한 만큼 더한다.
+  //    ⛔ 문턱 숫자(110KB)를 여기 박지 않는다 — 게이트 파일에서 읽는다(박으면 둘이 갈릴 때 또 가짜 불이 난다).
+  const 막음 = Number(((readFileSync(게이트, 'utf8').match(/'HANDOVER\.md'[^\n]*막음:\s*([\d_]+)/) || [])[1] || '110_000').replace(/_/g, ''))
+  const 지금 = statSync(join(나무, 'HANDOVER.md')).size
+  부풀리기(join(나무, 'HANDOVER.md'), Math.max(0, 막음 - 지금) + 8000)   // 막음 넘김 — ⛔진짜 파일이 아니다
   const 넘김 = 돌림('node', [게이트], { cwd: 나무 })
   재기('막음 문턱을 넘기면 배포를 막는다', 넘김.code, 1)
   재기('넘겼을 때 «어디를 자를지»까지 알려준다', /가장 큰 절/.test(넘김.out), true)
