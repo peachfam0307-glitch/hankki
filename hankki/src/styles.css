@@ -4200,7 +4200,10 @@ html, body { overscroll-behavior: none; }
     /* 펭펭 30px ＋ gap 9px = 라벨 알약 왼쪽에 딱 맞춰 들여쓴다 */
     margin: 5px 0 0 39px;
     font-size: 16px; font-weight: 700; color: var(--text-sub);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    /* 🔤 [2026-09-04] `nowrap` ＋ 말줄임이었다 → **두 줄로 접는다.**
+       🔢 실측(820×1180) = 자리 252px 인데 이 문장은 289px 이 든다. 늘 잘렸다.
+       ⛔ 「말줄임」은 «어쩌다 긴 것»에 쓰는 것이지 **늘 넘치는 문장**에 쓰는 게 아니다. */
+    white-space: normal; overflow: visible; text-overflow: clip; word-break: keep-all;
   }
 
   /* ⭐⭐ 제철도 «같은» 1fr 1fr ＋ «같은» gap — 그래야 오른쪽 요리 셋이
@@ -4215,7 +4218,15 @@ html, body { overscroll-behavior: none; }
   .news-title { font-size: 18.5px; }
   .news-sub { font-size: 16.5px; }
   .today-label { font-size: 16px; }
-  .today-title { font-size: 22px; }
+  /* 🔤🔤 [2026-09-04] **제목을 두 줄로 접는다 — 「어떤 레시피가 떠도」 안 잘리게.**
+     ⛔⛔ 왜 «기준을 올리는» 길로 안 갔나 = 그건 땜빵이다(절대원칙 34).
+        이 칸에 뜨는 레시피는 **날마다 바뀐다**(`pickRotate`). 그래서 잘림 개수도 날마다 달라져
+        `_repro-패드글씨-0821` 이 **어느 날은 통과하고 어느 날은 죽는다** — 배포가 날씨처럼 된다.
+        🔢 2026-09-04 실측 = 「묵은지 들기름 파스타」 208px 이 드는데 자리는 191px.
+           같은 자리에 「가지덮밥」이 뜨면 안 잘린다. **코드는 그대로인데 결과가 갈린다.**
+     ✅ 그래서 «숫자»가 아니라 «모양»을 바꾼다 — 접으면 이름이 아무리 길어도 다 읽힌다.
+     ⛔ 오른쪽 「다른 추천」 단추는 안 건드렸다 — 그 자리를 뺏으면 단추가 갈 곳이 없다. */
+  .today-title { font-size: 22px; white-space: normal; overflow: visible; text-overflow: clip; word-break: keep-all; }
   .today-reason { font-size: 16px; }
   .today-card { --today-thumb: 88px; }
   .weekly-kicker { font-size: 16.5px; }
