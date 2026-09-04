@@ -164,10 +164,28 @@ h1 em{font-style:normal;color:#8a4a1c;}
 //    📐 자리 = 화면을 «크림 카드»가 감싸므로 화면이 그만큼 작아진다(1040 → 990).
 //       🔢 990 × 800/1280 = 619 · 카드 = 990+15×2 = 1020 × 649 · 둘 ＋ 사이 26 = **1324**
 //          → 릴스①(1322)과 «같은 높이»라 안전지대 판정이 그대로 간다(창업자가 이미 확정한 값).
+// 📱📱 **「릴스②는 패드인 게 안 보인다」 — 창업자 2026-09-04**
+//    📮 창업자 = *"릴스 2는 **패드인게 없엉. 어떻게해야 쉽게 알까**.."*
+//    ⭐ 맞다. 릴스① 은 **카피로** 말했다(「패드로 보면」·쪽지 「패드」). 릴스② 는 그 축이 없다.
+//
+//    🔎 **길 넷을 재보고 둘을 골랐다**
+//      ⓐ 카피로 말한다(「패드로 장 보면」) → ⛔릴스① 과 «같은 수법»이라 둘이 다시 닮는다
+//      ⓑ 태그에 「패드」를 붙인다 → ✅작지만 «글자로» 못 박는다 (0.5초면 읽힌다)
+//      ⓒ **크림 카드를 «패드 몸체»로 바꾼다** → ✅⭐**글자 없이** 알린다
+//      ⓓ 표지 칸을 하나 더 붙인다 → ⛔칸이 늘고, 표지는 UI 를 안 보여줘서
+//         창업자 취지(*"우리ui를 바로 보여주는게 조회수가 낫더라고"*)에 어긋난다
+//    ✅ **ⓒ ＋ ⓑ 로 간다** — 릴스는 소리 끄고 넘기며 보니 **그림이 글자를 이긴다.**
+//       그리고 ⓒ 는 릴스① 과 «더» 갈라진다(①엔 카드가 아예 없다).
+//
+//    🔢 패드로 읽히게 하는 것 셋 = **① 균일한 베젤 ② 큰 둥근 모서리 ③ 앞면 카메라 점**
+//       ⛔ 베젤 15px 에 카메라 점을 찍으면 안 보인다 → 22px 로 넓혔다(화면은 990 그대로).
+//       ⛔ 몸체를 «짙은 회색»으로 하면 짙은 숲 바탕에 묻힌다 → **밝은 은회색**으로.
+//    🅰🅱 `PAD=0` 으로 돌리면 옛 크림 카드 판이 나온다 — 창업자가 둘을 나란히 놓고 고른다.
+const 패드몸체 = process.env.PAD !== '0'
 const 장폭2 = 990
 const 장높2 = Math.round(장폭2 * 800 / 1280)
-const 여백2 = 15
-const 사이2 = 26
+const 여백2 = 패드몸체 ? 22 : 15
+const 사이2 = 패드몸체 ? 22 : 26
 const 판2 = (s) => `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:'Gowun';src:url(data:font/woff2;base64,${고운}) format('woff2');}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -197,19 +215,26 @@ body{width:${W}px;height:${H}px;overflow:hidden;position:relative;
 .tag{position:absolute;left:190px;top:224px;font-family:'Gowun';font-size:28px;color:#e8b866;
   border:2px solid rgba(232,184,102,.5);padding:6px 20px;border-radius:5px;letter-spacing:.09em;}
 .wrap2{position:absolute;left:${(W - (장폭2 + 여백2 * 2)) / 2}px;top:${판시작}px;}
-/* 🗂 크림 «카드» 위에 화면을 얹는다 — ①은 종이에 붙인 듯 둥글었고, 여기선 각지게 */
-.card{background:#f4efe3;padding:${여백2}px;border-radius:14px;
-  box-shadow:0 26px 52px rgba(0,0,0,.46), 0 0 0 1px rgba(255,255,255,.06);}
+/* 📱 «패드 몸체» — 균일한 베젤 ＋ 큰 둥근 모서리 ＋ 앞면 카메라 점. 셋이 모여야 「기기」로 읽힌다.
+   ⛔ 짙은 회색으로 하면 짙은 숲 바탕에 묻힌다 → 밝은 은회색. */
+.card{position:relative;padding:${여백2}px;
+  background:${패드몸체 ? 'linear-gradient(160deg,#e6eae2,#cdd3c9)' : '#f4efe3'};
+  border-radius:${패드몸체 ? 26 : 14}px;
+  box-shadow:0 26px 52px rgba(0,0,0,.46), 0 0 0 1px rgba(255,255,255,${패드몸체 ? '.18' : '.06'});}
 .card+.card{margin-top:${사이2}px;}
-.card img{width:${장폭2}px;height:${장높2}px;border-radius:7px;display:block;object-fit:cover;}
+.card img{width:${장폭2}px;height:${장높2}px;border-radius:${패드몸체 ? 8 : 7}px;display:block;object-fit:cover;}
+${패드몸체 ? `/* 📷 앞면 카메라 — 갤럭시 탭을 «가로»로 쓰면 긴 변 위쪽 가운데에 온다 */
+.cam{position:absolute;top:${Math.round((여백2 - 7) / 2)}px;left:50%;transform:translateX(-50%);
+  width:7px;height:7px;border-radius:50%;background:rgba(40,52,44,.42);
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.25);}` : '.cam{display:none}'}
 </style></head><body>
 <div class="grid"></div>
 <div class="no">${s.번호 || ''}</div>
 <div class="cap2"><div class="bar"></div><h1>${s.제목}<br><em>${s.제목2}</em></h1></div>
-<div class="tag">${s.쪽지}</div>
+<div class="tag">${패드몸체 ? '패드 · ' : ''}${s.쪽지}</div>
 <div class="wrap2">
-  <div class="card"><img src="${그림(s.위)}"></div>
-  <div class="card"><img src="${그림(s.아래)}"></div>
+  <div class="card"><span class="cam"></span><img src="${그림(s.위)}"></div>
+  <div class="card"><span class="cam"></span><img src="${그림(s.아래)}"></div>
 </div>
 </body></html>`
 
