@@ -168,6 +168,8 @@ export function cartItems() {
     out.push({
       name: name[1], brand: f('brand'), cat, mall: f('mall') || (/url:/.test(line) ? '직접' : ''),
       benefit: f('benefit'), tag: f('tag'), from: f('from') || null,
+      // 🔗 [2026-09-04] 「사러가기」가 «제 상품»으로 가나 — 검수 때 창업자에게 링크를 달라고 말하려고 같이 읽는다
+      url: f('url'), mallRaw: f('mall'),
     })
   }
   return out
@@ -180,6 +182,19 @@ function cart() {
       date: it.from, where: `주부의 장바구니 · ${it.cat}`, kind: 'cart',
       what: it.brand ? `${it.brand} ${it.name}` : it.name, keys: [],
     }))
+}
+
+// 🔗🔗 **「사러가기」가 «엉뚱한 데»로 가는 제품** — 검수 때 창업자에게 링크를 달라고 «도구가» 말한다
+//    📮 창업자 2026-09-04 = *"오늘 올린거중에 감태랑 새우적 링크 안달렸고 링크가 이상한데 가있더라"*
+//       → *"내가 달아주면 되지 않아? 오늘처럼"* → *"**나보고 달라고 말해줘 장바구니 검수할때**"*
+//    🔎 뿌리 = `ShopScreen.linkFor` 의 `MALL_SEARCH` 에 **coupang·oasis·naver 뿐**이다.
+//       `kurly`·`icoop` 은 표에 없어서 **네이버쇼핑 검색으로 떨어진다.** 그게 「이상한 데」였다.
+//    ⭐ 그래서 «한꺼번에 30개»를 받을 게 아니라 **열리기 전에 그 몇 개만** 받으면 된다.
+//       ⛔ 내가 기억해서 말하지 않는다 — 기억은 반드시 낡는다. 검수 관문이 스스로 말한다.
+//    ⛔ 한살림은 «일부러» 링크를 안 단다(창업자 2026-08-17 *"링크안달면되고"*) → 세지 않는다.
+const 링크표에있는몰 = new Set(['coupang', 'oasis', ''])
+export function 링크없는장바구니(items = cartItems()) {
+  return items.filter((it) => !it.url && it.mallRaw !== 'hansalim' && !링크표에있는몰.has(it.mallRaw || ''))
 }
 
 export const gates = () =>
@@ -228,6 +243,14 @@ if (mode === '--on') {
   const g = gates().filter((x) => x.date === arg)
   if (!g.length) { console.log(`(${arg} 에 열리는 건 없다)`); process.exit(0) }
   console.log(g.flatMap((x) => x.keys).join(' '))
+  // 🔗 그날 열리는 장바구니 제품 중 «사러가기가 엉뚱한 데로 가는» 것 — 검수 자리에서 바로 말한다
+  const 그날링크없음 = 링크없는장바구니().filter((it) => it.from === arg)
+  if (그날링크없음.length) {
+    console.error(`\n🔗 **창업자에게 링크를 받아야 하는 제품 ${그날링크없음.length}개** (이날 열린다)`)
+    for (const it of 그날링크없음) console.error(`   · ${it.brand ? it.brand + ' ' : ''}${it.name}   (${it.mallRaw})`)
+    console.error('   ⛔ 링크가 없으면 「사러가기」가 **네이버쇼핑 검색**으로 떨어진다 — 엉뚱한 게 나온다.')
+    console.error('   👉 창업자에게 그 제품 «상품 주소»를 받아 `url:` 로 박는다(추적 부스러기는 떼고).')
+  }
   process.exit(0)
 }
 
@@ -292,6 +315,22 @@ if (mode === '--brief' || mode === '--check') {
     ? `${hot ? '🚨' : '📅'} ${nx[0].date}(D${d === 0 ? '-DAY' : `-${d}`}) 에 **저절로** 열린다 — ${n}컷`
     : `${hot ? '🚨' : '🙋'} ${nx[0].date}(D${d === 0 ? '-DAY' : `-${d}`}) 에 **다시 보기로 한 것**이 있다`)
   nx.forEach((g) => console.log(`   · ${g.where} — ${g.what}${g.todo ? '' : ` (${g.keys.length})`}`))
+  // 🔗 **장바구니 검수 때 창업자에게 링크를 달라고 «도구가» 말한다** (창업자 2026-09-04)
+  //    📮 *"나보고 달라고 말해줘 장바구니 검수할때"*
+  //    ⭐ 한꺼번에 30개를 받지 않는다 — **열리기 전에 그 몇 개만.** 그래서 D-30 안만 띄운다.
+  //    ⛔ 내가 기억해서 말하지 않는다 — 기억은 반드시 낡는다.
+  {
+    const 오늘 = todayKST()
+    const 곧 = 링크없는장바구니()
+      .filter((it) => it.from && it.from > 오늘 && dday(it.from) <= 30)
+      .sort((a, b) => a.from.localeCompare(b.from))
+    if (곧.length) {
+      console.log(`🔗 **창업자에게 «사러가기 링크»를 받아야 하는 제품 ${곧.length}개** (30일 안에 열린다)`)
+      곧.slice(0, 4).forEach((it) => console.log(`   · ${it.from} (D-${dday(it.from)}) ${it.name}   (${it.mallRaw})`))
+      if (곧.length > 4) console.log(`   · … 외 ${곧.length - 4}개`)
+      console.log('   ⛔ 없으면 「사러가기」가 **네이버쇼핑 검색**으로 떨어진다(컬리·아이쿱은 몰 표에 없다).')
+    }
+  }
   if (hot) {
     console.log('   ⛔ **절대원칙(창업자 2026-08-01) = 자동 공개 전날에 반드시 고화질 전수 검수.**')
     console.log(`   👉 키 목록: node hankki/scripts/release-calendar.mjs --on ${nx[0].date}`)
