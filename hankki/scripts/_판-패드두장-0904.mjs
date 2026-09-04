@@ -28,8 +28,11 @@ import { readdirSync, mkdirSync, readFileSync } from 'node:fs'
 import { chromium } from 'playwright'
 import { join } from 'node:path'
 
+// 🖼 `FEED=1` = 인스타 «피드» 규격(4:5). 안 주면 릴스 규격(9:16). 아래 📐 절에 계산을 적어 뒀다.
+//    ⛔ 여기서 정의한다 — `낼곳` 이 바로 이 값을 쓰는데, 아래에 두면 «선언 전 사용»으로 죽는다.
+const 피드 = process.env.FEED === '1'
 const 찍은곳 = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/패드릴스'
-const 낼곳 = join(찍은곳, '두장쌓기')
+const 낼곳 = join(찍은곳, 피드 ? '피드넉다섯' : '두장쌓기')
 mkdirSync(낼곳, { recursive: true })
 const APP = new URL('..', import.meta.url).pathname
 const 폰트 = (이름) => readFileSync(join(APP, 'design/promo/fonts', 이름)).toString('base64')
@@ -110,13 +113,23 @@ if (없는것.length) {
 // 📐 릴스 1080×1920 · 안전지대 = 위 230 · 아래 384 를 뺀 1306
 //    제목 자리를 위에 두고, 화면 두 장은 그 아래로. 아래 장은 «아래로 흘러나가게» 둔다 —
 //    ⭐ 스토어 스샷이 폰을 아래로 흘려 「더 있다」를 만든 것과 같은 수법인데, 여기선 «가로 두 장»이라 결이 다르다.
-const W = 1920 * 9 / 16, H = 1920
-const 장폭 = 1040
-const 장높 = Math.round(장폭 * 800 / 1280)   // 650
-const 사이 = 22
-const 글머리 = 258                            // 위덮임 230 바로 아래
-const 판시작 = 470
-console.log(`📐 한 칸 ${장폭}×${장높} · 둘 ${장높 * 2 + 사이} · 시작 ${판시작} → 끝 ${판시작 + 장높 * 2 + 사이}`)
+// 🖼🖼 **[창업자 2026-09-04] 피드에도 올린다 — 그래서 규격이 «둘»이다**
+//    📮 창업자 = *"피드로도 올릴게 각각 스샷줄래? 한번에 다운받을 수 있게 해줭"*
+//    ⛔⛔ **릴스 카드를 그대로 피드에 올리면 안 된다** — 9:16(1080×1920)을 피드에 올리면
+//       인스타가 **4:5(1080×1350)로 잘라** 위아래를 먹는다. 제목이나 아래 화면이 통째로 날아간다.
+//    ✅ 그래서 `FEED=1` 이면 **처음부터 4:5 로 그린다**(잘라 맞추지 않는다 — 2026-09-03 교훈).
+//    🔢 4:5 자리 계산 = 1350 안에 「제목 ＋ 화면 둘」을 넣어야 한다
+//       · 장폭 880 → 장높 550 · 둘 ＋ 사이 18 = **1118**
+//       · 글머리 44 ＋ 제목 두 줄(76×1.02×2 ≈ 155) → 판시작 **210** · 끝 **1328** < 1350 ✅
+//       ⚠️ 화면이 1040 → 880 으로 15% 작아진다. 피드는 «정지 그림»이라 눌러서 크게 볼 수 있어 괜찮다.
+const W = 1080, H = 피드 ? 1350 : 1920
+const 장폭 = 피드 ? 810 : 1040
+const 장높 = Math.round(장폭 * 800 / 1280)   // 릴스 650 · 피드 550
+const 사이 = 피드 ? 18 : 22
+const 글머리 = 피드 ? 84 : 258                // 릴스는 인스타 위덮임 230 바로 아래 · 피드는 안 덮인다
+const 판시작 = 피드 ? 250 : 470
+const 제목크기 = 피드 ? 76 : 104
+console.log(`📐 ${피드 ? '피드 4:5' : '릴스 9:16'} · 한 칸 ${장폭}×${장높} · 둘 ${장높 * 2 + 사이} · 시작 ${판시작} → 끝 ${판시작 + 장높 * 2 + 사이} / ${H}`)
 
 const 그림 = (n) => `data:image/png;base64,${readFileSync(join(찍은곳, n + '.png')).toString('base64')}`
 
@@ -136,10 +149,10 @@ const 패드표시 = `
 /* ⛔ [규칙 21 이 잡았다] z-index 가 없으면 뾰미 «아래쪽»이 패드 몸체에 잘린다 —
    판에서 화면(.wrap)이 «나중»에 그려지기 때문이다.
    ✅ 앞으로 빼서 **패드에 걸터앉은** 그림으로 만든다(잘리는 것보다 귀엽고, 「패드 위」라는 뜻도 산다). */
-.padmark{position:absolute;right:64px;top:${글머리 - 96}px;display:flex;flex-direction:column;
-  align-items:flex-end;gap:10px;z-index:5;}
+.padmark{position:absolute;right:${피드 ? 44 : 64}px;top:${피드 ? 20 : 글머리 - 96}px;display:flex;flex-direction:column;
+  align-items:flex-end;gap:${피드 ? 6 : 10}px;z-index:5;}
 .padbadge{display:inline-flex;align-items:center;gap:12px;padding:14px 26px;border-radius:999px;
-  font-family:'Jua';font-size:42px;line-height:1;white-space:nowrap;}
+  font-family:'Jua';font-size:${피드 ? 34 : 42}px;line-height:1;white-space:nowrap;}
 .padbadge .ico{width:46px;height:32px;border-radius:5px;border:3.5px solid currentColor;position:relative;}
 .padbadge .ico::after{content:'';position:absolute;top:2.5px;left:50%;transform:translateX(-50%);
   width:4px;height:4px;border-radius:50%;background:currentColor;}
@@ -181,7 +194,7 @@ body{width:${W}px;height:${H}px;overflow:hidden;position:relative;
   background:linear-gradient(180deg, rgba(196,150,96,.62), rgba(176,130,78,.55));
   border-left:2px dashed rgba(120,85,45,.35);border-right:2px dashed rgba(120,85,45,.35);
   box-shadow:0 3px 8px rgba(90,60,25,.18);}
-h1{font-family:'Pen';font-size:104px;line-height:1.02;color:#4a2c11;letter-spacing:-.5px;
+h1{font-family:'Pen';font-size:${제목크기}px;line-height:1.02;color:#4a2c11;letter-spacing:-.5px;
   text-shadow:0 2px 0 rgba(255,250,238,.55);}
 h1 em{font-style:normal;color:#8a4a1c;}
 .note{position:absolute;right:74px;top:${글머리 - 24}px;font-family:'Jua';font-size:34px;color:#6a4520;
@@ -201,7 +214,7 @@ h1 em{font-style:normal;color:#8a4a1c;}
       바뀐 건 화면을 «감싸는 것»뿐 — 종이에 «패드 사진을 붙인» 것으로 읽혀 스크랩북 결도 안 깨진다. */
 .wrap{position:absolute;left:${(W - (패드몸체 ? 장폭 + 44 : 장폭)) / 2}px;top:${판시작}px;}
 ${패드몸체 ? `
-.pad{position:relative;padding:22px;
+.pad{position:relative;padding:${피드 ? 14 : 22}px;
   background:linear-gradient(160deg,#f4f0e6,#dcd5c6);border-radius:26px;
   box-shadow:0 22px 44px rgba(70,45,18,.34), 0 0 0 1px rgba(255,255,255,.5);}
 .pad+.pad{margin-top:${사이}px;}
@@ -248,10 +261,10 @@ ${패드조각('살구', s.쪽지)}
 //       ⛔ 몸체를 «짙은 회색»으로 하면 짙은 숲 바탕에 묻힌다 → **밝은 은회색**으로.
 //    🅰🅱 `PAD=0` 으로 돌리면 옛 크림 카드 판이 나온다 — 창업자가 둘을 나란히 놓고 고른다.
 //    ⭐ [2026-09-04] `패드몸체` 는 이제 **릴스① 도 같이 쓴다** — 위(그림 정의 옆)로 옮겼다.
-const 장폭2 = 990
+const 장폭2 = 피드 ? 810 : 990
 const 장높2 = Math.round(장폭2 * 800 / 1280)
-const 여백2 = 패드몸체 ? 22 : 15
-const 사이2 = 패드몸체 ? 22 : 26
+const 여백2 = 패드몸체 ? (피드 ? 14 : 22) : 15
+const 사이2 = 피드 ? 18 : (패드몸체 ? 22 : 26)
 const 판2 = (s) => `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:'Gowun';src:url(data:font/woff2;base64,${고운}) format('woff2');}
 /* ⚠️ 패드 배지가 Jua 라 여기서도 실어야 한다 — 안 실으면 글씨가 조용히 기본체로 떨어진다 */
@@ -277,12 +290,12 @@ body{width:${W}px;height:${H}px;overflow:hidden;position:relative;
    ✅ 번호를 «금빛 줄 자리»로 옮겼다 — 줄이 하던 「제목이 여기서 시작한다」를 번호가 대신하고,
       번호는 옅은 배경 무늬에서 **읽히는 글자**가 된다(차례가 정보라던 취지가 오히려 살아난다).
    ⛔ 태그(「패드 · 냉장고」)는 없앴다 — 배지가 같은 말을 «훨씬 크게» 한다. 둘 다 두면 같은 말이 두 번이다. */
-.no{position:absolute;left:70px;top:224px;font-family:'Gowun';font-size:46px;line-height:1;
+.no{position:absolute;left:70px;top:${피드 ? 글머리 - 10 : 224}px;font-family:'Gowun';font-size:46px;line-height:1;
   color:#e8b866;letter-spacing:.02em;}
-.cap2{position:absolute;left:70px;top:236px;width:${W - 380}px;}
+.cap2{position:absolute;left:70px;top:${피드 ? 글머리 : 236}px;width:${W - 380}px;}
 .bar{width:96px;height:7px;border-radius:4px;background:linear-gradient(90deg,#e8b866,#c98f45);margin-bottom:16px;
   ${배지있나 ? 'margin-left:96px;' : ''}}
-.cap2 h1{font-family:'Gowun';font-size:76px;line-height:1.16;color:#f3efe2;letter-spacing:-1.5px;}
+.cap2 h1{font-family:'Gowun';font-size:${피드 ? 64 : 76}px;line-height:1.16;color:#f3efe2;letter-spacing:-1.5px;}
 .cap2 h1 em{font-style:normal;color:#e8b866;}
 .wrap2{position:absolute;left:${(W - (장폭2 + 여백2 * 2)) / 2}px;top:${판시작}px;}
 /* 📱 «패드 몸체» — 균일한 베젤 ＋ 큰 둥근 모서리 ＋ 앞면 카메라 점. 셋이 모여야 「기기」로 읽힌다.
