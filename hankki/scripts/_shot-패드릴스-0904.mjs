@@ -182,7 +182,14 @@ if (어느것 === '전부' || 어느것 === '1') {
   //    ⭐ 첫 칸이 아니라 «이름으로» 고른다 — 그래야 목록 차례가 바뀌어도 같은 편이 열린다.
   //    ⛔ `.or()` 로 「이름 아니면 첫 칸」을 묶었더니 **둘 다 맞아 strict 위반으로 죽었다**(2026-09-04).
   //       ✅ 묶지 말고 «찾아보고 없으면» 첫 칸으로 — 코드로 가른다.
-  const 홍보편 = process.env.SHOT_RECIPE || '돼지고기 김치찌개'
+  // ⛔⛔ [2026-09-04] 여기 「돼지고기 김치찌개」가 박혀 있었다 — **안 꾸민 편**이다.
+  //    📮 창업자 = *"근데 하필이면 아무것도 안꾸민걸 정했어??? 일부러?"* — 일부러가 아니라 실수다.
+  //    뿌리 = 창업자 백업을 «물리기 전»에 시드 목록을 보고 이름을 정해뒀고, 백업을 물린 뒤에도 안 고쳤다.
+  //    📌 홍보물의 핵심이 «레꾸(꾸미기)»인데 정작 «안 꾸민 접시»를 열면 보여줄 게 없다.
+  //    ✅ 꾸민 편으로 간다 — 차돌짬뽕(가을 프레임 ＋ 꼬르곰·펭펭 ＋ 솔방울).
+  //    ⛔ 백업이 바뀌어 그 편이 없으면 «첫 칸»으로 물러나는데, 그건 또 안 꾸민 편일 수 있다 →
+  //       그때 시끄럽게 알린다(조용히 밋밋한 홍보물을 만드는 게 제일 나쁘다).
+  const 홍보편 = process.env.SHOT_RECIPE || '차돌짬뽕'
   const 이름칸 = p.locator('.grid-card button.press').filter({ hasText: 홍보편 })
   const 첫편 = (await 이름칸.count()) ? 이름칸.first() : p.locator('.grid-card button.press').first()
   if (await 첫편.count()) {
@@ -210,6 +217,47 @@ if (어느것 === '전부' || 어느것 === '1') {
       await 찍자(p, '1-04-레꾸', '레꾸 — 꼬르곰·펭펭 스티커 서랍')
     } else console.log('  ⛔ 「레시피 꾸미기」 단추를 못 찾았다')
   } else console.log('  ⛔ 레시피 목록에서 첫 편을 못 찾았다 — 고르는 잣대를 다시 봐야 한다')
+  // 🔥🔥 요리모드 — 📮 창업자 = *"요리모드도 꼭 보여줘야해"*
+  //    ⭐ 패드 강조와 «딱» 맞는 장면이다 — 불 앞에서 «멀리서» 보는 화면이라
+  //       「패드라 크게 보인다」가 그대로 자랑이 된다.
+  //    📚 가는 길·멈출 자리는 `_shot-스토어용화면-0822` 가 2026-08-22 에 알아낸 것을 그대로 쓴다:
+  //       ⛔ 첫 화면은 «재료 준비»(체크리스트)다 — 「재료 준비 완료」를 눌러야 큰 글씨 걸음이 나온다
+  //       ⭐ 「끓」이 든 걸음에서 멈춘다(타이머를 맞추는 «진짜» 장면) — ⛔몇 번째인지 박지 않는다
+  await 홈으로(p); await 시트닫기(p)
+  if (await 탭(p, '레시피')) {
+    const 칸 = p.locator('.grid-card button.press').filter({ hasText: 홍보편 })
+    const 문 = (await 칸.count()) ? 칸.first() : p.locator('.grid-card button.press').first()
+    await 문.click(); await p.waitForTimeout(1800)
+    await 굴리기(p, 900)
+    // ⛔ [2026-09-04] 옛 판(`_shot-스토어용화면-0822`)은 `/요리 시작/` 으로 찾았는데 **지금 이름은 「요리모드 시작」**이다.
+    //    가운데 「모드」가 끼어서 안 맞는다 — 손으로 적은 이름은 앱이 바뀌면 반드시 낡는다(규칙 17).
+    //    ✅ 둘 다 받아 준다. 그래도 못 찾으면 «시끄럽게» 알린다.
+    const 요리시작 = p.getByRole('button', { name: /요리모드 시작|요리 시작/ }).first()
+    if (await 요리시작.count()) {
+      await 요리시작.click(); await p.waitForTimeout(1600)
+      await 찍자(p, '1-07-요리모드-재료', '요리 모드 — 재료 준비')
+      const 시작 = p.getByRole('button', { name: /재료 준비 완료/ }).first()
+      if (await 시작.count()) { await 시작.click(); await p.waitForTimeout(1400) }
+      for (let n = 0; n < 6; n++) {
+        // ⛔ body.innerText 로 보면 «앞 화면이 DOM 에 남아» 엉뚱한 「분」에 걸린다
+        // ⛔ 제일 안쪽 칸은 「STEP 5 / 7」 숫자만 든 것이라 걸음 글이 통째로 빠진다
+        // ✅ 300자 미만 중 «제일 긴 것» = STEP ＋ 걸음 글이 다 든 칸
+        const 글 = await p.evaluate(() => {
+          const 후보 = [...document.querySelectorAll('div,section')]
+            .filter((e) => /STEP\s*\d+\s*\/\s*\d+/.test(e.innerText || '') && e.innerText.length < 300)
+          if (!후보.length) return ''
+          return 후보.reduce((a, c) => (c.innerText.length > a.innerText.length ? c : a)).innerText
+        })
+        if (/끓/.test(글) && /\d+\s*분/.test(글)) break
+        if (n >= 4 && /\d+\s*분/.test(글)) break
+        const 다음 = p.getByRole('button', { name: /다음/ }).first()
+        if (!(await 다음.count())) break
+        await 다음.click(); await p.waitForTimeout(800)
+      }
+      await 찍자(p, '1-08-요리모드-걸음', '요리 모드 — 끓이는 걸음 ＋ 타이머')
+    } else console.log('  ⛔ 「요리 시작」 단추를 못 찾았다')
+  }
+
   await 홈으로(p); await 시트닫기(p)
   if (await 탭(p, '일기')) await 찍자(p, '1-05-일기', '한끼 일기 — 음식 아이콘이 쌓인 달력')
   await 홈으로(p); await 시트닫기(p)
