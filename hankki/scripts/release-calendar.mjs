@@ -131,13 +131,15 @@ function recipes() {
     const f = m[1].match(/from:\s*'(\d{4}-\d{2}-\d{2})'/)
     if (!t || !f) continue
     const r = m[1].match(/review:\s*'([^']*)'/)
-    날짜별.set(f[1], [...(날짜별.get(f[1]) || []), { 제목: t[1], 검수: r ? r[1] : null }])
+    // 📺 출처(sourceUrl)가 붙은 편 = **SNS 레시피**다. 우리 편과 «여는 요일»이 다르다(아래 요일표).
+    const sns = /sourceUrl:\s*'[^']+'/.test(m[1])
+    날짜별.set(f[1], [...(날짜별.get(f[1]) || []), { 제목: t[1], 검수: r ? r[1] : null, sns }])
   }
   return [...날짜별].map(([date, 편]) => {
     const 미검수 = 편.filter((x) => x.검수 !== '창업자')
     const 줄 = 줄이름.get(date)
     return {
-      date, where: '🍳 레시피', kind: 'recipe',
+      date, where: '🍳 레시피', kind: 편.every((x) => x.sns) ? 'sns' : 'recipe',
       what: `${줄 ? `${[...new Set(줄)].join(' · ')} — ` : ''}${편.map((x) => x.제목).join(' · ')}`
         + (미검수.length ? `   ⛔검수 안 받은 것 ${미검수.length}편` : '   ✅검수 완료'),
       keys: 편.map((x) => x.제목),
@@ -202,6 +204,38 @@ function cart() {
 const 링크표에있는몰 = new Set(['coupang', 'oasis', ''])
 export function 링크없는장바구니(items = cartItems()) {
   return items.filter((it) => !it.url && it.mallRaw !== 'hansalim' && !링크표에있는몰.has(it.mallRaw || ''))
+}
+
+// 📅📅📅 **[창업자 확정 2026-09-04] 여는 요일 = 월·수·토. ⛔재론 금지**
+//   📮 창업자 = *"우리 레시피부터 장바구니 sns레시피 올라가는 요일 픽스"* → *"**그러자 월수 토로가자.**"*
+//
+//   ⭐⭐ **왜 요일을 못 박나** — 「1주에 3개씩」 드립 설계의 목적이 **재방문 이유**다
+//      (2026-08-29 창업자 *"많이 쓰는 제품들이니까 소개하는게 좋지"*).
+//      **언제 오는지 모르면 기다릴 수가 없다.** 요일이 흔들리면 드립이 그냥 「가끔 늘어나는 목록」이 된다.
+//   🔢 실측(2026-09-04) = 월·토는 «이미» 그렇게 돌고 있었다 —
+//      레시피 8/03·8/10·8/17·8/24·8/31·9/07 전부 **월** · 장바구니 8/29·9/05·9/12·9/19 전부 **토**.
+//      SNS 만 9/03 목요일에 처음 나갔고, 그래서 **수요일로 옮겼다**(계란후라이조림 9/10→9/09).
+//
+//   ⛔⛔ **규칙으로 적어두면 반드시 낡는다** — 그래서 여기서 «잰다».
+//      날짜를 손으로 넣는 자리가 셋(`weekly.js`·`basics.js`·`curation.js`)이라
+//      하나만 어긋나도 조용히 화요일에 열린다. 사람은 그걸 못 본다.
+//   ⚠️ **이미 열린 것은 안 본다** — 9/03(목)에 나간 SNS 둘은 그대로 둔다. 지난 일은 못 고친다.
+const 요일이름 = ['일', '월', '화', '수', '목', '금', '토']
+const 요일of = (d) => { const [y, m, dd] = d.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd)).getUTCDay() }
+export const 여는요일 = { recipe: 1, sns: 3, cart: 6 }   // 월 · 수 · 토
+const 갈래이름 = { recipe: '🍳 우리 레시피', sns: '📺 SNS 레시피', cart: '🛒 주부의 장바구니' }
+
+/** 앞으로 열릴 것 중 «요일이 어긋난» 것. ⛔이미 열린 것은 세지 않는다. */
+export function 요일어긋남(from = todayKST()) {
+  return gates()
+    .filter((g) => g.date > from && 여는요일[g.kind] !== undefined)
+    .filter((g) => 요일of(g.date) !== 여는요일[g.kind])
+    .map((g) => ({
+      ...g,
+      실제요일: 요일이름[요일of(g.date)],
+      바른요일: 요일이름[여는요일[g.kind]],
+      갈래: 갈래이름[g.kind],
+    }))
 }
 
 export const gates = () =>
@@ -304,6 +338,16 @@ if (mode === '--pending') {
 
 const nx = nextGate()
 if (mode === '--brief' || mode === '--check') {
+  // 📅 **여는 요일이 어긋났나** — 월(우리 레시피) · 수(SNS) · 토(장바구니)
+  //    ⛔ 0건이면 «아무 말도 안 한다» — 시끄러운 게이트는 죽은 게이트다.
+  const 어긋 = 요일어긋남()
+  if (어긋.length) {
+    console.log(`📅 **여는 요일이 어긋난 것 ${어긋.length}건** — 창업자 확정(2026-09-04) = 월·수·토`)
+    어긋.slice(0, 4).forEach((g) => console.log(
+      `   ⛔ ${g.date} ${g.실제요일}요일인데 ${g.갈래}는 «${g.바른요일}요일» — ${g.what.replace(/\s+[⛔✅]검수.*/, '').slice(0, 44)}`))
+    if (어긋.length > 4) console.log(`   · … 외 ${어긋.length - 4}건`)
+    console.log(`   👉 유저가 «언제 오는지»를 못 익히면 드립이 재방문 이유가 못 된다`)
+  }
   // ⭐ 「가장 가까운 한 날짜」와 별개로 **검수 대기는 늘 보인다** — 미리 준비하라고.
   const 대기 = 검수대기(30)
   if (대기.length) {
