@@ -68,7 +68,14 @@ const mine = [...new Set([...drawerDates, ...cardDates, ...cartDates])].sort()
 // ✅ [2026-08-29 창업자 확정 *"소식에 띄우자"*] 「주부의 장바구니」(`kind: 'cart'`)도 여기서 «센다».
 //    ⭐ 소식 페이지 목록에 뜨므로 안내와 달력이 «같은 날짜»를 봐야 한다.
 //    ⛔ 단 「곧 열려요」엔 «안» 나온다 — 그건 아래 ⒞ 가 따로 본다(창업자 *"곧 안내하는거에서 빼면되겠다"*).
-const theirs = [...new Set(calendarGates().filter((g) => !g.todo && g.kind !== 'recipe').map((g) => g.date))].sort()
+// ⛔⛔ [2026-09-04] 여기가 `kind !== 'recipe'` 한 줄이었다가 **깨졌다.**
+//    같은 날 달력에 「여는 요일」을 넣으며 SNS 레시피를 `kind: 'sns'` 라는 **새 갈래**로 갈랐더니,
+//    그 한 줄이 «레시피만» 빼고 있어서 SNS 가 그대로 새어 들어왔다(9/03·9/09 가 달력 쪽에만 생김).
+//    ⭐ 뿌리 = **갈래 이름을 낱개로 견주면, 갈래가 하나 늘 때마다 이 줄이 조용히 틀린다.**
+//    ✅ 그래서 「레시피 갈래」를 «묶음»으로 둔다 — 앞으로 갈래가 늘어도 여기 한 곳만 고치면 된다.
+//    📌 SNS 레시피도 레시피다 — 안내 목록에 안 나가는 것은 2026-08-17 결정 그대로다.
+const 레시피갈래 = new Set(['recipe', 'sns'])
+const theirs = [...new Set(calendarGates().filter((g) => !g.todo && !레시피갈래.has(g.kind)).map((g) => g.date))].sort()
 if (mine.join() === theirs.join()) ok(`여는 날짜가 달력과 같다 — ${theirs.length}개 (${theirs.join(' · ')})`)
 else fail(`⛔ 안내 ${mine.join(' · ')} ≠ 달력 ${theirs.join(' · ')}`)
 
