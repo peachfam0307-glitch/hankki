@@ -143,6 +143,26 @@ export async function 로그아웃() {
   번호쓰기('')
 }
 
+// ⏳⏳ **[2026-09-04 · 오늘 하루를 먹은 자리] 「로그인했나」를 «기다린 뒤에» 묻는다.**
+//   📮 창업자 = *"앱을 껐다가 켜면 그때보이고 **뭔가 불안정해**"* ＋ 폰·패드 기록이 «한 줄도» 없었다
+//   ⛔⛔ `auth.currentUser` 는 앱을 켠 «직후엔 거의 항상 null» 이다 —
+//      파이어베이스가 「이 사람 로그인돼 있다」를 **나중에**(onAuthStateChanged 로) 알려주기 때문이다.
+//      그런데 자동 맞추기는 홈이 그려지고 3초 뒤에 돌면서 그 값을 **그냥 읽었다.**
+//      → 「로그인 안 함」으로 조용히 물러나고, 그건 기록에도 안 남는 이유라 **화면이 늘 비어 있었다.**
+//   ⭐⭐ 이게 «불안정»의 정체다 — 어떨 땐 복원이 먼저 끝나 되고, 어떨 땐 못 되고(＝경주).
+//   ✅ 그래서 «묻기 전에 기다린다». 첫 답이 오면 그때 판단한다.
+//   ⚠️ 8초까지만 기다린다 — 인터넷이 죽어 영영 안 오면 앱이 멈추면 안 된다(그땐 그냥 없는 것으로).
+async function 사람기다리기 (auth, A) {
+  if (auth.currentUser) return 사람으로(auth.currentUser)
+  return await new Promise((풀기) => {
+    let 끝났나 = false
+    const 마치기 = (u) => { if (끝났나) return; 끝났나 = true; try { 그만() } catch { /* noop */ } clearTimeout(시계); 풀기(u ? 사람으로(u) : null) }
+    const 시계 = setTimeout(() => 마치기(auth.currentUser), 8000)
+    let 그만 = () => {}
+    try { 그만 = A.onAuthStateChanged(auth, (u) => 마치기(u)) } catch { 마치기(null) }
+  })
+}
+
 // 로그인 상태를 지켜본다. 되돌려주는 함수를 부르면 그만 본다.
 export function 사람지켜보기(알림) {
   let 그만 = null
@@ -560,7 +580,11 @@ export function 새판알림글 ({ 클라우드, 폰 }) {
 //   ⭐ 다만 «전부» 적지 않는다 — 앱을 켤 때마다 도는 길이라, 늘 나는 이유(바뀐 것 없음·로그인 안 함·
 //      내가 마지막)까지 적으면 50줄이 그걸로 다 차서 **정작 볼 것이 밀려난다**(시끄러운 기록 = 죽은 기록).
 //      ✅ 「막힌 것」만 적는다 — 이 셋은 «사람이 손대야» 풀리는 것들이다.
-const 적을이유 = new Set(['아직안받았다', '다른기기', '되돌릴자리없음', '인터넷'])
+// ⛔⛔ [2026-09-04] 「로그인안함」을 «넣었다» — 그 전엔 빼놨다.
+//   그런데 오늘 창업자 폰·패드가 «한 줄도 없는» 채로 하루를 갔고, 그 침묵의 정체가 바로 이것이었다
+//   (로그인 복원을 안 기다리고 물어서 늘 「로그인 안 함」으로 물러났다).
+//   📌 «조용히 물러나는 길»은 반드시 기록에 남겨야 한다 — 안 남으면 다음에도 못 찾는다.
+const 적을이유 = new Set(['아직안받았다', '다른기기', '되돌릴자리없음', '인터넷', '로그인안함'])
 async function 못한것적기 (한일, 왜, 덧 = {}) {
   try {
     if (!적을이유.has(왜)) return
@@ -580,8 +604,8 @@ export async function 맞추기상태 () {
     밑.받았다표시 = 받았나()
     밑.로그인했나 = 로그인해뒀나()
     if (!밑.로그인했나) return 밑
-    const { F, auth, db } = await 붙기()
-    const 사람 = 사람으로(auth.currentUser)
+    const { F, A, auth, db } = await 붙기()
+    const 사람 = await 사람기다리기(auth, A)   // ⏳ 화면도 «기다린 뒤» 값을 보여준다
     if (!사람) { 밑.로그인했나 = false; return 밑 }
     const 문서 = await F.getDoc(F.doc(db, 'users', 사람.번호))
     const d = 문서.exists() ? (문서.data() || {}) : null
@@ -602,14 +626,18 @@ export async function 맞추기상태 () {
 export async function 저절로올리기(백업만들기, { 확인함 = false } = {}) {
   try {
     if (!로그인해뒀나()) return { 했나: false, 왜: '로그인안함' }
-    const { F, auth, db } = await 붙기()
-    const 사람 = 사람으로(auth.currentUser)
-    if (!사람) return { 했나: false, 왜: '로그인안함' }
+    const { F, A, auth, db } = await 붙기()
+    // ⏳ ⭐여기도 «기다린다» — 앱을 켠 직후엔 로그인 복원이 아직 안 끝나 있다(위 머리주석)
+    const 사람 = await 사람기다리기(auth, A)
+    if (!사람) {
+      await 못한것적기('못올림', '로그인안함')
+      return { 했나: false, 왜: '로그인안함' }
+    }
 
     // ⛔ 안전장치 ② — 클라우드 것을 아직 안 가져왔으면 «절대» 안 올린다.
     //   (앱을 지웠다 깐 빈 폰이 클라우드를 덮는 것을 막는다)
     if (!받았나()) {
-      // 🔍 ⭐ 이 기기는 «자동 받기 길로 들어가지도 못한다** — 부르는 쪽(App.jsx)이
+      // 🔍 ⭐ 이 기기는 «자동 받기 길로 들어가지도 못한다» — 부르는 쪽(App.jsx)이
       //    「다른기기」일 때만 받기로 넘어가기 때문이다. 그러니 반드시 남긴다.
       await 못한것적기('못올림', '아직안받았다')
       return { 했나: false, 왜: '아직안받았다' }
@@ -776,9 +804,13 @@ function 지문맞추기(판) {
 export async function 저절로받기(백업만들기) {
   try {
     if (!로그인해뒀나()) return { 했나: false, 왜: '로그인안함' }
-    const { F, auth, db } = await 붙기()
-    const 사람 = 사람으로(auth.currentUser)
-    if (!사람) return { 했나: false, 왜: '로그인안함' }
+    const { F, A, auth, db } = await 붙기()
+    // ⏳ ⭐로그인 복원을 «기다린다» — 안 기다리면 앱을 켠 직후엔 늘 null 이다(위 머리주석)
+    const 사람 = await 사람기다리기(auth, A)
+    if (!사람) {
+      await 못한것적기('못받음', '로그인안함')
+      return { 했나: false, 왜: '로그인안함' }
+    }
 
     const 문서 = await F.getDoc(F.doc(db, 'users', 사람.번호))
     if (!문서.exists()) return { 했나: false, 왜: '클라우드비었음' }
