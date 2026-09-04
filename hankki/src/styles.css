@@ -880,6 +880,43 @@ img {
 }
 
 /* ── 요리 기록 앨범(내가 만든 요리 아카이브) ── */
+/* 📔📔 달 고르기 줄 — 「③ 섞기」 (창업자 확정 2026-09-04 *"3번하자"*)
+   ⭐ 달 «안»은 아래로 스크롤, 달 «사이»는 이 줄로 점프. 목록은 그대로 다 이어진다.
+   🔢 왜 = 일기 365개면 스크롤이 19.7화면이라 작년 것에 닿을 방법이 없었다.
+   ⛔ `position: sticky` 인데 **바탕색이 없으면 아래 타일이 통과해 겹친다**(`.topbar-stick` 이 겪은 그것).
+   🔢 z-index 20 = 「보면서 쓰기」 띠(19)보다 위 · 시트(3500)보다 아래 — `.topbar-stick` 과 같은 잣대. */
+.mon-chips {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  /* ⛔ `margin: 0 -20px` 로 화면 padding 을 되돌려야 첫 칩이 안 깎인다(`.hscroll inset` 과 같은 함정) */
+  margin: 0 -20px 12px;
+  padding: 8px 20px;
+  background: var(--bg);
+  scrollbar-width: none;
+}
+.mon-chips::-webkit-scrollbar { display: none; }
+.mon-chip {
+  flex: 0 0 auto;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--text-sub);
+  font-size: 13.6px;
+  font-weight: 700;
+  white-space: nowrap;
+  font-family: inherit;
+  min-height: 34px;
+}
+.mon-chip.on {
+  background: var(--brown);
+  border-color: var(--brown);
+  color: #fff;
+}
 .album-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

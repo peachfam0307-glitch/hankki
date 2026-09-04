@@ -311,6 +311,10 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   // 다이어리는 «날짜»만 쓴다(달력 표시용). 내용은 다이어리 화면이 보여준다.
   const diaryDays = useMemo(() => new Set(diary.filter((d) => d.kind === 'diary').map((d) => dayKey(d.at))), [diary])
   const [dayFilter, setDayFilter] = useState(null) // 'y-m-d' | null — 캘린더에서 고른 날
+  // 📔 달 고르기 줄(③ 섞기) — 누른 달과, 달마다의 DOM 자리.
+  //    ⭐ `고른달` 은 «걸러내는 값이 아니다» — 칩에 표시만 한다. 목록은 그대로 다 이어진다(그게 섞기의 뜻).
+  const [고른달, set고른달] = useState(null)
+  const 달칸 = useRef({})
 
   // 🐛🐛 기록의 아이콘은 레시피에 «저장된» 값을 먼저 본다.
   //   여태 제목으로 다시 추측해서(`guessFoodIcon(e.title)`), 사람이 직접 고른 아이콘이
@@ -735,8 +739,50 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               )}
               {/* 🗓 날짜를 안 골랐을 땐 **달마다 갈라서** 보여준다 (창업자 2026-09-03)
                   ⛔ 전엔 여기서 `entries` 를 통째로 그려 지난달 것이 끝없이 이어졌다. */}
+              {/* 📔📔 [창업자 확정 2026-09-04] **달 고르기 줄 — 「③ 섞기」**
+                  📮 창업자 = *"아래로 쭉 무한스크롤되기 할건지 달별로 옆으로 넘기게 할건지"* → 시안을 보고 *"3번하자"*
+                  ⭐ 섞기 = **달 «안»은 아래로 스크롤 · 달 «사이»는 이 줄로 점프.**
+                     ②(한 달씩 옆으로 넘기기)를 안 고른 이유 = 「쌓인 느낌」이 사라진다.
+                     우리가 파는 게 「한 끼가 쌓이면 한 해가 돼요」인데 한 달만 보이면 그게 안 보인다.
+                  🔢 왜 필요한가(실측 · 폰 411px · 타일 120px · 3칸) —
+                     30개=1.6화면 · 100개=5.5화면 · **365개(1년)=19.7화면** · 1000개(3년)=53.8화면.
+                     ⛔ 1년 쓰면 작년 1월에 닿는 데 **20화면**을 긁어야 했다. **오래 쓸수록 나빠지는 구조**였다.
+                  ⭐ `position: sticky` 로 붙인다 — 아래로 한참 내려가도 다른 달로 갈 수 있어야 값을 한다.
+                     ⛔ 바탕색을 반드시 깔아야 한다(위 `.topbar-stick` 주석의 교훈 — 안 깔면 글자가 통과해 겹친다).
+                  ⛔ **달이 하나뿐이면 안 그린다** — 고를 것이 없는데 자리만 먹는다. */}
+              {!dayFilter && monthGroups.length > 1 && (
+                <div className="mon-chips">
+                  {monthGroups.map((g) => (
+                    <button
+                      key={g.ym}
+                      type="button"
+                      className={`mon-chip press${고른달 === g.ym ? ' on' : ''}`}
+                      aria-pressed={고른달 === g.ym}
+                      onClick={() => {
+                        set고른달(g.ym)
+                        const el = 달칸.current[g.ym]
+                        if (!el) return
+                        // ⛔⛔ 스크롤하는 것은 `window` 가 «아니다» — `.app-frame` 이 `overflow:hidden` 이고
+                        //    실제로 굴러가는 건 **`.screen`** 이다(`styles.css:305`).
+                        //    처음에 `window.scrollTo` 를 썼다가 재현판에서 «0→0» 으로 잡혔다.
+                        //    📌 규칙 18 — 「안 움직인다」가 아니라 «내가 엉뚱한 것을 굴리고 있었다».
+                        const 판 = el.closest('.screen')
+                        if (!판) return
+                        // ⭐ 칩 줄이 sticky 라 그 높이(＋여백)만큼 빼야 달 머리글이 줄에 안 가린다.
+                        const 줄 = 판.querySelector('.mon-chips')
+                        const 줄높이 = 줄 ? 줄.offsetHeight : 46
+                        const y = 판.scrollTop + el.getBoundingClientRect().top
+                          - 판.getBoundingClientRect().top - 줄높이 - 8
+                        판.scrollTo({ top: Math.max(0, y), behavior: 'smooth' })
+                      }}
+                    >
+                      {g.label.replace('년 ', '.').replace('월', '')}
+                    </button>
+                  ))}
+                </div>
+              )}
               {!dayFilter && monthGroups.map((g) => (
-                <div key={g.ym} style={{ marginBottom: 18 }}>
+                <div key={g.ym} ref={(el) => { 달칸.current[g.ym] = el }} style={{ marginBottom: 18 }}>
                   <div className="t-sub" style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--brown)', margin: '0 2px 8px' }}>
                     {g.label} <span style={{ fontWeight: 700 }}>{g.items.length}개</span>
                   </div>

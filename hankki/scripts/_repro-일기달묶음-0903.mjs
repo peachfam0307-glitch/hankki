@@ -43,6 +43,14 @@ const 심을것 = [
   ['수제 떡갈비', 9, 2], ['공심채 볶음', 9, 1], ['수제 떡갈비', 9, 1],   // 9월 — 떡갈비가 «두 번»
   ['수제 떡갈비', 8, 28], ['공심채 볶음', 8, 26], ['공심채 볶음', 8, 20], // 8월 — 둘 다 두 번
   ['엄마표 김밥', 8, 14], ['누룽지삼계탕', 8, 9],
+  // 📔 [2026-09-04] 7월·6월을 더했다 — **달 고르기 줄(③ 섞기)을 재려면 화면이 길어야 한다.**
+  //    ⛔ 8장만 심었을 땐 전체가 한 화면에 들어와 «스크롤할 곳이 없어» 점프 검사가 늘 0 이었다.
+  //       그건 앱 버그가 아니라 **판이 짧아서 생긴 거짓 빨간불**이다.
+  //    ⛔ 제목을 «다 다르게» 준다 — 같은 달에 같은 제목이면 앱이 겹침을 지워서(위 ② 검사) 칸이 안 늘어난다.
+  ['간장 계란밥', 7, 30], ['오이무침', 7, 27], ['감자조림', 7, 24], ['어묵볶음', 7, 20],
+  ['콩나물국', 7, 16], ['가지볶음', 7, 12], ['버섯전골', 7, 8], ['숙주나물', 7, 4],
+  ['깻잎장아찌', 6, 29], ['시금치나물', 6, 25], ['두부조림', 6, 21], ['멸치볶음', 6, 17],
+  ['호박전', 6, 13], ['새우볶음밥', 6, 9], ['달래무침', 6, 5], ['북엇국', 6, 2],
 ]
 const 일기들 = 심을것.map(([title, m, d], i) => ({
   id: `t${i}`, recipeId: `r${i}`, title, source: '창업자', at: 때(m, d), rating: 5, note: '', photo: null,
@@ -122,6 +130,41 @@ for (const 칸 of 판) {
 const i9 = 달머리.indexOf('2026년 9월')
 const i8 = 달머리.indexOf('2026년 8월')
 적기(i9 >= 0 && i8 >= 0 && i9 < i8, `9월이 8월보다 «위»에 있다 (9월 ${i9}번째 · 8월 ${i8}번째)`)
+
+// ⑤⑥ 📔 달 고르기 줄 — 「③ 섞기」 (창업자 확정 2026-09-04 *"3번하자"*)
+//    ⭐ 이 줄이 있어야 «먼 달»에 닿을 수 있다. 없으면 1년치가 20화면이라 스크롤로만 가야 했다.
+//    ⛔ 「칩이 있나」로 끝내지 않는다 — **눌러서 그 달로 «실제로 갔나»**를 잰다(규칙 18 ⓘ).
+const 칩들 = await p.evaluate(() => [...document.querySelectorAll('.mon-chip')].map((b) => b.textContent.trim()))
+적기(칩들.length === 달머리.length,
+  `달 고르기 칩이 달 수만큼 있다 — ${칩들.length}개 (${칩들.join(' · ') || '없다'})`)
+
+if (칩들.length >= 2) {
+  // 둘째 칩(8월)을 눌러 그 달 머리글이 «화면 위쪽»으로 오는지 본다
+  // ⛔ 굴러가는 것은 `window` 가 아니라 **`.screen`** 이다(`.app-frame` 이 overflow:hidden · styles.css:305).
+  //    처음에 window.scrollY 로 쟀다가 늘 «0→0» 이 나왔다 — 앱이 아니라 «내가 엉뚱한 것을 보고 있었다».
+  const 전 = await p.evaluate(() => (document.querySelector('.screen') || {}).scrollTop ?? -1)
+  await p.click('.mon-chip:nth-child(2)').catch(() => {})
+  await p.waitForTimeout(1100)
+  const 후 = await p.evaluate(() => {
+    const 줄 = document.querySelector('.mon-chips')
+    const 머리 = [...document.querySelectorAll('.log-main .t-sub')].find((e) => /2026년\s*8월/.test(e.textContent))
+    return {
+      y: (document.querySelector('.screen') || {}).scrollTop ?? -1,
+      켠칩: (document.querySelector('.mon-chip.on') || {}).textContent || null,
+      머리y: 머리 ? Math.round(머리.getBoundingClientRect().top) : null,
+      줄바닥: 줄 ? Math.round(줄.getBoundingClientRect().bottom) : null,
+    }
+  })
+  // ⭐ 「8월 머리글이 칩 줄 «바로 아래»에 왔나」 — 가려지면 누른 값이 없다
+  const 잘왔나 = 후.머리y !== null && 후.줄바닥 !== null
+    && 후.머리y >= 후.줄바닥 - 4 && 후.머리y < 후.줄바닥 + 90
+  적기(잘왔나,
+    `칩을 누르면 그 달이 칩 줄 바로 아래로 온다 — 8월 머리 y=${후.머리y} · 칩줄 바닥 y=${후.줄바닥} (스크롤 ${전}→${후.y})`)
+  적기((후.켠칩 || '').includes('8'), `누른 칩에 표시가 남는다 — «${후.켠칩 || '없다'}»`)
+  // 다음 칸(달력 검사)이 원래 자리에서 시작하도록 맨 위로 되돌린다
+  await p.evaluate(() => { const s = document.querySelector('.screen'); if (s) s.scrollTop = 0 })
+  await p.waitForTimeout(400)
+}
 
 // ③ ⭐기록은 안 지워졌다 — 달력에서 8/26 을 누르면 그날 것이 나온다
 //    ⛔ 「겹쳐서 안 보이게」 한 것이 「지운 것」이 되면 그건 고친 게 아니라 망친 것이다
