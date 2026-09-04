@@ -559,13 +559,21 @@ export default function EditorScreen({ id, prefill }) {
 
     // ② AI — «뒤에서». ⭐ 얹는 규칙은 `mergeTidy` 한 곳에 있다(여기와 `App.jsx` 가 «같은 말»)
     //   👁 [ⓒ] 글자와 «함께 사진»을 준다. ⛔사진이 없으면(붙여넣기·직접 작성) 지금과 똑같이 돈다.
+    // 💀💀 **[2026-09-04] 시작 «전»에 「아직 못 다듬음」을 남긴다** — `App.jsx` 와 «같은 말».
+    //   ⛔ 안드로이드가 앱을 정리하면 이 약속(20~60초)이 통째로 사라진다(창업자 영상 실측).
+    //      그때 표시가 없으면 **영영 안 다듬어진다** — 열쇠는 이미 나갔는데.
+    //   ✅ 표시가 남아 있으면 그 레시피를 열 때 `RecipeDetailScreen` 이 저절로 만회한다(열쇠 0).
+    //   🧪 판 = `_repro-앱이정리됨-0904.mjs`
+    updateRecipe(r.id, { tidyFail: 1 })
     tidyRecipe(combined, shotAccum.current).then((ai) => {
       if (ai) {
         채우기(mergeTidy(r, ai))
+        updateRecipe(r.id, { tidyFail: 0 })   // ✅ 다 됐으니 표시를 지운다(안 지우면 또 다듬는다)
         nav.showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
         return
       }
       // ⛔ 실패는 «유저에게 안 알린다» — 이미 채워져 있어 할 일이 0이다. 창업자(운영자)만 이유를 본다.
+      //    ⭐ 표시는 «그대로 둔다» — 다음에 그 레시피를 열 때 만회한다.
       if (tidyFounder()) nav.showToast('AI 다듬기는 못 했어요' + tidyTail())
     })
   }
