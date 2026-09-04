@@ -157,10 +157,15 @@ function recipes() {
 export function cartItems() {
   const out = []
   let cat = ''
+  let catIcon = ''
   for (const line of read('src/data/curation.js').split('\n')) {
     if (/^\s*(\/\/|\*|\/\*)/.test(line)) continue
     const c = line.match(/^\s*cat:\s*'([^']+)'/)
-    if (c) cat = c[1]
+    if (c) {
+      cat = c[1]
+      // 🖼 갈래 대표 그림 — 제품이 자기 그림을 안 가지면 이걸 «물려받는다»(`ShopScreen.jsx:331` `it.icon || g.icon`)
+      catIcon = (line.match(/icon:\s*'([^']*)'/) || [])[1] || ''
+    }
     const name = line.match(/^\s*\{\s*name:\s*'([^']+)'/)
     if (!name) continue
     // ⛔ 값에 작은따옴표가 없다는 보장이 없어 큰따옴표 판도 같이 본다(2026-08-29 `benefit` 실측에서 겪었다)
@@ -168,6 +173,8 @@ export function cartItems() {
     out.push({
       name: name[1], brand: f('brand'), cat, mall: f('mall') || (/url:/.test(line) ? '직접' : ''),
       benefit: f('benefit'), tag: f('tag'), from: f('from') || null,
+      // 🖼 `ownIcon` = 제 그림 · `icon` = 화면에 실제로 뜨는 것(제 그림 없으면 갈래 대표를 물려받는다)
+      ownIcon: f('icon'), icon: f('icon') || catIcon, catIcon,
       // 🔗 [2026-09-04] 「사러가기」가 «제 상품»으로 가나 — 검수 때 창업자에게 링크를 달라고 말하려고 같이 읽는다
       url: f('url'), mallRaw: f('mall'),
     })
