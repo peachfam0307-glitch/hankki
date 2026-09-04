@@ -289,9 +289,28 @@ if (어느것 === '전부' || 어느것 === '2') {
       await 냉장고.click(); await p.waitForTimeout(1500)
       const 비었나 = await p.evaluate(() => /비어|아직 없|담아/.test(document.body.innerText))
       if (비었나) console.log('  ⚠️⚠️ 냉장고가 «비어 있다» — 이 장은 홍보물에 못 쓴다. 재료를 채워야 한다')
-      await 찍자(p, '2-04-냉장고', '냉장고 — 있는 재료')
-      await 굴리기(p, 700)
-      await 찍자(p, '2-05-냉장고-아래', '냉장고 — 아래쪽')
+      await 찍자(p, '2-04-냉장고', '냉장고 — 있는 재료 ＋ 유통기한')
+      // 🧾🧾 [창업자 2026-09-04] *"냉장고도 «영수증 찍고 재료 담기 유통기한 메모» 되는거 보여주면 좋겠어"*
+      //    🔢 실측 = `PantryView` 에 둘이 나란히 있다 — **「＋재료 담기」가 주 · 「영수증」이 보조**.
+      //       (2026-08 에 창업자가 *"영수증스캔이 버튼이 더 커서. 영수증 스캔하는 탭이라고 생각할 것 같아"* 라고
+      //        해서 크기를 뒤집었다 — 그 결정이 화면에 그대로 있다)
+      //    ⭐ 홍보물엔 «둘 다» 보여준다 — 재료를 넣는 길이 여럿이라는 게 자랑거리다.
+      const 담기 = p.getByRole('button', { name: /재료 담기/ }).first()
+      if (await 담기.count()) {
+        await 담기.click(); await p.waitForTimeout(1400)
+        await 찍자(p, '2-06-재료담기', '냉장고 — 재료 담기 (유통기한 메모)')
+        await 시트닫기(p)
+        await p.keyboard.press('Escape').catch(() => {})
+        await p.waitForTimeout(900)
+      } else console.log('  ⛔ 「＋재료 담기」 단추를 못 찾았다')
+      const 영수증 = p.getByRole('button', { name: /^영수증$/ }).first()
+      if (await 영수증.count()) {
+        // ⛔ 누르면 «파일 고르기»가 열린다 — 취소하면 화면이 그대로다.
+        //    그래서 «누르지 않고» 그 자리가 보이게만 찍는다(홍보물엔 「이런 길이 있다」가 보이면 된다).
+        await 영수증.scrollIntoViewIfNeeded().catch(() => {})
+        await p.waitForTimeout(700)
+        await 찍자(p, '2-07-영수증자리', '냉장고 — 영수증으로 담는 길')
+      } else console.log('  ⛔ 「영수증」 단추를 못 찾았다')
     } else console.log('  ⛔ 냉장고 들어가는 자리를 못 찾았다')
   }
 }
