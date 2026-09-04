@@ -35,6 +35,7 @@ const APP = new URL('..', import.meta.url).pathname
 const 폰트 = (이름) => readFileSync(join(APP, 'design/promo/fonts', 이름)).toString('base64')
 const 펜 = 폰트('nanumpen-korean-400.woff2')
 const 주아 = 폰트('jua-korean-400.woff2')
+const 고운 = 폰트('gowun-dodum-korean-400.woff2')
 
 // 🎞 릴스에 넣을 차례 — «흐름»으로 짝짓는다(아무거나 둘씩 묶지 않는다)
 //    ⭐ 위/아래가 «한 이야기»라야 한 칸으로 읽힌다. 제목은 그 이야기를 한 줄로 말한다.
@@ -65,15 +66,34 @@ const 바탕 = {
 const 글씨색 = { 살구: ['#5a3113', '#a4521b'], 세이지: ['#2f3a24', '#5a7038'] }
 const 테이프색 = { 살구: ['rgba(214,160,104,.62)', 'rgba(192,136,80,.55)'], 세이지: ['rgba(160,176,132,.62)', 'rgba(136,154,108,.55)'] }
 
+// 🎨🎨 **릴스 ① 과 ② 는 «옷이 통째로» 다르다** (창업자 2026-09-04)
+//    📮 *"릴스 2 릴스 1이랑 **배경 색 다른게 없는 것 같아. 완전 다른 스타일이 나와야지.**"*
+//    ⛔ 맞는 지적이다 — 그 전엔 **바탕색만 살구/세이지로 갈랐고** 짜임·글씨·화면 테두리가 전부 같았다.
+//       바탕색 둘 다 «밝은 파스텔»이라 인스타 피드에서 나란히 걸리면 한 릴스로 읽힌다.
+//    ✅ 그래서 **명도부터 뒤집는다** — ①은 밝은 살구 종이, ②는 **짙은 숲**. 그리고 다섯을 다 갈랐다:
+//       | | 릴스① 스크랩북 | 릴스② 살림노트 |
+//       |---|---|---|
+//       | 바탕 | 살구 크라프트 종이 ＋ 결·얼룩 | **짙은 숲 ＋ 옅은 모눈** |
+//       | 글씨 | 나눔펜 «손글씨» 104px 갈색 | **고운돋움 «정자» 92px 크림** |
+//       | 제목 장식 | 마스킹테이프 | **큰 번호(01~06) ＋ 금빛 밑줄** |
+//       | 곁말 | 오른쪽 둥근 «알약» 쪽지 | **네모 «태그»(테두리만)** |
+//       | 화면 | 종이에 «붙인» 듯 둥근 모서리 | **크림 카드 «위에 얹은» 각진 모서리** |
+//    ⭐ 번호를 쓴 이유 = 릴스②는 **차례가 곧 내용**이다(담기 → 고르기 → 사기 → 채우기 → 찍기 → 꺼내기).
+//       ①은 「이런 게 있어요」라 차례가 없다. 그래서 ①엔 번호를 안 붙인다.
 const 짝 = [
   { 이름: 'R1-1', 옷: '살구', 위: '1-02-요리책', 아래: '1-03-상세', 제목: '패드로 보면', 제목2: '한 판에 다 보여요', 쪽지: '패드' },
   { 이름: 'R1-2', 옷: '살구', 위: '1-04-레꾸', 아래: '1-06-레꾸자랑', 제목: '꼬르곰·펭펭이', 제목2: '이만큼 커져요', 쪽지: '레꾸' },
   { 이름: 'R1-3', 옷: '살구', 위: '1-07-요리모드-재료', 아래: '1-08-요리모드-걸음', 제목: '불 앞에서도', 제목2: '멀리서 보여요', 쪽지: '요리모드' },
   { 이름: 'R1-4', 옷: '살구', 위: '1-11-레꾸-프레임', 아래: '1-11-레꾸-데코', 제목: '붙일 게', 제목2: '이만큼 많아요', 쪽지: '꾸미기' },
-  { 이름: 'R1-5', 옷: '살구', 위: '1-05-일기', 아래: '1-09-일기-펼침', 제목: '만들어 먹은 게', 제목2: '쭉 쌓여요', 쪽지: '일기' },
+  { 이름: 'R1-5', 옷: '살구', 위: '1-05-일기', 아래: '1-12-일기-속지', 제목: '틀도 골라서', 제목2: '내 맘대로', 쪽지: '속지' },
   { 이름: 'R1-6', 옷: '살구', 위: '1-10-일기-틀', 아래: '1-01-홈', 제목: '한 끼가 쌓이면', 제목2: '한 해가 돼요', 쪽지: '한끼일기' },
-  { 이름: 'R2-1', 옷: '세이지', 위: '2-01-장보기', 아래: '2-02-장바구니', 제목: '담기만 하면', 제목2: '장보기 끝', 쪽지: '장보기' },
-  { 이름: 'R2-2', 옷: '세이지', 위: '2-04-냉장고', 아래: '2-06-재료담기', 제목: '영수증 찍으면', 제목2: '냉장고로 쏙', 쪽지: '냉장고' },
+  // ── 릴스 ② 살림노트 (짙은 숲 · 번호 있음) ──────────────────
+  { 이름: 'R2-1', 옷: '숲', 번호: '01', 위: '2-01-장보기', 아래: '2-02-장바구니', 제목: '필요한 걸 담으면', 제목2: '장보기 끝', 쪽지: '장보기' },
+  { 이름: 'R2-2', 옷: '숲', 번호: '02', 위: '2-08-큐레이션-갈래', 아래: '2-09-큐레이션-제품', 제목: '주부가 골라 둔 걸', 제목2: '갈래별로', 쪽지: '큐레이션' },
+  { 이름: 'R2-3', 옷: '숲', 번호: '03', 위: '2-10-큐레이션-더', 아래: '2-03-장바구니-더', 제목: '사러가기까지', 제목2: '한 자리에서', 쪽지: '사러가기' },
+  { 이름: 'R2-4', 옷: '숲', 번호: '04', 위: '2-04-냉장고', 아래: '2-06-재료담기', 제목: '유통기한까지', 제목2: '적어 둬요', 쪽지: '냉장고' },
+  { 이름: 'R2-5', 옷: '숲', 번호: '05', 위: '2-07-영수증자리', 아래: '2-04-냉장고', 제목: '영수증 찍으면', 제목2: '냉장고로 쏙', 쪽지: '영수증' },
+  { 이름: 'R2-6', 옷: '숲', 번호: '06', 위: '2-05-냉장고-아래', 아래: '2-01-장보기', 제목: '있는 걸로', 제목2: '뭐 해먹지', 쪽지: '살림' },
 ]
 
 const 있는것 = new Set(readdirSync(찍은곳).filter((f) => f.endsWith('.png')).map((f) => f.slice(0, -4)))
@@ -139,10 +159,59 @@ h1 em{font-style:normal;color:#8a4a1c;}
 <div class="wrap"><img class="shot" src="${그림(s.위)}"><img class="shot" src="${그림(s.아래)}"></div>
 </body></html>`
 
+// 🌲🌲 **릴스 ② — 「살림노트」 판** (2026-09-04 · 창업자 = *"완전 다른 스타일이 나와야지"*)
+//    ⭐ 위 표의 다섯을 코드로 옮긴 것이다. ⛔릴스① 판(`판()`)을 손대지 않는다 — 창업자가 그건 *"좋앙"* 했다.
+//    📐 자리 = 화면을 «크림 카드»가 감싸므로 화면이 그만큼 작아진다(1040 → 990).
+//       🔢 990 × 800/1280 = 619 · 카드 = 990+15×2 = 1020 × 649 · 둘 ＋ 사이 26 = **1324**
+//          → 릴스①(1322)과 «같은 높이»라 안전지대 판정이 그대로 간다(창업자가 이미 확정한 값).
+const 장폭2 = 990
+const 장높2 = Math.round(장폭2 * 800 / 1280)
+const 여백2 = 15
+const 사이2 = 26
+const 판2 = (s) => `<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Gowun';src:url(data:font/woff2;base64,${고운}) format('woff2');}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:${W}px;height:${H}px;overflow:hidden;position:relative;
+  /* 🌲 짙은 숲 — 릴스①(밝은 살구)과 «명도»부터 뒤집는다. 가을 저녁 색이라 계절도 안 어긋난다 */
+  background:
+    radial-gradient(ellipse at 22% 6%, rgba(126,158,124,.30), transparent 58%),
+    radial-gradient(ellipse at 88% 94%, rgba(11,24,19,.62), transparent 64%),
+    linear-gradient(163deg,#263a30 0%,#1b2a24 52%,#121e19 100%);}
+/* 🔲 옅은 «모눈» — 살림 노트의 결. ①의 종이 «섬유»와 완전히 다른 무늬다 */
+.grid{position:absolute;inset:0;opacity:.85;
+  background-image:repeating-linear-gradient(0deg, rgba(232,240,222,.052) 0 1px, transparent 1px 48px),
+                   repeating-linear-gradient(90deg, rgba(232,240,222,.052) 0 1px, transparent 1px 48px);}
+/* 🔢 큰 번호 — 차례가 곧 내용이라 번호가 «정보»다(장식이 아니다) */
+.no{position:absolute;right:64px;top:${글머리 - 86}px;font-family:'Gowun';font-size:196px;
+  line-height:1;color:rgba(232,240,222,.085);letter-spacing:-.04em;}
+.cap2{position:absolute;left:70px;top:${글머리}px;width:${W - 220}px;}
+.bar{width:96px;height:7px;border-radius:4px;background:linear-gradient(90deg,#e8b866,#c98f45);margin-bottom:26px;}
+.cap2 h1{font-family:'Gowun';font-size:88px;line-height:1.16;color:#f3efe2;letter-spacing:-1.5px;}
+.cap2 h1 em{font-style:normal;color:#e8b866;}
+/* 🏷 네모 «태그» — ①의 둥근 알약 쪽지와 모양이 반대다 */
+.tag{position:absolute;left:70px;top:${글머리 + 232}px;font-family:'Gowun';font-size:30px;color:#e8b866;
+  border:2px solid rgba(232,184,102,.5);padding:8px 22px;border-radius:5px;letter-spacing:.09em;}
+.wrap2{position:absolute;left:${(W - (장폭2 + 여백2 * 2)) / 2}px;top:${판시작}px;}
+/* 🗂 크림 «카드» 위에 화면을 얹는다 — ①은 종이에 붙인 듯 둥글었고, 여기선 각지게 */
+.card{background:#f4efe3;padding:${여백2}px;border-radius:14px;
+  box-shadow:0 26px 52px rgba(0,0,0,.46), 0 0 0 1px rgba(255,255,255,.06);}
+.card+.card{margin-top:${사이2}px;}
+.card img{width:${장폭2}px;height:${장높2}px;border-radius:7px;display:block;object-fit:cover;}
+</style></head><body>
+<div class="grid"></div>
+<div class="no">${s.번호 || ''}</div>
+<div class="cap2"><div class="bar"></div><h1>${s.제목}<br><em>${s.제목2}</em></h1></div>
+<div class="tag">${s.쪽지}</div>
+<div class="wrap2">
+  <div class="card"><img src="${그림(s.위)}"></div>
+  <div class="card"><img src="${그림(s.아래)}"></div>
+</div>
+</body></html>`
+
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const p = await b.newPage({ viewport: { width: W, height: H } })
 for (const s of 짝) {
-  await p.setContent(판(s), { waitUntil: 'load' })
+  await p.setContent(s.옷 === '숲' ? 판2(s) : 판(s), { waitUntil: 'load' })
   await p.waitForTimeout(400)
   await p.screenshot({ path: join(낼곳, s.이름 + '.png') })
   console.log(`  ✅ ${s.이름}  「${s.제목} ${s.제목2}」  (${s.위} ＋ ${s.아래})`)

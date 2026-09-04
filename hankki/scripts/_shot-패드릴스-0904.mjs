@@ -127,6 +127,54 @@ await 시트닫기(p)
 //       그래야 앱이 실제로 쓰는 복원 길(`importAll` ＋ 사진 창고 되살리기)을 «그대로» 탄다(규칙 30).
 //    ⛔⛔ 이 파일은 «창업자 개인 데이터»다 — 저장소에 넣지 않는다. 경로만 밖에서 받는다.
 //       실행: BACKUP=/…/백업.json node scripts/_shot-패드릴스-0904.mjs
+// 🍂🍂 **가을 일기를 «내가» 만들어 넣는다** (2026-09-04)
+//    📮 창업자 = *"한끼일기도 «예쁜 틀»로 바꿔줘. 너무 저거는 **백지**라.."*
+//       → *"**내가 꾸민 거 말고..**"* → *"**네가 꾸며서 넣어줘 가을 느낌나게**"*
+//
+//    ⛔⛔ **두 번 헛돌고 알아낸 것 둘 (규칙 18 — 확인 방식부터 의심한다)**
+//    ⑴ **덮어쓰기** — 처음엔 화면을 띄운 «뒤» localStorage 를 고치고 새로고침했다. 그런데
+//       `ctx.addInitScript` 가 **페이지가 열릴 때마다 원본 백업을 다시 붓는다.** 내 꾸미기가 매번 지워졌다.
+//       ✅ 그래서 **붓는 물에 미리 타 둔다** — 아래에서 `담을것.diary` 에 넣고 시작한다.
+//    ⑵ **창업자 백업의 일기 21개 중 앱이 「일기」로 보는 건 둘뿐이다** — 나머지 19개엔 `kind: 'diary'` 가
+//       아예 없다(요리 기록으로 들어온 것). 그래서 그 날을 열면 **「여기에 써요」 빈칸**이 뜬다.
+//       실제로 9/2 를 열어 백지가 나왔고, 그제서야 데이터를 다시 봤다.
+//       ✅ 그리고 그 둘은 창업자가 꾸민 것이라 **쓰면 안 된다.** → **새 일기를 만든다.**
+//
+//    🔢 가을 자산은 짐작하지 않고 실측해서 골랐다 (`release-calendar.mjs --on 2026-09-01` 이 연 것들):
+//       · 꼬르곰·펭펭의 가을 = `au_b20 au_b09 au_b24 au_b26~b30`
+//       · 가을 단풍·낙엽 = `au_i24 au_i28 au_i38 au_i39 au_i29 au_i42`
+//       · 가을 소품 8 = `au_i43`담요 `au_i44`머그 `au_i45`호박 `au_i46`도토리 `au_i47`초 `au_i48`장화 `au_i49`바구니 `au_i50`버섯
+//    ⛔ 10/1·11/1 에 열리는 것은 **안 쓴다** — 홍보물에 «지금 못 받는 것»을 그리면 거짓말이 된다.
+//    ⛔ 글은 «기능 이름»만 — 개수·숫자를 쓰지 않는다(2026-09-04 창업자 = *"260편은 내 앱만.. 되는건데"*).
+//    ⛔ 글자가 앉는 왼쪽 위는 비워 둔다 — 스티커가 글을 덮으면 「지저분해 보인다」(2026-09-03 창업자).
+const { todayKST } = await import('../src/today.js')   // ⛔ 날짜를 여기서 만들지 않는다(절대원칙 27)
+const 가을일기날 = todayKST()
+const 가을일기만들기 = () => {
+  const [y, m, d] = 가을일기날.split('-').map(Number)
+  return {
+    id: 'shot-가을일기-0904', kind: 'diary',
+    at: Date.UTC(y, m - 1, d, 3, 0, 0),           // KST 정오 = UTC 03:00
+    paper: { rule: 'plain', skin: 'kraft', art: 'today' },
+    note: '선선해져서 국물이 자꾸 생각나는 날.',
+    title: '가을 첫 들깨탕', line: '뜨끈한 게 최고', weather: 'partly', font: 'gaegu', size: 'md',
+    // 📐 자리는 «찍은 판에서 역산»했다 — 짐작이 아니다(`_shot-일기틀시안-0904.mjs` 로 네 판 돌려 맞췄다)
+    //    🔢 종이 = 폭 837 · 높이 1094(픽셀) · 사진칸 = 종이 기준 x 0.18~0.81 · y 0.12~0.55
+    //       → 「사진 넣기」 안내가 한가운데(x 0.50 · y 0.335)에 있어 **그 위를 캐릭터 둘로 겹쳐 덮는다.**
+    //    ⭐ 사진 대신 스티커로 채우는 건 유저도 하는 일이다. ⛔창업자 사진을 홍보물에 쓰지 않는다.
+    decor: [
+      { id: 'sh1', type: 'sticker', key: 'au_b09', x: 0.605, y: 0.300, s: 0.30, r: 3 },
+      { id: 'sh2', type: 'sticker', key: 'au_b27', x: 0.425, y: 0.330, s: 0.28, r: -3 },
+      { id: 'sh3', type: 'sticker', key: 'au_i24', x: 0.245, y: 0.155, s: 0.10, r: -14 },
+      { id: 'sh4', type: 'sticker', key: 'au_i38', x: 0.760, y: 0.470, s: 0.10, r: 9 },
+      { id: 'sh5', type: 'sticker', key: 'au_i49', x: 0.500, y: 0.495, s: 0.15, r: 2 },
+      { id: 'sh6', type: 'sticker', key: 'au_i45', x: 0.175, y: 0.930, s: 0.13, r: 5 },
+      { id: 'sh7', type: 'sticker', key: 'au_i46', x: 0.290, y: 0.962, s: 0.09, r: -8 },
+      // ⛔ 쪽지는 «글이 앉는 자리»를 피한다 — 첫 판에서 메모칸 글을 덮어 읽을 수가 없었다
+      { id: 'sh8', type: 'note', art: 'dgn07', text: '가을엔\n뜨끈한 게 최고', font: 'gaegu', x: 0.845, y: 0.875, s: 0.26, r: 3, tc: '#8a4a1c' },
+    ],
+  }
+}
+
 const 백업파일 = process.env.BACKUP
 if (백업파일) {
   console.log(`\n💾 백업 물리는 중 — ${백업파일}`)
@@ -139,6 +187,7 @@ if (백업파일) {
   const 원본 = JSON.parse(readFileSync(백업파일, 'utf8'))
   const 담을것 = {}
   for (const k of Object.keys(원본)) if (!k.startsWith('_')) 담을것[k] = 원본[k]
+  담을것.diary = [...(담을것.diary || []), 가을일기만들기()]
   await ctx.addInitScript((v) => {
     try {
       const 이미 = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
@@ -162,52 +211,6 @@ if (백업파일) {
   }
   await 홈으로(p); await 시트닫기(p)
 }
-
-// 🍂🍂 **가을 일기를 «내가» 꾸며서 넣는다** (2026-09-04)
-//    📮 창업자 = *"한끼일기도 «예쁜 틀»로 바꿔줘. 너무 저거는 **백지**라.."*
-//       → *"**내가 꾸민 거 말고..**"* → *"**네가 꾸며서 넣어줘 가을 느낌나게**"*
-//    ⭐ 그래서 창업자가 꾸며 둔 8/11·8/12 는 «안 쓴다». 글만 있고 안 꾸민 날 하나를 골라
-//       **지금 열려 있는 가을 자산만으로** 꾸민다.
-//    🔢 자산은 짐작하지 않고 실측해서 골랐다 — `release-calendar.mjs --on 2026-09-01` 이 연 것들:
-//       · 꼬르곰·펭펭의 가을 = `au_b20 au_b09 au_b24 au_b26~b30`
-//       · 가을 단풍·낙엽 = `au_i24 au_i28 au_i38 au_i39 au_i29 au_i42`
-//       · 가을 소품 8 = `au_i43`(담요) `au_i44`(머그) `au_i45`(호박) `au_i46`(도토리)
-//                       `au_i47`(초) `au_i48`(장화) `au_i49`(바구니) `au_i50`(버섯)
-//    ⛔ 10/1·11/1 에 열리는 것은 **안 쓴다** — 홍보물에 «지금 못 받는 것»을 그리면 거짓말이 된다.
-//    ⛔ 글자가 있는 왼쪽 위는 비워 둔다 — 스티커가 글을 덮으면 「지저분해 보인다」(2026-09-03 창업자).
-const 가을로꾸미기 = async (page) => {
-  const 결과 = await page.evaluate(() => {
-    try {
-      const 열쇠 = 'hankki:v1'
-      const 값 = JSON.parse(localStorage.getItem(열쇠) || '{}')
-      const d = 값.diary || []
-      const 고름 = d
-        .filter((e) => typeof e?.note === 'string' && e.note.trim().length > 3)
-        .filter((e) => !(e?.paper?.art && e.paper.art !== 'none') && !(e?.decor?.length))
-        .sort((a, b) => b.at - a.at)[0]
-      if (!고름) return null
-      const 씨 = (n) => 'sh' + n
-      고름.paper = { rule: 'plain', skin: 'kraft', art: 'today' }
-      고름.decor = [
-        { id: 씨(1), type: 'sticker', key: 'au_b09', x: 0.845, y: 0.155, s: 0.25, r: 4 },
-        { id: 씨(2), type: 'sticker', key: 'au_b27', x: 0.155, y: 0.845, s: 0.235, r: -4, motion: 'tongtong' },
-        { id: 씨(3), type: 'sticker', key: 'au_i24', x: 0.085, y: 0.395, s: 0.125, r: -14 },
-        { id: 씨(4), type: 'sticker', key: 'au_i38', x: 0.915, y: 0.555, s: 0.135, r: 9 },
-        { id: 씨(5), type: 'sticker', key: 'au_i45', x: 0.335, y: 0.935, s: 0.15, r: 6 },
-        { id: 씨(6), type: 'sticker', key: 'au_i46', x: 0.475, y: 0.955, s: 0.10, r: -8 },
-        { id: 씨(7), type: 'note', art: 'dgn07', text: '가을엔\n뜨끈한 게 최고', font: 'gaegu', x: 0.715, y: 0.815, s: 0.40, r: 3, tc: '#8a4a1c', motion: 'tilt' },
-      ]
-      localStorage.setItem(열쇠, JSON.stringify(값))
-      const t = new Date(고름.at + 9 * 3600 * 1000)
-      return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate(), n: 고름.decor.length }
-    } catch { return null }
-  })
-  if (!결과) { console.log('  ⚠️⚠️ 가을 꾸미기를 못 넣었다 — 글만 있는 «안 꾸민» 일기를 못 찾았다'); return null }
-  console.log(`  🍂 가을로 꾸몄다 — ${결과.y}-${결과.m}-${결과.d} · 틀 오늘의한끼 ＋ 크라프트 ＋ 꾸민것 ${결과.n}개`)
-  return 결과
-}
-const 가을일기 = 백업파일 ? await 가을로꾸미기(p) : null
-if (가을일기) { await p.goto(집, { waitUntil: 'networkidle' }); await p.waitForTimeout(2000); await 시트닫기(p); await 홈으로(p) }
 
 const 어느것 = process.env.SET || '전부'
 
@@ -329,50 +332,40 @@ if (어느것 === '전부' || 어느것 === '1') {
     //    ⛔ 그렇다고 그 둘을 열어 쓰지 «않는다» — 창업자가 «내가 꾸민 거 말고»라고 했다.
     //       📌 그리고 그게 홍보물로도 맞다: 그건 **창업자 한 사람의 결과물**이지 «앱이 주는 것»이 아니다.
     //          새로 깐 사람이 보는 건 «빈 종이 ＋ 고를 수 있는 틀 여덟»이다. 자랑거리는 **틀 그 자체**다.
-    //    ✅ 그래서 **글만 있는 날 하나를 골라 «내가» 가을로 꾸며서** 그 판을 찍는다(위 `가을로꾸미기`).
+    //    ✅ 그래서 **오늘 자리에 «내가 만든» 가을 일기**를 넣고 그 판을 찍는다(위 `가을일기만들기`).
     //       ＋ 서랍(틀 여덟이 늘어선 자리)도 한 장 — 창업자가 말한 *"일기 «다양한 틀»"* 이 그것이다.
-    const 꾸민날 = 가을일기
-    if (!꾸민날) console.log('  ⚠️⚠️ 가을로 꾸민 일기가 없다 — 이 장은 백지로 나온다')
-    else {
-      console.log(`  📔 여는 날 = ${꾸민날.y}-${꾸민날.m}-${꾸민날.d} (내가 가을로 꾸민 날)`)
-      // 📅 그 달로 넘어간다 — 「이전 달」을 눌러서(오늘이 9월이면 8월은 한 번)
-      const 이번달 = new Date(Date.now() + 9 * 3600 * 1000)
-      const 뒤로 = (이번달.getUTCFullYear() * 12 + 이번달.getUTCMonth()) - (꾸민날.y * 12 + (꾸민날.m - 1))
-      for (let i = 0; i < Math.max(0, Math.min(뒤로, 24)); i++) {
-        const 이전 = p.locator('[aria-label="이전 달"]').first()
-        if (!(await 이전.count())) break
-        await 이전.click({ timeout: 3000 }).catch(() => {})
-        await p.waitForTimeout(700)
-      }
+    // ⛔ 「일기 보기」 단추를 찾다가 못 찾았었다 — 실측하니 **달력 날을 누르면 «바로» 일기로 들어간다**
+    //    (`MyRecipesScreen` 의 `onOpenDay`). 중간 단계가 없다. 없는 단추를 기다린 것이다(규칙 17).
+    {
+      const [, , 날] = 가을일기날.split('-')
+      const 오늘날 = Number(날)
+      console.log(`  📔 여는 날 = ${가을일기날} (내가 만든 가을 일기)`)
       await 찍자(p, '1-05-일기', '한끼 일기 — 음식 아이콘이 쌓인 달력')
-      const 칸 = p.locator('button.cal-day').filter({ has: p.locator('.cal-num', { hasText: new RegExp(`^${꾸민날.d}$`) }) }).first()
+      const 칸 = p.locator('button.cal-day').filter({ has: p.locator('.cal-num', { hasText: new RegExp(`^${오늘날}$`) }) }).first()
       if (await 칸.count()) {
         await 칸.click({ timeout: 5000 }).catch(() => {})
-        await p.waitForTimeout(1500)
-        await 찍자(p, '1-09-일기-펼침', '일기 — 그날 만든 요리가 쭉')
-        const 일기보기 = p.getByRole('button', { name: /일기 보기/ }).first()
-        if (await 일기보기.count()) {
-          await 일기보기.click({ timeout: 5000 }).catch(() => {})
-          await p.waitForTimeout(1800)
-          // 🔎 정말 «꾸민» 판이 열렸나 — 백지면 시끄럽게 알린다(백지를 홍보물에 쓰는 게 제일 나쁘다)
-          const 꾸밈보이나 = await p.evaluate(() => document.querySelectorAll('.decor-layer *, [class*=decor] img, [class*=decor] span').length)
-          console.log(`     └ 펼친 일기에 꾸민 것 ${꾸밈보이나}개 ${꾸밈보이나 > 0 ? '✅' : '⚠️ 백지일 수 있다'}`)
-          await 찍자(p, '1-10-일기-틀', '일기 — 꾸민 틀(사진·스티커·쪽지)')
-          // 🗂 [창업자 2026-09-04] *"일기 «다양한 틀»이랑 꾸미기 아이템 있는거 보여주자"*
-          //    → 틀은 «꾸미기» 안 「속지」에서 고른다(DiaryScreen = *"속지(선·종이·틀)도 꾸미기 안에서 골라요"*).
-          const 꾸미기2 = p.getByRole('button', { name: /^꾸미기$/ }).first()
-          if (await 꾸미기2.count()) {
-            await 꾸미기2.click({ timeout: 5000 }).catch(() => {})
-            await p.waitForTimeout(1600)
-            await 시트닫기(p)
-            for (const 이름 of ['속지', '틀', '종이']) {
-              const t = p.locator('button, [role="tab"]').filter({ hasText: new RegExp(`^${이름}$`) }).first()
-              if (await t.count()) { await t.click({ timeout: 3000 }).catch(() => {}); await p.waitForTimeout(1200); break }
-            }
-            await 찍자(p, '1-12-일기-속지', '일기 — 틀 서랍(다양한 속지)')
-          } else console.log('  ⛔ 일기 안에서 「꾸미기」를 못 찾았다')
-        } else console.log('  ⛔ 「일기 보기」 단추를 못 찾았다')
-      } else console.log(`  ⛔ 달력에서 ${꾸민날.d}일 칸을 못 찾았다`)
+        await p.waitForTimeout(1800)
+        // 🔎 정말 «꾸민» 판이 열렸나 — 백지면 시끄럽게 알린다(백지를 홍보물에 쓰는 게 제일 나쁘다)
+        const 본것 = await p.evaluate(() => ({
+          꾸밈: document.querySelectorAll('.decor-layer img, .decor-layer > *').length,
+          빈칸: /여기에 써요/.test(document.body.innerText),
+        }))
+        console.log(`     └ 꾸민 것 ${본것.꾸밈}개 ${본것.꾸밈 > 0 && !본것.빈칸 ? '✅' : '⚠️⚠️ 백지다 — 이 장은 홍보물에 못 쓴다'}`)
+        await 찍자(p, '1-10-일기-틀', '일기 — 가을로 꾸민 틀')
+        // 🗂 [창업자 2026-09-04] *"일기 «다양한 틀»이랑 꾸미기 아이템 있는거 보여주자"*
+        //    → 틀은 «꾸미기» 안 「속지」에서 고른다(DiaryScreen = *"속지(선·종이·틀)도 꾸미기 안에서 골라요"*).
+        const 꾸미기2 = p.getByRole('button', { name: /꾸미기/ }).first()
+        if (await 꾸미기2.count()) {
+          await 꾸미기2.click({ timeout: 5000 }).catch(() => {})
+          await p.waitForTimeout(1600)
+          await 시트닫기(p)
+          for (const 이름 of ['속지', '틀', '종이']) {
+            const t = p.locator('button, [role="tab"]').filter({ hasText: new RegExp(`^${이름}$`) }).first()
+            if (await t.count()) { await t.click({ timeout: 3000 }).catch(() => {}); await p.waitForTimeout(1200); break }
+          }
+          await 찍자(p, '1-12-일기-속지', '일기 — 틀 서랍(다양한 속지)')
+        } else console.log('  ⛔ 일기 안에서 「꾸미기」를 못 찾았다')
+      } else console.log(`  ⛔ 달력에서 ${오늘날}일 칸을 못 찾았다`)
     }
   }
   await 홈으로(p); await 시트닫기(p)
