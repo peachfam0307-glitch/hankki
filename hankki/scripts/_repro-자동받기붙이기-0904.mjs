@@ -1,0 +1,177 @@
+#!/usr/bin/env node
+// 🔌 «자동 받기» 붙이기 재현판 — 2026-09-04
+//
+// 📮 창업자 = *"붙이기 마저 하자"*
+//
+// ⭐⭐ **여기가 2026-09-01 사고가 «난 자리»다.** 조각들(합치기·되돌리기·기록·무덤·계기판)은
+//    따로따로 초록불이지만, **실제 흐름에 붙는 순간이 진짜다.** 그래서 이 판이 따로 있다.
+//    🚨 그날 = 자동 받기가 방금 담은 레시피를 덮었다. 열쇠는 깎였고 레시피는 없었다.
+//
+// 🧪 재는 것 아홉 — «저절로받기» 를 통째로 돌려서 본다
+//   ① ⭐**폰에만 있던 편이 «살아남는다»** (＝9/1 사고가 안 난다)
+//   ② 패드에서 온 편도 «같이» 있다 (덮은 게 아니라 합쳤다)
+//   ③ ⭐**얹기 «전»에 되돌릴 벌이 떠 있다** — 꼬여도 돌아갈 자리
+//   ④ 무엇이 오갔는지 «기록»이 남는다 · ⑤ 계기판이 읽기를 «센다»
+//   ⑥ 무덤이 있으면 그 편은 안 되살아난다
+//   ⑦ ⭐**「양쪽이 바뀌었어도」 이제는 받는다** — 합치기라 잃을 게 없다
+//      ⛔ 그 전엔 여기서 멈췄다. 그게 창업자가 겪은 「패드에 반영이 안 된다」의 절반이다.
+//   ⑧ 사진이 안 사라진다 · ⑨ ⭐되돌리기가 «실패하면» 얹지 «않는다»(돌아갈 자리 없이 안 건드린다)
+//
+// 📐 설계 = `docs/폰패드-자동동기화-설계-2026-09-04.md`
+
+let 나쁨 = 0
+const 잰다 = (좋나, 이름, 덧 = '') => {
+  if (!좋나) 나쁨++
+  console.log(`  ${좋나 ? '✅' : '⛔'} ${이름}${덧 ? ` — ${덧}` : ''}`)
+}
+
+// ── 폰 흉내 ──────────────────────────────────────────────────────────────
+const 칸 = new Map()
+globalThis.localStorage = {
+  getItem: (k) => (칸.has(k) ? 칸.get(k) : null),
+  setItem: (k, v) => 칸.set(k, String(v)),
+  removeItem: (k) => 칸.delete(k),
+}
+
+// ── 가짜 파이어베이스 (기존 판 `_repro-클라우드동기화-0821` 과 «같은 얼개») ──
+const 창고 = new Map()
+let 읽은수 = 0
+const 길 = (조각들) => 조각들.join('/')
+const F = {
+  doc: (_db, ...조각) => ({ _길: 길(조각), id: 조각[조각.length - 1] }),
+  collection: (_db, ...조각) => ({ _길: 길(조각) }),
+  async getDoc (자리) { 읽은수++; const v = 창고.get(자리._길); return { exists: () => v !== undefined, data: () => v, ref: 자리 } },
+  async getDocs (모음) {
+    const 안 = []
+    for (const [k, v] of 창고) {
+      if (!k.startsWith(모음._길 + '/')) continue
+      읽은수++
+      안.push({ id: k.slice(모음._길.length + 1), data: () => v, ref: { _길: k } })
+    }
+    return { forEach: (f) => 안.forEach(f), docs: 안, size: 안.length }
+  },
+  writeBatch: () => {
+    const 할일 = []
+    return { set: (자리, 값) => 할일.push(['set', 자리._길, 값]), delete: (자리) => 할일.push(['del', 자리._길]),
+      commit: async () => { for (const [무엇, k, v] of 할일) 무엇 === 'set' ? 창고.set(k, v) : 창고.delete(k) } }
+  },
+  serverTimestamp: () => new Date().toISOString(),
+}
+const 사람 = { uid: 'fb-uid', providerData: [{ providerId: 'google.com', uid: '구글번호1' }] }
+
+const C = await import('../src/cloud.js')
+C._가짜창고물리기({ F, db: {}, auth: { currentUser: 사람 }, A: {} })
+
+// ── 큰 창고(되돌리기·기록·계기판이 함께 쓴다) ────────────────────────────
+const 큰창고 = new Map()
+const 가짜큰창고 = {
+  async 넣기 (k, v) { 큰창고.set(k, JSON.parse(JSON.stringify(v))); return true },
+  async 꺼내기 (k) { const v = 큰창고.get(k); return v === undefined ? null : JSON.parse(JSON.stringify(v)) },
+  async 지우기 (k) { 큰창고.delete(k) },
+  async 열쇠들 () { return [...큰창고.keys()] },
+}
+const 못뜨는창고 = { ...가짜큰창고, async 넣기 (k) { if (String(k).startsWith('벌')) return false; 큰창고.set(k, v => v); return true } }
+
+const U = await import('../src/syncUndo.js'); U._창고물리기(가짜큰창고)
+const L = await import('../src/syncLog.js'); L._창고물리기(가짜큰창고)
+const M = await import('../src/syncMeter.js'); M._창고물리기(가짜큰창고)
+
+// ── 판 짜기 ──────────────────────────────────────────────────────────────
+const 사진 = 'data:image/png;base64,' + 'A'.repeat(1500)
+// 패드가 «먼저» 올려 둔 것 (기기 = 패드)
+창고.set('users/구글번호1', {
+  j: JSON.stringify({ profile: { name: '한끼러버' }, shoppingList: [{ name: '우유' }] }),
+  at: '2026-09-04T00:00:00.000Z', v: 2, 기기: '패드', n레시피: 1, n일기: 0,
+})
+창고.set('users/구글번호1/recipes/u-pad', { j: JSON.stringify({ id: 'u-pad', title: '패드 편', 고친때: 4000 }) })
+
+// 폰이 들고 있는 것 — ⭐방금 담은 편이 있다(9/1 의 항정살조림 자리)
+const 폰판 = {
+  _app: 'hankki', _v: 2,
+  recipes: [
+    { id: 'u-phone', title: '방금 담은 편', image: 사진, 고친때: 5000 },
+  ],
+  diary: [], folders: [], profile: { name: '한끼러버' },
+  shops: [], wishlist: [], shoppingList: [{ name: '두부' }], pantry: [],
+  seedV: 1, memoCleanV: 1, removedSeedIds: [],
+}
+const 백업만들기 = async () => JSON.parse(JSON.stringify(폰판))
+
+// ⭐ 로그인해 둔 표식 ＋ 「가져온 적 있다」 표시
+//   ⛔ 없으면 안전장치가 «먼저» 막아 정작 재려던 자리를 못 잰다(기존 판 0821 도 같은 표식을 쓴다)
+칸.set('hankki:cloud:on', '1')
+C.받았다표시()
+
+console.log('\n🔌 자동 받기 붙이기 — 「9/1 사고가 안 난다」\n')
+
+읽은수 = 0
+const r = await C.저절로받기(백업만들기)
+
+// ⑦ 양쪽이 바뀌었어도 받는다
+잰다(r?.했나 === true, '⑦ ⭐ 「양쪽이 바뀌었어도」 받는다 (합치기라 잃을 게 없다)',
+  r?.했나 ? '받았다' : `⛔안 받았다 — ${r?.왜}`)
+
+const 편들 = (r?.판?.recipes || [])
+const 찾기 = (id) => 편들.find((x) => x.id === id)
+
+// ①② 폰 것도 패드 것도 «둘 다» 있다
+잰다(!!찾기('u-phone'), '① ⭐ 폰에만 있던 편이 «살아남는다» (9/1 사고 자리)',
+  찾기('u-phone') ? '있다' : '⛔사라졌다')
+잰다(!!찾기('u-pad'), '② 패드에서 온 편도 «같이» 있다')
+잰다(편들.length === 2, '  ②-b 덮은 게 아니라 «합쳤다»', `${편들.length}편 (2라야 맞다)`)
+
+// ⑧ 사진이 안 사라진다
+잰다(찾기('u-phone')?.image === 사진, '⑧ 폰에 있던 사진이 안 사라진다',
+  찾기('u-phone')?.image ? '있다' : '⛔빈 칸')
+
+// 장보기도 합쳐진다
+const 장 = (r?.판?.shoppingList || []).map((x) => x.name).sort().join('·')
+잰다(장.includes('두부') && 장.includes('우유'), '  ②-c 장보기도 «합쳐진다»', 장 || '비었다')
+
+// ③ 얹기 «전»에 되돌릴 벌이 떠 있다
+const 벌들 = await U.벌목록()
+잰다(벌들.length >= 1, '③ ⭐ 얹기 «전»에 되돌릴 벌이 떠 있다', `${벌들.length}벌`)
+
+// ④ 기록이 남는다
+const 기록 = await L.읽기()
+잰다(기록.length >= 1 && 기록[0].한일, '④ 무엇이 오갔는지 «기록»이 남는다',
+  기록[0] ? L.한줄로(기록[0]) : '⛔비었다')
+
+// ⑤ 계기판이 읽기를 센다
+const 계 = await M.읽기()
+// ⭐⭐ 「센다」가 아니라 **«실제와 같은 수»를 세나**를 잰다 — 틀린 계기판은 감보다 나쁘다.
+//    🧪 [2026-09-04] 처음엔 «0보다 크나»만 재서 2건/3건이 갈린 걸 못 잡았다. 헛돌던 칸이다.
+잰다(계.읽기 === 읽은수, '⑤ ⭐ 계기판 숫자가 «진짜 읽은 수»와 같다',
+  `계기판 ${계.읽기}건 · 진짜 ${읽은수}건`)
+
+// ⑨ ⭐ 되돌리기가 실패하면 «얹지 않는다»
+U._창고물리기({ ...가짜큰창고, async 넣기 (k) { return String(k).startsWith('벌') ? false : true } })
+창고.set('users/구글번호1/recipes/u-pad2', { j: JSON.stringify({ id: 'u-pad2', title: '또 하나', 고친때: 6000 }) })
+const r2 = await C.저절로받기(백업만들기)
+잰다(r2?.했나 === false && /되돌|벌/.test(r2?.왜 || ''),
+  '⑨ ⭐ 되돌릴 벌을 «못 뜨면» 얹지 않는다 (돌아갈 자리 없이 안 건드린다)', r2?.왜 || '⛔그냥 얹었다')
+U._창고물리기(가짜큰창고)
+
+// ⛔ 여기서 끝내지 «않는다» — 아래 ⑩ 이 남았다(처음에 여기서 exit 해서 ⑩ 이 «안 돌았다»).
+
+// ── ⑩ ⭐ 「앱이 실제로 얹나」 — App.jsx 가 부르는 이름이 «진짜 있나» ────────
+//   ⛔⛔ [2026-09-04] 처음에 `store.replaceAll` 이라고 «지어냈다». 없는 이름이라
+//      그대로 뒀으면 자동 받기가 «조용히 아무 일도 안 하고» 도는 채로 나갈 뻔했다.
+//      📌 제일 무서운 실패다 — 판은 초록불인데 앱에선 아무 일도 안 난다.
+//   ✅ 그래서 «앱이 부르는 이름»을 소스에서 읽어 store 에 진짜 있는지 본다.
+import { readFileSync } from 'node:fs'
+const 앱소스 = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+const 스토어소스 = readFileSync(new URL('../src/store.jsx', import.meta.url), 'utf8')
+const 부르는것 = (앱소스.match(/store\.(\w+)\(받았나결과\.판\)/) || [])[1]
+잰다(!!부르는것, '⑩ App.jsx 가 받은 판을 «얹는다»', 부르는것 ? `store.${부르는것}()` : '⛔안 얹는다')
+잰다(!!부르는것 && new RegExp(`\\b${부르는것}:`).test(스토어소스),
+  '  ⑩-b ⭐ 그 이름이 store 에 «진짜» 있다 (지어낸 이름이 아니다)',
+  부르는것 ? (new RegExp(`\\b${부르는것}:`).test(스토어소스) ? '있다' : '⛔없는 이름이다') : '')
+// ⛔ 주석 «안»의 글자를 코드로 세면 안 된다 — 처음에 그렇게 만들어 «주석 한 줄» 때문에 빨간불이 났다.
+//    (그 주석은 「다시 잠그지 말 것」이라고 적어둔 줄이었다 — 판이 그걸 잠금으로 읽었다)
+const 코드만 = 앱소스.split('\n').filter((줄) => !/^\s*(\/\/|\*|\/\*)/.test(줄)).join('\n')
+잰다(!/if \(false\)/.test(코드만), '  ⑩-c 자동 받기 잠금(if (false))이 «풀렸다»',
+  /if \(false\)/.test(코드만) ? '⛔아직 잠겨 있다' : '풀렸다')
+
+console.log(나쁨 ? `\n⛔ ${나쁨}칸 실패\n` : '')
+process.exit(나쁨 ? 1 : 0)
