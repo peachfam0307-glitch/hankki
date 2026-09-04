@@ -12,7 +12,22 @@ export function embedUrl(url = '') {
     //   ⛔ `src`(임베드 주소)는 남겨 둔다 — 편집 화면 「영상 보면서 쓰기」가 아직 쓴다.
     //      ⛔ 레시피 «상세»에선 `src` 를 쓰지 않는다. 거긴 `thumb` 만이다.
     //   🔢 `hqdefault` = 480×360. 그림이 없으면 화면에서 `onError` 로 그 칸을 통째로 감춘다.
-    return { type: 'youtube', id: m[1], src: `https://www.youtube.com/embed/${m[1]}?playsinline=1`, thumb: `https://i.ytimg.com/vi/${m[1]}/hqdefault.jpg`, ratio: '16/9' }
+    //
+    // 🔒🔒 [창업자 확정 2026-09-04] `src` 는 **`youtube-nocookie.com`** 을 쓴다 — 「추적 끄기」
+    //   📮 창업자 = *"아동용 영상이면 추적을 꺼야 하는데 안 끄고 있어 **이거는 문제되는거면 끄자**"*
+    //   ⭐⭐ 왜 = Developer Policies III.E.4.j 는 「임베드하는 영상마다 Made for Kids 를 조회하고,
+    //      MFK 면 **추적을 끄라**」고 한다. 우리는 그 조회를 아직 안 붙였다(＝어느 영상이 MFK 인지 모른다).
+    //      → **모르면 «전부» 추적을 끈다.** 그러면 MFK 영상이 섞여 들어와도 지켜야 할 것은 지켜진다.
+    //      📌 절대원칙 34 — 숫자를 넓힌 게 아니라 **실패의 «모양»을 바꿨다**:
+    //         「모르는 영상에 추적이 켜진 채 나간다」 → 「모르는 영상도 추적이 꺼진 채 나간다」
+    //   🔢 실측(2026-09-04 · 공식 도움말 ＋ 검색 다섯 곳 일치) — nocookie 가 «하는 일»
+    //      ✅ 이 영상을 본 것이 유저의 유튜브 개인화에 안 쓰인다
+    //      ✅ 광고가 붙어도 «비개인화» 광고로 나간다
+    //      ⚠️ 다만 «추적 0»은 아니다 — 쿠키는 안 심지만 브라우저 저장소에 기기 식별자를 두고 IP 는 간다
+    //   ⛔⛔ **그래서 이것이 「조회」를 대신하지 않는다.** 조문의 «의무»는 여전히 조회다.
+    //      조회를 붙이는 일은 **창업자가 미뤘다(2026-09-04)** — 다시 볼 날은 아래 `recheck` 에 박아 뒀다.
+    //   ⛔ 재생·전체화면·인라인은 그대로다(호스트만 바뀐다). 판이 이 주소를 글자로 붙들지 않는지 확인했다.
+    return { type: 'youtube', id: m[1], src: `https://www.youtube-nocookie.com/embed/${m[1]}?playsinline=1`, thumb: `https://i.ytimg.com/vi/${m[1]}/hqdefault.jpg`, ratio: '16/9' }
   }
   m = u.match(/instagram\.com\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/)
   if (m) {
