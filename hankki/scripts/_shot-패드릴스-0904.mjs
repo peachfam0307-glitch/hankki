@@ -76,10 +76,16 @@ const 탭 = async (page, 글자) => {
   await t.click(); await page.waitForTimeout(1300)
   return true
 }
+// ⛔⛔ [2026-09-04] 시트가 «겹쳐» 뜨면 아래 시트의 「닫기」가 가려져 클릭이 15초를 기다리다 죽는다.
+//    (백업을 물리자 확인 층이 그 위에 떠서 실제로 그랬다)
+//    ✅ 죽지 않게 «짧게 시도하고 넘어간다» — 닫기는 «곁다리»지 이 판의 목적이 아니다.
+//    ⛔ 시간을 늘려서 풀지 않았다(절대원칙 34) — 실패해도 판이 계속 가게 «모양»을 바꿨다.
 const 시트닫기 = async (page) => {
-  for (const 글자 of ['나중에 볼게요', '닫기']) {
+  for (const 글자 of ['나중에 볼게요', '확인', '닫기']) {
     const b2 = page.getByRole('button', { name: 글자 }).first()
-    if (await b2.count()) { await b2.click(); await page.waitForTimeout(900); return }
+    if (!(await b2.count())) continue
+    const 됐나 = await b2.click({ timeout: 2500 }).then(() => true).catch(() => false)
+    if (됐나) { await page.waitForTimeout(900); return }
   }
 }
 
@@ -93,6 +99,50 @@ if (await p.getByText('Google 계정으로 시작하기').count()) {
   await p.close(); p = p2
 }
 await 시트닫기(p)
+
+// 💾💾 **창업자 백업을 «앱의 진짜 복원 길»로 물린다** (2026-09-04)
+//    📮 창업자 = *"콩국수 그만나오게하자 ㅋㅋㅋ 내꺼 줄게"*
+//    ⛔ 시드 데이터는 어느 화면을 찍어도 콩국수가 나온다 — 홍보물엔 창업자 실물이 훨씬 좋다
+//       (실측 = 창업자 백업 = 레시피 260편 · 일기 21 · 꾸민 표지 16 · 사진 8 · 냉장고 8 · _photosMissing 0).
+//    ⭐ localStorage 를 손으로 채우지 «않는다» — 설정의 「백업 불러오기」 파일칸에 그대로 넣는다.
+//       그래야 앱이 실제로 쓰는 복원 길(`importAll` ＋ 사진 창고 되살리기)을 «그대로» 탄다(규칙 30).
+//    ⛔⛔ 이 파일은 «창업자 개인 데이터»다 — 저장소에 넣지 않는다. 경로만 밖에서 받는다.
+//       실행: BACKUP=/…/백업.json node scripts/_shot-패드릴스-0904.mjs
+const 백업파일 = process.env.BACKUP
+if (백업파일) {
+  console.log(`\n💾 백업 물리는 중 — ${백업파일}`)
+  // ⛔⛔ [2026-09-04] **UI 로 물리는 길은 막혔다** — 「백업 파일 불러오기」가 여는 파일칸은
+  //    설정 화면의 `fileRef`(`importData`)와 «다른 칸»이라, 파일을 넣어도 `onChange` 가 안 걸린다.
+  //    (확인 상자도 오류 토스트도 «둘 다» 안 떴다 = 핸들러 자체가 안 돌았다는 뜻)
+  //    ✅ 그래서 저장 열쇠 `hankki:v1` 에 «바로» 넣는다. 홍보물 찍기용이라 이걸로 충분하다.
+  //    ⛔ 대신 «화면으로 검산»한다 — 열쇠에 넣는 건 앱 길이 아니라서 모양이 안 맞으면 조용히 빈다(규칙 30).
+  //       그래서 아래에서 편수를 세고, 찍은 뒤 눈으로 본다.
+  const 원본 = JSON.parse(readFileSync(백업파일, 'utf8'))
+  const 담을것 = {}
+  for (const k of Object.keys(원본)) if (!k.startsWith('_')) 담을것[k] = 원본[k]
+  await ctx.addInitScript((v) => {
+    try {
+      const 이미 = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+      localStorage.setItem('hankki:v1', JSON.stringify({ ...이미, ...v }))
+    } catch { /* 못 넣으면 시드 그대로 — 아래 편수 세기가 잡는다 */ }
+  }, 담을것)
+  await p.goto(집, { waitUntil: 'networkidle' }); await p.waitForTimeout(2500)
+  await 시트닫기(p)
+  // 🔎 정말 들어갔나 — «시끄럽게» 확인한다. 안 들어간 줄 모르고 찍으면 시드로 홍보물을 만든다.
+  const 편수 = await p.evaluate(() => {
+    try { return (JSON.parse(localStorage.getItem('hankki:v1') || '{}').recipes || []).length } catch { return -1 }
+  })
+  console.log(`  📚 앱이 든 레시피 = ${편수}편 ${편수 > 100 ? '✅ 창업자 것' : '⚠️ 시드일 수 있다'}`)
+  // 🧹 «청소 안내 띠»가 맨 위에 걸린다 — 「사진 1장을 정리해 0.3MB 를 비웠어요」.
+  //    ⛔ 홍보물에 시스템 안내가 찍히면 안 된다. 한 번 뜨고 사라지므로 «가라앉을 때까지» 기다린다.
+  //    ⛔ 시간을 그냥 늘리지 않았다 — 띠가 «사라졌나»를 보고 끝낸다(절대원칙 34).
+  for (let i = 0; i < 12; i++) {
+    const 띠 = await p.evaluate(() => /정리해|비웠어요/.test(document.body.innerText))
+    if (!띠) break
+    await p.waitForTimeout(1000)
+  }
+  await 홈으로(p); await 시트닫기(p)
+}
 
 const 어느것 = process.env.SET || '전부'
 
