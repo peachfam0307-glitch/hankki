@@ -264,17 +264,19 @@ function 맞춘기록 ({ 불러오기끝, onClose, showToast, 지금판 }) {
   const [폄, set폄] = useState(false)
   const [줄들, set줄들] = useState(null)
   const [벌들, set벌들] = useState([])
+  const [상태, set상태] = useState(null)
 
   useEffect(() => {
     if (!폄) return
     let 살아있나 = true
     ;(async () => {
       try {
-        const [기록, 되돌] = await Promise.all([import('../syncLog'), import('../syncUndo')])
-        const [ㄱ, ㄴ] = await Promise.all([기록.읽기(), 되돌.벌목록()])
+        const [기록, 되돌, 구름] = await Promise.all([import('../syncLog'), import('../syncUndo'), import('../cloud')])
+        const [ㄱ, ㄴ, ㄷ] = await Promise.all([기록.읽기(), 되돌.벌목록(), 구름.맞추기상태()])
         if (!살아있나) return
         set줄들(ㄱ.slice(0, 8).map((줄) => ({ 때: 줄.때, 글: 기록.한줄로(줄) })))
         set벌들(ㄴ)
+        set상태(ㄷ)
       } catch { if (살아있나) set줄들([]) }
     })()
     return () => { 살아있나 = false }
@@ -309,6 +311,21 @@ function 맞춘기록 ({ 불러오기끝, onClose, showToast, 지금판 }) {
 
       {폄 && (
         <div style={{ marginTop: 10 }}>
+          {/* 🩺🩺 [2026-09-04] 「지금 무엇이 막고 있나」 — ⭐기록보다 «위»에 둔다.
+              📮 창업자 = *"기록 안보여 저절로 맞춘적이 없데"* — 그때 화면은 «비었다»만 말했고
+                 그게 「안 해봤다」인지 「하다 말았다」인지 아무도 몰랐다.
+              ⛔ 여기서 «판단»을 적지 않는다 — 읽은 값만 그대로 보여준다.
+                 내가 해석해서 「이게 원인이에요」라고 쓰면 그건 또 짐작이고, 창업자가 그 위에서 판정하게 된다. */}
+          {상태 && (
+            <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '10px 12px', fontSize: 14, lineHeight: 1.75, marginBottom: 10 }}>
+              <div>클라우드를 가져온 적 <b>{상태.받았다표시 ? '있음' : '없음'}</b></div>
+              <div>
+                마지막으로 올린 기기 ={' '}
+                <b>{!상태.마지막올린기기 ? '없음' : 상태.마지막올린기기 === 상태.이기기 ? '이 기기' : '다른 기기'}</b>
+                {상태.언제 ? <span className="t-sub"> · {때(상태.언제)}</span> : null}
+              </div>
+            </div>
+          )}
           {줄들 === null && <div className="t-sub" style={{ fontSize: 14 }}>보는 중…</div>}
           {줄들 !== null && !줄들.length && (
             <div className="t-sub" style={{ fontSize: 14, lineHeight: 1.6 }}>아직 저절로 맞춘 적이 없어요.</div>
