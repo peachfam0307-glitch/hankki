@@ -94,7 +94,21 @@ const 시트치우기 = async (p) => {
     await p.waitForTimeout(400)
   }
 }
+// ⏳⏳ **앱이 «떴는지»부터 본다** — 2026-09-04 CI 실측으로 더한 칸.
+//   🔎 그날 빨간불의 알맹이 = `화면 = ` **(빈 글자)** 인데 저장된 레시피 6편은 멀쩡히 있었다.
+//      즉 「레시피가 없다」가 아니라 **화면이 통째로 안 그려진 채 20초를 기다렸다**.
+//      스모크 4개가 동시에 도는 자리라 CI 가 느릴 때 첫 그리기가 늦는다.
+//   ⛔ 20000 을 60000 으로 «넓히지» 않는다 — 그러면 다음엔 60초짜리 빈 화면이 온다(절대원칙 34).
+//   ✅ 대신 **기다리는 «대상»을 바꾼다**: 「제목이 보이나」 하나로 두 가지(앱이 떴나 · 그 레시피가 있나)를
+//      한꺼번에 재던 것을 둘로 가른다. 그러면 늦게 떠도 통과하고, 진짜로 없으면 그 말이 나온다.
+const 앱떴나 = async (p) => {
+  try {
+    await p.waitForFunction(() => (document.body.innerText || '').trim().length > 0, null, { timeout: 25000 })
+    return true
+  } catch { return false }
+}
 const 레시피열기 = async (p, 제목) => {
+  await 앱떴나(p)
   await 시트치우기(p)
   const 칸 = p.getByText(제목, { exact: false }).first()
   try {
