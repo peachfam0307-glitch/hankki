@@ -346,11 +346,19 @@ if (어느것 === '전부' || 어느것 === '1') {
         await 칸.click({ timeout: 5000 }).catch(() => {})
         await p.waitForTimeout(1800)
         // 🔎 정말 «꾸민» 판이 열렸나 — 백지면 시끄럽게 알린다(백지를 홍보물에 쓰는 게 제일 나쁘다)
-        const 본것 = await p.evaluate(() => ({
-          꾸밈: document.querySelectorAll('.decor-layer img, .decor-layer > *').length,
-          빈칸: /여기에 써요/.test(document.body.innerText),
-        }))
-        console.log(`     └ 꾸민 것 ${본것.꾸밈}개 ${본것.꾸밈 > 0 && !본것.빈칸 ? '✅' : '⚠️⚠️ 백지다 — 이 장은 홍보물에 못 쓴다'}`)
+        // ⛔⛔ [2026-09-04] 처음엔 `.decor-layer img` 를 셌는데 **늘 0** 이 나와 「백지다」라고 두 번 잘못 알렸다.
+        //    실물을 열어 보니 멀쩡히 꾸며져 있었다 — 틀린 건 화면이 아니라 «내 자」였다(규칙 18 · 규칙 21).
+        //    ✅ 그래서 «앱이 실제로 그리는 표시»로 잰다: 스티커는 `<img>` 로 종이 위에 얹히고,
+        //       안 꾸며졌으면 「여기에 써요」·「사진 넣기」 같은 «빈자리 안내»가 뜬다. 둘을 같이 본다.
+        const 본것 = await p.evaluate(() => {
+          const 종이 = document.querySelector('[class*=paper], [class*=sheet]') || document.body
+          return {
+            그림: 종이.querySelectorAll('img').length,
+            빈안내: (document.body.innerText.match(/여기에 써요|사진 넣기/g) || []).length,
+          }
+        })
+        const 좋나 = 본것.그림 >= 4 && 본것.빈안내 === 0
+        console.log(`     └ 종이 위 그림 ${본것.그림}개 · 빈자리 안내 ${본것.빈안내}개 ${좋나 ? '✅' : '⚠️ 열어서 확인할 것'}`)
         await 찍자(p, '1-10-일기-틀', '일기 — 가을로 꾸민 틀')
         // 🗂 [창업자 2026-09-04] *"일기 «다양한 틀»이랑 꾸미기 아이템 있는거 보여주자"*
         //    → 틀은 «꾸미기» 안 「속지」에서 고른다(DiaryScreen = *"속지(선·종이·틀)도 꾸미기 안에서 골라요"*).

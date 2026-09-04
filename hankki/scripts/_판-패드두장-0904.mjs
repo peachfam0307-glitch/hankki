@@ -182,15 +182,20 @@ body{width:${W}px;height:${H}px;overflow:hidden;position:relative;
   background-image:repeating-linear-gradient(0deg, rgba(232,240,222,.052) 0 1px, transparent 1px 48px),
                    repeating-linear-gradient(90deg, rgba(232,240,222,.052) 0 1px, transparent 1px 48px);}
 /* 🔢 큰 번호 — 차례가 곧 내용이라 번호가 «정보»다(장식이 아니다) */
-.no{position:absolute;right:64px;top:${글머리 - 86}px;font-family:'Gowun';font-size:196px;
+/* ⛔⛔ [2026-09-04 · 규칙 21 이 잡았다] 처음엔 제목 88px 에 시작 258 이라 **둘째 줄이 카드에 잘렸다.**
+   🔢 재보니 = 258 ＋ 줄(7) ＋ 사이(26) ＝ 291 부터 글이고, 88×1.16×2 = 204 → **끝이 495**.
+      카드가 470 에서 시작하니 25px 를 먹힌다. ⛔글자만 줄이면 또 아슬아슬하다 —
+      ✅ 셋을 같이 줄여 **여유를 35px 만든다**: 시작 236 · 사이 16 · 글자 76 → 끝 435. */
+.no{position:absolute;right:60px;top:${글머리 - 118}px;font-family:'Gowun';font-size:186px;
   line-height:1;color:rgba(232,240,222,.085);letter-spacing:-.04em;}
-.cap2{position:absolute;left:70px;top:${글머리}px;width:${W - 220}px;}
-.bar{width:96px;height:7px;border-radius:4px;background:linear-gradient(90deg,#e8b866,#c98f45);margin-bottom:26px;}
-.cap2 h1{font-family:'Gowun';font-size:88px;line-height:1.16;color:#f3efe2;letter-spacing:-1.5px;}
+.cap2{position:absolute;left:70px;top:236px;width:${W - 300}px;}
+.bar{width:96px;height:7px;border-radius:4px;background:linear-gradient(90deg,#e8b866,#c98f45);margin-bottom:16px;}
+.cap2 h1{font-family:'Gowun';font-size:76px;line-height:1.16;color:#f3efe2;letter-spacing:-1.5px;}
 .cap2 h1 em{font-style:normal;color:#e8b866;}
-/* 🏷 네모 «태그» — ①의 둥근 알약 쪽지와 모양이 반대다 */
-.tag{position:absolute;left:70px;top:${글머리 + 232}px;font-family:'Gowun';font-size:30px;color:#e8b866;
-  border:2px solid rgba(232,184,102,.5);padding:8px 22px;border-radius:5px;letter-spacing:.09em;}
+/* 🏷 네모 «태그» — ①의 둥근 알약 쪽지와 모양이 반대다.
+   ⛔ 처음엔 제목 «아래»에 뒀는데 거긴 카드 자리다 → 금빛 줄 «옆»으로 올렸다(빈 자리를 쓴다). */
+.tag{position:absolute;left:190px;top:224px;font-family:'Gowun';font-size:28px;color:#e8b866;
+  border:2px solid rgba(232,184,102,.5);padding:6px 20px;border-radius:5px;letter-spacing:.09em;}
 .wrap2{position:absolute;left:${(W - (장폭2 + 여백2 * 2)) / 2}px;top:${판시작}px;}
 /* 🗂 크림 «카드» 위에 화면을 얹는다 — ①은 종이에 붙인 듯 둥글었고, 여기선 각지게 */
 .card{background:#f4efe3;padding:${여백2}px;border-radius:14px;
