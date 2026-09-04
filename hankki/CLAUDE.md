@@ -288,7 +288,22 @@
      🔢 **실측 (2026-08-17 · `curl -o /dev/null -w %{http_code}`)** — 전부 **`000`**(연결 자체가 안 됨):
         `ko.wikipedia.org` · `namu.wiki` · `brunch.co.kr` · `www.law.go.kr` · `blog.naver.com`
         ＋ WebFetch = `EGRESS_BLOCKED` : `nts.go.kr` · `nhis.or.kr` · `easylaw.go.kr` · 개인 블로그 전부
-     ✅ **되는 것 = `WebSearch` 하나뿐** — 그건 앤트로픽 서버가 대신 검색해서 **«요약»만** 준다.
+     ⛔⛔ **[2026-09-04 정정] 여기 「되는 것 = WebSearch 하나뿐」이라고 적혀 있었다 — 틀렸다.**
+        📮 창업자 = *"언제는 안된다더니 질문하나로 되게 됐네 ㅠㅠ"* — **맞는 지적이다.**
+        「유튜브 MFK 조회를 할 수 있나」를 **재보지도 않고** 위 목록만 보고 「못 한다」로 뭉갰다.
+        ⭐⭐ **막는 잣대는 «호스트»다 — 「웹이 전부 막혔다」가 아니다.**
+        🔢 **실측 (2026-09-04 · 같은 명령)**
+        | 열린다 ✅ | 막힌다 ⛔ |
+        |---|---|
+        | `www.googleapis.com` (400 — 유튜브 Data API 조회 **가능**) | `www.youtube.com` (웹·oembed 둘 다) |
+        | `api.github.com` (200) | `developers.google.com` · `ko.wikipedia.org` · `www.law.go.kr` |
+        | | `graph.facebook.com` · `api.instagram.com` · `graph.instagram.com` · `api.threads.net` |
+        ⭐ 대체로 **「사람이 읽는 페이지」는 막히고 「기계가 읽는 API」는 일부 열린다.**
+           ⛔ 다만 `youtube.com/oembed` 는 API 인데 막혔다 — **호스트로 갈리지 길로 갈리지 않는다.**
+        ✅✅ **그래서 규칙 = 「안 된다」고 말하기 «전»에 그 주소를 «한 줄로 재본다».**
+           `curl -s -o /dev/null -w "%{http_code}\n" <주소>` → **`000` 이면 막힘 · 숫자가 오면 열림**
+           ⛔ 이 표도 낡을 수 있다. **표를 믿지 말고 재라.** 재는 데 3초다.
+     ✅ **`WebSearch` 는 늘 된다** — 그건 앤트로픽 서버가 대신 검색해서 **«요약»만** 준다.
         ⛔ **표·원문·긴 목록은 요약에 안 실린다.** 그래서 등급표·세율표 같은 건 조각으로만 온다.
      ⭐⭐ **다른 AI(퍼플렉시티·챗지피티·제미나이)는 «자기 회사 서버»에서 웹을 직접 읽는다.**
         그래서 표를 통째로 갖고 온다. **내가 못 하는 게 맞고, 앞으로도 못 한다.**
