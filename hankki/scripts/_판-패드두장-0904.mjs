@@ -81,7 +81,9 @@ const 테이프색 = { 살구: ['rgba(214,160,104,.62)', 'rgba(192,136,80,.55)']
 //    ⭐ 번호를 쓴 이유 = 릴스②는 **차례가 곧 내용**이다(담기 → 고르기 → 사기 → 채우기 → 찍기 → 꺼내기).
 //       ①은 「이런 게 있어요」라 차례가 없다. 그래서 ①엔 번호를 안 붙인다.
 const 짝 = [
-  { 이름: 'R1-1', 옷: '살구', 위: '1-02-요리책', 아래: '1-03-상세', 제목: '패드로 보면', 제목2: '한 판에 다 보여요', 쪽지: '패드' },
+  // ⛔ [2026-09-04] 쪽지가 '패드'라 배지가 **「패드 · 패드」**로 겹쳐 나왔다(규칙 21 이 잡았다).
+  //    배지가 앞에 「패드 · 」를 붙이므로 쪽지엔 **기능 이름만** 넣는다.
+  { 이름: 'R1-1', 옷: '살구', 위: '1-02-요리책', 아래: '1-03-상세', 제목: '패드로 보면', 제목2: '한 판에 다 보여요', 쪽지: '요리책' },
   { 이름: 'R1-2', 옷: '살구', 위: '1-04-레꾸', 아래: '1-06-레꾸자랑', 제목: '꼬르곰·펭펭이', 제목2: '이만큼 커져요', 쪽지: '레꾸' },
   { 이름: 'R1-3', 옷: '살구', 위: '1-07-요리모드-재료', 아래: '1-08-요리모드-걸음', 제목: '불 앞에서도', 제목2: '멀리서 보여요', 쪽지: '요리모드' },
   { 이름: 'R1-4', 옷: '살구', 위: '1-11-레꾸-프레임', 아래: '1-11-레꾸-데코', 제목: '붙일 게', 제목2: '이만큼 많아요', 쪽지: '꾸미기' },
@@ -118,6 +120,43 @@ console.log(`📐 한 칸 ${장폭}×${장높} · 둘 ${장높 * 2 + 사이} · 
 
 const 그림 = (n) => `data:image/png;base64,${readFileSync(join(찍은곳, n + '.png')).toString('base64')}`
 
+// 📱 패드 몸체 — `PAD=0` 이면 옛 판(릴스①=맨 화면 · 릴스②=크림 카드)이 나온다
+const 패드몸체 = process.env.PAD !== '0'
+// 🦊 뾰미가 «방석에 앉아 패드를 보는» 컷 — 창업자 = *"귀엽다 뾰미 ㅋㅋ"*
+//    ⚠️⚠️ **이 컷은 아직 «앱에 등록 안 됐다»**(`Stickers.jsx` 에 `xb_d` 0건 · 실측).
+//       홍보물에만 쓰는 셈이다. 유저가 서랍에서 찾으면 없다 — 창업자에게 그대로 알렸다.
+//    ⚠️ 창업자가 짚은 대로 **얘는 «식별»을 못 맡는다** — 폰에서 작아진다. 귀여움만 맡는다.
+const 뾰미 = readFileSync(join(APP, 'docs/stickers/카롱뾰미-단독컷-2026-08-10/낱개/xb_d04.png')).toString('base64')
+// 🏷 표시 = 「큰 배지 ＋ 뾰미」. `MARK=배지` 면 배지만 · `MARK=뾰미` 면 뾰미만 · `MARK=0` 이면 둘 다 없음
+const 표시 = process.env.MARK || '둘다'
+const 배지있나 = 표시 === '둘다' || 표시 === '배지'
+const 뾰미있나 = 표시 === '둘다' || 표시 === '뾰미'
+// 🔢 배지 폭 ≈ 400px → 폰에서 0.36배로 줄어도 **약 140px** 이라 읽힌다(창업자 지적에 맞춘 값)
+const 패드표시 = `
+/* ⛔ [규칙 21 이 잡았다] z-index 가 없으면 뾰미 «아래쪽»이 패드 몸체에 잘린다 —
+   판에서 화면(.wrap)이 «나중»에 그려지기 때문이다.
+   ✅ 앞으로 빼서 **패드에 걸터앉은** 그림으로 만든다(잘리는 것보다 귀엽고, 「패드 위」라는 뜻도 산다). */
+.padmark{position:absolute;right:64px;top:${글머리 - 96}px;display:flex;flex-direction:column;
+  align-items:flex-end;gap:10px;z-index:5;}
+.padbadge{display:inline-flex;align-items:center;gap:12px;padding:14px 26px;border-radius:999px;
+  font-family:'Jua';font-size:42px;line-height:1;white-space:nowrap;}
+.padbadge .ico{width:46px;height:32px;border-radius:5px;border:3.5px solid currentColor;position:relative;}
+.padbadge .ico::after{content:'';position:absolute;top:2.5px;left:50%;transform:translateX(-50%);
+  width:4px;height:4px;border-radius:50%;background:currentColor;}
+.padfox{width:230px;height:auto;display:block;filter:drop-shadow(0 8px 16px rgba(40,30,15,.28));}
+.padbadge.살구{background:rgba(255,250,238,.92);color:#8a4a1c;box-shadow:0 8px 18px rgba(90,60,25,.20);}
+.padbadge.숲{background:rgba(232,184,102,.16);color:#e8b866;border:2.5px solid rgba(232,184,102,.55);
+  box-shadow:0 8px 20px rgba(0,0,0,.34);}
+`
+// ⭐ 배지가 «곁말 쪽지»를 흡수한다 — 「패드 · 요리모드」 한 줄로 둘을 말한다.
+//    ⛔ 쪽지를 따로 두면 오른쪽 위에 둘이 겹치고, 릴스에서는 작은 쪽지가 어차피 안 읽힌다.
+const 패드조각 = (옷, 곁말) => (배지있나 || 뾰미있나
+  ? `<div class="padmark">
+      ${배지있나 ? `<div class="padbadge ${옷}"><span class="ico"></span>패드 · ${곁말}</div>` : ''}
+      ${뾰미있나 ? `<img class="padfox" src="data:image/png;base64,${뾰미}">` : ''}
+    </div>`
+  : '')
+
 const 판 = (s) => `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:'Pen';src:url(data:font/woff2;base64,${펜}) format('woff2');}
 @font-face{font-family:'Jua';src:url(data:font/woff2;base64,${주아}) format('woff2');}
@@ -148,15 +187,42 @@ h1 em{font-style:normal;color:#8a4a1c;}
 .note{position:absolute;right:74px;top:${글머리 - 24}px;font-family:'Jua';font-size:34px;color:#6a4520;
   background:rgba(255,250,238,.82);padding:10px 22px;border-radius:999px;transform:rotate(3deg);
   box-shadow:0 6px 14px rgba(90,60,25,.16);}
-.wrap{position:absolute;left:${(W - 장폭) / 2}px;top:${판시작}px;}
+/* 📱📱 [창업자 2026-09-04] *"**전체 1.2.릴스에**"* 패드 표시를 넣는다 —
+   📮 *"패드인거 강조하는 스티커나 이런거 넣자"* → *"**릴스라서 «작은 스티커로는 식별이 안될거야»**.
+      뾰미는 뾰미대로 하더라도. **뭔가 표시가 있어야 할 듯해**"*
+   ⭐⭐ **맞는 지적이라 설계를 바꿨다** — 릴스는 폰에서 손바닥만 하게 본다.
+      🔢 1080×1920 판이 폰에서 대략 세로 700px 로 줄어든다 = **약 0.36배.**
+         200px 스티커는 거기서 **72px** 이 된다 — 「뭔가 있네」지 「패드네」가 아니다.
+   ✅ 그래서 **큰 것 셋을 겹쳐** 쓴다(하나만으론 안 된다):
+      ① **패드 «몸체»** — 화면 크기만큼 크다. 줄어들어도 실루엣이 남는다(제일 세다)
+      ② **큰 배지** — 글자로 못 박는다. 폭 400px 이라 폰에서도 140px 로 읽힌다
+      ③ **뾰미** — 「패드로 보는 중」을 캐릭터로. ⚠️작아서 «식별»은 못 맡고 «귀여움»만 맡는다
+   ⛔ 릴스① 은 창업자가 *"좋앙"* 한 판이라 **바탕·글씨·마스킹테이프는 한 글자도 안 건드렸다.**
+      바뀐 건 화면을 «감싸는 것»뿐 — 종이에 «패드 사진을 붙인» 것으로 읽혀 스크랩북 결도 안 깨진다. */
+.wrap{position:absolute;left:${(W - (패드몸체 ? 장폭 + 44 : 장폭)) / 2}px;top:${판시작}px;}
+${패드몸체 ? `
+.pad{position:relative;padding:22px;
+  background:linear-gradient(160deg,#f4f0e6,#dcd5c6);border-radius:26px;
+  box-shadow:0 22px 44px rgba(70,45,18,.34), 0 0 0 1px rgba(255,255,255,.5);}
+.pad+.pad{margin-top:${사이}px;}
+.pad img{width:${장폭}px;height:${장높}px;border-radius:8px;display:block;object-fit:cover;}
+.pad .cam{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:7px;height:7px;
+  border-radius:50%;background:rgba(90,60,25,.34);box-shadow:0 0 0 1.5px rgba(255,255,255,.5);}
+` : `
 .shot{width:${장폭}px;height:${장높}px;border-radius:20px;display:block;object-fit:cover;
   box-shadow:0 22px 44px rgba(70,45,18,.34), 0 2px 0 rgba(255,252,244,.8);}
 .shot+.shot{margin-top:${사이}px;}
+`}
+${패드표시}
 </style></head><body>
 <div class="grain"></div><div class="stain"></div>
-<div class="note">${s.쪽지}</div>
+${배지있나 ? '' : `<div class="note">${s.쪽지}</div>`}
 <div class="cap"><div class="tape"></div><h1>${s.제목}<br><em>${s.제목2}</em></h1></div>
-<div class="wrap"><img class="shot" src="${그림(s.위)}"><img class="shot" src="${그림(s.아래)}"></div>
+${패드조각('살구', s.쪽지)}
+<div class="wrap">${패드몸체
+    ? `<div class="pad"><span class="cam"></span><img src="${그림(s.위)}"></div>
+       <div class="pad"><span class="cam"></span><img src="${그림(s.아래)}"></div>`
+    : `<img class="shot" src="${그림(s.위)}"><img class="shot" src="${그림(s.아래)}">`}</div>
 </body></html>`
 
 // 🌲🌲 **릴스 ② — 「살림노트」 판** (2026-09-04 · 창업자 = *"완전 다른 스타일이 나와야지"*)
@@ -181,13 +247,15 @@ h1 em{font-style:normal;color:#8a4a1c;}
 //       ⛔ 베젤 15px 에 카메라 점을 찍으면 안 보인다 → 22px 로 넓혔다(화면은 990 그대로).
 //       ⛔ 몸체를 «짙은 회색»으로 하면 짙은 숲 바탕에 묻힌다 → **밝은 은회색**으로.
 //    🅰🅱 `PAD=0` 으로 돌리면 옛 크림 카드 판이 나온다 — 창업자가 둘을 나란히 놓고 고른다.
-const 패드몸체 = process.env.PAD !== '0'
+//    ⭐ [2026-09-04] `패드몸체` 는 이제 **릴스① 도 같이 쓴다** — 위(그림 정의 옆)로 옮겼다.
 const 장폭2 = 990
 const 장높2 = Math.round(장폭2 * 800 / 1280)
 const 여백2 = 패드몸체 ? 22 : 15
 const 사이2 = 패드몸체 ? 22 : 26
 const 판2 = (s) => `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:'Gowun';src:url(data:font/woff2;base64,${고운}) format('woff2');}
+/* ⚠️ 패드 배지가 Jua 라 여기서도 실어야 한다 — 안 실으면 글씨가 조용히 기본체로 떨어진다 */
+@font-face{font-family:'Jua';src:url(data:font/woff2;base64,${주아}) format('woff2');}
 *{margin:0;padding:0;box-sizing:border-box}
 body{width:${W}px;height:${H}px;overflow:hidden;position:relative;
   /* 🌲 짙은 숲 — 릴스①(밝은 살구)과 «명도»부터 뒤집는다. 가을 저녁 색이라 계절도 안 어긋난다 */
@@ -204,16 +272,18 @@ body{width:${W}px;height:${H}px;overflow:hidden;position:relative;
    🔢 재보니 = 258 ＋ 줄(7) ＋ 사이(26) ＝ 291 부터 글이고, 88×1.16×2 = 204 → **끝이 495**.
       카드가 470 에서 시작하니 25px 를 먹힌다. ⛔글자만 줄이면 또 아슬아슬하다 —
       ✅ 셋을 같이 줄여 **여유를 35px 만든다**: 시작 236 · 사이 16 · 글자 76 → 끝 435. */
-.no{position:absolute;right:60px;top:${글머리 - 118}px;font-family:'Gowun';font-size:186px;
-  line-height:1;color:rgba(232,240,222,.085);letter-spacing:-.04em;}
-.cap2{position:absolute;left:70px;top:236px;width:${W - 300}px;}
-.bar{width:96px;height:7px;border-radius:4px;background:linear-gradient(90deg,#e8b866,#c98f45);margin-bottom:16px;}
+/* ⛔⛔ [2026-09-04 · 창업자 «전체 1.2.릴스에» 표시를 넣으며 자리를 다시 잡았다]
+   큰 번호가 오른쪽 위에 있었는데 **패드 배지가 들어갈 자리**가 바로 거기다.
+   ✅ 번호를 «금빛 줄 자리»로 옮겼다 — 줄이 하던 「제목이 여기서 시작한다」를 번호가 대신하고,
+      번호는 옅은 배경 무늬에서 **읽히는 글자**가 된다(차례가 정보라던 취지가 오히려 살아난다).
+   ⛔ 태그(「패드 · 냉장고」)는 없앴다 — 배지가 같은 말을 «훨씬 크게» 한다. 둘 다 두면 같은 말이 두 번이다. */
+.no{position:absolute;left:70px;top:224px;font-family:'Gowun';font-size:46px;line-height:1;
+  color:#e8b866;letter-spacing:.02em;}
+.cap2{position:absolute;left:70px;top:236px;width:${W - 380}px;}
+.bar{width:96px;height:7px;border-radius:4px;background:linear-gradient(90deg,#e8b866,#c98f45);margin-bottom:16px;
+  ${배지있나 ? 'margin-left:96px;' : ''}}
 .cap2 h1{font-family:'Gowun';font-size:76px;line-height:1.16;color:#f3efe2;letter-spacing:-1.5px;}
 .cap2 h1 em{font-style:normal;color:#e8b866;}
-/* 🏷 네모 «태그» — ①의 둥근 알약 쪽지와 모양이 반대다.
-   ⛔ 처음엔 제목 «아래»에 뒀는데 거긴 카드 자리다 → 금빛 줄 «옆»으로 올렸다(빈 자리를 쓴다). */
-.tag{position:absolute;left:190px;top:224px;font-family:'Gowun';font-size:28px;color:#e8b866;
-  border:2px solid rgba(232,184,102,.5);padding:6px 20px;border-radius:5px;letter-spacing:.09em;}
 .wrap2{position:absolute;left:${(W - (장폭2 + 여백2 * 2)) / 2}px;top:${판시작}px;}
 /* 📱 «패드 몸체» — 균일한 베젤 ＋ 큰 둥근 모서리 ＋ 앞면 카메라 점. 셋이 모여야 「기기」로 읽힌다.
    ⛔ 짙은 회색으로 하면 짙은 숲 바탕에 묻힌다 → 밝은 은회색. */
@@ -227,11 +297,15 @@ ${패드몸체 ? `/* 📷 앞면 카메라 — 갤럭시 탭을 «가로»로 �
 .cam{position:absolute;top:${Math.round((여백2 - 7) / 2)}px;left:50%;transform:translateX(-50%);
   width:7px;height:7px;border-radius:50%;background:rgba(40,52,44,.42);
   box-shadow:0 0 0 1.5px rgba(255,255,255,.25);}` : '.cam{display:none}'}
+${배지있나 ? '' : `.tag{position:absolute;left:190px;top:224px;font-family:'Gowun';font-size:28px;color:#e8b866;
+  border:2px solid rgba(232,184,102,.5);padding:6px 20px;border-radius:5px;letter-spacing:.09em;}`}
+${패드표시}
 </style></head><body>
 <div class="grid"></div>
 <div class="no">${s.번호 || ''}</div>
 <div class="cap2"><div class="bar"></div><h1>${s.제목}<br><em>${s.제목2}</em></h1></div>
-<div class="tag">${패드몸체 ? '패드 · ' : ''}${s.쪽지}</div>
+${배지있나 ? '' : `<div class="tag">${패드몸체 ? '패드 · ' : ''}${s.쪽지}</div>`}
+${패드조각('숲', s.쪽지)}
 <div class="wrap2">
   <div class="card"><span class="cam"></span><img src="${그림(s.위)}"></div>
   <div class="card"><span class="cam"></span><img src="${그림(s.아래)}"></div>
