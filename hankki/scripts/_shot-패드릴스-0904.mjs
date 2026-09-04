@@ -108,7 +108,14 @@ if (어느것 === '전부' || 어느것 === '1') {
   if (await 탭(p, '레시피')) await 찍자(p, '1-02-요리책', '레시피 목록 — 꾸민 표지가 깔린 격자')
   // 상세 — ⛔ «홈»엔 레시피 카드가 없다(실측 0개). 목록에서 연다.
   //    ⛔ 실패를 조용히 삼키지 않는다 — 2026-09-03 에 그래서 앱 버그로 오인할 뻔했다.
-  const 첫편 = p.locator('.recipe-card, [class*="recipe"] a, .grid a').first()
+  // 🔢 실측(2026-09-04) = 목록 한 칸은 `div.grid-card > button.press` 다.
+  //    ⛔ `.recipe-card` 라고 짐작해 적었다가 «없는 이름»이라 한 편도 못 열었다(규칙 17 — 못 찾은 것이지 없는 게 아니다).
+  //    ⭐ 첫 칸이 아니라 «이름으로» 고른다 — 그래야 목록 차례가 바뀌어도 같은 편이 열린다.
+  //    ⛔ `.or()` 로 「이름 아니면 첫 칸」을 묶었더니 **둘 다 맞아 strict 위반으로 죽었다**(2026-09-04).
+  //       ✅ 묶지 말고 «찾아보고 없으면» 첫 칸으로 — 코드로 가른다.
+  const 홍보편 = process.env.SHOT_RECIPE || '돼지고기 김치찌개'
+  const 이름칸 = p.locator('.grid-card button.press').filter({ hasText: 홍보편 })
+  const 첫편 = (await 이름칸.count()) ? 이름칸.first() : p.locator('.grid-card button.press').first()
   if (await 첫편.count()) {
     await 첫편.click(); await p.waitForTimeout(1800)
     await 굴리기(p, 700)
@@ -117,6 +124,20 @@ if (어느것 === '전부' || 어느것 === '1') {
     const 꾸미기 = p.getByRole('button', { name: /레시피 꾸미기/ }).first()
     if (await 꾸미기.count()) {
       await 꾸미기.click(); await p.waitForTimeout(1800)
+      // ⛔⛔ [2026-09-04 · 규칙 21 이 잡았다] 꾸미기로 «들어간 뒤»에 「받은 선물」 시트가 떠서
+      //    화면 아래 절반(스티커 서랍)을 통째로 덮었다. 보여주려던 것이 바로 그 서랍이었다.
+      //    📌 들어가기 «전»에 닫아둔 건 소용없다 — 이 시트는 들어간 뒤에 뜬다. 여기서 한 번 더 닫는다.
+      await 시트닫기(p)
+      // 🔎 정말 걷혔나 — 안 걷혔으면 시끄럽게 알린다(가린 채로 찍는 게 제일 나쁘다)
+      const 남았나 = await p.evaluate(() => /받은 선물|나중에 볼게요/.test(document.body.innerText))
+      if (남았나) console.log('  ⚠️⚠️ 「받은 선물」 시트가 아직 덮고 있다 — 이 장은 홍보물에 못 쓴다')
+      // 🎨 서랍은 「배경」 탭으로 열린다 — 색깔 네모만 보여서 «꾸미기»로 안 읽힌다.
+      //    📮 창업자 2026-08-22 = *"레꾸꾸미기에서 «더 귀여운 스티커들» 있는 부분으로"*
+      //    ⭐ 그래서 「친구들」(꼬르곰·펭펭)로 옮겨서 찍는다. 없으면 「데코」.
+      for (const 탭이름 of ['친구들', '데코']) {
+        const t = p.locator('button, [role="tab"]').filter({ hasText: new RegExp(`^${탭이름}$`) }).first()
+        if (await t.count()) { await t.click(); await p.waitForTimeout(1200); break }
+      }
       await 찍자(p, '1-04-레꾸', '레꾸 — 꼬르곰·펭펭 스티커 서랍')
     } else console.log('  ⛔ 「레시피 꾸미기」 단추를 못 찾았다')
   } else console.log('  ⛔ 레시피 목록에서 첫 편을 못 찾았다 — 고르는 잣대를 다시 봐야 한다')
