@@ -44,13 +44,32 @@ const 집 = `http://127.0.0.1:${PORT}/`
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 // ⛔ `SEED_COACH_SEEN` 은 «함수»다 — JSON 으로 넘기면 안내 딱지가 그대로 떠서 클릭을 가로챈다.
-const ctx = await b.newContext({ viewport: { width: 820, height: 1456 }, deviceScaleFactor: 2 })
+// 📐📐 **실측으로 갈아엎었다 (2026-09-04)** — 창업자 = *"아 세로가 아니라 «가로» 버전이지"*
+//    ⛔ 처음엔 820×1456(세로 9:16)으로 찍었다. 그런데 그 바탕이 된 820×1180 은 «패드 실물»이 아니라
+//       `_repro-패드글씨-0821` 이 쓰는 **«검사판 값»**이었다 — 검사 숫자를 실물로 여겼다(규칙 18).
+//    ⭐ 창업자는 패드를 **«가로»로 쓴다.** 그게 폰과 제일 다른 그림(2단 레이아웃)이고 자랑거리다.
+//    🔢 가로 1280×800(16:10) → 릴스 폭에 맞추면 **1080×675 = 릴스의 3분의 1**뿐이다.
+//       ✅ 그런데 **두 장이면 1350** 이고, 릴스 안전지대(1920 − 위 230 − 아래 384 = **1306**)에 거의 딱 맞는다.
+//          16:10 을 둘 쌓으면 9:16 이 된다 — 우연이 아니다. 그래서 **«가로 두 장 쌓기»**로 간다.
+//    ⛔ 빈자리를 클레이로 채우거나 잘라서 풀지 않는다 — 2026-09-03 에 그러다 세 판을 헛돌렸다.
+const ctx = await b.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 })
 await ctx.addInitScript(SEED_COACH_SEEN)
 await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch { /* noop */ } })
 
 const 찍은것 = []
 const 찍자 = async (p, 이름, 설명) => {
   await p.waitForTimeout(700)
+  // 🧹🧹 «청소 안내 띠»가 맨 위에 걸린다 — 「사진 N장을 정리해 …MB 를 비웠어요」.
+  //    ⛔ 홍보물에 시스템 안내가 찍히면 안 된다.
+  //    ⛔⛔ 백업을 물린 «직후»에만 기다렸더니 소용없었다 — 탭을 옮길 때마다 청소가 다시 돌아 또 떴다.
+  //       ✅ 그래서 «한 곳»에서 막는다 — 찍기 «직전»에, 띠가 사라질 때까지.
+  //       ⛔ 그냥 대기 시간을 늘리지 않았다(절대원칙 34) — 띠가 «없어졌나»를 보고 끝낸다.
+  for (let i = 0; i < 15; i++) {
+    const 띠 = await p.evaluate(() => /정리해|비웠어요/.test(document.body.innerText))
+    if (!띠) break
+    await p.waitForTimeout(1000)
+    if (i === 14) console.log(`  ⚠️⚠️ ${이름} — 정리 안내 띠가 안 걷혔다. 이 장은 홍보물에 못 쓴다`)
+  }
   // 🔎 규칙 21 — 화면 한가운데를 «덮은 것»이 있으면 알린다(찍고 나서 눈으로 볼 때 헷갈리지 않게)
   const 덮개 = await p.evaluate(() => {
     const el = document.elementFromPoint(innerWidth / 2, innerHeight / 2)
@@ -65,7 +84,7 @@ const 찍자 = async (p, 이름, 설명) => {
 
 // ⛔ scrollTop 을 넣으면 «한 픽셀도 안 구른다»(2026-08-22) — 바퀴를 실제로 굴린다.
 const 굴리기 = async (page, 픽셀) => {
-  await page.mouse.move(410, 800)
+  await page.mouse.move(640, 500)
   await page.mouse.wheel(0, 픽셀)
   await page.waitForTimeout(700)
 }
