@@ -163,6 +163,52 @@ if (백업파일) {
   await 홈으로(p); await 시트닫기(p)
 }
 
+// 🍂🍂 **가을 일기를 «내가» 꾸며서 넣는다** (2026-09-04)
+//    📮 창업자 = *"한끼일기도 «예쁜 틀»로 바꿔줘. 너무 저거는 **백지**라.."*
+//       → *"**내가 꾸민 거 말고..**"* → *"**네가 꾸며서 넣어줘 가을 느낌나게**"*
+//    ⭐ 그래서 창업자가 꾸며 둔 8/11·8/12 는 «안 쓴다». 글만 있고 안 꾸민 날 하나를 골라
+//       **지금 열려 있는 가을 자산만으로** 꾸민다.
+//    🔢 자산은 짐작하지 않고 실측해서 골랐다 — `release-calendar.mjs --on 2026-09-01` 이 연 것들:
+//       · 꼬르곰·펭펭의 가을 = `au_b20 au_b09 au_b24 au_b26~b30`
+//       · 가을 단풍·낙엽 = `au_i24 au_i28 au_i38 au_i39 au_i29 au_i42`
+//       · 가을 소품 8 = `au_i43`(담요) `au_i44`(머그) `au_i45`(호박) `au_i46`(도토리)
+//                       `au_i47`(초) `au_i48`(장화) `au_i49`(바구니) `au_i50`(버섯)
+//    ⛔ 10/1·11/1 에 열리는 것은 **안 쓴다** — 홍보물에 «지금 못 받는 것»을 그리면 거짓말이 된다.
+//    ⛔ 글자가 있는 왼쪽 위는 비워 둔다 — 스티커가 글을 덮으면 「지저분해 보인다」(2026-09-03 창업자).
+const 가을로꾸미기 = async (page) => {
+  const 결과 = await page.evaluate(() => {
+    try {
+      const 열쇠 = 'hankki:v1'
+      const 값 = JSON.parse(localStorage.getItem(열쇠) || '{}')
+      const d = 값.diary || []
+      const 고름 = d
+        .filter((e) => typeof e?.note === 'string' && e.note.trim().length > 3)
+        .filter((e) => !(e?.paper?.art && e.paper.art !== 'none') && !(e?.decor?.length))
+        .sort((a, b) => b.at - a.at)[0]
+      if (!고름) return null
+      const 씨 = (n) => 'sh' + n
+      고름.paper = { rule: 'plain', skin: 'kraft', art: 'today' }
+      고름.decor = [
+        { id: 씨(1), type: 'sticker', key: 'au_b09', x: 0.845, y: 0.155, s: 0.25, r: 4 },
+        { id: 씨(2), type: 'sticker', key: 'au_b27', x: 0.155, y: 0.845, s: 0.235, r: -4, motion: 'tongtong' },
+        { id: 씨(3), type: 'sticker', key: 'au_i24', x: 0.085, y: 0.395, s: 0.125, r: -14 },
+        { id: 씨(4), type: 'sticker', key: 'au_i38', x: 0.915, y: 0.555, s: 0.135, r: 9 },
+        { id: 씨(5), type: 'sticker', key: 'au_i45', x: 0.335, y: 0.935, s: 0.15, r: 6 },
+        { id: 씨(6), type: 'sticker', key: 'au_i46', x: 0.475, y: 0.955, s: 0.10, r: -8 },
+        { id: 씨(7), type: 'note', art: 'dgn07', text: '가을엔\n뜨끈한 게 최고', font: 'gaegu', x: 0.715, y: 0.815, s: 0.40, r: 3, tc: '#8a4a1c', motion: 'tilt' },
+      ]
+      localStorage.setItem(열쇠, JSON.stringify(값))
+      const t = new Date(고름.at + 9 * 3600 * 1000)
+      return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate(), n: 고름.decor.length }
+    } catch { return null }
+  })
+  if (!결과) { console.log('  ⚠️⚠️ 가을 꾸미기를 못 넣었다 — 글만 있는 «안 꾸민» 일기를 못 찾았다'); return null }
+  console.log(`  🍂 가을로 꾸몄다 — ${결과.y}-${결과.m}-${결과.d} · 틀 오늘의한끼 ＋ 크라프트 ＋ 꾸민것 ${결과.n}개`)
+  return 결과
+}
+const 가을일기 = 백업파일 ? await 가을로꾸미기(p) : null
+if (가을일기) { await p.goto(집, { waitUntil: 'networkidle' }); await p.waitForTimeout(2000); await 시트닫기(p); await 홈으로(p) }
+
 const 어느것 = process.env.SET || '전부'
 
 // ══════════════════════════════════════════════════════════════
@@ -215,6 +261,15 @@ if (어느것 === '전부' || 어느것 === '1') {
         if (await t.count()) { await t.click(); await p.waitForTimeout(1200); break }
       }
       await 찍자(p, '1-04-레꾸', '레꾸 — 꼬르곰·펭펭 스티커 서랍')
+      // 🎀 [창업자 2026-09-04] *"꾸미기 «아이템» 있는거 보여주자"* — 친구들 말고 «프레임·데코»도 한 장.
+      //    ⭐ 서랍에 «무엇이 얼마나» 들었는지가 자랑이다. 탭 하나만 보여주면 그게 안 보인다.
+      for (const 탭이름 of ['프레임', '데코']) {
+        const t = p.locator('button, [role="tab"]').filter({ hasText: new RegExp(`^${탭이름}$`) }).first()
+        if (await t.count()) {
+          await t.click(); await p.waitForTimeout(1300)
+          await 찍자(p, `1-11-레꾸-${탭이름}`, `레꾸 — ${탭이름} 서랍`)
+        } else console.log(`  ⛔ 서랍 탭 「${탭이름}」 을 못 찾았다`)
+      }
     } else console.log('  ⛔ 「레시피 꾸미기」 단추를 못 찾았다')
   } else console.log('  ⛔ 레시피 목록에서 첫 편을 못 찾았다 — 고르는 잣대를 다시 봐야 한다')
   // 🔥🔥 요리모드 — 📮 창업자 = *"요리모드도 꼭 보여줘야해"*
@@ -259,7 +314,67 @@ if (어느것 === '전부' || 어느것 === '1') {
   }
 
   await 홈으로(p); await 시트닫기(p)
-  if (await 탭(p, '일기')) await 찍자(p, '1-05-일기', '한끼 일기 — 음식 아이콘이 쌓인 달력')
+  if (await 탭(p, '일기')) {
+    // ⭐ 달력은 «꾸민 날이 있는 달»로 넘어간 뒤에 찍는다(아래) — 빈 달을 찍으면 자랑거리가 없다
+    // 📔📔 [창업자 2026-09-04] *"릴스 1은 «일기 다양한 틀»이랑 «꾸미기 아이템» 있는거 보여주자.
+    //    «만들어 먹은거 쭉» 있는 것도"*
+    //    🔢 실측 = 달력에서 날을 누르면 그 아래로 펼쳐진다 — 「N월 N일 일기 보기」 · 그날 만든 요리 · 「꾸미기」
+    //
+    // ⛔⛔ [2026-09-04 · 창업자가 두 번 잡았다]
+    //    ⑴ *"한끼일기도 «예쁜 틀»로 바꿔줘. 너무 저거는 **백지**라.."*
+    //    ⑵ *"**내가 꾸민 거 말고..**"*  ← ⭐이게 방향을 갈랐다
+    //    🔎 뿌리 = 처음엔 «그림이 든 첫 칸»을 집었는데 그건 「요리 사진이 있는 날」이지 「꾸민 날」이 아니다.
+    //       🔢 실측 = 창업자 백업 일기 21개 중 틀·꾸밈이 있는 건 **딱 둘**(8/11·8/12). 나머지 19개는
+    //          `paper` 자체가 없어 **정말로 백지**다. 9월 달력에서 집었으니 백지가 나온 게 당연했다.
+    //    ⛔ 그렇다고 그 둘을 열어 쓰지 «않는다» — 창업자가 «내가 꾸민 거 말고»라고 했다.
+    //       📌 그리고 그게 홍보물로도 맞다: 그건 **창업자 한 사람의 결과물**이지 «앱이 주는 것»이 아니다.
+    //          새로 깐 사람이 보는 건 «빈 종이 ＋ 고를 수 있는 틀 여덟»이다. 자랑거리는 **틀 그 자체**다.
+    //    ✅ 그래서 **글만 있는 날 하나를 골라 «내가» 가을로 꾸며서** 그 판을 찍는다(위 `가을로꾸미기`).
+    //       ＋ 서랍(틀 여덟이 늘어선 자리)도 한 장 — 창업자가 말한 *"일기 «다양한 틀»"* 이 그것이다.
+    const 꾸민날 = 가을일기
+    if (!꾸민날) console.log('  ⚠️⚠️ 가을로 꾸민 일기가 없다 — 이 장은 백지로 나온다')
+    else {
+      console.log(`  📔 여는 날 = ${꾸민날.y}-${꾸민날.m}-${꾸민날.d} (내가 가을로 꾸민 날)`)
+      // 📅 그 달로 넘어간다 — 「이전 달」을 눌러서(오늘이 9월이면 8월은 한 번)
+      const 이번달 = new Date(Date.now() + 9 * 3600 * 1000)
+      const 뒤로 = (이번달.getUTCFullYear() * 12 + 이번달.getUTCMonth()) - (꾸민날.y * 12 + (꾸민날.m - 1))
+      for (let i = 0; i < Math.max(0, Math.min(뒤로, 24)); i++) {
+        const 이전 = p.locator('[aria-label="이전 달"]').first()
+        if (!(await 이전.count())) break
+        await 이전.click({ timeout: 3000 }).catch(() => {})
+        await p.waitForTimeout(700)
+      }
+      await 찍자(p, '1-05-일기', '한끼 일기 — 음식 아이콘이 쌓인 달력')
+      const 칸 = p.locator('button.cal-day').filter({ has: p.locator('.cal-num', { hasText: new RegExp(`^${꾸민날.d}$`) }) }).first()
+      if (await 칸.count()) {
+        await 칸.click({ timeout: 5000 }).catch(() => {})
+        await p.waitForTimeout(1500)
+        await 찍자(p, '1-09-일기-펼침', '일기 — 그날 만든 요리가 쭉')
+        const 일기보기 = p.getByRole('button', { name: /일기 보기/ }).first()
+        if (await 일기보기.count()) {
+          await 일기보기.click({ timeout: 5000 }).catch(() => {})
+          await p.waitForTimeout(1800)
+          // 🔎 정말 «꾸민» 판이 열렸나 — 백지면 시끄럽게 알린다(백지를 홍보물에 쓰는 게 제일 나쁘다)
+          const 꾸밈보이나 = await p.evaluate(() => document.querySelectorAll('.decor-layer *, [class*=decor] img, [class*=decor] span').length)
+          console.log(`     └ 펼친 일기에 꾸민 것 ${꾸밈보이나}개 ${꾸밈보이나 > 0 ? '✅' : '⚠️ 백지일 수 있다'}`)
+          await 찍자(p, '1-10-일기-틀', '일기 — 꾸민 틀(사진·스티커·쪽지)')
+          // 🗂 [창업자 2026-09-04] *"일기 «다양한 틀»이랑 꾸미기 아이템 있는거 보여주자"*
+          //    → 틀은 «꾸미기» 안 「속지」에서 고른다(DiaryScreen = *"속지(선·종이·틀)도 꾸미기 안에서 골라요"*).
+          const 꾸미기2 = p.getByRole('button', { name: /^꾸미기$/ }).first()
+          if (await 꾸미기2.count()) {
+            await 꾸미기2.click({ timeout: 5000 }).catch(() => {})
+            await p.waitForTimeout(1600)
+            await 시트닫기(p)
+            for (const 이름 of ['속지', '틀', '종이']) {
+              const t = p.locator('button, [role="tab"]').filter({ hasText: new RegExp(`^${이름}$`) }).first()
+              if (await t.count()) { await t.click({ timeout: 3000 }).catch(() => {}); await p.waitForTimeout(1200); break }
+            }
+            await 찍자(p, '1-12-일기-속지', '일기 — 틀 서랍(다양한 속지)')
+          } else console.log('  ⛔ 일기 안에서 「꾸미기」를 못 찾았다')
+        } else console.log('  ⛔ 「일기 보기」 단추를 못 찾았다')
+      } else console.log(`  ⛔ 달력에서 ${꾸민날.d}일 칸을 못 찾았다`)
+    }
+  }
   await 홈으로(p); await 시트닫기(p)
   if (await 탭(p, '레꾸자랑')) await 찍자(p, '1-06-레꾸자랑', '레꾸자랑 — 뽑은 카드')
 }
@@ -275,6 +390,24 @@ if (어느것 === '전부' || 어느것 === '2') {
     await 찍자(p, '2-01-장보기', '장보기 — 담긴 재료 ＋ 줄마다 사러가기')
     await 굴리기(p, 900)
     await 찍자(p, '2-02-장바구니', '주부의 장바구니 — 큐레이션')
+    // 🛒🛒 [창업자 2026-09-04] *"냉장고는 «큐레이션 좀 더 자세하게» 보여주고"*
+    //    🔢 실측 = 큐레이션은 «갈래 칩»(`.shop-chip`)으로 접혀 있다 — 기본은 「이번 주 픽」만 펼친다.
+    //       그래서 그냥 굴리면 «몇 칸»만 보이고 「엄선했다」가 안 읽힌다.
+    //    ✅ 칩을 눌러 갈래를 펼치고 «제품 카드가 여러 장 깔린» 자리를 찍는다.
+    const 칩들 = p.locator('.shop-chip')
+    const 칩수 = await 칩들.count()
+    if (칩수 > 1) {
+      // ⭐ 「전체」가 있으면 그걸로 — 제품이 제일 많이 깔린다. 없으면 둘째 칩.
+      const 전체칩 = 칩들.filter({ hasText: /^전체$/ }).first()
+      const 고른칩 = (await 전체칩.count()) ? 전체칩 : 칩들.nth(1)
+      await 고른칩.click({ timeout: 4000 }).catch(() => {})
+      await p.waitForTimeout(1400)
+      await 찍자(p, '2-08-큐레이션-갈래', '주부의 장바구니 — 갈래를 펼친 자리')
+      await 굴리기(p, 800)
+      await 찍자(p, '2-09-큐레이션-제품', '주부의 장바구니 — 제품 카드가 쭉 ＋ 사러가기')
+      await 굴리기(p, 800)
+      await 찍자(p, '2-10-큐레이션-더', '주부의 장바구니 — 더 아래')
+    } else console.log('  ⛔ 큐레이션 갈래 칩(.shop-chip)을 못 찾았다')
     await 굴리기(p, 900)
     await 찍자(p, '2-03-장바구니-더', '주부의 장바구니 — 더 아래')
   }
@@ -303,7 +436,11 @@ if (어느것 === '전부' || 어느것 === '2') {
         await p.keyboard.press('Escape').catch(() => {})
         await p.waitForTimeout(900)
       } else console.log('  ⛔ 「＋재료 담기」 단추를 못 찾았다')
-      const 영수증 = p.getByRole('button', { name: /^영수증$/ }).first()
+      // ⛔⛔ [2026-09-04] `/^영수증$/` 로 찾다가 못 찾았다 — 이 단추 «안»에 「베타」 딱지가 같이 들어 있어
+      //    읽히는 이름이 「영수증 베타」다. 정확히 같기를 요구하면 영영 못 만난다(규칙 17 — 없는 게 아니라 못 찾은 것).
+      //    ⛔ 그냥 `/영수증/` 으로 넓히면 「갤러리에서 영수증 고르기」까지 물어 온다 → 그 둘을 «빼고» 고른다.
+      const 영수증 = p.getByRole('button', { name: /영수증/ })
+        .filter({ hasNotText: '갤러리' }).filter({ hasNotText: '고르기' }).first()
       if (await 영수증.count()) {
         // ⛔ 누르면 «파일 고르기»가 열린다 — 취소하면 화면이 그대로다.
         //    그래서 «누르지 않고» 그 자리가 보이게만 찍는다(홍보물엔 「이런 길이 있다」가 보이면 된다).
