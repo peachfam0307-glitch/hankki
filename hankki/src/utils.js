@@ -3,13 +3,27 @@
 // 문자열을 주면 브라우저가 '팝업 창'으로 열어 모바일에서 좁게/세로로 깨져 보이고,
 // App Link(쿠팡·컬리 등) 앱 열기와 겹쳐 '두 번 열린 것처럼' 보인다.
 // 앵커 클릭 방식이면 정식 새 탭(설치된 앱이 있으면 그 앱)으로 깔끔하게 열린다.
+// 🛒 쿠팡 «문» — 2026-09-05 창업자 제보: 앱 안 브라우저(커스텀 탭)로 열면 쿠팡이
+//   「요청하신 페이지의 사용권한이 없습니다」로 막는다. 직접 상품 링크·검색 둘 다.
+//   같은 폰 크롬에선 열렸다 → 링크가 아니라 «여는 창»이 막힌 것.
+//   ⭐ 검사 페이지(public/coupang-door-test.html) 7가지 중 창업자 실물 = **④ 크롬 강제만 열렸다**
+//     (①지금 방식 ②리퍼러 ③같은 창 ⑤쿠팡 앱 ⑥m.coupang ⑦직접 상품 = 전부 막힘).
+//   그래서 쿠팡 주소는 안드로이드에서 intent 로 크롬을 «정식 탭»으로 연다. 크롬이 없으면 fallback 으로 웹.
+//   ⛔ 안드로이드 밖(아이폰·PC)은 그대로 — intent 스킴을 모른다.
+const 쿠팡 = /^https?:\/\/(www\.|m\.)?coupang\.com\//i
+export function 쿠팡문(u, ua = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
+  if (!쿠팡.test(u) || !/Android/i.test(ua)) return u
+  const 뒤 = u.replace(/^https?:\/\//i, '')
+  return `intent://${뒤}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(u)};end`
+}
+
 export function openExternal(url) {
   if (!url) return
   // 이미 스킴이 있으면(https://, intent://, intent:, market: 등) 그대로 쓰고,
   // 'shop.example.com' 같은 맨 도메인만 https:// 를 붙인다.
   // (안드로이드 intent 링크로 쇼핑몰 '앱'을 강제로 열 때 https 로 덮어쓰지 않도록)
   const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(url) || /^intent:/i.test(url)
-  const u = hasScheme ? url : 'https://' + url
+  const u = 쿠팡문(hasScheme ? url : 'https://' + url)
   const a = document.createElement('a')
   a.href = u
   a.target = '_blank'
