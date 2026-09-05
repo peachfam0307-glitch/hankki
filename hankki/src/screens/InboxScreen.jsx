@@ -7,6 +7,8 @@ import SourceBadge from '../components/SourceBadge'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { timeAgo } from '../utils'
 import { getOcrLeft, KEY_NAME, KEY_UNIT } from '../ocr'
+import { tidyRecipe, tidyTail, tidyFounder } from '../tidy'
+import { 만회값 } from '../retidy'
 import uiKeyOne from '../assets/ui/key_one.png'
 import uiKeyHole from '../assets/ui/key_hole.png'
 
@@ -35,6 +37,34 @@ export default function InboxScreen() {
   const nav = useNav()
   // 미정리함은 "버릴 것"이 쌓이는 곳 — 상세까지 안 들어가고 여기서 바로 지운다(창업자 요청).
   const [delAsk, setDelAsk] = useState(null)
+  // 🤖🗃 **[2026-09-05 · 창업자 「보관함에 「AI로 다듬기」 단추 ㄱㄱ」]** 줄마다 AI 를 «다시» 부른다.
+  //   ⭐ 왜 여기인가 = 보관함에 남은 이유가 «AI 실패»다(2026-09-05 부터 AI 가 성공했을 때만 졸업한다).
+  //      그 자리에서 한 번 더 → 성공하면 «저절로» 레시피 탭으로 — 창업자가 말한 「다듬고 다시 나가는」 흐름.
+  //   💰 열쇠 0개 — 글자 읽기는 이미 끝났고 그것만 열쇠를 센다(`ocr.js` 한 곳). `tidyRecipe` 는 안 깎는다.
+  //   ⭐ 얹는 규칙은 `retidy.js` 의 `만회값()` «한 곳» — 상세 화면의 자동 만회와 «같은 말»이라야 안 갈린다.
+  //   ⛔ 원문(`rawText`)이 없는 편(8/22 이전에 담은 것)엔 단추를 안 그린다 — 없는 걸 있는 척하지 않는다.
+  const [다듬는중, set다듬는중] = useState('')   // 지금 AI 가 도는 줄의 id (한 번에 하나)
+  const 다듬기 = async (r) => {
+    const 원문 = String(r.rawText || '')
+    if (다듬는중 || 원문.length < 40) return
+    set다듬는중(r.id)
+    nav.showToast('AI가 다듬는 중이에요 · 20~60초 걸려요', 6000)
+    // 👁 사진도 같이(ⓒ) — 저장된 캡처가 dataURL 이면 그것(`tidy.js` 가 한 번 더 거른다)
+    const 사진 = typeof r.image === 'string' && r.image.startsWith('data:image/') ? r.image : ''
+    const ai = await tidyRecipe(원문, 사진)
+    set다듬는중('')
+    if (!ai) {
+      // ⛔ 유저가 «직접 눌렀으니» 실패도 말한다(공유받기 때 조용한 것과 다르다)
+      updateRecipe(r.id, { tidyFail: 2 })
+      nav.showToast('AI 다듬기는 못 했어요 · 한 번 더 눌러 보세요' + (tidyFounder() ? tidyTail() : ''), 6000)
+      return
+    }
+    const { 바꿀것 } = 만회값(r, 원문, ai)
+    updateRecipe(r.id, 바꿀것)
+    // ⭐ «어디로 갔는지»를 말한다 — 졸업했으면 목록에서 사라지는데, 안 말하면 「지워졌다」로 읽힌다
+    // ⛔ 여기엔 `tidyTail()` 을 안 붙인다 — 「옮겼어요 · AI가 정리했어요」처럼 같은 말이 두 번 된다(9/05 캡처)
+    nav.showToast(바꿀것.status === 'sorted' ? 'AI가 다듬어서 「레시피」 탭으로 옮겼어요' : 'AI가 다듬었어요 · 아직 반쪽이라 여기 둘게요', 5200)
+  }
   const ocrLeft = getOcrLeft()   // 🔑 상단바 오른쪽 잔량 — 화면을 열 때마다 새로 읽는다
 
   // 🗃🗃 [창업자 확정 2026-08-28 = ㉠] **정리 끝난 레시피는 여기 «안» 보인다.**
@@ -159,6 +189,21 @@ export default function InboxScreen() {
                    *"난 이대로 쓸래"* 하는 사람이 있다. 고를 자유를 뺏지 않는다.
                 ⛔ 휴지통과 헷갈리면 안 된다 — 이 줄은 **글자 단추**라 아이콘(🗑)과 모양부터 다르다. */}
             <div style={{ display: 'flex', gap: 8, padding: '0 4px 10px 70px' }}>
+              {/* 🤖 AI로 다듬기 — 원문이 있는 줄에만 · 열쇠 0개 · 성공하면 저절로 졸업(창업자 2026-09-05) */}
+              {String(r.rawText || '').length >= 40 && (
+                <button
+                  className="press"
+                  onClick={() => 다듬기(r)}
+                  disabled={!!다듬는중}
+                  style={{
+                    flex: 1, padding: '9px 10px', borderRadius: 'var(--r-md)', border: 'none',
+                    background: 다듬는중 === r.id ? 'var(--cream)' : 'var(--blue, #5b7aa8)',
+                    color: 다듬는중 === r.id ? 'var(--text-sub)' : '#fff', fontSize: 15.5, fontWeight: 700,
+                  }}
+                >
+                  {다듬는중 === r.id ? '다듬는 중…' : 'AI로 다듬기'}
+                </button>
+              )}
               {!다읽었나(r) && (
                 <button
                   className="press"

@@ -158,5 +158,39 @@ console.log('\nⒷ AI 가 «실패»하는 날 → 그 편을 열면 만회')
   await ctx.close()
 }
 
+// ═══ Ⓒ AI 실패 → 보관함 「AI로 다듬기」 단추 (창업자 2026-09-05 ㄱㄱ) ═══
+console.log('\nⒸ AI 가 «실패»하는 날 → 보관함에서 「AI로 다듬기」 단추')
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
+  await ctx.addInitScript(SEED_COACH_SEEN)
+  await 공유심기(ctx)
+  const 셈 = { AI: 0 }
+  const p = await ctx.newPage(); p.on('pageerror', (e) => console.log('  ⚠️ pageerror:', e.message))
+  가로채기(p, { AI: false, 지연: 300, 셈 })
+  await p.goto(URL0, { waitUntil: 'load' })
+  await p.waitForTimeout(6000)
+  await p.close()
+
+  const p2 = await ctx.newPage(); p2.on('pageerror', (e) => console.log('  ⚠️ pageerror:', e.message))
+  가로채기(p2, { AI: true, 지연: 2500, 셈 })
+  await p2.goto(URL0, { waitUntil: 'networkidle' }); await p2.waitForTimeout(2200)
+  await p2.getByRole('button', { name: /임시보관함/ }).first().click().catch(() => {})
+  await p2.waitForTimeout(900)
+  await p2.screenshot({ path: join(OUT, 'C1-보관함-단추.png') })
+  const 단추 = p2.getByRole('button', { name: /^AI로 다듬기$/ }).first()
+  console.log('  ⑥ 단추 있나 =', await 단추.count())
+  await 단추.click()
+  await p2.waitForTimeout(800)
+  await p2.screenshot({ path: join(OUT, 'C2-누른직후-다듬는중.png') })
+  await p2.waitForTimeout(4000)
+  await p2.screenshot({ path: join(OUT, 'C3-다듬은뒤-보관함.png') })
+  console.log('  ⑦ 누른 뒤 =', (await 상태(p2)).join(' | '), '· AI 부른 횟수', 셈.AI)
+  const 남은줄 = await p2.evaluate(() => document.querySelectorAll('.inbox-row').length)
+  console.log('  ⑦-보관함 남은 줄 =', 남은줄)
+  await p2.close()
+  console.log('  ⑧-레시피탭에 있나 =', await 레시피탭(ctx, 'C4-다듬은뒤-레시피탭.png'))
+  await ctx.close()
+}
+
 await b.close(); srv.close()
 console.log('\n📁 ' + OUT)
