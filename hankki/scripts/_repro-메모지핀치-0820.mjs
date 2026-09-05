@@ -22,16 +22,26 @@ const 심기 = async () => {
   await p.addInitScript(()=>{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')})
   await p.goto('http://127.0.0.1:4415/',{waitUntil:'networkidle'})
   await p.waitForFunction(()=>!!localStorage.getItem('hankki:v1'),null,{timeout:15000})
-  await p.evaluate(()=>{const s=JSON.parse(localStorage.getItem('hankki:v1'))
+  // ⭐⭐ [2026-09-04] 고른 편의 «이름을 돌려준다» — 그 전엔 여기선 물러나고(`||s.recipes[0]`)
+  //    아래 `열기()` 는 「닭곰탕」을 글자로 박아 눌렀다. 씨앗이 다른 편을 고르면 «영영 없는 것»을 기다린다.
+  //    🔢 실측 = CI run #2117 이 `waiting for locator('text=닭곰탕')` 로 30초 타임아웃(로컬은 7칸 초록불).
+  //    ⛔ 30초를 60초로 넓히지 않았다 — 없는 글자는 기다려도 안 나온다(절대원칙 34).
+  const 이름 = await p.evaluate(()=>{const s=JSON.parse(localStorage.getItem('hankki:v1'))
   const r=s.recipes.find(x=>x.title==='닭곰탕')||s.recipes[0]; r.cooked=2
   s.diary=[{id:'d0',recipeId:r.id,title:r.title,at:Date.now()-864e5,rating:4,note:'물 조금 더 · 대파 듬뿍',photo:null}]
-  localStorage.setItem('hankki:v1',JSON.stringify(s))})
+  localStorage.setItem('hankki:v1',JSON.stringify(s)); return r.title})
   await p.close()
+  return 이름
 }
 const 열기 = async () => {
   const p = await ctx.newPage(); await p.addInitScript(SEED_COACH_SEEN)
-  await p.goto('http://127.0.0.1:4415/',{waitUntil:'networkidle'}); await p.waitForTimeout(600)
-  await p.click('text=닭곰탕'); await p.waitForSelector('.memo-note',{timeout:10000})
+  await p.goto('http://127.0.0.1:4415/',{waitUntil:'networkidle'})
+  // ⭐ 기다리는 «대상»을 갈랐다 — ①앱이 떴나 ②그 편이 있나.
+  //    ⛔ 붙여놓고 한 덩이로 기다리면 「화면이 통째로 안 그려진 것」과 「그 편이 없는 것」이 같은 실패로 보인다.
+  //       그러면 로그가 «원인을 안 알려준다» — CI 에서 30초를 헛기다린 자리가 그것이었다.
+  //    📌 옆 세션이 `_repro-원문보기-0828` 에서 같은 고침을 했다(2026-09-04 · c247faf).
+  await p.waitForSelector('.grid-card, .recipe-list, [class*="card"]',{timeout:20000})
+  await p.click(`text=${심은편}`); await p.waitForSelector('.memo-note',{timeout:10000})
   await p.evaluate(()=>{[...document.querySelectorAll('.memo-note')].pop().scrollIntoView({block:'center'})})
   await p.waitForTimeout(300); return p
 }
@@ -54,7 +64,7 @@ const 저장값 = (p) => p.evaluate(()=>{try{return JSON.parse(localStorage.getI
 let 죽음 = 0
 const 말 = (ok, s) => { if(!ok)죽음++; console.log(`${ok?'✅':'⛔'} ${s}`) }
 
-await 심기()
+const 심은편 = await 심기()   // ⭐ 씨앗이 «실제로 고른» 편 이름 — 열기()가 이걸 누른다(글자 박기 금지)
 const p1 = await 열기()
 const 전 = await 폭(p1)
 await 벌리기(p1, 1.5)

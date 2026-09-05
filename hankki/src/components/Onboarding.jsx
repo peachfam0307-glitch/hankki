@@ -139,7 +139,7 @@ const Slide2 = () => (
   <Stage bg="linear-gradient(160deg,#d3e3c8,#eaf2e2)">
     <Cap top={210}><H1 style={{ color: '#4a6b42' }}>레시피 정리?<br />우린 레시피 레꾸해요</H1><Sub style={{ color: '#5f7a54' }}>레꾸하면, 한 끼가 추억이 된다</Sub></Cap>
     <div style={{ position: 'absolute', top: 556, left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
-      <Card food="fe_06" foodW={346} cover="linear-gradient(150deg,#fbf5e8,#f2ecda)" title="연어 포케볼" rot={-3}
+      <Card food="fe_511" foodW={346} cover="linear-gradient(150deg,#fbf5e8,#f2ecda)" title="연어 포케볼" rot={-3}
         deco={<><Img k="dc_dhb14" style={{ left: 38, top: 46, width: 70, transform: 'rotate(-10deg)' }} /><Img k="dc_dhb10" style={{ right: 42, top: 52, width: 74, transform: 'rotate(10deg)' }} /><Img k="dc_dhb04" style={{ left: 34, top: 262, width: 54, transform: 'rotate(-8deg)' }} /><Img k="dc_dsy04" style={{ right: 50, top: 280, width: 60, transform: 'rotate(8deg)' }} /><Spark x={150} y={140} size={40} /></>}
         char={<Img k="gp_pengv" cls="hk-m-kong" style={{ left: -6, bottom: -8, width: 198, transformOrigin: 'bottom center', filter: 'drop-shadow(0 8px 12px rgba(90,60,30,.22))' }} />}
         postit={<Postit style={{ right: 28, bottom: 36, background: '#dde5cf', transform: 'rotate(4deg)', fontSize: 36, color: '#4f5a44', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -148,7 +148,7 @@ const Slide2 = () => (
           <svg viewBox="0 0 48 48" width={30} height={30} aria-hidden="true"><path d="M24 41C8 29.5 8.5 16.5 16 13c4.3-2 8 .9 8 4.6 0-3.7 3.7-6.6 8-4.6 7.5 3.5 8 16.5-8 28Z" fill="none" stroke="#7d8a6e" strokeWidth="3.4" strokeLinejoin="round" /></svg>
         </Postit>} />
       <div style={{ marginTop: 34, background: '#fff', borderRadius: 36, padding: '28px 24px', boxShadow: '0 16px 34px rgba(70,90,60,.2)', width: 640, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Chip k="gp_gomhi" /><Chip k="gp_penghi" /><Chip k="fh_k27" /><Chip k="fe_15" />
+        <Chip k="gp_gomhi" /><Chip k="gp_penghi" /><Chip k="gr_003" /><Chip k="fe_508" />
         <div style={{ width: 120, height: 120, borderRadius: 26, background: '#5d3410', color: '#fff', fontSize: 54, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>＋</div>
       </div>
       <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 40, color: '#4a6b42' }}><img src={uiHandPoint} alt="" draggable={false} style={{ width: 52, height: 52, objectFit: 'contain' }} />톡 눌러 붙이기만 하면 끝!</div>
@@ -180,7 +180,7 @@ const P = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, typeof
 // ⛔⛔ **2·3째 줄의 1·2번째 칸은 비워 둔다** — 펭펭이 달력 왼쪽 아래에 서 있어 «그 두 칸을 가린다».
 //    첫 판에서 3째 줄 1번 칸의 음식이 통째로 안 보였다(캡처로 잡았다). 달력의 요지가 「해먹은 날에 그림이 박힌다」인데
 //    그 그림이 캐릭터 뒤로 숨으면 요지가 죽는다. 📌아이콘을 옮길 땐 펭펭 폭(container 0~146px)을 먼저 볼 것.
-const CAL = [null, 'fh_k22', null, 'fe_15', null, null, 'fh_k27', null, null, null, 'fe_06', null, 'fe_09', null, null, null, 'fe_22', null, 'fh_k29', null, 'fe_18']
+const CAL = [null, 'fh_k22', null, 'fe_508', null, null, 'gr_003', null, null, null, 'fe_511', null, 'gr_036', null, null, null, 'fe_22', null, 'fh_k29', null, 'fe_18']
 const SlideD = () => (
   <Stage bg="linear-gradient(165deg,#d6dfea,#eef2f7)">
     <Cap top={210}><H1 style={{ color: '#3f5570' }}>오늘의 한 끼가<br />일기가 돼요</H1><Sub style={{ color: '#5b7291' }}>사진 붙이고 속지 골라 · 그날을 남겨요</Sub></Cap>
@@ -196,7 +196,7 @@ const SlideD = () => (
             ⭐ 고침 = 칸을 100%로 채우고 `objectFit:'contain'` — 달력 칸이 이미 쓰는 문법이라 거긴 안 잘렸다.
             📌 **한 축만 잡으면 다른 축은 «비율이 정한다» — 칸 안에 넣으려면 두 축을 다 잡아야 한다.** */}
         <div style={{ position: 'absolute', ...P({ top: SNAP.photo.top, bottom: SNAP.photo.bottom, left: SNAP.photo.left, right: SNAP.photo.right }), padding: '4%', overflow: 'hidden' }}>
-          <img src={F('fe_81')} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img src={F('gr_232')} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
         <div style={{ position: 'absolute', ...P({ top: SNAP.title.top, left: SNAP.title.left }), fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 44, color: '#3f4a5a', lineHeight: 1 }}>비빔국수</div>
         <div style={{ position: 'absolute', ...P({ top: SNAP.date.top, left: SNAP.date.left }), fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 30, color: '#9aa4b2', lineHeight: 1 }}>{DIARY_DATE}</div>
@@ -266,7 +266,7 @@ const Slide3 = () => (
             <div style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', padding: '10px 34px', background: '#f0b7c6', backgroundImage: 'repeating-linear-gradient(0deg,rgba(255,255,255,.5) 0 10px,transparent 10px 20px),repeating-linear-gradient(90deg,rgba(255,255,255,.5) 0 10px,transparent 10px 20px)', borderRadius: 4, boxShadow: '0 6px 13px rgba(150,90,90,.22)', fontFamily: "'Gaegu', cursive", fontWeight: 700, fontSize: 38, color: '#7a4a52', whiteSpace: 'nowrap' }}>감바스 알 아히요</div>
             <Img k="dc_dhb10" style={{ left: 22, top: 98, width: 64, transform: 'rotate(-12deg)' }} /><Img k="dc_dhb01" style={{ right: 26, top: 104, width: 58, transform: 'rotate(10deg)' }} /><Img k="dc_dhb04" style={{ left: 26, top: 270, width: 48, transform: 'rotate(-8deg)' }} />
             <Spark x={150} y={175} size={44} />
-            <Img k="fe_08" style={{ top: '49%', left: '50%', transform: 'translate(-50%,-50%)', width: 296, filter: 'drop-shadow(0 10px 16px rgba(90,60,30,.2))' }} />
+            <Img k="fe_414" style={{ top: '49%', left: '50%', transform: 'translate(-50%,-50%)', width: 296, filter: 'drop-shadow(0 10px 16px rgba(90,60,30,.2))' }} />
             <Img k="gp_duoht" cls="hk-m-tilt" style={{ right: -4, bottom: -4, width: 252, transformOrigin: 'bottom center' }} />
             <Postit style={{ left: 24, bottom: 34, background: '#fff6b8', transform: 'rotate(-4deg)', fontSize: 32, color: '#6b5330' }}>오늘 저녁<br />성공!</Postit>
           </div>

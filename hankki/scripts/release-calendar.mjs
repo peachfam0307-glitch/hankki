@@ -97,14 +97,33 @@ function cards() {
 //       「대기·예정」이라 적어둔 줄이 넉 달 뒤에도 그대로 「대기」였다(`doc-guard --stale`).
 //       📌 그래서 적는 자리를 «결정이 사는 곳»(paidPacks.js)에 두고, **달력이 그날 꺼내 보여준다.**
 //    ⚠️ 컷이 아니라 「할 일」이라 `keys` 가 없다 → 검수판 키 목록(`--on`)엔 안 섞인다.
+//    ⭐⭐ [2026-09-04] 읽는 자리를 «넓혔다» — 약속은 유료팩에만 있는 게 아니다.
+//       📮 창업자가 유튜브 MFK 조회를 「한달쯤 뒤에 다시 생각하자」로 미뤘다.
+//       ⛔ 그걸 `paidPacks.js` 에 끼워 넣는 건 «내가 편한 쪽»이다 — 유료팩과 아무 상관이 없다.
+//          그러면 다음 사람이 유료팩을 읽다가 유튜브 얘기를 만나 헷갈린다.
+//       ✅ 원래 취지 그대로 «결정이 사는 곳»에 둔다 — 임베드 결정은 `src/embed.js` 에 산다.
+//       ⛔ 새 파일·새 장치를 만들지 않았다(절대원칙 35) — 이미 도는 이 함수가 «한 곳 더» 볼 뿐이다.
+//    📌 새 자리를 더할 땐 아래 `약속이사는곳` 에 한 줄만 보탠다.
+const 약속이사는곳 = [
+  { 파일: 'src/data/paidPacks.js', 이름: null },   // 이름 = 가장 가까운 label: (팩 이름)
+  { 파일: 'src/embed.js', 이름: '📺 유튜브 임베드' },
+  // 🍎 [2026-09-05] 아이폰은 «앱 코드»가 아니라 문서에 결정이 산다 — 그래서 문서도 읽는다.
+  //    ⛔ 새 장치를 만들지 않았다. 읽는 «자리»만 넓혔다(절대원칙 35).
+  { 파일: 'docs/아이폰-웹앱-2026-09-05.md', 이름: '🍎 아이폰 웹앱' },
+]
+
 function promises() {
-  const src = read('src/data/paidPacks.js')
   const out = []
-  for (const m of src.matchAll(/recheck:\s*\[([\s\S]*?)\]/g)) {
-    // 그 팩이 뭔지 알려면 위로 거슬러 가장 가까운 `label:` 을 본다
-    const label = src.slice(0, m.index).match(/label:\s*'([^']+)'(?![\s\S]*label:\s*')/)
-    for (const r of m[1].matchAll(/on:\s*'(\d{4}-\d{2}-\d{2})'\s*,\s*what:\s*'([^']*)'/g)) {
-      out.push({ date: r[1], where: '🙋 그날 같이 볼 것', what: `${label ? label[1] + ' — ' : ''}${r[2]}`, keys: [], todo: true })
+  for (const { 파일, 이름: 붙박이이름 } of 약속이사는곳) {
+    const src = read(파일)
+    if (!src) continue   // ⛔ 파일이 옮겨지거나 지워져도 달력이 죽지 않는다
+    for (const m of src.matchAll(/recheck:\s*\[([\s\S]*?)\]/g)) {
+      // 그 팩이 뭔지 알려면 위로 거슬러 가장 가까운 `label:` 을 본다
+      //   ⭐ `label:` 이 없는 파일(embed.js 같은)은 붙박이 이름을 쓴다
+      const label = 붙박이이름 ?? src.slice(0, m.index).match(/label:\s*'([^']+)'(?![\s\S]*label:\s*')/)?.[1]
+      for (const r of m[1].matchAll(/on:\s*'(\d{4}-\d{2}-\d{2})'\s*,\s*what:\s*'([^']*)'/g)) {
+        out.push({ date: r[1], where: '🙋 그날 같이 볼 것', what: `${label ? label + ' — ' : ''}${r[2]}`, keys: [], todo: true })
+      }
     }
   }
   return out
