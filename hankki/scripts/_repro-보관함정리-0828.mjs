@@ -409,9 +409,16 @@ console.log('\n🤖 AI 가 «나중에» 채우면 그때 졸업한다 (⚠️�
 const 주석뺀다 = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n')
 const App소스 = 주석뺀다(readFileSync(join(ROOT, 'src/App.jsx'), 'utf8'))
 const store소스 = 주석뺀다(readFileSync(join(ROOT, 'src/store.jsx'), 'utf8'))
-const 채우기몸통 = (App소스.split('const 채우기 = (r) =>')[1] || '').split('현재.title = 새제목')[0]
-chk('⭐⭐ `채우기()` 가 «다 읽었으면» status 를 올린다 (창업자 폰 항정살조림이 갇힌 자리)',
-  /다읽었나\(r\)/.test(채우기몸통) && /status:\s*'sorted'/.test(채우기몸통))
+// 🗃🤖 [2026-09-05 · 창업자 확정] 잣대가 바뀌었다 — «AI 가 성공했을 때만» 졸업한다.
+//   📮 창업자 = *"보관함은 ai가 읽어서 성공했을때만 옮기고, ai가 실패해서 기본규칙이 적용되면 그대로 남게 하자."*
+//   ⛔ 옛 칸은 「`다읽었나(r)` 면 올린다」였다 — 그게 9/05 아침 제보(장사말 2줄이 정식 레시피가 됨)의 자리다.
+//   ⭐ 항정살조림(AI 가 «나중에» 채운 것)은 여전히 나온다 — AI 성공 판이 `AI끝남: true` 로 부르기 때문이다.
+//   🔒 전문은 `_repro-보관함AI대기-0905.mjs`(탈출구 셋까지 잰다). 여기선 «졸업 줄이 살아 있나»만 본다.
+const 채우기몸통 = (App소스.split('const 채우기 = (r, { AI끝남 = false } = {}) =>')[1] || '').split('현재.title = 새제목')[0]
+chk('⭐⭐ `채우기()` 가 «AI 끝남 ＋ 다 읽었으면» status 를 올린다 (항정살조림 자리 · 잣대는 2026-09-05 판)',
+  /AI끝남\s*&&\s*다읽었나\(r\)/.test(채우기몸통) && /status:\s*'sorted'/.test(채우기몸통))
+chk('⭐ AI 성공 판이 «졸업시키는 쪽»으로 부른다 (`AI끝남: true`) — 이게 없으면 항정살조림이 도로 갇힌다',
+  /채우기\(mergeTidy\([^)]*\)\s*,\s*\{\s*AI끝남:\s*true\s*\}\)/.test(App소스))
 chk('⭐ 잣대가 «한 곳»이다 — 세 자리가 `다읽었나()` 를 부른다 (갈리면 또 어긋난다)',
   /export function 다읽었나/.test(store소스) && (App소스.match(/다읽었나\(/g) || []).length >= 2,
   `App.jsx 안 ${(App소스.match(/다읽었나\(/g) || []).length}번`)
