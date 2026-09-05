@@ -197,9 +197,14 @@ const 가을씬 = await 씬모음('2026-11-15')
 적기(십일월.엽서 > 0 && 십일월.티켓 > 0, `11월 뽑기에 엽서·티켓이 «둘 다» 나온다 (${십일월.뽑은}번 중 엽서 ${십일월.엽서} · 티켓 ${십일월.티켓})`)
 적기(구월.엽서 === 0 && 구월.티켓 === 0, `9월 뽑기엔 «안» 나온다 (40번 중 엽서 ${구월.엽서} · 티켓 ${구월.티켓})`)
 
-const SUMMER = ['scene_pool', 'scene_sandcastle', 'scene_picnic', 'scene_night_market']
-적기(SUMMER.some((s) => 여름씬.has(s)), `여름엔 여름 씬이 나온다 (${[...여름씬].filter((s) => SUMMER.includes(s)).join(', ') || '없음'})`)
-적기(!SUMMER.some((s) => 가을씬.has(s)), `가을엔 여름 씬이 «안» 나온다 (${[...가을씬].sort().join(', ')})`)
+// 🐧 [2026-09-05] 옛 씬 10장(옛 펭펭 7 ＋ 여름)은 전부 풀에서 내렸다 — 📮 창업자 *"여름껀 다 빼자"*
+//    → 「여름엔 여름 씬이 나온다」 칸은 뒤집었다: **여름에도 옛 씬·여름 씬이 «안» 나온다**. 정본 씬(scene_n_*)만 나온다.
+const SUMMER = ['scene_pool', 'scene_sandcastle', 'scene_picnic', 'scene_night_market', 'scene_walk']
+const OLD = ['scene_camp', 'scene_cook_kitchen', 'scene_market', 'scene_movie', 'scene_soup']
+const 옛것 = (set) => [...set].filter((s) => SUMMER.includes(s) || OLD.includes(s))
+적기(옛것(여름씬).length === 0, `여름에도 여름·옛 씬이 «안» 나온다 (${옛것(여름씬).join(', ') || '0'})`)
+적기(옛것(가을씬).length === 0, `가을엔 여름·옛 씬이 «안» 나온다 (${[...가을씬].sort().join(', ')})`)
+적기([...여름씬].every((s) => s.startsWith('scene_n_')), `여름 씬이 전부 정본(scene_n_)이다 (${여름씬.size}장)`)
 // ⛔ 「하나도 안 나온다」로 통과시키면 안 된다 — 씬을 통째로 잃어도 초록불이 된다(규칙 18 ⓘ)
 적기(가을씬.size >= 4, `가을에도 사철 씬은 그대로 나온다 (${가을씬.size}장)`)
 
