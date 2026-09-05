@@ -35,8 +35,11 @@ await page.evaluate(() => document.fonts.ready)
 await page.waitForTimeout(900)
 
 // ── 로그인 문이 온보딩 «앞»에 선다 — 「나중에 하기」로 지나간다 (첫 판은 11장이 전부 로그인 화면이었다 · 규칙 21)
-await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === '나중에 하기'); if (b) b.click() })
-await page.waitForTimeout(1000)
+// 「나중에 하기」 뒤에 「로그인 없이 시작할까요?」 시트가 한 번 더 선다 → 「그냥 시작하기」
+for (const 글자 of ['나중에 하기', '그냥 시작하기']) {
+  await page.evaluate((t) => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === t); if (b) b.click() }, 글자)
+  await page.waitForTimeout(1000)
+}
 // ── 온보딩 — 「다음」을 눌러 끝까지. 마지막 장 버튼은 「한끼 시작하기」
 const 찍은것 = []
 for (let i = 1; i <= 14; i++) {
@@ -51,9 +54,7 @@ for (let i = 1; i <= 14; i++) {
 // ── 프로필 — 홈 상단 아바타(aria-label="프로필") → 기본 아바타가 gr_343 인가
 await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /한끼 시작하기/.test(x.textContent)); if (b) b.click() })
 await page.waitForTimeout(900)
-await page.evaluate(() => { try { localStorage.setItem('hankki:onboarded', '1') } catch {} })
-await page.goto(`http://127.0.0.1:${PORT}/hankki/`, { waitUntil: 'networkidle' })
-await page.waitForTimeout(900)
+// ⛔ 다시 goto 하면 위 initScript 가 onboarded 를 또 지워 온보딩이 다시 선다 — 새로고침 없이 홈에서 바로 간다
 await page.evaluate(() => { const b = document.querySelector('button[aria-label="프로필"]'); if (b) b.click() })
 await page.waitForTimeout(900)
 const pf = join(OUT, '프로필-기본아바타.png')
