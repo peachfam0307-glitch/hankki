@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, cloneElement } from 'react'
 import Portal from './Portal'
 import Icon from './Icon'
 import Thumb from './Thumb'
@@ -1313,7 +1313,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                         ⭐ 둘은 «같은 `PaperSheet`»에 `onChange` 만 다른 조각이라 늘 `paperEdit` 를 써도 자리가 안 어긋난다.
                         ⚠️ 대신 글칸이 포인터를 먹는다 → 스티커를 글칸 «위»로 끌 수 있는지 재현으로 확인했다
                            (`_repro-0807-5.mjs` ⓑ — 드래그는 스티커에서 시작해 포인터가 잡히므로 그대로 끌린다). */}
-                    {paperEdit || paperOverlay}
+                    {/* 🗑 사진 ✕(지우기)는 **속지·글쓰기 탭에서만** — 스티커 탭(`mode==='decor'`)에선 사진 ✕와 스티커 ✕가
+                        나란히 붙어 스티커를 끌다 사진이 지워졌다(창업자 폰 제보 2026-09-06). 조각은 부모가 만들어 내려오므로
+                        여기서 탭을 보고 `photoClear` 만 얹는다(PaperSheet 의 기본값은 false = 날짜 화면엔 안 뜬다). */}
+                    {(() => { const 판 = paperEdit || paperOverlay; return 판 ? cloneElement(판, { photoClear: mode !== 'decor' }) : null })()}
                     {layer}
                   </PaperBox>
                 </div>
