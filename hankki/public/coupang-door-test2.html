@@ -1,0 +1,26 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>쿠팡 문 검사 2</title>
+<style>body{font-family:sans-serif;padding:20px;background:#fbf5e8;color:#5d3410;line-height:1.5}a{display:block;margin:14px 0;padding:18px;border-radius:14px;background:#5d3410;color:#fff;text-decoration:none;font-size:18px}small{display:block;opacity:.7;font-size:13px}p{font-size:14px}#who{background:#fff;padding:10px 14px;border-radius:10px;font-size:13px;word-break:break-all}</style>
+<h2>🛒 쿠팡 문 검사 2 — 2026-09-05 20:0x</h2>
+<p><b>이 페이지가 어디서 열렸는지</b>가 먼저다. 아래 줄을 그대로 캡처해줘.</p>
+<div id="who"></div>
+<p>그다음 위에서부터 하나씩. 열리는 번호만 알려줘.</p>
+<a id="d1">Ⓐ 크롬 강제 · 같은 창<small>v12.61 앱과 똑같은 방식</small></a>
+<a id="d2">Ⓑ 삼성 인터넷으로<small>intent · package=com.sec.android.app.sbrowser</small></a>
+<a id="d3">Ⓒ 쿠팡 앱으로<small>intent · package=com.coupang.mobile (앱 없으면 스토어)</small></a>
+<a id="d4">Ⓓ 아무 브라우저 고르기<small>intent · package 없음 → 안드로이드가 물어봄</small></a>
+<a id="d5">Ⓔ 쿠팡 앱 스킴<small>coupang:// 직접</small></a>
+<script>
+const q = encodeURIComponent('알라 하바티치즈')
+const path = 'www.coupang.com/np/search?q=' + q
+const web = 'https://' + path
+const ua = navigator.userAgent
+const standalone = matchMedia('(display-mode: standalone)').matches
+const ref = document.referrer
+who.textContent = `standalone=${standalone} · referrer=${ref||'없음'} · ${ua}`
+d1.href = 'intent://' + path + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(web) + ';end'
+d2.href = 'intent://' + path + '#Intent;scheme=https;package=com.sec.android.app.sbrowser;S.browser_fallback_url=' + encodeURIComponent(web) + ';end'
+d3.href = 'intent://' + path + '#Intent;scheme=https;package=com.coupang.mobile;end'
+d4.href = 'intent://' + path + '#Intent;scheme=https;end'
+d5.href = 'coupang://search?q=' + q
+</script>

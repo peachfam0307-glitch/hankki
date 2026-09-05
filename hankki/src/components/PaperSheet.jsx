@@ -86,7 +86,13 @@ export const WRITE_SIZES = [
 //   ⭐ 둘은 성격이 다르다 — 글칸은 누르면 **키보드가 떠서** 꾸미기를 방해하지만,
 //      축은 **탭 한 번**이라 꾸미는 중에 눌러도 아무것도 안 가린다.
 //   📌 그래서 「글칸은 읽기 전용, 축은 살아 있음」을 **한 칸으로** 만든다.
-export default function PaperSheet({ fields, value = {}, onChange, onPick, onPickPhoto, dateLabel = '', rule = '', font = '', size = '' }) {
+// 🗑 `photoClear` = 사진칸의 ✕(사진 지우기)를 «그릴지». 기본 false.
+//    📮 창업자 폰 제보 2026-09-06 00:25 *"나갔다 들어와도 x가 보여"* ＋ 00:28 *"데코스티커를 추가하면 x표시 뜨는 바로 옆에 붙어
+//       스티커를 움직이면 사진이 움직이거나 스티커가 사라져서 불편해"*
+//    ⛔ 전엔 `canShot`(사진을 «넣을» 수 있나)이 ✕도 함께 갈랐다 — 일기 «날짜 화면»은 사진 넣기 길을 열어 두니
+//       읽는 화면에도 ✕가 늘 떴고, 꾸미기 판의 스티커 탭에서도 사진 ✕와 스티커 ✕가 나란히 붙었다.
+//    ⭐ 「넣기」와 「지우기」는 다른 일이다 — 지우기는 꾸미기 판의 «속지·글쓰기» 탭에서만(DecorEditor 가 탭을 보고 넘긴다).
+export default function PaperSheet({ fields, value = {}, onChange, onPick, onPickPhoto, dateLabel = '', rule = '', font = '', size = '', photoClear = false }) {
   // ✍️ 본문 글씨체 — 못 찾으면 예전 그대로(귀염체). ⛔이미 쓴 일기가 바뀌면 안 된다
   const f = TEXT_FONTS.find((t) => t.key === font)
   // 📏 크기 = «글씨체 보정» × «작게/보통/크게». 둘 다 없으면 1 → 지금 모습 그대로
@@ -211,8 +217,9 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
                             판은 320~330px 한 크기로만 그려지고, 캡처(1080)에선 `canShot` 이 false 라 안 뜬다.
                       ⚠️ 자리는 사진칸 «안»쪽 — 밖에 두면 `overflow:hidden` 이 잘라 먹는다
                          (오늘 손잡이에서 −60px 로 이미 겪었다).
-                      ⛔ 읽기 전용(꾸미기 밖·미리보기)엔 안 뜬다 — `canShot` 이 그걸 가른다. */}
-                  <button type="button" className="press" aria-label="사진 지우기"
+                      ⛔ 읽기 전용(꾸미기 밖·미리보기)엔 안 뜬다 — `canShot` 이 그걸 가른다.
+                      ⛔ [2026-09-06] ＋ `photoClear` 가 참일 때만 — 날짜 화면·스티커 탭엔 안 그린다(위 함수 머리 주석). */}
+                  {photoClear && <button type="button" className="press" aria-label="사진 지우기"
                     onClick={(e) => { e.stopPropagation(); write({ ...value, [pk]: '' }) }}
                     style={{
                       position: 'absolute', top: 5, right: 5,
@@ -222,7 +229,7 @@ export default function PaperSheet({ fields, value = {}, onChange, onPick, onPic
                       boxShadow: '0 2px 6px rgba(0,0,0,.3)',
                     }}>
                     <Icon name="x" size={15} color="#fff" stroke={2.6} />
-                  </button>
+                  </button>}
                 </>
               ))
             : (canShot && (
