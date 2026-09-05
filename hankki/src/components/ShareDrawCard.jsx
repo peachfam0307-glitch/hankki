@@ -78,10 +78,23 @@ const SCENES = Object.entries(import.meta.glob('../assets/scenepool/*.png', { ea
 //   ⭐ **`camp` 는 «안» 뺐다** — 밤 모닥불 ＋ 담요 ＋ 뜨거운 컵이라 **오히려 가을에 맞다.**
 //      ⏳ `walk`(반팔 ＋ 아이스 음료)는 애매해서 남겼다 — 창업자가 빼라고 하면 이 정규식에 한 낱말만 더한다.
 //   ⛔ 파일을 지우지 «않는다» — 여름이 오면 그대로 다시 나온다(한 번 만든 것을 버리지 않는다).
-const SUMMER_SCENE = /^scene_(pool|sandcastle|picnic|night_market)\./
-// ⭐ `isPeakSeason` = 전환기 겹침을 «안» 센다 → 카드 스킨(`summer`)과 «같은 잣대»로 9/1 에 같이 빠진다.
-//    ⛔ `isSeason` 을 쓰면 9/14 까지 남아 「여름 스킨은 빠졌는데 여름 사진은 나온다」가 된다.
-const scenesNow = (now) => (isPeakSeason('summer', now) ? SCENES : SCENES.filter((s) => !SUMMER_SCENE.test(s.name)))
+const SUMMER_SCENE = /^scene_(pool|sandcastle|picnic|night_market|walk)\./
+// 🐧🧥 **[2026-09-05] 씬에도 옛 펭펭이 있었다 — 9/2 에 «솔로·콤비»만 내리고 «씬»은 아무도 안 봤다.**
+//   📮 창업자 = *"랜덩카드 뽑기에서 또 옛날 펭펭있어;;"* (스샷 = `scene_cook_kitchen` · 흰 코트 · 벨트 없음)
+//   🔍 10장을 «다 열어 보고» 골랐다(규칙 21) — 잣대는 9/2 와 같다(연한 코트 · 벨트 없음)
+//      옛 펭펭 = `camp` · `cook_kitchen` · `market` · `movie` · `soup` ＋ 여름의 `sandcastle` · `picnic`
+//      괜찮음 = `pool`(튜브) · `night_market`(원피스) · `walk`(원피스)
+//   📌 폴라로이드는 65% 로 여기서 뽑는다 — 9월 씬 6장 중 5장이 옛 펭펭이라 **폴라로이드의 절반 넘게**가 그 펭펭이었다.
+//   ⛔ 파일은 «안» 지운다(꾸미기 띠부씰 판이 같은 그림을 따로 쓴다) — 카드 뽑기 풀에서만 내린다.
+//   ⭐ `walk` 를 여름 묶음에 «넣었다» — 옛 펭펭 5장을 내리면 사철 씬이 `walk` «한 장»만 남아
+//      폴라로이드 65% 가 «같은 사진»이 된다. 반팔·아이스 음료라 여름이 맞기도 하다.
+//      → 사철 폴라로이드는 씬 없이 캐릭터 풀(pjs_·duos_·gom_)에서 뽑는다 — 창업자 *"카드는 다양하게 나와야 예뻐(캐릭터가)"*
+//   ✅ 📮 창업자 10:16 = *"여름껀 다 빼자"* → 여름 씬은 여름에도 «안» 나온다. 옛 씬 10장이 전부 풀에서 빠졌다.
+//      ＝ 지금은 씬 = 0 → 폴라로이드도 캐릭터 풀(pjs_·duos_·gom_)에서 뽑는다.
+//   ⭐ 창업자가 «정본 펭펭 배경 씬»(영화·불꽃·기차·서재 / 가을 4)을 다시 보내주기로 했다 —
+//      `scenepool/` 에 넣기만 하면 저절로 다시 찬다(⛔아래 두 정규식에 안 걸리는 새 이름으로).
+const OLD_PENG_SCENE = /^scene_(camp|cook_kitchen|market|movie|soup|sandcastle|picnic)\./
+const scenesNow = () => SCENES.filter((s) => !OLD_PENG_SCENE.test(s.name) && !SUMMER_SCENE.test(s.name))
 
 const GOM = pickPool(/^gom_/)
 // 🐧🧥 **옛 펭펭은 카드에서 «전부» 내렸다** (창업자 2026-09-02)
