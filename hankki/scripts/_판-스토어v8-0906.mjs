@@ -29,7 +29,7 @@ const b64 = (p) => `data:image/png;base64,${readFileSync(p).toString('base64')}`
 const 폰트 = readFileSync(join(ROOT, 'design/promo/fonts-embed.css'), 'utf8')
 // 🐧 [창업자 00:33] *"펭펭 옛컷 그만 써..ㅠ"* — `gp_peng*`·`gp_duo*`(벨트 없는 트렌치)는 옛 펭펭이다. 펭펭·콤비는 **sharepool 의 정본**(`pjs_`·`duos_` · 2026-09-02 창업자 제공)만 쓴다. 곰 솔로 `gp_gom*` 은 그대로.
 const 스티커 = (k) => b64(join(ROOT, /^(pjs|duos)_/.test(k) ? `src/assets/sharepool/${k}.png` : `src/assets/stickers/photo/${k}.png`))
-const 앱 = (f) => b64(join(원본, `${f}.png`))
+const 앱 = (f) => b64(join(원본, `v8-${f}.png`)) // ⛔ 파일 이름에 v8- 접두 — latest-map 이 앱화면-2508 과 «같은 이름»을 잡는다(2026-09-06 배포 직전에 걸렸다)
 
 // 🎨 D 뼈대 — 모눈 #f1ede6 · 올리브 #4a4f36 · 포인트 #c2703a(앱 토큰) · 폰 테 #fffdf8
 const 올리브 = '#4a4f36'
