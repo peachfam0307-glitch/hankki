@@ -24,6 +24,11 @@ export function openExternal(url) {
   // (안드로이드 intent 링크로 쇼핑몰 '앱'을 강제로 열 때 https 로 덮어쓰지 않도록)
   const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(url) || /^intent:/i.test(url)
   const u = 쿠팡문(hasScheme ? url : 'https://' + url)
+  // ⭐ intent:// 는 «같은 창»으로 보낸다 — 검사 페이지 ④가 그 방식이었고 열렸다.
+  //   v12.60 은 intent 를 새 창(target=_blank)으로 던졌는데 크롬이 새 창 intent 를 조용히 막고
+  //   fallback(원래 https)만 커스텀 탭에 띄워 «똑같은 검문 화면»이 다시 떴다 (창업자 19:38 캡처).
+  //   같은 창 이동이라도 intent 는 앱 밖(크롬)을 열고 우리 화면은 그대로 남는다 — 페이지가 바뀌지 않는다.
+  if (/^intent:/i.test(u)) { window.location.assign(u); return }
   const a = document.createElement('a')
   a.href = u
   a.target = '_blank'
