@@ -33,7 +33,20 @@ const 앱 = (f) => b64(join(원본, `${f}.png`))
 
 // 🎨 D 뼈대 — 모눈 #f1ede6 · 올리브 #4a4f36 · 포인트 #c2703a(앱 토큰) · 폰 테 #fffdf8
 const 올리브 = '#4a4f36'
-const 공통 = `${폰트}
+// 📱 [00:46] *"이거 캐러셀도 줘~!"* — 같은 8장을 인스타 캐러셀(1080×1350 · 4:5)로. `CAROUSEL=1` 이면 키만 줄이고 폰·단계·카드를 위로 당긴다.
+const 캐러셀 = !!process.env.CAROUSEL
+const 캐러셀CSS = 캐러셀 ? `
+body{height:1350px}
+.wrap{padding-top:64px}.hh{font-size:84px}.ss{font-size:32px;margin-top:12px}.rule{top:330px}
+.front{top:440px;width:600px;height:1000px;right:-60px}
+.back{top:460px;width:260px;height:460px}
+.steps{top:980px;gap:14px}.step img,.step .dot{width:78px;height:78px}.step b{font-size:29px}.step small{font-size:22px}
+.duo{top:470px!important;width:250px!important}
+.sp{transform:scale(.8)}
+.card{top:400px!important;padding:32px 38px!important}.card p{font-size:30px!important;line-height:1.55!important}.card hr{margin:18px 0!important}
+.pill{bottom:150px!important;font-size:30px!important;padding:14px 32px!important}.end{bottom:40px!important;font-size:40px!important}
+` : ''
+const 공통0 = `${폰트}
 *{margin:0;padding:0;box-sizing:border-box}
 body{width:1080px;height:1920px;overflow:hidden;position:relative;font-family:'Jua','Gowun Dodum',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
   background:#f1ede6;background-image:linear-gradient(rgba(74,79,54,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(74,79,54,.09) 1px,transparent 1px);background-size:54px 54px}
@@ -61,6 +74,7 @@ body{width:1080px;height:1920px;overflow:hidden;position:relative;font-family:'J
 /* ✨ 샤랄라 — 📮 [00:42] *"효과도 넣어줘. 샤랄라같은거"* · 네 갈래 별을 폰 둘레와 헤드라인 곁에 흩는다(연한 금빛 · 은은한 광) */
 .sp{position:absolute;z-index:5;filter:drop-shadow(0 0 10px rgba(255,214,120,.85))}
 `
+const 공통 = 공통0 + 캐러셀CSS
 const 별 = (x, y, s, o = 1, c = '#f2c86a') => `<svg class="sp" style="left:${x}px;top:${y}px;width:${s}px;height:${s}px;opacity:${o}" viewBox="0 0 48 48"><path d="M24 2C25.6 16 32 22.4 46 24 32 25.6 25.6 32 24 46 22.4 32 16 25.6 2 24 16 22.4 22.4 16 24 2Z" fill="${c}"/></svg>`
 const 샤랄라 = () => 별(700, 96, 74) + 별(790, 190, 40, .8, '#fff3d6') + 별(380, 560, 52, .9) + 별(440, 640, 28, .7, '#fff3d6') + 별(1000, 520, 62) + 별(950, 600, 30, .75, '#fff3d6') + 별(300, 1180, 44, .85) + 별(360, 1250, 24, .7, '#fff3d6')
 const 머리 = (h, s) => `<div class="wrap"><div class="hh">${h}</div><div class="ss">${s}</div></div><div class="rule"></div>`
@@ -77,10 +91,11 @@ ${머리('캡처 한 장이면<br>레시피가 정리돼요', '보다가 캡처 
 <div class="step"><img src="${b64(join(안내원본, 'i-한끼.png'))}"><div><b>③ 한끼</b><small>누르면 끝</small></div></div></div>`
 
 // 02~07 — 헤드라인 ＋ 주인공 폰 ＋ 왼쪽에 곰펭 한 마리와 포인트 둘
+//    📮 [00:45] *"펭펭에 비해 꼬르곰이 작게 느껴져"* — gp_gom* 컷은 여백이 커서 같은 폭이면 작아 보인다 → 곰 360 · 펭 290
 const 장 = ({ 머리: h, 부제, 파일, 곰, 포인트: pts, 자리 = 'top', 폰 = '' }) => `<style>${공통}
 .front img{object-position:${자리}} ${폰}</style>
 ${머리(h, 부제)}${샤랄라()}
-${곰 ? `<img class="duo" src="${스티커(곰)}">` : ''}
+${곰 ? `<img class="duo" style="width:${/^gp_gom/.test(곰) ? 360 : 290}px;top:${/^gp_gom/.test(곰) ? 660 : 700}px" src="${스티커(곰)}">` : ''}
 <div class="front"><img src="${앱(파일)}"></div>
 ${포인트(pts)}`
 
@@ -94,11 +109,14 @@ const 장05 = () => 장({ 머리: '불 앞에서도<br>편하게', 부제: '큰 
 // 08 왜 만들었나 — v5 마지막 장 글 «그대로»(창업자 확정 문단) · 뼈대만 D 로
 const 장08 = () => `<style>${공통}
 .wrap{padding-top:96px}.hh{font-size:88px}
+/* 📮 [00:49] *"8번에서 설명이 제목밑에 바짝 붙어있어"* — 제목이 한 줄이라 부제가 붙어 보인다 → 부제를 한 호흡 띄운다 */
+.ss{margin-top:34px}.rule{top:340px}
 .duo{left:auto;right:64px;top:120px;width:250px}
-.card{position:absolute;left:64px;right:64px;top:560px;z-index:3;background:#fffdf8;border-radius:36px;padding:44px 46px;box-shadow:0 20px 44px rgba(74,79,54,.12);text-align:left}
-.card p{font-family:'Gowun Dodum';color:${올리브};font-size:35px;line-height:1.62;letter-spacing:-0.01em}
+${캐러셀 ? '.duo{top:40px!important;width:200px!important}.rule{top:300px}' : ''}
+.card{position:absolute;left:64px;right:64px;top:440px;z-index:3;background:#fffdf8;border-radius:36px;padding:60px 54px;box-shadow:0 20px 44px rgba(74,79,54,.12);text-align:left}
+.card p{font-family:'Gowun Dodum';color:${올리브};font-size:42px;line-height:1.72;letter-spacing:-0.01em}
 .card .go{color:#c2703a;font-weight:700}
-.card hr{border:0;border-top:2px dashed rgba(74,79,54,.22);margin:28px 0}
+.card hr{border:0;border-top:2px dashed rgba(74,79,54,.22);margin:40px 0}
 .pill{position:absolute;left:64px;bottom:214px;z-index:3;background:${올리브};color:#fff8ec;border-radius:999px;padding:20px 44px;font-size:36px;font-family:'Jua';white-space:nowrap}
 .end{position:absolute;left:64px;right:64px;bottom:62px;z-index:3;text-align:left;font-family:'Jua';color:${올리브};font-size:50px;line-height:1.42;letter-spacing:-0.02em}
 </style>
@@ -137,7 +155,7 @@ const 장들 = {
 
 const CHROMIUM = process.env.SMOKE_CHROMIUM
 const br = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
-const p = await br.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 2 })
+const p = await br.newPage({ viewport: { width: 1080, height: 캐러셀 ? 1350 : 1920 }, deviceScaleFactor: 2 })
 const 이름들 = []
 for (const [이름, 만들기] of Object.entries(장들)) {
   await p.setContent(`<!doctype html><meta charset="utf-8">${만들기()}`)
