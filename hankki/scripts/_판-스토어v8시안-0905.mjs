@@ -110,3 +110,85 @@ for i,k in enumerate(['A-린넨','B-회연두','C-두톤테이프']):
   sh.paste(Image.open('${OUT}/v8-시안'+k+'.png').resize((720,1280)),(20+i*740,20))
 sh.save('${OUT}/v8-시안-나란히.png')`)
 console.log('📸', OUT)
+
+// ─────────────────────────────────────────────────────────────
+// 📮 23:56 창업자 = *"저번거랑 너무 비슷한 것 같아..."* → A·B·C 는 «색만» 바꾼 셈이었다(가운데 헤드라인 + 두 폰 + 아래 알약 = v7 짜임).
+//    ⭐ 짜임을 바꾼다 — 헤드라인 자리·폰 놓임·흐름 표시 방식이 셋 다 다르게.
+const 단계CSS = `
+.steps{position:absolute;z-index:6;display:flex;flex-direction:column;gap:26px}
+.step{display:flex;align-items:center;gap:18px}
+.step img{width:96px;height:96px;border-radius:50%;display:block;box-shadow:0 4px 12px rgba(93,52,16,.16);border:4px solid #fffdf8}
+.step b{font-family:'Jua';font-weight:400;color:#5d3410;font-size:34px;letter-spacing:-0.02em}
+.step small{display:block;font-family:'Gowun Dodum';color:rgba(93,52,16,.6);font-size:26px}
+`
+const 단계 = `<div class="steps">
+<div class="step"><img src="${IMG.i공유}"><div><b>① 공유</b><small>캡처한 글에서</small></div></div>
+<div class="step"><img src="${IMG.i더보기}"><div><b>② 더보기</b></div></div>
+<div class="step"><img src="${IMG.i한끼}"><div><b>③ 한끼</b><small>누르면 끝</small></div></div></div>`
+
+// ⓓ 에디토리얼 — 헤드라인 «왼쪽 정렬» 위, 한끼 폰이 오른쪽 아래로 «화면 밖까지» 크게, 인스타는 왼쪽에 작게 기울여, 단계는 왼쪽 세로
+const D = `<style>${공통}${단계CSS}
+body{background:#f1ede6;
+  background-image:linear-gradient(rgba(74,79,54,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(74,79,54,.09) 1px,transparent 1px);background-size:54px 54px}
+.hh,.step b{color:#4a4f36}.ss,.step small{color:rgba(74,79,54,.62)}.rule{background:rgba(74,79,54,.22)!important}
+.wrap{text-align:left;padding:110px 64px 0}
+.hh{font-size:96px}
+.front{right:-90px;top:640px;width:720px;height:1400px;border-radius:52px;transform:rotate(-4deg);box-shadow:0 40px 80px rgba(93,52,16,.20)}
+.back{left:52px;top:640px;width:330px;height:600px;transform:rotate(3deg)}
+.back img{border-radius:28px}
+.arrow{display:none}.flow{display:none}
+.steps{left:64px;top:1300px}
+.rule{position:absolute;z-index:2;left:64px;right:64px;top:432px;height:3px;background:rgba(93,52,16,.18)}
+</style><div class="rule"></div>
+${머리}${장면}${단계}`
+
+// ⓔ 노트 — 헤드라인을 «흰 노트 카드»에 담아 위 왼쪽, 오른쪽 위 곰펭 · 폰은 정면 크게 아래로 흘러나감 · 흐름은 폰 «위»에 얹은 작은 알약 셋
+const E = `<style>${공통}
+body{background:#ece9e2;
+  background-image:repeating-linear-gradient(135deg,rgba(90,52,70,.07) 0 6px,transparent 6px 26px)}
+.hh{color:#5a3446}.ss{color:rgba(90,52,70,.62)}.chip b,.end{color:#5a3446}
+.note{position:absolute;z-index:3;left:52px;top:96px;width:700px;background:#fffdf8;border-radius:34px;padding:52px 56px 46px;text-align:left;
+  box-shadow:0 20px 44px rgba(93,52,16,.12);transform:rotate(-1.5deg)}
+.note .hh{font-size:80px}.note .ss{font-size:32px;margin-top:14px}
+.wrap{display:none}
+.duo{position:absolute;z-index:4;right:42px;top:110px;width:260px;filter:drop-shadow(0 10px 20px rgba(93,52,16,.16))}
+.front{left:50%;right:auto;transform:translateX(-50%);top:560px;width:760px;height:1500px;border-radius:56px}
+.back{display:none}.arrow{display:none}
+.flow{bottom:44px;padding:14px 26px;gap:10px}
+.chip{width:100px}.chip img{width:70px;height:70px}.chip b{font-size:26px}.sep{font-size:44px}.end{font-size:30px}
+</style>
+<div class="note"><div class="hh">캡처 한 장이면<br>레시피가 정리돼요</div><div class="ss">인스타 · 갤러리 · 어디서든 공유 한 번</div></div>
+<img class="duo" src="${곰펭}">${장면}`
+
+// ⓕ 두 폰 «나란히 기울임» — 위에 작은 라벨 알약, 헤드라인 가운데, 두 폰이 살짝 안쪽으로 기울어 마주 봄, 아래는 한 줄 문장(알약 없음)
+const F = `<style>${공통}
+body{background:#eeeae3;
+  background-image:radial-gradient(rgba(47,79,79,.11) 2.2px,transparent 2.6px),radial-gradient(rgba(47,79,79,.11) 2.2px,transparent 2.6px);background-size:44px 44px;background-position:0 0,22px 22px}
+.hh,.line{color:#2f4f4f}.ss{color:rgba(47,79,79,.62)}.label{background:#2f4f4f!important}
+body::after{content:'';position:absolute;z-index:1;left:0;right:0;top:980px;bottom:0;background:#e2ddd3;clip-path:polygon(0 12%,100% 0,100% 100%,0 100%)}
+.label{position:absolute;z-index:3;left:50%;transform:translateX(-50%);top:80px;background:#5d3410;color:#fff8ec;border-radius:999px;padding:12px 34px;font-family:'Jua';font-size:30px;letter-spacing:.04em}
+.wrap{padding-top:160px}
+.back{left:36px;top:560px;width:470px;height:960px;transform:rotate(-5deg)}
+.front{right:36px;top:520px;width:560px;height:1100px;transform:rotate(4deg);border-radius:44px}
+.arrow{display:none}
+.flow{display:none}
+.line{position:absolute;z-index:6;left:0;right:0;bottom:84px;text-align:center;font-family:'Jua';color:#5d3410;font-size:44px;letter-spacing:-0.02em}
+.line span{color:#c2703a}
+</style><div class="label">STEP 1 · 캡처</div>
+${머리}${장면}<div class="line">공유 › 더보기 › <span>한끼</span> 누르면 끝</div>`
+
+{
+  const br = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
+  const p = await br.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 2 })
+  for (const [n, h] of Object.entries({ 'v8-시안D-에디토리얼': D, 'v8-시안E-노트': E, 'v8-시안F-마주보기': F })) {
+    await p.setContent(`<!doctype html><meta charset="utf-8">${h}`)
+    await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(300)
+    await p.screenshot({ path: `${OUT}/${n}.png` }); console.log('  ✅', n)
+  }
+  await br.close()
+  py(`from PIL import Image
+sh=Image.new('RGB',(720*3+80,1320),'white')
+for i,k in enumerate(['D-에디토리얼','E-노트','F-마주보기']):
+  sh.paste(Image.open('${OUT}/v8-시안'+k+'.png').resize((720,1280)),(20+i*740,20))
+sh.save('${OUT}/v8-시안-나란히2.png')`)
+}
