@@ -89,12 +89,12 @@ const SUMMER_SCENE = /^scene_(pool|sandcastle|picnic|night_market|walk)\./
 //   ⭐ `walk` 를 여름 묶음에 «넣었다» — 옛 펭펭 5장을 내리면 사철 씬이 `walk` «한 장»만 남아
 //      폴라로이드 65% 가 «같은 사진»이 된다. 반팔·아이스 음료라 여름이 맞기도 하다.
 //      → 사철 폴라로이드는 씬 없이 캐릭터 풀(pjs_·duos_·gom_)에서 뽑는다 — 창업자 *"카드는 다양하게 나와야 예뻐(캐릭터가)"*
-//      ⏳ `walk` 판정은 창업자 확인 대기(빼라고 한 적은 없다 · 내 판단이다).
-//   ⭐ 새 씬(정본 펭펭)이 오면 `scenepool/` 에 넣기만 하면 저절로 다시 찬다.
+//   ✅ 📮 창업자 10:16 = *"여름껀 다 빼자"* → 여름 씬은 여름에도 «안» 나온다. 옛 씬 10장이 전부 풀에서 빠졌다.
+//      ＝ 지금은 씬 = 0 → 폴라로이드도 캐릭터 풀(pjs_·duos_·gom_)에서 뽑는다.
+//   ⭐ 창업자가 «정본 펭펭 배경 씬»(영화·불꽃·기차·서재 / 가을 4)을 다시 보내주기로 했다 —
+//      `scenepool/` 에 넣기만 하면 저절로 다시 찬다(⛔아래 두 정규식에 안 걸리는 새 이름으로).
 const OLD_PENG_SCENE = /^scene_(camp|cook_kitchen|market|movie|soup|sandcastle|picnic)\./
-// ⭐ `isPeakSeason` = 전환기 겹침을 «안» 센다 → 카드 스킨(`summer`)과 «같은 잣대»로 9/1 에 같이 빠진다.
-//    ⛔ `isSeason` 을 쓰면 9/14 까지 남아 「여름 스킨은 빠졌는데 여름 사진은 나온다」가 된다.
-const scenesNow = (now) => SCENES.filter((s) => !OLD_PENG_SCENE.test(s.name) && (isPeakSeason('summer', now) || !SUMMER_SCENE.test(s.name)))
+const scenesNow = () => SCENES.filter((s) => !OLD_PENG_SCENE.test(s.name) && !SUMMER_SCENE.test(s.name))
 
 const GOM = pickPool(/^gom_/)
 // 🐧🧥 **옛 펭펭은 카드에서 «전부» 내렸다** (창업자 2026-09-02)
