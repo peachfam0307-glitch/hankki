@@ -27,6 +27,7 @@ import { join, resolve } from 'node:path'
 const APP = resolve(new URL('..', import.meta.url).pathname)
 const OUT = join(APP, 'design/promo/인스타-2509')
 const SRC = join(OUT, '미역국-앱녹화-원본-2026-09-05.mp4')
+const SRC2 = join(OUT, '랜덤카드-앱녹화-원본-2026-09-05.mp4')   // 📮 창업자 15:08 랜덤카드만 다시 녹화 (1060×2200 · 28.3초)
 const CARDS = join(OUT, '카드-미역국')
 const ICON = join(APP, 'public/icons/icon-512-v7.png')
 const AVATAR = join(APP, 'src/assets/sharepool/pjs_01.png')   // 정본 펭펭(벨트 트렌치)
@@ -108,26 +109,29 @@ async function 채팅장면들() {
 // ── 장면 표 ──────────────────────────────────────────────────────────
 // 녹화(1076×2156)는 세로가 길어 위 150px 을 잘라 1080×1920 에 맞춘다(카드가 가운데 오도록)
 const 앱 = 'crop=1076:1912:0:150,scale=1080:1920,setsar=1'
-const 카드순간 = [4.4, 7.4, 8.8, 14.8, 24.6]   // 5장 — 카톡에 보낸 카드(12.2 폴라로이드)와 밋밋한 회색 포스터(2.6)는 뺐다
+const 앱2 = 'crop=1060:1884:0:170,scale=1080:1920,setsar=1'   // 새 녹화 1060×2200
+// 새 녹화에서 고른 5장(중복 제외): 펭펭 장바구니(체크) · 서재 폴라로이드 콤비 · No.10 곰펭 · 초록 꼬르곰 · 한복 펭펭
+const 카드순간 = [3.5, 7.0, 10.4, 12.4, 21.8]
 const 장면 = [
   { chat: 1, dur: 0.9 }, { chat: 2, dur: 0.9 }, { chat: 3, dur: 1.2 },      // 훅 3.0초
   { chat: 4, dur: 0.9 }, { chat: 5, dur: 0.9 },
-  { src: [0.0, 1.4], dur: 1.4 },
-  ...카드순간.map((t) => ({ src: [t, t + 1.5], dur: 1.5 })),   // 📮 창업자 "카드넘긴 1.5초로 가자" (2026-09-05 15:03) → 1.5초 × 5장
+  { src2: [1.6, 3.0], dur: 1.4, y: 316 },   // 자랑하기 시트 → 「랜덤 카드로 뽑기」(시트가 아래라 아래쪽 맞춰 자른다)
+  ...카드순간.map((t) => ({ src2: [t, t + 1.5], dur: 1.5 })),   // 📮 창업자 "카드넘긴 1.5초로 가자" (2026-09-05 15:03) → 1.5초 × 5장
   { src: [26.6, 27.4], dur: 0.8 },
   { chat: 6, dur: 0.8 }, { chat: 7, dur: 0.9 },
   { end: true, dur: 1.0 },
 ]
 
 const { files, end } = await 채팅장면들()
-const inputs = ['-i', SRC]
-let nIn = 0   // 입력 0 = 녹화 · 그 뒤 정지 그림들 (⛔inputs.length 로 세면 인자 수에 따라 틀린다)
+const inputs = ['-i', SRC, '-i', SRC2]
+let nIn = 1   // 입력 0·1 = 녹화 둘 · 그 뒤 정지 그림들 (⛔inputs.length 로 세면 인자 수에 따라 틀린다)
 const still = (f) => { inputs.push('-loop', '1', '-framerate', String(FPS), '-i', f); return ++nIn }
 const chatIdx = files.map(still); const endIdx = still(end)
 const fc = [], labels = []
 장면.forEach((s, i) => {
   if (s.chat) fc.push(`[${chatIdx[s.chat - 1]}:v]trim=duration=${s.dur},setpts=PTS-STARTPTS,scale=${W}:${H},setsar=1,format=yuv420p[v${i}]`)
   else if (s.end) fc.push(`[${endIdx}:v]trim=duration=${s.dur},setpts=PTS-STARTPTS,scale=${W}:${H},setsar=1,fade=t=in:st=0:d=0.3:color=0xfbf5e8,format=yuv420p[v${i}]`)
+  else if (s.src2) fc.push(`[1:v]trim=${s.src2[0]}:${s.src2[1]},setpts=PTS-STARTPTS,${s.y ? 앱2.replace(":0:170", `:0:${s.y}`) : 앱2},fps=${FPS},tpad=stop_mode=clone:stop_duration=1,trim=duration=${s.dur},setpts=PTS-STARTPTS,format=yuv420p[v${i}]`)
   else fc.push(`[0:v]trim=${s.src[0]}:${s.src[1]},setpts=PTS-STARTPTS,${앱},fps=${FPS},tpad=stop_mode=clone:stop_duration=1,trim=duration=${s.dur},setpts=PTS-STARTPTS,format=yuv420p[v${i}]`)
   labels.push(`[v${i}]`)
 })
