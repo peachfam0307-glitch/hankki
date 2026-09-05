@@ -9,7 +9,8 @@ import TimerSheet from '../components/TimerSheet'
 import DiaryEntrySheet, { Stars, downscale } from '../components/DiaryEntrySheet'
 import Portal from '../components/Portal'
 import ConfirmSheet from '../components/ConfirmSheet'
-import FoodIcon, { guessFoodIcon } from '../components/FoodIcon'
+import FoodIcon, { guessFoodIcon, guessFoodIconStrict } from '../components/FoodIcon'
+import { 공유아이콘 } from '../shareIcon'
 import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
@@ -191,11 +192,34 @@ export default function RecipeDetailScreen({ id }) {
       // 🏷 [2026-09-03] 자리표 판정은 «파서 한 곳»에서 — 「제목없음」도 여기서 같이 걸린다
       const 자리표 = 자리표제목(r.title)
       const 재료없다 = !(r.ingredients || []).length
-      const 바꿀것 = {
-        tidyFail: 0,
-        ...(자리표 && m.title ? { title: m.title } : {}),
-        ...(재료없다 && m.ingredients.length ? { ingredients: m.ingredients } : {}),
-      }
+      // 🗃🤖 **[2026-09-05] 아직 임시보관함에 있는 편(unsorted)은 AI 답을 «통째로» 받는다.**
+      //   ⛔ 왜 = 위 「빈 칸만 채운다」는 **유저가 봤을 수 있는 레시피**를 지키는 규칙이다.
+      //      그런데 보관함에 남아 있는 편은 «졸업한 적이 없다» — 유저가 손댄 적도, 레시피 탭에서 본 적도 없다.
+      //      거기에 빈 칸만 채우면 **장사말 제목(「계속됩니다.. 커밍쑨」)·광고문 재료가 그대로 졸업**한다
+      //      (9/05 헤드리스 실측 — 만회 뒤 status 만 올라가고 내용은 파서 판 그대로였다).
+      //   ⭐ 창업자 확정 = *"ai가 읽어서 성공했을때만 옮긴다"* → 옮길 땐 «AI 가 읽은 것»이라야 한다.
+      //   ✅ 잣대 = `status !== 'sorted'` 하나. 이미 졸업한 편은 **옛 규칙 그대로**(빈 칸만).
+      //   📌 공유받기 때 AI 가 바로 성공했을 때(App.jsx `채우기(mergeTidy…)`)와 «같은 결과»가 된다 —
+      //      실패했다가 나중에 되든, 바로 되든 유저가 받는 레시피가 같아야 한다.
+      const 아직보관함 = r.status !== 'sorted'
+      // ⛔ 제목만은 «유저가 준 것»을 지킨다(App.jsx 와 같은 잣대) — 자리표거나 «파서가 붙인 것»일 때만 AI 제목으로.
+      //    「파서가 붙인 것」 = 같은 원문을 파서에 다시 넣었을 때 나오는 제목과 같다(＝우리가 지어 붙인 제목).
+      const 파서제목이다 = !!r.title && r.title === 기본.title
+      // 🍱 제목이 바뀌면 표지 아이콘도 «같은 잣대»로 다시 찾는다(App.jsx `채우기` 와 같다 · 직접 고른 건 안 덮는다).
+      const 새제목 = (자리표 || 파서제목이다) && m.title ? m.title : r.title
+      const 새아이콘 = 아직보관함 ? 공유아이콘(r, 새제목, guessFoodIconStrict) : null
+      const 바꿀것 = 아직보관함
+        ? {
+          tidyFail: 0,
+          ...(새제목 !== r.title ? { title: 새제목 } : {}),
+          ingredients: m.ingredients, steps: m.steps,
+          ...(새아이콘 ? { icon: 새아이콘, iconPicked: false } : {}),
+        }
+        : {
+          tidyFail: 0,
+          ...(자리표 && m.title ? { title: m.title } : {}),
+          ...(재료없다 && m.ingredients.length ? { ingredients: m.ingredients } : {}),
+        }
       // 🗃🤖 **[2026-09-05] 만회에 성공했으면 «여기서» 졸업시킨다 — 이 줄이 「영영 안 나오는」 것을 막는다.**
       //   ⛔⛔ 왜 필요한가 = 같은 날 `App.jsx` 가 **「AI 가 성공했을 때만 졸업」**으로 바뀌었다(창업자 확정).
       //      그러면 담을 때 AI 가 실패한 편은 임시보관함에 남는데, **나중에 이 화면이 만회에 성공해도**
@@ -210,7 +234,7 @@ export default function RecipeDetailScreen({ id }) {
       if (r.status !== 'sorted' && 다읽었나({ ...r, ...바꿀것 })) 바꿀것.status = 'sorted'
       updateRecipe(r.id, 바꿀것)
       // 🔔 조용하지만 «말은 한다» — 화면이 갑자기 바뀌면 유저는 「고장인가」로 읽는다.
-      if (자리표 || 재료없다) nav.showToast('AI가 레시피를 더 다듬었어요', 4000)
+      if (아직보관함 || 자리표 || 재료없다) nav.showToast('AI가 레시피를 더 다듬었어요', 4000)
     })()
     return () => { 살아있나 = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
