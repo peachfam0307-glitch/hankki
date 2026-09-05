@@ -205,7 +205,7 @@ export default function ShopScreen() {
                   ⚠️ 이 줄이 없으면 `buyUrlFor()` 가 url 없는 줄을 **쿠팡·네이버 검색으로 보내서**
                      큐레이션에서 링크를 뺀 게 통째로 헛일이 된다(담은 뒤에 새는 구멍). */}
               {!noBuyRow(it) && (
-                <button className="press mini-buy" onClick={() => openUrl(buyUrlFor(it, shops))}>
+                <button className="press mini-buy" onClick={() => openUrl(buyUrlFor(it, shops), it.name)}>
                   사러가기
                 </button>
               )}
@@ -404,7 +404,7 @@ function Curation() {
   //   ⚠️ 폴백을 타면 한살림 제품을 네이버에서 찾게 되므로 «맨 먼저» 걸러 낸다.
   const linkFor = (it) =>
     isHansalim(it) ? '' : it.url || (MALL_SEARCH[it.mall] || MALL_SEARCH.naver).replace('{q}', encodeURIComponent(it.q))
-  const buy = (it) => openUrl(linkFor(it))
+  const buy = (it) => openUrl(linkFor(it), [it.brand, it.name].filter(Boolean).join(" "))
   const add = (it) => {
     // ⭐ 담는 건 그대로 된다 — 매장에 갈 때 «적어두는 것»은 여전히 쓸모가 있다.
     //   다만 `noBuy` 를 같이 담아 **리스트에서도** 사러가기를 안 그린다.

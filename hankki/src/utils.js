@@ -15,37 +15,33 @@
 //   그래서 «검색 길»은 안드로이드에서 `coupang://search?q=…` 로 쿠팡 앱을 연다.
 //   ⛔ 직접 상품 링크(/vp/products/…)는 앱 딥링크 모양을 «아직 모른다»(검사 3 대기) → 그대로 https.
 //   ⛔ 안드로이드 밖(아이폰·PC)은 그대로.
+//   ⭐ 검사 3(창업자 23:17 실물) = 상품 딥링크 후보 ①~⑤ 전부 «홈/검색» — 쿠팡 앱은 상품 하나를 바로 여는 주소를 안 받았다.
+//     **⑥ `intent://search?q=…#Intent;scheme=coupang;package=com.coupang.mobile;S.browser_fallback_url=…;end` 만 열렸다.**
+//     → 직접 상품 링크(/vp/products/…)도 «제품 이름으로 앱 검색»으로 보낸다(이름은 부르는 쪽이 준다). 이름이 없으면 그대로 https.
+//     → 여는 모양은 ⑥ 그대로 — 앱이 없는 폰은 크롬이 fallback(웹 검색)으로 보낸다(⛔타이머 꼼수 없음).
 const 쿠팡검색 = /^https?:\/\/(www\.|m\.)?coupang\.com\/(np|nm)\/search\?(?:.*&)?q=([^&#]+)/i
-export function 쿠팡문(u, ua = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
+const 쿠팡상품 = /^https?:\/\/(www\.|m\.)?coupang\.com\/vp\/products\//i
+export function 쿠팡문(u, ua = typeof navigator === 'undefined' ? '' : navigator.userAgent, name = '') {
   if (!/Android/i.test(ua)) return u
+  let q = null
   const m = 쿠팡검색.exec(u)
-  if (!m) return u
-  return `coupang://search?q=${m[3]}`
-}
-// 쿠팡 앱이 «없는» 폰 = coupang:// 을 아무도 안 받아 화면이 그대로다 → 1.5초 뒤에도 우리 화면이 보이면 웹으로.
-//   (앱이 열리면 우리 문서가 hidden 이 된다 — 그걸로 「열렸나」를 안다)
-function 앱열고아니면웹(appUrl, webUrl) {
-  const t0 = Date.now()
-  window.location.assign(appUrl)
-  setTimeout(() => {
-    if (document.hidden || Date.now() - t0 > 4000) return
-    const a = document.createElement('a')
-    a.href = webUrl; a.target = '_blank'; a.rel = 'noopener noreferrer'
-    document.body.appendChild(a); a.click(); a.remove()
-  }, 1500)
+  if (m) q = m[3]
+  else if (쿠팡상품.test(u) && name) q = encodeURIComponent(name)
+  if (!q) return u
+  const web = `https://www.coupang.com/np/search?q=${q}`
+  return `intent://search?q=${q}#Intent;scheme=coupang;package=com.coupang.mobile;S.browser_fallback_url=${encodeURIComponent(web)};end`
 }
 
-export function openExternal(url) {
+export function openExternal(url, name = "") {
   if (!url) return
   // 이미 스킴이 있으면(https://, intent://, intent:, market: 등) 그대로 쓰고,
   // 'shop.example.com' 같은 맨 도메인만 https:// 를 붙인다.
   // (안드로이드 intent 링크로 쇼핑몰 '앱'을 강제로 열 때 https 로 덮어쓰지 않도록)
   const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(url) || /^intent:/i.test(url)
   const web = hasScheme ? url : 'https://' + url
-  const u = 쿠팡문(web)
+  const u = 쿠팡문(web, undefined, name)
   // ⭐ 앱 스킴(coupang://)·intent 는 «같은 창»으로 보낸다 — 새 창(_blank)으로 던지면 크롬이 조용히 막는다(v12.60 실측).
   //   같은 창 이동이라도 우리 화면은 그대로 남는다 — 앱이 앞으로 나올 뿐 페이지가 바뀌지 않는다.
-  if (/^coupang:/i.test(u)) { 앱열고아니면웹(u, web); return }
   if (/^intent:/i.test(u)) { window.location.assign(u); return }
   const a = document.createElement('a')
   a.href = u
