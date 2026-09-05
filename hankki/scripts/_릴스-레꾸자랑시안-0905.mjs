@@ -97,9 +97,9 @@ async function 채팅장면들() {
   }
   // 끝 카드
   await p.setContent(`<!doctype html><meta charset="utf-8"><style>${CSS}
-    html,body{margin:0;width:${W}px;height:${H}px;background:#fbf5e8;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:70px;font-family:'Nanum Pen Script',cursive;color:#5d3410}
-    img{width:440px;height:440px;border-radius:96px;box-shadow:0 18px 44px rgba(60,35,10,.22)} .t{font-size:118px;white-space:nowrap}</style>
-    <body><img src="${b64(ICON)}"><div class="t">오늘도 한끼하세요</div></body>`, { waitUntil: 'load' })
+    html,body{margin:0;width:${W}px;height:${H}px;background:#fbf5e8;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:70px;font-family:'NanumPen',cursive;color:#5d3410}
+    img{width:440px;height:440px;border-radius:96px;box-shadow:0 18px 44px rgba(60,35,10,.22)} .t{font-size:150px;white-space:nowrap;margin-top:-10px} .cta{font-family:'GowunDodum',sans-serif;font-size:40px;opacity:.6;margin-top:-30px;letter-spacing:.02em}</style>
+    <body><img src="${b64(ICON)}"><div class="t">오늘도 한끼하세요</div><div class="cta">Play 스토어에서 「한끼」 검색</div></body>`, { waitUntil: 'load' })
   await p.evaluate(() => document.fonts.ready)
   const end = join(TMP, 'end.png'); await p.screenshot({ path: end })
   await b.close(); return { files, end }
@@ -108,12 +108,12 @@ async function 채팅장면들() {
 // ── 장면 표 ──────────────────────────────────────────────────────────
 // 녹화(1076×2156)는 세로가 길어 위 150px 을 잘라 1080×1920 에 맞춘다(카드가 가운데 오도록)
 const 앱 = 'crop=1076:1912:0:150,scale=1080:1920,setsar=1'
-const 카드순간 = [2.6, 4.4, 7.4, 8.8, 12.2, 14.8, 24.6]   // 겹치지 않는 7장 (옛 펭펭·빈 카드 뺀 것)
+const 카드순간 = [4.4, 7.4, 8.8, 14.8, 24.6]   // 5장 — 카톡에 보낸 카드(12.2 폴라로이드)와 밋밋한 회색 포스터(2.6)는 뺐다
 const 장면 = [
   { chat: 1, dur: 0.9 }, { chat: 2, dur: 0.9 }, { chat: 3, dur: 1.2 },      // 훅 3.0초
   { chat: 4, dur: 0.9 }, { chat: 5, dur: 0.9 },
   { src: [0.0, 1.4], dur: 1.4 },
-  ...카드순간.map((t) => ({ src: [t, t + 1.0], dur: 1.0 })),   // 📮 창업자 "카드넘기는건 1.5초?1초?" → 1초 (1.5초면 7장에 10.5초라 16초 안에 카톡이 못 든다)
+  ...카드순간.map((t) => ({ src: [t, t + 1.5], dur: 1.5 })),   // 📮 창업자 "카드넘긴 1.5초로 가자" (2026-09-05 15:03) → 1.5초 × 5장
   { src: [26.6, 27.4], dur: 0.8 },
   { chat: 6, dur: 0.8 }, { chat: 7, dur: 0.9 },
   { end: true, dur: 1.0 },
