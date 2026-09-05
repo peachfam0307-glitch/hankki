@@ -188,8 +188,19 @@ if (await 요리시작.count()) {
   await 찍자(p, '25-요리모드-걸음', '요리 모드 — 끓이는 걸음 ＋ 타이머')
   // ⏲ [창업자 2026-09-05] *"요리모드는 요리모드+타이머열린 것 둘다 보여주게"* → 「이 단계 타이머 맞추기」를 눌러 시트가 뜬 채로 한 장 더
   const 타이머 = p.getByRole('button', { name: /타이머 맞추기/ }).first()
-  if (await 타이머.count()) { await 타이머.click(); await p.waitForTimeout(1000); await 찍자(p, '25b-요리모드-타이머', '요리 모드 — 타이머 시트 열림') }
-  else console.log('  ⛔ 「이 단계 타이머 맞추기」를 못 찾았다')
+  if (await 타이머.count()) {
+    await 타이머.click(); await p.waitForTimeout(1000); await 찍자(p, '25b-요리모드-타이머', '요리 모드 — 타이머 시트 열림')
+    // ⏱ [창업자 00:18] *"타이머 켜놓은 상태를 찍어줘"* — 시트가 아니라 «돌아가는» 타이머. 15분 프리셋을 눌러 시작시키고 걸음 화면에 뜬 타이머를 찍는다
+    const 프리셋 = p.getByRole('button', { name: /^15분$/ }).first()
+    if (await 프리셋.count()) {
+      await 프리셋.click(); await p.waitForTimeout(1500)
+      // ⛔ 첫 판은 화면 어디서든 「닫기」를 눌러 **요리모드가 닫혔다**(상세가 찍혔다 · 규칙 21). 시트가 «남아 있을 때만» 시트 안의 닫기를 누른다
+      const 남은시트 = p.locator('.sheet-mask .sheet').getByRole('button', { name: '닫기' }).first()
+      if (await 남은시트.count()) { await 남은시트.click(); await p.waitForTimeout(700) }
+      await p.waitForTimeout(1200) // 몇 초 흘러 「14:5x」로 보이게 — 「돈다」가 읽힌다
+      await 찍자(p, '25c-요리모드-타이머작동', '요리 모드 — 타이머가 돌아가는 걸음 화면')
+    } else console.log('  ⛔ 15분 프리셋을 못 찾았다')
+  } else console.log('  ⛔ 「이 단계 타이머 맞추기」를 못 찾았다')
 } else console.log('  ⛔ 「요리모드 시작」 단추를 못 찾았다')
 
 // ⑤ 🎨 꾸미기 — 📮 *"레꾸꾸미기에서 «더 귀여운 스티커들» 있는 부분으로"*
