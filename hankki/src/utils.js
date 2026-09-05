@@ -8,13 +8,31 @@
 //   같은 폰 크롬에선 열렸다 → 링크가 아니라 «여는 창»이 막힌 것.
 //   ⭐ 검사 페이지(public/coupang-door-test.html) 7가지 중 창업자 실물 = **④ 크롬 강제만 열렸다**
 //     (①지금 방식 ②리퍼러 ③같은 창 ⑤쿠팡 앱 ⑥m.coupang ⑦직접 상품 = 전부 막힘).
-//   그래서 쿠팡 주소는 안드로이드에서 intent 로 크롬을 «정식 탭»으로 연다. 크롬이 없으면 fallback 으로 웹.
-//   ⛔ 안드로이드 밖(아이폰·PC)은 그대로 — intent 스킴을 모른다.
-const 쿠팡 = /^https?:\/\/(www\.|m\.)?coupang\.com\//i
+//   ⛔ v12.60·61 = 「크롬으로 강제(intent package=com.android.chrome)」 — **둘 다 실패.** ④가 열렸던 자리는
+//     카톡 안 브라우저였고, 한끼 앱(TWA)은 «그 자체가 크롬»이라 크롬 강제가 자기 자신으로 돌아와 커스텀 탭이 됐다.
+//   ⭐⭐ 검사 2(public/coupang-door-test2.html · 창업자 20:55 실물) = **Ⓔ `coupang://search?q=` 가 쿠팡 앱을 열고 검색 결과까지 떴다.**
+//     Ⓒ(intent scheme=https package=com.coupang.mobile)는 스토어 화면으로 갔다 — 쿠팡 앱은 https 를 안 받고 «coupang://» 만 받는다.
+//   그래서 «검색 길»은 안드로이드에서 `coupang://search?q=…` 로 쿠팡 앱을 연다.
+//   ⛔ 직접 상품 링크(/vp/products/…)는 앱 딥링크 모양을 «아직 모른다»(검사 3 대기) → 그대로 https.
+//   ⛔ 안드로이드 밖(아이폰·PC)은 그대로.
+const 쿠팡검색 = /^https?:\/\/(www\.|m\.)?coupang\.com\/(np|nm)\/search\?(?:.*&)?q=([^&#]+)/i
 export function 쿠팡문(u, ua = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
-  if (!쿠팡.test(u) || !/Android/i.test(ua)) return u
-  const 뒤 = u.replace(/^https?:\/\//i, '')
-  return `intent://${뒤}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(u)};end`
+  if (!/Android/i.test(ua)) return u
+  const m = 쿠팡검색.exec(u)
+  if (!m) return u
+  return `coupang://search?q=${m[3]}`
+}
+// 쿠팡 앱이 «없는» 폰 = coupang:// 을 아무도 안 받아 화면이 그대로다 → 1.5초 뒤에도 우리 화면이 보이면 웹으로.
+//   (앱이 열리면 우리 문서가 hidden 이 된다 — 그걸로 「열렸나」를 안다)
+function 앱열고아니면웹(appUrl, webUrl) {
+  const t0 = Date.now()
+  window.location.assign(appUrl)
+  setTimeout(() => {
+    if (document.hidden || Date.now() - t0 > 4000) return
+    const a = document.createElement('a')
+    a.href = webUrl; a.target = '_blank'; a.rel = 'noopener noreferrer'
+    document.body.appendChild(a); a.click(); a.remove()
+  }, 1500)
 }
 
 export function openExternal(url) {
@@ -23,11 +41,11 @@ export function openExternal(url) {
   // 'shop.example.com' 같은 맨 도메인만 https:// 를 붙인다.
   // (안드로이드 intent 링크로 쇼핑몰 '앱'을 강제로 열 때 https 로 덮어쓰지 않도록)
   const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(url) || /^intent:/i.test(url)
-  const u = 쿠팡문(hasScheme ? url : 'https://' + url)
-  // ⭐ intent:// 는 «같은 창»으로 보낸다 — 검사 페이지 ④가 그 방식이었고 열렸다.
-  //   v12.60 은 intent 를 새 창(target=_blank)으로 던졌는데 크롬이 새 창 intent 를 조용히 막고
-  //   fallback(원래 https)만 커스텀 탭에 띄워 «똑같은 검문 화면»이 다시 떴다 (창업자 19:38 캡처).
-  //   같은 창 이동이라도 intent 는 앱 밖(크롬)을 열고 우리 화면은 그대로 남는다 — 페이지가 바뀌지 않는다.
+  const web = hasScheme ? url : 'https://' + url
+  const u = 쿠팡문(web)
+  // ⭐ 앱 스킴(coupang://)·intent 는 «같은 창»으로 보낸다 — 새 창(_blank)으로 던지면 크롬이 조용히 막는다(v12.60 실측).
+  //   같은 창 이동이라도 우리 화면은 그대로 남는다 — 앱이 앞으로 나올 뿐 페이지가 바뀌지 않는다.
+  if (/^coupang:/i.test(u)) { 앱열고아니면웹(u, web); return }
   if (/^intent:/i.test(u)) { window.location.assign(u); return }
   const a = document.createElement('a')
   a.href = u
