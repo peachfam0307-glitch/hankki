@@ -1,0 +1,13 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>쿠팡 문 검사 4 — 파트너스 링크</title>
+<style>body{font-family:sans-serif;padding:20px;background:#fbf5e8;color:#5d3410;line-height:1.5}a{display:block;margin:14px 0;padding:18px;border-radius:14px;background:#5d3410;color:#fff;text-decoration:none;font-size:18px}small{display:block;opacity:.7;font-size:13px;word-break:break-all}p{font-size:14px}</style>
+<h2>🛒 검사 4 — 파트너스 링크(link.coupang.com)가 어디로 가나</h2>
+<p><b>한끼 앱 안</b>에서 열어야 값이 난다(카톡 「나와의 채팅」에 붙이고 누르면 한끼로 열림). 각 번호가 ⓐ쿠팡 앱 상품 ⓑ갈색 창 상품 ⓒ갈색 창 「사용권한 없음」 셋 중 뭔지 알려줘.</p>
+<a id="d1" target="_blank" rel="noopener noreferrer">① 파트너스 링크 · 새 창<small>https://link.coupang.com/a/gNIMH7wSTk (지금 앱 방식)</small></a>
+<a id="d2">② 파트너스 링크 · 같은 창</a>
+<a id="d3">③ 파트너스 링크 → 인텐트로 쿠팡 앱에 넘기기<small>intent://link.coupang.com/a/…#Intent;scheme=https;package=com.coupang.mobile;end</small></a>
+<script>
+const p = 'https://link.coupang.com/a/gNIMH7wSTk'
+d1.href = p; d2.href = p
+d3.href = 'intent://link.coupang.com/a/gNIMH7wSTk#Intent;scheme=https;package=com.coupang.mobile;S.browser_fallback_url=' + encodeURIComponent(p) + ';end'
+</script>
