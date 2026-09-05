@@ -159,7 +159,9 @@ await 홈으로(p); await 탭(p, '레시피')
 await p.locator('text=돼지고기 김치찌개').first().click()
 await p.waitForTimeout(1000)
 await 굴리기(p, 900)
-const 요리시작 = p.getByRole('button', { name: /요리 시작/ }).first()
+// ⛔ [2026-09-06] 단추 글자가 「요리모드 시작」이다(`RecipeDetailScreen.jsx` action-bar) — /요리 시작/ 은 «한 번도» 안 걸렸다.
+//    v7 의 25번은 8/22 판(그때 글자)으로 찍힌 것. 규칙 21 — 「⛔ 못 찾았다」 줄을 읽었어야 했다.
+const 요리시작 = p.getByRole('button', { name: /요리\s*모드?\s*시작/ }).first()
 if (await 요리시작.count()) {
   await 요리시작.click(); await p.waitForTimeout(1500)
   await 찍자(p, '24-요리모드', '요리 모드 — 재료 준비')
@@ -184,12 +186,41 @@ if (await 요리시작.count()) {
     await 다음.click(); await p.waitForTimeout(800)
   }
   await 찍자(p, '25-요리모드-걸음', '요리 모드 — 끓이는 걸음 ＋ 타이머')
-} else console.log('  ⛔ 「요리 시작」 단추를 못 찾았다')
+  // ⏲ [창업자 2026-09-05] *"요리모드는 요리모드+타이머열린 것 둘다 보여주게"* → 「이 단계 타이머 맞추기」를 눌러 시트가 뜬 채로 한 장 더
+  const 타이머 = p.getByRole('button', { name: /타이머 맞추기/ }).first()
+  if (await 타이머.count()) { await 타이머.click(); await p.waitForTimeout(1000); await 찍자(p, '25b-요리모드-타이머', '요리 모드 — 타이머 시트 열림') }
+  else console.log('  ⛔ 「이 단계 타이머 맞추기」를 못 찾았다')
+} else console.log('  ⛔ 「요리모드 시작」 단추를 못 찾았다')
 
 // ⑤ 🎨 꾸미기 — 📮 *"레꾸꾸미기에서 «더 귀여운 스티커들» 있는 부분으로"*
 //    ⛔ 요리 모드에서 «뒤로»가 상세로 안 돌아올 때가 있다 → 앱을 다시 열고 처음부터 들어간다
+await 홈으로(p)
+// 🍂 [창업자 2026-09-05] *"콩국수랑(바꾸자)"* — 콩국수 표지는 «여름 씬»(요트·튜브)이라 가을판에 안 맞는다.
+//    ⭐ 콩국수 레시피의 표지 꾸밈을 **가을 것으로 갈아 심는다** — 9/1 에 실제로 열린 스티커만(`buddies_autumn_a`·`deco_autumn_a`·`deco_autumn_props`).
+//    ⛔ 레시피가 «어느 배열»에 있는지는 박지 않는다 — title 로 찾아 그 자리에 쓴다(없으면 ⛔ 를 찍고 콩국수 그대로 간다).
+const 가을심기 = await p.evaluate(() => {
+  const st = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+  for (const k of Object.keys(st)) {
+    if (!Array.isArray(st[k])) continue
+    const r = st[k].find((x) => x && /콩국수/.test(x.title || ''))
+    if (!r) continue
+    r.thumb = 'none'; r.decorBg = 'kraft'
+    r.decor = [
+      { id: 'au-tape', type: 'tape', key: 'gingham', x: 0.49, y: 0.17, s: 0.62, r: 3 },
+      { id: 'au-title', type: 'text', color: 't_navy', font: 'gaegu', text: '콩국수', x: 0.49, y: 0.165, s: 0.58, r: -3, w: 'mid' },
+      { id: 'au-gom', type: 'sticker', key: 'au_b09', x: 0.30, y: 0.62, s: 0.40, r: -4 },
+      { id: 'au-peng', type: 'sticker', key: 'au_b27', x: 0.70, y: 0.66, s: 0.36, r: 5 },
+      { id: 'au-leaf1', type: 'sticker', key: 'au_i24', x: 0.14, y: 0.34, s: 0.14, r: -18 },
+      { id: 'au-leaf2', type: 'sticker', key: 'au_i38', x: 0.86, y: 0.40, s: 0.13, r: 12 },
+      { id: 'au-pumpkin', type: 'sticker', key: 'au_i45', x: 0.50, y: 0.90, s: 0.16, r: 0 },
+    ]
+    localStorage.setItem('hankki:v1', JSON.stringify(st))
+    return k
+  }
+  return null
+})
+console.log(가을심기 ? `  🍂 콩국수 표지를 가을로 심었다 (${가을심기})` : '  ⛔ 콩국수 레시피를 저장소에서 못 찾았다 — 여름 표지 그대로 찍힌다')
 await 홈으로(p); await 탭(p, '레시피')
-// ⭐ 여기만 **콩국수 그대로 둔다** — 창업자가 «직접 꾸민» 샘플이라 스티커가 얹힌 표지가 나온다.
 //   ⛔ 이 화면은 스티커 서랍을 덮어서 **재료가 한 줄도 안 보인다** → 브랜드 걱정이 없다(2026-08-28 확인).
 await p.locator('text=콩국수').first().click()
 await p.waitForTimeout(1000)
@@ -229,6 +260,55 @@ await p.evaluate(() => {
 })
 await 홈으로(p)
 if (await 탭(p, '일기')) await 찍자(p, '26-일기-채운달력', '한끼 일기 — 음식 아이콘이 쌓인 달력')
+
+// 📔🍂 [창업자 2026-09-05] *"일꾸 한 장으로 가자"* — 06장은 달력이 아니라 «꾸민 일기 한 장».
+//    ⭐ `_shot-일기틀시안-0904.mjs` 가 창업자와 고른 A 판(오늘의 한끼 · 크라프트) ＋ 그 가을 꾸밈을 그대로 심는다.
+//    ⛔ 그 판은 창업자 백업 파일이 있어야 돌고(지금 없다) 폰 비율도 아니라 여기서 «같은 값»으로 다시 심는다.
+await p.evaluate(() => {
+  const st = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+  const 오늘 = new Date(); 오늘.setHours(12, 0, 0, 0)
+  st.diary = [...(st.diary || []).filter((d) => d.id !== 'shot-가을일기'), {
+    id: 'shot-가을일기', kind: 'diary', at: 오늘.getTime(),
+    paper: { rule: 'plain', skin: 'kraft', art: 'today' },
+    note: '선선해져서 국물이 자꾸 생각나는 날.', title: '가을 첫 들깨탕', line: '뜨끈한 게 최고', weather: 'partly',
+    font: 'gaegu', size: 'md',
+    decor: [
+      { id: 'a1', type: 'sticker', key: 'au_b09', x: 0.605, y: 0.300, s: 0.30, r: 3 },
+      { id: 'a2', type: 'sticker', key: 'au_b27', x: 0.425, y: 0.330, s: 0.28, r: -3 },
+      { id: 'a3', type: 'sticker', key: 'au_i24', x: 0.245, y: 0.155, s: 0.10, r: -14 },
+      { id: 'a4', type: 'sticker', key: 'au_i38', x: 0.760, y: 0.470, s: 0.10, r: 9 },
+      { id: 'a5', type: 'sticker', key: 'au_i49', x: 0.500, y: 0.495, s: 0.15, r: 2 },
+      { id: 'a6', type: 'sticker', key: 'au_i45', x: 0.175, y: 0.930, s: 0.13, r: 5 },
+      { id: 'a7', type: 'sticker', key: 'au_i46', x: 0.290, y: 0.962, s: 0.09, r: -8 },
+      { id: 'a8', type: 'note', art: 'dgn07', text: '가을엔\n뜨끈한 게 최고', font: 'gaegu', x: 0.845, y: 0.875, s: 0.26, r: 3, tc: '#8a4a1c' },
+    ],
+  }]
+  localStorage.setItem('hankki:v1', JSON.stringify(st))
+})
+await 홈으로(p)
+if (await 탭(p, '일기')) {
+  const D = new Date().getDate()
+  const 칸 = p.locator('button.cal-day').filter({ has: p.locator('.cal-num', { hasText: new RegExp(`^${D}$`) }) }).first()
+  if (await 칸.count()) {
+    await 칸.click(); await p.waitForTimeout(1800)
+    const 빈자리 = await p.evaluate(() => (document.body.innerText.match(/사진 넣기|여기에 써요/g) || []).length)
+    if (빈자리) console.log(`  ⚠️ 일꾸 — 「사진 넣기/여기에 써요」 안내가 ${빈자리}곳 비친다`)
+    await 찍자(p, '26b-일꾸', '한끼 일기 — 가을로 꾸민 일기 한 장')
+  } else console.log('  ⛔ 오늘 칸(button.cal-day)을 못 찾았다')
+}
+
+// 🃏 07장 랜덤 카드 — `_shot-홍보용앱화면-0820.mjs` ⑨⑩ 과 같은 길 (그 판은 옛 scratchpad 재료라 여기로 옮겼다)
+await 홈으로(p)
+if (await 탭(p, '레꾸자랑')) {
+  await 시트닫기(p)
+  const 첫칸 = p.locator('.grid-card, .album-tile, .brag-card').first()
+  if (await 첫칸.count()) {
+    await 첫칸.click(); await p.waitForTimeout(1300)
+    const 랜덤 = p.getByRole('button', { name: /랜덤/ }).first()
+    if (await 랜덤.count()) { await 랜덤.click(); await p.waitForTimeout(2200); await 찍자(p, '10-랜덤카드', '랜덤 카드 — 뽑을 때마다 달라지는 그 화면') }
+    else console.log('  ⛔ 「랜덤 카드」 단추를 못 찾았다')
+  } else console.log('  ⛔ 레꾸자랑 목록의 첫 칸을 못 찾았다')
+} else console.log('  ⛔ 레꾸자랑 탭을 못 찾았다')
 
 // ⑦ 🛒🛒 장보기 — [2026-08-27 다시 씀] 📮 창업자 = *"장보기는 재료 담긴 걸로 다시 찍어줘"*
 //    ⛔⛔ **내가 이 탭의 순서를 거꾸로 알고 있었다** — 맨 위가 «장보기 리스트»이고
