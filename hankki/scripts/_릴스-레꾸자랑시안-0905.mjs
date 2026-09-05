@@ -97,9 +97,9 @@ async function 채팅장면들() {
   }
   // 끝 카드
   await p.setContent(`<!doctype html><meta charset="utf-8"><style>${CSS}
-    html,body{margin:0;width:${W}px;height:${H}px;background:#fbf5e8;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:70px;font-family:'NanumPen',cursive;color:#5d3410}
-    img{width:440px;height:440px;border-radius:96px;box-shadow:0 18px 44px rgba(60,35,10,.22)} .t{font-size:150px;white-space:nowrap;margin-top:-10px} .cta{font-family:'GowunDodum',sans-serif;font-size:40px;opacity:.6;margin-top:-30px;letter-spacing:.02em}</style>
-    <body><img src="${b64(ICON)}"><div class="t">오늘도 한끼하세요</div><div class="cta">Play 스토어에서 「한끼」 검색</div></body>`, { waitUntil: 'load' })
+    html,body{margin:0;width:${W}px;height:${H}px;background:#fbf5e8;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:70px;font-family:'Jua',sans-serif;color:#5d3410}
+    img{width:440px;height:440px;border-radius:96px;box-shadow:0 18px 44px rgba(60,35,10,.22)} .t{font-size:120px;white-space:nowrap;margin-top:-10px} .cta{font-family:'Jua',sans-serif;font-size:44px;color:#fbf5e8;background:#5d3410;padding:28px 64px;border-radius:999px;margin-top:-10px;box-shadow:0 12px 30px rgba(60,35,10,.25)}</style>
+    <body><img src="${b64(ICON)}"><div class="t">오늘도 한끼하세요</div><div class="cta">▶ Play 스토어에서 「한끼」 검색</div></body>`, { waitUntil: 'load' })
   await p.evaluate(() => document.fonts.ready)
   const end = join(TMP, 'end.png'); await p.screenshot({ path: end })
   await b.close(); return { files, end }
