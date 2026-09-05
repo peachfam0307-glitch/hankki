@@ -27,7 +27,8 @@ mkdirSync(OUT, { recursive: true })
 
 const b64 = (p) => `data:image/png;base64,${readFileSync(p).toString('base64')}`
 const 폰트 = readFileSync(join(ROOT, 'design/promo/fonts-embed.css'), 'utf8')
-const 스티커 = (k) => b64(join(ROOT, `src/assets/stickers/photo/${k}.png`))
+// 🐧 [창업자 00:33] *"펭펭 옛컷 그만 써..ㅠ"* — `gp_peng*`·`gp_duo*`(벨트 없는 트렌치)는 옛 펭펭이다. 펭펭·콤비는 **sharepool 의 정본**(`pjs_`·`duos_` · 2026-09-02 창업자 제공)만 쓴다. 곰 솔로 `gp_gom*` 은 그대로.
+const 스티커 = (k) => b64(join(ROOT, /^(pjs|duos)_/.test(k) ? `src/assets/sharepool/${k}.png` : `src/assets/stickers/photo/${k}.png`))
 const 앱 = (f) => b64(join(원본, `${f}.png`))
 
 // 🎨 D 뼈대 — 모눈 #f1ede6 · 올리브 #4a4f36 · 포인트 #c2703a(앱 토큰) · 폰 테 #fffdf8
@@ -57,13 +58,17 @@ body{width:1080px;height:1920px;overflow:hidden;position:relative;font-family:'J
 .step small{display:block;font-family:'Gowun Dodum';color:rgba(74,79,54,.6);font-size:26px}
 .duo{position:absolute;z-index:5;left:56px;top:700px;width:300px;filter:drop-shadow(0 10px 20px rgba(74,79,54,.16))}
 .leaf{position:absolute;z-index:2;opacity:.5}
+/* ✨ 샤랄라 — 📮 [00:42] *"효과도 넣어줘. 샤랄라같은거"* · 네 갈래 별을 폰 둘레와 헤드라인 곁에 흩는다(연한 금빛 · 은은한 광) */
+.sp{position:absolute;z-index:5;filter:drop-shadow(0 0 10px rgba(255,214,120,.85))}
 `
+const 별 = (x, y, s, o = 1, c = '#f2c86a') => `<svg class="sp" style="left:${x}px;top:${y}px;width:${s}px;height:${s}px;opacity:${o}" viewBox="0 0 48 48"><path d="M24 2C25.6 16 32 22.4 46 24 32 25.6 25.6 32 24 46 22.4 32 16 25.6 2 24 16 22.4 22.4 16 24 2Z" fill="${c}"/></svg>`
+const 샤랄라 = () => 별(700, 96, 74) + 별(790, 190, 40, .8, '#fff3d6') + 별(380, 560, 52, .9) + 별(440, 640, 28, .7, '#fff3d6') + 별(1000, 520, 62) + 별(950, 600, 30, .75, '#fff3d6') + 별(300, 1180, 44, .85) + 별(360, 1250, 24, .7, '#fff3d6')
 const 머리 = (h, s) => `<div class="wrap"><div class="hh">${h}</div><div class="ss">${s}</div></div><div class="rule"></div>`
 const 포인트 = (rows) => `<div class="steps">${rows.map(([e, b, s]) => `<div class="step"><div class="dot">${e}</div><div><b>${b}</b>${s ? `<small>${s}</small>` : ''}</div></div>`).join('')}</div>`
 
 // 01 캡처하는 법 — 8/28 확정 장면 ㉢(인스타 › 한끼 ＋ 단계) 을 D 짜임으로
 const 장01 = () => `<style>${공통}</style>
-${머리('캡처 한 장이면<br>레시피가 정리돼요', '보다가 캡처 · 재료도 순서도 알아서')}
+${머리('캡처 한 장이면<br>레시피가 정리돼요', '보다가 캡처 · 재료도 순서도 알아서')}${샤랄라()}
 <div class="back"><img src="${b64(join(안내원본, '인스타-공유동그라미.png'))}"></div>
 <div class="front"><img src="${앱('21-상세-재료순서')}"></div>
 <div class="steps">
@@ -74,7 +79,7 @@ ${머리('캡처 한 장이면<br>레시피가 정리돼요', '보다가 캡처 
 // 02~07 — 헤드라인 ＋ 주인공 폰 ＋ 왼쪽에 곰펭 한 마리와 포인트 둘
 const 장 = ({ 머리: h, 부제, 파일, 곰, 포인트: pts, 자리 = 'top', 폰 = '' }) => `<style>${공통}
 .front img{object-position:${자리}} ${폰}</style>
-${머리(h, 부제)}
+${머리(h, 부제)}${샤랄라()}
 ${곰 ? `<img class="duo" src="${스티커(곰)}">` : ''}
 <div class="front"><img src="${앱(파일)}"></div>
 ${포인트(pts)}`
@@ -97,8 +102,8 @@ const 장08 = () => `<style>${공통}
 .pill{position:absolute;left:64px;bottom:214px;z-index:3;background:${올리브};color:#fff8ec;border-radius:999px;padding:20px 44px;font-size:36px;font-family:'Jua';white-space:nowrap}
 .end{position:absolute;left:64px;right:64px;bottom:62px;z-index:3;text-align:left;font-family:'Jua';color:${올리브};font-size:50px;line-height:1.42;letter-spacing:-0.02em}
 </style>
-${머리('꼬르곰은 저예요', '펭펭은 제 사춘기 딸이고요')}
-<img class="duo" src="${스티커('gp_duoht')}">
+${머리('꼬르곰은 저예요', '펭펭은 제 사춘기 딸이고요')}${별(640, 90, 60)}${별(720, 170, 32, .8, '#fff3d6')}${별(130, 480, 44, .9)}
+<img class="duo" src="${스티커('duos_06')}">
 <div class="card">
   <p>저장만 해둔 레시피 캡처가 수백 장.<br>정작 해먹고 싶을 땐 못 찾았어요.<br><span class="go">그래서 한끼를 만들었어요.</span></p>
   <hr>
@@ -112,19 +117,19 @@ ${머리('꼬르곰은 저예요', '펭펭은 제 사춘기 딸이고요')}
 // 🗂 8장 — ⛔순서가 곧 값어치다(앞 2~3장만 검색결과에 뜬다) · 파일 이름은 v8- 접두(latest-map)
 const 장들 = {
   'v8-01-캡처하는법': 장01,
-  'v8-02-요리책': () => 장({ 머리: '레시피가 쌓이면<br>나만의 요리책', 부제: '표지도 내 마음대로 꾸며요', 파일: '20-레시피목록', 곰: 'gp_gomhi',
+  'v8-02-요리책': () => 장({ 머리: '레시피가 쌓이면<br>나만의 요리책', 부제: '표지도 내 마음대로 꾸며요', 파일: '20-창업자-레꾸목록', 곰: 'gp_gomhi', // 📮 [00:39] *"레시피가 쌓이면 여기에서 레꾸 한것들로 바꿀까"* → 창업자 폰의 레꾸 표지 목록 캡처(부타노가쿠니·간장비빔국수·꽈리고추·광어깻잎·차돌짬뽕·보쌈무김치)
     포인트: [['📚', '폴더로 정리', '한식 · 간식 · 우리 집'], ['🖼', '표지는 내 취향', '사진도 스티커도']] }),
   // 📮 [창업자 00:13] *"콩국수 무슨일이야 ㅠㅠ 내가 꾸며놓은 것중에 예쁜 것들 있자나"* → 내가 심은 가을 꾸밈을 버리고
   //    **창업자가 직접 꾸민 「간장비빔국수」 표지 캡처**(가을 · 은행잎·목도리·낙엽더미 곰펭)를 쓴다. 상태바·제스처바만 잘랐다.
-  'v8-03-레꾸': () => 장({ 머리: '레시피 정리? 우린<br>레시피 레꾸해요', 부제: '스티커 붙이고 배경 깔고 · 한 끼가 추억이 돼요', 파일: '23-창업자-간장비빔국수', 곰: 'gp_pengv',
+  'v8-03-레꾸': () => 장({ 머리: '레시피 정리? 우린<br>레시피 레꾸해요', 부제: '스티커 붙이고 배경 깔고 · 한 끼가 추억이 돼요', 파일: '23-창업자-간장비빔국수', 곰: 'pjs_03',
     포인트: [['🍂', '계절마다 새 스티커', '지금은 가을'], ['🐻', '꼬르곰·펭펭도', '함께 붙여요']], 자리: 'top' }),
   'v8-04-장보기': () => 장({ 머리: '재료는 한 번에<br>사러가기', 부제: '레시피 재료 그대로 톡 · 18년차 주부의 추천템까지', 파일: '27-장보기-사러가기', 곰: 'gp_gomtb',
     포인트: [['🛒', '담기 한 번', '재료가 리스트로'], ['🔗', '줄마다 사러가기', '검색 없이 바로']] }),
   'v8-05-요리모드': 장05,
-  'v8-06-일꾸': () => 장({ 머리: '오늘의 한 끼가<br>일기가 돼요', 부제: '속지 고르고 · 사진 한 장 · 한 줄 · 스티커까지', 파일: '26-창업자-일꾸-임시', 곰: 'gp_pengym', // 📮 [00:23] 창업자가 직접 꾸민 갈비탕 일기(⚠️ 임시 — 저장 띠는 잘랐고 사진 위 ✕ 는 남아 있다 · 깨끗한 재캡처 대기)
+  'v8-06-일꾸': () => 장({ 머리: '오늘의 한 끼가<br>일기가 돼요', 부제: '속지 고르고 · 사진 한 장 · 한 줄 · 스티커까지', 파일: '26-창업자-일꾸-임시', 곰: 'pjs_01', // 📮 [00:23] 창업자가 직접 꾸민 갈비탕 일기(⚠️ 임시 — 저장 띠는 잘랐고 사진 위 ✕ 는 남아 있다 · 깨끗한 재캡처 대기)
     포인트: [['📔', '속지도 여러 가지', '선 · 종이 · 틀'], ['✏️', '손글씨 서체로', '그날 기분 그대로']] }),
   // ⛔ 자랑 카드는 «아래 단추»(이 카드를 내 레시피 표지로)가 값어치다 → 폰을 덜 기울이고 위로 올려 아래가 남게
-  'v8-07-자랑': () => 장({ 머리: '오늘의 한 끼를<br>카드 한 장으로', 부제: '뽑을 때마다 달라지는 카드 · 친구에게 톡', 파일: '10-랜덤카드', 곰: 'gp_duohi',
+  'v8-07-자랑': () => 장({ 머리: '오늘의 한 끼를<br>카드 한 장으로', 부제: '뽑을 때마다 달라지는 카드 · 친구에게 톡', 파일: '10-랜덤카드', 곰: 'duos_02',
     포인트: [['🃏', '다시 뽑기', '마음에 드는 카드까지'], ['💬', '공유하기', '카톡으로 자랑']], 자리: '50% 8%',
     폰: '.front{top:560px;height:1480px;transform:rotate(-2.5deg)}' }),
   'v8-08-왜만들었나': 장08,
