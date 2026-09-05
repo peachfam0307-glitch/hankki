@@ -133,8 +133,12 @@ console.log('⑧ 배선 — 앱이 진짜로 그 잣대를 «부르나» (규칙
   const app = 읽기('src/App.jsx')
   칸('공유받기 판정이 자리표제목을 부른다', /자동제목인가 = 자리표제목\(/.test(app))
   칸('App 이 자리표제목을 가져온다', /import \{[^}]*자리표제목[^}]*\} from '\.\/parseRecipe'/.test(app))
+  // ⭐ [2026-09-05] 상세의 「다시 정리」 얹는 규칙이 `retidy.js` «한 곳»으로 갔다(보관함 「AI로 다듬기」와 같이 쓴다).
+  //    그래서 잣대는 «그 한 곳»이 자리표제목을 부르나 ＋ 상세가 그 한 곳을 쓰나, 둘로 본다.
   const dt = 읽기('src/screens/RecipeDetailScreen.jsx')
-  칸('상세 「다시 정리」도 자리표제목을 부른다', /const 자리표 = 자리표제목\(r\.title\)/.test(dt))
+  const rt = 읽기('src/retidy.js')
+  칸('상세 「다시 정리」도 자리표제목을 부른다 (retidy.js 를 거쳐서)',
+    /const 자리표 = 자리표제목\(r\.title\)/.test(rt) && /import \{ 만회값 \} from '\.\.\/retidy'/.test(dt))
   const td = 읽기('src/tidy.js')
   칸('AI 합치기가 요리이름만을 거친다', /title: 요리이름만\(/.test(td))
   // ⛔⛔ 파서는 장사말을 «읽기는» 해야 한다 — 재료·걸음에서 그 낱말을 지우면 안 된다
