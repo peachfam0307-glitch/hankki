@@ -74,7 +74,7 @@ const 장 = []
 // ③ 전 — 둘을 «가로»로 나란히 (②와 방향을 바꾼다)
 장.push({ 이름: '3-전', html: `
   <div style="position:absolute;left:0;right:0;top:120px;text-align:center;font-size:58px;font-weight:700">전 부치는 날</div>
-  <div style="position:absolute;left:0;right:0;top:205px;text-align:center;font-size:32px;color:#a98a6b">기름 냄새 나는 그 날 · 네 가지 다 지금 열려 있어요</div>
+  <div style="position:absolute;left:0;right:0;top:205px;text-align:center;font-size:32px;color:#a98a6b">네 가지 다 지금 열려 있어요</div>
   <!-- ⛔ [2026-09-13] 가로 한 줄에 넷을 넣었더니 «넘쳐서» 새우관자전이 잘리고 알배추전은 아예 안 보였다.
        ⭐ 2x2 격자로. 칸이 넓어져 「꼬치 없는 꼬치전」 같은 긴 이름도 한 줄에 든다. -->
   <!-- ⛔ [2026-09-13] 그림을 320px 로 키웠더니 2행이 «바닥 밖으로» 나갔다(알배추전 20분이 잘림) -->
@@ -87,7 +87,7 @@ const 장 = []
       </div>`).join('')}
   </div>
   <!-- ⛔ [2026-09-13] 아래 문구와 곰이 «2x2 카드»와 겹쳤다 — 문구는 부제로 올리고 곰은 제목 옆으로 뺐다 -->
-  ${곰펭('cs_b11', 175, 'right:30px;top:80px')}` })
+  ${곰펭('cs_b11', 130, 'left:60px;top:95px')}` })
 
 // ④ 나물·잡채 — 글을 «오른쪽»에 붙이고 그림을 왼쪽으로 (③의 좌우대칭을 깬다)
 // ⛔ [2026-09-13] 창업자 = "잡채는 왼쪽 끝부분 잘렸어" — left:-80px 이라 그릇이 화면 밖으로 나갔다.
