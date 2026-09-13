@@ -50,42 +50,56 @@ if (await 뽑기.count()) { await 뽑기.first().click().catch(() => {}); await 
 
 // 앱이 쓰는 그 라이브러리(UMD)를 페이지에 얹는다 — 앱 번들 안 함수는 밖에서 못 부른다
 await p.addScriptTag({ path: path.join(__dirname, '..', 'node_modules', 'html-to-image', 'dist', 'html-to-image.js') })
+// ⭐ 3차(12:45) — 맥 WebKit 에서 «재현됐다»(칩 오른쪽 절반이 어둡게/희게 갈라짐 · 딸 폰과 같은 모양).
+//    같은 카드에서 고침 후보를 «칩 스타일만 바꿔» 차례로 굽고 한 장에 세로로 쌓는다(눈으로 고른다).
+//   A = 지금 그대로(inline span · borderRadius 999 · 바깥 그림자 ＋ inset 테두리 그림자)
+//   B = borderRadius 를 «값»으로(30px) — 999 가 WebKit 클론에서 이상하게 풀리는지
+//   C = 그림자 둘 다 빼고 border 2px 만
+//   D = B ＋ C(둥근값 ＋ border · 그림자 0)
+//   E = 바깥 그림자만 빼기(inset 테두리 그림자는 유지)
 const r = await p.evaluate(async () => {
   const 큰것 = [...document.querySelectorAll('img')].map((i) => ({ i, r: i.getBoundingClientRect() }))
     .filter((x) => x.r.width > 120 && x.r.height > 120).sort((a, b) => b.r.width * b.r.height - a.r.width * a.r.height)[0]
   if (!큰것) return { err: '카드 그림을 못 찾음' }
   let el = 큰것.i
   while (el.parentElement) { const rr = el.parentElement.getBoundingClientRect(); if (rr.width >= 300 && rr.height >= 400) { el = el.parentElement; break } el = el.parentElement }
+  const 칩들 = [...el.querySelectorAll('span,div')].filter((s) => s.children.length === 0 && /^(\d+분|\d+인분|한식|중식|일식|양식|간식|쉬움|보통|어려움)$/.test((s.textContent || '').trim()))
+  if (!칩들.length) return { err: '칩을 못 찾음' }
+  const 원래 = 칩들.map((s) => s.getAttribute('style') || '')
+  const 변형 = {
+    A: (s) => {},
+    B: (s) => { s.style.borderRadius = '30px' },
+    C: (s) => { s.style.boxShadow = 'none'; s.style.border = '2px solid rgba(216,150,110,.25)' },
+    D: (s) => { s.style.borderRadius = '30px'; s.style.boxShadow = 'none'; s.style.border = '2px solid rgba(216,150,110,.25)' },
+    E: (s) => { s.style.boxShadow = 'inset 0 0 0 2px rgba(216,150,110,.25)' }
+  }
   const opt = { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff' }
-  await window.htmlToImage.toJpeg(el, opt)          // 예열(앱과 같다)
-  const url = await window.htmlToImage.toJpeg(el, opt)
-  const im = new Image(); im.src = url; await im.decode()
-  const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight
-  c.getContext('2d').drawImage(im, 0, 0)
-  // 칩 = 카드 안에서 «N분»·«N인분» 글자를 가진 작은 상자
   const R = el.getBoundingClientRect()
-  const 칩 = [...el.querySelectorAll('span,div')].filter((s) => s.children.length === 0 && /^(\d+분|\d+인분|한식|중식|일식|양식|간식|쉬움|보통|어려움)$/.test((s.textContent || '').trim()))
-    .map((s) => s.getBoundingClientRect())
-  if (!칩.length) return { err: '칩을 못 찾음', w: c.width, h: c.height, full: c.toDataURL('image/png') }
-  const k = c.width / R.width
+  const 칩 = 칩들.map((q) => q.getBoundingClientRect())
   const x0 = Math.max(0, Math.min(...칩.map((q) => q.left)) - R.left - 16), x1 = Math.max(...칩.map((q) => q.right)) - R.left + 70
   const y0 = Math.min(...칩.map((q) => q.top)) - R.top - 12, y1 = Math.max(...칩.map((q) => q.bottom)) - R.top + 12
-  const 배 = Math.min(1, 640 / ((x1 - x0) * k))   // 로그에 실을 만큼만(≈640px 폭 · JPEG)
-  const cc = document.createElement('canvas'); cc.width = Math.round((x1 - x0) * k * 배); cc.height = Math.round((y1 - y0) * k * 배)
-  cc.getContext('2d').drawImage(c, x0 * k, y0 * k, (x1 - x0) * k, (y1 - y0) * k, 0, 0, cc.width, cc.height)
-  // 숫자: 각 칩 오른쪽 바깥 띠(2~14px)에서 «거의 흰» 픽셀 비율 — 반달이 있으면 커진다
-  const ctx = c.getContext('2d'); const 띠 = []
-  for (const q of 칩) {
-    const sx = Math.round((q.right - R.left + 2) * k), sy = Math.round((q.top - R.top) * k), sw = Math.round(12 * k), sh = Math.round(q.height * k)
-    const d = ctx.getImageData(sx, sy, sw, sh).data; let n = 0, w = 0
-    for (let i = 0; i < d.length; i += 4) { n++; if (d[i] > 240 && d[i + 1] > 240 && d[i + 2] > 235) w++ }
-    띠.push(+(w / n).toFixed(3))
+  const 조각 = []
+  for (const [k, f] of Object.entries(변형)) {
+    칩들.forEach((s, i) => { s.setAttribute('style', 원래[i]); f(s) })
+    await window.htmlToImage.toJpeg(el, opt)
+    const url = await window.htmlToImage.toJpeg(el, opt)
+    const im = new Image(); im.src = url; await im.decode()
+    const kk = im.naturalWidth / R.width
+    const 배 = Math.min(1, 560 / ((x1 - x0) * kk))
+    const cc = document.createElement('canvas'); cc.width = Math.round((x1 - x0) * kk * 배); cc.height = Math.round((y1 - y0) * kk * 배)
+    const cx = cc.getContext('2d'); cx.drawImage(im, x0 * kk, y0 * kk, (x1 - x0) * kk, (y1 - y0) * kk, 0, 0, cc.width, cc.height)
+    cx.fillStyle = '#000'; cx.font = 'bold 22px sans-serif'; cx.fillText(k, 6, 26)
+    조각.push(cc)
   }
-  return { w: c.width, h: c.height, 칩수: 칩.length, 띠, crop: cc.toDataURL('image/jpeg', 0.82), full: c.toDataURL('image/png') }
+  칩들.forEach((s, i) => s.setAttribute('style', 원래[i]))
+  const W = Math.max(...조각.map((c) => c.width)), H = 조각.reduce((a, c) => a + c.height + 4, 0)
+  const all = document.createElement('canvas'); all.width = W; all.height = H
+  const ax = all.getContext('2d'); ax.fillStyle = '#888'; ax.fillRect(0, 0, W, H)
+  let y = 0; for (const c of 조각) { ax.drawImage(c, 0, y); y += c.height + 4 }
+  return { 칩수: 칩들.length, 판: Object.keys(변형).join(''), crop: all.toDataURL('image/jpeg', 0.8) }
 })
-if (r.full) writeFileSync(path.join(OUT, `칩반달-실물-${ENGINE}.png`), Buffer.from(r.full.split(',')[1], 'base64'))
-if (r.crop) writeFileSync(path.join(OUT, `칩반달-실물-${ENGINE}-칩줄.jpg`), Buffer.from(r.crop.split(',')[1], 'base64'))
-console.log(`[${ENGINE}] 카드 ${r.w}x${r.h} · 칩 ${r.칩수 || 0}개 · 오른쪽 띠 흰 비율 = ${JSON.stringify(r.띠 || null)} ${r.err ? '· ⚠️ ' + r.err : ''}`)
+if (r.crop) writeFileSync(path.join(OUT, `칩반달-실물-${ENGINE}-후보.jpg`), Buffer.from(r.crop.split(',')[1], 'base64'))
+console.log(`[${ENGINE}] 칩 ${r.칩수 || 0}개 · 후보 ${r.판 || ''} ${r.err ? '· ⚠️ ' + r.err : ''}`)
 if (errs.length) console.log('page errors:', errs.join(' | ').slice(0, 400))
-if (r.crop) { const b64 = r.crop.split(',')[1]; console.log(`--- 칩줄 JPEG base64 (${b64.length}자) ---`); for (let i = 0; i < b64.length; i += 4000) console.log('B64:' + b64.slice(i, i + 4000)); console.log('--- 끝 ---') }
+if (r.crop) { const b64 = r.crop.split(',')[1]; console.log(`--- 후보 5장 JPEG base64 (${b64.length}자) ---`); for (let i = 0; i < b64.length; i += 4000) console.log('B64:' + b64.slice(i, i + 4000)); console.log('--- 끝 ---') }
 await b.close(); srv.kill(); process.exit(0)
