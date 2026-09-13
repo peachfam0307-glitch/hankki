@@ -7075,7 +7075,9 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-yangbaechu-cheese-jeon',
     title: '양배추 치즈전', from: '2026-09-30',
-    origin: '성시경',   // ⏳창업자가 링크를 가져오면 sns 에 넣는다
+    origin: '성시경',   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다
+    sourceUrl: 'https://www.youtube.com/watch?v=FGc8QXJvAVc',
+    sourceName: '성시경 SUNG SI KYUNG',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3019',
     category: '한식', folder: '한식',
@@ -7102,7 +7104,9 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-yangbaechu-pork-bokkeum',
     title: '양배추 돼지고기 볶음', from: '2026-11-04',
-    origin: '이연복 셰프',   // ⏳창업자가 링크를 가져오면 sns 에 넣는다
+    origin: '이연복 셰프',   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다
+    sourceUrl: 'https://www.youtube.com/watch?v=HvUdN6yjRvI',
+    sourceName: '이연복의 복주머니',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'gr_376',
     category: '중식', folder: '중식',
@@ -7131,7 +7135,9 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-gaji-omelet',
     title: '가지 오믈렛', from: '2026-10-07',
-    origin: '강민경',   // ⏳창업자가 링크를 가져오면 sns 에 넣는다
+    origin: '강민경',   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다 (영상 31:10 지점)
+    sourceUrl: 'https://www.youtube.com/watch?v=wYt6u4bblgY&t=1870s',
+    sourceName: '걍민경',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3020',
     category: '양식', folder: '양식',
@@ -7424,7 +7430,9 @@ const RAW_BASICS = [
     // 📮 창업자 2026-09-13 = "임성근 멸치볶음" → SNS 갈래라 이름에 사람 이름을 쓴다
     //    (앱에 이미 「어남선생 갈비치킨」·「정호영 셰프 닭볶음탕」이 같은 방식으로 있다)
     title: '임성근 멸치볶음', from: '2026-10-21',
-    origin: '임성근 셰프',   // ⏳창업자가 링크를 가져오면 sns 에 넣는다
+    origin: '임성근 셰프',   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다
+    sourceUrl: 'https://www.youtube.com/watch?v=IiGotbOXghQ',
+    sourceName: '임성근 임짱TV',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3013',
     category: '한식', folder: '한식',
