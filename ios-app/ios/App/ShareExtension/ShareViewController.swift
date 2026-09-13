@@ -70,7 +70,10 @@ final class ShareViewController: UIViewController {
             try? data.write(to: dir.appendingPathComponent("meta.json"), options: .atomic)
         }
         label.text = "한끼에 담았어요 · 한끼를 열면 보여요"
-        if let u = URL(string: "\(Self.scheme)://share?ts=\(ts)") { openHost(u) }
+        // ⛔ [2026-09-13 22:2x · 17판 딸 폰 실물] 여기서 응답자 체인으로 앱을 깨우던 «보너스»(openHost)를 «뺐다».
+        //    영상 = 공유 시트에 「한끼」가 뜨고 → 누르면 1초 어두워졌다가 → 공유 시트로 되돌아옴(닫히지 않음).
+        //    = completeRequest 전에 죽은 모양. 비공식 셀렉터 호출이 확장 프로세스에서 예외를 낼 수 있다(포럼 764570 도 «동작 보고»일 뿐).
+        //    ⭐ 본선은 원래 「저장 → 앱이 열릴 때 꺼냄」이라 이 줄 없이도 기능은 그대로다(Apple 원문대로).
         finish()
     }
 
@@ -106,24 +109,12 @@ final class ShareViewController: UIViewController {
         }
     }
 
-    /// 비공식 «보너스». 확장에선 UIApplication.open 이 컴파일 단계에서 막혀 있어(API_ONLY) 응답자 체인을 타고 셀렉터로 부른다.
-    /// iOS 18+ 에선 openURL: 변종은 막혔고 openURL:options:completionHandler: 변종만 동작 보고(포럼 764570). 안 돼도 데이터는 inbox 에 남는다.
-    private func openHost(_ url: URL) {
-        let sel = sel_registerName("openURL:options:completionHandler:")
-        var r: UIResponder? = self
-        while let cur = r {
-            if cur.responds(to: sel), let imp = class_getMethodImplementation(type(of: cur), sel) {
-                typealias Fn = @convention(c) (AnyObject, Selector, NSURL, NSDictionary, AnyObject?) -> Void
-                let f = unsafeBitCast(imp, to: Fn.self)
-                f(cur, sel, url as NSURL, NSDictionary(), nil)
-                return
-            }
-            r = cur.next
-        }
-    }
+    // 🗑 [2026-09-13] 응답자 체인으로 hankki://share 를 여는 비공식 코드(openHost)는 «지웠다» — 17판 실물에서 그 자리에서 죽는 모양이었고,
+    //    Apple 원문대로 공유 부품은 앱을 못 연다. 되살릴 땐 git 이력(17판 커밋)에 있다. ⛔되살리기 전에 실기기에서 먼저 잰다.
 
     private func finish() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        // 1.5초 = 「담았어요」를 눈으로 읽을 시간(창업자 *"반응이 없엉"* — 0.6초는 깜빡임으로 보인다)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
         }
     }
