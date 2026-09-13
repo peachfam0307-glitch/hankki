@@ -52,6 +52,8 @@ import { needsOnboarding } from '../components/Onboarding'
 import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount, myDiaryCount, needsCloudHome, markCloudHomeSeen, askOpenCloud, 클라우드보임 } from '../nudges'
 import { 로그인해뒀나 } from '../cloud'
 import { weeklyNow, homemadeNow, snsNow } from '../data/weekly'
+// 🌕 특집 — 날짜가 열고 «닫는다». 철이 지나면 스스로 사라진다(`data/specials.js`)
+import { nowSpecial, specialRecipes } from '../data/specials.js'
 import { whatsNew } from '../data/whatsnew'
 import { pantryScore, pantryUrgent, 남은날수, 기한말 } from '../pantryMatch'
 import SeasonDecor from '../components/SeasonDecor.jsx'
@@ -65,7 +67,10 @@ import { useSeasonCuts } from '../season/useSeasonCuts.js'
 // 📅 [창업자 2026-09-07 00:05] *"홈화면에 이번주제철 옆에 월요일 업뎃을 표시할까??"* · *"sns는 수요일 업뎃인거"* · *"월 배지를 옆에 달아도 좋고"*
 //    → 키커 옆 작은 동그라미 「월」·「수」. 🔢 실측 = 제철 19주·우리집 25주 `from` 전부 월요일 · SNS 20편 전부 수요일(weekly.js·basics.js).
 //    ⛔ 요일을 코드에서 «세지» 않는다 — 데이터가 그 요일에 열리게 우리가 맞춰 두는 것이라(check-weekly 가 월요일을 지킨다) 글자로 준다.
-function WeekBox({ w, 기본, open, 요일, 줄컷 }) {
+// 🌕 `가로` = 특집 줄처럼 «밀어서» 보는 판 (2026-09-13 · 창업자 = *"스크롤로 쭉 볼수있게"*)
+//    ⛔ 새 부품을 만들지 않는다 — 이 상자를 그대로 쓰고 줄 클래스만 바꾼다
+//       (「같은 것이 화면마다 다르게 생기면 유저는 다른 것으로 읽는다」 · 2026-09-04 창업자 지적과 같은 결).
+function WeekBox({ w, 기본, open, 요일, 줄컷, 가로 }) {
   return (
     <div className="weekly-box">
       <div className="weekly-text">
@@ -101,7 +106,7 @@ function WeekBox({ w, 기본, open, 요일, 줄컷 }) {
         <div className="t-sub weekly-why">{w.why}</div>
       </div>
       {/* 🗓 `weekly-row` = 밀지 않고 한 화면에 딱 맞는 격자 (2026-08-03 오징어 상자 사고 → 잘림 0) */}
-      <div className="weekly-row">
+      <div className={`weekly-row${가로 ? ' rail' : ''}`}>
         {w.items.map((r) => (
           <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
             {/* 🍱 [2026-08-23 창업자] *"자주해먹는요리 요리이모지들어간 그림 크기 다른칸이비해 작음.
@@ -220,6 +225,14 @@ export default function HomeScreen() {
   // 🍳 우리집레시피 — 창업자가 실제로 해먹는 것. 제철과 «별개» 줄이다(창업자 확정 2026-08-11, 안 ⒜).
   //    ⛔ 재고가 없으면 `null` 이라 박스를 아예 안 그린다(제철 줄과 같은 규칙).
   const homemade = useMemo(() => homemadeNow(recipes), [recipes])
+  // 🌕 특집 줄 — ⛔실릴 편이 «없으면» 아예 안 그린다(빈 줄이 뜨면 죽은 자리가 된다).
+  //    ⭐ 판정은 `specials.js` 한 곳에서만 한다 — 여기서 날짜를 또 세지 않는다.
+  const 특집 = useMemo(() => {
+    const s = nowSpecial()
+    if (!s) return null
+    const items = specialRecipes(recipes)
+    return items.length ? { ...s, items } : null
+  }, [recipes])
   // 📺 SNS 요리 — 유튜브·인스타에서 보고 우리 말로 정리한 편들 (창업자 확정 2026-09-03).
   //    ⛔ 손으로 적은 목록이 없다 — `source: 'hankki'` ＋ `sourceUrl` 로 «직접» 고른다(`weekly.js` snsNow).
   //    ⛔ 재고가 없으면 `null` 이라 박스를 아예 안 그린다(위 둘과 같은 규칙).
@@ -667,6 +680,15 @@ export default function HomeScreen() {
             📐 창업자 *"폰에서는 2줄이 필요하지만 패드에서는 1줄에 다 들어가잖아"*
                · 폰   = 위아래 두 박스   · 패드 = 좌우 나란히 (`.week-pair.two`)
             ⛔ `two` 는 «둘 다 있을 때만» 붙는다 — 하나뿐이면 지금 모양(박스 안이 좌우로) 그대로다. */}
+        {/* 🌕 특집 — 「이번 주 제철」 «위»에 온다. 철이 있는 동안만 뜨는 것이라 제일 먼저 눈에 닿아야 한다.
+            📮 창업자 2026-09-13 = *"추석특집을 띄우면 좋지 스크롤로 쭉 볼수있게"*
+            ⛔ 편이 없으면 `특집` 이 null 이라 이 줄 자체가 안 그려진다. */}
+        {특집 && (
+          <div className="week-pair">
+            <WeekBox w={{ kicker: 특집.label, title: 특집.sub, why: '', items: 특집.items }} 기본={특집.label} open={open} 가로 />
+          </div>
+        )}
+
         {(weekly || homemade) && (
           <div className={`week-pair${weekly && homemade ? ' two' : ''}`}>
             {weekly && <WeekBox w={weekly} 기본="이번 주 제철" open={open} 요일="월" 줄컷={명절컷 && 명절컷[줄장식[명절]]} />}
