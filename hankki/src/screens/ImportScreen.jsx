@@ -498,13 +498,15 @@ export default function ImportScreen() {
       ],
     },
     gallery: {
-      lead: '사진 보관함의 레시피 사진은 공유에서 「한끼」를 고르거나, 여기서 골라요.',
+      // 📱 [2026-09-14 창업자 *"또는 아래 가져오기가 뭐야?"* · *"3번도 왜 넣었는지 이해가 안 되는데"*] 공유 부품이 없던 15판 안내(앱 안에서 고르기)가
+      //    섞여 있었다 → 첫 카드와 같은 모양으로 «공유 흐름 하나»만. 앱 안에서 고르는 길은 아래 「사진 고르기」 단추가 맡는다.
+      lead: '사진 앱에 있는 레시피 사진은 공유에서 「한끼」를 고르면 바로 담겨요.',
       steps: [
-        <>사진을 열고 <span style={{ display: 'inline-flex', verticalAlign: 'middle', margin: '0 2px' }}><Icon name="share" size={20} color="#3478F6" stroke={1.9} /></span> <b>공유</b> → <b>한끼</b>를 고르면 담겨요 · 한끼를 열면 보여요</>,
-        <>또는 아래 <span className="nav-import-circle" style={{ display: 'inline-flex', width: 26, height: 26, verticalAlign: 'middle', boxShadow: 'none', margin: '0 2px' }}><Icon name="plus" size={16} color="#fff" stroke={2.5} /></span> <b>가져오기</b>를 눌러요</>,
-        <><span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 4 }}><Icon name="camera" size={20} color="#B0895E" stroke={1.8} /></span><b>한끼 앱에서 사진 가져오기</b> → <b>AI로 정확하게 읽기</b>(또는 <b>그냥 읽기</b>)를 누르고 사진을 골라요</>,
+        <>사진 앱에서 <b>사진</b>을 열어요</>,
+        <><span style={{ display: 'inline-flex', verticalAlign: 'middle', margin: '0 2px' }}><Icon name="share" size={20} color="#3478F6" stroke={1.9} /></span> <b>공유</b>를 누른 뒤 앱 줄에서 <b>한끼</b>를 골라요 <span className="t-sub">(안 보이면 맨 끝 「더 보기」에서 한끼를 켜요)</span></>,
+        <><b>한끼에 담았어요</b>가 뜨면 <b>한끼를 열어요</b> · 임시보관함에 있고, 제목과 재료를 자동으로 읽어 드려요</>,
       ],
-      result: '임시보관함에 담기고, 제목·재료를 자동으로 읽어 드려요.',
+      result: '지금 바로 고르려면 아래 「사진 고르기」로 여기서 골라도 돼요.',
       buttons: [
         { label: '사진 고르기', onClick: () => 갈래로('photo') },
       ],
