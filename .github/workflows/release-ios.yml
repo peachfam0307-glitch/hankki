@@ -1,29 +1,27 @@
 name: 🍎 iOS 서명 빌드 → TestFlight
 
-# 🍎 2026-09-12 — 애플 개발자 가입 완료(12:50 · 등록 ID T9R4W65K68) 뒤 첫 «서명» 빌드.
+# 🍎 2026-09-12 — 애플 개발자 가입 완료(12:50 · 등록 ID T9R4W65K68) 뒤 «서명» 빌드.
 #
 # 무엇 = 깃허브 맥(macos-26)에서 우리 웹(hankki/dist)을 껍데기에 넣고 «애플 열쇠로 서명»해 .ipa 를 만든다.
-#   upload=true 면 그 자리에서 App Store Connect(TestFlight)로 올린다.
+#   커밋 제목에 [testflight] 가 있으면(또는 dispatch upload=true) 그 자리에서 App Store Connect(TestFlight)로 올린다.
 #
 # 열쇠 = App Store Connect API 키 셋(깃허브 비밀 칸 · 2026-09-12 창업자가 넣음)
 #   ASC_KEY_ID · ASC_ISSUER_ID · ASC_API_KEY_P8(.p8 본문)
-#   ⛔ 인증서·프로필을 «손으로» 만들지 않는다 — xcodebuild 가 API 키로 «클라우드 서명»한다
-#      (애플 원문 · Distributing your app for beta testing and releases · 2026-09-12 열람 =
-#       "Xcode uses cloud-managed signing certificates to automatically code sign your app").
-#      xcodebuild 쪽 원문(-allowProvisioningUpdates · -authenticationKey* · exportOptions 키)은
-#      아래 「📖 xcodebuild 원문」 단계가 «러너에서» 찍어 로그에 남긴다(절대원칙 38 · 기억으로 안 적는다).
 #
-# 앱 ID kr.hankki.app(Sign In with Apple 켜짐) = 2026-09-12 13:23 창업자가 개발자 사이트에서 등록 · Team ID 6YM72N6FPD.
+# 🔁🔁 2026-09-13 9판 — 서명 방식을 «기기 없이 수동 서명»으로 바꿨다 (ios-app/fastlane/Fastfile 머리말에 전말)
+#   1판 자동 서명 = "Your team has no devices" · 2~6판 서명 없는 archive = applesignin 권한 누락(Apple 로그인 죽음)
+#   7판 ad-hoc = iOS SDK 금지 · 8판 자동 서명 되돌림 = 기기 등록이 창업자 컴퓨터(드라이버)에서 막힘
+#   ⇒ fastlane match 가 API 열쇠로 배포 인증서·App Store 프로필을 «만들어» 서명한다. 기기 0대여도 된다.
+#      매 판 nuke(팀 배포 인증서 비움 · 애플 한도 = 팀당 1개) → 새로 1개. 저장소는 러너 안 임시 git(남는 것 0).
+#   ⛔ 서명 확인 단계가 applesignin 권한을 «반드시» 확인한다 — 없으면 죽는다(4·6판 사고 재발 금지).
+#
+# 앱 ID kr.hankki.app(Sign In with Apple 켜짐) · Team ID 6YM72N6FPD · App Store Connect 앱 「한끼 - 캡처로 만드는 레시피앱」(09-12 14:00).
 # 빌드 번호 = 이 워크플로 실행 번호(run_number) · 버전 = hankki/src/version.js 의 APP_VERSION(v13.19 → 13.19).
 #
-# ⚠️ upload=true 는 App Store Connect 에 「한끼」 앱(번들 kr.hankki.app)이 «먼저» 만들어져 있어야 성공한다.
-
 # ⚠️ workflow_dispatch(손으로 돌리기)는 깃허브 규칙상 «기본 갈래»에 있는 워크플로만 된다(2026-09-12 실측 404).
 #    이 파일은 아이폰 갈래에만 있으므로 push 로도 돈다.
-#    ⭐ push 로 TestFlight 에 «올리려면» 커밋 제목에 [testflight] 를 넣는다(2026-09-12 2판 뒤 추가). 없으면 .ipa 만 만든다.
-#       ✅ App Store Connect 앱 기록 = 「한끼 - 캡처로 만드는 레시피앱」(2026-09-12 14:00 생성 · 번들 kr.hankki.app · SKU hankki-ios-2026).
-#       ⛔ 3판(run 34673892037) 실측 = 커밋 제목에 그 글자를 «설명으로» 적었더니 스위치가 켜져 앱 기록 «전»에 올리려다
-#          "Error Downloading App Information" 으로 죽었다 → 올릴 생각이 없으면 커밋 글에 그 글자를 쓰지 않는다.
+#    ⭐ push 로 TestFlight 에 «올리려면» 커밋 제목에 [testflight] 를 넣는다. 없으면 .ipa 만 만든다.
+#    ⛔ 3판 실측 = 커밋 제목에 그 글자를 «설명으로» 적었더니 스위치가 켜졌다 → 올릴 생각이 없으면 커밋 글에 그 글자를 쓰지 않는다.
 on:
   workflow_dispatch:
     inputs:
@@ -59,6 +57,7 @@ jobs:
         run: |
           sw_vers
           xcodebuild -version
+          fastlane --version | tail -1
           uname -m
 
       - name: 🔐 비밀 칸 셋이 다 있나 (값은 안 찍는다)
@@ -75,22 +74,6 @@ jobs:
           [ "$ok" = 1 ] || exit 1
           echo "✅ 셋 다 있음 · 키 ID 길이=${#K} · Issuer 길이=${#I}"
 
-      - name: 🔑 API 키 파일 놓기 (~/private_keys/AuthKey_<KEYID>.p8)
-        env:
-          K: ${{ secrets.ASC_KEY_ID }}
-          P: ${{ secrets.ASC_API_KEY_P8 }}
-        run: |
-          mkdir -p ~/private_keys
-          printf '%s\n' "$P" > ~/private_keys/AuthKey_$K.p8
-          chmod 600 ~/private_keys/AuthKey_$K.p8
-          echo "KEY_PATH=$HOME/private_keys/AuthKey_$K.p8" >> "$GITHUB_ENV"
-
-      - name: 📖 xcodebuild 원문 (인증 플래그 · exportOptions 키) — 로그에 남긴다
-        run: |
-          xcodebuild -help 2>&1 | grep -n -i "allowProvisioningUpdates\|authenticationKey" || true
-          echo "──── exportOptionsPlist keys ────"
-          xcodebuild -help 2>&1 | sed -n '/Available keys for -exportOptionsPlist/,/^$/p' | head -120
-
       - name: 🌐 웹 빌드 (hankki/dist)
         working-directory: hankki
         run: |
@@ -105,107 +88,52 @@ jobs:
           npx cap sync ios
           du -sh ios/App/App/public
 
-      - name: 🔢 버전·빌드 번호
+      - name: 🔢 버전·빌드 번호 · 올리기 스위치
+        env:
+          HEAD_MSG: ${{ github.event.head_commit.message }}
         run: |
           V=$(grep -o "APP_VERSION = 'v[0-9.]*'" hankki/src/version.js | grep -o '[0-9][0-9.]*')
           echo "MARKETING_VERSION=$V" >> "$GITHUB_ENV"
           echo "BUILD_NUMBER=${{ github.run_number }}" >> "$GITHUB_ENV"
-          echo "버전 $V · 빌드 ${{ github.run_number }}"
+          # 올리는 길 둘 = ⓐ dispatch upload=true(기본 갈래 전용이라 지금은 못 씀) ⓑ push 커밋 제목에 [testflight]
+          UP=false
+          [ "${{ inputs.upload }}" = "true" ] && UP=true
+          case "$HEAD_MSG" in *"[testflight]"*) UP=true;; esac
+          echo "UPLOAD=$UP" >> "$GITHUB_ENV"
+          echo "버전 $V · 빌드 ${{ github.run_number }} · 올리기=$UP"
 
-      # 🧪 2판(2026-09-12 13:3x) — 1판은 archive 가 «개발용» 서명을 하려다 죽었다:
-      #   "Your team has no devices from which to generate a provisioning profile" ＋ "No iOS App Development profiles for kr.hankki.app"
-      #   → archive 는 서명 «없이» 만들고, 아래 exportArchive 가 API 키로 «배포용(App Store)» 서명을 한다.
-      #   (러너 밖에서 원문을 못 열어 «실험»으로 잰다 — 안 되면 3판 = ASC API 로 인증서·프로필을 직접 만들어 수동 서명)
-      # ⛔⛔ 7판(2026-09-12 17:1x) — 「서명 없이 archive」의 대가: 빌드 4·6 의 서명된 앱 권한에 applesignin 이 «없었다»
-      #   (6판 로그 entitlements = application-identifier · beta-reports-active · team-identifier · get-task-allow 넷뿐)
-      #   → 딸 폰에서 Apple 로그인이 「잘 안 됐어요」. 권한 파일은 archive 때 서명하면서 박히는데 서명을 껐으니 빠진 것.
-      #   실험 = archive 를 «임시(ad-hoc · CODE_SIGN_IDENTITY=-) 서명»으로 만들어 권한을 박고, export 가 배포 서명으로 갈아입힌다.
-      #   아래 「archive 권한 확인」이 applesignin 이 없으면 죽는다(빈 줄로 지나가지 않게).
-      #   ⛔ 7판 결과(run 34682795868) = "Ad Hoc code signing is not allowed with SDK 'iOS 26.5'" — 임시 서명 길은 애플이 막았다.
-      #   ✅ 8판 = 1판 방식(자동 서명 · API 키)으로 되돌린다. 1판이 죽은 이유 「팀에 기기 0대」는
-      #      딸 아이폰 UDID 를 개발자 사이트 Devices 에 등록하면 풀린다(등록 «전»엔 이 단계가 1판과 같은 말로 죽는다).
-      - name: 🍎 archive (자동 서명 · API 키 · 팀에 기기 1대 이상 필요)
-        working-directory: ios-app/ios/App
+      - name: 🗄 match 임시 저장소 (러너 안 빈 git · 판 끝나면 사라진다)
+        run: |
+          set -e
+          D="$RUNNER_TEMP/match-store.git"
+          git init -q --bare -b main "$D"
+          echo "MATCH_LOCAL_REPO=file://$D" >> "$GITHUB_ENV"
+          echo "MATCH_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+          git config --global user.email "ci@hankki.local"
+          git config --global user.name "hankki-ci"
+          echo "✅ $D"
+
+      # 🍎 서명 ＋ archive ＋ export(＋ 올리기) — 전부 ios-app/fastlane/Fastfile 의 release 레인이 한다
+      - name: 🍎 fastlane release (기기 없이 수동 서명 → .ipa → upload 면 TestFlight)
+        working-directory: ios-app
         env:
-          K: ${{ secrets.ASC_KEY_ID }}
-          I: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          FASTLANE_SKIP_UPDATE_CHECK: "1"
+          FASTLANE_HIDE_CHANGELOG: "1"
+          FASTLANE_OPT_OUT_USAGE: "1"
+          LC_ALL: en_US.UTF-8
+          LANG: en_US.UTF-8
         run: |
-          set -o pipefail
-          xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
-          xcodebuild -project App.xcodeproj -scheme App -configuration Release \
-            -sdk iphoneos -destination 'generic/platform=iOS' \
-            -archivePath build/App.xcarchive \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$KEY_PATH" -authenticationKeyID "$K" -authenticationKeyIssuerID "$I" \
-            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic \
-            MARKETING_VERSION="$MARKETING_VERSION" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-            archive | tail -80
-          test -d build/App.xcarchive || { echo "⛔ archive 가 안 만들어졌다"; exit 1; }
+          fastlane ios release upload:"$UPLOAD"
 
-      - name: 🔍 archive 권한 확인 (applesignin 이 박혔나)
-        working-directory: ios-app/ios/App
+      # ⛔ 4·6판 사고 = 서명된 앱에 applesignin 이 없었는데 «빈 줄»로 지나갔다 → 이제 .ipa 실물을 풀어서 없으면 죽는다
+      - name: 🔍 서명 확인 (.ipa 안 실물 · 누가 서명했나 · applesignin 있나)
+        working-directory: ios-app
         run: |
-          APP=build/App.xcarchive/Products/Applications/App.app
-          codesign -d --entitlements :- "$APP" 2>/dev/null | tee build/archive-entitlements.txt || true
-          grep -q "com.apple.developer.applesignin" build/archive-entitlements.txt || { echo "⛔ archive 앱에 applesignin 권한이 없다"; exit 1; }
-          echo "✅ archive 권한에 applesignin 있음"
-          test -d build/App.xcarchive || { echo "⛔ archive 가 안 만들어졌다"; exit 1; }
-
-      - name: 📝 ExportOptions.plist
-        working-directory: ios-app/ios/App
-        env:
-          HEAD_MSG: ${{ github.event.head_commit.message }}
-        run: |
-          # 올리는 길 둘 = ⓐ dispatch upload=true(기본 갈래 전용이라 지금은 못 씀) ⓑ push 커밋 제목에 «[testflight]»
-          DEST=export
-          [ "${{ inputs.upload }}" = "true" ] && DEST=upload
-          case "$HEAD_MSG" in *"[testflight]"*) DEST=upload;; esac
-          echo "DEST=$DEST"
-          cat > build/ExportOptions.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0"><dict>
-            <key>method</key><string>app-store-connect</string>
-            <key>destination</key><string>$DEST</string>
-            <key>signingStyle</key><string>automatic</string>
-            <key>teamID</key><string>$TEAM_ID</string>
-            <key>uploadSymbols</key><true/>
-            <key>manageAppVersionAndBuildNumber</key><false/>
-          </dict></plist>
-          EOF
-          cat build/ExportOptions.plist
-          plutil -lint build/ExportOptions.plist
-
-      - name: 📤 exportArchive (.ipa · upload=true 면 TestFlight 로)
-        working-directory: ios-app/ios/App
-        env:
-          K: ${{ secrets.ASC_KEY_ID }}
-          I: ${{ secrets.ASC_ISSUER_ID }}
-        run: |
-          set -o pipefail
-          xcodebuild -exportArchive \
-            -archivePath build/App.xcarchive \
-            -exportOptionsPlist build/ExportOptions.plist \
-            -exportPath build/out \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$KEY_PATH" -authenticationKeyID "$K" -authenticationKeyIssuerID "$I" \
-            | tail -80
-          ls -la build/out || true
-          find build/out -name "*.ipa" -exec du -sh {} \; || true
-
-      # 🧪 2판(run 34673353854)에서 이 단계가 «빈 줄»로 지났다 — archive 안의 App.app 은 서명 «없는» 것이라 볼 게 없었다.
-      #    서명된 실물은 .ipa 안 Payload/App.app 이다 → 풀어서 본다. ＋ DistributionSummary.plist(누가·무슨 프로필로)도 찍는다.
-      - name: 🔍 서명 확인 (.ipa 안 실물 · 누가 서명했나 · 어떤 권한)
-        working-directory: ios-app/ios/App
-        run: |
-          # destination=upload 면 .ipa 를 디스크에 «안 남기고» 바로 올린다 → 그땐 DistributionSummary 만 찍고 끝
-          IPA=$(ls build/out/*.ipa 2>/dev/null | head -1)
-          if [ -z "$IPA" ]; then
-            echo "ℹ️ .ipa 없음(=upload 로 바로 올림). DistributionSummary.plist:"
-            plutil -p build/out/DistributionSummary.plist 2>/dev/null | head -60 || true
-            grep -i "upload\|success\|error" build/out/Packaging.log 2>/dev/null | tail -20 || true
-            exit 0
-          fi
+          IPA=build/out/App.ipa
+          test -f "$IPA" || { echo "⛔ $IPA 가 없다"; exit 1; }
           rm -rf build/ipa-check && mkdir -p build/ipa-check
           unzip -q "$IPA" -d build/ipa-check
           APP=$(ls -d build/ipa-check/Payload/*.app | head -1)
@@ -215,25 +143,25 @@ jobs:
           codesign -d --entitlements :- "$APP" 2>/dev/null | grep -A1 "applesignin\|team-identifier\|application-identifier\|aps-environment" || true
           echo "── Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" -c "Print :CFBundleShortVersionString" -c "Print :CFBundleVersion" "$APP/Info.plist" || true
-          echo "── DistributionSummary.plist"
-          plutil -p build/out/DistributionSummary.plist 2>/dev/null | grep -i "certificate\|name\|profile\|team\|type\|entitlements\|applesignin" | head -40 || true
           echo "── 서명이 팀 $TEAM_ID 인가 · applesignin 권한이 있나"
           codesign -dv --verbose=2 "$APP" 2>&1 | grep -q "TeamIdentifier=$TEAM_ID" || { echo "⛔ TeamIdentifier 가 $TEAM_ID 가 아니다"; exit 1; }
           codesign -d --entitlements :- "$APP" 2>/dev/null | grep -q "com.apple.developer.applesignin" || { echo "⛔ 서명된 앱에 applesignin 권한이 없다(빌드 4·6 사고) — 이 빌드는 올리면 안 된다"; exit 1; }
-          echo "✅ 서명 = 팀 $TEAM_ID · applesignin 있음"
+          echo "✅ 서명 = 팀 $TEAM_ID · applesignin 있음 · 올리기=$UPLOAD"
 
-      - name: ⬆️ 결과물 (.ipa · ExportOptions · 로그)
+      - name: ⬆️ 결과물 (.ipa · 로그)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ios-release-${{ github.run_number }}
           path: |
-            ios-app/ios/App/build/out/*.ipa
-            ios-app/ios/App/build/out/*.plist
-            ios-app/ios/App/build/out/*.log
-            ios-app/ios/App/build/ExportOptions.plist
+            ios-app/build/out/*.ipa
+            ios-app/build/out/*.plist
+            ios-app/build/out/*.log
+            ~/Library/Logs/gym/*.log
           if-no-files-found: ignore
 
-      - name: 🧹 열쇠 지우기
+      - name: 🧹 열쇠·임시 저장소·키체인 지우기
         if: always()
-        run: rm -rf ~/private_keys
+        run: |
+          rm -rf "$RUNNER_TEMP/match-store.git" ~/private_keys || true
+          security delete-keychain fastlane_tmp_keychain 2>/dev/null || true

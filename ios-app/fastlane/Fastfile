@@ -1,0 +1,110 @@
+# 🍎 한끼 iOS — 「기기 없이」 서명해서 .ipa 만들고(옵션) TestFlight 로 올리는 길 (2026-09-13)
+#
+# 왜 이 길인가 (전부 실측 · docs/아이폰-가입-내일할것-2026-09-12.md 맨 아래)
+#   · 자동 서명(archive)  → "Your team has no devices" (1판 · 팀에 기기 0대)
+#   · 서명 없는 archive    → 서명된 앱에 applesignin 권한이 빠져 Apple 로그인이 죽음 (4·6판)
+#   · ad-hoc 임시 서명     → "Ad Hoc code signing is not allowed with SDK iOS" (7판)
+#   · 딸 폰 UDID 등록      → 창업자 컴퓨터에 애플 USB 드라이버가 끝내 안 심김 (9/12 밤 ~ 9/13 아침)
+#   ⇒ 러너가 App Store Connect API 열쇠로 «배포 인증서 ＋ App Store 프로필»을 직접 만들어 «수동 서명»한다.
+#      기기가 0대여도 되고, 앞으로 기기 등록이 영영 필요 없다.
+#
+# 원문 (2026-09-13 이 세션에서 열람)
+#   · 애플 API: POST /v1/certificates(csrContent·certificateType) · POST /v1/profiles(bundleId·certificates · IOS_APP_STORE)
+#   · 애플 도움말 인증서 개요: "Distribution certificates belong to the team and only one type of each
+#     distribution certificate … is allowed per team"  → 배포 인증서는 팀당 «하나». 그래서 매 판 «nuke → 새로 하나».
+#   · fastlane match: 옵션 = match/lib/match/options.rb · nuke = sync_code_signing.md 469줄
+#     ("apps that are already available in the App Store / TestFlight will still work") · setup_ci = 임시 키체인
+#
+# ⛔ 이 파일은 «수동 서명»이다 — Xcode 의 자동 서명·클라우드 관리 인증서는 안 쓴다.
+# ⛔ nuke 는 팀의 «배포» 인증서·프로필을 전부 지운다. 지금 팀엔 러너가 만든 것(＋6판이 만든 클라우드 관리 인증서)뿐이라 괜찮다.
+#    나중에 맥에서 손으로 만든 배포 인증서가 생기면 이 줄을 다시 본다.
+# ⛔ 열쇠(ASC_API_KEY_P8)는 환경변수로만 온다 — 파일로 안 남기고, 로그에 안 찍는다(fastlane 이 sensitive 로 가림).
+
+default_platform(:ios)
+
+BUNDLE_ID = "kr.hankki.app"
+TEAM_ID   = "6YM72N6FPD"
+PROJECT   = "ios/App/App.xcodeproj"
+
+platform :ios do
+  desc "기기 없이 서명 → build/out/App.ipa · upload:true 면 TestFlight 까지"
+  lane :release do |opts|
+    # 1) 임시 키체인 (없으면 CI 에서 서명이 멈춘다 — fastlane/docs github.md)
+    setup_ci
+
+    # 2) API 열쇠 — 파일 없이 내용으로
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_content: ENV.fetch("ASC_API_KEY_P8"),
+      in_house: false
+    )
+
+    # 3) match 저장소 = 이 러너 안의 «빈 로컬 git» (판이 끝나면 사라진다 · 아무 데도 안 남는다)
+    #    MATCH_PASSWORD 도 판마다 난수 — 워크플로가 넣어 준다.
+    store = {
+      storage_mode: "git",
+      git_url: ENV.fetch("MATCH_LOCAL_REPO"),   # file:///…/match-store.git
+      git_branch: "main",
+      shallow_clone: false,
+      api_key: api_key,
+      team_id: TEAM_ID,
+      skip_docs: true
+    }
+
+    # 4) 팀의 «배포» 인증서·프로필을 비운다 — 애플이 팀당 배포 인증서 하나만 허용하므로 «항상 0 → 1»로 간다
+    match_nuke(store.merge(type: "distribution", skip_confirmation: true, safe_remove_certs: false))
+
+    # 5) 새 배포 인증서 ＋ App Store 프로필 만들고 키체인·프로필 폴더에 설치
+    match(store.merge(
+      type: "appstore",
+      app_identifier: BUNDLE_ID,
+      readonly: false,
+      generate_apple_certs: true,
+      force: true,
+      skip_confirmation: true
+    ))
+
+    profile_name = ENV.fetch("sigh_#{BUNDLE_ID}_appstore_profile-name")
+    UI.important("프로필 = #{profile_name}")
+
+    # 6) 프로젝트를 «수동 서명»으로 — 이 프로필·Apple Distribution 인증서로만 서명한다
+    update_code_signing_settings(
+      path: PROJECT,
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      bundle_identifier: BUNDLE_ID,
+      code_sign_identity: "Apple Distribution",
+      profile_name: profile_name,
+      targets: ["App"]
+    )
+
+    # 7) archive → export (.ipa) — 권한(App.entitlements 의 applesignin)은 여기서 서명하며 박힌다
+    build_app(
+      project: PROJECT,
+      scheme: "App",
+      configuration: "Release",
+      export_method: "app-store",
+      export_team_id: TEAM_ID,
+      output_directory: "build/out",
+      output_name: "App.ipa",
+      xcargs: %(MARKETING_VERSION="#{ENV.fetch('MARKETING_VERSION')}" CURRENT_PROJECT_VERSION="#{ENV.fetch('BUILD_NUMBER')}"),
+      export_options: {
+        provisioningProfiles: { BUNDLE_ID => profile_name },
+        signingStyle: "manual",
+        uploadSymbols: true,
+        manageAppVersionAndBuildNumber: false
+      }
+    )
+
+    # 8) upload:true 면 TestFlight 로 (처리 완료까지 안 기다린다 — 러너 시간 아낌)
+    if opts[:upload].to_s == "true"   # 명령줄 `upload:true` 는 문자열로 온다 — "false" 도 참이 되니 글자로 비교
+      upload_to_testflight(
+        api_key: api_key,
+        ipa: "build/out/App.ipa",
+        skip_waiting_for_build_processing: true
+      )
+      UI.success("TestFlight 로 올렸다 — App Store Connect 에서 처리 중 → 딸 폰 TestFlight 업데이트")
+    end
+  end
+end
