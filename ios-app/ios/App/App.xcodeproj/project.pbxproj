@@ -18,6 +18,7 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		70EA9429EC647696A68249A5 /* gom.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C3CF10369641A954ADD510C /* gom.png */; };
 		893856917D250A547584D396 /* HankkiViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16B8E5223DF9A8F96CCDC767 /* HankkiViewController.swift */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
 		A1C0908A2E6D0001000A0001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1C090892E6D0001000A0001 /* PrivacyInfo.xcprivacy */; };
@@ -60,6 +61,7 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		8C3CF10369641A954ADD510C /* gom.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = gom.png; sourceTree = "<group>"; };
 		8D6BFA4073BE43677169C860 /* ShareIntakePlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShareIntakePlugin.swift; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
@@ -95,6 +97,7 @@
 				31A50BE07465182BD2DADB99 /* ShareViewController.swift */,
 				9B45318D538932CD2A8B8146 /* Info.plist */,
 				ABB64891B1AC5B0D09DEBDED /* ShareExtension.entitlements */,
+				8C3CF10369641A954ADD510C /* gom.png */,
 			);
 			name = ShareExtension;
 			path = ShareExtension;
@@ -240,6 +243,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				70EA9429EC647696A68249A5 /* gom.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
