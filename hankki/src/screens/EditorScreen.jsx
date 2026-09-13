@@ -1430,13 +1430,18 @@ export default function EditorScreen({ id, prefill }) {
           message={'그냥 닫으면 다음에 이어서 쓸 수 있어요.\n버리면 지금 쓴 내용이 사라져요.'}
           confirmLabel="버리기"
           danger
+          // 🍎 [2026-09-13 딸 폰 빌드 15 실물] 「버리기」를 눌러도 화면이 안 닫혔다(창업자 *"나가지지도 않음"*).
+          //    뿌리 = ConfirmSheet 가 onConfirm() 뒤에 곧바로 onClose() 를 불러 «같은 순간에» history.back() 이 둘
+          //    (①여기 nav.pop ②시트 층 정리) 나간다. 크롬은 둘 다 처리하는데 아이폰 웹뷰(WebKit)는 연달아 온 back 하나를
+          //    삼켜서 시트만 닫히고 편집 화면이 남았다. → 저장 때(위 nav.popAll)와 같은 길로: 시트 층을 «소비됨»으로
+          //    표시하고 history.go(-n) 한 번에 정리한다. ⛔ 두 번째 back 을 «기다리는» 땜빵(setTimeout)은 안 쓴다(규칙 34).
           onConfirm={() => {
             try { localStorage.removeItem(DRAFT_KEY) } catch { /* noop */ }
-            nav.pop()
+            nav.popAll()
             nav.showToast('쓰던 내용을 버렸어요')
           }}
           secondaryLabel="그냥 닫기 (이어서 쓸래요)"
-          onSecondary={() => nav.pop()}
+          onSecondary={() => nav.popAll()}
           onClose={() => setDiscardAsk(false)}
         />
       )}

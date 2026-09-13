@@ -38,6 +38,7 @@
 
 const ALLOWED_ORIGINS = [
   'https://peachfam0307-glitch.github.io',
+  'capacitor://localhost',   // 🍎 [2026-09-13] 아이폰 앱 안의 주소 — 없으면 AI 다듬기가 아이폰에서 403 으로 «항상» 실패한다
 ]
 
 // ── 상한 ── ⭐이건 «열쇠»가 아니라 «우리 무료 통»을 지키는 벽이다

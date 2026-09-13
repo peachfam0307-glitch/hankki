@@ -49,5 +49,12 @@ const pantry = 읽기('src/components/PantryView.jsx')
 const prev = 읽기('src/components/PreviewSheet.jsx')
 잰다(/\{앱안인가\(\) \? '아이패드에서도 써요' : '패드·폴드에서도 써요'\}/.test(prev), '⑫ 소식 팝업: 앱이면 「폴드」 대신 「아이패드」')
 
+// 빌드 15 딸 폰 실물(20:1x)에서 잡은 둘
+const ed = 읽기('src/screens/EditorScreen.jsx')
+잰다(/onConfirm=\{\(\) => \{\s*try \{ localStorage\.removeItem\(DRAFT_KEY\) \} catch \{[^}]*\}\s*nav\.popAll\(\)/.test(ed), '⑬ 편집 「버리기」 = popAll 한 번(back 둘 겹침 ✕ · 아이폰 웹뷰가 하나 삼킴)')
+const w1 = 읽기('ocr-proxy/worker.js'), w2 = 읽기('ocr-proxy/worker-tidy.js')
+잰다(/ALLOWED_ORIGINS = \[[\s\S]*?'capacitor:\/\/localhost'[\s\S]*?\]/.test(w1), '⑭ OCR 워커 허용 주소에 capacitor://localhost')
+잰다(/ALLOWED_ORIGINS = \[[\s\S]*?'capacitor:\/\/localhost'[\s\S]*?\]/.test(w2), '⑭ AI 워커 허용 주소에 capacitor://localhost')
+
 console.log(나쁨 ? `\n⛔ ${나쁨}칸 실패\n` : '\n✅ 아이폰 앱에서 없는 길·안 되는 부품을 가르치지 않는다 · 안드로이드 글자는 그대로\n')
 process.exit(나쁨 ? 1 : 0)
