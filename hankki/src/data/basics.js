@@ -6921,7 +6921,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-nokkochi-jeon',
-    title: '꼬치 없는 꼬치전', from: '2026-09-16',
+    title: '꼬치 없는 꼬치전', from: '2026-09-14',
     origin: '창업자',
     review: '창업자',   // ☑️ 2026-09-13 15:02 창업자 = "다 통과야" (검수판 4편 전부)
     icon: 'n3009',
@@ -6956,7 +6956,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-saeu-gwanja-jeon',
-    title: '새우관자전', from: '2026-09-16',
+    title: '새우관자전', from: '2026-09-14',
     origin: '창업자',
     review: '창업자',   // ☑️ 2026-09-13 15:02 창업자 = "다 통과야"
     icon: 'n3010',
@@ -6991,7 +6991,7 @@ const RAW_BASICS = [
     //    원문 = docs/받은레시피-꼬치없는꼬치전-2026-09-13.md 아래쪽
     //    ⭐ 설탕 6큰술 → 아우노슈가 9큰술 (앱 안 모든 편이 1.5배로 환산돼 있다 · 창업자 "네가 비율대로 바꿔줘")
     id: 'basic-la-galbi',
-    title: 'LA갈비', from: '2026-09-16',
+    title: 'LA갈비', from: '2026-09-14',
     origin: '창업자',
     review: '창업자',
     icon: 'n3011',
@@ -7023,7 +7023,7 @@ const RAW_BASICS = [
     // 🥬 창업자가 직접 써서 준 레시피 (2026-09-13) — ⛔클로드가 만들지 않았다.
     //    원문 = docs/받은레시피-꼬치없는꼬치전-2026-09-13.md 아래쪽
     id: 'basic-albaechu-jeon',
-    title: '알배추전', from: '2026-09-16',
+    title: '알배추전', from: '2026-09-14',
     origin: '창업자',
     review: '창업자',
     icon: 'n3012',
