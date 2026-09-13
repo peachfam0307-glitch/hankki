@@ -90,8 +90,15 @@ const 장 = []
           ＋ 「readLink」(링크 본문 자동 읽기)는 「서버 되면 되살릴 것」으로 «빠져 있다».
        ✅ 진짜 되는 길은 둘 = ⑴캡처해서 공유(사진 글씨를 읽어 재료·순서 자동) ⑵글 붙여넣기(무료).
           블로그는 ⑵다 — 창업자 말이 맞다. -->
-  <div style="position:absolute;right:70px;top:340px;text-align:right;font-size:34px;color:#a98a6b;line-height:1.55">캡처해서 한끼로 보내면<br>재료·순서까지 정리돼요</div>
-  <div style="position:absolute;right:70px;top:520px"><span class="알약">인스타 · 유튜브는 캡처로</span></div>
+  <!-- ⛔⛔ [2026-09-13 · 두 번째 고침] 「캡처해서 한끼로 «보내면»」도 아이폰에선 «틀린 말»이다.
+       🔢 아이폰 세션 실측 = iOS 껍데기에 Share Extension 이 없다(확장 타깃 0 · Info.plist NSExtension 0건).
+          안드로이드가 되는 건 웹 매니페스트의 share_target 덕인데 «iOS는 그걸 안 읽는다».
+          실물 = 딸 폰 09-13 12:09 사진첩 공유 시트에 「한끼」 없음.
+       ✅ 아이폰에서 되는 길 = 캡처해 두고 → 한끼에서 「사진 가져오기」로 «불러온다»(사진 고르기는 실물 확인됨).
+       ⭐ 그래서 「보내면」을 빼고 «불러오면»으로. 두 폰 다 맞는 말이 된다.
+       📌 Share Extension 은 승인 뒤 1.1 에서 만든다(네이티브라 딸 폰 시험까지 하고 낸다). -->
+  <div style="position:absolute;right:70px;top:340px;text-align:right;font-size:34px;color:#a98a6b;line-height:1.55">캡처해 두고 불러오면<br>재료·순서까지 정리돼요</div>
+  <div style="position:absolute;right:70px;top:520px"><span class="알약">캡처한 사진에서 읽어와요</span></div>
   <div style="position:absolute;right:70px;top:610px"><span class="알약">블로그 글은 복사해서 붙여넣기</span></div>
   ${폰('3a-레시피탭.png', 1000, 'left:40px;bottom:-90px', 3)}` })
 

@@ -114,7 +114,7 @@ ${장(3.4, 2.6, `
 
 ${장(6.0, 2.8, `
   <div class="툭" style="--at:6.15s;position:absolute;left:0;right:0;top:180px;text-align:center;font-size:64px;line-height:1.38;font-weight:700">인스타에서 본 레시피,<br>담아두면 안 사라져요</div>
-  <div class="툭" style="--at:6.35s;position:absolute;left:0;right:0;top:400px;text-align:center;font-size:42px;color:#a98a6b">캡처해서 한끼로 보내면 재료·순서까지</div>
+  <div class="툭" style="--at:6.35s;position:absolute;left:0;right:0;top:400px;text-align:center;font-size:42px;color:#a98a6b">캡처해 두고 불러오면 재료·순서까지</div>
   ${폰('3a-레시피탭.png', 1230, 'left:257px;bottom:-140px', 6.25)}`)}
 
 ${장(8.8, 2.4, `
