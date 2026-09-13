@@ -53,7 +53,8 @@ platform :ios do
     }
 
     # 4) 팀의 «배포» 인증서·프로필을 비운다 — 애플이 팀당 배포 인증서 하나만 허용하므로 «항상 0 → 1»로 간다
-    match_nuke(store.merge(type: "distribution", skip_confirmation: true, safe_remove_certs: false))
+    #    ⚠️ 9판 실측: 이 액션의 type 은 match 종류(appstore·adhoc·development…)를 받는다 — 명령줄의 "distribution" 이 아니라 "appstore".
+    match_nuke(store.merge(type: "appstore", skip_confirmation: true, safe_remove_certs: false))
 
     # 5) 새 배포 인증서 ＋ App Store 프로필 만들고 키체인·프로필 폴더에 설치
     match(store.merge(

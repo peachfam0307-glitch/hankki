@@ -108,7 +108,7 @@ jobs:
           D="$RUNNER_TEMP/match-store.git"
           git init -q --bare -b main "$D"
           echo "MATCH_LOCAL_REPO=file://$D" >> "$GITHUB_ENV"
-          echo "MATCH_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+          MP=$(openssl rand -hex 24); echo "::add-mask::$MP"; echo "MATCH_PASSWORD=$MP" >> "$GITHUB_ENV"   # 판마다 난수 · 로그에 가림
           git config --global user.email "ci@hankki.local"
           git config --global user.name "hankki-ci"
           echo "✅ $D"
