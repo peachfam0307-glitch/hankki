@@ -17,7 +17,7 @@
 #
 # ✅ 11판(run 34732658356) 실측 = Authority=Apple Distribution · entitlements 에 applesignin=[Default] · 기기 0대로 서명 성공.
 # ✅ 12판 = 첫 TestFlight 올리기(빌드 12 · 09-13 11:37) → 딸 폰 Apple 로그인 ✅ · 13판 = 배포 갈래 v13.27 합침 ＋ 카드 칩 흰 반달 고침(B9) 실음.
-# 🍎 16판(09-13 밤) = Share Extension 첫 판 — 공유 시트에 「한끼」가 뜨고, 받은 것은 App Group inbox 에 두었다가 앱이 열릴 때 담는다(scripts/add-share-extension.rb · ShareIntakePlugin).
+# 🍎 16판(09-13 20:5x · 포털 = App Group group.kr.hankki.app · App ID 둘에 배정 ✅ 창업자 캡처 「Enabled App Groups (1)」) = Share Extension 첫 판 — 공유 시트에 「한끼」가 뜨고, 받은 것은 App Group inbox 에 두었다가 앱이 열릴 때 담는다(scripts/add-share-extension.rb · ShareIntakePlugin).
 #    ⛔ 포털 선행 = App Group group.kr.hankki.app 등록 + kr.hankki.app / kr.hankki.app.share 두 App ID 에 배정(창업자 1회). 안 돼 있으면 match 에서 죽는다.
 # 🍎 15판(09-13 20:0x) = 14판 ＋ 배포 갈래 v13.32(추석·캡처 레시피) 합침 ＋ 아이폰 안내에 실제 단추 아이콘(가져오기 ＋ · 카메라) ＋ 안내 머리 제목.
 # 🍎 14판(09-13 19:4x) = 심사 제출(15:50) 취소 뒤 다시 제출용 — 아이폰에서 없는 길(공유 시트 → 한끼)·안 되는 부품(<a download>·진동·SW 갱신)을 안 가르치게 12곳 갈라 놓음(_repro-아이폰안내-0913).
