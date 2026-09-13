@@ -15,6 +15,7 @@
 #   · fastlane match: 옵션 = match/lib/match/options.rb · nuke = sync_code_signing.md 469줄
 #     ("apps that are already available in the App Store / TestFlight will still work") · setup_ci = 임시 키체인
 #
+# ✅ 11판(run 34732658356) 실측 = Authority=Apple Distribution · entitlements 에 applesignin=[Default] · 기기 0대로 서명 성공.
 # ⛔ 이 파일은 «수동 서명»이다 — Xcode 의 자동 서명·클라우드 관리 인증서는 안 쓴다.
 # ⛔ nuke 는 팀의 «배포» 인증서·프로필을 전부 지운다. 지금 팀엔 러너가 만든 것(＋6판이 만든 클라우드 관리 인증서)뿐이라 괜찮다.
 #    나중에 맥에서 손으로 만든 배포 인증서가 생기면 이 줄을 다시 본다.
