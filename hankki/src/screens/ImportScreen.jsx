@@ -117,12 +117,14 @@ const HIDDEN = [
 ]
 // 🍎🍎 [2026-09-13 · 심사 제출 뒤 잡음] **아이폰 앱엔 「공유 → 더보기 → 한끼」 길이 없다.**
 //    안드로이드는 웹 매니페스트 share_target 으로 공유 시트에 한끼가 뜨지만, 아이폰 껍데기엔 그 부품(Share Extension)이
-//    아직 없다(딸 폰 실물 09-13 12:09 — 사진첩 공유 시트에 한끼 없음). 그런데 ①②카드와 안내가 그 길을 «그대로» 가르쳐서
-//    심사관·유저가 따라 하면 막힌다(2.1). → 아이폰 앱이면 ①을 「캡처 → 한끼 → 사진 고르기」 안내로 바꾸고 ②(갤러리 공유)는 내린다.
-//    ⛔ 기능을 끈 게 아니다(규칙 39) — 없는 길을 «가르치지 않는» 것이고, 되는 길(사진 고르기)로 안내한다. Share Extension 은 1.1 후보.
+//    없었다(딸 폰 실물 09-13 12:09 — 사진첩 공유 시트에 한끼 없음). 그런데 ①②카드와 안내가 그 길을 «그대로» 가르쳐서
+//    심사관·유저가 따라 하면 막힌다(2.1). → 아이폰 앱이면 ①을 아이폰 흐름으로 바꾸고 ②(갤러리 공유)는 ①에 합친다.
+//    🍎 [09-13 밤 · 16판~] Share Extension 을 넣었다(ios-app/ios/App/ShareExtension · src/iosShare.js) → 아이폰 공유 시트에도 「한끼」가 뜬다.
+//    ⛔ Apple 제한 = 공유 부품은 앱을 «직접 못 연다» → 안내는 「담았어요 → 한끼를 열면 보여요」까지 정직하게 적는다.
+//    ⛔ 안드로이드·웹은 한 글자도 안 바뀐다(`앱안인가()` 는 껍데기 밖에서 항상 false).
 //    ⛔ 안드로이드·웹은 한 글자도 안 바뀐다(`앱안인가()` 는 껍데기 밖에서 항상 false).
 const OPTIONS_IOS = [
-  { ...OPTIONS[0], title: '캡처한 사진 바로 한끼로', desc: '인스타·유튜브 보다 캡처해 두면, 여기서 골라 재료까지 정리해요' },
+  { ...OPTIONS[0], title: '캡처한 사진 바로 한끼로', desc: '캡처를 공유에서 「한끼」로 보내거나, 여기서 골라요 · 재료까지 정리해요' },
   ...OPTIONS.filter((o) => o.key !== 'share' && o.key !== 'gallery'),
 ]
 const ALL_FLOWS = [...OPTIONS, ...HIDDEN]
@@ -475,15 +477,16 @@ export default function ImportScreen() {
   const 안내들 = 앱안인가() ? {
     ...안내들기본,
     share: {
-      lead: '인스타·유튜브를 보다가 캡처해 두면, 한끼에서 골라 재료까지 읽어 드려요.',
+      lead: '인스타·유튜브를 보다가 캡처하면, 공유에서 「한끼」를 골라 바로 보낼 수 있어요.',
       // 🍎 보고 따라 하는 안내라 «실제 단추 모양»을 같이 그린다(창업자 09-13 19:5x *"사람들이 보고 따라하니까"*) —
-      //    가져오기 = 아래 탭의 갈색 원(＋) 그대로(같은 class) · 사진 고르기 = 그 카드의 카메라 아이콘 그대로.
+      //    공유 = 아이폰 공유 단추(네모＋위 화살표) · 「한끼를 열어요」는 Apple 제한(부품이 앱을 직접 못 연다)이라 정직하게 적는다.
+      //    ⛔ 「더 보기」 한 줄은 실물 근거다 — 아이폰 공유 시트의 앱 줄은 새 부품을 처음엔 숨길 수 있다(딸 폰 16판 실물로 다시 확인).
       steps: [
         <>인스타·유튜브를 보다가 <b>캡처</b>해요 <span className="t-sub">(옆 버튼＋소리 올리기를 같이 꾹)</span></>,
-        <>한끼로 돌아와 아래 <span className="nav-import-circle" style={{ display: 'inline-flex', width: 26, height: 26, verticalAlign: 'middle', boxShadow: 'none', margin: '0 2px' }}><Icon name="plus" size={16} color="#fff" stroke={2.5} /></span> <b>가져오기</b>를 눌러요</>,
-        <><span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 4 }}><Icon name="camera" size={20} color="#B0895E" stroke={1.8} /></span><b>한끼 앱에서 사진 가져오기</b> → <b>AI로 정확하게 읽기</b>(또는 <b>그냥 읽기</b>)를 누르고 방금 캡처를 골라요</>,
+        <>캡처를 열고 <span style={{ display: 'inline-flex', verticalAlign: 'middle', margin: '0 2px' }}><Icon name="share" size={20} color="#3478F6" stroke={1.9} /></span> <b>공유</b>를 누른 뒤 앱 줄에서 <b>한끼</b>를 골라요 <span className="t-sub">(안 보이면 맨 끝 「더 보기」에서 한끼를 켜요)</span></>,
+        <><b>한끼에 담았어요</b>가 뜨면 <b>한끼를 열어요</b> · 임시보관함에 있고, 제목과 재료를 자동으로 읽어 드려요</>,
       ],
-      result: '임시보관함에 담기고, 제목·재료를 자동으로 읽어 드려요.',
+      result: '이미 캡처해 둔 사진은 아래 「사진 고르기」로 여기서 바로 골라도 돼요.',
       buttons: [
         { label: '사진 고르기', onClick: () => 갈래로('photo') },
         { label: 'Instagram 에서 담는 다른 방법', ghost: true, onClick: () => 갈래로('instagram') },
@@ -492,9 +495,10 @@ export default function ImportScreen() {
       ],
     },
     gallery: {
-      lead: '사진 보관함에 저장해 둔 레시피 사진도 여기서 고르면 돼요.',
+      lead: '사진 보관함의 레시피 사진은 공유에서 「한끼」를 고르거나, 여기서 골라요.',
       steps: [
-        <>아래 <span className="nav-import-circle" style={{ display: 'inline-flex', width: 26, height: 26, verticalAlign: 'middle', boxShadow: 'none', margin: '0 2px' }}><Icon name="plus" size={16} color="#fff" stroke={2.5} /></span> <b>가져오기</b>를 눌러요</>,
+        <>사진을 열고 <span style={{ display: 'inline-flex', verticalAlign: 'middle', margin: '0 2px' }}><Icon name="share" size={20} color="#3478F6" stroke={1.9} /></span> <b>공유</b> → <b>한끼</b>를 고르면 담겨요 · 한끼를 열면 보여요</>,
+        <>또는 아래 <span className="nav-import-circle" style={{ display: 'inline-flex', width: 26, height: 26, verticalAlign: 'middle', boxShadow: 'none', margin: '0 2px' }}><Icon name="plus" size={16} color="#fff" stroke={2.5} /></span> <b>가져오기</b>를 눌러요</>,
         <><span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 4 }}><Icon name="camera" size={20} color="#B0895E" stroke={1.8} /></span><b>한끼 앱에서 사진 가져오기</b> → <b>AI로 정확하게 읽기</b>(또는 <b>그냥 읽기</b>)를 누르고 사진을 골라요</>,
       ],
       result: '임시보관함에 담기고, 제목·재료를 자동으로 읽어 드려요.',
