@@ -113,6 +113,9 @@ const 샤랄라 = () => 별(700, 96, 74) + 별(790, 190, 40, .8, '#fff3d6') + �
 const 머리 = (h, s) => `<div class="wrap"><div class="hh">${h}</div><div class="ss">${s}</div></div><div class="rule"></div>`
 const 포인트 = (rows) => `<div class="steps">${rows.map(([e, b, s]) => `<div class="step"><div class="dot">${e}</div><div><b>${b}</b>${s ? `<small>${s}</small>` : ''}</div></div>`).join('')}</div>`
 
+// 🍎 [2026-09-14] 아이폰 공유 단추(네모＋위 화살표) — 17~19판 실물로 공유 시트에 「한끼」가 뜨는 걸 확인한 뒤 «그 길»을 가르친다.
+//    안드로이드의 i-공유.png 는 점 세 개 모양이라 아이폰과 다르다 → 아이폰 것은 iOS 글리프를 그대로 그린다(파란 □↑).
+const iOS공유단추 = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><circle cx="48" cy="48" r="48" fill="#fff"/><g fill="none" stroke="#3478F6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M48 22v36"/><path d="M34 36l14-14 14 14"/><path d="M36 46h-6a4 4 0 0 0-4 4v22a4 4 0 0 0 4 4h36a4 4 0 0 0 4-4V50a4 4 0 0 0-4-4h-6"/></g></svg>`)
 // 01 캡처하는 법 — 8/28 확정 장면 ㉢(인스타 › 한끼 ＋ 단계) 을 D 짜임으로
 const 장01 = () => `<style>${공통}</style>
 ${머리('캡처 한 장이면<br>레시피가 정리돼요', '보다가 캡처 · 재료도 순서도 알아서')}${샤랄라()}
@@ -120,8 +123,8 @@ ${머리('캡처 한 장이면<br>레시피가 정리돼요', '보다가 캡처 
 <div class="front"><img src="${앱('21-상세-재료순서')}"></div>
 ${(아이폰 || 아이패드) ? `<div class="steps">
 <div class="step"><div class="dot">①</div><div><b>캡처</b><small>보다가 찰칵</small></div></div>
-<div class="step"><img src="${b64(join(안내원본, 'i-한끼.png'))}"><div><b>② 한끼</b><small>가져오기 누르기</small></div></div>
-<div class="step"><div class="dot">③</div><div><b>사진 고르기</b><small>AI로 읽기 누르면 끝</small></div></div></div>` : `<div class="steps">
+<div class="step"><img src="${iOS공유단추}"><div><b>② 공유 › 한끼</b><small>사진에서 공유 누르고</small></div></div>
+<div class="step"><img src="${b64(join(안내원본, 'i-한끼.png'))}"><div><b>③ 한끼 열기</b><small>담겨 있어요 · AI가 읽어요</small></div></div></div>` : `<div class="steps">
 <div class="step"><img src="${b64(join(안내원본, 'i-공유.png'))}"><div><b>① 공유</b><small>캡처한 글에서</small></div></div>
 <div class="step"><img src="${b64(join(안내원본, 'i-더보기.png'))}"><div><b>② 더보기</b></div></div>
 <div class="step"><img src="${b64(join(안내원본, 'i-한끼.png'))}"><div><b>③ 한끼</b><small>누르면 끝</small></div></div></div>`}`
