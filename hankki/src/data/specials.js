@@ -41,7 +41,7 @@ export const SPECIALS = [
       //       ＋ 새로 나온 두 편(꼬치전·새우관자전)을 앞·가운데에 둔다.
       'basic-nokkochi-jeon',        // 🍢 꼬치 없는 꼬치전 (9/16 · 새것 · 알록달록)
       'basic-soonsal-galbijjim',    // 🥩 초간단 순살 갈비찜 35분 (갈비 중 제일 쉬운 것)
-      'basic-kkaennip-jeon',        // 🌿 깻잎전 (초록)
+      'basic-kkaennip-jeon',        // 🌿 깻잎고기전 (초록)
       'basic-la-galbi',             // 🥩 LA갈비 (9/16 · 새것 · 구이 — 조림 둘과 색이 다르다)
       'basic-japchae',              // 🍜 잡채 (면)
       'basic-saeu-gwanja-jeon',     // 🦐 새우관자전 (9/16 · 새것 · 흰색)
