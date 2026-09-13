@@ -526,12 +526,26 @@ function isWrappedOpen(s) {
   const closes = (t.match(/[)）]/g) || []).length
   if (opens > closes) return true // 괄호 안 닫힘 → 확실히 이어짐
   if (/,\s*$/.test(t)) return true // 끝이 쉼표 → 목록/문장 계속
+  // 📱📱 **[2026-09-13 · 창업자 아이폰 실물 「가지덮밥」] 화면 폭에 «꽉 찬» 줄이 글자 중간에서 끊긴 것도 이어진다.**
+  //   📮 인스타 캡션은 폭에 맞춰 «낱말 중간»에서 줄을 바꾼다 — 「…노릇해질／때까지 볶아주세요」·「…알／룰로스 1/2스푼」·
+  //      「…빠르게 섞／어주세요」. 끊긴 앞줄이 조사·연결어미로 안 끝나서 위 WRAP_CONNECT 를 빠져나갔고,
+  //      **한 걸음이 둘로 갈라지고(18·19 / 21·22 / 23·24), 낱말이 반으로 잘렸다.**
+  //   ✅ 잣대 = 28자 이상(폭을 채운 줄) ＋ 한글로 끝남(문장부호·종결어미 아님 = 위에서 이미 걸렀다).
+  //      재료 줄·제목은 28자를 거의 안 넘고, 넘어도 뒷줄이 번호·불릿·절 이름이면 mergeWrappedLines 가 안 붙인다.
+  //      ⛔ 이 잣대는 mergeWrappedLines 안에서만 쓴다(빈 줄을 사이에 두면 «문단»이라 안 붙인다) — 아래 `꽉찬끊김`.
   return WRAP_CONNECT.test(t) // 연결어미·조사로 끝남
 }
+// 📱 폭에 꽉 찬 줄이 «분량»으로 끝나면 재료 나열이 끝난 것이지 끊긴 게 아니다(「…소금 약간」 다음 줄은 새 문장).
+const QTY_TAIL = /(\d\s*(g|kg|ml|l|cc|개|알|쪽|봉지|봉|모|장|대|톨|줄기|컵|큰\s?술|작은\s?술|스푼|티스푼|숟가락|숟갈|줌|꼬집|줄|캔|팩|조각|인분|마리|공기|스틱)|약간|조금|적당량|소량|한\s?줌)\s*$/i
 function mergeWrappedLines(lines) {
   const out = []
+  let 빈줄지남 = false   // 앞 줄과 이 줄 사이에 빈 줄이 있었나 — 있으면 «문단»이라 꽉찬 규칙을 안 쓴다
   for (const raw of lines) {
     const prev = out.length ? out[out.length - 1] : null
+    if (!String(raw).trim()) { 빈줄지남 = true }
+    const p0 = String(prev || '').trim(); const r0 = String(raw).trim()
+    const 꽉찬끊김 = prev != null && !빈줄지남 && p0.length >= 28 && /[가-힣]$/.test(p0) && /^[가-힣]/.test(r0) &&
+      !WRAP_ENDPUNCT.test(p0) && !SENTENCE_END.test(p0) && !QTY_TAIL.test(p0)
     // ⛔⛔ [2026-08-28] 여기 «불릿 목록»이 손으로 관리되던 게 사고의 뿌리였다.
     //    실측 = 한국 인스타 캡션에 흔한 장식 30개 중 **18개**(■ □ ◆ ◇ ▶ ▷ ◈ ▣ ◎ ★ ☆ ※ 🔸 🔹 📌 🍲 [ 【)
     //    가 목록에 없어서 아래 SEC_ING/SEC_STEP 방어막을 «못 넘고» 앞 문장에 붙었다.
@@ -544,7 +558,7 @@ function mergeWrappedLines(lines) {
     const contQty = WRAP_STARTQTY.test(raw) && !WRAP_ENDPUNCT.test(String(prev || '')) && !SENTENCE_END.test(String(prev || ''))
     if (
       prev != null &&
-      (isWrappedOpen(prev) || contQty) &&
+      (isWrappedOpen(prev) || contQty || 꽉찬끊김) &&
       !WRAP_NEWITEM.test(raw) &&
       !SEC_ING.test(bare) &&
       !SEC_STEP.test(bare) &&
@@ -555,10 +569,22 @@ function mergeWrappedLines(lines) {
       !(String(raw).trim().length > 0 && String(raw).trim().length <= 24 && !/[가-힣]/.test(String(raw))) &&
       (prev + ' ' + raw).replace(/\s+/g, ' ').length <= 160
     ) {
-      out[out.length - 1] = (prev + ' ' + raw).replace(/\s+/g, ' ').trim()
+      // 📱 [2026-09-13 · 가지덮밥] 폭에 «꽉 찬» 줄이 낱말 중간에서 끊겼으면 «띄우지 않고» 붙인다 —
+      //    「알／룰로스」→「알룰로스」·「섞／어주세요」→「섞어주세요」·「향／이 올라올」→「향이 올라올」.
+      //    ⛔ 「노릇해질／때까지」처럼 낱말 «사이»에서 끊긴 것까지 붙이면 안 된다 → 셋 중 하나일 때만 붙인다:
+      //       ⓐ 뒷줄이 조사·어미 음절로 시작 ⓑ 앞줄 마지막 낱말이 한 음절 ⓒ 뒷줄 첫 낱말이 한 음절.
+      const 앞끝낱말 = (p0.match(/[가-힣]+$/) || [''])[0]
+      const 뒤첫낱말 = (r0.match(/^[가-힣]+/) || [''])[0]
+      const 붙여 = 꽉찬끊김 && (
+        /^(이|가|을|를|은|는|에|의|서|로|도|와|과|어|아|요|게|지|며|면|고|다|니|까|죠|세|해|었|았|겠)/.test(r0) ||
+        앞끝낱말.length === 1 || 뒤첫낱말.length === 1
+      )
+      out[out.length - 1] = (prev + (붙여 ? '' : ' ') + raw).replace(/\s+/g, ' ').trim()
+      if (r0) 빈줄지남 = false
       continue
     }
     out.push(raw)
+    if (String(raw).trim()) 빈줄지남 = false
   }
   return out
 }
@@ -847,10 +873,16 @@ export function parseRecipeText(raw = '', opts = {}) {
       //    ⭐ 뿌리 = 이 「첫 줄 제목」 가지가 아래 «절 헤더» 판정보다 **먼저 돌고 continue 한다** —
       //       그래서 SEC_ING 가 볼 기회조차 없었다.
       //    📌 절 이름(재료·만드는 법·양념·팁)은 «무엇이 적혔나»이지 «무슨 요리인가»가 아니다.
-      const 절이름 = SEC_ING.test(asTitle) || SEC_STEP.test(asTitle) || SEC_MEMO.test(asTitle) ||
+      // ✅✅ [2026-09-13 · 창업자 아이폰 실물 「가지덮밥」] **장식을 벗기고 절 이름인지 본다.**
+      //    📮 캡션이 「✅재료」로 시작 → OCR 이 「√재료」로 읽음 → 여기서 `asTitle` 이 「√재료」라 SEC_ING 에 안 걸려
+      //       **제목이 「√ 재료」가 되고 재료 15줄이 전부 만드는 법으로 갔다.** 위 「[재료]」 사고(08-28)와 같은 뿌리인데
+      //       그때는 sanitize 가 괄호를 벗겨 줘서 살았고, 체크표시(√·✅·✔)는 안 벗겨져 다시 터졌다.
+      //    ⭐ 절 헤더 판정(아래 `stripLead`)과 «같은 눈»으로 본다 — 여기만 다른 눈이면 또 어긋난다.
+      const 절제목 = stripLead(asTitle) || asTitle
+      const 절이름 = SEC_ING.test(절제목) || SEC_STEP.test(절제목) || SEC_MEMO.test(절제목) ||
         // 🥄 [2026-08-31] 「계량」·「분량」도 절 이름이다 — 창업자 삼치 원문이 「[계량] 밥숟가락 기준」으로
         //    시작해서 **제목이 「계량」**이 됐다(해시태그 때문에 진짜 제목이 비었을 때 그 자리를 채웠다).
-        /^(재료|양념|소스|양념장|육수|만드는\s*법|만드는\s*방법|만들기|조리법|순서|팁|포인트|계량|분량|계량법)$/.test(asTitle)
+        /^(재료|양념|소스|양념장|육수|만드는\s*법|만드는\s*방법|만들기|조리법|조리\s*방법|순서|팁|포인트|계량|분량|계량법)$/.test(절제목)
       if (!절이름 && (emojiHead || isBanner || plainName) && !QTY.test(asTitle) && asTitle.length >= 2 && !SENTENCE_END.test(asTitle)) {
         title = asTitle
         continue
@@ -950,8 +982,21 @@ export function parseRecipeText(raw = '', opts = {}) {
     // 끝에 붙은 괄호 코멘트는 분류에서 제외하고 '핵심'으로 판단한다.
     // ("멸치액젓 2스푼 (저는…꿀팁!)"의 핵심은 '멸치액젓 2스푼'=재료 — 괄호가 !로 끝나도 순서 오인 안 함)
     const core = l.replace(/\s*[(（][^()（）]*[)）]\s*$/, '').trim() || l
-    const stepLike = looksLikeStep(core)
-    const ingLike = !stepLike && looksLikeIngredient(core, bullet)
+    // 🔢🔢 **[2026-09-13 · 창업자 아이폰 실물 「가지덮밥」] 재료 절 «안»의 번호 줄은 재료다.**
+    //   📮 캡션 = 「✅재료 / 1. 가지 1개 반 / 2. 소고기 다짐육 300g … 15. 밥 1~2공기 / ✅ 조리방법 / 1. …」
+    //      → 재료 15줄이 «번호가 붙었다는 이유로» 전부 만드는 법 1~15번이 됐고 재료 칸은 비었다.
+    //   ⛔ 뿌리 = `looksLikeStep` 의 첫 줄 「번호면 걸음」이 «절»을 안 본다. 인스타는 재료에도 1. 2. 3. 을 흔히 단다.
+    //   ✅ 잣대 = 재료 절 안 ＋ 번호 뒤 몸통이 «문장이 아니고»(종결어미·조리 동사 없음) 짧으면 재료.
+    //      ⛔ 절 밖(mode !== 'ing')은 한 글자도 안 바뀐다 — 「1. 가지를 썰어주세요」는 그대로 걸음이다.
+    const 번호뗀 = stepMarked ? core.replace(STEP, '').trim() : ''
+    const 번호재료 = mode === 'ing' && stepMarked && 번호뗀.length >= 1 && 번호뗀.length <= 40 &&
+      !DECLARATIVE.test(번호뗀) && !STEP_VERB.test(번호뗀) && /[가-힣]/.test(번호뗀) &&
+      // 「1. 알배추, 양파, 당근, 부추는」처럼 분량 없이 조사로 끝나면 «끊긴 문장»이지 재료가 아니다(차돌짬뽕 ㉔)
+      !(!QTY.test(번호뗀) && !AMOUNT.test(번호뗀) && /(은|는|이|가|을|를|에|에서|로|으로|와|과|랑)$/.test(번호뗀)) &&
+      (QTY.test(번호뗀) || AMOUNT.test(번호뗀) || /^[가-힣][가-힣\s·,()（）\d/~.\-]*$/.test(번호뗀))
+    const stepLike = !번호재료 && looksLikeStep(core)
+    const ingLike = 번호재료 || (!stepLike && looksLikeIngredient(core, bullet))
+    if (번호재료) { pushIng(l.replace(STEP, '').trim(), false); continue }
 
     // 괄호로 통째 감싼 코멘트 → 메모. (예: "(저는 중불에서 10분…졸여줬어요)")
     if (!ingLike && /^[(（][^()]*[)）]\s*$/.test(l)) {
@@ -1250,7 +1295,10 @@ export function 머리에서제목 (raw) {
     if ((t0.match(/#[^\s#]+/g) || []).length >= 2) continue
     // 👤 계정명은 «원문 줄»에서 먼저 뗀다 — 글자 청소를 거치면 `kim_seoul_638` 이 뭉개져 못 알아본다.
     let s = (t0.replace(IG_HANDLE, '').trim() || t0).replace(머리계정명, '').trim() || t0
-    s = s.replace(/^[\s\-*•·▪◦‣●○#[\]【】]+/u, '').trim() // 앞머리 장식·해시
+    // 🎀 [2026-09-13 · 창업자 아이폰 실물 「가지덮밥」] 앞머리 장식은 파서 본체와 «같은 눈»(stripLead)으로 벗긴다.
+    //    ⛔ 그 전엔 여기만 손으로 적은 목록이라 체크표시(✅ → OCR 「√」)가 안 벗겨졌고, 「√재료」가 SEC_ING 를 빠져나가
+    //       **제목이 「√ 재료」**가 됐다(08-28 「목록을 네 군데 손으로」 사고와 같은 뿌리 — 한 군데가 남아 있었다).
+    s = stripLead(s.replace(/^[\s#[\]【】]+/u, '')).trim() // 앞머리 장식·해시
     s = s.replace(/[\s.,·…!?~"'”』」)\]]+$/u, '').trim() // 꼬리 문장부호(`,,` `..` `!!`)
     const 줄인 = s.replace(꼬리조사, '').trim()
     if (줄인.length >= 2 && /[가-힣]{2,}/.test(줄인)) s = 줄인
