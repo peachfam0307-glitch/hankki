@@ -113,6 +113,10 @@ export const ING_LINKS = {
   '갈아 둔 깨': 'https://link.coupang.com/a/gYVL6ohhKe', // ⛇묶음: 통깨 / 깨소금 / 깨 / 갈아 둔 깨
   '갈아만든배': 'https://link.coupang.com/a/gZheSMmxgW', // ⛇묶음: 배즙 / 갈아만든배
   '건고추': 'https://link.coupang.com/a/gZhybNEQI8',
+  // 🐟 [창업자 2026-09-13] "참치액은 모스스토리 참치액" — 25편이 쓰는 재료인데 링크가 없었다.
+  //    ⚠️ 네이버 브랜드스토어라 «쿠팡 파트너스가 아니다 = 수수료 0원». 창업자가 실제로 쓰는 제품이라 넣는다.
+  //    ⛔ 창업자가 준 원문엔 광고 추적값(n_media·n_ad·NaPm·nl-ts-pid 등)이 잔뜩 붙어 있었다 — 전부 뗐다.
+  '참치액': 'https://brand.naver.com/mosstory/products/10222660132',
   // ⭐ 아래 셋은 재료 줄에 «분량이 붙은 모양»으로만 있다(「닭다리살 700g」·「스파게티 면 180g」).
   //    넣기 도구가 «이름 그대로»를 못 찾아 건너뛰었지만, 앱의  는 분량을 떼고 찾으므로 붙는다.
   '닭다리살': 'https://link.coupang.com/a/gZgVXN4cpg',
