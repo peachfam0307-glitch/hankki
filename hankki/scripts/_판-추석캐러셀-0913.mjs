@@ -87,14 +87,14 @@ const 장 = []
       </div>`).join('')}
   </div>
   <!-- ⛔ [2026-09-13] 아래 문구와 곰이 «2x2 카드»와 겹쳤다 — 문구는 부제로 올리고 곰은 제목 옆으로 뺐다 -->
-  ${곰펭('cs_b11', 190, 'right:40px;top:95px')}` })
+  ${곰펭('cs_b11', 175, 'right:30px;top:80px')}` })
 
 // ④ 나물·잡채 — 글을 «오른쪽»에 붙이고 그림을 왼쪽으로 (③의 좌우대칭을 깬다)
 // ⛔ [2026-09-13] 창업자 = "잡채는 왼쪽 끝부분 잘렸어" — left:-80px 이라 그릇이 화면 밖으로 나갔다.
 //    ＋ 들깨무침은 «그림이 아예 없었다»(글만 있었다). 둘 다 그림을 온전히 보여준다.
 장.push({ 이름: '4-나물', html: `
   <div style="position:absolute;left:0;right:0;top:130px;text-align:center;font-size:58px;font-weight:700">잡채랑 나물</div>
-  <div style="position:absolute;left:0;right:0;top:215px;text-align:center;font-size:32px;color:#a98a6b">손 많이 가는 것부터 · 전날 미리 해두면 그날이 편해요</div>
+  <div style="position:absolute;left:0;right:0;top:215px;text-align:center;font-size:32px;color:#a98a6b">전날 미리 해두면 그날이 편해요</div>
   ${나물.map((g, i) => `
     <div style="position:absolute;left:80px;right:80px;top:${310 + i * 450}px;height:400px;display:flex;align-items:center;gap:40px;background:#fff;border:3px solid #efe2cf;border-radius:44px;padding:0 50px">
       ${컷(g.그림, 290)}
@@ -104,7 +104,7 @@ const 장 = []
         <div style="font-size:34px;color:#a98a6b;margin-top:14px">${g.분}분</div>
       </div>
     </div>`).join('')}
-  ${곰펭('cs_b08', 190, 'right:40px;top:95px')}` })
+  ${곰펭('cs_b08', 190, 'left:50px;bottom:40px')}` })
 
 // ⑤ 연휴 뒤 — 배경을 «진하게» 뒤집는다 (앞 넷과 확 다르게)
 장.push({ 이름: '5-남은음식', html: `
