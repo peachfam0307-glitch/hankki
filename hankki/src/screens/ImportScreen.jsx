@@ -281,7 +281,7 @@ export default function ImportScreen() {
   //       ⑶이 함수와 버튼(②)·기다림 화면(③)을 되돌린다. **`src/linkReader.js` 는 안 지웠다** —
   //       공유받기(`App.jsx`)가 아직 쓰고 있고, 그쪽은 «백그라운드»라 실패해도 유저를 안 붙잡는다.
 
-  const flowMeta = ALL_FLOWS.find((o) => o.key === flow)
+  const flowMeta = (앱안인가() ? [...OPTIONS_IOS, ...HIDDEN] : ALL_FLOWS).find((o) => o.key === flow)   // 🍎 아이폰 앱이면 안내 머리 제목도 아이폰 카드 글자로
 
   // 📖 네 갈래의 안내 내용 — «데이터»로 둔다. 화면 마크업은 한 벌뿐이라 한쪽만 예뻐질 일이 없다.
   //   ⛔ 「」 안이 **누르는 것**이다(창업자 = *"눌러야하는 것 강조"*). 굵게는 `강조()` 가 붙인다.
@@ -476,10 +476,12 @@ export default function ImportScreen() {
     ...안내들기본,
     share: {
       lead: '인스타·유튜브를 보다가 캡처해 두면, 한끼에서 골라 재료까지 읽어 드려요.',
+      // 🍎 보고 따라 하는 안내라 «실제 단추 모양»을 같이 그린다(창업자 09-13 19:5x *"사람들이 보고 따라하니까"*) —
+      //    가져오기 = 아래 탭의 갈색 원(＋) 그대로(같은 class) · 사진 고르기 = 그 카드의 카메라 아이콘 그대로.
       steps: [
-        강조('인스타·유튜브를 보다가 「캡처」해요'),
-        강조('한끼로 돌아와 「가져오기」를 눌러요'),
-        강조('「사진 고르기」에서 방금 캡처를 골라요'),
+        <>인스타·유튜브를 보다가 <b>캡처</b>해요 <span className="t-sub">(옆 버튼＋소리 올리기를 같이 꾹)</span></>,
+        <>한끼로 돌아와 아래 <span className="nav-import-circle" style={{ display: 'inline-flex', width: 26, height: 26, verticalAlign: 'middle', boxShadow: 'none', margin: '0 2px' }}><Icon name="plus" size={16} color="#fff" stroke={2.5} /></span> <b>가져오기</b>를 눌러요</>,
+        <><span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 4 }}><Icon name="camera" size={20} color="#B0895E" stroke={1.8} /></span><b>한끼 앱에서 사진 가져오기</b> → <b>AI로 정확하게 읽기</b>(또는 <b>그냥 읽기</b>)를 누르고 방금 캡처를 골라요</>,
       ],
       result: '임시보관함에 담기고, 제목·재료를 자동으로 읽어 드려요.',
       buttons: [
@@ -492,8 +494,8 @@ export default function ImportScreen() {
     gallery: {
       lead: '사진 보관함에 저장해 둔 레시피 사진도 여기서 고르면 돼요.',
       steps: [
-        강조('「가져오기」를 눌러요'),
-        강조('「사진 고르기」에서 사진을 골라요'),
+        <>아래 <span className="nav-import-circle" style={{ display: 'inline-flex', width: 26, height: 26, verticalAlign: 'middle', boxShadow: 'none', margin: '0 2px' }}><Icon name="plus" size={16} color="#fff" stroke={2.5} /></span> <b>가져오기</b>를 눌러요</>,
+        <><span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 4 }}><Icon name="camera" size={20} color="#B0895E" stroke={1.8} /></span><b>한끼 앱에서 사진 가져오기</b> → <b>AI로 정확하게 읽기</b>(또는 <b>그냥 읽기</b>)를 누르고 사진을 골라요</>,
       ],
       result: '임시보관함에 담기고, 제목·재료를 자동으로 읽어 드려요.',
       buttons: [

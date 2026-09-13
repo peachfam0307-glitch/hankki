@@ -121,7 +121,7 @@ ${머리('캡처 한 장이면<br>레시피가 정리돼요', '보다가 캡처 
 ${(아이폰 || 아이패드) ? `<div class="steps">
 <div class="step"><div class="dot">①</div><div><b>캡처</b><small>보다가 찰칵</small></div></div>
 <div class="step"><img src="${b64(join(안내원본, 'i-한끼.png'))}"><div><b>② 한끼</b><small>가져오기 누르기</small></div></div>
-<div class="step"><div class="dot">③</div><div><b>사진 고르기</b><small>누르면 끝</small></div></div></div>` : `<div class="steps">
+<div class="step"><div class="dot">③</div><div><b>사진 고르기</b><small>AI로 읽기 누르면 끝</small></div></div></div>` : `<div class="steps">
 <div class="step"><img src="${b64(join(안내원본, 'i-공유.png'))}"><div><b>① 공유</b><small>캡처한 글에서</small></div></div>
 <div class="step"><img src="${b64(join(안내원본, 'i-더보기.png'))}"><div><b>② 더보기</b></div></div>
 <div class="step"><img src="${b64(join(안내원본, 'i-한끼.png'))}"><div><b>③ 한끼</b><small>누르면 끝</small></div></div></div>`}`
