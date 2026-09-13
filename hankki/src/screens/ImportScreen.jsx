@@ -1054,13 +1054,13 @@ export default function ImportScreen() {
                   복사 → 가져오기 → <b>텍스트 붙여넣기</b> → 자동 정리! <span className="t-sub" style={{ fontSize: 15 }}>복사가 안 되면 캡처해서 사진으로.</span>
                 </div>
               </div>
-              <div className="imp-tip">
+              {!앱안인가() && <div className="imp-tip">{/* 🍎 아이폰 껍데기엔 공유 목록에 한끼가 안 뜬다 — 이 팁은 웹·안드로이드에서만 */}
                 <div className="imp-tip-h" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="share" size={16} color="var(--brown)" stroke={1.8} /> 앱 설치하면 — 공유로 바로 담기</div>
                 <div className="imp-tip-b">
                   앱을 설치하면 인스타·유튜브 <b>공유(↗)</b> 목록에 <b>‘한끼’</b>가 떠요.<br />
                   <span className="t-sub" style={{ fontSize: 15 }}>단, 인스타 공유는 ‘링크’만 보내져요(캡션은 안 와요). 내용까지 담으려면 캡처가 확실해요.</span>
                 </div>
-              </div>
+              </div>}
             </div>
           </div>
         </div>

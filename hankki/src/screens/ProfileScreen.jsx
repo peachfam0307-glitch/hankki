@@ -262,6 +262,7 @@ export default function ProfileScreen() {
     //   ⭐ 그래서 클 때는 **바로 파일로** 저장하고 «왜 그랬는지»를 말해준다.
     //      파일은 다운로드 알림이 떠서 유저가 «됐다»를 안다.
     if (json.length > CLIP_MAX) {
+      if (앱안인가()) { nav.showToast('저장한 게 많아 복사가 안 돼요 · 「백업 보내서 저장하기」로 공유 창에 보내 주세요'); return }   // 🍎 앱 안엔 <a download> 가 없다 — 「파일로 저장했어요」라고 말하지 않는다
       downloadBackup()
       nav.showToast('저장한 게 많아 복사 대신 «파일»로 저장했어요 다운로드 폴더를 확인하세요')
       return
@@ -815,7 +816,7 @@ export default function ProfileScreen() {
           {checking ? '확인 중…' : '최신 버전 확인'}
         </button>
         <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 15, marginTop: 10, lineHeight: 1.5 }}>
-          설치한 앱이 옛 버전에서 멈췄을 때 눌러요
+          {앱안인가() ? '아이폰 앱은 App Store 에서 업데이트돼요' : '설치한 앱이 옛 버전에서 멈췄을 때 눌러요'}
         </div>
         {/* 📒📒 **최근 AI 다듬기 다섯 번 — ⛔창업자 폰에만 보인다** [창업자 2026-09-10]
             📮 창업자 = *"갈색띠가 안떠 성공해도"* ＋ *"계속남게할순없어?"* ＋ *"나만보이게해줘"*

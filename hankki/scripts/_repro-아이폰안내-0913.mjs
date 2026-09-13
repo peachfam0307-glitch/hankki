@@ -42,5 +42,12 @@ const sdc = 읽기('src/components/ShareDrawCard.jsx')
 const pantry = 읽기('src/components/PantryView.jsx')
 잰다(/\{앱안인가\(\) \? '사진에서 영수증 고르기' : '갤러리에서 영수증 고르기'\}/.test(pantry), '⑧ 냉장고: 앱이면 「사진」')
 
+// 2차 점검(09-13 19:4x)에서 더 잡은 넷
+잰다(/\{!앱안인가\(\) && <div className="imp-tip">/.test(imp), '⑨ 가져오기 도움말: 「앱 설치하면 공유로 바로 담기」 팁은 앱 밖에서만')
+잰다(/\{앱안인가\(\) \? '아이폰 앱은 App Store 에서 업데이트돼요' : '설치한 앱이 옛 버전에서 멈췄을 때 눌러요'\}/.test(prof), '⑩ 최신 버전 확인 설명 줄: 앱이면 App Store')
+잰다(/if \(앱안인가\(\)\) \{ nav\.showToast\('저장한 게 많아 복사가 안 돼요/.test(prof), '⑪ 백업 복사 폴백: 앱이면 「파일로 저장했어요」라고 안 한다')
+const prev = 읽기('src/components/PreviewSheet.jsx')
+잰다(/\{앱안인가\(\) \? '아이패드에서도 써요' : '패드·폴드에서도 써요'\}/.test(prev), '⑫ 소식 팝업: 앱이면 「폴드」 대신 「아이패드」')
+
 console.log(나쁨 ? `\n⛔ ${나쁨}칸 실패\n` : '\n✅ 아이폰 앱에서 없는 길·안 되는 부품을 가르치지 않는다 · 안드로이드 글자는 그대로\n')
 process.exit(나쁨 ? 1 : 0)
