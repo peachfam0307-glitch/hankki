@@ -33,13 +33,19 @@ export const SPECIALS = [
     ids: [
       // ⛔ [2026-09-13] 처음에 id 를 «지어냈다»(galbijjim-spicy 등) — 셋 다 안 붙어서 빈 줄이 됐다.
       //    ⭐ id 는 반드시 `recipe.mjs` 로 «읽어서» 적는다. 기억으로 적지 않는다(규칙 29).
-      'basic-soonsal-galbijjim',    // 초간단 순살 갈비찜 35분
-      'basic-maeun-galbijjim',      // 매운 소갈비찜 70분
-      'basic-tteokgalbi',           // 수제 떡갈비 30분
-      'basic-kkaennip-jeon',        // 깻잎전
-      'basic-nokkochi-jeon',        // 꼬치 없는 꼬치전 (9/16 열림)
-      'basic-saeu-gwanja-jeon',     // 새우관자전 (9/16 열림)
-      'basic-japchae',              // 잡채
+      //
+      // 🎨 **순서는 «갈래와 색»을 번갈아 놓는다** (2026-09-13)
+      //    ⛔ 처음엔 갈비 셋을 나란히 뒀는데 **시안에서 «거의 같은 그림»으로 보였다** —
+      //       갈색 조림이 연속이면 미는 손이 거기서 멈춘다.
+      //    ⭐ 그래서 전 → 갈비 → 전 → 면 → 전 → 갈비 로 갈아 놓는다.
+      //       ＋ 새로 나온 두 편(꼬치전·새우관자전)을 앞·가운데에 둔다.
+      'basic-nokkochi-jeon',        // 🍢 꼬치 없는 꼬치전 (9/16 · 새것 · 알록달록)
+      'basic-soonsal-galbijjim',    // 🥩 초간단 순살 갈비찜 35분 (갈비 중 제일 쉬운 것)
+      'basic-kkaennip-jeon',        // 🌿 깻잎전 (초록)
+      'basic-japchae',              // 🍜 잡채 (면)
+      'basic-saeu-gwanja-jeon',     // 🦐 새우관자전 (9/16 · 새것 · 흰색)
+      'basic-maeun-galbijjim',      // 🌶 매운 소갈비찜 70분 (빨강)
+      'basic-tteokgalbi',           // 🍖 수제 떡갈비 30분
     ],
   },
 ]

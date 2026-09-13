@@ -4811,7 +4811,9 @@ html, body { overscroll-behavior: none; }
 }
 .weekly-row.rail::-webkit-scrollbar { display: none; }
 .weekly-row.rail > .mini-card {
-  flex: 0 0 122px;                             /* 폰에서 세 칸 반쯤 보인다 = 「더 있다」가 읽힌다 */
+  /* 📐 [2026-09-13 넓혔다] 122px 이면 「초간단 순살 갈비찜」이 두 줄로 접혀 카드 높이가 들쭉날쭉했다.
+     ⭐ 138px = 그 이름이 한 줄에 들어가고, 폰(411px)에서 여전히 «두 칸 반»이 보여 「더 있다」가 읽힌다. */
+  flex: 0 0 138px;
   scroll-snap-align: start;
 }
 @media (min-width: 700px) {                    /* 패드 */
