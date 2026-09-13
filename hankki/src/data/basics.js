@@ -6923,6 +6923,7 @@ const RAW_BASICS = [
     id: 'basic-nokkochi-jeon',
     title: '꼬치 없는 꼬치전', from: '2026-09-16',
     origin: '창업자',
+    review: '창업자',   // ☑️ 2026-09-13 15:02 창업자 = "다 통과야" (검수판 4편 전부)
     icon: '',
     category: '한식',
     folder: '한식',
@@ -6957,6 +6958,7 @@ const RAW_BASICS = [
     id: 'basic-saeu-gwanja-jeon',
     title: '새우관자전', from: '2026-09-16',
     origin: '창업자',
+    review: '창업자',   // ☑️ 2026-09-13 15:02 창업자 = "다 통과야"
     icon: '',
     category: '한식',
     folder: '한식',
