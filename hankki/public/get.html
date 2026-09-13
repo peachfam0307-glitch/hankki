@@ -56,7 +56,12 @@
     <img class="logo" src="./icons/icon-512-v7.png" alt="한끼">
     <h1>한끼 받으러 가는 중…</h1>
     <p class="sub">잠시 뒤 Play 스토어가 열려요</p>
-    <a class="btn" id="go" href="https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa">Play 스토어에서 받기</a>
+    <!-- 🏷️ [2026-09-12] 꼬리표(referrer) 를 달았다 — Play 콘솔이 «이 징검다리로 온 설치»를 따로 세준다.
+         📮 창업자 = *"이게 되는지 알면 인스타로 계속 사람몇명왔다 셀때 나한테 말했어야지"* — 내가 늦었다.
+         ⭐ 형식은 구글 공식 = `&referrer=` 안에 utm_* 를 «URL 인코딩해서» 넣는다(%3D 는 = · %26 은 &).
+            https://support.google.com/analytics/answer/10917952
+         ⛔ 스토어 주소가 바뀌면 src/nudges.js 의 STORE_URL 과 «같이» 고친다. -->
+    <a class="btn" id="go" href="https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa&referrer=utm_source%3Dhankki_bridge%26utm_medium%3Dinstagram%26utm_campaign%3Dprofile_link">Play 스토어에서 받기</a>
     <!-- ⛔⛔ [창업자 확정 2026-09-08] 「앱 없이 웹으로 먼저 볼래요」 단추를 «지웠다».
          📮 창업자 = *"웹으로 볼래요도 빼"* · *"굳이.. 힘들게 돈까지 써가면서 광고하는데 다운을 받게 해야지.."*
          ⭐ 이 페이지는 «인스타 광고로 온 사람»이 처음 닿는 자리다 — 광고비를 써서 데려온 사람을
@@ -66,11 +71,66 @@
     <p class="note">꼬르곰 · 펭펭과 레꾸해요</p>
   </div>
 <script>
-  // ⛔ `location.href` 대신 `replace` — 뒤로가기를 눌렀을 때 이 페이지로 다시 튕기지 않게.
-  // ⚠️ 인앱 브라우저가 막으면 아무 일도 안 일어난다 → 위 버튼이 그때를 위한 길이다.
-  setTimeout(function () {
-    try { location.replace(document.getElementById('go').href) } catch (e) {}
-  }, 1200)
+  // 📊📊 [2026-09-12] **징검다리 계측** — 여기가 여태 «깜깜»했다.
+  //    광고 → 프로필(83명 셈) → [깜깜] → 징검다리 → [깜깜] → 스토어 → 설치(15명 셈)
+  //    📮 창업자 = *"나는 이런게 되는지도 모르잖아"* — 알려주는 게 내 일이었다. 늦게 넣는다.
+  //
+  //    잰다 = ① bridge      — 이 페이지에 «온» 사람 N
+  //           ② bridge_go   — 스토어로 «간» 사람 M (단추를 눌렀든 자동으로 넘어갔든)
+  //    ⭐ N 과 M 만 있으면 「프로필 왔다고 다 스토어로 가진 않는다」가 숫자가 된다.
+  //
+  //    ⛔ 못 보는 것 = M 중 «실제 설치»는 Play 콘솔이 센다. 사람 단위로 못 이어 붙인다.
+  //       → 그래서 위 단추에 referrer 꼬리표를 따로 달았다(구글이 세준다).
+  //    ⚠️ 측정 ID 는 앱과 «같다»(G-L20V2VE1CS) — 그래서 GA4 「사용자 수」에 안 깐 사람도 섞인다.
+  //       page_title 로 갈라 봐야 한다(bridge / bridge_go 는 앱 화면이 아니다).
+  //    📌 앱(src/stats.js)과 «같은 방식» = page_view 의 page_title 에 이름을 싣는다(웹 스트림이라 그렇다).
+  (function () {
+    var ID = 'G-L20V2VE1CS'
+    var 갔다 = false
+    try {
+      window.dataLayer = window.dataLayer || []
+      window.gtag = function () { window.dataLayer.push(arguments) }
+      gtag('js', new Date())
+      // ⛔ send_page_view: false — gtag 가 «스스로» 보내면 이름이 안 실린다.
+      gtag('config', ID, { send_page_view: false })
+      gtag('event', 'page_view', { page_title: 'bridge' })
+      var s = document.createElement('script')
+      s.async = true
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + ID
+      // ⛔⛔ 여기가 제일 위험한 자리 — gtag 가 «붙기 전»에 스토어로 튕기면 계측이 통째로 날아간다.
+      //    dataLayer 에 쌓아둔 것은 gtag.js 가 내려와야 비로소 밖으로 나간다.
+      //    ⭐ 그래서 «붙은 뒤»에 이동 타이머를 시작한다. 못 붙으면(onerror) 그때도 바로 보낸다.
+      //    ⚠️ 상한 3초 — 인터넷이 느려도 «스토어로 가는 길»을 계측 때문에 막지 않는다.
+      s.onload = 타이머시작
+      s.onerror = 타이머시작
+      document.head.appendChild(s)
+      setTimeout(타이머시작, 3000)
+    } catch (e) { 타이머시작() }
+
+    // ⭐ 「갔다」를 «한 번»만 보낸다 — 단추를 눌렀는데 자동 이동도 걸리면 두 번 세진다.
+    function 갔다고보낸다() {
+      if (갔다) return
+      갔다 = true
+      try { gtag('event', 'page_view', { page_title: 'bridge_go' }) } catch (e) {}
+    }
+    try {
+      document.getElementById('go').addEventListener('click', 갔다고보낸다)
+    } catch (e) { /* noop */ }
+
+    // ⛔ `location.href` 대신 `replace` — 뒤로가기를 눌렀을 때 이 페이지로 다시 튕기지 않게.
+    // ⚠️ 인앱 브라우저가 막으면 아무 일도 안 일어난다 → 위 버튼이 그때를 위한 길이다.
+    // ⭐ «한 번»만 건다 — onload·onerror·3초 상한이 셋 다 이 함수를 부른다.
+    var 걸었나 = false
+    function 타이머시작() {
+      if (걸었나) return
+      걸었나 = true
+      setTimeout(function () {
+        갔다고보낸다()
+        try { location.replace(document.getElementById('go').href) } catch (e) {}
+      }, 1200)
+    }
+
+  })()
 </script>
 </body>
 </html>

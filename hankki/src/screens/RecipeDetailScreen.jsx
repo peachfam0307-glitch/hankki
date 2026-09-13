@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { COACH } from '../coach'
-import { 사러나감 } from '../stats'
+import { 사러나감, 장보기담음, 요리끝냄 } from '../stats'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -326,6 +326,11 @@ export default function RecipeDetailScreen({ id }) {
     const entry = { id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: 표지사진 }
     addDiary(entry)
     cook(r.id)
+    // 📊 [2026-09-12] ⛔⛔ 여기가 «빠져 있었다» — 「만들었어요」 문은 두 곳인데 요리모드 쪽만 셌다.
+    //    📮 창업자 = *"요리를 만들었어요를 안누르면 카운트가 안되는거잖아?"* → 물어봐서 찾았다.
+    //    ⭐ 위 `if (existing) return` 뒤라서, 하루 두 번 눌러도 «한 번»만 센다(중복 방지가 이미 있다).
+    //    ⚠️ 이걸 고쳐도 「그냥 보고 부엌에서 요리한 사람」은 여전히 못 잰다 — 앱이 부엌을 못 본다.
+    try { 요리끝냄() } catch { /* noop */ }
     nav.showToast(표지사진 ? '만들었어요! 표지 사진도 일기에 담았어요' : '만들었어요! 한끼 일기에 남겼어요')
     // 🚪 리뷰 문 — 「한 끼 해냈다」 (창업자 확정 2026-09-03)
     //   ⛔⛔ 이건 **창업자 2026-08-06 확정(「토스트만, 시트 안 뜬다」)을 «뒤집은» 것**이다.
@@ -455,6 +460,9 @@ export default function RecipeDetailScreen({ id }) {
   const addAllPicks = () => {
     // ⛔ 한살림은 `noBuy` 를 같이 담는다 — 안 그러면 장보기 리스트에서 쿠팡·네이버 검색으로 샌다
     pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p), ...(isHansalim(p) ? { noBuy: true } : {}) }))
+    // 📊 [2026-09-12] 담았다 — ⛔ forEach «바깥»이다. 안에 넣으면 픽이 6개일 때 6건이 되어 부푼다.
+    //    「다 담기」는 사람이 한 번 누른 «한 번»이다.
+    장보기담음()
     nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요`)
   }
   // 구매처 배지 — 장보기 화면 `mallLabel()` 과 «같은 규칙»이라야 한다(한쪽만 고치면 앞뒤가 안 맞는다)
@@ -920,6 +928,8 @@ export default function RecipeDetailScreen({ id }) {
                   //   ⛔ 그래서 `scaleIngredient`(인분 환산)도 여기선 안 쓴다 — 어차피 분량을 뗄 것이라
                   //      환산해 봐야 그 숫자가 버려진다. 인분 환산은 «재료 목록 화면»이 하는 일이다.
                   addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => ingredientName(ing)))
+                  // 📊 [2026-09-12] 담았다 — 재료가 몇 개든 «한 번» 누른 것이다.
+                  장보기담음()
                   nav.showToast('재료를 장보기 리스트에 담았어요')
                 }}
               >

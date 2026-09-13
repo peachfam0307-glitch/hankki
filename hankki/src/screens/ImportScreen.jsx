@@ -12,7 +12,7 @@ import { guessFoodIcon } from '../components/FoodIcon'
 import { getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import KeyBadge from '../components/KeyBadge'
 import EarnList from '../components/EarnList'
-import { 갈래고름 } from '../stats'
+import { 갈래고름, 레시피저장 } from '../stats'
 import Icon from '../components/Icon'
 import Portal from '../components/Portal'
 // 🐻 [2026-08-28] 잔량 띠의 캐릭터(펭펭 돋보기 · 둘이 하트)를 **뺐다** — 창업자 *"그림 박스하나 없어져"*.
@@ -166,7 +166,7 @@ export default function ImportScreen() {
   useLayerBack(help, () => setHelp(false))
   // 하위 흐름(링크·사진 등 선택 단계)은 모달이 아니라 화면 내 단계라 상태만 되돌린다.
   useBackHandler(() => {
-    if (flow) { setFlow(null); return true }
+    if (flow) { 갈래로(null); return true }   // 📊 갈래 셈도 비운다 — 다음 가져오기는 새로 센다
     return false
   })
 
@@ -224,11 +224,29 @@ export default function ImportScreen() {
   //    ⛔ 예전엔 「사진·직접 작성하기」가 목록에서 곧장 편집 화면으로 갔다. 그러면
   //       «어떻게 쓰는지»를 말할 자리가 없어서, 안내가 전부 편집 화면 안으로 밀려 들어가 있었다.
   //    ⚠️ 직접 입력도 예외로 두지 않는다 — 한 갈래만 다르게 굴면 「이건 왜 바로 열리지」가 된다.
-  const choose = (key) => {
-    // 🪜 [2026-09-10] 퍼널의 두 번째 걸음 — «어느 갈래를 눌렀나».
-    //    ⛔ 이 한 줄이 없어서 「SNS 캡처에서 샌다」를 짐작으로 말할 수밖에 없었다.
-    갈래고름(key)
+  // 🪜🪜 [2026-09-12 고침] 갈래 세기를 «한 곳»으로 모았다.
+  //
+  // ⛔⛔ 전엔 `choose()` 안에서만 셌다. 그래서 둘이 동시에 틀렸다 —
+  //    ⒜ **빠짐** — 흐름 «안»에서 갈래를 바꾸는 여덟 길(`setFlow` 직접 호출)이 한 건도 안 세졌다:
+  //       「이미 캡처해 뒀으면 여기서 고르기」·「앱을 안 나가고 여기서 고르기」(→photo) ·
+  //       「Instagram/YouTube 에서 담는 다른 방법」 · 「링크 주소만 담아두기」 ·
+  //       「설명(더보기) 붙여넣기」·「글을 복사했다면 붙여넣기」 외 1(→text)
+  //    ⒝ **부풂** — 목록으로 돌아왔다(`setFlow(null)`) 다시 누르면 «또» 셌다.
+  //       둘러보기만 한 사람 하나가 4건이 될 수 있다.
+  //    📌 그 둘이 겹쳐서 퍼널 첫 칸을 못 믿게 만들었다(2026-09-12 전수검사).
+  //
+  // ✅ 이제 갈래가 «바뀌는 길»은 전부 이 함수를 지난다 ＋ **같은 가져오기에서 한 갈래는 한 번만** 센다.
+  //    ⛔⛔ 처음엔 「목록으로 나가면(null) 비운다」로 짰다가 **재현판이 잡았다** —
+  //       목록↔갈래를 오가는 게 바로 「둘러보기」라, 나갈 때 비우면 **매번 새로 세서 그대로 3건**이었다.
+  //       ✅ 그래서 «이 화면이 떠 있는 동안»은 안 비운다. 가져오기 화면을 나갔다 들어오면
+  //          컴포넌트가 다시 뜨면서 ref 가 새로 생기니 그때는 저절로 새로 센다(＝새 가져오기).
+  const 센갈래 = useRef(new Set())
+  const 갈래로 = (key) => {
+    if (key && !센갈래.current.has(key)) { 센갈래.current.add(key); 갈래고름(key) }
     setFlow(key)
+  }
+  const choose = (key) => {
+    갈래로(key)
     setUrl('')
     setTitle('')
     setLinkOpen(false)
@@ -237,6 +255,9 @@ export default function ImportScreen() {
   const saveLink = () => {
     const t = title.trim() || `${flowMeta?.title || '새'} 레시피`
     addRecipe(makeInboxRecipe({ source: flow, title: t, sourceUrl: url.trim() }))
+    // 📊 [2026-09-12] 새 레시피가 담겼다 — ⛔전엔 EditorScreen 한 곳만 세서 이 길이 통째로 빠졌다.
+    //    그래서 「갈래 고름 → 저장」 퍼널이 «샌 것처럼» 보였다(2026-09-12 전수검사에서 잡았다).
+    레시피저장()
     nav.pop()
     nav.push({ name: 'inbox' })
     nav.showToast('임시보관함에 담았어요 · 나중에 정리해요')
@@ -333,16 +354,16 @@ export default function ImportScreen() {
         //       **그 사람은 인스타에 다시 갈 이유가 없다.** 이미 폰 안에 있다.
         //    ⛔ 위 설명 셋을 안 지운다 — 공유로 «바로» 오는 길이 여전히 제일 빠르다.
         //       이건 그 길을 못 가는 사람의 «두 번째 문»이다.
-        { label: '이미 캡처해 뒀으면 여기서 고르기', onClick: () => setFlow('photo') },
+        { label: '이미 캡처해 뒀으면 여기서 고르기', onClick: () => 갈래로('photo') },
         // ⛔ 「열러 가기」라고 쓰지 않는다 — **앱을 여는 게 아니라 «우리 안내 화면»으로 간다.**
         //    이름이 하는 일과 달라지면 그게 곧 「되는 척」이다(v11.19 링크 정직과 같은 자리).
         //    ⭐ 그 화면 안에 「글 붙여넣기」·「보면서 적기」·「링크만 저장」이 있고, 진짜 앱 열기 단추도 맨 아래 있다.
-        { label: 'Instagram 에서 담는 다른 방법', ghost: true, onClick: () => setFlow('instagram') },
-        { label: 'YouTube 에서 담는 다른 방법', ghost: true, onClick: () => setFlow('youtube') },
+        { label: 'Instagram 에서 담는 다른 방법', ghost: true, onClick: () => 갈래로('instagram') },
+        { label: 'YouTube 에서 담는 다른 방법', ghost: true, onClick: () => 갈래로('youtube') },
         // 🔗 목록에서 내렸을 뿐 «죽이지 않았다» — 여기로 들어간다.
         //    ⛔ 어디서도 못 들어가면 그건 「목록에서 내린 것」이 아니라 «지운 것»이다.
         //       그 화면(v11.19 링크 정직)이 「주소만 담아둬요 · 재료·순서는 안 담겨요」를 말하는 자리다.
-        { label: '링크 주소만 담아두기', ghost: true, onClick: () => setFlow('link') },
+        { label: '링크 주소만 담아두기', ghost: true, onClick: () => 갈래로('link') },
       ],
     },
     gallery: {
@@ -372,7 +393,7 @@ export default function ImportScreen() {
       buttons: [
         // ⭐ 갤러리를 여는 길은 폰마다 달라 우리가 못 연다 → 대신 «앱 안에서 고르는 길»을 준다.
         //    ⛔ 「갤러리 앱을 여세요」라고만 하고 끝내면 막다른 길이 된다.
-        { label: '앱을 안 나가고 여기서 고르기', onClick: () => setFlow('photo') },
+        { label: '앱을 안 나가고 여기서 고르기', onClick: () => 갈래로('photo') },
       ],
     },
     photo: {
@@ -452,7 +473,7 @@ export default function ImportScreen() {
         style={{ display: 'none' }}
       />
       <div className="topbar-back">
-        <button className="icon-btn press" onClick={() => (flow ? setFlow(null) : nav.pop())} aria-label="닫기">
+        <button className="icon-btn press" onClick={() => (flow ? 갈래로(null) : nav.pop())} aria-label="닫기">
           <Icon name={flow ? 'chevron-left' : 'x'} size={24} />
         </button>
         <div style={{ fontSize: 18, fontWeight: 700 }} />
@@ -776,12 +797,12 @@ export default function ImportScreen() {
           {(flow === 'youtube'
             ? [
                 ['camera', '캡처해서 올리기', '캡처만 하면 재료·순서 자동으로', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), keyCount(1), true],
-                ['pen', '설명(더보기) 붙여넣기', '글 복사해 오면 알아서 정리해요', false, () => { setFlow('text'); setText('') }, keyCount(0), false],
+                ['pen', '설명(더보기) 붙여넣기', '글 복사해 오면 알아서 정리해요', false, () => { 갈래로('text'); setText('') }, keyCount(0), false],
                 ['play', '영상 보면서 적기', '영상 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } }), `받아적으면 ${keyCount(0)}`, false],
               ]
             : [
                 ['camera', '캡처해서 올리기', '인스타는 글자 복사가 안 돼요', true, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim() } }), keyCount(1), true],
-                ['pen', '글을 복사했다면 붙여넣기', '복사한 글을 넣으면 알아서 정리해요', false, () => { setFlow('text'); setText('') }, keyCount(0), false],
+                ['pen', '글을 복사했다면 붙여넣기', '복사한 글을 넣으면 알아서 정리해요', false, () => { 갈래로('text'); setText('') }, keyCount(0), false],
                 ['photo', '미리보기 띄우고 적기', '게시물 띄워두고 아래에 받아적기', false, () => nav.push({ name: 'editor', prefill: { source: flow, sourceUrl: url.trim(), watch: true } }), `받아적으면 ${keyCount(0)}`, false],
               ]
           ).map(([ic, t, d, best, go, costText, paid]) => (
@@ -842,7 +863,7 @@ export default function ImportScreen() {
           {/* 블로그 정직 안내 — 사진이 많아 캡처가 번거로우니 '글 복사 → 텍스트 붙여넣기'를 권한다 */}
           <button
             className="press"
-            onClick={() => { setFlow('text'); setText('') }}
+            onClick={() => { 갈래로('text'); setText('') }}
             style={{ width: '100%', textAlign: 'left', marginBottom: 16, padding: '13px 15px', borderRadius: 'var(--r-md)', background: 'var(--cream)', border: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 11 }}
           >
             <div className="opt-ico" style={{ background: '#fff', flexShrink: 0 }}><Icon name="edit" size={20} color="var(--brown)" /></div>
@@ -950,7 +971,13 @@ export default function ImportScreen() {
               </div>
               <button
                 className="btn-primary press"
-                onClick={() => { setAiPreview(false); choose('write') }}
+                // ⛔⛔ [2026-09-12 고침] 여기는 `choose('write')`(빈 종이) 였다 — **동작이 틀렸다.**
+                //    이 시트는 처음부터 끝까지 「사진 찍으면 레시피가 돼요」·「캡처만 올리면」이라고 말한다.
+                //    그런데 누르면 «빈 종이»가 열렸다 → 사진을 기대한 사람이 빈 종이를 받는다.
+                //    📮 창업자 = "저게 뭐야??? ai미리보기?" → "이거 고쳐"
+                //    ⭐ 계측(import_write)이 틀린 게 아니라 «동작»이 틀렸던 것이다.
+                //       계측은 동작을 따라가므로 고치면 저절로 맞아진다(import_photo).
+                onClick={() => { setAiPreview(false); choose('photo') }}
                 style={{ width: '100%', marginTop: 15, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
                 <Icon name="camera" size={17} color="#fff" /> 사진으로 시작하기

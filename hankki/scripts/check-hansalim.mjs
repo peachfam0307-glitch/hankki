@@ -47,7 +47,7 @@ if (/export const productLink[\s\S]{0,220}isHansalim/.test(cur)) ok('productLink
 else no('productLink() 에 한살림 예외가 없다 — url 이 없으면 네이버 검색으로 폴백한다')
 
 // ③ ⭐ store 가 noBuy 를 «저장»하나 — 오늘 실제로 샌 자리
-const addBlock = store.match(/case 'addShopItem': \{[\s\S]{0,600}?\n {4}\}/)
+const addBlock = store.match(/case 'addShopItem': \{[\s\S]{0,900}?\n {4}\}/)
 if (!addBlock) no("store.jsx 의 addShopItem 을 못 찾았다 — 검사가 낡았다")
 else if (!/noBuy/.test(addBlock[0])) no('addShopItem 이 noBuy 를 안 담는다 — 담는 순간 표식이 버려져 리스트에서 사러가기가 되살아난다')
 else ok('addShopItem 이 noBuy 를 저장한다')

@@ -13,7 +13,7 @@ import { 만회값 } from './retidy'   // 🧺 선반에서 받은 답을 얹는
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
 import { guessCategory, fitImage, imageSize } from './utils'
 // 🖼 「뭘 많이 썼나」를 재는 자리 — 나가는 건 «화면 이름 하나»뿐이다(자물쇠는 `src/stats.js`).
-import { 화면봄 } from './stats'
+import { 화면봄, 레시피저장 } from './stats'
 // 🍱 [2026-08-28] 공유로 담으면 아이콘이 빈 접시로 굳던 것 — 뿌리·막이 설명은 `shareIcon.js` 주석에.
 import { 공유아이콘 } from './shareIcon'
 // 🎴 축소 루프가 «자랑카드 표지»를 건드리지 않게 — 잣대는 화면·클라우드와 «같은 한 곳»(2026-09-02)
@@ -704,6 +704,10 @@ export default function App() {
         if (raw) rec.rawText = raw
       }
       store.addRecipe(rec)
+      // 📊 [2026-09-12] 새 레시피가 담겼다 — ⛔이 길이 제일 크게 빠져 있었다.
+      //    여기는 «SNS·갤러리에서 공유로 받아» 담는 길이다. 인스타 광고로 온 사람이 제일 많이 쓸 길인데
+      //    한 건도 안 세고 있었다. 그 위에서 「저장 1명」이라고 말했다(2026-09-12 전수검사에서 잡았다).
+      try { 레시피저장() } catch { /* 통계가 죽어도 담기는 된다 */ }
       // ⛔ 정리가 끝난 것을 임시보관함으로 보내면 «거기 없다» — 그 화면은 미정리만 보여준다.
       //    그래서 정리된 것은 «그 레시피»를 바로 연다(방금 담은 걸 눈으로 확인하게).
       setStack([rec.status === 'sorted' ? { name: 'detail', id: rec.id } : { name: 'inbox' }])

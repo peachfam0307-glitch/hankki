@@ -36,10 +36,17 @@ const 편들 = new Map(레시피들().map((r) => [r.id, r]))
 //       날짜로만 뽑으면 그런 편은 «영영 검수판을 못 만든다** → 또 새 파일을 짜게 된다.
 //       바로 그게 이 파일이 옛 판(`_판-검수5편-0817.mjs`)을 대신하며 없애려던 일이다.
 //    쓰기:  node scripts/_판-검수.mjs --id basic-own-
+// 📛📛 [2026-09-12] **편 «이름»으로도 뽑는다** — `--편 "팟타이,수육,…"`
+//    ⛔ 왜 또 넓혔나 = 창업자가 「식용유 → 올리브유」처럼 **여기저기 흩어진 편을 콕 집어» 고치라고 할 때가 있다.
+//       날짜도 아이디 앞자리도 그걸 못 묶는다 → 없으면 또 새 판 파일을 짜게 된다(이 파일이 없애려던 일).
+//    쓰기:  node scripts/_판-검수.mjs --편 "팟타이,마늘쫑 비빔밥"
+const 편이름들 = ((process.argv.find((a) => a.startsWith('--편=')) || '').slice(4)
+  || (process.argv.includes('--편') ? process.argv[process.argv.indexOf('--편') + 1] || '' : ''))
+  .split(',').map((x) => x.trim()).filter(Boolean)
 const 날짜들 = process.argv.slice(2).filter((a) => /^\d{4}-\d{2}-\d{2}$/.test(a)).sort()
 const id앞 = (process.argv.slice(2).find((a) => a.startsWith('--id=')) || '').slice(5)
   || (process.argv[process.argv.indexOf('--id') + 1] && process.argv.includes('--id') ? process.argv[process.argv.indexOf('--id') + 1] : '')
-if (!날짜들.length && !id앞) {
+if (!날짜들.length && !id앞 && !편이름들.length) {
   console.error('⛔ 날짜나 아이디를 달라 —  node scripts/_판-검수.mjs 2026-08-24 [2026-08-31 …]')
   console.error('                        node scripts/_판-검수.mjs --id basic-own-')
   console.error('   그 달에 열리는 날짜 보기 =  node scripts/release-calendar.mjs --month 2026-09')
@@ -56,7 +63,7 @@ for (const g of gates()) {
 }
 
 const 목록 = 레시피들()
-  .filter((r) => (id앞 ? r.id.startsWith(id앞) : 날짜들.includes(r.from)))
+  .filter((r) => (편이름들.length ? 편이름들.includes(r.title) : id앞 ? r.id.startsWith(id앞) : 날짜들.includes(r.from)))
   .map((r) => ({
     id: r.id,
     줄: 줄이름.get(r.title)?.줄 || r.folder || '레시피',
@@ -188,7 +195,9 @@ const 그린것 = 목록.map((m, i) => {
   if (!r) throw new Error(`⛔ ${m.id} 를 basics.js 에서 못 찾았다 — 판이 앱과 어긋난다`)
   // 🔒 판이 앱과 어긋나지 않게 «고른 조건에 맞나»를 다시 본다 — 날짜 모드면 날짜로, 아이디 모드면 아이디로.
   //   ⛔ 아이디 모드에서 from 을 검사하면 «from 없는 편»이 전부 죽는다(2026-09-11 실제로 막혔다).
-  if (id앞) { if (!r.id.startsWith(id앞)) throw new Error(`⛔ ${r.title} 의 id 가 ${r.id} 다 — 고른 아이디가 아니다`) }
+  //   ⛔ 편이름 모드에서 from 을 검사하면 «from 없는 편»이 전부 죽는다 — 아이디 모드와 같은 함정이다(2026-09-12).
+  if (편이름들.length) { if (!편이름들.includes(r.title)) throw new Error(`⛔ ${r.title} 은 고른 편이 아니다`) }
+  else if (id앞) { if (!r.id.startsWith(id앞)) throw new Error(`⛔ ${r.title} 의 id 가 ${r.id} 다 — 고른 아이디가 아니다`) }
   else if (!날짜들.includes(r.from)) throw new Error(`⛔ ${r.title} 의 from 이 ${r.from} 이다 — 고른 날짜가 아니다`)
   return { 날: r.from || '처음부터', 줄: m.줄, html: 카드(r, m, i) }
 })
@@ -196,7 +205,8 @@ const 그린것 = 목록.map((m, i) => {
 //   ⛔ 아이디 모드면 `날짜들` 이 «비어 있다» → 이 map 이 0바퀴 돌아 **카드가 통째로 사라진다**.
 //      2026-09-11 에 실제로 그래서 15KB 짜리 «뼈대만» 나왔다(9/14 판은 595KB). 눈으로 열어서 잡았다(규칙 21).
 //   ✅ 아이디 모드는 한 칸으로 묶는다.
-const 묶을것 = id앞 ? [...new Set(그린것.map((x) => x.날))] : 날짜들
+//   ✅ 편이름 모드도 마찬가지로 «있는 날»을 그대로 쓴다 (날짜들이 비어 있으니 0바퀴를 돈다)
+const 묶을것 = (id앞 || 편이름들.length) ? [...new Set(그린것.map((x) => x.날))] : 날짜들
 const 날짜별 = 묶을것.map((d) => ({
   날: d,
   줄들: [...new Set(그린것.filter((x) => x.날 === d).map((x) => x.줄))],
@@ -210,7 +220,7 @@ const 몸통 = 날짜별.map((g) => `
   ${g.html}`).join('\n')
 const 총 = 그린것.length
 
-const 이름 = id앞 ? `창업자 저장 레시피 ${그린것.length}편` : (날짜들.length === 1 ? 날짜들[0] : `${날짜들[0]} ~ ${날짜들[날짜들.length - 1]}`)
+const 이름 = 편이름들.length ? `이름 바꾼 ${그린것.length}편` : id앞 ? `창업자 저장 레시피 ${그린것.length}편` : (날짜들.length === 1 ? 날짜들[0] : `${날짜들[0]} ~ ${날짜들[날짜들.length - 1]}`)
 const html = `<title>레시피 검수판 ${이름}</title>
 <style>
   :root{
@@ -553,7 +563,8 @@ const html = `<title>레시피 검수판 ${이름}</title>
 </script>
 `
 
-const 파일 = id앞 ? `검수판-${id앞.replace(/[^a-zA-Z0-9가-힣-]/g, '')}${그린것.length}편.html` : `검수판-${날짜들[0]}${날짜들.length > 1 ? `-외${날짜들.length - 1}` : ''}.html`
+const 파일 = 편이름들.length ? `검수판-이름바꾼${그린것.length}편.html` : id앞 ?
+ `검수판-${id앞.replace(/[^a-zA-Z0-9가-힣-]/g, '')}${그린것.length}편.html` : `검수판-${날짜들[0]}${날짜들.length > 1 ? `-외${날짜들.length - 1}` : ''}.html`
 writeFileSync(join(OUT, 파일), html)
 console.log(`✅ 판 완성 — ${(html.length / 1024).toFixed(0)}KB`)
 for (const m of 목록) {

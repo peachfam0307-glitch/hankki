@@ -533,8 +533,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⭐ 잣대 = 「붙인 게 하나라도 있거나 속지를 골랐거나 표지를 바꿨나」.
   //      ⛔ 그냥 열었다 닫은 것(뒤로가기도 저장이다)까지 «꾸몄다»로 세면 숫자가 거짓말이 된다.
   const doSave = () => {
-    const 꾸몄나 = (items && items.length > 0) || (bg && bg !== 'none') || thumb !== savedThumb
-    if (꾸몄나) { try { 꾸미기저장() } catch { /* 통계가 죽어도 저장은 된다 */ } }
+    // ⛔⛔ [2026-09-12 고침] 잣대가 「지금 뭐라도 붙어 있나」였다 — 그러면 **이미 꾸민 레시피를
+    //    열었다 뒤로만 눌러도** 「꾸며서 저장했다」로 세진다(뒤로가기 = 저장이다 · 아래 주석).
+    //    items 초기값이 `draft?.items || recipe.decor` 라 전에 붙인 게 이미 들어 있기 때문이다.
+    //    🔢 한 사람이 꾸민 레시피를 열 번 열어 보면 10건 — 「열었는데 안 붙인 비율」이 못 나온다.
+    //    ✅ 잣대를 「**이번에 바뀐 게 있나**」로 바꾼다 — `isDirty()` 가 바로 위에 이미 있었다.
+    //    📮 창업자 = "이상하게 심어놓고 침소봉대하고;; 당황스럽네"
+    if (isDirty()) { try { 꾸미기저장() } catch { /* 통계가 죽어도 저장은 된다 */ } }
     clearDraft(); onSave(items, bg, thumb)
   }
   const doExit = () => { clearDraft(); onClose() }

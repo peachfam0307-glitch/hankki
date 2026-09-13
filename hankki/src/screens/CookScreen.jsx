@@ -14,6 +14,7 @@ import { useWakeLock } from '../useWakeLock'
 import { useLayerBack } from '../useBackHandler'
 import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
+import { 요리끝냄 } from '../stats'
 
 // 요리 모드 — 풀스크린. 큰 글씨 · 화면 안 꺼짐 · 단계 타이머.
 // 흐름: 0단계 = 재료 준비(요리의 시작) → 1~N단계 = 조리 단계.
@@ -91,6 +92,11 @@ export default function CookScreen({ id }) {
   }
 
   const finish = () => {
+    // 📊 [2026-09-12] 요리모드를 «끝냈다» — ⛔조건 «밖»이다.
+    //    ⛔⛔ 처음엔 아래 `if (!오늘것)` 안에 넣었다가 잡았다(창업자 = "다 확인해 하나하나").
+    //       그러면 상세에서 「만들었어요」를 먼저 누른 사람은 요리모드를 끝내도 0건이 된다.
+    //       이름이 「요리모드를 끝냈다」인데 잣대가 「오늘 그 레시피 첫 기록」이면 뜻이 어긋난다.
+    요리끝냄()
     // 오늘 이미 이 레시피 기록이 있으면(상세의 '만들었어요' 등) 중복으로 쌓지 않는다
     const today = new Date().toDateString()
     const 오늘것 = diary.find((d) => d.recipeId === r.id && new Date(d.at).toDateString() === today)

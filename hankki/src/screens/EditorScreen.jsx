@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from 'react'
 // 쓰던 내용이 날아가지 않게 한다. 저장 완료하면 지운다.
 const DRAFT_KEY = 'hankki:editorDraft'
 import { useStore, newId, 기본표지, 방금저장됐나 } from '../store'
-import { 레시피저장 } from '../stats'
+import { 레시피저장, 읽어냄, 못읽음 } from '../stats'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
@@ -76,6 +76,8 @@ export default function EditorScreen({ id, prefill }) {
   const ocrParts = useRef([]) // 읽은 글자를 «고른 순서대로» 담는다(끝나는 순서가 아니라)
   const ocrCropped = useRef(0) // 지금까지 자른 장 수 = 다음 장의 자리(idx)
   const ocrCropOpen = useRef(false) // 자르기 화면이 지금 떠 있나 — 마무리를 미룰지 판단
+  // 📊 이번 «한 번의 가져오기»에서 읽기 셈을 보냈나 — 여러 장이어도 한 번만 세려고(finishOcr 안에서 쓴다)
+  const 읽기셈보냄 = useRef(false)
   const ocrAccum = useRef('') // 'all' 자동분류용 — 여러 장의 인식 텍스트를 모아 한 번에 파싱
   // 👁👁 [창업자 판정 2026-09-01 = ⓒ] AI 에게 «글자와 함께 사진»을 준다.
   //   ⛔ 그 전엔 사진을 읽고 «버렸다» — 그래서 AI 가 「생가즈 조그」를 짐작으로 고쳤고
@@ -419,7 +421,7 @@ export default function EditorScreen({ id, prefill }) {
     const target = ocrTargetRef.current || 'all'
     const total = ocrTotal.current
     // 🔒 이번 읽기의 «열쇠 셈»을 0 으로 — 앞 읽기의 값이 남으면 안내가 어긋난다
-    if (!ocrParts.current.some((t) => t)) 열쇠셈리셋()
+    if (!ocrParts.current.some((t) => t)) { 열쇠셈리셋(); 읽기셈보냄.current = false }   // 📊 읽기 셈도 같이 0 으로
     ocrBusy.current = true
     // ⛔ `try/finally` 로 감싼다 — 여기서 무엇이 터져도 `ocrBusy` 가 true 로 «굳으면»
     //    남은 장이 영영 안 들어오고 단추도 계속 흐린 채로 남는다(옛 판에서 실제로 났던 사고).
@@ -461,6 +463,21 @@ export default function EditorScreen({ id, prefill }) {
   const finishOcr = async () => {
     const target = ocrTargetRef.current || 'all'
     ocrAccum.current = ocrParts.current.filter((t) => t && t.trim()).join('\n').trim()
+
+    // 📊📊 [2026-09-12] 「읽었나 / 못 읽었나」를 «여기서 한 번»만 센다.
+    //   ⛔⛔ **장마다 세면 안 된다** — 3장을 넣은 사람이 3명처럼 보인다. 이 함수는 «다 읽은 뒤»
+    //      한 번만 불린다(위 454줄이 `ocrCropOpen || ocrQueue.length` 면 돌아가게 막는다).
+    //   ⭐ 왜 필요했나 = 2026-09-12 실측에서 「갈래 고름 10명 → 저장 1명」 사이가 깜깜했다.
+    //      이 한 줄이 그 아홉이 «읽기에서» 샜는지 «읽은 뒤»에 샜는지를 가른다.
+    //   ⛔ 나가는 건 이름뿐이다 — 읽은 «글자»는 한 자도 안 보낸다.
+    // 🔒 **안전벨트** — 이번 읽기에서 «한 번만» 보낸다.
+    //    ⛔ finishOcr 가 한 번만 불리는 건 코드로 확인했지만(454줄 가드), 재현판으로 «증명은 못 했다»
+    //       — 사진 3장 흐름을 재현판이 못 몰았다(2026-09-12). 증명 못 한 것은 코드로 막는다.
+    //    📮 창업자 = *"엉뚱하게 잘못재면 타격이 커"*
+    if (!읽기셈보냄.current) {
+      읽기셈보냄.current = true
+      if (ocrAccum.current) 읽어냄(); else 못읽음()
+    }
 
     // 🆓🆓 [창업자 확정 2026-08-29] **「그냥 읽기」로 들어왔으면 «열쇠 얘기를 아예 안 한다».**
     //   📮 창업자 = *"3번은 열쇠다썼지만 무료로 쓰고싶은 사용자들이 거의 쓰겠네 **안내도 잘해줘야 할 듯.**"*
