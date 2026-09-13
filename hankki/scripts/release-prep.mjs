@@ -96,7 +96,10 @@ for (const [날, 편들] of [...날짜별].sort((a, b) => a[0] < b[0] ? -1 : 1))
     const 검수 = r.review ? '✅검수' : '⛔검수필요'
     if (!r.review) 총검수++
     // 🍱 음식 아이콘 — ①직접 박아둔 것이 있나 ②없으면 제목으로 자동으로 붙나
-    const 자동 = guessFoodIconStrict(r.title)
+    // ⛔⛔ [2026-09-13 · 규칙 12 검증이 잡았다] 이 함수는 못 찾으면 «'default'» 를 돌려준다 —
+    //    truthy 라서 처음엔 「자동으로 붙었다」로 셌다. 그러면 아이콘 없는 편을 «영영» 못 잡는다.
+    const 딴것 = guessFoodIconStrict(r.title)
+    const 자동 = 딴것 && 딴것 !== 'default' ? 딴것 : ''
     const 아이콘 = r.icon ? `✅${r.icon}` : (자동 ? `🔸자동 ${자동}` : '⛔아이콘없음')
     if (!r.icon && !자동) 총아이콘++
     const 재료 = 필요한재료(r)

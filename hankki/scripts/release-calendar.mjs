@@ -296,6 +296,27 @@ if (mode === '--tomorrow') {
   }
   console.log(`\n   ⚠️ 레시피 검수는 끝났다. 그림·카드는 «고화질 전수»로 눈으로 볼 것:`)
   console.log(`      node hankki/scripts/release-calendar.mjs --on ${내일}`)
+
+  // 절대원칙 [창업자 2026-09-13] 검수 확인사항은 «셋»이다 — 글만이 아니다.
+  //    창업자 원문 = "음식아이콘, 재료들이 쿠팡파트너스링크있는지도 확인사항에 넣어 (검수시 절대원칙)"
+  //    그 전엔 이 자리가 「검수 표시가 붙었나」만 봤다. 그래서 —
+  //      ㄱ) 아이콘이 안 붙은 편이 그대로 열려도 아무도 안 막았다
+  //      ㄴ) 재료 링크는 날짜와 무관하게 뭉뚱그려 세고 있어서, 내일 열리는 편의 링크가 급한지 알 길이 없었다
+  //    판정은 release-prep.mjs 한 곳에만 둔다 — 여기 베껴 쓰면 두 벌이 되어 반드시 갈린다.
+  const 낼것 = (() => {
+    try {
+      return execFileSync(process.execPath, [join(APP, "scripts/release-prep.mjs"), "--on", 내일], { encoding: "utf8" })
+    } catch (e) { return String(e.stdout || "") || null }
+  })()
+  if (낼것 === null) {
+    console.log(`\n   ⚠️ 아이콘·재료링크 확인을 «못 돌렸다» — 손으로 볼 것: scripts/release-prep.mjs --on ${내일}`)
+  } else {
+    console.log("\n" + 낼것.split("\n").slice(1).join("\n").trimEnd())
+    if (/아이콘없음/.test(낼것)) {
+      console.log("\n⛔⛔ **아이콘이 없는 편이 «내일» 열린다** — 오늘 붙인다(창업자를 안 기다려도 된다).")
+      process.exit(1)
+    }
+  }
   process.exit(0)
 }
 
