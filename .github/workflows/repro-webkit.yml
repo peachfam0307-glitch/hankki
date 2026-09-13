@@ -11,6 +11,7 @@ on:
     paths:
       - '.github/workflows/repro-webkit.yml'
       - 'hankki/scripts/_repro-카드굽기-webkit-0913.mjs'
+      - 'hankki/scripts/_repro-칩반달-webkit-0913.mjs'
 
 jobs:
   repro:
@@ -35,3 +36,16 @@ jobs:
         working-directory: hankki
         continue-on-error: true
         run: node scripts/_repro-카드굽기-webkit-0913.mjs webkit
+      - name: 🧪 칩 반달 — 크롬(대조군) · WebKit
+        working-directory: hankki
+        continue-on-error: true
+        run: |
+          node scripts/_repro-칩반달-webkit-0913.mjs chromium
+          node scripts/_repro-칩반달-webkit-0913.mjs webkit
+      - name: ⬆️ 구운 그림 (눈으로 판정용)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repro-webkit-${{ github.run_number }}
+          path: hankki/scripts/_out/*.png
+          if-no-files-found: ignore

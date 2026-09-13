@@ -27,3 +27,4 @@ hankki/_*.py
 
 # 스토어 스샷 「최종-N장」 = renders-v* 의 «복사본» — 스크립트로 언제든 다시 만든다(중복 44MB 방지)
 hankki/design/promo/스토어스샷-2507/최종-*/
+hankki/scripts/_out/
