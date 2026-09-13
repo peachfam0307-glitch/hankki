@@ -44,8 +44,10 @@ export const SPECIALS = [
       'basic-kkaennip-jeon',        // 🌿 깻잎고기전 (초록)
       'basic-la-galbi',             // 🥩 LA갈비 (9/16 · 새것 · 구이 — 조림 둘과 색이 다르다)
       'basic-japchae',              // 🍜 잡채 (면)
+      'basic-kkotge-tang',          // 🦀 꽃게탕 (빨간 국물 — 면 뒤라 색이 확 산다)
       'basic-saeu-gwanja-jeon',     // 🦐 새우관자전 (9/16 · 새것 · 흰색)
       'basic-maeun-galbijjim',      // 🌶 매운 소갈비찜 70분 (빨강)
+      'basic-kkotge-jjim',          // 🦀 꽃게간장조림 (갈색 — 빨간 갈비찜 뒤)
       'basic-albaechu-jeon',        // 🥬 알배추전 (9/14 · 새것 · 연노랑 — 빨강 뒤라 대비가 산다. ⛔깻잎전 옆은 피했다)
       // ⛔ 'basic-tteokgalbi'(수제 떡갈비)는 «뺐다» — 창업자 2026-09-13 "떡갈비는 빼기"
       //    갈비가 셋(순살·매운·떡갈비)이라 겹쳤고, 떡갈비는 다짐육이라 명절상 갈비 자리를 둘이 이미 채운다
