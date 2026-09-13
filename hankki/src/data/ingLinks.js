@@ -61,6 +61,7 @@ export const ING_LINKS = {
   '레몬': 'https://link.coupang.com/a/gYWCAAhdlI',
 
   '생강가루': 'https://link.coupang.com/a/gYWLh2oac0',
+  '생강청': 'https://link.coupang.com/a/g0iVJL70jQ',   // 🫚 [창업자 2026-09-13] 내일 열리는 「간장 제육볶음」 재료
   '표고버섯': 'https://link.coupang.com/a/gYW5mQxvmC',
   '다진 파': 'https://link.coupang.com/a/gYRLijw0cu', // ⛇묶음: 대파 / 다진 파
   '감자전분': 'https://link.coupang.com/a/gYWQr9gXIa', // ⛇묶음: 감자전분 / 전분가루
@@ -119,8 +120,12 @@ export const ING_LINKS = {
   '스파게티면': 'https://link.coupang.com/a/gZgElvHnVc', // ⛇묶음: 파스타면 / 스파게티 면 / 스파게티면
   '떡국떡': 'https://link.coupang.com/a/gZgZbTXfqK',
   // 🍖 [창업자 2026-09-12] 둘을 줬는데 재료 줄 이름은 하나다 → **찌개용**으로 (찌개·국 3편 · 볶음 2편)
-  //    ⛔ 불고기·제육용(gZgrUsWnlc)은 안 쓴다 — 한 이름에 하나만 붙는다.
+  //    ⛔ 「돼지고기 앞다리살」 한 이름엔 하나만 붙는다 → 찌개용을 붙였다.
   '돼지고기 앞다리살': 'https://link.coupang.com/a/gZgtXRkfyC',
+  // 🍖 [2026-09-13 정정] 창업자 = *"제육용은 내가 어제 링크줬어"* — **맞다. 받아놓고 안 썼다.**
+  //    ⭐ 재료 줄이 「돼지고기 제육용 600g」이라 «이름이 다르다» → 앞다리살과 안 부딪힌다.
+  //    ⛔ 「안 쓴다」고 적어둔 게 그대로 굳어 있었다 — 받은 링크는 쓸 자리를 다시 찾는다.
+  '돼지고기 제육용': 'https://link.coupang.com/a/gZgrUsWnlc',
   // ⭐ 아래 넷은 재료 줄에 «분량이 붙은 모양»으로만 있어 넣기 도구가 건너뛴다 — 앱은 분량을 떼고 찾으므로 붙는다.
   '대패삼겹': 'https://link.coupang.com/a/gZjUYZsdkO', // ⛇묶음: 대패삼겹 / 돼지고기 목살
   '돼지고기 다짐육': 'https://link.coupang.com/a/gZjXCOQfRs',
