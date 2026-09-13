@@ -1949,8 +1949,15 @@ img {
             ⭐ DOM 순서는 «장바구니 먼저»로 두고 `order` 로만 바꾼다 — 그래야 패드에서 그냥 좌우가 된다.
    · 패드 = 좌우 2열(왼쪽 장바구니·오른쪽 리스트) — 위 `@media (min-width: 700px)` 참고. */
 .shop-pair { display: flex; flex-direction: column; }
-.shop-pair.has-items .shop-cur { order: 2; margin-top: 26px; }
-.shop-pair.has-items .shop-list { order: 1; }
+/* 🛒🛒 [2026-09-13 창업자 확정] 「빈손일 때도」 장보기 리스트가 먼저 온다 — `has-items` 조건을 뺐다.
+   🔢 왜 = GA4 28일 실측 `shop` 19번 열림 · 평균 **5초**(모든 화면 중 제일 짧다).
+      재현판으로 재니 빈손일 때 「장보기 리스트」가 위에서 **1,522px** — 첫 화면(891px) «밖»이었다.
+      ＝ 장보기를 연 사람이 첫 화면에서 «자기 목록»을 한 칸도 못 봤다. 보이는 건 추천 상품뿐.
+   📮 창업자 = *"C로 가자"* (시안 셋을 캡처로 보고 고름 · `scripts/_판-장보기시안-0913.mjs`)
+   ⭐ 175px 로 올라오면서 «주부의 장바구니»도 첫 화면에 같이 들어온다 — 수익 자리를 안 잃는다.
+   ⛔ 「5초가 늘어난다」는 아직 증명 못 했다. 바꾼 뒤 GA4 로 다시 재야 안다. */
+.shop-pair .shop-cur { order: 2; margin-top: 26px; }
+.shop-pair .shop-list { order: 1; }
 
 .shop-row {
   display: flex;
