@@ -20,7 +20,8 @@ const state = { recipes: basicRecipes.map((r, i) => ({ ...r, status: 'sorted', s
 
 const PORT = 4378
 const srv = spawn('python3', ['-m', 'http.server', String(PORT), '--bind', '127.0.0.1', '--directory', 'dist'], { stdio: 'ignore' })
-await new Promise((r) => setTimeout(r, 900))
+// ⛔ 러너(맥)에선 python 이 늦게 떠서 0.9초 고정 대기로는 ERR_CONNECTION_TIMED_OUT(1차 실측) → 응답할 때까지 기다린다(최대 30초)
+for (let i = 0; i < 60; i++) { try { const r = await fetch(`http://127.0.0.1:${PORT}/`); if (r.ok) break } catch {} await new Promise((r) => setTimeout(r, 500)) }
 const pw = await import('playwright')
 const b = await pw[ENGINE].launch(ENGINE === 'chromium' && process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, timezoneId: 'Asia/Seoul', locale: 'ko-KR' })
