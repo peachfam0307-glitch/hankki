@@ -84,9 +84,15 @@ const 장 = []
 장.push({ 이름: '3-담아두기', html: `
   <!-- ⛔ [눈으로 잡았다] 제목을 네 줄로 흘렸더니 오른쪽 아래가 통째로 비었다 → 두 줄로 묶고 알약을 받쳤다 -->
   <div style="position:absolute;right:70px;top:150px;text-align:right;font-size:56px;line-height:1.4;font-weight:700">인스타에서 본 레시피,<br>담아두면 안 사라져요</div>
-  <div style="position:absolute;right:70px;top:340px;text-align:right;font-size:34px;color:#a98a6b;line-height:1.55">링크만 넣으면<br>재료·순서가 들어와요</div>
-  <div style="position:absolute;right:70px;top:520px"><span class="알약">유튜브 · 인스타 · 블로그</span></div>
-  <div style="position:absolute;right:70px;top:610px"><span class="알약">사진 속 글씨도 읽어와요</span></div>
+  <!-- ⛔⛔ [창업자가 잡았다 2026-09-13] = *"블로그 글씨는 긁어서 붙여야하지않아?? 캡쳐는 인스타랑 유튜브 캡션만"*
+       내가 처음에 「링크만 넣으면 재료·순서가 들어와요」라고 썼는데 **그건 되는 척이다.**
+       🔢 실측(src/screens/ImportScreen.jsx) — 「link」 갈래 = *"주소만 저장해요 · 재료·순서는 안 담겨요"*
+          ＋ 「readLink」(링크 본문 자동 읽기)는 「서버 되면 되살릴 것」으로 «빠져 있다».
+       ✅ 진짜 되는 길은 둘 = ⑴캡처해서 공유(사진 글씨를 읽어 재료·순서 자동) ⑵글 붙여넣기(무료).
+          블로그는 ⑵다 — 창업자 말이 맞다. -->
+  <div style="position:absolute;right:70px;top:340px;text-align:right;font-size:34px;color:#a98a6b;line-height:1.55">캡처해서 한끼로 보내면<br>재료·순서까지 정리돼요</div>
+  <div style="position:absolute;right:70px;top:520px"><span class="알약">인스타 · 유튜브는 캡처로</span></div>
+  <div style="position:absolute;right:70px;top:610px"><span class="알약">블로그 글은 복사해서 붙여넣기</span></div>
   ${폰('3a-레시피탭.png', 1000, 'left:40px;bottom:-90px', 3)}` })
 
 // ④ 꾸미기 — 배경을 «진하게» 뒤집는다(앞 셋과 확 다르게). 폰은 가운데.
@@ -95,7 +101,9 @@ const 장 = []
   <div style="position:absolute;left:0;right:0;top:110px;text-align:center;font-size:60px;font-weight:700">내 한 끼를 꾸며서</div>
   <div style="position:absolute;left:0;right:0;top:200px;text-align:center;font-size:34px;color:#a0805c">표지로 저장하고, 친구한테 자랑해요</div>
   <!-- ⛔ [눈으로 잡았다] 880px 은 제목과 폰 사이가 400px 넘게 비었다 → 키워서 위로 붙인다 -->
-  ${폰('4b-꾸민표지-상세.png', 1020, 'left:305px;bottom:-110px')}
+  <!-- ⛔ [창업자 2026-09-13] "내한끼꾸며서에 아래부분잘렸엉 랜덤뽑기" — bottom:-110px 이라 폰 아래가
+       화면 밖으로 나가 「랜덤 카드로 뽑기」 칸이 통째로 잘렸다. ⭐폰을 «통째로» 화면 안에 넣는다. -->
+  ${폰('4b-꾸민표지-상세.png', 1000, 'left:309px;bottom:40px')}
   ${컷('02', 300, 'right:40px;bottom:120px')}` })
 
 // ⑤ 로그인 — ⭐«아이폰만의» 화면이다(Apple로 로그인). 이 캐러셀에서 제일 중요한 증거.
