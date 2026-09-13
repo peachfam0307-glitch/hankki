@@ -6,6 +6,11 @@ import { 표지굽기 } from '../coverEncode.js'   // 🎴📦 표지 = WebP q0.
 import { fontCSS, fontOptFrom } from '../fontEmbed'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
+// 🍎 2026-09-13 — 아이폰 앱 안에선 「Play스토어」 대신 「App Store」. 심사 지침 2.3.10(다른 플랫폼 이름 금지) —
+//    딸 아이폰 실물(09-12 17:59 문자 카드 · 18:00 사진첩 카드)에서 「Play스토어 '한끼' 검색」이 그대로 나갔다.
+//    웹·안드로이드는 그대로. 카드 «그림 안 알약» 둘 ＋ 공유 «글» 둘 = 네 곳이 전부 이 한 줄을 본다.
+import { 앱안인가 } from '../nativeAuth'
+const 스토어이름 = () => (앱안인가() ? 'App Store' : 'Play스토어')
 // ⛔ UI엔 유니코드 이모지를 쓰지 않는다 — 우리 아이콘·스티커만(CLAUDE.md 핀).
 //    v8.63에서 앱 전체를 정리할 때 이 시트는 '보류'로 빠져 🔄💌🖼🐻🐧가 남아 있었다(2026-07-29 정리).
 import uiDuoHi from '../assets/stickers/photo/gp_duohi.png'
@@ -614,7 +619,7 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
           「Play스토어 ‘한끼’ / 검색」 으로 «두 줄»이 되어 알약 밖으로 삐져나왔다.
           ⭐ 뽑힌 사진에서만 보였다 — 화면에선 한 줄이라 눈으로는 절대 못 잡는다. */}
       <span style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', padding: '9px 20px', borderRadius: 999, background: wm, color: onColor(wm), fontFamily: 'Jua, sans-serif', fontSize: 22, letterSpacing: '-0.01em' }}>
-        Play스토어 ‘한끼’ 검색
+        {스토어이름()} ‘한끼’ 검색
       </span>
     </div>
   )
@@ -1140,7 +1145,7 @@ export function RecipeCard({ recipe }) {
         {steps.length > 7 && <div style={{ fontSize: 26, color: '#a8987e', paddingLeft: 53, marginTop: 2 }}>… 전체 {steps.length}단계는 한끼 앱에서 →</div>}
       </div>
       <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '18px 42px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontSize: 38, fontWeight: 800 }}>🔍 Play스토어 ‘한끼’ 검색</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '18px 42px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontSize: 38, fontWeight: 800 }}>🔍 {스토어이름()} ‘한끼’ 검색</span>
       </div>
     </div>
   )
@@ -1284,7 +1289,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
     const 레시피 = files.length > 1 ? files[1] : null
     if (!navigator.canShare({ files: 표지 })) return null
     return navigator
-      .share({ files: 표지, title, text: `『${title}』 오늘의 한 끼 🧡\nPlay스토어에서 '한끼' 검색 🔍`, url: APP_URL })
+      .share({ files: 표지, title, text: `『${title}』 오늘의 한 끼 🧡\n${스토어이름()}에서 '한끼' 검색 🔍`, url: APP_URL })
       .then((v) => { onShared?.(); if (레시피) set남은레시피(레시피); return v })
   }, [title, onShared])
 
@@ -1292,7 +1297,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
   const 레시피보내기 = useCallback(() => {
     const f = 남은레시피
     if (!f) return
-    const opt = { files: [f], title, text: `『${title}』 재료·만드는 법이에요 🍳\nPlay스토어에서 '한끼' 검색 🔍`, url: APP_URL }
+    const opt = { files: [f], title, text: `『${title}』 재료·만드는 법이에요 🍳\n${스토어이름()}에서 '한끼' 검색 🔍`, url: APP_URL }
     if (navigator.canShare && navigator.share && navigator.canShare({ files: [f] })) {
       navigator.share(opt)
         .then(() => set남은레시피(null))

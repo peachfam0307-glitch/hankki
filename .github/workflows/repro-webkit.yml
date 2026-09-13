@@ -1,0 +1,37 @@
+name: 🧪 WebKit 재현판 (카드 굽기 그림 누락)
+
+# 2026-09-13 — 딸 아이폰에서 「카드 → 표지·공유」 그림에 캐릭터가 빠진 사고(빌드 4)의 재현판을
+# «사파리 엔진(WebKit)»으로 돌린다. 이 컨테이너엔 WebKit 이 없어(playwright CDN 막힘) 맥 러너에서 잰다.
+# 무엇을 재나 = hankki/scripts/_repro-카드굽기-webkit-0913.mjs 머리말. 크롬(대조군) ＋ WebKit 둘 다 표로 찍는다.
+# ⛔ 앱 코드는 안 건드린다 — 재현·측정만. 고침은 이 표를 보고 고른다(절대원칙 7 · 짐작으로 「고쳤다」 안 한다).
+on:
+  push:
+    branches:
+      - claude/annyeong-yoi12y
+    paths:
+      - '.github/workflows/repro-webkit.yml'
+      - 'hankki/scripts/_repro-카드굽기-webkit-0913.mjs'
+
+jobs:
+  repro:
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 📦 의존성 ＋ 브라우저(webkit·chromium)
+        working-directory: hankki
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install webkit chromium
+          npx playwright --version
+      - name: 🧪 크롬(대조군)
+        working-directory: hankki
+        continue-on-error: true
+        run: node scripts/_repro-카드굽기-webkit-0913.mjs chromium
+      - name: 🧪 WebKit(사파리 엔진)
+        working-directory: hankki
+        continue-on-error: true
+        run: node scripts/_repro-카드굽기-webkit-0913.mjs webkit
