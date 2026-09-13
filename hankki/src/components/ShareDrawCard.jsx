@@ -2,7 +2,7 @@ import { isSeason, isPeakSeason, inCardWindow, seasonsNow } from '../season'
 import { SEASON_CUTS } from '../data/cardSeasons'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toJpeg, toCanvas } from 'html-to-image'
-import { 표지굽기 } from '../coverEncode.js'   // 🎴📦 표지 = WebP q0.8(되면) · 아니면 JPEG q0.86 (2026-09-07)
+import { 표지굽기, 예열굽기 } from '../coverEncode.js'   // 🎴📦 표지 = WebP q0.8(되면) · 아니면 JPEG q0.86 (2026-09-07) · 🍎 예열굽기 = 사파리 첫 굽기 그림 누락 대비(2026-09-13)
 import { fontCSS, fontOptFrom } from '../fontEmbed'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
@@ -1207,7 +1207,8 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
     //      4.7MB 가 되고, 글씨체 하나만 쓴 사람도 열두 벌을 다 내려받는다.
     //   ⚠️ pixelRatio 는 1.6 유지 — 1 로 낮추면 반올림 때문에 폭이 미세하게 달라진다.
     const fontOpt = fontOptFrom(await fontCSS(el))
-    const u = await toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff', ...fontOpt })
+    // 🍎 사파리 엔진은 첫 굽기에서 그림을 빠뜨린다(9/12 딸 아이폰 실물 · 재현 run 34732617886) → 예열굽기(coverEncode.js)
+    const u = await 예열굽기(() => toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff', ...fontOpt }))
     const b = await (await fetch(u)).blob()
     return new File([b], name.replace(/\.png$/, '.jpg'), { type: 'image/jpeg' })
   }, [])
@@ -1390,7 +1391,8 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
       // 📦 [2026-09-07] 캔버스로 받아 «작게» 굽는다 — WebP q0.8(≈1/3 · 실측) · 사파리처럼 못 구우면 JPEG q0.86 그대로.
       //    ⛔ 품질값은 coverEncode.js 한 곳에 있다 — 여기서 숫자를 적지 않는다.
       let canvas
-      try { canvas = await toCanvas(coverRef.current, opt) } catch { canvas = await toCanvas(coverRef.current, { ...opt, skipFonts: true }) }
+      // 🍎 사파리 엔진 첫 굽기 그림 누락 대비 → 예열굽기(coverEncode.js · 2026-09-13)
+      try { canvas = await 예열굽기(() => toCanvas(coverRef.current, opt)) } catch { canvas = await 예열굽기(() => toCanvas(coverRef.current, { ...opt, skipFonts: true })) }
       const { url } = 표지굽기(canvas)
       await onSaveCover?.(url)
       onClose?.()
