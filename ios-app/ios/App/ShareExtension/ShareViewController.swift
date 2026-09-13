@@ -6,8 +6,8 @@ import UniformTypeIdentifiers
 /// 한끼 앱이 열릴 때(어떤 길이든) ShareIntakePlugin.consume 이 그 inbox 를 꺼내 임시보관함에 담는다.
 ///
 /// ⛔ Apple 원문(open(_:completionHandler:) · ExtensionOverview · 포럼 764570 DTS 답변, 2026-09-13 열람):
-///    공유 부품은 앱을 «직접 열 수 없다». 그래서 본선은 「저장 → 앱이 열리면 꺼냄」이고,
-///    아래 openHost 는 «되면 좋은 보너스»다(실패해도 데이터는 inbox 에 남는다).
+///    공유 부품은 앱을 «직접 열 수 없다». 그래서 본선은 「저장 → 앱이 열리면 꺼냄」이다.
+///    ✅ 17판 딸 폰 실물(22:30) = 저장은 됐다(임시보관함에 들어옴). 앱을 깨우던 비공식 코드는 그 자리에서 죽어서 뺐다(아래 🗑).
 /// ⛔ Capacitor 를 import 하지 않는다 — APPLICATION_EXTENSION_API_ONLY=YES.
 final class ShareViewController: UIViewController {
     static let appGroup = "group.kr.hankki.app"
