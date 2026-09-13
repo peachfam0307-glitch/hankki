@@ -5,6 +5,7 @@
 // 이 판은 dist 의 «진짜 앱»을 열어 `?card=chuseok` 카드를 뽑고, 앱과 같은 길(html-to-image toJpeg · 1.6 · 예열 두 번)로 굽는다.
 // 결과 = ① 카드 전체 PNG(_out) ② 칩 줄만 잘라 base64 로 로그에 찍는다(러너 결과물을 이 컨테이너가 못 받아서 · 규칙 21 눈으로 본다)
 // 사용(러너): node scripts/_repro-칩반달-실물-webkit-0913.mjs webkit   (dist 가 있어야 한다 · npm run build)
+// ✅ 4차(12:5x) — 고침(ShareDrawCard chips: 사파리 엔진이면 그림자 대신 border) 넣은 뒤 다시 돈다 → 이제 A(그대로)가 C 처럼 깨끗해야 한다
 import { spawn } from 'node:child_process'
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs'
 import path from 'node:path'

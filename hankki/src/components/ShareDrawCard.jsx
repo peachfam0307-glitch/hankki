@@ -2,7 +2,7 @@ import { isSeason, isPeakSeason, inCardWindow, seasonsNow } from '../season'
 import { SEASON_CUTS } from '../data/cardSeasons'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toJpeg, toCanvas } from 'html-to-image'
-import { 표지굽기, 예열굽기 } from '../coverEncode.js'   // 🎴📦 표지 = WebP q0.8(되면) · 아니면 JPEG q0.86 (2026-09-07) · 🍎 예열굽기 = 사파리 첫 굽기 그림 누락 대비(2026-09-13)
+import { 표지굽기, 예열굽기, 사파리엔진인가 } from '../coverEncode.js'   // 🎴📦 표지 = WebP q0.8(되면) · 아니면 JPEG q0.86 (2026-09-07) · 🍎 예열굽기 = 사파리 첫 굽기 그림 누락 대비 · 사파리엔진인가 = 칩 그림자 우회(2026-09-13)
 import { fontCSS, fontOptFrom } from '../fontEmbed'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
@@ -590,9 +590,15 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
       {meta.map((m, i) => (<span key={i} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>{i > 0 && <span style={{ width: 6, height: 6, borderRadius: 3, background: sep }} />}{m}</span>))}
     </div>
   )
+  // 🍎🍎 [2026-09-13] **사파리 엔진(아이폰)은 이 칩의 box-shadow 를 SVG 안에서 잘못 굽는다** — 칩 오른쪽 절반이 갈라진 흰 반달로
+  //   나온다(딸 아이폰14 · 빌드 12 · 문자 공유 카드 12:12 캡처). 맥 WebKit 재현판(`_repro-칩반달-실물-webkit-0913.mjs` · run 34736276791)
+  //   = A 그대로 ⛔ · B 둥근값 고정 ⛔ · **C 그림자 대신 border ✅** · D ✅ · E 바깥 그림자만 빼기 ⛔(inset 만 남겨도 남는다).
+  //   ⇒ 사파리 엔진일 때만 «그림자 0 · 진짜 테두리 2px». 크롬(안드로이드)은 원래 모양 그대로(같은 판에서 다섯 후보 전부 멀쩡).
+  //   border 는 자리를 먹어(inset 은 안 먹는다) 패딩을 2px 씩 줄여 칩 크기를 같게 맞춘다.
+  const 사파리칩 = 사파리엔진인가()
   const chips = (ring, text) => (
     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-      {meta.map((c, i) => <span key={i} style={{ padding: '11px 24px', borderRadius: 999, background: '#fffdf8', boxShadow: `0 8px 20px -12px rgba(120,80,50,.5), inset 0 0 0 2px ${ring}`, fontFamily: 'Jua, sans-serif', fontSize: 28, color: text }}>{c}</span>)}
+      {meta.map((c, i) => <span key={i} style={{ padding: 사파리칩 ? '9px 22px' : '11px 24px', borderRadius: 999, background: '#fffdf8', ...(사파리칩 ? { border: `2px solid ${ring}` } : { boxShadow: `0 8px 20px -12px rgba(120,80,50,.5), inset 0 0 0 2px ${ring}` }), fontFamily: 'Jua, sans-serif', fontSize: 28, color: text }}>{c}</span>)}
     </div>
   )
   // 🔍🔍 **「Play스토어 '한끼' 검색」 = 설치 유도 글자.** 이 카드에서 제일 아까운 한 줄이다.
