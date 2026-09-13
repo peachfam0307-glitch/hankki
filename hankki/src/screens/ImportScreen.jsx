@@ -13,6 +13,7 @@ import { getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import KeyBadge from '../components/KeyBadge'
 import EarnList from '../components/EarnList'
 import { 갈래고름, 레시피저장 } from '../stats'
+import { 앱안인가 } from '../nativeAuth'   // 🍎 아이폰 앱이면 공유 시트(share_target) 길이 «없다» — 안내를 갈아 끼운다
 import Icon from '../components/Icon'
 import Portal from '../components/Portal'
 // 🐻 [2026-08-28] 잔량 띠의 캐릭터(펭펭 돋보기 · 둘이 하트)를 **뺐다** — 창업자 *"그림 박스하나 없어져"*.
@@ -113,6 +114,16 @@ const HIDDEN = [
   { key: 'youtube', icon: 'youtube', title: 'YouTube', desc: '캡처·설명 붙여넣기로 담기', color: '#E33', costText: `캡처하면 ${keyCount(1)}`, paid: true },
   { key: 'text', icon: 'edit', title: '텍스트 붙여넣기', desc: '레시피 글을 붙여넣으면 재료·순서까지 자동 정리', color: '#B0895E', costText: keyCount(0), paid: false },
   { key: 'link', icon: 'link', title: '링크 주소만 담아두기', desc: '주소만 저장해요 · 재료·순서는 안 담겨요', color: '#9B8B79', costText: keyCount(0), paid: false },
+]
+// 🍎🍎 [2026-09-13 · 심사 제출 뒤 잡음] **아이폰 앱엔 「공유 → 더보기 → 한끼」 길이 없다.**
+//    안드로이드는 웹 매니페스트 share_target 으로 공유 시트에 한끼가 뜨지만, 아이폰 껍데기엔 그 부품(Share Extension)이
+//    아직 없다(딸 폰 실물 09-13 12:09 — 사진첩 공유 시트에 한끼 없음). 그런데 ①②카드와 안내가 그 길을 «그대로» 가르쳐서
+//    심사관·유저가 따라 하면 막힌다(2.1). → 아이폰 앱이면 ①을 「캡처 → 한끼 → 사진 고르기」 안내로 바꾸고 ②(갤러리 공유)는 내린다.
+//    ⛔ 기능을 끈 게 아니다(규칙 39) — 없는 길을 «가르치지 않는» 것이고, 되는 길(사진 고르기)로 안내한다. Share Extension 은 1.1 후보.
+//    ⛔ 안드로이드·웹은 한 글자도 안 바뀐다(`앱안인가()` 는 껍데기 밖에서 항상 false).
+const OPTIONS_IOS = [
+  { ...OPTIONS[0], title: '캡처한 사진 바로 한끼로', desc: '인스타·유튜브 보다 캡처해 두면, 여기서 골라 재료까지 정리해요' },
+  ...OPTIONS.filter((o) => o.key !== 'share' && o.key !== 'gallery'),
 ]
 const ALL_FLOWS = [...OPTIONS, ...HIDDEN]
 
@@ -324,7 +335,7 @@ export default function ImportScreen() {
   //    **마침표로 끊으면** 줄이 어디서 갈려도 두 문장이 각각 읽힌다.
   const NOTE_이미지고르기 = '처음 한 번은 무엇을 보낼지 고르는 화면이 떠요. 「이미지」를 고르면 돼요.'
 
-  const 안내들 = {
+  const 안내들기본 = {
     share: {
       lead: '인스타·유튜브를 보다가 캡처하면, 그 자리에서 한끼로 보낼 수 있어요.',
       steps: [
@@ -460,6 +471,36 @@ export default function ImportScreen() {
       ],
     },
   }
+  // 🍎 아이폰 앱 = 공유 시트에 한끼가 없으니 ①②의 안내를 «되는 길»로 바꾼다(안드로이드·웹은 안내들기본 그대로).
+  const 안내들 = 앱안인가() ? {
+    ...안내들기본,
+    share: {
+      lead: '인스타·유튜브를 보다가 캡처해 두면, 한끼에서 골라 재료까지 읽어 드려요.',
+      steps: [
+        강조('인스타·유튜브를 보다가 「캡처」해요'),
+        강조('한끼로 돌아와 「가져오기」를 눌러요'),
+        강조('「사진 고르기」에서 방금 캡처를 골라요'),
+      ],
+      result: '임시보관함에 담기고, 제목·재료를 자동으로 읽어 드려요.',
+      buttons: [
+        { label: '사진 고르기', onClick: () => 갈래로('photo') },
+        { label: 'Instagram 에서 담는 다른 방법', ghost: true, onClick: () => 갈래로('instagram') },
+        { label: 'YouTube 에서 담는 다른 방법', ghost: true, onClick: () => 갈래로('youtube') },
+        { label: '링크 주소만 담아두기', ghost: true, onClick: () => 갈래로('link') },
+      ],
+    },
+    gallery: {
+      lead: '사진 보관함에 저장해 둔 레시피 사진도 여기서 고르면 돼요.',
+      steps: [
+        강조('「가져오기」를 눌러요'),
+        강조('「사진 고르기」에서 사진을 골라요'),
+      ],
+      result: '임시보관함에 담기고, 제목·재료를 자동으로 읽어 드려요.',
+      buttons: [
+        { label: '사진 고르기', onClick: () => 갈래로('photo') },
+      ],
+    },
+  } : 안내들기본
 
   return (
     /* 📏 `imp` = 가져오기 화면 «전용» 표식 — 상자 안 줄간을 한 값으로 묶는 데 쓴다(styles.css).
@@ -512,7 +553,7 @@ export default function ImportScreen() {
               ⛔ 값(열쇠 몇 개)은 여전히 «고르는 그 줄»에 붙는다 — 창업자가 결제에서 정한 원칙과 같다:
                  *"구매 탭은 안 만든다 — 「쓰려는 순간」 그 자리에서"*. 알리는 것도 같은 자리다. */}
           <div className="imp-opts">
-            {OPTIONS.map((o, i) => (
+            {(앱안인가() ? OPTIONS_IOS : OPTIONS).map((o, i) => (
               <button
                 key={o.key}
                 className={`imp-opt press${i === 0 ? ' is-top' : ''}`}

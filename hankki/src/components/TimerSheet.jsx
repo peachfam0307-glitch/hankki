@@ -3,6 +3,7 @@ import { useTimer, SOUNDS } from '../timer'
 import Icon from './Icon'
 import Portal from './Portal'
 import { useModalBack } from '../useBackHandler'
+import { 앱안인가 } from '../nativeAuth'   // 🍎 아이폰 웹뷰엔 진동(vibrate)이 없다 — 문구를 거짓으로 두지 않는다(2026-09-13)
 
 const PRESETS = [1, 3, 5, 10, 15, 30]
 
@@ -75,7 +76,7 @@ export default function TimerSheet({ label = '요리 타이머', onClose }) {
           {/* ⭐ 「다른 화면에 있어도 울린다」를 «반드시» 말한다 — 타이머는 전역이라 실제로 그런데,
               그걸 모르면 유저가 타이머 화면에 붙들려 앉아 있는다(테스터가 그랬다). */}
           <div style={{ marginTop: 9, textAlign: 'center', fontSize: 15.8, lineHeight: 1.5, color: 'var(--brown)' }}>
-            <b style={{ fontWeight: 800 }}>소리와 진동</b>으로 알려드려요<br />
+            <b style={{ fontWeight: 800 }}>{앱안인가() ? '소리' : '소리와 진동'}</b>으로 알려드려요<br />
             <span className="t-sub" style={{ fontSize: 15.3 }}>다른 화면에 있어도 울려요</span>
           </div>
         </div>
