@@ -8,7 +8,10 @@ import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
 
 const APP = new URL('..', import.meta.url).pathname
-const OUT = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad'
+// ⛔⛔ [2026-09-13 고침] 여기 «다른 세션의» scratchpad 경로가 박혀 있었다 —
+//    그 세션이 끝나면 판이 엉뚱한 데로 떨어진다(2026-09-12 `_repro-물안담김` 과 같은 사고).
+//    ⭐ 지금 세션의 자리는 환경변수가 알려준다. 없으면 /tmp 로.
+const OUT = process.env.OUT || process.env.CLAUDE_SCRATCHPAD_DIR || '/tmp/claude-0'
 
 // ── 레시피 = 앱이 «화면에 쓰는 바로 그 값» ────────────────────────
 // ⛔⛔ [2026-08-17] 첫 판은 여기서 basics.js 를 «글자로 파싱»했다.
