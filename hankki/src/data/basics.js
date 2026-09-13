@@ -7075,7 +7075,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-yangbaechu-cheese-jeon',
     title: '양배추 치즈전', from: '2026-09-30',
-    origin: '성시경',   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다
+    origin: '성시경',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다
     sourceUrl: 'https://www.youtube.com/watch?v=FGc8QXJvAVc',
     sourceName: '성시경 SUNG SI KYUNG',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
@@ -7104,7 +7104,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-yangbaechu-pork-bokkeum',
     title: '양배추 돼지고기 볶음', from: '2026-11-04',
-    origin: '이연복 셰프',   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다
+    origin: '이연복 셰프',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다
     sourceUrl: 'https://www.youtube.com/watch?v=HvUdN6yjRvI',
     sourceName: '이연복의 복주머니',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
@@ -7135,7 +7135,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-gaji-omelet',
     title: '가지 오믈렛', from: '2026-10-07',
-    origin: '강민경',   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다 (영상 31:10 지점)
+    origin: '강민경',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다 (영상 31:10 지점)
     sourceUrl: 'https://www.youtube.com/watch?v=wYt6u4bblgY&t=1870s',
     sourceName: '걍민경',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
@@ -7167,7 +7167,7 @@ const RAW_BASICS = [
     title: '양배추나물', from: '2026-10-14',
     // 📮 창업자 2026-09-13 = "양배추나물은 그냥 링크없이 넣자" · "유명인이 아니라서 콩이모는"
     //    → SNS 갈래가 아니라 «우리 레시피»로 간다. 링크도 origin 도 없다.
-    origin: '창업자',
+    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3021',
     category: '한식', folder: '한식',
@@ -7192,7 +7192,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-deulkkae-sujebi',
     title: '들깨수제비', from: '2026-10-05',
-    origin: '창업자',
+    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3022',
     category: '한식', folder: '한식',
@@ -7224,7 +7224,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-gaji-lasagna',
     title: '가지 라자냐', from: '2026-10-21',
-    origin: '창업자',
+    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'gr_399',
     category: '양식', folder: '양식',
@@ -7254,7 +7254,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-ojingeo-gamja-jorim',
     title: '오징어 감자조림', from: '2026-10-14',
-    origin: '창업자',
+    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3015',
     category: '한식', folder: '한식',
@@ -7289,7 +7289,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-daepae-kimchi-sotbap',
     title: '대패삼겹살 김치 솥밥', from: '2026-09-30',
-    origin: '창업자',
+    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3014',
     category: '한식', folder: '한식',
@@ -7323,7 +7323,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-gaji-gangjeong',
     title: '가지강정', from: '2026-10-28',
-    origin: '창업자',
+    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3016',
     category: '한식', folder: '한식',
@@ -7358,7 +7358,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-saeu-kongnamul-jjim',
     title: '새우 콩나물찜', from: '2026-10-07',
-    origin: '창업자',
+    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3017',
     category: '한식', folder: '한식',
@@ -7398,7 +7398,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-mul-bibim-guksu',
     title: '물비빔국수', from: '2026-10-28',
-    origin: '창업자',
+    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'gr_232',
     category: '한식', folder: '한식',
@@ -7432,7 +7432,7 @@ const RAW_BASICS = [
     // 📮 창업자 2026-09-13 = "임성근 멸치볶음" → SNS 갈래라 이름에 사람 이름을 쓴다
     //    (앱에 이미 「어남선생 갈비치킨」·「정호영 셰프 닭볶음탕」이 같은 방식으로 있다)
     title: '임성근 멸치볶음', from: '2026-10-21',
-    origin: '임성근 셰프',   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다
+    origin: '임성근 셰프',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)   // ☑️ 2026-09-13 창업자가 원본 링크를 가져왔다
     sourceUrl: 'https://www.youtube.com/watch?v=IiGotbOXghQ',
     sourceName: '임성근 임짱TV',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
@@ -7469,7 +7469,7 @@ const RAW_BASICS = [
     // 📮 창업자 2026-09-13 = "문어미역샐러드로 고쳐주고" (원문 이름 「타코 스노모노」)
     id: 'basic-munueo-oi-naengchae',
     title: '문어미역샐러드', from: '2026-11-04',
-    origin: '창업자',
+    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3018',
     category: '일식', folder: '일식',
