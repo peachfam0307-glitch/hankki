@@ -7165,7 +7165,9 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-yangbaechu-namul',
     title: '양배추나물', from: '2026-10-14',
-    origin: '콩이모',   // ⏳창업자가 링크를 가져오면 sns 에 넣는다
+    // 📮 창업자 2026-09-13 = "양배추나물은 그냥 링크없이 넣자" · "유명인이 아니라서 콩이모는"
+    //    → SNS 갈래가 아니라 «우리 레시피»로 간다. 링크도 origin 도 없다.
+    origin: '창업자',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3021',
     category: '한식', folder: '한식',
