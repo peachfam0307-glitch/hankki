@@ -182,7 +182,8 @@ console.log('\n── ⓑ 진짜로 그렇게 도나 (tidy.js 를 실제로 실�
 
 // ⛔ 이 컨테이너는 Cloudflare 를 못 부른다 → «바깥 세계»만 흉내낸다.
 //   앱 코드는 진짜 tidy.js 를 그대로 쓴다(절대원칙 30).
-globalThis.localStorage = { getItem: () => null, setItem: () => {} }
+// 🔐 [2026-09-08] AI 허락(큰 틀 6-② ⓑ) — 이 판은 «허락한 유저»를 흉내낸다(허락 자체는 _repro-AI동의-0908 이 잰다)
+globalThis.localStorage = { getItem: (k) => (k === 'hankki:ai:consent' ? 'yes' : null), setItem: () => {} }
 
 const 맛보기 = '된장크림파스타\n스파게티 200g\n된장 1큰술\n1. 면을 삶는다\n2. 팬에 된장을 풀고 생크림을 넣는다'
 

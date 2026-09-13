@@ -33,7 +33,8 @@ globalThis.fetch = async (url, opt) => {
   마지막몸통 = JSON.parse(opt.body)
   return { ok: true, json: async () => ({ title: '삼치간장조림', ingredients: ['무 1/3개'], steps: ['구워요.'], memo: '' }) }
 }
-globalThis.localStorage = { getItem: () => null, setItem: () => {} }
+// 🔐 [2026-09-08] AI 허락(큰 틀 6-② ⓑ) — 이 판은 «허락한 유저»를 흉내낸다(허락 자체는 _repro-AI동의-0908 이 잰다)
+globalThis.localStorage = { getItem: (k) => (k === 'hankki:ai:consent' ? 'yes' : null), setItem: () => {} }
 
 const { tidyRecipe } = await import(join(앱, 'src/tidy.js'))
 const 긴글 = '삼치간장조림 레시피\n[재료]\n무 1/3개\n비비고 순살 삼치 2팩\n식용유 2스푼\n물 200ml\n[만드는 법]\n팬에 식용유를 두르고 무를 구워주세요.'
@@ -121,7 +122,7 @@ const 앱제이 = readFileSync(join(앱, 'src/App.jsx'), 'utf8')
 //      **앱 어디서 빠졌는지**를 알 길이 없었다. 앱 안이 조용해서 창업자도 나도 못 봤다.
 //   ⭐ 이 꼬리 한 조각이면 다음 한 번에 답이 나온다(규칙 8 — 시행착오는 코드가 한다).
 console.log('\n  ── ⑤ 사진이 실렸나를 «말해주나» ──')
-globalThis.localStorage = { getItem: () => '열쇠있다', setItem: () => {} }
+globalThis.localStorage = { getItem: (k) => (k === 'hankki:ai:consent' ? 'yes' : '열쇠있다'), setItem: () => {} }   // 🔐 허락 = yes(2026-09-08)
 const { tidyTail: 꼬리 } = await import(join(앱, 'src/tidy.js'))
 globalThis.fetch = async (url, opt) => {
   마지막몸통 = JSON.parse(opt.body)
@@ -138,7 +139,7 @@ const 꼬리3 = 꼬리()
 잰다(/📷너무큼\(/.test(꼬리3), '⑤-3 ⭐너무 커서 뺐으면 «크기까지» 말한다', 꼬리3)
 await tidyRecipe(긴글, 'https://남의주소/사진.jpg')
 잰다(/📷모양아님/.test(꼬리()), '⑤-4 dataURL 이 아니면 「모양아님」')
-globalThis.localStorage = { getItem: () => null, setItem: () => {} }
+globalThis.localStorage = { getItem: (k) => (k === 'hankki:ai:consent' ? 'yes' : null), setItem: () => {} }   // 🔐 허락 = yes(2026-09-08)
 잰다(!/📷/.test(꼬리()), '⑤-5 ⛔열쇠 없는 «유저»에겐 안 보인다')
 // ── ⑥ 🔁 「되다 안 되다」를 줄이는 둘 (2026-09-01 저녁 · 창업자 «1.2 둘다하자») ──
 //   ⭐ 심장 = **network 일 때만 다시 건다.** timeout·5xx 는 워커가 이미 뉴런을 썼으므로 ⛔재시도 금지.

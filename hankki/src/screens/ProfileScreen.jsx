@@ -20,6 +20,7 @@ import ConfirmSheet from '../components/ConfirmSheet'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import LabSheet from '../components/LabSheet'
 import CloudSheet from '../components/CloudSheet'
+import DeleteAccountSheet from '../components/DeleteAccountSheet'   // 🗑 계정 · 데이터 삭제(큰 틀 6-① ⓑ)
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 // 📣 [창업자 2026-09-03 · ④⑤ 스샷] 그 앱 설정엔 「정보」 갈래에 «공지사항»이 있다.
 //   🔢 실측 = 우리 「한끼 소식」 입구는 **홈 하나뿐**이었다(`HomeScreen.jsx:440` 만이 `PreviewSheet` 를 연다).
@@ -49,6 +50,7 @@ import { FAV_NAME } from '../favName'
 // 🏷 갈래 이름도 «한 곳»에서만 온다(`src/settingsGroups.js`) — 화면과 관문이 같은 목록을 본다.
 //    ⛔ 여기에 갈래 이름을 «다시 적지» 말 것. 2026-09-04 에 화면과 관문이 각각 적어서 실제로 갈렸다.
 import { 설정갈래, 설정섹션, 설정이름표스타일 } from '../settingsGroups'
+import { AI동의상태, AI동의쓰기, 바뀜이벤트 } from '../aiConsent'   // 🤖🔐 AI 다듬기 사용 켜기/끄기(큰 틀 6-② ⓑ)
 
 export default function ProfileScreen() {
   const store = useStore()
@@ -72,11 +74,15 @@ export default function ProfileScreen() {
   const [checking, setChecking] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
   const [lab, setLab] = useState(false) // 한끼연구소(의견·설문·오류) 시트
+  const [delAccount, setDelAccount] = useState(false) // 🗑 계정 · 데이터 삭제 시트(2026-09-08)
   const [소식, set소식] = useState(false) // 한끼 소식(＝공지사항) 시트 — 홈과 «같은 부품»
   const 소식들 = whatsNew()
   const 안본소식 = isNewsUnread(소식들)
   // ☁️ 홈 한 줄로 들어왔으면 도착하자마자 클라우드 시트를 연다(백업 쪽지와 같은 길)
   const [cloud, setCloud] = useState(() => takeOpenCloud())
+  // 🤖🔐 AI 다듬기 허락 상태 — 'yes' | 'no' | null(아직 안 물음). 시트에서 답하면 바뀜이벤트로 여기도 갱신된다.
+  const [ai동의, setAi동의] = useState(() => AI동의상태())
+  useEffect(() => { const f = () => setAi동의(AI동의상태()); window.addEventListener(바뀜이벤트, f); return () => window.removeEventListener(바뀜이벤트, f) }, [])
   // ⛔⛔ `useLayerBack` 은 «반드시» 위 `useState` «아래»에 둔다 —
   //   위에 두면 `cloud` 를 선언 «전»에 읽어 `Cannot access before initialization` 으로 **설정 화면이 통째로 죽는다.**
   //   📌 2026-08-21 에 실제로 그렇게 냈다. 빌드도 통과하고 스모크도 통과했다 — **화면을 열어서야 드러났다**(규칙 21).
@@ -403,7 +409,19 @@ export default function ProfileScreen() {
     //   ⛔ 여기서 «바로 지우지» 않는다 — 지우는 단추는 클라우드 시트 안의 ［클라우드 비우기］다.
     //      이 줄은 «어디서 지우는지 알려주는 길»이고, 그게 Play 가 말하는 「인앱 경로」다.
     //   ⛔ 로그인 안 한 사람에게도 보인다 — 기기 안 데이터를 지우는 법도 그 페이지에 있다.
-    { icon: 'trash', label: '계정 · 데이터 삭제', 밖: true, onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'delete-account.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
+    //   🍎 [2026-09-08 · 큰 틀 6-① ⓑ] 이제 «앱 안 시트»가 뜬다 — 애플 5.1.1(v) = 앱 안에서 계정 삭제를 «시작»할 수 있어야 한다.
+    //      실측 = 위 주석이 가리키던 ［클라우드 비우기］ 단추가 **앱 어디에도 없었다**(`클라우드비우기()` 를 부르는 곳 0).
+    //      시트 = 「클라우드 비우기」(서버 기록만) ＋ 「계정 삭제」(기록＋계정) · ⛔이 폰의 레시피는 어느 쪽도 안 건드린다 · 웹 안내 링크는 시트 맨 아래.
+    // 🤖🔐 AI 다듬기 사용 — 애플 5.1.2(i) 「제3자 AI 로 보내기 전 허락」의 «바꾸는 자리»(큰 틀 6-② ⓑ · 2026-09-08)
+    //   · 처음엔 「아직 안 물음」 — 첫 다듬기 때 시트가 묻는다 · 여기서 켜면 시트 없이 바로 'yes' · 끄면 AI 를 안 부른다(규칙 정리만)
+    {
+      icon: 'sparkle', label: 'AI 다듬기 사용', badge: ai동의 === 'yes' ? '켜짐' : ai동의 === 'no' ? '꺼짐' : '처음 쓸 때 물어봐요',
+      onClick: () => {
+        if (ai동의 === 'yes') { AI동의쓰기('no'); nav.showToast('AI 다듬기를 껐어요 · 레시피는 앱 안 규칙으로만 정리해요') }
+        else { AI동의쓰기('yes'); nav.showToast('AI 다듬기를 켰어요 · 글자·사진이 Cloudflare Workers AI 로 가요') }
+      },
+    },
+    { icon: 'trash', label: '계정 · 데이터 삭제', onClick: () => setDelAccount(true) },
     // 📊 [2026-09-08] 「이용 통계 보내기」 줄은 여기 «없다» — 방침 페이지 «안»으로 옮겼다.
     //   📮 창업자 = *"우리도 깊이 묻어놓자"* · *"설정에서 딱 안보이게"*
     //   ⛔ 다시 넣지 말 것. 끄는 자리가 «두 곳»이 되면 한쪽이 반드시 낡는다.
@@ -974,6 +992,8 @@ export default function ProfileScreen() {
 
       {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
       {lab && <LabSheet onClose={() => setLab(false)} />}
+      {/* 🗑 계정 · 데이터 삭제 — 앱 안 시트(큰 틀 6-① ⓑ · 2026-09-08) */}
+      {delAccount && <DeleteAccountSheet onClose={() => setDelAccount(false)} showToast={nav.showToast} />}
       {소식 && <PreviewSheet onClose={() => set소식(false)} />}
 
       {/* 첫 방문 코치마크 — 백업·의견 보내기 안내 */}

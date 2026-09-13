@@ -35,6 +35,36 @@ const 앱 = (f) => b64(join(원본, `v8-${f}.png`)) // ⛔ 파일 이름에 v8- 
 const 올리브 = '#4a4f36'
 // 📱 [00:46] *"이거 캐러셀도 줘~!"* — 같은 8장을 인스타 캐러셀(1080×1350 · 4:5)로. `CAROUSEL=1` 이면 키만 줄이고 폰·단계·카드를 위로 당긴다.
 const 캐러셀 = !!process.env.CAROUSEL
+// 🍎 [2026-09-08] 애플 App Store 규격 — 같은 8장을 «비율만 바꿔» 뽑는다(창업자 "13일 전에 할 수 있는 건 다").
+//    원문 = developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications (2026-09-08 이 세션에서 열람)
+//    · iPhone 6.9" = 1320×2868 (세로) — «필수»(6.5" 도 안 주면). · iPad 13" = 2064×2752 — 껍데기가 아이패드도 켜져 있어(TARGETED_DEVICE_FAMILY 1,2) «필수».
+//    · 1~10장 · JPEG/PNG · ⛔알파 채널 금지 → 마지막에 RGB 로 굳힌다.
+//    그리는 법 = 1080 폭 CSS 를 그대로 두고 «키»만 바꾼 뒤(아이폰 2346 · 아이패드 1440) 2배로 찍고 Pillow 로 정확한 픽셀에 맞춘다(비율이 같아서 찌그러지지 않는다).
+const 아이폰 = process.env.IOS === '1'
+const 아이패드 = process.env.IPAD === '1'
+const 캔버스높이 = 캐러셀 ? 1350 : 아이폰 ? 2346 : 아이패드 ? 1440 : 1920
+const 아이폰CSS = 아이폰 ? `
+body{height:2346px}
+.wrap{padding-top:150px}.hh{font-size:104px}.ss{font-size:42px;margin-top:24px}.rule{top:500px}
+.front{top:700px;width:760px;height:1800px;right:-30px}
+.front img{height:100%} /* 📮 [09-08 창업자] *"아이폰 아래가 많이 남네?"* — 그림에 높이 100% 가 없어 틀보다 «먼저» 끝나고 틀 바탕색이 남았다(안드로이드 1920 캔버스에선 그림이 더 길어 안 보이던 구멍) → cover 로 틀을 꽉 채운다 */
+.back{top:720px;width:430px;height:780px}
+.duo{top:840px!important}
+.steps{top:1820px;gap:30px}
+` : ''
+// 아이패드(3:4)는 캐러셀(4:5)보다 조금 더 «넓적»하다 — 캐러셀 값을 물려받고 키만 90px 늘린다
+const 아이패드CSS = 아이패드 ? `
+body{height:1440px}
+.wrap{padding-top:70px}.hh{font-size:84px}.ss{font-size:32px;margin-top:12px}.rule{top:340px}
+.front{top:430px;width:620px;height:1080px;right:-20px}
+.front img{height:100%}
+.back{top:440px;width:350px;height:640px}
+.steps{top:1110px;gap:16px}.step img,.step .dot{width:80px;height:80px}.step b{font-size:29px}.step small{font-size:22px}
+.duo{top:490px!important}
+.sp{transform:scale(.85)}
+.card{top:400px!important;padding:34px 40px!important}.card p{font-size:31px!important;line-height:1.55!important}.card hr{margin:20px 0!important}
+.pill{bottom:170px!important;font-size:30px!important;padding:14px 32px!important}.end{bottom:48px!important;font-size:42px!important}
+` : ''
 const 캐러셀CSS = 캐러셀 ? `
 body{height:1350px}
 .wrap{padding-top:64px}.hh{font-size:84px}.ss{font-size:32px;margin-top:12px}.rule{top:330px}
@@ -75,7 +105,7 @@ body{width:1080px;height:1920px;overflow:hidden;position:relative;font-family:'J
 /* ✨ 샤랄라 — 📮 [00:42] *"효과도 넣어줘. 샤랄라같은거"* · 네 갈래 별을 폰 둘레와 헤드라인 곁에 흩는다(연한 금빛 · 은은한 광) */
 .sp{position:absolute;z-index:5;filter:drop-shadow(0 0 10px rgba(255,214,120,.85))}
 `
-const 공통 = 공통0 + 캐러셀CSS
+const 공통 = 공통0 + 캐러셀CSS + 아이폰CSS + 아이패드CSS
 const 별 = (x, y, s, o = 1, c = '#f2c86a') => `<svg class="sp" style="left:${x}px;top:${y}px;width:${s}px;height:${s}px;opacity:${o}" viewBox="0 0 48 48"><path d="M24 2C25.6 16 32 22.4 46 24 32 25.6 25.6 32 24 46 22.4 32 16 25.6 2 24 16 22.4 22.4 16 24 2Z" fill="${c}"/></svg>`
 const 샤랄라 = () => 별(700, 96, 74) + 별(790, 190, 40, .8, '#fff3d6') + 별(380, 560, 52, .9) + 별(440, 640, 28, .7, '#fff3d6') + 별(1000, 520, 62) + 별(950, 600, 30, .75, '#fff3d6') + 별(300, 1180, 44, .85) + 별(360, 1250, 24, .7, '#fff3d6')
 const 머리 = (h, s) => `<div class="wrap"><div class="hh">${h}</div><div class="ss">${s}</div></div><div class="rule"></div>`
@@ -98,10 +128,12 @@ ${머리('캡처 한 장이면<br>레시피가 정리돼요', '보다가 캡처 
 //    목표 = 그림 높이 곰 400 · 펭 360(곰보다 살짝 작게 — 창업자 말) · 콤비 380
 const 스티커치수 = { gp_gomhi: [593, 667], gp_gomtb: [581, 698], gp_gomft: [572, 699], gp_gomv: [548, 663], pjs_01: [427, 551], pjs_03: [401, 552], pjs_05: [486, 546], duos_02: [595, 533], duos_06: [620, 475] }
 const 스티커폭 = (k) => { const [w, h] = 스티커치수[k] || [1, 1]; const H = /^gp_gom/.test(k) ? 400 : /^pjs_/.test(k) ? 360 : 380; return Math.round(H * w / h) }
-const 장 = ({ 머리: h, 부제, 파일, 곰, 포인트: pts, 자리 = 'top', 폰 = '', 캐러셀자리 = null }) => `<style>${공통}
-.front img{object-position:${캐러셀 && 캐러셀자리 ? 캐러셀자리 : 자리}} ${캐러셀 ? '' : 폰}</style>
+// 🍎 아이패드는 폰이 짧아 캐러셀 자리·크기 규칙을 그대로 따른다 · 아이폰은 폰이 «더 길어» 장별 덮어쓰기를 따로 받는다(아이폰폰)
+const 짧은폰 = 캐러셀 || 아이패드
+const 장 = ({ 머리: h, 부제, 파일, 곰, 포인트: pts, 자리 = 'top', 폰 = '', 캐러셀자리 = null, 아이폰폰 = '', 아이패드폰 = '' }) => `<style>${공통}
+.front img{object-position:${짧은폰 && 캐러셀자리 ? 캐러셀자리 : 자리}} ${캐러셀 ? '' : 아이패드 ? 아이패드폰 : 아이폰 ? 아이폰폰 : 폰}</style>
 ${머리(h, 부제)}${샤랄라()}
-${곰 ? `<img class="duo" style="width:${Math.round(스티커폭(곰) * (캐러셀 ? 0.8 : 1))}px;top:${/^gp_gom/.test(곰) ? 660 : 690}px" src="${스티커(곰)}">` : ''}
+${곰 ? `<img class="duo" style="width:${Math.round(스티커폭(곰) * (짧은폰 ? 0.8 : 1))}px;top:${/^gp_gom/.test(곰) ? 660 : 690}px" src="${스티커(곰)}">` : ''}
 <div class="front"><img src="${앱(파일)}"></div>
 ${포인트(pts)}`
 
@@ -111,7 +143,10 @@ const 장05 = () => 장({ 머리: '불 앞에서도<br>편하게', 부제: '큰 
   포인트: [['⏲', '걸음마다 타이머', '끓는 시간 딱 맞게'], ['🔔', '소리와 진동으로', '다른 화면에 있어도']],
   // ⛔ 첫 판은 타이머 띠(이 장의 값어치)가 아래로 잘렸다(규칙 21) → 폰을 줄여 올리고 «아래»가 보이게 자른다
   // 📮 [09-06 01:11] *"타이머, 요리모드 잘 안보여"* → 폰을 더 넓게(700) · 덜 기울여 타이머 띠와 걸음 글이 크게 들어오게
-  자리: '50% 100%', 폰: '.front{top:470px;right:-10px;width:700px;height:1480px;transform:rotate(-2deg)}' })
+  자리: '50% 100%', 폰: '.front{top:470px;right:-10px;width:700px;height:1480px;transform:rotate(-2deg)}',
+  아이폰폰: '.front{top:600px;right:-10px;width:740px;height:1860px;transform:rotate(-2deg)}',
+  // 🍎 아이패드(3:4)는 키가 1440 이라 «타이머 띠＋이전·다음»이 아래로 잘렸다(규칙 21 · 09-08 검수판) → 폰을 올려 아래가 남게
+  아이패드폰: '.front{top:330px;height:1090px;transform:rotate(-2deg)}' })
 
 // 08 왜 만들었나 — v5 마지막 장 글 «그대로»(창업자 확정 문단) · 뼈대만 D 로
 const 장08 = () => `<style>${공통}
@@ -119,7 +154,8 @@ const 장08 = () => `<style>${공통}
 /* 📮 [00:49] *"8번에서 설명이 제목밑에 바짝 붙어있어"* — 제목이 한 줄이라 부제가 붙어 보인다 → 부제를 한 호흡 띄운다 */
 .ss{margin-top:34px}.rule{top:340px}
 .duo{left:auto;right:64px;top:110px;width:300px} /* 08 은 헤드라인 옆 작은 자리라 «균일» 규칙에서 뺀다 — 496px 로 하니 카드를 덮었다(규칙 21) */
-${캐러셀 ? '.duo{top:40px!important;width:200px!important}.rule{top:300px}' : ''}
+${짧은폰 ? '.duo{top:40px!important;width:200px!important}.rule{top:300px}' : ''}
+${아이폰 ? '.wrap{padding-top:140px}.hh{font-size:96px}.rule{top:400px}.duo{top:150px!important;width:320px!important}.card{top:520px!important;left:40px!important;right:40px!important;padding:92px 56px!important}.card p{font-size:46px!important;line-height:1.95!important}.card hr{margin:70px 0!important}.pill{bottom:300px!important;font-size:40px!important;padding:24px 50px!important}.end{bottom:100px!important;font-size:58px!important}' : ''} /* ⛔ 이 줄은 아래 .card 기본 규칙보다 «앞»에 있어 !important 가 없으면 진다(첫 판이 그랬다) */ /* 09-08 창업자 "아래가 남네" — 08 은 카드 글을 키워 아래 알약과 붙인다 */
 .card{position:absolute;left:64px;right:64px;top:440px;z-index:3;background:#fffdf8;border-radius:36px;padding:60px 54px;box-shadow:0 20px 44px rgba(74,79,54,.12);text-align:left}
 .card p{font-family:'Gowun Dodum';color:${올리브};font-size:42px;line-height:1.72;letter-spacing:-0.01em}
 .card .go{color:#c2703a;font-weight:700}
@@ -157,15 +193,21 @@ const 장들 = {
   'v8-07-자랑': () => 장({ 머리: '오늘의 한 끼를<br>카드 한 장으로', 부제: '뽑을 때마다 달라지는 카드 · 친구에게 톡', 파일: '10-랜덤카드', 곰: 'duos_02',
     포인트: [['🃏', '다시 뽑기', '마음에 드는 카드까지'], ['💬', '공유하기', '카톡으로 자랑']],
     // 📮 [09-06 01:11] *"콩국수도 레꾸자랑뽑기가 보이면 좋겠고"* → 카드 «아래»(다시 뽑기·공유하기 단추 줄)가 보이는 자리로 자른다
-    자리: '50% 58%', 캐러셀자리: '50% 42%', 폰: '.front{top:520px;height:1440px;transform:rotate(-2.5deg)}' }), // 캐러셀은 폰이 짧아 58% 면 카드 «위»가 잘린다(13:44 창업자) → 42%
+    자리: '50% 58%', 캐러셀자리: '50% 42%', 폰: '.front{top:520px;height:1440px;transform:rotate(-2.5deg)}',
+    아이폰폰: '.front{top:640px;height:1820px;transform:rotate(-2.5deg)}',
+    아이패드폰: '.front{top:330px;height:1090px;transform:rotate(-2.5deg)}' }), // 캐러셀은 폰이 짧아 58% 면 카드 «위»가 잘린다(13:44 창업자) → 42%
   'v8-08-왜만들었나': 장08,
 }
 
 const CHROMIUM = process.env.SMOKE_CHROMIUM
 const br = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
-const p = await br.newPage({ viewport: { width: 1080, height: 캐러셀 ? 1350 : 1920 }, deviceScaleFactor: 2 })
+const p = await br.newPage({ viewport: { width: 1080, height: 캔버스높이 }, deviceScaleFactor: 2 })
+// 🍎 파일 이름 접두 = 어느 가게 것인지(ios-/ipad-) · 애플 정확 픽셀(같은 비율이라 늘리기만 한다 · 알파 없이 RGB)
+const 접두 = 아이폰 ? 'ios-' : 아이패드 ? 'ipad-' : ''
+const 애플크기 = 아이폰 ? [1320, 2868] : 아이패드 ? [2064, 2752] : null
 const 이름들 = []
-for (const [이름, 만들기] of Object.entries(장들)) {
+for (const [이름0, 만들기] of Object.entries(장들)) {
+  const 이름 = 접두 ? 이름0.replace(/^v8-/, 접두) : 이름0
   await p.setContent(`<!doctype html><meta charset="utf-8">${만들기()}`)
   await p.evaluate(() => document.fonts.ready)
   await p.waitForTimeout(350)
@@ -173,12 +215,21 @@ for (const [이름, 만들기] of Object.entries(장들)) {
   이름들.push(이름); console.log(`  ✅ ${이름}`)
 }
 await br.close()
-// 🔎 검수판 — 8장을 한눈에(규칙 21). sharp 가 없어 Pillow.
+// 🔎 검수판 — 8장을 한눈에(규칙 21). sharp 가 없어 Pillow. 애플 갈래는 먼저 정확 픽셀로 맞추고 RGB 로 굳힌다.
+const 검수판이름 = 접두 ? `${접두}검수판` : 'v8-검수판'
 execFileSync('python3', ['-c', `from PIL import Image
 fs=${JSON.stringify(이름들)}
-w,h=486,864
+target=${애플크기 ? JSON.stringify(애플크기) : 'None'}
+for f in fs:
+  if target:
+    im=Image.open('${OUT}/'+f+'.png').convert('RGB')
+    if im.size!=tuple(target): im=im.resize(tuple(target),Image.LANCZOS)
+    im.save('${OUT}/'+f+'.png',optimize=True)
+    assert Image.open('${OUT}/'+f+'.png').size==tuple(target), f
+    assert Image.open('${OUT}/'+f+'.png').mode=='RGB', f
+w=486; h=round(w*${캔버스높이}/1080)
 sh=Image.new('RGB',(w*4+50,h*2+30),'white')
 for i,f in enumerate(fs):
   sh.paste(Image.open('${OUT}/'+f+'.png').resize((w,h)),(10+(i%4)*(w+10),10+(i//4)*(h+10)))
-sh.save('${OUT}/v8-검수판.png')`])
-console.log(`\n📸 8장 ＋ 검수판 → ${OUT}`)
+sh.save('${OUT}/${검수판이름}.png')`])
+console.log(`\n📸 8장 ＋ 검수판 → ${OUT}${애플크기 ? ` (애플 정확 픽셀 ${애플크기.join('×')} · RGB)` : ''}`)

@@ -9,6 +9,7 @@ import { timeAgo } from '../utils'
 import { getOcrLeft, KEY_NAME } from '../ocr'
 import { 남은열쇠말 } from '../안내말'
 import { tidyRecipe, 실패꼬리 } from '../tidy'
+import { AI동의받기 } from '../aiConsent'   // 🔐 AI 로 보내기 전 허락(큰 틀 6-② ⓑ)
 import { 만회값 } from '../retidy'
 import TidyWaiting from '../components/TidyWaiting'
 import uiKeyOne from '../assets/ui/key_one.png'
@@ -61,6 +62,8 @@ export default function InboxScreen() {
   const 다듬기 = async (r) => {
     const 원문 = String(r.rawText || '')
     if (다듬는중 || 원문.length < 40) return
+    // 🔐 허락 «먼저»(대기창보다 앞) — 유저가 직접 눌렀으니 「사용 안 함」이었어도 다시 묻는다(큰 틀 6-② ⓑ)
+    if (!(await AI동의받기({ 다시묻기: true }))) return
     set다듬는중(r.id)
     set창닫음(false)   // ⭐ 새로 시작할 땐 창을 «다시» 연다(먼젓번에 닫아 뒀어도)
     nav.showToast('AI가 다듬는 중이에요 · 다 되면 레시피에 저절로 올라가요', 6000)

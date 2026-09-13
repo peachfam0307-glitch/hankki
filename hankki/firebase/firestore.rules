@@ -32,15 +32,31 @@ service cloud.firestore {
       return request.auth.token.firebase.identities['google.com'][0];
     }
 
-    // 👤 users/{구글번호} 문서 하나 = 그 사람의 «meta»
+    // 🍎 [2026-09-08 · 큰 틀 4 · 열쇠 갈래 ⓑ] 애플로 로그인한 사람 — 칸 이름은 «apple_애플번호»
+    //    (구글 칸은 그대로 «구글번호». 이미 있는 유저는 손 안 댄다 · 앱 `src/nativeAuth.js` 열쇠() 와 같은 식)
+    function isAppleUser() {
+      return request.auth != null
+          && request.auth.token.firebase.sign_in_provider == 'apple.com';
+    }
+    function appleKey() {
+      return 'apple_' + request.auth.token.firebase.identities['apple.com'][0];
+    }
+
+    // 이 칸의 주인인가 — 구글이면 구글번호, 애플이면 apple_번호
+    function owns(gid) {
+      return (isGoogleUser() && googleId() == gid)
+          || (isAppleUser() && appleKey() == gid);
+    }
+
+    // 👤 users/{열쇠} 문서 하나 = 그 사람의 «meta»
     //    (profile · folders · shops · wishlist · shoppingList · pantry · seedV …)
     //    그 아래 recipes/{id} · diary/{id} 는 한 편·한 장이 문서 하나다.
     match /users/{gid} {
-      allow read, write: if isGoogleUser() && googleId() == gid;
+      allow read, write: if owns(gid);
 
       // ⭐ `{doc=**}` = 그 아래 «몇 겹이든» 전부 같은 조건
       match /{doc=**} {
-        allow read, write: if isGoogleUser() && googleId() == gid;
+        allow read, write: if owns(gid);
       }
     }
   }

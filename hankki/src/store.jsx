@@ -15,6 +15,8 @@ import { politeSteps, politeFormalSteps } from './polish'
 import { pickPaper } from './memoPaper'
 // 🗄 사진은 「큰 창고」로 — 서랍(localStorage 5MB)엔 글자만 남긴다
 import { 나누기, 여럿넣기, 지우기 as 창고에서지우기, 쪽지열쇠모으기, 열쇠들 as 창고열쇠들 } from './photoStore'
+// 🪞🍎 아이폰 «앱» 안에서만 — 저장될 때마다 폰 문서 폴더에 거울을 예약한다(앱 밖이면 0 비용 · 2026-09-08 큰 틀 5)
+import { 거울예약 } from './mirror'
 
 const KEY = 'hankki:v1'
 // 💾💾 **「저장이 진짜로 됐나」 — 화면이 물어볼 수 있게 밖으로 낸다** (창업자 확정 2026-09-02)
@@ -976,8 +978,12 @@ function reducer(state, action) {
     }
     case 'reset': {
       // 처음 상태로 — 기본 레시피를 다시 채우므로 삭제 기록도 초기화한다.
+      // 👪 `action.전부` = 일기·재료함·장보기·가게까지 «다» 처음으로 (2026-09-10 · 다른 계정 「비우고 시작」 · 로그인-필수로 §10)
+      //    ⛔ 설정의 「초기화」는 그대로(전부 없음) — 그 단추의 뜻(레시피만)을 안 바꾼다.
+      const 전부 = action.전부 ? { diary: [], pantry: [], shoppingList: [], wishlist: [], shops: DEFAULT_SHOPS, sampleGone: false } : null
       return {
         ...state,
+        ...전부,
         recipes: seedRecipes,
         seedV: BASICS_VERSION,
         removedSeedIds: [],
@@ -1284,6 +1290,8 @@ export function StoreProvider({ children }) {
       }
       localStorage.setItem(KEY, 글)
       마지막저장성공 = Date.now()
+      // 🪞 아이폰 앱이면 10초 뒤 문서 폴더에 한 벌 더(거울) — 웹·안드로이드에선 바로 false 로 끝난다
+      try { 거울예약() } catch { /* 거울은 덤 — 본체 저장은 이미 끝났다 */ }
     } catch {
       // 저장 공간 초과(특히 iOS ~5MB) — 조용히 사라지면 안 된다(핵심 약속: 레시피 보관)
       마지막저장실패 = Date.now()
@@ -1306,7 +1314,7 @@ export function StoreProvider({ children }) {
     removeFolder: useCallback((name) => dispatch({ type: 'removeFolder', name }), []),
     setProfile: useCallback((patch) => dispatch({ type: 'setProfile', patch }), []),
     clearAll: useCallback(() => dispatch({ type: 'clear' }), []),
-    reset: useCallback(() => dispatch({ type: 'reset' }), []),
+    reset: useCallback((전부 = false) => dispatch({ type: 'reset', 전부: 전부 === true }), []),
     addShop: useCallback((shop) => dispatch({ type: 'addShop', shop }), []),
     updateShop: useCallback((id, patch) => dispatch({ type: 'updateShop', id, patch }), []),
     removeShop: useCallback((id) => dispatch({ type: 'removeShop', id }), []),

@@ -2,10 +2,15 @@ import { isSeason, isPeakSeason, inCardWindow, seasonsNow } from '../season'
 import { SEASON_CUTS } from '../data/cardSeasons'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toJpeg, toCanvas } from 'html-to-image'
-import { 표지굽기 } from '../coverEncode.js'   // 🎴📦 표지 = WebP q0.8(되면) · 아니면 JPEG q0.86 (2026-09-07)
+import { 표지굽기, 예열굽기, 사파리엔진인가 } from '../coverEncode.js'   // 🎴📦 표지 = WebP q0.8(되면) · 아니면 JPEG q0.86 (2026-09-07) · 🍎 예열굽기 = 사파리 첫 굽기 그림 누락 대비 · 사파리엔진인가 = 칩 그림자 우회(2026-09-13)
 import { fontCSS, fontOptFrom } from '../fontEmbed'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
+// 🍎 2026-09-13 — 아이폰 앱 안에선 「Play스토어」 대신 「App Store」. 심사 지침 2.3.10(다른 플랫폼 이름 금지) —
+//    딸 아이폰 실물(09-12 17:59 문자 카드 · 18:00 사진첩 카드)에서 「Play스토어 '한끼' 검색」이 그대로 나갔다.
+//    웹·안드로이드는 그대로. 카드 «그림 안 알약» 둘 ＋ 공유 «글» 둘 = 네 곳이 전부 이 한 줄을 본다.
+import { 앱안인가 } from '../nativeAuth'
+const 스토어이름 = () => (앱안인가() ? 'App Store' : 'Play스토어')
 // ⛔ UI엔 유니코드 이모지를 쓰지 않는다 — 우리 아이콘·스티커만(CLAUDE.md 핀).
 //    v8.63에서 앱 전체를 정리할 때 이 시트는 '보류'로 빠져 🔄💌🖼🐻🐧가 남아 있었다(2026-07-29 정리).
 import uiDuoHi from '../assets/stickers/photo/gp_duohi.png'
@@ -585,9 +590,15 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
       {meta.map((m, i) => (<span key={i} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>{i > 0 && <span style={{ width: 6, height: 6, borderRadius: 3, background: sep }} />}{m}</span>))}
     </div>
   )
+  // 🍎🍎 [2026-09-13] **사파리 엔진(아이폰)은 이 칩의 box-shadow 를 SVG 안에서 잘못 굽는다** — 칩 오른쪽 절반이 갈라진 흰 반달로
+  //   나온다(딸 아이폰14 · 빌드 12 · 문자 공유 카드 12:12 캡처). 맥 WebKit 재현판(`_repro-칩반달-실물-webkit-0913.mjs` · run 34736276791)
+  //   = A 그대로 ⛔ · B 둥근값 고정 ⛔ · **C 그림자 대신 border ✅** · D ✅ · E 바깥 그림자만 빼기 ⛔(inset 만 남겨도 남는다).
+  //   ⇒ 사파리 엔진일 때만 «그림자 0 · 진짜 테두리 2px». 크롬(안드로이드)은 원래 모양 그대로(같은 판에서 다섯 후보 전부 멀쩡).
+  //   border 는 자리를 먹어(inset 은 안 먹는다) 패딩을 2px 씩 줄여 칩 크기를 같게 맞춘다.
+  const 사파리칩 = 사파리엔진인가()
   const chips = (ring, text) => (
     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-      {meta.map((c, i) => <span key={i} style={{ padding: '11px 24px', borderRadius: 999, background: '#fffdf8', boxShadow: `0 8px 20px -12px rgba(120,80,50,.5), inset 0 0 0 2px ${ring}`, fontFamily: 'Jua, sans-serif', fontSize: 28, color: text }}>{c}</span>)}
+      {meta.map((c, i) => <span key={i} style={{ padding: 사파리칩 ? '9px 22px' : '11px 24px', borderRadius: 999, background: '#fffdf8', ...(사파리칩 ? { border: `2px solid ${ring}` } : { boxShadow: `0 8px 20px -12px rgba(120,80,50,.5), inset 0 0 0 2px ${ring}` }), fontFamily: 'Jua, sans-serif', fontSize: 28, color: text }}>{c}</span>)}
     </div>
   )
   // 🔍🔍 **「Play스토어 '한끼' 검색」 = 설치 유도 글자.** 이 카드에서 제일 아까운 한 줄이다.
@@ -614,7 +625,7 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
           「Play스토어 ‘한끼’ / 검색」 으로 «두 줄»이 되어 알약 밖으로 삐져나왔다.
           ⭐ 뽑힌 사진에서만 보였다 — 화면에선 한 줄이라 눈으로는 절대 못 잡는다. */}
       <span style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', padding: '9px 20px', borderRadius: 999, background: wm, color: onColor(wm), fontFamily: 'Jua, sans-serif', fontSize: 22, letterSpacing: '-0.01em' }}>
-        Play스토어 ‘한끼’ 검색
+        {스토어이름()} ‘한끼’ 검색
       </span>
     </div>
   )
@@ -1140,7 +1151,7 @@ export function RecipeCard({ recipe }) {
         {steps.length > 7 && <div style={{ fontSize: 26, color: '#a8987e', paddingLeft: 53, marginTop: 2 }}>… 전체 {steps.length}단계는 한끼 앱에서 →</div>}
       </div>
       <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '18px 42px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontSize: 38, fontWeight: 800 }}>🔍 Play스토어 ‘한끼’ 검색</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '18px 42px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontSize: 38, fontWeight: 800 }}>🔍 {스토어이름()} ‘한끼’ 검색</span>
       </div>
     </div>
   )
@@ -1202,7 +1213,8 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
     //      4.7MB 가 되고, 글씨체 하나만 쓴 사람도 열두 벌을 다 내려받는다.
     //   ⚠️ pixelRatio 는 1.6 유지 — 1 로 낮추면 반올림 때문에 폭이 미세하게 달라진다.
     const fontOpt = fontOptFrom(await fontCSS(el))
-    const u = await toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff', ...fontOpt })
+    // 🍎 사파리 엔진은 첫 굽기에서 그림을 빠뜨린다(9/12 딸 아이폰 실물 · 재현 run 34732617886) → 예열굽기(coverEncode.js)
+    const u = await 예열굽기(() => toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff', ...fontOpt }))
     const b = await (await fetch(u)).blob()
     return new File([b], name.replace(/\.png$/, '.jpg'), { type: 'image/jpeg' })
   }, [])
@@ -1284,7 +1296,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
     const 레시피 = files.length > 1 ? files[1] : null
     if (!navigator.canShare({ files: 표지 })) return null
     return navigator
-      .share({ files: 표지, title, text: `『${title}』 오늘의 한 끼 🧡\nPlay스토어에서 '한끼' 검색 🔍`, url: APP_URL })
+      .share({ files: 표지, title, text: `『${title}』 오늘의 한 끼 🧡\n${스토어이름()}에서 '한끼' 검색 🔍`, url: APP_URL })
       .then((v) => { onShared?.(); if (레시피) set남은레시피(레시피); return v })
   }, [title, onShared])
 
@@ -1292,7 +1304,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
   const 레시피보내기 = useCallback(() => {
     const f = 남은레시피
     if (!f) return
-    const opt = { files: [f], title, text: `『${title}』 재료·만드는 법이에요 🍳\nPlay스토어에서 '한끼' 검색 🔍`, url: APP_URL }
+    const opt = { files: [f], title, text: `『${title}』 재료·만드는 법이에요 🍳\n${스토어이름()}에서 '한끼' 검색 🔍`, url: APP_URL }
     if (navigator.canShare && navigator.share && navigator.canShare({ files: [f] })) {
       navigator.share(opt)
         .then(() => set남은레시피(null))
@@ -1385,7 +1397,8 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
       // 📦 [2026-09-07] 캔버스로 받아 «작게» 굽는다 — WebP q0.8(≈1/3 · 실측) · 사파리처럼 못 구우면 JPEG q0.86 그대로.
       //    ⛔ 품질값은 coverEncode.js 한 곳에 있다 — 여기서 숫자를 적지 않는다.
       let canvas
-      try { canvas = await toCanvas(coverRef.current, opt) } catch { canvas = await toCanvas(coverRef.current, { ...opt, skipFonts: true }) }
+      // 🍎 사파리 엔진 첫 굽기 그림 누락 대비 → 예열굽기(coverEncode.js · 2026-09-13)
+      try { canvas = await 예열굽기(() => toCanvas(coverRef.current, opt)) } catch { canvas = await 예열굽기(() => toCanvas(coverRef.current, { ...opt, skipFonts: true })) }
       const { url } = 표지굽기(canvas)
       await onSaveCover?.(url)
       onClose?.()

@@ -26,3 +26,17 @@ export function 표지굽기 (캔버스) {
   if (webp.startsWith('data:image/webp')) return { url: webp, 종류: 'webp' }
   return { url: 캔버스.toDataURL('image/jpeg', 표지JPEG품질), 종류: 'jpeg' }
 }
+
+// 🍎🧪 [2026-09-13] 사파리 엔진(아이폰 앱·사파리)은 html-to-image 첫 굽기에서 «그림(<img>)을 빠뜨린다».
+//   실측 = 딸 아이폰14 빌드 4 에서 카드 → 표지·문자 공유·사진첩 저장 셋 다 캐릭터가 빈칸(9/12 17:55·17:59·18:00)
+//   재현 = scripts/_repro-카드굽기-webkit-0913.mjs 를 맥 러너 WebKit 으로 돌린 표(run 34732617886):
+//     지금 방식 A = 0.025(빈칸) · data URL 미리 넣기 B = 0.025(효과 없음) · «두 번 굽기» C = 0.790(그림 있음) · 크롬은 넷 다 0.796
+//   → 사파리 계열에서만 «한 번 예열하고 진짜로 굽는다». 크롬·안드로이드는 그대로(두 배 시간 안 든다).
+//   ⛔ 사파리 판정은 UA 문자열이라 완벽하진 않다(가짜 UA) — 틀려도 「한 번 더 굽는」 손해뿐, 그림이 빠지는 쪽으로는 안 틀린다.
+export function 사파리엔진인가 (ua = (typeof navigator !== 'undefined' ? navigator.userAgent : '')) {
+  return /AppleWebKit/i.test(ua) && !/Chrom|Android|Edg\//i.test(ua)
+}
+export async function 예열굽기 (굽기) {
+  if (사파리엔진인가()) { try { await 굽기() } catch { /* 예열은 실패해도 된다 */ } }
+  return 굽기()
+}

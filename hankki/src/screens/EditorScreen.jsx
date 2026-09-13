@@ -21,6 +21,7 @@ import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../util
 import { ocrImage, getOcrNote, getOcrLeft, 열쇠셈, 열쇠셈리셋, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw, NO_TITLE } from '../parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from '../tidy'
+import { AI동의받기 } from '../aiConsent'   // 🔐 AI 로 보내기 전 허락(큰 틀 6-② ⓑ)
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 // 🗄 저장된 사진은 「큰 창고」(IndexedDB)에 있고 상태엔 쪽지만 남는다 — 편집기는 열 때 꺼내 온다
@@ -671,6 +672,8 @@ export default function EditorScreen({ id, prefill }) {
   //   ⛔ 두 번 눌러 두 판이 겹치지 않게 `다듬는중` 으로 막는다(뉴런이 두 배로 나간다).
   const 다시다듬기 = async () => {
     if (다듬는중 || !rawText) return
+    // 🔐 허락 «먼저» — 직접 눌렀으니 「사용 안 함」이었어도 다시 묻는다(큰 틀 6-② ⓑ · 2026-09-08)
+    if (!(await AI동의받기({ 다시묻기: true }))) return
     set다듬는중(true)
     nav.showToast('AI가 다시 다듬는 중이에요 · 20~60초 걸려요', 6000)
     // ⭐ 규칙 파서를 «먼저» 돌려둔다 — AI 가 분량을 떼먹으면 이걸로 되살린다(`mergeTidy`).

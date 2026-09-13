@@ -27,7 +27,8 @@ import { shouldAskReviewNow } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
 import { SOURCES, 저장날짜보임 } from '../data/seed'
 // 🔁 AI 정리 실패 만회(아래 「만회한적」 절) — 잣대는 앱이 쓰는 그 모듈 그대로다(절대원칙 30).
-import { tidyRecipe, 실패꼬리 } from '../tidy'
+import { tidyRecipe, 실패꼬리, 동의안함으로끝났나 } from '../tidy'
+import { AI동의받기 } from '../aiConsent'   // 🔐 AI 로 보내기 전 허락(큰 틀 6-② ⓑ)
 import { picksForIngredients, productLink, productMall, curIcon, isHansalim } from '../data/curation'
 
 import { useWakeLock } from '../useWakeLock'
@@ -202,6 +203,8 @@ export default function RecipeDetailScreen({ id }) {
   const 다시다듬기 = async () => {
     const 원문 = String(r?.rawText || '')
     if (다시중 || 원문.length < 40) return
+    // 🔐 허락 «먼저»(대기창보다 앞) — 직접 눌렀으니 「사용 안 함」이었어도 다시 묻는다(큰 틀 6-② ⓑ)
+    if (!(await AI동의받기({ 다시묻기: true }))) return
     set다시중(true); set창닫음(false)
     nav.showToast('AI가 다듬는 중이에요 · 다 되면 레시피에 저절로 올라가요', 6000)
     // 👁 사진이 손에 있으면 같이 보낸다(`tidy.js` 가 한 번 더 거른다) — 보관함 단추와 «같은 말»
@@ -230,7 +233,8 @@ export default function RecipeDetailScreen({ id }) {
     ;(async () => {
       const ai = await tidyRecipe(원문)
       if (!살아있나) return
-      if (!ai) { updateRecipe(r.id, { tidyFail: 2 }); return }
+      // 🙅 [2026-09-13] 동의를 안 한 사람에겐 만회할 게 없다 — 실패 표시를 «지운다»(실패로 적으면 보관함이 「안 됐어요」라고 거짓말한다)
+      if (!ai) { updateRecipe(r.id, { tidyFail: 동의안함으로끝났나() ? 0 : 2 }); return }
       // ⭐ 얹는 규칙은 `retidy.js` 의 `만회값()` «한 곳» — 임시보관함 「AI로 다듬기」 단추와 «같은 말»(2026-09-05).
       //   규칙 전문(보관함이면 통째로 · 졸업한 편은 빈 칸만 · 제목은 유저 것 지킴 · 아이콘 다시 · 올리기만)은 그 파일에.
       const { 바꿀것, 바뀐게있나 } = 만회값(r, 원문, ai)

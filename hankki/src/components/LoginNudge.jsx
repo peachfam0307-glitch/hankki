@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import Portal from './Portal'
 import GoogleButton from './GoogleButton'
+import AppleButton from './AppleButton'          // 🍎 아이폰 앱 안에서만 보이는 둘째 단추(큰 틀 4)
+import { 앱안인가 } from '../nativeAuth'
 import { useModalBack } from '../useBackHandler'
 import { 로그인 } from '../cloud'
 import { 무료열쇠상한, KEY_NAME, KEY_UNIT } from '../ocr'
@@ -61,10 +63,10 @@ export default function LoginNudge({ recipes = 0, diaries = 0, onLater, onLogged
   const [탈, set탈] = useState('')
   const { 비로그인, 로그인: 로그인상한 } = 무료열쇠상한()
 
-  const 눌러로그인 = async () => {
+  const 눌러로그인 = async (공급자 = 'google.com') => {
     set탈(''); set바쁨(true)
     try {
-      await 로그인()
+      await 로그인(공급자)
       onLoggedIn()
     } catch (e) {
       // ⛔ 실패해도 시트를 닫지 않는다 — 닫으면 «봤음»이 되어 다시는 못 권한다. 나가는 길은 「나중에 하기」뿐.
@@ -139,7 +141,9 @@ export default function LoginNudge({ recipes = 0, diaries = 0, onLater, onLogged
           </div>
 
           <div style={{ padding: '18px 18px 0' }}>
-            <GoogleButton label="구글로 로그인" busy={바쁨} onClick={눌러로그인} />
+            <GoogleButton label="구글로 로그인" busy={바쁨} onClick={() => 눌러로그인('google.com')} />
+            {/* 🍎 아이폰 «앱 안»에서만 — 구글 다음(열쇠 갈래 ⓑ) */}
+            {앱안인가() && <AppleButton busy={바쁨} disabled={바쁨} onClick={() => 눌러로그인('apple.com')} />}
             <button
               className="press" onClick={onLater} disabled={바쁨}
               style={{ width: '100%', marginTop: 10, color: 'var(--text-sub)', fontSize: 16.5, fontWeight: 400, padding: '8px 0', fontFamily: "'Jua', sans-serif" }}

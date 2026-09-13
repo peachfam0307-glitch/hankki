@@ -3,11 +3,14 @@ import Icon from './Icon'
 import PromptSheet from './PromptSheet'
 import ConfirmSheet from './ConfirmSheet'
 import GoogleButton from './GoogleButton'
+import AppleButton from './AppleButton'          // 🍎 아이폰 앱 안에서만 보이는 둘째 단추(큰 틀 4)
+import { 앱안인가 } from '../nativeAuth'
 import { useStore } from '../store'
 import { APP_TAGLINE } from '../version'
-import { markCloudGateSeen } from '../nudges'
+import { markCloudGateSeen, myRecipeCount, myDiaryCount } from '../nudges'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
-import { 로그인, 요약, 내려받기, 미리붙기, 받았다표시 } from '../cloud'
+import { 합치기 } from '../syncMerge'                 // 👪 「이 계정에 넣기」 뒤 가져오기 = 덮지 않고 더한다
+import { 로그인, 요약, 내려받기, 미리붙기, 받았다표시, 기기주인정하기 } from '../cloud'
 import KeyGift from './KeyGift'
 import duoHi from '../assets/sharepool/duo_hi.png'
 
@@ -28,7 +31,7 @@ import duoHi from '../assets/sharepool/duo_hi.png'
 //    자세한 것은 「자세히」를 눌러야 펴진다(장보기의 「더보기·접기」와 같은 모양).
 
 export default function CloudGate({ onDone }) {
-  const { importAll } = useStore()
+  const { importAll, reset, recipes, diary, folders, profile, shoppingList, pantry, wishlist } = useStore()
   const [열림, set열림] = useState(false)   // 「자세히」 펼침
   const [바쁨, set바쁨] = useState('')
   const [탈, set탈] = useState('')
@@ -40,22 +43,45 @@ export default function CloudGate({ onDone }) {
   //      그게 맞다: 「이 브라우저에선 안 된다」는 그 자리에서 드러나는 일이고,
   //      저장하면 «한 번 실패했던 사람»이 다음에 로그인을 건너뛰기 쉬워진다.
   const [실패수, set실패수] = useState(0)
+  // 👪 [2026-09-10 로그인 필수 ②] 이 기기 기록의 주인이 «다른 계정»이었다 → 「넣을까 · 비울까」 물음 { 사람, 레시피, 일기 }
+  //    ⛔ 조용히 섞지 않는다 — 가족 아이패드에서 A 가 나가고 B 가 들어오면 A 의 폰 기록이 B 계정으로 올라가던 구멍(§8 1차).
+  //    ⭐ 아이폰 앱에서 «먼저» 켠다(`앱안인가()`) — 안드로이드도 같은 구멍이지만 A/B 판정 뒤 스위치만 넓힌다(§8 ⑥·⑧).
+  //    `단계` 1 = 넣기/비우기 물음 · 2 = 비우기 한 번 더 확인. ⛔ 상태 «하나»로 둔다 — ConfirmSheet 가 `onSecondary()` 뒤에
+  //    `onClose()` 를 «같은 틱에» 부르므로, 둘로 나누면 닫기가 낡은 값을 보고 물음을 지워 둘째 시트가 안 뜬다(함수형 갱신으로 순서를 지킨다).
+  const [계정물음, set계정물음] = useState(null)
+  // 👪 「이 계정에 넣기」를 골랐다 → 클라우드에 이 계정 것이 «있으면» 가져올 때 «덮지 않고 합친다»(syncMerge 더하기만).
+  //    ⛔ 이 표식 없이 `가져오기` 는 통째로 얹는다(importAll) — 그러면 「넣기」라 해놓고 이 기기 기록이 사라진다.
+  const [합쳐받기, set합쳐받기] = useState(false)
 
   // ⛔ 팝업은 누른 «그 순간» 열려야 브라우저가 안 막는다 → 화면이 뜰 때 미리 받아 둔다.
   useEffect(() => { 미리붙기() }, [])
 
   const 지나가기 = () => { markCloudGateSeen(); onDone() }
 
-  const 눌러로그인 = async () => {
+  // ⏳ [2026-09-10 §8 ④] «영영 도는 바퀴» 금지 — 로그인 뒤 클라우드 요약이 8초 안에 안 오면 손을 뗀다(다시 누르면 된다)
+  const 제한 = (약속, ms = 8000) => new Promise((풀기, 막기) => {
+    const 시계 = setTimeout(() => { const e = new Error('늦음'); e.code = 'hankki/timeout'; 막기(e) }, ms)
+    약속.then((v) => { clearTimeout(시계); 풀기(v) }, (e) => { clearTimeout(시계); 막기(e) })
+  })
+
+  // 로그인이 «된 뒤» — 클라우드에 자기 것이 있나 보고 갈래를 튼다(가져오기 화면 / 처음 쓰는 사람)
+  const 로그인뒤 = async () => {
+    const r = await 제한(요약())
+    if (r.있나 && (r.레시피 || r.일기)) { set찾음(r); set바쁨(''); return }
+    // ⭐ 클라우드가 비어 있으면 = 처음 쓰는 사람. **가져올 게 없으니 「봤다」로 친다.**
+    //   📌 이 표식이 있어야 다음에 앱을 켤 때 «저절로 올리기»가 돈다(안전장치 ②).
+    받았다표시()
+    지나가기()
+  }
+
+  const 눌러로그인 = async (공급자 = 'google.com') => {
     set탈(''); set바쁨('로그인')
     try {
-      await 로그인()
-      const r = await 요약()
-      if (r.있나 && (r.레시피 || r.일기)) { set찾음(r); set바쁨(''); return }
-      // ⭐ 클라우드가 비어 있으면 = 처음 쓰는 사람. **가져올 게 없으니 「봤다」로 친다.**
-      //   📌 이 표식이 있어야 다음에 앱을 켤 때 «저절로 올리기»가 돈다(안전장치 ②).
-      받았다표시()
-      지나가기()
+      const 사람 = await 로그인(공급자)
+      // 👪 주인이 다른 계정이고 이 기기에 «내 기록»이 있으면 — 올리기·가져오기 «전에» 묻는다(둘 다 섞는 길이다)
+      const 레 = myRecipeCount(recipes); const 일 = myDiaryCount(diary)
+      if (앱안인가() && 사람.이전주인 && (레 + 일) > 0) { set계정물음({ 사람, 레시피: 레, 일기: 일, 단계: 1 }); set바쁨(''); return }
+      await 로그인뒤()
     } catch (e) {
       // 🔐 [2026-09-07] 실패를 «센다» — 2번째부터 탈출구가 나타난다.
       //   ⛔ 유저가 팝업을 스스로 닫은 것(취소)도 여기로 온다. 그것도 세는 게 맞다 —
@@ -65,11 +91,27 @@ export default function CloudGate({ onDone }) {
     }
   }
 
+  // 👪 물음의 두 답 — 「이 계정에 넣기」 = 주인만 바꾸고 평소 흐름 · 「비우고 시작」 = 이 기기 기록을 처음으로 되돌린 뒤 평소 흐름
+  //    ⛔ 비우기는 되돌릴 수 없어 «한 번 더» 묻는다(ConfirmSheet danger). 시트를 그냥 닫으면 아무것도 안 바꾼다(다시 누르면 또 묻는다).
+  const 물음답 = async (비울까) => {
+    const q = 계정물음; set계정물음(null)
+    if (!q) return
+    set탈(''); set바쁨('로그인')
+    try {
+      if (비울까) reset(true)            // 레시피·폴더·프로필 ＋ 일기·재료함·장보기까지 처음으로(store `reset` 전부)
+      else set합쳐받기(true)              // 넣기 = 클라우드 것이 있으면 합쳐서 받는다(아래 `가져오기`)
+      기기주인정하기(q.사람.번호)
+      await 로그인뒤()
+    } catch (e) { set탈(고운말(e)); set바쁨('') }
+  }
+
   const 가져오기 = async () => {
     set탈(''); set바쁨('가져오기')
     try {
-      const data = await 내려받기()
-      if (!data) { 지나가기(); return }
+      const 받은것 = await 내려받기()
+      if (!받은것) { 지나가기(); return }
+      // 👪 「이 계정에 넣기」 뒤라면 이 기기 기록과 «합친다»(더하기만 · 무덤 없음 = 아무것도 안 지운다)
+      const data = 합쳐받기 ? 합치기({ 내것: { recipes, diary, folders, profile, shoppingList, pantry, wishlist }, 받은것 }) : 받은것
       importAll(data)
       받았다표시() // ⭐ 가져왔다 → 이제부터 저절로 올려도 안전하다(안전장치 ②)
       const n = 잠긴장수(data.diary)
@@ -135,7 +177,9 @@ export default function CloudGate({ onDone }) {
 
           {/* 🔵🔴🟡🟢 구글 규정 단추 — 창업자가 보내 준 다른 앱 캡처 그대로(2026-08-21).
               ⛔ 우리 파란 단추(`btn-primary`)로 두지 말 것 — 「우리 앱 단추」로 보이지 «구글 단추»로 안 보인다. */}
-          <GoogleButton busy={바쁨 === '로그인'} disabled={!!바쁨} onClick={눌러로그인} />
+          <GoogleButton busy={바쁨 === '로그인'} disabled={!!바쁨} onClick={() => 눌러로그인('google.com')} />
+          {/* 🍎 아이폰 «앱 안»에서만 — 애플 심사 4.8(제3자 로그인이 있으면 Apple 로그인도 «같이») · 구글 «다음»에 둔다(열쇠 갈래 ⓑ) */}
+          {앱안인가() && <AppleButton busy={바쁨 === '로그인'} disabled={!!바쁨} onClick={() => 눌러로그인('apple.com')} />}
 
           {/* 📷📷 **사진 한 줄만 «펴서» 둔다** (창업자 2026-08-31 *"유저들한테 안내를 꼭 해야겠네"* → *"잘보이게 적어줘"*)
               ⛔ 그 전엔 이 말이 아래 「자세히」 «안»에 접혀 있었다 — **창업자 본인도 모르고 있었다.**
@@ -183,7 +227,15 @@ export default function CloudGate({ onDone }) {
               ✅ 그래서 **막되 «갇히지 않게»** 한다 — 로그인이 **두 번 실패하면** 탈출구가 나타난다.
                  ⭐ 이건 「그냥 보기」를 되살린 게 아니다. **로그인이 «안 되는» 사람만 만나는 문**이다.
                  ⛔ 이 탈출구를 지우지 말 것 — 지우면 그 사람들에겐 **열 수 없는 앱**이 된다. */}
-          {실패수 >= 2 && (
+          {/* 🍎 [2026-09-10 창업자 확정 «로그인 필수» · §8 ④] **아이폰 앱 안에선 이 탈출구를 «그리지 않는다».**
+              위 주석의 「못 여는 사람 셋」은 웹 길 이야기다 — 아이폰 앱은 스토어로만 오고 부품이 있어 «안 되는 브라우저»가 없다.
+              남는 건 「그 순간 인터넷·로그인 서버가 불안한 사람」뿐이라 «안내 ＋ 다시 시도»로 받는다(§9 ⑨). */}
+          {앱안인가() && 실패수 >= 2 && (
+            <div className="t-sub" style={{ marginTop: 13, fontSize: 14, lineHeight: 1.6, textAlign: 'center', textWrap: 'balance', whiteSpace: 'pre-line' }}>
+              인터넷 연결을 확인한 뒤 위 단추를 다시 눌러 주세요.{'\n'}계속 안 되면 잠시 뒤에 다시 해 주세요.
+            </div>
+          )}
+          {!앱안인가() && 실패수 >= 2 && (
             <button
               className="press" onClick={() => set물음(true)} disabled={!!바쁨}
               style={{ width: '100%', marginTop: 13, color: 'var(--text-sub)', fontSize: 15, fontWeight: 600, padding: '6px 0' }}
@@ -245,6 +297,28 @@ export default function CloudGate({ onDone }) {
         </div>
       )}
 
+      {/* 👪 다른 계정의 기록이 이 기기에 있다 — 올리기·가져오기 «전»에 묻는다(§8 ② · 조용히 섞지 않는다) */}
+      {계정물음 && 계정물음.단계 !== 2 && (
+        <ConfirmSheet
+          title="이 기기에 다른 계정의 기록이 있어요"
+          message={`레시피 ${계정물음.레시피}개 · 일기 ${계정물음.일기}장이 이 기기에 남아 있어요.\n지금 로그인한 계정에 넣을까요, 비우고 시작할까요?`}
+          confirmLabel="이 계정에 넣기"
+          onConfirm={() => 물음답(false)}
+          secondaryLabel="비우고 시작하기"
+          onSecondary={() => set계정물음((q) => (q ? { ...q, 단계: 2 } : null))}
+          onClose={() => set계정물음((q) => (q && q.단계 === 2 ? q : null))}
+        />
+      )}
+      {계정물음 && 계정물음.단계 === 2 && (
+        <ConfirmSheet
+          title="이 기기의 기록을 비울까요?"
+          message={`레시피 ${계정물음.레시피}개 · 일기 ${계정물음.일기}장이 이 기기에서 지워져요. 되돌릴 수 없어요.`}
+          confirmLabel="비우고 시작하기" danger
+          onConfirm={() => 물음답(true)}
+          onClose={() => set계정물음((q) => (q ? { ...q, 단계: 1 } : null))}
+        />
+      )}
+
       {/* ⚠️ 「나중에 하기」를 누르면 «한 번» 물어본다.
           📮 창업자 2026-08-21 = *"나중에 하기를 누르면 안내팝업. **모르고 그냥 해볼수있으니까**"*
           ⛔⛔ 창업자 말 중 「저장이 안 된다」는 «정확히는 틀리다» — 코드로 확인했다(`store.jsx:691`).
@@ -282,6 +356,7 @@ function 고운말(e) {
   if (c.includes('popup-blocked')) return '로그인 창이 막혔어요. 다시 눌러 주세요.'
   if (c.includes('popup-closed') || c.includes('cancelled-popup')) return '로그인 창을 닫으셨어요.'
   if (c.includes('network')) return '인터넷이 불안해요. 잠시 뒤에 다시 눌러 주세요.'
+  if (c === 'hankki/timeout') return '확인이 늦어지고 있어요. 잠시 뒤에 다시 눌러 주세요.'
   // ⛔ 옛 이름 「그냥 둘러볼게요」가 여기 남아 있었다 — 창업자가 2026-08-21 에 물린 말이다(*"그냥 둘러보기??"*).
   //   화면 단추는 「나중에 하기」인데 오류 문구만 옛 이름이라 «같은 것을 두 이름»으로 불렀다.
   //   📌 v11.02 「책갈피」와 같은 자리 — 이름을 바꾸면 그 이름이 «뜨는 곳 전부»를 같이 바꾼다.

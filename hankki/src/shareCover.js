@@ -4,6 +4,7 @@
 
 import { toPng, toJpeg } from 'html-to-image'
 import { fontCSS, fontOptFrom } from './fontEmbed'
+import { 예열굽기 } from './coverEncode.js'   // 🍎 사파리 첫 굽기 그림 누락 대비(2026-09-13)
 
 const DISPLAY = "'Jua', 'Apple SD Gothic Neo', sans-serif" // 통통 귀여운 브랜드/제목
 const BODY = "'Gowun Dodum', 'Apple SD Gothic Neo', sans-serif" // 부드러운 본문
@@ -84,11 +85,12 @@ export async function buildCoverPayload({ coverEl, title, info = [], appUrl, rec
     // ⏱ **12초 제한** — 캡처가 안 끝나면 로딩만 돌고 아무 말이 없다. 그게 유저에겐 먹통이다
     //    (창업자 2026-08-03 *"로딩은 돌아가. 그다음이 안돼"*). 끝나든 못 끝나든 **말은 한다.**
     coverUrl = await Promise.race([
-      toPng(coverEl, {
+      // 🍎 사파리 엔진은 첫 굽기에서 그림을 빠뜨린다 → 예열굽기(coverEncode.js · 2026-09-13 · 재현 run 34732617886)
+      예열굽기(() => toPng(coverEl, {
         pixelRatio: scale,
         ...fontOpt,
         filter: (node) => !(node.dataset && 'nocapture' in node.dataset),
-      }),
+      })),
       new Promise((_, rej) => setTimeout(() => rej(new Error('capture timeout')), 40000)),
     ])
   } catch (e) {

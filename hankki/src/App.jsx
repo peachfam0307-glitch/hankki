@@ -5,8 +5,9 @@ import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } f
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, 열쇠셈, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw, 자리표제목 } from './parseRecipe'
-import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중, 번호알림받기, 선반집기 } from './tidy'
-import { 까닭말, 다듬기끝말, 남은열쇠말 } from './안내말'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중, 번호알림받기, 선반집기, 동의안함으로끝났나 } from './tidy'
+import AIConsentSheet from './components/AIConsentSheet'   // 🔐 AI 로 보내기 전 허락 시트(큰 틀 6-② ⓑ)
+import { 까닭말, 다듬기끝말, 동의안함끝말, 남은열쇠말 } from './안내말'
 import { 만회값 } from './retidy'   // 🧺 선반에서 받은 답을 얹는 규칙 — 상세 화면 자동 만회와 «같은 곳»
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
@@ -26,6 +27,8 @@ import { useTimer } from './timer'
 import Onboarding, { needsOnboarding } from './components/Onboarding'
 import CloudGate from './components/CloudGate'
 import ConfirmSheet from './components/ConfirmSheet'
+import { 앱안인가 } from './nativeAuth'                       // 🍎 아이폰 앱 안 = 로그인 필수 스위치(§8 ⑥)
+import { 로그인해뒀나, 사람지켜보기 } from './cloud'
 import TidyWaiting from './components/TidyWaiting'
 import { askOpenBackup, needsCloudGate, askOpenCloud, 클라우드보임, 자동받기켤까, shouldAskReview, shouldAskReviewNow, myRecipeCount, 문머리글 } from './nudges'
 import ReviewAskSheet from './components/ReviewAskSheet'
@@ -101,7 +104,18 @@ export default function App() {
   //   ⛔ 이미 쓰고 있던 사람에겐 안 띄운다 — 잘 쓰던 앱이 갑자기 로그인 화면으로 시작하면 그건 «벽»으로 읽힌다.
   //      그 사람들은 홈 한 줄에서 만난다(규칙 18 ⓙ — 이미 깔린 폰).
   //   🔀 ＋ 공개 스위치(`클라우드보임`) — 켜는 날까지 창업자 폰에서만. 근거는 `nudges.js` 머리주석.
-  const [cloudGate, setCloudGate] = useState(() => 클라우드보임() && needsCloudGate() && needsOnboarding())
+  //   🍎🔐 [2026-09-10 · 창업자 확정 «로그인 필수» · docs/로그인-필수로 §8·§10] **아이폰 앱 안에선 조건이 다르다** —
+  //      「처음 한 번」이 아니라 «로그인해 두지 않았으면 언제나» 문이다(로그아웃·계정 삭제 뒤도).
+  //      ⛔ 스위치는 `앱안인가()` 하나 — 웹·안드로이드는 아래 조건 그대로(A/B 판정 뒤에만 넓힌다 · §8 ⑥).
+  //      ⭐ 표식(`로그인해뒀나`)으로 «먼저» 그리고, 진짜 상태는 아래 `사람지켜보기` 가 «확정»으로 말할 때 바로잡는다(§8 ⑤).
+  const [cloudGate, setCloudGate] = useState(() => 클라우드보임() && (앱안인가() ? !로그인해뒀나() : (needsCloudGate() && needsOnboarding())))
+  // 🍎 «확정 null» 이면 문을 다시 띄운다 — 로그아웃 · 계정 삭제 · 다른 기기에서 지운 계정(토큰 취소) 모두 여기로 온다.
+  //    ⛔ `확정: false`(붙기 실패 = 인터넷 없음)로는 «안» 띄운다 — 멀쩡히 쓰던 사람을 느린 망에서 쫓아내지 않는다.
+  //    ⭐ 문은 «덮어» 뜬다(화면 스택을 안 지운다) → 다시 로그인하면 쓰던 자리 그대로.
+  useEffect(() => {
+    if (!앱안인가()) return undefined
+    return 사람지켜보기((사람, m) => { if (사람 === null && m && m.확정) setCloudGate(true) })
+  }, [])
   // 🙏 한마디 청하기 — 「레시피를 저장한 직후」 (창업자 확정 2026-09-03 · 내 레시피 2개부터)
   //   ⛔⛔ **왜 «화면»이 아니라 여기서 띄우나** — `EditorScreen` 은 저장에 성공하면 `nav.popAll()` 로
   //      스스로 사라진다. 거기서 시트를 그리면 같은 틱에 언마운트돼 **아무것도 안 뜬다.**
@@ -932,6 +946,8 @@ export default function App() {
           //      그런데 «졸업»이 AI 성공에 걸려 있어서, 실패하면 그 편은 임시보관함에 그대로 남는다.
           //      말이 없으면 유저는 「왜 안 넘어가지」만 남고 «무엇을 누르면 되는지»를 모른다.
           //   ⭐ 그래서 무엇이 안 됐는지 ＋ «어떻게 하면 되는지»를 한 줄로 붙여 말한다.
+          // 🙅 [2026-09-13] 「사용 안 함」을 고른 건 실패가 아니다 — 표시를 지우고 «선택했다»고 말한다.
+          if (동의안함으로끝났나()) { store.updateRecipe(rec.id, { tidyFail: 0, tidying: 0, tidyJob: '' }); 끝알림(동의안함끝말()); return }
           끝알림(다듬기끝말(false, tidyFounder() ? tidyTail() : ''))
           if (tidyFounder()) showToast('AI 다듬기는 못 했어요' + tidyTail(), 6500)
         }).catch(() => {
@@ -1116,6 +1132,8 @@ export default function App() {
             📮 창업자 2026-08-21 = *"새유저는 그냥 첫화면에 로그인하고시작 «왜냐면 온보드는 그냥 건너뛰기할수도있어»"*
             ⛔ 소개 «마지막 장»에 두려던 내 안을 창업자가 잡았다 — 「건너뛰기」가 매 장 오른쪽 위에 있어 첫 장에서 통째로 넘어간다. */}
         {cloudGate && <CloudGate onDone={() => setCloudGate(false)} />}
+        {/* 🤖🔐 AI 다듬기 허락 시트 — tidy.js 가 보내기 «전»에 물으면 여기서 뜬다(큰 틀 6-② ⓑ · 2026-09-08) */}
+        <AIConsentSheet />
 
         {/* 🙏 한마디 청하기 — 레시피를 저장한 직후(내 레시피 2개부터 · 30일에 한 번).
             ⛔ 자리는 «여기»라야 한다 — 편집 화면은 저장에 성공하면 popAll 로 스스로 사라진다. */}

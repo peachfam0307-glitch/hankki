@@ -44,6 +44,8 @@
 // 🎴 자랑카드 표지 판정 — 화면(`Thumb.jsx`)과 «같은 잣대»를 쓴다.
 //   ⭐ 이건 맨 위에서 받아도 된다(1KB · 파이어베이스와 달리 무겁지 않다).
 import { 카드표지인가 } from './cardCover.js'
+// 🍎 앱 안 로그인 부품 다리 (큰 틀 4 · 2026-09-08) — 열쇠 만들기도 여기 한 곳
+import { 열쇠, 앱안인가, 앱으로로그인, 앱로그아웃, 앱계정지우기 } from './nativeAuth.js'
 
 // 📊 [2026-09-08] 통계(`stats.js`)도 «같은» 설정을 쓴다 — ⛔주소를 두 번 적지 않는다(손으로 적으면 낡는다).
 export const FIREBASE_설정 = {
@@ -74,7 +76,12 @@ async function 붙기() {
       import('firebase/firestore'),
     ])
     const application = 앱.initializeApp(설정)
-    붙은것 = { A: 인증, F: 창고, auth: 인증.getAuth(application), db: 창고.getFirestore(application) }
+    // 🍎 앱 안(Capacitor)에선 `initializeAuth(indexedDBLocalPersistence)` — 부품 원문(docs/firebase-js-sdk.md):
+    //    *"This makes sure that the user is still signed in the next time the app is started."* 웹은 지금 그대로 getAuth.
+    const auth = 앱안인가()
+      ? 인증.initializeAuth(application, { persistence: 인증.indexedDBLocalPersistence })
+      : 인증.getAuth(application)
+    붙은것 = { A: 인증, F: 창고, auth, db: 창고.getFirestore(application) }
     return 붙은것
   })()
   try {
@@ -101,10 +108,12 @@ function 구글번호(user) {
   return g?.uid || null
 }
 
+// 🍎 [2026-09-08 큰 틀 4 · 열쇠 갈래 ⓑ] 열쇠는 `nativeAuth.열쇠()` 한 곳이 만든다 —
+//    구글 = 지금 그대로 «구글번호» · 애플 = «apple_애플번호». 규칙(firestore.rules)도 같은 식이다.
 function 사람으로(user) {
-  const 번호 = 구글번호(user)
-  if (!번호) return null
-  return { 번호, 이름: user.displayName || '', 사진: user.photoURL || '' }
+  const k = 열쇠(user)
+  if (!k) return null
+  return { 번호: k.번호, 공급자: k.공급자, 이름: user.displayName || '', 사진: user.photoURL || '' }
 }
 
 // 🏷 «로그인해 둔 적이 있나»를 폰에 작게 적어 둔다.
@@ -127,20 +136,43 @@ export const 내구글번호 = () => { try { return localStorage.getItem(번호�
 
 // 로그인 — ⭐팝업. TWA 안에서 «된다»는 걸 2026-08-21 창업자 폰으로 확인했다.
 //   ⛔ `signInWithRedirect` 는 우리 환경(GitHub Pages)에서 깨진다 — 서드파티 쿠키를 쓴다.
-export async function 로그인() {
+//   🍎 [2026-09-08 큰 틀 4] 앱 안(Capacitor)에선 팝업이 «확실히» 죽는다(WKWebView · 구글 원문) →
+//      부품(FirebaseAuthentication)으로 로그인하고 그 열쇠로 웹 층에 signInWithCredential. 공급자 = 'google.com' | 'apple.com'.
+//      ⛔ 웹·안드로이드에서 'apple.com' 은 안 받는다 — 애플 단추 자체가 앱 안에서만 보인다.
+export async function 로그인(공급자 = 'google.com') {
   const { A, auth } = await 붙기()
-  const r = await A.signInWithPopup(auth, new A.GoogleAuthProvider())
-  const 사람 = 사람으로(r.user)
-  // ⛔ 구글 번호가 없으면 «계속하지 않는다» — Firebase UID 로 대신 넣으면 보험 ①이 조용히 깨진다.
-  if (!사람) throw new Error('구글 번호를 못 받았어요')
+  let user
+  if (앱안인가()) {
+    user = await 앱으로로그인({ A, auth, 공급자 })
+  } else {
+    if (공급자 !== 'google.com') throw new Error('여기서는 Google 로그인만 돼요')
+    const r = await A.signInWithPopup(auth, new A.GoogleAuthProvider())
+    user = r.user
+  }
+  const 사람 = 사람으로(user)
+  // ⛔ 열쇠(구글번호 / apple_번호)가 없으면 «계속하지 않는다» — Firebase UID 로 대신 넣으면 보험 ①이 조용히 깨진다.
+  if (!사람) throw new Error('로그인 번호를 못 받았어요')
   표식쓰기(true)
   번호쓰기(사람.번호)
-  return 사람
+  // 👪 [2026-09-10 로그인 필수 ②] 이 기기 기록의 «주인»이 따로 있고 지금 사람과 다르면 «주인을 안 바꾼다» —
+  //    부르는 쪽(CloudGate)이 「넣을까 · 비울까」를 묻고 `기기주인정하기` 로 정한다. 같거나 없으면 바로 정한다.
+  const 주인 = 기기주인()
+  if (!주인 || 주인 === 사람.번호) 기기주인정하기(사람.번호)
+  return { ...사람, 이전주인: 주인 && 주인 !== 사람.번호 ? 주인 : '' }
 }
+
+// 👪👪 **이 기기 기록의 주인** — 마지막으로 이 기기에서 «로그인해 쓴» 열쇠(번호). (2026-09-10 · 로그인-필수로 §8 ② · §10)
+//   ⛔ 로그아웃·계정 삭제에도 «안 지운다» — 지우면 「A 가 나가고 B 가 들어온」 것을 알 길이 없다.
+//      가족 아이패드에서 A 의 폰 기록이 B 계정으로 조용히 올라가던 구멍이 이것 하나로 막힌다.
+//   ⭐ 바뀌는 때 = 둘뿐 — 주인이 없거나 같을 때 로그인 · 유저가 「넣기 / 비우기」를 «고른 뒤».
+const 주인칸 = 'hankki:cloud:owner'
+export const 기기주인 = () => { try { return localStorage.getItem(주인칸) || '' } catch { return '' } }
+export function 기기주인정하기 (번호) { try { 번호 ? localStorage.setItem(주인칸, 번호) : localStorage.removeItem(주인칸) } catch { /* noop */ } }
 
 export async function 로그아웃() {
   const { A, auth } = await 붙기()
   await A.signOut(auth)
+  if (앱안인가()) await 앱로그아웃()   // 🍎 앱 층도 같이 — 안 하면 다음 켤 때 부품만 「로그인돼 있다」고 우긴다
   표식쓰기(false)
   번호쓰기('')
   지문지우기()   // 🕒 다음 사람은 처음부터(지문 · 받은 때 둘 다)
@@ -167,6 +199,10 @@ async function 사람기다리기 (auth, A) {
 }
 
 // 로그인 상태를 지켜본다. 되돌려주는 함수를 부르면 그만 본다.
+//   🍎 [2026-09-10 로그인 필수 ⑤] 알림의 «둘째 값» = `{ 확정 }`.
+//      · 확정 true  = 파이어베이스가 «직접» 말한 값(onAuthStateChanged — 복원이 끝난 «뒤»의 첫 답부터) → null 이면 진짜 로그아웃 상태
+//      · 확정 false = 붙기 자체가 실패(인터넷 없음 · 부품 못 받음) → «모른다». ⛔ 이걸로 문을 띄우지 않는다(느린 망 유저를 쫓아내지 않게)
+//      아이폰 앱에서 «확정 null» 이면 표식도 끈다 — 표식은 «진짜 상태»를 따라가야 한다(다른 기기에서 계정을 지운 뒤 이 폰).
 export function 사람지켜보기(알림) {
   let 그만 = null
   let 죽었나 = false
@@ -176,9 +212,10 @@ export function 사람지켜보기(알림) {
       const 사람 = u ? 사람으로(u) : null
       // 🔑 열쇠 통이 쓸 번호를 «여기서도» 맞춰 둔다 — 앱을 다시 열었을 때가 이 자리다
       번호쓰기(사람 ? 사람.번호 : '')
-      알림(사람)
+      if (!사람 && 앱안인가()) 표식쓰기(false)
+      알림(사람, { 확정: true })
     })
-  }).catch(() => 알림(null))
+  }).catch(() => 알림(null, { 확정: false }))
   return () => { 죽었나 = true; if (그만) 그만() }
 }
 
@@ -531,6 +568,46 @@ export async function 클라우드비우기() {
   await 묶어쓰기(F, db, 할일)
   지문지우기()
   return { 지운것: 할일.length }
+}
+
+// 🗑🍎 **계정 삭제** — 서버 기록 ＋ 로그인 계정을 지운다. ⛔ 이 폰의 레시피는 «안» 건드린다. (2026-09-08 · 큰 틀 6-① ⓑ · 계획 §12)
+//   왜 = 애플 5.1.1(v) = 앱 «안»에서 계정 삭제를 시작할 수 있어야 한다 · Play 도 삭제 경로를 요구한다.
+//   순서가 곧 설계다:
+//   ① «지금» 다시 로그인 — Firebase 원문(auth-public.d.ts:936) = deleteUser 는 *"requires the user to have recently signed in"*.
+//      만나고 나서 다시 시키면 두 번 묻는 흐름이 되니 «먼저» 한 번 한다(앱 안 = 부품 · 웹 = 팝업).
+//      ⛔ 다시 로그인한 사람이 «다른 계정»이면 아무것도 안 지운다 — 남의(또는 내 다른) 칸을 지우는 사고.
+//   ② 서버 기록 «먼저» — 계정을 먼저 지우면 규칙이 막혀 기록이 «고아»로 남는다(아무도 못 지운다).
+//   ③ 계정(deleteUser · 앱 안이면 부품 쪽도) — 여기서 끊기면 「기록은 지웠고 계정만 남았어요 · 다시 눌러 주세요」로 «정직하게» 던진다.
+//   ④ 폰 표식(로그인 표식·번호·지문·「받았다」) 지움 — 다음 사람은 처음부터.
+export async function 계정삭제() {
+  const { A, auth } = await 붙기()
+  const 전 = 사람으로(auth.currentUser)
+  if (!전) throw new Error('로그인부터 해주세요')
+  // ① 재인증
+  let user
+  if (앱안인가()) {
+    user = await 앱으로로그인({ A, auth, 공급자: 전.공급자 })
+  } else {
+    const r = await A.signInWithPopup(auth, new A.GoogleAuthProvider())
+    user = r.user
+  }
+  const 지금 = 사람으로(user)
+  if (!지금) throw new Error('로그인 번호를 못 받았어요')
+  if (지금.번호 !== 전.번호) throw new Error('다른 계정으로 로그인됐어요. 지우려는 계정으로 다시 로그인한 뒤 눌러 주세요')
+  // ② 서버 기록
+  const { 지운것 } = await 클라우드비우기()
+  // ③ 계정
+  try {
+    await A.deleteUser(auth.currentUser)
+    if (앱안인가()) { try { await 앱계정지우기() } catch { /* 웹 층은 이미 지워졌다 — 부품 쪽 실패는 삼킨다(다음 로그아웃이 정리) */ } }
+  } catch (e) {
+    const err = new Error('기록은 지웠고 계정 삭제만 남았어요. 한 번 더 눌러 주세요')
+    err.단계 = '계정'; err.지운것 = 지운것; err.원인 = e
+    throw err
+  }
+  // ④ 폰 표식
+  표식쓰기(false); 번호쓰기(''); 지문지우기(); 받았다지우기()
+  return { 지운것 }
 }
 
 // ─────────────────────────────────────────────────────────────────────────

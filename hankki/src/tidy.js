@@ -133,6 +133,9 @@ async function 선반기다리기(번호, headers) {
   return null                         // 2분 안에 안 왔다 — 워커는 계속 일하고 있다
 }
 
+// 🤖🔐 [2026-09-08 · 큰 틀 6-② ⓑ] 보내기 «전에» 허락 — 애플 5.1.2(i) "obtain explicit permission before doing so"
+import { AI동의받기 } from './aiConsent.js'
+
 // 🧺🧺 **선반에 놓인 답을 «집어온다»** — 앱이 깨어났을 때 부른다 [2026-09-10]
 //   ⭐ AI 를 «안» 부른다 — 워커가 이미 만들어 둔 답을 가져올 뿐이라 뉴런 0.
 //   ⛔ 기다리지 않는다. 한 번 물어보고 없으면 그냥 없는 것이다(그때는 지금처럼 「한 번 더」가 뜬다).
@@ -154,6 +157,11 @@ export async function 선반집기(번호) {
 
 // 📒 **기록은 «한 겹 감싸서» 남긴다** — `_마지막` 이 정해지는 자리가 열 곳이라
 //    하나씩 고치면 «반드시» 빠뜨린다. 어느 길로 끝나든 여기를 지나간다. [2026-09-10]
+// 🙅 [2026-09-13] 마지막 판이 「유저가 AI 를 안 쓰기로 한 것」인가 — 실패와 «갈라» 읽으려고 연다.
+//    배포 검수에서 잡힘: 동의 시트에서 「사용 안 함」을 고르면 null 이 돌아와 App·상세 화면이 tidyFail 로 적고
+//    「AI 다듬기가 안 됐어요 · 한 번 더」라고 «거짓» 안내를 했다. 안 쓴 것은 실패가 아니다.
+export function 동의안함으로끝났나() { return !!(_마지막 && _마지막.why === '동의안함') }
+
 export async function tidyRecipe(text, 사진) {
   const 잰때 = Date.now()
   const 답 = await 다듬기속(text, 사진)
@@ -170,6 +178,8 @@ async function 다듬기속(text, 사진) {
   if (!t) { _마지막 = { ok: false, why: '글자없음' }; return null }
   // ⛔ 너무 짧으면 AI 를 부를 값어치가 없다(＋우리 무료 통을 아낀다)
   if (t.length < 40) { _마지막 = { ok: false, why: '짧음' }; return null }
+  // 🔐 허락이 없으면 «한 바이트도» 안 나간다 — 시트가 없는 자리면 못 물은 것이라 역시 안 보낸다(재현판 ②)
+  if (!(await AI동의받기())) { _마지막 = { ok: false, why: '동의안함' }; return null }
 
   // 🔓👀 [2026-09-10] 유저 눈이면 운영자 열쇠를 «안 싣는다» — ocr.js 와 같은 잣대다.
   //   ⛔ 워커가 둘이라(hankki-ocr · hankki-tidy) 같은 구멍이 두 곳에 나 있었다.

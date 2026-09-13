@@ -6,6 +6,8 @@ import { StoreProvider } from './store'
 import { TimerProvider } from './timer'
 import { applyTheme, getTheme } from './theme'
 import './styles.css'
+// 🪞🍎 아이폰 «앱» 안에서만 — 본체가 «키째» 없으면 문서 폴더의 거울로 되살린다(첫 그리기 «전» · 2026-09-08 큰 틀 5)
+import { 거울되살리기, 거울귀기울이기 } from './mirror'
 
 // 저장된 테마 적용(인라인 부팅 스크립트와 동일 결과 — 상태바 색까지 확실히 동기화)
 applyTheme(getTheme())
@@ -29,18 +31,28 @@ if (window.visualViewport) {
 window.addEventListener('resize', setAppHeight)
 window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 200))
 
-createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    {/* 🛟 울타리는 «맨 바깥»에 — 저장소(StoreProvider)보다 밖이라야 그 안에서 뭐가 터져도 잡는다 */}
-    <ErrorBoundary>
-      <StoreProvider>
-        <TimerProvider>
-          <App />
-        </TimerProvider>
-      </StoreProvider>
-    </ErrorBoundary>
-  </React.StrictMode>
-)
+function 그리기 () {
+  createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      {/* 🛟 울타리는 «맨 바깥»에 — 저장소(StoreProvider)보다 밖이라야 그 안에서 뭐가 터져도 잡는다 */}
+      <ErrorBoundary>
+        <StoreProvider>
+          <TimerProvider>
+            <App />
+          </TimerProvider>
+        </StoreProvider>
+      </ErrorBoundary>
+    </React.StrictMode>
+  )
+}
+
+// 🪞 되살리기 판정은 «첫 그리기 전»에 — 그려 놓고 되살리면 StoreProvider 가 빈 판을 먼저 저장해 거울을 못 쓴다.
+//    앱 밖(웹·안드로이드)에선 'skip' 이 바로 와서 그리기가 한 틱만 늦다(눈에 안 보인다).
+//    'restored' 면 안에서 새로고침하므로 여기선 안 그린다(깜빡임 한 번이 빈 화면보다 낫다).
+Promise.resolve()
+  .then(() => 거울되살리기())
+  .catch(() => 'skip')
+  .then((결과) => { if (결과 !== 'restored') { 그리기(); try { 거울귀기울이기() } catch { /* noop */ } } })
 
 // 📊 [2026-09-08] 이용 통계 — ⛔ 화면을 «그린 뒤에» 켠다(첫 화면을 늦추지 않는다 · 절대원칙 32).
 //   ⭐ 안에서 requestIdleCallback 으로 한 번 더 미룬다. measurementId 가 비어 있으면 아무 일도 안 한다.

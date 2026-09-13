@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import Portal from './Portal'
 import Icon from './Icon'
 import GoogleButton from './GoogleButton'
+import AppleButton from './AppleButton'          // 🍎 아이폰 앱 안에서만 보이는 둘째 단추(큰 틀 4)
+import { 앱안인가 } from '../nativeAuth'
 import KeyGift from './KeyGift'
 import { 로그인, 로그아웃, 사람지켜보기, 요약, 올리기, 내려받기, 미리붙기, 받았다표시, 받았다지우기 } from '../cloud'
 import { 자동받기켤까 } from '../nudges'
@@ -79,8 +81,8 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
   //   ✅ 위험이 0인 근거 = **클라우드가 비었을 때만** 한다. 덮을 게 아예 없다.
   //      ⛔ 클라우드에 뭐가 있으면 손도 안 댄다 — 두 판을 보여주고 «고르게 한다»(창업자 확정).
   //      ⛔ 앱을 지웠다 깐 빈 폰이 클라우드를 덮는 길도 그대로 막혀 있다(그땐 클라우드가 «안» 비었다).
-  const 눌러로그인 = () => 감싸기('로그인', async () => {
-    await 로그인()
+  const 눌러로그인 = (공급자 = 'google.com') => 감싸기('로그인', async () => {
+    await 로그인(공급자)
     const r = await 요약()
     set구름(r)
     if (!비었다(r)) return          // 클라우드에 뭐가 있다 → 유저가 고른다
@@ -112,7 +114,9 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
 
   // ⛔ 로그아웃하면 «봤다» 표식도 지운다 — 다른 계정으로 로그인했을 때
   //    옛 표식이 남아 있으면 «남의 클라우드»를 이 폰 것으로 덮어버린다.
-  const 나가자 = () => 감싸기('로그아웃', async () => { await 로그아웃(); 받았다지우기(); set구름(null) })
+  //   🍎 [2026-09-10 로그인 필수 ①] 아이폰 앱에선 로그아웃 «직후» 첫 화면(문)이 다시 뜬다(App.jsx `사람지켜보기` 확정 null) —
+  //      시트(z 300)가 문(z 210) 위에 남아 가리므로 시트를 «닫아» 준다. 웹·안드로이드는 그대로(문이 안 뜬다).
+  const 나가자 = () => 감싸기('로그아웃', async () => { await 로그아웃(); 받았다지우기(); set구름(null); if (앱안인가()) onClose() })
 
   return (
     <Portal>
@@ -162,7 +166,9 @@ export default function CloudSheet({ onClose, 백업만들기, 불러오기끝, 
                   </div>
                 )}
                 {/* 🔵🔴🟡🟢 첫 화면과 «같은 단추»를 쓴다 — 같은 기능은 화면이 달라도 같은 모양 */}
-                <GoogleButton label="Google 계정으로 로그인" busy={바쁨 === '로그인'} disabled={!!바쁨} onClick={눌러로그인} />
+                <GoogleButton label="Google 계정으로 로그인" busy={바쁨 === '로그인'} disabled={!!바쁨} onClick={() => 눌러로그인('google.com')} />
+                {/* 🍎 아이폰 «앱 안»에서만 — 첫 화면(CloudGate)과 같은 단추·같은 순서(구글 다음) */}
+                {앱안인가() && <AppleButton label="Apple로 로그인" busy={바쁨 === '로그인'} disabled={!!바쁨} onClick={() => 눌러로그인('apple.com')} />}
                 {/* 🎁 선물 안내 — 첫 화면(CloudGate)과 «같은 부품»
                     ⛔⛔ 2026-09-01 까지 이 줄이 «첫 화면에만» 있었다. 그런데 첫 화면은 «새로 깐 사람»만 본다
                        → 이미 쓰던 사람은 설정에서 열어도 선물 얘기를 한 글자도 못 봤다(창업자가 잡았다). */}

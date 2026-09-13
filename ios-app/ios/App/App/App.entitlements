@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 🍎 2026-09-08 큰 틀 4 — 「Sign in with Apple」 권한(capability). 부품 원문(setup-apple.md) = Xcode 에서 이 capability 를 켠다.
+	     ⚠️ 서명 없는 빌드(지금)엔 영향 없다 · 9/13 가입 뒤 App ID 에 같은 capability 를 켜야 «서명 빌드»가 통과한다. -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+</dict>
+</plist>
