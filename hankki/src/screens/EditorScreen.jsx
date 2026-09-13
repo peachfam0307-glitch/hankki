@@ -1430,13 +1430,24 @@ export default function EditorScreen({ id, prefill }) {
           message={'그냥 닫으면 다음에 이어서 쓸 수 있어요.\n버리면 지금 쓴 내용이 사라져요.'}
           confirmLabel="버리기"
           danger
+          // 🚪🚪 **[창업자 제보 2026-09-13] *"버리기 누르면 변화없음 나가기도 안됨"* · *"저장해야지만 레시피화면으로 가"***
+          //   ⛔⛔ 뿌리 = `nav.pop()` 은 `history.back()` 인데, **이 물음 시트가 «자기 히스토리 칸»을 하나 쓴다**
+          //      (`useBackHandler.js` 의 `useModalBack` 머리주석 — *"마운트될 때 진짜 히스토리 칸을 하나 쌓고"*).
+          //      → 「버리기」가 부른 back() 이 **그 시트 칸만 먹고** 편집 화면은 그대로 남았다.
+          //      🔢 재현판 `_repro-버리기안나감-0913` = 초안은 «지워지는데» 화면이 «안 나간다»(창업자 증상 그대로).
+          //   ⭐ 저장이 잘 나가던 이유가 답이었다 — 저장은 `nav.popAll()` 을 쓴다.
+          //      그건 **쌓인 화면 칸 ＋ 모달 칸을 «세어서» 한 번에** 되돌린다(App.jsx `popAll`).
+          //   ✅ 그래서 버리기·그냥 닫기도 «같은 문»으로 나간다. 저장 뒤와 가는 곳이 같은 것도 맞다 —
+          //      둘 다 「이 작성은 끝났다」이고, 뒤로가기로 빈 편집기가 다시 나오면 안 된다(popAll 주석 그대로).
+          //   ⛔ `setTimeout`·`requestAnimationFrame` 으로 틈을 주는 땜빵을 쓰지 않는다(절대원칙 34) —
+          //      그건 타이밍에 기대는 것이고, 느린 폰에서 도로 깨진다.
           onConfirm={() => {
             try { localStorage.removeItem(DRAFT_KEY) } catch { /* noop */ }
-            nav.pop()
+            nav.popAll()
             nav.showToast('쓰던 내용을 버렸어요')
           }}
           secondaryLabel="그냥 닫기 (이어서 쓸래요)"
-          onSecondary={() => nav.pop()}
+          onSecondary={() => nav.popAll()}
           onClose={() => setDiscardAsk(false)}
         />
       )}
