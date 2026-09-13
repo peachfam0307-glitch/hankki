@@ -489,7 +489,7 @@ export default function ImportScreen() {
         <>캡처를 열고 <span style={{ display: 'inline-flex', verticalAlign: 'middle', margin: '0 2px' }}><Icon name="share" size={20} color="#3478F6" stroke={1.9} /></span> <b>공유</b>를 누른 뒤 앱 줄에서 <b>한끼</b>를 골라요 <span className="t-sub">(안 보이면 맨 끝 「더 보기」에서 한끼를 켜요)</span></>,
         <><b>한끼에 담았어요</b>가 뜨면 <b>한끼를 열어요</b> · 임시보관함에 있고, 제목과 재료를 자동으로 읽어 드려요</>,
       ],
-      result: '이미 캡처해 둔 사진은 아래 「사진 고르기」로 여기서 바로 골라도 돼요.',
+      result: '임시보관함에 담기고, 제목과 재료를 자동으로 읽어 드려요.',
       buttons: [
         { label: '사진 고르기', onClick: () => 갈래로('photo') },
         { label: 'Instagram 에서 담는 다른 방법', ghost: true, onClick: () => 갈래로('instagram') },
@@ -506,7 +506,7 @@ export default function ImportScreen() {
         <><span style={{ display: 'inline-flex', verticalAlign: 'middle', margin: '0 2px' }}><Icon name="share" size={20} color="#3478F6" stroke={1.9} /></span> <b>공유</b>를 누른 뒤 앱 줄에서 <b>한끼</b>를 골라요 <span className="t-sub">(안 보이면 맨 끝 「더 보기」에서 한끼를 켜요)</span></>,
         <><b>한끼에 담았어요</b>가 뜨면 <b>한끼를 열어요</b> · 임시보관함에 있고, 제목과 재료를 자동으로 읽어 드려요</>,
       ],
-      result: '지금 바로 고르려면 아래 「사진 고르기」로 여기서 골라도 돼요.',
+      result: '임시보관함에 담기고, 제목과 재료를 자동으로 읽어 드려요.',
       buttons: [
         { label: '사진 고르기', onClick: () => 갈래로('photo') },
       ],
