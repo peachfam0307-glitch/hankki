@@ -358,8 +358,29 @@ export default function EditorScreen({ id, prefill }) {
           5200,
         )
       }
-      ocrCropOpen.current = true
-      setCropImg(urls[0])
+      // ✂️✂️ **[창업자 확정 2026-09-13] 기본 흐름은 자르기 화면을 «안 띄운다».**
+      //   📮 창업자 = *"내가 방금 업청큰 사진있는거 그냥했는데 완전 잘돼"* · *"안내만 안뜨게 숨길수는 없어?"*
+      //            · *"굳이 귀찮게 자를필요 없으니까"*
+      //   ⭐ 왜 이제 괜찮나 = 같은 날 AI 다듬기를 고쳐서 **캡션을 통째로 줘도 잘 나눈다**
+      //      (제목 수식어 떼기·조리 문장에서 재료 뽑기·홍보 문구는 memo — 프롬프트 규칙 2·4·6).
+      //      오히려 «잘라내면» 재료를 뽑을 글이 사라진다(스테이크솥밥에서 쌀·올리브오일·물이 그랬다).
+      //   🔢 걸음 수 = 6걸음 → **5걸음**. 창업자가 짚은 「귀찮다」가 그 한 걸음이었다.
+      //
+      //   ⛔⛔ **자르기를 «없애지» 않는다**(절대원칙 39) — 아래 두 갈래는 그대로 자른다:
+      //      · 「재료 칸에만 채우기」 · 「만드는 법 칸에만 채우기」(`ocrTargetRef`)
+      //        → 그 사진의 글자는 «그 칸에만» 담기므로 다른 절이 섞이면 엉뚱한 데 들어간다.
+      //      ⭐ 즉 「통째로 읽기」만 건너뛴다. 골라 담는 길에서는 자르기가 여전히 제 일을 한다.
+      const 골라담기 = ocrTargetRef.current === 'ingredients' || ocrTargetRef.current === 'steps'
+      if (골라담기) {
+        ocrCropOpen.current = true
+        setCropImg(urls[0])
+      } else {
+        // 자르지 않고 통째로 — 자른 뒤와 «같은 길»로 보낸다(사진도 그대로 남긴다)
+        const img = urls[0]
+        setRefs((p) => [...p, img])
+        setPin('photo')
+        onCropped(img)
+      }
   }
 
   // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
@@ -406,8 +427,19 @@ export default function EditorScreen({ id, prefill }) {
     ocrJobs.current.push({ img, idx: ocrCropped.current })
     ocrCropped.current += 1
     if (ocrQueue.current.length) {
-      ocrCropOpen.current = true
-      setCropImg(ocrQueue.current.shift()) // 👉 사람은 다음 장을 자른다 · 앞 장은 뒤에서 읽힌다
+      // ✂️ [2026-09-13] 자르기를 건너뛰는 길이면 «둘째 장부터도» 안 띄운다.
+      //   ⛔ 여기를 안 고치면 첫 장만 안 뜨고 둘째 장에서 갑자기 자르기가 튀어나온다
+      //      (창업자가 「귀찮다」고 한 그 걸음이 두 장째에 되살아난다).
+      //   ⭐ 판정은 위 「고른 직후」와 «같은 잣대»를 쓴다 — 두 곳이 갈리면 반드시 어긋난다.
+      const 골라담기 = ocrTargetRef.current === 'ingredients' || ocrTargetRef.current === 'steps'
+      const 다음 = ocrQueue.current.shift()
+      if (골라담기) {
+        ocrCropOpen.current = true
+        setCropImg(다음) // 👉 사람은 다음 장을 자른다 · 앞 장은 뒤에서 읽힌다
+      } else {
+        setRefs((p) => [...p, 다음])
+        onCropped(다음)   // 자르지 않고 바로 다음 장으로
+      }
     } else {
       ocrCropOpen.current = false
     }

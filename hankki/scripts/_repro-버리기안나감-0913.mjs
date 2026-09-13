@@ -3,7 +3,7 @@
 //   ⛔ 짐작으로 고치지 않는다 — 먼저 그 자리를 그대로 밟아 본다(규칙 7).
 import { chromium } from 'playwright'
 import { createServer } from 'node:http'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, writeFileSync, unlinkSync } from 'node:fs'
 import { join, extname, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { SEED_COACH_SEEN } from '../src/coach.js'
@@ -71,6 +71,7 @@ const 초안남았나 = await p.evaluate(() => !!localStorage.getItem('hankki:ed
 잰다(!초안남았나, '⑤ 초안이 지워졌다', 초안남았나 ? '⛔ 아직 남아 있다' : '지워졌다')
 
 await p.screenshot({ path: '/tmp/claude-0/버리기-끝화면.png' })
+
 await b.close(); srv.close()
 console.log(나쁨 ? `⛔ ${나쁨}칸 실패 → /tmp/claude-0/버리기-끝화면.png 을 열어 볼 것` : '✅ 전부 통과')
 process.exit(나쁨 ? 1 : 0)
