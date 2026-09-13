@@ -12,6 +12,7 @@ on:
       - '.github/workflows/repro-webkit.yml'
       - 'hankki/scripts/_repro-카드굽기-webkit-0913.mjs'
       - 'hankki/scripts/_repro-칩반달-webkit-0913.mjs'
+      - 'hankki/scripts/_repro-칩반달-실물-webkit-0913.mjs'
 
 jobs:
   repro:
