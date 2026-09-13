@@ -4791,3 +4791,29 @@ html, body { overscroll-behavior: none; }
       실제로 `_repro-완성사진-0821` 이 그렇게 죽어서 잡혔다.
    ⭐ 자리·색·크기는 마크업 쪽 style 이 정한다(격자 크기에 따라 갈려서). 여기선 «글자»만 넣는다. */
 .sample-tag::after { content: '샘플'; }
+
+/* 🌕 특집 줄 — 「가로로 쭉 미는」 판 (2026-09-13)
+   📮 창업자 = *"추석특집을 띄우면 좋지 스크롤로 쭉 볼수있게"*
+   ⭐ `WeekBox` 를 그대로 쓰고 «이 클래스만» 더 붙인다 — 마크업을 두 벌로 만들지 않는다.
+   ⛔ 격자(`weekly-row`)는 「한 화면에 딱 맞게」가 목적이라 7편이면 세 줄이 된다.
+      특집은 편 수가 들쭉날쭉해서 «미는» 쪽이 맞다. */
+.weekly-row.rail {
+  display: flex;
+  gap: 11px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  /* 📌 상자 «안쪽 여백»만큼 좌우로 넘겨서, 미는 칸이 상자 가장자리까지 닿게 한다 */
+  margin-inline: -14px;
+  padding-inline: 14px;
+  padding-bottom: 2px;
+  scrollbar-width: none;                       /* 막대는 안 보이게 — 창업자가 회색 막대를 싫어한다 */
+}
+.weekly-row.rail::-webkit-scrollbar { display: none; }
+.weekly-row.rail > .mini-card {
+  flex: 0 0 122px;                             /* 폰에서 세 칸 반쯤 보인다 = 「더 있다」가 읽힌다 */
+  scroll-snap-align: start;
+}
+@media (min-width: 700px) {                    /* 패드 */
+  .weekly-row.rail > .mini-card { flex-basis: 150px; }
+}
