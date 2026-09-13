@@ -143,6 +143,7 @@ export default function ShopScreen() {
               「담기·사러가기 버튼이 너무 크고 설명은 왼쪽에 쏠린다」가 됐다(창업자 제보).
            ⭐ 폰(1열)에선 **지금 순서를 그대로 지킨다** — 담은 게 있으면 리스트가 위로 온다
               (긴 큐레이션에 리스트가 묻힌다는 옛 피드백). CSS `order` 로만 바꾸고 DOM 은 안 건드린다. */
+        <>
         <div className={`shop-pair${shoppingList.length > 0 ? ' has-items' : ''}`}>
         <div className="shop-cur" data-coach="curation"><Curation /></div>
 
@@ -167,8 +168,19 @@ export default function ShopScreen() {
           </div>
         </div>
         <ChecklistAdd />
+        {/* 📝📝 [2026-09-13 창업자 확정] 빈손 안내문을 «두 줄»로 줄이고 글씨를 키웠다(15 → 17px).
+            📮 창업자 = *"장보기리스트 설명 살재료를 적어보세요~ 글씨크기 키우고 2줄로 안내"*
+            ⛔ 옛 글 = 「…**위** 주부의 장바구니나…」 — 이제 장바구니가 «아래»로 내려가서
+               **「위」가 거짓말이 된다.** 시안 Ⓑ 캡처에서 눈으로 보고 잡았다.
+            ⭐ 첫 줄은 «할 일», 둘째 줄은 «다른 길». 세 줄짜리가 자리를 제일 많이 먹던 자리다.
+            ⛔⛔ 이 주석을 아래 `? (` «안»으로 넣지 말 것 — 표현식이 열리는 자리라
+               객체 리터럴로 파싱돼 `Expected ")"` 로 빌드가 죽는다(CLAUDE.md 에 적힌 함정 · 2026-09-13 또 밟았다). */}
         {shoppingList.length === 0 ? (
-          <div className="empty" style={{ padding: '24px' }}>{'필요한 재료를 담아보세요.\n위 주부의 장바구니나 레시피 상세 “재료 담기”로도 담을 수 있어요.'}</div>
+          <div className="empty" style={{ padding: '18px 8px', fontSize: 17, lineHeight: 1.75 }}>
+            {/* ⛔ 둘째 줄이 길면 «세 줄»로 넘친다 — 17px·411px 폭에서 실측했다(창업자는 «2줄»을 지정했다).
+                   「레시피 상세의 “재료 담기”로도 담을 수 있어요」 = 세 줄. 짧게 줄여 두 줄로 맞췄다. */}
+            {'살 재료를 적어보세요\n레시피에서 「재료 담기」로도 담겨요'}
+          </div>
         ) : (
           shoppingList.map((it) => (
             <div key={it.id} className="shop-row">
@@ -234,6 +246,19 @@ export default function ShopScreen() {
         {/* ⛔ 큐레이션을 여기 한 번 «더» 그리던 것을 지웠다 — 위로 올려 하나만 둔다.
             담은 게 있을 때 리스트를 위로 올리는 건 이제 CSS `order` 가 한다(`.shop-pair.has-items`). */}
 
+
+        {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
+        </div>
+        </div>
+
+        {/* ⛔⛔ 여기가 «형제 둘»이 되는 자리라 위를 `<>` 로 감쌌다 —
+            JSX 는 루트를 하나만 받는다. 2026-09-13 에 감싸는 걸 빼먹어 빌드가 죽었다. */}
+        {/* 🛍🛍 [2026-09-13 창업자 확정] 쇼핑몰 바로가기를 «맨 아래»로 내렸다.
+            📮 창업자 = *"C로 가자 쇼핑몰 바로가기도 맨 아래로"*
+            ⛔ 그 전엔 `.shop-list` 안에 있어서, 리스트를 위로 올리자 «장보기와 주부의 장바구니 사이»에
+               끼어 장바구니를 첫 화면 밖으로 밀어냈다(시안 Ⓒ 캡처에서 눈으로 봤다).
+            ⭐ `.shop-pair` «밖»으로 뺐다 — 패드 2단에서도 전체 폭으로 맨 아래에 온다.
+            📌 하는 일이 다르다 — 위 둘은 「무엇을 살까」이고 이건 「어디서 살까」다. 맨 아래가 맞다. */}
         {/* 3) 쇼핑몰 바로가기 — 리스트 확인하고 바로 사러 가는 자리(리스트 바로 아래). */}
         <div className="sec-head" style={{ marginTop: 24 }}>
           <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="tag" size={18} color="var(--brown)" stroke={1.9} />쇼핑몰 바로가기</div>
@@ -300,9 +325,7 @@ export default function ShopScreen() {
                         · 비조합원은 «매장»에서 10% 비싼 값으로만
               · 자연드림(아이쿱) = 일반가·조합원가가 따로 있다 = **비조합원도 온라인 구매 가능**
                         → 그래서 자연드림엔 아무 표시도 안 붙인다(그게 기본이다). */}
-        {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
-        </div>
-        </div>
+        </>
         )}
       </div>
 
