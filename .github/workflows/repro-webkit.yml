@@ -12,6 +12,7 @@ on:
       - '.github/workflows/repro-webkit.yml'
       - 'hankki/scripts/_repro-카드굽기-webkit-0913.mjs'
       - 'hankki/scripts/_repro-칩반달-webkit-0913.mjs'
+      - 'hankki/scripts/_repro-칩반달-실물-webkit-0913.mjs'
 
 jobs:
   repro:
@@ -42,6 +43,13 @@ jobs:
         run: |
           node scripts/_repro-칩반달-webkit-0913.mjs chromium
           node scripts/_repro-칩반달-webkit-0913.mjs webkit
+      - name: 🧪 칩 반달 «실물 카드» — 웹 빌드 → 크롬 · WebKit (칩 줄 JPEG 를 로그에 base64 로)
+        working-directory: hankki
+        continue-on-error: true
+        run: |
+          npm run build > /dev/null
+          node scripts/_repro-칩반달-실물-webkit-0913.mjs chromium | grep -v '^B64:'
+          node scripts/_repro-칩반달-실물-webkit-0913.mjs webkit
       - name: ⬆️ 구운 그림 (눈으로 판정용)
         if: always()
         uses: actions/upload-artifact@v4
