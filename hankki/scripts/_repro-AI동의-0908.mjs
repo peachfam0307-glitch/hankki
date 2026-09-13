@@ -92,6 +92,10 @@ window.addEventListener(A.동의이벤트, (e) => { 뜬횟수++; e.detail.받았
   잰다(셋.every(Boolean), '  ⑥-f 수동 단추 셋 = 대기창·호출 «앞»에서 다시묻기', 셋.join(','))
   잰다(/<AIConsentSheet \/>/.test(읽기('src/App.jsx')), '  ⑥-g App 에 시트가 붙어 있다')
   잰다(/if \(!\(await AI동의받기\(\)\)\)/.test(읽기('src/tidy.js')), '  ⑥-h tidy.js 가 보내기 «전»에 묻는다(자동 길 포함)')
+  // 🙅 [2026-09-13 배포 검수] 「사용 안 함」은 실패가 아니다 — 자동 길(App)·상세 만회가 tidyFail 로 안 적고, 안내말도 «선택»으로 말한다
+  잰다(/동의안함으로끝났나\(\)\) \{ store\.updateRecipe\(rec\.id, \{ tidyFail: 0/.test(읽기('src/App.jsx')), '  ⑥-i App 자동 길 = 동의 안 함이면 tidyFail 지우고 「AI 없이 정리했어요」')
+  잰다(/tidyFail: 동의안함으로끝났나\(\) \? 0 : 2/.test(읽기('src/screens/RecipeDetailScreen.jsx')), '  ⑥-j 상세 만회 = 동의 안 함이면 실패(2)로 안 굳힌다')
+  잰다(/why === '동의안함'/.test(읽기('src/tidy.js')) && /AI 없이 정리했어요/.test(읽기('src/안내말.js')), '  ⑥-k 까닭 읽기(tidy.js) ＋ 안내말(안내말.js) 이 있다')
 }
 
 console.log(나쁨 ? `\n⛔ ${나쁨}칸 실패\n` : '\n✅ 허락 전엔 한 바이트도 안 나간다 · 한 번 묻고 · 설정에서 바꾼다\n')

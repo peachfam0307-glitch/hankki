@@ -5,9 +5,9 @@ import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } f
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, 열쇠셈, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw, 자리표제목 } from './parseRecipe'
-import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중, 번호알림받기, 선반집기 } from './tidy'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중, 번호알림받기, 선반집기, 동의안함으로끝났나 } from './tidy'
 import AIConsentSheet from './components/AIConsentSheet'   // 🔐 AI 로 보내기 전 허락 시트(큰 틀 6-② ⓑ)
-import { 까닭말, 다듬기끝말, 남은열쇠말 } from './안내말'
+import { 까닭말, 다듬기끝말, 동의안함끝말, 남은열쇠말 } from './안내말'
 import { 만회값 } from './retidy'   // 🧺 선반에서 받은 답을 얹는 규칙 — 상세 화면 자동 만회와 «같은 곳»
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
@@ -946,6 +946,8 @@ export default function App() {
           //      그런데 «졸업»이 AI 성공에 걸려 있어서, 실패하면 그 편은 임시보관함에 그대로 남는다.
           //      말이 없으면 유저는 「왜 안 넘어가지」만 남고 «무엇을 누르면 되는지»를 모른다.
           //   ⭐ 그래서 무엇이 안 됐는지 ＋ «어떻게 하면 되는지»를 한 줄로 붙여 말한다.
+          // 🙅 [2026-09-13] 「사용 안 함」을 고른 건 실패가 아니다 — 표시를 지우고 «선택했다»고 말한다.
+          if (동의안함으로끝났나()) { store.updateRecipe(rec.id, { tidyFail: 0, tidying: 0, tidyJob: '' }); 끝알림(동의안함끝말()); return }
           끝알림(다듬기끝말(false, tidyFounder() ? tidyTail() : ''))
           if (tidyFounder()) showToast('AI 다듬기는 못 했어요' + tidyTail(), 6500)
         }).catch(() => {
