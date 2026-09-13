@@ -73,12 +73,15 @@ const 장 = []
 
 // ③ 전 — 둘을 «가로»로 나란히 (②와 방향을 바꾼다)
 장.push({ 이름: '3-전', html: `
-  <div style="position:absolute;left:0;right:0;top:120px;text-align:center;font-size:58px;font-weight:700">전 부치는 날</div>
-  <div style="position:absolute;left:0;right:0;top:205px;text-align:center;font-size:32px;color:#a98a6b">네 가지 다 지금 열려 있어요</div>
+  <!-- ⛔⛔ [2026-09-13] 가운데 정렬 제목 ＋ 오른쪽 위 곰 = 글씨가 화면 폭을 꽉 채워 «반드시» 만난다.
+       그렇다고 곰을 줄이면 창업자 = "꼬르곰이 너무작잖아". 자리를 바꿔야 크기를 지킬 수 있다.
+       ⭐ 그래서 2·2b 장과 같은 짜임으로 — 제목을 «왼쪽»에 붙이고 오른쪽 위를 캐릭터에게 통째로 준다. -->
+  <div style="position:absolute;left:80px;top:120px;font-size:58px;font-weight:700">전 부치는 날</div>
+  <div style="position:absolute;left:80px;top:205px;font-size:32px;color:#a98a6b">네 가지 다 지금 열려 있어요</div>
   <!-- ⛔ [2026-09-13] 가로 한 줄에 넷을 넣었더니 «넘쳐서» 새우관자전이 잘리고 알배추전은 아예 안 보였다.
        ⭐ 2x2 격자로. 칸이 넓어져 「꼬치 없는 꼬치전」 같은 긴 이름도 한 줄에 든다. -->
   <!-- ⛔ [2026-09-13] 그림을 320px 로 키웠더니 2행이 «바닥 밖으로» 나갔다(알배추전 20분이 잘림) -->
-  <div style="position:absolute;left:70px;right:70px;top:290px;display:grid;grid-template-columns:1fr 1fr;gap:28px">
+  <div style="position:absolute;left:70px;right:70px;top:340px;display:grid;grid-template-columns:1fr 1fr;gap:28px">
     ${전.map((g) => `
       <div style="background:#fff;border:3px solid #efe2cf;border-radius:40px;padding:28px 16px 24px;text-align:center">
         ${컷(g.그림, 275)}
@@ -87,14 +90,14 @@ const 장 = []
       </div>`).join('')}
   </div>
   <!-- ⛔ [2026-09-13] 아래 문구와 곰이 «2x2 카드»와 겹쳤다 — 문구는 부제로 올리고 곰은 제목 옆으로 뺐다 -->
-  ${곰펭('cs_b11', 130, 'left:60px;top:95px')}` })
+  ${곰펭('cs_b11', 250, 'right:50px;top:60px')}` })
 
 // ④ 나물·잡채 — 글을 «오른쪽»에 붙이고 그림을 왼쪽으로 (③의 좌우대칭을 깬다)
 // ⛔ [2026-09-13] 창업자 = "잡채는 왼쪽 끝부분 잘렸어" — left:-80px 이라 그릇이 화면 밖으로 나갔다.
 //    ＋ 들깨무침은 «그림이 아예 없었다»(글만 있었다). 둘 다 그림을 온전히 보여준다.
 장.push({ 이름: '4-나물', html: `
-  <div style="position:absolute;left:0;right:0;top:130px;text-align:center;font-size:58px;font-weight:700">잡채랑 나물</div>
-  <div style="position:absolute;left:0;right:0;top:215px;text-align:center;font-size:32px;color:#a98a6b">전날 미리 해두면 그날이 편해요</div>
+  <div style="position:absolute;left:80px;top:130px;font-size:58px;font-weight:700">잡채랑 나물</div>
+  <div style="position:absolute;left:80px;top:215px;font-size:32px;color:#a98a6b">전날 미리 해두면 그날이 편해요</div>
   ${나물.map((g, i) => `
     <div style="position:absolute;left:80px;right:80px;top:${310 + i * 450}px;height:400px;display:flex;align-items:center;gap:40px;background:#fff;border:3px solid #efe2cf;border-radius:44px;padding:0 50px">
       ${컷(g.그림, 290)}
@@ -104,7 +107,7 @@ const 장 = []
         <div style="font-size:34px;color:#a98a6b;margin-top:14px">${g.분}분</div>
       </div>
     </div>`).join('')}
-  ${곰펭('cs_b08', 190, 'left:50px;bottom:40px')}` })
+  ${곰펭('cs_b08', 250, 'right:50px;top:60px')}` })
 
 // ⑤ 연휴 뒤 — 배경을 «진하게» 뒤집는다 (앞 넷과 확 다르게)
 장.push({ 이름: '5-남은음식', html: `
