@@ -1564,7 +1564,7 @@ export default function EditorScreen({ id, prefill }) {
             ) : ocrNoVision.current ? (
               <>
                 <b style={{ color: '#fff' }}>글자는 다 남기고</b> 사진 부분만 잘라내면 돼요.<br />
-                <span style={{ color: '#ffd9a0', fontSize: 15 }}>지금은 {KEY_NAME} 없이 읽어요 · 사진을 잘라낼수록 글자를 더 잘 읽어요</span>
+                <span style={{ color: '#ffd9a0', fontSize: 15 }}>사진을 잘라낼수록 글자를 더 잘 읽어요 · 지금은 {KEY_NAME} 없이 읽어요</span>
               </>
             ) : undefined
           }
