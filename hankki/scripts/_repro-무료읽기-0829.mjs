@@ -50,13 +50,14 @@ const 재기 = (이름, 됐나, 값 = '') => { 칸.push({ 이름, 됐나, 값 })
 //      「그냥 읽기 = 0번」이 **통과했는데 아무것도 안 잰 초록불**이 된다(규칙 18 ⓘ).
 //      실제로 첫 판이 그랬고, 짝인 ④(AI 는 «불러야» 한다)가 «맞게» 걸려서 드러났다.
 //   📌 **되짚는 칸을 같이 두면 가짜 통과가 스스로 드러난다.** 한쪽만 재면 영영 못 본다.
+// ✂️ [창업자 확정 2026-09-13] 자르기 화면을 «안 띄우게» 바꿨다 → 「전체 사용」 단추가 없어졌다.
+//   ⛔ 옛 판은 그 단추를 8초 기다리다 죽었다 — 고쳐진 앱을 고장이라 우긴 것이다.
+//   ⭐ 이제는 사진을 넣으면 «곧바로» 읽기가 시작된다. 그래서 누를 것 없이 기다리기만 하면 된다.
+//   ⛔ 위 주석의 걱정(「읽기가 시작조차 안 하면 가짜 초록불」)은 그대로 유효하다 —
+//      그래서 기다리는 시간을 넉넉히 두고, 짝인 ④(AI 는 «불러야» 한다)가 여전히 되짚는다.
 async function 사진넣고자르기(p) {
   await p.locator('input[type=file]').first().setInputFiles({ name: 'r.png', mimeType: 'image/png', buffer: 사진 })
-  await p.waitForTimeout(1200)
-  const 전체 = p.locator('button', { hasText: '전체 사용' }).first()
-  await 전체.waitFor({ state: 'visible', timeout: 8000 })
-  await 전체.click()
-  await p.waitForTimeout(4500)
+  await p.waitForTimeout(5700)
 }
 
 // 🚪 가져오기 → ③ 「한끼 앱에서 사진 가져오기」 안내 화면까지

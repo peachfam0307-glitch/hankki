@@ -94,7 +94,8 @@ const 에디터 = readFileSync(join(앱, 'src/screens/EditorScreen.jsx'), 'utf8'
 잰다(/const shotAccum = useRef\(''\)/.test(에디터), '④-1 사진을 들 자리가 있다(useRef)')
 잰다(/if \(!shotAccum\.current && typeof img === 'string'\) shotAccum\.current = img/.test(에디터),
   '④-2 자른 «첫 장»만 들고 있는다')
-잰다(/tidyRecipe\(combined, shotAccum\.current\)/.test(에디터), '④-3 정리할 때 사진을 같이 넘긴다')
+// 🆓 [2026-09-14] 세 번째 인자(무료 읽기 표식)가 붙었다 — 재는 것은 «사진을 같이 넘기나»라 그대로다.
+잰다(/tidyRecipe\(combined, shotAccum\.current[,)]/.test(에디터), '④-3 정리할 때 사진을 같이 넘긴다')
 잰다(/shotAccum\.current = ''/.test(에디터), '④-4 ⭐새로 고르면 앞 판 사진을 버린다(옛 사진 ✕ 새 글자 방지)')
 잰다(!/localStorage[\s\S]{0,80}shotAccum/.test(에디터) && !/shotAccum[\s\S]{0,80}localStorage/.test(에디터),
   '④-5 ⛔사진을 localStorage 에 넣지 않는다 (store.jsx:698 — 저장이 통째로 막힌다)')

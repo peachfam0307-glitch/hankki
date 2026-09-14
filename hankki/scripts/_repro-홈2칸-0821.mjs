@@ -63,12 +63,15 @@ const 재기 = async (w, h) => {
       const 트랙 = getComputedStyle(row).gridTemplateColumns.trim().split(/\s+/).length
       return { 칸: cards.length, 한줄, 트랙, 폭: 표지 ? Math.round(표지.getBoundingClientRect().width) : 0 }
     }
-    const rows = [...document.querySelectorAll('.weekly-row')]
+    // ⛔ [2026-09-14] 「특집」·「이달의 레꾸」는 «가로로 미는 줄»(.rail)이라 격자가 아니다.
+    //    추석 특집이 홈 맨 위에 붙자 이 판이 그걸 «제철 줄»로 잘못 재서 죽었다(한 줄 10장).
+    //    ⭐ 이 판이 재는 건 «격자 줄»뿐이다 — 미는 줄은 뺀다.
+    const rows = [...document.querySelectorAll('.weekly-row:not(.rail)')]
     return {
       줄: rows.map(잰다).filter(Boolean),
       가로넘침: document.documentElement.scrollWidth > window.innerWidth + 1,
       // 이름표가 말줄임으로 잘리나
-      잘린이름: [...document.querySelectorAll('.weekly-row .name')].filter((n) => n.scrollWidth > n.clientWidth + 1).length,
+      잘린이름: [...document.querySelectorAll('.weekly-row:not(.rail) .name')].filter((n) => n.scrollWidth > n.clientWidth + 1).length,
     }
   })
   await ctx.close()
