@@ -1340,6 +1340,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
       const t = go(pre)
       if (t) { try { await t; return } catch (e) { if (e && e.name === 'AbortError') return } }
       // 여기까지 왔으면 이 폰은 파일 공유를 못 한다 → 저장으로
+      if (앱안인가()) { setBusy('공유 창을 못 열었어요 · 잠시 뒤 다시 눌러 주세요'); setTimeout(() => setBusy(null), 2400); return }   // 🍎 아이폰 앱은 <a download> 가 안 된다 — 「저장했어요」라고 거짓말하지 않는다
       pre.forEach((f, i) => setTimeout(() => saveFile(f), i * 400))
       setBusy('공유가 안 되는 폰이라 사진으로 저장했어요')
       setTimeout(() => setBusy(null), 2400)
@@ -1440,11 +1441,11 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
             style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, padding: '15px 34px', borderRadius: 999, background: '#fffdf8', color: '#5d3410', fontWeight: 800, fontSize: 16, border: 'none' }}>
             <Icon name="share" size={18} stroke={2.2} />지금 보내기
           </button>
-          <button className="press"
+          {!앱안인가() && <button className="press"
             onClick={() => { ready.forEach((f, i) => setTimeout(() => saveFile(f), i * 400)); setReady(null) }}
             style={{ padding: '9px 18px', background: 'transparent', color: 'rgba(255,255,255,.85)', fontSize: 13.5, fontWeight: 700, border: 'none' }}>
             사진으로 저장할게요
-          </button>
+          </button>}
         </div>
       )}
       {/* 📱 [2026-08-28 ⓑ] 카드 한 장이 나갔다 → 레시피 한 장을 «따로» 보낼지 청한다.

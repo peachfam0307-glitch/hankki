@@ -51,6 +51,10 @@
 
 const ALLOWED_ORIGINS = [
   'https://peachfam0307-glitch.github.io',
+  // 🍎 [2026-09-13] 아이폰 앱(Capacitor 껍데기) 안의 주소 — 기본 스킴 capacitor:// · 호스트 localhost
+  //    (@capacitor/ios CapacitorBridge.swift defaultScheme = "capacitor"). 이게 없어서 아이폰 앱에선 글씨 읽기가
+  //    403(forbidden_origin)으로 거절되고 폰 내장 읽기로 «조용히» 넘어가 초안이 엉망이었다(딸 폰 빌드 15 실물 20:14).
+  'capacitor://localhost',
 ]
 
 // ── 상한값(원하면 여기 숫자만 바꾸면 됨) ──
