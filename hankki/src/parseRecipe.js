@@ -563,7 +563,8 @@ function splitTableColumns(lines) {
     // 분량 = 단위 붙은 것(QTY) 또는 「진간장 4」처럼 이름 뒤 «숫자만»(표는 단위를 머리에 한 번만 적는다)
     const 분량있다 = (p) => QTY.test(p) || /[가-힣]\s*[\d½⅓¼]+(\.\d+)?(\s*[~-]\s*\d+)?$/.test(p)
     const ok = parts.length >= 2 && parts.every((p) => p.length >= 2 && p.length <= 30) && parts.some(분량있다)
-    if (ok) out.push(...parts)
+    // 표 줄은 «맨 앞·맨 끝»에도 나누개가 붙는다(「| 닭다리살 500g | 양파 1개 |」) — 쪼갠 뒤 그 찌꺼기를 벗긴다
+    if (ok) out.push(...parts.map((p) => p.replace(/^[|│┃ㅣIl]\s+/, '').replace(/\s+[|│┃ㅣIl]$/, '').trim()).filter((p) => p.length >= 2))
     else out.push(line)
   }
   return out
