@@ -73,6 +73,29 @@ const 켜보기 = async (손댔나) => {
   return 뒤
 }
 
+// ⛔⛔ [2026-09-14 · 창업자 «가지도 어제는 멀쩡했는데 갑자기 바뀐거고»]
+//   ⭐ 「새로 까는 사람」과 「이미 깔린 사람」이 **다른 그림을 볼 수 있다** —
+//      갈아끼우기 표는 «저장본»을 손보는 것이라, 씨앗이 처음 들어올 때와 결과가 갈릴 수 있다.
+//      📌 검수판이 멀쩡했는데 앱이 달랐다면 그 틈이 범인이다. 그래서 둘 다 잰다.
+console.log('\n⓪ 새로 까는 사람 — 씨앗이 처음 들어올 때 어떤 그림인가')
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } })
+  await ctx.addInitScript(SEED_COACH_SEEN)
+  await ctx.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
+  const p = await ctx.newPage()
+  await p.goto('http://127.0.0.1:4493/hankki/', { waitUntil: 'networkidle' })
+  await p.waitForTimeout(1800)
+  const 값 = await p.evaluate(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+      const r = (s.recipes || []).find((x) => x.id === 'basic-gaji-muchim')
+      return r ? r.icon : '(그 편이 없다)'
+    } catch (e) { return 'X' + e.message }
+  })
+  await ctx.close()
+  chk('⭐ 새로 까는 사람도 가지무침은 «가지무침» 그림이다', 값, 'fe_92')
+}
+
 console.log('\n② ⭐이미 깔린 폰(앞 버전 · 옛 그림) — 앱을 켜면 갈아끼워지나')
 const 안손댐 = await 켜보기(false)
 chk('⭐ 그림이 새것으로 갈아끼워진다', 안손댐.icon, 'gr_257')
