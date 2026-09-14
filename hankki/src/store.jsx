@@ -886,7 +886,9 @@ function initialState() {
       //    ⛔ 유저가 «지운» 폴더까지 되살리는 셈이지만, 기본 폴더는 애초에 지울 수 없다
       //       (`DEFAULT_FOLDERS` = 삭제 불가). 그래서 되살아나는 일이 없다.
       folders: saved.folders
-        ? ['아시안', '중식'].reduce((목록, 새것) => (목록.includes(새것) ? 목록 : [...목록, 새것]), saved.folders)
+        // 🥄 [2026-09-14] 「소스」를 더했다 — 창업자 = "소스는 따로 넣자. 소스만 필요할때도 있거든"
+        //    ⛔ 이 목록에 안 넣으면 «이미 쓰던 사람»은 소스 폴더가 영영 안 생긴다(위 경고 그대로).
+        ? ['아시안', '중식', '소스'].reduce((목록, 새것) => (목록.includes(새것) ? 목록 : [...목록, 새것]), saved.folders)
         : defaultFolders(mig.recipes),
       profile: { ...PROFILE_DEFAULT, ...(saved.profile || {}) },
       shops: migrateShops(saved.shops),
@@ -933,7 +935,7 @@ function initialState() {
 //    **이미 깔린 폰**이 받는다(규칙 18 ⓙ).
 // ⛔ 이 목록은 「유저가 지울 수 없는 폴더」를 정한다 — 레시피 탭 칩은 화면이 따로 정한다
 //    (MyRecipesScreen 의 칩목록 = 나라들 ＋ 종류들 ＋ 유저가 만든 폴더).
-export const 기본폴더 = ['한식', '중식', '일식', '양식', '아시안', '기타', '밥', '국', '면', '반찬', '간식', '샐러드']
+export const 기본폴더 = ['한식', '중식', '일식', '양식', '아시안', '기타', '밥', '국', '면', '반찬', '간식', '샐러드', '소스']
 
 function defaultFolders(recipes) {
   const set = new Set(기본폴더)
