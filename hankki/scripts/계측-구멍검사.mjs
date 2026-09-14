@@ -1,0 +1,93 @@
+#!/usr/bin/env node
+// 🕳🕳 계측 구멍 검사 — 2026-09-14
+//
+// 📮 창업자 2026-09-10 = *"다 심어야해. 우리가 알아야하니까 «레꾸자랑부터».. 다 카운트되게"*
+// ⛔⛔ 그 지시를 «다섯 문서»에 적어만 두고 나흘이 지나도록 코드에 한 줄도 안 넣었다.
+//    2026-09-14 에 창업자가 물어서야 드러났다 — 📮 *"저거 다 안재고 있었어????????"*
+//    📮 *"이 데이터다 우리 재산인데.."*
+//
+// ⭐⭐ **문서는 잊힌다. 그래서 이 검사를 만든다.** 스모크에 걸어 CI 가 막게 한다.
+//
+// 세 겹으로 본다:
+//   ① EARN 다섯(앱이 「값지다」고 정해 «열쇠를 주는» 행동)에 계측이 다 있나
+//   ② stats.js 가 내보낸 함수를 «실제로 부르는 곳»이 있나   ← 오늘 같은 일을 잡는 칸
+//   ③ 「문이 둘인데 한 곳만」 = 같은 행동의 자리가 여럿인데 일부만 붙었나
+//
+// ⛔ 검사가 헐렁하면 멀쩡한 배포를 죽인다 — 2026-09-14 에 내가 두 번 헛다리를 짚었다:
+//    ⓐ 조립 이름(`import_${갈래}`)을 통짜로 찾아 「없다」고 했다 → 접두어를 푼다
+//    ⓑ `return_d1` 의 숫자를 정규식이 못 받았다 → [a-z0-9_] 로 받는다
+//    ⓒ `'../stats.js'`(확장자 붙은 import)를 못 찾았다 → 두 꼴 다 받는다
+
+import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const 뿌리 = join(dirname(fileURLToPath(import.meta.url)), '..')
+const 읽기 = (p) => { try { return readFileSync(join(뿌리, p), 'utf8') } catch { return '' } }
+
+let 나쁨 = 0
+const 잰다 = (참인가, 무엇, 값 = '') => {
+  console.log(`  ${참인가 ? '✅' : '⛔'} ${무엇}${값 ? '  ' + 값 : ''}`)
+  if (!참인가) 나쁨++
+}
+
+// ── 소스 전부 모으기 (stats.js 는 뺀다 — 「부르는 곳」을 찾는 거라서)
+const 소스들 = []
+;(function 훑기(디렉) {
+  for (const 이름 of readdirSync(join(뿌리, 디렉))) {
+    const 길 = `${디렉}/${이름}`
+    if (statSync(join(뿌리, 길)).isDirectory()) { 훑기(길); continue }
+    if (!/\.(jsx?|mjs)$/.test(이름)) continue
+    if (길 === 'src/stats.js') continue
+    소스들.push({ 길, 글: 읽기(길) })
+  }
+})('src')
+const 온소스 = 소스들.map((s) => s.글).join('\n')
+const stats = 읽기('src/stats.js')
+
+console.log('\n🕳 계측 구멍 검사\n')
+
+// ═══ ① EARN 다섯에 계측이 다 있나 ═══
+// ⭐ 여기가 «뿌리»다 — 앱이 열쇠를 준다는 건 「이건 값진 행동이다」라고 이미 정했다는 뜻이다.
+//    열쇠는 주는데 숫자를 안 세면 그 자리는 영영 안 보인다.
+const EARN짝 = {
+  자랑: 'brag_shared',
+  레꾸: 'decor_saved',
+  일기: 'diary_new',
+  요리: 'cook_started',
+  냉장고: 'pantry_added',
+}
+const ocr = 읽기('src/ocr.js')
+const earn줄 = ocr.match(/export const EARN = \{([^}]*)\}/)
+const EARN목록 = earn줄 ? [...earn줄[1].matchAll(/(\S+?):/g)].map((m) => m[1].trim()) : []
+잰다(EARN목록.length === 5, '① EARN 다섯을 읽었다 (ocr.js)', EARN목록.join('·'))
+for (const 행동 of EARN목록) {
+  const 이름 = EARN짝[행동]
+  잰다(!!이름 && stats.includes(`'${이름}'`), `① 🔑열쇠 주는 「${행동}」에 계측이 있다`, 이름 || '(짝을 안 정했다)')
+}
+
+// ═══ ② 내보낸 함수를 «부르는 곳»이 있나 ═══
+// ⭐ 오늘(2026-09-14) 같은 일을 잡는 칸이다 — stats.js 엔 만들어 놓고 화면에서 안 부르는 경우.
+const 안불려도되는 = new Set(['통계꺼짐', '통계끄기설정', '통계시작', '다시왔나'])  // 내부·설정용
+for (const m of stats.matchAll(/export function ([가-힣A-Za-z_]+)\(/g)) {
+  const 이름 = m[1]
+  if (안불려도되는.has(이름)) continue
+  const 셈 = (온소스.match(new RegExp(`${이름}\\s*\\(`, 'g')) || []).length
+  잰다(셈 > 0, `② 「${이름}」 을 실제로 부르는 곳이 있다`, 셈 ? `${셈}곳` : '⛔아무도 안 부른다')
+}
+
+// ═══ ③ 문이 둘인데 한 곳만 붙었나 ═══
+// ⛔ `cook_done` 이 실제로 이렇게 샜다(v13.22 에서 메웠다) — 「만들었어요」 문이 두 곳인데 한 곳만 셌다.
+//    📮 창업자 = *"요리모드 안누르고 레시피랑 만드는법만 보고만들수도 있으니까"*
+const 문이여럿 = [
+  { 무엇: '🧊 냉장고에 넣는 자리', 찾을것: /addPantry\(/g, 계측: /냉장고담음\(\)/g },
+  { 무엇: '⏱ 5분 켜둠(상세·요리모드)', 찾을것: /useWakeLock\(\)/g, 계측: /오래켜둠재기\(/g },
+]
+for (const { 무엇, 찾을것, 계측 } of 문이여럿) {
+  const 문 = (온소스.match(찾을것) || []).length
+  const 잼 = (온소스.match(계측) || []).length
+  잰다(문 > 0 && 잼 >= 문, `③ ${무엇} — 문 ${문}곳에 계측 ${잼}곳`, 잼 < 문 ? '⛔한 곳이 빈다' : '')
+}
+
+console.log(나쁨 ? `\n✗ ${나쁨}칸 실패 — 계측에 구멍이 있다` : '\n✅ 계측 구멍 검사 통과')
+process.exit(나쁨 ? 1 : 0)

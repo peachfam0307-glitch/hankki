@@ -32,6 +32,7 @@ import { AI동의받기 } from '../aiConsent'   // 🔐 AI 로 보내기 전 허
 import { picksForIngredients, productLink, productMall, curIcon, isHansalim } from '../data/curation'
 
 import { useWakeLock } from '../useWakeLock'
+import { 오래켜둠재기 } from '../use오래켜둠'
 import { useLayerBack } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import ShareDrawCard, { RecipeCard, 카드표지로, 카드표지토스트 } from '../components/ShareDrawCard'
@@ -109,6 +110,10 @@ export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateDiary, updateRecipe } = useStore()
   const nav = useNav()
   useWakeLock() // 레시피를 보며 요리할 때 화면이 꺼지지 않게
+  // ⏱ 📊 [2026-09-14] 5분 넘게 «앞에 두고» 있었나 — 「보면서 만든 사람」
+  //   📮 창업자 = *"요리모드도 그렇지만 레시피상세에서 5분넘게 켜두는 것도 보고 만드는 거야"*
+  //   ⛔ 요리모드만 세면 반을 놓친다 — `cook_done` 때 밟은 구멍과 «같은 모양»이다.
+  오래켜둠재기('detail')
   const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
   const [timer, setTimer] = useState(false)
   // 🖼 유튜브 미리보기 그림이 안 올 때 — 그 칸을 통째로 감춘다(깨진 네모 금지)
