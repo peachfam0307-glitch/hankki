@@ -123,7 +123,9 @@ if (못찾음) console.log('   ⛔ 못 찾은 그림이 있으면 그 칸은 빈
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 const 칸html = 칸들.map((c, i) => {
-  const 나눠씀 = (그림쓰는편.get(c.키) || []).length
+  // 🔗 «누구랑» 나눠 쓰는지 이름을 적는다 (창업자 2026-09-14 *"뭐랑 뭐가 공유한지는지 내가 몰라"*)
+  //   ⛔ 개수만 적으면 창업자가 「그럼 어느 편이 같이 바뀌는데?」를 알 수가 없어 판정을 못 한다.
+  const 같이쓰는편 = (그림쓰는편.get(c.키) || []).filter((t) => t !== c.제목)
   return `<div class="칸" data-n="${i + 1}" data-t="${esc(c.제목)}">
   <div class="머리"><span class="번호">${i + 1}</span><span class="자리">${esc(c.자리)}</span></div>
   <div class="그림">${c.그림 ? `<img src="${c.그림}" alt="">` : '<span class="빈">그림 파일 없음</span>'}</div>
@@ -131,7 +133,7 @@ const 칸html = 칸들.map((c, i) => {
   <div class="재료">${esc(c.주재료.join(" · "))}</div>
   ${c.양념.length ? `<div class="양념">${c.양념.map((w) => `<span class="${/고추|마라|두반/.test(w) ? "매움" : "순함"}">${esc(w)}</span>`).join("")}</div>` : ""}
   <div class="밑줄">${esc(c.키)} · ${esc(c.갈래)}→${esc(c.종류)}${c.from ? ' · ' + esc(c.from) : ''}</div>
-  ${나눠씀 >= 2 ? `<div class="같이">⚠️ 이 그림을 ${나눠씀}편이 나눠 쓴다 — 바꾸면 같이 바뀐다</div>` : ''}
+  ${같이쓰는편.length ? `<div class="같이">⚠️ <b>${esc(같이쓰는편.join(' · '))}</b> 와 같은 그림 — 바꾸면 같이 바뀐다</div>` : ''}
   <div class="고르기">
     <button class="ok" data-v="ok">✅ 맞아</button>
     <button class="no" data-v="no">⛔ 바꿔</button>
