@@ -7543,8 +7543,8 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-beef-pepper-burrito',
     title: '비프페퍼브리또', from: '2026-09-17',
-    origin: '창업자',
-    icon: 'n2801',
+    origin: '창업자',   // 📮 창업자가 «직접 쓴» 레시피 (백업 뒤에 받음 · 2026-09-15)
+    icon: 'n3034',
     category: '일식', folder: '일식',
     tags: ['브리또', '냉동보관', '아침식사', '도시락'],
     time: 30, servings: 4, difficulty: '보통',
@@ -7592,9 +7592,9 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-musubi-burrito',
     title: '무스비맛브리또', from: '2026-09-17',
-    origin: '창업자',
+    origin: '창업자',   // 📮 창업자가 «직접 쓴» 레시피 (백업 뒤에 받음 · 2026-09-15)
     물어볼것: '①「위드잇 안심햄」이 curation.js 의 「위드잇 슬라이스햄 슬림」과 같은 제품인가(쿠팡 링크가 이미 있다) ②인분·시간이 비프페퍼브리또와 같은 4인분·30분이 맞나 ③볶음김치 양 ④밥 볶을 때 올리브유 양',
-    icon: 'n2801',
+    icon: 'n3035',
     category: '일식', folder: '일식',
     tags: ['브리또', '냉동보관', '아침식사', '도시락'],
     time: 30, servings: 4, difficulty: '보통',
