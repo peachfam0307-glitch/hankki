@@ -1,0 +1,91 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
+@font-face{font-family:'Jua';src:url('file:///home/user/hankki/hankki/src/assets/fonts/jua-korean-400.woff2') format('woff2');font-display:block}
+@font-face{font-family:'GowunDodum';src:url('file:///home/user/hankki/hankki/src/assets/fonts/gowun-dodum-korean-400.woff2') format('woff2');font-display:block}
+@font-face{font-family:'Gaegu';src:url('file:///home/user/hankki/hankki/src/assets/fonts/gaegu-korean-400.woff2') format('woff2');font-display:block}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1080px;height:1350px}
+body{font-family:'GowunDodum',sans-serif;background:radial-gradient(130% 90% at 70% 8%,#3a2b62 0%,#281d4a 42%,#1a1436 78%,#120e28 100%);color:#efe9ff;padding:44px 46px;position:relative;overflow:hidden}
+/* star field */
+.stars{position:absolute;inset:0;background-image:
+ radial-gradient(1.6px 1.6px at 40px 60px,rgba(255,255,255,.9),transparent),
+ radial-gradient(1.3px 1.3px at 200px 140px,rgba(255,255,255,.7),transparent),
+ radial-gradient(1.8px 1.8px at 380px 80px,rgba(255,246,210,.9),transparent),
+ radial-gradient(1.2px 1.2px at 560px 180px,rgba(255,255,255,.6),transparent),
+ radial-gradient(1.5px 1.5px at 720px 100px,rgba(255,255,255,.8),transparent),
+ radial-gradient(1.3px 1.3px at 900px 60px,rgba(210,230,255,.8),transparent),
+ radial-gradient(1.4px 1.4px at 1000px 200px,rgba(255,255,255,.7),transparent),
+ radial-gradient(1.2px 1.2px at 120px 300px,rgba(255,255,255,.5),transparent),
+ radial-gradient(1.6px 1.6px at 640px 320px,rgba(255,246,210,.7),transparent),
+ radial-gradient(1.3px 1.3px at 980px 380px,rgba(255,255,255,.6),transparent);
+ background-repeat:no-repeat}
+/* moon */
+.moon{position:absolute;top:64px;right:70px;width:118px;z-index:5;filter:drop-shadow(0 0 22px rgba(255,238,190,.55))}
+/* big sparkle stars */
+.bs{position:absolute;z-index:6}
+.bs1{top:360px;left:96px;width:70px;height:70px}
+.bs2{top:520px;right:110px;width:48px;height:48px}
+.bs3{top:300px;right:250px;width:34px;height:34px}
+.bs4{top:640px;left:200px;width:30px;height:30px}
+.bs svg{display:block;filter:drop-shadow(0 0 10px rgba(200,180,255,.8))}
+.brand{position:relative;text-align:center;font-family:'Jua';font-size:38px;color:#efe9ff;letter-spacing:1px;z-index:7}.brand .h{color:#ffb3d9}
+/* rare holographic badge */
+.rare{position:absolute;top:150px;left:64px;z-index:9;transform:rotate(-7deg);font-family:'Jua';font-size:23px;color:#2a1c46;padding:11px 24px;border-radius:14px;
+ background:linear-gradient(115deg,#ffd1e8,#c9b6ff 26%,#a0e9ff 48%,#b5ffd0 66%,#fff3b0 84%,#ffc4e1);
+ box-shadow:0 8px 20px -6px rgba(150,120,220,.7),inset 0 2px 0 rgba(255,255,255,.6)}
+/* dark glossy holographic panel */
+.pop{position:absolute;left:46px;right:46px;top:250px;height:648px;border-radius:60px;
+ background:linear-gradient(160deg,#4a3a74,#372a5c 55%,#2a2048);
+ box-shadow:0 34px 64px -22px rgba(20,10,50,.8),inset 0 2px 0 rgba(255,255,255,.16),inset 0 0 0 2px rgba(180,150,255,.22)}
+.pop .holo{position:absolute;inset:0;border-radius:60px;opacity:.30;mix-blend-mode:screen;
+ background:conic-gradient(from 40deg at 42% 30%,#ff6ec4,#7873f5,#4ADEDE,#63f5a5,#FFD86F,#ff6ec4)}
+.pop .sheen{position:absolute;left:0;right:0;top:0;height:46%;border-radius:60px 60px 140px 140px/60px 60px 70px 70px;background:linear-gradient(180deg,rgba(255,255,255,.20),transparent);pointer-events:none}
+.pop .dot{position:absolute;inset:0;border-radius:60px;overflow:hidden;background-image:radial-gradient(rgba(255,255,255,.10) 5px,transparent 6px);background-size:66px 66px;background-position:22px 22px}
+/* glitter dust */
+.glit{position:absolute;inset:0;z-index:6;pointer-events:none;background-image:
+ radial-gradient(2px 2px at 300px 500px,rgba(255,220,255,.9),transparent),
+ radial-gradient(2px 2px at 760px 560px,rgba(200,240,255,.9),transparent),
+ radial-gradient(1.6px 1.6px at 520px 460px,rgba(255,245,200,.9),transparent),
+ radial-gradient(1.6px 1.6px at 420px 700px,rgba(255,220,255,.8),transparent),
+ radial-gradient(2px 2px at 840px 720px,rgba(220,255,235,.8),transparent);
+ background-repeat:no-repeat}
+/* hero die-cut, bright keyline pops on dark */
+.hero{position:absolute;left:50%;bottom:452px;transform:translateX(-50%);width:436px;z-index:7;
+ filter:drop-shadow(4px 0 0 #fffdf8) drop-shadow(-4px 0 0 #fffdf8) drop-shadow(0 4px 0 #fffdf8) drop-shadow(0 -4px 0 #fffdf8) drop-shadow(4px 4px 0 #fffdf8) drop-shadow(-4px 4px 0 #fffdf8) drop-shadow(4px -4px 0 #fffdf8) drop-shadow(-4px -4px 0 #fffdf8) drop-shadow(0 0 26px rgba(190,160,255,.5)) drop-shadow(0 22px 24px rgba(15,8,40,.6))}
+/* collectible holo stamp */
+.stamp{position:absolute;top:266px;right:86px;width:150px;height:150px;transform:rotate(11deg);z-index:9}
+.stamp svg{position:absolute;inset:0}
+.stamp .txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Jua';color:#fff;line-height:1.02;text-align:center;text-shadow:0 1px 6px rgba(120,90,200,.9)}
+.stamp .txt b{font-size:28px}.stamp .txt s{font-size:16px;text-decoration:none;letter-spacing:2px;margin-top:2px;opacity:.95}
+.info{position:absolute;left:0;right:0;bottom:150px;text-align:center;z-index:7}
+.kick{font-family:'Gaegu';font-weight:700;font-size:34px;color:#ffc6e4;letter-spacing:1px}
+.title{font-family:'Jua';font-size:86px;letter-spacing:-1.5px;line-height:1;margin-top:6px;color:#fbf7ff;text-shadow:0 2px 18px rgba(150,120,230,.5)}
+.title .p{background:linear-gradient(115deg,#ffe1a0,#ffd1e8 30%,#c9b6ff 52%,#a0e9ff 74%,#fff3b0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.metabar{display:inline-flex;gap:10px;align-items:center;margin-top:18px;font-size:24px;color:#cbbdf0}
+.metabar .d{width:5px;height:5px;border-radius:50%;background:#8a76c8}
+.more{margin-top:16px;font-size:26px;color:#ffc6e4;font-weight:700}
+.foot{position:absolute;left:0;right:0;bottom:50px;text-align:center;z-index:7}
+.foot .wm{font-family:'Jua';font-size:27px;color:#d9ccff}
+.foot .url{display:inline-block;margin-left:12px;padding:6px 18px;border-radius:999px;background:rgba(180,150,255,.18);color:#d9ccff;font-size:18px}
+</style></head><body>
+<div class="stars"></div>
+<img class="moon" src="file:///tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/emo/moon.png">
+<div class="bs bs1"><svg viewBox="0 0 100 100"><path d="M50 0 C54 34 66 46 100 50 C66 54 54 66 50 100 C46 66 34 54 0 50 C34 46 46 34 50 0Z" fill="#fff"/></svg></div>
+<div class="bs bs2"><svg viewBox="0 0 100 100"><path d="M50 0 C54 34 66 46 100 50 C66 54 54 66 50 100 C46 66 34 54 0 50 C34 46 46 34 50 0Z" fill="#ffe6f4"/></svg></div>
+<div class="bs bs3"><svg viewBox="0 0 100 100"><path d="M50 0 C54 34 66 46 100 50 C66 54 54 66 50 100 C46 66 34 54 0 50 C34 46 46 34 50 0Z" fill="#d9ccff"/></svg></div>
+<div class="bs bs4"><svg viewBox="0 0 100 100"><path d="M50 0 C54 34 66 46 100 50 C66 54 54 66 50 100 C46 66 34 54 0 50 C34 46 46 34 50 0Z" fill="#fff6c8"/></svg></div>
+<div class="brand">한끼 <span class="h">☾</span></div>
+<div class="rare">✦ 홀로그램 한정 ✦</div>
+<div class="pop"><div class="holo"></div><div class="dot"></div><div class="sheen"></div></div>
+<div class="glit"></div>
+<div class="stamp">
+  <svg viewBox="0 0 100 100"><defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd1e8"/><stop offset="".5" stop-color="#a0e9ff"/><stop offset="1" stop-color="#fff3b0"/></linearGradient></defs><path d="M50 4 L60 12 L73 9 L77 22 L90 27 L86 40 L95 51 L85 62 L88 75 L74 77 L67 89 L54 84 L44 93 L35 82 L22 83 L21 70 L10 62 L18 50 L11 38 L23 31 L24 18 L38 18 L46 7 Z" fill="none" stroke="url(#hg)" stroke-width="3.6"/></svg>
+  <div class="txt"><b>야식</b><s>NIGHT</s></div>
+</div>
+<img class="hero" src="file:///tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad/char/generic/g2_heart.png">
+<div class="info">
+  <div class="kick">별 보며, 오늘 하루 수고했어</div>
+  <div class="title">야식 <span class="p">티라미수</span></div>
+  <div class="metabar"><span>야식</span><span class="d"></span><span>디저트</span><span class="d"></span><span>#힐링</span></div>
+  <div class="more">전체 레시피는 한끼 앱에서 →</div>
+</div>
+<div class="foot"><span class="wm">한끼</span><span class="url">peachfam0307-glitch.github.io/hankki</span></div>
+</body></html>

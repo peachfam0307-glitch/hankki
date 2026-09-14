@@ -1,0 +1,78 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../fonts-embed.css">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+  :root{--ink:#4a4136;--ink2:#94897a;--clay:#c47a58;--card:#fffdf8;--line:#e6ded0}
+  body{background:#777}
+  .card{position:relative;overflow:hidden;width:1080px;height:1350px;
+    background:radial-gradient(130% 90% at 50% -5%,#fdfcf9,#f3eee4);padding:84px 78px 74px;display:flex;flex-direction:column;align-items:center}
+  .tag{font-family:'GowunDodum';font-size:25px;letter-spacing:3px;color:#fff;background:var(--clay);padding:10px 26px;border-radius:999px}
+  .word{font-family:'Jua';font-size:58px;color:#5f4d3b;letter-spacing:-1px;margin-top:26px}
+  .hero{font-family:'Jua';font-size:66px;line-height:1.28;color:var(--ink);text-align:center;margin-top:20px;letter-spacing:-1px}
+  .hero .c{color:var(--clay)}
+
+  /* 곰돌이 + 레시피 카드 */
+  .visual{position:relative;width:420px;height:360px;margin-top:30px}
+  .rcard{position:absolute;left:96px;top:20px;width:250px;background:var(--card);border-radius:26px;box-shadow:0 22px 44px rgba(90,65,45,.16);transform:rotate(4deg);overflow:hidden}
+  .rc-top{height:120px;background:#efe7d6;position:relative}
+  .rc-body{padding:16px 20px 22px}
+  .rc-title{font-family:'Jua';font-size:30px;color:var(--ink)}
+  .rc-line{height:9px;background:#eee7d8;border-radius:5px;margin-top:12px}
+  .rc-line.s{width:55%}
+  .bubble{position:absolute;right:6px;top:-16px;background:#fffdf8;border-radius:18px 18px 18px 4px;padding:8px 16px;font-family:'Gaegu';font-weight:700;font-size:26px;color:var(--clay);box-shadow:0 6px 14px rgba(90,65,45,.12)}
+  .bear{position:absolute;left:24px;bottom:0;width:150px;height:150px}
+  .heart{position:absolute;right:70px;top:150px;width:40px;height:40px}
+
+  .box{margin-top:34px;width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:26px;padding:30px 36px;box-shadow:0 12px 30px rgba(120,95,65,.06)}
+  .li{display:flex;align-items:center;gap:18px;font-family:'GowunDodum';font-size:30px;color:var(--ink);padding:11px 0}
+  .li + .li{border-top:1.5px dashed #efe6d5}
+  .li .ic{flex:0 0 auto;width:52px;height:52px;border-radius:15px;background:#f4ede0;display:flex;align-items:center;justify-content:center}
+  .li .ic svg{width:30px;height:30px}
+  .li b{color:var(--clay);font-weight:400}
+  .foot{margin-top:auto;padding-top:30px;text-align:center}
+  .foot .big{font-family:'Jua';font-size:38px;color:#5f4d3b;line-height:1.35}
+  .foot .sm{font-family:'Gaegu';font-weight:700;font-size:30px;color:var(--clay);margin-top:12px}
+</style></head><body>
+<div class="card">
+  <div class="tag">엄마들, 도와주세요 🙏</div>
+  <div class="hero">18년차 주부가 만든<br>레시피 앱 <span class="c">‘한끼’</span> 테스터 모집</div>
+
+  <div class="visual">
+    <div class="rcard">
+      <div class="rc-top">
+        <div class="bubble">맛있어!</div>
+      </div>
+      <div class="rc-body">
+        <div class="rc-title">엄마표 김치찌개</div>
+        <div class="rc-line"></div><div class="rc-line s"></div>
+      </div>
+    </div>
+    <svg class="heart" viewBox="0 0 48 48"><path d="M24 41C8 29.5 8.5 16.5 16 13c4.3-2 8 .9 8 4.6 0-3.7 3.7-6.6 8-4.6 7.5 3.5 8 16.5-8 28Z" fill="#dd918a" stroke="#71604b" stroke-width="2" stroke-linejoin="round"/></svg>
+    <svg class="bear" viewBox="0 0 48 48">
+      <circle cx="14.5" cy="18" r="4.6" fill="#b98a63"/><circle cx="33.5" cy="18" r="4.6" fill="#b98a63"/>
+      <circle cx="14.5" cy="18" r="2.2" fill="#d9b593"/><circle cx="33.5" cy="18" r="2.2" fill="#d9b593"/>
+      <circle cx="24" cy="28" r="13" fill="#b98a63"/>
+      <ellipse cx="24" cy="32.5" rx="6.4" ry="4.6" fill="#ecd9bd"/>
+      <rect x="22.6" y="30" width="2.8" height="2.2" rx="1.1" fill="#5f4632"/>
+      <path d="M24 32.4v1.6M24 34c-.9.9-2 .9-2.8.2M24 34c.9.9 2 .9 2.8.2" stroke="#5f4632" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <circle cx="18.6" cy="27.5" r="1.35" fill="#3d3830"/><circle cx="29.4" cy="27.5" r="1.35" fill="#3d3830"/>
+      <circle cx="15.6" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/><circle cx="32.4" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/>
+      <circle cx="16.8" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+      <circle cx="24" cy="10.6" r="3.9" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+      <circle cx="31.2" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+      <rect x="15.5" y="14.6" width="17" height="3.6" rx="1.8" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <div class="box">
+    <div class="li"><span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="#c47a58" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="6" width="22" height="36" rx="4"/><path d="M21 37h6"/></svg></span><div><b>갤럭시(안드로이드)</b> + 지메일 있으신 분</div></div>
+    <div class="li"><span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="#c47a58" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="25" r="16"/><path d="M24 16v9l6 4"/><path d="M18 6h12"/></svg></span><div>2분 설치 → <b>2주만 유지</b> (안 지우기!)</div></div>
+    <div class="li"><span class="ic"><svg viewBox="0 0 48 48"><path d="M24 40C10 29.5 10.5 17.5 17 14.5c3.8-1.8 7 .8 7 4 0-3.2 3.2-5.8 7-4 6.5 3 7 15-7 25.5Z" fill="none" stroke="#c47a58" stroke-width="2.6" stroke-linejoin="round"/></svg></span><div>도와주시면 <b>소정의 감사 인사</b> 드려요</div></div>
+  </div>
+
+  <div class="foot">
+    <div class="big">댓글·채팅으로 <span style="color:#c47a58">지메일</span> 남겨주시면<br>초대 링크 보내드릴게요 :)</div>
+    <div class="sm">흩어진 레시피를, 한곳에 · 한끼 💛</div>
+  </div>
+</div>
+</body></html>

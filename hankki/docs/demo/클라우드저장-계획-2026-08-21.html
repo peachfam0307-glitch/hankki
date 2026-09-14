@@ -1,0 +1,288 @@
+<title>클라우드 저장 계획</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{--ground:#f7f3ec;--surface:#fffdf9;--ink:#2b2118;--muted:#6f6357;--line:#e4dccf;
+ --brand:#6b4f3a;--brand-soft:#efe6d9;--stop:#a5382a;--stop-soft:#f7e3df;--ok:#3f6b52;--ok-soft:#e2eee7;
+ --shadow:0 1px 2px rgba(43,33,24,.05),0 8px 24px rgba(43,33,24,.05)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --ground:#17140f;--surface:#1f1b15;--ink:#ece5da;--muted:#a2968a;--line:#322b22;
+ --brand:#caa176;--brand-soft:#2e2519;--stop:#e08174;--stop-soft:#341f1b;--ok:#8fbfa3;--ok-soft:#1b2822;
+ --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25)}}
+:root[data-theme="dark"]{--ground:#17140f;--surface:#1f1b15;--ink:#ece5da;--muted:#a2968a;--line:#322b22;
+ --brand:#caa176;--brand-soft:#2e2519;--stop:#e08174;--stop-soft:#341f1b;--ok:#8fbfa3;--ok-soft:#1b2822;
+ --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+ font-family:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;
+ font-size:16px;line-height:1.72;letter-spacing:-.01em;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:0 20px 96px}
+h1,h2,h3{font-family:"Gowun Batang","Nanum Myeongjo",serif;font-weight:700;text-wrap:balance;letter-spacing:-.02em}
+p{margin:0 0 14px}
+header{padding:56px 0 30px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.14em;color:var(--muted);margin:0 0 14px}
+h1{font-size:38px;line-height:1.28;margin:0 0 14px}
+.head-lead{font-size:17px;margin:0}
+.head-lead b{color:var(--brand)}
+.meta{margin-top:20px;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 16px}
+.meta b{color:var(--ink);font-weight:600}
+section{padding:38px 0;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+h2{font-size:24px;margin:0 0 8px;line-height:1.35}
+.lede{color:var(--muted);margin:0 0 22px;font-size:15px}
+.find{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;
+ box-shadow:var(--shadow);margin-bottom:16px}
+.find.big{border-color:var(--stop);border-width:2px}
+.find .tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.08em;padding:3px 9px;
+ border-radius:999px;background:var(--brand-soft);color:var(--brand);margin-bottom:9px}
+.find.big .tag{background:var(--stop-soft);color:var(--stop)}
+.find h3{font-size:19.5px;margin:0 0 9px;line-height:1.45}
+.find.big h3{color:var(--stop)}
+.find p{font-size:14.8px;margin:0 0 11px}
+.find p:last-child{margin-bottom:0}
+.quote{border-left:3px solid var(--line);padding-left:14px;color:var(--muted);font-size:14px;margin:12px 0}
+.tip{margin-top:12px;background:var(--ok-soft);border:1px solid var(--ok);border-radius:11px;padding:13px 15px;
+ font-size:14px;line-height:1.62}
+.tip b{color:var(--ok);font-weight:700}
+.scroller{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:6px;border:1px solid var(--line);
+ border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:440px;font-size:14.5px}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:600;white-space:nowrap}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+tbody th{font-weight:600;white-space:nowrap}
+td.dim,th.dim{color:var(--muted)}
+.tree{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;
+ box-shadow:var(--shadow);font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13.4px;line-height:2;
+ overflow-x:auto;white-space:pre}
+.tree b{color:var(--brand);font-weight:600}
+.tree i{color:var(--muted);font-style:normal}
+.you{background:var(--brand-soft);border:1px solid var(--brand);border-radius:16px;padding:22px;margin-top:6px}
+.you h3{font-size:20px;margin:0 0 10px;color:var(--brand)}
+.you ol{margin:0;padding-left:20px;font-size:15px}
+.you li{margin-bottom:9px}
+.you li:last-child{margin-bottom:0}
+.btn{display:inline-block;margin-top:14px;padding:12px 20px;border-radius:12px;background:var(--brand);
+ color:var(--surface);text-decoration:none;font-weight:600;font-size:15px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;
+ box-shadow:var(--shadow);margin-top:6px}
+fieldset{border:0;padding:0;margin:0 0 24px}
+legend{font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--muted);padding:0;margin-bottom:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;cursor:pointer;border:1px solid var(--line);
+ border-radius:12px;padding:14px 16px;background:var(--ground);transition:border-color .15s,background .15s}
+.opt input{margin:0;margin-top:5px;width:17px;height:17px;flex:0 0 auto;accent-color:var(--brand)}
+.opt .t{font-size:15px;font-weight:600;line-height:1.5}
+.opt .d{font-size:13.5px;color:var(--muted);line-height:1.6;margin-top:2px}
+.opt:focus-within{outline:2px solid var(--brand);outline-offset:2px}
+.opt.on{border-color:var(--brand);background:var(--brand-soft)}
+.opt.on .t{color:var(--brand)}
+.checks{display:flex;flex-direction:column;gap:2px}
+.chk{display:flex;gap:11px;align-items:flex-start;cursor:pointer;padding:9px 2px;font-size:14.5px;line-height:1.6}
+.chk input{margin:0;margin-top:4px;width:18px;height:18px;flex:0 0 auto;accent-color:var(--brand)}
+.chk.done span{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+textarea{width:100%;min-height:92px;border:1px solid var(--line);border-radius:12px;background:var(--ground);
+ color:var(--ink);padding:13px 15px;font:inherit;font-size:15px;resize:vertical}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
+button{font:inherit;font-weight:600;font-size:15px;cursor:pointer;border-radius:12px;padding:13px 22px;
+ border:1px solid var(--brand);background:var(--brand);color:var(--surface)}
+button.ghost{background:transparent;color:var(--muted);border-color:var(--line)}
+.said{font-size:14px;color:var(--brand);font-weight:600}
+#out{margin-top:16px;white-space:pre-wrap;font-size:13.5px;line-height:1.7;background:var(--ground);
+ border:1px solid var(--line);border-radius:12px;padding:15px;display:none;user-select:all;-webkit-user-select:all}
+#out.show{display:block}
+footer{padding:34px 0 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line);margin-top:38px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">한끼 · 창업자 확정 「1번」</p>
+  <h1>클라우드 저장 계획</h1>
+  <p class="head-lead">리서치로 <b>설계를 바꾼 게 넷</b>. 그중 하나는 <b>그냥 만들었으면 로그인이 안 됐을</b> 자리야.</p>
+  <div class="meta">
+    <span>고른 짝 <b>🅰 파이어베이스</b></span>
+    <span>네 손 <b>15분</b></span>
+    <span>카드 <b>0원</b></span>
+  </div>
+</header>
+
+<section>
+  <h2>리서치가 바꾼 것 넷</h2>
+  <p class="lede">전부 «만들기 전»에 나와서 다행인 것들이야.</p>
+
+  <div class="find big">
+    <span class="tag">제일 큰 것</span>
+    <h3>① 흔히 쓰는 로그인 방식이 우리 환경에선 깨진다</h3>
+    <p>Firebase 로그인에는 두 방식이 있는데, 널리 쓰이는 <b>리다이렉트 방식</b>은 <b>「서드파티 쿠키」</b>에 기대. 그런데 크롬·사파리·파이어폭스가 그걸 막았어.</p>
+    <div class="quote">Firebase 공식 — “이 방식은 <b>서드파티 저장소 접근을 막는 브라우저에서 동작하지 않는다</b>. 2024-06-24부터 크롬에서도 권장 옵션을 적용해야 한다.”</div>
+    <p>우리 앱은 <b>GitHub Pages</b>에 있어서 정면으로 걸려. <b>그냥 만들었으면 네 폰에서 로그인이 안 되는 걸 다 만든 뒤에 알았을 거야.</b></p>
+    <div class="tip">
+      <b>✅ 길이 둘 있고, 하나는 이미 통과한 길이야</b><br>
+      <b>ⓐ 팝업 방식</b> — 공식 1순위. 쿠키를 안 써. 코드가 제일 짧아. ⛔단 <b>TWA(우리 앱) 안에서 도는지는 모른다</b><br>
+      <b>ⓑ 8/19에 우리가 통과시킨 그 흐름</b> — 구글에서 열쇠를 직접 받아 Firebase에 넘긴다. <b>이미 네 폰에서 실물로 됐던 길</b>이라 확실해<br>
+      👉 <b>ⓐ를 폰에서 한 번 눌러보고</b>, 안 되면 ⓑ. 막다른 길이 아니야.
+    </div>
+  </div>
+
+  <div class="find">
+    <span class="tag">데이터 모양</span>
+    <h3>② 한 덩어리로 올리면 안 된다 — 문서 하나가 1MB까지</h3>
+    <p>Firestore는 <b>문서 하나에 최대 1MB</b>야. 레시피 한 편이 약 <b>1.46KB</b>니까 글자만 쳐도 <b>685편이면 한계</b>고, 꾸민 것·일기까지 한 덩어리면 훨씬 빨리 차.</p>
+    <p style="margin:0">→ <b>레시피 한 편 = 문서 한 개</b>로 쪼갠다. 아래 그림 참고.</p>
+  </div>
+
+  <div class="find">
+    <span class="tag">비용</span>
+    <h3>③ 무료 한도 = 저장 1GB · 읽기 5만/일 · 쓰기 2만/일</h3>
+    <p>넉넉해. 다만 <b>로그인할 때마다 전부 읽으면</b> 레시피 200편 = 200번 읽기야.</p>
+    <p style="margin:0">→ <b>「지난번 이후 바뀐 것만」</b> 읽게 짠다. 그러면 평소엔 몇 번으로 떨어져.</p>
+  </div>
+
+  <div class="find">
+    <span class="tag">우리 문서가 갈렸던 자리</span>
+    <h3>④ OAuth 동의 화면을 「게시」해야 한다</h3>
+    <div class="scroller" style="margin-bottom:12px">
+      <table><thead><tr><th>테스트 모드로 두면</th><th>무슨 일</th></tr></thead>
+      <tbody>
+        <tr><th>유저 수</th><td><b>100명이 하드캡</b> — 넘으면 로그인 자체가 안 된다</td></tr>
+        <tr><th>로그인 유지</th><td><b>7일 뒤 만료</b> — 일주일마다 다시 로그인</td></tr>
+      </tbody></table>
+    </div>
+    <p>✅ <b>검증(2~6주)은 안 걸려</b> — 우리는 로그인만 쓰니까 기본 권한뿐이고, 기본 권한만 쓰는 앱은 검증 없이 게시돼.</p>
+    <p style="margin:0">⚠️ 우리 문서엔 <b>「게시 누르지 마」</b>라고 적혀 있었는데 그건 <b>8/19 «실험» 때</b> 얘기였어. <b>모순이 아니라 시점이 달랐던 것</b> — 실험은 테스트, 서비스는 게시. 문서 고쳐뒀어.</p>
+  </div>
+</section>
+
+<section>
+  <h2>데이터를 어떻게 두나</h2>
+  <p class="lede">쪼개되, <b>내려받아 합치면 백업 파일이 그대로</b> 나오게. 그게 갈아타기 보험 ②야.</p>
+  <div class="tree"><b>users/{구글 고유번호}</b>          <i>← 열쇠 = 구글 sub (보험 ①)</i>
+  ├ <b>meta</b>                   <i>프로필 · 폴더 · 장보기 · 냉장고 …</i>
+  ├ <b>recipes/{id}</b>           <i>레시피 한 편 = 문서 한 개</i>
+  └ <b>diary/{id}</b>             <i>일기 한 장 = 문서 한 개</i></div>
+  <p style="margin-top:16px;font-size:14.8px">⭐ 문서 하나하나가 <b>백업 파일 속 모양 그대로</b>라, 나중에 🅱(클라우드플레어)로 옮겨도 <b>내려받아 그대로 올리면 끝</b>이야.</p>
+  <p style="margin:0;font-size:14.8px">⛔ <b>사진은 안 올려</b> — 네가 확정한 「글자부터」 그대로. 사진은 폰이랑 백업 파일에 그대로 남아.</p>
+</section>
+
+<section>
+  <h2>순서 — 누가 뭘 하나</h2>
+  <div class="scroller">
+    <table>
+      <thead><tr><th></th><th>무엇</th><th>누구</th><th>시간</th></tr></thead>
+      <tbody>
+        <tr><th>0</th><td><b>Firebase 첫 설정</b> — 프로젝트·서울 리전·로그인 켜기·동의화면 게시</td><td><b>너</b></td><td>10분</td></tr>
+        <tr><th>1</th><td><b>로그인 방식 실물 판정</b> — 팝업이 우리 앱에서 도나</td><td>나(판) → <b>너 1회</b></td><td>5분</td></tr>
+        <tr><th>2</th><td class="dim">로그인 붙이기 (설정 화면에 「로그인」)</td><td class="dim">나</td><td class="dim">—</td></tr>
+        <tr><th>3</th><td class="dim">올리기·내려받기 ＋ 보안 규칙(자기 것만)</td><td class="dim">나</td><td class="dim">—</td></tr>
+        <tr><th>4</th><td class="dim">충돌 처리 — 자동 병합 말고 <b>「폰 판 / 클라우드 판 고르기」</b></td><td class="dim">나</td><td class="dim">—</td></tr>
+        <tr><th>5</th><td>신고 넷 → <b>배포</b></td><td>너＋나</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="tip" style="margin-top:16px">
+    <b>⏰ 명의 이전이랑 안 부딪혀</b> — 0~4는 <b>Play 콘솔을 아예 안 건드려.</b> 콘솔이 필요한 건 ⑤(신고)뿐이라 <b>이전이 끝난 뒤</b>에 해. 그래서 <b>7일 대기 동안 0~4를 다 만들어두면 이전 끝나는 날 바로 나가.</b>
+  </div>
+</section>
+
+<section>
+  <h2>네가 할 건 오늘 저녁 10분</h2>
+  <div class="you">
+    <h3>Firebase 첫 설정</h3>
+    <ol>
+      <li>프로젝트 만들기 <b>(네 계정으로)</b></li>
+      <li>⛔ Firestore — <b>위치 = asia-northeast3(서울)</b> · <b>되돌릴 수 없음</b></li>
+      <li>구글 로그인 켜기</li>
+      <li>⭐ OAuth 동의 화면 <b>「게시」</b></li>
+      <li>웹 앱 등록 → <b>설정값 6줄</b> 나한테</li>
+      <li>승인된 도메인에 우리 주소 있나</li>
+    </ol>
+    <a class="btn" href="https://claude.ai/code/artifact/840a5d62-fccd-469e-9d3f-641dcdbd2e5a">누르는 순서 판 열기 →</a>
+  </div>
+  <p style="margin-top:16px;font-size:14.8px">⛔ <b>카드 등록·Blaze 업그레이드는 안 해.</b> 무료로 충분하고, 카드가 없으면 한도를 넘어도 <b>청구 대신 그냥 막혀.</b></p>
+</section>
+
+<section>
+  <h2>⏳ 네가 정할 것 — 하나뿐</h2>
+  <div class="verdict">
+    <fieldset>
+      <legend>잠긴 일기를 클라우드에 어떻게 두나</legend>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="lock" value="비번으로 잠가서 올린다 (추천)">
+          <span><span class="t">비번으로 잠가서 올린다 (추천)</span><span class="d">백업 파일이랑 같은 방식 · 안 잃고 안 샌다 · 비번 잊으면 그것만 영영 못 봄</span></span></label>
+        <label class="opt"><input type="radio" name="lock" value="안 올린다 (폰에만)">
+          <span><span class="t">안 올린다 — 폰에만 둔다</span><span class="d">제일 안전 · ⛔폰 바꾸면 잠근 일기는 잃는다</span></span></label>
+        <label class="opt"><input type="radio" name="lock" value="나중에 정한다">
+          <span><span class="t">나중에 정한다</span><span class="d">3단계에서 물어도 안 늦어</span></span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>계획 확인</legend>
+      <div class="checks" id="checks">
+        <label class="chk"><input type="checkbox" data-k="p1"><span>데이터를 <b>쪼개서</b> 올리는 것 (합치면 백업 파일 그대로)</span></label>
+        <label class="chk"><input type="checkbox" data-k="p2"><span><b>사진은 안 올린다</b> — 글자부터</span></label>
+        <label class="chk"><input type="checkbox" data-k="p3"><span>충돌 나면 <b>내가 고른다</b> (자동 병합 안 함)</span></label>
+        <label class="chk"><input type="checkbox" data-k="p4"><span>신고 넷은 <b>명의 이전 끝난 뒤</b></span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>메모</legend>
+      <textarea id="memo" placeholder="걸리는 것 · 다르게 하고 싶은 것"></textarea>
+    </fieldset>
+    <div class="actions">
+      <button type="button" id="copy">복사하기</button>
+      <button type="button" class="ghost" id="reset">지우기</button>
+      <span class="said" id="said"></span>
+    </div>
+    <div id="out"></div>
+  </div>
+</section>
+
+<footer>
+  근거 = Firebase 공식(리다이렉트 로그인과 서드파티 저장소) · Firestore 문서 1 MiB · 무료 한도(저장 1GiB·읽기 5만·쓰기 2만) ·
+  OAuth 테스트 모드 100명 상한과 7일 만료 · 기본 권한만 쓰면 검증 면제 ·
+  전문 = <b>docs/클라우드저장-구현계획-2026-08-21.md</b>
+</footer>
+</div>
+
+<script>
+(function(){
+  var KEY='hankki:클라우드:계획:v1';
+  var chk=[].slice.call(document.querySelectorAll('#checks input'));
+  var lock=[].slice.call(document.querySelectorAll('input[name=lock]'));
+  var memo=document.getElementById('memo'),out=document.getElementById('out'),said=document.getElementById('said');
+  function load(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){return{}}}
+  function save(){var st={chk:{},lock:null,memo:memo.value};
+    chk.forEach(function(c){st.chk[c.dataset.k]=c.checked});
+    lock.forEach(function(r){if(r.checked)st.lock=r.value});
+    try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+  function paint(){chk.forEach(function(c){c.closest('.chk').classList.toggle('done',c.checked)});
+    lock.forEach(function(r){r.closest('.opt').classList.toggle('on',r.checked)})}
+  var st=load();
+  if(st.chk)chk.forEach(function(c){if(st.chk[c.dataset.k])c.checked=true});
+  if(st.lock)lock.forEach(function(r){if(r.value===st.lock)r.checked=true});
+  if(st.memo)memo.value=st.memo;
+  paint();
+  chk.concat(lock).forEach(function(el){el.addEventListener('change',function(){paint();save();said.textContent='';out.classList.remove('show')})});
+  memo.addEventListener('input',save);
+  function text(){
+    var l=null;lock.forEach(function(r){if(r.checked)l=r.value});
+    var L=['[한끼] 클라우드 저장 계획',''];
+    L.push('잠긴 일기: '+(l||'(아직 안 골랐음)'));L.push('');L.push('계획 확인:');
+    chk.forEach(function(c){L.push('  '+(c.checked?'[v] ':'[ ] ')+c.parentNode.querySelector('span').textContent.trim())});
+    var m=memo.value.trim();if(m){L.push('');L.push('메모:');L.push(m)}
+    L.push('');L.push('※ 다음 = Firebase 첫 설정(10분) → 로그인 방식 실물 판정(5분) → 나머지는 클로드');
+    return L.join('\n');
+  }
+  function fallback(t){out.textContent=t;out.classList.add('show');
+    try{var r=document.createRange();r.selectNodeContents(out);var s=window.getSelection();s.removeAllRanges();s.addRange(r)}catch(e){}
+    said.textContent='길게 눌러서 복사해줘';}
+  document.getElementById('copy').addEventListener('click',function(){var t=text();out.textContent=t;out.classList.add('show');
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){said.textContent='복사했어 (안 됐으면 아래 글자를 길게 눌러줘)'}).catch(function(){fallback(t)})}else{fallback(t)}});
+  document.getElementById('reset').addEventListener('click',function(){chk.forEach(function(c){c.checked=false});
+    lock.forEach(function(r){r.checked=false});memo.value='';paint();
+    try{localStorage.removeItem(KEY)}catch(e){}out.classList.remove('show');said.textContent='지웠어'});
+})();
+</script>

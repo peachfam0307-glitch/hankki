@@ -1,0 +1,1082 @@
+import { useState, useRef, useEffect } from 'react'
+import { COACH, COACH_KEYS } from '../coach'
+import { useStore, 서랍한도, 서랍다시재기 } from '../store'
+import { useNav } from '../App'
+import { useLayerBack } from '../useBackHandler'
+import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL, LAB_SURVEY_URL, LAB_BUG_URL } from '../version'
+// 📒 tidy 에서 오는 것 «한 줄로» 모은다 — 2026-09-10 에 두 줄로 갈려 있었다.
+//    ⛔ 갈려 있으면 다음 사람이 한쪽만 보고 「유저 눈을 안 본다」고 착각한다(오늘 실제로 그런 사고를 냈다).
+//    tidyFounder = 유저 눈을 «따른다» · 진짜운영자 = 유저 눈과 «무관»(스위치를 그릴지 정한다)
+import { tidyFounder, 다듬기기록, 진짜운영자, 유저눈인가, 유저눈설정 } from '../tidy'
+import Icon from '../components/Icon'
+import KeyBadge from '../components/KeyBadge'
+import TabTips from '../components/TabTips'
+import EmojiPicker from '../components/EmojiPicker'
+import FoodIconPicker from '../components/FoodIconPicker'
+import Buddy, { BUDDY_GROUPS } from '../components/Buddies'
+import Portal from '../components/Portal'
+import PromptSheet from '../components/PromptSheet'
+import ConfirmSheet from '../components/ConfirmSheet'
+import KitchenGuideSheet from '../components/KitchenGuideSheet'
+import LabSheet from '../components/LabSheet'
+import CloudSheet from '../components/CloudSheet'
+import DeleteAccountSheet from '../components/DeleteAccountSheet'   // 🗑 계정 · 데이터 삭제(큰 틀 6-① ⓑ)
+import CoachMarks, { needsCoach } from '../components/CoachMarks'
+// 📣 [창업자 2026-09-03 · ④⑤ 스샷] 그 앱 설정엔 「정보」 갈래에 «공지사항»이 있다.
+//   🔢 실측 = 우리 「한끼 소식」 입구는 **홈 하나뿐**이었다(`HomeScreen.jsx:440` 만이 `PreviewSheet` 를 연다).
+//      → 홈에서 지나쳐 버리면 **다시 볼 길이 없었다.** 그게 ⑤와의 진짜 빈 칸이다.
+//   ⭐ 새로 만들지 않는다 — 홈이 쓰는 «그 부품 그대로». 두 곳이 어긋날 수가 없다.
+import PreviewSheet from '../components/PreviewSheet'
+import { isNewsUnread, markNewsSeen } from '../components/NewsPopup'
+import { whatsNew } from '../data/whatsnew'
+import { cropSquare, openExternal } from '../utils'
+import { takeOpenBackup, backupDone, takeOpenCloud, 클라우드보임, STORE_URL } from '../nudges'
+// 🏷 «표식»만 읽는다 — 파이어베이스(167KB)를 부르지 않는다(`cloud.js:108` 머리주석 · 홈도 같은 걸 쓴다)
+import { 로그인해뒀나 } from '../cloud'
+import { 잠긴장수, 백업풀기 } from '../diaryLock'
+import { 백업만들기 } from '../backupData'
+
+// 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
+const PROFILE_COACH_KEY = COACH.profile
+const PROFILE_COACH_STEPS = [
+  { sel: '[data-coach="backup"]', label: '백업 · 내보내기', desc: '폰을 바꾸거나 지워도 레시피를 지키는 제일 중요한 버튼!' },
+  { sel: '[data-coach="update"]', label: '최신 버전 확인', desc: '앱이 옛 버전에서 멈췄을 때 눌러요 · 새 기능·수정이 바로 반영돼요' },
+  { sel: '[data-coach="lab"]', label: '한끼연구소', desc: '의견·설문·안 되는 것을 받는 방이에요 여러분 한 줄이 저에겐 진짜 큰 힘이 돼요. 익명이니까 편하게 남겨 주세요!' },
+]
+import { THEMES, getTheme, setTheme } from '../theme'
+import { Avatar } from './HomeScreen'
+// 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
+import { FAV_NAME } from '../favName'
+// 🏷 갈래 이름도 «한 곳»에서만 온다(`src/settingsGroups.js`) — 화면과 관문이 같은 목록을 본다.
+//    ⛔ 여기에 갈래 이름을 «다시 적지» 말 것. 2026-09-04 에 화면과 관문이 각각 적어서 실제로 갈렸다.
+import { 설정갈래, 설정섹션, 설정이름표스타일 } from '../settingsGroups'
+import { AI동의상태, AI동의쓰기, 바뀜이벤트 } from '../aiConsent'   // 🤖🔐 AI 다듬기 사용 켜기/끄기(큰 틀 6-② ⓑ)
+
+export default function ProfileScreen() {
+  const store = useStore()
+  const { profile, setProfile, recipes, clearAll, reset, importAll } = store
+  const nav = useNav()
+  // 홈의 백업 안내로 들어왔으면 도착하자마자 백업 시트를 연다
+  // (탭 이동은 인자를 못 넘겨서 nudges.js 쪽지로 받는다. 읽는 순간 지워져 한 번만 열린다.)
+  const [backup, setBackup] = useState(() => takeOpenBackup())
+  const [avatarSheet, setAvatarSheet] = useState(false)
+  // 👀 [2026-09-10] 유저 눈으로 보기 — 켜고 끄면 화면을 다시 그려야 해서 상태로 든다
+  const [유저눈, set유저눈] = useState(() => 유저눈인가())
+  const [editSheet, setEditSheet] = useState(false)
+  const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
+  const [unlockAsk, setUnlockAsk] = useState(null) // 백업 안 잠긴 일기를 풀 때 { n, data }
+  // 인라인 시트(백업·아바타) — 뒤로가기로 닫기(편집·붙여넣기·확인 시트는 자체 처리)
+  useLayerBack(backup, () => setBackup(false))
+  useLayerBack(avatarSheet, () => setAvatarSheet(false))
+  const [coach, setCoach] = useState(() => needsCoach(PROFILE_COACH_KEY))
+  const [theme, setThemeState] = useState(getTheme())
+  const [pasteOpen, setPasteOpen] = useState(false)
+  const [checking, setChecking] = useState(false)
+  const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
+  const [lab, setLab] = useState(false) // 한끼연구소(의견·설문·오류) 시트
+  const [delAccount, setDelAccount] = useState(false) // 🗑 계정 · 데이터 삭제 시트(2026-09-08)
+  const [소식, set소식] = useState(false) // 한끼 소식(＝공지사항) 시트 — 홈과 «같은 부품»
+  const 소식들 = whatsNew()
+  const 안본소식 = isNewsUnread(소식들)
+  // ☁️ 홈 한 줄로 들어왔으면 도착하자마자 클라우드 시트를 연다(백업 쪽지와 같은 길)
+  const [cloud, setCloud] = useState(() => takeOpenCloud())
+  // 🤖🔐 AI 다듬기 허락 상태 — 'yes' | 'no' | null(아직 안 물음). 시트에서 답하면 바뀜이벤트로 여기도 갱신된다.
+  const [ai동의, setAi동의] = useState(() => AI동의상태())
+  useEffect(() => { const f = () => setAi동의(AI동의상태()); window.addEventListener(바뀜이벤트, f); return () => window.removeEventListener(바뀜이벤트, f) }, [])
+  // ⛔⛔ `useLayerBack` 은 «반드시» 위 `useState` «아래»에 둔다 —
+  //   위에 두면 `cloud` 를 선언 «전»에 읽어 `Cannot access before initialization` 으로 **설정 화면이 통째로 죽는다.**
+  //   📌 2026-08-21 에 실제로 그렇게 냈다. 빌드도 통과하고 스모크도 통과했다 — **화면을 열어서야 드러났다**(규칙 21).
+  useLayerBack(cloud, () => setCloud(false))
+  const fileRef = useRef(null)
+  const avatarFileRef = useRef(null)
+
+  // 최신 버전 확인 — 설치한 앱(standalone)은 '당겨서 새로고침'이 안 돼서 최신 버전을 못 받는 일이 있다.
+  // 이 버튼이 서비스워커 업데이트를 강제로 확인한다. 새 버전이 있으면 SW가 skipWaiting 으로
+  // 바로 활성화 → controllerchange 로 앱이 자동 새로고침(main.jsx). 없으면 '최신' 안내만.
+  const checkUpdate = async () => {
+    if (checking) return
+    if (!('serviceWorker' in navigator)) {
+      nav.showToast('이 환경에선 업데이트 확인이 안 돼요 · 브라우저를 새로고침해 주세요')
+      return
+    }
+    setChecking(true)
+    try {
+      const reg = await navigator.serviceWorker.getRegistration()
+      if (!reg) {
+        setChecking(false)
+        nav.showToast('설치 상태를 확인할 수 없어요 · 브라우저를 새로고침해 주세요')
+        return
+      }
+      let found = false
+      const onFound = () => { found = true }
+      reg.addEventListener('updatefound', onFound)
+      await reg.update()
+      if (reg.installing || reg.waiting) found = true
+      reg.removeEventListener('updatefound', onFound)
+      if (found) {
+        nav.showToast('새 버전을 받았어요 · 곧 새로고침돼요')
+        if (reg.waiting) { try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }) } catch { /* noop */ } }
+        // 안전망: controllerchange 자동 새로고침이 안 오면 직접 새로고침
+        setTimeout(() => window.location.reload(), 2200)
+      } else {
+        setChecking(false)
+        nav.showToast(`이미 최신 버전이에요 · ${APP_VERSION}`)
+      }
+    } catch {
+      setChecking(false)
+      nav.showToast('업데이트 확인 중 문제가 생겼어요 · 잠시 후 다시 시도해 주세요')
+    }
+  }
+
+  // 아바타 사진 — 정사각으로 잘라 작게 저장
+  const onAvatarPhoto = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const img = await cropSquare(reader.result, 256, 0.85)
+      setProfile({ avatar: { type: 'photo', value: img } })
+      setAvatarSheet(false)
+      nav.showToast('프로필 사진을 바꿨어요')
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const editProfile = () => setEditSheet(true)
+
+  const saveProfile = ({ name, bio }) => {
+    setProfile({ name: name.trim() || profile.name, bio: bio.trim() })
+    nav.showToast('프로필을 바꿨어요')
+  }
+
+  // 🔐 [창업자 확정 ⓑ · 2026-08-19] 잠긴 일기는 «본문만 잠가서» 담는다.
+  //   📮 창업자 *"백업할때 일기 잠금 풀리는건 어떻게 해결해?"* → *"일기는 b로 가자"*
+  //   ⛔ 그 전엔 `store.diary` 를 통째로 담고 JSON 으로 평문 저장해서
+  //      **백업 파일을 메모장으로 열면 잠근 일기가 그대로 보였다.**
+  //      (앱 «화면»으로는 못 열었다 — `checkPin` 이 막는다. 새던 건 «파일»이다)
+  //   ⭐ 열쇠 = 이미 저장돼 있는 비번 «자국» → **백업할 때 비번을 안 물어도 된다.**
+  //      푸는 건 「불러오기」 때만 묻는다.
+  //   ⚠️ `crypto.subtle` 이 없으면 **평문으로 담지 않고 본문을 뺀다** — 새는 것보다 잃는 게 낫다
+  //      (원본은 그 폰에 그대로 있다).
+  //   📌 글씨체(`font`·`size`)는 글이 아니라서 안 잠근다.
+  // ⭐⭐ 만드는 코드는 «한 곳»에 있다 → `src/backupData.js`
+  //   ⛔ 여기와 클라우드가 따로 만들면 «백업 파일엔 들어가는데 클라우드엔 안 들어가는 칸»이 생긴다.
+  //      그건 폰을 바꾼 «뒤에야» 드러난다 — 제일 늦게 발견되는 사고다.
+  const buildBackup = () => 백업만들기(store)
+
+  // 📁 파일 이름에 «시각»까지 넣는다 (2026-08-16 창업자 캡처)
+  //   ⛔ 날짜만 넣었더니 같은 날 두 번째 저장에서 안드로이드가
+  //      **「파일을 다시 다운로드하시겠습니까?」** 를 띄웠다(같은 이름이 이미 있어서).
+  //      📮 창업자 *"이런거 뜨면안되는거잖아"* — 맞다. 백업은 여러 번 눌러도 «그냥 되어야» 한다.
+  //   ⭐ 시각이 붙으면 이름이 매번 달라 그 물음이 아예 안 뜬다.
+  //      ＋ 덤으로 **어느 게 최신인지** 파일 목록에서 바로 보인다.
+  //   ⛔ `toISOString()` 은 UTC 라 한국 시각과 9시간 어긋난다 → 로컬 시각으로 짠다.
+  const backupFilename = () => {
+    const d = new Date()
+    const p = (n) => String(n).padStart(2, '0')
+    return `한끼백업-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`
+  }
+
+  // 다운로드 폴더로 저장 (데스크톱·폴백)
+  const downloadBackup = async () => {
+    // ⛔ await 를 빼면 `JSON.stringify(Promise)` 가 `{}` 로 굳어 **백업이 통째로 빈다.**
+    const blob = new Blob([JSON.stringify(await buildBackup())], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = backupFilename()
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    setBackup(false)
+    backupDone() // 이미 백업한 사람에게 홈에서 또 권하지 않는다
+    nav.showToast('백업 파일을 저장했어요 (폰 다운로드 폴더)')
+  }
+
+  // 공유로 보내기 — 카톡 나에게·드라이브·파일 앱 등 안전한 곳에 바로 저장 (모바일)
+  const shareBackup = async () => {
+    const file = new File([JSON.stringify(await buildBackup())], backupFilename(), { type: 'application/json' })
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: '한끼 백업',
+          text: '한끼 레시피 백업 파일이에요. 안전한 곳에 보관해 주세요',
+        })
+        setBackup(false)
+        backupDone()
+        nav.showToast('백업을 공유했어요 · 카톡 나에게·드라이브에 저장해두세요')
+        return
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return // 사용자가 공유 취소
+      // 그 외 오류(파일 공유 거부 등)는 아래 복사 폴백으로 넘어간다
+    }
+    // ⛔⛔ [2026-08-16 정정] 여기서 `copyBackup()` 으로 떨어뜨리고 있었다 — **그게 창업자 폰의 사고였다.**
+    //   공유가 막힌 폰에서 복사로 떨어졌는데 **복사도 실패**해서
+    //   시스템이 「클립보드로 복사하지 못했습니다」를 띄웠다(창업자 캡처).
+    //   ⭐ **폴백은 「어디서나 되는 것」이 아니라 「됐는지 유저가 아는 것」이어야 한다.**
+    //      파일 저장은 **다운로드 알림**이 뜬다 — 복사는 아무 표시가 없다.
+    downloadBackup()
+  }
+
+  // 백업 코드를 클립보드로 복사 — 공유가 막힌 기기의 마지막 수단
+  //
+  // ⛔⛔⛔ [2026-08-16 창업자 캡처] **앱이 「실패」를 「성공」이라고 말하고 있었다.**
+  //   화면에 토스트가 «둘» 겹쳐 떴다 —
+  //     시스템: 「클립보드로 복사하지 못했습니다.」   ← 진짜
+  //     우리:   「백업 코드를 복사했어요 …」          ← 거짓
+  //   `navigator.clipboard.writeText()` 가 **성공으로 resolve 되고도 실제 복사는 실패**한다.
+  //   (창업자 폰 레시피 237편 ≈ 247KB — 안드로이드 클립보드 상한으로 보이지만 ⛔확인된 값이 아니다.)
+  //
+  // ⭐⭐ 그래서 고친 건 «원인»이 아니라 «태도»다 — **확인할 수 없는 것을 성공이라고 말하지 않는다.**
+  //   ⑴ ⛔ **`backupDone()` 을 뺐다** — 이게 제일 위험했다.
+  //      그걸 부르면 홈의 백업 안내가 **영영 꺼진다.** 복사가 실패해도 「이미 백업한 사람」이 되어
+  //      **유저는 백업이 있다고 믿고 폰을 바꾸고, 아무것도 없다.**
+  //      📌 파일 저장은 다운로드 알림이, 공유는 공유 시트가 뜬다 — **유저가 «됐다»를 안다.**
+  //         복사만 아무 피드백이 없다. 그래서 여기서만 뺀다.
+  //   ⑵ 토스트를 정직하게 — 「복사했어요」로 끝내지 않고 **붙여넣어 확인하라**고 말한다.
+  //   ⛔ `clipboard.readText()` 로 대조하는 길은 **일부러 안 썼다** — 안드로이드에서 권한 프롬프트를
+  //      띄울 수 있어 「붙여넣기 허용?」을 보게 된다. 확인하려다 더 나빠진다.
+  // 📏 클립보드로 보낼 수 있는 크기인가 — ⛔100KB 는 «확인된 값이 아니다».
+  //   우리가 아는 건 **창업자 폰 247KB 에서 실패한 사례 하나**뿐이고, 상한은 기기·안드로이드 판마다 다르다.
+  //   ⭐ 넉넉히 잡는 쪽이 안전하다 — 틀려서 파일로 저장돼도 **유저는 아무것도 잃지 않는다.**
+  const CLIP_MAX = 100 * 1024
+
+  const copyBackup = async () => {
+    const json = JSON.stringify(await buildBackup())
+
+    // ⛔⛔⛔ [2026-08-16 두 번째 고침] **큰 백업은 복사를 «시도조차 하지 않는다».**
+    //   📮 창업자 캡처 = 「클립보드로 복사하지 못했습니다」(시스템) ＋ 우리 안내가 «겹쳐서» 떴다.
+    //      *"이런거 뜨면안되는거잖아"* — 맞다.
+    //   ⛔ 오전에 고친 건 «토스트 문구»뿐이라 **시스템 실패 알림은 그대로 떴다.**
+    //      `clipboard.writeText()` 가 **성공으로 resolve 되고도 실제 복사는 실패**하므로
+    //      `catch` 로는 영영 못 잡는다. **애초에 안 부르는 것 말고는 길이 없다.**
+    //   ⭐ 그래서 클 때는 **바로 파일로** 저장하고 «왜 그랬는지»를 말해준다.
+    //      파일은 다운로드 알림이 떠서 유저가 «됐다»를 안다.
+    if (json.length > CLIP_MAX) {
+      downloadBackup()
+      nav.showToast('저장한 게 많아 복사 대신 «파일»로 저장했어요 다운로드 폴더를 확인하세요')
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(json)
+      setBackup(false)
+      // ⛔ `backupDone()` 을 부르지 않는다 — 복사는 «됐는지 확인할 방법이 없다».
+      //    부르면 홈의 백업 안내가 영영 꺼져서, 유저는 백업이 있다고 믿고 폰을 바꾸고 아무것도 없다.
+      nav.showToast('백업 코드를 복사했어요 카톡 「나에게」에 붙여넣어 «들어갔는지» 꼭 확인하세요')
+    } catch {
+      // 클립보드가 «대놓고» 막힌 기기 — 파일로
+      downloadBackup()
+    }
+  }
+
+  // 🔐 백업에 «잠긴 일기»가 들어 있으면 불러온 뒤 비번을 물어 푼다.
+  //   ⭐ 순서가 중요하다 — **먼저 불러오고(안 잃는다) → 그다음 푼다.**
+  //      비번을 먼저 물으면 「모르겠다」는 사람이 백업 자체를 못 불러온다.
+  //   ⛔ 「나중에 할래요」를 눌러도 **일기는 그대로 들어와 있다** — 잠긴 채로 남을 뿐이다.
+  //      비번이 생각나면 그때 다시 불러오면 된다.
+  // 📥 백업 파일 «과» 클라우드가 **같은 흐름**을 쓴다(잠긴 일기 비번 묻기까지).
+  //   ⛔ 그런데 말은 갈라야 한다 — 클라우드에서 가져왔는데 「백업을 불러왔어요」라고 하면 **틀린 말**이다.
+  //   📷 ＋ 클라우드에서 왔을 때만 «사진» 한 마디를 붙인다 (창업자 2026-08-31 *"잘보이게 적어줘"*) —
+  //      「내 사진 어디 갔어」가 나오는 자리가 바로 여기, **가져온 직후**다.
+  //      ⛔ 잠긴 일기가 있으면 그 말을 먼저 한다 — 그건 «해야 할 일»이고 사진은 «설명»이다. 둘을 한 줄에 담지 않는다.
+  const 불러오기끝 = (data, 어디 = '백업') => {
+    importAll(data)
+    setBackup(false)
+    const n = 잠긴장수(data.diary)
+    const 왔다 = 어디 === '클라우드' ? '클라우드에서 가져왔어요' : '백업을 불러왔어요'
+    if (!n) { nav.showToast(어디 === '클라우드' ? `${왔다} · 직접 넣은 사진은 함께 오지 않아요` : 왔다); return }
+    nav.showToast(`${왔다} · 잠긴 일기 ${n}장은 비번을 넣어야 보여요`)
+    setUnlockAsk({ n, data })
+  }
+
+  const 잠금풀기 = async ({ pin }) => {
+    const p = String(pin || '').trim()
+    if (!p) { setUnlockAsk(null); return }
+    const { 일기목록, 푼수, 못푼수 } = await 백업풀기(unlockAsk.data.diary, p)
+    setUnlockAsk(null)
+    if (!푼수) { nav.showToast('비번이 안 맞아요 · 다시 불러와서 넣어볼 수 있어요'); return }
+    // ⭐ 푼 것만 반영한다 — 못 푼 것은 «잠긴 채로» 그대로 있다(안 지운다).
+    importAll({ ...unlockAsk.data, diary: 일기목록 })
+    nav.showToast(못푼수 ? `일기 ${푼수}장을 열었어요 · ${못푼수}장은 아직 잠겨 있어요` : `잠긴 일기 ${푼수}장을 열었어요`)
+  }
+
+  // 붙여넣은 백업 코드로 복원
+  const importFromText = ({ code }) => {
+    try {
+      const data = JSON.parse((code || '').trim())
+      if (!Array.isArray(data.recipes)) throw new Error('형식 오류')
+      setConfirmAsk({
+        title: '백업 불러오기',
+        message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
+        confirmLabel: '불러오기',
+        onConfirm: () => 불러오기끝(data),
+      })
+    } catch {
+      nav.showToast('백업 코드를 읽을 수 없어요 처음부터 끝까지 전체를 붙여넣었는지 확인해 주세요')
+    }
+  }
+
+  const importData = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result)
+        if (!Array.isArray(data.recipes)) throw new Error('형식 오류')
+        setConfirmAsk({
+          title: '백업 불러오기',
+          message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
+          confirmLabel: '불러오기',
+          onConfirm: () => 불러오기끝(data),
+        })
+      } catch {
+        nav.showToast('백업 파일을 읽을 수 없어요')
+      }
+      e.target.value = ''
+    }
+    reader.readAsText(file)
+  }
+
+  // 하단 탭과 겹치는 항목(내 레시피·장보기)은 뺐다 — 같은 곳으로 가는 문이 두 개면 헷갈린다.
+  // '만들었어요! 기록'은 하단 '일지' 탭과 겹쳐서 뺐고, '설정' 행은 프로필 편집을 여는 잘못된 항목이라 뺐다.
+  // (프로필 편집은 맨 위 프로필 카드를 누르면 열린다)
+  // 🧹🧹 [창업자 2026-09-03] *"설정 깔끔하게 다시 정리하는거"*
+  //   ⛔ 그 전 = **한 상자에 10줄이 통째로** 붙어 있었다(실측). 「스토어에 한마디」와
+  //      「오픈소스 라이선스」가 «같은 무게»로 읽혔다 — 찾는 사람이 열 줄을 다 읽어야 했다.
+  //   ⭐ 줄은 «하나도» 지우지 않았다. **갈래만 나눴다** — 무엇을 뺄지는 창업자가 정할 일이다.
+  //   ⭐ 갈래를 나누는 기준 = «언제 오는가»
+  //      ⑴ 늘 쓰는 것 ⑵ 한끼를 돕는 것(우리가 받고 싶은 것) ⑶ 다시 보고 싶을 때 ⑷ 법·계정
+  //   ⛔ ⑷를 맨 아래 둔다 — Play 가 요구해서 있는 줄이지, 유저가 찾아오는 줄이 아니다.
+  const menu = [
+    // ⭐⭐ [창업자 2026-09-03] 「스토어에 한마디」 — **언제든 스스로 갈 수 있는 상시 입구.**
+    //   📮 창업자 = *"리뷰는 진짜 라이트하게 써봐도 올릴수있게 하면 좋겠다. **리뷰가 좀 시급해**"*
+    //   ⛔⛔ **그 전엔 스토어로 가는 길이 앱 안에 «리뷰창 시트» 하나뿐이었다**(실측 = `STORE_URL` 참조가 1곳).
+    //      그 시트는 조건이 붙는다(내 레시피 2개 · 자랑 보내기 · 30일에 한 번).
+    //      → **가볍게 써보고 리뷰를 남기려는 사람에게는 길이 «아예 없었다».**
+    //        앱품앗이로 온 사람이 딱 그 사람이다 — 설치하고 3~5분 써보고 리뷰를 쓰려는데
+    //        어디로 가야 하는지 앱이 안 알려준다. 스스로 스토어를 찾아가야 했다.
+    //   ⛔ 「물어봤음」을 **남기지 않는다** — 이건 우리가 «청한 것»이 아니라 유저가 «스스로 누른 것»이다.
+    //      여기서 날짜를 박으면 정작 청해야 할 자리(저장 직후·자랑 직후)가 30일 막힌다.
+    //   ⛔ 홈·첫 화면에 두지 않는다 — 상시로 눈에 띄면 그건 조르는 것이다(재촉 금지 원칙).
+    //      설정은 «찾아오는» 자리라 조름이 아니다.
+    // 📣 한끼 소식 — ⛔홈에서만 열리던 것을 여기서도 연다(창업자 ④⑤ 스샷 = 「정보」 갈래의 공지사항).
+    //   ⭐ 「새로」 알약은 **안 본 소식이 있을 때만** — 늘 켜져 있으면 아무도 안 본다(홈과 같은 원칙·같은 열쇠).
+    // ⛔ `bell` 을 적었다가 **타일이 빈 칸으로 나왔다** — 우리 `Icon.jsx` 엔 없는 이름이다(실측 목록에 0건).
+    //    📌 아이콘 이름을 «기억»으로 적지 않는다. `Icon.jsx` 에 있는 것만 쓴다.
+    //    ⛔ 그다음 `alert` 로 갔더니 **삼각형 경고 표시**라 「나쁜 일」로 읽혔다(열어 보고 잡았다 · 절대원칙 21).
+    //    ✅ `gift` — 소식 팝업이 이미 선물색을 쓰고 「새로」 알약도 `--gift` 라 **한 벌로 읽힌다.**
+    { icon: 'gift', label: '한끼 소식', badge: 안본소식 ? '새로' : '', onClick: () => { markNewsSeen(소식들); set소식(true) } },
+    { icon: 'star', label: '스토어에 한마디', badge: '리뷰 남기기', 밖: true, onClick: () => openExternal(STORE_URL) },
+    // 🔖 [2026-08-18] 「즐겨찾기」 → **「책갈피」** (창업자 확정 · 유저에게 보이는 여섯 곳을 같이 바꿨다)
+    { icon: 'heart', label: FAV_NAME, onClick: () => nav.push({ name: 'favorites' }) },
+    // 💾 백업은 이 목록에서 «꺼냈다» — 아래 독립 카드로. (창업자 2026-08-16)
+    { icon: 'help', label: '요리 가이드', badge: '계량·손질', onClick: () => setGuide(true) },
+    // 💬 [창업자 2026-09-03] *"앱소개 다시보기랑 기능안내다시보기는 눌렀을때 어떤 건지 알려주면 좋겠어"*
+    //   ⛔ 이름만으로는 둘이 «똑같이» 읽혔다 — 「소개」와 「안내」의 차이를 유저가 알 리 없다.
+    //   ⭐ 부제 한 줄이 「무엇이 열리나」를 말해 준다. 새 부품 안 만들었다 — `.opt-row .t .a/.b` 가 이미 있다.
+    { icon: 'help', label: '앱 소개 다시 보기', desc: '처음 켰을 때 나오던 소개 화면을 다시 봐요', onClick: () => nav.showOnboarding && nav.showOnboarding() },
+    {
+      icon: 'sparkle', label: '기능 안내 다시 보기', badge: '반짝 안내',
+      desc: '각 화면에 처음 들어갔을 때 반짝이던 설명을 되살려요',
+      // ⛔ 이 줄은 «아무 데도 안 간다» — 기록만 지우고 토스트를 띄운다. 그래서 화살표를 안 붙인다.
+      제자리: true,
+      onClick: () => {
+        // 코치마크 본 기록을 지워 각 화면 첫 방문 안내가 다시 나오게 한다(딸 아이디어 ⭐ 후속)
+        // ⛔⛔ 🐛 여기 이름을 «손으로» 적어 뒀다가 두 칸이 죽어 있었다 (2026-08-08 발견) —
+        //    `home` 을 지웠는데 실제 키는 v8.60 부터 `home2`(지금은 `home3`) 였고, `brag` 는 목록에 아예 없었다.
+        //    → **눌러도 홈·레꾸자랑 안내는 안 돌아왔다.** 이제 `src/coach.js` 가 가진 목록을 통째로 지운다.
+        try { COACH_KEYS.forEach((k) => localStorage.removeItem(k)) } catch { /* noop */ }
+        nav.showToast('각 화면에 들어가면 반짝 안내가 다시 나와요')
+      },
+    },
+    { icon: 'help', label: '도움말 및 문의', 밖: true, onClick: () => { try { const a = document.createElement('a'); a.href = 'mailto:annyeong.hankki@gmail.com'; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com') } },
+    // 🔬 한끼연구소 — 옛 '의견 보내기' 자리를 승격시켰다(창업자 아이디어 2026-07-30).
+    // "의견 보내기"는 민원 창구처럼 읽히는데, 연구소는 유저를 연구원으로 만든다 → 참여 동기가 다르다.
+    // 창구 셋(의견·설문·오류) 중 주소가 하나라도 있을 때만 노출(전부 비면 빈 방이 된다).
+    ...(FEEDBACK_URL || LAB_SURVEY_URL || LAB_BUG_URL
+      ? [{ icon: 'bulb', label: '한끼연구소', badge: '의견·설문', coach: 'lab', onClick: () => setLab(true) }]
+      : []),
+    // 🗑️🗑️ 계정·데이터 삭제 — ⛓**Play 가 요구하는 「앱 «안» 경로」다**(신고 넷 ③).
+    //   📄 공식 = support.google.com/googleplay/android-developer/answer/13327111
+    //      「계정 만들기가 «선택»이어도」 앱 안 경로와 웹 주소를 «둘 다» 요구한다.
+    //   ⭐ 웹 쪽은 2026-08-19 에 미리 만들어 뒀다 → `public/delete-account.html`
+    //   ⛔ 여기서 «바로 지우지» 않는다 — 지우는 단추는 클라우드 시트 안의 ［클라우드 비우기］다.
+    //      이 줄은 «어디서 지우는지 알려주는 길»이고, 그게 Play 가 말하는 「인앱 경로」다.
+    //   ⛔ 로그인 안 한 사람에게도 보인다 — 기기 안 데이터를 지우는 법도 그 페이지에 있다.
+    //   🍎 [2026-09-08 · 큰 틀 6-① ⓑ] 이제 «앱 안 시트»가 뜬다 — 애플 5.1.1(v) = 앱 안에서 계정 삭제를 «시작»할 수 있어야 한다.
+    //      실측 = 위 주석이 가리키던 ［클라우드 비우기］ 단추가 **앱 어디에도 없었다**(`클라우드비우기()` 를 부르는 곳 0).
+    //      시트 = 「클라우드 비우기」(서버 기록만) ＋ 「계정 삭제」(기록＋계정) · ⛔이 폰의 레시피는 어느 쪽도 안 건드린다 · 웹 안내 링크는 시트 맨 아래.
+    // 🤖🔐 AI 다듬기 사용 — 애플 5.1.2(i) 「제3자 AI 로 보내기 전 허락」의 «바꾸는 자리»(큰 틀 6-② ⓑ · 2026-09-08)
+    //   · 처음엔 「아직 안 물음」 — 첫 다듬기 때 시트가 묻는다 · 여기서 켜면 시트 없이 바로 'yes' · 끄면 AI 를 안 부른다(규칙 정리만)
+    {
+      icon: 'sparkle', label: 'AI 다듬기 사용', badge: ai동의 === 'yes' ? '켜짐' : ai동의 === 'no' ? '꺼짐' : '처음 쓸 때 물어봐요',
+      onClick: () => {
+        if (ai동의 === 'yes') { AI동의쓰기('no'); nav.showToast('AI 다듬기를 껐어요 · 레시피는 앱 안 규칙으로만 정리해요') }
+        else { AI동의쓰기('yes'); nav.showToast('AI 다듬기를 켰어요 · 글자·사진이 Cloudflare Workers AI 로 가요') }
+      },
+    },
+    { icon: 'trash', label: '계정 · 데이터 삭제', onClick: () => setDelAccount(true) },
+    // 📊 [2026-09-08] 「이용 통계 보내기」 줄은 여기 «없다» — 방침 페이지 «안»으로 옮겼다.
+    //   📮 창업자 = *"우리도 깊이 묻어놓자"* · *"설정에서 딱 안보이게"*
+    //   ⛔ 다시 넣지 말 것. 끄는 자리가 «두 곳»이 되면 한쪽이 반드시 낡는다.
+    //      끄는 자리 = `public/privacy.html` 안(같은 주소라 저장소를 공유한다).
+    { icon: 'settings', label: '개인정보처리방침', 밖: true, onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
+    { icon: 'book', label: '오픈소스 라이선스', 밖: true, onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'licenses.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
+  ]
+
+  // ⭐ 갈래는 «이름표»로 짠다 — 줄을 다시 적지 않는다. 위에서 한 줄을 지우면 여기서도 저절로 빠진다.
+  //   ⛔ 어느 갈래에도 안 적힌 줄은 **버리지 않고** 마지막 갈래 뒤에 붙는다(놓치면 줄이 사라진다).
+  // 📄 갈래 정의는 `src/settingsGroups.js` 가 가진다 — 관문(`_repro-설정갈래-0903`)도 거기서 읽어 간다.
+  const 담긴것 = new Set(설정갈래.flatMap((g) => g.keys))
+  const 갈래들 = 설정갈래
+    .map((g) => ({ title: g.title, items: g.keys.map((k) => menu.find((m) => m.label === k)).filter(Boolean) }))
+    .filter((g) => g.items.length)
+  const 남은것 = menu.filter((m) => !담긴것.has(m.label))
+  if (남은것.length) 갈래들.push({ title: '그 밖에', items: 남은것 })
+
+  return (
+    <>
+      <div className="topbar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div className="h-title">설정</div>
+          <TabTips tab="profile" />
+        </div>
+        {/* 🔑 [창업자 2026-09-01] *"설정에도 열쇠를 크게 하나 붙이면 좋겠어. **가져오기랑 같은 자리에**"*
+            ⭐ 가져오기와 «같은 부품»이다 — 모양도 숫자도 어긋날 수가 없다. */}
+        <KeyBadge />
+      </div>
+
+      {/* 👀👀 [창업자 확정 2026-09-10] **유저 눈으로 보기** — ⛔운영자 기기에만 뜬다.
+          📮 창업자 = *"이게 나랑 유저랑 보이는 화면이 다르니까 테스트하기가 너무 어렵네"*
+          ⛔ 그날 실제로 하루를 태웠다 — 창업자 폰에서 단추가 하나만 떠서 세 번을 버그로 의심했고,
+             진짜는 «창업자가 무제한이라» 그런 것이었다(시크릿 모드에선 멀쩡했다).
+          ⭐ 켜면 무제한 표시·운영자 배지가 «일반 유저»처럼 굴어서, 이 폰이 그대로 「유저 눈」이 된다.
+          ⭐⭐ **[2026-09-10 저녁 · 바뀌었다] 이제 열쇠도 진짜로 깎인다** (창업자 = "a로가").
+          유저 눈이면 두 워커(hankki-ocr · hankki-tidy)에 운영자 열쇠를 «안» 보낸다 →
+          개인 한도를 그대로 받고, 계기판의 「창업자」에도 안 실린다.
+          ⛔ 끄면 «표시»만 무제한으로 돌아온다 — 그동안 쓴 열쇠는 «안» 돌아온다(워커가 쓴 수를 누적한다).
+          ⛔ 판정은 `tidy.js` 한 곳이 갖는다(잣대를 늘리지 않는다). */}
+      {진짜운영자() && (
+        <div className="pad" style={{ paddingTop: 0 }}>
+          <button
+            className="press"
+            onClick={() => { 유저눈설정(!유저눈); set유저눈(!유저눈); location.reload() }}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px',
+              borderRadius: 14, textAlign: 'left',
+              border: `1px solid ${유저눈 ? 'var(--brown)' : 'var(--line)'}`,
+              background: 유저눈 ? 'var(--cream-deep)' : 'var(--card)',
+            }}
+          >
+            {/* ⛔ `eye` 아이콘은 우리 Icon 에 «없다» — 있는 것 중에 「사람」을 쓴다(유저 눈이니까) */}
+            <Icon name="user" size={18} color="var(--brown)" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 800, fontSize: 15.5 }}>유저 눈으로 보기</div>
+              <div className="t-sub" style={{ fontSize: 13.5, marginTop: 2 }}>
+                {유저눈 ? '켜짐 · 일반 유저 화면이에요 · 열쇠가 진짜로 깎여요(안 돌아와요)' : '꺼짐 · 지금 운영자 화면이에요'}
+              </div>
+            </div>
+            <div style={{
+              flex: '0 0 auto', width: 44, height: 26, borderRadius: 999, padding: 3,
+              background: 유저눈 ? 'var(--brown)' : 'var(--line)',
+              display: 'flex', justifyContent: 유저눈 ? 'flex-end' : 'flex-start',
+            }}>
+              <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff' }} />
+            </div>
+          </button>
+        </div>
+      )}
+
+      <div className="pad">
+        {/* 프로필 — 아바타는 눌러서 이모지·사진으로 바꿀 수 있다 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0 20px' }}>
+          <button className="press" onClick={() => setAvatarSheet(true)} aria-label="프로필 아이콘 바꾸기" style={{ position: 'relative', flex: '0 0 auto' }}>
+            <Avatar name={profile.name} avatar={profile.avatar} size={56} />
+            <span style={{ position: 'absolute', right: -3, bottom: -3, width: 21, height: 21, borderRadius: '50%', background: 'var(--brown)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="camera" size={12} color="#fff" />
+            </span>
+          </button>
+          <button className="press" onClick={editProfile} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>{profile.name}</div>
+              <div className="t-sub" style={{ marginTop: 3 }}>{profile.bio}</div>
+            </div>
+            <Icon name="edit" size={20} color="var(--sand)" />
+          </button>
+        </div>
+
+        <input ref={avatarFileRef} type="file" accept="image/*" onChange={onAvatarPhoto} style={{ display: 'none' }} />
+
+        {avatarSheet && (
+          <div className="card fade" style={{ padding: 16, marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ fontSize: 17, fontWeight: 700 }}>프로필 아이콘</div>
+              <button className="press" onClick={() => setAvatarSheet(false)} style={{ color: 'var(--text-sub)', fontSize: 16.5, fontWeight: 600 }}>닫기</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* 요리사 친구들 — 모자 쓴 동물 캐릭터. 세 가지 그림체를 섹션으로 나눠 보여준다. */}
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--brown)', marginBottom: 10 }}>요리사 친구들</div>
+                {BUDDY_GROUPS.map((g) => (
+                  <div key={g.key} style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--sand)', margin: '0 2px 8px', letterSpacing: '0.02em' }}>{g.label}</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                      {g.items.map((bd) => {
+                        const on = profile.avatar?.type === 'buddy' && profile.avatar.value === bd.id
+                        return (
+                          <button
+                            key={bd.id}
+                            className="press"
+                            onClick={() => { setProfile({ avatar: { type: 'buddy', value: bd.id } }); setAvatarSheet(false); nav.showToast(`${bd.name}로 바꿨어요`) }}
+                            aria-label={bd.name}
+                            style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, width: 60 }}
+                          >
+                            <div
+                              style={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: '50%',
+                                overflow: 'hidden',
+                                background: 'linear-gradient(160deg,#f8f6f1,#f1eee7)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: on ? '2.5px solid var(--brown)' : '2.5px solid transparent',
+                                boxSizing: 'border-box',
+                              }}
+                            >
+                              <Buddy id={bd.id} size={56} />
+                            </div>
+                            <span style={{ fontSize: 15, fontWeight: on ? 800 : 600, color: on ? 'var(--brown)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{bd.name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <EmojiPicker
+                  value={profile.avatar?.type === 'emoji' ? profile.avatar.value : '😊'}
+                  size={56}
+                  onChange={(e) => { setProfile({ avatar: { type: 'emoji', value: e } }); nav.showToast('프로필 이모지를 바꿨어요') }}
+                />
+                <div style={{ fontSize: 16, fontWeight: 600 }}>이모지로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <FoodIconPicker
+                  value={profile.avatar?.type === 'icon' ? profile.avatar.value : 'gr_343'}
+                  size={56}
+                  onChange={(k) => { setProfile({ avatar: { type: 'icon', value: k } }); nav.showToast('프로필 아이콘을 바꿨어요') }}
+                />
+                <div style={{ fontSize: 16, fontWeight: 600 }}>한끼 아이콘으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 눌러서 고르기</span></div>
+              </div>
+              <button className="press" onClick={() => avatarFileRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '4px 0', textAlign: 'left' }}>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
+                  <Icon name="camera" size={22} color="var(--brown)" />
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>사진으로 하기 <span className="t-sub" style={{ fontWeight: 400 }}>· 동그랗게 잘라드려요</span></div>
+              </button>
+              {profile.avatar && (
+                <button className="press" onClick={() => { setProfile({ avatar: null }); setAvatarSheet(false) }} style={{ padding: 10, borderRadius: 12, background: 'var(--cream)', color: 'var(--text-sub)', fontSize: 16.5, fontWeight: 600 }}>
+                  기본(이름 첫 글자)으로 돌리기
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 통계 */}
+        <div className="card" style={{ display: 'flex', padding: '16px 0', background: 'var(--cream)', border: 'none' }}>
+          <Stat n={recipes.length} label="전체 레시피" />
+          <div style={{ width: 1, background: 'var(--line)' }} />
+          <Stat n={recipes.filter((r) => r.favorite).length} label={FAV_NAME} />
+          <div style={{ width: 1, background: 'var(--line)' }} />
+          {/* 예전 'Inbox' — 홈에서 뺀 대신 여기 통계에서 연다. 아직 편집 안 끝난(미정리) 레시피 개수, 탭하면 목록 */}
+          <Stat n={recipes.filter((r) => r.status === 'unsorted').length} label="미정리" onClick={() => nav.push({ name: 'inbox' })} />
+        </div>
+
+        {/* 💾💾 백업 = 메뉴 목록에서 «꺼내» 따로 세운다 (창업자 2026-08-16)
+            📮 *"설정에 백업 내보내기는 **버튼색을 다르게한다거나. 뭔가 눈에 확띄게** 해야할 것 같아.
+               **우리 클라우드 저장전까지는**"*
+            ⛔ 목록 «안»에서 색만 바꾸면 여전히 「목록의 한 줄」이다 — 요리 가이드·앱 소개와 같은 무게로 읽힌다.
+               꺼내서 위에 세우면 통계 바로 밑이라 **시선이 먼저 닿는다.**
+            ⭐ 포인트색 테두리 = 이 화면에서 «유일하게» 테두리가 있는 카드라 저절로 튄다
+               (⛔ 배경을 크림으로 칠하면 `opt-row:active` 와 같은 색이라 «눌린 것»처럼 보인다).
+            ⭐ 부제 한 줄이 색보다 세다 — 다른 줄엔 부제가 없어서 이것만 두 줄이 되고,
+               «왜 눌러야 하는지»까지 말해준다.
+            ⏰ 창업자 말대로 **클라우드 저장(#87)이 나오면 이 강조는 되돌린다** — 그때는 백업이 저절로 되니까. */}
+        {/* 🏷 [창업자 2026-09-03] *"백업 내보내기랑 클라우드 저장공간도 넣어야해"*
+            ⭐ 갈래에 «넣되» 목록으로 «되돌리지는» 않는다 — 2026-08-16 「꺼내서 강조하라」는 창업자 확정이 살아 있다.
+               이름표만 얹으면 **강조는 그대로 두고 갈래에는 들어간다.** 둘이 안 부딪힌다. */}
+        <div style={설정이름표스타일}>{설정섹션.백업}</div>
+        <button
+          className="card press" data-coach="backup" onClick={() => setBackup(true)}
+          /* ⛔ marginTop 을 뺐다 — 위에 붙은 이름표가 그 간격을 이미 갖는다(20). 두면 두 겹이 된다. */
+          style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left', border: '1.5px solid var(--brown)' }}
+        >
+          <Icon name="cloud" size={24} color="var(--brown)" stroke={2} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 17.5, fontWeight: 800, color: 'var(--brown)' }}>백업 · 내보내기</div>
+            <div className="t-sub" style={{ fontSize: 15, marginTop: 2 }}>폰을 바꾸거나 앱을 지워도 안 잃게 저장해요</div>
+          </div>
+          <Icon name="chevron-right" size={18} color="var(--brown)" />
+        </button>
+
+        {/* 📊 저장 공간 — 백업 «바로 밑»에 둔다.
+            ⭐ 거의 찼을 때 유저가 할 일이 「백업해 두기」라서, 그 단추 옆에 있어야 말이 이어진다. */}
+        <StorageRow />
+
+        {/* ☁️☁️ 클라우드 저장 — 백업 바로 «밑»에 세운다 (창업자 확정 「1번」 · 2026-08-16)
+            ⭐ 왜 여기냐 = 백업과 «같은 걱정»을 푸는 자리다 — 「폰 바꾸면 어떡하지」.
+               떨어뜨려 놓으면 유저가 둘을 다른 기능으로 읽고, 백업만 하고 만다.
+            ⛔ 백업을 «치우지» 않는다 — 사진은 백업에만 들어간다(클라우드는 글자만).
+               📌 둘은 겹치는 게 아니라 «나뉘어» 맡는다. 그래서 부제로 그걸 말해 준다.
+            ⭐ 테두리는 «백업에만» 남긴다 — 둘 다 두르면 둘 다 안 튄다. */}
+        {/* 🔀 공개 스위치 — 켜는 날까지 창업자 폰에서만 보인다(근거 = `nudges.js` 머리주석 · 창업자 확정 2026-08-31) */}
+        {클라우드보임() && (
+        <button
+          className="card press" data-coach="cloud" onClick={() => setCloud(true)}
+          style={{ marginTop: 10, padding: 16, display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left' }}
+        >
+          <Icon name="cloud" size={24} color="var(--brown)" stroke={2} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* 🔐🔐 **[창업자 2026-09-08] *"설정에 로그인하러가기 하나 만들수있나??"*
+                ⛔⛔ 입구는 «이미 여기 있었다» — 이 카드를 누르면 시트 안에 ［Google 계정으로 로그인］이 있다.
+                   그런데 카드 «얼굴»에 「로그인」이라는 글자가 한 자도 없었다. 「클라우드 저장」은 백업 기능으로 읽힌다.
+                   → 로그인을 찾으러 설정에 들어온 사람이 **못 찾는다.** 창업자가 이 질문을 한 것 자체가 실측이다.
+                ⭐ 그래서 «새로 만들지 않고» 이름만 상태에 따라 가른다 — 두 입구가 생기면 반드시 어긋난다.
+                   · 로그인 «안» 했다 = 「로그인하러 가기」 (지금 필요한 행동)
+                   · 로그인 했다   = 「클라우드 저장」   (이제 이건 저장 관리 자리다)
+                ⛔ 표식(`로그인해뒀나`)은 «진짜 로그인 판정»이 아니다 — 이름표를 고르는 데만 쓴다(cloud.js:111). */}
+            <div style={{ fontSize: 15.5, fontWeight: 800 }}>{로그인해뒀나() ? '클라우드 저장' : '로그인하러 가기'}</div>
+            {/* ⛔ 「매어 두면」 금지 (창업자 2026-08-21) · ⭐ 첫 화면·홈 한 줄과 «같은 말»로 */}
+            <div className="t-sub" style={{ fontSize: 11.5, marginTop: 2 }}>로그인하면 새 폰에서도 이어서 써요</div>
+          </div>
+          <Icon name="chevron-right" size={18} color="var(--sand)" />
+        </button>
+        )}
+
+        {/* 메뉴 — 갈래마다 «상자 하나». 사이가 벌어져야 눈이 갈래를 읽는다. */}
+        {갈래들.map((g) => (
+          <div key={g.title || '기본'}>
+            {/* ⛔⛔ [2026-09-04 정정] 여기 「첫 갈래엔 이름표를 안 붙인다」고 적혀 있었다 — **되돌리기 «전»의 말**이다.
+                실제로는 「자주 여는 것」 이름표를 다시 붙였다(그 갈래만 붕 떠 보여서 창업자가 스샷으로 잡았다).
+                📌 주석대로 떼면 그 문제로 그대로 돌아간다. 이름표는 «줄 전체»가 정한다 — 하나만 빼면 그게 튄다.
+                ⭐ 여백은 `설정이름표스타일`(위 20px)이 갖는다 — 감싼 칸의 marginTop 을 뺐다(두면 두 겹). */}
+            {g.title && (
+              <div style={설정이름표스타일}>{g.title}</div>
+            )}
+            <div className="card" style={{ overflow: 'hidden' }}>
+              {g.items.map((m, i) => (
+                <div key={m.label}>
+                  {/* 🔲 [창업자 2026-09-03 · 「그 스샷 참고해서 우리스타일로」] 줄마다 «둥근 타일»에 아이콘.
+                      ⭐ 맨 아이콘은 글자에 붙어 보여서 열 줄이 한 덩어리로 읽혔다 — 타일이 줄을 하나씩 떼어 준다.
+                      ⭐ 새로 만들지 않았다 — `.opt-ico`(styles.css:1237)가 «이미» 있었는데 이 화면만 안 쓰고 있었다.
+                      ⛔ 색색 이모지 타일은 안 쓴다(유니코드 이모지 금지 · 핀) — 크림 바탕에 우리 갈색 아이콘. */}
+                  <button className="opt-row press" onClick={m.onClick} data-coach={m.coach} style={{ padding: '13px 16px' }}>
+                    <span className="opt-ico" style={{ width: 38, height: 38 }}>
+                      <Icon name={m.icon} size={20} color="var(--brown)" stroke={1.7} />
+                    </span>
+                    {/* 🟠 「새로」만 선물색 — 홈 소식 알약과 «같은 색»이라 한 벌로 읽힌다(styles.css:96).
+                        ⛔ 초록 이름표(`badge-sorted`)로 두면 「계량·손질」·「의견·설문」과 판박이라 알림이 아니라 «분류»로 읽힌다. */}
+                    {/* ⛔⛔ 부제를 붙였더니 「기능 안내 다시 보기」 부제가 **세 줄로 쪼개졌다**(스샷에서 잡았다).
+                        알약이 줄 «오른쪽»에 서서 부제가 쓸 폭을 통째로 먹었기 때문이다.
+                        ✅ 부제가 있는 줄은 알약을 «제목 옆»으로 올린다 — 부제는 폭을 다 쓴다.
+                        ⛔ 부제를 짧게 줄여서 풀지 않았다 — 그러면 «무엇이 열리나»가 흐려진다(붙인 이유가 그건데). */}
+                    <div className="t" style={{ fontSize: 17, fontWeight: 500 }}>
+                      {m.desc ? (
+                        <>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span className="a">{m.label}</span>
+                            {m.badge && <span className="badge badge-sorted">{m.badge}</span>}
+                          </span>
+                          <span className="b" style={{ display: 'block' }}>{m.desc}</span>
+                        </>
+                      ) : m.label}
+                    </div>
+                    {!m.desc && m.badge && (m.badge === '새로'
+                      ? <span style={{ marginRight: 6, fontSize: 14, fontWeight: 900, color: 'var(--surface)', background: 'var(--gift)', borderRadius: 999, padding: '1px 7px' }}>{m.badge}</span>
+                      : <span className="badge badge-sorted" style={{ marginRight: 6 }}>{m.badge}</span>)}
+                    {/* ➡️➡️ [창업자 2026-09-03] *"근데 누르면 뭐가 나와? 다 화살표가 있어서..."* — 맞는 말이다.
+                        🔢 **재봤더니 열한 줄 중 화살표가 «맞는» 건 여섯뿐이었다.**
+                          · 밖으로 «나가는» 것 5 = 스토어·문의(메일앱)·계정삭제·방침·라이선스 → 앱을 떠난다
+                          · «아무 데도 안 가는» 것 1 = 기능 안내(기록만 지우고 토스트)
+                        ⛔ 셋을 같은 화살표로 그리면 그건 «거짓말»이다 — 눌러 봐야만 알 수 있게 된다.
+                        ✅ 나가는 줄엔 `link`(⧉), 제자리 줄엔 «아무것도». 화살표는 진짜 다음 화면이 열리는 줄만. */}
+                    {m.제자리 ? null
+                      : m.밖 ? <Icon name="link" size={16} color="var(--sand)" />
+                        : <Icon name="chevron-right" size={18} color="var(--sand)" />}
+                  </button>
+                  {/* ⭐ 금이 «타일 오른쪽»에서 시작하게 — 타일 폭 38 ＋ 왼여백 16 ＋ 사이 14 = 68 */}
+                  {i < g.items.length - 1 && <hr className="divider" style={{ marginLeft: 68 }} />}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* 🏷 [창업자 2026-09-03] *"테마도. 버전확인이랑 넣을게 많네.."* — 갈래 밖에 떠 있던 상자들도 이름표 아래로. */}
+        <div style={설정이름표스타일}>{설정섹션.테마}</div>
+        {/* 테마 — 화면 색(크림·세이지·다크). 다크모드도 여기서 고른다. */}
+        <div className="card" style={{ padding: 16 }}>
+          <div style={{ fontSize: 17, fontWeight: 700 }}>테마</div>
+          <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, marginBottom: 14 }}>앱 화면 색을 골라요 · 다크모드도 여기서</div>
+          {/* 🔲🔲 **2×2 격자** — 창업자 2026-08-29 = *"이렇게말고 2×2로 올리자 **빼빼로인줄**..ㅋㅋ"*
+             ⭐ 뿌리 = 살구를 더해 **3 → 4개**가 되자 한 줄에 넷이 들어가 칸이 좁아졌다.
+                🔢 실측(390px) = 카드 안쪽 358 − gap 30 = 칸당 **82px**, 좌우 여백 빼면 글자가 쓸 폭이 **68px**.
+                   「뮤트로 그레이지」·「연한 오렌지 · 가을 햇살」이 **한 글자씩 세로로 쪼개졌다**(＝빼빼로).
+             ⛔ **글자를 줄이거나 desc 를 빼서 풀지 않았다** — 설명은 고를 때 읽는 것이라 지우면 판단이 어려워진다.
+                칸을 넓히면 글자를 안 건드려도 풀린다.
+             ⛔⛔ **`1fr` 이 아니라 `minmax(0, 1fr)`** — body 뿌리에 `word-break: keep-all` 이 걸려 있어
+                `1fr`(＝`minmax(auto, 1fr)`)이면 **안 끊기는 낱말이 칸을 벌려 좌우가 짝짝이가 된다**(v11.24 사고 그대로).
+             ⭐ 테마가 더 늘어도 저절로 2·3·4·… 줄로 쌓인다 — 다음에 또 안 고친다. */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+            {THEMES.map((t) => {
+              const on = theme === t.key
+              return (
+                <button
+                  key={t.key}
+                  className="press"
+                  onClick={() => { setTheme(t.key); setThemeState(t.key); nav.showToast(`${t.label} 테마로 바꿨어요`) }}
+                  aria-label={`${t.label} 테마`}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+                    padding: '13px 10px', borderRadius: 14, background: 'var(--cream)',
+                    border: on ? '2px solid var(--brown)' : '2px solid transparent', boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: t.bg, position: 'relative', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.09)' }}>
+                    <span style={{ position: 'absolute', right: 7, bottom: 7, width: 14, height: 14, borderRadius: '50%', background: t.point, boxShadow: '0 1px 2px rgba(0,0,0,.2)' }} />
+                  </div>
+                  <span style={{ fontSize: 15.5, fontWeight: on ? 800 : 600, color: on ? 'var(--brown)' : 'var(--text)' }}>{t.label}</span>
+                  <span className="t-sub" style={{ fontSize: 15 }}>{t.desc}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* 🏷 앱 자체에 대한 것 — 예시 데이터 · 버전 · 꼬리말. 갈래 중 «마지막»이다. */}
+        {/* ⛔ 위 여백이 여기만 22px 이었다 — 값이 네 군데에 따로 적혀 있어서 갈렸다(2026-09-04).
+            ✅ 이제 `설정이름표스타일` 한 곳이라 그렇게 갈릴 수가 없다. */}
+        <div style={설정이름표스타일}>{설정섹션.앱}</div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            className="press"
+            onClick={() => setConfirmAsk({
+              title: '예시 데이터 비우기',
+              message: '예시 레시피를 포함해 모든 레시피를 비울까요?\n(내 폴더·태그는 유지돼요)',
+              confirmLabel: '비우기',
+              danger: true,
+              onConfirm: () => { clearAll(); nav.showToast('깨끗하게 비웠어요 · 이제 내 레시피만 담아요') },
+            })}
+            style={{ flex: 1, color: 'var(--brown)', fontSize: 16, fontWeight: 600, padding: 13, background: 'var(--cream)', borderRadius: 'var(--r-md)' }}
+          >
+            예시 데이터 비우기
+          </button>
+          <button
+            className="press"
+            onClick={() => setConfirmAsk({
+              title: '예시 되돌리기',
+              message: '예시 레시피를 다시 불러올까요?\n(현재 내용이 초기 예시로 바뀌어요)',
+              confirmLabel: '되돌리기',
+              onConfirm: () => { reset(); nav.showToast('초기 예시로 되돌렸어요') },
+            })}
+            style={{ flex: 1, color: 'var(--text-sub)', fontSize: 16, fontWeight: 500, padding: 13, background: 'var(--cream)', borderRadius: 'var(--r-md)' }}
+          >
+            예시 되돌리기
+          </button>
+        </div>
+        <button
+          className="press"
+          data-coach="update"
+          onClick={checkUpdate}
+          disabled={checking}
+          style={{
+            width: '100%', marginTop: 22, padding: 13, borderRadius: 'var(--r-md)',
+            background: 'var(--cream)', color: 'var(--brown)', fontSize: 16.5, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            opacity: checking ? 0.6 : 1,
+          }}
+        >
+          <Icon name="refresh" size={16} color="var(--brown)" stroke={2} />
+          {checking ? '확인 중…' : '최신 버전 확인'}
+        </button>
+        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 15, marginTop: 10, lineHeight: 1.5 }}>
+          설치한 앱이 옛 버전에서 멈췄을 때 눌러요
+        </div>
+        {/* 📒📒 **최근 AI 다듬기 다섯 번 — ⛔창업자 폰에만 보인다** [창업자 2026-09-10]
+            📮 창업자 = *"갈색띠가 안떠 성공해도"* ＋ *"계속남게할순없어?"* ＋ *"나만보이게해줘"*
+            ⛔ 띠는 최대 4.8초다. 게다가 성공이 «나가 있는 동안» 나면 떴다 사라져 볼 수가 없다.
+            ⭐ 그래서 «지나가는 말»이 아니라 «쌓이는 기록»으로. 걸린 시간이 쌓이면
+               아직 못 푼 「왜 2분을 넘겼나」도 저절로 답이 나온다.
+            ⛔ 레시피 «글자»는 한 자도 안 적는다 — 모델·걸린 시간·까닭만(개인정보 0). */}
+        {tidyFounder() && 다듬기기록().length > 0 && (
+          <div style={{ marginTop: 16, padding: '12px 14px', borderRadius: 'var(--r-md)', background: 'var(--cream)', border: '1px solid var(--line)' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--brown)', marginBottom: 8 }}>
+              최근 AI 다듬기 5번 <span style={{ fontWeight: 400, color: 'var(--text-sub)' }}>· 나만 보여요</span>
+            </div>
+            {다듬기기록().map((줄, i) => (
+              <div key={i} className="t-sub" style={{ fontSize: 14, lineHeight: 1.7, wordBreak: 'keep-all' }}>
+                {줄.ok ? '✅' : '⛔'} {new Date(줄.때).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                {줄.ms ? ` · ${(줄.ms / 1000).toFixed(1)}초` : ''}
+                {줄.model ? ` · ${줄.model}` : ''}
+                {줄.ok ? '' : ` · ${줄.why || '까닭없음'}`}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 15, marginTop: 12 }}>
+          한끼 · {APP_VERSION} — {APP_TAGLINE}
+        </div>
+      </div>
+
+      <input ref={fileRef} type="file" accept="application/json,.json" onChange={importData} style={{ display: 'none' }} />
+
+      {editSheet && (
+        <PromptSheet
+          title="프로필 수정"
+          fields={[
+            { key: 'name', label: '닉네임', value: profile.name, placeholder: '닉네임' },
+            { key: 'bio', label: '한 줄 소개', value: profile.bio, placeholder: '나를 한 줄로 소개해요', multiline: true },
+          ]}
+          onSubmit={saveProfile}
+          onClose={() => setEditSheet(false)}
+        />
+      )}
+
+      {/* 🔐 백업 안 잠긴 일기를 푸는 자리 — 새 시트를 만들지 않고 PromptSheet 를 그대로 쓴다 */}
+      {unlockAsk && (
+        <PromptSheet
+          title="잠긴 일기 열기"
+          fields={[{
+            key: 'pin',
+            label: `잠긴 일기 ${unlockAsk.n}장이 있어요`,
+            value: '',
+            placeholder: '비번 네 자리',
+          }]}
+          submitLabel="열기"
+          onSubmit={잠금풀기}
+          onClose={() => setUnlockAsk(null)}
+        />
+      )}
+
+      {confirmAsk && (
+        <ConfirmSheet
+          title={confirmAsk.title}
+          message={confirmAsk.message}
+          confirmLabel={confirmAsk.confirmLabel}
+          danger={confirmAsk.danger}
+          onConfirm={confirmAsk.onConfirm}
+          onClose={() => setConfirmAsk(null)}
+        />
+      )}
+
+      {backup && (
+       <Portal>
+        <div className="sheet-mask" onClick={() => setBackup(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
+            <div className="emoji-sheet-head">
+              <span>백업 · 내보내기</span>
+              <button className="press" onClick={() => setBackup(false)} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
+            </div>
+            <div style={{ padding: '2px 16px 0' }}>
+              {/* ⭐ 첫 문장을 「무엇을」에서 «왜»로 바꿨다 (창업자 2026-08-15)
+                  📮 *"이거 백업안하고 기기를 바꾸거나, 패드에 깔면 이메일을 안받으니까 처음 가입한 것 처럼되거든?
+                     그래서 **백업하는 걸 좀 강조**해서 알려줘야 할 것 같아."*
+                  ⛔ 옛 문구는 「모든 데이터를 파일 하나로 담아요」 = «무엇을»이라 안 해도 그만으로 읽힌다.
+                     유저가 모르는 건 «담긴다»가 아니라 **「로그인이 없어서 새 기기엔 아무것도 안 따라온다」**는 사실이다.
+                  ⛔ 겁주지 않는다(`docs/리텐션-설계원칙-2026-07-30.md`) — 「사라져요!」가 아니라 **사실 ＋ 다음 행동.**
+                  ⚠️ `t-sub` 은 pre-line 이 아니라 {'\n'} 이 안 먹는다 — 여기서 명시한다(옛 문구는 한 줄로 뭉쳐 있었다). */}
+              <div className="t-sub" style={{ fontSize: 16, lineHeight: 1.65, marginBottom: 12, whiteSpace: 'pre-line' }}>
+                {/* ⛔ [2026-09-06] 옛 첫 문장 「한끼는 로그인이 없어요」는 **낡은 사실**이었다 — 8/31 부터 구글 로그인(클라우드 저장)이 있다.
+                    로그인 안 한 사람이 이 글을 읽으면 «로그인이 없구나»로 굳는다(창업자 로그인 안내 ㄱㄱ 날 실물로 잡음). */}
+                로그인 안 하면 모든 게 <b>이 기기 안에만</b> 있어요. 앱을 지우거나 폰을 바꾸면 사라져요.{'\n'}이 파일 하나면 레시피 · 일지 · 냉장고 · 장보기 · 프로필까지 <b>그대로 옮겨져요.</b> 로그인(위 클라우드 저장)을 하면 파일 없이도 남아요.
+              </div>
+              {/* 📁📁 추천 자리 = 「파일로 저장」 (창업자 2026-08-16 · 셋 다 직접 써보고 말했다)
+                  📮 *"카톡나에게 보내기보다 **파일이 편해.**"*
+                  📮 *"카톡보내기는 **외계어가 너무 길어서** 복사붙이기가 번거롭건데"*
+                  📮 *"카톡보내기도 **나쁘지않은데** 저장한게 많은수록 **길이가 엄청나.**"*
+                  ⛔ 옛 판은 「백업 보내서 저장하기」가 추천이고 3단계가 «카톡 나에게»를 밀었다.
+                     그런데 창업자는 그 길을 **「외계어 붙여넣기」로 겪고 있었다** — 공유가 안 뜨면
+                     `shareBackup` 이 조용히 `copyBackup()` 으로 떨어졌기 때문이다.
+                  ✅✅ [2026-08-16 밤] **그 폴백을 «파일 저장»으로 바꿨다** — 창업자 캡처에
+                     「클립보드로 복사하지 못했습니다」가 떠서, 복사는 폴백으로도 못 쓴다는 게 확인됐다.
+                     이제 어느 버튼을 눌러도 **끝에는 반드시 파일이 하나 생긴다.**
+                     📌 **추천한 길이 그 폰에서 딴 길로 새고 있었다.**
+                  ⭐ 파일은 그 갈림길이 없다 — 누르면 파일 하나가 «반드시» 생긴다.
+                  ⛔ 나머지 둘을 «지우지» 않는다 — 창업자 *"카톡보내기도 나쁘지않은데"*.
+                     순서만 바꾸고, 코드 복사엔 「길다」를 미리 적어 놀라지 않게 한다. */}
+              <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 14, fontSize: 15.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
+                <b style={{ color: 'var(--brown)' }}>제일 쉬운 방법 (2단계)</b>{'\n'}
+                <b>1.</b> 아래 <b>폰에 파일로 저장</b> 누르기{'\n'}
+                <b>2.</b> 끝! <b>다운로드 폴더</b>에 파일 하나가 생겨요
+              </div>
+              <button className="btn-primary press" onClick={downloadBackup}>폰에 파일로 저장 (추천)</button>
+              <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.55, margin: '8px 2px 12px', whiteSpace: 'pre-line' }}>
+                파일 앱 → <b>다운로드</b> 에 <b>한끼백업-날짜.json</b> 이 생겨요.{'\n'}폰이 고장나도 남게 하려면 그 파일을 <b>드라이브·카톡 「나에게」</b>에 한 번 더 올려두면 제일 안전해요.
+              </div>
+              <button className="btn-ghost press" style={{ width: '100%' }} onClick={shareBackup}>백업 보내서 저장하기 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 공유 창으로</span></button>
+              {/* ⚠️ 저장한 게 많으면 복사가 «안 되는» 폰이 있다(창업자 폰 247KB 에서 실패).
+                  그럴 땐 코드가 알아서 파일로 저장한다 — 그래서 라벨에 「짧을 때」라고 미리 적는다. */}
+              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={copyBackup}>백업 코드 복사 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 저장한 게 적을 때만</span></button>
+              <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.5, margin: '7px 2px 0' }}>
+                코드는 저장한 게 많을수록 <b>아주 길어요.</b> 붙여넣기가 번거로우면 위 <b>파일</b>로 하세요.
+              </div>
+
+              <hr className="divider" style={{ margin: '16px 0' }} />
+              <div style={{ fontSize: 16.5, fontWeight: 700, marginBottom: 10 }}>백업에서 되살리기</div>
+              {/* 🔁🔁 「폰 → 패드」 옮기는 법 (창업자 2026-08-15)
+                  📮 *"**패드에 깔아서 핸드폰에 내가 저장한 것들 살리는 법도 안내하고.**"*
+                  ⛔ 그 전엔 버튼 둘뿐이고 «어떻게 옮기는지»가 앱 어디에도 없었다 —
+                     버튼 이름만 봐선 「내 폰 안 어딘가에서 되살린다」로 읽힌다.
+                  ⚠️ 경고 둘은 «내가 코드로 확인한 사실»이라 반드시 적는다:
+                     ⑴ `store.jsx` 의 `importAll` 은 **합치기가 아니라 덮어쓰기**다(614줄) —
+                        받는 기기에 이미 쓴 게 있으면 통째로 사라진다.
+                     ⑵ ✅✅ **[2026-08-19 고쳤다] 잠긴 일기는 이제 «잠긴 채로» 옮겨간다**(창업자 확정 ⓑ).
+                        ⛔ 그 전엔 `store.diary` 를 평문으로 통째 담아 **백업 파일을 메모장으로 열면 본문이 보였다.**
+                           (앱 «화면»으로는 못 열었다 — `checkPin` 이 막는다. 새던 건 «파일»이다)
+                        ⭐ 이제 본문만 비번 자국으로 잠가 담고, 불러올 때 비번을 물어 푼다.
+                           ⛔ 비번 «자국»을 백업에 넣지 않는다 — 넣으면 파일만으로 풀려서 잠근 의미가 없다. */}
+              <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 12, fontSize: 15.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
+                <b style={{ color: 'var(--brown)' }}>새 폰·패드로 옮기기</b>{'\n'}
+                <b>1.</b> 쓰던 기기에서 위 <b>「폰에 파일로 저장」</b>을 눌러요{'\n'}
+                <b>2.</b> 그 파일을 새 기기로 보내요 — 카톡 「나에게」·드라이브·메일 어느 쪽이든 돼요{'\n'}
+                <b>3.</b> 새 기기에서 <b>「이미 다른 기기에서 쓰고 있었어요」</b>(소개 마지막 줄) 또는 <b>홈 오른쪽 위 설정 → 백업</b>에서 그 파일을 열면 끝이에요{'\n'}
+                {'\n'}
+                <span className="t-sub" style={{ fontSize: 15 }}>불러오면 <b>그 기기에 있던 내용은 백업 내용으로 바뀌어요.</b>{'\n'}잠가둔 일기는 <b>잠긴 채로</b> 옮겨가요 — 불러올 때 비번을 물어볼게요.</span>
+              </div>
+              <button className="btn-ghost press" style={{ width: '100%' }} onClick={() => fileRef.current?.click()}>백업 파일 불러오기</button>
+              <button className="btn-ghost press" style={{ width: '100%', marginTop: 10 }} onClick={() => setPasteOpen(true)}>코드 붙여넣기로 불러오기</button>
+            </div>
+          </div>
+        </div>
+       </Portal>
+      )}
+
+      {pasteOpen && (
+        <PromptSheet
+          title="코드로 불러오기"
+          fields={[
+            { key: 'code', label: '백업 코드 붙여넣기', value: '', placeholder: '복사해 둔 백업 코드를 여기에 붙여넣어 주세요', multiline: true },
+          ]}
+          submitLabel="불러오기"
+          onSubmit={(v) => { setPasteOpen(false); importFromText(v) }}
+          onClose={() => setPasteOpen(false)}
+        />
+      )}
+
+      {/* ☁️ 클라우드 — ⭐ 내려받기는 백업 불러오기와 «같은 흐름»으로 넘긴다(`불러오기끝`).
+          📌 그래야 잠긴 일기 비번 묻기가 한 자리에만 있다. 두 벌로 나뉘면 한쪽만 고쳐진다. */}
+      {cloud && (
+        <CloudSheet
+          onClose={() => setCloud(false)}
+          백업만들기={buildBackup}
+          불러오기끝={불러오기끝}
+          showToast={nav.showToast}
+          폰레시피={store.recipes.length}
+          폰일기={(store.diary || []).length}
+          // 📷 사진은 클라우드에 안 올라간다 → 백업으로 가는 입구를 시트 안에 낸다 (창업자 확정 2026-08-27)
+          //   ⛔ 시트를 «닫고» 연다 — 시트 위에 시트를 겹치면 뒤로가기 층이 꼬인다
+          백업열기={() => { setCloud(false); setBackup(true) }}
+        />
+      )}
+
+      {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
+      {lab && <LabSheet onClose={() => setLab(false)} />}
+      {/* 🗑 계정 · 데이터 삭제 — 앱 안 시트(큰 틀 6-① ⓑ · 2026-09-08) */}
+      {delAccount && <DeleteAccountSheet onClose={() => setDelAccount(false)} showToast={nav.showToast} />}
+      {소식 && <PreviewSheet onClose={() => set소식(false)} />}
+
+      {/* 첫 방문 코치마크 — 백업·의견 보내기 안내 */}
+      {coach && <CoachMarks storageKey={PROFILE_COACH_KEY} steps={PROFILE_COACH_STEPS} onDone={() => setCoach(false)} />}
+    </>
+  )
+}
+
+// 📊📊 **저장 공간 — 계기판이 «둘»이다** (2026-09-02)
+//
+//   ⛔⛔ 하나로 재면 «초록불인 채로 잃는다». 실측(`scripts/_probe-계기판-0902.mjs`) =
+//      `navigator.storage.estimate()` 에 1MB 를 localStorage 로 넣어도 **0KB** 로 나온다.
+//      즉 그 값만 그리면 **터지는 순간에도 「3%」**라고 말한다. 창업자가 2026-09-02 아침에
+//      레시피를 잃은 그 벽(서랍 4.56MB/5MB = 91%)이 정확히 estimate() 가 «안 보는» 자리다.
+//
+//   ⭐ 그래서 갈라 그린다 —
+//      ① **서랍**(글자) = 우리가 쓰기 직전에 «직접 센» 글자 수(`store.jsx` 쓰기())
+//      ② **사진 창고**(IndexedDB) = `estimate()` — 여긴 estimate 가 «진짜로» 센다
+//
+//   ⛔ 창고 값은 **없을 수 있다**(브라우저가 estimate 를 안 주거나 0). 그러면 **그 줄을 아예 안 그린다** —
+//      「0MB」라고 적으면 사진이 없어진 줄 안다.
+function 자릿수(n) { return n >= 100 ? Math.round(n) : Math.round(n * 10) / 10 }
+function StorageRow() {
+  // ⭐ 화면에 «들어올 때» 다시 잰다 — 앱을 켜고 아직 한 번도 안 썼으면 0 이라 「0%」로 거짓말한다
+  const [찬비율, set찬비율] = useState(() => Math.min(1, 서랍다시재기() / 서랍한도))
+  const [창고, set창고] = useState(null)
+  useEffect(() => {
+    set찬비율(Math.min(1, 서랍다시재기() / 서랍한도))
+    let 살아있나 = true
+    ;(async () => {
+      try {
+        const e = await navigator.storage?.estimate?.()
+        if (!살아있나 || !e) return
+        // ⭐ 크롬은 «어디에» 얼마를 썼는지까지 알려준다 → 사진 창고(IndexedDB)만 콕 집는다.
+        //    ⛔ 통째로 그리면 **앱 파일 캐시(4.7MB)까지 「사진」이라고 말하게 된다**(실측 23.6MB).
+        //    ⚠️ 없는 브라우저면 통째로 보여주되 **이름을 정직하게** 「앱·사진」이라고 쓴다.
+        const 사진만 = e.usageDetails?.indexedDB
+        const 쓴것 = 사진만 != null ? 사진만 : e.usage
+        if (쓴것 > 0) set창고({ 쓴것, 한도: e.quota || 0, 사진만: 사진만 != null })
+      } catch { /* 못 재는 브라우저면 그 줄을 안 그린다 */ }
+    })()
+    return () => { 살아있나 = false }
+  }, [])
+  const 퍼센트 = Math.round(찬비율 * 100)
+  // ⛔ 색은 «세 단」 — 다 찬 뒤에 빨개지면 늦다. 80% 에서 경보가 뜨니 색도 거기서 갈린다.
+  const 색 = 퍼센트 >= 90 ? '#c0392b' : 퍼센트 >= 80 ? '#c77b30' : 'var(--brown)'
+  return (
+    <div className="card" data-probe="storage" style={{ marginTop: 10, padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <div style={{ fontSize: 15.5, fontWeight: 800, flex: 1 }}>저장 공간</div>
+        <div style={{ fontSize: 15.5, fontWeight: 800, color: 색 }}>{퍼센트}%</div>
+      </div>
+      <div style={{ height: 8, borderRadius: 99, background: 'var(--line)', marginTop: 8, overflow: 'hidden' }}>
+        <div style={{ width: `${Math.max(2, 퍼센트)}%`, height: '100%', background: 색, borderRadius: 99 }} />
+      </div>
+      <div className="t-sub" style={{ fontSize: 13.5, marginTop: 6 }}>
+        레시피·일기 글자 {자릿수(서랍한도 * 찬비율 / 1024 / 1024)}MB / 약 {Math.round(서랍한도 / 1024 / 1024)}MB
+      </div>
+      {창고 && (
+        <div className="t-sub" style={{ fontSize: 13.5, marginTop: 2 }}>
+          {창고.사진만 ? '사진' : '앱 · 사진'} {자릿수(창고.쓴것 / 1024 / 1024)}MB{창고.한도 ? ` / 약 ${자릿수(창고.한도 / 1024 / 1024 / 1024)}GB` : ''}
+        </div>
+      )}
+      {퍼센트 >= 80 && (
+        <div className="t-sub" style={{ fontSize: 13.5, marginTop: 6, color: 색, fontWeight: 700 }}>
+          거의 다 찼어요 · 위에서 백업해 두는 게 좋아요
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Stat({ n, label, onClick }) {
+  const inner = (
+    <>
+      <div style={{ fontSize: 21, fontWeight: 700 }}>{n}</div>
+      <div className="t-sub" style={{ marginTop: 2 }}>{label}</div>
+    </>
+  )
+  if (!onClick) return <div style={{ flex: 1, textAlign: 'center' }}>{inner}</div>
+  return (
+    <button className="press" onClick={onClick} style={{ flex: 1, textAlign: 'center', background: 'none', border: 'none', padding: 0 }}>
+      {inner}
+    </button>
+  )
+}

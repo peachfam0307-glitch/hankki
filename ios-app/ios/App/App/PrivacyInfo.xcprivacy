@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 🍎 애플 개인정보 매니페스트 (2024-05-01 부터 제출 조건) — 2026-09-08 큰 틀 5
+	     · 추적(트래킹) 안 함 · 추적 도메인 없음
+	     · «필요한 사유가 있는 API» = 파일 시간(FileTimestamp) — @capacitor/filesystem 이 문서 폴더에 거울을 쓰며 쓴다
+	       사유 C617.1 = 앱 «안» 파일의 시간 정보(앱 컨테이너·그룹 컨테이너·CloudKit)에 한함
+	     · UserDefaults(CA92.1) 는 Capacitor 코어가 쓴다 — 같이 적어 둔다
+	     · 수집하는 데이터 유형 = 없음(레시피·일기는 폰 안 ＋ 유저가 켠 경우에만 유저 자신의 클라우드) -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

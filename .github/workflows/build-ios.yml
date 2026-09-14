@@ -1,0 +1,86 @@
+name: 🍎 iOS 파일럿 (맥 없이 아이폰 앱이 «만들어지나»)
+
+# 🍎 2026-09-07 — 창업자 「앱개발부터 시작」 · 이 세션 = 아이폰 갈래 (session_01BuM5tZiYweRPkjKJ6mPtVk)
+#
+# 무엇을 재나 = «맥 없이» 깃허브가 빌려주는 맥(macos-26 · 공개 저장소 무료)에서
+#   우리 웹(hankki/dist) 을 Capacitor 8 껍데기(ios-app/ios)에 넣어 xcodebuild 가 «앱을 만들어 내나».
+#   ⛔ 서명(애플 열쇠)은 «안» 한다 — 개발자 계정은 9/13 에 가입한다. 여기선 「빌드가 되나」만.
+#   ✅ 되면 → 9/13 뒤 서명·TestFlight 단계로 (build-aab.yml 처럼 Secrets 로 열쇠를 넣는다)
+#   ⛔ 안 되면 → 그 로그가 곧 답이다. 잃는 것 = 0 (앱·배포와 무관한 별도 파일)
+#
+# ⚠️ 배포 워크플로(deploy-hankki.yml)와는 «완전히 별개»다 — hankki/** 를 안 고친다.
+#    Node 는 22 (Capacitor 8 요구 · 배포 워크플로는 20 그대로 둔다).
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/annyeong-yoi12y
+    paths:
+      - 'ios-app/**'
+      - '.github/workflows/build-ios.yml'
+
+jobs:
+  build-ios:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 🧰 러너 확인 (Xcode 판 · 맥 종류)
+        run: |
+          sw_vers
+          xcodebuild -version
+          uname -m
+
+      - name: 🌐 웹 빌드 (hankki/dist)
+        working-directory: hankki
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          du -sh dist
+
+      - name: 📦 껍데기에 웹 넣기 (cap sync)
+        working-directory: ios-app
+        run: |
+          npm ci --no-audit --no-fund
+          npx cap sync ios
+          du -sh ios/App/App/public
+
+      # ⛔ 서명 없이 — CODE_SIGNING_ALLOWED=NO. 「앱이 만들어지나」만 본다.
+      - name: 🍎 xcodebuild (서명 없이)
+        working-directory: ios-app/ios/App
+        run: |
+          set -o pipefail
+          xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build | tail -60
+
+      - name: 📏 결과물 크기
+        working-directory: ios-app/ios/App
+        run: |
+          APP=$(find build -name "*.app" -type d | head -1)
+          echo "앱 = $APP"
+          du -sh "$APP"
+          du -sh "$APP/public" || true
+          ls "$APP" | head -30
+          # 🪞 2026-09-08 큰 틀 5 — 개인정보 매니페스트가 «앱 안에» 실렸나 (없으면 제출 반려 · 여기서 죽는다)
+          test -f "$APP/PrivacyInfo.xcprivacy" && echo "✅ PrivacyInfo.xcprivacy 실림" || { echo "⛔ PrivacyInfo.xcprivacy 가 앱에 없다"; exit 1; }
+          # 🔌 Filesystem 부품이 링크됐나 (거울이 부를 부품)
+          grep -rq "CapacitorFilesystem" "$APP/Frameworks/" 2>/dev/null && echo "✅ CapacitorFilesystem 링크됨" || ls "$APP/Frameworks" || true
+
+      - name: ⬆️ 결과물 올리기 (Info.plist · 크기 표 · 로그용)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-pilot-info
+          path: |
+            ios-app/ios/App/build/Build/Products/Release-iphoneos/App.app/Info.plist
+          if-no-files-found: ignore

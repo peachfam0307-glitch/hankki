@@ -1,0 +1,22 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>쿠팡 문 검사</title>
+<style>body{font-family:sans-serif;padding:20px;background:#fbf5e8;color:#5d3410;line-height:1.5}a,button{display:block;margin:14px 0;padding:18px;border-radius:14px;background:#5d3410;color:#fff;text-decoration:none;font-size:18px;border:0;width:100%;text-align:left}small{display:block;opacity:.7;font-size:13px;color:#fff}p{font-size:14px}</style>
+<h2>🛒 쿠팡 문 검사 — 2026-09-05</h2>
+<p>앱 안(한끼)에서 이 페이지를 열고, 아래를 <b>위에서부터 하나씩</b> 눌러 어떤 번호가 쿠팡 상품 목록을 보여주는지 알려줘. 실패 = 「사용권한이 없습니다」.</p>
+<a id="d1" target="_blank" rel="noopener noreferrer">① 지금 방식<small>https · 새 창 · noreferrer (지금 앱과 같음)</small></a>
+<a id="d2" target="_blank">② 리퍼러 있는 새 창<small>https · 새 창 · noreferrer 없음</small></a>
+<a id="d3">③ 같은 창에서 바로 이동<small>https · target 없음</small></a>
+<a id="d4">④ 크롬으로 강제<small>intent:// · package=com.android.chrome</small></a>
+<a id="d5">⑤ 쿠팡 앱으로<small>intent:// · package=com.coupang.mobile · 없으면 웹으로 폴백</small></a>
+<a id="d6" target="_blank" rel="noopener noreferrer">⑥ 모바일 주소<small>m.coupang.com</small></a>
+<a id="d7" target="_blank" rel="noopener noreferrer">⑦ 직접 상품(하바티)<small>/vp/products/184626081</small></a>
+<script>
+const q = encodeURIComponent('알라 하바티치즈')
+const web = 'https://www.coupang.com/np/search?q=' + q
+const path = 'www.coupang.com/np/search?q=' + q
+d1.href = web; d2.href = web; d3.href = web
+d4.href = 'intent://' + path + '#Intent;scheme=https;package=com.android.chrome;end'
+d5.href = 'intent://' + path + '#Intent;scheme=https;package=com.coupang.mobile;S.browser_fallback_url=' + encodeURIComponent(web) + ';end'
+d6.href = 'https://m.coupang.com/nm/search?q=' + q
+d7.href = 'https://www.coupang.com/vp/products/184626081?itemId=528358851&vendorItemId=95181086574'
+</script>

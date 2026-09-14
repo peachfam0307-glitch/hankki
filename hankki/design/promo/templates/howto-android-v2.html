@@ -1,0 +1,84 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../fonts-embed.css">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+  :root{--ink:#4a4136;--ink2:#8f8474;--clay:#c47a58;--card:#fffdf8;--line:#e6ded0;--green:#4a9b6e}
+  body{background:#777}
+  .card{position:relative;overflow:hidden;width:1080px;height:1350px;
+    background:radial-gradient(130% 90% at 50% -5%,#fdfcf9,#f1ece2);padding:64px 68px 56px;display:flex;flex-direction:column;align-items:center}
+
+  /* 플랫폼 대표 배지 — 눈에 확 */
+  .plat{display:flex;align-items:center;gap:20px;background:#eaf5ef;border:2.5px solid #cfe8db;border-radius:999px;padding:16px 40px 16px 30px}
+  .plat .robo{width:60px;height:60px}
+  .plat .pt{font-family:'Jua';font-size:46px;color:#3f8b62;letter-spacing:-.5px}
+  .plat .pt small{font-family:'GowunDodum';font-size:26px;color:#5aa77e;letter-spacing:0}
+
+  .title{font-family:'Jua';font-size:60px;color:var(--ink);letter-spacing:-1px;margin-top:22px;text-align:center;line-height:1.12}
+  .title .c{color:var(--clay)}
+
+  /* 왕 큰 핵심 배너 */
+  .alert{margin-top:26px;width:100%;background:linear-gradient(180deg,#c8825f,#bd6f4c);border-radius:30px;padding:34px 40px;box-shadow:0 16px 34px rgba(170,95,55,.28);display:flex;flex-direction:column;gap:14px}
+  .al{display:flex;align-items:center;gap:22px;justify-content:center}
+  .al .em{font-size:52px;line-height:1}
+  .al .tx{font-family:'Jua';font-size:52px;color:#fff;letter-spacing:-.5px}
+  .al .tx u{text-decoration:none;color:#ffe7b0}
+  .al .tx .big{font-size:62px}
+  .aldiv{height:2px;background:rgba(255,255,255,.28);margin:2px 30px}
+
+  /* 로그인 경고 스트립 */
+  .warn{margin-top:20px;width:100%;display:flex;align-items:center;gap:20px;background:#fff7ec;border:2.5px solid #f0d9b4;border-radius:22px;padding:24px 30px}
+  .warn .wic{font-size:46px;line-height:1;flex:0 0 auto}
+  .warn .wt{font-family:'GowunDodum';font-size:29px;color:#9a6b33;line-height:1.4}
+  .warn .wt b{color:var(--clay);font-weight:400}
+
+  .steps{margin-top:24px;width:100%;display:flex;flex-direction:column;gap:16px}
+  .st{display:flex;align-items:center;gap:24px;background:var(--card);border:1.5px solid var(--line);border-radius:22px;padding:22px 30px;box-shadow:0 8px 22px rgba(120,95,65,.05)}
+  .num{flex:0 0 auto;width:58px;height:58px;border-radius:50%;background:var(--clay);color:#fff;font-family:'Jua';font-size:32px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(150,95,60,.24)}
+  .st .tx{font-family:'GowunDodum';font-size:31px;color:var(--ink);line-height:1.3}
+  .st .tx b{color:var(--clay);font-weight:400}
+  .st .tx small{display:block;font-size:23px;color:var(--ink2);margin-top:3px}
+
+  .foot{margin-top:auto;padding-top:22px;display:flex;align-items:center;gap:18px;justify-content:center}
+  .foot svg{width:60px;height:60px}
+  .foot .t{font-family:'Gaegu';font-weight:700;font-size:33px;color:var(--clay);line-height:1.25;text-align:center}
+</style></head><body>
+<div class="card">
+  <div class="plat">
+    <svg class="robo" viewBox="0 0 48 48" fill="#3f8b62"><path d="M14 20a2 2 0 0 1 2 2v9a2 2 0 1 1-4 0v-9a2 2 0 0 1 2-2zm20 0a2 2 0 0 1 2 2v9a2 2 0 1 1-4 0v-9a2 2 0 0 1 2-2zM17 19h14v13a2 2 0 0 1-2 2h-1v4a2 2 0 1 1-4 0v-4h-0v4a2 2 0 1 1-4 0v-4h-1a2 2 0 0 1-2-2V19zm.5-2c.3-3 2.4-5.5 5.3-6.7l-1.3-2.4a.5.5 0 0 1 .9-.5l1.4 2.5a9 9 0 0 1 3.8 0l1.4-2.5a.5.5 0 0 1 .9.5l-1.3 2.4c2.9 1.2 5 3.7 5.3 6.7h-17zM21 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm6 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
+    <div class="pt">안드로이드<br><small>갤럭시 등 · 아이폰 ❌</small></div>
+  </div>
+
+  <div class="title">이렇게 <span class="c">참여</span>해요</div>
+
+  <div class="alert">
+    <div class="al"><span class="em">📲</span><span class="tx"><u class="big">오늘</u> 꼭 설치!</span></div>
+    <div class="aldiv"></div>
+    <div class="al"><span class="em">🗓️</span><span class="tx"><u>8월 10일</u>까지 유지</span></div>
+  </div>
+
+  <div class="warn">
+    <span class="wic">⚠️</span>
+    <div class="wt"><b>제가 보내드린 구글(gmail) 이메일</b>로 로그인된 폰에서 열어주세요. 다른 계정이면 설치가 안 돼요!</div>
+  </div>
+
+  <div class="steps">
+    <div class="st"><div class="num">1</div><div class="tx">받은 <b>초대 링크</b>를 폰에서 열기<small>카톡이면 → ‘다른 브라우저(크롬)로 열기’</small></div></div>
+    <div class="st"><div class="num">2</div><div class="tx">‘<b>테스터가 되겠습니다</b>’ 누르기<small>Become a tester</small></div></div>
+    <div class="st"><div class="num">3</div><div class="tx">잠시 뒤 <b>Play 스토어 → ‘설치’</b><small>안 뜨면 몇 분 후 링크 다시 열기</small></div></div>
+  </div>
+
+  <div class="foot">
+    <svg viewBox="0 0 48 48">
+      <circle cx="14.5" cy="18" r="4.6" fill="#b98a63"/><circle cx="33.5" cy="18" r="4.6" fill="#b98a63"/>
+      <circle cx="24" cy="28" r="13" fill="#b98a63"/><ellipse cx="24" cy="32.5" rx="6.4" ry="4.6" fill="#ecd9bd"/>
+      <rect x="22.6" y="30" width="2.8" height="2.2" rx="1.1" fill="#5f4632"/>
+      <path d="M24 32.4v1.6M24 34c-.9.9-2 .9-2.8.2M24 34c.9.9 2 .9 2.8.2" stroke="#5f4632" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <circle cx="18.6" cy="27.5" r="1.35" fill="#3d3830"/><circle cx="29.4" cy="27.5" r="1.35" fill="#3d3830"/>
+      <circle cx="15.6" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/><circle cx="32.4" cy="31" r="2.1" fill="#f0b9a6" opacity="0.75"/>
+      <rect x="15.5" y="14.6" width="17" height="3.6" rx="1.8" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+      <circle cx="16.8" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/><circle cx="24" cy="10.6" r="3.9" fill="#fff" stroke="#e2ded2" stroke-width="1"/><circle cx="31.2" cy="12.6" r="3.4" fill="#fff" stroke="#e2ded2" stroke-width="1"/>
+    </svg>
+    <div class="t">도와주셔서 감사해요!<br>흩어진 레시피를, 한곳에 💛</div>
+  </div>
+</div>
+</body></html>

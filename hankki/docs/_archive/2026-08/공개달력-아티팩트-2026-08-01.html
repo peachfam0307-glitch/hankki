@@ -1,0 +1,270 @@
+<title>한끼 공개 달력</title>
+
+<style>
+  :root{
+    --ground:#F2EFE7; --raised:#FBF9F4; --ink:#332C25; --muted:#7A6E62; --line:#DFD8CB;
+    --accent:#4E6F96;      /* 앱 포인트 더스티 블루 */
+    --auto:#4E6F96;        /* 저절로 열림 */
+    --manual:#B4713C;      /* 우리가 올려야 열림 */
+    --alert:#A8462F;       /* 임박·주의 */
+    --shadow:0 1px 2px rgba(60,48,36,.06), 0 6px 20px rgba(60,48,36,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ground:#191714; --raised:#221F1B; --ink:#EDE6DB; --muted:#9C9084; --line:#3A342C;
+      --accent:#8AAAD0; --auto:#8AAAD0; --manual:#D9975E; --alert:#E08268;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#191714; --raised:#221F1B; --ink:#EDE6DB; --muted:#9C9084; --line:#3A342C;
+    --accent:#8AAAD0; --auto:#8AAAD0; --manual:#D9975E; --alert:#E08268;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
+  }
+  :root[data-theme="light"]{
+    --ground:#F2EFE7; --raised:#FBF9F4; --ink:#332C25; --muted:#7A6E62; --line:#DFD8CB;
+    --accent:#4E6F96; --auto:#4E6F96; --manual:#B4713C; --alert:#A8462F;
+    --shadow:0 1px 2px rgba(60,48,36,.06), 0 6px 20px rgba(60,48,36,.05);
+  }
+
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:'Apple SD Gothic Neo','Pretendard','Noto Sans KR','Malgun Gothic',system-ui,sans-serif;
+    line-height:1.65; -webkit-text-size-adjust:100%;
+  }
+  .wrap{ max-width:44rem; margin:0 auto; padding:2.4rem 1.15rem 5rem; }
+  h1,h2,h3{ margin:0; text-wrap:balance; letter-spacing:-.02em; }
+
+  .eyebrow{ font-size:.72rem; letter-spacing:.16em; color:var(--muted); font-weight:700; }
+  h1{ font-size:1.85rem; font-weight:800; margin:.5rem 0 .35rem; }
+  .today{ color:var(--muted); font-size:.9rem; font-variant-numeric:tabular-nums; }
+
+  /* ── 지금 제일 가까운 문 ── */
+  .now{
+    margin:1.6rem 0 2.2rem; background:var(--raised); border:1px solid var(--line);
+    border-radius:14px; padding:1.15rem 1.2rem 1.25rem; box-shadow:var(--shadow);
+    border-left:5px solid var(--auto);
+  }
+  .now .d{ display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap; }
+  .now .date{ font-size:1.45rem; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.03em; }
+  .dday{
+    font-size:.78rem; font-weight:800; letter-spacing:.02em; padding:.16rem .5rem;
+    border-radius:999px; background:color-mix(in srgb, var(--auto) 14%, transparent); color:var(--auto);
+    font-variant-numeric:tabular-nums; white-space:nowrap;
+  }
+  .now p{ margin:.55rem 0 0; font-size:.94rem; color:var(--muted); }
+  .now strong{ color:var(--ink); }
+
+  /* ── 타임라인 ── */
+  h2{ font-size:1.05rem; font-weight:800; margin:2.4rem 0 .3rem; }
+  .sub{ font-size:.85rem; color:var(--muted); margin:0 0 1.1rem; }
+
+  .line{ position:relative; padding-left:1.5rem; }
+  .line::before{ content:''; position:absolute; left:.32rem; top:.5rem; bottom:.5rem; width:2px; background:var(--line); }
+  .ev{ position:relative; margin:0 0 1.35rem; }
+  .ev::before{
+    content:''; position:absolute; left:-1.32rem; top:.52rem; width:.66rem; height:.66rem;
+    border-radius:50%; background:var(--ground); border:2.5px solid var(--dot,var(--muted));
+  }
+  .ev.auto{ --dot:var(--auto); } .ev.manual{ --dot:var(--manual); }
+  .ev .hd{ display:flex; align-items:baseline; gap:.5rem; flex-wrap:wrap; }
+  .ev .date{ font-weight:800; font-size:1.02rem; font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
+  .tag{
+    font-size:.66rem; font-weight:800; letter-spacing:.06em; padding:.1rem .42rem; border-radius:4px;
+    background:color-mix(in srgb, var(--dot) 15%, transparent); color:var(--dot); white-space:nowrap;
+  }
+  .ev .note{ font-size:.85rem; color:var(--muted); margin:.1rem 0 .45rem; }
+  .rows{ display:flex; flex-direction:column; gap:.28rem; }
+  .row{
+    display:flex; justify-content:space-between; gap:.8rem; align-items:baseline;
+    background:var(--raised); border:1px solid var(--line); border-radius:9px; padding:.42rem .65rem;
+    font-size:.86rem;
+  }
+  .row .n{ color:var(--muted); font-variant-numeric:tabular-nums; font-weight:700; white-space:nowrap; }
+  .row .w{ color:var(--muted); font-size:.75rem; }
+
+  /* ── 주기 카드 ── */
+  .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(15rem,1fr)); gap:.75rem; }
+  .card{
+    background:var(--raised); border:1px solid var(--line); border-radius:12px;
+    padding:.85rem .95rem 1rem; box-shadow:var(--shadow);
+  }
+  .card h3{ font-size:.9rem; font-weight:800; margin-bottom:.3rem; }
+  .card p{ margin:.2rem 0 0; font-size:.83rem; color:var(--muted); }
+  .card .big{ font-size:1.5rem; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums; letter-spacing:-.03em; }
+
+  /* ── 원칙 배너 ── */
+  .rule{
+    margin:2.6rem 0 0; border:1.5px solid color-mix(in srgb, var(--alert) 40%, var(--line));
+    background:color-mix(in srgb, var(--alert) 7%, var(--raised));
+    border-radius:14px; padding:1.05rem 1.15rem 1.15rem;
+  }
+  .rule h2{ margin:0 0 .35rem; font-size:1rem; color:var(--alert); }
+  .rule p{ margin:.3rem 0 0; font-size:.87rem; }
+  .rule ol{ margin:.6rem 0 0; padding-left:1.15rem; font-size:.86rem; }
+  .rule li{ margin:.22rem 0; }
+
+  .warn{
+    margin-top:1rem; font-size:.82rem; color:var(--muted);
+    border-left:3px solid var(--manual); padding:.15rem 0 .15rem .7rem;
+  }
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.82em;
+    background:color-mix(in srgb, var(--ink) 7%, transparent); padding:.1rem .3rem; border-radius:4px;
+  }
+  footer{ margin-top:2.6rem; padding-top:1rem; border-top:1px solid var(--line); font-size:.78rem; color:var(--muted); }
+</style>
+
+<div class="wrap">
+
+  <div class="eyebrow">한끼 · 공개 달력</div>
+  <h1>언제 뭐가 올라가나</h1>
+  <p class="today">오늘 <strong>2026-08-01</strong> (한국시간) · 코드에 박힌 날짜를 직접 읽어서 만든 표</p>
+
+  <div class="now">
+    <div class="d">
+      <span class="date">2026-09-01</span>
+      <span class="dday">D-31</span>
+    </div>
+    <p><strong>가을 56컷이 저절로 열린다.</strong> 내가 아무것도 안 올려도 그날이 되면 유저 화면에 나타나.
+       그래서 <strong>8월 31일에 고화질 전수 검수</strong>를 해야 해.</p>
+  </div>
+
+  <h2>날짜별</h2>
+  <p class="sub">
+    <span style="color:var(--auto);font-weight:800">● 저절로</span> = 날짜만 되면 열림 ·
+    <span style="color:var(--manual);font-weight:800">● 손으로</span> = 우리가 해야 열림
+  </p>
+
+  <div class="line">
+
+    <div class="ev manual">
+      <div class="hd"><span class="date">2026-08-03</span><span class="tag">손으로</span></div>
+      <p class="note">사업자등록 처리기한 — 나오면 통신판매업 신고 → PG 심사(3~10일)</p>
+    </div>
+
+    <div class="ev manual">
+      <div class="hd"><span class="date">8월 중순</span><span class="tag">손으로</span></div>
+      <p class="note">프로덕션(정식) 공개 예정 — 7/31에 신청 완료, 구글 심사 대기 중.
+         <strong>정확한 날짜는 구글이 정한다</strong></p>
+    </div>
+
+    <div class="ev manual">
+      <div class="hd"><span class="date">2026-08-31</span><span class="tag">기한</span></div>
+      <p class="note">targetSdk 36 기한 — 이때까지 AAB 재빌드 안 하면 <strong>앱 업데이트가 거부</strong>돼
+         (설치된 앱은 그대로)</p>
+    </div>
+
+    <div class="ev auto">
+      <div class="hd"><span class="date">2026-09-01</span><span class="tag">저절로</span><span class="dday">D-31</span></div>
+      <p class="note">가을 1파 + 추석 카드 — <strong>56컷</strong></p>
+      <div class="rows">
+        <div class="row"><span>꾸미기 서랍 <span class="w">데코 탭</span> · 가을 단풍·낙엽</span><span class="n">11컷</span></div>
+        <div class="row"><span>꾸미기 서랍 <span class="w">친구들 탭</span> · 꼬르곰·펭펭의 가을</span><span class="n">7컷</span></div>
+        <div class="row"><span>레꾸자랑 카드 <span class="w">9/1~11/30</span> · 가을 세트</span><span class="n">16컷</span></div>
+        <div class="row"><span>레꾸자랑 카드 <span class="w">9/1~10/15</span> · 추석 한복 세트</span><span class="n">22컷</span></div>
+      </div>
+    </div>
+
+    <div class="ev auto">
+      <div class="hd"><span class="date">2026-10-01</span><span class="tag">저절로</span><span class="dday">D-61</span></div>
+      <p class="note">가을 2파 + 핼러윈 카드 — <strong>32컷</strong></p>
+      <div class="rows">
+        <div class="row"><span>꾸미기 서랍 <span class="w">데코 탭</span> · 가을 열매·수확</span><span class="n">10컷</span></div>
+        <div class="row"><span>꾸미기 서랍 <span class="w">친구들 탭</span> · 가을 나들이</span><span class="n">8컷</span></div>
+        <div class="row"><span>레꾸자랑 카드 <span class="w">10/1~11/2</span> · 핼러윈 세트</span><span class="n">14컷</span></div>
+      </div>
+    </div>
+
+    <div class="ev auto">
+      <div class="hd"><span class="date">2026-11-01</span><span class="tag">저절로</span><span class="dday">D-92</span></div>
+      <p class="note">가을 3파 — <strong>17컷</strong></p>
+      <div class="rows">
+        <div class="row"><span>꾸미기 서랍 <span class="w">데코 탭</span> · 늦가을 소품</span><span class="n">10컷</span></div>
+        <div class="row"><span>꾸미기 서랍 <span class="w">친구들 탭</span> · 늦가을</span><span class="n">7컷</span></div>
+      </div>
+    </div>
+
+    <div class="ev auto">
+      <div class="hd"><span class="date">2026-12-01</span><span class="tag">저절로</span><span class="dday">D-122</span></div>
+      <p class="note">크리스마스 카드 — <strong>2컷</strong> (아직 얇다, 겨울 준비 필요)</p>
+    </div>
+
+    <div class="ev auto">
+      <div class="hd"><span class="date">2027-03-01</span><span class="tag">저절로</span><span class="dday">D-212</span></div>
+      <p class="note">봄 프레임 <strong>23컷</strong> (소품·꽃)</p>
+    </div>
+
+  </div>
+
+  <h2>우리 업뎃 주기</h2>
+  <p class="sub">이미 정해둔 규칙 — 매번 다시 정하지 않으려고 박아둔 것</p>
+
+  <div class="cards">
+    <div class="card">
+      <h3>한 계절 세트</h3>
+      <div class="big">62컷</div>
+      <p>프레임 12 · 소품 24 · 메모·씰·라벨 8 · 마테 6 · 캐릭터 12</p>
+      <p><strong>3파로 나눠</strong> 한 번에 ~21컷 (9/1 · 10/1 · 11/1 식)</p>
+    </div>
+
+    <div class="card">
+      <h3>매달 드립</h3>
+      <div class="big">30~40컷</div>
+      <p>재고 300컷+ 로 <strong>8~10개월</strong>치. 매달분은 클로드 혼자 처리</p>
+    </div>
+
+    <div class="card">
+      <h3>카드 스킨</h3>
+      <div class="big">3개월</div>
+      <p>계절 스킨 3개월 주기 + <strong>그 중간에 이벤트 1.5개월 간격</strong>(추석·핼러윈·크리스마스·설날). 기본 4개는 사철</p>
+      <p>⚠️ 카드는 <strong>뽑기</strong>라 많아지면 각 카드가 안 나온다 → 적게 두고 갈아끼움</p>
+    </div>
+
+    <div class="card">
+      <h3>계절 전환기</h3>
+      <div class="big">14일</div>
+      <p>새 계절 첫 2주는 <strong>지난 계절도 함께 제철</strong> — 8/31 자정에 여름이 뚝 끊기지 않는다</p>
+      <p>스티커는 철이 지나도 <strong>안 숨긴다</strong>(순서만 밀림). 사라지는 건 <strong>카드 스킨</strong>뿐</p>
+    </div>
+
+    <div class="card">
+      <h3>유료팩 990원</h3>
+      <div class="big">4팩</div>
+      <p>추석(9월) · 가을 다꾸(10월) · 가을 수채화 · 핼러윈</p>
+      <p>⛓ <strong>결제가 붙기 전엔 하나도 안 올린다</strong></p>
+    </div>
+
+    <div class="card">
+      <h3>팩마다</h3>
+      <div class="big">1 + 1</div>
+      <p>모션 1개 · 효과 1개씩. 몰아 넣으면 그 팩만 팔린다</p>
+      <p>⛔ 무료로 준 걸 팩에 다시 넣지 않는다</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <h2>⛔ 절대원칙 — 자동 공개 전날엔 반드시 검수</h2>
+    <p>배포에는 통로가 <strong>두 개</strong>야. 하나는 내가 올리는 것, 하나는 <strong>날짜가 저절로 여는 것.</strong>
+       두 번째는 아무도 안 막고 있었어.</p>
+    <ol>
+      <li><strong>D-1에 검수</strong> — 그날 열릴 컷을 고화질 전수로 (진한 판 · 밝은 판 · 빨간 판 · 실제 크기)</li>
+      <li>검수 통과한 것만 남기고, 아닌 건 <strong>날짜 게이트에서 뺀다</strong></li>
+      <li>승인 안 난 변경은 배포 브랜치에 <strong>커밋조차 안 한다</strong> (<code>hold/검수대기</code>)</li>
+    </ol>
+    <p style="margin-top:.7rem"><strong>다음 검수일 = 2026년 8월 31일</strong> (9/1 자동 공개 56컷)</p>
+  </div>
+
+  <div class="warn">
+    ⚠️ <strong>추석·설날은 음력이라 양력 날짜가 해마다 바뀐다.</strong>
+    지금 추석 카드 창은 <code>9/1 ~ 10/15</code> 로 넉넉하게 잡아둔 상태 —
+    <strong>그 해 달력을 확인해서 좁혀야 한다.</strong> 날짜를 추측해서 박지 않는다.
+  </div>
+
+  <footer>
+    이 표는 손으로 적은 게 아니라 <code>hankki/scripts/release-calendar.mjs</code> 가
+    <code>Stickers.jsx</code>·<code>ShareDrawCard.jsx</code> 에 박힌 날짜를 <strong>직접 읽어</strong> 뽑은 값이야.
+    코드가 바뀌면 표도 다시 뽑으면 돼 — 손으로 관리하는 목록은 반드시 낡으니까.
+  </footer>
+
+</div>

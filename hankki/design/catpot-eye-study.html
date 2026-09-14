@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+body{background:#f5f6f4;margin:0;padding:30px;font-family:sans-serif;display:flex;gap:30px}
+.cell{display:flex;flex-direction:column;align-items:center;gap:8px}
+.circ{width:200px;height:200px;border-radius:50%;background:linear-gradient(135deg,#eef0ec,#dfe2da);display:flex;align-items:center;justify-content:center}
+.name{font-size:14px;font-weight:700;color:#6b4f3a}
+</style></head><body>
+
+<div class="cell"><div class="circ" id="cur"></div><div class="name">토토(세트 동료) — 이 눈이랑 맞춤</div></div>
+<div class="cell"><div class="circ" id="fix"></div><div class="name">수정안</div></div>
+
+<script>
+const Happy = (x,y,w=3.6)=>`<path d="M${x-w/2} ${y}q${w/2} -${w*0.62} ${w} 0" stroke="#5f4632" stroke-width="1.7" fill="none" stroke-linecap="round"/>`;
+const Eye = (x,y,r=2)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#3a332b"/><circle cx="${x+r*0.38}" cy="${y-r*0.42}" r="${r*0.45}" fill="#fff"/><circle cx="${x-r*0.45}" cy="${y+r*0.35}" r="${r*0.2}" fill="#fff" opacity="0.9"/>`;
+
+// 냄비·생선·김 (공통, 얼굴만 바뀜)
+const potEtc = `
+  <path d="M13 31h22a1 1 0 0 1 1 1.1c-.4 5.8-4.6 9.2-12 9.2s-11.6-3.4-12-9.2a1 1 0 0 1 1-1.1z" fill="#ad713a"/>
+  <ellipse cx="24" cy="31.4" rx="12.1" ry="2.2" fill="#d19a48"/>
+  <rect x="8.8" y="31.4" width="4.6" height="2.8" rx="1.4" fill="#94602e"/>
+  <rect x="34.6" y="31.4" width="4.6" height="2.8" rx="1.4" fill="#94602e"/>
+  <ellipse cx="18.4" cy="32" rx="2.5" ry="1.4" fill="#f0dfbe"/>
+  <ellipse cx="29.6" cy="32" rx="2.5" ry="1.4" fill="#f0dfbe"/>
+  <ellipse cx="33.6" cy="29.8" rx="2.4" ry="1.4" fill="#93b7c9" transform="rotate(-18 33.6 29.8)"/>
+  <path d="M35.7 28.7l1.9-1.5-.3 2.2 1.7 1-2.3.5z" fill="#7fa3b6"/>
+  <circle cx="32.8" cy="29.4" r="0.45" fill="#3d3830"/>
+  <path d="M30.8 11.5c-1-1.7-1-3.1 0-4.6M34.9 13.4c-1-1.7-1-3.1 0-4.6" stroke="#cdd3ce" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+
+const ears = `
+  <path d="M14 14l5.6 4.8-7 2.7z" fill="#c4a87e"/><path d="M34 14l-5.6 4.8 7 2.7z" fill="#c4a87e"/>
+  <path d="M15.8 16.2l3.4 2.9-4.3 1.6z" fill="#f7c4ae"/><path d="M32.2 16.2l-3.4 2.9 4.3 1.6z" fill="#f7c4ae"/>`;
+
+// 현재
+const cur = `<svg viewBox="0 0 48 48" width="170" height="170">
+  ${ears}
+  <circle cx="24" cy="24.5" r="11.4" fill="#f0dfbe"/>
+  ${Happy(21,24.2)} ${Happy(27.4,24.2)}
+  <path d="M22.5 26.9q.75 1 1.5 0 q.75 1 1.5 0" stroke="#5f4632" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+  <path d="M24 25.7v1.2" stroke="#5f4632" stroke-width="1" stroke-linecap="round"/>
+  <path d="M11.4 24l4.4 1M11.8 26.8l4.2-.2M36.6 24l-4.4 1M36.2 26.8l-4.2-.2" stroke="#c4a87e" stroke-width="1" stroke-linecap="round"/>
+  <circle cx="16.8" cy="27.4" r="2.4" fill="#f5b19b" opacity="0.8"/><circle cx="31.2" cy="27.4" r="2.4" fill="#f5b19b" opacity="0.8"/>
+  ${potEtc}
+</svg>`;
+
+// 수정안: 눈 동글 왕눈+간격 살짝 좁혀 중앙 정렬, 코+입 바로 아래로 붙여 한 덩어리, 볼 눈 밑으로
+const fix = `<svg viewBox="0 0 48 48" width="170" height="170">
+  ${ears}
+  <circle cx="24" cy="24.5" r="11.4" fill="#f0dfbe"/>
+  ${Eye(20.8,24.8,2)} ${Eye(27.2,24.8,2)}
+  <path d="M22.9 27.4c.4-.5 2.2-.5 2.6 0 .25.35-.2.85-1.3.85s-1.55-.5-1.3-.85z" fill="#c98a6a"/>
+  <path d="M24 28.1v.7m0 0q-.7.7-1.4 0m1.4 0q.7.7 1.4 0" stroke="#5f4632" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M12.4 24.8l3.8.8M12.8 27.2l3.6-.2M35.6 24.8l-3.8.8M35.2 27.2l-3.6-.2" stroke="#c4a87e" stroke-width="1" stroke-linecap="round"/>
+  <circle cx="16.8" cy="27" r="2.4" fill="#f5b19b" opacity="0.8"/><circle cx="31.2" cy="27" r="2.4" fill="#f5b19b" opacity="0.8"/>
+  ${potEtc}
+</svg>`;
+
+
+const rabbit = `<svg viewBox="0 0 48 48" width="170" height="170">
+  <ellipse cx="17" cy="10.5" rx="3.5" ry="8.2" fill="#f5ecdc"/><ellipse cx="17" cy="11" rx="1.7" ry="5.8" fill="#f7c4ae"/>
+  <g transform="rotate(30 31.5 11)"><ellipse cx="31.5" cy="10.5" rx="3.4" ry="7.8" fill="#f5ecdc"/><ellipse cx="31.5" cy="11" rx="1.6" ry="5.4" fill="#f7c4ae"/></g>
+  <circle cx="24" cy="28" r="13.5" fill="#f5ecdc"/>
+  ${Eye(18.4,27)} ${Eye(29.6,27)}
+  <path d="M22.7 29.6h2.6l-1.3 1.4z" fill="#f4a992"/>
+  <path d="M24 30.9v1.1M24 32c-.9.9-2 .9-2.8.1M24 32c.9.9 2 .9 2.8.1" stroke="#5f4632" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <circle cx="15.2" cy="31" r="2.5" fill="#f5b19b" opacity="0.8"/><circle cx="32.8" cy="31" r="2.5" fill="#f5b19b" opacity="0.8"/>
+</svg>`;
+document.getElementById('cur').innerHTML = rabbit;
+document.getElementById('fix').innerHTML = fix;
+</script>
+</body></html>

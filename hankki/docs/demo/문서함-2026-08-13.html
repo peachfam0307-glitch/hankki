@@ -1,0 +1,232 @@
+<title>한끼 문서함</title>
+<style>
+  /* ── 색 ──────────────────────────────────────────────
+     앱이 실제로 쓰는 팔레트에서 가져왔다(그레이지 바탕 · 더스티블루 포인트).
+     ⛔ 폰트 CDN 은 아티팩트에서 막혀 있어 링크하면 «조용히» 시스템 글꼴로 떨어진다.
+        한글 웹폰트를 data URI 로 심으면 수 MB 라 폰에서 느려진다 → 시스템 한글 글꼴 ＋ 무게·자간으로 위계. */
+  :root{
+    --ground:#F5F2EC; --card:#FFFFFF; --ink:#33291F; --muted:#857767;
+    --accent:#5878a0; --accent-soft:#E7EDF4; --line:#E4DED3; --warn:#B4623C; --warn-soft:#F6E9E2;
+    --ok:#5C7A5C; --ok-soft:#E8EEE6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#17171b; --card:#212024; --ink:#E9E3DA; --muted:#9C9287;
+      --accent:#7093c0; --accent-soft:#232C38; --line:#32302C; --warn:#CF8B63; --warn-soft:#2E241E;
+      --ok:#8FAE8F; --ok-soft:#232A23;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#17171b; --card:#212024; --ink:#E9E3DA; --muted:#9C9287;
+    --accent:#7093c0; --accent-soft:#232C38; --line:#32302C; --warn:#CF8B63; --warn-soft:#2E241E;
+    --ok:#8FAE8F; --ok-soft:#232A23;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","맑은 고딕",sans-serif;
+    font-size:15px; line-height:1.6; -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:720px; margin:0 auto; padding:0 18px 64px}
+
+  /* ── 머리 ── */
+  header{padding:36px 0 22px}
+  .eyebrow{font-size:11.5px; letter-spacing:.14em; color:var(--muted); font-weight:700}
+  h1{margin:8px 0 0; font-size:31px; font-weight:800; letter-spacing:-.02em; line-height:1.18; text-wrap:balance}
+  .lede{margin:12px 0 0; color:var(--muted); font-size:14.5px}
+  .pinbox{
+    margin-top:18px; padding:14px 16px; border-radius:13px;
+    background:var(--accent-soft); border:1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+    font-size:14px; line-height:1.62;
+  }
+  .pinbox b{color:var(--accent)}
+
+  /* ── 지금 상태 줄 ── */
+  .now{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px}
+  .stat{
+    flex:1 1 150px; background:var(--card); border:1px solid var(--line);
+    border-radius:12px; padding:11px 13px;
+  }
+  .stat .k{font-size:11.5px; color:var(--muted); font-weight:700; letter-spacing:.02em}
+  .stat .v{font-size:17px; font-weight:800; margin-top:3px; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+
+  /* ── 절 ── */
+  section{margin-top:34px}
+  h2{
+    margin:0 0 4px; font-size:17px; font-weight:800; letter-spacing:-.01em;
+    display:flex; align-items:baseline; gap:9px;
+  }
+  h2 .n{font-size:11.5px; color:var(--muted); font-weight:700; letter-spacing:.04em}
+  .sub{margin:0 0 14px; color:var(--muted); font-size:13.5px}
+
+  /* ── 카드 ── */
+  .list{display:flex; flex-direction:column; gap:9px}
+  a.item{
+    display:block; text-decoration:none; color:inherit;
+    background:var(--card); border:1px solid var(--line); border-radius:13px;
+    padding:14px 15px; min-height:56px;
+    transition:border-color .15s, transform .15s;
+  }
+  a.item:hover{border-color:var(--accent); transform:translateY(-1px)}
+  a.item:focus-visible{outline:2.5px solid var(--accent); outline-offset:2px}
+  .row{display:flex; align-items:center; gap:10px}
+  .t{font-weight:700; font-size:15.5px; letter-spacing:-.01em}
+  .arrow{margin-left:auto; color:var(--muted); font-weight:700; flex:none}
+  .d{margin-top:4px; color:var(--muted); font-size:13.5px; line-height:1.55}
+  .chip{
+    flex:none; font-size:11px; font-weight:800; padding:3px 8px; border-radius:999px;
+    letter-spacing:.01em;
+  }
+  .chip.wait{background:var(--warn-soft); color:var(--warn)}
+  .chip.done{background:var(--ok-soft); color:var(--ok)}
+  .chip.live{background:var(--accent-soft); color:var(--accent)}
+
+  footer{margin-top:44px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13px}
+  @media (prefers-reduced-motion: reduce){ a.item{transition:none} a.item:hover{transform:none} }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">2026년 8월 13일 · 목요일</div>
+  <h1>한끼 문서함</h1>
+  <p class="lede">그동안 만든 판 <b>19장</b>이 여기 다 있어요. 하나도 안 없어졌어요.</p>
+
+  <div class="pinbox">
+    📌 <b>이 한 장만 폰 홈 화면에 저장</b>해두세요.<br>
+    새 판이 생겨도 <b>여기에 링크만 늘어나요</b> — 주소가 안 바뀌니까 밀려서 사라지지 않아요.
+  </div>
+
+  <div class="now">
+    <div class="stat"><div class="k">앱 버전</div><div class="v">v10.53</div></div>
+    <div class="stat"><div class="k">주간 레시피</div><div class="v">19주 · 57편</div></div>
+    <div class="stat"><div class="k">프로덕션 재신청</div><div class="v">8/16 · D-3</div></div>
+  </div>
+</header>
+
+<section>
+  <h2>⏳ 판정이 필요한 것 <span class="n">여기부터</span></h2>
+  <p class="sub">제가 못 정하는 것들이에요. 이게 나와야 다음이 움직여요.</p>
+  <div class="list">
+
+    <a class="item" href="https://claude.ai/code/artifact/ca138fb6-84de-4f4c-bc12-f7d2be52c429">
+      <div class="row"><span class="t">11주 주간 레시피 33편</span><span class="chip wait">검수</span><span class="arrow">→</span></div>
+      <div class="d">11/02~1/18에 <b>저절로</b> 열릴 것들. 아직 앱에 안 넣었어요 — 「내가 쓰는 재료로」 바꿀 것만 짚어주세요.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/159ce0cf-2b3a-4baf-adf3-82f1e2329181">
+      <div class="row"><span class="t">새 음식 아이콘 54컷</span><span class="chip wait">판정</span><span class="arrow">→</span></div>
+      <div class="d">양념판을 <b>4개판</b>으로 할지 <b>3개판</b>으로 할지. 추천은 4개판 — 3개판은 가로가 세로의 2배라 칸에서 납작한 띠가 돼요.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/b33e4a55-a4db-4f24-8f4e-57d527ffcf89">
+      <div class="row"><span class="t">36편에 붙는 그림</span><span class="chip wait">판정</span><span class="arrow">→</span></div>
+      <div class="d">사진 없는 것 2 · 겹치는 것 9 · 넓은 낱말에 걸린 것 6. 이상한 것만 짚어주시면 그것만 다시 뽑아요.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/51b636a2-a4f8-47c4-97ed-976d2d870453">
+      <div class="row"><span class="t">레시피 36편 검수판</span><span class="chip wait">판정</span><span class="arrow">→</span></div>
+      <div class="d">「말한 것 ↔ 한 것」을 나란히 뒀어요. 예쁜지가 아니라 <b>말한 대로 됐는지</b>를 봐주세요.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/177b9d84-eda1-4875-a583-4931fa3704ea">
+      <div class="row"><span class="t">겨울·크리스마스 팩 119컷</span><span class="chip wait">11/1</span><span class="arrow">→</span></div>
+      <div class="d">작은 소품 32컷은 <b>실제 픽셀 100%</b>로 뒀어요 — 키우면 판정이 안 돼서요. 한 팩이냐 두 팩이냐는 11/1에.</div>
+    </a>
+
+  </div>
+</section>
+
+<section>
+  <h2>📌 자주 여는 것 <span class="n">늘 최신</span></h2>
+  <p class="sub">내용이 바뀌면 <b>같은 주소에 덮어써요.</b> 새 링크가 안 생겨요.</p>
+  <div class="list">
+
+    <a class="item" href="https://claude.ai/code/artifact/d87f5cdb-3c4e-4e16-97b8-08920f2113da">
+      <div class="row"><span class="t">한끼 일지 — 매일 한 것</span><span class="chip live">매일</span><span class="arrow">→</span></div>
+      <div class="d">하루가 끝날 때마다 맨 위에 한 칸씩. 초록＝배포 · 빨강＝틀려서 고친 것 · 노랑＝아직 안 끝난 것.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/9bd7d82d-8a0b-45d1-a34a-d6ebb578f47e">
+      <div class="row"><span class="t">고정 메모</span><span class="chip live">상시</span><span class="arrow">→</span></div>
+      <div class="d">잊으면 안 되는 것들 — 사업자·상표·수익모델·출시 일정.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/e17bc79d-2e4d-4343-9240-0982ae52d656">
+      <div class="row"><span class="t">주차별 업데이트 계획서</span><span class="chip live">상시</span><span class="arrow">→</span></div>
+      <div class="d">언제까지 뭘 채워둬야 하는지. 「저절로 열림」과 「손으로 할 일」을 갈라놨어요.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/8cf8ba80-cb03-4300-b510-d1f70d831257">
+      <div class="row"><span class="t">공개 달력</span><span class="chip live">상시</span><span class="arrow">→</span></div>
+      <div class="d">언제 뭐가 저절로 올라가나. 다음은 <b>9/1 · 78컷</b>이에요.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/f9dcef46-89db-437b-a407-c540d7db6998">
+      <div class="row"><span class="t">52주 제철 표</span><span class="chip live">상시</span><span class="arrow">→</span></div>
+      <div class="d">주간 레시피의 바닥. 한 번 만들면 매년 저절로 돌아요.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/09889b16-457f-40a2-ac0d-82825565a545">
+      <div class="row"><span class="t">폰에서 테스트할 것</span><span class="chip live">체크 저장됨</span><span class="arrow">→</span></div>
+      <div class="d">제가 컴퓨터로 확인 못 하는 것만 골랐어요 — 손가락·자판·눈으로 봐야 하는 것들.</div>
+    </a>
+
+  </div>
+</section>
+
+<section>
+  <h2>✅ 판정이 끝난 것 <span class="n">기록</span></h2>
+  <p class="sub">다시 볼 일은 적지만, 「그때 왜 그렇게 정했나」가 여기 있어요.</p>
+  <div class="list">
+
+    <a class="item" href="https://claude.ai/code/artifact/98f2400e-6d26-4cd4-acf1-69ccee495110">
+      <div class="row"><span class="t">상세 꾸미기 확정판</span><span class="chip done">확정</span><span class="arrow">→</span></div>
+      <div class="d">고른 조합을 <b>앱 화면 30장을 이어 붙인 영상</b>으로. 흉내가 아니라 진짜 앱이에요.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/de66d1d0-9d1c-44a3-a569-53b137b1d961">
+      <div class="row"><span class="t">상세 꾸미기 갈래 일곱</span><span class="chip done">끝</span><span class="arrow">→</span></div>
+      <div class="d">D＋G를 고른 그 판. 안 고른 다섯도 코드가 살아 있어요.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/d7098073-d4db-41dd-a824-df5545df19c1">
+      <div class="row"><span class="t">움직이는 배경 20</span><span class="chip done">3개 통과</span><span class="arrow">→</span></div>
+      <div class="d">사선 햇빛 · 김 서린 유리 · 수면 반사광이 통과했어요. 표지 위에서 진짜로 움직여요.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/7d72b90e-6121-469c-b921-3da27d2b8a2b">
+      <div class="row"><span class="t">모션·효과 한눈에</span><span class="chip done">기록</span><span class="arrow">→</span></div>
+      <div class="d">29종이 실제로 움직여요. 움직임은 글로 설명이 안 돼서 만든 판이에요.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/e98950ed-c522-4de4-9141-e1bd09842415">
+      <div class="row"><span class="t">8월 5일 작업 요약</span><span class="chip done">기록</span><span class="arrow">→</span></div>
+      <div class="d">처음 켤 때 받는 양을 <b>215MB → 4.1MB</b>로 줄인 날.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/dc51539d-7eb2-4d3f-9efa-339e4bc048f5">
+      <div class="row"><span class="t">8월 4일 하루 기록</span><span class="chip done">기록</span><span class="arrow">→</span></div>
+      <div class="d">그날 하루만 깊게 — 캡처가 답해준 것 넷, 틀린 것 여섯.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/f92dc303-d0af-4a82-a124-8ea65234b17a">
+      <div class="row"><span class="t">꾸미기 필살기</span><span class="chip done">방향</span><span class="arrow">→</span></div>
+      <div class="d">꾸미기가 어디로 갈지 정한 판.</div>
+    </a>
+
+    <a class="item" href="https://claude.ai/code/artifact/d38164ba-7240-4457-a728-85223aa81139">
+      <div class="row"><span class="t">이모티콘 프롬프트</span><span class="chip done">복붙용</span><span class="arrow">→</span></div>
+      <div class="d">꼬르곰·펭펭 32컷 발주용. 복사 버튼이 붙어 있어요.</div>
+    </a>
+
+  </div>
+</section>
+
+<footer>
+  📎 주소는 전부 <b>저장소 CLAUDE.md</b>에도 적혀 있어요 — 이 장을 잃어버려도 다시 찾을 수 있어요.<br>
+  새 판을 만들면 여기에 <b>줄만 늘어나요.</b> 주소는 안 바뀌어요.
+</footer>
+
+</div>

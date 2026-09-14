@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>한끼 — 큰 창고 되나 시험</title>
+<style>
+  :root { --bg:#f7f3ec; --card:#fff; --ink:#3b3229; --sub:#8b7f70; --blue:#5878a0; --red:#b4453c; --green:#3f7a4e; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+         font-size:16px; line-height:1.6; padding:20px 16px 60px; }
+  h1 { font-size:21px; margin:0 0 6px; }
+  .sub { color:var(--sub); font-size:14.5px; margin:0 0 18px; }
+  button { font:inherit; }
+  .go { display:block; width:100%; padding:18px; border:none; border-radius:14px;
+        background:var(--blue); color:#fff; font-size:18px; font-weight:700; margin:14px 0; }
+  .go:disabled { opacity:.55; }
+  .copy { display:block; width:100%; padding:14px; border:none; border-radius:12px;
+          background:var(--ink); color:#fff; font-size:16px; font-weight:700; margin-top:12px; }
+  .card { background:var(--card); border-radius:14px; padding:14px 16px; margin:10px 0; }
+  .row { display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid #efe9e0; }
+  .row:last-child { border-bottom:none; }
+  .k { color:var(--sub); font-size:14.5px; }
+  .v { font-weight:700; text-align:right; }
+  .ok { color:var(--green); } .no { color:var(--red); }
+  .verdict { font-size:19px; font-weight:800; padding:16px; border-radius:14px; margin:16px 0 0; text-align:center; }
+  .v-ok { background:#e6f0e8; color:var(--green); }
+  .v-no { background:#f6e4e2; color:var(--red); }
+  .note { font-size:14px; color:var(--sub); margin-top:14px; }
+  #out { white-space:pre-wrap; word-break:break-all; font-size:13px; color:var(--sub);
+         background:#fff; border-radius:12px; padding:12px; margin-top:12px; display:none; }
+</style>
+</head>
+<body>
+<h1>큰 창고, 이 폰에서 되나</h1>
+<p class="sub">사진을 옮길 «큰 창고»가 창업자 폰에서 진짜 도는지 봅니다.<br>
+아무것도 안 바뀌어요 — 시험이 끝나면 넣었던 것을 <b>전부 지웁니다</b>.</p>
+
+<button class="go" id="go">눌러서 시험하기</button>
+
+<div id="res"></div>
+<button class="copy" id="cp" style="display:none">결과 복사하기</button>
+<div id="out"></div>
+
+<p class="note">⛔ 한끼 앱 «안»에서 열어야 제일 정확해요. (홈에서 이 주소를 열면 앱으로 열립니다)</p>
+
+<script>
+var res = document.getElementById('res');
+var go  = document.getElementById('go');
+var cp  = document.getElementById('cp');
+var out = document.getElementById('out');
+var 줄들 = [];
+
+function 칸(k, v, 좋나) {
+  줄들.push(k + ' = ' + v);
+  var d = document.createElement('div');
+  d.className = 'row';
+  d.innerHTML = '<span class="k"></span><span class="v"></span>';
+  d.children[0].textContent = k;
+  d.children[1].textContent = v;
+  if (좋나 === true) d.children[1].className = 'v ok';
+  if (좋나 === false) d.children[1].className = 'v no';
+  return d;
+}
+
+function 그림() {
+  var c = document.createElement('canvas'); c.width = 900; c.height = 1950;
+  var x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, 900, 1950);
+  x.fillStyle = '#222'; x.font = '28px sans-serif';
+  for (var k = 0; k < 55; k++) x.fillText('항정살 400g · 간장 3큰술 · 설탕 1큰술 ' + k, 40, 60 + k * 34);
+  return c.toDataURL('image/jpeg', 0.75);
+}
+function 열기() {
+  return new Promise(function (ok, no) {
+    var q = indexedDB.open('hankki-시험', 1);
+    q.onupgradeneeded = function () { q.result.createObjectStore('img'); };
+    q.onsuccess = function () { ok(q.result); };
+    q.onerror = function () { no(q.error || new Error('못 열었다')); };
+    q.onblocked = function () { no(new Error('다른 창이 잡고 있다')); };
+  });
+}
+function 쓰기(db, k, v) {
+  return new Promise(function (ok, no) {
+    var t = db.transaction('img', 'readwrite');
+    t.objectStore('img').put(v, k);
+    t.oncomplete = function () { ok(true); };
+    t.onerror = function () { no(t.error || new Error('못 넣었다')); };
+  });
+}
+function 읽기(db, k) {
+  return new Promise(function (ok, no) {
+    var t = db.transaction('img', 'readonly');
+    var q = t.objectStore('img').get(k);
+    q.onsuccess = function () { ok(q.result); };
+    q.onerror = function () { no(q.error || new Error('못 꺼냈다')); };
+  });
+}
+
+go.onclick = async function () {
+  go.disabled = true; go.textContent = '시험하는 중이에요…';
+  res.innerHTML = ''; 줄들 = [];
+  var card = document.createElement('div'); card.className = 'card';
+  var 됐나 = true, db = null;
+
+  // ⓪ 어디서 열었나
+  var 앱안 = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  card.appendChild(칸('어디서 열었나', 앱안 ? '한끼 앱 안 ✅' : '브라우저 탭', 앱안));
+
+  try {
+    // ① 창고가 열리나
+    var t0 = Date.now();
+    db = await 열기();
+    card.appendChild(칸('창고가 열리나', '열린다 (' + (Date.now() - t0) + 'ms)', true));
+
+    // ② 사진 한 장 넣고 빼기
+    var 한장 = 그림();
+    card.appendChild(칸('시험용 사진 크기', Math.round(한장.length / 1024) + 'KB', null));
+    await 쓰기(db, 'one', 한장);
+    var 되읽음 = await 읽기(db, 'one');
+    var 같나 = 되읽음 === 한장;
+    card.appendChild(칸('넣었다 뺐더니 같나', 같나 ? '똑같다 ✅' : '다르다 ⛔', 같나));
+    if (!같나) 됐나 = false;
+
+    // ③ 100장 (앱을 켤 때 드는 값)
+    var t1 = Date.now();
+    for (var i = 0; i < 100; i++) await 쓰기(db, 'p' + i, 한장);
+    var 쓴시간 = Date.now() - t1;
+    var t2 = Date.now(); var 합 = 0;
+    for (var j = 0; j < 100; j++) { var v = await 읽기(db, 'p' + j); 합 += v ? v.length : 0; }
+    var 읽은시간 = Date.now() - t2;
+    card.appendChild(칸('사진 100장 넣기', 쓴시간 + 'ms', 쓴시간 < 5000));
+    card.appendChild(칸('사진 100장 꺼내기', 읽은시간 + 'ms', 읽은시간 < 3000));
+    card.appendChild(칸('꺼낸 양', (합 / 1048576).toFixed(1) + 'MB', 합 > 0));
+    if (합 === 0) 됐나 = false;
+
+    // ④ 남은 공간
+    if (navigator.storage && navigator.storage.estimate) {
+      var e = await navigator.storage.estimate();
+      card.appendChild(칸('쓴 양 / 한도',
+        (e.usage / 1048576).toFixed(0) + 'MB / ' + (e.quota / 1048576).toFixed(0) + 'MB',
+        (e.quota / 1048576) > 200));
+      if ((e.quota / 1048576) <= 200) 됐나 = false;
+    } else {
+      card.appendChild(칸('남은 공간', '못 잰다', false));
+    }
+
+    // ⑤ 지워지지 않게 켜져 있나
+    if (navigator.storage && navigator.storage.persisted) {
+      var p = await navigator.storage.persisted();
+      card.appendChild(칸('함부로 안 지워지게', p ? '켜져 있다 ✅' : '꺼져 있다', p));
+    }
+
+    // ⑥ 지금 한끼가 쓰는 작은 서랍은 얼마나 찼나
+    try {
+      var 한끼 = localStorage.getItem('hankki:v1') || '';
+      card.appendChild(칸('지금 한끼 데이터(작은 서랍)',
+        (한끼.length / 1048576).toFixed(2) + 'MB / 약 5MB', 한끼.length < 4 * 1048576));
+    } catch (e2) { card.appendChild(칸('작은 서랍', '못 읽었다', false)); }
+
+  } catch (err) {
+    됐나 = false;
+    card.appendChild(칸('⛔ 막힌 곳', String((err && err.message) || err), false));
+  }
+
+  // 치운다 — 넣었던 것 전부
+  try { if (db) db.close(); indexedDB.deleteDatabase('hankki-시험'); } catch (e3) {}
+  card.appendChild(칸('시험한 것 치우기', '치웠어요', true));
+
+  res.appendChild(card);
+  var v = document.createElement('div');
+  v.className = 'verdict ' + (됐나 ? 'v-ok' : 'v-no');
+  v.textContent = 됐나 ? '✅ 된다 — 사진을 큰 창고로 옮겨도 돼요' : '⛔ 안 된다 — 클로드에게 결과를 보내주세요';
+  res.appendChild(v);
+  줄들.unshift(됐나 ? '판정 = ✅ 된다' : '판정 = ⛔ 안 된다');
+  go.textContent = '다시 시험하기'; go.disabled = false;
+  cp.style.display = 'block';
+};
+
+cp.onclick = function () {
+  var 글 = '［큰 창고 시험 · ' + new Date().toLocaleString('ko-KR') + '］\n' + 줄들.join('\n');
+  var 됐다 = function () { cp.textContent = '복사했어요 ✅'; setTimeout(function () { cp.textContent = '결과 복사하기'; }, 1800); };
+  // ⛔ clipboard 는 «성공이라 해놓고» 실제로 복사가 안 되는 폰이 있다 → 글자를 보여주고 고르게 한다
+  try {
+    navigator.clipboard.writeText(글).then(됐다, function () { 펼치기(글); });
+  } catch (e) { 펼치기(글); }
+};
+function 펼치기(글) {
+  out.textContent = 글; out.style.display = 'block';
+  try {
+    var r = document.createRange(); r.selectNodeContents(out);
+    var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  } catch (e) {}
+  cp.textContent = '↓ 아래 글자를 길게 눌러 복사해 주세요';
+}
+</script>
+</body>
+</html>

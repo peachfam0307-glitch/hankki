@@ -1,0 +1,16 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>쿠팡 문 검사 3 — 상품 딥링크</title>
+<style>body{font-family:sans-serif;padding:20px;background:#fbf5e8;color:#5d3410;line-height:1.5}a{display:block;margin:14px 0;padding:18px;border-radius:14px;background:#5d3410;color:#fff;text-decoration:none;font-size:18px}small{display:block;opacity:.7;font-size:13px;word-break:break-all}p{font-size:14px}</style>
+<h2>🛒 검사 3 — 쿠팡 앱에서 «상품 하나»를 바로 여는 모양 찾기</h2>
+<p>검사 2에서 Ⓔ(coupang://search)가 열렸다. 이번엔 <b>하바티 치즈 상품 페이지</b>가 쿠팡 앱에서 바로 뜨는 번호를 찾는다. 위에서부터. <b>상품 상세가 뜨면</b> 그 번호, 검색 결과나 홈이 뜨면 「홈」이라고.</p>
+<a href="coupang://product/184626081">① coupang://product/184626081</a>
+<a href="coupang://product?productId=184626081">② coupang://product?productId=…</a>
+<a href="coupang://product?productId=184626081&itemId=528358851&vendorItemId=95181086574">③ ② + itemId + vendorItemId</a>
+<a href="coupang://products/184626081?itemId=528358851&vendorItemId=95181086574">④ coupang://products/…?itemId…</a>
+<a id="d5">⑤ coupang://link?url=<small>웹 주소를 앱 안 웹뷰로</small></a>
+<a id="d6">⑥ intent scheme=coupang<small>intent://search?q=…#Intent;scheme=coupang;package=com.coupang.mobile;S.browser_fallback_url=…;end — 앱 없을 때 폴백용</small></a>
+<script>
+const web = 'https://www.coupang.com/vp/products/184626081?itemId=528358851&vendorItemId=95181086574'
+d5.href = 'coupang://link?url=' + encodeURIComponent(web)
+d6.href = 'intent://search?q=' + encodeURIComponent('알라 하바티치즈') + '#Intent;scheme=coupang;package=com.coupang.mobile;S.browser_fallback_url=' + encodeURIComponent('https://www.coupang.com/np/search?q=' + encodeURIComponent('알라 하바티치즈')) + ';end'
+</script>

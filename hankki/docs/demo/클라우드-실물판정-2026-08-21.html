@@ -1,0 +1,289 @@
+<title>클라우드 실물 판정</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --ground:#f7f3ec; --surface:#fffdf9; --ink:#2b2118; --muted:#6f6357;
+    --line:#e4dccf; --brand:#6b4f3a; --a:#b06a2c; --b:#3f6470;
+    --stop:#a5382a; --stop-soft:#f7e3df; --ok:#3f6b52; --ok-soft:#e2eee7;
+    --code-bg:#f0ebe1;
+    --display:"Gowun Batang",ui-serif,Georgia,serif;
+    --body:"IBM Plex Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#17140f; --surface:#1f1b15; --ink:#ece5da; --muted:#a2968a;
+      --line:#322b22; --brand:#caa176; --a:#d8944f; --b:#6fa3b2;
+      --stop:#e08a7c; --stop-soft:#3a221e; --ok:#8cc0a2; --ok-soft:#1e2a23;
+      --code-bg:#241f18;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#17140f; --surface:#1f1b15; --ink:#ece5da; --muted:#a2968a;
+    --line:#322b22; --brand:#caa176; --a:#d8944f; --b:#6fa3b2;
+    --stop:#e08a7c; --stop-soft:#3a221e; --ok:#8cc0a2; --ok-soft:#1e2a23;
+    --code-bg:#241f18;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);
+       font-size:16px;line-height:1.72;-webkit-text-size-adjust:100%}
+  .wrap{max-width:44rem;margin:0 auto;padding:2.6rem 1.15rem 5rem;
+        display:flex;flex-direction:column;gap:1.15rem}
+
+  header{display:flex;flex-direction:column;gap:.45rem;margin-bottom:.4rem}
+  .eyebrow{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  h1{font-family:var(--display);font-weight:700;font-size:clamp(1.75rem,6.2vw,2.5rem);
+     line-height:1.22;margin:0;text-wrap:balance;letter-spacing:-.01em}
+  .lede{color:var(--muted);font-size:.95rem;margin:0}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:.9rem;padding:1.15rem 1.1rem}
+  .card h2{font-family:var(--display);font-size:1.18rem;font-weight:700;margin:0 0 .2rem;line-height:1.35}
+  .card p{margin:.45rem 0 0}
+
+  /* 순서가 «진짜로» 있다 — ㉠ 을 안 하면 ㉢ 이 막힌다 */
+  .step{display:grid;grid-template-columns:2.15rem 1fr;gap:.05rem 1rem;
+        background:var(--surface);border:1px solid var(--line);border-radius:.9rem;padding:1.15rem 1.1rem}
+  .num{font-family:var(--display);font-size:1.5rem;font-weight:700;color:var(--brand);line-height:1.25;
+       grid-row:1/span 2;text-align:center}
+  .step h2{margin:0}
+  .step .body{grid-column:2}
+  .where{font-size:.85rem;color:var(--muted);margin:.5rem 0 0;padding:.5rem .7rem;
+         background:var(--code-bg);border-radius:.5rem;word-break:keep-all}
+  .why{font-size:.88rem;color:var(--muted);margin:.55rem 0 0}
+
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:.6rem;
+      padding:.85rem .9rem;overflow-x:auto;font-size:.74rem;line-height:1.6;margin:.7rem 0 0;
+      font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em;
+       background:var(--code-bg);padding:.1em .35em;border-radius:.25em}
+
+  button{font:inherit;font-weight:600;font-size:.92rem;padding:.8rem 1rem;border-radius:.6rem;
+         border:1px solid var(--line);background:var(--ground);color:var(--ink);cursor:pointer;
+         width:100%;margin-top:.7rem;transition:background .15s}
+  button:hover{background:var(--code-bg)}
+  button.go{background:var(--brand);color:var(--surface);border-color:var(--brand)}
+  button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+  a.link{display:block;text-align:center;text-decoration:none;font-weight:600;font-size:.92rem;
+         padding:.8rem 1rem;border-radius:.6rem;background:var(--brand);color:var(--surface);margin-top:.7rem}
+
+  .flag{border-left:3px solid var(--stop);background:var(--stop-soft);border-radius:.4rem;
+        padding:.7rem .85rem;margin:.7rem 0 0;font-size:.88rem}
+  .good{border-left:3px solid var(--ok);background:var(--ok-soft);border-radius:.4rem;
+        padding:.7rem .85rem;margin:.7rem 0 0;font-size:.88rem}
+
+  table{width:100%;border-collapse:collapse;margin:.7rem 0 0;font-size:.88rem}
+  th,td{text-align:left;padding:.5rem .55rem;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:.78rem;letter-spacing:.04em}
+  .tw{overflow-x:auto}
+
+  label.pick{display:flex;gap:.65rem;align-items:flex-start;padding:.7rem .2rem;
+             border-bottom:1px solid var(--line);cursor:pointer}
+  label.pick:last-of-type{border-bottom:0}
+  input[type=radio],input[type=checkbox]{margin:.35rem 0 0;flex:0 0 auto;width:1.1rem;height:1.1rem;accent-color:var(--brand)}
+  .pick b{font-weight:600}
+  .pick span{display:block;font-size:.83rem;color:var(--muted)}
+  textarea{width:100%;margin-top:.7rem;padding:.75rem;border-radius:.6rem;border:1px solid var(--line);
+           background:var(--ground);color:var(--ink);font:inherit;font-size:.92rem;min-height:5.5rem;resize:vertical}
+  footer{color:var(--muted);font-size:.8rem;text-align:center;margin-top:1rem;line-height:1.7}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">한끼 · 클라우드 저장</div>
+  <h1>클라우드가 붙는지<br>폰으로 한 번 재요</h1>
+  <p class="lede">콘솔 설정은 끝났어요. 규칙과 판정판은 제가 만들어 뒀고요.
+    이제 <b>폰에서 세 가지</b>만 해 주면, 로그인이 어느 길로 붙는지 답이 나와요. 10분쯤 걸려요.</p>
+</header>
+
+<div class="card">
+  <h2>지금 왜 이걸 재나</h2>
+  <p>클라우드 저장은 <b>로그인</b> 위에 얹혀요. 그런데 <b>한끼 앱 안에서 구글 로그인 창이 뜨는지</b>는
+    아직 아무도 몰라요 — 공식 문서에도 답이 없어요.</p>
+  <div class="good"><b>어느 쪽이 나와도 막다른 길이 아니에요.</b>
+    안 되면 <b>8/19 에 이미 통했던 길</b>로 돌아가면 돼요. 어느 길인지만 정하려고 재는 거예요.</div>
+  <div class="flag">⛔ 이 판은 <b>앱 레시피를 하나도 안 건드려요.</b>
+    쓰는 곳은 시험용 칸 하나뿐이고, 지우는 단추도 달아 놨어요.</div>
+</div>
+
+<!-- ㉠ -->
+<div class="step">
+  <div class="num">㉠</div>
+  <h2>문지기(보안 규칙) 붙여넣기</h2>
+  <div class="body">
+    <p>지금은 <b>모두 막힘</b> 상태예요. 이걸 붙여야 “<b>로그인한 사람이 자기 것만</b>”이 돼요.</p>
+    <p class="where">Firebase 콘솔 → <b>Firestore Database</b> → 위쪽 <b>규칙</b> 탭 →
+      <b>있던 글자를 통째로 지우고</b> 붙여넣기 → <b>［게시］</b></p>
+    <button id="copyRules">규칙 복사하기</button>
+    <pre id="rules">rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isGoogleUser() {
+      return request.auth != null
+          && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    function googleId() {
+      return request.auth.token.firebase.identities['google.com'][0];
+    }
+
+    match /users/{gid} {
+      allow read, write: if isGoogleUser() && googleId() == gid;
+
+      match /{doc=**} {
+        allow read, write: if isGoogleUser() && googleId() == gid;
+      }
+    }
+  }
+}</pre>
+    <p class="why">⭐ 문에 붙은 이름표는 <b>구글 고유번호</b>예요 — 파이어베이스 전용 번호가 아니고요.
+      나중에 파이어베이스를 떠나도 <b>그 번호는 그대로</b>라서, 데이터를 통째로 들고 나갈 수 있어요.</p>
+    <div class="flag">⚠️ ［게시］까지 눌러야 살아나요. 저장만 하면 안 붙어요.</div>
+  </div>
+</div>
+
+<!-- ㉡ -->
+<div class="step">
+  <div class="num">㉡</div>
+  <h2>로그인 화면 “게시”하기</h2>
+  <div class="body">
+    <p>지금은 <b>시험 모드</b>라, 이대로 두면 이렇게 돼요.</p>
+    <div class="tw"><table>
+      <tr><th>시험 모드로 두면</th><th></th></tr>
+      <tr><td>쓸 수 있는 사람</td><td><b>100명이 끝</b> — 넘으면 로그인 자체가 안 돼요</td></tr>
+      <tr><td>로그인 유지</td><td><b>7일 뒤 풀려요</b> — 일주일마다 다시 로그인</td></tr>
+    </table></div>
+    <p class="where">Google Cloud 콘솔 → <b>API 및 서비스</b> → <b>OAuth 동의 화면</b> → <b>［앱 게시］</b></p>
+    <a class="link" href="https://console.cloud.google.com/apis/credentials/consent?project=hankki-6a768" target="_blank" rel="noopener">동의 화면 열기</a>
+    <div class="good">✅ <b>심사(2~6주)는 안 걸려요.</b> 우리는 이름·이메일만 받아서, 검증이 필요 없는 조건에 딱 맞아요.</div>
+    <div class="flag">⛔ 헷갈리는 자리 — 전에 “<b>게시 누르지 마</b>”라고 적어 뒀던 건
+      <b>8/19 «실험»할 때</b> 얘기예요. 지금은 진짜로 서비스하는 거라 <b>눌러야</b> 해요.
+      <br>📌 모순이 아니라 <b>때가 달랐던 것</b>.</div>
+  </div>
+</div>
+
+<!-- ㉢ -->
+<div class="step">
+  <div class="num">㉢</div>
+  <h2>판정판 눌러 보기</h2>
+  <div class="body">
+    <p><b>꼭 한끼 앱 «안»에서</b> 열어야 해요. 아래 주소를 <b>나한테 문자나 카톡으로 보내 놓고,
+      그 링크를 눌러서</b> 열면 앱으로 들어가요. <span style="color:var(--muted)">(8/19 에 이렇게 해서 됐어요)</span></p>
+    <a class="link" href="https://peachfam0307-glitch.github.io/hankki/fbtest.html" target="_blank" rel="noopener">판정판 열기</a>
+    <button id="copyLink">주소만 복사하기</button>
+    <p class="why">페이지 맨 위가 <b>📱「앱 안이에요」</b>라고 나오면 제대로 열린 거예요.
+      <b>🌐「앱 밖이에요」</b>가 나오면 크롬으로 열린 거라, 한끼 아이콘으로 들어가서 다시 눌러 주세요.</p>
+    <div class="tw"><table>
+      <tr><th>누를 것</th><th>무슨 뜻</th></tr>
+      <tr><td><b>①</b> 팝업으로 로그인</td><td>✅ 되면 <b>여기서 끝</b> — 제일 짧은 길</td></tr>
+      <tr><td><b>②</b> 넘어갔다 오기</td><td>①이 안 될 때만. <b>깨질 걸로 보고 있어요</b></td></tr>
+      <tr><td><b>③</b> 내 칸에 써보기</td><td>✅ <b>써져야</b> 정상</td></tr>
+      <tr><td><b>④</b> 남의 칸에 써보기</td><td>⛔ <b>막혀야</b> 정상</td></tr>
+    </table></div>
+    <div class="good">⭐ <b>③과 ④는 둘 다 봐야 해요.</b> ④만 보면, 문이 아예 다 잠겨 있어도
+      “잘 막힌다”처럼 보이거든요. <b>내 건 되고, 남의 건 안 되는</b> 게 답이에요.</div>
+    <div class="flag">🚨 ④에서 <b>“써졌어요”</b>가 나오면 <b>그 화면을 그대로 캡처</b>해 주세요.
+      남이 내 레시피를 볼 수 있다는 뜻이라, 바로 고쳐야 해요.</div>
+    <p class="why">다 누르고 나면 맨 아래 <b>［결과 복사하기］</b> → 저한테 붙여넣기.</p>
+  </div>
+</div>
+
+<!-- 판정 -->
+<div class="card">
+  <h2>판정 — ①이 어떻게 됐나</h2>
+  <p class="why">누르고 나서 골라 주세요. 이거 하나로 다음 코드가 갈려요.</p>
+  <label class="pick"><input type="radio" name="v" value="팝업 ✅ 됐다">
+    <b>① 팝업이 떴고, 로그인까지 됐다<span>제일 짧은 길로 갑니다</span></b></label>
+  <label class="pick"><input type="radio" name="v" value="팝업 ⛔ 안 됐다 / ② 도 안 됐다">
+    <b>① 도 ② 도 안 됐다<span>8/19 에 통했던 길로 돌아갑니다 — 이미 검증된 길이에요</span></b></label>
+  <label class="pick"><input type="radio" name="v" value="팝업 ⛔ · ② 는 됐다">
+    <b>① 은 안 됐는데 ② 는 됐다<span>예상 밖이에요. 그럼 ② 로 갑니다</span></b></label>
+  <label class="pick"><input type="radio" name="v" value="⛔ 여기까지 못 감">
+    <b>거기까지 못 갔다<span>어디서 멈췄는지 아래에 적어 주세요</span></b></label>
+
+  <p class="why" style="margin-top:1rem">확인한 것</p>
+  <label class="pick"><input type="checkbox" data-c="㉠ 규칙 게시함"><b>㉠ 규칙을 붙이고 ［게시］까지 눌렀다</b></label>
+  <label class="pick"><input type="checkbox" data-c="㉡ 동의화면 게시함"><b>㉡ 로그인 화면을 ［게시］했다</b></label>
+  <label class="pick"><input type="checkbox" data-c="앱 안에서 열었다"><b>판정판이 「앱 안이에요」라고 나왔다</b></label>
+  <label class="pick"><input type="checkbox" data-c="③ 내 칸 써졌다"><b>③ 내 칸에 써지고 다시 읽혔다</b></label>
+  <label class="pick"><input type="checkbox" data-c="④ 남의 칸 막혔다"><b>④ 남의 칸은 막혔다</b></label>
+
+  <textarea id="memo" placeholder="이상한 게 있었으면 여기에… (화면에 뜬 글자 그대로면 제일 좋아요)"></textarea>
+  <button class="go" id="copyOut">판정 복사하기</button>
+  <p class="why" id="out"></p>
+</div>
+
+<div class="card">
+  <h2>이 다음은 전부 제 몫이에요</h2>
+  <p>판정이 나오면 <b>로그인 붙이기 → 올리기·내려받기 → 충돌 나면 고르게 하기</b>를 만들어서 보여드릴게요.</p>
+  <div class="good">⏰ 이 넷은 <b>Play 콘솔을 안 건드려요.</b>
+    그래서 <b>명의 이전 7일 대기</b>랑 겹쳐 쓸 수 있어요 — 이전이 끝나는 날 바로 나갈 수 있게요.</div>
+  <p class="why">⛔ 신고 넷(데이터 보안 다시 신고 · 처리방침 · 앱 안 계정삭제 줄 · 콘텐츠 등급)은
+    <b>명의 이전이 끝난 뒤</b>에 한꺼번에 해요.</p>
+</div>
+
+<footer>한끼 · 2026-08-21 · 클라우드 저장 실물 판정<br>
+  <span style="opacity:.75">근거 = 클라우드저장-구현계획-2026-08-21 · 클라우드저장-실물판정-준비-2026-08-21</span></footer>
+
+</div>
+
+<script>
+  var KEY = 'hankki:판정:클라우드실물:v1'
+  function 담기 () {
+    var v = document.querySelector('input[name=v]:checked')
+    var 체크 = [].slice.call(document.querySelectorAll('input[type=checkbox]'))
+      .filter(function (c) { return c.checked }).map(function (c) { return c.dataset.c })
+    return { 판정: v ? v.value : '', 확인: 체크, 메모: document.getElementById('memo').value }
+  }
+  function 저장 () { try { localStorage.setItem(KEY, JSON.stringify(담기())) } catch (e) {} }
+  try {
+    var s = JSON.parse(localStorage.getItem(KEY) || 'null')
+    if (s) {
+      if (s.판정) { var r = document.querySelector('input[name=v][value="' + s.판정 + '"]'); if (r) r.checked = true }
+      ;(s.확인 || []).forEach(function (t) {
+        var c = document.querySelector('input[type=checkbox][data-c="' + t + '"]'); if (c) c.checked = true
+      })
+      document.getElementById('memo').value = s.메모 || ''
+    }
+  } catch (e) {}
+  document.addEventListener('change', 저장)
+  document.getElementById('memo').addEventListener('input', 저장)
+
+  function 복사 (글, el, 말) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(글).then(function () { el.textContent = 말 }, function () { 손으로(글, el) })
+    } else 손으로(글, el)
+  }
+  function 손으로 (글, el) {
+    var ta = document.createElement('textarea'); ta.value = 글
+    ta.style.position = 'fixed'; ta.style.opacity = '0'
+    document.body.appendChild(ta); ta.select()
+    try { document.execCommand('copy'); el.textContent = '복사했어요 ✅' }
+    catch (e) {
+      var pre = document.getElementById('rules')
+      var rg = document.createRange(); rg.selectNodeContents(pre)
+      getSelection().removeAllRanges(); getSelection().addRange(rg)
+      el.textContent = '길게 눌러서 복사해 주세요'
+    }
+    document.body.removeChild(ta)
+  }
+
+  document.getElementById('copyRules').onclick = function () {
+    복사(document.getElementById('rules').textContent, this, '규칙 복사했어요 ✅')
+  }
+  document.getElementById('copyLink').onclick = function () {
+    복사('https://peachfam0307-glitch.github.io/hankki/fbtest.html', this, '주소 복사했어요 ✅')
+  }
+  document.getElementById('copyOut').onclick = function () {
+    var d = 담기()
+    var t = '[한끼] 클라우드 실물 판정 2026-08-21\n'
+      + '판정: ' + (d.판정 || '(아직 안 골랐어요)') + '\n'
+      + '확인: ' + (d.확인.length ? d.확인.map(function (x) { return '[v] ' + x }).join(' ') : '(없음)')
+      + (d.메모 ? '\n메모: ' + d.메모 : '')
+    복사(t, document.getElementById('out'), '복사했어요 ✅ — 클로드한테 붙여넣기')
+  }
+</script>

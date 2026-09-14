@@ -1,0 +1,37 @@
+{
+ "9월 — 「가을이 왔어요」": [
+  {"lab":"🖼 가을 프레임 (재고에서 찾음 · 창 뚫기 끝)","n":12,"새것":true,"items":["naf01","naf02","naf03","naf04","naf05","naf06","naf07","naf08","naf09","naf10","naf11","naf12"]},
+  {"lab":"🍁 가을 단풍·낙엽 (⛔마테 2컷 뺐다)","n":12,"items":["au_i15","au_i16","au_i21","au_i01","au_i24","au_i28","au_i38","au_i39","au_i29","au_i30","au_i42","au_s02"]},
+  {"lab":"🐻 꼬르곰·펭펭의 가을","n":5,"items":["au_b20","au_b09","au_b13","au_b14","au_b18"]},
+  {"lab":"🎀 무늬 테이프","n":7,"items":["wt_dy02","wt_dy04","wt_dy03","wt_dy05","wt_dy06","wt_dy09","wt_dy21"]}
+ ],
+ "10월 — 「추석·수확 ＋ 카롱 데뷔」": [
+  {"lab":"🦫 카롱과 펭펭 (데뷔 · 통째로)","n":12,"items":["kp_run","kp_yoga","kp_dumbbell","kp_bench","kp_muscle","kp_shoulder","kp_hug","kp_salad","kp_chill","kp_walk","kp_leafsit","kp_rake"]},
+  {"lab":"🦫 카롱 솔로","n":4,"items":["ka_g02","ka_g03","ka_c02","ka_c04"]},
+  {"lab":"🌰 가을 열매·수확","n":11,"items":["au_i08","au_i26","au_i32","au_i23","au_i35","au_i36","au_i37","au_i33","au_t03","au_t04","au_s01"]},
+  {"lab":"🐻 가을 나들이 (⛔겹치는 곰 2컷 뺐다)","n":5,"items":["au_b02","au_b03","au_b19","au_b21","au_b12"]}
+ ],
+ "11월 — 「늦가을 ＋ 다꾸 재료」": [
+  {"lab":"🍂 늦가을 소품","n":11,"items":["au_i22","au_i25","au_i27","au_i31","au_i34","au_i40","au_i41","au_t01","au_t05","au_s03","au_s04"]},
+  {"lab":"🐻 꼬르곰·펭펭의 늦가을","n":6,"items":["au_b07","au_b08","au_b22","au_b15","au_b16","au_b17"]},
+  {"lab":"📄 민무늬·종이 테이프","n":6,"items":["wt_dy01","wt_dy11","wt_dy14","wt_dy18","wt_dy08","wt_dy16"]},
+  {"lab":"▦ 격자·도트 (⛔겹치는 1컷 뺐다)","n":5,"items":["wt_dy12","wt_dy13","wt_dy15","wt_dy19","wt_dy20"]},
+  {"lab":"🎞 필름·라인 프레임","n":4,"items":["pf_dy03","pf_dy06","pf_dy11","pf_dy05"]},
+  {"lab":"🌼 들꽃","n":4,"items":["dyf04","dyf05","dyf06","dyf11"]}
+ ],
+ "⏳ 2027-01 로 미룸 — 계절과 무관한 다꾸 재료": [
+  {"lab":"폴라로이드·리본 프레임","n":4,"items":["pf_dy01","pf_dy09","pf_dy10","pf_dy02"]},
+  {"lab":"꽃다발","n":4,"items":["dyf01","dyf02","dyf03","dyf07"]},
+  {"lab":"도장·씰","n":4,"items":["dys03","dys04","dys05","dys11"]},
+  {"lab":"메모지","n":4,"items":["dyl01","dyl05","dyl06","dyl10"]},
+  {"lab":"강조 표시","n":4,"items":["dyh01","dyh03","dyh12","dyh06"]},
+  {"lab":"선·화살표","n":4,"items":["dys01","dys02","dys07","dys08"]},
+  {"lab":"이름표·태그","n":4,"items":["dyl03","dyl09","dyl11","dyl08"]},
+  {"lab":"손그림 도장","n":4,"items":["dyh07","dyh08","dyh09","dyh05"]},
+  {"lab":"종이 액자·레이스","n":4,"items":["pf_dy04","pf_dy07","pf_dy08","pf_dy12"]},
+  {"lab":"화분·잎","n":4,"items":["dyf08","dyf09","dyf10","dyf12"]},
+  {"lab":"붓칠·햇살","n":4,"items":["dys06","dys09","dys10","dys12"]},
+  {"lab":"띠·배너","n":4,"items":["dyl02","dyl04","dyl07","dyl12"]},
+  {"lab":"점·붓칠","n":4,"items":["dyh02","dyh04","dyh10","dyh11"]}
+ ]
+}
