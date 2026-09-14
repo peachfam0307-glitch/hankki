@@ -57,6 +57,27 @@ const 어디 = (제목, 시작) => {
   return { 키: g, 자리 }
 }
 
+// 🌶🥢 **양념을 칸에 같이 보여준다** (창업자 2026-09-14
+//   *"제육볶음이면 간장인지 고추장인지 매콤인지 이런말이 없이 제육볶음 하면 내가 맞는지 아닌지 판단을 못해"*)
+//   ⛔⛔ 어제 «간장 제육» 사고가 정확히 이것이다 — 이름만 보면 «색»을 못 정한다.
+//      간장 제육에 빨간 고추장 그림이 붙어 있었고, 제목만 실은 판으로는 창업자가 못 잡았다.
+//   ⭐ 그림 색을 정하는 건 «양념»이다 → 재료에서 양념을 뽑아 칸에 적는다.
+const 양념말 = ['고추장', '고춧가루', '청양고추', '간장', '된장', '쌈장', '카레', '마요', '크림', '토마토', '버터', '들기름', '참기름', '굴소스', '두반장', '마라', '치즈', '우유', '생크림']
+const 양념뽑기 = (r) => {
+  const 글 = (r.ingredients || []).join(' ')
+  const 나온것 = 양념말.filter((w) => 글.includes(w))
+  // ⛔ 「간장」은 거의 다 들어간다 — 고추장·고춧가루가 «같이» 있으면 매운 쪽이 색을 정한다.
+  //   그래서 매운 것이 있으면 앞에 세운다(순서가 곧 눈에 띄는 차례다).
+  const 매운것 = 나온것.filter((w) => /고추|마라|두반/.test(w))
+  const 나머지 = 나온것.filter((w) => !/고추|마라|두반/.test(w))
+  return [...매운것, ...나머지].slice(0, 4)
+}
+// 🥩 주재료 = 재료 목록 «맨 앞» 두 줄 (양념은 보통 뒤에 몰려 있다)
+const 주재료뽑기 = (r) => (r.ingredients || [])
+  .filter((x) => !String(x).startsWith('['))
+  .slice(0, 2)
+  .map((x) => String(x).replace(/\s*\(.*?\)/g, '').trim())
+
 // 같은 그림을 나눠 쓰는 자리 — 여기서 한 편을 바꾸면 다른 편이 딸려 온다
 const 그림쓰는편 = new Map()
 const 칸들 = []
@@ -65,7 +86,7 @@ for (const r of allBasicRecipes) {
   if (!키) continue
   if (!그림쓰는편.has(키)) 그림쓰는편.set(키, [])
   그림쓰는편.get(키).push(r.title)
-  칸들.push({ 제목: r.title, 키, 자리, 갈래: r.category || '', 종류: 종류고르기(r), from: r.from || '' })
+  칸들.push({ 제목: r.title, 키, 자리, 갈래: r.category || '', 종류: 종류고르기(r), from: r.from || '', 양념: 양념뽑기(r), 주재료: 주재료뽑기(r) })
 }
 
 // 그림 파일을 찾아 data: 로 심는다 — 판 하나만 열면 되게(폰에서 본다)
@@ -107,6 +128,8 @@ const 칸html = 칸들.map((c, i) => {
   <div class="머리"><span class="번호">${i + 1}</span><span class="자리">${esc(c.자리)}</span></div>
   <div class="그림">${c.그림 ? `<img src="${c.그림}" alt="">` : '<span class="빈">그림 파일 없음</span>'}</div>
   <div class="제목">${esc(c.제목)}</div>
+  <div class="재료">${esc(c.주재료.join(" · "))}</div>
+  ${c.양념.length ? `<div class="양념">${c.양념.map((w) => `<span class="${/고추|마라|두반/.test(w) ? "매움" : "순함"}">${esc(w)}</span>`).join("")}</div>` : ""}
   <div class="밑줄">${esc(c.키)} · ${esc(c.갈래)}→${esc(c.종류)}${c.from ? ' · ' + esc(c.from) : ''}</div>
   ${나눠씀 >= 2 ? `<div class="같이">⚠️ 이 그림을 ${나눠씀}편이 나눠 쓴다 — 바꾸면 같이 바뀐다</div>` : ''}
   <div class="고르기">
@@ -136,7 +159,12 @@ const html = `<!doctype html><meta charset="utf-8">
   .그림 img { max-width:100%; max-height:100% }
   .빈 { font-size:13px; color:#C06A46 }
   .제목 { font-size:16.5px; font-weight:800; line-height:1.3 }
-  .밑줄 { font-size:12.5px; color:#9C8878; margin-top:3px }
+  .재료 { font-size:13px; color:#6B5646; margin-top:4px; line-height:1.4 }
+  .양념 { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px }
+  .양념 span { font-size:12.5px; font-weight:700; padding:2px 7px; border-radius:999px }
+  .양념 .매움 { background:#FBE3D8; color:#B4482A }
+  .양념 .순함 { background:#EDE6DC; color:#6B5646 }
+  .밑줄 { font-size:12.5px; color:#9C8878; margin-top:5px }
   .같이 { font-size:12.5px; color:#A15A30; margin-top:5px; line-height:1.4 }
   .고르기 { display:flex; gap:6px; margin-top:8px }
   .고르기 button { flex:1; padding:8px 0; border-radius:10px; border:1.5px solid #DCCFC2; background:#fff; font-size:14.5px; font-weight:700; color:#6B5646; cursor:pointer }
