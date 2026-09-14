@@ -87,13 +87,31 @@
   (function () {
     var ID = 'G-L20V2VE1CS'
     var 갔다 = false
+    // 🍎🍎 [2026-09-14] 아이폰·아이패드로 온 사람은 App Store 로 — 지금까지는 Play 단추뿐이라 «못 깔았다».
+    //    앱 ID 6811288851 = App Store Connect 실물(src/nudges.js STORE_URL 과 같은 값 · 바뀌면 «같이» 고친다).
+    //    ⛔ iPadOS 사파리는 UA 가 Mac 으로 나온다 → 터치 되는 MacIntel 도 아이패드로 본다.
+    //    ⛔ 애플 주소엔 Play 식 referrer 꼬리표를 붙이지 않는다(형식이 다르다). 못 읽으면 Play 그대로(오늘과 같음).
+    //    ⛔ 22 승인 «전»에 이 페이지를 배포하면 아이폰 사람이 빈 스토어 페이지를 본다 → 승인 뒤 「배포해」 때 나간다.
+    try {
+      var ua = navigator.userAgent || ''
+      var 애플 = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+      if (애플) {
+        var b = document.getElementById('go')
+        b.href = 'https://apps.apple.com/kr/app/id6811288851'
+        b.textContent = 'App Store에서 받기'
+      }
+    } catch (e) { /* 못 읽으면 Play 그대로 */ }
+    // 📊 [2026-09-14] 「인스타 링크로 아이폰 유저가 몇 명 왔나」(창업자) — 아이폰이면 이름 뒤에 _ios 를 붙인다.
+    //    bridge / bridge_go = 안드로이드·PC(오늘과 같음) · bridge_ios / bridge_go_ios = 아이폰·아이패드.
+    //    ⭐ 같은 「페이지 및 화면」 표에 «그냥» 뜬다(맞춤 측정기준 없이) · 합치면 전체.
+    function 갈래이름(이름) { return 애플 ? 이름 + '_ios' : 이름 }
     try {
       window.dataLayer = window.dataLayer || []
       window.gtag = function () { window.dataLayer.push(arguments) }
       gtag('js', new Date())
       // ⛔ send_page_view: false — gtag 가 «스스로» 보내면 이름이 안 실린다.
       gtag('config', ID, { send_page_view: false })
-      gtag('event', 'page_view', { page_title: 'bridge' })
+      gtag('event', 'page_view', { page_title: 갈래이름('bridge') })
       var s = document.createElement('script')
       s.async = true
       s.src = 'https://www.googletagmanager.com/gtag/js?id=' + ID
@@ -111,7 +129,7 @@
     function 갔다고보낸다() {
       if (갔다) return
       갔다 = true
-      try { gtag('event', 'page_view', { page_title: 'bridge_go' }) } catch (e) {}
+      try { gtag('event', 'page_view', { page_title: 갈래이름('bridge_go') }) } catch (e) {}
     }
     try {
       document.getElementById('go').addEventListener('click', 갔다고보낸다)
