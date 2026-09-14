@@ -146,7 +146,18 @@ jobs:
           echo "── 서명이 팀 $TEAM_ID 인가 · applesignin 권한이 있나"
           codesign -dv --verbose=2 "$APP" 2>&1 | grep -q "TeamIdentifier=$TEAM_ID" || { echo "⛔ TeamIdentifier 가 $TEAM_ID 가 아니다"; exit 1; }
           codesign -d --entitlements :- "$APP" 2>/dev/null | grep -q "com.apple.developer.applesignin" || { echo "⛔ 서명된 앱에 applesignin 권한이 없다(빌드 4·6 사고) — 이 빌드는 올리면 안 된다"; exit 1; }
-          echo "✅ 서명 = 팀 $TEAM_ID · applesignin 있음 · 올리기=$UPLOAD"
+          echo "── 🍎 Share Extension(.appex) — 있나 · 같은 팀인가 · 앱·부품 둘 다 App Group 이 있나 · 버전이 같나(ITMS-90473)"
+          APPEX=$(ls -d "$APP"/PlugIns/*.appex 2>/dev/null | head -1)
+          test -n "$APPEX" || { echo "⛔ PlugIns/*.appex 가 없다 — 공유 부품이 안 실렸다"; exit 1; }
+          codesign -dv --verbose=2 "$APPEX" 2>&1 | grep -q "TeamIdentifier=$TEAM_ID" || { echo "⛔ 부품 서명 팀이 $TEAM_ID 가 아니다"; exit 1; }
+          for B in "$APP" "$APPEX"; do
+            codesign -d --entitlements :- "$B" 2>/dev/null | grep -q "group.kr.hankki.app" || { echo "⛔ $B 에 App Group(group.kr.hankki.app) 권한이 없다 — 공유해도 앱이 못 꺼낸다"; exit 1; }
+          done
+          AV=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Info.plist"); EV=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APPEX/Info.plist")
+          AB=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Info.plist");            EB=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APPEX/Info.plist")
+          [ "$AV" = "$EV" ] && [ "$AB" = "$EB" ] || { echo "⛔ 앱/부품 버전 불일치 app=$AV($AB) appex=$EV($EB) — 업로드가 ITMS-90473 으로 거절된다"; exit 1; }
+          /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:NSExtensionActivationRule" "$APPEX/Info.plist" || { echo "⛔ 부품 Info.plist 에 활성 규칙이 없다"; exit 1; }
+          echo "✅ 서명 = 팀 $TEAM_ID · applesignin 있음 · 부품 $(basename "$APPEX") $EV($EB) · App Group 양쪽 있음 · 올리기=$UPLOAD"
 
       - name: ⬆️ 결과물 (.ipa · 로그)
         if: always()

@@ -4,6 +4,7 @@ import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
 import { whatsNew, unitOf, foldPacks } from '../data/whatsnew'
 import { StickerArt } from './Stickers'
+import { 앱안인가 } from '../nativeAuth'   // 🍎 아이폰 앱에선 「폴드」(갤럭시) 대신 「아이패드」(2026-09-13)
 
 // 📣 한끼 소식 — «방금 열렸어요» · «곧 열려요» · «그다음엔».
 //
@@ -172,7 +173,7 @@ export default function PreviewSheet({ onClose }) {
                   ⭐ `bulb` 가 오히려 맞다 — 이건 새 기능 광고가 아니라 «알려주는 팁»이다. */}
               <Icon name="bulb" size={18} color="var(--brown)" stroke={1.9} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 16.5, fontWeight: 800, marginBottom: 3 }}>패드·폴드에서도 써요</div>
+                <div style={{ fontSize: 16.5, fontWeight: 800, marginBottom: 3 }}>{앱안인가() ? '아이패드에서도 써요' : '패드·폴드에서도 써요'}</div>
                 <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.55 }}>
                   큰 화면에선 레시피가 좌우 두 칸으로 열리고, 일기 종이도 더 커져요.
                   폰을 눕혀도 돼요 — 안 돌아가면 폰의 <b>자동 회전</b>을 켜 보세요.
