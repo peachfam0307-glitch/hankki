@@ -883,7 +883,13 @@ export default function EditorScreen({ id, prefill }) {
               </span>
               {UNITS.map((u) => (
                 <button key={u} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insertUnit(u, focusField === 'steps' ? stepRef : ingRef, focusField)}
-                  style={{ flex: '0 0 auto', padding: '8px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', border: '1px solid var(--line)', fontSize: 16, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
+                  // 🥄🥄 [창업자 확정 2026-09-14 · 시안 B] **파란 알약 + 바탕색 글씨.**
+                  //   📮 창업자 = "잘보이는 색으로 바꾸자" · "눈에 띄어야 그걸보고 쉽게 고치지"
+                  //   ⛔ 옛 판 = 바탕 var(--cream) #f2ede3 인데 화면 바탕이 #fdfbf7 이라 «거의 같은 색»이었다.
+                  //      크림 알약은 앱 곳곳(태그·알약)에 널려 있어 그 사이에 묻혔다 — 누르는 것인지도 안 읽혔다.
+                  //   ⭐ 글씨를 #fff 로 «박지 않는다» — var(--bg) 면 밝은 테마에선 거의 흰색,
+                  //      다크에선 차콜(#17171b)이 되어 파란 알약 위에서 «둘 다» 또렷하다.
+                  style={{ flex: '0 0 auto', padding: '8px 14px', borderRadius: 999, background: 'var(--brown)', color: 'var(--bg)', border: '1px solid var(--brown)', fontSize: 16, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
                   {u}
                 </button>
               ))}
