@@ -49,7 +49,7 @@ chk('BASICS_VERSION 이 140 이상이다', BASICS_VERSION >= 140, 'true')
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 
 // 🧪 폰을 흉내 낸다 — 앞 버전(seedV) ＋ 옛 그림(gr_254)이 저장돼 있다
-const 켜보기 = async (손댔나) => {
+const 켜보기 = async (손댔나, 버전차 = 1) => {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 } })
   await ctx.addInitScript(SEED_COACH_SEEN)
   const 심을것 = { ...씨, icon: 'gr_254', ...(손댔나 ? { touched: 1 } : {}) }
@@ -58,7 +58,7 @@ const 켜보기 = async (손댔나) => {
       localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
       localStorage.setItem('hankki:v1', JSON.stringify({ recipes: [편], diary: [], seedV: 앞버전 }))
     } catch { /* noop */ }
-  }, [심을것, BASICS_VERSION - 1])
+  }, [심을것, BASICS_VERSION - 버전차])
   const p = await ctx.newPage()
   await p.goto('http://127.0.0.1:4493/hankki/', { waitUntil: 'networkidle' })
   await p.waitForTimeout(1800)
@@ -107,6 +107,21 @@ chk('   버전도 최신으로 올라간다', 안손댐.seedV, String(BASICS_VER
 //   ✅ 그래서 «제목으로 강제로 갈아끼우는 표»가 따로 있고, 그건 touched 와 상관없이 돈다.
 //      📌 그 표가 있는 이유 = 「이미 폰에 틀린 값이 저장됐다」를 되돌리려고(규칙 18 ⓙ).
 //      ⛔ 그래서 그 표가 곧 «제일 센 자리»다 — 그림을 바꿀 땐 여기부터 맞춘다.
+// ⛔⛔⛔ [2026-09-14 · 창업자 «13.39 인데 만두 아직 그대로야»]
+//   🌲 **씨앗 맞추기는  가 이미 최신이면 «통째로» 빠져나간다**(store.jsx 168줄 early return).
+//      그 아래에 그림 고치는 표 넷이 다 있다 → **버전이 같으면 표가 하나도 안 돈다.**
+//   📌 창업자 폰은 앞 판에서 이미 최신 번호가 됐다. 그래서 다음 판을 받아도 그림이 안 고쳐졌다.
+//   ⛔ 앞의 ② 칸은 «버전이 하나 낮은» 경우만 재서 이걸 못 잡았다 — 그게 이 칸을 더한 이유다.
+console.log('\n②-b ⭐⭐버전이 «이미 최신»인 폰 — 그래도 그림이 고쳐지나 (창업자 폰이 이 경우다)')
+{
+  const r = await 켜보기(false, 0)
+  // ⛔ 여기서 «고쳐진다»를 바라지 않는다 — 구조상 번호가 같으면 표가 «안» 돈다(위 주석).
+  //   ⭐ 그 사실을 «드러내» 둔다. 구조를 바꾸는 건 위험하므로(씨앗 재동기화가 유저 편집을 건드릴 수 있다)
+  //      대신  게이트가 「표를 고치면 번호도 올려라」를 강제한다.
+  //   📌 그러니 이 칸이 바뀌면(고쳐지게 되면) 그건 구조가 바뀐 것이다 — 그때 이 주석도 같이 고칠 것.
+  chk('번호가 같으면 표가 안 돈다 (＝그래서 표를 고치면 번호를 올려야 한다)', r.icon, 'gr_254')
+}
+
 console.log('\n③ 「손댄 편」도 고쳐진다 (제목으로 강제하는 표는 touched 와 상관없이 돈다)')
 const 손댐 = await 켜보기(true)
 chk('⭐ 손댄 편도 새 그림을 받는다', 손댐.icon, 'gr_257')
