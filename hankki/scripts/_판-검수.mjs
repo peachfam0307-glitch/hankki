@@ -69,7 +69,16 @@ const 목록 = 레시피들()
   .filter((r) => (편이름들.length ? 편이름들.includes(r.title) : id앞 ? r.id.startsWith(id앞) : 날짜들.includes(r.from)))
   .map((r) => ({
     id: r.id,
-    줄: 줄이름.get(r.title)?.줄 || r.folder || '레시피',
+    // ⛔ [2026-09-15] 줄 이름이 «편 이름 나열»이면 쓰지 않는다.
+    //    주간 레시피는 「여름 시원한 것 — 콩국수 · …」 꼴이라 ' — ' 앞만 잘리는데,
+    //    낱개로 넣은 편은 그 꼴이 아니라 **설명이 통째로** 줄 이름 자리에 들어왔다
+    //    (검수판 카드마다 「비프페퍼브리또 · 무스비맛브리또 ⛔검수 안 받은 것 2편」이 겹쳐 떴다).
+    //    ⭐ 잣대 = 「그 줄 안에 이 편의 제목이 들어 있으면」 그건 줄 이름이 아니라 목록이다.
+    줄: (() => {
+      const 후보 = 줄이름.get(r.title)?.줄
+      if (후보 && !후보.includes(r.title)) return 후보
+      return r.folder || '레시피'
+    })(),
     출처: r.from ? `${r.from} · 그날 저절로 열려` : '처음부터 열려 있다',
     누가: r.review === '창업자' ? '네가 이미 본 것' : '⏳ 아직 검수 전',
     볼것: '재료·양 · 순서 · 시간·인분·난이도',
@@ -171,6 +180,7 @@ const 카드 = (r, meta, i) => {
     <ol class="st">${r.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
   </section>
 
+  ${r.물어볼것 ? `<section><h3 style="color:#b4451f">❓ 물어볼 것</h3><div class="memo" style="color:#b4451f;font-weight:700">${esc(r.물어볼것)}</div></section>` : ''}
   ${r.memo ? `<section><h3>메모</h3><div class="memo">${r.memo.split('\n').filter(Boolean).map((p) => `<p>${esc(p)}</p>`).join('')}</div></section>` : ''}
 
   <!-- ✍️✍️ [2026-08-18 창업자] **판에서 바로 체크·입력한다.**
