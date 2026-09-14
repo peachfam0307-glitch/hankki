@@ -542,6 +542,33 @@ function isWrappedOpen(s) {
 }
 // 📱 폭에 꽉 찬 줄이 «분량»으로 끝나면 재료 나열이 끝난 것이지 끊긴 게 아니다(「…소금 약간」 다음 줄은 새 문장).
 const QTY_TAIL = /(\d\s*(g|kg|ml|l|cc|개|알|쪽|봉지|봉|모|장|대|톨|줄기|컵|큰\s?술|작은\s?술|스푼|티스푼|숟가락|숟갈|줌|꼬집|줄|캔|팩|조각|인분|마리|공기|스틱)|약간|조금|적당량|소량|한\s?줌)\s*$/i
+// 📊📊 [2026-09-14 · 창업자 찜닭 실물] «표»로 적힌 재료 — 「당면 | 물 250ml」 는 한 줄에 «두 칸»이다.
+//   📮 창업자 = *"당면 물이 당면 I 물250 이렇게 된 원문이더라고"* → 앱 화면 = 재료 「당면 물 250ml」＋「물 250ml」(중복)
+//      ·「진간장 4 설탕 2」(단위·재료가 옆 칸과 붙음).
+//   🌲 뿌리 = OCR 이 세로줄 「|」을 대문자 「I」(또는 소문자 l·한글 ㅣ)로 읽고, `sanitize` 는 「|」을 공백으로,
+//      `cleanTokens` 는 낱자 「I」를 잡음으로 «지워서» 두 칸이 한 재료로 «붙었다».
+//   ✅ 그래서 «청소보다 먼저»(줄바꿈 합치기 «뒤»), 원문 줄에서 칸 나누개를 보고 줄을 «쪼갠다».
+//   ⛔ 좁게 잡는다(규칙 37) — ⓐ나누개는 «양옆이 공백»인 낱자 하나뿐 ⓑ쪼갠 조각이 모두 2자 이상·30자 이하
+//      ⓒ조각 중 하나는 분량(QTY)이 있어야 한다(재료 표라는 근거) ⓓ소문자 l 은 앞이 숫자면 «리터»라 안 쪼갠다(「물 1 l」).
+//      조리 문장은 30자를 넘거나 분량이 없어 안 걸린다.
+const TABLE_SEP = /\s(?:\||│|┃|ㅣ|I|l)\s/
+function splitTableColumns(lines) {
+  const out = []
+  for (const line of lines) {
+    const s = String(line)
+    if (!TABLE_SEP.test(s)) { out.push(line); continue }
+    // 「물 1 l 넣고」의 l 은 리터 — 숫자 뒤 l 은 나누개로 안 본다
+    //    단, 그 뒤가 「설탕 2」처럼 «이름＋숫자»(다음 칸)면 리터가 아니라 나누개다(「진간장 4 l 설탕 2」).
+    const parts = s.split(/\s(?:\||│|┃|ㅣ|I|l(?=\s[가-힣]{1,12}\s*[\d½⅓¼])|(?<!\d\s)l)\s/).map((p) => p.trim())
+    // 분량 = 단위 붙은 것(QTY) 또는 「진간장 4」처럼 이름 뒤 «숫자만»(표는 단위를 머리에 한 번만 적는다)
+    const 분량있다 = (p) => QTY.test(p) || /[가-힣]\s*[\d½⅓¼]+(\.\d+)?(\s*[~-]\s*\d+)?$/.test(p)
+    const ok = parts.length >= 2 && parts.every((p) => p.length >= 2 && p.length <= 30) && parts.some(분량있다)
+    if (ok) out.push(...parts)
+    else out.push(line)
+  }
+  return out
+}
+
 function mergeWrappedLines(lines) {
   const out = []
   let 빈줄지남 = false   // 앞 줄과 이 줄 사이에 빈 줄이 있었나 — 있으면 «문단»이라 꽉찬 규칙을 안 쓴다
@@ -624,7 +651,8 @@ export function parseRecipeText(raw = '', opts = {}) {
   // ⭐ 줄바꿈으로 잘린 문장을 먼저 합친다(인스타 캡션은 한 문장이 여러 줄로 잘림) → 분류 정확도↑
   // ⭐ 「점 없는 번호」에 점을 먼저 찍는다 — «합치기보다 «먼저»» 라야 한다.
   //    안 그러면 「…데친 뒤」 가 「2 감자…」 를 꼬리로 삼켜 걸음이 하나 사라진다(창업자 캡처 그것).
-  const rawLines = mergeWrappedLines(markBareNumberSteps(text.split('\n')))
+  // 📊 표 재료 칸 쪼개기는 «줄바꿈 합치기 뒤»에 — 먼저 쪼개면 「당면」＋「물 250ml」를 합치기가 도로 붙인다(실측).
+  const rawLines = splitTableColumns(mergeWrappedLines(markBareNumberSteps(text.split('\n'))))
 
   // 불릿(* · - 등)으로 시작하는 줄 = 목록 항목(대부분 재료). 지우기 전에 기억해 둔다.
   // 📄 [2026-08-28] 「앞에 빈 줄이 있었나」를 기억한다 — 인스타 캡션에서 빈 줄은 «문단 나눔»이다.
