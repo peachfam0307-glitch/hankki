@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useLayoutEffect, use
 import { createPortal } from 'react-dom'
 import { useStore, 다읽었나 } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
-import { consumeIosShared, onIosShare } from './iosShare'
 import { makeInboxRecipe } from './screens/ImportScreen'
 import { ocrImage, getOcrLeft, 열쇠셈, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw, 자리표제목 } from './parseRecipe'
@@ -639,9 +638,7 @@ export default function App() {
   }, [])
   useEffect(() => {
     let cancelled = false
-    // 🍎 [2026-09-13] 안드로이드(서비스워커 CacheStorage)와 iOS(Share Extension → App Group inbox) 가 «같은 모양»으로 들어와
-    //    아래 한 함수가 둘 다 담는다. 모양 = shareIntake.js / iosShare.js 가 맞춰 준다.
-    const 공유담기 = async (data) => {
+    consumeSharedIntake().then(async (data) => {
       if (cancelled || !data) return
       const link = firstUrl(data.url, data.text)
       const caption = captionFrom(data.text)
@@ -990,19 +987,9 @@ export default function App() {
       //    📌 v11.19 「링크 주소만 담아두기」와 같은 말이 된다 — 가져오기 화면과 말이 맞는다.
       if (!link) return
       showToast('링크를 담았어요')
-    }
-    consumeSharedIntake().then(공유담기)
-    // 🍎 iOS — 부품은 앱을 «직접 못 연다»(Apple 제한). 그래서 ①시작 ②앞으로 돌아올 때 ③hankki://share 신호, 세 자리에서 꺼낸다.
-    //    consume 이 읽는 즉시 지우므로 겹쳐 불러도 두 번 담기지 않는다. 갤럭시·웹에선 빈 배열이라 아무 일 없다.
-    const iOS담기 = () => consumeIosShared().then(async (arr) => { for (const d of arr) await 공유담기(d) })
-    iOS담기()
-    const offIos = onIosShare(iOS담기)
-    const 앞으로오면 = () => { if (document.visibilityState === 'visible') iOS담기() }
-    document.addEventListener('visibilitychange', 앞으로오면)
+    })
     return () => {
       cancelled = true
-      offIos()
-      document.removeEventListener('visibilitychange', 앞으로오면)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

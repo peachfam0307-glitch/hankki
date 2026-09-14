@@ -5,7 +5,6 @@
 import { toPng, toJpeg } from 'html-to-image'
 import { fontCSS, fontOptFrom } from './fontEmbed'
 import { 예열굽기 } from './coverEncode.js'   // 🍎 사파리 첫 굽기 그림 누락 대비(2026-09-13)
-import { 앱안인가 } from './nativeAuth.js'      // 🍎 아이폰 앱이면 표지 알약에 App Store(2.3.10 · 2026-09-13 심사 전 전수점검)
 
 const DISPLAY = "'Jua', 'Apple SD Gothic Neo', sans-serif" // 통통 귀여운 브랜드/제목
 const BODY = "'Gowun Dodum', 'Apple SD Gothic Neo', sans-serif" // 부드러운 본문
@@ -168,7 +167,7 @@ export async function buildCoverPayload({ coverEl, title, info = [], appUrl, rec
   ctx.fillStyle = '#a89c88'
   ctx.font = `29px ${BODY}`
   ctx.fillText('오늘도 한 끼 해냈다 🧡', W / 2, footerTop)
-  const pillLabel = 앱안인가() ? '나도 꾸미러 가기  ·  App Store ‘한끼’ 검색' : '나도 꾸미러 가기  ·  Play스토어 ‘한끼’ 검색'
+  const pillLabel = '나도 꾸미러 가기  ·  Play스토어 ‘한끼’ 검색'
   const pillW = 720
   roundRect(ctx, W / 2 - pillW / 2, footerTop + 34, pillW, 58, 29)
   ctx.fillStyle = '#5d3410'          // ⭐ 채운 알약 — 연한 판＋갈색 글자는 카드 배경에 묻혔다

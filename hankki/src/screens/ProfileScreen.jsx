@@ -50,7 +50,6 @@ import { FAV_NAME } from '../favName'
 // 🏷 갈래 이름도 «한 곳»에서만 온다(`src/settingsGroups.js`) — 화면과 관문이 같은 목록을 본다.
 //    ⛔ 여기에 갈래 이름을 «다시 적지» 말 것. 2026-09-04 에 화면과 관문이 각각 적어서 실제로 갈렸다.
 import { 설정갈래, 설정섹션, 설정이름표스타일 } from '../settingsGroups'
-import { 앱안인가 } from '../nativeAuth'   // 🍎 아이폰 앱 = 파일 다운로드(<a download>)가 조용히 안 된다 · 서비스워커 갱신도 없다(2026-09-13 전수점검)
 import { AI동의상태, AI동의쓰기, 바뀜이벤트 } from '../aiConsent'   // 🤖🔐 AI 다듬기 사용 켜기/끄기(큰 틀 6-② ⓑ)
 
 export default function ProfileScreen() {
@@ -96,7 +95,6 @@ export default function ProfileScreen() {
   // 바로 활성화 → controllerchange 로 앱이 자동 새로고침(main.jsx). 없으면 '최신' 안내만.
   const checkUpdate = async () => {
     if (checking) return
-    if (앱안인가()) { nav.showToast('아이폰 앱은 App Store 에서 업데이트돼요 · 지금 판이 최신이에요'); return }   // 🍎 번들이 앱 안에 실려 있어 서비스워커 갱신이 없다
     if (!('serviceWorker' in navigator)) {
       nav.showToast('이 환경에선 업데이트 확인이 안 돼요 · 브라우저를 새로고침해 주세요')
       return
@@ -182,9 +180,6 @@ export default function ProfileScreen() {
 
   // 다운로드 폴더로 저장 (데스크톱·폴백)
   const downloadBackup = async () => {
-    // 🍎 [2026-09-13] 아이폰 껍데기(WKWebView)는 <a download> 를 «조용히» 무시한다 — 그런데 아래가 「저장했어요」라고 말했다.
-    //    실패를 성공이라 말하지 않는다 → 앱 안에선 공유 창 길로 안내한다(백업 «됐다» 표시도 안 남긴다).
-    if (앱안인가()) { nav.showToast('이 폰에선 「백업 보내서 저장하기」로 공유 창에 보내 주세요 (파일에 저장 · 카톡 나에게)'); return }
     // ⛔ await 를 빼면 `JSON.stringify(Promise)` 가 `{}` 로 굳어 **백업이 통째로 빈다.**
     const blob = new Blob([JSON.stringify(await buildBackup())], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -262,7 +257,6 @@ export default function ProfileScreen() {
     //   ⭐ 그래서 클 때는 **바로 파일로** 저장하고 «왜 그랬는지»를 말해준다.
     //      파일은 다운로드 알림이 떠서 유저가 «됐다»를 안다.
     if (json.length > CLIP_MAX) {
-      if (앱안인가()) { nav.showToast('저장한 게 많아 복사가 안 돼요 · 「백업 보내서 저장하기」로 공유 창에 보내 주세요'); return }   // 🍎 앱 안엔 <a download> 가 없다 — 「파일로 저장했어요」라고 말하지 않는다
       downloadBackup()
       nav.showToast('저장한 게 많아 복사 대신 «파일»로 저장했어요 다운로드 폴더를 확인하세요')
       return
@@ -816,7 +810,7 @@ export default function ProfileScreen() {
           {checking ? '확인 중…' : '최신 버전 확인'}
         </button>
         <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 15, marginTop: 10, lineHeight: 1.5 }}>
-          {앱안인가() ? '아이폰 앱은 App Store 에서 업데이트돼요' : '설치한 앱이 옛 버전에서 멈췄을 때 눌러요'}
+          설치한 앱이 옛 버전에서 멈췄을 때 눌러요
         </div>
         {/* 📒📒 **최근 AI 다듬기 다섯 번 — ⛔창업자 폰에만 보인다** [창업자 2026-09-10]
             📮 창업자 = *"갈색띠가 안떠 성공해도"* ＋ *"계속남게할순없어?"* ＋ *"나만보이게해줘"*
@@ -923,15 +917,12 @@ export default function ProfileScreen() {
                      순서만 바꾸고, 코드 복사엔 「길다」를 미리 적어 놀라지 않게 한다. */}
               <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 14, fontSize: 15.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
                 <b style={{ color: 'var(--brown)' }}>제일 쉬운 방법 (2단계)</b>{'\n'}
-                {앱안인가()
-                  ? <><b>1.</b> 아래 <b>백업 보내서 저장하기</b> 누르기{'\n'}<b>2.</b> 공유 창에서 <b>「파일에 저장」</b> 또는 카톡 <b>「나에게」</b></>
-                  : <><b>1.</b> 아래 <b>폰에 파일로 저장</b> 누르기{'\n'}<b>2.</b> 끝! <b>다운로드 폴더</b>에 파일 하나가 생겨요</>}
+                <b>1.</b> 아래 <b>폰에 파일로 저장</b> 누르기{'\n'}
+                <b>2.</b> 끝! <b>다운로드 폴더</b>에 파일 하나가 생겨요
               </div>
-              {앱안인가()
-                ? <button className="btn-primary press" onClick={shareBackup}>백업 보내서 저장하기 (추천)</button>
-                : <button className="btn-primary press" onClick={downloadBackup}>폰에 파일로 저장 (추천)</button>}
+              <button className="btn-primary press" onClick={downloadBackup}>폰에 파일로 저장 (추천)</button>
               <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.55, margin: '8px 2px 12px', whiteSpace: 'pre-line' }}>
-                {앱안인가() ? <>공유 창에서 <b>「파일에 저장」</b>을 고르면 파일 앱에 <b>한끼백업-날짜.json</b> 으로 남아요.{'\n'}</> : <>파일 앱 → <b>다운로드</b> 에 <b>한끼백업-날짜.json</b> 이 생겨요.{'\n'}</>}폰이 고장나도 남게 하려면 그 파일을 <b>드라이브·카톡 「나에게」</b>에 한 번 더 올려두면 제일 안전해요.
+                파일 앱 → <b>다운로드</b> 에 <b>한끼백업-날짜.json</b> 이 생겨요.{'\n'}폰이 고장나도 남게 하려면 그 파일을 <b>드라이브·카톡 「나에게」</b>에 한 번 더 올려두면 제일 안전해요.
               </div>
               <button className="btn-ghost press" style={{ width: '100%' }} onClick={shareBackup}>백업 보내서 저장하기 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 공유 창으로</span></button>
               {/* ⚠️ 저장한 게 많으면 복사가 «안 되는» 폰이 있다(창업자 폰 247KB 에서 실패).

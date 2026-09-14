@@ -230,18 +230,8 @@ export function politeLine(line) {
   return s
 }
 
-// 🤖 [2026-09-14 · 창업자 아이폰 실물 「광깻무」] AI 가 「~요」 규칙을 «기계로» 지켜 「썬다요」·「다진다요」·「버무린다요」를 냈다.
-//    한다체(ㄴ다/는다) 뒤에 요만 붙인 것이라 우리말이 아니다 → 그 「요」를 떼고 아래 표로 다시 다듬는다(썬다요 → 썬다 → 썰어요).
-//    ⛔ 「~다요」 전부가 아니라 «앞 음절에 ㄴ 받침(썬·진·린)이거나 「는」»일 때만 — 「예쁘다요」 같은 건 애초에 안 나온다.
-function 한다체요떼기(s) {
-  return String(s).replace(/([가-힣])다요(\s*[.!…]?)$/, (m, ch, tail) => {
-    const code = ch.charCodeAt(0) - 0xac00
-    const ㄴ받침 = code >= 0 && code % 28 === 4
-    return (ㄴ받침 || ch === '는') ? ch + '다' + tail : m
-  })
-}
 export function politeSteps(steps) {
-  return (steps || []).map((s) => politeLine(한다체요떼기(s)))
+  return (steps || []).map(politeLine)
 }
 
 // ── 🕊 «약하게» 다듬기 — 합쇼체(~ㅂ니다/습니다)만 고친다 ──

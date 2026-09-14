@@ -278,11 +278,6 @@ export function collapseRepeatedSyllables(s) {
 /** 🥄 「계량 기준」 줄 — 제목도 걸음도 아니고 «메모»다. 쓰는 곳이 둘(규칙 파서 · AI 결과)이라 여기 한 곳에 둔다.
  *   ⛔ 잣대가 둘로 갈리면 **규칙 파서는 걸러내는데 AI 판이 도로 얹는다**(창업자 폰이 그 상태였다). */
 export const KIJUN_LINE = /(계량|계랑)[^\n]{0,10}기준/
-// 🥄 [2026-09-13 · 창업자 아이폰 실물 「차돌 짬뽕」 글 붙여넣기] **「1스푼 = 큰 스푼 = 15g」 같은 «단위 정의» 줄**도 잣대 안내다.
-//   ⛔ 실측 = 앞 줄 「✅ 차돌 짬뽕 재료 ✅ 2인분 기준」에 «분량으로 시작한다»는 이유로 딸려 붙고(contQty), 남은 「= 큰 스푼 = 15g」이
-//      **재료 「큰 스푼 15g」**이 됐다. 「계량」 낱말이 없어 KIJUN_LINE 을 빠져나갔다.
-//   ✅ 잣대 = 숫자＋단위로 시작하고 바로 「=」(또는 :)가 온다. 진짜 재료(「간장 2스푼」)는 «이름»으로 시작해 안 걸린다.
-export const UNIT_DEF_LINE = /^\s*[\d½⅓¼]+\s*(스푼|큰\s?술|작은\s?술|숟가락|숟갈|티스푼|컵|공기|T|t|ml|cc)\s*(=|＝|:|：)/
 
 function sanitize(s) {
   return String(s)
@@ -542,34 +537,6 @@ function isWrappedOpen(s) {
 }
 // 📱 폭에 꽉 찬 줄이 «분량»으로 끝나면 재료 나열이 끝난 것이지 끊긴 게 아니다(「…소금 약간」 다음 줄은 새 문장).
 const QTY_TAIL = /(\d\s*(g|kg|ml|l|cc|개|알|쪽|봉지|봉|모|장|대|톨|줄기|컵|큰\s?술|작은\s?술|스푼|티스푼|숟가락|숟갈|줌|꼬집|줄|캔|팩|조각|인분|마리|공기|스틱)|약간|조금|적당량|소량|한\s?줌)\s*$/i
-// 📊📊 [2026-09-14 · 창업자 찜닭 실물] «표»로 적힌 재료 — 「당면 | 물 250ml」 는 한 줄에 «두 칸»이다.
-//   📮 창업자 = *"당면 물이 당면 I 물250 이렇게 된 원문이더라고"* → 앱 화면 = 재료 「당면 물 250ml」＋「물 250ml」(중복)
-//      ·「진간장 4 설탕 2」(단위·재료가 옆 칸과 붙음).
-//   🌲 뿌리 = OCR 이 세로줄 「|」을 대문자 「I」(또는 소문자 l·한글 ㅣ)로 읽고, `sanitize` 는 「|」을 공백으로,
-//      `cleanTokens` 는 낱자 「I」를 잡음으로 «지워서» 두 칸이 한 재료로 «붙었다».
-//   ✅ 그래서 «청소보다 먼저»(줄바꿈 합치기 «뒤»), 원문 줄에서 칸 나누개를 보고 줄을 «쪼갠다».
-//   ⛔ 좁게 잡는다(규칙 37) — ⓐ나누개는 «양옆이 공백»인 낱자 하나뿐 ⓑ쪼갠 조각이 모두 2자 이상·30자 이하
-//      ⓒ조각 중 하나는 분량(QTY)이 있어야 한다(재료 표라는 근거) ⓓ소문자 l 은 앞이 숫자면 «리터»라 안 쪼갠다(「물 1 l」).
-//      조리 문장은 30자를 넘거나 분량이 없어 안 걸린다.
-const TABLE_SEP = /\s(?:\||│|┃|ㅣ|I|l)\s/
-function splitTableColumns(lines) {
-  const out = []
-  for (const line of lines) {
-    const s = String(line)
-    if (!TABLE_SEP.test(s)) { out.push(line); continue }
-    // 「물 1 l 넣고」의 l 은 리터 — 숫자 뒤 l 은 나누개로 안 본다
-    //    단, 그 뒤가 「설탕 2」처럼 «이름＋숫자»(다음 칸)면 리터가 아니라 나누개다(「진간장 4 l 설탕 2」).
-    const parts = s.split(/\s(?:\||│|┃|ㅣ|I|l(?=\s[가-힣]{1,12}\s*[\d½⅓¼])|(?<!\d\s)l)\s/).map((p) => p.trim())
-    // 분량 = 단위 붙은 것(QTY) 또는 「진간장 4」처럼 이름 뒤 «숫자만»(표는 단위를 머리에 한 번만 적는다)
-    const 분량있다 = (p) => QTY.test(p) || /[가-힣]\s*[\d½⅓¼]+(\.\d+)?(\s*[~-]\s*\d+)?$/.test(p)
-    const ok = parts.length >= 2 && parts.every((p) => p.length >= 2 && p.length <= 30) && parts.some(분량있다)
-    // 표 줄은 «맨 앞·맨 끝»에도 나누개가 붙는다(「| 닭다리살 500g | 양파 1개 |」) — 쪼갠 뒤 그 찌꺼기를 벗긴다
-    if (ok) out.push(...parts.map((p) => p.replace(/^[|│┃ㅣIl]\s+/, '').replace(/\s+[|│┃ㅣIl]$/, '').trim()).filter((p) => p.length >= 2))
-    else out.push(line)
-  }
-  return out
-}
-
 function mergeWrappedLines(lines) {
   const out = []
   let 빈줄지남 = false   // 앞 줄과 이 줄 사이에 빈 줄이 있었나 — 있으면 «문단»이라 꽉찬 규칙을 안 쓴다
@@ -588,8 +555,7 @@ function mergeWrappedLines(lines) {
     //    ✅ 목록을 늘리지 않는다 — **앞머리 장식은 «전부» 벗긴다**(구두점·기호·이모지).
     //       숫자는 안 벗기므로 「1.」 같은 새 항목은 WRAP_NEWITEM 이 그대로 잡는다.
     const bare = stripLead(raw)
-    // 🥄 「1스푼 = 큰 스푼 = 15g」(단위 정의)은 앞 줄의 꼬리가 아니다 — 붙이면 재료 이름에 섞인다(차돌 짬뽕 실물).
-    const contQty = WRAP_STARTQTY.test(raw) && !UNIT_DEF_LINE.test(raw) && !WRAP_ENDPUNCT.test(String(prev || '')) && !SENTENCE_END.test(String(prev || ''))
+    const contQty = WRAP_STARTQTY.test(raw) && !WRAP_ENDPUNCT.test(String(prev || '')) && !SENTENCE_END.test(String(prev || ''))
     if (
       prev != null &&
       (isWrappedOpen(prev) || contQty || 꽉찬끊김) &&
@@ -652,8 +618,7 @@ export function parseRecipeText(raw = '', opts = {}) {
   // ⭐ 줄바꿈으로 잘린 문장을 먼저 합친다(인스타 캡션은 한 문장이 여러 줄로 잘림) → 분류 정확도↑
   // ⭐ 「점 없는 번호」에 점을 먼저 찍는다 — «합치기보다 «먼저»» 라야 한다.
   //    안 그러면 「…데친 뒤」 가 「2 감자…」 를 꼬리로 삼켜 걸음이 하나 사라진다(창업자 캡처 그것).
-  // 📊 표 재료 칸 쪼개기는 «줄바꿈 합치기 뒤»에 — 먼저 쪼개면 「당면」＋「물 250ml」를 합치기가 도로 붙인다(실측).
-  const rawLines = splitTableColumns(mergeWrappedLines(markBareNumberSteps(text.split('\n'))))
+  const rawLines = mergeWrappedLines(markBareNumberSteps(text.split('\n')))
 
   // 불릿(* · - 등)으로 시작하는 줄 = 목록 항목(대부분 재료). 지우기 전에 기억해 둔다.
   // 📄 [2026-08-28] 「앞에 빈 줄이 있었나」를 기억한다 — 인스타 캡션에서 빈 줄은 «문단 나눔»이다.
@@ -676,7 +641,6 @@ export function parseRecipeText(raw = '', opts = {}) {
     //   ⛔⛔ 여기서 «기억»해 둬야 한다 — 바로 아래 `stripLead` 가 앞머리 장식을 «전부» 벗겨서
     //      그 다음부터는 「※ 였다」는 사실이 사라진다(`stepMarked` 를 미리 재는 이유와 같다).
     const tipMarked = /^\s*※/.test(rawLine)
-    const unitDef = UNIT_DEF_LINE.test(rawLine)   // 🥄 「1스푼 = 큰 스푼 = 15g」 — 「=」는 아래 청소에서 지워지므로 «원문 줄»에서 미리 잰다
     // 맨 앞 장식 이모지(🍆📌🍷 등) — 첫 줄이면 제목 후보 신호로 쓴다.
     const emojiHead = /^\s*[-*•·▪◦‣●○✅✔☑]*\s*[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}❤]/u.test(rawLine)
     // 번호·동그라미 번호가 붙은 줄인지 원문에서 미리 본다 — sanitize가 ①~⑳을 지워버리기 때문.
@@ -769,7 +733,7 @@ export function parseRecipeText(raw = '', opts = {}) {
     // 🏷 `tagTitle` = 「머리에 홀로 선 해시태그」 표시. **여기서 기억해 두지 않으면 사라진다** —
     //    아래 `stripLead`·`sanitize` 가 `#` 을 벗겨서 그 뒤로는 태그였다는 사실을 알 길이 없다
     //    (`stepMarked`·`tipMarked` 를 미리 재 두는 것과 같은 이유다).
-    if (isHeader || (l.length > 1 && !isGibberish(l))) { items.push({ l, bullet, emojiHead, stepMarked, checkMark, tipMarked, unitDef, tagTitle: 첫줄태그제목, blankBefore: blankAhead }); blankAhead = false }
+    if (isHeader || (l.length > 1 && !isGibberish(l))) { items.push({ l, bullet, emojiHead, stepMarked, checkMark, tipMarked, tagTitle: 첫줄태그제목, blankBefore: blankAhead }); blankAhead = false }
   }
 
   let title = ''
@@ -827,7 +791,7 @@ export function parseRecipeText(raw = '', opts = {}) {
   while (첫내용 < items.length && SCREEN_CHROME.test(items[첫내용].l)) 첫내용++
 
   for (let idx = 0; idx < items.length; idx++) {
-    const { l, bullet, emojiHead, stepMarked, checkMark, tipMarked, unitDef, tagTitle, blankBefore } = items[idx]
+    const { l, bullet, emojiHead, stepMarked, checkMark, tipMarked, tagTitle, blankBefore } = items[idx]
 
     // 🧹🧹 [2026-08-28] 인스타 «화면 글자»는 제목도 재료도 순서도 될 수 없다 — 제일 먼저 버린다.
     //    📮 창업자 실물(차돌짬뽕) — 화면 맨 위의 「댓글 45」가 «제목»이 됐다.
@@ -860,7 +824,6 @@ export function parseRecipeText(raw = '', opts = {}) {
     //   ⛔ 좁게 잡는다 = **「계량/계랑」 ＋ 「기준」이 «한 줄에» 있을 때만.**
     //      「계량컵으로 물을 담아요」 같은 조리 문장은 「기준」이 없어 안 걸린다.
     if (KIJUN_LINE.test(l)) { other.push(l); lastWasBulletIng = false; continue }
-    if (unitDef || UNIT_DEF_LINE.test(l)) { other.push(l); lastWasBulletIng = false; continue }   // 🥄 「1스푼 = 큰 스푼 = 15g」 → 메모(위 KIJUN_LINE 과 같은 자리)
     if (PORTION_ONLY.test(l)) { lastWasBulletIng = false; continue }
 
     // 🧾🧾 [2026-08-28] 「재료: A, B, C」 «한 줄 나열»형 — 콤마로 쪼개 재료로 담는다.
@@ -946,9 +909,7 @@ export function parseRecipeText(raw = '', opts = {}) {
     //      그래서 «세는 방식»을 바꾼다 — 꼬리 괄호를 떼고 센다. 길이가 아니라 «무엇을 재나»의 문제였다.
     //   ⛔ 떼는 건 «꼬리»뿐이다. 「(인덕션 8사용) 물이 끓으면」처럼 머리에 붙은 괄호는 안 건드린다.
     //   🧪 판 = 닭한마리 파서 재현판(2026-09-04)
-    // 🍜 [2026-09-13 · 차돌 짬뽕 실물] 「차돌 짬뽕 재료 ✅ 2인분 기준」처럼 «기호 ＋ 인분 안내»가 꼬리에 붙은 절 이름도 같은 절 이름이다.
-    //    괄호 꼬리를 떼는 것과 같은 이유 — 인분은 잣대지 이름이 아니다. 꼬리에서만 뗀다.
-    const 꼬리괄호뗀머리 = head.replace(/\s*[(（][^)）]*[)）]\s*$/, '').replace(/\s*[\p{S}\p{P}]*\s*\d+\s*[~\-–]?\s*\d*\s*인분\s*(기준)?\s*$/u, '').trim() || head
+    const 꼬리괄호뗀머리 = head.replace(/\s*[(（][^)）]*[)）]\s*$/, '').trim() || head
     if (꼬리괄호뗀머리.length <= 16 && !stepMarked && !DECLARATIVE.test(head)) {
       // ⛔⛔ **원본(head)을 «덮어쓰지» 않는다.** 처음엔 덮어썼다가 기존 판이 잡았다 —
       //    「레시피 (3-4인분 기준)」의 방어막(SEC_STEP_PORTION)이 괄호를 보고 «순서 헤더가 아니다»를
@@ -1031,8 +992,7 @@ export function parseRecipeText(raw = '', opts = {}) {
     const 번호재료 = mode === 'ing' && stepMarked && 번호뗀.length >= 1 && 번호뗀.length <= 40 &&
       !DECLARATIVE.test(번호뗀) && !STEP_VERB.test(번호뗀) && /[가-힣]/.test(번호뗀) &&
       // 「1. 알배추, 양파, 당근, 부추는」처럼 분량 없이 조사로 끝나면 «끊긴 문장»이지 재료가 아니다(차돌짬뽕 ㉔)
-      //   ＋ 「4. 고춧가루가 야채에 살짝 배면」처럼 연결어미(면·고·며·서)로 끝나도 끊긴 문장이다(차돌 짬뽕 붙여넣기 실물).
-      !(!QTY.test(번호뗀) && !AMOUNT.test(번호뗀) && /(은|는|이|가|을|를|에|에서|로|으로|와|과|랑|면|고|며|서|도|든)$/.test(번호뗀)) &&
+      !(!QTY.test(번호뗀) && !AMOUNT.test(번호뗀) && /(은|는|이|가|을|를|에|에서|로|으로|와|과|랑)$/.test(번호뗀)) &&
       (QTY.test(번호뗀) || AMOUNT.test(번호뗀) || /^[가-힣][가-힣\s·,()（）\d/~.\-]*$/.test(번호뗀))
     const stepLike = !번호재료 && looksLikeStep(core)
     const ingLike = 번호재료 || (!stepLike && looksLikeIngredient(core, bullet))

@@ -11,7 +11,6 @@
 // ⏰ 절대원칙 27 — 「오늘」은 `today.js` 한 곳에서만 만든다
 import { todayKST } from './today.js'  // ⛔ 확장자를 붙인다 — 게이트가 «노드»로 이 파일을 열 수 있다
 import { 유저눈인가 } from './tidy.js'  // 👀 [2026-09-10] 유저 눈 스위치 — 잣대는 tidy.js 한 곳
-import { 앱안인가 } from './nativeAuth.js'   // 🍎 아이폰 앱이면 리뷰 주소가 App Store 다(2026-09-13)
 
 const K_BACKUP = 'hankki:nudge:backup' // 마지막으로 닫았거나 실제로 백업한 문턱
 // 🗓 [2026-08-28] **물어본 «날짜»(YYYY-MM-DD)** 를 담는다 — 30일 뒤 한 번 더 묻기 위해.
@@ -181,11 +180,7 @@ export const 문머리글 = {
 }
 
 // 스토어 리뷰 주소 — 패키지명은 `CLAUDE.md` 고정 메모 기준.
-// 🍎 [2026-09-13] 아이폰 앱(껍데기 안)은 App Store 리뷰 쓰기 주소 — 앱 ID 6811288851(App Store Connect 실물).
-//    ⛔ 그 전엔 아이폰에서도 Play 주소를 열었다(리뷰 시트가 저절로 뜨는데 구글 페이지로 감 = 2.3.10 ＋ 안 되는 기능).
-export const STORE_URL = 앱안인가()
-  ? 'https://apps.apple.com/kr/app/id6811288851?action=write-review'
-  : 'https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa'
+export const STORE_URL = 'https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa'
 
 // ─────────────────────────────────────────────────────────────
 // 🎁 출시기념 팩 안내 — 꾸미기 서랍을 열면 «딱 한 번».
