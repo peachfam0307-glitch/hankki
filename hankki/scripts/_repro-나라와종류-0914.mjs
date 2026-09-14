@@ -178,6 +178,52 @@ console.log('\n⑦ ⭐⭐이미 깔린 폰 — 옛 갈래가 저장돼 있어도
   chk('⛔ 유저가 옮겨 둔 폴더를 잃지 않는다', 뒤.folder, '내폴더')
 }
 
+// ───────── ⑧ 🗑 폰에만 남은 «옛 폴더» — 칩에선 빠지고 편은 «안» 사라진다 ─────────
+//   📮 창업자 2026-09-14 = 폰 칩 줄에 「소스 25 · 밥·면·덮밥 19 · 고기 21 · 해물 7 …」이 떠 있었다
+//      → *"나 기억안나는데 ???"* → *"그럼 다 빼야지"*
+//   ⛔⛔ **제일 중요한 것 = 편이 사라지면 안 된다.** 칩만 빼고 편은 다른 칩에서 보여야 한다.
+//      그래서 이 칸은 «둘 다» 잰다 — ⓐ칩이 없다 ⓑ그 편이 그래도 보인다.
+console.log('\n⑧ 🗑 폰에만 남은 옛 폴더 — 칩에선 빠지고, 편은 안 사라진다')
+{
+  const { 옛폴더이름 } = await import('../src/data/종류.js')
+  const 씨 = allBasicRecipes.find((r) => r.id === 'basic-ganjang-gejang')
+  const ctx3 = await b.newContext({ viewport: { width: 390, height: 844 } })
+  await ctx3.addInitScript(SEED_COACH_SEEN)
+  // 🧪 옛 판이 남긴 모습 — folders 목록에 옛 이름이 들어 있고, 한 편이 그 폴더에 들어 있다
+  await ctx3.addInitScript(([편, 옛것]) => {
+    try {
+      localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
+      localStorage.setItem('hankki:v1', JSON.stringify({
+        recipes: [편], diary: [], seedV: 0,
+        folders: ['한식', '중식', '일식', '양식', '아시안', ...옛것, '내가만든폴더'],
+      }))
+    } catch { /* noop */ }
+  }, [{ ...씨, folder: '소스' }, 옛폴더이름])
+  const p3 = await ctx3.newPage()
+  await p3.goto('http://127.0.0.1:4494/hankki/', { waitUntil: 'networkidle' })
+  await p3.waitForTimeout(1800)
+  {
+    const 닫기 = await p3.$('text=닫기')
+    if (닫기) { await 닫기.click(); await p3.waitForTimeout(700) }
+    const 것 = await p3.$('text=내 레시피 전체 보기')
+    if (것) { await 것.click(); await p3.waitForTimeout(1500) }
+  }
+  const 칩3 = await p3.evaluate(() => [...document.querySelectorAll('.pill')].map((e) => (e.textContent || '').trim().replace(/\s*\d+\s*$/, '').trim()))
+  console.log('       ' + 칩3.join(' | '))
+  const 남은옛것 = 옛폴더이름.filter((n) => 칩3.includes(n))
+  chk('⭐ 옛 폴더 칩이 하나도 없다', 남은옛것.length, 0)
+  if (남은옛것.length) console.log('       남은 것 = ' + 남은옛것.join(' · '))
+  // ⛔⛔ 되짚기 둘 — 이게 없으면 「다 지워버렸다」도 통과한다
+  chk('⛔ 유저가 «직접 만든» 폴더는 살아 있다', 칩3.includes('내가만든폴더'), 'true')
+  const 한식글 = await p3.evaluate(() => {
+    const 것 = [...document.querySelectorAll('.pill')].find((e) => (e.textContent || '').trim().replace(/\s*\d+\s*$/, '').trim() === '한식')
+    if (것) 것.click()
+    return new Promise((r) => setTimeout(() => r(document.body.innerText), 700))
+  })
+  chk('⭐⭐ 그 폴더에 있던 편이 «사라지지 않는다» (한식 칩에 뜬다)', /간장게장/.test(한식글), 'true')
+  await ctx3.close()
+}
+
 await b.close(); srv.close()
 console.log(`\n${실패 ? '⛔' : '✅'} ${통과}/${통과 + 실패}`)
 if (실패) console.log('   ' + 실패목록.join('\n   '))

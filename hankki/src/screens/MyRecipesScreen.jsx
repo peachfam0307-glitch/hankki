@@ -3,7 +3,7 @@ import { COACH } from '../coach'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import { 저장날짜보임 } from '../data/seed'
-import { 나라들, 종류들, 종류고르기 } from '../data/종류'
+import { 나라들, 종류들, 종류고르기, 옛폴더이름 } from '../data/종류'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
@@ -345,7 +345,9 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   //   ⭐ 유저가 만든 폴더는 남긴다 — 옛 이름(국물·국·탕)으로 옮겨 둔 편을 잃으면 안 된다.
   const 칩목록 = useMemo(() => {
     const 정해진것 = [...나라들, ...종류들]
-    const 유저것 = (folders || []).filter((f) => !정해진것.includes(f))
+    // ⛔ 폰에만 남은 «옛 폴더»는 뺀다 (창업자 2026-09-14 "그럼 다 빼야지" · data/종류.js 의 옛폴더이름)
+    //   ⭐ 칩에서만 빠진다 — 그 폴더에 든 편은 나라 칩·종류 칩·「전체」에 그대로 뜬다(아래 여기드나).
+    const 유저것 = (folders || []).filter((f) => !정해진것.includes(f) && !옛폴더이름.includes(f))
     return [...정해진것, ...유저것]
   }, [folders])
   const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__heart' && folder !== '__pinned' && folder !== '__often' && folder !== '__sns' && !DEFAULT_FOLDERS.has(folder)
