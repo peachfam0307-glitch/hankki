@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 앱과 부품이 «같은 저장칸»을 쓰는 열쇠 — 개발자 사이트에서 App Group `group.kr.hankki.app` 을 만들고
+	     kr.hankki.app · kr.hankki.app.share 두 App ID 에 배정해야 서명이 통과한다(창업자 1회 · 2026-09-13 조사). -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.kr.hankki.app</string>
+	</array>
+</dict>
+</plist>

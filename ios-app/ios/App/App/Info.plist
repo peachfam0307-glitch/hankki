@@ -30,6 +30,17 @@
 				<string>com.googleusercontent.apps.741474124689-lon9f2np1aqjh1pgk5ldev8bofg11e6f</string>
 			</array>
 		</dict>
+		<dict>
+			<!-- 🍎 2026-09-13 Share Extension 이 앱을 깨우는 신호(hankki://share?ts=…). URL 내용은 안 쓰고 «깨우기»로만 쓴다. -->
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>kr.hankki.app.share</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>hankki</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleDisplayName</key>
         <string>한끼</string>

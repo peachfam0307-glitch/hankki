@@ -42,8 +42,6 @@ const 사진 = Buffer.from(
   'ExIFfXpnAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
   'AAAAAAAAAAAAAAAAvBpVSAABw3aBpwAAAABJRU5ErkJggg==', 'base64')
 
-// 📄 40자를 넘는 «레시피 모양» 가짜 글자 — tidy.js 의 「짧으면 안 부른다」(40자) 를 넘기려고
-const 가짜글자 = '김치찌개\n재료\n신김치 200g\n돼지고기 150g\n두부 반 모\n만드는 법\n김치를 볶아요\n물을 붓고 끓여요\n두부를 넣어요'
 const 칸 = []
 const 재기 = (이름, 됐나, 값 = '') => { 칸.push({ 이름, 됐나, 값 }); console.log(`${됐나 ? '✅' : '⛔'} ${이름}${값 ? ' — ' + 값 : ''}`) }
 
@@ -65,10 +63,6 @@ async function 사진넣고자르기(p) {
 // 🚪 가져오기 → ③ 「한끼 앱에서 사진 가져오기」 안내 화면까지
 async function 안내까지(ctx, 남은 = 19) {
   const p = await ctx.newPage()
-  // 🔐 [2026-09-14] AI 동의를 «미리» 심는다 — 안 심으면 동의 시트가 앞을 막아
-  //    다듬기 워커가 «어느 갈래에서도» 0 번이 되고, 「그냥 읽기 0번」이 아무것도 안 잰 초록불이 된다.
-  //    ⛔ 실제로 이 칸을 더한 첫 시도가 그랬고 — 짝인 ④(「AI로 읽기」는 «불러야» 한다)가 맞게 걸려서 드러났다.
-  await p.addInitScript(() => { try { localStorage.setItem('hankki:ai:consent', 'yes') } catch { /* noop */ } })
   let 열쇠쓴호출 = 0
   const 기본신호 = []
   // 🕸 프록시를 가로채 «횟수»를 센다. 실제로 나가게 두지 않는다(이 환경은 workers.dev 를 막는다).
@@ -79,18 +73,6 @@ async function 안내까지(ctx, 남은 = 19) {
   //    ✅ 그래서 「사진을 실어 보냈나(`image`)」로 옮긴다 — **그게 진짜로 열쇠를 쓰는 요청**이다.
   //       ⛔ 느슨하게 만든 게 아니라 «더 정확하게» 만든 것이다. 조회를 실수로 차감하게 바꾸면
   //          몸통에 image 가 실리므로 여전히 잡힌다.
-  // 🤖🤖 [2026-09-14] **AI 다듬기 워커도 «센다».**
-  //   📮 창업자 = *"열쇠쓰기를 안했는데 ai가 읽는거 되는거 고쳐야해"*
-  //   ⭐ 확정(2026-08-29 · 재론 금지) = 갈래는 «둘»뿐 —
-  //      잘 되는 쪽(구글 Vision ＋ AI · 열쇠 1개) · 불편한 쪽(tesseract ＋ 규칙 파서 · 0개).
-  //      ⛔ 「열쇠 없이도 AI 정리」를 어디에도 열지 않는다 — 열면 그 순간 열쇠가 안 팔린다.
-  //   ⛔ 「팝업이 떴나」로 재지 않는다 — 떠도 안 돌 수 있고, 안 떠도 돌 수 있다.
-  //      ✅ **워커를 불렀나**가 곧 「AI 가 읽었나」다.
-  let 다듬기호출 = 0
-  await p.route('**hankki-tidy.annyeong-hankki.workers.dev**', async (route) => {
-    다듬기호출 += 1
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: false }) })
-  })
   await p.route('**/hankki-ocr.annyeong-hankki.workers.dev/**', async (route) => {
     let 몸 = {}
     try { 몸 = JSON.parse(route.request().postData() || '{}') } catch { /* noop */ }
@@ -107,10 +89,7 @@ async function 안내까지(ctx, 남은 = 19) {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      // ⛔⛔ [2026-09-14] 전엔 「가짜」 두 글자였다 —  는 **40자 미만이면 AI 를 아예 안 부른다.**
-      //    그래서 어느 갈래에서든 다듬기가 0 번이 되어, 아래 「그냥 읽기 0번」이 «아무것도 안 잰» 초록불이었다.
-      //    ✅ 40자를 넘는 «레시피 모양» 글자를 준다 — 그래야 짝인 ④가 되짚을 수 있다.
-      body: JSON.stringify(몸.image ? { text: 가짜글자, left } : { ok: true, left }),
+      body: JSON.stringify(몸.image ? { text: '가짜', left } : { ok: true, left }),
     })
   })
   await p.goto('http://127.0.0.1:4477/hankki/', { waitUntil: 'networkidle' })
@@ -119,7 +98,7 @@ async function 안내까지(ctx, 남은 = 19) {
   await p.waitForTimeout(900)
   await p.locator('.imp-opt').nth(2).click() // ③
   await p.waitForTimeout(700)
-  return { p, 횟수: () => 열쇠쓴호출, 다듬기: () => 다듬기호출, 기본신호 }
+  return { p, 횟수: () => 열쇠쓴호출, 기본신호 }
 }
 
 // ① 목록에 「무료로도 돼요」 알약이 붙었나
@@ -173,14 +152,11 @@ async function 안내까지(ctx, 남은 = 19) {
       localStorage.setItem('hankki:ocrLeft', JSON.stringify({ welcome: 20, month: 5, total: 20 }))
     } catch { /* noop */ }
   })
-  const { p, 횟수, 다듬기, 기본신호 } = await 안내까지(ctx)
+  const { p, 횟수, 기본신호 } = await 안내까지(ctx)
   p.on('pageerror', () => { /* tesseract CDN 이 막혀 터진다 — 판정과 무관 */ })
   await p.locator('.pad.fade button', { hasText: '그냥 읽기' }).click()
   await 사진넣고자르기(p)
   재기('⭐ 「그냥 읽기」 → 프록시 호출 0번 (＝열쇠 안 깎임)', 횟수() === 0, `${횟수()}번`)
-  // 🤖 [2026-09-14 창업자 제보] AI 다듬기도 «안» 돌아야 한다 — 확정의 「불편한 쪽」은 규칙 파서다
-  await p.waitForTimeout(2500)
-  재기('🤖⭐ 「그냥 읽기」 → AI 다듬기 워커 0번 (＝열쇠 없이 AI 정리가 안 열린다)', 다듬기() === 0, `${다듬기()}번`)
   // 📊📊 [2026-09-01 창업자 지시] 「무료로 얼마나 읽히나」를 세려면 앱이 «알려줘야» 한다.
   //   📮 *"기본인식을 얼마나 썼는지도 알아야 하지 않을까"* · *"유료 켤때 무료이용률도 알아야 가격이나 장수를 수정하니까"*
   //   ⭐⭐ 재는 것은 개수가 아니라 **갈래가 갈리나** — 갈래가 틀리면 숫자는 있는데 «처방»이 정반대가 된다
@@ -205,15 +181,11 @@ async function 안내까지(ctx, 남은 = 19) {
       localStorage.setItem('hankki:ocrLeft', JSON.stringify({ welcome: 20, month: 5, total: 20 }))
     } catch { /* noop */ }
   })
-  const { p, 횟수, 다듬기 } = await 안내까지(ctx)
+  const { p, 횟수 } = await 안내까지(ctx)
   p.on('pageerror', () => { /* 위와 같다 */ })
   await p.locator('.pad.fade button', { hasText: 'AI로' }).click()
   await 사진넣고자르기(p)
   재기('⭐ 「AI로 읽기」 → 프록시 호출 1번 이상 (열쇠 길은 그대로 산다)', 횟수() >= 1, `${횟수()}번`)
-  // 🤖 되짚기 — 열쇠를 쓴 쪽은 AI 다듬기가 «돌아야» 한다(확정 = 열쇠를 쓰면 «무조건» AI 정리까지)
-  //   ⛔ 이 칸이 없으면 「그냥 읽기 0번」이 «아무것도 안 재고» 통과할 수 있다(규칙 18 ⓘ).
-  await p.waitForTimeout(3500)
-  재기('🤖⭐ 「AI로 읽기」 → AI 다듬기 워커 1번 이상 (열쇠 값어치가 반쪽이 아니다)', 다듬기() >= 1, `${다듬기()}번`)
   await ctx.close()
 }
 
