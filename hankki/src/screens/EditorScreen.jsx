@@ -182,6 +182,9 @@ export default function EditorScreen({ id, prefill }) {
   // 🚨 저장이 «실패»했다 — 화면에 빨간 띠로 남긴다(토스트는 지나가면 못 본다)
   const [saveFailed, setSaveFailed] = useState(false)
   const [다듬는중, set다듬는중] = useState(false) // 🤖 「AI로 다시 다듬기」가 도는 동안
+  // 🆓 [2026-09-14] 이번 판을 «무료로» 읽었나 — 「AI로 다시 다듬기」 단추를 가릴 잣대다.
+  //   ⛔ ref 로 두면 화면이 다시 안 그려져 단추가 남는다(창업자 확정 = 열쇠 없이 AI 정리는 어디에도 안 연다).
+  const [무료판, set무료판] = useState(false)
   // 📥 [2026-08-22] 파서에 넣은 «원문» — 화면엔 안 보이고 저장만 된다.
   //    파서를 고친 날 「다시 읽기」로 되살릴 재료다(→ `parseRecipe.js` 의 `keepRaw` 주석).
   //    ⛔ 편집으로 들어왔는데 원문이 없으면 «빈 값으로 덮지» 않는다 — 없는 값으로 덮는 건 지우는 것이다(규칙 18 ⓙ).
@@ -585,6 +588,9 @@ export default function EditorScreen({ id, prefill }) {
       return
     }
     const combined = ocrAccum.current
+    // 🆓 「그냥 읽기」로 왔나 = 프록시를 «한 번도 안 불렀다»(셈.안부름). 화면이 고른 값이 아니라 «사실»이다.
+    const 무료로읽었다 = !!셈.안부름
+    set무료판(무료로읽었다)
     // 🆓 freeTail = 「그냥 읽기」로 왔다(열쇠를 안 썼다) — 열쇠 얘기보다 «먼저» 말한다
     // 🈳 글자를 못 얻었다 — 원인Tail 이 「열쇠는 그대로예요」까지 말해 준다(서버가 안 깎았을 때만)
     if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + (freeTail || 원인Tail || quotaTail), freeTail || 원인Tail || quotaTail ? 6500 : 3200); return }
@@ -651,7 +657,12 @@ export default function EditorScreen({ id, prefill }) {
     //      그때 표시가 없으면 **영영 안 다듬어진다** — 열쇠는 이미 나갔는데.
     //   ✅ 표시가 남아 있으면 그 레시피를 열 때 `RecipeDetailScreen` 이 저절로 만회한다(열쇠 0).
     //   🧪 판 = `_repro-앱이정리됨-0904.mjs`
-    updateRecipe(r.id, { tidyFail: 1 })
+    // 🆓🆓 [2026-09-14 · 창업자 확정 2026-08-29] 무료로 읽었으면 AI 정리가 «아예 없다» —
+    //   그래서 「아직 못 다듬음」 표시도 «안» 남긴다. 남기면 레시피 상세가 저절로 만회해서
+    //   결국 열쇠 0개로 AI 가 도는 그 길이 다시 열린다(막는 곳이 하나여야 한다).
+    //   ⭐ 대신 «무료로 읽었다»를 레시피에 적어 둔다 — 「AI로 다시 다듬기」 단추를 가릴 잣대다.
+    if (무료로읽었다) updateRecipe(r.id, { freeRead: 1, tidyFail: 0 })
+    else updateRecipe(r.id, { tidyFail: 1 })
     // 🏷🏷 **제목만 못 찾았을 때 — 「직접 적어주세요」로 데려간다** (창업자 확정 2026-09-09)
     //
     //   📮 창업자 = *"캡쳐에 제목이 없는거는 ai스캔을해도 안나오잖아. 이건 그냥 유저가 저장을 하는게 맞아"*
@@ -676,8 +687,11 @@ export default function EditorScreen({ id, prefill }) {
     //      안내가 스스로 모순이라 **다듬는 동안 화면이 죽은 것처럼 보였다.**
     //   ⭐ 그래서 시간이 정해진 토스트 말고 **끝날 때까지 남는 줄**을 켠다(아래 `다듬는중` 표시).
     //   ⛔⛔ 두 갈래(성공·실패) «모두»에서 꺼야 한다 — 한 쪽을 빠뜨리면 «영영 도는 것»으로 굳는다.
+    // 🆓 무료로 읽었으면 여기서 끝이다 — 규칙 파서 결과가 그대로 남는다(확정의 「불편한 쪽」).
+    //   ⛔ 「다듬는 중」 표시도 안 켠다 — 돌지도 않는데 도는 것처럼 보이면 그게 더 나쁘다.
+    if (무료로읽었다) { setTimeout(제목챙기기, 1200); return }
     set다듬는중(true)
-    tidyRecipe(combined, shotAccum.current).then((ai) => {
+    tidyRecipe(combined, shotAccum.current, { 무료: 무료로읽었다 }).then((ai) => {
       set다듬는중(false)
       if (ai) {
         채우기(mergeTidy(r, ai))
@@ -1400,6 +1414,9 @@ export default function EditorScreen({ id, prefill }) {
                          ⛔ 없으면 글자만으로 돈다(그래도 규칙 파서보단 낫다).
                       ⛔ 이 단추는 «누른 사람이 원해서» 칸을 갈아끼운다 — 손으로 고친 것도 덮인다.
                          그래서 아래에 그렇게 적어 둔다(모르고 눌러 잃는 일이 없게). */}
+                  {/* 🆓 [2026-09-14] 무료로 읽은 판엔 «안» 보인다 — 누르면 열쇠 0개로 AI 가 돈다.
+                      창업자 확정(2026-08-29 · 재론 금지) = 「열쇠 없이도 AI 정리」를 어디에도 열지 않는다. */}
+                  {!무료판 && (
                   <button
                     type="button"
                     className="press"
@@ -1408,6 +1425,7 @@ export default function EditorScreen({ id, prefill }) {
                   >
                     {다듬는중 ? 'AI가 다듬는 중…' : 'AI로 다시 다듬기'}
                   </button>
+                  )}
                 </div>
                 <div style={{ fontSize: 15, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>
                   레시피가 이상하게 담겼을 때 이 글자를 그대로 보내주시면 원인을 찾을 수 있어요.

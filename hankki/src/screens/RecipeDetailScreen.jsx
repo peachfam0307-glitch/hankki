@@ -225,6 +225,10 @@ export default function RecipeDetailScreen({ id }) {
   const 만회한적 = useRef('')
   useEffect(() => {
     if (!r || r.tidyFail !== 1) return
+    // 🆓 [2026-09-14] 무료로 읽은 편은 «만회하지 않는다» — 그게 열쇠 0개로 AI 가 도는 뒷문이다.
+    //   ⛔ 편집 화면이 표시를 안 남기므로 보통은 여기 안 오지만, 옛 편·동기화로 들어올 수 있어 한 번 더 막는다.
+    //   📄 근거 = 창업자 확정 2026-08-29(재론 금지) · docs/_archive/2026-08/AI다듬기-만들기전-리서치-2026-08-28.md
+    if (r.freeRead) return
     const 원문 = String(r.rawText || '')
     if (원문.length < 40) return          // 원문이 없으면 만회할 재료가 없다
     if (만회한적.current === r.id) return // ⛔ 이 화면에 머무는 동안 두 번 돌지 않게
@@ -884,7 +888,8 @@ export default function RecipeDetailScreen({ id }) {
             ⭐ 자리 = **재료 «바로 위»**. 유저가 「덜 읽혔네」를 느끼는 곳이 바로 여기다.
             ⛔ 「고장」이라고 쓰지 않는다 — 단추 하나로 되는 일이다(보관함 줄과 «같은 말»).
             ⛔ 원문이 40자 미만이면 아예 안 보인다 — 다듬을 재료가 없어 눌러도 헛돈다(뉴런도 0). */}
-        {(r.tidyFail === 1 || r.tidyFail === 2) && String(r.rawText || '').length >= 40 && (
+        {/* 🆓 [2026-09-14] 무료로 읽은 편엔 «안» 보인다 — 누르면 열쇠 0개로 AI 가 돈다(창업자 확정 2026-08-29) */}
+        {!r.freeRead && (r.tidyFail === 1 || r.tidyFail === 2) && String(r.rawText || '').length >= 40 && (
           <button
             className="press" onClick={다시다듬기} disabled={다시중}
             style={{ width: '100%', marginTop: 14, padding: '12px 14px', borderRadius: 14, background: 'var(--cream)', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}

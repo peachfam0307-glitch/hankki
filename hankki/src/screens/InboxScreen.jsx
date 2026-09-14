@@ -69,7 +69,9 @@ export default function InboxScreen() {
     nav.showToast('AI가 다듬는 중이에요 · 다 되면 레시피에 저절로 올라가요', 6000)
     // 👁 사진도 같이(ⓒ) — 저장된 캡처가 dataURL 이면 그것(`tidy.js` 가 한 번 더 거른다)
     const 사진 = typeof r.image === 'string' && r.image.startsWith('data:image/') ? r.image : ''
-    const ai = await tidyRecipe(원문, 사진)
+    // 🆓 [2026-09-14] 무료로 읽은 편은 AI 정리가 «없다» — 여기로 들어와도 막힌다(막는 문은 tidy.js 한 곳).
+    //   📄 창업자 확정 2026-08-29(재론 금지) = 「열쇠 없이도 AI 정리」를 어디에도 열지 않는다.
+    const ai = await tidyRecipe(원문, 사진, { 무료: !!r.freeRead })
     set다듬는중('')
     if (!ai) {
       // ⛔ 유저가 «직접 눌렀으니» 실패도 말한다(공유받기 때 조용한 것과 다르다)
@@ -210,8 +212,10 @@ export default function InboxScreen() {
                    *"난 이대로 쓸래"* 하는 사람이 있다. 고를 자유를 뺏지 않는다.
                 ⛔ 휴지통과 헷갈리면 안 된다 — 이 줄은 **글자 단추**라 아이콘(🗑)과 모양부터 다르다. */}
             <div style={{ display: 'flex', gap: 8, padding: '0 4px 10px 70px' }}>
-              {/* 🤖 AI로 다듬기 — 원문이 있는 줄에만 · 열쇠 0개 · 성공하면 저절로 졸업(창업자 2026-09-05) */}
-              {String(r.rawText || '').length >= 40 && (
+              {/* 🤖 AI로 다듬기 — 원문이 있는 줄에만 · 열쇠 0개 · 성공하면 저절로 졸업(창업자 2026-09-05)
+                  🆓 [2026-09-14] ⛔무료로 읽은 편엔 «안» 보인다 — 누르면 열쇠 0개로 AI 정리가 되고,
+                     그게 창업자 확정(2026-08-29 · 재론 금지)이 «어디에도 열지 말라»고 한 그 문이다. */}
+              {!r.freeRead && String(r.rawText || '').length >= 40 && (
                 <button
                   className="press"
                   onClick={() => 다듬기(r)}
