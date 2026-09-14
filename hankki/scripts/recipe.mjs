@@ -87,6 +87,9 @@ if (!isMain) { /* import 용 */ } else {
     console.log(`\n   만드는 법 ${r.steps.length}걸음`)
     r.steps.forEach((s, i) => console.log(`     ${i + 1}. ${s}`))
     if (r.memo) { console.log('\n   메모'); r.memo.split('\n').filter(Boolean).forEach((p) => console.log(`     ${p}`)) }
+    // ❓ [2026-09-14] 그 편에 «창업자에게 물어볼 것»이 남아 있으면 여기서도 띄운다
+    //   📮 창업자 = *"나중에검수할때꼭말해줘"* — 검수판(release-prep)과 «같은 값»을 읽는다
+    if (r.물어볼것) console.log(`\n   ❓ 창업자에게 물어볼 것\n     ${r.물어볼것}`)
   }
   console.log()
 }
