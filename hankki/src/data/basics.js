@@ -266,7 +266,7 @@ const RAW_BASICS = [
     id: 'basic-tteokbokki',
     title: '국물 떡볶이',
     icon: 'gr_003',
-    category: '간식',
+    category: '기타',
     folder: '간식',
     tags: ['간단한 요리', '간식'],
     time: 20,
@@ -512,7 +512,7 @@ const RAW_BASICS = [
     id: 'basic-basquecake', // 자리 재사용: 바스크치즈케이크 → 요즘 감성 '요거트 아이스크림'으로 교체
     title: '요거트 아이스크림',
     icon: 'fe_19',
-    category: '간식',
+    category: '기타',
     folder: '간식',
     tags: ['노오븐', '건강 간식'],
     time: 10,
@@ -539,7 +539,7 @@ const RAW_BASICS = [
     id: 'basic-tiramisu', // 자리 재사용: 티라미수 → 요즘 유행 '크루키'로 교체
     title: '크루키',
     icon: 'fe_17',
-    category: '간식',
+    category: '기타',
     folder: '간식',
     tags: ['노오븐', '에어프라이어'],
     time: 20,
@@ -687,7 +687,7 @@ const RAW_BASICS = [
     // ✅ 창업자가 실물(검수판)을 보고 확인했다 — 2026-08-17. 코코넛 워터를 메인으로 바꾼 판.
     review: '창업자',
     icon: 'fe_508',
-    category: '간식',
+    category: '기타',
     folder: '간식',
     tags: ['스무디', '아침대용', '다이어트'],
     time: 5,
@@ -1839,7 +1839,7 @@ const RAW_BASICS = [
     // ✅ 창업자가 실물(검수판)을 보고 확인했다 — 2026-08-17.
     review: '창업자',
     icon: 'fb_b09',
-    category: '간식',
+    category: '기타',
     folder: '간식',
     tags: ['여름', '아이 간식', '간단한 요리'],
     time: 10,
@@ -2261,7 +2261,7 @@ const RAW_BASICS = [
     title: '오리지날 떡볶이', from: '2026-09-16', review: '창업자',   // ✅ 2026-09-08 창업자 검수 (분량·메모 판정 반영)
     // ⏳ 그림 = 임시로 국물 떡볶이 것과 같은 컷을 쓴다. 창업자가 새로 뽑아주면 갈아끼운다.
     icon: 'gr_003',
-    category: '한식',
+    category: '기타',
     folder: '한식',
     tags: ['분식', 'SNS', '떡볶이'],
     time: 25,   // 창업자 확정 2026-09-08 = "떡볶이는 25분"
@@ -6915,7 +6915,7 @@ const RAW_BASICS = [
     origin: '창업자',
     review: '창업자', // ✅ 2026-09-11 검수판 15편 전수 → 13편 「괜찮아」 · 우삼겹은 창업자 "잘못눌렀어 패스야" · 대파소스는 치킨스톡 「포」로 고침
     icon: 'gr_007',
-    category: '간식', folder: '간식', tags: ['간식', '초간단'],
+    category: '기타', folder: '간식', tags: ['간식', '초간단'],
     time: 45, servings: 4, difficulty: '쉬움',
     ingredients: [
       '찹쌀가루 400g',
