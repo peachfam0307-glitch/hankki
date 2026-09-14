@@ -736,7 +736,7 @@ export default function EditorScreen({ id, prefill }) {
     //   ⛔ dataURL 이 아니면 안 보낸다(`tidy.js` 가 또 한 번 거른다).
     const 표지 = typeof editing?.image === 'string' ? editing.image : ''
     const 사진 = shotAccum.current || (표지.startsWith('data:image/') ? 표지 : '')
-    const ai = await tidyRecipe(rawText, 사진)
+    const ai = await tidyRecipe(rawText, 사진, { 무료: 무료판 || !!editing?.freeRead })
     set다듬는중(false)
     끝표시(!!ai)
     if (!ai) {
@@ -1438,7 +1438,7 @@ export default function EditorScreen({ id, prefill }) {
                          그래서 아래에 그렇게 적어 둔다(모르고 눌러 잃는 일이 없게). */}
                   {/* 🆓 [2026-09-14] 무료로 읽은 판엔 «안» 보인다 — 누르면 열쇠 0개로 AI 가 돈다.
                       창업자 확정(2026-08-29 · 재론 금지) = 「열쇠 없이도 AI 정리」를 어디에도 열지 않는다. */}
-                  {!무료판 && (
+                  {!(무료판 || editing?.freeRead) && (
                   <button
                     type="button"
                     className="press"
