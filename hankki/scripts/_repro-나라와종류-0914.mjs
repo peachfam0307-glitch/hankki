@@ -140,7 +140,45 @@ console.log('\n⑥ 나라가 다른 편이 섞이지 않는다')
   chk('⛔ 일식 칩에 된장찌개는 «안» 뜬다', /된장찌개/.test(일식글), 'false')
 }
 
-await ctx.close(); await b.close(); srv.close()
+await ctx.close()
+
+// ───────── ⑦ ⭐⭐⭐제일 큰 구멍 — «이미 깔린 폰»도 새 갈래를 받나 ─────────
+//   ⛔⛔ 앱은 «폰에 저장된 복사본»을 보여준다. 원본을 고쳐도 이미 깔린 폰은 옛 값을 그대로 쓴다.
+//      실측(store.jsx) = 씨앗 다시 맞추기가 글·사진·savedAt 은 고치는데 **category 는 안 고친다**
+//      (팟타이 한 편만 손으로 박혀 있다 · 216줄).
+//   📌 어제 가지무침이 12시간 안 바뀐 것과 «같은 뿌리»다(규칙 18 ⓙ).
+//   ⭐ 그래서 「옛 갈래가 저장된 폰」을 흉내 내어 심고, 앱을 켜서 갈래가 새것이 되나를 본다.
+console.log('\n⑦ ⭐⭐이미 깔린 폰 — 옛 갈래가 저장돼 있어도 새 갈래를 받나')
+{
+  const 씨 = allBasicRecipes.find((r) => r.id === 'basic-ganjang-gejang')
+  const ctx2 = await b.newContext({ viewport: { width: 390, height: 844 } })
+  await ctx2.addInitScript(SEED_COACH_SEEN)
+  // 🧪 옛 판이 저장해 둔 모습 그대로 — 갈래가 '반찬'(종류가 갈래 자리에 들어 있던 때)
+  await ctx2.addInitScript(([편, 앞버전]) => {
+    try {
+      localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1')
+      localStorage.setItem('hankki:v1', JSON.stringify({ recipes: [편], diary: [], seedV: 앞버전 }))
+    } catch { /* noop */ }
+  //   ⛔ 폴더는 씨앗과 «다른» 값을 심는다 — 씨앗과 같은 값을 심으면 덮여도 티가 안 나
+  //      「안 건드렸다」로 잘못 읽힌다(실제로 처음에 그렇게 가짜 초록불이 났다).
+  }, [{ ...씨, category: '반찬', folder: '내폴더' }, 0])
+  const p2 = await ctx2.newPage()
+  await p2.goto('http://127.0.0.1:4494/hankki/', { waitUntil: 'networkidle' })
+  await p2.waitForTimeout(2000)
+  const 뒤 = await p2.evaluate(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
+      const r = (s.recipes || []).find((x) => x.id === 'basic-ganjang-gejang')
+      return r ? { category: r.category, folder: r.folder } : { category: '(그 편이 없다)', folder: '' }
+    } catch (e) { return { category: 'X' + e.message, folder: '' } }
+  })
+  await ctx2.close()
+  chk('⭐⭐ 갈래가 새것(한식)으로 맞춰진다', 뒤.category, '한식')
+  // ⛔ 되짚기 — 폴더는 «건드리면 안 된다». 유저가 옮겨 둔 자리를 잃으면 안 되기 때문.
+  chk('⛔ 유저가 옮겨 둔 폴더를 잃지 않는다', 뒤.folder, '내폴더')
+}
+
+await b.close(); srv.close()
 console.log(`\n${실패 ? '⛔' : '✅'} ${통과}/${통과 + 실패}`)
 if (실패) console.log('   ' + 실패목록.join('\n   '))
 console.log()
