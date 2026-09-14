@@ -16,6 +16,7 @@ import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES } from '../theme'
+import { 나라들 } from '../data/종류'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, 열쇠셈, 열쇠셈리셋, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
@@ -1353,7 +1354,15 @@ export default function EditorScreen({ id, prefill }) {
         <div className="field">
           <label>폴더</label>
           <div className="hscroll" style={{ padding: 0, margin: 0 }}>
-            {folders.map((c) => (
+            {/* 🌏🌏 [창업자 실물 2026-09-14] 나라를 «뺀다» — 바로 위 「카테고리」 줄과 똑같아서
+                한 화면에 한식·중식·일식·양식·아시안·기타가 «두 번» 떴다.
+                📮 창업자 = "카테고리도 한식 위 아래 두번 중복이야" ·
+                   "제목아래 카테고리랑 테그밑에 폴더가 또있어"
+                ⛔ 그 전엔 «서로 다른 값»도 고를 수 있었다 — 카테고리는 한식인데 폴더는 양식처럼.
+                ⭐ 갈래를 이렇게 나눈다 = 카테고리는 「어느 나라 것인가」 · 폴더는 「어디에 넣어둘까」.
+                ⛔ 저장된 편은 하나도 안 움직인다 — 폴더가 「한식」인 편은 그대로 있고
+                   레시피 탭 한식 칩에도 그대로 뜬다. «고르는 자리»에서만 안 보인다. */}
+            {folders.filter((c) => !나라들.includes(c)).map((c) => (
               <button key={c} className={`pill press ${f.folder === c ? 'active' : ''}`} onClick={() => set('folder', c)}>{c}</button>
             ))}
             <button className="pill press" onClick={() => setNewFolder(true)}>
