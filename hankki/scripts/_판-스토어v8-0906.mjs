@@ -35,6 +35,8 @@ const 앱 = (f) => b64(join(원본, `v8-${f}.png`)) // ⛔ 파일 이름에 v8- 
 const 올리브 = '#4a4f36'
 // 📱 [00:46] *"이거 캐러셀도 줘~!"* — 같은 8장을 인스타 캐러셀(1080×1350 · 4:5)로. `CAROUSEL=1` 이면 키만 줄이고 폰·단계·카드를 위로 당긴다.
 const 캐러셀 = !!process.env.CAROUSEL
+// 🍎 [2026-09-13] 아이폰·아이패드 판의 01 단계는 「공유→더보기→한끼」가 아니라 「캡처 → 한끼 가져오기 → 사진 고르기」다 —
+//    아이폰 껍데기엔 공유 시트(share_target) 길이 없다(딸 폰 실물 09-13). 없는 흐름을 스샷에 그리면 2.3.3(앱과 다른 스샷)에 걸린다.
 // 🍎 [2026-09-08] 애플 App Store 규격 — 같은 8장을 «비율만 바꿔» 뽑는다(창업자 "13일 전에 할 수 있는 건 다").
 //    원문 = developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications (2026-09-08 이 세션에서 열람)
 //    · iPhone 6.9" = 1320×2868 (세로) — «필수»(6.5" 도 안 주면). · iPad 13" = 2064×2752 — 껍데기가 아이패드도 켜져 있어(TARGETED_DEVICE_FAMILY 1,2) «필수».
@@ -111,15 +113,21 @@ const 샤랄라 = () => 별(700, 96, 74) + 별(790, 190, 40, .8, '#fff3d6') + �
 const 머리 = (h, s) => `<div class="wrap"><div class="hh">${h}</div><div class="ss">${s}</div></div><div class="rule"></div>`
 const 포인트 = (rows) => `<div class="steps">${rows.map(([e, b, s]) => `<div class="step"><div class="dot">${e}</div><div><b>${b}</b>${s ? `<small>${s}</small>` : ''}</div></div>`).join('')}</div>`
 
+// 🍎 [2026-09-14] 아이폰 공유 단추(네모＋위 화살표) — 17~19판 실물로 공유 시트에 「한끼」가 뜨는 걸 확인한 뒤 «그 길»을 가르친다.
+//    안드로이드의 i-공유.png 는 점 세 개 모양이라 아이폰과 다르다 → 아이폰 것은 iOS 글리프를 그대로 그린다(파란 □↑).
+const iOS공유단추 = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><circle cx="48" cy="48" r="48" fill="#fff"/><g fill="none" stroke="#3478F6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M48 22v36"/><path d="M34 36l14-14 14 14"/><path d="M36 46h-6a4 4 0 0 0-4 4v22a4 4 0 0 0 4 4h36a4 4 0 0 0 4-4V50a4 4 0 0 0-4-4h-6"/></g></svg>`)
 // 01 캡처하는 법 — 8/28 확정 장면 ㉢(인스타 › 한끼 ＋ 단계) 을 D 짜임으로
 const 장01 = () => `<style>${공통}</style>
 ${머리('캡처 한 장이면<br>레시피가 정리돼요', '보다가 캡처 · 재료도 순서도 알아서')}${샤랄라()}
 <div class="back"><img src="${b64(join(안내원본, '인스타-공유동그라미.png'))}"></div>
 <div class="front"><img src="${앱('21-상세-재료순서')}"></div>
-<div class="steps">
+${(아이폰 || 아이패드) ? `<div class="steps">
+<div class="step"><div class="dot">①</div><div><b>캡처</b><small>보다가 찰칵</small></div></div>
+<div class="step"><img src="${iOS공유단추}"><div><b>② 공유 › 한끼</b><small>사진에서 공유 누르고</small></div></div>
+<div class="step"><img src="${b64(join(안내원본, 'i-한끼.png'))}"><div><b>③ 한끼 열기</b><small>담겨 있어요 · AI가 읽어요</small></div></div></div>` : `<div class="steps">
 <div class="step"><img src="${b64(join(안내원본, 'i-공유.png'))}"><div><b>① 공유</b><small>캡처한 글에서</small></div></div>
 <div class="step"><img src="${b64(join(안내원본, 'i-더보기.png'))}"><div><b>② 더보기</b></div></div>
-<div class="step"><img src="${b64(join(안내원본, 'i-한끼.png'))}"><div><b>③ 한끼</b><small>누르면 끝</small></div></div></div>`
+<div class="step"><img src="${b64(join(안내원본, 'i-한끼.png'))}"><div><b>③ 한끼</b><small>누르면 끝</small></div></div></div>`}`
 
 // 02~07 — 헤드라인 ＋ 주인공 폰 ＋ 왼쪽에 곰펭 한 마리와 포인트 둘
 //    📮 [00:45] *"펭펭에 비해 꼬르곰이 작게 느껴져"* — gp_gom* 컷은 여백이 커서 같은 폭이면 작아 보인다 → 곰 360 · 펭 290

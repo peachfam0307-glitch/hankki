@@ -182,6 +182,12 @@ export default function EditorScreen({ id, prefill }) {
   // 🚨 저장이 «실패»했다 — 화면에 빨간 띠로 남긴다(토스트는 지나가면 못 본다)
   const [saveFailed, setSaveFailed] = useState(false)
   const [다듬는중, set다듬는중] = useState(false) // 🤖 「AI로 다시 다듬기」가 도는 동안
+  // 🔚🔚 **[2026-09-13 창업자 실물 · 아이폰 빌드 15] 「20~60초 다듬는다고 하고 그 창이 사라지면 조용해 · 끝난 건지 안 된 건지 몰라」**
+  //   ⛔ 옛 판 = 위 「다듬는 중」 줄이 «사라지기만» 했다. 성공은 4.8초 띠 하나(놓친다), 실패는 아무 말 없음(09-09 결정).
+  //   ⭐ 창업자가 그 결정을 뒤집었다 — «끝났는지»는 알아야 한다. 그래서 줄이 사라지는 대신 **끝말로 바뀐다**(9초).
+  //      공유로 담는 길(App.jsx 끝알림·다듬기끝말)과 같은 모양이다 — 두 길이 같은 말을 한다.
+  const [다듬끝, set다듬끝] = useState(null)   // null | { 됐나: boolean }
+  const 끝표시 = (됐나) => { set다듬끝({ 됐나 }); setTimeout(() => set다듬끝((v) => (v && v.됐나 === 됐나 ? null : v)), 9000) }
   // 📥 [2026-08-22] 파서에 넣은 «원문» — 화면엔 안 보이고 저장만 된다.
   //    파서를 고친 날 「다시 읽기」로 되살릴 재료다(→ `parseRecipe.js` 의 `keepRaw` 주석).
   //    ⛔ 편집으로 들어왔는데 원문이 없으면 «빈 값으로 덮지» 않는다 — 없는 값으로 덮는 건 지우는 것이다(규칙 18 ⓙ).
@@ -679,6 +685,7 @@ export default function EditorScreen({ id, prefill }) {
     set다듬는중(true)
     tidyRecipe(combined, shotAccum.current).then((ai) => {
       set다듬는중(false)
+      끝표시(!!ai)   // 🔚 사라지지 않고 «끝말»로 바뀐다 — 됐는지 안 됐는지 보인다
       if (ai) {
         채우기(mergeTidy(r, ai))
         updateRecipe(r.id, { tidyFail: 0 })   // ✅ 다 됐으니 표시를 지운다(안 지우면 또 다듬는다)
@@ -693,6 +700,7 @@ export default function EditorScreen({ id, prefill }) {
     }).catch(() => {
       // ⛔ 여기까지 오는 일은 «없어야» 하지만 — 오면 표시가 영영 남는다. 그게 제일 나쁜 모양이다.
       set다듬는중(false)
+      끝표시(false)
       setTimeout(제목챙기기, 1200)
     })
   }
@@ -716,6 +724,7 @@ export default function EditorScreen({ id, prefill }) {
     const 사진 = shotAccum.current || (표지.startsWith('data:image/') ? 표지 : '')
     const ai = await tidyRecipe(rawText, 사진)
     set다듬는중(false)
+    끝표시(!!ai)
     if (!ai) {
       // ⛔ 여기선 실패를 «유저에게도» 알린다 — 유저가 «직접 눌렀으니» 결과를 알 권리가 있다.
       //    (공유받기 때 조용한 것과 다르다. 거긴 유저가 부른 적이 없다)
@@ -1224,6 +1233,19 @@ export default function EditorScreen({ id, prefill }) {
               </div>
             </div>
           )}
+          {/* 🔚 끝말 — 위 줄이 «사라지는 대신» 이걸로 바뀐다(9초). 창업자 09-13 *"끝난 건지 안 된 건지 몰라"* */}
+          {다듬끝 && !다듬는중 && !ocr.busy && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 13px', borderRadius: 'var(--r-md)', background: 다듬끝.됐나 ? '#EAF3E4' : 'var(--cream)', color: 'var(--brown)', marginBottom: 12 }}>
+              <img src={uiGomPot} alt="" aria-hidden="true" draggable={false}
+                width={33} height={47} style={{ flex: '0 0 auto', objectFit: 'contain', margin: '-6px 0' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 16.5, fontWeight: 700 }}>{다듬끝.됐나 ? 'AI 다듬기 다 됐어요' : '이번엔 AI 다듬기가 안 됐어요'}</div>
+                <div className="t-sub" style={{ fontSize: 15, marginTop: 4, lineHeight: 1.4, wordBreak: 'keep-all' }}>
+                  {다듬끝.됐나 ? '재료와 만드는 법을 고쳐 넣었어요 · 확인하고 저장하면 돼요' : '초안은 그대로 있어요 · 고쳐서 저장해도 되고, 저장한 뒤 「AI로 다시 다듬기」를 눌러도 돼요'}
+                </div>
+              </div>
+            </div>
+          )}
         {/* 사진으로 채우기는 재료·만드는 법 각 칸 옆의 📷 버튼으로 — 썸네일 사진과 헷갈리지 않게 여기엔 두지 않는다 */}
 
         <div className="field">
@@ -1463,6 +1485,7 @@ export default function EditorScreen({ id, prefill }) {
           confirmLabel="버리기"
           danger
           // 🚪🚪 **[창업자 제보 2026-09-13] *"버리기 누르면 변화없음 나가기도 안됨"* · *"저장해야지만 레시피화면으로 가"***
+          //   🍎 같은 날 아이폰 갈래(빌드 15 딸 폰)도 같은 증상을 같은 길(popAll)로 고쳤다 — 합칠 때 코드는 같았고 주석만 겹쳤다.
           //   ⛔⛔ 뿌리 = `nav.pop()` 은 `history.back()` 인데, **이 물음 시트가 «자기 히스토리 칸»을 하나 쓴다**
           //      (`useBackHandler.js` 의 `useModalBack` 머리주석 — *"마운트될 때 진짜 히스토리 칸을 하나 쌓고"*).
           //      → 「버리기」가 부른 back() 이 **그 시트 칸만 먹고** 편집 화면은 그대로 남았다.
