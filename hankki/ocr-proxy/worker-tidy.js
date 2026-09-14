@@ -201,6 +201,11 @@ export default {
       //   ⛔ 유저 «개인별»은 세지 않는다 — 그건 곧 개인정보가 된다(OCR 워커와 같은 원칙).
       const [오늘, 오늘창] = await Promise.all([num(kvq, `td:${날}`), num(kvq, `tdf:${날}`)])
       const 눈오늘 = await num(kvq, `tv:${날}`)
+      // 🙋‍♀️ [2026-09-14] 「누가 시켰나」 — 사람이 «누른» 것과 앱이 «저절로» 돈 것을 가른다.
+      const [까user, 까auto, 까retry, 까모름] = await Promise.all([
+        num(kvq, `tr:${날}:user`), num(kvq, `tr:${날}:auto`),
+        num(kvq, `tr:${날}:retry`), num(kvq, `tr:${날}:모름`),
+      ])
       return json({
         날,
         오늘: {
@@ -212,6 +217,11 @@ export default {
         },
         // 👁 그중 «사진까지 본」 편수(ⓒ). 나머지는 글자만 본 것이다.
         눈: { 사진까지본것: 눈오늘, 글자만: Math.max(0, 오늘 - 눈오늘) },
+        // 🙋‍♀️🙋‍♀️ [2026-09-14] **「사람이 진짜 AI 를 쓰나」** — 유료를 켤지 정하는 칸이다.
+        //   ⛔⛔ `사람이누름` 만 「유저가 AI 를 썼다」이다. `저절로` 는 앱이 만회한 것이라 «수요가 아니다».
+        //   ⛔ `재시도` 는 같은 한 번이 network 로 죽어 다시 부른 것 — 사람 수로 세면 부푼다.
+        //   ⚠️ `모름` = 아직 옛 앱을 쓰는 사람 — 이 값이 줄어드는 것으로 새 판이 퍼진 정도를 본다.
+        누가시켰나: { 사람이누름: 까user, 저절로: 까auto, 재시도: 까retry, 모름: 까모름 },
       }, 200, cors)
     }
 
@@ -334,6 +344,8 @@ export default {
     // ⛔ **옛 앱은 한 글자도 안 바뀐다** — `job` 을 «안» 보내면 예전처럼 기다렸다 받는다(아래 `맡김`).
     // ⛔ KV 가 없으면 선반이 없으니 맡길 수 없다 → 그때도 예전 길로 간다.
     // ⛔ 재시도·모델 차례·상한은 «한 글자도» 안 건드렸다 — 바꾼 건 「누가 결과를 받나」 하나뿐이다.
+    // 🙋‍♀️ [2026-09-14] 「누가 시켰나」 — 앱이 실어 보낸다. ⛔없으면 「모름」이고 «막지 않는다»(옛 앱 보호).
+    const 까닭 = String(body.까닭 || '').trim().slice(0, 8)
     const 맡김 = !!(kv && ctx && typeof ctx.waitUntil === 'function' && String(body.job || '').trim())
     const 번호 = String(body.job || '').trim().slice(0, 64)
 
@@ -437,10 +449,10 @@ export default {
       } catch (e) {
         마지막오류 = String((e && e.message) || e).slice(0, 200)
         console.log('AI_FAILED', model, (Date.now() - 시작) + 'ms', 마지막오류.slice(0, 300))
-        await 통세기(kv, ymd, founder, 눈)
+        await 통세기(kv, ymd, founder, 눈, 까닭)
         continue
       }
-      await 통세기(kv, ymd, founder, 눈)   // ⛔ 실패해도 뉴런은 나갔다 — 성공만 세면 통이 조용히 샌다
+      await 통세기(kv, ymd, founder, 눈, 까닭)   // ⛔ 실패해도 뉴런은 나갔다 — 성공만 세면 통이 조용히 샌다
 
       const parsed = pickJson(out)
       if (!parsed) {
@@ -733,11 +745,19 @@ async function num(kv, key) {
 //   👤 [2026-09-01] 창업자 몫(`tdf:`)과 «사진까지 본」 편수(`tv:`)를 «따로» 센다.
 //      ⭐ 전체(`td:`)는 그대로 둔다 — 상한이 그 값을 보므로 잣대를 흔들면 안 된다.
 //      ⛔ 유저 개인별은 안 센다(그건 곧 개인정보가 된다).
-async function 통세기(kv, ymd, founder, 눈) {
+//   🙋‍♀️ [2026-09-14] **「누가 시켰나」(`tr:`)도 «따로» 센다** — 📮창업자 = *"이것도 확실히 잴수있는 걸 만들어야해..."*
+//      ⛔⛔ 다듬기는 **사람이 안 눌러도 «저절로» 돈다**(앱이 레시피를 열 때 실패한 편을 만회한다).
+//         그래서 「오늘 16건」이 **사람이 쓴 것인지 앱이 돈 것인지 못 갈랐다.**
+//         👉 유료를 켤지·값을 얼마로 할지가 이 숫자에 달려 있다.
+//      🔒 갈래를 «넷으로 못 박는다** — 자유 글자를 받으면 KV 키가 유저 수만큼 늘어난다.
+async function 통세기(kv, ymd, founder, 눈, 까닭) {
   if (!kv) return
   await inc(kv, `td:${ymd}`, 60 * 60 * 48)
   if (founder) await inc(kv, `tdf:${ymd}`, 60 * 60 * 48)
   if (눈) await inc(kv, `tv:${ymd}`, 60 * 60 * 48)
+  // ⛔ 허용목록 밖은 전부 '모름' 으로 접는다 — ⛔«막지 않는다»(옛 앱이 그대로 돌아야 한다)
+  const 갈 = ['user', 'auto', 'retry'].includes(까닭) ? 까닭 : '모름'
+  await inc(kv, `tr:${ymd}:${갈}`, 60 * 60 * 48)
 }
 
 async function inc(kv, key, ttl) {

@@ -214,7 +214,8 @@ export default function RecipeDetailScreen({ id }) {
     nav.showToast('AI가 다듬는 중이에요 · 다 되면 레시피에 저절로 올라가요', 6000)
     // 👁 사진이 손에 있으면 같이 보낸다(`tidy.js` 가 한 번 더 거른다) — 보관함 단추와 «같은 말»
     const 사진 = typeof r.image === 'string' && r.image.startsWith('data:image/') ? r.image : ''
-    const ai = await tidyRecipe(원문, 사진, { 무료: !!r.freeRead })
+    // 🙋‍♀️ user = 유저가 「다시 해보기」 «단추를 눌렀다» (2026-09-14)
+    const ai = await tidyRecipe(원문, 사진, { 무료: !!r.freeRead, 까닭: 'user' })
     set다시중(false)
     if (!ai) {
       // ⛔ 표를 2 로 «둔다» — 단추는 아래 조건이 1·2 둘 다 보여주므로 사라지지 않는다
@@ -240,7 +241,9 @@ export default function RecipeDetailScreen({ id }) {
     만회한적.current = r.id
     let 살아있나 = true
     ;(async () => {
-      const ai = await tidyRecipe(원문, '', { 무료: !!r.freeRead })
+      // 🤖 auto = 앱이 «저절로» 만회한다 — 유저는 레시피를 열었을 뿐이다 (2026-09-14)
+      //   ⛔⛔ 이걸 「사람이 AI 를 썼다」로 세면 유료 판단이 통째로 틀어진다. 여기가 그 자리다.
+      const ai = await tidyRecipe(원문, '', { 무료: !!r.freeRead, 까닭: 'auto' })
       if (!살아있나) return
       // 🙅 [2026-09-13] 동의를 안 한 사람에겐 만회할 게 없다 — 실패 표시를 «지운다»(실패로 적으면 보관함이 「안 됐어요」라고 거짓말한다)
       if (!ai) { updateRecipe(r.id, { tidyFail: 동의안함으로끝났나() ? 0 : 2 }); return }

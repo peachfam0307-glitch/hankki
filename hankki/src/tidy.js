@@ -179,12 +179,14 @@ export function 동의안함으로끝났나() { return !!(_마지막 && _마지�
 export async function tidyRecipe(text, 사진, opts = {}) {
   if (opts && opts.무료) { _마지막 = { ok: false, why: '무료읽기' }; return null }
   const 잰때 = Date.now()
-  const 답 = await 다듬기속(text, 사진)
+  // 🙋‍♀️ 「누가 시켰나」 — 부르는 쪽이 `{ 까닭: 'user' }` 또는 `'auto'` 를 준다 (2026-09-14)
+  //   ⛔ 안 주면 '모름' 이다 — «막지 않는다». 옛 자리를 못 찾아도 앱은 그대로 돌아야 한다.
+  const 답 = await 다듬기속(text, 사진, ['user', 'auto'].includes(opts && opts.까닭) ? opts.까닭 : '모름')
   기록하기({ ...(_마지막 || {}), ms: (_마지막 && _마지막.ms) || (Date.now() - 잰때) })
   return 답
 }
 
-async function 다듬기속(text, 사진) {
+async function 다듬기속(text, 사진, 까닭 = '모름') {
   _마지막 = null
   _사진 = ''
   const t = String(text || '').trim()
@@ -264,7 +266,8 @@ async function 다듬기속(text, 사진) {
   //
   //   ⚠️ 정직하게 = `network` 가 「요청은 갔는데 응답만 못 받은 것」일 수도 있다. 그때는 한 번 더 먹는다.
   //      그래도 **최대 1회**라 손해가 유한하고, 유저가 얻는 건 「되다 안 되다」가 줄어드는 것이다.
-  const 한판 = async () => {
+  //   ⛔ 재시도는 «같은 사람의 같은 한 번»이다 — 까닭을 retry 로 바꿔 따로 센다(사람 수가 안 부풀게).
+  const 한판 = async (이번까닭 = 까닭) => {
     const resp = await fetch(TIDY_URL, {
       method: 'POST',
       headers,
@@ -278,6 +281,21 @@ async function 다듬기속(text, 사진) {
         budgetMs: Math.max(0, (선반간격 * 선반횟수) - (Date.now() - 보낸때)),
         // 🧺 번호표 — 이걸 주면 워커가 «맡고» 번호를 돌려준다(옛 워커는 이 칸을 그냥 무시한다)
         job: 번호,
+        // 🙋‍♀️🙋‍♀️ **「누가 시켰나」** (2026-09-14) — 📮창업자 = *"이것도 확실히 잴수있는 걸 만들어야해..."*
+        //
+        // ⛔⛔ 왜 필요한가 = 다듬기는 **사람이 안 눌러도 «저절로» 돈다**
+        //    (`RecipeDetailScreen.jsx:243` 이 레시피를 열 때 실패한 편을 만회한다 · `retidy.js` 주석).
+        //    그래서 「오늘 16건」이 **사람이 쓴 것인지 앱이 돈 것인지 못 가른다.**
+        //    👉 **유료를 켤지·값을 얼마로 할지가 이 숫자에 달려 있는데 지금은 근거가 없다.**
+        //
+        // 갈래 넷 (⛔늘리지 말 것 — 자유 글자를 보내면 워커의 KV 키가 유저 수만큼 늘어난다)
+        //   `user`  = 사람이 «단추를 눌렀다»   (보관함 「AI로 다듬기」 · 상세 「다시 해보기」)
+        //   `auto`  = 앱이 «저절로» 돌았다     (공유받기 직후 · 레시피 열 때 만회)
+        //   `retry` = 위 한 판이 network 로 죽어 «한 번 더» 부른 것 (⛔사람 수가 부풀지 않게 따로 센다)
+        //   `모름`  = 옛 앱이 보낸 것 (워커가 그렇게 접는다)
+        //
+        // ⛔ 옛 워커는 이 칸을 «그냥 무시»한다 — 앱만 나가도 나빠지지 않는다(budgetMs 와 같은 성질).
+        까닭: 이번까닭,
       }),
       signal: ac ? ac.signal : undefined,
     })
@@ -311,7 +329,7 @@ async function 다듬기속(text, 사진) {
       // 끊긴 것(AbortError)은 «시간»이 다한 것이라 다시 걸어도 또 끊긴다 — 그대로 포기
       if (e && e.name === 'AbortError') throw e
       await new Promise((r2) => setTimeout(r2, 1200))   // 잠깐 쉬고 한 번만 더
-      r = await 한판()                                    // 여기서 또 죽으면 아래 catch 가 받는다
+      r = await 한판('retry')                             // 여기서 또 죽으면 아래 catch 가 받는다
     }
     if (r.실패) {
       // 429 = 그날 통이 찼다 · 502 = AI 가 이상한 답 → 둘 다 «조용히» 규칙 파서로

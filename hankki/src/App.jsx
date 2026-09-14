@@ -944,7 +944,8 @@ export default function App() {
         // 🧺 워커가 맡은 «번호»를 그 레시피에 적어 둔다 — 앱이 얼어도 살아남는다 [2026-09-10]
         //   ⛔ 이게 없으면 깨어났을 때 «물어볼 번호»가 없어 선반에 놓인 답을 통째로 버린다.
         번호알림받기((번호) => store.updateRecipe(rec.id, { tidyJob: 번호, tidyJobAt: Date.now() }))
-        tidyRecipe(text, 장들[0]).then((ai) => {
+        // 🤖 auto = 공유받기 직후 앱이 «저절로» 돈다 — 유저가 AI 를 부른 게 아니다 (2026-09-14)
+        tidyRecipe(text, 장들[0], { 까닭: 'auto' }).then((ai) => {
           set자동다듬기창(false)
           if (cancelled) { store.updateRecipe(rec.id, { tidying: 0 }); return }
           if (ai) {

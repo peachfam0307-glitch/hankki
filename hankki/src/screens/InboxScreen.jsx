@@ -71,7 +71,8 @@ export default function InboxScreen() {
     const 사진 = typeof r.image === 'string' && r.image.startsWith('data:image/') ? r.image : ''
     // 🆓 [2026-09-14] 무료로 읽은 편은 AI 정리가 «없다» — 여기로 들어와도 막힌다(막는 문은 tidy.js 한 곳).
     //   📄 창업자 확정 2026-08-29(재론 금지) = 「열쇠 없이도 AI 정리」를 어디에도 열지 않는다.
-    const ai = await tidyRecipe(원문, 사진, { 무료: !!r.freeRead })
+    // 🙋‍♀️ user = 유저가 「AI로 다듬기」 «단추를 눌렀다» (2026-09-14)
+    const ai = await tidyRecipe(원문, 사진, { 무료: !!r.freeRead, 까닭: 'user' })
     set다듬는중('')
     if (!ai) {
       // ⛔ 유저가 «직접 눌렀으니» 실패도 말한다(공유받기 때 조용한 것과 다르다)
