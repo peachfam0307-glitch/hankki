@@ -652,7 +652,11 @@ export default function EditorScreen({ id, prefill }) {
           ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
           : leftTail
             ? '초안을 채웠어요' + leftTail
-            : '초안을 채웠어요 · 사진 보며 다듬어 주세요') + AI다듬는중,
+            : '초안을 채웠어요 · 사진 보며 다듬어 주세요')
+        // 🆓🆓 [창업자 실물 2026-09-14 20:37] 무료로 읽었는데 꼬리에 「AI가 더 다듬는 중이에요」가
+        //   «무조건» 붙어 있었다 — 무료는 AI 를 아예 안 부르는데 도는 척을 한 것이다.
+        //   ⛔ 창업자 = "이거까지 띄우면 너무 정신없어서". 안 도는 일을 말하지 않는다.
+        + (freeTail ? '' : AI다듬는중),
       20000,
     )
 
@@ -1554,7 +1558,8 @@ export default function EditorScreen({ id, prefill }) {
           title={
             ocrTargetRef.current === 'ingredients' ? '재료 사진 자르기'
               : ocrTargetRef.current === 'steps' ? '만드는 법 사진 자르기'
-                : '글자 부분만 남기기'
+                : ocrNoVision.current ? '레시피 부분만 남기기'
+                  : '글자 부분만 남기기'
           }
           hint={
             ocrTargetRef.current === 'ingredients' ? (
@@ -1562,9 +1567,17 @@ export default function EditorScreen({ id, prefill }) {
             ) : ocrTargetRef.current === 'steps' ? (
               <>이 사진의 글자는 <b style={{ color: '#f0ede7' }}>만드는 법 칸에만</b> 담겨요. 순서 부분만 남겨주세요.</>
             ) : ocrNoVision.current ? (
+              // 🆓🆓 [창업자 2026-09-14] 무료로 읽을 때는 «잘라내는 것»이 곧 인식률이다 — 그래서 크게 적는다.
+              //   📮 창업자 = "안내가 잘~~보이게" · "제목 재료 만드는법만 나오게 잘라야하지않아"
+              //   ⭐ 왜 열쇠 쪽과 말이 다른가 = 조리 문장에서 재료를 «더 뽑아주는» 것은 AI 만 한다.
+              //      무료는 그걸 못 하니 글을 더 남겨도 득이 없고, 글자만 많아져 흐려진다.
+              //      ＋ 무료 쪽은 긴 변이 1500px 미만이면 최대 3배로 키워 읽는다(ocr.js preprocess)
+              //        → 사진을 걷어낼수록 글자가 그만큼 커져서 들어간다.
               <>
-                <b style={{ color: '#fff' }}>글자는 다 남기고</b> 사진 부분만 잘라내면 돼요.<br />
-                <span style={{ color: '#ffd9a0', fontSize: 15 }}>사진을 잘라낼수록 글자를 더 잘 읽어요 · 지금은 {KEY_NAME} 없이 읽어요</span>
+                <b style={{ color: '#fff', fontSize: 19 }}>제목 · 재료 · 만드는 법</b>
+                <span style={{ fontSize: 19 }}>만 남겨주세요</span><br />
+                <span style={{ color: '#ffd9a0', fontSize: 16, fontWeight: 700 }}>사진을 잘라낼수록 글자를 더 잘 읽어요</span><br />
+                <span style={{ color: '#cfcac1', fontSize: 14.5 }}>지금은 {KEY_NAME} 없이 읽어요</span>
               </>
             ) : undefined
           }
