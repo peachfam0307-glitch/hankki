@@ -1617,7 +1617,7 @@ const RAW_BASICS = [
     //       (규칙 18 ⓙ = 「새로 까는 사람」만 보지 말고 «이미 깔린 폰»을 본다 — 이번엔 그 반대쪽이었다)
     //    ⭐ gr_266 은 멸치만 있고 꽈리고추가 없다. n2701 은 창업자가 실제로 만든 그 요리다.
     icon: 'n2701',
-    category: '반찬',
+    category: '한식',
     folder: '반찬',
     tags: ['밑반찬', '밥도둑', '여름'],
     time: 15,          // ⏳창업자 확인 필요 — 원본에 시간이 없어 내가 «제안»한 값이다
@@ -1664,7 +1664,7 @@ const RAW_BASICS = [
     //   ⛔ 「계란후라이」 그림이 우리에게 «없다»(실측 2026-09-03 · 계란 계열은 계란장·계란찜·계란말이뿐).
     //   ⛔ 자동 배정에 맡기면 이름의 「조림」 때문에 gr_386(장조림 · 카와이)을 집는다 → 그래서 박아 둔다.
     icon: 'n3024',
-    category: '반찬',
+    category: '한식',
     folder: '반찬',
     tags: ['계란', '밥반찬', '간단'],
     time: 15,          // 창업자 확정 = "시간 15분"
@@ -5057,7 +5057,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-galbitang-my', title: '갈비탕', from: '2026-12-14',
-    icon: 'fh_k10', category: '국·탕', folder: '국·탕',
+    icon: 'fh_k10', category: '한식', folder: '국·탕',
     time: 40, servings: 3, difficulty: '보통',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5082,7 +5082,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-gukmul-dak-bokkeumtang', title: '국물 닭볶음탕', from: '2026-12-14',
-    icon: 'fe_419', category: '국·탕', folder: '국·탕',
+    icon: 'fe_419', category: '한식', folder: '국·탕',
     time: 40, servings: 3, difficulty: '보통',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5112,7 +5112,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-sundubu-jjigae-my', title: '순두부찌개', from: '2026-12-21',
-    icon: 'fe_520', category: '국·탕', folder: '국·탕',
+    icon: 'fe_520', category: '한식', folder: '국·탕',
     time: 25, servings: 2, difficulty: '쉬움',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5144,7 +5144,7 @@ const RAW_BASICS = [
     id: 'basic-haemul-nurungji-tang', title: '해물누룽지탕', from: '2026-12-21',
     // 🍜 [2026-08-26] fe_114(누룽지탕) → fe_528(해물누룽지탕 전용). 창업자가 유지70에 준 컷이 이제 들어갔다.
     //    ⛔ 박힌 icon 은 ICON_RULES 를 덮으므로(Thumb.jsx) 여기를 안 고치면 이 편만 옛 그림이다(v10.76 사고).
-    icon: 'fe_528', category: '국·탕', folder: '국·탕',
+    icon: 'fe_528', category: '중식', folder: '국·탕',
     time: 25, servings: 2, difficulty: '쉬움',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5171,7 +5171,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-sukiyaki', title: '스키야키', from: '2026-12-28',
-    icon: 'fe_121', category: '전골', folder: '국·탕',
+    icon: 'fe_121', category: '일식', folder: '국·탕',
     time: 30, servings: 2, difficulty: '쉬움',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5202,7 +5202,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-chadol-doenjang', title: '차돌된장', from: '2026-12-28',
-    icon: 'fe_133', category: '국·탕', folder: '국·탕',
+    icon: 'fe_133', category: '한식', folder: '국·탕',
     time: 20, servings: 1, difficulty: '쉬움',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5225,7 +5225,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-jangjorim-my', title: '장조림', from: '2027-01-04',
-    icon: 'gr_386', category: '반찬', folder: '반찬',
+    icon: 'gr_386', category: '한식', folder: '반찬',
     time: 35, servings: 2, difficulty: '보통',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5254,7 +5254,7 @@ const RAW_BASICS = [
     //   ✅ 창업자 답 넷으로 완성 — 제목 *"마늘간장계란밥하자."* / 계란 *"푼거 아니고 그냥 깨서 부치는거야 반숙으로."*
     //      / 간장은 «팬 바닥에 둘러 지지듯이»(*"b"*) / *"시간은 10분 1인분."*
     id: 'basic-maneul-ganjang-gyeranbap', title: '마늘간장계란밥', from: '2027-01-04',
-    icon: 'fe_03', category: '밥', folder: '밥',
+    icon: 'fe_03', category: '한식', folder: '밥',
     time: 10, servings: 1, difficulty: '쉬움',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5277,7 +5277,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-jeonbok-juk', title: '전복죽', from: '2027-01-11',
-    icon: 'gr_249', category: '밥', folder: '밥',
+    icon: 'gr_249', category: '한식', folder: '밥',
     time: 40, servings: 3, difficulty: '보통',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5308,7 +5308,7 @@ const RAW_BASICS = [
     // 📮 창업자가 «직접 쓴» 레시피 (원래 이름 「테리야끼 장어덮밥」)
     //   ⭐ 창업자가 검수판에서 직접 고쳤다 — *"데리야끼장어덮밥이야(제목변경)"*
     id: 'basic-teriyaki-jangeo-deopbap', title: '데리야끼장어덮밥', from: '2027-01-11',
-    icon: 'gr_340', category: '밥', folder: '밥',
+    icon: 'gr_340', category: '일식', folder: '밥',
     time: 40, servings: 2, difficulty: '보통',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5338,7 +5338,7 @@ const RAW_BASICS = [
     //      **「소스」가 아니라 «요리»가 됐다** — 파를 썰고 담그고 무치는 순서가 다 있다.
     //      📌 이 한 번이 나중에 「소스를 어디에 둘 것인가」 규칙의 본보기가 됐다.
     id: 'basic-pajeori', title: '파절이', from: '2027-01-18',
-    icon: 'fe_258', category: '반찬', folder: '반찬',
+    icon: 'fe_258', category: '한식', folder: '반찬',
     time: 10, servings: 2, difficulty: '쉬움',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5361,7 +5361,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-dallaejang-my', title: '달래장', from: '2027-01-18',
-    icon: 'fe_500', category: '반찬', folder: '반찬',
+    icon: 'fe_500', category: '한식', folder: '반찬',
     time: 10, servings: 1, difficulty: '쉬움',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5383,7 +5383,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-bibimbap-sauce', title: '비빔밥 소스', from: '2027-01-25',
-    icon: 'gr_333', category: '양념', folder: '반찬',
+    icon: 'gr_333', category: '한식', folder: '반찬',
     time: 5, servings: 2, difficulty: '쉬움',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -5401,7 +5401,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-nurungji-samgyetang', title: '누룽지삼계탕', from: '2027-01-25',
-    icon: 'fh_k06', category: '국·탕', folder: '국·탕',
+    icon: 'fh_k06', category: '한식', folder: '국·탕',
     time: 60, servings: 2, difficulty: '보통',
     origin: '창업자', review: '창업자',
     ingredients: [
@@ -6028,7 +6028,7 @@ const RAW_BASICS = [
     id: 'basic-aehobak-gukbap',
     title: '애호박 국밥', from: '2026-09-09', review: '창업자',   // ✅창업자 검수 2026-09-06 = "다시다 → 연두·백간장 대체" 반영
     icon: 'n2904',   // ✅ 창업자 컷 2026-09-06 (전엔 gr_370 임시)
-    category: '국물', folder: '국물', tags: ['애호박', '돼지고기', '얼큰', '해장', '국밥'],
+    category: '한식', folder: '국물', tags: ['애호박', '돼지고기', '얼큰', '해장', '국밥'],
     time: 30, servings: 3, difficulty: '보통',
     sourceUrl: 'https://youtu.be/WV91-NxNNDI',
     sourceName: '정호영의 오늘도 요리 Kitchen Caden',
@@ -6051,7 +6051,7 @@ const RAW_BASICS = [
     id: 'basic-odeng-dangmyeon-bokkeum',
     title: '어묵 당면볶음', from: '2026-09-23', review: '창업자',   // ✅창업자 검수 2026-09-06 괜찮아
     icon: 'n2903',   // ✅ 창업자 컷 2026-09-06 (전엔 gr_104 임시)
-    category: '반찬', folder: '반찬', tags: ['당면', '어묵', '자취', '간단', '매콤'],
+    category: '한식', folder: '반찬', tags: ['당면', '어묵', '자취', '간단', '매콤'],
     time: 20, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://youtu.be/xwa-fR__hYs',
     sourceName: '자취요리신 simple cooking',
@@ -6076,7 +6076,7 @@ const RAW_BASICS = [
 
     title: '마늘 간장 닭날개조림', from: '2026-10-07', review: '창업자',   // ✅창업자 검수 2026-09-06 괜찮아
     icon: 'n3029',   // 🎨 [2026-09-14] 창업자가 닭날개 «조림» 컷을 뽑아 줬다(앞 컷 fe_65 는 튀긴 치킨이었다)
-    category: '반찬', folder: '반찬', tags: ['닭날개', '간장', '마늘', '매콤'],
+    category: '한식', folder: '반찬', tags: ['닭날개', '간장', '마늘', '매콤'],
     time: 35, servings: 3, difficulty: '보통',
     sourceUrl: 'https://youtu.be/sSOVLr_LoPk',
     sourceName: '소소황 Cook & Eat',
@@ -6100,7 +6100,7 @@ const RAW_BASICS = [
     id: 'basic-maekom-dakdarisal-bokkeum',
     title: '매콤 닭다리살 볶음', from: '2026-09-23', review: '창업자',   // ✅창업자 검수 2026-09-06 괜찮아
     icon: 'gr_222',   // 자동 배정은 gr_387(제육)을 집는다 → 매콤 닭강정으로
-    category: '반찬', folder: '반찬', tags: ['닭다리살', '매콤', '스리라차', '간단'],
+    category: '한식', folder: '반찬', tags: ['닭다리살', '매콤', '스리라차', '간단'],
     time: 20, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://youtu.be/9atUjpURXvc',
     sourceName: '하루한끼 one meal a day',
@@ -6121,7 +6121,7 @@ const RAW_BASICS = [
     id: 'basic-ganjang-dak-jorim',
     title: '초간단 찜닭', from: '2026-10-21', review: '창업자',   // ✅창업자 검수 2026-09-06 = 제목 「초간단 찜닭」
     icon: 'fe_283',   // 찜닭 컷
-    category: '반찬', folder: '반찬', tags: ['닭정육', '간장', '당면', '감자', '찜닭'],
+    category: '한식', folder: '반찬', tags: ['닭정육', '간장', '당면', '감자', '찜닭'],
     time: 35, servings: 3, difficulty: '쉬움',
     sourceUrl: 'https://youtu.be/bWPF0mD_Kbo',
     sourceName: '하루한끼 one meal a day',
@@ -6142,7 +6142,7 @@ const RAW_BASICS = [
     id: 'basic-dwaeji-gochujang-jjigae',
     title: '돼지고기 고추장찌개', from: '2026-09-30', review: '창업자',   // ✅창업자 검수 2026-09-06 괜찮아
     icon: 'fh_k02',   // 자동 배정은 일반 stew → 돼지고기 든 빨간 찌개(김치찌개 컷)로 (⏳창업자 판정)
-    category: '국물', folder: '국물', tags: ['돼지고기', '고추장', '찌개', '감자', '두부'],
+    category: '한식', folder: '국물', tags: ['돼지고기', '고추장', '찌개', '감자', '두부'],
     time: 35, servings: 3, difficulty: '보통',
     sourceUrl: 'https://youtu.be/nBtobggpVGo',
     sourceName: '김대석 셰프TV',
@@ -6166,7 +6166,7 @@ const RAW_BASICS = [
     id: 'basic-ureong-doenjang-jjigae',
     title: '우렁 순두부 된장찌개', from: '2026-10-21', review: '창업자',   // ✅창업자 검수 2026-09-06 괜찮아
     icon: 'fe_133',   // 된장찌개 컷 (자동은 순두부 fe_520 — 계란 올린 빨간 찌개라 아니다)
-    category: '국물', folder: '국물', tags: ['우렁', '된장', '순두부', '찌개'],
+    category: '한식', folder: '국물', tags: ['우렁', '된장', '순두부', '찌개'],
     time: 30, servings: 3, difficulty: '보통',
     sourceUrl: 'https://youtu.be/TBJ2cnACCxc',
     sourceName: '김대석 셰프TV',
@@ -6216,7 +6216,7 @@ const RAW_BASICS = [
     id: 'basic-eonam-dubu-jorim',
     title: '어남선생 두부조림', from: '2026-09-16', review: '창업자',   // ✅창업자 검수 2026-09-06 괜찮아
     icon: 'gr_055',
-    category: '반찬', folder: '반찬', tags: ['두부', '조림', '간장', '밥반찬'],
+    category: '한식', folder: '반찬', tags: ['두부', '조림', '간장', '밥반찬'],
     time: 25, servings: 3, difficulty: '쉬움',
     sourceUrl: 'https://youtu.be/As8bN8Yr8oQ',
     sourceName: 'KBS Entertain',
@@ -6242,7 +6242,7 @@ const RAW_BASICS = [
     id: 'basic-eonam-ojingeo-bokkeum',
     title: '어남선생 오징어볶음', from: '2026-09-30', review: '창업자',   // ✅창업자 검수 2026-09-06 괜찮아
     icon: 'fe_75',
-    category: '반찬', folder: '반찬', tags: ['오징어', '매콤', '볶음', '안주'],
+    category: '한식', folder: '반찬', tags: ['오징어', '매콤', '볶음', '안주'],
     time: 30, servings: 3, difficulty: '보통',
     sourceUrl: 'https://youtu.be/sT5KsSpq8w4',
     sourceName: 'KBS Entertain',
@@ -6270,7 +6270,7 @@ const RAW_BASICS = [
     id: 'basic-eonam-15min-kkakdugi',
     title: '어남선생 15분 깍두기', from: '2026-10-14', review: '창업자',   // ✅창업자 검수 2026-09-06 괜찮아
     icon: 'gr_046',
-    category: '반찬', folder: '반찬', tags: ['깍두기', '무', '김치', '저장'],
+    category: '한식', folder: '반찬', tags: ['깍두기', '무', '김치', '저장'],
     time: 90, servings: 6, difficulty: '보통',
     sourceUrl: 'https://youtu.be/szmQk5NZ1-Y',
     sourceName: 'KBS Entertain',
@@ -6297,7 +6297,7 @@ const RAW_BASICS = [
     id: 'basic-eonam-galbi-chicken',
     title: '어남선생 갈비치킨', from: '2026-11-04', review: '창업자',   // ✅창업자 검수 2026-09-06 괜찮아
     icon: 'fe_65',    // ⏳ 닭날개조림과 같은 컷 — 간장 닭 컷이 하나뿐이다 (창업자 판정)
-    category: '반찬', folder: '반찬', tags: ['닭', '갈비맛', '간장', '올리고당', '한 팬'],
+    category: '한식', folder: '반찬', tags: ['닭', '갈비맛', '간장', '올리고당', '한 팬'],
     time: 25, servings: 3, difficulty: '보통',
     sourceUrl: 'https://youtu.be/kdhAx2GrZcQ',
     sourceName: 'KBS Entertain',
@@ -6329,7 +6329,7 @@ const RAW_BASICS = [
     //   ⭐ 우리 편(창업자가 직접 쓴 것)이 「닭볶음탕」 이름을 그대로 갖는다 — 우리 것이 원래 이름이다.
     title: '정호영 셰프 닭볶음탕', from: '2026-10-28', review: '창업자',   // ✅창업자 검수 2026-09-06 괜찮아
     icon: 'fe_419',
-    category: '국물', folder: '국물', tags: ['닭', '매콤', '감자', '한 냄비'],
+    category: '한식', folder: '국물', tags: ['닭', '매콤', '감자', '한 냄비'],
     time: 40, servings: 4, difficulty: '보통',
     sourceUrl: 'https://youtu.be/pNtwZuhYQeg',
     sourceName: '정호영의 오늘도 요리 Kitchen Caden',
@@ -6353,7 +6353,7 @@ const RAW_BASICS = [
     id: 'basic-hanpan-tangsuyuk',
     title: '한판 탕수육', from: '2026-10-28', review: '창업자',   // ✅창업자 검수 2026-09-06 괜찮아
     icon: 'fe_91',
-    category: '반찬', folder: '반찬', tags: ['탕수육', '돼지고기', '전분', '한 판', '아이'],
+    category: '중식', folder: '반찬', tags: ['탕수육', '돼지고기', '전분', '한 판', '아이'],
     time: 35, servings: 3, difficulty: '보통',
     sourceUrl: 'https://youtu.be/yY3zlWOrteQ',
     sourceName: '달달한끼 DalDalMeal',
@@ -6377,7 +6377,7 @@ const RAW_BASICS = [
     id: 'basic-jinmichae-bokkeum',
     title: '간장진미채볶음', from: '2026-10-14', review: '창업자',   // ✅창업자 검수 2026-09-06 = 제목 「간장진미채볶음」
     icon: 'gr_244',
-    category: '반찬', folder: '반찬', tags: ['진미채', '밑반찬', '간장', '마요네즈'],
+    category: '한식', folder: '반찬', tags: ['진미채', '밑반찬', '간장', '마요네즈'],
     time: 15, servings: 4, difficulty: '쉬움',
     sourceUrl: 'https://youtu.be/uQ3Ikx1izBA',
     sourceName: '윤반찬',
@@ -6401,7 +6401,7 @@ const RAW_BASICS = [
     id: 'basic-jipbap-jokbal',
     title: '집에서 하는 족발', from: '2026-11-04',
     icon: 'n2901',   // ✅ 창업자 컷 2026-09-06 (전엔 gr_441 임시)
-    category: '반찬', folder: '반찬', tags: ['족발', '미박사태', '돼지고기', '한 냄비', '저녁', '야식'],
+    category: '한식', folder: '반찬', tags: ['족발', '미박사태', '돼지고기', '한 냄비', '저녁', '야식'],
     time: 70, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/Db2iQRahyQn/',
     sourceName: 'nomoney_cook',
