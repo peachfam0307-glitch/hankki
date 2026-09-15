@@ -108,7 +108,21 @@ await 탭찍기('레시피', '3a-레시피탭.png')
 await 탭찍기('레꾸자랑', '4a-레꾸자랑.png')
 // 4장 후보 ②: 「꾸민 표지」가 «한 장으로» 보이는 상세 화면
 await p.getByText('꽃게탕', { exact: true }).first().click()
-await p.waitForTimeout(2000)
+// ⛔ [창업자 2026-09-15] *"캐러셀에서 레꾸자랑에서 랜덤부붙 잘렸엉"* — 「랜덤 카드로 뽑기」 아랫변이
+//    스크린샷 «맨 밑»에 딱 붙어 잘려 있었다. 2000ms 는 시트가 다 올라오기 전이었다.
+//    ⭐ 넉넉히 기다리고, 시트가 화면 안에 «통째로» 들어왔는지 재고 나서 찍는다.
+await p.waitForTimeout(3500)
+const 시트끝 = await p.evaluate(() => {
+  const els = [...document.querySelectorAll('*')].filter((e) => /랜덤 카드로 뽑기/.test(e.textContent || '') && e.children.length < 6)
+  if (!els.length) return null
+  const r = els[els.length - 1].getBoundingClientRect()
+  return { bottom: Math.round(r.bottom), 창: window.innerHeight }
+})
+console.log('   🔎 「랜덤 카드로 뽑기」 아랫변 =', JSON.stringify(시트끝))
+if (시트끝 && 시트끝.bottom > 시트끝.창 - 8) {
+  console.log('   ⚠️ 아직 화면 밑에 물려 있다 — 더 기다린다')
+  await p.waitForTimeout(2000)
+}
 await p.screenshot({ path: join(낼곳, '4b-꾸민표지-상세.png') })
 console.log('📸 4b-꾸민표지-상세')
 

@@ -87,7 +87,11 @@ const 머리 = `<style>
     100%{opacity:0;transform:translate(calc(-50% + var(--x)), calc(var(--y) + 560px)) scale(1) rotate(var(--r))}}
   .폰틀{position:absolute;border:14px solid #3a2a1c;border-radius:62px;overflow:hidden;background:#fff;
     box-shadow:0 40px 80px rgba(93,52,16,.24)}
-  .폰틀 img{width:100%;height:100%;object-fit:cover;object-position:top}
+  /* ⛔ [창업자 2026-09-15] "레꾸자랑에서 랜덤부붙 잘렸엉" ＋ "아이폰 화면을 위로 다 조금씩 올려줄래"
+     cover + object-position:top 이라 폰 상자가 화면 «아래»를 잘랐다.
+     ⭐ contain 이면 화면이 통째로 들어간다(스크린샷 2.168 ＝ 폰 상자 852/393 ＝ 2.168 로 거의 같다).
+     ⛔ cover 로 되돌리지 말 것 — 되돌리면 또 잘린다. */
+  .폰틀 img{width:100%;height:100%;object-fit:contain;object-position:center}
   .알약{display:inline-flex;align-items:center;gap:12px;background:#fff;border:3px solid #efe2cf;border-radius:999px;padding:20px 42px;font-size:44px;color:#7a5a3a}
 </style>`
 
@@ -110,24 +114,24 @@ ${장(0, 3.4, `
 ${장(3.4, 2.6, `
   <div class="툭" style="--at:3.55s;position:absolute;left:0;right:0;top:200px;text-align:center;font-size:84px;line-height:1.3;font-weight:700">이제 어느 폰이든</div>
   <div class="툭" style="--at:3.7s;position:absolute;left:0;right:0;top:330px;text-align:center;font-size:44px;color:#a98a6b">흩어진 레시피를, 한곳에</div>
-  ${폰('2-홈.png', 1280, 'left:234px;bottom:-140px', 3.6)}`)}
+  ${폰('2-홈.png', 1230, 'left:257px;bottom:-40px', 3.6)}`)}
 
 ${장(6.0, 2.8, `
   <div class="툭" style="--at:6.15s;position:absolute;left:0;right:0;top:180px;text-align:center;font-size:64px;line-height:1.38;font-weight:700">인스타에서 본 레시피,<br>담아두면 안 사라져요</div>
   <div class="툭" style="--at:6.35s;position:absolute;left:0;right:0;top:400px;text-align:center;font-size:42px;color:#a98a6b">캡처해 두고 불러오면 재료·순서까지</div>
-  ${폰('3a-레시피탭.png', 1230, 'left:257px;bottom:-140px', 6.25)}`)}
+  ${폰('3a-레시피탭.png', 1230, 'left:257px;bottom:-40px', 6.25)}`)}
 
 ${장(8.8, 2.4, `
   <div style="position:absolute;inset:0;background:#f3e6d2"></div>
   <div class="툭" style="--at:8.95s;position:absolute;left:0;right:0;top:200px;text-align:center;font-size:80px;font-weight:700">꾸며서 자랑해요</div>
   <div class="툭" style="--at:9.1s;position:absolute;left:0;right:0;top:330px;text-align:center;font-size:42px;color:#a0805c">내가 꾸민 표지 그대로, 친구한테</div>
-  ${폰('4b-꾸민표지-상세.png', 1230, 'left:257px;bottom:-140px', 9.0)}`)}
+  ${폰('4b-꾸민표지-상세.png', 1230, 'left:257px;bottom:-40px', 9.0)}`)}
 
 ${장(11.2, 2.4, `
   <div class="툭" style="--at:11.35s;position:absolute;left:0;right:0;top:180px;text-align:center;font-size:74px;line-height:1.35;font-weight:700">폰이 바뀌어도<br>그대로 있어요</div>
   <div class="팝" style="--at:11.7s;position:absolute;left:0;right:0;top:400px;text-align:center">
     <span class="알약" style="background:#111;border-color:#111;color:#fff">Apple로 로그인</span></div>
-  ${폰('5-로그인.png', 1200, 'left:270px;bottom:-140px', 11.45)}`)}
+  ${폰('5-로그인.png', 1230, 'left:257px;bottom:-40px', 11.45)}`)}
 
 ${장(13.6, 2.4, `
   <div class="툭" style="--at:13.75s;position:absolute;left:0;right:0;top:420px;text-align:center;font-size:88px;line-height:1.35;font-weight:700">아이폰에서도,<br>오늘도 한끼하세요</div>
