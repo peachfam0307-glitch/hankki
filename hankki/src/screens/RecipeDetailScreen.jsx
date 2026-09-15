@@ -19,7 +19,7 @@ import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
 import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
-import { scaleIngredient, isIngHeader } from '../scale'
+import { scaleIngredient } from '../scale'
 import { FoodIconSheet } from '../components/FoodIconPicker'
 import { dateLabel, openExternal as openUrl, ingredientName, fitImage } from '../utils'
 import { photoPanStart } from '../photoPan'
@@ -101,8 +101,7 @@ const COACH_STEPS = [
 
 // 재료 목록에서 '[양념]'·'[소스]'·'[드레싱]'처럼 대괄호만 있는 줄은 소제목(헤더)으로 그린다.
 // (장보기 담기·인분 환산에서 제외) — 전 레시피 양념/소스 표기 통일용.
-// 🔁 [2026-09-15] 판정은 `src/scale.js` 로 옮겼다 — **요리모드도 같은 잣대를 써야 해서**다.
-//    여기에만 있던 탓에 요리모드가 「[양념]」을 «그냥 재료»로 그리고 있었다.
+const isIngHeader = (s) => /^\[[^\]]+\]$/.test(String(s).trim())
 
 // 🛒 주부의 장바구니 픽 — 몇 칸까지 펼쳐 두나 (창업자 2026-08-15 *"4칸 넘어가면 접을 수 있게"*)
 const PICK_FOLD = 4
