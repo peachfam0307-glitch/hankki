@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { COACH } from '../coach'
 import { 사러나감, 장보기담음, 요리끝냄, 픽펼침 } from '../stats'
 import { useStore, newId } from '../store'
@@ -169,6 +169,19 @@ export default function RecipeDetailScreen({ id }) {
   //      그래서 `buy_pick_detail` 이 2026-09-15 에 **0건**이었다.
   //   ⛔ 카드를 «없애지» 않는다 — 누르면 지금 그대로 카드·사러가기·「이 재료 다 담기」가 다 나온다.
   const [pickBoxOpen, setPickBoxOpen] = useState(false)
+  // ☑️ [창업자 2026-09-15] 재료 체크 — **«끈 것»만 담아 둔다.** 기본은 다 켜짐이라 빈 Set 이 곧 「전부」다.
+  //   ⭐ 이렇게 두면 인분을 바꾸거나 레시피가 갱신돼도 «새 재료가 저절로 켜진» 상태가 된다.
+  //      (켠 것을 담으면 새 재료가 꺼진 채로 들어와 「담기 눌렀는데 빠졌다」가 난다)
+  const [끈것, set끈것] = useState(() => new Set())
+  // 🛒 «켠 것»만 골라 둔다 — 소제목(`[양념]`)은 애초에 재료가 아니라 빠진다.
+  //   ⛔ 분량은 떼고 이름만 (창업자 *"그냥 두부 양파를 사지"*) — 담는 쪽과 세는 쪽이 어긋나면 안 되니 한 자리에서 만든다.
+  const 담을재료 = useMemo(
+    () => (r?.ingredients || [])
+      .map((ing, i) => ({ ing, i }))
+      .filter(({ ing, i }) => !isIngHeader(ing) && !끈것.has(i))
+      .map(({ ing }) => ingredientName(ing)),
+    [r?.ingredients, 끈것],
+  )
   // ⛔⛔ 훅은 «전부» 아래 `if (!r)` 보다 위에 있어야 한다 — 밑에 두면 레시피를 지우는 순간
   //    early return 이 걸려 훅 개수가 줄고 React 가 트리째 죽는다(빈 화면).
   //    2026-08-03 창업자 제보 *"홍콩식가지볶음 지웠더니 먹통됨"* 의 정체가 이거였다.
@@ -949,14 +962,16 @@ export default function RecipeDetailScreen({ id }) {
                   // 🛒 **분량은 떼고 «이름»만 담는다** — 창업자 *"그냥 두부 양파를 사지. 해물가루육수 1봉을 사진 않잖아"*
                   //   ⛔ 그래서 `scaleIngredient`(인분 환산)도 여기선 안 쓴다 — 어차피 분량을 뗄 것이라
                   //      환산해 봐야 그 숫자가 버려진다. 인분 환산은 «재료 목록 화면»이 하는 일이다.
-                  addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => ingredientName(ing)))
+                  // ☑️ [창업자 확정 2026-09-15] **체크한 것만** 담는다 — *"지금은 전체를 다 담고 직접 지워야 하잖아"*
+                  if (담을재료.length === 0) { nav.showToast('담을 재료를 체크해 주세요'); return }
+                  addShopItems(담을재료)
                   // 📊 [2026-09-12] 담았다 — 재료가 몇 개든 «한 번» 누른 것이다.
                   장보기담음()
-                  nav.showToast('재료를 장보기 리스트에 담았어요')
+                  nav.showToast(`재료 ${담을재료.length}개를 장보기 리스트에 담았어요`)
                 }}
               >
                 <Icon name="cart" size={13} />
-                장보기 담기
+                {담을재료.length}개 담기
               </button>
             </div>
             {baseServings > 0 && (
@@ -980,10 +995,28 @@ export default function RecipeDetailScreen({ id }) {
               {latestEntry?.note && (
                 <MemoNote recipeId={r.id} 횟수={cookedN} 붙임 onClick={() => setLogEntry(latestEntry)} />
               )}
+              {/* ☑️ [창업자 2026-09-15] *"재료에 체크박스를 둬서 필요한 것만 장보기 담기할수는 없나?"*
+                  ＋ *"지금은 전체를 다 담고 직접 지워야 하잖아"*
+                 ⭐ **기본은 «다 켜짐»** — 지금 행동(다 담고 지우기)과 결과가 같아 새로 배울 게 없다.
+                    빼고 싶은 것만 끄면 된다.
+                 ⭐ 체크 모양은 **요리모드 「재료 준비」와 같은 문법**(`.cook-ing-box`)이다 — 두 곳이 어긋나지 않게.
+                 ⛔ 저장하지 않는다 — 이 화면에 있는 동안만이다(요리모드 체크와 같다). */}
               {r.ingredients.map((ing, i) => (
                 isIngHeader(ing)
                   ? <div key={i} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
-                  : <div key={i} className="ing">{scaleIngredient(ing, ratio)}</div>
+                  : (
+                    <button
+                      key={i} type="button" className="ing press"
+                      aria-pressed={!끈것.has(i)}
+                      onClick={() => set끈것((옛) => { const 새 = new Set(옛); if (새.has(i)) 새.delete(i); else 새.add(i); return 새 })}
+                      style={{ display: 'flex', alignItems: 'center', width: '100%', textAlign: 'left', background: 'none', border: 'none' }}
+                    >
+                      <span style={{ flex: '0 0 auto', width: 21, height: 21, borderRadius: 7, marginRight: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 끈것.has(i) ? 'transparent' : 'var(--brown)', border: 끈것.has(i) ? '2px solid var(--line)' : 'none' }}>
+                        {!끈것.has(i) && <Icon name="check" size={13} color="#fff" stroke={2.6} />}
+                      </span>
+                      <span style={{ flex: 1, minWidth: 0, opacity: 끈것.has(i) ? 0.45 : 1 }}>{scaleIngredient(ing, ratio)}</span>
+                    </button>
+                  )
               ))}
               {/* ⛔ float 는 부모가 높이를 안 잡는다 — 재료가 메모지보다 짧으면 다음 절이 겹친다 */}
               {latestEntry?.note && <div style={{ clear: 'both' }} />}
