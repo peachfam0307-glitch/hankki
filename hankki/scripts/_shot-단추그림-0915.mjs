@@ -42,8 +42,11 @@ const 판 = (v) => {
     if (옛) {
       const 새 = document.createElement('button')
       새.className = 'press hk-담기'
+      // 🎨 📮 창업자 = *"담기 색이 너무 진해보이는데 조금 연하게"* — `--brown` 에 흰색을 섞는다.
+      //    ⛔ 색값을 박지 않는다 — 테마마다 `--brown` 이 다르다(살구는 군고구마 #8a4a26).
+      const 바탕 = v.연하게 ? `color-mix(in srgb, var(--brown) ${v.연하게}%, #fff)` : 'var(--brown)'
       새.setAttribute('style', 'display:flex;align-items:center;justify-content:center;gap:8px;width:100%;'
-        + 'margin-top:16px;padding:15px;border-radius:16px;background:var(--brown);color:#fff;font-weight:800;font-size:17px;border:none')
+        + `margin-top:16px;padding:15px;border-radius:16px;background:${바탕};color:#fff;font-weight:800;font-size:17px;border:none`)
       새.innerHTML = 옛.innerHTML
       옛.remove()
       const 재료들 = [...document.querySelectorAll('.ing')]
@@ -113,6 +116,10 @@ const 시안 = {
   '8-체크만-17px': { A: 1, 그림: 1, 타이머: '옆', 틈: 40, 체크만: 17, 굵기: 3 },
   '9-체크만-20px진하게': { A: 1, 그림: 1, 타이머: '옆', 틈: 40, 체크만: 20, 굵기: 3.6 },
   '10-체크만-3개끔': { A: 1, 그림: 1, 타이머: '옆', 틈: 40, 체크만: 20, 굵기: 3.6, 끄기: 3 },
+  // 🎨 [창업자 2026-09-15] ②안 확정 뒤 — 담기 색을 «얼마나» 연하게 할지
+  '11-연하게78': { A: 1, 그림: 1, 타이머: '옆', 틈: 40, 체크만: 20, 굵기: 3.6, 연하게: 78 },
+  '12-연하게64': { A: 1, 그림: 1, 타이머: '옆', 틈: 40, 체크만: 20, 굵기: 3.6, 연하게: 64 },
+  '13-연하게50': { A: 1, 그림: 1, 타이머: '옆', 틈: 40, 체크만: 20, 굵기: 3.6, 연하게: 50 },
 }
 for (const [이름, 옵션] of Object.entries(시안)) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, locale: 'ko-KR' })
