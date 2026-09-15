@@ -328,7 +328,7 @@ const CURATION_ALL = [
       { name: '명태살 가득 참 어묵', matches: ['어묵'], benefit: '명태살이 가득해 성분 좋은 어묵이에요. 종류별로 사서 오븐에 구운 뒤 냉동해두면, 가루육수 넣어 남편이 좋아하는 어묵탕 5분 컷', q: '한살림 명태살가득참어묵', mall: 'hansalim' },
       { name: '바른어묵', brand: '새로미', matches: ['어묵'], benefit: '성분 좋고 맛있는 어묵이에요. 짜지 않아 아이 반찬으로도 안심. 한살림이 집 근처에 없다면 이걸로 대용해도 좋아요. 구우면 겉이 쫄깃해져 더 맛있어요', q: '새로미 바른어묵', mall: 'coupang', url: 'https://link.coupang.com/a/gRY7t47uk8' },
       // 🍢 [2026-09-15] 창업자가 준 링크 — «쿠팡에 어묵 링크가 없다»고 해서 새로 준 것
-      { name: '네모어묵', who: '클로드', brand: '새로미', matches: ['어묵', '사각어묵'], benefit: '네모나서 꼬치에 끼우거나 어묵탕에 넣기 좋아요. 새로미 어묵은 성분이 좋고 짜지 않아 아이 반찬으로도 안심이에요', q: '새로미 네모어묵', mall: 'coupang', url: 'https://link.coupang.com/a/g3YmRHlrQ4' },
+      { name: '네모어묵', who: '창업자', brand: '새로미', matches: ['어묵', '사각어묵'], benefit: '성분이 깔끔하고 맛있어요. 쫄깃한 식감을 좋아해서 꼭 오븐에 구워 냉동실에 보관해두고 정말 많이 사용해요. 모듬어묵, 봉어묵도 추천해요. 장보기할때 꼭 담아보세요.', q: '새로미 네모어묵', mall: 'coupang', url: 'https://link.coupang.com/a/g3YmRHlrQ4' },
     ],
   },
   {
