@@ -849,6 +849,10 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       {view === 'grid' && (
         <>
           {/* 찾는 중엔 폴더 칩을 감춘다 — 어느 폴더에 넣었는지 기억나면 애초에 안 찾는다 */}
+          {/* 📏 [2026-09-15 아이패드 실측] 칩 줄 둘을 `.pad` 로 감싼다 — `.hscroll` 은 「20px 여백 안에서
+              −20px 로 빠져나가는」 모양이라 여백 없는 `.screen` 바로 밑에 두면 첫 칸이 화면 왼쪽 끝에 딱 붙고
+              끝 칸은 오른쪽 끝에서 잘린다(폰도 같았고 패드에서 눈에 띄었다). 아래 목록(`.pad`)과 같은 여백으로 맞춘다. */}
+          <div className="pad">
           <div className="hscroll" style={{ marginBottom: 8, display: query ? 'none' : undefined }}>
             <button className={`pill press ${folder === '전체' ? 'active' : ''}`} onClick={() => setFolder('전체')}>전체 {sorted.length}</button>
             {/* ⭐ [2026-08-17 창업자 *"바꿔"*] 유니코드 글자 `★` → 우리 별 아이콘.
@@ -914,6 +918,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               <button key={c} className={`pill press ${folder === c ? 'active' : ''}`} onClick={() => setFolder(c)}>{c} {countIn(c)}</button>
             ))}
             <button className="pill press" style={{ borderStyle: 'dashed', color: 'var(--text-sub)' }} onClick={() => setNewFolder(true)}>＋ 폴더</button>
+          </div>
           </div>
           <div className="pad">
             {/* 사용자가 만든 폴더는 여기서 바로 삭제(폴더·태그 탭을 없애 모아보기로 흡수) */}
