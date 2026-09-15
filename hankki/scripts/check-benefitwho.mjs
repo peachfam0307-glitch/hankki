@@ -81,6 +81,54 @@ if (클로드가쓴것.length) {
   실패++
 }
 
+// 💰💰 **쿠팡 주소인데 «파트너스 링크»가 아닌가** — 그러면 눌러도 수수료가 0원이다.
+//   📮 창업자 2026-09-15 = *"예전꺼는 그럼 수익링크가 아니었을거야"* → **맞았다.**
+//   🔢 실측 = 129개 중 **1개**(알라 하바티치즈)가 `www.coupang.com/vp/products/…` 였다.
+//      파트너스 주소는 `link.coupang.com/a/…` 꼴이다. 그 꼴이 아니면 우리 몫이 «안 잡힌다».
+//   ⛔ 조용히 새는 자리다 — 링크는 «열리니까» 아무도 이상하게 안 여긴다.
+{
+  const 샘 = []
+  for (const 줄 of src.split('\n')) {
+    if (/^\s*\/\//.test(줄)) continue
+    const u = (줄.match(/url:\s*'([^']+)'/) || [])[1]
+    if (!u || !/coupang\.com/.test(u)) continue
+    if (/link\.coupang\.com\/a\//.test(u)) continue
+    const n = (줄.match(/name:\s*'([^']+)'/) || [])[1] || '(이름 모름)'
+    샘.push({ n, u })
+  }
+  if (샘.length) {
+    console.log(`\n   ⛔ 쿠팡 주소인데 «파트너스 링크가 아닌» 제품 ${샘.length}개 — 눌러도 수수료 0원`)
+    for (const x of 샘) console.log(`      · ${x.n}  —  ${x.u.slice(0, 56)}…`)
+    console.log(`      👉 파트너스에서 그 제품 링크를 만들어 link.coupang.com/a/… 꼴로 갈아끼운다.`)
+    실패++
+  } else {
+    console.log(`   ✅ 쿠팡 주소가 전부 파트너스 링크다`)
+  }
+}
+
+// 🔁🔁 **같은 제품이 «두 줄»로 들어갔나** — 2026-09-15 에 실제로 났다.
+//   📮 창업자 = *"새로미 바른어묵이 네모어묵이야 근데"* → *"같은거야;;;"*
+//   ⛔ 내가 오늘 어묵 링크를 받고 **이미 새로미 어묵이 있는지 안 보고** 새 줄로 넣었다.
+//      → 유저에게 «같은 물건»이 이름만 달리 두 번 보였다.
+//   ⭐ 잣대 = **같은 브랜드 안에서 주소(url)가 다른데 이름이 비슷한 것**은 못 잡는다(이름이 아예 달랐다).
+//      그래서 «브랜드 ＋ 같은 갈래»에 제품이 둘 이상이면 **알린다**(⛔막지는 않는다 — 진짜로 다른 제품일 수 있다).
+{
+  const 묶음 = new Map()
+  for (const p of 제품) {
+    const b = (src.split('\n').find((l) => l.includes(`name: '${p.name}'`)) || '').match(/brand:\s*'([^']+)'/)
+    if (!b) continue
+    const k = b[1]
+    if (!묶음.has(k)) 묶음.set(k, [])
+    묶음.get(k).push(p.name)
+  }
+  const 여럿 = [...묶음].filter(([, xs]) => xs.length > 1)
+  if (여럿.length) {
+    console.log(`\n   📢 같은 브랜드에 제품이 둘 이상 — «같은 물건이 두 줄»은 아닌지 눈으로 볼 것`)
+    for (const [b, xs] of 여럿) console.log(`      · ${b} — ${xs.join(' · ')}`)
+    console.log(`      ⛔ 막지는 않는다(진짜로 다른 제품일 수 있다). 2026-09-15 새로미 어묵이 실제로 겹쳤다.`)
+  }
+}
+
 console.log(`   🗂 기준선(안 묻는 옛 제품) ${기준선.length}개`)
 console.log('')
 if (실패) {
