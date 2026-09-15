@@ -142,6 +142,29 @@ jobs:
             exit 1
           fi
           ls "$SDK"
+          # 🔗🔗 **bubblewrap 이 「맞는 SDK 인가」를 보는 잣대가 «폴더 하나»다.**
+          #   📄 @bubblewrap/core AndroidSdkTools.validatePath (실물을 열어 읽었다 · 2026-09-15):
+          #        toolsPath = <sdk>/tools · binPath = <sdk>/bin
+          #        둘 «다» 없으면 → "The provided androidSdk isn't correct."
+          #   ⛔ 러너 SDK 에는 `cmdline-tools/16.0/bin` 은 있어도 **맨 위 `tools/` 도 `bin/` 도 없다.**
+          #      그래서 21판 run 21 이 마지막 「AAB 빌드」에서 그 말로 죽었다.
+          #      ＝ SDK 가 나쁜 게 아니라 **그 검사가 옛 자리를 본다.**
+          #   📌 옛날엔 setup-android 가 `tools` 패키지를 깔아 줘서 저절로 통과했다.
+          #      구글이 `tools` 를 내리면서 그 받침이 사라진 것이다 — 두 실패가 «같은 뿌리»다.
+          #   ⭐ 그래서 cmdline-tools 의 bin 을 맨 위 `bin` 으로 이어 준다(복사 아니라 링크).
+          CLI_BIN="$(ls -d "$SDK"/cmdline-tools/*/bin 2>/dev/null | sort -V | tail -1)"
+          if [ -z "$CLI_BIN" ]; then
+            echo "⛔ cmdline-tools/*/bin 을 못 찾았다 — 이어 줄 자리가 없다."
+            ls -la "$SDK/cmdline-tools" 2>/dev/null || true
+            exit 1
+          fi
+          [ -e "$SDK/bin" ] || ln -s "$CLI_BIN" "$SDK/bin"
+          echo "── 이어 준 자리 ── $SDK/bin -> $CLI_BIN"
+          # ⛔ 이어 준 뒤 «진짜로 보이나»를 여기서 확인한다 — 안 그러면 다음 단계에서 같은 말로 또 죽는다.
+          if [ ! -e "$SDK/tools" ] && [ ! -e "$SDK/bin" ]; then
+            echo "⛔ 아직도 tools 도 bin 도 없다 — bubblewrap 이 또 거부한다."
+            exit 1
+          fi
           echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
 
