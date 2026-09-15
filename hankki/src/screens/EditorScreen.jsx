@@ -16,6 +16,7 @@ import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES } from '../theme'
+import { 나라들 } from '../data/종류'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, 열쇠셈, 열쇠셈리셋, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
@@ -652,7 +653,11 @@ export default function EditorScreen({ id, prefill }) {
           ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
           : leftTail
             ? '초안을 채웠어요' + leftTail
-            : '초안을 채웠어요 · 사진 보며 다듬어 주세요') + AI다듬는중,
+            : '초안을 채웠어요 · 사진 보며 다듬어 주세요')
+        // 🆓🆓 [창업자 실물 2026-09-14 20:37] 무료로 읽었는데 꼬리에 「AI가 더 다듬는 중이에요」가
+        //   «무조건» 붙어 있었다 — 무료는 AI 를 아예 안 부르는데 도는 척을 한 것이다.
+        //   ⛔ 창업자 = "이거까지 띄우면 너무 정신없어서". 안 도는 일을 말하지 않는다.
+        + (freeTail ? '' : AI다듬는중),
       20000,
     )
 
@@ -736,7 +741,7 @@ export default function EditorScreen({ id, prefill }) {
     //   ⛔ dataURL 이 아니면 안 보낸다(`tidy.js` 가 또 한 번 거른다).
     const 표지 = typeof editing?.image === 'string' ? editing.image : ''
     const 사진 = shotAccum.current || (표지.startsWith('data:image/') ? 표지 : '')
-    const ai = await tidyRecipe(rawText, 사진)
+    const ai = await tidyRecipe(rawText, 사진, { 무료: 무료판 || !!editing?.freeRead })
     set다듬는중(false)
     끝표시(!!ai)
     if (!ai) {
@@ -879,7 +884,13 @@ export default function EditorScreen({ id, prefill }) {
               </span>
               {UNITS.map((u) => (
                 <button key={u} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insertUnit(u, focusField === 'steps' ? stepRef : ingRef, focusField)}
-                  style={{ flex: '0 0 auto', padding: '8px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', border: '1px solid var(--line)', fontSize: 16, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
+                  // 🥄🥄 [창업자 확정 2026-09-14 · 시안 B] **파란 알약 + 바탕색 글씨.**
+                  //   📮 창업자 = "잘보이는 색으로 바꾸자" · "눈에 띄어야 그걸보고 쉽게 고치지"
+                  //   ⛔ 옛 판 = 바탕 var(--cream) #f2ede3 인데 화면 바탕이 #fdfbf7 이라 «거의 같은 색»이었다.
+                  //      크림 알약은 앱 곳곳(태그·알약)에 널려 있어 그 사이에 묻혔다 — 누르는 것인지도 안 읽혔다.
+                  //   ⭐ 글씨를 #fff 로 «박지 않는다» — var(--bg) 면 밝은 테마에선 거의 흰색,
+                  //      다크에선 차콜(#17171b)이 되어 파란 알약 위에서 «둘 다» 또렷하다.
+                  style={{ flex: '0 0 auto', padding: '8px 14px', borderRadius: 999, background: 'var(--brown)', color: 'var(--bg)', border: '1px solid var(--brown)', fontSize: 16, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
                   {u}
                 </button>
               ))}
@@ -1343,7 +1354,15 @@ export default function EditorScreen({ id, prefill }) {
         <div className="field">
           <label>폴더</label>
           <div className="hscroll" style={{ padding: 0, margin: 0 }}>
-            {folders.map((c) => (
+            {/* 🌏🌏 [창업자 실물 2026-09-14] 나라를 «뺀다» — 바로 위 「카테고리」 줄과 똑같아서
+                한 화면에 한식·중식·일식·양식·아시안·기타가 «두 번» 떴다.
+                📮 창업자 = "카테고리도 한식 위 아래 두번 중복이야" ·
+                   "제목아래 카테고리랑 테그밑에 폴더가 또있어"
+                ⛔ 그 전엔 «서로 다른 값»도 고를 수 있었다 — 카테고리는 한식인데 폴더는 양식처럼.
+                ⭐ 갈래를 이렇게 나눈다 = 카테고리는 「어느 나라 것인가」 · 폴더는 「어디에 넣어둘까」.
+                ⛔ 저장된 편은 하나도 안 움직인다 — 폴더가 「한식」인 편은 그대로 있고
+                   레시피 탭 한식 칩에도 그대로 뜬다. «고르는 자리»에서만 안 보인다. */}
+            {folders.filter((c) => !나라들.includes(c)).map((c) => (
               <button key={c} className={`pill press ${f.folder === c ? 'active' : ''}`} onClick={() => set('folder', c)}>{c}</button>
             ))}
             <button className="pill press" onClick={() => setNewFolder(true)}>
@@ -1438,7 +1457,7 @@ export default function EditorScreen({ id, prefill }) {
                          그래서 아래에 그렇게 적어 둔다(모르고 눌러 잃는 일이 없게). */}
                   {/* 🆓 [2026-09-14] 무료로 읽은 판엔 «안» 보인다 — 누르면 열쇠 0개로 AI 가 돈다.
                       창업자 확정(2026-08-29 · 재론 금지) = 「열쇠 없이도 AI 정리」를 어디에도 열지 않는다. */}
-                  {!무료판 && (
+                  {!(무료판 || editing?.freeRead) && (
                   <button
                     type="button"
                     className="press"
@@ -1554,13 +1573,27 @@ export default function EditorScreen({ id, prefill }) {
           title={
             ocrTargetRef.current === 'ingredients' ? '재료 사진 자르기'
               : ocrTargetRef.current === 'steps' ? '만드는 법 사진 자르기'
-                : '글자 부분만 남기기'
+                : ocrNoVision.current ? '레시피 부분만 남기기'
+                  : '글자 부분만 남기기'
           }
           hint={
             ocrTargetRef.current === 'ingredients' ? (
               <>이 사진의 글자는 <b style={{ color: '#f0ede7' }}>재료 칸에만</b> 담겨요. 재료 부분만 남겨주세요.</>
             ) : ocrTargetRef.current === 'steps' ? (
               <>이 사진의 글자는 <b style={{ color: '#f0ede7' }}>만드는 법 칸에만</b> 담겨요. 순서 부분만 남겨주세요.</>
+            ) : ocrNoVision.current ? (
+              // 🆓🆓 [창업자 2026-09-14] 무료로 읽을 때는 «잘라내는 것»이 곧 인식률이다 — 그래서 크게 적는다.
+              //   📮 창업자 = "안내가 잘~~보이게" · "제목 재료 만드는법만 나오게 잘라야하지않아"
+              //   ⭐ 왜 열쇠 쪽과 말이 다른가 = 조리 문장에서 재료를 «더 뽑아주는» 것은 AI 만 한다.
+              //      무료는 그걸 못 하니 글을 더 남겨도 득이 없고, 글자만 많아져 흐려진다.
+              //      ＋ 무료 쪽은 긴 변이 1500px 미만이면 최대 3배로 키워 읽는다(ocr.js preprocess)
+              //        → 사진을 걷어낼수록 글자가 그만큼 커져서 들어간다.
+              <>
+                <b style={{ color: '#fff', fontSize: 19 }}>제목 · 재료 · 만드는 법</b>
+                <span style={{ fontSize: 19 }}>만 남겨주세요</span><br />
+                <span style={{ color: '#ffd9a0', fontSize: 16, fontWeight: 700 }}>사진을 잘라낼수록 글자를 더 잘 읽어요</span><br />
+                <span style={{ color: '#cfcac1', fontSize: 14.5 }}>지금은 {KEY_NAME} 없이 읽어요</span>
+              </>
             ) : undefined
           }
           onDone={(img) => { setCropImg(null); setRefs((p) => [...p, img]); setPin('photo'); onCropped(img) }}

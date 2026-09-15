@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -11,6 +11,8 @@ import { downscale } from '../components/DiaryEntrySheet'
 import Portal from '../components/Portal'
 import { scaleIngredient } from '../scale'
 import { useWakeLock } from '../useWakeLock'
+import { 오래켜둠재기 } from '../use오래켜둠'
+import { 요리시작 } from '../stats'
 import { useLayerBack } from '../useBackHandler'
 import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
@@ -37,6 +39,12 @@ export default function CookScreen({ id }) {
   // 재료 시트 — 뒤로가기로 닫기(요리모드는 유지). 타이머 시트는 자체 처리.
   useLayerBack(showIng, () => setShowIng(false))
   useWakeLock() // 화면이 꺼지지 않게 (요리 모드)
+  // 📊 [2026-09-14] 🍳 요리모드를 «시작»했다 — 한 번만.
+  //   ⛔ 화면 기록(`cook`)과 뜻이 다르다: 그건 「들어왔다 나갔다」를 다 세지만 이건 «첫 걸음»이다.
+  //   ⛔ 열쇠(EARN.요리)는 «끝냈을 때» 주는 자리라 여기가 아니다 — 시작과 끝은 다른 값이다.
+  useEffect(() => { try { 요리시작() } catch { /* 통계가 죽어도 요리는 된다 */ } }, [])
+  // ⏱ 📊 [2026-09-14] 5분 넘게 «앞에 두고» 있었나 — 「진짜로 요리했나」
+  오래켜둠재기('cook')
   const prep = i === 0 // 재료 준비 화면인지
   // 📖 요리 가이드(계량·손질) — 🧪**테스터 의견**(창업자 전달 2026-08-14)
   //    원문 = *"재료손질 화면에서도 요리가이드 있었으면 좋겠데"* ＋ 창업자 풀이

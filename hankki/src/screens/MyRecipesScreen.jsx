@@ -3,6 +3,7 @@ import { COACH } from '../coach'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import { 저장날짜보임 } from '../data/seed'
+import { 나라들, 종류들, 종류고르기, 옛폴더이름 } from '../data/종류'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
@@ -79,7 +80,15 @@ const DIARY_COACH_STEPS = [
 // 카테고리와 연결된 기본 폴더 — 삭제 불가(사용자가 만든 폴더만 지울 수 있게)
 // ⛔⛔ 여기와 `theme.js` 의 `CATEGORIES` 는 «같이» 고쳐야 한다 — 하나만 고치면
 //    칩엔 있는데 폴더가 «지워지는» 갈래가 생긴다. 2026-09-03 에 중식을 넣으며 둘 다 고쳤다.
-const DEFAULT_FOLDERS = new Set(['한식', '중식', '양식', '일식', '간식', '아시안'])
+const DEFAULT_FOLDERS = new Set([...나라들, ...종류들])
+
+// 🍚🌏 **한 편이 «나라 칩»과 «종류 칩»에 둘 다 든다** (창업자 확정 2026-09-14 *"중복이어야 맞아"*)
+//   ⛔⛔ 그 전엔 `(r.folder || r.category)` 였다 — **folder 가 있으면 category 가 «버려졌다».**
+//      그래서 간장게장(갈래 한식·폴더 반찬)이 **한식 칩에서 사라졌다.**
+//      📌 실측 2026-09-14 = 새로 까는 사람 화면엔 반찬 칩도 없어서 «어느 칩에서도» 안 나왔다.
+//   ⭐ 이제 셋 중 하나만 맞으면 든다 — ①나라(category) ②유저가 옮긴 폴더(folder) ③종류(계산).
+//      📌 ②를 남겨 두는 이유 = 유저가 «자기가 만든 폴더»로 옮긴 편을 잃으면 안 된다.
+const 여기드나 = (r, 칩) => r.category === 칩 || r.folder === 칩 || 종류고르기(r) === 칩
 
 const dayKey = (ts) => {
   const d = new Date(ts)
@@ -327,9 +336,31 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       : folder === '__pinned' ? sorted.filter((r) => FAV_PINS.some((종) => isPinned(r, 종.key)))
       : folder === '__often' ? sorted.filter((r) => (r.cooked || 0) > 0).sort((a, b) => (b.cooked || 0) - (a.cooked || 0))
       : folder === '__sns' ? sorted.filter(SNS인가)
-      : sorted.filter((r) => (r.folder || r.category) === folder)
-  const countIn = (name) => sorted.filter((r) => (r.folder || r.category) === name).length
+      : sorted.filter((r) => 여기드나(r, folder))
+  const countIn = (name) => sorted.filter((r) => 여기드나(r, name)).length
   // ⛔ 새 칩 열쇠()를 여기 «안» 넣으면 「폴더 삭제」 단추가 뜬다 — 폴더가 아닌데 폴더로 읽힌다
+  // 🧺 **칩 목록은 «정해진 것»이다** — 나라 다섯 ＋ 종류 여섯 ＋ 유저가 «직접 만든» 폴더.
+  //   ⛔⛔ 그 전엔 `folders` 를 그대로 그렸다. 그 목록은 레시피에 적힌 folder 로 «저절로» 불어나서
+  //      아무도 정한 적 없는 「국·탕·찌개」 칩이 2편짜리로 생겨 있었다(실측 2026-09-14).
+  //   ⭐ 유저가 만든 폴더는 남긴다 — 옛 이름(국물·국·탕)으로 옮겨 둔 편을 잃으면 안 된다.
+  const 칩목록 = useMemo(() => {
+    // 🍚🍚 [창업자 확정 2026-09-14] **종류가 나라보다 «앞»이다.**
+    //   📮 창업자 = *"나라보다는 반찬 국 이런 카테고리가 요리하기 더 편하지 않을까..
+    //      레시피 모아보기에도 밥 면 이게 나라보다 먼저나와야하지않을까 싶네"*
+    //   🔢 실측이 그 말을 받쳐준다(우리 201편):
+    //      · 나라 = 한식 154편(**77%**) · 양식 23 · 일식 9 · 기타 7 · 중식 6 · 아시안 2
+    //        → 나라 칩은 사실상 「한식」 하나다. 눌러도 거의 안 걸러지고, 중식·아시안은 빈 서랍에 가깝다.
+    //      · 종류 = 반찬 102 · 국 30 · 밥 23 · 면 23 · 간식 13 · 샐러드 7 · 소스 3
+    //        → 고르게 갈린다. **거르는 값이 훨씬 크다.**
+    //   ⛔ 나라를 «없애지» 않았다 — 뒤로 물릴 뿐이다(양식 23편은 쓸모가 있다).
+    //   ⚠️ 정직하게 = 「나라 칩을 실제로 누가 쓰나」는 재본 적이 없다(칩 누름을 안 센다).
+    //      확실한 것은 「한식이 77%라 거르는 값이 작다」 하나뿐이고, 그 위에서 정했다.
+    const 정해진것 = [...종류들, ...나라들]
+    // ⛔ 폰에만 남은 «옛 폴더»는 뺀다 (창업자 2026-09-14 "그럼 다 빼야지" · data/종류.js 의 옛폴더이름)
+    //   ⭐ 칩에서만 빠진다 — 그 폴더에 든 편은 나라 칩·종류 칩·「전체」에 그대로 뜬다(아래 여기드나).
+    const 유저것 = (folders || []).filter((f) => !정해진것.includes(f) && !옛폴더이름.includes(f))
+    return [...정해진것, ...유저것]
+  }, [folders])
   const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__heart' && folder !== '__pinned' && folder !== '__often' && folder !== '__sns' && !DEFAULT_FOLDERS.has(folder)
 
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
@@ -879,7 +910,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                  아래 목록이 위아래로 튄다. 각 줄은 «그 줄 안에서» 옆으로 넘긴다(`.hscroll`).
               ⭐ 「전체」는 윗줄에 둔다 — 어느 줄을 보든 돌아올 자리라 제일 왼쪽 첫 칸이 맞다. */}
           <div className="hscroll" style={{ marginBottom: 8, display: query ? 'none' : undefined }}>
-            {folders.map((c) => (
+            {칩목록.map((c) => (
               <button key={c} className={`pill press ${folder === c ? 'active' : ''}`} onClick={() => setFolder(c)}>{c} {countIn(c)}</button>
             ))}
             <button className="pill press" style={{ borderStyle: 'dashed', color: 'var(--text-sub)' }} onClick={() => setNewFolder(true)}>＋ 폴더</button>

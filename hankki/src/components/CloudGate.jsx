@@ -9,8 +9,8 @@ import { useStore } from '../store'
 import { APP_TAGLINE } from '../version'
 import { markCloudGateSeen, myRecipeCount, myDiaryCount } from '../nudges'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
-import { 합치기 } from '../syncMerge'                 // 👪 「이 계정에 넣기」 뒤 가져오기 = 덮지 않고 더한다
-import { 로그인, 요약, 내려받기, 미리붙기, 받았다표시, 기기주인정하기 } from '../cloud'
+import { 합치기, 받을때합칠까 } from '../syncMerge'    // 👪 「이 계정에 넣기」 뒤 가져오기 = 덮지 않고 더한다 · 🔁 같은 폰 같은 계정 재로그인도 합친다
+import { 로그인, 요약, 내려받기, 미리붙기, 받았다표시, 기기주인정하기, 기기주인 } from '../cloud'
 import KeyGift from './KeyGift'
 import duoHi from '../assets/sharepool/duo_hi.png'
 
@@ -77,10 +77,13 @@ export default function CloudGate({ onDone }) {
   const 눌러로그인 = async (공급자 = 'google.com') => {
     set탈(''); set바쁨('로그인')
     try {
+      const 주인전 = 기기주인()   // 🔁 로그인 «전»에 읽는다 — 로그인() 이 주인을 정하고 나면 새 폰도 「같다」로 보인다
       const 사람 = await 로그인(공급자)
       // 👪 주인이 다른 계정이고 이 기기에 «내 기록»이 있으면 — 올리기·가져오기 «전에» 묻는다(둘 다 섞는 길이다)
       const 레 = myRecipeCount(recipes); const 일 = myDiaryCount(diary)
       if (앱안인가() && 사람.이전주인 && (레 + 일) > 0) { set계정물음({ 사람, 레시피: 레, 일기: 일, 단계: 1 }); set바쁨(''); return }
+      // 🔁 [2026-09-14] 같은 폰·같은 계정 재로그인 = 가져오기가 폰 기록을 «덮지 않고 합친다»(딸 폰 97→87 실측)
+      if (받을때합칠까({ 이전주인: 사람.이전주인, 주인전, 번호: 사람.번호 })) set합쳐받기(true)
       await 로그인뒤()
     } catch (e) {
       // 🔐 [2026-09-07] 실패를 «센다» — 2번째부터 탈출구가 나타난다.

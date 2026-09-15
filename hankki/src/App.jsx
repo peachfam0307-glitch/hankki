@@ -14,7 +14,7 @@ import { 만회값 } from './retidy'   // 🧺 선반에서 받은 답을 얹는
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
 import { guessCategory, fitImage, imageSize } from './utils'
 // 🖼 「뭘 많이 썼나」를 재는 자리 — 나가는 건 «화면 이름 하나»뿐이다(자물쇠는 `src/stats.js`).
-import { 화면봄, 레시피저장 } from './stats'
+import { 화면봄, 레시피저장, 꾸민게쌓였나, 읽어냄, 못읽음 } from './stats'
 // 🍱 [2026-08-28] 공유로 담으면 아이콘이 빈 접시로 굳던 것 — 뿌리·막이 설명은 `shareIcon.js` 주석에.
 import { 공유아이콘 } from './shareIcon'
 // 🎴 축소 루프가 «자랑카드 표지»를 건드리지 않게 — 잣대는 화면·클라우드와 «같은 한 곳»(2026-09-02)
@@ -261,6 +261,7 @@ export default function App() {
     화면봄(위 ? 위.name : tab)
   }, [tab, stack])
 
+
   // 안드로이드 '뒤로가기'가 앱을 바로 종료시키지 않도록: 열린 화면을 닫고,
   // 탭이면 홈으로. (히스토리 트랩을 유지해 갑작스런 종료 방지)
   useEffect(() => {
@@ -442,6 +443,31 @@ export default function App() {
     for (const r of store.recipes || []) if (r?.tidying) store.updateRecipe(r.id, { tidying: 0 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // 🎨🎨 📊 [2026-09-14] 「꾸민 게 «쌓여» 있나」 — 📮창업자 = *"레꾸가 우리앱 아이덴티티니까"*
+  //
+  // ⛔ `decor_saved` 는 「오늘 저장을 «누른» 횟수」다 — 한 편을 두 번 고치면 2번 세지고,
+  //    앱을 지우면 같이 사라진다. 그래서 **「꾸민 레시피가 몇 개 쌓였나」를 못 본다.**
+  // ⭐ 그래서 앱을 열 때 «가지고 있는 개수»를 «구간»으로 딱 한 번 보낸다.
+  //
+  // 🔒 ⛔레시피 이름도, 무엇을 붙였는지도 한 자도 안 보낸다 — 구간 이름뿐이다.
+  // ⛔ 판정을 «새로 만들지 않는다» — `RecipeDetailScreen.jsx:418` 의 `isDecorated` 와 «같은 규칙»이다.
+  //    (규칙이 둘이 되면 화면과 통계가 서로 다른 말을 한다.)
+  // ⛔ 한 번만 — 화면을 옮길 때마다 보내면 숫자가 부풀어 거짓이 된다.
+  // ⛔⛔ [2026-09-14 잡은 사고] 처음엔 이걸 «위쪽 화면봄 옆»에 넣었다가 되돌렸다 —
+  //    그 컴포넌트엔 `recipes` 가 없다. **빌드는 통과했다**(전역 참조로 두고 넘어간다) —
+  //    폰에서야 터졌을 것이다. 📌 «변수가 그 자리에 있나»는 빌드가 아니라 눈으로 확인한다.
+  const 쌓임보냈나 = useRef(false)
+  useEffect(() => {
+    if (쌓임보냈나.current) return
+    const 목록 = store.recipes || []
+    if (!목록.length) return
+    쌓임보냈나.current = true
+    try {
+      const n = 목록.filter((r) => (r?.decor && r.decor.length) || (r?.decorBg && r.decorBg !== 'none') || r?.thumb === 'none').length
+      꾸민게쌓였나(n)
+    } catch { /* 통계가 죽어도 앱은 그대로 돈다 */ }
+  }, [store.recipes])
 
 
   // ⭐ 아래 「저절로 올리기」가 «한 번만» 도는데 그 안에서 최신 store 를 봐야 한다 — 그래서 ref 로 들고 있는다.
@@ -758,13 +784,26 @@ export default function App() {
         //      열쇠를 썼는지조차 알 수 없다. 그게 오늘 밤 창업자가 겪은 침묵의 한 갈래다.
         //   ⭐ 서버가 보낸 «왜»로 말을 고른다(tidy.js 의 까닭말 한 곳) — 짐작하지 않는다.
         //   📖 표 = docs/열쇠와안내-까닭별-2026-09-09.md
+        // 📊📊 [2026-09-14] **여기가 계측의 «구멍»이었다** — 📮창업자 = *"붙여줘"*
+        //
+        // ⛔⛔ `읽어냄()`·`못읽음()` 이 `EditorScreen.jsx:520` «한 곳»에만 붙어 있었다.
+        //    그런데 글자를 읽는 길은 셋이다 — 편집 캡처 · **여기(공유받기)** · 냉장고 영수증.
+        //    ＝ **제일 많이 쓰는 갈래(`import_share` 10명)가 통째로 «안 세졌다».**
+        //
+        // ⛔ 그래서 2026-09-14 에 클로드가 「22명 고름 → 2명 읽음 = 20명이 샌다」고 잘못 읽었다.
+        //    진짜는 「2명만 «세졌다»」였다. 샜는지 아닌지는 **이 줄이 붙은 뒤라야 보인다.**
+        //
+        // 📌 구멍검사(`scripts/계측-구멍검사.mjs`)도 이걸 못 잡았다 —
+        //    「부르는 곳이 있나」만 보고 **「부를 자리가 더 있나」는 안 봤다.** 검사도 같이 고쳤다.
         if (!text.trim()) {
+          try { 못읽음() } catch { /* 통계가 죽어도 안내는 뜬다 */ }
           const 셈 = 열쇠셈()
           set자동남은말('')
           창닫음.current = false        // 새 사진이니 새 판이다
           끝알림(까닭말(셈.왜, 셈.앎))
           return
         }
+        try { 읽어냄() } catch { /* 통계가 죽어도 다듬기는 돈다 */ }
         // 🤖🤖 [2026-08-29] **AI 다듬기 — ⭐여기가 창업자가 실제로 쓰는 문이다.**
         //   ⛔⛔ 8/29 아침에 AI 를 `EditorScreen`(편집 화면 캡처 단추) «한 곳»에만 붙여서
         //      「가져오기 → 사진」·공유받기로 담은 것은 **워커를 한 번도 안 불렀다**
@@ -918,7 +957,8 @@ export default function App() {
         // 🧺 워커가 맡은 «번호»를 그 레시피에 적어 둔다 — 앱이 얼어도 살아남는다 [2026-09-10]
         //   ⛔ 이게 없으면 깨어났을 때 «물어볼 번호»가 없어 선반에 놓인 답을 통째로 버린다.
         번호알림받기((번호) => store.updateRecipe(rec.id, { tidyJob: 번호, tidyJobAt: Date.now() }))
-        tidyRecipe(text, 장들[0]).then((ai) => {
+        // 🤖 auto = 공유받기 직후 앱이 «저절로» 돈다 — 유저가 AI 를 부른 게 아니다 (2026-09-14)
+        tidyRecipe(text, 장들[0], { 까닭: 'auto' }).then((ai) => {
           set자동다듬기창(false)
           if (cancelled) { store.updateRecipe(rec.id, { tidying: 0 }); return }
           if (ai) {

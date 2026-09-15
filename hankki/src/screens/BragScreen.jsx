@@ -10,6 +10,7 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import Icon from '../components/Icon'
 import { matchKo } from '../utils'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
+import { 자랑보냄 } from '../stats'
 // 🗄 「표지 그림이 큰 창고에 있나」 — 찍기 전에 기다릴지 정하는 잣대(2026-09-03)
 import { 창고에있나 } from '../photoStore'
 import { warmFontCSS } from '../fontEmbed'
@@ -183,6 +184,10 @@ export default function BragScreen() {
       else if (res && res.shared === true && res.다음) 띄울시트 = { ...res.다음, 이어보내기: true }
       // 🎁 레꾸자랑을 «진짜로» 보냈다 — 평생 1회(서버가 판정)
       //   ⛔ 실패·저장 폴백에는 안 준다 — 「보내기」를 해본 게 아니다
+      // 📊 [2026-09-14] «진짜로 보냈을 때만» 센다 — 열쇠 조건과 똑같은 자리다.
+      //   ⛔ 열쇠받기() «안»이 아니라 «밖»이다 — 열쇠는 평생 한 번, 통계는 매번 세야 한다.
+      //   ⛔ 취소(AbortError)·사진 저장 폴백은 `shared: false` 라 여기 안 들어온다(shareCover.js:232·235·244).
+      if (res && res.shared === true) { try { 자랑보냄() } catch { /* 통계가 죽어도 자랑은 된다 */ } }
       if (res && res.shared === true) 열쇠받기(EARN.자랑).then((받음) => { if (받음) nav.showToast(`레꾸자랑을 처음 보냈어요 · ${KEY_NAME} 1${KEY_UNIT}를 더 받았어요`, 5200) })
       else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')

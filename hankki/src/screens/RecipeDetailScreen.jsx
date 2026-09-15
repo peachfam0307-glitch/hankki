@@ -32,6 +32,7 @@ import { AI동의받기 } from '../aiConsent'   // 🔐 AI 로 보내기 전 허
 import { picksForIngredients, productLink, productMall, curIcon, isHansalim } from '../data/curation'
 
 import { useWakeLock } from '../useWakeLock'
+import { 오래켜둠재기 } from '../use오래켜둠'
 import { useLayerBack } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import ShareDrawCard, { RecipeCard, 카드표지로, 카드표지토스트 } from '../components/ShareDrawCard'
@@ -109,6 +110,10 @@ export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateDiary, updateRecipe } = useStore()
   const nav = useNav()
   useWakeLock() // 레시피를 보며 요리할 때 화면이 꺼지지 않게
+  // ⏱ 📊 [2026-09-14] 5분 넘게 «앞에 두고» 있었나 — 「보면서 만든 사람」
+  //   📮 창업자 = *"요리모드도 그렇지만 레시피상세에서 5분넘게 켜두는 것도 보고 만드는 거야"*
+  //   ⛔ 요리모드만 세면 반을 놓친다 — `cook_done` 때 밟은 구멍과 «같은 모양»이다.
+  오래켜둠재기('detail')
   const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
   const [timer, setTimer] = useState(false)
   // 🖼 유튜브 미리보기 그림이 안 올 때 — 그 칸을 통째로 감춘다(깨진 네모 금지)
@@ -209,7 +214,8 @@ export default function RecipeDetailScreen({ id }) {
     nav.showToast('AI가 다듬는 중이에요 · 다 되면 레시피에 저절로 올라가요', 6000)
     // 👁 사진이 손에 있으면 같이 보낸다(`tidy.js` 가 한 번 더 거른다) — 보관함 단추와 «같은 말»
     const 사진 = typeof r.image === 'string' && r.image.startsWith('data:image/') ? r.image : ''
-    const ai = await tidyRecipe(원문, 사진)
+    // 🙋‍♀️ user = 유저가 「다시 해보기」 «단추를 눌렀다» (2026-09-14)
+    const ai = await tidyRecipe(원문, 사진, { 무료: !!r.freeRead, 까닭: 'user' })
     set다시중(false)
     if (!ai) {
       // ⛔ 표를 2 로 «둔다» — 단추는 아래 조건이 1·2 둘 다 보여주므로 사라지지 않는다
@@ -235,7 +241,9 @@ export default function RecipeDetailScreen({ id }) {
     만회한적.current = r.id
     let 살아있나 = true
     ;(async () => {
-      const ai = await tidyRecipe(원문)
+      // 🤖 auto = 앱이 «저절로» 만회한다 — 유저는 레시피를 열었을 뿐이다 (2026-09-14)
+      //   ⛔⛔ 이걸 「사람이 AI 를 썼다」로 세면 유료 판단이 통째로 틀어진다. 여기가 그 자리다.
+      const ai = await tidyRecipe(원문, '', { 무료: !!r.freeRead, 까닭: 'auto' })
       if (!살아있나) return
       // 🙅 [2026-09-13] 동의를 안 한 사람에겐 만회할 게 없다 — 실패 표시를 «지운다»(실패로 적으면 보관함이 「안 됐어요」라고 거짓말한다)
       if (!ai) { updateRecipe(r.id, { tidyFail: 동의안함으로끝났나() ? 0 : 2 }); return }

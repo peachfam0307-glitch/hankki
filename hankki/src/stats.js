@@ -76,12 +76,93 @@ function 우리기기인가() {
 
 let 붙였나 = false
 
+// ═══════════════════════════════════════════════════════════════════
+// 🍎🍎 **아이폰 껍데기 안에서는 gtag 를 «안 쓰고» GA4 수집 주소로 직접 보낸다** (2026-09-14)
+//
+// 🔢 왜 = 2026-09-14 14:02 실측(창업자 GA4 실시간 캡처 3장) — 딸 폰 22판으로 2분 돌아다녔는데
+//    앱 화면이 **하나도 안 잡혔다**(잡힌 1명은 get.html 징검다리 사람). 코드는 조건 없이 통계시작() 을
+//    부르니(main.jsx) 「안 켠 것」이 아니라 껍데기 안에서 막힌다.
+//    후보 = ⓐ WKWebView 가 googletagmanager.com 스크립트를 못 받음 ⓑ `capacitor://localhost` 주소·쿠키를
+//    GA4/WKWebView 가 버림. ⛔ 어느 쪽인지 «못 갈랐다»(샌드박스에서 google-analytics.com 이 막혀 실험 불가).
+// ⭐ 그래서 «셋 다 안 기대는» 길 — 스크립트 없이, 쿠키 없이, https 주소로 우리가 직접 쏜다.
+//    원문 = github.com/idarek/minimal-analytics-4 (g/collect v=2 · cid/_fv/sid/sct/_ss/_s/seg/_et/dl/dt/en · sendBeacon).
+//    gtag.js 가 쓰는 바로 그 주소·그 칸이라 콘솔엔 «똑같이» 쌓인다(실시간·페이지 및 화면).
+// 📌 페이지 경로를 `/hankki/ios` 로 보낸다 → 창업자가 「페이지 및 화면」에서 **페이지 경로**(표준 측정기준)로
+//    아이폰 앱만 가른다. 맞춤 측정기준 등록 없이. (웹·안드로이드는 `/hankki/`)
+// ⛔ 웹·안드로이드는 «한 줄도» 안 바뀐다 — 스위치는 Capacitor.isNativePlatform 하나(nativeAuth.js:19 와 같은 판정 ·
+//    이 파일은 import 0 규칙이라 같은 식을 여기 적는다).
+// ⛔ 검증 = 제출 «전» TestFlight 딸 폰 → 창업자 GA4 실시간에 `home` 이 뜨는 캡처. 그 캡처 없이는 제출하지 않는다.
+export const IOS_PAGE = 'https://peachfam0307-glitch.github.io/hankki/ios'
+const 직접칸 = { cid: 'hankki:stats:cid', sid: 'hankki:stats:sid', sct: 'hankki:stats:sct', last: 'hankki:stats:last', hits: 'hankki:stats:hits' }
+const 세션시간 = 30 * 60 * 1000   // GA4 기본값과 같다 — 웹 숫자와 같은 자로 견주려고
+
+function 앱안() {
+  try { const C = window.Capacitor; return !!(C && C.isNativePlatform && C.isNativePlatform()) } catch { return false }
+}
+
+/** 🧮 수집 주소를 «만들기만» 한다(안 보낸다) — 재현판이 이걸로 잰다.
+ *  저장소를 못 읽으면 null(＝안 보낸다 · 매번 새 사람으로 세는 것보다 안 세는 게 낫다). */
+export function 수집주소만들기({ 이름, 저장소, 지금 = Date.now(), tid = MEASUREMENT_ID, 내부 = false, 화면크기 = '', 언어 = '' }) {
+  let cid, sid, sct, last, hits
+  try {
+    cid = 저장소.getItem(직접칸.cid); sid = 저장소.getItem(직접칸.sid); sct = Number(저장소.getItem(직접칸.sct) || 0)
+    last = Number(저장소.getItem(직접칸.last) || 0); hits = Number(저장소.getItem(직접칸.hits) || 0)
+  } catch { return null }
+  const 처음 = !cid
+  if (처음) { cid = `${Math.floor(Math.random() * 1e9)}.${Math.floor(지금 / 1000)}`; sct = 0 }
+  const 지난 = 지금 - last
+  // ⛔ 음수·NaN(시계 거꾸로) 도 «새 세션»으로만 — 절대 던지지 않는다
+  const 새세션 = !sid || !Number.isFinite(지난) || 지난 < 0 || 지난 > 세션시간
+  if (새세션) { sid = String(Math.floor(지금 / 1000)); sct = sct + 1; hits = 0 }
+  hits += 1
+  try {
+    저장소.setItem(직접칸.cid, cid); 저장소.setItem(직접칸.sid, sid); 저장소.setItem(직접칸.sct, String(sct))
+    저장소.setItem(직접칸.last, String(지금)); 저장소.setItem(직접칸.hits, String(hits))
+  } catch { return null }
+  const p = new URLSearchParams()
+  p.set('v', '2'); p.set('tid', tid); p.set('cid', cid)
+  if (처음) p.set('_fv', '1')
+  p.set('sid', sid); p.set('sct', String(sct)); p.set('_s', String(hits))
+  if (새세션) p.set('_ss', '1')
+  p.set('seg', '1')
+  // ⭐ 참여 시간 — 없으면 활성 사용자로 안 센다. 같은 세션 안에선 «지난 신호부터», 첫 신호는 1초.
+  p.set('_et', String(새세션 ? 1000 : Math.min(Math.max(지난, 1), 세션시간)))
+  p.set('en', 'page_view'); p.set('dt', 이름); p.set('dl', `${IOS_PAGE}#${이름}`)
+  if (화면크기) p.set('sr', 화면크기)
+  if (언어) p.set('ul', 언어)
+  if (내부) p.set('ep.traffic_type', 'internal')   // 콘솔 「내부 트래픽」 필터가 보는 그 이름
+  return `https://www.google-analytics.com/g/collect?${p.toString()}`
+}
+
+let 직접모드 = false
+function 직접보내기(이름) {
+  try {
+    if (통계꺼짐()) return
+    const url = 수집주소만들기({
+      이름, 저장소: localStorage, 내부: 우리기기인가(),
+      화면크기: (screen && screen.width) ? `${screen.width}x${screen.height}` : '',
+      언어: (navigator.language || '').toLowerCase(),
+    })
+    if (!url) return
+    let 갔나 = false
+    try { if (navigator.sendBeacon) 갔나 = navigator.sendBeacon(url) } catch { 갔나 = false }
+    if (!갔나) fetch(url, { method: 'POST', mode: 'no-cors', keepalive: true }).catch(() => {})
+  } catch { /* ⛔ 통계가 죽어도 앱은 그대로 돈다 */ }
+}
+
 /** 🚀 앱이 뜬 «뒤에» 부른다. 두 번 불러도 한 번만 붙는다. */
 export function 통계시작() {
   if (붙였나 || !MEASUREMENT_ID) return
   붙였나 = true
   // 🔕 꺼져 있으면 «받지도» 않는다 — 끈 사람에게 40KB 를 내려받게 하지 않는다.
   if (통계꺼짐()) { 통계끄기설정(true); return }
+  // 🍎 아이폰 껍데기 = 직접 모드. gtag 를 안 받는다. 첫 화면(못보낸화면)은 여기서 보내고 「다시 왔나」도 여기서.
+  if (앱안()) {
+    직접모드 = true
+    if (못보낸화면) { const 것 = 못보낸화면; 못보낸화면 = null; 직접보내기(것) }
+    다시왔나()
+    return
+  }
 
   const 나중에 = window.requestIdleCallback || ((f) => setTimeout(f, 2000))
   나중에(() => {
@@ -239,6 +320,96 @@ export function 요리끝냄() { 지난화면 = null; 행동보내기('cook_done
 /** 📔 새 일기가 생겼다. ⚠️종이만 골라도 생긴다(DiaryScreen 의 save 가 그렇다) — 「글을 썼다」가 아니다. */
 export function 일기생김() { 지난화면 = null; 행동보내기('diary_new') }
 
+// ═══════════════════════════════════════════════════════════════════
+// 🕳🕳 [2026-09-14] «열쇠는 주면서 숫자는 안 세던» 세 자리를 메운다
+//
+// 📮 창업자 2026-09-10 = *"다 심어야해. 우리가 알아야하니까 «레꾸자랑부터».. 다 카운트되게"*
+// ⛔⛔ 그 지시를 다섯 문서에 «적어만» 두고 나흘이 지나도록 코드에 한 줄도 안 넣었다.
+//    2026-09-14 에 창업자가 물어서야 드러났다. 📮 = *"저거 다 안재고 있었어????????"*
+//
+// ⭐ 구멍의 «뿌리» = `ocr.js:240` 의 EARN — 앱이 이미 「값지다」고 정해 열쇠를 주는 다섯 행동이다.
+//    열쇠는 주는데 계측이 없으면 그 자리는 영영 안 보인다. 그래서 EARN 다섯을 기준으로 맞췄다:
+//      자랑 ⛔없음 → 아래 심음 · 레꾸 ✅decor_saved · 일기 ✅diary_new
+//      요리 ⛔없음 → 아래 심음 · 냉장고 ⛔없음 → 아래 심음
+//    🔒 이 규칙을 `scripts/계측-구멍검사.mjs` 가 CI 에서 지킨다 — 문서는 잊혀도 CI 는 안 잊는다.
+//
+// ⛔⛔ 붙일 때 규칙 = **`열쇠받기()` «바깥»에 붙인다.**
+//    열쇠는 「평생 처음 한 번」만 주는데 **통계는 «매번» 세야 한다.**
+//    (2026-09-10 문서가 이미 경고한 함정이다 — 안에 넣으면 두 번째부터 영영 안 세진다.)
+
+/** 🎴 레꾸자랑을 «진짜로» 보냈다. ⛔취소·저장 폴백은 안 센다 — `res.shared === true` 일 때만. */
+export function 자랑보냄() { 지난화면 = null; 행동보내기('brag_shared') }
+
+/** 🍳 요리모드를 «시작»했다. ⚠️화면 기록(`cook`)과 짝이지만 뜻이 다르다 — 이건 첫 걸음을 뗀 순간이다. */
+export function 요리시작() { 지난화면 = null; 행동보내기('cook_started') }
+
+/** 🧊 냉장고에 재료를 «넣었다». ⛔무엇을 넣었는지는 한 자도 안 보낸다. */
+export function 냉장고담음() { 지난화면 = null; 행동보내기('pantry_added') }
+
+// ── ⏱⏱ [2026-09-14] 「진짜로 요리했나」 — 5분 넘게 켜 뒀나
+//
+// 📮 창업자 = *"레시피상세 51초면 요리를 안했다는건데"* · *"초단위면 앱을 안쓰고 휙휙보고 나간다는거 아닐까"*
+// ⛔ 지금 `cook_done` 은 「**만들었어요를 «누른»** 사람」이라 실제보다 적을 수밖에 없다.
+//    5분 켜둠은 **안 눌러도 잡힌다.**
+//
+// ⛔⛔ 문이 «두 곳»이다 — 요리모드 ＋ 레시피 상세.
+//    📮 창업자 = *"요리모드도 그렇지만 «레시피상세에서» 5분넘게 켜두는 것도 보고 만드는 거야"*
+//    📌 `cook_done` 때 정확히 같은 구멍을 밟았다(v13.22 에서 메웠다). 세 번째로 밟지 않는다.
+//
+// ⛔⛔⛔ 이 이름을 「요리한 사람」으로 읽으면 안 된다 — **「5분 넘게 켜 둔 사람」**이다.
+//    레시피를 꼼꼼히 읽기만 한 사람도 섞인다. 그래서 `cook_done` 과 «다른 이름»으로 둔다.
+//
+// 🔎 잰 근거 = GA4 참여 시간은 «화면이 앞에 있을 때»만 쌓인다(상호작용은 필요 없다).
+//    https://www.analyticsmania.com/post/user_engagement-event-in-google-analytics-4/ (열람 2026-09-14)
+//    ⭐ 그래서 우리 타이머도 «앞에 있을 때»만 재야 잣대가 같아진다 → `오래켜둠시작()` 이 그렇게 짜였다.
+/** ⏱ 그 화면을 5분 넘게 «앞에 두고» 있었다. `자리` = 'detail' | 'cook' */
+export function 오래켜둠(자리) {
+  if (!['detail', 'cook'].includes(자리)) return   // ⛔ 모르는 값은 안 보낸다
+  지난화면 = null
+  행동보내기(`cook_long_${자리}`)
+}
+
+
+/** 🔍 검색했는데 «결과가 0» 이었다. ⛔⛔ 검색어는 절대 안 보낸다 — 「0건이었다」는 사실뿐이다. */
+export function 검색빈손() { 지난화면 = null; 행동보내기('search_empty') }
+
+// ── 🎨🎨 [2026-09-14] 「꾸민 게 «쌓여» 있나」 — 창업자 = *"레꾸가 우리앱 아이덴티티니까"*
+//
+// ⛔ `decor_saved` 는 「오늘 저장을 «누른» 횟수」다. 앱을 지우면 같이 사라지고,
+//    한 편을 두 번 고치면 2번 세진다 → **「꾸민 레시피가 몇 개 쌓였나」를 못 본다.**
+// ⭐ 그래서 앱을 열 때 «가지고 있는 개수»를 «구간»으로 한 번 보낸다.
+// 🔒 ⛔레시피 이름도, 무엇을 붙였는지도 한 자도 안 보낸다. 개수를 구간으로만.
+// ⛔ 0개면 아예 안 보낸다 — 대부분이 0이라 표가 그걸로 덮인다.
+/** 🎨 꾸민 표지를 «가진» 레시피가 몇 개인가 (구간) */
+export function 꾸민게쌓였나(개수) {
+  const n = Number(개수) || 0
+  if (n <= 0) return
+  지난화면 = null
+  행동보내기(n === 1 ? 'decor_have_1' : n <= 4 ? 'decor_have_2_4' : 'decor_have_5plus')
+}
+
+// ── 🔑🔑 「로그인 몇 명 · 무엇으로」 (2026-09-14)
+//   📮 창업자 = *"출시되면 로그인부터 유저들 로그인 몇명했는지 볼수있는 판이있어야해"*
+//   🔢 지금까지 GA4 엔 로그인 이벤트가 «없었다» — 누적 계정 수는 Firebase 콘솔에서만 보였다.
+//   ⭐ 이름 넷으로 고정 = login_google · login_apple · signup_google · signup_apple
+//      «signup» = 계정이 «막» 생긴 로그인(creationTime ≈ lastSignInTime · 60초 안). 계정 삭제 뒤 재가입도 signup 이 맞다.
+//   ⛔ 부르는 자리는 cloud.js 로그인() «성공 반환 직전» 한 곳뿐 — 지켜보기(onAuthStateChanged) 콜백에서 부르면
+//      앱을 켤 때마다 로그인으로 세어 부푼다. ⛔ 이메일·이름·번호는 한 자도 안 보낸다(이름 넷뿐).
+export function 로그인됨(공급자, 새계정) {
+  const 이름 = 공급자 === 'apple.com' ? 'apple' : 공급자 === 'google.com' ? 'google' : ''
+  if (!이름) return   // 모르는 공급자는 안 보낸다(이름을 지어내지 않는다)
+  지난화면 = null
+  행동보내기(`${새계정 ? 'signup' : 'login'}_${이름}`)
+}
+/** 🧮 「막 생긴 계정」인가 — Firebase user.metadata 의 두 시각이 60초 안이면 그렇다. 못 읽으면 false(로그인으로 센다). */
+export function 새계정인가(metadata) {
+  try {
+    const 생김 = Date.parse(metadata && metadata.creationTime), 들어옴 = Date.parse(metadata && metadata.lastSignInTime)
+    if (!Number.isFinite(생김) || !Number.isFinite(들어옴)) return false
+    return Math.abs(들어옴 - 생김) < 60 * 1000
+  } catch { return false }
+}
+
 
 // ═══════════════════════════════════════════════════════════════════
 // 🛒🛒 [2026-09-10] 수익 축 — 「사러 나갔다」 · 「담았다」
@@ -268,6 +439,7 @@ export function 장보기담음() { 지난화면 = null; 행동보내기('shop_a
 function 행동보내기(이름) {
   try {
     if (통계꺼짐()) return
+    if (직접모드) { 직접보내기(이름); return }   // 🍎 아이폰 껍데기 — gtag 없이 직접
     if (typeof window.gtag !== 'function') return   // ⛔ 담아두지 않는다 — 화면 자리를 안 뺏는다
     window.gtag('event', 'page_view', {
       page_title: 이름,
@@ -290,6 +462,7 @@ function 행동보내기(이름) {
 function 보내기(이름) {
   try {
     if (통계꺼짐()) return
+    if (직접모드) { 못보낸화면 = null; 직접보내기(이름); return }   // 🍎 아이폰 껍데기 — gtag 없이 직접
     if (typeof window.gtag !== 'function') { 못보낸화면 = 이름; return }  // 아직 안 붙었다 — 붙으면 그때 보낸다
     못보낸화면 = null
     window.gtag('event', 'page_view', {
