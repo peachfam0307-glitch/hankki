@@ -54,6 +54,20 @@ function fmtNum(n) {
   return String(r)
 }
 
+// 🧂 재료 목록에서 「[양념]」·「[소스]」·「[드레싱]」처럼 «대괄호만» 있는 줄 = 소제목이다.
+//    ⭐ 레시피에 «사람이 적어 넣은» 줄이다 — 앱이 만들어 붙이는 게 아니다.
+//       🔢 2026-09-15 실측 = 있는 편 94 · 없는 편 109 (`basics.js` 전수).
+//       📮 창업자 = *"안붙으면 굳이 붙이지말고. 붙어 있는 건 파랑색글자로"*
+//          → ⛔ **없는 편에 소제목을 «만들어» 붙이지 않는다.**
+//    ⛔⛔ **잣대를 두 벌 만들지 않는다** — 원래 `RecipeDetailScreen.jsx` 안에만 있어서
+//       요리모드가 이 줄을 «그냥 재료»로 그렸고, 「[양념]」이 체크박스 달린 재료 칸을 먹었다.
+//       (2026-09-15 패드 전수 캡처에서 드러났다 · 폰에서도 같았다)
+//       판정 로직을 베껴 쓰면 반드시 갈린다(2026-09-12 사고) → **여기 한 곳에서만 정한다.**
+export const isIngHeader = (s) => /^\[[^\]]+\]$/.test(String(s).trim())
+
+// 🔤 대괄호를 뗀 «보이는 이름» — `[밑간 · 30분]` → `밑간 · 30분`
+export const ingHeaderText = (s) => String(s).trim().replace(/^\[|\]$/g, '')
+
 export function scaleIngredient(str, ratio) {
   if (!ratio || Math.abs(ratio - 1) < 0.001) return str
   const s = String(str).replace(/[½⅓⅔¼¾⅕⅖]/g, (m) => UNI_FRAC[m] || m)
