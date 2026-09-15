@@ -2356,7 +2356,25 @@ img {
       ⭐ 같은 비율이라 «글자 하나가 먹는 잉크»가 걸음 글자와 같아진다(`_probe-귀염체작은화면-0901` 의 그 잣대).
    ⛔ 글자 «크기»는 안 건드렸다(19px 그대로) — 창업자가 말한 건 «글씨체» 하나다.
       ⚠️ 귀염체는 같은 px 에서 본문체보다 작아 보인다. 작게 느껴지면 그때 창업자가 정한다(규칙 11). */
-.cook-ing { font-family: 'Gaegu', 'Pretendard', sans-serif; font-weight: 700; -webkit-text-stroke: 0.58px currentColor; font-size: 19px; flex: 1; min-width: 0; }
+/* 📐 [창업자 확정 2026-09-15] *"요리모드에 재료칸에 글자가 많으니까. 거기만 1px씩 줄이고"*
+   ⛔ 여기만 줄인다 — 걸음 글(`.cook-steptext`)·안내(`.cook-tips`)는 한 픽셀도 안 건드린다.
+   🔢 폰 19 → **18px** · 패드 30 → **29px**(아래 미디어 블록) */
+.cook-ing { font-family: 'Gaegu', 'Pretendard', sans-serif; font-weight: 700; -webkit-text-stroke: 0.58px currentColor; font-size: 18px; flex: 1; min-width: 0; }
+/* 🧂🔵 「[양념]」 소제목 — 📮 창업자 = *"대신 양념은 파랑색글씨로 잘보이게. **사이즈는 같게**"*
+   ⭐ 그래서 «줄이기 전 크기»(19px)를 그대로 쓴다. 재료가 18px 이라 **저절로 한 단 커 보인다.**
+   🔵 색은 `--brown` — 이름만 브라운이고 실제 값은 **더스티 블루 `#5878a0`**(앱 포인트 색).
+      ⛔ 새 색을 지어내지 않았다. 레시피 «상세»의 `.ing-head` 도 같은 색을 쓴다.
+   ⛔ 체크박스는 없다 — 📮 창업자 = *"체크박스빼야지"*. 소제목은 «꺼내서 지울» 것이 아니다.
+   📌 자리는 재료 줄과 같은 흐름에 그대로 둔다(칸 전체로 펴지 않는다) — 창업자 판정. */
+.cook-ing-head {
+  font-family: 'Gaegu', 'Pretendard', sans-serif; font-weight: 800;
+  -webkit-text-stroke: 0.58px currentColor;
+  font-size: 19px; color: var(--brown);
+  /* 재료 줄(min-height 44 · padding 6px 4px)과 «같은 결»로 앉힌다 — 위아래 틈만 조금 더 준다 */
+  padding: 10px 4px 4px;
+  /* 🖼 2열(`.cook-ings.two`)에서 소제목이 열 사이에 «반 잘리지» 않게 */
+  break-inside: avoid; -webkit-column-break-inside: avoid;
+}
 .cook-ing.done { opacity: .44; text-decoration: line-through; }
 /* 📱📱📱 [창업자 2026-09-04] **재료 준비 화면 = 패드에서 「두 열 ＋ 큰 글씨」**
    📮 창업자 = *"요리모드 재료는 «글자가 좀 작아 양쪽으로 하고 크게» 보이면 더 좋겠다"*
@@ -2383,7 +2401,8 @@ img {
   .cook-ings.two { columns: 2; column-gap: 54px; }
   .cook-ings.two .cook-ing-row { break-inside: avoid; -webkit-column-break-inside: avoid; }
   /* 🔢 획은 창업자가 고른 비율 그대로 — 0.0304 × 글자크기 (2026-09-01 판정에서 나온 값) */
-  .cook-ing { font-size: 30px; -webkit-text-stroke-width: 0.91px; }
+  .cook-ing { font-size: 29px; -webkit-text-stroke-width: 0.91px; }   /* 30 → 29 (창업자 「1px씩 줄이고」) */
+  .cook-ing-head { font-size: 30px; -webkit-text-stroke-width: 0.91px; padding: 14px 4px 6px; }  /* 소제목은 줄이기 «전» 크기 그대로 */
   .cook-ing-row { min-height: 54px; gap: 15px; }
   .cook-ing-box { width: 30px; height: 30px; border-radius: 9px; }
 }

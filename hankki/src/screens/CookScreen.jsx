@@ -9,7 +9,7 @@ import MemoNote from '../components/MemoNote'
 import CropSheet from '../components/CropSheet'
 import { downscale } from '../components/DiaryEntrySheet'
 import Portal from '../components/Portal'
-import { scaleIngredient } from '../scale'
+import { scaleIngredient, isIngHeader } from '../scale'
 import { useWakeLock } from '../useWakeLock'
 import { 오래켜둠재기 } from '../use오래켜둠'
 import { 요리시작 } from '../stats'
@@ -182,6 +182,18 @@ export default function CookScreen({ id }) {
                 ⭐ 줄 전체가 버튼이라 손가락이 작은 네모를 겨냥할 필요가 없다(최소 높이 44).
                 ⛔ 유니코드 ✓ 대신 우리 아이콘(`check`)을 쓴다 — CLAUDE.md 핀. */}
             {ings.length ? ings.map((ing, k) => (
+              /* 🧂🔵 [창업자 확정 2026-09-15] 「[양념]」 같은 «대괄호만 있는 줄»은 재료가 아니라 소제목이다.
+                  📮 창업자 = *"붙어 있는 건 파랑색글자로"* → *"체크박스빼야지"*
+                  ⛔ 전엔 이 줄이 **체크박스 달린 재료 칸**을 먹고 있었다(대괄호까지 그대로 보였다).
+                     2026-09-15 패드 전수 캡처에서 드러났고, **폰에서도 같았다** — 패드만의 문제가 아니었다.
+                  ⭐ 「자리는 그대로 두고 색만」이 창업자 안이다 — 소제목을 칸 전체로 펴는 안(A·B·C)은 창업자가 물렸다:
+                     *"양념이 오른쪽으로 일괄 이동을하면 양념이 많은 판은 애매해질거야"*
+                     🔢 맞는 지적이다 — 샤브샤브는 재료 29개에 대괄호가 **넷**이다. 펴면 2열 흐름이 네 번 끊긴다.
+                  ⛔ 대괄호를 «떼지 않는다» — 창업자가 보고 고른 시안이 대괄호가 보이는 판이었다.
+                     (상세는 뗀다 — 거긴 소제목 자리가 따로 있다) */
+              isIngHeader(ing) ? (
+                <div key={k} className="cook-ing-head">{ing.trim()}</div>
+              ) : (
               <button
                 key={k} type="button" className="press cook-ing-row" aria-pressed={!!checked[k]}
                 onClick={() => toggle(k)}>
@@ -194,6 +206,7 @@ export default function CookScreen({ id }) {
                           레시피 «상세»의 재료 줄이 같은 클래스라 거기까지 손글씨가 된다(창업자가 말한 화면이 아니다). */}
                 <span className={`ing cook-ing${checked[k] ? ' done' : ''}`}>{scaleIngredient(ing, 1)}</span>
               </button>
+              )
             )) : <div className="empty">재료 정보가 없어요.</div>}
           </div>
           {/* 안내 — 화면 안 꺼짐 · 타이머는 필요할 때
