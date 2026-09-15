@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { COACH } from '../coach'
-import { 사러나감, 장보기담음, 요리끝냄 } from '../stats'
+import { 사러나감, 장보기담음, 요리끝냄, 픽펼침 } from '../stats'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -161,6 +161,14 @@ export default function RecipeDetailScreen({ id }) {
   const [servings, setServings] = useState(baseServings || 1)
   const ratio = baseServings ? servings / baseServings : 1
   const [picksOpen, setPicksOpen] = useState(false) // 🛒 픽카드 접기 — 4칸까지만 보이고 나머지는 「더 보기」
+  // 🧺 [창업자 확정 2026-09-15 · A안] 「주부의 장바구니」 상자를 «통째로» 접는다 — 평소엔 알약 한 줄.
+  //   📮 창업자 = *"큐레이션이 되게 제한적이야. 다 올리면 레시피보는데 방해되서 3-4개정도만 올렸거든"*
+  //      ＋ *"또 계속 반복되니까"* ＋ *"작게 주부의 장바구니 탭으로 바로 가기를 그냥 만들까"*
+  //      → 시안 넷을 보고 **②문구 ＋ A알약**으로 확정 (*"그래 a로 가자"*)
+  //   🔢 왜 = 이 상자가 화면 위에서 **750px** 아래(화면 844px)라 `detail` 체류 **10초** 안에 «안 보인다».
+  //      그래서 `buy_pick_detail` 이 2026-09-15 에 **0건**이었다.
+  //   ⛔ 카드를 «없애지» 않는다 — 누르면 지금 그대로 카드·사러가기·「이 재료 다 담기」가 다 나온다.
+  const [pickBoxOpen, setPickBoxOpen] = useState(false)
   // ⛔⛔ 훅은 «전부» 아래 `if (!r)` 보다 위에 있어야 한다 — 밑에 두면 레시피를 지우는 순간
   //    early return 이 걸려 훅 개수가 줄고 React 가 트리째 죽는다(빈 화면).
   //    2026-08-03 창업자 제보 *"홍콩식가지볶음 지웠더니 먹통됨"* 의 정체가 이거였다.
@@ -983,8 +991,27 @@ export default function RecipeDetailScreen({ id }) {
           </>
         )}
 
+        {/* 🧺 [창업자 확정 2026-09-15 · A안] 평소엔 «알약 한 줄» — 누르면 지금 상자가 그대로 펼쳐진다.
+            ⛔ 유니코드 이모지를 쓰지 않는다(절대원칙) — 왼쪽은 우리 `cart` 아이콘, 오른쪽은 채운 원 안의 ＋.
+            ⭐ 색·모양을 「장보기 담기」(`.mini-buy` = 알약·크림·brown)와 «같은 결»로 맞췄다 —
+               📮 창업자 = *"장보기 담기고 이거랑 같은 색이나 알약으로 튀게"*
+               그래야 「이것도 누르는 것」이 저절로 읽힌다. */}
+        {pantryPicks.length > 0 && !pickBoxOpen && (
+          <button
+            className="press"
+            onClick={() => { setPickBoxOpen(true); try { 픽펼침() } catch { /* 통계가 죽어도 펼쳐진다 */ } }}
+            aria-label="이 레시피에 쓴 제품 보기"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', marginTop: 20, padding: '12px 14px 12px 16px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 16 }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+              <Icon name="cart" size={19} color="var(--brown)" />
+              이 레시피에 쓴 제품 보기 ({pantryPicks.length})
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 19, fontWeight: 700, lineHeight: 1, flex: '0 0 auto' }}>+</span>
+          </button>
+        )}
         {/* 🛒 주부의 장바구니 픽 — 이 레시피가 쓴 제품을 바로 사러가기(재료 바로 밑 · 수익 연결) */}
-        {pantryPicks.length > 0 && (
+        {pantryPicks.length > 0 && pickBoxOpen && (
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
             {/* 🔠 [2026-08-22 창업자] *"주부의 장바구니에서하고 재품하고 너무따닥따닥붙어있어"* · *"줄간도 너무 붙어있어"* */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 19, fontWeight: 800, color: 'var(--brown)', marginBottom: 14 }}>
