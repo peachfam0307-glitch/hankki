@@ -29,14 +29,15 @@ const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: p
 
 // 🔗 징검다리를 열고, 그때 나간 이름들과 «어디로 갔나»를 돌려준다.
 //    단추누를까 = 자동 이동을 기다리지 않고 유저가 먼저 누른 상황
-//    우리기기 = 창업자 폰 흉내 (localStorage 에 운영자 열쇠가 있는 상태)
-async function 열어본다({ 단추누를까 = false, 우리기기 = false } = {}) {
-  const ctx = await b.newContext({ viewport: { width: 390, height: 860 }, locale: 'ko-KR', serviceWorkers: 'block' })
+//    우리기기 = 창업자 폰 흉내 (localStorage 에 운영자 열쇠가 있는 상태) · 아이폰 = iPhone UA
+async function 열어본다({ 단추누를까 = false, 우리기기 = false, 아이폰 = false } = {}) {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 860 }, locale: 'ko-KR', serviceWorkers: 'block', ...(아이폰 ? { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1' } : {}) })
   // ⛔⛔ 스토어로 «진짜» 넘어가면 그 순간 window 가 새로 나서 dataLayer 가 통째로 사라진다.
   //    → 「갔다」를 보내놓고도 못 읽는다(처음 판이 그래서 0건이 나왔다).
   //    ⭐ 그래서 이동을 «막고», 대신 «가려고 했는가»를 기록한다. 페이지는 그대로 남아 읽을 수 있다.
   const 가려한주소 = []
   await ctx.route('**://play.google.com/**', (r) => { 가려한주소.push(r.request().url()); r.abort() })
+  await ctx.route('**://apps.apple.com/**', (r) => { 가려한주소.push(r.request().url()); r.abort() })   // 🍎 아이폰 갈래도 «가려 했는가»만 기록
   await ctx.route('**://www.googletagmanager.com/**', (r) => r.abort())
   await ctx.route('**://*.google-analytics.com/**', (r) => r.abort())
   // ⛔⛔⛔ 여기가 이 재현판에서 제일 어려웠던 자리 —
@@ -109,6 +110,14 @@ console.log('\n🔗 징검다리\n')
   const { 설정들: 우리 } = await 열어본다({ 우리기기: true })
   잰다(보통.length > 0 && 보통.every((v) => v === '(없음)'), '③ 보통 유저에겐 「내부」 딱지가 «안» 붙는다', JSON.stringify(보통))
   잰다(우리.some((v) => v === 'internal'), '③ 🙋‍♀️운영자 열쇠가 있으면 traffic_type=internal 이 붙는다', JSON.stringify(우리))
+}
+
+// ── ④ 🍎 [2026-09-14] 아이폰으로 오면 App Store 로 — 계측 이름은 그대로(운영체제 측정기준으로 갈린다)
+{
+  const { 이름들, 링크, 가려한주소 } = await 열어본다({ 아이폰: true })
+  잰다(/^https:\/\/apps\.apple\.com\/kr\/app\/id6811288851/.test(링크 || ''), '④ 🍎 아이폰 UA 면 단추가 App Store(id6811288851)', 링크)
+  잰다(/apps\.apple\.com/.test(가려한주소 || ''), '④ 🍎 자동 이동도 App Store 로 간다', 가려한주소)
+  잰다(이름들.filter((n) => n === 'bridge_ios').length === 1 && 이름들.filter((n) => n === 'bridge_go_ios').length === 1 && !이름들.includes('bridge'), '④ 아이폰은 bridge_ios / bridge_go_ios 한 번씩 (「아이폰 유저 몇 명 왔나」)', JSON.stringify(이름들))
 }
 
 await b.close(); srv.close()

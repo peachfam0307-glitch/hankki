@@ -11,11 +11,11 @@
 	     · 사진첩 저장 = 공유 창에서 「이미지 저장」을 고를 때
 	     · 사진첩 읽기 = iOS 14+ 는 시스템 선택창이라 권한이 안 뜨지만, 옛 기기·경로를 위해 같이 둔다 -->
 	<key>NSCameraUsageDescription</key>
-	<string>영수증이나 요리 사진을 찍어 레시피·냉장고에 넣을 때 카메라를 씁니다.</string>
+	<string>영수증이나 요리 사진을 직접 찍어 레시피·냉장고에 넣기 위해 카메라를 씁니다. 찍은 사진은 이 기기와 회원님의 클라우드 저장소에만 저장돼요.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>레시피 캡처·요리 사진을 고를 때 사진첩을 씁니다.</string>
+	<string>레시피 캡처나 요리 사진을 앨범에서 골라 레시피·일기에 넣기 위해 사진첩을 씁니다. 고른 사진은 이 기기와 회원님의 클라우드 저장소에만 저장돼요.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>레꾸자랑 카드를 사진첩에 저장할 때 씁니다.</string>
+	<string>만든 레꾸자랑 카드를 회원님의 사진첩에 저장하기 위해 씁니다. 저장 외에 사진첩을 읽지 않아요.</string>
 	<!-- 수출 규정 문답 건너뛰기 — 우리는 https 표준 암호화만 쓴다(자체 암호화 없음) -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
