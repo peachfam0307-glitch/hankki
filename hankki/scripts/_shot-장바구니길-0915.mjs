@@ -102,12 +102,20 @@ for (const [이름, 고침] of Object.entries(손질)) {
     const y = Math.round(찾.getBoundingClientRect().top + window.scrollY)
     return { 위에서: y, 화면: window.innerHeight, 화면판: +(y / window.innerHeight).toFixed(2) }
   })
-  // 그 자리로 굴려서 찍는다
+  // 📍 그 자리로 굴려서 찍는다
+  //    ⛔⛔ 첫 판은 `querySelectorAll('button,div')` 로 찾아 **맨 바깥 div 를 먼저 잡았다** →
+  //       「위에서 0px」이 나왔고, 화면도 엉뚱한 데서 멈춰 **줄이 아래 단추에 반쯤 덮여 안 보였다.**
+  //       📮 창업자 = *"이짜나 잘려서 안보여.. 아래에 있어서"* — 맞는 지적이다.
+  //    ✅ 그래서 ⑴ «제일 안쪽» 요소를 고르고 ⑵ 아래 고정 단추(요리모드 줄) 높이만큼 위로 올린다.
   await p.evaluate(() => {
-    const 찾 = [...document.querySelectorAll('button,div')].find((e) => (e.textContent || '').includes('주부의 장바구니'))
-    if (찾) 찾.scrollIntoView({ block: 'center' })
+    const 후보 = [...document.querySelectorAll('button,div')]
+      .filter((e) => (e.textContent || '').includes('주부의 장바구니'))
+    const 찾 = 후보[후보.length - 1]      // 제일 안쪽(마지막)이 진짜 그 줄이다
+    if (!찾) return
+    찾.scrollIntoView({ block: 'center' })
+    window.scrollBy(0, -90)               // 아래 고정 단추에 안 덮이게 조금 더 올린다
   })
-  await p.waitForTimeout(600)
+  await p.waitForTimeout(700)
   await p.screenshot({ path: join(OUT, `${이름}.jpg`), type: 'jpeg', quality: 76 })
   console.log(`  ${이름.padEnd(14)} ${JSON.stringify(잰값)}`)
   await ctx.close()
