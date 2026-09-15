@@ -133,7 +133,7 @@ ${장(13.6, 2.4, `
   <div class="툭" style="--at:13.75s;position:absolute;left:0;right:0;top:420px;text-align:center;font-size:88px;line-height:1.35;font-weight:700">아이폰에서도,<br>오늘도 한끼하세요</div>
   <img class="팝" style="--at:14.0s;position:absolute;left:240px;top:800px;height:600px;object-fit:contain" src="${축하('03')}">
   <div class="툭" style="--at:14.25s;position:absolute;left:0;right:0;bottom:220px;text-align:center;font-size:50px;line-height:1.6;color:#7a5a3a">
-    앱스토어 · 구글 플레이에서<br><b style="color:${진};font-size:68px">한끼</b> 다운로드</div>
+    앱스토어 · 구글 플레이에서<br><b style="color:${진};font-size:82px;letter-spacing:-1px">한끼 레시피북</b> 검색</div>
   <div class="불">${폭죽(80, 13.85, 700)}</div>`)}
 `
 

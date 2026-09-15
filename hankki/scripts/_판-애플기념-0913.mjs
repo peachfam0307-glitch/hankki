@@ -129,7 +129,7 @@ const 장 = []
   <div style="position:absolute;left:0;right:0;top:230px;text-align:center;font-size:76px;line-height:1.35;font-weight:700">아이폰에서도,<br>오늘도 한끼하세요</div>
   ${컷('03', 430, 'left:290px;top:520px')}
   <div style="position:absolute;left:0;right:0;bottom:150px;text-align:center;font-size:42px;line-height:1.6;color:#7a5a3a">
-    앱스토어 · 구글 플레이에서<br><b style="color:${진};font-size:56px">한끼</b> 다운로드</div>` })
+    앱스토어 · 구글 플레이에서<br><b style="color:${진};font-size:68px;letter-spacing:-1px">한끼 레시피북</b> 검색</div>` })
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const p = await (await b.newContext({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 })).newPage()
