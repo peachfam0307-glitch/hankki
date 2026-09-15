@@ -53,7 +53,11 @@ const 폰 = (파일, 높이, 자리, 기울기 = 0) => {
   return `<div style="position:absolute;${자리};width:${폭}px;height:${높이}px;border-radius:${Math.round(높이 * 0.055)}px;
     border:${Math.max(6, Math.round(높이 / 110))}px solid #3a2a1c;overflow:hidden;background:#fff;
     box-shadow:0 30px 60px rgba(93,52,16,.22);transform:rotate(${기울기}deg)">
-    <img src="${화면(파일)}" style="width:100%;height:100%;object-fit:cover;object-position:top">
+    <!-- ⛔ [창업자 2026-09-15] "레꾸자랑에서 랜덤부붙 잘렸엉" + "아이폰 화면을 위로 다 조금씩 올려줄래" -->
+    <!--    cover + object-position:top 이라 폰 상자가 화면 «아래»를 잘랐다(「랜덤 카드로 뽑기」 칸 아래 모서리). -->
+    <!--    ⭐ contain 으로 바꾸면 화면이 «통째로» 들어간다. 스크린샷 비율(2.168)과 폰 상자 비율(852/393=2.168)이 -->
+    <!--       거의 같아서 여백도 거의 안 생긴다. ⛔cover 로 되돌리지 말 것 — 되돌리면 또 잘린다. -->
+    <img src="${화면(파일)}" style="width:100%;height:100%;object-fit:contain;object-position:center">
   </div>`
 }
 // 🐻🐧 축하 컷 — ⛔«높이»로 맞춘다(컷마다 가로세로 비율이 다르다 · 추석 캐러셀에서 값을 치르고 배운 것)
@@ -129,7 +133,7 @@ const 장 = []
   <div style="position:absolute;left:0;right:0;top:230px;text-align:center;font-size:76px;line-height:1.35;font-weight:700">아이폰에서도,<br>오늘도 한끼하세요</div>
   ${컷('03', 430, 'left:290px;top:520px')}
   <div style="position:absolute;left:0;right:0;bottom:150px;text-align:center;font-size:42px;line-height:1.6;color:#7a5a3a">
-    앱스토어 · 구글 플레이에서<br><b style="color:${진};font-size:56px">한끼</b> 다운로드</div>` })
+    앱스토어 · 구글 플레이에서<br><b style="color:${진};font-size:68px;letter-spacing:-1px">한끼 레시피북</b> 검색</div>` })
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const p = await (await b.newContext({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 })).newPage()

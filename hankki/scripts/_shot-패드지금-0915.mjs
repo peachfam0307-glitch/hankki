@@ -54,20 +54,7 @@ const 길 = [
   { 이름: '03-레시피상세', 가기: async (p) => { await 눌러(p, '레시피'); await 길막치우기(p); await 첫카드(p) } },
   { 이름: '04-장보기', 가기: async (p) => 눌러(p, '장보기') },
   { 이름: '05-가져오기', 가기: async (p) => { await 눌러(p, '레시피'); await 길막치우기(p); await 눌러(p, '가져오기') } },
-  // 🎴📔🍳🎨 [2026-09-15 두 번째 판] 창업자 = *"나머지 화면들 돌려봐"*
-  { 이름: '06-레꾸자랑', 가기: async (p) => 눌러(p, '레꾸자랑') },
-  { 이름: '07-일기', 가기: async (p) => 눌러(p, '일기') },
-  { 이름: '08-요리모드', 가기: async (p) => { await 눌러(p, '레시피'); await 길막치우기(p); await 첫카드(p); await 길막치우기(p); await 글자눌러(p, '요리모드 시작') } },
-  { 이름: '09-꾸미기서랍', 가기: async (p) => { await 눌러(p, '레시피'); await 길막치우기(p); await 첫카드(p); await 길막치우기(p); await 글자눌러(p, '레시피 꾸미기') } },
 ]
-
-// 🔘 하단 탭이 아니라 «화면 안 단추»를 누른다 — 요리모드·꾸미기가 그렇다
-async function 글자눌러(p, 글) {
-  const 것 = p.locator('button', { hasText: 글 }).first()
-  if (await 것.count() === 0) { console.log(`   ⛔ 「${글}」 단추를 못 찾았다`); return false }
-  try { await 것.click({ timeout: 3000 }); await p.waitForTimeout(1400); return true }
-  catch (e) { console.log(`   ⛔ 「${글}」 누르기 실패 — ${String(e).split('\n')[0].slice(0, 110)}`); return false }
-}
 
 // 🧭 ⛔ `text=레시피` 로 찾으면 «홈 본문 글자»가 먼저 잡혀 화면이 안 옮겨진다.
 //    📌 2026-09-15 첫 판이 정확히 그랬다 — 다섯 장이 다 홈으로 찍혔다(글 수가 59~63으로 거의 같아 들켰다).
