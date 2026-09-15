@@ -122,8 +122,28 @@ jobs:
       #   ⭐ 답 = **미리 깔고 설정 파일을 써둔다.** 그러면 물어볼 게 없어진다.
       #   ⚠️ 옛 주석에 *"bubblewrap 이 알아서 내려받는다"* 고 적어뒀는데 **틀렸다** —
       #      내려받기 «전에» 물어본다. 사람이 있어야 한다는 뜻이었다.
-      - name: Android SDK 준비
-        uses: android-actions/setup-android@v3
+      # 🤖 **[2026-09-15] `android-actions/setup-android@v3` 를 걷어냈다.**
+      #   ⛔⛔ 21판 첫 빌드와 재시도가 «둘 다» 여기서 죽었다(run 20 · 9단계):
+      #        Warning: Failed to find package 'tools'
+      #        Error: .../cmdline-tools/16.0/bin/sdkmanager failed with exit code 1
+      #      ＝ 그 액션이 구글에서 «내려간» 옛 패키지(`tools`)를 받으려 한다. 우리 코드 문제가 아니고,
+      #        재시도로는 영영 안 풀린다(액션이 고쳐지기 전엔 늘 같은 자리에서 죽는다).
+      #   ⭐ 답 = **그 액션이 애초에 필요 없다.** ubuntu-latest 러너에는 Android SDK 가 이미 깔려 있고
+      #      `ANDROID_HOME`(=/usr/local/lib/android/sdk) 이 잡혀 있다. 우리가 그 액션에서 원한 것은
+      #      **「bubblewrap 이 질문을 안 던지게 경로를 주는 것」** 하나뿐이었다(아래 단계).
+      #   ⛔ 그러니 «없으면 그 자리에서 죽인다» — 조용히 넘어가면 다음 단계가 엉뚱한 말로 죽는다(규칙 18).
+      - name: Android SDK 확인 (러너에 이미 있다)
+        run: |
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "── Android SDK 자리 ── $SDK"
+          if [ ! -d "$SDK/platform-tools" ] && [ ! -d "$SDK/cmdline-tools" ]; then
+            echo "⛔ 러너에 Android SDK 가 없다 — 이 워크플로는 러너에 깔린 SDK 를 쓴다."
+            ls -la "$SDK" 2>/dev/null || echo "   (그 자리 자체가 없다)"
+            exit 1
+          fi
+          ls "$SDK"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
 
       - name: bubblewrap 설정 미리 써두기 (질문이 안 나오게)
         run: |
