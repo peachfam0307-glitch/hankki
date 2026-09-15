@@ -376,21 +376,17 @@ export default function EditorScreen({ id, prefill }) {
       //      오히려 «잘라내면» 재료를 뽑을 글이 사라진다(스테이크솥밥에서 쌀·올리브오일·물이 그랬다).
       //   🔢 걸음 수 = 6걸음 → **5걸음**. 창업자가 짚은 「귀찮다」가 그 한 걸음이었다.
       //
-      //   ⛔⛔ **자르기를 «없애지» 않는다**(절대원칙 39) — 아래 두 갈래는 그대로 자른다:
-      //      · 「재료 칸에만 채우기」 · 「만드는 법 칸에만 채우기」(`ocrTargetRef`)
-      //        → 그 사진의 글자는 «그 칸에만» 담기므로 다른 절이 섞이면 엉뚱한 데 들어간다.
-      //      ⭐ 즉 「통째로 읽기」만 건너뛴다. 골라 담는 길에서는 자르기가 여전히 제 일을 한다.
-      const 골라담기 = ocrTargetRef.current === 'ingredients' || ocrTargetRef.current === 'steps'
-      if (골라담기) {
-        ocrCropOpen.current = true
-        setCropImg(urls[0])
-      } else {
-        // 자르지 않고 통째로 — 자른 뒤와 «같은 길»로 보낸다(사진도 그대로 남긴다)
-        const img = urls[0]
-        setRefs((p) => [...p, img])
-        setPin('photo')
-        onCropped(img)
-      }
+      //
+      // ✂️✂️ **[창업자 실물 2026-09-15] 그 결정을 되돌린다 — «언제나» 자른다.**
+      //   📮 창업자 = *"자르기안내도 없어 어제 우리 문구까지 다 정했잖아"*
+      //            · *"사진올리면 사진부분 자르고 블라블라 하는거 안내 자르기되게 하기로 했는데"*
+      //   ⛔⛔ 뿌리 = 9/13 의 「안 띄운다」와 9/14 의 자르기 안내가 «부딪혔는데 아무도 안 알려줬다».
+      //      9/14 에 열쇠·무료 두 갈래 문구를 다 정해 넣었는데 **그 화면이 안 열려서 한 번도 못 떴다.**
+      //      글자만 넣고 「반영했다」고 말한 것이다 — 도달하는지를 안 봤다(규칙 21).
+      //   ⭐ 안내는 둘 다 이미 있다 — 열쇠 = CropSheet.jsx 기본 hint · 무료 = 아래 1580줄 무렵.
+      //   ⛔ 이제 갈래가 «하나»다. 다시 가르지 않는다 — 가르는 순간 또 한쪽이 못 뜬다.
+      ocrCropOpen.current = true
+      setCropImg(urls[0])
   }
 
   // 여러 장 선택 지원 — 긴 레시피(2~3컷)를 한꺼번에 골라 한 장씩 크롭→인식→합쳐서 정리.
@@ -437,19 +433,11 @@ export default function EditorScreen({ id, prefill }) {
     ocrJobs.current.push({ img, idx: ocrCropped.current })
     ocrCropped.current += 1
     if (ocrQueue.current.length) {
-      // ✂️ [2026-09-13] 자르기를 건너뛰는 길이면 «둘째 장부터도» 안 띄운다.
-      //   ⛔ 여기를 안 고치면 첫 장만 안 뜨고 둘째 장에서 갑자기 자르기가 튀어나온다
-      //      (창업자가 「귀찮다」고 한 그 걸음이 두 장째에 되살아난다).
-      //   ⭐ 판정은 위 「고른 직후」와 «같은 잣대»를 쓴다 — 두 곳이 갈리면 반드시 어긋난다.
-      const 골라담기 = ocrTargetRef.current === 'ingredients' || ocrTargetRef.current === 'steps'
+      // ✂️ [2026-09-15] 위 「고른 직후」와 «같은 잣대» — 언제나 자른다.
+      //   ⛔ 두 곳이 갈리면 반드시 어긋난다(첫 장만 뜨거나 둘째 장에서 갑자기 튀어나온다).
       const 다음 = ocrQueue.current.shift()
-      if (골라담기) {
-        ocrCropOpen.current = true
-        setCropImg(다음) // 👉 사람은 다음 장을 자른다 · 앞 장은 뒤에서 읽힌다
-      } else {
-        setRefs((p) => [...p, 다음])
-        onCropped(다음)   // 자르지 않고 바로 다음 장으로
-      }
+      ocrCropOpen.current = true
+      setCropImg(다음) // 👉 사람은 다음 장을 자른다 · 앞 장은 뒤에서 읽힌다
     } else {
       ocrCropOpen.current = false
     }
@@ -1174,13 +1162,22 @@ export default function EditorScreen({ id, prefill }) {
                     ⭐ 둘 다 «그때» 이미 말하고 있다 — 소진은 340~360줄 꼬리가, 고치기는 각 칸의 📷 단추가.
                  ⑶ 예시(「3장 고르면 3장」)까지 붙여 두 줄이 됐다. 규칙이 한 줄이면 예시가 필요 없다.
               📌 한 줄 = **지금 이 화면에서 필요한 것만.** */}
-          <div style={{
-            paddingLeft: 10, marginBottom: 10,
-            borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
-            fontSize: 16.4, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px',
-          }}>
-            사진 1장에 {keyCount(1)}를 써요
-          </div>
+          {/* 🆓🆓 **[창업자 실물 2026-09-15] 무료로 읽기로 왔으면 이 빨간 줄을 «안» 띄운다.**
+              📮 창업자 = *"위에 빨간 얄약도 안띄우기로 했었고"*
+              ⛔⛔ 뿌리 = 이 줄에 **조건이 한 개도 없었다.** 그래서 「그냥 읽기」로 들어와도 떴고,
+                 같은 화면 위쪽 띠는 「열쇠 안 쓰고 읽어서 덜 정확해요」라고 말하고 있었다.
+                 ＝ **한 화면이 서로 반대말을 했다.** 유저는 「그래서 썼다는 거야 만 거야」가 된다.
+              ⭐ 잣대 = `ocrNoVision`(어느 단추로 들어왔나) ＋ `무료판`(읽고 나서 «사실»로 안 것).
+                 둘 다 본다 — 앞엣것은 읽기 «전»에도 알고, 뒤엣것은 열쇠가 0이라 무료가 된 경우를 잡는다. */}
+          {!(ocrNoVision.current || 무료판 || editing?.freeRead) && (
+            <div style={{
+              paddingLeft: 10, marginBottom: 10,
+              borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
+              fontSize: 16.4, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px',
+            }}>
+              사진 1장에 {keyCount(1)}를 써요
+            </div>
+          )}
 
           {[
             // ⛔ 「재료 칸에 만드는 법이 섞여 들어왔다면…」을 뺐다(창업자 *"이 안내도 정신이 없어"*).
