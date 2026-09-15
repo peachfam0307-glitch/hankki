@@ -2724,6 +2724,11 @@ html, body { overscroll-behavior: none; }
      화면 폭만큼 커져 아래 '꾸미기 서랍(메뉴)'을 화면 밖으로 밀어내던 문제 방지 */
   max-width: 440px; margin: 0 auto;
   background: var(--bg);
+  /* 📱🍎 [2026-09-15 아이패드 세로 실측] 위 440px 은 «이 층»만 칠한다 — 패드 세로(820~1024px)에선
+     440 밖 양옆이 투명이라 밑에 깔린 레시피 상세(표지·「장보기 담기」·재료·「만들었어요」)가 그대로 비쳤다.
+     폰은 화면이 440 안이라 몰랐고, 가로는 아래 2단 규칙(max-width: none)이라 안 났다 — **세로 태블릿만** 구멍.
+     ✅ 그림자를 사방 100vmax 로 «퍼뜨려» 층 바깥을 같은 배경색으로 덮는다 — 폭·격자는 안 건드린다. */
+  box-shadow: 0 0 0 100vmax var(--bg);
   display: flex; flex-direction: column;
   padding-top: var(--safe-top);
   animation: fadeIn 0.18s ease both;
