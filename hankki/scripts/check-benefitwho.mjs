@@ -87,22 +87,28 @@ if (클로드가쓴것.length) {
 //      파트너스 주소는 `link.coupang.com/a/…` 꼴이다. 그 꼴이 아니면 우리 몫이 «안 잡힌다».
 //   ⛔ 조용히 새는 자리다 — 링크는 «열리니까» 아무도 이상하게 안 여긴다.
 {
-  const 샘 = []
+  const 샘 = [], 적힌것 = []
   for (const 줄 of src.split('\n')) {
     if (/^\s*\/\//.test(줄)) continue
     const u = (줄.match(/url:\s*'([^']+)'/) || [])[1]
     if (!u || !/coupang\.com/.test(u)) continue
     if (/link\.coupang\.com\/a\//.test(u)) continue
+    // ⭐⭐ [창업자 2026-09-15] *"하바티는 쿠팡수익링크에 없어..."*
+    //   ＝ **파트너스에서 «만들 수 없는» 제품이 있다.** 내가 그 갈래를 생각 못 하고 게이트를 만들었다.
+    //   ⛔ 그렇다고 그냥 통과시키면 «진짜로 새는 것»을 못 잡는다.
+    //   ✅ 그래서 **`파트너스없음: true` 라고 «적으면»** 통과시킨다 — 적어야만 통과하니 조용히는 못 샌다.
+    if (/파트너스없음:\s*true/.test(줄)) { 적힌것.push((줄.match(/name:\s*'([^']+)'/) || [])[1]); continue }
     const n = (줄.match(/name:\s*'([^']+)'/) || [])[1] || '(이름 모름)'
     샘.push({ n, u })
   }
   if (샘.length) {
     console.log(`\n   ⛔ 쿠팡 주소인데 «파트너스 링크가 아닌» 제품 ${샘.length}개 — 눌러도 수수료 0원`)
     for (const x of 샘) console.log(`      · ${x.n}  —  ${x.u.slice(0, 56)}…`)
-    console.log(`      👉 파트너스에서 그 제품 링크를 만들어 link.coupang.com/a/… 꼴로 갈아끼운다.`)
+    console.log(`      👉 파트너스 링크를 만들어 link.coupang.com/a/… 꼴로 갈아끼운다.`)
+    console.log(`      ⛔ 파트너스에 «그 제품이 없어서» 못 만드는 것이면 그 줄에 적는다:  파트너스없음: true`)
     실패++
   } else {
-    console.log(`   ✅ 쿠팡 주소가 전부 파트너스 링크다`)
+    console.log(`   ✅ 쿠팡 주소가 전부 파트너스 링크다${적힌것.length ? ` (못 만드는 것 ${적힌것.length}개는 적혀 있다 — ${적힌것.join(' · ')})` : ''}`)
   }
 }
 
