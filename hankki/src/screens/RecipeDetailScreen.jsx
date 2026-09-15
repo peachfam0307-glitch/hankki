@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { COACH } from '../coach'
-import { 사러나감, 장보기담음, 요리끝냄 } from '../stats'
+import { 사러나감, 장보기담음, 요리끝냄, 픽펼침 } from '../stats'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -40,6 +40,10 @@ import ShareDrawCard, { RecipeCard, 카드표지로, 카드표지토스트 } fro
 import uiGomHeart from '../assets/ui/gom_heart.png'
 // 🐻 엄지척 = **물결 정본**(창업자 2026-08-14 · `gt_01`). 옛 `ui/gom_thumbsup` 은 매끈 곰이었다.
 import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
+// 🐧🐻 [창업자 2026-09-15] 단추에 붙일 컷 — *"장보기 담기도 카트같은거 붙이고 … 타이머도 그림을"*
+//   ⛔ 새로 그린 건 없다(규칙 8) · 재료 소제목의 `gom_shop` 과 «겹치지 않는» 컷으로 골랐다
+import pnShoplist from '../assets/ui/wave/pn_shoplist.png'
+import gomPot from '../assets/ui/wave/gom_pot.png'
 import DetailDecor from '../components/DetailDecor'
 import MemoNote from '../components/MemoNote'
 import { hlColor } from '../components/Stickers'
@@ -161,6 +165,27 @@ export default function RecipeDetailScreen({ id }) {
   const [servings, setServings] = useState(baseServings || 1)
   const ratio = baseServings ? servings / baseServings : 1
   const [picksOpen, setPicksOpen] = useState(false) // 🛒 픽카드 접기 — 4칸까지만 보이고 나머지는 「더 보기」
+  // 🧺 [창업자 확정 2026-09-15 · A안] 「주부의 장바구니」 상자를 «통째로» 접는다 — 평소엔 알약 한 줄.
+  //   📮 창업자 = *"큐레이션이 되게 제한적이야. 다 올리면 레시피보는데 방해되서 3-4개정도만 올렸거든"*
+  //      ＋ *"또 계속 반복되니까"* ＋ *"작게 주부의 장바구니 탭으로 바로 가기를 그냥 만들까"*
+  //      → 시안 넷을 보고 **②문구 ＋ A알약**으로 확정 (*"그래 a로 가자"*)
+  //   🔢 왜 = 이 상자가 화면 위에서 **750px** 아래(화면 844px)라 `detail` 체류 **10초** 안에 «안 보인다».
+  //      그래서 `buy_pick_detail` 이 2026-09-15 에 **0건**이었다.
+  //   ⛔ 카드를 «없애지» 않는다 — 누르면 지금 그대로 카드·사러가기·「이 재료 다 담기」가 다 나온다.
+  const [pickBoxOpen, setPickBoxOpen] = useState(false)
+  // ☑️ [창업자 2026-09-15] 재료 체크 — **«끈 것»만 담아 둔다.** 기본은 다 켜짐이라 빈 Set 이 곧 「전부」다.
+  //   ⭐ 이렇게 두면 인분을 바꾸거나 레시피가 갱신돼도 «새 재료가 저절로 켜진» 상태가 된다.
+  //      (켠 것을 담으면 새 재료가 꺼진 채로 들어와 「담기 눌렀는데 빠졌다」가 난다)
+  const [끈것, set끈것] = useState(() => new Set())
+  // 🛒 «켠 것»만 골라 둔다 — 소제목(`[양념]`)은 애초에 재료가 아니라 빠진다.
+  //   ⛔ 분량은 떼고 이름만 (창업자 *"그냥 두부 양파를 사지"*) — 담는 쪽과 세는 쪽이 어긋나면 안 되니 한 자리에서 만든다.
+  const 담을재료 = useMemo(
+    () => (r?.ingredients || [])
+      .map((ing, i) => ({ ing, i }))
+      .filter(({ ing, i }) => !isIngHeader(ing) && !끈것.has(i))
+      .map(({ ing }) => ingredientName(ing)),
+    [r?.ingredients, 끈것],
+  )
   // ⛔⛔ 훅은 «전부» 아래 `if (!r)` 보다 위에 있어야 한다 — 밑에 두면 레시피를 지우는 순간
   //    early return 이 걸려 훅 개수가 줄고 React 가 트리째 죽는다(빈 화면).
   //    2026-08-03 창업자 제보 *"홍콩식가지볶음 지웠더니 먹통됨"* 의 정체가 이거였다.
@@ -933,23 +958,6 @@ export default function RecipeDetailScreen({ id }) {
                   계량·손질
                 </button>
               </div>
-              <button
-                className="mini-buy press"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
-                data-coach="shop"
-                onClick={() => {
-                  // 🛒 **분량은 떼고 «이름»만 담는다** — 창업자 *"그냥 두부 양파를 사지. 해물가루육수 1봉을 사진 않잖아"*
-                  //   ⛔ 그래서 `scaleIngredient`(인분 환산)도 여기선 안 쓴다 — 어차피 분량을 뗄 것이라
-                  //      환산해 봐야 그 숫자가 버려진다. 인분 환산은 «재료 목록 화면»이 하는 일이다.
-                  addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => ingredientName(ing)))
-                  // 📊 [2026-09-12] 담았다 — 재료가 몇 개든 «한 번» 누른 것이다.
-                  장보기담음()
-                  nav.showToast('재료를 장보기 리스트에 담았어요')
-                }}
-              >
-                <Icon name="cart" size={13} />
-                장보기 담기
-              </button>
             </div>
             {baseServings > 0 && (
               <div className="serv-row">
@@ -972,19 +980,88 @@ export default function RecipeDetailScreen({ id }) {
               {latestEntry?.note && (
                 <MemoNote recipeId={r.id} 횟수={cookedN} 붙임 onClick={() => setLogEntry(latestEntry)} />
               )}
+              {/* ☑️ [창업자 2026-09-15] *"재료에 체크박스를 둬서 필요한 것만 장보기 담기할수는 없나?"*
+                  ＋ *"지금은 전체를 다 담고 직접 지워야 하잖아"*
+                 ⭐ **기본은 «다 켜짐»** — 지금 행동(다 담고 지우기)과 결과가 같아 새로 배울 게 없다.
+                    빼고 싶은 것만 끄면 된다.
+                 ⭐ 체크 모양은 **요리모드 「재료 준비」와 같은 문법**(`.cook-ing-box`)이다 — 두 곳이 어긋나지 않게.
+                 ⛔ 저장하지 않는다 — 이 화면에 있는 동안만이다(요리모드 체크와 같다). */}
               {r.ingredients.map((ing, i) => (
                 isIngHeader(ing)
                   ? <div key={i} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
-                  : <div key={i} className="ing">{scaleIngredient(ing, ratio)}</div>
+                  : (
+                    <button
+                      key={i} type="button" className="ing press"
+                      aria-pressed={!끈것.has(i)}
+                      onClick={() => set끈것((옛) => { const 새 = new Set(옛); if (새.has(i)) 새.delete(i); else 새.add(i); return 새 })}
+                      style={{ display: 'flex', alignItems: 'center', width: '100%', textAlign: 'left', background: 'none', border: 'none' }}
+                    >
+                      {/* ☑️ [창업자 확정 2026-09-15] **네모 칸 없이 ✓ 표시만.**
+                          📮 *"파란색 창말고 그냥 체크만 되는걸로 … 너무 정신이 없는 것 같아서.
+                             대신 체크표시를 조금 진하게"* → 20px · 굵기 3.6
+                          ⛔ 끈 줄도 «자리는 그대로» 비워 둔다 — 안 그러면 글이 좌우로 흔들린다. */}
+                      <span style={{ flex: '0 0 auto', width: 21, height: 21, marginRight: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {!끈것.has(i) && <Icon name="check" size={20} color="var(--brown)" stroke={3.6} />}
+                      </span>
+                      {/* ⛔⛔ 끈 줄을 «흐리게 하지 않는다** — 📮 창업자 = *"재료를 보고 요리를 해야하니까"*.
+                          체크는 「장보기에 담을 것」을 고르는 것이지 「재료를 지우는 것」이 아니다. */}
+                      <span style={{ flex: 1, minWidth: 0 }}>{scaleIngredient(ing, ratio)}</span>
+                    </button>
+                  )
               ))}
+              {/* 🛒 [창업자 확정 2026-09-15 · A안] 담기 단추는 **재료 목록 «끝»**이다.
+                  🔢 실측(`_probe-알약자리-0915.mjs`) — 옛 자리(재료 소제목 옆) 693px · 재료 끝 1174~1492px
+                     → 체크를 다 하면 손가락은 «목록 끝»인데 단추는 **최대 799px 위**였다(화면 한 판).
+                  🎨 바탕 = `--brown` 에 흰색을 22% 섞은 값 — 📮 *"담기 색이 너무 진해보이는데 조금 연하게"* (78% 확정).
+                     ⛔ 색값을 박지 않는다 — 테마마다 `--brown` 이 다르다(살구는 군고구마 #8a4a26).
+                  🐧 그림 = `pn_shoplist` — 재료 소제목의 곰(`gom_shop`)과 «겹치지 않는» 컷을 골랐다. */}
+              <button
+                className="press"
+                data-coach="shop"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginTop: 16, padding: 15, borderRadius: 16, background: 'color-mix(in srgb, var(--brown) 78%, #fff)', color: '#fff', fontWeight: 800, fontSize: 17, border: 'none' }}
+                onClick={() => {
+                  // 🛒 **분량은 떼고 «이름»만 담는다** — 창업자 *"그냥 두부 양파를 사지. 해물가루육수 1봉을 사진 않잖아"*
+                  //   ⛔ 그래서 `scaleIngredient`(인분 환산)도 여기선 안 쓴다 — 어차피 분량을 뗄 것이라
+                  //      환산해 봐야 그 숫자가 버려진다. 인분 환산은 «재료 목록 화면»이 하는 일이다.
+                  // ☑️ [창업자 확정 2026-09-15] **체크한 것만** 담는다 — *"지금은 전체를 다 담고 직접 지워야 하잖아"*
+                  if (담을재료.length === 0) { nav.showToast('담을 재료를 체크해 주세요'); return }
+                  addShopItems(담을재료)
+                  // 📊 [2026-09-12] 담았다 — 재료가 몇 개든 «한 번» 누른 것이다.
+                  장보기담음()
+                  nav.showToast(`재료 ${담을재료.length}개를 장보기 리스트에 담았어요`)
+                }}
+              >
+                <img src={pnShoplist} alt="" aria-hidden="true" draggable={false} style={{ height: 34, width: 'auto', flex: '0 0 auto' }} />
+                {/* 0개일 땐 «개수를 안 쓴다» — 📮 창업자 = *"0개 담기가 아니라 장보기담기로 바꿔야하고"* */}
+                {담을재료.length > 0 ? `${담을재료.length}개 담기` : '장보기 담기'}
+              </button>
               {/* ⛔ float 는 부모가 높이를 안 잡는다 — 재료가 메모지보다 짧으면 다음 절이 겹친다 */}
               {latestEntry?.note && <div style={{ clear: 'both' }} />}
             </div>
           </>
         )}
 
+        {/* 🧺 [창업자 확정 2026-09-15 · A안] 평소엔 «알약 한 줄» — 누르면 지금 상자가 그대로 펼쳐진다.
+            ⛔ 유니코드 이모지를 쓰지 않는다(절대원칙) — 왼쪽은 우리 `cart` 아이콘, 오른쪽은 채운 원 안의 ＋.
+            ⭐ 색·모양을 「장보기 담기」(`.mini-buy` = 알약·크림·brown)와 «같은 결»로 맞췄다 —
+               📮 창업자 = *"장보기 담기고 이거랑 같은 색이나 알약으로 튀게"*
+               그래야 「이것도 누르는 것」이 저절로 읽힌다. */}
+        {pantryPicks.length > 0 && !pickBoxOpen && (
+          <button
+            className="press"
+            onClick={() => { setPickBoxOpen(true); try { 픽펼침() } catch { /* 통계가 죽어도 펼쳐진다 */ } }}
+            aria-label="이 레시피에 쓴 제품 보기"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', marginTop: 20, padding: '12px 14px 12px 16px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 16 }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+              <Icon name="cart" size={19} color="var(--brown)" />
+              이 레시피에 쓴 제품 보기 ({pantryPicks.length})
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 19, fontWeight: 700, lineHeight: 1, flex: '0 0 auto' }}>+</span>
+          </button>
+        )}
         {/* 🛒 주부의 장바구니 픽 — 이 레시피가 쓴 제품을 바로 사러가기(재료 바로 밑 · 수익 연결) */}
-        {pantryPicks.length > 0 && (
+        {pantryPicks.length > 0 && pickBoxOpen && (
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
             {/* 🔠 [2026-08-22 창업자] *"주부의 장바구니에서하고 재품하고 너무따닥따닥붙어있어"* · *"줄간도 너무 붙어있어"* */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 19, fontWeight: 800, color: 'var(--brown)', marginBottom: 14 }}>
@@ -1043,12 +1120,18 @@ export default function RecipeDetailScreen({ id }) {
 
         {r.steps?.length > 0 && (
           <>
-            <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
+            {/* 📐 [창업자 2026-09-15] 틈 26 → **40**. 📮 *"만드는법을 아래로 살짝만 내리자 알약이랑 너무 붙어있으니까 답답해보여"*
+                (바로 위가 「이 레시피에 쓴 제품 보기」 알약이다) */}
+            <div className="sec-head" style={{ marginTop: 40, marginBottom: 6 }}>
               <div className="sec-title-row" style={{ display: 'flex', alignItems: 'center' }}>
                 <DetailDecor where="head-만드는법" />
                 <SecTitle>만드는 법</SecTitle>
               </div>
-              <button className="mini-buy press" onClick={() => setTimer(true)}>타이머</button>
+              {/* 🐻 냄비 곰 — ⛔ 그림을 단추 «아래»에 따로 두면 오른쪽 아래 「위로 가기」 화살표와 겹친다(눈으로 봤다) */}
+              <button className="mini-buy press" onClick={() => setTimer(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <img src={gomPot} alt="" aria-hidden="true" draggable={false} style={{ height: 26, width: 'auto', flex: '0 0 auto' }} />
+                타이머
+              </button>
             </div>
             <div>
               {/* ※ [2026-09-01 창업자 판정 ⓐ] 「※」로 시작하던 줄은 «걸음»이 아니라 앞 걸음의 «곁말»이다.
