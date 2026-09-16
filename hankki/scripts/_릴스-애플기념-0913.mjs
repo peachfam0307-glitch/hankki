@@ -150,7 +150,11 @@ ${장(13.6, 2.4, `
 `
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
-const p = await (await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 })).newPage()
+// 🔍🔍 [창업자 2026-09-16 = 릴스가 고화질이 아니야] **2배로 찍어서 절반으로 줄인다**(슈퍼샘플링).
+//    ⛔ 1배로 찍으면 글자 가장자리가 그 해상도에서 «한 번만» 계산돼 거칠다.
+//    ⭐ 2160x3840 으로 찍고 ffmpeg 가 1080x1920 으로 줄이면 픽셀 넷이 하나로 섞여 훨씬 매끈하다.
+const 배율 = Number(process.env.SS || 2)
+const p = await (await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 배율 })).newPage()
 await p.setContent('<!doctype html><html><head>' + 머리 + '</head><body>' + 몸 + '</body></html>')
 await p.waitForTimeout(700)
 await p.evaluate(() => { document.getAnimations().forEach((a) => a.pause()) })
@@ -163,5 +167,9 @@ for (let i = 0; i < 총; i++) {
 await b.close()
 console.log('🎞 프레임 다 찍었다 → 이어붙인다')
 execFileSync(FF, ['-y', '-framerate', String(FPS), '-i', join(임시, 'f%04d.png'),
-  '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-movflags', '+faststart', 낼파일], { stdio: 'inherit' })
+  // ⭐ lanczos = 줄일 때 제일 또렷한 방식 · crf 15 = 더 적게 버린다(18 은 인스타 재압축 뒤 뭉갰다)
+  //    maxrate/bufsize 로 바닥을 받쳐 준다 — 단색 화면이라 crf 만으로는 비트레이트가 너무 내려간다
+  '-vf', 'scale=' + W + ':' + H + ':flags=lanczos',
+  '-c:v', 'libx264', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-crf', '15',
+  '-maxrate', '12M', '-bufsize', '24M', '-movflags', '+faststart', 낼파일], { stdio: 'inherit' })
 console.log('✅', 낼파일)

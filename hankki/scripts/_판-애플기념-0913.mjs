@@ -145,7 +145,10 @@ const 장 = []
     </span></div>` })
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
-const p = await (await b.newContext({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 })).newPage()
+// 🔍 [창업자 2026-09-16 = 고화질로] 2배로 찍는다 — 2160x2700.
+//    ⭐ 인스타가 어차피 재압축한다. 소스가 클수록 뭉개고 남는 것이 또렷하다.
+//    ⛔ 1080 으로 찍어 올리면 인스타 압축이 «그 픽셀 위에» 한 번 더 얹힌다.
+const p = await (await b.newContext({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: Number(process.env.SS || 2) })).newPage()
 for (const s of 장) {
   await p.setContent(`<!doctype html><html><head>${머리}</head><body>${s.html}</body></html>`)
   await p.waitForTimeout(250)
