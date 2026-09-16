@@ -54,7 +54,7 @@ const 장 = []
 장.push({ 이름: 'B-곰펭', html: `
   <div style="position:absolute;left:0;right:0;top:${비(0.17)}px;text-align:center;font-size:96px;font-weight:700;letter-spacing:-2px">한끼 레시피북</div>
   <div style="position:absolute;left:0;right:0;top:${비(0.235)}px;text-align:center;font-size:42px;color:#a98a6b">흩어진 레시피를, 한곳에</div>
-  ${컷('03', 비(0.18), `left:290px;top:${비(0.285)}px`)}
+  ${컷('03', 비(0.18), `left:50%;transform:translateX(-50%);top:${비(0.285)}px`)}
   <div style="position:absolute;left:0;right:0;top:${비(0.48)}px;text-align:center"><span class="알약">앱스토어 · 구글 플레이에서 검색</span></div>` })
 
 // ③ 아주 심플 — 이름 한 줄과 스토어 한 줄뿐. 글씨가 제일 크다.
