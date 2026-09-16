@@ -301,7 +301,10 @@ export const HOMEMADE = [
     ids: ['basic-ganjang-jeyuk', 'basic-maneuljjong-jangajji'] },   // 간장 제육볶음 · 마늘쫑장아찌
   { from: '2026-09-21', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-moksal-jorim', 'basic-gomadare-sauce'] },   // 목살조림 · 고마다래 소스
+    // 🌯 [창업자 확정 2026-09-16] 브리또 둘을 «우리집레시피» 칸에 넣는다(창업자 «ㄱ으로 가자»).
+    //    ⛔ 특집 줄은 안 쓴다 — 추석 특집이 9/29 까지 그 자리를 쓰고 있다(창업자 «다음주는 추석이라 또 특집은 애매해»).
+    //    📌 창업자가 직접 써서 준 편이라 «우리집레시피»가 맞는 자리다(origin: '창업자').
+    ids: ['basic-moksal-jorim', 'basic-gomadare-sauce', 'basic-beef-pepper-burrito', 'basic-musubi-burrito'] },   // 목살조림 · 고마다래 소스 · 브리또 둘
   { from: '2026-09-28', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     ids: ['basic-daepae-dallae-deopbap', 'basic-ojingeo-nurungji'] },   // 대패삼겹 달래덮밥 · 오징어누룽지
