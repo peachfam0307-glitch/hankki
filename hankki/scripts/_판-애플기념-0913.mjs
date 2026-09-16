@@ -33,6 +33,8 @@ const 축하 = (n) => 짐(join(R, `docs/stickers/여름-창업자-2507/낱개-�
 const 씬 = (k) => 짐(join(R, `docs/stickers/콤비-씬-정본-2026-09-05/낱개-씬/${k}.png`))
 const 화면 = (f) => { const p = join(화면곳, f); if (!existsSync(p)) throw new Error(`⛔ 화면이 없다 → ${p} (먼저 _shot-애플기념화면-0913.mjs 를 돌린다)`); return 짐(p) }
 
+// 🐻 앱 아이콘(꼬르곰) — 카톡 배경과 «같은 꼴»로 쓴다(창업자 2026-09-16 = 카톡화면이랑 똑같이)
+const 앱아이콘 = 짐(join(R, 'public/icons/icon-512-v7.png'))
 const 폰트 = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-korean-400.woff2')).toString('base64')
 const 폰트L = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-latin-400.woff2')).toString('base64')
 
@@ -43,6 +45,8 @@ const 머리 = `<style>
   @font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트L}) format('woff2')}
   *{margin:0;padding:0;box-sizing:border-box;font-family:GD,sans-serif;-webkit-font-smoothing:antialiased}
   body{width:1080px;height:1350px;background:${바탕};color:${진};overflow:hidden;position:relative}
+  /* 🐻 알약 앞 꼬르곰 = 앱 아이콘. ⛔유니코드 이모지 금지(절대원칙) */
+  .알약 img{width:72px;height:72px;border-radius:18px;display:block}
   .알약{display:inline-flex;align-items:center;gap:10px;background:#fff;border:2px solid #efe2cf;border-radius:999px;padding:14px 26px;font-size:30px;color:#7a5a3a}
 </style>`
 
@@ -67,7 +71,7 @@ const 장 = []
 
 // ① 훅 — ⭐이 캐러셀의 «전부». 글씨가 제일 크고, 폰은 안 넣는다(말이 먼저다).
 장.push({ 이름: '1-훅', html: `
-  <div style="position:absolute;left:0;right:0;top:150px;text-align:center;font-size:44px;color:#a98a6b">2026.09 · 애플 앱스토어 출시</div>
+  <div style="position:absolute;left:0;right:0;top:150px;text-align:center;font-size:44px;color:#a98a6b">2026.09 · App Store 출시</div>
   <div style="position:absolute;left:0;right:0;top:250px;text-align:center;font-size:92px;line-height:1.3;font-weight:700">아이폰 유저분들<br>많이 기다리셨죠?</div>
   <!-- 🎆 폭죽 = 창업자 *"폭죽같은거 터지는 효과? 도 좋고"* — 불꽃놀이 씬컷을 통째로 쓴다(꼬르곰·펭펭 둘 다 있다) -->
   <!-- ⛔ [눈으로 잡았다] 700px 로 두니 아래 알약이 그림 «위»에 얹혀 꼬르곰 다리를 가렸다 → 660px 로 줄이고 위로 -->
@@ -132,11 +136,19 @@ const 장 = []
 장.push({ 이름: '6-끝', html: `
   <div style="position:absolute;left:0;right:0;top:230px;text-align:center;font-size:76px;line-height:1.35;font-weight:700">아이폰에서도,<br>오늘도 한끼하세요</div>
   ${컷('03', 430, 'left:290px;top:520px')}
-  <div style="position:absolute;left:0;right:0;bottom:150px;text-align:center;font-size:42px;line-height:1.6;color:#7a5a3a">
-    앱스토어 · 구글 플레이에서<br><b style="color:${진};font-size:68px;letter-spacing:-1px">한끼 레시피북</b> 검색</div>` })
+  <!-- 🐻 [창업자 2026-09-16] "마지막 장에 우리한끼 로고 넣자" + "카톡화면이랑 똑같이"
+       → 카톡 프로필 배경과 «같은 꼴»의 알약 = 앱 아이콘 ＋ 스토어 이름(영어) ＋ 검색어 -->
+  <div style="position:absolute;left:0;right:0;bottom:130px;text-align:center">
+    <span class="알약" style="padding:20px 40px 20px 22px;font-size:36px;text-align:left;line-height:1.35">
+      <img src="${앱아이콘}">
+      <span>App Store · Google Play 에서<br><b style="color:${진};font-size:46px;letter-spacing:-1px">한끼 레시피북</b> 검색</span>
+    </span></div>` })
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
-const p = await (await b.newContext({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 })).newPage()
+// 🔍 [창업자 2026-09-16 = 고화질로] 2배로 찍는다 — 2160x2700.
+//    ⭐ 인스타가 어차피 재압축한다. 소스가 클수록 뭉개고 남는 것이 또렷하다.
+//    ⛔ 1080 으로 찍어 올리면 인스타 압축이 «그 픽셀 위에» 한 번 더 얹힌다.
+const p = await (await b.newContext({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: Number(process.env.SS || 2) })).newPage()
 for (const s of 장) {
   await p.setContent(`<!doctype html><html><head>${머리}</head><body>${s.html}</body></html>`)
   await p.waitForTimeout(250)

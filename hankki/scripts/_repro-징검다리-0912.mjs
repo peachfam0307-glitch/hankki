@@ -115,7 +115,12 @@ console.log('\n🔗 징검다리\n')
 // ── ④ 🍎 [2026-09-14] 아이폰으로 오면 App Store 로 — 계측 이름은 그대로(운영체제 측정기준으로 갈린다)
 {
   const { 이름들, 링크, 가려한주소 } = await 열어본다({ 아이폰: true })
-  잰다(/^https:\/\/apps\.apple\.com\/kr\/app\/id6811288851/.test(링크 || ''), '④ 🍎 아이폰 UA 면 단추가 App Store(id6811288851)', 링크)
+  // 🏷 [2026-09-16] 주소 «경로»가 바뀌었다 — App Store Connect 가 준 캠페인 링크 원형(`/app/apple-store/`)을 쓴다.
+  //    ⛔ 옛 검사는 `/kr/app/` 을 못 박아 두어 경로를 바꾸자마자 빨간불이 났다(실제로 run 2546 이 그랬다).
+  //    ✅ 그래서 «변하지 않는 것»만 본다 = 애플 도메인 ＋ 우리 앱 id.
+  잰다(/^https:\/\/apps\.apple\.com\/.*id6811288851/.test(링크 || ''), '④ 🍎 아이폰 UA 면 단추가 App Store(id6811288851)', 링크)
+  // 🏷 캠페인 꼬리표 — `pt` 가 없으면 `ct` 를 적어도 「분석 → 획득 → 캠페인」에 «안 뜬다»
+  잰다(/[?&]pt=\d+/.test(링크 || '') && /[?&]ct=[A-Za-z0-9_]+/.test(링크 || ''), '④ 🍎 캠페인 꼬리표(pt·ct)가 붙어 있다 — 릴스가 만든 설치를 센다', 링크)
   잰다(/apps\.apple\.com/.test(가려한주소 || ''), '④ 🍎 자동 이동도 App Store 로 간다', 가려한주소)
   잰다(이름들.filter((n) => n === 'bridge_ios').length === 1 && 이름들.filter((n) => n === 'bridge_go_ios').length === 1 && !이름들.includes('bridge'), '④ 아이폰은 bridge_ios / bridge_go_ios 한 번씩 (「아이폰 유저 몇 명 왔나」)', JSON.stringify(이름들))
 }

@@ -58,6 +58,15 @@ for (const f of files) {
   //       안 쓰므로 이 저장소가 막으려던 «거짓 통과»는 그대로 막힌다.
   const html = blocks.join('\n') + '\n' + (t.match(/<script[\s\S]*?<\/script>/gi) || []).join('\n')
   if (!PICKABLE.test(html)) { skip.push([f, '고를 것이 없다(보여주기만)']); continue }
+  // ⛔⛔ [2026-09-16] **HTML 을 만들어도 «창업자에게 주지 않는» 판이 있다** — 띄워서 «캡처만» 하는 판이다.
+  //    🔢 실제로 났다 = `_판-식비시안-0916.mjs` 가 시안 그림 3장을 찍는 판인데,
+  //       그림 «속» 장식 단추(`<button class="seg">장보기</button>`)를 「창업자가 고르는 것」으로 봐서 배포를 막았다.
+  //    ⭐ 가르는 잣대 = **HTML 을 파일로 «내보내나»**. 내보내야 창업자가 폰에서 열고, 그래야 기억할 것이 생긴다.
+  //       · 내보낸다 → `writeFileSync(…, html)` · 아티팩트로 준다   ＝ 눌러 쓰는 판 → 검사한다
+  //       · 안 내보낸다 → `screenshot` 만 한다                      ＝ 보여주는 판 → 기억할 것이 없다
+  //    ⛔ 이건 잣대를 «넓힌» 것이 아니라 게이트가 처음부터 뜻한 바다 — 바로 위 주석이 그렇게 적혀 있다.
+  const 내보내나 = /writeFileSync\s*\([^)]*(html|HTML|몸|판)|artifact|\.html['"]\s*\)/.test(t)
+  if (!내보내나) { skip.push([f, 'HTML 을 만들지만 «캡처만» 한다(창업자에게 안 준다)']); continue }
   if (MEMORY.test(html)) ok.push(f)
   else bad.push(f)
 }

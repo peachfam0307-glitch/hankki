@@ -143,8 +143,17 @@ console.log('\n📊 계측 전수\n')
   //       「캡처가 안 찍혔다」고 오해했다(2026-09-12). join() 으로 만든다.
   if (process.env.SHOT) await p.screenshot({ path: join(ROOT, '_계측전수-레시피탭.jpg'), quality: 40, type: 'jpeg' })
   잰다((await 이름들(p)).includes('detail'), '③ 레시피 상세에 들어갔다 (0 이면 아래가 헛돈다)', JSON.stringify((await 이름들(p)).slice(-3)))
-  const 담기 = p.locator('button', { hasText: '장보기 담기' }).first()
+  // ⛔ [2026-09-15] 글자가 «개수»로 바뀌었다 — 「15개 담기」 / 0개일 때만 「장보기 담기」.
+  //    옛 글자만 찾으면 «단추를 못 찾았다»로 헛돈다(이번 스모크에서 실제로 그랬다).
+  //    ⭐ 그래서 «자리»(`[data-coach="shop"]`)로 찾는다 — 글자가 또 바뀌어도 안 깨진다.
+  const 담기 = p.locator('[data-coach="shop"]').first()
   if (await 담기.count() > 0) {
+    // ☑️ [2026-09-16] **재료를 «먼저 체크»해야 담긴다** — 창업자 확정으로 기본이 «다 꺼짐»이 됐다.
+    //    ⛔ 안 켜고 누르면 0개라 「담을 재료를 체크해 주세요」만 뜬다(그게 맞는 동작이다).
+    //       그 탓에 이 칸이 0번으로 빨간불이 났었다 — 앱이 아니라 이 재현판이 낡았던 것이다.
+    const 재료들 = p.locator('.ing')
+    for (const n of [0, 1]) await 재료들.nth(n).click().catch(() => {})
+    await p.waitForTimeout(400)
     await 담기.click(); await p.waitForTimeout(900)
     const a = await 이름들(p)
     잰다(셈(a, 'shop_added') === 1, '③ ⭐상세의 「장보기 담기」가 «한 번» 세진다 (전엔 0건)', `${셈(a, 'shop_added')}번`)
