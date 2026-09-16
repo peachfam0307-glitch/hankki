@@ -243,7 +243,7 @@ const CURATION_ALL = [
     cat: '햄·소시지', group: '고기·해산물', emoji: '🌭', icon: 'cu_ham_slice',
     items: [
       { name: '문어 비엔나', matches: ['비엔나', '소시지'], icon: 'cu_ham_vienna', benefit: '햄·소시지는 첨가물이 많아 쉽게 손이 안 가는데, 이건 성분이 괜찮아 오아시스 장볼 때마다 하나씩 꼭 담는 단골템이에요. 살짝 데쳐 그냥 먹어도 맛있고 모양도 귀여워 아이들이 좋아해요', q: '문어 비엔나', mall: 'oasis' },
-      { name: '안심햄 대용량', who: '클로드', brand: '위드잇', matches: ['스팸'], icon: 'cu_ham_slice', benefit: '슬라이스햄 슬림과 같은 제품이고 용량만 달라요. 요리에 한 번에 많이 쓸 땐 이쪽이 알뜰해요', q: '위드잇 안심햄 대용량', mall: 'coupang', url: 'https://link.coupang.com/a/g5iQ6pPiea' },
+      { name: '안심햄 대용량', who: '창업자', brand: '위드잇', matches: ['스팸'], icon: 'cu_ham_slice', benefit: '슬라이스햄 슬림과 같은 제품이고 용량만 달라요. 요리에 한 번에 많이 쓸 땐 이쪽이 알뜰해요', q: '위드잇 안심햄 대용량', mall: 'coupang', url: 'https://link.coupang.com/a/g5iQ6pPiea' },
       { name: '슬라이스햄 슬림', brand: '위드잇', matches: ['슬라이스햄'], icon: 'cu_ham_slice', benefit: "첨가물 없는 '착한 스팸' 컨셉이에요. (스팸의 찐한 맛을 기대하면 조금 아쉬울 수 있어요) 데리야끼소스에 살짝 구워 무스비에 넣으면 아이 간편식으로 좋아요. 저희 애는 2주 동안 하루 한 개씩 무스비로 먹었어요. ⚠️이 링크는 «낱개로 소분된» 것이에요 — 무스비맛브리또처럼 한 번에 많이 쓸 땐 «대용량»으로 고르세요(같은 제품이고 용량만 달라요)", q: '위드잇 슬라이스햄 슬림', mall: 'coupang', url: 'https://link.coupang.com/a/gR0tQ4teVN' },
       // 🥓 [2026-08-28] 설명은 **창업자가 2026-08-17 밤에 써 준 것**을 그대로 쓴다.
       //    📮 검수판에서 창업자 = *"이것도 저번에 적은 것 같아(확인요망)"* → 맞았다. 자료 문서에 남아 있었다.
