@@ -243,6 +243,7 @@ const CURATION_ALL = [
     cat: '햄·소시지', group: '고기·해산물', emoji: '🌭', icon: 'cu_ham_slice',
     items: [
       { name: '문어 비엔나', matches: ['비엔나', '소시지'], icon: 'cu_ham_vienna', benefit: '햄·소시지는 첨가물이 많아 쉽게 손이 안 가는데, 이건 성분이 괜찮아 오아시스 장볼 때마다 하나씩 꼭 담는 단골템이에요. 살짝 데쳐 그냥 먹어도 맛있고 모양도 귀여워 아이들이 좋아해요', q: '문어 비엔나', mall: 'oasis' },
+      { name: '안심햄 대용량', who: '클로드', brand: '위드잇', matches: ['스팸'], icon: 'cu_ham_slice', benefit: '슬라이스햄 슬림과 같은 제품이고 용량만 달라요. 요리에 한 번에 많이 쓸 땐 이쪽이 알뜰해요', q: '위드잇 안심햄 대용량', mall: 'coupang', url: 'https://link.coupang.com/a/g5iQ6pPiea' },
       { name: '슬라이스햄 슬림', brand: '위드잇', matches: ['슬라이스햄'], icon: 'cu_ham_slice', benefit: "첨가물 없는 '착한 스팸' 컨셉이에요. (스팸의 찐한 맛을 기대하면 조금 아쉬울 수 있어요) 데리야끼소스에 살짝 구워 무스비에 넣으면 아이 간편식으로 좋아요. 저희 애는 2주 동안 하루 한 개씩 무스비로 먹었어요. ⚠️이 링크는 «낱개로 소분된» 것이에요 — 무스비맛브리또처럼 한 번에 많이 쓸 땐 «대용량»으로 고르세요(같은 제품이고 용량만 달라요)", q: '위드잇 슬라이스햄 슬림', mall: 'coupang', url: 'https://link.coupang.com/a/gR0tQ4teVN' },
       // 🥓 [2026-08-28] 설명은 **창업자가 2026-08-17 밤에 써 준 것**을 그대로 쓴다.
       //    📮 검수판에서 창업자 = *"이것도 저번에 적은 것 같아(확인요망)"* → 맞았다. 자료 문서에 남아 있었다.
@@ -313,6 +314,7 @@ const CURATION_ALL = [
       { name: '몽글이 순두부', brand: '한살림', matches: ['순두부'], benefit: '작은 냄비에 파르르 끓여 양념장만 넣으면 3분 컷. 바쁜 아침 남편 식사대용으로, 저녁에 출출할 때 야식으로도 좋아요', q: '한살림 몽글이 순두부', mall: 'hansalim' },
       // ⭐ 창업자 2026-08-03 제공. **쿠팡이라 조합원 아니어도 산다** — 도토리묵 자리에 한살림밖에 없던 걸 메운다.
       { name: '국내산 도토리로 만든 도토리묵', brand: '친정엄마', matches: ['도토리묵'], benefit: '국산 도토리앙금·천일염, 성분이 심플해요. 작은 사이즈로 소분돼 있어 하나 까서 혼자 먹기 딱이에요', q: '친정엄마 국내산 도토리묵', mall: 'coupang', url: 'https://link.coupang.com/a/gRZnjMvfJA' },
+      { name: '국산콩두부', who: '창업자', brand: '곰곰', matches: ['두부'], benefit: '두부요리 어디든 사용 가능해요', q: '곰곰 국산콩두부', mall: 'coupang', url: 'https://link.coupang.com/a/g5iOKxxNQa' },
       { name: '오리엔탈연두부', brand: '빠르게한끼', icon: 'cu_yeondubu', matches: ['연두부'], benefit: '국산콩에 소스도 들어있어서 입맛 없을 때나 바쁜 아침에 휘리릭 먹기 좋아요', q: '빠르게한끼 오리엔탈 연두부', mall: 'kurly', from: '2026-09-19' },
       { name: '낫또', icon: 'cu_natto', matches: ['낫또'], benefit: '낫또를 썩 좋아하진 않는데 몸에 좋다고 해서 브랜드별로 거의 먹어봤어요. 그중에 자연드림 낫또가 제 입맛에는 제일 괜찮았어요. 저같은 낫또 초심자 추천', q: '낫또', mall: 'icoop', from: '2027-02-06', url: 'http://icoop.or.kr/coopmall/goodsmall.phtm?act=find&key=%EB%82%AB%EB%98%90&x=0&y=0' },
     ],
