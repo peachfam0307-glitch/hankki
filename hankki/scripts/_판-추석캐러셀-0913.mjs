@@ -154,7 +154,7 @@ const 가족장 = (이름, 윗글, 목록, 곰키, 곰자리) => ({ 이름, html
        ⭐ 제목을 280px 로 올리고, 다운로드 줄을 34 → 44px 로 키웠다(이 장의 «할 일»이 그것이다). -->
   <div style="position:absolute;left:0;right:0;top:280px;text-align:center;font-size:78px;font-weight:700">오늘도 한끼하세요</div>
   <div style="position:absolute;left:0;right:0;top:420px;text-align:center;font-size:36px;color:#a98a6b">흩어진 레시피를, 한곳에</div>
-  <div style="position:absolute;left:0;right:0;bottom:170px;text-align:center;font-size:44px;line-height:1.5;color:#7a5a3a">구글 플레이스토어에서<br><b style="color:${진};font-size:54px">한끼</b> 다운로드</div>
+  <div style="position:absolute;left:0;right:0;bottom:170px;text-align:center;font-size:44px;line-height:1.5;color:#7a5a3a">Google Play 에서<br><b style="color:${진};font-size:54px">한끼</b> 다운로드</div>
   ${곰펭('cs_b03', 400, 'left:330px;top:580px')}` })
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })

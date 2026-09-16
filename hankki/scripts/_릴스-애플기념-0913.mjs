@@ -104,7 +104,7 @@ const 장 = (시작, 길, 속) => `<div class="장" style="--at:${시작}s;--len
 
 const 몸 = `
 ${장(0, 3.4, `
-  <div class="툭" style="--at:.15s;position:absolute;left:0;right:0;top:250px;text-align:center;font-size:52px;color:#a98a6b">2026.09 · 애플 앱스토어 출시</div>
+  <div class="툭" style="--at:.15s;position:absolute;left:0;right:0;top:250px;text-align:center;font-size:52px;color:#a98a6b">2026.09 · App Store 출시</div>
   <div class="툭" style="--at:.35s;position:absolute;left:0;right:0;top:360px;text-align:center;font-size:104px;line-height:1.32;font-weight:700">아이폰 유저분들<br>많이 기다리셨죠?</div>
   <div class="팝" style="--at:.7s;position:absolute;left:120px;top:800px;width:840px;height:840px;border-radius:70px;overflow:hidden;box-shadow:0 30px 70px rgba(93,52,16,.2)">
     <img src="${씬('sn_06')}" style="width:100%;height:100%;object-fit:cover"></div>
@@ -137,7 +137,7 @@ ${장(13.6, 2.4, `
   <div class="툭" style="--at:13.75s;position:absolute;left:0;right:0;top:420px;text-align:center;font-size:88px;line-height:1.35;font-weight:700">아이폰에서도,<br>오늘도 한끼하세요</div>
   <img class="팝" style="--at:14.0s;position:absolute;left:240px;top:800px;height:600px;object-fit:contain" src="${축하('03')}">
   <div class="툭" style="--at:14.25s;position:absolute;left:0;right:0;bottom:220px;text-align:center;font-size:50px;line-height:1.6;color:#7a5a3a">
-    앱스토어 · 구글 플레이에서<br><b style="color:${진};font-size:82px;letter-spacing:-1px">한끼 레시피북</b> 검색</div>
+    App Store · Google Play 에서<br><b style="color:${진};font-size:82px;letter-spacing:-1px">한끼 레시피북</b> 검색</div>
   <div class="불">${폭죽(80, 13.85, 700)}</div>`)}
 `
 

@@ -67,7 +67,7 @@ const 장 = []
 
 // ① 훅 — ⭐이 캐러셀의 «전부». 글씨가 제일 크고, 폰은 안 넣는다(말이 먼저다).
 장.push({ 이름: '1-훅', html: `
-  <div style="position:absolute;left:0;right:0;top:150px;text-align:center;font-size:44px;color:#a98a6b">2026.09 · 애플 앱스토어 출시</div>
+  <div style="position:absolute;left:0;right:0;top:150px;text-align:center;font-size:44px;color:#a98a6b">2026.09 · App Store 출시</div>
   <div style="position:absolute;left:0;right:0;top:250px;text-align:center;font-size:92px;line-height:1.3;font-weight:700">아이폰 유저분들<br>많이 기다리셨죠?</div>
   <!-- 🎆 폭죽 = 창업자 *"폭죽같은거 터지는 효과? 도 좋고"* — 불꽃놀이 씬컷을 통째로 쓴다(꼬르곰·펭펭 둘 다 있다) -->
   <!-- ⛔ [눈으로 잡았다] 700px 로 두니 아래 알약이 그림 «위»에 얹혀 꼬르곰 다리를 가렸다 → 660px 로 줄이고 위로 -->
@@ -133,7 +133,7 @@ const 장 = []
   <div style="position:absolute;left:0;right:0;top:230px;text-align:center;font-size:76px;line-height:1.35;font-weight:700">아이폰에서도,<br>오늘도 한끼하세요</div>
   ${컷('03', 430, 'left:290px;top:520px')}
   <div style="position:absolute;left:0;right:0;bottom:150px;text-align:center;font-size:42px;line-height:1.6;color:#7a5a3a">
-    앱스토어 · 구글 플레이에서<br><b style="color:${진};font-size:68px;letter-spacing:-1px">한끼 레시피북</b> 검색</div>` })
+    App Store · Google Play 에서<br><b style="color:${진};font-size:68px;letter-spacing:-1px">한끼 레시피북</b> 검색</div>` })
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const p = await (await b.newContext({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 })).newPage()
