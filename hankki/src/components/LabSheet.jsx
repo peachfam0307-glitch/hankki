@@ -93,7 +93,10 @@ export default function LabSheet({ onClose }) {
                 </div>
                 <div className="t-sub" style={{ fontSize: 15.6, lineHeight: 1.5, marginTop: 5, paddingLeft: 28 }}>{r.desc}</div>
                 {/* 설문은 뭘 묻는지 미리 보여준다 — 모르고 들어가면 안 누른다 */}
-                {r.chips && (
+                {/* ⛔ `r.chips &&` 로 두면 «빈 배열도 참»이라 빈 줄이 그려진다(2026-09-16 실측).
+                    보기를 없앤 뒤(창업자 «우리가 제시하지말고») 칩 자리에 8px 빈 칸이 남았다.
+                    📌 「있나」가 아니라 **「비었나」**를 봐야 한다(절대원칙 18ⓘ와 같은 자리). */}
+                {r.chips?.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8, paddingLeft: 28 }}>
                     {r.chips.map((c) => (
                       <span
