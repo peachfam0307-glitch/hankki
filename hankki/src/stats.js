@@ -74,6 +74,98 @@ function 우리기기인가() {
   try { return !!localStorage.getItem('hankki:founder') } catch { return false }
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// 🙋‍♀️🙋‍♀️ **우리 기기는 통계를 «아예 안 보낸다»** (창업자 확정 2026-09-16 · 설계 관문 통과 21:2x)
+//
+// 📮 창업자 = *"아이폰 유저가 늘었을때 내폰이랑 섞이면 진짜 어려워지거든?? 네가 설계를 잘 해야해.."*
+//           *"내가 레시피, 레꾸자랑 장보기등등 (아이폰으로) 열어보는 것들이 애널리틱스에 표시가 되거나 아예 안잡혀야해"*
+//
+// ⛔ 그 전(09-09~)엔 「internal 딱지를 달아 보내고 GA4 필터가 거른다」였다. 두 군데에 기댄다 —
+//    ①콘솔 필터가 「사용중」으로 계속 켜져 있어야 하고 ②반영이 24~36시간 걸린다. 조용히 새는 길이 둘이다.
+// ⭐ 그래서 «안 보냄»을 기본으로 바꿨다. 기기 안에서 판정하고 끝 — 서버·필터·지연에 기대지 않는다.
+//    아이폰 앱은 주소창이 없어 `?founder=` 길이 없다 → 설정 맨 아래 버전 글자 7번 탭 → 열쇠 칸(`ProfileScreen`).
+//    ⭐ 정체는 «열쇠 하나»다 — AI 무제한·유저눈·통계가 전부 `hankki:founder` 에 걸린다. 새 정체를 만들지 않는다.
+//
+// 🔬 「점검용 보내기」 = 우리가 계측이 «도는지» 봐야 할 때만 켠다. internal 딱지를 달고 보내고 **30분 뒤 저절로 꺼진다**
+//    (필터가 사용중이라 GA4 보고서·실시간엔 안 뜬다 → 우리 쪽 검증은 아래 「보낸 기록」 5건으로 한다).
+// 📓 「보낸 기록」 = 우리 기기에서만 쌓는다(유저 폰엔 아무것도 안 남긴다).
+//
+// ⚠️ 첫 설치 → 열쇠 넣기 «사이»에 나간 몇 건은 유저로 남는다(GA4는 지난 것을 안 지운다).
+//    → 시험 폰은 앱을 지우지 말고 «업데이트만» · 열쇠 넣은 날 = 그 기기의 표본 시작일(문서에 박는다).
+// 🔒 지키는 판 = `scripts/_repro-내부기기-0916.mjs`
+const 점검열쇠 = 'hankki:stats:probe'   // 값 = 「언제까지」(ms) — 지나면 꺼진 것
+const 기록열쇠 = 'hankki:stats:log'
+export const 점검시간 = 30 * 60 * 1000
+
+/** 🙋‍♀️ 이 기기가 내부(우리) 기기인가 — 설정 화면이 「내부 기기」 글자를 그릴 때 본다. */
+export function 내부기기인가() { return 우리기기인가() }
+
+/** 🔑 설정 7번 탭에서 열쇠를 넣는다 — `App.jsx` 의 `?founder=` 와 «같은 자리»(hankki:founder)에 같은 값.
+ *  빈 값이면 «해제»다(AI 무제한 통로도 같이 닫힌다 — 열쇠는 하나다). 저장 성공 여부를 돌려준다. */
+export function 내부기기설정(열쇠값) {
+  const v = String(열쇠값 || '').trim()
+  try { if (v) localStorage.setItem('hankki:founder', v); else localStorage.removeItem('hankki:founder') } catch { return false }
+  return true
+}
+
+/** 🔬 점검용 보내기 — 켜져 있으면(아직 시간이 안 지났으면) 우리 기기라도 internal 딱지를 달고 보낸다. 기본 = 꺼짐.
+ *  「언제까지」를 돌려준다(꺼져 있으면 0). 시간이 지났으면 표식을 지운다. */
+export function 점검보내기까지(지금 = Date.now()) {
+  try {
+    const 까지 = Number(localStorage.getItem(점검열쇠) || 0)
+    if (!까지) return 0
+    if (까지 <= 지금) { localStorage.removeItem(점검열쇠); return 0 }
+    return 까지
+  } catch { return 0 }
+}
+export function 점검보내기인가() { return 점검보내기까지() > 0 }
+/** 켜면 지금부터 30분 · 끄면 바로. */
+export function 점검보내기설정(켤까, 지금 = Date.now()) {
+  try { if (켤까) localStorage.setItem(점검열쇠, String(지금 + 점검시간)); else localStorage.removeItem(점검열쇠) } catch { /* noop */ }
+}
+
+/** 🚦 지금 보내도 되나 — ①유저가 껐으면 ✗ ②우리 기기인데 점검이 아니면 ✗. 나머지 ✓.
+ *  ⛔ 세 보내는 함수(직접보내기·보내기·행동보내기)와 통계시작이 «전부» 이 하나를 본다 — 잣대를 늘리지 않는다. */
+export function 보낼까() {
+  if (통계꺼짐()) return false
+  if (우리기기인가() && !점검보내기인가()) return false
+  return true
+}
+
+/** 📓 마지막으로 보낸 5건 — 점검 화면이 보여준다. 유저 폰엔 안 쌓인다(우리 기기에서만 적는다). */
+export function 보낸기록() {
+  try { const a = JSON.parse(localStorage.getItem(기록열쇠) || '[]'); return Array.isArray(a) ? a : [] } catch { return [] }
+}
+function 기록남기기(이름, 방식) {
+  if (!우리기기인가()) return
+  try {
+    const a = 보낸기록()
+    a.unshift({ t: Date.now(), 이름, 방식, 내부: true })
+    localStorage.setItem(기록열쇠, JSON.stringify(a.slice(0, 5)))
+  } catch { /* noop */ }
+}
+
+// 📍 앱으로 켰나(홈 화면에 깐 것 = Play 앱·설치형 웹) vs 브라우저 — 경로를 갈라 보낸다(2026-09-16).
+//   📮 창업자 = 기능 추가·삭제를 «기기별로» 설계해야 하는데 갤럭시 앱과 웹이 둘 다 `/hankki/` 라 못 갈랐다.
+//   ⭐ 콘솔 설정 없이 지금 쓰는 「페이지 경로」 한 칸으로 셋이 갈린다 — iOS 앱 `/hankki/ios` · 앱 `/hankki/app` · 웹 `/hankki/`.
+//   ⛔ 판정 잣대는 브라우저가 주는 것만 쓴다(display-mode standalone · iOS 홈화면 · android-app:// 참조) — UA 문자열 분석은 안 한다.
+export function 앱으로켰나() {
+  try {
+    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true
+    if (navigator.standalone === true) return true
+    if (String(document.referrer || '').startsWith('android-app://')) return true
+  } catch { /* noop */ }
+  return false
+}
+/** 📍 보낼 주소의 경로 — 앱이면 `…/app`, 아니면 지금 경로 그대로. 순수 함수라 재현판이 잰다. */
+export function 보낼경로({ 경로 = '/', 앱 = false } = {}) {
+  if (!앱) return 경로
+  return 경로.endsWith('/') ? `${경로}app` : `${경로}/app`
+}
+function 지금주소(이름) {
+  return `${location.origin}${보낼경로({ 경로: location.pathname, 앱: 앱으로켰나() })}#${이름}`
+}
+
 let 붙였나 = false
 
 // ═══════════════════════════════════════════════════════════════════
@@ -137,7 +229,7 @@ export function 수집주소만들기({ 이름, 저장소, 지금 = Date.now(), 
 let 직접모드 = false
 function 직접보내기(이름) {
   try {
-    if (통계꺼짐()) return
+    if (!보낼까()) return
     const url = 수집주소만들기({
       이름, 저장소: localStorage, 내부: 우리기기인가(),
       화면크기: (screen && screen.width) ? `${screen.width}x${screen.height}` : '',
@@ -147,6 +239,7 @@ function 직접보내기(이름) {
     let 갔나 = false
     try { if (navigator.sendBeacon) 갔나 = navigator.sendBeacon(url) } catch { 갔나 = false }
     if (!갔나) fetch(url, { method: 'POST', mode: 'no-cors', keepalive: true }).catch(() => {})
+    기록남기기(이름, '직접')
   } catch { /* ⛔ 통계가 죽어도 앱은 그대로 돈다 */ }
 }
 
@@ -156,6 +249,8 @@ export function 통계시작() {
   붙였나 = true
   // 🔕 꺼져 있으면 «받지도» 않는다 — 끈 사람에게 40KB 를 내려받게 하지 않는다.
   if (통계꺼짐()) { 통계끄기설정(true); return }
+  // 🙋‍♀️ 우리 기기(점검 아님)도 «받지도 보내지도» 않는다 — 켜려면 설정에서 점검(30분)을 켜고 앱을 다시 연다.
+  if (!보낼까()) return
   // 🍎 아이폰 껍데기 = 직접 모드. gtag 를 안 받는다. 첫 화면(못보낸화면)은 여기서 보내고 「다시 왔나」도 여기서.
   if (앱안()) {
     직접모드 = true
@@ -446,13 +541,14 @@ export function 장보기담음() { 지난화면 = null; 행동보내기('shop_a
 //    ⭐ 화면은 다음 이동에서 또 보내지지만, 잃은 화면 기록은 못 되찾는다. 그래서 행동이 양보한다.
 function 행동보내기(이름) {
   try {
-    if (통계꺼짐()) return
+    if (!보낼까()) return
     if (직접모드) { 직접보내기(이름); return }   // 🍎 아이폰 껍데기 — gtag 없이 직접
     if (typeof window.gtag !== 'function') return   // ⛔ 담아두지 않는다 — 화면 자리를 안 뺏는다
     window.gtag('event', 'page_view', {
       page_title: 이름,
-      page_location: `${location.origin}${location.pathname}#${이름}`,
+      page_location: 지금주소(이름),
     })
+    기록남기기(이름, 'gtag')
   } catch { /* ⛔ 통계가 죽어도 앱은 그대로 돈다 */ }
 }
 
@@ -469,14 +565,15 @@ function 행동보내기(이름) {
 //    📌 주소에 `#화면이름` 을 붙이는 건 «구분용»이다 — 실제로 그 주소로 옮기지 않는다.
 function 보내기(이름) {
   try {
-    if (통계꺼짐()) return
+    if (!보낼까()) return
     if (직접모드) { 못보낸화면 = null; 직접보내기(이름); return }   // 🍎 아이폰 껍데기 — gtag 없이 직접
     if (typeof window.gtag !== 'function') { 못보낸화면 = 이름; return }  // 아직 안 붙었다 — 붙으면 그때 보낸다
     못보낸화면 = null
     window.gtag('event', 'page_view', {
       page_title: 이름,
-      page_location: `${location.origin}${location.pathname}#${이름}`,
+      page_location: 지금주소(이름),
     })
+    기록남기기(이름, 'gtag')
   } catch { /* ⛔ 통계가 죽어도 앱은 그대로 돈다 */ }
 }
 let 못보낸화면 = null
