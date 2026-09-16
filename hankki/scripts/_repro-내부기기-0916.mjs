@@ -116,7 +116,7 @@ console.log('②-b 설정 맨 아래 「내부 기기 · 통계 안 보냄」')
 // ── ③ 우리 기기 + 점검 켬 = internal 로 보냄 + 기록 ────────────
 console.log('③ 우리 기기 + 점검용 보내기 켬')
 {
-  const { ctx, page, 요청 } = await 열기({ 저장: { 'hankki:founder': 열쇠, 'hankki:stats:probe': '1' } })
+  const { ctx, page, 요청 } = await 열기({ 저장: { 'hankki:founder': 열쇠, 'hankki:stats:probe': String(Date.now() + 30 * 60 * 1000) } })
   await 탭(page, '레시피'); await 탭(page, '장보기')
   const pv = await 페이지뷰들(page); const cfg = await 설정값(page)
   잰다(요청.some((r) => /gtag\/js/.test(r.url)), '점검이면 gtag 를 받는다')
@@ -162,7 +162,7 @@ console.log('⑤ 앱(standalone)으로 켜면 경로 /hankki/app')
 // ── ⑥ 유저 스위치가 이긴다 ─────────────────────────────────────
 console.log('⑥ 유저가 통계를 껐으면 점검을 켜도 안 나간다')
 {
-  const { ctx, page, 요청 } = await 열기({ 저장: { 'hankki:founder': 열쇠, 'hankki:stats:probe': '1', 'hankki:stats:off': '1' } })
+  const { ctx, page, 요청 } = await 열기({ 저장: { 'hankki:founder': 열쇠, 'hankki:stats:probe': String(Date.now() + 30 * 60 * 1000), 'hankki:stats:off': '1' } })
   await 탭(page, '레시피')
   const pv = await 페이지뷰들(page)
   잰다(!요청.some((r) => /gtag\/js/.test(r.url)) && pv.length === 0, '꺼짐이 점검보다 세다(요청 0 · page_view 0)')
