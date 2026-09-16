@@ -316,9 +316,8 @@ export const HOMEMADE = [
     ids: ['basic-mapa-dubu', 'basic-sogogi-gyudon'] },   // 마파두부 · 소고기 규동
   { from: '2026-10-12', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    // 🚨 [2026-09-16] 두부참치찌개를 뺐다 — 창업자 «완전 잘못됐어 일단 내리자 내가 다시줄게»(섞인 레시피).
-    //    ⛔ 다시 받으면 여기 도로 넣는다.
-    ids: ['basic-jeonbok-sotbap'] },   // 전복솥밥
+    // ✅ [2026-09-16] 두부참치찌개를 «도로 넣었다» — 창업자가 새 판으로 다시 주고 검수까지 끝냈다(«다 맞아. ㄱㄱ 내보내자»).
+    ids: ['basic-jeonbok-sotbap', 'basic-dubu-chamchi-jjigae'] },   // 전복솥밥 · 두부참치찌개
   { from: '2026-10-19', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     ids: ['basic-ganjang-yakiniku', 'basic-ojingeo-saeujeon'] },   // 간장 야키니쿠 · 오징어 새우전
