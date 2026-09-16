@@ -8,6 +8,8 @@ import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL, LAB_SURVEY_URL, LAB_BUG_URL } f
 //    ⛔ 갈려 있으면 다음 사람이 한쪽만 보고 「유저 눈을 안 본다」고 착각한다(오늘 실제로 그런 사고를 냈다).
 //    tidyFounder = 유저 눈을 «따른다» · 진짜운영자 = 유저 눈과 «무관»(스위치를 그릴지 정한다)
 import { tidyFounder, 다듬기기록, 진짜운영자, 유저눈인가, 유저눈설정 } from '../tidy'
+// 🙋‍♀️ [2026-09-16] 우리 기기 = 통계 안 보냄 · 7번 탭 열쇠 칸 · 점검 30분 · 보낸 기록 — 판정은 stats.js 한 곳
+import { 내부기기인가, 내부기기설정, 점검보내기까지, 점검보내기설정, 보낸기록 } from '../stats'
 import Icon from '../components/Icon'
 import KeyBadge from '../components/KeyBadge'
 import TabTips from '../components/TabTips'
@@ -63,6 +65,20 @@ export default function ProfileScreen() {
   const [avatarSheet, setAvatarSheet] = useState(false)
   // 👀 [2026-09-10] 유저 눈으로 보기 — 켜고 끄면 화면을 다시 그려야 해서 상태로 든다
   const [유저눈, set유저눈] = useState(() => 유저눈인가())
+  // 🙋‍♀️ [창업자 확정 2026-09-16] 설정 맨 아래 버전 글자 «7번 탭» → 운영자 열쇠 칸(아이폰 앱엔 주소창이 없어 ?founder= 길이 없다)
+  //    열쇠가 «이미» 있으면 칸을 안 연다 — 상태·점검·해제는 아래 운영자 칸에 늘 보인다(숨은 판을 따로 안 만든다).
+  const [열쇠칸, set열쇠칸] = useState(false)
+  const 탭셈 = useRef({ n: 0, t: 0 })
+  const 버전탭 = () => {
+    const 지금 = Date.now()
+    if (지금 - 탭셈.current.t > 3000) 탭셈.current.n = 0   // 3초 넘게 쉬면 처음부터
+    탭셈.current = { n: 탭셈.current.n + 1, t: 지금 }
+    if (탭셈.current.n < 7) return
+    탭셈.current.n = 0
+    if (내부기기인가()) { nav.showToast('이미 내부 기기예요 · 위 운영자 칸에서 점검·해제해요'); return }
+    set열쇠칸(true)
+  }
+  const 점검까지 = 점검보내기까지()
   const [editSheet, setEditSheet] = useState(false)
   const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
   const [unlockAsk, setUnlockAsk] = useState(null) // 백업 안 잠긴 일기를 풀 때 { n, data }
@@ -496,6 +512,58 @@ export default function ProfileScreen() {
               <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff' }} />
             </div>
           </button>
+
+          {/* 📊📊 [창업자 확정 2026-09-16] **이 기기는 통계를 안 보내요** — 운영자 기기에만 뜬다.
+              📮 창업자 = *"아이폰 유저가 늘었을때 내폰이랑 섞이면 진짜 어려워지거든?? 네가 설계를 잘 해야해.."*
+              ⭐ 판정·저장은 전부 `stats.js`(보낼까·점검보내기설정·보낸기록) — 여기는 그리고 누르는 것뿐.
+              ⭐ 「점검 30분」 = 계측이 도는지 볼 때만. internal 딱지로 나가고 30분 뒤 저절로 꺼진다(잊어도 원칙이 안 흐려진다).
+              ⭐ 「보낸 기록」 = 점검 중 나간 최근 5건 — GA4 필터가 사용중이라 실시간엔 안 뜨니 우리 쪽은 이걸로 본다.
+              ⚠️ 「해제」 = 열쇠를 지운다 → AI 무제한(운영자 통로)도 같이 꺼진다(열쇠는 하나다). 확인 시트로 한 번 더 묻는다. */}
+          <div data-coach="stats-internal" style={{ marginTop: 10, padding: '12px 13px', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--card)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Icon name="settings" size={18} color="var(--brown)" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 800, fontSize: 15.5 }}>내부 기기 · 통계 {점검까지 ? '점검 중' : '안 보냄'}</div>
+                <div className="t-sub" style={{ fontSize: 13.5, marginTop: 2 }}>
+                  {점검까지
+                    ? `internal 딱지로 보내는 중 · ${Math.max(1, Math.ceil((점검까지 - Date.now()) / 60000))}분 뒤 저절로 꺼져요`
+                    : '이 기기에서 연 화면은 이용 통계에 안 실려요(표본에서 빠져요)'}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <button
+                className="press"
+                onClick={() => { 점검보내기설정(!점검까지); location.reload() }}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 12, border: '1px solid var(--line)', background: 점검까지 ? 'var(--cream-deep)' : 'var(--bg)', fontWeight: 700, fontSize: 14 }}
+              >
+                {점검까지 ? '점검 끄기' : '점검 30분 켜기'}
+              </button>
+              <button
+                className="press"
+                onClick={() => setConfirmAsk({
+                  title: '내부 기기 해제',
+                  message: '운영자 열쇠를 이 기기에서 지워요.\n통계가 다시 보내지고, AI 다듬기 무제한도 같이 꺼져요(열쇠는 하나예요).\n다시 켜려면 버전 글자를 7번 눌러 열쇠를 넣으면 돼요.',
+                  confirmLabel: '해제',
+                  danger: true,
+                  onConfirm: () => { 내부기기설정(''); location.reload() },
+                })}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--bg)', fontWeight: 700, fontSize: 14, color: 'var(--text-sub)' }}
+              >
+                내부 기기 해제
+              </button>
+            </div>
+            {보낸기록().length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div className="t-sub" style={{ fontSize: 13, fontWeight: 700 }}>점검 중 보낸 것 (최근 {보낸기록().length}건)</div>
+                {보낸기록().map((줄, i) => (
+                  <div key={i} className="t-sub" style={{ fontSize: 13, lineHeight: 1.7 }}>
+                    {new Date(줄.t).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} · {줄.이름} · {줄.방식}{줄.내부 ? ' · internal' : ''}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -840,10 +908,33 @@ export default function ProfileScreen() {
           </div>
         )}
 
-        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 15, marginTop: 12 }}>
+        {/* 🙋‍♀️ 버전 글자 7번 탭 = 운영자 열쇠 칸(2026-09-16). 유저는 못 찾는다 — 7번 ＋ 열쇠 둘 다 있어야 한다. */}
+        <button
+          className="press"
+          data-tap="version"
+          onClick={버전탭}
+          style={{ display: 'block', width: '100%', textAlign: 'center', color: 'var(--sand)', fontSize: 15, marginTop: 12, background: 'transparent', border: 0, padding: '6px 0' }}
+        >
           한끼 · {APP_VERSION} — {APP_TAGLINE}
-        </div>
+        </button>
+        {내부기기인가() && (
+          <div className="t-sub" style={{ textAlign: 'center', fontSize: 12.5, marginTop: 2 }}>내부 기기 · 통계 {점검까지 ? '점검 중' : '안 보냄'}</div>
+        )}
       </div>
+
+      {열쇠칸 && (
+        <PromptSheet
+          title="운영자 열쇠"
+          fields={[{ key: 'k', label: '운영자 열쇠', value: '', placeholder: '열쇠를 붙여넣어요' }]}
+          onSubmit={(v) => {
+            if (!내부기기설정(v.k)) { nav.showToast('저장이 안 됐어요 · 저장 공간을 확인해요'); return }
+            if (!String(v.k || '').trim()) return
+            nav.showToast('내부 기기로 표시했어요 · 이제 통계를 안 보내요')
+            setTimeout(() => location.reload(), 700)
+          }}
+          onClose={() => set열쇠칸(false)}
+        />
+      )}
 
       <input ref={fileRef} type="file" accept="application/json,.json" onChange={importData} style={{ display: 'none' }} />
 
