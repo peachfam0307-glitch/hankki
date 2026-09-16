@@ -21,13 +21,17 @@ const 축하 = (n) => 짐(join(R, `docs/stickers/여름-창업자-2507/낱개-�
 const 폰트 = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-korean-400.woff2')).toString('base64')
 const 폰트L = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-latin-400.woff2')).toString('base64')
 
+// 📏 폰 화면 비율 — 카톡 배경은 «전체화면»이라 폰이 길면 위아래가 잘린다.
+//   ⭐ 갤럭시·아이폰 요즘 기기 = 대략 1080×2340(19.5:9). 9:16(1920)만 뽑으면 늘어나며 잘린다.
+//   👉 HEIGHT 로 두 판을 다 뽑아 창업자가 폰에서 고른다.
+const 높이 = Number(process.env.HEIGHT || 1920)
 const 바탕 = '#FFFDF7'
 const 진 = '#5d3410'
 const 머리 = `<style>
   @font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트}) format('woff2');unicode-range:U+AC00-D7A3,U+1100-11FF,U+3130-318F}
   @font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트L}) format('woff2')}
   *{margin:0;padding:0;box-sizing:border-box;font-family:GD,sans-serif;-webkit-font-smoothing:antialiased}
-  body{width:1080px;height:1920px;background:${바탕};color:${진};overflow:hidden;position:relative}
+  body{width:1080px;height:${높이}px;background:${바탕};color:${진};overflow:hidden;position:relative}
   .알약{display:inline-flex;align-items:center;background:#fff;border:2px solid #efe2cf;border-radius:999px;
     padding:18px 36px;font-size:38px;color:#7a5a3a}
 </style>`
@@ -54,7 +58,7 @@ const 장 = []
   <div style="position:absolute;left:0;right:0;top:700px;text-align:center;font-size:40px;line-height:1.7;color:#a98a6b">아이폰 · 안드로이드<br>둘 다 있어요</div>` })
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
-const p = await (await b.newContext({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 })).newPage()
+const p = await (await b.newContext({ viewport: { width: 1080, height: 높이 }, deviceScaleFactor: 1 })).newPage()
 for (const s of 장) {
   await p.setContent(`<!doctype html><html><head>${머리}</head><body>${s.html}</body></html>`)
   await p.waitForTimeout(250)
