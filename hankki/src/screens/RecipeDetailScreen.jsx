@@ -501,7 +501,8 @@ export default function RecipeDetailScreen({ id }) {
   //      → 아무 표시도 안 붙인다. 창업자 확인 2026-08-10.
   // ⛔ 재료와 메모를 «갈라서» 넘긴다 — 한 자루에 섞으면 메모의 설명 문장에서 광고가 걸린다
   //    (2026-08-31 「누룽지」 사고 — `curation.js` `picksForIngredients` 주석 참고)
-  const pantryPicks = picksForIngredients(r?.ingredients || [], r?.memo || '')
+  // 🧺 [창업자 확정 2026-09-16] **재료에 걸리는 큐레이션을 «전부»** — 📮 *"그냥 다 넣자. 접었다 폈다 하는거니까"*
+  const pantryPicks = picksForIngredients(r?.ingredients || [], r?.memo || '', { 전부: true })
   // 🔽 4칸까지만 보이고 나머지는 접는다(창업자 2026-08-15 *"너무 길면 좀 그래"*)
   // 🧺 [창업자 확정 2026-09-16] **그 레시피에 걸리는 픽을 «전부» 보여준다.**
   //   📮 *"이제 ＋로 볼수있으니까 재료에 들어가는 우리 모든 큐레이션 넣어도 될 것 같아"* · *"그 레시피의 재료에 들어가는"*

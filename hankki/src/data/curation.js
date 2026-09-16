@@ -666,7 +666,15 @@ export const productMall = (it) => {
 //   📌 같은 눈이 게이트엔 이미 있었다 — `scripts/check-picks.mjs` ⑤ *"재료 줄만 본다 —
 //      메모의 설명 문장까지 막으면 시끄럽다"*. 규칙만 여기에 없었다.
 //   🧪 재현판 = `scripts/_repro-누룽지광고-0831.mjs`
-export const picksForIngredients = (ingredients = [], notes = '') => {
+/**
+ * @param {object} [옵션]
+ * @param {boolean} [옵션.전부]  `noRecipePick` 으로 뺀 것까지 «전부» 돌려준다.
+ *   🧺 [창업자 확정 2026-09-16] 레시피 상세는 이 값을 켠다 —
+ *      📮 *"그냥 다 넣자. 접었다 폈다 하는거니까 이제는"* · *"재료에 들어가는 모든 재료중 큐레이션에 있는거"*
+ *   ⭐ 까닭 = 상자가 알약(＋)으로 «접혀» 있어 도배가 안 된다. 뺐던 까닭(고춧가루가 62편에 붙는다)이 사라졌다.
+ *   ⛔ 「이번 주 픽」은 «안» 켠다 — 거긴 접히는 자리가 아니다(창업자가 말한 것도 레시피 재료다).
+ */
+export const picksForIngredients = (ingredients = [], notes = '', 옵션 = {}) => {
   // 풀네임(direct)은 메모까지 본다 — 창업자가 «이 제품» 이라고 콕 집어 적은 자리라서.
   const text = [...(ingredients || []), notes || ''].join('  ')
   // ⭐ 두 갈래로 찾는다.
@@ -689,7 +697,7 @@ export const picksForIngredients = (ingredients = [], notes = '') => {
     //    ⛔ `matches` 만 떼는 걸로는 못 뺀다 — 재료 줄에 «풀네임»이 박힌 편이 6편,
     //       메모에 박힌 편이 12편이라 풀네임 매칭(direct)으로 계속 붙는다.
     //       (올리브유 때는 `matches` 만 떼도 됐다 — 풀네임을 아무 데도 안 적었으니까)
-    if (p.noRecipePick) continue
+    if (p.noRecipePick && !옵션.전부) continue
     if (p.name && text.includes(p.name)) direct.push(p)
     else if ((p.matches || []).some((w) => w && startsWithAny(w))) byWord.push(p)
   }
