@@ -243,6 +243,7 @@ const CURATION_ALL = [
     cat: '햄·소시지', group: '고기·해산물', emoji: '🌭', icon: 'cu_ham_slice',
     items: [
       { name: '문어 비엔나', matches: ['비엔나', '소시지'], icon: 'cu_ham_vienna', benefit: '햄·소시지는 첨가물이 많아 쉽게 손이 안 가는데, 이건 성분이 괜찮아 오아시스 장볼 때마다 하나씩 꼭 담는 단골템이에요. 살짝 데쳐 그냥 먹어도 맛있고 모양도 귀여워 아이들이 좋아해요', q: '문어 비엔나', mall: 'oasis' },
+      { name: '안심햄 대용량', who: '창업자', brand: '위드잇', matches: ['스팸'], icon: 'cu_ham_slice', benefit: '슬라이스햄 슬림과 같은 제품이고 용량만 달라요. 요리에 한 번에 많이 쓸 땐 이쪽이 알뜰해요', q: '위드잇 안심햄 대용량', mall: 'coupang', url: 'https://link.coupang.com/a/g5iQ6pPiea' },
       { name: '슬라이스햄 슬림', brand: '위드잇', matches: ['슬라이스햄'], icon: 'cu_ham_slice', benefit: "첨가물 없는 '착한 스팸' 컨셉이에요. (스팸의 찐한 맛을 기대하면 조금 아쉬울 수 있어요) 데리야끼소스에 살짝 구워 무스비에 넣으면 아이 간편식으로 좋아요. 저희 애는 2주 동안 하루 한 개씩 무스비로 먹었어요. ⚠️이 링크는 «낱개로 소분된» 것이에요 — 무스비맛브리또처럼 한 번에 많이 쓸 땐 «대용량»으로 고르세요(같은 제품이고 용량만 달라요)", q: '위드잇 슬라이스햄 슬림', mall: 'coupang', url: 'https://link.coupang.com/a/gR0tQ4teVN' },
       // 🥓 [2026-08-28] 설명은 **창업자가 2026-08-17 밤에 써 준 것**을 그대로 쓴다.
       //    📮 검수판에서 창업자 = *"이것도 저번에 적은 것 같아(확인요망)"* → 맞았다. 자료 문서에 남아 있었다.
@@ -259,7 +260,7 @@ const CURATION_ALL = [
   {
     cat: '돼지고기', group: '고기·해산물', emoji: '🥩', icon: 'cu_pork',
     items: [
-      { name: '한돈 생 대패목심', brand: '선진포크', matches: ['대패목심'], benefit: '대패삼겹살보다 기름이 적어 깔끔해요. 소분해 냉동해두면 바쁜 아침에도 금방 구워 낼 수 있어요. 고기 좋아해서 아침에도 고기 찾는 아이 있는 집에 좋아요', q: '선진포크 한돈 생 대패목심', mall: 'coupang', url: 'https://link.coupang.com/a/gR0vvlmv0K' },
+      { name: '한돈 생 대패목심', brand: '선진포크', matches: ['대패목심', '대패삼겹', '제육'], benefit: '대패삼겹살보다 기름이 적어 깔끔해요. 소분해 냉동해두면 바쁜 아침에도 금방 구워 낼 수 있어요. 고기 좋아해서 아침에도 고기 찾는 아이 있는 집에 좋아요', q: '선진포크 한돈 생 대패목심', mall: 'coupang', url: 'https://link.coupang.com/a/gR0vvlmv0K' },
     ],
   },
   {
@@ -313,6 +314,7 @@ const CURATION_ALL = [
       { name: '몽글이 순두부', brand: '한살림', matches: ['순두부'], benefit: '작은 냄비에 파르르 끓여 양념장만 넣으면 3분 컷. 바쁜 아침 남편 식사대용으로, 저녁에 출출할 때 야식으로도 좋아요', q: '한살림 몽글이 순두부', mall: 'hansalim' },
       // ⭐ 창업자 2026-08-03 제공. **쿠팡이라 조합원 아니어도 산다** — 도토리묵 자리에 한살림밖에 없던 걸 메운다.
       { name: '국내산 도토리로 만든 도토리묵', brand: '친정엄마', matches: ['도토리묵'], benefit: '국산 도토리앙금·천일염, 성분이 심플해요. 작은 사이즈로 소분돼 있어 하나 까서 혼자 먹기 딱이에요', q: '친정엄마 국내산 도토리묵', mall: 'coupang', url: 'https://link.coupang.com/a/gRZnjMvfJA' },
+      { name: '국산콩두부', who: '창업자', brand: '곰곰', matches: ['두부'], benefit: '국산콩이라 성분도 깔끔하고, 가성비도 좋아 어느 두부요리에나 두루두루 쓰기 좋아요', q: '곰곰 국산콩두부', mall: 'coupang', url: 'https://link.coupang.com/a/g5iOKxxNQa' },
       { name: '오리엔탈연두부', brand: '빠르게한끼', icon: 'cu_yeondubu', matches: ['연두부'], benefit: '국산콩에 소스도 들어있어서 입맛 없을 때나 바쁜 아침에 휘리릭 먹기 좋아요', q: '빠르게한끼 오리엔탈 연두부', mall: 'kurly', from: '2026-09-19' },
       { name: '낫또', icon: 'cu_natto', matches: ['낫또'], benefit: '낫또를 썩 좋아하진 않는데 몸에 좋다고 해서 브랜드별로 거의 먹어봤어요. 그중에 자연드림 낫또가 제 입맛에는 제일 괜찮았어요. 저같은 낫또 초심자 추천', q: '낫또', mall: 'icoop', from: '2027-02-06', url: 'http://icoop.or.kr/coopmall/goodsmall.phtm?act=find&key=%EB%82%AB%EB%98%90&x=0&y=0' },
     ],
@@ -511,7 +513,7 @@ const CURATION_ALL = [
       { name: '유기농 스위트콘', brand: '발투센', matches: ['옥수수', '스위트콘'], benefit: '옥수수는 한살림이 제 입맛에는 제일 맛있었는데, 한살림이 집 근처에 없다면 이걸로 대용해도 좋아요', q: '발투센 유기농 스위트콘', mall: 'coupang', url: 'https://link.coupang.com/a/g3fAUF8MHA' },
       { name: '국내산 무농약 목이버섯', matches: ['목이버섯'], benefit: '저희 딸이 목이버섯을 정말 좋아해요. 생목이는 변질이 빨라서 매번 사기도 그렇고… 국산으로 찾다가 이 제품을 계속 구입하고 있어요. 낱개라 조금씩 쓰기 편하고 소비기한도 길고요. 추천합니다', q: '국내산 무농약인증 건목이버섯', mall: 'coupang', from: '2027-03-06', url: 'https://link.coupang.com/a/gR0iYfaF3I' },
       { name: '건조 흰목이버섯', brand: '하진이네버섯뜰에', matches: ['흰목이버섯'], benefit: '하진이네 건조 흰목이버섯, 물에 불렸을 때 너무 깨끗하고 식감도 좋아요. 아쉬운 점은 송이로 들어있어서 한 번에 먹기엔 양이 좀 많아요. 목이버섯 소비가 많은 집이라면 하진이네 추천합니다', q: '하진이네버섯뜰에 건조 흰목이버섯 80g', mall: 'coupang', from: '2027-03-06', url: 'https://link.coupang.com/a/gR1syklmsS' },
-      { name: '국내산 베이비 브로콜리', icon: 'cu_broccoli', matches: ['베이비브로콜리'], benefit: '베이비브로콜리는 줄기가 부드럽고 맛있어요. 꼭 한번 드셔보세요', q: '국내산 베이비 브로콜리', mall: 'coupang', from: '2026-09-05' },
+      { name: '국내산 베이비 브로콜리', icon: 'cu_broccoli', matches: ['베이비브로콜리', '브로콜리'], benefit: '베이비브로콜리는 줄기가 부드럽고 맛있어요. 꼭 한번 드셔보세요', q: '국내산 베이비 브로콜리', mall: 'coupang', from: '2026-09-05' },
     ],
   },
   {
@@ -666,7 +668,15 @@ export const productMall = (it) => {
 //   📌 같은 눈이 게이트엔 이미 있었다 — `scripts/check-picks.mjs` ⑤ *"재료 줄만 본다 —
 //      메모의 설명 문장까지 막으면 시끄럽다"*. 규칙만 여기에 없었다.
 //   🧪 재현판 = `scripts/_repro-누룽지광고-0831.mjs`
-export const picksForIngredients = (ingredients = [], notes = '') => {
+/**
+ * @param {object} [옵션]
+ * @param {boolean} [옵션.전부]  `noRecipePick` 으로 뺀 것까지 «전부» 돌려준다.
+ *   🧺 [창업자 확정 2026-09-16] 레시피 상세는 이 값을 켠다 —
+ *      📮 *"그냥 다 넣자. 접었다 폈다 하는거니까 이제는"* · *"재료에 들어가는 모든 재료중 큐레이션에 있는거"*
+ *   ⭐ 까닭 = 상자가 알약(＋)으로 «접혀» 있어 도배가 안 된다. 뺐던 까닭(고춧가루가 62편에 붙는다)이 사라졌다.
+ *   ⛔ 「이번 주 픽」은 «안» 켠다 — 거긴 접히는 자리가 아니다(창업자가 말한 것도 레시피 재료다).
+ */
+export const picksForIngredients = (ingredients = [], notes = '', 옵션 = {}) => {
   // 풀네임(direct)은 메모까지 본다 — 창업자가 «이 제품» 이라고 콕 집어 적은 자리라서.
   const text = [...(ingredients || []), notes || ''].join('  ')
   // ⭐ 두 갈래로 찾는다.
@@ -689,7 +699,7 @@ export const picksForIngredients = (ingredients = [], notes = '') => {
     //    ⛔ `matches` 만 떼는 걸로는 못 뺀다 — 재료 줄에 «풀네임»이 박힌 편이 6편,
     //       메모에 박힌 편이 12편이라 풀네임 매칭(direct)으로 계속 붙는다.
     //       (올리브유 때는 `matches` 만 떼도 됐다 — 풀네임을 아무 데도 안 적었으니까)
-    if (p.noRecipePick) continue
+    if (p.noRecipePick && !옵션.전부) continue
     if (p.name && text.includes(p.name)) direct.push(p)
     else if ((p.matches || []).some((w) => w && startsWithAny(w))) byWord.push(p)
   }

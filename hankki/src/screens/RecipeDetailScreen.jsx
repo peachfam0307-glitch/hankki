@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, Fragment } from 'react'
 import { COACH } from '../coach'
 import { 사러나감, 장보기담음, 요리끝냄, 픽펼침 } from '../stats'
 import { useStore, newId } from '../store'
@@ -107,8 +107,19 @@ const COACH_STEPS = [
 // (장보기 담기·인분 환산에서 제외) — 전 레시피 양념/소스 표기 통일용.
 const isIngHeader = (s) => /^\[[^\]]+\]$/.test(String(s).trim())
 
+// 🏷🏷 [창업자 확정 2026-09-16] 「[양념장]」이 **줄마다 되풀이되면 «맨 처음 한 번»만** 보여준다.
+//   📮 창업자 = *"양념장 육수 앞에 제목 다 중복 뭐야"* → *"제일 앞에 하나만 붙이자 중복빼고 … 제일 처음 한번만"*
+//   🔢 레시피 «데이터»가 원래 줄마다 붙은 꼴이다(`src/data/basics.js:2291` = `'[해산물 튀김] 세몰리나 1컵'`).
+//      ⛔ **데이터는 한 글자도 안 고친다** — 화면에서만 접는다(같은 줄을 요리모드·장보기도 쓴다).
+//   ⭐ «바로 앞 줄과 같을 때»만 뗀다 — 묶음이 바뀌면 그 첫 줄에 다시 붙어 경계가 보인다.
+const ingGroup = (s) => {
+  const m = /^\[([^\]]+)\]/.exec(String(s).trim())
+  return m ? m[1] : null
+}
+const stripIngGroup = (s) => String(s).replace(/^\s*\[[^\]]+\]\s*/, '')
+
 // 🛒 주부의 장바구니 픽 — 몇 칸까지 펼쳐 두나 (창업자 2026-08-15 *"4칸 넘어가면 접을 수 있게"*)
-const PICK_FOLD = 4
+// ⛔ [2026-09-16] 「4칸까지만」 접기를 창업자가 뒤집었다 — 이 값은 이제 안 쓴다(지우지 않고 자취만 남긴다)
 
 export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateDiary, updateRecipe } = useStore()
@@ -164,7 +175,7 @@ export default function RecipeDetailScreen({ id }) {
   const baseServings = r?.servings || 0
   const [servings, setServings] = useState(baseServings || 1)
   const ratio = baseServings ? servings / baseServings : 1
-  const [picksOpen, setPicksOpen] = useState(false) // 🛒 픽카드 접기 — 4칸까지만 보이고 나머지는 「더 보기」
+
   // 🧺 [창업자 확정 2026-09-15 · A안] 「주부의 장바구니」 상자를 «통째로» 접는다 — 평소엔 알약 한 줄.
   //   📮 창업자 = *"큐레이션이 되게 제한적이야. 다 올리면 레시피보는데 방해되서 3-4개정도만 올렸거든"*
   //      ＋ *"또 계속 반복되니까"* ＋ *"작게 주부의 장바구니 탭으로 바로 가기를 그냥 만들까"*
@@ -176,15 +187,15 @@ export default function RecipeDetailScreen({ id }) {
   // ☑️ [창업자 2026-09-15] 재료 체크 — **«끈 것»만 담아 둔다.** 기본은 다 켜짐이라 빈 Set 이 곧 「전부」다.
   //   ⭐ 이렇게 두면 인분을 바꾸거나 레시피가 갱신돼도 «새 재료가 저절로 켜진» 상태가 된다.
   //      (켠 것을 담으면 새 재료가 꺼진 채로 들어와 「담기 눌렀는데 빠졌다」가 난다)
-  const [끈것, set끈것] = useState(() => new Set())
+  const [켠것, set켠것] = useState(() => new Set())
   // 🛒 «켠 것»만 골라 둔다 — 소제목(`[양념]`)은 애초에 재료가 아니라 빠진다.
   //   ⛔ 분량은 떼고 이름만 (창업자 *"그냥 두부 양파를 사지"*) — 담는 쪽과 세는 쪽이 어긋나면 안 되니 한 자리에서 만든다.
   const 담을재료 = useMemo(
     () => (r?.ingredients || [])
       .map((ing, i) => ({ ing, i }))
-      .filter(({ ing, i }) => !isIngHeader(ing) && !끈것.has(i))
-      .map(({ ing }) => ingredientName(ing)),
-    [r?.ingredients, 끈것],
+      .filter(({ ing, i }) => !isIngHeader(ing) && 켠것.has(i))
+      .map(({ ing }) => ingredientName(stripIngGroup(ing))),
+    [r?.ingredients, 켠것],
   )
   // ⛔⛔ 훅은 «전부» 아래 `if (!r)` 보다 위에 있어야 한다 — 밑에 두면 레시피를 지우는 순간
   //    early return 이 걸려 훅 개수가 줄고 React 가 트리째 죽는다(빈 화면).
@@ -490,9 +501,14 @@ export default function RecipeDetailScreen({ id }) {
   //      → 아무 표시도 안 붙인다. 창업자 확인 2026-08-10.
   // ⛔ 재료와 메모를 «갈라서» 넘긴다 — 한 자루에 섞으면 메모의 설명 문장에서 광고가 걸린다
   //    (2026-08-31 「누룽지」 사고 — `curation.js` `picksForIngredients` 주석 참고)
-  const pantryPicks = picksForIngredients(r?.ingredients || [], r?.memo || '')
+  // 🧺 [창업자 확정 2026-09-16] **재료에 걸리는 큐레이션을 «전부»** — 📮 *"그냥 다 넣자. 접었다 폈다 하는거니까"*
+  const pantryPicks = picksForIngredients(r?.ingredients || [], r?.memo || '', { 전부: true })
   // 🔽 4칸까지만 보이고 나머지는 접는다(창업자 2026-08-15 *"너무 길면 좀 그래"*)
-  const shownPicks = picksOpen ? pantryPicks : pantryPicks.slice(0, PICK_FOLD)
+  // 🧺 [창업자 확정 2026-09-16] **그 레시피에 걸리는 픽을 «전부» 보여준다.**
+  //   📮 *"이제 ＋로 볼수있으니까 재료에 들어가는 우리 모든 큐레이션 넣어도 될 것 같아"* · *"그 레시피의 재료에 들어가는"*
+  //   ⭐ 까닭 = 상자 자체가 알약(＋)으로 접혀 있다. **상자 안에서 또 접을 이유가 없어졌다.**
+  //   ⛔ 옛 판정(2026-08-15 *"4칸 넘어가면 접을 수 있게"*)을 «창업자가» 뒤집은 것이다 — 내 판단이 아니다.
+  const shownPicks = pantryPicks
   // ⭐ 「다 담기」는 접혀 있어도 «전부» 담는다 — 「다」라고 써 놓고 보이는 것만 담으면 거짓말이 된다.
   //    담고 나서 뜨는 토스트가 개수를 말해주니 유저도 몇 개 담겼는지 안다.
   const addAllPicks = () => {
@@ -982,31 +998,42 @@ export default function RecipeDetailScreen({ id }) {
               )}
               {/* ☑️ [창업자 2026-09-15] *"재료에 체크박스를 둬서 필요한 것만 장보기 담기할수는 없나?"*
                   ＋ *"지금은 전체를 다 담고 직접 지워야 하잖아"*
-                 ⭐ **기본은 «다 켜짐»** — 지금 행동(다 담고 지우기)과 결과가 같아 새로 배울 게 없다.
-                    빼고 싶은 것만 끄면 된다.
-                 ⭐ 체크 모양은 **요리모드 「재료 준비」와 같은 문법**(`.cook-ing-box`)이다 — 두 곳이 어긋나지 않게.
+                 ⭐ **기본은 «다 꺼짐»** (창업자 2026-09-16 고침) — 필요한 것만 직접 체크한다.
                  ⛔ 저장하지 않는다 — 이 화면에 있는 동안만이다(요리모드 체크와 같다). */}
               {r.ingredients.map((ing, i) => (
                 isIngHeader(ing)
                   ? <div key={i} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
                   : (
+                  <Fragment key={i}>
+                  {/* 🏷 [창업자 확정 2026-09-16] 묶음이 «시작하는» 줄 위에 소제목을 «혼자 한 줄»로 띄운다.
+                      📮 창업자 = *"육수를 혼자 한줄을 차지하게 하면 안돼?"*
+                      ⭐ 그러면 재료 줄에서는 대괄호가 «전부» 떨어져 글이 깔끔해진다.
+                      ⛔ 데이터는 한 글자도 안 고친다 — `basics.js` 는 줄마다 `[육수]` 가 붙은 꼴 그대로다. */}
+                  {ingGroup(ing) && ingGroup(ing) !== (i > 0 ? ingGroup(r.ingredients[i - 1]) : null) && (
+                    <div className="ing-head">{ingGroup(ing)}</div>
+                  )}
                     <button
                       key={i} type="button" className="ing press"
-                      aria-pressed={!끈것.has(i)}
-                      onClick={() => set끈것((옛) => { const 새 = new Set(옛); if (새.has(i)) 새.delete(i); else 새.add(i); return 새 })}
+                      aria-pressed={켠것.has(i)}
+                      onClick={() => set켠것((옛) => { const 새 = new Set(옛); if (새.has(i)) 새.delete(i); else 새.add(i); return 새 })}
                       style={{ display: 'flex', alignItems: 'center', width: '100%', textAlign: 'left', background: 'none', border: 'none' }}
                     >
-                      {/* ☑️ [창업자 확정 2026-09-15] **네모 칸 없이 ✓ 표시만.**
-                          📮 *"파란색 창말고 그냥 체크만 되는걸로 … 너무 정신이 없는 것 같아서.
-                             대신 체크표시를 조금 진하게"* → 20px · 굵기 3.6
-                          ⛔ 끈 줄도 «자리는 그대로» 비워 둔다 — 안 그러면 글이 좌우로 흔들린다. */}
-                      <span style={{ flex: '0 0 auto', width: 21, height: 21, marginRight: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {!끈것.has(i) && <Icon name="check" size={20} color="var(--brown)" stroke={3.6} />}
+                      {/* ☑️☑️ [창업자 확정 2026-09-16] **기본은 «다 꺼짐». 직접 체크한 것만 담는다.**
+                          📮 *"체크는 되어있으면 안되지"* ＋ *"그냥 보이고 앞에 체크표시를 직접해야하는거고"*
+                          ⛔⛔ **2026-09-15 에 내가 «기본 다 켜짐»으로 «내 맘대로» 정해서 내보냈다 — 창업자가 시킨 적 없다.**
+                             📮 *"누가 이렇게 넣으래 니맘대로"* · *"확인받으면 그대로 가. 마음대로 수정해서 올리기 금지"*
+                          ⭐ 안 켠 자리엔 **연한 빈 네모**를 둔다 — 📮 *"체크빼면 아무것도 안남아 체크박스 연하게 꼭 넣어"*
+                             (아무것도 없으면 «누를 수 있는 자리»인 줄 모른다)
+                          ⛔ 켜짐은 네모 없이 ✓ 만 — 창업자 2026-09-15 확정(*"파란색 창말고 그냥 체크만"*). */}
+                      <span style={{ flex: '0 0 auto', width: 21, height: 21, marginRight: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 7, border: 켠것.has(i) ? 'none' : '2px solid var(--line)' }}>
+                        {켠것.has(i) && <Icon name="check" size={20} color="var(--brown)" stroke={3.6} />}
                       </span>
-                      {/* ⛔⛔ 끈 줄을 «흐리게 하지 않는다** — 📮 창업자 = *"재료를 보고 요리를 해야하니까"*.
+                      {/* ⛔⛔ 안 켠 줄을 «흐리게 하지 않는다» — 📮 창업자 = *"재료를 보고 요리를 해야하니까"*.
                           체크는 「장보기에 담을 것」을 고르는 것이지 「재료를 지우는 것」이 아니다. */}
-                      <span style={{ flex: 1, minWidth: 0 }}>{scaleIngredient(ing, ratio)}</span>
+                      {/* 🏷 묶음 이름은 «위 소제목 줄»이 맡는다 — 여기선 늘 뗀다 */}
+                      <span style={{ flex: 1, minWidth: 0 }}>{stripIngGroup(scaleIngredient(ing, ratio))}</span>
                     </button>
+                  </Fragment>
                   )
               ))}
               {/* 🛒 [창업자 확정 2026-09-15 · A안] 담기 단추는 **재료 목록 «끝»**이다.
@@ -1031,7 +1058,8 @@ export default function RecipeDetailScreen({ id }) {
                   nav.showToast(`재료 ${담을재료.length}개를 장보기 리스트에 담았어요`)
                 }}
               >
-                <img src={pnShoplist} alt="" aria-hidden="true" draggable={false} style={{ height: 34, width: 'auto', flex: '0 0 auto' }} />
+                {/* 🛒 [창업자 2026-09-16] 장보기 담기 = **카트**, 주부의 장바구니 = **펭**. 둘을 맞바꿨다. */}
+                <Icon name="cart" size={24} color="#fff" />
                 {/* 0개일 땐 «개수를 안 쓴다» — 📮 창업자 = *"0개 담기가 아니라 장보기담기로 바꿔야하고"* */}
                 {담을재료.length > 0 ? `${담을재료.length}개 담기` : '장보기 담기'}
               </button>
@@ -1054,7 +1082,8 @@ export default function RecipeDetailScreen({ id }) {
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', marginTop: 20, padding: '12px 14px 12px 16px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 16 }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-              <Icon name="cart" size={19} color="var(--brown)" />
+              {/* 🐧 [창업자 2026-09-16] 장보기 담기와 그림을 «맞바꿨다» — 여기가 펭이다 */}
+              <img src={pnShoplist} alt="" aria-hidden="true" draggable={false} style={{ height: 28, width: 'auto', flex: '0 0 auto' }} />
               이 레시피에 쓴 제품 보기 ({pantryPicks.length})
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 19, fontWeight: 700, lineHeight: 1, flex: '0 0 auto' }}>+</span>
@@ -1064,10 +1093,21 @@ export default function RecipeDetailScreen({ id }) {
         {pantryPicks.length > 0 && pickBoxOpen && (
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
             {/* 🔠 [2026-08-22 창업자] *"주부의 장바구니에서하고 재품하고 너무따닥따닥붙어있어"* · *"줄간도 너무 붙어있어"* */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 19, fontWeight: 800, color: 'var(--brown)', marginBottom: 14 }}>
-              <Icon name="cart" size={19} color="var(--brown)" />
-              주부의 장바구니에서 고른 재료
-            </div>
+            {/* ⛔⛔ [창업자 2026-09-16] **펼쳤으면 «접는 길»도 있어야 한다** — 📮 *"＋ 눌렀잖아 다시 닫기 하는게 없어"*
+                2026-09-15 에 A안(알약 → 펼침)을 넣으면서 내가 «여는 쪽»만 넣고 닫는 쪽을 빠뜨렸다.
+                ⭐ 제목 줄 통째를 단추로 만든다 — 알약을 누르던 손가락이 그대로 여기를 누르게 된다.
+                ⛔ 접을 때는 «안» 센다(`픽펼침()` 은 펼칠 때만) — 한 사람이 여닫으면 숫자가 부푼다. */}
+            <button
+              type="button" className="press"
+              onClick={() => setPickBoxOpen(false)}
+              aria-expanded="true" aria-label="이 레시피에 쓴 제품 접기"
+              style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', marginBottom: 14, padding: 0, background: 'none', border: 'none', fontSize: 19, fontWeight: 800, color: 'var(--brown)', textAlign: 'left' }}
+            >
+              <img src={pnShoplist} alt="" aria-hidden="true" draggable={false} style={{ height: 26, width: 'auto', flex: '0 0 auto' }} />
+              <span style={{ flex: 1, minWidth: 0 }}>주부의 장바구니에서 고른 재료</span>
+              {/* 🔽 여는 알약의 ＋ 와 «짝»이 되는 − (같은 크기·같은 색이라 한 쌍으로 읽힌다) */}
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 19, fontWeight: 700, lineHeight: 1, flex: '0 0 auto' }}>−</span>
+            </button>
             {shownPicks.map((p) => (
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 15, padding: '13px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
                 {curIcon(p.icon) && <img src={curIcon(p.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain', flex: '0 0 auto' }} />}
@@ -1098,12 +1138,7 @@ export default function RecipeDetailScreen({ id }) {
                 ⭐ 문구·화살표는 장보기 화면(`ShopScreen`)의 「더보기 / 접기」와 «같은 모양»으로.
                    ⛔ 거기서 냈던 사고를 되풀이하지 않는다 — **펼친 뒤에도 같은 자리에 「접기」를 그린다.**
                 ⭐ 개수를 밝힌다(「3개 더보기」) — 이 카드가 고친 게 «몇 개인지 안 밝힌 것»이라 숨기면 앞뒤가 안 맞는다. */}
-            {pantryPicks.length > PICK_FOLD && (
-              <button className="press" onClick={() => setPicksOpen((v) => !v)} aria-label={picksOpen ? '장바구니 재료 접기' : '장바구니 재료 더 보기'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%', marginTop: 2, padding: '9px 0', borderTop: '1px solid rgba(0,0,0,.05)', color: 'var(--brown)', fontWeight: 800, fontSize: 15.5 }}>
-                {picksOpen ? '접기' : `${pantryPicks.length - PICK_FOLD}개 더보기`}
-                <Icon name={picksOpen ? 'chevron-up' : 'chevron-down'} size={13} color="var(--brown)" />
-              </button>
-            )}
+            {/* ⛔ [창업자 2026-09-16] 「N개 더보기」를 뺐다 — 상자 자체가 알약(＋)으로 접히니 두 겹이 된다. */}
             <button className="press" onClick={addAllPicks} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 16 }}>
               <Icon name="cart" size={16} color="#fff" />
               이 재료 다 담기

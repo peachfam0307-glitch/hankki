@@ -45,6 +45,8 @@ const 화면 = (f) => { const p = join(화면곳, f); if (!existsSync(p)) throw 
 const 씬 = (k) => 짐(join(R, 'docs/stickers/콤비-씬-정본-2026-09-05/낱개-씬/' + k + '.png'))
 const 축하 = (n) => 짐(join(R, 'docs/stickers/여름-창업자-2507/낱개-콤비축하/' + n + '.png'))
 
+// 🐻 앱 아이콘(꼬르곰) — 카톡 배경·캐러셀과 «같은 꼴»
+const 앱아이콘 = 짐(join(R, 'public/icons/icon-512-v7.png'))
 const 폰트 = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-korean-400.woff2')).toString('base64')
 const 폰트L = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-latin-400.woff2')).toString('base64')
 const 진 = '#5d3410'
@@ -92,6 +94,8 @@ const 머리 = `<style>
      ⭐ contain 이면 화면이 통째로 들어간다(스크린샷 2.168 ＝ 폰 상자 852/393 ＝ 2.168 로 거의 같다).
      ⛔ cover 로 되돌리지 말 것 — 되돌리면 또 잘린다. */
   .폰틀 img{width:100%;height:100%;object-fit:contain;object-position:center}
+  /* 🐻 알약 앞 꼬르곰 = 앱 아이콘. ⛔유니코드 이모지 금지(절대원칙) */
+  .알약 img{width:86px;height:86px;border-radius:22px;display:block}
   .알약{display:inline-flex;align-items:center;gap:12px;background:#fff;border:3px solid #efe2cf;border-radius:999px;padding:20px 42px;font-size:44px;color:#7a5a3a}
 </style>`
 
@@ -104,7 +108,7 @@ const 장 = (시작, 길, 속) => `<div class="장" style="--at:${시작}s;--len
 
 const 몸 = `
 ${장(0, 3.4, `
-  <div class="툭" style="--at:.15s;position:absolute;left:0;right:0;top:250px;text-align:center;font-size:52px;color:#a98a6b">2026.09 · 애플 앱스토어 출시</div>
+  <div class="툭" style="--at:.15s;position:absolute;left:0;right:0;top:250px;text-align:center;font-size:52px;color:#a98a6b">2026.09 · App Store 출시</div>
   <div class="툭" style="--at:.35s;position:absolute;left:0;right:0;top:360px;text-align:center;font-size:104px;line-height:1.32;font-weight:700">아이폰 유저분들<br>많이 기다리셨죠?</div>
   <div class="팝" style="--at:.7s;position:absolute;left:120px;top:800px;width:840px;height:840px;border-radius:70px;overflow:hidden;box-shadow:0 30px 70px rgba(93,52,16,.2)">
     <img src="${씬('sn_06')}" style="width:100%;height:100%;object-fit:cover"></div>
@@ -136,13 +140,21 @@ ${장(11.2, 2.4, `
 ${장(13.6, 2.4, `
   <div class="툭" style="--at:13.75s;position:absolute;left:0;right:0;top:420px;text-align:center;font-size:88px;line-height:1.35;font-weight:700">아이폰에서도,<br>오늘도 한끼하세요</div>
   <img class="팝" style="--at:14.0s;position:absolute;left:240px;top:800px;height:600px;object-fit:contain" src="${축하('03')}">
-  <div class="툭" style="--at:14.25s;position:absolute;left:0;right:0;bottom:220px;text-align:center;font-size:50px;line-height:1.6;color:#7a5a3a">
-    앱스토어 · 구글 플레이에서<br><b style="color:${진};font-size:82px;letter-spacing:-1px">한끼 레시피북</b> 검색</div>
+  <!-- 🐻 [창업자 2026-09-16] 마지막 장에 우리 아이콘 — 카톡 배경·캐러셀과 «같은 꼴» -->
+  <div class="툭" style="--at:14.25s;position:absolute;left:0;right:0;bottom:200px;text-align:center">
+    <span class="알약" style="padding:24px 46px 24px 26px;font-size:44px;text-align:left;line-height:1.35">
+      <img src="${앱아이콘}">
+      <span>App Store · Google Play 에서<br><b style="color:${진};font-size:56px;letter-spacing:-1px">한끼 레시피북</b> 검색</span>
+    </span></div>
   <div class="불">${폭죽(80, 13.85, 700)}</div>`)}
 `
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
-const p = await (await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 })).newPage()
+// 🔍🔍 [창업자 2026-09-16 = 릴스가 고화질이 아니야] **2배로 찍어서 절반으로 줄인다**(슈퍼샘플링).
+//    ⛔ 1배로 찍으면 글자 가장자리가 그 해상도에서 «한 번만» 계산돼 거칠다.
+//    ⭐ 2160x3840 으로 찍고 ffmpeg 가 1080x1920 으로 줄이면 픽셀 넷이 하나로 섞여 훨씬 매끈하다.
+const 배율 = Number(process.env.SS || 2)
+const p = await (await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 배율 })).newPage()
 await p.setContent('<!doctype html><html><head>' + 머리 + '</head><body>' + 몸 + '</body></html>')
 await p.waitForTimeout(700)
 await p.evaluate(() => { document.getAnimations().forEach((a) => a.pause()) })
@@ -155,5 +167,9 @@ for (let i = 0; i < 총; i++) {
 await b.close()
 console.log('🎞 프레임 다 찍었다 → 이어붙인다')
 execFileSync(FF, ['-y', '-framerate', String(FPS), '-i', join(임시, 'f%04d.png'),
-  '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-movflags', '+faststart', 낼파일], { stdio: 'inherit' })
+  // ⭐ lanczos = 줄일 때 제일 또렷한 방식 · crf 15 = 더 적게 버린다(18 은 인스타 재압축 뒤 뭉갰다)
+  //    maxrate/bufsize 로 바닥을 받쳐 준다 — 단색 화면이라 crf 만으로는 비트레이트가 너무 내려간다
+  '-vf', 'scale=' + W + ':' + H + ':flags=lanczos',
+  '-c:v', 'libx264', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-crf', '15',
+  '-maxrate', '12M', '-bufsize', '24M', '-movflags', '+faststart', 낼파일], { stdio: 'inherit' })
 console.log('✅', 낼파일)

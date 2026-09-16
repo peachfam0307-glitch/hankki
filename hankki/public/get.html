@@ -103,14 +103,21 @@
     // 🍎🍎 [2026-09-14] 아이폰·아이패드로 온 사람은 App Store 로 — 지금까지는 Play 단추뿐이라 «못 깔았다».
     //    앱 ID 6811288851 = App Store Connect 실물(src/nudges.js STORE_URL 과 같은 값 · 바뀌면 «같이» 고친다).
     //    ⛔ iPadOS 사파리는 UA 가 Mac 으로 나온다 → 터치 되는 MacIntel 도 아이패드로 본다.
-    //    ⛔ 애플 주소엔 Play 식 referrer 꼬리표를 붙이지 않는다(형식이 다르다). 못 읽으면 Play 그대로(오늘과 같음).
+    //    ⛔ 애플 주소엔 Play 식 `referrer=` 꼬리표를 붙이지 «않는다» — 형식이 다르다.
+    //    ✅ [2026-09-16] 애플 형식으로 붙였다 = `pt`(제공업체 토큰) · `ct`(캠페인 이름) · `mt=8`(앱).
+    //       📮 창업자 = *"내일부터 아이폰 릴스할거거든"* → App Store Connect 에서 캠페인을 만들어 토큰을 받았다.
+    //       ⛔⛔ **`pt` 가 없으면 `ct` 를 적어도 「분석 → 획득 → 캠페인」에 «안 뜬다».** 둘 다 있어야 한다.
+    //       ⛔ `ct` 는 영문·숫자·밑줄 40자까지 — 괄호 같은 글자가 섞이면 «다른 캠페인»이 된다.
+    //          (창업자가 준 링크에 `)` 가 섞여 있었다 — 빼고 넣었다.)
+    //       📌 `pt` 는 비밀이 아니다(공개 링크에 그대로 들어간다) — 열쇠처럼 숨길 것이 아니다.
+    //       🔗 공식 = developer.apple.com/help/app-store-connect-analytics/acquisition/campaign-links/
     //    ⛔ 22 승인 «전»에 이 페이지를 배포하면 아이폰 사람이 빈 스토어 페이지를 본다 → 승인 뒤 「배포해」 때 나간다.
     try {
       var ua = navigator.userAgent || ''
       var 애플 = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
       if (애플) {
         var b = document.getElementById('go')
-        b.href = 'https://apps.apple.com/kr/app/id6811288851'
+        b.href = 'https://apps.apple.com/app/apple-store/id6811288851?pt=129448125&ct=instagram_reels&mt=8'
         b.textContent = 'App Store에서 받기'
       }
     } catch (e) { /* 못 읽으면 Play 그대로 */ }
