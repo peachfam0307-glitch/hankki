@@ -259,7 +259,7 @@ const CURATION_ALL = [
   {
     cat: '돼지고기', group: '고기·해산물', emoji: '🥩', icon: 'cu_pork',
     items: [
-      { name: '한돈 생 대패목심', brand: '선진포크', matches: ['대패목심'], benefit: '대패삼겹살보다 기름이 적어 깔끔해요. 소분해 냉동해두면 바쁜 아침에도 금방 구워 낼 수 있어요. 고기 좋아해서 아침에도 고기 찾는 아이 있는 집에 좋아요', q: '선진포크 한돈 생 대패목심', mall: 'coupang', url: 'https://link.coupang.com/a/gR0vvlmv0K' },
+      { name: '한돈 생 대패목심', brand: '선진포크', matches: ['대패목심', '대패삼겹', '제육'], benefit: '대패삼겹살보다 기름이 적어 깔끔해요. 소분해 냉동해두면 바쁜 아침에도 금방 구워 낼 수 있어요. 고기 좋아해서 아침에도 고기 찾는 아이 있는 집에 좋아요', q: '선진포크 한돈 생 대패목심', mall: 'coupang', url: 'https://link.coupang.com/a/gR0vvlmv0K' },
     ],
   },
   {
@@ -511,7 +511,7 @@ const CURATION_ALL = [
       { name: '유기농 스위트콘', brand: '발투센', matches: ['옥수수', '스위트콘'], benefit: '옥수수는 한살림이 제 입맛에는 제일 맛있었는데, 한살림이 집 근처에 없다면 이걸로 대용해도 좋아요', q: '발투센 유기농 스위트콘', mall: 'coupang', url: 'https://link.coupang.com/a/g3fAUF8MHA' },
       { name: '국내산 무농약 목이버섯', matches: ['목이버섯'], benefit: '저희 딸이 목이버섯을 정말 좋아해요. 생목이는 변질이 빨라서 매번 사기도 그렇고… 국산으로 찾다가 이 제품을 계속 구입하고 있어요. 낱개라 조금씩 쓰기 편하고 소비기한도 길고요. 추천합니다', q: '국내산 무농약인증 건목이버섯', mall: 'coupang', from: '2027-03-06', url: 'https://link.coupang.com/a/gR0iYfaF3I' },
       { name: '건조 흰목이버섯', brand: '하진이네버섯뜰에', matches: ['흰목이버섯'], benefit: '하진이네 건조 흰목이버섯, 물에 불렸을 때 너무 깨끗하고 식감도 좋아요. 아쉬운 점은 송이로 들어있어서 한 번에 먹기엔 양이 좀 많아요. 목이버섯 소비가 많은 집이라면 하진이네 추천합니다', q: '하진이네버섯뜰에 건조 흰목이버섯 80g', mall: 'coupang', from: '2027-03-06', url: 'https://link.coupang.com/a/gR1syklmsS' },
-      { name: '국내산 베이비 브로콜리', icon: 'cu_broccoli', matches: ['베이비브로콜리'], benefit: '베이비브로콜리는 줄기가 부드럽고 맛있어요. 꼭 한번 드셔보세요', q: '국내산 베이비 브로콜리', mall: 'coupang', from: '2026-09-05' },
+      { name: '국내산 베이비 브로콜리', icon: 'cu_broccoli', matches: ['베이비브로콜리', '브로콜리'], benefit: '베이비브로콜리는 줄기가 부드럽고 맛있어요. 꼭 한번 드셔보세요', q: '국내산 베이비 브로콜리', mall: 'coupang', from: '2026-09-05' },
     ],
   },
   {
