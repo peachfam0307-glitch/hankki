@@ -35,6 +35,8 @@ const 머리 = `<style>
   .알약{display:inline-flex;align-items:center;background:#fff;border:2px solid #efe2cf;border-radius:999px;
     padding:18px 36px;font-size:38px;color:#7a5a3a}
 </style>`
+// 📐 자리를 «높이 비율»로 — 폰이 길든 짧든 같은 꼴로 앉게 한다
+const 비 = (r) => Math.round(높이 * r)
 const 컷 = (n, 높이, 자리) => `<img src="${축하(n)}" style="position:absolute;${자리};height:${높이}px;object-fit:contain">`
 
 const 장 = []
@@ -46,11 +48,14 @@ const 장 = []
   <div style="position:absolute;left:0;right:0;top:560px;text-align:center"><span class="알약">앱스토어 · 구글 플레이</span></div>` })
 
 // ② 캐릭터 얹음 — 글자 아래에 건배 컷(03). ⭐컷은 «높이»로 맞춘다(비율이 제각각).
+// ⛔⛔ [창업자 2026-09-16] "너무 위에 올라가있어" — px 로 박아서 «긴 폰»에서 위로 쏠렸다.
+//    ⭐ 그래서 자리를 «높이 비율»로 준다 — 1920 이든 2340 이든 같은 꼴로 앉는다.
+//    📌 48% 아래로는 안 내린다 — 거기부터 카톡이 프로필 사진·이름으로 덮는다.
 장.push({ 이름: 'B-곰펭', html: `
-  <div style="position:absolute;left:0;right:0;top:200px;text-align:center;font-size:96px;font-weight:700;letter-spacing:-2px">한끼 레시피북</div>
-  <div style="position:absolute;left:0;right:0;top:340px;text-align:center;font-size:42px;color:#a98a6b">흩어진 레시피를, 한곳에</div>
-  ${컷('03', 420, 'left:290px;top:450px')}
-  <div style="position:absolute;left:0;right:0;top:910px;text-align:center"><span class="알약">앱스토어 · 구글 플레이</span></div>` })
+  <div style="position:absolute;left:0;right:0;top:${비(0.17)}px;text-align:center;font-size:96px;font-weight:700;letter-spacing:-2px">한끼 레시피북</div>
+  <div style="position:absolute;left:0;right:0;top:${비(0.235)}px;text-align:center;font-size:42px;color:#a98a6b">흩어진 레시피를, 한곳에</div>
+  ${컷('03', 비(0.18), `left:290px;top:${비(0.285)}px`)}
+  <div style="position:absolute;left:0;right:0;top:${비(0.48)}px;text-align:center"><span class="알약">앱스토어 · 구글 플레이에서 검색</span></div>` })
 
 // ③ 아주 심플 — 이름 한 줄과 스토어 한 줄뿐. 글씨가 제일 크다.
 장.push({ 이름: 'C-한줄', html: `
