@@ -119,7 +119,7 @@ const ingGroup = (s) => {
 const stripIngGroup = (s) => String(s).replace(/^\s*\[[^\]]+\]\s*/, '')
 
 // 🛒 주부의 장바구니 픽 — 몇 칸까지 펼쳐 두나 (창업자 2026-08-15 *"4칸 넘어가면 접을 수 있게"*)
-const PICK_FOLD = 4
+// ⛔ [2026-09-16] 「4칸까지만」 접기를 창업자가 뒤집었다 — 이 값은 이제 안 쓴다(지우지 않고 자취만 남긴다)
 
 export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateDiary, updateRecipe } = useStore()
@@ -175,7 +175,7 @@ export default function RecipeDetailScreen({ id }) {
   const baseServings = r?.servings || 0
   const [servings, setServings] = useState(baseServings || 1)
   const ratio = baseServings ? servings / baseServings : 1
-  const [picksOpen, setPicksOpen] = useState(false) // 🛒 픽카드 접기 — 4칸까지만 보이고 나머지는 「더 보기」
+
   // 🧺 [창업자 확정 2026-09-15 · A안] 「주부의 장바구니」 상자를 «통째로» 접는다 — 평소엔 알약 한 줄.
   //   📮 창업자 = *"큐레이션이 되게 제한적이야. 다 올리면 레시피보는데 방해되서 3-4개정도만 올렸거든"*
   //      ＋ *"또 계속 반복되니까"* ＋ *"작게 주부의 장바구니 탭으로 바로 가기를 그냥 만들까"*
@@ -503,7 +503,11 @@ export default function RecipeDetailScreen({ id }) {
   //    (2026-08-31 「누룽지」 사고 — `curation.js` `picksForIngredients` 주석 참고)
   const pantryPicks = picksForIngredients(r?.ingredients || [], r?.memo || '')
   // 🔽 4칸까지만 보이고 나머지는 접는다(창업자 2026-08-15 *"너무 길면 좀 그래"*)
-  const shownPicks = picksOpen ? pantryPicks : pantryPicks.slice(0, PICK_FOLD)
+  // 🧺 [창업자 확정 2026-09-16] **그 레시피에 걸리는 픽을 «전부» 보여준다.**
+  //   📮 *"이제 ＋로 볼수있으니까 재료에 들어가는 우리 모든 큐레이션 넣어도 될 것 같아"* · *"그 레시피의 재료에 들어가는"*
+  //   ⭐ 까닭 = 상자 자체가 알약(＋)으로 접혀 있다. **상자 안에서 또 접을 이유가 없어졌다.**
+  //   ⛔ 옛 판정(2026-08-15 *"4칸 넘어가면 접을 수 있게"*)을 «창업자가» 뒤집은 것이다 — 내 판단이 아니다.
+  const shownPicks = pantryPicks
   // ⭐ 「다 담기」는 접혀 있어도 «전부» 담는다 — 「다」라고 써 놓고 보이는 것만 담으면 거짓말이 된다.
   //    담고 나서 뜨는 토스트가 개수를 말해주니 유저도 몇 개 담겼는지 안다.
   const addAllPicks = () => {
@@ -1088,10 +1092,21 @@ export default function RecipeDetailScreen({ id }) {
         {pantryPicks.length > 0 && pickBoxOpen && (
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
             {/* 🔠 [2026-08-22 창업자] *"주부의 장바구니에서하고 재품하고 너무따닥따닥붙어있어"* · *"줄간도 너무 붙어있어"* */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 19, fontWeight: 800, color: 'var(--brown)', marginBottom: 14 }}>
-              <Icon name="cart" size={19} color="var(--brown)" />
-              주부의 장바구니에서 고른 재료
-            </div>
+            {/* ⛔⛔ [창업자 2026-09-16] **펼쳤으면 «접는 길»도 있어야 한다** — 📮 *"＋ 눌렀잖아 다시 닫기 하는게 없어"*
+                2026-09-15 에 A안(알약 → 펼침)을 넣으면서 내가 «여는 쪽»만 넣고 닫는 쪽을 빠뜨렸다.
+                ⭐ 제목 줄 통째를 단추로 만든다 — 알약을 누르던 손가락이 그대로 여기를 누르게 된다.
+                ⛔ 접을 때는 «안» 센다(`픽펼침()` 은 펼칠 때만) — 한 사람이 여닫으면 숫자가 부푼다. */}
+            <button
+              type="button" className="press"
+              onClick={() => setPickBoxOpen(false)}
+              aria-expanded="true" aria-label="이 레시피에 쓴 제품 접기"
+              style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', marginBottom: 14, padding: 0, background: 'none', border: 'none', fontSize: 19, fontWeight: 800, color: 'var(--brown)', textAlign: 'left' }}
+            >
+              <img src={pnShoplist} alt="" aria-hidden="true" draggable={false} style={{ height: 26, width: 'auto', flex: '0 0 auto' }} />
+              <span style={{ flex: 1, minWidth: 0 }}>주부의 장바구니에서 고른 재료</span>
+              {/* 🔽 여는 알약의 ＋ 와 «짝»이 되는 − (같은 크기·같은 색이라 한 쌍으로 읽힌다) */}
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 19, fontWeight: 700, lineHeight: 1, flex: '0 0 auto' }}>−</span>
+            </button>
             {shownPicks.map((p) => (
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 15, padding: '13px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
                 {curIcon(p.icon) && <img src={curIcon(p.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain', flex: '0 0 auto' }} />}
@@ -1122,12 +1137,7 @@ export default function RecipeDetailScreen({ id }) {
                 ⭐ 문구·화살표는 장보기 화면(`ShopScreen`)의 「더보기 / 접기」와 «같은 모양»으로.
                    ⛔ 거기서 냈던 사고를 되풀이하지 않는다 — **펼친 뒤에도 같은 자리에 「접기」를 그린다.**
                 ⭐ 개수를 밝힌다(「3개 더보기」) — 이 카드가 고친 게 «몇 개인지 안 밝힌 것»이라 숨기면 앞뒤가 안 맞는다. */}
-            {pantryPicks.length > PICK_FOLD && (
-              <button className="press" onClick={() => setPicksOpen((v) => !v)} aria-label={picksOpen ? '장바구니 재료 접기' : '장바구니 재료 더 보기'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%', marginTop: 2, padding: '9px 0', borderTop: '1px solid rgba(0,0,0,.05)', color: 'var(--brown)', fontWeight: 800, fontSize: 15.5 }}>
-                {picksOpen ? '접기' : `${pantryPicks.length - PICK_FOLD}개 더보기`}
-                <Icon name={picksOpen ? 'chevron-up' : 'chevron-down'} size={13} color="var(--brown)" />
-              </button>
-            )}
+            {/* ⛔ [창업자 2026-09-16] 「N개 더보기」를 뺐다 — 상자 자체가 알약(＋)으로 접히니 두 겹이 된다. */}
             <button className="press" onClick={addAllPicks} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 16 }}>
               <Icon name="cart" size={16} color="#fff" />
               이 재료 다 담기
