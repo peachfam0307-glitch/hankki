@@ -110,9 +110,10 @@ console.log('\n👀 유저 눈으로 보기\n')
   .map((a) => [...a])
     .filter((a) => a[0] === 'config')
     .map((a) => a[2]?.traffic_type || null))
-  잰다(보낸것.length > 0, '④ 통계 설정이 나갔다', JSON.stringify(보낸것))
-  잰다(보낸것.every((t) => t === 'internal'),
-    '④ ⭐유저 눈을 켜도 통계는 «우리 것»으로 나간다 (화면만 유저처럼)', JSON.stringify(보낸것))
+  // ⭐⭐ [2026-09-16 바뀜 · 창업자 확정] 우리 기기는 이제 internal 로 «보내는» 게 아니라 «아예 안 보낸다».
+  //    유저 눈을 켜도 마찬가지다 — 화면만 유저처럼, 통계는 0건. (점검 30분을 켠 때만 internal 로 나간다 · _repro-내부기기-0916)
+  잰다(보낸것.length === 0,
+    '④ ⭐유저 눈을 켜도 통계는 «안 나간다» — 우리 기기는 안 보냄(09-16) · 화면만 유저처럼', JSON.stringify(보낸것))
   await ctx.close()
 }
 
