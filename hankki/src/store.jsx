@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react'
 import { seedRecipes, 열린때 } from './data/seed'
-import { basicRecipes, BASICS_VERSION } from './data/basics'
+import { basicRecipes, allBasicRecipes, BASICS_VERSION } from './data/basics'
 // 🥬 재료 이름 → 파트너스 링크 (2026-09-12 창업자 *"장보기에 들어가는 것도 다 붙이자"*)
 //   ⭐ **담는 길이 여기 하나로 모인다** — 레시피 「재료 담기」·장보기 자유 입력·어디서 담든
 //      이 자리를 지나므로, 링크를 여기서 붙이면 화면마다 따로 손댈 곳이 없다.
@@ -233,7 +233,19 @@ function migrateBasics(saved) {
   // v13: 기본 제공 레시피의 '내용'(제목·재료·순서·메모·태그·아이콘·카테고리·표지 등)을
   // 최신 큐레이션으로 다시 맞춘다. 단, 사용자가 직접 편집한 레시피(touched)와
   // 개인 상태(즐겨찾기·요리횟수·꾸미기·직접 넣은 표지사진)는 그대로 보존한다.
-  const seedById = new Map(basicRecipes.map((s) => [s.id, s]))
+  // 🚨🚨 [2026-09-16 · 창업자 폰 캡처가 잡았다] **여기가 `basicRecipes` 였다 — 그게 뿌리다.**
+  //   📮 창업자 = 두부참치찌개를 열었더니 **옛 판**(물 450ml · 올리고당 · 참기름 · 깨)이 떠 있었다.
+  //      오늘 재료도 만드는 법도 통째로 갈아엎고 BASICS_VERSION 을 160까지 올렸는데 **한 글자도 안 바뀌었다.**
+  //   🌲 **`basicRecipes` 는 「`from` 이 지난 편」만 내준다**(99편). 전체는 `allBasicRecipes`(203편)다.
+  //      두부참치찌개는 `from: '2026-10-12'` 라 **아직 씨앗 목록에 없다.**
+  //      → 아래 표들이 전부 `seedById.has(r.id)` 로 걸러내니 **그 편은 아무도 못 고친다. 영영.**
+  //   ⭐⭐ **「폰엔 있는데 씨앗엔 없는 편」이 생긴다** — 한 번 열렸다가 여는 날짜를 뒤로 민 편이 그렇다.
+  //      (두부참치찌개가 정확히 그 경우다 — 예전에 열렸고, 오늘 고치며 10/12 자리로 되돌렸다)
+  //      ⛔ 그런 편은 **유저 폰에 남아 계속 보이는데** 갱신만 안 닿는다. 제일 나쁜 모양이다.
+  //   ✅ 그래서 **고칠 때는 전체를 본다**(`allBasicRecipes`).
+  //      ⛔ **「새로 넣는 것」은 그대로 `basicRecipes` 다**(위 `add`·`opened`) — 안 열린 편을 당겨 열지 않는다.
+  //         📌 **「고치기」와 「열기」는 다른 일이다.** 이 줄은 «고치기»에만 쓴다.
+  const seedById = new Map(allBasicRecipes.map((s) => [s.id, s]))
   fixed = fixed.map((r) => {
     if (!r || r.touched || !seedById.has(r.id)) return r
     const s = seedById.get(r.id)
@@ -314,6 +326,29 @@ function migrateBasics(saved) {
     if (!r || !r.touched || !seedById.has(r.id)) return r
     const s = seedById.get(r.id)
     return { ...r, ingredients: s.ingredients, memo: s.memo }
+  })
+  // 🍲🍲 v161 (2026-09-16) — **v31 이 「재료」만 덮고 «만드는 법»을 안 덮었다.**
+  //   📮 창업자 폰 캡처 = 두부참치찌개가 **옛 판**(물 450ml · 올리고당 · 참기름 · 깨)으로 떠 있었다.
+  //   ⛔⛔ 뿌리 = 위 v31 은 손댄 편(`touched`)에 대해 `ingredients` 와 `memo` «둘만» 갈아끼운다.
+  //      그런데 오늘 고친 넷(두부참치찌개·볶음밥·꼬치전·잡채)은 **만드는 법을 통째로 갈아엎은 편**들이다.
+  //      → 재료만 새것이 되고 걸음은 옛것으로 남으면 **둘이 어긋난 「섞인 판」**이 된다.
+  //         (재료엔 해물가루육수가 있는데 걸음엔 없고, 걸음은 450ml를 끓이라고 한다)
+  //   📌 9/12 가지 사고와 **같은 자리**다 — 「재료만 바꾸면 만드는 법이 거짓말이 된다」.
+  //      그때는 내가 손으로 안 고쳐서 났고, 이번엔 **코드가 절반만 고쳐서** 났다.
+  //   ✅ 그래서 시드가 **만드는 법·시간·인분·난이도**까지 들고 오게 한다.
+  //      ⛔ 개인 것은 하나도 안 건드린다 — 즐겨찾기·요리횟수·꾸미기·표지·폴더·저장시각은 여기 없다.
+  //      ⛔ `touched` 딱지도 그대로 둔다 — 「유저가 손댄 편」이라는 사실은 지워지지 않는다.
+  //      ⛔ 제목은 «일부러» 뺐다 — 유저가 이름을 바꿔 부르는 건 그 사람 것이다(v10 알리오 올리오 자리와 같다).
+  fixed = fixed.map((r) => {
+    if (!r || !r.touched || !seedById.has(r.id)) return r
+    const s = seedById.get(r.id)
+    return {
+      ...r,
+      steps: s.steps,
+      time: s.time,
+      servings: s.servings,
+      difficulty: s.difficulty,
+    }
   })
   // v34: 사용자가 직접 만든 레시피(시드 아님)의 아이콘을 새 완성요리 PNG로 업그레이드.
   //      제목에 딱 맞는 PNG가 생긴 경우에만 교체(없으면 기존 아이콘 유지 → 회귀 없음).
