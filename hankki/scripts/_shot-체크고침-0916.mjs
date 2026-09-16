@@ -36,8 +36,8 @@ await p.getByText('오리지날 떡볶이', { exact: true }).first().click({ tim
 await p.waitForTimeout(1400); await 치우기(p)
 // 📍 「[육수]」·「[양념장]」이 시작하는 자리로 굴린다 — 거기가 판정할 곳이다
 await p.evaluate(() => {
-  const 줄 = [...document.querySelectorAll('.ing')].find((e) => (e.textContent || '').includes('육수'))
-  if (줄) { 줄.scrollIntoView({ block: 'start' }); window.scrollBy(0, -120) }
+  const 줄 = [...document.querySelectorAll('.ing')].pop()
+  if (줄) { 줄.scrollIntoView({ block: 'center' }); window.scrollBy(0, 200) }
 })
 await p.waitForTimeout(600)
 await p.screenshot({ path: join(OUT, '1-기본-다꺼짐.jpg'), type: 'jpeg', quality: 82 })

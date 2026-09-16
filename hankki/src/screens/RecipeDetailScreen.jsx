@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, Fragment } from 'react'
 import { COACH } from '../coach'
 import { 사러나감, 장보기담음, 요리끝냄, 픽펼침 } from '../stats'
 import { useStore, newId } from '../store'
@@ -194,7 +194,7 @@ export default function RecipeDetailScreen({ id }) {
     () => (r?.ingredients || [])
       .map((ing, i) => ({ ing, i }))
       .filter(({ ing, i }) => !isIngHeader(ing) && 켠것.has(i))
-      .map(({ ing }) => ingredientName(ing)),
+      .map(({ ing }) => ingredientName(stripIngGroup(ing))),
     [r?.ingredients, 켠것],
   )
   // ⛔⛔ 훅은 «전부» 아래 `if (!r)` 보다 위에 있어야 한다 — 밑에 두면 레시피를 지우는 순간
@@ -999,6 +999,14 @@ export default function RecipeDetailScreen({ id }) {
                 isIngHeader(ing)
                   ? <div key={i} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
                   : (
+                  <Fragment key={i}>
+                  {/* 🏷 [창업자 확정 2026-09-16] 묶음이 «시작하는» 줄 위에 소제목을 «혼자 한 줄»로 띄운다.
+                      📮 창업자 = *"육수를 혼자 한줄을 차지하게 하면 안돼?"*
+                      ⭐ 그러면 재료 줄에서는 대괄호가 «전부» 떨어져 글이 깔끔해진다.
+                      ⛔ 데이터는 한 글자도 안 고친다 — `basics.js` 는 줄마다 `[육수]` 가 붙은 꼴 그대로다. */}
+                  {ingGroup(ing) && ingGroup(ing) !== (i > 0 ? ingGroup(r.ingredients[i - 1]) : null) && (
+                    <div className="ing-head">{ingGroup(ing)}</div>
+                  )}
                     <button
                       key={i} type="button" className="ing press"
                       aria-pressed={켠것.has(i)}
@@ -1017,16 +1025,10 @@ export default function RecipeDetailScreen({ id }) {
                       </span>
                       {/* ⛔⛔ 안 켠 줄을 «흐리게 하지 않는다» — 📮 창업자 = *"재료를 보고 요리를 해야하니까"*.
                           체크는 「장보기에 담을 것」을 고르는 것이지 「재료를 지우는 것」이 아니다. */}
-                      {/* 🏷 바로 앞 줄과 «같은 묶음»이면 「[양념장]」을 뗀다 — 첫 줄에만 남는다 */}
-                      <span style={{ flex: 1, minWidth: 0 }}>{
-                        (() => {
-                          const 글 = scaleIngredient(ing, ratio)
-                          const 이번 = ingGroup(ing)
-                          const 앞 = i > 0 ? ingGroup(r.ingredients[i - 1]) : null
-                          return 이번 && 이번 === 앞 ? stripIngGroup(글) : 글
-                        })()
-                      }</span>
+                      {/* 🏷 묶음 이름은 «위 소제목 줄»이 맡는다 — 여기선 늘 뗀다 */}
+                      <span style={{ flex: 1, minWidth: 0 }}>{stripIngGroup(scaleIngredient(ing, ratio))}</span>
                     </button>
+                  </Fragment>
                   )
               ))}
               {/* 🛒 [창업자 확정 2026-09-15 · A안] 담기 단추는 **재료 목록 «끝»**이다.
@@ -1051,7 +1053,8 @@ export default function RecipeDetailScreen({ id }) {
                   nav.showToast(`재료 ${담을재료.length}개를 장보기 리스트에 담았어요`)
                 }}
               >
-                <img src={pnShoplist} alt="" aria-hidden="true" draggable={false} style={{ height: 34, width: 'auto', flex: '0 0 auto' }} />
+                {/* 🛒 [창업자 2026-09-16] 장보기 담기 = **카트**, 주부의 장바구니 = **펭**. 둘을 맞바꿨다. */}
+                <Icon name="cart" size={24} color="#fff" />
                 {/* 0개일 땐 «개수를 안 쓴다» — 📮 창업자 = *"0개 담기가 아니라 장보기담기로 바꿔야하고"* */}
                 {담을재료.length > 0 ? `${담을재료.length}개 담기` : '장보기 담기'}
               </button>
@@ -1074,7 +1077,8 @@ export default function RecipeDetailScreen({ id }) {
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', marginTop: 20, padding: '12px 14px 12px 16px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 16 }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-              <Icon name="cart" size={19} color="var(--brown)" />
+              {/* 🐧 [창업자 2026-09-16] 장보기 담기와 그림을 «맞바꿨다» — 여기가 펭이다 */}
+              <img src={pnShoplist} alt="" aria-hidden="true" draggable={false} style={{ height: 28, width: 'auto', flex: '0 0 auto' }} />
               이 레시피에 쓴 제품 보기 ({pantryPicks.length})
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 19, fontWeight: 700, lineHeight: 1, flex: '0 0 auto' }}>+</span>
