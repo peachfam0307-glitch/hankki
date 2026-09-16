@@ -49,7 +49,7 @@ const 장 = []
 장.push({ 이름: 'A-글자만', html: `
   <div style="position:absolute;left:0;right:0;top:250px;text-align:center;font-size:104px;font-weight:700;letter-spacing:-2px">한끼 레시피북</div>
   <div style="position:absolute;left:0;right:0;top:400px;text-align:center;font-size:44px;color:#a98a6b">흩어진 레시피를, 한곳에</div>
-  <div style="position:absolute;left:0;right:0;top:560px;text-align:center"><span class="알약">앱스토어 · 구글 플레이</span></div>` })
+  <div style="position:absolute;left:0;right:0;top:560px;text-align:center"><span class="알약"><img src="${앱아이콘}">App Store · Google Play</span></div>` })
 
 // ② 캐릭터 얹음 — 글자 아래에 건배 컷(03). ⭐컷은 «높이»로 맞춘다(비율이 제각각).
 // ⛔⛔ [창업자 2026-09-16] "너무 위에 올라가있어" — px 로 박아서 «긴 폰»에서 위로 쏠렸다.

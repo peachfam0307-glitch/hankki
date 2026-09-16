@@ -315,7 +315,7 @@ img.mark{width:520px;filter:drop-shadow(0 14px 30px rgba(93,52,16,.2))}
 </style>
 <img class="mark" src="${b64(join(ROOT, 'design/promo/logo/한끼로고-곰ㅎ-투명-2507.png'))}">
 <div class="line">이번 주 밥상,<br><b>가족이 같이 골라요</b></div>
-<div class="store">Google Play 에서 「한끼」</div>
+<div class="store">App Store · Google Play 에서 「한끼」</div>
 <img class="cut" src="${스('gp_duotb')}" style="right:40px;bottom:40px;height:250px">`
 
 const 앞면 = (제목, 자막, 컷, 옵션 = {}) => `<style>${폰트}
