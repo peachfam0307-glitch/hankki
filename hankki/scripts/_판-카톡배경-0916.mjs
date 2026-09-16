@@ -32,11 +32,15 @@ const 머리 = `<style>
   @font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트L}) format('woff2')}
   *{margin:0;padding:0;box-sizing:border-box;font-family:GD,sans-serif;-webkit-font-smoothing:antialiased}
   body{width:1080px;height:${높이}px;background:${바탕};color:${진};overflow:hidden;position:relative}
-  .알약{display:inline-flex;align-items:center;background:#fff;border:2px solid #efe2cf;border-radius:999px;
-    padding:18px 36px;font-size:38px;color:#7a5a3a}
+  .알약{display:inline-flex;align-items:center;gap:18px;background:#fff;border:2px solid #efe2cf;border-radius:999px;
+    padding:14px 36px 14px 18px;font-size:36px;color:#7a5a3a}
+  /* 🐻 알약 앞 꼬르곰 = 앱 아이콘 그대로. ⛔유니코드 이모지를 쓰지 않는다(절대원칙) — 우리 컷만 쓴다. */
+  .알약 img{width:64px;height:64px;border-radius:16px;display:block}
 </style>`
 // 📐 자리를 «높이 비율»로 — 폰이 길든 짧든 같은 꼴로 앉게 한다
 const 비 = (r) => Math.round(높이 * r)
+// 🐻 앱 아이콘(꼬르곰) — public/icons 의 현행 v7
+const 앱아이콘 = 짐(join(R, 'public/icons/icon-512-v7.png'))
 const 컷 = (n, 높이, 자리) => `<img src="${축하(n)}" style="position:absolute;${자리};height:${높이}px;object-fit:contain">`
 
 const 장 = []
@@ -55,7 +59,7 @@ const 장 = []
   <div style="position:absolute;left:0;right:0;top:${비(0.17)}px;text-align:center;font-size:96px;font-weight:700;letter-spacing:-2px">한끼 레시피북</div>
   <div style="position:absolute;left:0;right:0;top:${비(0.235)}px;text-align:center;font-size:42px;color:#a98a6b">흩어진 레시피를, 한곳에</div>
   ${컷('03', 비(0.18), `left:50%;transform:translateX(-50%);top:${비(0.285)}px`)}
-  <div style="position:absolute;left:0;right:0;top:${비(0.48)}px;text-align:center"><span class="알약">앱스토어 · 구글 플레이에서 검색</span></div>` })
+  <div style="position:absolute;left:0;right:0;top:${비(0.48)}px;text-align:center"><span class="알약"><img src="${앱아이콘}">App Store · Google Play 에서 검색</span></div>` })
 
 // ③ 아주 심플 — 이름 한 줄과 스토어 한 줄뿐. 글씨가 제일 크다.
 장.push({ 이름: 'C-한줄', html: `
