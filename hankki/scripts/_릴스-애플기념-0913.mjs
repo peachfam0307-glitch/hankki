@@ -45,6 +45,8 @@ const 화면 = (f) => { const p = join(화면곳, f); if (!existsSync(p)) throw 
 const 씬 = (k) => 짐(join(R, 'docs/stickers/콤비-씬-정본-2026-09-05/낱개-씬/' + k + '.png'))
 const 축하 = (n) => 짐(join(R, 'docs/stickers/여름-창업자-2507/낱개-콤비축하/' + n + '.png'))
 
+// 🐻 앱 아이콘(꼬르곰) — 카톡 배경·캐러셀과 «같은 꼴»
+const 앱아이콘 = 짐(join(R, 'public/icons/icon-512-v7.png'))
 const 폰트 = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-korean-400.woff2')).toString('base64')
 const 폰트L = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-latin-400.woff2')).toString('base64')
 const 진 = '#5d3410'
@@ -92,6 +94,8 @@ const 머리 = `<style>
      ⭐ contain 이면 화면이 통째로 들어간다(스크린샷 2.168 ＝ 폰 상자 852/393 ＝ 2.168 로 거의 같다).
      ⛔ cover 로 되돌리지 말 것 — 되돌리면 또 잘린다. */
   .폰틀 img{width:100%;height:100%;object-fit:contain;object-position:center}
+  /* 🐻 알약 앞 꼬르곰 = 앱 아이콘. ⛔유니코드 이모지 금지(절대원칙) */
+  .알약 img{width:86px;height:86px;border-radius:22px;display:block}
   .알약{display:inline-flex;align-items:center;gap:12px;background:#fff;border:3px solid #efe2cf;border-radius:999px;padding:20px 42px;font-size:44px;color:#7a5a3a}
 </style>`
 
@@ -136,8 +140,12 @@ ${장(11.2, 2.4, `
 ${장(13.6, 2.4, `
   <div class="툭" style="--at:13.75s;position:absolute;left:0;right:0;top:420px;text-align:center;font-size:88px;line-height:1.35;font-weight:700">아이폰에서도,<br>오늘도 한끼하세요</div>
   <img class="팝" style="--at:14.0s;position:absolute;left:240px;top:800px;height:600px;object-fit:contain" src="${축하('03')}">
-  <div class="툭" style="--at:14.25s;position:absolute;left:0;right:0;bottom:220px;text-align:center;font-size:50px;line-height:1.6;color:#7a5a3a">
-    App Store · Google Play 에서<br><b style="color:${진};font-size:82px;letter-spacing:-1px">한끼 레시피북</b> 검색</div>
+  <!-- 🐻 [창업자 2026-09-16] 마지막 장에 우리 아이콘 — 카톡 배경·캐러셀과 «같은 꼴» -->
+  <div class="툭" style="--at:14.25s;position:absolute;left:0;right:0;bottom:200px;text-align:center">
+    <span class="알약" style="padding:24px 46px 24px 26px;font-size:44px;text-align:left;line-height:1.35">
+      <img src="${앱아이콘}">
+      <span>App Store · Google Play 에서<br><b style="color:${진};font-size:56px;letter-spacing:-1px">한끼 레시피북</b> 검색</span>
+    </span></div>
   <div class="불">${폭죽(80, 13.85, 700)}</div>`)}
 `
 
