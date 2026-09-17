@@ -52,7 +52,14 @@ const 묶음 = [
   [/^decor_have_/, "'decor_have_1'"],
   [/^return_/, "'return_d1'"],
 ]
-const 화면들 = ['home', 'import', 'detail', 'myrecipes', 'shop', 'decor', 'cook', 'editor', 'log', 'profile', 'brag', 'inbox', 'search', 'diary', 'favorites', 'settings']
+// ⛔⛔ [2026-09-17 고침] 여기 화면 목록이 «손으로 적혀» 있었다 — 그래서 낡았다(규칙 22).
+//    실제 stats.js 의 자물쇠엔 없는 `decor`·`settings` 가 들어 있었고, 있는 `cooked` 가 빠져 있었다.
+//    ✅ 이제 stats.js 의 `보내도되는화면` 을 «읽어서» 쓴다. 코드가 바뀌면 이 도구가 저절로 따라간다.
+const 화면들 = (() => {
+  const m = stats.match(/const 보내도되는화면 = new Set\(\[([\s\S]*?)\]\)/)
+  if (!m) 죽는다('stats.js 에서 보내도되는화면 을 못 찾았다 — 이름이 바뀌었나?')
+  return [...m[1].matchAll(/'([a-z0-9_]+)'/g)].map((x) => x[1])
+})()
 const 갈래 = (이름) => {
   const 직접 = 글자그대로(이름)
   if (직접) return { 무늬: 직접.trim(), 파일: 'hankki/src/stats.js', 꼴: '' }
