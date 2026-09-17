@@ -61,21 +61,33 @@ console.log('① 카드가 그려진다')
 chk('「앱이 달라졌어요」 제목이 있다', 소식.includes('앱이 달라졌어요'), 'true')
 chk(`배지가 「업데이트 ${기대줄.length}종」이다`, 소식.includes(`업데이트 ${기대줄.length}종`), 'true')
 
-console.log('② 줄이 다 들어 있고 순서가 최신 위다')
-let 앞 = -1, 순서 = true, 빠짐 = []
-for (const l of 기대줄) {
-  const i = 소식.indexOf(l.user)
-  if (i < 0) { 빠짐.push(l.v); continue }
-  if (i < 앞) 순서 = false
-  앞 = i
-}
-chk('빠진 줄 0', 빠짐.join(',') || '0', '0')
-chk('최신이 위다', 순서, 'true')
+// 📌 [창업자 2026-09-17] 소식엔 «최신 한 줄만» — 나머지는 설정 「업데이트 내역」이 전부 보여준다
+console.log('② 소식엔 최신 한 줄만 · 설정 → 업데이트 내역엔 전부')
+chk('최신 줄이 있다', 소식.includes(기대줄[0].user), 'true')
+chk('둘째 줄은 소식에 «없다»', 기대줄.length < 2 || !소식.includes(기대줄[1].user), 'true')
+chk('「설정 → 업데이트 내역」 안내가 있다', 소식.includes('업데이트 내역'), 'true')
 
 console.log('③ 자리 — 살구 아래 · 장바구니 위')
 const i살구 = 소식.indexOf('배경 1종'), i업 = 소식.indexOf('앱이 달라졌어요'), i장 = 소식.indexOf('장바구니')
 chk('살구(배경) 다음이다', i살구 < 0 || i살구 < i업, 'true')   // 살구는 21일이 지나면 사라지므로 없으면 통과
 chk('장바구니보다 앞이다', i업 < i장, 'true')
+
+// ④ 설정 → 업데이트 내역 — 전부 · 날짜별
+console.log('④ 설정 → 업데이트 내역')
+await p.locator('button:has-text("닫기")').first().click().catch(() => {})
+await p.waitForTimeout(300)
+await p.locator('button[aria-label="설정"]').first().click()
+await p.waitForTimeout(700)
+const 내역줄 = p.locator('text=업데이트 내역').first()
+chk('설정에 「업데이트 내역」 줄이 있다', (await 내역줄.count()) > 0, 'true')
+if (await 내역줄.count()) { await 내역줄.click(); await p.waitForTimeout(700) }
+const 내역 = await p.evaluate(() => document.body.innerText)
+const { allUserLines } = await import('../src/data/changelog.js')
+const 전부 = allUserLines()
+const 빠짐 = 전부.filter((l) => !내역.includes(l.user)).map((l) => l.v)
+chk(`업데이트 내역에 ${전부.length}줄이 다 있다`, 빠짐.join(',') || '0', '0')
+chk('날짜 머리(「9월 17일」)가 있다', 내역.includes('9월 17일'), 'true')
+await p.screenshot({ path: '/tmp/claude-0/-home-user-hankki/2414fcda-d05a-5b79-84dc-8c748bfda84b/scratchpad/업뎃내역.png' })
 
 await b.close(); srv.close()
 console.log(`\n${실패 ? '⛔' : '✅'} 통과 ${통과} · 실패 ${실패}`)

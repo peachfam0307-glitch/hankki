@@ -421,7 +421,8 @@ export function whatsNew(today = todayKST()) {
   //    ⛔ 알림 층엔 안 올린다(아래 openedAlert) — 살구 배경과 같은 층. 배포마다 홈 「새로」가 켜지면 아무도 안 본다.
   {
     const 줄 = updateLines(today, FRESH_DAYS)
-    if (줄.length) opened.push({ when: 줄[0].when, kind: UPDATE_KIND, title: '앱이 달라졌어요', count: 줄.length, lines: 줄.map((c) => ({ when: c.when, v: c.v, text: c.user })) })
+    // 📌 [창업자 2026-09-17] 소식엔 **최신 한 줄만** — 나머지는 「설정 → 업데이트 내역」(UpdateLogSheet)이 전부 보여준다.
+    if (줄.length) opened.push({ when: 줄[0].when, kind: UPDATE_KIND, title: '앱이 달라졌어요', count: 줄.length, lines: [{ when: 줄[0].when, v: 줄[0].v, text: 줄[0].user }], why: '지난 것은 설정 → 업데이트 내역에서 봐요' })
   }
   opened.push(...cartOpened(today))
 

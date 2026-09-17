@@ -25,7 +25,8 @@
 //
 // ⛔ 이 파일은 «맨 node» 로 읽힌다(게이트·뽑기 명령) — Vite 전용 import(`import.meta.glob`·PNG)를 넣지 말 것.
 // ⛔ UI 에 유니코드 이모지 금지(절대원칙) — `user` 문장에 이모지를 넣지 말 것.
-// 🗄 90일 지난 줄은 `node scripts/changelog.mjs --보관` 이 `docs/changelog-보관.md` 로 옮긴다(번들을 안 키운다).
+// 🗄 90일 지난 «null 줄»은 `node scripts/changelog.mjs --보관` 이 `docs/changelog-보관.md` 로 옮긴다(번들을 안 키운다).
+//    ⛔ user 있는 줄은 «안» 옮긴다 — 설정 「업데이트 내역」이 전부를 보여준다(창업자 2026-09-17).
 //
 // ⭐ 아래 12줄(9/1 ~ 9/17)은 2026-09-17 창업자가 표를 보고 «다 ㄱ» 한 소급분이다.
 //    ⛔ 살구 배경(8/29)은 `whatsnew.js` `APP_FEATURES` 에 이미 있어 여기 다시 적지 않는다.
@@ -50,6 +51,14 @@ export const CHANGELOG = [
 ]
 
 export const UPDATE_KIND = '업데이트'
+
+// 📣 [창업자 2026-09-17] «두 자리»로 갈랐다 —
+//    · 「한끼 소식」 = updateLines(today, 21) 중 **최신 한 줄만** (도배 방지 · 21일 지나면 빠짐)
+//    · 「설정 → 업데이트 내역」 = allUserLines() **전부** · 날짜별 (창이 없다 · 지난 것도 안 사라진다)
+//    ⛔ 그래서 --보관 은 «user 있는 줄»은 안 옮긴다 — 설정 목록이 잘린다. null 줄(게이트용)만 90일 지나면 내린다.
+export function allUserLines() {
+  return CHANGELOG.filter((c) => c.user).sort((a, b) => b.when.localeCompare(a.when))
+}
 
 // 「방금」 창 안에 든 «유저 줄»만 — 최신이 위. `today` 는 KST 'YYYY-MM-DD'.
 export function updateLines(today, freshDays) {

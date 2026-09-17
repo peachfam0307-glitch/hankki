@@ -37,8 +37,9 @@ if (has('--asc')) {
 if (has('--보관')) {
   const today = todayKST()
   const days = (a) => Math.round((Date.parse(today) - Date.parse(a)) / 86400000)
-  const 남길 = CHANGELOG.filter((c) => days(c.when) <= 90)
-  const 옮길 = CHANGELOG.filter((c) => days(c.when) > 90)
+  // ⛔ user 있는 줄은 «안» 옮긴다 — 설정 「업데이트 내역」이 전부를 보여준다(창업자 2026-09-17). null 줄만 내린다.
+  const 남길 = CHANGELOG.filter((c) => c.user || days(c.when) <= 90)
+  const 옮길 = CHANGELOG.filter((c) => !c.user && days(c.when) > 90)
   if (!옮길.length) { console.log('🗄 90일 지난 줄 없음 — 옮길 것 없다'); process.exit(0) }
   const 문서 = new URL('../docs/changelog-보관.md', import.meta.url)
   if (!existsSync(문서)) writeFileSync(문서, '# 📣 changelog 보관 — 90일 지난 줄 (⛔지우지 않는다 · 아래로 이어붙인다)\n')
