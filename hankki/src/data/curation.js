@@ -267,14 +267,14 @@ const CURATION_ALL = [
   {
     cat: '돼지고기', group: '고기·해산물', emoji: '🥩', icon: 'cu_pork',
     items: [
-      { name: '한돈 생 대패목심', brand: '선진포크', matches: ['대패목심', '대패삼겹', '제육'], benefit: '대패삼겹살보다 기름이 적어 깔끔해요. 소분해 냉동해두면 바쁜 아침에도 금방 구워 낼 수 있어요. 고기 좋아해서 아침에도 고기 찾는 아이 있는 집에 좋아요', q: '선진포크 한돈 생 대패목심', mall: 'coupang', url: 'https://link.coupang.com/a/gR0vvlmv0K' },
+      { name: '한돈 생 대패목심', brand: '선진포크', ingredients: '돼지고기 100%(국내산)', allergen: '돼지고기 함유', nutrition: '600g', checked: '2026-09-17', ingWho: '창업자', matches: ['대패목심', '대패삼겹', '제육'], benefit: '대패삼겹살보다 기름이 적어 깔끔해요. 소분해 냉동해두면 바쁜 아침에도 금방 구워 낼 수 있어요. 고기 좋아해서 아침에도 고기 찾는 아이 있는 집에 좋아요', q: '선진포크 한돈 생 대패목심', mall: 'coupang', url: 'https://link.coupang.com/a/gR0vvlmv0K' },
     ],
   },
   {
     cat: '국수·면', group: '면·밥', emoji: '🍜', icon: 'cu_noodle',
     items: [
-      { name: '우리밀 유기농국수', brand: '오월햇살', matches: ['소면', '국수'], benefit: '성분 좋고 쫄깃해서 잔치국수·비빔국수 어디든 편하게 써요. 급할 땐 삶아서 냉면육수만 부어도 시원한 한 그릇 완성!', q: '오월햇살 우리밀 유기농 국수', mall: 'coupang', url: 'https://link.coupang.com/a/gRYSmcGuu4' },
-      { name: '보리면', brand: '보보리쿡시', matches: ['보리면'], benefit: '밀가루 0%라 속이 편해요. 삶지 않고 익혀내는 방식이라 쫄깃하고 씹을수록 향이 올라와요. 쯔유와 특히 잘 어울려요', q: '보보리쿡시 보리면', mall: 'coupang', url: 'https://link.coupang.com/a/gR0xUdOyWq' },
+      { name: '우리밀 유기농국수', brand: '오월햇살', ingredients: '밀가루 98%(밀: 유기농국내산 100%), 천일염 2%(국내산 100%)', allergen: '밀 함유', nutrition: '400g(3~4인분)', checked: '2026-09-17', ingWho: '창업자', matches: ['소면', '국수'], benefit: '성분 좋고 쫄깃해서 잔치국수·비빔국수 어디든 편하게 써요. 급할 땐 삶아서 냉면육수만 부어도 시원한 한 그릇 완성!', q: '오월햇살 우리밀 유기농 국수', mall: 'coupang', url: 'https://link.coupang.com/a/gRYSmcGuu4' },
+      { name: '보리면', brand: '보보리쿡시', ingredients: '보리(국산) 83%, 현미(국산) 14%, 새싹보리순분말(국산) 3%', nutrition: '400g', checked: '2026-09-17', ingWho: '창업자', matches: ['보리면'], benefit: '밀가루 0%라 속이 편해요. 삶지 않고 익혀내는 방식이라 쫄깃하고 씹을수록 향이 올라와요. 쯔유와 특히 잘 어울려요', q: '보보리쿡시 보리면', mall: 'coupang', url: 'https://link.coupang.com/a/gR0xUdOyWq' },
       { name: '들기름막국수', brand: '샐러드판다', icon: 'cu_makguksu', matches: ['막국수'], benefit: '다이어트 할 때 많이 사먹었던 들기름막국수예요. 간단하고 소스도 짜지 않고 맛있어서 추천해요', q: '샐러드판다 들기름막국수', mall: 'coupang', from: '2027-01-30', url: 'https://link.coupang.com/a/gVL13OXv5g' },
       { name: '우리콩 두부면 넓은면', brand: '농협식품', matches: ['두부면'], benefit: '우리콩면이라 성분도 좋고, 식감도 좋아서 자주 이용해요. 추천템', q: '농협식품 우리콩 두부면 넓은면', mall: 'coupang', from: '2026-09-26' },
       { name: '어묵탕맛', brand: '누들핏', benefit: '누들핏이라 다이어트에 도움될까 해서 샀더니 이거 먹고 입이 터졌어요. 누들핏이 다 맛이 괜찮은데 어묵탕맛이 제일 맛있는 것 같아요. 강추합니다', q: '누들핏 어묵탕맛', mall: 'coupang', from: '2026-10-03' },
@@ -285,7 +285,7 @@ const CURATION_ALL = [
   {
     cat: '누룽지', group: '면·밥', emoji: '🍚', icon: 'cu_nurungji',
     items: [
-      { name: '현미누룽지', brand: '자연다음', matches: ['누룽지'], benefit: '쌀눈 살아있는 국내산 현미누룽지예요. 개별 소포장이라 눅눅해질 걱정 없이 쓰기 편하고, 얇아서 금방 익어 밥하기 귀찮은 날·아침에 밥 없을 때 구원템이에요', q: '자연다음 현미누룽지', mall: 'coupang', url: 'https://link.coupang.com/a/gRY3f8r1Cm' },
+      { name: '현미누룽지', brand: '자연다음', ingredients: '현미(국내산) 100%', nutrition: '990g(33g×30개입)', checked: '2026-09-17', ingWho: '창업자', matches: ['누룽지'], benefit: '쌀눈 살아있는 국내산 현미누룽지예요. 개별 소포장이라 눅눅해질 걱정 없이 쓰기 편하고, 얇아서 금방 익어 밥하기 귀찮은 날·아침에 밥 없을 때 구원템이에요', q: '자연다음 현미누룽지', mall: 'coupang', url: 'https://link.coupang.com/a/gRY3f8r1Cm' },
       { name: '김치볶음밥 포켓누룽지', brand: '심플잇', benefit: '저희 애 친구들 사이에 한때 유행이었던 김치볶음밥 누룽지. 매콤한데 아이들이 정말 좋아하더라구요. 간단한 간식용으로 추천', q: '심플잇 김치볶음밥 포켓누룽지', mall: 'coupang', from: '2026-10-10', url: 'https://link.coupang.com/a/gR0McSFGRo' },
     ],
   },
@@ -301,7 +301,7 @@ const CURATION_ALL = [
     cat: '콩국물', group: '두부·콩', emoji: '🫘', icon: 'cu_soymilk',
     items: [
       { name: '무농약콩으로 만든 콩국물', matches: ['콩국물'], benefit: '남편이 콩국수를 좋아해서 여름에 자주 사는 아이템이에요. 국산 대두＋정제수가 끝이에요. 가격도 저렴하고 양도 적어서 한 끼에 딱 끝나요. 간이 안 되어 있어서 소금은 먹기 직전에 취향껏 넣으면 돼요', q: '한살림 무농약콩으로 만든 콩국물', mall: 'hansalim' },
-      { name: '특등급 국산콩물', brand: '풀무원', matches: ['콩국물'], benefit: '한살림이 근처에 없을 때 쿠팡에서 바로 받을 수 있어요. 이건 소금간이 되어 있어서 그냥 부어 먹어도 되고, 맛을 보고 싱거우면 소금만 조금 더하면 돼요', q: '풀무원 특등급 국산콩물', mall: 'coupang',
+      { name: '특등급 국산콩물', brand: '풀무원', ingredients: '풀무원특등급콩[대두(국산), 두유고형분 7.3%], 천일염(국산)', allergen: '대두 함유', nutrition: '100g당 40kcal · 나트륨 115mg · 탄수화물 3g · 식이섬유 2g · 당류 0.4g · 지방 2g · 트랜스지방 0g · 포화지방 0.3g · 콜레스테롤 0mg · 단백질 3g · 칼슘 23mg · 철 0.5mg (총 내용량 960g · 384kcal)', checked: '2026-09-17', ingWho: '창업자', matches: ['콩국물'], benefit: '한살림이 근처에 없을 때 쿠팡에서 바로 받을 수 있어요. 이건 소금간이 되어 있어서 그냥 부어 먹어도 되고, 맛을 보고 싱거우면 소금만 조금 더하면 돼요', q: '풀무원 특등급 국산콩물', mall: 'coupang',
         // ⚠️ 창업자가 콕 집어준 상품이라 «검색어»가 아니라 직접 링크로 건다(검색은 다른 풀무원 콩물이 먼저 뜬다).
         //    ⛔ 원본 주소에 붙어 있던 `searchId`·`traceId`·`rank` 등은 **창업자 검색 세션 식별자**라 떼어냈다.
         //    ⭐ `itemId`·`vendorItemId` 도 뗐다 — 그건 «1개들이/2개들이» 같은 «옵션»까지 박아버린다.
@@ -329,7 +329,7 @@ const CURATION_ALL = [
   {
     cat: '카레', group: '간편식·간식', emoji: '🍛', icon: 'cu_curry',
     items: [
-      { name: '채담카레', matches: ['카레'], benefit: '건더기가 없어서 야채 싫어하는 아이도 잘 먹어요. 알고 보면 새싹채소·양파로 만든 건데 말이죠. 몰래 건강 챙기기 좋은 순한 카레예요', q: '채담카레', mall: 'coupang', url: 'https://link.coupang.com/a/gRZ3ZiKoNw' },
+      // ⛔ [창업자 2026-09-17] 채담카레 «뺐다» — 원재료 표가 「변경 후」 GMO 로 바뀌었다(*"채담카레 빼자 변경후에 GMO로 바뀌었어"*)
       { name: '버터치킨카레', brand: '상하농원', ingredients: '정제수, 양파(국산), 닭안심(국산), 토마토페이스트(미국산), 매일후레쉬쉐프크림(유크림, 농축유크림, 유화제, 전지분유, 덱스트린), 감자, 다진마늘, 혼합믹스HJ_7, 로스티드카레분, 채종유, 화이트루, 설탕, 가공버터(뉴질랜드), 코코넛밀크, 치킨스톡, 생강, 카레분, 변성전분, 덱스트린, 데어리풍미유, 아몬드페이스트', allergen: '닭고기, 토마토, 밀, 대두, 우유 함유', nutrition: '170g · 230kcal · 나트륨 960mg · 탄수화물 14g · 당류 9g · 지방 16g · 트랜스지방 0.5g 미만 · 포화지방 4g · 콜레스테롤 30mg · 단백질 8g', checked: '2026-09-17', ingWho: '창업자', matches: ['카레'], benefit: '대기업 맛인데 성분이 착해요. 풍미가 부드럽고, 급할 땐 중탕해서 돈까스랑 곁들이면 든든한 한 끼가 돼요. 저는 구비해두는 카레예요', q: '상하농원 버터치킨카레', mall: 'coupang', url: 'https://link.coupang.com/a/gRZ5ovZeMe' },
     ],
   },
