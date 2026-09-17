@@ -36,6 +36,8 @@ import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
 import TabTalk from '../components/TabTalk'
 import ConfirmSheet from '../components/ConfirmSheet'
+import CurationDetailSheet from '../components/CurationDetailSheet'   // 🛒 제품 상세(원재료·알레르기) — 창업자 2026-09-17
+import { LAB_BUG_URL } from '../version'
 import { openExternal, matchKo } from '../utils'
 import { CURATION, curIcon, weeklyPicks, isHansalim, productLink, productMall } from '../data/curation'
 import { weeklyNow, todayKST } from '../data/weekly'
@@ -405,6 +407,7 @@ function Curation() {
   const CATFOLD = 3
   const [openG, setOpenG] = useState({})   // 펼쳤나 — 열쇠는 `g:큰칸` · `c:소칸` (이름이 겹쳐도 안 섞이게)
   const [openCard, setOpenCard] = useState({}) // 카드별 «설명을 펼쳤나»
+  const [detail, setDetail] = useState(null)   // 🛒 탭한 제품 — 상세 시트(원재료명·알레르기). 카드는 그대로, 시트로 본다(창업자 2026-09-17)
   // 큰 칸으로 다시 묶는다 — ⚠️ 소제목(작은 칸)은 그대로 살린다. 접히는 건 «개수»뿐이다.
   const byGroup = [...new Set(shownGroups.map((g) => g.group))].map((name) => ({
     name,
@@ -480,7 +483,8 @@ function Curation() {
       {/* 🔠 [2026-08-22 창업자] *"아이콘이랑 제목을 같은 줄. 설명은 내려서 아이콘 아래로.
           그럼 글자가 더 많이 보이잖아. 아이콘은 좀 더 키우고"*
           ⭐ 설명이 아이콘 «옆」이 아니라 «아래»로 내려와 카드 폭을 다 쓴다 → 한 줄에 들어가는 글자가 늘어난다. */}
-      <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
+      {/* 🛒 [창업자 2026-09-17 «원재료가 중요한거야»] 이름 줄을 누르면 상세 시트 — 카드는 안 키운다(132장 스크롤). */}
+      <div role="button" tabIndex={0} onClick={() => setDetail(it)} onKeyDown={(e) => { if (e.key === 'Enter') setDetail(it) }} style={{ display: 'flex', gap: 15, alignItems: 'center', cursor: 'pointer' }}>
         <div className="emoji-tile" style={{ width: 58, height: 58, fontSize: 31, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 53, height: 53, objectFit: 'contain' }} /> : it.emoji}
         </div>
@@ -790,6 +794,19 @@ function Curation() {
           {/* ⛔ 아래 안내판을 뺐다 (창업자 2026-08-03 *"아래위로 좀 지저분해보여"*).
               「앞으로도 하나씩 계속 올라와요」는 **맨 위 부제로 옮겨 살렸다** — 창업자가 콕 집어 남기라 했다. */}
         </>
+      )}
+      {detail && (
+        <CurationDetailSheet
+          it={detail}
+          iconSrc={curIcon(detail.icon)}
+          title={detail.brand && !파는곳.includes(detail.brand) ? `${detail.brand} ${detail.name}` : detail.name}
+          mallLabel={mallLabel(detail)}
+          canBuy={!!linkFor(detail)}
+          onAdd={() => { add(detail); setDetail(null) }}
+          onBuy={() => buy(detail)}
+          onReport={LAB_BUG_URL ? () => openUrl(LAB_BUG_URL, '오류 신고') : null}
+          onClose={() => setDetail(null)}
+        />
       )}
     </>
   )
