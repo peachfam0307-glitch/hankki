@@ -87,30 +87,22 @@ const 칸 = (제목, 글, top, left) => `
   ${칸('영양정보', '열량 · 나트륨 · 당류<br>포장 숫자 그대로', 890, 240)}
   ${곰('ch_che04', 220, 'right:70px;top:110px')}` })
 
-// ④ 얼마나 — 숫자 하나 크게 ＋ 제품 그림 띠 (배경 뒤집기)
-const 띠 = ['cu_gulsauce', 'cu_cheese', 'cu_curry', 'cu_bread', 'cu_dangmyeon', 'cu_burrito'].map((k) => `<img src="${제품그림(k)}" style="width:150px;height:150px;object-fit:contain">`).join('')
-장.push({ 이름: '4-얼마나', html: `
-  <div style="position:absolute;inset:0;background:${크림}"></div>
-  <div style="position:absolute;left:0;right:0;top:170px;text-align:center;font-size:38px;color:${흐림}">지금 장바구니에 열려 있는 제품 중</div>
-  <div style="position:absolute;left:0;right:0;top:250px;text-align:center;font-size:190px;font-weight:700;line-height:1">${든}<span style="font-size:70px">개</span></div>
-  <div style="position:absolute;left:0;right:0;top:480px;text-align:center;font-size:44px;line-height:1.5">원재료가 들어 있어요<br><span style="font-size:32px;color:${흐림}">새로 올라오는 제품도 채워서 나가요</span></div>
-  <div style="position:absolute;left:0;right:0;top:720px;display:flex;justify-content:center;gap:24px">${띠}</div>
-  ${곰('ce_cheers', 330, 'left:330px;bottom:90px')}` })
+// ④ (빠짐 · 창업자 2026-09-17 *"4번은 의미없지 않아?? 어차피 다 올라가 있는데"* — 「몇 개 들었다」는 다 채운 뒤엔 자랑거리가 아니다)
 
 // ⑤ 정직 — 확인일 · 포장 우선 · 잘못됐어요 (글 오른쪽 · 그림 왼쪽)
-장.push({ 이름: '5-정직', html: `
+장.push({ 이름: '4-정직', html: `
   <div style="position:absolute;left:80px;top:120px;font-size:58px;font-weight:700">틀리면 바로 고쳐요</div>
   <div style="position:absolute;left:80px;top:205px;font-size:32px;color:${흐림}">포장이 바뀌면 글자도 바뀌어야 하니까</div>
   <div class="카드" style="position:absolute;left:80px;right:80px;top:340px;padding:44px 48px;font-size:38px;line-height:1.7">
     · 옮겨 적은 <b>확인 날짜</b>를 같이 보여요<br>
     · 실제 제품 <b>포장 표시가 우선</b>이에요<br>
-    · 다르면 <b>「잘못됐어요 알려주기」</b> 한 번이면 돼요
+    · 다르면 <b>「잘못됐어요 알려주기」</b>를 눌러주세요
   </div>
   ${곰('ch_che05', 300, 'right:90px;bottom:160px')}
   <div style="position:absolute;left:80px;bottom:120px" class="알약">v13.67 부터</div>` })
 
 // ⑥ 끝 — 고정멘트 (절대원칙 2026-09-16 · App Store · Google Play 영어 표기)
-장.push({ 이름: '6-끝', html: `
+장.push({ 이름: '5-끝', html: `
   <div style="position:absolute;left:0;right:0;top:280px;text-align:center;font-size:78px;font-weight:700">오늘도 한끼하세요</div>
   <div style="position:absolute;left:0;right:0;top:420px;text-align:center;font-size:36px;color:${흐림}">흩어진 레시피를, 한곳에</div>
   <div style="position:absolute;left:0;right:0;bottom:150px;text-align:center">
@@ -118,7 +110,7 @@ const 띠 = ['cu_gulsauce', 'cu_cheese', 'cu_curry', 'cu_bread', 'cu_dangmyeon',
       <img src="${앱아이콘}" style="width:112px;height:112px;border-radius:26px">
       <span>App Store · Google Play 에서<br><b style="color:${진};font-size:52px;letter-spacing:-1px">한끼 레시피북</b> 검색</span>
     </span></div>
-  ${곰('ce_manse', 400, 'left:330px;top:580px')}` })
+  ${곰('gp_duotb', 470, 'left:250px;top:560px')}` })   // 🐻🐧 엄지척 콤비 — 만세(ce_manse)는 아이폰 기념 캐러셀에서 썼다(창업자 «다른걸로»)
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const p = await (await b.newContext({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 })).newPage()
