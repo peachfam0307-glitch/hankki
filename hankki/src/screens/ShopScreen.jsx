@@ -103,6 +103,15 @@ export default function ShopScreen() {
   // 🔑💰 [2026-09-17 시제품] 식비는 «창업자 폰에서만» 켜진다 — 아직 검수 전이라 유저 화면은 그대로여야 한다(규칙 13).
   //   ⭐ 켜는 법 = 주소 끝에 ?식비=1 을 붙여 한 번 연다 → 그 폰에 저장돼 다음부터 그냥 뜬다. 끄는 법 = ?식비=0
   //   ⛔ 창업자가 「모두에게 열자」고 하기 전엔 이 열쇠를 떼지 않는다.
+  // 🚪 [2026-09-18 검사용] ?앱문=1 로 켜고 ?앱문=0 으로 끈다 — 식비 열쇠와 같은 방식
+  const [앱문켬] = useState(() => {
+    try {
+      const v = new URLSearchParams(location.search).get('앱문')
+      if (v === '1') localStorage.setItem('hankki:앱문', '1')
+      if (v === '0') localStorage.removeItem('hankki:앱문')
+      return localStorage.getItem('hankki:앱문') === '1'
+    } catch { return false }
+  })
   const [식비켬] = useState(() => {
     try {
       const v = new URLSearchParams(location.search).get('식비')
@@ -155,6 +164,13 @@ export default function ShopScreen() {
             냉장고{expN > 0 && <span className="seg-count" data-testid="pantry-exp-count">{expN}</span>}
           </button>
         </div>
+
+        {/* 🚪 [2026-09-18 · 검사용 · 창업자 열쇠 ?앱문=1 뒤에만] 「앱으로 열리나」 후보 판
+              ⛔ 왜 앱 «안»에 두나 = 아티팩트 판으로 줬더니 안전상자가 intent 이동을 통째로 막아
+                 후보 15개가 «전부 아무일 없음»으로 나왔다(2026-09-18 창업자 실측 · 앱은 깔려 있었다).
+                 우리 앱은 그 자리가 아니라서 «진짜로» 열린다.
+              ⛔ 유저 화면엔 없다. 답을 얻으면 이 칸은 걷어낸다. */}
+        {앱문켬 && <앱문검사 />}
 
         {view === 'pantry' && <PantryView />}
         {식비켬 && view === 'cost' && <FoodCostView />}
@@ -875,6 +891,45 @@ function Curation() {
         />
       )}
     </>
+  )
+}
+
+// 🚪🚪 [2026-09-18 · 검사용 · 열쇠 ?앱문=1] 「어떤 주소가 앱을 여나」를 «앱 안»에서 가린다
+//   📮 창업자 = *"쿠팡이츠 눌러봤는데 이츠그냥 대표홈페이지였어.배민도 그렇고 앱을 열어야하는데"*
+//   ⛔ 지금 코드(`앱문()`)는 `scheme=https` 인데, 2026-09-05 실측에 **쿠팡 앱은 https 를 안 받고
+//      coupang:// 만 받는다**고 적혀 있다(utils.js). 배민·이츠·컬리도 같은 꼴일 수 있어 후보를 가린다.
+//   ⭐ 되돌림 주소(browser_fallback_url)를 붙여 둔다 — 앱이 안 열리면 «웹»이 뜨니
+//      「아무 일도 안 남」이 나오면 그건 앱이 없는 게 아니라 «주소를 못 넘긴 것»이다.
+const 앱문후보 = [
+  ['배달의민족', 'com.sampleapp', 'https://baemin.com', ['baemin', 'baeminfood']],
+  ['쿠팡이츠', 'com.coupang.mobile.eats', 'https://www.coupangeats.com', ['coupangeats']],
+  ['마켓컬리', 'com.dbs.kurly.m2', 'https://www.kurly.com', ['kurly']],
+]
+function 앱문검사() {
+  const 열기 = (u) => { try { window.location.assign(u) } catch { /* noop */ } }
+  return (
+    <div className="pad-box" style={{ marginTop: 10, padding: 12, border: '1px dashed var(--line)', borderRadius: 14 }}>
+      <b style={{ fontSize: 15 }}>앱으로 열리나 (검사용)</b>
+      <div className="t-sub" style={{ fontSize: 13, marginTop: 4, marginBottom: 8 }}>
+        차례로 눌러서 <b>앱이 뜨는 줄</b>을 찾으면 돼요. 뒤로가기로 돌아오세요.
+      </div>
+      {앱문후보.map(([이름, pkg, web, 스킴들]) => (
+        <div key={pkg} style={{ borderTop: '1px solid var(--line)', paddingTop: 8, marginTop: 8 }}>
+          <b style={{ fontSize: 14 }}>{이름}</b>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+            <button className="press chip" onClick={() => 열기(web)}>ⓐ 웹</button>
+            <button className="press chip" onClick={() => 열기(`intent://${web.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=${pkg};S.browser_fallback_url=${encodeURIComponent(web)};end`)}>ⓑ https</button>
+            {스킴들.map((s, i) => (
+              <span key={s} style={{ display: 'contents' }}>
+                <button className="press chip" onClick={() => 열기(`${s}://`)}>{'ⓒⓔ'[i] || 'ⓒ'} {s}://</button>
+                <button className="press chip" onClick={() => 열기(`intent://home#Intent;scheme=${s};package=${pkg};S.browser_fallback_url=${encodeURIComponent(web)};end`)}>{'ⓓⓕ'[i] || 'ⓓ'} intent {s}</button>
+              </span>
+            ))}
+            <button className="press chip" onClick={() => 열기(`intent://${web.replace(/^https?:\/\//, '')}#Intent;package=${pkg};S.browser_fallback_url=${encodeURIComponent(web)};end`)}>ⓖ 꾸러미만</button>
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
 
