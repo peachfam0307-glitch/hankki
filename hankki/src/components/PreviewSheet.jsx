@@ -68,7 +68,7 @@ const UPCOMING = [
 // 🧑‍🤝‍🧑 [2026-09-02] `친구들` = 꾸미기에서 갈라 나온 갈래(`whatsnew.js` 의 `BUDDY_KIND`).
 //   ⛔ 없으면 기본값 `sparkle` 로 떨어지는데 **「우리집레시피」가 이미 그 아이콘**이라 한 화면에 둘이 겹친다(실물로 봤다).
 //   ⭐ 이름은 서랍 탭과 «같은 말»을 쓴다 — `DecorEditor.jsx:616` `{ key: 'buddies', label: '친구들' }`.
-const KIND_ICON = { '이번 주 레시피': 'diary', '꾸미기': 'palette', '친구들': 'heart', '레꾸자랑 카드': 'star', '장바구니': 'cart', '배경': 'settings' }
+const KIND_ICON = { '이번 주 레시피': 'diary', '꾸미기': 'palette', '친구들': 'heart', '레꾸자랑 카드': 'star', '장바구니': 'cart', '배경': 'settings', '업데이트': 'sparkle' }
 
 // 🖼 미리보기 한 줄 — ⭐**글자만 있으면 광고가 안 된다** (창업자 2026-08-03 *"가을 이모지팩도 광고해야하지 않아?"*).
 //    ⛔ `StickerArt` 는 우리 그림을 그린다(유니코드 이모지 아님).
@@ -120,6 +120,18 @@ function NewsRow({ it, tone }) {
           </span>
         </div>
         {it.why && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.why}</div>}
+        {/* 📣 [2026-09-17] 업데이트 카드 — 판마다 유저 한 줄(`data/changelog.js`). 최신이 위 · 날짜는 「9/17」로 짧게.
+            ⛔ 문장은 여기서 짓지 않는다 — changelog 의 who:'창업자' 줄만 온다(check-changelog 가 막는다). */}
+        {Array.isArray(it.lines) && it.lines.length > 0 && (
+          <ul style={{ listStyle: 'none', margin: '6px 0 0', padding: 0, display: 'grid', gap: 5 }}>
+            {it.lines.map((l) => (
+              <li key={l.v} style={{ display: 'flex', gap: 8, alignItems: 'baseline', fontSize: 15.5, lineHeight: 1.4 }}>
+                <span className="t-sub" style={{ flex: '0 0 auto', fontSize: 13.5, fontVariantNumeric: 'tabular-nums' }}>{l.when.slice(5).replace(/^0/, '').replace('-0', '/').replace('-', '/')}</span>
+                <span>{l.text}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         {/* 💬 쓰는 법 = 서랍의 `hint` 를 그대로 (창업자 2026-08-30 *"접시 사용법도 아래 적어줘"*) */}
         {it.gift && it.hint && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.hint}</div>}
         {/* 🎁 「매달 오는 게 아니다」 한 줄 — ⛔팝업과 «같은 값»을 쓴다(`Stickers.jsx` 의 `giftNote`).

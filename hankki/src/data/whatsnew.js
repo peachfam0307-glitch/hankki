@@ -36,6 +36,9 @@ import { THEMES } from '../theme'
 //    📌 `weekly.js`·`basics.js` 에도 같은 공식이 있었다 — 셋 다 고쳤다(창업자 폰 캡처로 잡음).
 // ⭐⭐ [2026-08-17] 공식을 여기서 «없앴다» — `src/today.js` 한 곳에만 둔다(창업자 절대원칙).
 import { todayKST } from '../today.js'   // ⛔ re-export 만 하면 이 파일 안에서 못 쓴다
+// 📣 [2026-09-17] «배포로 바뀐 것» — 버전마다 유저 한 줄. 손으로 적는 자리가 아니라 안 적으면 배포가 죽는다(check-changelog).
+import { updateLines, UPDATE_KIND } from './changelog'
+export { UPDATE_KIND }
 export { todayKST }
 
 const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000)
@@ -413,6 +416,13 @@ export function whatsNew(today = todayKST()) {
   // 🍑 앱에서 열린 것(배경 등)은 장바구니 «앞» — 장바구니가 맨 아래라는 창업자 확정을 안 깬다
   //    (게이트 `_repro-소식장바구니-0829` 가 「장바구니가 맨 아래인가」를 실제로 잰다)
   opened.push(...appOpened(today))
+  // 📣 [2026-09-17] 업데이트 줄 — 여러 판이 한꺼번에 뜨면 「방금 열렸어요」가 도배되니(하루 3~4판 · 소급 12줄)
+  //    **한 카드로 접는다**: 「앱이 달라졌어요 · 업데이트 N종」 ＋ 안에 날짜순 목록(`lines`).
+  //    ⛔ 알림 층엔 안 올린다(아래 openedAlert) — 살구 배경과 같은 층. 배포마다 홈 「새로」가 켜지면 아무도 안 본다.
+  {
+    const 줄 = updateLines(today, FRESH_DAYS)
+    if (줄.length) opened.push({ when: 줄[0].when, kind: UPDATE_KIND, title: '앱이 달라졌어요', count: 줄.length, lines: 줄.map((c) => ({ when: c.when, v: c.v, text: c.user })) })
+  }
   opened.push(...cartOpened(today))
 
   return {
@@ -424,7 +434,7 @@ export function whatsNew(today = todayKST()) {
     //   ⛔ 팝업도 마찬가지다 — 9/1 꾸미기로 한 번 뜬 팝업이 9/5 장바구니 때문에 **또** 뜬다
     //      (`newsSignature` 가 달라져서). 같은 소식을 두 번 보여주는 셈이다.
     //   🍑 배경도 «소식 페이지에만» — 창업자가 「안내에 남겨야해」라고 콕 집었다(위 `APP_FEATURES` 주석)
-    openedAlert: opened.filter((o) => o.kind !== CART_KIND && o.kind !== APP_KIND),
+    openedAlert: opened.filter((o) => o.kind !== CART_KIND && o.kind !== APP_KIND && o.kind !== UPDATE_KIND),
     upcoming: upcoming.length ? { when, dday: days(today, when), items: upcoming } : null,
   }
 }
