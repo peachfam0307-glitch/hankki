@@ -19,7 +19,7 @@ import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
 import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
-import { scaleIngredient } from '../scale'
+import { scaleIngredient, isIngHeader, ingGroup, stripIngGroup } from '../scale'   // 🏷 묶음 잣대 셋은 scale.js 한 곳(요리모드와 공유 · 2026-09-18)
 import { FoodIconSheet } from '../components/FoodIconPicker'
 import { dateLabel, openExternal as openUrl, ingredientName, fitImage } from '../utils'
 import { photoPanStart } from '../photoPan'
@@ -105,18 +105,12 @@ const COACH_STEPS = [
 
 // 재료 목록에서 '[양념]'·'[소스]'·'[드레싱]'처럼 대괄호만 있는 줄은 소제목(헤더)으로 그린다.
 // (장보기 담기·인분 환산에서 제외) — 전 레시피 양념/소스 표기 통일용.
-const isIngHeader = (s) => /^\[[^\]]+\]$/.test(String(s).trim())
-
+// 🏷 isIngHeader · ingGroup · stripIngGroup 는 `src/scale.js` 로 옮겼다(2026-09-18 · 요리모드도 같이 쓴다). 아래 주석은 «왜»를 위해 남긴다.
 // 🏷🏷 [창업자 확정 2026-09-16] 「[양념장]」이 **줄마다 되풀이되면 «맨 처음 한 번»만** 보여준다.
 //   📮 창업자 = *"양념장 육수 앞에 제목 다 중복 뭐야"* → *"제일 앞에 하나만 붙이자 중복빼고 … 제일 처음 한번만"*
 //   🔢 레시피 «데이터»가 원래 줄마다 붙은 꼴이다(`src/data/basics.js:2291` = `'[해산물 튀김] 세몰리나 1컵'`).
 //      ⛔ **데이터는 한 글자도 안 고친다** — 화면에서만 접는다(같은 줄을 요리모드·장보기도 쓴다).
 //   ⭐ «바로 앞 줄과 같을 때»만 뗀다 — 묶음이 바뀌면 그 첫 줄에 다시 붙어 경계가 보인다.
-const ingGroup = (s) => {
-  const m = /^\[([^\]]+)\]/.exec(String(s).trim())
-  return m ? m[1] : null
-}
-const stripIngGroup = (s) => String(s).replace(/^\s*\[[^\]]+\]\s*/, '')
 
 // 🛒 주부의 장바구니 픽 — 몇 칸까지 펼쳐 두나 (창업자 2026-08-15 *"4칸 넘어가면 접을 수 있게"*)
 // ⛔ [2026-09-16] 「4칸까지만」 접기를 창업자가 뒤집었다 — 이 값은 이제 안 쓴다(지우지 않고 자취만 남긴다)

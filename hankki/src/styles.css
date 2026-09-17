@@ -2507,6 +2507,8 @@ img {
   /* ⚠️ `columns` 는 칸 안에서 줄을 «쪼갤» 수 있다 — 체크네모와 글자가 갈라지면 고장으로 읽힌다 */
   .cook-ings.two { columns: 2; column-gap: 54px; }
   .cook-ings.two .cook-ing-row { break-inside: avoid; -webkit-column-break-inside: avoid; }
+  /* 🏷 [2026-09-18] 묶음 소제목은 두 열 위를 «가로질러» 한 줄 — 열 안에 끼면 「양념장」이 오른쪽 열 중간에서 시작해 어느 줄부터인지 안 보인다 */
+  .cook-ings.two .cook-ing-head { column-span: all; }
   /* 🔢 획은 창업자가 고른 비율 그대로 — 0.0304 × 글자크기 (2026-09-01 판정에서 나온 값) */
   .cook-ing { font-size: 30px; -webkit-text-stroke-width: 0.91px; }
   .cook-ing-row { min-height: 54px; gap: 15px; }
