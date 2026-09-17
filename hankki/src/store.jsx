@@ -5,6 +5,7 @@ import { basicRecipes, allBasicRecipes, BASICS_VERSION } from './data/basics'
 //   ⭐ **담는 길이 여기 하나로 모인다** — 레시피 「재료 담기」·장보기 자유 입력·어디서 담든
 //      이 자리를 지나므로, 링크를 여기서 붙이면 화면마다 따로 손댈 곳이 없다.
 import { ingLink, 담을만한가 } from './data/ingLinks'
+import { todayKST } from './today'
 import { makeSampleDiary, SAMPLE_DIARY_ID, SAMPLE_READY } from './data/sampleDiary'
 // ⛔ `FOOD_ICON_GROUPS` 를 빠뜨리면 v96 패스가 ReferenceError 로 죽고
 //    **그 앞의 v13·v34·v38·v88 마이그레이션까지 통째로 안 돈다**(같은 함수 안이라서).
@@ -1456,11 +1457,8 @@ export function useStore() {
 }
 
 // 새 레시피 id 생성 — Date.now 는 브라우저 런타임에서 사용 가능
-// 💰 오늘 날짜 'YYYY-MM-DD' (KST) — ⛔`toISOString()` 은 UTC 라 밤 9시 이후가 «내일»이 된다
-function 오늘날짜(t = Date.now()) {
-  const d = new Date(t + 9 * 3600 * 1000)
-  return d.toISOString().slice(0, 10)
-}
+// 💰 오늘 날짜 — ⛔여기서 만들지 않는다(절대원칙 27 · check-kst 게이트). src/today.js 한 곳뿐.
+const 오늘날짜 = () => todayKST()
 
 export function newId() {
 

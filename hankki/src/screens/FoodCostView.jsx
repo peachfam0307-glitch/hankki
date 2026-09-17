@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../store'
+import { todayKST } from '../today'
 import { useNav } from '../App'
 import { useModalBack } from '../useBackHandler'
 import Portal from '../components/Portal'
@@ -22,19 +23,20 @@ import Icon from '../components/Icon'
 
 const 돈 = (n) => (n || 0).toLocaleString('ko-KR')
 
-// 📅 월요일 시작 주의 «첫날»을 'YYYY-MM-DD' 로 (KST) — ⛔`toISOString()` 은 UTC 라 밤에 하루가 밀린다
-function 주의첫날(날 = new Date(Date.now() + 9 * 3600 * 1000)) {
-  const d = new Date(날)
-  const 요일 = (d.getUTCDay() + 6) % 7 // 월=0
-  d.setUTCDate(d.getUTCDate() - 요일)
-  return d.toISOString().slice(0, 10)
-}
+// 📅 날짜 계산 — ⛔「오늘」은 여기서 만들지 않는다. 절대원칙 27 = `src/today.js` 의 todayKST() 한 곳뿐.
+//    (2026-09-17 에 여기서 직접 만들었다가 `check-kst` 게이트가 잡았다 — 게이트가 값을 했다)
+const 오늘 = () => todayKST()
+// 🗓 'YYYY-MM-DD' 에 며칠을 더한다(빼면 음수) — 이미 만들어진 «날짜 글자»를 옮기는 것이라 시간대와 무관하다.
 function 며칠뒤(날짜, n) {
   const d = new Date(날짜 + 'T00:00:00Z')
   d.setUTCDate(d.getUTCDate() + n)
   return d.toISOString().slice(0, 10)
 }
-const 오늘 = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10)
+// 📅 그 날짜가 든 주의 «월요일»
+function 주의첫날(날짜 = 오늘()) {
+  const 요일 = (new Date(날짜 + 'T00:00:00Z').getUTCDay() + 6) % 7 // 월=0
+  return 며칠뒤(날짜, -요일)
+}
 const 날보기 = (s) => `${Number(s.slice(5, 7))}.${Number(s.slice(8, 10))}`
 const 요일보기 = (s) => '일월화수목금토'[new Date(s + 'T00:00:00Z').getUTCDay()]
 

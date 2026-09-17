@@ -20,7 +20,7 @@ await ctx.addInitScript(() => { try { localStorage.setItem('hankki:nudge:cloudga
 const p = await ctx.newPage(); const 오류 = []
 p.on('pageerror', (e) => 오류.push(String(e)))
 p.on('console', (m) => { if (m.type() === 'error' && !/net::|ERR_TUNNEL/.test(m.text())) 오류.push(m.text()) })
-await p.goto('http://127.0.0.1:4537/hankki/', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2400)
+await p.goto('http://127.0.0.1:4537/hankki/?%EC%8B%9D%EB%B9%84=1', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2400)
 async function 치우기() { for (let i = 0; i < 12; i++) { const 것 = p.locator('.sheet-mask button, [aria-label="다음 안내 보기"], button:has-text("건너뛰기"), button:has-text("시작하기")').first(); if (await 것.count() === 0 || !(await 것.isVisible().catch(() => false))) break; try { await 것.click({ timeout: 2000 }); await p.waitForTimeout(450) } catch { break } } }
 await 치우기()
 

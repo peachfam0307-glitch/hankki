@@ -25,7 +25,8 @@ const p = await ctx.newPage()
 const 오류 = []
 p.on('pageerror', (e) => 오류.push(String(e)))
 p.on('console', (m) => { if (m.type() === 'error' && !/ERR_TUNNEL|net::/.test(m.text())) 오류.push(m.text()) })
-await p.goto('http://127.0.0.1:4533/hankki/', { waitUntil: 'domcontentloaded' })
+// 🔑 [2026-09-17] 식비는 «열쇠»(?식비=1) 뒤에 있다 — 검수 전이라 유저 화면엔 안 뜬다. 재현판도 열쇠를 켜고 연다.
+await p.goto('http://127.0.0.1:4533/hankki/?%EC%8B%9D%EB%B9%84=1', { waitUntil: 'domcontentloaded' })
 await p.waitForTimeout(2600)
 async function 치우기() { for (let i = 0; i < 12; i++) { const 것 = p.locator('.sheet-mask button, [aria-label="다음 안내 보기"], button:has-text("건너뛰기"), button:has-text("시작하기")').first(); if (await 것.count() === 0 || !(await 것.isVisible().catch(() => false))) break; try { await 것.click({ timeout: 2000 }); await p.waitForTimeout(500) } catch { break } } }
 await 치우기()

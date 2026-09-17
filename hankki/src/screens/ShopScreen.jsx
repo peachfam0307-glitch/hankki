@@ -100,6 +100,17 @@ export default function ShopScreen() {
   }
   const [clearAsk, setClearAsk] = useState(false)
   const [값편집, set값편집] = useState(null)   // 💰 값 칸이 열린 줄 id (2026-09-17)
+  // 🔑💰 [2026-09-17 시제품] 식비는 «창업자 폰에서만» 켜진다 — 아직 검수 전이라 유저 화면은 그대로여야 한다(규칙 13).
+  //   ⭐ 켜는 법 = 주소 끝에 ?식비=1 을 붙여 한 번 연다 → 그 폰에 저장돼 다음부터 그냥 뜬다. 끄는 법 = ?식비=0
+  //   ⛔ 창업자가 「모두에게 열자」고 하기 전엔 이 열쇠를 떼지 않는다.
+  const [식비켬] = useState(() => {
+    try {
+      const v = new URLSearchParams(location.search).get('식비')
+      if (v === '1') localStorage.setItem('hankki:식비', '1')
+      if (v === '0') localStorage.removeItem('hankki:식비')
+      return localStorage.getItem('hankki:식비') === '1'
+    } catch { return false }
+  })
   // 💰 합계 = 값을 «적은 줄»만. 안 적은 줄은 0 이 아니라 «모르는 것»이라 개수를 같이 밝힌다.
   const 값있는수 = shoppingList.filter((i) => Number(i.won) > 0).length
   const 합계 = shoppingList.reduce((s, i) => s + (Number(i.won) || 0), 0)
@@ -140,11 +151,11 @@ export default function ShopScreen() {
             냉장고{expN > 0 && <span className="seg-count" data-testid="pantry-exp-count">{expN}</span>}
           </button>
           {/* 💰 [2026-09-17 시제품] 식비 — 셋째 칸. ⭐«쌓이지» 않는다: 여기 오면 장보기 리스트·주부의 장바구니는 안 그린다(냉장고와 같은 규칙). */}
-          <button type="button" className={`seg ${view === 'cost' ? 'on' : ''}`} onClick={() => setView('cost')}>식비</button>
+          {식비켬 && <button type="button" className={`seg ${view === 'cost' ? 'on' : ''}`} onClick={() => setView('cost')}>식비</button>}
         </div>
 
         {view === 'pantry' && <PantryView />}
-        {view === 'cost' && <FoodCostView />}
+        {식비켬 && view === 'cost' && <FoodCostView />}
 
         {view === 'shop' && (
         /* 📐📐 [2026-08-13 창업자 지시 *"장보기를 오른쪽에 장바구니를 왼쪽에"*]
@@ -235,7 +246,7 @@ export default function ShopScreen() {
                     ⭐ 값은 «안 적어도» 된다 — 적은 것만 아래에서 더한다(부분합이라고 밝힌다).
                     ⛔ 늘 `<input>` 이 아니다 — 이름 편집과 같은 규칙으로 «누른 줄만» 칸이 열린다.
                     🔢 9,999,999 상한·앞 0 무시는 store 가 맡는다(0 이면 칸을 지운다). */}
-              {값편집 === it.id ? (
+              {식비켬 && (값편집 === it.id ? (
                 <input
                   autoFocus
                   inputMode="numeric"
@@ -250,6 +261,7 @@ export default function ShopScreen() {
                   style={{ fontSize: 15.5, fontWeight: it.won ? 700 : 400, color: it.won ? 'var(--text)' : 'var(--sand)', background: 'none', border: 'none', padding: '5px 2px', whiteSpace: 'nowrap' }}>
                   {it.won ? `${it.won.toLocaleString('ko-KR')}원` : '값'}
                 </button>
+              ))}
               )}
               {/* ⛔ `noBuy`(한살림) 는 사러가기를 안 그린다 — 담을 때 붙여 둔 표식이다.
                   ⚠️ 이 줄이 없으면 `buyUrlFor()` 가 url 없는 줄을 **쿠팡·네이버 검색으로 보내서**
@@ -270,7 +282,7 @@ export default function ShopScreen() {
         {/* 💰💰 담은 것 합계 — «값을 적은 줄만» 더한다. 그래서 「값 적은 것 N개」를 «꼭» 같이 적는다.
               ⛔ 이 수를 「장본 값」이라고 부르지 않는다 — 안 적은 줄이 빠져 있어 총액이 아니다(부분합).
               ⭐ 「식비로 적기」 = 「완료 지우기」를 안 누르는 사람에게도 길을 준다(같은 일을 한다). */}
-        {값있는수 > 0 && (
+        {식비켬 && 값있는수 > 0 && (
           <div className="sum-box">
             <div className="sum-row">
               <span>담은 것 합계 <b className="sum-n">값 적은 것 {값있는수}개</b></span>
