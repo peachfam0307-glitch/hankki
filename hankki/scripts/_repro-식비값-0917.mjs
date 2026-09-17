@@ -35,7 +35,7 @@ await p.waitForTimeout(1000); await 치우기()
 
 // ① 재료 셋 담기
 for (const n of ['두부', '대파', '참치캔']) {
-  await p.locator('input[placeholder*="살 재료"], input[placeholder*="1990"]').first().fill(n)
+  await p.locator('input[placeholder*="살 재료"], input[placeholder*="두부"]').first().fill(n)
   await p.keyboard.press('Enter'); await p.waitForTimeout(350)
 }
 본다('재료 3줄 담김', await p.locator('.shop-row').count() === 3)

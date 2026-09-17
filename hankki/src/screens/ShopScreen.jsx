@@ -323,7 +323,7 @@ export default function ShopScreen() {
         {shoppingList.length > 0 && (
           <div className="t-sub" style={{ fontSize: 16.5, marginTop: 18, lineHeight: 1.85 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
-            {식비켬 && <><br />값도 같이 적으려면 <b style={{ color: 'var(--brown)' }}>「두부 1990」</b> 처럼 뒤에 금액을 붙여 보세요.</>}
+            {식비켬 && <><br />값도 같이 적으려면 <b style={{ color: 'var(--brown)' }}>「두부 1910」</b> 처럼 뒤에 금액을 붙여 보세요.</>}
           </div>
         )}
 
@@ -949,7 +949,7 @@ function ChecklistAdd({ 식비켬 }) {
       {/* 💰 [2026-09-18 창업자 «금액 적는 안내나 양식이 없어 유저들은 모를듯해»]
             ⭐ 안내를 «적는 자리»에 둔다 — 목록 아래 설명은 이미 있었지만 적을 땐 안 보인다(빈손이면 아예 없다). */}
       <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()}
-        placeholder={식비켬 ? '두부 1990 (값은 안 적어도 돼요)' : '살 재료 입력하고 Enter'} />
+        placeholder={식비켬 ? '두부 1910 (값은 안 적어도 돼요)' : '살 재료 입력하고 Enter'} />
       {text && (
         <button className="press" onClick={add} aria-label="추가"><Icon name="plus" size={20} color="var(--brown)" /></button>
       )}
