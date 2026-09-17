@@ -262,7 +262,6 @@ export default function ShopScreen() {
                   {it.won ? `${it.won.toLocaleString('ko-KR')}원` : '값'}
                 </button>
               ))}
-              )}
               {/* ⛔ `noBuy`(한살림) 는 사러가기를 안 그린다 — 담을 때 붙여 둔 표식이다.
                   ⚠️ 이 줄이 없으면 `buyUrlFor()` 가 url 없는 줄을 **쿠팡·네이버 검색으로 보내서**
                      큐레이션에서 링크를 뺀 게 통째로 헛일이 된다(담은 뒤에 새는 구멍). */}
@@ -288,8 +287,10 @@ export default function ShopScreen() {
               <span>담은 것 합계 <b className="sum-n">값 적은 것 {값있는수}개</b></span>
               <b className="sum-v">{합계.toLocaleString('ko-KR')}원</b>
             </div>
-            <button className="press sum-btn" onClick={() => { store.clearDoneShopItems(); nav.showToast('식비에 적었어요') }}>
-              산 것만 식비로 적기
+            {/* ⛔ 예전엔 «체크한 줄»만 옮기면서도 늘 「적었어요」라고 말했다 — 창업자가 값만 적고 눌렀을 때 아무 일도 안 났다.
+                  ✅ 이제 값이 적힌 줄을 전부 옮기고, 실제로 옮긴 «개수와 금액»을 말한다. */}
+            <button className="press sum-btn" onClick={() => { store.shopToFoodCost(); nav.showToast(`식비에 적었어요 · ${값있는수}개 ${합계.toLocaleString('ko-KR')}원`) }}>
+              값 적은 것 식비로 적기
             </button>
           </div>
         )}

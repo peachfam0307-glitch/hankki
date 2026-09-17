@@ -29,6 +29,7 @@ await p.evaluate(() => {
   const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
   const 오늘 = new Date(Date.now() + 9 * 3600e3)
   const 날 = (n) => { const d = new Date(오늘); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10) }
+  if (process.env.한줄만) { s.foodCost = [{ id: 'z1', d: 날(0), k: 'shop', won: 45000, memo: '롯데마트' }]; localStorage.setItem('hankki:v1', JSON.stringify(s)); return }
   s.foodCost = [
     { id: 'a1', d: 날(0), k: 'shop', won: 31000, items: [{ n: '두부', won: 3900 }, { n: '대파', won: 2500 }] },
     { id: 'a2', d: 날(2), k: 'out', won: 24000, memo: '치킨' },

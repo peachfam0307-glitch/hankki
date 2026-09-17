@@ -1171,13 +1171,34 @@ function reducer(state, action) {
       return { ...state, shoppingList: state.shoppingList.filter((i) => i.id !== action.id) }
     }
     case 'clearDoneShopItems': {
-      // 💰 [2026-09-17 시제품] 값(won)이 적힌 «산» 줄이 있으면 식비 한 줄로 남기고 지운다(창업자 «품목별로 금액 적으면 아래 총합»).
-      //    값이 하나도 없으면 아무것도 안 남긴다 — 조르지 않는다.
-      const 산것 = state.shoppingList.filter((i) => i.done && Number(i.won) > 0)
-      const foodCost = 산것.length
-        ? [{ id: newId(), d: 오늘날짜(), k: 'shop', won: 산것.reduce((s, i) => s + Number(i.won), 0), items: 산것.map((i) => ({ n: i.name, won: Number(i.won) })) }, ...(state.foodCost || [])]
-        : (state.foodCost || [])
-      return { ...state, foodCost, shoppingList: state.shoppingList.filter((i) => !i.done) }
+      // 🧹 「완료 지우기」 — 체크한 줄을 목록에서 뺀다. ⛔식비와 상관없다(그건 아래 'shopToFoodCost').
+      return { ...state, shoppingList: state.shoppingList.filter((i) => !i.done) }
+    }
+    // 💰💰 [2026-09-17] 「값 적은 것 식비로 적기」
+    //   ⛔⛔ 처음엔 «체크한 줄»만 봤다 — 그래서 창업자가 값만 적고 누르니 **0줄이 적혔는데 「식비에 적었어요」가 떴다**(거짓말).
+    //      📮 창업자 = *"적었는데 장보기에 반영안됐아"* — 맞는 지적이다.
+    //   ✅ 이제 «값이 적힌 줄»이면 체크와 상관없이 산 것으로 본다 — 값을 적었다는 건 이미 샀다는 뜻이다.
+    //      그 줄들은 목록에서 빠지고 냉장고로 들어간다(체크했을 때와 같다).
+    //   ⛔ 값이 하나도 없으면 «아무 일도 안 일어난다» — 화면이 「적었다」고 말하지 않게 0 을 돌려준다.
+    case 'shopToFoodCost': {
+      const 산것 = state.shoppingList.filter((i) => Number(i.won) > 0)
+      if (!산것.length) return state
+      const 이름들 = new Set(state.pantry.map((p) => p.name))
+      const pantry = [
+        ...산것.filter((i) => !이름들.has(i.name)).map((i) => ({ id: newId(), name: i.name, icon: null, expiry: null, addedAt: Date.now() })),
+        ...state.pantry,
+      ]
+      const 줄 = {
+        id: newId(), d: 오늘날짜(), k: 'shop',
+        won: 산것.reduce((s, i) => s + Number(i.won), 0),
+        items: 산것.map((i) => ({ n: i.name, won: Number(i.won) })),
+      }
+      return {
+        ...state,
+        foodCost: [줄, ...(state.foodCost || [])],
+        shoppingList: state.shoppingList.filter((i) => !(Number(i.won) > 0)),
+        pantry,
+      }
     }
     // 💰 장보기 줄에 값 적기 — 안 적어도 된다. 0·빈칸이면 지운다. 최대 9,999,999.
     case 'setShopItemWon': {
@@ -1435,6 +1456,7 @@ export function StoreProvider({ children }) {
     removeShopItem: useCallback((id) => dispatch({ type: 'removeShopItem', id }), []),
     clearDoneShopItems: useCallback(() => dispatch({ type: 'clearDoneShopItems' }), []),
     setShopItemWon: useCallback((id, won) => dispatch({ type: 'setShopItemWon', id, won }), []),
+    shopToFoodCost: useCallback(() => dispatch({ type: 'shopToFoodCost' }), []),
     addFoodCost: useCallback((entry) => dispatch({ type: 'addFoodCost', entry }), []),
     removeFoodCost: useCallback((id) => dispatch({ type: 'removeFoodCost', id }), []),
     clearShopItemsAll: useCallback(() => dispatch({ type: 'clearShopItemsAll' }), []),

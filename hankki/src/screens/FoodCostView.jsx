@@ -5,6 +5,7 @@ import { useNav } from '../App'
 import { useModalBack } from '../useBackHandler'
 import Portal from '../components/Portal'
 import Icon from '../components/Icon'
+import { openExternal } from '../utils'
 
 // 💰💰 식비 «보는 곳» — 장보기 탭 셋째 칸 (2026-09-17 시제품 · hold · ⏳창업자 판정 전)
 //
@@ -65,6 +66,10 @@ export default function FoodCostView() {
   const 쓴주 = 여덟주.filter((w) => w.합 > 0)
   const 주평균 = 쓴주.length ? Math.round(쓴주.reduce((s, w) => s + w.합, 0) / 쓴주.length) : 0
   const 제일큰주 = Math.max(1, ...여덟주.map((w) => w.합))
+  // ⛔⛔ [2026-09-17 창업자 실물] 첫 주엔 «견줄 것이 없다» — 그런데도 「지난주 없음」·「주 평균 134,000원」이 떴다.
+  //    한 주뿐인데 「평균」이라고 말하면 그건 평균이 아니라 «같은 수를 두 번» 보여주는 것이다(거짓말에 가깝다).
+  //    ✅ 그래서 쓴 주가 «둘 이상»일 때만 견주기 줄과 8주 막대를 그린다. 그 전엔 조용히 숨긴다.
+  const 견줄만한가 = 쓴주.length >= 2
 
   // 🍚 하루 식비 = 「기록이 있는 날」 기준. ⛔안 적은 날을 0 으로 세면 값이 반토막 난다.
   const 최근28 = 며칠뒤(오늘(), -27)
@@ -89,10 +94,12 @@ export default function FoodCostView() {
       <div className="fc-big">
         <div className="fc-k">이번 주 식비 <span className="fc-date">{날보기(이번주)} ~ {날보기(주끝)}</span></div>
         <div className="fc-v">{돈(주합)}<em>원</em></div>
-        <div className="fc-ref">
-          <span>지난주 <b>{지난주합 ? 돈(지난주합) + '원' : '없음'}</b></span>
-          <span>주 평균 <b>{주평균 ? 돈(주평균) + '원' : '없음'}</b></span>
-        </div>
+        {견줄만한가 && (
+          <div className="fc-ref">
+            {지난주합 > 0 && <span>지난주 <b>{돈(지난주합)}원</b></span>}
+            <span>주 평균 <b>{돈(주평균)}원</b></span>
+          </div>
+        )}
       </div>
 
       {/* 🥕🍜 갈래 둘 — 막대가 한 색이 될 수 있어 «숫자를 같이» 적는다(관문 2차) */}
@@ -113,15 +120,18 @@ export default function FoodCostView() {
           {하루 ? <div className="fc-hv">{돈(하루)}<em>원</em></div> : <div className="fc-hwait">일주일 적으면 나와요</div>}
           {하루 && <div className="fc-hs">최근 4주로 셈했어요</div>}
         </div>
-        <div className="fc-half">
-          <div className="fc-hk">8주 흐름</div>
-          <div className="fc-weeks">
-            {여덟주.map((w, i) => (
-              <b key={w.첫} className={i === 7 ? 'now' : ''} style={{ height: `${Math.max(3, Math.round((w.합 / 제일큰주) * 44))}px` }} />
-            ))}
+        {/* 📊 8주 막대 — 쓴 주가 하나뿐이면 나머지 일곱은 납작한 선이라 «허전하기만» 하다(창업자 실물 2026-09-17) */}
+        {견줄만한가 && (
+          <div className="fc-half">
+            <div className="fc-hk">8주 흐름</div>
+            <div className="fc-weeks">
+              {여덟주.map((w, i) => (
+                <b key={w.첫} className={i === 7 ? 'now' : ''} style={{ height: `${Math.max(3, Math.round((w.합 / 제일큰주) * 44))}px` }} />
+              ))}
+            </div>
+            <div className="fc-hs">주마다 얼마 썼나</div>
           </div>
-          <div className="fc-hs">주마다 얼마 썼나</div>
-        </div>
+        )}
       </div>
 
       <button className="press fc-out-btn" onClick={() => set적기('out')}>외식·배달 적기</button>
@@ -165,6 +175,22 @@ export default function FoodCostView() {
   )
 }
 
+// 🏪🏪 「가서 보고 와서 적기」 — 창업자 2026-09-17 *"내가 자주가는 사이트를 추가할 수 있으면 좋겠어. 가서 보고와서 적게."*
+//   ⭐ 장보기 칸은 **앱에 이미 있는 가게 목록**(`store.shops`)을 그대로 쓴다 — 유저가 「가게 편집」으로 더하고 지운 것이
+//      여기 그대로 뜬다(규칙 22 = 목록을 손으로 또 적지 않는다). 그래서 «자주 가는 곳»이 사람마다 다르게 된다.
+//   ⭐ 외식·배달은 그 목록에 없어서 셋만 기본으로 둔다. 주소는 2026-09-17 에 찾아 확인한 것이다.
+//      ⚠️ 이 환경은 사람이 보는 웹을 못 열어 «직접 열어보진 못했다» — 창업자가 눌러 보고 틀리면 고친다.
+//   🛒🛒 **쿠팡은 «파트너스 링크가 아니라 그냥 주소»다** (절대원칙 · 창업자 2026-09-15).
+//      파트너스 링크를 누르면 그 뒤 24시간 개인 구매가 실적에 섞인다. 여긴 「값 보러 가는」 자리라 그냥 주소로 간다.
+//      📮 창업자 2026-09-17 = *"나는 그렇게 해주고 유저들은 링크로. 그래야 우리도 수익이 나지."*
+//      → ⏳ 유저에게 열 때 쿠팡을 파트너스 링크로 바꾼다. ⛔단축코드는 창업자만 만들 수 있어 «받아서» 박는다(ingLinks.js 와 같다).
+//         지금은 식비가 창업자 열쇠 뒤에만 있어서 전부 그냥 주소다.
+const 배달가게 = [
+  { id: 'baemin', name: '배달의민족', url: 'https://baemin.com' },
+  { id: 'coupangeats', name: '쿠팡이츠', url: 'https://www.coupangeats.com' },
+  { id: 'yogiyo', name: '요기요', url: 'https://www.yogiyo.co.kr/mobile/' },
+]
+
 // ⌨️ 적는 시트 — 가계부에서 «0·00·000 키»만 가져왔다(수입·이체·결제수단은 안 만든다 · 식비만 보는 앱이라)
 function 적기시트({ 갈래, 닫기, store, nav }) {
   useModalBack(닫기)
@@ -172,6 +198,8 @@ function 적기시트({ 갈래, 닫기, store, nav }) {
   const [메모, set메모] = useState('')
   const [k, setK] = useState(갈래)
   const [날, set날] = useState(오늘())
+  // 🏪 갈래에 따라 다른 목록 — 장보기는 «앱의 가게 목록»(유저가 고친 게 그대로), 외식은 배달 앱 셋
+  const 가게들 = k === 'out' ? 배달가게 : (store.shops || []).filter((s) => s.url)
   const 값 = Number(글) || 0
   const 누름 = (키) => {
     if (키 === '⌫') return set글((s) => s.slice(0, -1))
@@ -199,6 +227,18 @@ function 적기시트({ 갈래, 닫기, store, nav }) {
           {/* ⭐ 메모는 «안 적어도» 저장된다 — 필수로 하면 3초가 10초가 된다(설계 1차) */}
           <input className="fc-memo" value={메모} onChange={(e) => set메모(e.target.value.slice(0, 40))}
             placeholder={k === 'out' ? '뭐 먹었어요? (안 적어도 돼요)' : '어디서? (안 적어도 돼요)'} />
+          {/* 🏪 가서 보고 와서 적기 — 누르면 «새 창»으로 열려 이 시트는 그대로 남는다(적던 금액도 안 날아간다).
+                ⭐ 이름은 그 자리에서 메모에 채워 둔다 — 돌아와서 숫자만 치면 끝난다. */}
+          {가게들.length > 0 && (
+            <div className="fc-shops">
+              <div className="fc-shops-k">가서 보고 올까요?</div>
+              <div className="fc-shops-row">
+                {가게들.map((s) => (
+                  <button key={s.id} className="press fc-shop" onClick={() => { set메모(s.name); openExternal(s.url) }}>{s.name}</button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="fc-day">
             <button className="press" onClick={() => set날((d) => 며칠뒤(d, -1))}>‹</button>
             <span>{날 === 오늘() ? '오늘' : `${날보기(날)} ${요일보기(날)}`}</span>

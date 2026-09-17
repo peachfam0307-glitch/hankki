@@ -63,10 +63,7 @@ const 큰값 = await p.evaluate(() => JSON.parse(localStorage.getItem('hankki:v1
 본다('9,999,999 을 넘지 않는다', 큰값 === 9999999)
 await 값적기('참치캔', '0')   // 되돌림
 
-// ④ 「산 것만 식비로 적기」 — 두부·대파만 체크하고 누른다
-for (const n of ['두부', '대파']) {
-  await p.locator('.shop-row').filter({ hasText: n }).first().locator('.check-box').click(); await p.waitForTimeout(300)
-}
+// ④ 「값 적은 것 식비로 적기」 — ⛔체크를 «안» 해도 옮겨져야 한다(창업자 2026-09-17 «적었는데 장보기에 반영안됐아»)
 await p.locator('.sum-btn').first().click(); await p.waitForTimeout(700)
 const 판 = () => p.evaluate(() => JSON.parse(localStorage.getItem('hankki:v1') || '{}'))
 let d = await 판()
@@ -74,8 +71,13 @@ let d = await 판()
 본다('그 줄 값 = 6,400', d.foodCost?.[0]?.won === 6400)
 본다('그 줄에 품목 이름 2개가 남았다', (d.foodCost?.[0]?.items || []).length === 2)
 본다('날짜가 오늘(KST)', d.foodCost?.[0]?.d === new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10))
-본다('체크한 줄만 지워졌다(참치캔 남음)', (d.shoppingList || []).length === 1)
-본다('값 없이 체크만 한 건 안 쌓인다(식비 1줄뿐)', (d.foodCost || []).length === 1)
+본다('값 적은 줄만 지워졌다(값 없는 참치캔은 남음)', (d.shoppingList || []).length === 1 && d.shoppingList[0].name === '참치캔')
+본다('산 것이 냉장고로 들어갔다', (d.pantry || []).filter((x) => ['두부', '대파'].includes(x.name)).length === 2)
+// 🧪 값이 하나도 없을 때 누르면 «아무 일도 안 나야» 한다 — 그게 창업자가 겪은 거짓말의 뿌리다
+await p.locator('.sum-btn').count().then(async (n) => { if (n) await p.locator('.sum-btn').first().click() })
+await p.waitForTimeout(500)
+d = await 판()
+본다('값이 없으면 식비가 안 늘어난다', (d.foodCost || []).length === 1)
 
 // ⑤ 백업 → 식비 지움 → 복원
 const 백업 = await 판()
