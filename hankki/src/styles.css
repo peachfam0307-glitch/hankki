@@ -2000,6 +2000,9 @@ img {
 .fc-wk-head b { font-size: 15px; color: var(--text); }
 .fc-card { background: var(--surface); border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
 .fc-row { display: flex; align-items: center; gap: 9px; padding: 12px 13px; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+/* ✏️ 줄 전체가 「고치기」 단추다 — X 만 따로 남는다 (창업자 2026-09-18 «저기도 수정가능하게») */
+.fc-row .fc-hit { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px;
+  background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .fc-row:last-child { border-bottom: 0; }
 .fc-d { width: 58px; color: var(--text-sub); font-size: 13px; flex: none; }
 .fc-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

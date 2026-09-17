@@ -29,7 +29,7 @@ const c1 = await b.newContext({ viewport: { width: 390, height: 844 }, locale: '
 await c1.addInitScript(() => { try { localStorage.setItem('hankki:nudge:cloudgate', '1') } catch { /* noop */ } })
 let p = await 열기('http://127.0.0.1:4539/hankki/', c1)
 본다('유저 화면엔 식비 칸이 없다', await p.locator('.segment .seg').filter({ hasText: '식비' }).count() === 0)
-await p.locator('input[placeholder*="살 재료"]').first().fill('두부'); await p.keyboard.press('Enter'); await p.waitForTimeout(400)
+await p.locator('input[placeholder*="살 재료"], input[placeholder*="1990"]').first().fill('두부'); await p.keyboard.press('Enter'); await p.waitForTimeout(400)
 본다('유저 화면엔 값 칸도 없다', await p.locator('button[aria-label*="값 적기"]').count() === 0)
 본다('장보기 리스트는 그대로 뜬다', await p.locator('.shop-row').count() === 1)
 // ② 창업자 — 열쇠 링크로 한 번 열기
@@ -37,7 +37,7 @@ const c2 = await b.newContext({ viewport: { width: 390, height: 844 }, locale: '
 await c2.addInitScript(() => { try { localStorage.setItem('hankki:nudge:cloudgate', '1') } catch { /* noop */ } })
 p = await 열기('http://127.0.0.1:4539/hankki/?%EC%8B%9D%EB%B9%84=1', c2)
 본다('열쇠 링크로 열면 식비 칸이 생긴다', await p.locator('.segment .seg').filter({ hasText: '식비' }).count() === 1)
-await p.locator('input[placeholder*="살 재료"]').first().fill('대파'); await p.keyboard.press('Enter'); await p.waitForTimeout(400)
+await p.locator('input[placeholder*="살 재료"], input[placeholder*="1990"]').first().fill('대파'); await p.keyboard.press('Enter'); await p.waitForTimeout(400)
 본다('값 칸도 같이 생긴다', await p.locator('button[aria-label*="값 적기"]').count() === 1)
 // ③ 그 폰에서 «주소 없이» 다시 열어도 남아 있나
 p = await 열기('http://127.0.0.1:4539/hankki/', c2)

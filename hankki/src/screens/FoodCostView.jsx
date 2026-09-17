@@ -54,6 +54,7 @@ export default function FoodCostView() {
   const nav = useNav()
   const [적기, set적기] = useState(null)  // null | 'out' | 'shop'
   const [지울것, set지울것] = useState(null)
+  const [고칠것, set고칠것] = useState(null)  // ✏️ 창업자 2026-09-18 «저기도 수정가능하게»
   const [예산고치기, set예산고치기] = useState(false)
   // 📅📅 [2026-09-17 창업자] *"주별 월별로도 통계 볼수있어? 아님 날짜를 며칠부터 며칠까지 정해서도?"* → 셋 다 된다.
   //   ⭐ 기본은 «주» — 장 보는 리듬이 주라서다. 달·기간은 눌러서 바꾼다.
@@ -236,13 +237,18 @@ export default function FoodCostView() {
             <div className="fc-card">
               {안.map((e) => (
                 <div key={e.id} className="fc-row">
-                  <span className="fc-d">{날보기(e.d)} {요일보기(e.d)}</span>
-                  <span className="fc-t">
-                    {e.k === 'shop' ? '장보기' : '외식·배달'}
-                    {e.memo && <small>{e.memo}</small>}
-                    {e.items?.length > 0 && <small>{e.items.map((x) => x.n).join(' · ')}</small>}
-                  </span>
-                  <b className="fc-w">{돈(e.won)}원</b>
+                  {/* ✏️ 줄을 누르면 «그 줄 그대로» 적기 시트가 열린다 — 창업자 2026-09-18 «저기도 수정가능하게»
+                        ⭐ 누를 수 있다는 걸 «보이게» 한다(오른쪽 연필) — 안 보이면 없는 기능이다(값 칸에서 겪었다). */}
+                  <button className="press fc-hit" onClick={() => set고칠것(e)} aria-label={`${날보기(e.d)} ${돈(e.won)}원 고치기`}>
+                    <span className="fc-d">{날보기(e.d)} {요일보기(e.d)}</span>
+                    <span className="fc-t">
+                      {e.k === 'shop' ? '장보기' : '외식·배달'}
+                      {e.memo && <small>{e.memo}</small>}
+                      {e.items?.length > 0 && <small>{e.items.map((x) => x.n).join(' · ')}</small>}
+                    </span>
+                    <b className="fc-w">{돈(e.won)}원</b>
+                    <Icon name="edit" size={14} color="var(--sand)" />
+                  </button>
                   <button className="icon-btn press" onClick={() => set지울것(e)} aria-label="지우기">
                     <Icon name="x" size={16} color="var(--sand)" />
                   </button>
@@ -254,6 +260,7 @@ export default function FoodCostView() {
       })}
 
       {적기 && <적기시트 갈래={적기} 닫기={() => set적기(null)} store={store} nav={nav} />}
+      {고칠것 && <적기시트 갈래={고칠것.k} 고칠것={고칠것} 닫기={() => set고칠것(null)} store={store} nav={nav} />}
       {예산고치기 && <예산시트 칸={잣대 === 'month' ? 'm' : 'w'} 지금={예산} 닫기={() => set예산고치기(false)} store={store} nav={nav} />}
       {지울것 && (
         <지움확인 줄={지울것} 닫기={() => set지울것(null)} 지움={() => { store.removeFoodCost(지울것.id); set지울것(null); nav.showToast('지웠어요') }} />
@@ -273,12 +280,14 @@ export default function FoodCostView() {
 //      → ⏳ 유저에게 열 때 쿠팡을 파트너스 링크로 바꾼다. ⛔단축코드는 창업자만 만들 수 있어 «받아서» 박는다(ingLinks.js 와 같다).
 //         지금은 식비가 창업자 열쇠 뒤에만 있어서 전부 그냥 주소다.
 // ⌨️ 적는 시트 — 가계부에서 «0·00·000 키»만 가져왔다(수입·이체·결제수단은 안 만든다 · 식비만 보는 앱이라)
-function 적기시트({ 갈래, 닫기, store, nav }) {
+// ✏️ `고칠것` 이 있으면 «같은 시트»가 고치는 자리가 된다 — 창업자 2026-09-18 «저기도 수정가능하게»
+//   ⭐ 화면을 하나 더 만들지 «않는다» — 적을 때와 고칠 때가 다르게 생기면 그게 또 배울 것이 된다.
+function 적기시트({ 갈래, 고칠것, 닫기, store, nav }) {
   useModalBack(닫기)
-  const [글, set글] = useState('')
-  const [메모, set메모] = useState('')
+  const [글, set글] = useState(고칠것 ? String(고칠것.won) : '')
+  const [메모, set메모] = useState(고칠것?.memo || '')
   const [k, setK] = useState(갈래)
-  const [날, set날] = useState(오늘())
+  const [날, set날] = useState(고칠것?.d || 오늘())
   const [가게추가, set가게추가] = useState(false)
   const [지울가게, set지울가게] = useState(null)
   // 🧮 계산기 모드 — 창업자 2026-09-17 *"계산기 모드도 쓸수있나??"*
@@ -301,8 +310,13 @@ function 적기시트({ 갈래, 닫기, store, nav }) {
   }
   const 저장 = () => {
     if (!합계값) return
-    store.addFoodCost({ d: 날, k, won: 합계값, memo: 메모.trim() || undefined })
-    nav.showToast('적었어요')
+    if (고칠것) {
+      store.editFoodCost(고칠것.id, { d: 날, k, won: 합계값, memo: 메모 })
+      nav.showToast('고쳤어요')
+    } else {
+      store.addFoodCost({ d: 날, k, won: 합계값, memo: 메모.trim() || undefined })
+      nav.showToast('적었어요')
+    }
     닫기()
   }
   // 🧮 ＋ = 지금 친 값을 «담아 두고» 칸을 비운다. 다음 영수증을 이어서 친다.
@@ -354,7 +368,7 @@ function 적기시트({ 갈래, 닫기, store, nav }) {
                 : <button key={i} className={`press fc-key${/^(⌫|지움)$/.test(키) ? ' bk' : ''}${/^0{2,3}$/.test(키) ? ' zz' : ''}${키 === '＋' ? ' plus' : ''}`} onClick={() => 누름(키)}>{키}</button>
             ))}
           </div>
-          <button className="press fc-save" disabled={!합계값} onClick={저장}>적었어요</button>
+          <button className="press fc-save" disabled={!합계값} onClick={저장}>{고칠것 ? '고쳤어요' : '적었어요'}</button>
         </div>
       </div>
       {가게추가 && <가게추가시트 갈래={k} 닫기={() => set가게추가(false)} store={store} nav={nav} />}

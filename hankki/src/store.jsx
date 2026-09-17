@@ -1279,6 +1279,24 @@ function reducer(state, action) {
       // ⭐ 누를 때마다 시각을 적어 둔다 — 화면은 이 값으로 «최근 쓴 순»으로 줄을 세운다(손으로 끌어 옮길 필요가 없다)
       return { ...state, costShops: (state.costShops || []).map((s) => (s.id === action.id ? { ...s, at: Date.now() } : s)) }
     }
+    // ✏️ 적은 줄 고치기 — 창업자 2026-09-18 «저기도 수정가능하게»
+    //   ⛔ 지우고 새로 넣지 «않는다» — 그러면 목록 맨 위로 튀어올라 「어디 갔지」가 된다. 자리에 둔 채 값만 바꾼다.
+    //   ⭐ 값을 0 으로 고치려 하면 아무 일도 안 한다(지우기는 X 가 맡는다 — 물어보고 지운다).
+    case 'editFoodCost': {
+      const won = Math.min(9999999, Math.max(0, Math.floor(Number(action.patch?.won) || 0)))
+      if (!won) return state
+      return {
+        ...state,
+        foodCost: (state.foodCost || []).map((e) => {
+          if (e.id !== action.id) return e
+          const 새것 = { ...e, won, d: action.patch.d || e.d, k: action.patch.k === 'out' ? 'out' : 'shop' }
+          const memo = (action.patch.memo || '').trim()
+          if (memo) 새것.memo = memo.slice(0, 40)
+          else delete 새것.memo
+          return 새것
+        }),
+      }
+    }
     case 'removeFoodCost': {
       return { ...state, foodCost: (state.foodCost || []).filter((e) => e.id !== action.id) }
     }
@@ -1529,6 +1547,7 @@ export function StoreProvider({ children }) {
     usedCostShop: useCallback((id) => dispatch({ type: 'usedCostShop', id }), []),
     setFoodBudget: useCallback((칸, won) => dispatch({ type: 'setFoodBudget', 칸, won }), []),
     addFoodCost: useCallback((entry) => dispatch({ type: 'addFoodCost', entry }), []),
+    editFoodCost: useCallback((id, patch) => dispatch({ type: 'editFoodCost', id, patch }), []),
     removeFoodCost: useCallback((id) => dispatch({ type: 'removeFoodCost', id }), []),
     clearShopItemsAll: useCallback(() => dispatch({ type: 'clearShopItemsAll' }), []),
     addPantry: useCallback((item) => dispatch({ type: 'addPantry', item }), []),

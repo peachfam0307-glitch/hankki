@@ -78,7 +78,7 @@ await p.keyboard.press('Escape'); await p.waitForTimeout(400)
 //   ⛔ 시트가 열려 있으면 뒤 화면을 못 누른다 — 먼저 닫는다(sheet-mask 가 손가락을 막는다)
 for (let i = 0; i < 4; i++) { const 막 = p.locator('.sheet-mask'); if (!(await 막.count())) break; await 막.last().click({ position: { x: 5, y: 5 } }); await p.waitForTimeout(450) }
 await p.locator('.segment .seg').filter({ hasText: '장보기' }).first().click(); await p.waitForTimeout(600)
-const 담기 = p.locator('input[placeholder*="살 재료"]').first()
+const 담기 = p.locator('input[placeholder*="살 재료"], input[placeholder*="1990"]').first()
 // ⛔ 앞 단계에서 두부·대파는 «식비로 옮겨져» 목록에서 빠졌다 — 다시 담아야 여기서 잰다
 for (const 글 of ['두부 1990', '돼지고기 600g', '양파 3', '대파 1,500']) { await 담기.fill(글); await p.keyboard.press('Enter'); await p.waitForTimeout(400) }
 await p.waitForTimeout(400)

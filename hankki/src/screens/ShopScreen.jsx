@@ -190,7 +190,7 @@ export default function ShopScreen() {
             )}
           </div>
         </div>
-        <ChecklistAdd />
+        <ChecklistAdd 식비켬={식비켬} />
         {/* 📝📝 [2026-09-13 창업자 확정] 빈손 안내문을 «두 줄»로 줄이고 글씨를 키웠다(15 → 17px).
             📮 창업자 = *"장보기리스트 설명 살재료를 적어보세요~ 글씨크기 키우고 2줄로 안내"*
             ⛔ 옛 글 = 「…**위** 주부의 장바구니나…」 — 이제 장바구니가 «아래»로 내려가서
@@ -267,7 +267,9 @@ export default function ShopScreen() {
               ) : (
                 <button className="press" onClick={() => set값편집(it.id)} aria-label={`${it.name} 값 적기`}
                   style={{ fontSize: 15.5, fontWeight: it.won ? 700 : 400, color: it.won ? 'var(--text)' : 'var(--sand)', background: 'none', border: 'none', padding: '5px 2px', whiteSpace: 'nowrap' }}>
-                  {it.won ? `${it.won.toLocaleString('ko-KR')}원` : '값'}
+                  {/* ⛔ [2026-09-18 창업자 «연하게 값이라고 되어있어서 이부분수정»] 옛 글자 = 「값」 한 자.
+                        무엇을 하라는 자리인지 안 보였다 — 누르면 금액을 적는 자리라고 «글자로» 말한다. */}
+                  {it.won ? `${it.won.toLocaleString('ko-KR')}원` : '＋ 금액'}
                 </button>
               ))}
               {/* ⛔ `noBuy`(한살림) 는 사러가기를 안 그린다 — 담을 때 붙여 둔 표식이다.
@@ -876,7 +878,7 @@ function Curation() {
   )
 }
 
-function ChecklistAdd() {
+function ChecklistAdd({ 식비켬 }) {
   const { addShopItems } = useStore()
   const [text, setText] = useState('')
   const add = () => {
@@ -889,7 +891,10 @@ function ChecklistAdd() {
   return (
     <div className="searchbar" style={{ marginBottom: 12 }}>
       <Icon name="cart" size={19} color="var(--text-sub)" />
-      <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="살 재료 입력하고 Enter" />
+      {/* 💰 [2026-09-18 창업자 «금액 적는 안내나 양식이 없어 유저들은 모를듯해»]
+            ⭐ 안내를 «적는 자리»에 둔다 — 목록 아래 설명은 이미 있었지만 적을 땐 안 보인다(빈손이면 아예 없다). */}
+      <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()}
+        placeholder={식비켬 ? '두부 1990 (값은 안 적어도 돼요)' : '살 재료 입력하고 Enter'} />
       {text && (
         <button className="press" onClick={add} aria-label="추가"><Icon name="plus" size={20} color="var(--brown)" /></button>
       )}
