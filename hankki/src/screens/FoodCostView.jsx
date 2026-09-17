@@ -396,8 +396,9 @@ function 가게추가시트({ 갈래, 닫기, store, nav }) {
       <div className="sheet-mask" onClick={닫기}>
         <div className="sheet fc-sheet" onClick={(e) => e.stopPropagation()}>
           <div className="fc-ask-t" style={{ marginBottom: 12 }}>자주 가는 곳 더하기</div>
-          <input className="fc-memo" value={이름} onChange={(e) => set이름(e.target.value.slice(0, 20))} placeholder="이름 (예: 홈플러스)" />
-          <input className="fc-memo" style={{ marginTop: 8 }} value={주소} onChange={(e) => set주소(e.target.value.trim())} placeholder="주소 (예: homeplus.co.kr)" inputMode="url" />
+          {/* ⛔ 시트가 «두 장 겹친다»(적기 시트 위에 이 시트) — 같은 class 를 쓰면 아래 칸이 잡힌다. 이름을 따로 준다. */}
+          <input className="fc-memo fc-add-name" value={이름} onChange={(e) => set이름(e.target.value.slice(0, 20))} placeholder="이름 (예: 홈플러스)" />
+          <input className="fc-memo fc-add-url" style={{ marginTop: 8 }} value={주소} onChange={(e) => set주소(e.target.value.trim())} placeholder="주소 (예: homeplus.co.kr)" inputMode="url" />
           <div className="fc-hs" style={{ textAlign: 'left', marginTop: 8 }}>주소는 그 앱·사이트를 열었을 때 주소창에 뜨는 글자예요</div>
           <button className="press fc-save" disabled={!이름.trim() || !주소.trim()} onClick={저장}>더할게요</button>
         </div>
