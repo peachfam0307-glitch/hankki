@@ -20,7 +20,7 @@ let 넣음 = 0, 이미 = 0
 const 건너뜀 = []
 for (const it of d['목록에_있는_편']) {
   if (!it.ingredients || it.ingredients.trim() === '?') { 건너뜀.push(`${it.name} — 원재료 비어 있음`); continue }
-  const re = /\{\s*name:\s*'([^']+)'(?:,\s*brand:\s*'([^']+)')?/g
+  const re = /\{\s*name:\s*'([^']+)'(?:,\s*who:\s*'[^']*')?(?:,\s*brand:\s*'([^']+)')?/g   // who: 가 name 과 brand 사이에 끼는 덩이가 있다(안심햄)
   const hits = []
   let m
   while ((m = re.exec(s))) {
