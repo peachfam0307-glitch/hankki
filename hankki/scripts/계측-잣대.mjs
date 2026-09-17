@@ -44,7 +44,7 @@ const stats = readFileSync(new URL('src/stats.js', 앱뿌리), 'utf8')
 const 코드줄 = stats.split('\n').filter((l) => !/^\s*\/\//.test(l))
 const 글자그대로 = (이름) => 코드줄.find((l) => new RegExp(`(행동보내기|보내기)\\('${이름}'\\)`).test(l))
 const 묶음 = [
-  [/^import_(share|gallery|photo|write)$/, '`import_${갈래}`'],
+  [/^import_(share|gallery|photo|write|instagram|youtube|text|link)$/, '`import_${갈래}`'],   // 🔢 여덟 (ImportScreen.jsx:88-116 실측 2026-09-17 — 넷만 적혀 있어 나머지 넷은 도구가 죽었다)
   [/^cook_long_/, '`cook_long_${자리}`'],
   [/^buy_/, '`buy_${자리}`'],
   [/^(signup|login)_/, "`${새계정 ? 'signup' : 'login'}_${이름}`"],
