@@ -1959,6 +1959,13 @@ img {
 .shop-pair .shop-cur { order: 2; margin-top: 26px; }
 .shop-pair .shop-list { order: 1; }
 
+/* 💰 [2026-09-17 시제품] 담은 것 합계 상자 — 값을 «적은 줄»만 더한 부분합이다(개수를 같이 적는다) */
+.sum-box { margin-top: 14px; background: var(--cream); border-radius: 15px; padding: 13px 15px 12px; }
+.sum-row { display: flex; align-items: baseline; justify-content: space-between; font-size: 15px; color: var(--text-sub); }
+.sum-n { font-weight: 600; color: var(--sand); font-size: 13px; margin-left: 5px; }
+.sum-v { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -.4px; }
+.sum-btn { width: 100%; margin-top: 11px; padding: 11px 0; border-radius: 12px; background: var(--brown); color: #fff; font-weight: 700; font-size: 15.5px; }
+
 .shop-row {
   display: flex;
   align-items: center;

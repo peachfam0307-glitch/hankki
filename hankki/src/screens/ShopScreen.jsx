@@ -98,6 +98,10 @@ export default function ShopScreen() {
     try { sessionStorage.setItem('hankki:shopView', v) } catch { /* noop */ }
   }
   const [clearAsk, setClearAsk] = useState(false)
+  const [값편집, set값편집] = useState(null)   // 💰 값 칸이 열린 줄 id (2026-09-17)
+  // 💰 합계 = 값을 «적은 줄»만. 안 적은 줄은 0 이 아니라 «모르는 것»이라 개수를 같이 밝힌다.
+  const 값있는수 = shoppingList.filter((i) => Number(i.won) > 0).length
+  const 합계 = shoppingList.reduce((s, i) => s + (Number(i.won) || 0), 0)
   // ✏️ 지금 «고치는 중인» 장보기 줄 — { id, text } · null 이면 아무 줄도 편집 중이 아니다
   const [편집, set편집] = useState(null)
   // 인라인 시트(쇼핑몰 편집·추가/편집 폼) — 뒤로가기로 닫기(비우기 확인은 ConfirmSheet 자체 처리)
@@ -223,6 +227,26 @@ export default function ShopScreen() {
                   {it.name}
                 </button>
               )}
+              {/* 💰💰 [2026-09-17 시제품 · 창업자 «품목별로 금액 적으면 아래 총합이 뜨게»]
+                    ⭐ 값은 «안 적어도» 된다 — 적은 것만 아래에서 더한다(부분합이라고 밝힌다).
+                    ⛔ 늘 `<input>` 이 아니다 — 이름 편집과 같은 규칙으로 «누른 줄만» 칸이 열린다.
+                    🔢 9,999,999 상한·앞 0 무시는 store 가 맡는다(0 이면 칸을 지운다). */}
+              {값편집 === it.id ? (
+                <input
+                  autoFocus
+                  inputMode="numeric"
+                  defaultValue={it.won || ''}
+                  placeholder="0"
+                  onBlur={(e) => { store.setShopItemWon(it.id, e.target.value.replace(/[^0-9]/g, '')); set값편집(null) }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') set값편집(null) }}
+                  style={{ width: 84, fontSize: 15.5, fontFamily: 'inherit', textAlign: 'right', color: 'var(--text)', background: 'var(--cream)', border: '1.5px solid var(--brown)', borderRadius: 9, padding: '5px 8px', outline: 'none' }}
+                />
+              ) : (
+                <button className="press" onClick={() => set값편집(it.id)} aria-label={`${it.name} 값 적기`}
+                  style={{ fontSize: 15.5, fontWeight: it.won ? 700 : 400, color: it.won ? 'var(--text)' : 'var(--sand)', background: 'none', border: 'none', padding: '5px 2px', whiteSpace: 'nowrap' }}>
+                  {it.won ? `${it.won.toLocaleString('ko-KR')}원` : '값'}
+                </button>
+              )}
               {/* ⛔ `noBuy`(한살림) 는 사러가기를 안 그린다 — 담을 때 붙여 둔 표식이다.
                   ⚠️ 이 줄이 없으면 `buyUrlFor()` 가 url 없는 줄을 **쿠팡·네이버 검색으로 보내서**
                      큐레이션에서 링크를 뺀 게 통째로 헛일이 된다(담은 뒤에 새는 구멍). */}
@@ -239,6 +263,20 @@ export default function ShopScreen() {
         )}
         {/* 💡 **고칠 수 있다는 걸 알려준다** — 누를 수 있어도 «누를 수 있는 줄 모르면» 없는 기능이다.
               ⭐ 예를 «창업자가 말한 그대로» 적는다 — *"양파 1망 돼지고기 600g은 맞지."* */}
+        {/* 💰💰 담은 것 합계 — «값을 적은 줄만» 더한다. 그래서 「값 적은 것 N개」를 «꼭» 같이 적는다.
+              ⛔ 이 수를 「장본 값」이라고 부르지 않는다 — 안 적은 줄이 빠져 있어 총액이 아니다(부분합).
+              ⭐ 「식비로 적기」 = 「완료 지우기」를 안 누르는 사람에게도 길을 준다(같은 일을 한다). */}
+        {값있는수 > 0 && (
+          <div className="sum-box">
+            <div className="sum-row">
+              <span>담은 것 합계 <b className="sum-n">값 적은 것 {값있는수}개</b></span>
+              <b className="sum-v">{합계.toLocaleString('ko-KR')}원</b>
+            </div>
+            <button className="press sum-btn" onClick={() => { store.clearDoneShopItems(); nav.showToast('식비에 적었어요') }}>
+              산 것만 식비로 적기
+            </button>
+          </div>
+        )}
         {shoppingList.length > 0 && (
           <div className="t-sub" style={{ fontSize: 16.5, marginTop: 18, lineHeight: 1.85 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.

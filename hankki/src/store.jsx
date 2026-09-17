@@ -930,6 +930,7 @@ function initialState() {
       wishlist: [], // 위시는 장보기로 흡수됨 — 더 이상 별도 목록으로 쓰지 않는다
       shoppingList: foldWishIntoShopping(saved.wishlist, saved.shoppingList || migrateShopping()),
       pantry: saved.pantry || [],
+      foodCost: Array.isArray(saved.foodCost) ? saved.foodCost : [],
       diary,
       sampleGone: saved.sampleGone || false,
     }
@@ -949,6 +950,7 @@ function initialState() {
     wishlist: [],
     shoppingList: [],
     pantry: [],
+    foodCost: [],   // 💰 식비 줄(2026-09-17 시제품 · hold) — {id,d:'YYYY-MM-DD',k:'shop'|'out',won,memo?,items?:[{n,won}]}
     // 📔 처음 켠 사람은 일기 탭이 텅 비어 「뭘 하는 곳인지」 안 보인다 → 샘플 한 장 놓아 둔다.
     //    ⏳ 스위치가 꺼져 있으면 빈 채로 둔다(까닭 = `sampleDiary.js` 맨 위)
     diary: SAMPLE_READY ? [makeSampleDiary()] : [],
@@ -1168,7 +1170,30 @@ function reducer(state, action) {
       return { ...state, shoppingList: state.shoppingList.filter((i) => i.id !== action.id) }
     }
     case 'clearDoneShopItems': {
-      return { ...state, shoppingList: state.shoppingList.filter((i) => !i.done) }
+      // 💰 [2026-09-17 시제품] 값(won)이 적힌 «산» 줄이 있으면 식비 한 줄로 남기고 지운다(창업자 «품목별로 금액 적으면 아래 총합»).
+      //    값이 하나도 없으면 아무것도 안 남긴다 — 조르지 않는다.
+      const 산것 = state.shoppingList.filter((i) => i.done && Number(i.won) > 0)
+      const foodCost = 산것.length
+        ? [{ id: newId(), d: 오늘날짜(), k: 'shop', won: 산것.reduce((s, i) => s + Number(i.won), 0), items: 산것.map((i) => ({ n: i.name, won: Number(i.won) })) }, ...(state.foodCost || [])]
+        : (state.foodCost || [])
+      return { ...state, foodCost, shoppingList: state.shoppingList.filter((i) => !i.done) }
+    }
+    // 💰 장보기 줄에 값 적기 — 안 적어도 된다. 0·빈칸이면 지운다. 최대 9,999,999.
+    case 'setShopItemWon': {
+      const won = Math.min(9999999, Math.max(0, Math.floor(Number(action.won) || 0)))
+      return { ...state, shoppingList: state.shoppingList.map((i) => (i.id === action.id ? (won ? { ...i, won } : (({ won: _w, ...rest }) => rest)(i)) : i)) }
+    }
+    // 💰 식비 줄 직접 적기(외식·배달 · 또는 장보기 총액만) / 지우기
+    case 'addFoodCost': {
+      const won = Math.min(9999999, Math.max(0, Math.floor(Number(action.entry?.won) || 0)))
+      if (!won) return state
+      const e = { id: newId(), d: action.entry.d || 오늘날짜(), k: action.entry.k === 'out' ? 'out' : 'shop', won }
+      if (action.entry.memo) e.memo = String(action.entry.memo).slice(0, 40)
+      if (Array.isArray(action.entry.items) && action.entry.items.length) e.items = action.entry.items
+      return { ...state, foodCost: [e, ...(state.foodCost || [])] }
+    }
+    case 'removeFoodCost': {
+      return { ...state, foodCost: (state.foodCost || []).filter((e) => e.id !== action.id) }
     }
     case 'clearShopItemsAll': {
       return { ...state, shoppingList: [] }
@@ -1257,6 +1282,7 @@ function reducer(state, action) {
         wishlist: [], // 위시는 장보기로 흡수 — 백업 복원 시에도 합쳐서 불러온다
         shoppingList: foldWishIntoShopping(d.wishlist, d.shoppingList || []),
         pantry: d.pantry || [],
+        foodCost: Array.isArray(d.foodCost) ? d.foodCost : (state.foodCost || []),   // 💰 백업에 식비가 없으면(옛 백업) 지금 폰 것을 지킨다
         diary: d.diary || [],
       }
     }
@@ -1407,6 +1433,9 @@ export function StoreProvider({ children }) {
     updateShopItem: useCallback((id, name) => dispatch({ type: 'updateShopItem', id, name }), []),
     removeShopItem: useCallback((id) => dispatch({ type: 'removeShopItem', id }), []),
     clearDoneShopItems: useCallback(() => dispatch({ type: 'clearDoneShopItems' }), []),
+    setShopItemWon: useCallback((id, won) => dispatch({ type: 'setShopItemWon', id, won }), []),
+    addFoodCost: useCallback((entry) => dispatch({ type: 'addFoodCost', entry }), []),
+    removeFoodCost: useCallback((id) => dispatch({ type: 'removeFoodCost', id }), []),
     clearShopItemsAll: useCallback(() => dispatch({ type: 'clearShopItemsAll' }), []),
     addPantry: useCallback((item) => dispatch({ type: 'addPantry', item }), []),
     updatePantry: useCallback((id, patch) => dispatch({ type: 'updatePantry', id, patch }), []),
@@ -1427,6 +1456,13 @@ export function useStore() {
 }
 
 // 새 레시피 id 생성 — Date.now 는 브라우저 런타임에서 사용 가능
+// 💰 오늘 날짜 'YYYY-MM-DD' (KST) — ⛔`toISOString()` 은 UTC 라 밤 9시 이후가 «내일»이 된다
+function 오늘날짜(t = Date.now()) {
+  const d = new Date(t + 9 * 3600 * 1000)
+  return d.toISOString().slice(0, 10)
+}
+
 export function newId() {
+
   return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
 }
