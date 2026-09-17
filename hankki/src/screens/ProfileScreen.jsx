@@ -29,6 +29,7 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 //      → 홈에서 지나쳐 버리면 **다시 볼 길이 없었다.** 그게 ⑤와의 진짜 빈 칸이다.
 //   ⭐ 새로 만들지 않는다 — 홈이 쓰는 «그 부품 그대로». 두 곳이 어긋날 수가 없다.
 import PreviewSheet from '../components/PreviewSheet'
+import UpdateLogSheet from '../components/UpdateLogSheet'   // 📣 업데이트 내역 — 날짜별 전체 (창업자 2026-09-17)
 import { isNewsUnread, markNewsSeen } from '../components/NewsPopup'
 import { whatsNew } from '../data/whatsnew'
 import { cropSquare, openExternal } from '../utils'
@@ -93,6 +94,7 @@ export default function ProfileScreen() {
   const [lab, setLab] = useState(false) // 한끼연구소(의견·설문·오류) 시트
   const [delAccount, setDelAccount] = useState(false) // 🗑 계정 · 데이터 삭제 시트(2026-09-08)
   const [소식, set소식] = useState(false) // 한끼 소식(＝공지사항) 시트 — 홈과 «같은 부품»
+  const [업뎃내역, set업뎃내역] = useState(false) // 📣 업데이트 내역 — 소식은 최신 한 줄, 여기는 전부(창업자 2026-09-17)
   const 소식들 = whatsNew()
   const 안본소식 = isNewsUnread(소식들)
   // ☁️ 홈 한 줄로 들어왔으면 도착하자마자 클라우드 시트를 연다(백업 쪽지와 같은 길)
@@ -394,6 +396,9 @@ export default function ProfileScreen() {
     //    ⛔ 그다음 `alert` 로 갔더니 **삼각형 경고 표시**라 「나쁜 일」로 읽혔다(열어 보고 잡았다 · 절대원칙 21).
     //    ✅ `gift` — 소식 팝업이 이미 선물색을 쓰고 「새로」 알약도 `--gift` 라 **한 벌로 읽힌다.**
     { icon: 'gift', label: '한끼 소식', badge: 안본소식 ? '새로' : '', onClick: () => { markNewsSeen(소식들); set소식(true) } },
+    // 📣 [창업자 2026-09-17] *"설정칸에 업데이트를 쭉 날짜별로 볼수있게 하고, 한끼소식에는 한줄만"*
+    //   ⛔ 「새로」 알약은 안 붙인다 — 배포마다 켜지면 아무도 안 본다(소식 alert 층에서 뺀 것과 같은 이유).
+    { icon: 'sparkle', label: '업데이트 내역', desc: '언제 무엇이 달라졌는지 날짜별로 봐요', onClick: () => set업뎃내역(true) },
     { icon: 'star', label: '스토어에 한마디', badge: '리뷰 남기기', 밖: true, onClick: () => openExternal(STORE_URL) },
     // 🔖 [2026-08-18] 「즐겨찾기」 → **「책갈피」** (창업자 확정 · 유저에게 보이는 여섯 곳을 같이 바꿨다)
     { icon: 'heart', label: FAV_NAME, onClick: () => nav.push({ name: 'favorites' }) },
@@ -1095,6 +1100,7 @@ export default function ProfileScreen() {
       {/* 🗑 계정 · 데이터 삭제 — 앱 안 시트(큰 틀 6-① ⓑ · 2026-09-08) */}
       {delAccount && <DeleteAccountSheet onClose={() => setDelAccount(false)} showToast={nav.showToast} />}
       {소식 && <PreviewSheet onClose={() => set소식(false)} />}
+      {업뎃내역 && <UpdateLogSheet onClose={() => set업뎃내역(false)} />}
 
       {/* 첫 방문 코치마크 — 백업·의견 보내기 안내 */}
       {coach && <CoachMarks storageKey={PROFILE_COACH_KEY} steps={PROFILE_COACH_STEPS} onDone={() => setCoach(false)} />}
