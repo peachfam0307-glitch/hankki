@@ -52,10 +52,11 @@ await p.goto(`http://127.0.0.1:${PORT}/hankki/`, { waitUntil: 'networkidle' })
 await p.waitForTimeout(1200)
 for (let i = 0; i < 3; i++) { const x = p.locator('button:has-text("닫기")').first(); if (await x.count()) { await x.click().catch(() => {}); await p.waitForTimeout(250) } }
 await p.locator('text=한끼 소식').first().click()
-await p.waitForTimeout(1000)
-
-const 본문 = await p.evaluate(() => document.body.innerText)
-const 소식 = 본문.slice(본문.lastIndexOf('한끼 소식'))
+// ⛔ [CI 2026-09-17 run 2597] 로컬은 통과했는데 CI 에서 ①③이 죽었다 — 페이지 innerText 를 「한끼 소식」 글자로
+//    잘라 쓰니 느린 러너에선 자르는 자리가 달랐다(같은 글자가 다른 데도 있다). «시트 요소»를 직접 읽는다.
+await p.waitForSelector('.sheet', { timeout: 15000 })
+await p.waitForTimeout(600)
+const 소식 = await p.evaluate(() => { const s = [...document.querySelectorAll('.sheet')].pop(); return s ? s.innerText : '' })
 
 console.log('① 카드가 그려진다')
 chk('「앱이 달라졌어요」 제목이 있다', 소식.includes('앱이 달라졌어요'), 'true')
