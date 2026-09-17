@@ -110,7 +110,7 @@ const 칸 = (제목, 글, top, left) => `
       <img src="${앱아이콘}" style="width:112px;height:112px;border-radius:26px">
       <span>App Store · Google Play 에서<br><b style="color:${진};font-size:52px;letter-spacing:-1px">한끼 레시피북</b> 검색</span>
     </span></div>
-  ${곰('gp_duotb', 470, 'left:250px;top:560px')}` })   // 🐻🐧 엄지척 콤비 — 만세(ce_manse)는 아이폰 기념 캐러셀에서 썼다(창업자 «다른걸로»)
+  ${곰('gp_duohi', 470, 'left:250px;top:560px')}` })   // 🐻🐧 손 흔드는 콤비 — 만세(ce_manse)는 아이폰 캐러셀에서 썼고, 엄지척(gp_duotb)은 반짝이가 잘려 있었다(창업자 2026-09-17)
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const p = await (await b.newContext({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 })).newPage()
