@@ -2013,11 +2013,12 @@ img {
 .fc-in b { font-size: 15px; font-weight: 700; color: var(--text-sub); margin-left: 3px; }
 .fc-memo { width: 100%; margin-top: 9px; padding: 11px 13px; border-radius: 11px; border: 1px solid var(--line); background: var(--surface); font-size: 15px; font-family: inherit; color: var(--text); outline: none; }
 /* 📅 잣대 고르기 — 주 · 달 · 기간 */
-.fc-scale { display: flex; gap: 6px; margin-top: 12px; background: var(--cream); border-radius: 13px; padding: 4px; }
-.fc-scale button { flex: 1; padding: 8px 0; border-radius: 10px; font-size: 14.5px; font-weight: 700; color: var(--text-sub); background: transparent; }
-.fc-scale button.on { background: var(--surface); color: var(--brown); box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.fc-scale { display: flex; gap: 6px; margin-top: 12px; }
+.fc-scale button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 10px 0; border-radius: 12px; font-size: 14.5px; font-weight: 700; color: var(--text-sub); background: var(--cream); border: 1px solid var(--line); }
+.fc-scale button.on { background: var(--surface); color: var(--brown); border-color: var(--brown); box-shadow: 0 1px 4px rgba(0,0,0,.06); }
 .fc-range { display: flex; align-items: center; gap: 8px; margin-top: 9px; font-size: 14px; color: var(--text-sub); }
-.fc-range input { flex: 1; min-width: 0; padding: 9px 10px; border-radius: 11px; border: 1px solid var(--line); background: var(--surface); font-size: 14.5px; font-family: inherit; color: var(--text); }
+.fc-range input { flex: 1; min-width: 0; padding: 11px 10px; border-radius: 11px; border: 1.5px solid var(--brown); background: var(--surface); font-size: 14.5px; font-family: inherit; color: var(--text); font-weight: 600; }
+.fc-range-k { font-size: 12.5px; color: var(--text-sub); margin-top: 10px; }
 
 /* 🧮 계산기 — 더한 것들을 위에 줄줄이 */
 .fc-calc { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; align-items: baseline; font-size: 14px; color: var(--text-sub); margin-bottom: 6px; }

@@ -117,14 +117,21 @@ export default function FoodCostView() {
 
   return (
     <div className="fc">
-      {/* 📅 잣대 고르기 — 주(기본) · 달 · 기간. 창업자 2026-09-17 *"주별 월별로도? 날짜를 며칠부터 며칠까지도?"* */}
+      {/* 📅 잣대 고르기 — 주(기본) · 달 · 기간. 창업자 2026-09-17 *"주별 월별로도? 날짜를 며칠부터 며칠까지도?"*
+            ⛔ [창업자 2026-09-17 *"표시가 안되어있어서 누를 수 있는지 몰겠어"*] 글자만 있으면 «눌러지는 줄» 모른다.
+            ✅ 안 고른 칸도 «단추처럼» 보이게 테두리를 주고, 「기간」엔 달력 그림을 붙여 무엇이 나오는지 미리 알린다. */}
       <div className="fc-scale">
-        {[['week', '주'], ['month', '달'], ['range', '기간']].map(([v, 글]) => (
-          <button key={v} className={`press ${잣대 === v ? 'on' : ''}`} onClick={() => set잣대(v)}>{글}</button>
+        {[['week', '주별'], ['month', '달별'], ['range', '날짜 고르기']].map(([v, 글]) => (
+          <button key={v} className={`press ${잣대 === v ? 'on' : ''}`} onClick={() => set잣대(v)}>
+            {/* ⛔ 아이콘 이름은 «있는 것»만 쓴다 — 없는 이름을 쓰면 조용히 빈 칸이 뜬다(Icon.jsx 목록에 calendar 가 없다) */}
+            {v === 'range' && <Icon name="clock" size={13} color={잣대 === v ? 'var(--brown)' : 'var(--text-sub)'} />}
+            {글}
+          </button>
         ))}
       </div>
       {잣대 === 'range' && (
         <>
+          <div className="fc-range-k">보고 싶은 날짜를 고르세요</div>
           <div className="fc-range">
             <input type="date" value={기간.부터} max={오늘()} onChange={(e) => set기간((g) => ({ ...g, 부터: e.target.value }))} />
             <span>~</span>
