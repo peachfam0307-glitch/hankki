@@ -47,9 +47,18 @@ if (/export const productLink[\s\S]{0,220}isHansalim/.test(cur)) ok('productLink
 else no('productLink() 에 한살림 예외가 없다 — url 이 없으면 네이버 검색으로 폴백한다')
 
 // ③ ⭐ store 가 noBuy 를 «저장»하나 — 오늘 실제로 샌 자리
-const addBlock = store.match(/case 'addShopItem': \{[\s\S]{0,900}?\n {4}\}/)
+// ⛔⛔ [2026-09-18] 옛 판은 `[\s\S]{0,900}?` 로 «길이»에 기대서, 그 덩이에 주석 몇 줄이 붙자
+//    코드가 멀쩡한데도 「검사가 낡았다」로 죽었다. 길이가 아니라 «다음 case 까지»로 자른다.
+const addStart = store.indexOf("case 'addShopItem': {")
+const addBlock = addStart < 0 ? null : [store.slice(addStart, (() => {
+  const 다음 = store.indexOf("\n    case '", addStart + 10)
+  return 다음 < 0 ? addStart + 2000 : 다음
+})())]
 if (!addBlock) no("store.jsx 의 addShopItem 을 못 찾았다 — 검사가 낡았다")
-else if (!/noBuy/.test(addBlock[0])) no('addShopItem 이 noBuy 를 안 담는다 — 담는 순간 표식이 버려져 리스트에서 사러가기가 되살아난다')
+// ⛔⛔ [2026-09-18] 옛 판은 덩이를 «통째로» 보고 noBuy 를 찾았다 — 그런데 그 덩이의 «주석»에도 noBuy 가 적혀 있어서
+//    실제 코드에서 noBuy 를 지워도 초록불이 떴다(일부러 깨서 확인했더니 안 잡혔다 · 규칙 18 ⓘ).
+//    ✅ 주석을 떼고 «코드만» 본다.
+else if (!/noBuy:\s*true/.test(addBlock[0].replace(/\/\/[^\n]*/g, ''))) no('addShopItem 이 noBuy 를 안 담는다 — 담는 순간 표식이 버려져 리스트에서 사러가기가 되살아난다')
 else ok('addShopItem 이 noBuy 를 저장한다')
 
 // ④ 리스트가 「noBuy ＋ 옛 url」 둘 다 보나 (규칙 18 ⓙ — 이미 담아둔 사람)

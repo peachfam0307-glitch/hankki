@@ -31,7 +31,8 @@ const 값 = (k) => { const i = a.indexOf(k); return i >= 0 ? a[i + 1] : null }
 const 부터 = 값('--부터'), 까지 = 값('--까지'), 이벤트들 = (값('--이벤트') || '').split(',').map((s) => s.trim()).filter(Boolean)
 const 날짜꼴 = /^\d{4}-\d{2}-\d{2}$/
 if (!부터 || !까지 || !날짜꼴.test(부터) || !날짜꼴.test(까지)) 죽는다('--부터 --까지 가 없거나 YYYY-MM-DD 가 아니다. 기간 모르는 캡처로는 아무것도 못 나눈다')
-if (이벤트들.length === 0) 죽는다('--이벤트 가 없다')
+if (이벤트들.length === 0 && !a.includes('--전부')) 죽는다('--이벤트 가 없다 (전부 보려면 --전부)')
+
 const 시작ms = Date.parse(`${부터}T00:00:00+09:00`), 끝ms = Date.parse(`${까지}T23:59:59+09:00`)
 if (!(시작ms <= 끝ms)) 죽는다('--부터 가 --까지 보다 뒤다')
 
@@ -44,14 +45,21 @@ const stats = readFileSync(new URL('src/stats.js', 앱뿌리), 'utf8')
 const 코드줄 = stats.split('\n').filter((l) => !/^\s*\/\//.test(l))
 const 글자그대로 = (이름) => 코드줄.find((l) => new RegExp(`(행동보내기|보내기)\\('${이름}'\\)`).test(l))
 const 묶음 = [
-  [/^import_(share|gallery|photo|write)$/, '`import_${갈래}`'],
+  [/^import_(share|gallery|photo|write|instagram|youtube|text|link)$/, '`import_${갈래}`'],   // 🔢 여덟 (ImportScreen.jsx:88-116 실측 2026-09-17 — 넷만 적혀 있어 나머지 넷은 도구가 죽었다)
   [/^cook_long_/, '`cook_long_${자리}`'],
   [/^buy_/, '`buy_${자리}`'],
   [/^(signup|login)_/, "`${새계정 ? 'signup' : 'login'}_${이름}`"],
   [/^decor_have_/, "'decor_have_1'"],
   [/^return_/, "'return_d1'"],
 ]
-const 화면들 = ['home', 'import', 'detail', 'myrecipes', 'shop', 'decor', 'cook', 'editor', 'log', 'profile', 'brag', 'inbox', 'search', 'diary', 'favorites', 'settings']
+// ⛔⛔ [2026-09-17 고침] 여기 화면 목록이 «손으로 적혀» 있었다 — 그래서 낡았다(규칙 22).
+//    실제 stats.js 의 자물쇠엔 없는 `decor`·`settings` 가 들어 있었고, 있는 `cooked` 가 빠져 있었다.
+//    ✅ 이제 stats.js 의 `보내도되는화면` 을 «읽어서» 쓴다. 코드가 바뀌면 이 도구가 저절로 따라간다.
+const 화면들 = (() => {
+  const m = stats.match(/const 보내도되는화면 = new Set\(\[([\s\S]*?)\]\)/)
+  if (!m) 죽는다('stats.js 에서 보내도되는화면 을 못 찾았다 — 이름이 바뀌었나?')
+  return [...m[1].matchAll(/'([a-z0-9_]+)'/g)].map((x) => x[1])
+})()
 const 갈래 = (이름) => {
   const 직접 = 글자그대로(이름)
   if (직접) return { 무늬: 직접.trim(), 파일: 'hankki/src/stats.js', 꼴: '' }
@@ -60,6 +68,26 @@ const 갈래 = (이름) => {
   if (/^bridge/.test(이름)) return { 무늬: 이름, 파일: 'hankki/public/get.html', 꼴: ' (징검다리 get.html)' }
   if (화면들.includes(이름)) return { 무늬: '화면봄(', 파일: 'hankki/src/App.jsx', 꼴: ' (화면 배선 — 모든 화면이 같은 날)' }
   return null
+}
+// ⛔⛔ [2026-09-17 신설 · 창업자가 잡은 사고] 잣대는 «내가 준 이벤트»만 본다.
+//    그래서 brag_shared(심은 날 09-14 21:53)·pick_open(09-15 22:47)을 «안 주고» 「나흘 내리 0」이라고 말했다.
+//    📮 창업자 = "내보낼 물건이 없는 게 아니라 네가 지금까지 안 쟀던 거지.. 이거 재는 도구 만든 거 얼마 안 됐을걸"
+//    ✅ --전부 = stats.js·get.html·화면 목록에서 «스스로» 다 모아 심은 날을 찍는다. 「0」을 말하기 전에 이걸 돌린다.
+const 전부인가 = a.includes('--전부')
+if (전부인가) {
+  const 낱 = new Set(화면들)
+  for (const l of 코드줄) {
+    const m = l.match(/(?:행동보내기|보내기)\('([a-z0-9_]+)'\)/)
+    if (m) 낱.add(m[1])
+  }
+  for (const [re] of 묶음) {
+    const 본 = String(re).replace(/^\/\^|\$\/$|\/$/g, '')
+    const m = 본.match(/^([a-z_]*)\(([a-z|]+)\)$/)
+    if (m) for (const g of m[2].split('|')) 낱.add(m[1] + g)
+    else 낱.add(본.replace(/[\^$\\]/g, ''))
+  }
+  for (const b of ['bridge', 'bridge_go', 'bridge_ios', 'bridge_go_ios']) 낱.add(b)
+  for (const e of [...낱].sort()) if (갈래(e)) 이벤트들.push(e)
 }
 for (const e of 이벤트들) if (!갈래(e)) 죽는다(`「${e}」 를 보내는 줄을 stats.js·get.html·화면 목록 어디서도 못 찾았다 — 이름을 틀리게 쳤나?`)
 

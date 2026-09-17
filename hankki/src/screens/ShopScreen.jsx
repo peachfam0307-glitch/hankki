@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { COACH } from '../coach'
 import { useStore, newId } from '../store'
 import { pantryExpiryCount } from '../pantryExpiry'
+import FoodCostView from './FoodCostView'
 import { 사러나감, 장보기담음 } from '../stats'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
@@ -98,6 +99,21 @@ export default function ShopScreen() {
     try { sessionStorage.setItem('hankki:shopView', v) } catch { /* noop */ }
   }
   const [clearAsk, setClearAsk] = useState(false)
+  const [값편집, set값편집] = useState(null)   // 💰 값 칸이 열린 줄 id (2026-09-17)
+  // 🔑💰 [2026-09-17 시제품] 식비는 «창업자 폰에서만» 켜진다 — 아직 검수 전이라 유저 화면은 그대로여야 한다(규칙 13).
+  //   ⭐ 켜는 법 = 주소 끝에 ?식비=1 을 붙여 한 번 연다 → 그 폰에 저장돼 다음부터 그냥 뜬다. 끄는 법 = ?식비=0
+  //   ⛔ 창업자가 「모두에게 열자」고 하기 전엔 이 열쇠를 떼지 않는다.
+  const [식비켬] = useState(() => {
+    try {
+      const v = new URLSearchParams(location.search).get('식비')
+      if (v === '1') localStorage.setItem('hankki:식비', '1')
+      if (v === '0') localStorage.removeItem('hankki:식비')
+      return localStorage.getItem('hankki:식비') === '1'
+    } catch { return false }
+  })
+  // 💰 합계 = 값을 «적은 줄»만. 안 적은 줄은 0 이 아니라 «모르는 것»이라 개수를 같이 밝힌다.
+  const 값있는수 = shoppingList.filter((i) => Number(i.won) > 0).length
+  const 합계 = shoppingList.reduce((s, i) => s + (Number(i.won) || 0), 0)
   // ✏️ 지금 «고치는 중인» 장보기 줄 — { id, text } · null 이면 아무 줄도 편집 중이 아니다
   const [편집, set편집] = useState(null)
   // 인라인 시트(쇼핑몰 편집·추가/편집 폼) — 뒤로가기로 닫기(비우기 확인은 ConfirmSheet 자체 처리)
@@ -130,6 +146,10 @@ export default function ShopScreen() {
         {/* 장보기가 주(첫인상), 냉장고는 옆 토글(부). 냉장고 기능은 유지하되 앞으로 안 내세운다. */}
         <div className="segment" style={{ marginTop: 4 }}>
           <button type="button" className={`seg ${view === 'shop' ? 'on' : ''}`} onClick={() => setView('shop')}>장보기</button>
+          {/* 💰 [2026-09-17 시제품] 식비 — ⭐«장보기 다음» 자리다(창업자 확정 2026-09-17 *"탭이 장보기-식비-냉장고여야해"*).
+                장을 보고 «바로» 값을 적는 흐름이라 둘이 붙어 있어야 한다. 냉장고는 그 뒤.
+                ⭐«쌓이지» 않는다: 여기 오면 장보기 리스트·주부의 장바구니는 안 그린다(냉장고와 같은 규칙). */}
+          {식비켬 && <button type="button" className={`seg ${view === 'cost' ? 'on' : ''}`} onClick={() => setView('cost')}>식비</button>}
           {/* 🔴 「냉장고 ②」 — 임박·지난 재료 개수. 탭바 점과 같은 셈(`pantryExpiry.js`). 0 이면 숫자가 없다. (창업자 확정 2026-09-06) */}
           <button type="button" className={`seg ${view === 'pantry' ? 'on' : ''}`} data-coach="pantry" onClick={() => setView('pantry')}>
             냉장고{expN > 0 && <span className="seg-count" data-testid="pantry-exp-count">{expN}</span>}
@@ -137,6 +157,7 @@ export default function ShopScreen() {
         </div>
 
         {view === 'pantry' && <PantryView />}
+        {식비켬 && view === 'cost' && <FoodCostView />}
 
         {view === 'shop' && (
         /* 📐📐 [2026-08-13 창업자 지시 *"장보기를 오른쪽에 장바구니를 왼쪽에"*]
@@ -200,7 +221,13 @@ export default function ShopScreen() {
                   autoFocus
                   value={편집.text}
                   onChange={(e) => set편집({ id: it.id, text: e.target.value })}
-                  onBlur={() => { store.updateShopItem(it.id, 편집.text); set편집(null) }}
+                  onBlur={() => {
+                    // ✏️💰 [2026-09-18 창업자 *"수정도 되게 해줘. 입력한거 잘못 적었을때"*]
+                    //   ⭐ 이름을 고칠 때 «값도 같이» 고친다 — 「두부 2500」으로 바꾸면 이름은 두부, 값은 2,500.
+                    //   ⭐ 값을 지우려면 숫자만 빼고 저장하면 된다(두부). ⛔따로 다른 칸을 찾아 누를 필요가 없다.
+                    store.updateShopItem(it.id, 편집.text)
+                    set편집(null)
+                  }}
                   onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') set편집(null) }}
                   style={{
                     flex: 1, minWidth: 0, fontSize: 17, fontFamily: 'inherit', color: 'var(--text)',
@@ -211,7 +238,7 @@ export default function ShopScreen() {
               ) : (
                 <button
                   className="press"
-                  onClick={() => set편집({ id: it.id, text: it.name })}
+                  onClick={() => set편집({ id: it.id, text: it.won ? `${it.name} ${it.won}` : it.name })}
                   aria-label={`${it.name} 고치기`}
                   style={{
                     flex: 1, minWidth: 0, textAlign: 'left', fontSize: 17, fontFamily: 'inherit',
@@ -223,6 +250,26 @@ export default function ShopScreen() {
                   {it.name}
                 </button>
               )}
+              {/* 💰💰 [2026-09-17 시제품 · 창업자 «품목별로 금액 적으면 아래 총합이 뜨게»]
+                    ⭐ 값은 «안 적어도» 된다 — 적은 것만 아래에서 더한다(부분합이라고 밝힌다).
+                    ⛔ 늘 `<input>` 이 아니다 — 이름 편집과 같은 규칙으로 «누른 줄만» 칸이 열린다.
+                    🔢 9,999,999 상한·앞 0 무시는 store 가 맡는다(0 이면 칸을 지운다). */}
+              {식비켬 && (값편집 === it.id ? (
+                <input
+                  autoFocus
+                  inputMode="numeric"
+                  defaultValue={it.won || ''}
+                  placeholder="0"
+                  onBlur={(e) => { store.setShopItemWon(it.id, e.target.value.replace(/[^0-9]/g, '')); set값편집(null) }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') set값편집(null) }}
+                  style={{ width: 84, fontSize: 15.5, fontFamily: 'inherit', textAlign: 'right', color: 'var(--text)', background: 'var(--cream)', border: '1.5px solid var(--brown)', borderRadius: 9, padding: '5px 8px', outline: 'none' }}
+                />
+              ) : (
+                <button className="press" onClick={() => set값편집(it.id)} aria-label={`${it.name} 값 적기`}
+                  style={{ fontSize: 15.5, fontWeight: it.won ? 700 : 400, color: it.won ? 'var(--text)' : 'var(--sand)', background: 'none', border: 'none', padding: '5px 2px', whiteSpace: 'nowrap' }}>
+                  {it.won ? `${it.won.toLocaleString('ko-KR')}원` : '값'}
+                </button>
+              ))}
               {/* ⛔ `noBuy`(한살림) 는 사러가기를 안 그린다 — 담을 때 붙여 둔 표식이다.
                   ⚠️ 이 줄이 없으면 `buyUrlFor()` 가 url 없는 줄을 **쿠팡·네이버 검색으로 보내서**
                      큐레이션에서 링크를 뺀 게 통째로 헛일이 된다(담은 뒤에 새는 구멍). */}
@@ -239,9 +286,26 @@ export default function ShopScreen() {
         )}
         {/* 💡 **고칠 수 있다는 걸 알려준다** — 누를 수 있어도 «누를 수 있는 줄 모르면» 없는 기능이다.
               ⭐ 예를 «창업자가 말한 그대로» 적는다 — *"양파 1망 돼지고기 600g은 맞지."* */}
+        {/* 💰💰 담은 것 합계 — «값을 적은 줄만» 더한다. 그래서 「값 적은 것 N개」를 «꼭» 같이 적는다.
+              ⛔ 이 수를 「장본 값」이라고 부르지 않는다 — 안 적은 줄이 빠져 있어 총액이 아니다(부분합).
+              ⭐ 「식비로 적기」 = 「완료 지우기」를 안 누르는 사람에게도 길을 준다(같은 일을 한다). */}
+        {식비켬 && 값있는수 > 0 && (
+          <div className="sum-box">
+            <div className="sum-row">
+              <span>담은 것 합계 <b className="sum-n">값 적은 것 {값있는수}개</b></span>
+              <b className="sum-v">{합계.toLocaleString('ko-KR')}원</b>
+            </div>
+            {/* ⛔ 예전엔 «체크한 줄»만 옮기면서도 늘 「적었어요」라고 말했다 — 창업자가 값만 적고 눌렀을 때 아무 일도 안 났다.
+                  ✅ 이제 값이 적힌 줄을 전부 옮기고, 실제로 옮긴 «개수와 금액»을 말한다. */}
+            <button className="press sum-btn" onClick={() => { store.shopToFoodCost(); nav.showToast(`식비에 적었어요 · ${값있는수}개 ${합계.toLocaleString('ko-KR')}원`) }}>
+              값 적은 것 식비로 적기
+            </button>
+          </div>
+        )}
         {shoppingList.length > 0 && (
           <div className="t-sub" style={{ fontSize: 16.5, marginTop: 18, lineHeight: 1.85 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
+            {식비켬 && <><br />값도 같이 적으려면 <b style={{ color: 'var(--brown)' }}>「두부 1990」</b> 처럼 뒤에 금액을 붙여 보세요.</>}
           </div>
         )}
 
