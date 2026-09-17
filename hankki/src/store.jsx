@@ -57,6 +57,22 @@ const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행�
 // 장보기 쇼핑몰 바로가기 기본 목록. url = 홈, search = 재료 검색(‘{q}’에 재료명 치환).
 // 나중에 제휴(어필리에이트) 태그를 이 url/search에 붙이면 그대로 수수료 링크가 됨.
 // iconType: 'emoji' | 'label'(글자 타일). 재료 아이콘과 동일한 방식.
+// 🏪🏪 식비 「가서 보고 와서 적기」 기본 목록 (창업자 확정 2026-09-17 = *"쿠팡 컬리 네이버쇼핑, 롯데마트 이마트, 쿠팡츠 배민 요기요 정도면 될까"*)
+//   ⭐ 유저가 «편집으로 더하고 지운다» — 자주 쓰는 곳은 «누른 순서»로 저절로 앞에 온다(손으로 끌어 옮기지 않아도 된다).
+//   🛒 쿠팡은 **파트너스 링크가 아니라 그냥 주소**다 — 누르면 24시간 개인 구매가 실적에 섞이기 때문(절대원칙 2026-09-15).
+//      ⏳ 유저에게 열 때 파트너스 링크로 바꾼다(창업자 *"유저들은 링크로. 그래야 우리도 수익이 나지"*) — 단축코드는 창업자가 만든다.
+//   ⚠️ 주소는 2026-09-17 에 찾아 적었다. 이 환경은 사람이 보는 웹을 못 열어 «눌러보진 못했다» — 틀리면 편집으로 고친다.
+const 기본식비가게 = [
+  { id: 'cs_coupang', name: '쿠팡', url: 'https://www.coupang.com', k: 'shop' },
+  { id: 'cs_kurly', name: '마켓컬리', url: 'https://www.kurly.com', k: 'shop' },
+  { id: 'cs_naver', name: '네이버쇼핑', url: 'https://shopping.naver.com', k: 'shop' },
+  { id: 'cs_lottemart', name: '롯데마트', url: 'https://lottemartzetta.com', k: 'shop' },
+  { id: 'cs_emart', name: '이마트몰', url: 'https://emart.ssg.com', k: 'shop' },
+  { id: 'cs_eats', name: '쿠팡이츠', url: 'https://www.coupangeats.com', k: 'out' },
+  { id: 'cs_baemin', name: '배달의민족', url: 'https://baemin.com', k: 'out' },
+  { id: 'cs_yogiyo', name: '요기요', url: 'https://www.yogiyo.co.kr/mobile/', k: 'out' },
+]
+
 const DEFAULT_SHOPS = [
   { id: 'coupang', name: '쿠팡', icon: 'box', iconType: 'icon', url: 'https://www.coupang.com', search: 'https://www.coupang.com/np/search?q={q}' },
   { id: 'kurly', name: '마켓컬리', icon: 'bag', iconType: 'icon', url: 'https://www.kurly.com', search: 'https://www.kurly.com/search?sword={q}' },
@@ -932,6 +948,7 @@ function initialState() {
       shoppingList: foldWishIntoShopping(saved.wishlist, saved.shoppingList || migrateShopping()),
       pantry: saved.pantry || [],
       foodCost: Array.isArray(saved.foodCost) ? saved.foodCost : [],
+      costShops: Array.isArray(saved.costShops) && saved.costShops.length ? saved.costShops : [...기본식비가게],
       diary,
       sampleGone: saved.sampleGone || false,
     }
@@ -952,6 +969,7 @@ function initialState() {
     shoppingList: [],
     pantry: [],
     foodCost: [],   // 💰 식비 줄(2026-09-17 시제품 · hold) — {id,d:'YYYY-MM-DD',k:'shop'|'out',won,memo?,items?:[{n,won}]}
+    costShops: [...기본식비가게],   // 🏪 「가서 보고 와서 적기」 목록 — 유저가 더하고 지운다
     // 📔 처음 켠 사람은 일기 탭이 텅 비어 「뭘 하는 곳인지」 안 보인다 → 샘플 한 장 놓아 둔다.
     //    ⏳ 스위치가 꺼져 있으면 빈 채로 둔다(까닭 = `sampleDiary.js` 맨 위)
     diary: SAMPLE_READY ? [makeSampleDiary()] : [],
@@ -1214,6 +1232,23 @@ function reducer(state, action) {
       if (Array.isArray(action.entry.items) && action.entry.items.length) e.items = action.entry.items
       return { ...state, foodCost: [e, ...(state.foodCost || [])] }
     }
+    // 🏪 식비 가게 — 더하기 · 지우기 · 「누른 때」 기억(자주 쓰는 곳이 앞으로 온다)
+    case 'addCostShop': {
+      const name = (action.shop?.name || '').trim()
+      let url = (action.shop?.url || '').trim()
+      if (!name || !url) return state
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url
+      const 목록 = state.costShops || []
+      if (목록.some((s) => s.url === url)) return state
+      return { ...state, costShops: [...목록, { id: newId(), name: name.slice(0, 20), url, k: action.shop.k === 'out' ? 'out' : 'shop' }] }
+    }
+    case 'removeCostShop': {
+      return { ...state, costShops: (state.costShops || []).filter((s) => s.id !== action.id) }
+    }
+    case 'usedCostShop': {
+      // ⭐ 누를 때마다 시각을 적어 둔다 — 화면은 이 값으로 «최근 쓴 순»으로 줄을 세운다(손으로 끌어 옮길 필요가 없다)
+      return { ...state, costShops: (state.costShops || []).map((s) => (s.id === action.id ? { ...s, at: Date.now() } : s)) }
+    }
     case 'removeFoodCost': {
       return { ...state, foodCost: (state.foodCost || []).filter((e) => e.id !== action.id) }
     }
@@ -1305,6 +1340,7 @@ function reducer(state, action) {
         shoppingList: foldWishIntoShopping(d.wishlist, d.shoppingList || []),
         pantry: d.pantry || [],
         foodCost: Array.isArray(d.foodCost) ? d.foodCost : (state.foodCost || []),   // 💰 백업에 식비가 없으면(옛 백업) 지금 폰 것을 지킨다
+        costShops: Array.isArray(d.costShops) && d.costShops.length ? d.costShops : (state.costShops || [...기본식비가게]),
         diary: d.diary || [],
       }
     }
@@ -1457,6 +1493,9 @@ export function StoreProvider({ children }) {
     clearDoneShopItems: useCallback(() => dispatch({ type: 'clearDoneShopItems' }), []),
     setShopItemWon: useCallback((id, won) => dispatch({ type: 'setShopItemWon', id, won }), []),
     shopToFoodCost: useCallback(() => dispatch({ type: 'shopToFoodCost' }), []),
+    addCostShop: useCallback((shop) => dispatch({ type: 'addCostShop', shop }), []),
+    removeCostShop: useCallback((id) => dispatch({ type: 'removeCostShop', id }), []),
+    usedCostShop: useCallback((id) => dispatch({ type: 'usedCostShop', id }), []),
     addFoodCost: useCallback((entry) => dispatch({ type: 'addFoodCost', entry }), []),
     removeFoodCost: useCallback((id) => dispatch({ type: 'removeFoodCost', id }), []),
     clearShopItemsAll: useCallback(() => dispatch({ type: 'clearShopItemsAll' }), []),

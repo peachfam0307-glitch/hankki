@@ -146,12 +146,14 @@ export default function ShopScreen() {
         {/* 장보기가 주(첫인상), 냉장고는 옆 토글(부). 냉장고 기능은 유지하되 앞으로 안 내세운다. */}
         <div className="segment" style={{ marginTop: 4 }}>
           <button type="button" className={`seg ${view === 'shop' ? 'on' : ''}`} onClick={() => setView('shop')}>장보기</button>
+          {/* 💰 [2026-09-17 시제품] 식비 — ⭐«장보기 다음» 자리다(창업자 확정 2026-09-17 *"탭이 장보기-식비-냉장고여야해"*).
+                장을 보고 «바로» 값을 적는 흐름이라 둘이 붙어 있어야 한다. 냉장고는 그 뒤.
+                ⭐«쌓이지» 않는다: 여기 오면 장보기 리스트·주부의 장바구니는 안 그린다(냉장고와 같은 규칙). */}
+          {식비켬 && <button type="button" className={`seg ${view === 'cost' ? 'on' : ''}`} onClick={() => setView('cost')}>식비</button>}
           {/* 🔴 「냉장고 ②」 — 임박·지난 재료 개수. 탭바 점과 같은 셈(`pantryExpiry.js`). 0 이면 숫자가 없다. (창업자 확정 2026-09-06) */}
           <button type="button" className={`seg ${view === 'pantry' ? 'on' : ''}`} data-coach="pantry" onClick={() => setView('pantry')}>
             냉장고{expN > 0 && <span className="seg-count" data-testid="pantry-exp-count">{expN}</span>}
           </button>
-          {/* 💰 [2026-09-17 시제품] 식비 — 셋째 칸. ⭐«쌓이지» 않는다: 여기 오면 장보기 리스트·주부의 장바구니는 안 그린다(냉장고와 같은 규칙). */}
-          {식비켬 && <button type="button" className={`seg ${view === 'cost' ? 'on' : ''}`} onClick={() => setView('cost')}>식비</button>}
         </div>
 
         {view === 'pantry' && <PantryView />}

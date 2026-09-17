@@ -41,28 +41,55 @@ function 주의첫날(날짜 = 오늘()) {
 const 날보기 = (s) => `${Number(s.slice(5, 7))}.${Number(s.slice(8, 10))}`
 const 요일보기 = (s) => '일월화수목금토'[new Date(s + 'T00:00:00Z').getUTCDay()]
 
+// 📅 달 첫날·끝날 (KST 날짜 글자만 다룬다)
+const 달첫날 = (날짜) => 날짜.slice(0, 8) + '01'
+const 달끝날 = (날짜) => {
+  const [y, m] = 날짜.split('-').map(Number)
+  return `${날짜.slice(0, 8)}${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`
+}
+const 달보기 = (s) => `${Number(s.slice(5, 7))}월`
+
 export default function FoodCostView() {
   const store = useStore()
   const nav = useNav()
   const [적기, set적기] = useState(null)  // null | 'out' | 'shop'
   const [지울것, set지울것] = useState(null)
+  // 📅📅 [2026-09-17 창업자] *"주별 월별로도 통계 볼수있어? 아님 날짜를 며칠부터 며칠까지 정해서도?"* → 셋 다 된다.
+  //   ⭐ 기본은 «주» — 장 보는 리듬이 주라서다. 달·기간은 눌러서 바꾼다.
+  //   ⛔ 기록은 «전부» 남아 있다. 여기 8칸·12칸은 «보여주는 범위»일 뿐이다(5년이 쌓여도 안 지운다).
+  const [잣대, set잣대] = useState('week')   // week | month | range
+  const [기간, set기간] = useState(() => ({ 부터: 며칠뒤(todayKST(), -29), 까지: todayKST() }))
 
   const 줄들 = store.foodCost || []
-  const 이번주 = 주의첫날()
-  const 주끝 = 며칠뒤(이번주, 6)
-  const 이번주줄 = 줄들.filter((e) => e.d >= 이번주 && e.d <= 주끝)
-  const 주합 = 이번주줄.reduce((s, e) => s + e.won, 0)
-  const 장보기합 = 이번주줄.filter((e) => e.k === 'shop').reduce((s, e) => s + e.won, 0)
+
+  // 🗓 지금 보는 구간 — 잣대에 따라 갈린다
+  const 구간 = 잣대 === 'week'
+    ? { 부터: 주의첫날(), 까지: 며칠뒤(주의첫날(), 6), 이름: '이번 주' }
+    : 잣대 === 'month'
+      ? { 부터: 달첫날(오늘()), 까지: 달끝날(오늘()), 이름: 달보기(오늘()) }
+      : { 부터: 기간.부터 <= 기간.까지 ? 기간.부터 : 기간.까지, 까지: 기간.부터 <= 기간.까지 ? 기간.까지 : 기간.부터, 이름: '고른 기간' }
+
+  const 구간줄 = 줄들.filter((e) => e.d >= 구간.부터 && e.d <= 구간.까지)
+  const 주합 = 구간줄.reduce((s, e) => s + e.won, 0)
+  const 장보기합 = 구간줄.filter((e) => e.k === 'shop').reduce((s, e) => s + e.won, 0)
   const 외식합 = 주합 - 장보기합
 
-  // 📊 최근 8주 — ⛔5년치를 매번 훑지 않는다(관문 3차). 8주 밖은 안 보여준다.
-  const 여덟주 = []
-  for (let i = 7; i >= 0; i--) {
-    const 첫 = 며칠뒤(이번주, -7 * i)
-    const 끝 = 며칠뒤(첫, 6)
-    여덟주.push({ 첫, 합: 줄들.filter((e) => e.d >= 첫 && e.d <= 끝).reduce((s, e) => s + e.won, 0) })
+  // 📊 막대 — 주면 8주, 달이면 12달. ⛔5년치를 매번 훑지 않는다(관문 3차).
+  const 칸들 = []
+  if (잣대 === 'month') {
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(오늘() + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() - i, 1)
+      const 첫 = d.toISOString().slice(0, 10)
+      칸들.push({ 첫, 끝: 달끝날(첫), 이름: 달보기(첫) })
+    }
+  } else {
+    for (let i = 7; i >= 0; i--) {
+      const 첫 = 며칠뒤(주의첫날(), -7 * i)
+      칸들.push({ 첫, 끝: 며칠뒤(첫, 6), 이름: `${날보기(첫)}~` })
+    }
   }
-  const 지난주합 = 여덟주[6]?.합 || 0
+  const 여덟주 = 칸들.map((c) => ({ ...c, 합: 줄들.filter((e) => e.d >= c.첫 && e.d <= c.끝).reduce((s, e) => s + e.won, 0) }))
+  const 지난주합 = 여덟주[여덟주.length - 2]?.합 || 0
   const 쓴주 = 여덟주.filter((w) => w.합 > 0)
   const 주평균 = 쓴주.length ? Math.round(쓴주.reduce((s, w) => s + w.합, 0) / 쓴주.length) : 0
   const 제일큰주 = Math.max(1, ...여덟주.map((w) => w.합))
@@ -90,14 +117,28 @@ export default function FoodCostView() {
 
   return (
     <div className="fc">
-      {/* ⭐ 이번 «주» — 제일 크게. 지난주·평균을 옆에 둬서 많이 썼는지 «견줄» 수 있게 한다 */}
+      {/* 📅 잣대 고르기 — 주(기본) · 달 · 기간. 창업자 2026-09-17 *"주별 월별로도? 날짜를 며칠부터 며칠까지도?"* */}
+      <div className="fc-scale">
+        {[['week', '주'], ['month', '달'], ['range', '기간']].map(([v, 글]) => (
+          <button key={v} className={`press ${잣대 === v ? 'on' : ''}`} onClick={() => set잣대(v)}>{글}</button>
+        ))}
+      </div>
+      {잣대 === 'range' && (
+        <div className="fc-range">
+          <input type="date" value={기간.부터} max={오늘()} onChange={(e) => set기간((g) => ({ ...g, 부터: e.target.value }))} />
+          <span>~</span>
+          <input type="date" value={기간.까지} max={오늘()} onChange={(e) => set기간((g) => ({ ...g, 까지: e.target.value }))} />
+        </div>
+      )}
+
+      {/* ⭐ 고른 구간 — 제일 크게. 지난 칸·평균을 옆에 둬서 많이 썼는지 «견줄» 수 있게 한다 */}
       <div className="fc-big">
-        <div className="fc-k">이번 주 식비 <span className="fc-date">{날보기(이번주)} ~ {날보기(주끝)}</span></div>
+        <div className="fc-k">{구간.이름} 식비 <span className="fc-date">{날보기(구간.부터)} ~ {날보기(구간.까지)}</span></div>
         <div className="fc-v">{돈(주합)}<em>원</em></div>
         {견줄만한가 && (
           <div className="fc-ref">
-            {지난주합 > 0 && <span>지난주 <b>{돈(지난주합)}원</b></span>}
-            <span>주 평균 <b>{돈(주평균)}원</b></span>
+            {지난주합 > 0 && 잣대 !== 'range' && <span>지난 {잣대 === 'month' ? '달' : '주'} <b>{돈(지난주합)}원</b></span>}
+            <span>{잣대 === 'month' ? '달' : '주'} 평균 <b>{돈(주평균)}원</b></span>
           </div>
         )}
       </div>
@@ -123,28 +164,28 @@ export default function FoodCostView() {
         {/* 📊 8주 막대 — 쓴 주가 하나뿐이면 나머지 일곱은 납작한 선이라 «허전하기만» 하다(창업자 실물 2026-09-17) */}
         {견줄만한가 && (
           <div className="fc-half">
-            <div className="fc-hk">8주 흐름</div>
+            <div className="fc-hk">{잣대 === 'month' ? '12달' : '8주'} 흐름</div>
             <div className="fc-weeks">
               {여덟주.map((w, i) => (
-                <b key={w.첫} className={i === 7 ? 'now' : ''} style={{ height: `${Math.max(3, Math.round((w.합 / 제일큰주) * 44))}px` }} />
+                <b key={w.첫} className={i === 여덟주.length - 1 ? 'now' : ''} style={{ height: `${Math.max(3, Math.round((w.합 / 제일큰주) * 44))}px` }} />
               ))}
             </div>
-            <div className="fc-hs">주마다 얼마 썼나</div>
+            <div className="fc-hs">{잣대 === 'month' ? '달' : '주'}마다 얼마 썼나</div>
           </div>
         )}
       </div>
 
       <button className="press fc-out-btn" onClick={() => set적기('out')}>외식·배달 적기</button>
 
-      {/* 📜 적은 줄 — 주마다 묶는다. ⛔8주 밖은 안 그린다(관문 3차) */}
-      {여덟주.slice().reverse().map((w) => {
-        const 끝 = 며칠뒤(w.첫, 6)
+      {/* 📜 적은 줄 — 주(달)마다 묶는다. 「기간」을 고르면 그 안만 한 덩이로 본다. */}
+      {(잣대 === 'range' ? [{ 첫: 구간.부터, 끝: 구간.까지, 합: 주합 }] : 여덟주.slice().reverse()).map((w) => {
+        const 끝 = w.끝
         const 안 = 줄들.filter((e) => e.d >= w.첫 && e.d <= 끝).sort((a, b) => (a.d < b.d ? 1 : -1))
         if (!안.length) return null
         return (
           <div key={w.첫}>
             <div className="fc-wk-head">
-              <span>{날보기(w.첫)} ~ {날보기(끝)}{w.첫 === 이번주 ? ' · 이번 주' : ''}</span>
+              <span>{날보기(w.첫)} ~ {날보기(끝)}{w.첫 === 구간.부터 && 잣대 !== 'range' ? ` · ${구간.이름}` : ''}</span>
               <b>{돈(w.합)}원</b>
             </div>
             <div className="fc-card">
@@ -185,12 +226,6 @@ export default function FoodCostView() {
 //      📮 창업자 2026-09-17 = *"나는 그렇게 해주고 유저들은 링크로. 그래야 우리도 수익이 나지."*
 //      → ⏳ 유저에게 열 때 쿠팡을 파트너스 링크로 바꾼다. ⛔단축코드는 창업자만 만들 수 있어 «받아서» 박는다(ingLinks.js 와 같다).
 //         지금은 식비가 창업자 열쇠 뒤에만 있어서 전부 그냥 주소다.
-const 배달가게 = [
-  { id: 'baemin', name: '배달의민족', url: 'https://baemin.com' },
-  { id: 'coupangeats', name: '쿠팡이츠', url: 'https://www.coupangeats.com' },
-  { id: 'yogiyo', name: '요기요', url: 'https://www.yogiyo.co.kr/mobile/' },
-]
-
 // ⌨️ 적는 시트 — 가계부에서 «0·00·000 키»만 가져왔다(수입·이체·결제수단은 안 만든다 · 식비만 보는 앱이라)
 function 적기시트({ 갈래, 닫기, store, nav }) {
   useModalBack(닫기)
@@ -198,23 +233,34 @@ function 적기시트({ 갈래, 닫기, store, nav }) {
   const [메모, set메모] = useState('')
   const [k, setK] = useState(갈래)
   const [날, set날] = useState(오늘())
+  const [가게추가, set가게추가] = useState(false)
+  const [지울가게, set지울가게] = useState(null)
+  // 🧮 계산기 모드 — 창업자 2026-09-17 *"계산기 모드도 쓸수있나??"*
+  //   ⭐ 여러 곳에서 산 걸 «더해 가며» 한 줄로 적을 때 쓴다(가계부 스샷의 그 방식).
+  //   ⛔ 곱하기·나누기는 안 넣는다 — 영수증 값을 더하는 자리라 ＋ 하나면 된다(시끄러우면 안 쓴다)
+  const [더한것, set더한것] = useState([])
   // 🏪 갈래에 따라 다른 목록 — 장보기는 «앱의 가게 목록»(유저가 고친 게 그대로), 외식은 배달 앱 셋
-  const 가게들 = k === 'out' ? 배달가게 : (store.shops || []).filter((s) => s.url)
+  // 🏪 갈래에 맞는 곳만 · «최근 누른 순»으로 앞에 온다(창업자 «자주쓰는 곳을 앞으로»)
+  const 가게들 = (store.costShops || []).filter((s) => (s.k === 'out') === (k === 'out')).sort((a, b) => (b.at || 0) - (a.at || 0))
   const 값 = Number(글) || 0
+  const 합계값 = 더한것.reduce((s, n) => s + n, 0) + 값
   const 누름 = (키) => {
     if (키 === '⌫') return set글((s) => s.slice(0, -1))
-    if (키 === '지움') return set글('')
+    if (키 === '＋') return 더하기()
+    if (키 === '지움') { set더한것([]); return set글('') }
     set글((s) => {
       const 새것 = (s + 키).replace(/^0+/, '')
       return 새것.length > 7 ? s : 새것
     })
   }
   const 저장 = () => {
-    if (!값) return
-    store.addFoodCost({ d: 날, k, won: 값, memo: 메모.trim() || undefined })
+    if (!합계값) return
+    store.addFoodCost({ d: 날, k, won: 합계값, memo: 메모.trim() || undefined })
     nav.showToast('적었어요')
     닫기()
   }
+  // 🧮 ＋ = 지금 친 값을 «담아 두고» 칸을 비운다. 다음 영수증을 이어서 친다.
+  const 더하기 = () => { if (!값) return; set더한것((a) => [...a, 값]); set글('') }
   return (
     <Portal>
       <div className="sheet-mask" onClick={닫기}>
@@ -223,7 +269,15 @@ function 적기시트({ 갈래, 닫기, store, nav }) {
             <button className={`press ${k === 'shop' ? 'on' : ''}`} onClick={() => setK('shop')}>장보기</button>
             <button className={`press ${k === 'out' ? 'on' : ''}`} onClick={() => setK('out')}>외식·배달</button>
           </div>
-          <div className="fc-in">{값 ? 돈(값) : '0'}<b>원</b></div>
+          {/* 🧮 계산기 — 더한 것이 있으면 위에 줄줄이 보여주고 «합계»를 크게 */}
+          {더한것.length > 0 && (
+            <div className="fc-calc">
+              {더한것.map((n, i) => <span key={i}>{돈(n)}</span>)}
+              <span className="plus">＋</span>
+              <span>{돈(값)}</span>
+            </div>
+          )}
+          <div className="fc-in">{돈(합계값) || '0'}<b>원</b></div>
           {/* ⭐ 메모는 «안 적어도» 저장된다 — 필수로 하면 3초가 10초가 된다(설계 1차) */}
           <input className="fc-memo" value={메모} onChange={(e) => set메모(e.target.value.slice(0, 40))}
             placeholder={k === 'out' ? '뭐 먹었어요? (안 적어도 돼요)' : '어디서? (안 적어도 돼요)'} />
@@ -234,8 +288,11 @@ function 적기시트({ 갈래, 닫기, store, nav }) {
               <div className="fc-shops-k">가서 보고 올까요?</div>
               <div className="fc-shops-row">
                 {가게들.map((s) => (
-                  <button key={s.id} className="press fc-shop" onClick={() => { set메모(s.name); openExternal(s.url) }}>{s.name}</button>
+                  <button key={s.id} className="press fc-shop" onClick={() => { set메모(s.name); store.usedCostShop(s.id); openExternal(s.url) }}
+                    onContextMenu={(e) => { e.preventDefault(); set지울가게(s) }}>{s.name}</button>
                 ))}
+                {/* ➕ 자주 가는 곳을 «내가» 더한다 — 이름과 주소만. 꾹 누르면 지운다. */}
+                <button className="press fc-shop add" onClick={() => set가게추가(true)}>＋ 추가</button>
               </div>
             </div>
           )}
@@ -245,13 +302,36 @@ function 적기시트({ 갈래, 닫기, store, nav }) {
             <button className="press" disabled={날 >= 오늘()} onClick={() => set날((d) => (d < 오늘() ? 며칠뒤(d, 1) : d))}>›</button>
           </div>
           <div className="fc-keys">
-            {['1', '2', '3', '⌫', '4', '5', '6', '00', '7', '8', '9', '000', '', '0', '', '지움'].map((키, i) => (
+            {['1', '2', '3', '⌫', '4', '5', '6', '00', '7', '8', '9', '000', '지움', '0', '', '＋'].map((키, i) => (
               키 === ''
                 ? <span key={i} />
-                : <button key={i} className={`press fc-key${/^(⌫|지움)$/.test(키) ? ' bk' : ''}${/^0{2,3}$/.test(키) ? ' zz' : ''}`} onClick={() => 누름(키)}>{키}</button>
+                : <button key={i} className={`press fc-key${/^(⌫|지움)$/.test(키) ? ' bk' : ''}${/^0{2,3}$/.test(키) ? ' zz' : ''}${키 === '＋' ? ' plus' : ''}`} onClick={() => 누름(키)}>{키}</button>
             ))}
           </div>
-          <button className="press fc-save" disabled={!값} onClick={저장}>적었어요</button>
+          <button className="press fc-save" disabled={!합계값} onClick={저장}>적었어요</button>
+        </div>
+      </div>
+      {가게추가 && <가게추가시트 갈래={k} 닫기={() => set가게추가(false)} store={store} nav={nav} />}
+      {지울가게 && (
+        <지움확인2 이름={지울가게.name} 닫기={() => set지울가게(null)} 지움={() => { store.removeCostShop(지울가게.id); set지울가게(null) }} />
+      )}
+    </Portal>
+  )
+}
+
+// 🗑 가게 지우기 확인 — 꾹 누르면 뜬다(실수로 사라지면 안 된다)
+function 지움확인2({ 이름, 닫기, 지움 }) {
+  useModalBack(닫기)
+  return (
+    <Portal>
+      <div className="sheet-mask" onClick={닫기}>
+        <div className="sheet fc-ask" onClick={(e) => e.stopPropagation()}>
+          <div className="fc-ask-t">「{이름}」을 목록에서 뺄까요?</div>
+          <div className="fc-ask-s">적어둔 식비는 그대로 남아요</div>
+          <div className="fc-ask-btns">
+            <button className="press" onClick={닫기}>그대로 둘게요</button>
+            <button className="press danger" onClick={지움}>뺄게요</button>
+          </div>
         </div>
       </div>
     </Portal>
@@ -271,6 +351,32 @@ function 지움확인({ 줄, 닫기, 지움 }) {
             <button className="press" onClick={닫기}>그대로 둘게요</button>
             <button className="press danger" onClick={지움}>지울게요</button>
           </div>
+        </div>
+      </div>
+    </Portal>
+  )
+}
+
+// 🏪➕ 자주 가는 곳 더하기 — 이름·주소만. ⛔우리가 목록을 정하지 않는다(사람마다 다니는 곳이 다르다).
+function 가게추가시트({ 갈래, 닫기, store, nav }) {
+  useModalBack(닫기)
+  const [이름, set이름] = useState('')
+  const [주소, set주소] = useState('')
+  const 저장 = () => {
+    if (!이름.trim() || !주소.trim()) return
+    store.addCostShop({ name: 이름, url: 주소, k: 갈래 })
+    nav.showToast('더했어요')
+    닫기()
+  }
+  return (
+    <Portal>
+      <div className="sheet-mask" onClick={닫기}>
+        <div className="sheet fc-sheet" onClick={(e) => e.stopPropagation()}>
+          <div className="fc-ask-t" style={{ marginBottom: 12 }}>자주 가는 곳 더하기</div>
+          <input className="fc-memo" value={이름} onChange={(e) => set이름(e.target.value.slice(0, 20))} placeholder="이름 (예: 홈플러스)" />
+          <input className="fc-memo" style={{ marginTop: 8 }} value={주소} onChange={(e) => set주소(e.target.value.trim())} placeholder="주소 (예: homeplus.co.kr)" inputMode="url" />
+          <div className="fc-hs" style={{ textAlign: 'left', marginTop: 8 }}>주소는 그 앱·사이트를 열었을 때 주소창에 뜨는 글자예요</div>
+          <button className="press fc-save" disabled={!이름.trim() || !주소.trim()} onClick={저장}>더할게요</button>
         </div>
       </div>
     </Portal>
