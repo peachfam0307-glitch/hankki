@@ -17,7 +17,7 @@
 //   node scripts/release-calendar.mjs --brief    세션 시작용 (가장 가까운 문 하나)
 //   node scripts/release-calendar.mjs --check    임박(D-7 이내)하면 크게 알린다
 //   node scripts/release-calendar.mjs --on 2026-09-01   그날 열리는 컷 «키 목록» (검수판 만들 때)
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
 
@@ -179,7 +179,13 @@ export function cartItems() {
   const out = []
   let cat = ''
   let catIcon = ''
-  for (const line of read('src/data/curation.js').split('\n')) {
+  const 줄들 = read('src/data/curation.js').split('\n')
+  for (let 번호 = 0; 번호 < 줄들.length; 번호++) {
+    const line = 줄들[번호]
+    // 🧾 [2026-09-17 밤] 원재료는 «다음 줄»에 적히기도 한다(9/19 셋이 그랬다 — 한 줄로 보면 「없다」로 잘못 찍힌다).
+    //    제품 덩이는 다음 제품 「{ name:」 이나 「],」 전까지다 — 그 안에서 찾는다.
+    const 덩이 = [line]
+    for (let j = 번호 + 1; j < 줄들.length && !/^\s*\{\s*name:/.test(줄들[j]) && !/^\s*\],?\s*$/.test(줄들[j]); j++) 덩이.push(줄들[j])
     if (/^\s*(\/\/|\*|\/\*)/.test(line)) continue
     const c = line.match(/^\s*cat:\s*'([^']+)'/)
     if (c) {
@@ -198,9 +204,48 @@ export function cartItems() {
       ownIcon: f('icon'), icon: f('icon') || catIcon, catIcon,
       // 🔗 [2026-09-04] 「사러가기」가 «제 상품»으로 가나 — 검수 때 창업자에게 링크를 달라고 말하려고 같이 읽는다
       url: f('url'), mallRaw: f('mall'),
+      // 🧾 [절대원칙 · 창업자 2026-09-17] 검수 때 «원재료 캡처»를 달라고 도구가 말한다 — 있나 없나만 본다
+      hasIng: 덩이.some((l) => /\bingredients:\s*'/.test(l)),
     })
   }
   return out
+}
+
+// 🖼🖼 **[절대원칙 · 창업자 2026-09-17] 장바구니 제품이 열릴 때 «아이콘도 같이» 보여준다.**
+//    📮 창업자 = *"나중에 올라갈때 아이콘도같이보여줘 절대원칙"*
+//    🌲 왜 = 9/17 에 창업자가 폰에서 *"주부의장바구니 아이콘 다른게 좀 있어"* — 제 그림이 없는 제품이 «갈래 대표»를
+//       물려받아 베이컨이 슬라이스햄으로, 또띠아가 식빵으로 떠 있었다. 창업자가 8/12 에 59컷을 다 줬는데 46컷을 안 썼다.
+//    ✅ 그래서 검수 자리(--on · --tomorrow)에서 제품마다 «무슨 그림이 뜨나»를 글자로 찍고, 앱 실제 크기(42px)
+//       판 PNG 를 같이 만든다. ⚠️ 갈래 그림을 물려받는 제품은 「⚠️물려받음」으로 찍는다 — 창업자가 그 자리에서 판정한다.
+export function 장바구니그림판(items, 날) {
+  if (!items.length) return null
+  const 그림폴더 = join(APP, 'src/assets/curation')
+  console.error(`\n🖼 **이날 열리는 장바구니 제품의 «그림»** (절대원칙 2026-09-17 · 창업자가 같이 본다)`)
+  const rows = []
+  for (const it of items) {
+    const 파일 = join(그림폴더, `${it.icon}.png`)
+    const 있음 = existsSync(파일)
+    const 꼴 = !있음 ? '⛔ 그림 파일 없음' : it.ownIcon ? '제 그림' : `⚠️ 물려받음(${it.cat} 갈래 대표)`
+    console.error(`   · ${it.brand ? it.brand + ' ' : ''}${it.name} — ${it.icon || '(없음)'} · ${꼴}`)
+    if (!있음) continue
+    const u = 'data:image/png;base64,' + readFileSync(파일).toString('base64')
+    rows.push(`<tr><td class=nm><b>${it.brand ? it.brand + ' ' : ''}${it.name}</b><br><span class=k>${it.icon} · ${꼴}</span></td><td><img src="${u}" style="height:42px"></td><td><img src="${u}" style="height:126px"></td></tr>`)
+  }
+  if (!rows.length) return null
+  const html = `<meta charset=utf-8><style>body{background:#faf7f2;font-family:system-ui,sans-serif;padding:20px;color:#3b2c1e}h1{font-size:20px;margin:0 0 10px}table{border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}th{background:#efe7db;font-size:13px;padding:8px 10px}td{border-top:1px solid #f0eae0;padding:9px 12px;text-align:center;vertical-align:middle}td.nm{text-align:left;font-size:15px;min-width:170px}.k{font-size:11px;color:#a2937f}</style><h1>🛒 ${날} 열리는 장바구니 제품 — 그림</h1><table><tr><th>제품</th><th>42px 카드 ⭐</th><th>126px 확대</th></tr>${rows.join('')}</table>`
+  const 낼곳 = process.env.CLAUDE_SCRATCHPAD_DIR || '/tmp/claude-0'
+  const htmlPath = join(낼곳, `장바구니그림-${날}.html`)
+  const pngPath = join(낼곳, `장바구니그림-${날}.png`)
+  try { mkdirSync(낼곳, { recursive: true }); writeFileSync(htmlPath, html) } catch { return null }
+  const 크롬 = process.env.SMOKE_CHROMIUM || (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : '')
+  try {
+    execFileSync(process.execPath, [join(APP, 'scripts/_shot-판-0828.mjs'), htmlPath, pngPath, '520'], { env: { ...process.env, SMOKE_CHROMIUM: 크롬 }, stdio: 'pipe' })
+    console.error(`   📸 판 = ${pngPath}  ← 창업자에게 «이 그림»을 보여준다`)
+    return pngPath
+  } catch {
+    console.error(`   ⚠️ PNG 를 못 찍었다 — HTML 을 직접 찍을 것: ${htmlPath}`)
+    return htmlPath
+  }
 }
 
 function cart() {
@@ -220,6 +265,16 @@ function cart() {
 //    ⭐ 그래서 «한꺼번에 30개»를 받을 게 아니라 **열리기 전에 그 몇 개만** 받으면 된다.
 //       ⛔ 내가 기억해서 말하지 않는다 — 기억은 반드시 낡는다. 검수 관문이 스스로 말한다.
 //    ⛔ 한살림은 «일부러» 링크를 안 단다(창업자 2026-08-17 *"링크안달면되고"*) → 세지 않는다.
+// 🧾🧾 **[절대원칙 · 창업자 2026-09-17] 큐레이션 검수 때 «원재료 캡처»를 «꼭» 달라고 말한다.**
+//    📮 창업자 = *"큐레이션 검수할때 원재료캡쳐달라고꼭 말해 절대원칙."*
+//       ＋ 같은 날 = *"지금 큐레이션에 들어있는 제품만 캡쳐 찍어서 주고, 다음에 올라가는 거는 검수할때 찍어서 줄게"*
+//    🌲 왜 = 상세 시트(CurationDetailSheet)가 «원재료명·알레르기»를 보여주는데(2026-09-17 · 저작권 답 = 사진 ✗ 글자 ✓),
+//       라벨은 창업자 포장 사진·쿠팡 캡처로만 온다. 검수 때 안 받으면 그 편은 영영 빈 채로 열린다.
+//    ⛔ 내가 기억해서 말하지 않는다 — 링크(위)와 «같은 자리»에서 도구가 말한다.
+export function 원재료없는장바구니(items = cartItems()) {
+  return items.filter((it) => !it.hasIng)
+}
+
 const 링크표에있는몰 = new Set(['coupang', 'oasis', ''])
 export function 링크없는장바구니(items = cartItems()) {
   return items.filter((it) => !it.url && it.mallRaw !== 'hansalim' && !링크표에있는몰.has(it.mallRaw || ''))
@@ -296,6 +351,8 @@ if (mode === '--tomorrow') {
   }
   console.log(`\n   ⚠️ 레시피 검수는 끝났다. 그림·카드는 «고화질 전수»로 눈으로 볼 것:`)
   console.log(`      node hankki/scripts/release-calendar.mjs --on ${내일}`)
+  // 🖼 [절대원칙 · 창업자 2026-09-17] 내일 열리는 장바구니 제품은 «그림»도 같이 보여준다
+  장바구니그림판(cartItems().filter((it) => it.from === 내일), 내일)
 
   // 절대원칙 [창업자 2026-09-13] 검수 확인사항은 «셋»이다 — 글만이 아니다.
   //    창업자 원문 = "음식아이콘, 재료들이 쿠팡파트너스링크있는지도 확인사항에 넣어 (검수시 절대원칙)"
@@ -332,6 +389,15 @@ if (mode === '--on') {
     console.error('   ⛔ 링크가 없으면 「사러가기」가 **네이버쇼핑 검색**으로 떨어진다 — 엉뚱한 게 나온다.')
     console.error('   👉 창업자에게 그 제품 «상품 주소»를 받아 `url:` 로 박는다(추적 부스러기는 떼고).')
   }
+  // 🧾 [절대원칙 · 창업자 2026-09-17] 그날 열리는 제품 중 «원재료가 없는» 것 — 검수 자리에서 캡처를 달라고 말한다
+  const 그날원재료없음 = 원재료없는장바구니().filter((it) => it.from === arg)
+  if (그날원재료없음.length) {
+    console.error(`\n🧾 **창업자에게 «원재료 캡처»를 받아야 하는 제품 ${그날원재료없음.length}개** (이날 열린다 · 절대원칙 2026-09-17)`)
+    for (const it of 그날원재료없음) console.error(`   · ${it.brand ? it.brand + ' ' : ''}${it.name}`)
+    console.error('   👉 포장 뒷면(원재료명·알레르기·영양) 사진이나 쿠팡 상세 캡처 → 내가 글자로 옮겨 `ingredients:` 로 박는다.')
+  }
+  // 🖼 [절대원칙 · 창업자 2026-09-17] 그날 열리는 제품의 «그림»을 같이 보여준다
+  장바구니그림판(cartItems().filter((it) => it.from === arg), arg)
   process.exit(0)
 }
 
@@ -420,6 +486,16 @@ if (mode === '--brief' || mode === '--check') {
       곧.slice(0, 4).forEach((it) => console.log(`   · ${it.from} (D-${dday(it.from)}) ${it.name}   (${it.mallRaw})`))
       if (곧.length > 4) console.log(`   · … 외 ${곧.length - 4}개`)
       console.log('   ⛔ 없으면 「사러가기」가 **네이버쇼핑 검색**으로 떨어진다(컬리·아이쿱은 몰 표에 없다).')
+    }
+    // 🧾 [절대원칙 · 창업자 2026-09-17] 곧 열리는 제품 중 «원재료 없는» 것 — 검수 때 캡처를 달라고 말한다
+    const 곧원재료 = 원재료없는장바구니()
+      .filter((it) => it.from && it.from > 오늘 && dday(it.from) <= 30)
+      .sort((a, b) => a.from.localeCompare(b.from))
+    if (곧원재료.length) {
+      console.log(`🧾 **창업자에게 «원재료 캡처»를 받아야 하는 제품 ${곧원재료.length}개** (30일 안에 열린다 · 절대원칙 2026-09-17)`)
+      곧원재료.slice(0, 4).forEach((it) => console.log(`   · ${it.from} (D-${dday(it.from)}) ${it.brand ? it.brand + ' ' : ''}${it.name}`))
+      if (곧원재료.length > 4) console.log(`   · … 외 ${곧원재료.length - 4}개`)
+      console.log('   👉 검수판을 줄 때 «포장 뒷면 사진 또는 쿠팡 상세 캡처»를 같이 달라고 말한다.')
     }
   }
   if (hot) {

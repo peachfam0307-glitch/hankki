@@ -44,8 +44,21 @@ for (const 줄 of src.split('\n')) {
   if (!n) continue
   const b = (줄.match(/benefit:\s*'([^']*)'/) || 줄.match(/benefit:\s*"([^"]*)"/) || [])[1]
   if (!b) continue
-  const who = (줄.match(/who:\s*'([^']+)'/) || [])[1] || ''
+  const who = (줄.match(/\bwho:\s*'([^']+)'/) || [])[1] || ''
   제품.push({ name: n, benefit: b, who })
+}
+// 🛒 [2026-09-17] 원재료명(ingredients)도 «누가 옮겨 적었나»(ingWho)가 있어야 한다 — 알레르기 오타는 위험하다.
+//    제품 한 줄이 여러 줄로 이어지므로 파일 전체에서 ingredients: 뒤 ~ 다음 name: 앞 사이에서 ingWho 를 찾는다.
+const 원재료칸 = []
+{
+  const re = /name:\s*'([^']+)'[\s\S]*?(?=\n\s*\{ name:|\n\s*\]|$)/g
+  let m
+  while ((m = re.exec(src))) {
+    const 덩이 = m[0]
+    if (!/ingredients:\s*'/.test(덩이)) continue
+    const iw = (덩이.match(/ingWho:\s*'([^']+)'/) || [])[1] || ''
+    원재료칸.push({ name: m[1], ingWho: iw })
+  }
 }
 
 console.log('\n✍️ 큐레이션 설명 — 「누가 썼나」가 적혀 있나\n')
@@ -62,8 +75,21 @@ const 옛것 = new Set(기준선)
 
 const 새것안적힘 = 제품.filter((p) => !옛것.has(p.name) && !p.who)
 const 클로드가쓴것 = 제품.filter((p) => p.who === '클로드')
+const 원재료주인없음 = 원재료칸.filter((p) => !p.ingWho)
+const 원재료클로드 = 원재료칸.filter((p) => p.ingWho === '클로드')
 
 let 실패 = 0
+if (원재료주인없음.length) {
+  console.log(`\n   ⛔ 원재료명을 적은 제품 ${원재료주인없음.length}개에 «누가 옮겨 적었나»(ingWho)가 없다`)
+  for (const p of 원재료주인없음) console.log(`      · ${p.name}`)
+  console.log(`      👉 ingWho: '창업자' (창업자가 라벨을 보고 «맞다» 한 것)  또는  ingWho: '클로드' (내가 옮긴 초안)`)
+  실패++
+}
+if (원재료클로드.length) {
+  console.log(`\n   ⛔ 원재료명을 «클로드»가 옮겨 적은 채 남은 제품 ${원재료클로드.length}개 — 창업자가 라벨과 대조해 «맞다» 하기 전엔 못 나간다(알레르기 오타는 위험하다)`)
+  for (const p of 원재료클로드) console.log(`      · ${p.name}`)
+  실패++
+}
 if (새것안적힘.length) {
   console.log(`\n   ⛔ 새 제품 ${새것안적힘.length}개에 «누가 썼나»가 없다`)
   for (const p of 새것안적힘) console.log(`      · ${p.name}  —  "${p.benefit.slice(0, 40)}…"`)

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { COACH } from '../coach'
 import { useStore, newId } from '../store'
 import { pantryExpiryCount } from '../pantryExpiry'
+import FoodCostView from './FoodCostView'
 import { 사러나감, 장보기담음 } from '../stats'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
@@ -36,6 +37,8 @@ import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
 import TabTalk from '../components/TabTalk'
 import ConfirmSheet from '../components/ConfirmSheet'
+import CurationDetailSheet from '../components/CurationDetailSheet'   // 🛒 제품 상세(원재료·알레르기) — 창업자 2026-09-17
+import { LAB_BUG_URL } from '../version'
 import { openExternal, matchKo } from '../utils'
 import { CURATION, curIcon, weeklyPicks, isHansalim, productLink, productMall } from '../data/curation'
 import { weeklyNow, todayKST } from '../data/weekly'
@@ -96,6 +99,21 @@ export default function ShopScreen() {
     try { sessionStorage.setItem('hankki:shopView', v) } catch { /* noop */ }
   }
   const [clearAsk, setClearAsk] = useState(false)
+  const [값편집, set값편집] = useState(null)   // 💰 값 칸이 열린 줄 id (2026-09-17)
+  // 🔑💰 [2026-09-17 시제품] 식비는 «창업자 폰에서만» 켜진다 — 아직 검수 전이라 유저 화면은 그대로여야 한다(규칙 13).
+  //   ⭐ 켜는 법 = 주소 끝에 ?식비=1 을 붙여 한 번 연다 → 그 폰에 저장돼 다음부터 그냥 뜬다. 끄는 법 = ?식비=0
+  //   ⛔ 창업자가 「모두에게 열자」고 하기 전엔 이 열쇠를 떼지 않는다.
+  const [식비켬] = useState(() => {
+    try {
+      const v = new URLSearchParams(location.search).get('식비')
+      if (v === '1') localStorage.setItem('hankki:식비', '1')
+      if (v === '0') localStorage.removeItem('hankki:식비')
+      return localStorage.getItem('hankki:식비') === '1'
+    } catch { return false }
+  })
+  // 💰 합계 = 값을 «적은 줄»만. 안 적은 줄은 0 이 아니라 «모르는 것»이라 개수를 같이 밝힌다.
+  const 값있는수 = shoppingList.filter((i) => Number(i.won) > 0).length
+  const 합계 = shoppingList.reduce((s, i) => s + (Number(i.won) || 0), 0)
   // ✏️ 지금 «고치는 중인» 장보기 줄 — { id, text } · null 이면 아무 줄도 편집 중이 아니다
   const [편집, set편집] = useState(null)
   // 인라인 시트(쇼핑몰 편집·추가/편집 폼) — 뒤로가기로 닫기(비우기 확인은 ConfirmSheet 자체 처리)
@@ -128,6 +146,10 @@ export default function ShopScreen() {
         {/* 장보기가 주(첫인상), 냉장고는 옆 토글(부). 냉장고 기능은 유지하되 앞으로 안 내세운다. */}
         <div className="segment" style={{ marginTop: 4 }}>
           <button type="button" className={`seg ${view === 'shop' ? 'on' : ''}`} onClick={() => setView('shop')}>장보기</button>
+          {/* 💰 [2026-09-17 시제품] 식비 — ⭐«장보기 다음» 자리다(창업자 확정 2026-09-17 *"탭이 장보기-식비-냉장고여야해"*).
+                장을 보고 «바로» 값을 적는 흐름이라 둘이 붙어 있어야 한다. 냉장고는 그 뒤.
+                ⭐«쌓이지» 않는다: 여기 오면 장보기 리스트·주부의 장바구니는 안 그린다(냉장고와 같은 규칙). */}
+          {식비켬 && <button type="button" className={`seg ${view === 'cost' ? 'on' : ''}`} onClick={() => setView('cost')}>식비</button>}
           {/* 🔴 「냉장고 ②」 — 임박·지난 재료 개수. 탭바 점과 같은 셈(`pantryExpiry.js`). 0 이면 숫자가 없다. (창업자 확정 2026-09-06) */}
           <button type="button" className={`seg ${view === 'pantry' ? 'on' : ''}`} data-coach="pantry" onClick={() => setView('pantry')}>
             냉장고{expN > 0 && <span className="seg-count" data-testid="pantry-exp-count">{expN}</span>}
@@ -135,6 +157,7 @@ export default function ShopScreen() {
         </div>
 
         {view === 'pantry' && <PantryView />}
+        {식비켬 && view === 'cost' && <FoodCostView />}
 
         {view === 'shop' && (
         /* 📐📐 [2026-08-13 창업자 지시 *"장보기를 오른쪽에 장바구니를 왼쪽에"*]
@@ -221,6 +244,26 @@ export default function ShopScreen() {
                   {it.name}
                 </button>
               )}
+              {/* 💰💰 [2026-09-17 시제품 · 창업자 «품목별로 금액 적으면 아래 총합이 뜨게»]
+                    ⭐ 값은 «안 적어도» 된다 — 적은 것만 아래에서 더한다(부분합이라고 밝힌다).
+                    ⛔ 늘 `<input>` 이 아니다 — 이름 편집과 같은 규칙으로 «누른 줄만» 칸이 열린다.
+                    🔢 9,999,999 상한·앞 0 무시는 store 가 맡는다(0 이면 칸을 지운다). */}
+              {식비켬 && (값편집 === it.id ? (
+                <input
+                  autoFocus
+                  inputMode="numeric"
+                  defaultValue={it.won || ''}
+                  placeholder="0"
+                  onBlur={(e) => { store.setShopItemWon(it.id, e.target.value.replace(/[^0-9]/g, '')); set값편집(null) }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') set값편집(null) }}
+                  style={{ width: 84, fontSize: 15.5, fontFamily: 'inherit', textAlign: 'right', color: 'var(--text)', background: 'var(--cream)', border: '1.5px solid var(--brown)', borderRadius: 9, padding: '5px 8px', outline: 'none' }}
+                />
+              ) : (
+                <button className="press" onClick={() => set값편집(it.id)} aria-label={`${it.name} 값 적기`}
+                  style={{ fontSize: 15.5, fontWeight: it.won ? 700 : 400, color: it.won ? 'var(--text)' : 'var(--sand)', background: 'none', border: 'none', padding: '5px 2px', whiteSpace: 'nowrap' }}>
+                  {it.won ? `${it.won.toLocaleString('ko-KR')}원` : '값'}
+                </button>
+              ))}
               {/* ⛔ `noBuy`(한살림) 는 사러가기를 안 그린다 — 담을 때 붙여 둔 표식이다.
                   ⚠️ 이 줄이 없으면 `buyUrlFor()` 가 url 없는 줄을 **쿠팡·네이버 검색으로 보내서**
                      큐레이션에서 링크를 뺀 게 통째로 헛일이 된다(담은 뒤에 새는 구멍). */}
@@ -237,6 +280,22 @@ export default function ShopScreen() {
         )}
         {/* 💡 **고칠 수 있다는 걸 알려준다** — 누를 수 있어도 «누를 수 있는 줄 모르면» 없는 기능이다.
               ⭐ 예를 «창업자가 말한 그대로» 적는다 — *"양파 1망 돼지고기 600g은 맞지."* */}
+        {/* 💰💰 담은 것 합계 — «값을 적은 줄만» 더한다. 그래서 「값 적은 것 N개」를 «꼭» 같이 적는다.
+              ⛔ 이 수를 「장본 값」이라고 부르지 않는다 — 안 적은 줄이 빠져 있어 총액이 아니다(부분합).
+              ⭐ 「식비로 적기」 = 「완료 지우기」를 안 누르는 사람에게도 길을 준다(같은 일을 한다). */}
+        {식비켬 && 값있는수 > 0 && (
+          <div className="sum-box">
+            <div className="sum-row">
+              <span>담은 것 합계 <b className="sum-n">값 적은 것 {값있는수}개</b></span>
+              <b className="sum-v">{합계.toLocaleString('ko-KR')}원</b>
+            </div>
+            {/* ⛔ 예전엔 «체크한 줄»만 옮기면서도 늘 「적었어요」라고 말했다 — 창업자가 값만 적고 눌렀을 때 아무 일도 안 났다.
+                  ✅ 이제 값이 적힌 줄을 전부 옮기고, 실제로 옮긴 «개수와 금액»을 말한다. */}
+            <button className="press sum-btn" onClick={() => { store.shopToFoodCost(); nav.showToast(`식비에 적었어요 · ${값있는수}개 ${합계.toLocaleString('ko-KR')}원`) }}>
+              값 적은 것 식비로 적기
+            </button>
+          </div>
+        )}
         {shoppingList.length > 0 && (
           <div className="t-sub" style={{ fontSize: 16.5, marginTop: 18, lineHeight: 1.85 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
@@ -404,7 +463,7 @@ function Curation() {
   // 🧾 큰 칸을 골랐을 때 «소칸(줄)» 몇 개까지 — 창업자 *"양념류가 9줄이야. 3개정도만 보이고 아래 더보기"*
   const CATFOLD = 3
   const [openG, setOpenG] = useState({})   // 펼쳤나 — 열쇠는 `g:큰칸` · `c:소칸` (이름이 겹쳐도 안 섞이게)
-  const [openCard, setOpenCard] = useState({}) // 카드별 «설명을 펼쳤나»
+  const [detail, setDetail] = useState(null)   // 🛒 탭한 제품 — 상세 시트(원재료명·알레르기). 카드는 그대로, 시트로 본다(창업자 2026-09-17)
   // 큰 칸으로 다시 묶는다 — ⚠️ 소제목(작은 칸)은 그대로 살린다. 접히는 건 «개수»뿐이다.
   const byGroup = [...new Set(shownGroups.map((g) => g.group))].map((name) => ({
     name,
@@ -480,7 +539,8 @@ function Curation() {
       {/* 🔠 [2026-08-22 창업자] *"아이콘이랑 제목을 같은 줄. 설명은 내려서 아이콘 아래로.
           그럼 글자가 더 많이 보이잖아. 아이콘은 좀 더 키우고"*
           ⭐ 설명이 아이콘 «옆」이 아니라 «아래»로 내려와 카드 폭을 다 쓴다 → 한 줄에 들어가는 글자가 늘어난다. */}
-      <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
+      {/* 🛒 [창업자 2026-09-17 «원재료가 중요한거야»] 이름 줄을 누르면 상세 시트 — 카드는 안 키운다(132장 스크롤). */}
+      <div role="button" tabIndex={0} onClick={() => setDetail(it)} onKeyDown={(e) => { if (e.key === 'Enter') setDetail(it) }} style={{ display: 'flex', gap: 15, alignItems: 'center', cursor: 'pointer' }}>
         <div className="emoji-tile" style={{ width: 58, height: 58, fontSize: 31, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 53, height: 53, objectFit: 'contain' }} /> : it.emoji}
         </div>
@@ -512,10 +572,14 @@ function Curation() {
               ⛔ 자르지 «않는다». 39개를 재보니 **가장 짧은 설명도 41자**(가운데 74 · 최장 127)라
                  한 줄에 들어가는 게 하나도 없고, 이 설명이 바로 큐레이션의 값어치다
                  (*"남편이 콩국수를 좋아해서…"*). 잘라내면 그냥 상품 목록이 된다.
-              ⭐ 그래서 «접어만» 둔다 — 훑을 땐 짧고, 궁금하면 눌러서 한 글자도 안 빠진 전문을 본다. */}
+              ⭐ 그래서 «접어만» 둔다 — 훑을 땐 짧고, 궁금하면 눌러서 한 글자도 안 빠진 전문을 본다.
+              🧾 [창업자 2026-09-17] 이제 누르면 «그 자리에서 펼치지 않고» 상세 «시트»로 간다 — 아이콘·이름·설명 어디를 눌러도 같은 시트.
+                 📮 *"설명도 다 아이콘 누르는 걸로 바꿀까"* · *"그럼 깔끔해지긴하겠다"* · 걱정 = *"유저들이 모르려나??"*
+                 → 그래서 「자세히 보기 ›」 표시를 남긴다(눌리는 곳이라는 신호). 시트에 전문·원재료·담기·사러가기가 다 있다.
+                 ⛔ 두 동작(펼침/시트)을 같이 두면 누르는 자리마다 결과가 달라 헷갈린다 — 하나로. */}
           <button
             className="press"
-            onClick={() => setOpenCard((s) => ({ ...s, [it.name]: !s[it.name] }))}
+            onClick={() => setDetail(it)}
             style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0 }}
           >
             {/* ↩️ **[2026-08-23 창업자] *"올리고당설명줄바꿈되게"*** — 줄바꿈이 «뜻»을 갈랐다.
@@ -531,8 +595,8 @@ function Curation() {
             <span
               className="t-sub"
               style={{
-                display: openCard[it.name] ? 'block' : '-webkit-box',
-                WebkitLineClamp: openCard[it.name] ? 'none' : 2,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 /* 🔠 [2026-08-29] 창업자 = *"장바구니 설명도 글자 1-2포인트만 작게해도 될 것 같고"*
@@ -552,11 +616,8 @@ function Curation() {
             >
               {it.benefit}
             </span>
-            {/* 🔽🔼 [2026-08-12] 창업자 *"주부의 장바구니(접기버튼 잘보이게)"*
-                ⛔ 옛 코드는 `!openCard[...]` 라 **펼친 뒤엔 「접기」가 아예 안 그려졌다.**
-                   접으려면 설명 글 자체를 다시 눌러야 하는데 그걸 알려주는 표시가 없었다.
-                   → 「펼치기는 보이는데 접기가 안 보인다」가 정확히 이것이다.
-                ✅ 펼쳐도 «같은 자리에» 「접기」를 그린다 ＋ 화살표를 붙여 눌리는 곳임을 보인다. */}
+            {/* 🔽🔼 [2026-08-12] 창업자 *"주부의 장바구니(접기버튼 잘보이게)"* — 눌리는 곳엔 «표시»를 남긴다(화살표).
+                (옛 「더보기/접기」 펼침은 2026-09-17 에 시트로 합쳐졌다 — 위 🧾) */}
             {/* 👆 [2026-08-29] 창업자 = *"그거랑 담기가 너무 붙어있어. 접기. 누르려다 담기를 누르게돼."*
                 🔢 옛 실측 = 「더보기」 글자 아래끝 ↔ 「담기」 위끝이 **11px** 뿐이었다.
                 ⭐⭐ 오터치를 막는 건 «완충 지대»다 — 아무 버튼도 아닌 «빈 공간»이라야
@@ -566,8 +627,8 @@ function Curation() {
                 ✅ 그래서 둘 다 조금씩 = 「더보기」는 눌리기 쉽게 살짝 키우고(paddingBottom 4),
                    그 «아래»는 빈 공간으로 벌린다 → 실제 간격 11 → **22px**. */}
             <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--brown)', display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 6, paddingBottom: 4 }}>
-              {openCard[it.name] ? '접기' : '더보기'}
-              <Icon name={openCard[it.name] ? 'chevron-up' : 'chevron-down'} size={12} />
+              자세히 보기
+              <Icon name="chevron-right" size={12} />
             </span>
           </button>
       </div>
@@ -790,6 +851,19 @@ function Curation() {
           {/* ⛔ 아래 안내판을 뺐다 (창업자 2026-08-03 *"아래위로 좀 지저분해보여"*).
               「앞으로도 하나씩 계속 올라와요」는 **맨 위 부제로 옮겨 살렸다** — 창업자가 콕 집어 남기라 했다. */}
         </>
+      )}
+      {detail && (
+        <CurationDetailSheet
+          it={detail}
+          iconSrc={curIcon(detail.icon)}
+          title={detail.brand && !파는곳.includes(detail.brand) ? `${detail.brand} ${detail.name}` : detail.name}
+          mallLabel={mallLabel(detail)}
+          canBuy={!!linkFor(detail)}
+          onAdd={() => { add(detail); setDetail(null) }}
+          onBuy={() => buy(detail)}
+          onReport={LAB_BUG_URL ? () => openUrl(LAB_BUG_URL, '오류 신고') : null}
+          onClose={() => setDetail(null)}
+        />
       )}
     </>
   )

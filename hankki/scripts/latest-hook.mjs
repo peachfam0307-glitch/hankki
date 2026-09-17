@@ -175,6 +175,14 @@ try {
         console.log('   전체 = `node hankki/scripts/doc-guard.mjs --const --recent`')
       }
     } catch { /* 없으면 조용히 */ }
+    // 🛒📅 장바구니 원재료 확인일(`checked`)이 180일 넘은 편 (2026-09-17 · 저작권답 3「주기 재확인」)
+    //   ⭐ 배포는 안 막는다 — 재확인은 창업자가 포장을 봐야 하는 일이라 브리핑에서 «몰아서» 시킨다. 없으면 조용하다.
+    try {
+      const { execFileSync } = await import('node:child_process')
+      const out = execFileSync(process.execPath, [decodeURIComponent(new URL('./check-원재료확인일.mjs', import.meta.url).pathname), '--brief'],
+        { encoding: 'utf8', timeout: 8000 })
+      if (out.trim()) process.stdout.write(out)
+    } catch { /* 없으면 조용히 */ }
     // 🙈 「모른다」고 적어놓고 «그 위에서 추천»한 곳 (2026-08-03 네이버 커넥트 사고)
     try {
       const { execFileSync } = await import('node:child_process')

@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react'
 import { seedRecipes, 열린때 } from './data/seed'
-import { basicRecipes, BASICS_VERSION } from './data/basics'
+import { basicRecipes, allBasicRecipes, BASICS_VERSION } from './data/basics'
 // 🥬 재료 이름 → 파트너스 링크 (2026-09-12 창업자 *"장보기에 들어가는 것도 다 붙이자"*)
 //   ⭐ **담는 길이 여기 하나로 모인다** — 레시피 「재료 담기」·장보기 자유 입력·어디서 담든
 //      이 자리를 지나므로, 링크를 여기서 붙이면 화면마다 따로 손댈 곳이 없다.
 import { ingLink, 담을만한가 } from './data/ingLinks'
+import { todayKST } from './today'
 import { makeSampleDiary, SAMPLE_DIARY_ID, SAMPLE_READY } from './data/sampleDiary'
 // ⛔ `FOOD_ICON_GROUPS` 를 빠뜨리면 v96 패스가 ReferenceError 로 죽고
 //    **그 앞의 v13·v34·v38·v88 마이그레이션까지 통째로 안 돈다**(같은 함수 안이라서).
@@ -56,6 +57,22 @@ const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행�
 // 장보기 쇼핑몰 바로가기 기본 목록. url = 홈, search = 재료 검색(‘{q}’에 재료명 치환).
 // 나중에 제휴(어필리에이트) 태그를 이 url/search에 붙이면 그대로 수수료 링크가 됨.
 // iconType: 'emoji' | 'label'(글자 타일). 재료 아이콘과 동일한 방식.
+// 🏪🏪 식비 「가서 보고 와서 적기」 기본 목록 (창업자 확정 2026-09-17 = *"쿠팡 컬리 네이버쇼핑, 롯데마트 이마트, 쿠팡츠 배민 요기요 정도면 될까"*)
+//   ⭐ 유저가 «편집으로 더하고 지운다» — 자주 쓰는 곳은 «누른 순서»로 저절로 앞에 온다(손으로 끌어 옮기지 않아도 된다).
+//   🛒 쿠팡은 **파트너스 링크가 아니라 그냥 주소**다 — 누르면 24시간 개인 구매가 실적에 섞이기 때문(절대원칙 2026-09-15).
+//      ⏳ 유저에게 열 때 파트너스 링크로 바꾼다(창업자 *"유저들은 링크로. 그래야 우리도 수익이 나지"*) — 단축코드는 창업자가 만든다.
+//   ⚠️ 주소는 2026-09-17 에 찾아 적었다. 이 환경은 사람이 보는 웹을 못 열어 «눌러보진 못했다» — 틀리면 편집으로 고친다.
+const 기본식비가게 = [
+  { id: 'cs_coupang', name: '쿠팡', url: 'https://www.coupang.com', k: 'shop' },
+  { id: 'cs_kurly', name: '마켓컬리', url: 'https://www.kurly.com', k: 'shop' },
+  { id: 'cs_naver', name: '네이버쇼핑', url: 'https://shopping.naver.com', k: 'shop' },
+  { id: 'cs_lottemart', name: '롯데마트', url: 'https://lottemartzetta.com', k: 'shop' },
+  { id: 'cs_emart', name: '이마트몰', url: 'https://emart.ssg.com', k: 'shop' },
+  { id: 'cs_eats', name: '쿠팡이츠', url: 'https://www.coupangeats.com', k: 'out' },
+  { id: 'cs_baemin', name: '배달의민족', url: 'https://baemin.com', k: 'out' },
+  { id: 'cs_yogiyo', name: '요기요', url: 'https://www.yogiyo.co.kr/mobile/', k: 'out' },
+]
+
 const DEFAULT_SHOPS = [
   { id: 'coupang', name: '쿠팡', icon: 'box', iconType: 'icon', url: 'https://www.coupang.com', search: 'https://www.coupang.com/np/search?q={q}' },
   { id: 'kurly', name: '마켓컬리', icon: 'bag', iconType: 'icon', url: 'https://www.kurly.com', search: 'https://www.kurly.com/search?sword={q}' },
@@ -233,7 +250,19 @@ function migrateBasics(saved) {
   // v13: 기본 제공 레시피의 '내용'(제목·재료·순서·메모·태그·아이콘·카테고리·표지 등)을
   // 최신 큐레이션으로 다시 맞춘다. 단, 사용자가 직접 편집한 레시피(touched)와
   // 개인 상태(즐겨찾기·요리횟수·꾸미기·직접 넣은 표지사진)는 그대로 보존한다.
-  const seedById = new Map(basicRecipes.map((s) => [s.id, s]))
+  // 🚨🚨 [2026-09-16 · 창업자 폰 캡처가 잡았다] **여기가 `basicRecipes` 였다 — 그게 뿌리다.**
+  //   📮 창업자 = 두부참치찌개를 열었더니 **옛 판**(물 450ml · 올리고당 · 참기름 · 깨)이 떠 있었다.
+  //      오늘 재료도 만드는 법도 통째로 갈아엎고 BASICS_VERSION 을 160까지 올렸는데 **한 글자도 안 바뀌었다.**
+  //   🌲 **`basicRecipes` 는 「`from` 이 지난 편」만 내준다**(99편). 전체는 `allBasicRecipes`(203편)다.
+  //      두부참치찌개는 `from: '2026-10-12'` 라 **아직 씨앗 목록에 없다.**
+  //      → 아래 표들이 전부 `seedById.has(r.id)` 로 걸러내니 **그 편은 아무도 못 고친다. 영영.**
+  //   ⭐⭐ **「폰엔 있는데 씨앗엔 없는 편」이 생긴다** — 한 번 열렸다가 여는 날짜를 뒤로 민 편이 그렇다.
+  //      (두부참치찌개가 정확히 그 경우다 — 예전에 열렸고, 오늘 고치며 10/12 자리로 되돌렸다)
+  //      ⛔ 그런 편은 **유저 폰에 남아 계속 보이는데** 갱신만 안 닿는다. 제일 나쁜 모양이다.
+  //   ✅ 그래서 **고칠 때는 전체를 본다**(`allBasicRecipes`).
+  //      ⛔ **「새로 넣는 것」은 그대로 `basicRecipes` 다**(위 `add`·`opened`) — 안 열린 편을 당겨 열지 않는다.
+  //         📌 **「고치기」와 「열기」는 다른 일이다.** 이 줄은 «고치기»에만 쓴다.
+  const seedById = new Map(allBasicRecipes.map((s) => [s.id, s]))
   fixed = fixed.map((r) => {
     if (!r || r.touched || !seedById.has(r.id)) return r
     const s = seedById.get(r.id)
@@ -314,6 +343,29 @@ function migrateBasics(saved) {
     if (!r || !r.touched || !seedById.has(r.id)) return r
     const s = seedById.get(r.id)
     return { ...r, ingredients: s.ingredients, memo: s.memo }
+  })
+  // 🍲🍲 v161 (2026-09-16) — **v31 이 「재료」만 덮고 «만드는 법»을 안 덮었다.**
+  //   📮 창업자 폰 캡처 = 두부참치찌개가 **옛 판**(물 450ml · 올리고당 · 참기름 · 깨)으로 떠 있었다.
+  //   ⛔⛔ 뿌리 = 위 v31 은 손댄 편(`touched`)에 대해 `ingredients` 와 `memo` «둘만» 갈아끼운다.
+  //      그런데 오늘 고친 넷(두부참치찌개·볶음밥·꼬치전·잡채)은 **만드는 법을 통째로 갈아엎은 편**들이다.
+  //      → 재료만 새것이 되고 걸음은 옛것으로 남으면 **둘이 어긋난 「섞인 판」**이 된다.
+  //         (재료엔 해물가루육수가 있는데 걸음엔 없고, 걸음은 450ml를 끓이라고 한다)
+  //   📌 9/12 가지 사고와 **같은 자리**다 — 「재료만 바꾸면 만드는 법이 거짓말이 된다」.
+  //      그때는 내가 손으로 안 고쳐서 났고, 이번엔 **코드가 절반만 고쳐서** 났다.
+  //   ✅ 그래서 시드가 **만드는 법·시간·인분·난이도**까지 들고 오게 한다.
+  //      ⛔ 개인 것은 하나도 안 건드린다 — 즐겨찾기·요리횟수·꾸미기·표지·폴더·저장시각은 여기 없다.
+  //      ⛔ `touched` 딱지도 그대로 둔다 — 「유저가 손댄 편」이라는 사실은 지워지지 않는다.
+  //      ⛔ 제목은 «일부러» 뺐다 — 유저가 이름을 바꿔 부르는 건 그 사람 것이다(v10 알리오 올리오 자리와 같다).
+  fixed = fixed.map((r) => {
+    if (!r || !r.touched || !seedById.has(r.id)) return r
+    const s = seedById.get(r.id)
+    return {
+      ...r,
+      steps: s.steps,
+      time: s.time,
+      servings: s.servings,
+      difficulty: s.difficulty,
+    }
   })
   // v34: 사용자가 직접 만든 레시피(시드 아님)의 아이콘을 새 완성요리 PNG로 업그레이드.
   //      제목에 딱 맞는 PNG가 생긴 경우에만 교체(없으면 기존 아이콘 유지 → 회귀 없음).
@@ -895,6 +947,8 @@ function initialState() {
       wishlist: [], // 위시는 장보기로 흡수됨 — 더 이상 별도 목록으로 쓰지 않는다
       shoppingList: foldWishIntoShopping(saved.wishlist, saved.shoppingList || migrateShopping()),
       pantry: saved.pantry || [],
+      foodCost: Array.isArray(saved.foodCost) ? saved.foodCost : [],
+      costShops: Array.isArray(saved.costShops) && saved.costShops.length ? saved.costShops : [...기본식비가게],
       diary,
       sampleGone: saved.sampleGone || false,
     }
@@ -914,6 +968,8 @@ function initialState() {
     wishlist: [],
     shoppingList: [],
     pantry: [],
+    foodCost: [],   // 💰 식비 줄(2026-09-17 시제품 · hold) — {id,d:'YYYY-MM-DD',k:'shop'|'out',won,memo?,items?:[{n,won}]}
+    costShops: [...기본식비가게],   // 🏪 「가서 보고 와서 적기」 목록 — 유저가 더하고 지운다
     // 📔 처음 켠 사람은 일기 탭이 텅 비어 「뭘 하는 곳인지」 안 보인다 → 샘플 한 장 놓아 둔다.
     //    ⏳ 스위치가 꺼져 있으면 빈 채로 둔다(까닭 = `sampleDiary.js` 맨 위)
     diary: SAMPLE_READY ? [makeSampleDiary()] : [],
@@ -1133,7 +1189,68 @@ function reducer(state, action) {
       return { ...state, shoppingList: state.shoppingList.filter((i) => i.id !== action.id) }
     }
     case 'clearDoneShopItems': {
+      // 🧹 「완료 지우기」 — 체크한 줄을 목록에서 뺀다. ⛔식비와 상관없다(그건 아래 'shopToFoodCost').
       return { ...state, shoppingList: state.shoppingList.filter((i) => !i.done) }
+    }
+    // 💰💰 [2026-09-17] 「값 적은 것 식비로 적기」
+    //   ⛔⛔ 처음엔 «체크한 줄»만 봤다 — 그래서 창업자가 값만 적고 누르니 **0줄이 적혔는데 「식비에 적었어요」가 떴다**(거짓말).
+    //      📮 창업자 = *"적었는데 장보기에 반영안됐아"* — 맞는 지적이다.
+    //   ✅ 이제 «값이 적힌 줄»이면 체크와 상관없이 산 것으로 본다 — 값을 적었다는 건 이미 샀다는 뜻이다.
+    //      그 줄들은 목록에서 빠지고 냉장고로 들어간다(체크했을 때와 같다).
+    //   ⛔ 값이 하나도 없으면 «아무 일도 안 일어난다» — 화면이 「적었다」고 말하지 않게 0 을 돌려준다.
+    case 'shopToFoodCost': {
+      const 산것 = state.shoppingList.filter((i) => Number(i.won) > 0)
+      if (!산것.length) return state
+      const 이름들 = new Set(state.pantry.map((p) => p.name))
+      const pantry = [
+        ...산것.filter((i) => !이름들.has(i.name)).map((i) => ({ id: newId(), name: i.name, icon: null, expiry: null, addedAt: Date.now() })),
+        ...state.pantry,
+      ]
+      const 줄 = {
+        id: newId(), d: 오늘날짜(), k: 'shop',
+        won: 산것.reduce((s, i) => s + Number(i.won), 0),
+        items: 산것.map((i) => ({ n: i.name, won: Number(i.won) })),
+      }
+      return {
+        ...state,
+        foodCost: [줄, ...(state.foodCost || [])],
+        shoppingList: state.shoppingList.filter((i) => !(Number(i.won) > 0)),
+        pantry,
+      }
+    }
+    // 💰 장보기 줄에 값 적기 — 안 적어도 된다. 0·빈칸이면 지운다. 최대 9,999,999.
+    case 'setShopItemWon': {
+      const won = Math.min(9999999, Math.max(0, Math.floor(Number(action.won) || 0)))
+      return { ...state, shoppingList: state.shoppingList.map((i) => (i.id === action.id ? (won ? { ...i, won } : (({ won: _w, ...rest }) => rest)(i)) : i)) }
+    }
+    // 💰 식비 줄 직접 적기(외식·배달 · 또는 장보기 총액만) / 지우기
+    case 'addFoodCost': {
+      const won = Math.min(9999999, Math.max(0, Math.floor(Number(action.entry?.won) || 0)))
+      if (!won) return state
+      const e = { id: newId(), d: action.entry.d || 오늘날짜(), k: action.entry.k === 'out' ? 'out' : 'shop', won }
+      if (action.entry.memo) e.memo = String(action.entry.memo).slice(0, 40)
+      if (Array.isArray(action.entry.items) && action.entry.items.length) e.items = action.entry.items
+      return { ...state, foodCost: [e, ...(state.foodCost || [])] }
+    }
+    // 🏪 식비 가게 — 더하기 · 지우기 · 「누른 때」 기억(자주 쓰는 곳이 앞으로 온다)
+    case 'addCostShop': {
+      const name = (action.shop?.name || '').trim()
+      let url = (action.shop?.url || '').trim()
+      if (!name || !url) return state
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url
+      const 목록 = state.costShops || []
+      if (목록.some((s) => s.url === url)) return state
+      return { ...state, costShops: [...목록, { id: newId(), name: name.slice(0, 20), url, k: action.shop.k === 'out' ? 'out' : 'shop' }] }
+    }
+    case 'removeCostShop': {
+      return { ...state, costShops: (state.costShops || []).filter((s) => s.id !== action.id) }
+    }
+    case 'usedCostShop': {
+      // ⭐ 누를 때마다 시각을 적어 둔다 — 화면은 이 값으로 «최근 쓴 순»으로 줄을 세운다(손으로 끌어 옮길 필요가 없다)
+      return { ...state, costShops: (state.costShops || []).map((s) => (s.id === action.id ? { ...s, at: Date.now() } : s)) }
+    }
+    case 'removeFoodCost': {
+      return { ...state, foodCost: (state.foodCost || []).filter((e) => e.id !== action.id) }
     }
     case 'clearShopItemsAll': {
       return { ...state, shoppingList: [] }
@@ -1222,6 +1339,8 @@ function reducer(state, action) {
         wishlist: [], // 위시는 장보기로 흡수 — 백업 복원 시에도 합쳐서 불러온다
         shoppingList: foldWishIntoShopping(d.wishlist, d.shoppingList || []),
         pantry: d.pantry || [],
+        foodCost: Array.isArray(d.foodCost) ? d.foodCost : (state.foodCost || []),   // 💰 백업에 식비가 없으면(옛 백업) 지금 폰 것을 지킨다
+        costShops: Array.isArray(d.costShops) && d.costShops.length ? d.costShops : (state.costShops || [...기본식비가게]),
         diary: d.diary || [],
       }
     }
@@ -1372,6 +1491,13 @@ export function StoreProvider({ children }) {
     updateShopItem: useCallback((id, name) => dispatch({ type: 'updateShopItem', id, name }), []),
     removeShopItem: useCallback((id) => dispatch({ type: 'removeShopItem', id }), []),
     clearDoneShopItems: useCallback(() => dispatch({ type: 'clearDoneShopItems' }), []),
+    setShopItemWon: useCallback((id, won) => dispatch({ type: 'setShopItemWon', id, won }), []),
+    shopToFoodCost: useCallback(() => dispatch({ type: 'shopToFoodCost' }), []),
+    addCostShop: useCallback((shop) => dispatch({ type: 'addCostShop', shop }), []),
+    removeCostShop: useCallback((id) => dispatch({ type: 'removeCostShop', id }), []),
+    usedCostShop: useCallback((id) => dispatch({ type: 'usedCostShop', id }), []),
+    addFoodCost: useCallback((entry) => dispatch({ type: 'addFoodCost', entry }), []),
+    removeFoodCost: useCallback((id) => dispatch({ type: 'removeFoodCost', id }), []),
     clearShopItemsAll: useCallback(() => dispatch({ type: 'clearShopItemsAll' }), []),
     addPantry: useCallback((item) => dispatch({ type: 'addPantry', item }), []),
     updatePantry: useCallback((id, patch) => dispatch({ type: 'updatePantry', id, patch }), []),
@@ -1392,6 +1518,10 @@ export function useStore() {
 }
 
 // 새 레시피 id 생성 — Date.now 는 브라우저 런타임에서 사용 가능
+// 💰 오늘 날짜 — ⛔여기서 만들지 않는다(절대원칙 27 · check-kst 게이트). src/today.js 한 곳뿐.
+const 오늘날짜 = () => todayKST()
+
 export function newId() {
+
   return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
 }

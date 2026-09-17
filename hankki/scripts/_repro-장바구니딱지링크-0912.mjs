@@ -56,7 +56,26 @@ await b.close(); srv.close()
 const cur = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../src/data/curation.js'), 'utf8')
 const 몰표 = [...cur.matchAll(/^\s{2}(\w+):\s*'(https?:[^']+)'/gm)].map((m) => m[1])
 const 아는몰 = new Set(몰표)
-const 제품들 = [...cur.matchAll(/\{\s*name:\s*'([^']+)'[^}]*\}/g)].map((m) => m[0])
+// ⛔ 2026-09-17: 원재료 글에 «{막걸리(…)}» 같은 중괄호가 들어오자 `[^}]*` 가 덩이를 잘못 잘라 10편이 «딱지 없음»으로 오판됐다.
+//    → 따옴표 «안»의 중괄호는 건너뛰고 닫는 중괄호를 찾는다.
+const 제품들 = 제품덩이(cur)
+function 제품덩이(src) {
+  const out = []
+  const re = /\{\s*name:\s*'/g
+  let m
+  while ((m = re.exec(src))) {
+    let i = m.index, depth = 0, q = false
+    for (; i < src.length; i++) {
+      const c = src[i]
+      if (q) { if (c === '\\') i++; else if (c === "'") q = false; continue }
+      if (c === "'") q = true
+      else if (c === '{') depth++
+      else if (c === '}' && --depth === 0) break
+    }
+    out.push(src.slice(m.index, i + 1)); re.lastIndex = i + 1
+  }
+  return out
+}
 
 const 몰주소 = { coupang: 'coupang', kurly: 'kurly', oasis: 'oasis', icoop: 'icoop', naver: 'naver' }
 const 샘 = [], 어긋남 = [], 한살림링크 = [], 빈딱지 = []
