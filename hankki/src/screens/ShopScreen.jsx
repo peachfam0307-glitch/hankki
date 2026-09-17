@@ -221,7 +221,13 @@ export default function ShopScreen() {
                   autoFocus
                   value={편집.text}
                   onChange={(e) => set편집({ id: it.id, text: e.target.value })}
-                  onBlur={() => { store.updateShopItem(it.id, 편집.text); set편집(null) }}
+                  onBlur={() => {
+                    // ✏️💰 [2026-09-18 창업자 *"수정도 되게 해줘. 입력한거 잘못 적었을때"*]
+                    //   ⭐ 이름을 고칠 때 «값도 같이» 고친다 — 「두부 2500」으로 바꾸면 이름은 두부, 값은 2,500.
+                    //   ⭐ 값을 지우려면 숫자만 빼고 저장하면 된다(두부). ⛔따로 다른 칸을 찾아 누를 필요가 없다.
+                    store.updateShopItem(it.id, 편집.text)
+                    set편집(null)
+                  }}
                   onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') set편집(null) }}
                   style={{
                     flex: 1, minWidth: 0, fontSize: 17, fontFamily: 'inherit', color: 'var(--text)',
@@ -232,7 +238,7 @@ export default function ShopScreen() {
               ) : (
                 <button
                   className="press"
-                  onClick={() => set편집({ id: it.id, text: it.name })}
+                  onClick={() => set편집({ id: it.id, text: it.won ? `${it.name} ${it.won}` : it.name })}
                   aria-label={`${it.name} 고치기`}
                   style={{
                     flex: 1, minWidth: 0, textAlign: 'left', fontSize: 17, fontFamily: 'inherit',
@@ -299,6 +305,7 @@ export default function ShopScreen() {
         {shoppingList.length > 0 && (
           <div className="t-sub" style={{ fontSize: 16.5, marginTop: 18, lineHeight: 1.85 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
+            {식비켬 && <><br />값도 같이 적으려면 <b style={{ color: 'var(--brown)' }}>「두부 1990」</b> 처럼 뒤에 금액을 붙여 보세요.</>}
           </div>
         )}
 

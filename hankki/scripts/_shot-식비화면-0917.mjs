@@ -44,6 +44,11 @@ await p.evaluate(() => {
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2200); await 치우기()
 await p.locator('.bottom-nav .nav-item').filter({ hasText: '장보기' }).first().click(); await p.waitForTimeout(900); await 치우기()
 await p.locator('.segment .seg').filter({ hasText: '식비' }).first().click(); await p.waitForTimeout(800)
+// 💰 예산 20만원을 심어 「남은 돈」까지 보이게
+await p.evaluate(() => { const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}'); s.foodBudget = { w: 200000, m: 800000 }; localStorage.setItem('hankki:v1', JSON.stringify(s)) })
+await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2200); await 치우기()
+await p.locator('.bottom-nav .nav-item').filter({ hasText: '장보기' }).first().click(); await p.waitForTimeout(800); await 치우기()
+await p.locator('.segment .seg').filter({ hasText: '식비' }).first().click(); await p.waitForTimeout(700)
 await p.screenshot({ path: join(OUT, '식비화면-1-통계.png'), fullPage: true })
 console.log('주 합계 =', await p.locator('.fc-v').first().textContent())
 console.log('줄 수 =', await p.locator('.fc-row').count(), '(넣은 것 8줄이 다 있나)')

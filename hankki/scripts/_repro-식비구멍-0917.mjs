@@ -74,6 +74,34 @@ d = await 판()
 본다('같은 주소는 두 번 안 들어간다', (d.costShops || []).filter((s) => s.url === 'https://mart.example.com').length === 1)
 await p.keyboard.press('Escape'); await p.waitForTimeout(400)
 await p.keyboard.press('Escape'); await p.waitForTimeout(400)
+// ⑧-0 [2026-09-18] 「두부 1990」 한 번에 치기 — 창업자 «값을 눌러 또 금액을 적고 좀 번거로워»
+//   ⛔ 시트가 열려 있으면 뒤 화면을 못 누른다 — 먼저 닫는다(sheet-mask 가 손가락을 막는다)
+for (let i = 0; i < 4; i++) { const 막 = p.locator('.sheet-mask'); if (!(await 막.count())) break; await 막.last().click({ position: { x: 5, y: 5 } }); await p.waitForTimeout(450) }
+await p.locator('.segment .seg').filter({ hasText: '장보기' }).first().click(); await p.waitForTimeout(600)
+const 담기 = p.locator('input[placeholder*="살 재료"]').first()
+// ⛔ 앞 단계에서 두부·대파는 «식비로 옮겨져» 목록에서 빠졌다 — 다시 담아야 여기서 잰다
+for (const 글 of ['두부 1990', '돼지고기 600g', '양파 3', '대파 1,500']) { await 담기.fill(글); await p.keyboard.press('Enter'); await p.waitForTimeout(400) }
+await p.waitForTimeout(400)
+d = await 판()
+const 찾 = (n) => (d.shoppingList || []).find((i) => i.name === n)
+본다('「두부 1990」 → 이름 두부 · 값 1,990', 찾('두부')?.won === 1990)
+본다('「대파 1,500」 쉼표도 읽는다', 찾('대파')?.won === 1500)
+본다('「돼지고기 600g」 은 값이 아니다(사는 양)', !!찾('돼지고기 600g') && !찾('돼지고기 600g')?.won)
+본다('「양파 3」 은 값이 아니다(세 자리 미만)', !!찾('양파 3') && !찾('양파 3')?.won)
+// ✏️ [2026-09-18] 잘못 적었을 때 고치기 — 창업자 «수정도 되게 해줘»
+// ⛔ 고치기를 누르면 그 줄 «글자»가 입력칸으로 바뀐다 → 「두부」로는 더 못 찾는다. 열린 칸을 바로 잡는다.
+const 고치기열기 = async (이름) => { await p.locator('.shop-row').filter({ hasText: 이름 }).first().locator('button[aria-label*="고치기"]').click(); await p.waitForTimeout(400); return p.locator('.shop-row input').first() }
+let 칸 = await 고치기열기('두부')
+본다('고치기 칸에 «이름 값»이 같이 들어 있다', (await 칸.inputValue()) === '두부 1990')
+await 칸.fill('두부 2500'); await p.keyboard.press('Enter'); await p.waitForTimeout(500)
+d = await 판()
+본다('「두부 2500」으로 고치면 값이 바뀐다', (d.shoppingList || []).find((i) => i.name === '두부')?.won === 2500)
+칸 = await 고치기열기('두부')
+await 칸.fill('두부'); await p.keyboard.press('Enter'); await p.waitForTimeout(500)
+d = await 판()
+본다('숫자를 빼고 저장하면 값이 지워진다', !(d.shoppingList || []).find((i) => i.name === '두부')?.won)
+await p.locator('.segment .seg').filter({ hasText: '식비' }).first().click(); await p.waitForTimeout(500)
+
 // ⑧ 날짜 거꾸로 고르기 (까지 < 부터)
 await p.evaluate(() => {
   const s = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
@@ -107,6 +135,22 @@ await p.locator('button', { hasText: '지울게요' }).first().click(); await p.
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2200); await 치우기(); await 식비로()
 본다('새로고침해도 기록이 남는다', (await 판()).foodCost.length === 전 - 1)
 본다('더한 가게도 남는다', (await 판()).costShops.some((s) => s.name === '우리동네마트'))
+// 💰 예산 — 창업자 2026-09-18 «이번주 식비를 20만원안에서 살기» · 주·달 따로
+await p.locator('.fc-bud-new').first().click(); await p.waitForTimeout(500)
+본다('처음엔 「안 정할래요」다', (await p.locator('.fc-save').last().textContent()).includes('안 정할래요'))
+for (const k of ['5', '000']) { await p.locator('.fc-key', { hasText: new RegExp('^' + k + '$') }).first().click(); await p.waitForTimeout(120) }
+본다('만 원 미만이면 잠긴다', await p.locator('.fc-save').last().isDisabled())
+await p.locator('.fc-key.bk', { hasText: '지움' }).first().click(); await p.waitForTimeout(150)
+for (const k of ['2', '00', '000']) { await p.locator('.fc-key', { hasText: new RegExp('^' + k + '$') }).first().click(); await p.waitForTimeout(120) }
+await p.locator('.fc-save').last().click(); await p.waitForTimeout(600)
+d = await 판()
+console.log('   예산 =', JSON.stringify(d.foodBudget))
+본다('주 예산 20만원이 저장된다', d.foodBudget?.w === 200000)
+본다('남은 돈이 뜬다', /남았어요|더 썼어요/.test(await p.locator('.fc-bud-s b').first().textContent()))
+await p.locator('.fc-scale button', { hasText: '달별' }).first().click(); await p.waitForTimeout(500)
+본다('달별은 «달 예산»이라 아직 안 정한 상태다', await p.locator('.fc-bud-new').count() === 1)
+await p.locator('.fc-scale button', { hasText: '주별' }).first().click(); await p.waitForTimeout(500)
+본다('주별로 돌아오면 예산이 그대로 있다', await p.locator('.fc-bud-s').count() === 1)
 본다('콘솔 오류 0', 오류.length === 0)
 if (오류.length) console.log('   ⛔', 오류.slice(0, 5))
 await b.close(); srv.close()

@@ -32,6 +32,28 @@ export function 쿠팡문(u, ua = typeof navigator === 'undefined' ? '' : naviga
   return `intent://search?q=${q}#Intent;scheme=coupang;package=com.coupang.mobile;S.browser_fallback_url=${encodeURIComponent(web)};end`
 }
 
+// 📱📱 [2026-09-18 창업자 *"쿠팡이츠 눌러봤는데 그냥 대표홈페이지였어. 배민도 그렇고 앱을 열어야하는데"*]
+//   ⭐ 안드로이드는 `intent://` 로 «앱»을 연다 — 앱이 없으면 크롬이 `browser_fallback_url` 로 웹을 띄운다(쿠팡문과 같은 꼴).
+//   ⛔ 아이폰은 그대로 웹이다 — 우리 코드는 아이폰에서 앱으로 안 보낸다(`_repro-쿠팡문-0905` ④와 같은 줄).
+//   ⛔⛔ **꾸러미 이름(package)은 «확인한 것»만 적는다** — 틀린 이름을 쓰면 앱이 있는 폰에서도 안 열린다.
+//      🔢 근거 = Google Play 주소(2026-09-17 검색으로 확인) ·
+//         배달의민족 `play.google.com/store/apps/details?id=com.sampleapp` · 쿠팡이츠 `…?id=com.coupang.mobile.eats`
+//         컬리 `…?id=com.dbs.kurly.m2` (2026-09-18 확인 · ⛔처음에 확인 없이 com.kurly.kurlymarket 이라 적었다가 고쳤다)
+//      ❓ 요기요·롯데마트·이마트몰은 꾸러미 이름을 «아직 못 찾았다» → 그대로 웹으로 연다(⛔짐작으로 적지 않는다).
+const 앱꾸러미 = [
+  { 무늬: /(^|\.)baemin\.com/i, pkg: 'com.sampleapp' },
+  { 무늬: /(^|\.)coupangeats\.com/i, pkg: 'com.coupang.mobile.eats' },
+  { 무늬: /(^|\.)kurly\.com/i, pkg: 'com.dbs.kurly.m2' },
+]
+export function 앱문(u, ua = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
+  if (!/Android/i.test(ua)) return u
+  let host = ''
+  try { host = new URL(u).host } catch { return u }
+  const 것 = 앱꾸러미.find((x) => x.무늬.test(host))
+  if (!것) return u
+  return `intent://${u.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=${것.pkg};S.browser_fallback_url=${encodeURIComponent(u)};end`
+}
+
 export function openExternal(url, name = "") {
   if (!url) return
   // 이미 스킴이 있으면(https://, intent://, intent:, market: 등) 그대로 쓰고,
@@ -39,7 +61,7 @@ export function openExternal(url, name = "") {
   // (안드로이드 intent 링크로 쇼핑몰 '앱'을 강제로 열 때 https 로 덮어쓰지 않도록)
   const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(url) || /^intent:/i.test(url)
   const web = hasScheme ? url : 'https://' + url
-  const u = 쿠팡문(web, undefined, name)
+  const u = 앱문(쿠팡문(web, undefined, name))
   // ⭐ 앱 스킴(coupang://)·intent 는 «같은 창»으로 보낸다 — 새 창(_blank)으로 던지면 크롬이 조용히 막는다(v12.60 실측).
   //   같은 창 이동이라도 우리 화면은 그대로 남는다 — 앱이 앞으로 나올 뿐 페이지가 바뀌지 않는다.
   if (/^intent:/i.test(u)) { window.location.assign(u); return }
