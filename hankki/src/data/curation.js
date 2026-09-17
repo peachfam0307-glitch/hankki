@@ -67,17 +67,17 @@ const CURATION_ALL = [
   {
     cat: '간장', group: '양념', emoji: '🫗', icon: 'cu_soy',
     items: [
-      { name: '우리콩 진간장', brand: '성가정', matches: ['진간장'], tag: '진간장', benefit: '국산 우리콩으로 담가 뒷맛이 깔끔해요. 염도가 높지 않아 두루두루 사용하기 좋아요', q: '성가정 우리콩 진간장', mall: 'coupang', url: 'https://link.coupang.com/a/gRYUv7E6gf' },
+      { name: '우리콩 진간장', brand: '성가정', ingredients: '정제수, 대두(국산), 천일염(국산), 소맥(국산), 주정, 종국', allergen: '대두, 밀 함유', nutrition: '420mL · 252kcal', checked: '2026-09-17', ingWho: '창업자', matches: ['진간장'], tag: '진간장', benefit: '국산 우리콩으로 담가 뒷맛이 깔끔해요. 염도가 높지 않아 두루두루 사용하기 좋아요', q: '성가정 우리콩 진간장', mall: 'coupang', url: 'https://link.coupang.com/a/gRYUv7E6gf' },
       { name: '쌀누룩 맛간장', matches: ['맛간장'], tag: '맛간장', benefit: '100% 국산콩에 무방부제·무첨가물, 원당과 과일로 건강한 단맛과 감칠맛을 냈어요. 무침·비빔·계란간장밥처럼 바로 먹는 요리에 딱. 통째로 구비해두는 저의 주문템이에요', q: '쌀누룩 맛간장', url: 'https://smartstore.naver.com/thebat/products/5788851801' },
       // 🫗 [2026-08-29 창업자 제공] *"국산콩으로 만들어 성분도 좋고, 색, 감칠맛, 염도가 있는 편이에요."*
       //    ⭐ 성가정 진간장(염도 낮음·두루두루)과 «역할이 갈린다» — 이건 색·감칠맛·염도가 필요한 자리다.
-      { name: '우리콩 양조간장', brand: '샘표', matches: ['양조간장'], tag: '양조간장', benefit: '국산콩으로 만들어 성분도 좋고, 색·감칠맛·염도가 있는 편이에요. 찜이나 색 내는 볶음 요리할 때 많이 사용해요', q: '샘표 우리콩 양조간장', mall: 'coupang', from: '2026-08-29', url: 'https://link.coupang.com/a/gRZz56j0YC' },
-      { name: '붉은대게 백간장', brand: '홍영의', matches: ['백간장'], tag: '백간장', benefit: '붉은대게즙으로 만들어 깔끔하고 깊은 감칠맛이 나요. 국간장보다 색이 옅어 국물색을 해치지 않으면서 간을 맞춰줘서, 맑은국·나물무침·계란찜, 김치찌개 간 맞출 때 살짝 둘러요', q: '홍영의 붉은대게 백간장', mall: 'coupang', url: 'https://link.coupang.com/a/gRY0NsfeOO' },
+      { name: '우리콩 양조간장', brand: '샘표', ingredients: '정제수, 대두(국산), 소맥(국산), 천일염(호주산), 주정', allergen: '대두, 밀 함유', checked: '2026-09-17', ingWho: '창업자', matches: ['양조간장'], tag: '양조간장', benefit: '국산콩으로 만들어 성분도 좋고, 색·감칠맛·염도가 있는 편이에요. 찜이나 색 내는 볶음 요리할 때 많이 사용해요', q: '샘표 우리콩 양조간장', mall: 'coupang', from: '2026-08-29', url: 'https://link.coupang.com/a/gRZz56j0YC' },
+      { name: '붉은대게 백간장', brand: '홍영의', ingredients: '붉은대게추출액70%[붉은대게(국내산)/고형분4.4%이상], 정제염(국내산), 정제수, 바다맛베이스[정제염(국내산), 건멸치분말(국내산)], 건멸치(국내산), 주정, 건다시마, 건표고버섯, 건양파, 건대파, 무말랭이, 검은콩, 고추씨, 감초, 흑후추, 건마늘, 참당귀뿌리, 영양강화제, 건생강', allergen: '대두, 게 함유', checked: '2026-09-17', ingWho: '창업자', matches: ['백간장'], tag: '백간장', benefit: '붉은대게즙으로 만들어 깔끔하고 깊은 감칠맛이 나요. 국간장보다 색이 옅어 국물색을 해치지 않으면서 간을 맞춰줘서, 맑은국·나물무침·계란찜, 김치찌개 간 맞출 때 살짝 둘러요', q: '홍영의 붉은대게 백간장', mall: 'coupang', url: 'https://link.coupang.com/a/gRY0NsfeOO' },
       // 🥄 2026-08-14 창업자 요청 — *"연두 우리콩 요리에센스야. 노랑뚜껑이고, 성분이 깔끔해 국산콩, 국산채소로 만들었어.
       //    이것도 주부의 장바구니에 없으면 넣자. 내가 자주쓰는거라."* ＋ 링크를 직접 줬다.
       //    ⚠️ 「노랑뚜껑」이 중요하다 — 연두는 종류가 여럿이라 «우리콩(노랑뚜껑)»이 아니면 성분이 다르다.
       //    ⛔ 그래서 검색(q)이 아니라 **창업자가 준 상품 주소**를 그대로 쓴다. 검색은 다른 연두를 물어온다.
-      { name: '우리콩 요리에센스', brand: '연두', matches: ['연두'], tag: '연두', benefit: '노랑뚜껑 «우리콩»이라 성분이 깔끔해요. 국산콩·국산채소로 만들어서 감칠맛만 딱 붙고 뒷맛이 안 남아요. 소금 대신 조금 넣으면 국물이 훨씬 부드러워져서 제가 자주 쓰는 템이에요', url: 'https://link.coupang.com/a/gRY96xjSeW' },
+      { name: '우리콩 요리에센스', brand: '연두', ingredients: '국산콩발효액[국산연두콩발효맛내기액(대두: 국산), 천일염: 호주산], 국산채소양념[표고버섯농축액(표고버섯: 국산), 국산순야채양념(무: 국산)], 발효주정, 천일염(호주산), 발효한효모물', allergen: '대두 함유', checked: '2026-09-17', ingWho: '창업자', matches: ['연두'], tag: '연두', benefit: '노랑뚜껑 «우리콩»이라 성분이 깔끔해요. 국산콩·국산채소로 만들어서 감칠맛만 딱 붙고 뒷맛이 안 남아요. 소금 대신 조금 넣으면 국물이 훨씬 부드러워져서 제가 자주 쓰는 템이에요', url: 'https://link.coupang.com/a/gRY96xjSeW' },
     ],
   },
   {
@@ -88,8 +88,8 @@ const CURATION_ALL = [
       //   ⛔ **죽장연은 안 붙인다** ("죽장연 빼고 백합이랑 맥만").
       //   🔢 실측 = 재료줄에 「된장…」이 있는 편은 **된장찌개 1편**뿐이라 「도배」 경고에 안 걸린다.
       { name: '미소된장', benefit: '일본 미소된장 맛있는데 거의 GMO더라구요. 국산 재료로 만든 미소된장을 발견했는데, 일본식 미소된장 맛은 아니에요. 슴슴하고 구수해서 어린아이들용으로 참 좋을 것 같아 추천템에 올려요', q: '국산 미소된장', url: 'https://smartstore.naver.com/uilu-mijum/products/4170629592', from: '2026-09-26' },
-      { name: '맥된장', matches: ['된장'], benefit: '국산콩 메주 96%, 천일염 4%로만 만들어 성분이 좋아요. 가격도 합리적이라 손이 자주 가요. 특히 백합된장과 궁합이 좋아 섞어 쓰면 더 맛있어요', q: '맥된장', mall: 'coupang', url: 'https://link.coupang.com/a/gRYZjLwCQK' },
-      { name: '백합된장', matches: ['된장'], benefit: '수녀님들이 메주·물·소금만으로 정성껏 만들었어요. 찌개도 좋지만 국을 끓이면 구수한 맛이 확 살아나요. 맥된장과 섞어 쓰면 궁합이 좋아요', q: '백합된장', url: 'http://www.spcfood.co.kr/product/product_view.php?ProductSeqNo=8' },
+      { name: '맥된장', ingredients: '메주96%[대두100%(국산)], 천일염(국산)', allergen: '대두 함유', nutrition: '450g', checked: '2026-09-17', ingWho: '창업자', matches: ['된장'], benefit: '국산콩 메주 96%, 천일염 4%로만 만들어 성분이 좋아요. 가격도 합리적이라 손이 자주 가요. 특히 백합된장과 궁합이 좋아 섞어 쓰면 더 맛있어요', q: '맥된장', mall: 'coupang', url: 'https://link.coupang.com/a/gRYZjLwCQK' },
+      { name: '백합된장', ingredients: '메주, 물, 식염 (성분 및 함량: 메주41%, 물34%, 식염25% · 원료원산지 국산100%)', allergen: '대두, 밀 함유', nutrition: '100g당 165kcal · 탄수화물 12g · 당류 3g · 단백질 14g · 지방 7g · 포화지방 0.7g · 트랜스지방 불검출 · 콜레스테롤 0mg · 나트륨 4144mg (총 내용량 1kg)', checked: '2026-09-17', ingWho: '창업자', matches: ['된장'], benefit: '수녀님들이 메주·물·소금만으로 정성껏 만들었어요. 찌개도 좋지만 국을 끓이면 구수한 맛이 확 살아나요. 맥된장과 섞어 쓰면 궁합이 좋아요', q: '백합된장', url: 'http://www.spcfood.co.kr/product/product_view.php?ProductSeqNo=8' },
     ],
   },
   {
@@ -101,7 +101,7 @@ const CURATION_ALL = [
       //   ⭐⭐ 그래서 **품절 위험이 없다** — 상품 하나에 고정하면 그 판매자가 빠질 때 죽은 링크가 되는데,
       //      검색 결과는 안 죽는다. ＝ 지금 우리 구조(검색 길)를 하나도 안 바꾸고 수수료만 붙는다.
       //   📌 만드는 법 = 파트너스 → 링크 생성 → 검색창에 «제품 이름만»(⛔주소를 붙여넣으면 그게 검색어가 된다) → 🔗
-      { name: '맛술', brand: '요리맛샘', matches: ['맛술'], benefit: '성분이 깔끔한 맛술이에요. 살짝 산미가 있지만 잡내를 잡고 감칠맛을 더하는 데 어느 요리에나 잘 맞아요', q: '요리맛샘 맛술', mall: 'coupang', url: 'https://link.coupang.com/a/gRYozMRl7I' },
+      { name: '맛술', brand: '요리맛샘', ingredients: '프락토올리고당, 정제수, 현미사과식초[현미막걸리식초{막걸리(현미: 국산)}, 사과(국산)], 마늘(국산), 생강(국산), 사랑담은 참맛간장[양조간장(대두, 밀/국산)], 발효주정, 사과농축과즙액(사과100%/국산), 정제소금(국산), 레몬농축액', allergen: '대두, 밀 함유', nutrition: '230g · 329kcal', checked: '2026-09-17', ingWho: '창업자', matches: ['맛술'], benefit: '성분이 깔끔한 맛술이에요. 살짝 산미가 있지만 잡내를 잡고 감칠맛을 더하는 데 어느 요리에나 잘 맞아요', q: '요리맛샘 맛술', mall: 'coupang', url: 'https://link.coupang.com/a/gRYozMRl7I' },
     ],
   },
   {
@@ -132,15 +132,15 @@ const CURATION_ALL = [
     //    「액젓」이라는 이름이 안에 든 것과 안 맞게 됐다(⛔이름은 그대로 두고 딴 걸 담지 않는다).
     cat: '젓갈·액젓', group: '양념', emoji: '🐟', icon: 'cu_aekjeot',
     items: [
-      { name: '초피액젓', brand: '와촌식품', benefit: '국물요리 간은 거의 이걸로 해요. 수도 없이 사서 쓰는 템이에요. 감칠맛이 좋아 국·찌개·나물무침 어디에나 잘 맞아요', q: '와촌식품 초피액젓', url: 'https://wachonfood.co.kr/' },
-      { name: '참새우젓', matches: ['새우젓'], benefit: '새우젓을 쓸 일이 많이 없는데 가끔 필요할 때 있잖아요. 작은 용량이라 냉동실에 넣어두고, 필요할 때 요긴하게 사용하고 있어요', q: '참새우젓', mall: 'icoop', url: 'https://icoop.or.kr/coopmall/goodsmall.phtm?act=detail&gc=48041IF800', from: '2026-08-29' },
+      { name: '초피액젓', brand: '와촌식품', ingredients: '멸치(국내산)76.5%, 천일염(국내산)23%, 초피나무잎(국내산)0.5%', nutrition: '900mL', checked: '2026-09-17', ingWho: '창업자', benefit: '국물요리 간은 거의 이걸로 해요. 수도 없이 사서 쓰는 템이에요. 감칠맛이 좋아 국·찌개·나물무침 어디에나 잘 맞아요', q: '와촌식품 초피액젓', url: 'https://wachonfood.co.kr/' },
+      { name: '참새우젓', ingredients: '새우(국산) 75%, 천일염(국산) 25%', allergen: '새우 함유', checked: '2026-09-17', ingWho: '창업자', matches: ['새우젓'], benefit: '새우젓을 쓸 일이 많이 없는데 가끔 필요할 때 있잖아요. 작은 용량이라 냉동실에 넣어두고, 필요할 때 요긴하게 사용하고 있어요', q: '참새우젓', mall: 'icoop', url: 'https://icoop.or.kr/coopmall/goodsmall.phtm?act=detail&gc=48041IF800', from: '2026-08-29' },
       { name: '양념낙지젓', icon: 'cu_nakji_jeot', benefit: '젓갈을 자주 먹진 않는데, 가끔 먹고 싶을 때 한 번씩 주문해요. 꼬들꼬들하고 양념이 맛있어요', q: '한살림 양념낙지젓', mall: 'hansalim', from: '2026-09-05' },
     ],
   },
   {
     cat: '소금', group: '양념', emoji: '🧂', icon: 'cu_salt',
     items: [
-      { name: '대파소금', brand: '모에솔트', matches: ['대파소금'], benefit: '대파소금이 유행이라지만 직접 갈아 섞는 건 엄두가 안 났는데 딱 나와줬어요. 국내산 대파 50%에 염도 낮은 소금만으로 만들어 열자마자 대파향이 솔솔. 고기구이·계란후라이·국에 살짝 감칠맛 낼 때 좋아요', q: '모에솔트 대파소금', mall: 'coupang', url: 'https://link.coupang.com/a/gR0kG4w7hs' },
+      { name: '대파소금', brand: '모에솔트', ingredients: '대파 50%(국내산), 천일염 50%(국내산)', nutrition: '180g', checked: '2026-09-17', ingWho: '창업자', matches: ['대파소금'], benefit: '대파소금이 유행이라지만 직접 갈아 섞는 건 엄두가 안 났는데 딱 나와줬어요. 국내산 대파 50%에 염도 낮은 소금만으로 만들어 열자마자 대파향이 솔솔. 고기구이·계란후라이·국에 살짝 감칠맛 낼 때 좋아요', q: '모에솔트 대파소금', mall: 'coupang', url: 'https://link.coupang.com/a/gR0kG4w7hs' },
     ],
   },
   {
@@ -153,8 +153,8 @@ const CURATION_ALL = [
       //    ✅ 그림은 `docs/stickers/큐레이션-창업자-2026-09-04/` 에 보관 — 시럽 제품이 들어오는 날 쓴다.
       //    ⛔ `src/assets/curation/` 에는 두지 않는다 — 그 폴더는 `import.meta.glob(eager)` 로
       //       **통째로 번들에 실려서** 안 쓰는 그림까지 유저가 «전부» 내려받는다.
-      { name: '아우노슈가', benefit: '성분 좋은 설탕이에요. 많이 달지 않아서 일반 설탕보다 조금 넉넉히 넣어도 부담 없어요. 저는 요리에 두루 이걸 써요', q: '아우노슈가', mall: 'coupang', url: 'https://link.coupang.com/a/g3fOzcNQiG' },
-      { name: '흑당시럽', brand: '아우노', matches: ['흑당시럽', '올리고당'], benefit: '올리고당 대신 쓰는 시럽이에요. 올리고당과 같은 양으로 넣으면 돼요', q: '아우노 흑당시럽', url: 'https://smartstore.naver.com/aunosugar/category/0e2ffeda4f7c41c98c836a5789147cdd?cp=1' },
+      { name: '아우노슈가', ingredients: '유기농미네랄로우슈가(콜롬비아산, 유기농 사탕수수 100%)', nutrition: '100g당 390kcal · 나트륨 6mg · 탄수화물 94g · 당류 87g · 지방 1.4g · 트랜스지방 0g · 포화지방 0g · 콜레스테롤 0mg · 단백질 0.5g · 칼슘 220.1mg · 칼륨 584.1mg · 마그네슘 42.3mg · 인 47.4mg · 철 0.6mg · 아연 0.1mg · 망간 0.2mg · 나이아신 0.4mg NE · 비타민B6 0.05mg (총 내용량 320g)', checked: '2026-09-17', ingWho: '창업자', benefit: '성분 좋은 설탕이에요. 많이 달지 않아서 일반 설탕보다 조금 넉넉히 넣어도 부담 없어요. 저는 요리에 두루 이걸 써요', q: '아우노슈가', mall: 'coupang', url: 'https://link.coupang.com/a/g3fOzcNQiG' },
+      { name: '흑당시럽', brand: '아우노', ingredients: '유기미네랄원당(콜롬비아산, 유기농 사탕수수 100%), 정제수', nutrition: '100g당 257kcal · 나트륨 0mg · 탄수화물 62g · 당류 58g · 지방 0.9g · 포화지방 0g · 트랜스지방 0g · 콜레스테롤 0mg · 단백질 0g · 철 0.4mg · 칼슘 145.3mg · 칼륨 385.5mg · 망간 0.2mg · 마그네슘 27.9mg (총 내용량 250g)', checked: '2026-09-17', ingWho: '창업자', matches: ['흑당시럽', '올리고당'], benefit: '올리고당 대신 쓰는 시럽이에요. 올리고당과 같은 양으로 넣으면 돼요', q: '아우노 흑당시럽', url: 'https://smartstore.naver.com/aunosugar/category/0e2ffeda4f7c41c98c836a5789147cdd?cp=1' },
       // 🛒 2026-08-17 「주부의 장바구니」 1판 ① — 창업자 원문 = `docs/장바구니-창업자자료-2026-08-09.md` 6️⃣
       //   ⭐ 이 목록에서 **빈칸이 제일 큰 재료**다 — 기본 레시피 **28편**이 「올리고당 N큰술」을 쓰는데 앱엔 제품이 없었다.
       //   ⚠️ 자연드림은 직접 주소를 아직 못 받았다 → `q` 검색(네이버 폴백). ⛔한살림과 달리 **비조합원도 살 수 있다**(창업자 확정).
@@ -179,7 +179,7 @@ const CURATION_ALL = [
       // 🍲 [2026-08-29] ✅ **창업자가 설명을 써 줘서 들어왔다** — 8/17부터 「설명이 없어 못 넣는」 자리였다.
       //    ⭐ 우리 규칙 = 설명 없이 올리지 않는다(「18년차 주부의 손」이 빠지면 그냥 광고가 된다). 그 규칙이 값을 한 자리다.
       //    ⚠️ 창업자가 «리뉴얼되며 소금이 들어갔다»까지 적어 줬다 — 좋은 말만 하지 않는 게 이 큐레이션의 값어치다.
-      { name: '한우 사골 곰탕 스틱', brand: '설성목장', icon: 'cu_stock_beef', matches: ['사골육수'], tag: '사골육수', benefit: '무항생제 한우 사골과 잡뼈를 우린 고농축 스틱이에요. 개별포장되어 있어 쓰기 편해서 냉장고에 늘 구비해둬요. 리뉴얼되면서 소금이 들어갔어요', q: '설성목장 한우 사골 곰탕 스틱', mall: 'coupang', from: '2026-09-05', url: 'https://link.coupang.com/a/gRZPuJSP7c' },
+      { name: '한우 사골 곰탕 스틱', brand: '설성목장', ingredients: '한우사골추출물88%[고형분53%/정제수, 한우사골뼈25%(국내산/무항생제한우), 한우뼈25%(국내산/무항생제한우)], 정제소금(국내산)', allergen: '쇠고기 함유', nutrition: '14g당 38kcal', checked: '2026-09-17', ingWho: '창업자', icon: 'cu_stock_beef', matches: ['사골육수'], tag: '사골육수', benefit: '무항생제 한우 사골과 잡뼈를 우린 고농축 스틱이에요. 개별포장되어 있어 쓰기 편해서 냉장고에 늘 구비해둬요. 리뉴얼되면서 소금이 들어갔어요', q: '설성목장 한우 사골 곰탕 스틱', mall: 'coupang', from: '2026-09-05', url: 'https://link.coupang.com/a/gRZPuJSP7c' },
     ],
   },
   {
@@ -197,7 +197,7 @@ const CURATION_ALL = [
       //      ✅ 장보기 탭 큐레이션 목록엔 **그대로 있다**(올리브유 때와 같은 뜻 — 목록에서 지우는 게 아니다).
       //   ⛔ `matches` 만 떼면 안 빠진다 — 재료 줄에 「복이네먹거리 고춧가루」 풀네임이 박힌 편이 6편,
       //      메모 「제가 쓰는 양념 —」 줄에 박힌 편이 12편이라 풀네임 매칭으로 계속 붙는다.
-      { name: '고춧가루', brand: '복이네먹거리', matches: ['고춧가루'], noRecipePick: true, benefit: '국내산 고추로 만들어요. 순한맛·보통매운맛에 용량·입자 크기까지 골라 살 수 있어 내 요리에 딱 맞춰 쓰기 좋아요', q: '복이네먹거리 고춧가루', mall: 'coupang', url: 'https://link.coupang.com/a/gRYXiRJNkG' },
+      { name: '고춧가루', brand: '복이네먹거리', ingredients: '건고추100%(국산)', nutrition: '250g', checked: '2026-09-17', ingWho: '창업자', matches: ['고춧가루'], noRecipePick: true, benefit: '국내산 고추로 만들어요. 순한맛·보통매운맛에 용량·입자 크기까지 골라 살 수 있어 내 요리에 딱 맞춰 쓰기 좋아요', q: '복이네먹거리 고춧가루', mall: 'coupang', url: 'https://link.coupang.com/a/gRYXiRJNkG' },
     ],
   },
   {
@@ -260,7 +260,7 @@ const CURATION_ALL = [
   {
     cat: '훈제오리', group: '고기·해산물', emoji: '🦆', icon: 'cu_duck',
     items: [
-      { name: '훈제오리', brand: '자연누리', matches: ['훈제오리'], benefit: '저는 수년째 먹는 재료예요. 소분해 냉동해두면 바쁜 아침에 깻잎이랑 휘리릭 볶아 반찬으로 딱. 처음엔 생소해도 한번 사면 계속 사게 될 거예요', q: '자연누리 훈제오리', mall: 'coupang', url: 'https://link.coupang.com/a/gRZxZdjvdQ' },
+      { name: '훈제오리', brand: '자연누리', ingredients: '무항생제 오리94.69%(국산), 사과(국산), 배(국산), 마늘(국산), 감자전분(국산), 호수염, 비정제당, 당근(국산), 양파(국산), 파(국산), 표고버섯(국산), 다시마(국산), 황기(국산), 대추(국산), 후추, 감초, 팔각, 계피, 로즈마리, 타임, 생강(국산), 정향, 회향, 월계수', nutrition: '100g당 205kcal · 단백질 15g · 콜레스테롤 85mg · 포화지방 4g (총 내용량 400g · 나머지 칸은 사진에 가려짐)', checked: '2026-09-17', ingWho: '창업자', matches: ['훈제오리'], benefit: '저는 수년째 먹는 재료예요. 소분해 냉동해두면 바쁜 아침에 깻잎이랑 휘리릭 볶아 반찬으로 딱. 처음엔 생소해도 한번 사면 계속 사게 될 거예요', q: '자연누리 훈제오리', mall: 'coupang', url: 'https://link.coupang.com/a/gRZxZdjvdQ' },
       { name: '훈제오리', brand: '무무덕', matches: ['훈제오리'], benefit: '나온 지 얼마 안 된 신상이에요. 첨가물 없이 깔끔하고 샤브 야채 위에 올려 찜해 먹으면 고소한 다이어트 건강식이 돼요. 자연누리와 또 다른 느낌이라 번갈아 구비해둬요', q: '무무덕 훈제오리', url: 'https://sanjitalk.com/article/161' },
     ],
   },
@@ -292,7 +292,7 @@ const CURATION_ALL = [
   {
     cat: '두유', group: '두부·콩', emoji: '🥛', icon: 'cu_soymilk',
     items: [
-      { name: '국산콩두유 약콩', brand: '연세', matches: ['두유'], benefit: '국산콩으로 만들어 적당한 단맛에 고소하고 느끼하지 않아요. 출출할 때나 아이 간식으로 챙겨주기 좋은, 제 최애 두유예요', q: '연세 국산콩두유 약콩', url: 'https://brand.naver.com/yonseidairy/products/8785157847' },
+      { name: '국산콩두유 약콩', brand: '연세', ingredients: '원액두유 70%(대두고형분 7%, 대두: 국산), 정제수, 설탕, 약콩추출액 1%(국산, 고형분 2%), 올리고당, 현미유(미강유/태국산), 현미믹스시럽, 깨페이스트, 약콩분말 0.2%(국산), 정제소금, 해조분말', allergen: '대두 함유', checked: '2026-09-17', ingWho: '창업자', matches: ['두유'], benefit: '국산콩으로 만들어 적당한 단맛에 고소하고 느끼하지 않아요. 출출할 때나 아이 간식으로 챙겨주기 좋은, 제 최애 두유예요', q: '연세 국산콩두유 약콩', url: 'https://brand.naver.com/yonseidairy/products/8785157847' },
     ],
   },
   {
@@ -323,7 +323,7 @@ const CURATION_ALL = [
       { name: '국내산 도토리로 만든 도토리묵', brand: '친정엄마', matches: ['도토리묵'], benefit: '국산 도토리앙금·천일염, 성분이 심플해요. 작은 사이즈로 소분돼 있어 하나 까서 혼자 먹기 딱이에요', q: '친정엄마 국내산 도토리묵', mall: 'coupang', url: 'https://link.coupang.com/a/gRZnjMvfJA' },
       { name: '국산콩두부', who: '창업자', brand: '곰곰', matches: ['두부'], benefit: '국산콩이라 성분도 깔끔하고, 가성비도 좋아 어느 두부요리에나 두루두루 쓰기 좋아요', q: '곰곰 국산콩두부', mall: 'coupang', url: 'https://link.coupang.com/a/g5iOKxxNQa' },
       { name: '오리엔탈연두부', brand: '빠르게한끼', icon: 'cu_yeondubu', matches: ['연두부'], benefit: '국산콩에 소스도 들어있어서 입맛 없을 때나 바쁜 아침에 휘리릭 먹기 좋아요', q: '빠르게한끼 오리엔탈 연두부', mall: 'kurly', from: '2026-09-19' },
-      { name: '낫또', icon: 'cu_natto', matches: ['낫또'], benefit: '낫또를 썩 좋아하진 않는데 몸에 좋다고 해서 브랜드별로 거의 먹어봤어요. 그중에 자연드림 낫또가 제 입맛에는 제일 괜찮았어요. 저같은 낫또 초심자 추천', q: '낫또', mall: 'icoop', from: '2027-02-06', url: 'http://icoop.or.kr/coopmall/goodsmall.phtm?act=find&key=%EB%82%AB%EB%98%90&x=0&y=0' },
+      { name: '낫또', ingredients: '[낫또] 쥐눈이콩(국산)100%, 종균 / [맛간장소스] 올리고당, 양조간장27.35%[대두(국산), 소맥(우리밀: 국산), 소금, 종국], 정제수, 유기농설탕7%, 발효식초[주정, 맥아엑기스, 발효영양원], 가쓰오시즈닝엑기스S{소스[참치농축액(다랑어: 원양산)], 무농축액(무: 국산)}, 소금', allergen: '대두, 밀 함유', nutrition: '88g[낫또40g, 맛간장소스4g]×2개입', checked: '2026-09-17', ingWho: '창업자', icon: 'cu_natto', matches: ['낫또'], benefit: '낫또를 썩 좋아하진 않는데 몸에 좋다고 해서 브랜드별로 거의 먹어봤어요. 그중에 자연드림 낫또가 제 입맛에는 제일 괜찮았어요. 저같은 낫또 초심자 추천', q: '낫또', mall: 'icoop', from: '2027-02-06', url: 'http://icoop.or.kr/coopmall/goodsmall.phtm?act=find&key=%EB%82%AB%EB%98%90&x=0&y=0' },
     ],
   },
   {
@@ -422,7 +422,7 @@ const CURATION_ALL = [
   {
     cat: '우유·유제품', group: '유제품', emoji: '🥛', icon: 'cu_milk',
     items: [
-      { name: '소화가 잘되는 우유', brand: '연세우유', matches: ['우유'], benefit: '제가 라떼를 정말 좋아하는데, 라떼 조합으로 제일 맛있는 우유인 것 같아요. 약간의 첨가물이 있는데 제가 먹는 거니까 :) 아쉬운 건 1팩씩은 안 팔더라구요', q: '연세우유 소화가 잘되는 우유', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gRZhYWJypw' },
+      { name: '소화가 잘되는 우유', brand: '연세우유', ingredients: '원유 99.03597%(국산), 칼슘혼합제제(탄산칼슘, 아라비아검, 정제수), 난소화성말토덱스트린, 락타아제, 열처리유산균', allergen: '우유 함유', nutrition: '100mL당 65kcal · 나트륨 50mg · 탄수화물 5g · 당류 5g · 지방 3.7g · 트랜스지방 0g · 포화지방 2.5g · 콜레스테롤 11mg · 단백질 3g · 칼슘 200mg (총 내용량 900mL)', checked: '2026-09-17', ingWho: '창업자', matches: ['우유'], benefit: '제가 라떼를 정말 좋아하는데, 라떼 조합으로 제일 맛있는 우유인 것 같아요. 약간의 첨가물이 있는데 제가 먹는 거니까 :) 아쉬운 건 1팩씩은 안 팔더라구요', q: '연세우유 소화가 잘되는 우유', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gRZhYWJypw' },
       { name: '마이카페라떼 마일드', brand: '매일', benefit: '시판되는 많은 라떼들 중에 제 원픽은 매일카페라떼예요. 많이 달지 않고 제 입맛에는 그렇게 좋더라구요. 라떼 좋아하는 분들 강추합니다', q: '매일 마이카페라떼 마일드', mall: 'coupang', from: '2026-11-28', url: 'https://link.coupang.com/a/gR01WV52tM' },
       { name: '클로티드크림', brand: '데본', benefit: '타르틴 슬랩 올리브오일 뿌려 살짝 구워서 이거 발라드세요. 꼭이요. (꿀도 추가…)', q: '데본 클로티드크림', mall: 'kurly', from: '2026-12-19' },
     ],
@@ -455,7 +455,7 @@ const CURATION_ALL = [
       //    **쿠팡에 물건이 없었다**(품절) → 창업자가 오아시스 상품 주소를 직접 줬다.
       //    ⛔ 그래서 파트너스 수수료는 «안 붙는다» — 그래도 «살 수 있는 곳»을 보여주는 게 먼저다.
       //    📌 나중에 쿠팡에 다시 들어오면 `mall: 'coupang'` ＋ 파트너스 링크로 되돌린다.
-      { name: '유기농 골드퀸 현미밥 즉석밥', brand: '치밀', matches: ['즉석밥'], benefit: '현미밥이지만 쫀득하고 맛있어요. 플라스틱 용기가 아니라 더 좋구요. 햇반보다 이거 쟁이세요', q: '치밀 유기농 골드퀸 현미밥 즉석밥', mall: 'oasis', url: 'https://www.oasis.co.kr/product/detail/115011', from: '2027-01-16' },
+      { name: '유기농 골드퀸 현미밥 즉석밥', brand: '치밀', ingredients: '유기농 골드퀸현미(국산) 100%', checked: '2026-09-17', ingWho: '창업자', matches: ['즉석밥'], benefit: '현미밥이지만 쫀득하고 맛있어요. 플라스틱 용기가 아니라 더 좋구요. 햇반보다 이거 쟁이세요', q: '치밀 유기농 골드퀸 현미밥 즉석밥', mall: 'oasis', url: 'https://www.oasis.co.kr/product/detail/115011', from: '2027-01-16' },
       { name: '곤드레나물밥', matches: ['곤드레'], benefit: '곤드레나물부터 양념까지 다 국산재료라 건강한 한 끼 먹고 싶을 때 구입해요', q: '한살림 곤드레나물밥', mall: 'hansalim', from: '2026-12-05' },
       { name: '차돌듬뿍 묵은지볶음밥', benefit: '요건 어른들 비상템이에요. 칼칼하고 자극적인 맛. 전 컬리에서 장 볼 때 꼭 하나씩 담아요', q: '차돌듬뿍 묵은지볶음밥', mall: 'kurly', from: '2026-12-26' },
       { name: '이혜정의 꽉찬 수제 영양밥', brand: '빅마마', benefit: '국산재료 사용해 성분도 좋고, 내용물도 실해요. 추천템', q: '빅마마 이혜정 꽉찬 수제 영양밥 전복', mall: 'coupang', from: '2027-01-23', url: 'https://link.coupang.com/a/gR1cAvlyqi' },
@@ -465,7 +465,7 @@ const CURATION_ALL = [
       { name: '수제 김치찌개', brand: '오모가리', benefit: '내가 끓이는 김치찌개가 제일 맛있지만, 또 남이 끓여주는 것도 먹고 싶잖아요. 한 팩 뜯어서 두부나 돼지고기 추가해서 끓이면 간편식으로 괜찮아요. 자주 사는 템', q: '오모가리 수제 김치찌개', mall: 'coupang', from: '2027-02-06', url: 'https://link.coupang.com/a/gR1fjRGFYz' },
       { name: '물만두', matches: ['물만두', '만두'], benefit: '떡국에도 넣고 만둣국 끓일 때도 좋고, 물만두로 간단히 조리해 먹기도 좋아요. 첨가물 거의 없고 전 재료 국산이라 자극적인 맛은 아니지만 냉동실에 꾸준히 있는 아이템', q: '한살림 물만두', mall: 'hansalim', from: '2026-12-19' },
       { name: '닭가슴살 만두', brand: '굽네', matches: ['만두'], benefit: '전자레인지에 간단하게 돌려먹는 만두인데, 피가 라이스페이퍼처럼 쫄깃하고 소도 맛있어요. 기본 맛이 제일 맛있었어요. 매콤한 거 좋아하시면 청양고추맛도 추천', q: '굽네 닭가슴살 만두', mall: 'coupang', from: '2027-02-13', url: 'https://link.coupang.com/a/gRZRPRtxsq' },
-      { name: '하남쭈꾸미', matches: ['쭈꾸미', '주꾸미'], benefit: '저는 간편식 쭈꾸미 중에서는 하남쭈꾸미가 제일 맛있는 것 같아요. 매콤하고 자극적인 맛 좋아하면 담아보세요', q: '하남쭈꾸미', mall: 'coupang', from: '2027-02-20', url: 'https://link.coupang.com/a/gR1hD6q9jE' },
+      { name: '하남쭈꾸미', ingredients: '주꾸미81%(외국산: 베트남, 태국, 인도네시아 등), 고추장[된장{밀가루(밀: 미국산, 호주산)}, 물엿, 혼합양념(중국산), 혼합조미료, 정제소금], 설탕, 고춧가루(건고추: 중국산), 마늘, 향미유, 무, L-글루탐산나트륨(향미증진제), 혼합간장, 표고버섯가루, 양파, 볶은참깨, 후춧가루', allergen: '대두, 밀 함유', nutrition: '500g', checked: '2026-09-17', ingWho: '창업자', matches: ['쭈꾸미', '주꾸미'], benefit: '저는 간편식 쭈꾸미 중에서는 하남쭈꾸미가 제일 맛있는 것 같아요. 매콤하고 자극적인 맛 좋아하면 담아보세요', q: '하남쭈꾸미', mall: 'coupang', from: '2027-02-20', url: 'https://link.coupang.com/a/gR1hD6q9jE' },
       { name: '남도떡갈비', brand: '비비고', matches: ['떡갈비'], benefit: '자극적인 대기업 맛이에요. 밥에 물 말아서 남도 떡갈비에 김치면…', q: '비비고 남도떡갈비', mall: 'coupang', from: '2027-02-27', url: 'https://link.coupang.com/a/gRZjIxQfnM' },
       { name: '해물파전 · 김치전', brand: '부침명장', matches: ['해물파전', '김치전'], benefit: '냉동실에 넣어두면 반찬 없을 때 구워서 내기 딱이에요', q: '부침명장 해물파전 김치전', mall: 'kurly', from: '2027-01-09' },
     ],
@@ -489,7 +489,7 @@ const CURATION_ALL = [
   {
     cat: '잼·스프레드', group: '빵·떡', emoji: '🍯', icon: 'cu_spread',
     items: [
-      { name: '호두크림치즈', brand: '포비베이글', matches: ['크림치즈'], benefit: '포비베이글 크림치즈 중에 하나만 고르라면 저는 이거요. 고소하고 달달해서 빵에 발라먹기 좋아요', q: '포비베이글 호두크림치즈', mall: 'coupang', from: '2027-02-13', url: 'https://link.coupang.com/a/gR1n7yW2Kq' },
+      { name: '호두크림치즈', brand: '포비베이글', ingredients: '치즈[미국산/살균우유, 크림, 식염, 로커스트콩검(안정제), 컬쳐], 호두[미국산/호두100%], 설탕, 정제수, 과채주스[스페인산], 일반증류주1, 일반증류주2', allergen: '우유, 호두 함유 · 토마토, 이산화황, 밀 혼입 가능', nutrition: '100g', checked: '2026-09-17', ingWho: '창업자', matches: ['크림치즈'], benefit: '포비베이글 크림치즈 중에 하나만 고르라면 저는 이거요. 고소하고 달달해서 빵에 발라먹기 좋아요', q: '포비베이글 호두크림치즈', mall: 'coupang', from: '2027-02-13', url: 'https://link.coupang.com/a/gR1n7yW2Kq' },
       { name: '무화과 스프레드', brand: '포비', matches: ['무화과잼'], benefit: '호두스프레드랑 함께 자주 구입해요. 무화과가 톡톡 씹히고 크림치즈도 과하게 달지 않아요', q: '포비 무화과 스프레드', mall: 'coupang', from: '2027-02-20', url: 'https://link.coupang.com/a/gR1pAVcxKm' },
       { name: '알룰로스 딸기잼', matches: ['딸기잼'], benefit: '달지 않고 딸기 함량도 많아 정말 맛있어요. 대신 한 개씩 구입하기 어렵다는 게 조금 아쉬워요', q: '무설탕 저당 알룰로스 딸기잼 파우치', mall: 'coupang', from: '2027-02-27', url: 'https://link.coupang.com/a/gR1rf7MFyu' },
     ],
@@ -537,7 +537,7 @@ const CURATION_ALL = [
     cat: '피자', group: '간편식·간식', emoji: '🍕', icon: 'cu_pizza4',
     items: [
       { name: '버섯피자', brand: '톰볼라', matches: ['피자'], benefit: '어른 피자맛. 짭짤하고 자극적인데 맛있어요. 피맥은 이걸로 추천합니다', q: '톰볼라 버섯피자', mall: 'kurly', from: '2026-09-12', url: 'https://www.kurly.com/goods/5044304' },
-      { name: '작은사이즈 고르곤졸라 · 불고기피자', brand: '우리별피자', matches: ['피자'], benefit: '가끔 인스타에서 공구할 때 사봤는데 토핑도 실하고 사이즈도 딱 좋더라구요. 모짜렐라 치즈 듬뿍 추가해서 굽는 거 추천해요. 저는 고르곤졸라·불고기피자가 제일 맛있었어요', q: '우리별피자 고르곤졸라 불고기피자', url: 'https://smartstore.naver.com/wooristar/products/6626404795', from: '2027-01-09' },
+      { name: '작은사이즈 고르곤졸라 · 불고기피자', brand: '우리별피자', ingredients: '[불고기] 백도우[밀가루(이탈리아산), 올리브유(스페인산), 정제소금(국산), 효모, 설탕], 치즈[치즈{모짜렐라치즈(외국산/미국, 프랑스, 독일 등), 고다치즈(뉴질랜드산)}, 분말셀룰로스], 불고기프리미엄S[쇠고기(미국, 호주), 소스{양조간장(탈지대두: 외국산)}, 대파, 양파, 혼합간장], 소스[필드토마토, 크러쉬드토마토, 양파, 설탕, 당근], 치즈, 치즈 / [고르곤졸라] 백도우[밀가루(이탈리아산), 올리브유(스페인산), 정제소금(국산), 효모, 설탕], 치즈[치즈{모짜렐라치즈(외국산/미국, 프랑스, 독일 등), 고다치즈(뉴질랜드산)}, 분말셀룰로스], 소스[우유(국산), 대두유(콩: 외국산/미국, 브라질, 파라과이 등), 밀가루, 가공버터1, 가공버터2], 치즈[치즈, 토리코스타(변성전분)], 이탈리안 블루 치즈 고르곤졸라 돌체(이탈리아산), 당류가공품, 치즈', allergen: '[불고기] 알류(계란), 우유, 대두, 밀, 토마토, 아황산류, 쇠고기, 조개류(굴) 함유 / [고르곤졸라] 알류(계란), 우유, 대두, 밀, 닭고기 함유', nutrition: '[불고기] 140g · 365kcal · 나트륨 532mg · 탄수화물 45g · 당류 5g · 지방 13g · 트랜스지방 0.3g · 포화지방 7g · 콜레스테롤 32mg · 단백질 17g / [고르곤졸라] 122g · 357kcal · 나트륨 486mg · 탄수화물 42g · 당류 6g · 지방 15g · 트랜스지방 0.4g · 포화지방 8g · 콜레스테롤 36mg · 단백질 13g', checked: '2026-09-17', ingWho: '창업자', matches: ['피자'], benefit: '가끔 인스타에서 공구할 때 사봤는데 토핑도 실하고 사이즈도 딱 좋더라구요. 모짜렐라 치즈 듬뿍 추가해서 굽는 거 추천해요. 저는 고르곤졸라·불고기피자가 제일 맛있었어요', q: '우리별피자 고르곤졸라 불고기피자', url: 'https://smartstore.naver.com/wooristar/products/6626404795', from: '2027-01-09' },
     ],
   },
 ]
