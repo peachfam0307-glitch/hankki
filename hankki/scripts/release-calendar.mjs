@@ -198,6 +198,8 @@ export function cartItems() {
       ownIcon: f('icon'), icon: f('icon') || catIcon, catIcon,
       // 🔗 [2026-09-04] 「사러가기」가 «제 상품»으로 가나 — 검수 때 창업자에게 링크를 달라고 말하려고 같이 읽는다
       url: f('url'), mallRaw: f('mall'),
+      // 🧾 [절대원칙 · 창업자 2026-09-17] 검수 때 «원재료 캡처»를 달라고 도구가 말한다 — 있나 없나만 본다
+      hasIng: /\bingredients:\s*'/.test(line),
     })
   }
   return out
@@ -220,6 +222,16 @@ function cart() {
 //    ⭐ 그래서 «한꺼번에 30개»를 받을 게 아니라 **열리기 전에 그 몇 개만** 받으면 된다.
 //       ⛔ 내가 기억해서 말하지 않는다 — 기억은 반드시 낡는다. 검수 관문이 스스로 말한다.
 //    ⛔ 한살림은 «일부러» 링크를 안 단다(창업자 2026-08-17 *"링크안달면되고"*) → 세지 않는다.
+// 🧾🧾 **[절대원칙 · 창업자 2026-09-17] 큐레이션 검수 때 «원재료 캡처»를 «꼭» 달라고 말한다.**
+//    📮 창업자 = *"큐레이션 검수할때 원재료캡쳐달라고꼭 말해 절대원칙."*
+//       ＋ 같은 날 = *"지금 큐레이션에 들어있는 제품만 캡쳐 찍어서 주고, 다음에 올라가는 거는 검수할때 찍어서 줄게"*
+//    🌲 왜 = 상세 시트(CurationDetailSheet)가 «원재료명·알레르기»를 보여주는데(2026-09-17 · 저작권 답 = 사진 ✗ 글자 ✓),
+//       라벨은 창업자 포장 사진·쿠팡 캡처로만 온다. 검수 때 안 받으면 그 편은 영영 빈 채로 열린다.
+//    ⛔ 내가 기억해서 말하지 않는다 — 링크(위)와 «같은 자리»에서 도구가 말한다.
+export function 원재료없는장바구니(items = cartItems()) {
+  return items.filter((it) => !it.hasIng)
+}
+
 const 링크표에있는몰 = new Set(['coupang', 'oasis', ''])
 export function 링크없는장바구니(items = cartItems()) {
   return items.filter((it) => !it.url && it.mallRaw !== 'hansalim' && !링크표에있는몰.has(it.mallRaw || ''))
@@ -332,6 +344,13 @@ if (mode === '--on') {
     console.error('   ⛔ 링크가 없으면 「사러가기」가 **네이버쇼핑 검색**으로 떨어진다 — 엉뚱한 게 나온다.')
     console.error('   👉 창업자에게 그 제품 «상품 주소»를 받아 `url:` 로 박는다(추적 부스러기는 떼고).')
   }
+  // 🧾 [절대원칙 · 창업자 2026-09-17] 그날 열리는 제품 중 «원재료가 없는» 것 — 검수 자리에서 캡처를 달라고 말한다
+  const 그날원재료없음 = 원재료없는장바구니().filter((it) => it.from === arg)
+  if (그날원재료없음.length) {
+    console.error(`\n🧾 **창업자에게 «원재료 캡처»를 받아야 하는 제품 ${그날원재료없음.length}개** (이날 열린다 · 절대원칙 2026-09-17)`)
+    for (const it of 그날원재료없음) console.error(`   · ${it.brand ? it.brand + ' ' : ''}${it.name}`)
+    console.error('   👉 포장 뒷면(원재료명·알레르기·영양) 사진이나 쿠팡 상세 캡처 → 내가 글자로 옮겨 `ingredients:` 로 박는다.')
+  }
   process.exit(0)
 }
 
@@ -420,6 +439,16 @@ if (mode === '--brief' || mode === '--check') {
       곧.slice(0, 4).forEach((it) => console.log(`   · ${it.from} (D-${dday(it.from)}) ${it.name}   (${it.mallRaw})`))
       if (곧.length > 4) console.log(`   · … 외 ${곧.length - 4}개`)
       console.log('   ⛔ 없으면 「사러가기」가 **네이버쇼핑 검색**으로 떨어진다(컬리·아이쿱은 몰 표에 없다).')
+    }
+    // 🧾 [절대원칙 · 창업자 2026-09-17] 곧 열리는 제품 중 «원재료 없는» 것 — 검수 때 캡처를 달라고 말한다
+    const 곧원재료 = 원재료없는장바구니()
+      .filter((it) => it.from && it.from > 오늘 && dday(it.from) <= 30)
+      .sort((a, b) => a.from.localeCompare(b.from))
+    if (곧원재료.length) {
+      console.log(`🧾 **창업자에게 «원재료 캡처»를 받아야 하는 제품 ${곧원재료.length}개** (30일 안에 열린다 · 절대원칙 2026-09-17)`)
+      곧원재료.slice(0, 4).forEach((it) => console.log(`   · ${it.from} (D-${dday(it.from)}) ${it.brand ? it.brand + ' ' : ''}${it.name}`))
+      if (곧원재료.length > 4) console.log(`   · … 외 ${곧원재료.length - 4}개`)
+      console.log('   👉 검수판을 줄 때 «포장 뒷면 사진 또는 쿠팡 상세 캡처»를 같이 달라고 말한다.')
     }
   }
   if (hot) {
