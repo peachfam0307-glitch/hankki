@@ -134,7 +134,7 @@ const CURATION_ALL = [
     items: [
       { name: '초피액젓', brand: '와촌식품', ingredients: '멸치(국내산)76.5%, 천일염(국내산)23%, 초피나무잎(국내산)0.5%', nutrition: '900mL', checked: '2026-09-17', ingWho: '창업자', benefit: '국물요리 간은 거의 이걸로 해요. 수도 없이 사서 쓰는 템이에요. 감칠맛이 좋아 국·찌개·나물무침 어디에나 잘 맞아요', q: '와촌식품 초피액젓', url: 'https://wachonfood.co.kr/' },
       { name: '참새우젓', ingredients: '새우(국산) 75%, 천일염(국산) 25%', allergen: '새우 함유', checked: '2026-09-17', ingWho: '창업자', matches: ['새우젓'], benefit: '새우젓을 쓸 일이 많이 없는데 가끔 필요할 때 있잖아요. 작은 용량이라 냉동실에 넣어두고, 필요할 때 요긴하게 사용하고 있어요', q: '참새우젓', mall: 'icoop', url: 'https://icoop.or.kr/coopmall/goodsmall.phtm?act=detail&gc=48041IF800', from: '2026-08-29' },
-      { name: '양념낙지젓', icon: 'cu_nakji_jeot', benefit: '젓갈을 자주 먹진 않는데, 가끔 먹고 싶을 때 한 번씩 주문해요. 꼬들꼬들하고 양념이 맛있어요', q: '한살림 양념낙지젓', mall: 'hansalim', from: '2026-09-05' },
+      { name: '양념낙지젓', ingredients: '낙지 75.0%(국산), 고춧가루 6.0%(국산), 천일염 5.0%(국산), 마늘 4.0%(국산), 조청 3.0%(국산), 유기농설탕 2.0%(브라질산), 참깨 1.0%(국산), 다시마 0.08%(국산), 양파 0.1%(국산), 생강 0.02%(국산), 정제수 3.8%', checked: '2026-09-17', ingWho: '창업자', icon: 'cu_nakji_jeot', benefit: '젓갈을 자주 먹진 않는데, 가끔 먹고 싶을 때 한 번씩 주문해요. 꼬들꼬들하고 양념이 맛있어요', q: '한살림 양념낙지젓', mall: 'hansalim', from: '2026-09-05' },
     ],
   },
   {
