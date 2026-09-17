@@ -406,7 +406,6 @@ function Curation() {
   // 🧾 큰 칸을 골랐을 때 «소칸(줄)» 몇 개까지 — 창업자 *"양념류가 9줄이야. 3개정도만 보이고 아래 더보기"*
   const CATFOLD = 3
   const [openG, setOpenG] = useState({})   // 펼쳤나 — 열쇠는 `g:큰칸` · `c:소칸` (이름이 겹쳐도 안 섞이게)
-  const [openCard, setOpenCard] = useState({}) // 카드별 «설명을 펼쳤나»
   const [detail, setDetail] = useState(null)   // 🛒 탭한 제품 — 상세 시트(원재료명·알레르기). 카드는 그대로, 시트로 본다(창업자 2026-09-17)
   // 큰 칸으로 다시 묶는다 — ⚠️ 소제목(작은 칸)은 그대로 살린다. 접히는 건 «개수»뿐이다.
   const byGroup = [...new Set(shownGroups.map((g) => g.group))].map((name) => ({
@@ -516,10 +515,14 @@ function Curation() {
               ⛔ 자르지 «않는다». 39개를 재보니 **가장 짧은 설명도 41자**(가운데 74 · 최장 127)라
                  한 줄에 들어가는 게 하나도 없고, 이 설명이 바로 큐레이션의 값어치다
                  (*"남편이 콩국수를 좋아해서…"*). 잘라내면 그냥 상품 목록이 된다.
-              ⭐ 그래서 «접어만» 둔다 — 훑을 땐 짧고, 궁금하면 눌러서 한 글자도 안 빠진 전문을 본다. */}
+              ⭐ 그래서 «접어만» 둔다 — 훑을 땐 짧고, 궁금하면 눌러서 한 글자도 안 빠진 전문을 본다.
+              🧾 [창업자 2026-09-17] 이제 누르면 «그 자리에서 펼치지 않고» 상세 «시트»로 간다 — 아이콘·이름·설명 어디를 눌러도 같은 시트.
+                 📮 *"설명도 다 아이콘 누르는 걸로 바꿀까"* · *"그럼 깔끔해지긴하겠다"* · 걱정 = *"유저들이 모르려나??"*
+                 → 그래서 「자세히 보기 ›」 표시를 남긴다(눌리는 곳이라는 신호). 시트에 전문·원재료·담기·사러가기가 다 있다.
+                 ⛔ 두 동작(펼침/시트)을 같이 두면 누르는 자리마다 결과가 달라 헷갈린다 — 하나로. */}
           <button
             className="press"
-            onClick={() => setOpenCard((s) => ({ ...s, [it.name]: !s[it.name] }))}
+            onClick={() => setDetail(it)}
             style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0 }}
           >
             {/* ↩️ **[2026-08-23 창업자] *"올리고당설명줄바꿈되게"*** — 줄바꿈이 «뜻»을 갈랐다.
@@ -535,8 +538,8 @@ function Curation() {
             <span
               className="t-sub"
               style={{
-                display: openCard[it.name] ? 'block' : '-webkit-box',
-                WebkitLineClamp: openCard[it.name] ? 'none' : 2,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 /* 🔠 [2026-08-29] 창업자 = *"장바구니 설명도 글자 1-2포인트만 작게해도 될 것 같고"*
@@ -556,11 +559,8 @@ function Curation() {
             >
               {it.benefit}
             </span>
-            {/* 🔽🔼 [2026-08-12] 창업자 *"주부의 장바구니(접기버튼 잘보이게)"*
-                ⛔ 옛 코드는 `!openCard[...]` 라 **펼친 뒤엔 「접기」가 아예 안 그려졌다.**
-                   접으려면 설명 글 자체를 다시 눌러야 하는데 그걸 알려주는 표시가 없었다.
-                   → 「펼치기는 보이는데 접기가 안 보인다」가 정확히 이것이다.
-                ✅ 펼쳐도 «같은 자리에» 「접기」를 그린다 ＋ 화살표를 붙여 눌리는 곳임을 보인다. */}
+            {/* 🔽🔼 [2026-08-12] 창업자 *"주부의 장바구니(접기버튼 잘보이게)"* — 눌리는 곳엔 «표시»를 남긴다(화살표).
+                (옛 「더보기/접기」 펼침은 2026-09-17 에 시트로 합쳐졌다 — 위 🧾) */}
             {/* 👆 [2026-08-29] 창업자 = *"그거랑 담기가 너무 붙어있어. 접기. 누르려다 담기를 누르게돼."*
                 🔢 옛 실측 = 「더보기」 글자 아래끝 ↔ 「담기」 위끝이 **11px** 뿐이었다.
                 ⭐⭐ 오터치를 막는 건 «완충 지대»다 — 아무 버튼도 아닌 «빈 공간»이라야
@@ -570,8 +570,8 @@ function Curation() {
                 ✅ 그래서 둘 다 조금씩 = 「더보기」는 눌리기 쉽게 살짝 키우고(paddingBottom 4),
                    그 «아래»는 빈 공간으로 벌린다 → 실제 간격 11 → **22px**. */}
             <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--brown)', display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 6, paddingBottom: 4 }}>
-              {openCard[it.name] ? '접기' : '더보기'}
-              <Icon name={openCard[it.name] ? 'chevron-up' : 'chevron-down'} size={12} />
+              자세히 보기
+              <Icon name="chevron-right" size={12} />
             </span>
           </button>
       </div>

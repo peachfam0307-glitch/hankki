@@ -12,6 +12,8 @@ import { dirname, join } from 'node:path'
 const R = dirname(dirname(fileURLToPath(import.meta.url)))
 const 낼곳 = process.env.OUT || '/tmp/claude-0/원재료캐러셀'
 const 캡처 = process.env.SHOT || ''   // 앱 시트 캡처 png (없으면 2장은 글로만)
+const 캡처2 = process.env.SHOT2 || ''  // 앱 목록 캡처 png (2장 뒤에 깔리는 둘째 폰)
+const 씬 = (k) => { const p = join(R, `src/assets/scenepool/${k}.png`); return existsSync(p) ? 'data:image/png;base64,' + b64(p) : '' }
 rmSync(낼곳, { recursive: true, force: true }); mkdirSync(낼곳, { recursive: true })
 
 const b64 = (p) => existsSync(p) ? readFileSync(p).toString('base64') : ''
@@ -41,23 +43,34 @@ const 곰 = (키, px, 자리) => `<img src="${그림(키)}" style="position:abso
 
 const 장 = []
 
-// ① 훅 — 큰 글씨 ＋ 굴소스 병 ＋ 만세 꼬르곰
+// ① 훅 — «배경 있는» 씬을 통째로 깔고 글은 아래 크림 띠에 (창업자 2026-09-17 *"첫장은 배경있는 걸로"*)
+//    ⛔ 처음에 scene_market 을 집었다가 창업자 *"저거 애들 옛컷이야"* — 그건 9/5 에 옛 펭펭이라 카드 풀에서 내린 컷(ShareDrawCard OLD_PENG_SCENE).
+//    ⛔ scenepool 은 옛 컷도 파일로 남아 있다(띠부씰이 같은 그림을 쓴다) → 홍보물에 쓸 땐 «정본»(scene_n_*·scene_np*)만.
+//    ✅ scene_n_08 = 돋보기로 들여다보는 꼬르곰 — 「뒷면부터 살펴본다」와 뜻이 맞는다.
+//    씬은 604px 라 1080 폭으로 키우면 흐릿해진다 → 위쪽 1080×1080 에 «cover» 로 채우고 아래 270px 는 크림 띠. 흐림은 일러스트라 용서된다.
 장.push({ 이름: '1-훅', html: `
-  <div style="position:absolute;left:80px;top:150px;font-size:38px;color:${흐림}">주부의 장바구니가 달라졌어요</div>
-  <div style="position:absolute;left:80px;top:215px;font-size:88px;line-height:1.28;font-weight:700">사러 가기 전에<br>뒷면부터</div>
-  <div style="position:absolute;right:60px;bottom:210px"><img src="${제품그림('cu_gulsauce')}" style="width:520px;height:520px;object-fit:contain"></div>
-  <div style="position:absolute;left:80px;bottom:110px" class="알약">원재료·알레르기를 앱에서 바로</div>
-  ${곰('ce_manse', 330, 'left:70px;top:600px')}` })
+  <div style="position:absolute;inset:0;background:${크림}"></div>
+  <div style="position:absolute;left:0;top:0;width:1080px;height:1000px;overflow:hidden">
+    <img src="${씬('scene_n_08')}" style="width:100%;height:100%;object-fit:cover;object-position:center 30%">
+    <div style="position:absolute;left:0;right:0;bottom:0;height:420px;background:linear-gradient(to bottom, rgba(246,236,220,0) 0%, rgba(246,236,220,0.96) 62%, ${크림} 100%)"></div>
+  </div>
+  <div style="position:absolute;left:70px;top:660px" class="알약">주부의 장바구니가 달라졌어요</div>
+  <div style="position:absolute;left:70px;top:750px;font-size:96px;line-height:1.22;font-weight:700">사러 가기 전에<br>뒷면부터</div>
+  <div style="position:absolute;left:70px;bottom:100px" class="알약">원재료·알레르기를 앱에서 바로</div>
+  <div style="position:absolute;right:60px;bottom:90px"><img src="${제품그림('cu_gulsauce')}" style="width:300px;height:300px;object-fit:contain"></div>` })
 
-// ② 실물 — 앱 시트 캡처를 폰 틀에 (짜임: 가운데 세로)
-장.push({ 이름: '2-실물', html: `
-  <div style="position:absolute;left:0;right:0;top:110px;text-align:center;font-size:56px;font-weight:700">제품 이름을 누르면</div>
-  <div style="position:absolute;left:0;right:0;top:190px;text-align:center;font-size:32px;color:${흐림}">추천 글 전문과 원재료가 한 장에 올라와요</div>
-  <div style="position:absolute;left:250px;top:280px;width:580px;height:1000px;border-radius:56px;background:#2b2118;padding:16px;overflow:hidden">
-    <div style="width:100%;height:100%;border-radius:42px;overflow:hidden;background:#fff">
-      ${캡처 ? `<img src="data:image/png;base64,${b64(캡처)}" style="width:100%;display:block">` : ''}
+// ② 실물 — 폰 «둘»을 크게 겹친다 (창업자 2026-09-17 *"화면 좀 크게 UI넣어줘"*) — 뒤 = 목록(카드) · 앞 = 시트
+const 폰 = (png, left, top, w, h, z) => `
+  <div style="position:absolute;left:${left}px;top:${top}px;width:${w}px;height:${h}px;border-radius:64px;background:#2b2118;padding:14px;overflow:hidden;z-index:${z};box-shadow:0 30px 60px rgba(60,30,0,.25)">
+    <div style="width:100%;height:100%;border-radius:50px;overflow:hidden;background:#fff">
+      ${png ? `<img src="data:image/png;base64,${b64(png)}" style="width:100%;display:block">` : ''}
     </div>
-  </div>` })
+  </div>`
+장.push({ 이름: '2-실물', html: `
+  <div style="position:absolute;left:0;right:0;top:90px;text-align:center;font-size:56px;font-weight:700">카드를 누르면</div>
+  <div style="position:absolute;left:0;right:0;top:170px;text-align:center;font-size:32px;color:${흐림}">추천 글 전문과 원재료가 한 장에 올라와요</div>
+  ${캡처2 ? 폰(캡처2, 40, 330, 620, 1340, 1) : ''}
+  ${폰(캡처, 400, 250, 640, 1380, 2)}` })
 
 // ③ 무엇을 보나 — 세 칸을 «왼쪽으로» 붙여 계단처럼
 const 칸 = (제목, 글, top, left) => `
