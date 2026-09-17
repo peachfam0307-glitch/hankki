@@ -124,11 +124,15 @@ export default function FoodCostView() {
         ))}
       </div>
       {잣대 === 'range' && (
-        <div className="fc-range">
-          <input type="date" value={기간.부터} max={오늘()} onChange={(e) => set기간((g) => ({ ...g, 부터: e.target.value }))} />
-          <span>~</span>
-          <input type="date" value={기간.까지} max={오늘()} onChange={(e) => set기간((g) => ({ ...g, 까지: e.target.value }))} />
-        </div>
+        <>
+          <div className="fc-range">
+            <input type="date" value={기간.부터} max={오늘()} onChange={(e) => set기간((g) => ({ ...g, 부터: e.target.value }))} />
+            <span>~</span>
+            <input type="date" value={기간.까지} max={오늘()} onChange={(e) => set기간((g) => ({ ...g, 까지: e.target.value }))} />
+          </div>
+          {/* ↩︎ 막대를 눌러 들어왔을 때 돌아가는 길 — 없으면 유저가 날짜를 손으로 되돌려야 한다 */}
+          <button className="press fc-back" onClick={() => set잣대('week')}>이번 주로 돌아가기</button>
+        </>
       )}
 
       {/* ⭐ 고른 구간 — 제일 크게. 지난 칸·평균을 옆에 둬서 많이 썼는지 «견줄» 수 있게 한다 */}
@@ -165,12 +169,24 @@ export default function FoodCostView() {
         {견줄만한가 && (
           <div className="fc-half">
             <div className="fc-hk">{잣대 === 'month' ? '12달' : '8주'} 흐름</div>
+            {/* 👆 [2026-09-17 창업자 *"8주흐름은 누르면 자세히 보여??"*] → 누르면 그 칸만 본다.
+                  ⭐ 「기간」 잣대로 바꿔 그 주(달)의 시작·끝을 넣는다 — 화면 하나로 끝나고 새 화면을 안 만든다.
+                  ⛔ 빈 칸은 눌러도 소용없다(볼 게 없다) — 눌리지 않게 막는다. */}
             <div className="fc-weeks">
               {여덟주.map((w, i) => (
-                <b key={w.첫} className={i === 여덟주.length - 1 ? 'now' : ''} style={{ height: `${Math.max(3, Math.round((w.합 / 제일큰주) * 44))}px` }} />
+                <button key={w.첫} type="button" disabled={!w.합}
+                  className={`press ${i === 여덟주.length - 1 ? 'now' : ''}`}
+                  aria-label={`${w.이름} ${돈(w.합)}원 자세히`}
+                  onClick={() => { set기간({ 부터: w.첫, 까지: w.끝 }); set잣대('range') }}>
+                  {/* 💵 [2026-09-17 창업자 *"그래프아래 아무것도 안적혀있어서"*] — 막대만 있으면 «무엇을 보는지» 모른다.
+                        ⭐ 만원 단위로 줄여 적는다(41,000 → 4). 여덟 칸에 여섯 자리를 넣으면 뭉개진다. */}
+                  <em>{w.합 ? Math.round(w.합 / 10000) : ''}</em>
+                  <i style={{ height: `${Math.max(3, Math.round((w.합 / 제일큰주) * 34))}px` }} />
+                  <span>{잣대 === 'month' ? w.이름.replace('월', '') : Number(w.첫.slice(8, 10))}</span>
+                </button>
               ))}
             </div>
-            <div className="fc-hs">{잣대 === 'month' ? '달' : '주'}마다 얼마 썼나</div>
+            <div className="fc-hs">{잣대 === 'month' ? '달' : '월요일 날짜'} · 만원 · 누르면 그 {잣대 === 'month' ? '달' : '주'}만 봐요</div>
           </div>
         )}
       </div>

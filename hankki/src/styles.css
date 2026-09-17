@@ -1987,9 +1987,14 @@ img {
 .fc-hv em { font-size: 12.5px; font-style: normal; font-weight: 600; margin-left: 2px; }
 .fc-hwait { font-size: 13px; color: var(--sand); margin-top: 9px; line-height: 1.5; }
 .fc-hs { font-size: 11.5px; color: var(--text-sub); margin-top: 4px; }
-.fc-weeks { display: flex; align-items: flex-end; justify-content: center; gap: 5px; height: 46px; margin-top: 5px; }
-.fc-weeks b { width: 11px; background: var(--sand); border-radius: 3px 3px 0 0; }
-.fc-weeks b.now { background: var(--brown); }
+.fc-weeks { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 62px; margin-top: 5px; }
+.fc-weeks button { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 19px; height: 62px; padding: 0; background: none; gap: 2px; }
+.fc-weeks button em { font-style: normal; font-size: 10px; font-weight: 700; color: var(--text-sub); line-height: 1; height: 11px; }
+.fc-weeks button span { font-size: 9.5px; color: var(--sand); line-height: 1; }
+.fc-weeks button.now em, .fc-weeks button.now span { color: var(--brown); }
+.fc-weeks button i { display: block; width: 11px; background: var(--sand); border-radius: 3px 3px 0 0; }
+.fc-weeks button.now i { background: var(--brown); }
+.fc-back { width: 100%; margin-top: 8px; padding: 9px 0; border-radius: 11px; background: var(--cream); color: var(--brown); font-size: 14px; font-weight: 700; }
 .fc-out-btn { width: 100%; margin-top: 13px; padding: 13px 0; border-radius: 13px; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 16px; }
 .fc-wk-head { display: flex; justify-content: space-between; align-items: baseline; margin: 20px 2px 8px; font-size: 13.5px; color: var(--text-sub); }
 .fc-wk-head b { font-size: 15px; color: var(--text); }
