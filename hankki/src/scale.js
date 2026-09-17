@@ -76,3 +76,18 @@ export function scaleIngredient(str, ratio) {
   })
   return 바뀐것 ? out : str
 }
+
+// 🏷 재료 «묶음» 표기 — 한 곳에서만 정한다(상세·요리모드가 같은 잣대를 써야 한다).
+//   ⓐ `'[양념]'` 처럼 대괄호«만» 있는 줄 = 소제목(헤더). 장보기 담기·인분 환산에서 뺀다.
+//   ⓑ `'[양념장] 고추장 1큰술'` 처럼 줄마다 붙은 꼴 = 화면에서 «맨 처음 한 번»만 소제목으로 띄우고 줄에선 뗀다
+//      (창업자 확정 2026-09-16 *"제일 처음 한번만"* · ⛔ 데이터는 한 글자도 안 고친다).
+//   🔢 [2026-09-18] 요리모드는 이 잣대를 «안 쓰고» 있었다 — 오리지날 떡볶이 재료 준비 화면에 「[양념장]」이 아홉 번 찍혔다
+//      (창업자 실물 캡처 · 갤럭시). 그래서 상세 화면에 있던 셋을 여기로 올려 둘이 같은 함수를 쓴다.
+export const isIngHeader = (s) => /^\[[^\]]+\]$/.test(String(s).trim())
+export const ingGroup = (s) => { const m = /^\[([^\]]+)\]/.exec(String(s).trim()); return m ? m[1] : null }
+export const stripIngGroup = (s) => String(s).replace(/^\s*\[[^\]]+\]\s*/, '')
+// 소제목을 띄울 줄인가 — 헤더 줄이거나, 묶음이 «바로 앞 줄»과 다른 첫 줄
+export const ingHeadBefore = (list, i) => {
+  const g = ingGroup(list[i]); if (!g || isIngHeader(list[i])) return null
+  return g !== (i > 0 ? ingGroup(list[i - 1]) : null) ? g : null
+}
