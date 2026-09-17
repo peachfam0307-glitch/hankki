@@ -21,6 +21,7 @@ const 그림 = (k) => { const p = join(R, `src/assets/stickers/photo/${k}.png`);
 const 제품그림 = (k) => { const p = join(R, `src/assets/curation/${k}.png`); return existsSync(p) ? 'data:image/png;base64,' + b64(p) : '' }
 const 폰트 = b64(join(R, 'src/assets/fonts/gowun-dodum-korean-400.woff2'))
 const 폰트L = b64(join(R, 'src/assets/fonts/gowun-dodum-latin-400.woff2'))
+const 앱아이콘 = 'data:image/png;base64,' + b64(join(R, 'public/icons/icon-512-v7.png'))   // 🐻 끝 장 알약 앞 꼬르곰 — 카톡 배경·릴스와 «같은 꼴»(절대원칙 2026-09-16)
 
 // ── 값은 저장소에서 «읽는다» — 지금 열려 있는 제품 중 원재료가 든 개수
 const cur = readFileSync(join(R, 'src/data/curation.js'), 'utf8')
@@ -54,7 +55,7 @@ const 장 = []
     <img src="${씬('scene_n_08')}" style="width:100%;height:100%;object-fit:cover;object-position:center 30%">
     <div style="position:absolute;left:0;right:0;bottom:0;height:420px;background:linear-gradient(to bottom, rgba(246,236,220,0) 0%, rgba(246,236,220,0.96) 62%, ${크림} 100%)"></div>
   </div>
-  <div style="position:absolute;left:70px;top:660px" class="알약">주부의 장바구니가 달라졌어요</div>
+  <div style="position:absolute;left:70px;top:660px" class="알약">원재료 일일이 찾아보기 번거롭죠?</div>
   <div style="position:absolute;left:70px;top:750px;font-size:96px;line-height:1.22;font-weight:700">사러 가기 전에<br>뒷면부터</div>
   <div style="position:absolute;left:70px;bottom:100px" class="알약">원재료·알레르기를 앱에서 바로</div>
   <div style="position:absolute;right:60px;bottom:90px"><img src="${제품그림('cu_gulsauce')}" style="width:300px;height:300px;object-fit:contain"></div>` })
@@ -67,8 +68,8 @@ const 폰 = (png, left, top, w, h, z) => `
     </div>
   </div>`
 장.push({ 이름: '2-실물', html: `
-  <div style="position:absolute;left:0;right:0;top:90px;text-align:center;font-size:56px;font-weight:700">카드를 누르면</div>
-  <div style="position:absolute;left:0;right:0;top:170px;text-align:center;font-size:32px;color:${흐림}">추천 글 전문과 원재료가 한 장에 올라와요</div>
+  <div style="position:absolute;left:0;right:0;top:90px;text-align:center;font-size:56px;font-weight:700">한끼에선 추천템만 누르면</div>
+  <div style="position:absolute;left:0;right:0;top:170px;text-align:center;font-size:32px;color:${흐림}">왜 추천하는지, 뭐가 들었는지 바로 보여요</div>
   ${캡처2 ? 폰(캡처2, 40, 330, 620, 1340, 1) : ''}
   ${폰(캡처, 400, 250, 640, 1380, 2)}` })
 
@@ -112,7 +113,11 @@ const 띠 = ['cu_gulsauce', 'cu_cheese', 'cu_curry', 'cu_bread', 'cu_dangmyeon',
 장.push({ 이름: '6-끝', html: `
   <div style="position:absolute;left:0;right:0;top:280px;text-align:center;font-size:78px;font-weight:700">오늘도 한끼하세요</div>
   <div style="position:absolute;left:0;right:0;top:420px;text-align:center;font-size:36px;color:${흐림}">흩어진 레시피를, 한곳에</div>
-  <div style="position:absolute;left:0;right:0;bottom:170px;text-align:center;font-size:44px;line-height:1.5;color:#7a5a3a">App Store · Google Play 에서<br><b style="color:${진};font-size:54px">한끼</b> 다운로드</div>
+  <div style="position:absolute;left:0;right:0;bottom:150px;text-align:center">
+    <span class="알약" style="padding:24px 46px 24px 26px;font-size:40px;text-align:left;line-height:1.35;gap:22px">
+      <img src="${앱아이콘}" style="width:112px;height:112px;border-radius:26px">
+      <span>App Store · Google Play 에서<br><b style="color:${진};font-size:52px;letter-spacing:-1px">한끼 레시피북</b> 검색</span>
+    </span></div>
   ${곰('ce_manse', 400, 'left:330px;top:580px')}` })
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
