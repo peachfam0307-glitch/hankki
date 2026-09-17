@@ -33,6 +33,21 @@ const 센다 = (제목) => countPantryHitsWeighted(편(제목), 냉장고, () =>
   본다('⛔ 제육볶음은 한 줄도 안 잘린다 (`[양념]` 뿐)', 본체재료(편('제육볶음').ingredients).length === 원, `${원}줄`)
 }
 
+// ②-b [창업자 2026-09-18 *"이런건 특별한 재료가 필요하지 않으니까 빼자"*] 찍먹 계열도 곁가지다
+{
+  const 남 = 본체재료(편('오징어 새우전').ingredients)
+  본다('⭐ `[찍먹 간장]` 칸이 빠진다', !남.some((x) => /찍먹/.test(String(x))) && !남.includes('진간장 4큰술'), `${남.length}줄 남음`)
+}
+{
+  const 남 = 본체재료(편('버섯전').ingredients)
+  본다('⭐ `[초간장]` 칸이 빠진다', !남.some((x) => /초간장/.test(String(x))))
+}
+// ⛔ 「시럽」은 «뺐다가 되돌렸다» — 맛탕은 시럽에 버무리는 요리라 그게 본체다
+{
+  const 원 = (편('고구마맛탕').ingredients || []).length
+  본다('⛔ 고구마맛탕 `[시럽]` 은 «안» 잘린다 (그게 본체다)', 본체재료(편('고구마맛탕').ingredients).length === 원, `${원}줄`)
+}
+
 // ③ 잘리는 편이 «적다» — 넓게 자르고 있지 않나
 {
   const 바뀐 = allBasicRecipes.filter((r) => (r.ingredients || []).length !== 본체재료(r.ingredients).length)
