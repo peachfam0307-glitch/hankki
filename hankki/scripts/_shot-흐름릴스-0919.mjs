@@ -128,7 +128,24 @@ await 찍기('4-식비-목록')
 await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(400)
 await p.locator('.fc-scale button').filter({ hasText: '달별' }).first().click({ force: true }); await p.waitForTimeout(800)
 await 찍기('5-식비-달별')
+// 💰 예산 — 창업자 2026-09-18 *"우리 예산도 정해서 살 수 있잖아."*
+//   ⭐ 예산을 정해두면 「N원 남았어요」가 뜬다(FoodCostView.jsx:163). 장 보면서 «얼마 남았지»를 본다.
+await p.locator('.fc-scale button').filter({ hasText: '주별' }).first().click({ force: true }); await p.waitForTimeout(700)
+const 예산단추 = p.locator('button:has-text("고치기"), button:has-text("예산 정하기")').first()
+if (await 예산단추.count()) {
+  await 예산단추.scrollIntoViewIfNeeded(); await p.waitForTimeout(300); await 찍기('5c-예산-남았어요')
+  await 예산단추.click({ force: true }); await p.waitForTimeout(900); await 찍기('5d-예산정하기')
+  await p.keyboard.press('Escape').catch(() => {}); await p.waitForTimeout(600)
+}
 await p.locator('.fc-scale button').filter({ hasText: '주별' }).first().click({ force: true }); await p.waitForTimeout(600)
+// ③-b 장보기에서 «체크» — 그러면 냉장고로 들어간다 (ShopScreen.jsx:214 = 「샀어요! 냉장고에 넣어뒀어요」)
+//   ⛔ 「남은 재료가 냉장고로」가 아니다 — 창업자가 잡았다(2026-09-18). «체크한 재료»가 간다.
+await p.locator('.segment .seg').filter({ hasText: '장보기' }).first().click({ force: true }); await p.waitForTimeout(900)
+const 체크 = p.locator('.check-box').first()
+if (await 체크.count()) {
+  await 체크.scrollIntoViewIfNeeded(); await p.waitForTimeout(300)
+  await 체크.click({ force: true }); await p.waitForTimeout(500); await 찍기('5b-체크하면냉장고')
+}
 // ④ 냉장고 — 흐름의 끝 칸
 await p.locator('.segment .seg').filter({ hasText: '냉장고' }).first().click({ force: true }); await p.waitForTimeout(1000)
 await 안내치우기(); await 찍기('6-냉장고')
