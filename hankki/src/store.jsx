@@ -63,11 +63,17 @@ const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행�
 //      ⏳ 유저에게 열 때 파트너스 링크로 바꾼다(창업자 *"유저들은 링크로. 그래야 우리도 수익이 나지"*) — 단축코드는 창업자가 만든다.
 //   ⚠️ 주소는 2026-09-17 에 찾아 적었다. 이 환경은 사람이 보는 웹을 못 열어 «눌러보진 못했다» — 틀리면 편집으로 고친다.
 const 기본식비가게 = [
-  { id: 'cs_coupang', name: '쿠팡', url: 'https://www.coupang.com', k: 'shop' },
+  // 🛒 [창업자가 준 단축코드 2026-09-18] 쿠팡 홈 파트너스 링크 — 유저가 누르면 «우리 수익»이 된다.
+  //    ⛔ 창업자 폰에서는 `파트너스문()` 이 그냥 쿠팡 주소로 바꿔 보낸다(24시간 규칙에 안 걸리게).
+  //    ⛔ 링크는 코드가 못 만든다 — 규칙 없는 단축코드라 «받아서» 박는다(`ingLinks.js` 와 같다).
+  { id: 'cs_coupang', name: '쿠팡', url: 'https://link.coupang.com/a/g8XUHyeW96', k: 'shop' },
   { id: 'cs_kurly', name: '마켓컬리', url: 'https://www.kurly.com', k: 'shop' },
   { id: 'cs_naver', name: '네이버쇼핑', url: 'https://shopping.naver.com', k: 'shop' },
   { id: 'cs_lottemart', name: '롯데마트', url: 'https://lottemartzetta.com', k: 'shop' },
   { id: 'cs_emart', name: '이마트몰', url: 'https://emart.ssg.com', k: 'shop' },
+  // 🌱 [창업자 2026-09-18] 자연드림 — ⛔대표(icoop.or.kr)가 아니라 «장보기몰» 주소다.
+  //    📮 창업자 = *"자연드림은 장보기링크를 따로 따야해 지금은 대표로 들어사져"* → 그 자리에서 주소를 받았다.
+  { id: 'cs_icoop', name: '자연드림', url: 'https://icoop.or.kr/coopmall/shopMain.phtm', k: 'shop' },
   { id: 'cs_eats', name: '쿠팡이츠', url: 'https://www.coupangeats.com', k: 'out' },
   { id: 'cs_baemin', name: '배달의민족', url: 'https://baemin.com', k: 'out' },
   { id: 'cs_yogiyo', name: '요기요', url: 'https://www.yogiyo.co.kr/mobile/', k: 'out' },
