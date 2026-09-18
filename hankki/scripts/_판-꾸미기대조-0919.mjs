@@ -114,6 +114,38 @@ const 심기 = async (몇겹) => {
   }, [겹, 몇겹]).catch((e) => '⛔ ' + e.message)
   return 결과
 }
+// 🎬🎬 릴스용 — 한 겹씩 쌓이는 «낱장»을 0겹부터 전부 찍는다
+//   📮 창업자 = *"한겹씩쌓이게 우리 가을레꾸릴스만들었었자나"* ＋ *"저거 릴스만 만들어줘 16-17초짜리로"*
+//   ⭐ 자막·배경은 «안» 넣는다 — 창업자 = *"내가 자막달고 다 할게"*
+if (process.env.REEL) {
+  for (let n = 0; n <= 겹.length; n++) {
+    console.log('  🌱', await 심기(n), '· ' + n + '겹')
+    // ⏳ 대기를 짧게 줬더니(1700/1000/1300/1400) 저장본을 «읽기 전»에 꾸미기가 열려 조각이 0개로 찍혔다.
+    //    📌 「저장됐다」와 「화면에 그려졌다」는 다른 말이다 — 되읽기는 통과해도 그림은 빈 카드였다.
+    await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2400); await 안내치우기()
+    // 🔎 되읽어 확인 — 「심었다」만 믿지 않는다(2026-09-18: 심었다고 찍혔는데 그림이 안 바뀌었다)
+    const 확인 = await p.evaluate(() => {
+      try {
+        const s = JSON.parse(localStorage.getItem('hankki:v1') || 'null')
+        const r = s?.recipes?.find((x) => x.id === 'basic-saeu-gwanja-jeon')
+        return r ? ('decor ' + (r.decor?.length ?? 'none') + ' · bg ' + (r.decorBg || 'none')) : '그 줄 없음'
+      } catch (e) { return '⛔ ' + e.message }
+    })
+    console.log('     🔎 되읽기 =', 확인)
+    await p.locator('.bottom-nav .nav-item').filter({ hasText: '레시피' }).first().click()
+    await p.waitForTimeout(1200); await 안내치우기()
+    const 그것 = p.locator('text=새우관자전').first().locator('xpath=ancestor-or-self::*[self::button or self::a][1]')
+    await 그것.scrollIntoViewIfNeeded(); await 그것.click({ force: true }); await p.waitForTimeout(1700); await 안내치우기()
+    await p.locator('[data-coach="decor"]').first().click({ force: true }); await p.waitForTimeout(2000); await 안내치우기()
+    // ✅ 「그려졌나」를 «화면에서» 센다 — 저장본만 믿지 않는다
+    const 그려진수 = await p.evaluate(() => document.querySelectorAll('.decor-stage [data-decor], .decor-stage img, .decor-stage svg').length)
+    const rr = await p.evaluate(() => { const e = document.querySelector('.decor-stage'); const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, width: b.width, height: b.height } })
+    await p.screenshot({ path: join(밖, '겹-' + String(n).padStart(2, '0') + '.png'), clip: rr })
+    console.log('     👁 화면에 그려진 것 =', 그려진수)
+    console.log('  📸', n + '겹', n > 0 ? 겹[n - 1].이름 : '(민 카드)')
+  }
+  await b.close(); srv.close(); process.exit(0)
+}
 // 🍽 접시 크기를 «몇 단계»로 뽑아 창업자가 고르게 한다 — ⛔내가 눈대중으로 정하지 않는다
 if (process.env.DISH_STEPS) {
   // 📮 창업자 = *"접시를 좀 더 키워야해. 네꺼 작아"* → 0.92 보다 «위쪽»으로 다시 뽑는다
@@ -139,7 +171,12 @@ if (process.env.DISH_STEPS) {
   }
   await b.close(); srv.close(); process.exit(0)
 }
-console.log('  🌱', await 심기(겹.length))
+// 🎬 LAYERS=n → «본문 경로»로 n겹만 심고 한 장 찍는다.
+//    ⛔ 한 프로세스 안에서 reload 를 돌며 여러 장 찍으면 앱이 자기 상태로 덮어 «빈 카드»가 나온다
+//       (2026-09-18 실측 — 저장본 되읽기는 통과했는데 화면엔 조각이 0개였다).
+//    ✅ 그래서 겹마다 프로세스를 따로 띄운다. 느리지만 «확실하다».
+const 몇겹 = process.env.LAYERS ? Number(process.env.LAYERS) : 겹.length
+console.log('  🌱', await 심기(몇겹), '· ' + 몇겹 + '겹')
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2000); await 안내치우기()
 
 // 🍤 레시피 상세 → 표지를 찍는다(꾸미기 화면이 아니라 «유저가 보는» 표지)
@@ -156,7 +193,7 @@ await p.waitForTimeout(1800); await 안내치우기()
 await p.screenshot({ path: join(밖, '내판-꾸미기.png') })
 const r = await p.evaluate(() => { const e = document.querySelector('.decor-stage'); if (!e) return null; const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, width: b.width, height: b.height } })
 console.log('  📐 판 자리 =', JSON.stringify(r))
-if (r) await p.screenshot({ path: join(밖, '내판-판만.png'), clip: r })
+if (r) await p.screenshot({ path: join(밖, process.env.LAYERS ? '겹-' + String(몇겹).padStart(2, '0') + '.png' : '내판-판만.png'), clip: r })
 else console.log('  ⚠️ .decor-stage 를 못 찾았다 — 꾸미기 화면이 안 열렸다')
 console.log('✅ →', 밖)
 await b.close(); srv.close()
