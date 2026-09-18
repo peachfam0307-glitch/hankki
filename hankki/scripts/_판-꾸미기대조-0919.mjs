@@ -85,6 +85,7 @@ const 안내치우기 = async () => {
 }
 await p.goto('http://127.0.0.1:4617/hankki/', { waitUntil: 'domcontentloaded' })
 await p.waitForTimeout(2200); await 안내치우기()
+if (process.env.DISH_FRONT) { await p.addInitScript(() => { window.__접시앞 = true }); await p.evaluate(() => { window.__접시앞 = true }) }
 
 // 💾 꾸미기를 «저장본에 직접» 심는다 — 앱이 한 번 저장한 뒤라야 한다(store.jsx:145)
 const 심기 = async (몇겹) => {
@@ -93,7 +94,10 @@ const 심기 = async (몇겹) => {
       const s = JSON.parse(localStorage.getItem('hankki:v1') || 'null')
       if (!s || !Array.isArray(s.recipes)) return '아직 저장 전'
       const id = 'basic-saeu-gwanja-jeon'
-      const 것들 = 줄들.slice(0, n).map((x, i) => ({ id: 'cmp' + i, ...x.it }))
+      let 것들 = 줄들.slice(0, n).map((x, i) => ({ id: 'cmp' + i, ...x.it }))
+      // 🔝 접시를 «맨 앞»으로 = 배열 맨 뒤로 (뒤에 있을수록 위에 그려진다)
+      //    📮 창업자 = *"위에 얹는거야."* → 순서 바의 「맨 앞으로」를 쓴 것이다.
+      if (window.__접시앞) { const d = 것들.shift(); 것들.push(d) }
       // ⛔⛔ 원래 줄을 «지우고 새로 넣으면» 레시피가 통째로 사라진다(2026-09-18 실측 — 목록에서 없어졌다).
       //    저장본의 그 줄은 «레시피 전부»를 들고 있다. 꾸미기만 얹는다.
       const 그줄 = s.recipes.find((r) => r.id === id)
@@ -103,7 +107,7 @@ const 심기 = async (몇겹) => {
       localStorage.setItem('hankki:v1', JSON.stringify(s))
       return '심었다 ' + 것들.length + '겹'
     } catch (e) { return '⛔ ' + e.message }
-  }, [겹, 몇겹])
+  }, [겹, 몇겹]).catch((e) => '⛔ ' + e.message)
   return 결과
 }
 // 🍽 접시 크기를 «몇 단계»로 뽑아 창업자가 고르게 한다 — ⛔내가 눈대중으로 정하지 않는다
