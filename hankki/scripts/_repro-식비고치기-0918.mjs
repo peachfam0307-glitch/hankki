@@ -34,10 +34,24 @@ await 치우기()
 await p.locator('.bottom-nav .nav-item').filter({ hasText: '장보기' }).first().click()
 await p.waitForTimeout(1000); await 치우기()
 
+// ③-b [창업자 2026-09-18 *"1990뒤에 원이나 ₩ 이런걸 붙이면 좋겠고"*] 안내에 단위를 붙였으니 «파서도» 받아야 한다
+//   ⛔ 안 받으면 안내가 «함정»이 된다 — 시킨 대로 「두부 1910원」이라 쳤는데 이름이 「두부 1910원」이 되고 금액은 0.
+{
+  const 꼴 = [['두부 1910원', 1910], ['대파 1,910원', 1910], ['계란 ₩1910', 1910]]
+  for (const [글, 값] of 꼴) {
+    await p.locator('input[placeholder*="두부"], input[placeholder*="살 재료"]').first().fill(글)
+    await p.keyboard.press('Enter'); await p.waitForTimeout(450)
+    const 줄 = p.locator('.shop-row').filter({ hasText: 글.split(' ')[0] }).first()
+    const 값글 = ((await 줄.locator('button[aria-label*="금액 적기"]').textContent()) || '').trim()
+    본다(`⭐ 「${글}」 을 금액으로 받는다`, 값글 === `${값.toLocaleString('ko-KR')}원`, 값글)
+    await 줄.locator('button[aria-label="삭제"]').click(); await p.waitForTimeout(350)
+  }
+}
+
 // ③ 적는 칸 안내 — 「두부 1910」이 «적는 자리»에 보이나
 // ⛔ `.searchbar input` 은 큐레이션 «찾기» 칸도 잡는다 — 담는 칸은 「살 재료/두부」 쪽이다(첫 판이 여기서 헛방을 쳤다)
 const 안내 = await p.locator('input[placeholder*="두부"], input[placeholder*="살 재료"]').first().getAttribute('placeholder')
-본다('적는 칸이 「두부 1910」 꼴을 알려준다', /두부\s*1910/.test(안내 || ''), 안내 || '(없음)')
+본다('적는 칸이 「두부 1910」 꼴을 알려준다', /두부\s*1,?910/.test(안내 || ''), 안내 || '(없음)')
 
 // 한 줄로 이름＋값 담기 (창업자 «두부를 적고 값을 눌러 또 금액을 적고 좀 번거로워»)
 await p.locator('input[placeholder*="두부"], input[placeholder*="살 재료"]').first().fill('두부 1910')
@@ -46,11 +60,11 @@ await p.locator('input[placeholder*="두부"], input[placeholder*="살 재료"]'
 await p.keyboard.press('Enter'); await p.waitForTimeout(500)
 
 // ④ 값 안 적은 줄 글자
-const 빈값글 = ((await p.locator('.shop-row').filter({ hasText: '대파' }).first().locator('button[aria-label*="값 적기"]').textContent()) || '').trim()
-본다('값 안 적은 줄은 「＋ 금액」이라고 말한다', 빈값글 === '＋ 금액', 빈값글)
+const 빈값글 = ((await p.locator('.shop-row').filter({ hasText: '대파' }).first().locator('button[aria-label*="금액 적기"]').textContent()) || '').trim()
+본다('금액 안 적은 줄은 「＋ 금액」이라고 말한다', 빈값글 === '＋ 금액', 빈값글)
 
 // 식비로 옮기기
-await p.locator('button:has-text("값 적은 것 식비로 적기")').first().click()
+await p.locator('button:has-text("금액 적은 것 식비로 적기")').first().click()
 await p.waitForTimeout(900)
 await p.locator('.seg', { hasText: '식비' }).first().click().catch(() => {})
 await p.locator('button.seg:has-text("식비")').first().click().catch(() => {})

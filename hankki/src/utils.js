@@ -40,10 +40,17 @@ export function 쿠팡문(u, ua = typeof navigator === 'undefined' ? '' : naviga
 //         배달의민족 `play.google.com/store/apps/details?id=com.sampleapp` · 쿠팡이츠 `…?id=com.coupang.mobile.eats`
 //         컬리 `…?id=com.dbs.kurly.m2` (2026-09-18 확인 · ⛔처음에 확인 없이 com.kurly.kurlymarket 이라 적었다가 고쳤다)
 //      ❓ 요기요·롯데마트·이마트몰은 꾸러미 이름을 «아직 못 찾았다» → 그대로 웹으로 연다(⛔짐작으로 적지 않는다).
+// ✅✅ [2026-09-18 창업자 실물 판정 = *"C d 다돼"*] **앱 «전용 스킴»이라야 열린다.**
+//   🔢 안드로이드 폰으로 후보를 눌러 가렸다 — ⓒ(`baemin://`)·ⓓ(intent ＋ scheme=baemin) 둘 다 앱이 떴고,
+//      ⓑ(scheme=https)는 안 열렸다. 셋(배민·쿠팡이츠·컬리) 다 같았다.
+//   ⭐ **ⓓ를 쓴다** — 앱이 «없는» 폰은 크롬이 `browser_fallback_url` 로 웹을 띄운다.
+//      ⓒ 는 앱이 없으면 «아무 일도 안 난다»(창업자 폰엔 다 깔려 있어 안 드러난 갈래다).
+//   📌 쿠팡(`쿠팡문`)이 2026-09-05 에 확정한 모양과 «같다» — 그때도 https 는 안 받고 coupang:// 만 받았다.
+//      ⛔ 그런데 내가 2026-09-17 밤에 이 함수를 scheme=https 로 만들었다. 같은 저장소 안에 답이 적혀 있었는데 안 읽었다.
 const 앱꾸러미 = [
-  { 무늬: /(^|\.)baemin\.com/i, pkg: 'com.sampleapp' },
-  { 무늬: /(^|\.)coupangeats\.com/i, pkg: 'com.coupang.mobile.eats' },
-  { 무늬: /(^|\.)kurly\.com/i, pkg: 'com.dbs.kurly.m2' },
+  { 무늬: /(^|\.)baemin\.com/i, pkg: 'com.sampleapp', 스킴: 'baemin' },
+  { 무늬: /(^|\.)coupangeats\.com/i, pkg: 'com.coupang.mobile.eats', 스킴: 'coupangeats' },
+  { 무늬: /(^|\.)kurly\.com/i, pkg: 'com.dbs.kurly.m2', 스킴: 'kurly' },
 ]
 export function 앱문(u, ua = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
   if (!/Android/i.test(ua)) return u
@@ -51,7 +58,7 @@ export function 앱문(u, ua = typeof navigator === 'undefined' ? '' : navigator
   try { host = new URL(u).host } catch { return u }
   const 것 = 앱꾸러미.find((x) => x.무늬.test(host))
   if (!것) return u
-  return `intent://${u.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=${것.pkg};S.browser_fallback_url=${encodeURIComponent(u)};end`
+  return `intent://home#Intent;scheme=${것.스킴};package=${것.pkg};S.browser_fallback_url=${encodeURIComponent(u)};end`
 }
 
 export function openExternal(url, name = "") {

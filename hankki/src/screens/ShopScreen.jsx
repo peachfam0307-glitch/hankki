@@ -103,15 +103,6 @@ export default function ShopScreen() {
   // 🔑💰 [2026-09-17 시제품] 식비는 «창업자 폰에서만» 켜진다 — 아직 검수 전이라 유저 화면은 그대로여야 한다(규칙 13).
   //   ⭐ 켜는 법 = 주소 끝에 ?식비=1 을 붙여 한 번 연다 → 그 폰에 저장돼 다음부터 그냥 뜬다. 끄는 법 = ?식비=0
   //   ⛔ 창업자가 「모두에게 열자」고 하기 전엔 이 열쇠를 떼지 않는다.
-  // 🚪 [2026-09-18 검사용] ?앱문=1 로 켜고 ?앱문=0 으로 끈다 — 식비 열쇠와 같은 방식
-  const [앱문켬] = useState(() => {
-    try {
-      const v = new URLSearchParams(location.search).get('앱문')
-      if (v === '1') localStorage.setItem('hankki:앱문', '1')
-      if (v === '0') localStorage.removeItem('hankki:앱문')
-      return localStorage.getItem('hankki:앱문') === '1'
-    } catch { return false }
-  })
   const [식비켬] = useState(() => {
     try {
       const v = new URLSearchParams(location.search).get('식비')
@@ -164,13 +155,6 @@ export default function ShopScreen() {
             냉장고{expN > 0 && <span className="seg-count" data-testid="pantry-exp-count">{expN}</span>}
           </button>
         </div>
-
-        {/* 🚪 [2026-09-18 · 검사용 · 창업자 열쇠 ?앱문=1 뒤에만] 「앱으로 열리나」 후보 판
-              ⛔ 왜 앱 «안»에 두나 = 아티팩트 판으로 줬더니 안전상자가 intent 이동을 통째로 막아
-                 후보 15개가 «전부 아무일 없음»으로 나왔다(2026-09-18 창업자 실측 · 앱은 깔려 있었다).
-                 우리 앱은 그 자리가 아니라서 «진짜로» 열린다.
-              ⛔ 유저 화면엔 없다. 답을 얻으면 이 칸은 걷어낸다. */}
-        {앱문켬 && <앱문검사 />}
 
         {view === 'pantry' && <PantryView />}
         {식비켬 && view === 'cost' && <FoodCostView />}
@@ -281,8 +265,17 @@ export default function ShopScreen() {
                   style={{ width: 84, fontSize: 15.5, fontFamily: 'inherit', textAlign: 'right', color: 'var(--text)', background: 'var(--cream)', border: '1.5px solid var(--brown)', borderRadius: 9, padding: '5px 8px', outline: 'none' }}
                 />
               ) : (
-                <button className="press" onClick={() => set값편집(it.id)} aria-label={`${it.name} 값 적기`}
-                  style={{ fontSize: 15.5, fontWeight: it.won ? 700 : 400, color: it.won ? 'var(--text)' : 'var(--sand)', background: 'none', border: 'none', padding: '5px 2px', whiteSpace: 'nowrap' }}>
+                /* 💰 [2026-09-18 창업자 *"+금액도 적는칸이라는걸 티나게보여줌좋겠어"*]
+                      ⛔ 글자만 연하게 두면 «눌러서 적는 자리»인 줄 모른다 — 빈 칸엔 테두리를 줘서 «적는 칸»처럼 보이게 한다.
+                      ⭐ 값이 적힌 뒤엔 테두리를 뺀다 — 그땐 「얼마」가 읽히는 게 먼저다. */
+                <button className="press" onClick={() => set값편집(it.id)} aria-label={`${it.name} 금액 적기`}
+                  style={{
+                    fontSize: 15.5, fontWeight: it.won ? 700 : 400,
+                    color: it.won ? 'var(--text)' : 'var(--text-sub)',
+                    background: it.won ? 'none' : 'var(--cream)',
+                    border: it.won ? 'none' : '1.5px dashed var(--line)',
+                    borderRadius: 9, padding: it.won ? '5px 2px' : '4px 9px', whiteSpace: 'nowrap',
+                  }}>
                   {/* ⛔ [2026-09-18 창업자 «연하게 값이라고 되어있어서 이부분수정»] 옛 글자 = 「값」 한 자.
                         무엇을 하라는 자리인지 안 보였다 — 누르면 금액을 적는 자리라고 «글자로» 말한다. */}
                   {it.won ? `${it.won.toLocaleString('ko-KR')}원` : '＋ 금액'}
@@ -310,20 +303,24 @@ export default function ShopScreen() {
         {식비켬 && 값있는수 > 0 && (
           <div className="sum-box">
             <div className="sum-row">
-              <span>담은 것 합계 <b className="sum-n">값 적은 것 {값있는수}개</b></span>
+              <span>담은 것 합계 <b className="sum-n">금액 적은 것 {값있는수}개</b></span>
               <b className="sum-v">{합계.toLocaleString('ko-KR')}원</b>
             </div>
             {/* ⛔ 예전엔 «체크한 줄»만 옮기면서도 늘 「적었어요」라고 말했다 — 창업자가 값만 적고 눌렀을 때 아무 일도 안 났다.
                   ✅ 이제 값이 적힌 줄을 전부 옮기고, 실제로 옮긴 «개수와 금액»을 말한다. */}
             <button className="press sum-btn" onClick={() => { store.shopToFoodCost(); nav.showToast(`식비에 적었어요 · ${값있는수}개 ${합계.toLocaleString('ko-KR')}원`) }}>
-              값 적은 것 식비로 적기
+              금액 적은 것 식비로 적기
             </button>
           </div>
         )}
         {shoppingList.length > 0 && (
           <div className="t-sub" style={{ fontSize: 16.5, marginTop: 18, lineHeight: 1.85 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
-            {식비켬 && <><br />값도 같이 적으려면 <b style={{ color: 'var(--brown)' }}>「두부 1910」</b> 처럼 뒤에 금액을 붙여 보세요.</>}
+            {/* 💰 [2026-09-18 창업자] *"우리가 지금까지는 금액을 안적었었어. 그럼 금액을적으면 계산해준다거나 그런말이 들어가야하는게아닌가?"*
+                  ⛔ 옛 글 = 「안 적어도 돼요」 — «빼도 되는 이유»만 말하고 «적으면 뭐가 좋은지»를 안 말했다.
+                     창업자부터 「단위를 적지 말라는 줄」로 읽었다. 창업자가 헷갈리면 유저는 더 헷갈린다.
+                  ✅ 그래서 «어디로 가는지»를 말한다 — 적으면 식비에 모인다. */}
+            {식비켬 && <><br /><b style={{ color: 'var(--brown)' }}>「두부 1,910원」</b> 처럼 금액도 같이요.</>}
           </div>
         )}
 
@@ -894,45 +891,6 @@ function Curation() {
   )
 }
 
-// 🚪🚪 [2026-09-18 · 검사용 · 열쇠 ?앱문=1] 「어떤 주소가 앱을 여나」를 «앱 안»에서 가린다
-//   📮 창업자 = *"쿠팡이츠 눌러봤는데 이츠그냥 대표홈페이지였어.배민도 그렇고 앱을 열어야하는데"*
-//   ⛔ 지금 코드(`앱문()`)는 `scheme=https` 인데, 2026-09-05 실측에 **쿠팡 앱은 https 를 안 받고
-//      coupang:// 만 받는다**고 적혀 있다(utils.js). 배민·이츠·컬리도 같은 꼴일 수 있어 후보를 가린다.
-//   ⭐ 되돌림 주소(browser_fallback_url)를 붙여 둔다 — 앱이 안 열리면 «웹»이 뜨니
-//      「아무 일도 안 남」이 나오면 그건 앱이 없는 게 아니라 «주소를 못 넘긴 것»이다.
-const 앱문후보 = [
-  ['배달의민족', 'com.sampleapp', 'https://baemin.com', ['baemin', 'baeminfood']],
-  ['쿠팡이츠', 'com.coupang.mobile.eats', 'https://www.coupangeats.com', ['coupangeats']],
-  ['마켓컬리', 'com.dbs.kurly.m2', 'https://www.kurly.com', ['kurly']],
-]
-function 앱문검사() {
-  const 열기 = (u) => { try { window.location.assign(u) } catch { /* noop */ } }
-  return (
-    <div className="pad-box" style={{ marginTop: 10, padding: 12, border: '1px dashed var(--line)', borderRadius: 14 }}>
-      <b style={{ fontSize: 15 }}>앱으로 열리나 (검사용)</b>
-      <div className="t-sub" style={{ fontSize: 13, marginTop: 4, marginBottom: 8 }}>
-        차례로 눌러서 <b>앱이 뜨는 줄</b>을 찾으면 돼요. 뒤로가기로 돌아오세요.
-      </div>
-      {앱문후보.map(([이름, pkg, web, 스킴들]) => (
-        <div key={pkg} style={{ borderTop: '1px solid var(--line)', paddingTop: 8, marginTop: 8 }}>
-          <b style={{ fontSize: 14 }}>{이름}</b>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-            <button className="press chip" onClick={() => 열기(web)}>ⓐ 웹</button>
-            <button className="press chip" onClick={() => 열기(`intent://${web.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=${pkg};S.browser_fallback_url=${encodeURIComponent(web)};end`)}>ⓑ https</button>
-            {스킴들.map((s, i) => (
-              <span key={s} style={{ display: 'contents' }}>
-                <button className="press chip" onClick={() => 열기(`${s}://`)}>{'ⓒⓔ'[i] || 'ⓒ'} {s}://</button>
-                <button className="press chip" onClick={() => 열기(`intent://home#Intent;scheme=${s};package=${pkg};S.browser_fallback_url=${encodeURIComponent(web)};end`)}>{'ⓓⓕ'[i] || 'ⓓ'} intent {s}</button>
-              </span>
-            ))}
-            <button className="press chip" onClick={() => 열기(`intent://${web.replace(/^https?:\/\//, '')}#Intent;package=${pkg};S.browser_fallback_url=${encodeURIComponent(web)};end`)}>ⓖ 꾸러미만</button>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function ChecklistAdd({ 식비켬 }) {
   const { addShopItems } = useStore()
   const [text, setText] = useState('')
@@ -949,7 +907,7 @@ function ChecklistAdd({ 식비켬 }) {
       {/* 💰 [2026-09-18 창업자 «금액 적는 안내나 양식이 없어 유저들은 모를듯해»]
             ⭐ 안내를 «적는 자리»에 둔다 — 목록 아래 설명은 이미 있었지만 적을 땐 안 보인다(빈손이면 아예 없다). */}
       <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()}
-        placeholder={식비켬 ? '두부 1910 (값은 안 적어도 돼요)' : '살 재료 입력하고 Enter'} />
+        placeholder={식비켬 ? '두부 1,910원 처럼 적어 보세요' : '살 재료 입력하고 Enter'} />
       {text && (
         <button className="press" onClick={add} aria-label="추가"><Icon name="plus" size={20} color="var(--brown)" /></button>
       )}
