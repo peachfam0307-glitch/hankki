@@ -54,6 +54,21 @@ const 안내치우기 = async () => {
   }
 }
 const 찍기 = async (이름) => { await p.screenshot({ path: join(밖, 이름 + '.png') }); console.log('  📸', 이름) }
+// ✂️ 창업자 2026-09-18 = *"큼직큼직하게 잘 보이게 소개하는 부분만 크롭해서 크게 보여줘"*
+//   ⭐ 폰을 통째로 넣으면 글씨가 작아 폰에서 «안 읽힌다». 그 부분만 잘라 크게 쓴다.
+//   ⛔ 잘린 판을 그대로 믿지 않는다 — 찍고 나서 눈으로 본다(규칙 21).
+const 크롭 = async (이름, 로케, 여백 = 18) => {
+  const 것 = typeof 로케 === 'string' ? p.locator(로케).first() : 로케
+  if (await 것.count() === 0) { console.log('  ⚠️ 크롭 못 함(못 찾음) —', 이름); return }
+  try {
+    await 것.scrollIntoViewIfNeeded(); await p.waitForTimeout(300)
+    const b = await 것.boundingBox()
+    if (!b) { console.log('  ⚠️ 크롭 못 함(자리 없음) —', 이름); return }
+    const x = Math.max(0, b.x - 여백), y = Math.max(0, b.y - 여백)
+    await p.screenshot({ path: join(밖, 이름 + '.png'), clip: { x, y, width: Math.min(390 - x, b.width + 여백 * 2), height: b.height + 여백 * 2 } })
+    console.log('  ✂️', 이름, Math.round(b.width) + 'x' + Math.round(b.height))
+  } catch (e) { console.log('  ⚠️ 크롭 못 함 —', 이름, e.message.split('\n')[0]) }
+}
 await p.goto('http://127.0.0.1:4612/hankki/', { waitUntil: 'domcontentloaded' })
 await p.waitForTimeout(2300); await 안내치우기()
 const 심음 = await p.evaluate((줄들) => {
@@ -91,6 +106,7 @@ if (await 두부조림.count()) {
     }
     console.log('  ✅ 고른 재료 =', 고른수)
     await 찍기('1e-재료체크')
+    await 크롭('c1-재료체크', p.locator('.ing').first().locator('xpath=..'), 14)
     // 🧺 그다음 「장보기 담기」를 누르면 «담긴다»
     await 담기.scrollIntoViewIfNeeded(); await 담기.click({ force: true }); await p.waitForTimeout(1300); await 안내치우기()
     await 찍기('1f-담김')
@@ -98,10 +114,13 @@ if (await 두부조림.count()) {
 }
 // ② 장보기 — 담긴 재료가 쭉 들어온 자리
 // ⛔ 상세 화면에선 아래 띠가 가려질 수 있다 — 뒤로 나온 뒤 누른다
-await p.locator('button[aria-label="뒤로"], .detail-top button').first().click({ force: true }).catch(() => {})
-await p.waitForTimeout(900); await 안내치우기()
+// ⛔ 상세 화면엔 아래 띠가 «아예 없다» — 뒤로가기로는 못 잡는다. 주소로 홈에 돌아간다.
+//    ⭐ 담은 재료는 localStorage 에 있어 다시 열어도 그대로다.
+await p.goto('http://127.0.0.1:4612/hankki/', { waitUntil: 'domcontentloaded' })
+await p.waitForTimeout(2000); await 안내치우기()
 await p.locator('.bottom-nav .nav-item').filter({ hasText: '장보기' }).first().click({ force: true })
 await p.waitForTimeout(900); await 안내치우기(); await 찍기('2-장보기')
+await 크롭('c2-장보기목록', '.shop-list', 14)
 // ②-a-2 레시피에서 담은 재료는 «금액이 비어 있다» — 창업자 2026-09-18 *"근데 그런 가격은 다시입력해야하긴해"*
 //   ⭐ 그 「＋ 금액」 칸을 눌러 적는 장면이 «흐름의 이음매»다. 이게 없으면 레시피→식비가 끊겨 보인다.
 const 금액칸 = p.locator('button[aria-label*="금액 적기"]').first()
@@ -109,7 +128,7 @@ if (await 금액칸.count()) {
   await 금액칸.scrollIntoViewIfNeeded(); await p.waitForTimeout(300); await 찍기('2a-금액칸')
   await 금액칸.click({ force: true }); await p.waitForTimeout(900); await 찍기('2a2-금액적기')
   const 시트칸 = p.locator('input[type="text"], input[inputmode="numeric"]').last()
-  if (await 시트칸.count()) { try { await 시트칸.fill('1910'); await p.waitForTimeout(500); await 찍기('2a3-1910적음') } catch { /* noop */ } }
+  if (await 시트칸.count()) { try { await 시트칸.fill('1910'); await p.waitForTimeout(500); await 찍기('2a3-1910적음'); await 크롭('c3-금액적음', '.shop-row', 24) } catch { /* noop */ } }
   await p.keyboard.press('Escape').catch(() => {}); await p.waitForTimeout(600)
 }
 // ②-b 새로 적을 때는 «한 줄로» — 두부 1910
@@ -118,23 +137,23 @@ if (await 적는칸.count()) {
   await 적는칸.click(); await p.waitForTimeout(200)
   for (const 글 of ['두부', '두부 19', '두부 1910']) { await 적는칸.fill(글); await p.waitForTimeout(250) }
   await 찍기('2b-금액타자')
-  await 적는칸.press('Enter'); await p.waitForTimeout(800); await 찍기('2c-식비에넣기')
+  await 적는칸.press('Enter'); await p.waitForTimeout(800); await 찍기('2c-식비에넣기'); await 크롭('c4-식비에넣기', '.shop-cur', 20)
 }
 // ③ 식비 — 요약 · 목록 · 달별 (구체 소개)
 await p.locator('.segment .seg').filter({ hasText: '식비' }).first().click({ force: true }); await p.waitForTimeout(1100)
-await 찍기('3-식비-요약')
+await 찍기('3-식비-요약'); await 크롭('c5-식비요약', '.fc-big', 16); await 크롭('c6-갈래막대', '.fc-ratio', 16)
 await p.locator('.fc-hit').nth(5).evaluate((el) => el.scrollIntoView({ block: 'center' })); await p.waitForTimeout(600)
-await 찍기('4-식비-목록')
+await 찍기('4-식비-목록'); await 크롭('c7-목록', '.fc-card', 14)
 await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(400)
 await p.locator('.fc-scale button').filter({ hasText: '달별' }).first().click({ force: true }); await p.waitForTimeout(800)
-await 찍기('5-식비-달별')
+await 찍기('5-식비-달별'); await 크롭('c8-흐름막대', '.fc-two', 16)
 // 💰 예산 — 창업자 2026-09-18 *"우리 예산도 정해서 살 수 있잖아."*
 //   ⭐ 예산을 정해두면 「N원 남았어요」가 뜬다(FoodCostView.jsx:163). 장 보면서 «얼마 남았지»를 본다.
 await p.locator('.fc-scale button').filter({ hasText: '주별' }).first().click({ force: true }); await p.waitForTimeout(700)
 const 예산단추 = p.locator('button:has-text("고치기"), button:has-text("예산 정하기")').first()
 if (await 예산단추.count()) {
-  await 예산단추.scrollIntoViewIfNeeded(); await p.waitForTimeout(300); await 찍기('5c-예산-남았어요')
-  await 예산단추.click({ force: true }); await p.waitForTimeout(900); await 찍기('5d-예산정하기')
+  await 예산단추.scrollIntoViewIfNeeded(); await p.waitForTimeout(300); await 찍기('5c-예산-남았어요'); await 크롭('c9-남았어요', '.fc-big', 20)
+  await 예산단추.click({ force: true }); await p.waitForTimeout(900); await 찍기('5d-예산정하기'); await 크롭('c10-예산시트', '.sheet, .fc-sheet', 0)
   await p.keyboard.press('Escape').catch(() => {}); await p.waitForTimeout(600)
 }
 await p.locator('.fc-scale button').filter({ hasText: '주별' }).first().click({ force: true }); await p.waitForTimeout(600)
@@ -144,10 +163,10 @@ await p.locator('.segment .seg').filter({ hasText: '장보기' }).first().click(
 const 체크 = p.locator('.check-box').first()
 if (await 체크.count()) {
   await 체크.scrollIntoViewIfNeeded(); await p.waitForTimeout(300)
-  await 체크.click({ force: true }); await p.waitForTimeout(500); await 찍기('5b-체크하면냉장고')
+  await 체크.click({ force: true }); await p.waitForTimeout(500); await 찍기('5b-체크하면냉장고'); await 크롭('c11-토스트', '.toast', 22)
 }
 // ④ 냉장고 — 흐름의 끝 칸
 await p.locator('.segment .seg').filter({ hasText: '냉장고' }).first().click({ force: true }); await p.waitForTimeout(1000)
-await 안내치우기(); await 찍기('6-냉장고')
+await 안내치우기(); await 찍기('6-냉장고'); await 크롭('c12-냉장고', '.shop-list', 14)
 console.log('✅ 다 찍었다 →', 밖)
 await b.close(); srv.close()
