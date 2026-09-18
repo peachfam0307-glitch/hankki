@@ -36,13 +36,13 @@ mkdirSync(밖, { recursive: true })
 // 🧩 확정값 (창업자 판정 2026-09-19) — ⛔ 여기 숫자를 눈대중으로 고치지 않는다.
 //    탭 = 서랍에서 누를 탭 라벨 · key = 서랍 칸의 aria-label(앞부분)
 const 조각 = [
-  { 이름: '그릇 접시',        탭: '프레임', key: 'pf_ad08', x: 0.5094, y: 0.4828, s: 0.78, r: 0 },
+  { 이름: '그릇 접시',        탭: '프레임', key: 'pf_ad08', x: 0.5094, y: 0.46, s: 0.78, r: 0 },
   { 이름: '포토코너(왼위)',   탭: '데코',   key: 'pc3_02', x: 0.12, y: 0.1331, s: 0.24, r: 0 },
   { 이름: '포토코너(오른아래)', 탭: '데코', key: 'pc3_02', x: 0.88, y: 0.8669, s: 0.24, r: 0, flip: true, flipY: true },
-  { 이름: '카롱＋펭펭',       탭: '친구들', key: 'kp_shoulder', x: 0.195, y: 0.78, s: 0.24, r: 0, motion: 'tongtong', fx: 'heart' },
+  { 이름: '카롱＋펭펭',       탭: '친구들', key: 'kp_shoulder', x: 0.195, y: 0.78, s: 0.24, r: 0, fxLabel: '하트' },   // 통통은 친구들이면 저절로(DecorEditor 763),
   { 이름: '제목 글자',        탭: '글자',   text: '새우관자전', color: 't_lilac', font: 'gaegu', x: 0.46, y: 0.125, s: 0.52, r: 0 },
-  { 이름: '큰 하트',          탭: '데코',   key: 'dc_dhb04', color: '#d78e86', x: 0.645, y: 0.125, s: 0.115, r: 0 },
-  { 이름: '작은 하트',        탭: '데코',   key: 'dc_dhb04', color: '#e8b9bd', x: 0.235, y: 0.185, s: 0.05, r: 0 },
+  { 이름: '큰 하트',          탭: '데코',   key: 'dc_dhb04', colorKey: 'coral', x: 0.645, y: 0.125, s: 0.115, r: 0 },
+  { 이름: '작은 하트',        탭: '데코',   key: 'dc_dhb04', colorKey: 'rose', x: 0.235, y: 0.185, s: 0.05, r: 0 },
   { 이름: '아래 마테',        탭: '마테',   key: 'wt_dy06', x: 0.60, y: 0.78, s: 0.32, r: -8 },
   { 이름: '아이 원픽',        탭: '글자',   key: 'tw_kidpick', x: 0.79, y: 0.29, s: 0.22, r: -10 },
 ]
@@ -106,6 +106,12 @@ const 끌기 = async (from, to, 걸음 = 22, 쉼 = 14) => {
   }
   await p.waitForTimeout(90); await p.mouse.up()
 }
+// 🗂 편집바 갈래 — ⛔같은 갈래를 또 누르면 «접힌다»(DecorEditor: ctxCur===k && ctxOpen → 닫기).
+//    2026-09-19 실측: 붙자마자 「순서」가 열려 있어서 내가 누르니 닫혔고 뒤집기 단추가 사라졌다.
+const 갈래열기 = async (k) => {
+  const t = p.locator(`[data-ctxtab="${k}"]`)
+  if ((await t.getAttribute('aria-pressed')) !== 'true') { await t.click(); await p.waitForTimeout(400) }
+}
 const 탭누르기 = async (라벨) => {
   const t = p.locator('.decor-tabs button, [role="tablist"] button, button').filter({ hasText: new RegExp(`^${라벨}$`) }).first()
   await t.click({ timeout: 3000 }); await p.waitForTimeout(500)
@@ -118,18 +124,50 @@ const 고른조각 = async () => p.evaluate(() => {
   return { cx: b.x + b.width / 2, cy: b.y + b.height / 2, w: b.width, hx: hb.x + hb.width / 2, hy: hb.y + hb.height / 2 }
 })
 
+// 🎨 첫 겹 = 배경 «모눈» (창업자 순서: 배경 → 그릇 → …) — ⛔ 1차 녹화에서 이걸 빼먹어 흰 바탕이었다
+await 탭누르기('배경'); await p.locator('[aria-label^="배경 모눈"]').first().click(); await p.waitForTimeout(700); 적기('배경 모눈')
 for (let i = 0; i < 몇; i++) {
   const c = 조각[i]
   적기(`▶ ${c.이름} — 탭 «${c.탭}»`)
   await 탭누르기(c.탭)
   if (c.text) {
-    // ✍️ 글자 — 「글자 쓰기」 흐름은 다음 판에서 잇는다(먼저 그릇부터 되는지 본다)
-    console.log('  ⏭ 글자는 이 판에서 건너뛴다'); continue
+    // ✍️ 글자 = 「글자 넣기」 → 바로 치는 상태(textarea) → 한 글자씩 → 빈 판을 눌러 치기 끝 → 다시 눌러 고르기
+    //    → 「색」·「글씨」 갈래에서 t_lilac · 귀염체 → 끌기·크기
+    await p.locator('button:has-text("글자 넣기")').first().click(); await p.waitForTimeout(500)
+    await p.keyboard.type(c.text, { delay: 140 }); await p.waitForTimeout(400); 적기(`   글자 침 «${c.text}»`)
+    await p.mouse.click(판.x + 판.w * 0.5, 판.y + 판.h * 0.95); await p.waitForTimeout(400)   // 치기 끝(빈 자리)
+    const 글 = p.locator('.decor-stage').getByText(c.text, { exact: true }).first()
+    await 글.click({ force: true }); await p.waitForTimeout(450)
+    await 갈래열기("color")
+    await p.locator(`[aria-label="글자색 ${c.color}"]`).click(); await p.waitForTimeout(350)
+    await 갈래열기("font")
+    await p.locator('button').filter({ hasText: /^귀염체$/ }).last().click(); await p.waitForTimeout(400); 적기(`   색 ${c.color} · 귀염체`)
+    let 지금 = await 고른조각()
+    if (!지금) { console.log('  ⛔ 글자 손잡이를 못 찾았다'); continue }
+    await 끌기({ x: 지금.cx, y: 지금.cy }, 화면(c.x, c.y)); await p.waitForTimeout(300); 적기(`   끌어다 놓음`)
+    지금 = await 고른조각()
+    // 글자 s 는 폭 기준이 아니다(fontPx = s×0.15×폭). 손잡이 비율은 같으니 s0 를 기본값 0.5 로 본다(addText).
+    const 배 = c.s / 0.5; const dx = 지금.hx - 지금.cx, dy = 지금.hy - 지금.cy
+    await 끌기({ x: 지금.hx, y: 지금.hy }, { x: 지금.cx + dx * 배, y: 지금.cy + dy * 배 }, 14, 16); await p.waitForTimeout(400); 적기(`   크기 0.5 → ${c.s}`)
+    continue
   }
   const 칸 = p.locator(`.decor-cell[aria-label^="${c.key}"]`).first()
   await 칸.scrollIntoViewIfNeeded(); await p.waitForTimeout(250)
   await 칸.click(); await p.waitForTimeout(600)
   적기(`   붙음 (기본 자리)`)
+  // 🎨 색 — 편집바 「색」 갈래 → aria-label "색 <키>" (⛔hex 를 지어내지 않는다 · STICKER_COLORS 의 키만)
+  if (c.colorKey) { await 갈래열기("color"); await p.locator(`[aria-label="색 ${c.colorKey}"]`).click(); await p.waitForTimeout(400); 적기(`   색 ${c.colorKey}`) }
+  // 🔄 뒤집기 — 「순서」 갈래 안의 단추 둘
+  if (c.flip || c.flipY) {
+    await 갈래열기("order")
+    if (c.flip) { await p.locator('button:has-text("좌우 뒤집기")').click(); await p.waitForTimeout(350) }
+    if (c.flipY) { await p.locator('button:has-text("상하 뒤집기")').click(); await p.waitForTimeout(350) }
+    적기(`   뒤집음`)
+  }
+  // ✨ 효과 — 「효과」 갈래 → 라벨 글자(하트)
+  if (c.fxLabel) { await 갈래열기("fx"); await p.locator('button').filter({ hasText: new RegExp(`^${c.fxLabel}$`) }).last().click(); await p.waitForTimeout(500); 적기(`   효과 ${c.fxLabel}`) }
+  // 📐 프레임을 얹은 «뒤» 음식 사진이 어디에 얼마나 그려지나 — 낱장 판과 «다르다»(2026-09-19 실측: 폭 0.50 → 0.69)
+  if (process.env.PROBE) console.log('     📐 커버 =', JSON.stringify(await p.evaluate(() => { const st = document.querySelector('.decor-stage'); const sb = st.getBoundingClientRect(); return [...st.querySelectorAll('img')].map((i) => { const b = i.getBoundingClientRect(); return { src: i.currentSrc.split('/').pop().slice(0, 12), nw: i.naturalWidth, nh: i.naturalHeight, fit: getComputedStyle(i).objectFit, x: +(b.x - sb.x).toFixed(2), y: +(b.y - sb.y).toFixed(2), w: +b.width.toFixed(2), h: +b.height.toFixed(2) } }) })))
   let 지금 = await 고른조각()
   if (!지금) { console.log('  ⛔ 손잡이를 못 찾았다 — 조각이 «고른» 상태가 아니다'); break }
   // ① 끌어다 놓기
@@ -160,9 +198,12 @@ for (let i = 0; i < 몇; i++) {
   const 끝 = await 고른조각()
   const 실제 = 끝 && { x: +((끝.cx - 판.x) / 판.w).toFixed(4), y: +((끝.cy - 판.y) / 판.h).toFixed(4), s: +(끝.w / 판.w).toFixed(3) }
   console.log('     🔎 화면에서 잰 값 =', JSON.stringify(실제), ' 목표 =', JSON.stringify({ x: c.x, y: c.y, s: c.s, r: c.r }))
+  // 🖼 손잡이 wrapper 말고 «그림 자체»의 자리 — wrapper 는 여백이 있어 어긋날 수 있다
+  if (c.key) console.log('     🖼 그림 자체 =', JSON.stringify(await p.evaluate((k) => { const st = document.querySelector('.decor-stage'); const sb = st.getBoundingClientRect(); const i = [...st.querySelectorAll('img')].reverse().find((i) => i.currentSrc.includes(k)); if (!i) return null; const b = i.getBoundingClientRect(); return { x: +((b.x + b.width / 2 - sb.x) / sb.width).toFixed(4), y: +((b.y + b.height / 2 - sb.y) / sb.height).toFixed(4), s: +(b.width / sb.width).toFixed(3) } }, c.key)))
   await p.waitForTimeout(500)
 }
-await p.waitForTimeout(1500)
+// 🖐 빈 자리를 눌러 고르기를 푼다 — 손잡이가 뜬 채로 끝나면 완성이 아니다(대조에서 잡힘)
+await p.mouse.click(판.x + 판.w * 0.5, 판.y + 판.h * 0.995); await p.waitForTimeout(1800)
 적기('끝')
 await p.screenshot({ path: join(밖, '마지막.png') })
 writeFileSync(join(밖, '자막.json'), JSON.stringify({ 판, 자막 }, null, 2))
