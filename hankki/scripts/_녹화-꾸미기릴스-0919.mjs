@@ -38,11 +38,11 @@ mkdirSync(밖, { recursive: true })
 const 조각 = [
   { 이름: '그릇 접시',        탭: '프레임', key: 'pf_ad08', x: 0.5094, y: 0.46, s: 0.78, r: 0 },
   { 이름: '포토코너(왼위)',   탭: '데코',   key: 'pc3_02', x: 0.13, y: 0.145, s: 0.24, r: 0 },   // 한계(0.12/0.1331)+0.01 — 딱 놓으면 소수점 오차로 잘린다
-  { 이름: '포토코너(오른아래)', 탭: '데코', key: 'pc3_02', x: 0.87, y: 0.855, s: 0.24, r: 0, flip: true, flipY: true },
-  { 이름: '카롱＋펭펭',       탭: '친구들', key: 'kp_shoulder', x: 0.195, y: 0.765, s: 0.24, r: 0, fxLabel: '하트' },   // 통통은 친구들이면 저절로(DecorEditor 763),
-  { 이름: '제목 글자',        탭: '글자',   text: '새우관자전', color: 't_lilac', font: 'gaegu', x: 0.46, y: 0.125, s: 0.52, r: 0 },
-  { 이름: '큰 하트',          탭: '데코',   key: 'dc_dhb04', colorKey: 'coral', x: 0.69, y: 0.125, s: 0.115, r: 0 },
-  { 이름: '아래 마테',        탭: '마테',   key: 'wt_dy06', x: 0.60, y: 0.78, s: 0.32, r: -8 },
+  { 이름: '포토코너(오른아래)', 탭: '데코', key: 'pc3_02', x: 0.86, y: 0.84, s: 0.24, r: 0, flip: true, flipY: true },
+  { 이름: '카롱＋펭펭',       탭: '친구들', key: 'kp_shoulder', x: 0.195, y: 0.75, s: 0.24, r: 0, fxLabel: '하트' },   // 통통은 친구들이면 저절로(DecorEditor 763),
+  { 이름: '제목 글자',        탭: '글자',   text: '새우관자전', color: 't_lilac', font: 'gaegu', x: 0.46, y: 0.15, s: 0.52, r: 0 },
+  { 이름: '큰 하트',          탭: '데코',   key: 'dc_dhb04', colorKey: 'coral', x: 0.69, y: 0.15, s: 0.115, r: 0 },
+  { 이름: '아래 마테',        탭: '마테',   key: 'wt_dy06', x: 0.60, y: 0.72, s: 0.32, r: -8 },
   { 이름: '아이 원픽',        탭: '글자',   key: 'tw_kidpick', x: 0.79, y: 0.29, s: 0.22, r: -10 },
 ]
 const 몇 = process.env.ONLY ? Number(process.env.ONLY) : 조각.length
@@ -216,6 +216,8 @@ for (let i = 0; i < 몇; i++) {
 }
 // 🖐 빈 자리를 눌러 고르기를 푼다 — 손잡이가 뜬 채로 끝나면 완성이 아니다(대조에서 잡힘)
 await p.mouse.click(판.x + 판.w * 0.5, 판.y + 판.h * 0.995); await p.waitForTimeout(1800)
+// 📏 «잘리나»를 눈이 아니라 DOM 으로 잰다 — 그림 rect 가 판 rect 를 넘으면 그만큼 잘린 것이다
+console.log('  📏 판 밖으로 나간 그림 =', JSON.stringify(await p.evaluate(() => { const st = document.querySelector('.decor-stage'); const s = st.getBoundingClientRect(); return [...st.querySelectorAll('img')].map((i) => { const b = i.getBoundingClientRect(); const o = { 왼: +(s.x - b.x).toFixed(1), 위: +(s.y - b.y).toFixed(1), 오: +((b.x + b.width) - (s.x + s.width)).toFixed(1), 아래: +((b.y + b.height) - (s.y + s.height)).toFixed(1) }; const 넘침 = Object.fromEntries(Object.entries(o).filter(([, v]) => v > 0.5)); return Object.keys(넘침).length ? { src: i.currentSrc.split('/').pop().slice(0, 10), ...넘침 } : null }).filter(Boolean) })))
 적기('끝')
 await p.screenshot({ path: join(밖, '마지막.png') })
 writeFileSync(join(밖, '자막.json'), JSON.stringify({ 판, 자막 }, null, 2))
