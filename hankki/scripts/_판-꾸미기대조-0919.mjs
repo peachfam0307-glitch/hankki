@@ -40,11 +40,11 @@ const 겹 = [
   //    🔢 0.40·0.36·0.32 를 찍어 «눈으로» 골랐다 — 0.40 은 흰 접시가 좌우로 남고,
   //       0.32 는 접시가 음식을 먹는다. 0.36 에서 앞벽이 음식 아래에 붙고 갈색 테가 사라진다.
   { 이름: '그릇 접시',        it: { type: 'sticker', key: 'pf_ad08', x: Number(process.env.DX || 0.5094), y: Number(process.env.DY || 0.4828), s: Number(process.env.DS || 0.78), r: 0 } },
-  { 이름: '포토코너(왼위)',   it: { type: 'sticker', key: 'pc3_02', x: 0.125, y: 0.155, s: 0.19, r: 0 } },
+  { 이름: '포토코너(왼위)',   it: { type: 'sticker', key: 'pc3_02', x: 0.12, y: 0.1331, s: 0.24, r: 0 } },
   // 🔄 오른아래 코너 = 좌우＋상하 둘 다 뒤집기(점대칭) · 필드 이름은 flip·flipY (DecorLayer.jsx:351)
-  { 이름: '포토코너(오른아래)', it: { type: 'sticker', key: 'pc3_02', x: 0.85, y: 0.875, s: 0.18, r: 0, flip: true, flipY: true } },
+  { 이름: '포토코너(오른아래)', it: { type: 'sticker', key: 'pc3_02', x: 0.88, y: 0.8669, s: 0.24, r: 0, flip: true, flipY: true } },
   // 💗 카롱 위로 뜨는 하트는 «스티커가 아니라 효과»다 — fx: 'heart' (Stickers.jsx:1150)
-  { 이름: '카롱＋펭펭·효과',   it: { type: 'sticker', key: 'kp_shoulder', x: 0.195, y: 0.68, s: 0.18, r: 0, motion: 'tongtong', fx: 'heart' } },
+  { 이름: '카롱＋펭펭·효과',   it: { type: 'sticker', key: 'kp_shoulder', x: 0.195, y: 0.78, s: 0.24, r: 0, motion: 'tongtong', fx: 'heart' } },
   // ✍️ 제목 = «글자만»(type text · lilac 보라). ⛔note 를 쓰면 베이지 종이가 같이 붙는다
   { 이름: '제목 글자',        it: { type: 'text', text: '새우관자전', color: 't_lilac', font: 'gaegu', x: 0.40, y: 0.125, s: 0.52, r: 0 } },
   // 💗 하트 = 얼굴 «없는» dc_dhb04 (색바꾸기 칸의 그것)
