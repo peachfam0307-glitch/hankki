@@ -64,7 +64,7 @@ const 빈값글 = ((await p.locator('.shop-row').filter({ hasText: '대파' }).f
 본다('금액 안 적은 줄은 「＋ 금액」이라고 말한다', 빈값글 === '＋ 금액', 빈값글)
 
 // 식비로 옮기기
-await p.locator('button:has-text("금액 적은 것 식비로 적기")').first().click()
+await p.locator('button:has-text("식비에 넣기")').first().click()
 await p.waitForTimeout(900)
 await p.locator('.seg', { hasText: '식비' }).first().click().catch(() => {})
 await p.locator('button.seg:has-text("식비")').first().click().catch(() => {})
