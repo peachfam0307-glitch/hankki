@@ -38,11 +38,16 @@ const 겹 = [
   // 🍽 3차 — 0.88 은 «너무 커서» 창이 벌어지며 원래 흰 접시 테가 드러났다(내 눈으로 봤다).
   { 이름: '그릇 접시',        it: { type: 'sticker', key: 'pf_ad08', x: 0.505, y: 0.50, s: 0.80, r: 0 } },
   { 이름: '포토코너(왼위)',   it: { type: 'sticker', key: 'pc3_02', x: 0.115, y: 0.135, s: 0.23, r: 0 } },
-  // ⛔ 180도 안 돌린다 — 창업자 카드도 «그대로» 붙어 있다(레이스가 왼쪽 위를 향한다)
-  { 이름: '포토코너(오른아래)', it: { type: 'sticker', key: 'pc3_02', x: 0.875, y: 0.90, s: 0.25, r: 0 } },
-  { 이름: '하트 마테',        it: { type: 'sticker', key: 'wt_dy06', x: 0.60, y: 0.78, s: 0.34, r: -3 } },
+  // 🔄🔄 오른아래 코너 = «좌우＋상하 둘 다 뒤집기» — 코너 둘을 확대해 눈으로 확인했다.
+  //    왼위 = 깅엄이 왼쪽 위 · 오른아래 = 깅엄이 오른쪽 아래(＝점대칭).
+  //    ⛔ 나는 1차에 r:180 으로 «맞게» 넣었다가, 창업자의 「크기랑 위치를 조절해야해」를
+  //       「안 돌린 게 맞다」로 잘못 읽고 r:0 으로 되돌렸다 → 📮 *"포토코너 아래쪽에 있는거 잘못됐어"*
+  //    ⭐ 앱에는 「좌우 뒤집기·상하 뒤집기」 단추가 있다(DecorEditor.jsx:1475·1484) → flipX·flipY 로 넣는다.
+  { 이름: '포토코너(오른아래)', it: { type: 'sticker', key: 'pc3_02', x: 0.875, y: 0.90, s: 0.25, r: 0, flipX: true, flipY: true } },
+  { 이름: '하트 마테',        it: { type: 'sticker', key: 'wt_dy06', x: 0.60, y: 0.78, s: 0.34, r: -6 } },
   // ✍️ 제목 = «글자만»(type:'text'). ⛔note 를 쓰면 베이지 종이가 같이 붙는다(1차 사고)
-  { 이름: '제목 글자',        it: { type: 'text', text: '새우관자전', color: 'wine', font: 'gaegu', x: 0.40, y: 0.125, s: 0.52, r: 0 } },
+  // 🟣 제목 색 = 보라 — 📮 창업자 = *"글자 색(새우관자전) 보라색?이고"* → wine(자주) 말고 lilac(라일락)
+  { 이름: '제목 글자',        it: { type: 'text', text: '새우관자전', color: 'lilac', font: 'gaegu', x: 0.40, y: 0.125, s: 0.52, r: 0 } },
   // 💗 하트는 «얼굴 없는» 쪽이다 — 색바꾸기 칸에 둘이 있다: 얼굴 있는 SVG 와 얼굴 없는 PNG.
   //    창업자 = 「04하트야」 = dc_dhb04. ⛔내가 SVG 를 골라 «웃는 얼굴 하트»가 됐었다.
   { 이름: '큰 하트',          it: { type: 'sticker', key: 'dc_dhb04', color: '#d78e86', x: 0.645, y: 0.125, s: 0.115, r: 0 } },
@@ -53,7 +58,7 @@ const 겹 = [
   // 🗣🗣 말풍선 = **글자가 이미 박힌 스티커** — 📮 창업자 = *"글자 한끼문구 아이원픽"*
   //    ⛔ 나는 fn_speech(빈 말풍선)에 글을 쓰는 줄 알았다. 틀렸다. 글자 탭 「한끼 문구」의 tw_kidpick 이다.
   //       (같은 그룹에 tw_hubbypick =「남편 원픽!」 — 창업자 캡처에 둘이 나란히 있었다)
-  { 이름: '말풍선',           it: { type: 'sticker', key: 'tw_kidpick', x: 0.775, y: 0.295, s: 0.26, r: 0 } },
+  { 이름: '말풍선',           it: { type: 'sticker', key: 'tw_kidpick', x: 0.775, y: 0.295, s: 0.26, r: -5 } },
 ]
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
@@ -100,6 +105,23 @@ const 심기 = async (몇겹) => {
     } catch (e) { return '⛔ ' + e.message }
   }, [겹, 몇겹])
   return 결과
+}
+// 🍽 접시 크기를 «몇 단계»로 뽑아 창업자가 고르게 한다 — ⛔내가 눈대중으로 정하지 않는다
+if (process.env.DISH_STEPS) {
+  for (const s of [0.68, 0.74, 0.80, 0.86, 0.92]) {
+    겹[0].it.s = s
+    console.log('  🌱', await 심기(겹.length), '· 접시 s =', s)
+    await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1800); await 안내치우기()
+    await p.locator('.bottom-nav .nav-item').filter({ hasText: '레시피' }).first().click()
+    await p.waitForTimeout(1100); await 안내치우기()
+    const 그것 = p.locator('text=새우관자전').first().locator('xpath=ancestor-or-self::*[self::button or self::a][1]')
+    await 그것.scrollIntoViewIfNeeded(); await 그것.click({ force: true }); await p.waitForTimeout(1400); await 안내치우기()
+    await p.locator('[data-coach="decor"]').first().click({ force: true }); await p.waitForTimeout(1500); await 안내치우기()
+    const rr = await p.evaluate(() => { const e = document.querySelector('.decor-stage'); const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, width: b.width, height: b.height } })
+    await p.screenshot({ path: join(밖, '접시-' + String(s).replace('.', '') + '.png'), clip: rr })
+    console.log('  📸 접시 s =', s)
+  }
+  await b.close(); srv.close(); process.exit(0)
 }
 console.log('  🌱', await 심기(겹.length))
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2000); await 안내치우기()
