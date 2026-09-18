@@ -51,7 +51,7 @@ await p.waitForTimeout(1000); await 치우기()
 // ③ 적는 칸 안내 — 「두부 1910」이 «적는 자리»에 보이나
 // ⛔ `.searchbar input` 은 큐레이션 «찾기» 칸도 잡는다 — 담는 칸은 「살 재료/두부」 쪽이다(첫 판이 여기서 헛방을 쳤다)
 const 안내 = await p.locator('input[placeholder*="두부"], input[placeholder*="살 재료"]').first().getAttribute('placeholder')
-본다('적는 칸이 「두부 1910」 꼴을 알려준다', /두부\s*1,?910/.test(안내 || ''), 안내 || '(없음)')
+본다('적는 칸이 「두부 1910」 꼴을 알려준다', /두부\s*1910/.test(안내 || ''), 안내 || '(없음)')
 
 // 한 줄로 이름＋값 담기 (창업자 «두부를 적고 값을 눌러 또 금액을 적고 좀 번거로워»)
 await p.locator('input[placeholder*="두부"], input[placeholder*="살 재료"]').first().fill('두부 1910')
