@@ -458,7 +458,7 @@ export default function ImportScreen() {
         ? [
             { label: `AI로 정확하게 읽기 · ${keyCount(1)}`, onClick: () => 사진고르기(false) },
             // 📊 열쇠가 «있는데» 이걸 눌렀다 = 진짜 「고름」이다(값이 비싸게 느껴진다는 신호)
-            { label: `그냥 읽기 · ${KEY_SHORT} 안 써요 · 인식률이 떨어져요`, ghost: true, onClick: () => 사진고르기(true, '고름') },
+            { label: `그냥 읽기 · ${KEY_SHORT}는 안 쓰지만 인식률이 떨어져요`, ghost: true, onClick: () => 사진고르기(true, '고름') },
           ]
         // ⭐⭐ **여기서 «누른 손짓»으로 고르기 창을 연다** — 다음 화면에서 저절로 열려고 하면
         //    브라우저가 「손짓 없이 연 창」으로 보고 막을 수 있다.
@@ -798,8 +798,12 @@ export default function ImportScreen() {
             </figure>
           )}
 
-          {/* ✅ 결과 — 「그래서 어떻게 되나」. ⛔없으면 유저가 «담긴 뒤»를 못 그린다. */}
-          <div style={{
+          {/* ✅ 결과 — 「그래서 어떻게 되나」. ⛔없으면 유저가 «담긴 뒤»를 못 그린다.
+              🔀🔀 [2026-09-18 창업자] **사진 갈래만 단추 «아래»로 내린다** — *"초록박스는 그냥읽기 아래에 둘래??"*
+                ⛔ 사진 갈래에서만 이 칸이 «결과»가 아니라 «기본 인식의 손해»를 적는다.
+                   단추 위에 있으면 두 단추 공통 설명처럼 읽혀 경고가 안 된다(2026-09-18 실물 캡처로 확인).
+                ⭐ 나머지 넷은 그대로 위다 — 거긴 「담기면 이렇게 돼요」라 고르기 «전»에 읽어야 한다. */}
+          {flow !== 'photo' && <div style={{
             padding: '12px 15px', borderRadius: 14, marginBottom: 18,
             background: 'linear-gradient(135deg, #eef7e7, #e2eed7)', border: '1px solid #cfe3c4',
             fontSize: 16, fontWeight: 700, color: '#3d6b38', lineHeight: 1.55, wordBreak: 'keep-all',
