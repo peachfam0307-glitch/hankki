@@ -1,39 +1,37 @@
 // ✂️🎥 녹화 여섯 조각 → 릴스 한 편 (9:16) — 2026-09-19
 //
-// ⭐ 하는 일 = ⑴조각마다 «앱이 켜지는 앞부분»을 잘라내고 ⑵9:16 으로 여백을 채워 ⑶이어붙인다.
-//   ⛔ 앞부분(스플래시·홈 대기)은 릴스에선 «군더더기»다 — 창업자 *"군더더기 빼고 딱 중요한 흐름만"*.
-//      녹화는 context 를 만드는 순간 시작돼서 그 몇 초를 피할 수가 없다. 그래서 «여기서» 잘라낸다.
-//   🔢 자르는 초는 눈으로 판을 보고 정한 값이다(1fps 판 → scripts 밖 판N.png). 기억으로 적지 않았다.
+// ⭐ 하는 일 = ⑴조각마다 «준비 구간»을 잘라내고 ⑵9:16 으로 여백을 채워 ⑶이어붙인다.
+//
+// ⛔⛔ 자르는 초를 «눈대중으로 적지 않는다» — 녹화가 `자를곳.json` 에 스스로 적어 둔 값을 읽는다.
+//    📮 창업자 2026-09-18 = *"중간중간 홈으로 왔다갔다 쓸데없는 장면이 많아"*
+//    🌲 뿌리 = 전 판은 내가 판(1fps 그림)을 보고 「앞 3초」 하고 손으로 적었다. 장면마다 앱 켜지는
+//       시간이 달라서 그 값이 늘 어긋났고, 그 어긋난 만큼 «홈 화면»이 릴스에 남았다.
+//    ✅ 이제 녹화가 「준비 끝난 시각」을 재서 넘겨준다 — 홈은 한 칸도 안 남는다.
 //
 // 쓰는 법: node scripts/_영상-흐름릴스-편집-0919.mjs
 import { execFileSync } from 'node:child_process'
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync, writeFileSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 const FF = join(new URL('..', import.meta.url).pathname, 'node_modules/ffmpeg-static/ffmpeg')
 const 안 = process.env.IN || '/tmp/claude-0/녹화-식비흐름'
 const 밖 = process.env.OUT || '/tmp/claude-0/녹화-식비흐름'
 const 바탕 = '#FBF3E4'   // 🍞 식탁보 크림 — 예고 릴스와 같은 결
 
-// [파일, 앞에서 잘라낼 초]
-const 조각 = [
-  ['01-①레시피-골라담기.webm', 4.0],
-  ['02-②장보기-금액적기.webm', 3.0],
-  ['03-③식비-배달외식.webm', 3.0],
-  ['04-④식비-예산.webm', 6.5],
-  ['05-⑤식비-주별달별.webm', 3.0],
-  ['06-⑥냉장고-만들요리.webm', 5.5],
-]
+const 표길 = join(안, '자를곳.json')
+if (!existsSync(표길)) { console.log('⛔ 자를곳.json 이 없다 — 녹화부터 돌릴 것'); process.exit(1) }
+const 조각 = JSON.parse(readFileSync(표길, 'utf8'))
+
 const 낱개 = []
-for (const [이름, 앞] of 조각) {
-  const 길 = join(안, 이름)
-  if (!existsSync(길)) { console.log('  ⚠️ 없다 —', 이름); continue }
-  const 나올것 = join(밖, '_잘린-' + 이름.replace('.webm', '.mp4'))
-  execFileSync(FF, ['-y', '-loglevel', 'error', '-ss', String(앞), '-i', 길,
+for (const { 파일, 자를초 } of 조각) {
+  const 길 = join(안, 파일)
+  if (!existsSync(길)) { console.log('  ⚠️ 없다 —', 파일); continue }
+  const 나올것 = join(밖, '_잘린-' + 파일.replace('.webm', '.mp4'))
+  execFileSync(FF, ['-y', '-loglevel', 'error', '-ss', String(자를초), '-i', 길,
     // 📐 9:16(1080x1920) — 폰 화면은 통째로 두고 «여백»만 채운다(⛔화면을 자르지 않는다)
     '-vf', `scale=-2:1920,pad=1080:1920:(ow-iw)/2:0:${바탕},fps=30,setsar=1,format=yuv420p`,
     '-an', '-c:v', 'libx264', '-crf', '17', '-preset', 'slow', 나올것])
   낱개.push(나올것)
-  console.log('  ✂️', 이름, '앞', 앞 + '초 잘라냄')
+  console.log('  ✂️', 파일, '앞', 자를초 + '초 잘라냄')
 }
 const 목록 = join(밖, '_이을것.txt')
 writeFileSync(목록, 낱개.map((f) => `file '${f}'`).join('\n') + '\n')
