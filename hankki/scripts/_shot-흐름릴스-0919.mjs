@@ -167,6 +167,9 @@ if (await 체크.count()) {
 }
 // ④ 냉장고 — 흐름의 끝 칸
 await p.locator('.segment .seg').filter({ hasText: '냉장고' }).first().click({ force: true }); await p.waitForTimeout(1000)
-await 안내치우기(); await 찍기('6-냉장고'); await 크롭('c12-냉장고', '.shop-list', 14)
+await 안내치우기(); await 찍기('6-냉장고'); // 🧊 냉장고에서 제일 좋은 컷 = 「가진 재료로 만들기」 — 장 본 재료로 «만들 요리»를 골라준다.
+//    ⭐ 흐름의 마지막 고리다: 레시피 -> 장보기 -> 식비 -> 냉장고 -> 다시 요리.
+await 크롭('c12-가진재료로만들기', '.hscroll', 14)
+await 크롭('c13-냉장고안내', p.locator('text=유통기한도 챙겨주고요').first(), 16)
 console.log('✅ 다 찍었다 →', 밖)
 await b.close(); srv.close()
