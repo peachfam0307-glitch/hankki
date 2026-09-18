@@ -35,7 +35,7 @@ await p.waitForTimeout(1000); await 치우기()
 
 // ① 재료 셋 담기
 for (const n of ['두부', '대파', '참치캔']) {
-  await p.locator('input[placeholder*="살 재료"]').first().fill(n)
+  await p.locator('input[placeholder*="살 재료"], input[placeholder*="두부"]').first().fill(n)
   await p.keyboard.press('Enter'); await p.waitForTimeout(350)
 }
 본다('재료 3줄 담김', await p.locator('.shop-row').count() === 3)
@@ -43,7 +43,7 @@ for (const n of ['두부', '대파', '참치캔']) {
 // ② 값 적기 — 두부 3,900 · 대파 2,500 · 참치캔은 «안 적는다»
 async function 값적기(이름, 글) {
   const row = p.locator('.shop-row').filter({ hasText: 이름 }).first()
-  await row.locator('button[aria-label*="값 적기"]').click(); await p.waitForTimeout(250)
+  await row.locator('button[aria-label*="금액 적기"]').click(); await p.waitForTimeout(250)
   await row.locator('input[inputmode="numeric"]').fill(글)
   await p.keyboard.press('Enter'); await p.waitForTimeout(350)
 }

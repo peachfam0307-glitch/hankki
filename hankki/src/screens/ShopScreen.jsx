@@ -103,6 +103,15 @@ export default function ShopScreen() {
   // 🔑💰 [2026-09-17 시제품] 식비는 «창업자 폰에서만» 켜진다 — 아직 검수 전이라 유저 화면은 그대로여야 한다(규칙 13).
   //   ⭐ 켜는 법 = 주소 끝에 ?식비=1 을 붙여 한 번 연다 → 그 폰에 저장돼 다음부터 그냥 뜬다. 끄는 법 = ?식비=0
   //   ⛔ 창업자가 「모두에게 열자」고 하기 전엔 이 열쇠를 떼지 않는다.
+  // 🚪 [2026-09-18 검사용] ?앱문=1 로 켜고 ?앱문=0 으로 끈다 — 답을 얻으면 걷어낸다
+  const [앱문켬] = useState(() => {
+    try {
+      const v = new URLSearchParams(location.search).get('앱문')
+      if (v === '1') localStorage.setItem('hankki:앱문', '1')
+      if (v === '0') localStorage.removeItem('hankki:앱문')
+      return localStorage.getItem('hankki:앱문') === '1'
+    } catch { return false }
+  })
   const [식비켬] = useState(() => {
     try {
       const v = new URLSearchParams(location.search).get('식비')
@@ -156,6 +165,8 @@ export default function ShopScreen() {
           </button>
         </div>
 
+        {앱문켬 && <앱문검사 />}
+
         {view === 'pantry' && <PantryView />}
         {식비켬 && view === 'cost' && <FoodCostView />}
 
@@ -190,7 +201,7 @@ export default function ShopScreen() {
             )}
           </div>
         </div>
-        <ChecklistAdd />
+        <ChecklistAdd 식비켬={식비켬} />
         {/* 📝📝 [2026-09-13 창업자 확정] 빈손 안내문을 «두 줄»로 줄이고 글씨를 키웠다(15 → 17px).
             📮 창업자 = *"장보기리스트 설명 살재료를 적어보세요~ 글씨크기 키우고 2줄로 안내"*
             ⛔ 옛 글 = 「…**위** 주부의 장바구니나…」 — 이제 장바구니가 «아래»로 내려가서
@@ -265,9 +276,20 @@ export default function ShopScreen() {
                   style={{ width: 84, fontSize: 15.5, fontFamily: 'inherit', textAlign: 'right', color: 'var(--text)', background: 'var(--cream)', border: '1.5px solid var(--brown)', borderRadius: 9, padding: '5px 8px', outline: 'none' }}
                 />
               ) : (
-                <button className="press" onClick={() => set값편집(it.id)} aria-label={`${it.name} 값 적기`}
-                  style={{ fontSize: 15.5, fontWeight: it.won ? 700 : 400, color: it.won ? 'var(--text)' : 'var(--sand)', background: 'none', border: 'none', padding: '5px 2px', whiteSpace: 'nowrap' }}>
-                  {it.won ? `${it.won.toLocaleString('ko-KR')}원` : '값'}
+                /* 💰 [2026-09-18 창업자 *"+금액도 적는칸이라는걸 티나게보여줌좋겠어"*]
+                      ⛔ 글자만 연하게 두면 «눌러서 적는 자리»인 줄 모른다 — 빈 칸엔 테두리를 줘서 «적는 칸»처럼 보이게 한다.
+                      ⭐ 값이 적힌 뒤엔 테두리를 뺀다 — 그땐 「얼마」가 읽히는 게 먼저다. */
+                <button className="press" onClick={() => set값편집(it.id)} aria-label={`${it.name} 금액 적기`}
+                  style={{
+                    fontSize: 15.5, fontWeight: it.won ? 700 : 400,
+                    color: it.won ? 'var(--text)' : 'var(--text-sub)',
+                    background: it.won ? 'none' : 'var(--cream)',
+                    border: it.won ? 'none' : '1.5px dashed var(--line)',
+                    borderRadius: 9, padding: it.won ? '5px 2px' : '4px 9px', whiteSpace: 'nowrap',
+                  }}>
+                  {/* ⛔ [2026-09-18 창업자 «연하게 값이라고 되어있어서 이부분수정»] 옛 글자 = 「값」 한 자.
+                        무엇을 하라는 자리인지 안 보였다 — 누르면 금액을 적는 자리라고 «글자로» 말한다. */}
+                  {it.won ? `${it.won.toLocaleString('ko-KR')}원` : '＋ 금액'}
                 </button>
               ))}
               {/* ⛔ `noBuy`(한살림) 는 사러가기를 안 그린다 — 담을 때 붙여 둔 표식이다.
@@ -292,20 +314,28 @@ export default function ShopScreen() {
         {식비켬 && 값있는수 > 0 && (
           <div className="sum-box">
             <div className="sum-row">
-              <span>담은 것 합계 <b className="sum-n">값 적은 것 {값있는수}개</b></span>
+              <span>담은 것 합계 <b className="sum-n">금액 적은 것 {값있는수}개</b></span>
               <b className="sum-v">{합계.toLocaleString('ko-KR')}원</b>
             </div>
             {/* ⛔ 예전엔 «체크한 줄»만 옮기면서도 늘 「적었어요」라고 말했다 — 창업자가 값만 적고 눌렀을 때 아무 일도 안 났다.
                   ✅ 이제 값이 적힌 줄을 전부 옮기고, 실제로 옮긴 «개수와 금액»을 말한다. */}
             <button className="press sum-btn" onClick={() => { store.shopToFoodCost(); nav.showToast(`식비에 적었어요 · ${값있는수}개 ${합계.toLocaleString('ko-KR')}원`) }}>
-              값 적은 것 식비로 적기
+              식비에 넣기
             </button>
           </div>
         )}
         {shoppingList.length > 0 && (
           <div className="t-sub" style={{ fontSize: 16.5, marginTop: 18, lineHeight: 1.85 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
-            {식비켬 && <><br />값도 같이 적으려면 <b style={{ color: 'var(--brown)' }}>「두부 1990」</b> 처럼 뒤에 금액을 붙여 보세요.</>}
+            {/* 💰 [2026-09-18 창업자] *"우리가 지금까지는 금액을 안적었었어. 그럼 금액을적으면 계산해준다거나 그런말이 들어가야하는게아닌가?"*
+                  ⛔ 옛 글 = 「안 적어도 돼요」 — «빼도 되는 이유»만 말하고 «적으면 뭐가 좋은지»를 안 말했다.
+                     창업자부터 「단위를 적지 말라는 줄」로 읽었다. 창업자가 헷갈리면 유저는 더 헷갈린다.
+                  ✅ 그래서 «어디로 가는지»를 말한다 — 적으면 식비에 모인다. */}
+            {/* 💰 [창업자 2026-09-18] *"유저가적을때는 두부 1910만 원은 자동으로 붙게"*
+                  ⭐ 보여주는 예시엔 «원»을 안 붙인다 — 붙여 두면 «꼭 적어야 하는 것»처럼 읽힌다.
+                  ⭐ 담기고 나면 줄에 「1,910원」으로 뜬다(원은 우리가 붙인다).
+                  ⛔ 그래도 «받기»는 넓다 — 두부 1910원·두부 ₩1910 도 금액으로 읽는다(`이름값가르기`). */}
+            {식비켬 && <><br /><b style={{ color: 'var(--brown)' }}>「두부 1910」</b> 처럼 금액도 같이요.</>}
           </div>
         )}
 
@@ -876,7 +906,53 @@ function Curation() {
   )
 }
 
-function ChecklistAdd() {
+// 🚪🚪 [2026-09-18 · 검사용 · 열쇠 ?앱문=1] 「어느 주소가 앱을 여나」 — 갤럭시·아이폰 둘 다 본다
+//   📮 창업자 = *"아이폰에서 식비적을때 쿠팡이츠 바로 안보이냐는 뜻"* · *"아이폰도 쿠팡 자연드림 컬리 등등 도 되나 봐야"*
+//   ⭐ 갤럭시(안드로이드) = 배민·이츠·컬리는 2026-09-18 에 ⓓ(intent ＋ 앱 스킴)로 «열림» 확정 →
+//      여기선 «아직 안 붙인 넷»(요기요·롯데마트·이마트몰·자연드림)만 가린다.
+//   ⭐ 아이폰 = intent:// 가 안 먹는다. 앱 주소(`coupangeats://`)를 그냥 열어야 하는데 «해 본 적이 없다».
+//      ⛔ 아이폰은 되돌림 주소가 없어서 앱이 «없으면» 아무 일도 안 난다 — 그 꼴도 같이 잰다.
+//   🛒 쿠팡은 파트너스 링크가 아니라 «그냥 홈 주소»다 — 눌러도 24시간 규칙에 안 걸린다.
+const 앱문후보 = [
+  ['요기요', 'com.fineapp.yogiyo', 'https://www.yogiyo.co.kr/mobile/', ['yogiyo']],
+  ['롯데마트 제타', 'com.osp.lotte.mobile', 'https://lottemartzetta.com', ['lottemart', 'zetta']],
+  ['이마트몰', 'kr.co.emart.emartmall', 'https://emart.ssg.com', ['emartmall', 'ssg']],
+  ['자연드림', 'com.naturaldream.app', 'https://icoop.or.kr', ['naturaldream']],
+  ['쿠팡', 'com.coupang.mobile', 'https://www.coupang.com', ['coupang']],
+  ['쿠팡이츠', 'com.coupang.mobile.eats', 'https://www.coupangeats.com', ['coupangeats']],
+  ['배달의민족', 'com.sampleapp', 'https://baemin.com', ['baemin']],
+  ['마켓컬리', 'com.dbs.kurly.m2', 'https://www.kurly.com', ['kurly']],
+]
+function 앱문검사() {
+  const 아이폰 = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent)
+  const 열기 = (u) => { try { window.location.assign(u) } catch { /* noop */ } }
+  return (
+    <div style={{ marginTop: 10, padding: 12, border: '1px dashed var(--line)', borderRadius: 14 }}>
+      <b style={{ fontSize: 15 }}>앱으로 열리나 (검사용 · {아이폰 ? '아이폰' : '갤럭시'})</b>
+      <div className="t-sub" style={{ fontSize: 13, marginTop: 4, marginBottom: 8 }}>
+        차례로 눌러서 <b>앱이 뜨는 줄</b>을 찾아 주세요. 뒤로가기로 돌아오면 돼요.
+      </div>
+      {앱문후보.map(([이름, pkg, web, 스킴들]) => (
+        <div key={pkg} style={{ borderTop: '1px solid var(--line)', paddingTop: 8, marginTop: 8 }}>
+          <b style={{ fontSize: 14 }}>{이름}</b>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+            <button className="press chip" onClick={() => 열기(web)}>ⓐ 웹</button>
+            {스킴들.map((s) => (
+              <button key={s} className="press chip" onClick={() => 열기(`${s}://`)}>ⓑ {s}://</button>
+            ))}
+            {/* ⛔ intent:// 는 안드로이드 전용 — 아이폰엔 안 그린다(눌러도 아무 일이 없어 «헷갈리게만» 한다) */}
+            {!아이폰 && 스킴들.map((s) => (
+              <button key={'i' + s} className="press chip" onClick={() => 열기(`intent://home#Intent;scheme=${s};package=${pkg};S.browser_fallback_url=${encodeURIComponent(web)};end`)}>ⓒ intent {s}</button>
+            ))}
+            {!아이폰 && <button className="press chip" onClick={() => 열기(`intent://${web.replace(/^https?:\/\//, '')}#Intent;package=${pkg};S.browser_fallback_url=${encodeURIComponent(web)};end`)}>ⓓ 꾸러미만</button>}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ChecklistAdd({ 식비켬 }) {
   const { addShopItems } = useStore()
   const [text, setText] = useState('')
   const add = () => {
@@ -889,7 +965,10 @@ function ChecklistAdd() {
   return (
     <div className="searchbar" style={{ marginBottom: 12 }}>
       <Icon name="cart" size={19} color="var(--text-sub)" />
-      <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="살 재료 입력하고 Enter" />
+      {/* 💰 [2026-09-18 창업자 «금액 적는 안내나 양식이 없어 유저들은 모를듯해»]
+            ⭐ 안내를 «적는 자리»에 둔다 — 목록 아래 설명은 이미 있었지만 적을 땐 안 보인다(빈손이면 아예 없다). */}
+      <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()}
+        placeholder={식비켬 ? '두부 1910 처럼 적어 보세요' : '살 재료 입력하고 Enter'} />
       {text && (
         <button className="press" onClick={add} aria-label="추가"><Icon name="plus" size={20} color="var(--brown)" /></button>
       )}
