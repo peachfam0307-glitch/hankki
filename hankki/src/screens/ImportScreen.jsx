@@ -807,7 +807,7 @@ export default function ImportScreen() {
             padding: '12px 15px', borderRadius: 14, marginBottom: 18,
             background: 'linear-gradient(135deg, #eef7e7, #e2eed7)', border: '1px solid #cfe3c4',
             fontSize: 16, fontWeight: 700, color: '#3d6b38', lineHeight: 1.55, wordBreak: 'keep-all',
-          }}>{안내들[flow].result}</div>
+          }}>{안내들[flow].result}</div>}
 
           {안내들[flow].buttons.map((b) => (
             <button key={b.label} className={b.ghost ? 'btn-ghost press' : 'btn-primary press'}
@@ -815,6 +815,13 @@ export default function ImportScreen() {
               {b.label}
             </button>
           ))}
+
+          {/* 🔀 사진 갈래는 여기 — 「그냥 읽기」 «바로 아래»에 붙는다(창업자 2026-09-18) */}
+          {flow === 'photo' && <div style={{
+            padding: '12px 15px', borderRadius: 14, marginTop: 4, marginBottom: 18,
+            background: 'linear-gradient(135deg, #eef7e7, #e2eed7)', border: '1px solid #cfe3c4',
+            fontSize: 16, fontWeight: 700, color: '#3d6b38', lineHeight: 1.55, wordBreak: 'keep-all',
+          }}>{안내들[flow].result}</div>}
         </div>
       ) : flow === 'text' ? (
         <div className="pad fade">
