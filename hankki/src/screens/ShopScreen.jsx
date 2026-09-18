@@ -914,7 +914,10 @@ function ChecklistAdd({ 식비켬 }) {
       <Icon name="cart" size={19} color="var(--text-sub)" />
       {/* 💰 [2026-09-18 창업자 «금액 적는 안내나 양식이 없어 유저들은 모를듯해»]
             ⭐ 안내를 «적는 자리»에 둔다 — 목록 아래 설명은 이미 있었지만 적을 땐 안 보인다(빈손이면 아예 없다). */}
+      {/* 🔒 aria-label 은 «안 바뀌는 표식»이다 — 안내문(placeholder)이 바뀌어도 판이 안 깨진다.
+            ⛔ 2026-09-18 에 안내문을 바꾸자 이 칸을 찾던 재현판 셋이 한꺼번에 죽었다. */}
       <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()}
+        aria-label="살 재료 적기"
         placeholder={식비켬 ? '두부 1910 처럼 적어 보세요' : '살 재료 입력하고 Enter'} />
       {text && (
         <button className="press" onClick={add} aria-label="추가"><Icon name="plus" size={20} color="var(--brown)" /></button>
