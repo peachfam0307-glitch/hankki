@@ -28,7 +28,8 @@ for (const { 파일, 자를초 } of 조각) {
   const 나올것 = join(밖, '_잘린-' + 파일.replace('.webm', '.mp4'))
   execFileSync(FF, ['-y', '-loglevel', 'error', '-ss', String(자를초), '-i', 길,
     // 📐 9:16(1080x1920) — 폰 화면은 통째로 두고 «여백»만 채운다(⛔화면을 자르지 않는다)
-    '-vf', `scale=-2:1920,pad=1080:1920:(ow-iw)/2:0:${바탕},fps=30,setsar=1,format=yuv420p`,
+    // 📐 녹화가 이미 1080x1920(9:16) 이다 — 여백을 채울 일이 없다(창업자 *"화면이 왜 이리 작아?"*)
+    '-vf', 'scale=1080:1920,fps=30,setsar=1,format=yuv420p',
     '-an', '-c:v', 'libx264', '-crf', '17', '-preset', 'slow', 나올것])
   낱개.push(나올것)
   console.log('  ✂️', 파일, '앞', 자를초 + '초 잘라냄')

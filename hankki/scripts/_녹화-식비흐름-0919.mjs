@@ -76,15 +76,28 @@ const 연출 = `
       d.style.left = x + 'px'; d.style.top = y + 'px'
       document.body.appendChild(d); setTimeout(() => d.remove(), 600)
     }
-    window.__고리 = (x, y, w, h, 여백) => {
-      칠(); window.__고리지움()
-      const 여 = 여백 == null ? 6 : 여백
-      const d = document.createElement('div'); d.className = '연출고리'; d.id = '연출고리'
-      d.style.left = (x - 여) + 'px'; d.style.top = (y - 여) + 'px'
-      d.style.width = (w + 여 * 2) + 'px'; d.style.height = (h + 여 * 2) + 'px'
-      document.body.appendChild(d)
+    // ⭕⭕ 고리는 «그 물건에 붙어» 따라다닌다 — 창업자 2026-09-18 *"3개담기에 노란박스 위치 다시잡아야하고"*
+    //   🌲 뿌리 = 전엔 그릴 때의 자리(x,y)를 position:fixed 로 박아 뒀다. 그린 «뒤에» 화면이
+    //      스크롤되면(누르기 직전 scrollIntoView) 물건만 움직이고 고리는 그 자리에 남아 어긋났다.
+    //   ✅ 이제 매 프레임 그 물건의 자리를 다시 재서 따라간다. 스크롤해도 안 어긋난다.
+    let 붙은것 = null, 여백값 = 6, 돌고있나 = false
+    const 따라가기 = () => {
+      if (!붙은것 || !붙은것.isConnected) { 돌고있나 = false; return }
+      const d = document.getElementById('연출고리')
+      if (!d) { 돌고있나 = false; return }
+      const r = 붙은것.getBoundingClientRect()
+      d.style.left = (r.left - 여백값) + 'px'; d.style.top = (r.top - 여백값) + 'px'
+      d.style.width = (r.width + 여백값 * 2) + 'px'; d.style.height = (r.height + 여백값 * 2) + 'px'
+      requestAnimationFrame(따라가기)
     }
-    window.__고리지움 = () => { const o = document.getElementById('연출고리'); if (o) o.remove() }
+    window.__고리붙임 = (el, 여백) => {
+      칠(); window.__고리지움()
+      붙은것 = el; 여백값 = 여백 == null ? 6 : 여백
+      const d = document.createElement('div'); d.className = '연출고리'; d.id = '연출고리'
+      document.body.appendChild(d)
+      if (!돌고있나) { 돌고있나 = true; requestAnimationFrame(따라가기) }
+    }
+    window.__고리지움 = () => { 붙은것 = null; const o = document.getElementById('연출고리'); if (o) o.remove() }
     document.addEventListener('pointerdown', (e) => window.__파동(e.clientX, e.clientY), true)
   })()
 `
@@ -94,12 +107,28 @@ let 저장본 = null
 let 장번호 = 0
 const 자를곳 = []   // 📝 편집이 읽을 「어디부터 쓸지」 표 — 눈대중 금지
 
+// 🚧 안내창(소개·코치마크) 치우기
+//   ⛔⛔ 「몇 초 기다렸다가 한 번 훑는다」로 하면 «앱이 늦게 뜨는 날» 통째로 헛돈다.
+//      🔢 2026-09-18 실측 = 기다림을 2.3초→2.0초로 줄이고 배율을 3배로 올렸더니, 소개 화면이
+//         뜨기 «전»에 훑고 지나가서 그 뒤 모든 누르기가 30초씩 타임아웃 났다(장면 하나가 35.7초).
+//   ✅ 그래서 «시계»가 아니라 «상태»를 기다린다 — 아래 띠가 눌릴 수 있을 때까지.
 async function 안내치우기(p) {
-  for (let i = 0; i < 10; i++) {
+  let 맑음 = 0
+  for (let 판 = 0; 판 < 20; 판++) {
     const 것 = p.locator('.sheet-mask button, [aria-label="다음 안내 보기"], button:has-text("건너뛰기"), button:has-text("시작하기")').first()
-    if (await 것.count() === 0 || !(await 것.isVisible().catch(() => false))) break
-    try { await 것.click({ timeout: 1500 }); await p.waitForTimeout(250) } catch { break }
+    if (await 것.count() > 0 && await 것.isVisible().catch(() => false)) {
+      try { await 것.click({ timeout: 1500 }); await p.waitForTimeout(250); continue } catch { /* 다음 판에 다시 */ }
+    }
+    // ⛔⛔ 「아래 띠가 보이나」로는 «못» 가린다 — 소개 화면 «뒤»에 띠가 이미 깔려 있어서
+    //    Playwright 은 그걸 「보인다」고 한다. 그래서 소개가 뜨기도 전에 끝났다고 잘못 판단했다.
+    //    ✅ 가리는 것이 «하나도 없을 때»가 열린 것이다. 그것도 두 판 이어서 없어야 한다(늦게 뜬다).
+    if (await p.locator('.sheet-mask, .onb, button:has-text("건너뛰기")').count() === 0) {
+      맑음++
+      if (맑음 >= 2) return
+    } else { 맑음 = 0 }
+    await p.waitForTimeout(600)
   }
+  console.log('     ⚠️ 안내창을 다 못 치웠다 — 아래 띠가 안 보인다')
 }
 
 // 🎬 장면 = 「준비(안 쓴다)」 ＋ 「보여줄 것(쓴다)」
@@ -110,9 +139,14 @@ async function 장면(이름, 준비, 하기, { 씨뿌리기 = false } = {}) {
   mkdirSync(방, { recursive: true })
   const 켠때 = Date.now()   // ⏱ 여기가 영상의 0초다
   const ctx = await b.newContext({
-    viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'ko-KR',
+    // 📐📐 폰 판을 «9:16 그대로» 잡는다 — 📮 창업자 2026-09-18 = *"그리고 화면이 왜 이리 작아?"*
+    //   🌲 뿌리 = 폰 기본값 390x844 는 비율이 0.462 로 «릴스(0.5625)보다 길쭉»하다. 그래서 9:16 에
+    //      넣으면 세로를 맞추느라 폰이 좁아지고 양옆에 크림 여백만 커졌다. 글씨가 그만큼 작아졌다.
+    //   ✅ 390 x 694 = 0.562 = 릴스와 «같은 비율». 여백 0, 폰이 화면을 꽉 채운다.
+    //   ⛔ 앱이 깨지는 값이 아니다 — 세로만 짧아진 폰(작은 기기)이고 레이아웃은 그대로 흐른다.
+    viewport: { width: 390, height: 694 }, deviceScaleFactor: 3, locale: 'ko-KR',
     storageState: 저장본 || undefined,
-    recordVideo: { dir: 방, size: { width: 780, height: 1688 } },
+    recordVideo: { dir: 방, size: { width: 1080, height: 1920 } },
   })
   // ⛔ 코치마크는 접두어(hankki:coach)로 통째로 막는다 — 안 그러면 녹화 내내 안내창이 덮는다
   await ctx.addInitScript(() => {
@@ -156,13 +190,17 @@ async function 장면(이름, 준비, 하기, { 씨뿌리기 = false } = {}) {
 }
 
 // 👆 커서를 그 자리로 옮긴다
-const 손 = async (p, 것) => {
+// 👆 커서를 그 자리로 옮긴다
+//   ⛔ 적는 칸에서는 «가운데»를 짚으면 안 된다 — 📮 창업자 = *"숫자쓸깨 커서가 중앙을 가리고 있어"*
+//      ✅ 그럴 땐 칸 «아래»를 짚는다. 손가락은 보이고 숫자는 안 가린다.
+const 손 = async (p, 것, { 아래 = false } = {}) => {
   await 것.scrollIntoViewIfNeeded().catch(() => {})
   await p.waitForTimeout(140)
   const r = await 것.boundingBox()
   if (!r) return null
-  await p.evaluate(([x, y]) => window.__커서(x, y), [r.x + r.width / 2, r.y + r.height / 2])
-  await p.waitForTimeout(300)
+  const y = 아래 ? r.y + r.height + 24 : r.y + r.height / 2
+  await p.evaluate(([x, y2]) => window.__커서(x, y2), [r.x + r.width / 2, y])
+  await p.waitForTimeout(아래 ? 200 : 300)
   return r
 }
 // ⭕ 보여줄 것에 노란 동그라미
@@ -171,9 +209,7 @@ const 동그라미 = async (p, 것, { 여백 = 6, 머묾 = 900 } = {}) => {
   if (await 대상.count() === 0) { console.log('     ⚠️ 동그라미 못 그림 —', String(것)); return }
   await 대상.scrollIntoViewIfNeeded().catch(() => {})
   await p.waitForTimeout(200)
-  const r = await 대상.boundingBox()
-  if (!r) return
-  await p.evaluate(([x, y, w, h, 여]) => window.__고리(x, y, w, h, 여), [r.x, r.y, r.width, r.height, 여백])
+  await 대상.evaluate((el, 여) => window.__고리붙임(el, 여), 여백)
   await p.waitForTimeout(머묾)
 }
 const 동그라미지움 = (p) => p.evaluate(() => window.__고리지움())
@@ -189,6 +225,10 @@ const 눌러 = async (p, 것, 쉼 = 480) => {
 const 그냥눌러 = async (p, 것, 쉼 = 700) => {
   const 대상 = typeof 것 === 'string' ? p.locator(것).first() : 것
   if (await 대상.count() === 0) return false
+  // ⛔ 화면이 짧아지면(9:16) 목록이 아래로 밀려 «안 보이는 것을 force 로 누르는» 일이 생긴다.
+  //    2026-09-18 실측 = 두부조림이 접힌 자리에 있어 누른 척만 하고 상세로 안 갔다.
+  await 대상.scrollIntoViewIfNeeded().catch(() => {})
+  await p.waitForTimeout(120)
   await 대상.click({ force: true }); await p.waitForTimeout(쉼); return true
 }
 const 탭 = (p, 글) => p.locator('.bottom-nav .nav-item').filter({ hasText: 글 }).first()
@@ -198,7 +238,9 @@ const 칸 = (p, 글) => p.locator('.segment .seg').filter({ hasText: 글 }).firs
 await 장면('①레시피-골라담기',
   async (p) => {   // 준비 = 레시피 상세까지 «조용히» 간다
     await 그냥눌러(p, 탭(p, '레시피'), 900)
-    await 그냥눌러(p, p.locator('text=어남선생 두부조림').first(), 1300)
+    // ⛔ 글자(text=…)를 누르면 «안 열린다» — 그건 카드 «안»의 제목 글씨라 누를 수 있는 건 조상이다.
+    //    🔢 2026-09-18 실측 = 누르기는 성공한 척 하고 주소가 그대로였다(.ing 0개).
+    await 그냥눌러(p, p.locator('text=어남선생 두부조림').first().locator('xpath=ancestor-or-self::*[self::button or self::a][1]'), 1300)
     await 안내치우기(p)
     await p.locator('.ing').first().scrollIntoViewIfNeeded(); await p.waitForTimeout(500)
   },
@@ -226,10 +268,10 @@ await 장면('②장보기-금액적기',
     if (await 눌러(p, 금액칸, 600)) {
       const 시트칸 = p.locator('input[type="text"], input[inputmode="numeric"]').last()
       if (await 시트칸.count()) {
-        await 손(p, 시트칸)
+        await 손(p, 시트칸, { 아래: true })
         // 🐇 금액 타자는 «빠르게» — 창업자 *"금액적거나 하는 건 좀 빠르게 넘어가고"*
-        for (const 글 of ['1', '19', '191', '1910']) { await 시트칸.fill(글); await p.waitForTimeout(110) }
-        await p.waitForTimeout(350)
+        for (const 글 of ['1', '19', '191', '1910']) { await 시트칸.fill(글); await p.waitForTimeout(55) }
+        await p.waitForTimeout(220)
         await p.keyboard.press('Enter').catch(() => {})
         await p.waitForTimeout(800)
       }
@@ -253,7 +295,7 @@ await 장면('③식비-배달외식',
     // 🏪 「가서 보고 올까요?」 = 자주 가는 가게들
     await 동그라미(p, '.fc-shops', { 여백: 6, 머묾: 1200 })
     await 동그라미지움(p)
-    for (const 키 of ['1', '5', '000']) await 눌러(p, p.locator('.fc-key').filter({ hasText: new RegExp('^' + 키 + '$') }).first(), 240)
+    for (const 키 of ['1', '5', '000']) await 눌러(p, p.locator('.fc-key').filter({ hasText: new RegExp('^' + 키 + '$') }).first(), 150)
     await p.waitForTimeout(300)
     await 눌러(p, p.locator('.fc-save').first(), 1200)
   })
@@ -267,7 +309,7 @@ await 장면('④식비-예산',
   async (p) => {
     await 눌러(p, p.locator('.fc-bud-new, button:has-text("· 고치기")').first(), 700)
     if (await p.locator('.fc-key').first().count()) {
-      for (const 키 of ['2', '0', '0', '000']) await 눌러(p, p.locator('.fc-key').filter({ hasText: new RegExp('^' + 키 + '$') }).first(), 220)
+      for (const 키 of ['2', '0', '0', '000']) await 눌러(p, p.locator('.fc-key').filter({ hasText: new RegExp('^' + 키 + '$') }).first(), 150)
       await p.waitForTimeout(300)
       await 눌러(p, p.locator('.fc-save, button:has-text("정했어요")').first(), 1200)
     } else { await p.keyboard.press('Escape').catch(() => {}); await p.waitForTimeout(400) }
