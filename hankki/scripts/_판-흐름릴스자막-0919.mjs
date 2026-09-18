@@ -15,6 +15,8 @@ const 밖 = process.env.OUT || '/tmp/claude-0/녹화-식비흐름'
 mkdirSync(밖, { recursive: true })
 const 짐 = (p) => 'data:image/png;base64,' + readFileSync(p).toString('base64')
 const 앱아이콘 = 짐(join(R, 'public/icons/icon-512-v7.png'))
+// 🐧 펭펭 «메모지＋장바구니» — 「적는다」가 보이는 유일한 장보기 컷(ps_01)
+const 펭펭적기 = 짐(join(R, 'docs/stickers/곰펭-창업자-2026-08-13/낱개/ps_01.png'))
 const 폰트 = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-korean-400.woff2')).toString('base64')
 const 폰트L = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-latin-400.woff2')).toString('base64')
 
@@ -48,9 +50,15 @@ const 틀 = (속) => `<!doctype html><html><head><meta charset="utf-8"><style>
         box-shadow:0 22px 60px #0006}
   /* 🎬 훅·끝장 */
   .가운데{height:1920px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
-  .훅작{color:${연};font-size:58px}
-  .훅큰{color:${진};font-size:150px;font-weight:700;letter-spacing:-5px}
-  .훅줄{color:${짚};font-size:52px;margin-top:24px;letter-spacing:-1px}
+  .펭{width:440px;margin-bottom:10px;filter:drop-shadow(0 22px 46px #0008)}
+  .훅작{color:${연};font-size:62px;letter-spacing:-1px}
+  .훅큰{color:${진};font-size:186px;font-weight:700;letter-spacing:-8px;line-height:1.04;margin-top:4px;
+        text-shadow:0 12px 36px #0009}
+  .훅밑{color:${짚};font-size:56px;margin-top:20px;letter-spacing:-1px}
+  .흐름{display:flex;align-items:center;gap:12px;margin-top:62px}
+  .흐름 span{color:${연};font-size:44px;border:3px solid ${연}44;border-radius:60px;padding:15px 28px}
+  .흐름 span.on{color:#1d2a3c;background:${짚};border-color:${짚};font-weight:700}
+  .흐름 i{color:${연}99;font-size:42px;font-style:normal}
   .알약{margin-top:44px;display:flex;align-items:center;gap:20px;border:3px solid ${연}55;border-radius:70px;
         padding:22px 40px;color:${연};font-size:36px;line-height:1.4}
   .알약 img{width:92px;height:92px;border-radius:22px}
@@ -58,14 +66,26 @@ const 틀 = (속) => `<!doctype html><html><head><meta charset="utf-8"><style>
 </style></head><body>${속}</body></html>`
 
 const 장면판 = (c) => 틀(`<div class="판"><div class="작">${c.작}</div><div class="큰">${c.큰}</div><div class="자리"></div></div>`)
-const 훅판 = 틀(`<div class="가운데">
+// 🎬 훅 — ⛔ 처음엔 글자 셋만 두었더니 «휑했다». 📮 창업자 = *"첫장도 글씨 좀 크고 뚜렷하게. 휑해보여"*
+//   🐧 창업자 = *"아니면 애들 뽑아올까? 가계부쓰는 애들?"* → 서랍을 뒤졌다.
+//      ⛔ 「가계부 쓰는」 컷은 «없다». 제일 가까운 것 = `ps_01` = **펭펭이 «메모지»와 장바구니를 든 컷**.
+//         (`펭펭-장보기-4컷` 중 첫 컷 — 나머지는 시장·카트·봉투라 「적는다」가 안 보인다)
+//   ✅ ⑴펭펭을 크게(440px) ⑵글자를 키우고(식비 가계부 186px) ⑶흐름을 «알약 넷»으로 세웠다.
+//      말줄(→ 로 이어 쓴 한 줄)은 작아서 안 읽힌다 — 알약이면 멀리서도 네 칸이 보인다.
+const 훅판 = 틀(`<div class="가운데" style="gap:0">
+  <img class="펭" src="${펭펭적기}">
   <div class="훅작">한끼에</div>
   <div class="훅큰">식비 가계부</div>
-  <div class="훅줄">레시피 → 장보기 → 식비 → 냉장고</div>
+  <div class="훅밑">장보기에서 바로 적어요</div>
+  <div class="흐름">
+    <span>레시피</span><i>›</i><span>장보기</span><i>›</i><span class="on">식비</span><i>›</i><span>냉장고</span>
+  </div>
 </div>`)
 const 끝판 = 틀(`<div class="가운데">
-  <div class="훅큰" style="font-size:112px">오늘 열려요</div>
-  <div class="훅줄">레시피 보다가 그 자리에서 식비까지</div>
+  <!-- ⛔ 「오늘 열려요」로 적었다가 창업자가 잡았다 — 📮 *"이 릴스를 올린 시점은 열렸을거야"*
+       ✅ 올리는 시점엔 «이미 열려 있다». 예고는 어제 릴스가 이미 했다. 여기선 «지금 쓰라»고 한다. -->
+  <div class="훅큰" style="font-size:112px">지금 쓸 수 있어요</div>
+  <div class="훅밑">레시피 보다가 그 자리에서 식비까지</div>
   <div class="알약"><img src="${앱아이콘}"><span>App Store · Google Play 에서<br><b>한끼 레시피북</b> 검색</span></div>
 </div>`)
 
