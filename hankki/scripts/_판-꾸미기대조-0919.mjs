@@ -46,7 +46,7 @@ const 겹 = [
   // 💗 카롱 위로 뜨는 하트는 «스티커가 아니라 효과»다 — fx: 'heart' (Stickers.jsx:1150)
   { 이름: '카롱＋펭펭·효과',   it: { type: 'sticker', key: 'kp_shoulder', x: 0.195, y: 0.78, s: 0.24, r: 0, motion: 'tongtong', fx: 'heart' } },
   // ✍️ 제목 = «글자만»(type text · lilac 보라). ⛔note 를 쓰면 베이지 종이가 같이 붙는다
-  { 이름: '제목 글자',        it: { type: 'text', text: '새우관자전', color: 't_lilac', font: 'gaegu', x: 0.40, y: 0.125, s: 0.52, r: 0 } },
+  { 이름: '제목 글자',        it: { type: 'text', text: '새우관자전', color: 't_lilac', font: 'gaegu', x: Number(process.env.TX ?? 0.40), y: 0.125, s: 0.52, r: 0 } },
   // 💗 하트 = 얼굴 «없는» dc_dhb04 (색바꾸기 칸의 그것)
   { 이름: '큰 하트',          it: { type: 'sticker', key: 'dc_dhb04', color: '#d78e86', x: 0.645, y: 0.125, s: 0.115, r: 0 } },
   { 이름: '작은 하트(왼위)',  it: { type: 'sticker', key: 'dc_dhb04', color: '#e8b9bd', x: 0.235, y: 0.185, s: 0.05, r: 0 } },
