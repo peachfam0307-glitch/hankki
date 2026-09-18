@@ -50,9 +50,9 @@ const 겹 = [
   // 💗 하트 = 얼굴 «없는» dc_dhb04 (색바꾸기 칸의 그것)
   { 이름: '큰 하트',          it: { type: 'sticker', key: 'dc_dhb04', color: '#d78e86', x: 0.645, y: 0.125, s: 0.115, r: 0 } },
   { 이름: '작은 하트(왼위)',  it: { type: 'sticker', key: 'dc_dhb04', color: '#e8b9bd', x: 0.235, y: 0.185, s: 0.05, r: 0 } },
-  { 이름: '아래 마테',        it: { type: 'sticker', key: 'wt_dy06', x: 0.60, y: 0.78, s: 0.32, r: -3 } },
+  { 이름: '아래 마테',        it: { type: 'sticker', key: 'wt_dy06', x: 0.60, y: 0.78, s: 0.32, r: Number(process.env.MR ?? -3) } },
   // 🗣 말풍선 = 글자가 이미 박힌 스티커(글자 탭 「한끼 문구」 tw_kidpick)
-  { 이름: '아이 원픽!',       it: { type: 'sticker', key: 'tw_kidpick', x: 0.79, y: 0.29, s: 0.22, r: -5 } },
+  { 이름: '아이 원픽!',       it: { type: 'sticker', key: 'tw_kidpick', x: 0.79, y: 0.29, s: 0.22, r: Number(process.env.KR ?? -5) } },
 ]
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
