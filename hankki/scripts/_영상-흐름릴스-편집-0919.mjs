@@ -16,6 +16,10 @@ const FF = join(new URL('..', import.meta.url).pathname, 'node_modules/ffmpeg-st
 const 안 = process.env.IN || '/tmp/claude-0/녹화-식비흐름'
 const 밖 = process.env.OUT || '/tmp/claude-0/녹화-식비흐름'
 const 배속 = Number(process.env.BAESOK || 1.4)   // 🐇 1.0 = 녹화 그대로 · 클수록 빠르다
+// 🐇🐇 장면마다 «더» 조이는 값 — 📮 창업자 2026-09-18 = *"5초까지가 좀 느려"*
+//   ⭐ 첫 5초 = ①에서 재료 셋을 하나씩 체크하는 자리. 뜻은 한 번에 읽히는데 세 번 반복이라 늘어진다.
+//      그 장면만 1.6배 더 조인다(뒤 장면은 그대로 — 거기선 숫자가 바뀌는 걸 봐야 한다).
+const 덧배속 = { '01': 1.6 }
 
 const 표길 = join(안, '자를곳.json')
 if (!existsSync(표길)) { console.log('⛔ 자를곳.json 이 없다 — 녹화부터 돌릴 것'); process.exit(1) }
@@ -26,6 +30,7 @@ for (const { 파일, 자를초 } of 조각) {
   const 길 = join(안, 파일)
   if (!existsSync(길)) { console.log('  ⚠️ 없다 —', 파일); continue }
   const 나올것 = join(밖, '_잘린-' + 파일.replace('.webm', '.mp4'))
+  const 이배속 = 배속 * (덧배속[파일.slice(0, 2)] || 1)
   execFileSync(FF, ['-y', '-loglevel', 'error', '-ss', String(자를초), '-i', 길,
     // 📐 9:16(1080x1920) — 폰 화면은 통째로 두고 «여백»만 채운다(⛔화면을 자르지 않는다)
     // 📐 녹화가 이미 1080x1920(9:16) 이다 — 여백을 채울 일이 없다(창업자 *"화면이 왜 이리 작아?"*)
@@ -35,10 +40,10 @@ for (const { 파일, 자를초 } of 조각) {
     // 📐 녹화가 «페이지 크기 그대로»(390x694) 라 회색 여백이 0 이다 — 여기서 늘리면 꽉 찬다.
     //   ⛔ 전엔 틀을 1080x1920 으로 줬는데 Playwright 이 페이지를 «안 키워서» 구석에 박혔고,
     //      그 회색까지 통째로 늘리는 바람에 화면이 계속 작았다(창업자 *"4등분되어있어"*).
-    '-vf', `setpts=PTS/${배속},scale=1080:1920:flags=lanczos,fps=30,setsar=1,format=yuv420p`,
+    '-vf', `setpts=PTS/${이배속},scale=1080:1920:flags=lanczos,fps=30,setsar=1,format=yuv420p`,
     '-an', '-c:v', 'libx264', '-crf', '17', '-preset', 'slow', 나올것])
   낱개.push(나올것)
-  console.log('  ✂️', 파일, '앞', 자를초 + '초 잘라냄')
+  console.log('  ✂️', 파일, '앞', 자를초 + '초 잘라냄 ·', 이배속.toFixed(2) + '배속')
 }
 const 목록 = join(밖, '_이을것.txt')
 writeFileSync(목록, 낱개.map((f) => `file '${f}'`).join('\n') + '\n')
