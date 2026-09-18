@@ -62,7 +62,7 @@ const 겹 = [
   //    ⭐ DecorLayer 는 배열 «순서대로» 그린다(자동 정렬 없음 · DecorLayer.jsx:198).
   //    ⛔ 나는 접시를 맨 앞에 두고 「구조상 못 덮는다」고 단정했다 — 창업자가 실물로 반증했다.
   //       실물이 이긴다. 순서를 바꾸면 되는 일이었다.
-  { 이름: '그릇 접시',        it: { type: 'sticker', key: 'pf_ad08', x: 0.505, y: 0.52, s: 0.86, r: 0 } },
+  { 이름: '그릇 접시',        it: { type: 'sticker', key: 'pf_ad08', x: 0.505, y: 0.44, s: 0.98, r: 0 } },
 ]
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
