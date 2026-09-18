@@ -34,11 +34,12 @@ const 바탕들 = {
   크림격자: { 바탕: '#FBF3E4', 줄: '#EADFC6' },
   남색격자: { 바탕: '#26354A', 줄: '#2F4058' },
 }
-const 고른 = process.env.BG || '크림격자'
+const 고른 = process.env.BG || '크림단색'
 if (!바탕들[고른]) { console.log('⛔ 모르는 배경:', 고른, '· 있는 것 =', Object.keys(바탕들).join(' · ')); process.exit(1) }
 const 바 = 바탕들[고른]
 // 🖼 여백 = 배경이 «테두리처럼만» 보이게 하는 값. 작을수록 카드가 커진다.
-const 여백 = Number(process.env.여백 || 28)
+// ⛔⛔ 이름이 ASCII 인 이유 = bash 는 환경변수 이름이 한글이면 죽는다(2026-09-19 에 두 번 밟았다).
+const 여백 = Number(process.env.PAD || 28)
 console.log('  🎨 배경 =', 고른, '· 테두리', 여백 + 'px')
 
 const 조각들 = 낱장.map((f, i) => {
@@ -49,10 +50,14 @@ const 조각들 = 낱장.map((f, i) => {
     //    *"레꾸화면이 커야하니까 배경은 조금만 나와도 돼. 테두리처럼"*
     //    🔢 카드 폭 = 1080 - 여백×2 (기본 여백 28px) · 위아래는 9:16 이라 띠가 남는다
     //       ＝ 그 띠가 창업자가 «자막 달 자리»다(창업자가 직접 단다).
+    // ⛔⛔ 폭 기준(scale=1080:-2)으로 늘리면 «9:16 을 넘친다» — 2026-09-19 실측:
+    //    화면 통째로 찍으면 1170×2532(세로 0.462)라 1080 폭이면 높이가 2337 → 1920 초과 → pad 가 죽는다.
+    //    ✅ force_original_aspect_ratio=decrease = «틀 안에 다 들어오게» 줄인다(긴 변 기준).
     ...(typeof 바 === 'string'
-      ? ['-vf', `scale=${1080 - 여백 * 2}:-2:flags=lanczos,pad=1080:1920:${여백}:(oh-ih)/2:${바},fps=30,setsar=1,format=yuv420p`]
+      ? ['-vf', `scale=${1080 - 여백 * 2}:${1920 - 여백 * 2}:force_original_aspect_ratio=decrease:flags=lanczos,`
+          + `pad=1080:1920:(ow-iw)/2:(oh-ih)/2:${바},fps=30,setsar=1,format=yuv420p`]
       : ['-filter_complex',
-          `[0:v]scale=${1080 - 여백 * 2}:-2:flags=lanczos[card];`
+          `[0:v]scale=${1080 - 여백 * 2}:${1920 - 여백 * 2}:force_original_aspect_ratio=decrease:flags=lanczos[card];`
           + `color=c=${바.바탕}:s=1080x1920:d=${초}:r=30[bg0];`
           + `[bg0]drawgrid=w=96:h=96:t=4:c=${바.줄}[bg];`
           + `[bg][card]overlay=(W-w)/2:(H-h)/2,fps=30,setsar=1,format=yuv420p`]),
