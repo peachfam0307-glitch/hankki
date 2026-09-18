@@ -76,6 +76,8 @@ const 머리 = `<style>
   /* 🃏 잘라낸 화면을 «카드»로 — 진한 배경 위라 흰 카드가 튀어나온다 */
   .카드{position:absolute;left:60px;width:960px;border-radius:26px;overflow:hidden;background:#fff;
     box-shadow:0 34px 70px rgba(0,0,0,.42)}
+  /* 🛟 안전망 — 어떤 카드도 화면 밖으로 나가지 않게. ⛔2026-09-18 에 재료 목록이 넘쳐 창업자가 잡았다. */
+  .카드{max-height:1080px}
   .카드 img{width:100%;display:block}
   .번호{position:absolute;left:0;right:0;text-align:center;font-size:58px;font-weight:700;color:${연}}
   .큰{position:absolute;left:0;right:0;text-align:center;font-size:88px;line-height:1.28;font-weight:700}

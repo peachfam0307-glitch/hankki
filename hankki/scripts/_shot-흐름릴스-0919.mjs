@@ -106,7 +106,18 @@ if (await 두부조림.count()) {
     }
     console.log('  ✅ 고른 재료 =', 고른수)
     await 찍기('1e-재료체크')
-    await 크롭('c1-재료체크', p.locator('.ing').first().locator('xpath=..'), 14)
+    // ⛔ 재료 목록을 통째로 자르면 «양념»까지 딸려와 카드가 화면 밖으로 넘친다(창업자가 잡았다).
+    //    ✅ 첫 줄부터 «여섯 줄»까지만 — 고른 셋(두부·양파·대파)이 들어가는 만큼만 자른다.
+    await (async () => {
+      const 줄들 = p.locator('.ing')
+      const n = Math.min(6, await 줄들.count())
+      if (n === 0) { console.log('  ⚠️ 재료 줄이 없다'); return }
+      const 첫 = await 줄들.first().boundingBox(); const 끝 = await 줄들.nth(n - 1).boundingBox()
+      if (!첫 || !끝) { console.log('  ⚠️ 재료 줄 자리 못 잡음'); return }
+      const x = Math.max(0, 첫.x - 14), y = Math.max(0, 첫.y - 14)
+      await p.screenshot({ path: join(밖, 'c1-재료체크.png'), clip: { x, y, width: Math.min(390 - x, 첫.width + 28), height: (끝.y + 끝.height) - y + 14 } })
+      console.log('  ✂️ c1-재료체크', n + '줄')
+    })()
     // 🧺 그다음 「장보기 담기」를 누르면 «담긴다»
     await 담기.scrollIntoViewIfNeeded(); await 담기.click({ force: true }); await p.waitForTimeout(1300); await 안내치우기()
     await 찍기('1f-담김')
@@ -137,7 +148,7 @@ if (await 적는칸.count()) {
   await 적는칸.click(); await p.waitForTimeout(200)
   for (const 글 of ['두부', '두부 19', '두부 1910']) { await 적는칸.fill(글); await p.waitForTimeout(250) }
   await 찍기('2b-금액타자')
-  await 적는칸.press('Enter'); await p.waitForTimeout(800); await 찍기('2c-식비에넣기'); await 크롭('c4-식비에넣기', '.shop-cur', 20)
+  await 적는칸.press('Enter'); await p.waitForTimeout(800); await 찍기('2c-식비에넣기'); await 크롭('c4-식비에넣기', '.sum-box', 20)
 }
 // ③ 식비 — 요약 · 목록 · 달별 (구체 소개)
 await p.locator('.segment .seg').filter({ hasText: '식비' }).first().click({ force: true }); await p.waitForTimeout(1100)
