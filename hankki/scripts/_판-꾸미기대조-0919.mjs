@@ -207,7 +207,14 @@ await p.waitForTimeout(1800); await 안내치우기()
 await p.screenshot({ path: join(밖, '내판-꾸미기.png') })
 const r = await p.evaluate(() => { const e = document.querySelector('.decor-stage'); if (!e) return null; const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, width: b.width, height: b.height } })
 console.log('  📐 판 자리 =', JSON.stringify(r))
-if (r) await p.screenshot({ path: join(밖, process.env.LAYERS ? '겹-' + String(몇겹).padStart(2, '0') + '.png' : '내판-판만.png'), clip: r })
+// 📱📱 전체=1 이면 «화면 통째로» 찍는다 — 아래 스티커 서랍까지 나온다.
+//    📮 창업자 2026-09-19 = *"아래 스티커 서랍이 나와야해"*
+//    ⭐ 릴스는 「진짜로 꾸미는 장면」이라야 한다 — 판만 잘라 내면 «결과»만 보이고 «하는 것»이 안 보인다.
+//    ⛔ 그래서 릴스용 낱장은 clip 없이 찍는다(390×844 전체 · @3x = 1170×2532).
+//    ⛔⛔ 이름이 «FULL» 인 이유 = bash 는 환경변수 이름이 한글이면 죽는다(2026-09-19 또 밟았다).
+const 낼이름 = process.env.LAYERS ? '겹-' + String(몇겹).padStart(2, '0') + '.png' : '내판-판만.png'
+if (process.env.FULL) await p.screenshot({ path: join(밖, 낼이름) })
+else if (r) await p.screenshot({ path: join(밖, 낼이름), clip: r })
 else console.log('  ⚠️ .decor-stage 를 못 찾았다 — 꾸미기 화면이 안 열렸다')
 console.log('✅ →', 밖)
 await b.close(); srv.close()
