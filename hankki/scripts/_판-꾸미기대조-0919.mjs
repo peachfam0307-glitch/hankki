@@ -108,7 +108,15 @@ const 심기 = async (몇겹) => {
 }
 // 🍽 접시 크기를 «몇 단계»로 뽑아 창업자가 고르게 한다 — ⛔내가 눈대중으로 정하지 않는다
 if (process.env.DISH_STEPS) {
-  for (const s of [0.68, 0.74, 0.80, 0.86, 0.92]) {
+  // 📮 창업자 = *"접시를 좀 더 키워야해. 네꺼 작아"* → 0.92 보다 «위쪽»으로 다시 뽑는다
+  // 📮 창업자 2026-09-18 = *"흰테가 보이는건 괜찮아 «검은테두리»가 보이지않으면 돼"*
+  //    ＋ *"내 접시 보면 «아래쪽은 새우관자전에 붙어있어» 윗쪽은 흰부분이 보이잖아"*
+  //    ⭐ 그래서 문제는 «크기»가 아니라 «자리»였다 — 접시를 «아래로» 내려 아래쪽 갈색 테를 덮는다.
+  //    ⛔ 나는 접시를 키우면 창이 커져 테가 더 드러난다는 것만 보고 「줄여야 한다」로 갔었다.
+  //       창업자는 «가운데 맞추기»가 아니라 «아래를 붙이기»를 한 것이다.
+  for (const sy of (process.env.DISH_LIST || '0.88@0.50,0.88@0.54,0.88@0.58,0.94@0.54,0.94@0.58').split(',')) {
+    const [s, y] = sy.split('@').map(Number)
+    겹[0].it.y = y
     겹[0].it.s = s
     console.log('  🌱', await 심기(겹.length), '· 접시 s =', s)
     await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1800); await 안내치우기()
@@ -118,8 +126,8 @@ if (process.env.DISH_STEPS) {
     await 그것.scrollIntoViewIfNeeded(); await 그것.click({ force: true }); await p.waitForTimeout(1400); await 안내치우기()
     await p.locator('[data-coach="decor"]').first().click({ force: true }); await p.waitForTimeout(1500); await 안내치우기()
     const rr = await p.evaluate(() => { const e = document.querySelector('.decor-stage'); const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, width: b.width, height: b.height } })
-    await p.screenshot({ path: join(밖, '접시-' + String(s).replace('.', '') + '.png'), clip: rr })
-    console.log('  📸 접시 s =', s)
+    await p.screenshot({ path: join(밖, '접시-' + sy.replace(/[.@]/g, '_') + '.png'), clip: rr })
+    console.log('  📸 접시', sy)
   }
   await b.close(); srv.close(); process.exit(0)
 }
