@@ -35,7 +35,7 @@ const FF = join(R, 'node_modules/ffmpeg-static/ffmpeg')
 if (!existsSync(FF)) { console.error('⛔ ffmpeg-static 이 없다'); process.exit(1) }
 rmSync(임시, { recursive: true, force: true }); mkdirSync(임시, { recursive: true }); mkdirSync(낼곳, { recursive: true })
 
-const W = 1080, H = 1920, FPS = 30, 길이 = 9.0
+const W = 1080, H = 1920, FPS = 30, 길이 = 11.0
 const 짐 = (p) => 'data:image/png;base64,' + readFileSync(p).toString('base64')
 const 화면 = (f) => { const p = join(화면곳, f); if (!existsSync(p)) throw new Error('⛔ 화면이 없다 → ' + p + ' (먼저 _shot-식비화면-0918.mjs)'); return 짐(p) }
 const 앱아이콘 = 짐(join(R, 'public/icons/icon-512-v7.png'))
@@ -44,12 +44,19 @@ const 씬 = (k) => 짐(join(R, 'docs/stickers/콤비-씬-정본-2026-09-05/낱�
 const 폰트 = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-korean-400.woff2')).toString('base64')
 const 폰트L = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-latin-400.woff2')).toString('base64')
 const 진 = '#5d3410'
+const 연 = '#a3855f'   // 📓 체크 배경에 맞춘 보조 글자색(시안 ⓒ)
 
 const 머리 = `<style>
   @font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트}) format('woff2');unicode-range:U+AC00-D7A3,U+1100-11FF,U+3130-318F}
   @font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트L}) format('woff2')}
   *{margin:0;padding:0;box-sizing:border-box;font-family:GD,sans-serif;-webkit-font-smoothing:antialiased}
-  body{width:${W}px;height:${H}px;background:#FFFDF7;color:${진};overflow:hidden;position:relative}
+  /* 📓 [창업자 확정 2026-09-18] 배경 = 「식탁보 체크」 — *"3번하자. 노트느낌 예고니까."* · *"나도 체크가 좋아"*
+        ⭐ 격자라 «노트»로 읽힌다 — 예고와 결이 맞고, 민무늬 크림을 쓰는 캐러셀과도 갈린다.
+        ⛔ 무늬에 유니코드 이모지를 쓰지 않는다(절대원칙) — CSS 로 그린다. */
+  body{width:${W}px;height:${H}px;color:${진};overflow:hidden;position:relative;
+    background-color:#FBF3E4;
+    background-image:repeating-linear-gradient(0deg,#efe0c6 0 5px,transparent 5px 128px),
+                     repeating-linear-gradient(90deg,#efe0c6 0 5px,transparent 5px 128px)}
   .장{position:absolute;inset:0;opacity:0;animation:장뜸 var(--len) linear var(--at) both}
   @keyframes 장뜸{0%{opacity:0}5%{opacity:1}92%{opacity:1}100%{opacity:0}}
   .툭{animation:툭 .5s cubic-bezier(.2,1.4,.4,1) var(--at) both}
@@ -73,29 +80,33 @@ const 폰 = (파일, 높이, 자리, at) => {
 }
 const 장 = (시작, 길, 속) => `<div class="장" style="--at:${시작}s;--len:${길}s">${속}</div>`
 const 큰글 = (at, top, 글) => `<div class="툭" style="--at:${at}s;position:absolute;left:0;right:0;top:${top}px;text-align:center;font-size:86px;line-height:1.25;font-weight:700">${글}</div>`
-const 작은글 = (at, top, 글) => `<div class="툭" style="--at:${at}s;position:absolute;left:0;right:0;top:${top}px;text-align:center;font-size:46px;color:#a98a6b">${글}</div>`
+const 작은글 = (at, top, 글) => `<div class="툭" style="--at:${at}s;position:absolute;left:0;right:0;top:${top}px;text-align:center;font-size:46px;color:${연}">${글}</div>`
 
 const 몸 = `
-${장(0, 2.5, `
-  ${큰글(0.15, 200, '장보기에 그냥 적으면')}
-  ${작은글(0.35, 350, '두부 1910 — 이렇게만')}
-  ${폰('식비릴스-담김.png', 1400, 'left:217px;bottom:40px', 0.3)}`)}
+${장(0, 2.2, `
+  <div class="툭" style="--at:.15s;position:absolute;left:0;right:0;top:440px;text-align:center;font-size:72px;color:${연}">한끼에</div>
+  <div class="툭" style="--at:.3s;position:absolute;left:0;right:0;top:580px;text-align:center;font-size:150px;line-height:1.2;font-weight:700;letter-spacing:-3px">식비 가계부</div>
+  <div class="팝" style="--at:.65s;position:absolute;left:0;right:0;top:830px;text-align:center;font-size:96px;font-weight:700;color:${연}">곧 나와요</div>`)}
 
-${장(2.5, 2.5, `
-  ${큰글(2.65, 200, '식비가 돼요')}
-  ${작은글(2.85, 330, '장 본 것도, 시켜 먹은 것도')}
-  ${폰('식비목록-0918.png', 1400, 'left:217px;bottom:40px', 2.8)}`)}
+${장(2.2, 2.4, `
+  ${큰글(2.35, 200, '장보기에 그냥 적으면')}
+  ${작은글(2.55, 350, '두부 1910 — 이렇게만')}
+  ${폰('식비릴스-담김.png', 1400, 'left:217px;bottom:40px', 2.5)}`)}
 
-${장(5.0, 2.0, `
-  ${큰글(5.15, 200, '배달까지 같이')}
-  ${폰('식비화면-0918-전체.png', 1400, 'left:217px;bottom:40px', 5.3)}`)}
+${장(4.6, 2.4, `
+  ${큰글(4.75, 200, '식비가 돼요')}
+  ${작은글(4.95, 330, '장 본 것도, 시켜 먹은 것도')}
+  ${폰('식비목록-0918.png', 1400, 'left:217px;bottom:40px', 4.9)}`)}
 
-${장(7.0, 2.0, `
-  ${큰글(7.15, 300, '곧 나와요')}
-  ${작은글(7.35, 470, '식비 가계부가 생겨요')}
-  <div class="팝" style="--at:7.5s;position:absolute;left:120px;top:640px;width:840px;height:840px;border-radius:70px;overflow:hidden;box-shadow:0 30px 70px rgba(93,52,16,.2)">
+${장(7.0, 1.9, `
+  ${큰글(7.15, 200, '배달까지 같이')}
+  ${폰('식비화면-0918-전체.png', 1400, 'left:217px;bottom:40px', 7.3)}`)}
+
+${장(8.9, 2.1, `
+  ${큰글(9.05, 300, '곧 만나요')}
+  <div class="팝" style="--at:9.3s;position:absolute;left:120px;top:560px;width:840px;height:840px;border-radius:70px;overflow:hidden;box-shadow:0 30px 70px rgba(93,52,16,.2)">
     <img src="${씬('sn_05')}" style="width:100%;height:100%;object-fit:cover"></div>
-  <div class="툭" style="--at:7.6s;position:absolute;left:0;right:0;bottom:180px;text-align:center">
+  <div class="툭" style="--at:9.45s;position:absolute;left:0;right:0;bottom:180px;text-align:center">
     <span class="알약" style="padding:24px 46px 24px 26px;font-size:44px;text-align:left;line-height:1.35">
       <img src="${앱아이콘}">
       <span>App Store · Google Play 에서<br><b style="color:${진};font-size:56px;letter-spacing:-1px">한끼 레시피북</b> 검색</span>
