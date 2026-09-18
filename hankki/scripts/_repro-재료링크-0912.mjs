@@ -58,7 +58,7 @@ const 담아보기 = async (이름) => {
   await pg.waitForTimeout(700)
   await pg.evaluate(() => { const b = [...document.querySelectorAll('button,a')].find((x) => /장보기/.test(x.textContent || '')); if (b) b.click() })
   await pg.waitForTimeout(400)
-  const 칸 = await pg.$('input[placeholder*="살 재료"]')
+  const 칸 = await pg.$('input[aria-label="살 재료 적기"]')
   if (!칸) { await pg.screenshot({ path: '/tmp/장보기화면.png' }); return null }
   await 칸.fill(이름)
   await 칸.press('Enter')

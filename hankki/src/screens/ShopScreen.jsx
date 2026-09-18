@@ -100,25 +100,20 @@ export default function ShopScreen() {
   }
   const [clearAsk, setClearAsk] = useState(false)
   const [값편집, set값편집] = useState(null)   // 💰 값 칸이 열린 줄 id (2026-09-17)
-  // 🔑💰 [2026-09-17 시제품] 식비는 «창업자 폰에서만» 켜진다 — 아직 검수 전이라 유저 화면은 그대로여야 한다(규칙 13).
-  //   ⭐ 켜는 법 = 주소 끝에 ?식비=1 을 붙여 한 번 연다 → 그 폰에 저장돼 다음부터 그냥 뜬다. 끄는 법 = ?식비=0
-  //   ⛔ 창업자가 「모두에게 열자」고 하기 전엔 이 열쇠를 떼지 않는다.
-  // 🚪 [2026-09-18 검사용] ?앱문=1 로 켜고 ?앱문=0 으로 끈다 — 답을 얻으면 걷어낸다
-  const [앱문켬] = useState(() => {
-    try {
-      const v = new URLSearchParams(location.search).get('앱문')
-      if (v === '1') localStorage.setItem('hankki:앱문', '1')
-      if (v === '0') localStorage.removeItem('hankki:앱문')
-      return localStorage.getItem('hankki:앱문') === '1'
-    } catch { return false }
-  })
+  // 💰💰 [2026-09-18 · 열쇠를 뗐다 — 모든 유저에게 열린다]
+  //   📮 창업자 = *"앞으로 아이폰이랑 유저에게 보이는 시점을 맞출거야 절대원칙"*
+  //   🍎 그래서 «아이폰 빌드에 이 판이 들어가야» 두 쪽 유저가 같은 날 본다 — 아이폰은 빌드에 굳어지기 때문이다.
+  //   ⛔ 그렇다고 이 커밋을 배포 갈래로 밀지 않는다 — 우리는 «푸시 = 즉시 배포»다.
+  //      `hold/식비공개-0918` 에 담아 두고, **아이폰 승인이 난 날** 배포 갈래로 옮긴다(창업자 «아이폰이랑 같이 밀자»).
+  // ⭐ 이제 늘 켜져 있다. ⛔`?식비=0` 은 «끄는 길»로 남겨 둔다 — 문제가 나면 그 폰에서 바로 닫을 수 있어야 한다.
   const [식비켬] = useState(() => {
     try {
       const v = new URLSearchParams(location.search).get('식비')
-      if (v === '1') localStorage.setItem('hankki:식비', '1')
-      if (v === '0') localStorage.removeItem('hankki:식비')
-      return localStorage.getItem('hankki:식비') === '1'
-    } catch { return false }
+      if (v === '1') localStorage.removeItem('hankki:식비끔')
+      if (v === '0') localStorage.setItem('hankki:식비끔', '1')
+      return localStorage.getItem('hankki:식비끔') !== '1'
+    // ⛔ 저장소를 못 읽는 폰(사생활 모드·데이터 차단)에서도 «켜진» 쪽이 맞다 — 못 읽는다고 기능을 감추면 안 된다.
+    } catch { return true }
   })
   // 💰 합계 = 값을 «적은 줄»만. 안 적은 줄은 0 이 아니라 «모르는 것»이라 개수를 같이 밝힌다.
   const 값있는수 = shoppingList.filter((i) => Number(i.won) > 0).length
@@ -164,8 +159,6 @@ export default function ShopScreen() {
             냉장고{expN > 0 && <span className="seg-count" data-testid="pantry-exp-count">{expN}</span>}
           </button>
         </div>
-
-        {앱문켬 && <앱문검사 />}
 
         {view === 'pantry' && <PantryView />}
         {식비켬 && view === 'cost' && <FoodCostView />}
@@ -906,52 +899,6 @@ function Curation() {
   )
 }
 
-// 🚪🚪 [2026-09-18 · 검사용 · 열쇠 ?앱문=1] 「어느 주소가 앱을 여나」 — 갤럭시·아이폰 둘 다 본다
-//   📮 창업자 = *"아이폰에서 식비적을때 쿠팡이츠 바로 안보이냐는 뜻"* · *"아이폰도 쿠팡 자연드림 컬리 등등 도 되나 봐야"*
-//   ⭐ 갤럭시(안드로이드) = 배민·이츠·컬리는 2026-09-18 에 ⓓ(intent ＋ 앱 스킴)로 «열림» 확정 →
-//      여기선 «아직 안 붙인 넷»(요기요·롯데마트·이마트몰·자연드림)만 가린다.
-//   ⭐ 아이폰 = intent:// 가 안 먹는다. 앱 주소(`coupangeats://`)를 그냥 열어야 하는데 «해 본 적이 없다».
-//      ⛔ 아이폰은 되돌림 주소가 없어서 앱이 «없으면» 아무 일도 안 난다 — 그 꼴도 같이 잰다.
-//   🛒 쿠팡은 파트너스 링크가 아니라 «그냥 홈 주소»다 — 눌러도 24시간 규칙에 안 걸린다.
-const 앱문후보 = [
-  ['요기요', 'com.fineapp.yogiyo', 'https://www.yogiyo.co.kr/mobile/', ['yogiyo']],
-  ['롯데마트 제타', 'com.osp.lotte.mobile', 'https://lottemartzetta.com', ['lottemart', 'zetta']],
-  ['이마트몰', 'kr.co.emart.emartmall', 'https://emart.ssg.com', ['emartmall', 'ssg']],
-  ['자연드림', 'com.naturaldream.app', 'https://icoop.or.kr', ['naturaldream']],
-  ['쿠팡', 'com.coupang.mobile', 'https://www.coupang.com', ['coupang']],
-  ['쿠팡이츠', 'com.coupang.mobile.eats', 'https://www.coupangeats.com', ['coupangeats']],
-  ['배달의민족', 'com.sampleapp', 'https://baemin.com', ['baemin']],
-  ['마켓컬리', 'com.dbs.kurly.m2', 'https://www.kurly.com', ['kurly']],
-]
-function 앱문검사() {
-  const 아이폰 = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent)
-  const 열기 = (u) => { try { window.location.assign(u) } catch { /* noop */ } }
-  return (
-    <div style={{ marginTop: 10, padding: 12, border: '1px dashed var(--line)', borderRadius: 14 }}>
-      <b style={{ fontSize: 15 }}>앱으로 열리나 (검사용 · {아이폰 ? '아이폰' : '갤럭시'})</b>
-      <div className="t-sub" style={{ fontSize: 13, marginTop: 4, marginBottom: 8 }}>
-        차례로 눌러서 <b>앱이 뜨는 줄</b>을 찾아 주세요. 뒤로가기로 돌아오면 돼요.
-      </div>
-      {앱문후보.map(([이름, pkg, web, 스킴들]) => (
-        <div key={pkg} style={{ borderTop: '1px solid var(--line)', paddingTop: 8, marginTop: 8 }}>
-          <b style={{ fontSize: 14 }}>{이름}</b>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-            <button className="press chip" onClick={() => 열기(web)}>ⓐ 웹</button>
-            {스킴들.map((s) => (
-              <button key={s} className="press chip" onClick={() => 열기(`${s}://`)}>ⓑ {s}://</button>
-            ))}
-            {/* ⛔ intent:// 는 안드로이드 전용 — 아이폰엔 안 그린다(눌러도 아무 일이 없어 «헷갈리게만» 한다) */}
-            {!아이폰 && 스킴들.map((s) => (
-              <button key={'i' + s} className="press chip" onClick={() => 열기(`intent://home#Intent;scheme=${s};package=${pkg};S.browser_fallback_url=${encodeURIComponent(web)};end`)}>ⓒ intent {s}</button>
-            ))}
-            {!아이폰 && <button className="press chip" onClick={() => 열기(`intent://${web.replace(/^https?:\/\//, '')}#Intent;package=${pkg};S.browser_fallback_url=${encodeURIComponent(web)};end`)}>ⓓ 꾸러미만</button>}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function ChecklistAdd({ 식비켬 }) {
   const { addShopItems } = useStore()
   const [text, setText] = useState('')
@@ -967,7 +914,10 @@ function ChecklistAdd({ 식비켬 }) {
       <Icon name="cart" size={19} color="var(--text-sub)" />
       {/* 💰 [2026-09-18 창업자 «금액 적는 안내나 양식이 없어 유저들은 모를듯해»]
             ⭐ 안내를 «적는 자리»에 둔다 — 목록 아래 설명은 이미 있었지만 적을 땐 안 보인다(빈손이면 아예 없다). */}
+      {/* 🔒 aria-label 은 «안 바뀌는 표식»이다 — 안내문(placeholder)이 바뀌어도 판이 안 깨진다.
+            ⛔ 2026-09-18 에 안내문을 바꾸자 이 칸을 찾던 재현판 셋이 한꺼번에 죽었다. */}
       <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()}
+        aria-label="살 재료 적기"
         placeholder={식비켬 ? '두부 1910 처럼 적어 보세요' : '살 재료 입력하고 Enter'} />
       {text && (
         <button className="press" onClick={add} aria-label="추가"><Icon name="plus" size={20} color="var(--brown)" /></button>
