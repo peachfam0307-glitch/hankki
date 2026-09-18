@@ -15,7 +15,7 @@ import { join } from 'node:path'
 const FF = join(new URL('..', import.meta.url).pathname, 'node_modules/ffmpeg-static/ffmpeg')
 const 안 = process.env.IN || '/tmp/claude-0/녹화-식비흐름'
 const 밖 = process.env.OUT || '/tmp/claude-0/녹화-식비흐름'
-const 바탕 = '#FBF3E4'   // 🍞 식탁보 크림 — 예고 릴스와 같은 결
+const 배속 = Number(process.env.BAESOK || 1.4)   // 🐇 1.0 = 녹화 그대로 · 클수록 빠르다
 
 const 표길 = join(안, '자를곳.json')
 if (!existsSync(표길)) { console.log('⛔ 자를곳.json 이 없다 — 녹화부터 돌릴 것'); process.exit(1) }
@@ -29,7 +29,10 @@ for (const { 파일, 자를초 } of 조각) {
   execFileSync(FF, ['-y', '-loglevel', 'error', '-ss', String(자를초), '-i', 길,
     // 📐 9:16(1080x1920) — 폰 화면은 통째로 두고 «여백»만 채운다(⛔화면을 자르지 않는다)
     // 📐 녹화가 이미 1080x1920(9:16) 이다 — 여백을 채울 일이 없다(창업자 *"화면이 왜 이리 작아?"*)
-    '-vf', 'scale=1080:1920,fps=30,setsar=1,format=yuv420p',
+    // 📐 녹화가 이미 1080x1920(9:16) 이다 — 여백을 채울 일이 없다(창업자 *"화면이 왜 이리 작아?"*)
+    // 🐇 배속 = 손잡이 하나로 조인다 — 📮 창업자 2026-09-18 *"속도 더 빨리해도 돼"*
+    //   ⭐ 다시 녹화하지 않고 여기서 조절한다(BAESOK=1.6 처럼 줘도 된다).
+    '-vf', `setpts=PTS/${배속},scale=1080:1920,fps=30,setsar=1,format=yuv420p`,
     '-an', '-c:v', 'libx264', '-crf', '17', '-preset', 'slow', 나올것])
   낱개.push(나올것)
   console.log('  ✂️', 파일, '앞', 자를초 + '초 잘라냄')
