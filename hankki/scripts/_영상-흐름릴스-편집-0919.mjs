@@ -31,22 +31,37 @@ for (const { 파일, 자를초 } of 조각) {
   if (!existsSync(길)) { console.log('  ⚠️ 없다 —', 파일); continue }
   const 나올것 = join(밖, '_잘린-' + 파일.replace('.webm', '.mp4'))
   const 이배속 = 배속 * (덧배속[파일.slice(0, 2)] || 1)
-  execFileSync(FF, ['-y', '-loglevel', 'error', '-ss', String(자를초), '-i', 길,
-    // 📐 9:16(1080x1920) — 폰 화면은 통째로 두고 «여백»만 채운다(⛔화면을 자르지 않는다)
-    // 📐 녹화가 이미 1080x1920(9:16) 이다 — 여백을 채울 일이 없다(창업자 *"화면이 왜 이리 작아?"*)
-    // 📐 녹화가 이미 1080x1920(9:16) 이다 — 여백을 채울 일이 없다(창업자 *"화면이 왜 이리 작아?"*)
-    // 🐇 배속 = 손잡이 하나로 조인다 — 📮 창업자 2026-09-18 *"속도 더 빨리해도 돼"*
-    //   ⭐ 다시 녹화하지 않고 여기서 조절한다(BAESOK=1.6 처럼 줘도 된다).
-    // 📐 녹화가 «페이지 크기 그대로»(390x694) 라 회색 여백이 0 이다 — 여기서 늘리면 꽉 찬다.
-    //   ⛔ 전엔 틀을 1080x1920 으로 줬는데 Playwright 이 페이지를 «안 키워서» 구석에 박혔고,
-    //      그 회색까지 통째로 늘리는 바람에 화면이 계속 작았다(창업자 *"4등분되어있어"*).
-    '-vf', `setpts=PTS/${이배속},scale=1080:1920:flags=lanczos,fps=30,setsar=1,format=yuv420p`,
+  // 🎨 배경 판(남색 격자 ＋ 자막) 위에 «폰 화면»을 얹는다 — 창업자 2026-09-18 *"배경넣고 자막 얹자"*
+  //   ⭐ 판은 _판-흐름릴스자막-0919.mjs 가 미리 찍어 둔다.
+  //   ⛔ 자리 값(866x1541 · 107,311)은 «그 판과 같아야» 한다 — 한쪽만 고치면 어긋난다.
+  // 📐 녹화는 «페이지 크기 그대로»(390x694) 라 회색 여백이 0 이다.
+  //   ⛔ 전엔 녹화 틀을 1080x1920 으로 줬는데 Playwright 이 페이지를 «안 키워서» 구석에 박혔고,
+  //      그 회색까지 통째로 늘리는 바람에 화면이 계속 작았다(창업자 *"4등분되어있어"*).
+  const 판 = join(안, '배경-' + 파일.slice(0, 2) + '.png')
+  const 판있나 = existsSync(판)
+  execFileSync(FF, ['-y', '-loglevel', 'error',
+    ...(판있나 ? ['-loop', '1', '-i', 판] : []),
+    '-ss', String(자를초), '-i', 길,
+    ...(판있나
+      ? ['-filter_complex', `[1:v]setpts=PTS/${이배속},scale=866:1541:flags=lanczos,fps=30[폰];[0:v][폰]overlay=107:311:shortest=1,setsar=1,format=yuv420p`]
+      : ['-vf', `setpts=PTS/${이배속},scale=1080:1920:flags=lanczos,fps=30,setsar=1,format=yuv420p`]),
     '-an', '-c:v', 'libx264', '-crf', '17', '-preset', 'slow', 나올것])
   낱개.push(나올것)
-  console.log('  ✂️', 파일, '앞', 자를초 + '초 잘라냄 ·', 이배속.toFixed(2) + '배속')
+  console.log('  ✂️', 파일, '앞', 자를초 + '초 잘라냄 ·', 이배속.toFixed(2) + '배속', 판있나 ? '· 배경＋자막' : '')
 }
+// 🎬 훅(앞)·끝장(뒤) — 멈춘 판이라 몇 초 늘여서 만든다
+const 멈춘판 = (이름, 초) => {
+  const 판 = join(안, '배경-' + 이름 + '.png')
+  if (!existsSync(판)) return null
+  const 나올것 = join(밖, '_잘린-00-' + 이름 + '.mp4')
+  execFileSync(FF, ['-y', '-loglevel', 'error', '-loop', '1', '-t', String(초), '-i', 판,
+    '-vf', 'fps=30,setsar=1,format=yuv420p', '-c:v', 'libx264', '-crf', '17', '-preset', 'slow', 나올것])
+  console.log('  🎬 멈춘 판', 이름, 초 + '초')
+  return 나올것
+}
+const 줄줄이 = [멈춘판('훅', 1.8), ...낱개, 멈춘판('끝', 2.6)].filter(Boolean)
 const 목록 = join(밖, '_이을것.txt')
-writeFileSync(목록, 낱개.map((f) => `file '${f}'`).join('\n') + '\n')
+writeFileSync(목록, 줄줄이.map((f) => `file '${f}'`).join('\n') + '\n')
 const 완성 = join(밖, '릴스-식비흐름-0919.mp4')
 execFileSync(FF, ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', 목록, '-c', 'copy', 완성])
 // ⏱ 길이는 «돌려서» 얻는다 — ffmpeg 은 -i 만 주면 exit 1 이라 잡아서 읽는다
