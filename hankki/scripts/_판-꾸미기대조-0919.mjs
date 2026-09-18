@@ -9,11 +9,34 @@
 // ⭐ 그릇 프레임은 사진 «위»에 얹혀 원래 접시의 검은 테를 덮는다 → 자리·크기가 어긋나면 테가 삐져나온다.
 //    그래서 대조판에 «접시 테두리 확대»를 따로 넣는다.
 //
+// 🛠🛠 **이 판을 돌리기 «전»에 절차 문서를 읽는다** (창업자 2026-09-19)
+//    📮 *"담에도 꾸미기 릴스 만들때 이 도구를 1순위로 불러와. 이거 적어놓고 니맘대로 만들면 의미없잖아"*
+//    📄 docs/꾸미기-시안-그대로-얹는법-2026-09-19.md  ← 순서·함정·확정값이 다 여기 있다
+//    🧮 자리·크기는 «푼다» = tools/꾸미기-자리풀기.py (재기 · 한계 · 덮기)
+//    ⛔ 눈대중으로 숫자를 고치지 않는다. 오늘 그래서 몇 시간을 태웠다.
+//
 // 쓰는 법: SMOKE_CHROMIUM=… node scripts/_판-꾸미기대조-0919.mjs
 import { chromium } from 'playwright'
 import { readFileSync, mkdirSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { createServer } from 'node:http'
-import { extname, join } from 'node:path'
+import { extname, dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+// 🔒🔒 값검사를 «통과해야» 돈다 — 안 읽고 그냥 돌릴 수 없게 막는다.
+//    ⛔ 2026-09-19: color 'lilac' 이 오류 없이 흰색으로 떨어져 글자가 잘못 나갔다.
+//       조용히 틀리는 값은 «찍기 전에» 잡아야 한다 — 찍고 나면 눈으로 볼 때까지 모른다.
+//    🚪 급할 때만 건너뛴다 = 값검사건너뜀=1 (⛔습관 되면 이 장치가 없는 것과 같다)
+if (!process.env.값검사건너뜀) {
+  const 여기 = dirname(fileURLToPath(import.meta.url))
+  try {
+    execFileSync(process.execPath, [join(여기, '꾸미기-값검사.mjs'), 'scripts/' + '_판-꾸미기대조-0919.mjs'], { stdio: 'inherit' })
+  } catch {
+    console.error('\n⛔ 값검사에서 막혔다 — 위에 적힌 값을 고치고 다시 돌린다.')
+    console.error('   📄 절차 = docs/꾸미기-시안-그대로-얹는법-2026-09-19.md')
+    process.exit(1)
+  }
+}
 const DIST = join(new URL('..', import.meta.url).pathname, 'dist')
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2', '.jpg': 'image/jpeg' }
 const srv = createServer((q, s) => {
