@@ -37,12 +37,11 @@ mkdirSync(밖, { recursive: true })
 //    탭 = 서랍에서 누를 탭 라벨 · key = 서랍 칸의 aria-label(앞부분)
 const 조각 = [
   { 이름: '그릇 접시',        탭: '프레임', key: 'pf_ad08', x: 0.5094, y: 0.46, s: 0.78, r: 0 },
-  { 이름: '포토코너(왼위)',   탭: '데코',   key: 'pc3_02', x: 0.12, y: 0.1331, s: 0.24, r: 0 },
-  { 이름: '포토코너(오른아래)', 탭: '데코', key: 'pc3_02', x: 0.88, y: 0.8669, s: 0.24, r: 0, flip: true, flipY: true },
-  { 이름: '카롱＋펭펭',       탭: '친구들', key: 'kp_shoulder', x: 0.195, y: 0.78, s: 0.24, r: 0, fxLabel: '하트' },   // 통통은 친구들이면 저절로(DecorEditor 763),
+  { 이름: '포토코너(왼위)',   탭: '데코',   key: 'pc3_02', x: 0.13, y: 0.145, s: 0.24, r: 0 },   // 한계(0.12/0.1331)+0.01 — 딱 놓으면 소수점 오차로 잘린다
+  { 이름: '포토코너(오른아래)', 탭: '데코', key: 'pc3_02', x: 0.87, y: 0.855, s: 0.24, r: 0, flip: true, flipY: true },
+  { 이름: '카롱＋펭펭',       탭: '친구들', key: 'kp_shoulder', x: 0.195, y: 0.765, s: 0.24, r: 0, fxLabel: '하트' },   // 통통은 친구들이면 저절로(DecorEditor 763),
   { 이름: '제목 글자',        탭: '글자',   text: '새우관자전', color: 't_lilac', font: 'gaegu', x: 0.46, y: 0.125, s: 0.52, r: 0 },
-  { 이름: '큰 하트',          탭: '데코',   key: 'dc_dhb04', colorKey: 'coral', x: 0.645, y: 0.125, s: 0.115, r: 0 },
-  { 이름: '작은 하트',        탭: '데코',   key: 'dc_dhb04', colorKey: 'rose', x: 0.235, y: 0.185, s: 0.05, r: 0 },
+  { 이름: '큰 하트',          탭: '데코',   key: 'dc_dhb04', colorKey: 'coral', x: 0.69, y: 0.125, s: 0.115, r: 0 },
   { 이름: '아래 마테',        탭: '마테',   key: 'wt_dy06', x: 0.60, y: 0.78, s: 0.32, r: -8 },
   { 이름: '아이 원픽',        탭: '글자',   key: 'tw_kidpick', x: 0.79, y: 0.29, s: 0.22, r: -10 },
 ]
@@ -58,6 +57,7 @@ await ctx.addInitScript(() => {
     localStorage.setItem('hankki:nudge:cloudgate', '1')
     localStorage.setItem('hankki:onboarded', '1')
     localStorage.setItem('hankki:news:off', '1')
+    localStorage.setItem('hankki-theme', 'apricot')   // 🍑 살구 테마 — 창업자 2026-09-19 *"살구테마에서해줘"* (키 = src/theme.js THEME_KEY)
     const _get = Storage.prototype.getItem
     Storage.prototype.getItem = function (k) { if (typeof k === 'string' && k.startsWith('hankki:coach')) return '1'; return _get.call(this, k) }
   } catch { /* noop */ }
@@ -119,9 +119,13 @@ const 탭누르기 = async (라벨) => {
 // 🎯 지금 «고른» 조각의 자리 — 저장본이 아니라 «화면»에서 읽는다(손잡이가 붙은 것)
 const 고른조각 = async () => p.evaluate(() => {
   const h = document.querySelector('.decor-stage [aria-label="크기·회전"]'); if (!h) return null
-  const box = h.closest('[data-decor], .decor-item') || h.parentElement
+  // 🔖 회전이 걸린 요소 = data-decor-item (DecorLayer 267줄). ⛔ 손잡이 parentElement 로 읽으면 rotate 가 없어 늘 0 이 나온다(2026-09-19 실측).
+  const box = h.closest('[data-decor-item]') || h.parentElement
   const b = box.getBoundingClientRect(); const hb = h.getBoundingClientRect()
-  return { cx: b.x + b.width / 2, cy: b.y + b.height / 2, w: b.width, hx: hb.x + hb.width / 2, hy: hb.y + hb.height / 2 }
+  // 🔄 지금 각도 — 붙을 때 ((n%5)-2)×4° 가 «저절로» 붙는다(DecorEditor addSticker). 0° 가 아니다.
+  //    ⛔ 2026-09-19: r:0 이면 안 돌렸더니 코너 -4°·카롱 +4° 로 삐딱하게 붙어 잘렸다.
+  const m = /rotate\(([-\d.]+)deg\)/.exec(box.style.transform || '')
+  return { cx: b.x + b.width / 2, cy: b.y + b.height / 2, w: b.width, hx: hb.x + hb.width / 2, hy: hb.y + hb.height / 2, r: m ? Number(m[1]) : 0 }
 })
 
 // 🎨 첫 겹 = 배경 «모눈» (창업자 순서: 배경 → 그릇 → …) — ⛔ 1차 녹화에서 이걸 빼먹어 흰 바탕이었다
@@ -187,12 +191,20 @@ for (let i = 0; i < 몇; i++) {
     await p.waitForTimeout(300); 적기(`   크기 ${s0} → ${c.s} (손잡이 ${d0.toFixed(0)}px → ${(d0 * 배).toFixed(0)}px)`)
   }
   // ③ 돌리기 — 6° 문턱을 «넘겨» 원하는 각으로(0° 면 안 돌린다)
-  if (c.r) {
-    지금 = await 고른조각()
+  지금 = await 고른조각()
+  const 목표각 = c.r || 0
+  if (지금 && Math.abs(지금.r - 목표각) > 0.5) {
     const dx = 지금.hx - 지금.cx, dy = 지금.hy - 지금.cy, d = Math.hypot(dx, dy), a0 = Math.atan2(dy, dx)
-    const a1 = a0 + (c.r * Math.PI) / 180
-    await 끌기({ x: 지금.hx, y: 지금.hy }, { x: 지금.cx + d * Math.cos(a1), y: 지금.cy + d * Math.sin(a1) }, 14, 16)
-    await p.waitForTimeout(300); 적기(`   돌림 ${c.r}°`)
+    const 차 = 목표각 - 지금.r
+    // ⛔ 6° 안은 «안 돌린 것»으로 본다(문턱). 그래서 먼저 12° 를 넘겨 갔다가 목표로 돌아온다.
+    //    ＋ 자석 ±5°(0·90·180·270) 이 있어 0° 근처는 저절로 0° 에 붙는다.
+    const 지나감 = 차 + (차 >= 0 ? 12 : -12)
+    const 점 = (deg) => ({ x: 지금.cx + d * Math.cos(a0 + (deg * Math.PI) / 180), y: 지금.cy + d * Math.sin(a0 + (deg * Math.PI) / 180) })
+    await p.mouse.move(지금.hx, 지금.hy); await p.mouse.down(); await p.waitForTimeout(80)
+    for (let k = 1; k <= 10; k++) { const t = k / 10; await p.mouse.move(점(지나감 * t).x, 점(지나감 * t).y); await p.waitForTimeout(16) }
+    for (let k = 1; k <= 6; k++) { const t = k / 6; const deg = 지나감 + (차 - 지나감) * t; await p.mouse.move(점(deg).x, 점(deg).y); await p.waitForTimeout(16) }
+    await p.waitForTimeout(90); await p.mouse.up()
+    await p.waitForTimeout(300); 적기(`   각도 ${지금.r}° → ${목표각}°`)
   }
   // 🔎 저장본에 «실제로» 어떤 값이 들어갔나 — 눈으로 보기 전에 숫자로 먼저 본다
   const 끝 = await 고른조각()
