@@ -34,11 +34,13 @@ function 며칠뒤(날짜, n) {
   d.setUTCDate(d.getUTCDate() + n)
   return d.toISOString().slice(0, 10)
 }
-// 📅 그 날짜가 든 주의 «월요일»
-function 주의첫날(날짜 = 오늘()) {
-  const 요일 = (new Date(날짜 + 'T00:00:00Z').getUTCDay() + 6) % 7 // 월=0
+// 📅 그 날짜가 든 주의 «첫날» — 기본 월요일. 📅 [2026-09-20 창업자] 시작 요일을 고를 수 있다(store.foodBudget.wstart · 0=일…6=토)
+//   주는 늘 7일이라 달과 달리 예외가 없다(끝 = 첫날+6).
+function 주의첫날(날짜 = 오늘(), 시작요일 = 1) {
+  const 요일 = (new Date(날짜 + 'T00:00:00Z').getUTCDay() - 시작요일 + 7) % 7
   return 며칠뒤(날짜, -요일)
 }
+const 요일글 = ['일', '월', '화', '수', '목', '금', '토']
 const 날보기 = (s) => `${Number(s.slice(5, 7))}.${Number(s.slice(8, 10))}`
 const 요일보기 = (s) => '일월화수목금토'[new Date(s + 'T00:00:00Z').getUTCDay()]
 
@@ -79,13 +81,15 @@ export default function FoodCostView() {
   const [잣대, set잣대] = useState('week')   // week | month | range
   const 시작일 = Math.min(28, Math.max(1, Number(store.foodBudget?.start) || 1))   // 📅 달 시작일(1~28)
   const [시작일고르기, set시작일고르기] = useState(false)
+  const 주시작 = [0, 1, 2, 3, 4, 5, 6].includes(Number(store.foodBudget?.wstart)) ? Number(store.foodBudget.wstart) : 1   // 📅 주 시작 요일(기본 월)
+  const [요일고르기, set요일고르기] = useState(false)
   const [기간, set기간] = useState(() => ({ 부터: 며칠뒤(todayKST(), -29), 까지: todayKST() }))
 
   const 줄들 = store.foodCost || []
 
   // 🗓 지금 보는 구간 — 잣대에 따라 갈린다
   const 구간 = 잣대 === 'week'
-    ? { 부터: 주의첫날(), 까지: 며칠뒤(주의첫날(), 6), 이름: '이번 주' }
+    ? { 부터: 주의첫날(오늘(), 주시작), 까지: 며칠뒤(주의첫날(오늘(), 주시작), 6), 이름: '이번 주' }
     : 잣대 === 'month'
       ? (() => { const 첫 = 달첫날(오늘(), 시작일); return { 부터: 첫, 까지: 달끝날(첫), 이름: 달보기(첫) } })()
       : { 부터: 기간.부터 <= 기간.까지 ? 기간.부터 : 기간.까지, 까지: 기간.부터 <= 기간.까지 ? 기간.까지 : 기간.부터, 이름: '고른 기간' }
@@ -106,7 +110,7 @@ export default function FoodCostView() {
     }
   } else {
     for (let i = 7; i >= 0; i--) {
-      const 첫 = 며칠뒤(주의첫날(), -7 * i)
+      const 첫 = 며칠뒤(주의첫날(오늘(), 주시작), -7 * i)
       칸들.push({ 첫, 끝: 며칠뒤(첫, 6), 이름: `${날보기(첫)}~` })
     }
   }
@@ -162,6 +166,13 @@ export default function FoodCostView() {
           <Icon name="edit" size={13} color="var(--brown)" />
         </button>
       )}
+      {/* 📅 주 시작 요일 — 창업자 2026-09-20 *"주도 달력에서 날짜 고를수있어??"* → 달과 같은 회색 줄. 누르면 달력에서 날짜 하나 → 그 요일부터 */}
+      {잣대 === 'week' && (
+        <button className="press fc-mstart" onClick={() => set요일고르기(true)} aria-label="주 시작 요일 바꾸기">
+          {구간.이름} 식비 <span className="fc-date">{날보기(구간.부터)} ~ {날보기(구간.까지)}</span>
+          <Icon name="edit" size={13} color="var(--brown)" />
+        </button>
+      )}
       {잣대 === 'range' && (
         <>
           <div className="fc-range-k">보고 싶은 날짜를 고르세요</div>
@@ -177,7 +188,7 @@ export default function FoodCostView() {
 
       {/* ⭐ 고른 구간 — 제일 크게. 지난 칸·평균을 옆에 둬서 많이 썼는지 «견줄» 수 있게 한다 */}
       <div className="fc-big">
-        {잣대 !== 'month' && <div className="fc-k">{구간.이름} 식비 <span className="fc-date">{날보기(구간.부터)} ~ {날보기(구간.까지)}</span></div>}   {/* 달별은 위 회색 줄이 이 이름표다 */}
+        {잣대 === 'range' && <div className="fc-k">{구간.이름} 식비 <span className="fc-date">{날보기(구간.부터)} ~ {날보기(구간.까지)}</span></div>}   {/* 주별·달별은 위 회색 줄이 이 이름표다 */}
         <div className="fc-v">{돈(주합)}<em>원</em></div>
         {/* 💰💰 [2026-09-18 창업자 *"이번주 식비를 20만원안에서 살기를 했어. 남은 돈 보는 것도 정할 수 있어??"*]
               ⭐ 세웠으면 남은 돈을 «제일 크게» — 마트 앞에서 보는 건 「얼마 썼나」가 아니라 「얼마 남았나」다.
@@ -245,7 +256,7 @@ export default function FoodCostView() {
                 </button>
               ))}
             </div>
-            <div className="fc-hs">{잣대 === 'month' ? '달' : '월요일 날짜'} · 만원 · 누르면 그 {잣대 === 'month' ? '달' : '주'}만 봐요</div>
+            <div className="fc-hs">{잣대 === 'month' ? '달' : `${요일글[주시작]}요일 날짜`} · 만원 · 누르면 그 {잣대 === 'month' ? '달' : '주'}만 봐요</div>
           </div>
         )}
       </div>
@@ -298,6 +309,7 @@ export default function FoodCostView() {
       {고칠것 && <적기시트 갈래={고칠것.k} 고칠것={고칠것} 닫기={() => set고칠것(null)} store={store} nav={nav} />}
       {예산고치기 && <예산시트 칸={잣대 === 'month' ? 'm' : 'w'} 지금={예산} 닫기={() => set예산고치기(false)} store={store} nav={nav} />}
       {시작일고르기 && <시작일시트 지금={시작일} 닫기={() => set시작일고르기(false)} store={store} nav={nav} />}
+      {요일고르기 && <요일시트 지금={주시작} 닫기={() => set요일고르기(false)} store={store} nav={nav} />}
       {지울것 && (
         <지움확인 줄={지울것} 닫기={() => set지울것(null)} 지움={() => { store.removeFoodCost(지울것.id); set지울것(null); nav.showToast('지웠어요') }} />
       )}
@@ -496,7 +508,8 @@ function 예산시트({ 칸, 지금, 닫기, store, nav }) {
       const 첫 = d.toISOString().slice(0, 10)
       return 줄들.filter((e) => e.d >= 첫 && e.d <= 달끝날(첫)).reduce((s, e) => s + e.won, 0)
     }
-    const 첫 = 며칠뒤(주의첫날(), -7)
+    const 주시작 = [0, 1, 2, 3, 4, 5, 6].includes(Number(store.foodBudget?.wstart)) ? Number(store.foodBudget.wstart) : 1
+    const 첫 = 며칠뒤(주의첫날(오늘(), 주시작), -7)
     return 줄들.filter((e) => e.d >= 첫 && e.d <= 며칠뒤(첫, 6)).reduce((s, e) => s + e.won, 0)
   })()
   const 누름 = (키) => {
@@ -556,6 +569,34 @@ function 시작일시트({ 지금, 닫기, store, nav }) {
           <div className="fc-ask-btns">
             <button className="press" onClick={닫기}>그대로 둘게요</button>
             <button className="press danger" disabled={!되나} onClick={정하기}>이걸로 할게요</button>
+          </div>
+        </div>
+      </div>
+    </Portal>
+  )
+}
+
+// 📅📅 주 시작 요일 고르기 — 창업자 2026-09-20 *"주도 달력에서 날짜 고를수있어??"* ＋ *"월화수목금토일 이렇게 넣지말고"*
+//   ⭐ 요일 단추 일곱 개 대신 «달력에서 날짜 하나» — 그 날의 요일이 주의 첫날이 된다(폰 달력이 뜬다).
+//   ⭐ 고르면 그 자리에서 「→ 토요일부터 · 9.19 ~ 9.25」 를 미리 보여준다. 기록은 안 건드린다(자르는 선만 옮긴다).
+function 요일시트({ 지금, 닫기, store, nav }) {
+  useModalBack(닫기)
+  const [날, set날] = useState(() => 주의첫날(오늘(), 지금))
+  const 요일 = /^\d{4}-\d{2}-\d{2}$/.test(날) ? new Date(날 + 'T00:00:00Z').getUTCDay() : null
+  const 첫 = 요일 === null ? null : 주의첫날(오늘(), 요일)
+  const 정하기 = () => { if (요일 === null) return; store.setFoodWeekStart(요일); nav.showToast(`주를 ${요일글[요일]}요일부터 셀게요`); 닫기() }
+  return (
+    <Portal>
+      <div className="sheet-mask" onClick={닫기}>
+        <div className="sheet fc-ask" onClick={(e) => e.stopPropagation()}>
+          <div className="fc-ask-t">주는 무슨 요일부터 셀까요?</div>
+          <div className="fc-ask-s">장 보는 날을 달력에서 고르면 그 요일부터 한 주예요</div>
+          <div className="fc-mstart-in"><input type="date" value={날} onChange={(e) => set날(e.target.value)} /></div>
+          {/* 📮 창업자 2026-09-20 *"우리나라는 년 월 일로 세"* — 달력 칸은 폰이 제 나라 꼴로 그리지만(한국 폰 = 2026. 09. 19.), 고른 날을 «우리 글자»로 한 번 더 찍는다 */}
+          <div className="fc-bud-ref">{요일 === null ? ' ' : <>{Number(날.slice(0, 4))}년 {Number(날.slice(5, 7))}월 {Number(날.slice(8, 10))}일 ({요일글[요일]}) → <b>{요일글[요일]}요일부터</b> · 이번 주 {날보기(첫)} ~ {날보기(며칠뒤(첫, 6))}</>}</div>
+          <div className="fc-ask-btns">
+            <button className="press" onClick={닫기}>그대로 둘게요</button>
+            <button className="press danger" disabled={요일 === null} onClick={정하기}>이걸로 할게요</button>
           </div>
         </div>
       </div>
