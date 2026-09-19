@@ -156,9 +156,10 @@ export default function FoodCostView() {
       {/* 📅 달 시작일 — 창업자 2026-09-20 *"9월 13일-10월 12일 이렇게 계산하거든"*. 달별에서만 보인다.
             ⭐ 시작일 하나로 끝난다 — 끝은 «다음 시작일 하루 전»이라 매달 저절로 굴러간다(끝날짜를 손으로 정하면 매달 두 번 만져야 한다). */}
       {잣대 === 'month' && (
-        <button className="press fc-mstart" onClick={() => set시작일고르기(true)}>
-          {/* 📮 창업자 2026-09-20 *"너무 길어"* → 구간 글자는 뺐다(위 상자에 9.13 ~ 10.12 가 이미 찍힌다) */}
-          달 시작 <b>{시작일}일</b> · 바꾸기
+        // 📮 창업자 2026-09-20 *"9월식비 9-1-30 이 칸을 회색으로 옮기고 누르게 하면 되지않나"* → 큰 상자의 이름표를 «이 줄로 올리고» 누르면 시작일 시트
+        <button className="press fc-mstart" onClick={() => set시작일고르기(true)} aria-label="달 시작일 바꾸기">
+          {구간.이름} 식비 <span className="fc-date">{날보기(구간.부터)} ~ {날보기(구간.까지)}</span>
+          <Icon name="edit" size={13} color="var(--brown)" />
         </button>
       )}
       {잣대 === 'range' && (
@@ -176,7 +177,7 @@ export default function FoodCostView() {
 
       {/* ⭐ 고른 구간 — 제일 크게. 지난 칸·평균을 옆에 둬서 많이 썼는지 «견줄» 수 있게 한다 */}
       <div className="fc-big">
-        <div className="fc-k">{구간.이름} 식비 <span className="fc-date">{날보기(구간.부터)} ~ {날보기(구간.까지)}</span></div>
+        {잣대 !== 'month' && <div className="fc-k">{구간.이름} 식비 <span className="fc-date">{날보기(구간.부터)} ~ {날보기(구간.까지)}</span></div>}   {/* 달별은 위 회색 줄이 이 이름표다 */}
         <div className="fc-v">{돈(주합)}<em>원</em></div>
         {/* 💰💰 [2026-09-18 창업자 *"이번주 식비를 20만원안에서 살기를 했어. 남은 돈 보는 것도 정할 수 있어??"*]
               ⭐ 세웠으면 남은 돈을 «제일 크게» — 마트 앞에서 보는 건 「얼마 썼나」가 아니라 「얼마 남았나」다.
