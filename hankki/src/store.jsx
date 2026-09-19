@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react'
 import { seedRecipes, 열린때 } from './data/seed'
 import { basicRecipes, allBasicRecipes, BASICS_VERSION } from './data/basics'
+import { 거울쓰기 } from './pantryExpiry.js'   // 🔔🧊 알림 «얹기» 거울 — 저장 자리에서 매번(2026-09-19)
 // 🥬 재료 이름 → 파트너스 링크 (2026-09-12 창업자 *"장보기에 들어가는 것도 다 붙이자"*)
 //   ⭐ **담는 길이 여기 하나로 모인다** — 레시피 「재료 담기」·장보기 자유 입력·어디서 담든
 //      이 자리를 지나므로, 링크를 여기서 붙이면 화면마다 따로 손댈 곳이 없다.
@@ -1508,6 +1509,9 @@ export function StoreProvider({ children }) {
       }
       localStorage.setItem(KEY, 글)
       마지막저장성공 = Date.now()
+      // 🔔🧊 [2026-09-19] 유통기한 «얹기» 거울 — 저장 자리 «하나»라 담기·지우기·고치기 어느 길로 와도 지난다(한쪽만 붙이면 반을 놓친다).
+      //    같은 글자면 안 쓴다(pantryExpiry.거울쓰기) · 실패해도 본체 저장은 이미 끝났다.
+      try { 거울쓰기(저장할판.pantry) } catch { /* 거울은 덤 */ }
       // 🪞 아이폰 앱이면 10초 뒤 문서 폴더에 한 벌 더(거울) — 웹·안드로이드에선 바로 false 로 끝난다
       try { 거울예약() } catch { /* 거울은 덤 — 본체 저장은 이미 끝났다 */ }
     } catch {

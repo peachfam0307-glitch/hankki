@@ -7,6 +7,8 @@ import { precacheAndRoute } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { CacheFirst } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
+// 🧊 [2026-09-19] 유통기한 «얹기» — 거울(hankki-shared/pantry-expiry)을 «그리는 순간» 읽어 남은 날을 다시 센다(낡지 않는다)
+import { 거울읽어문장, 거울캐시 } from './pantryExpiry.js'
 
 precacheAndRoute(self.__WB_MANIFEST || [])
 
@@ -178,9 +180,10 @@ async function 오늘문구(event) {
   return {}
 }
 self.addEventListener('push', (event) => {
-  event.waitUntil(오늘문구(event).then((값) => {
+  event.waitUntil(Promise.all([오늘문구(event), 거울읽어문장(new Date())]).then(([값, 얹을줄]) => {
   const 제목 = String(값.제목 || '한끼')
-  const 본문 = String(값.본문 || '새로운 소식이 있어요')
+  // 🧊 임박 재료가 있으면 한 줄 «얹는다» — 없거나 못 읽으면 원래 본문 그대로(추가 푸시 0 · 하루 한 번 그대로)
+  const 본문 = String(값.본문 || '새로운 소식이 있어요') + (얹을줄 ? ' · ' + 얹을줄 : '')
   const 길 = String(값.길 || './')
   const 표 = String(값.표 || 'hankki')
   return self.registration.showNotification(제목, {
