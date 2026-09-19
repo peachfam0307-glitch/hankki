@@ -24,11 +24,34 @@ const srv = createServer((q, s) => {
   let p = decodeURIComponent(q.url.split('?')[0]).replace(/^\/hankki/, ''); if (p === '/' || p === '') p = '/index.html'
   let b, t = MIME[extname(p)] || 'application/octet-stream'
   try { b = readFileSync(join(DIST, p)) } catch { b = readFileSync(join(DIST, 'index.html')); t = 'text/html' }
+  // 📐📐 [고화질일 때만] 미디어쿼리를 «폰(390×694)» 기준으로 고정한다.
+  //   ⛔ 실측(2026-09-19) = zoom 2.769 로 키우면 앱은 390px 폭으로 «그려지는데» 미디어쿼리는 뷰포트(1080×1922)를 본다
+  //      → 레시피·장보기가 «패드 2단»으로 떴다(왼쪽 반이 비고 「주부의 장바구니」가 옆칸으로).
+  //   ✅ 그래서 css 를 내줄 때 폰에서 «안 걸리는» min-width/min-height(≥500 / >694) 는 99999 로 밀어 못 걸리게,
+  //      폰에서 «걸리는» max-width:500·max-height:700 은 99999 로 넓혀 걸리게 바꾼다. 앱 파일은 안 건드린다.
+  if (HQ && t === 'text/css') {
+    b = String(b)
+      .replace(/min-width:\s*(\d+)px/g, (m, n) => Number(n) >= 500 ? 'min-width:99999px' : m)
+      .replace(/min-height:\s*(\d+)px/g, (m, n) => Number(n) > 694 ? 'min-height:99999px' : m)
+      .replace(/max-width:\s*500px/g, 'max-width:99999px')
+      .replace(/max-height:\s*700px/g, 'max-height:99999px')
+  }
   s.writeHead(200, { 'content-type': t }); s.end(b)
 })
 await new Promise((r) => srv.listen(4613, r))
 const 밖 = process.env.OUT || '/tmp/claude-0/녹화-식비흐름'
 rmSync(밖, { recursive: true, force: true }); mkdirSync(밖, { recursive: true })
+
+// 🎥🎥 고화질(기본) — 📮 창업자 2026-09-19 = *"표지에 이거넣어서 만들어주기로했어. **고화질로**"*
+//   ⛔ recordVideo 는 «뷰포트 크기 그대로» 찍는다 — 390×694 로 찍어 1080 으로 늘리면 글씨가 뭉갠다(옛 판이 그랬다).
+//   ✅ 꾸미기릴스-녹화.mjs 와 같은 길 = 뷰포트를 1080×1922 로 키우고 문서를 CSS zoom 2.769 로 «앱을» 키운다.
+//      390×2.769 = 1079.9 · 694×2.769 = 1921.7 → 앱은 여전히 390 CSS px 폭으로 그려진다(레이아웃 그대로).
+//   📐 연출(커서·파동·고리)은 zoom 된 문서 «안»에 있어서 좌표를 배율로 나눠 넣는다(아래 __배율).
+//      🔢 실측(probe-zoom) = getBoundingClientRect·clientX 는 «뷰포트 px» 로 온다 → 나눠야 제자리.
+//   빠르게 확인만 = HQ=0 (⛔환경변수 이름은 ASCII — 한글이면 bash 가 죽는다)
+const HQ = process.env.HQ !== '0'
+const 배율 = HQ ? 1080 / 390 : 1
+const 틀 = HQ ? { width: 1080, height: 1922 } : { width: 390, height: 694 }
 
 // ⛔ 날짜를 여기서 «만들지» 않는다(절대원칙 27) — todayKST() 에서 ±n일만 옮긴다.
 const { todayKST } = await import('../src/today.js')
@@ -70,10 +93,12 @@ const 연출 = `
       if (!c) { c = document.createElement('div'); c.id = '연출커서'; document.body.appendChild(c) }
       return c
     }
-    window.__커서 = (x, y) => { const c = 커서(); c.style.left = x + 'px'; c.style.top = y + 'px'; c.style.opacity = '1' }
+    // 📐 zoom 된 문서 안이라 «뷰포트 px» 를 배율로 나눠 넣는다(HQ 아니면 1) — 실측: clientX·getBoundingClientRect 둘 다 뷰포트 px
+    const Z = () => window.__배율 || 1
+    window.__커서 = (x, y) => { const c = 커서(); c.style.left = x / Z() + 'px'; c.style.top = y / Z() + 'px'; c.style.opacity = '1' }
     window.__파동 = (x, y) => {
       칠(); const d = document.createElement('div'); d.className = '연출파동'
-      d.style.left = x + 'px'; d.style.top = y + 'px'
+      d.style.left = x / Z() + 'px'; d.style.top = y / Z() + 'px'
       document.body.appendChild(d); setTimeout(() => d.remove(), 600)
     }
     // ⭕⭕ 고리는 «그 물건에 붙어» 따라다닌다 — 창업자 2026-09-18 *"3개담기에 노란박스 위치 다시잡아야하고"*
@@ -86,8 +111,9 @@ const 연출 = `
       const d = document.getElementById('연출고리')
       if (!d) { 돌고있나 = false; return }
       const r = 붙은것.getBoundingClientRect()
-      d.style.left = (r.left - 여백값) + 'px'; d.style.top = (r.top - 여백값) + 'px'
-      d.style.width = (r.width + 여백값 * 2) + 'px'; d.style.height = (r.height + 여백값 * 2) + 'px'
+      const z = Z()
+      d.style.left = (r.left / z - 여백값) + 'px'; d.style.top = (r.top / z - 여백값) + 'px'
+      d.style.width = (r.width / z + 여백값 * 2) + 'px'; d.style.height = (r.height / z + 여백값 * 2) + 'px'
       requestAnimationFrame(따라가기)
     }
     window.__고리붙임 = (el, 여백) => {
@@ -163,10 +189,15 @@ async function 장면(이름, 준비, 하기, { 씨뿌리기 = false } = {}) {
     //   ✅ 고침 = **틀을 페이지 크기에 딱 맞춘다.** 그러면 영상이 곧 화면이다(회색 0).
     //      키우는 일은 편집이 맡는다 — 1080x1920 으로 늘린다.
     //   📏 390 x 694 = 0.562 = 릴스 비율 그대로라 잘리는 데가 없다.
-    viewport: { width: 390, height: 694 }, deviceScaleFactor: 2, locale: 'ko-KR',
+    // 🎥 [2026-09-19 고화질] 위 값들은 «HQ=0» 일 때의 틀이다. 기본은 1080×1922 ＋ zoom 2.769 (맨 위 HQ 절).
+    viewport: 틀, deviceScaleFactor: HQ ? 1 : 2, locale: 'ko-KR',
     storageState: 저장본 || undefined,
-    recordVideo: { dir: 방, size: { width: 390, height: 694 } },
+    recordVideo: { dir: 방, size: 틀 },
   })
+  if (HQ) await ctx.addInitScript((z) => {
+    window.__배율 = z
+    document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.zoom = String(z) })
+  }, 배율)
   // ⛔ 코치마크는 접두어(hankki:coach)로 통째로 막는다 — 안 그러면 녹화 내내 안내창이 덮는다
   await ctx.addInitScript(() => {
     try {
