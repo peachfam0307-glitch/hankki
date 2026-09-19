@@ -57,6 +57,8 @@ const 틀 = (속) => `<!doctype html><html><head><meta charset="utf-8"><style>
      ✅ 둥근 카드로 감싸 「종이 한 장」처럼 앉힌다. */
   .펭{width:820px;border-radius:38px;margin-bottom:34px;box-shadow:0 26px 60px #0009}
   .훅작{color:${연};font-size:62px;letter-spacing:-1px}
+  .제안{color:${진};font-size:96px;font-weight:700;letter-spacing:-3px;line-height:1.28;text-align:center;margin-top:10px;text-shadow:0 10px 30px #0009}
+  .제안밑{color:${짚};font-size:46px;margin-top:26px;letter-spacing:-1px}
   .훅큰{color:${진};font-size:186px;font-weight:700;letter-spacing:-8px;line-height:1.04;margin-top:4px;
         text-shadow:0 12px 36px #0009}
   .훅밑{color:${짚};font-size:56px;margin-top:20px;letter-spacing:-1px}
@@ -77,7 +79,16 @@ const 장면판 = (c) => 틀(`<div class="판"><div class="작">${c.작}</div><d
 //         (`펭펭-장보기-4컷` 중 첫 컷 — 나머지는 시장·카트·봉투라 「적는다」가 안 보인다)
 //   ✅ ⑴펭펭을 크게(440px) ⑵글자를 키우고(식비 가계부 186px) ⑶흐름을 «알약 넷»으로 세웠다.
 //      말줄(→ 로 이어 쓴 한 줄)은 작아서 안 읽힌다 — 알약이면 멀리서도 네 칸이 보인다.
-const 훅판 = 틀(`<div class="가운데" style="gap:0">
+// 🗣 [2026-09-19 19:3x · 창업자 「제일 처음에 한끼연구소 그거 어디갔어?」] 첫 장 = «제안 문구 ＋ 표지를 한 장에».
+//   ⛔ 9/18 22:27 배경·자막을 얹을 때 내가 첫 장을 「한끼에 / 식비 가계부」로 «임의로» 바꿨다 — 창업자가 빼라고 한 적 없다.
+//   ✅ 창업자 = *"문구랑 표지를 같은 장에 넣으면?"* → HOOK=A(문구＋표지) · B(＋아래 작게 식비 가계부 알약) 둘을 판으로 보여준다.
+const 훅종류 = process.env.HOOK || '1'   // ✅ 창업자 확정 2026-09-19 19:43 「1->2로 가는게 좋았어」 = 문구 장 → 표지 장
+const 제안 = `
+  <div class="제안">“식비도 기록할 수 있으면<br>좋겠어요”</div>
+  <div class="제안밑">— 한끼 연구소에 온 제안</div>`
+//   ＋ HOOK=1 = 창업자 「1번」 = 제안 문구 «한 장»(2초 · 훅0) → 표지＋「식비 가계부」 장(1.8초 · 훅) → 본편
+const 훅판 = 훅종류 === '1'
+  ? 틀(`<div class="가운데" style="gap:0">
   <img class="펭" src="${가계부컷}">
   <div class="훅작">한끼에</div>
   <div class="훅큰">식비 가계부</div>
@@ -86,6 +97,12 @@ const 훅판 = 틀(`<div class="가운데" style="gap:0">
     <span>레시피</span><i>›</i><span>장보기</span><i>›</i><span class="on">식비</span><i>›</i><span>냉장고</span>
   </div>
 </div>`)
+  : 틀(`<div class="가운데" style="gap:0">
+  <img class="펭" src="${가계부컷}">
+  ${제안}
+  ${훅종류 === 'B' ? `<div class="흐름" style="margin-top:54px"><span>레시피</span><i>›</i><span>장보기</span><i>›</i><span class="on">식비</span><i>›</i><span>냉장고</span></div>` : ''}
+</div>`)
+const 훅0판 = 틀(`<div class="가운데" style="gap:0">${제안}</div>`)
 const 끝판 = 틀(`<div class="가운데">
   <!-- ⛔ 「오늘 열려요」로 적었다가 창업자가 잡았다 — 📮 *"이 릴스를 올린 시점은 열렸을거야"*
        ✅ 올리는 시점엔 «이미 열려 있다». 예고는 어제 릴스가 이미 했다. 여기선 «지금 쓰라»고 한다. -->
@@ -101,6 +118,7 @@ const 찍기 = async (이름, html) => {
   await p.screenshot({ path: join(밖, 이름 + '.png') }); console.log('  🎨', 이름)
 }
 await 찍기('배경-훅', 훅판)
+if (훅종류 === '1') await 찍기('배경-훅0', 훅0판)
 for (const c of 자막) await 찍기('배경-' + c.칸, 장면판(c))
 await 찍기('배경-끝', 끝판)
 await b.close()
