@@ -4,6 +4,7 @@ import { useStore, newId } from '../store'
 import { pantryExpiryCount } from '../pantryExpiry'
 import FoodCostView from './FoodCostView'
 import { 사러나감, 장보기담음, 식비적음 } from '../stats'
+import { 알림허락받기 } from '../pushConsent'   // 🔔 담기가 «끝난 직후» 알림을 묻는다(2026-09-19 · 창업자 확정)
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
@@ -531,6 +532,9 @@ function Curation() {
     store.addShopItem({ name: it.name, url: linkFor(it), ...(isHansalim(it) ? { noBuy: true } : {}) })
     장보기담음()   // 🛒 [2026-09-10] 담기까지 세야 「들어와서 담지도 않는가」가 갈린다
     nav.showToast('장보기 리스트에 담았어요')
+    // 🔔 [2026-09-19] 담기가 «끝난 뒤»에 알림을 물어본다 — ⛔담는 중에 물으면 담기가 끊기고 놀라서 차단한다.
+    //    물을 자리가 아니면(아이폰·이미 답함·이미 차단) 아무 일도 안 일어난다.
+    try { 알림허락받기() } catch { /* 알림이 죽어도 담기는 된다 */ }
   }
 
   // 🏬 **「파는 곳」 이름들** — `brand` 칸에 들어 있어도 이건 제조사가 아니라 «쇼핑몰»이다.
@@ -908,6 +912,8 @@ function ChecklistAdd({ 식비켬 }) {
     // 📊 [2026-09-12] 담았다 — 직접 입력해서 담는 길도 «담기»다.
     장보기담음()
     setText('')
+    // 🔔 [2026-09-19] 위 자리와 짝이다 — 한쪽만 붙이면 반을 놓친다.
+    try { 알림허락받기() } catch { /* 알림이 죽어도 담기는 된다 */ }
   }
   return (
     <div className="searchbar" style={{ marginBottom: 12 }}>
