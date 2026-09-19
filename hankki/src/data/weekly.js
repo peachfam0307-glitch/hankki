@@ -310,51 +310,36 @@ export const HOMEMADE = [
     ids: ['basic-moksal-jorim', 'basic-gomadare-sauce', 'basic-beef-pepper-burrito', 'basic-musubi-burrito'] },   // 목살조림 · 고마다래 소스 · 브리또 둘
   { from: '2026-09-28', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-daepae-dallae-deopbap', 'basic-ojingeo-nurungji'] },   // 대패삼겹 달래덮밥 · 오징어누룽지
+    ids: ['basic-daepae-dallae-deopbap', 'basic-ojingeo-nurungji', 'basic-mapa-dubu', 'basic-sogogi-gyudon'] },   // 대패삼겹 달래덮밥 · 오징어누룽지 · 마파두부 · 소고기 규동
   { from: '2026-10-05', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-mapa-dubu', 'basic-sogogi-gyudon'] },   // 마파두부 · 소고기 규동
-  { from: '2026-10-12', title: '우리집레시피', kicker: '이번 주 한끼',
-    why: '일상에서 자주 해먹는 요리들이에요.',
     // ✅ [2026-09-16] 두부참치찌개를 «도로 넣었다» — 창업자가 새 판으로 다시 주고 검수까지 끝냈다(«다 맞아. ㄱㄱ 내보내자»).
-    ids: ['basic-jeonbok-sotbap', 'basic-dubu-chamchi-jjigae'] },   // 전복솥밥 · 두부참치찌개
-  { from: '2026-10-19', title: '우리집레시피', kicker: '이번 주 한끼',
-    why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-ganjang-yakiniku', 'basic-ojingeo-saeujeon'] },   // 간장 야키니쿠 · 오징어 새우전
-  { from: '2026-10-26', title: '우리집레시피', kicker: '이번 주 한끼',
+    ids: ['basic-jeonbok-sotbap', 'basic-dubu-chamchi-jjigae', 'basic-ganjang-yakiniku', 'basic-ojingeo-saeujeon'] },   // 전복솥밥 · 두부참치찌개 · 간장 야키니쿠 · 오징어 새우전
+  { from: '2026-10-12', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     // 🍄 [2026-08-18] 「간단 버섯밥」을 뺐다 — 8/31 「뚝딱 버섯 볶음밥」과 «같은 요리»였다
     //    (창업자 *"간단 버섯밥 이거 아까 후딱버섯밥아냐?"* → 대조하니 재료·순서가 같았다).
     //    ✅ 빈 자리엔 창업자 「샤브샤브」가 들어왔다 — **만드는 법도 창업자가 직접 썼다**(2026-08-18).
-    ids: ['basic-honey-ganjang-chicken', 'basic-shabu-shabu'] },   // 허니 간장 치킨 · 샤브샤브
-  { from: '2026-11-02', title: '우리집레시피', kicker: '이번 주 한끼',
+    ids: ['basic-honey-ganjang-chicken', 'basic-shabu-shabu', 'basic-deulgireum-dubu-jeongol', 'basic-bibim-galbijjim'] },   // 허니 간장 치킨 · 샤브샤브 · 들기름 두부전골 · 간편갈비조림
+  { from: '2026-10-19', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-deulgireum-dubu-jeongol', 'basic-bibim-galbijjim'] },   // 들기름 두부전골 · 간편갈비조림
-  { from: '2026-11-09', title: '우리집레시피', kicker: '이번 주 한끼',
-    why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-hwangtae-guk', 'basic-hwangtae-jangajji'] },   // 황태국 · 황태장아찌
-  { from: '2026-11-16', title: '우리집레시피', kicker: '이번 주 한끼',
-    why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-eolkeun-syabeu-kalguksu', 'basic-sunsal-jjimdak'] },   // 얼큰 샤브 칼국수 · 순살찜닭
+    ids: ['basic-hwangtae-guk', 'basic-hwangtae-jangajji', 'basic-eolkeun-syabeu-kalguksu', 'basic-sunsal-jjimdak'] },   // 황태국 · 황태장아찌 · 얼큰 샤브 칼국수 · 순살찜닭
   // 🍢🍢 [2026-08-18 고침] 11/23 「어묵」 줄을 **WEEKLY(제철)로 옮겼다** — 여기 있으면 안 된다.
   //    ⛔⛔ 두 줄이 «같은 배열»에 같은 날짜로 있으면 `열린줄()` 이 **하나만** 고른다
   //       (`w.from > pick.from` 이라 같은 날짜면 먼저 나온 것이 이긴다).
   //       → 11/23 에 「어묵」이 «우리집레시피 자리»를 먹고 **부대찌개·닭볶음탕이 영영 안 떴다.**
   //    🔬 코드로 재현해서 확인했다(2026-08-18) — 「우리집 어묵 — 어묵탕, 어묵볶음」이 찍혔다.
   //    📌 이건 2026-08-14 에 어묵을 넣을 때 «배열을 잘못 고른» 것이다. 레시피는 멀쩡했다.
-  { from: '2026-11-23', title: '우리집레시피', kicker: '이번 주 한끼',
-    why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-insaeng-budae-jjigae', 'basic-dak-bokkeumtang'] },   // 인생 부대찌개 · 닭볶음탕
-  { from: '2026-11-30', title: '우리집레시피', kicker: '이번 주 한끼',
+  { from: '2026-10-26', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     // 🌱 [창업자 검수 2026-08-18] 「봄동겉절이」를 뺐다 — *"11월에 봄동이 없을거야"*
     //    우리 52주 제철표도 봄동 = 9주차(2~3월)다. ⛔레시피는 «안 지운다» — 봄 주차가 생기면 그때 쓴다.
     //    ⭐ 대신 창업자 「순두부조림」(백업 원문). 이 줄은 제철이 아니라 «가정식»이라 계절이 아니라
     //       「그때 재료를 구할 수 있나」만 본다(창업자 *"가정식이니까 상관없어"*). 순두부는 사철 나온다.
-    ids: ['basic-gul-maesaengi-tteokguk', 'basic-sundubu-jorim'] },   // 굴 매생이 떡국 · 순두부조림
-  { from: '2026-12-07', title: '우리집레시피', kicker: '이번 주 한끼',
+    ids: ['basic-insaeng-budae-jjigae', 'basic-dak-bokkeumtang', 'basic-gul-maesaengi-tteokguk', 'basic-sundubu-jorim'] },   // 인생 부대찌개 · 닭볶음탕 · 굴 매생이 떡국 · 순두부조림
+  { from: '2026-11-02', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-yangnyeom-gejang', 'basic-daepa-bulgogi-jeongol'] },   // 양념게장 · 대파듬뿍 불고기전골   // 양념게장
+    ids: ['basic-yangnyeom-gejang', 'basic-daepa-bulgogi-jeongol', 'basic-galbitang-my', 'basic-gukmul-dak-bokkeumtang'] },   // 양념게장 · 대파듬뿍 불고기전골   // 양념게장 · 갈비탕 · 국물 닭볶음탕
 
   // 🍚🍚 [2026-08-19] 12~1월 7주 — 창업자가 「내 레시피 쓰기」 판에서 직접 쓰고 검수한 14편
   //   📮 창업자 = *"우리집레시피라면 **2편씩** 나가야해. 이번주제철은 3편이고."*
@@ -362,27 +347,15 @@ export const HOMEMADE = [
   //      비빔냉면 · 쯔유 메밀국수 · 새콤달콤막국수 · 김치비빔국수 · 오이샌드위치.
   //      ⛔ 버린 게 아니다. 봄 주차를 짤 때 이 다섯부터 쓴다(원문 = `docs/_대기/내레시피-*-창업자검수-*.md`).
   //   ⭐ 「누룽지삼계탕」만 21편 밖에서 골랐다 — 1/25 짝이 비어서(창업자 *"누룽지삼계탕 가자."*).
-  { from: '2026-12-14', title: '우리집레시피', kicker: '이번 주 한끼',
+  { from: '2026-11-09', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-galbitang-my', 'basic-gukmul-dak-bokkeumtang'] },   // 갈비탕 · 국물 닭볶음탕
-  { from: '2026-12-21', title: '우리집레시피', kicker: '이번 주 한끼',
+    ids: ['basic-sundubu-jjigae-my', 'basic-haemul-nurungji-tang', 'basic-sukiyaki', 'basic-chadol-doenjang'] },   // 순두부찌개 · 해물누룽지탕 · 스키야키 · 차돌된장
+  { from: '2026-11-16', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-sundubu-jjigae-my', 'basic-haemul-nurungji-tang'] },   // 순두부찌개 · 해물누룽지탕
-  { from: '2026-12-28', title: '우리집레시피', kicker: '이번 주 한끼',
+    ids: ['basic-jangjorim-my', 'basic-maneul-ganjang-gyeranbap', 'basic-jeonbok-juk', 'basic-teriyaki-jangeo-deopbap'] },   // 장조림 · 마늘간장계란밥 · 전복죽 · 데리야끼장어덮밥
+  { from: '2026-11-23', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-sukiyaki', 'basic-chadol-doenjang'] },   // 스키야키 · 차돌된장
-  { from: '2027-01-04', title: '우리집레시피', kicker: '이번 주 한끼',
-    why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-jangjorim-my', 'basic-maneul-ganjang-gyeranbap'] },   // 장조림 · 마늘간장계란밥
-  { from: '2027-01-11', title: '우리집레시피', kicker: '이번 주 한끼',
-    why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-jeonbok-juk', 'basic-teriyaki-jangeo-deopbap'] },   // 전복죽 · 데리야끼장어덮밥
-  { from: '2027-01-18', title: '우리집레시피', kicker: '이번 주 한끼',
-    why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-pajeori', 'basic-dallaejang-my'] },   // 파절이 · 달래장
-  { from: '2027-01-25', title: '우리집레시피', kicker: '이번 주 한끼',
-    why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-bibimbap-sauce', 'basic-nurungji-samgyetang'] },   // 비빔밥 소스 · 누룽지삼계탕
+    ids: ['basic-pajeori', 'basic-dallaejang-my', 'basic-bibimbap-sauce', 'basic-nurungji-samgyetang'] },   // 파절이 · 달래장 · 비빔밥 소스 · 누룽지삼계탕
   // ⬆⬆ [자동] 우리집레시피 25주 끝 ⬆⬆
 ]
 
@@ -477,7 +450,7 @@ export const weeksLeft = (now = new Date()) => {
 //   ⭐ 특별히 앞에 세우고 싶은 주가 있으면 그때만 창업자가 말한다 — 그건 «그 주만» 넣고 다음 주에 뺀다.
 const SNS_PICK = []
 
-export const snsNow = (recipes = [], now = new Date(), k = 2) => {
+export const snsNow = (recipes = [], now = new Date(), k = 4) => {   // ✅ 2026-09-19 창업자 「SNS 늘리자」 — 수요일 4편 · 폰 두 줄 딱
   const t = todayKST(now)
   const 열린것 = recipes.filter((r) => r && r.source === 'hankki' && r.sourceUrl && (!r.from || r.from <= t))
   // ⭐ 창업자가 고른 것을 «그 순서대로» 먼저 — 없는 id 는 조용히 건너뛴다(편을 지워도 안 깨진다)
