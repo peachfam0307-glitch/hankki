@@ -530,22 +530,31 @@ function 예산시트({ 칸, 지금, 닫기, store, nav }) {
 // 📅📅 달 시작일 고르기 — 창업자 2026-09-20 *"나는 보통 9월 13일-10월 12일 이렇게 계산하거든"*
 //   ⭐ 1~28 만 — 29·30·31 은 2월에 없어서 구간이 깨진다(창업자 물음 *"31일인 달이랑 30일 달이 있을텐데"* → 그래서 시작일만 받는다).
 //   ⭐ 고르면 달별 합계·달 예산·12달 흐름·지난 달이 전부 그 구간으로 바뀐다. 적어 둔 기록은 안 건드린다(잣대만 바뀐다).
+//   📮 창업자 2026-09-20 *"1-31까지 다 저렇게 해야해? 숫자만 입력한다던가"* → 판 대신 «숫자 한 칸». 치면 그 자리에서 구간을 미리 보여준다.
 function 시작일시트({ 지금, 닫기, store, nav }) {
   useModalBack(닫기)
+  const [글, set글] = useState(String(지금))
+  const 값 = Math.floor(Number(글) || 0)
+  const 되나 = 값 >= 1 && 값 <= 28
   const 보기 = (d) => (d === 1 ? '1일 ~ 말일' : `${d}일 ~ 다음 달 ${d - 1}일`)
+  const 정하기 = () => { if (!되나) return; store.setFoodMonthStart(값); nav.showToast(`달을 ${보기(값)}로 셀게요`); 닫기() }
   return (
     <Portal>
       <div className="sheet-mask" onClick={닫기}>
         <div className="sheet fc-ask" onClick={(e) => e.stopPropagation()}>
           <div className="fc-ask-t">달은 며칠부터 셀까요?</div>
-          <div className="fc-ask-s">월급날 기준으로 살림하면 그 날을 고르세요 · 지금은 <b>{보기(지금)}</b></div>
-          <div className="fc-keys fc-days">
-            {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
-              <button key={d} className={`press fc-key${d === 지금 ? ' on' : ''}`}
-                onClick={() => { store.setFoodMonthStart(d); nav.showToast(`달을 ${보기(d)}로 셀게요`); 닫기() }}>{d}</button>
-            ))}
+          <div className="fc-ask-s">월급날 기준으로 살림하면 그 날짜를 적으세요</div>
+          <div className="fc-mstart-in">
+            <input type="number" inputMode="numeric" min={1} max={28} value={글} autoFocus
+              onChange={(e) => set글(e.target.value.replace(/\D/g, '').slice(0, 2))}
+              onKeyDown={(e) => { if (e.key === 'Enter') 정하기() }} />
+            <span>일부터</span>
           </div>
-          <div className="fc-bud-ref">29·30·31일은 2월에 없어서 고를 수 없어요</div>
+          <div className="fc-bud-ref">{되나 ? <>→ <b>{보기(값)}</b></> : 글 ? '1~28 사이로 적어주세요 (29·30·31일은 2월에 없어요)' : ' '}</div>
+          <div className="fc-ask-btns">
+            <button className="press" onClick={닫기}>그대로 둘게요</button>
+            <button className="press danger" disabled={!되나} onClick={정하기}>이걸로 할게요</button>
+          </div>
         </div>
       </div>
     </Portal>
