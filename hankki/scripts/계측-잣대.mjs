@@ -51,6 +51,12 @@ const 묶음 = [
   [/^(signup|login)_/, "`${새계정 ? 'signup' : 'login'}_${이름}`"],
   [/^decor_have_/, "'decor_have_1'"],
   [/^return_/, "'return_d1'"],
+  // 💰 [2026-09-19] 식비 — 갈래를 이름 «뒤»에 붙였다(stats.js:548·550). 묶음으로 안 적으면
+  //    도구가 「그 눈을 못 찾았다」며 죽거나, 더 나쁘게 «눈이 없던 날»을 0 으로 찍는다.
+  //    ⛔ 무늬에 백틱·${ 를 넣지 않는다 — sh() 가 «셸»로 돌아서 백틱이 명령 치환으로 먹힌다(값이 빈손이 된다).
+  //       그냥 글자 조각으로 둔다 — git log -S 는 조각이면 충분하다.
+  [/^foodcost_added_(shop|direct)$/, 'foodcost_added_'],
+  [/^foodcost_shop_open_/, 'foodcost_shop_open_'],
 ]
 // ⛔⛔ [2026-09-17 고침] 여기 화면 목록이 «손으로 적혀» 있었다 — 그래서 낡았다(규칙 22).
 //    실제 stats.js 의 자물쇠엔 없는 `decor`·`settings` 가 들어 있었고, 있는 `cooked` 가 빠져 있었다.
@@ -64,7 +70,13 @@ const 갈래 = (이름) => {
   const 직접 = 글자그대로(이름)
   if (직접) return { 무늬: 직접.trim(), 파일: 'hankki/src/stats.js', 꼴: '' }
   const m = 묶음.find(([re]) => re.test(이름))
-  if (m) { const 줄 = 코드줄.find((l) => l.includes(m[1])); if (줄) return { 무늬: 줄.trim(), 파일: 'hankki/src/stats.js', 꼴: ' (묶음이 심긴 날 — 이 갈래는 그 뒤일 수 있다)' } }
+  if (m) {
+    const 줄 = 코드줄.find((l) => l.includes(m[1]))
+    // ⛔⛔ [2026-09-19] 줄을 «통째로» -S 에 주면 백틱이 든 줄은 셸이 «명령 치환»으로 먹어 조용히 빈손이 된다.
+    //    실측 = foodcost_added_ 가 「심은 날 모름」으로 나왔다(git log -S 로 손수 돌리면 멀쩡히 나온다).
+    //    ✅ 찾을 조각에 백틱·$ 가 없으면 «그 조각»을 쓴다 — git log -S 는 조각이면 충분하다.
+    if (줄) return { 무늬: /[`$]/.test(m[1]) ? 줄.trim() : m[1], 파일: 'hankki/src/stats.js', 꼴: ' (묶음이 심긴 날 — 이 갈래는 그 뒤일 수 있다)' }
+  }
   if (/^bridge/.test(이름)) return { 무늬: 이름, 파일: 'hankki/public/get.html', 꼴: ' (징검다리 get.html)' }
   if (화면들.includes(이름)) return { 무늬: '화면봄(', 파일: 'hankki/src/App.jsx', 꼴: ' (화면 배선 — 모든 화면이 같은 날)' }
   return null
