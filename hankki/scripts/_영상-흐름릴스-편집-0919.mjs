@@ -40,10 +40,13 @@ for (const { 파일, 자를초 } of 조각) {
   const 판 = join(안, '배경-' + 파일.slice(0, 2) + '.png')
   const 판있나 = existsSync(판)
   execFileSync(FF, ['-y', '-loglevel', 'error',
-    ...(판있나 ? ['-loop', '1', '-i', 판] : []),
+    // ⏱⏱ [2026-09-19 · 창업자 「맨마지막 부분 릴스가 이상해」] 배경판을 -loop 로 넣으면 그 «판»이 25fps 라
+    //    overlay 결과가 25fps 로 나오고, 훅·끝판(30fps)과 -c copy 로 이으면 뒤쪽 시간표가 깨진다
+    //    (실측: 27초 뒤 75프레임이 8초를 차지 → 끝장이 8초 멈춘 것처럼 보였다). 판을 30fps 로 넣고 겹친 «뒤»에 fps=30.
+    ...(판있나 ? ['-framerate', '30', '-loop', '1', '-i', 판] : []),
     '-ss', String(자를초), '-i', 길,
     ...(판있나
-      ? ['-filter_complex', `[1:v]setpts=PTS/${이배속},scale=866:1541:flags=lanczos,fps=30[폰];[0:v][폰]overlay=107:311:shortest=1,setsar=1,format=yuv420p`]
+      ? ['-filter_complex', `[1:v]setpts=PTS/${이배속},scale=866:1541:flags=lanczos,fps=30[폰];[0:v][폰]overlay=107:311:shortest=1,fps=30,setsar=1,format=yuv420p`]
       : ['-vf', `setpts=PTS/${이배속},scale=1080:1920:flags=lanczos,fps=30,setsar=1,format=yuv420p`]),
     '-an', '-c:v', 'libx264', '-crf', '17', '-preset', 'slow', 나올것])
   낱개.push(나올것)
@@ -63,7 +66,8 @@ const 줄줄이 = [멈춘판('훅', 1.8), ...낱개, 멈춘판('끝', 2.6)].filt
 const 목록 = join(밖, '_이을것.txt')
 writeFileSync(목록, 줄줄이.map((f) => `file '${f}'`).join('\n') + '\n')
 const 완성 = join(밖, '릴스-식비흐름-0919.mp4')
-execFileSync(FF, ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', 목록, '-c', 'copy', 완성])
+// ⛔ -c copy 로 잇지 않는다 — 조각마다 시간표(tbn)가 달라 뒤쪽이 밀린다. 한 번 더 굽는다(37초라 금방이다).
+execFileSync(FF, ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', 목록, '-vf', 'fps=30,setsar=1,format=yuv420p', '-c:v', 'libx264', '-crf', '17', '-preset', 'slow', '-movflags', '+faststart', 완성])
 // ⏱ 길이는 «돌려서» 얻는다 — ffmpeg 은 -i 만 주면 exit 1 이라 잡아서 읽는다
 let 길이 = '?'
 try { execFileSync(FF, ['-i', 완성], { stdio: ['ignore', 'pipe', 'pipe'] }) } catch (e) {
