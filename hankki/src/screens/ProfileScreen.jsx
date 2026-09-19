@@ -558,6 +558,12 @@ export default function ProfileScreen() {
                 내부 기기 해제
               </button>
             </div>
+            {/* 🔔 [2026-09-19 아이폰 세션] 「이 폰(앱 안)에서 웹 푸시가 되나」 판정 한 줄 — 내부 기기 카드 안에만 뜬다(유저 안 보임).
+                아이폰 앱(WKWebView)은 사파리·홈화면 웹앱과 조건이 달라 실측이 필요하다 → docs/아이폰-알림-설계-2026-09-19.md 1절 */}
+            <div className="t-sub" style={{ fontSize: 13, marginTop: 8 }} data-probe="push">
+              푸시 API: {typeof window !== 'undefined' && 'PushManager' in window && 'serviceWorker' in navigator ? '있음' : '없음'}
+              {typeof Notification !== 'undefined' ? ` · 알림 권한 ${Notification.permission}` : ' · Notification 없음'}
+            </div>
             {보낸기록().length > 0 && (
               <div style={{ marginTop: 10 }}>
                 <div className="t-sub" style={{ fontSize: 13, fontWeight: 700 }}>점검 중 보낸 것 (최근 {보낸기록().length}건)</div>
