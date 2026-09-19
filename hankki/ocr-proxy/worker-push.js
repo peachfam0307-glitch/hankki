@@ -50,6 +50,16 @@ const 칸 = {
   묶음수: 'push:n',
   보냄: (날, 플랫폼, n) => `push:sent:${날}:${플랫폼}:${n}`,
   기록: (달) => `push:log:${달}`,
+  // 🔔📅 D-2 «따로» 알림 (2026-09-20) — 날짜 → 그날 깨울 폰 주소들 · 폰 → 그 폰이 적어 둔 날짜들(바뀌면 옛 날짜에서 빼려고)
+  임박날: (날) => `push:exp:${날}`,
+  임박폰: (해시) => `push:expof:${해시}`,
+  임박보냄: (날) => `push:sent:${날}:exp`,   // 값 = 여기까지 보냈다(번호) — 40명씩 끊어 보낸다
+}
+const 임박 = {
+  시각: '09:00',        // 창업자 확정 = 토요일 장바구니와 같은 아침 9시(장 보러 가기 전)
+  날짜최대: 20,        // 앱은 14일치를 보낸다 — 그 위는 잘라낸다
+  한번에: 40,          // 한 번 깨어나 보내는 수(묶음크기와 같은 이유 · 50 상한)
+  바꾸기최대: 20,      // 한 요청에서 고치는 날짜 칸 수 — 넘으면 partial 로 답하고 앱이 다음 저장 때 마저 보낸다(요청 하나 = KV 읽기·쓰기 2×20+2 < 50)
 }
 
 export default {
@@ -103,6 +113,22 @@ export default {
       return json(r, r.error ? 507 : 200, cors)
     }
 
+    // 📅 D-2 날짜 넣기 — { endpoint, dates: ['YYYY-MM-DD', …] } · 재료 이름은 «안 온다». 빈 목록 = 이 폰의 날짜 전부 지우기.
+    if (url.pathname === '/expiry' && request.method === 'POST') {
+      if (!ALLOWED_ORIGINS.includes(origin)) return json({ error: 'forbidden' }, 403, cors)
+      if (env.APP_TOKEN && request.headers.get('x-hankki-token') !== env.APP_TOKEN) return json({ error: 'unauthorized' }, 401, cors)
+      if (!kv) return json({ error: 'no_kv' }, 501, cors)
+      let body = null
+      try { body = await request.json() } catch { return json({ error: 'bad_json' }, 400, cors) }
+      const endpoint = body?.endpoint
+      if (typeof endpoint !== 'string' || !/^https:\/\//.test(endpoint) || endpoint.length > 2048) return json({ error: 'bad_endpoint' }, 400, cors)
+      if (!Array.isArray(body?.dates)) return json({ error: 'bad_dates' }, 400, cors)
+      const 오늘 = kstDay(new Date())
+      const dates = [...new Set(body.dates.filter((d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= 오늘))].sort().slice(0, 임박.날짜최대)
+      const r = await 임박날짜맞추기(kv, endpoint, dates)
+      return json(r, 200, cors)
+    }
+
     return json({ error: 'not_found' }, 404, cors)
   },
 
@@ -119,7 +145,8 @@ export async function 보내기(env, now) {
   if (!kv) return { 했나: false, 왜: 'no_kv' }
   const 날 = kstDay(now)
   const 문구 = await 오늘문구(날)
-  if (!문구) return { 했나: false, 왜: '오늘 보낼 것 없음' }
+  // 📅 일정이 «없는» 날 = D-2 폰들에게만 «따로» 보낸다(아침 9시). 일정이 있는 날은 그 알림 둘째 줄에 얹히므로 여기선 안 보낸다(하루 한 번).
+  if (!문구) return 임박보내기(kv, 날, now)
   const 분 = kstMinutes(now)
   const [h, m] = String(문구.시각 || '15:30').split(':').map(Number)
   const 시작 = h * 60 + m
@@ -145,6 +172,58 @@ export async function 보내기(env, now) {
   }
   return { 했나: false, 왜: '오늘 묶음 다 보냈다' }
 }
+
+// ── 📅 D-2 «따로» 알림 ─────────────────────────────────────────────────────
+/** 폰 하나의 날짜 목록을 «지난번과 견줘» 바뀐 칸만 고친다. 돌려주는 값 = { ok, 더함, 뺌, partial? } */
+async function 임박날짜맞추기(kv, endpoint, dates) {
+  const 해시 = await 짧은해시(endpoint)
+  const 전 = (await kv.get(칸.임박폰(해시), 'json')) || []
+  const 더할것 = dates.filter((d) => !전.includes(d))
+  const 뺄것 = 전.filter((d) => !dates.includes(d))
+  const 바꿀것 = [...뺄것.map((d) => ['-', d]), ...더할것.map((d) => ['+', d])]
+  const partial = 바꿀것.length > 임박.바꾸기최대
+  let 더함 = 0, 뺌 = 0
+  const 남긴날 = new Set(전)
+  for (const [어떻게, d] of 바꿀것.slice(0, 임박.바꾸기최대)) {
+    const 목록 = (await kv.get(칸.임박날(d), 'json')) || []
+    if (어떻게 === '+') {
+      if (!목록.includes(endpoint)) 목록.push(endpoint)
+      // 그날이 지나면 스스로 사라진다(＋2일 여유) — 손으로 안 지워도 표가 안 자란다
+      await kv.put(칸.임박날(d), JSON.stringify(목록), { expirationTtl: 남은초(d) + 2 * 86400 })
+      남긴날.add(d); 더함++
+    } else {
+      const 남 = 목록.filter((e) => e !== endpoint)
+      await kv.put(칸.임박날(d), JSON.stringify(남), { expirationTtl: 남은초(d) + 2 * 86400 })
+      남긴날.delete(d); 뺌++
+    }
+  }
+  await kv.put(칸.임박폰(해시), JSON.stringify([...남긴날].sort()), { expirationTtl: 60 * 86400 })
+  return partial ? { ok: true, 더함, 뺌, partial: true } : { ok: true, 더함, 뺌 }
+}
+
+/** 일정 없는 날 아침 9시 — 오늘 날짜에 적힌 폰들에게 빈 푸시. 한 번 깨어나면 40명. 폰의 sw 가 거울을 읽어 「냉장고 …」만 띄운다. */
+async function 임박보내기(kv, 날, now) {
+  const 분 = kstMinutes(now)
+  const [h, m] = 임박.시각.split(':').map(Number)
+  const 시작 = h * 60 + m
+  if (분 < 시작 || 분 >= 시작 + LIMITS.보내는창분) return { 했나: false, 왜: `오늘 일정 없음 · D-2 는 ${임박.시각} 부터 ${LIMITS.보내는창분}분` }
+  const 목록 = (await kv.get(칸.임박날(날), 'json')) || []
+  if (!목록.length) return { 했나: false, 왜: '오늘 D-2 폰 없음' }
+  const 부터 = Number(await kv.get(칸.임박보냄(날))) || 0
+  if (부터 >= 목록.length) return { 했나: false, 왜: '오늘 D-2 다 보냈다' }
+  const 까지 = Math.min(목록.length, 부터 + 임박.한번에)
+  await kv.put(칸.임박보냄(날), String(까지), { expirationTtl: 60 * 60 * 48 })   // ⛔ 보내기 «전»에 — 두 번 보내기 방지
+  const 열쇠 = await 열쇠꺼내기(kv)
+  let 성공 = 0, 만료 = 0
+  for (const endpoint of 목록.slice(부터, 까지)) {
+    const r = await 푸시하나({ endpoint }, 열쇠)
+    if (r === 'ok') 성공++; else if (r === 'gone') 만료++   // 만료된 주소는 묶음 쪽 보내기가 지운다 · 여기 표는 TTL 로 사라진다
+  }
+  await 기록더하기(kv, 날.slice(0, 7), { 임박보냄: 까지 - 부터, 임박성공: 성공, 실행: 1 })
+  return { 했나: true, 임박: true, 보냄: 까지 - 부터, 성공, 만료, 부터, 까지, 전체: 목록.length }
+}
+function 남은초(ymd) { const [y, mo, d] = ymd.split('-').map(Number); return Math.max(60, Math.floor((Date.UTC(y, mo - 1, d) - 9 * 3600000 - Date.now()) / 1000) + 86400) }
+async function 짧은해시(s) { const b = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))); let h = ''; for (let i = 0; i < 12; i++) h += b[i].toString(16).padStart(2, '0'); return h }
 
 /** 빈 푸시 하나. 'ok' | 'gone'(410·404 → 지운다) | 'fail'(일시) */
 async function 푸시하나(sub, 열쇠) {

@@ -117,3 +117,34 @@ export async function 거울읽어문장(now = new Date()) {
     return 문장
   } catch { return null }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// 🔔📅 **D-2 «따로» 알림** (창업자 2026-09-20 *"장보기 유통기한 레시피 알림이랑 다르게 무조건 -2에는 알려줘야지"* · 설계 관문 통과 00:27)
+//
+// 월·수·토가 아닌 날에 D-2 가 되는 재료는 «얹기»만으론 그날 못 알린다 → 그날 아침 9시에 «따로» 온다.
+// ⭐ 서버로 가는 건 «날짜»뿐 — 「이 폰은 9/23·9/27 에 알려 달라」. 재료 이름·수량·사진은 «안» 나간다(방침 한 줄 = privacy.html 9번).
+// ⭐ 문장은 그날 폰이 거울(위)을 읽어 만든다 → 서버는 무엇이 상하는지 «모른다». 이미 지운 재료면 알림도 안 뜬다.
+// ⛔ 월·수·토·꾸미기 날은 여기 날짜에 «안 넣는다» — 그날은 원래 알림 둘째 줄에 얹힌다(하루 한 번). 워커도 «일정 있는 날은 따로 안 보낸다»(이중 방어).
+export const 알림날짜창 = 14   // 앞으로 며칠치 날짜를 보내나 — 냉장고 재료 유통기한은 보통 2주 안이다(그 밖은 다음 저장 때 창에 들어온다)
+
+// 'YYYY-MM-DD' ± n 일 — UTC 산수(check-kst 규칙: toISOString().slice 금지)
+export function 날짜더하기(ymd, n) {
+  const [y, m, d] = String(ymd).split('-').map(Number)
+  const t = new Date(Date.UTC(y, m - 1, d) + n * 86400000)
+  const p = (v) => String(v).padStart(2, '0')
+  return `${t.getUTCFullYear()}-${p(t.getUTCMonth() + 1)}-${p(t.getUTCDate())}`
+}
+
+/** 워커에 보낼 «알릴 날짜» 목록 — 유통기한 − 2일 · 오늘~창 안 · 일정 있는 날 제외 · 중복 없이 · 오름차순 */
+export function 알림날짜들(pantry = [], 오늘, 일정날들 = []) {
+  const 끝 = 날짜더하기(오늘, 알림날짜창)
+  const 빼기 = new Set(일정날들)
+  const 모음 = new Set()
+  for (const p of 거울고르기(pantry)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(p.expiry)) continue
+    const 날 = 날짜더하기(p.expiry, -알림임박일)
+    if (날 < 오늘 || 날 > 끝 || 빼기.has(날)) continue
+    모음.add(날)
+  }
+  return [...모음].sort()
+}

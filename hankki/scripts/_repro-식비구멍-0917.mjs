@@ -17,7 +17,7 @@ let 통과 = 0; const 실패 = []
 const 본다 = (n, 참) => { if (참) { 통과++; console.log('  ✓', n) } else { 실패.push(n); console.log('  ✗', n) } }
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, locale: 'ko-KR' })
-await ctx.addInitScript(() => { try { localStorage.setItem('hankki:nudge:cloudgate', '1') } catch { /* noop */ } })
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:nudge:cloudgate', '1'); localStorage.setItem('hankki:push:consent', 'no') /* 🔔 담기 뒤 알림 시트(v13.80)가 화면을 덮지 않게 */ } catch { /* noop */ } })
 const p = await ctx.newPage(); const 오류 = []
 p.on('pageerror', (e) => 오류.push(String(e)))
 p.on('console', (m) => { if (m.type() === 'error' && !/net::|ERR_TUNNEL/.test(m.text())) 오류.push(m.text()) })

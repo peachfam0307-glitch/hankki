@@ -55,7 +55,7 @@ console.log(`\n🛒 장바구니 상세 시트 — 원재료 있는 편 「${있
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const c = await b.newContext({ viewport: { width: 390, height: 844 } })
 await c.addInitScript(SEED_COACH_SEEN)
-await c.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') } catch {} })
+await c.addInitScript(() => { try { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1'); localStorage.setItem('hankki:push:consent', 'no') /* 🔔 담기 뒤 알림 시트(v13.80) */ } catch {} })
 const p = await c.newPage()
 await p.goto(`http://127.0.0.1:${PORT}/hankki/`, { waitUntil: 'networkidle' })
 await p.waitForTimeout(1200)

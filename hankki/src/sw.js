@@ -176,16 +176,23 @@ async function 오늘문구(event) {
   try {
     const r = await fetch(PUSH_URL + '/today', { cache: 'no-store' })
     if (r.ok) return await r.json()
+    if (r.status === 404) return { 없음: true }   // 오늘 일정이 «없다»(＝D-2 따로 알림) — 실패와 다르다
   } catch (e) { /* 아래로 */ }
   return {}
 }
 self.addEventListener('push', (event) => {
   event.waitUntil(Promise.all([오늘문구(event), 거울읽어문장(new Date())]).then(([값, 얹을줄]) => {
   const 제목 = String(값.제목 || '한끼')
+  // 📅 오늘 문구가 «없는» 날 = D-2 «따로» 알림이다(워커 임박보내기) → 냉장고 줄만 띄운다.
+  //    ⛔ 거울에도 알릴 게 없으면(그새 지웠다·못 읽었다) «안 띄운다» — 「새로운 소식이 있어요」 같은 빈말을 냉장고 대신 띄우지 않는다.
+  //       (크롬은 그럴 때 「백그라운드에서 업데이트됨」을 한 번 대신 띄울 수 있다 — 앱이 날짜를 저장 때마다 맞추므로 드문 일이다)
+  //    ⭐ 「없음」(404)과 「못 가져옴」(그물 끊김)은 다르다 — 못 가져온 날은 전처럼 «반드시» 하나 띄운다(크롬이 다음 푸시를 끊지 않게).
+  const 냉장고만 = !!값.없음
+  if (냉장고만 && !얹을줄) return
   // 🧊 임박 재료가 있으면 한 줄 «얹는다» — 없거나 못 읽으면 원래 본문 그대로(추가 푸시 0 · 하루 한 번 그대로)
-  const 본문 = String(값.본문 || '새로운 소식이 있어요') + (얹을줄 ? '\n' + 얹을줄 : '')
+  const 본문 = 냉장고만 ? 얹을줄 : String(값.본문 || '새로운 소식이 있어요') + (얹을줄 ? '\n' + 얹을줄 : '')
   const 길 = String(값.길 || './')
-  const 표 = String(값.표 || 'hankki')
+  const 표 = 냉장고만 ? 'hankki-exp' : String(값.표 || 'hankki')   // 표가 다르니 같은 날 두 종류가 서로 덮지 않는다
   return self.registration.showNotification(제목, {
       body: 본문,
       // 🖼 아이콘은 매니페스트가 쓰는 «그 파일»이다 — 두 곳에 적지 않는다.

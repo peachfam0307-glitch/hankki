@@ -127,5 +127,48 @@ const 넣기 = (i, extra = {}) => 요청('/subscribe', { method: 'POST', headers
   잰다(!겹침 || 겹침[1].시각 === 겹침[1].갈래.map((k) => 시각표[k]).sort()[0], '⑧ 갈래가 겹치는 날 시각 = «제일 이른 것»', 겹침 ? `${겹침[0]} ${겹침[1].갈래.join('+')} → ${겹침[1].시각}` : '(120일 안에 겹치는 날 없음)')
 }
 
-console.log(나쁨 ? `\n⛔ ${나쁨}개 틀렸다` : '\n✅ 푸시 워커 — 묶음·잠금·410·상한 다 제자리')
+// ⑨ 📅 D-2 «따로» 알림 — /expiry 로 날짜만 · 일정 없는 날 아침 9시에 그 폰들에게만 · 40명씩 · 두 번 안 보냄 · 일정 있는 날은 안 보냄
+{
+  const 날짜넣기 = (ep, dates, tok = 'tok') => 요청('/expiry', { method: 'POST', headers: { 'x-hankki-token': tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: ep, dates }) })
+  const 폰A = 'https://fcm.example/send/A', 폰B = 'https://fcm.example/send/B'
+  잰다((await 날짜넣기(폰A, ['2026-09-24'], 'wrong')).status === 401, '⑨ /expiry 토큰 틀리면 401')
+  잰다((await (await 날짜넣기(폰A, 'x')).json()).error === 'bad_dates', '⑨ dates 가 배열이 아니면 400')
+  const a1 = await (await 날짜넣기(폰A, ['2026-09-24', '2026-09-27', '2026-09-24', '2020-01-01', 'zzz'])).json()
+  잰다(a1.ok && a1.더함 === 2 && a1.뺌 === 0, '⑨ 폰A = 9/24·9/27 (중복·지난 날·엉뚱한 글자는 버린다)', JSON.stringify(a1))
+  await 날짜넣기(폰B, ['2026-09-24'])
+  잰다(JSON.stringify(await KV.get('push:exp:2026-09-24', 'json')) === JSON.stringify([폰A, 폰B]), '⑨ push:exp:2026-09-24 = [A, B]')
+  const a2 = await (await 날짜넣기(폰A, ['2026-09-27', '2026-09-30'])).json()
+  const 날24 = await KV.get('push:exp:2026-09-24', 'json'), 날30 = await KV.get('push:exp:2026-09-30', 'json')
+  잰다(a2.더함 === 1 && a2.뺌 === 1 && JSON.stringify(날24) === JSON.stringify([폰B]) && JSON.stringify(날30) === JSON.stringify([폰A]), '⑨ 폰A 가 목록을 바꾸면 «옛 날짜에서 빠지고» 새 날짜에 들어간다 (재료를 먹어 치운 폰에 안 보낸다)')
+  const a3 = await (await 날짜넣기(폰A, ['2026-09-27', '2026-09-30'])).json()
+  잰다(a3.더함 === 0 && a3.뺌 === 0, '⑨ 같은 목록 다시 = KV 쓰기 없이 0·0 (폰이 같으면 안 보내지만 워커도 한 번 더 막는다)')
+  const 시월 = Array.from({ length: 20 }, (_, i) => `2026-10-${String(i + 1).padStart(2, '0')}`), 동지 = Array.from({ length: 20 }, (_, i) => `2026-11-${String(i + 1).padStart(2, '0')}`)
+  await 날짜넣기('https://fcm.example/send/C', 시월)
+  const a4 = await (await 날짜넣기('https://fcm.example/send/C', 동지)).json()
+  const a5 = await (await 날짜넣기('https://fcm.example/send/C', 동지)).json()
+  잰다(a4.partial === true && a4.더함 + a4.뺌 === 20 && !a5.partial && a4.더함 + a4.뺌 + a5.더함 + a5.뺌 === 40, '⑨ 한 요청에 바꿀 칸이 20 넘으면 partial → 앱이 한 번 더 보내면 마저 맞춘다 (50 요청 상한)', JSON.stringify(a4) + ' → ' + JSON.stringify(a5))
+  // 보내기 — 9/24 는 일정 «없는» 날(일정 = 9/21 만) → 09:00 창에 폰B(위에서 9/24 는 B 만 남았다)
+  보낸곳.length = 0
+  const r0 = await W.보내기(env, new Date('2026-09-23T23:30:00Z'))   // KST 9/24 08:30
+  잰다(r0.했나 === false && /D-2/.test(r0.왜), '⑨ 08:30 = 아직 안 보낸다', r0.왜)
+  const r1 = await W.보내기(env, new Date('2026-09-24T00:10:00Z'))   // KST 09:10
+  잰다(r1.했나 === true && r1.임박 === true && r1.보냄 === 1 && 보낸곳.length === 1 && 보낸곳[0] === 폰B, '⑨ 09:10 = 9/24 에 적힌 폰B «하나»에게만 빈 푸시', JSON.stringify(r1))
+  const r2 = await W.보내기(env, new Date('2026-09-24T00:20:00Z'))
+  잰다(r2.했나 === false && /다 보냈다/.test(r2.왜) && 보낸곳.length === 1, '⑨ 5분 뒤 또 깨어나도 «두 번 안 보낸다»')
+  // 41명이 같은 날이면 40 ＋ 1
+  for (let i = 0; i < 41; i++) await 날짜넣기(`https://fcm.example/send/m${i}`, ['2026-09-25'])
+  보낸곳.length = 0
+  const r3 = await W.보내기(env, new Date('2026-09-25T00:05:00Z'))
+  const r4 = await W.보내기(env, new Date('2026-09-25T00:10:00Z'))
+  const r5 = await W.보내기(env, new Date('2026-09-25T00:15:00Z'))
+  잰다(r3.보냄 === 40 && r4.보냄 === 1 && r5.했나 === false && 보낸곳.length === 41, '⑨ 41명 = 40 → 1 → 끝 (한 번 깨어나면 40명 · 50 상한)')
+  // 일정 «있는» 날(9/21)엔 따로 안 보낸다 — 얹기가 대신한다
+  await 날짜넣기('https://fcm.example/send/z', ['2026-09-21'])
+  보낸곳.length = 0
+  const r6 = await W.보내기(env, new Date('2026-09-21T00:10:00Z'))   // KST 9/21 09:10 — 일정은 15:30
+  잰다(r6.했나 === false && !/D-2/.test(r6.왜) && 보낸곳.length === 0, '⑨ 일정 있는 날(9/21) 아침엔 D-2 를 «따로 안 보낸다» — 15:30 알림 둘째 줄에 얹힌다(하루 한 번)', r6.왜)
+  잰다(!JSON.stringify([...서랍.keys()]).includes('두부') && ![...서랍.values()].some((v) => /두부|우유|name/.test(v)), '⑨ KV 어디에도 재료 이름이 없다 — 날짜와 주소뿐')
+}
+
+console.log(나쁨 ? `\n⛔ ${나쁨}개 틀렸다` : '\n✅ 푸시 워커 — 묶음·잠금·410·상한 다 제자리 · D-2 따로')
 process.exit(나쁨 ? 1 : 0)

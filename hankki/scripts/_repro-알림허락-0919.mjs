@@ -137,5 +137,18 @@ const 시트붙이기 = () => window.addEventListener(P.알림이벤트, (e) => 
   잰다((await P.알림허락받기({ 다시묻기: true })) === false && 뜬횟수 === 0, '⑨ 브라우저가 차단이면 다시묻기여도 «안 묻는다»(폰 설정에서만 풀린다)')
 }
 
-console.log(나쁨 ? `\n⛔ ${나쁨}개 틀렸다` : '\n✅ 알림 허락 — 화살을 아낀다')
+// ⑩ 📅 D-2 날짜 보내기(pushSubscribe.유통기한날짜보내기) — ⛔ 이 파일은 ocr.js(tesseract)를 끌어와 Node 에서 못 돌린다 → ⑧ 처럼 «소스»를 잰다. 실제 동작은 워커 재현판 ⑨ ＋ 얹기 재현판 ⑦ 이 잰다.
+{
+  const subs = 읽기('src/pushSubscribe.js')
+  const f = subs.slice(subs.indexOf('export async function 유통기한날짜보내기'))
+  잰다(/if \(!푸시가능\(\) \|\| 알림동의상태\(\) !== 'yes'\) return false/.test(f), '⑩ 허락(yes) 전엔 안 보낸다')
+  잰다(/endpoint = localStorage\.getItem\(보낸표\)[\s\S]{0,80}if \(!endpoint\) return false/.test(f), '⑩ 구독이 워커에 간 뒤(보낸표)에만 — 워커가 이 폰을 알아야 한다')
+  잰다(/알림날짜들\(pantry, todayKST\(\)\)/.test(f) && /if \(이미 === 글\) return '같다'/.test(f), '⑩ 날짜만 세고, 지난번과 같으면 요청 0')
+  잰다(/body: JSON\.stringify\(\{ endpoint, dates: 날짜들 \}\)/.test(f) && !/name|memo|photo/.test(f), '⑩ 보내는 몸통 = { endpoint, dates } — 이름·메모·사진 «없음»')
+  잰다(/if \(!v \|\| !v\.ok \|\| v\.partial\) return false/.test(f) && /localStorage\.setItem\(날짜표, 글\)/.test(f), '⑩ 워커가 partial 이면 «안 적는다» → 다음 저장 때 또 보낸다 · ok 면 적는다')
+  잰다(/localStorage\.removeItem\(보낸표\); localStorage\.removeItem\(날짜표\)/.test(subs) && /localStorage\.setItem\(보낸표, sub\.endpoint\); localStorage\.removeItem\(날짜표\)/.test(subs), '⑩ 끄면 날짜표도 지운다 · 새 구독 주소면 날짜표를 지워 다시 보낸다')
+  잰다(/const 모으는초 = 30/.test(subs) && /setTimeout\(\(\) => \{ 모으기 = null; 유통기한날짜보내기\(마지막냉장고\)/.test(subs), '⑩ 저장 자리에선 30초 모아 «한 번» (재료 셋 잇달아 넣어도 요청 하나)')
+}
+
+console.log(나쁨 ? `\n⛔ ${나쁨}개 틀렸다` : '\n✅ 알림 허락 — 화살을 아낀다 · D-2 날짜만')
 process.exit(나쁨 ? 1 : 0)

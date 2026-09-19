@@ -90,5 +90,19 @@ const 냉장고 = [
   잰다(new RegExp(`const SHARE_CACHE = '${P.거울캐시}'`).test(sw), `⑥ 캐시 이름이 sw 와 같다 (${P.거울캐시})`)
   잰다(/② 폰 푸시[\s\S]*얹기/.test(pe) && !/명의 이전 뒤 판정/.test(pe), '⑥ 머리 주석 ② = 「명의 이전 뒤 판정」→「얹기」로 바뀌었다')
 }
-console.log(나쁨 ? `\n⛔ ${나쁨}개 틀렸다` : '\n✅ 유통기한 얹기 — 서버 0바이트 · 낡지 않는다')
+// ⑦ 📅 D-2 «따로» — 워커에 보낼 «날짜»만 (창업자 2026-09-20 "무조건 -2에는 알려줘야지")
+{
+  const 냉 = [{ name: '두부', expiry: '2026-09-23', photo: 'data:x', memo: '비밀' }, { name: '우유', expiry: '2026-09-20' }, { name: '달걀', expiry: '2026-09-23' }, { name: '김치', expiry: '2026-12-01' }, { name: '상추', expiry: '2026-09-28' }, { name: '소금' }]
+  const d = P.알림날짜들(냉, '2026-09-20')
+  잰다(JSON.stringify(d) === JSON.stringify(['2026-09-21', '2026-09-26']), '⑦ 두부·달걀(9/23)→9/21 하나 · 상추(9/28)→9/26 · 우유(지남)·김치(창 밖)·소금(기한 없음)은 없다', JSON.stringify(d))
+  잰다(!JSON.stringify(d).includes('두부') && !JSON.stringify(d).includes('비밀'), '⑦ 목록엔 «날짜뿐» — 이름·메모·사진이 없다')
+  잰다(JSON.stringify(P.알림날짜들(냉, '2026-09-20', ['2026-09-26'])) === JSON.stringify(['2026-09-21']), '⑦ 일정 있는 날을 주면 뺀다(그날은 얹기)')
+  잰다(P.날짜더하기('2026-09-01', -2) === '2026-08-30' && P.날짜더하기('2026-12-31', 1) === '2027-01-01', '⑦ 날짜 산수 = 달·해를 넘는다 (toISOString 없이)')
+  잰다(JSON.stringify(P.알림날짜들(냉, '2026-09-22')) === JSON.stringify(['2026-09-26']), '⑦ 이틀 뒤(9/22)에 다시 세면 9/21 은 지났으니 빠진다 — 켤 때 한 번 다시 맞추는 이유')
+  const sw = 읽기('src/sw.js'), subs = 읽기('src/pushSubscribe.js'), store = 읽기('src/store.jsx')
+  잰다(/status === 404\) return \{ 없음: true \}/.test(sw) && /const 냉장고만 = !!값\.없음/.test(sw) && /if \(냉장고만 && !얹을줄\) return/.test(sw), '⑦ sw = 오늘 문구 «없음»(404)이면 냉장고 줄만 · 그마저 없으면 안 띄운다 · 못 가져온 날(그물)은 전처럼 띄운다')
+  잰다(/\$\{PUSH_URL\}\/expiry/.test(subs) && /JSON\.stringify\(\{ endpoint, dates: 날짜들 \}\)/.test(subs), '⑦ 앱 → 워커 = { endpoint, dates } 뿐')
+  잰다(/거울쓰기\(저장할판\.pantry\)[\s\S]{0,200}유통기한날짜맞추기\(저장할판\.pantry\)/.test(store) && /setTimeout\(\(\) => \{ try \{ 유통기한날짜맞추기\(지금state\.current\?\.pantry/.test(store), '⑦ store = 저장 자리 ＋ 켤 때 한 번(12초 뒤)')
+}
+console.log(나쁨 ? `\n⛔ ${나쁨}개 틀렸다` : '\n✅ 유통기한 얹기 — 서버 0바이트 · 낡지 않는다 · D-2 는 날짜만')
 process.exit(나쁨 ? 1 : 0)
