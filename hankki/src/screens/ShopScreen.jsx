@@ -3,7 +3,7 @@ import { COACH } from '../coach'
 import { useStore, newId } from '../store'
 import { pantryExpiryCount } from '../pantryExpiry'
 import FoodCostView from './FoodCostView'
-import { 사러나감, 장보기담음 } from '../stats'
+import { 사러나감, 장보기담음, 식비적음 } from '../stats'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
@@ -312,7 +312,7 @@ export default function ShopScreen() {
             </div>
             {/* ⛔ 예전엔 «체크한 줄»만 옮기면서도 늘 「적었어요」라고 말했다 — 창업자가 값만 적고 눌렀을 때 아무 일도 안 났다.
                   ✅ 이제 값이 적힌 줄을 전부 옮기고, 실제로 옮긴 «개수와 금액»을 말한다. */}
-            <button className="press sum-btn" onClick={() => { store.shopToFoodCost(); nav.showToast(`식비에 적었어요 · ${값있는수}개 ${합계.toLocaleString('ko-KR')}원`) }}>
+            <button className="press sum-btn" onClick={() => { store.shopToFoodCost(); 식비적음('shop'); nav.showToast(`식비에 적었어요 · ${값있는수}개 ${합계.toLocaleString('ko-KR')}원`) }}>
               식비에 넣기
             </button>
           </div>

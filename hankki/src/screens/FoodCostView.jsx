@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStore } from '../store'
+import { 식비열림, 식비적음, 식비예산정함, 식비가게열림 } from '../stats'
 import { todayKST } from '../today'
 import { useNav } from '../App'
 import { useModalBack } from '../useBackHandler'
@@ -53,6 +54,8 @@ export default function FoodCostView() {
   const store = useStore()
   const nav = useNav()
   const [적기, set적기] = useState(null)  // null | 'out' | 'shop'
+  // 📊 식비 칸을 «열었다» — 이 판은 view==='cost' 일 때만 붙으니(ShopScreen) 붙는 순간이 곧 연 순간이다
+  useEffect(() => { 식비열림() }, [])
   const [지울것, set지울것] = useState(null)
   const [고칠것, set고칠것] = useState(null)  // ✏️ 창업자 2026-09-18 «저기도 수정가능하게»
   const [예산고치기, set예산고치기] = useState(false)
@@ -321,6 +324,7 @@ function 적기시트({ 갈래, 고칠것, 닫기, store, nav }) {
       nav.showToast('고쳤어요')
     } else {
       store.addFoodCost({ d: 날, k, won: 합계값, memo: 메모.trim() || undefined })
+      식비적음('direct')   // 📊 시트에서 직접 적었다 (⛔고침은 안 센다 · 금액·메모는 안 보낸다)
       nav.showToast('적었어요')
     }
     닫기()
@@ -354,7 +358,7 @@ function 적기시트({ 갈래, 고칠것, 닫기, store, nav }) {
               <div className="fc-shops-k">가서 보고 올까요?</div>
               <div className="fc-shops-row">
                 {가게들.map((s) => (
-                  <button key={s.id} className="press fc-shop" onClick={() => { set메모(s.name); store.usedCostShop(s.id); openExternal(s.url) }}
+                  <button key={s.id} className="press fc-shop" onClick={() => { set메모(s.name); store.usedCostShop(s.id); 식비가게열림(s.id); openExternal(s.url) }}
                     onContextMenu={(e) => { e.preventDefault(); set지울가게(s) }}>{s.name}</button>
                 ))}
                 {/* ➕ 자주 가는 곳을 «내가» 더한다 — 이름과 주소만. 꾹 누르면 지운다. */}
@@ -488,7 +492,7 @@ function 예산시트({ 칸, 지금, 닫기, store, nav }) {
                 : <button key={i} className={`press fc-key${/^(⌫|지움)$/.test(키) ? ' bk' : ''}${/^0{2,3}$/.test(키) ? ' zz' : ''}`} onClick={() => 누름(키)}>{키}</button>
             ))}
           </div>
-          <button className="press fc-save" disabled={!!값 && 값 < 10000} onClick={() => { store.setFoodBudget(칸, 값); nav.showToast(값 ? '예산을 정했어요' : '예산을 지웠어요'); 닫기() }}>
+          <button className="press fc-save" disabled={!!값 && 값 < 10000} onClick={() => { store.setFoodBudget(칸, 값); if (값) 식비예산정함(); nav.showToast(값 ? '예산을 정했어요' : '예산을 지웠어요'); 닫기() }}>
             {값 ? (값 < 10000 ? '만 원부터 정할 수 있어요' : '이걸로 할게요') : '안 정할래요'}
           </button>
         </div>
