@@ -183,7 +183,7 @@ self.addEventListener('push', (event) => {
   event.waitUntil(Promise.all([오늘문구(event), 거울읽어문장(new Date())]).then(([값, 얹을줄]) => {
   const 제목 = String(값.제목 || '한끼')
   // 🧊 임박 재료가 있으면 한 줄 «얹는다» — 없거나 못 읽으면 원래 본문 그대로(추가 푸시 0 · 하루 한 번 그대로)
-  const 본문 = String(값.본문 || '새로운 소식이 있어요') + (얹을줄 ? ' · ' + 얹을줄 : '')
+  const 본문 = String(값.본문 || '새로운 소식이 있어요') + (얹을줄 ? '\n' + 얹을줄 : '')
   const 길 = String(값.길 || './')
   const 표 = String(값.표 || 'hankki')
   return self.registration.showNotification(제목, {

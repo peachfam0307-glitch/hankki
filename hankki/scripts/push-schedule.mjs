@@ -28,7 +28,7 @@ export function 일정만들기(부터 = todayKST()) {
   const 더하기 = (date, kind, 조각) => { (날[date] ||= { kinds: new Set(), 조각: [] }); 날[date].kinds.add(kind); if (조각) 날[date].조각.push(조각) }
   for (const g of gates()) {
     if (g.date < 부터) continue
-    if (g.kind === 'recipe') 더하기(g.date, 'recipe', `이번 주 레시피가 열렸어요 — ${String(g.what).split(' — ')[0].replace(/\s+⛔.*$/, '')}`)
+    if (g.kind === 'recipe') 더하기(g.date, 'recipe', `${String(g.what).split(' — ')[0].split(' · ')[0].replace(/\s+⛔.*$/, '').trim()} 레시피가 열렸어요`)
     else if (g.kind === 'sns') 더하기(g.date, 'sns', '새 SNS 레시피가 열렸어요')
     else if (g.kind === 'cart') 더하기(g.date, 'cart', null)
     else if (/^꾸미기 서랍/.test(String(g.where || ''))) 더하기(g.date, 'decor', '새 꾸미기가 열렸어요')
