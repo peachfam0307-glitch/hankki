@@ -113,8 +113,12 @@ await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2200);
 await p.locator('.fc-scale button', { hasText: '날짜 고르기' }).first().click(); await p.waitForTimeout(400)
 const 부터칸 = p.locator('.fc-range input').first()
 const 까지칸 = p.locator('.fc-range input').nth(1)
-await 부터칸.fill('2026-09-17'); await p.waitForTimeout(300)
-await 까지칸.fill('2026-09-01'); await p.waitForTimeout(500)
+// ⛔⛔ [2026-09-19] 여기가 '2026-09-17' · '2026-09-01' 로 «박혀» 있었다 — 씨앗은 오늘−1·오늘−20 이라
+//    쓴 날(9/18)엔 오늘−1 = 9/17 로 범위 안이었고, 9/19 부터는 둘 다 범위 밖 → 합 0 → 배포가 두 판(2664·2665) 죽었다.
+//    앱은 멀쩡했다(바로 뒤 「100년」 칸 통과). 검사가 «날짜에 박히면» 다음 날 저절로 죽는다 → 오늘 기준으로 센다.
+const 날KST = (n) => { const d = new Date(Date.now() + 9 * 3600e3); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10) }
+await 부터칸.fill(날KST(0)); await p.waitForTimeout(300)      // 부터 = 오늘
+await 까지칸.fill(날KST(30)); await p.waitForTimeout(500)     // 까지 = 30일 전 (거꾸로) — 씨앗 둘(−1·−20)이 그 사이에 든다
 const 거꾸로 = (await p.locator('.fc-v').first().textContent()).replace(/[^0-9]/g, '')
 본다('날짜를 거꾸로 골라도 죽지 않고 그 사이를 센다', Number(거꾸로) > 0)
 // ⑨ 아주 먼 옛날 / 앞날
