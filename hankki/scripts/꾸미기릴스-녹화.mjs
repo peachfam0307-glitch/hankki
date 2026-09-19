@@ -54,7 +54,8 @@ const 테마 = 시안.테마 || 'apricot'
 const 배경 = 시안.배경 || '모눈'
 const 목표초 = Number(process.env.SEC || 시안.초 || 17.5)
 const 이름 = (basename(시안경로).match(/시안-(.+?)-\d{4}-\d{2}-\d{2}/) || [, 'untitled'])[1]
-const 날짜 = (basename(시안경로).match(/(\d{4}-\d{2}-\d{2})/) || [, new Date().toISOString().slice(0, 10)])[1]
+const { todayKST } = await import('../src/today.js')   // ⏰ 절대원칙 27 — 「오늘」은 today.js 한 곳에서만
+const 날짜 = (basename(시안경로).match(/(\d{4}-\d{2}-\d{2})/) || [, todayKST()])[1]
 if (!레시피 || !Array.isArray(조각) || !조각.length) { console.error('⛔ 시안 JSON 에 「레시피」와 「조각」이 있어야 한다'); process.exit(2) }
 
 // 🔒 값검사를 «통과해야» 돈다 — 조용히 틀리는 값은 찍고 나면 눈으로 볼 때까지 모른다
