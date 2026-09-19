@@ -138,3 +138,69 @@ async function handleShare(req) {
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim())
 })
+
+// 🔔🔔 **폰 알림(웹 푸시)** — 2026-09-19 · 설계 = `docs/알림-설계-2026-09-19.md`
+//
+// 📮 창업자 = *"월,수 레시피 토 장바구니 올라갈때 · 새 꾸미기 오픈 · 유통기한임박 이렇게 알람보내는거 어때"*
+//
+// ⛔⛔ **왜 필요했나 — 우리는 유저를 «부를 길»이 하나도 없었다.**
+//    🔢 실측 2026-09-19 = 푸시 코드 **0줄** · 30일 활성 242명인데 **하루 활성 8명**(3.3%).
+//       즉 «스스로 기억해서» 아이콘을 눌러야만 돌아온다. 한 달에 한 번 여는 앱이 된 게 당연하다.
+//    ⭐ 그래서 「앱이 별로라 안 돌아온다」는 **아직 관측된 적이 없다** — 「부를 길이 없다」만 확인된 사실이다.
+//       이 둘을 «가르는 실험»이 이 코드다.
+//
+// ⛔⛔⛔ **이 파일은 유저 242명 폰에서 «지금 돌고 있다».** 그래서 규칙이 하나 —
+//    **여기 아래 두 리스너만 더한다. 위의 `fetch`·공유받기(share_target)·캐시 규칙은 «한 글자도» 안 건드린다.**
+//    🔢 까닭 = 위 `skipWaiting()`＋`clientsClaim()` 때문에 새 판이 «즉시» 모든 탭을 장악한다.
+//       잘못되면 흰 화면이 뜨고, 유저는 앱을 지워야 복구된다. 우리는 배포 초록불만 보고 나간다.
+//    🔒 지키는 판 = `scripts/_repro-푸시-0919.mjs` (「공유받기가 여전히 돈다」를 같이 본다)
+//
+// 🍎 **아이폰은 이 길로 «못 온다»** — 우리 아이폰 앱은 Capacitor(WKWebView)다.
+//    🔢 근거 = WKWebView 엔 서비스워커·PushManager 가 아예 없다(열람 2026-09-19 · magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide).
+//       iOS 의 Push API 는 「사파리 → 공유 → 홈 화면에 추가」한 PWA 전용이다.
+//    ⭐ 그래서 아이폰은 **2판에서 APNs(@capacitor/push-notifications)**로 간다. 이 리스너는 웹·안드로이드(TWA) 몫이다.
+//    ⛔ 부르는 쪽(앱)에서 `PushManager` 가 없으면 **권한 시트를 아예 안 띄운다** — 거짓 약속을 하지 않는다.
+
+/** 📨 알림 하나를 그린다.
+ *  ⛔ 보내는 쪽이 이상한 걸 보내도 «앱이 멎으면 안 된다» — 못 읽으면 기본 문구로 띄운다(절대원칙 34).
+ *  ⭐ `tag` 를 쓰면 같은 이름의 알림이 «덮어써진다» — 혹시 두 번 와도 폰에는 하나만 남는다.
+ *     (두 번 보내는 것 자체는 워커가 막는다. 이건 «마지막 그물»이다.)
+ */
+self.addEventListener('push', (event) => {
+  let 값 = {}
+  try { 값 = event.data ? event.data.json() : {} } catch (e) { 값 = {} }
+  const 제목 = String(값.제목 || '한끼')
+  const 본문 = String(값.본문 || '새로운 소식이 있어요')
+  const 길 = String(값.길 || './')
+  const 표 = String(값.표 || 'hankki')
+  event.waitUntil(
+    self.registration.showNotification(제목, {
+      body: 본문,
+      // 🖼 아이콘은 매니페스트가 쓰는 «그 파일»이다 — 두 곳에 적지 않는다.
+      icon: new URL('icons/icon-192-v7.png', self.registration.scope).href,
+      badge: new URL('icons/icon-192-v7.png', self.registration.scope).href,
+      tag: 표,
+      renotify: false,
+      data: { 길 },
+    })
+  )
+})
+
+/** 👆 알림을 누르면 — 이미 열려 있는 한끼가 있으면 «그걸» 띄우고, 없으면 새로 연다.
+ *  ⛔ 무조건 새 창을 열면 탭이 쌓인다(유저가 누를 때마다 하나씩).
+ */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const 길 = new URL((event.notification.data && event.notification.data.길) || './', self.registration.scope).href
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((창들) => {
+      for (const 창 of 창들) {
+        if (창.url.startsWith(self.registration.scope) && 'focus' in 창) {
+          if ('navigate' in 창) { try { 창.navigate(길) } catch (e) { /* 못 옮겨도 띄우기는 한다 */ } }
+          return 창.focus()
+        }
+      }
+      return self.clients.openWindow ? self.clients.openWindow(길) : undefined
+    })
+  )
+})

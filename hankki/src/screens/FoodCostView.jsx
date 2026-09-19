@@ -43,12 +43,26 @@ const 날보기 = (s) => `${Number(s.slice(5, 7))}.${Number(s.slice(8, 10))}`
 const 요일보기 = (s) => '일월화수목금토'[new Date(s + 'T00:00:00Z').getUTCDay()]
 
 // 📅 달 첫날·끝날 (KST 날짜 글자만 다룬다)
-const 달첫날 = (날짜) => 날짜.slice(0, 8) + '01'
-const 달끝날 = (날짜) => {
-  const [y, m] = 날짜.split('-').map(Number)
-  return `${날짜.slice(0, 8)}${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`
+//   📅📅 [2026-09-20 창업자] *"나는 보통 9월 13일-10월 12일 이렇게 계산하거든? 근데 우리앱은 … 정해져있어"*
+//   ⭐ 「달」은 «시작일»(store.foodBudget.start · 1~28 · 기본 1)부터 다음 시작일 «하루 전»까지다.
+//      시작일 13 → 9/13~10/12 · 1/13~2/12 · 2/13~3/12 — 끝은 저절로라 달 길이와 무관하다(창업자 물음 *"31일인 달이랑 30일 달"*).
+//   ⛔ 29~31 은 store 가 안 받는다(2월에 없다). 시작일 1 이면 예전 그대로(1일~말일).
+const 두자리 = (n) => String(n).padStart(2, '0')
+// 그 날짜가 든 «달 구간»의 첫날 — 오늘이 시작일보다 앞이면 지난달 시작일이 첫날이다
+function 달첫날(날짜, 시작일 = 1) {
+  const [y, m, d] = 날짜.split('-').map(Number)
+  const t = new Date(Date.UTC(y, m - 1, 1))
+  if (d < 시작일) t.setUTCMonth(t.getUTCMonth() - 1)
+  return `${t.getUTCFullYear()}-${두자리(t.getUTCMonth() + 1)}-${두자리(시작일)}`
 }
-const 달보기 = (s) => `${Number(s.slice(5, 7))}월`
+// 그 구간의 끝날 = 다음 시작일 하루 전 (첫날을 넣는다)
+function 달끝날(첫날) {
+  const [y, m] = 첫날.split('-').map(Number)
+  const t = new Date(Date.UTC(y, m - 1, Number(첫날.slice(8, 10))))
+  t.setUTCMonth(t.getUTCMonth() + 1); t.setUTCDate(t.getUTCDate() - 1)
+  return t.toISOString().slice(0, 10)
+}
+const 달보기 = (s) => `${Number(s.slice(5, 7))}월`   // 시작일이 13이면 「9월」= 9/13~10/12 (구간 날짜는 옆에 같이 찍힌다)
 
 export default function FoodCostView() {
   const store = useStore()
@@ -63,6 +77,8 @@ export default function FoodCostView() {
   //   ⭐ 기본은 «주» — 장 보는 리듬이 주라서다. 달·기간은 눌러서 바꾼다.
   //   ⛔ 기록은 «전부» 남아 있다. 여기 8칸·12칸은 «보여주는 범위»일 뿐이다(5년이 쌓여도 안 지운다).
   const [잣대, set잣대] = useState('week')   // week | month | range
+  const 시작일 = Math.min(28, Math.max(1, Number(store.foodBudget?.start) || 1))   // 📅 달 시작일(1~28)
+  const [시작일고르기, set시작일고르기] = useState(false)
   const [기간, set기간] = useState(() => ({ 부터: 며칠뒤(todayKST(), -29), 까지: todayKST() }))
 
   const 줄들 = store.foodCost || []
@@ -71,7 +87,7 @@ export default function FoodCostView() {
   const 구간 = 잣대 === 'week'
     ? { 부터: 주의첫날(), 까지: 며칠뒤(주의첫날(), 6), 이름: '이번 주' }
     : 잣대 === 'month'
-      ? { 부터: 달첫날(오늘()), 까지: 달끝날(오늘()), 이름: 달보기(오늘()) }
+      ? (() => { const 첫 = 달첫날(오늘(), 시작일); return { 부터: 첫, 까지: 달끝날(첫), 이름: 달보기(첫) } })()
       : { 부터: 기간.부터 <= 기간.까지 ? 기간.부터 : 기간.까지, 까지: 기간.부터 <= 기간.까지 ? 기간.까지 : 기간.부터, 이름: '고른 기간' }
 
   const 구간줄 = 줄들.filter((e) => e.d >= 구간.부터 && e.d <= 구간.까지)
@@ -82,8 +98,9 @@ export default function FoodCostView() {
   // 📊 막대 — 주면 8주, 달이면 12달. ⛔5년치를 매번 훑지 않는다(관문 3차).
   const 칸들 = []
   if (잣대 === 'month') {
+    const 이번첫 = 달첫날(오늘(), 시작일)
     for (let i = 11; i >= 0; i--) {
-      const d = new Date(오늘() + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() - i, 1)
+      const d = new Date(이번첫 + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() - i)   // 시작일이 같으니 달만 뺀다(1~28 이라 안 밀린다)
       const 첫 = d.toISOString().slice(0, 10)
       칸들.push({ 첫, 끝: 달끝날(첫), 이름: 달보기(첫) })
     }
@@ -136,6 +153,15 @@ export default function FoodCostView() {
           </button>
         ))}
       </div>
+      {/* 📅 달 시작일 — 창업자 2026-09-20 *"9월 13일-10월 12일 이렇게 계산하거든"*. 달별에서만 보인다.
+            ⭐ 시작일 하나로 끝난다 — 끝은 «다음 시작일 하루 전»이라 매달 저절로 굴러간다(끝날짜를 손으로 정하면 매달 두 번 만져야 한다). */}
+      {잣대 === 'month' && (
+        // 📮 창업자 2026-09-20 *"9월식비 9-1-30 이 칸을 회색으로 옮기고 누르게 하면 되지않나"* → 큰 상자의 이름표를 «이 줄로 올리고» 누르면 시작일 시트
+        <button className="press fc-mstart" onClick={() => set시작일고르기(true)} aria-label="달 시작일 바꾸기">
+          {구간.이름} 식비 <span className="fc-date">{날보기(구간.부터)} ~ {날보기(구간.까지)}</span>
+          <Icon name="edit" size={13} color="var(--brown)" />
+        </button>
+      )}
       {잣대 === 'range' && (
         <>
           <div className="fc-range-k">보고 싶은 날짜를 고르세요</div>
@@ -151,7 +177,7 @@ export default function FoodCostView() {
 
       {/* ⭐ 고른 구간 — 제일 크게. 지난 칸·평균을 옆에 둬서 많이 썼는지 «견줄» 수 있게 한다 */}
       <div className="fc-big">
-        <div className="fc-k">{구간.이름} 식비 <span className="fc-date">{날보기(구간.부터)} ~ {날보기(구간.까지)}</span></div>
+        {잣대 !== 'month' && <div className="fc-k">{구간.이름} 식비 <span className="fc-date">{날보기(구간.부터)} ~ {날보기(구간.까지)}</span></div>}   {/* 달별은 위 회색 줄이 이 이름표다 */}
         <div className="fc-v">{돈(주합)}<em>원</em></div>
         {/* 💰💰 [2026-09-18 창업자 *"이번주 식비를 20만원안에서 살기를 했어. 남은 돈 보는 것도 정할 수 있어??"*]
               ⭐ 세웠으면 남은 돈을 «제일 크게» — 마트 앞에서 보는 건 「얼마 썼나」가 아니라 「얼마 남았나」다.
@@ -271,6 +297,7 @@ export default function FoodCostView() {
       {적기 && <적기시트 갈래={적기} 닫기={() => set적기(null)} store={store} nav={nav} />}
       {고칠것 && <적기시트 갈래={고칠것.k} 고칠것={고칠것} 닫기={() => set고칠것(null)} store={store} nav={nav} />}
       {예산고치기 && <예산시트 칸={잣대 === 'month' ? 'm' : 'w'} 지금={예산} 닫기={() => set예산고치기(false)} store={store} nav={nav} />}
+      {시작일고르기 && <시작일시트 지금={시작일} 닫기={() => set시작일고르기(false)} store={store} nav={nav} />}
       {지울것 && (
         <지움확인 줄={지울것} 닫기={() => set지울것(null)} 지움={() => { store.removeFoodCost(지울것.id); set지울것(null); nav.showToast('지웠어요') }} />
       )}
@@ -464,7 +491,8 @@ function 예산시트({ 칸, 지금, 닫기, store, nav }) {
   const 줄들 = store.foodCost || []
   const 지난 = (() => {
     if (칸 === 'm') {
-      const d = new Date(오늘() + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() - 1, 1)
+      const 시작일 = Math.min(28, Math.max(1, Number(store.foodBudget?.start) || 1))
+      const d = new Date(달첫날(오늘(), 시작일) + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() - 1)
       const 첫 = d.toISOString().slice(0, 10)
       return 줄들.filter((e) => e.d >= 첫 && e.d <= 달끝날(첫)).reduce((s, e) => s + e.won, 0)
     }
@@ -495,6 +523,40 @@ function 예산시트({ 칸, 지금, 닫기, store, nav }) {
           <button className="press fc-save" disabled={!!값 && 값 < 10000} onClick={() => { store.setFoodBudget(칸, 값); if (값) 식비예산정함(); nav.showToast(값 ? '예산을 정했어요' : '예산을 지웠어요'); 닫기() }}>
             {값 ? (값 < 10000 ? '만 원부터 정할 수 있어요' : '이걸로 할게요') : '안 정할래요'}
           </button>
+        </div>
+      </div>
+    </Portal>
+  )
+}
+
+// 📅📅 달 시작일 고르기 — 창업자 2026-09-20 *"나는 보통 9월 13일-10월 12일 이렇게 계산하거든"*
+//   ⭐ 1~28 만 — 29·30·31 은 2월에 없어서 구간이 깨진다(창업자 물음 *"31일인 달이랑 30일 달이 있을텐데"* → 그래서 시작일만 받는다).
+//   ⭐ 고르면 달별 합계·달 예산·12달 흐름·지난 달이 전부 그 구간으로 바뀐다. 적어 둔 기록은 안 건드린다(잣대만 바뀐다).
+//   📮 창업자 2026-09-20 *"1-31까지 다 저렇게 해야해? 숫자만 입력한다던가"* → 판 대신 «숫자 한 칸». 치면 그 자리에서 구간을 미리 보여준다.
+function 시작일시트({ 지금, 닫기, store, nav }) {
+  useModalBack(닫기)
+  const [글, set글] = useState(String(지금))
+  const 값 = Math.floor(Number(글) || 0)
+  const 되나 = 값 >= 1 && 값 <= 28
+  const 보기 = (d) => (d === 1 ? '1일 ~ 말일' : `${d}일 ~ 다음 달 ${d - 1}일`)
+  const 정하기 = () => { if (!되나) return; store.setFoodMonthStart(값); nav.showToast(`달을 ${보기(값)}로 셀게요`); 닫기() }
+  return (
+    <Portal>
+      <div className="sheet-mask" onClick={닫기}>
+        <div className="sheet fc-ask" onClick={(e) => e.stopPropagation()}>
+          <div className="fc-ask-t">달은 며칠부터 셀까요?</div>
+          <div className="fc-ask-s">월급날 기준으로 살림하면 그 날짜를 적으세요</div>
+          <div className="fc-mstart-in">
+            <input type="number" inputMode="numeric" min={1} max={28} value={글} autoFocus
+              onChange={(e) => set글(e.target.value.replace(/\D/g, '').slice(0, 2))}
+              onKeyDown={(e) => { if (e.key === 'Enter') 정하기() }} />
+            <span>일부터</span>
+          </div>
+          <div className="fc-bud-ref">{되나 ? <>→ <b>{보기(값)}</b></> : 글 ? '1~28 사이로 적어주세요 (29·30·31일은 2월에 없어요)' : ' '}</div>
+          <div className="fc-ask-btns">
+            <button className="press" onClick={닫기}>그대로 둘게요</button>
+            <button className="press danger" disabled={!되나} onClick={정하기}>이걸로 할게요</button>
+          </div>
         </div>
       </div>
     </Portal>
