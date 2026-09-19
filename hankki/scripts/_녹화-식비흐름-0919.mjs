@@ -194,10 +194,16 @@ async function 장면(이름, 준비, 하기, { 씨뿌리기 = false } = {}) {
     storageState: 저장본 || undefined,
     recordVideo: { dir: 방, size: 틀 },
   })
-  if (HQ) await ctx.addInitScript((z) => {
+  if (HQ) await ctx.addInitScript(([z, h]) => {
     window.__배율 = z
-    document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.zoom = String(z) })
-  }, 배율)
+    document.addEventListener('DOMContentLoaded', () => {
+      document.documentElement.style.zoom = String(z)
+      // 📏 아래 띠가 «화면 밖»으로 나가던 것 — main.jsx 가 --app-height 를 visualViewport.height(1922) 로 적어서
+      //    앱 틀이 1922 CSS px × zoom = 5322px 가 됐다(실측: .bottom-nav top 5144). 폰 높이(694)로 못 박는다.
+      const s = document.createElement('style'); s.textContent = ':root{--app-height:' + h + 'px !important}'
+      document.head.appendChild(s)
+    })
+  }, [배율, 틀.height / 배율])
   // ⛔ 코치마크는 접두어(hankki:coach)로 통째로 막는다 — 안 그러면 녹화 내내 안내창이 덮는다
   await ctx.addInitScript(() => {
     try {
