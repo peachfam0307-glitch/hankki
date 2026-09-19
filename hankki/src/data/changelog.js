@@ -37,7 +37,7 @@ export const CHANGELOG = [
   // 💰💰 식비 가계부가 «열린 판» — 창업자가 준 문장이다(2026-09-18 = "식비 가계부가 생겼어요 · 장보기에서 바로 적어요 이대로 가자")
   { v: 'v13.78', when: '2026-09-19', user: null, who: '클로드', asc: false },   // 📊 식비 계측 넷(foodcost_open·added_shop/direct·budget_set·shop_open_<id>) — 이름·금액 안 보냄 · 지키는 판 _repro-식비계측-0919
   { v: 'v13.79', when: '2026-09-19', user: null, who: '클로드', asc: false },
-  { v: 'v13.80', when: '2026-09-19', user: '장바구니에 담으면 알림을 받을지 물어봐요 · 월·수 새 레시피, 토요일 장바구니', who: '클로드', asc: false },   // 🔔 허락 시트(pushConsent) ＋ 구독(pushSubscribe) ＋ 워커(worker-push.js) — asc:false = 아이폰(WKWebView)엔 안 뜬다 · 문구는 창업자 확인 대기   // 🔔 서비스워커에 푸시 리스너 둘(push·notificationclick)만 «얹었다» — ⛔유저 눈엔 아직 아무것도 안 보인다(권한 시트도 보내는 쪽도 없다) · 공유받기·캐시는 한 글자도 안 건드림 · 지키는 판 _repro-푸시-0919
+  { v: 'v13.80', when: '2026-09-19', user: '장바구니에 담으면 알림을 받을지 물어봐요 · 월·수 새 레시피, 토요일 장바구니', who: '창업자', asc: false },   // 🔔 허락 시트(pushConsent) ＋ 구독(pushSubscribe) ＋ 워커(worker-push.js) — asc:false = 아이폰(WKWebView)엔 안 뜬다 · 📮 창업자 2026-09-19 23:45 «네가 판단해 리스크나 구멍없는걸로» = 문장 위임 → 유통기한·아이폰은 «안 적었다»(아직 없는 걸 약속하지 않는다)   // 🔔 서비스워커에 푸시 리스너 둘(push·notificationclick)만 «얹었다» — ⛔유저 눈엔 아직 아무것도 안 보인다(권한 시트도 보내는 쪽도 없다) · 공유받기·캐시는 한 글자도 안 건드림 · 지키는 판 _repro-푸시-0919
   { v: 'v13.77', when: '2026-09-19', user: '식비 가계부가 생겼어요 · 장보기에서 바로 적어요', who: '창업자', asc: true },   // 💰 식비 «공개» — 아이폰 1.0.1 승인(9/19 11:44)과 같이 연다
   { v: 'v13.76', when: '2026-09-19', user: null, who: '창업자', asc: false },   // 🚪 앱 열기 후보판 «걷어냄»(dist 다시 구움 · run 2666)
   { v: 'v13.75', when: '2026-09-18', user: null, who: '창업자', asc: false },   // 🚪 앱 열기 후보판 다시(열쇠 ?앱문=1 뒤 · 갤럭시/아이폰 갈라서)
