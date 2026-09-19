@@ -69,26 +69,51 @@ export async function 거울쓰기(pantry = []) {
   } catch { return false }
 }
 
-/** 📨 거울 → 알림에 얹을 한 줄. 임박 0이면 null. `now` 는 «그리는 순간»이어야 한다. */
-export function 거울문장(거울 = [], now = new Date()) {
-  const 급한것 = expiringPantry(거울, now)
-  if (!급한것.length) return null
-  const [첫] = 급한것
-  const 나머지 = 급한것.length - 1
-  const 꼬리 = 나머지 > 0 ? ` 외 ${나머지}개` : ''
-  // ⛔ 조사 「이/가」를 안 붙인다 — 받침에 따라 갈려서 「두부이(가)」 꼴이 된다. 조사 없이도 뜻이 선다.
-  if (첫.left < 0) return `냉장고의 ${첫.name}${꼬리} 지났어요`
-  if (첫.left === 0) return `냉장고의 ${첫.name}${꼬리} 오늘까지예요`
-  return `냉장고에 ${첫.name}${꼬리} ${첫.left}일 남았어요`
+// 🔔 알림 잣대 = «이틀» — 📮 창업자 2026-09-20 *"이틀 남았을때만 띄우자. 너무 자주뜨면 또 그러니까."*
+//    ⛔ 앱 안 빨간 점(D-3)과 «다른» 잣대다 — 점은 «정리하라»는 표시고, 알림은 «아직 쓸 수 있다»는 신호라 더 늦게·더 드물게.
+//    ⭐ «한 재료는 한 번만» — 같은 두부를 월·수 두 번 말하면 그게 「자주」다. 말한 것은 알린표(캐시)에 적고 다시 안 말한다.
+//    📌 「정확히 D-2 인 날»만이면 그날이 월·수·토가 아닌 재료는 영영 못 알린다(7일 중 3일뿐) → D-0~D-2 창에서 «한 번».
+//       월→수 2일·수→토 3일·토→월 2일이라 3일 창이면 모든 재료가 «꼭 한 번» 걸린다.
+export const 알림임박일 = 2
+export const 알린표칸 = 'pantry-expiry-told'
+const 키 = (p) => `${p.name}|${p.expiry}`
+
+/** 이번에 알릴 재료 — 남은 날 0~2 · 아직 안 알린 것 · 급한 순 */
+export function 알릴것(거울 = [], now = new Date(), 알린표 = {}) {
+  return expiringPantry(거울, now).filter((p) => p.left >= 0 && p.left <= 알림임박일 && !알린표[키(p)])
 }
 
-/** sw 가 부른다 — 거울을 읽어 한 줄. 못 읽으면 null(원래 알림 그대로). */
+/** 📨 거울 → 알림에 얹을 한 줄. 없으면 null. `now` 는 «그리는 순간»이어야 한다.
+ *  ⛔ 지난 재료는 «안» 띄운다 — 📮 창업자 2026-09-20 *"냉장고의 우유가 지났어요는 뜨면 안되고 유통기한이 남은걸 띄워야지"* */
+export function 거울문장(거울 = [], now = new Date(), 알린표 = {}) {
+  const 남은것 = 알릴것(거울, now, 알린표)
+  if (!남은것.length) return null
+  const [첫] = 남은것
+  const 나머지 = 남은것.length - 1
+  const 꼬리 = 나머지 > 0 ? ` 외 ${나머지}개` : ''
+  // ⛔ 조사 「이/가」를 안 붙인다 — 받침에 따라 갈려서 「두부이(가)」 꼴이 된다. 조사 없이도 뜻이 선다.
+  if (첫.left === 0) return `냉장고 ${첫.name}${꼬리} 오늘까지예요`
+  return `냉장고 ${첫.name}${꼬리} ${첫.left}일 남았어요`
+}
+
+/** sw 가 부른다 — 거울을 읽어 한 줄 ＋ «말한 재료를 알린표에 적는다»(다음엔 안 말한다). 못 읽으면 null(원래 알림 그대로).
+ *  ⛔ 지난 재료의 알린표 줄은 지운다 — 안 지우면 표가 영원히 자란다. */
 export async function 거울읽어문장(now = new Date()) {
   try {
     if (typeof caches === 'undefined') return null
     const c = await caches.open(거울캐시)
     const r = await c.match(거울칸)
     if (!r) return null
-    return 거울문장(await r.json(), now)
+    const 거울 = await r.json()
+    let 알린표 = {}
+    try { const t = await c.match(알린표칸); if (t) 알린표 = (await t.json()) || {} } catch { 알린표 = {} }
+    const 이번 = 알릴것(거울, now, 알린표)
+    const 문장 = 거울문장(거울, now, 알린표)
+    const 전 = JSON.stringify(알린표)
+    for (const p of 이번) 알린표[키(p)] = 1
+    // 지난 것은 «말할 게 없는 날에도» 지운다 — 안 그러면 표가 영원히 자란다(재현판 ⑤-b 가 잡았다)
+    for (const k of Object.keys(알린표)) { const d = k.split('|')[1]; const left = expiryDaysLeft(d, now); if (left === null || left < 0) delete 알린표[k] }
+    if (JSON.stringify(알린표) !== 전) await c.put(알린표칸, new Response(JSON.stringify(알린표), { headers: { 'Content-Type': 'application/json' } }))
+    return 문장
   } catch { return null }
 }

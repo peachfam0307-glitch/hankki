@@ -16,17 +16,25 @@ const 아이콘 = 'data:image/png;base64,' + readFileSync(join(뿌리, 'public/i
 const 일정 = 일정만들기('2026-09-19').날
 const 월 = 일정['2026-09-21'], 토 = 일정['2026-09-26'], 핼 = 일정['2026-10-01']
 // 🧊 얹기 = 월요일 15:30 에 «그리는 순간» — 냉장고에 두부(9/23까지)·우유(9/20까지)가 있다고 치면
-const 얹음 = 거울문장([{ name: '두부', expiry: '2026-09-23' }, { name: '우유', expiry: '2026-09-20' }], new Date('2026-09-21T15:30:00+09:00'))
-const 알림들 = [
-  { 때: '월 15:30', 본문: 월.본문 + (얹음 ? ' · ' + 얹음 : ''), 언제: '지금' },
-  { 때: '토 09:00', 본문: 토.본문, 언제: '토' },
-  { 때: '10/1(목) 20:00', 본문: 핼.본문, 언제: '10월 1일' },
+// 두부 9/23(D-2) · 우유 9/20(지남 → ⛔안 뜬다) · 상추 9/22(D-1)
+const 얹음 = 거울문장([{ name: '두부', expiry: '2026-09-23' }, { name: '우유', expiry: '2026-09-20' }, { name: '상추', expiry: '2026-09-22' }], new Date('2026-09-21T15:30:00+09:00'))
+// 🅰🅱🅲 [창업자 2026-09-20 00:16 *"너무 정신없고 길어"*] 월요일 카드 «짧은 후보 셋» — --후보 로 찍는다. ⛔고르면 push-schedule.mjs 한 곳만 바꾼다.
+const 후보 = process.argv.includes('--후보')
+const 냉장고줄 = 얹음 ? '\n' + 얹음 : ''
+const 알림들 = 후보 ? [
+  { 때: '🅰 갈래 이름은 빼고 · 냉장고는 «둘째 줄»', 제목: '한끼', 본문: '이번 주 레시피가 열렸어요 — 버섯' + 냉장고줄, 언제: '지금' },
+  { 때: '🅱 재료를 «앞»으로 · 냉장고는 둘째 줄', 제목: '한끼', 본문: '버섯 레시피가 열렸어요' + 냉장고줄, 언제: '지금' },
+  { 때: '🅲 갈래를 «제목»으로 올린다 · 본문은 재료뿐', 제목: '이번 주 레시피', 본문: '버섯' + 냉장고줄, 언제: '지금' },
+] : [
+  { 때: '월 15:30', 제목: '한끼', 본문: 월.본문 + (얹음 ? ' · ' + 얹음 : ''), 언제: '지금' },
+  { 때: '토 09:00', 제목: '한끼', 본문: 토.본문, 언제: '토' },
+  { 때: '10/1(목) 20:00', 제목: '한끼', 본문: 핼.본문, 언제: '10월 1일' },
 ]
 const 카드 = (n) => `
   <div class="card">
     <div class="head"><img src="${아이콘}"><span class="app">한끼</span><span class="dot">·</span><span class="when">${n.언제}</span><span class="chev">⌄</span></div>
-    <div class="title">한끼</div>
-    <div class="body">${n.본문}</div>
+    <div class="title">${n.제목}</div>
+    <div class="body" style="white-space:pre-line">${n.본문}</div>
     <div class="tag">보내는 때 = ${n.때}</div>
   </div>`
 const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
@@ -51,8 +59,8 @@ const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const p = await b.newPage({ viewport: { width: 1080, height: 1500 }, deviceScaleFactor: 1 })
 await p.setContent(html, { waitUntil: 'load' })
-const 길 = join(뿌리, 'docs', '알림-시안-2026-09-20.png')
+const 길 = join(뿌리, 'docs', 후보 ? '알림-시안-후보-2026-09-20.png' : '알림-시안-2026-09-20.png')
 await p.screenshot({ path: 길, fullPage: true })
 await b.close()
 console.log(`📱 ${길}`)
-console.log(알림들.map((n) => `   ${n.때}  ${n.본문}`).join('\n'))
+console.log(알림들.map((n) => `   ${n.때}  [${n.제목}] ${n.본문.replace(/\n/g, ' ⏎ ')}`).join('\n'))
