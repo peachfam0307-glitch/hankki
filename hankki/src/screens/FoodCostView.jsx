@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStore } from '../store'
+import { 식비열림, 식비적음, 식비예산정함, 식비가게열림 } from '../stats'
 import { todayKST } from '../today'
 import { useNav } from '../App'
 import { useModalBack } from '../useBackHandler'
@@ -53,7 +54,11 @@ export default function FoodCostView() {
   const store = useStore()
   const nav = useNav()
   const [적기, set적기] = useState(null)  // null | 'out' | 'shop'
+  // 📊 식비 칸을 «열었다» — 이 판은 view==='cost' 일 때만 붙으니(ShopScreen) 붙는 순간이 곧 연 순간이다
+  useEffect(() => { 식비열림() }, [])
   const [지울것, set지울것] = useState(null)
+  const [고칠것, set고칠것] = useState(null)  // ✏️ 창업자 2026-09-18 «저기도 수정가능하게»
+  const [예산고치기, set예산고치기] = useState(false)
   // 📅📅 [2026-09-17 창업자] *"주별 월별로도 통계 볼수있어? 아님 날짜를 며칠부터 며칠까지 정해서도?"* → 셋 다 된다.
   //   ⭐ 기본은 «주» — 장 보는 리듬이 주라서다. 달·기간은 눌러서 바꾼다.
   //   ⛔ 기록은 «전부» 남아 있다. 여기 8칸·12칸은 «보여주는 범위»일 뿐이다(5년이 쌓여도 안 지운다).
@@ -97,6 +102,8 @@ export default function FoodCostView() {
   //    한 주뿐인데 「평균」이라고 말하면 그건 평균이 아니라 «같은 수를 두 번» 보여주는 것이다(거짓말에 가깝다).
   //    ✅ 그래서 쓴 주가 «둘 이상»일 때만 견주기 줄과 8주 막대를 그린다. 그 전엔 조용히 숨긴다.
   const 견줄만한가 = 쓴주.length >= 2
+  // 💰 지금 잣대에 맞는 예산 — 주면 주 예산, 달이면 달 예산. 「날짜 고르기」엔 예산이 없다.
+  const 예산 = 잣대 === 'month' ? (store.foodBudget?.m || 0) : (store.foodBudget?.w || 0)
 
   // 🍚 하루 식비 = 「기록이 있는 날」 기준. ⛔안 적은 날을 0 으로 세면 값이 반토막 난다.
   const 최근28 = 며칠뒤(오늘(), -27)
@@ -146,6 +153,25 @@ export default function FoodCostView() {
       <div className="fc-big">
         <div className="fc-k">{구간.이름} 식비 <span className="fc-date">{날보기(구간.부터)} ~ {날보기(구간.까지)}</span></div>
         <div className="fc-v">{돈(주합)}<em>원</em></div>
+        {/* 💰💰 [2026-09-18 창업자 *"이번주 식비를 20만원안에서 살기를 했어. 남은 돈 보는 것도 정할 수 있어??"*]
+              ⭐ 세웠으면 남은 돈을 «제일 크게» — 마트 앞에서 보는 건 「얼마 썼나」가 아니라 「얼마 남았나」다.
+              ⛔ 넘어도 빨강으로 나무라지 않는다 — 주황 한 단계 ＋ 「12,000원 더 썼어요」(설계 관문 2차).
+              ⛔ 「날짜 고르기」엔 예산이 없다 — 아무 기간이나 고른 것이라 견줄 예산이 없다. */}
+        {잣대 !== 'range' && (예산 > 0 ? (
+          <>
+            <div className={`fc-bud ${주합 > 예산 ? 'over' : ''}`}>
+              <i style={{ width: `${Math.min(100, Math.round((주합 / 예산) * 100))}%` }} />
+            </div>
+            <div className="fc-bud-s">
+              <b>{주합 > 예산 ? `${돈(주합 - 예산)}원 더 썼어요` : `${돈(예산 - 주합)}원 남았어요`}</b>
+              <button className="press" onClick={() => set예산고치기(true)}>예산 {돈(예산)}원 · 고치기</button>
+            </div>
+          </>
+        ) : (
+          <button className="press fc-bud-new" onClick={() => set예산고치기(true)}>
+            {잣대 === 'month' ? '이번 달' : '이번 주'} 예산 정하기
+          </button>
+        ))}
         {견줄만한가 && (
           <div className="fc-ref">
             {지난주합 > 0 && 잣대 !== 'range' && <span>지난 {잣대 === 'month' ? '달' : '주'} <b>{돈(지난주합)}원</b></span>}
@@ -214,13 +240,24 @@ export default function FoodCostView() {
             <div className="fc-card">
               {안.map((e) => (
                 <div key={e.id} className="fc-row">
-                  <span className="fc-d">{날보기(e.d)} {요일보기(e.d)}</span>
-                  <span className="fc-t">
-                    {e.k === 'shop' ? '장보기' : '외식·배달'}
-                    {e.memo && <small>{e.memo}</small>}
-                    {e.items?.length > 0 && <small>{e.items.map((x) => x.n).join(' · ')}</small>}
-                  </span>
-                  <b className="fc-w">{돈(e.won)}원</b>
+                  {/* ✏️ 줄을 누르면 «그 줄 그대로» 적기 시트가 열린다 — 창업자 2026-09-18 «저기도 수정가능하게»
+                        ⭐ 누를 수 있다는 걸 «보이게» 한다(오른쪽 연필) — 안 보이면 없는 기능이다(값 칸에서 겪었다). */}
+                  <button className="press fc-hit" onClick={() => set고칠것(e)} aria-label={`${날보기(e.d)} ${돈(e.won)}원 고치기`}>
+                    <span className="fc-d">{날보기(e.d)} {요일보기(e.d)}</span>
+                    {/* 🏷 [2026-09-18 창업자 «메모 잘리는 것도 같이 고쳐줘»] 주인공을 바꿨다.
+                          ⛔ 전엔 「갈래 ＋ 메모」가 한 줄을 나눠 써서 «늘 메모가» 잘렸다(「외식·배달 쿠팡…」).
+                          ⭐ 갈래는 둘 중 하나라 금액 옆에서 짐작되지만, 메모는 «거기서만» 알 수 있는 것이다.
+                             그래서 메모가 있으면 메모를 앞에 두고 갈래를 작게 뒤로 보낸다 — 잘려도 잃는 것이 적다. */}
+                    <span className="fc-t">
+                      {/* ⛔ flex 안의 «맨 글자»에는 말줄임이 안 걸린다 — 반드시 칸으로 감싼다 */}
+                      {e.memo
+                        ? (<><span className="fc-m">{e.memo}</span><small>{e.k === 'shop' ? '장보기' : '외식·배달'}</small></>)
+                        : (<span className="fc-m">{e.k === 'shop' ? '장보기' : '외식·배달'}</span>)}
+                      {e.items?.length > 0 && <small>{e.items.map((x) => x.n).join(' · ')}</small>}
+                    </span>
+                    <b className="fc-w">{돈(e.won)}원</b>
+                    <Icon name="edit" size={14} color="var(--sand)" />
+                  </button>
                   <button className="icon-btn press" onClick={() => set지울것(e)} aria-label="지우기">
                     <Icon name="x" size={16} color="var(--sand)" />
                   </button>
@@ -232,6 +269,8 @@ export default function FoodCostView() {
       })}
 
       {적기 && <적기시트 갈래={적기} 닫기={() => set적기(null)} store={store} nav={nav} />}
+      {고칠것 && <적기시트 갈래={고칠것.k} 고칠것={고칠것} 닫기={() => set고칠것(null)} store={store} nav={nav} />}
+      {예산고치기 && <예산시트 칸={잣대 === 'month' ? 'm' : 'w'} 지금={예산} 닫기={() => set예산고치기(false)} store={store} nav={nav} />}
       {지울것 && (
         <지움확인 줄={지울것} 닫기={() => set지울것(null)} 지움={() => { store.removeFoodCost(지울것.id); set지울것(null); nav.showToast('지웠어요') }} />
       )}
@@ -250,12 +289,14 @@ export default function FoodCostView() {
 //      → ⏳ 유저에게 열 때 쿠팡을 파트너스 링크로 바꾼다. ⛔단축코드는 창업자만 만들 수 있어 «받아서» 박는다(ingLinks.js 와 같다).
 //         지금은 식비가 창업자 열쇠 뒤에만 있어서 전부 그냥 주소다.
 // ⌨️ 적는 시트 — 가계부에서 «0·00·000 키»만 가져왔다(수입·이체·결제수단은 안 만든다 · 식비만 보는 앱이라)
-function 적기시트({ 갈래, 닫기, store, nav }) {
+// ✏️ `고칠것` 이 있으면 «같은 시트»가 고치는 자리가 된다 — 창업자 2026-09-18 «저기도 수정가능하게»
+//   ⭐ 화면을 하나 더 만들지 «않는다» — 적을 때와 고칠 때가 다르게 생기면 그게 또 배울 것이 된다.
+function 적기시트({ 갈래, 고칠것, 닫기, store, nav }) {
   useModalBack(닫기)
-  const [글, set글] = useState('')
-  const [메모, set메모] = useState('')
+  const [글, set글] = useState(고칠것 ? String(고칠것.won) : '')
+  const [메모, set메모] = useState(고칠것?.memo || '')
   const [k, setK] = useState(갈래)
-  const [날, set날] = useState(오늘())
+  const [날, set날] = useState(고칠것?.d || 오늘())
   const [가게추가, set가게추가] = useState(false)
   const [지울가게, set지울가게] = useState(null)
   // 🧮 계산기 모드 — 창업자 2026-09-17 *"계산기 모드도 쓸수있나??"*
@@ -278,8 +319,14 @@ function 적기시트({ 갈래, 닫기, store, nav }) {
   }
   const 저장 = () => {
     if (!합계값) return
-    store.addFoodCost({ d: 날, k, won: 합계값, memo: 메모.trim() || undefined })
-    nav.showToast('적었어요')
+    if (고칠것) {
+      store.editFoodCost(고칠것.id, { d: 날, k, won: 합계값, memo: 메모 })
+      nav.showToast('고쳤어요')
+    } else {
+      store.addFoodCost({ d: 날, k, won: 합계값, memo: 메모.trim() || undefined })
+      식비적음('direct')   // 📊 시트에서 직접 적었다 (⛔고침은 안 센다 · 금액·메모는 안 보낸다)
+      nav.showToast('적었어요')
+    }
     닫기()
   }
   // 🧮 ＋ = 지금 친 값을 «담아 두고» 칸을 비운다. 다음 영수증을 이어서 친다.
@@ -311,7 +358,7 @@ function 적기시트({ 갈래, 닫기, store, nav }) {
               <div className="fc-shops-k">가서 보고 올까요?</div>
               <div className="fc-shops-row">
                 {가게들.map((s) => (
-                  <button key={s.id} className="press fc-shop" onClick={() => { set메모(s.name); store.usedCostShop(s.id); openExternal(s.url) }}
+                  <button key={s.id} className="press fc-shop" onClick={() => { set메모(s.name); store.usedCostShop(s.id); 식비가게열림(s.id); openExternal(s.url) }}
                     onContextMenu={(e) => { e.preventDefault(); set지울가게(s) }}>{s.name}</button>
                 ))}
                 {/* ➕ 자주 가는 곳을 «내가» 더한다 — 이름과 주소만. 꾹 누르면 지운다. */}
@@ -331,7 +378,7 @@ function 적기시트({ 갈래, 닫기, store, nav }) {
                 : <button key={i} className={`press fc-key${/^(⌫|지움)$/.test(키) ? ' bk' : ''}${/^0{2,3}$/.test(키) ? ' zz' : ''}${키 === '＋' ? ' plus' : ''}`} onClick={() => 누름(키)}>{키}</button>
             ))}
           </div>
-          <button className="press fc-save" disabled={!합계값} onClick={저장}>적었어요</button>
+          <button className="press fc-save" disabled={!합계값} onClick={저장}>{고칠것 ? '고쳤어요' : '적었어요'}</button>
         </div>
       </div>
       {가게추가 && <가게추가시트 갈래={k} 닫기={() => set가게추가(false)} store={store} nav={nav} />}
@@ -401,6 +448,53 @@ function 가게추가시트({ 갈래, 닫기, store, nav }) {
           <input className="fc-memo fc-add-url" style={{ marginTop: 8 }} value={주소} onChange={(e) => set주소(e.target.value.trim())} placeholder="주소 (예: homeplus.co.kr)" inputMode="url" />
           <div className="fc-hs" style={{ textAlign: 'left', marginTop: 8 }}>주소는 그 앱·사이트를 열었을 때 주소창에 뜨는 글자예요</div>
           <button className="press fc-save" disabled={!이름.trim() || !주소.trim()} onClick={저장}>더할게요</button>
+        </div>
+      </div>
+    </Portal>
+  )
+}
+
+// 💰⌨️ 예산 정하기 — 창업자 2026-09-18 *"이번주 식비를 20만원안에서 살기를 했어"*
+//   ⭐ 빈 칸만 던지지 않는다 — «지난 주(달)에 얼마 썼나»를 먼저 보여준다(가계부 스샷 3번의 그 자리).
+//   ⛔ 만 원 미만은 못 넣는다 · 「안 정할래요」로 지운다(막대가 사라진다).
+function 예산시트({ 칸, 지금, 닫기, store, nav }) {
+  useModalBack(닫기)
+  const [글, set글] = useState(지금 ? String(지금) : '')
+  const 값 = Number(글) || 0
+  const 줄들 = store.foodCost || []
+  const 지난 = (() => {
+    if (칸 === 'm') {
+      const d = new Date(오늘() + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() - 1, 1)
+      const 첫 = d.toISOString().slice(0, 10)
+      return 줄들.filter((e) => e.d >= 첫 && e.d <= 달끝날(첫)).reduce((s, e) => s + e.won, 0)
+    }
+    const 첫 = 며칠뒤(주의첫날(), -7)
+    return 줄들.filter((e) => e.d >= 첫 && e.d <= 며칠뒤(첫, 6)).reduce((s, e) => s + e.won, 0)
+  })()
+  const 누름 = (키) => {
+    if (키 === '⌫') return set글((s) => s.slice(0, -1))
+    if (키 === '지움') return set글('')
+    if (키 === '＋') return
+    set글((s) => { const 새것 = (s + 키).replace(/^0+/, ''); return 새것.length > 8 ? s : 새것 })
+  }
+  return (
+    <Portal>
+      <div className="sheet-mask" onClick={닫기}>
+        <div className="sheet fc-sheet" onClick={(e) => e.stopPropagation()}>
+          <div className="fc-ask-t" style={{ marginBottom: 4 }}>{칸 === 'm' ? '이번 달' : '이번 주'} 식비, 얼마 안에 쓸까요?</div>
+          <div className="fc-hs" style={{ textAlign: 'left', marginBottom: 10 }}>안 정해도 돼요 · 정하면 남은 돈이 보여요</div>
+          <div className="fc-in">{값 ? 돈(값) : '0'}<b>원</b></div>
+          {지난 > 0 && <div className="fc-bud-ref">지난 {칸 === 'm' ? '달' : '주'}엔 <b>{돈(지난)}원</b> 썼어요</div>}
+          <div className="fc-keys">
+            {['1', '2', '3', '⌫', '4', '5', '6', '00', '7', '8', '9', '000', '지움', '0', '', ''].map((키, i) => (
+              키 === ''
+                ? <span key={i} />
+                : <button key={i} className={`press fc-key${/^(⌫|지움)$/.test(키) ? ' bk' : ''}${/^0{2,3}$/.test(키) ? ' zz' : ''}`} onClick={() => 누름(키)}>{키}</button>
+            ))}
+          </div>
+          <button className="press fc-save" disabled={!!값 && 값 < 10000} onClick={() => { store.setFoodBudget(칸, 값); if (값) 식비예산정함(); nav.showToast(값 ? '예산을 정했어요' : '예산을 지웠어요'); 닫기() }}>
+            {값 ? (값 < 10000 ? '만 원부터 정할 수 있어요' : '이걸로 할게요') : '안 정할래요'}
+          </button>
         </div>
       </div>
     </Portal>

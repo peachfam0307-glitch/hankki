@@ -35,7 +35,7 @@ await p.waitForTimeout(1000); await 치우기()
 
 // ① 재료 셋 담기
 for (const n of ['두부', '대파', '참치캔']) {
-  await p.locator('input[placeholder*="살 재료"]').first().fill(n)
+  await p.locator('input[placeholder*="살 재료"], input[placeholder*="두부"]').first().fill(n)
   await p.keyboard.press('Enter'); await p.waitForTimeout(350)
 }
 본다('재료 3줄 담김', await p.locator('.shop-row').count() === 3)
@@ -43,7 +43,7 @@ for (const n of ['두부', '대파', '참치캔']) {
 // ② 값 적기 — 두부 3,900 · 대파 2,500 · 참치캔은 «안 적는다»
 async function 값적기(이름, 글) {
   const row = p.locator('.shop-row').filter({ hasText: 이름 }).first()
-  await row.locator('button[aria-label*="값 적기"]').click(); await p.waitForTimeout(250)
+  await row.locator('button[aria-label*="금액 적기"]').click(); await p.waitForTimeout(250)
   await row.locator('input[inputmode="numeric"]').fill(글)
   await p.keyboard.press('Enter'); await p.waitForTimeout(350)
 }
@@ -73,6 +73,7 @@ let d = await 판()
 본다('날짜가 오늘(KST)', d.foodCost?.[0]?.d === new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10))
 본다('값 적은 줄만 지워졌다(값 없는 참치캔은 남음)', (d.shoppingList || []).length === 1 && d.shoppingList[0].name === '참치캔')
 본다('산 것이 냉장고로 들어갔다', (d.pantry || []).filter((x) => ['두부', '대파'].includes(x.name)).length === 2)
+console.log('   냉장고 =', JSON.stringify((d.pantry || []).map((x) => x.name)))
 // 🧪 값이 하나도 없을 때 누르면 «아무 일도 안 나야» 한다 — 그게 창업자가 겪은 거짓말의 뿌리다
 await p.locator('.sum-btn').count().then(async (n) => { if (n) await p.locator('.sum-btn').first().click() })
 await p.waitForTimeout(500)

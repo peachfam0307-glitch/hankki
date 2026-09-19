@@ -2000,10 +2000,17 @@ img {
 .fc-wk-head b { font-size: 15px; color: var(--text); }
 .fc-card { background: var(--surface); border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
 .fc-row { display: flex; align-items: center; gap: 9px; padding: 12px 13px; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+/* ✏️ 줄 전체가 「고치기」 단추다 — X 만 따로 남는다 (창업자 2026-09-18 «저기도 수정가능하게») */
+.fc-row .fc-hit { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px;
+  background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .fc-row:last-child { border-bottom: 0; }
 .fc-d { width: 58px; color: var(--text-sub); font-size: 13px; flex: none; }
-.fc-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fc-t small { color: var(--text-sub); font-size: 12px; margin-left: 5px; }
+/* 🏷 [2026-09-18] 메모가 주인공 · 갈래는 «늘 남는다».
+      ⛔ 전엔 한 줄에 흘려서 뒤엣것부터 잘렸고, 그 뒤엣것이 «메모»였다(「외식·배달 쿠팡…」).
+      ✅ 이제 메모 칸만 줄어들고(min-width:0) 갈래는 안 줄어든다(flex:none) — 잘려도 갈래는 보인다. */
+.fc-t { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+.fc-t small { color: var(--text-sub); font-size: 12px; flex: none; }
+.fc-m { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fc-w { font-weight: 700; white-space: nowrap; }
 .fc-sheet { padding: 12px 18px calc(20px + var(--safe-bottom)); }
 .fc-seg { display: flex; gap: 7px; }
@@ -2012,6 +2019,16 @@ img {
 .fc-in { margin-top: 11px; background: var(--cream); border-radius: 13px; padding: 15px; text-align: right; font-size: 28px; font-weight: 800; letter-spacing: -.5px; }
 .fc-in b { font-size: 15px; font-weight: 700; color: var(--text-sub); margin-left: 3px; }
 .fc-memo { width: 100%; margin-top: 9px; padding: 11px 13px; border-radius: 11px; border: 1px solid var(--line); background: var(--surface); font-size: 15px; font-family: inherit; color: var(--text); outline: none; }
+/* 💰 예산 막대 — 남은 돈이 제일 크다 */
+.fc-bud { height: 10px; border-radius: 5px; background: var(--cream); margin-top: 12px; overflow: hidden; }
+.fc-bud i { display: block; height: 100%; background: var(--brown); border-radius: 5px; }
+.fc-bud.over i { background: #d98a3d; }
+.fc-bud-s { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--text-sub); }
+.fc-bud-s b { font-size: 15px; color: var(--text); }
+.fc-bud-s button { font-size: 12.5px; color: var(--brown); font-weight: 700; background: none; }
+.fc-bud-new { margin-top: 12px; width: 100%; padding: 10px 0; border-radius: 11px; background: var(--cream); color: var(--brown); font-size: 14.5px; font-weight: 700; }
+.fc-bud-ref { margin-top: 9px; font-size: 13px; color: var(--text-sub); text-align: center; }
+
 /* 📅 잣대 고르기 — 주 · 달 · 기간 */
 .fc-scale { display: flex; gap: 6px; margin-top: 12px; }
 .fc-scale button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 10px 0; border-radius: 12px; font-size: 14.5px; font-weight: 700; color: var(--text-sub); background: var(--cream); border: 1px solid var(--line); }

@@ -140,7 +140,25 @@ const ALL_FLOWS = [...OPTIONS, ...HIDDEN]
 function 열쇠말(flow, meta) {
   // ⛔ 무제한인 사람에게 「열쇠 1개」라고 적으면 거짓말이 된다
   if (getOcrLeft().무제한) return `${KEY_NAME} 무제한`
-  if (flow === 'photo') return '열쇠를 쓸지 고를 수 있어요'
+  // 💡💡 [2026-09-18 창업자] **잔액을 보여준다** — *"열쇠를 받을구멍이 없으니까 아끼는게 아닌가 싶어서"*
+  //   ⛔⛔ 뿌리 = 이 화면에서 유저 눈에 보이는 건 «비용»(단추의 「열쇠 1개」)뿐이고
+  //      «내가 몇 개 있는지»는 안 보였다. 가져오기 «목록»엔 🔑 숫자가 있는데
+  //      상세로 들어오면 그 자리가 이 딱지로 바뀌면서 잔액이 사라진다(2026-09-18 실물 캡처 둘로 확인).
+  //   🔢 그런데 실제로는 남아돈다 — 로그인 91명 × 웰컴 30개인데 이 달 유저가 쓴 건 28건(한 명당 0.3건).
+  //      막힘 3 · 없음 0 = 바닥친 사람이 없다. 그런데 「고름」 35 = 있는데도 안 쓴다.
+  //      ＝ **모자라서 아끼는 게 아니라 얼마 있는지 몰라서 아낀다**는 뜻이다.
+  //   ⛔ 「한 개 50원어치」 같은 «값»은 안 적는다 — 창업자가 아직 값을 정하지 않았다.
+  //      한 번 적으면 나중에 그 값에 묶인다(절대원칙 · 확정 안 된 것을 화면에 적지 않는다).
+  //   ⭐ 단추를 가르는 조건과 «똑같은 조건»을 쓴다(아래 buttons) — 안 그러면 말과 화면이 갈린다.
+  if (flow === 'photo') {
+    const 남은 = getOcrLeft()
+    // ⚠️ unknown = 서버 답을 한 번도 못 받았다 → 숫자를 못 믿는다. 그땐 옛 말 그대로.
+    if (남은.unknown) return '열쇠를 쓸지 고를 수 있어요'
+    // 🕳 열쇠 0 = 단추가 「사진 고르기」 하나뿐이라 «고를 수가 없다».
+    //    그때 「고를 수 있어요」라고 적으면 화면이 거짓말을 한다(2026-09-18 창업자 지적).
+    if (남은.total <= 0) return '열쇠가 없어도'
+    return `열쇠 ${남은.total}${KEY_UNIT} 있어요 · 쓸지 고를 수 있어요`
+  }
   if (!meta?.paid) return `${KEY_NAME}를 안 써요`
   return meta.costText
 }
@@ -435,7 +453,7 @@ export default function ImportScreen() {
       //   ⛔ 「열쇠를 «안 쓰면»」이라고 썼다가 고쳤다 — 열쇠가 0개인 사람에겐 **선택처럼 들린다**
       //      (그 사람은 «안 쓰는» 게 아니라 «없는» 것이다 · 실물로 두 화면을 나란히 찍어 보고 잡았다).
       //      ⭐ 「기본 인식」은 초록 박스가 이미 쓴 말이라 **어느 쪽 유저에게도 그대로 맞는다.**
-      result: '기본 인식은 덜 읽혀요. 대신 사진이 위에 떠서 보면서 고칠 수 있어요.',
+      result: '기본 인식은 인식률이 떨어져요. 대신 사진이 위에 떠서 보면서 고칠 수 있어요.',
       // 🆓🆓🆓 [창업자 확정 2026-08-29] **이 길만 「열쇠를 쓸지」 고를 수 있다.**
       //   📮 창업자 = *"한끼에서 가져오기를 무료ocr로 읽게하면 안돼??"* →
       //      갈래 둘(ⓐ무조건 공짜 / ⓑ고르게)을 대고 **ⓑ** — *"열쇠가능하면 그렇게 하면 좋지"*
@@ -458,7 +476,7 @@ export default function ImportScreen() {
         ? [
             { label: `AI로 정확하게 읽기 · ${keyCount(1)}`, onClick: () => 사진고르기(false) },
             // 📊 열쇠가 «있는데» 이걸 눌렀다 = 진짜 「고름」이다(값이 비싸게 느껴진다는 신호)
-            { label: `그냥 읽기 · ${KEY_SHORT} 안 써요`, ghost: true, onClick: () => 사진고르기(true, '고름') },
+            { label: `그냥 읽기 · ${KEY_SHORT}는 안 쓰지만 인식률이 떨어져요`, ghost: true, onClick: () => 사진고르기(true, '고름') },
           ]
         // ⭐⭐ **여기서 «누른 손짓»으로 고르기 창을 연다** — 다음 화면에서 저절로 열려고 하면
         //    브라우저가 「손짓 없이 연 창」으로 보고 막을 수 있다.
@@ -798,12 +816,16 @@ export default function ImportScreen() {
             </figure>
           )}
 
-          {/* ✅ 결과 — 「그래서 어떻게 되나」. ⛔없으면 유저가 «담긴 뒤»를 못 그린다. */}
-          <div style={{
+          {/* ✅ 결과 — 「그래서 어떻게 되나」. ⛔없으면 유저가 «담긴 뒤»를 못 그린다.
+              🔀🔀 [2026-09-18 창업자] **사진 갈래만 단추 «아래»로 내린다** — *"초록박스는 그냥읽기 아래에 둘래??"*
+                ⛔ 사진 갈래에서만 이 칸이 «결과»가 아니라 «기본 인식의 손해»를 적는다.
+                   단추 위에 있으면 두 단추 공통 설명처럼 읽혀 경고가 안 된다(2026-09-18 실물 캡처로 확인).
+                ⭐ 나머지 넷은 그대로 위다 — 거긴 「담기면 이렇게 돼요」라 고르기 «전»에 읽어야 한다. */}
+          {flow !== 'photo' && <div style={{
             padding: '12px 15px', borderRadius: 14, marginBottom: 18,
             background: 'linear-gradient(135deg, #eef7e7, #e2eed7)', border: '1px solid #cfe3c4',
             fontSize: 16, fontWeight: 700, color: '#3d6b38', lineHeight: 1.55, wordBreak: 'keep-all',
-          }}>{안내들[flow].result}</div>
+          }}>{안내들[flow].result}</div>}
 
           {안내들[flow].buttons.map((b) => (
             <button key={b.label} className={b.ghost ? 'btn-ghost press' : 'btn-primary press'}
@@ -811,6 +833,13 @@ export default function ImportScreen() {
               {b.label}
             </button>
           ))}
+
+          {/* 🔀 사진 갈래는 여기 — 「그냥 읽기」 «바로 아래»에 붙는다(창업자 2026-09-18) */}
+          {flow === 'photo' && <div style={{
+            padding: '12px 15px', borderRadius: 14, marginTop: 4, marginBottom: 18,
+            background: 'linear-gradient(135deg, #eef7e7, #e2eed7)', border: '1px solid #cfe3c4',
+            fontSize: 16, fontWeight: 700, color: '#3d6b38', lineHeight: 1.55, wordBreak: 'keep-all',
+          }}>{안내들[flow].result}</div>}
         </div>
       ) : flow === 'text' ? (
         <div className="pad fade">

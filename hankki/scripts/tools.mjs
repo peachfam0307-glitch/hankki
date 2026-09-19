@@ -58,20 +58,28 @@ const headOf = (path) => {
     const m = ln.match(/^\s*(?:\/\/|#)\s?(.*)$/)
     if (!m) { if (head.length && ln.trim() && !/^\s*(import|const|let|from)/.test(ln)) break; if (head.length) break; continue }
     const s = m[1].trim()
+    // 🐍 파이썬 도구의 첫 줄  은 «설명이 아니다» — 건너뛴다.
+    //    ⛔ 2026-09-19: 안 건너뛰었더니 tools/ 41개가 전부 설명 자리에 shebang 을 달고 나왔다.
+    if (/^!/.test(s)) continue
     head.push(s)
     if (!desc && s && !/^[-=─━]+$/.test(s)) desc = s.replace(/\s+/g, ' ').slice(0, 96)
   }
   return { desc, head: head.join(' ') }
 }
 
-const files = readdirSync(join(APP, 'scripts'))
-  .filter((f) => /\.(mjs|js)$/.test(f))
-  .sort()
+// 📁📁 «두 곳»을 다 훑는다 — scripts/ 와 tools/ (창업자 2026-09-19)
+//   ⛔⛔ 전엔 scripts/ 만 봤다. 그래서 tools/ 의 파이썬 도구 40여 개가 «목록에 없었다».
+//      📌 이 도구의 존재 이유가 「있는 걸 또 만들지 마라」인데, 정작 절반을 안 보여 줬다.
+//      🔢 실측 2026-09-19 = tools/ 에 .py 41개 — 자르기·창뚫기·배경펴기가 전부 여기 있다.
+const 훑기 = (폴더, 확장) => existsSync(join(APP, 폴더))
+  ? readdirSync(join(APP, 폴더)).filter((f) => 확장.test(f)).sort().map((f) => ({ 폴더, f }))
+  : []
+const files = [...훑기('scripts', /\.(mjs|js)$/), ...훑기('tools', /\.py$/)]
 
-const rows = files.map((f) => {
+const rows = files.map(({ 폴더, f }) => {
   const k = kindOf(f)
-  const h = headOf(join(APP, 'scripts', f))
-  return { f, ...k, desc: h.desc, head: h.head, smoke: SMOKE.includes(`scripts/${f}`) }
+  const h = headOf(join(APP, 폴더, f))
+  return { f, 폴더, ...k, desc: h.desc, head: h.head, smoke: SMOKE.includes(`${폴더}/${f}`) }
 })
 
 // ── 인자 ──

@@ -63,11 +63,17 @@ const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행�
 //      ⏳ 유저에게 열 때 파트너스 링크로 바꾼다(창업자 *"유저들은 링크로. 그래야 우리도 수익이 나지"*) — 단축코드는 창업자가 만든다.
 //   ⚠️ 주소는 2026-09-17 에 찾아 적었다. 이 환경은 사람이 보는 웹을 못 열어 «눌러보진 못했다» — 틀리면 편집으로 고친다.
 const 기본식비가게 = [
-  { id: 'cs_coupang', name: '쿠팡', url: 'https://www.coupang.com', k: 'shop' },
+  // 🛒 [창업자가 준 단축코드 2026-09-18] 쿠팡 홈 파트너스 링크 — 유저가 누르면 «우리 수익»이 된다.
+  //    ⛔ 창업자 폰에서는 `파트너스문()` 이 그냥 쿠팡 주소로 바꿔 보낸다(24시간 규칙에 안 걸리게).
+  //    ⛔ 링크는 코드가 못 만든다 — 규칙 없는 단축코드라 «받아서» 박는다(`ingLinks.js` 와 같다).
+  { id: 'cs_coupang', name: '쿠팡', url: 'https://link.coupang.com/a/g8XUHyeW96', k: 'shop' },
   { id: 'cs_kurly', name: '마켓컬리', url: 'https://www.kurly.com', k: 'shop' },
   { id: 'cs_naver', name: '네이버쇼핑', url: 'https://shopping.naver.com', k: 'shop' },
   { id: 'cs_lottemart', name: '롯데마트', url: 'https://lottemartzetta.com', k: 'shop' },
   { id: 'cs_emart', name: '이마트몰', url: 'https://emart.ssg.com', k: 'shop' },
+  // 🌱 [창업자 2026-09-18] 자연드림 — ⛔대표(icoop.or.kr)가 아니라 «장보기몰» 주소다.
+  //    📮 창업자 = *"자연드림은 장보기링크를 따로 따야해 지금은 대표로 들어사져"* → 그 자리에서 주소를 받았다.
+  { id: 'cs_icoop', name: '자연드림', url: 'https://icoop.or.kr/coopmall/shopMain.phtm', k: 'shop' },
   { id: 'cs_eats', name: '쿠팡이츠', url: 'https://www.coupangeats.com', k: 'out' },
   { id: 'cs_baemin', name: '배달의민족', url: 'https://baemin.com', k: 'out' },
   { id: 'cs_yogiyo', name: '요기요', url: 'https://www.yogiyo.co.kr/mobile/', k: 'out' },
@@ -949,6 +955,7 @@ function initialState() {
       pantry: saved.pantry || [],
       foodCost: Array.isArray(saved.foodCost) ? saved.foodCost : [],
       costShops: Array.isArray(saved.costShops) && saved.costShops.length ? saved.costShops : [...기본식비가게],
+      foodBudget: { w: 0, m: 0, ...(saved.foodBudget || {}) },
       diary,
       sampleGone: saved.sampleGone || false,
     }
@@ -970,6 +977,7 @@ function initialState() {
     pantry: [],
     foodCost: [],   // 💰 식비 줄(2026-09-17 시제품 · hold) — {id,d:'YYYY-MM-DD',k:'shop'|'out',won,memo?,items?:[{n,won}]}
     costShops: [...기본식비가게],   // 🏪 「가서 보고 와서 적기」 목록 — 유저가 더하고 지운다
+    foodBudget: { w: 0, m: 0 },   // 💰 식비 예산 — w=한 주 · m=한 달. 0 이면 «안 세웠다»(막대를 안 그린다)
     // 📔 처음 켠 사람은 일기 탭이 텅 비어 「뭘 하는 곳인지」 안 보인다 → 샘플 한 장 놓아 둔다.
     //    ⏳ 스위치가 꺼져 있으면 빈 채로 둔다(까닭 = `sampleDiary.js` 맨 위)
     diary: SAMPLE_READY ? [makeSampleDiary()] : [],
@@ -1141,7 +1149,12 @@ function reducer(state, action) {
         //   ⛔ 옛 판은 이름만 담아서, 장보기의 `buyUrlFor()` 가 쿠팡 «일반 검색»으로 보냈다 = 수수료 0원.
         //   ⚠️ `url: undefined` 로 둔다(빈 문자열 아님) — `addShopItem` 과 같은 모양이라야
         //      장보기 줄을 읽는 쪽이 두 길을 다르게 보지 않는다.
-        .map((n) => ({ id: newId(), name: n, done: false, url: ingLink(n) || undefined }))
+        // 💰 [2026-09-18] 여기도 「두부 1910」을 가른다 — ⛔단수(addShopItem)만 고쳤다가 «직접 입력»이 안 먹었다.
+        //    직접 입력 칸(ChecklistAdd)은 이 복수 길로 온다. 두 길을 같은 함수로 묶어 또 갈리지 않게 했다.
+        .map((n) => {
+          const { 이름, 값 } = 이름값가르기(n)
+          return { id: newId(), name: 이름 || n, done: false, url: ingLink(이름 || n) || undefined, ...(값 ? { won: 값 } : {}) }
+        })
       return { ...state, shoppingList: [...add, ...state.shoppingList] }
     }
     // 단건 담기 — 사러가기 링크(url)를 함께 저장(주부의 장바구니 '담기' 등). 이름 중복은 무시.
@@ -1150,14 +1163,19 @@ function reducer(state, action) {
     //      **말없이 버려진다.** 실제로 `noBuy` 를 담는 코드를 써 놓고도 리스트엔 사러가기가 그대로 떴다
     //      (2026-08-17 · 게이트 50개가 전부 초록불이었고 «화면을 열어보고» 잡았다 — 규칙 21).
     case 'addShopItem': {
-      const name = (action.item?.name || '').trim()
+      // 💰💰 [2026-09-18 창업자 *"장보기에 두부를 적고 값을 눌러 또 금액을 적고 좀 번거로워"*]
+      //   ⭐ 한 번에 친다 — 「두부 1910」 처럼 **이름 뒤에 숫자**를 붙이면 이름과 값으로 갈라 담는다.
+      //   ⛔ 「돼지고기 600g」·「양파 1망」은 «사는 양»이라 값이 아니다 — 단위가 붙으면 안 센다(글자가 남으면 이름의 일부다).
+      //   ⛔ 「양파 3」도 값이 아니다(3원짜리는 없다) — **세 자리(100원) 이상**만 값으로 본다.
+      //   📌 값을 안 붙여도 그대로 담긴다 — 옛 방식이 그대로 산다.
+      const { 이름: name, 값 } = 이름값가르기(action.item?.name || '')
       if (!name || state.shoppingList.some((i) => i.name === name)) return state
       if (!담을만한가(name)) return state   // 🚱 물류는 안 담는다 (창업자 2026-09-12)
       // 🔗 [2026-09-12] 주소를 «안 주고» 담는 자리(냉장고·직접 입력)도 아는 재료면 링크가 붙는다.
       //   ⛔ `noBuy`(한살림 = 조합원 전용)에는 절대 안 붙인다 — 사러가기를 «안 그리는» 줄이다.
       //      여기서 url 을 채우면 8/17 에 링크를 뺀 일이 통째로 헛일이 된다.
       const url = action.item.url || (action.item.noBuy ? '' : ingLink(name)) || undefined
-      const item = { id: newId(), name, done: false, url, ...(action.item.noBuy ? { noBuy: true } : {}) }
+      const item = { id: newId(), name, done: false, url, ...(값 ? { won: 값 } : {}), ...(action.item.noBuy ? { noBuy: true } : {}) }
       return { ...state, shoppingList: [item, ...state.shoppingList] }
     }
     case 'toggleShopItem': {
@@ -1181,9 +1199,18 @@ function reducer(state, action) {
     //      **담아주는 건 우리가 하고, 양은 유저가 적는다.**
     //   ⛔ 빈 이름으로는 안 바꾼다 — 지우려면 삭제(×)를 쓴다. 빈 줄이 남으면 그게 고장이다.
     case 'updateShopItem': {
-      const name = (action.name || '').trim()
-      if (!name) return state
-      return { ...state, shoppingList: state.shoppingList.map((i) => (i.id === action.id ? { ...i, name } : i)) }
+      // ✏️💰 [2026-09-18] 고칠 때도 「두부 2500」을 가른다 — 담을 때와 «같은 함수»를 쓴다(두 벌이면 갈린다).
+      //   ⛔ 숫자를 빼고 저장하면 값이 «지워진다» — 잘못 적은 값을 되돌리는 길이다(창업자 *"잘못 적었을때"*).
+      const { 이름, 값 } = 이름값가르기(action.name || '')
+      if (!이름) return state
+      return {
+        ...state,
+        shoppingList: state.shoppingList.map((i) => {
+          if (i.id !== action.id) return i
+          const { won: _옛값, ...나머지 } = i
+          return 값 ? { ...나머지, name: 이름, won: 값 } : { ...나머지, name: 이름 }
+        }),
+      }
     }
     case 'removeShopItem': {
       return { ...state, shoppingList: state.shoppingList.filter((i) => i.id !== action.id) }
@@ -1245,9 +1272,36 @@ function reducer(state, action) {
     case 'removeCostShop': {
       return { ...state, costShops: (state.costShops || []).filter((s) => s.id !== action.id) }
     }
+    // 💰 예산 세우기 — 창업자 2026-09-18 *"이번주 식비를 20만원안에서 살기를 했어. 그럼 남은 돈 보는 것도?"*
+    //   ⛔ 만 원 미만은 안 받는다 — 첫 기록에 바로 빨간 막대가 되어 조르는 꼴이 된다(설계 관문 2차).
+    //   ⛔ 0 을 주면 «지운다» = 안 세운 상태로 돌아간다(막대가 사라진다).
+    case 'setFoodBudget': {
+      const 칸 = action.칸 === 'm' ? 'm' : 'w'
+      const n = Math.min(99999999, Math.floor(Number(action.won) || 0))
+      if (n && n < 10000) return state
+      return { ...state, foodBudget: { ...(state.foodBudget || { w: 0, m: 0 }), [칸]: n } }
+    }
     case 'usedCostShop': {
       // ⭐ 누를 때마다 시각을 적어 둔다 — 화면은 이 값으로 «최근 쓴 순»으로 줄을 세운다(손으로 끌어 옮길 필요가 없다)
       return { ...state, costShops: (state.costShops || []).map((s) => (s.id === action.id ? { ...s, at: Date.now() } : s)) }
+    }
+    // ✏️ 적은 줄 고치기 — 창업자 2026-09-18 «저기도 수정가능하게»
+    //   ⛔ 지우고 새로 넣지 «않는다» — 그러면 목록 맨 위로 튀어올라 「어디 갔지」가 된다. 자리에 둔 채 값만 바꾼다.
+    //   ⭐ 값을 0 으로 고치려 하면 아무 일도 안 한다(지우기는 X 가 맡는다 — 물어보고 지운다).
+    case 'editFoodCost': {
+      const won = Math.min(9999999, Math.max(0, Math.floor(Number(action.patch?.won) || 0)))
+      if (!won) return state
+      return {
+        ...state,
+        foodCost: (state.foodCost || []).map((e) => {
+          if (e.id !== action.id) return e
+          const 새것 = { ...e, won, d: action.patch.d || e.d, k: action.patch.k === 'out' ? 'out' : 'shop' }
+          const memo = (action.patch.memo || '').trim()
+          if (memo) 새것.memo = memo.slice(0, 40)
+          else delete 새것.memo
+          return 새것
+        }),
+      }
     }
     case 'removeFoodCost': {
       return { ...state, foodCost: (state.foodCost || []).filter((e) => e.id !== action.id) }
@@ -1341,6 +1395,7 @@ function reducer(state, action) {
         pantry: d.pantry || [],
         foodCost: Array.isArray(d.foodCost) ? d.foodCost : (state.foodCost || []),   // 💰 백업에 식비가 없으면(옛 백업) 지금 폰 것을 지킨다
         costShops: Array.isArray(d.costShops) && d.costShops.length ? d.costShops : (state.costShops || [...기본식비가게]),
+        foodBudget: { w: 0, m: 0, ...(state.foodBudget || {}), ...(d.foodBudget || {}) },   // 💰 옛 백업이면 지금 폰 예산을 지킨다
         diary: d.diary || [],
       }
     }
@@ -1496,7 +1551,9 @@ export function StoreProvider({ children }) {
     addCostShop: useCallback((shop) => dispatch({ type: 'addCostShop', shop }), []),
     removeCostShop: useCallback((id) => dispatch({ type: 'removeCostShop', id }), []),
     usedCostShop: useCallback((id) => dispatch({ type: 'usedCostShop', id }), []),
+    setFoodBudget: useCallback((칸, won) => dispatch({ type: 'setFoodBudget', 칸, won }), []),
     addFoodCost: useCallback((entry) => dispatch({ type: 'addFoodCost', entry }), []),
+    editFoodCost: useCallback((id, patch) => dispatch({ type: 'editFoodCost', id, patch }), []),
     removeFoodCost: useCallback((id) => dispatch({ type: 'removeFoodCost', id }), []),
     clearShopItemsAll: useCallback(() => dispatch({ type: 'clearShopItemsAll' }), []),
     addPantry: useCallback((item) => dispatch({ type: 'addPantry', item }), []),
@@ -1520,6 +1577,23 @@ export function useStore() {
 // 새 레시피 id 생성 — Date.now 는 브라우저 런타임에서 사용 가능
 // 💰 오늘 날짜 — ⛔여기서 만들지 않는다(절대원칙 27 · check-kst 게이트). src/today.js 한 곳뿐.
 const 오늘날짜 = () => todayKST()
+
+// 💰💰 [2026-09-18 창업자 *"두부를 적고 값을 눌러 또 금액을 적고 좀 번거로워"*]
+//   「두부 1910」 → { 이름: '두부', 값: 1910 }. ⛔담는 길이 둘(단수·복수)이라 «한 함수»로 묶는다 — 따로 두면 반드시 갈린다.
+//   ⛔ 「돼지고기 600g」·「양파 1망」은 «사는 양»이라 값이 아니다(숫자 뒤에 글자가 남는다).
+//   ⛔ 「양파 3」도 값이 아니다 — 세 자리(100원) 이상만 값으로 본다.
+//   ⭐⭐ [2026-09-18 창업자 *"1990뒤에 원이나 ₩ 이런걸 붙이면 좋겠고"*] 「원」·「₩」·쉼표를 «다» 받는다.
+//      ⛔ 안내에 「1,910원」이라 써 놓고 파서가 숫자만 받으면 **안내가 함정이 된다** —
+//         시킨 대로 「두부 1910원」이라 쳤는데 이름이 「두부 1910원」이 되고 금액은 0 이 된다.
+//      ⭐ 그래서 «보여주는 꼴»과 «받는 꼴»을 같이 넓혔다. 받는 꼴 = 두부 1910 · 두부 1,910원 · 두부 ₩1910
+export function 이름값가르기(글) {
+  const t = String(글 || '').trim()
+  const m = t.match(/^(.+?)\s+₩?\s*([0-9][0-9,]{2,})\s*원?$/)
+  if (!m) return { 이름: t, 값: 0 }
+  const n = Number(m[2].replace(/,/g, ''))
+  if (!(n >= 100 && n <= 9999999)) return { 이름: t, 값: 0 }
+  return { 이름: m[1].trim(), 값: n }
+}
 
 export function newId() {
 

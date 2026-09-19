@@ -534,6 +534,21 @@ export function 픽펼침() { 지난화면 = null; 행동보내기('pick_open') 
 // ⭐ 「담았다」도 같이 센다 — 장보기 체류가 **5초**(다른 화면은 25~51초)인 까닭이 갈린다:
 //    들어와서 «담지도» 않는 것인지, 담고 바로 나가는 것인지.
 export function 장보기담음() { 지난화면 = null; 행동보내기('shop_added') }
+// ═══════════════════════════════════════════════════════════════════
+// 💰💰 [2026-09-19] 식비 넷 — 식비는 «화면»이 아니라 장보기 «안»의 칸이라 화면봄() 에 안 잡힌다.
+//    v13.77 로 공개된 날 심는다(아이폰 29판에 같이 실린다).
+//    · foodcost_open           식비 칸을 «열었다» (FoodCostView 가 붙을 때)
+//    · foodcost_added_shop     장보기 「식비에 넣기」 로 적혔다 / foodcost_added_direct 적기시트 「적었어요」
+//    · foodcost_budget_set     예산을 세우거나 고쳤다 (⛔지운 것은 안 센다)
+//    · foodcost_shop_open_<id> 「가서 보고 올까요?」 가게 단추 — 기본 목록이면 cs_* 아이디, 유저가 더한 곳은 custom
+// 🔒 규칙 ④ — 가게 «이름»은 절대 안 보낸다(store.jsx addCostShop 의 name 은 유저가 친 글자다). 금액·메모·날짜도 안 보낸다.
+//    ⛔ 보내기() 가 아니라 행동보내기() — 위 「행동은 못 보내면 버린다」 그대로(2026-09-12 사고).
+const 기본가게아이디 = /^cs_[a-z]+$/
+export function 식비열림() { 지난화면 = null; 행동보내기('foodcost_open') }
+export function 식비적음(방식) { 지난화면 = null; 행동보내기(`foodcost_added_${방식 === 'shop' ? 'shop' : 'direct'}`) }
+export function 식비예산정함() { 지난화면 = null; 행동보내기('foodcost_budget_set') }
+export function 식비가게열림(id) { 지난화면 = null; 행동보내기(`foodcost_shop_open_${기본가게아이디.test(String(id || '')) ? id : 'custom'}`) }
+
 
 // ⛔⛔ 행동은 «못 보내면 버린다» — 화면과 다르다.
 //    까닭 = `보내기()` 는 gtag 가 아직 안 붙었으면 «한 칸»(못보낸화면)에 담아뒀다가 나중에 보낸다.

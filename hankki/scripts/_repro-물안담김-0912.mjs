@@ -20,7 +20,7 @@ await pg.goto(`http://localhost:${port}/hankki/`); await pg.waitForTimeout(1600)
 await pg.getByRole('button',{name:/장보기|장바구니/}).first().click().catch(()=>{}); await pg.waitForTimeout(900)
 
 const 넣기 = async (말) => {
-  const 칸 = pg.getByPlaceholder('살 재료 입력하고 Enter').first()
+  const 칸 = pg.locator('input[aria-label="살 재료 적기"]').first()
   if (!(await 칸.count())) throw new Error('⛔ 입력칸을 못 찾았다 — 이 판정은 믿을 수 없다')
   await 칸.scrollIntoViewIfNeeded(); await 칸.fill(말); await 칸.press('Enter'); await pg.waitForTimeout(450)
   return pg.evaluate(() => {

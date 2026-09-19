@@ -32,6 +32,70 @@ export function 쿠팡문(u, ua = typeof navigator === 'undefined' ? '' : naviga
   return `intent://search?q=${q}#Intent;scheme=coupang;package=com.coupang.mobile;S.browser_fallback_url=${encodeURIComponent(web)};end`
 }
 
+// 📱📱 [2026-09-18 창업자 *"쿠팡이츠 눌러봤는데 그냥 대표홈페이지였어. 배민도 그렇고 앱을 열어야하는데"*]
+//   ⭐ 안드로이드는 `intent://` 로 «앱»을 연다 — 앱이 없으면 크롬이 `browser_fallback_url` 로 웹을 띄운다(쿠팡문과 같은 꼴).
+//   ⛔ 아이폰은 그대로 웹이다 — 우리 코드는 아이폰에서 앱으로 안 보낸다(`_repro-쿠팡문-0905` ④와 같은 줄).
+//   ✅✅ [2026-09-18 저녁 · 딸 아이폰 실물 · 2026-09-07 문서의 「모름」을 닫았다]
+//      🔢 눌러 본 결과 = 요기요·제타·이마트몰·자연드림·컬리 = «웹만» · 쿠팡이츠·배민 = 앱 스킴이 안 먹고 대표 홈페이지 ·
+//         나머지는 사파리가 **「주소가 유효하지 않습니다」** → **아이폰에서 앱으로 열린 건 쿠팡(`coupang://`) «하나뿐»**
+//      ⛔ 그 하나도 «켜지 않는다» — 아이폰엔 되돌림 주소가 없어서 **앱이 없는 사람은 오류 화면을 본다**.
+//         한 사람을 앱으로 보내려고 나머지에게 «막다른 화면»을 주는 셈이다(실패의 모양이 더 나빠진다 · 절대원칙 34).
+//      📌 그래서 아이폰은 «웹»이 확정이다. ⛔이 줄을 근거 없이 되꺼내지 말 것.
+//   ⛔⛔ **꾸러미 이름(package)은 «확인한 것»만 적는다** — 틀린 이름을 쓰면 앱이 있는 폰에서도 안 열린다.
+//      🔢 근거 = Google Play 주소(2026-09-17 검색으로 확인) ·
+//         배달의민족 `play.google.com/store/apps/details?id=com.sampleapp` · 쿠팡이츠 `…?id=com.coupang.mobile.eats`
+//         컬리 `…?id=com.dbs.kurly.m2` (2026-09-18 확인 · ⛔처음에 확인 없이 com.kurly.kurlymarket 이라 적었다가 고쳤다)
+// ✅✅ [2026-09-18 저녁 · 창업자 갤럭시 실물] **스킴이 «없어도» 꾸러미만으로 열린다** — 넷을 더 가렸다.
+//   🔢 눌러 본 결과 = 롯데마트 제타 ⓒⓓ · 이마트몰 ⓒⓓ · 자연드림 ⓒⓓ 열림 · **요기요는 ⓐ=ⓒ=ⓓ 전부 같은 화면(＝웹)**
+//   ⭐⭐ **스킴 없는 꼴(`스킴: null`)을 쓴다** — 두 가지가 낫다:
+//      ① 앱 스킴을 «몰라도» 된다(짐작을 안 해도 된다 · 절대원칙 15)
+//      ② `intent://<그 주소>` 라 **우리가 준 주소 그대로** 앱에 넘어간다. 스킴 꼴(`intent://home`)은 «홈»으로만 간다.
+//   ⛔ 배민은 ⓓ 가 «안» 열렸다 → 배민만 스킴 꼴을 그대로 둔다(컬리·이츠도 이미 확인된 꼴이라 안 건드린다).
+//   ⛔ **요기요는 웹 그대로 둔다** — 앱이 그 주소를 안 받는다. 꾸러미(com.fineapp.yogiyo)는 찾았지만 열리지 않았다.
+// ✅✅ [2026-09-18 창업자 실물 판정 = *"C d 다돼"*] **앱 «전용 스킴»이라야 열린다.**
+//   🔢 안드로이드 폰으로 후보를 눌러 가렸다 — ⓒ(`baemin://`)·ⓓ(intent ＋ scheme=baemin) 둘 다 앱이 떴고,
+//      ⓑ(scheme=https)는 안 열렸다. 셋(배민·쿠팡이츠·컬리) 다 같았다.
+//   ⭐ **ⓓ를 쓴다** — 앱이 «없는» 폰은 크롬이 `browser_fallback_url` 로 웹을 띄운다.
+//      ⓒ 는 앱이 없으면 «아무 일도 안 난다»(창업자 폰엔 다 깔려 있어 안 드러난 갈래다).
+//   📌 쿠팡(`쿠팡문`)이 2026-09-05 에 확정한 모양과 «같다» — 그때도 https 는 안 받고 coupang:// 만 받았다.
+//      ⛔ 그런데 내가 2026-09-17 밤에 이 함수를 scheme=https 로 만들었다. 같은 저장소 안에 답이 적혀 있었는데 안 읽었다.
+const 앱꾸러미 = [
+  { 무늬: /(^|\.)baemin\.com/i, pkg: 'com.sampleapp', 스킴: 'baemin' },
+  { 무늬: /(^|\.)coupangeats\.com/i, pkg: 'com.coupang.mobile.eats', 스킴: 'coupangeats' },
+  { 무늬: /(^|\.)kurly\.com/i, pkg: 'com.dbs.kurly.m2', 스킴: 'kurly' },
+  // ⭐ 스킴 없이 «꾸러미만» — 2026-09-18 저녁에 창업자 갤럭시로 열리는 걸 확인한 셋
+  { 무늬: /(^|\.)lottemartzetta\.com/i, pkg: 'com.osp.lotte.mobile', 스킴: null },
+  { 무늬: /(^|\.)emart\.ssg\.com/i, pkg: 'kr.co.emart.emartmall', 스킴: null },
+  { 무늬: /(^|\.)icoop\.or\.kr/i, pkg: 'com.naturaldream.app', 스킴: null },
+]
+export function 앱문(u, ua = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
+  if (!/Android/i.test(ua)) return u
+  let host = ''
+  try { host = new URL(u).host } catch { return u }
+  const 것 = 앱꾸러미.find((x) => x.무늬.test(host))
+  if (!것) return u
+  // ⭐ 스킴이 있으면 `intent://home` ＋ scheme (배민·이츠·컬리 — 실물로 이 꼴만 열렸다)
+  //   스킴이 없으면 «그 주소 그대로» ＋ package (제타·이마트몰·자연드림 — 그 페이지로 간다)
+  const 속 = 것.스킴 ? `home#Intent;scheme=${것.스킴};` : `${u.replace(/^https?:\/\//, '')}#Intent;`
+  return `intent://${속}package=${것.pkg};S.browser_fallback_url=${encodeURIComponent(u)};end`
+}
+
+// 🛒🛒 [절대원칙 · 창업자 2026-09-18] **파트너스 링크는 «창업자 폰에서만» 그냥 주소로 간다**
+//   📮 창업자 = *"창업자 폰만 그냥 주소로 가게 해줘"* · 뿌리 = *"나는 그렇게 해주고 유저들은 링크로. 그래야 우리도 수익이 나지"*
+//   ⛔ 왜 = 파트너스 링크를 누르면 «그 뒤 24시간» 그 기기의 개인 구매가 실적에 섞인다(공식 가이드 41쪽).
+//      창업자는 그 폰으로 장을 본다 → 창업자 폰만 그냥 주소로 보내 그 걱정을 없앤다.
+//   ⭐ 정체는 «이미 있는 열쇠 하나»다 — `hankki:founder`(통계·AI 무제한·유저눈이 다 여기 걸린다).
+//      ⛔ 새 표식을 만들지 않는다(정체가 둘이면 반드시 갈린다).
+//   ⛔ `stats.js` 를 import 하지 «않는다» — 여는 길이 통계에 기대면 통계가 죽을 때 링크도 죽는다. 열쇠만 직접 본다.
+const 창업자폰 = () => { try { return !!localStorage.getItem('hankki:founder') } catch { return false } }
+// 🔗 파트너스 링크인가 — 쿠팡이 만들어 주는 단축 주소(link.coupang.com/a/…)
+const 파트너스링크 = /^https?:\/\/link\.coupang\.com\//i
+/** 🛒 창업자 폰이면 파트너스 링크를 «그냥 쿠팡 주소»로 바꾼다(유저는 그대로 파트너스로 간다). */
+export function 파트너스문(u, 홈 = 'https://www.coupang.com') {
+  if (!파트너스링크.test(String(u || ''))) return u
+  return 창업자폰() ? 홈 : u
+}
+
 export function openExternal(url, name = "") {
   if (!url) return
   // 이미 스킴이 있으면(https://, intent://, intent:, market: 등) 그대로 쓰고,
@@ -39,7 +103,7 @@ export function openExternal(url, name = "") {
   // (안드로이드 intent 링크로 쇼핑몰 '앱'을 강제로 열 때 https 로 덮어쓰지 않도록)
   const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(url) || /^intent:/i.test(url)
   const web = hasScheme ? url : 'https://' + url
-  const u = 쿠팡문(web, undefined, name)
+  const u = 앱문(쿠팡문(파트너스문(web), undefined, name))
   // ⭐ 앱 스킴(coupang://)·intent 는 «같은 창»으로 보낸다 — 새 창(_blank)으로 던지면 크롬이 조용히 막는다(v12.60 실측).
   //   같은 창 이동이라도 우리 화면은 그대로 남는다 — 앱이 앞으로 나올 뿐 페이지가 바뀌지 않는다.
   if (/^intent:/i.test(u)) { window.location.assign(u); return }

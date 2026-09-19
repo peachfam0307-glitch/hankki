@@ -1,5 +1,6 @@
-// 🔑🔬 식비 열쇠 재현판 (2026-09-17) — 「창업자 폰에만 뜨고 유저 화면은 그대로」를 확인한다
-//   ⛔ 이게 깨지면 검수 전 기능이 유저에게 그대로 나간다(규칙 13).
+// 🔑🔬 식비 열쇠 재현판 (2026-09-17 → 2026-09-18 뒤집음)
+//   ⭐ v13.76 에서 열쇠를 «뗐다» — 이제 유저에게도 보이고, `?식비=0` 으로 «끄는» 쪽이 열쇠다.
+//   ⛔ 이게 깨지면 식비가 안 보이거나(공개 실패) 못 끄게 된다(되돌릴 길 없음).
 import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
@@ -24,27 +25,27 @@ async function 열기(주소, ctx) {
   for (let i = 0; i < 8; i++) { const 것 = p.locator('.sheet-mask button, button:has-text("건너뛰기")').first(); if (await 것.count() === 0 || !(await 것.isVisible().catch(() => false))) break; try { await 것.click({ timeout: 1500 }); await p.waitForTimeout(400) } catch { break } }
   return p
 }
-// ① 보통 유저 — 열쇠 없음
+// ① 보통 유저 — 이제 «그냥 보인다»(v13.76 에 열쇠를 뗐다)
 const c1 = await b.newContext({ viewport: { width: 390, height: 844 }, locale: 'ko-KR' })
 await c1.addInitScript(() => { try { localStorage.setItem('hankki:nudge:cloudgate', '1') } catch { /* noop */ } })
 let p = await 열기('http://127.0.0.1:4539/hankki/', c1)
-본다('유저 화면엔 식비 칸이 없다', await p.locator('.segment .seg').filter({ hasText: '식비' }).count() === 0)
-await p.locator('input[placeholder*="살 재료"]').first().fill('두부'); await p.keyboard.press('Enter'); await p.waitForTimeout(400)
-본다('유저 화면엔 값 칸도 없다', await p.locator('button[aria-label*="값 적기"]').count() === 0)
+본다('유저 화면에도 식비 칸이 있다', await p.locator('.segment .seg').filter({ hasText: '식비' }).count() === 1)
+await p.locator('input[aria-label="살 재료 적기"]').first().fill('두부'); await p.keyboard.press('Enter'); await p.waitForTimeout(400)
+본다('값 칸도 같이 있다', await p.locator('button[aria-label*="금액 적기"]').count() === 1)
 본다('장보기 리스트는 그대로 뜬다', await p.locator('.shop-row').count() === 1)
-// ② 창업자 — 열쇠 링크로 한 번 열기
+// ② 끄기 — ?식비=0 으로 그 폰에서만 끈다
 const c2 = await b.newContext({ viewport: { width: 390, height: 844 }, locale: 'ko-KR' })
 await c2.addInitScript(() => { try { localStorage.setItem('hankki:nudge:cloudgate', '1') } catch { /* noop */ } })
-p = await 열기('http://127.0.0.1:4539/hankki/?%EC%8B%9D%EB%B9%84=1', c2)
-본다('열쇠 링크로 열면 식비 칸이 생긴다', await p.locator('.segment .seg').filter({ hasText: '식비' }).count() === 1)
-await p.locator('input[placeholder*="살 재료"]').first().fill('대파'); await p.keyboard.press('Enter'); await p.waitForTimeout(400)
-본다('값 칸도 같이 생긴다', await p.locator('button[aria-label*="값 적기"]').count() === 1)
-// ③ 그 폰에서 «주소 없이» 다시 열어도 남아 있나
-p = await 열기('http://127.0.0.1:4539/hankki/', c2)
-본다('다음부터는 주소 없이도 뜬다', await p.locator('.segment .seg').filter({ hasText: '식비' }).count() === 1)
-// ④ 끄기
 p = await 열기('http://127.0.0.1:4539/hankki/?%EC%8B%9D%EB%B9%84=0', c2)
 본다('?식비=0 으로 끈다', await p.locator('.segment .seg').filter({ hasText: '식비' }).count() === 0)
+await p.locator('input[aria-label="살 재료 적기"]').first().fill('대파'); await p.keyboard.press('Enter'); await p.waitForTimeout(400)
+본다('끄면 값 칸도 없다', await p.locator('button[aria-label*="금액 적기"]').count() === 0)
+// ③ 끈 폰에서 «주소 없이» 다시 열어도 꺼져 있나
+p = await 열기('http://127.0.0.1:4539/hankki/', c2)
+본다('끈 것은 주소 없이도 유지된다', await p.locator('.segment .seg').filter({ hasText: '식비' }).count() === 0)
+// ④ 다시 켜기
+p = await 열기('http://127.0.0.1:4539/hankki/?%EC%8B%9D%EB%B9%84=1', c2)
+본다('?식비=1 로 다시 켠다', await p.locator('.segment .seg').filter({ hasText: '식비' }).count() === 1)
 await b.close(); srv.close()
 console.log(`\n${실패.length ? '⛔' : '✅'} 통과 ${통과} · 실패 ${실패.length}`)
 if (실패.length) process.exit(1)
