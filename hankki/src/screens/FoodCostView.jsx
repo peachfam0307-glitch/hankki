@@ -241,9 +241,15 @@ export default function FoodCostView() {
                         ⭐ 누를 수 있다는 걸 «보이게» 한다(오른쪽 연필) — 안 보이면 없는 기능이다(값 칸에서 겪었다). */}
                   <button className="press fc-hit" onClick={() => set고칠것(e)} aria-label={`${날보기(e.d)} ${돈(e.won)}원 고치기`}>
                     <span className="fc-d">{날보기(e.d)} {요일보기(e.d)}</span>
+                    {/* 🏷 [2026-09-18 창업자 «메모 잘리는 것도 같이 고쳐줘»] 주인공을 바꿨다.
+                          ⛔ 전엔 「갈래 ＋ 메모」가 한 줄을 나눠 써서 «늘 메모가» 잘렸다(「외식·배달 쿠팡…」).
+                          ⭐ 갈래는 둘 중 하나라 금액 옆에서 짐작되지만, 메모는 «거기서만» 알 수 있는 것이다.
+                             그래서 메모가 있으면 메모를 앞에 두고 갈래를 작게 뒤로 보낸다 — 잘려도 잃는 것이 적다. */}
                     <span className="fc-t">
-                      {e.k === 'shop' ? '장보기' : '외식·배달'}
-                      {e.memo && <small>{e.memo}</small>}
+                      {/* ⛔ flex 안의 «맨 글자»에는 말줄임이 안 걸린다 — 반드시 칸으로 감싼다 */}
+                      {e.memo
+                        ? (<><span className="fc-m">{e.memo}</span><small>{e.k === 'shop' ? '장보기' : '외식·배달'}</small></>)
+                        : (<span className="fc-m">{e.k === 'shop' ? '장보기' : '외식·배달'}</span>)}
                       {e.items?.length > 0 && <small>{e.items.map((x) => x.n).join(' · ')}</small>}
                     </span>
                     <b className="fc-w">{돈(e.won)}원</b>

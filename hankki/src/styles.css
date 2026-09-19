@@ -2005,8 +2005,12 @@ img {
   background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .fc-row:last-child { border-bottom: 0; }
 .fc-d { width: 58px; color: var(--text-sub); font-size: 13px; flex: none; }
-.fc-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fc-t small { color: var(--text-sub); font-size: 12px; margin-left: 5px; }
+/* 🏷 [2026-09-18] 메모가 주인공 · 갈래는 «늘 남는다».
+      ⛔ 전엔 한 줄에 흘려서 뒤엣것부터 잘렸고, 그 뒤엣것이 «메모»였다(「외식·배달 쿠팡…」).
+      ✅ 이제 메모 칸만 줄어들고(min-width:0) 갈래는 안 줄어든다(flex:none) — 잘려도 갈래는 보인다. */
+.fc-t { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+.fc-t small { color: var(--text-sub); font-size: 12px; flex: none; }
+.fc-m { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fc-w { font-weight: 700; white-space: nowrap; }
 .fc-sheet { padding: 12px 18px calc(20px + var(--safe-bottom)); }
 .fc-seg { display: flex; gap: 7px; }

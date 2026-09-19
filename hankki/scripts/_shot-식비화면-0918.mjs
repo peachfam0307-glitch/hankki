@@ -16,8 +16,10 @@ const srv = createServer((q, s) => {
 await new Promise((r) => srv.listen(4611, r))
 const 밖 = process.env.CLAUDE_SCRATCHPAD_DIR || '/tmp'
 // 🗓 이번 주로 심는다 — 화면 기본 잣대가 «주»라서 바로 보인다
-const 주첫 = (() => { const d = new Date(Date.now() + 9 * 3600e3); const w = d.getUTCDay(); d.setUTCDate(d.getUTCDate() - w); return d.toISOString().slice(0, 10) })()
+//   ⛔ 날짜를 여기서 «만들지» 않는다(절대원칙 27) — 앱과 같은 한 곳에서 가져온다.
+const { todayKST } = await import('../src/today.js')
 const 며칠 = (n) => { const d = new Date(주첫 + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
+const 주첫 = (() => { const d = new Date(todayKST() + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - d.getUTCDay()); return d.toISOString().slice(0, 10) })()
 const 씨 = [
   { d: 며칠(0), k: 'shop', won: 38400, memo: '쿠팡' },
   { d: 며칠(1), k: 'out', won: 15000, memo: '배민 치킨' },
@@ -77,6 +79,15 @@ await p.screenshot({ path: join(밖, '식비화면-0918-전체.png'), fullPage: 
 await p.locator('.fc-hit').nth(5).evaluate((el) => el.scrollIntoView({ block: 'center' })); await p.waitForTimeout(700)
 await p.screenshot({ path: join(밖, '식비목록-0918.png') })
 const 줄수 = await p.locator('.fc-hit').count()
+// 🛒 릴스 1번 칸 — 장보기에서 «두부 1910» 을 적는 자리 (창업자 2026-09-18 예고 릴스)
+await p.locator('.segment .seg').filter({ hasText: '장보기' }).first().click({ force: true }); await p.waitForTimeout(700)
+const 적는칸 = p.locator('input[aria-label="살 재료 적기"]').first()
+await 적는칸.click(); await p.waitForTimeout(200)
+await p.screenshot({ path: join(밖, '식비릴스-빈칸.png') })
+for (const 글 of ['두부', '두부 19', '두부 1910']) { await 적는칸.fill(글); await p.waitForTimeout(250) }
+await p.screenshot({ path: join(밖, '식비릴스-타자.png') })
+await 적는칸.press('Enter'); await p.waitForTimeout(700)
+await p.screenshot({ path: join(밖, '식비릴스-담김.png') })
 console.log('덮은 것 =', 덮음 || '(없음)')
 console.log('줄 개수 =', 줄수)
 console.log('📸', join(밖, '식비화면-0918.png'), '·', join(밖, '식비화면-0918-전체.png'))
