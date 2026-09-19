@@ -65,3 +65,11 @@
 | 잔량 표시 UI | ⏳ 앱쪽 미구현 |
 | 저장당 1건 카운트 | ⛔ **아직 「호출당」이다** — 고쳐야 함 |
 | 990원 20장팩 결제·KV 크레딧 원장 | ⛔ 미구현 = **#54**(출시 게이트) |
+
+## 🔔 셋째 워커 — `hankki-push` (폰 알림 · 2026-09-19)
+- **코드**: `worker-push.js` — 대시보드 Edit code 에 통째로 붙여넣고 Deploy. ⛔이름은 꼭 `hankki-push`(앱이 `https://hankki-push.annyeong-hankki.workers.dev` 로 찾는다).
+- **KV 바인딩** `PUSH_KV` → 새 네임스페이스 `hankki-push-kv` (구독 묶음·잠금·기록·VAPID 열쇠).
+- **Secret** `APP_TOKEN` · `FOUNDER_SECRET` = 다른 두 워커와 «같은» 값.
+- **Cron Trigger** `*/5 * * * *` — ⛔ 이걸 안 걸면 구독만 쌓이고 알림은 영영 안 간다.
+- **확인**: `/vapid` 를 폰 브라우저로 열면 `{ pub }` · `/?quota=1&key=<FOUNDER_SECRET>` 로 구독 수·이달 보낸 수.
+- 설계·재현판 = `docs/알림-설계-2026-09-19.md` · `scripts/_repro-푸시워커-0919.mjs`

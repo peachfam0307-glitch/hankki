@@ -166,15 +166,24 @@ self.addEventListener('activate', (event) => {
  *  ⭐ `tag` 를 쓰면 같은 이름의 알림이 «덮어써진다» — 혹시 두 번 와도 폰에는 하나만 남는다.
  *     (두 번 보내는 것 자체는 워커가 막는다. 이건 «마지막 그물»이다.)
  */
+// 📨 워커는 «빈 푸시»를 보낸다(암호화 0줄 · worker-push.js 머리 참조) → 문구는 여기서 /today 로 가져온다.
+//    ⛔ 가져오기가 실패해도 «반드시» 하나는 띄운다 — 크롬은 push 를 받고 알림을 안 띄우면 다음 푸시를 조용히 끊는다.
+const PUSH_URL = 'https://hankki-push.annyeong-hankki.workers.dev'
+async function 오늘문구(event) {
+  try { if (event.data) { const v = event.data.json(); if (v && v.본문) return v } } catch (e) { /* 아래로 */ }
+  try {
+    const r = await fetch(PUSH_URL + '/today', { cache: 'no-store' })
+    if (r.ok) return await r.json()
+  } catch (e) { /* 아래로 */ }
+  return {}
+}
 self.addEventListener('push', (event) => {
-  let 값 = {}
-  try { 값 = event.data ? event.data.json() : {} } catch (e) { 값 = {} }
+  event.waitUntil(오늘문구(event).then((값) => {
   const 제목 = String(값.제목 || '한끼')
   const 본문 = String(값.본문 || '새로운 소식이 있어요')
   const 길 = String(값.길 || './')
   const 표 = String(값.표 || 'hankki')
-  event.waitUntil(
-    self.registration.showNotification(제목, {
+  return self.registration.showNotification(제목, {
       body: 본문,
       // 🖼 아이콘은 매니페스트가 쓰는 «그 파일»이다 — 두 곳에 적지 않는다.
       icon: new URL('icons/icon-192-v7.png', self.registration.scope).href,
@@ -183,7 +192,7 @@ self.addEventListener('push', (event) => {
       renotify: false,
       data: { 길 },
     })
-  )
+  }))
 })
 
 /** 👆 알림을 누르면 — 이미 열려 있는 한끼가 있으면 «그걸» 띄우고, 없으면 새로 연다.

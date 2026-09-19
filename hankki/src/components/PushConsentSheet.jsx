@@ -15,6 +15,7 @@ import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
 import { 알림이벤트 } from '../pushConsent'
+import { 구독맞추기 } from '../pushSubscribe'
 
 export default function PushConsentSheet () {
   const [답하기, set답하기] = useState(null)
@@ -27,6 +28,8 @@ export default function PushConsentSheet () {
       set답하기(() => d.답)
     }
     window.addEventListener(알림이벤트, 받기)
+    // 🔁 앱을 켤 때 한 번 — 이미 켠 폰의 구독이 워커에 «있게» 맞춘다(서비스워커가 바뀌어도 살아남는다). 실패해도 조용하다.
+    구독맞추기()
     return () => window.removeEventListener(알림이벤트, 받기)
   }, [])
 

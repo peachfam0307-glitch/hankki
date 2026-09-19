@@ -11,7 +11,7 @@ import EmojiPicker from './EmojiPicker'
 import CropSheet from './CropSheet'
 import Portal from './Portal'
 import { 냉장고담음 } from '../stats'
-import { 알림허락받기 } from '../pushConsent'   // 🔔 재료를 «넣은 뒤» 알림을 묻는다(2026-09-19 · 창업자 확정)
+import { 알림켜기 } from '../pushSubscribe'   // 🔔 재료를 «넣은 뒤» 알림을 묻는다(2026-09-19 · 창업자 확정)
 import { useLayerBack } from '../useBackHandler'
 import { guessEmoji } from '../emoji'
 import { pantryKey, pantryUrgent, rankPantryRecipes, 급하다, 남은날수, 기한말 } from '../pantryMatch'
@@ -90,7 +90,7 @@ export default function PantryView() {
     names.forEach((nm) => {
       if (!pantry.some((p) => p.name === nm)) {
         store.addPantry({ id: newId(), name: nm, icon: guessIngredientIcon(nm), expiry: null, addedAt: Date.now() })
-        try { 냉장고담음(); 알림허락받기() } catch { /* 📊[09-14] 넣었다 · 아래 ⛔주석 참조 */ }
+        try { 냉장고담음(); 알림켜기() } catch { /* 📊[09-14] 넣었다 · 아래 ⛔주석 참조 */ }
         // 🎁 냉장고를 처음 채웠다 — 평생 1회(서버가 판정)
         //   ⛔ 전엔 여기서 토스트를 안 띄웠다(*"장보기 흐름 한가운데다"*) — 그 판단이 틀렸다.
         //      받고도 모르면 「안 받았다」가 된다(창업자 2026-09-01).
@@ -776,7 +776,7 @@ function PantryForm({ item, onClose }) {
       //      **안내 카드까지 소리 없이 사라져** 「없어졌다」로만 보였다.
       //      📌 **받은 것은 반드시 «받았다»고 말한다** — 특히 그게 마지막 하나일 때.
       // 📊 [2026-09-14] 🧊 넣었다 — «둘째 길». 위 자리와 짝이다(한쪽만 붙이면 반을 놓친다).
-      try { 냉장고담음(); 알림허락받기() } catch { /* 통계가 죽어도 냉장고는 된다 */ }
+      try { 냉장고담음(); 알림켜기() } catch { /* 통계가 죽어도 냉장고는 된다 */ }
       열쇠받기(EARN.냉장고).then((받음) => {
         if (받음) nav.showToast(`냉장고를 처음 채웠어요 · ${KEY_NAME} 1${KEY_UNIT}를 더 받았어요`, 5200)
       })

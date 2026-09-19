@@ -17,7 +17,7 @@ import { tidyFounder, 유저눈인가 } from './tidy'
 // 프록시엔 6중 방어벽(월 900건 상한 등)이 있어 비용 $0을 물리적으로 보장한다.
 // 실패(오프라인·한도초과·오류)하면 아래 폰내장/tesseract로 '조용히' 폴백 → OCR은 늘 동작.
 const OCR_PROXY_URL = 'https://hankki-ocr.annyeong-hankki.workers.dev'
-const OCR_APP_TOKEN = '0VRNDSjHBhwniTzIDAbnRaJygyfGJ2K2'
+export const OCR_APP_TOKEN = '0VRNDSjHBhwniTzIDAbnRaJygyfGJ2K2'
 
 // 🔓👀 운영자 열쇠를 헤더에 싣는다 — 단, 「유저 눈」이면 «안 싣는다».
 //   📮 창업자 2026-09-10 = "유저 눈 스위치로 갈게" → "a로가"
