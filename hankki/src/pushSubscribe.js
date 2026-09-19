@@ -8,18 +8,34 @@
 // ⭐ 서비스워커를 새로 등록하지 «않는다» — 이미 도는 `src/sw.js` 를 `navigator.serviceWorker.ready` 로 «찾는다».
 // 🔒 재현판 = scripts/_repro-알림허락-0919.mjs ⑧
 
-import { 알림허락받기, 알림동의상태, 푸시가능, 브라우저권한 } from './pushConsent'
+import { 알림허락받기, 알림동의상태, 알림동의쓰기, 푸시가능, 브라우저권한 } from './pushConsent'
 import { OCR_APP_TOKEN } from './ocr'
 
 export const PUSH_URL = 'https://hankki-push.annyeong-hankki.workers.dev'   // ⛔ 워커 이름이 `hankki-push` 여야 이 주소가 난다
 const 보낸표 = 'hankki:push:subscribed'   // 값 = 워커에 «이미 보낸» endpoint — 같은 주소를 매번 다시 보내지 않는다(KV 쓰기 1,000/일)
 
-/** 🙋 담기가 끝난 직후 부른다 = 허락 → 켜졌으면 구독까지. Promise<boolean> */
-export async function 알림켜기() {
+/** 🙋 담기가 끝난 직후 부른다 = 허락 → 켜졌으면 구독까지. Promise<boolean>
+ *  ⚙️ 설정 「켜기」는 { 다시묻기: true } — 우리 시트에서 「괜찮아요」 했던 사람도 다시 물을 수 있다. */
+export async function 알림켜기({ 다시묻기 = false } = {}) {
   let 됐나 = false
-  try { 됐나 = await 알림허락받기() } catch { 됐나 = false }
+  try { 됐나 = await 알림허락받기({ 다시묻기 }) } catch { 됐나 = false }
   if (!됐나) return false
   return 구독맞추기()
+}
+
+/** ⚙️ 설정 「끄기」 — 구독을 «폰에서» 지우고 우리 답을 no 로. 워커 칸은 다음 보낼 때 410 이 와서 스스로 빠진다(따로 지우는 길을 안 만든다).
+ *  ⛔ 브라우저 권한은 우리가 못 내린다 — 하지만 구독이 없으면 아무것도 안 온다. */
+export async function 알림끄기() {
+  try {
+    if (푸시가능()) {
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.getSubscription()
+      if (sub) await sub.unsubscribe()
+    }
+  } catch { /* 못 지워도 아래 답은 no 로 남긴다 — 다음 구독맞추기가 안 돈다 */ }
+  try { localStorage.removeItem(보낸표) } catch { /* noop */ }
+  알림동의쓰기('no')
+  return true
 }
 
 /** 🔁 켜져 있는 폰이면 구독이 워커에 «있게» 맞춘다 — 앱을 켤 때도 한 번 부른다(서비스워커가 바뀌어도 살아남게). */

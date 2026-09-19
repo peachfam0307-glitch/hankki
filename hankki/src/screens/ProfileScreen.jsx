@@ -55,6 +55,9 @@ import { FAV_NAME } from '../favName'
 import { 설정갈래, 설정섹션, 설정이름표스타일 } from '../settingsGroups'
 import { 앱안인가 } from '../nativeAuth'   // 🍎 아이폰 앱 = 파일 다운로드(<a download>)가 조용히 안 된다 · 서비스워커 갱신도 없다(2026-09-13 전수점검)
 import { AI동의상태, AI동의쓰기, 바뀜이벤트 } from '../aiConsent'   // 🤖🔐 AI 다듬기 사용 켜기/끄기(큰 틀 6-② ⓑ)
+// 🔔 [2026-09-19] 알림 켜기/끄기 — 시트가 「언제든 설정에서 끌 수 있어요」라고 «약속»한다. 이 줄이 그 약속이다(창업자 *"알림켤수있는 것도 설정에 따로 넣어야겠네"*).
+import { 알림동의상태, 알림바뀜, 푸시가능, 브라우저권한 } from '../pushConsent'
+import { 알림켜기, 알림끄기 } from '../pushSubscribe'
 
 export default function ProfileScreen() {
   const store = useStore()
@@ -102,6 +105,8 @@ export default function ProfileScreen() {
   // 🤖🔐 AI 다듬기 허락 상태 — 'yes' | 'no' | null(아직 안 물음). 시트에서 답하면 바뀜이벤트로 여기도 갱신된다.
   const [ai동의, setAi동의] = useState(() => AI동의상태())
   useEffect(() => { const f = () => setAi동의(AI동의상태()); window.addEventListener(바뀜이벤트, f); return () => window.removeEventListener(바뀜이벤트, f) }, [])
+  const [알림동의, set알림동의] = useState(() => 알림동의상태())
+  useEffect(() => { const f = () => set알림동의(알림동의상태()); window.addEventListener(알림바뀜, f); return () => window.removeEventListener(알림바뀜, f) }, [])
   // ⛔⛔ `useLayerBack` 은 «반드시» 위 `useState` «아래»에 둔다 —
   //   위에 두면 `cloud` 를 선언 «전»에 읽어 `Cannot access before initialization` 으로 **설정 화면이 통째로 죽는다.**
   //   📌 2026-08-21 에 실제로 그렇게 냈다. 빌드도 통과하고 스모크도 통과했다 — **화면을 열어서야 드러났다**(규칙 21).
@@ -446,6 +451,21 @@ export default function ProfileScreen() {
       onClick: () => {
         if (ai동의 === 'yes') { AI동의쓰기('no'); nav.showToast('AI 다듬기를 껐어요 · 레시피는 앱 안 규칙으로만 정리해요') }
         else { AI동의쓰기('yes'); nav.showToast('AI 다듬기를 켰어요 · 글자·사진이 Cloudflare Workers AI 로 가요') }
+      },
+    },
+    // 🔔 알림 받기 — 담기 시트가 «약속»한 「설정에서 끌 수 있어요」의 실물(2026-09-19). 설계 = docs/알림-설계-2026-09-19.md
+    //   · 🍎 아이폰(WKWebView)·옛 브라우저 = 「이 기기는 안 돼요」 — 거짓 약속을 안 한다
+    //   · 브라우저가 «차단»이면 우리가 못 푼다 → 폰 설정으로 안내 · 켜기 = 다시묻기(「괜찮아요」 했던 사람도 다시 묻는다)
+    //   · 끄기 = 폰의 구독을 지운다 → 아무것도 안 온다(워커 칸은 다음 보낼 때 410 으로 스스로 빠진다)
+    {
+      icon: 'clock', label: '알림 받기',
+      badge: !푸시가능() ? '이 기기는 안 돼요' : 브라우저권한() === 'denied' ? '폰 설정에서 차단됨' : (알림동의 === 'yes' && 브라우저권한() === 'granted') ? '켜짐' : 알림동의 === 'no' ? '꺼짐' : '담을 때 물어봐요',
+      onClick: async () => {
+        if (!푸시가능()) { nav.showToast('이 기기에선 알림을 받을 수 없어요'); return }
+        if (브라우저권한() === 'denied') { nav.showToast('폰 설정 → 앱 → 한끼 → 알림에서 켜 주세요'); return }
+        if (알림동의 === 'yes' && 브라우저권한() === 'granted') { await 알림끄기(); nav.showToast('알림을 껐어요'); return }
+        const 됐나 = await 알림켜기({ 다시묻기: true })
+        nav.showToast(됐나 ? '알림을 켰어요 · 월·수 15:30 · 토 9:00' : '알림을 켜지 못했어요')
       },
     },
     { icon: 'trash', label: '계정 · 데이터 삭제', onClick: () => setDelAccount(true) },

@@ -110,7 +110,7 @@ const 시트붙이기 = () => window.addEventListener(P.알림이벤트, (e) => 
   잰다(/냉장고담음\(\); 알림켜기\(\)/.test(pantry), '⑦ 냉장고 = 넣기(냉장고담음) «뒤»에 묻는다')
   // ── ⑧ 구독(pushSubscribe) — 허락 «뒤»에만, 이미 도는 서비스워커를 «찾아» 쓴다
   const subs = 읽기('src/pushSubscribe.js')
-  잰다(/export async function 알림켜기[\s\S]*?알림허락받기\(\)[\s\S]*?if \(!됐나\) return false[\s\S]*?return 구독맞추기\(\)/.test(subs), '⑧ 알림켜기 = 허락 → 안 됐으면 끝 → 됐으면 구독맞추기')
+  잰다(/export async function 알림켜기[\s\S]*?알림허락받기\(\{ 다시묻기 \}\)[\s\S]*?if \(!됐나\) return false[\s\S]*?return 구독맞추기\(\)/.test(subs), '⑧ 알림켜기 = 허락 → 안 됐으면 끝 → 됐으면 구독맞추기')
   잰다(/navigator\.serviceWorker\.ready/.test(subs) && !/serviceWorker\.register\(/.test(subs), '⑧ 서비스워커를 «새로 등록하지 않고» ready 로 찾는다 (sw.js 가 이미 돈다)')
   잰다(/getSubscription\(\)[\s\S]*?if \(!sub\)[\s\S]*?\/vapid[\s\S]*?pushManager\.subscribe\(\{ userVisibleOnly: true/.test(subs), '⑧ 구독이 없을 때만 /vapid 를 받아 새로 만든다 (userVisibleOnly)')
   잰다(/'x-hankki-token': OCR_APP_TOKEN/.test(subs) && /export const OCR_APP_TOKEN/.test(읽기('src/ocr.js')), '⑧ 구독 넣기에 앱 토큰을 붙인다 (KV 쓰기 1,000/일을 남이 못 쓰게)')
@@ -120,6 +120,21 @@ const 시트붙이기 = () => window.addEventListener(P.알림이벤트, (e) => 
   잰다(/하루에 한 번/.test(시트), '⑦ 시트 문구에 「하루에 한 번」 — 잦지 않다고 «먼저» 말한다')
   잰다(/월·수/.test(시트) && /토요일/.test(시트) && /꾸미기/.test(시트), '⑦ 시트 문구에 «언제 오는지» 셋')
   잰다(/name="clock"/.test(시트), '⑦ 아이콘 = clock (Icon.jsx 에 bell 이 없다 · alert 는 경고처럼 보인다)')
+}
+
+// ⑨ ⚙️ 설정 줄 — 「설정에서 끌 수 있어요」라는 «약속»의 실물 ＋ 다시묻기·끄기
+{
+  const prof = 읽기('src/screens/ProfileScreen.jsx'), subs = 읽기('src/pushSubscribe.js')
+  잰다(/label: '알림 받기'/.test(prof) && /알림끄기\(\)/.test(prof) && /알림켜기\(\{ 다시묻기: true \}\)/.test(prof), '⑨ 설정에 「알림 받기」 줄 — 끄기 ＋ 켜기(다시묻기)')
+  잰다(/이 기기는 안 돼요/.test(prof) && /폰 설정에서 차단됨/.test(prof), '⑨ 아이폰·차단 폰엔 «못 켠다»고 정직하게 보인다')
+  잰다(/export async function 알림끄기[\s\S]*?unsubscribe\(\)[\s\S]*?알림동의쓰기\('no'\)/.test(subs), '⑨ 알림끄기 = 폰 구독 지우기 ＋ 우리 답 no')
+  폰(true, 'default'); 서랍.clear(); 권한창횟수 = 0; 듣는이.clear(); 뜬횟수 = 0; 다음답 = 'no'; 시트붙이기()
+  await P.알림허락받기()
+  다음답 = 'yes'; 권한창답 = 'granted'
+  const r = await P.알림허락받기({ 다시묻기: true })
+  잰다(r === true && 뜬횟수 === 2 && P.알림동의상태() === 'yes', '⑨ 「괜찮아요」 뒤에도 설정 켜기(다시묻기)면 «다시 묻고» 켜진다')
+  폰(true, 'denied'); 듣는이.clear(); 뜬횟수 = 0; 시트붙이기()
+  잰다((await P.알림허락받기({ 다시묻기: true })) === false && 뜬횟수 === 0, '⑨ 브라우저가 차단이면 다시묻기여도 «안 묻는다»(폰 설정에서만 풀린다)')
 }
 
 console.log(나쁨 ? `\n⛔ ${나쁨}개 틀렸다` : '\n✅ 알림 허락 — 화살을 아낀다')
