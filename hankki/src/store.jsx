@@ -1281,6 +1281,14 @@ function reducer(state, action) {
       if (n && n < 10000) return state
       return { ...state, foodBudget: { ...(state.foodBudget || { w: 0, m: 0 }), [칸]: n } }
     }
+    // 📅 달 «시작일» — 창업자 2026-09-20 *"나는 보통 9월 13일-10월 12일 이렇게 계산하거든"* (급여일 살림)
+    //   ⭐ 시작일 하나면 끝날짜는 «다음 시작일 하루 전»으로 저절로 — 달 길이(28·30·31)와 무관하다.
+    //   ⛔ 29~31 은 못 고른다 — 2월에 그 날이 없어 구간이 깨진다. 1 = 지금과 같음(1일~말일).
+    case 'setFoodMonthStart': {
+      const n = Math.floor(Number(action.day) || 1)
+      if (n < 1 || n > 28) return state
+      return { ...state, foodBudget: { ...(state.foodBudget || { w: 0, m: 0 }), start: n } }
+    }
     case 'usedCostShop': {
       // ⭐ 누를 때마다 시각을 적어 둔다 — 화면은 이 값으로 «최근 쓴 순»으로 줄을 세운다(손으로 끌어 옮길 필요가 없다)
       return { ...state, costShops: (state.costShops || []).map((s) => (s.id === action.id ? { ...s, at: Date.now() } : s)) }
@@ -1551,6 +1559,7 @@ export function StoreProvider({ children }) {
     addCostShop: useCallback((shop) => dispatch({ type: 'addCostShop', shop }), []),
     removeCostShop: useCallback((id) => dispatch({ type: 'removeCostShop', id }), []),
     usedCostShop: useCallback((id) => dispatch({ type: 'usedCostShop', id }), []),
+    setFoodMonthStart: useCallback((day) => dispatch({ type: 'setFoodMonthStart', day }), []),
     setFoodBudget: useCallback((칸, won) => dispatch({ type: 'setFoodBudget', 칸, won }), []),
     addFoodCost: useCallback((entry) => dispatch({ type: 'addFoodCost', entry }), []),
     editFoodCost: useCallback((id, patch) => dispatch({ type: 'editFoodCost', id, patch }), []),
