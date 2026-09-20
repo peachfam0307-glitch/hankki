@@ -56,6 +56,7 @@ function 시트 ({ 답 }) {
             <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '13px 15px', fontSize: 14.5, lineHeight: 1.85, whiteSpace: 'pre-line' }}>
               · <b>월·수</b> — 새 레시피가 열려요{'\n'}
               · <b>토요일 아침</b> — 이번 주 장바구니{'\n'}
+              · <b>유통기한 이틀 전 아침</b> — 냉장고에 넣어 둔 것{'\n'}
               · <b>가끔</b> — 새 꾸미기가 열릴 때
             </div>
             <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.6, margin: '10px 2px 14px' }}>
