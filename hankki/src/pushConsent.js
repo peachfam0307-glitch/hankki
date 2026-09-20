@@ -110,7 +110,17 @@ export function 알림허락받기({ 다시묻기 = false } = {}) {
     if (v !== 'yes') { if (v === 'no') 알림동의쓰기('no'); 풀기(false); return }
     // ✅ 여기서만 «진짜» 권한창을 띄운다 — 우리 시트에서 「예」 한 사람뿐이다
     let 결과 = 'denied'
-    try { 결과 = await w().Notification.requestPermission() } catch { 결과 = 'denied' }
+    // 🍎🍎 [2026-09-20 23:37 · 실물로 찾은 진짜 범인] 아이폰 «앱»엔 Notification 이 «아예 없다».
+    //   ⛔ 그래서 아래 줄이 오류 → catch → 'denied' → 「알림을 켜지 못했어요」.
+    //      우리 시트에서 「예」를 눌러도 «애플에게 묻기도 전에» 웹 코드가 거절로 만들어 버렸다.
+    //   🔢 증거 셋 = ①아이폰 설정 → 한끼 에 「알림」 줄이 «아예 없다»(한 번도 안 물었다는 뜻)
+    //      ②🐾 발자국이 비어 있다(아이폰 코드까지 못 갔다) ③설정 칸에 「Notification 없음」이 찍혀 있다.
+    //   ✅ 아이폰이면 애플에게 «직접» 묻는다(pushNative). 웹·갤럭시는 아래 줄 그대로.
+    if (아이폰앱인가()) {
+      try { 결과 = await (await import('./pushNative.js')).아이폰허락받기() } catch { 결과 = 'denied' }
+    } else {
+      try { 결과 = await w().Notification.requestPermission() } catch { 결과 = 'denied' }
+    }
     알림동의쓰기(결과 === 'granted' ? 'yes' : 'no')
     풀기(결과 === 'granted')
   }
