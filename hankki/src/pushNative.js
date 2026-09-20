@@ -22,6 +22,20 @@
 import { 아이폰앱인가, 아이폰권한칸, 알림동의쓰기 } from './pushConsent.js'  // ⭐ 확장자를 붙인다 — 재현판(node)이 이 부품을 «그대로 불러» 돌린다(favPin.js 와 같은 까닭)
 
 const 보낸표 = 'hankki:push:iostoken'   // 워커에 «이미 보낸» 토큰 — 같은 토큰을 매번 다시 안 보낸다(KV 쓰기 아낀다)
+export const 발자국칸 = 'hankki:push:ios발자국'   // 🐾 어디까지 갔나 — 설정 「내부 기기」 칸에 찍힌다
+
+/** 🐾 [2026-09-20 밤] «어디서 멈췄는지»를 폰에 적는다.
+ *  ⛔ 왜 필요한가 = 2026-09-20 22:07 딸 폰에서 「알림 받을게요」를 눌렀는데 «애플 권한창이 안 떴다».
+ *     그런데 앱 안에서 일어나는 일이라 내가 볼 방법이 전혀 없었다 — 오류도 안 난다(조용한 실패).
+ *     짐작으로 세 군데를 고쳐보는 대신, 「푸시 API: 있음/없음」 한 줄이 30초에 답을 준 것과 «같은 방법»을 쓴다.
+ *  ⭐ 유저에겐 안 보인다(내부 기기 칸은 열쇠를 넣은 우리 폰에만 뜬다). */
+function 발자국(말) {
+  try {
+    const 전 = localStorage.getItem(발자국칸) || ''
+    const 때 = new Date().toTimeString().slice(0, 8)
+    localStorage.setItem(발자국칸, `${전 ? 전 + ' → ' : ''}${때} ${말}`.slice(-300))
+  } catch { /* 못 적어도 하던 일은 그대로 간다 */ }
+}
 
 function 부품() {
   try { return (typeof window !== 'undefined' && window.Capacitor?.Plugins?.PushNotifications) || null } catch { return null }
@@ -30,15 +44,17 @@ function 부품() {
 /** 애플 권한창 → Promise<'granted'|'denied'|'default'>. 답을 폰에 적어 둔다(브라우저권한() 이 읽는다). */
 export async function 아이폰허락받기() {
   const P = 부품()
+  발자국(P ? '부품있음' : '⛔부품없음')
   if (!P) return 'default'
   try {
     // ⛔ 이미 정해진 답이 있으면 «다시 안 묻는다» — 아이폰은 한 번 거절하면 앱이 영영 못 묻는다(화살이 하나다).
     let r = await P.checkPermissions()
-    if (r.receive === 'prompt' || r.receive === 'prompt-with-rationale') r = await P.requestPermissions()
+    발자국(`지금권한=${r?.receive}`)
+    if (r.receive === 'prompt' || r.receive === 'prompt-with-rationale') { r = await P.requestPermissions(); 발자국(`물어본답=${r?.receive}`) }
     const 답 = r.receive === 'granted' ? 'granted' : r.receive === 'denied' ? 'denied' : 'default'
     try { localStorage.setItem(아이폰권한칸, 답) } catch { /* 못 적어도 된다 — 다음에 한 번 더 확인할 뿐 */ }
     return 답
-  } catch { return 'default' }
+  } catch (e) { 발자국(`⛔권한오류 ${String(e?.message || e).slice(0, 60)}`); return 'default' }
 }
 
 /** 애플이 주는 기기 토큰을 «기다린다» — register() 는 답을 안 돌려주고 사건으로 알려준다. */
@@ -56,13 +72,14 @@ function 토큰기다리기(P, 초 = 12) {
 
 /** 🔁 켜져 있는 아이폰이면 토큰이 워커에 «있게» 맞춘다. Promise<boolean> */
 export async function 아이폰구독맞추기({ 주소, 토큰: 앱토큰 } = {}) {
-  if (!아이폰앱인가() || !주소 || !앱토큰) return false
+  if (!아이폰앱인가() || !주소 || !앱토큰) { 발자국(`⛔구독못함(아이폰=${아이폰앱인가()}·주소=${!!주소})`); return false }
   const P = 부품()
   if (!P) return false
   try {
     const r = await P.checkPermissions()
-    if (r.receive !== 'granted') return false
+    if (r.receive !== 'granted') { 발자국(`⛔구독전권한=${r?.receive}`); return false }
     const 토큰 = await 토큰기다리기(P)
+    발자국(토큰 ? `토큰받음 ${String(토큰).length}자` : '⛔토큰안옴(12초)')
     if (!토큰 || !/^[0-9a-fA-F]{64}$/.test(토큰)) return false   // 잣대는 좁게 — 이상한 값을 워커에 안 보낸다
     let 이미 = null
     try { 이미 = localStorage.getItem(보낸표) } catch { 이미 = null }
@@ -73,10 +90,12 @@ export async function 아이폰구독맞추기({ 주소, 토큰: 앱토큰 } = {
       // 문(production/sandbox)은 «안 보낸다» — 워커가 production 으로 잡고, 애플이 아니라고 하면 그 폰만 바꾼다.
       body: JSON.stringify({ platform: 'ios', sub: { endpoint: 토큰 } }),
     })
+    발자국(`워커답=${res.status}`)
     if (!res.ok) return false
     try { localStorage.setItem(보낸표, 토큰) } catch { /* noop */ }
+    발자국('✅워커에 등록됨')
     return true
-  } catch { return false }
+  } catch (e) { 발자국(`⛔구독오류 ${String(e?.message || e).slice(0, 60)}`); return false }
 }
 
 /** 🙋 우리 시트에서 「좋아요」를 누른 뒤 부른다 = 애플 권한창 → 토큰 등록까지. Promise<boolean> */

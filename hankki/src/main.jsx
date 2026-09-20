@@ -15,12 +15,18 @@ applyTheme(getTheme())
 // 실제 '보이는' 화면 높이를 재서 앱 높이(--app-height)로 쓴다.
 // 모바일 주소창·제스처바 때문에 100dvh와 실제 보이는 높이가 어긋나
 // 하단 버튼(하단바·요리시작·가져오기 등)이 화면 밖으로 잘리던 문제의 근본 해결.
+// ⌨️🍎 앱(웹뷰)이 알려준 키보드 높이 — 웹·갤럭시에선 늘 0 이라 아래 계산이 예전과 똑같다.
+//   ⛔ 이 값이 필요한 까닭 = 앱 웹뷰는 키보드가 떠도 visualViewport 를 «안 줄인다».
+//      그래서 아래 setAppHeight 가 「키보드 없다」로 덮어써 버리면 부품이 알려준 값이 지워진다(실제로 그렇게 된다).
+let 앱키보드 = 0
+
 function setAppHeight() {
   const vv = window.visualViewport
-  const h = vv ? vv.height : window.innerHeight
+  const h = (vv ? vv.height : window.innerHeight) - 앱키보드
   document.documentElement.style.setProperty('--app-height', Math.round(h) + 'px')
   // 키보드가 차지한 높이 — 입력칸 위 '계량 버튼 바'를 키보드 바로 위에 띄우는 데 쓴다.
-  const kb = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0
+  //   🍎 앱이면 부품이 알려준 값을 그대로 쓴다 — 웹뷰는 visualViewport 를 안 줄여서 아래 계산이 늘 0 이 된다.
+  const kb = 앱키보드 || (vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0)
   document.documentElement.style.setProperty('--kb-inset', Math.round(kb) + 'px')
   // ⌨️🍎 [2026-09-20 · 창업자 제보 「달력 보이는 부분이 키보드 속에 가려」]
   //   ⛔ 위 --kb-inset 은 아이폰에서 못 믿는다 — 사파리는 키보드가 뜨면 페이지를 통째로 민다(offsetTop).
@@ -47,6 +53,25 @@ function setAppHeight() {
   }
 }
 setAppHeight()
+
+// ⌨️🍎 [2026-09-20 밤 · 창업자 딸 폰 실물] **앱 안에서는 위 계산이 통째로 안 먹는다.**
+//   🔎 왜 = 사파리는 키보드가 뜨면 visualViewport 높이를 줄여 알려주는데, 앱 속 웹뷰는 «아무것도 안 알려준다».
+//      그래서 앱은 키보드가 뜬 줄을 모르고, 시트가 화면 맨 아래에 붙어 키보드에 깔린다.
+//      📌 22:02 캡처 = 알림 시트의 「괜찮아요」가 키보드 도구줄에 덮여 있었다(사파리에선 멀쩡한 판인데).
+//   ✅ 그래서 앱에서는 «부품이 알려주는 키보드 높이»를 그대로 쓴다 — 계산이 아니라 값을 받는 것이다.
+//   ⛔ 웹·갤럭시는 이 코드가 아예 안 돈다(부품이 없다) → 한 글자도 안 바뀐다.
+function 앱키보드듣기() {
+  try {
+    const K = window.Capacitor?.Plugins?.Keyboard
+    if (!K || !window.Capacitor?.isNativePlatform?.()) return
+    // ⭐ 값을 «한 곳»에 넣고 setAppHeight 를 다시 돌린다 — 계산식이 두 벌이 되면 반드시 갈린다(규칙 28).
+    const 넣기 = (높이) => { 앱키보드 = Math.max(0, Math.round(높이 || 0)); setAppHeight() }
+    K.addListener('keyboardWillShow', (e) => 넣기(e?.keyboardHeight))
+    K.addListener('keyboardWillHide', () => 넣기(0))
+  } catch { /* 부품이 없어도 앱은 그대로 돈다 */ }
+}
+앱키보드듣기()
+
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', setAppHeight)
   window.visualViewport.addEventListener('scroll', setAppHeight)

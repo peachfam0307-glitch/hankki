@@ -584,6 +584,14 @@ export default function ProfileScreen() {
               푸시 API: {typeof window !== 'undefined' && 'PushManager' in window && 'serviceWorker' in navigator ? '있음' : '없음'}
               {typeof Notification !== 'undefined' ? ` · 알림 권한 ${Notification.permission}` : ' · Notification 없음'}
             </div>
+            {/* 🐾🍎 [2026-09-20 밤] 아이폰 알림이 «어디까지 갔나» — 창업자 딸 폰에서 권한창이 안 떠서 넣었다.
+                앱 안에서 나는 일은 내가 볼 길이 «전혀» 없다(오류도 안 난다) → 발자국을 남겨 30초에 자리를 찾는다.
+                ⛔ 유저에겐 안 보인다 — 이 카드가 내부 기기(열쇠 넣은 폰)에만 뜬다. */}
+            <div className="t-sub" style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.5, wordBreak: 'break-all' }} data-probe="ios푸시">
+              🍎 부품: {typeof window !== 'undefined' && window.Capacitor?.Plugins?.PushNotifications ? '있음' : '없음'}
+              {' · 앱: '}{typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() ? (window.Capacitor.getPlatform?.() || '?') : '웹'}
+              <br />🐾 {(() => { try { return localStorage.getItem('hankki:push:ios발자국') || '아직 없음' } catch { return '못 읽음' } })()}
+            </div>
             {보낸기록().length > 0 && (
               <div style={{ marginTop: 10 }}>
                 <div className="t-sub" style={{ fontSize: 13, fontWeight: 700 }}>점검 중 보낸 것 (최근 {보낸기록().length}건)</div>
