@@ -1839,7 +1839,13 @@ img {
      ⭐ --kb-inset 은 main.jsx 가 visualViewport 로 이미 재고 있던 값이다(EditorScreen 계량 바가 쓰던 것) —
         새로 만들지 않고 그대로 쓴다. 갤럭시는 이 값이 0이라 «아무 변화 없다». 옛 폰이면 값이 없어 지금과 같다.
      ⛔ 이 한 줄이 autoFocus 시트 일곱 곳을 «전부» 고친다(식비 시작일·장보기 직접넣기 2·가져오기·레꾸자랑·내레시피·꾸미기 글자 3). */
-  bottom: var(--kb-inset, 0px);
+  /* ⌨️🍎 [2026-09-20 다시 고침] bottom 만 올리던 것 → «보이는 네모»를 통째로 씌운다.
+     사파리는 키보드가 뜨면 페이지를 밀어버려서(--vv-top) 「키보드 높이」 계산이 모자란다.
+     top/height 를 visualViewport 그대로 쓰면 밀린 양과 무관하게 항상 맞는다.
+     갤럭시·PC = --vv-top 0 · --vv-h 는 창 높이라 지금과 똑같다(실측함). */
+  top: var(--vv-top, 0px);
+  height: var(--vv-h, 100dvh);
+  bottom: auto;
   background: rgba(63, 50, 39, 0.35);
   /* 모달 시트는 항상 최상단 — 표지 꾸미기(z-index 220) 위에서도 글쓰기 시트가 떠야 한다 */
   z-index: 300;
@@ -1854,7 +1860,7 @@ img {
   padding: 8px 8px calc(12px + var(--safe-bottom));
   /* ⌨️ 키보드가 떴을 때 «보이는» 높이를 넘지 않게 — 안 그러면 긴 시트의 «윗부분»이 화면 밖으로 넘친다
      (바탕을 올려도 시트가 바탕보다 크면 flex-end 라 위로 삐져나간다). --app-height = visualViewport 높이. */
-  max-height: calc(var(--app-height, 100dvh) - 52px);
+  max-height: calc(var(--vv-h, var(--app-height, 100dvh)) - 52px);
   overflow-y: auto;
   overscroll-behavior: contain;
   animation: sheetUp 0.26s cubic-bezier(0.22, 0.61, 0.36, 1) both;
