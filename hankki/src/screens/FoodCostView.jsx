@@ -560,7 +560,12 @@ function 시작일시트({ 지금, 닫기, store, nav }) {
           <div className="fc-ask-t">달은 며칠부터 셀까요?</div>
           <div className="fc-ask-s">월급날 기준으로 살림하면 그 날짜를 적으세요</div>
           <div className="fc-mstart-in">
-            <input type="number" inputMode="numeric" min={1} max={28} value={글} autoFocus
+            {/* ⌨️🍎 [2026-09-20 · 창업자 제보] autoFocus 를 «뺐다» — 두 겹 중 둘째 겹.
+                ⛔ 있으면 시트가 뜨자마자 키보드가 올라와 «시트를 덮는다»(아이폰). 창업자 = 「안눌러진다」 → 「스크롤을 내려야 보여」.
+                ✅ 빼면 시트가 «먼저» 보이고, 숫자 칸을 눌러야 키보드가 온다 — 폰이 「보이는 높이」를 안 알려줘도 시트는 보인다.
+                ⭐ 첫째 겹 = styles.css 의 sheet-mask bottom(--kb-inset). 그게 먹으면 키보드 위로 올라가기까지 한다.
+                📌 잃는 것 = 탭 한 번 더. 얻는 것 = 「눌렀는데 아무것도 안 보인다」가 사라진다. */}
+            <input type="number" inputMode="numeric" min={1} max={28} value={글}
               onChange={(e) => set글(e.target.value.replace(/\D/g, '').slice(0, 2))}
               onKeyDown={(e) => { if (e.key === 'Enter') 정하기() }} />
             <span>일부터</span>
