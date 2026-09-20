@@ -101,9 +101,11 @@ try {
     // 📒 [창업자 확정 2026-09-20] 계측 캡처는 «아침에 전날 값»을 받는다 — 밤에 찍으면 그날 2~3시간이 매일 빠진다.
     //    ⛔ 규칙으로 두면 잊는다(2026-07-31 「규칙만 만들면 뭐해 안지키는데」) → 어제 값이 장부에 없으면 «내가 먼저» 말하게 띄운다.
     try {
-      const { todayKST: TK } = await import('./release-calendar.mjs')
-      const 오늘 = TK()
-      const 어제 = new Date(Date.parse(오늘 + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10)
+      // ⛔ 여기서 「오늘에서 하루 빼기」를 «직접» 하면 날짜 만드는 곳이 둘이 된다(절대원칙 27).
+      //    실제로 2026-09-20 에 그렇게 썼다가 check-kst 가 배포를 막았고, v13.88~92 가 못 나갔다.
+      //    ✅ 어제도 src/today.js 에서 받는다 — 고칠 자리도 하나, 틀릴 자리도 하나다.
+      const { yesterdayKST } = await import('../src/today.js')
+      const 어제 = yesterdayKST()
       const 장부길 = join(ROOT, 'hankki', 'docs', `계측-일별-${어제.slice(0, 7)}.json`)
       if (existsSync(장부길)) {
         const 장 = JSON.parse(readFileSync(장부길, 'utf8'))

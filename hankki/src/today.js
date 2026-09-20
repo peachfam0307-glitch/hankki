@@ -31,3 +31,10 @@ export const todayKST = (now = new Date()) =>
 /** 내일(KST). 「자동 공개 전날 검수」 게이트가 쓴다. */
 export const tomorrowKST = (now = new Date()) =>
   new Date(now.getTime() + 33 * 60 * 60000).toISOString().slice(0, 10)
+
+/** 어제(KST). 「아침에 전날 계측값을 받는다」 알림이 쓴다(2026-09-20).
+ *  ⭐ 9시간 더하고 24시간 빼는 것이라 ＝ −15시간. 위 둘과 «같은 산수»다.
+ *  ⛔ 부르는 쪽에서 「오늘에서 하루 빼기」를 직접 하지 않는다 — 그러면 날짜 만드는 곳이 다시 둘이 된다.
+ *     실제로 2026-09-20 에 latest-hook 이 그렇게 했다가 check-kst 가 배포를 막았다. */
+export const yesterdayKST = (now = new Date()) =>
+  new Date(now.getTime() - 15 * 60 * 60000).toISOString().slice(0, 10)
