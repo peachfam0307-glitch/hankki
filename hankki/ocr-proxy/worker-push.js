@@ -326,7 +326,10 @@ async function 아이폰하나(sub, jwt, 문구) {
         'apns-expiration': String(Math.floor(Date.now() / 1000) + 60 * 60 * 6),   // 6시간 지나면 애플이 버린다(늦은 알림은 짜증이다 · 웹의 보내는창과 같은 뜻)
       },
       body: JSON.stringify({
-        aps: { alert: { title: 문구.제목, body: 문구.본문 }, sound: 'default', 'thread-id': 문구.표 },
+        // 🔕 [창업자 확정 2026-09-21 00:09 「조용한걸루하고싶엉」] 소리 «없이» 보낸다 — 화면·잠금화면에만 뜬다.
+        //   ⛔ sound 를 아예 안 보내는 것이 «무음»이다(sound: '' 이나 null 이 아니라 «칸이 없어야» 한다).
+        //   ⭐ 갤럭시·웹은 원래 우리가 소리를 안 정한다(폰 설정을 따른다) → 이제 두 쪽이 같은 결이 된다.
+        aps: { alert: { title: 문구.제목, body: 문구.본문 }, 'thread-id': 문구.표 },
         길: 문구.길,   // 누르면 갈 자리 — 앱이 읽는다
       }),
     })
