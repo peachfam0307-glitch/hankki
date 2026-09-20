@@ -42,7 +42,13 @@ function setAppHeight() {
   const kb = Math.max(0, 창 - h)
   document.documentElement.style.setProperty('--kb-inset', Math.round(kb) + 'px')
   // 🔬 실물에서 무슨 값이 오는지 적어 둔다 — 설정 → 내부 기기 칸이 이걸 보여준다(창업자 캡처 한 장이면 끝난다)
-  try { localStorage.setItem('hankki:kb:재본값', `창${Math.round(창)} 보임${Math.round(보임)} 부품${Math.round(앱키보드)} 씀${Math.round(h)}`) } catch { /* noop */ }
+  //   ⛔ [23:17 고침] 키보드를 «닫은 뒤» 값이 덮어써서 기본값만 보였다(창844 보임844 부품0) — 정작 필요한 건 «떴을 때»다.
+  //      그래서 키보드가 올라온 순간의 값을 «따로» 남긴다(닫아도 안 지워진다 → 설정 화면까지 들고 갈 수 있다).
+  try {
+    const 줄 = `창${Math.round(창)} 보임${Math.round(h)} 부품${Math.round(앱키보드)} kb${Math.round(kb)}`
+    localStorage.setItem('hankki:kb:재본값', 줄)
+    if (kb > 40) localStorage.setItem('hankki:kb:떴을때', 줄)
+  } catch { /* noop */ }
   // ⌨️🍎 [2026-09-20 · 창업자 제보 「달력 보이는 부분이 키보드 속에 가려」]
   //   ⛔ 위 --kb-inset 은 아이폰에서 못 믿는다 — 사파리는 키보드가 뜨면 페이지를 통째로 민다(offsetTop).
   //      그러면 「창높이 − 보이는높이 − 밀린양」이 키보드를 «작게» 재고, 시트가 그만큼만 올라온다.
