@@ -135,6 +135,9 @@ export const ING_LINKS = {
   '돼지고기 다짐육': 'https://link.coupang.com/a/gZjXCOQfRs',
   '모둠버섯': 'https://link.coupang.com/a/gZj3j9D4iO',
   '소고기 다짐육': 'https://link.coupang.com/a/gZkspeX9Oe',
+  // 🔗 [2026-09-20 창업자] 재료 줄이 「위드잇 안심햄 200g (스팸 200g · 대용량으로)」 — 분량이 붙어 있어
+  //    넣기 도구가 물어보고 멈췄다. 위 넷과 같은 경우라 «분량 뗀 이름»으로 넣는다(무스비맛브리또 9/21).
+  '위드잇 안심햄': 'https://link.coupang.com/a/hcoEsSoyey',
   // 🍡 떡은 «이름이 이미 갈려» 있어 따로 붙는다 — 떡국떡 / 떡볶이 떡 · 가래떡(누들떡)
   '떡볶이 떡': 'https://link.coupang.com/a/gZg4AihgOW', // ⛇묶음: 떡볶이 떡 / 가래떡
   '가래떡': 'https://link.coupang.com/a/gZg4AihgOW', // ⛇묶음: 떡볶이 떡 / 가래떡
