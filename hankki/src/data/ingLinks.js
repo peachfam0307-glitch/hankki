@@ -154,8 +154,14 @@ export const ING_LINKS = {
   '닭가슴살': 'https://link.coupang.com/a/gZjNJKt7VQ',
   '닭볶음탕용 닭': 'https://link.coupang.com/a/gZjQd9T2T6',
   '돼지고기 목살': 'https://link.coupang.com/a/gZjUYZsdkO', // ⛇묶음: 대패삼겹 / 돼지고기 목살
+  // 🔗 [2026-09-20] 레시피가 그냥 「목살」로 적어 «같은 고기인데 안 붙고 있었다»(목살조림 9/21).
+  //    ⛔ 새 링크가 아니다 — 위 줄과 «같은 주소»다. 이름만 하나 더 이어 붙인다.
+  '목살': 'https://link.coupang.com/a/gZjUYZsdkO', // ⛇묶음: 대패삼겹 / 돼지고기 목살 / 목살
   '루꼴라': 'https://link.coupang.com/a/gZj0w4G25A',
-  '모차렐라 치즈': 'https://link.coupang.com/a/gZj6blHyHB',
+  // 🔗 [2026-09-20] 「모차렐라 / 모짜렐라」 — 한 글자 차이로 안 붙고 있었다(브리또 두 편 9/21).
+  //    ⛔ 새 링크가 아니다 — 아래 둘은 «같은 주소»다.
+  '모차렐라 치즈': 'https://link.coupang.com/a/gZj6blHyHB', // ⛇묶음: 모차렐라 치즈 / 모짜렐라 치즈
+  '모짜렐라 치즈': 'https://link.coupang.com/a/gZj6blHyHB', // ⛇묶음: 모차렐라 치즈 / 모짜렐라 치즈
   '사과': 'https://link.coupang.com/a/gZkbGOntU4',
   '숙주': 'https://link.coupang.com/a/gZktVgPObQ',
   '시금치': 'https://link.coupang.com/a/gZkvaQIHg4',
