@@ -65,3 +65,12 @@
 | 잔량 표시 UI | ⏳ 앱쪽 미구현 |
 | 저장당 1건 카운트 | ⛔ **아직 「호출당」이다** — 고쳐야 함 |
 | 990원 20장팩 결제·KV 크레딧 원장 | ⛔ 미구현 = **#54**(출시 게이트) |
+
+## 🔔 셋째 워커 — `hankki-push` (폰 알림 · 2026-09-19)
+- **코드**: `worker-push.js` — 대시보드 Edit code 에 통째로 붙여넣고 Deploy. ⛔이름은 꼭 `hankki-push`(앱이 `https://hankki-push.annyeong-hankki.workers.dev` 로 찾는다).
+- **KV 바인딩** `PUSH_KV` → 새 네임스페이스 `hankki-push-kv` (구독 묶음·잠금·기록·VAPID 열쇠).
+- **Secret** `APP_TOKEN` · `FOUNDER_SECRET` = 다른 두 워커와 «같은» 값.
+- **Cron Trigger** `*/5 * * * *` — ⛔ 이걸 안 걸면 구독만 쌓이고 알림은 영영 안 간다.
+- **확인**: `/vapid` 를 폰 브라우저로 열면 `{ pub }` · `/?quota=1&key=<FOUNDER_SECRET>` 로 구독 수·이달 보낸 수.
+- **📅 D-2 «따로» 알림(2026-09-20)** — 앱이 `/expiry` 로 「깨울 날짜」만 보낸다(재료 이름 없음). KV `push:exp:<날짜>`(그날 깨울 주소들 · 날짜 지나면 TTL 로 사라짐) · `push:expof:<해시>`(폰별 날짜 · 바뀌면 옛 날짜에서 뺀다). 일정 «없는» 날 아침 9시에 그 폰들에게만 · 40명씩 · `push:sent:<날>:exp` 로 두 번 안 보냄. 일정 있는 날은 그 알림 둘째 줄에 얹힌다.
+- 설계·재현판 = `docs/알림-설계-2026-09-19.md` · `scripts/_repro-푸시워커-0919.mjs`(⑨ = D-2)

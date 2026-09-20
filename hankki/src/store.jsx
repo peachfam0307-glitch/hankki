@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react'
 import { seedRecipes, 열린때 } from './data/seed'
 import { basicRecipes, allBasicRecipes, BASICS_VERSION } from './data/basics'
+import { 거울쓰기 } from './pantryExpiry.js'   // 🔔🧊 알림 «얹기» 거울 — 저장 자리에서 매번(2026-09-19)
+import { 유통기한날짜맞추기 } from './pushSubscribe.js'   // 🔔📅 D-2 «따로» 알림 — 날짜만 워커로(2026-09-20)
 // 🥬 재료 이름 → 파트너스 링크 (2026-09-12 창업자 *"장보기에 들어가는 것도 다 붙이자"*)
 //   ⭐ **담는 길이 여기 하나로 모인다** — 레시피 「재료 담기」·장보기 자유 입력·어디서 담든
 //      이 자리를 지나므로, 링크를 여기서 붙이면 화면마다 따로 손댈 곳이 없다.
@@ -1478,6 +1480,12 @@ export function StoreProvider({ children }) {
   //   🚨 **안전장치 = 「지금 상태가 쓸 열쇠」를 «둘 다» 센다.**
   //      아직 이사 전이라 사진이 `data:` 로 들어 있어도 `나누기()` 가 «쓰게 될 열쇠»를 알려준다.
   //      ⛔ 쪽지만 세면 이사 «직전»에 쓸어담아 **멀쩡한 사진을 통째로 지운다.**
+  // 🔔📅 [2026-09-20] D-2 «따로» 알림 날짜 — 켤 때 한 번(12초 뒤) 워커와 맞춘다. 저장이 없던 날(냉장고 안 만짐)에도 날짜 창(14일)이 하루 밀리며 새 날이 들어오는 걸 이렇게 잡는다.
+  //   ⛔ 같으면 안 보낸다(pushSubscribe.유통기한날짜보내기) — 켤 때마다 요청이 나가는 게 아니다.
+  useEffect(() => {
+    const t = setTimeout(() => { try { 유통기한날짜맞추기(지금state.current?.pantry || []) } catch { /* 덤 */ } }, 12000)
+    return () => clearTimeout(t)
+  }, [])
   //   ⏰ 앱을 켜고 8초 뒤 «한 번만» — 첫 화면을 먼저 그리고, 매 저장마다 훑지 않는다(절대원칙 32).
   useEffect(() => {
     const t = setTimeout(async () => {
@@ -1523,6 +1531,10 @@ export function StoreProvider({ children }) {
       }
       localStorage.setItem(KEY, 글)
       마지막저장성공 = Date.now()
+      // 🔔🧊 [2026-09-19] 유통기한 «얹기» 거울 — 저장 자리 «하나»라 담기·지우기·고치기 어느 길로 와도 지난다(한쪽만 붙이면 반을 놓친다).
+      //    같은 글자면 안 쓴다(pantryExpiry.거울쓰기) · 실패해도 본체 저장은 이미 끝났다.
+      try { 거울쓰기(저장할판.pantry) } catch { /* 거울은 덤 */ }
+      try { 유통기한날짜맞추기(저장할판.pantry) } catch { /* 날짜도 덤 — 다음 저장 때 다시 */ }
       // 🪞 아이폰 앱이면 10초 뒤 문서 폴더에 한 벌 더(거울) — 웹·안드로이드에선 바로 false 로 끝난다
       try { 거울예약() } catch { /* 거울은 덤 — 본체 저장은 이미 끝났다 */ }
     } catch {

@@ -8,6 +8,7 @@ import { ocrImage, getOcrLeft, 열쇠셈, 밀린열쇠보내기, 밀린기본보
 import { parseRecipeText, keepRaw, 자리표제목 } from './parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중, 번호알림받기, 선반집기, 동의안함으로끝났나 } from './tidy'
 import AIConsentSheet from './components/AIConsentSheet'   // 🔐 AI 로 보내기 전 허락 시트(큰 틀 6-② ⓑ)
+import PushConsentSheet from './components/PushConsentSheet'   // 🔔 폰 알림 허락 시트 — 담기가 끝난 «직후» 뜬다(2026-09-19)
 import { 까닭말, 다듬기끝말, 동의안함끝말, 남은열쇠말 } from './안내말'
 import { 만회값 } from './retidy'   // 🧺 선반에서 받은 답을 얹는 규칙 — 상세 화면 자동 만회와 «같은 곳»
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
@@ -1187,6 +1188,7 @@ export default function App() {
         {cloudGate && <CloudGate onDone={() => setCloudGate(false)} />}
         {/* 🤖🔐 AI 다듬기 허락 시트 — tidy.js 가 보내기 «전»에 물으면 여기서 뜬다(큰 틀 6-② ⓑ · 2026-09-08) */}
         <AIConsentSheet />
+        <PushConsentSheet />
 
         {/* 🙏 한마디 청하기 — 레시피를 저장한 직후(내 레시피 2개부터 · 30일에 한 번).
             ⛔ 자리는 «여기»라야 한다 — 편집 화면은 저장에 성공하면 popAll 로 스스로 사라진다. */}

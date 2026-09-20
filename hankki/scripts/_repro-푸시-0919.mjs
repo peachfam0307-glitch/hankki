@@ -29,8 +29,11 @@ const sw = 읽기('src/sw.js')
 
 // ── ② ⛔ 못 읽어도 «앱이 멎지 않는다» (절대원칙 34)
 const push몸 = (/addEventListener\('push', \(event\) => \{([\s\S]*?)\n\}\)/.exec(sw) || [])[1] || ''
-잰다(/try \{[\s\S]*event\.data[\s\S]*\} catch/.test(push몸), '② event.data 를 try/catch 로 읽는다 (이상한 게 와도 안 멎는다)')
-잰다(/값\.제목 \|\||제목 \|\| '한끼'/.test(push몸), '② 제목이 비어도 기본 문구로 띄운다')
+const 문구몸 = (/async function 오늘문구\(event\) \{([\s\S]*?)\n\}/.exec(sw) || [])[1] || ''
+잰다(/try \{[\s\S]*event\.data[\s\S]*\} catch/.test(문구몸), '② event.data 를 try/catch 로 읽는다 (이상한 게 와도 안 멎는다)')
+잰다(/fetch\(PUSH_URL \+ '\/today'/.test(문구몸) && /return \{\}/.test(문구몸), '② 빈 푸시면 /today 로 문구를 가져오고, 그것도 실패하면 «빈 값»으로라도 띄운다')
+잰다(/hankki-push\.annyeong-hankki\.workers\.dev/.test(sw) && 읽기('src/pushSubscribe.js').includes('hankki-push.annyeong-hankki.workers.dev'), '② 워커 주소가 sw.js 와 pushSubscribe.js 에서 «같다»')
+잰다(/제목 \|\| '한끼'/.test(push몸) && /본문 \|\| '새로운 소식이 있어요'/.test(push몸), '② 제목이 비어도 기본 문구로 띄운다')
 잰다(/event\.waitUntil\(/.test(push몸), '② waitUntil 로 감싼다 (안 감싸면 그리기 전에 워커가 잠든다)')
 
 // ── ③ ⛔ 같은 알림이 두 번 와도 폰엔 «하나»만 (마지막 그물 · 두 번 보내기는 워커가 막는다)

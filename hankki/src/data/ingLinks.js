@@ -135,9 +135,17 @@ export const ING_LINKS = {
   '돼지고기 다짐육': 'https://link.coupang.com/a/gZjXCOQfRs',
   '모둠버섯': 'https://link.coupang.com/a/gZj3j9D4iO',
   '소고기 다짐육': 'https://link.coupang.com/a/gZkspeX9Oe',
+  // 🔗 [2026-09-20 창업자] 재료 줄이 「위드잇 안심햄 200g (스팸 200g · 대용량으로)」 — 분량이 붙어 있어
+  //    넣기 도구가 물어보고 멈췄다. 위 넷과 같은 경우라 «분량 뗀 이름»으로 넣는다(무스비맛브리또 9/21).
+  '위드잇 안심햄': 'https://link.coupang.com/a/hcoEsSoyey',
   // 🍡 떡은 «이름이 이미 갈려» 있어 따로 붙는다 — 떡국떡 / 떡볶이 떡 · 가래떡(누들떡)
   '떡볶이 떡': 'https://link.coupang.com/a/gZg4AihgOW', // ⛇묶음: 떡볶이 떡 / 가래떡
   '가래떡': 'https://link.coupang.com/a/gZg4AihgOW', // ⛇묶음: 떡볶이 떡 / 가래떡
+  // 🍡 [2026-09-20 창업자 「그걸로 넣고」] 목살조림(9/21)이 그냥 「떡 1줌」이라고만 적는다.
+  //    🔎 판정 근거 = 만드는 법 4 「두 가지 소스 중 하나를 골라 «떡과 함께 붓고 졸이면»」 —
+  //       졸이는 요리라 떡국떡(얇은 것)은 퍼진다. ＋ 「1줌」은 길쭉한 떡을 쥐는 단위다.
+  //    ⛔ 새 링크가 아니다 — 위 둘과 «같은 주소»다.
+  '떡': 'https://link.coupang.com/a/gZg4AihgOW', // ⛇묶음: 떡볶이 떡 / 가래떡 / 떡
   '김가루': 'https://www.oasis.co.kr/product/detail/95589',
   '고등어': 'https://smartstore.naver.com/jejugalchi/products/4772215785',
   '쌀': 'https://smartstore.naver.com/eeem/products/6764610456',
@@ -154,8 +162,14 @@ export const ING_LINKS = {
   '닭가슴살': 'https://link.coupang.com/a/gZjNJKt7VQ',
   '닭볶음탕용 닭': 'https://link.coupang.com/a/gZjQd9T2T6',
   '돼지고기 목살': 'https://link.coupang.com/a/gZjUYZsdkO', // ⛇묶음: 대패삼겹 / 돼지고기 목살
+  // 🔗 [2026-09-20] 레시피가 그냥 「목살」로 적어 «같은 고기인데 안 붙고 있었다»(목살조림 9/21).
+  //    ⛔ 새 링크가 아니다 — 위 줄과 «같은 주소»다. 이름만 하나 더 이어 붙인다.
+  '목살': 'https://link.coupang.com/a/gZjUYZsdkO', // ⛇묶음: 대패삼겹 / 돼지고기 목살 / 목살
   '루꼴라': 'https://link.coupang.com/a/gZj0w4G25A',
-  '모차렐라 치즈': 'https://link.coupang.com/a/gZj6blHyHB',
+  // 🔗 [2026-09-20] 「모차렐라 / 모짜렐라」 — 한 글자 차이로 안 붙고 있었다(브리또 두 편 9/21).
+  //    ⛔ 새 링크가 아니다 — 아래 둘은 «같은 주소»다.
+  '모차렐라 치즈': 'https://link.coupang.com/a/gZj6blHyHB', // ⛇묶음: 모차렐라 치즈 / 모짜렐라 치즈
+  '모짜렐라 치즈': 'https://link.coupang.com/a/gZj6blHyHB', // ⛇묶음: 모차렐라 치즈 / 모짜렐라 치즈
   '사과': 'https://link.coupang.com/a/gZkbGOntU4',
   '숙주': 'https://link.coupang.com/a/gZktVgPObQ',
   '시금치': 'https://link.coupang.com/a/gZkvaQIHg4',
@@ -163,6 +177,8 @@ export const ING_LINKS = {
   '양송이버섯': 'https://link.coupang.com/a/gZkBeXvDS8',
   '완숙 토마토': 'https://link.coupang.com/a/gZkCFDgWku',
   '다시마초': 'https://smartstore.naver.com/cnmi/products/7222887351',
+  '청경채': 'https://link.coupang.com/a/hcoF50tQXY',
+  '볶음김치': 'https://link.coupang.com/a/hcoMCMURZk',
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)

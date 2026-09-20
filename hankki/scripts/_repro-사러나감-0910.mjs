@@ -37,6 +37,7 @@ await ctx.route('**://*.oasis.co.kr/**', (r) => r.abort())
 await ctx.addInitScript(() => {
   try {
     localStorage.setItem('hankki:nudge:cloudgate', '1')
+    localStorage.setItem('hankki:push:consent', 'no')   // 🔔 담기 뒤 알림 시트(v13.80)가 화면을 덮지 않게
     localStorage.setItem('hankki:onboarded', '1')
   } catch { /* noop */ }
 })
