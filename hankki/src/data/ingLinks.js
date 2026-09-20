@@ -141,6 +141,11 @@ export const ING_LINKS = {
   // 🍡 떡은 «이름이 이미 갈려» 있어 따로 붙는다 — 떡국떡 / 떡볶이 떡 · 가래떡(누들떡)
   '떡볶이 떡': 'https://link.coupang.com/a/gZg4AihgOW', // ⛇묶음: 떡볶이 떡 / 가래떡
   '가래떡': 'https://link.coupang.com/a/gZg4AihgOW', // ⛇묶음: 떡볶이 떡 / 가래떡
+  // 🍡 [2026-09-20 창업자 「그걸로 넣고」] 목살조림(9/21)이 그냥 「떡 1줌」이라고만 적는다.
+  //    🔎 판정 근거 = 만드는 법 4 「두 가지 소스 중 하나를 골라 «떡과 함께 붓고 졸이면»」 —
+  //       졸이는 요리라 떡국떡(얇은 것)은 퍼진다. ＋ 「1줌」은 길쭉한 떡을 쥐는 단위다.
+  //    ⛔ 새 링크가 아니다 — 위 둘과 «같은 주소»다.
+  '떡': 'https://link.coupang.com/a/gZg4AihgOW', // ⛇묶음: 떡볶이 떡 / 가래떡 / 떡
   '김가루': 'https://www.oasis.co.kr/product/detail/95589',
   '고등어': 'https://smartstore.naver.com/jejugalchi/products/4772215785',
   '쌀': 'https://smartstore.naver.com/eeem/products/6764610456',
