@@ -5,7 +5,7 @@
 //    ✅ 날짜가 «사는 곳»(weekly.js · basics.js · curation.js · seasonDecor.js)을 이미 읽는 `release-calendar.gates()` 를 «부른다».
 //       로직을 두 벌로 만들지 않는다(절대원칙 30·35). 명절 꾸미기는 `seasonDecor.명절창` 을 그대로 읽는다.
 // ⭐ 하루 = «한 줄» — 같은 날 여러 갈래가 열려도 문구를 «합친다»(창업자 확정 「당일 하루 1번만」).
-//    시각 = 그날 갈래 중 «제일 이른» 것 (장바구니 09:00 < 레시피·SNS 15:30 < 꾸미기 20:00).
+//    시각 = 그날 갈래 중 «제일 이른» 것 (장바구니 09:00 < 레시피·SNS 17:00 < 꾸미기 20:00).
 // ⏳ 문구는 «임시»다 — 창업자가 아직 문장을 안 정했다(2026-09-19). 여기 한 곳만 고치면 된다(워커는 안 만진다).
 //
 // 쓰는 법:  node scripts/push-schedule.mjs            → dist/push/schedule.json 굽기
@@ -18,7 +18,12 @@ import { gates, todayKST } from './release-calendar.mjs'
 import { 명절창 } from '../src/data/seasonDecor.js'
 
 const 뿌리 = join(dirname(fileURLToPath(import.meta.url)), '..')
-export const 시각표 = { cart: '09:00', recipe: '15:30', sns: '15:30', decor: '20:00' }   // 창업자 확정 2026-09-19
+// ⏰ [2026-09-20 창업자 확정 「그러자」] 레시피·SNS = 15:30 → **17:00**
+//   🔢 근거 = GA4 탐색(시간 × 활성 사용자 · 28일 8/23~9/19 · 창업자 캡처) — 17시 **29명**이 제일 많고 15시는 19명(1.5배).
+//      20시가 25명으로 둘째지만 «저녁을 먹은 뒤»라 레시피 알림으로는 늦다. 새벽은 3시 4명·5시 2명.
+//   ✅ 시간대 확인 = GA4 속성 세부정보 「보고 시간대 = (GMT+09:00)」 → 표가 한국시간 맞다(나라 칸은 영국이지만 오프셋이 +9다).
+//   ⛔ 이 값을 「대충 저녁쯤」으로 되돌리지 말 것 — 잰 값이다. 바꾸려면 새 시간대 표를 받아서.
+export const 시각표 = { cart: '09:00', recipe: '17:00', sns: '17:00', decor: '20:00' }   // 창업자 확정 2026-09-19 · 시각만 2026-09-20 갱신
 // 📅 'YYYY-MM-DD' 에 n일 더하기 — ⛔「오늘」은 여기서 안 만든다(todayKST 로 받는다). UTC 자정 기준 덧셈이라 시간대와 무관하다(check-kst 규칙).
 const 며칠뒤 = (ymd, n) => { const [y, m, d] = ymd.split('-').map(Number); const t = new Date(Date.UTC(y, m - 1, d + n)); return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}` }
 const 며칠 = 120
