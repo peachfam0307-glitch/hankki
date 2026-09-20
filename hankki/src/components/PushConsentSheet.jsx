@@ -54,9 +54,13 @@ function 시트 ({ 답 }) {
               <div style={{ fontSize: 15.5, fontWeight: 700 }}>새 레시피가 열리면 알려드릴게요</div>
             </div>
             <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '13px 15px', fontSize: 14.5, lineHeight: 1.85, whiteSpace: 'pre-line' }}>
-              · <b>월·수</b> — 새 레시피가 열려요{'\n'}
-              · <b>토요일 아침</b> — 이번 주 장바구니{'\n'}
-              · <b>가끔</b> — 새 꾸미기가 열릴 때
+              {/* ✂️ [2026-09-20 20:45 창업자 「알림 내용이 너무 길다는거야」 → 20:46 「마지막꺼」] 줄표를 떼고 네 줄 다 짧게.
+                  📮 창업자가 손수 쓴 문구 = 「유통기한 D-2 재료. 한번만」 — 「한 번만」이 «자주 오는 것 아니냐»는 걱정을 미리 누른다.
+                  ⭐ D-2 표기는 낯설지 않다 — 냉장고 화면이 이미 「가까우면 D-3 표시」를 쓴다(PantryView). */}
+              · <b>월·수</b> 새 레시피{'\n'}
+              · <b>토요일 아침</b> 장바구니{'\n'}
+              · <b>유통기한 D-2 재료</b> (한 번만){'\n'}
+              · <b>가끔</b> 새 꾸미기
             </div>
             <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.6, margin: '10px 2px 14px' }}>
               <b>하루에 한 번</b>만 보내요. 언제든 <b>설정</b>에서 끌 수 있어요.
