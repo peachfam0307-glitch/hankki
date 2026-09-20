@@ -307,10 +307,16 @@ export const HOMEMADE = [
     // 🌯 [창업자 확정 2026-09-16] 브리또 둘을 «우리집레시피» 칸에 넣는다(창업자 «ㄱ으로 가자»).
     //    ⛔ 특집 줄은 안 쓴다 — 추석 특집이 9/29 까지 그 자리를 쓰고 있다(창업자 «다음주는 추석이라 또 특집은 애매해»).
     //    📌 창업자가 직접 써서 준 편이라 «우리집레시피»가 맞는 자리다(origin: '창업자').
-    ids: ['basic-moksal-jorim', 'basic-gomadare-sauce', 'basic-beef-pepper-burrito', 'basic-musubi-burrito'] },   // 목살조림 · 고마다래 소스 · 브리또 둘
+    // 🔄 [2026-09-20 21:0x 창업자 「소스단독은 별로야」 · 「다른걸로 해우자」] 고마다래 소스 ↔ 마파두부 맞바꿈(9/28 과)
+    //    ⛔ 빼서 버린 게 아니다 — 일주일 «미룬» 것이다. 양쪽 다 「우리집레시피」 갈래라 자리를 바꿔도 결이 안 틀어진다.
+    //    ⭐ 마파두부를 고른 이유 = ⓐ창업자가 직접 쓰고 8/18 검수한 편(origin·review 둘 다 창업자) ⓑ링크 없는 재료 0개 ⓒ내일이 버섯·목살·브리또라 결이 갈린다
+    //    📌 ⛔ 어남선생 오징어볶음을 먼저 권했다가 창업자가 잡았다 — 「어남선생은 SNS레시피잖아」. 갈래를 안 보고 권했다.
+    //    ❓ 9/28 에 소스가 그대로 남는 건 같다 — 그날도 「단독은 별로」면 그때 또 정한다(샤브샤브 편 안으로 넣을지)
+    ids: ['basic-moksal-jorim', 'basic-mapa-dubu', 'basic-beef-pepper-burrito', 'basic-musubi-burrito'] },   // 목살조림 · 마파두부 · 브리또 둘
   { from: '2026-09-28', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
-    ids: ['basic-daepae-dallae-deopbap', 'basic-ojingeo-nurungji', 'basic-mapa-dubu', 'basic-sogogi-gyudon'] },   // 대패삼겹 달래덮밥 · 오징어누룽지 · 마파두부 · 소고기 규동
+    // 🔄 [2026-09-20] 마파두부가 9/21 로 갔다 → 그 자리에 고마다래 소스가 온다(맞바꿈 · 편 수 그대로 넷)
+    ids: ['basic-daepae-dallae-deopbap', 'basic-ojingeo-nurungji', 'basic-gomadare-sauce', 'basic-sogogi-gyudon'] },   // 대패삼겹 달래덮밥 · 오징어누룽지 · 고마다래 소스 · 소고기 규동
   { from: '2026-10-05', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     // ✅ [2026-09-16] 두부참치찌개를 «도로 넣었다» — 창업자가 새 판으로 다시 주고 검수까지 끝냈다(«다 맞아. ㄱㄱ 내보내자»).
