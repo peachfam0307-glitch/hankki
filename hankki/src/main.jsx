@@ -22,12 +22,23 @@ let 앱키보드 = 0
 
 function setAppHeight() {
   const vv = window.visualViewport
-  const h = (vv ? vv.height : window.innerHeight) - 앱키보드
+  // ⛔⛔ [2026-09-20 22:32 사고] 여기서 «빼기»를 했다가 화면이 반토막 났다 — 창업자 딸 폰에서 장보기가 통째로 비고
+  //    아래 메뉴가 위로 올라왔다. 🔎 뿌리 = 앱 웹뷰는 키보드가 뜨면 «스스로 줄어든다»(vv.height 가 이미 작다).
+  //    거기서 부품이 준 높이를 또 빼니 두 번 빠졌다(844 → 508 → 172).
+  //    ⭐ 그래서 «웹뷰가 이미 줄였나»를 먼저 본다 — 줄였으면 그 값을 그대로 쓰고, 안 줄였을 때만 내가 뺀다.
+  //       판정 = 창 높이와 보이는 높이의 차이가 키보드의 절반을 넘으면 «이미 줄였다».
+  //    ⚠️ 어느 쪽인지 나는 실물을 못 본다 — 그래서 아래 ?kb=1 창과 설정 화면에 «숫자를 찍는다»(짐작 금지).
+  const 창 = window.innerHeight
+  const 보임 = vv ? vv.height : 창
+  const 이미줄었나 = 앱키보드 > 0 && (창 - 보임) > 앱키보드 / 2
+  const h = 이미줄었나 || !앱키보드 ? 보임 : Math.max(120, 창 - 앱키보드)
   document.documentElement.style.setProperty('--app-height', Math.round(h) + 'px')
   // 키보드가 차지한 높이 — 입력칸 위 '계량 버튼 바'를 키보드 바로 위에 띄우는 데 쓴다.
   //   🍎 앱이면 부품이 알려준 값을 그대로 쓴다 — 웹뷰는 visualViewport 를 안 줄여서 아래 계산이 늘 0 이 된다.
-  const kb = 앱키보드 || (vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0)
+  const kb = Math.max(0, 창 - h)
   document.documentElement.style.setProperty('--kb-inset', Math.round(kb) + 'px')
+  // 🔬 실물에서 무슨 값이 오는지 적어 둔다 — 설정 → 내부 기기 칸이 이걸 보여준다(창업자 캡처 한 장이면 끝난다)
+  try { localStorage.setItem('hankki:kb:재본값', `창${Math.round(창)} 보임${Math.round(보임)} 부품${Math.round(앱키보드)} 씀${Math.round(h)}`) } catch { /* noop */ }
   // ⌨️🍎 [2026-09-20 · 창업자 제보 「달력 보이는 부분이 키보드 속에 가려」]
   //   ⛔ 위 --kb-inset 은 아이폰에서 못 믿는다 — 사파리는 키보드가 뜨면 페이지를 통째로 민다(offsetTop).
   //      그러면 「창높이 − 보이는높이 − 밀린양」이 키보드를 «작게» 재고, 시트가 그만큼만 올라온다.

@@ -590,6 +590,7 @@ export default function ProfileScreen() {
             <div className="t-sub" style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.5, wordBreak: 'break-all' }} data-probe="ios푸시">
               🍎 부품: {typeof window !== 'undefined' && window.Capacitor?.Plugins?.PushNotifications ? '있음' : '없음'}
               {' · 앱: '}{typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() ? (window.Capacitor.getPlatform?.() || '?') : '웹'}
+              <br />⌨️ {(() => { try { return localStorage.getItem('hankki:kb:재본값') || '아직 없음' } catch { return '못 읽음' } })()}
               <br />🐾 {(() => { try { return localStorage.getItem('hankki:push:ios발자국') || '아직 없음' } catch { return '못 읽음' } })()}
             </div>
             {보낸기록().length > 0 && (
