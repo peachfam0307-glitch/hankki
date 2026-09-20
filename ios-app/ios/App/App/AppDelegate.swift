@@ -11,6 +11,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
 
+    // 🔔🍎 [2026-09-20] 알림 — 애플이 준 «기기 토큰»을 Capacitor 에 넘긴다.
+    //   ⛔ 이 두 함수가 없으면 플러그인이 토큰을 «영영 못 받는다» — 오류도 안 난다(조용한 실패).
+    //   📄 이름의 출처 = node_modules/@capacitor/ios/Capacitor/Capacitor/CAPNotifications.swift (기억이 아니라 부품 원문에서 확인 · 규칙 38)
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+    }
+
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.

@@ -31,13 +31,34 @@ export function 푸시가능() {
   try {
     const win = w()
     if (!win) return false
+    if (아이폰앱인가()) return true   // 🍎 아래 참고 — 아이폰 «앱»은 웹 푸시가 아니라 애플 길(APNs)로 받는다
     return 'serviceWorker' in win.navigator && 'PushManager' in win && 'Notification' in win
   } catch { return false }
 }
 
+/** 🍎 아이폰 «앱» 안인가 — 2026-09-20 딸 폰 실측: 앱 속 웹뷰엔 serviceWorker·PushManager·Notification 이 «셋 다 없다».
+ *  ⛔ 그래서 위 잣대로는 아이폰이 영원히 false 였다(＝시트를 아예 안 띄웠다). 애플 길로 받으니 «된다»가 맞다.
+ *  ⭐ 여기선 window 만 본다 — 플러그인을 부르지 않는다(이 파일은 네트워크·플러그인을 모른다는 원칙 그대로). */
+export function 아이폰앱인가() {
+  try {
+    const C = w()?.Capacitor
+    return !!(C && C.isNativePlatform && C.isNativePlatform() && C.getPlatform && C.getPlatform() === 'ios')
+  } catch { return false }
+}
+
+export const 아이폰권한칸 = 'hankki:push:iosperm'   // 애플 권한창의 답을 적어 둔다 — 아이폰엔 Notification.permission 이 없다
+
 /** 🔔 브라우저가 이미 정한 답 — 'granted' · 'denied' · 'default'(아직 안 물음) */
 export function 브라우저권한() {
-  try { return 푸시가능() ? w().Notification.permission : 'denied' } catch { return 'denied' }
+  try {
+    // 🍎 아이폰 앱엔 Notification 이 «없다» → 애플 권한창의 답을 우리가 적어 둔 것을 읽는다(pushNative 가 적는다).
+    //    ⛔ 아이폰도 한 번 거절하면 앱이 다시 못 묻는다(폰 설정에서만) — 웹의 'denied' 와 같은 뜻이라 같은 글자를 쓴다.
+    if (아이폰앱인가()) {
+      const v = localStorage.getItem(아이폰권한칸)
+      return v === 'granted' || v === 'denied' ? v : 'default'
+    }
+    return 푸시가능() ? w().Notification.permission : 'denied'
+  } catch { return 'denied' }
 }
 
 /** 'yes' · 'no' · null(아직 안 물었다) — «우리 시트»의 답이다(브라우저 권한과 다른 것) */

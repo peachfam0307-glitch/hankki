@@ -8,7 +8,7 @@
 // ⭐ 서비스워커를 새로 등록하지 «않는다» — 이미 도는 `src/sw.js` 를 `navigator.serviceWorker.ready` 로 «찾는다».
 // 🔒 재현판 = scripts/_repro-알림허락-0919.mjs ⑧
 
-import { 알림허락받기, 알림동의상태, 알림동의쓰기, 푸시가능, 브라우저권한 } from './pushConsent'
+import { 알림허락받기, 알림동의상태, 알림동의쓰기, 푸시가능, 브라우저권한, 아이폰앱인가 } from './pushConsent'
 import { OCR_APP_TOKEN } from './ocr'
 import { 알림날짜들 } from './pantryExpiry'
 import { todayKST } from './today'
@@ -22,12 +22,15 @@ export async function 알림켜기({ 다시묻기 = false } = {}) {
   let 됐나 = false
   try { 됐나 = await 알림허락받기({ 다시묻기 }) } catch { 됐나 = false }
   if (!됐나) return false
+  // 🍎 우리 시트에서 「좋아요」가 난 뒤 — 아이폰은 여기서 «애플 권한창»이 뜨고 토큰까지 받는다.
+  if (아이폰앱인가()) { try { return await (await import('./pushNative')).아이폰알림켜기({ 주소: PUSH_URL, 토큰: OCR_APP_TOKEN }) } catch { return false } }
   return 구독맞추기()
 }
 
 /** ⚙️ 설정 「끄기」 — 구독을 «폰에서» 지우고 우리 답을 no 로. 워커 칸은 다음 보낼 때 410 이 와서 스스로 빠진다(따로 지우는 길을 안 만든다).
  *  ⛔ 브라우저 권한은 우리가 못 내린다 — 하지만 구독이 없으면 아무것도 안 온다. */
 export async function 알림끄기() {
+  if (아이폰앱인가()) { try { return await (await import('./pushNative')).아이폰알림끄기() } catch { /* 아래 공통 길로 */ } }
   try {
     if (푸시가능()) {
       const reg = await navigator.serviceWorker.ready
@@ -44,6 +47,9 @@ export async function 알림끄기() {
 export async function 구독맞추기() {
   try {
     if (!푸시가능() || 알림동의상태() !== 'yes' || 브라우저권한() !== 'granted') return false
+    // 🍎 [2026-09-20] 아이폰 «앱»은 받는 길이 다르다(APNs) — 아래 웹 푸시 코드는 여기서 아예 안 돈다.
+    //    ⛔ 안 가르면 `navigator.serviceWorker.ready` 에서 영영 안 풀리는 약속에 걸린다(오류도 안 난다).
+    if (아이폰앱인가()) return (await import('./pushNative')).아이폰구독맞추기({ 주소: PUSH_URL, 토큰: OCR_APP_TOKEN })
     const reg = await navigator.serviceWorker.ready
     let sub = await reg.pushManager.getSubscription()
     if (!sub) {

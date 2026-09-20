@@ -10,6 +10,12 @@
 	</array>
 	<!-- 🍎 2026-09-13 Share Extension 과 같은 저장칸(App Group). 앱·부품 «양쪽» 권한 파일에 있어야 한다(Apple App Groups Entitlement 원문).
 	     ⛔ 개발자 사이트에서 그룹 등록 + App ID 배정을 안 하면 match 프로필에 이 권한이 없어 서명이 죽는다. -->
+	<!-- 🔔🍎 [2026-09-20] 알림(APNs) 권한. 값은 «어느 애플 문을 쓰나» — TestFlight·앱스토어 빌드는 production 이다.
+	     ⛔ 포털에서 App ID `kr.hankki.app` 에 Push Notifications 를 «켜 두지 않으면» match 프로필에 이 권한이 없어 서명이 죽는다
+	        (App Group 때와 똑같은 자리 · 창업자 2026-09-20 20:37 체크 확인).
+	     📌 워커는 기본을 production 으로 잡고, 애플이 BadDeviceToken 을 주면 그 폰만 sandbox 로 바꿔 둔다. -->
+	<key>aps-environment</key>
+	<string>production</string>
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.kr.hankki.app</string>
