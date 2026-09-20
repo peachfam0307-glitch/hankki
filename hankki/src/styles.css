@@ -1832,6 +1832,14 @@ img {
 .sheet-mask {
   position: fixed;
   inset: 0;
+  /* ⌨️🍎 [2026-09-20 · 창업자 제보 「안눌러진다」 → 「스크롤을 내려야 보여」] 키보드 위로 올린다.
+     🔎 뿌리 = 여기가 «화면 전체 높이»를 잡는데, 갤럭시는 index.html 의 interactive-widget=resizes-content 로
+        키보드가 뜨면 화면이 줄어 시트가 저절로 올라오지만 **아이폰은 그 설정을 안 따른다** → 시트가 키보드 뒤에 깔린다.
+     ✅ 실측(09-20 12:56) = 같은 웹·같은 코드인데 창업자 갤럭시는 바로 보이고 딸 아이폰만 가렸다.
+     ⭐ --kb-inset 은 main.jsx 가 visualViewport 로 이미 재고 있던 값이다(EditorScreen 계량 바가 쓰던 것) —
+        새로 만들지 않고 그대로 쓴다. 갤럭시는 이 값이 0이라 «아무 변화 없다». 옛 폰이면 값이 없어 지금과 같다.
+     ⛔ 이 한 줄이 autoFocus 시트 일곱 곳을 «전부» 고친다(식비 시작일·장보기 직접넣기 2·가져오기·레꾸자랑·내레시피·꾸미기 글자 3). */
+  bottom: var(--kb-inset, 0px);
   background: rgba(63, 50, 39, 0.35);
   /* 모달 시트는 항상 최상단 — 표지 꾸미기(z-index 220) 위에서도 글쓰기 시트가 떠야 한다 */
   z-index: 300;
@@ -1844,7 +1852,9 @@ img {
   background: var(--surface);
   border-radius: 22px 22px 0 0;
   padding: 8px 8px calc(12px + var(--safe-bottom));
-  max-height: calc(100dvh - 52px);
+  /* ⌨️ 키보드가 떴을 때 «보이는» 높이를 넘지 않게 — 안 그러면 긴 시트의 «윗부분»이 화면 밖으로 넘친다
+     (바탕을 올려도 시트가 바탕보다 크면 flex-end 라 위로 삐져나간다). --app-height = visualViewport 높이. */
+  max-height: calc(var(--app-height, 100dvh) - 52px);
   overflow-y: auto;
   overscroll-behavior: contain;
   animation: sheetUp 0.26s cubic-bezier(0.22, 0.61, 0.36, 1) both;
