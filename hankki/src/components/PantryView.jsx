@@ -799,7 +799,10 @@ function PantryForm({ item, onClose }) {
               <FoodIconPicker value={icon} size={64} mode="ing" onChange={(k) => { setIcon(k); setIconPicked(true) }} />
             )}
             <div style={{ flex: 1 }}>
-              <input className="wa-inp" value={name} onChange={(e) => setNm(e.target.value)} placeholder="재료 이름 (예: 두부)" autoFocus={!editing} />
+              {/* ⌨️🍎 [2026-09-20 · 전수검사에서 같이 잡힘] autoFocus 를 «뺐다» — 식비 시트와 «같은 구조»였다.
+                  ⛔ 있으면 시트가 뜨자마자 키보드가 올라와 아이폰에서 시트를 덮는다(창업자 제보 09-20). 여기도 바닥 시트 안이다.
+                  ✅ 빼면 시트가 먼저 보이고, 이름 칸을 눌러야 키보드가 온다. 잃는 것 = 탭 한 번. */}
+              <input className="wa-inp" value={name} onChange={(e) => setNm(e.target.value)} placeholder="재료 이름 (예: 두부)" />
               <input className="wa-inp" style={{ marginTop: 8 }} value={qty} onChange={(e) => setQty(e.target.value)} placeholder="수량 (예: 2팩, 500g) · 선택" />
             </div>
           </div>
