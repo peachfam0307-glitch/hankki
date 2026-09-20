@@ -9,7 +9,8 @@ import MemoNote from '../components/MemoNote'
 import CropSheet from '../components/CropSheet'
 import { downscale } from '../components/DiaryEntrySheet'
 import Portal from '../components/Portal'
-import { scaleIngredient } from '../scale'
+import { scaleIngredient, isIngHeader, ingHeadBefore, stripIngGroup } from '../scale'
+import { Fragment } from 'react'
 import { useWakeLock } from '../useWakeLock'
 import { 오래켜둠재기 } from '../use오래켜둠'
 import { 요리시작 } from '../stats'
@@ -181,9 +182,15 @@ export default function CookScreen({ id }) {
                 ⭐ 재료를 «꺼내면서» 하나씩 지워가는 자리다. 그래서 저장도 계산도 안 한다 — 표시만.
                 ⭐ 줄 전체가 버튼이라 손가락이 작은 네모를 겨냥할 필요가 없다(최소 높이 44).
                 ⛔ 유니코드 ✓ 대신 우리 아이콘(`check`)을 쓴다 — CLAUDE.md 핀. */}
+            {/* 🏷 [2026-09-18 · 창업자 실물] 「[양념장] …」이 줄마다 되풀이되던 것 — 상세 화면과 «같은 잣대»(scale.js)로
+                묶음이 시작하는 줄 위에 소제목 한 번, 줄에선 뗀다. 헤더만 있는 줄('[양념]')은 체크 없이 소제목으로. */}
             {ings.length ? ings.map((ing, k) => (
+              isIngHeader(ing)
+                ? <div key={k} className="ing-head cook-ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
+                : <Fragment key={k}>
+              {ingHeadBefore(ings, k) && <div className="ing-head cook-ing-head">{ingHeadBefore(ings, k)}</div>}
               <button
-                key={k} type="button" className="press cook-ing-row" aria-pressed={!!checked[k]}
+                type="button" className="press cook-ing-row" aria-pressed={!!checked[k]}
                 onClick={() => toggle(k)}>
                 <span className={`cook-ing-box${checked[k] ? ' on' : ''}`}>
                   {checked[k] && <Icon name="check" size={15} color="#fff" stroke={2.6} />}
@@ -192,8 +199,9 @@ export default function CookScreen({ id }) {
                     ✍️ [창업자 2026-09-01] *"요리모드 첨에 재료나오는 화면도 글씨체 귀염체?로 바꿔야함."*
                        → `cook-ing` 이 귀염체를 준다. ⛔`.ing` 자체는 «안» 건드린다 —
                           레시피 «상세»의 재료 줄이 같은 클래스라 거기까지 손글씨가 된다(창업자가 말한 화면이 아니다). */}
-                <span className={`ing cook-ing${checked[k] ? ' done' : ''}`}>{scaleIngredient(ing, 1)}</span>
+                <span className={`ing cook-ing${checked[k] ? ' done' : ''}`}>{stripIngGroup(scaleIngredient(ing, 1))}</span>
               </button>
+              </Fragment>
             )) : <div className="empty">재료 정보가 없어요.</div>}
           </div>
           {/* 안내 — 화면 안 꺼짐 · 타이머는 필요할 때
@@ -317,7 +325,12 @@ export default function CookScreen({ id }) {
             </div>
             <div style={{ padding: '0 16px', maxHeight: '50vh', overflowY: 'auto' }}>
               {(r.ingredients || []).map((ing, k) => (
-                <div key={k} className="ing">{scaleIngredient(ing, 1)}</div>
+                isIngHeader(ing)
+                  ? <div key={k} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
+                  : <Fragment key={k}>
+                      {ingHeadBefore(r.ingredients, k) && <div className="ing-head">{ingHeadBefore(r.ingredients, k)}</div>}
+                      <div className="ing">{stripIngGroup(scaleIngredient(ing, 1))}</div>
+                    </Fragment>
               ))}
             </div>
           </div>

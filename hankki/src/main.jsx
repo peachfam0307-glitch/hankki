@@ -22,6 +22,29 @@ function setAppHeight() {
   // 키보드가 차지한 높이 — 입력칸 위 '계량 버튼 바'를 키보드 바로 위에 띄우는 데 쓴다.
   const kb = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0
   document.documentElement.style.setProperty('--kb-inset', Math.round(kb) + 'px')
+  // ⌨️🍎 [2026-09-20 · 창업자 제보 「달력 보이는 부분이 키보드 속에 가려」]
+  //   ⛔ 위 --kb-inset 은 아이폰에서 못 믿는다 — 사파리는 키보드가 뜨면 페이지를 통째로 민다(offsetTop).
+  //      그러면 「창높이 − 보이는높이 − 밀린양」이 키보드를 «작게» 재고, 시트가 그만큼만 올라온다.
+  //      📌 창업자 캡처(09-20 18:57) = 주소창이 화면 한가운데까지 내려와 있었다 = 밀렸다는 눈에 보이는 증거.
+  //   ⭐ 그래서 «키보드 높이»를 계산하지 않고 «지금 보이는 네모»를 그대로 쓴다.
+  //      재는 값이 하나(보이는 네모)라 밀든 안 밀든 같다 — 실패의 «모양»이 바뀐다(규칙 34).
+  //   ⚠️ 사파리가 미는 방법이 둘이다 — ⓐ visualViewport.offsetTop ⓑ 문서 스크롤(scrollY).
+  //      어느 쪽인지 이 환경에선 못 잰다(아이폰이 없다) → 둘을 «더해서» 덮는다.
+  //      우리 앱 틀은 overflow:hidden 이라 평소 scrollY = 0 이다 → 갤럭시·PC 는 0 + 0 = 변화 없음.
+  const 밀린양 = vv ? (vv.offsetTop || 0) + (window.scrollY || 0) : 0
+  document.documentElement.style.setProperty('--vv-top', Math.round(밀린양) + 'px')
+  document.documentElement.style.setProperty('--vv-h', Math.round(h) + 'px')
+  // 🔬 ?kb=1 일 때만 — 실제 아이폰에서 어느 값이 움직이는지 눈으로 확인하는 창(유저에겐 안 보인다)
+  if (typeof location !== 'undefined' && location.search.includes('kb=1')) {
+    let 창 = document.getElementById('kb-probe')
+    if (!창) {
+      창 = document.createElement('div')
+      창.id = 'kb-probe'
+      창.style.cssText = 'position:fixed;left:0;top:0;z-index:3400;background:#111;color:#0f0;font:700 12px/1.5 monospace;padding:4px 6px;pointer-events:none'
+      document.body.appendChild(창)
+    }
+    창.textContent = `창${window.innerHeight} 보임${Math.round(h)} offTop${vv ? Math.round(vv.offsetTop || 0) : -1} scrollY${Math.round(window.scrollY || 0)} kb${Math.round(kb)}`
+  }
 }
 setAppHeight()
 if (window.visualViewport) {
