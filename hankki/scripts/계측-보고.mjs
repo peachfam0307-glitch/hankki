@@ -170,6 +170,58 @@ P()
 for (const d of 날들) if (장부.날[d].미완사유) P(`⚠️ **${d}** — ${장부.날[d].미완사유}`)
 P()
 
+// 🇰🇷🇰🇷 **이름표 — 창업자가 읽는 글자로** (창업자 2026-09-20 *"내가 알아볼수있게 한글로 바꿔서써. 레시피 로그 브릿지 그런거 뭔말인지 모르겠어"*)
+//   ⭐ 탭 이름은 «앱에서 읽어온다»(`BottomNav.jsx`) — 손으로 적으면 탭 이름이 바뀔 때 낡는다(규칙 12).
+//   ⛔ 사전에 «없는» 이름은 영어 그대로 두고 §끝에 「이름표 없는 것」으로 모아 찍는다 — 새 눈이 생겨도 조용히 영어로 남지 않게.
+const 탭이름표 = (() => {
+  try {
+    const 글 = readFileSync(new URL('src/components/BottomNav.jsx', 앱뿌리), 'utf8')
+    const 표 = {}
+    for (const m of 글.matchAll(/\{\s*key:\s*'([a-z_]+)'\s*,\s*label:\s*'([^']+)'/g)) 표[m[1]] = m[2]
+    return 표
+  } catch { return {} }
+})()
+const 손이름표 = {
+  // 화면 — 탭이 아닌 것만
+  detail: '레시피 상세', editor: '레시피 편집', inbox: '받은 것', favorites: '최애', cook: '요리 모드',
+  cooked: '만든 음식', diary: '일기 쓰기', search: '검색', profile: '설정', decor: '꾸미기 판',
+  // 들어오는 길
+  bridge: '「한끼 받기」 안내 페이지에 옴 (안드·PC)', bridge_go: '거기서 스토어로 감 (안드·PC)',
+  bridge_ios: '「한끼 받기」에 옴 (아이폰)', bridge_go_ios: '거기서 앱스토어로 감 (아이폰)',
+  first_open: '앱을 «처음» 켬', return_d1: '어제 왔던 사람이 또 옴', return_d2_7: '2~7일 만에 또 옴', return_d8plus: '8일 넘어 또 옴',
+  // 꾸미기·자랑
+  decor_saved: '꾸민 표지를 저장함', decor_have_1: '꾸민 표지 1개 가짐', decor_have_2_4: '꾸민 표지 2~4개 가짐',
+  decor_have_5plus: '꾸민 표지 5개 넘게 가짐', brag_shared: '자랑 카드를 내보냄',
+  // 레시피
+  recipe_saved: '레시피를 저장함', import_read_ok: '사진·글에서 읽어냄', import_read_fail: '못 읽음',
+  import_gallery: '가져오기 — 사진첩', import_photo: '가져오기 — 사진 찍기', import_share: '가져오기 — 공유받기',
+  import_write: '가져오기 — 직접 씀', import_link: '가져오기 — 링크', import_text: '가져오기 — 글 붙여넣기',
+  import_youtube: '가져오기 — 유튜브', import_instagram: '가져오기 — 인스타',
+  // 요리·일기·냉장고
+  cook_started: '요리를 시작함', cook_done: '요리를 끝냄', cook_long_detail: '레시피 상세에 오래 머묾',
+  diary_new: '일기 한 장 씀', pantry_added: '냉장고에 재료 넣음', shop_added: '장보기에 담음',
+  search_empty: '검색했는데 빈손', pick_open: '「이번 주 픽」 펼침',
+  // 사러가기·로그인
+  buy_cart: '사러가기 — 장보기에서', buy_pick_detail: '사러가기 — 레시피 상세에서', buy_pick_shop: '사러가기 — 주부의 장바구니에서',
+  login_google: '구글로 로그인', login_apple: '애플로 로그인', signup_google: '구글로 «가입»', signup_apple: '애플로 «가입»',
+  login_ok: '로그인 됨 (옛 눈)',
+  // 식비
+  foodcost_open: '식비 화면을 엶', foodcost_added_shop: '식비 적음 — 장보기에서', foodcost_added_direct: '식비 적음 — 직접',
+  foodcost_budget_set: '식비 예산을 정함',
+  // 길
+  '/hankki/': '웹 첫 화면', '/hankki/app': '앱 (안드로이드)', '/hankki/get.html': '「한끼 받기」 안내 페이지', '/hankki/ios': '아이폰 다리 화면',
+}
+const 이름표없는것 = new Set()
+const 이름 = (k) => {
+  if (/^foodcost_shop_open_/.test(k)) return `「가서 보고 올까요?」 가게 단추 — ${k.replace('foodcost_shop_open_', '')}`
+  const v = 탭이름표[k] || 손이름표[k]
+  if (v) return v
+  if (/^[a-z][a-z0-9_/.]*$/i.test(k)) 이름표없는것.add(k)
+  return k
+}
+/** 표에 찍는 꼴 = 「한글 이름 (영어)」 — 영어도 남긴다(콘솔에서 찾아야 하니까) */
+const 이름칸 = (k) => { const v = 이름(k); return v === k ? `\`${k}\`` : `**${v}**<br>\`${k}\`` }
+
 // §3 화면별 사람 수
 const 화면목 = [...new Set(날들.flatMap((d) => Object.keys(장부.날[d].화면 || {})))]
   .sort((x, y) => 날들.reduce((s, d) => s + ((장부.날[d].화면 || {})[y]?.[1] || 0), 0) - 날들.reduce((s, d) => s + ((장부.날[d].화면 || {})[x]?.[1] || 0), 0))
@@ -178,7 +230,7 @@ P()
 P(`| 화면 | ${날들.map((d) => d.slice(5)).join(' | ')} |`)
 P(`|---|${날들.map(() => '---:').join('|')}|`)
 for (const s of 화면목) {
-  P(`| \`${s}\` | ${날들.map((d) => {
+  P(`| ${이름칸(s)} | ${날들.map((d) => {
     const x = (장부.날[d].화면 || {})[s]
     const 이 = 있었나(s, d, !!x)
     if (!x) return 이 === false ? '⬜' : 이 === 'part' ? '🌱0' : '0'
@@ -194,7 +246,7 @@ P()
 P(`| 이벤트 | 심은 날 | ${날들.map((d) => d.slice(5)).join(' | ')} |`)
 P(`|---|---|${날들.map(() => '---:').join('|')}|`)
 for (const e of 행동목) {
-  P(`| \`${e}\` | ${심은날찾기(e) || '모름'} | ${날들.map((d) => {
+  P(`| ${이름칸(e)} | ${심은날찾기(e) || '모름'} | ${날들.map((d) => {
     const x = (장부.날[d].행동 || {})[e]
     const 이 = 있었나(e, d, !!x)
     if (이 === false) return '⬜'
@@ -217,7 +269,7 @@ if (날들.some((d) => 식비눈.some((e) => 식비값(d, e)))) {
   P(`| 칸 | ${날들.map((d) => d.slice(5)).join(' | ')} |`)
   P(`|---|${날들.map(() => '---:').join('|')}|`)
   for (const e of 식비눈) {
-    P(`| \`${e}\` | ${날들.map((d) => {
+    P(`| ${이름칸(e)} | ${날들.map((d) => {
       const x = 식비값(d, e), 이 = 있었나(e, d, !!x)
       if (이 === false) return '⬜'
       if (!x) return 이 === 'part' ? '🌱0' : '0'
@@ -252,11 +304,22 @@ for (const d of 날들) {
   if (없던눈.length) P(`⬜ **이날 아직 없던 눈 ${없던눈.length}개** = ${없던눈.sort().map((x) => `\`${x}\``).join(' · ')}`)
   if (v.캡처시각) P(`📸 캡처 ${v.캡처시각}${v.미완사유 ? ` — ${v.미완사유}` : ''}`)
   if (v.채널) P(`🚪 채널 = ${Object.entries(v.채널).map(([k, c]) => `**${k}** 총${c.총}·새${c.새}·재방문${c.재방문}·${초(c.참여초)}·이벤트${c.이벤트}`).join(' / ')}`)
-  if (v.경로) P(`📱 경로 = ${Object.entries(v.경로).map(([k, x]) => `\`${k}\` ${x[0]}조회·${x[1]}명·${초(x[2])}`).join(' · ')}`)
+  if (v.경로) P(`📱 경로 = ${Object.entries(v.경로).map(([k, x]) => `${이름(k)} ${x[0]}조회·${x[1]}명·${초(x[2])}`).join(' · ')}`)
   if (v.도시) P(`🗺 도시 = ${Object.entries(v.도시).map(([k, n]) => `${k} ${n}`).join(' · ')}`)
-  if (v.이탈률) P(`📉 이탈률 = ${Object.entries(v.이탈률).map(([k, n]) => `\`${k}\` ${n}%`).join(' · ')}`)
+  if (v.이탈률) P(`📉 첫 화면만 보고 나간 비율 = ${Object.entries(v.이탈률).map(([k, n]) => `${이름(k)} ${n}%`).join(' · ')}`)
   if (v.첫사용자소스) P(`🔎 첫 사용자 소스 = ${Object.entries(v.첫사용자소스).map(([k, n]) => `${k} ${n}`).join(' · ')}`)
   for (const 고 of v.고침 || []) P(`⛔ **고침** — ${고}`)
+  P()
+}
+
+// 🇰🇷 이름표가 «없는» 것을 모아 찍는다 — 새 눈이 생겨도 조용히 영어로 남지 않게 (창업자 2026-09-20)
+if (이름표없는것.size) {
+  P(`---`)
+  P(`## 🇰🇷 아직 한글 이름표가 없는 것 ${이름표없는것.size}개`)
+  P()
+  P(`${[...이름표없는것].sort().map((x) => `\`${x}\``).join(' · ')}`)
+  P()
+  P(`👉 \`scripts/계측-보고.mjs\` 의 \`손이름표\` 에 한 줄 더한다. ⛔탭 이름은 적지 않는다 — \`BottomNav.jsx\` 에서 저절로 읽어온다.`)
   P()
 }
 
