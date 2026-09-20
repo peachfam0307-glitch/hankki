@@ -172,6 +172,8 @@ export const ING_LINKS = {
   '양송이버섯': 'https://link.coupang.com/a/gZkBeXvDS8',
   '완숙 토마토': 'https://link.coupang.com/a/gZkCFDgWku',
   '다시마초': 'https://smartstore.naver.com/cnmi/products/7222887351',
+  '청경채': 'https://link.coupang.com/a/hcoF50tQXY',
+  '볶음김치': 'https://link.coupang.com/a/hcoMCMURZk',
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
