@@ -108,8 +108,19 @@ export default {
       try { body = await request.json() } catch { return json({ error: 'bad_json' }, 400, cors) }
       const 플랫폼 = body?.platform === 'ios' ? 'ios' : 'web'
       const sub = body?.sub
-      if (!sub || typeof sub.endpoint !== 'string' || !/^https:\/\//.test(sub.endpoint) || sub.endpoint.length > 2048) return json({ error: 'bad_sub' }, 400, cors)
-      const r = await 구독넣기(kv, 플랫폼, { endpoint: sub.endpoint, keys: sub.keys || {} })
+      // 🍎 [2026-09-20] 아이폰은 «주소»가 아니라 «기기 토큰»이 온다(16진 64자) — 잣대를 갈라 받는다.
+      //   ⛔ 옛 잣대(https:// 만 통과)로는 아이폰 구독이 «전부» 400 으로 튕겼다. 담기지도 않았다.
+      //   ⭐ 잣대는 «좁게» 잡는다(규칙 37) — 16진 64자만. 넓게 받으면 쓰레기가 KV 에 쌓인다.
+      const 아이폰인가 = 플랫폼 === 'ios'
+      const 토큰꼴 = 아이폰인가
+        ? (typeof sub?.endpoint === 'string' && /^[0-9a-fA-F]{64}$/.test(sub.endpoint))
+        : (typeof sub?.endpoint === 'string' && /^https:\/\//.test(sub.endpoint) && sub.endpoint.length <= 2048)
+      if (!sub || !토큰꼴) return json({ error: 'bad_sub' }, 400, cors)
+      const r = 아이폰인가
+        // 🍎 아이폰은 «어느 애플 문»으로 보낼지를 같이 담는다 — TestFlight·스토어 = production · Xcode 직접 = sandbox.
+        //    ⛔ 문을 틀리면 애플이 400 BadDeviceToken 을 준다(＝조용한 실패가 아니라 «틀렸다»고 말해 준다 · 아래에서 문을 바꿔 다시 담는다)
+        ? await 구독넣기(kv, 'ios', { endpoint: sub.endpoint, 문: body?.apnsEnv === 'sandbox' ? 'sandbox' : 'production' })
+        : await 구독넣기(kv, 'web', { endpoint: sub.endpoint, keys: sub.keys || {} })
       return json(r, r.error ? 507 : 200, cors)
     }
 
@@ -153,7 +164,30 @@ export async function 보내기(env, now) {
   if (분 < 시작 || 분 >= 시작 + LIMITS.보내는창분) return { 했나: false, 왜: `아직 아니다(${문구.시각} 부터 ${LIMITS.보내는창분}분)` }
 
   const n = await 묶음수읽기(kv)
-  // ⛔ 1판은 web 만 보낸다 — ios 칸은 APNs 가 붙을 때 쓴다(구독은 담아 두되 «웹 푸시로는 안 쏜다»)
+  // 🍎 [2026-09-20] 아이폰 묶음이 «웹보다 먼저» 간다 — 수가 훨씬 적어서(아이폰 유저 소수) 한 번에 끝나고,
+  //    웹 묶음을 기다리다 보내는창 60분을 넘기는 일이 없다. ⛔ 한 번 깨어나면 여전히 «묶음 하나»다(요청 50개 상한).
+  for (let i = 0; i < n.ios; i++) {
+    const 잠금 = 칸.보냄(날, 'ios', i)
+    if (await kv.get(잠금)) continue
+    const jwt = await apnsJwt(env)
+    if (!jwt) break                                          // 열쇠가 아직 없다 → 아이폰은 조용히 건너뛰고 웹은 그대로 보낸다
+    await kv.put(잠금, '1', { expirationTtl: 60 * 60 * 48 })
+    const 목록 = await 묶음읽기(kv, 'ios', i)
+    let 성공 = 0, 만료 = 0, 고침 = 0
+    const 남길것 = []
+    for (const s of 목록) {
+      const r = await 아이폰하나(s, jwt, 문구)
+      if (r === 'ok') { 성공++; 남길것.push(s) }
+      else if (r === 'gone') { 만료++ }
+      // 🚪 문이 틀렸을 뿐이면 «버리지 않고» 문을 바꿔 둔다 — 다음 판에 제대로 간다(실패의 모양을 바꾼다 · 규칙 34)
+      else if (r === 'sandbox') { 고침++; 남길것.push({ ...s, 문: 'sandbox' }) }
+      else { 남길것.push(s) }
+    }
+    if (만료 || 고침) await kv.put(칸.묶음('ios', i), JSON.stringify(남길것))
+    await 기록더하기(kv, 날.slice(0, 7), { 보냄: 목록.length, 성공, 만료삭제: 만료, 실행: 1 })
+    return { 했나: true, 플랫폼: 'ios', 묶음: i, 보냄: 목록.length, 성공, 만료삭제: 만료, 문고침: 고침 }
+  }
+
   for (let i = 0; i < n.web; i++) {
     const 잠금 = 칸.보냄(날, 'web', i)
     if (await kv.get(잠금)) continue                       // 이미 보낸 묶음
@@ -235,6 +269,75 @@ async function 푸시하나(sub, 열쇠) {
       headers: { TTL: '86400', Urgency: 'normal', Authorization: `vapid t=${jwt}, k=${열쇠.pub}`, 'Content-Length': '0' },
     })
     if (r.status === 404 || r.status === 410) return 'gone'
+    return r.status >= 200 && r.status < 300 ? 'ok' : 'fail'
+  } catch { return 'fail' }
+}
+
+// ── 🍎 아이폰(APNs) ───────────────────────────────────────────────────────
+// ⛔⛔ **왜 아이폰만 «글자를 실어» 보내나** — 웹은 빈 푸시를 보내면 서비스워커가 깨어나 `/today` 로 문구를 가져온다.
+//   아이폰 앱엔 **서비스워커가 아예 없다**(2026-09-20 실측 = `푸시 API: 없음`). 깨어나서 가져올 놈이 없다.
+//   → APNs 는 **보낼 때 제목·본문을 같이 실어야** 한다. 암호화는 안 한다(애플과 우리 사이는 TLS·JWT 로 이미 잠긴다).
+//   📌 그래서 문구를 바꾸는 길은 웹과 «같다» — 앱이 구운 `push/schedule.json` 하나다. 워커를 다시 붙여넣을 일이 없다.
+//
+// 🔑 창업자가 워커 비밀칸에 넣을 셋 (Settings → Variables and Secrets → Secret)
+//   · `APNS_KEY`   = 애플에서 받은 .p8 «파일 안의 글자 통째로»(-----BEGIN PRIVATE KEY----- 줄 포함)
+//   · `APNS_KEY_ID`= 그 키의 Key ID (10자리)
+//   · `APNS_TEAM_ID`= 팀 ID (10자리 · Membership 화면)
+//   ⛔ 셋 중 하나라도 없으면 아이폰 묶음은 «건너뛴다» — 웹 알림은 그대로 나간다(한쪽이 없다고 둘 다 멈추지 않는다).
+
+const APNS_토픽 = 'kr.hankki.app'      // ⛔ 앱 번들 ID 와 «글자 하나까지» 같아야 한다(Fastfile BUNDLE_ID)
+const APNS_문 = { production: 'https://api.push.apple.com', sandbox: 'https://api.development.push.apple.com' }
+let _apns표 = null                     // { jwt, 만든때 } — 애플은 20~60분마다 새로 만들라고 한다. 한 번 만들어 55분 쓴다.
+
+/** .p8 글자 → WebCrypto 열쇠. ⛔ 매번 import 하면 느리지만 워커는 자주 새로 뜨므로 캐시는 JWT 쪽에만 둔다. */
+async function apns열쇠(p8) {
+  const 몸통 = String(p8).replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')
+  const bin = Uint8Array.from(atob(몸통), (c) => c.charCodeAt(0))
+  return crypto.subtle.importKey('pkcs8', bin, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'])
+}
+
+/** 애플에 보여 줄 표(JWT). 없으면 null — 그럼 아이폰은 이번 판을 건너뛴다. */
+async function apnsJwt(env) {
+  if (!env.APNS_KEY || !env.APNS_KEY_ID || !env.APNS_TEAM_ID) return null
+  const 지금 = Math.floor(Date.now() / 1000)
+  if (_apns표 && 지금 - _apns표.만든때 < 55 * 60) return _apns표.jwt
+  try {
+    const head = b64url(new TextEncoder().encode(JSON.stringify({ alg: 'ES256', kid: env.APNS_KEY_ID })))
+    const body = b64url(new TextEncoder().encode(JSON.stringify({ iss: env.APNS_TEAM_ID, iat: 지금 })))
+    const 열쇠 = await apns열쇠(env.APNS_KEY)
+    const sig = new Uint8Array(await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, 열쇠, new TextEncoder().encode(`${head}.${body}`)))
+    const jwt = `${head}.${body}.${b64url(sig)}`
+    _apns표 = { jwt, 만든때: 지금 }
+    return jwt
+  } catch { return null }
+}
+
+/** 아이폰 하나에 보낸다. 'ok' | 'gone'(토큰 죽음 → 지운다) | 'sandbox'(문을 바꿔야 한다) | 'fail'(일시) */
+async function 아이폰하나(sub, jwt, 문구) {
+  const 문 = APNS_문[sub.문 === 'sandbox' ? 'sandbox' : 'production']
+  try {
+    const r = await fetch(`${문}/3/device/${sub.endpoint}`, {
+      method: 'POST',
+      headers: {
+        authorization: `bearer ${jwt}`,
+        'apns-topic': APNS_토픽,
+        'apns-push-type': 'alert',
+        'apns-priority': '10',
+        'apns-expiration': String(Math.floor(Date.now() / 1000) + 60 * 60 * 6),   // 6시간 지나면 애플이 버린다(늦은 알림은 짜증이다 · 웹의 보내는창과 같은 뜻)
+      },
+      body: JSON.stringify({
+        aps: { alert: { title: 문구.제목, body: 문구.본문 }, sound: 'default', 'thread-id': 문구.표 },
+        길: 문구.길,   // 누르면 갈 자리 — 앱이 읽는다
+      }),
+    })
+    if (r.status === 410) return 'gone'                       // 앱을 지웠다
+    if (r.status === 400) {
+      // 애플이 «왜» 틀렸는지 말해 준다 — 문이 틀린 것과 토큰이 죽은 것을 갈라야 한다(규칙 18ⓚ = 경계가 원인을 가리킨다)
+      let 까닭 = ''
+      try { 까닭 = (await r.json())?.reason || '' } catch { /* 몸통이 비어도 된다 */ }
+      if (까닭 === 'BadDeviceToken') return sub.문 === 'sandbox' ? 'gone' : 'sandbox'
+      return 'gone'                                            // BadTopic·DeviceTokenNotForTopic 등 — 고쳐도 이 토큰은 못 쓴다
+    }
     return r.status >= 200 && r.status < 300 ? 'ok' : 'fail'
   } catch { return 'fail' }
 }

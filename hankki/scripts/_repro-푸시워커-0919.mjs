@@ -33,12 +33,22 @@ const env = { PUSH_KV: KV, APP_TOKEN: 'tok', FOUNDER_SECRET: 'fs' }
 const 일정 = { 날: { '2026-09-21': { 제목: '한끼', 본문: '이번 주 레시피가 열렸어요 — 버섯', 길: './', 시각: '15:30' } } }
 let fetch셈 = 0
 const 보낸곳 = []
+const 애플몸통 = []   // 🍎 아이폰에 «실제로 실려 간» 알맹이 — 제목·본문이 들었나를 여기서 본다
 let 응답표 = {}   // endpoint → status
 globalThis.fetch = async (url, opt = {}) => {
   fetch셈++
   const u = String(url)
   if (u.includes('/push/schedule.json')) return new Response(JSON.stringify(일정), { status: 200 })
   보낸곳.push(u)
+  // 🍎 [2026-09-20] 애플 문 — 웹 푸시와 «헤더도 몸통도» 다르다. 아래 vapid 검사에 걸리면 안 되니 «먼저» 가른다.
+  if (u.includes('push.apple.com')) {
+    const h = opt.headers || {}
+    if (!/^bearer [\w-]+\.[\w-]+\.[\w-]+$/.test(h.authorization || '')) return new Response(JSON.stringify({ reason: 'MissingProviderToken' }), { status: 403 })
+    if (h['apns-topic'] !== 'kr.hankki.app') return new Response(JSON.stringify({ reason: 'BadTopic' }), { status: 400 })
+    애플몸통.push(JSON.parse(opt.body || '{}'))
+    const st = 응답표[u] ?? 200
+    return new Response(st === 200 ? '' : JSON.stringify({ reason: 응답표[u + ':왜'] || 'BadDeviceToken' }), { status: st })
+  }
   const st = 응답표[u] ?? 201
   if (opt.headers) { const a = opt.headers.Authorization || ''; if (!/^vapid t=[\w-]+\.[\w-]+\.[\w-]+, k=[\w-]{80,}$/.test(a)) return new Response('bad vapid', { status: 400 }) }
   return new Response('', { status: st })
@@ -173,5 +183,51 @@ const 넣기 = (i, extra = {}) => 요청('/subscribe', { method: 'POST', headers
   잰다(!JSON.stringify([...서랍.keys()]).includes('두부') && ![...서랍.values()].some((v) => /두부|우유|name/.test(v)), '⑨ KV 어디에도 재료 이름이 없다 — 날짜와 주소뿐')
 }
 
-console.log(나쁨 ? `\n⛔ ${나쁨}개 틀렸다` : '\n✅ 푸시 워커 — 묶음·잠금·410·상한 다 제자리 · D-2 따로')
+// ⑩ 🍎 아이폰(APNs) — 2026-09-20 · 딸 아이폰 실측 「푸시 API: 없음」이라 네이티브로 간다
+{
+  서랍.clear(); 보낸곳.length = 0; 애플몸통.length = 0; 응답표 = {}
+  const { generateKeyPairSync } = await import('node:crypto')
+  const { privateKey } = generateKeyPairSync('ec', { namedCurve: 'P-256', privateKeyEncoding: { type: 'pkcs8', format: 'pem' }, publicKeyEncoding: { type: 'spki', format: 'pem' } })
+  const 아이폰env = { ...env, APNS_KEY: privateKey, APNS_KEY_ID: 'ABCD123456', APNS_TEAM_ID: 'TEAM123456' }
+  const 토큰 = (n) => String(n).padStart(2, '0').repeat(32)   // 16진 64자
+  const 아이폰넣기 = (n, extra = {}) => 요청('/subscribe', { method: 'POST', headers: { 'x-hankki-token': 'tok', 'Content-Type': 'application/json' }, body: JSON.stringify({ platform: 'ios', sub: { endpoint: 토큰(n) }, ...extra }) })
+
+  잰다((await 아이폰넣기('zz')).status === 400, '⑩ 16진 64자가 아니면 400 (잣대를 좁게 — 쓰레기가 KV 에 안 쌓인다)')
+  const a = await (await 아이폰넣기(1)).json()
+  잰다(a.ok === true && (await KV.get('push:n', 'json')).ios === 1, '⑩ 아이폰 구독이 «ios 칸»에 담긴다 (웹 묶음과 안 섞인다)')
+  잰다((await KV.get('push:ios:0', 'json'))[0].문 === 'production', '⑩ 기본 문 = production (TestFlight·스토어가 그 문이다)')
+
+  const 때 = new Date('2026-09-21T06:40:00Z')   // KST 15:40 — 일정 15:30 부터 60분 안
+  const r = await W.보내기(아이폰env, 때)
+  잰다(r.했나 === true && r.플랫폼 === 'ios' && r.성공 === 1, '⑩ 때가 되면 아이폰에 보낸다', JSON.stringify(r))
+  잰다(보낸곳.some((u) => u.startsWith('https://api.push.apple.com/3/device/')), '⑩ 애플 문으로 간다 (sandbox 가 아니다)')
+  잰다(애플몸통[0]?.aps?.alert?.본문 === undefined && 애플몸통[0]?.aps?.alert?.body === '이번 주 레시피가 열렸어요 — 버섯', '⑩ ⭐제목·본문을 «실어서» 보낸다 — 아이폰엔 가져올 서비스워커가 없다')
+  잰다(애플몸통[0]?.aps?.alert?.title === '한끼' && typeof 애플몸통[0]?.길 === 'string', '⑩ 제목 ＋ 누르면 갈 자리도 같이 간다')
+  잰다((await W.보내기(아이폰env, 때)).했나 === false, '⑩ 5분 뒤 또 깨어나도 «두 번 안 보낸다» (잠금)')
+
+  // 🚪 문이 틀렸을 뿐이면 버리지 않고 «문을 바꿔» 둔다
+  서랍.clear(); 보낸곳.length = 0
+  await 아이폰넣기(2)
+  응답표[`https://api.push.apple.com/3/device/${토큰(2)}`] = 400
+  응답표[`https://api.push.apple.com/3/device/${토큰(2)}:왜`] = 'BadDeviceToken'
+  await W.보내기(아이폰env, 때)
+  const 남음 = await KV.get('push:ios:0', 'json')
+  잰다(남음.length === 1 && 남음[0].문 === 'sandbox', '⑩ BadDeviceToken(production) = 버리지 «않고» sandbox 로 바꿔 둔다 — 다음 판에 간다')
+
+  // 앱을 지운 폰 = 410 → 묶음에서 빠진다
+  서랍.clear(); 보낸곳.length = 0
+  await 아이폰넣기(3)
+  응답표[`https://api.push.apple.com/3/device/${토큰(3)}`] = 410
+  await W.보내기(아이폰env, 때)
+  잰다((await KV.get('push:ios:0', 'json')).length === 0, '⑩ 410(앱 지움) = 묶음에서 빠진다 — 죽은 토큰이 KV 를 안 채운다')
+
+  // ⭐ 열쇠가 아직 없을 때 = 아이폰만 건너뛰고 «웹은 그대로 나간다»
+  서랍.clear(); 보낸곳.length = 0; 응답표 = {}
+  await 아이폰넣기(4)
+  await 넣기(77)
+  const r열쇠없음 = await W.보내기(env, 때)   // env = APNS_* 가 «없는» 그대로
+  잰다(r열쇠없음.했나 === true && r열쇠없음.플랫폼 === undefined && 보낸곳.every((u) => !u.includes('apple')), '⑩ ⭐APNs 열쇠가 없으면 아이폰만 조용히 건너뛰고 «웹 알림은 나간다» (한쪽이 없다고 둘 다 안 멈춘다)')
+}
+
+console.log(나쁨 ? `\n⛔ ${나쁨}개 틀렸다` : '\n✅ 푸시 워커 — 묶음·잠금·410·상한 다 제자리 · D-2 따로 · 🍎아이폰 APNs')
 process.exit(나쁨 ? 1 : 0)
