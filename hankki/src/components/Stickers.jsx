@@ -5,7 +5,8 @@ import { packDrawerGroups } from '../data/paidPacks'
 import { isReleased, seasonRank } from '../season'
 // 🌧 가을 유료팩 배경 — 우리 배경 중 «첫 사진». 표지가 1:1 이라 미리 1:1 로 잘라 뒀다.
 import RAIN_STREET from '../assets/decorbg/rain-street.webp'
-import HW_NIGHT from '../assets/decorbg/halloween-night.webp'   // 🎃 창업자 2026-08-03 확정 배경(클레이-핼러윈밤 · docs/stickers/배경-창업자-2026-07-31)
+import HW_NIGHT from '../assets/decorbg/halloween-night.webp'
+import HW_FELT from '../assets/decorbg/halloween-felt.webp'     // 🎃 같은 날 받은 «둘째» 판(펠트 · 밝은 크림) — 창업자 2026-09-21 「둘 다 앱에서 볼게」   // 🎃 창업자 2026-08-03 확정 배경(클레이-핼러윈밤 · docs/stickers/배경-창업자-2026-07-31)
 
 // ── 꾸미기 스티커 라이브러리 ──
 // 전부 오리지널 아트(저작권 안전). 아바타 '요리사 친구들'과 같은 결:
@@ -2749,6 +2750,9 @@ export const DECOR_BACKGROUNDS = [
   //   ⭐ 원본이 1:1(1254px)이라 그대로 1000px 로 줄여 넣었다(비 오는 창과 같은 크기·화질).
   { key: 'hwnight', label: '핼러윈 밤', dark: true, pack: 'halloween2026', key열쇠: '할로윈',
     style: { backgroundImage: 'url(' + HW_NIGHT + ')', backgroundSize: 'cover', backgroundPosition: 'center' } },
+  // 🎃 펠트 크림 판 — 8/3 엔 「팩당 배경 1개」 규칙으로 예비 보관했던 것. 창업자 2026-09-21 *"둘 다 앱에서 볼게"* → 열쇠 뒤에서 나란히 본다. 둘 중 무엇을 팩에 넣을지는 창업자가 앱에서 보고 정한다.
+  { key: 'hwfelt', label: '핼러윈 펠트', pack: 'halloween2026', key열쇠: '할로윈',
+    style: { backgroundImage: 'url(' + HW_FELT + ')', backgroundSize: 'cover', backgroundPosition: 'center' } },
   { key: 'plum', label: '딥플럼', dark: true, style: { background: '#3e3442' } },
   { key: 'midnight', label: '미드나잇', dark: true, style: { background: '#2d3340' } },
 ]
