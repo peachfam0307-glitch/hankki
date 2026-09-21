@@ -163,7 +163,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     const 키움 = 1.15   // 흰 그릇 «입» = 창 × 1.15
     // 🔢 사진 지름(표지 폭 대비) ＝ 아이콘 크기. 흰 그릇은 그 사진에 «입»을 맞춘다 → 그릇 그림 폭 = 사진지름 ÷ (창너비×1.15)
     const 사진지름 = (() => { const n = parseFloat(iconSize); return Number.isFinite(n) && n > 0 ? n / 100 : 0.56 })()
-    const 그릇그림폭 = 창 ? 사진지름 / (창.w * 키움) : 사진지름
+    const 그릇그림폭 = 사진지름   // ＝ iconSize. 우리 앱 기존 음식 아이콘과 같은 크기(창업자 2026-09-22 00:55)
    // 1.3·1.22 는 뒤쪽 테 안쪽 선을 덮고 아래 바닥이 남았다(확대해서 봄) → 1.15 ＋ 조금 아래
     // 🍽🍽 [창업자 2026-09-22 00:28 최종] **사진은 «한 크기»다 — 그릇 그림이 «위에 얹힐» 뿐이다.**
     //    📮 *"흰도자기 기본값하고 프레임만 위에얹으라고 했잖아. 그림이 왜 움직이고, 그릇프레임을 씌우면 갑자기 왜 작아져?"*
@@ -212,25 +212,16 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //    그릇 그림은 DecorLayer 가 «유저가 놓은 자리·크기·각도»로 그 위에 그린다(창이 뚫려 있어 음식이 보인다).
     //    ⛔ 그 전 = 사진을 틀의 창 크기로 잘라 넣어서, 그릇을 바꾸거나 돌리면 사진까지 작아지고 따라 돌았다.
     inner = 그릇 ? (
-      // ㉡ 기본 흰 그릇 — **그릇이 사진에 맞춘다**(창업자 2026-09-22 00:45 *"사진이 왜 갑자기 커져?"*).
-      //    ⭐ 사진은 늘 아이콘 크기(가운데). 그릇은 «자기 창이 그 사진에 겹치도록» 크기와 자리를 잡는다.
-      //    🔢 그릇 폭 W = 사진지름 ÷ (창너비 × 1.15) · 그릇 왼쪽 = 0.5 − 창.cx × W · 위 = 0.5 − 창.cy × (W ÷ 비율)
-      //       (창.cx·cy 는 «그릇 그림 안»에서 창이 어디 있나 — frameWindows.js 가 픽셀로 잰 값)
-      <div style={{ position: 'absolute', inset: 0 }}>
-        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: `${사진지름 * 100}%`, aspectRatio: '1 / 1', borderRadius: '50%', overflow: 'hidden' }}>
-          {사진상자}
+      // ㉡ 기본 흰 도자기 — **우리 앱 기존 아이콘과 «같은 크기»**(iconSize · 창업자 2026-09-22 00:55 *"기본 도자기가 너무커 기존 도자기 크기값이랑 맞춰"*).
+      //    사진은 그 그릇의 «입»(창 × 1.15 · 조금 아래)에 담긴다 — 그릇이 늘 있으니 사진 크기도 늘 같다.
+      //    ⛔ 서랍 그릇은 여기 안 온다 — 그건 DecorLayer 가 이 «위»에 얹는 꾸미기다(00:52 창업자 「기본 도자기가 사라지냐고」).
+      <div style={center}>
+        <div style={{ position: 'relative', width: `${그릇그림폭 * 100}%`, aspectRatio: `${PHOTO_FAMILY[그릇].ratio}`, flex: '0 0 auto' }}>
+          <div style={{ position: 'absolute', left: `${(창.cx - 창.w * 키움 / 2) * 100}%`, top: `${(창.cy + 0.015 - 창.h * 키움 / 2) * 100}%`, width: `${창.w * 키움 * 100}%`, height: `${창.h * 키움 * 100}%`, borderRadius: '50%', overflow: 'hidden' }}>
+            {사진상자}
+          </div>
+          <img src={PHOTO_FAMILY[그릇].src} alt="" draggable={false} loading={eager ? 'eager' : 'lazy'} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', pointerEvents: 'none', filter: 'drop-shadow(0 2px 4px rgba(70,60,45,.18))' }} />
         </div>
-        <img
-          src={PHOTO_FAMILY[그릇].src} alt="" draggable={false} loading={eager ? 'eager' : 'lazy'}
-          style={{
-            position: 'absolute',
-            left: `${(0.5 - 창.cx * 그릇그림폭) * 100}%`,
-            top: `${(0.5 - (창.cy + 0.015) * (그릇그림폭 / PHOTO_FAMILY[그릇].ratio)) * 100}%`,
-            width: `${그릇그림폭 * 100}%`,
-            display: 'block', pointerEvents: 'none',
-            filter: 'drop-shadow(0 2px 4px rgba(70,60,45,.18))',
-          }}
-        />
       </div>
     ) : (
       <div style={center}>
