@@ -4332,6 +4332,8 @@ html, body { overscroll-behavior: none; }
   background: var(--surface); border: 1px solid var(--tease-line);   /* 소식 카드와 «한 벌» */
 }
 .insta-label { font-size: 13.5px; font-weight: 800; color: var(--text); line-height: 1.25; word-break: keep-all; }
+/* 아이콘 크기는 CSS 가 정한다(속성 width 를 CSS 가 이긴다) — 패드에서 키우려고(`--news-gom` 과 같은 처방) */
+.insta-card svg { width: var(--insta-icon, 26px); height: var(--insta-icon, 26px); }
 /* ⚠️ `.today-card` 의 `margin-top: 16px` 을 지운다 — 이제 `.home-pair` 의 gap 이 간격을 만든다.
    안 지우면 두 칸이 세로로 어긋난다(왼쪽만 위로 붙는다). */
 .home-pair > .today-card { margin-top: 0; }
@@ -4416,6 +4418,8 @@ html, body { overscroll-behavior: none; }
         예전의 *"한끼소식이랑 오징어가 너무 오른쪽이 휑해보인다.."* 가 되돌아오지 않는다. */
   .home-pair > .news-card { grid-column: 1 / -1; }
   .home-pair > .news-row { grid-column: 1 / -1; }   /* 2026-09-21 소식·인스타 묶음도 전폭 */
+  .insta-card { --insta-icon: 44px; gap: 10px; }  .insta-label { font-size: 19px; }
+  .news-row .news-title { font-size: 21px; }  .news-row .news-sub { font-size: 16.5px; }  .news-row .news-card { --news-gom: 40px; gap: 14px; }   /* 📮 창업자 *"한끼소식도 글씨 더 키우고"* — 패드만 */   /* 📮 창업자 2026-09-21 *"패드는 크기를 더 키우자 아이콘도 글자도"* */
 
   /* 📐📐 **패드에선 「다음에 뭐 할까」가 «2줄»** — 창업자 2026-08-20
      📮 창업자 = *"**패드는 2줄로 가야겠는데? 콩국수랑 맞춰서**"*
