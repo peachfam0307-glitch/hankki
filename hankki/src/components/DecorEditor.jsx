@@ -462,7 +462,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    올라와 안에 꾸며둔 작은 스티커를 다 덮었다(v8.59에서 고친 문제가 여기서 재발).
   //    `hl` = 형광펜. 마테와 «같은 성질»이다 — 넓게 깔리는 띠라, 탭했다고 맨 앞으로 올라오면
   //    그 밑에 붙여둔 스티커에 죄다 색이 입혀진다(multiply 라 비치긴 해도 색은 얹힌다).
-  const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || it.type === 'hl' || (it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('dc_dma') || it.key.startsWith('pf_') || it.key.startsWith('sf_'))))
+  const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || it.type === 'hl' || (it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('dc_dma') || it.key.startsWith('pf_') || it.key.startsWith('pb_') || it.key.startsWith('sf_'))))
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로. 단 배경격은 제자리 유지.
   // ⌨️⌨️ **아이템을 만지면 «종이 본문» 커서를 내려놓는다** (창업자 폰 캡처 2026-08-12 · 재현으로 확정)
   //   ⛔⛔ 폰은 뒤로가기로 «자판만» 닫혀 blur 가 안 온다 → 본문 커서가 남고 `typing` 이 참인 채다.
@@ -752,10 +752,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     //   같은 그림이 데코에선 «안 써지는 그림», 글자 갈래에선 «글 상자»로 붙는 두 갈래였다 —
     //   창업자 2026-08-08 *"글자안써짐 아래탭에 글자색고르기없음"* (v9.88 「사진 두 길」과 같은 뿌리).
     //   ⛔ 프레임(pf_·벡터)은 밑판이라 제외 — 「글쓰기 프레임」은 글자 갈래에서 붙일 때만 글 상자다.
-    if (BOX_PAD[key] && !FRAMES[key] && !key.startsWith('pf_')) return addBox(key)
+    if (BOX_PAD[key] && !FRAMES[key] && !key.startsWith('pf_') && !key.startsWith('pb_')) return addBox(key)
     const n = items.length
     const isKf = KITCHEN_IDS.has(key)
-    const isFrame = !!FRAMES[key] || (typeof key === 'string' && key.startsWith('pf_'))   // 벡터·PNG 프레임 둘 다
+    const isFrame = !!FRAMES[key] || (typeof key === 'string' && (key.startsWith('pf_') || key.startsWith('pb_')))   // pb_ = 기본 그릇(2026-09-21)   // 벡터·PNG 프레임 둘 다
     const it = {
       id: newDecorId(), type: 'sticker', key,
       x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.46 : 0.42 + ((n % 4) - 1.5) * 0.05,
@@ -822,7 +822,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    📐 창 위치·크기는 짐작이 아니라 «실측표»(FRAME_WINDOW)를 쓴다.
   //       다시 뽑기 = scripts/frame-windows.mjs · 실측 = 프레임 75개 중 창을 찾은 것 54개
   //       창을 못 잰 프레임(테두리가 열려 있어 바깥과 이어진 것)은 평균값으로 넣고 손잡이로 맞추게 한다.
-  const frameOf = (it) => (it && it.type === 'sticker' && (FRAMES[it.key] || (typeof it.key === 'string' && it.key.startsWith('pf_'))) ? it : null)
+  const frameOf = (it) => (it && it.type === 'sticker' && (FRAMES[it.key] || (typeof it.key === 'string' && (it.key.startsWith('pf_') || it.key.startsWith('pb_')))) ? it : null)
   const selFrame = frameOf(items.find((x) => x.id === sel))
   // 🔗🔗 **프레임 ↔ 속 사진 오가기** (창업자 폰 제보 2026-08-07 *"프레임에 넣은 사진을 줄이는 도구도 없고"*)
   //   ⛔ 사진은 프레임 «뒤»에 깔린다 → 창 안을 탭해도 «프레임»이 잡힌다(재현으로 확인).
@@ -1359,7 +1359,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             //   ⛔⛔ 이 자리에 `{/* */}` 금지 — `return (` 앞이라 빌드가 죽는다(오늘 네 번째로 밟았다).
             return (
               <div style={{ position: 'relative', width: '100%', aspectRatio: ratio, borderRadius: 18, overflow: 'hidden' }}>
-                <Thumb recipe={{ ...recipe, decorBg: bg, thumb }} ratio={ratio} radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
+                <Thumb recipe={{ ...recipe, decorBg: bg, thumb, decor: items }} ratio={ratio} radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
                 {layer}
               </div>
             )
