@@ -4325,7 +4325,7 @@ html, body { overscroll-behavior: none; }
 .news-row > .news-card { align-items: center; gap: 12px; padding: 12px 12px 12px 15px; min-height: 104px; }   /* 📮 창업자 2026-09-21 *"왼쪽에 너무 바싹"* — 왼쪽 여백 12→15 · 곰↔글 10→12 */
 .news-gom-col { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; flex: 0 0 auto; }
 .news-new { font-size: 10.5px; font-weight: 900; line-height: 1.5; padding: 0 6px; border-radius: 999px; }
-.news-sub { font-size: 13.5px; margin-top: 2px; line-height: 1.35; word-break: keep-all; white-space: normal; }
+.news-sub { color: var(--text-sub); font-size: 13.5px; margin-top: 2px; line-height: 1.35; word-break: keep-all; white-space: normal; }
 .insta-card {
   display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 9px;   /* 📮 창업자 2026-09-21 *"아이콘도 조금 띄우고 글자도"* 6→9 */
   min-width: 0; min-height: 104px; padding: 12px 8px; border-radius: 14px; text-align: center;

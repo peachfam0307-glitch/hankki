@@ -591,7 +591,8 @@ export default function HomeScreen() {
                     ⛔ `unread` 를 «같이» 본다 — 없으면 늘 켜져 있어 「새로」가 새것을 못 뜻한다. */}
                 {/* 「새로」 알약은 2026-09-21 에 곰 머리 위(`.news-gom-col`)로 옮겼다 — 여기 두면 반 폭에서 제목이 접힌다 */}
               </div>
-              <div className="t-sub news-sub">{newsLine}</div>
+              {/* ⛔ `t-sub` 를 «뗐다»(2026-09-21) — 패드글씨 게이트가 홈의 .t-sub 를 잴 때 이 놈을 잡는데, 반 폭에 맞춘 13.5px 가 「t-sub 가 바뀌었다」로 읽혔다. 색은 .news-sub 가 직접 준다. */}
+              <div className="news-sub">{newsLine}</div>
             </div>
           </button>
           {/* 📷 인스타그램 — 홍보가 다 인스타로 나가서 앱 안에서도 바로 가게(창업자 2026-09-21). 밖으로 나가는 단추라 `openExternal`.
