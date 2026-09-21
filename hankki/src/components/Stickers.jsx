@@ -1104,7 +1104,15 @@ export const 기본그릇키 = (갈래) => 기본그릇표[갈래] || 'pb_x03'  
 //    그릇(프레임 pf_/pb_)은 «한 크기»다 — 기본 그릇도, 서랍에서 얹은 그릇도 표지 폭의 58%. 손잡이로 못 키우고 못 줄인다.
 //    ⭐ 아이콘 표지(홈 70%·상세 56%)와 다른 잣대인 건 맞다 — 그릇은 «표지 안 물건»이라 화면마다 안 바뀌고 늘 같아야 타일이 나란하다.
 export const 그릇폭 = 0.58
+// 🔢 [창업자 2026-09-22 01:00] 기본 흰 도자기 = 공식 음식 아이콘 × 이 배수. 1 이면 아이콘과 같은 크기.
+export const 그릇줄임 = Number(new URLSearchParams(typeof location !== 'undefined' ? location.search : '').get('그릇줄임')) || 1
+// 🔢 [창업자 2026-09-22 01:09 「테두리가 없어서 그런가보자」] 사진이 그릇 «창»의 몇 배로 담기나. 작을수록 흰 테가 넉넉히 보인다.
+export const 사진담김 = Number(new URLSearchParams(typeof location !== 'undefined' ? location.search : '').get('사진담김')) || 1.15
 export const 그릇인가 = (key) => typeof key === 'string' && (key.startsWith('pf_') || key.startsWith('pb_'))
+// 🍽 [창업자 2026-09-21 23:32 확정] «기본 흰 도자기 그릇(pb_)»과 음식 사진은 **아이콘처럼 고정**(가운데 · 아이콘 크기 · 못 옮기고 못 키움).
+//    서랍에서 얹는 그릇(pf_ · 할로윈 냄비 등)은 다른 스티커처럼 옮기고 키우고 돌린다 — 사진은 그 그릇을 따라간다.
+//    📮 *"기본 화이트도자기그릇이랑 음식사진은 고정."* · *"대신 냄비는 키울수있지"*
+export const 기본그릇인가 = (key) => typeof key === 'string' && key.startsWith('pb_')
 
 // 🔑 창업자 열쇠 — `?그릇=1` 을 한 번 열면 그 폰에 남는다(할로윈 열쇠와 같은 꼴 · DecorEditor 698줄과 같은 저장 이름). `?그릇=0` 으로 끈다.
 //    ⛔ 유저에겐 안 보인다 — 창업자가 폰에서 만져 보고 「배포해」 하면 열쇠를 뗀다(아이폰 빌드와 같이).
@@ -2198,6 +2206,9 @@ let _frameIds = null
 export const frameIds = () => (_frameIds ||= new Set(drawerGroups().filter((g) => g.tab === 'frame').flatMap((g) => g.items || [])))
 export const hasFrameDecor = (recipe) =>
   (recipe?.decor || []).some((it) => it?.type === 'sticker' && frameIds().has(it.key))
+// 🍽 [2026-09-21 23:32] «얹은» 프레임만 — 기본 흰 그릇(pb_)은 아이콘처럼 고정이라 빼고 센다(홈 그림 크기 판정용).
+export const 얹은틀있나 = (recipe) =>
+  (recipe?.decor || []).some((it) => it?.type === 'sticker' && frameIds().has(it.key) && !기본그릇인가(it.key))
 
 // 포스트잇 색 팔레트(차분한 종이 톤) — bg / 접힘 / 글자 / line(무늬 선 색)
 // 포스트잇 색 — 새 배경 뮤트 팔레트에 맞춰 통일(쨍하지 않게). 키는 유지(저장표지 호환), 색만 뮤트로. + 라벤더·클레이 추가.
