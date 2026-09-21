@@ -14,7 +14,7 @@ import { needsGiftPack } from '../nudges'
 import { cropRatio, imageRatio } from '../utils'
 import { 기본표지 } from '../store'
 import { FRAME_WINDOW } from '../data/frameWindows'
-import { StickerArt, stickerRatio, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, TEXT_SIZES, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
+import { StickerArt, stickerRatio, 그릇폭, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, TEXT_SIZES, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES, 열쇠있나 } from './Stickers'
 
 // 📜📜 HStrip — 가로로 «넘치는 칩 줄»에 막대를 **우리가 그려서** 항상 보여준다.
 //   (창업자 2026-08-08 *"스크롤바가 처음부터 안보여서 글자체 저게다처럼보임"* —
@@ -462,7 +462,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    올라와 안에 꾸며둔 작은 스티커를 다 덮었다(v8.59에서 고친 문제가 여기서 재발).
   //    `hl` = 형광펜. 마테와 «같은 성질»이다 — 넓게 깔리는 띠라, 탭했다고 맨 앞으로 올라오면
   //    그 밑에 붙여둔 스티커에 죄다 색이 입혀진다(multiply 라 비치긴 해도 색은 얹힌다).
-  const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || it.type === 'hl' || (it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('dc_dma') || it.key.startsWith('pf_') || it.key.startsWith('sf_'))))
+  const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || it.type === 'hl' || (it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('dc_dma') || it.key.startsWith('pf_') || it.key.startsWith('pb_') || it.key.startsWith('sf_'))))
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로. 단 배경격은 제자리 유지.
   // ⌨️⌨️ **아이템을 만지면 «종이 본문» 커서를 내려놓는다** (창업자 폰 캡처 2026-08-12 · 재현으로 확정)
   //   ⛔⛔ 폰은 뒤로가기로 «자판만» 닫혀 blur 가 안 온다 → 본문 커서가 남고 `typing` 이 참인 채다.
@@ -694,8 +694,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //      그냥 올리면 «유저도 같이» 본다. 핼러윈은 10/16 에 여는 것이라 아직 보이면 안 된다.
   //   ⭐ 얼개는 식비 열쇠(ShopScreen.jsx:110)와 같다 — 주소로 켜고 저장소에 남긴다. `?<이름>=0` 으로 끈다.
   //   ⛔ 저장소를 못 읽는 폰에서는 «안 보이는» 쪽이 맞다 — 식비와 반대다(식비는 이미 공개된 것이라 켠다).
+  //   🔓 [2026-09-21] `열쇠까지` 가 있으면 그 날짜부터는 열쇠 없이 열린다 — 핼러윈 접시가 10/16 에 유저에게 «저절로» 열리게(아이폰은 구운 판이 박혀서 그날 손댈 수 없다).
   const 열쇠켬 = (x) => {
     if (!x.key열쇠) return true
+    if (x.열쇠까지 && isReleased(x.열쇠까지)) return true
     try {
       const v = new URLSearchParams(location.search).get(x.key열쇠)
       if (v === '1') localStorage.setItem('hankki:열쇠:' + x.key열쇠, '1')
@@ -752,13 +754,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     //   같은 그림이 데코에선 «안 써지는 그림», 글자 갈래에선 «글 상자»로 붙는 두 갈래였다 —
     //   창업자 2026-08-08 *"글자안써짐 아래탭에 글자색고르기없음"* (v9.88 「사진 두 길」과 같은 뿌리).
     //   ⛔ 프레임(pf_·벡터)은 밑판이라 제외 — 「글쓰기 프레임」은 글자 갈래에서 붙일 때만 글 상자다.
-    if (BOX_PAD[key] && !FRAMES[key] && !key.startsWith('pf_')) return addBox(key)
+    if (BOX_PAD[key] && !FRAMES[key] && !key.startsWith('pf_') && !key.startsWith('pb_')) return addBox(key)
     const n = items.length
     const isKf = KITCHEN_IDS.has(key)
-    const isFrame = !!FRAMES[key] || (typeof key === 'string' && key.startsWith('pf_'))   // 벡터·PNG 프레임 둘 다
+    const isFrame = !!FRAMES[key] || (typeof key === 'string' && (key.startsWith('pf_') || key.startsWith('pb_')))   // pb_ = 기본 그릇(2026-09-21)   // 벡터·PNG 프레임 둘 다
     const it = {
       id: newDecorId(), type: 'sticker', key,
-      x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.46 : 0.42 + ((n % 4) - 1.5) * 0.05,
+      x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.5 : 0.42 + ((n % 4) - 1.5) * 0.05,   // 그릇은 기본 그릇과 «같은 자리»(가운데)
       // 📏📏 **`rs_v`·`rs_k`(레꾸 캐릭터 32컷)만 0.32** — 창업자 *"근데 글자가 너무 작아?"* (2026-08-12)
       //   ⭐⭐ **`s` 는 «폭» 기준이다**(`DecorLayer` 225줄 `width: ${it.s * 100}%`).
       //      ⛔ 나는 처음에 «긴변» 기준으로 계산해 창업자에게 **11.7px 이라고 잘못 말했다.**
@@ -770,7 +772,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       //      → 0.32 는 0.34 보다 6% 작을 뿐인데 뭉개짐을 확실히 피한다.
       //   📌 더 키우려면 «시트를 뽑을 때 글자를 크게» 하는 수밖에 없다 — 확대는 화질을 못 살린다.
       //   ⚠️ 여기 값을 고치면 `scripts/check-sticker-res.mjs` 의 `defaultScale()` «도» 고칠 것(복사본이다).
-      s: isFrame ? 0.58 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : (key.startsWith('rs_v') || key.startsWith('rs_k')) ? 0.32 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
+      s: isFrame ? 그릇폭 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : (key.startsWith('rs_v') || key.startsWith('rs_k')) ? 0.32 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
       r: isFrame ? 0 : ((n % 5) - 2) * 4,
       // 🐻🐧 친구들(캐릭터)은 붙자마자 통통 움직인다 — 소품·음식은 가만히.
       //    ⚠️ 여기도 `gp_` 접두어로 골랐었다 → 여름·가을 곰펭은 붙여도 모션이 안 박혔다.
@@ -822,7 +824,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    📐 창 위치·크기는 짐작이 아니라 «실측표»(FRAME_WINDOW)를 쓴다.
   //       다시 뽑기 = scripts/frame-windows.mjs · 실측 = 프레임 75개 중 창을 찾은 것 54개
   //       창을 못 잰 프레임(테두리가 열려 있어 바깥과 이어진 것)은 평균값으로 넣고 손잡이로 맞추게 한다.
-  const frameOf = (it) => (it && it.type === 'sticker' && (FRAMES[it.key] || (typeof it.key === 'string' && it.key.startsWith('pf_'))) ? it : null)
+  const frameOf = (it) => (it && it.type === 'sticker' && (FRAMES[it.key] || (typeof it.key === 'string' && (it.key.startsWith('pf_') || it.key.startsWith('pb_')))) ? it : null)
   const selFrame = frameOf(items.find((x) => x.id === sel))
   // 🔗🔗 **프레임 ↔ 속 사진 오가기** (창업자 폰 제보 2026-08-07 *"프레임에 넣은 사진을 줄이는 도구도 없고"*)
   //   ⛔ 사진은 프레임 «뒤»에 깔린다 → 창 안을 탭해도 «프레임»이 잡힌다(재현으로 확인).
@@ -1359,7 +1361,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             //   ⛔⛔ 이 자리에 `{/* */}` 금지 — `return (` 앞이라 빌드가 죽는다(오늘 네 번째로 밟았다).
             return (
               <div style={{ position: 'relative', width: '100%', aspectRatio: ratio, borderRadius: 18, overflow: 'hidden' }}>
-                <Thumb recipe={{ ...recipe, decorBg: bg, thumb }} ratio={ratio} radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
+                <Thumb recipe={{ ...recipe, decorBg: bg, thumb, decor: items }} ratio={ratio} radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
                 {layer}
               </div>
             )
@@ -2066,7 +2068,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                         `pack` 을 붙여만 놓고 «거르는 곳»을 안 만든 것이다. AAB 굽기 직전에 잡았다.
                         📌 절대원칙 = *"파는건 공유카드로도 안내보내는게 맞지"* (창업자 2026-08-03)
                         📌 배운 것 = **꼬리표를 붙이는 것과 그 꼬리표를 «읽는 것»은 다른 일이다.** */}
-                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden && (!b.pack || ownedPacks().has(b.pack)))
+                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden && (!b.pack || ownedPacks().has(b.pack) || (b.key열쇠 && 열쇠있나(b.key열쇠))))   // 🔑 팩 배경도 창업자 열쇠로 미리 본다(2026-09-21 핼러윈 밤)
                       .map((b, i) => ({ b, i }))
                       .sort((x, y) => (y.b.anim ? 1 : 0) - (x.b.anim ? 1 : 0) || x.i - y.i)   // 안정 정렬
                       .map(({ b }) => {

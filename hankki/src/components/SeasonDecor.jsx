@@ -71,7 +71,9 @@ export default function SeasonDecor() {
     // 📌 높이 0 · position:relative 짜리 «닻» — 글 맨 끝에 붙는다. 줄 높이를 한 픽셀도 안 늘린다.
     //    ⛔ pointer-events: none — 장식이 단추 위에 앉아 누름을 먹으면 안 된다.
     <div ref={닻} aria-hidden style={{ position: 'relative', height: 0, pointerEvents: 'none' }}>
-      {잰것 && 닻자리 && 조각들.map((조각, i) => {
+      {잰것 && 닻자리 && 조각들.map((원조각, i) => {
+        // 📐 [2026-09-21] 패드(폭 700 이상 · styles.css 의 패드 문턱과 같은 값)에서만 `패드` 값으로 덮어쓴다 — 없으면 폰 값 그대로
+        const 조각 = (잰것.폭 >= 700 && 원조각.패드) ? { ...원조각, ...원조각.패드 } : 원조각
         const w = 조각.w * 잰것.폭
         // ⭐ y 는 «가운데»다(판이 translate(-50%,-50%) 로 놓았다) — 여기서도 가운데로 놓는다.
         //   · 아래 조각 = 글 맨 아래에서 위로 (1-y)×화면높이   → 닻 기준 음수

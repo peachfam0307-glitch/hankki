@@ -1,7 +1,7 @@
 // 앱 버전 — 배포마다 숫자를 올린다. 설정 화면 맨 아래에 표시되고,
 // 새 버전으로 업데이트되면(서비스워커 교체 → 새로고침) 안내 토스트를 띄우는 기준이 된다.
 // 사용자가 "지금 몇 버전이야?"를 바로 확인해 알려줄 수 있어, 캐시 문제 진단에도 쓴다.
-export const APP_VERSION = 'v13.93'
+export const APP_VERSION = 'v13.99'
 export const APP_TAGLINE = '꼬르곰·펭펭과 레꾸해요'
 
 // 익명 의견 보내기 채널 — 로그인 없이 익명으로 받는 구글 폼(또는 Tally) 링크.
@@ -38,4 +38,5 @@ export const LAB_BUG_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSf8bMGM8JlY
 //   ⚠️ 법무는 그대로다 — **앱은 여전히 아무것도 수집·전송하지 않는다.** 주소를 열어줄 뿐이다.
 export const INSTAGRAM_ID = 'annyeong_hankki'
 export const INSTAGRAM_URL = `https://www.instagram.com/${INSTAGRAM_ID}/`
+// 💬 [창업자 2026-09-21] 설정의 「DM 보내기」 — 인스타 메시지 링크 꼴(ig.me/m/<계정>). ✅ 19:41 창업자 폰 실물 = *"인스타 돼~"* (메시지 창이 열린다 · 인스타 쪽 설정 없이).
 export const INSTAGRAM_DM_URL = `https://ig.me/m/${INSTAGRAM_ID}`

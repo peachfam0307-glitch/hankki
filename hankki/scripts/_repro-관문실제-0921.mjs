@@ -94,6 +94,19 @@ S.냉장고열림(); S.장바구니펼침(); S.자랑고름(); S.자랑사진저
 본다('전부 40자 아래(GA4 상한)', 통.every((n) => n.length <= 40), true)
 본다('이름에 숫자·값이 안 섞였다', 통.every((n) => /^[a-z_]+$/.test(n)), true)
 
+console.log('\n⑧ 「뜬 사람」 관문은 «한 번 뜨는 컴포넌트»에 걸려 있다 — 장마다 뜨는 틀에 걸면 사람당 N번 나간다')
+// ⛔⛔ [2026-09-21 15:1x GA4 실측] onboard_seen 50건 / 5명 = 사람당 10번. Stage(장마다 마운트)에 걸어서다.
+//    눌러 잰 판은 「나갔나」만 봐서(≥1) 못 잡았다 — «몇 번»인지도 봐야 한다.
+{
+  const { readFileSync } = await import('node:fs')
+  const 소스 = readFileSync(new URL('../src/components/Onboarding.jsx', import.meta.url), 'utf8')
+  const 부름 = 소스.indexOf('소개봄()')
+  const 온보딩 = 소스.indexOf('export default function Onboarding')
+  const 틀 = 소스.indexOf('function Stage')
+  본다('소개봄() 이 Onboarding 본체 «안»에 있다(Stage 가 아니라)', 부름 > 온보딩 && 온보딩 > 틀, true)
+  본다('Stage 안에는 소개봄() 이 없다', 소스.slice(틀, 온보딩).includes('소개봄()'), false)
+}
+
 console.log('\n⑤ 통계를 끈 사람 — 아무것도 안 나가야 한다')
 켬(); S.통계끄기설정(true); 비움()
 S.화면봄('search'); S.자랑보냄()

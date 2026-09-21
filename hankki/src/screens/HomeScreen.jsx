@@ -6,6 +6,9 @@ import OneLineSheet from '../components/OneLineSheet'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
+import { openExternal } from '../utils'
+import { INSTAGRAM_URL } from '../version'
+import { 인스타로감 } from '../stats'   // 🚪 insta_go — 홈 인스타 칸을 누른 사람
 import { SNS인가, SNS표 } from '../embed'
 import Thumb from '../components/Thumb'
 import { hasFrameDecor } from '../components/Stickers'
@@ -24,7 +27,8 @@ import ConfirmSheet from '../components/ConfirmSheet'
 //   · 그 밖 → **70%** = 2026-08-23 창업자 지시(*"조금만더크게수정"*) 그대로 살아 있다
 //   ⭐ 두 지시가 부딪치는 건 **프레임을 쓸 때뿐**이다 → 그때만 양보한다. 어느 쪽도 안 되돌린다.
 //   ⛔ 이 판정은 `Stickers.jsx` 에 한 곳으로 둔다 — 홈에 이 칸이 «둘»이라 여기 적으면 갈라진다.
-const 홈그림크기 = (r) => (hasFrameDecor(r) ? '56%' : '70%')
+// 📏 [2026-09-21] 프레임이 있어도 70% — 그릇은 Thumb 가 «아이콘과 같은 크기»로 배율을 맞춘다(창업자 「내사진 들어간 레시피 그릇이 넘 작아」). 옛 56% 는 그릇이 58% 고정이던 때의 값.
+const 홈그림크기 = (r) => (hasFrameDecor(r) ? '70%' : '70%')
 // 🐻 코치 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지 규칙)
 import uiHandPoint from '../assets/ui/hand_point.png'
 // 🐻 엄지척·박수 = **물결 정본**(창업자 2026-08-14 제공 · `…-08-14/낱개/gt_01`·`gt_c01`)
@@ -247,7 +251,9 @@ export default function HomeScreen() {
     //    소식 페이지를 열면 맨 아래에 있다 — 거기서 보면 된다.
     const o = news.openedAlert
     if (o.length) {
-      const head = `${o[0].title} ${o[0].count}개 새로 열렸어요`
+      // 📮 창업자(2026-09-21) *"새로열렸어요는 아랫줄에"* — 반 폭에서 「새로」만 윗줄에 남던 것. 「새로 열렸어요」 사이를 안 끊기는 띄어쓰기로.
+      const head = `${o[0].title} ${o[0].count}개 새로 열렸어요`
+
       return o.length > 1 ? `${head} 외 ${o.length - 1}건` : head
     }
     if (news.upcoming) {
@@ -542,6 +548,12 @@ export default function HomeScreen() {
             ⭐ 폭 상한을 씌우지 «않는다» — 창업자 확정 안 D(v10.07) 「가로에선 앱이 화면 폭을 꽉 쓴다」와 안 부딪히게.
             ⚠️ 이 묶음 때문에 «순서»가 바뀐다(소식 → 오늘 → 제철). 창업자가 고른 E 시안이 그 순서였다. */}
         <div className="home-pair">
+          {/* 📣📷 [창업자 2026-09-21] 「한끼 소식」 반 · 「인스타그램」 반 — *"한끼소식을 반으로 나눠서 반은 한끼소식 반은 인스타그램"*
+              ＋ *"높이를 지금보다 좀 더"* ＋ *"꼬르곰 위로 새로 빨간 알약을 올리고 한끼소식을 그 자리에"*
+              ⭐ 폭은 58:42 — 반반이면 소식 한 줄(「우리집레시피 4개 새로 열렸어요 외 11건」)이 세 줄로 접힌다(흉내판 실측). 58 이면 두 줄.
+              ⛔ 「새로」는 곰 «머리 위»에 — 옆에 두면 제목이 두 줄로 접혀 폭을 다 먹는다.
+              📐 패드에선 이 묶음이 전폭(`.home-pair > .news-row`) — 소식이 제일 위라는 확정 순서는 그대로다. */}
+          <div className="news-row">
           <button
             className="press news-card"
             onClick={() => { 소식봤음(); setPreview(true) }}
@@ -555,9 +567,15 @@ export default function HomeScreen() {
                 ⛔⛔ 크기가 `width={26}` «인라인»이라 CSS 로는 못 이긴다(v10.08 에 당했다).
                    ✅ 그래서 크기를 **CSS 변수**로 읽게 한다 — 폰은 26px 그대로, 패드에서만 `.news-gom` 이 키운다.
                    ⭐ 「한끼 소식」 글자 크기를 클래스로 뺀 것과 «같은 처방»이다(바로 아래 주석). */}
-            <img src={한복('소식', uiGomWow)} alt="" draggable={false} className="hk-m-tongtong news-gom"
-              style={{ flex: '0 0 auto', display: 'block', objectFit: 'contain', margin: '-9px 0',
-                width: 'var(--news-gom, 26px)', height: 'auto' }} />
+            <span className="news-gom-col">
+              {/* 🟠 「새로」 — 곰 머리 위. `unread` 를 같이 본다(늘 켜져 있으면 새것을 못 뜻한다 · 아래 옛 주석 그대로) */}
+              {news.openedAlert.length > 0 && unread && (
+                <span className="news-new" style={{ color: 'var(--surface)', background: 'var(--gift)' }}>새로</span>
+              )}
+              <img src={한복('소식', uiGomWow)} alt="" draggable={false} className="hk-m-tongtong news-gom"
+                style={{ flex: '0 0 auto', display: 'block', objectFit: 'contain',
+                  width: 'var(--news-gom, 26px)', height: 'auto' }} />
+            </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {/* 🔠 크기는 인라인이 아니라 클래스로 — 넓은 화면에서 키우려면 CSS 가 이겨야 한다
@@ -572,14 +590,24 @@ export default function HomeScreen() {
                        `styles.css:96` = *"앱 포인트가 전부 파랑이라 오렌지 알약 하나만 «유일하게 튄다»"*
                        ＋ 흰 글자 대비 4.84 로 이미 재둔 값이다. ⛔색을 여기 박지 말 것(그 한 줄만 고친다).
                     ⛔ `unread` 를 «같이» 본다 — 없으면 늘 켜져 있어 「새로」가 새것을 못 뜻한다. */}
-                {news.openedAlert.length > 0 && unread && (
-                  <span style={{ fontSize: 15, fontWeight: 900, color: 'var(--surface)', background: 'var(--gift)', borderRadius: 999, padding: '1px 7px' }}>새로</span>
-                )}
+                {/* 「새로」 알약은 2026-09-21 에 곰 머리 위(`.news-gom-col`)로 옮겼다 — 여기 두면 반 폭에서 제목이 접힌다 */}
               </div>
-              <div className="t-sub news-sub">{newsLine}</div>
+              {/* ⛔ `t-sub` 를 «뗐다»(2026-09-21) — 패드글씨 게이트가 홈의 .t-sub 를 잴 때 이 놈을 잡는데, 반 폭에 맞춘 13.5px 가 「t-sub 가 바뀌었다」로 읽혔다. 색은 .news-sub 가 직접 준다. */}
+              <div className="news-sub">{newsLine}</div>
             </div>
-            <Icon name="chevron-right" size={18} color="var(--sand)" />
           </button>
+          {/* 📷 인스타그램 — 홍보가 다 인스타로 나가서 앱 안에서도 바로 가게(창업자 2026-09-21). 밖으로 나가는 단추라 `openExternal`.
+              🚪 insta_go 로 누른 사람을 센다 — 홈 연 사람 대비 몇 %가 누르나로 이 칸을 «살릴지» 정한다. */}
+          <button
+            className="press insta-card"
+            onClick={() => { try { 인스타로감() } catch { /* noop */ } openExternal(INSTAGRAM_URL) }}
+            aria-label="한끼 인스타그램 열기"
+          >
+            {/* 창업자(18:29) = *"인스타그램은 그림아이콘 + 아래 한끼인스타그램"* — 아이콘 위 · 글자 아래 · 가운데 */}
+            <Icon name="instagram" size={26} color="var(--brown)" />
+            <span className="insta-label">한끼 인스타그램</span>
+          </button>
+          </div>
 
           {/* 🍳🍳 「다음에 뭐 할까」 — ✅창업자 확정 2026-08-20 (시안 4판의 「라 — 라벨 알약」)
               📮 판정 원문 = *"**라벨알약 말한거야**"* · 그 앞 = *"좋아졌어."*

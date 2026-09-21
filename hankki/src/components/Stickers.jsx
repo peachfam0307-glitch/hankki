@@ -5,6 +5,8 @@ import { packDrawerGroups } from '../data/paidPacks'
 import { isReleased, seasonRank } from '../season'
 // 🌧 가을 유료팩 배경 — 우리 배경 중 «첫 사진». 표지가 1:1 이라 미리 1:1 로 잘라 뒀다.
 import RAIN_STREET from '../assets/decorbg/rain-street.webp'
+import HW_NIGHT from '../assets/decorbg/halloween-night.webp'
+import HW_FELT from '../assets/decorbg/halloween-felt.webp'     // 🎃 같은 날 받은 «둘째» 판(펠트 · 밝은 크림) — 창업자 2026-09-21 「둘 다 앱에서 볼게」   // 🎃 창업자 2026-08-03 확정 배경(클레이-핼러윈밤 · docs/stickers/배경-창업자-2026-07-31)
 
 // ── 꾸미기 스티커 라이브러리 ──
 // 전부 오리지널 아트(저작권 안전). 아바타 '요리사 친구들'과 같은 결:
@@ -781,6 +783,14 @@ const PHOTO_RATIO = {
 //    ⏳ 1.45 짜리 둘(pf_hw03·07)은 «창업자가 직접 담아보고» 정한다 — 그래서 일단 넣었다
   pf_hw01: 1.268, pf_hw03: 1.450, pf_hw04: 1.2772,
   pf_hw05: 1.2579, pf_hw07: 1.4457, pf_hw08: 1.3264,
+  // 🎃 [2026-09-21 22:18 창업자 2차 시트] 「접시가 없길래 뽑았어」 — 4컷 중 접시 ①(물결 · hw09)·볼 ③(보라 고양이 · hw10)만 올렸다. 시트 = docs/stickers/할로윈접시2-창업자-2026-09-21
+  pf_hw09: 1.0655, pf_hw10: 1.3347,
+// 🍽 [2026-09-21] 기본 그릇 8컷 — 창업자가 뽑은 흰 무지 시트 둘(`docs/stickers/기본그릇-창업자-2026-09-21`) · `그릇시트-통째로.py` 로 잘랐다.
+//    📮 왜 = 「내 사진으로 아이콘 바꾸기」가 맨 동그라미로 떠서 프레임 창 밖으로 삐져나갔다 — 무지 그릇이 하나도 없었다.
+//    🔢 잰 비율(가로÷세로) — PNG 실제 크기. w = 시트1(①냄비 ②둥근볼 ③얕은손잡이접시 ④고리손잡이접시) · x = 시트2(⑤고리손잡이볼 ⑥주름볼 ⑦넓은접시 ⑧한손잡이팬)
+  pb_w01: 1.2816, pb_w02: 1.1842, pb_w03: 1.3672, pb_w04: 1.3107,
+  pb_x01: 1.2829, pb_x02: 1.1169, pb_x03: 1.2141, pb_x04: 1.3724,
+
 // 🔖 [2026-09-01] 포토코너 24컷 — 창업자 시트 셋. 사진·종이 «모서리»에 붙이는 조각이다.
 //    ⛔ pc1_ = 가을이라 10/1 에 연다 · pc2_·pc3_ 은 기본으로 깔린다(창업자 확정 2026-09-01)
   pc1_01: 0.8, pc1_02: 0.7767, pc1_03: 0.77, pc1_04: 0.8101,
@@ -1077,6 +1087,36 @@ for (const key of Object.keys(PHOTO_RATIO)) {
   if (!PHOTO_FAMILY[key]) PHOTO_FAMILY[key] = { src: PHOTO_URLS[`../assets/stickers/photo/${key}.png`], ratio: PHOTO_RATIO[key] }
 }
 export const PHOTO_IDS = new Set(Object.keys(PHOTO_FAMILY))
+
+// 🍽🍽 [창업자 확정 2026-09-21] 갈래별 «기본 그릇» — 사진 표지에 그릇 프레임을 «안» 얹었을 때 저절로 깔리는 것.
+//    📮 창업자 = *"근데 요리에따라 달라야하긴하는데"* → 표 → *"좋지. 저렇게해주면."* · *"소스는 손잡이 달린애로 하면돼"*
+//    ⭐ 갈래는 새로 안 만든다 — 음식 아이콘 픽커 갈래(`dishCatOf` · FoodIcon.jsx)를 그대로 쓴다. 모르면 ⑦ 넓은 접시.
+//    📄 잰 값·표 전문 = docs/stickers/기본그릇-창업자-2026-09-21/README.md
+const 기본그릇표 = {
+  '국·탕·찌개': 'pb_w01',                                       // ① 양손잡이 냄비
+  '밥': 'pb_w02', '밥·면·빵': 'pb_w02', '면': 'pb_w02', '분식': 'pb_w02', '동남아': 'pb_w02',   // ② 둥근 볼
+  '볶음·조림·찜': 'pb_x01',                                     // ⑤ 고리손잡이 볼
+  '빵·디저트·음료': 'pb_w03',                                   // ③ 얕은 손잡이 접시
+  '양념·소스': 'pb_x04', '양념·장': 'pb_x04',                    // ⑧ 한손잡이 팬 (창업자 「소스는 손잡이 달린 애로」)
+}
+export const 기본그릇키 = (갈래) => 기본그릇표[갈래] || 'pb_x03'   // ⑦ 넓은 접시 = 구이·전·반찬·양식·일식·중식·모름
+// 📏 [창업자 2026-09-21 21:55 *"그릇사이즈가 줄어들고 늘어나서 홈에서 보면 그릇사이즈가 달라져"*]
+//    그릇(프레임 pf_/pb_)은 «한 크기»다 — 기본 그릇도, 서랍에서 얹은 그릇도 표지 폭의 58%. 손잡이로 못 키우고 못 줄인다.
+//    ⭐ 아이콘 표지(홈 70%·상세 56%)와 다른 잣대인 건 맞다 — 그릇은 «표지 안 물건»이라 화면마다 안 바뀌고 늘 같아야 타일이 나란하다.
+export const 그릇폭 = 0.58
+export const 그릇인가 = (key) => typeof key === 'string' && (key.startsWith('pf_') || key.startsWith('pb_'))
+
+// 🔑 창업자 열쇠 — `?그릇=1` 을 한 번 열면 그 폰에 남는다(할로윈 열쇠와 같은 꼴 · DecorEditor 698줄과 같은 저장 이름). `?그릇=0` 으로 끈다.
+//    ⛔ 유저에겐 안 보인다 — 창업자가 폰에서 만져 보고 「배포해」 하면 열쇠를 뗀다(아이폰 빌드와 같이).
+export const 열쇠있나 = (이름) => {
+  try {
+    const v = new URLSearchParams(location.search).get(이름)
+    if (v === '1') localStorage.setItem('hankki:열쇠:' + 이름, '1')
+    if (v === '0') localStorage.removeItem('hankki:열쇠:' + 이름)
+    return localStorage.getItem('hankki:열쇠:' + 이름) === '1'
+  } catch { return false }
+}
+
 
 // ── ✨ 캐릭터 움직임(모션) · 효과(양념) — 스티커마다 골라 얹는다 ──
 // 전부 그림 1장으로 되는 CSS 모션. item.motion / item.fx 에 key 저장.
@@ -1881,7 +1921,14 @@ export const STICKER_GROUPS = [
   //    ⛔ 유저에게는 아직 안 보인다 — 핼러윈은 **10/16** 에 연다(창업자 «할로윈은 16일로 미뤄»).
   //       그때 이 줄의 `key열쇠` 를 떼고 `from: '2026-10-16'` 으로 바꾼다.
   //    ⭐ 얼개는 식비 열쇠(ShopScreen.jsx:110)와 같다 — 한 번 열면 그 폰에 남는다.
-  { key: 'deco_dish_halloween', tab: 'frame', key열쇠: '할로윈', bigCell: true, from: '2026-01-01', label: '할로윈 접시', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_hw05', 'pf_hw01', 'pf_hw04', 'pf_hw08', 'pf_hw03', 'pf_hw07'] },
+  // ✅ [창업자 2026-09-21 19:5x] 실물로 담아 보고 «넷»을 골랐다 = 검은 고양이·달(hw07) · 고양이·호박 냄비(hw04) · 유령·호박 물결(hw08) · 유령·호박 주황 손잡이(hw01).
+  //    ⛔ 열쇠(`?할로윈=1`)는 창업자 *"키도 냅둬 인스타에 캐러셀 구울때 또 쓸수있을거같애"* — 그대로 둔다. 유저 공개는 10/16 창(seasonDecor.js).
+  //    캡처 = docs/인스타-소재-할로윈접시-2026-09-21/
+  // ✅✅ [창업자 2026-09-21 22:2x 최종] 넷 = 냄비 둘(①주황 손잡이 hw01 · ②검은 고양이·호박 hw04) ＋ 접시(물결 hw09) ＋ 볼(보라 고양이 hw10). hw07·hw08 은 뺐다(파일은 둔다).
+  //    🔓 유저 공개 = `열쇠까지: '2026-10-16'` — 그날부터는 열쇠 없이 열린다(DecorEditor 열쇠켬). 그 전엔 창업자 열쇠(?할로윈=1)로만. 아이폰은 구운 판이 박히니 «이 줄이 들어간 판»으로 굽는다.
+  { key: 'deco_dish_halloween', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', bigCell: true, from: '2026-01-01', label: '할로윈 접시', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_hw01', 'pf_hw04', 'pf_hw09', 'pf_hw10'] },
+  // 🍽 [창업자 2026-09-21] 기본 그릇 8컷 — 늘 열려 있다. 사진 표지에 프레임을 «안» 얹으면 갈래별 기본 그릇(`기본그릇키`)이 저절로 깔리고, 여기서 직접 고르면 그게 이긴다.
+  { key: 'deco_dish_basic', tab: 'frame', key열쇠: '그릇', bigCell: true, from: '2026-01-01', label: '기본 그릇', hint: '내 사진을 흰 그릇에 담아요', items: ['pb_x03', 'pb_w02', 'pb_w01', 'pb_x01', 'pb_w03', 'pb_x02', 'pb_w04', 'pb_x04'] },
   { key: 'deco_dy_frame_b', tab: 'frame', diary: true, from: '2027-01-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
   { key: 'deco_dy_frame_c', tab: 'frame', diary: true, from: '2027-01-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
 
@@ -2698,6 +2745,14 @@ export const DECOR_BACKGROUNDS = [
     swatch: { backgroundSize: '70px 90px,100px 130px,cover' } },
 
   // 🌙 딥(어두운) 배경지 — 반짝임·홀로·별이 사는 "밤하늘 다꾸" (창업자 픽: 딥플럼·미드나잇)
+  // 🎃 **핼러윈 밤 — 핼러윈 유료팩 배경** (창업자 2026-08-03 확정 · «클레이-핼러윈밤» · 두 판 중 어두운 쪽 = 빛 효과가 산다)
+  //   🔑 [2026-09-21] 창업자 *"우리 할로윈 배경도 넣어줘. 한번 보게"* → 열쇠(?할로윈=1) 뒤에서 보인다. 유저는 팩(halloween2026)을 열어야 본다(지금은 안 판다 → 안 보인다).
+  //   ⭐ 원본이 1:1(1254px)이라 그대로 1000px 로 줄여 넣었다(비 오는 창과 같은 크기·화질).
+  { key: 'hwnight', label: '핼러윈 밤', dark: true, pack: 'halloween2026', key열쇠: '할로윈',
+    style: { backgroundImage: 'url(' + HW_NIGHT + ')', backgroundSize: 'cover', backgroundPosition: 'center' } },
+  // 🎃 펠트 크림 판 — 8/3 엔 「팩당 배경 1개」 규칙으로 예비 보관했던 것. 창업자 2026-09-21 *"둘 다 앱에서 볼게"* → 열쇠 뒤에서 나란히 본다. 둘 중 무엇을 팩에 넣을지는 창업자가 앱에서 보고 정한다.
+  { key: 'hwfelt', label: '핼러윈 펠트', pack: 'halloween2026', key열쇠: '할로윈',
+    style: { backgroundImage: 'url(' + HW_FELT + ')', backgroundSize: 'cover', backgroundPosition: 'center' } },
   { key: 'plum', label: '딥플럼', dark: true, style: { background: '#3e3442' } },
   { key: 'midnight', label: '미드나잇', dark: true, style: { background: '#2d3340' } },
 ]

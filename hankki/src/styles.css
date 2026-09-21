@@ -4319,8 +4319,21 @@ html, body { overscroll-behavior: none; }
   border: 1px solid var(--tease-line);
   text-align: left;
 }
-.news-title { font-size: 16.5px; font-weight: 800; color: var(--text); }
-.news-sub { font-size: 15px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.news-title { font-size: 16.5px; font-weight: 800; color: var(--text); white-space: nowrap; }
+/* 📣📷 [창업자 2026-09-21] 소식 58 : 인스타 42 — 반 폭이라 소식 한 줄은 «두 줄로 접되 자르지 않는다» */
+.news-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 8px; align-items: stretch; }   /* 창업자(18:29) = 소식 2/3 · 인스타 1/3 */
+.news-row > .news-card { align-items: center; gap: 12px; padding: 12px 12px 12px 15px; min-height: 104px; }   /* 📮 창업자 2026-09-21 *"왼쪽에 너무 바싹"* — 왼쪽 여백 12→15 · 곰↔글 10→12 */
+.news-gom-col { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; flex: 0 0 auto; }
+.news-new { font-size: 10.5px; font-weight: 900; line-height: 1.5; padding: 0 6px; border-radius: 999px; }
+.news-sub { color: var(--text-sub); font-size: 13.5px; margin-top: 2px; line-height: 1.35; word-break: keep-all; white-space: normal; }
+.insta-card {
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 9px;   /* 📮 창업자 2026-09-21 *"아이콘도 조금 띄우고 글자도"* 6→9 */
+  min-width: 0; min-height: 104px; padding: 12px 8px; border-radius: 14px; text-align: center;
+  background: var(--surface); border: 1px solid var(--tease-line);   /* 소식 카드와 «한 벌» */
+}
+.insta-label { font-size: 13.5px; font-weight: 800; color: var(--text); line-height: 1.25; word-break: keep-all; }
+/* 아이콘 크기는 CSS 가 정한다(속성 width 를 CSS 가 이긴다) — 패드에서 키우려고(`--news-gom` 과 같은 처방) */
+.insta-card svg { width: var(--insta-icon, 26px); height: var(--insta-icon, 26px); }
 /* ⚠️ `.today-card` 의 `margin-top: 16px` 을 지운다 — 이제 `.home-pair` 의 gap 이 간격을 만든다.
    안 지우면 두 칸이 세로로 어긋난다(왼쪽만 위로 붙는다). */
 .home-pair > .today-card { margin-top: 0; }
@@ -4404,6 +4417,9 @@ html, body { overscroll-behavior: none; }
      ⭐ 그러면 아래 칸에 [다음에 뭐 할까 | 오늘 뭐 해먹지]가 좌우로 서서
         예전의 *"한끼소식이랑 오징어가 너무 오른쪽이 휑해보인다.."* 가 되돌아오지 않는다. */
   .home-pair > .news-card { grid-column: 1 / -1; }
+  .home-pair > .news-row { grid-column: 1 / -1; }   /* 2026-09-21 소식·인스타 묶음도 전폭 */
+  .insta-card { --insta-icon: 48px; flex-direction: row; gap: 16px; padding: 12px 20px; }  .insta-label { font-size: 22px; }   /* 📮 창업자 *"패드는 왼쪽에 아이콘 오른쪽에 글자"* — 가로로 */
+  .news-row .news-title { font-size: 24px; }  .news-row .news-sub { font-size: 18.5px; }   /* 📮 창업자 19:29 *"글씨 좀 더 키워줘"* 21/16.5 → 24/18.5 */  .news-row .news-card { --news-gom: 40px; gap: 18px; padding-left: 24px; }   /* 📮 창업자 *"한끼소식도 글씨 더 키우고"* — 패드만 */   /* 📮 창업자 2026-09-21 *"패드는 크기를 더 키우자 아이콘도 글자도"* */
 
   /* 📐📐 **패드에선 「다음에 뭐 할까」가 «2줄»** — 창업자 2026-08-20
      📮 창업자 = *"**패드는 2줄로 가야겠는데? 콩국수랑 맞춰서**"*
