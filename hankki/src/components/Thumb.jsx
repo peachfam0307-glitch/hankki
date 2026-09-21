@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { 창고에있나, 그릴수있나, 창고표시, 꺼내기 } from '../photoStore'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
-import { bgStyle, bgIsDark, bgAnim, PHOTO_FAMILY, stickerRatio, 기본그릇키, 기본그릇인가, 열쇠있나, 그릇폭 } from './Stickers'
+import { bgStyle, bgIsDark, bgAnim, PHOTO_FAMILY, stickerRatio, 기본그릇키, 기본그릇인가, 열쇠있나, 그릇폭, 그릇줄임 } from './Stickers'
 import { FRAME_WINDOW } from '../data/frameWindows'
 import { dishCatOf } from './FoodIcon'
 import { graphemes } from '../utils'
@@ -163,7 +163,8 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     const 키움 = 1.15   // 흰 그릇 «입» = 창 × 1.15
     // 🔢 사진 지름(표지 폭 대비) ＝ 아이콘 크기. 흰 그릇은 그 사진에 «입»을 맞춘다 → 그릇 그림 폭 = 사진지름 ÷ (창너비×1.15)
     const 사진지름 = (() => { const n = parseFloat(iconSize); return Number.isFinite(n) && n > 0 ? n / 100 : 0.56 })()
-    const 그릇그림폭 = 사진지름   // ＝ iconSize. 우리 앱 기존 음식 아이콘과 같은 크기(창업자 2026-09-22 00:55)
+    // 🔢 [창업자 2026-09-22 01:00 「좀 크네 그릇크기자체를 좀 줄이자」] 기존 아이콘보다 조금 작게 — 그 배수가 그릇줄임.
+    const 그릇그림폭 = 사진지름 * 그릇줄임
    // 1.3·1.22 는 뒤쪽 테 안쪽 선을 덮고 아래 바닥이 남았다(확대해서 봄) → 1.15 ＋ 조금 아래
     // 🍽🍽 [창업자 2026-09-22 00:28 최종] **사진은 «한 크기»다 — 그릇 그림이 «위에 얹힐» 뿐이다.**
     //    📮 *"흰도자기 기본값하고 프레임만 위에얹으라고 했잖아. 그림이 왜 움직이고, 그릇프레임을 씌우면 갑자기 왜 작아져?"*
