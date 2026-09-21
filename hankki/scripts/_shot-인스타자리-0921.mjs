@@ -50,17 +50,26 @@ await 판('B-소식아래', (svg) => {
 })
 // D = 창업자 안(2026-09-21 18:1x) — 「한끼 소식」 카드를 반으로 나눠 왼쪽 소식 · 오른쪽 인스타
 await 판('D-소식반반', (svg) => {
+  // 창업자(18:24) = *"여튼 네가 깔끔하게 만들어봐봐"* — 정리한 판
+  //   · 폭 58:42 · 높이 같이 · 「새로」는 꼬르곰 «머리 위»(가리지 않게) · 제목 한 줄 · 소식 두 줄로 접되 안 자름 · 화살표는 뺀다(폭 벌기)
   const t = [...document.querySelectorAll('.news-title')][0]; if (!t) throw new Error('한끼 소식 없음')
   let card = t; while (card.parentElement && card.getBoundingClientRect().width < window.innerWidth * 0.8) card = card.parentElement
-  const W = card.getBoundingClientRect().width   // 카드가 «원래 차지하던 폭» 안에서 반으로 가른다 (첫 판은 오른쪽으로 삐져나갔다)
-  const wrap = document.createElement('div'); wrap.style.cssText = `display:flex;gap:8px;align-items:stretch;width:${W}px;box-sizing:border-box`
+  const W = card.getBoundingClientRect().width
+  const wrap = document.createElement('div'); wrap.style.cssText = `display:flex;gap:8px;align-items:stretch;width:${W}px;box-sizing:border-box;position:relative;z-index:2`
   card.parentElement.insertBefore(wrap, card); wrap.appendChild(card)
-  // 창업자(18:15) = *"대신 높이를 지금보다 좀 더 주면 좋을 듯"* → 두 칸 다 높이를 주고, 소식 한 줄은 «두 줄»로 접히게(반 폭에서 「우리집레…」로 잘리던 것)
-  card.style.cssText += ';flex:1 1 0;min-width:0;width:auto;margin:0;min-height:112px'
-  const sub = card.querySelector('.news-sub'); if (sub) sub.style.cssText += ';white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3'
+  card.style.cssText += ';flex:58 1 0;min-width:0;width:auto;margin:0;min-height:104px;--news-gom:26px;padding-right:12px'
+  const sub = card.querySelector('.news-sub'); if (sub) sub.style.cssText += ';white-space:normal;overflow:visible;text-overflow:clip;font-size:13px;line-height:1.35;word-break:keep-all'
+  t.style.whiteSpace = 'nowrap'
+  const badge = [...t.parentElement.children].find((e) => e !== t && /새로/.test(e.textContent || ''))
+  const gom = card.querySelector('img')
+  if (badge && gom) {
+    const col = document.createElement('span'); col.style.cssText = 'display:inline-flex;flex-direction:column;align-items:center;gap:3px;flex:none'
+    gom.parentElement.insertBefore(col, gom); badge.style.cssText += ';font-size:10.5px;padding:0 6px;line-height:1.5'; col.appendChild(badge); col.appendChild(gom)
+  }
+  const arrow = [...card.querySelectorAll('svg')].pop(); if (arrow && !arrow.closest('.news-title')) arrow.style.display = 'none'
   const ig = document.createElement('button'); ig.className = 'press'
-  ig.style.cssText = 'flex:1 1 0;min-width:0;min-height:112px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);text-align:left'
-  ig.innerHTML = `<span style="color:var(--brown);display:inline-flex">${svg}</span><div style="font-size:17px;font-weight:800;line-height:1.2">인스타그램</div><div style="font-size:13px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">@annyeong_hankki</div>`
+  ig.style.cssText = 'flex:42 1 0;min-width:0;min-height:104px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;padding:12px 12px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);text-align:left;position:relative;z-index:2'
+  ig.innerHTML = `<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--brown);display:inline-flex">${svg}</span><span style="font-size:17px;font-weight:800;line-height:1.2">인스타그램</span></div><div style="font-size:13px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">@annyeong_hankki</div><div style="font-size:12.5px;color:var(--text-sub)">새 레시피·소식 먼저 봐요</div>`
   wrap.appendChild(ig)
 })
 await 판('C-설정', (svg) => {
