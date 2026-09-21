@@ -10,7 +10,7 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import Icon from '../components/Icon'
 import { matchKo } from '../utils'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
-import { 자랑보냄 } from '../stats'
+import { 자랑보냄, 자랑고름, 자랑사진저장 } from '../stats'   // 🚪 [2026-09-21] brag_pick · brag_saved_fallback — «고르고 돌아선 사람»과 «폰 탓»을 가른다
 // 🗄 「표지 그림이 큰 창고에 있나」 — 찍기 전에 기다릴지 정하는 잣대(2026-09-03)
 import { 창고에있나 } from '../photoStore'
 import { warmFontCSS } from '../fontEmbed'
@@ -80,7 +80,11 @@ export default function BragScreen() {
   //   ⛔ 카드를 우리가 대신 닫지도 않는다 — 「표지로 저장」이 아직 거기 있다. **뺏지 않는다.**
   //   ⭐ `useModalBack(onClose)` 덕에 뒤로가기로 닫아도 `onClose` 를 타므로 새는 길이 없다.
   const [askReview, setAskReview] = useState(null) // 머리글 글자를 담는다(null = 안 뜸)
-  const 자랑보냄 = useRef(false)
+  // 🔴🔴 [2026-09-21 버그] 이 useRef 가 위 13줄의 «계측 함수 자랑보냄»과 «같은 이름»이었다.
+  //    컴포넌트 안에서는 이 줄이 이겨서 190줄 `자랑보냄()` 이 useRef 객체를 불렀고 → TypeError → catch 가 삼켰다.
+  //    ＝ 레꾸자랑을 보내도 brag_shared 가 «한 번도» 안 나갔다. 문서엔 「며칠째 0」이라 적혀 있었고 「인기 없다」로 읽었다.
+  //    ✅ 이름을 갈랐다. 🛡 같은 사고는 scripts/check-계측겹침.mjs 가 막는다.
+  const 보냈나 = useRef(false)
   const [coach, setCoach] = useState(() => needsCoach(BRAG_COACH_KEY))
   const coverRef = useRef(null) // 꾸민 표지 캡처용(화면 밖 숨은 레이어)
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
@@ -189,7 +193,7 @@ export default function BragScreen() {
       //   ⛔ 취소(AbortError)·사진 저장 폴백은 `shared: false` 라 여기 안 들어온다(shareCover.js:232·235·244).
       if (res && res.shared === true) { try { 자랑보냄() } catch { /* 통계가 죽어도 자랑은 된다 */ } }
       if (res && res.shared === true) 열쇠받기(EARN.자랑).then((받음) => { if (받음) nav.showToast(`레꾸자랑을 처음 보냈어요 · ${KEY_NAME} 1${KEY_UNIT}를 더 받았어요`, 5200) })
-      else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
+      else if (res && res.ok && res.shared === false) { try { 자랑사진저장() } catch { /* noop */ } nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요') }   // 🚪 brag_saved_fallback — 폰 탓이지 사람 탓이 아니다
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
       // 🗣🗣 **여기가 빠져 있었다** — 창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 «아예» 못봤어"*
       //   ⛔⛔ 리뷰 청하기가 «랜덤 카드» 길에만 붙어 있었다(`ShareDrawCard` 의 `onShared`).
@@ -200,15 +204,15 @@ export default function BragScreen() {
       //      ⭐ 「한 곳만 감쌌다」는 말이 맞으려면 **그 한 곳을 모든 길이 지나가야** 한다.
       //   ✅ 조건 = **`shared === true` 일 때만**(`shareCover.js` 206·210줄).
       //      취소(AbortError)·사진 저장·허가 끊김은 전부 `shared: false` 라 저절로 걸러진다.
-      if (res && res.shared === true) 자랑보냄.current = true
+      if (res && res.shared === true) 보냈나.current = true
     } finally {
       setBusy(false)
       setPick(null)
       // ⛔ 시트를 닫은 «뒤»에 띄운다 — 시트 위에 시트를 겹치지 않는다(2026-08-27 에 지킨 것 ⑴)
       if (띄울시트) setPending(띄울시트) // 📱 리뷰는 이 시트의 `onClose` 가 청한다(아래)
       else {
-        if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-        자랑보냄.current = false
+        if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+        보냈나.current = false
       }
     }
   }
@@ -301,7 +305,7 @@ export default function BragScreen() {
                 ⛔ 이 주석을 `) : (` 바로 뒤로 올리지 말 것 — 표현식 여는 자리라 빌드가 깨진다(실제로 깨뜨렸다). */}
             {list.map((r, i) => (
               <div key={r.id} className="grid-card" {...(i === 0 ? { 'data-coach': 'brag-list' } : {})}>
-                <button className="press" style={{ textAlign: 'left', width: '100%' }} onClick={() => setPick(r)} aria-label={`${r.title} 자랑하기`}>
+                <button className="press" style={{ textAlign: 'left', width: '100%' }} onClick={() => { try { 자랑고름() } catch { /* noop */ } setPick(r) }} aria-label={`${r.title} 자랑하기`}>
                   <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                   <div className="name">{r.title}</div>
                 </button>
@@ -343,14 +347,14 @@ export default function BragScreen() {
              ⭐ 랜덤 카드(`ShareDrawCard`)와 «같은 모양»으로 맞췄다 — 보낼 때 표시하고, 닫을 때 청한다. */}
       <SendNowSheet
         pending={pending}
-        onShared={() => { 자랑보냄.current = true }}
+        onShared={() => { 보냈나.current = true }}
         onClose={(다음) => {
           // 📱 [2026-08-28 ⓑ] 「지금 보내기」로 표지가 나갔고 레시피가 남았으면 **한 장 더**를 먼저 청한다.
           //    ⛔ 리뷰는 그다음이다 — 시트 위에 시트를 겹치지 않는다.
           if (다음) { setPending({ ...다음, 이어보내기: true }); return }
           setPending(null)
-          if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-          자랑보냄.current = false
+          if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+          보냈나.current = false
         }}
       />
 
@@ -359,11 +363,11 @@ export default function BragScreen() {
         <Portal>
           <ShareDrawCard
             recipe={share}
-            onShared={() => { 자랑보냄.current = true }}
+            onShared={() => { 보냈나.current = true }}
             onClose={() => {
               setShare(null)
-              if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-              자랑보냄.current = false
+              if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+              보냈나.current = false
             }}
             onSaveCover={(img) => { const 말 = 카드표지토스트(share); updateRecipe(share.id, 카드표지로(img)); nav.showToast(말) }}
           />

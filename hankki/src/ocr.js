@@ -8,6 +8,7 @@ import { normalizeNumerals } from './ocrCorrect'
 //   cloud.js 는 파이어베이스를 `await import` 로 늦게 부르고, 이 함수는 localStorage 한 줄만 본다.
 //   (로그인 안 한 사람에게 167KB 를 지우지 않으려고 cloud.js:102 가 바로 그 목적으로 만든 것)
 import { 로그인해뒀나, 내구글번호 } from './cloud'
+import { 열쇠받음, 열쇠막힘 } from './stats.js'   // 🚪 [2026-09-21] key_earn · key_block — key_block 이 곧 «결제 수요»다
 // 🔓 운영자 표식 — 「무제한인가」의 잣대를 `getOcrLeft()` 한 곳에 모으려고 여기서 읽는다.
 //    ⛔ 순환 없음(확인) — `tidy.js` 는 `polish`·`parseRecipe` 만 부르고 `ocr.js` 를 안 부른다.
 import { tidyFounder, 유저눈인가 } from './tidy'
@@ -263,7 +264,9 @@ export async function 열쇠받기(행동) {
   if (!EARN[행동]) return false
   try {
     const d = await 한번보내기(행동)
-    return !!(d && d.준것)
+    const 받았다 = !!(d && d.준것)
+    if (받았다) { try { 열쇠받음() } catch { /* 통계가 죽어도 열쇠는 준다 */ } }   // 🚪 key_earn — 「열쇠를 몇 개 줬나」. 레꾸자랑 옆줄이 이걸 안 세고 있었다.
+    return 받았다
   } catch {
     const q = 큐읽기()
     if (!q.includes(행동)) 큐쓰기([...q, 행동])
@@ -735,6 +738,9 @@ export async function ocrImage(image, onProgress, opts = {}) {
     //      고름 = 열쇠가 «있는데» 「그냥 읽기」를 눌렀다(값이 비싸게 느껴진다)
     //      없음 = 열쇠가 0 이라 **단추가 하나뿐**이었다(장수가 모자라다 · 막힘과 같은 처방)
     //      ⛔ 그 전엔 둘 다 「고름」이었다 — 처방이 정반대인 둘이 한 칸에 섞여 값을 잘못 정하게 된다.
+    // 🚪 key_block — 열쇠가 모자라 AI 읽기를 «못» 한 사람. «없음»(0개라 단추가 하나뿐) 과 «막힘»(서버 429) 둘 다.
+    //    ⭐ 이 수가 곧 결제 수요다 — 「막힌 사람이 몇 명인가」를 모르면 결제를 켤 때가 언제인지 못 정한다.
+    if ((opts.noVision && opts.noVisionWhy === '없음') || (!opts.noVision && _ocrNote === 'user_quota')) { try { 열쇠막힘() } catch { /* noop */ } }
     기본인식알림(opts.noVision ? (opts.noVisionWhy === '없음' ? '없음' : '고름') : (_ocrNote === 'user_quota' ? '막힘' : '실패'))
   }
   // 1) 폰 내장 OCR (있으면 정확, 요즘 크롬은 기본 비활성이라 대개 건너뜀)

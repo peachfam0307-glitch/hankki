@@ -10,7 +10,7 @@ import FoodIconPicker from './FoodIconPicker'
 import EmojiPicker from './EmojiPicker'
 import CropSheet from './CropSheet'
 import Portal from './Portal'
-import { 냉장고담음 } from '../stats'
+import { 냉장고담음, 냉장고열림 } from '../stats'   // 🚪 [2026-09-21] 냉장고열림 — «연 사람»을 세야 「담은 사람」과 비율이 나온다
 import { 알림켜기 } from '../pushSubscribe'   // 🔔 재료를 «넣은 뒤» 알림을 묻는다(2026-09-19 · 창업자 확정)
 import { useLayerBack } from '../useBackHandler'
 import { guessEmoji } from '../emoji'
@@ -234,6 +234,8 @@ export default function PantryView() {
   const [아랫돌림, set아랫돌림] = useState(0)
   const 냉장고키 = pantry.map((p) => p.id).join(',')
   useEffect(() => { set윗돌림(0); set아랫돌림(0) }, [냉장고키])
+  // 🚪 pantry_open — 「냉장고를 연 사람」. 2026-09-21 눌러서 재 보니 관문 0개였다(담음만 재고 열림은 안 쟀다).
+  useEffect(() => { try { 냉장고열림() } catch { /* 통계가 죽어도 냉장고는 뜬다 */ } }, [])
 
   const 돌린다 = (목록, 자리) => (자리 % (목록.length || 1) === 0 ? 목록 : [...목록.slice(자리 % 목록.length), ...목록.slice(0, 자리 % 목록.length)])
 

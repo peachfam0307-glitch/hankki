@@ -111,6 +111,17 @@ async function 한판({ 소개봄 }) {
   async function 걸음(이름, 누르기, 기다림 = 1100) {
     let 눌렀나 = false, 탈 = ''
     try { 눌렀나 = await 누르기() } catch (e) { 눌렀나 = false; 탈 = String(e && e.message || e).split('\n')[0].slice(0, 110) }
+    // 🔎 못 눌렀으면 «무엇이 덮고 있나»를 같이 적는다 — 「못 찾았다」만으로는 판 고장인지 앱 고장인지 못 가른다
+    if (!눌렀나) {
+      try {
+        탈 += ' ‖ 덮개=' + await p.evaluate(() => {
+          const el = document.elementFromPoint(195, 422)
+          const 이름 = el ? `${el.tagName.toLowerCase()}.${String(el.className || '').split(' ').slice(0, 2).join('.')}` : '없음'
+          const 글 = (el && (el.closest('.sheet, .sheet-mask, [role=dialog]') || el).innerText || '').replace(/\s+/g, ' ').slice(0, 70)
+          return `${이름} 「${글}」`
+        })
+      } catch { /* noop */ }
+    }
     await p.waitForTimeout(기다림)
     const 나간것 = await 비우기()
     본것.push({ 걸음: 이름, 눌렀나: !!눌렀나, 관문: 나간것, 탈 })
@@ -131,15 +142,55 @@ async function 한판({ 소개봄 }) {
   await 걸음('앱 켜자마자', async () => true, 300)
   await 걸음('레시피 탭', 탭눌러('레시피'))
   await 걸음('레시피 하나 열기', async () => {
-    const el = p.locator('[aria-label*="자랑"], .card, .rec-card').first()
+    // ⛔ 처음엔 `.card, .rec-card` 를, 다음엔 `.album-grid .press` 를 짐작으로 썼다 — 둘 다 «못 눌렀다».
+    //    `.album-grid` 는 «일기 앨범» 타일이다. 레시피 탭 타일 = MyRecipesScreen 941줄 `.grid-card > button.press`(openRecipe).
+    const el = p.locator('.grid-card .press').first()
+    if (!(await el.count())) return false
+    await el.scrollIntoViewIfNeeded(); await el.click({ timeout: 2500 }); return true
+  }, 1400)
+  // 상세의 단추는 글자가 아니라 `data-coach` 로 잡는다(RecipeDetailScreen 649·1236줄) — 글자 매칭은 코치마크 설명문에도 걸린다.
+  await 걸음('레꾸(꾸미기) 열기', async () => {
+    const el = p.locator('[data-coach="decor"]').first()
+    if (!(await el.count())) return false
+    await el.scrollIntoViewIfNeeded(); await el.click({ timeout: 2500 }); return true
+  }, 1600)
+  // ⛔ 처음엔 `p.goBack()` 으로 닫았다 — 그건 «페이지 밖»으로 나가서 뒤 걸음이 전부 빈 화면이 됐다(판 고장 넷째). 앱 안의 「취소」 단추로 닫는다(DecorEditor 1173줄).
+  // 🎁 처음 레꾸를 열면 「받은 선물」 시트(GiftPackSheet)가 «먼저» 덮는다 — 판 덮개 실측으로 잡았다(2026-09-21).
+  //    ⚠️ 이 시트는 관문이 없다 → 아래 표에 「관문 0개」로 찍히는 게 «맞는» 결과다(설계 문서 §7 에 적는다).
+  await 걸음('받은 선물 시트 닫기', async () => {
+    const el = p.locator('.sheet button.press', { hasText: /^닫기$/ }).first()
     if (!(await el.count())) return false
     await el.click({ timeout: 2500 }); return true
-  }, 1400)
-  await 걸음('레꾸(꾸미기) 열기', 글자눌러('/레시피 꾸미기|꾸미기/'), 1600)
-  await 걸음('요리 시작', 글자눌러('/요리 시작|요리하기|요리모드/'), 1600)
+  }, 800)
+  await 걸음('레꾸 닫기(취소)', async () => {
+    const el = p.locator('button.press', { hasText: /^취소$/ }).last()
+    if (!(await el.count())) return false
+    await el.click({ timeout: 2500 }); return true
+  }, 900)
+  await 걸음('요리 시작', async () => {
+    const el = p.locator('[data-coach="cook"]').first()
+    if (!(await el.count())) return false
+    await el.scrollIntoViewIfNeeded(); await el.click({ timeout: 2500 }); return true
+  }, 1600)
+  await 걸음('요리모드 닫기', async () => {
+    const el = p.locator('[aria-label="닫기"]').first()
+    if (!(await el.count())) return false
+    await el.click({ timeout: 2500 }); return true
+  }, 900)
+  await 걸음('상세 닫기(뒤로)', async () => {
+    const el = p.locator('[aria-label="뒤로"]').first()
+    if (!(await el.count())) return false
+    await el.click({ timeout: 2500 }); return true
+  }, 900)
   await 걸음('일기 탭', 탭눌러('일기'))
   await 걸음('장보기 탭', 탭눌러('장보기'))
-  await 걸음('주부의 장바구니 펼치기', 글자눌러('/주부의 장바구니/'), 1300)
+  // ⛔ [2026-09-21 내가 밟은 함정] 처음엔 «제목 글자» 「주부의 장바구니」를 눌렀다 — 그건 아무 단추도 아니라 관문 0개로 «보였다».
+  //    진짜 「펼쳐 봤다」는 **카테고리 칩**(`.cur-chips .pill`)을 누르는 것이다(ShopScreen 의 chip()). 기본 칩(pick)이 이미 켜져 있어 «둘째 칩»을 누른다.
+  await 걸음('주부의 장바구니 칩 눌러 펼치기', async () => {
+    const el = p.locator('.cur-chips .pill').nth(1)
+    if (!(await el.count())) return false
+    await el.scrollIntoViewIfNeeded(); await el.click({ timeout: 2500 }); return true
+  }, 1300)
   await 걸음('사러가기 (쿠팡은 막아둠)', 글자눌러('/사러가기/'), 1300)
   await 걸음('식비 열기', 글자눌러('/식비|이번 달 식비/'), 1300)
   await 걸음('냉장고 열기', 글자눌러('/냉장고|재료함/'), 1300)
@@ -147,8 +198,19 @@ async function 한판({ 소개봄 }) {
   await 걸음('자랑할 카드 고르기', async () => {
     const el = p.locator('[aria-label*="자랑하기"]').first()
     if (!(await el.count())) return false
-    await el.click({ timeout: 2500 }); return true
+    // ⛔ 첫 판에선 «타임아웃»이었다 — 단추는 있는데 화면 밖(스크롤 아래)이라 못 눌렀다. 「없다」가 아니다.
+    await el.scrollIntoViewIfNeeded(); await el.click({ timeout: 2500 }); return true
   }, 1400)
+  // 자랑 선택 시트(.sheet-mask)가 탭바를 덮는다 — 닫고 나서 홈을 누른다(⛔안 닫으면 「홈 탭 못 눌렀다」가 «앱 탓»으로 보인다)
+  await 걸음('자랑 시트 닫기', async () => {
+    const el = p.locator('.sheet-mask').first()
+    if (!(await el.count())) return false
+    // 시트는 올라오는 «움직임»이 있다 — 그 사이에 누르면 3판 중 1판만 닫혔다. 다 올라온 뒤 마스크 «위쪽 빈자리»를 누른다.
+    await p.waitForTimeout(500)
+    await el.click({ position: { x: 20, y: 40 }, force: true, timeout: 2500 })
+    await p.waitForTimeout(400)
+    return !(await p.locator('.sheet-mask').count())
+  }, 700)
   await 걸음('홈 탭', 탭눌러('홈'))
 
   await ctx.close()
