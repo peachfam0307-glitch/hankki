@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import Portal from './Portal'
+import { 리뷰시트봄, 리뷰하러감 } from '../stats'   // 🚪 [2026-09-21] 관문 — 덮개 층이라 화면봄이 못 잡는다
 import { useModalBack } from '../useBackHandler'
 import { openExternal } from '../utils'
 import { STORE_URL, markReviewAsked } from '../nudges'
@@ -18,6 +20,8 @@ import uiGomHeart from '../assets/ui/gom_heart.png'
 //       (요리를 안 하고 꾸며서 보낸 사람일 수 있다). **자리마다 참인 말**을 준다.
 export default function ReviewAskSheet({ onClose, title }) {
   const close = () => { markReviewAsked(); onClose() } // 뜬 순간부터 '물어봤음' — 어떻게 닫아도 다시 안 묻는다
+  // 🚪 review_seen — 「리뷰를 청한 사람」. review_go 와 견줘야 «스토어까지 간 비율»이 나온다.
+  useEffect(() => { try { 리뷰시트봄() } catch { /* 통계가 죽어도 시트는 뜬다 */ } }, [])
   // ⛔⛔ [2026-08-27] 여기가 `useModalBack(onClose)` 였다 — **뒤로가기로 닫으면 「물어봤음」이 안 남았다.**
   //    📮 창업자 물음 = *"레꾸자랑을 하면 «1회만» 리뷰써달라는 안내가뜨는거지?"* → 코드를 열어보고 찾았다.
   //    ⭐ 자리가 «기록 시트 닫는 순간» 하나였을 땐 거의 안 드러났다 — 거기까지 온 사람이 거의 없었으니까.
@@ -42,7 +46,7 @@ export default function ReviewAskSheet({ onClose, title }) {
             <button
               className="btn-primary press"
               style={{ marginBottom: 8 }}
-              onClick={() => { openExternal(STORE_URL); close() }}
+              onClick={() => { try { 리뷰하러감() } catch { /* noop */ } openExternal(STORE_URL); close() }}
             >
               스토어에 한마디
             </button>

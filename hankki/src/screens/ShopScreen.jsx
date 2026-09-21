@@ -3,7 +3,7 @@ import { COACH } from '../coach'
 import { useStore, newId } from '../store'
 import { pantryExpiryCount } from '../pantryExpiry'
 import FoodCostView from './FoodCostView'
-import { 사러나감, 장보기담음, 식비적음 } from '../stats'
+import { 사러나감, 장보기담음, 식비적음, 장바구니펼침 } from '../stats'   // 🚪 [2026-09-21] 장바구니펼침 — 창업자 「주부의 장바구니 몇 명이 눌러봤나」
 import { 알림켜기 } from '../pushSubscribe'   // 🔔 담기가 «끝난 직후» 알림을 묻는다(2026-09-19 · 창업자 확정)
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
@@ -686,7 +686,7 @@ function Curation() {
     <button
       key={key}
       className={`pill press ${curCat === key ? 'active' : ''}`}
-      onClick={() => setCurCat(key)}
+      onClick={() => { try { 장바구니펼침() } catch { /* noop */ } setCurCat(key) }}   /* 🚪 pick_open_shop — 칩을 눌러 «펼쳐 봤다» */
       style={key === 'pick' ? { position: 'relative', overflow: 'visible' } : undefined}
     >
       {key === 'pick' && (
@@ -709,7 +709,7 @@ function Curation() {
     <>
       <div className="sec-head" style={{ marginTop: 6 }}>
         <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><img src={uiGomShop} alt="" draggable={false} style={{ width: 28, height: 28, objectFit: 'contain', flex: '0 0 auto' }} />주부의 장바구니{/* 📅 「토」 = 매주 토요일 3개씩 새로 열린다(weeklypick.js 갓열린것 · 창업자 2026-09-07 「주부의 장바구니 토요일도 같이 달아줘」) · 홈 「이번 주」 상자의 월·수 배지와 같은 모양 */}<span className="weekly-day" aria-label="토요일마다 새로 와요">토</span></div>
-        <button className="press" style={secBtnStyle} onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
+        <button className="press" style={secBtnStyle} onClick={() => { if (!open) { try { 장바구니펼침() } catch { /* noop */ } } setOpen((v) => !v) }}>{open ? '접기' : '펼치기'}</button>
       </div>
       {/* ⭐ 「계속 올라와요」를 여기로 올렸다 — 창업자 2026-08-03 *"주부의 장바구니옆에 계속 올라오다는
           문구 적어줘. (원래 지워지는 아래안내판에 있었음)"*. 아래 안내판을 빼면서 그 말만 살렸다.

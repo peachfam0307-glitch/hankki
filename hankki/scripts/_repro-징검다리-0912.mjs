@@ -30,7 +30,7 @@ const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: p
 // 🔗 징검다리를 열고, 그때 나간 이름들과 «어디로 갔나»를 돌려준다.
 //    단추누를까 = 자동 이동을 기다리지 않고 유저가 먼저 누른 상황
 //    우리기기 = 창업자 폰 흉내 (localStorage 에 운영자 열쇠가 있는 상태) · 아이폰 = iPhone UA
-async function 열어본다({ 단추누를까 = false, 우리기기 = false, 아이폰 = false } = {}) {
+async function 열어본다({ 단추누를까 = false, 우리기기 = false, 아이폰 = false, 꼬리 = '' } = {}) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 860 }, locale: 'ko-KR', serviceWorkers: 'block', ...(아이폰 ? { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1' } : {}) })
   // ⛔⛔ 스토어로 «진짜» 넘어가면 그 순간 window 가 새로 나서 dataLayer 가 통째로 사라진다.
   //    → 「갔다」를 보내놓고도 못 읽는다(처음 판이 그래서 0건이 나왔다).
@@ -70,7 +70,7 @@ async function 열어본다({ 단추누를까 = false, 우리기기 = false, 아
     if (t.startsWith('재현판설정:')) 설정들.push(t.slice(6))
     else if (t.startsWith('재현판:')) 이름들.push(t.slice(4))
   })
-  await p.goto('http://127.0.0.1:4491/hankki/get.html', { waitUntil: 'domcontentloaded' })
+  await p.goto('http://127.0.0.1:4491/hankki/get.html' + 꼬리, { waitUntil: 'domcontentloaded' })
   const 링크 = await p.getAttribute('#go', 'href')
   if (단추누를까) await p.click('#go')
   // 자동 이동(1.2초) ＋ gtag 실패 감지까지 넉넉히
@@ -123,6 +123,21 @@ console.log('\n🔗 징검다리\n')
   잰다(/[?&]pt=\d+/.test(링크 || '') && /[?&]ct=[A-Za-z0-9_]+/.test(링크 || ''), '④ 🍎 캠페인 꼬리표(pt·ct)가 붙어 있다 — 릴스가 만든 설치를 센다', 링크)
   잰다(/apps\.apple\.com/.test(가려한주소 || ''), '④ 🍎 자동 이동도 App Store 로 간다', 가려한주소)
   잰다(이름들.filter((n) => n === 'bridge_ios').length === 1 && 이름들.filter((n) => n === 'bridge_go_ios').length === 1 && !이름들.includes('bridge'), '④ 아이폰은 bridge_ios / bridge_go_ios 한 번씩 (「아이폰 유저 몇 명 왔나」)', JSON.stringify(이름들))
+}
+
+// ── ⑤ 🏷 [2026-09-21] 받은 꼬리표가 스토어 링크로 «넘어간다» — 광고/프로필이 설치 수에서도 갈린다
+{
+  const 광고 = '?utm_source=instagram&utm_medium=paid&utm_campaign=ads_2026_10&utm_content=decor_reel'
+  const { 링크 } = await 열어본다({ 꼬리: 광고 })
+  잰다(/referrer=utm_source%3Dhankki_bridge%26utm_medium%3Dpaid%26utm_campaign%3Dads_2026_10%26utm_content%3Ddecor_reel/.test(링크 || ''), '⑤ 광고 꼬리표가 Play referrer 에 그대로 실린다', 링크)
+  const { 링크: 프로필 } = await 열어본다({ 꼬리: '?utm_source=instagram&utm_medium=profile&utm_campaign=bio' })
+  잰다(/utm_medium%3Dprofile%26utm_campaign%3Dbio/.test(프로필 || ''), '⑤ 프로필 꼬리표는 profile/bio 로 — 광고와 «다른 값»', 프로필)
+  const { 링크: 맨몸 } = await 열어본다()
+  잰다(/utm_campaign%3Dprofile_link/.test(맨몸 || ''), '⑤ 꼬리표 없이 오면 옛 값(profile_link) 그대로 — 아무것도 안 깨진다', 맨몸)
+  const { 링크: 못된 } = await 열어본다({ 꼬리: '?utm_medium=pa%22id%3C&utm_campaign=x%20y' })
+  잰다(/utm_medium%3Dpaid(%26|$)/.test(못된 || '') && !/[<"]/.test(decodeURIComponent(못된 || '')), '⑤ 이상한 글자는 걸러진다(링크가 안 깨진다)', 못된)
+  const { 링크: 사과 } = await 열어본다({ 아이폰: true, 꼬리: 광고 })
+  잰다(/ct=instagram_paid_ads_2026_10(&|$)/.test(사과 || '') && /pt=129448125/.test(사과 || ''), '⑤ 🍎 아이폰은 ct=instagram_paid_ads_2026_10 (pt 유지)', 사과)
 }
 
 await b.close(); srv.close()

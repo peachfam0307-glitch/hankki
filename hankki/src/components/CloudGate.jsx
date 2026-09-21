@@ -5,6 +5,7 @@ import ConfirmSheet from './ConfirmSheet'
 import GoogleButton from './GoogleButton'
 import AppleButton from './AppleButton'          // 🍎 아이폰 앱 안에서만 보이는 둘째 단추(큰 틀 4)
 import { 앱안인가 } from '../nativeAuth'
+import { 로그인화면봄, 로그인실패, 로그인탈출 } from '../stats'   // 🚪 [2026-09-21] 관문 — 이 화면은 덮개 층이라 화면봄이 못 잡는다
 import { useStore } from '../store'
 import { APP_TAGLINE } from '../version'
 import { markCloudGateSeen, myRecipeCount, myDiaryCount } from '../nudges'
@@ -55,6 +56,8 @@ export default function CloudGate({ onDone }) {
 
   // ⛔ 팝업은 누른 «그 순간» 열려야 브라우저가 안 막는다 → 화면이 뜰 때 미리 받아 둔다.
   useEffect(() => { 미리붙기() }, [])
+  // 🚪 gate_seen — 「로그인 화면을 본 사람」. login/signup 과 견줘야 «보고 안 한 사람»이 보인다(2026-09-21 아침에 이게 없어 3시간 헤맸다).
+  useEffect(() => { try { 로그인화면봄() } catch { /* 통계가 죽어도 화면은 뜬다 */ } }, [])
 
   const 지나가기 = () => { markCloudGateSeen(); onDone() }
 
@@ -90,6 +93,7 @@ export default function CloudGate({ onDone }) {
       //   ⛔ 유저가 팝업을 스스로 닫은 것(취소)도 여기로 온다. 그것도 세는 게 맞다 —
       //      「안 되는지 못 하는지」를 우리가 못 가르고, 두 번 못 들어간 사람은 어느 쪽이든 도와야 한다.
       set실패수((n) => n + 1)
+      try { 로그인실패() } catch { /* noop */ }   // 🚪 gate_fail — 「눌렀는데 «못» 한 사람」. 이게 있어야 「안 했다」와 갈린다.
       set탈(고운말(e)); set바쁨('')
     }
   }
@@ -240,7 +244,7 @@ export default function CloudGate({ onDone }) {
           )}
           {!앱안인가() && 실패수 >= 2 && (
             <button
-              className="press" onClick={() => set물음(true)} disabled={!!바쁨}
+              className="press" onClick={() => { try { 로그인탈출() } catch { /* noop */ } set물음(true) }} disabled={!!바쁨}   /* 🚪 gate_escape — 두 번 실패하고 탈출구를 «눌렀다» (아이폰 앱엔 이 단추가 없어 0 이 정상) */
               style={{ width: '100%', marginTop: 13, color: 'var(--text-sub)', fontSize: 15, fontWeight: 600, padding: '6px 0' }}
             >
               로그인이 안 되나요? 그냥 시작하기

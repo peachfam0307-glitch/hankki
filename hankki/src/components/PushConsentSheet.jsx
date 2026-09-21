@@ -16,6 +16,7 @@ import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
 import { 알림이벤트 } from '../pushConsent'
 import { 구독맞추기 } from '../pushSubscribe'
+import { 알림시트봄, 알림허락, 알림거절 } from '../stats'   // 🚪 [2026-09-21] 관문 — 2026-09-20 에 나갔는데 계측이 0줄이었다
 
 export default function PushConsentSheet () {
   const [답하기, set답하기] = useState(null)
@@ -37,7 +38,11 @@ export default function PushConsentSheet () {
   return <시트 답={(v) => { const f = 답하기; set답하기(null); f(v) }} />
 }
 
-function 시트 ({ 답 }) {
+function 시트 ({ 답: 원답 }) {
+  // 🚪 push_seen / push_ok / push_no — 알림은 «돈 안 들이고 다시 부르는 유일한 길»이라 이 셋이 제일 아깝다.
+  //    ⛔ 「닫기」·바깥 탭(답(null))도 «안 허락한 것»이라 push_no 로 센다 — 허락은 'yes' 하나뿐이다.
+  useEffect(() => { try { 알림시트봄() } catch { /* 통계가 죽어도 시트는 뜬다 */ } }, [])
+  const 답 = (v) => { try { (v === 'yes' ? 알림허락 : 알림거절)() } catch { /* noop */ } 원답(v) }
   const 닫기 = () => 답(null)
   useModalBack(닫기)
   return (
