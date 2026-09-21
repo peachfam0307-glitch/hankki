@@ -14,7 +14,7 @@ import { needsGiftPack } from '../nudges'
 import { cropRatio, imageRatio } from '../utils'
 import { 기본표지 } from '../store'
 import { FRAME_WINDOW } from '../data/frameWindows'
-import { StickerArt, stickerRatio, 그릇폭, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, TEXT_SIZES, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
+import { StickerArt, stickerRatio, 그릇폭, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, TEXT_SIZES, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES, 열쇠있나 } from './Stickers'
 
 // 📜📜 HStrip — 가로로 «넘치는 칩 줄»에 막대를 **우리가 그려서** 항상 보여준다.
 //   (창업자 2026-08-08 *"스크롤바가 처음부터 안보여서 글자체 저게다처럼보임"* —
@@ -694,8 +694,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //      그냥 올리면 «유저도 같이» 본다. 핼러윈은 10/16 에 여는 것이라 아직 보이면 안 된다.
   //   ⭐ 얼개는 식비 열쇠(ShopScreen.jsx:110)와 같다 — 주소로 켜고 저장소에 남긴다. `?<이름>=0` 으로 끈다.
   //   ⛔ 저장소를 못 읽는 폰에서는 «안 보이는» 쪽이 맞다 — 식비와 반대다(식비는 이미 공개된 것이라 켠다).
+  //   🔓 [2026-09-21] `열쇠까지` 가 있으면 그 날짜부터는 열쇠 없이 열린다 — 핼러윈 접시가 10/16 에 유저에게 «저절로» 열리게(아이폰은 구운 판이 박혀서 그날 손댈 수 없다).
   const 열쇠켬 = (x) => {
     if (!x.key열쇠) return true
+    if (x.열쇠까지 && isReleased(x.열쇠까지)) return true
     try {
       const v = new URLSearchParams(location.search).get(x.key열쇠)
       if (v === '1') localStorage.setItem('hankki:열쇠:' + x.key열쇠, '1')
@@ -2066,7 +2068,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                         `pack` 을 붙여만 놓고 «거르는 곳»을 안 만든 것이다. AAB 굽기 직전에 잡았다.
                         📌 절대원칙 = *"파는건 공유카드로도 안내보내는게 맞지"* (창업자 2026-08-03)
                         📌 배운 것 = **꼬리표를 붙이는 것과 그 꼬리표를 «읽는 것»은 다른 일이다.** */}
-                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden && (!b.pack || ownedPacks().has(b.pack)))
+                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden && (!b.pack || ownedPacks().has(b.pack) || (b.key열쇠 && 열쇠있나(b.key열쇠))))   // 🔑 팩 배경도 창업자 열쇠로 미리 본다(2026-09-21 핼러윈 밤)
                       .map((b, i) => ({ b, i }))
                       .sort((x, y) => (y.b.anim ? 1 : 0) - (x.b.anim ? 1 : 0) || x.i - y.i)   // 안정 정렬
                       .map(({ b }) => {

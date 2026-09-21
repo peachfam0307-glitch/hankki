@@ -5,6 +5,7 @@ import { packDrawerGroups } from '../data/paidPacks'
 import { isReleased, seasonRank } from '../season'
 // 🌧 가을 유료팩 배경 — 우리 배경 중 «첫 사진». 표지가 1:1 이라 미리 1:1 로 잘라 뒀다.
 import RAIN_STREET from '../assets/decorbg/rain-street.webp'
+import HW_NIGHT from '../assets/decorbg/halloween-night.webp'   // 🎃 창업자 2026-08-03 확정 배경(클레이-핼러윈밤 · docs/stickers/배경-창업자-2026-07-31)
 
 // ── 꾸미기 스티커 라이브러리 ──
 // 전부 오리지널 아트(저작권 안전). 아바타 '요리사 친구들'과 같은 결:
@@ -781,6 +782,8 @@ const PHOTO_RATIO = {
 //    ⏳ 1.45 짜리 둘(pf_hw03·07)은 «창업자가 직접 담아보고» 정한다 — 그래서 일단 넣었다
   pf_hw01: 1.268, pf_hw03: 1.450, pf_hw04: 1.2772,
   pf_hw05: 1.2579, pf_hw07: 1.4457, pf_hw08: 1.3264,
+  // 🎃 [2026-09-21 22:18 창업자 2차 시트] 「접시가 없길래 뽑았어」 — 4컷 중 접시 ①(물결 · hw09)·볼 ③(보라 고양이 · hw10)만 올렸다. 시트 = docs/stickers/할로윈접시2-창업자-2026-09-21
+  pf_hw09: 1.0655, pf_hw10: 1.3347,
 // 🍽 [2026-09-21] 기본 그릇 8컷 — 창업자가 뽑은 흰 무지 시트 둘(`docs/stickers/기본그릇-창업자-2026-09-21`) · `그릇시트-통째로.py` 로 잘랐다.
 //    📮 왜 = 「내 사진으로 아이콘 바꾸기」가 맨 동그라미로 떠서 프레임 창 밖으로 삐져나갔다 — 무지 그릇이 하나도 없었다.
 //    🔢 잰 비율(가로÷세로) — PNG 실제 크기. w = 시트1(①냄비 ②둥근볼 ③얕은손잡이접시 ④고리손잡이접시) · x = 시트2(⑤고리손잡이볼 ⑥주름볼 ⑦넓은접시 ⑧한손잡이팬)
@@ -1920,7 +1923,9 @@ export const STICKER_GROUPS = [
   // ✅ [창업자 2026-09-21 19:5x] 실물로 담아 보고 «넷»을 골랐다 = 검은 고양이·달(hw07) · 고양이·호박 냄비(hw04) · 유령·호박 물결(hw08) · 유령·호박 주황 손잡이(hw01).
   //    ⛔ 열쇠(`?할로윈=1`)는 창업자 *"키도 냅둬 인스타에 캐러셀 구울때 또 쓸수있을거같애"* — 그대로 둔다. 유저 공개는 10/16 창(seasonDecor.js).
   //    캡처 = docs/인스타-소재-할로윈접시-2026-09-21/
-  { key: 'deco_dish_halloween', tab: 'frame', key열쇠: '할로윈', bigCell: true, from: '2026-01-01', label: '할로윈 접시', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_hw07', 'pf_hw04', 'pf_hw08', 'pf_hw01'] },
+  // ✅✅ [창업자 2026-09-21 22:2x 최종] 넷 = 냄비 둘(①주황 손잡이 hw01 · ②검은 고양이·호박 hw04) ＋ 접시(물결 hw09) ＋ 볼(보라 고양이 hw10). hw07·hw08 은 뺐다(파일은 둔다).
+  //    🔓 유저 공개 = `열쇠까지: '2026-10-16'` — 그날부터는 열쇠 없이 열린다(DecorEditor 열쇠켬). 그 전엔 창업자 열쇠(?할로윈=1)로만. 아이폰은 구운 판이 박히니 «이 줄이 들어간 판»으로 굽는다.
+  { key: 'deco_dish_halloween', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', bigCell: true, from: '2026-01-01', label: '할로윈 접시', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_hw01', 'pf_hw04', 'pf_hw09', 'pf_hw10'] },
   // 🍽 [창업자 2026-09-21] 기본 그릇 8컷 — 늘 열려 있다. 사진 표지에 프레임을 «안» 얹으면 갈래별 기본 그릇(`기본그릇키`)이 저절로 깔리고, 여기서 직접 고르면 그게 이긴다.
   { key: 'deco_dish_basic', tab: 'frame', key열쇠: '그릇', bigCell: true, from: '2026-01-01', label: '기본 그릇', hint: '내 사진을 흰 그릇에 담아요', items: ['pb_x03', 'pb_w02', 'pb_w01', 'pb_x01', 'pb_w03', 'pb_x02', 'pb_w04', 'pb_x04'] },
   { key: 'deco_dy_frame_b', tab: 'frame', diary: true, from: '2027-01-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
@@ -2739,6 +2744,11 @@ export const DECOR_BACKGROUNDS = [
     swatch: { backgroundSize: '70px 90px,100px 130px,cover' } },
 
   // 🌙 딥(어두운) 배경지 — 반짝임·홀로·별이 사는 "밤하늘 다꾸" (창업자 픽: 딥플럼·미드나잇)
+  // 🎃 **핼러윈 밤 — 핼러윈 유료팩 배경** (창업자 2026-08-03 확정 · «클레이-핼러윈밤» · 두 판 중 어두운 쪽 = 빛 효과가 산다)
+  //   🔑 [2026-09-21] 창업자 *"우리 할로윈 배경도 넣어줘. 한번 보게"* → 열쇠(?할로윈=1) 뒤에서 보인다. 유저는 팩(halloween2026)을 열어야 본다(지금은 안 판다 → 안 보인다).
+  //   ⭐ 원본이 1:1(1254px)이라 그대로 1000px 로 줄여 넣었다(비 오는 창과 같은 크기·화질).
+  { key: 'hwnight', label: '핼러윈 밤', dark: true, pack: 'halloween2026', key열쇠: '할로윈',
+    style: { backgroundImage: 'url(' + HW_NIGHT + ')', backgroundSize: 'cover', backgroundPosition: 'center' } },
   { key: 'plum', label: '딥플럼', dark: true, style: { background: '#3e3442' } },
   { key: 'midnight', label: '미드나잇', dark: true, style: { background: '#2d3340' } },
 ]

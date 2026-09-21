@@ -9,7 +9,7 @@ const OUT = process.env.OUT || '/tmp'
 const { basicRecipes, BASICS_VERSION } = await import('../src/data/basics.js')
 const { COACH } = await import('../src/coach.js')
 const 사진 = readFileSync(new URL('file://' + OUT + '/내사진.txt'), 'utf8').trim()
-const 골 = { 'basic-doenjangjjigae': null, 'basic-kimchibokkeumbap': null, 'basic-beoseot-jeon': null, 'basic-gomadare-sauce': null, 'basic-kimchijjigae': 'hw' }   // 얹은 그릇(0.58 고정)과 기본 그릇이 «같은 크기»인지 나란히 본다
+const 골 = { 'basic-doenjangjjigae': 'hw09bg', 'basic-kimchibokkeumbap': 'hw10', 'basic-beoseot-jeon': null, 'basic-gomadare-sauce': null, 'basic-kimchijjigae': 'hw' }   // 얹은 그릇(0.58 고정)과 기본 그릇이 «같은 크기»인지 나란히 본다
 const now = Date.now()
 const state = {
   recipes: basicRecipes.map((r, i) => {
@@ -17,6 +17,8 @@ const state = {
     if (g === undefined) return { ...r, status: 'sorted', savedAt: now - i * 60000 }
     const base = { ...r, status: 'sorted', savedAt: now + 1000 * (10 - Object.keys(골).indexOf(r.id)), thumb: 'photo', image: 사진, imageZoom: 1.35, touched: true, cooked: 3 }   // cooked → 홈 「자주 해먹는 요리」 줄에 뜬다(홈 그릇 크기 확인용)   // 시험 사진에 흰 접시가 섞여 있어 조금 당겨 본다(유저가 두 손가락으로 하는 것과 같다)
     if (g === 'hw') base.decor = [{ id: 'd1', type: 'sticker', key: 'pf_hw04', x: 0.5, y: 0.5, s: 0.58, r: 0 }]
+    if (g === 'hw09bg') { base.decor = [{ id: 'd1', type: 'sticker', key: 'pf_hw09', x: 0.5, y: 0.5, s: 0.58, r: 0 }]; base.decorBg = 'hwnight' }   // 🎃 새 물결 접시 ＋ 핼러윈 밤 배경(2026-09-21)
+    if (g === 'hw10') base.decor = [{ id: 'd1', type: 'sticker', key: 'pf_hw10', x: 0.5, y: 0.5, s: 0.58, r: 0 }]   // 🎃 새 보라 고양이 볼
     return base
   }),
   seedV: BASICS_VERSION,
@@ -45,7 +47,7 @@ await p.screenshot({ path: `${OUT}/기본그릇-목록.png` })
 const 잰것 = await p.evaluate(() => [...document.querySelectorAll('.grid-card img')].map((i) => i.getAttribute('src') || '').filter((s) => /p[bf]_/.test(s)).map((s) => s.match(/(p[bf]_[a-z0-9]+)/)?.[1]))
 console.log('목록에 그려진 그릇 =', JSON.stringify(잰것))
 if (!잰것.length) throw new Error('⛔ 그릇이 하나도 안 그려졌다')
-for (const [이름, 글] of [['찌개', '된장찌개'], ['전', '버섯전'], ['할로윈', '돼지고기 김치찌개']]) {
+for (const [이름, 글] of [['찌개', '된장찌개'], ['전', '버섯전'], ['할로윈', '돼지고기 김치찌개'], ['볶음밥', '김치볶음밥']]) {
   await p.getByText(글, { exact: true }).first().click(); await p.waitForTimeout(1200)
   await p.screenshot({ path: `${OUT}/기본그릇-상세-${이름}.png`, clip: { x: 0, y: 0, width: 390, height: 560 } })
   await p.locator('[aria-label="뒤로"]').first().click(); await p.waitForTimeout(700)
