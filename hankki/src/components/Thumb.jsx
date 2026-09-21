@@ -158,7 +158,10 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //    창업자 2026-09-21 *"홈에서 비교해봐 내사진 들어간 레시피 그릇이 넘 작아"* — 홈은 아이콘이 70% 인데 그릇이 58% 라 작았다.
     //    저장된 값(s=그릇폭)은 안 건드리고 «그릴 때만» 곱한다 → 편집 화면(iconSize 없음)은 그대로.
     // 📏 [2026-09-22 00:28] 얹은 프레임도 흰 그릇과 «같은 식»(창 × 1.15 · 조금 아래) — 그래야 프레임을 씌워도 «사진 크기가 안 변한다»(창업자 *"그릇프레임을 씌우면 갑자기 왜 작아져"*).
-    const 키움 = 1.15   // 흰 그릇 «입» 크기
+    const 키움 = 1.15   // 흰 그릇 «입» = 창 × 1.15
+    // 🔢 사진 지름(표지 폭 대비) ＝ 아이콘 크기. 흰 그릇은 그 사진에 «입»을 맞춘다 → 그릇 그림 폭 = 사진지름 ÷ (창너비×1.15)
+    const 사진지름 = (() => { const n = parseFloat(iconSize); return Number.isFinite(n) && n > 0 ? n / 100 : 0.56 })()
+    const 그릇그림폭 = 창 ? 사진지름 / (창.w * 키움) : 사진지름
    // 1.3·1.22 는 뒤쪽 테 안쪽 선을 덮고 아래 바닥이 남았다(확대해서 봄) → 1.15 ＋ 조금 아래
     // 🍽🍽 [창업자 2026-09-22 00:28 최종] **사진은 «한 크기»다 — 그릇 그림이 «위에 얹힐» 뿐이다.**
     //    📮 *"흰도자기 기본값하고 프레임만 위에얹으라고 했잖아. 그림이 왜 움직이고, 그릇프레임을 씌우면 갑자기 왜 작아져?"*
@@ -166,14 +169,10 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //    ✅ 이제 = 사진 동그라미는 늘 같은 크기(그릇 폭의 0.66 · 가운데)이고, **그릇 PNG 가 그 위에 덮인다**.
     //       우리 그릇 컷은 «창이 뚫려 있어»(그릇-창뚫기.py) 덮어도 가운데로 사진이 그대로 보인다.
     //       그래서 그릇을 바꿔도 사진은 «한 톨도 안 움직이고 안 커진다» — 테두리 그림만 갈린다.
-    //    ⭐ 흰 그릇(㉡) 안에서는 그 그릇의 «입» 크기로(창 × 1.15 · 조금 아래) · 얹은 그릇(㉠)일 때는 아이콘과 같은 크기로 가운데.
-    const 창상자 = 틀 ? { width: iconSize, aspectRatio: '1 / 1', borderRadius: '50%' } : 창 ? {
-      position: 'absolute',
-      left: `${(창.cx - 창.w * 키움 / 2) * 100}%`, top: `${(창.cy + 0.015 - 창.h * 키움 / 2) * 100}%`,
-      width: `${창.w * 키움 * 100}%`, height: `${창.h * 키움 * 100}%`,
-      borderRadius: '50%',
-      zIndex: 1,
-    } : null
+    //    ⭐⭐ [창업자 2026-09-22 00:45] **사진은 «늘 아이콘과 같은 크기»다** — *"사진이 왜 갑자기 커져?"* ·
+    //       *"그릇만 커졌다 작아졌다 하면서 도자기속 그림에 맞추고"*. 그래서 흰 그릇일 때도 사진은 그대로 두고,
+    //       **흰 그릇 쪽이 «자기 입이 그 사진에 딱 맞도록» 커진다**(아래 그릇폭계산).
+    const 창상자 = { width: '100%', height: '100%', borderRadius: '50%' }
     const 사진상자 = (
         <div
           {...panProps}
@@ -212,15 +211,28 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //    ⛔ 그 전 = 사진을 틀의 창 크기로 잘라 넣어서, 그릇을 바꾸거나 돌리면 사진까지 작아지고 따라 돌았다.
     inner = 틀 ? (
       <div style={center}>
-        {사진상자}
+        <div style={{ width: iconSize, aspectRatio: '1 / 1', borderRadius: '50%', overflow: 'hidden', flex: '0 0 auto' }}>{사진상자}</div>
       </div>
     ) : 그릇 ? (
-      // ㉡ 기본 그릇 — 폭은 «그릇폭»(서랍에서 얹은 그릇과 같은 크기 · 창업자 2026-09-21 「그릇사이즈가 달라져」) · 사진은 창에 · 그릇 그림은 사진 «위»
-      <div style={center}>
-        <div style={{ position: 'relative', width: `${그릇폭 * 그릇배율 * 100}%`, aspectRatio: `${PHOTO_FAMILY[그릇].ratio}`, flex: '0 0 auto' }}>
+      // ㉡ 기본 흰 그릇 — **그릇이 사진에 맞춘다**(창업자 2026-09-22 00:45 *"사진이 왜 갑자기 커져?"*).
+      //    ⭐ 사진은 늘 아이콘 크기(가운데). 그릇은 «자기 창이 그 사진에 겹치도록» 크기와 자리를 잡는다.
+      //    🔢 그릇 폭 W = 사진지름 ÷ (창너비 × 1.15) · 그릇 왼쪽 = 0.5 − 창.cx × W · 위 = 0.5 − 창.cy × (W ÷ 비율)
+      //       (창.cx·cy 는 «그릇 그림 안»에서 창이 어디 있나 — frameWindows.js 가 픽셀로 잰 값)
+      <div style={{ position: 'absolute', inset: 0 }}>
+        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: `${사진지름 * 100}%`, aspectRatio: '1 / 1', borderRadius: '50%', overflow: 'hidden' }}>
           {사진상자}
-          <img src={PHOTO_FAMILY[그릇].src} alt="" draggable={false} loading={eager ? 'eager' : 'lazy'} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', pointerEvents: 'none', filter: 'drop-shadow(0 2px 4px rgba(70,60,45,.18))' }} />
         </div>
+        <img
+          src={PHOTO_FAMILY[그릇].src} alt="" draggable={false} loading={eager ? 'eager' : 'lazy'}
+          style={{
+            position: 'absolute',
+            left: `${(0.5 - 창.cx * 그릇그림폭) * 100}%`,
+            top: `${(0.5 - (창.cy + 0.015) * (그릇그림폭 / PHOTO_FAMILY[그릇].ratio)) * 100}%`,
+            width: `${그릇그림폭 * 100}%`,
+            display: 'block', pointerEvents: 'none',
+            filter: 'drop-shadow(0 2px 4px rgba(70,60,45,.18))',
+          }}
+        />
       </div>
     ) : (
       <div style={center}>

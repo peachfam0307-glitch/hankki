@@ -79,7 +79,17 @@ await p.waitForTimeout(900)
 await 끈다(R.x + R.width * 0.5 + 80, R.y + R.height * 0.47 + 60, -80, -60)
 await p.waitForTimeout(1400)
 
-await 말('⑥ 다른 그릇으로 바꿔도 사진은 그대로'); await p.waitForTimeout(1200)
+await 말('⑥ 손잡이로 «키우고 돌린다» → 사진은 제자리'); await p.waitForTimeout(1200)
+const 손잡이 = p.locator('.decor-stage [aria-label="크기·회전"]').first()
+const H = await 손잡이.boundingBox().catch(() => null)
+if (H) {
+  await 끈다(H.x + H.width / 2, H.y + H.height / 2, 55, 40)      // 키우기
+  await p.waitForTimeout(800)
+  const H2 = await 손잡이.boundingBox()
+  await 끈다(H2.x + H2.width / 2, H2.y + H2.height / 2, -70, 55)  // 돌리기
+  await p.waitForTimeout(1400)
+}
+await 말('⑦ 다른 그릇으로 바꿔도 사진은 그대로'); await p.waitForTimeout(1200)
 const 접시 = p.locator('button:has(img[src*="pf_hw09"])').first()
 await 접시.click().catch(() => {}); await p.waitForTimeout(2000)
 const 볼 = p.locator('button:has(img[src*="pf_hw10"])').first()
