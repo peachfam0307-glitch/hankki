@@ -63,8 +63,8 @@ const Img = ({ k, style, cls }) => <img src={F(k)} alt="" draggable={false} clas
 // zoom은 브라우저가 축소된 크기 기준으로 레이아웃·래스터를 다시 하므로 폰트도 이미지도 선명하다.
 function Stage({ bg, children }) {
   const [scale, setScale] = useState(0.34)
-  // 🚪 onboard_seen — 「소개를 본 사람」. skip/done 과 견줘야 «중간에 앱을 꺼 버린 사람»이 보인다.
-  useEffect(() => { try { 소개봄() } catch { /* 통계가 죽어도 소개는 뜬다 */ } }, [])
+  // ⛔⛔ [2026-09-21 15:1x GA4 실측] 여기(Stage)에 onboard_seen 을 걸었더니 «한 사람당 10번» 나갔다(50건/5명).
+  //    Stage 는 «장마다» 하나씩 마운트되는 틀이다 — 열 장이면 열 번. 관문은 아래 Onboarding(한 번 뜨는 것)에 건다.
   useEffect(() => {
     const fit = () => setScale(Math.min(window.innerWidth / 1080, (window.innerHeight * 0.82) / 1920))
     fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit)
@@ -512,6 +512,9 @@ const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, SlideD, Slide3, SlideS, Slide6
 //      유저는 빈 앱을 보고 「초기화됐다」고 읽는다 (창업자 *"저장한거 초기화되면 나같으면 앱지워"*).
 export default function Onboarding({ onDone, onRestore }) {
   const N = SLIDES.length
+  // 🚪 onboard_seen — 「소개를 본 사람」. skip/done 과 견줘야 «중간에 앱을 꺼 버린 사람»이 보인다.
+  //    ⭐ «이 컴포넌트»는 한 번만 뜬다 → 사람당 1건. (⛔Stage 에 걸면 장마다 나간다 — 위 주석)
+  useEffect(() => { try { 소개봄() } catch { /* 통계가 죽어도 소개는 뜬다 */ } }, [])
   const [i, setI] = useState(0)
   const [drag, setDrag] = useState(0)      // 손가락 따라오는 오프셋(px)
   const [dragging, setDragging] = useState(false)
