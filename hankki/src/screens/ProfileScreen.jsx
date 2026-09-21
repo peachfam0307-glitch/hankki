@@ -3,13 +3,13 @@ import { COACH, COACH_KEYS } from '../coach'
 import { useStore, 서랍한도, 서랍다시재기 } from '../store'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
-import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL, LAB_SURVEY_URL, LAB_BUG_URL } from '../version'
+import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL, LAB_SURVEY_URL, LAB_BUG_URL, INSTAGRAM_DM_URL } from '../version'
 // 📒 tidy 에서 오는 것 «한 줄로» 모은다 — 2026-09-10 에 두 줄로 갈려 있었다.
 //    ⛔ 갈려 있으면 다음 사람이 한쪽만 보고 「유저 눈을 안 본다」고 착각한다(오늘 실제로 그런 사고를 냈다).
 //    tidyFounder = 유저 눈을 «따른다» · 진짜운영자 = 유저 눈과 «무관»(스위치를 그릴지 정한다)
 import { tidyFounder, 다듬기기록, 진짜운영자, 유저눈인가, 유저눈설정 } from '../tidy'
 // 🙋‍♀️ [2026-09-16] 우리 기기 = 통계 안 보냄 · 7번 탭 열쇠 칸 · 점검 30분 · 보낸 기록 — 판정은 stats.js 한 곳
-import { 내부기기인가, 내부기기설정, 점검보내기까지, 점검보내기설정, 보낸기록 } from '../stats'
+import { 내부기기인가, 내부기기설정, 점검보내기까지, 점검보내기설정, 보낸기록, 인스타DM } from '../stats'
 import Icon from '../components/Icon'
 import KeyBadge from '../components/KeyBadge'
 import TabTips from '../components/TabTips'
@@ -405,6 +405,11 @@ export default function ProfileScreen() {
     //   ⛔ 「새로」 알약은 안 붙인다 — 배포마다 켜지면 아무도 안 본다(소식 alert 층에서 뺀 것과 같은 이유).
     { icon: 'sparkle', label: '업데이트 내역', desc: '언제 무엇이 달라졌는지 날짜별로 봐요', onClick: () => set업뎃내역(true) },
     { icon: 'star', label: '스토어에 한마디', badge: '리뷰 남기기', 밖: true, onClick: () => openExternal(STORE_URL) },
+    // 📷 [창업자 2026-09-21] *"설정에도 하나 넣자"* — 홈 인스타 칸과 «같은 관문»(insta_go). 홈에서 못 찾은 사람의 상시 입구.
+    //    📮 창업자 *"DM보내는 걸로(바로)"* → 설정 줄은 «메시지 창»으로. 주소 = ig.me/m/<계정> (인스타 공식 DM 링크 꼴 — ⚠️이 환경에선 인스타를 못 열어 실물 확인은 창업자 폰에서).
+    { icon: 'instagram', label: '한끼에 DM 보내기', badge: '인스타그램', 밖: true, onClick: () => { try { 인스타DM() } catch { /* noop */ } openExternal(INSTAGRAM_DM_URL) } },
+
+
     // 🔖 [2026-08-18] 「즐겨찾기」 → **「책갈피」** (창업자 확정 · 유저에게 보이는 여섯 곳을 같이 바꿨다)
     { icon: 'heart', label: FAV_NAME, onClick: () => nav.push({ name: 'favorites' }) },
     // 💾 백업은 이 목록에서 «꺼냈다» — 아래 독립 카드로. (창업자 2026-08-16)

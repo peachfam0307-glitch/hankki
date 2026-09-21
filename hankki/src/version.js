@@ -38,4 +38,5 @@ export const LAB_BUG_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSf8bMGM8JlY
 //   ⚠️ 법무는 그대로다 — **앱은 여전히 아무것도 수집·전송하지 않는다.** 주소를 열어줄 뿐이다.
 export const INSTAGRAM_ID = 'annyeong_hankki'
 export const INSTAGRAM_URL = `https://www.instagram.com/${INSTAGRAM_ID}/`
+// 💬 [창업자 2026-09-21] 설정의 「DM 보내기」 — 인스타 공식 메시지 링크 꼴(ig.me/m/<계정>). ⚠️ 이 환경은 인스타를 못 열어 실물은 창업자 폰으로 확인한다.
 export const INSTAGRAM_DM_URL = `https://ig.me/m/${INSTAGRAM_ID}`

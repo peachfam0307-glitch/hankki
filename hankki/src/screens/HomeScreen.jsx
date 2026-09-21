@@ -250,7 +250,9 @@ export default function HomeScreen() {
     //    소식 페이지를 열면 맨 아래에 있다 — 거기서 보면 된다.
     const o = news.openedAlert
     if (o.length) {
-      const head = `${o[0].title} ${o[0].count}개 새로 열렸어요`
+      // 📮 창업자(2026-09-21) *"새로열렸어요는 아랫줄에"* — 반 폭에서 「새로」만 윗줄에 남던 것. 「새로 열렸어요」 사이를 안 끊기는 띄어쓰기로.
+      const head = `${o[0].title} ${o[0].count}개 새로 열렸어요`
+
       return o.length > 1 ? `${head} 외 ${o.length - 1}건` : head
     }
     if (news.upcoming) {
