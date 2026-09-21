@@ -73,9 +73,10 @@ await 냄비.scrollIntoViewIfNeeded().catch(() => {})
 await 냄비.click(); await p.waitForTimeout(1600)
 await 말('④ 사진은 그대로 · 그릇 그림만 갈렸다'); await p.waitForTimeout(2200)
 
-await 말('⑤ 얹은 냄비도 끌어 본다 → 안 움직인다'); await p.waitForTimeout(1200)
-await 끈다(R.x + R.width * 0.5, R.y + R.height * 0.47, 110, 70)
-await 끈다(R.x + R.width * 0.5, R.y + R.height * 0.47, -100, -70)
+await 말('⑤ 얹은 냄비는 끌어서 옮긴다 → 사진은 제자리'); await p.waitForTimeout(1200)
+await 끈다(R.x + R.width * 0.5, R.y + R.height * 0.47, 80, 60)
+await p.waitForTimeout(900)
+await 끈다(R.x + R.width * 0.5 + 80, R.y + R.height * 0.47 + 60, -80, -60)
 await p.waitForTimeout(1400)
 
 await 말('⑥ 다른 그릇으로 바꿔도 사진은 그대로'); await p.waitForTimeout(1200)

@@ -149,7 +149,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
       : null
     const 기본키 = (!카드표지 && !틀 && 열쇠있나('그릇')) ? 기본그릇키(dishCatOf(recipe.icon || guessFoodIcon(recipe.title))) : null   // 🔑 창업자 열쇠 뒤(?그릇=1) — 배포해 하면 뗀다
     const 그릇 = 기본키 && PHOTO_FAMILY[기본키] && PHOTO_FAMILY[기본키].src && FRAME_WINDOW[기본키] ? 기본키 : null
-    const 창 = 틀 ? FRAME_WINDOW[틀.key] : 그릇 ? FRAME_WINDOW[그릇] : null
+    const 창 = 그릇 ? FRAME_WINDOW[그릇] : null
     // 창 안에 놓는 사진 상자 — 부모(프레임/그릇 크기의 틀) 기준 %
     // 📏 기본 그릇(㉡)은 «창»(회색 바닥)보다 «입»(테 안쪽)이 훨씬 크다 — 창에만 넣으면 바닥에 작은 타원이 떠 보인다(2026-09-21 실물 · 창업자 *"저게 뭐야"* · *"사진이 가운데 들어가야 하는데"*).
     //    그래서 ㉡는 사진을 그릇 «위»에 얹고 입 크기(창 × 1.3)로 오린다 · 가운데는 창보다 살짝 위(cy − 0.02 · 그릇이 기울어 보여서).
@@ -158,7 +158,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //    창업자 2026-09-21 *"홈에서 비교해봐 내사진 들어간 레시피 그릇이 넘 작아"* — 홈은 아이콘이 70% 인데 그릇이 58% 라 작았다.
     //    저장된 값(s=그릇폭)은 안 건드리고 «그릴 때만» 곱한다 → 편집 화면(iconSize 없음)은 그대로.
     // 📏 [2026-09-22 00:28] 얹은 프레임도 흰 그릇과 «같은 식»(창 × 1.15 · 조금 아래) — 그래야 프레임을 씌워도 «사진 크기가 안 변한다»(창업자 *"그릇프레임을 씌우면 갑자기 왜 작아져"*).
-    const 키움 = 1.15
+    const 키움 = 1.15   // 흰 그릇 «입» 크기
    // 1.3·1.22 는 뒤쪽 테 안쪽 선을 덮고 아래 바닥이 남았다(확대해서 봄) → 1.15 ＋ 조금 아래
     // 🍽🍽 [창업자 2026-09-22 00:28 최종] **사진은 «한 크기»다 — 그릇 그림이 «위에 얹힐» 뿐이다.**
     //    📮 *"흰도자기 기본값하고 프레임만 위에얹으라고 했잖아. 그림이 왜 움직이고, 그릇프레임을 씌우면 갑자기 왜 작아져?"*
@@ -166,11 +166,13 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //    ✅ 이제 = 사진 동그라미는 늘 같은 크기(그릇 폭의 0.66 · 가운데)이고, **그릇 PNG 가 그 위에 덮인다**.
     //       우리 그릇 컷은 «창이 뚫려 있어»(그릇-창뚫기.py) 덮어도 가운데로 사진이 그대로 보인다.
     //       그래서 그릇을 바꿔도 사진은 «한 톨도 안 움직이고 안 커진다» — 테두리 그림만 갈린다.
-    const 창상자 = 창 ? {
+    //    ⭐ 흰 그릇(㉡) 안에서는 그 그릇의 «입» 크기로(창 × 1.15 · 조금 아래) · 얹은 그릇(㉠)일 때는 아이콘과 같은 크기로 가운데.
+    const 창상자 = 틀 ? { width: iconSize, aspectRatio: '1 / 1', borderRadius: '50%' } : 창 ? {
       position: 'absolute',
-      left: '50%', top: '48%', transform: 'translate(-50%,-50%)',
-      width: '66%', aspectRatio: '1 / 1',
+      left: `${(창.cx - 창.w * 키움 / 2) * 100}%`, top: `${(창.cy + 0.015 - 창.h * 키움 / 2) * 100}%`,
+      width: `${창.w * 키움 * 100}%`, height: `${창.h * 키움 * 100}%`,
       borderRadius: '50%',
+      zIndex: 1,
     } : null
     const 사진상자 = (
         <div
@@ -203,13 +205,14 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
           />
         </div>
     )
+    // 🍽🍽 [창업자 원본 녹화 2026-09-22 00:40 = *"우리 원래 앱 이대로 똑같이 만들어"*]
+    //    **음식은 «가운데 고정»이고 그릇만 위에 얹힌다** — 공식 AI 아이콘이 그렇게 군다(FoodIcon 은 늘 가운데·iconSize).
+    //    그래서 얹은 그릇(㉠)일 때 «사진을 그 틀 안에 넣지 않는다» — 사진은 아이콘 자리에 그대로 두고,
+    //    그릇 그림은 DecorLayer 가 «유저가 놓은 자리·크기·각도»로 그 위에 그린다(창이 뚫려 있어 음식이 보인다).
+    //    ⛔ 그 전 = 사진을 틀의 창 크기로 잘라 넣어서, 그릇을 바꾸거나 돌리면 사진까지 작아지고 따라 돌았다.
     inner = 틀 ? (
-      // ㉠ 얹힌 프레임의 자리에 «같은 틀»을 놓고 그 창에 사진 — 프레임 그림은 DecorLayer 가 이 위에 그린다
-      <div style={{ position: 'absolute', inset: 0 }}>
-        {/* 🍽 [창업자 2026-09-22 00:28 최종] 얹은 그릇 프레임도 «흰 그릇과 같은 자리·같은 크기»에 고정 — 그림만 바뀐다. 저장된 x·y·s·r 은 안 쓴다(DecorLayer 와 같은 줄). */}
-        <div style={{ position: 'absolute', left: '50%', top: '50%', width: `${그릇폭 * 그릇배율 * 100}%`, aspectRatio: `${stickerRatio(틀.key)}`, transform: 'translate(-50%,-50%)' }}>
-          {사진상자}
-        </div>
+      <div style={center}>
+        {사진상자}
       </div>
     ) : 그릇 ? (
       // ㉡ 기본 그릇 — 폭은 «그릇폭»(서랍에서 얹은 그릇과 같은 크기 · 창업자 2026-09-21 「그릇사이즈가 달라져」) · 사진은 창에 · 그릇 그림은 사진 «위»
