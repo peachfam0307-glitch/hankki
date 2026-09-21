@@ -87,10 +87,10 @@ console.log('\n⑦ 새 관문 17개 — 이름이 «고정»이고 값이 안 �
 켬(); 비움()
 S.소개봄(); S.소개건너뜀(); S.소개끝냄(); S.로그인화면봄(); S.로그인실패(); S.로그인탈출()
 S.알림시트봄(); S.알림허락(); S.알림거절(); S.알림으로들어옴(); S.리뷰시트봄(); S.리뷰하러감()
-S.냉장고열림(); S.장바구니펼침(); S.자랑고름(); S.자랑사진저장(); S.열쇠받음(); S.열쇠막힘()
-본다('18개 이름이 그대로 나간다', 통.slice(), ['onboard_seen', 'onboard_skip', 'onboard_done', 'gate_seen', 'gate_fail', 'gate_escape',
+S.냉장고열림(); S.장바구니펼침(); S.자랑고름(); S.자랑사진저장(); S.열쇠받음(); S.열쇠막힘(); S.선물시트봄(); S.선물보러감()
+본다('20개 이름이 그대로 나간다', 통.slice(), ['onboard_seen', 'onboard_skip', 'onboard_done', 'gate_seen', 'gate_fail', 'gate_escape',
   'push_seen', 'push_ok', 'push_no', 'push_open', 'review_seen', 'review_go',
-  'pantry_open', 'pick_open_shop', 'brag_pick', 'brag_saved_fallback', 'key_earn', 'key_block'])
+  'pantry_open', 'pick_open_shop', 'brag_pick', 'brag_saved_fallback', 'key_earn', 'key_block', 'gift_seen', 'gift_go'])
 본다('전부 40자 아래(GA4 상한)', 통.every((n) => n.length <= 40), true)
 본다('이름에 숫자·값이 안 섞였다', 통.every((n) => /^[a-z_]+$/.test(n)), true)
 

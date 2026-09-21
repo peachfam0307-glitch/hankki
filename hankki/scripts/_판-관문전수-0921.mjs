@@ -156,7 +156,7 @@ async function 한판({ 소개봄 }) {
   }, 1600)
   // ⛔ 처음엔 `p.goBack()` 으로 닫았다 — 그건 «페이지 밖»으로 나가서 뒤 걸음이 전부 빈 화면이 됐다(판 고장 넷째). 앱 안의 「취소」 단추로 닫는다(DecorEditor 1173줄).
   // 🎁 처음 레꾸를 열면 「받은 선물」 시트(GiftPackSheet)가 «먼저» 덮는다 — 판 덮개 실측으로 잡았다(2026-09-21).
-  //    ⚠️ 이 시트는 관문이 없다 → 아래 표에 「관문 0개」로 찍히는 게 «맞는» 결과다(설계 문서 §7 에 적는다).
+  //    (처음엔 관문이 없었다 → 09:5x 에 gift_seen · gift_go 를 박았다. 「레꾸 열기」 걸음에 decor 와 같이 gift_seen 이 찍혀야 맞다)
   await 걸음('받은 선물 시트 닫기', async () => {
     const el = p.locator('.sheet button.press', { hasText: /^닫기$/ }).first()
     if (!(await el.count())) return false

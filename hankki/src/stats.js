@@ -532,6 +532,9 @@ export const 자랑사진저장 = 관문('brag_saved_fallback') // 공유가 안
 export const 열쇠받음 = 관문('key_earn')
 export const 열쇠막힘 = 관문('key_block')
 
+export const 선물시트봄 = 관문('gift_seen')   // 레꾸를 «처음» 열면 덮는 「받은 선물」 시트 — 눌러 잰 판(§9.5)에서 관문 0개로 잡혔다(2026-09-21)
+export const 선물보러감 = 관문('gift_go')     // 시트에서 선물 칸으로 갔다 — 「닫기」와 갈라야 선물이 사람을 «끄는지» 보인다
+
 export function 로그인됨(공급자, 새계정) {
   const 이름 = 공급자 === 'apple.com' ? 'apple' : 공급자 === 'google.com' ? 'google' : ''
   if (!이름) return   // 모르는 공급자는 안 보낸다(이름을 지어내지 않는다)
