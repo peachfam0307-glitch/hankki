@@ -1105,7 +1105,9 @@ export const 기본그릇키 = (갈래) => 기본그릇표[갈래] || 'pb_x03'  
 //    ⭐ 아이콘 표지(홈 70%·상세 56%)와 다른 잣대인 건 맞다 — 그릇은 «표지 안 물건»이라 화면마다 안 바뀌고 늘 같아야 타일이 나란하다.
 export const 그릇폭 = 0.58
 // 🔢 [창업자 2026-09-22 01:00] 기본 흰 도자기 = 공식 음식 아이콘 × 이 배수. 1 이면 아이콘과 같은 크기.
-export const 그릇줄임 = Number(new URLSearchParams(typeof location !== 'undefined' ? location.search : '').get('그릇줄임')) || 0.88
+export const 그릇줄임 = Number(new URLSearchParams(typeof location !== 'undefined' ? location.search : '').get('그릇줄임')) || 1
+// 🔢 [창업자 2026-09-22 01:09 「테두리가 없어서 그런가보자」] 사진이 그릇 «창»의 몇 배로 담기나. 작을수록 흰 테가 넉넉히 보인다.
+export const 사진담김 = Number(new URLSearchParams(typeof location !== 'undefined' ? location.search : '').get('사진담김')) || 1.15
 export const 그릇인가 = (key) => typeof key === 'string' && (key.startsWith('pf_') || key.startsWith('pb_'))
 // 🍽 [창업자 2026-09-21 23:32 확정] «기본 흰 도자기 그릇(pb_)»과 음식 사진은 **아이콘처럼 고정**(가운데 · 아이콘 크기 · 못 옮기고 못 키움).
 //    서랍에서 얹는 그릇(pf_ · 할로윈 냄비 등)은 다른 스티커처럼 옮기고 키우고 돌린다 — 사진은 그 그릇을 따라간다.

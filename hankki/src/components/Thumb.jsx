@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { 창고에있나, 그릴수있나, 창고표시, 꺼내기 } from '../photoStore'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
-import { bgStyle, bgIsDark, bgAnim, PHOTO_FAMILY, stickerRatio, 기본그릇키, 기본그릇인가, 열쇠있나, 그릇폭, 그릇줄임 } from './Stickers'
+import { bgStyle, bgIsDark, bgAnim, PHOTO_FAMILY, stickerRatio, 기본그릇키, 기본그릇인가, 열쇠있나, 그릇폭, 그릇줄임, 사진담김 } from './Stickers'
 import { FRAME_WINDOW } from '../data/frameWindows'
 import { dishCatOf } from './FoodIcon'
 import { graphemes } from '../utils'
@@ -160,7 +160,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //    창업자 2026-09-21 *"홈에서 비교해봐 내사진 들어간 레시피 그릇이 넘 작아"* — 홈은 아이콘이 70% 인데 그릇이 58% 라 작았다.
     //    저장된 값(s=그릇폭)은 안 건드리고 «그릴 때만» 곱한다 → 편집 화면(iconSize 없음)은 그대로.
     // 📏 [2026-09-22 00:28] 얹은 프레임도 흰 그릇과 «같은 식»(창 × 1.15 · 조금 아래) — 그래야 프레임을 씌워도 «사진 크기가 안 변한다»(창업자 *"그릇프레임을 씌우면 갑자기 왜 작아져"*).
-    const 키움 = 1.15   // 흰 그릇 «입» = 창 × 1.15
+    const 키움 = 사진담김   // 흰 그릇 안에 사진이 얼마나 차나 (1.15 = 테 안쪽까지 꽉 · 작을수록 흰 테가 보인다 · 창업자 2026-09-22 01:09 「테두리가 없어서 그런가보자」)
     // 🔢 사진 지름(표지 폭 대비) ＝ 아이콘 크기. 흰 그릇은 그 사진에 «입»을 맞춘다 → 그릇 그림 폭 = 사진지름 ÷ (창너비×1.15)
     const 사진지름 = (() => { const n = parseFloat(iconSize); return Number.isFinite(n) && n > 0 ? n / 100 : 0.56 })()
     // 🔢 [창업자 2026-09-22 01:00 「좀 크네 그릇크기자체를 좀 줄이자」] 기존 아이콘보다 조금 작게 — 그 배수가 그릇줄임.
