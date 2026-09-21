@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { 창고에있나, 그릴수있나, 창고표시, 꺼내기 } from '../photoStore'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
-import { bgStyle, bgIsDark, bgAnim, PHOTO_FAMILY, stickerRatio, 기본그릇키 } from './Stickers'
+import { bgStyle, bgIsDark, bgAnim, PHOTO_FAMILY, stickerRatio, 기본그릇키, 열쇠있나 } from './Stickers'
 import { FRAME_WINDOW } from '../data/frameWindows'
 import { dishCatOf } from './FoodIcon'
 import { graphemes } from '../utils'
@@ -145,7 +145,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     const 틀 = !카드표지 && Array.isArray(recipe.decor)
       ? recipe.decor.find((it) => it && it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('pf_') || it.key.startsWith('pb_')) && FRAME_WINDOW[it.key])
       : null
-    const 기본키 = (!카드표지 && !틀) ? 기본그릇키(dishCatOf(recipe.icon || guessFoodIcon(recipe.title))) : null
+    const 기본키 = (!카드표지 && !틀 && 열쇠있나('그릇')) ? 기본그릇키(dishCatOf(recipe.icon || guessFoodIcon(recipe.title))) : null   // 🔑 창업자 열쇠 뒤(?그릇=1) — 배포해 하면 뗀다
     const 그릇 = 기본키 && PHOTO_FAMILY[기본키] && PHOTO_FAMILY[기본키].src && FRAME_WINDOW[기본키] ? 기본키 : null
     const 창 = 틀 ? FRAME_WINDOW[틀.key] : 그릇 ? FRAME_WINDOW[그릇] : null
     // 창 안에 놓는 사진 상자 — 부모(프레임/그릇 크기의 틀) 기준 %

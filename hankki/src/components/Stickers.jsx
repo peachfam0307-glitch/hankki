@@ -1096,6 +1096,17 @@ const 기본그릇표 = {
   '양념·소스': 'pb_x04', '양념·장': 'pb_x04',                    // ⑧ 한손잡이 팬 (창업자 「소스는 손잡이 달린 애로」)
 }
 export const 기본그릇키 = (갈래) => 기본그릇표[갈래] || 'pb_x03'   // ⑦ 넓은 접시 = 구이·전·반찬·양식·일식·중식·모름
+// 🔑 창업자 열쇠 — `?그릇=1` 을 한 번 열면 그 폰에 남는다(할로윈 열쇠와 같은 꼴 · DecorEditor 698줄과 같은 저장 이름). `?그릇=0` 으로 끈다.
+//    ⛔ 유저에겐 안 보인다 — 창업자가 폰에서 만져 보고 「배포해」 하면 열쇠를 뗀다(아이폰 빌드와 같이).
+export const 열쇠있나 = (이름) => {
+  try {
+    const v = new URLSearchParams(location.search).get(이름)
+    if (v === '1') localStorage.setItem('hankki:열쇠:' + 이름, '1')
+    if (v === '0') localStorage.removeItem('hankki:열쇠:' + 이름)
+    return localStorage.getItem('hankki:열쇠:' + 이름) === '1'
+  } catch { return false }
+}
+
 
 // ── ✨ 캐릭터 움직임(모션) · 효과(양념) — 스티커마다 골라 얹는다 ──
 // 전부 그림 1장으로 되는 CSS 모션. item.motion / item.fx 에 key 저장.
@@ -1905,7 +1916,7 @@ export const STICKER_GROUPS = [
   //    캡처 = docs/인스타-소재-할로윈접시-2026-09-21/
   { key: 'deco_dish_halloween', tab: 'frame', key열쇠: '할로윈', bigCell: true, from: '2026-01-01', label: '할로윈 접시', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_hw07', 'pf_hw04', 'pf_hw08', 'pf_hw01'] },
   // 🍽 [창업자 2026-09-21] 기본 그릇 8컷 — 늘 열려 있다. 사진 표지에 프레임을 «안» 얹으면 갈래별 기본 그릇(`기본그릇키`)이 저절로 깔리고, 여기서 직접 고르면 그게 이긴다.
-  { key: 'deco_dish_basic', tab: 'frame', bigCell: true, from: '2026-01-01', label: '기본 그릇', hint: '내 사진을 흰 그릇에 담아요', items: ['pb_x03', 'pb_w02', 'pb_w01', 'pb_x01', 'pb_w03', 'pb_x02', 'pb_w04', 'pb_x04'] },
+  { key: 'deco_dish_basic', tab: 'frame', key열쇠: '그릇', bigCell: true, from: '2026-01-01', label: '기본 그릇', hint: '내 사진을 흰 그릇에 담아요', items: ['pb_x03', 'pb_w02', 'pb_w01', 'pb_x01', 'pb_w03', 'pb_x02', 'pb_w04', 'pb_x04'] },
   { key: 'deco_dy_frame_b', tab: 'frame', diary: true, from: '2027-01-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
   { key: 'deco_dy_frame_c', tab: 'frame', diary: true, from: '2027-01-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
 
