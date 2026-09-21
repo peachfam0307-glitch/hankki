@@ -4418,8 +4418,8 @@ html, body { overscroll-behavior: none; }
         예전의 *"한끼소식이랑 오징어가 너무 오른쪽이 휑해보인다.."* 가 되돌아오지 않는다. */
   .home-pair > .news-card { grid-column: 1 / -1; }
   .home-pair > .news-row { grid-column: 1 / -1; }   /* 2026-09-21 소식·인스타 묶음도 전폭 */
-  .insta-card { --insta-icon: 44px; flex-direction: row; gap: 16px; padding: 12px 20px; }  .insta-label { font-size: 19px; }   /* 📮 창업자 *"패드는 왼쪽에 아이콘 오른쪽에 글자"* — 가로로 */
-  .news-row .news-title { font-size: 21px; }  .news-row .news-sub { font-size: 16.5px; }  .news-row .news-card { --news-gom: 40px; gap: 18px; padding-left: 24px; }   /* 📮 창업자 *"한끼소식도 글씨 더 키우고"* — 패드만 */   /* 📮 창업자 2026-09-21 *"패드는 크기를 더 키우자 아이콘도 글자도"* */
+  .insta-card { --insta-icon: 48px; flex-direction: row; gap: 16px; padding: 12px 20px; }  .insta-label { font-size: 22px; }   /* 📮 창업자 *"패드는 왼쪽에 아이콘 오른쪽에 글자"* — 가로로 */
+  .news-row .news-title { font-size: 24px; }  .news-row .news-sub { font-size: 18.5px; }   /* 📮 창업자 19:29 *"글씨 좀 더 키워줘"* 21/16.5 → 24/18.5 */  .news-row .news-card { --news-gom: 40px; gap: 18px; padding-left: 24px; }   /* 📮 창업자 *"한끼소식도 글씨 더 키우고"* — 패드만 */   /* 📮 창업자 2026-09-21 *"패드는 크기를 더 키우자 아이콘도 글자도"* */
 
   /* 📐📐 **패드에선 「다음에 뭐 할까」가 «2줄»** — 창업자 2026-08-20
      📮 창업자 = *"**패드는 2줄로 가야겠는데? 콩국수랑 맞춰서**"*
