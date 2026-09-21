@@ -15,7 +15,7 @@ const state = {
   recipes: basicRecipes.map((r, i) => {
     const g = 골[r.id]
     if (g === undefined) return { ...r, status: 'sorted', savedAt: now - i * 60000 }
-    const base = { ...r, status: 'sorted', savedAt: now + 1000 * (10 - Object.keys(골).indexOf(r.id)), thumb: 'photo', image: 사진, touched: true }
+    const base = { ...r, status: 'sorted', savedAt: now + 1000 * (10 - Object.keys(골).indexOf(r.id)), thumb: 'photo', image: 사진, imageZoom: 1.35, touched: true }   // 시험 사진에 흰 접시가 섞여 있어 조금 당겨 본다(유저가 두 손가락으로 하는 것과 같다)
     if (g === 'hw') base.decor = [{ id: 'd1', type: 'sticker', key: 'pf_hw07', x: 0.5, y: 0.5, s: 0.62, r: 0 }]
     return base
   }),
