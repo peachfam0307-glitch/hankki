@@ -16,7 +16,7 @@ const state = {
     const g = 골[r.id]
     if (g === undefined) return { ...r, status: 'sorted', savedAt: now - i * 60000 }
     const base = { ...r, status: 'sorted', savedAt: now + 1000 * (10 - Object.keys(골).indexOf(r.id)), thumb: 'photo', image: 사진, imageZoom: 1.35, touched: true, cooked: 3 }   // cooked → 홈 「자주 해먹는 요리」 줄에 뜬다(홈 그릇 크기 확인용)   // 시험 사진에 흰 접시가 섞여 있어 조금 당겨 본다(유저가 두 손가락으로 하는 것과 같다)
-    if (g === 'hw') base.decor = [{ id: 'd1', type: 'sticker', key: 'pf_hw04', x: 0.5, y: 0.5, s: 0.58, r: 0 }]
+    if (g === 'hw') base.decor = [{ id: 'd1', type: 'sticker', key: 'pf_hw04', x: 0.62, y: 0.55, s: 0.8, r: -8 }]   // 🍲 얹은 그릇은 유저가 키우고 옮긴 그대로(창업자 2026-09-21 「위에 얹는 그릇프레임만 키울수있다」)
     if (g === 'hw09bg') { base.decor = [{ id: 'd1', type: 'sticker', key: 'pf_hw09', x: 0.5, y: 0.5, s: 0.58, r: 0 }]; base.decorBg = 'hwnight' }   // 🎃 새 물결 접시 ＋ 핼러윈 밤 배경(2026-09-21)
     if (g === 'hw10') { base.decor = [{ id: 'd1', type: 'sticker', key: 'pf_hw10', x: 0.5, y: 0.5, s: 0.58, r: 0 }]; base.decorBg = 'hwfelt' }   // 🎃 새 보라 고양이 볼 ＋ 핼러윈 펠트 배경
     return base

@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
 import StoredImg from '../photoView'
-import { StickerArt, StickerFx, motionClass, stickerRatio, 그릇인가, NOTE_COLORS, NOTE_FAT, NOTE_HAND_FAT, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, textSizeV, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
+import { StickerArt, StickerFx, motionClass, stickerRatio, 그릇인가, 기본그릇인가, 그릇폭, NOTE_COLORS, NOTE_FAT, NOTE_HAND_FAT, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, textSizeV, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -88,6 +88,8 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     e.stopPropagation()
     const wasSel = selectedId === it.id
     onSelect?.(it.id)
+    // 🍽 그릇은 «안 끌린다» — 고르기(지우기 ×)만 된다. 아이콘처럼 자리가 정해져 있다(창업자 2026-09-21).
+    if (기본그릇인가(it.key)) { dragRef.current = null; return }
     const rect = boxRef.current.getBoundingClientRect()
     dragRef.current = { id: it.id, x0: it.x, y0: it.y, px: e.clientX, py: e.clientY, rect, moved: false, wasSel, it, marked: false }
     e.currentTarget.setPointerCapture?.(e.pointerId)
@@ -215,10 +217,14 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
         // 🏷 글 상자 = 포스트잇(`note`)에 «배경 그림»(`art`)을 깐 것 (2026-08-07)
         //   ⭐ 비율은 그 그림의 실제 비율을 쓴다 — 벡터 포스트잇의 1.06 을 쓰면 라벨이 찌그러진다.
         const ratio = it.type === 'photo' ? (it.ratio || 1) : (it.type === 'tape' || it.type === 'hl') ? (it.ratio || (it.type === 'hl' ? 6 : 3.4)) : it.type === 'note' ? (it.art ? stickerRatio(it.art) : it.shape === 'oval' ? 1.5 : it.shape === 'cloud' ? 1.35 : it.shape === 'circle' ? 1 : 1.06) : stickerRatio(it.key)
+        // 🍽 [창업자 2026-09-21 23:31] 그릇(pf_/pb_)은 **AI 음식 아이콘과 똑같이** 군다 — 자리 가운데 · 크기 = 아이콘 크기 · 안 옮겨지고 안 돌아가고 안 커진다.
+        //    📮 *"지금 레시피에 들어있는 ai 음식 아이콘은 네가 정한 크기가 딱 있잖아. 움직이지도 않고 크기가 줄지도 커지지도 않아."*
+        //    ⭐ 저장된 x·y·s·r 은 «안 쓴다» — 옛날에 손으로 옮기거나 키워 둔 그릇도 이 줄 하나로 다 같은 자리·같은 크기가 된다.
+        const 그릇 = 기본그릇인가(it.key)   // ⭐ pb_ 만 — pf_(서랍 그릇)은 보통 스티커처럼 자유
         const base = {
           position: 'absolute',
-          left: `${it.x * 100}%`,
-          top: `${it.y * 100}%`,
+          left: `${(그릇 ? 0.5 : it.x) * 100}%`,
+          top: `${(그릇 ? 0.5 : it.y) * 100}%`,
           // 글자: 상자를 글자에 딱 맞게(max-content) — 점선칸이 글자 폭만큼만. 크기는 TextDeco가 커버폭 px로.
           // 나머지(스티커·테이프·포스트잇): 폭=it.s + 종횡비 고정.
           ...(isText
@@ -231,7 +237,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             //      `autoCqw` 는 «넘치지 않는 가장 큰 값»을 찾는 함수라, 한도만 올리면
             //      **짧은 글은 그만큼 커지고 긴 글은 알아서 안 넘는다.** 잘림이 구조적으로 안 생긴다.
             //   ⛔ 저장값 `s` 는 안 건드린다 — 「보통」으로 되돌리면 원래대로 온다.
-            : { width: `${it.s * (그릇인가(it.key) ? 그릇배율 : 1) * 100}%`, aspectRatio: `${ratio}` }),   // 📏 그릇은 화면마다 «아이콘과 같은 크기»로(홈 70%·상세 56% · Thumb 가 배율을 준다 · 창업자 2026-09-21 「내사진 들어간 레시피 그릇이 넘 작아」)
+            : { width: `${(그릇 ? 그릇폭 * 그릇배율 : it.s) * 100}%`, aspectRatio: `${ratio}` }),   // 📏 그릇 폭 = 그 화면의 아이콘 크기(그릇폭×그릇배율 = iconSize · 홈 70%·그 밖 56%) — 저장값 s 는 안 쓴다
           // ↔ **좌우 뒤집기**(창업자 2026-08-06 *"캐릭터좌우반전돼?"* → 된다).
           //   ⭐ `rotate` «뒤»에 `scaleX` 를 둔다 — 순서를 바꾸면 뒤집은 뒤 회전이라
           //      기울기가 반대로 돌아 손잡이가 엉뚱하게 움직인다.
@@ -241,7 +247,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
           //      아래 두 곳은 손으로 180° 돌려야 하는데, 돌리면 **✕ 도 같이 돌아** 스티커를 잡으려다 지워진다
           //      (창업자 *"돌려서 오른쪽에 붙이면 삭제버튼이 오른쪽위에오니까 자꾸 지워져"* — 돌리기 자체는 잘 된다).
           //   📌 좌우＋상하를 같이 켜면 180° 회전과 같은 그림이라 **네 귀퉁이가 다 나온다**(6컷 → 24가지).
-          transform: `translate(-50%,-50%) rotate(${it.r || 0}deg)${it.flip ? ' scaleX(-1)' : ''}${it.flipY ? ' scaleY(-1)' : ''}`,
+          transform: 그릇 ? 'translate(-50%,-50%)' : `translate(-50%,-50%) rotate(${it.r || 0}deg)${it.flip ? ' scaleX(-1)' : ''}${it.flipY ? ' scaleY(-1)' : ''}`,   // 🍽 그릇은 안 돌리고 안 뒤집는다
           touchAction: 'none',
           cursor: editable ? 'grab' : 'default',
           // 🎯🎯 **층은 늘 통과시키고 «아이템만» 손가락을 받는다** → 빈 자리는 언제나 글칸·축이 받는다
@@ -374,7 +380,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                   </button>
                 )}
                 {/* 크기·회전 핸들 — ⛔ 그릇(pf_/pb_)엔 안 준다: 그릇은 «한 크기»(Stickers.그릇폭 · 창업자 2026-09-21 「그릇사이즈가 달라져」) */}
-                {!그릇인가(it.key) && <span
+                {!기본그릇인가(it.key) && <span
                   aria-label="크기·회전"
                   onPointerDown={onHandleDown(it)}
                   onPointerMove={onHandleMove}

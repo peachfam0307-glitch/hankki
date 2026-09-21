@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { 창고에있나, 그릴수있나, 창고표시, 꺼내기 } from '../photoStore'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
-import { bgStyle, bgIsDark, bgAnim, PHOTO_FAMILY, stickerRatio, 기본그릇키, 열쇠있나, 그릇폭 } from './Stickers'
+import { bgStyle, bgIsDark, bgAnim, PHOTO_FAMILY, stickerRatio, 기본그릇키, 기본그릇인가, 열쇠있나, 그릇폭 } from './Stickers'
 import { FRAME_WINDOW } from '../data/frameWindows'
 import { dishCatOf } from './FoodIcon'
 import { graphemes } from '../utils'
@@ -200,7 +200,8 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     inner = 틀 ? (
       // ㉠ 얹힌 프레임의 자리에 «같은 틀»을 놓고 그 창에 사진 — 프레임 그림은 DecorLayer 가 이 위에 그린다
       <div style={{ position: 'absolute', inset: 0 }}>
-        <div style={{ position: 'absolute', left: `${틀.x * 100}%`, top: `${틀.y * 100}%`, width: `${틀.s * 그릇배율 * 100}%`, aspectRatio: `${stickerRatio(틀.key)}`, transform: `translate(-50%,-50%) rotate(${틀.r || 0}deg)${틀.flip ? ' scaleX(-1)' : ''}` }}>
+        {/* 🍽 [창업자 2026-09-21 23:32 확정] 얹은 그릇 프레임(pf_)은 «유저가 옮기고 키운 그대로»(x·y·s·r) — 사진이 그 그릇을 따라간다. 기본 흰 그릇(pb_)만 아이콘처럼 고정(DecorLayer·아래 ㉡ 과 같은 줄) */}
+        <div style={{ position: 'absolute', left: `${(기본그릇인가(틀.key) ? 0.5 : 틀.x) * 100}%`, top: `${(기본그릇인가(틀.key) ? 0.5 : 틀.y) * 100}%`, width: `${(기본그릇인가(틀.key) ? 그릇폭 * 그릇배율 : 틀.s) * 100}%`, aspectRatio: `${stickerRatio(틀.key)}`, transform: 기본그릇인가(틀.key) ? 'translate(-50%,-50%)' : `translate(-50%,-50%) rotate(${틀.r || 0}deg)${틀.flip ? ' scaleX(-1)' : ''}` }}>
           {사진상자}
         </div>
       </div>

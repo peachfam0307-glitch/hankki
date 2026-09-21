@@ -11,7 +11,7 @@ import { INSTAGRAM_URL } from '../version'
 import { 인스타로감 } from '../stats'   // 🚪 insta_go — 홈 인스타 칸을 누른 사람
 import { SNS인가, SNS표 } from '../embed'
 import Thumb from '../components/Thumb'
-import { hasFrameDecor } from '../components/Stickers'
+import { 얹은틀있나 } from '../components/Stickers'
 import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
 import TabTips from '../components/TabTips'
@@ -27,8 +27,9 @@ import ConfirmSheet from '../components/ConfirmSheet'
 //   · 그 밖 → **70%** = 2026-08-23 창업자 지시(*"조금만더크게수정"*) 그대로 살아 있다
 //   ⭐ 두 지시가 부딪치는 건 **프레임을 쓸 때뿐**이다 → 그때만 양보한다. 어느 쪽도 안 되돌린다.
 //   ⛔ 이 판정은 `Stickers.jsx` 에 한 곳으로 둔다 — 홈에 이 칸이 «둘»이라 여기 적으면 갈라진다.
-// 📏 [2026-09-21] 프레임이 있어도 70% — 그릇은 Thumb 가 «아이콘과 같은 크기»로 배율을 맞춘다(창업자 「내사진 들어간 레시피 그릇이 넘 작아」). 옛 56% 는 그릇이 58% 고정이던 때의 값.
-const 홈그림크기 = (r) => (hasFrameDecor(r) ? '70%' : '70%')
+// 📏 [2026-09-21 23:32 창업자 확정] 「얹은 그릇 프레임」(pf_ · 유저가 옮기고 키운 것)이 있으면 56%(9/1 「라」 그대로 — 그림이 그 접시 안에 든다).
+//    기본 흰 그릇(pb_)은 «아이콘처럼 고정»이라 프레임으로 안 센다 → 70% 그대로, 그릇 자체가 아이콘 크기(70%)로 뜬다(「내사진 들어간 레시피 그릇이 넘 작아」).
+const 홈그림크기 = (r) => (얹은틀있나(r) ? '56%' : '70%')
 // 🐻 코치 스티커 = 우리 물결 꼬르곰(유니코드 이모지 금지 규칙)
 import uiHandPoint from '../assets/ui/hand_point.png'
 // 🐻 엄지척·박수 = **물결 정본**(창업자 2026-08-14 제공 · `…-08-14/낱개/gt_01`·`gt_c01`)
