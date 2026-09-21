@@ -98,6 +98,22 @@ try {
     console.log('📌 주제별 «최신» 문서 (옛 문서로 판단하는 게 반복된 사고다 — 이걸 먼저 읽는다):')
     rows.forEach(([k, v]) => console.log(`   ${k} → ${v[0].path}${v.length > 1 ? ` (옛 ${v.length - 1})` : ''}`))
     console.log('   전체는 `node hankki/scripts/latest-map.mjs` · 지도는 hankki/docs/최신-지도.md')
+    // 📒 [창업자 확정 2026-09-20] 계측 캡처는 «아침에 전날 값»을 받는다 — 밤에 찍으면 그날 2~3시간이 매일 빠진다.
+    //    ⛔ 규칙으로 두면 잊는다(2026-07-31 「규칙만 만들면 뭐해 안지키는데」) → 어제 값이 장부에 없으면 «내가 먼저» 말하게 띄운다.
+    try {
+      // ⛔ 여기서 「오늘에서 하루 빼기」를 «직접» 하면 날짜 만드는 곳이 둘이 된다(절대원칙 27).
+      //    실제로 2026-09-20 에 그렇게 썼다가 check-kst 가 배포를 막았고, v13.88~92 가 못 나갔다.
+      //    ✅ 어제도 src/today.js 에서 받는다 — 고칠 자리도 하나, 틀릴 자리도 하나다.
+      const { yesterdayKST } = await import('../src/today.js')
+      const 어제 = yesterdayKST()
+      const 장부길 = join(ROOT, 'hankki', 'docs', `계측-일별-${어제.slice(0, 7)}.json`)
+      if (existsSync(장부길)) {
+        const 장 = JSON.parse(readFileSync(장부길, 'utf8'))
+        const v = 장.날 && 장.날[어제]
+        if (!v) console.log(`\n📒📒 **어제(${어제}) 계측 값이 장부에 «없다»** — 창업자에게 «아침 캡처»를 먼저 청한다(창업자 확정 2026-09-20 「내일부터 아침에 전날 값 캡처하자」)\n   받을 것 = 보고서 개요 · 페이지 경로 · 페이지 제목(화면·행동 전수) · 채널 · 도시 · 유지 · ⭐운영체제(사용자→기술 · 갤/아이폰 추이 · 창업자 2026-09-21) · Firebase 사용자 수(＋오늘 든 계정의 구글/애플 갈래) · Play 설치 수 · 쿠팡 · 열쇠통`)
+        else if (v.미완사유) console.log(`\n📒 **어제(${어제}) 값이 «하루가 안 끝난» 판이다**(${String(v.캡처시각 || '')} 캡처) — 아침에 다시 받아 덮으면 하루가 온전해진다`)
+      }
+    } catch { /* 장부가 없어도 브리핑은 돈다 */ }
     // 📅 날짜가 «저절로» 여는 문 — 푸시 안 해도 열린다 (창업자 2026-08-01 절대원칙)
     try {
       const { nextGate, todayKST, gates } = await import('./release-calendar.mjs')

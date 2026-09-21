@@ -81,11 +81,13 @@
   //
   //    ⛔ 못 보는 것 = M 중 «실제 설치»는 Play 콘솔이 센다. 사람 단위로 못 이어 붙인다.
   //       → 그래서 위 단추에 referrer 꼬리표를 따로 달았다(구글이 세준다).
-  //    ⚠️ 측정 ID 는 앱과 «같다»(G-L20V2VE1CS) — 그래서 GA4 「사용자 수」에 안 깐 사람도 섞인다.
-  //       page_title 로 갈라 봐야 한다(bridge / bridge_go 는 앱 화면이 아니다).
+  //    ✅ [2026-09-21 10:1x] 측정 ID 를 «받기 페이지» 전용 스트림으로 갈랐다 (G-HQ6P8SXVWM · 스트림 15814232639 · 창업자가 콘솔에서 만들었다).
+  //       ⛔ 그 전엔 앱과 같은 ID(G-L20V2VE1CS)라 GA4 「활성·새 사용자」에 안 깐 사람이 섞였다
+  //          (9/21 실측 = GA4 새 13 vs Firebase 가입 1). 이제 앱 스트림 숫자 = 앱에 «들어온» 사람만.
+  //       📌 bridge / bridge_go 는 이제 「받기 페이지」 스트림에서 본다 — 앱 스트림엔 안 뜬다.
   //    📌 앱(src/stats.js)과 «같은 방식» = page_view 의 page_title 에 이름을 싣는다(웹 스트림이라 그렇다).
   (function () {
-    var ID = 'G-L20V2VE1CS'
+    var ID = 'G-HQ6P8SXVWM'
     var 갔다 = false
     // 🙋‍♀️🙋‍♀️ **우리 기기면 「내부」로 표시해 보낸다** (2026-09-14 · 앱 `src/stats.js:74` 와 «같은 열쇠»)
     //   ⛔⛔ **절반만 듣는 장치다 — 알고 넣는다.**
@@ -121,6 +123,27 @@
         b.textContent = 'App Store에서 받기'
       }
     } catch (e) { /* 못 읽으면 Play 그대로 */ }
+    // 🏷🏷 [2026-09-21] **이 페이지가 받은 꼬리표(utm_*)를 스토어 링크에 «그대로» 넘긴다.**
+    //    📮 창업자 = *"광고로 오는거는 다음 광고부터는 섞이지 않고 잴수있는거야??"*
+    //    ⛔ 그 전엔 Play 추천인이 `profile_link` 로 «고정»이라 GA4 에선 광고/프로필이 갈려도
+    //       **Play 콘솔 설치 수 안에서는 한 덩어리**였다. 아이폰 `ct` 도 `instagram_reels` 고정이었다.
+    //    ✅ 주소에 utm_medium 이 있으면 — Play: referrer 에 medium·campaign·content 를 싣는다(구글 형식 그대로).
+    //       아이폰: ct = instagram_<medium>_<campaign>(영문·숫자·밑줄 40자 · 애플 규칙). 없으면 옛 값 그대로.
+    //    ⛔ 값은 [a-z0-9_] 만 남긴다 — 남이 주소에 이상한 글자를 넣어도 링크가 안 깨진다.
+    try {
+      var q = new URLSearchParams(location.search)
+      var 깨끗 = function (k) { return String(q.get(k) || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 40) }
+      var med = 깨끗('utm_medium'), cam = 깨끗('utm_campaign'), con = 깨끗('utm_content')
+      if (med) {
+        var b2 = document.getElementById('go')
+        if (애플) {
+          b2.href = 'https://apps.apple.com/app/apple-store/id6811288851?pt=129448125&ct=' + ('instagram_' + med + (cam ? '_' + cam : '')).slice(0, 40) + '&mt=8'
+        } else {
+          var ref = 'utm_source=hankki_bridge&utm_medium=' + med + (cam ? '&utm_campaign=' + cam : '') + (con ? '&utm_content=' + con : '')
+          b2.href = 'https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa&referrer=' + encodeURIComponent(ref)
+        }
+      }
+    } catch (e) { /* 꼬리표를 못 읽으면 기본 링크 그대로 */ }
     // 📊 [2026-09-14] 「인스타 링크로 아이폰 유저가 몇 명 왔나」(창업자) — 아이폰이면 이름 뒤에 _ios 를 붙인다.
     //    bridge / bridge_go = 안드로이드·PC(오늘과 같음) · bridge_ios / bridge_go_ios = 아이폰·아이패드.
     //    ⭐ 같은 「페이지 및 화면」 표에 «그냥» 뜬다(맞춤 측정기준 없이) · 합치면 전체.

@@ -689,10 +689,24 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⛔ **알약과 순서는 «한 잣대»로 둔다** — 2026-08-30 에 순서만 내리고 알약을 안 내려서
   //      사흘 동안 9월인데 「출시기념 여름」에 알약이 붙어 있었다. 갈라 쓰면 그 사고가 되돌아온다.
   const giftUp = (x) => !!x.gift && !!x.from && (!x.season || seasonRank(x.season) === 0)
+  // 🔑🎃 [2026-09-20] 창업자 열쇠 — `key열쇠` 가 붙은 묶음은 `?<이름>=1` 을 한 번 연 폰에서만 보인다.
+  //   📮 왜 = 창업자 *"아래꺼 내가 직접 담아보고 싶은데"* — 실물로 담아 보고 정해야 하는데,
+  //      그냥 올리면 «유저도 같이» 본다. 핼러윈은 10/16 에 여는 것이라 아직 보이면 안 된다.
+  //   ⭐ 얼개는 식비 열쇠(ShopScreen.jsx:110)와 같다 — 주소로 켜고 저장소에 남긴다. `?<이름>=0` 으로 끈다.
+  //   ⛔ 저장소를 못 읽는 폰에서는 «안 보이는» 쪽이 맞다 — 식비와 반대다(식비는 이미 공개된 것이라 켠다).
+  const 열쇠켬 = (x) => {
+    if (!x.key열쇠) return true
+    try {
+      const v = new URLSearchParams(location.search).get(x.key열쇠)
+      if (v === '1') localStorage.setItem('hankki:열쇠:' + x.key열쇠, '1')
+      if (v === '0') localStorage.removeItem('hankki:열쇠:' + x.key열쇠)
+      return localStorage.getItem('hankki:열쇠:' + x.key열쇠) === '1'
+    } catch { return false }
+  }
   const groupsByTab = (t) => drawerGroups()
     // ⭐ `tabDiary` = 일기 화면에선 «다른 탭»에 둔다 — 꼬르곰 32컷은 레꾸 「글자」 / 일꾸 「기록」.
     //    ⛔ 두 탭에 «동시에» 두면 일꾸에서 글자·기록 양쪽에 같은 게 나온다(실측으로 잡았다).
-    .filter((x) => ((isDiary && x.tabDiary) || x.tab) === t && isReleased(x.from) && (!x.only || x.only === where) && onShelf(x))
+    .filter((x) => ((isDiary && x.tabDiary) || x.tab) === t && isReleased(x.from) && 열쇠켬(x) && (!x.only || x.only === where) && onShelf(x))
     // 🎁 선물끼리는 **새로 온 것이 위**. 창업자 2026-08-29 = *"오픈기념 특별선물로 예쁘게 만들어서 올리자."*
     //    ⛔ 안 넣으면 9/1 새 선물이 「출시기념 여름」(12컷) «아래»에 깔려 굴려야 나온다 — 실물로 봤다.
     //    ⭐ `from` 없는 옛 선물은 빈 문자열이라 저절로 뒤로 간다(비교 한 줄로 끝난다).

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Icon from './Icon'
+import { 소개봄, 소개건너뜀, 소개끝냄 } from '../stats'   // 🚪 [2026-09-21] 관문 — 덮개 층이라 화면봄이 못 잡는다
 // 🛒 장보기 콤비 — 꼬르곰이 카트, 펭펭이 바구니. 스토어 스샷 ⑤가 쓰는 그 컷이다.
 //    ⚠️ `sharepool` 에 있어서 `F()`(stickers/photo) 로는 못 부른다 → 직접 import.
 import duoCart from '../assets/sharepool/duo_cart.png'
@@ -62,6 +63,8 @@ const Img = ({ k, style, cls }) => <img src={F(k)} alt="" draggable={false} clas
 // zoom은 브라우저가 축소된 크기 기준으로 레이아웃·래스터를 다시 하므로 폰트도 이미지도 선명하다.
 function Stage({ bg, children }) {
   const [scale, setScale] = useState(0.34)
+  // 🚪 onboard_seen — 「소개를 본 사람」. skip/done 과 견줘야 «중간에 앱을 꺼 버린 사람»이 보인다.
+  useEffect(() => { try { 소개봄() } catch { /* 통계가 죽어도 소개는 뜬다 */ } }, [])
   useEffect(() => {
     const fit = () => setScale(Math.min(window.innerWidth / 1080, (window.innerHeight * 0.82) / 1920))
     fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit)
@@ -518,7 +521,8 @@ export default function Onboarding({ onDone, onRestore }) {
   const last = i === N - 1
 
   const finish = () => { markOnboarded(); onDone && onDone() }
-  const next = () => { if (last) finish(); else setI((v) => Math.min(N - 1, v + 1)) }
+  // 🚪 onboard_done = 마지막 장에서 「한끼 시작하기」 · onboard_skip = 오른쪽 위 「건너뛰기」 — 둘 다 finish 를 지나지만 «다른 사람»이다.
+  const next = () => { if (last) { try { 소개끝냄() } catch { /* noop */ } finish() } else setI((v) => Math.min(N - 1, v + 1)) }
   const prev = () => setI((v) => Math.max(0, v - 1))
 
   // 손가락 드래그 추적(트랙이 손가락 따라오다 놓으면 스냅) — 캐러셀 페이징
@@ -540,7 +544,7 @@ export default function Onboarding({ onDone, onRestore }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--bg)', display: 'flex', flexDirection: 'column', paddingTop: 'calc(var(--safe-top) + 6px)', paddingBottom: 'calc(var(--safe-bottom) + 20px)' }}>
       <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 16px' }}>
-        {!last && <button className="press" onClick={finish} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 700, padding: '6px 8px' }}>건너뛰기</button>}
+        {!last && <button className="press" onClick={() => { try { 소개건너뜀() } catch { /* noop */ } finish() }} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 700, padding: '6px 8px' }}>건너뛰기</button>}
       </div>
       <div ref={wRef} style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>

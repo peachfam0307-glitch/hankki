@@ -140,9 +140,15 @@ export const WEEKLY = [
   //    8/31 에 들어간 창업자 「버섯솥밥」과 이름이 거의 같아 3주 간격으로 두 번 나왔다.
   //    ⭐ 파일·레시피는 그대로 산다 — 주간 레시피 줄에서만 내렸다(검색·레시피 탭엔 그대로).
   {
+    // 🍄 [2026-09-21 00:0x 창업자 폰 제보] *"올라간거 두개가 다른데?"* — 홈엔 전골·볶음이 떴는데
+    //    그날 «새로 열린» 편은 볶음·전이었다. 묶음에 **버섯전이 아예 안 들어 있었다.**
+    //    ⛔ 게다가 설명은 「끓이고 볶고 부치는 세 가지」인데 id 는 둘뿐이었다 — 글자와 알맹이가 갈렸다.
+    //    ✅ [창업자 확정 ①] 전골을 내리고 **그날 열린 둘(볶음·전)**로 맞췄다. 설명도 두 가지로.
+    //       ⭐ 전골은 「처음부터」 열려 있던 편이라 그날 홈에 올릴 「새것」이 아니다.
+    //    🛡 게이트 = scripts/check-줄설명.mjs 의 ② 개수 검사 (되돌리면 배포가 죽는다)
     from: '2026-09-21', title: '버섯',
-    why: '버섯이 가장 좋을 때예요. 끓이고 볶고 부치는 세 가지로.',
-    ids: ['basic-dubu-deulkkae-jeongol', 'basic-beoseot-bokkeum'],
+    why: '버섯이 가장 좋을 때예요. 볶고 부치는 두 가지로.',
+    ids: ['basic-beoseot-bokkeum', 'basic-beoseot-jeon'],
   },
   {
     // ⛔ 제철이 «아닌» 주라 기본값(「이번 주 제철」)을 쓰면 안 된다 — 명절 뒤 남은 음식이다.
@@ -152,12 +158,12 @@ export const WEEKLY = [
   },
   {
     from: '2026-10-05', title: '고구마',
-    why: '고구마가 제일 단 때예요. 튀기고 부치고 굽는 세 가지로.',
+    why: '고구마가 제일 단 때예요. 오븐에 굽는 두 가지로.',
     ids: ['basic-goguma-jeon', 'basic-goguma-gratin'],
   },
   {
     from: '2026-10-12', title: '대하',
-    why: '가을 대하 철이에요. 굽고 담그고 튀기는 세 가지예요.',
+    why: '가을 대하 철이에요. 담그고 튀기는 두 가지예요.',
     ids: ['basic-saeujang', 'basic-saeu-twigim'],
   },
   {
@@ -193,12 +199,12 @@ export const WEEKLY = [
   {
     // 📅 김장철이라 「그 시기의 일」 갈래다 — 제철 재료가 아니라서 kicker 를 바꿨다.
     from: '2026-11-02', title: '김장날 고기', kicker: KICKER_SPECIAL,
-    why: '김장하는 날엔 고기죠. 삶고 굽는 세 가지로 골라 보세요.',
+    why: '김장하는 날엔 고기죠. 삶고 굽는 두 가지로 골라 보세요.',
     ids: ['basic-yangji-suyuk', 'basic-samgyeop-kkwarigochu'],
   },
   {
     from: '2026-11-09', title: '항정살', kicker: '이번 주 재료',
-    why: '항정살 한 덩이로 세 가지가 나와요. 구워서 졸이면 손님상에도 좋아요.',
+    why: '항정살 한 덩이로 두 가지가 나와요. 구워서 졸이면 손님상에도 좋아요.',
     ids: ['basic-hangjeong-samhap', 'basic-hangjeongsal-ganjang-jorim'],
   },
   {
@@ -219,12 +225,12 @@ export const WEEKLY = [
   },
   {
     from: '2026-11-30', title: '묵은지', kicker: '이번 주 재료',
-    why: '묵은지가 제일 맛있게 익었을 때예요. 볶고 지지고 조리는 세 가지로.',
+    why: '묵은지가 제일 맛있게 익었을 때예요. 볶고 조리는 두 가지로.',
     ids: ['basic-dwaeji-kimchi-duruchigi', 'basic-godeungeo-mugeunji-jorim'],
   },
   {
     from: '2026-12-07', title: '연말 파스타', kicker: KICKER_SPECIAL,
-    why: '연말엔 파스타 한 접시가 어울려요. 차갑게, 꾸덕하게, 얼큰하게 세 가지로.',
+    why: '연말엔 파스타 한 접시가 어울려요. 오일과 국물, 두 가지로.',
     ids: ['basic-haemul-oil-pasta', 'basic-ttukbaegi-pasta'],
   },
   // 📋 다음에 채울 곳 = **12/14 부터**. 아직 한 주도 없다.

@@ -1,6 +1,8 @@
 import Portal from './Portal'
 import { useModalBack } from '../useBackHandler'
 import { markGiftPackSeen } from '../nudges'
+import { 선물시트봄, 선물보러감 } from '../stats'
+import { useEffect } from 'react'
 import { StickerArt, bgStyle, bgAnim, giftGroups } from './Stickers'
 import { seasonRank } from '../season'
 
@@ -64,8 +66,9 @@ export function giftRows(now = new Date()) {
 
 export default function GiftPackSheet({ onClose, onGo }) {
   useModalBack(onClose)
+  useEffect(() => { try { 선물시트봄() } catch { /* noop */ } }, []) // 겹 화면이라 화면봄() 이 안 돈다 — 직접 센다
   const close = () => { markGiftPackSeen(); onClose() } // 뜬 순간부터 '봤음' — 어떻게 닫아도 다시 안 뜬다
-  const go = (cat) => { markGiftPackSeen(); onGo?.(cat); onClose() }
+  const go = (cat) => { try { 선물보러감() } catch { /* noop */ } markGiftPackSeen(); onGo?.(cat); onClose() }
   const rows = giftRows()
 
   return (
