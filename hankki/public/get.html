@@ -121,6 +121,27 @@
         b.textContent = 'App Store에서 받기'
       }
     } catch (e) { /* 못 읽으면 Play 그대로 */ }
+    // 🏷🏷 [2026-09-21] **이 페이지가 받은 꼬리표(utm_*)를 스토어 링크에 «그대로» 넘긴다.**
+    //    📮 창업자 = *"광고로 오는거는 다음 광고부터는 섞이지 않고 잴수있는거야??"*
+    //    ⛔ 그 전엔 Play 추천인이 `profile_link` 로 «고정»이라 GA4 에선 광고/프로필이 갈려도
+    //       **Play 콘솔 설치 수 안에서는 한 덩어리**였다. 아이폰 `ct` 도 `instagram_reels` 고정이었다.
+    //    ✅ 주소에 utm_medium 이 있으면 — Play: referrer 에 medium·campaign·content 를 싣는다(구글 형식 그대로).
+    //       아이폰: ct = instagram_<medium>_<campaign>(영문·숫자·밑줄 40자 · 애플 규칙). 없으면 옛 값 그대로.
+    //    ⛔ 값은 [a-z0-9_] 만 남긴다 — 남이 주소에 이상한 글자를 넣어도 링크가 안 깨진다.
+    try {
+      var q = new URLSearchParams(location.search)
+      var 깨끗 = function (k) { return String(q.get(k) || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 40) }
+      var med = 깨끗('utm_medium'), cam = 깨끗('utm_campaign'), con = 깨끗('utm_content')
+      if (med) {
+        var b2 = document.getElementById('go')
+        if (애플) {
+          b2.href = 'https://apps.apple.com/app/apple-store/id6811288851?pt=129448125&ct=' + ('instagram_' + med + (cam ? '_' + cam : '')).slice(0, 40) + '&mt=8'
+        } else {
+          var ref = 'utm_source=hankki_bridge&utm_medium=' + med + (cam ? '&utm_campaign=' + cam : '') + (con ? '&utm_content=' + con : '')
+          b2.href = 'https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa&referrer=' + encodeURIComponent(ref)
+        }
+      }
+    } catch (e) { /* 꼬리표를 못 읽으면 기본 링크 그대로 */ }
     // 📊 [2026-09-14] 「인스타 링크로 아이폰 유저가 몇 명 왔나」(창업자) — 아이폰이면 이름 뒤에 _ios 를 붙인다.
     //    bridge / bridge_go = 안드로이드·PC(오늘과 같음) · bridge_ios / bridge_go_ios = 아이폰·아이패드.
     //    ⭐ 같은 「페이지 및 화면」 표에 «그냥» 뜬다(맞춤 측정기준 없이) · 합치면 전체.
