@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { 창고에있나, 그릴수있나, 창고표시, 꺼내기 } from '../photoStore'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
-import { bgStyle, bgIsDark, bgAnim, PHOTO_FAMILY, stickerRatio, 기본그릇키, 열쇠있나 } from './Stickers'
+import { bgStyle, bgIsDark, bgAnim, PHOTO_FAMILY, stickerRatio, 기본그릇키, 열쇠있나, 그릇폭 } from './Stickers'
 import { FRAME_WINDOW } from '../data/frameWindows'
 import { dishCatOf } from './FoodIcon'
 import { graphemes } from '../utils'
@@ -199,9 +199,9 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
         </div>
       </div>
     ) : 그릇 ? (
-      // ㉡ 기본 그릇 — 아이콘과 같은 폭(iconSize) · 사진은 창에 · 그릇 그림은 사진 «위»
+      // ㉡ 기본 그릇 — 폭은 «그릇폭»(서랍에서 얹은 그릇과 같은 크기 · 창업자 2026-09-21 「그릇사이즈가 달라져」) · 사진은 창에 · 그릇 그림은 사진 «위»
       <div style={center}>
-        <div style={{ position: 'relative', width: iconSize, aspectRatio: `${PHOTO_FAMILY[그릇].ratio}`, flex: '0 0 auto' }}>
+        <div style={{ position: 'relative', width: `${그릇폭 * 100}%`, aspectRatio: `${PHOTO_FAMILY[그릇].ratio}`, flex: '0 0 auto' }}>
           {사진상자}
           <img src={PHOTO_FAMILY[그릇].src} alt="" draggable={false} loading={eager ? 'eager' : 'lazy'} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', pointerEvents: 'none', filter: 'drop-shadow(0 2px 4px rgba(70,60,45,.18))' }} />
         </div>

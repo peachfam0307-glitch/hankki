@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import Icon from './Icon'
 import StoredImg from '../photoView'
-import { StickerArt, StickerFx, motionClass, stickerRatio, NOTE_COLORS, NOTE_FAT, NOTE_HAND_FAT, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, textSizeV, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
+import { StickerArt, StickerFx, motionClass, stickerRatio, 그릇인가, NOTE_COLORS, NOTE_FAT, NOTE_HAND_FAT, BOX_PAD, TEXT_COLORS, TEXT_FONTS, TEXT_WEIGHTS, textSizeV, notePatternStyle, noteRadius, noteClip, noteIsClip, NoteShapeDefs, tapeStyle, hlColor } from './Stickers'
 
 // ── 꾸미기 레이어 ──
 // 레시피 표지 위에 스티커·포스트잇을 얹는다.
@@ -373,8 +373,8 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                     <Icon name="pen" size={15} color="#fff" />
                   </button>
                 )}
-                {/* 크기·회전 핸들 */}
-                <span
+                {/* 크기·회전 핸들 — ⛔ 그릇(pf_/pb_)엔 안 준다: 그릇은 «한 크기»(Stickers.그릇폭 · 창업자 2026-09-21 「그릇사이즈가 달라져」) */}
+                {!그릇인가(it.key) && <span
                   aria-label="크기·회전"
                   onPointerDown={onHandleDown(it)}
                   onPointerMove={onHandleMove}
@@ -391,7 +391,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                     <path d="M10 4a6 6 0 1 1-4.9 2.6" fill="none" stroke="#5a5244" strokeWidth="2" strokeLinecap="round" />
                     <path d="M9.4 1.4 13.3 4 9.4 6.6z" fill="#5a5244" />
                   </svg>
-                </span>
+                </span>}
               </div>
             )}
           </div>

@@ -14,7 +14,7 @@ import { needsGiftPack } from '../nudges'
 import { cropRatio, imageRatio } from '../utils'
 import { 기본표지 } from '../store'
 import { FRAME_WINDOW } from '../data/frameWindows'
-import { StickerArt, stickerRatio, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, TEXT_SIZES, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
+import { StickerArt, stickerRatio, 그릇폭, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, TEXT_SIZES, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
 
 // 📜📜 HStrip — 가로로 «넘치는 칩 줄»에 막대를 **우리가 그려서** 항상 보여준다.
 //   (창업자 2026-08-08 *"스크롤바가 처음부터 안보여서 글자체 저게다처럼보임"* —
@@ -758,7 +758,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     const isFrame = !!FRAMES[key] || (typeof key === 'string' && (key.startsWith('pf_') || key.startsWith('pb_')))   // pb_ = 기본 그릇(2026-09-21)   // 벡터·PNG 프레임 둘 다
     const it = {
       id: newDecorId(), type: 'sticker', key,
-      x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.46 : 0.42 + ((n % 4) - 1.5) * 0.05,
+      x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.5 : 0.42 + ((n % 4) - 1.5) * 0.05,   // 그릇은 기본 그릇과 «같은 자리»(가운데)
       // 📏📏 **`rs_v`·`rs_k`(레꾸 캐릭터 32컷)만 0.32** — 창업자 *"근데 글자가 너무 작아?"* (2026-08-12)
       //   ⭐⭐ **`s` 는 «폭» 기준이다**(`DecorLayer` 225줄 `width: ${it.s * 100}%`).
       //      ⛔ 나는 처음에 «긴변» 기준으로 계산해 창업자에게 **11.7px 이라고 잘못 말했다.**
@@ -770,7 +770,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       //      → 0.32 는 0.34 보다 6% 작을 뿐인데 뭉개짐을 확실히 피한다.
       //   📌 더 키우려면 «시트를 뽑을 때 글자를 크게» 하는 수밖에 없다 — 확대는 화질을 못 살린다.
       //   ⚠️ 여기 값을 고치면 `scripts/check-sticker-res.mjs` 의 `defaultScale()` «도» 고칠 것(복사본이다).
-      s: isFrame ? 0.58 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : (key.startsWith('rs_v') || key.startsWith('rs_k')) ? 0.32 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
+      s: isFrame ? 그릇폭 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : (key.startsWith('rs_v') || key.startsWith('rs_k')) ? 0.32 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
       r: isFrame ? 0 : ((n % 5) - 2) * 4,
       // 🐻🐧 친구들(캐릭터)은 붙자마자 통통 움직인다 — 소품·음식은 가만히.
       //    ⚠️ 여기도 `gp_` 접두어로 골랐었다 → 여름·가을 곰펭은 붙여도 모션이 안 박혔다.
