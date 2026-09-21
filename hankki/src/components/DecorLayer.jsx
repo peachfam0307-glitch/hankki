@@ -89,7 +89,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
     const wasSel = selectedId === it.id
     onSelect?.(it.id)
     // 🍽 그릇은 «안 끌린다» — 고르기(지우기 ×)만 된다. 아이콘처럼 자리가 정해져 있다(창업자 2026-09-21).
-    if (기본그릇인가(it.key)) { dragRef.current = null; return }
+    if (그릇인가(it.key)) { dragRef.current = null; return }
     const rect = boxRef.current.getBoundingClientRect()
     dragRef.current = { id: it.id, x0: it.x, y0: it.y, px: e.clientX, py: e.clientY, rect, moved: false, wasSel, it, marked: false }
     e.currentTarget.setPointerCapture?.(e.pointerId)
@@ -220,7 +220,9 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
         // 🍽 [창업자 2026-09-21 23:31] 그릇(pf_/pb_)은 **AI 음식 아이콘과 똑같이** 군다 — 자리 가운데 · 크기 = 아이콘 크기 · 안 옮겨지고 안 돌아가고 안 커진다.
         //    📮 *"지금 레시피에 들어있는 ai 음식 아이콘은 네가 정한 크기가 딱 있잖아. 움직이지도 않고 크기가 줄지도 커지지도 않아."*
         //    ⭐ 저장된 x·y·s·r 은 «안 쓴다» — 옛날에 손으로 옮기거나 키워 둔 그릇도 이 줄 하나로 다 같은 자리·같은 크기가 된다.
-        const 그릇 = 기본그릇인가(it.key)   // ⭐ pb_ 만 — pf_(서랍 그릇)은 보통 스티커처럼 자유
+        // ⛔⛔ [창업자 2026-09-22 00:28 최종] «얹는 그릇 프레임도» 고정이다 — *"흰도자기 기본값하고 프레임만 위에 얹으라고 했잖아"* · *"기존꺼랑 똑같이"*.
+        //    그릇(pb_·pf_ 둘 다) = 흰 그릇 자리에 «그림만 바뀐다». 사진은 그대로. 옮기고 키우는 건 없다(녹화 00:22 — 냄비를 얹자 사진이 작아지고 손잡이로 움직이던 것).
+        const 그릇 = 그릇인가(it.key)
         const base = {
           position: 'absolute',
           left: `${(그릇 ? 0.5 : it.x) * 100}%`,
@@ -380,7 +382,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
                   </button>
                 )}
                 {/* 크기·회전 핸들 — ⛔ 그릇(pf_/pb_)엔 안 준다: 그릇은 «한 크기»(Stickers.그릇폭 · 창업자 2026-09-21 「그릇사이즈가 달라져」) */}
-                {!기본그릇인가(it.key) && <span
+                {!그릇인가(it.key) && <span
                   aria-label="크기·회전"
                   onPointerDown={onHandleDown(it)}
                   onPointerMove={onHandleMove}
