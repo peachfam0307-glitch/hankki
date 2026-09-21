@@ -87,6 +87,8 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
 
   // ⭐ 잣대는 `store.js` 의 `기본표지()` 하나 — 예전 레시피 호환도 그 안에 있다
   const thumb = 기본표지(recipe)
+  // 📏 그릇 배율 = 이 화면의 아이콘 크기 ÷ 그릇폭(0.58). iconSize 가 '70%' 면 1.207, '56%' 면 0.966. 숫자가 아니면 1.
+  const 그릇배율 = (() => { const n = parseFloat(iconSize); return Number.isFinite(n) && n > 0 ? (n / 100) / 그릇폭 : 1 })()
   // ⭐ 「사진 표지인데 아직 창고에서 안 왔다」면 그리지 않는다 → 그 동안은 아이콘이 뜬다(안 깨진다)
   const showImg = thumb === 'photo' && 그림 && !failed
   // 🎴🎴 **「사진」과 「이미 완성된 표지 한 장(자랑카드)」은 다른 물건이다.** (창업자 2026-08-18)
@@ -152,7 +154,11 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     // 📏 기본 그릇(㉡)은 «창»(회색 바닥)보다 «입»(테 안쪽)이 훨씬 크다 — 창에만 넣으면 바닥에 작은 타원이 떠 보인다(2026-09-21 실물 · 창업자 *"저게 뭐야"* · *"사진이 가운데 들어가야 하는데"*).
     //    그래서 ㉡는 사진을 그릇 «위»에 얹고 입 크기(창 × 1.3)로 오린다 · 가운데는 창보다 살짝 위(cy − 0.02 · 그릇이 기울어 보여서).
     //    ㉠(얹은 프레임)은 창 그대로 — 프레임 그림이 위에 오고, 「이 프레임에 사진 넣기」와 같은 규칙이라 그대로 둔다.
-    const 키움 = 틀 ? 1 : 1.15   // 1.3·1.22 는 뒤쪽 테 안쪽 선을 덮고 아래 바닥이 남았다(확대해서 봄) → 1.15 ＋ 조금 아래
+    // 📏 그릇 배율 — 그릇(기본·얹은 것 둘 다)은 «이 화면의 아이콘 크기»(iconSize · 홈 70%·상세 56%)로 보인다.
+    //    창업자 2026-09-21 *"홈에서 비교해봐 내사진 들어간 레시피 그릇이 넘 작아"* — 홈은 아이콘이 70% 인데 그릇이 58% 라 작았다.
+    //    저장된 값(s=그릇폭)은 안 건드리고 «그릴 때만» 곱한다 → 편집 화면(iconSize 없음)은 그대로.
+    const 키움 = 틀 ? 1 : 1.15
+   // 1.3·1.22 는 뒤쪽 테 안쪽 선을 덮고 아래 바닥이 남았다(확대해서 봄) → 1.15 ＋ 조금 아래
     const 창상자 = 창 ? {
       position: 'absolute',
       left: `${(창.cx - 창.w * 키움 / 2) * 100}%`, top: `${(창.cy + (틀 ? 0 : 0.015) - 창.h * 키움 / 2) * 100}%`,
@@ -194,14 +200,14 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     inner = 틀 ? (
       // ㉠ 얹힌 프레임의 자리에 «같은 틀»을 놓고 그 창에 사진 — 프레임 그림은 DecorLayer 가 이 위에 그린다
       <div style={{ position: 'absolute', inset: 0 }}>
-        <div style={{ position: 'absolute', left: `${틀.x * 100}%`, top: `${틀.y * 100}%`, width: `${틀.s * 100}%`, aspectRatio: `${stickerRatio(틀.key)}`, transform: `translate(-50%,-50%) rotate(${틀.r || 0}deg)${틀.flip ? ' scaleX(-1)' : ''}` }}>
+        <div style={{ position: 'absolute', left: `${틀.x * 100}%`, top: `${틀.y * 100}%`, width: `${틀.s * 그릇배율 * 100}%`, aspectRatio: `${stickerRatio(틀.key)}`, transform: `translate(-50%,-50%) rotate(${틀.r || 0}deg)${틀.flip ? ' scaleX(-1)' : ''}` }}>
           {사진상자}
         </div>
       </div>
     ) : 그릇 ? (
       // ㉡ 기본 그릇 — 폭은 «그릇폭»(서랍에서 얹은 그릇과 같은 크기 · 창업자 2026-09-21 「그릇사이즈가 달라져」) · 사진은 창에 · 그릇 그림은 사진 «위»
       <div style={center}>
-        <div style={{ position: 'relative', width: `${그릇폭 * 100}%`, aspectRatio: `${PHOTO_FAMILY[그릇].ratio}`, flex: '0 0 auto' }}>
+        <div style={{ position: 'relative', width: `${그릇폭 * 그릇배율 * 100}%`, aspectRatio: `${PHOTO_FAMILY[그릇].ratio}`, flex: '0 0 auto' }}>
           {사진상자}
           <img src={PHOTO_FAMILY[그릇].src} alt="" draggable={false} loading={eager ? 'eager' : 'lazy'} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', pointerEvents: 'none', filter: 'drop-shadow(0 2px 4px rgba(70,60,45,.18))' }} />
         </div>
@@ -264,7 +270,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
   return (
     <div ref={상자} className={[anim, className].filter(Boolean).join(' ')} style={base}>
       {inner}
-      {decorated && <DecorLayer items={recipe.decor} />}
+      {decorated && <DecorLayer items={recipe.decor} 그릇배율={그릇배율} />}
     </div>
   )
 }

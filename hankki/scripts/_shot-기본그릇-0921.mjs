@@ -15,7 +15,7 @@ const state = {
   recipes: basicRecipes.map((r, i) => {
     const g = 골[r.id]
     if (g === undefined) return { ...r, status: 'sorted', savedAt: now - i * 60000 }
-    const base = { ...r, status: 'sorted', savedAt: now + 1000 * (10 - Object.keys(골).indexOf(r.id)), thumb: 'photo', image: 사진, imageZoom: 1.35, touched: true }   // 시험 사진에 흰 접시가 섞여 있어 조금 당겨 본다(유저가 두 손가락으로 하는 것과 같다)
+    const base = { ...r, status: 'sorted', savedAt: now + 1000 * (10 - Object.keys(골).indexOf(r.id)), thumb: 'photo', image: 사진, imageZoom: 1.35, touched: true, cooked: 3 }   // cooked → 홈 「자주 해먹는 요리」 줄에 뜬다(홈 그릇 크기 확인용)   // 시험 사진에 흰 접시가 섞여 있어 조금 당겨 본다(유저가 두 손가락으로 하는 것과 같다)
     if (g === 'hw') base.decor = [{ id: 'd1', type: 'sticker', key: 'pf_hw04', x: 0.5, y: 0.5, s: 0.58, r: 0 }]
     return base
   }),
@@ -37,6 +37,8 @@ await p.evaluate(({ s, keys }) => {
   keys.forEach((k) => localStorage.setItem(k, '1'))
 }, { s: state, keys: Object.values(COACH) })
 await p.goto(url); await p.waitForTimeout(2200)
+await p.getByText('자주 해먹는 요리', { exact: false }).first().scrollIntoViewIfNeeded(); await p.waitForTimeout(600)
+await p.screenshot({ path: `${OUT}/기본그릇-홈.png` })   // 🏠 홈에서 그릇 크기 = 아이콘 크기인가(창업자 2026-09-21 「홈에서 넘 작아」)
 await p.getByText('레시피', { exact: true }).last().click(); await p.waitForTimeout(900)
 await p.screenshot({ path: `${OUT}/기본그릇-목록.png` })
 // 🔒 자기 점검 — 표지 5장에 «그릇 그림(pb_/pf_)»이 실제로 그려졌나

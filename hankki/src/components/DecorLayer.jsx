@@ -33,7 +33,7 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 //      · 아이템은 끌기 준비를 한다 → 움직이면 이동, 안 움직이면 커서 그대로.
 //   ⛔ `.decor-stage` 까지는 안 올라간다 — 아이템의 `onItemDown` 이 거기서 `stopPropagation()` 한다.
 //      (안 그러면 「빈 데 눌렀다」로 읽혀 커서가 바로 풀린다 — 그건 그대로 살아 있다.)
-export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote, onEmptyTap, onTapItem, typingId, onText, pinching = false }) {
+export default function DecorLayer({ items = [], editable = false, selectedId, onSelect, onChange, onRemove, onEditNote, onEmptyTap, onTapItem, typingId, onText, pinching = false, 그릇배율 = 1 }) {
   const boxRef = useRef(null)
   // 커버 실제 폭(px) — 글자 상자를 글자에 딱 맞추면서(max-content) 글자 크기는 '커버 폭 기준'으로 px 계산하려고.
   const [coverW, setCoverW] = useState(0)
@@ -231,7 +231,7 @@ export default function DecorLayer({ items = [], editable = false, selectedId, o
             //      `autoCqw` 는 «넘치지 않는 가장 큰 값»을 찾는 함수라, 한도만 올리면
             //      **짧은 글은 그만큼 커지고 긴 글은 알아서 안 넘는다.** 잘림이 구조적으로 안 생긴다.
             //   ⛔ 저장값 `s` 는 안 건드린다 — 「보통」으로 되돌리면 원래대로 온다.
-            : { width: `${it.s * 100}%`, aspectRatio: `${ratio}` }),
+            : { width: `${it.s * (그릇인가(it.key) ? 그릇배율 : 1) * 100}%`, aspectRatio: `${ratio}` }),   // 📏 그릇은 화면마다 «아이콘과 같은 크기»로(홈 70%·상세 56% · Thumb 가 배율을 준다 · 창업자 2026-09-21 「내사진 들어간 레시피 그릇이 넘 작아」)
           // ↔ **좌우 뒤집기**(창업자 2026-08-06 *"캐릭터좌우반전돼?"* → 된다).
           //   ⭐ `rotate` «뒤»에 `scaleX` 를 둔다 — 순서를 바꾸면 뒤집은 뒤 회전이라
           //      기울기가 반대로 돌아 손잡이가 엉뚱하게 움직인다.
