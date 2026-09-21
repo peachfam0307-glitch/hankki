@@ -144,10 +144,12 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //      ㉡ 없으면 → 갈래별 **기본 그릇**(`기본그릇키`)을 «아이콘과 같은 크기»(`iconSize`)로 깔고, 사진은 그 창에.
     //         ⭐ 그릇 전체 폭 = iconSize 라 아이콘 표지와 자리가 같다 — 꾸미기할 여백이 그대로다(창업자 조건).
     //   🔒 창이 실측표에 없는 프레임(창 없는 21개)은 옛 동그라미 그대로 — 사진을 끼울 자리가 없다는 뜻이라 그게 맞다.
-    const 틀 = !카드표지 && Array.isArray(recipe.decor)
-      ? recipe.decor.find((it) => it && it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('pf_') || it.key.startsWith('pb_')) && FRAME_WINDOW[it.key])
-      : null
-    const 기본키 = (!카드표지 && !틀 && 열쇠있나('그릇')) ? 기본그릇키(dishCatOf(recipe.icon || guessFoodIcon(recipe.title))) : null   // 🔑 창업자 열쇠 뒤(?그릇=1) — 배포해 하면 뗀다
+    // ⛔⛔ [창업자 2026-09-22 00:52] **얹은 그릇이 와도 «기본 흰 도자기는 그대로 있다».**
+    //    📮 *"왜 기본 도자기가 사라지냐고... 내가 찍어준 거에는 기본 도자기가 그대로 있잖아"* (원본 앱 녹화 00:40)
+    //    ⭐ 원본 앱에서 AI 음식 아이콘(흰 그릇에 담긴 그림)은 «바닥»이고, 서랍 그릇은 그 «위»에 얹는 꾸미기 스티커였다.
+    //       내 사진 표지도 똑같다 — 흰 도자기＋사진이 바닥이고, 서랍 그릇은 DecorLayer 가 그 위에 그린다.
+    //    ⛔ 그래서 Thumb 은 서랍 그릇을 «표지 틀»로 쓰지 않는다(그 전엔 틀로 써서 흰 도자기가 사라졌다).
+    const 기본키 = (!카드표지 && 열쇠있나('그릇')) ? 기본그릇키(dishCatOf(recipe.icon || guessFoodIcon(recipe.title))) : null   // 🔑 창업자 열쇠 뒤(?그릇=1) — 배포해 하면 뗀다
     const 그릇 = 기본키 && PHOTO_FAMILY[기본키] && PHOTO_FAMILY[기본키].src && FRAME_WINDOW[기본키] ? 기본키 : null
     const 창 = 그릇 ? FRAME_WINDOW[그릇] : null
     // 창 안에 놓는 사진 상자 — 부모(프레임/그릇 크기의 틀) 기준 %
@@ -209,11 +211,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //    그래서 얹은 그릇(㉠)일 때 «사진을 그 틀 안에 넣지 않는다» — 사진은 아이콘 자리에 그대로 두고,
     //    그릇 그림은 DecorLayer 가 «유저가 놓은 자리·크기·각도»로 그 위에 그린다(창이 뚫려 있어 음식이 보인다).
     //    ⛔ 그 전 = 사진을 틀의 창 크기로 잘라 넣어서, 그릇을 바꾸거나 돌리면 사진까지 작아지고 따라 돌았다.
-    inner = 틀 ? (
-      <div style={center}>
-        <div style={{ width: iconSize, aspectRatio: '1 / 1', borderRadius: '50%', overflow: 'hidden', flex: '0 0 auto' }}>{사진상자}</div>
-      </div>
-    ) : 그릇 ? (
+    inner = 그릇 ? (
       // ㉡ 기본 흰 그릇 — **그릇이 사진에 맞춘다**(창업자 2026-09-22 00:45 *"사진이 왜 갑자기 커져?"*).
       //    ⭐ 사진은 늘 아이콘 크기(가운데). 그릇은 «자기 창이 그 사진에 겹치도록» 크기와 자리를 잡는다.
       //    🔢 그릇 폭 W = 사진지름 ÷ (창너비 × 1.15) · 그릇 왼쪽 = 0.5 − 창.cx × W · 위 = 0.5 − 창.cy × (W ÷ 비율)
