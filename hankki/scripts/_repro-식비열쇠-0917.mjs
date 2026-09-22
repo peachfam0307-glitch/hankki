@@ -2,6 +2,11 @@
 //   ⭐ v13.76 에서 열쇠를 «뗐다» — 이제 유저에게도 보이고, `?식비=0` 으로 «끄는» 쪽이 열쇠다.
 //   ⛔ 이게 깨지면 식비가 안 보이거나(공개 실패) 못 끄게 된다(되돌릴 길 없음).
 import { chromium } from 'playwright'
+// 🔑 [2026-09-23 00:4x] 코치마크·로그인 팝업 열쇠를 «미리 켠다» — 다른 재현판이 다 쓰는 표준 꼴이다.
+//    ⛔ 이 판만 그걸 안 해서, 9/23 00:00 에 레시피 4편이 열려 「한끼 소식」 팝업이 «먼저» 뜨자
+//       그걸 치운 뒤에야 로그인 팝업이 뜨는 2단이 됐고, 네 번째로 여는 화면에서 장보기 탭을 덮었다.
+//    📌 LoginNudge.jsx:33 이 이미 적어 둔 그대로다 — *"검사판이 COACH 목록으로 이 팝업을 «본 상태»로 연다"*.
+const { COACH } = await import('../src/coach.js')
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { extname, join } from 'node:path'
@@ -27,7 +32,7 @@ async function 열기(주소, ctx) {
 }
 // ① 보통 유저 — 이제 «그냥 보인다»(v13.76 에 열쇠를 뗐다)
 const c1 = await b.newContext({ viewport: { width: 390, height: 844 }, locale: 'ko-KR' })
-await c1.addInitScript(() => { try { localStorage.setItem('hankki:nudge:cloudgate', '1') } catch { /* noop */ } })
+await c1.addInitScript((keys) => { try { localStorage.setItem('hankki:nudge:cloudgate', '1'); keys.forEach((k) => localStorage.setItem(k, '1')) } catch { /* noop */ } }, Object.values(COACH))
 let p = await 열기('http://127.0.0.1:4539/hankki/', c1)
 본다('유저 화면에도 식비 칸이 있다', await p.locator('.segment .seg').filter({ hasText: '식비' }).count() === 1)
 await p.locator('input[aria-label="살 재료 적기"]').first().fill('두부'); await p.keyboard.press('Enter'); await p.waitForTimeout(400)
@@ -35,7 +40,7 @@ await p.locator('input[aria-label="살 재료 적기"]').first().fill('두부');
 본다('장보기 리스트는 그대로 뜬다', await p.locator('.shop-row').count() === 1)
 // ② 끄기 — ?식비=0 으로 그 폰에서만 끈다
 const c2 = await b.newContext({ viewport: { width: 390, height: 844 }, locale: 'ko-KR' })
-await c2.addInitScript(() => { try { localStorage.setItem('hankki:nudge:cloudgate', '1') } catch { /* noop */ } })
+await c2.addInitScript((keys) => { try { localStorage.setItem('hankki:nudge:cloudgate', '1'); keys.forEach((k) => localStorage.setItem(k, '1')) } catch { /* noop */ } }, Object.values(COACH))
 p = await 열기('http://127.0.0.1:4539/hankki/?%EC%8B%9D%EB%B9%84=0', c2)
 본다('?식비=0 으로 끈다', await p.locator('.segment .seg').filter({ hasText: '식비' }).count() === 0)
 await p.locator('input[aria-label="살 재료 적기"]').first().fill('대파'); await p.keyboard.press('Enter'); await p.waitForTimeout(400)
