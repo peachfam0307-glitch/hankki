@@ -112,7 +112,9 @@ const c0 = await 자리()
 잰다(!!c0.흰그릇 && !!c0.사진, '③-1 열쇠 없이도 흰 도자기에 사진이 담긴다', JSON.stringify(c0.흰그릇))
 await p.getByText('프레임', { exact: true }).first().click().catch(() => {}); await p.waitForTimeout(800)
 const 서랍 = await p.evaluate(() => document.body.innerText)
-잰다(서랍.includes('기본 그릇'), '③-2 서랍에 「기본 그릇」 묶음이 열려 있다', '')
+// 🔒 [창업자 2026-09-22 14:38 「빼」] 서랍 「기본 그릇」 묶음은 «안 보인다» — 고르면 흰 그릇이 겹쳐서다(실측 pb_x03+pb_w02+pb_x01).
+//    ⭐ 그래도 위 ③-1 처럼 «표지엔» 자동으로 깔린다. 그 둘이 갈리는 게 이 칸의 뜻이다.
+잰다(!서랍.includes('기본 그릇'), '③-2 서랍에 「기본 그릇」 묶음은 «안» 보인다 (열쇠 뒤)', '')
 잰다(!서랍.includes('할로윈 접시'), '③-3 「할로윈 접시」는 «안» 보인다 (열쇠·10/16 뒤)', '')
 await p.screenshot({ path: `${OUT}/그릇고정-③열쇠없이.png`, clip: { x: 0, y: 0, width: 390, height: 844 } })
 
