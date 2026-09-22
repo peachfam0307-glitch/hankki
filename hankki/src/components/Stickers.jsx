@@ -1936,7 +1936,8 @@ export const STICKER_GROUPS = [
   //    🔓 유저 공개 = `열쇠까지: '2026-10-16'` — 그날부터는 열쇠 없이 열린다(DecorEditor 열쇠켬). 그 전엔 창업자 열쇠(?할로윈=1)로만. 아이폰은 구운 판이 박히니 «이 줄이 들어간 판»으로 굽는다.
   { key: 'deco_dish_halloween', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', bigCell: true, from: '2026-01-01', label: '할로윈 접시', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_hw01', 'pf_hw04', 'pf_hw09', 'pf_hw10'] },
   // 🍽 [창업자 2026-09-21] 기본 그릇 8컷 — 늘 열려 있다. 사진 표지에 프레임을 «안» 얹으면 갈래별 기본 그릇(`기본그릇키`)이 저절로 깔리고, 여기서 직접 고르면 그게 이긴다.
-  { key: 'deco_dish_basic', tab: 'frame', key열쇠: '그릇', bigCell: true, from: '2026-01-01', label: '기본 그릇', hint: '내 사진을 흰 그릇에 담아요', items: ['pb_x03', 'pb_w02', 'pb_w01', 'pb_x01', 'pb_w03', 'pb_x02', 'pb_w04', 'pb_x04'] },
+  // 🔓 [창업자 2026-09-22 13:2x *"그건 우리 기본 기능이잖아"*] 열쇠를 뗐다 — 「내 사진으로 음식 아이콘」의 일부라 유저에게 나간다.
+  { key: 'deco_dish_basic', tab: 'frame', bigCell: true, from: '2026-01-01', label: '기본 그릇', hint: '내 사진을 흰 그릇에 담아요', items: ['pb_x03', 'pb_w02', 'pb_w01', 'pb_x01', 'pb_w03', 'pb_x02', 'pb_w04', 'pb_x04'] },
   { key: 'deco_dy_frame_b', tab: 'frame', diary: true, from: '2027-01-01', label: '필름·라인', items: ['pf_dy03', 'pf_dy06', 'pf_dy11', 'pf_dy05'] },
   { key: 'deco_dy_frame_c', tab: 'frame', diary: true, from: '2027-01-01', label: '종이 액자·레이스', items: ['pf_dy04', 'pf_dy07', 'pf_dy08', 'pf_dy12'] },
 

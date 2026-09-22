@@ -149,7 +149,12 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //    ⭐ 원본 앱에서 AI 음식 아이콘(흰 그릇에 담긴 그림)은 «바닥»이고, 서랍 그릇은 그 «위»에 얹는 꾸미기 스티커였다.
     //       내 사진 표지도 똑같다 — 흰 도자기＋사진이 바닥이고, 서랍 그릇은 DecorLayer 가 그 위에 그린다.
     //    ⛔ 그래서 Thumb 은 서랍 그릇을 «표지 틀»로 쓰지 않는다(그 전엔 틀로 써서 흰 도자기가 사라졌다).
-    const 기본키 = (!카드표지 && 열쇠있나('그릇')) ? 기본그릇키(dishCatOf(recipe.icon || guessFoodIcon(recipe.title))) : null   // 🔑 창업자 열쇠 뒤(?그릇=1) — 배포해 하면 뗀다
+    // 🔓 [창업자 2026-09-22 13:2x] **열쇠를 뗐다 — 모두에게 나간다.**
+    //    📮 *"할로윈 그릇은 안 보이더라도 도자기 위에 사진 들어가는 건 올려야지"* ＋ *"그건 우리 기본 기능이잖아. 내 사진 넣어서 음식 아이콘 만드는 거."*
+    //    ⭐ 맞다 — 「내 사진으로 음식 아이콘」은 이미 나가 있는 기능이고, 흰 도자기는 «그 기능의 고침»이다(새 기능이 아니다).
+    //       절대원칙 「유저에게 보이는 시점을 아이폰과 맞춘다」의 판정 한 줄 = 「유저 눈에 «새로» 보이나?」 → 고침이라 그냥 민다.
+    //    ⛔ 서랍의 할로윈 접시(`pf_hw*`)는 «새로 보이는 것»이라 열쇠 뒤에 그대로 있다(`Stickers.jsx` key열쇠 '할로윈').
+    const 기본키 = !카드표지 ? 기본그릇키(dishCatOf(recipe.icon || guessFoodIcon(recipe.title))) : null
     const 그릇 = 기본키 && PHOTO_FAMILY[기본키] && PHOTO_FAMILY[기본키].src && FRAME_WINDOW[기본키] ? 기본키 : null
     const 창 = 그릇 ? FRAME_WINDOW[그릇] : null
     // 창 안에 놓는 사진 상자 — 부모(프레임/그릇 크기의 틀) 기준 %
