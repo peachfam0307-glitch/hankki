@@ -1,6 +1,7 @@
 import { Fragment, useMemo, useRef, useState } from 'react'
 import { COACH } from '../coach'
 import { useStore } from '../store'
+import Portal from '../components/Portal'
 import { useNav } from '../App'
 import { 저장날짜보임, 내것인가 } from '../data/seed'
 import { 나라들, 종류들, 종류고르기, 옛폴더이름 } from '../data/종류'
@@ -208,7 +209,7 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconF
 //    *"맨 아래 바에 한끼일기도 넣자. 일기쓰려면 레시피에서 한끼일기 또 들어가야 하니까"*)
 //    ⚠️ App 이 key 를 달리 줘서 «다시 마운트»되게 한다 — 안 그러면 초기값이 안 먹는다.
 export default function MyRecipesScreen({ initView = 'grid' }) {
-  const { recipes, folders, addFolder, removeFolder, removeRecipe, diary, removeDiary, setFavPin } = useStore()
+  const { recipes, folders, addFolder, removeFolder, removeRecipe, updateRecipe, diary, removeDiary, setFavPin } = useStore()
   const nav = useNav()
   const [view, setView] = useState(initView) // grid | log | folders
   const [coach, setCoach] = useState(() => needsCoach(MYRECIPES_COACH_KEY))
@@ -271,6 +272,19 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   const lpEnd = () => clearTimeout(lpTimer.current)
   const [newFolder, setNewFolder] = useState(false)
   const [delFolder, setDelFolder] = useState(null) // 삭제할 사용자 폴더 이름
+  // 📁 [창업자 2026-09-23] 고른 편을 «목록에서 바로» 폴더로 옮긴다 — 상세→편집으로 안 들어간다
+  const [folderAsk, setFolderAsk] = useState(false)
+  const [새폴더로옮김, set새폴더로옮김] = useState(false) // 「+ 새 폴더」로 만든 뒤 «그 폴더로» 옮긴다
+  // 📁 고른 편을 한 폴더로 옮긴다 — ⭐한 번에 모아서 부른다(200편을 골라도 한 편씩 200번 돌지 않게)
+  //   ⛔ 한끼 레시피도 «같이» 옮긴다(창업자 확정 2026-09-23 = *"같이 옮길수있게 하자"*).
+  //      폴더만 바뀔 뿐 번호는 그대로라 「내 것」 칩에는 안 들어간다 — 두 축이 안 섞인다.
+  const 폴더로옮긴다 = (이름) => {
+    const 개수 = sel.size
+    sel.forEach((id) => updateRecipe(id, { folder: 이름 }))
+    setFolderAsk(false); set새폴더로옮김(false)
+    setSel(new Set()); setEdit(false)
+    nav.showToast(`${개수}개를 「${이름}」으로 옮겼어요`)
+  }
 
   // 한마디 청하기 — 기록 시트를 닫는 순간. 상세 화면과 «같은 자리»다.
   // ⭐ 기록을 제일 많이 여닫는 곳이 여기라, 상세에만 걸면 사실상 아무한테도 안 물어보게 된다.
@@ -1139,14 +1153,30 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       {/* 모아보기 편집 모드 하단 바 */}
       {edit && view === 'grid' && (
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(var(--nav-h) + 14px + var(--safe-bottom))', zIndex: 40, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
-          <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, padding: '9px 12px 9px 18px', boxShadow: '0 8px 26px rgba(60,45,30,0.22)' }}>
-            <span style={{ fontSize: 16.5, fontWeight: 800, color: 'var(--text)' }}>
-              {sel.size > 0 ? `${sel.size}개 선택` : '카드를 눌러 선택'}
+          <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 7, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, padding: '9px 10px 9px 14px', maxWidth: 'calc(100vw - 20px)', boxShadow: '0 8px 26px rgba(60,45,30,0.22)' }}>
+            {/* ⛔ 글자가 «접히지» 않게 한다 — 2026-09-23 에 ［폴더］를 더했더니 바가 두 줄로 찌그러졌다(실물로 봤다).
+                ⭐ 360px 폰이 기준이다. 접히면 단추 자리가 위아래로 흔들려 잘못 누르기 쉬워진다. */}
+            <span style={{ fontSize: 16.5, fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+              {sel.size > 0 ? `${sel.size}개` : '카드를 눌러 선택'}
             </span>
-            <button className="press" style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 8px' }}
+            <button className="press" style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 6px', whiteSpace: 'nowrap' }}
               onClick={() => setSel(sel.size === list.length ? new Set() : new Set(list.map((r) => r.id)))}>
               {sel.size === list.length && list.length > 0 ? '전체 해제' : '전체 선택'}
+              {/* ⚠️ 이 말은 그대로 둔다 — 줄이려면 창업자가 정한다(앱 글자는 창업자 것) */}
             </button>
+            {/* 📁📁 [창업자 2026-09-23] **고른 편을 폴더로 «바로» 옮긴다.**
+                📮 한끼연구소 폼 = *"제가쓴 레시피는 따로 폴더나 그런것도 만들어주세요 헷갈려요"*
+                ⛔ 그 전엔 **상세 → 편집 → 폴더 → 저장** 넉 단계였다(EditorScreen.jsx:1352).
+                   2026-08-17 에 «같은 뿌리»로 즐겨찾기·표지사진을 고치면서 이것만 남겨뒀다.
+                ⭐ 새 화면도 새 제스처도 안 만든다 — **이미 있는 고르기 모드에 단추 하나.**
+                   게다가 여러 편을 «한 번에» 옮긴다.
+                ⛔ 삭제와 «붙여 두지» 않는다 — 옮기려다 지우면 되돌릴 수 없다. 사이에 가름선을 둔다. */}
+            <button className="press" disabled={sel.size === 0}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 999, background: sel.size ? 'var(--cream)' : 'transparent', color: sel.size ? 'var(--text)' : 'var(--text-sub)', fontSize: 16.5, fontWeight: 800, opacity: sel.size ? 1 : 0.5 }}
+              onClick={() => sel.size && setFolderAsk(true)}>
+              <Icon name="folder" size={15} /> 폴더
+            </button>
+            <span style={{ width: 1, alignSelf: 'stretch', background: 'var(--line)', margin: '2px 2px' }} />
             <button className="press" disabled={sel.size === 0}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 999, background: sel.size ? 'var(--danger)' : 'var(--cream)', color: sel.size ? '#fff' : 'var(--text-sub)', fontSize: 16.5, fontWeight: 800 }}
               onClick={() => sel.size && setDelSelAsk(true)}>
@@ -1154,6 +1184,30 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* 📁📁 폴더 고르기 — 「어디로 들어가나」를 «눈으로 고른다»(창업자 2026-09-23 *"어떤 폴더로 들어가는데?"*)
+          ⭐ 목록 = 종류 여섯 ＋ 유저가 «직접 만든» 폴더 ＋ ［＋ 새 폴더］
+          ⛔ 나라(한식·양식…)는 «안» 넣는다 — 편집 화면이 2026-09-14 에 같은 이유로 뺐다
+             (📮 창업자 = *"카테고리도 한식 위 아래 두번 중복이야"*). 갈래를 여기서 다시 갈라놓지 않는다.
+          ⭐ 폴더가 하나도 없는 사람도 막히지 않는다 — 시트 안에서 바로 만든다. */}
+      {folderAsk && (
+        <Portal>
+          <div className="sheet-mask" onClick={() => setFolderAsk(false)}>
+            <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
+              <div className="emoji-sheet-head">
+                <span>{sel.size}개를 어디로 옮길까요?</span>
+                <button className="press" onClick={() => setFolderAsk(false)} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
+              </div>
+              <div style={{ padding: '4px 16px 0', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {[...종류들, ...(folders || []).filter((f) => !종류들.includes(f) && !나라들.includes(f) && !옛폴더이름.includes(f))].map((c) => (
+                  <button key={c} className="pill press" onClick={() => 폴더로옮긴다(c)}>{c}</button>
+                ))}
+                <button className="pill press" onClick={() => { setFolderAsk(false); set새폴더로옮김(true); setNewFolder(true) }}>+ 새 폴더</button>
+              </div>
+            </div>
+          </div>
+        </Portal>
       )}
 
       {delSelAsk && (
@@ -1176,7 +1230,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
         <PromptSheet
           title="새 폴더"
           fields={[{ key: 'name', label: '폴더 이름', placeholder: '예) 자주 만드는' }]}
-          onSubmit={({ name }) => { const nm = name.trim(); if (nm) addFolder(nm) }}
+          onSubmit={({ name }) => { const nm = name.trim(); if (!nm) return; addFolder(nm); if (새폴더로옮김) 폴더로옮긴다(nm) }}
           onClose={() => setNewFolder(false)}
         />
       )}
