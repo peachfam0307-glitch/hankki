@@ -513,8 +513,39 @@ export const 소개건너뜀 = 관문('onboard_skip')
 export const 소개끝냄 = 관문('onboard_done')
 /** 로그인 첫 화면(CloudGate) — gate_seen 대비 login·signup 이 «보고 안 한 사람»이고, gate_fail 이 «못 한 사람»이다 */
 export const 로그인화면봄 = 관문('gate_seen')
-export const 로그인실패 = 관문('gate_fail')
 export const 로그인탈출 = 관문('gate_escape')
+
+// 🔐🔐 **«왜» 못 들어갔나 — 넷으로 가른다** (2026-09-22 · 창업자 「본인 계정 비번 까먹어서 못들어온거 아냐?」)
+//
+// ⛔⛔ 그 전엔 `gate_fail` 하나뿐이라 **「그냥 닫은 사람」과 「진짜 막힌 사람」을 못 갈랐다.**
+//    🔢 2026-09-22 실측 = gate_fail **14번**(사람 4명) — 그런데 그게 문제인지 아닌지를 말할 수가 없었다.
+//    📮 창업자 물음이 맞았다 — 폰에 구글 계정이 «안 들어가 있으면» 비번을 쳐야 하고, 거기서 막히면 못 온다.
+//       그 경우도 우리 쪽엔 「창이 닫혔다」로만 와서 마음 바꾼 사람과 똑같이 보였다.
+//
+// 🔒 **정해진 넷뿐이다** — 이름 수가 안 터진다(§5 가 막는 건 `product_view_12345` 처럼 «끝없이 느는» 값이다).
+//    `import_share/gallery/photo/write` · `decor_have_1/2_4/5plus` 와 «같은 꼴»이다.
+// ⭐ `gate_fail` 은 «그대로 둔다» — 지난 날과 견줄 총계가 끊기면 안 된다(이름은 한 번 정하면 못 바꾼다 · §5).
+//    그래서 한 번 실패하면 «총계 하나 ＋ 갈래 하나» 가 나간다. 이름 4개만 는다(44 → 48 · 상한 500).
+// 🙈 우리가 여전히 «모르는» 것 = 구글·애플은 「비번이 틀렸다」를 우리에게 안 알려준다.
+//    그건 저쪽 창 안에서 끝나고, 우리 손엔 닫힌 것만 남는다. 그래서 «other» 는 「그 밖」이지 「비번 탓」이 아니다.
+const 로그인실패갈래 = { closed: 1, blocked: 1, net: 1, other: 1 }   // 🔒 이 넷 말고는 안 보낸다
+/** 🔐 로그인이 안 됐다 — 오류를 주면 갈래까지 같이 보낸다(⛔오류 «문장»은 안 보낸다 · 코드만 본다) */
+export function 로그인실패(e) {
+  지난화면 = null
+  행동보내기('gate_fail')
+  const 갈 = 로그인실패갈래고르기(e)
+  if (갈 && 로그인실패갈래[갈]) 행동보내기(`gate_fail_${갈}`)
+}
+/** 🧮 오류 → 갈래 한 글자. ⛔순수 함수라 재현판이 잰다(네트워크·화면을 모른다).
+ *  📌 잣대는 `CloudGate.고운말` 과 «같은 글자»를 본다 — 두 곳이 어긋나면 안내와 숫자가 따로 논다. */
+export function 로그인실패갈래고르기(e) {
+  const c = String((e && e.code) || '')
+  if (!c) return 'other'
+  if (c.includes('popup-blocked')) return 'blocked'                       // 브라우저가 창을 막았다
+  if (c.includes('popup-closed') || c.includes('cancelled-popup')) return 'closed'   // 스스로 닫았다(마음 바꿈)
+  if (c.includes('network') || c === 'hankki/timeout') return 'net'       // 인터넷·늦음
+  return 'other'                                                          // 그 밖 — 저쪽(구글·애플)에서 막힌 것이 여기 온다
+}
 /** 알림 허락 시트 */
 export const 알림시트봄 = 관문('push_seen')
 export const 알림허락 = 관문('push_ok')

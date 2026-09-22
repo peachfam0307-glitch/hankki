@@ -93,7 +93,9 @@ export default function CloudGate({ onDone }) {
       //   ⛔ 유저가 팝업을 스스로 닫은 것(취소)도 여기로 온다. 그것도 세는 게 맞다 —
       //      「안 되는지 못 하는지」를 우리가 못 가르고, 두 번 못 들어간 사람은 어느 쪽이든 도와야 한다.
       set실패수((n) => n + 1)
-      try { 로그인실패() } catch { /* noop */ }   // 🚪 gate_fail — 「눌렀는데 «못» 한 사람」. 이게 있어야 「안 했다」와 갈린다.
+      // 🚪 gate_fail — 「눌렀는데 «못» 한 사람」. 이게 있어야 「안 했다」와 갈린다.
+      //   🔐 [2026-09-22] 오류를 «같이» 넘긴다 → gate_fail_closed/blocked/net/other 로 «왜»가 갈린다(stats 가 코드만 읽는다).
+      try { 로그인실패(e) } catch { /* noop */ }
       set탈(고운말(e)); set바쁨('')
     }
   }
