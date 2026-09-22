@@ -70,6 +70,21 @@ function 토큰기다리기(P, 초 = 12) {
   })
 }
 
+// 👆📊 [2026-09-22] **아이폰에서 「알림을 눌러 들어왔다」를 센다** — push_open
+//   ⛔ 아이폰 «앱»엔 서비스워커가 없다 → 웹이 쓰는 `?push=1` 표가 여기선 «안 온다».
+//      그래서 애플 플러그인이 주는 사건(pushNotificationActionPerformed)을 직접 듣는다.
+//   ⭐ 웹과 «같은 이름»(push_open)으로 보낸다 — 폰 갈래는 이미 페이지 경로로 갈린다(설계 §4).
+//   🙈 담는 건 「눌렀다」 하나뿐이다 — 알림 내용·레시피는 안 보낸다.
+//   ⚠️ 아직 실물로 못 봤다 — 09-23(수) 17:00 첫 발송 때 딸 폰으로 확인한다.
+let 눌림듣나 = false
+export function 아이폰알림눌림듣기(알린다) {
+  if (눌림듣나 || !아이폰앱인가()) return
+  const P = 부품()
+  if (!P) return
+  눌림듣나 = true
+  try { P.addListener('pushNotificationActionPerformed', () => { try { 알린다() } catch { /* 통계가 죽어도 앱은 열린다 */ } }) } catch { 눌림듣나 = false }
+}
+
 /** 🔁 켜져 있는 아이폰이면 토큰이 워커에 «있게» 맞춘다. Promise<boolean> */
 export async function 아이폰구독맞추기({ 주소, 토큰: 앱토큰 } = {}) {
   if (!아이폰앱인가() || !주소 || !앱토큰) { 발자국(`⛔구독못함(아이폰=${아이폰앱인가()}·주소=${!!주소})`); return false }
