@@ -15,7 +15,7 @@ import { 만회값 } from './retidy'   // 🧺 선반에서 받은 답을 얹는
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
 import { guessCategory, fitImage, imageSize } from './utils'
 // 🖼 「뭘 많이 썼나」를 재는 자리 — 나가는 건 «화면 이름 하나»뿐이다(자물쇠는 `src/stats.js`).
-import { 화면봄, 레시피저장, 꾸민게쌓였나, 읽어냄, 못읽음 } from './stats'
+import { 화면봄, 레시피저장, 꾸민게쌓였나, 읽어냄, 못읽음, 알림으로들어옴 } from './stats'
 // 🍱 [2026-08-28] 공유로 담으면 아이콘이 빈 접시로 굳던 것 — 뿌리·막이 설명은 `shareIcon.js` 주석에.
 import { 공유아이콘 } from './shareIcon'
 // 🎴 축소 루프가 «자랑카드 표지»를 건드리지 않게 — 잣대는 화면·클라우드와 «같은 한 곳»(2026-09-02)
@@ -161,6 +161,37 @@ export default function App() {
   // 🔁 못 보낸 신호를 앱 열 때 조용히 다시 보낸다 — 행동 열쇠 ＋ 「기본 인식으로 읽었다」 둘 다.
   //   ⛔ 화면에 아무것도 안 띄운다. 숫자만 맞춘다.
   useEffect(() => { 밀린열쇠보내기(); 밀린기본보내기() }, [])
+
+  // 🔔📊 [2026-09-22] **「알림을 눌러 들어왔나」를 «한 번»만 센다** — push_open
+  //   🔢 왜 = 워커는 「보냈다」까지만 안다. 이게 없으면 **몇 명이 «열었나»를 영영 못 본다.**
+  //      2026-09-22 에 `알림으로들어옴` 이 stats 에 «만들어만 놓고 부르는 곳이 0곳»인 채로 있는 걸 찾았다.
+  //      뿌리 = 계측-구멍검사가 `export function` 만 보고 `export const`(관문 17개)를 통째로 안 봤다(같이 고쳤다).
+  //   ⛔ 표(`?push=1`)를 «지운다» — 안 지우면 새로고침·뒤로가기마다 또 세어 숫자가 부푼다.
+  //   ⛔ 주소만 바꾼다(replaceState) — 화면을 다시 그리거나 앞으로 가기를 망치지 않는다.
+  useEffect(() => {
+    try {
+      const u = new URL(window.location.href)
+      if (u.searchParams.get('push') !== '1') return
+      알림으로들어옴()
+      u.searchParams.delete('push')
+      window.history.replaceState(null, '', u.pathname + u.search + u.hash)
+    } catch { /* ⛔ 통계가 죽어도 앱은 그대로 돈다 */ }
+  }, [])
+
+  // 🍎 아이폰 «앱»은 서비스워커가 없어 위 표(`?push=1`)가 안 온다 → 애플 사건을 직접 듣는다.
+  //   ⛔ 웹 번들이 플러그인을 곧장 import 하지 않는다(저장소 규칙) — 아이폰일 때만 늦게 불러온다.
+  useEffect(() => {
+    let 살아있나 = true
+    ;(async () => {
+      try {
+        const { 아이폰앱인가 } = await import('./pushConsent.js')
+        if (!아이폰앱인가() || !살아있나) return
+        const { 아이폰알림눌림듣기 } = await import('./pushNative.js')
+        아이폰알림눌림듣기(알림으로들어옴)
+      } catch { /* ⛔ 못 붙어도 앱은 그대로 돈다 */ }
+    })()
+    return () => { 살아있나 = false }
+  }, [])
 
   // 🔤 카드·표지를 사진으로 뽑을 때 쓰는 «글꼴 꾸러미»를 앱이 한가할 때 미리 만들어 둔다.
   //   ⛔⛔ 안 데워두면 유저가 「공유하기」를 누른 «뒤에» 글꼴 8개·1.7MB 를 만들기 시작해

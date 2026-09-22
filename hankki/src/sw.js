@@ -210,7 +210,14 @@ self.addEventListener('push', (event) => {
  */
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const 길 = new URL((event.notification.data && event.notification.data.길) || './', self.registration.scope).href
+  // 📊 [2026-09-22] 「알림을 눌러 들어왔다」를 세려고 주소에 표를 하나 남긴다(`?push=1`).
+  //   ⛔ 서비스워커는 «다른 세상»이라 gtag 도 우리 stats 도 못 쓴다 — 그래서 앱이 켜질 때 읽게 한다(App.jsx).
+  //   🔢 왜 필요한가 = 워커는 「보냈다」까지만 안다. **몇 명이 «열었나»는 이 표가 없으면 영영 못 본다.**
+  //      9/23 첫 발송을 앞두고 만들었다(창업자 「혹시 다른 것들중에 안되는거 있나 좀 찾아봐」).
+  //   🙈 표는 «눌렀다»는 사실 하나뿐이다 — 누가·무엇을 눌렀는지는 안 담는다.
+  const 원길 = new URL((event.notification.data && event.notification.data.길) || './', self.registration.scope)
+  원길.searchParams.set('push', '1')
+  const 길 = 원길.href
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((창들) => {
       for (const 창 of 창들) {
