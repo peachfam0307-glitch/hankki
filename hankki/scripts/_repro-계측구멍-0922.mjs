@@ -46,11 +46,17 @@ const detail = 읽기('../src/screens/RecipeDetailScreen.jsx')
 // ═══ ② push_open — 웹과 아이폰 둘 다 ═══
 const sw = 읽기('../src/sw.js')
 const app = 읽기('../src/App.jsx')
-const native = 읽기('../src/pushNative.js')
+// 🍎 [2026-09-22] pushNative.js 는 «아이폰 갈래에만» 있다 — 배포(웹) 갈래엔 없다.
+//   ⛔ 그래서 무턱대고 읽으면 웹 갈래에서 판이 «터진다». 있을 때만 잰다.
+//   📌 이걸 몰라서 2026-09-22 에 실제로 한 번 죽었다(배포 갈래에 얹는 중에 드러났다).
+let native = ''
+try { native = 읽기('../src/pushNative.js') } catch { native = '' }
 재다('서비스워커가 주소에 push 표를 남긴다', /searchParams\.set\('push', '1'\)/.test(sw), true)
 재다('앱이 그 표를 읽고 알림으로들어옴을 부른다', /get\('push'\) !== '1'/.test(app) && /알림으로들어옴\(\)/.test(app), true)
 재다('앱이 표를 지운다(두 번 안 세게)', /searchParams\.delete\('push'\)/.test(app), true)
-재다('아이폰은 애플 사건을 듣는다', /pushNotificationActionPerformed/.test(native), true)
+// ⛔ 파일이 없는 갈래(웹)에서는 「없다」가 정답이다 — 그걸 실패로 세지 않는다.
+if (native) 재다('아이폰은 애플 사건을 듣는다', /pushNotificationActionPerformed/.test(native), true)
+else console.log('⏭ 아이폰 칸 건너뜀 — 이 갈래엔 pushNative.js 가 없다(웹 갈래)')
 
 console.log(죽음 ? `\n⛔ ${죽음}칸 죽었다` : '\n✅ 12칸 통과')
 process.exit(죽음 ? 1 : 0)

@@ -21,7 +21,7 @@
     "alias": "my-key-alias"
   },
   "appVersionName": "14.01",
-  "appVersionCode": 13,
+  "appVersionCode": 22,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://peachfam0307-glitch.github.io/hankki/manifest.webmanifest",
