@@ -2,7 +2,7 @@ import { Fragment, useMemo, useRef, useState } from 'react'
 import { COACH } from '../coach'
 import { useStore } from '../store'
 import { useNav } from '../App'
-import { 저장날짜보임 } from '../data/seed'
+import { 저장날짜보임, 내것인가 } from '../data/seed'
 import { 나라들, 종류들, 종류고르기, 옛폴더이름 } from '../data/종류'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
@@ -48,7 +48,7 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
 import pengNyam from '../assets/ui/wave/peng_nyam1.png' // 🐧 펭펭(한 술) — 한끼 일기 상단
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
-import { FAV_NAME, FAV_ADD, FAV_REMOVE } from '../favName'
+import { FAV_NAME, FAV_ADD, FAV_REMOVE, MINE_NAME } from '../favName'
 // 🔖 핀의 «종»도 한 곳에서만 온다(`src/favPin.js` · 2026-09-08 두 종 확정)
 import { isPinned, pinName, pinOf, nextPin, FAV_PINS } from '../favPin'
 // 🔖 하트 핀(최애) — 창업자가 2026-09-08 에 «클립 골격으로» 새로 뽑아 준 컷(`cp02`)
@@ -300,6 +300,8 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   //   ⭐⭐ 잣대는 «한 곳»에 둔다 — 칩 개수 · 거르기 · 썸네일 ▶ 표 셋이 같은 자를 쓴다.
   //      ⛔ 같은 식을 세 군데 적으면 하나만 고쳤을 때 「칩엔 3편인데 ▶ 는 5개」처럼 갈린다.
   const SNS수 = useMemo(() => sorted.filter(SNS인가).length, [sorted])
+  // 👤 「내 것」 = 유저가 자기 손으로 담은 편 (잣대는 data/seed.js 한 곳 — 여기서 다시 판정하지 않는다)
+  const 내것수 = useMemo(() => sorted.filter(내것인가).length, [sorted])
   // 🔖🔖 [2026-08-18] 책갈피가 카드 «위로 14px» 나가므로 그만큼 자리를 비운다.
   //   ⛔ 안 비웠더니 **맨 윗줄 책갈피가 필터 칩 줄에 가렸다**(실측 = 큰 2건 · 작은 3건).
   //   ⭐ 줄 사이도 같은 이유로 벌린다 — 아랫줄 책갈피가 «윗줄 이름표 «글자»»를 덮었다.
@@ -335,6 +337,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       //   ⭐ 잣대는 «한 곳»에서 온다(`isPinned`) — 종이 늘어도 이 줄은 안 고친다.
       : folder === '__pinned' ? sorted.filter((r) => FAV_PINS.some((종) => isPinned(r, 종.key)))
       : folder === '__often' ? sorted.filter((r) => (r.cooked || 0) > 0).sort((a, b) => (b.cooked || 0) - (a.cooked || 0))
+      : folder === '__mine' ? sorted.filter(내것인가)
       : folder === '__sns' ? sorted.filter(SNS인가)
       : sorted.filter((r) => 여기드나(r, folder))
   const countIn = (name) => sorted.filter((r) => 여기드나(r, name)).length
@@ -361,7 +364,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     const 유저것 = (folders || []).filter((f) => !정해진것.includes(f) && !옛폴더이름.includes(f))
     return [...정해진것, ...유저것]
   }, [folders])
-  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__heart' && folder !== '__pinned' && folder !== '__often' && folder !== '__sns' && !DEFAULT_FOLDERS.has(folder)
+  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__heart' && folder !== '__pinned' && folder !== '__often' && folder !== '__sns' && folder !== '__mine' && !DEFAULT_FOLDERS.has(folder)
 
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
   // 📔📔 **요리 기록과 다이어리를 가른다** — 둘 다 `diary` 배열에 살고 `kind` 로만 구분된다.
@@ -891,6 +894,17 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                 <img src={idxChef} alt="" className="pill-chef" />
                 <Icon name="heart" size={13} style={{ fill: 'currentColor', marginLeft: -3 }} />
                 모두 {pinnedCount}
+              </button>
+            )}
+            {/* 👤👤 [창업자 확정 2026-09-23] 「내 것」 — 유저가 «자기 손으로» 담은 편 (직접 쓴 것 ＋ 가져온 것 전부)
+                📮 한끼연구소 폼 = *"제가쓴 레시피는 따로 폴더나 그런것도 만들어주세요 헷갈려요"*
+                📮 창업자 = *"내가 가져온 것 내가쓴건 전부. 따로 하나 만들어야 할 것 같아"*
+                ⭐ SNS 칩 «앞»에 둔다 — 「내 것」이 큰 묶음이고 SNS 는 출처라 작은 묶음이다.
+                ⛔ 0편이면 안 띄운다 — 다른 칩과 같은 규칙(빈 칩은 「내 건 왜 없지」가 된다). */}
+            {내것수 > 0 && (
+              <button className={`pill press ${folder === '__mine' ? 'active' : ''}`} onClick={() => setFolder('__mine')}>
+                <Icon name="edit" size={13} />
+                {MINE_NAME} {내것수}
               </button>
             )}
             {SNS수 > 0 && (
