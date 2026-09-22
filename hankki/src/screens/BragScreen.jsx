@@ -347,7 +347,7 @@ export default function BragScreen() {
              ⭐ 랜덤 카드(`ShareDrawCard`)와 «같은 모양»으로 맞췄다 — 보낼 때 표시하고, 닫을 때 청한다. */}
       <SendNowSheet
         pending={pending}
-        onShared={() => { 보냈나.current = true }}
+        onShared={() => { try { 자랑보냄() } catch { /* 통계가 죽어도 자랑은 된다 */ } 보냈나.current = true }}
         onClose={(다음) => {
           // 📱 [2026-08-28 ⓑ] 「지금 보내기」로 표지가 나갔고 레시피가 남았으면 **한 장 더**를 먼저 청한다.
           //    ⛔ 리뷰는 그다음이다 — 시트 위에 시트를 겹치지 않는다.
@@ -363,7 +363,7 @@ export default function BragScreen() {
         <Portal>
           <ShareDrawCard
             recipe={share}
-            onShared={() => { 보냈나.current = true }}
+            onShared={() => { try { 자랑보냄() } catch { /* 통계가 죽어도 자랑은 된다 */ } 보냈나.current = true }}
             onClose={() => {
               setShare(null)
               if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')

@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect, useMemo, Fragment } from 'react'
 import { COACH } from '../coach'
-import { 사러나감, 장보기담음, 요리끝냄, 픽펼침 } from '../stats'
+// 🚨 [2026-09-22] 자랑보냄·자랑고름이 «여기 없어서» 레시피 상세에서 보낸 것이 한 번도 안 세어졌다.
+//   🔢 창업자 = *"요 며칠 통계에 레꾸자랑 보낸 사람있어?"* → 장부 15일치 brag_shared **0**.
+//   ⛔ 9/21 에 BragScreen 의 이름 겹침을 고쳤지만 그건 «네 길 중 한 길»이었다. 나머지 셋(여기 둘 · SendNowSheet 하나)은 그대로였다.
+//   📌 detail 은 어제 조회 52로 제일 많이 본 화면이다 — 여기서 보낸 사람이 통째로 빠져 있었다.
+import { 사러나감, 장보기담음, 요리끝냄, 픽펼침, 자랑보냄, 자랑고름 } from '../stats'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -148,7 +152,10 @@ export default function RecipeDetailScreen({ id }) {
   //   ⛔ 참·거짓이 아니라 «글자»를 담는 이유 = 자리마다 머리글이 달라야 한다.
   //      「N번째 한 끼예요」를 공유 직후에 띄우면 **거짓말**이 된다(요리를 안 했을 수 있다).
   const [askReview, setAskReview] = useState(null)
-  const 자랑보냄 = useRef(false)
+  // 🔴 [2026-09-22] 이 ref 이름이 계측 함수 «자랑보냄»과 같으면 컴포넌트 안에서 ref 가 이겨서
+  //    계측이 조용히 죽는다 — BragScreen 이 2026-09-21 에 정확히 그 사고였다(brag_shared 영영 0).
+  //    ✅ 그래서 이름을 가른다. 🛡 check-계측겹침 이 같은 사고를 다시 막는다.
+  const 보냈나 = useRef(false)
   // 인라인 오버레이(꾸미기) — 뒤로가기로 닫기.
   // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
   // 🔙 꾸미다가 뒤로가기 → **바로 닫지 않고 물어본다** (창업자 2026-07-30
@@ -471,13 +478,16 @@ export default function RecipeDetailScreen({ id }) {
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
       // 🗣 「꾸민 표지 그대로」 공유도 리뷰를 청한다 — BragScreen `sendCover` 와 «같은 구멍»이었다
       //   (창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 아예 못봤어"*). 자세한 경위는 그쪽 주석에.
-      if (res && res.shared === true) 자랑보냄.current = true
+      // 📊 [2026-09-22] brag_shared — ⛔BragScreen 의 sendCover 와 «같은 조건»이다(shared === true 일 때만).
+      //   취소(AbortError)·사진 저장 폴백은 shared:false 라 여기 안 들어온다(shareCover.js:232·235·244).
+      if (res && res.shared === true) { try { 자랑보냄() } catch { /* 통계가 죽어도 자랑은 된다 */ } }
+      if (res && res.shared === true) 보냈나.current = true
     } finally {
       setCoverBusy(false)
       if (띄울시트) setPending(띄울시트) // 📱 리뷰는 이 시트의 `onClose` 가 청한다(아래)
       else {
-        if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-        자랑보냄.current = false
+        if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+        보냈나.current = false
       }
     }
   }
@@ -541,13 +551,13 @@ export default function RecipeDetailScreen({ id }) {
              (창업자 = *"리뷰 안떠..ㅠㅠ"*). 자세한 경위는 `SendNowSheet.jsx` 머리 주석에. */}
       <SendNowSheet
         pending={pending}
-        onShared={() => { 자랑보냄.current = true }}
+        onShared={() => { try { 자랑보냄() } catch { /* 통계가 죽어도 자랑은 된다 */ } 보냈나.current = true }}
         onClose={(다음) => {
           // 📱 [2026-08-28 ⓑ] 표지가 나갔고 레시피가 남았으면 **한 장 더**를 먼저 청한다. 리뷰는 그다음.
           if (다음) { setPending({ ...다음, 이어보내기: true }); return }
           setPending(null)
-          if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-          자랑보냄.current = false
+          if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+          보냈나.current = false
         }}
       />
 
@@ -1347,7 +1357,7 @@ export default function RecipeDetailScreen({ id }) {
             <div className="sheet" onClick={(e) => e.stopPropagation()}>
               <div style={{ fontSize: 18.5, fontWeight: 800, textAlign: 'center', color: 'var(--text)' }}>친구랑 공유하기</div>
               <div style={{ fontSize: 15.5, color: 'var(--text-sub)', textAlign: 'center', margin: '4px 0 16px' }}>예쁜 카드로 카톡·인스타에 톡 보내요</div>
-              <button className="press" onClick={() => { setShareSheet(false); setDrawOpen(true) }}
+              <button className="press" onClick={() => { try { 자랑고름() } catch { /* noop */ } setShareSheet(false); setDrawOpen(true) }}
                 style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--cream)', border: 'none', marginBottom: 10, textAlign: 'left' }}>
                 <img src={uiGomThumb} alt="" draggable={false} style={{ width: 44, height: 44, objectFit: 'contain', flex: '0 0 auto' }} />
                 <span><span style={{ fontSize: 17.5, fontWeight: 800, color: 'var(--text)' }}>랜덤 카드 뽑기</span><br /><span style={{ fontSize: 15.5, color: 'var(--text-sub)' }}>꼬르곰·펭펭이 매번 다르게 · 안 꾸며도 예쁘게</span></span>
@@ -1366,12 +1376,12 @@ export default function RecipeDetailScreen({ id }) {
         <Portal>
           <ShareDrawCard
             recipe={r}
-            onShared={() => { 자랑보냄.current = true }}
+            onShared={() => { try { 자랑보냄() } catch { /* 통계가 죽어도 자랑은 된다 */ } 보냈나.current = true }}
             onClose={() => {
               setDrawOpen(false)
               // 🎴 보낸 사람에게만 · 카드를 «닫는» 순간에(시트 위에 시트가 되지 않게)
-              if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-              자랑보냄.current = false
+              if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+              보냈나.current = false
             }}
             onSaveCover={(img) => { const 말 = 카드표지토스트(r); updateRecipe(r.id, 카드표지로(img)); nav.showToast(말) }}
           />
