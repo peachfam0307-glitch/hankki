@@ -107,10 +107,13 @@ for (const 제목 of 유튜브편) {
   await 상세로(제목)
   // ⛔ .t-sub 는 화면에 여럿이다 — first() 로 잡으니 「한끼 기본 레시피」를 집었다(엉뚱한 줄).
   //    ✅ 영상 카드 «안»의 줄만 집는다 — 「영상으로 보기」가 적힌 카드를 먼저 찾고 그 안에서 고른다.
+  // ⛔ 영상 카드가 화면 «아래»에 있어 기본 캡처(760px)에 안 잡혔다 → 카드까지 내려서 찍는다.
+  await p.getByText('영상으로 보기').last().scrollIntoViewIfNeeded().catch(() => {})
+  await p.waitForTimeout(600)
   const 카드 = p.locator('div').filter({ hasText: /영상으로 보기|릴스로 보기/ }).last()
   const 줄 = await 카드.locator('.t-sub').last().innerText().catch(() => '(못 찾음)')
   console.log(`  ⑤ ${제목} → ${줄}`)
-  await 찍다(`⑤-영상문구-${제목}`, 760)
+  await 찍다(`⑤-영상문구-${제목}`, 844)
   await 뒤로()
 }
 
