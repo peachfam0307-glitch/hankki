@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Icon from './Icon'
-import { 소개봄, 소개건너뜀, 소개끝냄 } from '../stats'   // 🚪 [2026-09-21] 관문 — 덮개 층이라 화면봄이 못 잡는다
+import { 소개봄, 소개건너뜀, 소개끝냄, 소개장도달 } from '../stats'   // 🚪 [2026-09-21] 관문 — 덮개 층이라 화면봄이 못 잡는다
 // 🛒 장보기 콤비 — 꼬르곰이 카트, 펭펭이 바구니. 스토어 스샷 ⑤가 쓰는 그 컷이다.
 //    ⚠️ `sharepool` 에 있어서 `F()`(stickers/photo) 로는 못 부른다 → 직접 import.
 import duoCart from '../assets/sharepool/duo_cart.png'
@@ -516,6 +516,18 @@ export default function Onboarding({ onDone, onRestore }) {
   //    ⭐ «이 컴포넌트»는 한 번만 뜬다 → 사람당 1건. (⛔Stage 에 걸면 장마다 나간다 — 위 주석)
   useEffect(() => { try { 소개봄() } catch { /* 통계가 죽어도 소개는 뜬다 */ } }, [])
   const [i, setI] = useState(0)
+  // 📖📖 [창업자 2026-09-23 「온보딩 계측 심어줘」] **몇 번째 장까지 갔나** — onboard_step_1..10
+  //   ⛔⛔ 그 전엔 seen·skip·done 셋뿐이라 «어디서 나가는지»가 0 이었다.
+  //      🔢 2026-09-22 = 본 사람 23 · 끝낸 사람 9 · 건너뛴 사람 4 → **10명의 행방을 못 셌다.**
+  //   ⭐ **«처음 도달한 장»만 한 번** 보낸다 — 뒤로 갔다 오면 두 번 세져서 깔때기가 거짓이 된다.
+  //   ⛔ 1장은 `소개봄` 과 «같은 순간»에 나가야 한다 — 따로 걸면 1장 도달자가 seen 보다 적게 나온다.
+  //   ⚠️ 여기는 `Stage` 가 아니라 «이 컴포넌트»다 — Stage 에 걸면 장마다 열 번 나간다(2026-09-21 사고).
+  const 밟은장 = useRef(new Set())
+  useEffect(() => {
+    if (밟은장.current.has(i)) return
+    밟은장.current.add(i)
+    try { 소개장도달(i + 1) } catch { /* 통계가 죽어도 소개는 뜬다 */ }
+  }, [i])
   const [drag, setDrag] = useState(0)      // 손가락 따라오는 오프셋(px)
   const [dragging, setDragging] = useState(false)
   const startX = useRef(0)
