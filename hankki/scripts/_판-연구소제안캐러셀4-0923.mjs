@@ -56,10 +56,13 @@ const 장1 = `${머리}
   <div style="margin-top:72px;font-size:82px;font-weight:700;letter-spacing:-1.8px;line-height:1.24">그래서<br>만들었어요.</div>
   <!-- 🧩 [창업자 2026-09-23] *"1번 좀 휑해"* — 아래 절반이 비어 있었다.
        → 만든 것 «셋»을 줄로 세워 미리 보여준다(2·3·4장이 한 장씩 맡는 것과 «같은 차례·같은 그림»). -->
-  <div style="margin-top:44px;display:flex;flex-direction:column;gap:20px">
-    <div style="display:flex;align-items:center;gap:20px;font-size:34px;color:#6b4a24"><span style="display:inline-flex;width:70px;height:70px;align-items:center;justify-content:center;background:#fff;border:2px solid #efe2cf;border-radius:22px">${svg1('M4 20h4L18.5 9.5l-4-4L4 16zM13 7l4 4')}</span>내가 담은 것만 모아보는 「내 것」</div>
-    <div style="display:flex;align-items:center;gap:20px;font-size:34px;color:#6b4a24"><span style="display:inline-flex;width:70px;height:70px;align-items:center;justify-content:center;background:#fff;border:2px solid #efe2cf;border-radius:22px">${svg1('M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z')}</span>꾹 눌러 여러 편을 한 번에 폴더로</div>
-    <div style="display:flex;align-items:center;gap:20px;font-size:34px;color:#6b4a24"><span style="display:inline-flex;width:70px;height:70px;align-items:center;justify-content:center;background:#fff;border:2px solid #efe2cf;border-radius:22px"><img src="${모자}" style="height:40px"></span>해볼 것 · 최애로 꽂아두기</div>
+  <!-- 🧩 [창업자 2026-09-23] *"1번은 좀더 세련되게 만들어줄수있어? 지금은 지저분해보여."*
+       ⛔ 앞 판은 «흰 네모 상자 셋 ＋ 아이콘 셋»이 글줄마다 붙어 눈이 여섯 번 멈췄다.
+       → 상자와 아이콘을 «다 뺐다». 가는 선 하나 아래 짧은 글줄 셋만 — 세는 것은 글자 하나뿐이다. -->
+  <div style="margin-top:52px;padding-top:40px;border-top:2px solid #eee2cf;display:flex;flex-direction:column;gap:22px">
+    <div style="font-size:33px;color:#8a6a45;letter-spacing:-.3px">내가 담은 것만 모아보는 「내 것」</div>
+    <div style="font-size:33px;color:#8a6a45;letter-spacing:-.3px">꾹 눌러 여러 편을 한 번에 폴더로</div>
+    <div style="font-size:33px;color:#8a6a45;letter-spacing:-.3px">해볼 것 · 최애로 꽂아두기</div>
   </div>
 </div>
 ${알약}`
@@ -72,6 +75,19 @@ ${알약}`
 //   ⛔ 3장은 «위로» 올린다 = 바닥 띄움을 64 → 124px 로 «키운다»(bottom 이 커질수록 위로 간다).
 const 폰크기 = { 2: [530, 800], 3: [790, 740], 4: [560, 720] }
 const 폰바닥 = { 2: 46, 3: 124, 4: 168 }
+// 🔦 [창업자 2026-09-23] 폰 그림 «위»에 덧칠하는 것 — 자리는 폰 네모에 대한 «비율»로 적는다.
+//   📮 2장 = *"내것에도 효과를 줘. 내가 담은것이 내 것 폴더인지 우리는 알지만 사람들은 모르자나"*
+//      → 「내 것」 칩이 그냥 칩 셋 중 하나로 보인다. 고리를 둘러 «여기를 보라»고 찍어 준다.
+//   📮 3장 = *"글자만 안보이게 해줘"* → 시트에 반쯤 잘린 카드 제목 띠를 흐리게 덮는다(⛔지우지 않고 뭉갠다).
+//   📮 4장 = *"ui에 핀에도 효과를 줄래? 작아서 잘 안보여"* → 카드에 꽂힌 작은 핀 둘에 고리를 두른다.
+//   ⛔ 값은 «렌더한 그림을 열어 재서» 넣었다 — 짐작이 아니다(2026-09-23).
+const 고리 = (x, y, w, h, 색 = 'rgba(200,120,40,.85)') =>
+  `<span style="position:absolute;left:${x}%;top:${y}%;width:${w}px;height:${h}px;transform:translate(-50%,-50%);border:4px solid ${색};border-radius:999px;box-shadow:0 0 0 7px rgba(255,255,255,.55),0 0 26px 10px rgba(226,150,60,.45)"></span>`
+const 덧칠 = {
+  2: 고리(50, 34.9, 186, 70),
+  3: `<span style="position:absolute;left:0;right:0;top:34%;height:10%;backdrop-filter:blur(13px)"></span>`,
+  4: 고리(42.3, 60.4, 78, 78) + 고리(88.4, 60.4, 78, 78, 'rgba(214,110,95,.85)'),
+}
 const 기능장 = (n, 그림, 제목, 설명, 컷키, 자리) => `${머리}
 <div class="쪽">${n} / 4</div>
 <div style="padding:104px 58px 0">
@@ -79,7 +95,10 @@ const 기능장 = (n, 그림, 제목, 설명, 컷키, 자리) => `${머리}
   <div style="font-size:60px;font-weight:700;letter-spacing:-1.4px;line-height:1.24">${제목}</div>
   <div style="margin-top:16px;font-size:34px;color:${흐림};line-height:1.5">${설명}</div>
 </div>
-<img class="폰" src="${컷[컷키]}" style="position:absolute;left:50%;transform:translateX(-50%);bottom:${폰바닥[n]}px;width:${폰크기[n][0]}px;height:${폰크기[n][1]}px;object-position:${자리}">
+<div style="position:absolute;left:50%;transform:translateX(-50%);bottom:${폰바닥[n]}px;width:${폰크기[n][0]}px;height:${폰크기[n][1]}px">
+  <img class="폰" src="${컷[컷키]}" style="width:100%;height:100%;object-position:${자리}">
+  ${덧칠[n] || ''}
+</div>
 ${n === 4 ? 알약 : ''}`
 
 const 장2 = 기능장(2, svg('M4 20h4L18.5 9.5l-4-4L4 16zM13 7l4 4'), '내가 담은 것만<br>따로 봐요', '내가 쓴 것도, 인스타·유튜브에서<br>가져온 것도 한 칸에', '내것', 'top')
