@@ -511,6 +511,18 @@ const 관문 = (이름) => () => { 지난화면 = null; 행동보내기(이름) 
 export const 소개봄 = 관문('onboard_seen')
 export const 소개건너뜀 = 관문('onboard_skip')
 export const 소개끝냄 = 관문('onboard_done')
+// 📖📖 **소개 «몇 번째 장»까지 갔나** (창업자 2026-09-23 = "온보딩 계측 심어줘")
+//   ⛔⛔ 그 전엔 seen·skip·done 셋뿐이라 **「어디서 나가는지」가 0** 이었다.
+//      🔢 2026-09-22 실측 = 소개를 본 23명 중 끝낸 사람 9명 · 건너뛴 사람 4명 → **10명이 어디로 갔는지 몰랐다.**
+//   🔒 **이름은 «고정 10개»다** — 장이 10장이기 때문이다(Onboarding.jsx 의 SLIDES). §5 가 막는 건
+//      product_view_12345 처럼 «끝없이 느는» 값이지, 정해진 개수는 decor_have_1/2_4/5plus 와 같은 꼴이다.
+//   ⛔ 장수를 늘리면 여기도 «같이» 늘려야 한다 — 안 늘리면 새 장이 조용히 안 세어진다.
+//      🛡 그래서 scripts/_repro-소개장계측-0923.mjs 가 「SLIDES 수 == 이 표 수」를 본다(어긋나면 스모크가 죽는다).
+//   ⭐ 「처음 도달한 장」만 한 번 보낸다 — 뒤로 갔다 오면 두 번 세져서 깔때기가 거짓이 된다(부르는 쪽이 막는다).
+export const 소개장수 = 10
+const 소개장표 = Array.from({ length: 소개장수 }, (_, k) => 관문(`onboard_step_${k + 1}`))
+/** n = 1..10 (⛔0 부터가 아니다 — 창업자가 읽는 숫자와 같아야 한다) */
+export const 소개장도달 = (n) => { const f = 소개장표[n - 1]; if (f) f() }
 /** 로그인 첫 화면(CloudGate) — gate_seen 대비 login·signup 이 «보고 안 한 사람»이고, gate_fail 이 «못 한 사람»이다 */
 export const 로그인화면봄 = 관문('gate_seen')
 export const 로그인탈출 = 관문('gate_escape')
