@@ -40,3 +40,14 @@ export const INSTAGRAM_ID = 'annyeong_hankki'
 export const INSTAGRAM_URL = `https://www.instagram.com/${INSTAGRAM_ID}/`
 // 💬 [창업자 2026-09-21] 설정의 「DM 보내기」 — 인스타 메시지 링크 꼴(ig.me/m/<계정>). ✅ 19:41 창업자 폰 실물 = *"인스타 돼~"* (메시지 창이 열린다 · 인스타 쪽 설정 없이).
 export const INSTAGRAM_DM_URL = `https://ig.me/m/${INSTAGRAM_ID}`
+
+// 🆕 [창업자 2026-09-23] 홈 인스타 칸의 「새 글」 표식 — *"인스타에 새로운 글이 올라오면 우리 홈 인스타에도 표식을 달자 사람들 들어가보게"*
+//   ⛔⛔ **앱은 인스타에 새 글이 올라온 걸 «저절로 못 안다».** 그러려면 메타 연동(앱 심사·토큰)이 필요하고
+//      이 환경에선 그 서버가 아예 안 열려 확인조차 못 한다(CLAUDE.md 규칙 15 실측표).
+//      ⭐ 그래서 창업자가 «켜는» 길로 간다(창업자가 셋 중 ①을 골랐다) — 글 올린 날짜를 여기 적는다.
+//   ✅ 켜는 법 = 아래 날짜를 «글 올린 날»(KST · YYYY-MM-DD)로 바꿔 배포한다. 끄려면 '' 로 비운다.
+//   ⏳ 며칠 뜨나 = INSTA_NEW_DAYS. 그 뒤엔 저절로 사라진다 — ⛔늘 켜져 있으면 「새것」을 못 뜻한다
+//      (한끼 소식 「새로」가 unread 를 같이 보는 것과 같은 까닭 · HomeScreen.jsx:572).
+//   👆 ＋ **한 번 누르면 그 사람한테는 사라진다**(본 사람에게 계속 새것이라 하지 않는다).
+export const INSTA_NEW_AT = '2026-09-23'
+export const INSTA_NEW_DAYS = 5

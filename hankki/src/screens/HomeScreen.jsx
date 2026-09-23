@@ -7,11 +7,11 @@ import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import { openExternal } from '../utils'
-import { INSTAGRAM_URL } from '../version'
+import { INSTAGRAM_URL, INSTA_NEW_AT, INSTA_NEW_DAYS } from '../version'
 import { 인스타로감 } from '../stats'   // 🚪 insta_go — 홈 인스타 칸을 누른 사람
 import { SNS인가, SNS표 } from '../embed'
 import Thumb from '../components/Thumb'
-import { 얹은틀있나 } from '../components/Stickers'
+import { 얹은틀있나, 열쇠있나 } from '../components/Stickers'
 import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
 import TabTips from '../components/TabTips'
@@ -173,10 +173,28 @@ const HOME_COACH_STEPS = [
   //    📌 그래서 「기능이 숨어 있어 모른다」(2026-07-17 창업자 딸이 낸 문제)는 여전히 각 화면 코치가 답한다.
 ]
 
+// 🆕🆕 인스타 「새 글」 표식 — 뜰 조건 셋을 «한 곳»에서 판정한다 (창업자 2026-09-23)
+//   ① 창업자가 날짜를 켜 뒀나(`INSTA_NEW_AT` · version.js) ② 그날부터 INSTA_NEW_DAYS 안인가
+//   ③ 이 폰에서 «아직 안 눌렀나»(누른 날짜를 적어 둔다 — 그 글에 대해서만 끈다)
+//   ⛔ 날짜 계산은 «반드시» todayKST 로 (절대원칙 27 · 폰이 KST 면 0~9시에 하루가 어긋났다).
+const 인스타본표 = 'hankki:insta:본글'
+export const 인스타새글있나 = () => {
+  try {
+    const 켠날 = String(INSTA_NEW_AT || '').trim()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(켠날)) return false
+    if (localStorage.getItem(인스타본표) === 켠날) return false          // ③ 이미 눌러서 봤다
+    const 지난날 = (Date.parse(todayKST() + 'T00:00:00Z') - Date.parse(켠날 + 'T00:00:00Z')) / 86400000
+    return 지난날 >= 0 && 지난날 < INSTA_NEW_DAYS                        // ② 창 안인가 (⛔미래 날짜도 막는다)
+  } catch { return false }
+}
+const 인스타봤다 = () => { try { localStorage.setItem(인스타본표, String(INSTA_NEW_AT || '')) } catch { /* noop */ } }
+
 export default function HomeScreen() {
   // 📔 diary = 「만들었어요」가 쌓는 요리 일기 — 「한 줄 안 쓴 것」을 세는 데 쓴다(`nextUp.js`)
   const { recipes, profile, pantry, diary, removeRecipe } = useStore()
   const nav = useNav()
+  // 🆕 누르는 «그 자리»에서 표식이 사라지게 (localStorage 만 적으면 화면이 다시 그려질 때까지 남아 있다)
+  const [표식껐나, 표식끔] = useState(false)
   // 🗓🗓 「오늘 뭐 해먹지」를 **날짜로 돌린다** (창업자 확정 2026-08-28 = *"날짜로 돌리자"*)
   //
   // ⛔⛔ **이름이 「오늘」인데 날짜로 안 바뀌고 있었다.** `useState(0)` 이라 늘 맨 앞 하나였고,
@@ -599,11 +617,19 @@ export default function HomeScreen() {
           </button>
           {/* 📷 인스타그램 — 홍보가 다 인스타로 나가서 앱 안에서도 바로 가게(창업자 2026-09-21). 밖으로 나가는 단추라 `openExternal`.
               🚪 insta_go 로 누른 사람을 센다 — 홈 연 사람 대비 몇 %가 누르나로 이 칸을 «살릴지» 정한다. */}
+          {/* 🆕 [창업자 2026-09-23] 「새 글」 표식 — *"사람들 들어가보게"*. 고른 꼴은 ③ 알약(시안 넷을 폰 크기로 보고 골랐다).
+              ⭐ 우리가 «이미 쓰는» 모양이다 — 한끼 소식 곰 머리 위 `.news-new`(위 572줄). 새로 지어낸 꼴이 아니다.
+              🔑 ⛔**지금은 창업자 열쇠(`?인스타=1`) 뒤에 있다** — 절대원칙 2026-09-18 「유저에게 보이는 시점을 아이폰과 맞춘다」.
+                 아이폰 1.0.7 이 승인되는 날 이 `열쇠있나(...) &&` 를 뗀다(⛔내 판단으로 떼지 않는다). */}
           <button
             className="press insta-card"
-            onClick={() => { try { 인스타로감() } catch { /* noop */ } openExternal(INSTAGRAM_URL) }}
+            style={{ position: 'relative' }}
+            onClick={() => { 표식끔(true); 인스타봤다(); try { 인스타로감() } catch { /* noop */ } openExternal(INSTAGRAM_URL) }}
             aria-label="한끼 인스타그램 열기"
           >
+            {열쇠있나('인스타') && !표식껐나 && 인스타새글있나() && (
+              <span className="news-new" style={{ position: 'absolute', top: 7, right: 8, color: 'var(--surface)', background: 'var(--gift)' }}>새 글</span>
+            )}
             {/* 창업자(18:29) = *"인스타그램은 그림아이콘 + 아래 한끼인스타그램"* — 아이콘 위 · 글자 아래 · 가운데 */}
             <Icon name="instagram" size={26} color="var(--brown)" />
             <span className="insta-label">한끼 인스타그램</span>
