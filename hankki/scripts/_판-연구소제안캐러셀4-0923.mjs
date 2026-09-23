@@ -37,6 +37,7 @@ const 머리 = `<style>
  .알약 img{width:46px;height:46px;border-radius:12px}
  .쪽{position:absolute;right:52px;top:52px;font-size:26px;color:${흐림}}
 </style>`
+const svg1 = (d) => `<svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="${포인트}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`
 const svg = (d) => `<svg viewBox="0 0 24 24" width="54" height="54" fill="none" stroke="${포인트}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`
 const 알약 = `<div class="꼬리"><span class="알약"><img src="${앱아이콘}">App Store · Google Play 에서 「한끼 레시피북」 검색</span></div>`
 
@@ -52,26 +53,45 @@ const 장1 = `${머리}
   <div style="margin-top:16px;font-size:26px;color:${흐림}">— 한끼를 쓰는 분이 보내주셨어요</div>
   <!-- ⛔ 표지에 더 얹지 않는다 — 창업자 2026-09-23 = *"한장에 너무 많은 내용이 들어가서 정신없게 느껴져"*
        제보 한 덩이 ＋ 한 마디. 폰도 설명도 뺐다(2~4장이 그걸 한 장씩 맡는다). -->
-  <div style="margin-top:96px;font-size:76px;font-weight:700;letter-spacing:-1.8px;line-height:1.24">그래서<br>만들었어요.</div>
-</div>`
+  <div style="margin-top:72px;font-size:82px;font-weight:700;letter-spacing:-1.8px;line-height:1.24">그래서<br>만들었어요.</div>
+  <!-- 🧩 [창업자 2026-09-23] *"1번 좀 휑해"* — 아래 절반이 비어 있었다.
+       → 만든 것 «셋»을 줄로 세워 미리 보여준다(2·3·4장이 한 장씩 맡는 것과 «같은 차례·같은 그림»). -->
+  <div style="margin-top:44px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:center;gap:20px;font-size:34px;color:#6b4a24"><span style="display:inline-flex;width:70px;height:70px;align-items:center;justify-content:center;background:#fff;border:2px solid #efe2cf;border-radius:22px">${svg1('M4 20h4L18.5 9.5l-4-4L4 16zM13 7l4 4')}</span>내가 담은 것만 모아보는 「내 것」</div>
+    <div style="display:flex;align-items:center;gap:20px;font-size:34px;color:#6b4a24"><span style="display:inline-flex;width:70px;height:70px;align-items:center;justify-content:center;background:#fff;border:2px solid #efe2cf;border-radius:22px">${svg1('M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z')}</span>꾹 눌러 여러 편을 한 번에 폴더로</div>
+    <div style="display:flex;align-items:center;gap:20px;font-size:34px;color:#6b4a24"><span style="display:inline-flex;width:70px;height:70px;align-items:center;justify-content:center;background:#fff;border:2px solid #efe2cf;border-radius:22px"><img src="${모자}" style="height:40px"></span>해볼 것 · 최애로 꽂아두기</div>
+  </div>
+</div>
+${알약}`
 
 // ── 2~4장 = 기능 한 장씩 (폰을 «크게»)
 // 📐 폰 크기를 «장마다» 다르게 — 보여줄 것이 세로로 긴 장(목록)과 가로로 넓은 장(시트)이 다르다.
 //   ⛔ 다 같은 네모로 두면 목록 장은 칩 줄만 크게 잘려 «정작 레시피가 안 보인다»(2026-09-23 실물로 보고 고쳤다).
-const 폰크기 = { 2: [470, 740], 3: [650, 600], 4: [470, 700] }
+// 🧩 [창업자 2026-09-23] *"2번은 제목 좀 내리자 · 3번은 제목 내리고 ui더 크게하고 위로 올려 · 4번은 ui도 더 크게"*
+//   → 머리를 66 → 104px 로 «내리고», 폰을 장마다 키웠다(2장 470→530 · 3장 650→790 · 4장 470→560).
+//   ⛔ 3장은 «위로» 올린다 = 바닥 띄움을 64 → 124px 로 «키운다»(bottom 이 커질수록 위로 간다).
+const 폰크기 = { 2: [530, 800], 3: [790, 740], 4: [560, 720] }
+const 폰바닥 = { 2: 46, 3: 124, 4: 168 }
 const 기능장 = (n, 그림, 제목, 설명, 컷키, 자리) => `${머리}
 <div class="쪽">${n} / 4</div>
-<div style="padding:66px 58px 0">
+<div style="padding:104px 58px 0">
   <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">${그림}</div>
   <div style="font-size:60px;font-weight:700;letter-spacing:-1.4px;line-height:1.24">${제목}</div>
   <div style="margin-top:16px;font-size:34px;color:${흐림};line-height:1.5">${설명}</div>
 </div>
-<img class="폰" src="${컷[컷키]}" style="position:absolute;left:50%;transform:translateX(-50%);bottom:${n === 4 ? 150 : 64}px;width:${폰크기[n][0]}px;height:${폰크기[n][1]}px;object-position:${자리}">
+<img class="폰" src="${컷[컷키]}" style="position:absolute;left:50%;transform:translateX(-50%);bottom:${폰바닥[n]}px;width:${폰크기[n][0]}px;height:${폰크기[n][1]}px;object-position:${자리}">
 ${n === 4 ? 알약 : ''}`
 
 const 장2 = 기능장(2, svg('M4 20h4L18.5 9.5l-4-4L4 16zM13 7l4 4'), '내가 담은 것만<br>따로 봐요', '내가 쓴 것도, 인스타·유튜브에서<br>가져온 것도 한 칸에', '내것', 'top')
 const 장3 = 기능장(3, svg('M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z'), '꾹 눌러<br>폴더로 옮겨요', '여러 편을 골라서 한 번에.<br>새 폴더도 그 자리에서', '폴더', 'bottom')
-const 장4 = 기능장(4, `<img src="${모자}" style="height:54px"><img src="${하트}" style="height:54px">`, '해볼 것 · 최애로<br>꽂아둬요', '꽂아두면 맨 위에서<br>바로 찾아요', '핀', 'top')
+// 🧩 [창업자 2026-09-23] *"4번은 요리사랑 하트핀 크게. 오른쪽으로 배치하고 ui도 더 크게 핀들 효과로 강조해줘."*
+//   → 머리 왼쪽에 54px 로 얹혀 있던 핀 둘을 «오른쪽 큰 그림»으로 빼고(148px · 2.7배),
+//     뒤에 둥근 빛을 깔아 눈이 먼저 가게 했다. 제목 자리는 빈 칸(높이 54px)으로 그대로 둔다.
+const 핀강조 = (그림, 색) => `<span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:186px;height:186px">
+  <span style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle, ${색} 0%, rgba(255,255,255,0) 70%)"></span>
+  <img src="${그림}" style="position:relative;height:148px;filter:drop-shadow(0 10px 18px rgba(90,60,20,.22))">
+</span>`
+const 장4 = 기능장(4, `<div style="height:54px"></div><div style="position:absolute;right:30px;top:112px;display:flex;align-items:center;gap:6px">${핀강조(모자, 'rgba(226,196,150,.55)')}${핀강조(하트, 'rgba(230,150,140,.5)')}</div>`, '해볼 것 · 최애로<br>꽂아둬요', '꽂아두면 맨 위에서<br>바로 찾아요', '핀', 'top')
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const p = await b.newPage({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 })
