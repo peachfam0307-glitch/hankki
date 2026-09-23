@@ -1,0 +1,82 @@
+// 📸 「한끼연구소에 온 제안」 캐러셀 «4장» 4:5 (1080×1350) — 2026-09-23
+//
+// 📮 창업자 = *"캐러셀을 한장씩 더 만들자 너무 잘 안보여"*
+// ⛔⛔ 2장 판은 한 장에 기능 셋을 욱여넣어 폰이 322px 로 작아졌다 — 글자가 안 읽혔다.
+//    → **기능마다 한 장**을 주고 폰을 «크게» 놓는다(2~4장 = 폭 620px · 2배 가까이).
+// ⛔ 유니코드 이모지 금지(절대원칙 2026-07-26) — 앱이 쓰는 그림·아이콘 그대로.
+// ⛔ 「북마크」라고 쓰지 않는다 — 앱 이름은 「해볼 것」(요리사모자)·「최애」(하트)(favName.js:34·favPin.js:50).
+// 🏪 끝 알약 = App Store · Google Play 영어 표기 (절대원칙 2026-09-16) — 1장과 마지막 장에 둔다.
+import { chromium } from 'playwright'
+import { readFileSync, existsSync, mkdirSync, rmSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+const R = dirname(dirname(fileURLToPath(import.meta.url)))
+const 낼곳 = process.env.OUT || '/tmp/claude-0/연구소제안캐러셀4'
+rmSync(낼곳, { recursive: true, force: true }); mkdirSync(낼곳, { recursive: true })
+const b64 = (p) => existsSync(p) ? readFileSync(p).toString('base64') : ''
+const png = (p) => { const s = b64(p); return s ? 'data:image/png;base64,' + s : '' }
+const 폰트 = b64(join(R, 'src/assets/fonts/gowun-dodum-korean-400.woff2'))
+const 폰트L = b64(join(R, 'src/assets/fonts/gowun-dodum-latin-400.woff2'))
+const 앱아이콘 = png(join(R, 'public/icons/icon-512-v7.png'))
+const 모자 = png(join(R, 'src/assets/ui/idx_chef.png'))
+const 하트 = png(join(R, 'src/assets/ui/idx_heart.png'))
+const S = '/tmp/claude-0/홍보3장면'
+const 컷 = { 내것: png('/tmp/claude-0/내것칩/내것칩-1-내것-누른뒤.png'), 고름: png(`${S}/2a-고른모습.png`), 폴더: png(`${S}/2b-폴더시트.png`), 핀: png(`${S}/3-해볼것최애.png`) }
+for (const [k, v] of Object.entries(컷)) if (!v) { console.error(`⛔ 캡처 없음: ${k}`); process.exit(1) }
+
+const 바탕 = '#FFFDF7', 진 = '#5d3410', 흐림 = '#a98a6b', 포인트 = '#8a6a3a'
+const 머리 = `<style>
+ @font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트}) format('woff2');unicode-range:U+AC00-D7A3,U+1100-11FF,U+3130-318F}
+ @font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트L}) format('woff2')}
+ *{margin:0;padding:0;box-sizing:border-box;font-family:GD,sans-serif;-webkit-font-smoothing:antialiased}
+ body{width:1080px;height:1350px;background:${바탕};color:${진};overflow:hidden;position:relative}
+ .뱃지{display:inline-block;background:#fff;border:2px solid #efe2cf;border-radius:999px;padding:12px 28px;font-size:29px;color:#7a5a3a}
+ .폰{border-radius:30px;border:3px solid #eadfcd;box-shadow:0 20px 50px rgba(90,60,20,.18);object-fit:cover}
+ .꼬리{position:absolute;left:0;right:0;bottom:46px;text-align:center}
+ .알약{display:inline-flex;align-items:center;gap:14px;background:#fff;border:2px solid #efe2cf;border-radius:999px;padding:16px 30px;font-size:28px;color:#7a5a3a}
+ .알약 img{width:46px;height:46px;border-radius:12px}
+ .쪽{position:absolute;right:52px;top:52px;font-size:26px;color:${흐림}}
+</style>`
+const svg = (d) => `<svg viewBox="0 0 24 24" width="54" height="54" fill="none" stroke="${포인트}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`
+const 알약 = `<div class="꼬리"><span class="알약"><img src="${앱아이콘}">App Store · Google Play 에서 「한끼 레시피북」 검색</span></div>`
+
+// ── 1장 표지
+const 장1 = `${머리}
+<!-- ⭐ 표지는 덩이가 하나뿐이라 «세로 가운데»로 놓는다 — 위에 붙이면 아래가 절반 비어 허전하다(2026-09-23 실물로 보고 고쳤다) -->
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 58px">
+  <div class="뱃지">한끼연구소에 온 제안</div>
+  <div style="position:relative;background:#fff;border:3px solid #efe2cf;border-radius:34px;padding:34px 38px;margin-top:22px">
+    <div style="font-size:41px;line-height:1.5;letter-spacing:-.5px">“제가쓴 레시피는 따로 폴더나<br>그런것도 만들어주세요 헷갈려요”</div>
+    <div style="position:absolute;left:72px;bottom:-19px;width:32px;height:32px;background:#fff;border-right:3px solid #efe2cf;border-bottom:3px solid #efe2cf;transform:rotate(45deg)"></div>
+  </div>
+  <div style="margin-top:16px;font-size:26px;color:${흐림}">— 한끼를 쓰는 분이 보내주셨어요</div>
+  <!-- ⛔ 표지에 더 얹지 않는다 — 창업자 2026-09-23 = *"한장에 너무 많은 내용이 들어가서 정신없게 느껴져"*
+       제보 한 덩이 ＋ 한 마디. 폰도 설명도 뺐다(2~4장이 그걸 한 장씩 맡는다). -->
+  <div style="margin-top:96px;font-size:76px;font-weight:700;letter-spacing:-1.8px;line-height:1.24">그래서<br>만들었어요.</div>
+</div>`
+
+// ── 2~4장 = 기능 한 장씩 (폰을 «크게»)
+// 📐 폰 크기를 «장마다» 다르게 — 보여줄 것이 세로로 긴 장(목록)과 가로로 넓은 장(시트)이 다르다.
+//   ⛔ 다 같은 네모로 두면 목록 장은 칩 줄만 크게 잘려 «정작 레시피가 안 보인다»(2026-09-23 실물로 보고 고쳤다).
+const 폰크기 = { 2: [470, 740], 3: [650, 600], 4: [470, 700] }
+const 기능장 = (n, 그림, 제목, 설명, 컷키, 자리) => `${머리}
+<div class="쪽">${n} / 4</div>
+<div style="padding:66px 58px 0">
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">${그림}</div>
+  <div style="font-size:60px;font-weight:700;letter-spacing:-1.4px;line-height:1.24">${제목}</div>
+  <div style="margin-top:16px;font-size:34px;color:${흐림};line-height:1.5">${설명}</div>
+</div>
+<img class="폰" src="${컷[컷키]}" style="position:absolute;left:50%;transform:translateX(-50%);bottom:${n === 4 ? 150 : 64}px;width:${폰크기[n][0]}px;height:${폰크기[n][1]}px;object-position:${자리}">
+${n === 4 ? 알약 : ''}`
+
+const 장2 = 기능장(2, svg('M4 20h4L18.5 9.5l-4-4L4 16zM13 7l4 4'), '내가 담은 것만<br>따로 봐요', '내가 쓴 것도, 인스타·유튜브에서<br>가져온 것도 한 칸에', '내것', 'top')
+const 장3 = 기능장(3, svg('M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z'), '꾹 눌러<br>폴더로 옮겨요', '여러 편을 골라서 한 번에.<br>새 폴더도 그 자리에서', '폴더', 'bottom')
+const 장4 = 기능장(4, `<img src="${모자}" style="height:54px"><img src="${하트}" style="height:54px">`, '해볼 것 · 최애로<br>꽂아둬요', '꽂아두면 맨 위에서<br>바로 찾아요', '핀', 'top')
+
+const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
+const p = await b.newPage({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 })
+for (const [i, html] of [장1, 장2, 장3, 장4].entries()) {
+  await p.setContent(html, { waitUntil: 'networkidle' }); await p.waitForTimeout(350)
+  await p.screenshot({ path: join(낼곳, `${i + 1}장.png`) })
+}
+await b.close(); console.log('저장 →', 낼곳)
