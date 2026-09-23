@@ -50,7 +50,6 @@ const 장1 = `${머리}
     <div style="font-size:41px;line-height:1.5;letter-spacing:-.5px">“제가쓴 레시피는 따로 폴더나<br>그런것도 만들어주세요 헷갈려요”</div>
     <div style="position:absolute;left:72px;bottom:-19px;width:32px;height:32px;background:#fff;border-right:3px solid #efe2cf;border-bottom:3px solid #efe2cf;transform:rotate(45deg)"></div>
   </div>
-  <div style="margin-top:16px;font-size:26px;color:${흐림}">— 한끼를 쓰는 분이 보내주셨어요</div>
   <!-- ⛔ 표지에 더 얹지 않는다 — 창업자 2026-09-23 = *"한장에 너무 많은 내용이 들어가서 정신없게 느껴져"*
        제보 한 덩이 ＋ 한 마디. 폰도 설명도 뺐다(2~4장이 그걸 한 장씩 맡는다). -->
   <!-- 🧩 [창업자 2026-09-23 ②] *"그래서 만들었어요 까지를 좀 다르게 눈에 들어오게 해봐"*
