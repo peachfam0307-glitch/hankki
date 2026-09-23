@@ -53,16 +53,27 @@ const 장1 = `${머리}
   <div style="margin-top:16px;font-size:26px;color:${흐림}">— 한끼를 쓰는 분이 보내주셨어요</div>
   <!-- ⛔ 표지에 더 얹지 않는다 — 창업자 2026-09-23 = *"한장에 너무 많은 내용이 들어가서 정신없게 느껴져"*
        제보 한 덩이 ＋ 한 마디. 폰도 설명도 뺐다(2~4장이 그걸 한 장씩 맡는다). -->
-  <div style="margin-top:72px;font-size:82px;font-weight:700;letter-spacing:-1.8px;line-height:1.24">그래서<br>만들었어요.</div>
+  <!-- 🧩 [창업자 2026-09-23 ②] *"그래서 만들었어요 까지를 좀 다르게 눈에 들어오게 해봐"*
+       ⛔ 앞 판은 제보도 이 한 마디도 «같은 바탕 위 검은 글씨»라 한 덩어리로 흘러갔다.
+       → 이 한 마디만 «색을 뒤집는다»(진한 판 · 연한 글씨). 위(남이 한 말)와 아래(우리가 만든 것)가 여기서 갈린다. -->
+  <div style="margin-top:36px;background:${진};color:#FFF6E6;border-radius:30px;padding:32px 44px;box-shadow:0 16px 34px rgba(90,60,20,.22)">
+    <div style="font-size:26px;color:#e6cba6;letter-spacing:.5px">한끼가 답했습니다</div>
+    <div style="margin-top:12px;font-size:70px;font-weight:700;letter-spacing:-1.8px;line-height:1.2">그래서 만들었어요.</div>
+  </div>
   <!-- 🧩 [창업자 2026-09-23] *"1번 좀 휑해"* — 아래 절반이 비어 있었다.
        → 만든 것 «셋»을 줄로 세워 미리 보여준다(2·3·4장이 한 장씩 맡는 것과 «같은 차례·같은 그림»). -->
   <!-- 🧩 [창업자 2026-09-23] *"1번은 좀더 세련되게 만들어줄수있어? 지금은 지저분해보여."*
        ⛔ 앞 판은 «흰 네모 상자 셋 ＋ 아이콘 셋»이 글줄마다 붙어 눈이 여섯 번 멈췄다.
        → 상자와 아이콘을 «다 뺐다». 가는 선 하나 아래 짧은 글줄 셋만 — 세는 것은 글자 하나뿐이다. -->
-  <div style="margin-top:52px;padding-top:40px;border-top:2px solid #eee2cf;display:flex;flex-direction:column;gap:22px">
-    <div style="font-size:33px;color:#8a6a45;letter-spacing:-.3px">내가 담은 것만 모아보는 「내 것」</div>
-    <div style="font-size:33px;color:#8a6a45;letter-spacing:-.3px">꾹 눌러 여러 편을 한 번에 폴더로</div>
-    <div style="font-size:33px;color:#8a6a45;letter-spacing:-.3px">해볼 것 · 최애로 꽂아두기</div>
+  <!-- 🧩 [창업자 2026-09-23 ②] *"1번이 너무 글자가 작고 많고 다닥다닥 비슷하게 붙어있어"*
+       ⛔ 앞 판은 33px 글줄 «셋»이 같은 크기·같은 색·같은 길이로 붙어 있어 한 덩어리로 보였다.
+       → ⑴ 줄마다 «큰 이름»(46px 진한색)과 «작은 설명»(29px 흐린색)으로 층을 나눴다
+         ⑵ 글자를 키우고 줄 사이를 22 → 40px 로 벌렸다
+         ⑶ 글월을 «이름 한 마디»로 줄였다 — 읽을 것이 셋이 아니라 «세 낱말»이다. -->
+  <div style="margin-top:40px;padding-top:34px;border-top:2px solid #eee2cf;display:flex;flex-direction:column;gap:30px">
+    <div><div style="font-size:46px;font-weight:700;letter-spacing:-1px">내 것</div><div style="margin-top:6px;font-size:29px;color:${흐림}">내가 담은 편만 모아서</div></div>
+    <div><div style="font-size:46px;font-weight:700;letter-spacing:-1px">폴더</div><div style="margin-top:6px;font-size:29px;color:${흐림}">꾹 눌러 여러 편을 한 번에</div></div>
+    <div><div style="font-size:46px;font-weight:700;letter-spacing:-1px">해볼 것 · 최애</div><div style="margin-top:6px;font-size:29px;color:${흐림}">꽂아두면 맨 위에서 바로</div></div>
   </div>
 </div>
 ${알약}`
