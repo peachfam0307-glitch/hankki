@@ -23,8 +23,8 @@ const state = {
   recipes: [
     // 🔖 「해볼 것」(chef) 둘 · ❤️ 「최애」 하나 — 칩이 뜨려면 꽂힌 편이 있어야 한다
     // ⛔ favorite: true 가 «같이» 있어야 꽂힌 걸로 친다 — isPinned 는 둘 다 본다(favPin.js:59).
-    R('u_1', '엄마 김치찌개', 'fe_128', { favorite: true, favPin: 'chef' }),
-    R('u_22', '우리집 제육', 'fe_18', { favorite: true, favPin: 'heart' }),
+    R('u_1', '돼지고기 김치찌개', 'fh_k02', { favorite: true, favPin: 'chef' }),
+    R('u_22', '제육볶음', 'gr_387', { favorite: true, favPin: 'heart' }),
     R('u_333', '릴스에서 본 마늘파스타', 'fh_k18', { sourceUrl: 'https://www.instagram.com/reel/bbbb/', favorite: true, favPin: 'chef' }),
     R('basic-1', '꽃게탕', 'fh_k02'),
     R('basic-2', '어남선생 오징어볶음', 'fe_18', { sourceUrl: 'https://www.youtube.com/watch?v=aaaa' }),
@@ -48,8 +48,8 @@ await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(200)
 await page.screenshot({ path: join(OUT, '1-내것칩.png') })
 // ② 고르기 모드 → 폴더 시트
 await page.locator('text=편집').first().click(); await page.waitForTimeout(500)
-await page.getByText('엄마 김치찌개').click(); await page.waitForTimeout(200)
-await page.getByText('우리집 제육').click(); await page.waitForTimeout(400)
+await page.getByText('김치찌개', { exact: false }).first().click(); await page.waitForTimeout(200)
+await page.getByText('제육볶음', { exact: false }).first().click(); await page.waitForTimeout(400)
 await page.screenshot({ path: join(OUT, '2a-고른모습.png') })
 await page.getByText('폴더', { exact: true }).last().click(); await page.waitForTimeout(700)
 await page.screenshot({ path: join(OUT, '2b-폴더시트.png') })

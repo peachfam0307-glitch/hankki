@@ -26,8 +26,8 @@ const now = Date.now()
 const R = (id, title, icon, extra = {}) => ({ id, title, category: '한식', time: 15, thumb: 'icon', icon, ingredients: ['재료 1'], steps: ['끓여요.'], tags: [], savedAt: now - id.length * 90000, status: 'sorted', favorite: false, cooked: 0, ...extra })
 const state = {
   recipes: [
-    R('u_1', '엄마 김치찌개', 'fe_128'),
-    R('u_22', '우리집 제육', 'fe_18'),
+    R('u_1', '돼지고기 김치찌개', 'fh_k02'),
+    R('u_22', '제육볶음', 'gr_387'),
     R('u_333', '릴스에서 본 마늘파스타', 'fh_k18', { sourceUrl: 'https://www.instagram.com/reel/bbbb/' }),
     R('basic-1', '꽃게탕', 'fh_k02'),
   ],
@@ -52,8 +52,8 @@ await page.getByText('레시피', { exact: true }).last().click(); await page.wa
 // ① 꾹 눌러 고르기 모드 — 카드 두 장을 고른다
 const 카드 = page.locator('.card, [class*="grid"] button').first()
 await page.locator('text=편집').first().click(); await page.waitForTimeout(500)
-await page.getByText('엄마 김치찌개').click(); await page.waitForTimeout(250)
-await page.getByText('우리집 제육').click(); await page.waitForTimeout(400)
+await page.getByText('김치찌개', { exact: false }).first().click(); await page.waitForTimeout(250)
+await page.getByText('제육볶음', { exact: false }).first().click(); await page.waitForTimeout(400)
 await page.screenshot({ path: join(OUT, '폴더-1-고른모습.png') })
 
 // ② ［폴더］를 누른다 — 「어디로 들어가나」

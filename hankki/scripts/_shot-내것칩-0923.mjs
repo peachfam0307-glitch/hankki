@@ -36,8 +36,8 @@ const state = {
     R('basic-2', '어남선생 오징어볶음', 'fe_18', { sourceUrl: 'https://www.youtube.com/watch?v=aaaa' }),
     R('basic-3', '된장찌개', 'fe_133'),
     // 👤 유저가 담은 것 — 직접 쓴 것 ＋ 가져온 것 «둘 다» 내 것이다
-    R('u_1', '엄마 김치찌개', 'fe_128'),
-    R('u_22', '우리집 제육', 'fe_18'),
+    R('u_1', '돼지고기 김치찌개', 'fh_k02'),
+    R('u_22', '제육볶음', 'gr_387'),
     R('u_333', '릴스에서 본 마늘파스타', 'fh_k18', { sourceUrl: 'https://www.instagram.com/reel/bbbb/' }),
   ],
   diary: [],

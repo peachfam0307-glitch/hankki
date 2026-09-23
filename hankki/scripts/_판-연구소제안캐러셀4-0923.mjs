@@ -116,11 +116,17 @@ const 장3 = 기능장(3, svg('M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 
 // 🧩 [창업자 2026-09-23] *"4번은 요리사랑 하트핀 크게. 오른쪽으로 배치하고 ui도 더 크게 핀들 효과로 강조해줘."*
 //   → 머리 왼쪽에 54px 로 얹혀 있던 핀 둘을 «오른쪽 큰 그림»으로 빼고(148px · 2.7배),
 //     뒤에 둥근 빛을 깔아 눈이 먼저 가게 했다. 제목 자리는 빈 칸(높이 54px)으로 그대로 둔다.
-const 핀강조 = (그림, 색) => `<span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:186px;height:186px">
-  <span style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle, ${색} 0%, rgba(255,255,255,0) 70%)"></span>
-  <img src="${그림}" style="position:relative;height:148px;filter:drop-shadow(0 10px 18px rgba(90,60,20,.22))">
+// 🏷 [창업자 2026-09-23] *"요리사핀 아래 해볼 것. 하트핀 아래 최애 … 표기해줘"*
+//   ⛔ 그림만 두면 «어느 핀이 무엇인지» 밖에서는 모른다 — 2장 「내 것」 칩과 같은 자리의 문제다.
+//   ⛔ 이름은 앱이 쓰는 그대로 = 「해볼 것」·「최애」(favName.js:34 · favPin.js:50). ⛔「북마크」라 쓰지 않는다.
+const 핀강조 = (그림, 색, 이름) => `<span style="display:inline-flex;flex-direction:column;align-items:center;gap:2px">
+  <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:186px;height:186px">
+    <span style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle, ${색} 0%, rgba(255,255,255,0) 70%)"></span>
+    <img src="${그림}" style="position:relative;height:148px;filter:drop-shadow(0 10px 18px rgba(90,60,20,.22))">
+  </span>
+  <span style="font-size:30px;font-weight:700;color:${진};letter-spacing:-.5px">${이름}</span>
 </span>`
-const 장4 = 기능장(4, `<div style="height:54px"></div><div style="position:absolute;right:30px;top:112px;display:flex;align-items:center;gap:6px">${핀강조(모자, 'rgba(226,196,150,.55)')}${핀강조(하트, 'rgba(230,150,140,.5)')}</div>`, '해볼 것 · 최애로<br>꽂아둬요', '꽂아두면 맨 위에서<br>바로 찾아요', '핀', 'top')
+const 장4 = 기능장(4, `<div style="height:54px"></div><div style="position:absolute;right:30px;top:100px;display:flex;align-items:flex-start;gap:6px">${핀강조(모자, 'rgba(226,196,150,.55)', '해볼 것')}${핀강조(하트, 'rgba(230,150,140,.5)', '최애')}</div>`, '해볼 것 · 최애로<br>꽂아둬요', '꽂아두면 맨 위에서<br>바로 찾아요', '핀', 'top')
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const p = await b.newPage({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 })
