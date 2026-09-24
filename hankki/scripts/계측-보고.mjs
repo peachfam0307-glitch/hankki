@@ -234,7 +234,11 @@ const 손이름표 = {
   first_open: '앱을 «처음» 켬', return_d1: '어제 왔던 사람이 또 옴', return_d2_7: '2~7일 만에 또 옴', return_d8plus: '8일 넘어 또 옴',
   // 꾸미기·자랑
   decor_saved: '꾸민 표지를 저장함', decor_have_1: '꾸민 표지 1개 가짐', decor_have_2_4: '꾸민 표지 2~4개 가짐',
-  decor_have_5plus: '꾸민 표지 5개 넘게 가짐', brag_shared: '자랑 카드를 내보냄',
+  decor_have_5plus: '꾸민 표지 5개 넘게 가짐',
+  brag: '레꾸자랑 화면', brag_pick: '레꾸자랑 — 카드 고름', brag_send_tap: '레꾸자랑 — 「보내기」 누름',
+  brag_shared: '레꾸자랑 내보냄 — 내가 꾸민 표지', brag_shared_random: '레꾸자랑 내보냄 — 랜덤 카드',
+  brag_share_cancel: '레꾸자랑 — 공유창을 닫음', brag_saved_fallback: '레꾸자랑 — 공유가 안 돼 사진 저장',
+  brag_arrive: '레꾸자랑 받은 사람이 눌러 들어옴',
   // 레시피
   recipe_saved: '레시피를 저장함', import_read_ok: '사진·글에서 읽어냄', import_read_fail: '못 읽음',
   import_gallery: '가져오기 — 사진첩', import_photo: '가져오기 — 사진 찍기', import_share: '가져오기 — 공유받기',

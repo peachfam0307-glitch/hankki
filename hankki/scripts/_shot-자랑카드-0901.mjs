@@ -9,7 +9,7 @@ import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
 
-const OUT = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad'
+const OUT = process.env.SHOT_OUT || '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad'
 const 방 = `${OUT}/자랑카드-0901`
 mkdirSync(방, { recursive: true })
 const 그날 = process.env.ON || '2026-09-01'

@@ -41,7 +41,8 @@ const app = 읽기('src/App.jsx')
 잰다(/강조\('「더보기」를 누르고 「한끼」를 찾아요'\)/.test(imp), '① 가져오기: 안드로이드 안내(더보기 → 한끼)는 그대로 남아 있다')
 
 const cover = 읽기('src/shareCover.js')
-잰다(/앱안인가\(\) \? '나도 꾸미러 가기  ·  App Store ‘한끼’ 검색' : '나도 꾸미러 가기  ·  Play스토어 ‘한끼’ 검색'/.test(cover), '② 표지 알약: 앱이면 App Store · 아니면 Play스토어')
+// [2026-09-24] 이름을 「한끼 레시피북」 · 스토어 영어로 바꿨다 — 「앱이면 App Store만」이라는 뜻(2.3.10)은 그대로 잰다
+잰다(/스토어검색 = \(\) => \(앱안인가\(\) \? 'App Store 에서 「한끼 레시피북」 검색' : 'Google Play 에서 「한끼 레시피북」 검색'\)/.test(cover) && /const pillLabel = 스토어검색\(\)/.test(cover), '② 표지 알약: 앱이면 App Store · 아니면 Google Play')
 
 const nud = 읽기('src/nudges.js')
 잰다(/export const STORE_URL = 앱안인가\(\)\s*\? 'https:\/\/apps\.apple\.com\/kr\/app\/id6811288851\?action=write-review'/.test(nud), '③ 리뷰 주소: 앱이면 App Store 리뷰 쓰기(id6811288851)')

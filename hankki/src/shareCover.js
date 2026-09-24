@@ -43,6 +43,15 @@ async function ensureFonts() {
 //      백그라운드로 미리 그려두면, 고를 때쯤엔 다 돼 있어서 «누른 직후»에 바로 공유창이 열린다.
 //      (랜덤 카드는 v9.63부터 이렇게 하고 있었는데 꾸민 표지에만 없었다 — 창업자 2026-08-05)
 //   ⛔ 여기서 navigator.share 를 부르지 말 것. 공유는 «사용자가 누른 순간»에만 열린다.
+// 🏪 받은 사람이 «찾는 글자» — [2026-09-24] 앱 이름을 「한끼 레시피북」으로 · 스토어는 영어로(창업자 *"여기도 맞추자"*)
+//   ⛔ 두 스토어를 «한 줄에» 적지 않는다 — 이 카드는 «앱이 만든다». 아이폰 앱 안에 Google Play 가 찍히면
+//      애플 심사 2.3.10(다른 플랫폼 이름을 앱에 넣지 말 것)에 걸린다(2026-09-13 심사 전 전수점검 때 가른 이유).
+//      📌 「두 스토어 둘 다」(절대원칙 2026-09-16)는 «홍보물»(캐러셀·릴스) 규칙이다 — 앱 안 글자는 해당 없다.
+export const 스토어검색 = () => (앱안인가() ? 'App Store 에서 「한끼 레시피북」 검색' : 'Google Play 에서 「한끼 레시피북」 검색')
+// 🔗 [2026-09-24] 받은 사람이 누르는 주소 — «한 곳»으로 고정하고 꼬리표를 단다
+//   ⛔ 전엔 `appUrl`(지금 앱이 떠 있는 주소)을 썼다 → 아이폰 앱 안에선 `capacitor://localhost/…` 가 실려 «못 여는 링크»였다.
+//   ⭐ `?from=brag` = 받은 사람이 눌러 들어오면 앱이 `brag_arrive` 로 센다(stats.js) — «퍼져서 온 사람».
+export const 자랑주소 = 'https://peachfam0307-glitch.github.io/hankki/?from=brag'
 export async function buildCoverPayload({ coverEl, title, info = [], appUrl, recipeEl = null }) {
   if (!coverEl) return null
   await ensureFonts()
@@ -164,11 +173,12 @@ export async function buildCoverPayload({ coverEl, title, info = [], appUrl, rec
   //       📌 같은 성격의 자리는 **두 곳을 같이 고쳐야 한다** — 한쪽만 고치면 이렇게 오래 남는다.
   //    ⚠️ `url` 자체는 그대로 둔다 — 공유 payload 의 `url` 로 쓰이고, 웹으로 여는 사람에겐 유효하다.
   //       **카드에 «찍는 글자»만** 스토어 안내로 바꾼다.
-  const url = appUrl || 'https://peachfam0307-glitch.github.io/hankki/'
+  const url = 자랑주소   // ⛔ appUrl 은 이제 안 쓴다(위 🔗 — 아이폰 앱에서 못 여는 주소가 실렸다)
   ctx.fillStyle = '#a89c88'
   ctx.font = `29px ${BODY}`
   ctx.fillText('오늘도 한 끼 해냈다 🧡', W / 2, footerTop)
-  const pillLabel = 앱안인가() ? '나도 꾸미러 가기  ·  App Store ‘한끼’ 검색' : '나도 꾸미러 가기  ·  Play스토어 ‘한끼’ 검색'
+  // 🏪 [2026-09-24] 앱 이름 「한끼 레시피북」 · 스토어 영어 표기(위 `스토어검색`)
+  const pillLabel = 스토어검색()
   const pillW = 720
   roundRect(ctx, W / 2 - pillW / 2, footerTop + 34, pillW, 58, 29)
   ctx.fillStyle = '#5d3410'          // ⭐ 채운 알약 — 연한 판＋갈색 글자는 카드 배경에 묻혔다
@@ -232,7 +242,9 @@ export async function shareDecoratedCover({ coverEl, title, info = [], appUrl, r
       return { ok: true, shared: true, 다음: payload.다음 }
     }
   } catch (e) {
-    if (e && e.name === 'AbortError') return { ok: true, shared: false }
+    // 🙅 [2026-09-24] 공유창을 «닫은» 것 — ⛔저장 폴백(맨 아래)과 같은 값이면 화면이 「사진으로 저장했어요」라고 거짓말하고
+    //    통계도 brag_saved_fallback 으로 잘못 센다(9/22 의 2회가 그랬을 수 있다). `취소` 로 갈라 돌려준다.
+    if (e && e.name === 'AbortError') return { ok: true, shared: false, 취소: true }
     // 📮📮 **허가가 끊긴 것이다 — 저장으로 밀지 않는다.** (창업자 2026-08-05 *"내가만든표지는안돼"*)
     //   폰 공유는 «누른 직후»에만 열리는데 표지 캡처가 십수 초 걸려 그 사이 허가가 만료된다.
     //   ⭐ 만든 파일을 그대로 돌려주면, 화면이 「지금 보내기」 버튼을 띄운다 —

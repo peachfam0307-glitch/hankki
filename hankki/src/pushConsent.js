@@ -125,7 +125,10 @@ export function 알림허락받기({ 다시묻기 = false } = {}) {
     } else {
       try { 결과 = await w().Notification.requestPermission() } catch { 결과 = 'denied' }
     }
-    알림동의쓰기(결과 === 'granted' ? 'yes' : 'no')
+    // 🔔 [2026-09-24 · 창업자 갤럭시 실측 2026-09-23 밤] 크롬 창을 «그냥 닫은 것»(default)은 거절이 아니다.
+    //   ⛔ 전엔 default 도 'no' 로 적어서 → 다음부터 담기 시트가 «영영» 안 떴다. 화살은 denied 일 때만 쓴 것이다.
+    if (결과 === 'granted') 알림동의쓰기('yes')
+    else if (결과 === 'denied') 알림동의쓰기('no')
     풀기(결과 === 'granted')
   }
   let 받은시트 = false

@@ -436,7 +436,10 @@ export function 일기생김() { 지난화면 = null; 행동보내기('diary_new
 //    (2026-09-10 문서가 이미 경고한 함정이다 — 안에 넣으면 두 번째부터 영영 안 세진다.)
 
 /** 🎴 레꾸자랑을 «진짜로» 보냈다. ⛔취소·저장 폴백은 안 센다 — `res.shared === true` 일 때만. */
-export function 자랑보냄() { 지난화면 = null; 행동보내기('brag_shared') }
+//   📊 [2026-09-24] 창업자 = *"내가꾸민거 몇건 랜덤 몇건각각 알게되면 더 좋지"* → 갈래를 이름으로 가른다.
+//      brag_shared = 내가 꾸민 표지 · brag_shared_random = 랜덤 뽑기 카드 · 둘을 더하면 «밖으로 나간 건수».
+//      ⛔ 「레시피도 보내기」(이어보내기 두 번째 장)는 안 센다 — 한 번 자랑한 것을 두 건으로 세지 않는다.
+export function 자랑보냄(종류 = '표지') { 지난화면 = null; 행동보내기(종류 === '랜덤' ? 'brag_shared_random' : 'brag_shared') }
 
 /** 🍳 요리모드를 «시작»했다. ⚠️화면 기록(`cook`)과 짝이지만 뜻이 다르다 — 이건 첫 걸음을 뗀 순간이다. */
 export function 요리시작() { 지난화면 = null; 행동보내기('cook_started') }
@@ -571,6 +574,8 @@ export const 냉장고열림 = 관문('pantry_open')
 export const 장바구니펼침 = 관문('pick_open_shop')     // 장보기 탭의 「주부의 장바구니」 — ⛔상세의 pick_open 과 다른 자리
 export const 자랑고름 = 관문('brag_pick')             // 카드를 골랐다(시트가 떴다) — 보냈나(brag_shared)와 갈라야 «돌아선 사람»이 보인다
 export const 자랑사진저장 = 관문('brag_saved_fallback') // 공유가 안 되는 폰 → 사진 저장 — 폰 탓과 무관심을 가른다
+export const 자랑보내기누름 = 관문('brag_send_tap')   // [2026-09-24] 「보내기」를 눌렀다 — 고르고(brag_pick) 안 누른 사람과 누르고 멈춘 사람을 가른다
+export const 자랑창닫음 = 관문('brag_share_cancel')   // [2026-09-24] 폰 공유창까지 떴는데 닫았다 — 폰 탓(저장 폴백)과 가른다
 /** 열쇠 — key_block 이 곧 «결제 수요»다 */
 export const 열쇠받음 = 관문('key_earn')
 export const 열쇠막힘 = 관문('key_block')
@@ -767,9 +772,20 @@ try {
 const 마지막날칸 = 'hankki:lastOpen'
 
 /** 🔁 앱을 열 때 한 번 부른다 — 같은 날 여러 번 켜도 «하루에 한 번»만 보낸다. */
+// 🔗 [2026-09-24] 레꾸자랑 카드를 «받은» 사람이 링크를 눌러 들어왔다 — 공유 주소에 `?from=brag` 를 달았다(shareCover `자랑주소`).
+//   ⭐ 「몇 건 보냈나」(brag_shared*)의 짝 = 「그걸 보고 몇 명이 왔나」. 창 하나에 한 번만 센다(새로고침으로 부풀지 않게).
+function 자랑타고왔나() {
+  try {
+    if (new URLSearchParams(location.search).get('from') !== 'brag') return
+    try { if (sessionStorage.getItem('hankki:자랑타고옴')) return; sessionStorage.setItem('hankki:자랑타고옴', '1') } catch { /* noop */ }
+    행동보내기('brag_arrive')
+  } catch { /* ⛔ 통계가 죽어도 앱은 그대로 돈다 */ }
+}
+
 export function 다시왔나() {
   try {
     if (통계꺼짐()) return
+    자랑타고왔나()   // ⛔ 아래 「오늘 이미 보냈으면 그만」보다 «먼저» — 오늘 이미 켠 사람이 링크로 와도 센다
     const 오늘 = todayKST()
     let 지난 = null
     try { 지난 = localStorage.getItem(마지막날칸) } catch { /* noop */ }

@@ -470,7 +470,18 @@ export default function ProfileScreen() {
         if (브라우저권한() === 'denied') { nav.showToast('폰 설정 → 앱 → 한끼 → 알림에서 켜 주세요'); return }
         if (알림동의 === 'yes' && 브라우저권한() === 'granted') { await 알림끄기(); nav.showToast('알림을 껐어요'); return }
         const 됐나 = await 알림켜기({ 다시묻기: true })
-        nav.showToast(됐나 ? '알림을 켰어요 · 월·수 15:30 · 토 9:00' : '알림을 켜지 못했어요')
+        // 🔔 [2026-09-24] 실패를 «왜»로 가른다 — 창업자 갤럭시(2026-09-23)는 한끼가 홈 화면에 «설치»돼 있어
+        //   권한이 그 앱 소관이었고, 크롬 «탭»에서는 허용을 눌러도 영영 default 였다. 폰 설정은 이미 켜져 있었다.
+        //   ⛔ 날짜·시각을 글자로 박지 않는다 — 「월·수 15:30」이 이미 어긋나 있었다(진짜 17:00 · 요일 고정 아님).
+        if (됐나) { nav.showToast('알림을 켰어요 · 새 소식이 열리는 날 하루 한 번'); return }
+        const 권한지금 = 브라우저권한()
+        const 설치앱안 = (() => { try { return window.matchMedia('(display-mode: standalone)').matches } catch { return false } })()
+        nav.showToast(
+          권한지금 === 'denied' ? '폰 설정 → 앱 → 한끼 → 알림에서 켜 주세요'
+          : 권한지금 === 'granted' ? '알림을 켜지 못했어요 · 잠시 뒤 다시 눌러 주세요'
+          : 설치앱안 ? '알림을 켜려면 「허용」을 눌러 주세요'
+          : '홈 화면에 한끼를 설치했다면 그 아이콘으로 열어서 켜 주세요'
+        )
       },
     },
     { icon: 'trash', label: '계정 · 데이터 삭제', onClick: () => setDelAccount(true) },
