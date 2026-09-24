@@ -11,7 +11,6 @@ import TabTips from '../components/TabTips'
 import TabTalk from '../components/TabTalk'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
-import { 열쇠있나 } from '../components/Stickers'
 import FoodIcon, { guessFoodIcon, dishCatOf } from '../components/FoodIcon'
 // 🔖 인덱스 = 창업자가 고른 요리사모자 클립 (`ck_27` · 2026-08-18 확정)
 //    📮 *"하나만 고른다면 요리사모자(아무것도 없는거)"* · *"그러자 1개만 넣자. 제일 깔끔하긴해"*
@@ -370,7 +369,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   const 순서칸 = 'hankki:folder:순서'
   const [칩순서, set칩순서] = useState(() => { try { const v = JSON.parse(localStorage.getItem(순서칸) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } })
   const [칩편집, set칩편집] = useState(null)   // 고른 칩 이름 · null = 편집 아님
-  const 폴더앞켜짐 = 열쇠있나('폴더앞')
+  const 폴더앞켜짐 = true   // 🔓 열쇠(?폴더앞=1)는 2026-09-25 뗐다 — 아이폰 1.0.8 승인 날 (창업자 「승인됐어 갤럭시 배포해」)
   const 칩목록 = useMemo(() => {
     // 🍚🍚 [창업자 확정 2026-09-14] **종류가 나라보다 «앞»이다.**
     //   📮 창업자 = *"나라보다는 반찬 국 이런 카테고리가 요리하기 더 편하지 않을까..

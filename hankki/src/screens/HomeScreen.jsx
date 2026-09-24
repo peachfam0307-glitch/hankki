@@ -11,7 +11,7 @@ import { INSTAGRAM_URL, INSTA_NEW_AT, INSTA_NEW_DAYS } from '../version'
 import { 인스타로감 } from '../stats'   // 🚪 insta_go — 홈 인스타 칸을 누른 사람
 import { SNS인가, SNS표 } from '../embed'
 import Thumb from '../components/Thumb'
-import { 얹은틀있나, 열쇠있나 } from '../components/Stickers'
+import { 얹은틀있나 } from '../components/Stickers'
 import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
 import TabTips from '../components/TabTips'
@@ -620,14 +620,14 @@ export default function HomeScreen() {
           {/* 🆕 [창업자 2026-09-23] 「새 글」 표식 — *"사람들 들어가보게"*. 고른 꼴은 ③ 알약(시안 넷을 폰 크기로 보고 골랐다).
               ⭐ 우리가 «이미 쓰는» 모양이다 — 한끼 소식 곰 머리 위 `.news-new`(위 572줄). 새로 지어낸 꼴이 아니다.
               🔑 ⛔**지금은 창업자 열쇠(`?인스타=1`) 뒤에 있다** — 절대원칙 2026-09-18 「유저에게 보이는 시점을 아이폰과 맞춘다」.
-                 아이폰 1.0.7 이 승인되는 날 이 `열쇠있나(...) &&` 를 뗀다(⛔내 판단으로 떼지 않는다). */}
+                 🔓 2026-09-25 뗐다 — 아이폰 1.0.8 승인 날 (창업자 「승인됐어 갤럭시 배포해」). */}
           <button
             className="press insta-card"
             style={{ position: 'relative' }}
             onClick={() => { 표식끔(true); 인스타봤다(); try { 인스타로감() } catch { /* noop */ } openExternal(INSTAGRAM_URL) }}
             aria-label="한끼 인스타그램 열기"
           >
-            {열쇠있나('인스타') && !표식껐나 && 인스타새글있나() && (
+            {!표식껐나 && 인스타새글있나() && (
               <span className="news-new" style={{ position: 'absolute', top: 7, right: 8, color: 'var(--surface)', background: 'var(--gift)' }}>새 글</span>
             )}
             {/* 창업자(18:29) = *"인스타그램은 그림아이콘 + 아래 한끼인스타그램"* — 아이콘 위 · 글자 아래 · 가운데 */}
