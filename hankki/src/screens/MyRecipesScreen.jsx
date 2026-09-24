@@ -11,6 +11,7 @@ import TabTips from '../components/TabTips'
 import TabTalk from '../components/TabTalk'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
+import { 열쇠있나 } from '../components/Stickers'
 import FoodIcon, { guessFoodIcon, dishCatOf } from '../components/FoodIcon'
 // 🔖 인덱스 = 창업자가 고른 요리사모자 클립 (`ck_27` · 2026-08-18 확정)
 //    📮 *"하나만 고른다면 요리사모자(아무것도 없는거)"* · *"그러자 1개만 넣자. 제일 깔끔하긴해"*
@@ -360,6 +361,20 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   //   ⛔⛔ 그 전엔 `folders` 를 그대로 그렸다. 그 목록은 레시피에 적힌 folder 로 «저절로» 불어나서
   //      아무도 정한 적 없는 「국·탕·찌개」 칩이 2편짜리로 생겨 있었다(실측 2026-09-14).
   //   ⭐ 유저가 만든 폴더는 남긴다 — 옛 이름(국물·국·탕)으로 옮겨 둔 편을 잃으면 안 된다.
+  // 📁⬅ [2026-09-24] 칩을 꾹 → 「맨 앞으로」 (창업자 시안 D · *"그게 낫겠다"*)
+  //   ⭐ 순서 «전체»를 맞추게 하지 않는다 — 시안 A(화살표 시트)는 창업자가 «너무 복잡»하다고 했다.
+  //      자주 쓰는 칩만 앞으로 당긴다. 가장 최근에 당긴 것이 맨 앞이다.
+  //   💾 폰에만 적는다(localStorage) — 칩 순서는 «보기 설정»이라 잃어도 레시피는 그대로다.
+  //   ⛔ 열쇠(?폴더앞=1) 뒤 — 유저 눈에 새로 보이는 것은 아이폰과 같이 연다(절대원칙 2026-09-18)
+  const 앞칸 = 'hankki:folder:앞'
+  const [앞폴더, set앞폴더] = useState(() => { try { const v = JSON.parse(localStorage.getItem(앞칸) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } })
+  const [칩메뉴, set칩메뉴] = useState(null)
+  const 앞으로 = (c, 뺄까) => {
+    const 다음 = 뺄까 ? 앞폴더.filter((n) => n !== c) : [c, ...앞폴더.filter((n) => n !== c)]
+    set앞폴더(다음)
+    try { localStorage.setItem(앞칸, JSON.stringify(다음)) } catch { /* noop */ }
+  }
+  const 폴더앞켜짐 = 열쇠있나('폴더앞')
   const 칩목록 = useMemo(() => {
     // 🍚🍚 [창업자 확정 2026-09-14] **종류가 나라보다 «앞»이다.**
     //   📮 창업자 = *"나라보다는 반찬 국 이런 카테고리가 요리하기 더 편하지 않을까..
@@ -376,8 +391,11 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     // ⛔ 폰에만 남은 «옛 폴더»는 뺀다 (창업자 2026-09-14 "그럼 다 빼야지" · data/종류.js 의 옛폴더이름)
     //   ⭐ 칩에서만 빠진다 — 그 폴더에 든 편은 나라 칩·종류 칩·「전체」에 그대로 뜬다(아래 여기드나).
     const 유저것 = (folders || []).filter((f) => !정해진것.includes(f) && !옛폴더이름.includes(f))
-    return [...정해진것, ...유저것]
-  }, [folders])
+    const 기본 = [...정해진것, ...유저것]
+    if (!폴더앞켜짐) return 기본
+    const 앞 = 앞폴더.filter((n) => 기본.includes(n))   // 지운 폴더는 조용히 빠진다
+    return [...앞, ...기본.filter((n) => !앞.includes(n))]
+  }, [folders, 앞폴더, 폴더앞켜짐])
   const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__heart' && folder !== '__pinned' && folder !== '__often' && folder !== '__sns' && folder !== '__mine' && !DEFAULT_FOLDERS.has(folder)
 
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
@@ -951,7 +969,9 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               ⭐ 「전체」는 윗줄에 둔다 — 어느 줄을 보든 돌아올 자리라 제일 왼쪽 첫 칸이 맞다. */}
           <div className="hscroll" style={{ marginBottom: 8, display: query ? 'none' : undefined }}>
             {칩목록.map((c) => (
-              <button key={c} className={`pill press ${folder === c ? 'active' : ''}`} onClick={() => setFolder(c)}>{c} {countIn(c)}</button>
+              <button key={c} className={`pill press ${folder === c ? 'active' : ''}`}
+                {...(폴더앞켜짐 ? hold(() => set칩메뉴(c)) : {})}
+                onClick={() => { if (lpFired.current) { lpFired.current = false; return } setFolder(c) }}>{c} {countIn(c)}</button>
             ))}
             <button className="pill press" style={{ borderStyle: 'dashed', color: 'var(--text-sub)' }} onClick={() => setNewFolder(true)}>＋ 폴더</button>
           </div>
@@ -1243,6 +1263,15 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
         />
       )}
 
+      {칩메뉴 && (
+        <ConfirmSheet
+          title={`‘${칩메뉴}’`}
+          message={앞폴더.includes(칩메뉴) ? '원래 자리로 돌려놓을까요?' : '이 칩을 맨 앞으로 옮길까요?\n자주 쓰는 폴더를 바로 찾을 수 있어요.'}
+          confirmLabel={앞폴더.includes(칩메뉴) ? '원래 자리로' : '맨 앞으로'}
+          onConfirm={() => { const 뺄까 = 앞폴더.includes(칩메뉴); 앞으로(칩메뉴, 뺄까); nav.showToast(뺄까 ? '원래 자리로 돌려놨어요' : '맨 앞으로 옮겼어요') }}
+          onClose={() => set칩메뉴(null)}
+        />
+      )}
       {delFolder && (
         <ConfirmSheet
           title="폴더 삭제"
