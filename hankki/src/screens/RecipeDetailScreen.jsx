@@ -4,7 +4,7 @@ import { COACH } from '../coach'
 //   🔢 창업자 = *"요 며칠 통계에 레꾸자랑 보낸 사람있어?"* → 장부 15일치 brag_shared **0**.
 //   ⛔ 9/21 에 BragScreen 의 이름 겹침을 고쳤지만 그건 «네 길 중 한 길»이었다. 나머지 셋(여기 둘 · SendNowSheet 하나)은 그대로였다.
 //   📌 detail 은 어제 조회 52로 제일 많이 본 화면이다 — 여기서 보낸 사람이 통째로 빠져 있었다.
-import { 사러나감, 장보기담음, 요리끝냄, 픽펼침, 자랑보냄, 자랑고름 } from '../stats'
+import { 사러나감, 장보기담음, 요리끝냄, 픽펼침, 자랑보냄, 자랑고름, 자랑사진저장, 자랑보내기누름, 자랑창닫음 } from '../stats'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -459,6 +459,7 @@ export default function RecipeDetailScreen({ id }) {
   const hasRecipe = !!((r.ingredients || []).length || (r.steps || []).length)
   const doShareCover = async () => {
     // ⛔ 시트를 닫기 «전에» 미리 캡처를 손에 쥔다 — 닫으면 useEffect 정리가 prepRef 를 비운다
+    try { 자랑보내기누름() } catch { /* 통계가 죽어도 자랑은 된다 */ }   // 📊 [2026-09-24]
     const prepared = prepRef.current
     setCoverBusy(true) // 로딩 오버레이 + 숨은 레시피카드 마운트 유지
     setShareSheet(false)
@@ -474,7 +475,8 @@ export default function RecipeDetailScreen({ id }) {
       if (res && res.pending) 띄울시트 = res.pending   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
       // 📱 표지가 나갔고 레시피가 한 장 남았다 → 「레시피도 보내기」를 한 번 더 청한다(창업자 "ㄴ으로 하자")
       else if (res && res.shared === true && res.다음) 띄울시트 = { ...res.다음, 이어보내기: true }
-      else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
+      else if (res && res.취소) { try { 자랑창닫음() } catch { /* noop */ } }   // 🙅 [2026-09-24] 닫은 것 — ⛔「사진으로 저장했어요」라고 말하지 않는다
+      else if (res && res.ok && res.shared === false) { try { 자랑사진저장() } catch { /* noop */ } nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요') }
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
       // 🗣 「꾸민 표지 그대로」 공유도 리뷰를 청한다 — BragScreen `sendCover` 와 «같은 구멍»이었다
       //   (창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 아예 못봤어"*). 자세한 경위는 그쪽 주석에.
@@ -551,7 +553,7 @@ export default function RecipeDetailScreen({ id }) {
              (창업자 = *"리뷰 안떠..ㅠㅠ"*). 자세한 경위는 `SendNowSheet.jsx` 머리 주석에. */}
       <SendNowSheet
         pending={pending}
-        onShared={() => { try { 자랑보냄() } catch { /* 통계가 죽어도 자랑은 된다 */ } 보냈나.current = true }}
+        onShared={() => { if (!pending?.이어보내기) { try { 자랑보냄('표지') } catch { /* 통계가 죽어도 자랑은 된다 */ } } 보냈나.current = true }}   // ⛔ 이어보내기(레시피 두 번째 장)는 같은 자랑이라 안 센다
         onClose={(다음) => {
           // 📱 [2026-08-28 ⓑ] 표지가 나갔고 레시피가 남았으면 **한 장 더**를 먼저 청한다. 리뷰는 그다음.
           if (다음) { setPending({ ...다음, 이어보내기: true }); return }
@@ -1376,7 +1378,8 @@ export default function RecipeDetailScreen({ id }) {
         <Portal>
           <ShareDrawCard
             recipe={r}
-            onShared={() => { try { 자랑보냄() } catch { /* 통계가 죽어도 자랑은 된다 */ } 보냈나.current = true }}
+            onShared={() => { try { 자랑보냄('랜덤') } catch { /* 통계가 죽어도 자랑은 된다 */ } 보냈나.current = true }}
+            onTap={자랑보내기누름} onCancel={자랑창닫음} onSavedFallback={자랑사진저장}
             onClose={() => {
               setDrawOpen(false)
               // 🎴 보낸 사람에게만 · 카드를 «닫는» 순간에(시트 위에 시트가 되지 않게)

@@ -31,9 +31,10 @@ const detail = 읽기('../src/screens/RecipeDetailScreen.jsx')
 재다('BragScreen 이 자랑보냄을 가져온다', /import \{[^}]*자랑보냄/.test(brag), true)
 재다('RecipeDetail 이 자랑보냄을 가져온다', /import \{[^}]*자랑보냄/.test(detail), true)
 // 🔢 BragScreen 2곳 = sendCover 하나 ＋ SendNowSheet onShared 하나 ＋ ShareDrawCard onShared 하나 = 3
-재다('BragScreen 이 자랑보냄을 부르는 곳', 세기(brag, '자랑보냄\\(\\)') >= 3, true)
+// [2026-09-24] 자랑보냄('표지'|'랜덤') 으로 갈래를 넘기게 됐다 — 괄호 안 인자까지 센다
+재다('BragScreen 이 자랑보냄을 부르는 곳', 세기(brag, "자랑보냄\\((?:'표지'|'랜덤')?\\)") >= 3, true)
 // 🔢 RecipeDetail 2곳 = 꾸민 표지 ＋ onShared 둘 = 3
-재다('RecipeDetail 이 자랑보냄을 부르는 곳', 세기(detail, '자랑보냄\\(\\)') >= 3, true)
+재다('RecipeDetail 이 자랑보냄을 부르는 곳', 세기(detail, "자랑보냄\\((?:'표지'|'랜덤')?\\)") >= 3, true)
 재다('RecipeDetail 이 자랑고름을 부른다', 세기(detail, '자랑고름\\(\\)') >= 1, true)
 
 // ⛔⛔ 같은 이름으로 «덮는» 사고를 다시 만들지 않는다 — 이게 9/21 버그의 뿌리였다

@@ -10,7 +10,8 @@ import { useModalBack } from '../useBackHandler'
 //    딸 아이폰 실물(09-12 17:59 문자 카드 · 18:00 사진첩 카드)에서 「Play스토어 '한끼' 검색」이 그대로 나갔다.
 //    웹·안드로이드는 그대로. 카드 «그림 안 알약» 둘 ＋ 공유 «글» 둘 = 네 곳이 전부 이 한 줄을 본다.
 import { 앱안인가 } from '../nativeAuth'
-const 스토어이름 = () => (앱안인가() ? 'App Store' : 'Play스토어')
+// 🏪 [2026-09-24] 찾는 글자 = shareCover 의 `스토어검색` 하나로(두 곳이 따로 놀아 표지만 늦게 고쳐진 적이 있다 · 2026-08-04)
+import { 스토어검색, 자랑주소 } from '../shareCover'
 // ⛔ UI엔 유니코드 이모지를 쓰지 않는다 — 우리 아이콘·스티커만(CLAUDE.md 핀).
 //    v8.63에서 앱 전체를 정리할 때 이 시트는 '보류'로 빠져 🔄💌🖼🐻🐧가 남아 있었다(2026-07-29 정리).
 import uiDuoHi from '../assets/stickers/photo/gp_duohi.png'
@@ -198,7 +199,6 @@ const csOnly = (kind) => seasonCuts(kind).filter((e) => HANBOK.test(e.name))
 // 📌 계절 캐릭터 컷은 `seasonCuts()` 가 **창이 열렸을 때만** 넣어주므로 스킨별로 따로 거를 필요가 없다.
 //    (아치 스킨은 이제 가을 전용이 아니라 **사철 뼈대**다 — 옷만 계절마다 갈아입는다)
 
-const APP_URL = 'https://peachfam0307-glitch.github.io/hankki/'
 const rnd = (a) => a[Math.floor(Math.random() * a.length)]
 const titleFont = (t) => { const n = String(t).replace(/\s/g, '').length; return n <= 5 ? 104 : n <= 7 ? 88 : n <= 9 ? 74 : 62 }
 
@@ -637,7 +637,7 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
           「Play스토어 ‘한끼’ / 검색」 으로 «두 줄»이 되어 알약 밖으로 삐져나왔다.
           ⭐ 뽑힌 사진에서만 보였다 — 화면에선 한 줄이라 눈으로는 절대 못 잡는다. */}
       <span style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', padding: '9px 20px', borderRadius: 999, background: wm, color: onColor(wm), fontFamily: 'Jua, sans-serif', fontSize: 22, letterSpacing: '-0.01em' }}>
-        {스토어이름()} ‘한끼’ 검색
+        {스토어검색()}
       </span>
     </div>
   )
@@ -1163,13 +1163,14 @@ export function RecipeCard({ recipe }) {
         {steps.length > 7 && <div style={{ fontSize: 26, color: '#a8987e', paddingLeft: 53, marginTop: 2 }}>… 전체 {steps.length}단계는 한끼 앱에서 →</div>}
       </div>
       <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '18px 42px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontSize: 38, fontWeight: 800 }}>🔍 {스토어이름()} ‘한끼’ 검색</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '18px 42px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontSize: 38, fontWeight: 800 }}>🔍 {스토어검색()}</span>
       </div>
     </div>
   )
 }
 
-export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }) {
+// 📊 [2026-09-24] onTap = 「보내기」를 눌렀다 · onCancel = 폰 공유창을 닫았다 — 둘 다 부모가 계측으로 넘긴다(없으면 조용)
+export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared, onTap, onCancel, onSavedFallback }) {
   // ⛔⛔ **뒤로가기가 이 카드를 못 보고 «홈»으로 샜다** (창업자 2026-08-23
   //    *"레꾸자랑 갑자기 홈가는게 뒤로가기할때야. 닫기누르면 그대로있어"*)
   //   ⭐⭐ 창업자가 「닫기 ↔ 뒤로가기」로 갈라준 게 답을 줬다 —
@@ -1308,7 +1309,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
     const 레시피 = files.length > 1 ? files[1] : null
     if (!navigator.canShare({ files: 표지 })) return null
     return navigator
-      .share({ files: 표지, title, text: `『${title}』 오늘의 한 끼 🧡\n${스토어이름()}에서 '한끼' 검색 🔍`, url: APP_URL })
+      .share({ files: 표지, title, text: `『${title}』 오늘의 한 끼 🧡\n${스토어검색()} 🔍`, url: 자랑주소 })
       .then((v) => { onShared?.(); if (레시피) set남은레시피(레시피); return v })
   }, [title, onShared])
 
@@ -1316,7 +1317,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
   const 레시피보내기 = useCallback(() => {
     const f = 남은레시피
     if (!f) return
-    const opt = { files: [f], title, text: `『${title}』 재료·만드는 법이에요 🍳\n${스토어이름()}에서 '한끼' 검색 🔍`, url: APP_URL }
+    const opt = { files: [f], title, text: `『${title}』 재료·만드는 법이에요 🍳\n${스토어검색()} 🔍`, url: 자랑주소 }
     if (navigator.canShare && navigator.share && navigator.canShare({ files: [f] })) {
       navigator.share(opt)
         .then(() => set남은레시피(null))
@@ -1338,7 +1339,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
     if (!files) return
     const t = go(files)
     if (t) {
-      t.then(() => setReady(null)).catch((e) => { if (e && e.name === 'AbortError') setReady(null) })
+      t.then(() => setReady(null)).catch((e) => { if (e && e.name === 'AbortError') { setReady(null); try { onCancel?.() } catch { /* noop */ } } })
       return
     }
     files.forEach((f, i) => setTimeout(() => saveFile(f), i * 400)) // 이 폰은 파일 공유 자체가 안 된다
@@ -1347,13 +1348,15 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
 
   const share = useCallback(async () => {
     if (!cardRef.current || busy) return
+    try { onTap?.() } catch { /* 통계가 죽어도 공유는 된다 */ }
     const pre = readyRef.current
     if (pre) {
       const t = go(pre)
-      if (t) { try { await t; return } catch (e) { if (e && e.name === 'AbortError') return } }
+      if (t) { try { await t; return } catch (e) { if (e && e.name === 'AbortError') { try { onCancel?.() } catch { /* noop */ } return } } }
       // 여기까지 왔으면 이 폰은 파일 공유를 못 한다 → 저장으로
       if (앱안인가()) { setBusy('공유 창을 못 열었어요 · 잠시 뒤 다시 눌러 주세요'); setTimeout(() => setBusy(null), 2400); return }   // 🍎 아이폰 앱은 <a download> 가 안 된다 — 「저장했어요」라고 거짓말하지 않는다
       pre.forEach((f, i) => setTimeout(() => saveFile(f), i * 400))
+      try { onSavedFallback?.() } catch { /* noop */ }
       setBusy('공유가 안 되는 폰이라 사진으로 저장했어요')
       setTimeout(() => setBusy(null), 2400)
       return
@@ -1374,7 +1377,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
       if (t) {
         try { await t; setBusy(null); return }
         catch (e) {
-          if (e && e.name === 'AbortError') { setBusy(null); return }
+          if (e && e.name === 'AbortError') { setBusy(null); try { onCancel?.() } catch { /* noop */ } return }
           // ⭐ 여기까지 오면 «허가가 끊긴 것»이다(카드는 다 만들어졌다).
           //   ⛔ 예전엔 곧바로 저장으로 밀었다 — 그게 창업자가 본 「다운로드 팝업」이다.
           //   → 저장하지 말고 **「지금 보내기」 버튼**을 띄운다. 한 번 더 누르면 진짜로 나간다.
@@ -1382,6 +1385,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
         }
       }
       files.forEach((f, i) => setTimeout(() => saveFile(f), i * 400)) // 이 폰은 파일 공유 자체가 안 된다
+      try { onSavedFallback?.() } catch { /* noop */ }
       setBusy('공유가 안 되는 폰이라 사진으로 저장했어요')
       setTimeout(() => setBusy(null), 2400)
       return
