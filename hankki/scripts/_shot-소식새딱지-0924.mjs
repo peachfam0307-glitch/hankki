@@ -57,5 +57,20 @@ for (const 안 of ['지금', 'A-딱지', 'B-색']) {
   await p.screenshot({ path: join(OUT, `${안}.png`) })
   await ctx.close()
 }
+// ── [실물] 고친 뒤 — 열쇠 없음 / 처음 여는 사람 / 9/22 에 본 사람
+for (const [안, 주소, 봤다] of [['실물-열쇠없음', '/hankki/', null], ['실물-처음', '/hankki/?소식새로=1', null], ['실물-0922에봄', '/hankki/?소식새로=1', '2026-09-22']]) {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'ko-KR' })
+  await ctx.addInitScript((봤다) => { try { localStorage.setItem('hankki:nudge:cloudgate', '1'); if (봤다) localStorage.setItem('hankki:news:봤다', 봤다) } catch { /* noop */ } }, 봤다)
+  const p = await ctx.newPage()
+  await p.goto('http://127.0.0.1:4509' + encodeURI(주소), { waitUntil: 'domcontentloaded' })
+  await p.waitForTimeout(2600); await 치우기(p)
+  await p.getByText('한끼 소식', { exact: false }).first().click()
+  await p.waitForTimeout(1500)
+  const n = await p.evaluate(() => { const 머리 = [...document.querySelectorAll('span')].find((s) => s.textContent.trim() === '방금 열렸어요'); 머리?.scrollIntoView({ block: 'start' }); return document.querySelectorAll('[data-new="1"]').length })
+  console.log(`${안} — 색 띠 ${n}줄`)
+  await p.waitForTimeout(400)
+  await p.screenshot({ path: join(OUT, `${안}.png`) })
+  await ctx.close()
+}
 console.log(`📂 ${OUT}`)
 await b.close(); srv.close()
