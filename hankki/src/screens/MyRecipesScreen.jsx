@@ -11,6 +11,7 @@ import TabTips from '../components/TabTips'
 import TabTalk from '../components/TabTalk'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
+import { 열쇠있나 } from '../components/Stickers'
 import FoodIcon, { guessFoodIcon, dishCatOf } from '../components/FoodIcon'
 // 🔖 인덱스 = 창업자가 고른 요리사모자 클립 (`ck_27` · 2026-08-18 확정)
 //    📮 *"하나만 고른다면 요리사모자(아무것도 없는거)"* · *"그러자 1개만 넣자. 제일 깔끔하긴해"*
@@ -360,6 +361,16 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   //   ⛔⛔ 그 전엔 `folders` 를 그대로 그렸다. 그 목록은 레시피에 적힌 folder 로 «저절로» 불어나서
   //      아무도 정한 적 없는 「국·탕·찌개」 칩이 2편짜리로 생겨 있었다(실측 2026-09-14).
   //   ⭐ 유저가 만든 폴더는 남긴다 — 옛 이름(국물·국·탕)으로 옮겨 둔 편을 잃으면 안 된다.
+  // 📁↔ [2026-09-24] 칩 줄 «그 자리에서» 순서 바꾸기 (창업자 시안 E · *"편집으로 그줄의 칩을 앞뒤로 움직이면서 원하는 위치 조정"*)
+  //   · 칩을 꾹 → 그 줄이 편집 상태 · 고른 칩 양옆에 ◀ ▶ · 다른 칩을 톡 = 그 칩을 고름 · ［완료］로 끝
+  //   ⛔ 시안 A(긴 목록 시트)는 «너무 복잡» · D(맨 앞으로만)는 «편집이 아니다» — 창업자 판정
+  //   💾 폰에만 적는다(localStorage) — 칩 순서는 «보기 설정»이라 잃어도 레시피는 그대로다.
+  //   ⭐ 저장값은 «이름 순서»뿐 — 새로 생긴 폴더는 원래 자리(끝)에 붙고, 지운 폴더는 조용히 빠진다.
+  //   ⛔ 열쇠(?폴더앞=1) 뒤 — 유저 눈에 새로 보이는 것은 아이폰과 같이 연다(절대원칙 2026-09-18)
+  const 순서칸 = 'hankki:folder:순서'
+  const [칩순서, set칩순서] = useState(() => { try { const v = JSON.parse(localStorage.getItem(순서칸) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } })
+  const [칩편집, set칩편집] = useState(null)   // 고른 칩 이름 · null = 편집 아님
+  const 폴더앞켜짐 = 열쇠있나('폴더앞')
   const 칩목록 = useMemo(() => {
     // 🍚🍚 [창업자 확정 2026-09-14] **종류가 나라보다 «앞»이다.**
     //   📮 창업자 = *"나라보다는 반찬 국 이런 카테고리가 요리하기 더 편하지 않을까..
@@ -376,8 +387,46 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     // ⛔ 폰에만 남은 «옛 폴더»는 뺀다 (창업자 2026-09-14 "그럼 다 빼야지" · data/종류.js 의 옛폴더이름)
     //   ⭐ 칩에서만 빠진다 — 그 폴더에 든 편은 나라 칩·종류 칩·「전체」에 그대로 뜬다(아래 여기드나).
     const 유저것 = (folders || []).filter((f) => !정해진것.includes(f) && !옛폴더이름.includes(f))
-    return [...정해진것, ...유저것]
-  }, [folders])
+    const 기본 = [...정해진것, ...유저것]
+    if (!폴더앞켜짐) return 기본
+    const 앞 = 칩순서.filter((n) => 기본.includes(n))   // 지운 폴더는 조용히 빠진다
+    return [...앞, ...기본.filter((n) => !앞.includes(n))]
+  }, [folders, 칩순서, 폴더앞켜짐])
+  // 📁↔ 윗줄 칩 — 조건·그림은 옛 JSX 그대로(0편이면 안 띄움 · 「모두」 = 둘 다 꽂혔을 때만)
+  const 윗칩순서칸 = 'hankki:folder:순서위'
+  const [윗칩순서, set윗칩순서] = useState(() => { try { const v = JSON.parse(localStorage.getItem(윗칩순서칸) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } })
+  const 윗칩기본 = [
+    내것수 > 0 && { id: '__mine', name: MINE_NAME, n: 내것수, 그림: <Icon name="edit" size={13} /> },
+    favCount > 0 && { id: '__fav', name: FAV_NAME, n: favCount, 그림: <img src={idxChef} alt="" className="pill-chef" /> },
+    heartCount > 0 && { id: '__heart', name: pinName('heart'), n: heartCount, 그림: <Icon name="heart" size={13} style={{ fill: 'currentColor' }} /> },
+    favCount > 0 && heartCount > 0 && { id: '__pinned', name: '모두', n: pinnedCount, 그림: <><img src={idxChef} alt="" className="pill-chef" /><Icon name="heart" size={13} style={{ fill: 'currentColor', marginLeft: -3 }} /></> },
+    SNS수 > 0 && { id: '__sns', name: 'SNS', n: SNS수, 그림: <Icon name="play" size={13} /> },
+    oftenCount > 0 && { id: '__often', name: '자주', n: oftenCount, 그림: null },
+  ].filter(Boolean)
+  const 윗칩목록 = (() => {
+    if (!폴더앞켜짐) return 윗칩기본
+    const 앞 = 윗칩순서.map((id) => 윗칩기본.find((k) => k.id === id)).filter(Boolean)
+    return [...앞, ...윗칩기본.filter((k) => !윗칩순서.includes(k.id))]
+  })()
+  const 윗칩옮기기 = (id, 쪽) => {
+    const 지금 = 윗칩목록.map((k) => k.id)
+    const i = 지금.indexOf(id), j = i + 쪽
+    if (i < 0 || j < 0 || j >= 지금.length) return
+    ;[지금[i], 지금[j]] = [지금[j], 지금[i]]
+    set윗칩순서(지금)
+    try { localStorage.setItem(윗칩순서칸, JSON.stringify(지금)) } catch { /* noop */ }
+    requestAnimationFrame(() => { try { document.querySelector('[data-chip-edit="1"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) } catch { /* noop */ } })
+  }
+  const 칩옮기기 = (c, 쪽) => {
+    const 지금 = [...칩목록]
+    const i = 지금.indexOf(c), j = i + 쪽
+    if (i < 0 || j < 0 || j >= 지금.length) return
+    ;[지금[i], 지금[j]] = [지금[j], 지금[i]]
+    set칩순서(지금)
+    try { localStorage.setItem(순서칸, JSON.stringify(지금)) } catch { /* noop */ }
+    // 👀 옮긴 칩이 줄 밖으로 밀려 안 보이면 따라가 준다(옆으로 넘기는 줄이라 끝에선 금방 가려진다)
+    requestAnimationFrame(() => { try { document.querySelector('[data-chip-edit="1"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) } catch { /* noop */ } })
+  }
   const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__heart' && folder !== '__pinned' && folder !== '__often' && folder !== '__sns' && folder !== '__mine' && !DEFAULT_FOLDERS.has(folder)
 
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
@@ -880,64 +929,25 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                       칩 셋을 지나야 자기 것이 나왔다. **이 화면에 온 까닭이 「내가 담은 것」인데 제일 멀리 있었다.**
                    ✅ 「전체」 «바로 다음»으로 올린다 — 큰 묶음(전체 → 내 것) 다음에 꽂은 것·출처가 온다.
                 ⛔ 0편이면 안 띄운다 — 다른 칩과 같은 규칙(빈 칩은 「내 건 왜 없지」가 된다). */}
-            {내것수 > 0 && (
-              <button className={`pill press ${folder === '__mine' ? 'active' : ''}`} onClick={() => setFolder('__mine')}>
-                <Icon name="edit" size={13} />
-                {MINE_NAME} {내것수}
-              </button>
-            )}
-            {/* ⭐ [2026-08-17 창업자 *"바꿔"*] 유니코드 글자 `★` → 우리 별 아이콘.
-                ⛔ 앱에서 유니코드 별을 쓰던 곳이 둘이었다(앨범 배지 · 이 칩) — 이걸로 0이 된다.
-                ⚠️ `currentColor` 로 둔다 — 칩은 눌리면 글자색이 바뀌는데(`.pill.active`)
-                   색을 박으면 별만 안 따라가서 «그때만» 어긋난다. `.pill` 이 이미 flex 라 정렬은 그대로.
-                🔖🔖 **[2026-08-18 창업자 확정] 별 → 요리사모자 · 「즐겨찾기」 → 「책갈피」**
-                   📮 *"아니면 **즐겨찾기 버튼 앞에 요리사모자를 넣어봐.**"* → 갈래 여섯을 찍어 **② 모자＋글자** 확정
-                   📮 이름 = *"3번가자"*(책갈피). 그 앞에 창업자가 «my pick» 을 냈는데 실측으로 접었다 —
-                      ⑴「픽」은 장보기의 **「이번 주 픽」(제품)**으로 이미 쓰인다(＋레시피 메모 여러 편)
-                      ⑵**화면에 보이는 영어 낱말이 0개**라 유일한 영어가 된다(창업자 스스로 *"혼자영어인가ㅋ"*)
-                   ⭐⭐ **칩의 모자 = 카드의 모자** → 「이 모자가 책갈피구나」를 유저가 저절로 배운다.
-                      「모아보기 단추」를 새로 만들 필요가 없다 — 이 자리가 이미 그것이다.
-                   ⭐ 별점을 접고 인덱스로 갔는데 **별(★)이 여기 남아 있었다.** 이걸로 0이 된다.
-                   ⚠️ 이름은 여섯 곳을 «같이» 바꿨다(여기 · 사용법 · 설정 메뉴 · 설정 통계 · 모아보기 화면 제목·빈칸).
-                      ⛓ CLAUDE.md 「같은 기능은 탭이 달라도 같은 이름」 — 한 곳만 바꾸면 말이 갈라진다.
-                ⛔⛔ 이 주석은 `{favCount > 0 && (` **«바깥»**에 둔다 — 그 괄호 안은 «표현식» 자리라
-                   JSX 주석을 넣으면 객체 리터럴로 파싱돼 **빌드가 죽는다**(오늘 실제로 죽였다 · CLAUDE.md 함정). */}
-            {favCount > 0 && (
-              <button className={`pill press ${folder === '__fav' ? 'active' : ''}`} onClick={() => setFolder('__fav')}>
-                <img src={idxChef} alt="" className="pill-chef" />
-                {FAV_NAME} {favCount}
-              </button>
-            )}
-            {heartCount > 0 && (
-              <button className={`pill press ${folder === '__heart' ? 'active' : ''}`} onClick={() => setFolder('__heart')}>
-                <Icon name="heart" size={13} style={{ fill: 'currentColor' }} />
-                {pinName('heart')} {heartCount}
-              </button>
-            )}
-            {/* 📌📌 [2026-09-08 창업자] *"해볼것 최애 같이 보이는 칩 만들어줘"*
-                ⭐ 두 종이 «다 꽂혀 있을 때만» 뜬다 — 하나뿐이면 그 칩과 «같은 목록»이라 칩만 늘어난다.
-                ⭐ 모자와 하트를 나란히 그린다 — 글자를 안 읽어도 「둘을 합친 것」이 그림으로 읽힌다. */}
-            {favCount > 0 && heartCount > 0 && (
-              <button className={`pill press ${folder === '__pinned' ? 'active' : ''}`} onClick={() => setFolder('__pinned')}>
-                <img src={idxChef} alt="" className="pill-chef" />
-                <Icon name="heart" size={13} style={{ fill: 'currentColor', marginLeft: -3 }} />
-                모두 {pinnedCount}
-              </button>
-            )}
-            {/* 👤👤 [창업자 확정 2026-09-23] 「내 것」 — 유저가 «자기 손으로» 담은 편 (직접 쓴 것 ＋ 가져온 것 전부)
-                📮 한끼연구소 폼 = *"제가쓴 레시피는 따로 폴더나 그런것도 만들어주세요 헷갈려요"*
-                📮 창업자 = *"내가 가져온 것 내가쓴건 전부. 따로 하나 만들어야 할 것 같아"*
-                ⭐ SNS 칩 «앞»에 둔다 — 「내 것」이 큰 묶음이고 SNS 는 출처라 작은 묶음이다.
-                ⛔ 0편이면 안 띄운다 — 다른 칩과 같은 규칙(빈 칩은 「내 건 왜 없지」가 된다). */}
-            {SNS수 > 0 && (
-              <button className={`pill press ${folder === '__sns' ? 'active' : ''}`} onClick={() => setFolder('__sns')}>
-                <Icon name="play" size={13} />
-                SNS {SNS수}
-              </button>
-            )}
-            {oftenCount > 0 && (
-              <button className={`pill press ${folder === '__often' ? 'active' : ''}`} onClick={() => setFolder('__often')}>자주 {oftenCount}</button>
-            )}
+            {/* 📁↔ [2026-09-24] 윗줄도 «그 자리에서» 순서를 바꾼다 — 창업자 *"윗줄도 돼? sns내것 최애 그 줄"*
+                ⭐ 칩 여섯을 «목록»(윗칩기본)으로 모아 아랫줄과 같은 규칙(꾹 → 양옆 화살표 → 완료)으로 그린다. 「전체」는 늘 맨 앞.
+                ⛔ 조건·그림은 옛 JSX 를 한 글자도 안 바꾸고 옮겼다 — 「내 것」 자리·모자 아이콘·모두 칩 조건·0편이면 안 띄움의 경위는 git 이력(2026-08-17~09-23)에. */}
+            {윗칩목록.map((k, i) => (
+              칩편집 === k.id ? (
+                <span key={k.id} data-chip-edit="1" className="pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, padding: '0 4px', background: 'color-mix(in srgb, #e0703a 14%, var(--cream))', boxShadow: 'inset 0 0 0 2px #e0703a' }}>
+                  <button className="press" aria-label={`${k.name} 앞으로`} disabled={i === 0} onClick={() => 윗칩옮기기(k.id, -1)} style={{ padding: '6px 8px', opacity: i === 0 ? 0.3 : 1 }}><Icon name="chevron-left" size={18} color="var(--brown)" stroke={2.4} /></button>
+                  <span style={{ fontWeight: 800 }}>{k.name}</span>
+                  <button className="press" aria-label={`${k.name} 뒤로`} disabled={i === 윗칩목록.length - 1} onClick={() => 윗칩옮기기(k.id, 1)} style={{ padding: '6px 8px', opacity: i === 윗칩목록.length - 1 ? 0.3 : 1 }}><Icon name="chevron-right" size={18} color="var(--brown)" stroke={2.4} /></button>
+                </span>
+              ) : (
+                <button key={k.id} className={`pill press ${!칩편집 && folder === k.id ? 'active' : ''}`}
+                  {...(폴더앞켜짐 && !칩편집 ? hold(() => set칩편집(k.id)) : {})}
+                  style={칩편집 ? { borderStyle: 'dashed' } : undefined}
+                  onClick={() => { if (lpFired.current) { lpFired.current = false; return } if (칩편집) set칩편집(k.id); else setFolder(k.id) }}>
+                  {k.그림}{k.name}{칩편집 ? '' : ` ${k.n}`}
+                </button>
+              )
+            ))}
           </div>
           {/* 📂📂 [2026-09-08 창업자 확정] **칩 줄을 «두 줄»로 가른다.**
               📮 *"종류서랍은(필터줄) 2줄로 가도 좋을 것 같아"*
@@ -949,11 +959,30 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               ⛔ 한 줄에 접어 넣지(wrap) 않는다 — 폴더가 몇 개냐에 따라 줄 수가 들쭉날쭉해져
                  아래 목록이 위아래로 튄다. 각 줄은 «그 줄 안에서» 옆으로 넘긴다(`.hscroll`).
               ⭐ 「전체」는 윗줄에 둔다 — 어느 줄을 보든 돌아올 자리라 제일 왼쪽 첫 칸이 맞다. */}
+          {/* ↔ 편집 중엔 줄 «위»에 안내 ＋ ［완료］ — 줄 끝에 두면 옆으로 한참 밀어야 보인다(09-24 실물 캡처로 잡음) */}
+          {칩편집 && !query && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 8px', fontSize: 15, color: 'var(--text-sub)' }}>
+              <span style={{ flex: 1 }}>칩 양옆 화살표로 옮겨요 · 다른 칩을 누르면 그 칩을 옮겨요</span>
+              <button className="pill press" style={{ background: 'var(--brown)', color: '#fff', fontWeight: 800, flex: '0 0 auto' }} onClick={() => { set칩편집(null); nav.showToast('칩 순서를 바꿨어요') }}>완료</button>
+            </div>
+          )}
           <div className="hscroll" style={{ marginBottom: 8, display: query ? 'none' : undefined }}>
-            {칩목록.map((c) => (
-              <button key={c} className={`pill press ${folder === c ? 'active' : ''}`} onClick={() => setFolder(c)}>{c} {countIn(c)}</button>
+            {칩목록.map((c, i) => (
+              칩편집 === c ? (
+                // ↔ 고른 칩 — 양옆 화살표로 한 칸씩. 끝에 닿으면 그쪽 화살표는 흐리게(눌러도 안 움직인다)
+                <span key={c} data-chip-edit="1" className="pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, padding: '0 4px', background: 'color-mix(in srgb, #e0703a 14%, var(--cream))', boxShadow: 'inset 0 0 0 2px #e0703a' }}>
+                  <button className="press" aria-label={`${c} 앞으로`} disabled={i === 0} onClick={() => 칩옮기기(c, -1)} style={{ padding: '6px 8px', opacity: i === 0 ? 0.3 : 1 }}><Icon name="chevron-left" size={18} color="var(--brown)" stroke={2.4} /></button>
+                  <span style={{ fontWeight: 800 }}>{c}</span>
+                  <button className="press" aria-label={`${c} 뒤로`} disabled={i === 칩목록.length - 1} onClick={() => 칩옮기기(c, 1)} style={{ padding: '6px 8px', opacity: i === 칩목록.length - 1 ? 0.3 : 1 }}><Icon name="chevron-right" size={18} color="var(--brown)" stroke={2.4} /></button>
+                </span>
+              ) : (
+                <button key={c} className={`pill press ${!칩편집 && folder === c ? 'active' : ''}`}
+                  {...(폴더앞켜짐 && !칩편집 ? hold(() => set칩편집(c)) : {})}
+                  style={칩편집 ? { borderStyle: 'dashed' } : undefined}
+                  onClick={() => { if (lpFired.current) { lpFired.current = false; return } if (칩편집) set칩편집(c); else setFolder(c) }}>{c}{칩편집 ? '' : ` ${countIn(c)}`}</button>
+              )
             ))}
-            <button className="pill press" style={{ borderStyle: 'dashed', color: 'var(--text-sub)' }} onClick={() => setNewFolder(true)}>＋ 폴더</button>
+            {!칩편집 && <button className="pill press" style={{ borderStyle: 'dashed', color: 'var(--text-sub)' }} onClick={() => setNewFolder(true)}>＋ 폴더</button>}
           </div>
           </div>
           <div className="pad">

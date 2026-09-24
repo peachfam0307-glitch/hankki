@@ -426,6 +426,18 @@ export function whatsNew(today = todayKST()) {
   }
   opened.push(...cartOpened(today))
 
+  // 🗓 [2026-09-24] **최신순으로 세운다** — 창업자 = *"가장 최근에 올라가는 소식은 제일 위에 적어야하지않을까"*
+  //   ⛔ 그 전엔 이번 주 레시피·우리집레시피를 날짜와 상관없이 `unshift` 로 맨 위에 붙였다 →
+  //      월요일에 열린 두 줄이 수요일 「앱이 달라졌어요」보다 위에 섰다(09-24 화면 실측).
+  //   ⭐ 같은 날이면 원래 차례 그대로(정렬은 안정) — 그래서 같은 날엔 우리집이 여전히 제철보다 앞이다.
+  //   🛒 장바구니는 «맨 아래» 그대로 — 창업자 확정(위 🛒 주석 · 게이트 _repro-소식장바구니-0829).
+  const 최신순 = [
+    ...opened.filter((o) => o.kind !== CART_KIND).sort((a, b) => b.when.localeCompare(a.when)),
+    ...opened.filter((o) => o.kind === CART_KIND),
+  ]
+  opened.length = 0
+  opened.push(...최신순)
+
   return {
     today,
     opened,
