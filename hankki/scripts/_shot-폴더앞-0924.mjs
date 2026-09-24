@@ -23,7 +23,7 @@ async function 치우기(p) {
     try { await 것.click({ timeout: 2000 }); await p.waitForTimeout(600) } catch { break }
   }
 }
-const 칩줄 = (p) => p.evaluate(() => { const s = [...document.querySelectorAll('.hscroll')].find((h) => /＋ 폴더/.test(h.innerText)); return s ? [...s.querySelectorAll('button')].map((x) => x.innerText.trim()).slice(0, 6).join(' · ') : '' })
+const 칩줄 = (p) => p.evaluate(() => { const s = [...document.querySelectorAll('.hscroll')].find((h) => /＋ 폴더|완료/.test(h.innerText)); return s ? [...s.querySelectorAll('button')].map((x) => x.innerText.trim()).slice(0, 6).join(' · ') : '' })
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'ko-KR', hasTouch: false })
 await ctx.addInitScript(() => { try { localStorage.setItem('hankki:nudge:cloudgate', '1') } catch { /* noop */ } })
 const p = await ctx.newPage()
@@ -38,12 +38,17 @@ const bx = await 칩.boundingBox()
 await p.mouse.move(bx.x + bx.width / 2, bx.y + bx.height / 2); await p.mouse.down(); await p.waitForTimeout(700); await p.mouse.up()
 await p.waitForTimeout(600)
 await p.screenshot({ path: join(OUT, '1-꾹누름.png') })
-await p.getByRole('button', { name: '맨 앞으로' }).click()
+// ◀ 네 번 = 간식이 맨 앞으로
+for (let k = 0; k < 4; k++) { await p.getByRole('button', { name: '간식 앞으로' }).click(); await p.waitForTimeout(250) }
+await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(300)
+await p.screenshot({ path: join(OUT, '2-편집중.png') })
+console.log('편집중 =', await 칩줄(p))
+await p.getByRole('button', { name: '완료' }).click()
 await p.waitForTimeout(900)
 console.log('옮긴뒤 =', await 칩줄(p))
-await p.evaluate(() => { const s = [...document.querySelectorAll('.hscroll')].find((h) => /＋ 폴더/.test(h.innerText)); if (s) s.scrollLeft = 0; window.scrollTo(0, 0) })
+await p.evaluate(() => { document.querySelectorAll('.hscroll').forEach((s) => { s.scrollLeft = 0 }); window.scrollTo(0, 0) })
 await p.waitForTimeout(400)
-await p.screenshot({ path: join(OUT, '2-옮긴뒤.png') })
+await p.screenshot({ path: join(OUT, '3-완료.png') })
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2600); await 치우기(p)
 await p.locator('.bottom-nav .nav-item').filter({ hasText: '레시피' }).first().click(); await p.waitForTimeout(1200)
 console.log('새로고침 =', await 칩줄(p))
