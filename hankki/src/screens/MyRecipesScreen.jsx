@@ -872,6 +872,20 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
           <div className="pad">
           <div className="hscroll" style={{ marginBottom: 8, display: query ? 'none' : undefined }}>
             <button className={`pill press ${folder === '전체' ? 'active' : ''}`} onClick={() => setFolder('전체')}>전체 {sorted.length}</button>
+            {/* 👤👤 [창업자 확정 2026-09-23] 「내 것」 — 유저가 «자기 손으로» 담은 편 (직접 쓴 것 ＋ 가져온 것 전부)
+                📮 한끼연구소 폼 = *"제가쓴 레시피는 따로 폴더나 그런것도 만들어주세요 헷갈려요"*
+                📮 창업자 = *"내가 가져온 것 내가쓴건 전부. 따로 하나 만들어야 할 것 같아"*
+                📌📌 [자리 · 창업자 2026-09-23 밤] *"내것이 제일 앞쪽에 있으면 좋겠는데.. 내말반영이 안됐구나"*
+                   ⛔ 첫 판은 SNS 칩 «바로 앞»에 뒀다(해볼 것·최애·모두 «뒤») — 꽂은 편이 있는 사람은
+                      칩 셋을 지나야 자기 것이 나왔다. **이 화면에 온 까닭이 「내가 담은 것」인데 제일 멀리 있었다.**
+                   ✅ 「전체」 «바로 다음»으로 올린다 — 큰 묶음(전체 → 내 것) 다음에 꽂은 것·출처가 온다.
+                ⛔ 0편이면 안 띄운다 — 다른 칩과 같은 규칙(빈 칩은 「내 건 왜 없지」가 된다). */}
+            {내것수 > 0 && (
+              <button className={`pill press ${folder === '__mine' ? 'active' : ''}`} onClick={() => setFolder('__mine')}>
+                <Icon name="edit" size={13} />
+                {MINE_NAME} {내것수}
+              </button>
+            )}
             {/* ⭐ [2026-08-17 창업자 *"바꿔"*] 유니코드 글자 `★` → 우리 별 아이콘.
                 ⛔ 앱에서 유니코드 별을 쓰던 곳이 둘이었다(앨범 배지 · 이 칩) — 이걸로 0이 된다.
                 ⚠️ `currentColor` 로 둔다 — 칩은 눌리면 글자색이 바뀌는데(`.pill.active`)
@@ -915,12 +929,6 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                 📮 창업자 = *"내가 가져온 것 내가쓴건 전부. 따로 하나 만들어야 할 것 같아"*
                 ⭐ SNS 칩 «앞»에 둔다 — 「내 것」이 큰 묶음이고 SNS 는 출처라 작은 묶음이다.
                 ⛔ 0편이면 안 띄운다 — 다른 칩과 같은 규칙(빈 칩은 「내 건 왜 없지」가 된다). */}
-            {내것수 > 0 && (
-              <button className={`pill press ${folder === '__mine' ? 'active' : ''}`} onClick={() => setFolder('__mine')}>
-                <Icon name="edit" size={13} />
-                {MINE_NAME} {내것수}
-              </button>
-            )}
             {SNS수 > 0 && (
               <button className={`pill press ${folder === '__sns' ? 'active' : ''}`} onClick={() => setFolder('__sns')}>
                 <Icon name="play" size={13} />
