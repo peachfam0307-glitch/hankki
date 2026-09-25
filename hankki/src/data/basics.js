@@ -7568,7 +7568,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-nakgopsae',
-    title: '낙곱새', from: '2026-12-16',
+    title: '낙곱새', from: '2026-10-28',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'fe_479',
     category: '한식', folder: '한식', tags: ['전골', '매운맛', '해산물', '손님 요리'],
     time: 25, servings: 2, difficulty: '쉬움',
@@ -7589,7 +7589,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-maekom-sukju-dubu-jjim',
-    title: '매콤숙주두부찜', from: '2026-12-23',
+    title: '매콤숙주두부찜', from: '2026-10-28',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'gr_055',
     category: '한식', folder: '한식', tags: ['두부', '매운맛', '반찬'],
     time: 15, servings: 3, difficulty: '쉬움',
@@ -7614,7 +7614,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-haemul-jjim-eunji',
-    title: '해물찜', from: '2026-12-30',
+    title: '해물찜', from: '2026-11-04',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'gr_264',
     category: '한식', folder: '한식', tags: ['해산물', '매운맛', '손님 요리'],
     time: 20, servings: 3, difficulty: '보통',
@@ -7638,7 +7638,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-hwangtae-haejangguk',
-    title: '황태해장국', from: '2027-01-06',
+    title: '황태해장국', from: '2026-11-11',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'fe_518',
     category: '한식', folder: '한식', tags: ['국물 요리', '해장'],
     time: 25, servings: 2, difficulty: '쉬움',
@@ -7661,7 +7661,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-lobster-bokkeum',
-    title: '랍스터 볶음', from: '2027-01-13',
+    title: '랍스터 볶음', from: '2026-11-11',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'gr_302',
     category: '중식', folder: '중식', tags: ['해산물', '손님 요리'],
     time: 35, servings: 2, difficulty: '보통',
@@ -7685,7 +7685,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-shiokonbu-chicken',
-    title: '시오콘부 치킨', from: '2027-01-20',
+    title: '시오콘부 치킨', from: '2026-11-04',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'fe_65',
     category: '일식', folder: '일식', tags: ['닭고기', '안주', '반찬'],
     time: 25, servings: 2, difficulty: '쉬움',
@@ -7707,7 +7707,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-bassak-daepae-kimchijeon',
-    title: '바삭한 대패 김치전', from: '2027-01-27',
+    title: '바삭한 대패 김치전', from: '2026-11-04',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'gr_097',
     category: '한식', folder: '한식', tags: ['전', '김치', '안주'],
     time: 25, servings: 2, difficulty: '쉬움',
@@ -7730,7 +7730,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-miyeokjulgi-bokkeum',
-    title: '미역줄기볶음', from: '2027-02-10',
+    title: '미역줄기볶음', from: '2026-11-04',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'gr_042',   // ⏳ 임시(시금치나물 컷) — 창업자 새 컷 받으면 바꾼다
     category: '한식', folder: '한식', tags: ['반찬', '나물'],
     time: 20, servings: 4, difficulty: '쉬움',
@@ -7795,7 +7795,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-pa-kimchi-jangnam',
-    title: '파김치', from: '2027-02-17',
+    title: '파김치', from: '2026-11-11',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'gr_044',
     category: '한식', folder: '한식', tags: ['김치', '반찬'],
     time: 40, servings: 4, difficulty: '보통',
@@ -7821,7 +7821,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-oi-tangtang',
-    title: '오이탕탕이', from: '2027-02-24',   // ⏳ 날짜 임시 — 창업자 SNS 주 4편 자리 정하면 옮긴다
+    title: '오이탕탕이', from: '2026-10-28',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'gr_037',
     category: '한식', folder: '한식', tags: ['반찬', '오이', '간단'],
     time: 10, servings: 2, difficulty: '쉬움',
@@ -7843,7 +7843,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-nikujaga',
-    title: '니쿠자가', from: '2027-02-24',   // ⏳ 날짜 임시 — 창업자 SNS 주 4편 자리 정하면 옮긴다
+    title: '니쿠자가', from: '2026-10-28',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'fe_283',   // ⏳ 임시(찜닭 컷) — 창업자 새 컷 받으면 바꾼다
     category: '일식', folder: '일식', tags: ['조림', '감자', '당면'],
     time: 30, servings: 2, difficulty: '쉬움',
@@ -7868,7 +7868,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-eolgari-sogogi-guk',
-    title: '얼갈이 소고기국', from: '2027-02-24',   // ⏳ 날짜 임시 — 창업자 SNS 주 4편 자리 정하면 옮긴다
+    title: '얼갈이 소고기국', from: '2026-11-11',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
     icon: 'gr_351',   // ⏳ 임시(된장국 컷) — 창업자 새 컷 받으면 바꾼다
     category: '한식', folder: '한식', tags: ['국물 요리', '소고기'],
     time: 50, servings: 4, difficulty: '쉬움',
