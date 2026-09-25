@@ -7692,7 +7692,7 @@ const RAW_BASICS = [
     category: '일식', folder: '일식', tags: ['닭고기', '안주', '반찬'],
     time: 25, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DdbRik0z4EL/',
-    sourceName: '',   // ⏳ 계정 이름이 캡처에 없다 — 창업자에게 받기
+    sourceName: 'easymeal__',   // 📮 창업자 2026-09-25
     ingredients: [
       '닭다리살 500g', '시오콘부 소주잔 2/3~1컵', '다진 마늘 1큰술', '다진 생강 1/2큰술', '후추 약간', '미림 2큰술', '감자전분 3큰술', '식용유 적당히',
       '[허니마요 소스]',
