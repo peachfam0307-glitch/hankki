@@ -7820,6 +7820,28 @@ const RAW_BASICS = [
   },
   {
     ...base,
+    id: 'basic-oi-tangtang',
+    title: '오이탕탕이', from: '2027-02-24',   // ⏳ 날짜 임시 — 창업자 SNS 주 4편 자리 정하면 옮긴다
+    icon: 'gr_037',
+    category: '한식', folder: '한식', tags: ['반찬', '오이', '간단'],
+    time: 10, servings: 2, difficulty: '쉬움',
+    sourceUrl: 'https://www.instagram.com/reel/DchreE3vhTg/',
+    sourceName: 'try_eating_',   // 원본 = 박은영 셰프 레시피(영상 제목)
+    ingredients: [
+      '오이 1개', '파 조금',
+      '[양념]',
+      '설탕 1과1/2스푼', '간장 조금', '마늘 듬뿍', '소금 조금',
+      '참기름', '고추기름 조금',
+    ],
+    steps: [
+      '오이를 러프하게 두드려 썰고 파를 조금 넣어요.',
+      '설탕 1과1/2스푼, 간장, 마늘 듬뿍, 소금을 잘 섞어 양념을 만들어요.',
+      '오이에 양념을 버무린 뒤 참기름과 고추기름을 조금씩 넣어요.',
+    ],
+    memo: '',
+  },
+  {
+    ...base,
     id: 'basic-mul-bibim-guksu',
     title: '물비빔국수', from: '2026-11-02',   // 📅 [창업자 2026-09-16] 수 → 월
     origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
