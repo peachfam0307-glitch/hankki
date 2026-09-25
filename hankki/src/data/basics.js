@@ -7321,8 +7321,9 @@ const RAW_BASICS = [
     id: 'basic-yangbaechu-namul',
     title: '양배추나물', from: '2026-10-19',   // 📅 [창업자 2026-09-16] 수 → 월
     // 📮 창업자 2026-09-13 = "양배추나물은 그냥 링크없이 넣자" · "유명인이 아니라서 콩이모는"
-    //    → SNS 갈래가 아니라 «우리 레시피»로 간다. 링크도 origin 도 없다.
-    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
+    // 🔗 [창업자 2026-09-25 「바꾸자」] 위 결정을 뒤집었다 — SNS 레시피(원본 링크)로
+    sourceUrl: 'https://www.instagram.com/reel/Dc2YG-TBngQ/',
+    sourceName: 'auntcong',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3021',
     category: '한식', folder: '한식',
@@ -7445,8 +7446,10 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-daepae-kimchi-sotbap',
+    // 🔗 [창업자 2026-09-25] 9/13 에 빠졌던 원본 링크를 다시 받았다 → SNS 레시피로
+    sourceUrl: 'https://www.instagram.com/reel/DdIQMRpzUIf/',
+    sourceName: 'twosonmom_recipe',
     title: '대패삼겹살 김치 솥밥', from: '2026-10-05',   // 📅 [창업자 2026-09-16] 수 → 월 (SNS 인데 링크가 안 저장돼 「우리 레시피」로 잡혔다 · 창업자 «월요일로가고 다음부터는 링크랑 다 저장해놓을게»)
-    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3014',
     category: '한식', folder: '한식',
@@ -7481,7 +7484,9 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-gaji-gangjeong',
     title: '가지강정', from: '2026-11-02',   // 📅 [창업자 2026-09-16] 수 → 월
-    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
+    // 🔗 [창업자 2026-09-25] 9/13 에 빠졌던 원본 링크를 다시 받았다 → SNS 레시피로
+    sourceUrl: 'https://www.instagram.com/reel/DdGccnWqWqY/',
+    sourceName: 'cookwith_romy',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3016',
     category: '한식', folder: '한식',
@@ -7516,7 +7521,9 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-saeu-kongnamul-jjim',
     title: '새우 콩나물찜', from: '2026-10-12',   // 📅 [창업자 2026-09-16] 수 → 월
-    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
+    // 🔗 [창업자 2026-09-25] 9/13 에 빠졌던 원본 링크를 다시 받았다 → SNS 레시피로
+    sourceUrl: 'https://www.instagram.com/reel/DbnfkYnPNKB/',
+    sourceName: 'dabin_table',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3017',
     category: '한식', folder: '한식',
