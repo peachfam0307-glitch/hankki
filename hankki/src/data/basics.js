@@ -7574,6 +7574,7 @@ const RAW_BASICS = [
     time: 15, servings: 3, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DcNsy1IRLv8/',
     sourceName: 'iam_recipe',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '두부 1모 (500g)', '숙주 한 줌 (100~150g)', '양파 1/4개', '대파 1/2개', '다진 마늘 1큰술', '청양고추 1~2개 (선택)', '식용유 1큰술', '전분물 (물 1큰술 ＋ 감자전분 1큰술)',
       '[양념]',
@@ -7599,6 +7600,7 @@ const RAW_BASICS = [
     time: 20, servings: 3, difficulty: '보통',
     sourceUrl: 'https://www.instagram.com/reel/DdOAJiCzlli/',
     sourceName: 'eunji_kkkkkkkk',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '특왕새우 12마리', '가리비관자 15개', '자숙문어 1봉', '찜용 콩나물 2봉 (300g씩)', '대파', '청양고추', '미나리', '기름 1큰술', '참기름 1큰술', '전분물', '물 3큰술',
       '[양념장]',
@@ -7624,6 +7626,7 @@ const RAW_BASICS = [
     // ⏳ 원본 = 정호영의 오늘도 요리 Kitchen Caden(유튜브) — 창업자가 유튜브 링크를 주면 바꾼다(성시경·이연복 편과 같은 방식)
     sourceUrl: 'https://www.instagram.com/reel/DcY0Pa3JhXW/',
     sourceName: 'ttaracook',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '황태채 80g', '콩나물 한 줌', '무 5cm 토막', '두부 반 모', '고추', '대파', '계란 (풀어서)', '들기름 넉넉히', '물 1L', '다진 마늘 반 숟갈',
       '[양념]',
@@ -7646,6 +7649,7 @@ const RAW_BASICS = [
     time: 35, servings: 2, difficulty: '보통',
     sourceUrl: 'https://www.instagram.com/reel/DdVEXpGMjXL/',
     sourceName: 'blessing_haru',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '랍스터 2마리', '옥수수전분', '대파', '생강', '데코용 고수 (쪽파로 바꿔도 돼요)', '기름',
       '[양념]',
@@ -7670,6 +7674,7 @@ const RAW_BASICS = [
     time: 25, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DdbRik0z4EL/',
     sourceName: 'easymeal__',   // 📮 창업자 2026-09-25
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '닭다리살 500g', '시오콘부 소주잔 2/3~1컵', '다진 마늘 1큰술', '다진 생강 1/2큰술', '후추', '미림 2큰술', '감자전분 3큰술', '식용유 적당히',
       '[허니마요 소스]',
@@ -7692,6 +7697,7 @@ const RAW_BASICS = [
     time: 25, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DcvjxgPPP0D/',
     sourceName: 'along_recipe',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '김치 1컵', '튀김가루 1컵', '차가운 탄산수 1컵', '대패삼겹살 적당량', '후추 약간', '식용유 넉넉히',
     ],
@@ -7715,6 +7721,7 @@ const RAW_BASICS = [
     time: 20, servings: 4, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DVib2upCSez/',
     sourceName: 'jangnamcook',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '미역줄기 300g', '양파 1/4개 (20g)', '당근 1/4개 (20g)', '식용유 2스푼 (30g)', '다진 마늘 1스푼 (13g)', '참치액 반 스푼 (7g)',
       '[데치는 물]',
@@ -7740,6 +7747,7 @@ const RAW_BASICS = [
     time: 30, servings: 4, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DdkwJhnJwT1/',
     sourceName: 'jangnamcook',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '데친 고사리 500g', '소주 자작하게', '국간장 2스푼', '소고기 다시다 1/3스푼', '물 1컵', '참기름 1스푼', '들깻가루 1스푼',
     ],
@@ -7760,6 +7768,7 @@ const RAW_BASICS = [
     time: 20, servings: 4, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DWtkCMyiT0v/',
     sourceName: 'jangnamcook',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '봄부추 500g', '양파 반 개 (100g)', '고춧가루 1컵 (100g)', '멸치액젓 반 컵 (100g)', '새우젓 3스푼 (45g)', '다진 생강 1스푼 (10g)', '매실청 3스푼 (45g)',
     ],
@@ -7780,6 +7789,7 @@ const RAW_BASICS = [
     time: 40, servings: 4, difficulty: '보통',
     sourceUrl: 'https://www.instagram.com/reel/DWF8v1RiVZm/',
     sourceName: 'jangnamcook',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '쪽파 600g',
       '[절이는 물]',
@@ -7828,6 +7838,7 @@ const RAW_BASICS = [
     time: 30, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DdTAP-vzFr0/',
     sourceName: 'eatloguekr',   // 원본 = 정호영 셰프 니쿠자가(캡션)
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '감자 1개', '당근 1/2개', '양파 1/2개', '우삼겹 적당량', '당면 적당량', '꽈리고추 3개',
       '[간장소스]',
@@ -7853,6 +7864,7 @@ const RAW_BASICS = [
     time: 50, servings: 4, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DdTgmmfB-hp/',
     sourceName: 'ddddmama_',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '얼갈이 500g', '소고기 국거리 300g', '소금 1큰술 (데칠 때)', '참기름 2', '물 1.5L', '청양고추', '다진 대파',
       '[양념]',
@@ -7878,6 +7890,7 @@ const RAW_BASICS = [
     time: 15, servings: 1, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/Ddq45alzAEi/',
     sourceName: '2seo.ne__',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '소고기 다짐육 100g', '무 100g', '밥 2/3공기', '다진 마늘 1작은술', '다진 파', '기름', '물 2큰술', '들깻가루 1/2큰술', '들기름 1큰술',
       '[양념]',
