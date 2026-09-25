@@ -29,7 +29,7 @@ const read = (p) => { try { return readFileSync(join(APP, p), 'utf8') } catch { 
 
 // ⏰ 오늘은 **무조건 KST** — 컨테이너는 UTC라 그냥 쓰면 하루 어긋난다.
 //    ⭐ [2026-08-17] 여기서 «만들지» 않는다 — 날짜는 `src/today.js` 한 곳에서만(게이트 `check-kst`).
-import { todayKST, tomorrowKST } from '../src/today.js'
+import { todayKST, tomorrowKST, daysAheadKST } from '../src/today.js'
 // 🗓 요일 세기용 — `weekly.js` 는 노드가 그대로 열 수 있다(Vite 전용 문법이 없다).
 //    ⛔ 못 열려도 달력 본체는 돌아야 하므로 실패하면 `null` 로 두고 요일 절만 건너뛴다.
 const 주간 = await import('../src/data/weekly.js').catch(() => null)
@@ -338,8 +338,16 @@ if (isMain) {
 //    ＝ 하루를 «닫을 수 없다». 규칙으로 부탁하던 것이 장치가 된다.
 if (mode === '--tomorrow') {
   const 내일 = tomorrowKST()
+  // 📅 [창업자 2026-09-26] 3일 전 검수 — 아이폰 심사 여유. 사흘 안에 열리는 «검수 안 받은 레시피»가 있으면 막는다.
+  const 사흘뒤 = daysAheadKST(3)
+  const 사흘안 = gates().filter((x) => x.date > 내일 && x.date <= 사흘뒤 && x.kind === 'recipe' && /검수 안 받은 것/.test(x.what))
+  if (사흘안.length) {
+    console.log(`⛔⛔ 3일 안(~${사흘뒤})에 열리는 레시피가 검수 전이다 — 아이폰 심사 여유가 없다(창업자 2026-09-26)`)
+    사흘안.forEach((x) => console.log(`   · ${x.date} ${x.where} — ${x.what}`))
+    process.exit(1)
+  }
   const g = gates().filter((x) => x.date === 내일)
-  if (!g.length) { console.log(`✅ 내일(${내일}) 저절로 열리는 것 없음`); process.exit(0) }
+  if (!g.length) { console.log(`✅ 내일(${내일}) 저절로 열리는 것 없음 · 3일 안 검수 전 레시피 0`); process.exit(0) }
   console.log(`📅📅 **내일(${내일}) 저절로 열린다** — 절대원칙: «오늘» 검수한다\n`)
   g.forEach((x) => console.log(`   · ${x.where} — ${x.what}${x.todo ? '' : `  (${x.keys.length})`}`))
   const 미검수 = g.filter((x) => x.kind === 'recipe' && /검수 안 받은 것/.test(x.what))
