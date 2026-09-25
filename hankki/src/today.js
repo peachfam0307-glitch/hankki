@@ -38,3 +38,7 @@ export const tomorrowKST = (now = new Date()) =>
  *     실제로 2026-09-20 에 latest-hook 이 그렇게 했다가 check-kst 가 배포를 막았다. */
 export const yesterdayKST = (now = new Date()) =>
   new Date(now.getTime() - 15 * 60 * 60000).toISOString().slice(0, 10)
+
+/** n일 뒤(KST). 「자동 공개 3일 전 검수」 게이트가 쓴다(창업자 2026-09-26 — 아이폰 심사 때문에 전날로는 늦다). */
+export const daysAheadKST = (n, now = new Date()) =>
+  new Date(now.getTime() + (9 + 24 * n) * 60 * 60000).toISOString().slice(0, 10)
