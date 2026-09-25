@@ -7669,7 +7669,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-shiokonbu-chicken',
     title: '시오콘부 치킨', from: '2026-11-04',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
-    icon: 'fe_65',
+    icon: 'n3036',   // 🖼 창업자 컷 2026-09-25
     category: '일식', folder: '일식', tags: ['닭고기', '안주', '반찬'],
     time: 25, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DdbRik0z4EL/',
@@ -7811,7 +7811,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-oi-tangtang',
     title: '오이탕탕이', from: '2026-10-28',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
-    icon: 'gr_037',
+    icon: 'n3039',   // 🖼 창업자 컷 2026-09-25
     category: '한식', folder: '한식', tags: ['반찬', '오이', '간단'],
     time: 10, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DchreE3vhTg/',
@@ -7833,7 +7833,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-nikujaga',
     title: '니쿠자가', from: '2026-10-28',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
-    icon: 'fe_283',   // ⏳ 임시(찜닭 컷) — 창업자 새 컷 받으면 바꾼다
+    icon: 'n3038',   // 🖼 창업자 컷 2026-09-25
     category: '일식', folder: '일식', tags: ['조림', '감자', '당면'],
     time: 30, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DdTAP-vzFr0/',
@@ -7885,7 +7885,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-sogogi-mu-sotbap',
     title: '소고기무솥밥', from: '2026-10-28',   // 📅 [창업자 2026-09-25] SNS 수요일 — 낙곱새(대창 구하기 어려움 · 창업자 「빼자」) 자리
-    icon: 'gr_343',   // ⏳ 임시(솥밥 컷) — 창업자 새 컷 받으면 바꾼다
+    icon: 'n3037',   // 🖼 창업자 컷 2026-09-25
     category: '한식', folder: '한식', tags: ['밥', '솥밥', '아이', '남은 밥'],
     time: 15, servings: 1, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/Ddq45alzAEi/',
