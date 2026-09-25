@@ -93,7 +93,7 @@ ${격자(나들이.items, 4, 225)}
 <div class="step"><div class="d">2</div><div><b>꾸미기</b><small>아래 단추</small></div></div>
 <div class="step" style="margin:0"><div class="d">3</div><div><b>데코 · 친구들</b><small>가을 갈래에서 골라 붙이기</small></div></div>
 </div>
-<img src="${컷('au_b03')}" style="position:absolute;z-index:6;right:70px;top:820px;width:230px">
+<img src="${컷('au_b35')}" style="position:absolute;z-index:6;right:70px;top:820px;width:230px">
 <div class="end">오늘도 한끼하세요</div>
 <div class="foot">${알약}</div>`,
 }

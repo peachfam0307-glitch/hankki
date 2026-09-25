@@ -2111,7 +2111,7 @@ export const STICKER_GROUPS = [
   //    ⭐ 고른 넷 = 성격(요가·아령 = 「여유로운 체력왕」) 반 ＋ 요리(볶기·엄지척) 반.
   //       ⛔ 남은 4컷(매트 들기·물 마시기·손질·소스)은 파일에 그대로 있다 — 나중에 단독팩 재료.
   { key: 'buddies_karong_solo', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-09-01', label: '카롱', items: ['ka_g02', 'ka_g03', 'ka_c02', 'ka_c04'] },
-  { key: 'buddies_autumn_b', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-10-01', label: '한끼 친구들의 가을 나들이', items: [ 'au_b31', 'au_b32', 'au_b33', 'au_b34', 'au_b35', 'au_b36', 'au_b37', 'au_b03', 'au_b19', 'au_b21' ] },
+  { key: 'buddies_autumn_b', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-10-01', label: '한끼 친구들의 가을 나들이', items: [ 'au_b31', 'au_b32', 'au_b33', 'au_b34', 'au_b35', 'au_b36', 'au_b37', 'au_b19', 'au_b21' ] },
   // 🍁 유료팩과 겹치는 6컷(au_i10·11·13·14·17·20)을 내렸다 → 10 → 4컷 (위 2026-08-03 주석 참고)
   { key: 'deco_autumn_c', tab: 'deco', season: 'autumn', from: '2026-11-01', label: '늦가을 소품', items: ['au_i22', 'au_i25', 'au_i27', 'au_i31', 'au_i34', 'au_i40', 'au_i41', 'au_t01', 'au_t05', 'au_s03', 'au_s04'] },
   { key: 'buddies_autumn_c', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-11-01', label: '꼬르곰·펭펭의 늦가을', items: ['au_b07', 'au_b08', 'au_b22', 'au_b15', 'au_b16', 'au_b17'] },
