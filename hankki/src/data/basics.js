@@ -7914,6 +7914,7 @@ const RAW_BASICS = [
     time: 20, servings: 3, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DdjEuvtxpS_/',
     sourceName: 'oh_diningtable',
+    review: '창업자',   // ☑️ 2026-09-25 채팅 전수 = "괜찮아" (팁 뺌 · 4스푼)
     ingredients: [
       '두부 1모', '통조림 참치 1캔', '양파 1개', '대파 1대', '청양고추 (취향껏)', '물 300ml', '식용유 약간', '통깨 약간',
       '[양념장]',
