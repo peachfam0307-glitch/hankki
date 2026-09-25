@@ -1,7 +1,7 @@
 // 앱 버전 — 배포마다 숫자를 올린다. 설정 화면 맨 아래에 표시되고,
 // 새 버전으로 업데이트되면(서비스워커 교체 → 새로고침) 안내 토스트를 띄우는 기준이 된다.
 // 사용자가 "지금 몇 버전이야?"를 바로 확인해 알려줄 수 있어, 캐시 문제 진단에도 쓴다.
-export const APP_VERSION = 'v14.11'
+export const APP_VERSION = 'v14.13'
 export const APP_TAGLINE = '꼬르곰·펭펭과 레꾸해요'
 
 // 익명 의견 보내기 채널 — 로그인 없이 익명으로 받는 구글 폼(또는 Tally) 링크.
@@ -49,5 +49,5 @@ export const INSTAGRAM_DM_URL = `https://ig.me/m/${INSTAGRAM_ID}`
 //   ⏳ 며칠 뜨나 = INSTA_NEW_DAYS. 그 뒤엔 저절로 사라진다 — ⛔늘 켜져 있으면 「새것」을 못 뜻한다
 //      (한끼 소식 「새로」가 unread 를 같이 보는 것과 같은 까닭 · HomeScreen.jsx:572).
 //   👆 ＋ **한 번 누르면 그 사람한테는 사라진다**(본 사람에게 계속 새것이라 하지 않는다).
-export const INSTA_NEW_AT = '2026-09-23'
+export const INSTA_NEW_AT = '2026-09-25'
 export const INSTA_NEW_DAYS = 5

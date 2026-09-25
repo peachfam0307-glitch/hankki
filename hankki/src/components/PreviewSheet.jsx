@@ -3,7 +3,7 @@ import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
 import { whatsNew, unitOf, foldPacks } from '../data/whatsnew'
-import { StickerArt, 열쇠있나 } from './Stickers'
+import { StickerArt } from './Stickers'
 import { todayKST } from '../today'
 import { 앱안인가 } from '../nativeAuth'   // 🍎 아이폰 앱에선 「폴드」(갤럭시) 대신 「아이패드」(2026-09-13)
 
@@ -157,9 +157,8 @@ export default function PreviewSheet({ onClose }) {
   const opened = useMemo(() => foldPacks(news.opened), [news])
   // 🆕 「안 본 것」 = 지난번에 이 시트를 연 날 «뒤»에 열린 줄. 여는 순간 한 번만 재고(열어둔 채 안 흔들리게), 오늘을 적는다.
   //   · 처음 여는 사람 = 기록이 없다 → «가장 최근 날짜»의 줄만(21일치를 전부 칠하면 한눈에가 아니라 도배다)
-  //   · ⛔ 열쇠(?소식새로=1) 뒤 — 유저 눈에 새로 보이는 것은 아이폰과 같이 연다(절대원칙 2026-09-18)
+  //   · 🔓 열쇠(?소식새로=1)는 2026-09-25 뗐다 — 아이폰 1.0.8 승인 날 갤럭시와 같이 (창업자 「승인됐어 갤럭시 배포해」)
   const 새로본날 = useMemo(() => {
-    if (!열쇠있나('소식새로')) return null
     let 지난 = null
     try { 지난 = localStorage.getItem('hankki:news:봤다') } catch { /* noop */ }
     if (/^\d{4}-\d{2}-\d{2}$/.test(지난 || '')) return { 뒤: 지난 }
