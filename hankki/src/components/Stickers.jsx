@@ -817,6 +817,7 @@ const PHOTO_RATIO = {
 // 🐻🐧 [2026-08-29] 가을 곰펭 8컷 — 창업자 시트 `가을곰펭-창업자-2026-08-27`. 같은 유령이었다.
   au_b23: 1.1867, au_b24: 0.7712, au_b25: 0.9692, au_b26: 1.1053,
   au_b27: 1.0220, au_b28: 0.8442, au_b29: 1.2063, au_b30: 1.1978,
+  au_b31: 1.2903, au_b32: 1.0553, au_b33: 1.1555, au_b34: 1.3132, au_b35: 0.7628, au_b36: 0.8863, au_b37: 0.977,
 // 🐧🐧 [2026-09-02] 펭펭 «정본» 컷 — 창업자 검수 「좋다」 8컷 중 «골라» 넣은 넷.
 //   정본 옷 = 베레모 · 단발 · 진주목걸이(리본) · **벨트 버클 베이지 트렌치코트**
 //   낱개 원본 = `docs/stickers/펭펭-정본-2026-09-01/낱개/`  (⛔ 원본 이름을 잃지 않게 표로 남긴다)
@@ -2095,7 +2096,7 @@ export const STICKER_GROUPS = [
   //    ⛔ 둘 다 PNG·`PHOTO_RATIO` 는 지우지 않는다 — 나중에 딴 자리에 쓸 수 있다.
   { key: 'buddies_autumn_a', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-09-01', label: '꼬르곰·펭펭의 가을', items: ['au_b20', 'au_b09', 'au_b24', 'au_b26', 'au_b27', 'au_b28', 'au_b29', 'au_b30'] },
   // 🍁 유료팩과 겹치는 6컷(au_i02·05·06·07·09·18)을 내렸다 → 10 → 4컷 (위 2026-08-03 주석 참고)
-  { key: 'deco_autumn_b', tab: 'deco', season: 'autumn', from: '2026-10-01', label: '가을 열매·수확', items: [ 'au_i08', 'au_i26', 'au_i32', 'au_i23', 'au_i35', 'au_i36', 'au_i37', 'au_i33', 'au_s01' ] },
+  { key: 'deco_autumn_b', tab: 'deco', season: 'autumn', from: '2026-10-01', label: '가을 열매·수확', items: [ 'au_i08', 'au_i26', 'au_i32', 'au_i35', 'au_i36', 'au_i37', 'au_i33', 'au_s01' ] },
   // 🦫🐧 **친구 데뷔 ①** — 가을은 카롱이다(꼬르곰은 겨울·봄 친구와 짝을 짓는다).
   //    창업자 *"둘이 덩치가 있어서 케미가 별루야… 카롱이랑 꼬르곰둘은 별로 안어울림"* → 짝을 펭펭으로 바꿨다.
   //    ⛔ 5명을 한꺼번에 안 내보낸다 — 「새 친구 등장」은 한 번밖에 못 쓰는 카드라 셋으로 쪼갠다.
@@ -2110,7 +2111,7 @@ export const STICKER_GROUPS = [
   //    ⭐ 고른 넷 = 성격(요가·아령 = 「여유로운 체력왕」) 반 ＋ 요리(볶기·엄지척) 반.
   //       ⛔ 남은 4컷(매트 들기·물 마시기·손질·소스)은 파일에 그대로 있다 — 나중에 단독팩 재료.
   { key: 'buddies_karong_solo', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-09-01', label: '카롱', items: ['ka_g02', 'ka_g03', 'ka_c02', 'ka_c04'] },
-  { key: 'buddies_autumn_b', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-10-01', label: '꼬르곰·펭펭의 가을 나들이', items: [ 'au_b02', 'au_b03', 'au_b19', 'au_b21', 'au_b12' ] },
+  { key: 'buddies_autumn_b', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-10-01', label: '한끼 친구들의 가을 나들이', items: [ 'au_b31', 'au_b32', 'au_b33', 'au_b34', 'au_b35', 'au_b36', 'au_b37', 'au_b03', 'au_b19', 'au_b21' ] },
   // 🍁 유료팩과 겹치는 6컷(au_i10·11·13·14·17·20)을 내렸다 → 10 → 4컷 (위 2026-08-03 주석 참고)
   { key: 'deco_autumn_c', tab: 'deco', season: 'autumn', from: '2026-11-01', label: '늦가을 소품', items: ['au_i22', 'au_i25', 'au_i27', 'au_i31', 'au_i34', 'au_i40', 'au_i41', 'au_t01', 'au_t05', 'au_s03', 'au_s04'] },
   { key: 'buddies_autumn_c', tab: 'buddies', bigCell: true, season: 'autumn', from: '2026-11-01', label: '꼬르곰·펭펭의 늦가을', items: ['au_b07', 'au_b08', 'au_b22', 'au_b15', 'au_b16', 'au_b17'] },

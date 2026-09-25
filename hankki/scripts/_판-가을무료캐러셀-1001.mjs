@@ -61,8 +61,8 @@ const 장들 = {
 <img src="${컷('au_i26')}" style="left:360px;top:540px;width:330px">
 <img src="${컷('pc1_06')}" style="left:770px;top:520px;width:230px;transform:rotate(6deg)">
 <img src="${컷('au_i35')}" style="left:80px;top:880px;width:300px;transform:rotate(-4deg)">
-<img src="${컷('au_b12')}" style="left:420px;top:830px;width:340px">
-<img src="${컷('au_i23')}" style="left:790px;top:870px;width:220px;transform:rotate(5deg)">
+<img src="${컷('au_b33')}" style="left:380px;top:830px;width:400px">
+<img src="${컷('au_i32')}" style="left:800px;top:880px;width:230px;transform:rotate(5deg)">
 </div>
 <div class="foot" style="bottom:48px">${알약}</div>`,
   '2-포토코너': () => `<style>${공통}</style>
@@ -72,19 +72,13 @@ ${격자(코너.items, 4, 330)}
 <div class="foot">꾸미기 → 데코</div>`,
   '3-열매수확': () => `<style>${공통}</style>
 <div class="no">2</div>
-<div class="top"><div class="tag">데코</div><div class="hh">${열매.label}</div><div class="ss">포도·감·밤·버섯 · ${열매.items.length}가지</div></div>
+<div class="top"><div class="tag">데코</div><div class="hh">${열매.label}</div><div class="ss">포도·감·밤·고구마 · ${열매.items.length}가지</div></div>
 ${격자(열매.items, 3, 230)}
 <div class="foot">꾸미기 → 데코</div>`,
   '4-가을나들이': () => `<style>${공통}</style>
 <div class="no">3</div>
-<div class="top"><div class="tag">친구들</div><div class="hh" style="font-size:72px">${나들이.label}</div><div class="ss">꼬르곰·펭펭 · ${나들이.items.length}가지</div></div>
-<div class="sheet" style="display:block;padding:0">
-<img src="${컷(나들이.items[0])}" style="position:absolute;left:40px;top:40px;height:330px">
-<img src="${컷(나들이.items[1])}" style="position:absolute;left:340px;top:40px;height:330px">
-<img src="${컷(나들이.items[2])}" style="position:absolute;left:640px;top:40px;height:330px">
-<img src="${컷(나들이.items[3])}" style="position:absolute;left:120px;top:420px;height:330px">
-<img src="${컷(나들이.items[4])}" style="position:absolute;left:520px;top:410px;height:350px">
-</div>
+<div class="top"><div class="tag">친구들</div><div class="hh" style="font-size:72px">${나들이.label}</div><div class="ss">꼬르곰·펭펭·카롱 · ${나들이.items.length}가지</div></div>
+${격자(나들이.items, 4, 225)}
 <div class="foot">꾸미기 → 친구들</div>`,
   '5-끝': () => `<style>${공통}
 .card{position:absolute;z-index:5;left:80px;right:80px;top:420px;background:#fbf5e8;border-radius:36px;padding:44px 48px;box-shadow:0 22px 48px rgba(90,50,20,.16);transform:rotate(-1deg)}
