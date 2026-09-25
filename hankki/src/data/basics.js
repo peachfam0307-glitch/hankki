@@ -7816,6 +7816,7 @@ const RAW_BASICS = [
     time: 10, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DchreE3vhTg/',
     sourceName: 'try_eating_',   // 원본 = 박은영 셰프 레시피(영상 제목)
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '오이 1개', '파 조금',
       '[양념]',
@@ -7913,6 +7914,7 @@ const RAW_BASICS = [
     time: 15, servings: 5, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DdpvOiTp7Oq/',
     sourceName: 'bodere81',
+    review: '창업자',   // ☑️ 2026-09-25 SNS 검수판 = "괜찮아"
     ingredients: [
       '찹쌀 3컵', '물 1컵', '흑설탕 1컵', '진간장 3큰술', '꿀 3큰술', '참기름 2큰술', '계피가루 취향껏', '견과류 & 말린 과일 취향껏',
     ],
