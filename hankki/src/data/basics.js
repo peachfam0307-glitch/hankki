@@ -7349,7 +7349,9 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-deulkkae-sujebi',
     title: '들깨수제비', from: '2026-10-05',
-    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
+    // 🔗 [창업자 2026-09-25] 9/13 에 빠졌던 원본 링크를 다시 받았다 → SNS 레시피로
+    sourceUrl: 'https://www.instagram.com/reel/DdJNNWPqcZW/',
+    sourceName: 'dailybbokki',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'n3022',
     category: '한식', folder: '한식',
@@ -7381,7 +7383,9 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-gaji-lasagna',
     title: '가지 라자냐', from: '2026-10-26',   // 📅 [창업자 2026-09-16] 수 → 월
-    origin: '창업자',   // 📮 창업자가 «캡처로» 준 레시피 (백업 뒤에 받음 · 2026-09-13)
+    // 🔗 [창업자 2026-09-25] 9/13 에 빠졌던 원본 링크를 다시 받았다 → SNS 레시피로
+    sourceUrl: 'https://www.instagram.com/p/Dcigjp2lLp_/',
+    sourceName: 'yabini_bab',
     review: '창업자',   // ☑️ 2026-09-13 창업자 검수판 = "괜찮아"
     icon: 'gr_399',
     category: '양식', folder: '양식',
