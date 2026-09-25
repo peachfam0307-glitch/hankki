@@ -7730,7 +7730,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-miyeokjulgi-bokkeum',
-    title: '미역줄기볶음', from: '2027-02-03',
+    title: '미역줄기볶음', from: '2027-02-10',
     icon: 'gr_042',   // ⏳ 임시(시금치나물 컷) — 창업자 새 컷 받으면 바꾼다
     category: '한식', folder: '한식', tags: ['반찬', '나물'],
     time: 20, servings: 4, difficulty: '쉬움',
@@ -7751,6 +7751,26 @@ const RAW_BASICS = [
       '양파·당근과 참치액을 넣고 볶으면 끝이에요.',
     ],
     memo: '미림을 넣고 데치면 비린내가 싹 빠져요. 오래 데치면 물러지니 딱 30초만 데쳐요.',
+  },
+  {
+    ...base,
+    id: 'basic-gosari-namul',
+    title: '고사리나물', from: '2027-02-03',   // 명절 나물 — 설 전 주
+    icon: 'gr_042',   // ⏳ 임시(시금치나물 컷) — 창업자 새 컷 받으면 바꾼다
+    category: '한식', folder: '한식', tags: ['반찬', '나물', '명절'],
+    time: 30, servings: 4, difficulty: '쉬움',
+    sourceUrl: 'https://www.instagram.com/reel/DdkwJhnJwT1/',
+    sourceName: 'jangnamcook',
+    ingredients: [
+      '데친 고사리 500g', '소주 자작하게', '국간장 2스푼', '소고기 다시다 1/3스푼', '물 1컵', '참기름 1스푼', '들깻가루 1스푼',
+    ],
+    steps: [
+      '데친 고사리 500g에 소주를 자작하게 부어 버무린 뒤 10분 재우고 헹궈요.',
+      '한입 크기로 썰고 국간장 2스푼과 소고기 다시다 1/3스푼을 넣어 간해요.',
+      '냄비에 옮겨 담아 물 1컵을 넣고 뚜껑을 덮어 중불에서 10분 찌듯이 익혀요.',
+      '뚜껑을 열고 살짝 졸인 뒤 불을 끄고 참기름 1스푼과 들깻가루 1스푼을 넣어요.',
+    ],
+    memo: '소주에 재우면 강한 비린내는 싹 잡히고 은은한 고사리 향만 남아요. 참기름과 들깻가루는 마지막에 넣어야 향이 날아가지 않아요.',
   },
   {
     ...base,
