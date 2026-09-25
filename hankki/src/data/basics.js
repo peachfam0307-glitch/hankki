@@ -7644,7 +7644,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-lobster-bokkeum',
     title: '랍스터 볶음', from: '2026-11-11',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
-    icon: 'gr_302',
+    icon: 'n3042',   // 🖼 창업자 컷 2026-09-25
     category: '중식', folder: '중식', tags: ['해산물', '손님 요리'],
     time: 35, servings: 2, difficulty: '보통',
     sourceUrl: 'https://www.instagram.com/reel/DdVEXpGMjXL/',
@@ -7716,7 +7716,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-miyeokjulgi-bokkeum',
     title: '미역줄기볶음', from: '2026-11-04',   // 📅 [창업자 2026-09-25] SNS 수요일 4편 — 10/21 다음부터 이어서
-    icon: 'gr_042',   // ⏳ 임시(시금치나물 컷) — 창업자 새 컷 받으면 바꾼다
+    icon: 'n3043',   // 🖼 창업자 컷 2026-09-25
     category: '한식', folder: '한식', tags: ['반찬', '나물'],
     time: 20, servings: 4, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DVib2upCSez/',
@@ -7742,7 +7742,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-gosari-namul',
     title: '고사리나물', from: '2027-02-03',   // 명절 나물 — 설 전 주
-    icon: 'gr_042',   // ⏳ 임시(시금치나물 컷) — 창업자 새 컷 받으면 바꾼다
+    icon: 'n3041',   // 🖼 창업자 컷 2026-09-25
     category: '한식', folder: '한식', tags: ['반찬', '나물', '명절'],
     time: 30, servings: 4, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DdkwJhnJwT1/',
@@ -7763,7 +7763,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-bombuchu-kimchi',
     title: '봄부추김치', from: '2027-03-03',   // 봄부추 — 봄동겉절이(2/22) 다음
-    icon: 'gr_039',   // ⏳ 임시(부추겉절이 컷) — 창업자 새 컷 받으면 바꾼다
+    icon: 'n3040',   // 🖼 창업자 컷 2026-09-25
     category: '한식', folder: '한식', tags: ['김치', '반찬', '봄'],
     time: 20, servings: 4, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DWtkCMyiT0v/',
