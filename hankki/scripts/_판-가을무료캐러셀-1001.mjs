@@ -54,7 +54,7 @@ const 알약 = `<span class="알약"><img src="${앱아이콘}">App Store · Goo
 const 장들 = {
   '1-표지': () => `<style>${공통}
 .hh{font-size:100px}
-.pile img{position:absolute;z-index:4}</style>
+.pile img{position:absolute;z-index:4;filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 4px 8px rgba(90,50,20,.18))}</style>
 <div class="top"><div class="tag">10월 1일 · 무료</div><div class="hh">가을 스티커<br>새로 왔어요</div><div class="ss">${합}컷 · 일기·레시피 꾸미기에 붙여요</div></div>
 <div class="pile">
 <img src="${컷('pc1_02')}" style="left:70px;top:560px;width:250px;transform:rotate(-8deg)">
