@@ -17,6 +17,7 @@ import EmojiPicker from '../components/EmojiPicker'
 import FoodIconPicker from '../components/FoodIconPicker'
 import Buddy, { BUDDY_GROUPS } from '../components/Buddies'
 import Portal from '../components/Portal'
+import PushGuideSheet from '../components/PushGuideSheet'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
@@ -84,6 +85,7 @@ export default function ProfileScreen() {
   }
   const 점검까지 = 점검보내기까지()
   const [editSheet, setEditSheet] = useState(false)
+  const [알림길, set알림길] = useState(false)   // 🖼 폰 설정에서 알림 켜는 길(그림) — PushGuideSheet
   const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
   const [unlockAsk, setUnlockAsk] = useState(null) // 백업 안 잠긴 일기를 풀 때 { n, data }
   // 인라인 시트(백업·아바타) — 뒤로가기로 닫기(편집·붙여넣기·확인 시트는 자체 처리)
@@ -467,7 +469,7 @@ export default function ProfileScreen() {
       badge: !푸시가능() ? '이 기기는 안 돼요' : 브라우저권한() === 'denied' ? '폰 설정에서 차단됨' : (알림동의 === 'yes' && 브라우저권한() === 'granted') ? '켜짐' : 알림동의 === 'no' ? '꺼짐' : '담을 때 물어봐요',
       onClick: async () => {
         if (!푸시가능()) { nav.showToast('이 기기에선 알림을 받을 수 없어요'); return }
-        if (브라우저권한() === 'denied') { nav.showToast('폰 설정 → 앱 → 한끼 → 알림에서 켜 주세요'); return }
+        if (브라우저권한() === 'denied') { set알림길(true); return }   // 🖼 [2026-09-26] 글 대신 그림 — 창업자 「글만 있으면 까먹던데」
         if (알림동의 === 'yes' && 브라우저권한() === 'granted') { await 알림끄기(); nav.showToast('알림을 껐어요'); return }
         const 됐나 = await 알림켜기({ 다시묻기: true })
         // 🔔 [2026-09-24] 실패를 «왜»로 가른다 — 창업자 갤럭시(2026-09-23)는 한끼가 홈 화면에 «설치»돼 있어
@@ -475,6 +477,7 @@ export default function ProfileScreen() {
         //   ⛔ 날짜·시각을 글자로 박지 않는다 — 「월·수 15:30」이 이미 어긋나 있었다(진짜 17:00 · 요일 고정 아님).
         if (됐나) { nav.showToast('알림을 켰어요 · 새 소식이 열리는 날 하루 한 번'); return }
         const 권한지금 = 브라우저권한()
+        if (권한지금 === 'denied') { set알림길(true); return }
         const 설치앱안 = (() => { try { return window.matchMedia('(display-mode: standalone)').matches } catch { return false } })()
         nav.showToast(
           권한지금 === 'denied' ? '폰 설정 → 앱 → 한끼 → 알림에서 켜 주세요'
@@ -1150,6 +1153,7 @@ export default function ProfileScreen() {
       {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
       {lab && <LabSheet onClose={() => setLab(false)} />}
       {/* 🗑 계정 · 데이터 삭제 — 앱 안 시트(큰 틀 6-① ⓑ · 2026-09-08) */}
+      {알림길 && <PushGuideSheet onClose={() => set알림길(false)} />}
       {delAccount && <DeleteAccountSheet onClose={() => setDelAccount(false)} showToast={nav.showToast} />}
       {소식 && <PreviewSheet onClose={() => set소식(false)} />}
       {업뎃내역 && <UpdateLogSheet onClose={() => set업뎃내역(false)} />}

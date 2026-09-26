@@ -80,7 +80,7 @@ function 시트 ({ 답: 원답 }) {
               · <b>가끔</b> 새 꾸미기
             </div>
             <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.6, margin: '10px 2px 14px' }}>
-              <b>하루에 한 번</b>만 보내요. 언제든 <b>설정</b>에서 끌 수 있어요.
+              <b>하루에 한 번</b>만 보내요. 언제든 <b>홈 오른쪽 위 톱니 → 설정 → 알림 받기</b>에서 켜고 끌 수 있어요.
             </div>
             <button className="btn-primary press" style={{ width: '100%' }} onClick={() => 답('yes')}>알림 받을게요</button>
             <button className="press" style={{ width: '100%', marginTop: 10, color: 'var(--text-sub)', fontSize: 15.5, fontWeight: 600, padding: '8px 0' }} onClick={() => 답('no')}>괜찮아요</button>
