@@ -28,6 +28,9 @@ export const 시각표 = { cart: '09:00', recipe: '17:00', sns: '17:00', decor: 
 const 며칠뒤 = (ymd, n) => { const [y, m, d] = ymd.split('-').map(Number); const t = new Date(Date.UTC(y, m - 1, d + n)); return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}` }
 const 며칠 = 120
 
+// 🏷 갈래 이모지 — ⛔SNS 를 레시피보다 «먼저» 본다(「새 SNS 레시피」에 레시피 글자가 같이 있다)
+export const 이모지붙이기 = (c) => (/장바구니/.test(c) ? '🛒 ' : /SNS/.test(c) ? '📱 ' : /꾸미기/.test(c) ? '🎨 ' : /레시피/.test(c) ? '🍳 ' : '') + c
+
 export function 일정만들기(부터 = todayKST()) {
   const 날 = {}
   const 더하기 = (date, kind, 조각) => { (날[date] ||= { kinds: new Set(), 조각: [] }); 날[date].kinds.add(kind); if (조각) 날[date].조각.push(조각) }
@@ -49,7 +52,10 @@ export function 일정만들기(부터 = todayKST()) {
     if (조각.some((c) => /^(?!새 )\S+ 꾸미기가 열렸어요$/.test(c))) 조각 = 조각.filter((c) => c !== '새 꾸미기가 열렸어요')
     if (v.kinds.has('cart')) 조각.push(`이번 주 장바구니 ${장바구니수}개가 열렸어요`)
     const 시각 = [...v.kinds].map((k) => 시각표[k]).sort()[0]
-    out[date] = { 제목: '한끼', 본문: 조각.join(' · '), 길: './', 시각, 갈래: [...v.kinds].sort() }
+    // 🛒🍳📱🎨 [2026-09-26 창업자 「이모지같은것도 넣음좋겠어」 → 시안 보고 확정] 줄 앞에 갈래 이모지 하나.
+    //   ⭐ 여기(마지막 합치는 자리)에서만 붙인다 — 위 「명절 이름 줄」 거르기가 글자로 맞추기 때문이다.
+    //   ⛔ 앱 «화면»엔 이모지를 안 쓴다(창업자 2026-07-26) — 이건 폰 알림 글자라 따로다.
+    out[date] = { 제목: '한끼', 본문: 조각.map(이모지붙이기).join(' · '), 길: './', 시각, 갈래: [...v.kinds].sort() }
   }
   return { 만든때: new Date().toISOString(), 부터, 며칠, 날: out }
 }

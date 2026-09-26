@@ -86,7 +86,7 @@ const 냉장고 = [
 {
   const store = 읽기('src/store.jsx'), sw = 읽기('src/sw.js'), pe = 읽기('src/pantryExpiry.js')
   잰다(/localStorage\.setItem\(KEY, 글\)[\s\S]{0,400}거울쓰기\(저장할판\.pantry\)/.test(store) && (store.match(/거울쓰기\(/g) || []).length === 1, '⑥ store = 저장 자리 «하나»(setItem 직후)에서 거울쓰기 — 어느 길로 와도 지난다')
-  잰다(/거울읽어문장\(new Date\(\)\)/.test(sw) && /\(얹을줄 \? '\\n' \+ 얹을줄 : ''\)/.test(sw), '⑥ sw = 그리는 순간 거울을 읽어 본문 «둘째 줄»에 얹는다 (없으면 그대로 · 창업자 2026-09-20 "b가 나아")')
+  잰다(/거울읽어문장\(new Date\(\)\)/.test(sw) && /\(냉장고줄 \? '\\n' \+ 냉장고줄 : ''\)/.test(sw) && /냉장고줄 = 얹을줄 \? '🧊 ' \+ 얹을줄 : 얹을줄/.test(sw), '⑥ sw = 그리는 순간 거울을 읽어 본문 «둘째 줄»에 얹는다 (없으면 그대로 · 창업자 2026-09-20 "b가 나아")')
   잰다(new RegExp(`const SHARE_CACHE = '${P.거울캐시}'`).test(sw), `⑥ 캐시 이름이 sw 와 같다 (${P.거울캐시})`)
   잰다(/② 폰 푸시[\s\S]*얹기/.test(pe) && !/명의 이전 뒤 판정/.test(pe), '⑥ 머리 주석 ② = 「명의 이전 뒤 판정」→「얹기」로 바뀌었다')
 }
