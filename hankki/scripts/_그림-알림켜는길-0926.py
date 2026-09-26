@@ -22,6 +22,7 @@ os.makedirs(OUT, exist_ok=True)
 for k, (f, c, m, 모양) in 칸.items():
   im = Image.open(os.path.join(SRC, f)).convert('RGB')
   d = ImageDraw.Draw(im)
+  if k == 'g4': d.rectangle((45, 722, 420, 785), fill=(252, 252, 252))   # 창업자 폰 상태 「허용됨」을 지운다 — 막힌 사람이 보면 헷갈린다
   if 모양 == 'o': d.ellipse(m, outline=(232, 64, 52), width=12)
   else: d.rounded_rectangle(m, radius=40, outline=(232, 64, 52), width=12)
   cut = im.crop(c)
