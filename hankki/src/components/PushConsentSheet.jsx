@@ -36,7 +36,8 @@ export default function PushConsentSheet () {
     let 타이머 = null
     try {
       const 저장소 = { get: (k) => localStorage.getItem(k), set: (k, v) => localStorage.setItem(k, v) }
-      if (기존유저한번물을까(저장소, localStorage.getItem(ONBOARD_KEY) === '1')) {
+      // 🤖 자동 검사 브라우저(navigator.webdriver)엔 안 띄운다 — 검사판 406개가 «소개 끝낸 폰»으로 켜져 시트가 화면을 덮었다(2026-09-26 스모크). 실제 폰은 늘 false.
+      if (!navigator.webdriver && 기존유저한번물을까(저장소, localStorage.getItem(ONBOARD_KEY) === '1')) {
         타이머 = setTimeout(() => {
           try { localStorage.setItem(기존물음칸, '1') } catch { /* noop */ }
           알림켜기().catch(() => {})

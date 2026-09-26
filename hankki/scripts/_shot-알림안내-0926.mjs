@@ -10,7 +10,7 @@ const {SEED_COACH_SEEN}=await import('/home/user/hankki/hankki/src/coach.js')
 const b=await chromium.launch({executablePath:process.env.SMOKE_CHROMIUM})
 async function 판(이름, 기존, 차단, 뒤){
   const ctx=await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2})
-  await ctx.addInitScript(([기존,차단])=>{ if(기존) localStorage.setItem('hankki:onboarded','1'); localStorage.setItem('hankki:news:off','1'); localStorage.setItem('hankki:nudge:giftpack','1'); localStorage.setItem('hankki:giftSheetSeen','1'); if(차단) try{Object.defineProperty(Notification,'permission',{get:()=>'denied'})}catch{} },[기존,차단])
+  await ctx.addInitScript(([기존,차단])=>{ try{Object.defineProperty(navigator,'webdriver',{get:()=>false})}catch{}; if(기존) localStorage.setItem('hankki:onboarded','1'); localStorage.setItem('hankki:news:off','1'); localStorage.setItem('hankki:nudge:giftpack','1'); localStorage.setItem('hankki:giftSheetSeen','1'); if(차단) try{Object.defineProperty(Notification,'permission',{get:()=>'denied'})}catch{} },[기존,차단])
   await ctx.addInitScript({content:SEED_COACH_SEEN})
   const pg=await ctx.newPage(); await pg.goto('http://127.0.0.1:4471/hankki/',{waitUntil:'networkidle'}); await pg.waitForTimeout(5500)
   if(뒤) await 뒤(pg)
