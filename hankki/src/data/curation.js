@@ -278,19 +278,19 @@ const CURATION_ALL = [
       { name: '보리면', brand: '보보리쿡시', ingredients: '보리(국산) 83%, 현미(국산) 14%, 새싹보리순분말(국산) 3%', nutrition: '400g', checked: '2026-09-17', ingWho: '창업자', matches: ['보리면'], benefit: '밀가루 0%라 속이 편해요. 삶지 않고 익혀내는 방식이라 쫄깃하고 씹을수록 향이 올라와요. 쯔유와 특히 잘 어울려요', q: '보보리쿡시 보리면', mall: 'coupang', url: 'https://link.coupang.com/a/gR0xUdOyWq' },
       { name: '들기름막국수', brand: '샐러드판다', icon: 'cu_makguksu', matches: ['막국수'], benefit: '다이어트 할 때 많이 사먹었던 들기름막국수예요. 간단하고 소스도 짜지 않고 맛있어서 추천해요', q: '샐러드판다 들기름막국수', mall: 'coupang', from: '2027-01-30', url: 'https://link.coupang.com/a/gVL13OXv5g' },
       { name: '우리콩 두부면 넓은면', brand: '농협식품', icon: 'cu_dubu_myeon', ingredients: '대두 100%(국산), 염화마그네슘', allergen: '대두 함유', nutrition: '100g당 145kcal · 탄수화물 7.83g · 당류 0g · 단백질 18g · 지방 5.64g · 포화지방 0.85g · 트랜스지방 0g · 콜레스테롤 0mg · 나트륨 2.1mg', checked: '2026-09-25', ingWho: '창업자', matches: ['두부면'], benefit: '우리콩면이라 성분도 좋고, 식감도 좋아서 자주 이용해요. 추천템', q: '농협식품 우리콩 두부면 넓은면', mall: 'coupang', from: '2026-09-26', url: 'https://link.coupang.com/a/hkdhC7583w' },
-      { name: '어묵탕맛', brand: '누들핏', benefit: '누들핏이라 다이어트에 도움될까 해서 샀더니 이거 먹고 입이 터졌어요. 누들핏이 다 맛이 괜찮은데 어묵탕맛이 제일 맛있는 것 같아요. 강추합니다', q: '누들핏 어묵탕맛', mall: 'coupang', from: '2026-10-03' },
+      { name: '어묵탕맛', brand: '누들핏', icon: 'cu_cupnoodle', benefit: '누들핏이라 다이어트에 도움될까 해서 샀더니 이거 먹고 입이 터졌어요. 누들핏이 다 맛이 괜찮은데 어묵탕맛이 제일 맛있는 것 같아요. 강추합니다', q: '누들핏 어묵탕맛', mall: 'coupang', from: '2026-10-03' },
       // 🧾 [창업자 2026-09-17 검수] 자연드림이 아니라 «한살림» 물품이다(창업자가 한살림 상품 주소를 줬다 · 「자른당면(500g)」).
       //    한살림은 「사러가기」를 안 그린다(창업자 2026-08-17) → url 없이 mall 만. 원재료는 창업자 말 «고구마전분100%(국산)» · 영양은 한살림 상품 페이지 캡처.
       { name: '건자른당면', brand: '한살림', icon: 'cu_dangmyeon', matches: ['당면'], benefit: '당면 자를 때 다 튀고 불편했는데 자른당면이 정말 편했어요. 국산 고구마 전분 100%예요', q: '한살림 자른당면', mall: 'hansalim', from: '2026-09-19',
         ingredients: '고구마전분 100%(국산)', nutrition: '1회 제공량 100g당 352kcal · 나트륨 9mg · 탄수화물 88g · 당류 0g · 지방 0g · 트랜스지방 0g · 포화지방 0g · 콜레스테롤 0mg · 단백질 0g (총 내용량 500g · 5회)', checked: '2026-09-17', ingWho: '창업자' },
-      { name: '납작당면', matches: ['납작당면', '당면'], benefit: '애들은 납작한 당면을 좋아하더라구요. 불고기에, 닭볶음탕에 두루 넣어 사용하고 있어요. 자른당면이라 사용이 편리해요. 고구마전분 70%＋감자전분 30%', q: '한살림 납작당면', mall: 'hansalim', from: '2026-10-10' },
+      { name: '납작당면', icon: 'cu_dangmyeon', matches: ['납작당면', '당면'], benefit: '애들은 납작한 당면을 좋아하더라구요. 불고기에, 닭볶음탕에 두루 넣어 사용하고 있어요. 자른당면이라 사용이 편리해요. 고구마전분 70%＋감자전분 30%', q: '한살림 납작당면', mall: 'hansalim', from: '2026-10-10' },
     ],
   },
   {
     cat: '누룽지', group: '면·밥', emoji: '🍚', icon: 'cu_nurungji',
     items: [
       { name: '현미누룽지', brand: '자연다음', ingredients: '현미(국내산) 100%', nutrition: '990g(33g×30개입)', checked: '2026-09-17', ingWho: '창업자', matches: ['누룽지'], benefit: '쌀눈 살아있는 국내산 현미누룽지예요. 개별 소포장이라 눅눅해질 걱정 없이 쓰기 편하고, 얇아서 금방 익어 밥하기 귀찮은 날·아침에 밥 없을 때 구원템이에요', q: '자연다음 현미누룽지', mall: 'coupang', url: 'https://link.coupang.com/a/gRY3f8r1Cm' },
-      { name: '김치볶음밥 포켓누룽지', brand: '심플잇', benefit: '저희 애 친구들 사이에 한때 유행이었던 김치볶음밥 누룽지. 매콤한데 아이들이 정말 좋아하더라구요. 간단한 간식용으로 추천', q: '심플잇 김치볶음밥 포켓누룽지', mall: 'coupang', from: '2026-10-10', url: 'https://link.coupang.com/a/gR0McSFGRo' },
+      { name: '김치볶음밥 포켓누룽지', icon: 'cu_nurungji', brand: '심플잇', benefit: '저희 애 친구들 사이에 한때 유행이었던 김치볶음밥 누룽지. 매콤한데 아이들이 정말 좋아하더라구요. 간단한 간식용으로 추천', q: '심플잇 김치볶음밥 포켓누룽지', mall: 'coupang', from: '2026-10-10', url: 'https://link.coupang.com/a/gR0McSFGRo' },
     ],
   },
   {
@@ -407,7 +407,7 @@ const CURATION_ALL = [
     cat: '떡', group: '빵·떡', emoji: '🍡', icon: 'cu_tteok',
     items: [
       { name: '인절미', benefit: '오후에 가면 구경하기 힘든 한살림 떡들. 저는 그중에 인절미를 제일 좋아해요. 다른 떡들도 맛있으니 보이면 담아보세요', q: '한살림 인절미', mall: 'hansalim', from: '2026-10-17' },
-      { name: '우리쌀 떡국떡', brand: '칠갑농산', matches: ['떡국떡'], benefit: '떡이 쫄깃하고, 일 인분씩 포장되어 있어 쓰기에 편해요. 냉동실에 늘 쟁여놓는 떡국떡', q: '칠갑농산 우리쌀 떡국떡', mall: 'kurly', from: '2026-10-24' },
+      { name: '우리쌀 떡국떡', icon: 'cu_tteok', brand: '칠갑농산', matches: ['떡국떡'], benefit: '떡이 쫄깃하고, 일 인분씩 포장되어 있어 쓰기에 편해요. 냉동실에 늘 쟁여놓는 떡국떡', q: '칠갑농산 우리쌀 떡국떡', mall: 'kurly', from: '2026-10-24' },
       { name: '호박인절미', brand: '창억떡', benefit: '호박향이 많이 느껴지지 않고 달달해서 아침대용, 간식으로 좋아요', q: '창억 호박인절미', mall: 'kurly', from: '2026-10-31' },
       { name: '삼색꿀떡 (냉동)', brand: '더바른', benefit: '소포장 되어 있어 편리하고, 쫄깃하고 맛있어요. 아이들 간식으로 추천합니다', q: '더바른 삼색꿀떡 냉동', mall: 'coupang', from: '2026-11-14' },
       { name: '밤·옥수수설기 / 증편', brand: '홍블랑푸드', benefit: '홍블랑푸드 설기 참 맛있어요. 나오는 시기가 있는데, 저는 밤설기 정말 좋아하고 아이는 옥수수설기 좋아해요. 증편도 맛있는데 꼭 버터에 구워서 드세요. 강추합니다', q: '홍블랑푸드 밤설기 증편', url: 'https://hongblancfood.com/', from: '2026-11-07' },
@@ -417,7 +417,7 @@ const CURATION_ALL = [
     cat: '빵', group: '빵·떡', emoji: '🍞', icon: 'cu_bread',
     items: [
       { name: '오리지널 치아바타', icon: 'cu_ciabatta', brand: '아우어베이커리', matches: ['치아바타'], benefit: '한동안 샌드위치에 꽂혀 있었을 때 정말 많이 샀던 치아바타예요. 오븐에 구우면 겉바속촉이라 너무 맛있어요', q: '아우어베이커리 오리지널 치아바타', mall: 'kurly', from: '2026-11-07' },
-      { name: '통밀식빵', brand: '아르토스베이커리', matches: ['통밀식빵'], benefit: '저희 딸 입맛이 까다로운데 이 식빵 좋아해서 수십 봉지는 산 것 같아요. 이 식빵은 통밀로 만들었지만 까슬하지 않고 고소하고 달짝지근해요. 크기가 일반 식빵보다는 작아요', q: '아르토스베이커리 통밀식빵', mall: 'kurly', from: '2026-11-21' },
+      { name: '통밀식빵', icon: 'cu_bread', brand: '아르토스베이커리', matches: ['통밀식빵'], benefit: '저희 딸 입맛이 까다로운데 이 식빵 좋아해서 수십 봉지는 산 것 같아요. 이 식빵은 통밀로 만들었지만 까슬하지 않고 고소하고 달짝지근해요. 크기가 일반 식빵보다는 작아요', q: '아르토스베이커리 통밀식빵', mall: 'kurly', from: '2026-11-21' },
       { name: '슬랩 · 올리브푸가스', brand: '타르틴베이커리', benefit: '슬랩·올리브푸가스 정말 수도 없이 사먹었는데, 갑자기 유명해지면서 알람 맞춰놓고 사던 기억이 나네요. 슬랩은 샌드위치용으로 완전 강추(묵직하면서 고소해요). 올리브푸가스는 올리브가 듬뿍 들어있는데 고소 짭짤한 게 맛있어요. 올리브오일 뿌려 살짝 구워드세요', q: '타르틴베이커리 슬랩 올리브푸가스', mall: 'kurly', from: '2026-11-28' },
       { name: '밤밤식빵', brand: '리치몬드', benefit: '밤빵 좋아하는데 밤이 너무 달면 또 별로더라구요. 리치몬드는 적당하고, 빵도 부드럽고 맛있어요', q: '리치몬드 밤밤식빵', mall: 'kurly', from: '2026-12-05' },
       { name: '까만쫀득크런치', brand: '바비브레드', benefit: '커피에는 빵이 없으면 또 서운해서 많이 담았던 제품이에요. 맛있는 빵 여러 종류 사서 소분해놓고 커피랑 즐기는 재미에 오늘도 살이 찝니다', q: '바비브레드 까만쫀득크런치', mall: 'kurly', from: '2026-12-12' },
@@ -428,7 +428,7 @@ const CURATION_ALL = [
   {
     cat: '우유·유제품', group: '유제품', emoji: '🥛', icon: 'cu_milk',
     items: [
-      { name: '소화가 잘되는 우유', brand: '연세우유', ingredients: '원유 99.03597%(국산), 칼슘혼합제제(탄산칼슘, 아라비아검, 정제수), 난소화성말토덱스트린, 락타아제, 열처리유산균', allergen: '우유 함유', nutrition: '100mL당 65kcal · 나트륨 50mg · 탄수화물 5g · 당류 5g · 지방 3.7g · 트랜스지방 0g · 포화지방 2.5g · 콜레스테롤 11mg · 단백질 3g · 칼슘 200mg (총 내용량 900mL)', checked: '2026-09-17', ingWho: '창업자', matches: ['우유'], benefit: '제가 라떼를 정말 좋아하는데, 라떼 조합으로 제일 맛있는 우유인 것 같아요. 약간의 첨가물이 있는데 제가 먹는 거니까 :) 아쉬운 건 1팩씩은 안 팔더라구요', q: '연세우유 소화가 잘되는 우유', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gRZhYWJypw' },
+      { name: '소화가 잘되는 우유', icon: 'cu_milk', brand: '연세우유', ingredients: '원유 99.03597%(국산), 칼슘혼합제제(탄산칼슘, 아라비아검, 정제수), 난소화성말토덱스트린, 락타아제, 열처리유산균', allergen: '우유 함유', nutrition: '100mL당 65kcal · 나트륨 50mg · 탄수화물 5g · 당류 5g · 지방 3.7g · 트랜스지방 0g · 포화지방 2.5g · 콜레스테롤 11mg · 단백질 3g · 칼슘 200mg (총 내용량 900mL)', checked: '2026-09-17', ingWho: '창업자', matches: ['우유'], benefit: '제가 라떼를 정말 좋아하는데, 라떼 조합으로 제일 맛있는 우유인 것 같아요. 약간의 첨가물이 있는데 제가 먹는 거니까 :) 아쉬운 건 1팩씩은 안 팔더라구요', q: '연세우유 소화가 잘되는 우유', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gRZhYWJypw' },
       { name: '마이카페라떼 마일드', brand: '매일', benefit: '시판되는 많은 라떼들 중에 제 원픽은 매일카페라떼예요. 많이 달지 않고 제 입맛에는 그렇게 좋더라구요. 라떼 좋아하는 분들 강추합니다', q: '매일 마이카페라떼 마일드', mall: 'coupang', from: '2026-11-28', url: 'https://link.coupang.com/a/gR01WV52tM' },
       { name: '클로티드크림', brand: '데본', benefit: '타르틴 슬랩 올리브오일 뿌려 살짝 구워서 이거 발라드세요. 꼭이요. (꿀도 추가…)', q: '데본 클로티드크림', mall: 'kurly', from: '2026-12-19' },
     ],
@@ -488,7 +488,7 @@ const CURATION_ALL = [
     cat: '커피·차', group: '음료', emoji: '☕', icon: 'cu_coffee',
     items: [
       { name: '레드블랜드 원두', brand: '페이브', matches: ['원두'], benefit: '산미 없고 고소하고 묵직한 거 좋아하는데, 딱 제 취향이었어요. 비슷한 원두 좋아하시면 컬리 쇼핑할 때 담아보세요', q: '페이브 레드블랜드 원두', mall: 'kurly', from: '2027-01-23' },
-      { name: '콜롬비아 디카페인 원두', brand: '그라도스커피', matches: ['디카페인'], benefit: '디카페인 중에 가성비 좋고, 라떼 만들었을 때 고소하고 맛있었어요', q: '그라도스커피 콜롬비아 디카페인 원두', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gR1lBuWHdI' },
+      { name: '콜롬비아 디카페인 원두', icon: 'cu_coffee', brand: '그라도스커피', matches: ['디카페인'], benefit: '디카페인 중에 가성비 좋고, 라떼 만들었을 때 고소하고 맛있었어요', q: '그라도스커피 콜롬비아 디카페인 원두', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gR1lBuWHdI' },
       { name: '유기농 타타리메밀차', icon: 'cu_tea', brand: '평창다원', matches: ['메밀차'], benefit: '성분 좋고 고소하고 맛있어요. 가격이 좀 있지만, 메밀차 좋아하는 분들 추천합니다', q: '평창다원 유기농 타타리메밀차', mall: 'coupang', from: '2027-02-13', url: 'https://link.coupang.com/a/gR1mVwLGk8' },
     ],
   },
