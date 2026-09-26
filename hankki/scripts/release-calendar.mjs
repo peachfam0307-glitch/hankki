@@ -346,6 +346,17 @@ if (mode === '--tomorrow') {
     사흘안.forEach((x) => console.log(`   · ${x.date} ${x.where} — ${x.what}`))
     process.exit(1)
   }
+  // 🖼 [창업자 2026-09-26 · 3일 전 관문] 사흘 안에 열리는 장바구니 제품이 «제 그림» 없이 갈래 대표를 물려받으면 막는다.
+  //    🌲 왜 = 9/26 말랭이가 피자 그림으로 열렸다(장바구니는 자정에 열린다 · 20시로 잘못 알았다). 알림판만으로는 안 막혔다.
+  //    ✅ 창업자 그림이 없으면 = 그림을 받거나 날짜를 옮긴다. ⛔ 물려받은 채로는 못 연다.
+  const 그림폴더 = join(APP, 'src/assets/curation')
+  const 그림빔 = cartItems().filter((it) => it.from && it.from > todayKST() && it.from <= 사흘뒤 && (!it.ownIcon || !existsSync(join(그림폴더, `${it.ownIcon}.png`))))
+  if (그림빔.length) {
+    console.log(`⛔⛔ 3일 안(~${사흘뒤})에 열리는 장바구니 제품에 «제 그림»이 없다 — 갈래 대표를 물려받은 채로 열린다(창업자 2026-09-26)`)
+    그림빔.forEach((it) => console.log(`   · ${it.from} ${it.brand ? it.brand + ' ' : ''}${it.name} — ${it.icon || '(없음)'} 물려받음`))
+    console.log(`   👉 창업자 그림을 받아 붙이거나(8/12 컷 먼저 찾기) 날짜를 옮긴다.`)
+    process.exit(1)
+  }
   const g = gates().filter((x) => x.date === 내일)
   if (!g.length) { console.log(`✅ 내일(${내일}) 저절로 열리는 것 없음 · 3일 안 검수 전 레시피 0`); process.exit(0) }
   console.log(`📅📅 **내일(${내일}) 저절로 열린다** — 절대원칙: «오늘» 검수한다\n`)
