@@ -23,6 +23,24 @@ export const 알림칸 = 'hankki:push:consent'
 export const 알림이벤트 = 'hankki:pushconsent'
 export const 알림바뀜 = 'hankki:pushconsent:changed'
 
+// 🙋‍♀️ [창업자 2026-09-26] «기존 유저»에게만 앱 켤 때 한 번 알림 시트를 띄운다.
+//   📮 *"새로 오는 유저한테는 안보이게하고 어차피 장보기든 뭐든 담으면 보인다니까"* · *"기존 유저들한테만 보이게 하자"*
+//   🔢 왜 = 9/24 push_seen 1명 · 9/25 0명 — 담기 자리까지 가는 사람이 거의 없었다.
+//   ⭐ 「기존」 = 이 판을 «처음 켠 순간» 이미 소개(온보딩)를 끝낸 폰. 그 순간 한 번 적고 다시 안 바꾼다
+//      → 이 판 뒤에 새로 온 사람은 소개를 끝내도 '0' 이라 안 뜬다(담기 자리에서만 묻는다).
+//   ⛔ 폰 권한창이 아니라 «우리 시트»다 — 「예」 한 사람에게만 권한창(화살은 그대로 아낀다).
+export const 기존판정칸 = 'hankki:push:olduser'
+export const 기존물음칸 = 'hankki:push:oldasked'
+/** 순수 판정 — 재현판이 그대로 부른다. 저장소 = {get,set} */
+export function 기존유저한번물을까(저장소, 소개끝냄) {
+  let 판정 = 저장소.get(기존판정칸)
+  if (판정 !== '1' && 판정 !== '0') { 판정 = 소개끝냄 ? '1' : '0'; 저장소.set(기존판정칸, 판정) }
+  if (판정 !== '1') return false
+  if (저장소.get(기존물음칸) === '1') return false
+  return true
+}
+
+
 const w = () => (typeof window !== 'undefined' ? window : null)
 
 /** 📱 이 기기가 웹 푸시를 «할 수 있나» — 셋이 다 있어야 한다.

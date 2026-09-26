@@ -14,8 +14,9 @@ import { useEffect, useState } from 'react'
 import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
-import { 알림이벤트 } from '../pushConsent'
-import { 구독맞추기 } from '../pushSubscribe'
+import { 알림이벤트, 기존유저한번물을까, 기존물음칸 } from '../pushConsent'
+import { 구독맞추기, 알림켜기 } from '../pushSubscribe'
+import { ONBOARD_KEY } from './Onboarding'
 import { 알림시트봄, 알림허락, 알림거절 } from '../stats'   // 🚪 [2026-09-21] 관문 — 2026-09-20 에 나갔는데 계측이 0줄이었다
 
 export default function PushConsentSheet () {
@@ -31,7 +32,18 @@ export default function PushConsentSheet () {
     window.addEventListener(알림이벤트, 받기)
     // 🔁 앱을 켤 때 한 번 — 이미 켠 폰의 구독이 워커에 «있게» 맞춘다(서비스워커가 바뀌어도 살아남는다). 실패해도 조용하다.
     구독맞추기()
-    return () => window.removeEventListener(알림이벤트, 받기)
+    // 🙋‍♀️ [창업자 2026-09-26] 기존 유저에게만 «한 번» — 켜고 4초 뒤(첫 화면이 자리 잡은 뒤) 시트를 띄운다. 판정 = pushConsent.기존유저한번물을까
+    let 타이머 = null
+    try {
+      const 저장소 = { get: (k) => localStorage.getItem(k), set: (k, v) => localStorage.setItem(k, v) }
+      if (기존유저한번물을까(저장소, localStorage.getItem(ONBOARD_KEY) === '1')) {
+        타이머 = setTimeout(() => {
+          try { localStorage.setItem(기존물음칸, '1') } catch { /* noop */ }
+          알림켜기().catch(() => {})
+        }, 4000)
+      }
+    } catch { /* 못 읽으면 안 묻는다 — 담기 자리가 그대로 있다 */ }
+    return () => { window.removeEventListener(알림이벤트, 받기); if (타이머) clearTimeout(타이머) }
   }, [])
 
   if (!답하기) return null
