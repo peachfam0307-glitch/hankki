@@ -406,11 +406,11 @@ const CURATION_ALL = [
   {
     cat: '떡', group: '빵·떡', emoji: '🍡', icon: 'cu_tteok',
     items: [
-      { name: '인절미', benefit: '오후에 가면 구경하기 힘든 한살림 떡들. 저는 그중에 인절미를 제일 좋아해요. 다른 떡들도 맛있으니 보이면 담아보세요', q: '한살림 인절미', mall: 'hansalim', from: '2026-10-17' },
+      { name: '인절미', icon: 'cu_injeolmi', benefit: '오후에 가면 구경하기 힘든 한살림 떡들. 저는 그중에 인절미를 제일 좋아해요. 다른 떡들도 맛있으니 보이면 담아보세요', q: '한살림 인절미', mall: 'hansalim', from: '2026-10-17' },
       { name: '우리쌀 떡국떡', icon: 'cu_tteok', brand: '칠갑농산', matches: ['떡국떡'], benefit: '떡이 쫄깃하고, 일 인분씩 포장되어 있어 쓰기에 편해요. 냉동실에 늘 쟁여놓는 떡국떡', q: '칠갑농산 우리쌀 떡국떡', mall: 'kurly', from: '2026-10-24' },
-      { name: '호박인절미', brand: '창억떡', benefit: '호박향이 많이 느껴지지 않고 달달해서 아침대용, 간식으로 좋아요', q: '창억 호박인절미', mall: 'kurly', from: '2026-10-31' },
-      { name: '삼색꿀떡 (냉동)', brand: '더바른', benefit: '소포장 되어 있어 편리하고, 쫄깃하고 맛있어요. 아이들 간식으로 추천합니다', q: '더바른 삼색꿀떡 냉동', mall: 'coupang', from: '2026-11-14' },
-      { name: '밤·옥수수설기 / 증편', brand: '홍블랑푸드', benefit: '홍블랑푸드 설기 참 맛있어요. 나오는 시기가 있는데, 저는 밤설기 정말 좋아하고 아이는 옥수수설기 좋아해요. 증편도 맛있는데 꼭 버터에 구워서 드세요. 강추합니다', q: '홍블랑푸드 밤설기 증편', url: 'https://hongblancfood.com/', from: '2026-11-07' },
+      { name: '호박인절미', icon: 'cu_hobak_injeolmi', brand: '창억떡', benefit: '호박향이 많이 느껴지지 않고 달달해서 아침대용, 간식으로 좋아요', q: '창억 호박인절미', mall: 'kurly', from: '2026-10-31' },
+      { name: '삼색꿀떡 (냉동)', icon: 'cu_kkultteok', brand: '더바른', benefit: '소포장 되어 있어 편리하고, 쫄깃하고 맛있어요. 아이들 간식으로 추천합니다', q: '더바른 삼색꿀떡 냉동', mall: 'coupang', from: '2026-11-14' },
+      { name: '밤·옥수수설기 / 증편', icon: 'cu_bamseolgi', brand: '홍블랑푸드', benefit: '홍블랑푸드 설기 참 맛있어요. 나오는 시기가 있는데, 저는 밤설기 정말 좋아하고 아이는 옥수수설기 좋아해요. 증편도 맛있는데 꼭 버터에 구워서 드세요. 강추합니다', q: '홍블랑푸드 밤설기 증편', url: 'https://hongblancfood.com/', from: '2026-11-07' },
     ],
   },
   {
@@ -429,8 +429,8 @@ const CURATION_ALL = [
     cat: '우유·유제품', group: '유제품', emoji: '🥛', icon: 'cu_milk',
     items: [
       { name: '소화가 잘되는 우유', icon: 'cu_milk', brand: '연세우유', ingredients: '원유 99.03597%(국산), 칼슘혼합제제(탄산칼슘, 아라비아검, 정제수), 난소화성말토덱스트린, 락타아제, 열처리유산균', allergen: '우유 함유', nutrition: '100mL당 65kcal · 나트륨 50mg · 탄수화물 5g · 당류 5g · 지방 3.7g · 트랜스지방 0g · 포화지방 2.5g · 콜레스테롤 11mg · 단백질 3g · 칼슘 200mg (총 내용량 900mL)', checked: '2026-09-17', ingWho: '창업자', matches: ['우유'], benefit: '제가 라떼를 정말 좋아하는데, 라떼 조합으로 제일 맛있는 우유인 것 같아요. 약간의 첨가물이 있는데 제가 먹는 거니까 :) 아쉬운 건 1팩씩은 안 팔더라구요', q: '연세우유 소화가 잘되는 우유', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gRZhYWJypw' },
-      { name: '마이카페라떼 마일드', brand: '매일', benefit: '시판되는 많은 라떼들 중에 제 원픽은 매일카페라떼예요. 많이 달지 않고 제 입맛에는 그렇게 좋더라구요. 라떼 좋아하는 분들 강추합니다', q: '매일 마이카페라떼 마일드', mall: 'coupang', from: '2026-11-28', url: 'https://link.coupang.com/a/gR01WV52tM' },
-      { name: '클로티드크림', brand: '데본', benefit: '타르틴 슬랩 올리브오일 뿌려 살짝 구워서 이거 발라드세요. 꼭이요. (꿀도 추가…)', q: '데본 클로티드크림', mall: 'kurly', from: '2026-12-19' },
+      { name: '마이카페라떼 마일드', icon: 'cu_latte', brand: '매일', benefit: '시판되는 많은 라떼들 중에 제 원픽은 매일카페라떼예요. 많이 달지 않고 제 입맛에는 그렇게 좋더라구요. 라떼 좋아하는 분들 강추합니다', q: '매일 마이카페라떼 마일드', mall: 'coupang', from: '2026-11-28', url: 'https://link.coupang.com/a/gR01WV52tM' },
+      { name: '클로티드크림', icon: 'cu_clotted', brand: '데본', benefit: '타르틴 슬랩 올리브오일 뿌려 살짝 구워서 이거 발라드세요. 꼭이요. (꿀도 추가…)', q: '데본 클로티드크림', mall: 'kurly', from: '2026-12-19' },
     ],
   },
   {
@@ -450,8 +450,8 @@ const CURATION_ALL = [
       { name: '석박지', brand: '종가', matches: ['석박지', '깍두기'], benefit: '저는 김치도 겉절이, 깍두기도 갓 만든 거 좋아하는데, 갓 담근 깍두기 좋아하시면 추천합니다', q: '종가 석박지', mall: 'coupang', from: '2027-01-02', url: 'https://link.coupang.com/a/gRZIvJoLfw' },
       { name: '포기김치 5kg', brand: '대복', matches: ['포기김치'], benefit: '대복김치 맛있어요. 깔끔한 서울식 김치고, 국내산 재료. 전 3kg는 바로 먹고, 5kg짜리는 밖에 며칠 두고 확 익혀서 신김치 만들어요. 김치찌개나 김치전 해먹는데 너무 맛있어요', q: '대복 포기김치 5kg', mall: 'coupang', from: '2027-01-09', url: 'https://link.coupang.com/a/gR08wQAotE' },
       { name: '경상도 국밥집 겉절이', brand: '맘쏙김치', matches: ['겉절이'], benefit: '겉절이 좋아해서 자주 구입해요. 쿠팡에서 겉절이 이것저것 사봤는데 제 입맛에는 맘쏙김치가 제일 맛있었어요. 종가집 김치 스타일(서울식 깔끔 단맛 있는) 좋아하면 추천합니다', q: '맘쏙김치 경상도 국밥집 겉절이', mall: 'coupang', from: '2027-01-16', url: 'https://link.coupang.com/a/gRZgfIi7ye' },
-      { name: '꼬들단무지', matches: ['단무지'], benefit: '저희 가족은 꼬들 쫀득한 식감을 좋아하는데 이 단무지 식감이 꼬들꼬들해서 좋아해요. 고춧가루 살짝, 참기름 통깨만 넣으면 간단한 반찬으로 좋아요', q: '꼬들단무지', mall: 'icoop', from: '2026-11-14' },
-      { name: '황태채무침', matches: ['황태채'], benefit: '제가 좋아하는데 혼자 먹자고 집에서 하기 좀 그래서 가끔 구입해서 먹는 아이템. 간간하지만 양념이 맛있어서 좋아해요', q: '한살림 황태채무침', mall: 'hansalim', from: '2026-11-28' },
+      { name: '꼬들단무지', icon: 'cu_danmuji', matches: ['단무지'], benefit: '저희 가족은 꼬들 쫀득한 식감을 좋아하는데 이 단무지 식감이 꼬들꼬들해서 좋아해요. 고춧가루 살짝, 참기름 통깨만 넣으면 간단한 반찬으로 좋아요', q: '꼬들단무지', mall: 'icoop', from: '2026-11-14' },
+      { name: '황태채무침', icon: 'cu_hwangtae', matches: ['황태채'], benefit: '제가 좋아하는데 혼자 먹자고 집에서 하기 좀 그래서 가끔 구입해서 먹는 아이템. 간간하지만 양념이 맛있어서 좋아해요', q: '한살림 황태채무침', mall: 'hansalim', from: '2026-11-28' },
     ],
   },
   {
@@ -522,7 +522,7 @@ const CURATION_ALL = [
       //   📌 왜 드러났나 = check-weeklypick 이 2027-01-19 주를 「갈래 2가지로 뭉쳤다」고 잡았다.
       //      뽑힌 넷이 김치·절임 2(단무지·스위트콘) ＋ 간편식 2 였다. 검사가 옳았고 자리가 틀렸다.
       //   ⛔ 검사 잣대를 넓혀서 넘기지 않았다 — 그건 「섞어서」(창업자 2026-08-28)를 버리는 것이다.
-      { name: '옥수수병조림', matches: ['옥수수'], benefit: 'GMO는 가급적이면 피하고 싶어서 찾은 정착템. 그냥 먹어도 맛있어요. 페퍼런치 할 때나 볶아서 밥에 뿌려도 주고, 콘치즈로도 먹고 추천해요', q: '한살림 옥수수병조림', mall: 'hansalim', from: '2026-11-21' },
+      { name: '옥수수병조림', icon: 'cu_corn', matches: ['옥수수'], benefit: 'GMO는 가급적이면 피하고 싶어서 찾은 정착템. 그냥 먹어도 맛있어요. 페퍼런치 할 때나 볶아서 밥에 뿌려도 주고, 콘치즈로도 먹고 추천해요', q: '한살림 옥수수병조림', mall: 'hansalim', from: '2026-11-21' },
       { name: '유기농 스위트콘', brand: '발투센', ingredients: '유기농옥수수 67.6%, 정제수, 정제소금, 유기농레몬쥬스 0.12%', nutrition: '340g(고형량 230g) · 286kcal', checked: '2026-09-17', ingWho: '창업자', matches: ['옥수수', '스위트콘'], benefit: '옥수수는 한살림이 제 입맛에는 제일 맛있었는데, 한살림이 집 근처에 없다면 이걸로 대용해도 좋아요', q: '발투센 유기농 스위트콘', mall: 'coupang', url: 'https://link.coupang.com/a/g3fAUF8MHA' },
       { name: '국내산 무농약 목이버섯', matches: ['목이버섯'], benefit: '저희 딸이 목이버섯을 정말 좋아해요. 생목이는 변질이 빨라서 매번 사기도 그렇고… 국산으로 찾다가 이 제품을 계속 구입하고 있어요. 낱개라 조금씩 쓰기 편하고 소비기한도 길고요. 추천합니다', q: '국내산 무농약인증 건목이버섯', mall: 'coupang', from: '2027-03-06', url: 'https://link.coupang.com/a/gR0iYfaF3I' },
       { name: '건조 흰목이버섯', brand: '하진이네버섯뜰에', matches: ['흰목이버섯'], benefit: '하진이네 건조 흰목이버섯, 물에 불렸을 때 너무 깨끗하고 식감도 좋아요. 아쉬운 점은 송이로 들어있어서 한 번에 먹기엔 양이 좀 많아요. 목이버섯 소비가 많은 집이라면 하진이네 추천합니다', q: '하진이네버섯뜰에 건조 흰목이버섯 80g', mall: 'coupang', from: '2027-03-06', url: 'https://link.coupang.com/a/gR1syklmsS' },
