@@ -190,14 +190,18 @@ self.addEventListener('push', (event) => {
   const 냉장고만 = !!값.없음
   if (냉장고만 && !얹을줄) return
   // 🧊 임박 재료가 있으면 한 줄 «얹는다» — 없거나 못 읽으면 원래 본문 그대로(추가 푸시 0 · 하루 한 번 그대로)
-  const 본문 = 냉장고만 ? 얹을줄 : String(값.본문 || '새로운 소식이 있어요') + (얹을줄 ? '\n' + 얹을줄 : '')
+  //    🧊 [2026-09-26 창업자 확정] 냉장고 줄 앞에 이모지 하나 — 윗줄(🛒🍳📱🎨)과 짝을 맞춘다. 문장 자체(pantryExpiry)는 안 건드린다.
+  const 냉장고줄 = 얹을줄 ? '🧊 ' + 얹을줄 : 얹을줄
+  const 본문 = 냉장고만 ? 냉장고줄 : String(값.본문 || '새로운 소식이 있어요') + (냉장고줄 ? '\n' + 냉장고줄 : '')
   const 길 = String(값.길 || './')
   const 표 = 냉장고만 ? 'hankki-exp' : String(값.표 || 'hankki')   // 표가 다르니 같은 날 두 종류가 서로 덮지 않는다
   return self.registration.showNotification(제목, {
       body: 본문,
       // 🖼 아이콘은 매니페스트가 쓰는 «그 파일»이다 — 두 곳에 적지 않는다.
       icon: new URL('icons/icon-192-v7.png', self.registration.scope).href,
-      badge: new URL('icons/icon-192-v7.png', self.registration.scope).href,
+      // 🍚 [2026-09-26 창업자 캡처 「알림이 네모야」] 상태바 아이콘은 «투명 바탕 ＋ 흰 모양»이라야 한다 — 안드로이드는 색을 버리고
+      //   모양(투명도)만 쓴다. 꽉 찬 앱 아이콘을 넣으면 하얀 네모가 된다. 창업자가 시안 셋 중 「그릇이 더 잘 보이네」로 골랐다.
+      badge: new URL('icons/badge-bowl-96.png', self.registration.scope).href,
       tag: 표,
       renotify: false,
       data: { 길 },
