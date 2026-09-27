@@ -5245,6 +5245,7 @@ const RAW_BASICS = [
   },
   {
     ...base,
+    made: '창업자', // 🧑‍🍳 창업자가 «직접 만든» 레시피 — 뱃지 대상 (창업자 확인 · 2026-09-27 「스키야키 내꺼 맞아」)
     id: 'basic-sukiyaki', title: '스키야키', from: '2026-11-09',
     icon: 'fe_121', category: '일식',
     time: 30, servings: 2, difficulty: '쉬움',
