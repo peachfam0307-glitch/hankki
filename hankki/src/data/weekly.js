@@ -322,11 +322,12 @@ export const HOMEMADE = [
   { from: '2026-09-28', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     // 🔄 [2026-09-20] 마파두부가 9/21 로 갔다 → 그 자리에 고마다래 소스가 온다(맞바꿈 · 편 수 그대로 넷)
-    ids: ['basic-daepae-dallae-deopbap', 'basic-ojingeo-nurungji', 'basic-gomadare-sauce', 'basic-sogogi-gyudon'] },   // 대패삼겹 달래덮밥 · 오징어누룽지 · 고마다래 소스 · 소고기 규동
+    // 🔄 [2026-09-27] 고마다래 소스 → 10/5 칸으로 · 그 자리에 10분 쌀수제비(창업자 「소스하나면 좀 약해서.. 9월 28일에 넣자」)
+    ids: ['basic-daepae-dallae-deopbap', 'basic-ojingeo-nurungji', 'basic-ssal-sujebi-10min', 'basic-sogogi-gyudon'] },   // 대패삼겹 달래덮밥 · 오징어누룽지 · 10분 쌀수제비 · 소고기 규동
   { from: '2026-10-05', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     // ✅ [2026-09-16] 두부참치찌개를 «도로 넣었다» — 창업자가 새 판으로 다시 주고 검수까지 끝냈다(«다 맞아. ㄱㄱ 내보내자»).
-    ids: ['basic-jeonbok-sotbap', 'basic-dubu-chamchi-jjigae', 'basic-ganjang-yakiniku', 'basic-ojingeo-saeujeon'] },   // 전복솥밥 · 두부참치찌개 · 간장 야키니쿠 · 오징어 새우전
+    ids: ['basic-jeonbok-sotbap', 'basic-dubu-chamchi-jjigae', 'basic-ganjang-yakiniku', 'basic-ojingeo-saeujeon', 'basic-gomadare-sauce'] },   // 전복솥밥 · 두부참치찌개 · 간장 야키니쿠 · 오징어 새우전 · 고마다래 소스(9/28 칸에서 옮겨 옴 · 2026-09-27)
   { from: '2026-10-12', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     // 🍄 [2026-08-18] 「간단 버섯밥」을 뺐다 — 8/31 「뚝딱 버섯 볶음밥」과 «같은 요리»였다
