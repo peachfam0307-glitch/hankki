@@ -58,6 +58,7 @@ import idxHeart from '../assets/ui/idx_heart.png'
 // 🖼 일기 사진이 「큰 창고」에 있으면 쪽지(`idb://…`)다 — 달력·앨범도 꺼내서 그려야 한다
 import StoredImg from '../photoView'
 import SeasonHeadCut from '../components/SeasonHeadCut.jsx'
+import { 기본레시피표시 } from '../stats'
 
 // 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
 const MYRECIPES_COACH_KEY = COACH.myrecipes
@@ -1109,6 +1110,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                             ev.stopPropagation()
                             const 다음 = nextPin(r)
                             setFavPin(r.id, 다음)
+                            if (다음) 기본레시피표시(r.id, 다음)   // ⭐ 인기 레시피 — 기본 레시피만 번호로 센다(창업자 2026-09-27)
                             set방금바꾼(r.id)
                             nav.showToast?.(다음 ? `${pinName(다음)}에 넣었어요` : `${pinName(pinOf(r))}에서 뺐어요`)
                           }}
