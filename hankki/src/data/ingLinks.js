@@ -190,6 +190,7 @@ export const ING_LINKS = {
   '파': 'https://link.coupang.com/a/gYRLijw0cu', // ⛇묶음: 대파 / 다진 파 / 파
   '기름': 'https://www.costco.co.kr/Foods/Processed-Food/Oils/KS-Siurana-Extra-Virgin-Olive-Oil-1L/p/892188', // ⛇묶음: 올리브유 / 식용유 / 기름
   '전분물': 'https://link.coupang.com/a/gYWQr9gXIa', // ⛇묶음: 감자전분 / 전분가루 / 전분물
+  '당면': 'https://link.coupang.com/a/hod4irlEIv', // [창업자 2026-09-27] 남은 나물 잡채(9/28)
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
