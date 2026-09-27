@@ -87,7 +87,9 @@ export function 앱문(u, ua = typeof navigator === 'undefined' ? '' : navigator
 //   ⭐ 정체는 «이미 있는 열쇠 하나»다 — `hankki:founder`(통계·AI 무제한·유저눈이 다 여기 걸린다).
 //      ⛔ 새 표식을 만들지 않는다(정체가 둘이면 반드시 갈린다).
 //   ⛔ `stats.js` 를 import 하지 «않는다» — 여는 길이 통계에 기대면 통계가 죽을 때 링크도 죽는다. 열쇠만 직접 본다.
-const 창업자폰 = () => { try { return !!localStorage.getItem('hankki:founder') } catch { return false } }
+// 👀 [창업자 2026-09-27] 「유저 눈으로 보기」를 켠 폰은 유저처럼 상품 링크로 간다 — 딸 아이폰(켜 둠)에서 쿠팡 첫 화면만 떠 «링크가 다 안 된다»로 보였다.
+//    ⛔ tidy.js 를 import 하지 않는다(위 stats.js 와 같은 까닭) — 표식 글자는 tidy.js:512 「유저눈표식」과 같다.
+const 창업자폰 = () => { try { return !!localStorage.getItem('hankki:founder') && localStorage.getItem('hankki:유저눈') !== '1' } catch { return false } }
 // 🔗 파트너스 링크인가 — 쿠팡이 만들어 주는 단축 주소(link.coupang.com/a/…)
 const 파트너스링크 = /^https?:\/\/link\.coupang\.com\//i
 /** 🛒 창업자 폰이면 파트너스 링크를 «그냥 쿠팡 주소»로 바꾼다(유저는 그대로 파트너스로 간다). */
