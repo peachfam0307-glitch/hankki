@@ -5491,9 +5491,10 @@ const RAW_BASICS = [
   {
     ...base,
     // 📱 [창업자 2026-09-27] 인스타 SNS 레시피 — 11/23 우리집레시피 칸(양념장 둘 뺀 자리)
+    //    ⛔ 우리집레시피 칸엔 안 넣는다 — sourceUrl 이 있으면 SNS 상자(snsNow)가 저절로 세운다 · 둘 다 넣으면 두 상자에 겹친다
     //    원문 = 릴스 캡션(순서) ＋ 양 = 창업자가 준 «해먹은 사람 블로그» 정리(느타리버섯은 뺌 · 창업자)
     //    치킨스톡은 재료에서 빼고 메모로 (창업자 「맛이 부족하면 치킨스톡이나 백간장 조금 넣어도 된다고만」)
-    id: 'basic-gul-dangmyeon', title: '굴 당면', from: '2026-11-23',
+    id: 'basic-gul-dangmyeon', title: '굴 당면', from: '2026-11-25',   // 📅 SNS 는 수요일 — 우리집레시피 칸에서 빼고 SNS 상자로(창업자 2026-09-27 「1번으로 가고」)
     icon: 'gr_224', category: '한식', folder: '한식',
     time: 20, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DQV1YNpCXP7/',
