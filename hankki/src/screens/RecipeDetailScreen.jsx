@@ -57,6 +57,7 @@ import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 // 📺 링크 → 앱 안에서 재생할 수 있는 «공식» 임베드 주소 (유튜브·인스타)
 import { embedUrl, SNS표 } from '../embed'
+import avGom from '../assets/avatars/av_gom.png' // 🧑‍🍳 창업자가 «직접 만든» 레시피 뱃지 (made:'창업자' · 2026-09-27)
 
 // 🏷 출처(어디서 왔나) — 주소에서 «읽어» 낸다 (창업자 2026-09-03 *"원본링크에-출처도 붙이자"*)
 //   ⛔ 손으로 적는 칸을 새로 만들지 않는다 — 손으로 적으면 반드시 낡는다(규칙 12ⓑ).
@@ -701,6 +702,15 @@ export default function RecipeDetailScreen({ id }) {
         {/* 즐겨찾기는 상단 오버레이 북마크 하나로 통일 (중복 버튼 정리) */}
         <div className="h-title" style={{ fontSize: 25, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {r.title}
+          {/* 🧑‍🍳 창업자가 «직접 만든» 레시피 = 요리사 모자 꼬르곰 얼굴 (창업자 2026-09-27 「꼬르곰 얼굴만 · 귀엽게」)
+              ⛔ 글자는 안 붙인다 — 이름까지 달면 길다(창업자). 누르면 뜨는 말은 아직 안 정했다. */}
+          {r.made === '창업자' && (
+            <img src={avGom} alt="" className="founder-badge" style={{
+              width: 34, height: 34, flex: '0 0 auto', padding: 3, borderRadius: 999,
+              background: '#fff4e0', border: '1.5px solid #ecd2a8', transform: 'rotate(-8deg)',
+              boxShadow: '0 2px 6px rgba(120,80,30,.15)',
+            }} />
+          )}
           {/* 🏷 **「샘플」** — 창업자가 직접 꾸민 표지가 붙은 딱 한 편(콩국수)에만 뜬다.
               📮 창업자 2026-08-13 *"샘플이라고(삭제가능) 명시하고"* — 일기 샘플과 **같은 모양·같은 잉크색**을 쓴다.
                  ⛔ 두 곳에서 다르게 생기면 「다른 것」으로 읽힌다.
