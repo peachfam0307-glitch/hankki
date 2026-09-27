@@ -4,7 +4,7 @@ import { COACH } from '../coach'
 //   🔢 창업자 = *"요 며칠 통계에 레꾸자랑 보낸 사람있어?"* → 장부 15일치 brag_shared **0**.
 //   ⛔ 9/21 에 BragScreen 의 이름 겹침을 고쳤지만 그건 «네 길 중 한 길»이었다. 나머지 셋(여기 둘 · SendNowSheet 하나)은 그대로였다.
 //   📌 detail 은 어제 조회 52로 제일 많이 본 화면이다 — 여기서 보낸 사람이 통째로 빠져 있었다.
-import { 사러나감, 장보기담음, 요리끝냄, 픽펼침, 자랑보냄, 자랑고름, 자랑사진저장, 자랑보내기누름, 자랑창닫음 } from '../stats'
+import { 사러나감, 장보기담음, 요리끝냄, 픽펼침, 자랑보냄, 자랑고름, 자랑사진저장, 자랑보내기누름, 자랑창닫음, 기본레시피표시 } from '../stats'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -302,6 +302,8 @@ export default function RecipeDetailScreen({ id }) {
   //      랜덤 카드(ShareDrawCard)가 v9.63부터 쓰던 방식 — 검증된 처방을 표지에도 붙인다.
   // 🔤 글꼴 꾸러미 미리 데우기 — 캡처보다 «먼저» 끝나 있어야 캡처가 빨라진다(fontEmbed.js)
   useEffect(() => { warmFontCSS() }, [])
+  // ⭐ [창업자 2026-09-27] 인기 레시피 — «기본 레시피»를 열면 번호만 센다(유저가 쓴 레시피는 stats.js 가 걸러 안 보낸다)
+  useEffect(() => { if (id) 기본레시피표시(id, 'view') }, [id])
 
   const prepRef = useRef(null)
   useEffect(() => {
@@ -588,7 +590,7 @@ export default function RecipeDetailScreen({ id }) {
               ⏳ **그림은 아직 북마크 아이콘이다** — 목록은 요리사모자 클립으로 갔다.
                  말은 같은데 그림이 달라 「같은 기능인 줄 모른다」가 될 수 있다 → 창업자 판정 대기.
                  ⛔ 창업자가 지목한 건 「칩」이라 여기까지 그림을 넓히지 않았다. */}
-          <button className="bar-btn" onClick={() => toggleFavorite(r.id)} aria-label={FAV_NAME}>
+          <button className="bar-btn" onClick={() => { if (!r.favorite) 기본레시피표시(r.id, 'fav_on'); toggleFavorite(r.id) }} aria-label={FAV_NAME}>
             <Icon name="bookmark" size={20} color={r.favorite ? '#c2703f' : 'currentColor'} style={{ fill: r.favorite ? '#c2703f' : 'none' }} />
           </button>
           {/* 삭제 — 예전엔 '⋯ 더보기' 뒤에 숨겨뒀는데 메뉴 안에 삭제 하나뿐이라
