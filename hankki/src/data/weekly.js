@@ -369,7 +369,7 @@ export const HOMEMADE = [
   { from: '2026-11-23', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     // 🔄 [창업자 2026-09-27] «11/23일에 양념장은 다 빼야할 것 같아» → 달래장·비빔밥 소스 뺌 · ⏳ 파절이는 창업자가 레시피를 다시 준다
-    ids: ['basic-pajeori', 'basic-nurungji-samgyetang', 'basic-pad-kaprao-moosap', 'basic-hanwoo-chaekkeut-gui'] },   // 파절이 · 누룽지삼계탕 · 팟카카오무쌉 · 한우채끝 소고기양념구이 — 창업자 2026-09-27 · 굴 당면은 SNS 상자(11/25 수)로
+    ids: ['basic-pajeori', 'basic-nurungji-samgyetang', 'basic-pad-kaprao-moosap', 'basic-hanwoo-chaekkeut-gui'] },   // 파절이 · 누룽지삼계탕 · 팟카카오무쌉 · 소고기양념구이 — 창업자 2026-09-27 · 굴 당면은 SNS 상자(11/25 수)로
   // ⬆⬆ [자동] 우리집레시피 25주 끝 ⬆⬆
 ]
 
