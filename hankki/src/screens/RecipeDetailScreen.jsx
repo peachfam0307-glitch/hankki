@@ -57,6 +57,7 @@ import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 // 📺 링크 → 앱 안에서 재생할 수 있는 «공식» 임베드 주소 (유튜브·인스타)
 import { embedUrl, SNS표 } from '../embed'
+import avGom from '../assets/avatars/av_gom.png' // 🧑‍🍳 창업자가 «직접 만든» 레시피 뱃지 (made:'창업자' · 2026-09-27)
 
 // 🏷 출처(어디서 왔나) — 주소에서 «읽어» 낸다 (창업자 2026-09-03 *"원본링크에-출처도 붙이자"*)
 //   ⛔ 손으로 적는 칸을 새로 만들지 않는다 — 손으로 적으면 반드시 낡는다(규칙 12ⓑ).
@@ -129,6 +130,8 @@ export default function RecipeDetailScreen({ id }) {
   오래켜둠재기('detail')
   const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
   const [timer, setTimer] = useState(false)
+  const [주인장말, set주인장말] = useState(false) // 🧑‍🍳 꼬르곰 뱃지 말풍선 (2026-09-27)
+  useEffect(() => { if (!주인장말) return; const t = setTimeout(() => set주인장말(false), 1000); return () => clearTimeout(t) }, [주인장말])
   // 🖼 유튜브 미리보기 그림이 안 올 때 — 그 칸을 통째로 감춘다(깨진 네모 금지)
   const [썸네일깨짐, set썸네일깨짐] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
@@ -701,6 +704,34 @@ export default function RecipeDetailScreen({ id }) {
         {/* 즐겨찾기는 상단 오버레이 북마크 하나로 통일 (중복 버튼 정리) */}
         <div className="h-title" style={{ fontSize: 25, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {r.title}
+          {/* 🧑‍🍳 창업자가 «직접 만든» 레시피 = 요리사 모자 꼬르곰 얼굴 (창업자 2026-09-27 「꼬르곰 얼굴만 · 귀엽게」)
+              ⛔ 글자는 안 붙인다 — 이름까지 달면 길다(창업자). 누르면 「한끼 주인장 레시피예요」(창업자 2026-09-27 「주인장으로 하자」). */}
+          {/* 💬 누르면 꼬르곰 옆에 말풍선 (창업자 「귀엽게 말풍선」 · 「작게 1초만 · 뱃지옆에」) — 1초 뒤 저절로 사라진다 */}
+          {r.made === '창업자' && (
+            <span style={{ position: 'relative', display: 'inline-flex', flex: '0 0 auto' }}>
+            {주인장말 && (
+              // ↔ 뱃지 «옆» — 오른쪽 자리가 모자라면(긴 제목) 왼쪽으로 연다. 화면 밖으로 안 나가게.
+              <span className="founder-bubble" style={{
+                position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+                ...(주인장말 === '왼' ? { right: 'calc(100% + 9px)' } : { left: 'calc(100% + 9px)' }),
+                whiteSpace: 'nowrap', fontSize: 12.5, fontWeight: 700, color: '#6b4a24', lineHeight: 1.2,
+                background: '#fff4e0', border: '1.5px solid #ecd2a8', borderRadius: 14, padding: '5px 10px',
+                boxShadow: '0 2px 8px rgba(120,80,30,.16)', zIndex: 5, animation: 'fadeIn .2s ease-out',
+              }}>
+                한끼 주인장 레시피예요
+                <span style={{ position: 'absolute', top: '50%', width: 9, height: 9, background: '#fff4e0',
+                  ...(주인장말 === '왼'
+                    ? { left: '100%', borderTop: '1.5px solid #ecd2a8', borderRight: '1.5px solid #ecd2a8', transform: 'translate(-5px,-50%) rotate(45deg)' }
+                    : { right: '100%', borderBottom: '1.5px solid #ecd2a8', borderLeft: '1.5px solid #ecd2a8', transform: 'translate(5px,-50%) rotate(45deg)' }) }} />
+              </span>
+            )}
+            <img src={avGom} alt="한끼 주인장 레시피" className="founder-badge press" onClick={(e) => { const b = e.currentTarget.getBoundingClientRect(); set주인장말(b.right + 175 > window.innerWidth ? '왼' : '오') }} style={{ cursor: 'pointer',
+              width: 34, height: 34, flex: '0 0 auto', padding: 3, borderRadius: 999,
+              background: '#fff4e0', border: '1.5px solid #ecd2a8', transform: 'rotate(-8deg)',
+              boxShadow: '0 2px 6px rgba(120,80,30,.15)',
+            }} />
+            </span>
+          )}
           {/* 🏷 **「샘플」** — 창업자가 직접 꾸민 표지가 붙은 딱 한 편(콩국수)에만 뜬다.
               📮 창업자 2026-08-13 *"샘플이라고(삭제가능) 명시하고"* — 일기 샘플과 **같은 모양·같은 잉크색**을 쓴다.
                  ⛔ 두 곳에서 다르게 생기면 「다른 것」으로 읽힌다.

@@ -322,7 +322,8 @@ export const HOMEMADE = [
   { from: '2026-09-28', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     // 🔄 [2026-09-20] 마파두부가 9/21 로 갔다 → 그 자리에 고마다래 소스가 온다(맞바꿈 · 편 수 그대로 넷)
-    ids: ['basic-daepae-dallae-deopbap', 'basic-ojingeo-nurungji', 'basic-gomadare-sauce', 'basic-sogogi-gyudon'] },   // 대패삼겹 달래덮밥 · 오징어누룽지 · 고마다래 소스 · 소고기 규동
+    // 🔄 [2026-09-27] 고마다래 소스 → 10/12 샤브샤브 칸으로 · 그 자리에 10분 쌀수제비(창업자 「소스하나면 좀 약해서.. 9월 28일에 넣자」)
+    ids: ['basic-daepae-dallae-deopbap', 'basic-ojingeo-nurungji', 'basic-ssal-sujebi-10min', 'basic-sogogi-gyudon'] },   // 대패삼겹 달래덮밥 · 오징어누룽지 · 10분 쌀수제비 · 소고기 규동
   { from: '2026-10-05', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     // ✅ [2026-09-16] 두부참치찌개를 «도로 넣었다» — 창업자가 새 판으로 다시 주고 검수까지 끝냈다(«다 맞아. ㄱㄱ 내보내자»).
@@ -332,7 +333,7 @@ export const HOMEMADE = [
     // 🍄 [2026-08-18] 「간단 버섯밥」을 뺐다 — 8/31 「뚝딱 버섯 볶음밥」과 «같은 요리»였다
     //    (창업자 *"간단 버섯밥 이거 아까 후딱버섯밥아냐?"* → 대조하니 재료·순서가 같았다).
     //    ✅ 빈 자리엔 창업자 「샤브샤브」가 들어왔다 — **만드는 법도 창업자가 직접 썼다**(2026-08-18).
-    ids: ['basic-honey-ganjang-chicken', 'basic-shabu-shabu', 'basic-deulgireum-dubu-jeongol', 'basic-bibim-galbijjim'] },   // 허니 간장 치킨 · 샤브샤브 · 들기름 두부전골 · 간편갈비조림
+    ids: ['basic-honey-ganjang-chicken', 'basic-shabu-shabu', 'basic-deulgireum-dubu-jeongol', 'basic-bibim-galbijjim', 'basic-gomadare-sauce'] },   // 허니 간장 치킨 · 샤브샤브 · 들기름 두부전골 · 간편갈비조림 · 고마다래 소스(샤브샤브와 같이 · 창업자 2026-09-27 「고마다래 샤브샤브편에 같이 올리는거 어때」)
   { from: '2026-10-19', title: '우리집레시피', kicker: '이번 주 한끼',
     why: '일상에서 자주 해먹는 요리들이에요.',
     ids: ['basic-hwangtae-guk', 'basic-hwangtae-jangajji', 'basic-eolkeun-syabeu-kalguksu', 'basic-sunsal-jjimdak'] },   // 황태국 · 황태장아찌 · 얼큰 샤브 칼국수 · 순살찜닭
