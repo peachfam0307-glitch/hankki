@@ -161,6 +161,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-doenjangjjigae',
+    origin: '창업자', // 📮 창업자가 «직접 쓴» 레시피 (창업자 확인 · 2026-09-27 — 메모 「파운더」·창업자 말)
     title: '된장찌개',
     icon: 'fe_133',
     category: '한식',
@@ -1308,6 +1309,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-daegu-mungtigi',
+    origin: '창업자', // 📮 창업자가 «직접 쓴» 레시피 (창업자 확인 · 2026-09-27 — 메모 「파운더」·창업자 말)
     title: '대구뭉티기',
     icon: 'fe_22',
     category: '한식',
@@ -1338,6 +1340,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-gongsimchae-bokkeum',
+    origin: '창업자', // 📮 창업자가 «직접 쓴» 레시피 (창업자 확인 · 2026-09-27 — 메모 「파운더」·창업자 말)
     title: '공심채 볶음',
     icon: 'fe_499',
     category: '한식',
@@ -1368,6 +1371,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-siwon-mukchae',
+    origin: '창업자', // 📮 창업자가 «직접 쓴» 레시피 (창업자 확인 · 2026-09-27 — 메모 「파운더」·창업자 말)
     title: '시원한 묵채', from: '2026-08-17',
     // ✅ 창업자가 실물(검수판)을 보고 확인했다 — 2026-08-17. 1번에서 「찬물에」 뺀 판.
     review: '창업자',
@@ -1832,6 +1836,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-hunje-ori-kkaennip',
+    origin: '창업자', // 📮 창업자가 «직접 쓴» 레시피 (창업자 확인 · 2026-09-27 — 메모 「파운더」·창업자 말)
     title: '훈제오리 깻잎볶음', from: '2026-08-10',
     icon: 'fe_134',
     category: '한식',
@@ -5007,6 +5012,7 @@ const RAW_BASICS = [
 {
     ...base,
     id: 'basic-eomuk-tang',
+    origin: '창업자', // 📮 창업자가 «직접 쓴» 레시피 (창업자 확인 · 2026-09-27 — 메모 「파운더」·창업자 말)
     title: '어묵탕', from: '2026-11-23',
     review: '창업자',   // ✅ 2026-08-18 검수판 통과
     icon: 'fb_b02',
@@ -5041,6 +5047,7 @@ const RAW_BASICS = [
 {
     ...base,
     id: 'basic-eomuk-bokkeum',
+    origin: '창업자', // 📮 창업자가 «직접 쓴» 레시피 (창업자 확인 · 2026-09-27 — 메모 「파운더」·창업자 말)
     title: '어묵볶음', from: '2026-11-23',
     review: '창업자',   // ✅ 2026-08-18 검수판 통과
     icon: 'fh_k34',
