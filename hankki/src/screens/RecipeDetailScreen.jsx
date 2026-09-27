@@ -703,9 +703,9 @@ export default function RecipeDetailScreen({ id }) {
         <div className="h-title" style={{ fontSize: 25, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {r.title}
           {/* 🧑‍🍳 창업자가 «직접 만든» 레시피 = 요리사 모자 꼬르곰 얼굴 (창업자 2026-09-27 「꼬르곰 얼굴만 · 귀엽게」)
-              ⛔ 글자는 안 붙인다 — 이름까지 달면 길다(창업자). 누르면 뜨는 말은 아직 안 정했다. */}
+              ⛔ 글자는 안 붙인다 — 이름까지 달면 길다(창업자). 누르면 「한끼 주인장 레시피예요」(창업자 2026-09-27 「주인장으로 하자」). */}
           {r.made === '창업자' && (
-            <img src={avGom} alt="" className="founder-badge" style={{
+            <img src={avGom} alt="한끼 주인장 레시피" className="founder-badge press" onClick={() => nav.showToast('한끼 주인장 레시피예요')} style={{ cursor: 'pointer',
               width: 34, height: 34, flex: '0 0 auto', padding: 3, borderRadius: 999,
               background: '#fff4e0', border: '1.5px solid #ecd2a8', transform: 'rotate(-8deg)',
               boxShadow: '0 2px 6px rgba(120,80,30,.15)',
