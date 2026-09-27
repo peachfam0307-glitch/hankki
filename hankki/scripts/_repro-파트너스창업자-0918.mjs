@@ -25,6 +25,11 @@ const 링크 = 'https://link.coupang.com/a/AbCdEf'
 for (const u of ['https://www.coupang.com/np/search?q=두부', 'https://www.kurly.com', 'https://baemin.com']) {
   본다(`파트너스가 아니면 그대로 — ${u.slice(8, 30)}`, 파트너스문(u) === u)
 }
+// ⑥ [2026-09-27] 창업자 열쇠가 있어도 「유저 눈으로 보기」를 켜면 유저처럼 파트너스로 간다 (딸 아이폰 · 링크 확인용)
+칸.set('hankki:유저눈', '1')
+본다('👀 유저 눈을 켜면 창업자 폰도 상품 링크로 간다', 파트너스문(링크) === 링크, 파트너스문(링크))
+칸.delete('hankki:유저눈')
+본다('👀 유저 눈을 끄면 다시 쿠팡 첫 화면으로', 파트너스문(링크) === 'https://www.coupang.com')
 // ④ 열쇠를 빼면 곧바로 유저 쪽으로 돌아온다 (껐다 켜는 길이 산다)
 칸.delete('hankki:founder')
 본다('열쇠를 빼면 다시 파트너스로 간다', 파트너스문(링크) === 링크)
