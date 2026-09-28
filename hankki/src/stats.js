@@ -550,6 +550,26 @@ export function 로그인실패(e) {
   행동보내기('gate_fail')
   const 갈 = 로그인실패갈래고르기(e)
   if (갈 && 로그인실패갈래[갈]) 행동보내기(`gate_fail_${갈}`)
+  // 🔎 [창업자 2026-09-28 「응 다음판에 넣어줘」] other 는 «속»까지 가른다 — 9/27 한 사람이 other 7번으로 막혔는데 왜인지 몰랐다
+  if (갈 === 'other') { const 속 = 기타속고르기(e); if (기타속[속]) 행동보내기(`gate_other_${속}`) }
+}
+// 🔒 other 속 갈래 — «정해진 이름»만 보낸다(오류 문장·코드를 이름에 섞지 않는다 · §5). 이름 10개 더.
+//    ⭐ 앱 안 로그인(nativeAuth)은 팝업이 아니라서 «창 닫음»이 popup-closed 로 안 오고 여기로 새어 든다 → cancel 로 잡는다.
+const 기타속 = { nocode: 1, cancel: 1, noplugin: 1, notoken: 1, credential: 1, too_many: 1, disabled: 1, domain: 1, internal: 1, etc: 1 }
+/** 🧮 other 오류 → 속 갈래. ⛔순수 함수(재현판이 잰다) */
+export function 기타속고르기(e) {
+  const c = String((e && e.code) || '')
+  const m = String((e && e.message) || '')
+  if (/cancel|취소|12501|1001/i.test(c + ' ' + m)) return 'cancel'        // 앱 안 창을 닫음(구글 12501 · 애플 1001)
+  if (m.includes('이 앱 판에선 로그인이 안 돼요')) return 'noplugin'           // nativeAuth — 부품 없음
+  if (m.includes('로그인 정보를 못 받았어요')) return 'notoken'               // nativeAuth — 토큰 없음
+  if (!c) return 'nocode'
+  if (c.includes('invalid-credential') || c.includes('account-exists')) return 'credential'
+  if (c.includes('too-many-requests')) return 'too_many'
+  if (c.includes('user-disabled')) return 'disabled'
+  if (c.includes('unauthorized-domain') || c.includes('operation-not-allowed')) return 'domain'
+  if (c.includes('internal-error')) return 'internal'
+  return 'etc'
 }
 /** 🧮 오류 → 갈래 한 글자. ⛔순수 함수라 재현판이 잰다(네트워크·화면을 모른다).
  *  📌 잣대는 `CloudGate.고운말` 과 «같은 글자»를 본다 — 두 곳이 어긋나면 안내와 숫자가 따로 논다. */
