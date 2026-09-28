@@ -74,9 +74,9 @@ console.log('\n④-2 앱 켜자마자 «여럿»이 나도 순서대로 «다» 
 S.화면봄('home'); S.로그인화면봄(); S.로그인실패(); S.로그인됨('google.com', true)
 // 🔐 [2026-09-23] 로그인실패() 는 «총계 gate_fail ＋ 갈래 gate_fail_<왜>» 둘을 보낸다(stats.js:535·537).
 //    오류를 안 주고 부르면 갈래가 'other' 로 잡힌다 → gate_fail_other 가 같이 담긴다. 실제가 맞고 이 목록이 낡았다.
-본다('화면·관문·행동이 «섞여도» 순서대로 담긴다', S.대기상태().줄, ['home', 'gate_seen', 'gate_fail', 'gate_fail_other', 'signup_google'])
+본다('화면·관문·행동이 «섞여도» 순서대로 담긴다', S.대기상태().줄, ['home', 'gate_seen', 'gate_fail', 'gate_fail_other', 'gate_other_nocode', 'signup_google'])
 켬(); S.줄비우기()
-본다('다섯 다 나간다 — 하나도 안 덮인다', 통.slice(), ['home', 'gate_seen', 'gate_fail', 'gate_fail_other', 'signup_google'])
+본다('다섯 다 나간다 — 하나도 안 덮인다', 통.slice(), ['home', 'gate_seen', 'gate_fail', 'gate_fail_other', 'gate_other_nocode', 'signup_google'])
 
 console.log('\n④-3 넘치면 «오래된 것부터» 버리고 «몇 개 버렸는지» 센다 (상한 20)')
 끔(); 비움()
@@ -90,7 +90,7 @@ console.log('\n⑦ 새 관문 — 이름이 «고정»이고 값이 안 섞인�
 S.소개봄(); S.소개건너뜀(); S.소개끝냄(); S.로그인화면봄(); S.로그인실패(); S.로그인탈출()
 S.알림시트봄(); S.알림허락(); S.알림거절(); S.알림으로들어옴(); S.리뷰시트봄(); S.리뷰하러감()
 S.냉장고열림(); S.장바구니펼침(); S.자랑고름(); S.자랑사진저장(); S.열쇠받음(); S.열쇠막힘(); S.선물시트봄(); S.선물보러감()
-본다('21개 이름이 그대로 나간다', 통.slice(), ['onboard_seen', 'onboard_skip', 'onboard_done', 'gate_seen', 'gate_fail', 'gate_fail_other', 'gate_escape',
+본다('22개 이름이 그대로 나간다', 통.slice(), ['onboard_seen', 'onboard_skip', 'onboard_done', 'gate_seen', 'gate_fail', 'gate_fail_other', 'gate_other_nocode', 'gate_escape',
   'push_seen', 'push_ok', 'push_no', 'push_open', 'review_seen', 'review_go',
   'pantry_open', 'pick_open_shop', 'brag_pick', 'brag_saved_fallback', 'key_earn', 'key_block', 'gift_seen', 'gift_go'])
 본다('전부 40자 아래(GA4 상한)', 통.every((n) => n.length <= 40), true)

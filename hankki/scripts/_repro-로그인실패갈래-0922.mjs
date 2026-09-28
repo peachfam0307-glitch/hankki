@@ -18,7 +18,7 @@ const 재다 = (이름, 받은, 바란) => {
 }
 const 칸 = (code) => 로그인실패갈래고르기(code ? { code } : null)
 
-console.log('🔐 로그인 실패 갈래 — 11칸\n')
+console.log('🔐 로그인 실패 갈래 — 19칸\n')
 
 // ① 스스로 닫았다 = 마음 바꿈. ⭐제일 흔하고, «문제가 아닌» 쪽이다.
 재다('팝업 닫음', 칸('auth/popup-closed-by-user'), 'closed')
@@ -48,5 +48,17 @@ const 문 = readFileSync(new URL('../src/components/CloudGate.jsx', import.meta.
 const 같이본다 = ['popup-blocked', 'popup-closed', 'cancelled-popup', 'network', 'hankki/timeout']
 재다('고운말과 같은 잣대', 같이본다.every((g) => 문.includes(g)), true)
 
-console.log(죽음 ? `\n⛔ ${죽음}칸 죽었다` : '\n✅ 11칸 통과')
+// ⑦ 🔎 [2026-09-28] other 속 갈래 — 앱 안 창 닫기가 cancel 로 잡히나 · 이름이 새지 않나
+import { 기타속고르기 } from '../src/stats.js'
+재다('구글 앱 창 닫음', 기타속고르기({ code: '12501', message: 'Sign in canceled' }), 'cancel')
+재다('애플 앱 창 닫음', 기타속고르기({ message: 'The operation couldn’t be completed. (AuthorizationError error 1001.)' }), 'cancel')
+재다('부품 없음', 기타속고르기(new Error('이 앱 판에선 로그인이 안 돼요. 앱을 업데이트한 뒤 다시 해주세요')), 'noplugin')
+재다('토큰 없음', 기타속고르기(new Error('구글 로그인 정보를 못 받았어요')), 'notoken')
+재다('코드 없음', 기타속고르기(new Error('무언가')), 'nocode')
+재다('자격 틀림', 기타속고르기({ code: 'auth/invalid-credential' }), 'credential')
+재다('모르는 코드', 기타속고르기({ code: 'auth/weird' }), 'etc')
+const 속들 = new Set(['nocode', 'cancel', 'noplugin', 'notoken', 'credential', 'too_many', 'disabled', 'domain', 'internal', 'etc'])
+재다('속 갈래는 열뿐', ['', 'x', 'auth/internal-error', 'zzz'].every((c) => 속들.has(기타속고르기({ code: c }))), true)
+
+console.log(죽음 ? `\n⛔ ${죽음}칸 죽었다` : '\n✅ 19칸 통과')
 process.exit(죽음 ? 1 : 0)
