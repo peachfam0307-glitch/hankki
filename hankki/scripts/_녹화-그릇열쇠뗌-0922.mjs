@@ -82,7 +82,7 @@ const 서랍센다 = () => p.evaluate(() => {
   if (띠) 띠.textContent = ''
   const t = document.body.innerText
   if (띠) 띠.textContent = 두었던
-  return { 기본: t.includes('기본 그릇'), 할로윈: t.includes('할로윈 접시'), hw컷: document.querySelectorAll('img[src*="pf_hw"]').length }
+  return { 기본: t.includes('기본 그릇'), 할로윈: t.includes('보랏빛 핼러윈 식탁'), hw컷: document.querySelectorAll('img[src*="pf_hw"]').length }
 })
 await 말('⑤ 서랍을 끝까지 내려본다 — 할로윈 접시는 «없다»'); await p.waitForTimeout(1200)
 const 있나 = await 서랍센다()

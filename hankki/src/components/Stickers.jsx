@@ -1962,7 +1962,7 @@ export const STICKER_GROUPS = [
   { key: 'frame_halloween', 명절: 'hw', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈 프레임', items: ['hfw_01', 'hfw_02', 'hfw_03', 'hfw_04'] },
   { key: 'deco_halloween', 명절: 'hw', tab: 'deco', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈 종이·씰', items: ['hp_04', 'hp_07', 'hp_12', 'hp_14', 'hp_15', 'hp_18', 'hs_02', 'hs_06', 'hs_08', 'hs_09', 'hs_10', 'hs_11'] },
   { key: 'tape_halloween', 명절: 'hw', tab: 'tape', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈', items: ['ht_01', 'ht_02', 'ht_05', 'ht_06'] },
-  { key: 'deco_dish_halloween', 명절: 'hw', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', bigCell: true, from: '2026-01-01', label: '달밤의 호박 식탁', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_hw01', 'pf_hw04', 'pf_hw09', 'pf_hw10'] },
+  { key: 'deco_dish_halloween', 명절: 'hw', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', bigCell: true, from: '2026-01-01', label: '보랏빛 핼러윈 식탁', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_hw01', 'pf_hw04', 'pf_hw09', 'pf_hw10'] },
   // 🍽 [창업자 2026-09-21] 기본 그릇 8컷 — 늘 열려 있다. 사진 표지에 프레임을 «안» 얹으면 갈래별 기본 그릇(`기본그릇키`)이 저절로 깔리고, 여기서 직접 고르면 그게 이긴다.
   // 🔒🔒 [창업자 2026-09-22 14:38 *"빼 · 음식 종류에 맞게 기본값으로 네가 넣어주는 그릇이니까 · 빼고 안 보이게 하는 게 맞아 · 아예 삭제하라는 게 아니라"*]
   //    ⛔ **서랍에서 «안 보이게» 한다(열쇠 뒤). 묶음도 컷 8개도 «지우지 않는다».**
