@@ -2794,10 +2794,11 @@ export const DECOR_BACKGROUNDS = [
   // 🎃 **핼러윈 밤 — 핼러윈 유료팩 배경** (창업자 2026-08-03 확정 · «클레이-핼러윈밤» · 두 판 중 어두운 쪽 = 빛 효과가 산다)
   //   🔑 [2026-09-21] 창업자 *"우리 할로윈 배경도 넣어줘. 한번 보게"* → 열쇠(?할로윈=1) 뒤에서 보인다. 유저는 팩(halloween2026)을 열어야 본다(지금은 안 판다 → 안 보인다).
   //   ⭐ 원본이 1:1(1254px)이라 그대로 1000px 로 줄여 넣었다(비 오는 창과 같은 크기·화질).
-  { key: 'hwnight', label: '핼러윈 밤', dark: true, pack: 'halloween2026', key열쇠: '할로윈',
+  // 🎃 [창업자 2026-09-29 「꾸미기배경은 16일에 열자」] 팩에서 빼 10/16 무료로 — 그 전엔 열쇠(?할로윈=1) 뒤
+  { key: 'hwnight', label: '핼러윈 밤', dark: true, key열쇠: '할로윈', 열쇠까지: '2026-10-16',
     style: { backgroundImage: 'url(' + HW_NIGHT + ')', backgroundSize: 'cover', backgroundPosition: 'center' } },
   // 🎃 펠트 크림 판 — 8/3 엔 「팩당 배경 1개」 규칙으로 예비 보관했던 것. 창업자 2026-09-21 *"둘 다 앱에서 볼게"* → 열쇠 뒤에서 나란히 본다. 둘 중 무엇을 팩에 넣을지는 창업자가 앱에서 보고 정한다.
-  { key: 'hwfelt', label: '핼러윈 펠트', pack: 'halloween2026', key열쇠: '할로윈',
+  { key: 'hwfelt', label: '핼러윈 펠트', key열쇠: '할로윈', 열쇠까지: '2026-10-16',
     style: { backgroundImage: 'url(' + HW_FELT + ')', backgroundSize: 'cover', backgroundPosition: 'center' } },
   { key: 'plum', label: '딥플럼', dark: true, style: { background: '#3e3442' } },
   { key: 'midnight', label: '미드나잇', dark: true, style: { background: '#2d3340' } },

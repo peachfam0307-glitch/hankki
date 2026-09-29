@@ -41,6 +41,7 @@ const SUMMER = /^(sm_|duo_(bingsu|naengmyeon|watermelon))/
 //   ⚠️ JPEG 다 — PNG(2.15MB)는 서비스워커 미리받기 한도 2MB를 넘어 **빌드가 막혔다.**
 //      투명이 필요 없는 사진이라 JPEG 로 굽는다(품질 90 · 크로마 서브샘플링 끔 = 글자·선이 안 뭉갠다)
 import HW_FELT from '../assets/cardbg/hw_felt.jpg'
+import HW_NIGHT_BG from '../assets/decorbg/halloween-night.webp'   // 🎃🌙 [창업자 2026-09-29 「어두운카드도 넣자 레꾸자랑은」] 꾸미기 「핼러윈 밤」 배경과 같은 그림
 // 🎃 펠트 소품 — 창업자 2026-08-03 *"필요하면 써 자랑카드꾸밀때"* (3×3 로 다시 뽑아준 시트)
 //   ⭐ 배경과 **같은 펠트 소재**라 카드 위에서 결이 안 싸운다.
 //   ⚠️ hwf_04(검은고양이)는 유료팩 `hs_04` 와 «소재»가 겹치지만 **그대로 쓴다** —
@@ -234,7 +235,7 @@ function drawState() {
     // 🍂 `isPeakSeason` = 전환기 겹침을 «안» 센다 → **9/1 에 여름 스킨이 바로 빠진다**
     //    (창업자 확정 2026-08-29 = *"9월1일에 빼야지 가을시작이니까."* · ⛔`isSeason` 이면 9/14 까지 남는다)
     ...(isPeakSeason('summer') ? ['summer'] : []),
-    ...(hwOpen ? ['halloween'] : []), ...(csOpen ? ['chuseok'] : []),
+    ...(hwOpen ? ['halloween', 'halloween_night'] : []), ...(csOpen ? ['chuseok'] : []),
     // 🍂🍂 **[창업자 확정 2026-09-02] 11월엔 «둘 다» 얹는다** — *"11월은 둘가추가하자."*
     //   ⭐ 11/3 부터 덤(추석·핼러윈)이 다 빠져 **기본 6장만 남던 자리**다. 이제 11월이 **8장**이 된다.
     //   ⛔ 날짜를 여기 또 적지 «않는다» — `isLateAutumn`(LATE_AUTUMN_MONTH) 한 곳이 늦가을의 유일한 정의다.
@@ -251,7 +252,7 @@ function drawState() {
   // 여름 스킨만 여름 컷(수박·빙수·바비큐)까지 포함한 풀에서 뽑는다.
   const r = Math.random()
   const [g, p, d] = key === 'summer' ? [S_GOM, S_PENG, S_DUO]
-    : key === 'halloween' ? [hwOnly('gom'), hwOnly('peng'), hwOnly('duo')]
+    : (key === 'halloween' || key === 'halloween_night') ? [hwOnly('gom'), hwOnly('peng'), hwOnly('duo')]
       : key === 'chuseok' ? [csOnly('gom'), csOnly('peng'), csOnly('duo')]
       : [gomPool(), pengPool(), duoPool()]
   const 씬 = scenesNow()   // 🏖 여름 씬은 여름에만 (위 `scenesNow` 주석 참고)
@@ -260,7 +261,7 @@ function drawState() {
       // ⛔ **펭 자리도 비어 있을 수 있다** — 2026-09-02 에 옛 펭펭을 다 내려서 사철 펭 = 0 이 됐다.
       //    안 막으면 `rnd([])` → 아래 마지막 줄의 폴백이 «전체 풀»로 새어 **방금 내린 컷이 되살아난다.**
       ? (r < 0.5 ? g : r < 0.78 ? (p.length ? p : (d.length ? d : g)) : (d.length ? d : g))
-      : (key === 'halloween' || key === 'chuseok')
+      : (key === 'halloween' || key === 'halloween_night' || key === 'chuseok')
         // 곰·펭·콤비 골고루 — ⚠️ **콤비가 없으면 그 몫을 곰에게 몰지 말고 반반으로 나눈다.**
         //   안 그러면 곰 65% · 펭 35% 가 된다(추석은 콤비가 없어서 실제로 5판 중 4판이 곰이었다).
         //   📌 「명단이 2:2니까 반반이겠지」는 «명단»이지 «확률»이 아니다. 뽑아 보고 세야 안다.
@@ -291,7 +292,8 @@ const SKINS = {
   warm: { key: 'warm' }, panel: { key: 'panel' }, pola: { key: 'pola' },
   mag: { key: 'mag' }, arch: { key: 'arch' }, night: { key: 'night' },
   summer: { key: 'summer' },
-  halloween: { key: 'halloween' },   // 🎃 10/01~11/02 에만 얹는 한 장 (펠트 배경 ＋ 핼러윈 애들만)
+  halloween: { key: 'halloween' },
+  halloween_night: { key: 'halloween_night' },   // 🌙 [창업자 2026-09-29] 같은 창에 얹는 어두운 한 장   // 🎃 10/01~11/02 에만 얹는 한 장 (펠트 배경 ＋ 핼러윈 애들만)
   chuseok: { key: 'chuseok' },       // 🏮 09/01~10/15 에만 얹는 한 장 (조각보 배경 ＋ 한복만)
   // 🍂❄️ **11월 뼈대 시안 셋 (2026-09-02 · ⏳창업자 판정 대기)**
   //   ⛔ `drawState` 의 `pool` 엔 «안» 넣었다 — 고르기 전엔 유저에게 안 나온다(규칙 13).
@@ -820,11 +822,13 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
   //    펠트 질감은 우리 카드에 하나도 없던 결이라 나란히 놓으면 이 한 장만 튄다.
   // ⚠️ 배경이 세니까 **글자는 크림 판 위에** 올린다 — 펠트 위에 바로 얹으면 안 읽힌다.
   //    (배경 그림의 가운데가 비어 있어서 그 자리를 쓴다)
-  if (K.key === 'halloween') {
+  // 🌙 [창업자 2026-09-29] 어두운 한 장(`halloween_night`)도 같은 뼈대 — 배경 그림과 바깥 글자색만 다르다. 크림 판은 그대로.
+  if (K.key === 'halloween' || K.key === 'halloween_night') {
+    const 밤 = K.key === 'halloween_night'
     const hs = headSize([l1, l2], 132, 1080 - PAD * 2 - 40)
-    return shell('#f3ede1', <>
-      <img src={HW_FELT} alt="" crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: 1080, height: 1350, objectFit: 'cover' }} />
-      {brand('#4a3568', { textShadow: '0 2px 10px rgba(255,253,248,.95), 0 0 24px rgba(255,253,248,.8)' })}
+    return shell(밤 ? '#2a2036' : '#f3ede1', <>
+      <img src={밤 ? HW_NIGHT_BG : HW_FELT} alt="" crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: 1080, height: 1350, objectFit: 'cover' }} />
+      {밤 ? brand('#f4ecff', { textShadow: '0 2px 10px rgba(20,12,30,.9)' }) : brand('#4a3568', { textShadow: '0 2px 10px rgba(255,253,248,.95), 0 0 24px rgba(255,253,248,.8)' })}
       <div style={{ position: 'absolute', top: 84, right: PAD, transform: 'rotate(-7deg)', fontFamily: 'Jua, sans-serif', fontSize: 31, color: '#fff', background: 'linear-gradient(180deg,#8d6bb0,#6e4e94)', padding: '13px 28px', borderRadius: 18, boxShadow: '0 10px 18px -6px rgba(80,50,120,.55), inset 0 2px 0 rgba(255,255,255,.35)', zIndex: 9 }}>핼러윈 한정</div>
       {/* 가운데 크림 판 — 배경이 복잡해 글자를 여기 올린다 */}
       <div style={{ position: 'absolute', left: PAD - 6, right: PAD - 6, top: 300, padding: '34px 38px 40px', borderRadius: 34, background: 'rgba(253,250,244,.93)', boxShadow: '0 18px 40px -18px rgba(70,45,100,.45)', zIndex: 6 }}>
@@ -854,8 +858,8 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
         })()}
       </div>
       {hero({ right: 24, bottom: 210, height: 540, filter: die8('#ffffff') })}
-      {veil('250,246,238')}
-      {more('#33254a', '#6e4e94')}{foot('#4a3568', '#6e4e94')}
+      {밤 ? veil('32,24,44') : veil('250,246,238')}
+      {밤 ? <>{more('#f4ecff', '#d7c3f0')}{foot('#f4ecff', '#d7c3f0')}</> : <>{more('#33254a', '#6e4e94')}{foot('#4a3568', '#6e4e94')}</>}
     </>)
   }
 

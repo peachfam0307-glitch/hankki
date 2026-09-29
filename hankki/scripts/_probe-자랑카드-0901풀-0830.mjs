@@ -20,7 +20,7 @@ for (const 날짜 of ['2026-08-31', '2026-09-01', '2026-09-20', '2026-10-05', '2
   const 열린세트 = SEASON_CUTS.filter(s => inCardWindow(s, now))
   const hwOpen = 열린세트.some(s => s.key === 'hw'), csOpen = 열린세트.some(s => s.key === 'cs')
   const 뼈대 = ['warm','panel','pola','mag','arch','night',
-    ...(여름스킨 ? ['summer'] : []), ...(hwOpen ? ['halloween'] : []), ...(csOpen ? ['chuseok'] : [])]
+    ...(여름스킨 ? ['summer'] : []), ...(hwOpen ? ['halloween', 'halloween_night'] : []), ...(csOpen ? ['chuseok'] : [])]
 
   // 기본 풀 = COOK 만 통과 (withSummer 안 줌)
   const 기본 = (re) => { const h = 파일.filter(n => re.test(n) && COOK.test(n)); return h.length ? h : 파일.filter(n => re.test(n)) }

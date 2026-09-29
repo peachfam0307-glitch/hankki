@@ -2072,7 +2072,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                         `pack` 을 붙여만 놓고 «거르는 곳»을 안 만든 것이다. AAB 굽기 직전에 잡았다.
                         📌 절대원칙 = *"파는건 공유카드로도 안내보내는게 맞지"* (창업자 2026-08-03)
                         📌 배운 것 = **꼬리표를 붙이는 것과 그 꼬리표를 «읽는 것»은 다른 일이다.** */}
-                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden && (!b.pack || ownedPacks().has(b.pack) || (b.key열쇠 && 열쇠있나(b.key열쇠))))   // 🔑 팩 배경도 창업자 열쇠로 미리 본다(2026-09-21 핼러윈 밤)
+                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden && (b.pack ? (ownedPacks().has(b.pack) || (b.key열쇠 && 열쇠있나(b.key열쇠))) : 열쇠켬(b)))   // 🔑 팩 배경도 창업자 열쇠로 미리 본다(2026-09-21 핼러윈 밤)
                       .map((b, i) => ({ b, i }))
                       .sort((x, y) => (y.b.anim ? 1 : 0) - (x.b.anim ? 1 : 0) || x.i - y.i)   // 안정 정렬
                       .map(({ b }) => {
