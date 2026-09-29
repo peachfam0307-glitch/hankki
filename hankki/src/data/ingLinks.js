@@ -199,6 +199,8 @@ export const ING_LINKS = {
   '슈레드 치즈': 'https://link.coupang.com/a/gZj6blHyHB', // [창업자 2026-09-29] 「슈레드치즈도(모짜렐라치즈)」 — 모짜렐라와 같은 링크 · 양배추 치즈전
   '우동면': 'https://link.coupang.com/a/hrfCbis8Oq', // [창업자 2026-09-29] 면사랑 우동면 · 야끼우동
   '생강즙': 'https://link.coupang.com/a/gYWRWEezHE', // [창업자 2026-09-29] 「생강링크에 연결하자」 — 생강 갈아 짜서 쓴다 · 닭날개조림
+  '그라나파다노 치즈': 'https://link.coupang.com/a/hrfHP6DKiO', // [창업자 2026-09-29] 가지 오믈렛
+  '그라나파다노': 'https://link.coupang.com/a/hrfHP6DKiO',
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
