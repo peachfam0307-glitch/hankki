@@ -73,12 +73,13 @@ for (const 탭 of ['배경', '프레임', '마테', '데코', '글자', '친구�
   console.log('  📸', 탭, '·', (이름들[탭] || []).length + '칸')
 }
 // 🎃 핼러윈 칸까지 내려서 찍는다 — 탭 맨 위만 찍으면 안 보인다(가을 묶음이 위에 있다)
-for (const [탭, 키] of [['프레임', 'hfw_01'], ['친구들', 'hw_16'], ['데코', 'hp_04'], ['마테', 'ht_01']]) {
+// ✏️ TARGETS='[["데코","pc1_01"],…]' 로 주면 그 칸들을 찍는다(10/1 가을 검수 · 2026-09-30)
+for (const [탭, 키] of (process.env.TARGETS ? JSON.parse(process.env.TARGETS) : [['프레임', 'hfw_01'], ['친구들', 'hw_16'], ['데코', 'hp_04'], ['마테', 'ht_01']])) {
   await p.locator('button').filter({ hasText: new RegExp('^' + 탭 + '$') }).first().click({ force: true }); await p.waitForTimeout(700)
   const 칸 = p.locator('.decor-cell[aria-label="' + 키 + '"]').first()
   if (await 칸.count() === 0) { console.log('  ⛔ 없음', 키); continue }
   await 칸.scrollIntoViewIfNeeded(); await p.waitForTimeout(700)
-  await p.screenshot({ path: join(밖, '핼러윈-' + 탭 + '.png') })
+  await p.screenshot({ path: join(밖, '핼러윈-' + 탭 + '-' + 키 + '.png') })
 }
 const { writeFileSync } = await import('node:fs')
 writeFileSync(join(밖, '조각이름.json'), JSON.stringify(이름들, null, 2))
