@@ -191,17 +191,15 @@ export const ING_LINKS = {
   '기름': 'https://www.costco.co.kr/Foods/Processed-Food/Oils/KS-Siurana-Extra-Virgin-Olive-Oil-1L/p/892188', // ⛇묶음: 올리브유 / 식용유 / 기름
   '전분물': 'https://link.coupang.com/a/gYWQr9gXIa', // ⛇묶음: 감자전분 / 전분가루 / 전분물
   '당면': 'https://link.coupang.com/a/hod4irlEIv', // [창업자 2026-09-27] 남은 나물 잡채(9/28)
-  // [창업자 2026-09-29] 9/30 편 — 닭날개조림(페페론치노)·가지 오믈렛(페퍼론치노) 두 표기를 한 링크로
-  '페퍼론치노': 'https://link.coupang.com/a/hrfqzuUbhA', // ⛇묶음: 페퍼론치노 / 페페론치노
-  '페페론치노': 'https://link.coupang.com/a/hrfqzuUbhA',
   '닭날개': 'https://link.coupang.com/a/hrfwOoUYCa', // [창업자 2026-09-29] 마늘 간장 닭날개조림 — 레시피는 날개 그대로
   '닭봉': 'https://link.coupang.com/a/hrfmkfSUHA',   // [창업자 2026-09-29] 날개 대신 찾아 준 것 — 닭봉이 나오는 편에 쓰인다
-  '슈레드 치즈': 'https://link.coupang.com/a/gZj6blHyHB', // [창업자 2026-09-29] 「슈레드치즈도(모짜렐라치즈)」 — 모짜렐라와 같은 링크 · 양배추 치즈전
   '우동면': 'https://link.coupang.com/a/hrfCbis8Oq', // [창업자 2026-09-29] 면사랑 우동면 · 야끼우동
-  '생강즙': 'https://link.coupang.com/a/gYWRWEezHE', // [창업자 2026-09-29] 「생강링크에 연결하자」 — 생강 갈아 짜서 쓴다 · 닭날개조림
-  '그라나파다노 치즈': 'https://link.coupang.com/a/hrfHP6DKiO', // [창업자 2026-09-29] 가지 오믈렛
-  '그라나파다노': 'https://link.coupang.com/a/hrfHP6DKiO',
   '흑설탕': 'https://link.coupang.com/a/g3fOzcNQiG', // [창업자 2026-09-29] 「흑설탕은 아우노슈가하면돼」 — 주부의 장바구니 아우노슈가와 같은 링크 · 닭날개조림
+  '페퍼론치노': 'https://link.coupang.com/a/hrfqzuUbhA', // ⛇묶음: 페퍼론치노 / 페페론치노
+  '페페론치노': 'https://link.coupang.com/a/hrfqzuUbhA', // ⛇묶음: 페퍼론치노 / 페페론치노
+  '그라나파다노 치즈': 'https://link.coupang.com/a/hrfHP6DKiO',
+  '슈레드 치즈': 'https://link.coupang.com/a/gZj6blHyHB', // ⛇묶음: 모차렐라 치즈 / 모짜렐라 치즈 / 슈레드 치즈
+  '생강즙': 'https://link.coupang.com/a/gYWRWEezHE', // ⛇묶음: 생강 / 다진 생강 / 생강즙
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
