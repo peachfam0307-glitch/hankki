@@ -301,7 +301,7 @@ img {
 
 /* 앱을 폰 프레임 안에 담아 데스크톱에서도 자연스럽게 보이도록 */
 /* 🎃 [창업자 2026-09-29 「F2 라벤더로 판 바탕 깔아줘」] 핼러윈 기간 «홈» 배경 = 라벤더 펠트 ＋ 보라 포인트
-   ⭐ 표시는 SeasonDecor 가 홈에서만 단다(`data-season`) — 다른 탭·다른 철엔 안 닿는다.
+   ⭐ 표시는 useSeasonCuts 가 «앱 전체»에 단다(`data-season` · 창업자 20:07 「다른 탭들도 보라로」) — 다른 철엔 안 닿는다.
    ⛔ 다크 테마는 안 건드린다(어두운 바탕은 창업자가 안 골랐다). */
 :root[data-season='hw']:not([data-theme='dark']) {
   --bg: #eae5ee; --surface: #ffffff; --cream: #e0d8e8; --brown: #6f5a8e;

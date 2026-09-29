@@ -29,13 +29,7 @@ export default function SeasonDecor() {
   const 닻 = useRef(null)
   const [닻자리, set닻자리] = useState(null)
 
-  // 🎃 [창업자 2026-09-29 「F2 라벤더로」] 명절 동안 «홈 배경»을 갈아입는다 — 홈에 있을 때만(떠나면 되돌린다).
-  //    색·결은 styles.css 의 `:root[data-season='hw']` 한 곳에만 있다. 여기선 표시만 단다.
-  useEffect(() => {
-    if (철 !== 'hw') return
-    document.documentElement.setAttribute('data-season', 철)
-    return () => document.documentElement.removeAttribute('data-season')
-  }, [철])
+  // 🎃 명절 배경 표시(`data-season`)는 useSeasonCuts 가 «앱 전체»에 단다(2026-09-29 「다른 탭도 보라로」).
 
   useEffect(() => {
     if (!철 || !컷) return
