@@ -235,7 +235,7 @@ function drawState() {
     // 🍂 `isPeakSeason` = 전환기 겹침을 «안» 센다 → **9/1 에 여름 스킨이 바로 빠진다**
     //    (창업자 확정 2026-08-29 = *"9월1일에 빼야지 가을시작이니까."* · ⛔`isSeason` 이면 9/14 까지 남는다)
     ...(isPeakSeason('summer') ? ['summer'] : []),
-    ...(hwOpen ? ['halloween', 'halloween_night'] : []), ...(csOpen ? ['chuseok'] : []),
+    ...(hwOpen ? ['halloween', 'hwn_poster', 'hwn_moon', 'hwn_invite'] : []), ...(csOpen ? ['chuseok'] : []),
     // 🍂🍂 **[창업자 확정 2026-09-02] 11월엔 «둘 다» 얹는다** — *"11월은 둘가추가하자."*
     //   ⭐ 11/3 부터 덤(추석·핼러윈)이 다 빠져 **기본 6장만 남던 자리**다. 이제 11월이 **8장**이 된다.
     //   ⛔ 날짜를 여기 또 적지 «않는다» — `isLateAutumn`(LATE_AUTUMN_MONTH) 한 곳이 늦가을의 유일한 정의다.
@@ -864,7 +864,8 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
     </>)
   }
 
-  // 🌙🧪 [2026-09-29 · ⏳창업자 판정 대기] 어두운 핼러윈 카드 «뼈대 시안 셋» — 창업자 「디자인이 너무 똑같은뎅 · 박스랑.. 배경만 다르고」
+  // 🌙✅ [2026-09-29 창업자 「웅 이거 다 넣자」] 어두운 핼러윈 카드 «뼈대 셋» 모두 뽑기 풀에 — `halloween_night`(크림 카드와 뼈대가 같던 것)은 풀에서 뺐다
+  //    (옛 메모) 어두운 핼러윈 카드 «뼈대 시안 셋» — 창업자 「디자인이 너무 똑같은뎅 · 박스랑.. 배경만 다르고」
   //    ⛔ 뽑기 풀엔 «안» 넣었다 — `?card=hwn_poster|hwn_moon|hwn_invite` 로만 열린다. 고른 것 하나만 `halloween_night` 자리에 올린다.
   if (K.key === 'hwn_poster' || K.key === 'hwn_moon' || K.key === 'hwn_invite') {
     const bgImg = <img src={HW_NIGHT_BG} alt="" crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: 1080, height: 1350, objectFit: 'cover' }} />
