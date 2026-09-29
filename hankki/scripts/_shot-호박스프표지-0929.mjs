@@ -8,7 +8,9 @@ const OUT = process.env.OUT || '/tmp'
 const { allBasicRecipes, BASICS_VERSION } = await import('../src/data/basics.js')
 const { COACH } = await import('../src/coach.js')
 const ID = 'basic-tong-danhobak-cream-soup'
-const 그릇들 = ['pf_hw01', 'pf_hw04', 'pf_hw09', 'pf_hw10']
+// 🧮 자리·크기는 «푼» 값 — tools/꾸미기-자리풀기.py 덮기 <그릇> --대상 n3048 (통과 범위 한가운데 후보 · 2026-09-29)
+const 그릇값 = { pf_hw01: [0.77, 0.4932, 0.4614], pf_hw04: [0.75, 0.4949, 0.4532], pf_hw09: [0.64, 0.4983, 0.4647], pf_hw10: [0.68, 0.4932, 0.4433] }
+const 그릇들 = Object.keys(그릇값)
 const PORT = 4337
 const srv = spawn('python3', ['-m', 'http.server', String(PORT), '--bind', '127.0.0.1', '--directory', 'dist'], { stdio: 'ignore' })
 process.on('exit', () => { try { srv.kill() } catch {} })
@@ -20,7 +22,7 @@ for (const 그릇 of 그릇들) {
     const base = { ...r, status: 'sorted', savedAt: now - i * 60000 }
     if (r.id !== ID) return base
     return { ...base, savedAt: now + 60000, touched: true, decorBg: 'hwfelt', decor: [
-      { id: 'd1', type: 'sticker', key: 그릇, x: 0.50, y: 0.49, s: 0.67, r: 0 },
+      { id: 'd1', type: 'sticker', key: 그릇, s: 그릇값[그릇][0], x: 그릇값[그릇][1], y: 그릇값[그릇][2], r: 0 },
       { id: 'd2', type: 'sticker', key: 'hp_14', x: 0.35, y: 0.21, s: 0.19, r: -6 },
       { id: 'd3', type: 'sticker', key: 'hp_18', x: 0.79, y: 0.70, s: 0.18, r: 0 },
       { id: 'd4', type: 'sticker', key: 'hw_11', x: 0.62, y: 0.84, s: 0.19, r: 0 },
