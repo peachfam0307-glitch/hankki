@@ -252,7 +252,7 @@ function drawState() {
   // 여름 스킨만 여름 컷(수박·빙수·바비큐)까지 포함한 풀에서 뽑는다.
   const r = Math.random()
   const [g, p, d] = key === 'summer' ? [S_GOM, S_PENG, S_DUO]
-    : (key === 'halloween' || key === 'halloween_night') ? [hwOnly('gom'), hwOnly('peng'), hwOnly('duo')]
+    : (key === 'halloween' || key === 'halloween_night' || key.startsWith('hwn_')) ? [hwOnly('gom'), hwOnly('peng'), hwOnly('duo')]
       : key === 'chuseok' ? [csOnly('gom'), csOnly('peng'), csOnly('duo')]
       : [gomPool(), pengPool(), duoPool()]
   const 씬 = scenesNow()   // 🏖 여름 씬은 여름에만 (위 `scenesNow` 주석 참고)
@@ -261,7 +261,7 @@ function drawState() {
       // ⛔ **펭 자리도 비어 있을 수 있다** — 2026-09-02 에 옛 펭펭을 다 내려서 사철 펭 = 0 이 됐다.
       //    안 막으면 `rnd([])` → 아래 마지막 줄의 폴백이 «전체 풀»로 새어 **방금 내린 컷이 되살아난다.**
       ? (r < 0.5 ? g : r < 0.78 ? (p.length ? p : (d.length ? d : g)) : (d.length ? d : g))
-      : (key === 'halloween' || key === 'halloween_night' || key === 'chuseok')
+      : (key === 'halloween' || key === 'halloween_night' || key.startsWith('hwn_') || key === 'chuseok')
         // 곰·펭·콤비 골고루 — ⚠️ **콤비가 없으면 그 몫을 곰에게 몰지 말고 반반으로 나눈다.**
         //   안 그러면 곰 65% · 펭 35% 가 된다(추석은 콤비가 없어서 실제로 5판 중 4판이 곰이었다).
         //   📌 「명단이 2:2니까 반반이겠지」는 «명단»이지 «확률»이 아니다. 뽑아 보고 세야 안다.
@@ -293,7 +293,8 @@ const SKINS = {
   mag: { key: 'mag' }, arch: { key: 'arch' }, night: { key: 'night' },
   summer: { key: 'summer' },
   halloween: { key: 'halloween' },
-  halloween_night: { key: 'halloween_night' },   // 🌙 [창업자 2026-09-29] 같은 창에 얹는 어두운 한 장   // 🎃 10/01~11/02 에만 얹는 한 장 (펠트 배경 ＋ 핼러윈 애들만)
+  halloween_night: { key: 'halloween_night' },
+  hwn_poster: { key: 'hwn_poster' }, hwn_moon: { key: 'hwn_moon' }, hwn_invite: { key: 'hwn_invite' },   // 🧪 시안 셋(풀 밖 · ?card= 로만)   // 🌙 [창업자 2026-09-29] 같은 창에 얹는 어두운 한 장   // 🎃 10/01~11/02 에만 얹는 한 장 (펠트 배경 ＋ 핼러윈 애들만)
   chuseok: { key: 'chuseok' },       // 🏮 09/01~10/15 에만 얹는 한 장 (조각보 배경 ＋ 한복만)
   // 🍂❄️ **11월 뼈대 시안 셋 (2026-09-02 · ⏳창업자 판정 대기)**
   //   ⛔ `drawState` 의 `pool` 엔 «안» 넣었다 — 고르기 전엔 유저에게 안 나온다(규칙 13).
@@ -860,6 +861,58 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
       {hero({ right: 24, bottom: 210, height: 540, filter: die8('#ffffff') })}
       {밤 ? veil('32,24,44') : veil('250,246,238')}
       {밤 ? <>{more('#f4ecff', '#d7c3f0')}{foot('#f4ecff', '#d7c3f0')}</> : <>{more('#33254a', '#6e4e94')}{foot('#4a3568', '#6e4e94')}</>}
+    </>)
+  }
+
+  // 🌙🧪 [2026-09-29 · ⏳창업자 판정 대기] 어두운 핼러윈 카드 «뼈대 시안 셋» — 창업자 「디자인이 너무 똑같은뎅 · 박스랑.. 배경만 다르고」
+  //    ⛔ 뽑기 풀엔 «안» 넣었다 — `?card=hwn_poster|hwn_moon|hwn_invite` 로만 열린다. 고른 것 하나만 `halloween_night` 자리에 올린다.
+  if (K.key === 'hwn_poster' || K.key === 'hwn_moon' || K.key === 'hwn_invite') {
+    const bgImg = <img src={HW_NIGHT_BG} alt="" crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: 1080, height: 1350, objectFit: 'cover' }} />
+    const badge = <div style={{ position: 'absolute', top: 84, right: PAD, transform: 'rotate(-7deg)', fontFamily: 'Jua, sans-serif', fontSize: 31, color: '#fff', background: 'linear-gradient(180deg,#8d6bb0,#6e4e94)', padding: '13px 28px', borderRadius: 18, boxShadow: '0 10px 18px -6px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.35)', zIndex: 9 }}>핼러윈 한정</div>
+    const glow = '0 4px 18px rgba(20,10,35,.85), 0 0 40px rgba(20,10,35,.6)'
+    const tail = <>{veil('32,24,44')}{more('#f4ecff', '#d7c3f0')}{foot('#f4ecff')}</>
+    // ① 포스터 — 박스 없음 · 캐릭터 가운데 크게 · 제목은 아래 흰 글씨
+    if (K.key === 'hwn_poster') {
+      const hs = headSize([l1, l2], 128, 1080 - PAD * 2)
+      return shell('#2a2036', <>
+        {bgImg}{brand('#f4ecff', { textShadow: glow })}{badge}
+        {hero({ left: '50%', top: 130, height: 500, transform: 'translateX(-50%)', filter: die8('#ffffff') })}
+        {tail}
+        <div style={{ position: 'absolute', left: PAD, right: PAD, bottom: 300, zIndex: 9, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 44, color: '#e3cffb', textShadow: glow }}>오늘 밤은, 이 한 끼</div>
+          <div style={{ marginTop: 2, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.99, letterSpacing: -3, color: '#fffaf0', textShadow: glow, wordBreak: 'keep-all' }}>{l1}{l2 && <><br />{l2}</>}</div>
+          <div style={{ marginTop: 22, display: 'flex', justifyContent: 'center' }}>{chips('rgba(200,170,240,.5)', '#6e4e94')}</div>
+        </div>
+      </>)
+    }
+    // ② 보름달 창 — 위 제목 · 가운데 큰 보름달 안에 캐릭터
+    if (K.key === 'hwn_moon') {
+      const hs = headSize([l1, l2], 112, 1080 - PAD * 2)
+      return shell('#2a2036', <>
+        {bgImg}{brand('#f4ecff', { textShadow: glow })}{badge}
+        <div style={{ position: 'absolute', left: PAD, right: PAD, top: 150, zIndex: 9, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 40, color: '#e3cffb', textShadow: glow }}>오늘 밤은, 이 한 끼</div>
+          <div style={{ fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.99, letterSpacing: -3, color: '#fffaf0', textShadow: glow, wordBreak: 'keep-all' }}>{l1}{l2 && <><br />{l2}</>}</div>
+          <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center' }}>{chips('rgba(200,170,240,.5)', '#6e4e94')}</div>
+        </div>
+        <div style={{ position: 'absolute', left: 250, top: 520, width: 580, height: 580, borderRadius: '50%', background: 'radial-gradient(circle at 42% 38%, #fff6d2 0%, #f7df8c 55%, #e8c45e 100%)', boxShadow: '0 0 80px 20px rgba(255,225,140,.35)', zIndex: 5 }} />
+        {tail}
+        {hero({ left: '50%', top: 540, height: 540, transform: 'translateX(-50%)', filter: die8('#ffffff') })}
+      </>)
+    }
+    // ③ 초대장 — 기울인 종이 카드 안에 제목 · 캐릭터는 옆에 걸친다
+    const hs = headSize([l1, l2], 104, 560)
+    return shell('#2a2036', <>
+      {bgImg}{brand('#f4ecff', { textShadow: glow })}{badge}
+      <div style={{ position: 'absolute', left: 84, top: 230, width: 620, padding: '44px 44px 52px', background: '#fbf4e6', borderRadius: 22, transform: 'rotate(-4deg)', boxShadow: '0 30px 50px -20px rgba(0,0,0,.6)', zIndex: 6 }}>
+        <div style={{ position: 'absolute', inset: 16, border: '3px dashed rgba(110,78,148,.45)', borderRadius: 14, pointerEvents: 'none' }} />
+        <div style={{ fontFamily: 'Jua, sans-serif', fontSize: 28, letterSpacing: 6, color: '#8d6bb0' }}>HALLOWEEN PARTY</div>
+        <div style={{ marginTop: 6, fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 42, color: '#7a5a9e' }}>오늘 밤 초대 메뉴는</div>
+        <div style={{ marginTop: 10, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.99, letterSpacing: -3, color: '#33254a', wordBreak: 'keep-all' }}>{l1}{l2 && <><br />{l2}</>}</div>
+        <div style={{ marginTop: 24 }}>{chips('rgba(140,110,180,.3)', '#6e4e94')}</div>
+      </div>
+      {tail}
+      {hero({ right: 10, bottom: 230, height: 560, filter: die8('#ffffff') })}
     </>)
   }
 
