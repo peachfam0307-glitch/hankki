@@ -191,6 +191,9 @@ export const ING_LINKS = {
   '기름': 'https://www.costco.co.kr/Foods/Processed-Food/Oils/KS-Siurana-Extra-Virgin-Olive-Oil-1L/p/892188', // ⛇묶음: 올리브유 / 식용유 / 기름
   '전분물': 'https://link.coupang.com/a/gYWQr9gXIa', // ⛇묶음: 감자전분 / 전분가루 / 전분물
   '당면': 'https://link.coupang.com/a/hod4irlEIv', // [창업자 2026-09-27] 남은 나물 잡채(9/28)
+  // [창업자 2026-09-29] 9/30 편 — 닭날개조림(페페론치노)·가지 오믈렛(페퍼론치노) 두 표기를 한 링크로
+  '페퍼론치노': 'https://link.coupang.com/a/hrfqzuUbhA', // ⛇묶음: 페퍼론치노 / 페페론치노
+  '페페론치노': 'https://link.coupang.com/a/hrfqzuUbhA',
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
