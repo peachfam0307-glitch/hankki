@@ -1958,11 +1958,11 @@ export const STICKER_GROUPS = [
   //    🔓 유저 공개 = `열쇠까지: '2026-10-16'` — 그날부터는 열쇠 없이 열린다(DecorEditor 열쇠켬). 그 전엔 창업자 열쇠(?할로윈=1)로만. 아이폰은 구운 판이 박히니 «이 줄이 들어간 판»으로 굽는다.
   // 🎃 [창업자 2026-09-29] 핼러윈 무료 — 10/16 00시에 모두에게 열린다(그 전엔 창업자 열쇠 ?할로윈=1 로만). 확정 = docs/핼러윈-무료컷-확정-2026-09-29.md
   //    ⭐ 팩 62컷 중 창업자가 고른 22컷 ＋ 탭 캐릭터 5 ＋ 새 가로 프레임 4. 나머지는 2027 핼러윈 몫(paidPacks.js packed 에 잠겨 있다).
-  { key: 'buddies_halloween', tab: 'buddies', bigCell: true, key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '한끼 친구들의 핼러윈', items: ['hw_02', 'hw_03', 'hw_06', 'hw_09', 'hw_13', 'hw_01', 'hw_04', 'hw_11', 'hw_14', 'hw_15', 'hw_16'] },
-  { key: 'frame_halloween', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈 프레임', items: ['hfw_01', 'hfw_02', 'hfw_03', 'hfw_04'] },
-  { key: 'deco_halloween', tab: 'deco', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈 종이·씰', items: ['hp_04', 'hp_07', 'hp_12', 'hp_14', 'hp_15', 'hp_18', 'hs_02', 'hs_06', 'hs_08', 'hs_09', 'hs_10', 'hs_11'] },
-  { key: 'tape_halloween', tab: 'tape', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈', items: ['ht_01', 'ht_02', 'ht_05', 'ht_06'] },
-  { key: 'deco_dish_halloween', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', bigCell: true, from: '2026-01-01', label: '할로윈 접시', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_hw01', 'pf_hw04', 'pf_hw09', 'pf_hw10'] },
+  { key: 'buddies_halloween', 명절: 'hw', tab: 'buddies', bigCell: true, key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '한끼 친구들의 핼러윈', items: ['hw_02', 'hw_03', 'hw_06', 'hw_09', 'hw_13', 'hw_01', 'hw_04', 'hw_11', 'hw_14', 'hw_15', 'hw_16'] },
+  { key: 'frame_halloween', 명절: 'hw', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈 프레임', items: ['hfw_01', 'hfw_02', 'hfw_03', 'hfw_04'] },
+  { key: 'deco_halloween', 명절: 'hw', tab: 'deco', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈 종이·씰', items: ['hp_04', 'hp_07', 'hp_12', 'hp_14', 'hp_15', 'hp_18', 'hs_02', 'hs_06', 'hs_08', 'hs_09', 'hs_10', 'hs_11'] },
+  { key: 'tape_halloween', 명절: 'hw', tab: 'tape', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈', items: ['ht_01', 'ht_02', 'ht_05', 'ht_06'] },
+  { key: 'deco_dish_halloween', 명절: 'hw', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', bigCell: true, from: '2026-01-01', label: '할로윈 접시', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_hw01', 'pf_hw04', 'pf_hw09', 'pf_hw10'] },
   // 🍽 [창업자 2026-09-21] 기본 그릇 8컷 — 늘 열려 있다. 사진 표지에 프레임을 «안» 얹으면 갈래별 기본 그릇(`기본그릇키`)이 저절로 깔리고, 여기서 직접 고르면 그게 이긴다.
   // 🔒🔒 [창업자 2026-09-22 14:38 *"빼 · 음식 종류에 맞게 기본값으로 네가 넣어주는 그릇이니까 · 빼고 안 보이게 하는 게 맞아 · 아예 삭제하라는 게 아니라"*]
   //    ⛔ **서랍에서 «안 보이게» 한다(열쇠 뒤). 묶음도 컷 8개도 «지우지 않는다».**
