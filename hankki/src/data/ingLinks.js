@@ -196,6 +196,7 @@ export const ING_LINKS = {
   '페페론치노': 'https://link.coupang.com/a/hrfqzuUbhA',
   '닭날개': 'https://link.coupang.com/a/hrfwOoUYCa', // [창업자 2026-09-29] 마늘 간장 닭날개조림 — 레시피는 날개 그대로
   '닭봉': 'https://link.coupang.com/a/hrfmkfSUHA',   // [창업자 2026-09-29] 날개 대신 찾아 준 것 — 닭봉이 나오는 편에 쓰인다
+  '슈레드 치즈': 'https://link.coupang.com/a/gZj6blHyHB', // [창업자 2026-09-29] 「슈레드치즈도(모짜렐라치즈)」 — 모짜렐라와 같은 링크 · 양배추 치즈전
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
