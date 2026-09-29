@@ -201,6 +201,7 @@ export const ING_LINKS = {
   '생강즙': 'https://link.coupang.com/a/gYWRWEezHE', // [창업자 2026-09-29] 「생강링크에 연결하자」 — 생강 갈아 짜서 쓴다 · 닭날개조림
   '그라나파다노 치즈': 'https://link.coupang.com/a/hrfHP6DKiO', // [창업자 2026-09-29] 가지 오믈렛
   '그라나파다노': 'https://link.coupang.com/a/hrfHP6DKiO',
+  '흑설탕': 'https://link.coupang.com/a/g3fOzcNQiG', // [창업자 2026-09-29] 「흑설탕은 아우노슈가하면돼」 — 주부의 장바구니 아우노슈가와 같은 링크 · 닭날개조림
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
