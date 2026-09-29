@@ -307,6 +307,9 @@ img {
   --bg: #eae5ee; --surface: #ffffff; --cream: #e0d8e8; --brown: #6f5a8e;
   --nav-bg: rgba(234, 229, 238, 0.95);
 }
+/* 🎃 [창업자 2026-09-29 20:05 「애들 너무 작아 · 꼬르곰은 아래에 공간이 많아 · 펭펭은 조금만 더 크게」] 핼러윈 두 자리만 키운다 */
+:root[data-season='hw'] .news-gom { width: 40px !important; }
+:root[data-season='hw'] .next-peng { width: 36px; }
 :root[data-season='hw']:not([data-theme='dark']) body,
 :root[data-season='hw']:not([data-theme='dark']) .app-frame {
   background-color: #eae5ee;
