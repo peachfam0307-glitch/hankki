@@ -10,7 +10,10 @@ const { COACH } = await import('../src/coach.js')
 const ID = 'basic-tong-danhobak-cream-soup'
 // 🧮 자리·크기는 «푼» 값 — tools/꾸미기-자리풀기.py 덮기 <그릇> --대상 n3048 (통과 범위 한가운데 후보 · 2026-09-29)
 const 그릇값 = { pf_hw01: [0.77, 0.4932, 0.4614], pf_hw04: [0.75, 0.4949, 0.4532], pf_hw09: [0.64, 0.4983, 0.4647], pf_hw10: [0.68, 0.4932, 0.4433] }
-const 그릇들 = Object.keys(그릇값)
+// 🔧 VARIANTS='[["이름","그릇",s,x,y],…]' 로 주면 그 값들만 찍는다(창업자 「3번 그릇을 아래로 살짝만」 2026-09-30)
+const 변형 = process.env.VARIANTS ? JSON.parse(process.env.VARIANTS) : null
+if (변형) for (const [이름, 그릇, s, x, y] of 변형) 그릇값[이름] = [s, x, y, 그릇]
+const 그릇들 = 변형 ? 변형.map((v) => v[0]) : Object.keys(그릇값)
 const PORT = 4337
 const srv = spawn('python3', ['-m', 'http.server', String(PORT), '--bind', '127.0.0.1', '--directory', 'dist'], { stdio: 'ignore' })
 process.on('exit', () => { try { srv.kill() } catch {} })
@@ -22,10 +25,10 @@ for (const 그릇 of 그릇들) {
     const base = { ...r, status: 'sorted', savedAt: now - i * 60000 }
     if (r.id !== ID) return base
     return { ...base, savedAt: now + 60000, touched: true, decorBg: 'hwfelt', decor: [
-      { id: 'd1', type: 'sticker', key: 그릇, s: 그릇값[그릇][0], x: 그릇값[그릇][1], y: 그릇값[그릇][2], r: 0 },
-      { id: 'd2', type: 'sticker', key: 'hp_14', x: 0.35, y: 0.21, s: 0.19, r: -6 },
+      { id: 'd1', type: 'sticker', key: 그릇값[그릇][3] || 그릇, s: 그릇값[그릇][0], x: 그릇값[그릇][1], y: 그릇값[그릇][2], r: 0 },
+      { id: 'd2', type: 'sticker', key: 'hp_14', x: 0.33, y: 0.16, s: 0.28, r: -6 },   // BOO — 창업자 「크기 좀 더 키워줘」 0.19 → 0.24 → 「살짝 키워서 위쪽으로」 0.28 · y 0.19 → 0.16
       { id: 'd3', type: 'sticker', key: 'hp_18', x: 0.79, y: 0.70, s: 0.18, r: 0 },
-      { id: 'd4', type: 'sticker', key: 'hw_11', x: 0.62, y: 0.84, s: 0.19, r: 0 },
+      { id: 'd4', type: 'sticker', key: 'hw_11', x: 0.62, y: 0.82, s: 0.24, r: 0, motion: 'tilt', fx: 'bubble' },   // 펭펭 — 「크기 조금 더 · 갸웃＋물방울」 0.19 → 0.24
     ] }
   })
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
