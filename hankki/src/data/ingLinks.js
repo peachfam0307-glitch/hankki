@@ -194,6 +194,8 @@ export const ING_LINKS = {
   // [창업자 2026-09-29] 9/30 편 — 닭날개조림(페페론치노)·가지 오믈렛(페퍼론치노) 두 표기를 한 링크로
   '페퍼론치노': 'https://link.coupang.com/a/hrfqzuUbhA', // ⛇묶음: 페퍼론치노 / 페페론치노
   '페페론치노': 'https://link.coupang.com/a/hrfqzuUbhA',
+  '닭날개': 'https://link.coupang.com/a/hrfwOoUYCa', // [창업자 2026-09-29] 마늘 간장 닭날개조림 — 레시피는 날개 그대로
+  '닭봉': 'https://link.coupang.com/a/hrfmkfSUHA',   // [창업자 2026-09-29] 날개 대신 찾아 준 것 — 닭봉이 나오는 편에 쓰인다
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
