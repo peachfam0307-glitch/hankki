@@ -38,7 +38,8 @@ import { takeOpenBackup, backupDone, takeOpenCloud, 클라우드보임, STORE_UR
 // 🏷 «표식»만 읽는다 — 파이어베이스(167KB)를 부르지 않는다(`cloud.js:108` 머리주석 · 홈도 같은 걸 쓴다)
 import { 로그인해뒀나 } from '../cloud'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
-import { 백업만들기 } from '../backupData'
+import { 백업만들기, 기본빼기, 백업편수 } from '../backupData'
+import { allBasicRecipes } from '../data/basics'
 
 // 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
 const PROFILE_COACH_KEY = COACH.profile
@@ -191,6 +192,8 @@ export default function ProfileScreen() {
   //   ⛔ 여기와 클라우드가 따로 만들면 «백업 파일엔 들어가는데 클라우드엔 안 들어가는 칸»이 생긴다.
   //      그건 폰을 바꾼 «뒤에야» 드러난다 — 제일 늦게 발견되는 사고다.
   const buildBackup = () => 백업만들기(store)
+  // 📉 복사·파일·공유는 «손 안 댄 기본 레시피»를 뺀 판 — ⛔클라우드(아래 CloudSheet)엔 buildBackup 그대로 (backupData.js 기본빼기)
+  const buildExport = async () => 기본빼기(await buildBackup(), allBasicRecipes)
 
   // 📁 파일 이름에 «시각»까지 넣는다 (2026-08-16 창업자 캡처)
   //   ⛔ 날짜만 넣었더니 같은 날 두 번째 저장에서 안드로이드가
@@ -211,7 +214,7 @@ export default function ProfileScreen() {
     //    실패를 성공이라 말하지 않는다 → 앱 안에선 공유 창 길로 안내한다(백업 «됐다» 표시도 안 남긴다).
     if (앱안인가()) { nav.showToast('이 폰에선 「백업 보내서 저장하기」로 공유 창에 보내 주세요 (파일에 저장 · 카톡 나에게)'); return }
     // ⛔ await 를 빼면 `JSON.stringify(Promise)` 가 `{}` 로 굳어 **백업이 통째로 빈다.**
-    const blob = new Blob([JSON.stringify(await buildBackup())], { type: 'application/json' })
+    const blob = new Blob([JSON.stringify(await buildExport())], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -227,7 +230,7 @@ export default function ProfileScreen() {
 
   // 공유로 보내기 — 카톡 나에게·드라이브·파일 앱 등 안전한 곳에 바로 저장 (모바일)
   const shareBackup = async () => {
-    const file = new File([JSON.stringify(await buildBackup())], backupFilename(), { type: 'application/json' })
+    const file = new File([JSON.stringify(await buildExport())], backupFilename(), { type: 'application/json' })
     try {
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
@@ -276,7 +279,7 @@ export default function ProfileScreen() {
   const CLIP_MAX = 100 * 1024
 
   const copyBackup = async () => {
-    const json = JSON.stringify(await buildBackup())
+    const json = JSON.stringify(await buildExport())
 
     // ⛔⛔⛔ [2026-08-16 두 번째 고침] **큰 백업은 복사를 «시도조차 하지 않는다».**
     //   📮 창업자 캡처 = 「클립보드로 복사하지 못했습니다」(시스템) ＋ 우리 안내가 «겹쳐서» 떴다.
@@ -343,7 +346,7 @@ export default function ProfileScreen() {
       if (!Array.isArray(data.recipes)) throw new Error('형식 오류')
       setConfirmAsk({
         title: '백업 불러오기',
-        message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
+        message: `레시피 ${백업편수(data)}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
         confirmLabel: '불러오기',
         onConfirm: () => 불러오기끝(data),
       })
@@ -362,7 +365,7 @@ export default function ProfileScreen() {
         if (!Array.isArray(data.recipes)) throw new Error('형식 오류')
         setConfirmAsk({
           title: '백업 불러오기',
-          message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
+          message: `레시피 ${백업편수(data)}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
           confirmLabel: '불러오기',
           onConfirm: () => 불러오기끝(data),
         })
