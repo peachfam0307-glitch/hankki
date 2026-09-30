@@ -131,6 +131,7 @@ export const ING_LINKS = {
   '우렁살': 'https://link.coupang.com/a/hsQ8DuOSuy', // ⛇묶음: 우렁살 / 우렁
   '우렁': 'https://link.coupang.com/a/hsQ8DuOSuy', // ⛇묶음: 우렁살 / 우렁
   '진미채': 'https://link.coupang.com/a/hsRcvb5a7o',
+  '순두부': 'https://link.coupang.com/a/hsRAk8sSAu', // 창업자 2026-09-30 · 우렁 순두부 된장찌개(10/7)·순두부찌개·순두부조림·들깨 궁채나물
   '튀김가루': 'https://link.coupang.com/a/hsRwK7heqy', // 창업자 2026-09-30 · 오징어 새우전(10/5)·새우튀김·허니 간장 치킨·바삭한 대패 김치전
   '김치 크게': 'https://link.coupang.com/a/gYWFeBBQQu', // ⛇묶음: 묵은지 / 신김치 · 창업자 2026-09-30 「묵은지링크있으면 거기로 이어줘」(대패삼겹살 김치 솥밥 10/5) · ⛔「김치」 통째로 잇지 않는다(다른 편까지 번진다)
   '건고추': 'https://link.coupang.com/a/gZhybNEQI8',
