@@ -7,7 +7,7 @@ import { normalizeNumerals } from './ocrCorrect'
 // 🏷 「로그인해 둔 적이 있나」 표식만 읽는다 — ⛔파이어베이스를 «안» 받는다.
 //   cloud.js 는 파이어베이스를 `await import` 로 늦게 부르고, 이 함수는 localStorage 한 줄만 본다.
 //   (로그인 안 한 사람에게 167KB 를 지우지 않으려고 cloud.js:102 가 바로 그 목적으로 만든 것)
-import { 로그인해뒀나, 내구글번호 } from './cloud'
+import { 로그인해뒀나, 내구글번호, 내토큰 } from './cloud'
 import { 열쇠받음, 열쇠막힘 } from './stats.js'   // 🚪 [2026-09-21] key_earn · key_block — key_block 이 곧 «결제 수요»다
 // 🔓 운영자 표식 — 「무제한인가」의 잣대를 `getOcrLeft()` 한 곳에 모으려고 여기서 읽는다.
 //    ⛔ 순환 없음(확인) — `tidy.js` 는 `polish`·`parseRecipe` 만 부르고 `ocr.js` 를 안 부른다.
@@ -34,6 +34,13 @@ export const OCR_APP_TOKEN = '0VRNDSjHBhwniTzIDAbnRaJygyfGJ2K2'
 //      (주소로 들어가는 운영자 통로에 한글이 섞이면 그대로 그 상태가 된다 — 아무 말도 없다.)
 //      ⭐ 실패의 «모양»을 바꾼다(절대원칙 34) — 못 실을 열쇠면 **안 싣고 그냥 보낸다.**
 //         운영자 대접만 못 받을 뿐, 앱은 유저로서 멀쩡히 돈다.
+// 🔐 [2026-09-30] 로그인했으면 ID 토큰을 싣는다 — 서버가 «몸통 번호»가 아니라 이걸 믿는다(워커 `토큰확인`).
+async function 토큰헤더(headers) {
+  const t = await 내토큰()
+  if (t) headers['x-hankki-idtoken'] = t
+  return headers
+}
+
 function 열쇠헤더(headers) {
   try {
     if (유저눈인가()) return headers
@@ -115,6 +122,7 @@ async function ocrViaProxy(dataUrl, onProgress, batch) {
   const 그만기어 = () => { if (기어감) { clearInterval(기어감); 기어감 = null } }
   const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
   열쇠헤더(headers)   // 👀 유저 눈이면 안 실린다
+  await 토큰헤더(headers)
   let resp
   try {
     resp = await fetch(OCR_PROXY_URL, {
@@ -246,6 +254,7 @@ const 큐쓰기 = (a) => { try { localStorage.setItem(큐칸, JSON.stringify(a.s
 async function 한번보내기(행동) {
   const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
   열쇠헤더(headers)   // 👀 유저 눈이면 안 실린다
+  await 토큰헤더(headers)
   const resp = await fetch(OCR_PROXY_URL, {
     method: 'POST',
     headers,
@@ -297,6 +306,7 @@ export async function 열쇠새로고침() {
   try {
     const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
     열쇠헤더(headers)   // 👀 유저 눈이면 안 실린다
+    await 토큰헤더(headers)
     const resp = await fetch(OCR_PROXY_URL, {
       method: 'POST',
       headers,
