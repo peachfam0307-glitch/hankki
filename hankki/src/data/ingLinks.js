@@ -96,8 +96,8 @@ export const ING_LINKS = {
   '깨소금': 'https://link.coupang.com/a/gYVL6ohhKe', // ⛇묶음: 통깨 / 깨소금 / 깨 / 갈아 둔 깨
   '고춧가루': 'https://link.coupang.com/a/gYVKs7LhaC', // ⛇묶음: 고춧가루 / 복이네먹거리 고춧가루
   '복이네먹거리 고춧가루': 'https://link.coupang.com/a/gYVKs7LhaC', // ⛇묶음: 고춧가루 / 복이네먹거리 고춧가루
-  '묵은지': 'https://link.coupang.com/a/gYWFeBBQQu', // ⛇묶음: 묵은지 / 신김치
-  '신김치': 'https://link.coupang.com/a/gYWFeBBQQu', // ⛇묶음: 묵은지 / 신김치
+  '묵은지': 'https://link.coupang.com/a/gYWFeBBQQu', // ⛇묶음: 묵은지 / 신김치 / 김치 크게
+  '신김치': 'https://link.coupang.com/a/gYWFeBBQQu', // ⛇묶음: 묵은지 / 신김치 / 김치 크게
   '후추': 'https://link.coupang.com/a/gZhOsYoxBQ', // ⛇묶음: 후추 / 후춧가루
   '무': 'https://link.coupang.com/a/gZf2aXbvtk',
   '깨': 'https://link.coupang.com/a/gYVL6ohhKe', // ⛇묶음: 통깨 / 깨소금 / 깨 / 갈아 둔 깨
@@ -112,12 +112,27 @@ export const ING_LINKS = {
   '고추기름': 'https://link.coupang.com/a/gZgN3nzK32',
   '매실액': 'https://link.coupang.com/a/gZg6uVtfgG',
   '밀가루': 'https://link.coupang.com/a/gZhbtOlBPE',
-  '배즙': 'https://link.coupang.com/a/gZheSMmxgW', // ⛇묶음: 배즙 / 갈아만든배
+  '배즙': 'https://link.coupang.com/a/gZheSMmxgW', // ⛇묶음: 배즙 / 갈아만든배 / 배 음료
   '알배추': 'https://link.coupang.com/a/gZhmfjCjnM',
   '연근': 'https://link.coupang.com/a/gZhm3LXtUO',
   '와사비': 'https://link.coupang.com/a/gZho03X3Ke',
   '갈아 둔 깨': 'https://link.coupang.com/a/gYVL6ohhKe', // ⛇묶음: 통깨 / 깨소금 / 깨 / 갈아 둔 깨
-  '갈아만든배': 'https://link.coupang.com/a/gZheSMmxgW', // ⛇묶음: 배즙 / 갈아만든배
+  '갈아만든배': 'https://link.coupang.com/a/gZheSMmxgW', // ⛇묶음: 배즙 / 갈아만든배 / 배 음료
+  '배 음료': 'https://link.coupang.com/a/gZheSMmxgW', // ⛇묶음: 배즙 / 갈아만든배 / 배 음료
+  // 🛒 [창업자 2026-09-30] 「레시피링크는 우유, 견과류, 백간장. 참치 링크 다 있을거야」 — 주부의 장바구니 제품 링크를 레시피 재료에도 잇는다
+  '우유': 'https://link.coupang.com/a/hsReVb7dzp', // 창업자 2026-09-30 우유 링크
+  '견과류': 'https://link.coupang.com/a/hmfFhlhYwm', // = 장바구니 「하루견과블랙」
+  '백간장': 'https://link.coupang.com/a/gRY0NsfeOO', // ⛇묶음: 백간장 / 대게백간장
+  '대게백간장': 'https://link.coupang.com/a/gRY0NsfeOO', // ⛇묶음: 백간장 / 대게백간장
+  '참치캔': 'https://link.coupang.com/a/gR30YOssFg', // = 장바구니 「리오마레」(matches 참치캔·참치)
+  // 🔗 [창업자 2026-09-30] 10/7 편 링크 — 닭다리살(초간단 찜닭 「닭정육」) · 우렁살 · 진미채
+  '닭다리살': 'https://link.coupang.com/a/hsQ5E37Q2S', // ⛇묶음: 닭다리살 / 닭정육
+  '닭정육': 'https://link.coupang.com/a/hsQ5E37Q2S', // ⛇묶음: 닭다리살 / 닭정육
+  '우렁': 'https://link.coupang.com/a/hsQ8DuOSuy',  // 창업자 2026-09-30 「우렁살」 링크 · 레시피 재료 이름은 「우렁」
+  '진미채': 'https://link.coupang.com/a/hsRcvb5a7o',
+  '순두부': 'https://link.coupang.com/a/hsRAk8sSAu', // 창업자 2026-09-30 · 우렁 순두부 된장찌개(10/7)·순두부찌개·순두부조림·들깨 궁채나물
+  '튀김가루': 'https://link.coupang.com/a/hsRwK7heqy', // 창업자 2026-09-30 · 오징어 새우전(10/5)·새우튀김·허니 간장 치킨·바삭한 대패 김치전
+  '김치 크게': 'https://link.coupang.com/a/gYWFeBBQQu', // ⛇묶음: 묵은지 / 신김치 / 김치 크게
   '건고추': 'https://link.coupang.com/a/gZhybNEQI8',
   // 🐟 [창업자 2026-09-13] "참치액은 모스스토리 참치액" — 25편이 쓰는 재료인데 링크가 없었다.
   //    ⚠️ 네이버 브랜드스토어라 «쿠팡 파트너스가 아니다 = 수수료 0원». 창업자가 실제로 쓰는 제품이라 넣는다.
@@ -125,7 +140,7 @@ export const ING_LINKS = {
   '참치액': 'https://brand.naver.com/mosstory/products/10222660132',
   // ⭐ 아래 셋은 재료 줄에 «분량이 붙은 모양»으로만 있다(「닭다리살 700g」·「스파게티 면 180g」).
   //    넣기 도구가 «이름 그대로»를 못 찾아 건너뛰었지만, 앱의  는 분량을 떼고 찾으므로 붙는다.
-  '닭다리살': 'https://link.coupang.com/a/gZgVXN4cpg',
+  // '닭다리살' 옛 링크 gZgVXN4cpg → 창업자 2026-09-30 새 링크(위 hsQ5E37Q2S)로 갈았다 — 같은 키가 둘이면 «아래가» 이겨서 새 링크가 묻혔다
   '스파게티 면': 'https://link.coupang.com/a/gZgElvHnVc', // ⛇묶음: 파스타면 / 스파게티 면 / 스파게티면
   '스파게티면': 'https://link.coupang.com/a/gZgElvHnVc', // ⛇묶음: 파스타면 / 스파게티 면 / 스파게티면
   '떡국떡': 'https://link.coupang.com/a/gZgZbTXfqK',
@@ -206,6 +221,7 @@ export const ING_LINKS = {
 //   ⛔ 「물」처럼 «한 글자»가 많아서 부분일치로 거르면 「물냉면」까지 걸린다 → **완전일치로만** 본다.
 export const 안파는것 = new Set([
   '물', '뜨거운 물', '따뜻한 물', '찬물', '얼음', '얼음물', '끓는 물', '생수',   // 생수 = [창업자 2026-09-29 「생수는 빼자」]
+  '천일염',   // [창업자 2026-09-30 「천일염은 뺄게」 — 우렁 순두부 된장찌개 10/7]
   '밥', '따뜻한 밥', '찬밥', '식은 밥', '면수', '육수', '삶은 물',
 ])
 // ⛔⛔ [2026-09-12] **소금·후추를 여기서 뺐다 — 창업자 = *"후추를 왜 안사?"* · *"소금후추는 필수템이야."***

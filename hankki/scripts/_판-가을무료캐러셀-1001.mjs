@@ -12,7 +12,17 @@ import { execFileSync } from 'node:child_process'
 
 const ROOT = new URL('..', import.meta.url).pathname
 const S = process.env.SCRATCH || '/tmp/claude-0'
-const OUT = join(S, '가을무료캐러셀-1001')
+// 🎨 배경 시안 (창업자 2026-09-30 「배경색이랑 질감 같은거무늬 좀 다르게 해줄수있어?」) — BG=<이름> 이면 그 판으로 따로 찍는다
+const 배경들 = {
+  원래: 'background:#e9dcc6;background-image:repeating-linear-gradient(0deg,rgba(107,47,36,.045) 0 1px,transparent 1px 7px),repeating-linear-gradient(90deg,rgba(255,255,255,.18) 0 1px,transparent 1px 9px)',
+  단풍깅엄: 'background:#f3e4cf;background-image:repeating-linear-gradient(0deg,rgba(176,74,46,.10) 0 38px,transparent 38px 76px),repeating-linear-gradient(90deg,rgba(176,74,46,.10) 0 38px,transparent 38px 76px)',
+  크래프트: 'background:#d9b98f;background-image:radial-gradient(rgba(90,50,20,.13) 1px,transparent 1.4px),radial-gradient(rgba(255,255,255,.22) 1px,transparent 1.4px);background-size:11px 11px,17px 17px;background-position:0 0,5px 8px',
+  세이지린넨: 'background:#dfe0c8;background-image:repeating-linear-gradient(0deg,rgba(80,90,50,.07) 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,rgba(80,90,50,.07) 0 1px,transparent 1px 4px)',
+  호박물방울: 'background:#f6dcc0;background-image:radial-gradient(rgba(214,120,60,.22) 9px,transparent 10px);background-size:64px 64px',
+}
+const BG = process.env.BG || '원래'
+if (!배경들[BG]) { console.error('⛔ BG 없음:', BG, Object.keys(배경들)); process.exit(1) }
+const OUT = join(S, BG === '원래' ? '가을무료캐러셀-1001' : `가을무료캐러셀-1001-${BG}`)
 mkdirSync(OUT, { recursive: true })
 const b64 = (p) => `data:image/png;base64,${readFileSync(p).toString('base64')}`
 const 폰트 = readFileSync(join(ROOT, 'design/promo/fonts-embed.css'), 'utf8')
@@ -34,7 +44,7 @@ const 갈색 = '#6b2f24', 머스 = '#d9a441'
 const 공통 = `${폰트}
 *{margin:0;padding:0;box-sizing:border-box}
 body{width:1080px;height:1350px;overflow:hidden;position:relative;font-family:'Jua','Gowun Dodum',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
-  background:#e9dcc6;background-image:repeating-linear-gradient(0deg,rgba(107,47,36,.045) 0 1px,transparent 1px 7px),repeating-linear-gradient(90deg,rgba(255,255,255,.18) 0 1px,transparent 1px 9px)}
+  ${배경들[BG]}}
 .top{position:absolute;z-index:5;left:70px;right:70px;top:74px}
 .tag{display:inline-block;font-size:28px;color:#fff7ea;background:${갈색};border-radius:999px;padding:8px 24px;letter-spacing:.06em;margin-bottom:18px}
 .hh{color:${갈색};font-size:84px;line-height:1.22;letter-spacing:-0.02em}
