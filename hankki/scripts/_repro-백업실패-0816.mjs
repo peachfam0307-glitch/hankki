@@ -107,8 +107,14 @@ const p1 = await 열기()
     await p1.getByText(/백업 코드 복사/).first().click()
     await p1.waitForTimeout(600)
     const clip = await p1.evaluate(() => window.__clip)
-    재('③ 작은 백업은 그대로 복사되나', clip > 0,
+    // 🔒 [2026-09-30] 막 깐 폰도 기본 레시피만 97KB 라 상한(100KB)을 넘는다 → 작은 백업(기본빼기)이 켜져야 «작다».
+    //   ⏳ 작은백업켬 = false 인 동안(아이폰 1.1.2 승인 전 · 창업자 「두 단계로 가자」)은 «파일로 가는 것»이 맞는 답이다.
+    //   ⭐ 스위치를 켜는 순간 이 칸은 저절로 원래 잣대(복사된다)로 돌아간다 — 기한이 코드에 묶여 있다.
+    const { 작은백업켬 } = await import('../src/backupSlim.js')
+    if (작은백업켬) 재('③ 작은 백업은 그대로 복사되나', clip > 0,
       clip ? `${Math.round(clip / 1024)}KB 복사 — 고치다 반대로 막지 않았다` : '⛔ 작은 것까지 막혔다')
+    else 재('③ (작은 백업 꺼짐) 막 깐 폰은 복사 대신 파일로 가나', clip === 0 && (await p1.evaluate(() => window.__dl.length)) >= 2,
+      clip === 0 ? '클립보드 안 부름 · 파일 저장 — 스위치를 켜면 «복사된다»로 돌아간다' : `⛔ ${Math.round(clip / 1024)}KB 를 복사하려 했다`)
   }
 }
 

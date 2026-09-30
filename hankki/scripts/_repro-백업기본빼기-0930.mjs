@@ -68,9 +68,15 @@ const 통짜 = JSON.stringify(A판).length
 await 백업시트(A2)
 await A2.getByText(/백업 코드 복사/).first().click()
 await A2.waitForTimeout(700)
-const 코드 = await A2.evaluate(() => window.__clipText)
+// 🔒 작은백업켬 = false(1단계 · 아이폰 1.1.2 승인 전)면 앱은 통짜를 만들어 복사를 안 부른다 →
+//    «읽는 쪽»을 재려고 같은 함수(기본빼기)로 작은 백업을 여기서 만든다. 켜지면 앱이 만든 것을 그대로 쓴다.
+const { 작은백업켬, 기본빼기 } = await import('../src/backupSlim.js')
+const { allBasicRecipes } = await import('../src/data/basics.js')
+const 앱코드 = await A2.evaluate(() => window.__clipText)
+if (!작은백업켬) 재('⓪ (작은 백업 꺼짐) 앱은 복사를 안 부르나 — 통짜라 크다', !앱코드, 앱코드 ? '⛔ 복사했다' : '안 불렀다 — 스위치가 꺼져 있다')
+const 코드 = 작은백업켬 ? 앱코드 : JSON.stringify(기본빼기({ ...A판, _app: 'hankki', _v: 2 }, allBasicRecipes))
 const 백업 = 코드 ? JSON.parse(코드) : {}
-재('① 막 깐 폰 백업이 작아졌나', 코드.length > 0 && 코드.length < 20 * 1024,
+재('① 작은 백업이 작나', 코드.length > 0 && 코드.length < 20 * 1024,
   `${(코드.length / 1024).toFixed(1)}KB (폰 저장본 ${(통짜 / 1024).toFixed(1)}KB) · 담긴 편 ${백업.recipes?.length} · 번호만 ${백업._빠진기본?.length}`)
 const 담긴즐찾 = (백업.recipes || []).find((r) => r.id === 즐찾)
 재('② 즐겨찾기한 기본 편은 통째로 담기나', !!담긴즐찾 && 담긴즐찾.favorite === true && !(백업._빠진기본 || []).includes(즐찾), 즐찾)

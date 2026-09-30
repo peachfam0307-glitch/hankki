@@ -38,7 +38,8 @@ import { takeOpenBackup, backupDone, takeOpenCloud, 클라우드보임, STORE_UR
 // 🏷 «표식»만 읽는다 — 파이어베이스(167KB)를 부르지 않는다(`cloud.js:108` 머리주석 · 홈도 같은 걸 쓴다)
 import { 로그인해뒀나 } from '../cloud'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
-import { 백업만들기, 기본빼기, 백업편수 } from '../backupData'
+import { 백업만들기 } from '../backupData'
+import { 기본빼기, 백업편수, 작은백업켬 } from '../backupSlim'
 import { allBasicRecipes } from '../data/basics'
 
 // 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
@@ -193,7 +194,7 @@ export default function ProfileScreen() {
   //      그건 폰을 바꾼 «뒤에야» 드러난다 — 제일 늦게 발견되는 사고다.
   const buildBackup = () => 백업만들기(store)
   // 📉 복사·파일·공유는 «손 안 댄 기본 레시피»를 뺀 판 — ⛔클라우드(아래 CloudSheet)엔 buildBackup 그대로 (backupData.js 기본빼기)
-  const buildExport = async () => 기본빼기(await buildBackup(), allBasicRecipes)
+  const buildExport = async () => (작은백업켬 ? 기본빼기(await buildBackup(), allBasicRecipes) : buildBackup())
 
   // 📁 파일 이름에 «시각»까지 넣는다 (2026-08-16 창업자 캡처)
   //   ⛔ 날짜만 넣었더니 같은 날 두 번째 저장에서 안드로이드가
