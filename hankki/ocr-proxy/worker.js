@@ -252,6 +252,59 @@ const 찜지우기 = async (env, 통, 지문) => {
   } catch { /* 못 지워도 10분 뒤 청소가 걷어간다 */ }
 }
 
+// 🔐🔐 **[2026-09-30] 로그인 확인 — Firebase ID 토큰을 RS256 으로 검증한다**
+//   📮 결제를 켜기 «전»에 넣기로 한 것(`docs/결제-여는-순서-2026-09-19.md` §2-끝 ④).
+//   ⭐ 검사 항목 = 공식 라이브러리 원문(firebase-admin-node `token-verifier.ts` verifyContent)과 같다 —
+//      `kid` 있음 · `alg`=RS256 · `aud`=프로젝트 · `iss`=securetoken.google.com/프로젝트 · `sub` 1~128자
+//      ＋ 서명 ＋ `exp` 안 지남 · `iat`·`auth_time` 미래 아님.
+//   🔑 돌려주는 값 = **우리 열쇠**(구글 번호 / `apple_`＋애플 번호) — `nativeAuth.js 규칙열쇠` 와 «같은 식».
+//      ⛔ Firebase UID(`sub`)를 쓰지 않는다 — 보험 ①(`cloud.js` 머리 주석).
+const FIREBASE_PROJECT = 'hankki-6a768'
+const 공개키주소 = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'
+const 시계여유 = 300 // 초 — 폰·서버 시계 차이
+let 공개키통 = { 키: null, 까지: 0 }
+
+const b64url글 = (s) => atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4))
+const b64url바이트 = (s) => Uint8Array.from(b64url글(s), (c) => c.charCodeAt(0))
+const utf8풀기 = (s) => new TextDecoder().decode(b64url바이트(s))
+
+async function 공개키들 (강제 = false) {
+  if (!강제 && 공개키통.키 && Date.now() < 공개키통.까지) return 공개키통.키
+  const r = await fetch(공개키주소)
+  if (!r.ok) throw new Error('jwk_' + r.status)
+  const { keys } = await r.json()
+  const 초 = Number((/max-age=(\d+)/.exec(r.headers.get('Cache-Control') || '') || [])[1]) || 3600
+  공개키통 = { 키: Object.fromEntries((keys || []).map((k) => [k.kid, k])), 까지: Date.now() + 초 * 1000 }
+  return 공개키통.키
+}
+
+// 맞으면 우리 열쇠(글), 아니면 null. ⛔ 던지지 않는다 — 틀린 토큰은 «비로그인»으로 떨어질 뿐이다.
+export async function 토큰확인 (토큰, 지금 = Math.floor(Date.now() / 1000)) {
+  try {
+    const 조각 = String(토큰 || '').split('.')
+    if (조각.length !== 3 || 토큰.length > 4096) return null
+    const 머리 = JSON.parse(utf8풀기(조각[0]))
+    const 몸 = JSON.parse(utf8풀기(조각[1]))
+    if (머리.alg !== 'RS256' || !머리.kid) return null
+    if (몸.aud !== FIREBASE_PROJECT || 몸.iss !== 'https://securetoken.google.com/' + FIREBASE_PROJECT) return null
+    if (typeof 몸.sub !== 'string' || !몸.sub || 몸.sub.length > 128) return null
+    if (!(몸.exp > 지금 - 시계여유) || !(몸.iat <= 지금 + 시계여유)) return null
+    if (몸.auth_time != null && !(몸.auth_time <= 지금 + 시계여유)) return null
+    let 키들 = await 공개키들()
+    if (!키들[머리.kid]) 키들 = await 공개키들(true) // 구글이 키를 갈았을 수 있다 — 한 번만 새로 받는다
+    const jwk = 키들[머리.kid]
+    if (!jwk) return null
+    const 키 = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify'])
+    const 맞나 = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', 키, b64url바이트(조각[2]), new TextEncoder().encode(조각[0] + '.' + 조각[1]))
+    if (!맞나) return null
+    const f = 몸.firebase || {}
+    if (f.sign_in_provider === 'google.com') return f.identities?.['google.com']?.[0] || null
+    if (f.sign_in_provider === 'apple.com') { const a = f.identities?.['apple.com']?.[0]; return a ? 'apple_' + a : null }
+    return null
+  } catch { return null }
+}
+export const _공개키넣기 = (키) => { 공개키통 = { 키, 까지: Date.now() + 3600e3 } } // 재현판 전용
+
 export default {
 
   async fetch(request, env) {
@@ -410,12 +463,18 @@ export default {
     //    ✅ 쓴 수로 두면 `남은 = 상한 + 보너스 − 쓴수` 라 **로그인하는 순간 상한만 바뀌어 저절로 ＋20** 된다.
     //       로그아웃도 저절로 맞는다(상한이 10으로 돌아가고 쓴 수는 그대로라 «잃는 게 없다»).
     //
-    // ⛔ **로그인했다는 걸 서버가 «확인하지는» 못한다**(앱이 보낸 번호를 믿는다).
-    //    제대로 막으려면 Firebase ID 토큰을 RS256 으로 검증해야 한다.
-    //    이번 판엔 안 넣는다 — ⑴무료라 돈이 안 걸렸고 ⑵기기 번호를 갈면 10개씩 받는 더 큰 구멍이 이미 있고
-    //    ⑶전역 월 900·일 120 이 청구를 0원으로 막는다.
-    //    🚨 **결제를 켜는 날엔 «반드시» 넣는다.** 그날 이 줄을 다시 읽는다.
-    const sub = String(body.sub || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64)
+    // ~~⛔ 로그인했다는 걸 서버가 «확인하지는» 못한다(앱이 보낸 번호를 믿는다).~~
+    // 🔐 **[2026-09-30] 이제 확인한다** — 앱이 `x-hankki-idtoken` 에 Firebase ID 토큰을 싣는다(위 `토큰확인`).
+    //   ① 토큰이 맞으면 = **토큰 속 번호**를 쓴다(몸통 `sub` 은 무시 — 남의 번호를 적어 와도 소용없다)
+    //   ② 토큰이 왔는데 틀리면 = **비로그인**(10개 통)
+    //   ③ 토큰이 안 왔으면 = 옛 앱이다(아이폰은 빌드에 구워져 바로 안 바뀐다) →
+    //      `AUTH_STRICT` 가 없으면 옛날처럼 몸통 `sub` 을 믿고, **`AUTH_STRICT=1` 이면 비로그인.**
+    //      🚨 **결제를 켜는 날엔 `AUTH_STRICT=1` 을 «반드시» 켠다.** 그 전엔 옛 앱 로그인 유저가 열쇠 20개를 잃는다.
+    //   ⛔ 번호 모양은 옛 판과 «같은 거름»을 거친다 — 애플 번호의 `.` 이 빠진 채 KV 통 이름이 돼 있어서다.
+    const 거름 = (s) => String(s || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64)
+    const 준토큰 = request.headers.get('x-hankki-idtoken') || ''
+    const 확인번호 = 준토큰 ? 거름(await 토큰확인(준토큰)) : ''
+    const sub = 준토큰 ? 확인번호 : (env.AUTH_STRICT === '1' ? '' : 거름(body.sub))
     const 로그인 = !!sub
     const 통 = 로그인 ? `a:${sub}` : `d:${uid}`
     // 🎁🎁 행동 열쇠 표식을 찾을 통들 — 로그인했으면 «기기 통»도 같이 본다.
@@ -819,7 +878,7 @@ function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-hankki-token, x-hankki-founder',
+    'Access-Control-Allow-Headers': 'Content-Type, x-hankki-token, x-hankki-founder, x-hankki-idtoken',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
   }

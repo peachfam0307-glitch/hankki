@@ -135,6 +135,22 @@ const 번호칸 = 'hankki:cloud:sub'
 const 번호쓰기 = (n) => { try { n ? localStorage.setItem(번호칸, n) : localStorage.removeItem(번호칸) } catch { /* noop */ } }
 export const 내구글번호 = () => { try { return localStorage.getItem(번호칸) || '' } catch { return '' } }
 
+// 🔐 [2026-09-30] 서버에 «나 로그인했다»를 증명할 Firebase ID 토큰 — 워커 `토큰확인` 이 RS256 으로 검증한다.
+//   ⛔ 로그인 안 했으면 파이어베이스를 아예 안 부른다(무거운 짐을 괜히 싣지 않게).
+//   ⛔ 3초 안에 못 받으면 빈 값 — 워커는 토큰이 없으면 옛 방식으로 받는다(`AUTH_STRICT` 전까지).
+//   ⭐ 만료(1시간)되면 SDK 가 스스로 새로 받는다.
+export async function 내토큰() {
+  if (!로그인해뒀나()) return ''
+  try {
+    const 받기 = (async () => {
+      const { auth } = await 붙기()
+      if (auth.authStateReady) await auth.authStateReady()
+      return auth.currentUser ? await auth.currentUser.getIdToken() : ''
+    })()
+    return await Promise.race([받기, new Promise((r) => setTimeout(() => r(''), 3000))]) || ''
+  } catch { return '' }
+}
+
 // 로그인 — ⭐팝업. TWA 안에서 «된다»는 걸 2026-08-21 창업자 폰으로 확인했다.
 //   ⛔ `signInWithRedirect` 는 우리 환경(GitHub Pages)에서 깨진다 — 서드파티 쿠키를 쓴다.
 //   🍎 [2026-09-08 큰 틀 4] 앱 안(Capacitor)에선 팝업이 «확실히» 죽는다(WKWebView · 구글 원문) →
