@@ -131,6 +131,7 @@ export const ING_LINKS = {
   '우렁살': 'https://link.coupang.com/a/hsQ8DuOSuy', // ⛇묶음: 우렁살 / 우렁
   '우렁': 'https://link.coupang.com/a/hsQ8DuOSuy', // ⛇묶음: 우렁살 / 우렁
   '진미채': 'https://link.coupang.com/a/hsRcvb5a7o',
+  '김치 크게': 'https://link.coupang.com/a/gYWFeBBQQu', // ⛇묶음: 묵은지 / 신김치 · 창업자 2026-09-30 「묵은지링크있으면 거기로 이어줘」(대패삼겹살 김치 솥밥 10/5) · ⛔「김치」 통째로 잇지 않는다(다른 편까지 번진다)
   '건고추': 'https://link.coupang.com/a/gZhybNEQI8',
   // 🐟 [창업자 2026-09-13] "참치액은 모스스토리 참치액" — 25편이 쓰는 재료인데 링크가 없었다.
   //    ⚠️ 네이버 브랜드스토어라 «쿠팡 파트너스가 아니다 = 수수료 0원». 창업자가 실제로 쓰는 제품이라 넣는다.
