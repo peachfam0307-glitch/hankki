@@ -11,6 +11,8 @@ import { extname, join } from 'node:path'
 
 const ROOT = new URL('..', import.meta.url).pathname
 const DIST = join(ROOT, 'dist')
+// 🍎 OLD_DIST = 옛 판(예: 아이폰 1.1.1 에 구운 v14.24)을 띄운 서버 — 「새 백업을 옛 앱이 받으면」을 잰다(⑧)
+const OLD_DIST = process.env.OLD_DIST
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2' }
 const srv = createServer((q, s) => {
   let p = decodeURIComponent(q.url.split('?')[0]).replace(/^\/hankki/, ''); if (p === '/' || p === '') p = '/index.html'
@@ -110,6 +112,33 @@ await C.p.waitForTimeout(900)
 const C판 = await 판(C.p)
 재('⑥ 옛(통짜) 백업도 그대로 되나', C판.recipes.length === A판.recipes.length, `${C판.recipes.length}편`)
 await C.ctx.close()
+
+// ── ⑧ 옛 앱(OLD_DIST)이 새 백업을 받으면 — 바로 / 다시 켠 뒤 편 수
+if (OLD_DIST) {
+  const 옛srv = createServer((q, s) => {
+    let p = decodeURIComponent(q.url.split('?')[0]).replace(/^\/hankki/, ''); if (p === '/' || p === '') p = '/index.html'
+    let body, type = MIME[extname(p)] || 'application/octet-stream'
+    try { body = readFileSync(join(OLD_DIST, p)) } catch { body = readFileSync(join(OLD_DIST, 'index.html')); type = 'text/html' }
+    s.writeHead(200, { 'content-type': type }); s.end(body)
+  })
+  await new Promise((r) => 옛srv.listen(4393, r))
+  const ctx = await b.newContext({ viewport: { width: 390, height: 860 } })
+  const p = await ctx.newPage()
+  await p.addInitScript(SEED_COACH_SEEN)
+  await p.addInitScript(() => { localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1') })
+  await p.goto('http://127.0.0.1:4393/hankki/', { waitUntil: 'networkidle' }); await p.waitForTimeout(1200)
+  await 백업시트(p)
+  await p.getByRole('button', { name: '코드 붙여넣기로 불러오기' }).click(); await p.waitForTimeout(500)
+  await p.locator('textarea').first().fill(코드)
+  await p.getByRole('button', { name: '불러오기', exact: true }).last().click(); await p.waitForTimeout(600)
+  const 옛확인 = await p.locator('text=/레시피 \\d+개가 담긴 백업/').first().textContent().catch(() => '')
+  await p.getByRole('button', { name: '불러오기', exact: true }).last().click(); await p.waitForTimeout(900)
+  const 바로 = (await 판(p)).recipes.length
+  const p2 = await ctx.newPage(); await p2.goto('http://127.0.0.1:4393/hankki/', { waitUntil: 'networkidle' }); await p2.waitForTimeout(1200)
+  const 다시 = (await 판(p2)).recipes.length
+  console.log(`   🍎 옛 앱: 확인 창 「${(옛확인 || '').split('\\n')[0]}」 · 불러온 직후 ${바로}편 · 다시 켠 뒤 ${다시}편 (원래 ${A판.recipes.length}편)`)
+  await ctx.close(); 옛srv.close()
+}
 
 // ── ⑦ 클라우드는 안 건드렸나 (정적)
 const src = readFileSync(join(ROOT, 'src/screens/ProfileScreen.jsx'), 'utf8')
