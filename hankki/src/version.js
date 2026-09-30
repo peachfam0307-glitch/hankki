@@ -49,5 +49,5 @@ export const INSTAGRAM_DM_URL = `https://ig.me/m/${INSTAGRAM_ID}`
 //   ⏳ 며칠 뜨나 = INSTA_NEW_DAYS. 그 뒤엔 저절로 사라진다 — ⛔늘 켜져 있으면 「새것」을 못 뜻한다
 //      (한끼 소식 「새로」가 unread 를 같이 보는 것과 같은 까닭 · HomeScreen.jsx:572).
 //   👆 ＋ **한 번 누르면 그 사람한테는 사라진다**(본 사람에게 계속 새것이라 하지 않는다).
-export const INSTA_NEW_AT = '2026-09-30'   // 창업자 2026-09-30 가을 무료 캐러셀 올림(「올렸는데」)
+export const INSTA_NEW_AT = '2026-10-01'   // 창업자 2026-09-30 「오늘 올렸고 10월1일에 홈 인스타에 새로뜨면돼」(가을 무료 캐러셀 · 10/1~10/5)
 export const INSTA_NEW_DAYS = 5
