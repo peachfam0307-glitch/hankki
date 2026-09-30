@@ -118,6 +118,13 @@ export const ING_LINKS = {
   '와사비': 'https://link.coupang.com/a/gZho03X3Ke',
   '갈아 둔 깨': 'https://link.coupang.com/a/gYVL6ohhKe', // ⛇묶음: 통깨 / 깨소금 / 깨 / 갈아 둔 깨
   '갈아만든배': 'https://link.coupang.com/a/gZheSMmxgW', // ⛇묶음: 배즙 / 갈아만든배
+  '배 음료': 'https://link.coupang.com/a/gZheSMmxgW', // ⛇묶음: 배즙 / 갈아만든배 · 창업자 2026-09-30 「갈아만든배도」 (어남선생 깍두기 10/7)
+  // 🛒 [창업자 2026-09-30] 「레시피링크는 우유, 견과류, 백간장. 참치 링크 다 있을거야」 — 주부의 장바구니 제품 링크를 레시피 재료에도 잇는다
+  '우유': 'https://link.coupang.com/a/gRZhYWJypw', // = 장바구니 「소화가 잘되는 우유」
+  '견과류': 'https://link.coupang.com/a/hmfFhlhYwm', // = 장바구니 「하루견과블랙」
+  '백간장': 'https://link.coupang.com/a/gRY0NsfeOO', // = 장바구니 「붉은대게 백간장」
+  '대게백간장': 'https://link.coupang.com/a/gRY0NsfeOO', // = 장바구니 「붉은대게 백간장」
+  '참치캔': 'https://link.coupang.com/a/gR30YOssFg', // = 장바구니 「리오마레」(matches 참치캔·참치)
   '건고추': 'https://link.coupang.com/a/gZhybNEQI8',
   // 🐟 [창업자 2026-09-13] "참치액은 모스스토리 참치액" — 25편이 쓰는 재료인데 링크가 없었다.
   //    ⚠️ 네이버 브랜드스토어라 «쿠팡 파트너스가 아니다 = 수수료 0원». 창업자가 실제로 쓰는 제품이라 넣는다.
