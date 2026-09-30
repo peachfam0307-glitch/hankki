@@ -18,7 +18,8 @@ await new Promise((r) => srv.listen(4394, r))
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const { INSTA_NEW_AT, INSTA_NEW_DAYS } = await import('../src/version.js')
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
-const 날더하기 = (d, n) => new Date(Date.parse(d + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10)
+const { todayKST } = await import('../src/today.js')
+const 날더하기 = (d, n) => todayKST(new Date(Date.parse(d + 'T00:00:00Z') + n * 86400000))   // ⛔ toISOString 직접 금지(check-kst) — 오늘 만드는 곳은 today.js 하나
 const 결과 = []
 const 보기 = async (날, 떠야) => {
   const ctx = await b.newContext({ viewport: { width: 390, height: 860 } })
