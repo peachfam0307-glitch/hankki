@@ -312,8 +312,62 @@ export function 요일어긋남(from = todayKST()) {
     }))
 }
 
+// ── 📆📆 [절대원칙 · 창업자 2026-09-29] «정기적으로 저절로 열리는 것» 전부를 달력에 올린다 ──────────
+//    📮 창업자 = *"우리가 정기적으로 나가는 모든 기능은 3일전에 (레꾸자랑 할로윈등 올라가잖아. 그것도 3일전에 다 끝나야해)
+//       다른 것들 기능 뭐있나 찾아보고 다 코드 넣어줘"*
+//    🔎 2026-09-29 전수 = 날짜로 열리는 곳 11곳 중 gates() 가 본 건 5곳뿐이었다. 빠진 여섯 ↓
+//       ① 명절 홈 꾸미기(seasonDecor 명절창) ② 꾸미기 서랍 «열쇠까지»(할로윈 접시) ③ 이달의 레꾸(monthlyPicks ROUNDS)
+//       ④ 특집 줄(specials) ⑤ 유료팩 판매창(paidPacks SELL_WINDOW) ⑥ «닫히는 날»(until·to) — 닫힘도 유저가 본다
+const 한줄들 = (p) => read(p).split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+function seasonHome() {
+  const out = []
+  for (const l of 한줄들('src/data/seasonDecor.js')) {
+    const f = l.match(/from:\s*'(\d{4}-\d{2}-\d{2})'/); const t = l.match(/to:\s*'(\d{4}-\d{2}-\d{2})'/); const lb = l.match(/label:\s*'([^']*)'/)
+    if (!f || !lb) continue
+    out.push({ date: f[1], where: '🏠 명절 홈 꾸미기(배경·탭)', what: `${lb[1]} 열림`, keys: [], kind: 'season' })
+    if (t) out.push({ date: t[1], where: '🏠 명절 홈 꾸미기(배경·탭)', what: `${lb[1]} 닫힘(이날까지)`, keys: [], kind: 'close' })
+  }
+  return out
+}
+function drawerKeys() {
+  const out = []
+  for (const l of 한줄들('src/components/Stickers.jsx')) {
+    const k = l.match(/열쇠까지:\s*'(\d{4}-\d{2}-\d{2})'/); if (!k) continue
+    const lb = l.match(/label:\s*'([^']*)'/)
+    out.push({ date: k[1], where: '🎨 꾸미기 서랍 · 열쇠 풀림(모두에게)', what: lb?.[1] ?? '?', keys: [], kind: 'drawerkey' })
+  }
+  return out
+}
+function 덩이날짜(p, where, kind) {   // from·until 이 «여러 줄 덩이»에 있는 파일(monthlyPicks·specials)
+  const s = read(p); const out = []
+  for (const m of s.matchAll(/\{[^{}]*?from:\s*'(\d{4}-\d{2}-\d{2})'[^{}]*?\}/g)) {
+    const b = m[0]; const lb = b.match(/label:\s*'([^']*)'/)?.[1] ?? '?'; const u = b.match(/until:\s*'(\d{4}-\d{2}-\d{2})'/)?.[1]
+    out.push({ date: m[1], where, what: `${lb} 열림`, keys: [], kind })
+    if (u) out.push({ date: u, where, what: `${lb} 닫힘(이날까지)`, keys: [], kind: 'close' })
+  }
+  return out
+}
+function packs() {
+  const s = read('src/data/paidPacks.js'); const w = s.match(/SELL_WINDOW\s*=\s*\{([^}]*)\}/); if (!w) return []
+  const y = todayKST().slice(0, 4); const out = []
+  for (const m of w[1].matchAll(/(\w+):\s*\['(\d{2}-\d{2})',\s*'(\d{2}-\d{2})'\]/g)) {
+    for (const yy of [y, String(+y + 1)]) out.push({ date: `${yy}-${m[2]}`, where: '💎 유료팩 판매창', what: `${m[1]} 팩 광고 열림`, keys: [], kind: 'pack' })
+  }
+  return out
+}
 export const gates = () =>
-  [...drawer(), ...cards(), ...promises(), ...recipes(), ...cart()].sort((a, b) => a.date.localeCompare(b.date))
+  [...drawer(), ...cards(), ...promises(), ...recipes(), ...cart(),
+   ...seasonHome(), ...drawerKeys(),
+   ...덩이날짜('src/data/monthlyPicks.js', '🏆 이달의 레꾸(레꾸자랑)', 'event'),
+   ...덩이날짜('src/data/specials.js', '🌕 홈 특집 줄', 'special'),
+   ...packs()].sort((a, b) => a.date.localeCompare(b.date))
+
+// 📒 [절대원칙 · 창업자 2026-09-29] 레시피·장바구니 «밖»의 것은 이 장부에 «창업자 검수»가 적혀야 3일 관문을 넘는다.
+//    열쇠 = `${where}|${what}|${date}` · 값 = { 확인: '창업자', 날: 'YYYY-MM-DD', 메모 }
+//    ⛔ 창업자가 실물을 보고 OK 한 것만 적는다 — 내가 채우지 않는다.
+export const 검수장부경로 = join(APP, 'docs/검수장부.json')
+export const 장부열쇠 = (g) => `${g.where}|${g.what}|${g.date}`
+export function 검수장부() { try { return JSON.parse(readFileSync(검수장부경로, 'utf8')) } catch { return {} } }
 export const nextGate = (from = todayKST()) => {
   const up = gates().filter((g) => g.date >= from)
   return up.length ? up.filter((g) => g.date === up[0].date) : []
@@ -336,6 +390,15 @@ if (isMain) {
 //
 // ⭐ 그래서 `/잘자` 가 이걸 부르고, **검수 안 된 레시피가 내일 열리면 exit 1 로 죽는다.**
 //    ＝ 하루를 «닫을 수 없다». 규칙으로 부탁하던 것이 장치가 된다.
+// 📒 `--검수 "<열쇠>" [메모]` = 창업자가 실물을 보고 OK 한 것을 장부에 적는다(창업자 말이 있을 때만 부른다)
+if (mode === '--검수') {
+  const 장부 = 검수장부()
+  if (!gates().some((x) => 장부열쇠(x) === arg)) { console.error(`⛔ 그런 열쇠가 달력에 없다: ${arg}`); process.exit(1) }
+  장부[arg] = { 확인: '창업자', 날: todayKST(), 메모: process.argv[4] || '' }
+  writeFileSync(검수장부경로, JSON.stringify(장부, null, 1) + '\n')
+  console.log(`✅ 장부에 적었다 — ${arg}`)
+  process.exit(0)
+}
 if (mode === '--tomorrow') {
   const 내일 = tomorrowKST()
   // 📅 [창업자 2026-09-26] 3일 전 검수 — 아이폰 심사 여유. 사흘 안에 열리는 «검수 안 받은 레시피»가 있으면 막는다.
@@ -357,8 +420,34 @@ if (mode === '--tomorrow') {
     console.log(`   👉 창업자 그림을 받아 붙이거나(8/12 컷 먼저 찾기) 날짜를 옮긴다.`)
     process.exit(1)
   }
+  // 🔗 [절대원칙 · 창업자 2026-09-29] 3일 전 관문에 «재료 링크»도 — 사흘 안에 열리는 레시피에 링크 없는 재료가 있으면 막는다.
+  //    🌲 왜 = 9/30 편 재료 링크 9개를 «9/29 저녁»에야 받았다 → 웹은 됐지만 아이폰은 심사라 못 따라간다.
+  //       📮 창업자 = *"이것도 어제 했었어야해 그래야 내일 아이폰에 나가지.. 내가 3일전이라고 얘기하지 않았어?"*
+  //    ⭐ 판정은 release-prep.mjs 한 곳(앱과 같은 함수) — 여기서 다시 세지 않는다.
+  for (let n = 1; n <= 3; n++) {
+    const 날 = daysAheadKST(n)
+    let 판 = ''
+    try { 판 = execFileSync(process.execPath, [join(APP, 'scripts/release-prep.mjs'), '--on', 날], { encoding: 'utf8' }) } catch (e) { 판 = String(e.stdout || '') }
+    const m = 판.match(/링크를 만들어야 할 재료 = (\d+)개\s*(?:— (.*))?/)
+    if (m && +m[1] > 0) {
+      console.log(`⛔⛔ 3일 안(${날})에 열리는 레시피에 «쿠팡 링크 없는 재료» ${m[1]}개 — ${m[2] || ''}`)
+      console.log(`   👉 창업자에게 링크를 받거나(한 번에 목록으로) 안 사는 재료(안파는것)로 뺀다 · 아이폰 반영 때문에 3일 전이 마감(창업자 2026-09-29)`)
+      process.exit(1)
+    }
+  }
+  // 📒 [절대원칙 · 창업자 2026-09-29] 레시피·장바구니 «밖»의 것(꾸미기 서랍·레꾸자랑 카드·명절 홈·열쇠 풀림·이달의 레꾸·특집·유료팩)도
+  //    사흘 안에 열리면 «검수장부»에 창업자 확인이 있어야 한다. 없으면 막는다.
+  const 장부 = 검수장부()
+  const 장부밖 = gates().filter((x) => x.date >= 내일 && x.date <= 사흘뒤 && !['recipe', 'sns', 'cart', 'close'].includes(x.kind) && !장부[장부열쇠(x)])
+  if (장부밖.length) {
+    console.log(`⛔⛔ 3일 안(~${사흘뒤})에 열리는데 «창업자 검수»가 장부에 없다 — 아이폰 반영 마감(창업자 2026-09-29)`)
+    장부밖.forEach((x) => console.log(`   · ${x.date} ${x.where} — ${x.what}`))
+    console.log(`   👉 창업자에게 실물(화면)을 보여주고 OK 받으면 docs/검수장부.json 에 적는다: node scripts/release-calendar.mjs --검수 "<열쇠>"`)
+    console.log(`      열쇠: ${장부밖.map(장부열쇠).join('  ||  ')}`)
+    process.exit(1)
+  }
   const g = gates().filter((x) => x.date === 내일)
-  if (!g.length) { console.log(`✅ 내일(${내일}) 저절로 열리는 것 없음 · 3일 안 검수 전 레시피 0`); process.exit(0) }
+  if (!g.length) { console.log(`✅ 내일(${내일}) 저절로 열리는 것 없음 · 3일 안 검수 전 레시피 0 · 3일 안 링크 빈 재료 0 · 3일 안 장부 밖 0`); process.exit(0) }
   console.log(`📅📅 **내일(${내일}) 저절로 열린다** — 절대원칙: «오늘» 검수한다\n`)
   g.forEach((x) => console.log(`   · ${x.where} — ${x.what}${x.todo ? '' : `  (${x.keys.length})`}`))
   const 미검수 = g.filter((x) => x.kind === 'recipe' && /검수 안 받은 것/.test(x.what))

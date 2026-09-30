@@ -1391,8 +1391,21 @@ function reducer(state, action) {
     //   ⭐ 값은 **큰 쪽으로** 고른다 — 옛 백업(도장 없음)을 되살려도 «지금 폰이 이미 한 이사»를 다시 하지 않는다.
     //   📌 규칙 18 ⓙ 의 짝이다 — 「새로 까는 사람」이 아니라 **「되살리는 사람」**을 본 것.
     case 'importAll': {
-      const d = action.data || {}
-      if (!Array.isArray(d.recipes)) return state
+      const d0 = action.data || {}
+      if (!Array.isArray(d0.recipes)) return state
+      // 📉 [2026-09-30] 복사·파일 백업은 «손 안 댄 기본 레시피»를 빼고 번호만 남긴다(`backupData.js` 기본빼기)
+      //   → 여기서 «전체 편»(allBasicRecipes · 여는 날을 미룬 편 포함)에서 찾아 그 자리에서 도로 채운다.
+      //   ⛔ 지운 편(removedSeedIds)·이미 든 편은 안 넣는다. 번호 목록이 없으면(옛 백업·클라우드) 아무 일도 안 한다.
+      const d = (() => {
+        if (!Array.isArray(d0._빠진기본) || !d0._빠진기본.length) return d0
+        const 원본 = new Map(allBasicRecipes.map((r, i) => [r.id, [r, i]]))
+        const 있음 = new Set(d0.recipes.map((r) => r && r.id))
+        const 지운 = new Set(d0.removedSeedIds || [])
+        const 채움 = d0._빠진기본
+          .filter((id) => 원본.has(id) && !있음.has(id) && !지운.has(id))
+          .map((id) => { const [r, i] = 원본.get(id); return { ...r, savedAt: 열린때(r, i) } })
+        return { ...d0, recipes: [...d0.recipes, ...채움] }
+      })()
       return {
         seedV: Math.max(state.seedV || 0, d.seedV || 0, BASICS_VERSION),
         memoCleanV: Math.max(state.memoCleanV || 0, d.memoCleanV || 0),

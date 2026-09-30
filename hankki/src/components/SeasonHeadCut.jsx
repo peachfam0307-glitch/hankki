@@ -33,7 +33,8 @@ export default function SeasonHeadCut({ 탭, 기본, 폭, 높이, 여백, 모션
       style={{
         display: 'block', objectFit: 'contain', width: 'auto', height: 새높이,
         // ⬇ 아래로 5px — 창업자 *"머리가 닿아 다들"*
-        marginTop: 새여백 + 내림, marginBottom: 새여백 - 내림,
+        // 🎃 [창업자 2026-09-29 20:16 「탭에 애들이 말풍선에 아랫부분이 좀 잘렸거든. 위로 살짝씩만 올려줄래」] 핼러윈만 5 → 1px
+        marginTop: 새여백 + (철 === 'hw' ? 1 : 내림), marginBottom: 새여백 - (철 === 'hw' ? 1 : 내림),
         flex: '0 0 auto',
         ...style,
       }}

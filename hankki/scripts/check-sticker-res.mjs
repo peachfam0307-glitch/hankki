@@ -53,7 +53,12 @@ for (const m of src.matchAll(/items:\s*\[([^\]]*)\]/g)) {
 
 const bad = []
 const 축섞임 = []
+// ✅ 창업자가 «실제 크기로 보고» 그대로 쓰기로 한 컷 — ⛔이유 없이 더하지 말 것
+const 창업자OK = {
+  hp_15: '핼러윈 유령(원본 시트 1536px에 21컷이라 130px가 한계) · 창업자 2026-09-29 앱 크기 비교판 보고 「그대로 써 배포해」',
+}
 for (const key of registered) {
+  if (창업자OK[key]) continue
   const f = path.join(PHOTO_DIR, `${key}.png`)
   if (!fs.existsSync(f)) continue                      // SVG 스티커·프레임은 대상 아님
   const { w, h } = pngSize(f)

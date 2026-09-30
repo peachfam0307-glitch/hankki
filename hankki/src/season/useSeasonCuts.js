@@ -24,5 +24,12 @@ export function useSeasonCuts() {
     return () => { 살아있나 = false }
   }, [철])
 
+  // 🎃 [창업자 2026-09-29 「다른 탭들도 보자 (색은 보라로)」] 명절 색은 «앱 전체»에 — 홈만이 아니다.
+  //    ⭐ 떼지 않는다(탭을 옮길 때마다 붙였다 뗐다 하면 깜빡인다) — 철이 끝나면(철=null) 그때 뗀다.
+  useEffect(() => {
+    if (철 === 'hw') document.documentElement.setAttribute('data-season', 철)
+    else document.documentElement.removeAttribute('data-season')
+  }, [철])
+
   return { 철, 컷 }
 }

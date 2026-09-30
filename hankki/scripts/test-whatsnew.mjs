@@ -75,7 +75,9 @@ const mine = [...new Set([...drawerDates, ...cardDates, ...cartDates])].sort()
 //    ✅ 그래서 「레시피 갈래」를 «묶음»으로 둔다 — 앞으로 갈래가 늘어도 여기 한 곳만 고치면 된다.
 //    📌 SNS 레시피도 레시피다 — 안내 목록에 안 나가는 것은 2026-08-17 결정 그대로다.
 const 레시피갈래 = new Set(['recipe', 'sns'])
-const theirs = [...new Set(calendarGates().filter((g) => !g.todo && !레시피갈래.has(g.kind)).map((g) => g.date))].sort()
+// 📆 [2026-09-29] 달력에 «3일 전 관문»용 갈래가 늘었다(명절 홈·열쇠 풀림·이달의 레꾸·특집·유료팩·닫힘) — 소식이 세는 것이 아니라 뺀다
+const 관문만갈래 = new Set(['season', 'drawerkey', 'event', 'special', 'pack', 'close'])
+const theirs = [...new Set(calendarGates().filter((g) => !g.todo && !레시피갈래.has(g.kind) && !관문만갈래.has(g.kind)).map((g) => g.date))].sort()
 if (mine.join() === theirs.join()) ok(`여는 날짜가 달력과 같다 — ${theirs.length}개 (${theirs.join(' · ')})`)
 else fail(`⛔ 안내 ${mine.join(' · ')} ≠ 달력 ${theirs.join(' · ')}`)
 

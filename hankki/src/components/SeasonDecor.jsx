@@ -19,6 +19,7 @@ import { createPortal } from 'react-dom'
 import { 홈장식 } from '../data/seasonDecor.js'
 import { useSeasonCuts } from '../season/useSeasonCuts.js'
 
+const 판높이 = 675   // 놓아보기 판 바탕 캡처의 창 높이(380×675) — 창업자가 놓은 «자»
 export default function SeasonDecor() {
   const { 철, 컷 } = useSeasonCuts()
   const [통, set통] = useState(null)
@@ -27,6 +28,8 @@ export default function SeasonDecor() {
   //    ⛔ `scrollHeight` 를 그대로 쓰면 그 여백만큼 통째로 어긋난다(2026-09-10 실제로 그랬다).
   const 닻 = useRef(null)
   const [닻자리, set닻자리] = useState(null)
+
+  // 🎃 명절 배경 표시(`data-season`)는 useSeasonCuts 가 «앱 전체»에 단다(2026-09-29 「다른 탭도 보라로」).
 
   useEffect(() => {
     if (!철 || !컷) return
@@ -41,7 +44,10 @@ export default function SeasonDecor() {
     //      그 차이(위 여백·아래 여백)를 안 빼면 조각이 통째로 밀린다 — 2026-09-10 실측 **134px** 어긋났다.
     const 재기 = () => {
       const r = el.getBoundingClientRect()
-      set잰것({ 폭: innerWidth, 높이: innerHeight, 글높이: el.scrollHeight, 통위: r.top })
+      // 📐 [2026-09-29 창업자 「위치 다 달라」] 높이 자 = 판 바탕(380×675)의 «675» 로 고정한다(폰).
+      //    ⛔ 전엔 창 높이(innerHeight)를 썼다 → 홈 카드 높이는 폰마다 «같은 px» 인데 자만 늘어나
+      //       844 폰에선 조각이 25% 아래로 밀렸다(창업자가 놓은 자리와 딴판). 패드(폭 700↑)는 제 값(패드)이 있어 그대로 둔다.
+      set잰것({ 폭: innerWidth, 높이: innerWidth >= 700 ? innerHeight : 판높이, 글높이: el.scrollHeight, 통위: r.top })
       if (닻.current) {
         const 위치 = 닻.current.offsetTop
         set닻자리({ 앞: 위치, 뒤: el.scrollHeight - 위치 })
