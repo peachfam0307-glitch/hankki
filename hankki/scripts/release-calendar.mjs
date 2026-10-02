@@ -238,7 +238,8 @@ export function 장바구니그림판(items, 날) {
   const htmlPath = join(낼곳, `장바구니그림-${날}.html`)
   const pngPath = join(낼곳, `장바구니그림-${날}.png`)
   try { mkdirSync(낼곳, { recursive: true }); writeFileSync(htmlPath, html) } catch { return null }
-  const 크롬 = process.env.SMOKE_CHROMIUM || (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : '')
+  // ⛔ 경로를 박지 않는다(이 파일이 스모크·CI 배포 체인에 들어갔다 · check-mistakes) — 판 PNG 는 SMOKE_CHROMIUM 이 있을 때만 찍는다
+  const 크롬 = process.env.SMOKE_CHROMIUM || ''
   try {
     execFileSync(process.execPath, [join(APP, 'scripts/_shot-판-0828.mjs'), htmlPath, pngPath, '520'], { env: { ...process.env, SMOKE_CHROMIUM: 크롬 }, stdio: 'pipe' })
     console.error(`   📸 판 = ${pngPath}  ← 창업자에게 «이 그림»을 보여준다`)

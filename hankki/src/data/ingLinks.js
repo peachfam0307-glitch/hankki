@@ -64,12 +64,12 @@ export const ING_LINKS = {
   '생강청': 'https://link.coupang.com/a/g0iVJL70jQ',   // 🫚 [창업자 2026-09-13] 내일 열리는 「간장 제육볶음」 재료
   '표고버섯': 'https://link.coupang.com/a/gYW5mQxvmC',
   '다진 파': 'https://link.coupang.com/a/gYRLijw0cu', // ⛇묶음: 대파 / 다진 파
-  '감자전분': 'https://link.coupang.com/a/gYWQr9gXIa', // ⛇묶음: 감자전분 / 전분가루
+  '감자전분': 'https://link.coupang.com/a/gYWQr9gXIa', // ⛇묶음: 감자전분 / 전분가루 / 전분물 / 전분
 
   '통후추': 'https://link.coupang.com/a/gYXtDrToZM',
   '토마토소스': 'https://link.coupang.com/a/gYXJohuE2K',
   '통마늘': 'https://link.coupang.com/a/gYWf0VtWnc', // ⛇묶음: 마늘 / 통마늘
-  '전분가루': 'https://link.coupang.com/a/gYWQr9gXIa', // ⛇묶음: 감자전분 / 전분가루
+  '전분가루': 'https://link.coupang.com/a/gYWQr9gXIa', // ⛇묶음: 감자전분 / 전분가루 / 전분물 / 전분
   '가지': 'https://link.coupang.com/a/gYW53RCvwO',
   '레몬즙': 'https://link.coupang.com/a/gYXlG1Kdci',
   '방울토마토': 'https://link.coupang.com/a/gYXnuPqFzM',
@@ -106,7 +106,7 @@ export const ING_LINKS = {
   '부추': 'https://link.coupang.com/a/gZhfNOwn2i',
   '꽈리고추': 'https://link.coupang.com/a/gZgl15nJYq',
   '느타리버섯': 'https://link.coupang.com/a/gZgnN6PuG4',
-  '생크림': 'https://link.coupang.com/a/gZgyrKUbQH',
+  '생크림': 'https://link.coupang.com/a/hwlDQL6X2O',   // 창업자 2026-10-02 새 링크(옛 gZgyrKUbQH 대체)
   '파스타면': 'https://link.coupang.com/a/gZgElvHnVc', // ⛇묶음: 파스타면 / 스파게티 면 / 스파게티면
   '미림': 'https://link.coupang.com/a/gZg7lG8oYS',
   '고추기름': 'https://link.coupang.com/a/gZgN3nzK32',
@@ -204,7 +204,7 @@ export const ING_LINKS = {
   // [창업자 2026-09-25] SNS 새 편 — 「파는 대파」·「기름은 올리브유」·「전분물은 감자·옥수수 전분에 물 섞은 것」 → 같은 링크로 잇는다
   '파': 'https://link.coupang.com/a/gYRLijw0cu', // ⛇묶음: 대파 / 다진 파 / 파
   '기름': 'https://www.costco.co.kr/Foods/Processed-Food/Oils/KS-Siurana-Extra-Virgin-Olive-Oil-1L/p/892188', // ⛇묶음: 올리브유 / 식용유 / 기름
-  '전분물': 'https://link.coupang.com/a/gYWQr9gXIa', // ⛇묶음: 감자전분 / 전분가루 / 전분물
+  '전분물': 'https://link.coupang.com/a/gYWQr9gXIa', // ⛇묶음: 감자전분 / 전분가루 / 전분물 / 전분
   '당면': 'https://link.coupang.com/a/hod4irlEIv', // [창업자 2026-09-27] 남은 나물 잡채(9/28)
   '닭날개': 'https://link.coupang.com/a/hrfwOoUYCa', // [창업자 2026-09-29] 마늘 간장 닭날개조림 — 레시피는 날개 그대로
   '닭봉': 'https://link.coupang.com/a/hrfmkfSUHA',   // [창업자 2026-09-29] 날개 대신 찾아 준 것 — 닭봉이 나오는 편에 쓰인다
@@ -215,6 +215,18 @@ export const ING_LINKS = {
   '그라나파다노 치즈': 'https://link.coupang.com/a/hrfHP6DKiO',
   '슈레드 치즈': 'https://link.coupang.com/a/gZj6blHyHB', // ⛇묶음: 모차렐라 치즈 / 모짜렐라 치즈 / 슈레드 치즈
   '생강즙': 'https://link.coupang.com/a/gYWRWEezHE', // ⛇묶음: 생강 / 다진 생강 / 생강즙
+  // [창업자 2026-10-02] 10/7·10/12·10/14·10/16 편 재료 링크 (3일 전 관문 · 아이폰 반영)
+  '미나리': 'https://link.coupang.com/a/hwk88hFYjs',
+  '찜용 콩나물': 'https://link.coupang.com/a/hwla3rDISi', // ⛇묶음: 콩나물 / 찜용 콩나물
+  '콩나물': 'https://link.coupang.com/a/hwla3rDISi', // ⛇묶음: 콩나물 / 찜용 콩나물
+  '새우젓': 'https://link.coupang.com/a/hwlhgp3WFg', // ⛇묶음: 새우젓 / 새우젓 국물
+  '새우젓 국물': 'https://link.coupang.com/a/hwlhgp3WFg', // ⛇묶음: 새우젓 / 새우젓 국물
+  '잔멸치': 'https://link.coupang.com/a/hwlmTTJ5gq',
+  '단호박': 'https://link.coupang.com/a/hwlpjs2bAG', // ⛇묶음: 단호박 / 잘게 썬 단호박
+  '잘게 썬 단호박': 'https://link.coupang.com/a/hwlpjs2bAG', // ⛇묶음: 단호박 / 잘게 썬 단호박
+  '파슬리가루': 'https://link.coupang.com/a/hwlxhk5jWe',
+  '전분': 'https://link.coupang.com/a/gYWQr9gXIa', // 창업자 2026-10-02 「감자전분」 ⛇묶음: 감자전분 / 전분가루 / 전분물 / 전분
+  '재래된장': 'https://link.coupang.com/a/gRYZjLwCQK', // 창업자 2026-10-02 「맥된장」(장바구니 맥된장과 같은 링크)
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
