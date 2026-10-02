@@ -23,8 +23,6 @@ esac
 OUT=$(node "$CLAUDE_PROJECT_DIR/hankki/scripts/release-calendar.mjs" --bake 2>&1)
 RC=$?
 if [ "$RC" -ne 0 ]; then
-  TODAY=$(TZ=Asia/Seoul date +%F)
-  if grep -q "^${TODAY}	" /tmp/hankki-bake-ack 2>/dev/null; then exit 0; fi
   printf '%s\n' "$OUT" >&2
   printf '\n🍎 ⛔ 아이폰 굽기 막음 — 위 목록을 창업자에게 «한 번에» 보여주고 받은 뒤 굽는다. (창업자 2026-10-02 「올리기전에」)\n' >&2
   exit 2
