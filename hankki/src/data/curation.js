@@ -409,7 +409,7 @@ const CURATION_ALL = [
     cat: '떡', group: '빵·떡', emoji: '🍡', icon: 'cu_tteok',
     items: [
       { name: '인절미', icon: 'cu_injeolmi', ingredients: '찹쌀백미63.3%(국산/유기), 쑥21.1%(국산/유기), 백태11.9%(무농약/국산), 유기농설탕2.9%, 볶은소금(국산)', checked: '2026-10-02', ingWho: '창업자', benefit: '오후에 가면 구경하기 힘든 한살림 떡들. 저는 그중에 인절미를 제일 좋아해요. 다른 떡들도 맛있으니 보이면 담아보세요', q: '한살림 인절미', mall: 'hansalim', from: '2026-10-17' },
-      { name: '우리쌀 떡국떡', icon: 'cu_tteok', brand: '칠갑농산', matches: ['떡국떡'], benefit: '떡이 쫄깃하고, 일 인분씩 포장되어 있어 쓰기에 편해요. 냉동실에 늘 쟁여놓는 떡국떡', q: '칠갑농산 우리쌀 떡국떡', mall: 'kurly', from: '2026-10-24' },
+      { name: '우리쌀 떡국떡', icon: 'cu_tteok', brand: '칠갑농산', ingredients: '쌀 99%(국산), 정제소금, 주정', allergen: '난류(계란)·우유·대두·밀을 사용한 제품과 같은 제조시설에서 제조', nutrition: '총 내용량 800g(160g×5개입) 1,864kcal · 1인분(160g)당 372kcal · 나트륨 508mg · 탄수화물 84g · 당류 0g · 지방 1.2g · 트랜스지방 0g · 포화지방 0.4g · 콜레스테롤 0mg · 단백질 6g', checked: '2026-10-02', ingWho: '창업자', matches: ['떡국떡'], benefit: '떡이 쫄깃하고, 일 인분씩 포장되어 있어 쓰기에 편해요. 냉동실에 늘 쟁여놓는 떡국떡', q: '칠갑농산 우리쌀 떡국떡', mall: 'kurly', from: '2026-10-24' },
       { name: '호박인절미', icon: 'cu_hobak_injeolmi', brand: '창억떡', benefit: '호박향이 많이 느껴지지 않고 달달해서 아침대용, 간식으로 좋아요', q: '창억 호박인절미', mall: 'kurly', from: '2026-10-31' },
       { name: '삼색꿀떡 (냉동)', icon: 'cu_kkultteok', brand: '더바른', benefit: '소포장 되어 있어 편리하고, 쫄깃하고 맛있어요. 아이들 간식으로 추천합니다', q: '더바른 삼색꿀떡 냉동', mall: 'coupang', from: '2026-11-14' },
       { name: '밤·옥수수설기 / 증편', icon: 'cu_bamseolgi', brand: '홍블랑푸드', benefit: '홍블랑푸드 설기 참 맛있어요. 나오는 시기가 있는데, 저는 밤설기 정말 좋아하고 아이는 옥수수설기 좋아해요. 증편도 맛있는데 꼭 버터에 구워서 드세요. 강추합니다', q: '홍블랑푸드 밤설기 증편', url: 'https://hongblancfood.com/', from: '2026-11-07' },
