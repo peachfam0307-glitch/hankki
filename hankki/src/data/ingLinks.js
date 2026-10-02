@@ -217,6 +217,8 @@ export const ING_LINKS = {
   '생강즙': 'https://link.coupang.com/a/gYWRWEezHE', // ⛇묶음: 생강 / 다진 생강 / 생강즙
   // [창업자 2026-10-02] 10/7·10/12·10/14·10/16 편 재료 링크 (3일 전 관문 · 아이폰 반영)
   '미나리': 'https://link.coupang.com/a/hwk88hFYjs',
+  '겨자': 'https://link.coupang.com/a/hwl0H6be5Q', // ⛇묶음: 겨자 / 연겨자
+  '연겨자': 'https://link.coupang.com/a/hwl0H6be5Q', // ⛇묶음: 겨자 / 연겨자
   '찜용 콩나물': 'https://link.coupang.com/a/hwla3rDISi', // ⛇묶음: 콩나물 / 찜용 콩나물
   '콩나물': 'https://link.coupang.com/a/hwla3rDISi', // ⛇묶음: 콩나물 / 찜용 콩나물
   '새우젓': 'https://link.coupang.com/a/hwlhgp3WFg', // ⛇묶음: 새우젓 / 새우젓 국물
