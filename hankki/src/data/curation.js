@@ -424,7 +424,7 @@ const CURATION_ALL = [
       { name: '밤밤식빵', brand: '리치몬드', benefit: '밤빵 좋아하는데 밤이 너무 달면 또 별로더라구요. 리치몬드는 적당하고, 빵도 부드럽고 맛있어요', q: '리치몬드 밤밤식빵', mall: 'kurly', from: '2026-12-05' },
       { name: '까만쫀득크런치', brand: '바비브레드', benefit: '커피에는 빵이 없으면 또 서운해서 많이 담았던 제품이에요. 맛있는 빵 여러 종류 사서 소분해놓고 커피랑 즐기는 재미에 오늘도 살이 찝니다', q: '바비브레드 까만쫀득크런치', mall: 'kurly', from: '2026-12-12' },
       { 뺌: '창업자 2026-10-02 자연드림 전부 뺌(매장에서 사라지는 중)', name: '담백한 우리밀 또띠아', icon: 'cu_tortilla', matches: ['또띠아'], benefit: '첨가물이 없는 또띠아 찾을 때 이용해요. 소분해뒀다가 필요할 때 쓰기 좋아요', q: '또띠아', mall: 'icoop', from: '2026-10-31' },
-      { name: '우리밀 또띠아', icon: 'cu_tortilla', brand: '남향푸드', ingredients: '밀가루(밀: 국산) 61.37%, 정제수, 현미유(태국산), 태움·용융소금(국산), 효모', allergen: '밀 함유', nutrition: '총 내용량 400g(40g×10개입) 1,185kcal · 나트륨 3,400mg · 탄수화물 206g · 당류 0g · 지방 22g · 포화지방 5g · 트랜스지방 0g · 콜레스테롤 0mg · 단백질 41g', checked: '2026-09-17', ingWho: '창업자', matches: ['또띠아'], benefit: '첨가물이 적어서 괜찮아요. 저는 자연드림 또띠아를 즐겨 쓰는데, 이것도 첨가물이 적어서 좋았어요', q: '남향푸드 우리밀 또띠아', mall: 'coupang', url: 'https://link.coupang.com/a/g3fFJOly0a' },
+      { name: '우리밀 또띠아', icon: 'cu_tortilla', brand: '남향푸드', ingredients: '밀가루(밀: 국산) 61.37%, 정제수, 현미유(태국산), 태움·용융소금(국산), 효모', allergen: '밀 함유', nutrition: '총 내용량 400g(40g×10개입) 1,185kcal · 나트륨 3,400mg · 탄수화물 206g · 당류 0g · 지방 22g · 포화지방 5g · 트랜스지방 0g · 콜레스테롤 0mg · 단백질 41g', checked: '2026-09-17', ingWho: '창업자', matches: ['또띠아'], benefit: '자연드림 또띠아 부드럽고 첨가물 적어서 자주 구매했었는데 쿠팡 남향푸드에서 납품하는거더라구요. 냉동으로 오니까 보관시 낱장으로 떼어서 보관하세요.', q: '남향푸드 우리밀 또띠아', mall: 'coupang', url: 'https://link.coupang.com/a/g3fFJOly0a' },
     ],
   },
   {

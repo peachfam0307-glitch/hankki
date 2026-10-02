@@ -23,7 +23,7 @@ const 카드 = items.map((it, i) => {
   <div class="row"><img src="${그림(it.icon)}" class="ic"><img src="${그림(it.icon)}" class="ic42"><div><b>${esc(it.brand ? it.brand + ' ' : '')}${esc(it.name)}</b><div class="sub">${esc(it.mall || '')} · 그림 ${esc(it.icon)}</div></div></div>
   <div class="k">추천 글</div><div class="v">${esc(it.benefit)}</div>
   <div class="k">원재료</div><div class="v">${esc(원재료) || '—'}${알레르기 ? `<br><span class="sub">알레르기 ${esc(알레르기)}</span>` : ''}</div>
-  <div class="k">사러가기</div><div class="v">${it.url ? `<a href="${esc(it.url)}" target="_blank">${esc(it.url.slice(0, 60))}…</a>` : '—'}</div>
+  <div class="k">사러가기</div><div class="v">${it.url ? `<a href="${esc(it.url)}" target="_blank">${esc(it.url)}</a>` : '—'}</div>
   ${빠짐.length ? `<div class="warn">⚠️ ${빠짐.join(' · ')}</div>` : ''}
   <div class="pick" data-id="${id}" data-name="${esc(it.from + ' ' + it.name)}"><button data-v="좋아">좋아</button><button data-v="고칠것">고칠 것</button><button data-v="모르겠다">모르겠다</button></div>
   <textarea data-memo="${id}" placeholder="고칠 것 메모"></textarea></div>`
