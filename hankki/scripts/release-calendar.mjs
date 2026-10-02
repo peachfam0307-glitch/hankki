@@ -400,53 +400,22 @@ if (mode === '--검수') {
   console.log(`✅ 장부에 적었다 — ${arg}`)
   process.exit(0)
 }
-// 🍎🍎 **`--bake` = 아이폰 굽기 «전» 관문** (창업자 2026-10-02 「ㅇㅇ 관문 만들어」)
-//    📮 뿌리 = *"아니 아까 달라고 하지 올리기전에."* — 62판을 굽고 나서야 10/10 원재료 캡처 2개·재료 링크 8개를 청했다.
-//       아이폰은 구운 판이 심사·승인까지 며칠을 산다 → 그 사이 열리는 것이 빈 채로 나간다.
-//    ⭐ 잣대 = 앞으로 «14일» 안에 열리는 것 전부(⛔3일 관문은 오늘 걸 못 잡았다 — 10/10 은 8일 뒤였다).
-//    ⭐ 판정은 위 함수·release-prep 그대로 부른다(⛔베끼지 않는다). 전부 모아 «한 번에» 찍는다(규칙 31 · 질문 한 번).
-//    🚪 푸는 길 = 창업자에게 이 목록을 보여주고 「그대로 구워」를 받으면 `--bake-ok "<창업자 말>"` (오늘 하루만 유효).
-const 굽기허가 = '/tmp/hankki-bake-ack'
+// 🍎🍎 **`--bake` = 아이폰 굽기 «전» — «이 아래 3일 관문을 그대로» 14일로 돌린다** (창업자 2026-10-02)
+//    📮 뿌리 = *"아니 아까 달라고 하지 올리기전에."* ＋ *"장바구니 레꾸자랑 꾸미기 레시피 다 적용되도록 왜 또 다시만드는거야?"*
+//    ⛔ 처음엔 판정을 옆에 한 벌 «새로» 썼다 → 두 벌은 반드시 갈린다. 걷어내고 아래 관문 하나를 범위만 바꿔 부른다.
+//    🌲 구멍 = 3일 관문이 `/잘자` 에서만 불렸다(스모크·굽기엔 안 붙음) ＋ 아이폰은 구운 판이 며칠 살아 3일로는 짧다(10/10 은 8일 뒤였다).
+//    🚪 막히면 = 창업자에게 목록을 보여주고 「그대로 구워」를 받으면 `--bake-ok "<창업자 말>"` (오늘 하루 · bake-guard 훅이 본다)
 if (mode === '--bake-ok') {
   if (!arg) { console.error('⛔ 창업자 말을 같이 적는다: --bake-ok "<창업자 원문>"'); process.exit(1) }
-  writeFileSync(굽기허가, `${todayKST()}\t${arg}\n`)
+  writeFileSync('/tmp/hankki-bake-ack', `${todayKST()}\t${arg}\n`)
   console.log(`✅ 오늘(${todayKST()}) 굽기 허가 — ${arg}`)
   process.exit(0)
 }
-if (mode === '--bake') {
-  const 끝 = daysAheadKST(14), 오늘 = todayKST()
-  const 빈칸 = []
-  const 안 = (d) => d && d > 오늘 && d <= 끝
-  gates().filter((x) => 안(x.date) && x.kind === 'recipe' && /검수 안 받은 것/.test(x.what)).forEach((x) => 빈칸.push(`📝 검수 전 레시피 · ${x.date} ${x.what}`))
-  const 그림폴더 = join(APP, 'src/assets/curation')
-  const 장바구니 = cartItems().filter((it) => 안(it.from))
-  const 이름 = (it) => `${it.from} ${it.brand ? it.brand + ' ' : ''}${it.name}`
-  장바구니.filter((it) => !it.ownIcon || !existsSync(join(그림폴더, `${it.ownIcon}.png`))).forEach((it) => 빈칸.push(`🖼 장바구니 제 그림 없음 · ${이름(it)}`))
-  원재료없는장바구니(장바구니).forEach((it) => 빈칸.push(`🧾 장바구니 원재료 캡처 · ${이름(it)}`))
-  링크없는장바구니(장바구니).forEach((it) => 빈칸.push(`🔗 장바구니 사러가기 링크 · ${이름(it)}`))
-  for (let n = 1; n <= 14; n++) {
-    const 날 = daysAheadKST(n)
-    let 판 = ''
-    try { 판 = execFileSync(process.execPath, [join(APP, 'scripts/release-prep.mjs'), '--on', 날], { encoding: 'utf8' }) } catch (e) { 판 = String(e.stdout || '') }
-    const m = 판.match(/링크를 만들어야 할 재료 = (\d+)개\s*(?:— (.*))?/)
-    if (m && +m[1] > 0) 빈칸.push(`🔗 레시피 재료 링크 · ${날} ${m[2] || m[1] + '개'}`)
-    if (/아이콘없음/.test(판)) 빈칸.push(`🍽 레시피 음식 아이콘 없음 · ${날}`)
-  }
-  const 장부 = 검수장부()
-  gates().filter((x) => 안(x.date) && !['recipe', 'sns', 'cart', 'close'].includes(x.kind) && !장부[장부열쇠(x)]).forEach((x) => 빈칸.push(`📒 검수장부 없음 · ${x.date} ${x.where} — ${x.what}`))
-  if (!빈칸.length) { console.log(`✅ 굽기 관문 통과 — 14일 안(~${끝}) 빈칸 0`); process.exit(0) }
-  console.log(`⛔⛔ 아이폰 굽기 «전» — 14일 안(~${끝})에 열리는데 빈 것 ${빈칸.length}개. 창업자에게 «한 번에» 청한다:`)
-  빈칸.forEach((s) => console.log(`   · ${s}`))
-  let 허가 = ''
-  try { 허가 = readFileSync(굽기허가, 'utf8') } catch {}
-  if (허가.startsWith(오늘 + '\t')) { console.log(`   ✅ 오늘 창업자 허가 있음 — ${허가.split('\t')[1].trim()}`); process.exit(0) }
-  console.log(`   🚪 받거나 · 창업자가 「그대로 구워」라고 하면: node hankki/scripts/release-calendar.mjs --bake-ok "<창업자 말>"`)
-  process.exit(1)
-}
-if (mode === '--tomorrow') {
+const 범위 = mode === '--bake' ? 14 : 3
+if (mode === '--tomorrow' || mode === '--bake') {
   const 내일 = tomorrowKST()
   // 📅 [창업자 2026-09-26] 3일 전 검수 — 아이폰 심사 여유. 사흘 안에 열리는 «검수 안 받은 레시피»가 있으면 막는다.
-  const 사흘뒤 = daysAheadKST(3)
+  const 사흘뒤 = daysAheadKST(범위)
   const 사흘안 = gates().filter((x) => x.date > 내일 && x.date <= 사흘뒤 && x.kind === 'recipe' && /검수 안 받은 것/.test(x.what))
   if (사흘안.length) {
     console.log(`⛔⛔ 3일 안(~${사흘뒤})에 열리는 레시피가 검수 전이다 — 아이폰 심사 여유가 없다(창업자 2026-09-26)`)
@@ -464,11 +433,18 @@ if (mode === '--tomorrow') {
     console.log(`   👉 창업자 그림을 받아 붙이거나(8/12 컷 먼저 찾기) 날짜를 옮긴다.`)
     process.exit(1)
   }
+  // 🧾 [2026-10-02] 같은 관문에 «원재료 캡처»도 — 10/10 두 개가 빈 채로 62판이 구워졌다(규칙 2026-09-17 은 «말»로만 있었다).
+  const 원재료빔 = 원재료없는장바구니(cartItems().filter((it) => it.from && it.from > todayKST() && it.from <= 사흘뒤))
+  if (원재료빔.length) {
+    console.log(`⛔⛔ ${범위}일 안(~${사흘뒤})에 열리는 장바구니 제품에 «원재료»가 없다 — 창업자에게 캡처를 «한 번에» 청한다(절대원칙 2026-09-17)`)
+    원재료빔.forEach((it) => console.log(`   · ${it.from} ${it.brand ? it.brand + ' ' : ''}${it.name}`))
+    process.exit(1)
+  }
   // 🔗 [절대원칙 · 창업자 2026-09-29] 3일 전 관문에 «재료 링크»도 — 사흘 안에 열리는 레시피에 링크 없는 재료가 있으면 막는다.
   //    🌲 왜 = 9/30 편 재료 링크 9개를 «9/29 저녁»에야 받았다 → 웹은 됐지만 아이폰은 심사라 못 따라간다.
   //       📮 창업자 = *"이것도 어제 했었어야해 그래야 내일 아이폰에 나가지.. 내가 3일전이라고 얘기하지 않았어?"*
   //    ⭐ 판정은 release-prep.mjs 한 곳(앱과 같은 함수) — 여기서 다시 세지 않는다.
-  for (let n = 1; n <= 3; n++) {
+  for (let n = 1; n <= 범위; n++) {
     const 날 = daysAheadKST(n)
     let 판 = ''
     try { 판 = execFileSync(process.execPath, [join(APP, 'scripts/release-prep.mjs'), '--on', 날], { encoding: 'utf8' }) } catch (e) { 판 = String(e.stdout || '') }
@@ -484,7 +460,7 @@ if (mode === '--tomorrow') {
   const 장부 = 검수장부()
   const 장부밖 = gates().filter((x) => x.date >= 내일 && x.date <= 사흘뒤 && !['recipe', 'sns', 'cart', 'close'].includes(x.kind) && !장부[장부열쇠(x)])
   if (장부밖.length) {
-    console.log(`⛔⛔ 3일 안(~${사흘뒤})에 열리는데 «창업자 검수»가 장부에 없다 — 아이폰 반영 마감(창업자 2026-09-29)`)
+    console.log(`⛔⛔ ${범위}일 안(~${사흘뒤})에 열리는데 «창업자 검수»가 장부에 없다 — 아이폰 반영 마감(창업자 2026-09-29)`)
     장부밖.forEach((x) => console.log(`   · ${x.date} ${x.where} — ${x.what}`))
     console.log(`   👉 창업자에게 실물(화면)을 보여주고 OK 받으면 docs/검수장부.json 에 적는다: node scripts/release-calendar.mjs --검수 "<열쇠>"`)
     console.log(`      열쇠: ${장부밖.map(장부열쇠).join('  ||  ')}`)
