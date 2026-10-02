@@ -418,7 +418,8 @@ function 빈칸들(N) {
   const 이름 = (it) => `${it.from} ${it.brand ? it.brand + ' ' : ''}${it.name}`
   const 칸 = []
   // 📝 검수 안 받은 레시피 (창업자 2026-09-26)
-  gates().filter((x) => 안(x.date) && x.kind === 'recipe' && /검수 안 받은 것/.test(x.what)).forEach((x) => 칸.push(`📝 레시피 검수 전 · ${x.date} ${x.what}`))
+  // 📺 [2026-10-02] SNS 만 여는 날은 kind 가 'sns' 다 — 'recipe' 만 보다가 10/16 통단호박(검수 전)을 놓쳤다
+  gates().filter((x) => 안(x.date) && (x.kind === 'recipe' || x.kind === 'sns') && /검수 안 받은 것/.test(x.what)).forEach((x) => 칸.push(`📝 레시피 검수 전 · ${x.date} ${x.what}`))
   // 🖼 장바구니 «제 그림» (창업자 2026-09-26 · 말랭이 피자 그림 사고)
   const 그림폴더 = join(APP, 'src/assets/curation')
   const 장바구니 = cartItems().filter((it) => 안(it.from))
@@ -516,7 +517,7 @@ if (mode === '--on') {
 const 검수대기 = (안 = 30) => {
   const 오늘 = todayKST()
   return gates()
-    .filter((g) => g.kind === 'recipe' && g.date > 오늘 && /검수 안 받은 것/.test(g.what))
+    .filter((g) => (g.kind === 'recipe' || g.kind === 'sns') && g.date > 오늘 && /검수 안 받은 것/.test(g.what))
     .filter((g) => dday(g.date) <= 안)
     .map((g) => ({ ...g, d: dday(g.date) }))
 }
@@ -525,7 +526,7 @@ const 검수대기 = (안 = 30) => {
 //    ⭐ 그 달에 열리는 레시피를 «검수 됐든 안 됐든» 전부 준다 — 판을 한 번에 뽑으라고.
 if (mode === '--month') {
   const 달 = arg || todayKST().slice(0, 7)
-  const 것 = gates().filter((g) => g.kind === 'recipe' && g.date.startsWith(달))
+  const 것 = gates().filter((g) => (g.kind === 'recipe' || g.kind === 'sns') && g.date.startsWith(달))
   if (!것.length) { console.log(`(${달} 에 열리는 레시피가 없다)`); process.exit(0) }
   const 미검수 = 것.filter((g) => /검수 안 받은 것/.test(g.what))
   const n = 것.reduce((s, g) => s + g.keys.length, 0)
