@@ -193,8 +193,9 @@ export function cartItems() {
       // 🖼 갈래 대표 그림 — 제품이 자기 그림을 안 가지면 이걸 «물려받는다»(`ShopScreen.jsx:331` `it.icon || g.icon`)
       catIcon = (line.match(/icon:\s*'([^']*)'/) || [])[1] || ''
     }
-    const name = line.match(/^\s*\{\s*name:\s*'([^']+)'/)
+    const name = line.match(/^\s*\{\s*(?:뺌:\s*'[^']*',\s*)?name:\s*'([^']+)'/)
     if (!name) continue
+    if (/^\s*\{\s*뺌:/.test(line)) continue   // 🚫 [창업자 2026-10-02] 뺀 제품(자연드림)은 열리지 않는다 — 달력·관문에서도 뺀다
     // ⛔ 값에 작은따옴표가 없다는 보장이 없어 큰따옴표 판도 같이 본다(2026-08-29 `benefit` 실측에서 겪었다)
     const f = (k) => (line.match(new RegExp(`${k}:\\s*'([^']*)'`)) || line.match(new RegExp(`${k}:\\s*"([^"]*)"`)) || [])[1] || ''
     out.push({
