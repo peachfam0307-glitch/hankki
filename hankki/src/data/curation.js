@@ -285,14 +285,14 @@ const CURATION_ALL = [
       //    한살림은 「사러가기」를 안 그린다(창업자 2026-08-17) → url 없이 mall 만. 원재료는 창업자 말 «고구마전분100%(국산)» · 영양은 한살림 상품 페이지 캡처.
       { name: '건자른당면', brand: '한살림', icon: 'cu_dangmyeon', matches: ['당면'], benefit: '당면 자를 때 다 튀고 불편했는데 자른당면이 정말 편했어요. 국산 고구마 전분 100%예요', q: '한살림 자른당면', mall: 'hansalim', from: '2026-09-19',
         ingredients: '고구마전분 100%(국산)', nutrition: '1회 제공량 100g당 352kcal · 나트륨 9mg · 탄수화물 88g · 당류 0g · 지방 0g · 트랜스지방 0g · 포화지방 0g · 콜레스테롤 0mg · 단백질 0g (총 내용량 500g · 5회)', checked: '2026-09-17', ingWho: '창업자' },
-      { name: '납작당면', icon: 'cu_dangmyeon', matches: ['납작당면', '당면'], benefit: '애들은 납작한 당면을 좋아하더라구요. 불고기에, 닭볶음탕에 두루 넣어 사용하고 있어요. 자른당면이라 사용이 편리해요. 고구마전분 70%＋감자전분 30%', q: '한살림 납작당면', mall: 'hansalim', from: '2026-10-10' },
+      { name: '납작당면', icon: 'cu_dangmyeon_flat', matches: ['납작당면', '당면'], benefit: '애들은 납작한 당면을 좋아하더라구요. 불고기에, 닭볶음탕에 두루 넣어 사용하고 있어요. 자른당면이라 사용이 편리해요. 고구마전분 70%＋감자전분 30%', q: '한살림 납작당면', mall: 'hansalim', from: '2026-10-10' },
     ],
   },
   {
     cat: '누룽지', group: '면·밥', emoji: '🍚', icon: 'cu_nurungji',
     items: [
       { name: '현미누룽지', brand: '자연다음', ingredients: '현미(국내산) 100%', nutrition: '990g(33g×30개입)', checked: '2026-09-17', ingWho: '창업자', matches: ['누룽지'], benefit: '쌀눈 살아있는 국내산 현미누룽지예요. 개별 소포장이라 눅눅해질 걱정 없이 쓰기 편하고, 얇아서 금방 익어 밥하기 귀찮은 날·아침에 밥 없을 때 구원템이에요', q: '자연다음 현미누룽지', mall: 'coupang', url: 'https://link.coupang.com/a/gRY3f8r1Cm' },
-      { name: '김치볶음밥 포켓누룽지', icon: 'cu_nurungji', brand: '심플잇', benefit: '저희 애 친구들 사이에 한때 유행이었던 김치볶음밥 누룽지. 매콤한데 아이들이 정말 좋아하더라구요. 간단한 간식용으로 추천', q: '심플잇 김치볶음밥 포켓누룽지', mall: 'coupang', from: '2026-10-10', url: 'https://link.coupang.com/a/gR0McSFGRo' },
+      { name: '김치볶음밥 포켓누룽지', icon: 'cu_nurungji_kimchi', brand: '심플잇', benefit: '저희 애 친구들 사이에 한때 유행이었던 김치볶음밥 누룽지. 매콤한데 아이들이 정말 좋아하더라구요. 간단한 간식용으로 추천', q: '심플잇 김치볶음밥 포켓누룽지', mall: 'coupang', from: '2026-10-10', url: 'https://link.coupang.com/a/gR0McSFGRo' },
     ],
   },
   {
@@ -408,7 +408,7 @@ const CURATION_ALL = [
   {
     cat: '떡', group: '빵·떡', emoji: '🍡', icon: 'cu_tteok',
     items: [
-      { name: '쑥인절미', icon: 'cu_injeolmi',   /* 창업자 2026-10-02 「바꾸자 그림뽑아서 줄게」 — 그림 새 컷 대기 */ ingredients: '찹쌀백미63.3%(국산/유기), 쑥21.1%(국산/유기), 백태11.9%(무농약/국산), 유기농설탕2.9%, 볶은소금(국산)', checked: '2026-10-02', ingWho: '창업자', benefit: '오후에 가면 구경하기 힘든 한살림 떡들. 저는 그중에 인절미를 제일 좋아해요. 다른 떡들도 맛있으니 보이면 담아보세요', q: '한살림 쑥인절미', mall: 'hansalim', url: 'https://shop.hansalim.or.kr/shopping/prod/prodView.do?GDS_CD=080201245', from: '2026-10-17' },
+      { name: '쑥인절미', icon: 'cu_injeolmi_ssuk',   /* 창업자 2026-10-02 새 컷 */ ingredients: '찹쌀백미63.3%(국산/유기), 쑥21.1%(국산/유기), 백태11.9%(무농약/국산), 유기농설탕2.9%, 볶은소금(국산)', checked: '2026-10-02', ingWho: '창업자', benefit: '오후에 가면 구경하기 힘든 한살림 떡들. 저는 그중에 인절미를 제일 좋아해요. 다른 떡들도 맛있으니 보이면 담아보세요', q: '한살림 쑥인절미', mall: 'hansalim', url: 'https://shop.hansalim.or.kr/shopping/prod/prodView.do?GDS_CD=080201245', from: '2026-10-17' },
       { name: '우리쌀 떡국떡', icon: 'cu_tteok', brand: '칠갑농산', ingredients: '쌀 99%(국산), 정제소금, 주정', allergen: '난류(계란)·우유·대두·밀을 사용한 제품과 같은 제조시설에서 제조', nutrition: '총 내용량 800g(160g×5개입) 1,864kcal · 1인분(160g)당 372kcal · 나트륨 508mg · 탄수화물 84g · 당류 0g · 지방 1.2g · 트랜스지방 0g · 포화지방 0.4g · 콜레스테롤 0mg · 단백질 6g', checked: '2026-10-02', ingWho: '창업자', matches: ['떡국떡'], benefit: '떡이 쫄깃하고, 일 인분씩 포장되어 있어 쓰기에 편해요. 냉동실에 늘 쟁여놓는 떡국떡', q: '칠갑농산 우리쌀 떡국떡', mall: 'coupang', url: 'https://link.coupang.com/a/hwcNriSpLo', from: '2026-10-24' },
       { name: '호박인절미', icon: 'cu_hobak_injeolmi', brand: '창억떡', benefit: '호박향이 많이 느껴지지 않고 달달해서 아침대용, 간식으로 좋아요', q: '창억 호박인절미', mall: 'kurly', from: '2026-10-31' },
       { name: '삼색꿀떡 (냉동)', icon: 'cu_kkultteok', brand: '더바른', benefit: '소포장 되어 있어 편리하고, 쫄깃하고 맛있어요. 아이들 간식으로 추천합니다', q: '더바른 삼색꿀떡 냉동', mall: 'coupang', from: '2026-11-14' },
