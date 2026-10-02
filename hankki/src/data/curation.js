@@ -408,7 +408,7 @@ const CURATION_ALL = [
   {
     cat: '떡', group: '빵·떡', emoji: '🍡', icon: 'cu_tteok',
     items: [
-      { name: '인절미', icon: 'cu_injeolmi', benefit: '오후에 가면 구경하기 힘든 한살림 떡들. 저는 그중에 인절미를 제일 좋아해요. 다른 떡들도 맛있으니 보이면 담아보세요', q: '한살림 인절미', mall: 'hansalim', from: '2026-10-17' },
+      { name: '인절미', icon: 'cu_injeolmi', ingredients: '찹쌀백미63.3%(국산/유기), 쑥21.1%(국산/유기), 백태11.9%(무농약/국산), 유기농설탕2.9%, 볶은소금(국산)', checked: '2026-10-02', ingWho: '창업자', benefit: '오후에 가면 구경하기 힘든 한살림 떡들. 저는 그중에 인절미를 제일 좋아해요. 다른 떡들도 맛있으니 보이면 담아보세요', q: '한살림 인절미', mall: 'hansalim', from: '2026-10-17' },
       { name: '우리쌀 떡국떡', icon: 'cu_tteok', brand: '칠갑농산', matches: ['떡국떡'], benefit: '떡이 쫄깃하고, 일 인분씩 포장되어 있어 쓰기에 편해요. 냉동실에 늘 쟁여놓는 떡국떡', q: '칠갑농산 우리쌀 떡국떡', mall: 'kurly', from: '2026-10-24' },
       { name: '호박인절미', icon: 'cu_hobak_injeolmi', brand: '창억떡', benefit: '호박향이 많이 느껴지지 않고 달달해서 아침대용, 간식으로 좋아요', q: '창억 호박인절미', mall: 'kurly', from: '2026-10-31' },
       { name: '삼색꿀떡 (냉동)', icon: 'cu_kkultteok', brand: '더바른', benefit: '소포장 되어 있어 편리하고, 쫄깃하고 맛있어요. 아이들 간식으로 추천합니다', q: '더바른 삼색꿀떡 냉동', mall: 'coupang', from: '2026-11-14' },
