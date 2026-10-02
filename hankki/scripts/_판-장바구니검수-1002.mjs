@@ -13,14 +13,23 @@ const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
 const src = readFileSync(join(APP, 'src/data/curation.js'), 'utf8')
 const 덩이 = (name) => { const i = src.indexOf(`name: '${name}'`); const j = src.indexOf('\n      {', i + 5); return src.slice(i, j > 0 ? j : i + 3000) }
 const 값 = (blk, k) => (blk.match(new RegExp(`${k}:\\s*'([^']*)'`)) || [])[1] || ''
-const 그림 = (k) => { const f = join(APP, 'src/assets/curation', k + '.png'); return existsSync(f) ? 'data:image/png;base64,' + readFileSync(f).toString('base64') : '' }
+// 📏 [2026-10-02] 원본을 그대로 두 번씩 박으니 판이 1.6MB 가 되어 창업자 폰 보기에서 «조미김»에서 잘렸다 → 192px 로 줄여 한 번만 만든다
+import { execFileSync } from 'node:child_process'
+const 그림캐시 = {}
+const 그림 = (k) => {
+  if (k in 그림캐시) return 그림캐시[k]
+  const f = join(APP, 'src/assets/curation', k + '.png')
+  if (!existsSync(f)) return (그림캐시[k] = '')
+  const b64 = execFileSync('python3', ['-c', 'import sys,io,base64;from PIL import Image;im=Image.open(sys.argv[1]);im.thumbnail((160,160));b=io.BytesIO();im.save(b,"PNG",optimize=True);print(base64.b64encode(b.getvalue()).decode())', f]).toString().trim()
+  return (그림캐시[k] = 'data:image/png;base64,' + b64)
+}
 const 카드 = items.map((it, i) => {
   const b = 덩이(it.name)
   const 원재료 = 값(b, 'ingredients'), 알레르기 = 값(b, 'allergen'), 누가 = 값(b, 'who') || 값(b, 'ingWho')
   const 빠짐 = [!it.url && (it.mallRaw ? `상품 주소 없음(${it.mallRaw} 몰 검색으로 감)` : '링크 없음'), !원재료 && '원재료 없음(캡처 필요)', !it.ownIcon && '제 그림 없음'].filter(Boolean)
   const id = `c${i}`
   return `<div class="card"><div class="day">${it.from} · ${esc(it.cat)}</div>
-  <div class="row"><img src="${그림(it.icon)}" class="ic"><img src="${그림(it.icon)}" class="ic42"><div><b>${esc(it.brand ? it.brand + ' ' : '')}${esc(it.name)}</b><div class="sub">${esc(it.mall || '')} · 그림 ${esc(it.icon)}</div></div></div>
+  <div class="row"><img data-k="${esc(it.icon)}" class="ic"><img data-k="${esc(it.icon)}" class="ic42"><div><b>${esc(it.brand ? it.brand + ' ' : '')}${esc(it.name)}</b><div class="sub">${esc(it.mall || '')} · 그림 ${esc(it.icon)}</div></div></div>
   <div class="k">추천 글</div><div class="v">${esc(it.benefit)}</div>
   <div class="k">원재료</div><div class="v">${esc(원재료) || '—'}${알레르기 ? `<br><span class="sub">알레르기 ${esc(알레르기)}</span>` : ''}</div>
   <div class="k">사러가기</div><div class="v">${it.url ? `<a href="${esc(it.url)}" target="_blank">${esc(it.url)}</a>` : '—'}</div>
@@ -38,6 +47,7 @@ textarea{width:100%;box-sizing:border-box;margin-top:8px;border-radius:10px;bord
 ${카드}
 <button id="copy">판정 복사하기</button><div id="out"></div>
 <script>
+const IMG=${JSON.stringify(Object.fromEntries(items.map((it) => [it.icon, 그림(it.icon)])))};document.querySelectorAll('img[data-k]').forEach(i=>i.src=IMG[i.dataset.k]||'')
 const K='hankki:판:장바구니-1002';let st={};try{st=JSON.parse(localStorage.getItem(K)||'{}')}catch{}
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(st))}catch{}}
 document.querySelectorAll('.pick').forEach(p=>{const id=p.dataset.id;p.querySelectorAll('button').forEach(b=>{if(st[id]?.v===b.dataset.v)b.classList.add('on');b.onclick=()=>{p.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');st[id]={...(st[id]||{}),v:b.dataset.v,n:p.dataset.name};save()}})})
