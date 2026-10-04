@@ -706,6 +706,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       return localStorage.getItem('hankki:열쇠:' + x.key열쇠) === '1'
     } catch { return false }
   }
+  const 명절위 = (x) => !!x.명절 && (x.명절 === 이번명절() || (!!x.key열쇠 && !!x.열쇠까지 && !isReleased(x.열쇠까지)))
   const groupsByTab = (t) => drawerGroups()
     // ⭐ `tabDiary` = 일기 화면에선 «다른 탭»에 둔다 — 꼬르곰 32컷은 레꾸 「글자」 / 일꾸 「기록」.
     //    ⛔ 두 탭에 «동시에» 두면 일꾸에서 글자·기록 양쪽에 같은 게 나온다(실측으로 잡았다).
@@ -719,7 +720,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     //    ⭐ 계절이 안 붙은 선물(가을의 정원 세트 = 출시기념)은 그대로 위 — 계절 물건이 아니다.
     // 🎃 [창업자 2026-09-29 「할로윈 올라가면 꾸미기는 다 제일 위로, 끝나면 아래로」] 명절 창(seasonDecor.js 명절창) 안이면 그 명절 묶음(`명절`)이 선물보다도 위.
     //    창이 끝나면 이 줄은 0 이 되고, 계절 없는 묶음과 같이 아래로 간다.
-    .sort((a, b) => ((b.명절 && b.명절 === 이번명절() ? 1 : 0) - (a.명절 && a.명절 === 이번명절() ? 1 : 0))
+    // 🔑 [창업자 2026-10-04 「B로 해줘」] 열리기 «전»에 열쇠로 미리 보는 폰(창업자)에서도 그 명절 묶음을 맨 위로 — 10/15 에 서랍 순서를 실물로 보려고.
+    //    ⛔ 유저는 해당 없다(열쇠가 없으면 위 filter 에서 이미 빠진다) · 열쇠까지 날이 지나면 이 갈래는 꺼지고 명절 창만 본다.
+    .sort((a, b) => ((명절위(b) ? 1 : 0) - (명절위(a) ? 1 : 0))
       || ((giftUp(b) ? 1 : 0) - (giftUp(a) ? 1 : 0))
       || (giftUp(a) && giftUp(b) ? String(b.from || '').localeCompare(String(a.from || '')) : 0)
       || ((b.locked ? 1 : 0) - (a.locked ? 1 : 0))
