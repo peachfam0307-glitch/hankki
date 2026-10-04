@@ -87,8 +87,10 @@ await pg.setContent(판('<div class="띠" style="top:120px"><b>①</b> 할로윈
 await pg.setContent(판(`<div class="끝"><div class="제">10월 한끼 레꾸자랑<br><span style="color:#ffb347">10.16 ~ 10.26</span></div><span class="알약"><img src="${아이콘}"><span>App Store · Google Play 에서<br><b style="color:#3b2c4f;font-size:52px">한끼 레시피북</b> 검색</span></span></div>`)); await pg.waitForTimeout(300); await pg.screenshot({ path: join(밖, 'end.png') })
 await b.close()
 
+// ② = 창업자 폰 녹화 편집본(_shot-공유녹화편집-1004.mjs 결과) — 그림 장면 s2 대신 (창업자 2026-10-04 「우리아까만든 표지도 넣어서」)
+const 공유편집 = join(앱, 'design/promo/인스타-2610/공유-인스타DM-편집.mp4')
 const 길 = (p) => { try { execFileSync(FF, ['-i', p], { stdio: 'pipe' }) } catch (e) { const m = /Duration: (\d+):(\d+):([\d.]+)/.exec(String(e.stderr)); return m[1] * 3600 + m[2] * 60 + Number(m[3]) } }
-const 표지초 = 장면.s0.길이, 빨리 = 2.4, 꾸미기초 = 길(꾸미기) / 빨리, 이음 = 0.5, 끝장 = 3, s2 = 장면.s2.길이, s3 = 장면.s3.길이
+const 표지초 = 장면.s0.길이, 빨리 = 2.4, 꾸미기초 = 길(꾸미기) / 빨리, 이음 = 0.5, 끝장 = 3, s2 = 길(공유편집), s3 = 장면.s3.길이
 let o = 표지초 - 이음
 const f = `[0:v]fps=30,settb=AVTB,format=yuv420p[c]`
   + `;[1:v]setpts=PTS/${빨리},scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=0x2b123d,fps=30,format=yuva420p[d0];[2:v]format=rgba[t1];[d0][t1]overlay=0:0,settb=AVTB,format=yuv420p[d]`
@@ -99,7 +101,7 @@ const f = `[0:v]fps=30,settb=AVTB,format=yuv420p[c]`
   + `;[x3][e]xfade=transition=fade:duration=${이음}:offset=${(o += s3 - 이음).toFixed(2)},format=yuv420p[v]`
 execFileSync(FF, ['-y', '-framerate', '30', '-i', join(밖, 's0', 'f%04d.png'), '-i', 꾸미기,
   '-loop', '1', '-framerate', '30', '-t', String(꾸미기초 + 1), '-i', join(밖, 't1.png'),
-  '-framerate', '30', '-i', join(밖, 's2', 'f%04d.png'), '-framerate', '30', '-i', join(밖, 's3', 'f%04d.png'),
+  '-i', 공유편집, '-framerate', '30', '-i', join(밖, 's3', 'f%04d.png'),
   '-loop', '1', '-framerate', '30', '-t', String(끝장 + 이음), '-i', join(밖, 'end.png'),
   '-filter_complex', f, '-map', '[v]', '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', '-r', '30', '-movflags', '+faststart', 낼파일], { stdio: 'inherit' })
 console.log('✅', 낼파일)

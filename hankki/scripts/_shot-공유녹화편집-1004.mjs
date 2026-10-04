@@ -42,7 +42,10 @@ const 끝 = 상자.length
 // 1080×2340 → 높이 1920 에 맞춰 줄이고(886 폭) 양옆을 밤색으로 — 공유창 아래 앱 줄이 잘리지 않게
 const 배 = 1920 / 2340, X0 = Math.round((1080 - 1080 * 배) / 2)
 f += `;[v${끝}]tpad=start_mode=clone:start_duration=${멈춤 * 빨리},setpts=PTS/${빨리},scale=-2:1920,pad=1080:1920:(ow-iw)/2:0:color=0x2b123d,format=yuva420p[base]`
-f += `;[1:v]format=rgba[fx];[base][fx]overlay=0:0,format=yuv420p[v]`
+// 🔍 멈춤 동안 공유 알약을 3.2배로 크게 떠서 화면 가운데에 띄운다 — 「너무 위에있어서 안보여 확대를 하거나」(창업자 2026-10-04)
+const 줌 = { x: 690, y: 68, w: 280, h: 140, 배: 3.2, 놓X: 92, 놓Y: 640, 끝: 멈춤 + 0.1 }
+f += `;[base]split[bm][bc];[bc]crop=${줌.w}:${줌.h}:${줌.x}:${줌.y},scale=${줌.w * 줌.배}:${줌.h * 줌.배}[zm];[bm][zm]overlay=${줌.놓X}:${줌.놓Y}:enable='between(t,0.15,${줌.끝})'[bz]`
+f += `;[1:v]format=rgba[fx];[bz][fx]overlay=0:0,format=yuv420p[v]`
 
 // ✨ 반짝이 — 누르는 순간(원본 초)과 자리(원본 좌표)
 // [초, x, y, 폭, 높이] — 폭·높이 = 알약 둘레(눈으로 잰 원본 좌표)
@@ -55,6 +58,10 @@ const 별들 = 톡.map(([t, x, y, w, h, 리드], i) => { const X = X0 + x * 배,
 const html = `<!doctype html><html><head><style>@font-face{font-family:BH;src:url(data:font/woff2;base64,${폰('blackhansans-korean-400.woff2')})}@font-face{font-family:BH;src:url(data:font/woff2;base64,${폰('blackhansans-latin-400.woff2')})}
 *{margin:0;box-sizing:border-box}body{width:1080px;height:1920px;position:relative;overflow:hidden;background:transparent}
 .띠{animation:띠 .3s ease-out 3.2s both;position:absolute;left:40px;right:40px;top:70px;background:rgba(43,18,61,.94);color:#fff;border-radius:36px;padding:24px 16px;text-align:center;font-family:BH;font-size:50px;line-height:1.25;box-shadow:0 10px 30px rgba(0,0,0,.4)}.띠 b{color:#ffb347}
+.줌테{position:absolute;border:12px solid #ffd36b;border-radius:60px;box-shadow:0 0 0 8px rgba(255,140,40,.6),0 0 60px 16px #ffb347,0 30px 60px rgba(0,0,0,.45);animation:줌 var(--끝) linear 0s both}
+.줌말{position:absolute;left:60px;right:60px;text-align:center;font-family:BH;font-size:72px;color:#fff;background:rgba(43,18,61,.94);border-radius:40px;padding:26px 10px;animation:줌 var(--끝) linear 0s both}.줌말 b{color:#ffb347}
+.줌화살{position:absolute;left:0;top:0;filter:drop-shadow(0 0 10px #ffb347);animation:줌 var(--끝) linear 0s both}
+@keyframes 줌{0%{opacity:0}8%{opacity:0}16%{opacity:1}88%{opacity:1}100%{opacity:0}}
 @keyframes 띠{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:none}}
 .테{position:absolute;border-radius:999px;border:9px solid #ffd36b;box-shadow:0 0 0 6px rgba(255,140,40,.55),0 0 40px 10px #ffb347;opacity:0;animation:테 var(--dur) linear var(--from) both}
 @keyframes 테{0%{opacity:0;transform:scale(1.3)}12%{opacity:1;transform:scale(1)}30%{transform:scale(1.08)}48%{transform:scale(1)}66%{transform:scale(1.08)}84%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
@@ -62,7 +69,10 @@ const html = `<!doctype html><html><head><style>@font-face{font-family:BH;src:ur
 @keyframes 링{0%{opacity:0;transform:scale(.3)}25%{opacity:1}100%{opacity:0;transform:scale(1.5)}}
 .별{position:absolute;width:44px;height:44px;color:#fff3c4;font-size:44px;line-height:44px;text-align:center;text-shadow:0 0 16px #ffd36b;animation:별 .9s ease-out var(--at) both}
 @keyframes 별{0%{opacity:0;transform:rotate(var(--a)) translateY(0) scale(.4)}30%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateY(-120px) scale(1)}}</style></head>
-<body><div class="띠"><b>②</b> 한끼 앱에서 공유 → 인스타 → DM</div>${별들}</body></html>`
+<body><div class="줌테" style="left:${줌.놓X - 10}px;top:${줌.놓Y - 10}px;width:${줌.w * 줌.배 + 20}px;height:${줌.h * 줌.배 + 20}px;--끝:${줌.끝}s"></div>
+<div class="줌말" style="top:${줌.놓Y + 줌.h * 줌.배 + 40}px;--끝:${줌.끝}s">오른쪽 위 <b>「공유」</b>를 눌러요</div>
+<svg class="줌화살" style="--끝:${줌.끝}s" width="1080" height="1920"><path d="M 760 ${줌.놓Y - 20} Q 900 380 870 190" stroke="#ffd36b" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M 835 225 L 870 175 L 905 228" stroke="#ffd36b" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<div class="띠"><b>②</b> 한끼 앱에서 공유 → 인스타 → DM</div>${별들}</body></html>`
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const pg = await (await b.newContext({ viewport: { width: 1080, height: 1920 } })).newPage()
 await pg.setContent(html); await pg.waitForTimeout(500); await pg.evaluate(() => document.getAnimations().forEach((a) => a.pause()))
