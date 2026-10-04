@@ -163,6 +163,13 @@ function 열쇠말(flow, meta) {
   return meta.costText
 }
 
+// 🗝 「열쇠가 없어도」 갈래인가 — `열쇠말` 의 photo·0개 조건과 같다(무제한·unknown 은 아니다)
+function 열쇠바닥(flow) {
+  if (flow !== 'photo') return false
+  const 남은 = getOcrLeft()
+  return !남은.무제한 && !남은.unknown && 남은.total <= 0
+}
+
 function 장수꼬리(costText, paid, 홀로 = false) {
   if (홀로) {
     return <b style={{ fontWeight: 800, fontSize: '0.88em', color: paid ? 'var(--danger)' : 'var(--text-sub)', whiteSpace: 'nowrap' }}>{costText}</b>
@@ -746,7 +753,9 @@ export default function ImportScreen() {
               background: 'var(--cream)', color: 'var(--brown)',
               fontSize: 13.5, fontWeight: 800, whiteSpace: 'nowrap',
             }}>
-              <img src={uiKeyOne} alt="" aria-hidden="true" draggable={false} style={{ width: 14, height: 14, objectFit: 'contain' }} />
+              {/* 🗝 [창업자 2026-10-04 「알약도 구멍으로」] 「열쇠가 없어도」일 땐 열쇠구멍 — 큰 배지(KeyBadge)와 같은 짝.
+                  ⭐ 조건은 `열쇠말` 의 「열쇠가 없어도」 갈래와 «똑같다»(말과 그림이 갈리지 않게). */}
+              <img src={열쇠바닥(flow) ? uiKeyHole : uiKeyOne} alt="" aria-hidden="true" draggable={false} style={{ width: 14, height: 14, objectFit: 'contain' }} />
               {열쇠말(flow, flowMeta)}
             </span>
           </div>

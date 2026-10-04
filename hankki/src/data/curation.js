@@ -285,14 +285,14 @@ const CURATION_ALL = [
       //    한살림은 「사러가기」를 안 그린다(창업자 2026-08-17) → url 없이 mall 만. 원재료는 창업자 말 «고구마전분100%(국산)» · 영양은 한살림 상품 페이지 캡처.
       { name: '건자른당면', brand: '한살림', icon: 'cu_dangmyeon', matches: ['당면'], benefit: '당면 자를 때 다 튀고 불편했는데 자른당면이 정말 편했어요. 국산 고구마 전분 100%예요', q: '한살림 자른당면', mall: 'hansalim', from: '2026-09-19',
         ingredients: '고구마전분 100%(국산)', nutrition: '1회 제공량 100g당 352kcal · 나트륨 9mg · 탄수화물 88g · 당류 0g · 지방 0g · 트랜스지방 0g · 포화지방 0g · 콜레스테롤 0mg · 단백질 0g (총 내용량 500g · 5회)', checked: '2026-09-17', ingWho: '창업자' },
-      { name: '납작당면', icon: 'cu_dangmyeon_flat', matches: ['납작당면', '당면'], ingredients: '고구마전분(고구마:국산), 감자전분 30%(감자:국산), 키토산(게:국산)', allergen: '게 함유', nutrition: '300g', checked: '2026-10-02', ingWho: '창업자', benefit: '애들은 납작한 당면을 좋아하더라구요. 불고기에, 닭볶음탕에 두루 넣어 사용하고 있어요. 자른당면이라 사용이 편리해요.', who: '창업자', q: '국산감자 납작 자른당면', mall: 'coupang', url: 'https://link.coupang.com/a/hwl9qiK79U', from: '2026-10-10' },   // 창업자 2026-10-02 한살림 → 쿠팡(국산감자 납작 자른당면 · 상세 캡처 두 번 대조) · 설명 마지막 줄(전분 비율) 뺌
+      { name: '납작당면', icon: 'cu_dangmyeon_flat', brand: '진미식품', matches: ['납작당면', '당면'], ingredients: '고구마전분(고구마:국산), 감자전분 30%(감자:국산), 키토산(게:국산)', allergen: '게 함유', nutrition: '300g', checked: '2026-10-02', ingWho: '창업자', benefit: '애들은 납작한 당면을 좋아하더라구요. 불고기에, 닭볶음탕에 두루 넣어 사용하고 있어요. 자른당면이라 사용이 편리해요.', who: '창업자', q: '국산감자 납작 자른당면', mall: 'coupang', url: 'https://link.coupang.com/a/hwl9qiK79U', from: '2026-10-10' },   // 창업자 2026-10-02 한살림 → 쿠팡(국산감자 납작 자른당면 · 상세 캡처 두 번 대조) · 설명 마지막 줄(전분 비율) 뺌 · 브랜드 = 라벨 판매원 (주)진미식품(제조 안성식품 · 창업자 10/03 「진미식품일껄」)
     ],
   },
   {
     cat: '누룽지', group: '면·밥', emoji: '🍚', icon: 'cu_nurungji',
     items: [
       { name: '현미누룽지', brand: '자연다음', ingredients: '현미(국내산) 100%', nutrition: '990g(33g×30개입)', checked: '2026-09-17', ingWho: '창업자', matches: ['누룽지'], benefit: '쌀눈 살아있는 국내산 현미누룽지예요. 개별 소포장이라 눅눅해질 걱정 없이 쓰기 편하고, 얇아서 금방 익어 밥하기 귀찮은 날·아침에 밥 없을 때 구원템이에요', q: '자연다음 현미누룽지', mall: 'coupang', url: 'https://link.coupang.com/a/gRY3f8r1Cm' },
-      { name: '김치볶음밥 포켓누룽지', icon: 'cu_nurungji_kimchi', brand: '심플잇', benefit: '저희 애 친구들 사이에 한때 유행이었던 김치볶음밥 누룽지. 매콤한데 아이들이 정말 좋아하더라구요. 간단한 간식용으로 추천', q: '심플잇 김치볶음밥 포켓누룽지', mall: 'coupang', from: '2026-10-10', url: 'https://link.coupang.com/a/gR0McSFGRo' },
+      { name: '김치볶음밥 포켓누룽지', icon: 'cu_nurungji_kimchi', brand: '심플잇', ingredients: '쌀(미국산), 김치볶음밥소스[설탕, 김치(절임배추{배추:국산}), 양조간장(탈지대두(인도산)), 고춧가루, 정제소금], 복합조미식품, 가공소금, L-글루탐산나트륨(향미증진제)', allergen: '우유, 대두, 밀, 쇠고기, 닭고기, 새우, 조개류 함유', nutrition: '1봉(34g)당 130kcal · 탄수화물 28g · 당류 6g · 단백질 2.6g · 지방 0.9g · 포화지방 0.5g · 트랜스지방 0g · 콜레스테롤 0mg · 나트륨 330mg', checked: '2026-10-04', ingWho: '창업자', benefit: '저희 애 친구들 사이에 한때 유행이었던 김치볶음밥 누룽지. 매콤한데 아이들이 정말 좋아하더라구요. 간단한 간식용으로 추천', q: '심플잇 김치볶음밥 포켓누룽지', mall: 'coupang', from: '2026-10-10', url: 'https://link.coupang.com/a/gR0McSFGRo' },
     ],
   },
   {
