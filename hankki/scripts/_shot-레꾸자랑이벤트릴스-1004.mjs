@@ -93,10 +93,9 @@ const 길 = (p) => { try { execFileSync(FF, ['-i', p], { stdio: 'pipe' }) } catc
 const 표지초 = 장면.s0.길이, 빨리 = 2.4, 꾸미기초 = 길(꾸미기) / 빨리, 이음 = 0.5, 끝장 = 3, s2 = 길(공유편집), s3 = 장면.s3.길이
 let o = 표지초 - 이음
 const f = `[0:v]fps=30,settb=AVTB,format=yuv420p[c]`
-  + `;[1:v]setpts=PTS/${빨리},scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=0x2b123d,fps=30,format=yuva420p[d0];[2:v]format=rgba[t1];[d0][t1]overlay=0:0,settb=AVTB,format=yuv420p[d]`
+  // ✂️ 「꾸미기 과정빼자」(창업자 2026-10-04) — ① 꾸미기 장면(입력 1·2)은 안 쓴다 · 표지 → ② 폰녹화로 바로
   + `;[3:v]fps=30,settb=AVTB,format=yuv420p[s2];[4:v]fps=30,settb=AVTB,format=yuv420p[s3];[5:v]fps=30,settb=AVTB,format=yuv420p[e]`
-  + `;[c][d]xfade=transition=fade:duration=${이음}:offset=${o.toFixed(2)}[x1]`
-  + `;[x1][s2]xfade=transition=slideleft:duration=${이음}:offset=${(o += 꾸미기초 - 이음).toFixed(2)}[x2]`
+  + `;[c][s2]xfade=transition=fade:duration=${이음}:offset=${o.toFixed(2)}[x2]`
   + `;[x2][s3]xfade=transition=slideleft:duration=${이음}:offset=${(o += s2 - 이음).toFixed(2)}[x3]`
   + `;[x3][e]xfade=transition=fade:duration=${이음}:offset=${(o += s3 - 이음).toFixed(2)},format=yuv420p[v]`
 execFileSync(FF, ['-y', '-framerate', '30', '-i', join(밖, 's0', 'f%04d.png'), '-i', 꾸미기,
