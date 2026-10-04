@@ -21,7 +21,8 @@ const 밖 = process.env.OUT || '/tmp/claude-0/공유녹화편집'
 const 낼파일 = join(앱, 'design/promo/인스타-2610/공유-인스타DM-편집.mp4')
 rmSync(밖, { recursive: true, force: true }); mkdirSync(join(밖, 'fx'), { recursive: true })
 
-const 끝초 = 9.8, 빨리 = 1.2, 길이 = 끝초 / 빨리
+// ⏸ 멈춤 = 첫 화면을 1.5초 붙잡는다 — 「첨에 공유 알약 누르는게 안보여」(창업자 2026-10-04) · 그동안 공유 알약 테두리만 뛴다
+const 끝초 = 9.8, 빨리 = 1.2, 멈춤 = 1.5, 길이 = 끝초 / 빨리 + 멈춤
 // 흐림 상자 [x, y, w, h, 시작, 끝] — 원본 좌표
 const 상자 = [
   [0, 0, 1080, 110, 0, 끝초],
@@ -40,7 +41,7 @@ let f = `[0:v]trim=0:${끝초},setpts=PTS-STARTPTS,fps=30,format=yuv420p[v0]`
 const 끝 = 상자.length
 // 1080×2340 → 높이 1920 에 맞춰 줄이고(886 폭) 양옆을 밤색으로 — 공유창 아래 앱 줄이 잘리지 않게
 const 배 = 1920 / 2340, X0 = Math.round((1080 - 1080 * 배) / 2)
-f += `;[v${끝}]setpts=PTS/${빨리},scale=-2:1920,pad=1080:1920:(ow-iw)/2:0:color=0x2b123d,format=yuva420p[base]`
+f += `;[v${끝}]tpad=start_mode=clone:start_duration=${멈춤 * 빨리},setpts=PTS/${빨리},scale=-2:1920,pad=1080:1920:(ow-iw)/2:0:color=0x2b123d,format=yuva420p[base]`
 f += `;[1:v]format=rgba[fx];[base][fx]overlay=0:0,format=yuv420p[v]`
 
 // ✨ 반짝이 — 누르는 순간(원본 초)과 자리(원본 좌표)
@@ -48,12 +49,12 @@ f += `;[1:v]format=rgba[fx];[base][fx]overlay=0:0,format=yuv420p[v]`
 // 6번째 = 테두리가 누르기 몇 초 전부터 뜨나(편집본 초) — 보내기는 인스타 화면이 뜬 뒤라야 해서 짧게
 const 톡 = [[1.0, 930, 168, 250, 110, 1.0], [2.7, 540, 2150, 1000, 200, 1.0], [4.4, 780, 2050, 200, 200, 1.0], [6.45, 842, 1372, 260, 120, 1.0], [7.8, 899, 838, 230, 120, 0.6], [9.3, 540, 2128, 1000, 150, 0.7]]
 const 폰 = (n) => readFileSync(join(앱, 'src/assets/fonts', n)).toString('base64')
-const 별들 = 톡.map(([t, x, y, w, h, 리드], i) => { const X = X0 + x * 배, Y = y * 배, W = w * 배, H = h * 배, at = (t / 빨리 - 0.25).toFixed(2)
-  const 앞 = Math.max(0, t / 빨리 - 리드).toFixed(2), 길 = (t / 빨리 + 0.15 - 앞).toFixed(2)
+const 별들 = 톡.map(([t, x, y, w, h, 리드], i) => { const X = X0 + x * 배, Y = y * 배, W = w * 배, H = h * 배, T = t / 빨리 + 멈춤, at = (T - 0.25).toFixed(2)
+  const 앞 = (i ? Math.max(0, T - 리드) : 0).toFixed(2), 길 = (T + 0.15 - 앞).toFixed(2)
   return `<div class="테" style="left:${X - W / 2}px;top:${Y - H / 2}px;width:${W}px;height:${H}px;--from:${앞}s;--dur:${길}s"></div><div class="링" style="left:${X - 70}px;top:${Y - 70}px;--at:${at}s"></div>` + [0, 1, 2, 3, 4, 5].map((k) => `<div class="별" style="left:${X - 22}px;top:${Y - 22}px;--at:${at}s;--a:${k * 60 + i * 17}deg">✦</div>`).join('') }).join('')
 const html = `<!doctype html><html><head><style>@font-face{font-family:BH;src:url(data:font/woff2;base64,${폰('blackhansans-korean-400.woff2')})}@font-face{font-family:BH;src:url(data:font/woff2;base64,${폰('blackhansans-latin-400.woff2')})}
 *{margin:0;box-sizing:border-box}body{width:1080px;height:1920px;position:relative;overflow:hidden;background:transparent}
-.띠{animation:띠 .3s ease-out 1.0s both;position:absolute;left:40px;right:40px;top:70px;background:rgba(43,18,61,.94);color:#fff;border-radius:36px;padding:24px 16px;text-align:center;font-family:BH;font-size:50px;line-height:1.25;box-shadow:0 10px 30px rgba(0,0,0,.4)}.띠 b{color:#ffb347}
+.띠{animation:띠 .3s ease-out 3.2s both;position:absolute;left:40px;right:40px;top:70px;background:rgba(43,18,61,.94);color:#fff;border-radius:36px;padding:24px 16px;text-align:center;font-family:BH;font-size:50px;line-height:1.25;box-shadow:0 10px 30px rgba(0,0,0,.4)}.띠 b{color:#ffb347}
 @keyframes 띠{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:none}}
 .테{position:absolute;border-radius:999px;border:9px solid #ffd36b;box-shadow:0 0 0 6px rgba(255,140,40,.55),0 0 40px 10px #ffb347;opacity:0;animation:테 var(--dur) linear var(--from) both}
 @keyframes 테{0%{opacity:0;transform:scale(1.3)}12%{opacity:1;transform:scale(1)}30%{transform:scale(1.08)}48%{transform:scale(1)}66%{transform:scale(1.08)}84%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
