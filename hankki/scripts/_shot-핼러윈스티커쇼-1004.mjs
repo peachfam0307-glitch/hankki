@@ -56,17 +56,30 @@ const 쇼 = 4.2,   // ✏️ 「스티커 올라가는 것도 속도 조금만 �
 for (let i = 0; i < 칸수; i++) { await pg.evaluate((t) => document.getAnimations().forEach((a) => { a.currentTime = t }), (i / 30) * 1000); await pg.screenshot({ path: join(밖, 'show', 'f' + String(i).padStart(4, '0') + '.png') }) }
 await pg.setContent(`<!doctype html><html><head>${머리}</head><body><div class="끝"><div class="큰">10월 16일<br>할로윈 꾸미기 오픈</div><span class="알약"><img src="${아이콘}"><span>App Store · Google Play 에서<br><b style="color:#3b2c4f;font-size:52px">한끼 레시피북</b> 검색</span></span></div></body></html>`)
 await pg.waitForTimeout(300); await pg.screenshot({ path: join(밖, 'end.png') })
+// 🎃 끝장 앞에 «이벤트 표지» — 레꾸자랑 표지 그대로, 아래 참여방법 카드만 안내로 바꾼다
+//    📮 창업자 2026-10-04 「마지막에 이벤트 표지넣고 한끼에서 확인해달라는 거」 → 「좋아. 대신 안내만바꾸자.」
+//    ⭐ 이 릴스는 10/14 에 나가고 이벤트는 10/16 시작 → 날짜를 꼭 넣는다
+const BH = (n) => readFileSync(join(앱, 'src/assets/fonts', n)).toString('base64')
+const 표지 = 짐(join(앱, 'design/promo/인스타-2610/표지-레꾸자랑이벤트-2026-10-16.png'))
+await pg.setContent(`<!doctype html><html><head><style>@font-face{font-family:BH;src:url(data:font/woff2;base64,${BH('blackhansans-korean-400.woff2')})}@font-face{font-family:BH;src:url(data:font/woff2;base64,${BH('blackhansans-latin-400.woff2')})}
+*{margin:0;box-sizing:border-box}body{width:1080px;height:1920px;position:relative;background:url(${표지}) 0 0/1080px 1920px}
+.카드{position:absolute;left:52px;top:1556px;width:976px;height:304px;border-radius:46px;background:rgb(240,233,224);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;font-family:BH;color:#2b1a3d;text-align:center}
+.카드 .큰{font-size:64px;line-height:1.15}.카드 .큰 b{color:#f07a1a;font-weight:400}.카드 .작{font-size:48px;line-height:1.2}</style></head>
+<body><div class="카드"><div class="큰"><b>10월 16일</b>, 할로윈 레꾸자랑 시작</div><div class="작">참여 방법은 한끼 인스타에서 확인해 주세요</div></div></body></html>`)
+await pg.waitForTimeout(400); await pg.screenshot({ path: join(밖, 'event.png') })
 await b.close()
 
 const 앞길이 = (() => { try { execFileSync(FF, ['-i', 앞영상], { stdio: 'pipe' }) } catch (e) { const m = /Duration: (\d+):(\d+):([\d.]+)/.exec(String(e.stderr)); return m[1] * 3600 + m[2] * 60 + Number(m[3]) } })()
-const 이음 = 0.5, 끝장 = 3, 첫장 = 2   // ✏️ 「처음 도입 2.5초로 늘려줘」→「도입 2초로 바꾸고」
+const 이음 = 0.5, 끝장 = 3, 첫장 = 2, 이벤트장 = 2.8   // ✏️ 「처음 도입 2.5초로 늘려줘」→「도입 2초로 바꾸고」
 // ⏩ [창업자 2026-10-04 「꾸미기 2-19초 좀 빠르게 하자. 배속 좀 올려서」] 꾸미기 부분 17.5초 → 11초
 const 더빨리 = Number(process.env.FAST || 2.0), 꾸미기길이 = 앞길이 / 더빨리
 // 🎃 [창업자 2026-10-04 「젤 첫 화면에 할로윈 배경만 딱 띄워줄수있어? 거기에 내가 자막 넣게. 단호박도 따 빼고」 · 「2초정도」] → 펠트 배경만 2초
 const f = `[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,settb=AVTB,format=yuv420p[b]`
   + `;[1:v]setpts=PTS/${더빨리},scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=0xf6efe6,fps=30,settb=AVTB,format=yuv420p[a];[2:v]fps=30,settb=AVTB,format=yuv420p[s];[3:v]fps=30,settb=AVTB,format=yuv420p[e]`
   + `;[b][a]xfade=transition=fade:duration=${이음}:offset=${(첫장 - 이음).toFixed(2)}[ba]`
-  + `;[ba][s]xfade=transition=fade:duration=${이음}:offset=${(첫장 + 꾸미기길이 - 2 * 이음).toFixed(2)}[as];[as][e]xfade=transition=fade:duration=${이음}:offset=${(첫장 + 꾸미기길이 + 쇼 - 3 * 이음).toFixed(2)},format=yuv420p[v]`
+  + `;[ba][s]xfade=transition=fade:duration=${이음}:offset=${(첫장 + 꾸미기길이 - 2 * 이음).toFixed(2)}[as];[4:v]fps=30,settb=AVTB,format=yuv420p[ev];[as][ev]xfade=transition=fade:duration=${이음}:offset=${(첫장 + 꾸미기길이 + 쇼 - 3 * 이음).toFixed(2)}[ae]`
+  + `;[ae][e]xfade=transition=fade:duration=${이음}:offset=${(첫장 + 꾸미기길이 + 쇼 + 이벤트장 - 4 * 이음).toFixed(2)},format=yuv420p[v]`
 execFileSync(FF, ['-y', '-loop', '1', '-framerate', '30', '-t', String(첫장), '-i', join(앱, 'src/assets/decorbg/halloween-felt.webp'), '-i', 앞영상, '-framerate', '30', '-i', join(밖, 'show', 'f%04d.png'), '-loop', '1', '-framerate', '30', '-t', String(끝장 + 이음), '-i', join(밖, 'end.png'),
+  '-loop', '1', '-framerate', '30', '-t', String(이벤트장 + 이음), '-i', join(밖, 'event.png'),
   '-filter_complex', f, '-map', '[v]', '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', '-r', '30', '-movflags', '+faststart', 낼파일], { stdio: 'inherit' })
 console.log('✅', 낼파일)

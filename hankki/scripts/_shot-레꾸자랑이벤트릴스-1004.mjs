@@ -63,7 +63,7 @@ const 장면 = {
     <div class="반짝" style="left:140px;top:300px;--at:.3s">✦</div><div class="반짝" style="left:880px;top:250px;--at:.7s">✦</div><div class="반짝" style="left:960px;top:700px;--at:1.1s">✦</div><div class="반짝" style="left:80px;top:760px;--at:1.5s">✦</div>
     <div class="내림" style="top:95px;font-family:JU;color:#ffb347;font-size:64px;--at:.05s">10월 한끼</div>
     <div class="내림" style="top:165px;font-family:BH;color:#fff;font-size:190px;line-height:1;text-shadow:0 10px 0 #6b2fa0,0 18px 40px rgba(0,0,0,.6);--at:.15s">레꾸자랑</div>
-    <div class="내림 팡" style="top:390px;--at:.55s"><span style="display:inline-block;background:#ff7a1a;color:#fff;font-family:BH;font-size:60px;padding:14px 44px;border-radius:999px;transform:rotate(-2deg)">할로윈 레꾸를 자랑해 주세요</span></div>
+    <div class="내림 팡" style="top:390px;--at:.55s"><span style="display:inline-block;background:#ff7a1a;color:#fff;font-family:BH;font-size:60px;padding:14px 44px;border-radius:999px;transform:rotate(-2deg)">꾸미기 금손 모십니다</span></div>
     <div class="내림 팡" style="top:520px;font-family:BH;color:#fff;font-size:116px;text-shadow:0 6px 0 #ff7a1a,0 12px 30px rgba(0,0,0,.5);--at:.85s">10.16 ~ 10.26</div>
     <div class="올림" style="--at:1.15s"><div><b style="color:#ff7a1a">①</b> 할로윈 꾸미기로 요리 사진 꾸미기</div><div><b style="color:#ff7a1a">②</b> 공유 → 인스타 → <b>DM 보내기</b></div><div><b style="color:#ff7a1a">③</b> 10월 28일 한끼 인스타에 올려드려요</div></div>` },
   // ② 공유 → 인스타 → DM — 손가락 동그라미가 차례로 «누른다»
