@@ -66,44 +66,24 @@ const 굴리기 = async (sel, dy, 걸음, 쉼 = 16) => { for (let i = 0; i < 걸
 
 await p.goto('http://127.0.0.1:4622/hankki/?할로윈=1', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2500); await 치우기()
 await p.locator('.bottom-nav .nav-item').filter({ hasText: '레시피' }).first().click(); await p.waitForTimeout(1000); await 치우기()
-const 찾기 = p.getByPlaceholder(/내 레시피에서 찾기/)
-if (await 찾기.count()) { await 찾기.first().fill('통단호박'); await p.waitForTimeout(900) }
-// 🎃 첫 장면 = 레시피 목록의 «큰 표지 카드»(상세 화면 표지는 작다 — 1차 녹화 실측) → 눌러 들어간다
-//    통단호박은 「전체」 첫 줄 오른쪽에 있다(2026-10-04 실측) — 목록을 맨 위로 돌려 두고 보여 준다
+// 🎬 [2026-10-04 2판] 창업자 = *"꽃게부터 시작하는것"* · *"아이콘화면 작고, 오른쪽 레시피도 다 잘려서 쭉 내려가는게 의미가 없어"*
+//    → 목록·상세 스크롤은 «찍지 않는다»(잘라 낸다). 녹화는 꾸미기 화면(표지가 화면 가득)부터 쓴다.
 const 맨위 = () => p.evaluate(() => { document.scrollingElement.scrollTop = 0; document.querySelectorAll('*').forEach((e) => { if (e.scrollTop > 0) e.scrollTop = 0 }) })
-await 맨위(); await p.waitForTimeout(700)
-await 적기('표지')
-await p.waitForTimeout(1600)
-// 🎃 고화질(zoom)에선 목록이 «한 줄»이라 통단호박이 꽃게탕 «아래»에 있다 — 그 카드까지 부드럽게 내려간다
 const 카드 = p.getByText('통단호박 크림스프', { exact: false }).last()
-const 카드y = await 카드.evaluate((e) => { const c = e.closest('button,a,[role=button]') || e; return c.getBoundingClientRect().top })
-await p.mouse.move(540, 1400)
-const 갈 = Math.max(0, 카드y - 360)   // 카드 머리가 위에서 360px 쯤 오게 (⛔ ×배율 하면 세 배 넘어간다 — 실측)
-for (let i = 0; i < 45; i++) { await p.mouse.wheel(0, 갈 / 45); await p.waitForTimeout(20) }
-await p.waitForTimeout(1300)
-await 카드.click({ force: true }); await p.waitForTimeout(150); await 맨위(); await p.waitForTimeout(1200); await 치우기()
-await 맨위()   // 상세는 목록의 스크롤 자리를 물려받는다 — 맨 위(표지·제목)부터
-await 적기('내려가기')
-// 🖱 레시피 화면은 window 가 아니라 안쪽 칸이 구른다 — 휠로 굴린다(2026-10-04 실측: scrollBy 는 안 먹고 wheel 은 먹는다)
-await p.mouse.move(540, 1400)
-for (let i = 0; i < 150; i++) { await p.mouse.wheel(0, 2600 / 150 * 배율); await p.waitForTimeout(18) }
-await p.waitForTimeout(400)
-await 적기('올라가기')
-for (let i = 0; i < 60; i++) { await p.mouse.wheel(0, -2700 / 60 * 배율); await p.waitForTimeout(14) }
-await p.waitForTimeout(700)
-await 적기('꾸미기열기')
+await 카드.click({ force: true }); await p.waitForTimeout(1200); await 치우기(); await 맨위()
 await p.locator('[data-coach="decor"]').first().click({ force: true }); await p.waitForTimeout(1600)
-// 🎁 꾸미기를 열면 「받은 선물」 시트가 뜬다 — 덮인 채면 화면이 흐리고 탭이 안 눌린다(2026-10-04 1차 녹화 실측)
 for (const 글 of ['나중에 볼게요', '닫기']) { const x = p.locator('button').filter({ hasText: 글 }).first(); if (await x.count() && await x.isVisible().catch(() => false)) { await x.click({ timeout: 2000 }).catch(() => {}); await p.waitForTimeout(500); break } }
-await 치우기()
+await 치우기(); await p.waitForTimeout(500)
+await 적기('표지')
+await p.waitForTimeout(2600)   // 핼러윈으로 꾸민 통단호박 표지를 «크게» 머문다
 await 적기('서랍')
-const 탭 = async (라벨) => { const t = p.locator('button').filter({ hasText: new RegExp(`^${라벨}$`) }).first(); if (await t.count()) { await t.click({ timeout: 2500 }).catch(() => {}); await p.waitForTimeout(350) } }
+const 탭 = async (라벨) => { const t = p.locator('button').filter({ hasText: new RegExp(`^${라벨}$`) }).first(); if (await t.count()) { await t.click({ timeout: 2500 }).catch(() => {}); await p.waitForTimeout(250) } }
 for (const 라벨 of ['친구들', '프레임', '데코', '마테', '배경']) {
   await 탭(라벨)
   const 칸 = await p.evaluate(() => { document.querySelectorAll('[data-reel-drawer]').forEach((e) => e.removeAttribute('data-reel-drawer')); const d = document.querySelector('.decor-drawer'); if (!d) return null; const c = [...d.querySelectorAll('*')].find((e) => /(auto|scroll)/.test(getComputedStyle(e).overflowY) && e.scrollHeight > e.clientHeight + 40); if (!c) return null; c.setAttribute('data-reel-drawer', '1'); return '[data-reel-drawer]' })
-  await p.waitForTimeout(500)   // 맨 위(핼러윈 묶음)를 먼저 보여 준다
-  if (칸) await 굴리기(칸, 500, 30, 20)
-  await p.waitForTimeout(200)
+  await p.waitForTimeout(900)   // ⭐ 맨 위 = 핼러윈 묶음 — 가을까지 내려가지 않게 조금만 굴린다(1판: 핼러윈이 1초도 안 보였다)
+  if (칸) await 굴리기(칸, 220, 16, 22)
+  await p.waitForTimeout(150)
 }
 await 적기('끝')
 await p.waitForTimeout(500)
@@ -123,47 +103,59 @@ console.log('영상', 영상길이.toFixed(2), '벽', 벽끝.toFixed(2))
 console.log('🎥', 영상, JSON.stringify(표))
 
 // ───────── 굽기 ─────────
-// 앱 부분 = 「표지」부터 「끝」까지 → 16초로 배속. 위 110px(상태줄) 덜어 1080×1920 으로 자른다.
-const 앱길이 = 16, 끝장 = 3, 겹침 = 0.6
+// 0~3 = 유령 펭펭 춤(인트로 · 앱 밖 그림) → 3~15 = 앱 녹화(표지 → 서랍) → 15~18 = 끝 장. 이음새는 전부 0.5~0.6초 크로스페이드.
+const 인트로 = 3, 앱길이 = 12, 끝장 = 3, 겹침 = 0.6, 이음 = 0.5
 const 배속 = (표['끝'] - 표['표지']) / 앱길이
 const 맞춤 = (k) => (표[k] - 표['표지']) / 배속
 console.log('배속', 배속.toFixed(2), '서랍 시작', 맞춤('서랍').toFixed(2))
 
-// 🖼 글자 판 셋 ＋ 끝 장 — 앱과 같은 글꼴(고운돋움)로 Playwright 가 그린다
 const 폰트 = readFileSync(join(앱, 'src/assets/fonts/gowun-dodum-korean-400.woff2')).toString('base64')
 const 폰트L = readFileSync(join(앱, 'src/assets/fonts/gowun-dodum-latin-400.woff2')).toString('base64')
 const 아이콘 = 'data:image/png;base64,' + readFileSync(join(앱, 'public/icons/icon-512-v7.png')).toString('base64')
+const 펠트 = 'data:image/webp;base64,' + readFileSync(join(앱, 'src/assets/decorbg/halloween-felt.webp')).toString('base64')
+const 유령 = 'data:image/png;base64,' + readFileSync(join(앱, 'src/assets/stickers/photo/hw_11.png')).toString('base64')   // 👻 통단호박 표지의 그 유령 펭펭(창업자 「흰색 망토 뒤집어쓴거」)
 const 머리 = `<style>@font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트}) format('woff2');unicode-range:U+AC00-D7A3,U+1100-11FF,U+3130-318F}
 @font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트L}) format('woff2')}
-*{margin:0;padding:0;box-sizing:border-box;font-family:GD,sans-serif}body{width:1080px;height:1920px;background:transparent;position:relative}
+*{margin:0;padding:0;box-sizing:border-box;font-family:GD,sans-serif}body{width:1080px;height:1920px;background:transparent;position:relative;overflow:hidden}
 .띠{position:absolute;left:70px;right:70px;bottom:250px;background:rgba(48,34,66,.86);color:#fff;border-radius:40px;padding:38px 30px;text-align:center;font-size:66px;line-height:1.3;font-weight:700}
 .끝{position:absolute;inset:0;background:#3b2c4f;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:60px;color:#fff}
 .끝 .큰{font-size:84px;font-weight:700;text-align:center;line-height:1.3}
 .알약{display:inline-flex;align-items:center;gap:16px;background:#fff;border-radius:999px;padding:24px 46px 24px 26px;font-size:42px;color:#5a4b6b;line-height:1.35}
-.알약 img{width:90px;height:90px;border-radius:22px}</style>`
+.알약 img{width:90px;height:90px;border-radius:22px}
+.펠트{position:absolute;inset:0;background:url(${펠트}) center/cover}
+/* 💃 춤 = 통통 튀기(위아래) ＋ 좌우 흔들기 ＋ 착지할 때 살짝 납작 — 한 박자 0.5초 */
+.춤{position:absolute;left:50%;top:50%;width:760px;margin-left:-380px;margin-top:-330px;transform-origin:50% 100%;animation:춤 .5s ease-in-out infinite}
+@keyframes 춤{0%{transform:translateY(0) rotate(-9deg) scale(1.04,.95)}25%{transform:translateY(-90px) rotate(0deg) scale(.97,1.04)}50%{transform:translateY(0) rotate(9deg) scale(1.04,.95)}75%{transform:translateY(-90px) rotate(0deg) scale(.97,1.04)}100%{transform:translateY(0) rotate(-9deg) scale(1.04,.95)}}
+.그림자{position:absolute;left:50%;top:50%;width:440px;height:60px;margin-left:-220px;margin-top:370px;border-radius:50%;background:rgba(40,25,50,.25);animation:그림자 .25s ease-in-out infinite alternate}
+@keyframes 그림자{from{transform:scale(1)}to{transform:scale(.7);opacity:.6}}</style>`
 const 판들 = {
-  t1: '<div class="띠">통단호박 크림스프</div>',
-  t2: '<div class="띠">단호박 통째로, 40분</div>',
+  t1: '<div class="띠">통단호박 크림스프 · 40분</div>',
   t3: '<div class="띠" style="bottom:auto;top:150px">10월 16일,<br>할로윈 꾸미기가 열려요</div>',   // 서랍을 안 가리게 «위»에
   end: `<div class="끝"><div class="큰">10월 16일<br>할로윈 꾸미기 오픈</div><span class="알약"><img src="${아이콘}"><span>App Store · Google Play 에서<br><b style="color:#3b2c4f;font-size:52px">한끼 레시피북</b> 검색</span></span></div>`,
 }
 const b2 = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const pg = await (await b2.newContext({ viewport: { width: 1080, height: 1920 } })).newPage()
 for (const [k, h] of Object.entries(판들)) { await pg.setContent('<!doctype html><html><head>' + 머리 + '</head><body>' + h + '</body></html>'); await pg.waitForTimeout(300); await pg.screenshot({ path: join(밖, k + '.png'), omitBackground: k !== 'end' }) }
+// 💃 인트로 프레임 — 애니메이션을 멈추고 시간을 «한 칸씩» 옮겨 찍는다(_릴스-식비소개-0919 와 같은 방식 · 끊김 없음)
+mkdirSync(join(밖, 'intro'), { recursive: true })
+await pg.setContent('<!doctype html><html><head>' + 머리 + '</head><body><div class="펠트"></div><div class="그림자"></div><img class="춤" src="' + 유령 + '"></body></html>')
+await pg.waitForTimeout(500); await pg.evaluate(() => document.getAnimations().forEach((a) => a.pause()))
+const 인트로칸 = Math.round((인트로 + 이음) * 30)
+for (let i = 0; i < 인트로칸; i++) { await pg.evaluate((t) => document.getAnimations().forEach((a) => { a.currentTime = t }), (i / 30) * 1000); await pg.screenshot({ path: join(밖, 'intro', 'f' + String(i).padStart(4, '0') + '.png') }) }
 await b2.close()
 
-const 창 = [[0.2, 3.0, 't1'], [3.2, 8.0, 't2'], [Math.max(맞춤('서랍'), 10).toFixed(2), 앱길이, 't3']]
+const 서랍 = Math.max(맞춤('서랍'), 2.5).toFixed(2)
 let f = `[0:v]trim=start=${표['표지'].toFixed(2)}:end=${표['끝'].toFixed(2)},setpts=(PTS-STARTPTS)/${배속.toFixed(4)},crop=1080:1920:0:110,fps=30,format=yuva420p[a0]`
-창.forEach(([s, e, k], i) => {
-  f += `;[${i + 1}:v]format=rgba,fade=t=in:st=${s}:d=0.35:alpha=1,fade=t=out:st=${(e - 0.35).toFixed(2)}:d=0.35:alpha=1[o${i}]`
-  f += `;[a${i}][o${i}]overlay=0:0:enable='between(t,${s},${e})'[a${i + 1}]`
-})
-f += `;[4:v]format=rgba,fade=t=in:st=${(앱길이 - 겹침).toFixed(2)}:d=${겹침}:alpha=1[eo]`
-f += `;[a3]tpad=stop_mode=clone:stop_duration=${끝장}[ax];[ax][eo]overlay=0:0:enable='gte(t,${(앱길이 - 겹침).toFixed(2)})',trim=duration=${앱길이 + 끝장},format=yuv420p[v]`
+f += `;[1:v]format=rgba,fade=t=in:st=0.3:d=0.35:alpha=1,fade=t=out:st=${(서랍 - 0.35).toFixed(2)}:d=0.35:alpha=1[o0];[a0][o0]overlay=0:0:enable='between(t,0.3,${서랍})'[a1]`
+f += `;[2:v]format=rgba,fade=t=in:st=${서랍}:d=0.35:alpha=1[o1];[a1][o1]overlay=0:0:enable='gte(t,${서랍})'[a2]`
+f += `;[3:v]format=rgba,fade=t=in:st=${(앱길이 - 겹침).toFixed(2)}:d=${겹침}:alpha=1[eo]`
+f += `;[a2]tpad=stop_mode=clone:stop_duration=${끝장}[ax];[ax][eo]overlay=0:0:enable='gte(t,${(앱길이 - 겹침).toFixed(2)})',trim=duration=${앱길이 + 끝장},fps=30,settb=AVTB,format=yuv420p[app]`
+f += `;[4:v]fps=30,settb=AVTB,format=yuv420p[in]`
+f += `;[in][app]xfade=transition=fade:duration=${이음}:offset=${인트로},format=yuv420p[v]`
 execFileSync(FF, ['-y', '-i', 영상,
   '-loop', '1', '-t', String(앱길이 + 끝장), '-i', join(밖, 't1.png'),
-  '-loop', '1', '-t', String(앱길이 + 끝장), '-i', join(밖, 't2.png'),
   '-loop', '1', '-t', String(앱길이 + 끝장), '-i', join(밖, 't3.png'),
   '-loop', '1', '-t', String(앱길이 + 끝장), '-i', join(밖, 'end.png'),
+  '-framerate', '30', '-i', join(밖, 'intro', 'f%04d.png'),
   '-filter_complex', f, '-map', '[v]', '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', '-r', '30', '-movflags', '+faststart', 낼파일], { stdio: 'inherit' })
 console.log('✅', 낼파일)
