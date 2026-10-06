@@ -8184,7 +8184,7 @@ const RAW_BASICS = [
     title: '차돌 불고기', from: '2026-11-18',   // 📅 [창업자 2026-10-07] 「11월 18일에 넣자」 — SNS 수요일(약밥과 같은 칸)
     category: '한식', folder: '한식', tags: ['고기', '불고기', '차돌'],
     time: 20, servings: 2, difficulty: '쉬움',
-    sourceUrl: 'https://www.instagram.com/reel/DeJWdKmT4f6/',
+    sourceUrl: 'https://youtube.com/shorts/ibpZzlnbqd4',   // ✏️ 창업자 2026-10-07 원본 쇼츠(앱에서 재생) · 처음 받은 건 honeypicklabss 릴스 instagram.com/reel/DeJWdKmT4f6
     sourceName: '풍류천재 조서영',   // ✅ 창업자 2026-10-07 「풍류천재조서형으로하자」 → 영상 속 표기 「출처-풍류천재 조서영」 그대로 · 올린 계정 honeypicklabss
     물어볼것: '검수 때 같이 — ①시간 20분은 내가 잡은 값(영상에 없음) ③영상의 모자이크 재료 «한 꼬집»은 이름을 몰라 뺐다',
     ingredients: [
