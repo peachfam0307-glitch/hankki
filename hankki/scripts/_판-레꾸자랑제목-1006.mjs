@@ -44,7 +44,15 @@ const C = `<div class="가" style="text-align:left">
   <div style="position:absolute;top:478px;left:80px;font-family:JU;font-size:54px;color:#ffe3b5;letter-spacing:2px">꾸미기 금손 모십니다</div>
   <div style="position:absolute;top:548px;left:80px;font-family:DH;font-size:76px;color:#fff;letter-spacing:2px">10.16 — 10.26</div>
 </div>`
-const html = `<!doctype html><html><head>${머리}</head><body>${지금}${칸(A, 'A · 포스터')}${칸(B, 'B · 손글씨')}${칸(C, 'C · 왼쪽 정렬')}</body></html>`
+// ✏️ 창업자 2026-10-06 「B로 하고 금손을 금테, 주황 두가지로 해봐줘」 → B 의 금손 줄만 갈아 끼운 둘
+const 금손줄 = /<div style="position:absolute;top:420px[^\n]*꾸미기 금손 모십니다<\/div>/
+const 금테 = `<div style="position:absolute;top:412px;left:0;right:0"><span style="display:inline-block;font-family:JU;font-size:52px;color:#ffe3b5;letter-spacing:3px;padding:10px 46px;border:3px solid #ffb347;border-radius:999px;background:rgba(30,12,50,.55);box-shadow:0 0 24px rgba(255,160,60,.35)">꾸미기 금손 모십니다</span></div>`
+const 주황 = `<div style="position:absolute;top:410px;left:0;right:0"><span style="display:inline-block;font-family:JU;font-size:54px;color:#fff;letter-spacing:2px;padding:10px 46px;border-radius:999px;background:#ff7a1a;box-shadow:0 8px 24px rgba(0,0,0,.35)">꾸미기 금손 모십니다</span></div>`
+if (!금손줄.test(B)) throw new Error('B 의 금손 줄을 못 찾았다')
+const B금테 = B.replace(금손줄, 금테), B주황 = B.replace(금손줄, 주황)
+const html = process.env.판 === 'B둘'
+  ? `<!doctype html><html><head>${머리}</head><body>${지금}${칸(B, 'B · 금빛 글자')}${칸(B금테, 'B · 금테')}${칸(B주황, 'B · 주황')}</body></html>`
+  : `<!doctype html><html><head>${머리}</head><body>${지금}${칸(A, 'A · 포스터')}${칸(B, 'B · 손글씨')}${칸(C, 'C · 왼쪽 정렬')}</body></html>`
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const pg = await (await b.newContext({ viewport: { width: 4470, height: 1980 } })).newPage()
 await pg.setContent(html); await pg.waitForTimeout(600)
