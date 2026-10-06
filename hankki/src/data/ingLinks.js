@@ -36,6 +36,9 @@ export const ING_LINKS = {
   '대파': 'https://link.coupang.com/a/gYRLijw0cu', // ⛇묶음: 대파 / 다진 파
   '참기름': 'https://link.coupang.com/a/gYVFT4O92y',
   '양파': 'https://link.coupang.com/a/gYRGqOjirk',
+  '황태채': 'https://link.coupang.com/a/hCPeJ9ui8i', // 창업자 2026-10-06 「저번에 줬던거야 저장좀해놔」 · 10/19 황태국·황태장아찌
+  '야채가루육수': 'https://link.coupang.com/a/hCPkC0b8Y8', // 창업자 2026-10-06 · 10/19 황태국
+  '짜장가루': 'https://link.coupang.com/a/hCPsgOGCt2', // 창업자 2026-10-06 · 10/19 순살찜닭
 
   '간장': 'https://link.coupang.com/a/gYVIGOABGK',
 
