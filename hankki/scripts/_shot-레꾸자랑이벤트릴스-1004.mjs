@@ -26,7 +26,7 @@ const 아이콘 = 짐(join(앱, 'public/icons/icon-512-v7.png'))
 const 그림 = 짐(배경)
 const 유령 = 짐(join(앱, 'src/assets/stickers/photo/hw_11.png'))
 const 머리 = `<style>@font-face{font-family:BH;src:url(data:font/woff2;base64,${폰('blackhansans-korean-400.woff2')})}@font-face{font-family:BH;src:url(data:font/woff2;base64,${폰('blackhansans-latin-400.woff2')})}
-@font-face{font-family:JU;src:url(data:font/woff2;base64,${폰('jua-korean-400.woff2')})}@font-face{font-family:JU;src:url(data:font/woff2;base64,${폰('jua-latin-400.woff2')})}
+@font-face{font-family:JU;src:url(data:font/woff2;base64,${폰('jua-korean-400.woff2')})}@font-face{font-family:JU;src:url(data:font/woff2;base64,${폰('jua-latin-400.woff2')})}@font-face{font-family:SD;src:url(data:font/woff2;base64,${폰('singleday-korean-400.woff2')})}
 *{margin:0;box-sizing:border-box}body{width:1080px;height:1920px;position:relative;overflow:hidden;background:transparent}
 .밤{position:absolute;inset:0;background:url(${그림}) center/cover;filter:blur(6px) brightness(.55);transform:scale(1.05)}
 .띠{position:absolute;left:60px;right:60px;top:120px;background:rgba(43,18,61,.92);color:#fff;border-radius:40px;padding:30px 20px;text-align:center;font-family:BH;font-size:56px;line-height:1.25}
@@ -62,9 +62,10 @@ const 장면 = {
   s0: { 길이: 3.4, 몸: `<div class="표바"></div><div style="position:absolute;inset:0 0 auto 0;height:900px;background:linear-gradient(180deg,rgba(25,10,45,.7),rgba(25,10,45,0))"></div>
     <div class="반짝" style="left:140px;top:300px;--at:.3s">✦</div><div class="반짝" style="left:880px;top:250px;--at:.7s">✦</div><div class="반짝" style="left:960px;top:700px;--at:1.1s">✦</div><div class="반짝" style="left:80px;top:760px;--at:1.5s">✦</div>
     <div class="내림" style="top:95px;font-family:JU;color:#ffb347;font-size:64px;--at:.05s">10월 한끼</div>
-    <div class="내림" style="top:165px;font-family:BH;color:#fff;font-size:190px;line-height:1;text-shadow:0 10px 0 #6b2fa0,0 18px 40px rgba(0,0,0,.6);--at:.15s">레꾸자랑</div>
-    <div class="내림 팡" style="top:390px;--at:.55s"><span style="display:inline-block;background:#ff7a1a;color:#fff;font-family:BH;font-size:60px;padding:14px 44px;border-radius:999px;transform:rotate(-2deg)">꾸미기 금손 모십니다</span></div>
-    <div class="내림 팡" style="top:520px;font-family:BH;color:#fff;font-size:116px;text-shadow:0 6px 0 #ff7a1a,0 12px 30px rgba(0,0,0,.5);--at:.85s">10.16 ~ 10.26</div>
+    <!-- ✏️ 창업자 2026-10-06 「b주황할게」 = 손글씨 제목(_판-레꾸자랑제목-1006 B) ＋ 금손 줄 주황 알약 -->
+    <div class="내림" style="top:150px;--at:.15s"><span style="display:inline-block;font-family:SD;font-size:230px;line-height:1;color:#fff;-webkit-text-stroke:8px #ff7a1a;paint-order:stroke fill;text-shadow:0 10px 30px rgba(0,0,0,.5);transform:rotate(-3deg)">레꾸자랑</span></div>
+    <div class="내림 팡" style="top:410px;--at:.55s"><span style="display:inline-block;font-family:JU;font-size:54px;color:#fff;letter-spacing:2px;padding:10px 46px;border-radius:999px;background:#ff7a1a;box-shadow:0 8px 24px rgba(0,0,0,.35)">꾸미기 금손 모십니다</span></div>
+    <div class="내림 팡" style="top:510px;font-family:BH;color:#fff;font-size:100px;text-shadow:0 6px 0 #ff7a1a,0 12px 30px rgba(0,0,0,.5);--at:.85s">10.16 ~ 10.26</div>
     <div class="올림" style="--at:1.15s"><div><b style="color:#ff7a1a">①</b> 할로윈 꾸미기로 요리 사진 꾸미기</div><div><b style="color:#ff7a1a">②</b> 공유 → 인스타 → <b>DM 보내기</b></div><div><b style="color:#ff7a1a">③</b> 10월 28일 한끼 인스타에 올려드려요</div></div>` },
   // ② 공유 → 인스타 → DM — 손가락 동그라미가 차례로 «누른다»
   s2: { 길이: 3.2, 몸: `<div class="밤"></div><div class="띠"><b>②</b> 공유 → 인스타 → DM 보내기</div>
