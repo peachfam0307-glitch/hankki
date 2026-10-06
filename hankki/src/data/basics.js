@@ -8181,7 +8181,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-chadol-bulgogi',
-    title: '차돌 불고기', from: '2026-11-18',   // 📅 [창업자 2026-10-07] 「11월 18일에 넣자」 — SNS 수요일(약밥과 같은 칸)
+    title: '차돌 불고기', from: '2026-11-18', review: '창업자',   // ✅ 창업자 검수 2026-10-07 「차돌 불고기 검수 끝」 · 📅 [창업자 2026-10-07] 「11월 18일에 넣자」 — SNS 수요일(약밥과 같은 칸)
     category: '한식', folder: '한식', tags: ['고기', '불고기', '차돌'],
     time: 20, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://youtube.com/shorts/ibpZzlnbqd4',   // ✏️ 창업자 2026-10-07 원본 쇼츠(앱에서 재생) · 처음 받은 건 honeypicklabss 릴스 instagram.com/reel/DeJWdKmT4f6
