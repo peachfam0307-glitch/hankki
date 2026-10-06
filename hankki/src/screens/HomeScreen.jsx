@@ -178,16 +178,26 @@ const HOME_COACH_STEPS = [
 //   ③ 이 폰에서 «아직 안 눌렀나»(누른 날짜를 적어 둔다 — 그 글에 대해서만 끈다)
 //   ⛔ 날짜 계산은 «반드시» todayKST 로 (절대원칙 27 · 폰이 KST 면 0~9시에 하루가 어긋났다).
 const 인스타본표 = 'hankki:insta:본글'
+// 📅 [2026-10-06] INSTA_NEW_AT 은 날짜 «여러 개»도 된다 → 오늘 기준 «창 안에 든 가장 최근 날» 하나를 고른다
+const 지금켠날 = () => {
+  const 오늘 = Date.parse(todayKST() + 'T00:00:00Z')
+  let 고른 = ''
+  for (const s of [].concat(INSTA_NEW_AT || [])) {
+    const 켠날 = String(s || '').trim()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(켠날)) continue
+    const 지난날 = (오늘 - Date.parse(켠날 + 'T00:00:00Z')) / 86400000
+    if (지난날 >= 0 && 지난날 < INSTA_NEW_DAYS && 켠날 > 고른) 고른 = 켠날   // ② 창 안인가 (⛔미래 날짜도 막는다)
+  }
+  return 고른
+}
 export const 인스타새글있나 = () => {
   try {
-    const 켠날 = String(INSTA_NEW_AT || '').trim()
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(켠날)) return false
-    if (localStorage.getItem(인스타본표) === 켠날) return false          // ③ 이미 눌러서 봤다
-    const 지난날 = (Date.parse(todayKST() + 'T00:00:00Z') - Date.parse(켠날 + 'T00:00:00Z')) / 86400000
-    return 지난날 >= 0 && 지난날 < INSTA_NEW_DAYS                        // ② 창 안인가 (⛔미래 날짜도 막는다)
+    const 켠날 = 지금켠날()
+    if (!켠날) return false
+    return localStorage.getItem(인스타본표) !== 켠날          // ③ 이 글을 이미 눌러서 봤나
   } catch { return false }
 }
-const 인스타봤다 = () => { try { localStorage.setItem(인스타본표, String(INSTA_NEW_AT || '')) } catch { /* noop */ } }
+const 인스타봤다 = () => { try { localStorage.setItem(인스타본표, 지금켠날()) } catch { /* noop */ } }
 
 export default function HomeScreen() {
   // 📔 diary = 「만들었어요」가 쌓는 요리 일기 — 「한 줄 안 쓴 것」을 세는 데 쓴다(`nextUp.js`)
