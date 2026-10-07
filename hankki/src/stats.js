@@ -555,7 +555,7 @@ export function 로그인실패(e) {
 }
 // 🔒 other 속 갈래 — «정해진 이름»만 보낸다(오류 문장·코드를 이름에 섞지 않는다 · §5). 이름 10개 더.
 //    ⭐ 앱 안 로그인(nativeAuth)은 팝업이 아니라서 «창 닫음»이 popup-closed 로 안 오고 여기로 새어 든다 → cancel 로 잡는다.
-const 기타속 = { nocode: 1, cancel: 1, noplugin: 1, notoken: 1, credential: 1, too_many: 1, disabled: 1, domain: 1, internal: 1, etc: 1 }
+const 기타속 = { nocode: 1, cancel: 1, noplugin: 1, notoken: 1, credential: 1, too_many: 1, disabled: 1, domain: 1, internal: 1, etc: 1, nokey: 1, noauth: 1, webapple: 1 }
 /** 🧮 other 오류 → 속 갈래. ⛔순수 함수(재현판이 잰다) */
 export function 기타속고르기(e) {
   const c = String((e && e.code) || '')
@@ -563,6 +563,10 @@ export function 기타속고르기(e) {
   if (/cancel|취소|12501|1001/i.test(c + ' ' + m)) return 'cancel'        // 앱 안 창을 닫음(구글 12501 · 애플 1001)
   if (m.includes('이 앱 판에선 로그인이 안 돼요')) return 'noplugin'           // nativeAuth — 부품 없음
   if (m.includes('로그인 정보를 못 받았어요')) return 'notoken'               // nativeAuth — 토큰 없음
+  // 🔎 [2026-10-07] 우리가 «직접» 낸 오류(코드 없음)를 셋으로 더 가른다 — 10/7 아이폰 새 유저 3명이 nocode 로만 막혔는데 왜인지 못 갈랐다(창업자 재현 = 새로 깔아도 구글·애플 다 됨)
+  if (m.includes('로그인 번호를 못 받았어요')) return 'nokey'                 // 로그인은 됐는데 우리 열쇠(구글번호·apple_)를 못 만듦 — cloud.js 로그인()
+  if (m.includes('로그인부터 해주세요')) return 'noauth'                      // 로그인 직후 요약()에서 currentUser 가 아직 없음 — cloud.js 요약()
+  if (m.includes('Google 로그인만 돼요')) return 'webapple'                  // 앱 밖(웹)인데 애플을 누름 — cloud.js 로그인()
   if (!c) return 'nocode'
   if (c.includes('invalid-credential') || c.includes('account-exists')) return 'credential'
   if (c.includes('too-many-requests')) return 'too_many'
