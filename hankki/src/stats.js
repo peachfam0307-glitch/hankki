@@ -545,9 +545,12 @@ export const 로그인탈출 = 관문('gate_escape')
 //    그건 저쪽 창 안에서 끝나고, 우리 손엔 닫힌 것만 남는다. 그래서 «other» 는 「그 밖」이지 「비번 탓」이 아니다.
 const 로그인실패갈래 = { closed: 1, blocked: 1, net: 1, other: 1 }   // 🔒 이 넷 말고는 안 보낸다
 /** 🔐 로그인이 안 됐다 — 오류를 주면 갈래까지 같이 보낸다(⛔오류 «문장»은 안 보낸다 · 코드만 본다) */
-export function 로그인실패(e) {
+export function 로그인실패(e, 공급자 = '') {
   지난화면 = null
   행동보내기('gate_fail')
+  // 🔎 [2026-10-07] «어느 단추»로 막혔나 — 10/7 아이폰 3명이 Firebase 계정도 안 생긴 채 막혔다(창업자 콘솔 실측) → 구글 창인지 애플 창인지부터 가른다. 이름 2개.
+  if (공급자 === 'google.com') 행동보내기('gate_fail_google')
+  else if (공급자 === 'apple.com') 행동보내기('gate_fail_apple')
   const 갈 = 로그인실패갈래고르기(e)
   if (갈 && 로그인실패갈래[갈]) 행동보내기(`gate_fail_${갈}`)
   // 🔎 [창업자 2026-09-28 「응 다음판에 넣어줘」] other 는 «속»까지 가른다 — 9/27 한 사람이 other 7번으로 막혔는데 왜인지 몰랐다
@@ -555,7 +558,7 @@ export function 로그인실패(e) {
 }
 // 🔒 other 속 갈래 — «정해진 이름»만 보낸다(오류 문장·코드를 이름에 섞지 않는다 · §5). 이름 10개 더.
 //    ⭐ 앱 안 로그인(nativeAuth)은 팝업이 아니라서 «창 닫음»이 popup-closed 로 안 오고 여기로 새어 든다 → cancel 로 잡는다.
-const 기타속 = { nocode: 1, cancel: 1, noplugin: 1, notoken: 1, credential: 1, too_many: 1, disabled: 1, domain: 1, internal: 1, etc: 1 }
+const 기타속 = { nocode: 1, cancel: 1, noplugin: 1, notoken: 1, credential: 1, too_many: 1, disabled: 1, domain: 1, internal: 1, etc: 1, nokey: 1, noauth: 1, webapple: 1, apple1000: 1, appleerr: 1, googleerr: 1 }
 /** 🧮 other 오류 → 속 갈래. ⛔순수 함수(재현판이 잰다) */
 export function 기타속고르기(e) {
   const c = String((e && e.code) || '')
@@ -563,6 +566,15 @@ export function 기타속고르기(e) {
   if (/cancel|취소|12501|1001/i.test(c + ' ' + m)) return 'cancel'        // 앱 안 창을 닫음(구글 12501 · 애플 1001)
   if (m.includes('이 앱 판에선 로그인이 안 돼요')) return 'noplugin'           // nativeAuth — 부품 없음
   if (m.includes('로그인 정보를 못 받았어요')) return 'notoken'               // nativeAuth — 토큰 없음
+  // 🔎 [2026-10-07] 우리가 «직접» 낸 오류(코드 없음)를 셋으로 더 가른다 — 10/7 아이폰 새 유저 3명이 nocode 로만 막혔는데 왜인지 못 갈랐다(창업자 재현 = 새로 깔아도 구글·애플 다 됨)
+  if (m.includes('로그인 번호를 못 받았어요')) return 'nokey'                 // 로그인은 됐는데 우리 열쇠(구글번호·apple_)를 못 만듦 — cloud.js 로그인()
+  if (m.includes('로그인부터 해주세요')) return 'noauth'                      // 로그인 직후 요약()에서 currentUser 가 아직 없음 — cloud.js 요약()
+  if (m.includes('Google 로그인만 돼요')) return 'webapple'                  // 앱 밖(웹)인데 애플을 누름 — cloud.js 로그인()
+  // 🍎 [2026-10-07] 로그인 «창» 단계(부품) 오류 — Firebase 까지 못 간 실패. 10/7 3명이 여기였다(계정 0 · 창업자 콘솔).
+  //    애플 AuthorizationError 1000 = 「알 수 없는 실패」(폰 Apple ID·키체인 상태 등) · 1001(취소)은 위 cancel 이 먼저 잡는다.
+  if (/AuthorizationError error 1000\b|error 1000\.\)/.test(m)) return 'apple1000'
+  if (/AuthorizationError|AuthenticationServices/.test(m)) return 'appleerr'
+  if (/GIDSignIn|com\.google|keychain/i.test(m)) return 'googleerr'
   if (!c) return 'nocode'
   if (c.includes('invalid-credential') || c.includes('account-exists')) return 'credential'
   if (c.includes('too-many-requests')) return 'too_many'

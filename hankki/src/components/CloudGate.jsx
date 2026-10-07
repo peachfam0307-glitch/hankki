@@ -95,7 +95,7 @@ export default function CloudGate({ onDone }) {
       set실패수((n) => n + 1)
       // 🚪 gate_fail — 「눌렀는데 «못» 한 사람」. 이게 있어야 「안 했다」와 갈린다.
       //   🔐 [2026-09-22] 오류를 «같이» 넘긴다 → gate_fail_closed/blocked/net/other 로 «왜»가 갈린다(stats 가 코드만 읽는다).
-      try { 로그인실패(e) } catch { /* noop */ }
+      try { 로그인실패(e, 공급자) } catch { /* noop */ }
       set탈(고운말(e)); set바쁨('')
     }
   }
