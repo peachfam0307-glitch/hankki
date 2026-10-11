@@ -8209,7 +8209,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-goguma-sun-bokkeum',
-    title: '고구마순볶음', from: '2027-01-20',   // 📅 [창업자 2026-10-11] 「다다음주로하자」(10/21) → 곧 「고구마순도 없는 날짜에넣자」 = 다음 빈 수요일
+    title: '고구마순볶음', from: '2026-12-02',   // 📅 [창업자 2026-10-11] 「다다음주로하자」(10/21) → 「고구마순도 없는 날짜에넣자」 → 「수요일마다 4편씩」(2026-10-11)로 12/2
     category: '한식', folder: '반찬', tags: ['반찬', '나물', '볶음', '고구마순'],
     time: 30, servings: 4, difficulty: '쉬움',   // ⏱ 데치기 5 + 버무려 두기 10 + 볶기 5 + 5
     sourceUrl: 'https://www.instagram.com/reel/DdVHLq8zsfV/',
@@ -8232,7 +8232,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-jinmichae-jjokpa-muchim',
-    title: '진미채쪽파무침', from: '2026-12-02',
+    title: '진미채쪽파무침', from: '2026-11-18',
     category: '한식', folder: '반찬', tags: ['반찬', '진미채', '쪽파', '무침'],
     time: 20, servings: 4, difficulty: '쉬움',   // ⏱ 쪽파 절이기 10 + 손질·버무리기
     sourceUrl: 'https://www.instagram.com/reel/DeROLctSXfQ/',
@@ -8252,7 +8252,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-jidori-udon',
-    title: '지도리우동', from: '2026-12-09',
+    title: '지도리우동', from: '2026-11-25',
     category: '일식', folder: '일식', tags: ['우동', '닭다리살', '대파', '국물 요리'],
     time: 20, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DeMBerhhZ-8/',
@@ -8276,7 +8276,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-umma-hwangtae-haejangguk',
-    title: '엄마표 황태 해장국', from: '2026-12-16',   // ✅ 이름 = 창업자 2026-10-11(11/11 「황태해장국」 정호영 편과 구분)
+    title: '엄마표 황태 해장국', from: '2026-11-25',   // ✅ 이름 = 창업자 2026-10-11(11/11 「황태해장국」 정호영 편과 구분)
     category: '한식', folder: '한식', tags: ['국물 요리', '해장', '황태'],
     time: 30, servings: 4, difficulty: '쉬움',   // ⏱ 볶고 물 조금씩 4~5번 조리기 + 끓이기
     sourceUrl: 'https://www.instagram.com/reel/Dd0cWLsJPWJ/',
@@ -8299,7 +8299,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-kkaennip-muchim',
-    title: '깻잎무침', from: '2026-12-23',
+    title: '깻잎무침', from: '2026-11-25',
     category: '한식', folder: '반찬', tags: ['반찬', '깻잎', '무침'],
     time: 15, servings: 4, difficulty: '쉬움',   // ⏱ 데치기 1 + 헹구기·자르기·무치기
     sourceUrl: 'https://www.instagram.com/reel/DdsbuUyPoI8/',
@@ -8321,7 +8321,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-oi-crami-naengchae',
-    title: '오이크래미냉채', from: '2026-12-30',
+    title: '오이크래미냉채', from: '2026-12-02',
     category: '한식', folder: '반찬', tags: ['반찬', '냉채', '오이', '크래미'],
     time: 10, servings: 4, difficulty: '쉬움',   // ⏱ 원문 「5분」 + 소금에 절이기
     sourceUrl: 'https://www.instagram.com/reel/DdlMnseSeqU/',
@@ -8346,7 +8346,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-manneung-yangnyeom-ganjang',
-    title: '만능양념간장', from: '2027-01-06',
+    title: '만능양념간장', from: '2026-12-02',
     category: '한식', folder: '반찬', tags: ['양념', '간장', '깻잎장아찌'],
     time: 10, servings: 4, difficulty: '쉬움',   // ⏱ 썰고 섞기
     sourceUrl: 'https://www.instagram.com/reel/DdYQkGqOFYa/',
@@ -8366,7 +8366,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-kodari-jorim',
-    title: '코다리조림', from: '2027-01-13',
+    title: '코다리조림', from: '2026-12-02',
     category: '한식', folder: '반찬', tags: ['반찬', '생선', '코다리', '조림'],
     time: 25, servings: 4, difficulty: '쉬움',   // ⏱ 무 끓이기 5 + 조리기 15 + 대파 넣고 5
     sourceUrl: 'https://www.instagram.com/reel/DdNRI3qTQ74/',
@@ -8411,7 +8411,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-sogogi-mechurial-jorim',
-    title: '소고기메추리알조림', from: '2027-01-27',
+    title: '소고기메추리알조림', from: '2026-12-09',
     category: '한식', folder: '반찬', tags: ['반찬', '조림', '메추리알', '소고기', '꽈리고추'],
     time: 30, servings: 4, difficulty: '쉬움',   // ⏱ 소고기 밑간 10 + 양념장 끓이고 조리기
     sourceUrl: 'https://youtu.be/oQfc9OHeASY',
@@ -8437,7 +8437,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-samchi-ganjang-jorim',
-    title: '삼치 간장조림', from: '2027-02-10',
+    title: '삼치 간장조림', from: '2026-12-09',
     category: '한식', folder: '반찬', tags: ['반찬', '생선', '삼치', '조림'],
     time: 30, servings: 3, difficulty: '보통',   // ⏱ 무 졸이기 15 + 굽기 + 약불 3
     sourceUrl: 'https://youtu.be/STEnW6MwY9U',
@@ -8459,7 +8459,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-chadol-yukgaejang',
-    title: '초간단 육개장', from: '2027-02-17',   // 📅 빈 수요일(창업자 2026-10-11 「없는날짜에 채워넣어」) · 재료·순서 = 설명란 원문
+    title: '초간단 육개장', from: '2026-12-09',   // 📅 빈 수요일(창업자 2026-10-11 「없는날짜에 채워넣어」) · 재료·순서 = 설명란 원문
     category: '한식', folder: '한식', tags: ['국물 요리', '육개장', '차돌양지', '고사리'],
     time: 25, servings: 3, difficulty: '쉬움',   // ⏱ 볶기 + 10분 끓이기 + 한소끔
     sourceUrl: 'https://youtu.be/PUhBhaLHj6s',
@@ -8484,7 +8484,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-bibim-gim-guksu',
-    title: '비빔김국수', from: '2027-02-24',   // 📅 빈 수요일(창업자 「없는날짜에 채워넣어」) · 재료·순서 = 캡션 원문
+    title: '비빔김국수', from: '2026-12-09',   // 📅 빈 수요일(창업자 「없는날짜에 채워넣어」) · 재료·순서 = 캡션 원문
     category: '한식', folder: '한식', tags: ['국수', '김', '비빔'],
     time: 10, servings: 1, difficulty: '쉬움',   // ⏱ 김소스 갈기 + 무치기(삶은 소면 기준)
     sourceUrl: 'https://www.instagram.com/reel/DeUBqqFBUbx/',
@@ -8504,7 +8504,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-hanguksik-mapa-dubu',
-    title: '한국식 마파두부', from: '2027-03-10',   // 📅 빈 수요일 · 원제목 「고추장 된장으로 만든 한국식 마파두부」 · 9/21 「마파두부」와 다른 편
+    title: '한국식 마파두부', from: '2026-12-16',   // 📅 빈 수요일 · 원제목 「고추장 된장으로 만든 한국식 마파두부」 · 9/21 「마파두부」와 다른 편
     category: '한식', folder: '한식', tags: ['두부', '돼지고기', '고추장', '된장'],
     time: 20, servings: 3, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DeT8lkrPjcS/',
