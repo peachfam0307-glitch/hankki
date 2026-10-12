@@ -97,6 +97,10 @@ const ctx = await b.newContext({
   viewport: HQ ? { width: 1080, height: 2340 } : { width: 390, height: 844 }, deviceScaleFactor: HQ ? 1 : 2, locale: 'ko-KR', hasTouch: false,
   recordVideo: { dir: 밖, size: HQ ? { width: 1080, height: 2340 } : { width: 390, height: 844 } },
 })
+// 🔑⏰ [2026-10-04] 시안 JSON 의 「열쇠」(예: 할로윈)·「시계」(예: 2026-10-14) — 아직 안 열린 철 꾸미기로 찍을 때 (통단호박 핼러윈 릴스)
+if (시안.시계) await ctx.clock.setFixedTime(new Date(시안.시계 + 'T11:00:00Z'))
+if (시안.열쇠) await ctx.addInitScript((k) => { try { localStorage.setItem('hankki:열쇠:' + k, '1') } catch { /* noop */ } }, 시안.열쇠)
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki:nudge:giftpack', '1') } catch { /* noop */ } })   // 🎁 받은 선물 시트가 덮으면 탭이 안 눌린다
 if (HQ) await ctx.addInitScript((z) => { document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.zoom = String(z) }) }, 배율)
 await ctx.addInitScript((테마키) => {
   try {
