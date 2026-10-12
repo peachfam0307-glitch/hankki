@@ -26,7 +26,11 @@
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://peachfam0307-glitch.github.io/hankki/manifest.webmanifest",
   "fallbackType": "customtabs",
-  "features": {},
+  "features": {
+    "playBilling": {
+      "enabled": true
+    }
+  },
   "alphaDependencies": {
     "enabled": false
   },
