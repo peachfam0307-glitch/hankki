@@ -36,7 +36,7 @@ for (const [n, s] of [['BragScreen', brag], ['RecipeDetail', detail]]) {
 // ⑤ 받은 사람
 재다('⑤ 공유 주소 = https 고정 ＋ ?from=brag', /export const 자랑주소 = 'https:\/\/peachfam0307-glitch\.github\.io\/hankki\/\?from=brag'/.test(cover))
 재다('⑤ 표지 payload 가 appUrl 대신 자랑주소', /const url = 자랑주소/.test(cover))
-재다('⑤ 랜덤 카드 두 곳이 url: 자랑주소', (sdc.match(/url: 자랑주소/g) || []).length === 2)
+재다('⑤ 랜덤 카드 세 곳이 url: 자랑주소 (표지·이어보내기·②레시피만 · 2026-10-12)', (sdc.match(/url: 자랑주소/g) || []).length === 3)
 재다('⑤ 앱이 from=brag 을 brag_arrive 로 센다', /get\('from'\) !== 'brag'\) return[\s\S]{0,200}행동보내기\('brag_arrive'\)/.test(stats))
 재다('⑤ 다시왔나() 첫머리에서 자랑타고왔나()', /if \(통계꺼짐\(\)\) return\n\s*자랑타고왔나\(\)/.test(stats))
 
