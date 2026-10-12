@@ -1361,15 +1361,26 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared, 
   //    ⛔ 문구의 「· 재료·레시피 같이!」도 뺐다 — 한 장만 가는데 그렇게 적으면 거짓말이다.
   //    ⭐ 남은 레시피는 **버리지 않는다** — `남은레시피` 에 담아 아래 시트가 한 번 더 청한다.
   //       ⛔ 여기서 이어서 또 `share` 를 부르면 안 된다 — 허가(user activation)가 이미 소진돼 폰이 거절한다.
+  // 🍳 [창업자 2026-10-12] 「② 레시피」를 고른 채 보내면 «레시피 카드 한 장만» — 표지 없이.
+  //    📮 *"레시피만 보낼수가 없더라고. 레시피만 보내기를해도 표지가 무조건 먼저 가"* · *"작게 보이면 안되지"*
+  //    ⛔ 두 장을 한 번에 넘기지 않는다(위 2026-08-28 ⓑ) — 고른 한 장만 간다.
   const go = useCallback((files) => {
     if (!(navigator.canShare && navigator.share)) return null
+    const 레시피만 = page === 2 && files.length > 1
+    if (레시피만) {
+      const 한장 = [files[1]]
+      if (!navigator.canShare({ files: 한장 })) return null
+      return navigator
+        .share({ files: 한장, title, text: `『${title}』 재료·만드는 법이에요 🍳\n${스토어검색()} 🔍`, url: 자랑주소 })
+        .then((v) => { onShared?.(); return v })
+    }
     const 표지 = [files[0]]
     const 레시피 = files.length > 1 ? files[1] : null
     if (!navigator.canShare({ files: 표지 })) return null
     return navigator
       .share({ files: 표지, title, text: `『${title}』 오늘의 한 끼 🧡\n${스토어검색()} 🔍`, url: 자랑주소 })
       .then((v) => { onShared?.(); if (레시피) set남은레시피(레시피); return v })
-  }, [title, onShared])
+  }, [title, onShared, page])
 
   // 📱 남은 레시피 한 장을 «따로» 보낸다 — 이 버튼이 «새 터치»라 허가가 살아 있다.
   const 레시피보내기 = useCallback(() => {
@@ -1567,7 +1578,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared, 
           {hasRecipe
             /* 📱 [2026-08-28 ⓑ] 옛 글 = 「공유하면 2장(카드+레시피)이 «함께» 가요」 → 이제 **거짓말**이다.
                한 장씩 따로 보낸다(창업자 "ㄴ으로 하자"). ⛔되는 척하는 글자를 남기지 않는다(v11.19 「링크 정직」). */
-            ? <>카드 먼저, 레시피는 한 장 더 보내요<img src={uiDuoHi} alt="" draggable={false} style={{ width: 24, height: 24, objectFit: 'contain' }} /></>
+            ? <>{page === 2 ? '레시피만 한 장 보내요' : '카드 먼저, 레시피는 한 장 더 보내요'}<img src={uiDuoHi} alt="" draggable={false} style={{ width: 24, height: 24, objectFit: 'contain' }} /></>
             : <><Icon name="refresh" size={14} stroke={2} />다시 뽑기로 마음에 들 때까지</>}
         </div>
         {/* 버튼 */}
