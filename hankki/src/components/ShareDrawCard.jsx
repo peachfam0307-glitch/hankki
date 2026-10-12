@@ -1467,7 +1467,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared, 
       else setBusy('공유가 안 됐어요. 잠시 뒤 다시 눌러주세요')
       setTimeout(() => setBusy(null), 2800)
     }
-  }, [busy, title, hasRecipe, capture])
+  }, [busy, title, hasRecipe, capture, go])   // ⛔ go 를 빼면 «탭을 바꾸기 전» go(page=1)를 들고 있어 ② 레시피를 골라도 표지가 간다(2026-10-12 눈검사로 잡음)
 
   // 🖼 이 카드를 레시피 표지로 저장 — CTA 없는 cover 카드를 이미지로 캡처해 부모(레시피 화면)에 넘긴다.
   //    ⭐ 저장 «모양»은 아래 `카드표지로()` 한 곳에서 만든다 — 부르는 화면이 둘이라 흩어지면 한쪽이 낡는다.
