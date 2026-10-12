@@ -236,6 +236,7 @@ export const ING_LINKS = {
   '돼지 미박사태 800g': 'https://link.coupang.com/a/hM40tloWQ0',
   '체다치즈': 'https://link.coupang.com/a/hM44mFX6vA',
   '멕시칸 치즈': 'https://link.coupang.com/a/hM466A2PUi',
+  '토마토': 'https://link.coupang.com/a/hM5aTdLD0m',
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
