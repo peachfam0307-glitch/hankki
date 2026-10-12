@@ -233,6 +233,7 @@ export const ING_LINKS = {
   '전분': 'https://link.coupang.com/a/gYWQr9gXIa', // 창업자 2026-10-02 「감자전분」 ⛇묶음: 감자전분 / 전분가루 / 전분물 / 전분
   '재래된장': 'https://link.coupang.com/a/gRYZjLwCQK', // 창업자 2026-10-02 「맥된장」(장바구니 맥된장과 같은 링크)
   '생강쌍화차 1병': 'https://link.coupang.com/a/hM4UZFSleS',
+  '돼지 미박사태 800g': 'https://link.coupang.com/a/hM40tloWQ0',
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
