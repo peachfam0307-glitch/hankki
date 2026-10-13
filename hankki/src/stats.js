@@ -162,8 +162,8 @@ export function 보낼경로({ 경로 = '/', 앱 = false } = {}) {
   if (!앱) return 경로
   return 경로.endsWith('/') ? `${경로}app` : `${경로}/app`
 }
-function 지금주소(이름) {
-  return `${location.origin}${보낼경로({ 경로: location.pathname, 앱: 앱으로켰나() })}#${이름}`
+function 지금주소(이름, 꼬리 = '') {
+  return `${location.origin}${보낼경로({ 경로: location.pathname, 앱: 앱으로켰나() })}${꼬리 ? `?m=${encodeURIComponent(꼬리)}` : ''}#${이름}`
 }
 
 let 붙였나 = false
@@ -194,7 +194,7 @@ function 앱안() {
 
 /** 🧮 수집 주소를 «만들기만» 한다(안 보낸다) — 재현판이 이걸로 잰다.
  *  저장소를 못 읽으면 null(＝안 보낸다 · 매번 새 사람으로 세는 것보다 안 세는 게 낫다). */
-export function 수집주소만들기({ 이름, 저장소, 지금 = Date.now(), tid = MEASUREMENT_ID, 내부 = false, 화면크기 = '', 언어 = '' }) {
+export function 수집주소만들기({ 이름, 저장소, 지금 = Date.now(), tid = MEASUREMENT_ID, 내부 = false, 화면크기 = '', 언어 = '', 꼬리 = '' }) {
   let cid, sid, sct, last, hits
   try {
     cid = 저장소.getItem(직접칸.cid); sid = 저장소.getItem(직접칸.sid); sct = Number(저장소.getItem(직접칸.sct) || 0)
@@ -219,7 +219,7 @@ export function 수집주소만들기({ 이름, 저장소, 지금 = Date.now(), 
   p.set('seg', '1')
   // ⭐ 참여 시간 — 없으면 활성 사용자로 안 센다. 같은 세션 안에선 «지난 신호부터», 첫 신호는 1초.
   p.set('_et', String(새세션 ? 1000 : Math.min(Math.max(지난, 1), 세션시간)))
-  p.set('en', 'page_view'); p.set('dt', 이름); p.set('dl', `${IOS_PAGE}#${이름}`)
+  p.set('en', 'page_view'); p.set('dt', 이름); p.set('dl', `${IOS_PAGE}${꼬리 ? `?m=${encodeURIComponent(꼬리)}` : ''}#${이름}`)
   if (화면크기) p.set('sr', 화면크기)
   if (언어) p.set('ul', 언어)
   if (내부) p.set('ep.traffic_type', 'internal')   // 콘솔 「내부 트래픽」 필터가 보는 그 이름
@@ -227,13 +227,13 @@ export function 수집주소만들기({ 이름, 저장소, 지금 = Date.now(), 
 }
 
 let 직접모드 = false
-function 직접보내기(이름) {
+function 직접보내기(이름, 꼬리 = '') {
   try {
     if (!보낼까()) return
     const url = 수집주소만들기({
       이름, 저장소: localStorage, 내부: 우리기기인가(),
       화면크기: (screen && screen.width) ? `${screen.width}x${screen.height}` : '',
-      언어: (navigator.language || '').toLowerCase(),
+      언어: (navigator.language || '').toLowerCase(), 꼬리,
     })
     if (!url) return
     let 갔나 = false
@@ -544,10 +544,13 @@ export const 로그인탈출 = 관문('gate_escape')
 // 🙈 우리가 여전히 «모르는» 것 = 구글·애플은 「비번이 틀렸다」를 우리에게 안 알려준다.
 //    그건 저쪽 창 안에서 끝나고, 우리 손엔 닫힌 것만 남는다. 그래서 «other» 는 「그 밖」이지 「비번 탓」이 아니다.
 const 로그인실패갈래 = { closed: 1, blocked: 1, net: 1, other: 1 }   // 🔒 이 넷 말고는 안 보낸다
-/** 🔐 로그인이 안 됐다 — 오류를 주면 갈래까지 같이 보낸다(⛔오류 «문장»은 안 보낸다 · 코드만 본다) */
+/** 🔐 로그인이 안 됐다 — 오류를 주면 갈래까지 같이 보낸다 · 이름엔 코드만 · 오류 글 앞뒤 80자는 gate_fail «주소 꼬리»로만(2026-10-13 · 개인정보 지움) */
 export function 로그인실패(e, 공급자 = '') {
   지난화면 = null
-  행동보내기('gate_fail')
+  // 🔎 [창업자 2026-10-13 「그거 넣어줘」] 이름(gate_fail)은 그대로 두고 «주소 꼬리»(?m=)에 오류 글 앞부분을 싣는다.
+  //    10/13 한 사람이 구글 nocode 5 · 애플 appleerr 4 로 막혔는데 «왜»를 못 갈랐다 — 갈래만으론 끝이 없다.
+  //    ⭐ 이름 수는 안 는다(§5) · 콘솔 = 「페이지 위치」 차원에서 보인다 · ⛔메일·긴 숫자는 지운다(개인정보)
+  행동보내기('gate_fail', 실패글(e))
   // 🔎 [2026-10-07] «어느 단추»로 막혔나 — 10/7 아이폰 3명이 Firebase 계정도 안 생긴 채 막혔다(창업자 콘솔 실측) → 구글 창인지 애플 창인지부터 가른다. 이름 2개.
   if (공급자 === 'google.com') 행동보내기('gate_fail_google')
   else if (공급자 === 'apple.com') 행동보내기('gate_fail_apple')
@@ -555,6 +558,21 @@ export function 로그인실패(e, 공급자 = '') {
   if (갈 && 로그인실패갈래[갈]) 행동보내기(`gate_fail_${갈}`)
   // 🔎 [창업자 2026-09-28 「응 다음판에 넣어줘」] other 는 «속»까지 가른다 — 9/27 한 사람이 other 7번으로 막혔는데 왜인지 몰랐다
   if (갈 === 'other') { const 속 = 기타속고르기(e); if (기타속[속]) 행동보내기(`gate_other_${속}`) }
+}
+/** 🧹 오류 → 보낼 글 80자. ⛔메일 주소·6자리 넘는 숫자·토큰 같은 긴 덩어리는 지운다. 순수 함수 */
+export function 실패글(e) {
+  try {
+    const c = String((e && e.code) || '')
+    const m = String((e && e.message) || (typeof e === 'string' ? e : '') || '')
+    let s = (c ? `${c} ` : '') + m
+    s = s.replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, '@')   // 메일
+      .replace(/[A-Za-z0-9_-]{24,}/g, '~')                // 토큰·긴 열쇠
+      .replace(/\d{6,}/g, '#')                            // 긴 숫자
+      .replace(/\s+/g, ' ').trim()
+    // ⭐ 애플은 오류 번호가 «끝»에 붙는다(…AuthorizationError error 1004.) → 길면 앞 34 ＋ 뒤 44
+    if (s.length > 80) s = `${s.slice(0, 34)}…${s.slice(-44)}`
+    return s || 'empty'
+  } catch { return 'x' }
 }
 // 🔒 other 속 갈래 — «정해진 이름»만 보낸다(오류 문장·코드를 이름에 섞지 않는다 · §5). 이름 10개 더.
 //    ⭐ 앱 안 로그인(nativeAuth)은 팝업이 아니라서 «창 닫음»이 popup-closed 로 안 오고 여기로 새어 든다 → cancel 로 잡는다.
@@ -695,16 +713,16 @@ export function 식비가게열림(id) { 지난화면 = null; 행동보내기(`f
 //    옛 까닭 = `보내기()` 가 gtag 가 아직 안 붙었으면 «한 칸»(못보낸화면)에 담아뒀다가 나중에 보냈다.
 //    행동이 그 칸을 덮으면 **화면 기록이 통째로 사라진다**(칸이 하나뿐이다).
 //    ⭐ 화면은 다음 이동에서 또 보내지지만, 잃은 화면 기록은 못 되찾는다. 그래서 행동이 양보한다.
-function 행동보내기(이름) {
+function 행동보내기(이름, 꼬리 = '') {
   try {
     if (!보낼까()) return
-    if (직접모드) { 직접보내기(이름); return }   // 🍎 아이폰 껍데기 — gtag 없이 직접
+    if (직접모드) { 직접보내기(이름, 꼬리); return }   // 🍎 아이폰 껍데기 — gtag 없이 직접
     // ⏳ [2026-09-21] 전엔 여기서 «버렸다»(칸이 하나라 화면 자리를 뺏으면 안 됐다).
     //    이제 «줄»이라 담아둬도 화면이 안 날아간다 → 소개·로그인 화면처럼 «앱 켜자마자» 나는 행동도 잡힌다.
     if (typeof window.gtag !== 'function') { 담아둔다(이름); return }
     window.gtag('event', 'page_view', {
       page_title: 이름,
-      page_location: 지금주소(이름),
+      page_location: 지금주소(이름, 꼬리),
     })
     기록남기기(이름, 'gtag')
   } catch { /* ⛔ 통계가 죽어도 앱은 그대로 돈다 */ }
