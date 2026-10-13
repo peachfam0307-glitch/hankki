@@ -241,6 +241,7 @@ export const ING_LINKS = {
   '미니파프리카': 'https://link.coupang.com/a/hOQWWOMInc',
   '굴': 'https://link.coupang.com/a/hOQZmZrpdI',
   '라자냐면': 'https://link.coupang.com/a/hOQ0IoSbF6',
+  '알룰로스': 'https://link.coupang.com/a/hOQ2NwWnnM',
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
