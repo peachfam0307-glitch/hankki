@@ -3,6 +3,7 @@
 // ⛔ 확장자를 «반드시» 붙인다 — 없으면 Vite 는 되는데 node(재현판·검사판)에서 못 찾는다.
 //    📌 그러면 「앱과 같은 모듈로 검사한다」(절대원칙 30)를 못 지키게 된다.
 import { basicRecipes } from './basics.js'
+import { 이번명절 } from './seasonDecor.js'
 
 // ⚠️ `line` = 상세 화면에 «그대로» 나갈 한 줄. (창업자 제보 2026-08-03)
 //   예전엔 `label` 뒤에 「에서 가져옴」을 기계적으로 붙였는데 그러면
@@ -51,8 +52,22 @@ export const 열린때 = (r, i = 0) => {
   return (Number.isFinite(t) ? t : 바닥) - i * 1000
 }
 
+// 🎃 [창업자 2026-10-16 「할로윈이면 기간동안은 통단호박이 올라가야하지않을까」] 명절 «기간에만» 맨 위를 갈아 끼운다.
+//   ⭐ 기간은 `seasonDecor.js` 명절창(hw = 10/16~10/30) 그대로 — 날짜를 여기서 따로 적지 않는다(두 벌이면 갈린다).
+//   ⭐⭐ 폰에 «저장된» savedAt 은 안 건드린다 — 줄 세울 때(`정렬값`)만 바꾼다. 그래야 10/31 에 저절로 꽃게탕으로 돌아간다.
+//      ⛔ savedAt 에 박으면 기간이 끝나도 통단호박이 위에 남는다(이미 깔린 폰 · 규칙 18ⓙ).
+export const 명절맨위 = { hw: 'basic-tong-danhobak-cream-soup' }
+export const 지금맨위 = (오늘) => 명절맨위[이번명절(오늘)] || 맨위고정
+/** 🧮 목록 줄 세우는 값 — 지금 맨 위 편은 고정석, 철 지난 고정석(옛 savedAt 2099)은 «열린 날»로 내린다 */
+export const 정렬값 = (r, 오늘) => {
+  if (r?.id === 지금맨위(오늘)) return 고정석
+  const s = r?.savedAt || 0
+  return s >= 고정석 ? 열린때({ ...r, id: null }) : s
+}
+
 // 🔒 «없는 id 를 고정석에 적었나» — 손으로 적은 id 는 반드시 낡는다. 그때 조용히 안 먹히면 아무도 모른다.
 //    ⛔ 죽이지는 않는다(앱이 안 뜨면 그게 더 큰 사고다) — 대신 검사판·개발 콘솔에 대고 소리친다.
+for (const id of Object.values(명절맨위)) if (!basicRecipes.some((r) => r.id === id)) console.error('⛔ seed.js 명절맨위 = 「' + id + '」 인데 basics.js 에 그런 id 가 없다')
 if (맨위고정 && !basicRecipes.some((r) => r.id === 맨위고정)) {
   console.error('⛔ seed.js 맨위고정 = 「' + 맨위고정 + '」 인데 basics.js 에 그런 id 가 없다 — 샘플이 맨 위로 안 간다')
 }
