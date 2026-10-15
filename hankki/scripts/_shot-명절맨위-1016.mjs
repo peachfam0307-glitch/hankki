@@ -29,7 +29,7 @@ async function 치우기(p) {
 }
 
 async function 한판(이름, 닫기, 시작주소 = 'http://127.0.0.1:4513/hankki/') {
-  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, locale: 'ko-KR' })
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, locale: 'ko-KR', timezoneId: 'Asia/Seoul' })
   await ctx.addInitScript((닫기) => {
     try { localStorage.setItem('hankki:nudge:cloudgate', '1') } catch { /* noop */ }
     window.__계측 = []; window.__보냄 = []
@@ -51,5 +51,12 @@ const { ctx, p } = await 한판('레시피', false)
 await p.locator('.bottom-nav .nav-item').filter({ hasText: '레시피' }).first().click()
 await p.waitForTimeout(1500); await 치우기(p)
 await p.screenshot({ path: join(OUT, '레시피탭.png') })
+await p.locator('.bottom-nav .nav-item').filter({ hasText: '레꾸자랑' }).first().click()
+await p.waitForTimeout(1500); await 치우기(p)
+await p.screenshot({ path: join(OUT, '레꾸자랑탭.png') })
+await p.locator('.grid-card').first().click(); await p.waitForTimeout(2500)
+await p.screenshot({ path: join(OUT, '레꾸자랑시트.png') })
+await p.locator('button', { hasText: /랜덤/ }).first().click(); await p.waitForTimeout(5000)
+await p.screenshot({ path: join(OUT, '랜덤첫판.png') })
 console.log((await p.locator('body').innerText()).slice(0, 400).replace(/\n+/g, ' | '))
 await ctx.close(); await b.close(); srv.close()
