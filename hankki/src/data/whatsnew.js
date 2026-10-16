@@ -71,8 +71,10 @@ function gates() {
   const drawer = STICKER_GROUPS
     .filter((g) => g.from && g.items?.length)
     .map((g) => ({
-      when: g.from, kind: '꾸미기', title: g.label, count: g.items.length,
-      peek: drawable(g.items).slice(0, PEEK), tab: g.tab, season: g.season,
+      // 🎃 [2026-10-16] 핼러윈 묶음은 from 이 2026-01-01(열쇠로 미리 보던 것)이고 «모두에게 열린 날»은 `열쇠까지`다 → 늦은 쪽을 쓴다
+      //    ⛔ 안 그러면 10/16 에 열린 핼러윈 꾸미기가 「방금 열렸어요」에 한 줄도 안 뜬다(창업자 「다른 것도 고칠거 있나」 때 찍어서 잡음)
+      when: (g.열쇠까지 && g.열쇠까지 > g.from) ? g.열쇠까지 : g.from, kind: '꾸미기', title: g.label, count: g.items.length,
+      peek: drawable(g.items).slice(0, PEEK), tab: g.tab, season: g.season, 명절: g.명절,
       // 🎁 `gift`·`giftLabel` 은 서랍이 쓰는 «그 필드»를 그대로 읽는다(⛔이름을 따로 적지 않는다).
       // 💬 `hint` = 서랍에 뜨는 «쓰는 법» 한 줄. 창업자 2026-08-30 = *"접시 사용법도 아래 적어줘"*
       //    ⭐ 문구를 여기 새로 쓰지 «않는다» — 서랍과 안내가 갈리면 둘 중 하나가 낡는다.
@@ -205,7 +207,7 @@ export function headline(items = []) {
   }
 
   const seasons = [...new Set(items.map((i) => i.season).filter(Boolean))]
-  const ko = seasons.length === 1 ? SEASON_KO[seasons[0]] : null
+  const ko = items.some((i) => i.명절 === 'hw') ? '핼러윈' : seasons.length === 1 ? SEASON_KO[seasons[0]] : null
   const debut = NEW_FRIENDS.find((f) => items.some((i) => (i.title || '').includes(f))) || null
   // 🎁 그달 선물 — 여럿이면 «새로 온 것» 하나만 짚는다(둘을 나란히 놓으면 특별해 보이지 않는다).
   const gift = items.filter((i) => i.gift).sort((a, b) => String(b.when).localeCompare(String(a.when)))[0] || null
@@ -313,7 +315,8 @@ export function foldPacks(opened = []) {
 
   const 한줄 = (kind, gs) => {
     const seasons = [...new Set(gs.map((g) => g.season).filter(Boolean))]
-    const ko = seasons.length === 1 ? SEASON_KO[seasons[0]] : null
+    // 🎃 명절 묶음(핼러윈)이 섞이면 명절 이름이 앞선다 — 2026-10-16 「가을이 왔어요」 안에 핼러윈 꾸미기가 묻혔다
+    const ko = gs.some((g) => g.명절 === 'hw') ? '핼러윈' : seasons.length === 1 ? SEASON_KO[seasons[0]] : null
     return {
       when: gs[0].when, kind,
       // 🏷 제목이 배지와 같은 말을 되풀이하지 않게 «갈래마다 다르게» 짓는다

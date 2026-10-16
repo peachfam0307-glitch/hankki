@@ -59,7 +59,9 @@ export function giftRows(now = new Date()) {
     where: `${TAB_NAME[g.tab] || ''} 탭 맨 위`,
     art: g.items[0],
   }))
+  // 🍂 [창업자 2026-10-16 「예전거 남아있는거 있는지」] 철 지난 선물(여름)은 안내에서 뺀다 — 스티커는 서랍에 그대로 있다(숨기지 않는다).
   return [...묶음, ...EXTRA_GIFTS]
+    .filter(제철)
     .sort((a, b) => ((제철(b) ? 1 : 0) - (제철(a) ? 1 : 0))
       || String(b.from || '').localeCompare(String(a.from || '')))
 }
