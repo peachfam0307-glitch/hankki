@@ -11,7 +11,6 @@ import { seasonRank, isReleased } from '../season'
 import { 이번명절 } from '../data/seasonDecor.js'
 import GiftPackSheet, { giftRows } from './GiftPackSheet'
 import PackBuySheet from './PackBuySheet'
-import { needsGiftPack } from '../nudges'
 import { cropRatio, imageRatio } from '../utils'
 import { 기본표지 } from '../store'
 import { FRAME_WINDOW } from '../data/frameWindows'
@@ -447,7 +446,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   }, [typing])
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
-  const [gift, setGift] = useState(() => needsGiftPack())
+  // ⛔ [창업자 2026-10-16 「꾸미기처음열때 팝업은 이제 없애자」] 자동으로 안 띄운다 — 여름 선물 안내가 10월에도 떴다.
+  //    단추(🎁)로 여는 길은 그대로 둔다.
+  const [gift, setGift] = useState(false)
   // 🕗 최근 쓴 것 — **서랍을 여는 «순간» 값으로 고정한다.**
   //    ⛔ 붙일 때마다 다시 읽으면 맨 윗줄이 방금 붙인 것으로 계속 흔들려 «자리»가 안 생긴다.
   //    (음식 아이콘 픽커 v8.81 이 같은 이유로 시트 여는 순간 값으로 굳혔다)
