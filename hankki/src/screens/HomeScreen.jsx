@@ -65,6 +65,7 @@ import SeasonDecor from '../components/SeasonDecor.jsx'
 // 🇰🇷 명절엔 홈의 «우리 애» 둘도 한복을 입는다 — 📮창업자 2026-09-09 *"쟤들만 한복아니니까 이상해서.."*
 import { 홈컷, 줄장식 } from '../data/seasonDecor.js'
 import { useSeasonCuts } from '../season/useSeasonCuts.js'
+import { 정렬값 } from '../data/seed'
 
 // 🗓🍳 「이번 주」 박스 — 제철 줄과 우리집레시피 줄이 «똑같이» 생겼다.
 //   ⛔ 마크업을 두 번 적지 않는다 — 그러면 한쪽만 고치는 사고가 난다(2026-08-11 신설).
@@ -410,7 +411,7 @@ export default function HomeScreen() {
     [recipes]
   )
   const recent = useMemo(
-    () => [...recipes].sort((a, b) => b.savedAt - a.savedAt).slice(0, 4),
+    () => [...recipes].sort((a, b) => 정렬값(b) - 정렬값(a)).slice(0, 4),
     [recipes]
   )
 

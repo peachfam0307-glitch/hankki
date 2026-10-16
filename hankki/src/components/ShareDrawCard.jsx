@@ -211,7 +211,8 @@ function tagsOf(recipe) {
 }
 
 // 스타일별 카테고리 규칙(적재적소): 콤비는 넓은 스타일(홀로·팝·여름)에만.
-function drawState() {
+// 🎃 [창업자 2026-10-16 「레꾸자랑도 할로윈이 젤먼저보이고」] 시트를 처음 열 때(첫판)는 명절 카드만 — 「다시 뽑기」부터는 전부 섞는다.
+function drawState(첫판 = false) {
   // ⚠️ 스티커는 철이 지나도 순서만 밀리지만, **카드 스킨은 뽑기 풀에서 아예 빠진다**(한정 수집감).
   //    ✅✅ **[창업자 확정 2026-08-29] 카드 스킨은 «전환기 겹침을 안 쓴다» — 계절 첫날에 바로 갈아탄다.**
   //       📮 창업자 = *"레꾸자랑은 9월에는 여름꺼는 빠지는거 아냐?"* → *"**9월1일에 빼야지 가을시작이니까.**"*
@@ -242,9 +243,10 @@ function drawState() {
     //      그래서 **옷(늦가을)과 뼈대(둘)가 «같은 날» 같이 온다** — 11월 1일에 화면이 확 바뀐다.
     //   🔢 뽑기 확률 = 6장 각 16.7% → **8장 각 12.5%**(창업자가 그 값을 보고 「둘 다」로 정했다)
     ...(isLateAutumn() ? ['post', 'ticket'] : [])]
+  const 첫판들 = 첫판 && hwOpen ? ['halloween', 'hwn_poster', 'hwn_moon', 'hwn_invite'] : null
   const key = (() => {
     try { const v = new URLSearchParams(location.search).get('card'); if (v && SKINS[v]) return v } catch { /* noop */ }
-    return rnd(pool)
+    return rnd(첫판들 || pool)
   })()
   // 옷은 **뽑을 때** 정한다(상수로 굳히면 앱을 켜둔 채 계절이 넘어갈 때 안 바뀐다)
   const skin = { ...SKINS[key], W: wearOf(key) }
@@ -1241,7 +1243,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared, 
   useModalBack(onClose)
   const title = recipe?.title || '오늘의 한 끼'
   const tags = useMemo(() => tagsOf(recipe), [recipe])
-  const [draw, setDraw] = useState(drawState)
+  const [draw, setDraw] = useState(() => drawState(true))
   // busy = null 이거나 '지금 뭘 만들고 있는지' 한 줄. 문자열도 참이라 disabled·opacity 판정은 그대로 돈다.
   // ⚠️ 예전엔 버튼 글자만 '만드는 중…'으로 바뀌어서, 캡처가 오래 걸리면 먹통처럼 보였다
   //    (창업자 제보 2026-07-30 "레꾸자랑 공유하기 만들때 기다려달라는 멘트 안 떠").

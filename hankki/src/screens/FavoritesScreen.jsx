@@ -5,11 +5,12 @@ import Thumb from '../components/Thumb'
 import Icon from '../components/Icon'
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`) — 이 자리는 벌써 두 번 이름이 바뀌었다
 import { FAV_NAME } from '../favName'
+import { 정렬값 } from '../data/seed'
 
 export default function FavoritesScreen() {
   const { recipes } = useStore()
   const nav = useNav()
-  const favs = recipes.filter((r) => r.favorite).sort((a, b) => b.savedAt - a.savedAt)
+  const favs = recipes.filter((r) => r.favorite).sort((a, b) => 정렬값(b) - 정렬값(a))
 
   return (
     <div className="screen fade">

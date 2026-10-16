@@ -28,6 +28,7 @@ import TabTips from '../components/TabTips'
 import TabTalk from '../components/TabTalk'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 import SeasonHeadCut from '../components/SeasonHeadCut.jsx'
+import { 정렬값 } from '../data/seed'
 
 // 🎴 카드자랑 탭 — 바이럴 진입점. 내 레시피를 골라 자랑한다.
 // ⭐ 창업자 방향: 주인공은 '내가 꾸민 표지', 랜덤 카드는 옵션(메인 아님).
@@ -97,7 +98,7 @@ export default function BragScreen() {
   const [q, setQ] = useState('')
   const query = q.trim().toLowerCase()
   const sorted = useMemo(
-    () => recipes.filter((r) => r.status === 'sorted').sort((a, b) => b.savedAt - a.savedAt),
+    () => recipes.filter((r) => r.status === 'sorted').sort((a, b) => 정렬값(b) - 정렬값(a)),
     [recipes],
   )
   // 초성으로도 찾는다 — 「ㄱㅂ」으로 「김밥」이 걸린다(`matchKo`, 장보기 탭과 같은 함수)

@@ -3,7 +3,7 @@ import { COACH } from '../coach'
 import { useStore } from '../store'
 import Portal from '../components/Portal'
 import { useNav } from '../App'
-import { 저장날짜보임, 내것인가 } from '../data/seed'
+import { 저장날짜보임, 내것인가, 정렬값 } from '../data/seed'
 import { 나라들, 종류들, 종류고르기, 옛폴더이름 } from '../data/종류'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
@@ -293,7 +293,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
 
   // 뒤로가기 처리는 모달(요리기록 시트 등)까지 포함해 아래(상태 선언 뒤)에서 한 번에 등록한다.
 
-  const sorted = useMemo(() => recipes.filter((r) => r.status === 'sorted').sort((a, b) => b.savedAt - a.savedAt), [recipes])
+  const sorted = useMemo(() => recipes.filter((r) => r.status === 'sorted').sort((a, b) => 정렬값(b) - 정렬값(a)), [recipes])
   // 스마트 폴더 — ★즐겨찾기 / 🍳자주 해먹는. 실제 폴더와 안 겹치게 '__' 접두 키를 쓴다.
   // 🔖🔖 [2026-09-08 창업자 확정] 핀이 **두 종**이다 — 요리사모자＝해볼 것 · 하트＝최애.
   //   ⭐ 세는 잣대는 `favPin.js` «한 곳»에서 온다(`isPinned`) — 여기서 `r.favPin === 'heart'` 로 직접 적으면
