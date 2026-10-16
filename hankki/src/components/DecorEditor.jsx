@@ -707,6 +707,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       return localStorage.getItem('hankki:열쇠:' + x.key열쇠) === '1'
     } catch { return false }
   }
+  const 배경순 = (b) => (b.key열쇠 === '할로윈' && 이번명절() === 'hw') ? 0 : b.key === 'sea' ? 3 : b.anim ? 1 : 2
   const 명절위 = (x) => !!x.명절 && (x.명절 === 이번명절() || (!!x.key열쇠 && !!x.열쇠까지 && !isReleased(x.열쇠까지)))
   const groupsByTab = (t) => drawerGroups()
     // ⭐ `tabDiary` = 일기 화면에선 «다른 탭»에 둔다 — 꼬르곰 32컷은 레꾸 「글자」 / 일꾸 「기록」.
@@ -2078,7 +2079,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                         📌 배운 것 = **꼬리표를 붙이는 것과 그 꼬리표를 «읽는 것»은 다른 일이다.** */}
                     {DECOR_BACKGROUNDS.filter((b) => !b.hidden && (b.pack ? (ownedPacks().has(b.pack) || (b.key열쇠 && 열쇠있나(b.key열쇠))) : 열쇠켬(b)))   // 🔑 팩 배경도 창업자 열쇠로 미리 본다(2026-09-21 핼러윈 밤)
                       .map((b, i) => ({ b, i }))
-                      .sort((x, y) => (y.b.anim ? 1 : 0) - (x.b.anim ? 1 : 0) || x.i - y.i)   // 안정 정렬
+                      // 🎃 [창업자 2026-10-16 「다른 것도 체크」→ 배경 맨 앞이 「여름 물결」이었다] 지금 명절 배경 → 움직이는 것 → 나머지 → 철 지난 여름 물결 맨 뒤
+                      .sort((x, y) => 배경순(x.b) - 배경순(y.b) || x.i - y.i)   // 안정 정렬
                       .map(({ b }) => {
                       const on = bg === b.key
                       const sw = { ...(b.style || { background: 'linear-gradient(135deg,#eef0ec,#e1e5de)' }), ...(b.swatch || {}) }
