@@ -47,11 +47,8 @@ async function 한판(이름, 닫기, 시작주소 = 'http://127.0.0.1:4515/hank
   await p.waitForTimeout(2600); await 치우기(p)
   return { ctx, p }
 }
-const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, locale: 'ko-KR', timezoneId: 'Asia/Seoul' })
-const p = await ctx.newPage()
-await p.goto('http://127.0.0.1:4515/hankki/', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(3000)
-for (let i = 0; i < 4; i++) { await p.screenshot({ path: join(OUT, `온보딩${i}.png`) }); const n = p.locator('button', { hasText: /다음|시작/ }).first(); if (!(await n.count())) break; await n.click().catch(() => {}); await p.waitForTimeout(900) }
-await 치우기(p); await p.waitForTimeout(1500); await 치우기(p)
+const { ctx, p } = await 한판('새유저', false)
+await p.waitForTimeout(1500); await 치우기(p)
 await p.screenshot({ path: join(OUT, '홈.png') })
 await p.evaluate(() => window.scrollTo(0, 900)); await p.waitForTimeout(600); await p.screenshot({ path: join(OUT, '홈아래.png') })
 await p.evaluate(() => window.scrollTo(0, 0))
