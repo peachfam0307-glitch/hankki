@@ -1247,7 +1247,7 @@ export default function RecipeDetailScreen({ id }) {
         {r.memo && (
           <>
             <div className="h-section" style={{ marginTop: 26, marginBottom: 8 }}>메모</div>
-            <div className="card" style={{ padding: 14, fontSize: 16, lineHeight: 1.6, color: 'var(--text)', background: 'var(--cream)', border: 'none', whiteSpace: 'pre-line' }}>
+            <div className="card" style={{ padding: 14, fontSize: 16, lineHeight: 1.6, color: 'var(--text)', background: 'var(--cream)', border: 'none', whiteSpace: 'pre-line', wordBreak: 'keep-all', textWrap: 'pretty' }}>
               {r.memo}
             </div>
           </>
