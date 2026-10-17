@@ -55,4 +55,6 @@ await p.evaluate(() => window.scrollTo(0, 0))
 await p.getByText('한끼 소식').first().click().catch(() => {}); await p.waitForTimeout(1500); await p.screenshot({ path: join(OUT, '소식.png') })
 await p.keyboard.press('Escape'); await p.goBack().catch(() => {}); await p.waitForTimeout(800)
 for (const 탭 of ['일기', '장보기']) { await p.locator('.bottom-nav .nav-item').filter({ hasText: 탭 }).first().click().catch(() => {}); await p.waitForTimeout(1500); await 치우기(p); await p.screenshot({ path: join(OUT, `탭-${탭}.png`) }) }
+const 픽 = await p.evaluate(() => { const h = [...document.querySelectorAll('*')].find((e) => e.children.length === 0 && /이번 주 픽/.test(e.textContent)); const box = h && h.closest('section, div'); return document.body.innerText.split('이번 주 픽').slice(1).join(' | ').slice(0, 900) })
+console.log('PICK', 픽.replace(/\n+/g, ' / '))
 await ctx.close(); await b.close(); srv.close()
