@@ -58,6 +58,11 @@ await p.waitForSelector('.sheet', { timeout: 15000 })
 await p.waitForTimeout(600)
 const 소식 = await p.evaluate(() => { const s = [...document.querySelectorAll('.sheet')].pop(); return s ? s.innerText : '' })
 
+// ⚠️ [2026-10-18] 21일 안에 유저 눈에 보이는 판이 없으면(전부 user:null) 카드가 «안» 뜨는 게 맞다 — 그땐 없음을 잰다
+if (!기대줄.length) {
+  console.log('① 21일 창이 비었다 → 카드가 «없어야» 한다')
+  chk('「앱이 달라졌어요」 카드가 없다', !소식.includes('앱이 달라졌어요'), 'true')
+} else {
 console.log('① 카드가 그려진다')
 chk('「앱이 달라졌어요」 제목이 있다', 소식.includes('앱이 달라졌어요'), 'true')
 chk(`배지가 「업데이트 ${기대줄.length}종」이다`, 소식.includes(`업데이트 ${기대줄.length}종`), 'true')
