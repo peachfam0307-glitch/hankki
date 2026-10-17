@@ -113,6 +113,8 @@ export const 갓열린것 = (products = [], today = '', k = 3) => {
   return 열림.filter((p) => p.from === 최근).slice(0, k)
 }
 
+// 📅 몰 섞기·한살림 1개 규칙이 켜지는 날(다음 주 첫날 · 에폭 주차는 목요일에 넘어간다)
+export const 몰섞기시작 = '2026-10-22'
 export const pickRotate = ({ products = [], matched = [], today = '', n = 4 } = {}) => {
   const 담김 = new Set(matched.map((p) => p && p.name).filter(Boolean))
   const 안담김 = products.filter((p) => p && !담김.has(p.name))
@@ -125,6 +127,15 @@ export const pickRotate = ({ products = [], matched = [], today = '', n = 4 } = 
   //   ⛔ 예전엔 `matched` 를 여기 «밖»에 두고 항상 앞에 붙였다 → 풀네임이 박힌 제품이 영영 1번이었다.
   // 🧺 갈래가 뭉쳐 오지 않게 «돌아가며» 한 개씩 (창업자 *"섞어서"* · 위 `갈래섞기` 주석)
   // 🧺 [2026-10-17] matched 도 섞기 «안»에 — 앞에 따로 붙이면 그 몰(마른두부=한살림)이 갓 열린 것과 겹쳐 한 몰로 몰렸다
+  // 📅 [창업자 2026-10-17 「지금나간건 걍두고 다음부터 이렇게안되도록 규칙만들어」] 새 규칙은 «다음 주»부터 —
+  //    이번 주(10/15~10/21 · 주는 목요일에 넘어간다) 픽은 옛 방식 그대로 둔다.
+  const 새규칙 = !today || today >= 몰섞기시작
+  if (!새규칙) {
+    const 옛 = [...matched, ...갈래섞기(안담김.filter((p) => !갓이름.has(p.name) && !새것인가(p.since, today)))]
+    if (!옛.length) return [...갓열림, ...새것].slice(0, n)
+    const o = ((((weekNo(today) * n) % 옛.length) + 옛.length) % 옛.length)
+    return [...갓열림, ...새것, ...옛.slice(o), ...옛.slice(0, o)].slice(0, n)
+  }
   const 돌릴것 = 갈래섞기([...matched, ...안담김.filter((p) => !갓이름.has(p.name) && !새것인가(p.since, today))])
   if (!돌릴것.length) return [...갓열림, ...새것].slice(0, n)
   // ⭐⭐ **한 주에 `n` 칸씩 민다** — 한 칸씩 밀면 4개 중 3개가 다음 주에도 그대로 남는다.
@@ -145,14 +156,33 @@ export const pickRotate = ({ products = [], matched = [], today = '', n = 4 } = 
   //      데리야끼소스가 10/17·10/24 연달아 섰다(검사판은 안 열린 것까지 세서 못 봤다). → 빌리지 않는다.
   //   ✅ 대신 줄 자체가 몰이 섞이게 — `matched` 도 `갈래섞기` 안에 넣는다(아래 돌릴것). 그 주 차례 n개 안에서 몰 다른 것 먼저.
   const 줄 = [...돌릴것.slice(off), ...돌릴것.slice(0, off)]
-  const 차례 = 줄.slice(0, n).filter((p) => !앞.some((q) => q.name === p.name))
+  // 🧺 [규칙 · 창업자 2026-10-17] **한살림은 한 주에 1개까지** — 조합원만 사고 「사러가기」가 없다(사러 갈 수 없는 칸이 몰리면 픽이 빈다).
+  //    ⭐ 갓 열린 것·새 것은 그대로 앞(창업자 8/17·8/31) — 그게 한살림이어도 뺏지 않는다. 남은 칸에서 더 안 넣는다.
+  //    ⭐ 그 주 차례 n개에서 모자라면 «3주 뒤» 차례에서 빌린다 — 다음 주·2주 뒤는 열린 제품 수가 늘며 앞뒤 주 겹침이 났다(10/17 검사·실측)
+  const 한살림 = (p) => p && p.mall === 'hansalim'
+  const 안앞 = (p) => !앞.some((q) => q.name === p.name)
+  const 차례 = 줄.slice(0, n).filter(안앞)
+  const 빌림 = 줄.slice(n * 3, n * 4).filter(안앞)
   const 나온몰 = new Set(앞.map((p) => p.mall).filter(Boolean))
   const 고른 = [...앞]
-  while (고른.length < n && 차례.length) {
-    const i = 차례.findIndex((p) => !p.mall || !나온몰.has(p.mall))
-    const [p] = 차례.splice(i >= 0 ? i : 0, 1)
-    고른.push(p); if (p.mall) 나온몰.add(p.mall)
-    if (고른.length === n) break
+  let 한살림수 = 앞.filter(한살림).length
+  const 나온갈래 = new Set(앞.map((p) => p.cat).filter(Boolean))
+  // ⭐ 고르는 순서 = 한살림 한도 → 아직 안 나온 갈래(물건이 섞이게 · 검사 ⑤) → 아직 안 나온 몰
+  const 집기 = (판) => {
+    const 됨 = (p) => !한살림(p) || 한살림수 < 1
+    const 새갈래 = (p) => !p.cat || !나온갈래.has(p.cat)
+    const 새몰 = (p) => !p.mall || !나온몰.has(p.mall)
+    let i = 판.findIndex((p) => 됨(p) && 새갈래(p) && 새몰(p))
+    if (i < 0) i = 판.findIndex((p) => 됨(p) && 새갈래(p))
+    if (i < 0) i = 판.findIndex((p) => 됨(p) && 새몰(p))
+    if (i < 0) i = 판.findIndex(됨)
+    if (i < 0) return null
+    return 판.splice(i, 1)[0]
+  }
+  while (고른.length < n) {
+    const p = 집기(차례) || 집기(빌림) || 차례.shift()   // 끝내 없으면 원래 차례(칸을 비우지 않는다)
+    if (!p) break
+    고른.push(p); if (p.mall) 나온몰.add(p.mall); if (p.cat) 나온갈래.add(p.cat); if (한살림(p)) 한살림수++
   }
   return 고른
 }
