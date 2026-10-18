@@ -242,6 +242,9 @@ export const ING_LINKS = {
   '굴': 'https://link.coupang.com/a/hOQZmZrpdI',
   '라자냐면': 'https://link.coupang.com/a/hOQ0IoSbF6',
   '알룰로스': 'https://link.coupang.com/a/hOQ2NwWnnM',
+  '냉면육수': 'https://link.coupang.com/a/hXG4dPWEGy',   // 창업자 2026-10-19
+  '땅콩버터': 'https://link.coupang.com/a/hXG9PbQZY4',   // 창업자 2026-10-19
+  '볶음탕용 닭': 'https://link.coupang.com/a/hXHlqsxN4S',   // 창업자 2026-10-19
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
