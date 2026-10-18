@@ -74,7 +74,8 @@ await p.waitForTimeout(1400); await 길막()
 //    그러면 ③-2 가 「단추가 없다」로 죽는데, 그건 고장이 아니라 «담은 것이 그런 줄»인 것이다.
 //    ✅ 그래서 셋을 담는다 — 하나라도 주소가 있으면 리스트에 사러가기가 그려진다.
 const 담기들 = p.locator('button', { hasText: /^담기$/ })
-const 담을수 = Math.min(3, await 담기들.count())
+// ⚠️ [2026-10-18] 셋도 모자랐다 — 10/15 주 픽 앞 셋이 전부 한살림(창업자 「왜다한살림이야?」 · 10/22부터 규칙으로 막음) → 여섯까지
+const 담을수 = Math.min(6, await 담기들.count())
 // ⛔ 같은 이름은 두 번 안 담긴다(store.jsx addShopItem) → «서로 다른» 줄을 누른다
 for (let i = 0; i < 담을수; i++) { await 담기들.nth(i).click().catch(() => {}); await p.waitForTimeout(700) }
 const 담기 = p.locator('button', { hasText: /^담기$/ }).first()
