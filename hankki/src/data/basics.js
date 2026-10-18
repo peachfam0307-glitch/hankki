@@ -4896,6 +4896,7 @@ const RAW_BASICS = [
     id: 'basic-own-016',
     title: '육회비빔밥', from: '2026-10-26',
     origin: '창업자',   // 📮 창업자가 «직접 쓴» 레시피
+    review: '창업자',   // ✅ 2026-10-19 00:31 「검수 끝 배포해」
     icon: 'n3052',   // 🖼 창업자 2026-10-18 새 컷
     category: '한식',
     folder: '밥',
