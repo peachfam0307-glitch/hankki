@@ -5731,6 +5731,7 @@ const RAW_BASICS = [
     id: 'basic-yangji-suyuk',
     title: '양지수육', from: '2026-11-02',
     origin: '창업자',   // 📮 창업자가 «직접 쓴» 레시피
+    review: '창업자',   // ✅ 2026-10-19 검수판 지적 없음 → 창업자 「ㄱㄱ」
     icon: 'fe_322',   // 🖼 창업자 전용 컷(2026-08-18) — 전엔 수육 셋이 fe_125 하나를 나눠 썼다
     category: '한식',
     folder: '한식',
@@ -5817,6 +5818,7 @@ const RAW_BASICS = [
     id: 'basic-samgyeop-kkwarigochu',
     title: '삼겹살 꽈리고추', from: '2026-11-02',
     origin: '창업자',   // 📮 창업자가 «직접 쓴» 레시피
+    review: '창업자',   // ✅ 2026-10-19 검수판 지적 없음 → 창업자 「ㄱㄱ」
     icon: 'n3033',   // 🌶 [2026-09-14 창업자 전수 검수] 옛 fh_k14 는 «그냥 삼겹살»이라 꽈리고추가 없었다
     category: '한식',
     folder: '한식',
