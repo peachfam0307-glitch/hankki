@@ -47,7 +47,13 @@ export default function SeasonDecor() {
       // 📐 [2026-09-29 창업자 「위치 다 달라」] 높이 자 = 판 바탕(380×675)의 «675» 로 고정한다(폰).
       //    ⛔ 전엔 창 높이(innerHeight)를 썼다 → 홈 카드 높이는 폰마다 «같은 px» 인데 자만 늘어나
       //       844 폰에선 조각이 25% 아래로 밀렸다(창업자가 놓은 자리와 딴판). 패드(폭 700↑)는 제 값(패드)이 있어 그대로 둔다.
-      set잰것({ 폭: innerWidth, 높이: innerWidth >= 700 ? innerHeight : 판높이, 글높이: el.scrollHeight, 통위: r.top })
+      // 📱 [창업자 2026-10-20 「아이폰 할로윈 위치가 지금 좀 이상하네」 · 갤럭시는 멀쩡] 상단 안전영역(노치·시계줄) 높이를 잰다.
+      //    아이폰 앱은 화면이 시계줄 «밑까지» 깔려 상단바·카드가 그만큼 내려가는데, 「위」 조각은 창 맨 위에서 재서 그만큼 «위로» 떠 보였다
+      //    (거미줄이 시계줄에 · 긴 거미줄이 아이콘 위에 · 박쥐가 인스타 칸 끝에). 갤럭시(TWA)는 시계줄이 앱 밖이라 0 — 그대로다.
+      //    ⭐ 상단바가 내려가는 바로 그 값(styles.css 의 --safe-top)을 읽는다 — 두 곳이 같은 자로 움직여 갤럭시와 «같은 자리»가 된다.
+      let 안전위 = 0
+      try { const p = document.createElement('div'); p.style.cssText = 'position:fixed;top:0;height:var(--safe-top,0px);visibility:hidden;pointer-events:none'; document.body.appendChild(p); 안전위 = p.getBoundingClientRect().height || 0; p.remove() } catch { 안전위 = 0 }
+      set잰것({ 폭: innerWidth, 높이: innerWidth >= 700 ? innerHeight : 판높이, 글높이: el.scrollHeight, 통위: r.top, 안전위 })
       if (닻.current) {
         const 위치 = 닻.current.offsetTop
         set닻자리({ 앞: 위치, 뒤: el.scrollHeight - 위치 })
@@ -86,7 +92,7 @@ export default function SeasonDecor() {
         //   · 위  조각 = 글 맨 위에서 아래로 y×화면높이        → 닻에서 글높이만큼 거슬러 올라간다
         const 위쪽 = 조각.화면 === '아래'
           ? -(1 - 조각.y) * 잰것.높이 + 닻자리.뒤   // 닻 뒤에 남은 여백만큼 도로 내린다
-          : -닻자리.앞 + 조각.y * 잰것.높이 - 잰것.통위
+          : -닻자리.앞 + 조각.y * 잰것.높이 - 잰것.통위 + (잰것.안전위 || 0)   // 📱 아이폰 시계줄만큼 같이 내린다
         // ⛔⛔ 자리잡기와 «움직임»을 한 상자에 같이 두면 안 된다 — `hk-m-float` 같은 모션이
         //    `transform` 을 통째로 갈아끼워서 `translate(-50%,-50%)`(가운데맞춤)를 지워 버린다.
         //    ✅ 바깥 껍데기 = 자리·가운데맞춤·좌우뒤집기 / 안쪽 그림 = 모션. 서로 안 건드린다.
