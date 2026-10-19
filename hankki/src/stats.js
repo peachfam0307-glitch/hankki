@@ -185,7 +185,7 @@ let 붙였나 = false
 //    이 파일은 import 0 규칙이라 같은 식을 여기 적는다).
 // ⛔ 검증 = 제출 «전» TestFlight 딸 폰 → 창업자 GA4 실시간에 `home` 이 뜨는 캡처. 그 캡처 없이는 제출하지 않는다.
 export const IOS_PAGE = 'https://peachfam0307-glitch.github.io/hankki/ios'
-const 직접칸 = { cid: 'hankki:stats:cid', sid: 'hankki:stats:sid', sct: 'hankki:stats:sct', last: 'hankki:stats:last', hits: 'hankki:stats:hits' }
+const 직접칸 = { cid: 'hankki:stats:cid', sid: 'hankki:stats:sid', sct: 'hankki:stats:sct', last: 'hankki:stats:last', hits: 'hankki:stats:hits', prev: 'hankki:stats:prev' }
 const 세션시간 = 30 * 60 * 1000   // GA4 기본값과 같다 — 웹 숫자와 같은 자로 견주려고
 
 function 앱안() {
@@ -194,11 +194,20 @@ function 앱안() {
 
 /** 🧮 수집 주소를 «만들기만» 한다(안 보낸다) — 재현판이 이걸로 잰다.
  *  저장소를 못 읽으면 null(＝안 보낸다 · 매번 새 사람으로 세는 것보다 안 세는 게 낫다). */
-export function 수집주소만들기({ 이름, 저장소, 지금 = Date.now(), tid = MEASUREMENT_ID, 내부 = false, 화면크기 = '', 언어 = '', 꼬리 = '' }) {
-  let cid, sid, sct, last, hits
+export function 수집주소만들기(인자) { const r = 수집주소들(인자); return r ? r.본 : null }
+
+// ⏱⏱ [2026-10-19 · 창업자 「상세 시간 고쳐줘」] 머문 시간은 «떠나는 화면»에 붙인다.
+//   ⛔ 그 전엔 새 화면 기록(page_view)에 「지난 기록부터 지금까지」를 _et 로 실었다 → **앞 화면에서 보낸 시간이 «다음» 화면 줄로** 갔다.
+//      🔢 실측 = 10/19 아이폰 하루치 — 상세를 열면 view:… 가 먼저·detail 이 바로 뒤에 찍혀 view: 52초 · detail 0초(레시피 목록에서 보낸 시간이 view: 로).
+//   ✅ 이제 = ① 떠나는 화면 이름으로 user_engagement(_et = 머문 시간) ② 새 화면 page_view(_et = 1ms · 활성 사용자로 세게)
+//      gtag.js 가 웹에서 하는 것과 같은 모양이다(화면을 떠날 때 user_engagement 에 그 화면의 시간을 싣는다).
+//   ⛔ 웹·안드로이드는 안 바뀐다 — 이 길은 아이폰 껍데기(직접 모드)만 탄다.
+export function 수집주소들({ 이름, 저장소, 지금 = Date.now(), tid = MEASUREMENT_ID, 내부 = false, 화면크기 = '', 언어 = '', 꼬리 = '' }) {
+  let cid, sid, sct, last, hits, 앞화면
   try {
     cid = 저장소.getItem(직접칸.cid); sid = 저장소.getItem(직접칸.sid); sct = Number(저장소.getItem(직접칸.sct) || 0)
     last = Number(저장소.getItem(직접칸.last) || 0); hits = Number(저장소.getItem(직접칸.hits) || 0)
+    앞화면 = 저장소.getItem(직접칸.prev) || ''
   } catch { return null }
   const 처음 = !cid
   if (처음) { cid = `${Math.floor(Math.random() * 1e9)}.${Math.floor(지금 / 1000)}`; sct = 0 }
@@ -206,39 +215,49 @@ export function 수집주소만들기({ 이름, 저장소, 지금 = Date.now(), 
   // ⛔ 음수·NaN(시계 거꾸로) 도 «새 세션»으로만 — 절대 던지지 않는다
   const 새세션 = !sid || !Number.isFinite(지난) || 지난 < 0 || 지난 > 세션시간
   if (새세션) { sid = String(Math.floor(지금 / 1000)); sct = sct + 1; hits = 0 }
-  hits += 1
+  // ⏱ 같은 세션 안 · 앞 화면이 있고 · 앞 화면에 실제로 머문 시간이 있으면 → 그 화면 이름으로 머문 시간을 먼저 보낸다
+  const 머문다 = !새세션 && !!앞화면 && 지난 > 0
+  const 줄 = (en, 제목, 주소, et, 첫) => {
+    hits += 1
+    const p = new URLSearchParams()
+    p.set('v', '2'); p.set('tid', tid); p.set('cid', cid)
+    if (처음 && 첫) p.set('_fv', '1')
+    p.set('sid', sid); p.set('sct', String(sct)); p.set('_s', String(hits))
+    if (새세션 && 첫) p.set('_ss', '1')
+    p.set('seg', '1')
+    p.set('_et', String(et))
+    p.set('en', en); p.set('dt', 제목); p.set('dl', 주소)
+    if (화면크기) p.set('sr', 화면크기)
+    if (언어) p.set('ul', 언어)
+    if (내부) p.set('ep.traffic_type', 'internal')   // 콘솔 「내부 트래픽」 필터가 보는 그 이름
+    return `https://www.google-analytics.com/g/collect?${p.toString()}`
+  }
+  const 머문 = 머문다 ? 줄('user_engagement', 앞화면, `${IOS_PAGE}#${앞화면}`, Math.min(지난, 세션시간), true) : null
+  // ⭐ 참여 시간 — 없으면 활성 사용자로 안 센다. 새 세션 첫 신호 = 1초 · 그 밖엔 1ms(머문 시간은 위 줄이 이미 앞 화면에 실었다)
+  const 본 = 줄('page_view', 이름, `${IOS_PAGE}${꼬리 ? `?m=${encodeURIComponent(꼬리)}` : ''}#${이름}`, 새세션 ? 1000 : 1, !머문)
   try {
     저장소.setItem(직접칸.cid, cid); 저장소.setItem(직접칸.sid, sid); 저장소.setItem(직접칸.sct, String(sct))
-    저장소.setItem(직접칸.last, String(지금)); 저장소.setItem(직접칸.hits, String(hits))
+    저장소.setItem(직접칸.last, String(지금)); 저장소.setItem(직접칸.hits, String(hits)); 저장소.setItem(직접칸.prev, 이름)
   } catch { return null }
-  const p = new URLSearchParams()
-  p.set('v', '2'); p.set('tid', tid); p.set('cid', cid)
-  if (처음) p.set('_fv', '1')
-  p.set('sid', sid); p.set('sct', String(sct)); p.set('_s', String(hits))
-  if (새세션) p.set('_ss', '1')
-  p.set('seg', '1')
-  // ⭐ 참여 시간 — 없으면 활성 사용자로 안 센다. 같은 세션 안에선 «지난 신호부터», 첫 신호는 1초.
-  p.set('_et', String(새세션 ? 1000 : Math.min(Math.max(지난, 1), 세션시간)))
-  p.set('en', 'page_view'); p.set('dt', 이름); p.set('dl', `${IOS_PAGE}${꼬리 ? `?m=${encodeURIComponent(꼬리)}` : ''}#${이름}`)
-  if (화면크기) p.set('sr', 화면크기)
-  if (언어) p.set('ul', 언어)
-  if (내부) p.set('ep.traffic_type', 'internal')   // 콘솔 「내부 트래픽」 필터가 보는 그 이름
-  return `https://www.google-analytics.com/g/collect?${p.toString()}`
+  return { 머문, 본 }
 }
 
 let 직접모드 = false
 function 직접보내기(이름, 꼬리 = '') {
   try {
     if (!보낼까()) return
-    const url = 수집주소만들기({
+    const r = 수집주소들({
       이름, 저장소: localStorage, 내부: 우리기기인가(),
       화면크기: (screen && screen.width) ? `${screen.width}x${screen.height}` : '',
       언어: (navigator.language || '').toLowerCase(), 꼬리,
     })
-    if (!url) return
-    let 갔나 = false
-    try { if (navigator.sendBeacon) 갔나 = navigator.sendBeacon(url) } catch { 갔나 = false }
-    if (!갔나) fetch(url, { method: 'POST', mode: 'no-cors', keepalive: true }).catch(() => {})
+    if (!r) return
+    // ⏱ 앞 화면 머문 시간(있으면) → 새 화면 순서로. 차례가 바뀌면 GA 가 시간을 엉뚱한 화면에 붙인다.
+    for (const url of [r.머문, r.본].filter(Boolean)) {
+      let 갔나 = false
+      try { if (navigator.sendBeacon) 갔나 = navigator.sendBeacon(url) } catch { 갔나 = false }
+      if (!갔나) fetch(url, { method: 'POST', mode: 'no-cors', keepalive: true }).catch(() => {})
+    }
     기록남기기(이름, '직접')
   } catch { /* ⛔ 통계가 죽어도 앱은 그대로 돈다 */ }
 }

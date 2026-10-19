@@ -4,7 +4,7 @@
 //    gtag 스크립트·쿠키·capacitor:// 주소 셋 다 안 기대고 g/collect 로 직접 보내기로 했다(설계 관문 통과 14:1x).
 // ⛔ 여기선 «안 보낸다» — 주소를 만들기만 하고 칸을 잰다(샌드박스는 google-analytics.com 이 막혀 있다).
 //    진짜 검증 = TestFlight 딸 폰 → 창업자 GA4 실시간에 home 이 뜨는 캡처.
-import { 수집주소만들기, 새계정인가, IOS_PAGE, MEASUREMENT_ID } from '../src/stats.js'
+import { 수집주소만들기, 수집주소들, 새계정인가, IOS_PAGE, MEASUREMENT_ID } from '../src/stats.js'
 
 let 나쁨 = 0
 const 잰다 = (참, 말, 값 = '') => { if (참) console.log(`  ✅ ${말}${값 ? `  ${값}` : ''}`); else { 나쁨 += 1; console.log(`  ⛔ ${말}${값 ? `  ${값}` : ''}`) } }
@@ -24,10 +24,18 @@ const a = 칸(수집주소만들기({ 이름: 'home', 저장소: s, 지금: t0, 
 잰다(/^\d+\.\d+$/.test(a.cid), 'cid 모양 = 숫자.숫자', a.cid)
 
 console.log('🍎 같은 세션 두 번째 신호(5분 뒤)')
-const b = 칸(수집주소만들기({ 이름: 'myrecipes', 저장소: s, 지금: t0 + 5 * 60 * 1000 }))
+const 둘 = 수집주소들({ 이름: 'myrecipes', 저장소: s, 지금: t0 + 5 * 60 * 1000 })
+const 머 = 칸(둘.머문), b = 칸(둘.본)
 잰다(b.cid === a.cid, '같은 사람(cid 그대로) — 켤 때마다 새 사람으로 안 센다')
-잰다(b.sid === a.sid && !('_fv' in b) && !('_ss' in b) && b._s === '2' && b.sct === '1', '같은 세션 · _fv/_ss 없음 · _s=2')
-잰다(b._et === String(5 * 60 * 1000), '_et = 지난 신호부터 5분', b._et)
+잰다(b.sid === a.sid && !('_fv' in b) && !('_ss' in b) && b._s === '3' && b.sct === '1', '같은 세션 · _fv/_ss 없음 · 머문 줄 _s=2 → 새 화면 _s=3')
+// ⏱ [2026-10-19 · 창업자 「상세 시간 고쳐줘」] 머문 5분은 «떠나는 화면(home)»에 — 새 화면(myrecipes)에 붙이지 않는다
+잰다(머.en === 'user_engagement' && 머.dt === 'home' && 머._et === String(5 * 60 * 1000) && 머._s === '2', '앞 화면 home 에 머문 5분 = user_engagement(dt=home · _et=5분)', `${머.dt} ${머._et}`)
+잰다(b.en === 'page_view' && b.dt === 'myrecipes' && b._et === '1', '새 화면 page_view 는 _et=1ms(시간을 안 가져간다)', b._et)
+// ⏱ 상세 열기 순서(view: → detail) — detail 에 머문 시간은 «그다음» 화면이 열릴 때 detail 이름으로 나간다
+수집주소들({ 이름: 'view:basic-x', 저장소: s, 지금: t0 + 5 * 60 * 1000 + 50 })
+수집주소들({ 이름: 'detail', 저장소: s, 지금: t0 + 5 * 60 * 1000 + 60 })
+const 나감 = 수집주소들({ 이름: 'home', 저장소: s, 지금: t0 + 5 * 60 * 1000 + 60 + 52_000 })
+잰다(칸(나감.머문).dt === 'detail' && 칸(나감.머문)._et === '52000', '상세 52초 → detail 줄에 붙는다(view: 가 아니라)', `${칸(나감.머문).dt} ${칸(나감.머문)._et}`)
 
 console.log('🍎 31분 뒤 = 새 세션')
 const c = 칸(수집주소만들기({ 이름: 'home', 저장소: s, 지금: t0 + 36 * 60 * 1000 }))
