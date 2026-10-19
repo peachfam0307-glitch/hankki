@@ -43,6 +43,13 @@ for (const [이름, 쪽, 글] of 경우) {
   await p.locator('button', { hasText: 쪽 === 'google' ? /Google/ : /Apple/ }).first().click()
   await p.waitForTimeout(1500)
   await p.screenshot({ path: join(OUT, `${이름}-1팝업.png`) })
+  // ↻ 닫고 다시 눌러 본다(창업자 「닫았어 다시 했는데 안돼 그럼 팝업이 안열려서」)
+  await p.locator('.sheet button', { hasText: '알겠어요' }).first().click().catch(() => {}); await p.waitForTimeout(700)
+  const 닫힘 = await p.locator('.sheet').count()
+  await p.locator('button', { hasText: 쪽 === 'google' ? /Google/ : /Apple/ }).first().click(); await p.waitForTimeout(1500)
+  const 다시 = await p.locator('.sheet').count()
+  await p.screenshot({ path: join(OUT, `${이름}-2다시.png`) })
+  console.log(이름, '닫은 뒤 시트', 닫힘, '→ 다시 누른 뒤 시트', 다시)
   console.log(이름, '팝업 글 =', (await p.locator('.sheet').last().innerText().catch(() => '없음')).replace(/\n+/g, ' / '))
   await ctx.close()
 }
