@@ -46,6 +46,8 @@ for (const [이름, 쪽, 글] of 경우) {
   // ↻ 닫고 다시 눌러 본다(창업자 「닫았어 다시 했는데 안돼 그럼 팝업이 안열려서」)
   await p.locator('.sheet button', { hasText: '알겠어요' }).first().click().catch(() => {}); await p.waitForTimeout(700)
   const 닫힘 = await p.locator('.sheet').count()
+  await p.screenshot({ path: join(OUT, `${이름}-1b닫은뒤.png`) })
+  console.log(이름, '닫은 뒤 「한끼에 알리기」 링크', await p.locator('button', { hasText: '한끼에 알리기' }).count())
   await p.locator('button', { hasText: 쪽 === 'google' ? /Google/ : /Apple/ }).first().click(); await p.waitForTimeout(1500)
   const 다시 = await p.locator('.sheet').count()
   await p.screenshot({ path: join(OUT, `${이름}-2다시.png`) })

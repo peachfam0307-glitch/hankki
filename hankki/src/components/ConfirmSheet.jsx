@@ -6,7 +6,8 @@ import { useModalBack } from '../useBackHandler'
 // 삭제·초기화 같은 되돌리기 어려운 동작 확인에 쓴다(danger=빨강 버튼).
 // secondaryLabel/onSecondary = 선택 사항인 "제3의 길"(예: 버리기 vs 그냥 닫기 vs 계속 쓰기).
 // 안 넘기면 기존처럼 확인/취소 2지선다 그대로다.
-export default function ConfirmSheet({ title, message, confirmLabel = '확인', danger = false, onConfirm, onClose, secondaryLabel, onSecondary }) {
+// noCancel = 「알겠어요」처럼 확인이 곧 닫기인 안내 시트 — 닫는 단추가 셋(닫기·확인·취소)이 되지 않게 «취소»를 뺀다(창업자 2026-10-19).
+export default function ConfirmSheet({ title, message, confirmLabel = '확인', danger = false, onConfirm, onClose, secondaryLabel, onSecondary, noCancel = false }) {
   useModalBack(onClose) // 뒤로가기 → 닫기
   return (
     <Portal>
@@ -32,7 +33,7 @@ export default function ConfirmSheet({ title, message, confirmLabel = '확인', 
                 {secondaryLabel}
               </button>
             )}
-            <button className="btn-ghost press" style={{ width: '100%' }} onClick={onClose}>취소</button>
+            {!noCancel && <button className="btn-ghost press" style={{ width: '100%' }} onClick={onClose}>취소</button>}
           </div>
         </div>
       </div>
