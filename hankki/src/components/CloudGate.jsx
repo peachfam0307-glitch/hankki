@@ -44,6 +44,8 @@ export default function CloudGate({ onDone }) {
   //      그게 맞다: 「이 브라우저에선 안 된다」는 그 자리에서 드러나는 일이고,
   //      저장하면 «한 번 실패했던 사람»이 다음에 로그인을 건너뛰기 쉬워진다.
   const [실패수, set실패수] = useState(0)
+  // 🍎 [창업자 2026-10-19 「로그인실패 이유를 팝업으로」→「1.2.번 다 하자」] 막힌 이유 짐작 ＋ 「한끼에 알리기」
+  const [막힘, set막힘] = useState(null)
   // 👪 [2026-09-10 로그인 필수 ②] 이 기기 기록의 주인이 «다른 계정»이었다 → 「넣을까 · 비울까」 물음 { 사람, 레시피, 일기 }
   //    ⛔ 조용히 섞지 않는다 — 가족 아이패드에서 A 가 나가고 B 가 들어오면 A 의 폰 기록이 B 계정으로 올라가던 구멍(§8 1차).
   //    ⭐ 아이폰 앱에서 «먼저» 켠다(`앱안인가()`) — 안드로이드도 같은 구멍이지만 A/B 판정 뒤 스위치만 넓힌다(§8 ⑥·⑧).
@@ -97,6 +99,7 @@ export default function CloudGate({ onDone }) {
       //   🔐 [2026-09-22] 오류를 «같이» 넘긴다 → gate_fail_closed/blocked/net/other 로 «왜»가 갈린다(stats 가 코드만 읽는다).
       try { 로그인실패(e, 공급자) } catch { /* noop */ }
       set탈(고운말(e)); set바쁨('')
+      set막힘(막힘안내(e, 실패수 + 1))
     }
   }
 
@@ -306,6 +309,19 @@ export default function CloudGate({ onDone }) {
         </div>
       )}
 
+      {/* 🍎 로그인이 막혔다 — 짐작되는 설정 ＋ 우리에게 알리기(메일 · 오류 글을 담아) */}
+      {막힘 && (
+        <ConfirmSheet
+          title={막힘.title}
+          message={막힘.message}
+          confirmLabel="알겠어요"
+          onConfirm={() => {}}
+          secondaryLabel="한끼에 알리기"
+          onSecondary={() => 알리기메일(막힘.글)}
+          onClose={() => set막힘(null)}
+        />
+      )}
+
       {/* 👪 다른 계정의 기록이 이 기기에 있다 — 올리기·가져오기 «전»에 묻는다(§8 ② · 조용히 섞지 않는다) */}
       {계정물음 && 계정물음.단계 !== 2 && (
         <ConfirmSheet
@@ -357,6 +373,64 @@ export default function CloudGate({ onDone }) {
       )}
     </div>
   )
+}
+
+// 🍎🍎 [창업자 2026-10-19] 로그인이 막혔을 때 띄우는 팝업 — ⓐ 확인해 볼 설정(짐작) ⓑ 「한끼에 알리기」
+//   🔢 근거 = GA4 ?m= 오류 글(10/14~19) · 아이폰 구글 실패 = 전부 「Unable to open Safari.」 · 애플 실패 = 전부 AuthorizationError 1000
+//   ⚠️ 원인은 «확인 안 됐다» → 「~일 수 있어요」로만 쓴다(사파리 = AppAuth-iOS #980 사례 · 1000 = 애플 포럼 추정)
+//   📄 docs/로그인실패-오류글-2026-10-19.md
+function 막힘안내(e, 몇번째) {
+  const m = String((e && e.message) || '')
+  const c = (e && e.code) || ''
+  if (c.includes('popup-closed') || c.includes('cancelled-popup')) return null   // 스스로 닫은 것 — 막힌 게 아니다
+  if (/cancel|취소|12501|1001/i.test(c + ' ' + m)) return null                      // 앱 안 창을 닫음(구글 12501 · 애플 1001) — stats.js 기타속고르기 와 같은 잣대
+  // ── [창업자 2026-10-19 「또 예상되는 다른 로그인실패도 찾아봐」] 유저가 «스스로 풀 수 있는» 것만 팝업으로
+  if (m.includes('이 앱 판에선 로그인이 안 돼요')) return {                          // nativeAuth — 옛 앱 판(로그인 부품 없음)
+    title: '앱을 업데이트해 주세요',
+    message: '지금 깔린 한끼가 옛 판이라 로그인이 안 돼요.\nApp Store에서 한끼를 업데이트한 뒤 다시 눌러 주세요.',
+    글: m,
+  }
+  if (c.includes('account-exists-with-different-credential')) return {             // 같은 메일로 «다른 방법» 가입이 이미 있다
+    title: '전에 다른 방법으로 가입하셨어요',
+    message: '이 메일은 Google 또는 Apple 중 다른 쪽으로 이미 가입돼 있어요.\n처음 가입한 방법으로 로그인해 주세요.',
+    글: c,
+  }
+  if (c.includes('too-many-requests')) return {
+    title: '잠시 뒤에 다시 해 주세요',
+    message: '짧은 시간에 여러 번 눌러서 잠깐 막혔어요.\n몇 분 뒤에 다시 눌러 주세요.',
+    글: c,
+  }
+  if (c.includes('network') || c === 'hankki/timeout') return {
+    title: '인터넷 연결을 확인해 주세요',
+    message: '와이파이나 데이터가 불안하면 로그인이 안 될 수 있어요.\n연결을 확인하고 다시 눌러 주세요.',
+    글: c,
+  }
+  if (m.includes('Unable to open Safari')) return {
+    title: 'Google 로그인 창이 열리지 않았어요',
+    message: '폰 설정에서 사파리가 막혀 있으면 이럴 수 있어요.\n설정 → 스크린 타임 → 콘텐츠 및 개인정보 보호 제한 → 허용된 앱에서 Safari가 켜져 있는지 확인해 주세요.\n\n「Apple로 로그인」으로 들어와도 돼요.',
+    글: m,
+  }
+  if (m.includes('AuthorizationError') && m.includes('1000')) return {
+    title: 'Apple 로그인이 되지 않았어요',
+    message: '이 폰에 Apple 계정이 로그인돼 있지 않으면 이럴 수 있어요.\n설정 맨 위에 내 이름(Apple 계정)이 보이는지 확인해 주세요.\n\n「Google로 로그인」으로 들어와도 돼요.',
+    글: m,
+  }
+  if (몇번째 >= 2) return {   // 이유를 모르는 실패가 두 번째 — 같은 벽을 계속 두드리게 두지 않는다
+    title: '이 폰에서 로그인이 잘 안 되고 있어요',
+    message: '「한끼에 알리기」를 누르면 저희가 확인할게요.\n폰 기종을 같이 적어 주시면 더 빨리 찾을 수 있어요.',
+    글: m || c || '알 수 없음',
+  }
+  return null
+}
+
+// 📮 우리에게 알리기 = 메일(프로필 「도움말 및 문의」와 같은 주소) · 오류 글만 담는다(⛔ 이름·메일·계정은 안 담는다)
+function 알리기메일(글) {
+  try {
+    const 본문 = `로그인이 안 돼요.\n\n오류 글: ${String(글 || '').slice(0, 200)}\n폰 기종: \n`
+    const a = document.createElement('a')
+    a.href = `mailto:annyeong.hankki@gmail.com?subject=${encodeURIComponent('[한끼] 로그인이 안 돼요')}&body=${encodeURIComponent(본문)}`
+    a.click()
+  } catch { /* noop */ }
 }
 
 // ⛔ 파이어베이스 오류 코드를 그대로 보여주지 않는다 — 유저는 그걸 읽고 할 수 있는 게 없다.
