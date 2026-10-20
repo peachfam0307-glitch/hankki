@@ -7,7 +7,8 @@ import AppleButton from './AppleButton'          // 🍎 아이폰 앱 안에서
 import { 앱안인가 } from '../nativeAuth'
 import { 로그인화면봄, 로그인실패, 로그인탈출 } from '../stats'   // 🚪 [2026-09-21] 관문 — 이 화면은 덮개 층이라 화면봄이 못 잡는다
 import { useStore } from '../store'
-import { APP_TAGLINE } from '../version'
+import { APP_TAGLINE, APP_VERSION, INSTAGRAM_DM_URL } from '../version'
+import { openExternal } from '../utils'
 import { markCloudGateSeen, myRecipeCount, myDiaryCount } from '../nudges'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
 import { 합치기, 받을때합칠까 } from '../syncMerge'    // 👪 「이 계정에 넣기」 뒤 가져오기 = 덮지 않고 더한다 · 🔁 같은 폰 같은 계정 재로그인도 합친다
@@ -312,7 +313,12 @@ export default function CloudGate({ onDone }) {
           {실패글 && (
             <div style={{ marginTop: 6 }}>
               <button className="press" onClick={() => 알리기메일(실패글)} style={{ color: 'var(--brown)', fontSize: 14.5, fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3 }}>
-                한끼에 알리기
+                메일로 알리기
+              </button>
+              {/* 💬 [창업자 2026-10-20 「인스타DM으로 연결하는 건 없나?」] 메일앱이 없는 폰도 알릴 수 있게 — 프로필 「한끼에 DM 보내기」와 같은 주소 */}
+              <span style={{ color: 'var(--text-sub)', margin: '0 8px' }}>·</span>
+              <button className="press" onClick={() => openExternal(INSTAGRAM_DM_URL, '인스타그램')} style={{ color: 'var(--brown)', fontSize: 14.5, fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                인스타 DM으로 알리기
               </button>
             </div>
           )}
@@ -428,7 +434,7 @@ function 막힘안내(e, 몇번째) {
   }
   if (몇번째 >= 2) return {   // 이유를 모르는 실패가 두 번째 — 같은 벽을 계속 두드리게 두지 않는다
     title: '로그인이 잘 안 돼요',
-    message: '「한끼에 알리기」를 누르면 저희가 확인할게요.\n폰 기종을 같이 적어 주시면 더 빨리 찾을 수 있어요.',
+    message: '「한끼에 알리기」를 누르면 저희가 확인할게요.\n인스타그램 @annyeong_hankki 로 DM 주셔도 돼요.',
     글: m || c || '알 수 없음',
   }
   return null
@@ -437,7 +443,12 @@ function 막힘안내(e, 몇번째) {
 // 📮 우리에게 알리기 = 메일(프로필 「도움말 및 문의」와 같은 주소) · 오류 글만 담는다(⛔ 이름·메일·계정은 안 담는다)
 function 알리기메일(글) {
   try {
-    const 본문 = `로그인이 안 돼요.\n\n오류 글: ${String(글 || '').slice(0, 200)}\n폰 기종: \n`
+    // 📱 [창업자 2026-10-20 「자동으로 넣자」] 기기 정보를 앱이 직접 적는다 — 유저가 「폰 기종」을 안 적어도 가를 수 있게.
+    //   ⚠️ 진짜 iOS 버전은 아니다 — 브라우저 글(userAgent)이라 아이폰은 버전이 고정돼 보일 수 있다(GA 실측 = 성공·실패 전부 18.7).
+    //      진짜 버전은 @capacitor/device 같은 부품이 있어야 한다(지금 ios-app 에 없다).
+    let 기기 = ''
+    try { 기기 = `${navigator.userAgent || ''} · 화면 ${screen.width}x${screen.height} · 앱 ${APP_VERSION}` } catch { 기기 = '' }
+    const 본문 = `로그인이 안 돼요.\n\n오류 글: ${String(글 || '').slice(0, 200)}\n폰 기종: \n\n(자동) ${기기.slice(0, 300)}\n`
     const a = document.createElement('a')
     a.href = `mailto:annyeong.hankki@gmail.com?subject=${encodeURIComponent('[한끼] 로그인이 안 돼요')}&body=${encodeURIComponent(본문)}`
     a.click()
