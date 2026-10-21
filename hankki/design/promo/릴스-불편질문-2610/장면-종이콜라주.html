@@ -1,0 +1,83 @@
+<!doctype html><meta charset="utf-8">
+<style>
+@font-face{font-family:J;src:url(jua-korean-400.woff2)}
+@font-face{font-family:D;src:url(dohyeon-korean-400.woff2)}
+@font-face{font-family:P;src:url(nanumpen-korean-400.woff2)}
+@font-face{font-family:G;src:url(gaegu-korean-400.woff2)}
+*{box-sizing:border-box}html,body{margin:0;width:1080px;height:1920px;overflow:hidden}
+body{font-family:J;background:radial-gradient(130% 80% at 35% 15%,#fff 0%,#f8f6f1 55%,#ece8df 100%);color:#2f2823}
+body::before{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.25;mix-blend-mode:multiply;z-index:0}
+.sc{display:none;position:absolute;inset:0}
+.paper{position:absolute;background:var(--c,#fffdf8);box-shadow:0 1px 1px rgba(0,0,0,.06),0 16px 24px -8px rgba(40,30,20,.25)}
+.tape{position:absolute;width:150px;height:44px;background:rgba(240,220,160,.75);top:-20px;left:50%;margin-left:-75px;rotate:-4deg;box-shadow:0 2px 3px rgba(0,0,0,.08)}
+.sfx{position:absolute;font-family:D;font-size:170px;color:#f4e4a6;-webkit-text-stroke:15px #2b2420;paint-order:stroke fill;text-shadow:0 12px 0 #2b2420;opacity:0;z-index:20;white-space:nowrap}
+@keyframes bigpop{0%{opacity:0;transform:scale(.2) rotate(var(--r))}40%{opacity:1;transform:scale(1.15) rotate(var(--r))}100%{opacity:1;transform:scale(1) rotate(var(--r))}}
+@keyframes drop{0%{opacity:0;transform:translateY(-500px) rotate(var(--r0))}60%{opacity:1;transform:translateY(14px) rotate(var(--r))}100%{opacity:1;transform:translateY(0) rotate(var(--r))}}
+@keyframes pop{0%{opacity:0;transform:scale(.3) rotate(var(--r))}60%{opacity:1;transform:scale(1.1) rotate(var(--r))}100%{opacity:1;transform:scale(1) rotate(var(--r))}}
+@keyframes shake{0%,100%{translate:0}25%{translate:-14px}75%{translate:14px}}
+/* s2 갤러리 */
+.phone{left:150px;top:180px;width:780px;height:1180px;border-radius:70px;background:#2b2420;padding:34px;rotate:-3deg;z-index:2}
+.scr{width:100%;height:100%;border-radius:44px;overflow:hidden;background:#f7f4ee;position:relative}
+.grid{position:absolute;left:14px;right:14px;top:0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;animation:scroll 2.3s cubic-bezier(.5,0,.3,1) .15s both}
+@keyframes scroll{from{transform:translateY(0)}to{transform:translateY(-5200px)}}
+.th{aspect-ratio:1;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:P;font-size:34px;color:#2f2823;text-align:center;line-height:1}
+.cnt{left:560px;top:110px;padding:18px 34px;font-family:D;font-size:66px;rotate:6deg;z-index:5;--c:#f0cfc4}
+.cnt b{font-weight:400;color:#b5583a}
+.mag{position:absolute;left:300px;top:640px;width:330px;height:330px;border-radius:50%;border:26px solid #2b2420;background:rgba(255,255,255,.25);z-index:6;animation:hunt 2.4s ease-in-out .2s both}
+.mag::after{content:"";position:absolute;width:44px;height:220px;background:#2b2420;border-radius:22px;right:-120px;bottom:-200px;rotate:-45deg}
+@keyframes hunt{0%{transform:translate(-200px,200px)}25%{transform:translate(180px,-120px)}50%{transform:translate(-120px,-260px)}75%{transform:translate(220px,120px)}100%{transform:translate(0,0)}}
+/* s3 저장함 */
+.card{width:330px;height:410px;border-radius:18px;padding:0;overflow:hidden;opacity:0}
+.card .img{height:290px;display:flex;align-items:center;justify-content:center;font-family:P;font-size:52px}
+.card .bar{height:120px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font-family:J;font-size:34px;background:#fffdf8}
+.bm{width:40px;height:52px;background:#2b2420;clip-path:polygon(0 0,100% 0,100% 100%,50% 72%,0 100%)}
+.web{position:absolute;left:0;top:0;width:1080px;height:1400px;z-index:9;opacity:0;animation:pop .5s 1.9s both;--r:0deg}
+.tag{left:120px;top:1060px;padding:20px 40px;font-family:P;font-size:64px;rotate:-5deg;z-index:10;opacity:0;animation:pop .4s 2.2s both;--r:-5deg;--c:#cfdbe4}
+.dust{position:absolute;width:14px;height:14px;border-radius:50%;background:#b9b0a2;opacity:0;z-index:9}
+@keyframes fall{0%{opacity:0;transform:translateY(-80px)}20%{opacity:.8}100%{opacity:.7;transform:translateY(160px)}}
+/* s4 기억 */
+.bub{left:110px;top:220px;width:860px;height:700px;border-radius:50%;--c:#fffdf8;z-index:2;display:flex;align-items:center;justify-content:center;opacity:0;animation:pop .5s .1s both;--r:-2deg}
+.bub i{position:absolute;border-radius:50%;background:#fffdf8;box-shadow:0 10px 18px -6px rgba(40,30,20,.25)}
+.plate{width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,#fff 55%,#e9e3d8 56%,#fff 64%,#ddd5c7 100%);display:flex;align-items:center;justify-content:center;filter:blur(0);animation:fog 2.4s .4s both}
+.plate span{width:240px;height:170px;border-radius:50% 45% 55% 40%;background:radial-gradient(circle at 40% 40%,#e9a26a,#c4623c 70%);filter:blur(10px)}
+@keyframes fog{0%{filter:blur(0)}100%{filter:blur(18px);opacity:.55}}
+.qm{position:absolute;font-family:D;font-size:200px;color:#fffdf8;-webkit-text-stroke:14px #2b2420;paint-order:stroke fill;opacity:0;z-index:5}
+.mem{padding:22px 32px;font-family:P;font-size:58px;opacity:0;z-index:6;white-space:nowrap}
+.mem s{text-decoration-thickness:4px;color:#8a7f72}
+</style>
+<!-- 2 -->
+<div class="sc" id="s2">
+ <div class="paper phone"><div class="scr"><div class="grid" id="grid"></div></div></div>
+ <div class="paper cnt"><b id="n">0</b> / 3,000장</div>
+ <div class="mag"></div>
+ <div class="sfx" style="left:110px;top:1080px;--r:-6deg;animation:bigpop .35s 2.35s cubic-bezier(.2,1.5,.4,1) both">어딨어?!</div>
+</div>
+<!-- 3 -->
+<div class="sc" id="s3">
+ <div id="cards"></div>
+ <svg class="web" viewBox="0 0 1080 1400"><g fill="none" stroke="#7d7466" stroke-width="4" opacity=".8">
+  <path d="M0 0 L520 360"/><path d="M0 0 L380 520"/><path d="M0 0 L620 120"/><path d="M0 0 L120 600"/>
+  <path d="M80 56 Q60 120 34 170"/><path d="M180 126 Q130 250 80 340"/><path d="M300 210 Q210 380 140 520"/><path d="M420 290 Q300 480 220 640"/>
+  <path d="M110 30 Q150 90 150 160"/><path d="M240 60 Q270 160 250 280"/>
+  <path d="M1080 0 L620 380"/><path d="M1080 0 L760 560"/><path d="M1080 0 L980 640"/><path d="M1000 66 Q1020 140 1040 200"/><path d="M880 166 Q930 300 970 400"/><path d="M760 266 Q840 450 900 560"/></g></svg>
+ <div class="paper tag">마지막으로 본 날: <b style="font-weight:400;color:#b5583a">없음</b></div>
+ <div class="sfx" style="left:140px;top:1240px;--r:-5deg;animation:bigpop .35s 2.4s cubic-bezier(.2,1.5,.4,1) both">쌓이기만</div>
+</div>
+<!-- 4 -->
+<div class="sc" id="s4">
+ <div class="paper bub"><i style="width:120px;height:120px;left:120px;bottom:-130px"></i><i style="width:70px;height:70px;left:60px;bottom:-230px"></i><div class="plate"><span></span></div></div>
+ <div id="qs"></div>
+ <div class="sfx" style="left:200px;top:1220px;--r:-6deg;animation:bigpop .35s 2.4s cubic-bezier(.2,1.5,.4,1) both">기억 0</div>
+</div>
+<script>
+{const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d'),im=x.createImageData(256,256);for(let i=0;i<im.data.length;i+=4){const v=205+Math.random()*50;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255}x.putImageData(im,0,0);document.documentElement.style.setProperty('--grain','url('+c.toDataURL()+')')}
+const s=new URLSearchParams(location.search).get('s')||'2';document.getElementById('s'+s).style.display='block'
+const C=['#f4e4a6','#f0cfc4','#d3dfc8','#cfdbe4','#ecdcc6','#e8d5e6','#f7f4ee']
+if(s==='2'){const L=['캡처','셀카','영수증','고양이','캡처','밈','캡처','택배','하늘','캡처','메모','강아지','캡처','지도','캡처','쿠폰'];const g=document.getElementById('grid');for(let i=0;i<4*130;i++){const d=document.createElement('div');d.className='th';d.style.background=C[(i*3+Math.floor(i/4))%7];d.textContent=L[i*5%16];g.appendChild(d)}
+ const n=document.getElementById('n');const t0=performance.now();const tick=()=>{const t=(document.getAnimations()[0]?.currentTime??(performance.now()-t0))/1000;const k=Math.min(1,Math.max(0,(t-.15)/2.3));n.textContent=Math.round(2847*(1-Math.pow(1-k,2))).toLocaleString();requestAnimationFrame(tick)};tick()}
+if(s==='3'){const T=['떡볶이 황금레시피','10분 파스타','자취 계란요리','다이어트 샐러드','백종원 김치찌개','에어프라이어 치킨','오트밀 쿠키','마약 계란장','원팬 리조또'];const el=document.getElementById('cards');const P=[[80,140],[650,120],[360,280],[100,560],[640,520],[380,760],[90,980],[650,940],[370,1150]];T.forEach((t,i)=>{const d=document.createElement('div');d.className='paper card';const r=(i*37%13-6);d.style.cssText=`left:${P[i][0]}px;top:${P[i][1]}px;--r:${r}deg;--r0:${r*3}deg;animation:drop .35s cubic-bezier(.3,1.25,.5,1) ${(0.15+i*0.17).toFixed(2)}s both;z-index:${i+1}`;d.innerHTML=`<div class="img" style="background:${C[i%6]}">${t.split(' ')[0]}</div><div class="bar"><span>저장됨</span><span class="bm"></span></div>`;el.appendChild(d)});
+ for(let i=0;i<26;i++){const d=document.createElement('div');d.className='dust';d.style.cssText=`left:${(i*97)%1040}px;top:${(i*173)%1100}px;animation:fall 1.2s ${(1.8+i*.02).toFixed(2)}s both`;el.appendChild(d)}}
+if(s==='4'){const el=document.getElementById('qs');[[60,120,-12],[860,140,14],[780,820,-8],[40,800,10]].forEach(([x,y,r],i)=>{const q=document.createElement('div');q.className='qm';q.textContent='?';q.style.cssText=`left:${x}px;top:${y}px;--r:${r}deg;animation:pop .35s ${(0.5+i*.2).toFixed(2)}s both`;el.appendChild(q)});
+ [['빨간 거였나?',90,1000,-5,'#f0cfc4'],['치즈 <s>들어갔나</s>…?',520,1080,4,'#f4e4a6'],['누가 해줬더라',200,1160,-3,'#d3dfc8']].forEach(([t,x,y,r,c],i)=>{const m=document.createElement('div');m.className='paper mem';m.innerHTML=t;m.style.cssText=`left:${x}px;top:${y}px;--r:${r}deg;--r0:${r*3}deg;--c:${c};animation:drop .35s cubic-bezier(.3,1.25,.5,1) ${(1.0+i*.3).toFixed(2)}s both, hidem .2s 2.3s forwards`;el.appendChild(m)})
+ const st=document.createElement('style');st.textContent='@keyframes hidem{to{opacity:0}}';document.head.appendChild(st)}
+</script>
