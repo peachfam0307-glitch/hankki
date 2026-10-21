@@ -60,8 +60,8 @@ const side=q.get('side')||'L';const run=document.getElementById('run');run.class
 if(q.get('mode')==='beats'){run.style.display='none';['lines','puff','skid','dusts'].forEach(i=>{const e=document.getElementById(i);if(e)e.style.display='none'});
 const add=(h)=>{const t=document.createElement('div');t.innerHTML=h;document.body.appendChild(t.firstElementChild)}
 add('<div class="b1"><img src="'+q.get('ch1')+'"></div>');add('<div class="b2"><img src="'+q.get('ch2')+'"></div>')
-add('<div class="fx" style="left:60px;top:900px;font-size:110px;--r:-10deg;animation:fxp .9s .45s both">'+(q.get('fx1')||'헉!')+'</div>')
-add('<div class="fx" style="right:50px;top:860px;font-size:96px;--r:8deg;animation:fxp 1s 1.75s both">'+(q.get('fx2')||'뾰로롱~')+'</div>')
+add('<div class="fx" style="left:60px;top:'+(q.get('fy1')||900)+'px;font-size:110px;--r:-10deg;animation:fxp .9s .45s both">'+(q.get('fx1')||'헉!')+'</div>')
+add('<div class="fx" style="right:50px;top:'+(q.get('fy2')||860)+'px;font-size:96px;--r:8deg;animation:fxp 1s 1.75s both">'+(q.get('fx2')||'뾰로롱~')+'</div>')
 for(let i=0;i<7;i++)add('<div class="ht" style="left:'+(560+i*60)+'px;top:'+(1150+(i%3)*40)+'px;animation:htp 1s '+(1.8+i*0.08).toFixed(2)+'s both"></div>')
 document.querySelector('.cap span').style.animationDelay='1.9s';const rg2=document.getElementById('ring');if(rg2)rg2.style.animationDelay='.8s'}
 if(q.get('mode')==='peek'){const ph=document.querySelector('.phone');ph.style.left='30px';const rg=document.getElementById('ring');if(rg){rg.style.left=(parseInt(rx)-120)+'px'}run.style.display='none';['lines','puff','skid','dusts'].forEach(i=>{const e=document.getElementById(i);if(e)e.style.display='none'});const pc=document.createElement('div');pc.className='peekc';pc.innerHTML='<img src="'+q.get('ch')+'">';document.body.appendChild(pc);if(q.get('bub')){const b=document.createElement('div');b.className='bub';b.innerHTML=q.get('bub');document.body.appendChild(b)}}
