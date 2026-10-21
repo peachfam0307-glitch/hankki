@@ -26,6 +26,19 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#fbf7ef
 .cap span{display:inline-block;background:#ffe9a8;border-radius:22px;padding:14px 34px 18px;box-shadow:0 10px 24px -8px rgba(40,30,20,.3);rotate:-1.5deg;animation:pop .45s 1.3s cubic-bezier(.2,1.4,.4,1) both}
 .cap b{color:#e8735a;font-weight:400}
 @keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+/* 🎬 두 박자 — 「헉!」 표정 컷 → 「해결!」 에피소드 컷 */
+.b1{position:absolute;z-index:7;left:40px;bottom:440px;width:340px;height:380px;transform-origin:50% 100%;animation:b1in .35s .35s cubic-bezier(.2,1.6,.4,1) both, b1shake .1s .7s 6 both, b1out .3s 1.45s ease-in both}
+.b1 img,.b2 img{width:100%;height:100%;object-fit:contain;object-position:bottom}
+@keyframes b1in{from{transform:translateY(1000px) scale(.6)}to{transform:translateY(0) scale(1)}}
+@keyframes b1shake{0%,100%{translate:0}50%{translate:12px}}
+@keyframes b1out{to{transform:translateY(1100px) scale(.7)}}
+.b2{position:absolute;z-index:7;right:20px;bottom:420px;width:560px;height:460px;animation:b2in .55s 1.55s cubic-bezier(.2,1.4,.4,1) both, b2bob .5s 2.15s ease-in-out infinite}
+@keyframes b2in{0%{transform:translateX(700px) rotate(14deg)}70%{transform:translateX(-30px) rotate(-5deg)}100%{transform:translateX(0) rotate(0)}}
+@keyframes b2bob{0%,100%{translate:0 0}50%{translate:0 -14px}}
+.fx{position:absolute;z-index:8;font-family:J,D;color:#fffdf8;-webkit-text-stroke:12px #5a3a24;paint-order:stroke fill;opacity:0}
+@keyframes fxp{0%{opacity:0;transform:scale(.3) rotate(var(--r))}35%{opacity:1;transform:scale(1.2) rotate(var(--r))}75%{opacity:1;transform:scale(1) rotate(var(--r))}100%{opacity:0}}
+.ht{position:absolute;z-index:8;width:46px;height:46px;opacity:0;background:#e8735a;clip-path:path("M23 42 C-8 22 6 0 23 13 C40 0 54 22 23 42Z")}
+@keyframes htp{0%{opacity:0;transform:translateY(0) scale(.3)}30%{opacity:1;transform:translateY(-40px) scale(1.1)}100%{opacity:0;transform:translateY(-160px) scale(.8)}}
 /* 👀 빼꼼 — 폰 «뒤»에 숨어 있다 옆으로 반만 나온다 */
 .peekc{position:absolute;z-index:1;width:330px;height:420px;left:580px;top:500px;transform-origin:20% 100%;animation:peekR 2.4s .3s ease-in-out both}
 .peekc img{width:100%;height:100%;object-fit:contain;object-position:bottom}
@@ -44,6 +57,13 @@ const q=new URLSearchParams(location.search)
 const shot=document.getElementById('shot');shot.src=q.get('img');shot.style.top=(q.get('top')||0)+'px';shot.style.setProperty('--fy',(q.get('fy')||'40')+'%')
 const r=document.getElementById('ring');const [rx,ry,rw,rh]=(q.get('ring')||'').split(',');if(rx){r.style.setProperty('--rx',rx+'px');r.style.setProperty('--ry',ry+'px');r.style.setProperty('--rw',rw+'px');r.style.setProperty('--rh',rh+'px')}else r.remove()
 const side=q.get('side')||'L';const run=document.getElementById('run');run.classList.add(side);document.getElementById('ch').src=q.get('ch')
+if(q.get('mode')==='beats'){run.style.display='none';['lines','puff','skid','dusts'].forEach(i=>{const e=document.getElementById(i);if(e)e.style.display='none'});
+const add=(h)=>{const t=document.createElement('div');t.innerHTML=h;document.body.appendChild(t.firstElementChild)}
+add('<div class="b1"><img src="'+q.get('ch1')+'"></div>');add('<div class="b2"><img src="'+q.get('ch2')+'"></div>')
+add('<div class="fx" style="left:60px;top:900px;font-size:110px;--r:-10deg;animation:fxp .9s .45s both">'+(q.get('fx1')||'헉!')+'</div>')
+add('<div class="fx" style="right:50px;top:860px;font-size:96px;--r:8deg;animation:fxp 1s 1.75s both">'+(q.get('fx2')||'뾰로롱~')+'</div>')
+for(let i=0;i<7;i++)add('<div class="ht" style="left:'+(560+i*60)+'px;top:'+(1150+(i%3)*40)+'px;animation:htp 1s '+(1.8+i*0.08).toFixed(2)+'s both"></div>')
+document.querySelector('.cap span').style.animationDelay='1.9s';const rg2=document.getElementById('ring');if(rg2)rg2.style.animationDelay='.8s'}
 if(q.get('mode')==='peek'){const ph=document.querySelector('.phone');ph.style.left='30px';const rg=document.getElementById('ring');if(rg){rg.style.left=(parseInt(rx)-120)+'px'}run.style.display='none';['lines','puff','skid','dusts'].forEach(i=>{const e=document.getElementById(i);if(e)e.style.display='none'});const pc=document.createElement('div');pc.className='peekc';pc.innerHTML='<img src="'+q.get('ch')+'">';document.body.appendChild(pc);if(q.get('bub')){const b=document.createElement('div');b.className='bub';b.innerHTML=q.get('bub');document.body.appendChild(b)}}
 const L=document.getElementById('lines');L.style[side==='L'?'left':'right']='-20px';L.style.setProperty('--lx',side==='L'?'-200px':'200px')
 const P=document.getElementById('puff');P.style[side==='L'?'left':'right']='640px'
