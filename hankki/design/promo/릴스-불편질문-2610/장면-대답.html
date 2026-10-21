@@ -71,3 +71,22 @@ document.getElementById('cap').innerHTML=q.get('cap')
 const K=document.getElementById('skid');K.style[side==='L'?'left':'right']='300px'
 const DS=document.getElementById('dusts');for(let i=0;i<7;i++){const d=document.createElement('div');d.className='dust';const s=50+i*14;d.style.width=d.style.height=s+'px';d.style[side==='L'?'left':'right']=(240+i*45)+'px';d.style.setProperty('--dx',(side==='L'?-1:1)*(40+i*12)+'px');d.style.animation='dust .8s '+(0.58+i*0.06).toFixed(2)+'s ease-out both';DS.appendChild(d)}
 </script>
+<style>
+.tp{position:absolute;z-index:7;width:400px;height:400px;bottom:590px;transform-origin:50% 0;animation:tpin .55s .5s cubic-bezier(.3,1.35,.5,1) both}
+.tp.R{right:30px}.tp.L{left:30px}
+.tp .pp{position:absolute;inset:0;background:#fffdf8;border-radius:28px;box-shadow:0 18px 30px -10px rgba(60,40,25,.35);padding:22px}
+.tp img{width:100%;height:100%;object-fit:contain}
+@keyframes tpin{0%{opacity:0;transform:translateY(-900px) rotate(var(--r0))}70%{opacity:1;transform:translateY(18px) rotate(var(--r))}100%{opacity:1;transform:translateY(0) rotate(var(--r))}}
+.tape{position:absolute;width:190px;height:58px;background:rgba(232,214,160,.82);top:-22px;box-shadow:0 2px 4px rgba(0,0,0,.08);opacity:0;animation:tape .18s both}
+.tape::before,.tape::after{content:"";position:absolute;top:0;bottom:0;width:10px;background:inherit;clip-path:polygon(0 0,100% 10%,0 25%,100% 40%,0 55%,100% 70%,0 85%,100% 100%)}
+.tape::before{left:-9px;transform:scaleX(-1)}.tape::after{right:-9px}
+@keyframes tape{from{opacity:0;transform:scale(1.4) rotate(var(--t))}to{opacity:1;transform:scale(1) rotate(var(--t))}}
+.chak{position:absolute;z-index:9;font-family:D;color:#fffaf0;-webkit-text-stroke:12px #6b4f3a;paint-order:stroke fill;text-shadow:0 8px 0 #6b4f3a;opacity:0}
+@keyframes chak{0%{opacity:0;transform:scale(.3) rotate(var(--r))}40%{opacity:1;transform:scale(1.15) rotate(var(--r))}100%{opacity:1;transform:scale(1) rotate(var(--r))}}
+</style>
+<script>
+if(q.get('mode')==='tape'){document.getElementById('run').style.display='none';['lines','puff','skid','dusts'].forEach(i=>{const e=document.getElementById(i);if(e)e.style.display='none'})
+ const sd=q.get('side')||'R',r=sd==='R'?5:-5,t=document.createElement('div');t.className='tp '+sd;t.style.setProperty('--r',r+'deg');t.style.setProperty('--r0',(r*4)+'deg')
+ t.innerHTML='<div class="pp"><img src="'+q.get('ch')+'"></div><div class="tape" style="left:30px;--t:-28deg;animation-delay:1.0s"></div><div class="tape" style="right:30px;--t:26deg;animation-delay:1.12s"></div>';document.body.appendChild(t)
+ const c=document.createElement('div');c.className='chak';c.textContent=q.get('fx')||'착!';c.style.cssText='font-size:130px;top:'+(q.get('fy')||230)+'px;'+(sd==='R'?'right:60px':'left:60px')+';--r:'+(sd==='R'?8:-8)+'deg;animation:chak .35s 1.05s cubic-bezier(.2,1.5,.4,1) both';document.body.appendChild(c)}
+</script>
