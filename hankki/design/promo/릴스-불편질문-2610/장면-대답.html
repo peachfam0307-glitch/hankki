@@ -5,26 +5,30 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#fbf7ef
 .phone img{position:absolute;left:0;width:100%;top:0;transform-origin:50% var(--fy);animation:zoom 2.6s .3s ease-in-out both}
 @keyframes pin{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes zoom{from{transform:translateY(40px)}to{transform:translateY(0)}}
-.ring{position:absolute;left:var(--rx);top:var(--ry);width:var(--rw);height:var(--rh);border:9px solid #b5583a;border-radius:40px;opacity:0;animation:ring .5s 1.0s cubic-bezier(.2,1.5,.4,1) both}
+.ring{position:absolute;left:var(--rx);top:var(--ry);width:var(--rw);height:var(--rh);border:9px solid #b5583a;border-radius:40px;opacity:0;animation:ring .5s 1.4s cubic-bezier(.2,1.5,.4,1) both}
 @keyframes ring{from{opacity:0;transform:scale(1.25)}to{opacity:1;transform:scale(1)}}
 .run{position:absolute;bottom:430px;width:400px;height:480px;z-index:5}
 .run img{width:100%;height:100%;object-fit:contain;object-position:bottom}
-.L{left:-40px;animation:runL .55s .35s cubic-bezier(.3,.9,.3,1.2) both}.R{right:-40px;animation:runR .55s .35s cubic-bezier(.3,.9,.3,1.2) both}
-@keyframes runL{0%{transform:translateX(-700px) rotate(14deg)}80%{transform:translateX(20px) rotate(-6deg)}100%{transform:translateX(0) rotate(0)}}
-@keyframes runR{0%{transform:translateX(700px) rotate(-14deg)}80%{transform:translateX(-20px) rotate(6deg)}100%{transform:translateX(0) rotate(0)}}
-.run .bob{animation:bob .45s 1.0s ease-in-out infinite}
+.L{left:340px;transform-origin:30% 100%;animation:runL 1.0s .3s linear both}.R{right:340px;transform-origin:70% 100%;animation:runR 1.0s .3s linear both}
+@keyframes runL{0%{transform:translateX(-760px) rotate(16deg) skewX(-8deg)}22%{transform:translateX(-260px) rotate(18deg) skewX(-10deg)}30%{transform:translateX(-120px) rotate(-24deg) skewX(12deg)}55%{transform:translateX(40px) rotate(-30deg) skewX(14deg)}72%{transform:translateX(70px) rotate(-18deg) skewX(6deg)}84%{transform:translateX(30px) rotate(8deg) skewX(-3deg)}93%{transform:translateX(0) rotate(-3deg)}100%{transform:translateX(0) rotate(0)}}
+@keyframes runR{0%{transform:translateX(760px) rotate(-16deg) skewX(8deg)}22%{transform:translateX(260px) rotate(-18deg) skewX(10deg)}30%{transform:translateX(120px) rotate(24deg) skewX(-12deg)}55%{transform:translateX(-40px) rotate(30deg) skewX(-14deg)}72%{transform:translateX(-70px) rotate(18deg) skewX(-6deg)}84%{transform:translateX(-30px) rotate(-8deg) skewX(3deg)}93%{transform:translateX(0) rotate(3deg)}100%{transform:translateX(0) rotate(0)}}
+.skid{position:absolute;bottom:418px;height:14px;width:0;border-radius:7px;background:repeating-linear-gradient(90deg,rgba(60,45,35,.55) 0 22px,transparent 22px 34px);opacity:0;animation:skid .7s .58s ease-out both}
+@keyframes skid{0%{opacity:0;width:0}20%{opacity:1}70%{opacity:1;width:380px}100%{opacity:0;width:380px}}
+.dust{position:absolute;bottom:410px;border-radius:50%;background:#e4dacb;opacity:0}
+@keyframes dust{0%{opacity:0;transform:translate(0,0) scale(.3)}25%{opacity:.95}100%{opacity:0;transform:translate(var(--dx),-70px) scale(1.5)}}
+.run .bob{animation:bob .45s 1.45s ease-in-out infinite}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
 .lines{position:absolute;bottom:560px;width:300px;height:200px;opacity:0;background:repeating-linear-gradient(0deg,transparent 0 26px,rgba(43,36,32,.35) 26px 32px);animation:lines .5s .35s both}
 @keyframes lines{0%{opacity:0}20%{opacity:1}100%{opacity:0;transform:translateX(var(--lx))}}
 .puff{position:absolute;bottom:420px;width:90px;height:90px;border-radius:50%;background:#e9e1d3;opacity:0;animation:puff .6s .8s both}
 @keyframes puff{0%{opacity:0;transform:scale(.3)}30%{opacity:.9}100%{opacity:0;transform:scale(1.4) translateY(-30px)}}
 .cap{position:absolute;left:60px;right:60px;bottom:250px;text-align:center;font-family:D,J;font-size:76px;color:#2b2420;z-index:9;white-space:nowrap;word-break:keep-all}
-.cap span{display:inline-block;background:#fffdf8;padding:12px 30px 16px;box-shadow:0 10px 24px -8px rgba(40,30,20,.3);rotate:-1.5deg;animation:pop .45s .55s cubic-bezier(.2,1.4,.4,1) both}
+.cap span{display:inline-block;background:#fffdf8;padding:12px 30px 16px;box-shadow:0 10px 24px -8px rgba(40,30,20,.3);rotate:-1.5deg;animation:pop .45s 1.3s cubic-bezier(.2,1.4,.4,1) both}
 .cap b{color:#b5583a;font-weight:400}
 @keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
 </style>
 <div class="phone"><img id="shot"></div><div class="ring" id="ring"></div>
-<div class="lines" id="lines"></div><div class="puff" id="puff"></div>
+<div class="lines" id="lines"></div><div class="puff" id="puff"></div><div class="skid" id="skid"></div><div id="dusts"></div>
 <div class="run" id="run"><div class="bob" style="width:100%;height:100%"><img id="ch"></div></div>
 <div class="cap"><span id="cap"></span></div>
 <script>
@@ -33,6 +37,8 @@ const shot=document.getElementById('shot');shot.src=q.get('img');shot.style.top=
 const r=document.getElementById('ring');const [rx,ry,rw,rh]=(q.get('ring')||'').split(',');if(rx){r.style.setProperty('--rx',rx+'px');r.style.setProperty('--ry',ry+'px');r.style.setProperty('--rw',rw+'px');r.style.setProperty('--rh',rh+'px')}else r.remove()
 const side=q.get('side')||'L';const run=document.getElementById('run');run.classList.add(side);document.getElementById('ch').src=q.get('ch')
 const L=document.getElementById('lines');L.style[side==='L'?'left':'right']='-20px';L.style.setProperty('--lx',side==='L'?'-200px':'200px')
-const P=document.getElementById('puff');P.style[side==='L'?'left':'right']='300px'
+const P=document.getElementById('puff');P.style[side==='L'?'left':'right']='640px'
 document.getElementById('cap').innerHTML=q.get('cap')
+const K=document.getElementById('skid');K.style[side==='L'?'left':'right']='300px'
+const DS=document.getElementById('dusts');for(let i=0;i<7;i++){const d=document.createElement('div');d.className='dust';const s=50+i*14;d.style.width=d.style.height=s+'px';d.style[side==='L'?'left':'right']=(240+i*45)+'px';d.style.setProperty('--dx',(side==='L'?-1:1)*(40+i*12)+'px');d.style.animation='dust .8s '+(0.58+i*0.06).toFixed(2)+'s ease-out both';DS.appendChild(d)}
 </script>
