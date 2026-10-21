@@ -9,9 +9,9 @@
 body{font-family:J;background:#eceae6}
 #stage{position:absolute;inset:0;animation:cam .55s 2.45s both}
 @keyframes cam{0%{transform:scale(1)}20%{transform:scale(1.07) rotate(-1.6deg)}40%{transform:scale(1.05) rotate(1.3deg)}60%{transform:scale(1.06) rotate(-.7deg)}100%{transform:scale(1.04)}}
-.door{position:absolute;inset:0;background:radial-gradient(120% 70% at 30% 20%,#f7f6f3 0%,#ecebe7 55%,#dcdad4 100%)}
-.door::before{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.5;mix-blend-mode:multiply}
-.door::after{content:"";position:absolute;left:0;right:0;top:0;height:420px;background:linear-gradient(rgba(0,0,0,.05),transparent)}
+.door{position:absolute;inset:0;background:radial-gradient(130% 80% at 35% 15%,#ffffff 0%,#f8f7f4 55%,#eeece7 100%)}
+.door::before{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.28;mix-blend-mode:multiply}
+.door::after{content:"";position:absolute;left:0;right:0;top:0;height:420px;background:linear-gradient(rgba(0,0,0,.02),transparent)}
 .seam{position:absolute;left:0;right:0;top:1580px;height:3px;background:linear-gradient(90deg,transparent,#cdcac3 10%,#cdcac3 90%,transparent);box-shadow:0 2px 0 #fbfaf8}
 .grip{position:absolute;right:0;top:400px;width:34px;height:960px;border-radius:18px 0 0 18px;background:linear-gradient(90deg,#c6c3bc,#e9e7e2 60%,#d4d1ca);box-shadow:-6px 0 14px rgba(0,0,0,.08)}
 .note{position:absolute;width:350px;height:420px;padding:26px 24px 18px;color:#2f2823;opacity:0;
@@ -19,7 +19,7 @@ body{font-family:J;background:#eceae6}
  box-shadow:0 1px 1px rgba(0,0,0,.06),0 16px 24px -8px rgba(40,30,20,.22);clip-path:polygon(0 0,100% 0,100% 89%,92% 100%,0 100%)}
 .note::after{content:"";position:absolute;right:0;bottom:0;width:28px;height:46px;background:linear-gradient(225deg,rgba(0,0,0,.14),rgba(255,255,255,.4) 60%,transparent);clip-path:polygon(100% 0,0 100%,100% 100%)}
 .note h4{margin:0 0 8px;font-weight:400;font-size:44px;line-height:1;border-bottom:3px solid rgba(47,40,35,.5);padding-bottom:6px;display:inline-block}
-.note p{margin:0;font-size:29px;line-height:1.22;word-break:keep-all}.note p+p{margin-top:6px}.note small{display:block;font-size:24px;opacity:.7;margin-top:2px}
+.note p{margin:0;font-size:29px;line-height:1.22;word-break:keep-all}.note[style*="font-family: P"] p{font-size:34px}.note[style*="font-family: P"] h4{font-size:50px}.note p+p{margin-top:6px}.note small{display:block;font-size:24px;opacity:.7;margin-top:2px}
 .note .x{text-decoration:line-through;text-decoration-thickness:3px;opacity:.65}
 .note .em{color:#b5583a}
 .mag{position:absolute;width:54px;height:54px;border-radius:50%;left:50%;top:-16px;margin-left:-27px;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.55),transparent 42%),var(--m);box-shadow:0 6px 8px rgba(0,0,0,.22)}
@@ -31,16 +31,16 @@ body{font-family:J;background:#eceae6}
 @keyframes sfx{0%{opacity:0;transform:scale(.3) rotate(var(--r))}30%{opacity:1;transform:scale(1.2) rotate(var(--r))}70%{opacity:1;transform:scale(1) rotate(var(--r))}100%{opacity:0;transform:scale(1) rotate(var(--r))}}
 .big{font-size:180px;-webkit-text-stroke:16px #2b2420;color:#f4e4a6;text-shadow:0 12px 0 #2b2420}
 @keyframes bigpop{0%{opacity:0;transform:scale(.2) rotate(-8deg)}40%{opacity:1;transform:scale(1.15) rotate(-6deg)}100%{opacity:1;transform:scale(1) rotate(-6deg)}}
-.lines{position:absolute;inset:0;z-index:7;opacity:0;background:repeating-conic-gradient(from 0deg at 75% 80%,rgba(43,36,32,0) 0deg 6deg,rgba(43,36,32,.07) 6deg 8deg);animation:show .01s 2.45s forwards, hide .01s 3.0s forwards}
+.lines{position:absolute;inset:0;z-index:7;opacity:0;background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(43,36,32,0) 0deg 6deg,rgba(43,36,32,.07) 6deg 8deg);animation:show .01s 2.45s forwards, hide .01s 3.0s forwards}
 .bear{position:absolute;width:560px;left:500px;top:1310px;z-index:6;filter:drop-shadow(0 18px 18px rgba(0,0,0,.16))}
 .b1{animation:inb .5s cubic-bezier(.2,1.3,.4,1) .2s both, hide .01s 2.45s forwards}
 .b2{opacity:0;animation:show .01s 2.45s forwards, shake .12s 2.45s 5 both}
 @keyframes inb{from{transform:translateY(560px)}to{transform:translateY(0)}}
 @keyframes show{to{opacity:1}}@keyframes hide{to{opacity:0}}
 @keyframes shake{0%,100%{translate:0}25%{translate:-18px}75%{translate:18px}}
-.slap{z-index:9;left:760px;top:1220px;width:260px;height:250px;padding:22px 20px;animation:slap .28s 2.4s cubic-bezier(.5,0,.6,1.4) forwards}
-.slap h4{font-size:40px}.slap p{font-size:32px}
-@keyframes slap{0%{opacity:1;transform:translate(-700px,-900px) rotate(-60deg) scale(1.6)}100%{opacity:1;transform:translate(0,0) rotate(9deg) scale(1)}}
+.slap{z-index:9;left:240px;top:640px;width:600px;height:600px;padding:50px 46px;animation:slap .26s 2.4s cubic-bezier(.5,0,.6,1.3) forwards}
+.slap h4{font-size:80px}.slap p{font-size:66px;line-height:1.15}
+@keyframes slap{0%{opacity:1;transform:translate(-900px,-1200px) rotate(-50deg) scale(.6)}100%{opacity:1;transform:translate(0,0) rotate(-5deg) scale(1)}}
 .drop{position:absolute;width:44px;height:62px;background:linear-gradient(#bfe0f2,#7fb4d6);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;opacity:0;z-index:10;animation:drip .7s forwards}
 @keyframes drip{0%{opacity:0;transform:translateY(-10px)}25%{opacity:1}100%{opacity:1;transform:translateY(46px)}}
 </style>
@@ -48,11 +48,10 @@ body{font-family:J;background:#eceae6}
 <div class="door"></div><div class="seam"></div><div class="grip"></div>
 <div id="notes"></div>
 <div class="lines"></div>
-<img class="bear b1" src="ge_s104.png"><img class="bear b2" src="ge_s103.png">
+
 <div class="note slap" style="--c:#f0cfc4;--c2:#e3b9ab;font-family:P"><h4>???</h4><p>이건 무슨<br>레시피<span class="em">더라..</span></p></div>
-<div class="drop" style="left:600px;top:1320px;animation-delay:2.65s"></div>
-<div class="drop" style="left:980px;top:1350px;animation-delay:2.75s;width:34px;height:48px"></div>
-<div class="sfx big" style="left:90px;top:1150px;--r:-6deg;animation:bigpop .35s 2.5s cubic-bezier(.2,1.5,.4,1) both">덕지덕지</div>
+
+<div class="sfx big" style="left:110px;top:1320px;--r:-6deg;animation:bigpop .35s 2.5s cubic-bezier(.2,1.5,.4,1) both">덕지덕지</div>
 <div class="cap">레시피 아직도<br><b>포스트잇</b>에 적음?</div>
 </div>
 <script>
