@@ -24,7 +24,7 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#fbf7ef
 @keyframes puff{0%{opacity:0;transform:scale(.3)}30%{opacity:.9}100%{opacity:0;transform:scale(1.4) translateY(-30px)}}
 .cap{position:absolute;left:60px;right:60px;bottom:250px;text-align:center;font-family:J,D;font-size:80px;color:#5a3a24;z-index:9;white-space:nowrap;word-break:keep-all}
 .cap span{display:inline-block;background:#ffe9a8;border-radius:22px;padding:14px 34px 18px;box-shadow:0 10px 24px -8px rgba(40,30,20,.3);rotate:-1.5deg;animation:pop .45s 1.3s cubic-bezier(.2,1.4,.4,1) both}
-.cap b{color:#e8735a;font-weight:400}
+.cap b{color:#e8735a;font-weight:400}.cap span:empty{display:none}
 @keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
 /* 🎬 두 박자 — 「헉!」 표정 컷 → 「해결!」 에피소드 컷 */
 .b1{position:absolute;z-index:7;left:40px;bottom:440px;width:340px;height:380px;transform-origin:50% 100%;animation:b1in .35s .35s cubic-bezier(.2,1.6,.4,1) both, b1shake .1s .7s 6 both, b1out .3s 1.45s ease-in both}
