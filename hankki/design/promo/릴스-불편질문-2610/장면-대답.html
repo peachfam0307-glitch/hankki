@@ -1,0 +1,38 @@
+<!doctype html><meta charset="utf-8"><style>
+@font-face{font-family:D;src:url(dohyeon-korean-400.woff2),url(dohyeon-latin-400.woff2)}@font-face{font-family:J;src:url(jua-korean-400.woff2),url(jua-latin-400.woff2)}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#fbf7ef}
+.phone{position:absolute;left:150px;top:230px;width:780px;height:960px;border-radius:56px;overflow:hidden;background:#fff;box-shadow:0 30px 60px -20px rgba(80,60,40,.35),0 0 0 14px #fffdf8;animation:pin .5s cubic-bezier(.2,1.3,.4,1) both}
+.phone img{position:absolute;left:0;width:100%;top:0;transform-origin:50% var(--fy);animation:zoom 2.6s .3s ease-in-out both}
+@keyframes pin{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes zoom{from{transform:translateY(40px)}to{transform:translateY(0)}}
+.ring{position:absolute;left:var(--rx);top:var(--ry);width:var(--rw);height:var(--rh);border:9px solid #b5583a;border-radius:40px;opacity:0;animation:ring .5s 1.0s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes ring{from{opacity:0;transform:scale(1.25)}to{opacity:1;transform:scale(1)}}
+.run{position:absolute;bottom:430px;width:400px;height:480px;z-index:5}
+.run img{width:100%;height:100%;object-fit:contain;object-position:bottom}
+.L{left:-40px;animation:runL .55s .35s cubic-bezier(.3,.9,.3,1.2) both}.R{right:-40px;animation:runR .55s .35s cubic-bezier(.3,.9,.3,1.2) both}
+@keyframes runL{0%{transform:translateX(-700px) rotate(14deg)}80%{transform:translateX(20px) rotate(-6deg)}100%{transform:translateX(0) rotate(0)}}
+@keyframes runR{0%{transform:translateX(700px) rotate(-14deg)}80%{transform:translateX(-20px) rotate(6deg)}100%{transform:translateX(0) rotate(0)}}
+.run .bob{animation:bob .45s 1.0s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+.lines{position:absolute;bottom:560px;width:300px;height:200px;opacity:0;background:repeating-linear-gradient(0deg,transparent 0 26px,rgba(43,36,32,.35) 26px 32px);animation:lines .5s .35s both}
+@keyframes lines{0%{opacity:0}20%{opacity:1}100%{opacity:0;transform:translateX(var(--lx))}}
+.puff{position:absolute;bottom:420px;width:90px;height:90px;border-radius:50%;background:#e9e1d3;opacity:0;animation:puff .6s .8s both}
+@keyframes puff{0%{opacity:0;transform:scale(.3)}30%{opacity:.9}100%{opacity:0;transform:scale(1.4) translateY(-30px)}}
+.cap{position:absolute;left:60px;right:60px;bottom:250px;text-align:center;font-family:D,J;font-size:76px;color:#2b2420;z-index:9;white-space:nowrap;word-break:keep-all}
+.cap span{display:inline-block;background:#fffdf8;padding:12px 30px 16px;box-shadow:0 10px 24px -8px rgba(40,30,20,.3);rotate:-1.5deg;animation:pop .45s .55s cubic-bezier(.2,1.4,.4,1) both}
+.cap b{color:#b5583a;font-weight:400}
+@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+</style>
+<div class="phone"><img id="shot"></div><div class="ring" id="ring"></div>
+<div class="lines" id="lines"></div><div class="puff" id="puff"></div>
+<div class="run" id="run"><div class="bob" style="width:100%;height:100%"><img id="ch"></div></div>
+<div class="cap"><span id="cap"></span></div>
+<script>
+const q=new URLSearchParams(location.search)
+const shot=document.getElementById('shot');shot.src=q.get('img');shot.style.top=(q.get('top')||0)+'px';shot.style.setProperty('--fy',(q.get('fy')||'40')+'%')
+const r=document.getElementById('ring');const [rx,ry,rw,rh]=(q.get('ring')||'').split(',');if(rx){r.style.setProperty('--rx',rx+'px');r.style.setProperty('--ry',ry+'px');r.style.setProperty('--rw',rw+'px');r.style.setProperty('--rh',rh+'px')}else r.remove()
+const side=q.get('side')||'L';const run=document.getElementById('run');run.classList.add(side);document.getElementById('ch').src=q.get('ch')
+const L=document.getElementById('lines');L.style[side==='L'?'left':'right']='-20px';L.style.setProperty('--lx',side==='L'?'-200px':'200px')
+const P=document.getElementById('puff');P.style[side==='L'?'left':'right']='300px'
+document.getElementById('cap').innerHTML=q.get('cap')
+</script>

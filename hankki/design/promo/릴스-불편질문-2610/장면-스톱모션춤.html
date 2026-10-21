@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><style>
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#fbf7ef}
+.c{position:absolute;bottom:520px;transform-origin:50% 100%}
+.c img{position:absolute;left:0;bottom:0;opacity:0}
+#g{left:70px;width:480px;height:600px}#p{left:580px;width:430px;height:560px}
+.c img{width:100%;height:100%;object-fit:contain;object-position:bottom}
+.sh{position:absolute;bottom:500px;height:40px;border-radius:50%;background:rgba(120,90,60,.15)}
+@keyframes hop{0%,100%{transform:translateY(0) scale(1.04,.96)}35%{transform:translateY(-70px) scale(.97,1.04)}60%{transform:translateY(-70px) scale(1,1)}85%{transform:translateY(0) scale(1.06,.94)}}
+@keyframes sh{0%,100%{transform:scaleX(1);opacity:1}45%{transform:scaleX(.7);opacity:.5}}
+@keyframes show{0%,24.9%{opacity:1}25%,100%{opacity:0}}
+</style>
+<div class="sh" style="left:130px;width:360px;animation:sh .5s infinite"></div>
+<div class="sh" style="left:630px;width:320px;animation:sh .5s .25s infinite"></div>
+<div class="c" id="g" style="animation:hop .5s infinite"></div>
+<div class="c" id="p" style="animation:hop .5s .25s infinite"></div>
+<script>
+function set(id,keys,off){const el=document.getElementById(id);keys.forEach((k,i)=>{const im=document.createElement('img');im.src=k+'.png';im.style.animation=`show 2s ${(off+i*0.5-2).toFixed(2)}s infinite steps(1)`;el.appendChild(im)})}
+set('g',['gp_gomft','gp_gomv','gp_gomhi','gp_gomtb'],0)
+set('p',['gp_pengv','gp_penghi','gp_pengft','gp_pengtb'],0.25)
+</script>
