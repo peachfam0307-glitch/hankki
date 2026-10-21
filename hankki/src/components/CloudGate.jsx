@@ -13,7 +13,7 @@ import { 잠긴장수, 백업풀기 } from '../diaryLock'
 import { 합치기, 받을때합칠까 } from '../syncMerge'    // 👪 「이 계정에 넣기」 뒤 가져오기 = 덮지 않고 더한다 · 🔁 같은 폰 같은 계정 재로그인도 합친다
 import { 로그인, 요약, 내려받기, 미리붙기, 받았다표시, 기기주인정하기, 기기주인 } from '../cloud'
 import KeyGift from './KeyGift'
-import duoHi from '../assets/sharepool/duo_hi.png'
+import GatePreview from './GatePreview'
 
 // ☁️🚪 클라우드 첫 화면 — 앱을 켜자마자 «맨 처음» 뜬다. 소개보다 앞.
 //
@@ -175,7 +175,8 @@ export default function CloudGate({ onDone }) {
           ⛔ 240 이 안전선이다 — 원본이 760px 이라 3배 화면에서 240×3=720 ≤ 760 → **1.06배**(1.0 밑이면 흐려진다).
           ⛔ 간격을 170 까지 벌리지 않는다 — 412×640 에서 내용이 넘쳐 **단추가 87px 까지 올라왔다**(엄지 자리가 깨진다).
              110 은 320·360·412 폭 × 640~915 높이에서 전부 멀쩡했다. */}
-      <img src={duoHi} alt="" style={{ width: 240, maxWidth: '66%', margin: 'auto auto 110px', display: 'block' }} />
+      {/* 👀 [2026-10-21] 곰펭 그림 자리 → 앱 미리보기(첫 장 = 곰펭 인사) · GatePreview.jsx */}
+      <GatePreview />
 
       {!찾음 ? (
         <>
