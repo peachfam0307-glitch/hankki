@@ -5004,3 +5004,4 @@ html, body { overscroll-behavior: none; }
 @media (min-width: 700px) {                    /* 패드 */
   .weekly-row.rail > .mini-card { flex-basis: 150px; }
 }
+.gate-preview::-webkit-scrollbar { display: none; }
