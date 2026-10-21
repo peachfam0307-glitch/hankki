@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><style>
+@font-face{font-family:D;src:url(dohyeon-korean-400.woff2),url(dohyeon-latin-400.woff2)}@font-face{font-family:J;src:url(jua-korean-400.woff2),url(jua-latin-400.woff2)}
+html,body{margin:0;width:1080px;height:1920px;background:transparent}
+.cap{position:absolute;left:70px;top:1260px;font-family:D,J;font-size:88px;color:#2b2420;line-height:1.08}
+.cap span{display:inline-block;background:#fffdf8;padding:10px 26px 14px;margin:4px 0;box-shadow:0 10px 24px -8px rgba(40,30,20,.35);rotate:-2.5deg;white-space:nowrap}
+.cap span+br+span{rotate:1.5deg;margin-left:40px}b{color:#b5583a;font-weight:400}</style>
+<div class="cap"><span id="a"></span><br><span id="b"></span></div>
+<script>const q=new URLSearchParams(location.search);a.innerHTML=q.get('a');b.innerHTML=q.get('b')</script>
