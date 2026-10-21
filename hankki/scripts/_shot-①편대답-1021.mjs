@@ -23,6 +23,8 @@ await p.evaluate(() => window.scrollTo(0, 600)); await p.waitForTimeout(500); aw
 await p.keyboard.press('Escape').catch(() => {}); await p.locator('button[aria-label*="닫기"]').first().click().catch(() => {}); await p.waitForTimeout(800)
 await 탭('레시피')
 // 🎃 핼러윈 표지 샘플(통단호박)은 빼고 찍는다 — 창업자 2026-10-21 「갑자기 할로윈 나오니까 이상해」
+// 🎃 상단바 핼러윈 컷 → 평상시 곰으로(날짜는 오늘 그대로 · 레시피 수가 오늘 값으로 나오게)
+await p.evaluate(() => { const 곰 = [...document.querySelectorAll('img')].find((i) => /hw_\d+/.test(i.src)); const 원 = [...document.scripts].length; if (곰) { const 길 = performance.getEntriesByType('resource').map((x) => x.name).find((n) => n.includes('gom-header')); if (길) { 곰.src = 길; Object.assign(곰.style, { width: '42px', height: '42px', margin: '-4px 0' }) } else 곰.style.visibility = 'hidden' } return 원 })
 await p.evaluate(() => { for (const e of document.querySelectorAll('.fav-dot')) { const 칸 = e.parentElement; if (칸 && 칸.textContent.includes('통단호박')) { 칸.remove(); break } } })
 await p.waitForTimeout(400); await p.screenshot({ path: join(밖, 'C2-목록.png') })
 const 클립 = p.locator('.fav-dot'); console.log('인덱스 단추', await 클립.count())
