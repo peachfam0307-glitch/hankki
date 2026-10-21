@@ -15,6 +15,8 @@ const 재료 = [['두부', 1], ['애호박', 2], ['우유', 3], ['돼지고기',
 const 식비 = [[0, 'shop', 38400, '마트 장보기'], [-1, 'out', 15000, '치킨'], [-2, 'shop', 12700, '자연드림'], [-4, 'shop', 26800, '컬리'], [-5, 'out', 32000, '외식'], [-7, 'shop', 41000, '이마트몰'], [-9, 'shop', 33000, '한살림'], [-11, 'out', 9500, '국밥']].map(([d, k, won, memo]) => ({ d: 며칠(d), k, won, memo }))
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM || '/opt/pw-browsers/chromium' })
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, locale: 'ko-KR' })
+// 🎨 할로윈 보라 대신 평소 크림 테마로 — 릴스 배경과 맞추고, 시즌이 끝나도 쓰게 (창업자 2026-10-21 「배경이랑 할로윈 보라색이 안어울려」)
+await ctx.addInitScript(() => { try { localStorage.setItem('hankki-theme', 'cream'); const 원래 = Element.prototype.setAttribute; Element.prototype.setAttribute = function (k, v) { if (k === 'data-season') return; return 원래.call(this, k, v) } } catch { /* noop */ } })
 await ctx.addInitScript(() => { try { localStorage.setItem('hankki:nudge:cloudgate', '1'); localStorage.setItem('hankki:onboarded', '1'); localStorage.setItem('hankki:news:off', '1'); const g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { if (typeof k === 'string' && k.startsWith('hankki:coach')) return '1'; return g.call(this, k) } } catch { /* noop */ } })
 const p = await ctx.newPage()
 await p.goto('http://127.0.0.1:4651/hankki/', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2500)
