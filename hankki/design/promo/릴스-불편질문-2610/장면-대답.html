@@ -5,7 +5,7 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#fbf7ef
 .phone img{position:absolute;left:0;width:100%;top:0;transform-origin:50% var(--fy);animation:zoom 2.6s .3s ease-in-out both}
 @keyframes pin{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes zoom{from{transform:translateY(40px)}to{transform:translateY(0)}}
-.ring{position:absolute;left:var(--rx);top:var(--ry);width:var(--rw);height:var(--rh);border:9px solid #b5583a;border-radius:40px;opacity:0;animation:ring .5s 1.4s cubic-bezier(.2,1.5,.4,1) both}
+.ring{position:absolute;left:var(--rx);top:var(--ry);width:var(--rw);height:var(--rh);border:9px solid #e8735a;border-radius:40px;opacity:0;animation:ring .5s 1.4s cubic-bezier(.2,1.5,.4,1) both}
 @keyframes ring{from{opacity:0;transform:scale(1.25)}to{opacity:1;transform:scale(1)}}
 .run{position:absolute;bottom:430px;width:400px;height:480px;z-index:5}
 .run img{width:100%;height:100%;object-fit:contain;object-position:bottom}
@@ -22,10 +22,18 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#fbf7ef
 @keyframes lines{0%{opacity:0}20%{opacity:1}100%{opacity:0;transform:translateX(var(--lx))}}
 .puff{position:absolute;bottom:420px;width:90px;height:90px;border-radius:50%;background:#e9e1d3;opacity:0;animation:puff .6s .8s both}
 @keyframes puff{0%{opacity:0;transform:scale(.3)}30%{opacity:.9}100%{opacity:0;transform:scale(1.4) translateY(-30px)}}
-.cap{position:absolute;left:60px;right:60px;bottom:250px;text-align:center;font-family:D,J;font-size:76px;color:#2b2420;z-index:9;white-space:nowrap;word-break:keep-all}
-.cap span{display:inline-block;background:#fffdf8;padding:12px 30px 16px;box-shadow:0 10px 24px -8px rgba(40,30,20,.3);rotate:-1.5deg;animation:pop .45s 1.3s cubic-bezier(.2,1.4,.4,1) both}
-.cap b{color:#b5583a;font-weight:400}
+.cap{position:absolute;left:60px;right:60px;bottom:250px;text-align:center;font-family:J,D;font-size:80px;color:#5a3a24;z-index:9;white-space:nowrap;word-break:keep-all}
+.cap span{display:inline-block;background:#ffe9a8;border-radius:22px;padding:14px 34px 18px;box-shadow:0 10px 24px -8px rgba(40,30,20,.3);rotate:-1.5deg;animation:pop .45s 1.3s cubic-bezier(.2,1.4,.4,1) both}
+.cap b{color:#e8735a;font-weight:400}
 @keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+/* 👀 빼꼼 — 폰 «뒤»에 숨어 있다 옆으로 반만 나온다 */
+.peekc{position:absolute;z-index:1;width:360px;height:440px;left:470px;top:470px;transform-origin:20% 100%;animation:peekR 2.4s .3s ease-in-out both}
+.peekc img{width:100%;height:100%;object-fit:contain;object-position:bottom}
+@keyframes peekR{0%{transform:translateX(-200px) rotate(0)}18%{transform:translateX(180px) rotate(14deg)}30%{transform:translateX(150px) rotate(10deg)}42%{transform:translateX(0) rotate(2deg)}56%{transform:translateX(190px) rotate(16deg)}66%{transform:translateX(170px) rotate(12deg)}100%{transform:translateX(170px) rotate(12deg)}}
+.phone{z-index:2}.ring{z-index:3}
+.bub{position:absolute;z-index:6;right:50px;top:330px;font-family:J,D;font-size:60px;color:#5a3a24;background:#fffdf8;border:6px solid #5a3a24;border-radius:40px;padding:18px 30px;animation:bpop .4s 1.75s cubic-bezier(.2,1.6,.4,1) both;rotate:4deg}
+.bub::after{content:"";position:absolute;right:120px;bottom:-34px;border:18px solid transparent;border-top:24px solid #5a3a24}
+@keyframes bpop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
 </style>
 <div class="phone"><img id="shot"></div><div class="ring" id="ring"></div>
 <div class="lines" id="lines"></div><div class="puff" id="puff"></div><div class="skid" id="skid"></div><div id="dusts"></div>
@@ -36,6 +44,7 @@ const q=new URLSearchParams(location.search)
 const shot=document.getElementById('shot');shot.src=q.get('img');shot.style.top=(q.get('top')||0)+'px';shot.style.setProperty('--fy',(q.get('fy')||'40')+'%')
 const r=document.getElementById('ring');const [rx,ry,rw,rh]=(q.get('ring')||'').split(',');if(rx){r.style.setProperty('--rx',rx+'px');r.style.setProperty('--ry',ry+'px');r.style.setProperty('--rw',rw+'px');r.style.setProperty('--rh',rh+'px')}else r.remove()
 const side=q.get('side')||'L';const run=document.getElementById('run');run.classList.add(side);document.getElementById('ch').src=q.get('ch')
+if(q.get('mode')==='peek'){document.querySelector('.phone').style.left='40px';const rg=document.getElementById('ring');if(rg)rg.style.left=(parseInt(rx)-110)+'px';run.style.display='none';['lines','puff','skid','dusts'].forEach(i=>{const e=document.getElementById(i);if(e)e.style.display='none'});const pc=document.createElement('div');pc.className='peekc';pc.innerHTML='<img src="'+q.get('ch')+'">';document.body.appendChild(pc);if(q.get('bub')){const b=document.createElement('div');b.className='bub';b.innerHTML=q.get('bub');document.body.appendChild(b)}}
 const L=document.getElementById('lines');L.style[side==='L'?'left':'right']='-20px';L.style.setProperty('--lx',side==='L'?'-200px':'200px')
 const P=document.getElementById('puff');P.style[side==='L'?'left':'right']='640px'
 document.getElementById('cap').innerHTML=q.get('cap')
