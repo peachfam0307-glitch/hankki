@@ -1299,12 +1299,22 @@ async function 애플거두기(env, id) {
 function 알림거래번호(signedPayload) {
   const n = jws몸통(signedPayload)
   if (!n || !['REFUND', 'REVOKE'].includes(n.notificationType)) return ''
+  // ⛔ 우리 앱 알림이 아니면 애플에 묻지도 않는다(가짜 알림 소음 줄이기 · 진짜 판정은 어차피 다시 묻기가 한다)
+  if (!n.data || n.data.bundleId !== 애플.번들) return ''
   const t = jws몸통(n.data && n.data.signedTransactionInfo)
   return t && t.transactionId ? String(t.transactionId) : ''
 }
 
 async function 애플알림(request, env) {
   if (!애플켜짐(env)) return { ok: false, reason: 'billing_off' }
+  // 🚧 누구나 부를 수 있는 주소라 «한 곳에서 분당 30번»까지만 — 넘치면 애플에 안 묻는다
+  //   (가짜 알림 폭주로 우리 애플 키의 호출 한도를 태우면 «진짜 구매 확인»이 막힌다 · 다른 눈 검토 2026-10-22).
+  //   ⭐ 막혀도 하루 한 번 알림 기록 확인(`애플환불회수`)이 메운다.
+  if (env.OCR_KV) {
+    const 키 = `an:${request.headers.get('CF-Connecting-IP') || 'noip'}:${new Date().toISOString().slice(0, 16)}`
+    if ((await num(env.OCR_KV, 키)) >= 30) return { ok: false, reason: 'rate_limited' }
+    await inc(env.OCR_KV, 키, 120)
+  }
   let body
   try { body = await request.json() } catch { return { ok: false, reason: 'bad_json' } }
   const id = 알림거래번호(body && body.signedPayload)

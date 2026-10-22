@@ -356,10 +356,12 @@ export async function 애플것보내기(ids) {
 // 🗑 계정 삭제 때 — 워커의 산 열쇠를 지우고 구매 기록에서 «누구»를 떼어 낸다(`/billing/forget`).
 //   ⭐ 로그인 계정을 지우기 «전»에 불러야 한다(토큰이 살아 있어야 워커가 누군지 안다).
 //   ⛔ 실패해도 던지지 않는다 — 결제를 안 켰거나(옛 워커) 망이 끊겨도 계정 삭제는 막지 않는다.
-export async function 산것잊기() {
+export async function 산것잊기(미리받은토큰 = '') {
   try {
     const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
-    await 토큰헤더(headers)
+    // ⭐ 계정 삭제는 «지운 뒤»에 부른다 — 그땐 로그인이 이미 사라져 새 토큰을 못 받으니, 지우기 전에 받아 둔 것을 쓴다
+    if (미리받은토큰) headers['x-hankki-idtoken'] = 미리받은토큰
+    else await 토큰헤더(headers)
     if (!headers['x-hankki-idtoken']) return null
     const resp = await fetch(`${OCR_PROXY_URL}/billing/forget`, { method: 'POST', headers, body: '{}' })
     return await resp.json().catch(() => null)
