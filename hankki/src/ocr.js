@@ -340,6 +340,19 @@ export async function 결제상태() {
   } catch { return 'off' }
 }
 
+// 🍎 아이폰 거래 번호를 워커로 — 워커가 애플 서버에 다시 묻는다(`/billing/apple/sync`). 실패해도 던지지 않는다.
+export async function 애플것보내기(ids) {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return { ok: false, error: 'login_required' }
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/apple/sync`, { method: 'POST', headers, body: JSON.stringify({ transactions: ids.map((id) => ({ id })) }) })
+    const d = await resp.json().catch(() => null)
+    if (d && d.ok) await 열쇠새로고침()
+    return d
+  } catch { return null }
+}
+
 // 🗑 계정 삭제 때 — 워커의 산 열쇠를 지우고 구매 기록에서 «누구»를 떼어 낸다(`/billing/forget`).
 //   ⭐ 로그인 계정을 지우기 «전»에 불러야 한다(토큰이 살아 있어야 워커가 누군지 안다).
 //   ⛔ 실패해도 던지지 않는다 — 결제를 안 켰거나(옛 워커) 망이 끊겨도 계정 삭제는 막지 않는다.

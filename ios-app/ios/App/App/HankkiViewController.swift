@@ -6,5 +6,6 @@ import Capacitor
 final class HankkiViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(ShareIntakePlugin())
+        bridge?.registerPluginInstance(HankkiStorePlugin())   // 🍎💳 StoreKit 2 (2026-10-22)
     }
 }

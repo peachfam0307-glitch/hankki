@@ -102,13 +102,48 @@ export async function service() {
 // 결제 버튼을 «보여줘도 되나». 안 되면 버튼 자체를 안 그린다 — ⛔죽은 버튼을 만들지 않는다.
 //   (`LAB_*_URL` 이 비면 그 칸을 아예 안 그리는 것과 같은 방식)
 export async function canBuy() {
-  return !!(await service())
+  return !!(애플가게() || (await service()))
+}
+
+// ── 🍎 아이폰 (StoreKit 2 · 앱 부품 `HankkiStore` · 2026-10-22) ─────────────
+//   ⭐ 함수 이름(canBuy·details·buy·syncPurchases)은 그대로 두고 «속만» 가른다 — 화면(KeyShopSheet)은 안 고친다.
+//   ⭐ 확인은 워커가 «애플 서버에 다시 묻기»로 한다 — 여기선 거래 번호만 보낸다.
+//   ⛔ finish 는 워커가 「넣었다」(또는 «영영 못 넣는다»)고 답한 거래만. 망이 끊긴 것은 안 끝내 두면 다음에 또 나온다.
+function 애플가게() {
+  try {
+    const C = typeof window !== 'undefined' && window.Capacitor
+    if (!C || !C.isNativePlatform || !C.isNativePlatform() || !C.getPlatform || C.getPlatform() !== 'ios') return null
+    return (C.Plugins && C.Plugins.HankkiStore) || null
+  } catch { return null }
+}
+export const 아이폰인가 = () => !!애플가게()
+let _시험보내기 = null
+export const _애플보내기바꾸기 = (fn) => { _시험보내기 = fn }   // 재현판 전용(워커 대신 가짜 답)
+// 서버가 «다시 보내도 소용없다»고 한 이유들 — 이건 끝내야 매번 다시 안 나온다(돈은 이미 애플이 판단했다)
+const 끝낼이유 = new Set(['revoked', 'other_account', 'wrong_app', 'unknown_sku', 'wrong_type', 'bad_args'])
+async function 애플보내고끝내기(가게, ids) {
+  if (!ids.length) return null
+  const 보내기 = _시험보내기 || (await import('./ocr.js')).애플것보내기
+  const d = await 보내기(ids)
+  if (d && d.ok && Array.isArray(d.results)) {
+    for (const r of d.results) {
+      if (r && (r.ok || 끝낼이유.has(r.reason))) { try { await 가게.finish({ id: String(r.id) }) } catch { /* 다음에 또 */ } }
+    }
+  }
+  return d
 }
 
 // ── 값 읽기 ────────────────────────────────────────────────
 // 상품 정보(제목·설명·가격). ⭐가격은 **Play 가 준 값**을 그대로 쓴다 —
 // 나라·환율·세금이 붙으므로 우리가 「990원」이라고 박아 쓰면 언젠가 틀린다.
 export async function details(skus) {
+  const 가게 = 애플가게()
+  if (가게) {
+    try {
+      const r = await 가게.products({ ids: Array.isArray(skus) ? skus : [skus] })
+      return ((r && r.products) || []).map((p) => ({ sku: p.id, title: p.title, desc: '', price: p.price, raw: p }))   // 가격 = 애플이 준 글자 그대로
+    } catch { return [] }
+  }
   const s = await service()
   if (!s) return []
   try {
@@ -165,6 +200,18 @@ export async function ownedPackKeys() {
 //   reason: 'unavailable'(이 기기에서 결제 불가) · 'cancel'(유저가 닫음) · 'fail'(그 외)
 // ⛔ 예외를 밖으로 던지지 않는다 — 부르는 쪽에서 try/catch 를 빠뜨리면 화면이 통째로 죽는다.
 export async function buy(sku) {
+  const 가게 = 애플가게()
+  if (가게) {
+    let r
+    try { r = await 가게.purchase({ id: sku }) } catch { return { ok: false, reason: 'fail' } }
+    const st = r && r.status
+    if (st === 'cancel') return { ok: false, reason: 'cancel' }
+    if (st === 'pending') return { ok: false, reason: 'pending' }   // 가족 승인 대기 — 승인되면 `transaction` 알림으로 들어온다
+    if (!r || !r.id) return { ok: false, reason: 'fail' }
+    // ⭐ unverified 도 서버로 보낸다 — 판단은 애플 서버가 한다(폰의 판정을 안 믿는다)
+    const synced = await 애플보내고끝내기(가게, [String(r.id)])
+    return { ok: true, token: String(r.id), synced }
+  }
   const s = await service()
   if (!s) return { ok: false, reason: 'unavailable' }
   if (typeof PaymentRequest === 'undefined') return { ok: false, reason: 'unavailable' }
@@ -199,7 +246,14 @@ export async function buy(sku) {
 //   ⭐ 「돈 냈는데 못 받았다」를 막는 자리다 — 살 때 실패해도 여기서 따라붙는다.
 //   ⛔ 로그인 안 했으면 아무것도 안 한다(워커가 401) — 구매는 그대로 남아 있다가 로그인 뒤 들어온다.
 export async function syncPurchases() {
-  const list = (await purchases()).filter((p) => p.sku === SKU.ocr20 && p.token)
+  const 가게 = 애플가게()
+  if (가게) {
+    // 🍎 안 끝낸 거래 = 「돈은 냈는데 아직 우리가 못 받았다」 — 켤 때마다 다시 보낸다
+    let ids = []
+    try { ids = ((await 가게.unfinished()) || {}).ids || [] } catch { ids = [] }
+    return 애플보내고끝내기(가게, ids.map(String).slice(0, 10))
+  }
+  const list =(await purchases()).filter((p) => p.sku === SKU.ocr20 && p.token)
   if (!list.length) return null
   const { 산것보내기 } = await import('./ocr.js')   // ⭐ 결제 안 쓰는 사람에게 OCR 모듈을 미리 안 싣는다
   return 산것보내기(list)
@@ -220,6 +274,8 @@ export function 상점열쇠() {
 // 앱을 켤 때 한 번 — 첫 화면을 안 늦추게 3초 뒤. 결제가 안 되는 기기(웹·아이폰)면 아무것도 안 한다.
 export function syncOnStart() {
   setTimeout(() => { canBuy().then((ok) => (ok ? syncPurchases() : null)).catch(() => {}) }, 3000)
+  // 🍎 결제 창 밖에서 생긴 거래(가족 승인 뒤 등) — 앱 부품이 알려 주면 바로 보낸다
+  try { const 가게 = 애플가게(); if (가게 && 가게.addListener) 가게.addListener('transaction', () => { syncPurchases().catch(() => {}) }) } catch { /* noop */ }
 }
 
 // 소모성 상품 소진 — ⛔**꾸미기 팩엔 절대 부르지 말 것.** 부르면 복원이 깨진다.

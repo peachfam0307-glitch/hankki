@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Portal from './Portal'
 import { useModalBack } from '../useBackHandler'
-import { SKU, buy, canBuy, details } from '../billing'
+import { SKU, buy, canBuy, details, 아이폰인가 } from '../billing'
 import { 결제상태, getOcrLeft, KEY_NAME, KEY_UNIT } from '../ocr'
 import { 로그인 } from '../cloud'
 import uiKeyOne from '../assets/ui/key_one.png'
@@ -20,7 +20,8 @@ import uiShop from '../assets/ui/hankki_shop.png'
 // ⚠️ 유니코드 이모지 금지(창업자 2026-07-26) — 그림은 우리 스티커.
 
 const 말 = {
-  unavailable: '구글 플레이 스토어에서 받은 앱에서만 살 수 있어요.',
+  unavailable: 'Google Play · App Store 에서 받은 앱에서만 살 수 있어요.',
+  pending: '결제 승인을 기다리고 있어요. 승인되면 자동으로 들어와요.',
   off: '상점을 준비하고 있어요. 조금 뒤에 다시 열어 주세요.',
   fail: '결제가 끝까지 가지 못했어요. 잠시 뒤에 다시 해 볼래요?',
   later: '결제는 됐어요. 열쇠는 다음에 앱을 켤 때 자동으로 들어와요.',
@@ -97,7 +98,10 @@ export default function KeyShopSheet ({ onClose, showToast }) {
             {상태 === 'login' && (
               <>
                 <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.6, marginBottom: 10 }}>산 {KEY_NAME}는 계정에 담겨요. 폰을 바꿔도 그대로예요.</div>
-                <button className="btn-primary press" style={{ width: '100%' }} disabled={바쁨} onClick={로그인하자}>{바쁨 ? '잠시만요…' : '로그인하고 사기'}</button>
+                {/* 🍎 아이폰은 로그인 방법이 둘(구글·애플)이라 여기서 하나로 정하면 «다른 계정»이 생길 수 있다 → 설정의 로그인으로 보낸다 */}
+                {아이폰인가()
+                  ? <div style={{ background: 'var(--cream)', borderRadius: 11, padding: '10px 12px', fontSize: 15, lineHeight: 1.55 }}>설정 「로그인하러 가기」에서 로그인한 뒤 다시 열어 주세요.</div>
+                  : <button className="btn-primary press" style={{ width: '100%' }} disabled={바쁨} onClick={로그인하자}>{바쁨 ? '잠시만요…' : '로그인하고 사기'}</button>}
               </>
             )}
 
@@ -117,7 +121,8 @@ export default function KeyShopSheet ({ onClose, showToast }) {
                 {/* 🧾 고지 — 창업자 10/22 ⓐ 「남은 열쇠만 환불」 · 전자상거래법 17조 2항 5호(가분 콘텐츠)·6항(미리 표시) */}
                 <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.65, marginTop: 10, wordBreak: 'keep-all' }}>
                   산 {KEY_NAME}는 바로 계정에 담겨요. 쓴 {KEY_NAME}는 환불되지 않고, 남은 {KEY_NAME}는 환불을 요청할 수 있어요.
-                  환불은 설정 「도움말 및 문의」로 알려 주세요.
+                  {/* 🍎 아이폰은 환불을 «애플»이 한다 — 우리가 해 줄 수 없다(앱스토어 구매 내역에서 요청) */}
+                  {아이폰인가() ? '환불은 App Store 구매 내역에서 요청할 수 있어요.' : '환불은 설정 「도움말 및 문의」로 알려 주세요.'}
                 </div>
               </>
             )}
