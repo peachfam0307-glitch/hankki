@@ -975,11 +975,29 @@ async function 산열쇠쓰기(env, 통) {
 // `/billing/sync`  = 앱이 «가진 구매를 통째로» 보낸다 → 확인·적기·acknowledge·consume → 지금 상태
 // `/billing/state` = 지금 상태만 (구글에 안 묻는다 · 값싸다)
 async function 결제길(request, env, cors) {
-  if (!env.PLAY_SA_JSON || !env.DB) return json({ error: 'billing_off' }, 503, cors)
+  const 경로0 = new URL(request.url).pathname
+  // 🗑 계정 삭제 — 결제가 꺼져 있어도(열쇠 없음) 창고만 있으면 지운다. 그래서 꺼짐 판정보다 «앞»에 둔다.
+  if (!env.DB) return json({ error: 'billing_off' }, 503, cors)
+  if (경로0 !== '/billing/forget' && !env.PLAY_SA_JSON) return json({ error: 'billing_off' }, 503, cors)
   // 🔐 로그인 «확인»이 필수다 — 몸통 번호는 안 믿는다(ⓐ). 토큰이 없거나 틀리면 401.
   const 번호 = String((await 토큰확인(request.headers.get('x-hankki-idtoken') || '')) || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64)
   if (!번호) return json({ error: 'login_required' }, 401, cors)
   const 통 = `a:${번호}`
+
+  // 🗑🗑 계정 삭제 때 앱이 부른다(`cloud.js 계정삭제` · 로그인 계정을 지우기 «전» — 토큰이 살아 있을 때).
+  //   ⭐ 「이 사람」과의 연결만 끊는다 — 남은 산 열쇠는 지우고, 구매·사용 기록은 통을 `지움` 으로 바꿔 «누구»를 떼어 낸다.
+  //      주문번호는 남긴다 — 나중에 환불이 와도 회수(`환불회수`)가 토큰으로 찾는다. 사람과 이어지는 칸(구글 번호)은 사라진다.
+  //   ⛔ 남은 산 열쇠는 «사라진다» — 앱이 지우기 전에 「산 열쇠도 없어져요」를 먼저 보여준다(DeleteAccountSheet).
+  if (경로0 === '/billing/forget') {
+    try {
+      await 결제표준비(env.DB)
+      const 남 = await 산열쇠세기(env, 통)
+      await env.DB.prepare('DELETE FROM 산열쇠 WHERE 통 = ?').bind(통).run()
+      await env.DB.prepare("UPDATE 산구매 SET 통 = '지움', 때 = ? WHERE 통 = ?").bind(Date.now(), 통).run()
+      await env.DB.prepare("UPDATE 산열쇠씀 SET 통 = '지움' WHERE 통 = ?").bind(통).run()
+      return json({ ok: true, 사라진열쇠: 남.남음 }, 200, cors)
+    } catch { return json({ error: 'db_error' }, 500, cors) }
+  }
   let body
   try { body = await request.json() } catch { body = {} }
   const 경로 = new URL(request.url).pathname

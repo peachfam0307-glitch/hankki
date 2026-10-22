@@ -20,6 +20,7 @@ import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
 import { 사람지켜보기, 요약, 미리붙기, 클라우드비우기, 계정삭제, 받았다지우기 } from '../cloud'
+import { getOcrLeft } from '../ocr'
 
 const 확인글자 = '삭제'
 
@@ -45,6 +46,7 @@ export default function DeleteAccountSheet ({ onClose, showToast }) {
   }, [사람])
 
   const 기록수 = 구름?.있나 ? (구름.레시피 || 0) + (구름.일기 || 0) : 0
+  const 산열쇠 = Math.max(0, Number(getOcrLeft().paid) || 0)   // 💳 서버가 준 «산 열쇠» 남은 수(안 샀으면 0)
 
   const 비우자 = async () => {
     set탈(''); set바쁨('비우기')
@@ -130,6 +132,8 @@ export default function DeleteAccountSheet ({ onClose, showToast }) {
                   · 클라우드 기록 {기록수}건과 로그인 계정이 지워져요.{'\n'}
                   · 이 폰의 레시피·일기는 그대로 남아요.{'\n'}
                   · 안전을 위해 <b>한 번 더 로그인</b>을 물어봐요.
+                  {/* 💳 산 열쇠가 남은 사람에게만 — 계정에 붙어 있어서 같이 사라진다(2026-10-22 · 안 산 사람 화면은 그대로) */}
+                  {산열쇠 > 0 && <>{'\n'}· <b style={{ color: 'var(--danger)' }}>구매한 열쇠 {산열쇠}개도 함께 사라져요.</b> 되돌릴 수 없어요.</>}
                 </div>
                 <input
                   value={입력} onChange={(e) => set입력(e.target.value)} disabled={!!바쁨}

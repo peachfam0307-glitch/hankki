@@ -324,6 +324,19 @@ export async function 열쇠새로고침() {
   return false
 }
 
+// 🗑 계정 삭제 때 — 워커의 산 열쇠를 지우고 구매 기록에서 «누구»를 떼어 낸다(`/billing/forget`).
+//   ⭐ 로그인 계정을 지우기 «전»에 불러야 한다(토큰이 살아 있어야 워커가 누군지 안다).
+//   ⛔ 실패해도 던지지 않는다 — 결제를 안 켰거나(옛 워커) 망이 끊겨도 계정 삭제는 막지 않는다.
+export async function 산것잊기() {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return null
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/forget`, { method: 'POST', headers, body: '{}' })
+    return await resp.json().catch(() => null)
+  } catch { return null }
+}
+
 // 💳 산 것을 워커에 보낸다 → 구글에 진짜냐 묻고 · 열쇠를 넣고 · 「받았다」를 알린다(`/billing/sync`).
 //   ⭐ 몇 번을 보내도 결과가 같다(워커가 영수증으로 한 번만 준다) — 그래서 켤 때마다 통째로 보내도 된다.
 //   ⛔ 로그인 «확인»이 필수다(창업자 확정 2026-10-22 ⓐ) — 토큰이 없으면 서버가 401 을 준다.

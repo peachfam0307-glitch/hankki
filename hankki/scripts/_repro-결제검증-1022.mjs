@@ -107,6 +107,9 @@ function 가짜D1() {
     [/^SELECT 토큰 FROM 산열쇠 WHERE 통 = \? AND 남음 > 0 ORDER BY 처음 LIMIT 1$/, ([통]) => {
       const 줄 = [...열쇠.values()].filter((r) => r.통 === 통 && r.남음 > 0).sort((a, b) => a.처음 - b.처음)[0]; return 줄 ? { 토큰: 줄.토큰 } : null
     }],
+    [/^DELETE FROM 산열쇠 WHERE 통 = \?$/, ([통]) => { let n = 0; for (const [k, r] of [...열쇠]) if (r.통 === 통) { 열쇠.delete(k); n++ } return n }],
+    [/^UPDATE 산구매 SET 통 = '지움', 때 = \? WHERE 통 = \?$/, ([, 통]) => { let n = 0; for (const r of 구매.values()) if (r.통 === 통) { r.통 = '지움'; n++ } return n }],
+    [/^UPDATE 산열쇠씀 SET 통 = '지움' WHERE 통 = \?$/, ([통]) => { let n = 0; for (const r of 씀) if (r.통 === 통) { r.통 = '지움'; n++ } return n }],
     [/^INSERT INTO 산열쇠씀 \(토큰, 통, 때\) VALUES \(\?, \?, \?\)$/, ([t, 통]) => { 씀.push({ 토큰: t, 통 }); return 1 }],
     [/^UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/,([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음--; return 1 } return 0 }],
     [/^SELECT 통 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통 } : null)],
@@ -367,6 +370,19 @@ r = await 회수('틀린열쇠')
 새판({ FOUNDER_SECRET: 'fs', PLAY_SA_JSON: undefined })
 r = await 회수()
 잰다(r.reason === 'billing_off' && 구글.부름.voided === 0, '결제가 꺼져 있으면 구글에 묻지도 않는다', r)
+
+console.log('\n㉓ 계정 삭제 — 산 열쇠는 지우고, 기록은 «누구»를 떼어 낸다')
+새판(); 영수증('d1'); await sync(엄마, [{ sku: PACK, token: 'd1' }]); 무료다씀('111'); await 사진(엄마)
+r = await 부르기('/billing/forget', {}, 엄마)
+잰다(r.ok && r.사라진열쇠 === 19 && !env.DB.열쇠.has('d1'), '남은 19개는 지워진다 · 몇 개가 사라졌는지 알려 준다', r)
+잰다(env.DB.구매.get('d1').통 === '지움' && env.DB.씀.every((x) => x.통 === '지움'), '구매·사용 기록에서 구글 번호가 떨어진다(주문은 남는다)', [env.DB.구매.get('d1'), env.DB.씀])
+r = await sync(엄마, [{ sku: PACK, token: 'd1' }])
+잰다(r.results[0].reason === 'other_account' && r.paid === 0, '같은 영수증을 다시 보내도 열쇠가 되살아나지 않는다', r)
+r = await 부르기('/billing/forget', {}, null)
+잰다(r.status === 401, '로그인 확인 없이는 못 지운다', r)
+새판({ PLAY_SA_JSON: undefined })
+r = await 부르기('/billing/forget', {}, 엄마)
+잰다(r.ok && r.사라진열쇠 === 0, '결제가 꺼져 있어도 지우기는 된다(창고만 있으면)', r)
 
 console.log(`\n${실패 === 0 ? '✅' : '⛔'} ${통과}/${통과 + 실패} 통과\n`)
 process.exit(실패 === 0 ? 0 : 1)
