@@ -47,6 +47,8 @@
 //   Secret  APP_TOKEN      = 앱과 공유하는 임의 비밀
 //   Secret  FOUNDER_SECRET = 🔓 운영자 무제한 통로 비밀키(개인한도만 우회, 전역은 존중)
 //   KV 바인딩 OCR_KV       = 사용량 카운터 저장소
+//   D1 바인딩 DB           = 지문장부 ＋ 💳산 열쇠 원장(산구매·산열쇠) — 표는 워커가 스스로 만든다
+//   Secret  PLAY_SA_JSON   = 💳 구글 서비스 계정 열쇠 JSON 통째로(hankki-billing@…) — ⛔없으면 결제만 꺼진다
 // ═══════════════════════════════════════════════════════════════
 
 const ALLOWED_ORIGINS = [
@@ -436,6 +438,10 @@ export default {
       return json({ error: 'unauthorized' }, 401, cors)
     }
 
+    // 💳 결제 길 — `/billing/` 로 «시작하는 주소»만 가로챈다. 그 밖은 전부 지금까지처럼 OCR.
+    //   ⛔ OCR 은 이 갈림길을 한 번도 안 지나간다(주소가 `/` 다).
+    if (new URL(request.url).pathname.startsWith('/billing/')) return 결제길(request, env, cors)
+
     // 🔓 운영자(창업자) 통로 — 비밀키(FOUNDER_SECRET) 일치 시 '개인 한도'(IP·유저)만 우회(전역 900은 존중).
     // 앱은 이 기기가 운영자 모드일 때만 x-hankki-founder 헤더를 보낸다(URL ?founder=…로 1회 진입).
     const founder = !!(env.FOUNDER_SECRET && request.headers.get('x-hankki-founder') === env.FOUNDER_SECRET)
@@ -483,6 +489,14 @@ export default {
     //      (무한은 아니다 — 통이 둘뿐이라 최대 두 벌. 그래도 「1회 한정」 약속이 깨진다.)
     //      2026-09-01 에 「어느 것을 받았나」를 붙이다 드러났다.
     const 통들 = 로그인 ? [통, `d:${uid}`] : [통]
+    // 💳 **산 열쇠** — ⛔**토큰으로 «확인된» 로그인일 때만** 본다(창업자 확정 2026-10-22 ⓐ「로그인한 사람만」).
+    //   몸통 `sub` 만 믿으면 남의 번호를 적어 와 «그 사람이 산 열쇠»를 태울 수 있다(돈 낸 것을 뺏는 길).
+    //   `AUTH_STRICT` 와 상관없이 여기만은 늘 엄격하다.
+    const 산통 = 확인번호 ? `a:${확인번호}` : ''
+    let 산열쇠 = 0
+    let 산열쇠흐림 = false     // 「못 읽었다」 — 「0개」와 다른 말이다(앱이 화면을 안 건드린다)
+    if (산통) ({ 남음: 산열쇠, 흐림: 산열쇠흐림 } = await 산열쇠세기(env, 산통))
+    let 산열쇠로 = false       // 이번 사진을 «산 열쇠»로 읽나 (무료를 다 쓴 사람만)
 
     let 웰컴상한 = 로그인 ? LIMITS.WELCOME_ACCT : LIMITS.WELCOME_ANON
     let 쓴수 = 0
@@ -547,6 +561,8 @@ export default {
         acct: LIMITS.WELCOME_ACCT,
         monthly: LIMITS.PER_USER_MONTHLY,
         signed: 로그인,
+        paid: 산열쇠,             // 💳 산 열쇠 남은 수(확인된 로그인만 · 아니면 0)
+        ...(산열쇠흐림 ? { paidStale: true } : {}),
       }
     }
 
@@ -700,7 +716,10 @@ export default {
       if (monC >= LIMITS.MONTHLY_GLOBAL) return json({ error: 'global_quota' }, 429, cors)              // ① 운영자도 존중
       if (dayC >= LIMITS.DAILY_GLOBAL) return json({ error: 'global_quota' }, 429, cors)                // ② 운영자도 존중
       // ③ 유저 한도 — ⭐**웰컴이 남아 있으면 월 한도를 안 본다.** 웰컴을 다 쓴 뒤부터 월 5장이다.
-      if (!founder && welcomeLeft <= 0 && userC >= LIMITS.PER_USER_MONTHLY) {
+      // 💳 무료(웰컴·월 5)를 다 쓴 사람은 **산 열쇠**가 있으면 그걸로 읽는다.
+      //   ⭐ 무료부터 쓴다 — 월 5장은 다음 달이면 사라지지만 산 열쇠는 안 사라진다.
+      if (!founder && welcomeLeft <= 0 && userC >= LIMITS.PER_USER_MONTHLY && 산열쇠 > 0) 산열쇠로 = true
+      if (!founder && welcomeLeft <= 0 && userC >= LIMITS.PER_USER_MONTHLY && !산열쇠로) {
         // 🚧🚧 **[2026-09-01] 「막힘」을 센다 — 유료를 «언제» 켤지 판정하는 숫자다.**
         //   ⭐⭐ 「유저 몇 명」은 잘못된 잣대다 — 100명이어도 아무도 무료 한도를 안 넘으면 팔 게 없고,
         //      30명인데 다섯이 매달 넘으면 그게 시장이다.
@@ -759,6 +778,10 @@ export default {
     //   ⛔ 그러니 이 순서를 «편의로» 되돌리지 말 것. 되돌리면 재현판 Ⓐ②③④·Ⓒ③ 이 죽는다.
     const 유저몫차감 = async () => {
       if (!kv) return
+      // 💳 산 열쇠로 읽었으면 그걸 한 개 깎는다 — 무료 통(`wu:`)은 이미 다 썼으니 안 건드린다.
+      //   ⚠️ **정직하게** — 마지막 한 개를 «동시에» 두 장이 쓰면 둘 다 Vision 을 부르고 하나만 깎인다
+      //      (깎기가 Vision «뒤»라서). 유저가 잃는 게 아니라 «우리가» 한 번 손해 본다 — 창업자 Ⓐ 순서 그대로.
+      if (산열쇠로) 산열쇠 = await 산열쇠쓰기(env, 산통)
       await Promise.all([
         // ⭐ 웰컴을 쓰는 동안에도 «월 카운터를 같이» 올린다 —
         //    그래야 웰컴을 다 쓴 순간 월 카운터가 5를 넘어 「그 달은 끝」이 된다.
@@ -860,6 +883,245 @@ export default {
       //   ⭐ 운영자에게 ∞ 로 보이는 건 `left.무제한` 이 맡는다. 이 칸은 «사실»만 말한다.
     }, 200, cors)
   },
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 💳💳 결제 — 구글 영수증 확인 · 산 열쇠 원장 (2026-10-22 · 8/19 `hold/결제서버-0819` 를 지금 워커에 옮겨 얹음)
+//
+//   📮 창업자 = *"우리서버하는거 너믿고하는거니까 진짜 리스크 없이 가야해"*(8/19)
+//   ✅ 창업자 확정 2026-10-22 ⓐ = **열쇠는 로그인한 사람만 산다** → 산 열쇠는 계정 통(`a:<번호>`)에 붙는다.
+//      ⭐ 그래서 8/19 판의 「기기 바꾸면 구매 토큰 타고 옮기기」가 «통째로» 필요 없어졌다 — 계정이 따라간다.
+//
+//   🔒 지키는 것 (8/19 재검토 「돈이 새는 구멍 여섯」 그대로)
+//     ① 같은 영수증을 몇 번 보내도 **한 번만** 준다 — 영수증(토큰)이 기본키 · 넣는 문장이 멱등
+//     ② 「처음 보는 영수증인가」로 갈리지 않는다 — 반만 들어가도 다음 번에 마저 들어간다
+//     ③ 환불·취소(구글이 «취소»라고 말할 때만) → 남은 열쇠를 거둔다 · 이미 쓴 건 안 거둔다
+//     ④ ⛔ 404(구글이 모르는 영수증)엔 **절대 안 거둔다** — 「없다」와 「취소됐다」는 다른 말이다
+//     ⑤ 원장을 못 읽으면 「0개」라고 하지 않는다 → `흐림` 표
+//     ⑥ 마지막 한 개를 동시에 — 깎는 문장에 `남음>0` 을 걸어 마이너스로 안 간다
+//   ⭐ 열쇠를 «먼저» 적고 그 «뒤에» acknowledge·consume 한다 —
+//      반대면 「구글은 끝났다는데 우리 원장엔 없는」 상태가 생기고 그건 3일 환불로도 안 풀린다.
+//
+//   🔑 필요한 것 = Secret `PLAY_SA_JSON`(서비스 계정 열쇠 JSON 통째로) ＋ D1 `DB`(지문장부와 같은 창고)
+//      ⛔ 둘 중 하나라도 없으면 `billing_off` — **결제는 꺼지고 OCR 은 한 글자도 안 달라진다.**
+//   ⛔ 열쇠·토큰·영수증은 «절대» 로그에 찍지 않는다.
+// ═══════════════════════════════════════════════════════════════
+const 결제 = {
+  패키지: 'io.github.peachfam0307_glitch.twa',
+  // 소모성 상품 → 한 번에 주는 열쇠 수. ⚠️ Play Console 상품 ID 와 «한 글자도» 같아야 한다(`src/billing.js` SKU).
+  소모성: { ocr_pack_20: 20 },
+}
+const PLAY_API = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications'
+const OAUTH_URL = 'https://oauth2.googleapis.com/token'
+const SA_SCOPE = 'https://www.googleapis.com/auth/androidpublisher'
+
+let 결제표만듦 = false
+const 결제표준비 = async (db) => {
+  if (결제표만듦) return
+  // 산구매 = 영수증 한 장 한 줄(구글이 뭐라 했나) · 산열쇠 = 그 영수증으로 준 열쇠가 몇 개 남았나
+  await db.exec('CREATE TABLE IF NOT EXISTS 산구매 (토큰 TEXT PRIMARY KEY, 상품 TEXT NOT NULL, 통 TEXT NOT NULL, 주문 TEXT, 상태 INTEGER, 확인 INTEGER DEFAULT 0, 비움 INTEGER DEFAULT 0, 처음 INTEGER, 때 INTEGER)')
+  await db.exec('CREATE TABLE IF NOT EXISTS 산열쇠 (토큰 TEXT PRIMARY KEY, 통 TEXT NOT NULL, 남음 INTEGER NOT NULL, 처음 INTEGER, 때 INTEGER)')
+  await db.exec('CREATE INDEX IF NOT EXISTS 산열쇠_통 ON 산열쇠 (통)')
+  결제표만듦 = true
+}
+
+// 산 열쇠가 몇 개 남았나. ⛔던지지 않는다 — 못 읽으면 `흐림` 을 세운다(0 이라고 거짓말하지 않는다).
+//   ⭐ 결제가 꺼져 있으면(창고 없음) 조용히 0 — 「산 적이 없다」가 사실이다.
+async function 산열쇠세기(env, 통) {
+  if (!env.DB) return { 남음: 0, 흐림: false }
+  try {
+    await 결제표준비(env.DB)
+    const r = await env.DB.prepare('SELECT COALESCE(SUM(남음),0) AS n FROM 산열쇠 WHERE 통 = ?').bind(통).first()
+    return { 남음: (r && r.n) || 0, 흐림: false }
+  } catch { return { 남음: 0, 흐림: true } }
+}
+
+// 한 개 깎는다 → 남은 수. ⭐먼저 산 것부터 쓴다. `남음>0` 을 문장 «안»에 둬 겹쳐도 마이너스가 안 된다.
+async function 산열쇠쓰기(env, 통) {
+  try {
+    const row = await env.DB.prepare('SELECT 토큰 FROM 산열쇠 WHERE 통 = ? AND 남음 > 0 ORDER BY 처음 LIMIT 1').bind(통).first()
+    if (row) await env.DB.prepare('UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = ? WHERE 토큰 = ? AND 남음 > 0').bind(Date.now(), row.토큰).run()
+  } catch { /* 못 깎으면 우리가 한 번 손해 — 유저 것은 안 뺏는다 */ }
+  return (await 산열쇠세기(env, 통)).남음
+}
+
+// ── 갈림길 ────────────────────────────────────────────────
+// `/billing/sync`  = 앱이 «가진 구매를 통째로» 보낸다 → 확인·적기·acknowledge·consume → 지금 상태
+// `/billing/state` = 지금 상태만 (구글에 안 묻는다 · 값싸다)
+async function 결제길(request, env, cors) {
+  if (!env.PLAY_SA_JSON || !env.DB) return json({ error: 'billing_off' }, 503, cors)
+  // 🔐 로그인 «확인»이 필수다 — 몸통 번호는 안 믿는다(ⓐ). 토큰이 없거나 틀리면 401.
+  const 번호 = String((await 토큰확인(request.headers.get('x-hankki-idtoken') || '')) || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64)
+  if (!번호) return json({ error: 'login_required' }, 401, cors)
+  const 통 = `a:${번호}`
+  let body
+  try { body = await request.json() } catch { body = {} }
+  const 경로 = new URL(request.url).pathname
+
+  if (경로 === '/billing/sync') {
+    // 앱이 `listPurchases()` 로 받은 것 그대로. 산 직후에도 «하나짜리 배열»로 보낸다.
+    const 목록 = Array.isArray(body.purchases) ? body.purchases.slice(0, 30) : []
+    const 결과 = []
+    for (const p of 목록) {
+      const 상품 = String((p && p.sku) || '')
+      const 토큰 = String((p && p.token) || '')
+      결과.push({ sku: 상품, ...(await 구매하나(env, 통, 상품, 토큰)) })
+    }
+    const s = await 산열쇠세기(env, 통)
+    return json({ ok: true, results: 결과, paid: s.남음, ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
+  }
+  if (경로 === '/billing/state') {
+    const s = await 산열쇠세기(env, 통)
+    return json({ ok: true, paid: s.남음, ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
+  }
+  return json({ error: 'not_found' }, 404, cors)
+}
+
+// ── 영수증 한 장 ──────────────────────────────────────────
+// ①구글에 «진짜냐» 묻고 ②원장에 적고 ③acknowledge ④consume(또 살 수 있게).
+// ⭐ 몇 번을 보내도 결과가 같다 — 앱은 «켤 때마다» 통째로 다시 보내도 된다(돈 냈는데 못 받는 길이 막힌다).
+async function 구매하나(env, 통, 상품, 토큰) {
+  if (!상품 || !토큰 || 토큰.length > 512) return { ok: false, reason: 'bad_args' }
+  if (!Object.prototype.hasOwnProperty.call(결제.소모성, 상품)) return { ok: false, reason: 'unknown_sku' }
+  const db = env.DB
+  const 지금 = Date.now()
+  const 주소 = `${PLAY_API}/${결제.패키지}/purchases/products/${encodeURIComponent(상품)}/tokens/${encodeURIComponent(토큰)}`
+
+  // ① 구글에 묻는다 — ⛔앱 말을 안 믿는다(이게 서버가 있는 이유다)
+  const v = await playGet(env, 주소)
+  if (!v.ok) return { ok: false, reason: v.reason }   // ⛔ 여기선 «안 거둔다»(④)
+  const g = v.data || {}
+
+  try { await 결제표준비(db) } catch { return { ok: false, reason: 'db_error' } }
+
+  // 🔒 남의 영수증 — 이미 «다른 계정»에 적힌 영수증이면 이 계정엔 안 준다.
+  //   ⭐ 열쇠는 처음 받은 계정에 남는다(유저가 계정을 바꿔도 «사라지지는» 않는다).
+  try {
+    const 전 = await db.prepare('SELECT 통 FROM 산구매 WHERE 토큰 = ?').bind(토큰).first()
+    if (전 && 전.통 !== 통) return { ok: false, reason: 'other_account' }
+  } catch { return { ok: false, reason: 'db_error' } }
+
+  // ② 환불·취소 — purchaseState 0=구매됨 1=취소됨 2=보류(입금 대기)
+  //   ⭐ 「취소」라고 «구글이 말할 때만» 남은 열쇠를 거둔다. 보류는 아직 준 적이 없으니 안 준다.
+  if (g.purchaseState !== 0) {
+    if (g.purchaseState === 1) {
+      try {
+        await db.prepare('UPDATE 산열쇠 SET 남음 = 0, 때 = ? WHERE 토큰 = ?').bind(지금, 토큰).run()
+        await db.prepare('UPDATE 산구매 SET 상태 = 1, 때 = ? WHERE 토큰 = ?').bind(지금, 토큰).run()
+      } catch { /* 못 거둬도 다음 sync 에서 또 시도한다 */ }
+      return { ok: false, reason: 'revoked' }
+    }
+    return { ok: false, reason: 'pending' }
+  }
+
+  // ③ 원장 — ⭐「처음인가」로 안 가른다. 넣는 문장이 멱등이라 매번 그냥 다시 넣는다(②).
+  //   ⚠️ `quantity`(한 번에 여러 개) 는 그대로 믿지 않고 1~50 으로 자른다.
+  const 수량 = Math.max(1, Math.min(50, parseInt(g.quantity, 10) || 1))
+  try {
+    await db.prepare('INSERT OR IGNORE INTO 산구매 (토큰, 상품, 통, 주문, 상태, 확인, 비움, 처음, 때) VALUES (?, ?, ?, ?, 0, 0, 0, ?, ?)')
+      .bind(토큰, 상품, 통, String(g.orderId || ''), 지금, 지금).run()
+    await db.prepare('INSERT OR IGNORE INTO 산열쇠 (토큰, 통, 남음, 처음, 때) VALUES (?, ?, ?, ?, ?)')
+      .bind(토큰, 통, 결제.소모성[상품] * 수량, 지금, 지금).run()
+  } catch { return { ok: false, reason: 'db_error' } }
+
+  // ④ acknowledge — ⭐3일 안에 안 하면 구글이 «환불하고 회수»한다. 이미 했으면 안 부른다.
+  if (g.acknowledgementState !== 1) {
+    const a = await playPost(env, `${주소}:acknowledge`, {})
+    if (!a.ok) return { ok: false, reason: 'ack_failed' }   // ⛔ 실패를 성공이라 안 한다 — 앱이 다시 보낸다
+  }
+  try { await db.prepare('UPDATE 산구매 SET 확인 = 1, 때 = ? WHERE 토큰 = ?').bind(지금, 토큰).run() } catch { /* 표시일 뿐 */ }
+
+  // ⑤ consume — 사자마자 비운다(안 비우면 같은 상품을 «또» 못 산다 · ITEM_ALREADY_OWNED).
+  //   ⭐ 「구글 쪽에서 비웠다」와 「우리가 줄 열쇠」는 다른 칸이다 — 비워도 `산열쇠.남음` 은 그대로다.
+  //   ⛔ 실패해도 열쇠는 이미 들어갔다 → ok 로 답하고 다음 sync 에서 다시 비운다.
+  if (g.consumptionState !== 1) {
+    const c = await playPost(env, `${주소}:consume`, {})
+    if (c.ok) { try { await db.prepare('UPDATE 산구매 SET 비움 = 1, 때 = ? WHERE 토큰 = ?').bind(지금, 토큰).run() } catch { /* noop */ } }
+  }
+  return { ok: true }
+}
+
+// ── Google Play Developer API ─────────────────────────────
+let _saTok = null       // 이 isolate 안에서만 산다. ⛔KV·D1 에 «절대» 저장하지 않는다(그대로 열쇠다)
+let _saExp = 0
+
+// 서비스 계정 → OAuth 액세스 토큰. RS256 JWT 를 Web Crypto 로 직접 서명한다.
+// ⭐ 라이브러리를 안 쓴다 — 워커에 npm 을 넣으면 대시보드 복붙이 안 된다.
+async function saAccessToken(env) {
+  const now = Math.floor(Date.now() / 1000)
+  if (_saTok && _saExp > now + 60) return _saTok
+  let sa
+  try { sa = JSON.parse(env.PLAY_SA_JSON) } catch { return null }
+  if (!sa || !sa.client_email || !sa.private_key) return null
+  const head = b64urlStr(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
+  const claim = b64urlStr(JSON.stringify({ iss: sa.client_email, scope: SA_SCOPE, aud: OAUTH_URL, iat: now, exp: now + 3600 }))
+  let jwt
+  try {
+    const key = await importPk(sa.private_key)
+    const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(`${head}.${claim}`))
+    jwt = `${head}.${claim}.${b64urlBytes(new Uint8Array(sig))}`
+  } catch { return null }
+  let r
+  try {
+    r = await fetch(OAUTH_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: jwt }),
+    })
+  } catch { return null }
+  if (!r.ok) return null
+  const j = await r.json().catch(() => null)
+  if (!j || !j.access_token) return null
+  _saTok = j.access_token
+  _saExp = now + (parseInt(j.expires_in, 10) || 3600)
+  return _saTok
+}
+export const _sa토큰비우기 =() => { _saTok = null; _saExp = 0 }   // 재현판 전용(판마다 새로 로그인)
+
+// PEM(pkcs8) → CryptoKey. JSON.parse 가 `\n` 을 진짜 줄바꿈으로 바꿔 주므로 그대로 쓰면 된다.
+async function importPk(pem) {
+  const body = String(pem).replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')
+  const bin = atob(body)
+  const der = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) der[i] = bin.charCodeAt(i)
+  return crypto.subtle.importKey('pkcs8', der.buffer, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign'])
+}
+function b64urlBytes(bytes) {
+  let s = ''
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i])
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+function b64urlStr(str) { return b64urlBytes(new TextEncoder().encode(str)) }
+
+async function playGet(env, url) {
+  const tok = await saAccessToken(env)
+  if (!tok) return { ok: false, reason: 'no_service_account' }
+  let r
+  try { r = await fetch(url, { headers: { Authorization: `Bearer ${tok}` } }) } catch { return { ok: false, reason: 'net' } }
+  if (r.status === 401 || r.status === 403) { _saTok = null; return { ok: false, reason: 'sa_denied' } }   // 권한 전파 전이면 여기
+  if (r.status === 404 || r.status === 410) return { ok: false, reason: 'token_unknown' }
+  if (!r.ok) return { ok: false, reason: `play_${r.status}` }
+  const data = await r.json().catch(() => null)
+  if (!data) return { ok: false, reason: 'bad_reply' }
+  return { ok: true, data }
+}
+
+async function playPost(env, url, bodyObj) {
+  const tok = await saAccessToken(env)
+  if (!tok) return { ok: false, reason: 'no_service_account' }
+  let r
+  try {
+    r = await fetch(url, { method: 'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' }, body: JSON.stringify(bodyObj || {}) })
+  } catch { return { ok: false, reason: 'net' } }
+  if (r.status === 401 || r.status === 403) { _saTok = null; return { ok: false, reason: 'sa_denied' } }
+  // ⭐ 이미 acknowledge/consume 된 것은 400 으로 온다 — «실패가 아니라 이미 됨»이다.
+  if (r.status === 400) {
+    const t = (await r.text().catch(() => '')).toLowerCase()
+    if (t.includes('already')) return { ok: true, already: true }
+    return { ok: false, reason: 'play_400' }
+  }
+  if (!r.ok) return { ok: false, reason: `play_${r.status}` }
+  return { ok: true }
 }
 
 // KV 정수 읽기
