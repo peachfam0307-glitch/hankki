@@ -186,13 +186,28 @@ export async function buy(sku) {
     try { await resp.complete('fail') } catch { /* noop */ }
     return { ok: false, reason: 'fail' }
   }
-  // ⚠️ 여기서 「서버 검증」을 하는 게 정석이다(Play Developer API 로 토큰 확인).
-  //    ⏳ 아직 안 붙였다 — 붙이기 전엔 **폰에서 조작될 수 있다.**
-  //    다만 우리 손해는 막혀 있다: OCR 은 Worker 에 **전역 월 900건 상한**이 있어
-  //    크레딧이 조작돼도 «우리 돈»은 안 나간다(`ocr-proxy/worker.js`). 꾸미기 팩은 원가 0.
-  //    📌 그래도 매출이 붙으면 검증을 넣는다 — 그때까진 이 주석이 빚 문서다.
   try { await resp.complete('success') } catch { /* noop */ }
-  return { ok: true, token }
+  // 💳 [2026-10-22] 서버 검증 — 소모성(열쇠)은 산 «즉시» 워커에 보낸다(`syncPurchases`).
+  //   워커가 구글에 진짜냐 묻고 → 열쇠를 넣고 → acknowledge·consume 한다. ⛔폰이 «샀다»고 말하는 걸 안 믿는다.
+  //   ⭐ 여기서 못 보내도(망 끊김) 구매는 구글에 남아 있다 → 다음에 앱을 켤 때 `syncOnStart()` 가 다시 보낸다.
+  //   ⚠️ 꾸미기 팩(영구)은 아직 서버에 안 보낸다 — 지금 파는 건 열쇠 하나뿐이다.
+  const synced = sku === SKU.ocr20 ? await syncPurchases() : null
+  return { ok: true, token, synced }
+}
+
+// 💳 가진 소모성 구매를 워커에 «통째로» 보낸다 — 몇 번 보내도 열쇠는 한 번만 들어간다(워커가 영수증으로 막는다).
+//   ⭐ 「돈 냈는데 못 받았다」를 막는 자리다 — 살 때 실패해도 여기서 따라붙는다.
+//   ⛔ 로그인 안 했으면 아무것도 안 한다(워커가 401) — 구매는 그대로 남아 있다가 로그인 뒤 들어온다.
+export async function syncPurchases() {
+  const list = (await purchases()).filter((p) => p.sku === SKU.ocr20 && p.token)
+  if (!list.length) return null
+  const { 산것보내기 } = await import('./ocr.js')   // ⭐ 결제 안 쓰는 사람에게 OCR 모듈을 미리 안 싣는다
+  return 산것보내기(list)
+}
+
+// 앱을 켤 때 한 번 — 첫 화면을 안 늦추게 3초 뒤. 결제가 안 되는 기기(웹·아이폰)면 아무것도 안 한다.
+export function syncOnStart() {
+  setTimeout(() => { canBuy().then((ok) => (ok ? syncPurchases() : null)).catch(() => {}) }, 3000)
 }
 
 // 소모성 상품 소진 — ⛔**꾸미기 팩엔 절대 부르지 말 것.** 부르면 복원이 깨진다.
