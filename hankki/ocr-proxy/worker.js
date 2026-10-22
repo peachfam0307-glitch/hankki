@@ -313,6 +313,7 @@ export default {
   //   ⛔ 결제가 꺼져 있으면(열쇠·창고 없음) 아무것도 안 한다.
   async scheduled(controller, env, ctx) {
     ctx.waitUntil(환불회수(env))
+    ctx.waitUntil(애플환불회수(env))   // 🍎 애플 쪽도 같이(꺼져 있으면 아무것도 안 한다)
   },
 
   async fetch(request, env) {
@@ -320,6 +321,14 @@ export default {
     const cors = corsHeaders(origin)
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
+
+    // 🍎 애플 서버 알림(App Store Server Notifications V2) — 애플 «서버»가 부른다(앱이 아니다).
+    //   ⛔ 그래서 오리진·앱 토큰 검사보다 «앞»에 둔다(애플은 그걸 안 싣는다).
+    //   ⛔ 본문은 «안 믿는다» — 거래 번호만 꺼내 애플 서버에 다시 묻고, 거기서 «취소»라고 할 때만 거둔다.
+    //      그래서 누가 가짜 알림을 보내도 남의 열쇠를 못 지운다(재현판 ㉕).
+    if (request.method === 'POST' && new URL(request.url).pathname === '/billing/apple/notify') {
+      return json(await 애플알림(request, env), 200, cors)
+    }
 
     // 📊📊 **[창업자 확정 2026-08-31] 「이번 달 몇 건 / 900」을 볼 수 있게 한다 — *"이건 꼭 해야해"***
     //
@@ -978,7 +987,12 @@ async function 결제길(request, env, cors) {
   const 경로0 = new URL(request.url).pathname
   // 🗑 계정 삭제 — 결제가 꺼져 있어도(열쇠 없음) 창고만 있으면 지운다. 그래서 꺼짐 판정보다 «앞»에 둔다.
   if (!env.DB) return json({ error: 'billing_off' }, 503, cors)
-  if (경로0 !== '/billing/forget' && !env.PLAY_SA_JSON) return json({ error: 'billing_off' }, 503, cors)
+  // 💳 구글·애플은 «따로» 켜진다 — 한쪽 열쇠만 넣어도 그쪽만 판다(아이폰은 인앱 구매 키가 따로다).
+  const 구글켜짐 = !!env.PLAY_SA_JSON
+  const 애플켜짐v = 애플켜짐(env)
+  if (경로0 !== '/billing/forget' && !구글켜짐 && !애플켜짐v) return json({ error: 'billing_off' }, 503, cors)
+  if (경로0 === '/billing/sync' && !구글켜짐) return json({ error: 'billing_off' }, 503, cors)
+  if (경로0 === '/billing/apple/sync' && !애플켜짐v) return json({ error: 'billing_off' }, 503, cors)
   // 🔐 로그인 «확인»이 필수다 — 몸통 번호는 안 믿는다(ⓐ). 토큰이 없거나 틀리면 401.
   const 번호 = String((await 토큰확인(request.headers.get('x-hankki-idtoken') || '')) || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64)
   if (!번호) return json({ error: 'login_required' }, 401, cors)
@@ -1012,6 +1026,18 @@ async function 결제길(request, env, cors) {
       const 상품 = String((p && p.sku) || '')
       const 토큰 = String((p && p.token) || '')
       결과.push({ sku: 상품, ...(await 구매하나(env, 통, 상품, 토큰)) })
+    }
+    const s = await 산열쇠세기(env, 통)
+    return json({ ok: true, results: 결과, paid: s.남음, ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
+  }
+  // 🍎 아이폰 — 앱이 StoreKit 거래 번호(transactionId)만 보낸다. ⛔앱이 준 서명 거래는 안 믿고 애플 서버에 «다시» 묻는다.
+  //   한 번에 10개까지(무료 워커 바깥 호출 50번 · 거래 하나 = 많아야 2번(본 서버 → 없으면 샌드박스)).
+  if (경로 === '/billing/apple/sync') {
+    const 목록 = Array.isArray(body.transactions) ? body.transactions.slice(0, 10) : []
+    const 결과 = []
+    for (const t of 목록) {
+      const id = String((t && t.id) || '')
+      결과.push({ id, ...(await 애플구매하나(env, 통, id)) })
     }
     const s = await 산열쇠세기(env, 통)
     return json({ ok: true, results: 결과, paid: s.남음, ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
@@ -1126,8 +1152,8 @@ async function 환불회수(env) {
 
 // 📊 결제 계기판 — 전역 숫자만(⛔누가 샀는지는 안 준다). 결제가 꺼져 있으면 「꺼짐」.
 async function 결제계기판(env) {
-  if (!env.PLAY_SA_JSON || !env.DB) return { 켜짐: false }
-  const 판 = { 켜짐: true }
+  if ((!env.PLAY_SA_JSON && !애플켜짐(env)) || !env.DB) return { 켜짐: false }
+  const 판 = { 켜짐: true, 구글: !!env.PLAY_SA_JSON, 애플: 애플켜짐(env) }
   try {
     await 결제표준비(env.DB)
     const a = await env.DB.prepare('SELECT COUNT(*) AS n, SUM(CASE WHEN 상태 = 1 THEN 1 ELSE 0 END) AS 환불 FROM 산구매').bind().first()
@@ -1137,11 +1163,182 @@ async function 결제계기판(env) {
     판.남은산열쇠 = (b && b.n) || 0
   } catch { 판.흐림 = true }
   try { 판.환불회수마지막 = JSON.parse((env.OCR_KV && (await env.OCR_KV.get('vp:last'))) || 'null') } catch { 판.환불회수마지막 = null }
+  try { 판.애플환불마지막 = JSON.parse((env.OCR_KV && (await env.OCR_KV.get('ap:last'))) || 'null') } catch { 판.애플환불마지막 = null }
+  try {
+    const c = await env.DB.prepare("SELECT COUNT(*) AS n FROM 산구매 WHERE 주문 LIKE 'apple:Sandbox%'").bind().first()
+    판.애플시험결제 = (c && c.n) || 0   // 🧪 심사관·TestFlight 의 공짜 시험 결제 — 매출과 갈라 본다
+  } catch { /* noop */ }
   return 판
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 🍎🍎 아이폰 결제 — App Store Server API 로 «애플에 직접 묻는다» (2026-10-22 · 코드만 · 창업자 「갤럭시 끝나면 아이폰 것도 미리」)
+//
+//   📜 근거 = 애플이 공개한 서버 라이브러리 원본(github.com/apple/app-store-server-library-node · 2026-10-22 열람)
+//      · 거래 조회 = GET /inApps/v1/transactions/{transactionId} → { signedTransactionInfo }
+//      · 본 서버 https://api.storekit.apple.com · 샌드박스 https://api.storekit-sandbox.apple.com
+//      · 우리 인증 = ES256 JWT { iss: 발급자ID, iat, exp, aud: 'appstoreconnect-v1', bid: 번들ID } · 머리 kid = 키 ID
+//      · 알림 기록 = POST /inApps/v1/notifications/history { startDate, endDate, notificationType } → notificationHistory[].signedPayload · hasMore · paginationToken
+//   ⭐ 왜 «서명 직접 검증»이 아니라 «다시 묻기»인가 — 서명 검증은 인증서 3단·애플 표식 2개·날짜까지 봐야 한다
+//      (라이브러리 jws_verification.ts). 손으로 짜면 틀리기 쉽고, 인증서 만료 사고 사례도 있다.
+//      애플 서버에 우리 열쇠로 «직접» 물어 받은 답은 TLS 가 보증한다 → 그 답의 내용만 읽으면 된다(구글과 같은 구조).
+//   🧪 샌드박스(심사관·TestFlight 시험 결제)도 받는다 — 안 받으면 심사관이 「샀는데 안 들어온다」로 볼 수 있다.
+//      대신 주문 칸에 `apple:Sandbox` 로 표시해 계기판에서 매출과 갈라 본다.
+//   🔑 필요한 것 = Secret APPLE_IAP_KEY(.p8 내용) · APPLE_KEY_ID · APPLE_ISSUER_ID — 없으면 애플 쪽만 꺼진다.
+//   ⛔ «끝(finish)» 은 앱이 한다 — 서버가 열쇠를 넣었다고 답한 «뒤»에만(앱 StoreKit 부품).
+// ═══════════════════════════════════════════════════════════════
+const 애플 = {
+  번들: 'kr.hankki.app',
+  본서버: 'https://api.storekit.apple.com',
+  샌드박스: 'https://api.storekit-sandbox.apple.com',
+}
+function 애플켜짐(env) { return !!(env.APPLE_IAP_KEY && env.APPLE_KEY_ID && env.APPLE_ISSUER_ID && env.DB) }
+
+let _애플토큰 = null, _애플토큰끝 = 0
+async function 애플토큰(env) {
+  const now = Math.floor(Date.now() / 1000)
+  if (_애플토큰 && _애플토큰끝 > now + 30) return _애플토큰
+  try {
+    const head = b64urlStr(JSON.stringify({ alg: 'ES256', kid: env.APPLE_KEY_ID, typ: 'JWT' }))
+    const claim = b64urlStr(JSON.stringify({ iss: env.APPLE_ISSUER_ID, iat: now, exp: now + 300, aud: 'appstoreconnect-v1', bid: 애플.번들 }))
+    const body = String(env.APPLE_IAP_KEY).replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')
+    const der = Uint8Array.from(atob(body), (c) => c.charCodeAt(0))
+    const key = await crypto.subtle.importKey('pkcs8', der.buffer, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'])
+    // ⭐ WebCrypto ECDSA 서명은 r‖s(64바이트) 꼴이라 JWS ES256 이 요구하는 꼴 그대로다(DER 변환 불필요).
+    const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(`${head}.${claim}`))
+    _애플토큰 = `${head}.${claim}.${b64urlBytes(new Uint8Array(sig))}`
+    _애플토큰끝 = now + 300
+    return _애플토큰
+  } catch { return null }
+}
+export const _애플토큰비우기 = () => { _애플토큰 = null; _애플토큰끝 = 0 }   // 재현판 전용
+
+// JWS 몸통만 읽는다 — ⛔«애플 서버에서 직접 받은» 것에만 쓴다(그 경우 TLS 가 보증한다). 앱·알림이 준 것은 번호만 꺼내 다시 묻는다.
+function jws몸통(s) {
+  try {
+    const p = String(s || '').split('.')[1]
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(p.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((p.length + 3) % 4)), (c) => c.charCodeAt(0))))
+  } catch { return null }
+}
+
+async function 애플부름(env, 서버, 경로, method = 'GET', body = null) {
+  const tok = await 애플토큰(env)
+  if (!tok) return { ok: false, reason: 'no_apple_key' }
+  let r
+  try {
+    r = await fetch(서버 + 경로, { method, headers: { Authorization: `Bearer ${tok}`, ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) })
+  } catch { return { ok: false, reason: 'net' } }
+  if (r.status === 401 || r.status === 403) { _애플토큰 = null; return { ok: false, reason: 'apple_denied' } }
+  if (r.status === 404) return { ok: false, reason: 'not_found', 없음: true }
+  if (!r.ok) return { ok: false, reason: `apple_${r.status}` }
+  const data = await r.json().catch(() => null)
+  if (!data) return { ok: false, reason: 'bad_reply' }
+  return { ok: true, data }
+}
+
+// 거래 하나를 애플에 묻는다 — 본 서버에 없으면 샌드박스(심사관·TestFlight). 돌려주는 값 = 거래 몸통
+async function 애플거래(env, id) {
+  for (const 서버 of [애플.본서버, 애플.샌드박스]) {
+    const v = await 애플부름(env, 서버, `/inApps/v1/transactions/${encodeURIComponent(id)}`)
+    if (v.ok) {
+      const t = jws몸통(v.data.signedTransactionInfo)
+      return t ? { ok: true, t } : { ok: false, reason: 'bad_reply' }
+    }
+    if (!v.없음) return v   // 404 가 아니면(권한·망) 샌드박스로 넘어가지 않는다 — 실패를 그대로 말한다
+  }
+  return { ok: false, reason: 'token_unknown' }
+}
+
+// 🍎 거래 하나 — 구글 `구매하나` 와 «같은 원장·같은 규칙»(멱등 · 남의 것 · 취소면 남은 것만 거둠 · 404 엔 안 거둠)
+async function 애플구매하나(env, 통, id) {
+  if (!/^\d{1,32}$/.test(id)) return { ok: false, reason: 'bad_args' }
+  const v = await 애플거래(env, id)
+  if (!v.ok) return { ok: false, reason: v.reason }
+  const t = v.t
+  if (t.bundleId !== 애플.번들) return { ok: false, reason: 'wrong_app' }
+  if (!Object.prototype.hasOwnProperty.call(결제.소모성, t.productId)) return { ok: false, reason: 'unknown_sku' }
+  if (t.type !== 'Consumable') return { ok: false, reason: 'wrong_type' }
+  const 토큰 = `apple:${t.transactionId}`
+  const db = env.DB
+  const 지금 = Date.now()
+  try { await 결제표준비(db) } catch { return { ok: false, reason: 'db_error' } }
+  try {
+    const 전 = await db.prepare('SELECT 통 FROM 산구매 WHERE 토큰 = ?').bind(토큰).first()
+    if (전 && 전.통 !== 통) return { ok: false, reason: 'other_account' }
+  } catch { return { ok: false, reason: 'db_error' } }
+  if (t.revocationDate) {
+    try {
+      await db.prepare('UPDATE 산열쇠 SET 남음 = 0, 때 = ? WHERE 토큰 = ?').bind(지금, 토큰).run()
+      await db.prepare('UPDATE 산구매 SET 상태 = 1, 때 = ? WHERE 토큰 = ?').bind(지금, 토큰).run()
+    } catch { /* 다음에 또 */ }
+    return { ok: false, reason: 'revoked' }
+  }
+  const 수량 = Math.max(1, Math.min(50, parseInt(t.quantity, 10) || 1))
+  try {
+    await db.prepare('INSERT OR IGNORE INTO 산구매 (토큰, 상품, 통, 주문, 상태, 확인, 비움, 처음, 때) VALUES (?, ?, ?, ?, 0, 0, 0, ?, ?)')
+      .bind(토큰, t.productId, 통, `apple:${t.environment || ''}`, 지금, 지금).run()
+    await db.prepare('INSERT OR IGNORE INTO 산열쇠 (토큰, 통, 남음, 처음, 때) VALUES (?, ?, ?, ?, ?)')
+      .bind(토큰, 통, 결제.소모성[t.productId] * 수량, 지금, 지금).run()
+  } catch { return { ok: false, reason: 'db_error' } }
+  return { ok: true, sandbox: t.environment === 'Sandbox' }
+}
+
+// 거래 번호로 «다시 물어» 취소됐으면 남은 열쇠를 거둔다 — 알림·기록 둘 다 이 한 곳을 쓴다.
+async function 애플거두기(env, id) {
+  if (!/^\d{1,32}$/.test(String(id || ''))) return 0
+  const v = await 애플거래(env, id)
+  if (!v.ok || !v.t.revocationDate) return 0   // ⛔ 애플이 «취소»라고 하지 않으면 안 거둔다(가짜 알림 막이)
+  const 토큰 = `apple:${v.t.transactionId}`
+  await 결제표준비(env.DB)
+  const r = await env.DB.prepare('UPDATE 산열쇠 SET 남음 = 0, 때 = ? WHERE 토큰 = ? AND 남음 > 0').bind(Date.now(), 토큰).run()
+  await env.DB.prepare('UPDATE 산구매 SET 상태 = 1, 때 = ? WHERE 토큰 = ?').bind(Date.now(), 토큰).run()
+  return (r && r.meta && r.meta.changes) || 0
+}
+
+// 알림 한 통 — 본문에서 «거래 번호만» 꺼낸다(본문은 안 믿는다)
+function 알림거래번호(signedPayload) {
+  const n = jws몸통(signedPayload)
+  if (!n || !['REFUND', 'REVOKE'].includes(n.notificationType)) return ''
+  const t = jws몸통(n.data && n.data.signedTransactionInfo)
+  return t && t.transactionId ? String(t.transactionId) : ''
+}
+
+async function 애플알림(request, env) {
+  if (!애플켜짐(env)) return { ok: false, reason: 'billing_off' }
+  let body
+  try { body = await request.json() } catch { return { ok: false, reason: 'bad_json' } }
+  const id = 알림거래번호(body && body.signedPayload)
+  if (!id) return { ok: true, 거둠: 0 }   // 우리가 볼 알림이 아니다(구독·테스트 등) — 200 으로 받아 둔다
+  try { return { ok: true, 거둠: await 애플거두기(env, id) } } catch { return { ok: false, reason: 'db_error' } }
+}
+
+// ⏰ 하루 한 번 — 알림이 빠졌을 때를 메운다(알림 기록 · 지난 3일 · 본 서버·샌드박스 · 쪽당 최대 5번).
+async function 애플환불회수(env) {
+  if (!애플켜짐(env)) return { ok: false, reason: 'billing_off' }
+  const 결과 = { ok: true, 본: 0, 거둠: 0, 때: Date.now() }
+  try {
+    for (const 서버 of [애플.본서버, 애플.샌드박스]) {
+      let 쪽 = 0, 다음 = ''
+      do {
+        const v = await 애플부름(env, 서버, '/inApps/v1/notifications/history' + (다음 ? `?paginationToken=${encodeURIComponent(다음)}` : ''), 'POST',
+          { startDate: Date.now() - 3 * 86400000, endDate: Date.now(), notificationType: 'REFUND' })
+        if (!v.ok) { if (서버 === 애플.본서버) { 결과.ok = false; 결과.reason = v.reason } break }
+        for (const it of v.data.notificationHistory || []) {
+          결과.본++
+          const id = 알림거래번호(it && it.signedPayload)
+          if (id) 결과.거둠 += await 애플거두기(env, id)
+        }
+        다음 = v.data.hasMore ? (v.data.paginationToken || '') : ''
+        쪽++
+      } while (다음 && 쪽 < 5)
+    }
+  } catch { 결과.ok = false; 결과.reason = 'db_error' }
+  try { if (env.OCR_KV) await env.OCR_KV.put('ap:last', JSON.stringify(결과)) } catch { /* noop */ }
+  return 결과
+}
+
 // ── Google Play Developer API ─────────────────────────────
-let _saTok = null      // 이 isolate 안에서만 산다. ⛔KV·D1 에 «절대» 저장하지 않는다(그대로 열쇠다)
+let _saTok = null     // 이 isolate 안에서만 산다. ⛔KV·D1 에 «절대» 저장하지 않는다(그대로 열쇠다)
 let _saExp = 0
 
 // 서비스 계정 → OAuth 액세스 토큰. RS256 JWT 를 Web Crypto 로 직접 서명한다.
