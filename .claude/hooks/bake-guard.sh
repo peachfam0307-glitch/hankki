@@ -20,6 +20,20 @@ case "$CMD" in
   *"git push"*"annyeong-yoi12y"*) BAKE=1 ;;
 esac
 [ "$BAKE" = 1 ] || exit 0
+# 📸 [2026-10-22] 창업자가 인스타에 올렸다고 한 날(insta-posted.json)이 INSTA_NEW_AT 에 없으면 막는다 — 창업자 「구울때 새로 좀 넣어줘」
+MISS=$(python3 - "$CLAUDE_PROJECT_DIR" <<'PY'
+import json,os,re,sys
+r=sys.argv[1]; f=os.path.join(r,"hankki/scripts/insta-posted.json")
+if not os.path.exists(f): sys.exit()
+v=open(os.path.join(r,"hankki/src/version.js"),encoding="utf8").read()
+m=re.search(r"INSTA_NEW_AT\s*=\s*(\[[^\]]*\]|\x27[^\x27]*\x27)",v); have=set(re.findall(r"\d{4}-\d\d-\d\d",m.group(1) if m else ""))
+print(" ".join(d for d in json.load(open(f))["날"] if d not in have))
+PY
+)
+if [ -n "$MISS" ]; then
+  printf "📸 ⛔ 아이폰 굽기 막음 — 창업자가 인스타에 올렸다고 한 날 %s 이 version.js INSTA_NEW_AT 에 없다.\n   👉 넣거나(올린 날이 다르면 hankki/scripts/insta-posted.json 을 고친다) 다시 굽는다.\n" "$MISS" >&2
+  exit 2
+fi
 OUT=$(node "$CLAUDE_PROJECT_DIR/hankki/scripts/release-calendar.mjs" --bake 2>&1)
 RC=$?
 if [ "$RC" -ne 0 ]; then
