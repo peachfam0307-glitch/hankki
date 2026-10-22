@@ -27,7 +27,9 @@ export default function GatePreview() {
   // ⛔ 높이는 화면 높이에 묶는다 — 640 높이 폰에서도 단추가 엄지 자리 밖으로 밀리면 안 된다(8/21 확정)
   // 📐 [2026-10-23 창업자] 「작게보여」 → 그림 칸 39vh · 패드(가로 700↑)는 더 크게(48vh · 최대 640px) · 설명 글씨는 한 단계 줄임
   const 패드 = typeof window !== 'undefined' && window.innerWidth >= 700
-  const 높이 = 패드 ? 'min(640px, 48vh)' : 'min(460px, 39vh)'
+  // ⛔ 짧은 폰(높이 700 미만 · 아이폰SE 667 · 작은 갤럭시 640)은 39vh 면 아이폰 «애플 단추» 아래 열쇠 선물 칸이 화면 밖으로 밀린다(실측) → 33vh
+  const 짧은폰 = typeof window !== 'undefined' && window.innerHeight < 700
+  const 높이 = 패드 ? 'min(640px, 48vh)' : 짧은폰 ? 'min(460px, 33vh)' : 'min(460px, 39vh)'
   return (
     <div style={{ margin: 'auto 0 28px', width: '100%' }}>
       <div ref={판} onScroll={굴림} className="gate-preview"
@@ -37,7 +39,7 @@ export default function GatePreview() {
             <div style={{ height: 높이, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img src={그림} alt="" loading={i ? 'lazy' : 'eager'} draggable={false}
                 style={i ? { height: '100%', maxWidth: '80%', objectFit: 'contain', borderRadius: 16, border: '3px solid #fff', boxShadow: '0 6px 18px rgba(90,60,30,.18)' }
-                  : { width: 240, maxWidth: '66%', maxHeight: '100%', objectFit: 'contain' }} />
+                  : { width: 패드 ? 420 : 240, maxWidth: '66%', maxHeight: '100%', objectFit: 'contain' }} />
             </div>
             <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--brown)', marginTop: 10 }}>{제목}</div>
             <div className="t-sub" style={{ fontSize: 12, marginTop: 3, padding: '0 12px' }}>{설명}</div>
