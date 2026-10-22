@@ -432,7 +432,7 @@ const CURATION_ALL = [
   {
     cat: '우유·유제품', group: '유제품', emoji: '🥛', icon: 'cu_milk',
     items: [
-      { name: '소화가 잘되는 우유', icon: 'cu_milk', brand: '연세우유', ingredients: '원유 99.03597%(국산), 칼슘혼합제제(탄산칼슘, 아라비아검, 정제수), 난소화성말토덱스트린, 락타아제, 열처리유산균', allergen: '우유 함유', nutrition: '100mL당 65kcal · 나트륨 50mg · 탄수화물 5g · 당류 5g · 지방 3.7g · 트랜스지방 0g · 포화지방 2.5g · 콜레스테롤 11mg · 단백질 3g · 칼슘 200mg (총 내용량 900mL)', checked: '2026-09-17', ingWho: '창업자', matches: ['우유'], benefit: '제가 라떼를 정말 좋아하는데, 라떼 조합으로 제일 맛있는 우유인 것 같아요. 약간의 첨가물이 있는데 제가 먹는 거니까 :) 아쉬운 건 1팩씩은 안 팔더라구요', q: '연세우유 소화가 잘되는 우유', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gRZhYWJypw' },
+      { name: '소화가 잘되는 우유', icon: 'cu_milk_long', brand: '연세우유', ingredients: '원유 99.03597%(국산), 칼슘혼합제제(탄산칼슘, 아라비아검, 정제수), 난소화성말토덱스트린, 락타아제, 열처리유산균', allergen: '우유 함유', nutrition: '100mL당 65kcal · 나트륨 50mg · 탄수화물 5g · 당류 5g · 지방 3.7g · 트랜스지방 0g · 포화지방 2.5g · 콜레스테롤 11mg · 단백질 3g · 칼슘 200mg (총 내용량 900mL)', checked: '2026-09-17', ingWho: '창업자', matches: ['우유'], benefit: '제가 라떼를 정말 좋아하는데, 라떼 조합으로 제일 맛있는 우유인 것 같아요. 약간의 첨가물이 있는데 제가 먹는 거니까 :) 아쉬운 건 1팩씩은 안 팔더라구요', q: '연세우유 소화가 잘되는 우유', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gRZhYWJypw' },
       { name: '마이카페라떼 마일드', icon: 'cu_latte', brand: '매일', benefit: '시판되는 많은 라떼들 중에 제 원픽은 매일카페라떼예요. 많이 달지 않고 제 입맛에는 그렇게 좋더라구요. 라떼 좋아하는 분들 강추합니다', q: '매일 마이카페라떼 마일드', mall: 'coupang', from: '2026-11-28', url: 'https://link.coupang.com/a/gR01WV52tM' },
       { name: '클로티드크림', icon: 'cu_clotted', brand: '데본', benefit: '타르틴 슬랩 올리브오일 뿌려 살짝 구워서 이거 발라드세요. 꼭이요. (꿀도 추가…)', q: '데본 클로티드크림', mall: 'kurly', from: '2026-12-19' },
     ],
@@ -492,7 +492,7 @@ const CURATION_ALL = [
     cat: '커피·차', group: '음료', emoji: '☕', icon: 'cu_coffee',
     items: [
       { name: '레드블랜드 원두', brand: '페이브', matches: ['원두'], benefit: '산미 없고 고소하고 묵직한 거 좋아하는데, 딱 제 취향이었어요. 비슷한 원두 좋아하시면 컬리 쇼핑할 때 담아보세요', q: '페이브 레드블랜드 원두', mall: 'kurly', from: '2027-01-23' },
-      { name: '콜롬비아 디카페인 원두', icon: 'cu_coffee', brand: '그라도스커피', ingredients: '커피원두 100%(콜롬비아)', nutrition: '영양성분 표시대상 식품에 해당 없음 · 200g / 500g / 1kg', checked: '2026-10-02', ingWho: '창업자', matches: ['디카페인'], benefit: '디카페인 중에 가성비 좋고, 라떼 만들었을 때 고소하고 맛있었어요', q: '그라도스커피 콜롬비아 디카페인 원두', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gR1lBuWHdI' },
+      { name: '콜롬비아 디카페인 원두', icon: 'cu_coffee_bean', brand: '그라도스커피', ingredients: '커피원두 100%(콜롬비아)', nutrition: '영양성분 표시대상 식품에 해당 없음 · 200g / 500g / 1kg', checked: '2026-10-02', ingWho: '창업자', matches: ['디카페인'], benefit: '디카페인 중에 가성비 좋고, 라떼 만들었을 때 고소하고 맛있었어요', q: '그라도스커피 콜롬비아 디카페인 원두', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gR1lBuWHdI' },
       { name: '유기농 타타리메밀차', icon: 'cu_tea', brand: '평창다원', matches: ['메밀차'], benefit: '성분 좋고 고소하고 맛있어요. 가격이 좀 있지만, 메밀차 좋아하는 분들 추천합니다', q: '평창다원 유기농 타타리메밀차', mall: 'coupang', from: '2027-02-13', url: 'https://link.coupang.com/a/gR1mVwLGk8' },
     ],
   },
