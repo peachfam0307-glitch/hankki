@@ -233,7 +233,7 @@ console.log('\n⑫ 이상한 입력')
 r = await sync(엄마, [{ sku: 'keys_999', token: 't9' }, { sku: PACK, token: '' }, { sku: PACK, token: 'x'.repeat(600) }, null, 'abc'])
 잰다(r.results.every((x) => !x.ok) && r.paid === 0, '모르는 상품·빈 토큰·긴 토큰·쓰레기 전부 0', r.results.map((x) => x.reason))
 r = await sync(엄마, Array.from({ length: 100 }, (_, i) => ({ sku: PACK, token: 'z' + i })))
-잰다(r.results.length === 30, '한 번에 30개까지만 본다', r.results.length)
+잰다(r.results.length === 10, '한 번에 10개까지만 본다(무료 워커 바깥 호출 50번 한계)', r.results.length)
 r = await 부르기('/billing/nope', {}, 엄마)
 잰다(r.status === 404, '없는 길 → 404')
 

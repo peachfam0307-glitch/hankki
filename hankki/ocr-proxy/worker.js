@@ -960,7 +960,9 @@ async function 결제길(request, env, cors) {
 
   if (경로 === '/billing/sync') {
     // 앱이 `listPurchases()` 로 받은 것 그대로. 산 직후에도 «하나짜리 배열»로 보낸다.
-    const 목록 = Array.isArray(body.purchases) ? body.purchases.slice(0, 30) : []
+    //   ⛔ 한 번에 10개까지 — 무료 워커는 요청 하나에 바깥 호출 50번이 한계다(Cloudflare 공식 limits · 2026-10-22 열람).
+    //      영수증 하나 = 구글 3번(확인·ack·consume) → 10개 = 30번 ＋ 로그인 키·토큰 2번. 남은 건 다음 sync 에서 마저 한다.
+    const 목록 = Array.isArray(body.purchases) ? body.purchases.slice(0, 10) : []
     const 결과 = []
     for (const p of 목록) {
       const 상품 = String((p && p.sku) || '')
