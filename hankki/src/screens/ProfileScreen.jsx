@@ -24,6 +24,10 @@ import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import LabSheet from '../components/LabSheet'
 import CloudSheet from '../components/CloudSheet'
 import DeleteAccountSheet from '../components/DeleteAccountSheet'   // 🗑 계정 · 데이터 삭제(큰 틀 6-① ⓑ)
+import KeyShopSheet from '../components/KeyShopSheet'   // 🏪 한끼상점(2026-10-22 · 판매 스위치 뒤)
+import { 상점열쇠 } from '../billing'
+import { KEY_NAME } from '../열쇠이름.js'
+import uiShop from '../assets/ui/hankki_shop.png'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 // 📣 [창업자 2026-09-03 · ④⑤ 스샷] 그 앱 설정엔 「정보」 갈래에 «공지사항»이 있다.
 //   🔢 실측 = 우리 「한끼 소식」 입구는 **홈 하나뿐**이었다(`HomeScreen.jsx:440` 만이 `PreviewSheet` 를 연다).
@@ -66,6 +70,9 @@ export default function ProfileScreen() {
   const store = useStore()
   const { profile, setProfile, recipes, clearAll, reset, importAll } = store
   const nav = useNav()
+  // 🏪 한끼상점 — 판매 스위치가 켜진 기기만(`billing.js 상점열쇠`)
+  const [상점보임] = useState(() => 상점열쇠())
+  const [상점, set상점] = useState(false)
   // 홈의 백업 안내로 들어왔으면 도착하자마자 백업 시트를 연다
   // (탭 이동은 인자를 못 넘겨서 nudges.js 쪽지로 받는다. 읽는 순간 지워져 한 번만 열린다.)
   const [backup, setBackup] = useState(() => takeOpenBackup())
@@ -739,6 +746,20 @@ export default function ProfileScreen() {
           {/* 예전 'Inbox' — 홈에서 뺀 대신 여기 통계에서 연다. 아직 편집 안 끝난(미정리) 레시피 개수, 탭하면 목록 */}
           <Stat n={recipes.filter((r) => r.status === 'unsorted').length} label="미정리" onClick={() => nav.push({ name: 'inbox' })} />
         </div>
+
+        {/* 🏪 한끼상점 Ⓒ — 통계 아래 카드 한 줄 · 창업자 그림 「꽃 화분 가게」 64px (창업자 확정 2026-10-04 14:10·14:36)
+            ⛔ 판매 스위치(`상점열쇠()`)가 꺼져 있으면 안 그린다 — 실제 구매 시험 통과 전엔 일반 유저 화면 그대로. */}
+        {상점보임 && (
+          <button className="card press" onClick={() => set상점(true)} style={{ marginTop: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left' }}>
+            <img src={uiShop} alt="" aria-hidden="true" draggable={false} style={{ width: 64, height: 'auto', flex: 'none' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 17, fontWeight: 800 }}>한끼상점</div>
+              <div className="t-sub" style={{ fontSize: 15, marginTop: 2 }}>{KEY_NAME}를 더 받을 수 있어요</div>
+            </div>
+            <Icon name="chevron-right" size={18} color="var(--brown)" />
+          </button>
+        )}
+        {상점 && <KeyShopSheet onClose={() => set상점(false)} showToast={nav.showToast} />}
 
         {/* 💾💾 백업 = 메뉴 목록에서 «꺼내» 따로 세운다 (창업자 2026-08-16)
             📮 *"설정에 백업 내보내기는 **버튼색을 다르게한다거나. 뭔가 눈에 확띄게** 해야할 것 같아.

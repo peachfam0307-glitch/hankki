@@ -205,6 +205,18 @@ export async function syncPurchases() {
   return 산것보내기(list)
 }
 
+// 🏪 한끼상점을 «보여줘도 되나» — ⛔판매 스위치. 실제 구매 시험(라이선스 테스터)을 통과하기 전엔 꺼 둔다.
+//   지금은 `?상점=1` 로 연 기기만 본다(창업자·시험용) · `?상점=0` 으로 끈다. 일반 유저 화면은 한 글자도 안 바뀐다.
+//   📌 판매를 켜는 날 = 이 함수가 «기본 켬»이 되는 날이다(창업자 신호 뒤에만).
+export function 상점열쇠() {
+  try {
+    const v = new URLSearchParams(location.search).get('상점')
+    if (v === '1') localStorage.setItem('hankki:상점', '1')
+    if (v === '0') localStorage.removeItem('hankki:상점')
+    return localStorage.getItem('hankki:상점') === '1'
+  } catch { return false }
+}
+
 // 앱을 켤 때 한 번 — 첫 화면을 안 늦추게 3초 뒤. 결제가 안 되는 기기(웹·아이폰)면 아무것도 안 한다.
 export function syncOnStart() {
   setTimeout(() => { canBuy().then((ok) => (ok ? syncPurchases() : null)).catch(() => {}) }, 3000)

@@ -324,6 +324,22 @@ export async function 열쇠새로고침() {
   return false
 }
 
+// 💳 상점이 «지금 팔 수 있나» — 워커 결제가 켜져 있나(열쇠·창고) · 이 사람이 로그인 확인됐나.
+//   돌려주는 값 = 'on'(살 수 있다) · 'login'(로그인부터) · 'off'(서버 결제가 꺼짐·못 닿음)
+//   ⛔ 'off' 면 상점은 구매 단추를 «숨긴다» — 꺼진 서버에 팔면 확인 못 해서 3일 뒤 자동 환불된다.
+export async function 결제상태() {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return 'login'
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/state`, { method: 'POST', headers, body: '{}' })
+    const d = await resp.json().catch(() => null)
+    if (d && d.ok) return 'on'
+    if (d && d.error === 'login_required') return 'login'
+    return 'off'
+  } catch { return 'off' }
+}
+
 // 🗑 계정 삭제 때 — 워커의 산 열쇠를 지우고 구매 기록에서 «누구»를 떼어 낸다(`/billing/forget`).
 //   ⭐ 로그인 계정을 지우기 «전»에 불러야 한다(토큰이 살아 있어야 워커가 누군지 안다).
 //   ⛔ 실패해도 던지지 않는다 — 결제를 안 켰거나(옛 워커) 망이 끊겨도 계정 삭제는 막지 않는다.
