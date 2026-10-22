@@ -942,6 +942,7 @@ const 결제표준비 = async (db) => {
   await db.exec('CREATE TABLE IF NOT EXISTS 산구매 (토큰 TEXT PRIMARY KEY, 상품 TEXT NOT NULL, 통 TEXT NOT NULL, 주문 TEXT, 상태 INTEGER, 확인 INTEGER DEFAULT 0, 비움 INTEGER DEFAULT 0, 처음 INTEGER, 때 INTEGER)')
   await db.exec('CREATE TABLE IF NOT EXISTS 산열쇠 (토큰 TEXT PRIMARY KEY, 통 TEXT NOT NULL, 남음 INTEGER NOT NULL, 처음 INTEGER, 때 INTEGER)')
   await db.exec('CREATE INDEX IF NOT EXISTS 산열쇠_통 ON 산열쇠 (통)')
+  await db.exec('CREATE TABLE IF NOT EXISTS 산열쇠씀 (토큰 TEXT NOT NULL, 통 TEXT NOT NULL, 때 INTEGER)')
   결제표만듦 = true
 }
 
@@ -960,7 +961,12 @@ async function 산열쇠세기(env, 통) {
 async function 산열쇠쓰기(env, 통) {
   try {
     const row = await env.DB.prepare('SELECT 토큰 FROM 산열쇠 WHERE 통 = ? AND 남음 > 0 ORDER BY 처음 LIMIT 1').bind(통).first()
-    if (row) await env.DB.prepare('UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = ? WHERE 토큰 = ? AND 남음 > 0').bind(Date.now(), row.토큰).run()
+    if (row) {
+      const r = await env.DB.prepare('UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = ? WHERE 토큰 = ? AND 남음 > 0').bind(Date.now(), row.토큰).run()
+      // 🧾 사용 기록 — 「언제 · 어느 구매에서」 한 줄. 환불 분쟁·애플 CONSUMPTION_REQUEST 때 근거가 된다(창업자 확정 2026-10-22 ⓐ 남은 열쇠만 환불).
+      //   ⭐ 실제로 깎였을 때만 적는다. ⛔ 사진·글자는 안 적는다(새로 모으는 개인정보 0).
+      if (r && r.meta && r.meta.changes) await env.DB.prepare('INSERT INTO 산열쇠씀 (토큰, 통, 때) VALUES (?, ?, ?)').bind(row.토큰, 통, Date.now()).run()
+    }
   } catch { /* 못 깎으면 우리가 한 번 손해 — 유저 것은 안 뺏는다 */ }
   return (await 산열쇠세기(env, 통)).남음
 }

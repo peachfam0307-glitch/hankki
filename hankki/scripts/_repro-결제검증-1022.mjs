@@ -97,7 +97,7 @@ const SA_JSON = JSON.stringify({ client_email: 'hankki-billing@hankki-6a768.iam.
 
 // ── 🗄 가짜 D1 — 워커가 쓰는 문장을 «전부» 안다. 모르는 문장이면 죽는다(몰래 새 문장이 생기면 판이 알린다). ──
 function 가짜D1() {
-  const 구매 = new Map(), 열쇠 = new Map()
+  const 구매 = new Map(), 열쇠 = new Map(), 씀 = []
   const st = { 고장: null }   // 'read' | 'credit-insert' — 일부러 망가뜨린다
   const 문장 = [
     [/^SELECT COALESCE\(SUM\(남음\),0\) AS n FROM 산열쇠 WHERE 통 = \?$/, ([통]) => {
@@ -107,7 +107,8 @@ function 가짜D1() {
     [/^SELECT 토큰 FROM 산열쇠 WHERE 통 = \? AND 남음 > 0 ORDER BY 처음 LIMIT 1$/, ([통]) => {
       const 줄 = [...열쇠.values()].filter((r) => r.통 === 통 && r.남음 > 0).sort((a, b) => a.처음 - b.처음)[0]; return 줄 ? { 토큰: 줄.토큰 } : null
     }],
-    [/^UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음--; return 1 } return 0 }],
+    [/^INSERT INTO 산열쇠씀 \(토큰, 통, 때\) VALUES \(\?, \?, \?\)$/, ([t, 통]) => { 씀.push({ 토큰: t, 통 }); return 1 }],
+    [/^UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/,([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음--; return 1 } return 0 }],
     [/^SELECT 통 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통 } : null)],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 열쇠.get(t); if (r) { r.남음 = 0; return 1 } return 0 }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음 = 0; return 1 } return 0 }],
@@ -129,7 +130,7 @@ function 가짜D1() {
   ]
   const 찾기 = (sql) => { for (const [re, f] of 문장) if (re.test(sql)) return f; throw new Error('가짜 D1 이 모르는 문장: ' + sql) }
   return {
-    구매, 열쇠, st,
+    구매, 열쇠, 씀, st,
     exec: async () => {},
     prepare: (sql) => {
       const f = 찾기(sql)
@@ -285,6 +286,7 @@ r = await 사진(엄마)
 잰다(r.깎음 === true && 남음('o1') === 19 && r.left.paid === 19, '무료를 다 쓰면 산 열쇠로 읽고 19', r.left)
 r = await 사진(엄마, {}, {})
 잰다(남음('o1') === 18, '한 장 더 → 18', env.DB.열쇠.get('o1'))
+잰다(env.DB.씀.length === 2 && env.DB.씀.every((x) => x.토큰 === 'o1' && x.통 === 'a:111'), '산 열쇠 사용 기록 2줄(어느 구매·누구)', env.DB.씀)
 
 console.log('\n⑯ OCR — 몸통 번호만으로는 남의 산 열쇠를 못 태운다')
 새판(); 영수증('o2'); await sync(엄마, [{ sku: PACK, token: 'o2' }]); 무료다씀('111')
@@ -312,6 +314,7 @@ console.log('\n⑳ 마지막 한 개 — 마이너스로 안 간다')
 새판(); 영수증('o6'); await sync(엄마, [{ sku: PACK, token: 'o6' }]); 무료다씀('111'); env.DB.열쇠.get('o6').남음 = 1
 await Promise.all([사진(엄마), 사진(엄마), 사진(엄마)])
 잰다(남음('o6') === 0, '동시에 셋 → 0 (−1·−2 아님)', env.DB.열쇠.get('o6'))
+잰다(env.DB.씀.length === 1, '사용 기록도 실제로 깎인 1줄만', env.DB.씀)
 
 console.log('\n㉑ 로그인 안 한 사람 화면 — paid 는 0, 결제와 무관하게 OCR 그대로')
 새판()
