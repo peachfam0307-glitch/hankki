@@ -21,8 +21,10 @@ const 구글 = {
   영수증: new Map(),      // 토큰 → ProductPurchase
   권한: true,             // false = 권한 전파 전(403)
   ack실패: false, consume실패: false,
-  부름: { get: 0, ack: 0, consume: 0, oauth: 0, vision: 0 },
+  부름: { get: 0, ack: 0, consume: 0, oauth: 0, vision: 0, voided: 0 },
   비전: 'ok',
+  무효쪽: [],             // 무효 구매 목록 쪽들 — [['t1'], ['t2']] = 두 쪽
+  끝없는쪽: false,        // true = 다음 쪽 토큰을 끝없이 준다(고장 흉내)
 }
 globalThis.fetch = async (url) => {
   const u = String(url)
@@ -34,6 +36,17 @@ globalThis.fetch = async (url) => {
     구글.부름.vision++
     if (구글.비전 === '오류') return new Response('bad', { status: 500 })
     return new Response(JSON.stringify({ responses: [{ fullTextAnnotation: { text: '연근 400g\n간장 2큰술\n1. 굽는다 ' + Math.random() } }] }), { status: 200 })
+  }
+  // 무효 구매 목록 — 공식 모양: voidedPurchases[] · tokenPagination.nextPageToken
+  if (u.includes('/purchases/voidedpurchases')) {
+    구글.부름.voided++
+    if (!구글.권한) return new Response('denied', { status: 403 })
+    const q = new URL(u).searchParams
+    if (!(Number(q.get('startTime')) > Date.now() - 30 * 86400000)) return new Response('startTime too old', { status: 400 })
+    const 쪽 = Number(q.get('token') || 0)
+    const 이쪽 = 구글.무효쪽[쪽] || []
+    const 다음 = 구글.끝없는쪽 || 쪽 + 1 < 구글.무효쪽.length ? String(쪽 + 1) : undefined
+    return new Response(JSON.stringify({ voidedPurchases: 이쪽.map((t) => ({ purchaseToken: t, orderId: 'GPA.' + t, voidedTimeMillis: String(Date.now()) })), ...(다음 ? { tokenPagination: { nextPageToken: 다음 } } : {}) }), { status: 200 })
   }
   const m = u.match(/purchases\/products\/([^/]+)\/tokens\/([^:/]+)(?::(acknowledge|consume))?$/)
   if (m) {
@@ -97,6 +110,9 @@ function 가짜D1() {
     [/^UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음--; return 1 } return 0 }],
     [/^SELECT 통 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통 } : null)],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 열쇠.get(t); if (r) { r.남음 = 0; return 1 } return 0 }],
+    [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음 = 0; return 1 } return 0 }],
+    [/^SELECT COUNT\(\*\) AS n, SUM\(CASE WHEN 상태 = 1 THEN 1 ELSE 0 END\) AS 환불 FROM 산구매$/, () => ({ n: 구매.size, 환불: [...구매.values()].filter((r) => r.상태 === 1).length })],
+    [/^SELECT COALESCE\(SUM\(남음\),0\) AS n FROM 산열쇠$/, () => ({ n: [...열쇠.values()].reduce((s, r) => s + r.남음, 0) })],
     [/^UPDATE 산구매 SET 상태 = 1, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 구매.get(t); if (r) { r.상태 = 1; return 1 } return 0 }],
     [/^INSERT OR IGNORE INTO 산구매 /, ([t, 상품, 통, 주문, 처음]) => { if (구매.has(t)) return 0; 구매.set(t, { 토큰: t, 상품, 통, 주문, 상태: 0, 확인: 0, 비움: 0, 처음 }); return 1 }],
     [/^INSERT OR IGNORE INTO 산열쇠 /, ([t, 통, 남음, 처음]) => {
@@ -126,7 +142,7 @@ const 가짜KV = () => { const m = new Map(); return { _m: m, get: async (k) => 
 let env
 const 새판 = (고칠 = {}) => {
   env = { APP_TOKEN: 'tk', OCR_KV: 가짜KV(), DB: 가짜D1(), PLAY_SA_JSON: SA_JSON, VISION_KEY: 'v', ...고칠 }
-  구글.영수증.clear(); 구글.권한 = true; 구글.ack실패 = false; 구글.consume실패 = false; 구글.비전 = 'ok'
+  구글.영수증.clear(); 구글.권한 = true; 구글.ack실패 = false; 구글.consume실패 = false; 구글.비전 = 'ok'; 구글.무효쪽 = []; 구글.끝없는쪽 = false
   for (const k in 구글.부름) 구글.부름[k] = 0
   mod._sa토큰비우기()
 }
@@ -301,6 +317,53 @@ console.log('\n㉑ 로그인 안 한 사람 화면 — paid 는 0, 결제와 무
 새판()
 r = await 사진(null)
 잰다(r.깎음 === true && r.left.paid === 0 && !r.left.paidStale, '비로그인 = paid 0', r.left)
+
+console.log('\n㉒ 환불 회수(하루 한 번) — consume 뒤 환불도 거둔다')
+const 회수 = async (key = 'fs') => {
+  const r = await worker.fetch(new Request('https://w.example/?voided=1&key=' + key, { method: 'GET', headers: { Origin: ORIGIN } }), env)
+  return { status: r.status, ...(await r.json()) }
+}
+새판({ FOUNDER_SECRET: 'fs' }); 영수증('v1'); await sync(엄마, [{ sku: PACK, token: 'v1' }]); 무료다씀('111'); await 사진(엄마); await 사진(엄마)
+잰다(남음('v1') === 18 && 구글.영수증.get('v1').consumptionState === 1, '사고 두 장 읽음 · 구글 쪽은 이미 비움(앱이 다시 안 보낸다)')
+구글.무효쪽 = [['v1', '남의토큰']]
+r = await 회수()
+잰다(r.ok && r.본 === 2 && r.거둠 === 1 && 남음('v1') === 0, '무효 목록에서 찾아 남은 18 → 0 · 원장에 없는 토큰은 지나간다', r)
+잰다(env.DB.구매.get('v1').상태 === 1, '원장에 「환불」 표시')
+r = await 회수()
+잰다(r.ok && r.거둠 === 0 && 남음('v1') === 0, '다음 날 또 받아도 같다(멱등)', r)
+r = await 사진(엄마)
+잰다(r.error === 'user_quota', '회수 뒤엔 산 열쇠로 못 읽는다', r)
+
+새판({ FOUNDER_SECRET: 'fs' }); 영수증('v2'); 영수증('v3'); await sync(엄마, [{ sku: PACK, token: 'v2' }, { sku: PACK, token: 'v3' }])
+구글.무효쪽 = [['x1'], ['x2'], ['v3']]
+r = await 회수()
+잰다(r.ok && r.쪽 === 3 && 남음('v3') === 0 && 남음('v2') === 20, '세 쪽을 넘겨 셋째 쪽 v3 만 거둔다 · v2 는 그대로', r)
+구글.끝없는쪽 = true; 구글.무효쪽 = [[]]
+r = await 회수()
+잰다(r.쪽 === 5 && 구글.부름.voided <= 3 + 5, '다음 쪽이 끝없이 와도 5쪽에서 멈춘다', r)
+
+새판({ FOUNDER_SECRET: 'fs' }); 영수증('v4'); await sync(엄마, [{ sku: PACK, token: 'v4' }]); 구글.무효쪽 = [['v4']]; 구글.권한 = false
+r = await 회수()
+잰다(!r.ok && r.reason === 'sa_denied' && 남음('v4') === 20, '권한 없음 → 아무것도 안 바꾼다', r)
+잰다(JSON.parse(env.OCR_KV._m.get('vp:last')).ok === false, '실패도 계기판 기록(vp:last)에 남는다')
+r = await 회수('틀린열쇠')
+잰다(r.status === 401, '운영자 열쇠가 틀리면 401', r)
+
+새판({ FOUNDER_SECRET: 'fs' }); 영수증('v5'); await sync(엄마, [{ sku: PACK, token: 'v5' }]); 구글.무효쪽 = [['v5']]
+{
+  const 기다림 = []
+  await worker.scheduled({ cron: '0 18 * * *' }, env, { waitUntil: (p) => 기다림.push(p) })
+  await Promise.all(기다림)
+  잰다(남음('v5') === 0, 'Cron(scheduled) 이 부르면 거둔다')
+}
+{
+  const rr = await worker.fetch(new Request('https://w.example/?quota=1&key=fs', { method: 'GET', headers: { Origin: ORIGIN } }), env)
+  const q = await rr.json()
+  잰다(q.결제 && q.결제.켜짐 && q.결제.산건수 === 1 && q.결제.환불건수 === 1 && q.결제.환불회수마지막 && q.결제.환불회수마지막.ok, '계기판(?quota=1)에 산 건수·환불·마지막 회수가 보인다', q.결제)
+}
+새판({ FOUNDER_SECRET: 'fs', PLAY_SA_JSON: undefined })
+r = await 회수()
+잰다(r.reason === 'billing_off' && 구글.부름.voided === 0, '결제가 꺼져 있으면 구글에 묻지도 않는다', r)
 
 console.log(`\n${실패 === 0 ? '✅' : '⛔'} ${통과}/${통과 + 실패} 통과\n`)
 process.exit(실패 === 0 ? 0 : 1)

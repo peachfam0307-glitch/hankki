@@ -309,6 +309,12 @@ export const _공개키넣기 = (키) => { 공개키통 = { 키, 까지: Date.no
 
 export default {
 
+  // ⏰ 💳 하루 한 번 — 환불 회수(`환불회수`). Cloudflare 대시보드 → 워커 → 설정 → 트리거 → Cron 에서 켠다(UTC).
+  //   ⛔ 결제가 꺼져 있으면(열쇠·창고 없음) 아무것도 안 한다.
+  async scheduled(controller, env, ctx) {
+    ctx.waitUntil(환불회수(env))
+  },
+
   async fetch(request, env) {
     const origin = request.headers.get('Origin') || ''
     const cors = corsHeaders(origin)
@@ -352,7 +358,11 @@ export default {
       const ymdq = t.toISOString().slice(0, 10)
       // 👤 [창업자 지시 2026-09-01] 창업자 몫을 갈라 보여준다 — 그래야 「유저가 얼마나 쓰나」가 보인다.
       //   ⛔ 유저 «개인별»은 여전히 안 준다(바로 위 주석 그대로).
-      const [월, 일, 월창, 일창, 막힘, 기본, 기본창, 기본막힘, 기본고름, 기본실패, 기본없음] = await Promise.all([
+      // ⛔⛔ [2026-10-22 고침] 아래 «날마다» 칸 여섯(9/18 161ec2ff)을 읽어 놓고 «이름을 안 붙여서»
+      //    `기본일` 이 정의되지 않아 이 계기판 전체가 죽었다(ReferenceError → 500). 10/21 붙여넣은 판부터 실제로 죽어 있었다.
+      //    🔒 재현판 `_repro-결제검증-1022.mjs` ㉒ 가 이 길을 끝까지 부른다.
+      const [월, 일, 월창, 일창, 막힘, 기본, 기본창, 기본막힘, 기본고름, 기본실패, 기본없음,
+        기본일, 기본일창, 기본일막힘, 기본일고름, 기본일실패, 기본일없음] = await Promise.all([
         num(kvq, `m:${ymq}`), num(kvq, `d:${ymdq}`),
         num(kvq, `mf:${ymq}`), num(kvq, `df:${ymdq}`),
         num(kvq, `q:${ymq}`),
@@ -426,7 +436,17 @@ export default {
           기본: Math.round((기본유저 / 읽은것) * 100),
           읽은것,
         },
+        // 💳 결제 계기판 — 몇 건 팔렸나 · 환불 몇 건 · 환불 회수가 «마지막으로 언제» 돌았나(⛔30일 넘게 멈추면 놓친다)
+        결제: await 결제계기판(env),
       }, 200, cors)
+    }
+
+    // 💳 환불 회수를 «지금» 한 번 돌린다 — 창업자 테스트용(Cron 을 기다리지 않게). 운영자 열쇠가 맞아야 한다.
+    //   📖 `https://<워커주소>/?voided=1&key=<FOUNDER_SECRET>` — ⛔그 주소를 채팅·저장소에 적지 않는다.
+    if (new URL(request.url).searchParams.get('voided') === '1') {
+      const 준열쇠 = request.headers.get('x-hankki-founder') || new URL(request.url).searchParams.get('key') || ''
+      if (!env.FOUNDER_SECRET || 준열쇠 !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      return json(await 환불회수(env), 200, cors)
     }
 
     if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, cors)
@@ -1043,8 +1063,61 @@ async function 구매하나(env, 통, 상품, 토큰) {
   return { ok: true }
 }
 
+// ── 💸 환불 회수 (하루 한 번 · Cron) ─────────────────────────
+//   ⛔⛔ **왜 따로 있나** — 열쇠는 사자마자 consume 한다. consume 된 구매는 앱의 `listPurchases()` 에서 «사라져»
+//      앱이 다시 안 보낸다 → `구매하나()` 의 환불 판정(purchaseState 1)에 «영영» 안 닿는다.
+//      그대로 두면 **20개 받고 환불해도 열쇠가 남는다**(2026-10-22 창업자 검토 요청에서 찾음).
+//   ✅ 그래서 서버가 «스스로» 구글에 묻는다 = 무효 구매 목록(voidedpurchases).
+//      📜 공식(2026-10-22 열람) = 지난 30일만 · 쪽당 최대 1000 · 하루 6000번 · 30초에 30번 · 다음 쪽 = tokenPagination.nextPageToken
+//   ⭐ 매번 «지난 30일 통째로» 본다 — Cron 이 며칠 빠져도 놓치지 않고, 같은 환불을 또 받아도 거두기가 멱등이라 같다.
+//   ⭐ «남은 것만» 거둔다 — 이미 쓴 열쇠는 안 건드린다(유저 화면이 마이너스가 되지 않는다).
+//   ⛔ 우리 원장에 없는 토큰(다른 상품·옛 테스트)은 그냥 지나간다.
+//   ⛔ 실패하면 아무것도 안 바꾸고 다음 날 다시 — 마지막 결과는 KV `vp:last` 에 남겨 계기판(`?quota=1`)에 보인다.
+async function 환불회수(env) {
+  if (!env.PLAY_SA_JSON || !env.DB) return { ok: false, reason: 'billing_off' }
+  const 결과 = { ok: true, 본: 0, 거둠: 0, 쪽: 0, 때: Date.now() }
+  try {
+    await 결제표준비(env.DB)
+    const 시작 = Date.now() - 30 * 86400000 + 3600000   // 30일 «안쪽»(경계에서 400 이 안 나게 한 시간 여유)
+    let 다음 = ''
+    do {
+      const 주소 = `${PLAY_API}/${결제.패키지}/purchases/voidedpurchases?startTime=${시작}&maxResults=1000&type=0` + (다음 ? `&token=${encodeURIComponent(다음)}` : '')
+      const v = await playGet(env, 주소)
+      if (!v.ok) { 결과.ok = false; 결과.reason = v.reason; break }
+      for (const p of (v.data && v.data.voidedPurchases) || []) {
+        결과.본++
+        const 토큰 = String((p && p.purchaseToken) || '')
+        if (!토큰) continue
+        const r = await env.DB.prepare('UPDATE 산열쇠 SET 남음 = 0, 때 = ? WHERE 토큰 = ? AND 남음 > 0').bind(Date.now(), 토큰).run()
+        결과.거둠 += (r && r.meta && r.meta.changes) || 0
+        await env.DB.prepare('UPDATE 산구매 SET 상태 = 1, 때 = ? WHERE 토큰 = ?').bind(Date.now(), 토큰).run()
+      }
+      다음 = (v.data && v.data.tokenPagination && v.data.tokenPagination.nextPageToken) || ''
+      결과.쪽++
+    } while (다음 && 결과.쪽 < 5)   // ⛔ 쪽 넘김이 끝없이 와도 5쪽(5000건)에서 멈춘다 — 무료 워커 바깥 호출 50번 안
+  } catch { 결과.ok = false; 결과.reason = 'db_error' }
+  try { if (env.OCR_KV) await env.OCR_KV.put('vp:last', JSON.stringify(결과)) } catch { /* 기록만 못 남긴다 */ }
+  return 결과
+}
+
+// 📊 결제 계기판 — 전역 숫자만(⛔누가 샀는지는 안 준다). 결제가 꺼져 있으면 「꺼짐」.
+async function 결제계기판(env) {
+  if (!env.PLAY_SA_JSON || !env.DB) return { 켜짐: false }
+  const 판 = { 켜짐: true }
+  try {
+    await 결제표준비(env.DB)
+    const a = await env.DB.prepare('SELECT COUNT(*) AS n, SUM(CASE WHEN 상태 = 1 THEN 1 ELSE 0 END) AS 환불 FROM 산구매').bind().first()
+    const b = await env.DB.prepare('SELECT COALESCE(SUM(남음),0) AS n FROM 산열쇠').bind().first()
+    판.산건수 = (a && a.n) || 0
+    판.환불건수 = (a && a.환불) || 0
+    판.남은산열쇠 = (b && b.n) || 0
+  } catch { 판.흐림 = true }
+  try { 판.환불회수마지막 = JSON.parse((env.OCR_KV && (await env.OCR_KV.get('vp:last'))) || 'null') } catch { 판.환불회수마지막 = null }
+  return 판
+}
+
 // ── Google Play Developer API ─────────────────────────────
-let _saTok = null       // 이 isolate 안에서만 산다. ⛔KV·D1 에 «절대» 저장하지 않는다(그대로 열쇠다)
+let _saTok = null      // 이 isolate 안에서만 산다. ⛔KV·D1 에 «절대» 저장하지 않는다(그대로 열쇠다)
 let _saExp = 0
 
 // 서비스 계정 → OAuth 액세스 토큰. RS256 JWT 를 Web Crypto 로 직접 서명한다.
