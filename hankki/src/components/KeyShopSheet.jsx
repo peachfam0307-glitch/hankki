@@ -85,7 +85,8 @@ export default function KeyShopSheet ({ onClose, showToast }) {
           </div>
 
           <div style={{ padding: '2px 16px 0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--cream)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
+            {/* 상품 칸 — 완료 화면에선 숨긴다(창업자 10/23 「완료에서는 숨기자」) */}
+            {상태 !== 'done' && <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--cream)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
               <img src={uiShop} alt="" aria-hidden="true" draggable={false} style={{ width: 64, height: 'auto', flex: 'none' }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 17, fontWeight: 800, letterSpacing: '-0.02em' }}>
@@ -96,7 +97,7 @@ export default function KeyShopSheet ({ onClose, showToast }) {
                   사진 한 장을 AI로 읽을 때 1{KEY_UNIT}씩 써요. 무료 {KEY_NAME}를 다 쓴 뒤에 쓰여요.
                 </div>
               </div>
-            </div>
+            </div>}
 
             {상태 === '보는중' && <div className="t-sub" style={{ fontSize: 15, padding: '6px 2px 10px' }}>상점을 여는 중…</div>}
             {상태 === 'slow' && (
