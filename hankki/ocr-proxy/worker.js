@@ -314,6 +314,7 @@ export default {
   async scheduled(controller, env, ctx) {
     ctx.waitUntil(환불회수(env))
     ctx.waitUntil(애플환불회수(env))   // 🍎 애플 쪽도 같이(꺼져 있으면 아무것도 안 한다)
+    ctx.waitUntil(오년지움(env))       // 🧾 계정 지운 사람의 구매 기록 — 5년 지나면 지운다(전자상거래법 시행령 6조 · 2026-10-23)
   },
 
   async fetch(request, env) {
@@ -456,6 +457,16 @@ export default {
       const 준열쇠 = request.headers.get('x-hankki-founder') || new URL(request.url).searchParams.get('key') || ''
       if (!env.FOUNDER_SECRET || 준열쇠 !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
       return json(await 환불회수(env), 200, cors)
+    }
+
+    // 🧾 거래기록 찾기 — 유저가 문의 메일로 「내 구매 기록」을 청하면 창업자가 주문 번호로 뽑는다(시행령 6조 ②항 2호 · 2026-10-23).
+    //   📖 `https://<워커주소>/?order=<주문번호>&key=<FOUNDER_SECRET>` — 구글 = `GPA.…` · 애플 = 거래 번호(숫자)
+    //   ⛔ 계정 번호(통)는 안 내준다 — 주문·상품·시각·상태·남은 수·쓴 시각만.
+    if (new URL(request.url).searchParams.get('order')) {
+      const 준열쇠 = request.headers.get('x-hankki-founder') || new URL(request.url).searchParams.get('key') || ''
+      if (!env.FOUNDER_SECRET || 준열쇠 !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      if (!env.DB) return json({ error: 'billing_off' }, 503, cors)
+      return json(await 거래기록찾기(env, new URL(request.url).searchParams.get('order')), 200, cors)
     }
 
     if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, cors)
@@ -952,6 +963,10 @@ const 결제표준비 = async (db) => {
   await db.exec('CREATE TABLE IF NOT EXISTS 산열쇠 (토큰 TEXT PRIMARY KEY, 통 TEXT NOT NULL, 남음 INTEGER NOT NULL, 처음 INTEGER, 때 INTEGER)')
   await db.exec('CREATE INDEX IF NOT EXISTS 산열쇠_통 ON 산열쇠 (통)')
   await db.exec('CREATE TABLE IF NOT EXISTS 산열쇠씀 (토큰 TEXT NOT NULL, 통 TEXT NOT NULL, 때 INTEGER)')
+  // 🧾 법정 보존 «전용» 표 — 계정을 지운 사람의 거래기록만 옮겨 둔다(개인정보 보호법 21조 3항 · 표준지침 11조 = 분리 저장 · 2026-10-23).
+  //   ⭐ 계정 번호(통) 칸이 «아예 없다» — 일반 표와 이어 붙일 고리가 없다. 쓰는 곳 = 남의 영수증 막이 · 환불 표시 · 운영자 거래기록 찾기 · 5년 뒤 삭제뿐.
+  await db.exec('CREATE TABLE IF NOT EXISTS 보존구매 (토큰 TEXT PRIMARY KEY, 상품 TEXT, 주문 TEXT, 상태 INTEGER, 처음 INTEGER, 지운때 INTEGER)')
+  await db.exec('CREATE TABLE IF NOT EXISTS 보존씀 (토큰 TEXT NOT NULL, 때 INTEGER)')
   결제표만듦 = true
 }
 
@@ -999,16 +1014,22 @@ async function 결제길(request, env, cors) {
   const 통 = `a:${번호}`
 
   // 🗑🗑 계정 삭제 때 앱이 부른다(`cloud.js 계정삭제` · 로그인 계정을 지우기 «전» — 토큰이 살아 있을 때).
-  //   ⭐ 「이 사람」과의 연결만 끊는다 — 남은 산 열쇠는 지우고, 구매·사용 기록은 통을 `지움` 으로 바꿔 «누구»를 떼어 낸다.
+  //   ⭐ 「이 사람」과의 연결만 끊는다 — 남은 산 열쇠는 지우고, 구매·사용 기록은 보존 전용 표(보존구매·보존씀)로 «옮긴다»(계정 번호 없이 · 분리 보존 2026-10-23).
   //      주문번호는 남긴다 — 나중에 환불이 와도 회수(`환불회수`)가 토큰으로 찾는다. 사람과 이어지는 칸(구글 번호)은 사라진다.
   //   ⛔ 남은 산 열쇠는 «사라진다» — 앱이 지우기 전에 「산 열쇠도 없어져요」를 먼저 보여준다(DeleteAccountSheet).
   if (경로0 === '/billing/forget') {
     try {
       await 결제표준비(env.DB)
       const 남 = await 산열쇠세기(env, 통)
-      await env.DB.prepare('DELETE FROM 산열쇠 WHERE 통 = ?').bind(통).run()
-      await env.DB.prepare("UPDATE 산구매 SET 통 = '지움', 때 = ? WHERE 통 = ?").bind(Date.now(), 통).run()
-      await env.DB.prepare("UPDATE 산열쇠씀 SET 통 = '지움' WHERE 통 = ?").bind(통).run()
+      // 🧾 «분리 보존» — 일반 표에서 빼서 보존 전용 표로 옮긴다(계정 번호 없이). 한 묶음(batch)이라 반만 옮겨지지 않는다.
+      const 지금d = Date.now()
+      await env.DB.batch([
+        env.DB.prepare('DELETE FROM 산열쇠 WHERE 통 = ?').bind(통),
+        env.DB.prepare('INSERT OR IGNORE INTO 보존구매 (토큰, 상품, 주문, 상태, 처음, 지운때) SELECT 토큰, 상품, 주문, 상태, 처음, ? FROM 산구매 WHERE 통 = ?').bind(지금d, 통),
+        env.DB.prepare('INSERT INTO 보존씀 (토큰, 때) SELECT 토큰, 때 FROM 산열쇠씀 WHERE 통 = ?').bind(통),
+        env.DB.prepare('DELETE FROM 산구매 WHERE 통 = ?').bind(통),
+        env.DB.prepare('DELETE FROM 산열쇠씀 WHERE 통 = ?').bind(통),
+      ])
       return json({ ok: true, 사라진열쇠: 남.남음 }, 200, cors)
     } catch { return json({ error: 'db_error' }, 500, cors) }
   }
@@ -1071,6 +1092,8 @@ async function 구매하나(env, 통, 상품, 토큰) {
   try {
     const 전 = await db.prepare('SELECT 통 FROM 산구매 WHERE 토큰 = ?').bind(토큰).first()
     if (전 && 전.통 !== 통) return { ok: false, reason: 'other_account' }
+    // 🧾 계정을 지운 사람의 영수증(보존 표로 옮겨 감)도 «남의 것»이다 — 새 계정에 다시 주지 않는다.
+    if (!전 && (await db.prepare('SELECT 1 AS y FROM 보존구매 WHERE 토큰 = ?').bind(토큰).first())) return { ok: false, reason: 'other_account' }
   } catch { return { ok: false, reason: 'db_error' } }
 
   // ② 환불·취소 — purchaseState 0=구매됨 1=취소됨 2=보류(입금 대기)
@@ -1141,6 +1164,7 @@ async function 환불회수(env) {
         const r = await env.DB.prepare('UPDATE 산열쇠 SET 남음 = 0, 때 = ? WHERE 토큰 = ? AND 남음 > 0').bind(Date.now(), 토큰).run()
         결과.거둠 += (r && r.meta && r.meta.changes) || 0
         await env.DB.prepare('UPDATE 산구매 SET 상태 = 1, 때 = ? WHERE 토큰 = ?').bind(Date.now(), 토큰).run()
+        await env.DB.prepare('UPDATE 보존구매 SET 상태 = 1 WHERE 토큰 = ?').bind(토큰).run()   // 🧾 지운 계정 것이면 보존 표에 환불 표시
       }
       다음 = (v.data && v.data.tokenPagination && v.data.tokenPagination.nextPageToken) || ''
       결과.쪽++
@@ -1148,6 +1172,50 @@ async function 환불회수(env) {
   } catch { 결과.ok = false; 결과.reason = 'db_error' }
   try { if (env.OCR_KV) await env.OCR_KV.put('vp:last', JSON.stringify(결과)) } catch { /* 기록만 못 남긴다 */ }
   return 결과
+}
+
+// 🧾 거래기록 찾기(운영자 전용) — 주문 번호 하나로 구매·남은 수·사용 시각을 모은다.
+//   ⭐ 애플은 원장에 `apple:<거래번호>` 로 적히므로(주문 칸도) 숫자만 받아도 찾는다.
+async function 거래기록찾기(env, 주문0) {
+  const 주문 = String(주문0 || '').trim().slice(0, 80)
+  if (!주문) return { ok: false, reason: 'no_order' }
+  try {
+    await 결제표준비(env.DB)
+    const 후보 = /^\d{1,32}$/.test(주문) ? [`apple:${주문}`, 주문] : [주문]
+    let 줄 = null, 보존 = false
+    for (const k of 후보) {
+      줄 = await env.DB.prepare('SELECT 토큰, 상품, 주문, 상태, 처음 FROM 산구매 WHERE 주문 = ? OR 토큰 = ? LIMIT 1').bind(k, k).first()
+      if (!줄) { 줄 = await env.DB.prepare('SELECT 토큰, 상품, 주문, 상태, 처음 FROM 보존구매 WHERE 주문 = ? OR 토큰 = ? LIMIT 1').bind(k, k).first(); 보존 = !!줄 }
+      if (줄) break
+    }
+    if (!줄) return { ok: true, 찾음: false }
+    const 남 = 보존 ? null : await env.DB.prepare('SELECT 남음 FROM 산열쇠 WHERE 토큰 = ?').bind(줄.토큰).first()
+    const 씀 = await env.DB.prepare(`SELECT 때 FROM ${보존 ? '보존씀' : '산열쇠씀'} WHERE 토큰 = ? ORDER BY 때 LIMIT 500`).bind(줄.토큰).all()
+    const 날 = (ms) => (ms ? new Date(ms + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ') + ' KST' : null)
+    return {
+      ok: true, 찾음: true,
+      주문: 줄.주문, 상품: 줄.상품, 산때: 날(줄.처음),
+      상태: 줄.상태 === 1 ? '환불·취소됨' : '구매됨',
+      지급: 결제.소모성[줄.상품] || null, 남은수: 남 ? 남.남음 : 0,
+      쓴때: ((씀 && 씀.results) || []).map((r) => 날(r.때)),
+      계정삭제됨: 보존,
+    }
+  } catch { return { ok: false, reason: 'db_error' } }
+}
+
+// 🧾 5년 지난 «계정 지운 사람»의 구매·사용 기록(보존 전용 표)을 지운다 — 전자상거래법 시행령 6조 ①항 3호(대금결제·공급 기록 5년).
+//   ⭐ 계정이 살아 있는 사람 기록은 안 지운다(그 열쇠가 그 사람 것이라는 근거다 · 쓰는 동안 필요).
+//   ⭐ 보존 표 줄은 «남의 영수증» 막이(`other_account`)로도 쓰이므로 5년까지는 남긴다.
+async function 오년지움(env) {
+  if (!env.DB) return { ok: false, reason: 'billing_off' }
+  const 기준 = Date.now() - 5 * 365.25 * 86400000
+  try {
+    await 결제표준비(env.DB)
+    // ⭐ 사용 기록은 그 구매와 «같이» 지운다(구매 시각 기준 5년)
+    const a = await env.DB.prepare('DELETE FROM 보존씀 WHERE 토큰 IN (SELECT 토큰 FROM 보존구매 WHERE 처음 < ?)').bind(기준).run()
+    const b = await env.DB.prepare('DELETE FROM 보존구매 WHERE 처음 < ?').bind(기준).run()
+    return { ok: true, 씀: (a && a.meta && a.meta.changes) || 0, 구매: (b && b.meta && b.meta.changes) || 0 }
+  } catch { return { ok: false, reason: 'db_error' } }
 }
 
 // 📊 결제 계기판 — 전역 숫자만(⛔누가 샀는지는 안 준다). 결제가 꺼져 있으면 「꺼짐」.
@@ -1265,6 +1333,8 @@ async function 애플구매하나(env, 통, id) {
   try {
     const 전 = await db.prepare('SELECT 통 FROM 산구매 WHERE 토큰 = ?').bind(토큰).first()
     if (전 && 전.통 !== 통) return { ok: false, reason: 'other_account' }
+    // 🧾 계정을 지운 사람의 영수증(보존 표로 옮겨 감)도 «남의 것»이다 — 새 계정에 다시 주지 않는다.
+    if (!전 && (await db.prepare('SELECT 1 AS y FROM 보존구매 WHERE 토큰 = ?').bind(토큰).first())) return { ok: false, reason: 'other_account' }
   } catch { return { ok: false, reason: 'db_error' } }
   if (t.revocationDate) {
     try {
@@ -1292,6 +1362,7 @@ async function 애플거두기(env, id) {
   await 결제표준비(env.DB)
   const r = await env.DB.prepare('UPDATE 산열쇠 SET 남음 = 0, 때 = ? WHERE 토큰 = ? AND 남음 > 0').bind(Date.now(), 토큰).run()
   await env.DB.prepare('UPDATE 산구매 SET 상태 = 1, 때 = ? WHERE 토큰 = ?').bind(Date.now(), 토큰).run()
+  await env.DB.prepare('UPDATE 보존구매 SET 상태 = 1 WHERE 토큰 = ?').bind(토큰).run()
   return (r && r.meta && r.meta.changes) || 0
 }
 
