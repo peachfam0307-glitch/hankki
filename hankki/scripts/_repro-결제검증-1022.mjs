@@ -125,6 +125,8 @@ function 가짜D1() {
     [/^SELECT 1 AS y FROM 결제동의 WHERE 통 = \?$/, ([통]) => ((globalThis.__동의 || new Set()).has(통) ? { y: 1 } : null)],
     [/^SELECT 통, 상품 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통, 상품: 구매.get(t).상품 } : null)],
     [/^SELECT COUNT\(\*\) AS n FROM 산열쇠씀 WHERE 토큰 = \?$/, ([t]) => ({ n: 씀.filter((x) => x.토큰 === t).length })],
+    [/^SELECT 토큰, 남음 FROM 산열쇠 WHERE 통 = \? AND 남음 < 0 ORDER BY 처음$/, ([통]) => [...열쇠.values()].filter((r) => r.통 === 통 && r.남음 < 0).sort((a, b) => a.처음 - b.처음).map((r) => ({ 토큰: r.토큰, 남음: r.남음 }))],
+    [/^UPDATE 산열쇠 SET 남음 = 남음 \+ \?, 때 = \? WHERE 토큰 = \?$/, ([k, , t]) => { const r = 열쇠.get(t); if (r) { r.남음 += k; return 1 } return 0 }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 열쇠.get(t); if (r) { r.남음 = 0; return 1 } return 0 }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음 = 0; return 1 } return 0 }],
     [/^SELECT COUNT\(\*\) AS n, SUM\(CASE WHEN 상태 = 1 THEN 1 ELSE 0 END\) AS 환불 FROM 산구매$/, () => ({ n: 구매.size, 환불: [...구매.values()].filter((r) => r.상태 === 1).length })],
@@ -228,7 +230,7 @@ await 사진(엄마); await 사진(엄마)
 r = await sync(엄마, [{ sku: PACK, token: 't3' }])
 잰다(r.results[0].reason === 'revoked' && r.paid === 0, '환불 → 0', r)
 r = await 사진(엄마)
-잰다(r.error === 'user_quota', '환불 뒤엔 산 열쇠로 못 읽는다', r)
+잰다(r.error === 'debt' && r.빚 === 2, '환불 뒤엔 산 열쇠로 못 읽는다(쓴 2 만큼 빚 안내 · 10/23)', r)
 
 console.log('\n⑦ 구글에 없는 영수증(404) → 절대 안 거둔다 (8/19 구멍 ⑥)')
 새판(); 영수증('t4'); await sync(엄마, [{ sku: PACK, token: 't4' }]); 구글.영수증.delete('t4')
@@ -358,7 +360,7 @@ r = await 회수()
 r = await 회수()
 잰다(r.ok && r.거둠 === 0 && 남음('v1') === -2, '다음 날 또 받아도 같다(멱등)', r)
 r = await 사진(엄마)
-잰다(r.error === 'user_quota', '회수 뒤엔 산 열쇠로 못 읽는다', r)
+잰다(r.error === 'debt' && r.빚 === 2, '회수 뒤엔 산 열쇠로 못 읽는다(빚 2 안내)', r)
 
 새판({ FOUNDER_SECRET: 'fs' }); 영수증('v2'); 영수증('v3'); await sync(엄마, [{ sku: PACK, token: 'v2' }, { sku: PACK, token: 'v3' }])
 구글.무효쪽 = [['x1'], ['x2'], ['v3']]

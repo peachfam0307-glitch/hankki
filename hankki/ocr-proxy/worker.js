@@ -469,7 +469,26 @@ export default {
       return json(await 거래기록찾기(env, new URL(request.url).searchParams.get('order')), 200, cors)
     }
 
+    // 🤝 빚 탕감(운영자) — 환불이 늦게 오거나 과정 오류로 빚이 잘못 생겼을 때 창업자가 그 주문의 빚을 0 으로 돌린다(창업자 10/23).
+    //   📖 `https://<워커주소>/?forgive=<주문번호>&key=<FOUNDER_SECRET>` — 구글 `GPA.…` · 애플 거래 번호
+    //   ⭐ 빚(마이너스)만 0 으로 — 남은 열쇠를 «더 주지는» 않는다. 환불 표시는 그대로 둔다.
+    if (new URL(request.url).searchParams.get('forgive')) {
+      const 준열쇠 = request.headers.get('x-hankki-founder') || new URL(request.url).searchParams.get('key') || ''
+      if (!env.FOUNDER_SECRET || 준열쇠 !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      if (!env.DB) return json({ error: 'billing_off' }, 503, cors)
+      try {
+        await 결제표준비(env.DB)
+        const 주 = String(new URL(request.url).searchParams.get('forgive')).trim().slice(0, 80)
+        const 후보 = /^\d{1,32}$/.test(주) ? [`apple:${주}`] : [주]
+        const 줄 = await env.DB.prepare('SELECT 토큰 FROM 산구매 WHERE 주문 = ? OR 토큰 = ? LIMIT 1').bind(후보[0], 후보[0]).first()
+        if (!줄) return json({ ok: true, 찾음: false }, 200, cors)
+        const r = await env.DB.prepare('UPDATE 산열쇠 SET 남음 = 0, 때 = ? WHERE 토큰 = ? AND 남음 < 0').bind(Date.now(), 줄.토큰).run()
+        return json({ ok: true, 찾음: true, 탕감: (r && r.meta && r.meta.changes) || 0 }, 200, cors)
+      } catch { return json({ error: 'db_error' }, 500, cors) }
+    }
+
     if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, cors)
+
 
     // ⑤-a 오리진 체크
     if (!ALLOWED_ORIGINS.includes(origin)) return json({ error: 'forbidden_origin' }, 403, cors)
@@ -535,7 +554,8 @@ export default {
     const 산통 = 확인번호 ? `a:${확인번호}` : ''
     let 산열쇠 = 0
     let 산열쇠흐림 = false     // 「못 읽었다」 — 「0개」와 다른 말이다(앱이 화면을 안 건드린다)
-    if (산통) ({ 남음: 산열쇠, 흐림: 산열쇠흐림 } = await 산열쇠세기(env, 산통))
+    let 산빚 = 0               // 💸 환불로 생긴 빚(쓴 만큼) — 무료 열쇠가 먼저 갚는다(창업자 10/23 B)
+    if (산통) ({ 남음: 산열쇠, 빚: 산빚, 흐림: 산열쇠흐림 } = await 산열쇠세기(env, 산통))
     let 산열쇠로 = false       // 이번 사진을 «산 열쇠»로 읽나 (무료를 다 쓴 사람만)
 
     let 웰컴상한 = 로그인 ? LIMITS.WELCOME_ACCT : LIMITS.WELCOME_ANON
@@ -575,7 +595,7 @@ export default {
         if (기기Bo !== null) 보너스 = Math.max(보너스, parseInt(기기Bo, 10) || 0)
       }
     }
-    const welcomeLeft = Math.max(0, 웰컴상한 + 보너스 - 쓴수)
+    let welcomeLeft = Math.max(0, 웰컴상한 + 보너스 - 쓴수)
 
     // 📢 **남은 장수를 한 곳에서만 만든다** — 길이 넷(전에읽음·빈손·정상·무제한)으로 늘어서,
     //   각자 지으면 반드시 어긋난다. `깎았나` 하나만 받아 「이 호출이 깎았는지」를 반영한다.
@@ -758,6 +778,27 @@ export default {
       // ③ 유저 한도 — ⭐**웰컴이 남아 있으면 월 한도를 안 본다.** 웰컴을 다 쓴 뒤부터 월 5장이다.
       // 💳 무료(웰컴·월 5)를 다 쓴 사람은 **산 열쇠**가 있으면 그걸로 읽는다.
       //   ⭐ 무료부터 쓴다 — 월 5장은 다음 달이면 사라지지만 산 열쇠는 안 사라진다.
+      // 💸💸 빚 갚기(창업자 10/23 B · *"a면 비상식적 · 대신 안내는 해줘야"*) — 산 열쇠를 다 쓰고 환불받은 사람은
+      //   무료 열쇠(웰컴 → 월 5)가 «먼저» 빚을 갚는다. 다 갚기 전엔 AI 읽기를 못 하고 앱이 「빚 N개」를 안내한다(기본 인식은 된다).
+      //   ⭐ 한 번에 «지금 쓸 수 있는 무료 몫»을 모두 갚는다(시도마다 하나씩 사라지는 일이 없게).
+      if (!founder && 산빚 > 0) {
+        const 웰갚 = Math.min(산빚, welcomeLeft)
+        const 월갚 = welcomeLeft - 웰갚 > 0 ? 0 : Math.min(산빚 - 웰갚, Math.max(0, LIMITS.PER_USER_MONTHLY - userC))
+        // ⭐ 빚을 «먼저» 줄이고, 다 줄였을 때만 무료 카운터를 올린다 — 반대면 창고 오류 때 무료만 잃는다
+        if (웰갚 + 월갚 > 0 && (await 빚갚기(env, 산통, 웰갚 + 월갚)) === 웰갚 + 월갚) {
+          if (웰갚) {
+            쓴수 += 웰갚; welcomeLeft -= 웰갚
+            await Promise.all([kv.put(`wu:${통}`, String(쓴수), { expirationTtl: 60 * 60 * 24 * 365 }), ...(로그인 ? [kv.put(`wu:d:${uid}`, String(쓴수), { expirationTtl: 60 * 60 * 24 * 365 })] : [])])
+          }
+          if (월갚) await kv.put(`u:${uid}:${ym}`, String(userC + 월갚), { expirationTtl: 60 * 60 * 24 * 40 })
+        }
+        const 남은빚 = 산빚 - 웰갚 - 월갚
+        if (남은빚 > 0 || (welcomeLeft <= 0 && userC + 월갚 >= LIMITS.PER_USER_MONTHLY)) {
+          await 찜지우기(env, 통, 지문)
+          // 빚은 다 갚았는데 이번 달 무료가 바닥이면 평소처럼 「한도」다(산 열쇠는 그 전에 빚에 묶여 있었다 — 다음 요청부터 보인다)
+          return json(남은빚 > 0 ? { error: 'debt', 빚: 남은빚, 깎음: false } : { error: 'user_quota' }, 429, cors)
+        }
+      }
       if (!founder && welcomeLeft <= 0 && userC >= LIMITS.PER_USER_MONTHLY && 산열쇠 > 0) 산열쇠로 = true
       if (!founder && welcomeLeft <= 0 && userC >= LIMITS.PER_USER_MONTHLY && !산열쇠로) {
         // 🚧🚧 **[2026-09-01] 「막힘」을 센다 — 유료를 «언제» 켤지 판정하는 숫자다.**
@@ -985,11 +1026,26 @@ async function 산열쇠세기(env, 통) {
   try {
     await 결제표준비(env.DB)
     const r = await env.DB.prepare('SELECT COALESCE(SUM(남음),0) AS n FROM 산열쇠 WHERE 통 = ?').bind(통).first()
-    return { 남음: Math.max(0, (r && r.n) || 0), 흐림: false }   // 빚이 더 크면 0(마이너스는 안 보여 준다)
+    const n = (r && r.n) || 0
+    return { 남음: Math.max(0, n), 빚: Math.max(0, -n), 흐림: false }   // 빚이 더 크면 0(마이너스는 안 보여 준다)
   } catch { return { 남음: 0, 흐림: true } }
 }
 
 // 한 개 깎는다 → 남은 수. ⭐먼저 산 것부터 쓴다. `남음>0` 을 문장 «안»에 둬 겹쳐도 마이너스가 안 된다.
+// 💸 빚 갚기 — 마이너스 줄부터 n 만큼 올린다(0 을 넘기지 않는다)
+async function 빚갚기(env, 통, n) {
+  const 처음n = n
+  try {
+    const { results } = await env.DB.prepare('SELECT 토큰, 남음 FROM 산열쇠 WHERE 통 = ? AND 남음 < 0 ORDER BY 처음').bind(통).all()
+    for (const r of results || []) {
+      if (n <= 0) break
+      const k = Math.min(n, -r.남음)
+      await env.DB.prepare('UPDATE 산열쇠 SET 남음 = 남음 + ?, 때 = ? WHERE 토큰 = ?').bind(k, Date.now(), r.토큰).run()
+      n -= k
+    }
+  } catch { /* 못 갚으면 다음 번에 */ }
+  return 처음n - n   // 실제로 갚은 수 — 부르는 쪽은 이만큼만 무료 카운터를 올린다
+}
 async function 산열쇠쓰기(env, 통) {
   try {
     const row = await env.DB.prepare('SELECT 토큰 FROM 산열쇠 WHERE 통 = ? AND 남음 > 0 ORDER BY 처음 LIMIT 1').bind(통).first()
