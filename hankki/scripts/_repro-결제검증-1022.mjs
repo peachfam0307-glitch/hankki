@@ -118,6 +118,13 @@ function 가짜D1() {
     [/^INSERT INTO 산열쇠씀 \(토큰, 통, 때\) VALUES \(\?, \?, \?\)$/, ([t, 통]) => { 씀.push({ 토큰: t, 통 }); return 1 }],
     [/^UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/,([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음--; return 1 } return 0 }],
     [/^SELECT 통 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통 } : null)],
+    // 💸 거둠 = 쓴 만큼 빚(10/23)
+    [/^UPDATE 산열쇠 SET 남음 = -\(SELECT COUNT\(\*\) FROM 산열쇠씀 WHERE 산열쇠씀\.토큰 = 산열쇠\.토큰\), 때 = \? WHERE 토큰 = \? AND \(남음 > 0 OR /, ([, t]) => { const r = 열쇠.get(t); const n = 씀.filter((x) => x.토큰 === t).length; if (r && (r.남음 > 0 || (r.남음 === 0 && n > 0))) { r.남음 = -씀.filter((x) => x.토큰 === t).length; return 1 } return 0 }],
+    [/^SELECT COUNT\(\*\) AS n FROM 산구매 WHERE 통 = \? AND 상태 = 1$/, ([통]) => ({ n: [...구매.values()].filter((r) => r.통 === 통 && r.상태 === 1).length })],
+    [/^INSERT OR REPLACE INTO 결제동의 /, ([통]) => { (globalThis.__동의 ||= new Set()).add(통); return 1 }],
+    [/^SELECT 1 AS y FROM 결제동의 WHERE 통 = \?$/, ([통]) => ((globalThis.__동의 || new Set()).has(통) ? { y: 1 } : null)],
+    [/^SELECT 통, 상품 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통, 상품: 구매.get(t).상품 } : null)],
+    [/^SELECT COUNT\(\*\) AS n FROM 산열쇠씀 WHERE 토큰 = \?$/, ([t]) => ({ n: 씀.filter((x) => x.토큰 === t).length })],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 열쇠.get(t); if (r) { r.남음 = 0; return 1 } return 0 }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음 = 0; return 1 } return 0 }],
     [/^SELECT COUNT\(\*\) AS n, SUM\(CASE WHEN 상태 = 1 THEN 1 ELSE 0 END\) AS 환불 FROM 산구매$/, () => ({ n: 구매.size, 환불: [...구매.values()].filter((r) => r.상태 === 1).length })],
@@ -346,10 +353,10 @@ const 회수 = async (key = 'fs') => {
 잰다(남음('v1') === 18 && 구글.영수증.get('v1').consumptionState === 1, '사고 두 장 읽음 · 구글 쪽은 이미 비움(앱이 다시 안 보낸다)')
 구글.무효쪽 = [['v1', '남의토큰']]
 r = await 회수()
-잰다(r.ok && r.본 === 2 && r.거둠 === 1 && 남음('v1') === 0, '무효 목록에서 찾아 남은 18 → 0 · 원장에 없는 토큰은 지나간다', r)
+잰다(r.ok && r.본 === 2 && r.거둠 === 1 && 남음('v1') === -2, '무효 목록에서 찾아 남은 18 → 쓴 2 만큼 빚(-2 · 10/23) · 원장에 없는 토큰은 지나간다', r)
 잰다(env.DB.구매.get('v1').상태 === 1, '원장에 「환불」 표시')
 r = await 회수()
-잰다(r.ok && r.거둠 === 0 && 남음('v1') === 0, '다음 날 또 받아도 같다(멱등)', r)
+잰다(r.ok && r.거둠 === 0 && 남음('v1') === -2, '다음 날 또 받아도 같다(멱등)', r)
 r = await 사진(엄마)
 잰다(r.error === 'user_quota', '회수 뒤엔 산 열쇠로 못 읽는다', r)
 
