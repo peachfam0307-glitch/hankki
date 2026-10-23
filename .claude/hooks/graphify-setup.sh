@@ -14,7 +14,7 @@ mkdir -p graphify-out
   command -v uv >/dev/null 2>&1 || exit 0
   command -v graphify >/dev/null 2>&1 || uv tool install -q graphifyy || exit 0
   [ -f "$HOME/.claude/skills/graphify/SKILL.md" ] || graphify install >/dev/null 2>&1
-  PY=$(uv tool run --from graphifyy python -c "import sys; print(sys.executable)" 2>/dev/null) || exit 0
+  PY=$(uv tool run --from graphifyy python -c 'import sys; print(sys.executable)' 2>/dev/null) || exit 0
   printf '%s' "$PY" > graphify-out/.graphify_python
   "$PY" - <<'PYEOF'
 import json
