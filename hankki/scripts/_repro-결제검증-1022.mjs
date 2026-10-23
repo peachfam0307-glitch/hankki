@@ -97,7 +97,7 @@ const SA_JSON = JSON.stringify({ client_email: 'hankki-billing@hankki-6a768.iam.
 
 // ── 🗄 가짜 D1 — 워커가 쓰는 문장을 «전부» 안다. 모르는 문장이면 죽는다(몰래 새 문장이 생기면 판이 알린다). ──
 function 가짜D1() {
-  const 구매 = new Map(), 열쇠 = new Map(), 씀 = []
+  const 구매 = new Map(), 열쇠 = new Map(), 씀 = [], 보존 = new Map(), 보존씀 = []
   const st = { 고장: null }   // 'read' | 'credit-insert' — 일부러 망가뜨린다
   const 문장 = [
     [/^SELECT COALESCE\(SUM\(남음\),0\) AS n FROM 산열쇠 WHERE 통 = \?$/, ([통]) => {
@@ -108,8 +108,13 @@ function 가짜D1() {
       const 줄 = [...열쇠.values()].filter((r) => r.통 === 통 && r.남음 > 0).sort((a, b) => a.처음 - b.처음)[0]; return 줄 ? { 토큰: 줄.토큰 } : null
     }],
     [/^DELETE FROM 산열쇠 WHERE 통 = \?$/, ([통]) => { let n = 0; for (const [k, r] of [...열쇠]) if (r.통 === 통) { 열쇠.delete(k); n++ } return n }],
-    [/^UPDATE 산구매 SET 통 = '지움', 때 = \? WHERE 통 = \?$/, ([, 통]) => { let n = 0; for (const r of 구매.values()) if (r.통 === 통) { r.통 = '지움'; n++ } return n }],
-    [/^UPDATE 산열쇠씀 SET 통 = '지움' WHERE 통 = \?$/, ([통]) => { let n = 0; for (const r of 씀) if (r.통 === 통) { r.통 = '지움'; n++ } return n }],
+    // 🧾 계정 삭제 = 보존 전용 표로 «옮긴다»(2026-10-23 분리 보존)
+    [/^INSERT OR IGNORE INTO 보존구매 \(토큰, 상품, 주문, 상태, 처음, 지운때\) SELECT .* FROM 산구매 WHERE 통 = \?$/, ([때, 통]) => { let n = 0; for (const r of 구매.values()) if (r.통 === 통 && !보존.has(r.토큰)) { 보존.set(r.토큰, { 토큰: r.토큰, 상품: r.상품, 주문: r.주문, 상태: r.상태, 처음: r.처음, 지운때: 때 }); n++ } return n }],
+    [/^INSERT INTO 보존씀 \(토큰, 때\) SELECT 토큰, 때 FROM 산열쇠씀 WHERE 통 = \?$/, ([통]) => { const 옮김 = 씀.filter((r) => r.통 === 통); 보존씀.push(...옮김.map((r) => ({ 토큰: r.토큰, 때: r.때 }))); return 옮김.length }],
+    [/^DELETE FROM 산구매 WHERE 통 = \?$/, ([통]) => { let n = 0; for (const [k, r] of [...구매]) if (r.통 === 통) { 구매.delete(k); n++ } return n }],
+    [/^DELETE FROM 산열쇠씀 WHERE 통 = \?$/, ([통]) => { const 전 = 씀.length; for (let i = 씀.length - 1; i >= 0; i--) if (씀[i].통 === 통) 씀.splice(i, 1); return 전 - 씀.length }],
+    [/^SELECT 1 AS y FROM 보존구매 WHERE 토큰 = \?$/, ([t]) => (보존.has(t) ? { y: 1 } : null)],
+    [/^UPDATE 보존구매 SET 상태 = 1 WHERE 토큰 = \?$/, ([t]) => { const r = 보존.get(t); if (r) { r.상태 = 1; return 1 } return 0 }],
     [/^INSERT INTO 산열쇠씀 \(토큰, 통, 때\) VALUES \(\?, \?, \?\)$/, ([t, 통]) => { 씀.push({ 토큰: t, 통 }); return 1 }],
     [/^UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/,([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음--; return 1 } return 0 }],
     [/^SELECT 통 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통 } : null)],
@@ -125,6 +130,13 @@ function 가짜D1() {
     }],
     [/^UPDATE 산구매 SET 확인 = 1, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 구매.get(t); if (r) r.확인 = 1; return r ? 1 : 0 }],
     [/^UPDATE 산구매 SET 비움 = 1, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 구매.get(t); if (r) r.비움 = 1; return r ? 1 : 0 }],
+    [/^SELECT 토큰, 상품, 주문, 상태, 처음 FROM 산구매 WHERE 주문 = \? OR 토큰 = \? LIMIT 1$/, ([a, b]) => [...구매.values()].find((r) => r.주문 === a || r.토큰 === b) || null],
+    [/^SELECT 토큰, 상품, 주문, 상태, 처음 FROM 보존구매 WHERE 주문 = \? OR 토큰 = \? LIMIT 1$/, ([a, b]) => [...보존.values()].find((r) => r.주문 === a || r.토큰 === b) || null],
+    [/^SELECT 남음 FROM 산열쇠 WHERE 토큰 = \?$/, ([t]) => (열쇠.has(t) ? { 남음: 열쇠.get(t).남음 } : null)],
+    [/^SELECT 때 FROM 산열쇠씀 WHERE 토큰 = \? ORDER BY 때 LIMIT 500$/, ([t]) => ({ results: 씀.filter((r) => r.토큰 === t) })],
+    [/^SELECT 때 FROM 보존씀 WHERE 토큰 = \? ORDER BY 때 LIMIT 500$/, ([t]) => ({ results: 보존씀.filter((r) => r.토큰 === t) })],
+    [/^DELETE FROM 보존씀 WHERE 토큰 IN \(SELECT 토큰 FROM 보존구매 WHERE 처음 < \?\)$/, ([기준]) => { const 지울 = new Set([...보존.values()].filter((r) => r.처음 < 기준).map((r) => r.토큰)); const 전 = 보존씀.length; for (let i = 보존씀.length - 1; i >= 0; i--) if (지울.has(보존씀[i].토큰)) 보존씀.splice(i, 1); return 전 - 보존씀.length }],
+    [/^DELETE FROM 보존구매 WHERE 처음 < \?$/, ([기준]) => { let n = 0; for (const [k, r] of [...보존]) if (r.처음 < 기준) { 보존.delete(k); n++ } return n }],
     // 지문장부(OCR 길) — 「없으면 넣기」만 흉내낸다
     [/^SELECT 글자 FROM 지문장부/, () => null],
     [/^INSERT OR IGNORE INTO 지문장부/, () => 1],
@@ -133,11 +145,12 @@ function 가짜D1() {
   ]
   const 찾기 = (sql) => { for (const [re, f] of 문장) if (re.test(sql)) return f; throw new Error('가짜 D1 이 모르는 문장: ' + sql) }
   return {
-    구매, 열쇠, 씀, st,
+    구매, 열쇠, 씀, 보존, 보존씀, st,
     exec: async () => {},
+    batch: async (묶음) => { for (const s of 묶음) await s.run() },
     prepare: (sql) => {
       const f = 찾기(sql)
-      return { bind: (...b) => ({ first: async () => f(b), run: async () => ({ meta: { changes: f(b) } }) }) }
+      return { bind: (...b) => ({ first: async () => f(b), all: async () => f(b), run: async () => ({ meta: { changes: f(b) } }) }) }
     },
   }
 }
@@ -375,9 +388,25 @@ console.log('\n㉓ 계정 삭제 — 산 열쇠는 지우고, 기록은 «누구
 새판(); 영수증('d1'); await sync(엄마, [{ sku: PACK, token: 'd1' }]); 무료다씀('111'); await 사진(엄마)
 r = await 부르기('/billing/forget', {}, 엄마)
 잰다(r.ok && r.사라진열쇠 === 19 && !env.DB.열쇠.has('d1'), '남은 19개는 지워진다 · 몇 개가 사라졌는지 알려 준다', r)
-잰다(env.DB.구매.get('d1').통 === '지움' && env.DB.씀.every((x) => x.통 === '지움'), '구매·사용 기록에서 구글 번호가 떨어진다(주문은 남는다)', [env.DB.구매.get('d1'), env.DB.씀])
+잰다(!env.DB.구매.has('d1') && env.DB.보존.get('d1')?.주문 === 'GPA.d1' && !('통' in env.DB.보존.get('d1')) && env.DB.씀.length === 0 && env.DB.보존씀.length === 1, '구매·사용 기록은 보존 전용 표로 옮겨진다(계정 번호 칸 없음 · 주문은 남는다)', [env.DB.보존.get('d1'), env.DB.보존씀])
 r = await sync(엄마, [{ sku: PACK, token: 'd1' }])
 잰다(r.results[0].reason === 'other_account' && r.paid === 0, '같은 영수증을 다시 보내도 열쇠가 되살아나지 않는다', r)
+{ // 🧾 거래기록 찾기(운영자) · 환불 표시 · 5년 삭제 (2026-10-23)
+  const 찾기 = async (q, key = 'fs') => (await worker.fetch(new Request(`https://w.example/?order=${encodeURIComponent(q)}&key=${key}`, { method: 'GET' }), env)).json()
+  env.FOUNDER_SECRET = 'fs'
+  let q = await 찾기('GPA.d1', 'nope')
+  잰다(q.error === 'unauthorized', '운영자 열쇠 없이는 거래기록을 못 본다', q)
+  q = await 찾기('GPA.d1')
+  잰다(q.찾음 && q.계정삭제됨 && q.상품 === PACK && q.지급 === 20 && q.쓴때.length === 1 && !('통' in q), '지운 계정의 주문도 찾는다(계정 번호는 안 준다)', q)
+  q = await 찾기('GPA.없음')
+  잰다(q.ok && q.찾음 === false, '없는 주문은 「없다」', q)
+  const ps = []; env.DB.보존.get('d1').처음 = Date.now() - 4 * 365 * 86400000
+  await worker.scheduled({}, env, { waitUntil: (p) => ps.push(p) }); await Promise.all(ps)
+  잰다(env.DB.보존.has('d1'), '4년 된 보존 기록은 남는다')
+  env.DB.보존.get('d1').처음 = Date.now() - 6 * 365 * 86400000; ps.length = 0
+  await worker.scheduled({}, env, { waitUntil: (p) => ps.push(p) }); await Promise.all(ps)
+  잰다(!env.DB.보존.has('d1') && env.DB.보존씀.length === 0, '5년 지난 보존 기록은 사용 기록과 같이 지워진다', [env.DB.보존, env.DB.보존씀])
+}
 r = await 부르기('/billing/forget', {}, null)
 잰다(r.status === 401, '로그인 확인 없이는 못 지운다', r)
 새판({ PLAY_SA_JSON: undefined })

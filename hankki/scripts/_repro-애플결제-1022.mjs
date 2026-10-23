@@ -62,7 +62,7 @@ const ec = await webcrypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-25
 const P8 = '-----BEGIN PRIVATE KEY-----\n' + Buffer.from(await webcrypto.subtle.exportKey('pkcs8', ec.privateKey)).toString('base64').match(/.{1,64}/g).join('\n') + '\n-----END PRIVATE KEY-----\n'
 
 function 가짜D1() {
-  const 구매 = new Map(), 열쇠 = new Map(), 씀 = []
+  const 구매 = new Map(), 열쇠 = new Map(), 씀 = [], 보존 = new Map(), 보존씀 = []
   const st = { 고장: null }   // 'read' | 'credit-insert' — 일부러 망가뜨린다
   const 문장 = [
     [/^SELECT COALESCE\(SUM\(남음\),0\) AS n FROM 산열쇠 WHERE 통 = \?$/, ([통]) => {
@@ -73,8 +73,13 @@ function 가짜D1() {
       const 줄 = [...열쇠.values()].filter((r) => r.통 === 통 && r.남음 > 0).sort((a, b) => a.처음 - b.처음)[0]; return 줄 ? { 토큰: 줄.토큰 } : null
     }],
     [/^DELETE FROM 산열쇠 WHERE 통 = \?$/, ([통]) => { let n = 0; for (const [k, r] of [...열쇠]) if (r.통 === 통) { 열쇠.delete(k); n++ } return n }],
-    [/^UPDATE 산구매 SET 통 = '지움', 때 = \? WHERE 통 = \?$/, ([, 통]) => { let n = 0; for (const r of 구매.values()) if (r.통 === 통) { r.통 = '지움'; n++ } return n }],
-    [/^UPDATE 산열쇠씀 SET 통 = '지움' WHERE 통 = \?$/, ([통]) => { let n = 0; for (const r of 씀) if (r.통 === 통) { r.통 = '지움'; n++ } return n }],
+    // 🧾 계정 삭제 = 보존 전용 표로 «옮긴다»(2026-10-23 분리 보존)
+    [/^INSERT OR IGNORE INTO 보존구매 \(토큰, 상품, 주문, 상태, 처음, 지운때\) SELECT .* FROM 산구매 WHERE 통 = \?$/, ([때, 통]) => { let n = 0; for (const r of 구매.values()) if (r.통 === 통 && !보존.has(r.토큰)) { 보존.set(r.토큰, { 토큰: r.토큰, 상품: r.상품, 주문: r.주문, 상태: r.상태, 처음: r.처음, 지운때: 때 }); n++ } return n }],
+    [/^INSERT INTO 보존씀 \(토큰, 때\) SELECT 토큰, 때 FROM 산열쇠씀 WHERE 통 = \?$/, ([통]) => { const 옮김 = 씀.filter((r) => r.통 === 통); 보존씀.push(...옮김.map((r) => ({ 토큰: r.토큰, 때: r.때 }))); return 옮김.length }],
+    [/^DELETE FROM 산구매 WHERE 통 = \?$/, ([통]) => { let n = 0; for (const [k, r] of [...구매]) if (r.통 === 통) { 구매.delete(k); n++ } return n }],
+    [/^DELETE FROM 산열쇠씀 WHERE 통 = \?$/, ([통]) => { const 전 = 씀.length; for (let i = 씀.length - 1; i >= 0; i--) if (씀[i].통 === 통) 씀.splice(i, 1); return 전 - 씀.length }],
+    [/^SELECT 1 AS y FROM 보존구매 WHERE 토큰 = \?$/, ([t]) => (보존.has(t) ? { y: 1 } : null)],
+    [/^UPDATE 보존구매 SET 상태 = 1 WHERE 토큰 = \?$/, ([t]) => { const r = 보존.get(t); if (r) { r.상태 = 1; return 1 } return 0 }],
     [/^INSERT INTO 산열쇠씀 \(토큰, 통, 때\) VALUES \(\?, \?, \?\)$/, ([t, 통]) => { 씀.push({ 토큰: t, 통 }); return 1 }],
     [/^UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/,([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음--; return 1 } return 0 }],
     [/^SELECT 통 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통 } : null)],
@@ -99,8 +104,9 @@ function 가짜D1() {
   ]
   const 찾기 = (sql) => { for (const [re, f] of 문장) if (re.test(sql)) return f; throw new Error('가짜 D1 이 모르는 문장: ' + sql) }
   return {
-    구매, 열쇠, 씀, st,
+    구매, 열쇠, 씀, 보존, 보존씀, st,
     exec: async () => {},
+    batch: async (묶음) => { for (const s of 묶음) await s.run() },
     prepare: (sql) => {
       const f = 찾기(sql)
       return { bind: (...b) => ({ first: async () => f(b), run: async () => ({ meta: { changes: f(b) } }) }) }
