@@ -28,6 +28,8 @@ import Portal from '../components/Portal'
 //       ⛔ 글자 없이도 「끝났다」가 읽히는 게 목적이다(빈 열쇠구멍 = 꽂을 게 없다).
 import uiKeyOne from '../assets/ui/key_one.png'
 import uiKeyHole from '../assets/ui/key_hole.png'
+import KeyShopSheet from '../components/KeyShopSheet'   // 🏪 한끼상점(2026-10-22 · 판매 스위치 뒤)
+import { 상점열쇠 } from '../billing'
 // 📸📸 안내 사진 — [창업자 2026-08-28] *"1.2.3아래에 한장짜리 사진 넣자. 이게 제일 직관적이야."*
 //    ⭐ 창업자 «폰 실물» 캡처를 짜깁은 것이다(만든 판 = `scripts/_판-가져오기안내컷-0828.py`).
 //       ⛔ 흉내로 그린 그림이 아니다 — 유저가 진짜로 만나는 화면이라야 알아본다(절대원칙 30).
@@ -191,6 +193,9 @@ export default function ImportScreen() {
   const { addRecipe } = useStore()
   const nav = useNav()
   const [flow, setFlow] = useState(null) // instagram | youtube | link | text
+  // 🏪 한끼상점 Ⓑ — 판매 스위치가 켜진 기기만(`billing.js 상점열쇠`)
+  const [상점보임] = useState(() => 상점열쇠())
+  const [상점, set상점] = useState(false)
   // 🔍 예시 사진 크게 보기 — 창업자 제보 2026-08-29(*"확대도 안되고 작아서 잘 안보여"*)
   const [shotZoom, setShotZoom] = useState(null)
   const [url, setUrl] = useState('')
@@ -758,7 +763,13 @@ export default function ImportScreen() {
               <img src={열쇠바닥(flow) ? uiKeyHole : uiKeyOne} alt="" aria-hidden="true" draggable={false} style={{ width: 14, height: 14, objectFit: 'contain' }} />
               {열쇠말(flow, flowMeta)}
             </span>
+            {/* 🏪 Ⓑ 「더 받기」 — 알약 «끝»에 작은 글자 링크(창업자 확정 2026-10-04 · ⛔새 큰 버튼 없음).
+                ⛔ 판매 스위치가 꺼진 기기·사진 갈래가 아니면 안 그린다 — 일반 유저 화면은 그대로. */}
+            {상점보임 && flow === 'photo' && !getOcrLeft().무제한 && (
+              <button className="press" onClick={() => set상점(true)} style={{ marginLeft: 8, color: 'var(--brown)', fontSize: 13.5, fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3 }}>더 받기</button>
+            )}
           </div>
+          {상점 && <KeyShopSheet onClose={() => set상점(false)} showToast={nav?.showToast} />}
           <div className="t-sub" style={{ marginTop: 12, marginBottom: 18, fontSize: 16, lineHeight: 1.6, wordBreak: 'keep-all', textWrap: 'pretty' }}>
             {안내들[flow].lead}
           </div>

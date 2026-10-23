@@ -212,7 +212,12 @@ function saveOcrLeft(left) {
   // 🔢 상한도 같이 담는다 — 서버가 준 값이 언제나 이긴다(앱이 따로 세지 않는다)
   const 수 = (v, 기본) => (Number.isFinite(parseInt(v, 10)) ? Math.max(0, parseInt(v, 10)) : 기본)
   try {
+    // 💳 산 열쇠 — 서버가 «못 읽었다»(paidStale)면 폰에 있던 값을 그대로 둔다.
+    //   ⛔ 「못 읽음」을 0 으로 덮으면 산 사람 화면에서 열쇠가 «사라진» 것처럼 보인다(8/19 구멍 ⑤).
+    let 산것 = 수(left.paid, null)
+    if (left.paidStale) { try { 산것 = (JSON.parse(localStorage.getItem(LEFT_KEY) || '{}').paid) ?? null } catch { 산것 = null } }
     localStorage.setItem(LEFT_KEY, JSON.stringify({
+      paid: 산것,
       welcome: w,
       month: m,
       cap: 수(left.cap, null),
@@ -319,6 +324,70 @@ export async function 열쇠새로고침() {
   return false
 }
 
+// 💳 상점이 «지금 팔 수 있나» — 워커 결제가 켜져 있나(열쇠·창고) · 이 사람이 로그인 확인됐나.
+//   돌려주는 값 = 'on'(살 수 있다) · 'login'(로그인부터) · 'off'(서버 결제가 꺼짐·못 닿음)
+//   ⛔ 'off' 면 상점은 구매 단추를 «숨긴다» — 꺼진 서버에 팔면 확인 못 해서 3일 뒤 자동 환불된다.
+// 🍎 구매자 표(appAccountToken) — `/billing/state` 가 «이 로그인 계정» 것으로 내려준다. 애플 결제에 그대로 붙인다(billing.js buy).
+let _구매자표 = ''
+export const 구매자표 = () => _구매자표
+export async function 결제상태() {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return 'login'
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/state`, { method: 'POST', headers, body: '{}' })
+    const d = await resp.json().catch(() => null)
+    if (d && d.ok) { _구매자표 = String(d.account || ''); return 'on' }
+    if (d && d.error === 'login_required') return 'login'
+    return 'off'
+  } catch { return 'off' }
+}
+
+// 🍎 아이폰 거래 번호를 워커로 — 워커가 애플 서버에 다시 묻는다(`/billing/apple/sync`). 실패해도 던지지 않는다.
+export async function 애플것보내기(ids) {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return { ok: false, error: 'login_required' }
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/apple/sync`, { method: 'POST', headers, body: JSON.stringify({ transactions: ids.map((id) => ({ id })) }) })
+    const d = await resp.json().catch(() => null)
+    if (d && d.ok) await 열쇠새로고침()
+    return d
+  } catch { return null }
+}
+
+// 🗑 계정 삭제 때 — 워커의 산 열쇠를 지우고 구매 기록에서 «누구»를 떼어 낸다(`/billing/forget`).
+//   ⭐ 로그인 계정을 지우기 «전»에 불러야 한다(토큰이 살아 있어야 워커가 누군지 안다).
+//   ⛔ 실패해도 던지지 않는다 — 결제를 안 켰거나(옛 워커) 망이 끊겨도 계정 삭제는 막지 않는다.
+export async function 산것잊기(미리받은토큰 = '') {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    // ⭐ 계정 삭제는 «지운 뒤»에 부른다 — 그땐 로그인이 이미 사라져 새 토큰을 못 받으니, 지우기 전에 받아 둔 것을 쓴다
+    if (미리받은토큰) headers['x-hankki-idtoken'] = 미리받은토큰
+    else await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return null
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/forget`, { method: 'POST', headers, body: '{}' })
+    return await resp.json().catch(() => null)
+  } catch { return null }
+}
+
+// 💳 산 것을 워커에 보낸다 → 구글에 진짜냐 묻고 · 열쇠를 넣고 · 「받았다」를 알린다(`/billing/sync`).
+//   ⭐ 몇 번을 보내도 결과가 같다(워커가 영수증으로 한 번만 준다) — 그래서 켤 때마다 통째로 보내도 된다.
+//   ⛔ 로그인 «확인»이 필수다(창업자 확정 2026-10-22 ⓐ) — 토큰이 없으면 서버가 401 을 준다.
+//      그때 구매는 구글에 «받았다고 안 한» 채 남아 있다 → 로그인한 뒤 다음 번에 따라 들어온다.
+//   ⛔ 실패해도 던지지 않는다. 돌려주는 값 = 서버 답 그대로(못 받으면 null).
+export async function 산것보내기(목록) {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return { ok: false, error: 'login_required' }
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/sync`, { method: 'POST', headers, body: JSON.stringify({ purchases: 목록 }) })
+    const d = await resp.json().catch(() => null)
+    if (d && d.ok) await 열쇠새로고침()   // 화면의 열쇠 수를 서버 값으로 맞춘다
+    return d
+  } catch { return null }
+}
+
 // ── 📊📊 「기본 인식으로 읽었다」를 서버에 알린다 (창업자 지시 2026-09-01) ────
 //
 // 📮 창업자 = *"기본인식을 얼마나 썼는지도 알아야 하지 않을까"*
@@ -414,7 +483,9 @@ export function getOcrLeft() {
   //         둘 중 하나만 참이어도 무제한이다(운영자 아닌 사람에겐 둘 다 거짓이라 안 바뀐다).
   return {
     ...v,
-    total: v.welcome > 0 ? v.welcome : v.month,
+    // 💳 산 열쇠(paid)도 더한다 — 서버는 무료를 다 쓴 뒤 산 열쇠로 읽으니, 쓸 수 있는 수 = 무료 ＋ 산 것.
+    //   ⭐ 아직 아무도 안 샀으면 paid 는 0·null 이라 화면이 한 글자도 안 바뀐다.
+    total: (v.welcome > 0 ? v.welcome : v.month) + (Number(v.paid) || 0),
     // 👀 [2026-09-10] 유저 눈이면 «무조건» 거짓이다 — 서버 값도 무시한다.
     //   ⛔ 스위치를 켠 직후엔 «켜기 전에 받아둔» 서버 답(무제한: true)이 아직 남아 있다.
     //      그걸 그대로 믿으면 스위치를 켜도 한 박자 동안 ∞ 로 보인다.
