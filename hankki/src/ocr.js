@@ -327,6 +327,9 @@ export async function 열쇠새로고침() {
 // 💳 상점이 «지금 팔 수 있나» — 워커 결제가 켜져 있나(열쇠·창고) · 이 사람이 로그인 확인됐나.
 //   돌려주는 값 = 'on'(살 수 있다) · 'login'(로그인부터) · 'off'(서버 결제가 꺼짐·못 닿음)
 //   ⛔ 'off' 면 상점은 구매 단추를 «숨긴다» — 꺼진 서버에 팔면 확인 못 해서 3일 뒤 자동 환불된다.
+// 🍎 구매자 표(appAccountToken) — `/billing/state` 가 «이 로그인 계정» 것으로 내려준다. 애플 결제에 그대로 붙인다(billing.js buy).
+let _구매자표 = ''
+export const 구매자표 = () => _구매자표
 export async function 결제상태() {
   try {
     const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
@@ -334,7 +337,7 @@ export async function 결제상태() {
     if (!headers['x-hankki-idtoken']) return 'login'
     const resp = await fetch(`${OCR_PROXY_URL}/billing/state`, { method: 'POST', headers, body: '{}' })
     const d = await resp.json().catch(() => null)
-    if (d && d.ok) return 'on'
+    if (d && d.ok) { _구매자표 = String(d.account || ''); return 'on' }
     if (d && d.error === 'login_required') return 'login'
     return 'off'
   } catch { return 'off' }

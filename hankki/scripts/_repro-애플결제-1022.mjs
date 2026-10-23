@@ -229,6 +229,23 @@ env.OCR_KV._m.set(`wu:${딸통}`, '30'); env.OCR_KV._m.set(`u:d1:${new Date().to
 r = await 부르기('/', { image: 'data:image/png;base64,' + b64u('y' + Math.random()), uid: 'd1' }, 딸)
 잰다(r.깎음 === true && 남음('8001') === 19 && r.left.paid === 19, '무료 다 쓴 뒤 애플 열쇠로 읽고 19', r.left)
 
+console.log('\n⑬ 구매자 표(appAccountToken · 2026-10-23)')
+새판()
+{
+  const s딸 = await 부르기('/billing/state', {}, 딸), s남 = await 부르기('/billing/state', {}, 남)
+  const 모양 = /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+  잰다(모양.test(s딸.account) && s딸.account !== s남.account, '/billing/state 가 사람마다 다른 UUID 를 준다', [s딸.account, s남.account])
+  잰다((await 부르기('/billing/state', {}, 딸)).account === s딸.account, '같은 사람은 늘 같은 표', s딸.account)
+  거래('9101', { appAccountToken: s딸.account.toUpperCase() })   // 애플이 대문자로 줘도
+  r = await sync(남, ['9101'])
+  잰다(r.results[0].reason === 'not_this_account' && r.paid === 0 && !env.DB.구매.has('apple:9101'), '딸 표가 붙은 거래를 남이 보내면 안 넣는다(원장에도 안 적음)', r)
+  r = await sync(딸, ['9101'])
+  잰다(r.results[0].ok && r.paid === 20, '그 뒤 딸이 보내면 들어간다(남이 먼저 보내도 못 가로챈다)', r)
+  거래('9102')   // 표 없는 거래(옛 판)
+  r = await sync(남, ['9102'])
+  잰다(r.results[0].ok && r.paid === 20, '표 없는 거래는 옛 규칙(먼저 보낸 사람)', r)
+}
+
 console.log('\n⑫ 계기판 · 계정 삭제')
 새판(); 거래('9001'); 애플.거래.set('9002', { 환경: 'Sandbox', t: { transactionId: '9002', bundleId: 'kr.hankki.app', productId: PACK, type: 'Consumable', environment: 'Sandbox' } }); await sync(딸, ['9001', '9002'])
 {

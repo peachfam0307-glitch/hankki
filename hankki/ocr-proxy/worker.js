@@ -1065,7 +1065,8 @@ async function 결제길(request, env, cors) {
   }
   if (경로 === '/billing/state') {
     const s = await 산열쇠세기(env, 통)
-    return json({ ok: true, paid: s.남음, ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
+    // 🍎 account = 이 사람의 구매자 표(appAccountToken) — 앱은 이걸 그대로 애플 결제에 붙인다(앱이 번호를 따로 만들지 않는다)
+    return json({ ok: true, paid: s.남음, account: await 계정표(통), ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
   }
   return json({ error: 'not_found' }, 404, cors)
 }
@@ -1260,6 +1261,16 @@ const 애플 = {
   본서버: 'https://api.storekit.apple.com',
   샌드박스: 'https://api.storekit-sandbox.apple.com',
 }
+// 🍎 구매자 표(appAccountToken · UUID) — 계정 통(`a:<번호>`)에서 «늘 같은 값»을 만든다(SHA-256 앞 16바이트 · 판 5·변형 비트).
+//   ⭐ 만드는 곳은 여기 한 곳뿐 — `/billing/state` 가 앱에 내려주고, 거래 대조도 이걸로 한다.
+//   ⛔ 번호 자체는 안 내보낸다(한쪽 해시라 표에서 번호를 되찾을 수 없다).
+async function 계정표(통) {
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`hankki-acct:${통}`))).slice(0, 16)
+  h[6] = (h[6] & 0x0f) | 0x50
+  h[8] = (h[8] & 0x3f) | 0x80
+  const x = [...h].map((b) => b.toString(16).padStart(2, '0')).join('')
+  return `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`
+}
 function 애플켜짐(env) { return !!(env.APPLE_IAP_KEY && env.APPLE_KEY_ID && env.APPLE_ISSUER_ID && env.DB) }
 
 let _애플토큰 = null, _애플토큰끝 = 0
@@ -1326,6 +1337,10 @@ async function 애플구매하나(env, 통, id) {
   if (t.bundleId !== 애플.번들) return { ok: false, reason: 'wrong_app' }
   if (!Object.prototype.hasOwnProperty.call(결제.소모성, t.productId)) return { ok: false, reason: 'unknown_sku' }
   if (t.type !== 'Consumable') return { ok: false, reason: 'wrong_type' }
+  // 🔒 구매자 표 대조 — 산 사람(appAccountToken)과 지금 보낸 사람이 다르면 안 넣는다.
+  //   ⭐ 이유를 'not_this_account' 로 따로 둔다 — 앱은 이 거래를 «끝내지 않고» 둔다 → 산 사람이 다시 로그인하면 그때 들어간다.
+  //   ⭐ 표가 없는 거래(표 붙이기 전 판에서 산 것)는 예전처럼 «먼저 보낸 사람» 규칙으로 받는다.
+  if (t.appAccountToken && String(t.appAccountToken).toLowerCase() !== (await 계정표(통))) return { ok: false, reason: 'not_this_account' }
   const 토큰 = `apple:${t.transactionId}`
   const db = env.DB
   const 지금 = Date.now()

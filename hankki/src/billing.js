@@ -203,7 +203,10 @@ export async function buy(sku) {
   const 가게 = 애플가게()
   if (가게) {
     let r
-    try { r = await 가게.purchase({ id: sku }) } catch { return { ok: false, reason: 'fail' } }
+    // 🔒 구매자 표를 붙여 산다 — 서버가 「산 사람 = 보낸 사람」을 대조한다(남이 거래 번호만 들고 와도 못 받는다)
+    let 표 = ''
+    try { 표 = (await import('./ocr.js')).구매자표() } catch { /* 못 읽으면 표 없이 — 서버가 옛 규칙으로 받는다 */ }
+    try { r = await 가게.purchase({ id: sku, ...(표 ? { account: 표 } : {}) }) } catch { return { ok: false, reason: 'fail' } }
     const st = r && r.status
     if (st === 'cancel') return { ok: false, reason: 'cancel' }
     if (st === 'pending') return { ok: false, reason: 'pending' }   // 가족 승인 대기 — 승인되면 `transaction` 알림으로 들어온다

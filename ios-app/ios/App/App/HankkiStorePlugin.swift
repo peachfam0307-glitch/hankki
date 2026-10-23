@@ -53,7 +53,10 @@ public class HankkiStorePlugin: CAPPlugin, CAPBridgedPlugin {
         Task {
             do {
                 guard let p = try await Product.products(for: [id]).first else { call.resolve(["status": "fail"]); return }
-                let r = try await p.purchase()
+                // 🔒 구매자 표(appAccountToken) — 서버가 내려준 UUID. 없거나 모양이 틀리면 표 없이 산다(서버는 표 없는 거래를 옛 규칙으로 받는다).
+                var opts: Set<Product.PurchaseOption> = []
+                if let a = call.getString("account"), let u = UUID(uuidString: a) { opts.insert(.appAccountToken(u)) }
+                let r = try await p.purchase(options: opts)
                 switch r {
                 case .success(let v):
                     switch v {
