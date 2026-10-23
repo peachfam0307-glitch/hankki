@@ -32,18 +32,25 @@ export default function KeyShopSheet ({ onClose, showToast }) {
   const [상품, set상품] = useState(null)       // { price, title } — 구글이 준 값
   const [바쁨, set바쁨] = useState(false)
   const [탈, set탈] = useState('')
+  const [받은수, set받은수] = useState(0)
   const 닫기 = () => { if (!바쁨) onClose() }
   useModalBack(닫기)
 
   const 살펴보기 = async () => {
     set상태('보는중'); set탈('')
-    if (!(await canBuy())) { set상태('unavailable'); return }
-    const s = await 결제상태()
-    if (s !== 'on') { set상태(s); return }
-    const d = (await details([SKU.ocr20]))[0]
+    // ⏱ 8초 안에 답이 없으면 「다시 시도」 — 답 안 오는 단계가 하나라도 있으면 「여는 중」이 끝없이 남았다(창업자 10/23 실측 · 앱 다시 켜서 풀림)
+    let 늦음 = false
+    const 시계 = setTimeout(() => { 늦음 = true; set상태('slow') }, 8000)
+    const 끝 = (s) => { clearTimeout(시계); if (!늦음) set상태(s) }
+    if (!(await canBuy())) return 끝('unavailable')
+    // ⭐ 서버 확인과 가격 묻기는 서로 상관없다 → 동시에 묻는다
+    const [s, list] = await Promise.all([결제상태(), details([SKU.ocr20])])
+    if (s !== 'on') return 끝(s)
+    const d = list[0]
     // ⛔ 가격을 못 받으면 단추를 안 그린다 — 우리가 「990원」을 박아 쓰면 언젠가 틀린다(스토어는 1,000원이다)
-    if (!d || !d.price) { set상태('off'); return }
-    set상품(d); set상태('on')
+    if (!d || !d.price) return 끝('off')
+    if (!늦음) set상품(d)
+    끝('on')
   }
   useEffect(() => { 살펴보기() }, [])
 
@@ -63,7 +70,8 @@ export default function KeyShopSheet ({ onClose, showToast }) {
     if (!r.ok) { if (r.reason !== 'cancel') set탈(말[r.reason] || 말.fail); return }
     const 지금 = Number(getOcrLeft().paid) || 0
     // ⭐ 서버가 열쇠를 넣었는지는 «서버 답»으로만 말한다 — 폰이 추측해서 「들어왔어요」라고 하지 않는다
-    if (r.synced && r.synced.ok && 지금 > 전) { showToast?.(`${KEY_NAME} ${지금 - 전}${KEY_UNIT}가 들어왔어요`); onClose(); return }
+    // 🎉 위 띠(토스트)는 너무 작았다(창업자 10/23) → 시트 안에서 크게 보여 주고 「확인」으로 닫는다
+    if (r.synced && r.synced.ok && 지금 > 전) { set받은수(지금 - 전); set상태('done'); return }
     set탈(말.later)
   }
 
@@ -77,7 +85,8 @@ export default function KeyShopSheet ({ onClose, showToast }) {
           </div>
 
           <div style={{ padding: '2px 16px 0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--cream)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
+            {/* 상품 칸 — 완료 화면에선 숨긴다(창업자 10/23 「완료에서는 숨기자」) */}
+            {상태 !== 'done' && <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--cream)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 }}>
               <img src={uiShop} alt="" aria-hidden="true" draggable={false} style={{ width: 64, height: 'auto', flex: 'none' }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 17, fontWeight: 800, letterSpacing: '-0.02em' }}>
@@ -88,9 +97,24 @@ export default function KeyShopSheet ({ onClose, showToast }) {
                   사진 한 장을 AI로 읽을 때 1{KEY_UNIT}씩 써요. 무료 {KEY_NAME}를 다 쓴 뒤에 쓰여요.
                 </div>
               </div>
-            </div>
+            </div>}
 
             {상태 === '보는중' && <div className="t-sub" style={{ fontSize: 15, padding: '6px 2px 10px' }}>상점을 여는 중…</div>}
+            {상태 === 'slow' && (
+              <>
+                <div style={{ background: '#f6ece4', color: '#7a4a2c', fontSize: 15.5, fontWeight: 600, lineHeight: 1.55, borderRadius: 11, padding: '10px 12px', marginBottom: 10 }}>연결이 늦어지고 있어요.</div>
+                <button className="btn-primary press" style={{ width: '100%' }} onClick={살펴보기}>다시 시도</button>
+              </>
+            )}
+
+            {상태 === 'done' && (
+              <div style={{ textAlign: 'center', padding: '8px 4px 4px' }}>
+                <img src={uiKeyOne} alt="" aria-hidden="true" draggable={false} style={{ width: 72, height: 72, objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+                <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-0.02em', marginTop: 8 }}>{KEY_NAME} {받은수}{KEY_UNIT}가 들어왔어요</div>
+                <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.6, marginTop: 6, marginBottom: 16 }}>사진 가져오기에서 바로 쓸 수 있어요.</div>
+                <button className="btn-primary press" style={{ width: '100%' }} onClick={onClose}>확인</button>
+              </div>
+            )}
             {(상태 === 'unavailable' || 상태 === 'off') && (
               <div style={{ background: '#f6ece4', color: '#7a4a2c', fontSize: 15.5, fontWeight: 600, lineHeight: 1.55, borderRadius: 11, padding: '10px 12px', marginBottom: 10 }}>{말[상태]}</div>
             )}
@@ -122,7 +146,7 @@ export default function KeyShopSheet ({ onClose, showToast }) {
                 <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.65, marginTop: 10, wordBreak: 'keep-all' }}>
                   산 {KEY_NAME}는 바로 계정에 담겨요. 쓴 {KEY_NAME}는 환불되지 않고, 남은 {KEY_NAME}는 환불을 요청할 수 있어요.
                   {/* 🍎 아이폰은 환불을 «애플»이 한다 — 우리가 해 줄 수 없다(앱스토어 구매 내역에서 요청) */}
-                  {아이폰인가() ? '환불은 App Store 구매 내역에서 요청할 수 있어요.' : '환불은 설정 「도움말 및 문의」로 알려 주세요.'}
+                  {' '}{아이폰인가() ? '환불은 App Store 구매 내역에서 요청할 수 있어요.' : '환불은 설정 「도움말 및 문의」로 알려 주세요.'}
                   {/* 🧾 거래기록 열람(전자상거래법 시행령 6조 ②항 · 2026-10-23) — 스토어 구매 내역 ＋ 요청하면 메일로 */}
                   {' '}구매 내역은 {아이폰인가() ? 'App Store' : 'Google Play'}에서 볼 수 있고, 거래 기록이 필요하면 「도움말 및 문의」로 알려 주세요.
                 </div>
