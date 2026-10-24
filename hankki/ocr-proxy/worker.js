@@ -1472,13 +1472,20 @@ async function 애플구매하나(env, 통, id) {
     return { ok: false, reason: 'revoked' }
   }
   const 수량 = Math.max(1, Math.min(50, parseInt(t.quantity, 10) || 1))
+  let 줄열쇠 = 결제.소모성[t.productId] * 수량
   try {
+    // 🧪 연습 결제(Sandbox = TestFlight·심사관 · 돈 안 나감)는 «한 계정 하루 한 번»만 열쇠를 준다(창업자 10/24)
+    //   ⭐ 심사관은 한 번 사 보면 통과 · 계속 눌러 공짜 열쇠 받기는 막힌다 · 두 번째부터는 기록만(앱은 거래를 끝낸다)
+    if (t.environment === 'Sandbox') {
+      const c = await db.prepare("SELECT COUNT(*) AS n FROM 산구매 WHERE 통 = ? AND 주문 = 'apple:Sandbox' AND 처음 > ? AND 토큰 != ?").bind(통, 지금 - 86400000, 토큰).first()
+      if (c && c.n >= 1) 줄열쇠 = 0
+    }
     await db.prepare('INSERT OR IGNORE INTO 산구매 (토큰, 상품, 통, 주문, 상태, 확인, 비움, 처음, 때) VALUES (?, ?, ?, ?, 0, 0, 0, ?, ?)')
       .bind(토큰, t.productId, 통, `apple:${t.environment || ''}`, 지금, 지금).run()
     await db.prepare('INSERT OR IGNORE INTO 산열쇠 (토큰, 통, 남음, 처음, 때) VALUES (?, ?, ?, ?, ?)')
-      .bind(토큰, 통, 결제.소모성[t.productId] * 수량, 지금, 지금).run()
+      .bind(토큰, 통, 줄열쇠, 지금, 지금).run()
   } catch { return { ok: false, reason: 'db_error' } }
-  return { ok: true, sandbox: t.environment === 'Sandbox' }
+  return { ok: true, sandbox: t.environment === 'Sandbox', ...(줄열쇠 === 0 ? { 시험한도: true } : {}) }
 }
 
 // 거래 번호로 «다시 물어» 취소됐으면 남은 열쇠를 거둔다 — 알림·기록 둘 다 이 한 곳을 쓴다.

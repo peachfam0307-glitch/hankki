@@ -109,6 +109,7 @@ function 가짜D1() {
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음 = 0; return 1 } return 0 }],
     [/^SELECT COUNT\(\*\) AS n, SUM\(CASE WHEN 상태 = 1 THEN 1 ELSE 0 END\) AS 환불 FROM 산구매$/, () => ({ n: 구매.size, 환불: [...구매.values()].filter((r) => r.상태 === 1).length })],
     [/^SELECT COUNT\(\*\) AS n FROM 산구매 WHERE 주문 LIKE 'apple:Sandbox%'$/, () => ({ n: [...구매.values()].filter((r) => String(r.주문).startsWith('apple:Sandbox')).length })],
+    [/^SELECT COUNT\(\*\) AS n FROM 산구매 WHERE 통 = \? AND 주문 = 'apple:Sandbox' AND 처음 > \? AND 토큰 != \?$/, ([통, 기준, t]) => ({ n: [...구매.values()].filter((r) => r.통 === 통 && r.주문 === 'apple:Sandbox' && r.처음 > 기준 && r.토큰 !== t).length })],
     [/^SELECT COALESCE\(SUM\(남음\),0\) AS n FROM 산열쇠$/, () => ({ n: [...열쇠.values()].reduce((s, r) => s + r.남음, 0) })],
     [/^UPDATE 산구매 SET 상태 = 1, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 구매.get(t); if (r) { r.상태 = 1; return 1 } return 0 }],
     [/^INSERT OR IGNORE INTO 산구매 /, ([t, 상품, 통, 주문, 처음]) => { if (구매.has(t)) return 0; 구매.set(t, { 토큰: t, 상품, 통, 주문, 상태: 0, 확인: 0, 비움: 0, 처음 }); return 1 }],
@@ -192,6 +193,18 @@ console.log('\n⑤ 샌드박스(심사관·TestFlight) — 받되 표시한다')
 r = await sync(딸, ['2001'])
 잰다(r.results[0].ok && r.results[0].sandbox && r.paid === 20 && 애플.부름.본 === 1 && 애플.부름.샌드 === 1, '본 서버에 없으면 샌드박스로 · 20개 · sandbox 표시', r)
 잰다(env.DB.구매.get('apple:2001').주문 === 'apple:Sandbox', '원장 주문 칸 = apple:Sandbox')
+// 🧪 연습 결제는 한 계정 하루 한 번(창업자 10/24)
+애플.거래.set('2002', { 환경: 'Sandbox', t: { transactionId: '2002', bundleId: 'kr.hankki.app', productId: PACK, type: 'Consumable', quantity: 1, environment: 'Sandbox' } })
+r = await sync(딸, ['2002'])
+잰다(r.results[0].ok && r.results[0].시험한도 && r.paid === 20, '같은 날 두 번째 연습 결제 → 기록만 · 열쇠 안 늘어남(앱은 거래를 끝낸다)', r)
+r = await sync(딸, ['2001'])
+잰다(r.paid === 20, '첫 연습 결제를 또 보내도 그대로 20', r)
+env.DB.구매.get('apple:2001').처음 -= 86400001; env.DB.구매.get('apple:2002').처음 -= 86400001
+애플.거래.set('2003', { 환경: 'Sandbox', t: { transactionId: '2003', bundleId: 'kr.hankki.app', productId: PACK, type: 'Consumable', quantity: 1, environment: 'Sandbox' } })
+r = await sync(딸, ['2003'])
+잰다(r.paid === 40 && !r.results[0].시험한도, '하루 지나면 다시 20', r)
+거래('2004'); r = await sync(딸, ['2004'])
+잰다(r.paid === 60, '진짜 결제(Production)는 한도 없음', r)
 
 console.log('\n⑥ 남의 앱·다른 상품·비소모품·이상한 번호')
 새판(); 거래('3001', { bundleId: 'com.other.app' }); 거래('3002', { productId: 'deco_xmas' }); 거래('3003', { type: 'Non-Consumable' })
