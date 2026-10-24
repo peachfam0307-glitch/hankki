@@ -20,6 +20,7 @@ import { 나라들 } from '../data/종류'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, 열쇠셈, 열쇠셈리셋, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
+import { 빚안내몸 } from '../안내말'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw, NO_TITLE } from '../parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from '../tidy'
 import { AI동의받기 } from '../aiConsent'   // 🔐 AI 로 보내기 전 허락(큰 틀 6-② ⓑ)
@@ -555,7 +556,10 @@ export default function EditorScreen({ id, prefill }) {
     //   ⛔ `noVision` 이면 프록시를 «안 불렀으므로» 이 값들은 이번 읽기와 무관하다 → 통째로 죽인다.
     const note = 셈.안부름 ? null : getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
     const quotaTail =
-      note === 'user_quota'
+      // 💸 환불로 생긴 빚(창업자 10/24 문구 · 말은 안내말.js 한 곳)
+      note === 'debt'
+        ? ` · 지금은 AI 읽기를 할 수 없어요 · ${빚안내몸(셈.빚)}`
+        : note === 'user_quota'
         ? ` · 무료 ${KEY_NAME}를 다 써서 기본 인식이에요`
         : note === 'global_quota' || note === 'rate_limited'
           ? ' · 지금 이용이 많아 기본 인식이에요'

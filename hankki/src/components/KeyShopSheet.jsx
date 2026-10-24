@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Portal from './Portal'
 import { useModalBack } from '../useBackHandler'
 import { SKU, buy, canBuy, details, 아이폰인가 } from '../billing'
-import { 결제상태, getOcrLeft, KEY_NAME, KEY_UNIT } from '../ocr'
+import { 결제상태, 결제동의, 구매자표, 상점빚, getOcrLeft, KEY_NAME, KEY_UNIT } from '../ocr'
 import { 로그인 } from '../cloud'
 import uiKeyOne from '../assets/ui/key_one.png'
 import uiShop from '../assets/ui/hankki_shop.png'
@@ -25,7 +25,14 @@ const 말 = {
   off: '상점을 준비하고 있어요. 조금 뒤에 다시 열어 주세요.',
   fail: '결제가 끝까지 가지 못했어요. 잠시 뒤에 다시 해 볼래요?',
   later: '결제는 됐어요. 열쇠는 다음에 앱을 켤 때 자동으로 들어와요.',
+  // 🚫 환불 3번째부터(창업자 10/23 ④ · 10/24 시안 ②)
+  blocked: '환불 기록이 많아 지금은 구매할 수 없어요. 궁금한 점은 설정 「도움말 및 문의」로 알려 주세요.',
+  // 🧪 연습 결제(TestFlight·심사)는 한 계정 하루 한 번만 열쇠가 들어온다(창업자 10/24)
+  sandbox: '연습 결제는 하루 한 번만 열쇠가 들어와요. 내일 다시 해 볼 수 있어요.',
+  consent: '동의를 저장하지 못했어요. 잠시 뒤에 다시 해 볼래요?',
 }
+// 한 번에 사는 수 — 완료 화면이 「빚부터 메워 덜 보이는」 까닭을 셀 때 쓴다(서버 `결제.소모성` 과 같다)
+const 묶음수 = 20
 
 export default function KeyShopSheet ({ onClose, showToast }) {
   const [상태, set상태] = useState('보는중')   // 보는중 · unavailable · login · off · on
@@ -33,6 +40,9 @@ export default function KeyShopSheet ({ onClose, showToast }) {
   const [바쁨, set바쁨] = useState(false)
   const [탈, set탈] = useState('')
   const [받은수, set받은수] = useState(0)
+  const [채운수, set채운수] = useState(0)   // 💸 빚부터 메운 수(창업자 10/24 C)
+  const [동의, set동의] = useState(false)   // ✅ 아이폰만 — 체크해야 사기 단추가 눌린다(창업자 10/23 Ⓐ · 10/24 아이폰만)
+  const 동의필요 = 아이폰인가()
   const 닫기 = () => { if (!바쁨) onClose() }
   useModalBack(닫기)
 
@@ -46,6 +56,8 @@ export default function KeyShopSheet ({ onClose, showToast }) {
     // ⭐ 서버 확인과 가격 묻기는 서로 상관없다 → 동시에 묻는다
     const [s, list] = await Promise.all([결제상태(), details([SKU.ocr20])])
     if (s !== 'on') return 끝(s)
+    // 🍎 구매자 표 없이 사지 않는다 — 표 없는 구매는 «먼저 보낸 계정»이 가져갈 수 있다(10/24 점검)
+    if (아이폰인가() && !구매자표()) return 끝('off')
     const d = list[0]
     // ⛔ 가격을 못 받으면 단추를 안 그린다 — 우리가 「990원」을 박아 쓰면 언젠가 틀린다(스토어는 1,000원이다)
     if (!d || !d.price) return 끝('off')
@@ -63,15 +75,27 @@ export default function KeyShopSheet ({ onClose, showToast }) {
 
   const 사자 = async () => {
     if (바쁨) return
+    if (동의필요 && !동의) return
     set바쁨(true); set탈('')
+    // ✅ 동의를 «먼저» 서버에 적는다 — 못 적으면 사지 않는다(동의 없이 산 거래는 애플에 사용량을 못 알린다)
+    if (동의필요 && !(await 결제동의())) { set바쁨(false); set탈(말.consent); return }
     const 전 = Number(getOcrLeft().paid) || 0
+    const 전빚 = 상점빚()
     const r = await buy(SKU.ocr20)
     set바쁨(false)
     if (!r.ok) { if (r.reason !== 'cancel') set탈(말[r.reason] || 말.fail); return }
-    const 지금 = Number(getOcrLeft().paid) || 0
+    // 이번 거래의 서버 답 — 애플은 거래 번호(id)로 · 구글은 영수증을 안 돌려주므로 같은 상품의 «된» 답으로 찾는다
+    const 답들 = r.synced && Array.isArray(r.synced.results) ? r.synced.results : []
+    const 이번 = 답들.find((x) => x && x.id != null && String(x.id) === String(r.token)) || 답들.find((x) => x && x.sku === SKU.ocr20 && x.ok) || null
+    if (이번 && 이번.시험한도) { set탈(말.sandbox); return }
     // ⭐ 서버가 열쇠를 넣었는지는 «서버 답»으로만 말한다 — 폰이 추측해서 「들어왔어요」라고 하지 않는다
     // 🎉 위 띠(토스트)는 너무 작았다(창업자 10/23) → 시트 안에서 크게 보여 주고 「확인」으로 닫는다
-    if (r.synced && r.synced.ok && 지금 > 전) { set받은수(지금 - 전); set상태('done'); return }
+    if (r.synced && r.synced.ok && 이번 && 이번.ok) {
+      const 지금 = Number.isFinite(Number(r.synced.paid)) ? Number(r.synced.paid) : Number(getOcrLeft().paid) || 0
+      // 💸 빚이 있었으면 그만큼 먼저 메워져 덜 보인다 — 까닭을 같이 말한다(창업자 10/24 C)
+      set채운수(전빚 > 0 ? Math.min(전빚, 묶음수) : 0)
+      set받은수(Math.max(0, 지금 - 전)); set상태('done'); return
+    }
     set탈(말.later)
   }
 
@@ -110,14 +134,18 @@ export default function KeyShopSheet ({ onClose, showToast }) {
             {상태 === 'done' && (
               <div style={{ textAlign: 'center', padding: '8px 4px 4px' }}>
                 <img src={uiKeyOne} alt="" aria-hidden="true" draggable={false} style={{ width: 72, height: 72, objectFit: 'contain', display: 'block', margin: '0 auto' }} />
-                <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-0.02em', marginTop: 8 }}>{KEY_NAME} {받은수}{KEY_UNIT}가 들어왔어요</div>
-                <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.6, marginTop: 6, marginBottom: 16 }}>사진 가져오기에서 바로 쓸 수 있어요.</div>
+                <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-0.02em', marginTop: 8 }}>{KEY_NAME} {채운수 ? 묶음수 : 받은수}{KEY_UNIT}가 들어왔어요</div>
+                <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.6, marginTop: 6, marginBottom: 16, wordBreak: 'keep-all' }}>
+                  {/* 💸 빚부터 메워 덜 보이는 까닭(창업자 10/24 C) */}
+                  {채운수 ? `환불된 구매에서 쓴 ${채운수}${KEY_UNIT}를 먼저 채워 지금 ${받은수}${KEY_UNIT}예요.` : '사진 가져오기에서 바로 쓸 수 있어요.'}
+                </div>
                 <button className="btn-primary press" style={{ width: '100%' }} onClick={onClose}>확인</button>
               </div>
             )}
-            {(상태 === 'unavailable' || 상태 === 'off') && (
-              <div style={{ background: '#f6ece4', color: '#7a4a2c', fontSize: 15.5, fontWeight: 600, lineHeight: 1.55, borderRadius: 11, padding: '10px 12px', marginBottom: 10 }}>{말[상태]}</div>
+            {(상태 === 'unavailable' || 상태 === 'off' || 상태 === 'blocked') && (
+              <div style={{ background: '#f6ece4', color: '#7a4a2c', fontSize: 15.5, fontWeight: 600, lineHeight: 1.55, borderRadius: 11, padding: '10px 12px', marginBottom: 10, wordBreak: 'keep-all' }}>{말[상태]}</div>
             )}
+            {상태 === 'blocked' && <div className="t-sub" style={{ fontSize: 13.5, lineHeight: 1.65, marginBottom: 4 }}>무료 {KEY_NAME}는 그대로 쓸 수 있어요.</div>}
 
             {상태 === 'login' && (
               <>
@@ -131,13 +159,20 @@ export default function KeyShopSheet ({ onClose, showToast }) {
 
             {상태 === 'on' && 상품 && (
               <>
+                {/* ✅ 아이폰만 — 환불 요청 때 애플이 묻는 «사용량»을 보내려면 동의가 있어야 한다(애플 원문 customerConsented · 창업자 10/23 Ⓐ) */}
+                {동의필요 && (
+                  <label className="press" style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'var(--cream)', borderRadius: 12, padding: '11px 12px', marginBottom: 10, fontSize: 15, lineHeight: 1.55, wordBreak: 'keep-all', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={동의} disabled={바쁨} onChange={(e) => set동의(e.target.checked)} style={{ width: 22, height: 22, flex: 'none', marginTop: 1, accentColor: '#b5714a' }} />
+                    <span>(필수) 환불을 요청하면 이 구매에서 <b>쓴 {KEY_NAME} 수</b>를 Apple에 알리는 데 동의해요.</span>
+                  </label>
+                )}
                 <button
                   className="press"
                   onClick={사자}
-                  disabled={바쁨}
+                  disabled={바쁨 || (동의필요 && !동의)}
                   style={{
                     width: '100%', padding: '13px 12px', borderRadius: 14, border: 'none',
-                    background: 바쁨 ? '#cbb39f' : '#b5714a', color: '#fff', fontSize: 17, fontWeight: 800, letterSpacing: '-0.01em',
+                    background: 바쁨 || (동의필요 && !동의) ? '#cbb39f' : '#b5714a', color: '#fff', fontSize: 17, fontWeight: 800, letterSpacing: '-0.01em',
                   }}
                 >
                   {바쁨 ? '열쇠를 넣는 중…' : `${상품.price} · 사기`}

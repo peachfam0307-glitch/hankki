@@ -832,7 +832,7 @@ export default function App() {
           const 셈 = 열쇠셈()
           set자동남은말('')
           창닫음.current = false        // 새 사진이니 새 판이다
-          끝알림(까닭말(셈.왜, 셈.앎))
+          끝알림(까닭말(셈.왜, 셈.앎, 셈.빚))
           return
         }
         try { 읽어냄() } catch { /* 통계가 죽어도 다듬기는 돈다 */ }

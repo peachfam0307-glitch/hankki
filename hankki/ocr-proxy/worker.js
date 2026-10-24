@@ -1177,7 +1177,7 @@ async function 결제길(request, env, cors) {
     let 환불수 = 0   // 🔁 탈퇴 전 환불(탈퇴기록)도 같이 센다(10/24)
     try { await 결제표준비(env.DB); const c = await env.DB.prepare('SELECT COUNT(*) AS n FROM 산구매 WHERE 통 = ? AND 상태 = 1').bind(통).first(); 환불수 = (c && c.n) || 0
       const 전 = await env.DB.prepare('SELECT 환불수 FROM 탈퇴기록 WHERE 표 = ?').bind(await 탈퇴표(통)).first(); 환불수 += (전 && 전.환불수) || 0 } catch { /* 못 세면 안 막는다 */ }
-    return json({ ok: true, paid: s.남음, account: await 계정표(통), ...(환불수 >= 환불막는수 ? { blocked: 'refunds' } : {}), ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
+    return json({ ok: true, paid: s.남음, ...(s.빚 ? { 빚: s.빚 } : {}), account: await 계정표(통), ...(환불수 >= 환불막는수 ? { blocked: 'refunds' } : {}), ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
   }
   // ✅ 동의 적기 — 구매 시트에서 체크하고 살 때 앱이 부른다
   if (경로 === '/billing/consent') {
