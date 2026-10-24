@@ -64,7 +64,7 @@ const ec = await webcrypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-25
 const P8 = '-----BEGIN PRIVATE KEY-----\n' + Buffer.from(await webcrypto.subtle.exportKey('pkcs8', ec.privateKey)).toString('base64').match(/.{1,64}/g).join('\n') + '\n-----END PRIVATE KEY-----\n'
 
 function 가짜D1() {
-  const 구매 = new Map(), 열쇠 = new Map(), 씀 = [], 보존 = new Map(), 보존씀 = []
+  const 탈퇴 = new Map(), 구매 = new Map(), 열쇠 = new Map(), 씀 = [], 보존 = new Map(), 보존씀 = []
   const st = { 고장: null }   // 'read' | 'credit-insert' — 일부러 망가뜨린다
   const 문장 = [
     [/^SELECT COALESCE\(SUM\(남음\),0\) AS n FROM 산열쇠 WHERE 통 = \?$/, ([통]) => {
@@ -95,7 +95,16 @@ function 가짜D1() {
     [/^SELECT 토큰 FROM 산구매 WHERE 주문 = \? OR 토큰 = \? LIMIT 1$/, ([k]) => { for (const r of 구매.values()) if (r.주문 === k || r.토큰 === k) return { 토큰: r.토큰 }; return null }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND 남음 < 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 < 0) { r.남음 = 0; return 1 } return 0 }],
     [/^SELECT 토큰, 남음 FROM 산열쇠 WHERE 통 = \? AND 남음 < 0 ORDER BY 처음$/, ([통]) => [...열쇠.values()].filter((r) => r.통 === 통 && r.남음 < 0).sort((a, b) => a.처음 - b.처음).map((r) => ({ 토큰: r.토큰, 남음: r.남음 }))],
-    [/^UPDATE 산열쇠 SET 남음 = 남음 \+ \?, 때 = \? WHERE 토큰 = \?$/, ([k, , t]) => { const r = 열쇠.get(t); if (r) { r.남음 += k; return 1 } return 0 }],
+    [/^UPDATE 산열쇠 SET 남음 = 남음 \+ \?, 때 = \? WHERE 토큰 = \? AND 남음 <= -\?$/, ([k, , t, k2]) => { const r = 열쇠.get(t); if (r && r.남음 <= -k2) { r.남음 += k; return 1 } return 0 }],
+    // 🍎 일부 환불 = 남은 것만 0(빚 없음 · 10/24)
+    [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND NOT EXISTS \(SELECT 1 FROM 산구매 WHERE 산구매\.토큰 = 산열쇠\.토큰 AND 산구매\.상태 = 1\) AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && !(구매.get(t) && 구매.get(t).상태 === 1) && r.남음 > 0) { r.남음 = 0; return 1 } return 0 }],
+    // 🔁 탈퇴기록(빚·환불 수 이어 가기 · 10/24)
+    [/^SELECT 빚, 때 FROM 탈퇴기록 WHERE 표 = \?$/, ([표]) => (탈퇴.get(표) ? { 빚: 탈퇴.get(표).빚, 때: 탈퇴.get(표).때 } : null)],
+    [/^SELECT 환불수 FROM 탈퇴기록 WHERE 표 = \?$/, ([표]) => (탈퇴.get(표) ? { 환불수: 탈퇴.get(표).환불수 } : null)],
+    [/^INSERT OR IGNORE INTO 산열쇠 \(토큰, 통, 남음, 처음, 때\) VALUES \(\?, \?, \?, 0, \?\)$/, ([t, 통, 남음]) => { if (열쇠.has(t)) return 0; 열쇠.set(t, { 토큰: t, 통, 남음, 처음: 0 }); return 1 }],
+    [/^UPDATE 탈퇴기록 SET 빚 = 0 WHERE 표 = \? AND 때 = \?$/, ([표, 때]) => { const r = 탈퇴.get(표); if (r && r.때 === 때) { r.빚 = 0; return 1 } return 0 }],
+    [/^INSERT INTO 탈퇴기록 \(표, 빚, 환불수, 때\) VALUES \(\?, \?, \(SELECT COUNT\(\*\) FROM 산구매 WHERE 통 = \? AND 상태 = 1\), \?\) ON CONFLICT/, ([표, 빚, 통, 때]) => { const n = [...구매.values()].filter((r) => r.통 === 통 && r.상태 === 1).length; const r = 탈퇴.get(표); if (r) { r.빚 += 빚; r.환불수 += n; r.때 = 때 } else 탈퇴.set(표, { 빚, 환불수: n, 때 }); return 1 }],
+    [/^DELETE FROM 탈퇴기록 WHERE 때 < \?$/, ([기준]) => { let n = 0; for (const [k, r] of [...탈퇴]) if (r.때 < 기준) { 탈퇴.delete(k); n++ } return n }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 열쇠.get(t); if (r) { r.남음 = 0; return 1 } return 0 }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음 = 0; return 1 } return 0 }],
     [/^SELECT COUNT\(\*\) AS n, SUM\(CASE WHEN 상태 = 1 THEN 1 ELSE 0 END\) AS 환불 FROM 산구매$/, () => ({ n: 구매.size, 환불: [...구매.values()].filter((r) => r.상태 === 1).length })],
@@ -117,9 +126,9 @@ function 가짜D1() {
   ]
   const 찾기 = (sql) => { for (const [re, f] of 문장) if (re.test(sql)) return f; throw new Error('가짜 D1 이 모르는 문장: ' + sql) }
   return {
-    구매, 열쇠, 씀, 보존, 보존씀, st,
+    탈퇴, 구매, 열쇠, 씀, 보존, 보존씀, st,
     exec: async () => {},
-    batch: async (묶음) => { for (const s of 묶음) await s.run() },
+    batch: async (묶음) => { const 결과 = []; for (const s of 묶음) 결과.push(await s.run()); return 결과 },
     prepare: (sql) => {
       const f = 찾기(sql)
       return { bind: (...b) => ({ first: async () => f(b), all: async () => ({ results: f(b) }), run: async () => ({ meta: { changes: f(b) } }) }) }
@@ -339,6 +348,45 @@ console.log('\n⑭ 환불 악용 막기 — 빚 · 반복 환불 · 사용량 �
   애플.거래.get('9402').t.revocationDate = Date.now(); await 알림(환불알림('9402')); await 탕('9402&key=fs'); await 알림(환불알림('9402'))
   잰다(남음('9402') === 0, '환불 → 탕감 → 같은 알림 또 → 0 그대로', 남음('9402'))
 
+  // ⚡ 동시에 두 장(10/24 점검) — 같은 빚을 둘이 갚아 −3 → 0 → +3(공짜 열쇠)이 되던 구멍
+  새판(); 거래('9501'); await sync(딸, ['9501'])
+  env.OCR_KV._m.set(`wu:${딸통}`, '30'); env.OCR_KV._m.set(달, '5')
+  for (let i = 0; i < 3; i++) await 읽기()
+  애플.거래.get('9501').t.revocationDate = Date.now(); await 알림(환불알림('9501'))
+  잰다(남음('9501') === -3, '3장 쓰고 환불 → 빚 -3', 남음('9501'))
+  env.OCR_KV._m.set(`wu:${딸통}`, '0')   // 웰컴 30 남음
+  await Promise.all([읽기(), 읽기()])
+  잰다(남음('9501') <= 0, '두 장 동시 → 빚이 0 을 넘어 산 열쇠가 생기지 않는다', 남음('9501'))
+  잰다(Number(env.OCR_KV._m.get(`wu:${딸통}`)) >= 3,'갚은 만큼은 무료에서 빠졌다', env.OCR_KV._m.get(`wu:${딸통}`))
+
+  // 🍎 일부 환불(REFUND_PRORATED) — 쓴 몫은 값을 치렀다 → 남은 것만 0 · 빚 없음
+  새판(); 거래('9601'); await sync(딸, ['9601'])
+  env.OCR_KV._m.set(`wu:${딸통}`, '30'); env.OCR_KV._m.set(달, '5')
+  for (let i = 0; i < 5; i++) await 읽기()
+  Object.assign(애플.거래.get('9601').t, { revocationDate: Date.now(), revocationType: 'REFUND_PRORATED', revocationPercentage: 75000 })
+  await 알림(환불알림('9601'))
+  잰다(남음('9601') === 0 && env.DB.구매.get('apple:9601').상태 === 1, '5 쓰고 일부 환불 → 남은 15 만 0 · 빚 없음 · 환불 표시', 남음('9601'))
+  Object.assign(애플.거래.get('9601').t, { revocationType: 'REFUND_FULL' }); await 알림(환불알림('9601'))
+  잰다(남음('9601') === 0, '같은 거래 알림 또 → 그대로', 남음('9601'))
+
+  // 🔁 탈퇴 → 재가입 — 빚·환불 수가 이어진다(창업자 10/24 「막아야지」)
+  새판(); 거래('9701'); 거래('9702'); 거래('9703'); await sync(딸, ['9701', '9702', '9703'])
+  env.OCR_KV._m.set(`wu:${딸통}`, '30'); env.OCR_KV._m.set(달, '5')
+  for (let i = 0; i < 4; i++) await 읽기()
+  for (const id of ['9701', '9702']) { 애플.거래.get(id).t.revocationDate = Date.now(); await 알림(환불알림(id)) }
+  잰다((await 부르기('/billing/state', {}, 딸)).paid === 16, '9701 에서 4 쓰고 둘 환불 → 빚 4 · 남은 9703 의 20 이 메워 16', 남음('9701'))
+  for (const t of ['apple:9703']) env.DB.열쇠.get(t).남음 = 0   // 9703 도 다 썼다고 치자 → 빚 4 가 드러난다
+  r = await 부르기('/billing/forget', {}, 딸)
+  잰다(r.ok && env.DB.탈퇴.size === 1 && [...env.DB.탈퇴.values()][0].빚 === 4 && [...env.DB.탈퇴.values()][0].환불수 === 2, '탈퇴 → 해시 표에 빚 4 · 환불 2 만 남는다(계정 번호는 없다)', [...env.DB.탈퇴.values()])
+  잰다(![...env.DB.탈퇴.keys()][0].includes('apple_'), '탈퇴기록에 계정 번호가 그대로 들어가지 않는다')
+  거래('9704'); await sync(딸, ['9704'])
+  r = await 부르기('/billing/state', {}, 딸)
+  잰다(r.paid === 16, '재가입해 20 사면 빚 4 를 먼저 메워 16', r)
+  거래('9705'); await sync(딸, ['9705']); 애플.거래.get('9705').t.revocationDate = Date.now(); await 알림(환불알림('9705'))
+  r = await 부르기('/billing/state', {}, 딸)
+  잰다(r.blocked === 'refunds', '탈퇴 전 환불 2 ＋ 재가입 뒤 1 = 3 → 구매 막힘', r)
+  await 부르기('/billing/state', {}, 딸)
+  잰다([...env.DB.열쇠.keys()].filter((k) => k.startsWith('carry:')).length === 1, '빚 되돌림은 한 번만(여러 번 불려도 한 줄)')
 }
 
 console.log('\n⑫ 계기판 · 계정 삭제')

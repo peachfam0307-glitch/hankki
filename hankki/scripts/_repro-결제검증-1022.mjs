@@ -97,7 +97,7 @@ const SA_JSON = JSON.stringify({ client_email: 'hankki-billing@hankki-6a768.iam.
 
 // ── 🗄 가짜 D1 — 워커가 쓰는 문장을 «전부» 안다. 모르는 문장이면 죽는다(몰래 새 문장이 생기면 판이 알린다). ──
 function 가짜D1() {
-  const 구매 = new Map(), 열쇠 = new Map(), 씀 = [], 보존 = new Map(), 보존씀 = []
+  const 탈퇴 = new Map(), 구매 = new Map(), 열쇠 = new Map(), 씀 = [], 보존 = new Map(), 보존씀 = []
   const st = { 고장: null }   // 'read' | 'credit-insert' — 일부러 망가뜨린다
   const 문장 = [
     [/^SELECT COALESCE\(SUM\(남음\),0\) AS n FROM 산열쇠 WHERE 통 = \?$/, ([통]) => {
@@ -126,7 +126,16 @@ function 가짜D1() {
     [/^SELECT 통, 상품 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통, 상품: 구매.get(t).상품 } : null)],
     [/^SELECT COUNT\(\*\) AS n FROM 산열쇠씀 WHERE 토큰 = \?$/, ([t]) => ({ n: 씀.filter((x) => x.토큰 === t).length })],
     [/^SELECT 토큰, 남음 FROM 산열쇠 WHERE 통 = \? AND 남음 < 0 ORDER BY 처음$/, ([통]) => [...열쇠.values()].filter((r) => r.통 === 통 && r.남음 < 0).sort((a, b) => a.처음 - b.처음).map((r) => ({ 토큰: r.토큰, 남음: r.남음 }))],
-    [/^UPDATE 산열쇠 SET 남음 = 남음 \+ \?, 때 = \? WHERE 토큰 = \?$/, ([k, , t]) => { const r = 열쇠.get(t); if (r) { r.남음 += k; return 1 } return 0 }],
+    [/^UPDATE 산열쇠 SET 남음 = 남음 \+ \?, 때 = \? WHERE 토큰 = \? AND 남음 <= -\?$/, ([k, , t, k2]) => { const r = 열쇠.get(t); if (r && r.남음 <= -k2) { r.남음 += k; return 1 } return 0 }],
+    // 🍎 일부 환불 = 남은 것만 0(빚 없음 · 10/24)
+    [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND NOT EXISTS \(SELECT 1 FROM 산구매 WHERE 산구매\.토큰 = 산열쇠\.토큰 AND 산구매\.상태 = 1\) AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && !(구매.get(t) && 구매.get(t).상태 === 1) && r.남음 > 0) { r.남음 = 0; return 1 } return 0 }],
+    // 🔁 탈퇴기록(빚·환불 수 이어 가기 · 10/24)
+    [/^SELECT 빚, 때 FROM 탈퇴기록 WHERE 표 = \?$/, ([표]) => (탈퇴.get(표) ? { 빚: 탈퇴.get(표).빚, 때: 탈퇴.get(표).때 } : null)],
+    [/^SELECT 환불수 FROM 탈퇴기록 WHERE 표 = \?$/, ([표]) => (탈퇴.get(표) ? { 환불수: 탈퇴.get(표).환불수 } : null)],
+    [/^INSERT OR IGNORE INTO 산열쇠 \(토큰, 통, 남음, 처음, 때\) VALUES \(\?, \?, \?, 0, \?\)$/, ([t, 통, 남음]) => { if (열쇠.has(t)) return 0; 열쇠.set(t, { 토큰: t, 통, 남음, 처음: 0 }); return 1 }],
+    [/^UPDATE 탈퇴기록 SET 빚 = 0 WHERE 표 = \? AND 때 = \?$/, ([표, 때]) => { const r = 탈퇴.get(표); if (r && r.때 === 때) { r.빚 = 0; return 1 } return 0 }],
+    [/^INSERT INTO 탈퇴기록 \(표, 빚, 환불수, 때\) VALUES \(\?, \?, \(SELECT COUNT\(\*\) FROM 산구매 WHERE 통 = \? AND 상태 = 1\), \?\) ON CONFLICT/, ([표, 빚, 통, 때]) => { const n = [...구매.values()].filter((r) => r.통 === 통 && r.상태 === 1).length; const r = 탈퇴.get(표); if (r) { r.빚 += 빚; r.환불수 += n; r.때 = 때 } else 탈퇴.set(표, { 빚, 환불수: n, 때 }); return 1 }],
+    [/^DELETE FROM 탈퇴기록 WHERE 때 < \?$/, ([기준]) => { let n = 0; for (const [k, r] of [...탈퇴]) if (r.때 < 기준) { 탈퇴.delete(k); n++ } return n }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 열쇠.get(t); if (r) { r.남음 = 0; return 1 } return 0 }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음 = 0; return 1 } return 0 }],
     [/^SELECT COUNT\(\*\) AS n, SUM\(CASE WHEN 상태 = 1 THEN 1 ELSE 0 END\) AS 환불 FROM 산구매$/, () => ({ n: 구매.size, 환불: [...구매.values()].filter((r) => r.상태 === 1).length })],
@@ -154,9 +163,9 @@ function 가짜D1() {
   ]
   const 찾기 = (sql) => { for (const [re, f] of 문장) if (re.test(sql)) return f; throw new Error('가짜 D1 이 모르는 문장: ' + sql) }
   return {
-    구매, 열쇠, 씀, 보존, 보존씀, st,
+    탈퇴, 구매, 열쇠, 씀, 보존, 보존씀, st,
     exec: async () => {},
-    batch: async (묶음) => { for (const s of 묶음) await s.run() },
+    batch: async (묶음) => { const 결과 = []; for (const s of 묶음) 결과.push(await s.run()); return 결과 },
     prepare: (sql) => {
       const f = 찾기(sql)
       return { bind: (...b) => ({ first: async () => f(b), all: async () => f(b), run: async () => ({ meta: { changes: f(b) } }) }) }
