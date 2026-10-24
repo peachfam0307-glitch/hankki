@@ -120,6 +120,7 @@ function 가짜D1() {
     [/^SELECT 통 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통 } : null)],
     // 💸 거둠 = 쓴 만큼 빚(10/23)
     [/^UPDATE 산열쇠 SET 남음 = -\(SELECT COUNT\(\*\) FROM 산열쇠씀 WHERE 산열쇠씀\.토큰 = 산열쇠\.토큰\), 때 = \? WHERE 토큰 = \? AND NOT EXISTS \(SELECT 1 FROM 산구매 WHERE 산구매\.토큰 = 산열쇠\.토큰 AND 산구매\.상태 = 1\) AND \(남음 > 0 OR /, ([, t]) => { const r = 열쇠.get(t); const n = 씀.filter((x) => x.토큰 === t).length; if (r && !(구매.get(t) && 구매.get(t).상태 === 1) && (r.남음 > 0 || (r.남음 === 0 && n > 0))) { r.남음 = -씀.filter((x) => x.토큰 === t).length; return 1 } return 0 }],
+    [/^SELECT 토큰, 상품, 상태 FROM 산구매 WHERE 주문 = \? OR 주문 = \? LIMIT 1$/, ([a, b]) => { for (const r of 구매.values()) if (r.주문 === a || r.주문 === b) return { 토큰: r.토큰, 상품: r.상품, 상태: r.상태 }; return null }],
     [/^SELECT COUNT\(\*\) AS n FROM 산구매 WHERE 통 = \? AND 상태 = 1 AND COALESCE/, ([통]) => ({ n: [...구매.values()].filter((r) => r.통 === 통 && r.상태 === 1 && !String(r.주문 || '').startsWith('test:') && String(r.주문 || '') !== 'apple:Sandbox').length })],
     // 💳 Vision 앞 깎기 실패 되돌림 · 돌려주기(10/24)
     [/^UPDATE 산열쇠 SET 남음 = 남음 \+ 1 WHERE 토큰 = \?$/, ([t]) => { const r = 열쇠.get(t); if (r) { r.남음++; return 1 } return 0 }],
@@ -455,6 +456,23 @@ r = await sync(엄마, [{ sku: PACK, token: 'tt2' }])
 잰다(r.paid === 20 && r.results[0].시험한도 === true, '같은 날 두 번째 → 기록만 · 열쇠 그대로', r)
 r = await sync(엄마, [{ sku: PACK, token: 'rr1' }])
 잰다(r.paid === 40 && !r.results[0].시험한도, '진짜 구매는 한도 없음', r)
+
+console.log('\n㉛ 영수증 다시 확인(운영자 · 무효 목록에 안 뜨는 시험 환불) (10/24)')
+{
+  const 재확인 = async (주, 키 = 'fs') => { const x = await worker.fetch(new Request('https://w.example/?recheck=' + encodeURIComponent(주), { method: 'GET', headers: { 'x-hankki-founder': 키 } }), env); return { status: x.status, ...(await x.json()) } }
+  새판({ FOUNDER_SECRET: 'fs' }); 영수증('rc1'); await sync(엄마, [{ sku: PACK, token: 'rc1' }])
+  r = await 재확인('GPA.rc1', 'wrong')
+  잰다(r.status === 401, '운영자 키 없으면 401', r)
+  r = await 재확인('GPA.rc1')
+  잰다(r.ok && r.구글상태 === '구매됨' && r.거둠 === 0 && 남음('rc1') === 20, '아직 구매됨 → 안 거둔다', r)
+  구글.영수증.get('rc1').purchaseState = 1
+  r = await 재확인('GPA.rc1')
+  잰다(r.ok && r.구글상태 === '취소됨' && r.원장 === '환불' && 남음('rc1') === 0 && env.DB.구매.get('rc1').상태 === 1, '구글이 취소라 하면 거두고 환불 표시', r)
+  r = await 재확인('GPA.rc1')
+  잰다(r.ok && r.거둠 === 0 && 남음('rc1') === 0, '또 눌러도 그대로(한 번만)', r)
+  r = await 재확인('GPA.없음')
+  잰다(r.ok && r.찾음 === false, '없는 주문 → 찾음 false', r)
+}
 
 console.log(`\n${실패 === 0 ? '✅' : '⛔'} ${통과}/${통과 + 실패} 통과\n`)
 process.exit(실패 === 0 ? 0 : 1)
