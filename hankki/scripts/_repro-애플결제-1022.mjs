@@ -302,7 +302,7 @@ console.log('\n⑭ 환불 악용 막기 — 빚 · 반복 환불 · 사용량 �
   잰다(남음('9201') === 0 && env.DB.씀.filter((x) => x.토큰 === 'apple:9201').length === 20, '20개 다 씀', 남음('9201'))
   // 사용량 답하기 — 동의 없으면 안 보낸다
   r = await 알림(환불알림('9201', 'CONSUMPTION_REQUEST'))
-  잰다(r.ok && r.답함 === false && r.왜 === '동의없음' && 애플.사용답.length === 0, '동의 없으면 애플에 안 보낸다', r)
+  잰다(r.ok && r.답함 === false && r.까닭 === '동의없음' && 애플.사용답.length === 0, '동의 없으면 애플에 안 보낸다', r)
   r = await 부르기('/billing/consent', {}, 딸)
   잰다(r.ok, '동의 적기', r)
   r = await 알림(환불알림('9201', 'CONSUMPTION_REQUEST'))

@@ -9,7 +9,7 @@ import { parseRecipeText, keepRaw, 자리표제목 } from './parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중, 번호알림받기, 선반집기, 동의안함으로끝났나 } from './tidy'
 import AIConsentSheet from './components/AIConsentSheet'   // 🔐 AI 로 보내기 전 허락 시트(큰 틀 6-② ⓑ)
 import PushConsentSheet from './components/PushConsentSheet'   // 🔔 폰 알림 허락 시트 — 담기가 끝난 «직후» 뜬다(2026-09-19)
-import { 까닭말, 다듬기끝말, 동의안함끝말, 남은열쇠말 } from './안내말'
+import { 까닭말, 다듬기끝말, 동의안함끝말, 남은열쇠말, 빚안내몸 } from './안내말'
 import { 만회값 } from './retidy'   // 🧺 선반에서 받은 답을 얹는 규칙 — 상세 화면 자동 만회와 «같은 곳»
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
@@ -836,6 +836,9 @@ export default function App() {
           return
         }
         try { 읽어냄() } catch { /* 통계가 죽어도 다듬기는 돈다 */ }
+        // 💸 환불 빚으로 AI 읽기가 막혔는데 기본 인식이 글자를 얻은 경우 — 끝 창에 이유를 같이 남긴다(10/24 점검 · 말은 안내말.js)
+        const 빚말 = (() => { const s = 열쇠셈(); return s.왜 === 'debt' ? `지금은 AI 읽기를 할 수 없어요 · ${빚안내몸(s.빚)}` : '' })()
+        const 빚덧 = (끝) => (빚말 ? { ...끝, 열쇠말: 빚말 } : 끝)
         // 🤖🤖 [2026-08-29] **AI 다듬기 — ⭐여기가 창업자가 실제로 쓰는 문이다.**
         //   ⛔⛔ 8/29 아침에 AI 를 `EditorScreen`(편집 화면 캡처 단추) «한 곳»에만 붙여서
         //      「가져오기 → 사진」·공유받기로 담은 것은 **워커를 한 번도 안 불렀다**
@@ -999,7 +1002,7 @@ export default function App() {
             // ✅ 다 됐으니 「아직 못 다듬음」 표시를 «지운다» — 안 지우면 다음에 열 때 또 다듬는다(뉴런 낭비).
             store.updateRecipe(rec.id, { tidyFail: 0, tidying: 0, tidyJob: '' })   // 🧺 다 받았으니 번호를 버린다
             // 🔚 창이 «끝말»로 바뀐다 — 사라지기만 하면 됐는지 안 됐는지 모른다.
-            끝알림(다듬기끝말(true, tidyFounder() ? tidyTail() : ''))
+            끝알림(빚덧(다듬기끝말(true, tidyFounder() ? tidyTail() : '')))
             if (tidyFounder()) showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
             return
           }
@@ -1023,7 +1026,7 @@ export default function App() {
           //   ⭐ 그래서 무엇이 안 됐는지 ＋ «어떻게 하면 되는지»를 한 줄로 붙여 말한다.
           // 🙅 [2026-09-13] 「사용 안 함」을 고른 건 실패가 아니다 — 표시를 지우고 «선택했다»고 말한다.
           if (동의안함으로끝났나()) { store.updateRecipe(rec.id, { tidyFail: 0, tidying: 0, tidyJob: '' }); 끝알림(동의안함끝말()); return }
-          끝알림(다듬기끝말(false, tidyFounder() ? tidyTail() : ''))
+          끝알림(빚덧(다듬기끝말(false, tidyFounder() ? tidyTail() : '')))
           if (tidyFounder()) showToast('AI 다듬기는 못 했어요' + tidyTail(), 6500)
         }).catch(() => {
           // ⛔ 여기까지 오면 표시가 «영영» 도는 것으로 굳는다 — 그게 제일 나쁜 모양이다.

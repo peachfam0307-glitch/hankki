@@ -564,6 +564,8 @@ export default function EditorScreen({ id, prefill }) {
         : note === 'global_quota' || note === 'rate_limited'
           ? ' · 지금 이용이 많아 기본 인식이에요'
           : ''
+    // ⏱ 빚 안내는 두 문장(약 110자)이라 6.5초로는 못 읽는다(10/24 점검) → 12초
+    const 긴띠 = note === 'debt' ? 12000 : 6500
 
     // 📢 남은 장수 알림 — 창업자 *"20장을 다쓰면 다썼다고 알려줘야해 무료서비스로 변경된다고"*
     //   ⭐ 「막힌 다음」이 아니라 «마지막 장을 쓴 그 순간» 알린다. 그래야 한 박자 늦지 않다.
@@ -583,7 +585,7 @@ export default function EditorScreen({ id, prefill }) {
     // 마지막 장 — 결과 반영
     if (target === 'ingredients' || target === 'steps') {
       const base = target === 'ingredients' ? '재료 초안을 담았어요' : '만드는 법 초안을 담았어요'
-      nav.showToast(base + (freeTail || 원인Tail || quotaTail || leftTail || ' · 다듬어 주세요'), freeTail || 원인Tail || quotaTail || leftTail ? 6500 : 4800)
+      nav.showToast(base + (freeTail || 원인Tail || quotaTail || leftTail || ' · 다듬어 주세요'), freeTail || 원인Tail || quotaTail || leftTail ? 긴띠 : 4800)
       return
     }
     const combined = ocrAccum.current
@@ -592,7 +594,7 @@ export default function EditorScreen({ id, prefill }) {
     set무료판(무료로읽었다)
     // 🆓 freeTail = 「그냥 읽기」로 왔다(열쇠를 안 썼다) — 열쇠 얘기보다 «먼저» 말한다
     // 🈳 글자를 못 얻었다 — 원인Tail 이 「열쇠는 그대로예요」까지 말해 준다(서버가 안 깎았을 때만)
-    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + (freeTail || 원인Tail || quotaTail), freeTail || 원인Tail || quotaTail ? 6500 : 3200); return }
+    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + (freeTail || 원인Tail || quotaTail), freeTail || 원인Tail || quotaTail ? 긴띠 : 3200); return }
     // 🤖 AI 다듬기 — ⭐**규칙 파서를 «먼저» 돌려놓는다.**
     //   AI 가 안 되든 느리든 이상하든 이 `r` 이 그대로 쓰인다(3층 구조 1층 · 앱은 절대 안 죽는다).
     //   ⛔ 순서를 뒤집지 말 것 — AI 를 먼저 기다렸다가 실패하면 그때 파싱하면, 실패한 만큼 유저가 더 기다린다.

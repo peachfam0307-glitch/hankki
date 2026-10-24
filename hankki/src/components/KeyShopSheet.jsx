@@ -30,6 +30,8 @@ const 말 = {
   // 🧪 연습 결제(TestFlight·심사)는 한 계정 하루 한 번만 열쇠가 들어온다(창업자 10/24)
   sandbox: '연습 결제는 하루 한 번만 열쇠가 들어와요. 내일 다시 해 볼 수 있어요.',
   consent: '동의를 저장하지 못했어요. 잠시 뒤에 다시 해 볼래요?',
+  // 🍎 다른 한끼 계정으로 산 구매(구매자 표가 다름) — 그 계정으로 로그인하면 들어온다(10/24 점검)
+  other: '다른 한끼 계정으로 산 구매예요. 그 계정으로 로그인하면 열쇠가 들어와요.',
 }
 // 한 번에 사는 수 — 완료 화면이 「빚부터 메워 덜 보이는」 까닭을 셀 때 쓴다(서버 `결제.소모성` 과 같다)
 const 묶음수 = 20
@@ -41,6 +43,7 @@ export default function KeyShopSheet ({ onClose, showToast }) {
   const [탈, set탈] = useState('')
   const [받은수, set받은수] = useState(0)
   const [채운수, set채운수] = useState(0)   // 💸 빚부터 메운 수(창업자 10/24 C)
+  const [남은빚, set남은빚] = useState(0)   // 💸 다 못 메운 빚(빚이 20 넘을 때)
   const [동의, set동의] = useState(false)   // ✅ 아이폰만 — 체크해야 사기 단추가 눌린다(창업자 10/23 Ⓐ · 10/24 아이폰만)
   const 동의필요 = 아이폰인가()
   const 닫기 = () => { if (!바쁨) onClose() }
@@ -84,19 +87,23 @@ export default function KeyShopSheet ({ onClose, showToast }) {
     const r = await buy(SKU.ocr20)
     set바쁨(false)
     if (!r.ok) { if (r.reason !== 'cancel') set탈(말[r.reason] || 말.fail); return }
-    // 이번 거래의 서버 답 — 애플은 거래 번호(id)로 · 구글은 영수증을 안 돌려주므로 같은 상품의 «된» 답으로 찾는다
+    // 이번 거래의 서버 답 — 애플은 거래 번호(id) · 구글은 영수증(token)으로 «이번 것»만 찾는다
+    //   ⛔ 같은 상품의 다른 답으로 대신하지 않는다 — 예전 구매가 «된» 걸 보고 이번 것도 됐다고 말할 뻔했다(10/24 점검)
     const 답들 = r.synced && Array.isArray(r.synced.results) ? r.synced.results : []
-    const 이번 = 답들.find((x) => x && x.id != null && String(x.id) === String(r.token)) || 답들.find((x) => x && x.sku === SKU.ocr20 && x.ok) || null
+    const 이번 = 답들.find((x) => x && String(x.id != null ? x.id : x.token) === String(r.token)) || null
     if (이번 && 이번.시험한도) { set탈(말.sandbox); return }
     // ⭐ 서버가 열쇠를 넣었는지는 «서버 답»으로만 말한다 — 폰이 추측해서 「들어왔어요」라고 하지 않는다
     // 🎉 위 띠(토스트)는 너무 작았다(창업자 10/23) → 시트 안에서 크게 보여 주고 「확인」으로 닫는다
     if (r.synced && r.synced.ok && 이번 && 이번.ok) {
       const 지금 = Number.isFinite(Number(r.synced.paid)) ? Number(r.synced.paid) : Number(getOcrLeft().paid) || 0
-      // 💸 빚이 있었으면 그만큼 먼저 메워져 덜 보인다 — 까닭을 같이 말한다(창업자 10/24 C)
+      // 💸 빚이 있었으면 그만큼 먼저 메워져 덜 보인다 — 까닭을 같이 말한다(창업자 10/24 C) · 아직 남은 빚도
       set채운수(전빚 > 0 ? Math.min(전빚, 묶음수) : 0)
+      set남은빚(Math.max(0, Number(r.synced.빚) || 0))
       set받은수(Math.max(0, 지금 - 전)); set상태('done'); return
     }
-    set탈(말.later)
+    // 이번 거래가 «안 된» 까닭별로 — 가족 승인 대기는 «아직 결제 전»이다(「결제는 됐어요」라고 하지 않는다)
+    const 왜 = 이번 && !이번.ok ? 이번.reason : ''
+    set탈(왜 === 'pending' ? 말.pending : 왜 === 'not_this_account' || 왜 === 'other_account' ? 말.other : 말.later)
   }
 
   return (
@@ -137,7 +144,9 @@ export default function KeyShopSheet ({ onClose, showToast }) {
                 <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-0.02em', marginTop: 8 }}>{KEY_NAME} {채운수 ? 묶음수 : 받은수}{KEY_UNIT}가 들어왔어요</div>
                 <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.6, marginTop: 6, marginBottom: 16, wordBreak: 'keep-all' }}>
                   {/* 💸 빚부터 메워 덜 보이는 까닭(창업자 10/24 C) */}
-                  {채운수 ? `환불된 구매에서 쓴 ${채운수}${KEY_UNIT}를 먼저 채워 지금 ${받은수}${KEY_UNIT}예요.` : '사진 가져오기에서 바로 쓸 수 있어요.'}
+                  {남은빚
+                    ? `환불된 구매에서 쓴 ${KEY_NAME}를 먼저 채웠어요. 아직 ${남은빚}${KEY_UNIT}가 남아 있어 지금은 AI 읽기를 할 수 없어요.`
+                    : 채운수 ? `환불된 구매에서 쓴 ${채운수}${KEY_UNIT}를 먼저 채워 지금 ${받은수}${KEY_UNIT}예요.` : '사진 가져오기에서 바로 쓸 수 있어요.'}
                 </div>
                 <button className="btn-primary press" style={{ width: '100%' }} onClick={onClose}>확인</button>
               </div>

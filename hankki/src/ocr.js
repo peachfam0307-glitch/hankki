@@ -844,7 +844,7 @@ export async function ocrImage(image, onProgress, opts = {}) {
     // 🚪 key_block — 열쇠가 모자라 AI 읽기를 «못» 한 사람. «없음»(0개라 단추가 하나뿐) 과 «막힘»(서버 429) 둘 다.
     //    ⭐ 이 수가 곧 결제 수요다 — 「막힌 사람이 몇 명인가」를 모르면 결제를 켤 때가 언제인지 못 정한다.
     if ((opts.noVision && opts.noVisionWhy === '없음') || (!opts.noVision && _ocrNote === 'user_quota')) { try { 열쇠막힘() } catch { /* noop */ } }
-    기본인식알림(opts.noVision ? (opts.noVisionWhy === '없음' ? '없음' : '고름') : (_ocrNote === 'user_quota' || _ocrNote === 'debt' ? '막힘' : '실패'))
+    기본인식알림(opts.noVision ? (opts.noVisionWhy === '없음' ? '없음' : '고름') : (_ocrNote === 'user_quota' ? '막힘' : '실패'))
   }
   // 1) 폰 내장 OCR (있으면 정확, 요즘 크롬은 기본 비활성이라 대개 건너뜀)
   if (typeof image === 'string') {

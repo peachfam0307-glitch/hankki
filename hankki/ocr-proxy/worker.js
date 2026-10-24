@@ -1212,7 +1212,7 @@ async function 결제길(request, env, cors) {
       결과.push({ sku: 상품, token: 토큰, ...(await 구매하나(env, 통, 상품, 토큰)) })   // 🔁 token = 앱이 «이번 구매»의 답을 찾게(10/24)
     }
     const s = await 산열쇠세기(env, 통)
-    return json({ ok: true, results: 결과, paid: s.남음, ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
+    return json({ ok: true, results: 결과, paid: s.남음, ...(s.빚 ? { 빚: s.빚 } : {}), ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
   }
   // 🍎 아이폰 — 앱이 StoreKit 거래 번호(transactionId)만 보낸다. ⛔앱이 준 서명 거래는 안 믿고 애플 서버에 «다시» 묻는다.
   //   한 번에 10개까지(무료 워커 바깥 호출 50번 · 거래 하나 = 많아야 2번(본 서버 → 없으면 샌드박스)).
@@ -1224,7 +1224,7 @@ async function 결제길(request, env, cors) {
       결과.push({ id, ...(await 애플구매하나(env, 통, id)) })
     }
     const s = await 산열쇠세기(env, 통)
-    return json({ ok: true, results: 결과, paid: s.남음, ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
+    return json({ ok: true, results: 결과, paid: s.남음, ...(s.빚 ? { 빚: s.빚 } : {}), ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
   }
   if (경로 === '/billing/state') {
     const s = await 산열쇠세기(env, 통)
@@ -1616,8 +1616,8 @@ async function 사용량답하기(env, id) {
   const 토큰 = `apple:${v.t.transactionId}`
   await 결제표준비(env.DB)
   const 줄 = await env.DB.prepare('SELECT 통, 상품 FROM 산구매 WHERE 토큰 = ?').bind(토큰).first()
-  if (!줄) return { ok: true, 답함: false, 왜: '원장없음' }
-  if (!(await env.DB.prepare('SELECT 1 AS y FROM 결제동의 WHERE 통 = ?').bind(줄.통).first())) return { ok: true, 답함: false, 왜: '동의없음' }
+  if (!줄) return { ok: true, 답함: false, 까닭: '원장없음' }
+  if (!(await env.DB.prepare('SELECT 1 AS y FROM 결제동의 WHERE 통 = ?').bind(줄.통).first())) return { ok: true, 답함: false, 까닭: '동의없음' }   // ⭐ «왜» 는 OCR 안내 까닭 이름이라 겹치지 않게 «까닭»
   const 지급 = (결제.소모성[줄.상품] || 1) * Math.max(1, parseInt(v.t.quantity, 10) || 1)
   const c = await env.DB.prepare('SELECT COUNT(*) AS n FROM 산열쇠씀 WHERE 토큰 = ?').bind(토큰).first()
   const 씀 = Math.min(지급, (c && c.n) || 0)
