@@ -462,6 +462,28 @@ export default {
       return json(await 환불회수(env), 200, cors)
     }
 
+    // 🔁 영수증 다시 확인(운영자) — 주문 번호 하나를 구글에 «직접» 물어 환불(취소)이면 거둔다.
+    //   📮 10/24 실측 = 라이선스 테스터 시험 환불이 24시간 넘게 무효 목록(voidedpurchases)에 «안» 떴다(본 0) → 목록만 믿으면 놓친다.
+    //   📖 `?recheck=<GPA.…>` + 헤더 x-hankki-founder (운영자 페이지 단추) · 구글 영수증만(애플은 알림·기록이 따로 있다)
+    if (new URL(request.url).searchParams.get('recheck')) {
+      const 준열쇠 = request.headers.get('x-hankki-founder') || new URL(request.url).searchParams.get('key') || ''
+      if (!env.FOUNDER_SECRET || 준열쇠 !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      if (!env.DB || !env.PLAY_SA_JSON) return json({ error: 'billing_off' }, 503, cors)
+      try {
+        await 결제표준비(env.DB)
+        const 주 = String(new URL(request.url).searchParams.get('recheck')).trim().slice(0, 80)
+        const 줄 = await env.DB.prepare('SELECT 토큰, 상품, 상태 FROM 산구매 WHERE 주문 = ? OR 주문 = ? LIMIT 1').bind(주, 'test:' + 주).first()
+        if (!줄) return json({ ok: true, 찾음: false }, 200, cors)
+        const g = await playGet(env, `${PLAY_API}/${결제.패키지}/purchases/products/${encodeURIComponent(줄.상품)}/tokens/${encodeURIComponent(줄.토큰)}`)
+        if (!g.ok) return json({ ok: false, 찾음: true, reason: g.reason }, 502, cors)
+        const 구글상태 = g.data && g.data.purchaseState
+        let 거둠 = 0
+        if (구글상태 === 1 && 줄.상태 !== 1) 거둠 = await 환불적기(env.DB, 줄.토큰, Date.now())
+        return json({ ok: true, 찾음: true, 구글상태: 구글상태 === 1 ? '취소됨' : 구글상태 === 0 ? '구매됨' : 구글상태 === 2 ? '대기' : String(구글상태), 원장: 줄.상태 === 1 || 거둠 ? '환불' : '구매됨', 거둠 }, 200, cors)
+      } catch { return json({ error: 'db_error' }, 500, cors) }
+    }
+
+
     // 🧾 거래기록 찾기 — 유저가 문의 메일로 「내 구매 기록」을 청하면 창업자가 주문 번호로 뽑는다(시행령 6조 ②항 2호 · 2026-10-23).
     //   📖 `https://<워커주소>/?order=<주문번호>&key=<FOUNDER_SECRET>` — 구글 = `GPA.…` · 애플 = 거래 번호(숫자)
     //   ⛔ 계정 번호(통)는 안 내준다 — 주문·상품·시각·상태·남은 수·쓴 시각만.
