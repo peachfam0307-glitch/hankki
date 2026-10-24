@@ -328,7 +328,10 @@ export default {
     //   ⛔ 본문은 «안 믿는다» — 거래 번호만 꺼내 애플 서버에 다시 묻고, 거기서 «취소»라고 할 때만 거둔다.
     //      그래서 누가 가짜 알림을 보내도 남의 열쇠를 못 지운다(재현판 ㉕).
     if (request.method === 'POST' && new URL(request.url).pathname === '/billing/apple/notify') {
-      return json(await 애플알림(request, env), 200, cors)
+      // ⛔ 실패면 실패로 답한다 — 200 이면 애플이 «받았다»고 보고 다시 안 보낸다(사용량 답하기 12시간을 놓친다).
+      //   📜 애플 원문 = "Send HTTP 50x or 40x to have the App Store retry the notification" · 다시 보냄 = 1·12·24·48·72시간
+      const 답 = await 애플알림(request, env)
+      return json(답, 답.ok ? 200 : 답.reason === 'bad_json' ? 400 : 503, cors)
     }
 
     // 📊📊 **[창업자 확정 2026-08-31] 「이번 달 몇 건 / 900」을 볼 수 있게 한다 — *"이건 꼭 해야해"***
@@ -542,6 +545,8 @@ export default {
     const sub = 준토큰 ? 확인번호 : (env.AUTH_STRICT === '1' ? '' : 거름(body.sub))
     const 로그인 = !!sub
     const 통 = 로그인 ? `a:${sub}` : `d:${uid}`
+    // 📅 월 무료 카운터는 «계정»으로 센다 — 기기 번호(uid)는 앱이 보내는 값이라 바꿔 넣으면 월 5장이 새로 생겼다(10/24 점검)
+    const 월통 = 로그인 ? 통 : uid
     // 🎁🎁 행동 열쇠 표식을 찾을 통들 — 로그인했으면 «기기 통»도 같이 본다.
     //   ⛔⛔ **이게 없으면 로그인만 하면 다섯을 «또» 받는다** — 통 이름이 `d:` → `a:` 로 바뀌어
     //      옛 표식을 못 찾기 때문이다. 🔢 비로그인으로 다섯 받고 로그인하면 보너스 5 → 10.
@@ -607,7 +612,7 @@ export default {
       //   ⭐ 그래서 «부를 때» 다시 센다 — 상한·보너스·쓴수 는 모두 지금 값이다.
       const lw = Math.max(0, 웰컴상한 + 보너스 - 쓴수 - (깎았나 ? 1 : 0))
       let lm = LIMITS.PER_USER_MONTHLY   // 웰컴을 쓰는 동안엔 월 몫이 아직 안 줄었다
-      if (kv && lw <= 0) lm = Math.max(0, LIMITS.PER_USER_MONTHLY - (await num(kv, `u:${uid}:${ym}`)))
+      if (kv && lw <= 0) lm = Math.max(0, LIMITS.PER_USER_MONTHLY - (await num(kv, `u:${월통}:${ym}`)))
       return {
         // 🔓 [2026-09-02] 운영자면 「무제한」이라고 «말해» 준다 — 앱이 이 표식을 보고 ∞ 로 그린다.
         //   ⛔ 차감·한도 판정은 안 바뀐다. 이건 «보여 주는 값»에만 붙는다.
@@ -770,11 +775,12 @@ export default {
         num(kv, `ip:${ip}:${minute}`),
         num(kv, `d:${ymd}`),
         num(kv, `m:${ym}`),
-        num(kv, `u:${uid}:${ym}`),
+        num(kv, `u:${월통}:${ym}`),
       ])
       if (!founder && ipC >= LIMITS.PER_IP_PER_MIN) return json({ error: 'rate_limited' }, 429, cors)   // ④
-      if (monC >= LIMITS.MONTHLY_GLOBAL) return json({ error: 'global_quota' }, 429, cors)              // ① 운영자도 존중
-      if (dayC >= LIMITS.DAILY_GLOBAL) return json({ error: 'global_quota' }, 429, cors)                // ② 운영자도 존중
+      // ①② 전역 무료 상한(월 900·일 120) — ⭐ «산 열쇠로 읽는 것»엔 안 건다(아래에서 판정 뒤에 본다).
+      //   ⛔ 전엔 맨 앞에서 막아, 무료 요청이 상한을 채운 날엔 돈 낸 사람도 못 읽었다(10/24 점검).
+      const 전역참 = monC >= LIMITS.MONTHLY_GLOBAL || dayC >= LIMITS.DAILY_GLOBAL
       // ③ 유저 한도 — ⭐**웰컴이 남아 있으면 월 한도를 안 본다.** 웰컴을 다 쓴 뒤부터 월 5장이다.
       // 💳 무료(웰컴·월 5)를 다 쓴 사람은 **산 열쇠**가 있으면 그걸로 읽는다.
       //   ⭐ 무료부터 쓴다 — 월 5장은 다음 달이면 사라지지만 산 열쇠는 안 사라진다.
@@ -792,7 +798,7 @@ export default {
           쓴수 += 웰씀; welcomeLeft -= 웰씀
           await Promise.all([kv.put(`wu:${통}`, String(쓴수), { expirationTtl: 60 * 60 * 24 * 365 }), ...(로그인 ? [kv.put(`wu:d:${uid}`, String(쓴수), { expirationTtl: 60 * 60 * 24 * 365 })] : [])])
         }
-        if (월씀) await kv.put(`u:${uid}:${ym}`, String(userC + 월씀), { expirationTtl: 60 * 60 * 24 * 40 })
+        if (월씀) await kv.put(`u:${월통}:${ym}`, String(userC + 월씀), { expirationTtl: 60 * 60 * 24 * 40 })
         // ⭐ 남은 빚은 «다시 센다» — 같은 때 다른 요청이 갚았으면 그 몫이 빠져 있다(어림 계산으로 막거나 풀지 않는다)
         const 남은빚 = 갚음 === 웰갚 + 월갚 ? 산빚 - 갚음 : (await 산열쇠세기(env, 산통)).빚 || 0
         // ⚡ 다른 요청이 같은 때 갚았으면 그쪽이 웰컴 카운터를 올렸다 → 다시 읽는다(옛 값으로 덮어 그 몫을 지우지 않게)
@@ -804,6 +810,8 @@ export default {
         }
       }
       if (!founder && welcomeLeft <= 0 && userC >= LIMITS.PER_USER_MONTHLY && 산열쇠 > 0) 산열쇠로 = true
+      if (!founder && 전역참 && !산열쇠로 && 산열쇠 > 0) 산열쇠로 = true   // 무료가 남았어도 전역 상한인 날엔 산 열쇠로
+      if (전역참 && !산열쇠로) return json({ error: 'global_quota' }, 429, cors)   // ①② 운영자도 존중 · 산 열쇠는 통과
       if (!founder && welcomeLeft <= 0 && userC >= LIMITS.PER_USER_MONTHLY && !산열쇠로) {
         // 🚧🚧 **[2026-09-01] 「막힘」을 센다 — 유료를 «언제» 켤지 판정하는 숫자다.**
         //   ⭐⭐ 「유저 몇 명」은 잘못된 잣대다 — 100명이어도 아무도 무료 한도를 안 넘으면 팔 게 없고,
@@ -864,15 +872,15 @@ export default {
     const 유저몫차감 = async () => {
       if (!kv) return
       // 💳 산 열쇠로 읽었으면 그걸 한 개 깎는다 — 무료 통(`wu:`)은 이미 다 썼으니 안 건드린다.
-      //   ⚠️ **정직하게** — 마지막 한 개를 «동시에» 두 장이 쓰면 둘 다 Vision 을 부르고 하나만 깎인다
-      //      (깎기가 Vision «뒤»라서). 유저가 잃는 게 아니라 «우리가» 한 번 손해 본다 — 창업자 Ⓐ 순서 그대로.
-      if (산열쇠로) 산열쇠 = await 산열쇠쓰기(env, 산통)
+      //   ⭐ 산 열쇠는 Vision «앞»에서 이미 깎았다(`선토큰` · 10/24 점검 — 동시에 여러 장이면 한 개로 여러 장 읽혔다).
+      //      그래서 여기선 남은 수만 다시 센다 · 무료 카운터(웰컴·월)는 안 건드린다(전역 상한 날 웰컴이 남아 있어도).
+      if (산열쇠로) { 산열쇠 = (await 산열쇠세기(env, 산통)).남음; return }
       await Promise.all([
         // ⭐ 웰컴을 쓰는 동안에도 «월 카운터를 같이» 올린다 —
         //    그래야 웰컴을 다 쓴 순간 월 카운터가 5를 넘어 「그 달은 끝」이 된다.
         //    (창업자 확정: *"웰컴20장 다쓰면 무료5장은 소진한거니까 기본인식으로"*)
         // 🔢 유저 몫 — **사진 한 장마다** 깎는다(창업자 최종 확정 2026-08-13 밤)
-        inc(kv, `u:${uid}:${ym}`, 60 * 60 * 24 * 40),
+        inc(kv, `u:${월통}:${ym}`, 60 * 60 * 24 * 40),
         // 🎁 웰컴 차감 = 「쓴 수」를 하나 올린다. ⚠️만료 «1년»(달이 바뀌어도 남아야 한다 · 창업자 Ⓐ)
         //   ⭐ **웰컴이 남아 있을 때만 올린다** — 다 쓴 뒤의 「월 5장」은 여기서 안 센다.
         //      안 그러면 나중에 로그인해서 상한이 30 이 될 때 월 몫까지 웰컴에서 깎인 셈이 된다.
@@ -889,6 +897,15 @@ export default {
           : []),
       ])
     }
+
+    // 💳 산 열쇠는 «먼저» 깎는다 — 못 깎으면(동시에 온 다른 사진이 마지막 한 개를 가져감) Vision 을 안 부른다.
+    //   ⭐ Vision 이 실패하거나 빈손이면 `되돌림()` 으로 돌려준다(유저가 잃지 않는다 · 창업자 Ⓐ 「안 준다고 말했으면 안 줘야」).
+    let 선토큰 = ''
+    if (산열쇠로) {
+      선토큰 = await 산열쇠깎기(env, 산통)
+      if (!선토큰) return json({ error: 'user_quota', 깎음: false }, 429, cors)
+    }
+    const 되돌림 = async () => { if (선토큰) { await 산열쇠돌려주기(env, 선토큰); 선토큰 = '' } }
 
     // ── Google Vision (문서 OCR + 한/영 힌트) ──
     let vr
@@ -908,12 +925,14 @@ export default {
     //   📢 `깎음: false` 를 실어 보낸다 — 앱은 이 값 하나로만 「열쇠는 그대로예요」를 말한다.
     } catch {
       await 찜지우기(env, 통, 지문)   // 🗑 찜만 남으면 그 사진이 40일 동안 막힌다
+      await 되돌림()
       return json({ error: 'vision_fetch_failed', 깎음: false, 왜: '구글실패' }, 502, cors)
     }
 
     if (!vr.ok) {
       const detail = (await vr.text().catch(() => '')).slice(0, 300)
       await 찜지우기(env, 통, 지문)   // 🗑 위와 같은 이유
+      await 되돌림()
       return json({ error: 'vision_error', status: vr.status, detail, 깎음: false, 왜: '구글실패' }, 502, cors)
     }
     // ⭐ 구글이 200 으로 답했다 ＝ 우리는 이미 요금을 냈다. 위 두 return(502) 을 지난 뒤라
@@ -938,6 +957,7 @@ export default {
     //      악용해도 얻는 게 없다 — 열쇠는 안 줄지만 **레시피도 못 얻고**, 같은 사진은 두 번 안 불린다.
     if (text.trim().length < 짧은글자) {
       await 장부적기(env, kv, 통, 지문, '')
+      await 되돌림()
       return json({ text: '', 깎음: false, 왜: '빈손', left: await 남은알림(false) }, 200, cors)
     }
 
@@ -1010,6 +1030,10 @@ async function 환불적기(db, 토큰, 지금, 일부 = false) {
   const 결과 = await db.batch([
     db.prepare(일부 ? 남은만거둠SQL : 거둠SQL).bind(지금, 토큰),
     db.prepare('UPDATE 산구매 SET 상태 = 1, 때 = ? WHERE 토큰 = ?').bind(지금, 토큰),
+    // 🔁 탈퇴 «뒤»에 온 환불 — 그 사람 탈퇴기록에 쓴 만큼 빚 ＋ 환불 1 (일부 환불은 빚 없이 환불 수만) · 보존 표시가 아직 0 일 때 한 번만
+    //   ⭐ 때를 새로 적는다 — 재가입 뒤 되돌림 줄(carry:표:때)이 새 이름으로 한 번 더 생긴다
+    db.prepare('UPDATE 탈퇴기록 SET 빚 = 빚 + (CASE WHEN ? = 1 THEN 0 ELSE (SELECT COUNT(*) FROM 보존씀 WHERE 보존씀.토큰 = ?) END), 환불수 = 환불수 + 1, 때 = ? WHERE 표 = (SELECT 표 FROM 보존구매 WHERE 토큰 = ? AND 상태 = 0)')
+      .bind(일부 ? 1 : 0, 토큰, 지금, 토큰),
     db.prepare('UPDATE 보존구매 SET 상태 = 1 WHERE 토큰 = ?').bind(토큰),   // 🧾 지운 계정 것이면 보존 표에 환불 표시
   ])
   return (결과 && 결과[0] && 결과[0].meta && 결과[0].meta.changes) || 0
@@ -1032,6 +1056,8 @@ const 결제표준비 = async (db) => {
   //   ⭐ 계정 번호(통) 칸이 «아예 없다» — 일반 표와 이어 붙일 고리가 없다. 쓰는 곳 = 남의 영수증 막이 · 환불 표시 · 운영자 거래기록 찾기 · 5년 뒤 삭제뿐.
   await db.exec('CREATE TABLE IF NOT EXISTS 보존구매 (토큰 TEXT PRIMARY KEY, 상품 TEXT, 주문 TEXT, 상태 INTEGER, 처음 INTEGER, 지운때 INTEGER)')
   await db.exec('CREATE TABLE IF NOT EXISTS 보존씀 (토큰 TEXT NOT NULL, 때 INTEGER)')
+  // 🔁 보존구매에 «탈퇴 해시»(표) 칸 — 탈퇴 «뒤»에 온 환불도 그 사람의 탈퇴기록(빚·환불 수)에 더하려고(10/24 점검). 이미 있으면 그냥 지나간다.
+  try { await db.exec('ALTER TABLE 보존구매 ADD COLUMN 표 TEXT') } catch { /* 이미 있다 */ }
   // ✅ 「환불 요청 때 사용 내역을 애플에 제공」 동의 — 구매 시트 체크 칸(창업자 10/23 Ⓐ). 동의 없으면 애플에 안 보낸다(애플 원문).
   await db.exec('CREATE TABLE IF NOT EXISTS 결제동의 (통 TEXT PRIMARY KEY, 때 INTEGER)')
   // 🔁 탈퇴해도 «빚·환불 수»는 이어 간다(창업자 10/24 「막아야지」) — 안 그러면 「사서 다 쓰고 → 환불 → 탈퇴 → 재가입」이 끝없이 된다.
@@ -1085,6 +1111,36 @@ async function 빚갚기(env, 통, n) {
   } catch { /* 못 갚으면 다음 번에 */ }
   return 처음n - n   // 실제로 갚은 수 — 부르는 쪽은 이만큼만 무료 카운터를 올린다
 }
+// 💳 Vision «앞»에서 한 개 깎는다 → 깎은 구매 토큰('' = 못 깎음). 사용 기록도 같이 적는다(못 적으면 되돌림 · 10/24 점검).
+//   ⭐ 두 번 시도 — 첫 줄을 남이 막 비웠으면 다음 줄로.
+async function 산열쇠깎기(env, 통) {
+  try {
+    for (let i = 0; i < 2; i++) {
+      const row = await env.DB.prepare('SELECT 토큰 FROM 산열쇠 WHERE 통 = ? AND 남음 > 0 ORDER BY 처음 LIMIT 1').bind(통).first()
+      if (!row) return ''
+      const 지금 = Date.now()
+      const r = await env.DB.prepare('UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = ? WHERE 토큰 = ? AND 남음 > 0').bind(지금, row.토큰).run()
+      if (r && r.meta && r.meta.changes) {
+        // 🧾 사용 기록 — 깎인 때만. 못 적으면 깎은 걸 되돌린다(기록 없는 사용 = 환불 때 빚이 덜 잡힌다)
+        try { await env.DB.prepare('INSERT INTO 산열쇠씀 (토큰, 통, 때) VALUES (?, ?, ?)').bind(row.토큰, 통, 지금).run() } catch {
+          await env.DB.prepare('UPDATE 산열쇠 SET 남음 = 남음 + 1 WHERE 토큰 = ?').bind(row.토큰).run(); return ''
+        }
+        return row.토큰
+      }
+    }
+  } catch { /* 못 깎으면 산 열쇠로 안 읽는다 */ }
+  return ''
+}
+// 💳 Vision 이 실패·빈손이면 돌려준다 — 사용 기록 한 줄도 같이 지운다(가장 최근 것)
+async function 산열쇠돌려주기(env, 토큰) {
+  try {
+    await env.DB.batch([
+      // ⛔ 그 사이 환불로 거둔 구매면 안 돌려준다(빚 줄에 +1 하면 셈이 틀어진다)
+      env.DB.prepare('UPDATE 산열쇠 SET 남음 = 남음 + 1, 때 = ? WHERE 토큰 = ? AND NOT EXISTS (SELECT 1 FROM 산구매 WHERE 산구매.토큰 = 산열쇠.토큰 AND 산구매.상태 = 1)').bind(Date.now(), 토큰),
+      env.DB.prepare('DELETE FROM 산열쇠씀 WHERE rowid = (SELECT MAX(rowid) FROM 산열쇠씀 WHERE 토큰 = ?)').bind(토큰),
+    ])
+  } catch { /* 못 돌려주면 한 개 손해 — 드물다 */ }
+}
 async function 산열쇠쓰기(env, 통) {
   try {
     const row = await env.DB.prepare('SELECT 토큰 FROM 산열쇠 WHERE 통 = ? AND 남음 > 0 ORDER BY 처음 LIMIT 1').bind(통).first()
@@ -1129,10 +1185,10 @@ async function 결제길(request, env, cors) {
       const 표 = await 탈퇴표(통)
       await env.DB.batch([
         // 🔁 빚·환불 수는 해시 표로 넘긴다(재가입하면 되살아난다 · 창업자 10/24) — 더한다: 되돌리기 전에 또 지워도 안 사라진다
-        env.DB.prepare('INSERT INTO 탈퇴기록 (표, 빚, 환불수, 때) VALUES (?, ?, (SELECT COUNT(*) FROM 산구매 WHERE 통 = ? AND 상태 = 1), ?) ON CONFLICT(표) DO UPDATE SET 빚 = 탈퇴기록.빚 + excluded.빚, 환불수 = 탈퇴기록.환불수 + excluded.환불수, 때 = excluded.때')
+        env.DB.prepare('INSERT INTO 탈퇴기록 (표, 빚, 환불수, 때) VALUES (?, ?, (SELECT COUNT(*) FROM 산구매 WHERE 통 = ? AND 상태 = 1 AND COALESCE(주문, \'\') NOT LIKE \'test:%\' AND COALESCE(주문, \'\') != \'apple:Sandbox\'), ?) ON CONFLICT(표) DO UPDATE SET 빚 = 탈퇴기록.빚 + excluded.빚, 환불수 = 탈퇴기록.환불수 + excluded.환불수, 때 = excluded.때')
           .bind(표, 남.빚 || 0, 통, 지금d),
         env.DB.prepare('DELETE FROM 산열쇠 WHERE 통 = ?').bind(통),
-        env.DB.prepare('INSERT OR IGNORE INTO 보존구매 (토큰, 상품, 주문, 상태, 처음, 지운때) SELECT 토큰, 상품, 주문, 상태, 처음, ? FROM 산구매 WHERE 통 = ?').bind(지금d, 통),
+        env.DB.prepare('INSERT OR IGNORE INTO 보존구매 (토큰, 상품, 주문, 상태, 처음, 지운때, 표) SELECT 토큰, 상품, 주문, 상태, 처음, ?, ? FROM 산구매 WHERE 통 = ?').bind(지금d, 표, 통),
         env.DB.prepare('INSERT INTO 보존씀 (토큰, 때) SELECT 토큰, 때 FROM 산열쇠씀 WHERE 통 = ?').bind(통),
         env.DB.prepare('DELETE FROM 산구매 WHERE 통 = ?').bind(통),
         env.DB.prepare('DELETE FROM 산열쇠씀 WHERE 통 = ?').bind(통),
@@ -1153,7 +1209,7 @@ async function 결제길(request, env, cors) {
     for (const p of 목록) {
       const 상품 = String((p && p.sku) || '')
       const 토큰 = String((p && p.token) || '')
-      결과.push({ sku: 상품, ...(await 구매하나(env, 통, 상품, 토큰)) })
+      결과.push({ sku: 상품, token: 토큰, ...(await 구매하나(env, 통, 상품, 토큰)) })   // 🔁 token = 앱이 «이번 구매»의 답을 찾게(10/24)
     }
     const s = await 산열쇠세기(env, 통)
     return json({ ok: true, results: 결과, paid: s.남음, ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
@@ -1175,7 +1231,7 @@ async function 결제길(request, env, cors) {
     // 🍎 account = 이 사람의 구매자 표(appAccountToken) — 앱은 이걸 그대로 애플 결제에 붙인다(앱이 번호를 따로 만들지 않는다)
     // 🚫 환불 수 — 막는 수에 닿았으면 앱이 구매 단추 대신 안내를 띄운다(이미 산 것은 그대로 넣어 준다)
     let 환불수 = 0   // 🔁 탈퇴 전 환불(탈퇴기록)도 같이 센다(10/24)
-    try { await 결제표준비(env.DB); const c = await env.DB.prepare('SELECT COUNT(*) AS n FROM 산구매 WHERE 통 = ? AND 상태 = 1').bind(통).first(); 환불수 = (c && c.n) || 0
+    try { await 결제표준비(env.DB); const c = await env.DB.prepare('SELECT COUNT(*) AS n FROM 산구매 WHERE 통 = ? AND 상태 = 1 AND COALESCE(주문, \'\') NOT LIKE \'test:%\' AND COALESCE(주문, \'\') != \'apple:Sandbox\'').bind(통).first(); 환불수 = (c && c.n) || 0
       const 전 = await env.DB.prepare('SELECT 환불수 FROM 탈퇴기록 WHERE 표 = ?').bind(await 탈퇴표(통)).first(); 환불수 += (전 && 전.환불수) || 0 } catch { /* 못 세면 안 막는다 */ }
     return json({ ok: true, paid: s.남음, ...(s.빚 ? { 빚: s.빚 } : {}), account: await 계정표(통), ...(환불수 >= 환불막는수 ? { blocked: 'refunds' } : {}), ...(s.흐림 ? { paidStale: true } : {}) }, 200, cors)
   }
@@ -1228,11 +1284,20 @@ async function 구매하나(env, 통, 상품, 토큰) {
   // ③ 원장 — ⭐「처음인가」로 안 가른다. 넣는 문장이 멱등이라 매번 그냥 다시 넣는다(②).
   //   ⚠️ `quantity`(한 번에 여러 개) 는 그대로 믿지 않고 1~50 으로 자른다.
   const 수량 = Math.max(1, Math.min(50, parseInt(g.quantity, 10) || 1))
+  // 🧪 시험 구매(purchaseType 0 = 라이선스 테스터 · 돈 안 나감)는 애플 연습 결제처럼 «한 계정 하루 한 번»만 열쇠(창업자 10/24)
+  //   📜 구글 원문(purchases.products) = purchaseType 은 «표준 결제가 아닐 때만» 있다 · 0 Test · 1 Promo · 2 Rewarded
+  //   ⭐ 원장 주문 칸에 test: 를 붙여 가른다(계기판·환불 수에서 뺀다)
+  const 시험 = g.purchaseType === 0
+  let 줄열쇠 = 결제.소모성[상품] * 수량
   try {
+    if (시험) {
+      const c = await db.prepare("SELECT COUNT(*) AS n FROM 산구매 WHERE 통 = ? AND 주문 LIKE 'test:%' AND 처음 > ? AND 토큰 != ?").bind(통, 지금 - 86400000, 토큰).first()
+      if (c && c.n >= 1) 줄열쇠 = 0
+    }
     await db.prepare('INSERT OR IGNORE INTO 산구매 (토큰, 상품, 통, 주문, 상태, 확인, 비움, 처음, 때) VALUES (?, ?, ?, ?, 0, 0, 0, ?, ?)')
-      .bind(토큰, 상품, 통, String(g.orderId || ''), 지금, 지금).run()
+      .bind(토큰, 상품, 통, (시험 ? 'test:' : '') + String(g.orderId || ''), 지금, 지금).run()
     await db.prepare('INSERT OR IGNORE INTO 산열쇠 (토큰, 통, 남음, 처음, 때) VALUES (?, ?, ?, ?, ?)')
-      .bind(토큰, 통, 결제.소모성[상품] * 수량, 지금, 지금).run()
+      .bind(토큰, 통, 줄열쇠, 지금, 지금).run()
   } catch { return { ok: false, reason: 'db_error' } }
 
   // ④ acknowledge — ⭐3일 안에 안 하면 구글이 «환불하고 회수»한다. 이미 했으면 안 부른다.
@@ -1249,7 +1314,7 @@ async function 구매하나(env, 통, 상품, 토큰) {
     const c = await playPost(env, `${주소}:consume`, {})
     if (c.ok) { try { await db.prepare('UPDATE 산구매 SET 비움 = 1, 때 = ? WHERE 토큰 = ?').bind(지금, 토큰).run() } catch { /* noop */ } }
   }
-  return { ok: true }
+  return { ok: true, ...(시험 && 줄열쇠 === 0 ? { 시험한도: true } : {}) }
 }
 
 // ── 💸 환불 회수 (하루 한 번 · Cron) ─────────────────────────
@@ -1519,6 +1584,31 @@ function 사용요청번호(signedPayload) {
   const t = jws몸통(n.data.signedTransactionInfo)
   return t && t.transactionId ? String(t.transactionId) : ''
 }
+// ↩️ 환불 «취소»(REFUND_REVERSED) — 애플이 분쟁 끝에 환불을 되돌렸다 = 유저가 다시 돈을 냈다 → 거둔 열쇠를 되돌려 준다.
+//   📜 애플 원문(notificationType · 2026-10-24 열람) = "If your app revoked content or services as a result of the related refund, it needs to reinstate them."
+function 환불취소번호(signedPayload) {
+  const n = jws몸통(signedPayload)
+  if (!n || n.notificationType !== 'REFUND_REVERSED' || !n.data || n.data.bundleId !== 애플.번들) return ''
+  const t = jws몸통(n.data.signedTransactionInfo)
+  return t && t.transactionId ? String(t.transactionId) : ''
+}
+// ⭐ 본문은 안 믿는다 — 애플에 다시 물어 «취소 표시가 없을 때»만 되돌린다. 환불 표시(상태=1)인 줄만 · 한 번만.
+//   되돌린 수 = 빚이 남아 있으면 지급 ＋ 지금 남음(= 지급 − 쓴 수 ＋ 그새 무료로 메운 수) · 빚이 없으면 지급 − 쓴 수
+async function 애플되돌리기(env, id) {
+  if (!/^\d{1,32}$/.test(String(id || ''))) return 0
+  const v = await 애플거래(env, id)
+  if (!v.ok || v.t.revocationDate) return 0
+  const 토큰 = `apple:${v.t.transactionId}`
+  const 지급 = (결제.소모성[v.t.productId] || 0) * Math.max(1, Math.min(50, parseInt(v.t.quantity, 10) || 1))
+  await 결제표준비(env.DB)
+  const r = await env.DB.batch([
+    env.DB.prepare('UPDATE 산열쇠 SET 남음 = CASE WHEN 남음 < 0 THEN ? + 남음 ELSE ? - (SELECT COUNT(*) FROM 산열쇠씀 WHERE 산열쇠씀.토큰 = 산열쇠.토큰) END, 때 = ? WHERE 토큰 = ? AND EXISTS (SELECT 1 FROM 산구매 WHERE 산구매.토큰 = 산열쇠.토큰 AND 산구매.상태 = 1)')
+      .bind(지급, 지급, Date.now(), 토큰),
+    env.DB.prepare('UPDATE 산구매 SET 상태 = 0, 때 = ? WHERE 토큰 = ? AND 상태 = 1').bind(Date.now(), 토큰),
+  ])
+  return (r && r[0] && r[0].meta && r[0].meta.changes) || 0
+}
+
 async function 사용량답하기(env, id) {
   if (!/^\d{1,32}$/.test(id)) return { ok: true, 답함: false }
   const v = await 애플거래(env, id)
@@ -1557,6 +1647,8 @@ async function 애플알림(request, env) {
   try { body = await request.json() } catch { return { ok: false, reason: 'bad_json' } }
   const 사용요청 = 사용요청번호(body && body.signedPayload)
   if (사용요청) { try { return await 사용량답하기(env, 사용요청) } catch { return { ok: false, reason: 'db_error' } } }
+  const 되돌릴 = 환불취소번호(body && body.signedPayload)
+  if (되돌릴) { try { return { ok: true, 되돌림: await 애플되돌리기(env, 되돌릴) } } catch { return { ok: false, reason: 'db_error' } } }
   const id = 알림거래번호(body && body.signedPayload)
   if (!id) return { ok: true, 거둠: 0 }   // 우리가 볼 알림이 아니다(구독·테스트 등) — 200 으로 받아 둔다
   try { return { ok: true, 거둠: await 애플거두기(env, id) } } catch { return { ok: false, reason: 'db_error' } }
@@ -1567,16 +1659,17 @@ async function 애플환불회수(env) {
   if (!애플켜짐(env)) return { ok: false, reason: 'billing_off' }
   const 결과 = { ok: true, 본: 0, 거둠: 0, 때: Date.now() }
   try {
-    for (const 서버 of [애플.본서버, 애플.샌드박스]) {
+    // ↩️ REFUND_REVERSED(환불 취소)도 같이 훑는다 — 알림이 빠졌어도 다음 날 되돌려 준다(10/24)
+    for (const [서버, 종류] of [[애플.본서버, 'REFUND'], [애플.샌드박스, 'REFUND'], [애플.본서버, 'REFUND_REVERSED'], [애플.샌드박스, 'REFUND_REVERSED']]) {
       let 쪽 = 0, 다음 = ''
       do {
         const v = await 애플부름(env, 서버, '/inApps/v1/notifications/history' + (다음 ? `?paginationToken=${encodeURIComponent(다음)}` : ''), 'POST',
-          { startDate: Date.now() - 3 * 86400000, endDate: Date.now(), notificationType: 'REFUND' })
+          { startDate: Date.now() - 3 * 86400000, endDate: Date.now(), notificationType: 종류 })
         if (!v.ok) { if (서버 === 애플.본서버) { 결과.ok = false; 결과.reason = v.reason } break }
         for (const it of v.data.notificationHistory || []) {
           결과.본++
-          const id = 알림거래번호(it && it.signedPayload)
-          if (id) 결과.거둠 += await 애플거두기(env, id)
+          if (종류 === 'REFUND') { const id = 알림거래번호(it && it.signedPayload); if (id) 결과.거둠 += await 애플거두기(env, id) }
+          else { const id = 환불취소번호(it && it.signedPayload); if (id) 결과.되돌림 = (결과.되돌림 || 0) + (await 애플되돌리기(env, id)) }
         }
         다음 = v.data.hasMore ? (v.data.paginationToken || '') : ''
         쪽++
@@ -1685,7 +1778,7 @@ function corsHeaders(origin) {
   const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
   return {
     'Access-Control-Allow-Origin': allow,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',   // GET = 운영자 페이지(ops.html)가 헤더로 묻는 길
     'Access-Control-Allow-Headers': 'Content-Type, x-hankki-token, x-hankki-founder, x-hankki-idtoken',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',

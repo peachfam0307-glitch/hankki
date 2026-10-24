@@ -109,7 +109,7 @@ function 가짜D1() {
     }],
     [/^DELETE FROM 산열쇠 WHERE 통 = \?$/, ([통]) => { let n = 0; for (const [k, r] of [...열쇠]) if (r.통 === 통) { 열쇠.delete(k); n++ } return n }],
     // 🧾 계정 삭제 = 보존 전용 표로 «옮긴다»(2026-10-23 분리 보존)
-    [/^INSERT OR IGNORE INTO 보존구매 \(토큰, 상품, 주문, 상태, 처음, 지운때\) SELECT .* FROM 산구매 WHERE 통 = \?$/, ([때, 통]) => { let n = 0; for (const r of 구매.values()) if (r.통 === 통 && !보존.has(r.토큰)) { 보존.set(r.토큰, { 토큰: r.토큰, 상품: r.상품, 주문: r.주문, 상태: r.상태, 처음: r.처음, 지운때: 때 }); n++ } return n }],
+    [/^INSERT OR IGNORE INTO 보존구매 \(토큰, 상품, 주문, 상태, 처음, 지운때, 표\) SELECT .* FROM 산구매 WHERE 통 = \?$/, ([때, 표, 통]) => { let n = 0; for (const r of 구매.values()) if (r.통 === 통 && !보존.has(r.토큰)) { 보존.set(r.토큰, { 토큰: r.토큰, 상품: r.상품, 주문: r.주문, 상태: r.상태, 처음: r.처음, 지운때: 때, 표 }); n++ } return n }],
     [/^INSERT INTO 보존씀 \(토큰, 때\) SELECT 토큰, 때 FROM 산열쇠씀 WHERE 통 = \?$/, ([통]) => { const 옮김 = 씀.filter((r) => r.통 === 통); 보존씀.push(...옮김.map((r) => ({ 토큰: r.토큰, 때: r.때 }))); return 옮김.length }],
     [/^DELETE FROM 산구매 WHERE 통 = \?$/, ([통]) => { let n = 0; for (const [k, r] of [...구매]) if (r.통 === 통) { 구매.delete(k); n++ } return n }],
     [/^DELETE FROM 산열쇠씀 WHERE 통 = \?$/, ([통]) => { const 전 = 씀.length; for (let i = 씀.length - 1; i >= 0; i--) if (씀[i].통 === 통) 씀.splice(i, 1); return 전 - 씀.length }],
@@ -120,7 +120,18 @@ function 가짜D1() {
     [/^SELECT 통 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통 } : null)],
     // 💸 거둠 = 쓴 만큼 빚(10/23)
     [/^UPDATE 산열쇠 SET 남음 = -\(SELECT COUNT\(\*\) FROM 산열쇠씀 WHERE 산열쇠씀\.토큰 = 산열쇠\.토큰\), 때 = \? WHERE 토큰 = \? AND NOT EXISTS \(SELECT 1 FROM 산구매 WHERE 산구매\.토큰 = 산열쇠\.토큰 AND 산구매\.상태 = 1\) AND \(남음 > 0 OR /, ([, t]) => { const r = 열쇠.get(t); const n = 씀.filter((x) => x.토큰 === t).length; if (r && !(구매.get(t) && 구매.get(t).상태 === 1) && (r.남음 > 0 || (r.남음 === 0 && n > 0))) { r.남음 = -씀.filter((x) => x.토큰 === t).length; return 1 } return 0 }],
-    [/^SELECT COUNT\(\*\) AS n FROM 산구매 WHERE 통 = \? AND 상태 = 1$/, ([통]) => ({ n: [...구매.values()].filter((r) => r.통 === 통 && r.상태 === 1).length })],
+    [/^SELECT COUNT\(\*\) AS n FROM 산구매 WHERE 통 = \? AND 상태 = 1 AND COALESCE/, ([통]) => ({ n: [...구매.values()].filter((r) => r.통 === 통 && r.상태 === 1 && !String(r.주문 || '').startsWith('test:') && String(r.주문 || '') !== 'apple:Sandbox').length })],
+    // 💳 Vision 앞 깎기 실패 되돌림 · 돌려주기(10/24)
+    [/^UPDATE 산열쇠 SET 남음 = 남음 \+ 1 WHERE 토큰 = \?$/, ([t]) => { const r = 열쇠.get(t); if (r) { r.남음++; return 1 } return 0 }],
+    [/^UPDATE 산열쇠 SET 남음 = 남음 \+ 1, 때 = \? WHERE 토큰 = \? AND NOT EXISTS/, ([, t]) => { const r = 열쇠.get(t); if (r && !(구매.get(t) && 구매.get(t).상태 === 1)) { r.남음++; return 1 } return 0 }],
+    [/^DELETE FROM 산열쇠씀 WHERE rowid = \(SELECT MAX\(rowid\) FROM 산열쇠씀 WHERE 토큰 = \?\)$/, ([t]) => { for (let i = 씀.length - 1; i >= 0; i--) if (씀[i].토큰 === t) { 씀.splice(i, 1); return 1 } return 0 }],
+    // 🔁 탈퇴 뒤 환불 → 탈퇴기록(10/24)
+    [/^UPDATE 탈퇴기록 SET 빚 = 빚 \+ \(CASE WHEN \? = 1 THEN 0 ELSE \(SELECT COUNT\(\*\) FROM 보존씀 WHERE 보존씀\.토큰 = \?\) END\), 환불수 = 환불수 \+ 1, 때 = \? WHERE 표 = \(SELECT 표 FROM 보존구매 WHERE 토큰 = \? AND 상태 = 0\)$/, ([일부, t, 때, t2]) => { const p = 보존.get(t2); if (!p || p.상태 !== 0 || !탈퇴.get(p.표)) return 0; const r = 탈퇴.get(p.표); r.빚 += 일부 === 1 ? 0 : 보존씀.filter((x) => x.토큰 === t).length; r.환불수 += 1; r.때 = 때; return 1 }],
+    // ↩️ 애플 환불 취소(10/24)
+    [/^UPDATE 산열쇠 SET 남음 = CASE WHEN 남음 < 0 THEN \? \+ 남음 ELSE \? - /, ([a, b, , t]) => { const r = 열쇠.get(t); if (!r || !(구매.get(t) && 구매.get(t).상태 === 1)) return 0; r.남음 = r.남음 < 0 ? a + r.남음 : b - 씀.filter((x) => x.토큰 === t).length; return 1 }],
+    [/^UPDATE 산구매 SET 상태 = 0, 때 = \? WHERE 토큰 = \? AND 상태 = 1$/, ([, t]) => { const r = 구매.get(t); if (r && r.상태 === 1) { r.상태 = 0; return 1 } return 0 }],
+    // 🧪 구글 시험 구매 하루 한 번(10/24)
+    [/^SELECT COUNT\(\*\) AS n FROM 산구매 WHERE 통 = \? AND 주문 LIKE 'test:%' AND 처음 > \? AND 토큰 != \?$/, ([통, 기준, t]) => ({ n: [...구매.values()].filter((r) => r.통 === 통 && String(r.주문).startsWith('test:') && r.처음 > 기준 && r.토큰 !== t).length })],
     [/^INSERT OR REPLACE INTO 결제동의 /, ([통]) => { (globalThis.__동의 ||= new Set()).add(통); return 1 }],
     [/^SELECT 1 AS y FROM 결제동의 WHERE 통 = \?$/, ([통]) => ((globalThis.__동의 || new Set()).has(통) ? { y: 1 } : null)],
     [/^SELECT 통, 상품 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통, 상품: 구매.get(t).상품 } : null)],
@@ -134,7 +145,7 @@ function 가짜D1() {
     [/^SELECT 환불수 FROM 탈퇴기록 WHERE 표 = \?$/, ([표]) => (탈퇴.get(표) ? { 환불수: 탈퇴.get(표).환불수 } : null)],
     [/^INSERT OR IGNORE INTO 산열쇠 \(토큰, 통, 남음, 처음, 때\) VALUES \(\?, \?, \?, 0, \?\)$/, ([t, 통, 남음]) => { if (열쇠.has(t)) return 0; 열쇠.set(t, { 토큰: t, 통, 남음, 처음: 0 }); return 1 }],
     [/^UPDATE 탈퇴기록 SET 빚 = 0 WHERE 표 = \? AND 때 = \?$/, ([표, 때]) => { const r = 탈퇴.get(표); if (r && r.때 === 때) { r.빚 = 0; return 1 } return 0 }],
-    [/^INSERT INTO 탈퇴기록 \(표, 빚, 환불수, 때\) VALUES \(\?, \?, \(SELECT COUNT\(\*\) FROM 산구매 WHERE 통 = \? AND 상태 = 1\), \?\) ON CONFLICT/, ([표, 빚, 통, 때]) => { const n = [...구매.values()].filter((r) => r.통 === 통 && r.상태 === 1).length; const r = 탈퇴.get(표); if (r) { r.빚 += 빚; r.환불수 += n; r.때 = 때 } else 탈퇴.set(표, { 빚, 환불수: n, 때 }); return 1 }],
+    [/^INSERT INTO 탈퇴기록 \(표, 빚, 환불수, 때\) VALUES \(\?, \?, \(SELECT COUNT\(\*\) FROM 산구매 WHERE 통 = \? AND 상태 = 1.*\), \?\) ON CONFLICT/, ([표, 빚, 통, 때]) => { const n = [...구매.values()].filter((r) => r.통 === 통 && r.상태 === 1).length; const r = 탈퇴.get(표); if (r) { r.빚 += 빚; r.환불수 += n; r.때 = 때 } else 탈퇴.set(표, { 빚, 환불수: n, 때 }); return 1 }],
     [/^DELETE FROM 탈퇴기록 WHERE 때 < \?$/, ([기준]) => { let n = 0; for (const [k, r] of [...탈퇴]) if (r.때 < 기준) { 탈퇴.delete(k); n++ } return n }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 열쇠.get(t); if (r) { r.남음 = 0; return 1 } return 0 }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음 = 0; return 1 } return 0 }],
@@ -189,7 +200,7 @@ const 부르기 = async (경로, 몸, 토큰, 더 = {}) => {
 }
 const sync = (토큰, 목록) => 부르기('/billing/sync', { purchases: 목록 }, 토큰)
 const 사진 = (토큰, 몸 = {}, 더) => 부르기('/', { image: 'data:image/png;base64,' + b64u(String(Math.random())), uid: 'dev1', ...몸 }, 토큰, 더)
-const 무료다씀 = (계정) => { env.OCR_KV._m.set(`wu:a:${계정}`, '30'); env.OCR_KV._m.set(`u:dev1:${YM}`, '5') }
+const 무료다씀 = (계정) => { env.OCR_KV._m.set(`wu:a:${계정}`, '30'); env.OCR_KV._m.set(`u:a:${계정}:${YM}`, '5') }
 const 남음 = (t) => env.DB.열쇠.get(t) && env.DB.열쇠.get(t).남음
 
 console.log('\n💳 결제 — 영수증 확인 · 산 열쇠 원장\n')
@@ -435,6 +446,15 @@ r = await 부르기('/billing/forget', {}, null)
 새판({ PLAY_SA_JSON: undefined })
 r = await 부르기('/billing/forget', {}, 엄마)
 잰다(r.ok && r.사라진열쇠 === 0, '결제가 꺼져 있어도 지우기는 된다(창고만 있으면)', r)
+
+console.log('\n㉚ 시험 구매(라이선스 테스터 · purchaseType 0)는 하루 한 번 (10/24)')
+새판(); 영수증('tt1', { purchaseType: 0 }); 영수증('tt2', { purchaseType: 0 }); 영수증('rr1')
+r = await sync(엄마, [{ sku: PACK, token: 'tt1' }])
+잰다(r.paid === 20 && r.results[0].token === 'tt1' && !r.results[0].시험한도 && env.DB.구매.get('tt1').주문 === 'test:GPA.tt1', '첫 시험 구매 → 20 · 원장에 test: 표시 · 답에 영수증', r)
+r = await sync(엄마, [{ sku: PACK, token: 'tt2' }])
+잰다(r.paid === 20 && r.results[0].시험한도 === true, '같은 날 두 번째 → 기록만 · 열쇠 그대로', r)
+r = await sync(엄마, [{ sku: PACK, token: 'rr1' }])
+잰다(r.paid === 40 && !r.results[0].시험한도, '진짜 구매는 한도 없음', r)
 
 console.log(`\n${실패 === 0 ? '✅' : '⛔'} ${통과}/${통과 + 실패} 통과\n`)
 process.exit(실패 === 0 ? 0 : 1)
