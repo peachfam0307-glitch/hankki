@@ -429,7 +429,8 @@ r = await 부르기('/billing/forget', {}, 딸)
 console.log('\n⑮ 마지막 다각도 점검에서 막은 것 (10/24)')
 {
   const 읽기 = () => { for (const k of [...env.OCR_KV._m.keys()]) if (k.startsWith('ip:')) env.OCR_KV._m.delete(k); return 부르기('/', { image: 'data:image/png;base64,' + b64u('q' + Math.random()), uid: 'd1' }, 딸) }
-  const ym = new Date().toISOString().slice(0, 7), ymd = new Date().toISOString().slice(0, 10)
+  // ⏰ 워커 카운터 이름은 UTC 기준이라(worker.js ym·ymd) 여기서도 같은 값을 쓴다 — KST 날짜가 아니다
+  const 지금 = new Date().toISOString(), ym = 지금.slice(0, 7), ymd = 지금.slice(0, 10)
   const 무료끝 = () => { env.OCR_KV._m.set(`wu:${딸통}`, '30'); env.OCR_KV._m.set(`u:${딸통}:${ym}`, '5') }
   // ① 열쇠 1개로 동시에 여러 장 → 1장만 AI, 나머지는 막힘
   새판(); 거래('9801'); await sync(딸, ['9801']); 무료끝(); env.DB.열쇠.get('apple:9801').남음 = 1
