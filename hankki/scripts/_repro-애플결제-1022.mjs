@@ -86,7 +86,7 @@ function 가짜D1() {
     [/^UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/,([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음--; return 1 } return 0 }],
     [/^SELECT 통 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통 } : null)],
     // 💸 거둠 = 쓴 만큼 빚(10/23)
-    [/^UPDATE 산열쇠 SET 남음 = -\(SELECT COUNT\(\*\) FROM 산열쇠씀 WHERE 산열쇠씀\.토큰 = 산열쇠\.토큰\), 때 = \? WHERE 토큰 = \? AND \(남음 > 0 OR /, ([, t]) => { const r = 열쇠.get(t); const n = 씀.filter((x) => x.토큰 === t).length; if (r && (r.남음 > 0 || (r.남음 === 0 && n > 0))) { r.남음 = -씀.filter((x) => x.토큰 === t).length; return 1 } return 0 }],
+    [/^UPDATE 산열쇠 SET 남음 = -\(SELECT COUNT\(\*\) FROM 산열쇠씀 WHERE 산열쇠씀\.토큰 = 산열쇠\.토큰\), 때 = \? WHERE 토큰 = \? AND NOT EXISTS \(SELECT 1 FROM 산구매 WHERE 산구매\.토큰 = 산열쇠\.토큰 AND 산구매\.상태 = 1\) AND \(남음 > 0 OR /, ([, t]) => { const r = 열쇠.get(t); const n = 씀.filter((x) => x.토큰 === t).length; if (r && !(구매.get(t) && 구매.get(t).상태 === 1) && (r.남음 > 0 || (r.남음 === 0 && n > 0))) { r.남음 = -씀.filter((x) => x.토큰 === t).length; return 1 } return 0 }],
     [/^SELECT COUNT\(\*\) AS n FROM 산구매 WHERE 통 = \? AND 상태 = 1$/, ([통]) => ({ n: [...구매.values()].filter((r) => r.통 === 통 && r.상태 === 1).length })],
     [/^INSERT OR REPLACE INTO 결제동의 /, ([통]) => { (globalThis.__동의 ||= new Set()).add(통); return 1 }],
     [/^SELECT 1 AS y FROM 결제동의 WHERE 통 = \?$/, ([통]) => ((globalThis.__동의 || new Set()).has(통) ? { y: 1 } : null)],
@@ -333,6 +333,11 @@ console.log('\n⑭ 환불 악용 막기 — 빚 · 반복 환불 · 사용량 �
   r = await 탕('9402&key=fs')
   잰다(r.탕감 === 1 && 남음('9402') === 0, '탕감 → 빚 -7 이 0 (더 주지는 않는다)', r)
   잰다((await 탕('9402&key=fs')).탕감 === 0 && 남음('9402') === 0, '또 해도 0 그대로')
+  // 🔁 빚 되살아남(10/24 구멍) — 다 갚은 뒤·탕감한 뒤 같은 환불 알림이 또 와도(알림 재전송 · 하루 한 번 3일 기록) 다시 빚이 안 생긴다
+  await 알림(환불알림('9401'))
+  잰다(남음('9401') === 0, '다 갚은 뒤 같은 환불 알림 또 → 0 그대로(빚 안 되살아남)', 남음('9401'))
+  애플.거래.get('9402').t.revocationDate = Date.now(); await 알림(환불알림('9402')); await 탕('9402&key=fs'); await 알림(환불알림('9402'))
+  잰다(남음('9402') === 0, '환불 → 탕감 → 같은 알림 또 → 0 그대로', 남음('9402'))
 
 }
 

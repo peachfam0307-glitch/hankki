@@ -119,7 +119,7 @@ function 가짜D1() {
     [/^UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/,([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음--; return 1 } return 0 }],
     [/^SELECT 통 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통 } : null)],
     // 💸 거둠 = 쓴 만큼 빚(10/23)
-    [/^UPDATE 산열쇠 SET 남음 = -\(SELECT COUNT\(\*\) FROM 산열쇠씀 WHERE 산열쇠씀\.토큰 = 산열쇠\.토큰\), 때 = \? WHERE 토큰 = \? AND \(남음 > 0 OR /, ([, t]) => { const r = 열쇠.get(t); const n = 씀.filter((x) => x.토큰 === t).length; if (r && (r.남음 > 0 || (r.남음 === 0 && n > 0))) { r.남음 = -씀.filter((x) => x.토큰 === t).length; return 1 } return 0 }],
+    [/^UPDATE 산열쇠 SET 남음 = -\(SELECT COUNT\(\*\) FROM 산열쇠씀 WHERE 산열쇠씀\.토큰 = 산열쇠\.토큰\), 때 = \? WHERE 토큰 = \? AND NOT EXISTS \(SELECT 1 FROM 산구매 WHERE 산구매\.토큰 = 산열쇠\.토큰 AND 산구매\.상태 = 1\) AND \(남음 > 0 OR /, ([, t]) => { const r = 열쇠.get(t); const n = 씀.filter((x) => x.토큰 === t).length; if (r && !(구매.get(t) && 구매.get(t).상태 === 1) && (r.남음 > 0 || (r.남음 === 0 && n > 0))) { r.남음 = -씀.filter((x) => x.토큰 === t).length; return 1 } return 0 }],
     [/^SELECT COUNT\(\*\) AS n FROM 산구매 WHERE 통 = \? AND 상태 = 1$/, ([통]) => ({ n: [...구매.values()].filter((r) => r.통 === 통 && r.상태 === 1).length })],
     [/^INSERT OR REPLACE INTO 결제동의 /, ([통]) => { (globalThis.__동의 ||= new Set()).add(통); return 1 }],
     [/^SELECT 1 AS y FROM 결제동의 WHERE 통 = \?$/, ([통]) => ((globalThis.__동의 || new Set()).has(통) ? { y: 1 } : null)],
@@ -359,6 +359,11 @@ r = await 회수()
 잰다(env.DB.구매.get('v1').상태 === 1, '원장에 「환불」 표시')
 r = await 회수()
 잰다(r.ok && r.거둠 === 0 && 남음('v1') === -2, '다음 날 또 받아도 같다(멱등)', r)
+// 🔁 빚 되살아남(10/24 구멍) — 빚을 다 갚아 0 이 된 뒤에도 구글 목록(30일)에 같은 환불이 또 뜬다
+env.DB.열쇠.get('v1').남음 = 0
+r = await 회수()
+잰다(r.ok && r.거둠 === 0 && 남음('v1') === 0, '다 갚은 뒤 다음 날 회수 → 0 그대로(빚 안 되살아남)', r)
+env.DB.열쇠.get('v1').남음 = -2
 r = await 사진(엄마)
 잰다(r.error === 'debt' && r.빚 === 2, '회수 뒤엔 산 열쇠로 못 읽는다(빚 2 안내)', r)
 

@@ -995,7 +995,9 @@ const 결제 = {
 // 💸 환불·취소 때 거두는 문장 — 남은 것을 0 으로가 아니라 «쓴 만큼 빚(마이너스)»으로 둔다(창업자 10/23 「다 하자」③).
 //   ⭐ 다음에 사면 그 빚부터 메운다(합계가 SUM(남음) 이라 저절로). 「사서 다 쓰고 환불」을 되풀이해도 얻는 게 없다.
 //   ⭐ 아직 안 거둔 줄만(남음>0, 또는 다 써서 0) — 이미 거둔 줄(빚·안 쓰고 0)은 다시 안 건드린다(하루 한 번 회수·알림이 겹쳐도 멱등).
-const 거둠SQL = 'UPDATE 산열쇠 SET 남음 = -(SELECT COUNT(*) FROM 산열쇠씀 WHERE 산열쇠씀.토큰 = 산열쇠.토큰), 때 = ? WHERE 토큰 = ? AND (남음 > 0 OR (남음 = 0 AND (SELECT COUNT(*) FROM 산열쇠씀 WHERE 산열쇠씀.토큰 = 산열쇠.토큰) > 0))'
+//   ⛔ «환불 표시(산구매 상태=1)가 이미 있으면» 다시 안 거둔다 — 빚을 다 갚아 0 이 된 줄을 다음 날 회수(구글 30일 목록·애플 3일 기록)가
+//      또 마이너스로 만들던 구멍(10/24 실측 −3 → 0 → −3 · 빚 탕감도 다음 날 되살아났다). ⭐ 그래서 부르는 곳은 «거둔 뒤에» 상태를 1 로 적는다.
+const 거둠SQL = 'UPDATE 산열쇠 SET 남음 = -(SELECT COUNT(*) FROM 산열쇠씀 WHERE 산열쇠씀.토큰 = 산열쇠.토큰), 때 = ? WHERE 토큰 = ? AND NOT EXISTS (SELECT 1 FROM 산구매 WHERE 산구매.토큰 = 산열쇠.토큰 AND 산구매.상태 = 1) AND (남음 > 0 OR (남음 = 0 AND (SELECT COUNT(*) FROM 산열쇠씀 WHERE 산열쇠씀.토큰 = 산열쇠.토큰) > 0))'
 // 🚫 반복 환불자 — 환불(취소)이 이 수에 닿으면 더 못 산다(창업자 10/23 「2번까지는 변심·실수 · 3번부터」④).
 const 환불막는수 = 3
 const PLAY_API = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications'
