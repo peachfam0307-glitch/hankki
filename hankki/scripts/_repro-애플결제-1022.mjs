@@ -15,7 +15,7 @@ const PACK = 'ocr_pack_20'
 const 서명없는JWS = (몸) => b64u(JSON.stringify({ alg: 'ES256', x5c: [] })) + '.' + b64u(JSON.stringify(몸)) + '.c2ln'
 
 // ── 🧪 가짜 애플 (본 서버 · 샌드박스) ──
-const 애플 = { 거래: new Map(), 권한: true, 부름: { 본: 0, 샌드: 0, 기록: 0 }, 기록: [], 받은JWT: [] }
+const 애플 = { 거래: new Map(), 권한: true, 부름: { 본: 0, 샌드: 0, 기록: 0 }, 기록: [], 받은JWT: [], 사용답: [] }
 const 거래 = (id, 고칠 = {}) => 애플.거래.set(id, { 환경: 'Production', t: { transactionId: id, originalTransactionId: id, bundleId: 'kr.hankki.app', productId: PACK, type: 'Consumable', quantity: 1, environment: 'Production', ...고칠 } })
 globalThis.fetch = async (url, o = {}) => {
   const u = new URL(String(url))
@@ -31,6 +31,8 @@ globalThis.fetch = async (url, o = {}) => {
     const 이쪽 = 본 ? 애플.기록 : []
     return new Response(JSON.stringify({ notificationHistory: 이쪽.map((p) => ({ signedPayload: p })), hasMore: false }), { status: 200 })
   }
+  const 사 = u.pathname.match(/^\/inApps\/v2\/transactions\/consumption\/(\d+)$/)
+  if (사 && o.method === 'PUT') { 애플.사용답.push({ id: 사[1], 샌드, 몸: JSON.parse(o.body) }); return new Response(null, { status: 202 }) }
   const m = u.pathname.match(/^\/inApps\/v1\/transactions\/(\d+)$/)
   if (m) {
     if (본) 애플.부름.본++; else 애플.부름.샌드++
@@ -83,6 +85,17 @@ function 가짜D1() {
     [/^INSERT INTO 산열쇠씀 \(토큰, 통, 때\) VALUES \(\?, \?, \?\)$/, ([t, 통]) => { 씀.push({ 토큰: t, 통 }); return 1 }],
     [/^UPDATE 산열쇠 SET 남음 = 남음 - 1, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/,([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음--; return 1 } return 0 }],
     [/^SELECT 통 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통 } : null)],
+    // 💸 거둠 = 쓴 만큼 빚(10/23)
+    [/^UPDATE 산열쇠 SET 남음 = -\(SELECT COUNT\(\*\) FROM 산열쇠씀 WHERE 산열쇠씀\.토큰 = 산열쇠\.토큰\), 때 = \? WHERE 토큰 = \? AND \(남음 > 0 OR /, ([, t]) => { const r = 열쇠.get(t); const n = 씀.filter((x) => x.토큰 === t).length; if (r && (r.남음 > 0 || (r.남음 === 0 && n > 0))) { r.남음 = -씀.filter((x) => x.토큰 === t).length; return 1 } return 0 }],
+    [/^SELECT COUNT\(\*\) AS n FROM 산구매 WHERE 통 = \? AND 상태 = 1$/, ([통]) => ({ n: [...구매.values()].filter((r) => r.통 === 통 && r.상태 === 1).length })],
+    [/^INSERT OR REPLACE INTO 결제동의 /, ([통]) => { (globalThis.__동의 ||= new Set()).add(통); return 1 }],
+    [/^SELECT 1 AS y FROM 결제동의 WHERE 통 = \?$/, ([통]) => ((globalThis.__동의 || new Set()).has(통) ? { y: 1 } : null)],
+    [/^SELECT 통, 상품 FROM 산구매 WHERE 토큰 = \?$/, ([t]) => (구매.has(t) ? { 통: 구매.get(t).통, 상품: 구매.get(t).상품 } : null)],
+    [/^SELECT COUNT\(\*\) AS n FROM 산열쇠씀 WHERE 토큰 = \?$/, ([t]) => ({ n: 씀.filter((x) => x.토큰 === t).length })],
+    [/^SELECT 토큰 FROM 산구매 WHERE 주문 = \? OR 토큰 = \? LIMIT 1$/, ([k]) => { for (const r of 구매.values()) if (r.주문 === k || r.토큰 === k) return { 토큰: r.토큰 }; return null }],
+    [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND 남음 < 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 < 0) { r.남음 = 0; return 1 } return 0 }],
+    [/^SELECT 토큰, 남음 FROM 산열쇠 WHERE 통 = \? AND 남음 < 0 ORDER BY 처음$/, ([통]) => [...열쇠.values()].filter((r) => r.통 === 통 && r.남음 < 0).sort((a, b) => a.처음 - b.처음).map((r) => ({ 토큰: r.토큰, 남음: r.남음 }))],
+    [/^UPDATE 산열쇠 SET 남음 = 남음 \+ \?, 때 = \? WHERE 토큰 = \?$/, ([k, , t]) => { const r = 열쇠.get(t); if (r) { r.남음 += k; return 1 } return 0 }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \?$/, ([, t]) => { const r = 열쇠.get(t); if (r) { r.남음 = 0; return 1 } return 0 }],
     [/^UPDATE 산열쇠 SET 남음 = 0, 때 = \? WHERE 토큰 = \? AND 남음 > 0$/, ([, t]) => { const r = 열쇠.get(t); if (r && r.남음 > 0) { r.남음 = 0; return 1 } return 0 }],
     [/^SELECT COUNT\(\*\) AS n, SUM\(CASE WHEN 상태 = 1 THEN 1 ELSE 0 END\) AS 환불 FROM 산구매$/, () => ({ n: 구매.size, 환불: [...구매.values()].filter((r) => r.상태 === 1).length })],
@@ -109,7 +122,7 @@ function 가짜D1() {
     batch: async (묶음) => { for (const s of 묶음) await s.run() },
     prepare: (sql) => {
       const f = 찾기(sql)
-      return { bind: (...b) => ({ first: async () => f(b), run: async () => ({ meta: { changes: f(b) } }) }) }
+      return { bind: (...b) => ({ first: async () => f(b), all: async () => ({ results: f(b) }), run: async () => ({ meta: { changes: f(b) } }) }) }
     },
   }
 }
@@ -118,7 +131,7 @@ const 가짜KV = () => { const m = new Map(); return { _m: m, get: async (k) => 
 let env
 const 새판 = (고칠 = {}) => {
   env = { APP_TOKEN: 'tk', OCR_KV: 가짜KV(), DB: 가짜D1(), APPLE_IAP_KEY: P8, APPLE_KEY_ID: 'KEY123', APPLE_ISSUER_ID: 'iss-uuid', VISION_KEY: 'v', FOUNDER_SECRET: 'fs', ...고칠 }
-  애플.거래.clear(); 애플.권한 = true; 애플.기록 = []; 애플.받은JWT = []
+  애플.거래.clear(); 애플.권한 = true; 애플.기록 = []; 애플.받은JWT = []; 애플.사용답 = []; globalThis.__동의 = new Set()
   for (const k in 애플.부름) 애플.부름[k] = 0
   mod._애플토큰비우기()
 }
@@ -246,7 +259,86 @@ console.log('\n⑬ 구매자 표(appAccountToken · 2026-10-23)')
   잰다(r.results[0].ok && r.paid === 20, '표 없는 거래는 옛 규칙(먼저 보낸 사람)', r)
 }
 
+console.log('\n⑭ 환불 악용 막기 — 빚 · 반복 환불 · 사용량 답하기 (창업자 10/23)')
+{
+  const 읽기 = () => { for (const k of [...env.OCR_KV._m.keys()]) if (k.startsWith('ip:')) env.OCR_KV._m.delete(k); return 부르기('/', { image: 'data:image/png;base64,' + b64u('z' + Math.random()), uid: 'd1' }, 딸) }
+  const 무료끝 = () => { env.OCR_KV._m.set(`wu:${딸통}`, '30'); env.OCR_KV._m.set(`u:d1:${new Date().toISOString().slice(0, 7)}`, '5') }
+  새판(); 거래('9201'); await sync(딸, ['9201']); 무료끝()
+  for (let i = 0; i < 20; i++) await 읽기()
+  잰다(남음('9201') === 0 && env.DB.씀.filter((x) => x.토큰 === 'apple:9201').length === 20, '20개 다 씀', 남음('9201'))
+  // 사용량 답하기 — 동의 없으면 안 보낸다
+  r = await 알림(환불알림('9201', 'CONSUMPTION_REQUEST'))
+  잰다(r.ok && r.답함 === false && r.왜 === '동의없음' && 애플.사용답.length === 0, '동의 없으면 애플에 안 보낸다', r)
+  r = await 부르기('/billing/consent', {}, 딸)
+  잰다(r.ok, '동의 적기', r)
+  r = await 알림(환불알림('9201', 'CONSUMPTION_REQUEST'))
+  const 답 = 애플.사용답[0] && 애플.사용답[0].몸
+  잰다(r.답함 && 답 && 답.customerConsented === true && 답.deliveryStatus === 'DELIVERED' && 답.sampleContentProvided === true && 답.consumptionPercentage === 100000 && 답.refundPreference === 'DECLINE', '다 썼으면 100% · DECLINE', 답)
+  r = await 알림(환불알림('9999', 'CONSUMPTION_REQUEST'))
+  잰다(!r.답함 && 애플.사용답.length === 1, '애플이 모르는 거래 → 안 보낸다', r)
+  // 환불되면 쓴 20 만큼 빚 → 다음에 산 20 은 빚부터 메운다
+  애플.거래.get('9201').t.revocationDate = Date.now()
+  await 알림(환불알림('9201'))
+  잰다(남음('9201') === -20 && (await 부르기('/billing/state', {}, 딸)).paid === 0, '다 쓰고 환불 → 빚 -20 · 보이는 수는 0', 남음('9201'))
+  거래('9202'); r = await sync(딸, ['9202'])
+  잰다(r.paid === 0, '새로 산 20 은 빚을 메워 0', r)
+  r = await 읽기()
+  잰다(남음('9202') === 20 && r.error === 'user_quota', '빚이 남아 있는 동안 산 열쇠로 못 읽는다(막힘 · 새 열쇠 안 깎임)', r)
+  // 일부만 씀 → GRANT_PRORATED
+  거래('9203'); await sync(딸, ['9203'])
+  거래('9204'); await sync(딸, ['9204'])
+  잰다((await 부르기('/billing/state', {}, 딸)).paid === 40, '빚 -20 ＋ 20·20·20 = 40')
+  // 반복 환불 — 3번째부터 막는다
+  for (const id of ['9202', '9203']) { 애플.거래.get(id).t.revocationDate = Date.now(); await 알림(환불알림(id)) }
+  const s = await 부르기('/billing/state', {}, 딸)
+  잰다(s.blocked === 'refunds', '환불 3번 → blocked', s)
+  const s남 = await 부르기('/billing/state', {}, 남)
+  잰다(!s남.blocked, '다른 사람은 안 막힌다', s남)
+}
+{
+  새판(); 거래('9301'); await sync(딸, ['9301'])
+  await 부르기('/billing/consent', {}, 딸)
+  const 읽기 = () => { for (const k of [...env.OCR_KV._m.keys()]) if (k.startsWith('ip:')) env.OCR_KV._m.delete(k); return 부르기('/', { image: 'data:image/png;base64,' + b64u('w' + Math.random()), uid: 'd1' }, 딸) }
+  env.OCR_KV._m.set(`wu:${딸통}`, '30'); env.OCR_KV._m.set(`u:d1:${new Date().toISOString().slice(0, 7)}`, '5')
+  for (let i = 0; i < 5; i++) await 읽기()
+  await 알림(환불알림('9301', 'CONSUMPTION_REQUEST'))
+  const 답 = 애플.사용답[0] && 애플.사용답[0].몸
+  잰다(답 && 답.consumptionPercentage === 25000 && 답.refundPreference === 'GRANT_PRORATED', '5개 씀 → 25% · GRANT_PRORATED', 답)
+  새판(); 거래('9302'); await sync(딸, ['9302']); await 부르기('/billing/consent', {}, 딸)
+  await 알림(환불알림('9302', 'CONSUMPTION_REQUEST'))
+  잰다(애플.사용답[0] && 애플.사용답[0].몸.refundPreference === 'GRANT_FULL' && 애플.사용답[0].몸.consumptionPercentage === 0, '안 씀 → 0% · GRANT_FULL', 애플.사용답[0])
+}
+
+{
+  // 💸 빚 갚기(B) — 무료 열쇠가 먼저 빚을 갚는다
+  const 읽기 = () => { for (const k of [...env.OCR_KV._m.keys()]) if (k.startsWith('ip:')) env.OCR_KV._m.delete(k); return 부르기('/', { image: 'data:image/png;base64,' + b64u('v' + Math.random()), uid: 'd1' }, 딸) }
+  const 달 = `u:d1:${new Date().toISOString().slice(0, 7)}`
+  새판(); 거래('9401'); await sync(딸, ['9401'])
+  env.OCR_KV._m.set(`wu:${딸통}`, '30'); env.OCR_KV._m.set(달, '5')
+  for (let i = 0; i < 20; i++) await 읽기()
+  애플.거래.get('9401').t.revocationDate = Date.now(); await 알림(환불알림('9401'))
+  잰다(남음('9401') === -20, '다 쓰고 환불 → 빚 -20', 남음('9401'))
+  env.OCR_KV._m.set(달, '0')   // 새 달 — 무료 5
+  r = await 읽기()
+  잰다(r.error === 'debt' && r.빚 === 15 && 남음('9401') === -15 && env.OCR_KV._m.get(달) === '5', '새 달 무료 5 가 빚을 갚고 AI 읽기는 막힘 · 빚 15 안내', r)
+  r = await 읽기()
+  잰다(r.error === 'debt' && r.빚 === 15 && 남음('9401') === -15, '같은 달 또 해도 더 안 깎인다', r)
+  env.OCR_KV._m.set(`wu:${딸통}`, '0'); env.OCR_KV._m.set(달, '0')   // 웰컴 30 이 남아 있는 경우
+  r = await 읽기()
+  잰다(r.깎음 === true && 남음('9401') === 0 && env.OCR_KV._m.get(`wu:${딸통}`) === '16', '웰컴 30 중 15 로 빚을 다 갚고 바로 읽는다(15+1)', [r.깎음, 남음('9401'), env.OCR_KV._m.get(`wu:${딸통}`)])
+  // 🤝 탕감
+  거래('9402'); await sync(딸, ['9402']); env.DB.열쇠.get('apple:9402').남음 = -7
+  const 탕 = async (q) => (await worker.fetch(new Request('https://w.example/?forgive=' + q, { method: 'GET' }), env)).json()
+  잰다((await 탕('9402&key=틀림')).error === 'unauthorized', '탕감은 운영자 키가 있어야')
+  r = await 탕('9402&key=fs')
+  잰다(r.탕감 === 1 && 남음('9402') === 0, '탕감 → 빚 -7 이 0 (더 주지는 않는다)', r)
+  잰다((await 탕('9402&key=fs')).탕감 === 0 && 남음('9402') === 0, '또 해도 0 그대로')
+
+}
+
 console.log('\n⑫ 계기판 · 계정 삭제')
+
+
 새판(); 거래('9001'); 애플.거래.set('9002', { 환경: 'Sandbox', t: { transactionId: '9002', bundleId: 'kr.hankki.app', productId: PACK, type: 'Consumable', environment: 'Sandbox' } }); await sync(딸, ['9001', '9002'])
 {
   const rr = await worker.fetch(new Request('https://w.example/?quota=1&key=fs', { method: 'GET' }), env)
