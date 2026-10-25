@@ -998,7 +998,7 @@ export default function App() {
           if (cancelled) { store.updateRecipe(rec.id, { tidying: 0 }); return }
           if (ai) {
             // ⭐ **여기가 「AI 가 읽어서 성공했을 때」다** — 졸업은 이 판에서만 일어난다(창업자 확정 2026-09-05).
-            채우기(mergeTidy(기본, ai), { AI끝남: true })
+            채우기(mergeTidy(기본, ai, text), { AI끝남: true })
             // ✅ 다 됐으니 「아직 못 다듬음」 표시를 «지운다» — 안 지우면 다음에 열 때 또 다듬는다(뉴런 낭비).
             store.updateRecipe(rec.id, { tidyFail: 0, tidying: 0, tidyJob: '' })   // 🧺 다 받았으니 번호를 버린다
             // 🔚 창이 «끝말»로 바뀐다 — 사라지기만 하면 됐는지 안 됐는지 모른다.
