@@ -27,6 +27,7 @@ globalThis.fetch = async (url, o = {}) => {
   }
   애플.받은JWT.push(String((o.headers || {}).Authorization || ''))
   if (!애플.권한) return new Response('denied', { status: 401 })
+  if (u.pathname === '/inApps/v1/notifications/test') { 애플.시험요청 = (애플.시험요청 || 0) + 1; return new Response(JSON.stringify({ testNotificationToken: 'tt-' + 애플.시험요청 }), { status: 200 }) }
   if (u.pathname === '/inApps/v1/notifications/history') {
     애플.부름.기록++
     const 이쪽 = 본 ? 애플.기록 : []
@@ -483,6 +484,21 @@ console.log('\n⑮ 마지막 다각도 점검에서 막은 것 (10/24)')
   for (const id of ['9831', '9832', '9833']) { 애플.거래.set(id, { 환경: 'Sandbox', t: { transactionId: id, bundleId: 'kr.hankki.app', productId: PACK, type: 'Consumable', quantity: 1, environment: 'Sandbox' } }); await sync(딸, [id]); 애플.거래.get(id).t.revocationDate = Date.now(); await 알림(환불알림(id)) }
   r = await 부르기('/billing/state', {}, 딸)
   잰다(!r.blocked, '연습 결제 환불 3번 → 막히지 않는다', r)
+}
+
+console.log('\n⑯ 애플 시험 알림(10/25) — 등록 주소가 끝까지 닿나')
+{
+  새판()
+  const 시험 = async (q, 키 = 'fs') => (await worker.fetch(new Request('https://w.example/?appletest=' + q, { method: 'GET', headers: { 'x-hankki-founder': 키 } }), env)).json()
+  잰다((await 시험('sandbox', 'wrong')).error === 'unauthorized', '운영자 키 없으면 막힘')
+  r = await 시험('sandbox')
+  잰다(r.ok && r.서버 === 'sandbox' && 애플.시험요청 >= 1 && r.마지막받음 === null, '애플에 시험 알림 요청 · 아직 받은 것 없음', r)
+  r = await 알림({ signedPayload: 서명없는JWS({ notificationType: 'TEST', version: '2.0', data: { bundleId: 'kr.hankki.app', environment: 'Sandbox' } }) })
+  잰다(r.ok && r.시험 === true, 'TEST 알림을 받으면 기록만 하고 200', r)
+  r = await 시험('sandbox')
+  잰다(r.마지막받음 && r.마지막받음.버전 === '2.0' && r.마지막받음.환경 === 'Sandbox', '다시 누르면 «마지막받음» 에 버전 2.0 · Sandbox', r)
+  r = await 알림({ signedPayload: 서명없는JWS({ notificationType: 'TEST', version: '2.0', data: { bundleId: 'com.other', environment: 'Sandbox' } }) })
+  잰다(!r.시험, '남의 앱 TEST 는 기록 안 함', r)
 }
 
 console.log(`\n${실패 === 0 ? '✅' : '⛔'} ${통과}/${통과 + 실패} 통과\n`)

@@ -465,6 +465,19 @@ export default {
     // 🔁 영수증 다시 확인(운영자) — 주문 번호 하나를 구글에 «직접» 물어 환불(취소)이면 거둔다.
     //   📮 10/24 실측 = 라이선스 테스터 시험 환불이 24시간 넘게 무효 목록(voidedpurchases)에 «안» 떴다(본 0) → 목록만 믿으면 놓친다.
     //   📖 `?recheck=<GPA.…>` + 헤더 x-hankki-founder (운영자 페이지 단추) · 구글 영수증만(애플은 알림·기록이 따로 있다)
+    // 🧪 애플 시험 알림 보내 달라고 하기(운영자) — 애플이 우리 알림 주소로 TEST 를 쏜다 → 받으면 `ap:test` 에 남는다(계기판 · 이 길 «두 번째» 호출)
+    //   📖 `?appletest=sandbox`(기본) 또는 `?appletest=production` · 헤더 x-hankki-founder
+    if (new URL(request.url).searchParams.get('appletest')) {
+      const 준열쇠 = request.headers.get('x-hankki-founder') || new URL(request.url).searchParams.get('key') || ''
+      if (!env.FOUNDER_SECRET || 준열쇠 !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      if (!애플켜짐(env)) return json({ error: 'billing_off' }, 503, cors)
+      const 본 = new URL(request.url).searchParams.get('appletest') === 'production'
+      const v = await 애플부름(env, 본 ? 애플.본서버 : 애플.샌드박스, '/inApps/v1/notifications/test', 'POST', {})
+      let 받은것 = null
+      try { 받은것 = JSON.parse((env.OCR_KV && (await env.OCR_KV.get('ap:test'))) || 'null') } catch { /* noop */ }
+      return json({ ok: v.ok, 서버: 본 ? 'production' : 'sandbox', 보냄: v.ok ? '애플이 시험 알림을 보냈다 — 몇 초 뒤 다시 누르면 「마지막받음」이 바뀐다' : v.reason, 마지막받음: 받은것 && { ...받은것, 받음: new Date(받은것.받음 + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ') + ' KST' } }, 200, cors)
+    }
+
     if (new URL(request.url).searchParams.get('recheck')) {
       const 준열쇠 = request.headers.get('x-hankki-founder') || new URL(request.url).searchParams.get('key') || ''
       if (!env.FOUNDER_SECRET || 준열쇠 !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
@@ -1671,6 +1684,9 @@ async function 애플알림(request, env) {
   if (사용요청) { try { return await 사용량답하기(env, 사용요청) } catch { return { ok: false, reason: 'db_error' } } }
   const 되돌릴 = 환불취소번호(body && body.signedPayload)
   if (되돌릴) { try { return { ok: true, 되돌림: await 애플되돌리기(env, 되돌릴) } } catch { return { ok: false, reason: 'db_error' } } }
+  // 🧪 애플 «시험 알림»(TEST) — 등록한 주소·버전 2 가 끝까지 닿는지 확인용(운영자 `?appletest=1` 이 부른다 · 10/25)
+  //   📜 애플 원문 = 시험 알림은 «늘 버전 2 모양»으로 온다 → 우리가 읽어 받은 시각을 남기면 「연결 끝」이다. ⭐ 본문은 기록만(아무것도 안 바꾼다)
+  { const n = jws몸통(body && body.signedPayload); if (n && n.notificationType === 'TEST' && n.data && n.data.bundleId === 애플.번들) { try { if (env.OCR_KV) await env.OCR_KV.put('ap:test', JSON.stringify({ 받음: Date.now(), 버전: n.version || '', 환경: n.data.environment || '' }), { expirationTtl: 60 * 60 * 24 * 30 }) } catch { /* 기록만 */ } return { ok: true, 시험: true } } }
   const id = 알림거래번호(body && body.signedPayload)
   if (!id) return { ok: true, 거둠: 0 }   // 우리가 볼 알림이 아니다(구독·테스트 등) — 200 으로 받아 둔다
   try { return { ok: true, 거둠: await 애플거두기(env, id) } } catch { return { ok: false, reason: 'db_error' } }
