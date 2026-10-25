@@ -49,8 +49,8 @@ console.log('\n  ⑷ 다섯 줄만 · 안 터진다')
 
 console.log('\n  ⑸ 하얀 창 끝말에도 꼬리가 붙는다 (창업자만)')
 잰다(/다듬기끝말\(됐나, 꼬리 = ''\)/.test(말), '끝말이 꼬리를 받는다')
-잰다(/끝알림\(다듬기끝말\(true, tidyFounder\(\) \? tidyTail\(\) : ''\)\)/.test(app), '성공 창에 붙는다')
-잰다(/끝알림\(다듬기끝말\(false, tidyFounder\(\) \? tidyTail\(\) : ''\)\)/.test(app), '실패 창에도 붙는다')
+잰다(/끝알림\((빚덧\()?다듬기끝말\(true, tidyFounder\(\) \? tidyTail\(\) : ''\)\)/.test(app), '성공 창에 붙는다')
+잰다(/끝알림\((빚덧\()?다듬기끝말\(false, tidyFounder\(\) \? tidyTail\(\) : ''\)\)/.test(app), '실패 창에도 붙는다')
 
 if (틀림) { console.log(`\n❌ ${틀림}개 틀렸다.\n`); process.exit(1) }
 console.log('\n✅ 전부 통과 — 창업자 폰에만 쌓이고, 설정에서 언제든 다시 본다.\n')

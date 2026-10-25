@@ -20,6 +20,7 @@ import { 나라들 } from '../data/종류'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
 import { ocrImage, getOcrNote, getOcrLeft, 열쇠셈, 열쇠셈리셋, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
+import { 빚안내몸 } from '../안내말'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw, NO_TITLE } from '../parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from '../tidy'
 import { AI동의받기 } from '../aiConsent'   // 🔐 AI 로 보내기 전 허락(큰 틀 6-② ⓑ)
@@ -555,11 +556,16 @@ export default function EditorScreen({ id, prefill }) {
     //   ⛔ `noVision` 이면 프록시를 «안 불렀으므로» 이 값들은 이번 읽기와 무관하다 → 통째로 죽인다.
     const note = 셈.안부름 ? null : getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
     const quotaTail =
-      note === 'user_quota'
+      // 💸 환불로 생긴 빚(창업자 10/24 문구 · 말은 안내말.js 한 곳)
+      note === 'debt'
+        ? ` · 지금은 AI 읽기를 할 수 없어요 · ${빚안내몸(셈.빚)}`
+        : note === 'user_quota'
         ? ` · 무료 ${KEY_NAME}를 다 써서 기본 인식이에요`
         : note === 'global_quota' || note === 'rate_limited'
           ? ' · 지금 이용이 많아 기본 인식이에요'
           : ''
+    // ⏱ 빚 안내는 두 문장(약 110자)이라 6.5초로는 못 읽는다(10/24 점검) → 12초
+    const 긴띠 = note === 'debt' ? 12000 : 6500
 
     // 📢 남은 장수 알림 — 창업자 *"20장을 다쓰면 다썼다고 알려줘야해 무료서비스로 변경된다고"*
     //   ⭐ 「막힌 다음」이 아니라 «마지막 장을 쓴 그 순간» 알린다. 그래야 한 박자 늦지 않다.
@@ -579,7 +585,7 @@ export default function EditorScreen({ id, prefill }) {
     // 마지막 장 — 결과 반영
     if (target === 'ingredients' || target === 'steps') {
       const base = target === 'ingredients' ? '재료 초안을 담았어요' : '만드는 법 초안을 담았어요'
-      nav.showToast(base + (freeTail || 원인Tail || quotaTail || leftTail || ' · 다듬어 주세요'), freeTail || 원인Tail || quotaTail || leftTail ? 6500 : 4800)
+      nav.showToast(base + (freeTail || 원인Tail || quotaTail || leftTail || ' · 다듬어 주세요'), freeTail || 원인Tail || quotaTail || leftTail ? 긴띠 : 4800)
       return
     }
     const combined = ocrAccum.current
@@ -588,7 +594,7 @@ export default function EditorScreen({ id, prefill }) {
     set무료판(무료로읽었다)
     // 🆓 freeTail = 「그냥 읽기」로 왔다(열쇠를 안 썼다) — 열쇠 얘기보다 «먼저» 말한다
     // 🈳 글자를 못 얻었다 — 원인Tail 이 「열쇠는 그대로예요」까지 말해 준다(서버가 안 깎았을 때만)
-    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + (freeTail || 원인Tail || quotaTail), freeTail || 원인Tail || quotaTail ? 6500 : 3200); return }
+    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + (freeTail || 원인Tail || quotaTail), freeTail || 원인Tail || quotaTail ? 긴띠 : 3200); return }
     // 🤖 AI 다듬기 — ⭐**규칙 파서를 «먼저» 돌려놓는다.**
     //   AI 가 안 되든 느리든 이상하든 이 `r` 이 그대로 쓰인다(3층 구조 1층 · 앱은 절대 안 죽는다).
     //   ⛔ 순서를 뒤집지 말 것 — AI 를 먼저 기다렸다가 실패하면 그때 파싱하면, 실패한 만큼 유저가 더 기다린다.
@@ -694,7 +700,7 @@ export default function EditorScreen({ id, prefill }) {
       set다듬는중(false)
       끝표시(!!ai)   // 🔚 사라지지 않고 «끝말»로 바뀐다 — 됐는지 안 됐는지 보인다
       if (ai) {
-        채우기(mergeTidy(r, ai))
+        채우기(mergeTidy(r, ai, combined))
         updateRecipe(r.id, { tidyFail: 0 })   // ✅ 다 됐으니 표시를 지운다(안 지우면 또 다듬는다)
         nav.showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
         setTimeout(제목챙기기, 1200)          // ⏱ 위 안내를 읽을 틈을 준 뒤에
@@ -738,7 +744,7 @@ export default function EditorScreen({ id, prefill }) {
       nav.showToast('AI 다듬기는 못 했어요 · 한 번 더 눌러 보세요' + (tidyFounder() ? tidyTail() : ''), 6000)
       return
     }
-    const m = mergeTidy(기본, ai)
+    const m = mergeTidy(기본, ai, rawText)
     setF((prev) => ({
       ...prev,
       title: m.title || prev.title,

@@ -270,7 +270,9 @@ export function 상점열쇠() {
     const v = new URLSearchParams(location.search).get('상점')
     if (v === '1') localStorage.setItem('hankki:상점', '1')
     if (v === '0') localStorage.removeItem('hankki:상점')
-    return localStorage.getItem('hankki:상점') === '1'
+    // 🍎 운영자 기기(설정 7번 탭 열쇠 · `hankki:founder`)도 연다 — 아이폰 앱은 주소창이 없어 `?상점=1` 을 못 붙인다(10/25)
+    //   ⭐ 새 숨은 장치를 만들지 않는다 · 일반 유저 화면은 그대로 · 열쇠가 틀려도 결제는 서버가 확인한다(열쇠 공짜 아님)
+    return localStorage.getItem('hankki:상점') === '1' || !!localStorage.getItem('hankki:founder')
   } catch { return false }
 }
 

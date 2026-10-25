@@ -148,7 +148,7 @@ const wk = readFileSync(new URL('../ocr-proxy/worker.js', import.meta.url), 'utf
 const wk코드 = wk.replace(/^\s*\/\/.*$/gm, '')
 잰다(!/sameBatch/.test(wk코드), '⑤-1 ⭐`sameBatch` 가 코드에 0곳')
 잰다(!/`b:\$\{uid\}/.test(wk코드), '⑤-2 묶음 표식 키(`b:`)를 안 쓴다')
-잰다(/inc\(kv, `u:\$\{uid\}:\$\{ym\}`/.test(wk코드), '⑤-3 유저 몫이 «조건 없이» 깎인다')
+잰다(/inc\(kv, `u:\$\{(uid|월통)\}:\$\{ym\}`/.test(wk코드), '⑤-3 유저 몫이 «조건 없이» 깎인다')
 
 // ── ⑥ 🔒 화면 문구가 «장당»으로 남아 있나 ──────────────────────
 //   ⭐ 옛 판에서 가져온 칸이다 — 이건 여전히 값을 한다.

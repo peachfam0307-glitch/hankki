@@ -11,9 +11,12 @@ import { KEY_NAME, KEY_UNIT } from './열쇠이름.js'
 //   ⛔⛔ **말을 다른 곳에 또 적지 않는다** — 두 곳에 적으면 반드시 갈라진다.
 //   ⛔ 「열쇠 안 썼어요」는 «안 깎인 것이 사실일 때»만 붙는다. 서버가 보낸 값으로만 판단한다.
 //      그래서 «모름»(끊김)일 때는 열쇠 얘기를 통째로 뺀다 — 모르는 걸 안다고 말하는 게 최악이다.
-export function 까닭말(왜, 앎 = true) {
+export function 까닭말(왜, 앎 = true, 빚 = 0) {
   if (!앎) return { 머리: '연결이 끊겼어요', 몸: '잠시 뒤에 다시 해 주세요', 열쇠말: '' }
   switch (왜) {
+    // 💸 환불로 생긴 빚(창업자 10/24 확정 문구 · 「갚는다」 말은 안 쓴다)
+    case 'debt':
+      return { 머리: '지금은 AI 읽기를 할 수 없어요', 몸: 빚안내몸(빚), 열쇠말: '' }
     case '빈손':
       return { 머리: '글자가 안 보여요', 몸: '밝은 곳에서 다시 찍어 주세요', 열쇠말: '열쇠 안 썼어요' }
     case '전에읽음':
@@ -60,4 +63,11 @@ export function 남은열쇠말(left) {
   if (!Number.isFinite(n)) return ''
   if (n <= 0) return '열쇠를 다 썼어요 · 다음 달에 다시 채워져요'
   return `무료 ${KEY_NAME} ${n}${KEY_UNIT} 남았어요`
+}
+
+// 💸 빚 안내 «몸» — 편집 화면 띠와 가져오기 하얀 창이 같은 말을 쓴다(두 곳에 적지 않는다)
+export function 빚안내몸(빚) {
+  const n = Math.max(0, Number(빚) || 0)
+  const 몇 = n ? ` ${n}${KEY_UNIT}` : ''
+  return `환불된 구매에서 쓴 ${KEY_NAME}${몇}만큼 무료 ${KEY_NAME}가 먼저 쓰여요. 그 뒤엔 다시 AI로 읽을 수 있어요.`
 }

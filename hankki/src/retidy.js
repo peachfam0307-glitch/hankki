@@ -26,7 +26,7 @@ import { 다읽었나 } from './store'
 /** AI 답(`tidyRecipe` 결과)을 레시피 r 에 얹을 «바꿀 값»을 만든다. r 은 안 건드린다. */
 export function 만회값(r, 원문, ai) {
   const 기본 = parseRecipeText(원문, { fromOcr: true })
-  const m = mergeTidy(기본, ai)
+  const m = mergeTidy(기본, ai, 원문)
   const 자리표 = 자리표제목(r.title)
   const 재료없다 = !(r.ingredients || []).length
   const 아직보관함 = r.status !== 'sorted'

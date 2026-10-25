@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>한끼 운영</title>
+<!-- 🔐 운영자 전용(창업자 10/24 A) — 열쇠(FOUNDER_SECRET)를 «주소에 안 붙이고» 헤더로 보낸다.
+     ⭐ 열쇠는 이 폰의 이 페이지에만 저장된다(주소·브라우저 기록·스샷에 안 남는다). 지우기 단추로 지운다. -->
+<style>
+  body { margin: 0; background: #fbf7f1; color: #2b2622; font: 16px/1.5 -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  main { max-width: 520px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 4px 0 12px; }
+  .box { background: #fff; border-radius: 14px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  input { width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px; border: 1px solid #d9cfc2; border-radius: 10px; margin: 4px 0 8px; }
+  button { font-size: 15px; font-weight: 700; padding: 10px 12px; border: 0; border-radius: 10px; background: #b5714a; color: #fff; margin: 2px 4px 2px 0; }
+  button.sub { background: #e9e0d4; color: #5a4a3c; }
+  pre { white-space: pre-wrap; word-break: break-all; background: #f2ede3; border-radius: 10px; padding: 10px; font-size: 13px; min-height: 40px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>한끼 운영</h1>
+  <div class="box" id="keyBox">
+    <div>운영자 열쇠</div>
+    <input id="key" type="password" autocomplete="off" placeholder="열쇠를 한 번 넣으면 이 폰에 저장돼요" />
+    <button id="save">저장</button><button class="sub" id="forget">지우기</button>
+    <div id="keyState" style="font-size:14px;color:#8a8178"></div>
+  </div>
+  <div class="box">
+    <button data-q="quota=1">계기판</button>
+    <button data-q="voided=1">환불 회수 지금</button>
+    <button data-q="appletest=sandbox">애플 알림 시험</button>
+  </div>
+  <div class="box">
+    <div>주문 번호 (GPA.… 또는 애플 거래 번호)</div>
+    <input id="order" autocomplete="off" />
+    <button data-o="order">거래 기록 찾기</button>
+    <button data-o="recheck">영수증 다시 확인(구글)</button>
+    <button class="sub" data-o="forgive">빚 탕감</button>
+  </div>
+  <pre id="out"></pre>
+</main>
+<script>
+  const 워커 = 'https://hankki-ocr.annyeong-hankki.workers.dev/'
+  const 칸 = 'hankki:ops-key'
+  const $ = (id) => document.getElementById(id)
+  const 읽기 = () => { try { return localStorage.getItem(칸) || '' } catch { return '' } }
+  const 상태 = () => { $('keyState').textContent = 읽기() ? '저장됨' : '없음' }
+  $('save').onclick = () => { try { localStorage.setItem(칸, $('key').value.trim()) } catch {} $('key').value = ''; 상태() }
+  $('forget').onclick = () => { try { localStorage.removeItem(칸) } catch {} 상태() }
+  async function 부르기 (q) {
+    const k = 읽기()
+    if (!k) { $('out').textContent = '열쇠를 먼저 저장해 주세요'; return }
+    $('out').textContent = '…'
+    try {
+      const r = await fetch(워커 + '?' + q, { headers: { 'x-hankki-founder': k } })
+      $('out').textContent = r.status + '\n' + JSON.stringify(await r.json(), null, 2)
+    } catch (e) { $('out').textContent = '연결 실패: ' + e }
+  }
+  document.querySelectorAll('[data-q]').forEach((b) => { b.onclick = () => 부르기(b.dataset.q) })
+  document.querySelectorAll('[data-o]').forEach((b) => {
+    b.onclick = () => {
+      const o = $('order').value.trim()
+      if (!o) { $('out').textContent = '주문 번호를 넣어 주세요'; return }
+      if (b.dataset.o === 'forgive' && !confirm('이 주문의 빚을 0 으로 돌릴까요?')) return
+      부르기(b.dataset.o + '=' + encodeURIComponent(o))
+    }
+  })
+  상태()
+</script>
+</body>
+</html>

@@ -68,7 +68,9 @@ let _ocrNote = null
 //      · `안부름` = 「그냥 읽기」로 와서 서버를 아예 안 불렀다 → 「열쇠 안 쓰고 읽었어요」는 이 경우다
 let _셈 = { 깎인장수: 0, 앎: true, 안부름: false }
 export function 열쇠셈리셋() { _셈 = { 깎인장수: 0, 앎: true, 안부름: false } }
-export function 열쇠셈() { return { ..._셈, 왜: _왜 } }
+export function 열쇠셈() { return { ..._셈, 왜: _왜, 빚: _빚 } }
+let _빚 = 0
+export const getOcrDebt = () => _빚
 // 📖 서버가 말한 «원인» — 전에읽음 · 빈손 · 구글실패 · 처리중 · 정상
 //   ⛔ 한도 안내값(_ocrNote)과 «섞지 않는다» — 그건 다른 코드가 읽는 값이라 뜻을 겹치면 어긋난다.
 let _왜 = null
@@ -147,6 +149,8 @@ async function ocrViaProxy(dataUrl, onProgress, batch) {
     // 429(한도 초과) → 어느 한도인지 기록(앱이 "무료 다 썼어요" 안내). 전부 폴백으로 넘긴다 — 앱은 늘 동작해야 하니까.
     if (resp.status === 429) {
       _ocrNote = (d && d.error) || 'quota'
+      // 💸 환불로 생긴 빚 — 몇 개 남았는지 같이 받아 안내에 쓴다(창업자 10/24 「지금은 AI 읽기를 할 수 없어요」)
+      _빚 = d && d.error === 'debt' ? Math.max(0, Number(d.빚) || 0) : 0
       // ⭐ 한도도 «까닭»이다 — 한 곳(까닭말)에서 말을 고르게 같은 통에 넣는다.
       if (!_왜) _왜 = _ocrNote
     }
@@ -330,6 +334,20 @@ export async function 열쇠새로고침() {
 // 🍎 구매자 표(appAccountToken) — `/billing/state` 가 «이 로그인 계정» 것으로 내려준다. 애플 결제에 그대로 붙인다(billing.js buy).
 let _구매자표 = ''
 export const 구매자표 = () => _구매자표
+// 💸 상점을 열 때의 빚 — 사면 빚부터 메워 「20개」보다 적게 보인다 → 완료 화면이 까닭을 말한다(창업자 10/24 C)
+let _산빚 = 0
+export const 상점빚 = () => _산빚
+// ✅ 「환불 요청 때 사용 내역을 Apple에 제공」 동의 적기(아이폰 구매 시트 체크 칸 · 창업자 10/23 Ⓐ·10/24 아이폰만) — 실패하면 false(사지 않는다)
+export async function 결제동의() {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return false
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/consent`, { method: 'POST', headers, body: '{}' })
+    const d = await resp.json().catch(() => null)
+    return !!(d && d.ok)
+  } catch { return false }
+}
 export async function 결제상태() {
   try {
     const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
@@ -337,7 +355,11 @@ export async function 결제상태() {
     if (!headers['x-hankki-idtoken']) return 'login'
     const resp = await fetch(`${OCR_PROXY_URL}/billing/state`, { method: 'POST', headers, body: '{}' })
     const d = await resp.json().catch(() => null)
-    if (d && d.ok) { _구매자표 = String(d.account || ''); return 'on' }
+    if (d && d.ok) {
+      _구매자표 = String(d.account || ''); _산빚 = Math.max(0, Number(d.빚) || 0)
+      // 🚫 환불 3번째부터 — 사기 단추 대신 안내(창업자 10/23 ④)
+      return d.blocked === 'refunds' ? 'blocked' : 'on'
+    }
     if (d && d.error === 'login_required') return 'login'
     return 'off'
   } catch { return 'off' }

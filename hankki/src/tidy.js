@@ -438,8 +438,35 @@ function 계량줄옮기기 (메모, 걸음들) {
   return [있던것, ...옮길것].filter(Boolean).join('\n')
 }
 
-export function mergeTidy(r, ai) {
+// 🐛🐛 [2026-10-25 · 창업자 두부참치조림] **AI 걸음은 «원문에 근거가 있을 때만» 받는다.**
+//   📮 창업자 = *"인스타캡쳐(원본) 만드는법이 없었어 지어낸 것 같아"* — 원문엔 재료·양념장뿐인데
+//      앱에 만드는 법이 들어갔다. 막는 게 워커 지시문 「지어내지 마라」(worker-tidy.js) «하나»뿐이었다.
+//   ⭐ 잣대 = 걸음의 글자 두 개짜리 조각 중 원문에 있는 비율. ⛔재료 줄은 원문에서 «빼고» 잰다 —
+//      지어낸 걸음도 재료 이름(두부·양파)은 쓰니까, 그걸 세면 다 통과한다.
+//   🔢 실측(`_repro-지어낸걸음-1025.mjs`) = 지어낸 걸음 0.00~0.33 · 진짜 걸음 0.67~1.00 → 문턱 0.5
+//   ⛔ 원문을 못 받으면(옛 호출) «예전 그대로» 둔다 — 근거 없이 버리지 않는다.
+const 낱글 = (s) => String(s || '').toLowerCase().replace(/[^0-9a-z가-힣]/g, '')
+const 두글자 = (s) => { const t = 낱글(s); const o = []; for (let i = 0; i + 1 < t.length; i++) o.push(t.slice(i, i + 2)); return o }
+export const 근거문턱 = 0.5
+
+export function 걸음근거 (걸음, 원문, 재료들 = []) {
+  const 재료셋 = new Set((재료들 || []).map(낱글).filter(Boolean))
+  const 남은 = String(원문 || '').split('\n').filter((줄) => !재료셋.has(낱글(줄))).join('\n')
+  const 판 = new Set(두글자(남은))
+  // 「~요」 조각은 안 센다 — 해요체로 바꾼 말끝이라 원문 어디에나 걸린다
+  const 조각 = 두글자(걸음).filter((b) => !b.includes('요'))
+  if (!조각.length) return 1
+  return 조각.filter((b) => 판.has(b)).length / 조각.length
+}
+
+export function 원문걸음만 (걸음들, 원문, 재료들 = []) {
+  if (!Array.isArray(걸음들) || !String(원문 || '').trim()) return 걸음들
+  return 걸음들.filter((s) => 걸음근거(s, 원문, 재료들) >= 근거문턱)
+}
+
+export function mergeTidy(r, ai, 원문 = '') {
   if (!ai) return r
+  ai = { ...ai, steps: 원문걸음만(ai.steps, 원문, [...(r.ingredients || []), ...(ai.ingredients || [])]) }
   return {
     ...r,
     // 🏷 AI 가 제목을 못 주면 **규칙 파서 제목이 살아난다** — 창업자 짬뽕밥에서 이 자리가 값을 했다
