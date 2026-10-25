@@ -700,7 +700,7 @@ export default function EditorScreen({ id, prefill }) {
       set다듬는중(false)
       끝표시(!!ai)   // 🔚 사라지지 않고 «끝말»로 바뀐다 — 됐는지 안 됐는지 보인다
       if (ai) {
-        채우기(mergeTidy(r, ai))
+        채우기(mergeTidy(r, ai, combined))
         updateRecipe(r.id, { tidyFail: 0 })   // ✅ 다 됐으니 표시를 지운다(안 지우면 또 다듬는다)
         nav.showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
         setTimeout(제목챙기기, 1200)          // ⏱ 위 안내를 읽을 틈을 준 뒤에
@@ -744,7 +744,7 @@ export default function EditorScreen({ id, prefill }) {
       nav.showToast('AI 다듬기는 못 했어요 · 한 번 더 눌러 보세요' + (tidyFounder() ? tidyTail() : ''), 6000)
       return
     }
-    const m = mergeTidy(기본, ai)
+    const m = mergeTidy(기본, ai, rawText)
     setF((prev) => ({
       ...prev,
       title: m.title || prev.title,
