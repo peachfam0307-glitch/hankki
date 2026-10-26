@@ -85,7 +85,8 @@ console.log('\n── ⑧ 창업자 저장 15편이 «창업자 원본 차례»�
     '우삼겹 두부조림', '대파 소스 목살 덮밥', '닭목살 불고기', '달래 대패삼겹 덮밥', '새송이버섯 들깨무침',
     '들깨 궁채나물', '미나리 오징어무침', '간장 목살스테이크', '육회 깻잎무침', '구움찰떡',
   ]
-  const 선것 = 세운것.filter((r) => String(r.id).startsWith('basic-own-')).map((r) => r.title)
+  // ⏰ [2026-10-26] 「basic-own-」 전부로 세면 창업자 새 편(육회비빔밥 10/26)이 열리는 날 16편이 돼 죽었다 → 원본 15편 «이름»으로만 센다
+  const 선것 = 세운것.filter((r) => String(r.id).startsWith('basic-own-') && 원본차례.includes(r.title)).map((r) => r.title)
   칸(선것.length === 15, '15편이 다 있다', `${선것.length}편`)
   칸(JSON.stringify(선것) === JSON.stringify(원본차례), '위에서 아래로 원본 1번 → 15번', `맨 위 ${선것[0]} · 맨 아래 ${선것[14]}`)
   칸(세운것.filter((r) => String(r.id).startsWith('basic-own-')).every((r) => r.from), '15편에 from 이 다 달려 있다 — 없으면 바닥으로 깔린다')
