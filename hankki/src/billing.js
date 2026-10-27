@@ -262,18 +262,23 @@ export async function syncPurchases() {
   return 산것보내기(list)
 }
 
-// 🏪 한끼상점을 «보여줘도 되나» — ⛔판매 스위치. 실제 구매 시험(라이선스 테스터)을 통과하기 전엔 꺼 둔다.
-//   지금은 `?상점=1` 로 연 기기만 본다(창업자·시험용) · `?상점=0` 으로 끈다. 일반 유저 화면은 한 글자도 안 바뀐다.
-//   📌 판매를 켜는 날 = 이 함수가 «기본 켬»이 되는 날이다(창업자 신호 뒤에만).
+// 🏪 한끼상점을 «보여줘도 되나» — 판매 스위치.
+//   💳 [2026-10-27 창업자 「결제코드 시작하자」] 판매 «기본 켬» — 82판 승인 뒤 웹·83판에서 연다(10/26 확정 = 82 결제 없이 / 83 결제).
+//   ⛔ 사고 때 끄는 길은 남긴다 = `?상점=0`(이 기기만 끔) · `?상점=1` 로 다시 켬.
+//   ⭐ 켰어도 «살 수 없는 기기»(그냥 브라우저)엔 안 보인다 — 화면은 `상점보여도되나()` 로 `canBuy()` 까지 본다(죽은 단추 금지).
 export function 상점열쇠() {
   try {
     const v = new URLSearchParams(location.search).get('상점')
-    if (v === '1') localStorage.setItem('hankki:상점', '1')
-    if (v === '0') localStorage.removeItem('hankki:상점')
-    // 🍎 운영자 기기(설정 7번 탭 열쇠 · `hankki:founder`)도 연다 — 아이폰 앱은 주소창이 없어 `?상점=1` 을 못 붙인다(10/25)
-    //   ⭐ 새 숨은 장치를 만들지 않는다 · 일반 유저 화면은 그대로 · 열쇠가 틀려도 결제는 서버가 확인한다(열쇠 공짜 아님)
-    return localStorage.getItem('hankki:상점') === '1' || !!localStorage.getItem('hankki:founder')
-  } catch { return false }
+    if (v === '1') localStorage.removeItem('hankki:상점')
+    if (v === '0') localStorage.setItem('hankki:상점', '0')
+    return localStorage.getItem('hankki:상점') !== '0'
+  } catch { return true }
+}
+
+// 상점 카드를 그릴까 — 스위치 ＋ 이 기기에서 실제로 살 수 있나(갤럭시 Play · 아이폰 StoreKit)
+export async function 상점보여도되나() {
+  if (!상점열쇠()) return false
+  try { return await canBuy() } catch { return false }
 }
 
 // 앱을 켤 때 한 번 — 첫 화면을 안 늦추게 3초 뒤. 결제가 안 되는 기기(웹·아이폰)면 아무것도 안 한다.

@@ -25,7 +25,7 @@ import LabSheet from '../components/LabSheet'
 import CloudSheet from '../components/CloudSheet'
 import DeleteAccountSheet from '../components/DeleteAccountSheet'   // 🗑 계정 · 데이터 삭제(큰 틀 6-① ⓑ)
 import KeyShopSheet from '../components/KeyShopSheet'   // 🏪 한끼상점(2026-10-22 · 판매 스위치 뒤)
-import { 상점열쇠 } from '../billing'
+import { 상점보여도되나 } from '../billing'
 import { KEY_NAME } from '../열쇠이름.js'
 import uiShop from '../assets/ui/hankki_shop.png'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
@@ -70,8 +70,9 @@ export default function ProfileScreen() {
   const store = useStore()
   const { profile, setProfile, recipes, clearAll, reset, importAll } = store
   const nav = useNav()
-  // 🏪 한끼상점 — 판매 스위치가 켜진 기기만(`billing.js 상점열쇠`)
-  const [상점보임] = useState(() => 상점열쇠())
+  // 🏪 한끼상점 — 판매 스위치 ＋ 살 수 있는 기기만(`billing.js 상점보여도되나`)
+  const [상점보임, set상점보임] = useState(false)
+  useEffect(() => { let 산다 = true; 상점보여도되나().then((v) => { if (산다) set상점보임(v) }); return () => { 산다 = false } }, [])
   const [상점, set상점] = useState(false)
   // 홈의 백업 안내로 들어왔으면 도착하자마자 백업 시트를 연다
   // (탭 이동은 인자를 못 넘겨서 nudges.js 쪽지로 받는다. 읽는 순간 지워져 한 번만 열린다.)
