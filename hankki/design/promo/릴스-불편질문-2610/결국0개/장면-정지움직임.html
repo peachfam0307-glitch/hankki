@@ -1,0 +1,42 @@
+<!doctype html><meta charset="utf-8"><style>
+@font-face{font-family:D;src:url(dohyeon-korean-400.woff2),url(dohyeon-latin-400.woff2)}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#f6e6cf}
+#cam{position:absolute;inset:0;transform-origin:50% 45%}
+#pic{position:absolute;left:0;top:-5px;width:1080px;height:1930px;object-fit:cover;transform-origin:50% 80%}
+.drop{position:absolute;width:10px;height:34px;border-radius:6px;background:#6f8fb3;opacity:0}
+.fx{position:absolute;font-family:D;color:#fffaf0;-webkit-text-stroke:12px #6b4f3a;paint-order:stroke fill;text-shadow:0 8px 0 #6b4f3a;opacity:0;white-space:nowrap}
+.note{position:absolute;font-size:90px;opacity:0}
+.puff{position:absolute;width:60px;height:60px;border-radius:50%;background:#7b7f88;opacity:0}
+</style>
+<div id="cam"><img id="pic"></div>
+<script>
+const q=new URLSearchParams(location.search), s=q.get('s')
+const A=(el,k,o)=>el.animate(k,Object.assign({fill:'both'},o))
+const pic=document.getElementById('pic'), cam=document.getElementById('cam')
+const fx=(t,x,y,size,delay,rot=0)=>{const d=document.createElement('div');d.className='fx';d.textContent=t;Object.assign(d.style,{left:x+'px',top:y+'px',fontSize:size+'px'});document.body.appendChild(d)
+  A(d,[{opacity:0,transform:`scale(.3) rotate(${rot}deg)`},{opacity:1,transform:`scale(1.15) rotate(${rot}deg)`,offset:.25},{opacity:1,transform:`scale(1) rotate(${rot}deg)`,offset:.8},{opacity:0,transform:`scale(1) rotate(${rot}deg)`}],{delay,duration:900})}
+if(s==='1'){ // 시무룩 — 천천히 다가가며 «털썩», 비 뚝뚝
+  pic.src='1g.png'
+  A(cam,[{transform:'scale(1)'},{transform:'scale(1.07)'}],{duration:3000,easing:'ease-in-out'})
+  A(pic,[{transform:'scaleY(1)'},{transform:'scaleY(.97)',offset:.45},{transform:'scaleY(.985)',offset:.6},{transform:'scaleY(.975)'}],{delay:600,duration:1600,easing:'ease-out'})
+  for(let i=0;i<14;i++){const d=document.createElement('div');d.className='drop';const x=430+((i*37)%190),y=440;Object.assign(d.style,{left:x+'px',top:y+'px'});cam.appendChild(d)
+    A(d,[{opacity:0,transform:'translateY(0)'},{opacity:.85,transform:'translateY(40px)',offset:.2},{opacity:0,transform:'translateY(260px)'}],{delay:(i*190)%2600,duration:700,iterations:1})}
+  fx('털썩…',640,700,110,900,-6)
+}
+if(s==='2'){ // 꼬르곰 등장 — 콩콩 튀고 토닥토닥, 먹구름 펑
+  pic.src='2g.png'
+  A(pic,[{transform:'translateY(0) scale(1)'},{transform:'translateY(-26px) scale(1.01,.99)',offset:.15},{transform:'translateY(0) scale(1.02,.98)',offset:.3},{transform:'translateY(-18px)',offset:.45},{transform:'translateY(0)',offset:.6},{transform:'translateY(0)'}],{duration:1600,easing:'ease-in-out'})
+  A(cam,[{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:500,easing:'cubic-bezier(.2,1.4,.4,1)'})
+  fx('토닥토닥',470,900,96,700,-8)
+  fx('펑!',800,520,120,1700,10)
+  for(let i=0;i<6;i++){const p=document.createElement('div');p.className='puff';Object.assign(p.style,{left:'850px',top:'560px'});cam.appendChild(p);const a=i*60*Math.PI/180
+    A(p,[{opacity:.9,transform:'translate(0,0) scale(1)'},{opacity:0,transform:`translate(${Math.cos(a)*160}px,${Math.sin(a)*160}px) scale(.3)`}],{delay:1700,duration:600,easing:'ease-out'})}
+}
+if(s==='3'){ // 넷이 춤 — 박자 맞춰 통통 · 좌우 흔들 · 음표
+  pic.src='3k2.png'
+  A(pic,[{transform:'translateY(0) rotate(0)'},{transform:'translateY(-22px) rotate(-1.2deg)',offset:.25},{transform:'translateY(0) rotate(0)',offset:.5},{transform:'translateY(-22px) rotate(1.2deg)',offset:.75},{transform:'translateY(0) rotate(0)'}],{duration:1000,iterations:3,easing:'ease-in-out'})
+  fx('둠칫',120,330,110,200,-10); fx('둠칫',760,330,110,1200,10); fx('신난다!',330,250,120,2000,-4)
+  ;['♪','♫','♪','♫'].forEach((n,i)=>{const d=document.createElement('div');d.className='note';d.textContent=n;Object.assign(d.style,{left:(120+i*230)+'px',top:'760px',color:['#b5583a','#6b4f3a','#c98a2b','#7d5aa6'][i]});document.body.appendChild(d)
+    A(d,[{opacity:0,transform:'translateY(0)'},{opacity:1,transform:'translateY(-80px)',offset:.4},{opacity:0,transform:'translateY(-220px)'}],{delay:300+i*600,duration:1400})})
+}
+</script>
