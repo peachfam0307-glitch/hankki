@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import { useBackHandler, useLayerBack } from '../useBackHandler'
@@ -29,7 +29,7 @@ import Portal from '../components/Portal'
 import uiKeyOne from '../assets/ui/key_one.png'
 import uiKeyHole from '../assets/ui/key_hole.png'
 import KeyShopSheet from '../components/KeyShopSheet'   // 🏪 한끼상점(2026-10-22 · 판매 스위치 뒤)
-import { 상점열쇠 } from '../billing'
+import { 상점보여도되나 } from '../billing'
 // 📸📸 안내 사진 — [창업자 2026-08-28] *"1.2.3아래에 한장짜리 사진 넣자. 이게 제일 직관적이야."*
 //    ⭐ 창업자 «폰 실물» 캡처를 짜깁은 것이다(만든 판 = `scripts/_판-가져오기안내컷-0828.py`).
 //       ⛔ 흉내로 그린 그림이 아니다 — 유저가 진짜로 만나는 화면이라야 알아본다(절대원칙 30).
@@ -193,8 +193,9 @@ export default function ImportScreen() {
   const { addRecipe } = useStore()
   const nav = useNav()
   const [flow, setFlow] = useState(null) // instagram | youtube | link | text
-  // 🏪 한끼상점 Ⓑ — 판매 스위치가 켜진 기기만(`billing.js 상점열쇠`)
-  const [상점보임] = useState(() => 상점열쇠())
+  // 🏪 한끼상점 Ⓑ — 판매 스위치 ＋ 살 수 있는 기기만(`billing.js 상점보여도되나`)
+  const [상점보임, set상점보임] = useState(false)
+  useEffect(() => { let 산다 = true; 상점보여도되나().then((v) => { if (산다) set상점보임(v) }); return () => { 산다 = false } }, [])
   const [상점, set상점] = useState(false)
   // 🔍 예시 사진 크게 보기 — 창업자 제보 2026-08-29(*"확대도 안되고 작아서 잘 안보여"*)
   const [shotZoom, setShotZoom] = useState(null)
