@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 const W = fileURLToPath(new URL('.', import.meta.url))
 const br = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
 const p = await br.newPage({ viewport: { width: 1080, height: 1920 } })
-for (const s of ['1', '2', '3']) {
+for (const s of (process.env.SS || '1,2,3').split(',')) {
   const 폴더 = `${W}m${s}`; mkdirSync(폴더, { recursive: true })
   await p.goto('file://' + W + '장면-정지움직임.html?s=' + s)
   await p.evaluate(() => document.fonts.ready); await p.waitForFunction(() => document.getElementById('pic').complete); await p.waitForTimeout(200)

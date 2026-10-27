@@ -1,5 +1,6 @@
 <!doctype html><meta charset="utf-8"><style>
-@font-face{font-family:D;src:url(dohyeon-korean-400.woff2),url(dohyeon-latin-400.woff2)}
+@font-face{font-family:D;src:url(dohyeon-korean-400.woff2)}@font-face{font-family:D;src:url(dohyeon-latin-400.woff2);unicode-range:U+0000-00FF}@font-face{font-family:J;src:url(jua-latin-400.woff2)}
+body{font-family:D,J,sans-serif}
 html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#f6e6cf}
 #cam{position:absolute;inset:0;transform-origin:50% 45%}
 #pic{position:absolute;left:0;top:-5px;width:1080px;height:1930px;object-fit:cover;transform-origin:50% 80%}
@@ -22,6 +23,31 @@ if(s==='1'){ // 시무룩 — 천천히 다가가며 «털썩», 비 뚝뚝
   for(let i=0;i<14;i++){const d=document.createElement('div');d.className='drop';const x=430+((i*37)%190),y=440;Object.assign(d.style,{left:x+'px',top:y+'px'});cam.appendChild(d)
     A(d,[{opacity:0,transform:'translateY(0)'},{opacity:.85,transform:'translateY(40px)',offset:.2},{opacity:0,transform:'translateY(260px)'}],{delay:(i*190)%2600,duration:700,iterations:1})}
   fx('털썩…',640,700,110,900,-6)
+}
+if(s==='1b'){ // 3판 ① 바깥 우편함 — 천천히 다가가며 «텅…», 낙엽 휙
+  pic.src='n1.png'
+  A(cam,[{transform:'scale(1)'},{transform:'scale(1.08)'}],{duration:3000,easing:'ease-in-out'})
+  fx('텅…',120,560,140,700,-8)
+  const lf=document.createElement('div');lf.className='note';lf.textContent='🍂';lf.style.left='-120px';lf.style.top='900px';document.body.appendChild(lf)
+  A(lf,[{opacity:1,transform:'translate(0,0) rotate(0)'},{opacity:1,transform:'translate(1300px,-200px) rotate(540deg)'}],{delay:1500,duration:1400,easing:'ease-in'})
+}
+if(s==='4'){ // 셀프 시상식 — 반짝 확대, 꽃가루, 트로피 번쩍
+  pic.src='n4.png'
+  A(cam,[{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:600,easing:'cubic-bezier(.2,1.4,.4,1)'})
+  A(pic,[{transform:'translateY(0)'},{transform:'translateY(-16px)',offset:.5},{transform:'translateY(0)'}],{delay:600,duration:600,iterations:4})
+  fx('셀프 수상 🏆',600,110,96,500,6)
+  const C=['#f2c14e','#e07a5f','#81b29a','#b8a1e0','#f4a261']
+  for(let i=0;i<46;i++){const d=document.createElement('div');Object.assign(d.style,{position:'absolute',left:((i*97)%1080)+'px',top:'-40px',width:'18px',height:'30px',background:C[i%5],borderRadius:'4px'});document.body.appendChild(d)
+    A(d,[{transform:`translateY(0) rotate(0)`},{transform:`translateY(2000px) rotate(${(i%2?1:-1)*720}deg)`}],{delay:(i*53)%1500,duration:2200,easing:'linear'})}
+}
+if(s==='5'){ // 끝 장 — 넷이 손 흔들기 + 이름·두 스토어
+  pic.src='n5.png'; document.body.style.background='#fbf7ef'
+  A(pic,[{transform:'translateY(0)'},{transform:'translateY(-14px)',offset:.5},{transform:'translateY(0)'}],{duration:500,iterations:5})
+  const t=document.createElement('div');t.innerHTML='<img src="icon.png" style="width:150px;height:150px;border-radius:36px;box-shadow:0 12px 26px -10px rgba(40,30,20,.4)"><div style="font-family:D;font-size:120px;color:#2b2420;margin-top:14px">한끼 레시피북</div><div style="font-family:D;font-size:52px;color:#b5583a">레시피 · 장보기 · 냉장고 · 식비를 한 곳에</div>'
+  Object.assign(t.style,{position:'absolute',left:0,right:0,top:'150px',textAlign:'center'});document.body.appendChild(t)
+  A(t,[{opacity:0,transform:'scale(.7)'},{opacity:1,transform:'scale(1)'}],{duration:500,easing:'cubic-bezier(.2,1.4,.4,1)'})
+  const pl=document.createElement('div');pl.innerHTML='App Store · Google Play 에서<br><span style="color:#b5583a">「한끼 레시피북」</span> 검색'
+  Object.assign(pl.style,{position:'absolute',left:'90px',right:'90px',bottom:'110px',textAlign:'center',fontFamily:'D',fontSize:'52px',color:'#2b2420',background:'#fffdf8',borderRadius:'60px',padding:'24px 20px',boxShadow:'0 12px 26px -10px rgba(40,30,20,.3)'});document.body.appendChild(pl)
 }
 if(s==='2'){ // 꼬르곰 등장 — 콩콩 튀고 토닥토닥, 먹구름 펑
   pic.src='2g.png'
