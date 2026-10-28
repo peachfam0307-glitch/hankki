@@ -8549,7 +8549,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-saesongi-chicken',
     icon: 'n3059',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
-    title: '새송이 치킨', from: '2026-12-16',
+    title: '새송이 치킨', from: '2026-12-21',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '한식', folder: '반찬', tags: ['버섯', '새송이', '안주'],
     time: 25, servings: 2, difficulty: '보통',
     sourceUrl: 'https://www.instagram.com/reel/Del85fPB4ha/',
@@ -8571,7 +8571,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-haemul-nurungjitang-sns',
-    title: '초간단 해물누룽지탕', from: '2026-12-16',   // ✏️ 창업자 2026-10-28 이름 · 11/9 창업자 편 「해물누룽지탕」과 다른 편
+    title: '초간단 해물누룽지탕', from: '2026-12-21',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편   // ✏️ 창업자 2026-10-28 이름 · 11/9 창업자 편 「해물누룽지탕」과 다른 편
     category: '중식', folder: '중식', tags: ['해물', '누룽지', '손님상'],
     time: 25, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/Deq0ujrBCly/',
@@ -8594,7 +8594,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-gyeran-jjigi',
     icon: 'n3065',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
-    title: '계란 찌기', from: '2026-12-16',
+    title: '계란 찌기', from: '2026-12-21',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '한식', folder: '반찬', tags: ['계란', '기본'],
     time: 15, servings: 2, difficulty: '쉬움',
     sourceUrl: '',   // ❓ 링크 못 받음
@@ -8612,7 +8612,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-naeng-japchae',
-    title: '냉잡채', from: '2026-12-30',
+    title: '냉잡채', from: '2026-12-21',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '한식', folder: '한식', tags: ['당면', '소고기', '손님상'],
     time: 50, servings: 3, difficulty: '보통',
     sourceUrl: 'https://www.instagram.com/reel/De_auoEpDp1/',
@@ -8639,7 +8639,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-yangbaechu-jeon-diet',
-    title: '양배추전', from: '2026-12-30',
+    title: '양배추전', from: '2026-12-28',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '한식', folder: '반찬', tags: ['양배추', '다이어트'],
     time: 20, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/Deso0kfPh5J/',   // ✅ 창업자 2026-10-28 「맞아 양배추전링크」
@@ -8660,7 +8660,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-greek-yogurt-jjokpa-ball',
     icon: 'n3062',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
-    title: '그릭요거트 쪽파 볼', from: '2026-12-30',
+    title: '그릭요거트 쪽파 볼', from: '2026-12-28',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '양식', folder: '간식', tags: ['그릭요거트', '브런치'],
     time: 10, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/De_s1d-tezR/',   // ✅ 창업자 2026-10-28 「꾸덕요거트볼 샌드위치」 링크
@@ -8680,7 +8680,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-jeonbok-pasta',
     icon: 'n3061',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
-    title: '전복파스타', from: '2026-12-30',
+    title: '전복파스타', from: '2026-12-28',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '양식', folder: '양식', tags: ['전복', '문어', '파스타'],
     time: 30, servings: 2, difficulty: '보통',
     sourceUrl: 'https://www.instagram.com/reel/Dev1gi1TWE1/',
@@ -8705,7 +8705,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-garibi-bibimbap',
     icon: 'n3063',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
-    title: '가리비 비빔밥', from: '2027-01-13',
+    title: '가리비 비빔밥', from: '2026-12-28',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '한식', folder: '밥', tags: ['가리비', '부추', '제철'],
     time: 25, servings: 1, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DetA9L6RH9I/',
@@ -8726,7 +8726,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-ricepaper-dubu-mandu',
-    title: '라이스페이퍼 두부부추 만두', from: '2027-01-13',
+    title: '라이스페이퍼 두부부추 만두', from: '2027-01-04',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '한식', folder: '간식', tags: ['두부', '부추', '라이스페이퍼'],
     time: 30, servings: 2, difficulty: '보통',
     sourceUrl: 'https://www.instagram.com/reel/DdWUUm5z2IC/',
@@ -8748,7 +8748,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-maneuljjong-dwaeji-bokkeum',
     icon: 'n3064',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
-    title: '이연복 마늘쫑돼지고기볶음', from: '2027-01-13',
+    title: '이연복 마늘쫑돼지고기볶음', from: '2027-01-04',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '중식', folder: '중식', tags: ['마늘쫑', '돼지고기'],
     time: 20, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://youtube.com/shorts/FNKR2V8Hl-w',   // 창업자 「마늘쫑은 유튜브 쇼츠로 하자」
@@ -8766,7 +8766,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-eolgari-namul-muchim',
-    title: '얼갈이 나물무침', from: '2027-01-13',
+    title: '얼갈이 나물무침', from: '2027-01-04',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '한식', folder: '반찬', tags: ['얼갈이', '나물', '된장'],
     time: 15, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://youtu.be/Czslz30mrOo',
@@ -8788,7 +8788,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-kkwari-gochu-jorim-sns',
     icon: 'n3060',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
-    title: '꽈리고추조림', from: '2027-01-27',
+    title: '꽈리고추조림', from: '2027-01-04',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '한식', folder: '반찬', tags: ['꽈리고추', '밥도둑'],
     time: 15, servings: 3, difficulty: '쉬움',
     sourceUrl: 'https://youtube.com/shorts/IJPymR1gAOs',
@@ -8811,7 +8811,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-jeonghoyoung-musaengchae',
-    title: '정호영 셰프 무생채', from: '2027-01-27',
+    title: '정호영 셰프 무생채', from: '2027-01-11',   // 📅 창업자 2026-10-28 「수요일이 끝나면 월요일부터」 · 매주 월요일 4편
     category: '한식', folder: '반찬', tags: ['무', '밥도둑'],
     time: 15, servings: 4, difficulty: '쉬움',
     sourceUrl: 'https://youtu.be/6Ljb9ZqAmF8',
