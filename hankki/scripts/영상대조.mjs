@@ -46,22 +46,28 @@ if (설명파일) { const j = JSON.parse(readFileSync(설명파일, 'utf8')); �
 // ── 영어 → 우리말 사전 (분석의 «말»이 영어로 온다) ─────────────
 // ⚠️ 클로드가 적은 사전이다. 못 찾은 낱말은 ❓로 찍혀 사람이 본다 — 늘리면서 쓴다.
 const 사전 = [   // 값이 「가|나」면 아무거나 맞으면 된다 · ⚠️ 순서 중요(긴 말 먼저)
-  [/perilla oil/, '들기름'], [/sesame oil/, '참기름'], [/olive oil/, '올리브'], [/sesame (seeds?|powder)/, '깨'],
+  [/perilla oil/, '들기름'], [/perilla (seed )?(powder|seeds?)/, '들깨'], [/perilla leaf|perilla leaves|\bperilla\b/, '깻잎'],
+  [/sesame oil/, '참기름'], [/olive oil/, '올리브'], [/sesame salt/, '깨소금'], [/sesame (seeds?|powder)/, '깨'],
   [/cooking oil|vegetable oil|\boil\b/, '식용유|기름'],
-  [/soy sauce/, '간장'], [/oyster sauce/, '굴소스'], [/fish sauce/, '액젓'], [/plum (extract|juice|syrup)/, '매실'],
-  [/starch syrup|corn syrup|oligosaccharide/, '물엿|올리고당'], [/garlic scapes?/, '마늘쫑'], [/minced garlic|\bgarlic\b/, '마늘'],
-  [/green onions?|scallions?/, '파'], [/\bonions?\b/, '양파'], [/(red )?chili powder|red pepper powder|gochugaru/, '고춧가루'],
-  [/kkwari|shishito/, '꽈리'], [/\bsalt\b/, '소금'], [/\bsugar\b/, '설탕'], [/\bmsg\b/, '미원'], [/black pepper/, '후추'],
+  [/soy sauce/, '간장'], [/oyster sauce/, '굴소스'], [/tuna (fish sauce|liquid|extract|sauce)/, '참치액'], [/(anchovy|sand lance)?[\/ ]*(sand lance )?fish sauce/, '액젓'],
+  [/plum (extract|juice|syrup)/, '매실'], [/starch syrup|corn syrup|oligosaccharide/, '물엿|올리고당'], [/allulose/, '알룰로스'],
+  [/cooking wine|mirin/, '맛술|미림'], [/anchov(y|ies)/, '멸치'],
+  [/garlic scapes?/, '마늘쫑'], [/minced garlic|\bgarlic\b/, '마늘'],
+  [/green onions?|scallions?/, '파'], [/\bonions?\b/, '양파'],
+  [/(red )?chili powder|red pepper (powder|flakes)|chili flakes|gochugaru/, '고춧가루'],
+  [/kkwari|shishito/, '꽈리'], [/cheongyang/, '청양고추|고추'], [/red chili peppers?|red peppers?/, '홍고추|고추'], [/chili peppers?/, '고추'],
+  [/coarse salt|\bsalt\b/, '소금'], [/\bsugar\b/, '설탕'], [/\bmsg\b/, '미원'], [/black pepper|\bpepper\b(?! (powder|flakes))/, '후추'],
   [/doenjang|soybean paste/, '된장'], [/gochujang/, '고추장'], [/\bwater\b/, '물'], [/pork belly/, '삼겹살'], [/\bpork\b/, '돼지|삼겹살'],
   [/\bbeef\b/, '소고기'], [/\beggs?\b/, '계란|달걀'], [/radish/, '무'], [/cabbage|eolgari/, '얼갈이'], [/vinegar/, '식초'],
-  [/butter/, '버터'], [/\bmilk\b/, '우유'], [/cheese/, '치즈'], [/tofu/, '두부'], [/\brice\b/, '밥'],
+  [/oyster mushrooms?/, '느타리'], [/shiitake/, '표고'], [/glutinous rice flour/, '찹쌀가루'], [/mushrooms?/, '버섯'],
+  [/butter/, '버터'], [/\bmilk\b/, '우유'], [/cheese/, '치즈'], [/tofu/, '두부'], [/\brice\b(?! flour)/, '밥'],
 ]
 const 불사전 = [[/medium[- ]high heat/, '중강불'], [/medium[- ]low heat/, '중약불'], [/low heat/, '약불'], [/medium heat/, '중불'], [/high heat/, '센불|강불']]
 const 숫자말 = { one: 1, two: 2, three: 3, four: 4, five: 5, half: 0.5, a: 1 }
 const 단위말 = [[/tablespoons?|tbsp|spoonfuls?|spoons?/, '큰술'], [/teaspoons?|tsp/, '작은술'], [/\bml\b|milliliters?/, 'ml'], [/\bg\b|grams?/, 'g'],
   [/\bkg\b/, 'kg'], [/cups?/, '컵'], [/minutes?/, '분'], [/pinch/, '꼬집'], [/cloves?/, '알']]
 const 한국단위 = '큰술|작은술|g|kg|ml|컵|분|알|대|꼬집'
-const 정분량 = (s) => s.replace(/\s+/g, '').replace(/스푼|숟가락|술(?!큰)/g, '큰술').replace(/큰큰술/g, '큰술')
+const 정분량 = (s) => s.replace(/\s+/g, '').replace(/(?<![\d.])1\/2(?=[가-힣a-z])/g, '0.5').replace(/스푼|숟가락|술(?!큰)/g, '큰술').replace(/큰큰술/g, '큰술')
 const 분량뽑기 = (s) => new Set([...정분량(s).matchAll(new RegExp(`(\\d+(?:\\.\\d+)?(?:\\/\\d+)?)(${한국단위})`, 'g'))].map((m) => `${m[1]}${m[2]}`))
 
 const 한국어 = /[가-힣]/
@@ -152,9 +158,11 @@ function 짝들(말) {
     return 나
   }
   const 소 = 숫자풀기(말)
-  for (const m of 소.matchAll(/(\d+(?:\.\d+)?(?:\/\d+)?)\s*(tablespoons?|tbsp|spoonfuls?|spoons?|teaspoons?|tsp|ml|milliliters?|g|grams?|kg|cups?|pinch(?:es)?|cloves?)\s+(?:of\s+)?(?:the\s+)?([a-z][a-z \-]{1,40}?)(?=\s*(?:[,.;(]|\band\b|\binto\b|\bto\b|\bin\b|$))/g)) {
+  for (const m of 소.matchAll(/(\d+(?:\.\d+)?(?:\/\d+)?)\s*(tablespoons?|tbsp|spoonfuls?|spoons?|teaspoons?|tsp|ml|milliliters?|g|grams?|kg|cups?|pinch(?:es)?|cloves?)\s+(?:of\s+)?(?:the\s+)?([a-z][a-z \-\/]{1,40}?)(?=\s*(?:[,.;(]|\band\b|\binto\b|\bto\b|\bin\b|$))/g)) {
     const u = 영단위(m[2]); if (!u) continue
     const ko = 사전.find(([re]) => re.test(m[3]))?.[1]
+    // 「of」 없이 이어진 말(「16 tablespoons is based on …」)은 재료가 아닐 수 있다 → 사전에 없으면 ❓로 안 찍고 넘긴다
+    if (!ko && !/\bof\b/.test(m[0])) continue
     나.push({ 재료: ko || `❓${m[3].trim()}`, 양: `${m[1]}${u}`, 원문: m[0] })
   }
   // 단위 없이 「1/3 of a green onion」 — 파는 「대」, 그 밖은 「개」(우리말 셈)
