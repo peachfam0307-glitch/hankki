@@ -8770,10 +8770,10 @@ const RAW_BASICS = [
     category: '한식', folder: '반찬', tags: ['얼갈이', '나물', '된장'],
     time: 15, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://youtu.be/Czslz30mrOo',
-    sourceName: '',
-    // 순서 = 유튜브 AI 요약(창업자 「그대로 가」)
+    sourceName: '소소황 Cook & Eat',
+    // 순서 = 유튜브 AI 요약(창업자 「그대로 가」) · 재료 분량 = 설명란(YouTube API 2026-10-28)
     ingredients: [
-      '얼갈이', '소금 1큰술 (데칠 때)', '대파 1/3대 (채 썰기)',
+      '얼갈이 600g', '소금 1큰술 (데칠 때)', '대파 1/3대 (채 썰기)',
       '[양념장]',
       '된장 1큰술', '멸치액젓 1큰술', '다진마늘 1.5큰술', '참기름 1.5큰술', '깨소금 1.5큰술',
     ],
