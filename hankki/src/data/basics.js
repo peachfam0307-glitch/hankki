@@ -8642,9 +8642,8 @@ const RAW_BASICS = [
     title: '양배추전', from: '2026-12-30',
     category: '한식', folder: '반찬', tags: ['양배추', '다이어트'],
     time: 20, servings: 2, difficulty: '쉬움',
-    sourceUrl: 'https://www.instagram.com/reel/Deso0kfPh5J/',   // ❓ 녹화 속 계정 matt_place_ · 첫 링크가 이 편인지 확인 필요
+    sourceUrl: 'https://www.instagram.com/reel/Deso0kfPh5J/',   // ✅ 창업자 2026-10-28 「맞아 양배추전링크」
     sourceName: 'matt_place_',   // 출처: 유튜브 MBC 전지적참견시점
-    물어볼것: '첫 링크(Deso0kfPh5J)가 양배추전 링크가 맞는지 · 캡션 재료가 「계란 3개,」 뒤로 잘려 보였다(창업자 「캡션 그게 끝」)',
     // 순서 = 영상 자막을 따라 적음(창업자 「그냥 먹는거야. 캡션 그게 끝」)
     ingredients: [
       '양배추 200g', '애호박 1/3개', '당근 1/4개', '계란 3개',
