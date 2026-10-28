@@ -37,8 +37,9 @@ async function 레시피들() {
 }
 const r = (await 레시피들()).find((x) => x.id === id)
 if (!r) { console.error(`⛔ 레시피 ${id} 없음`); process.exit(1) }
-const 분석 = JSON.parse(readFileSync(분석파일, 'utf8'))
-const 장면 = (분석.result || 분석).scenes || []
+// 분석은 여러 번 줄 수 있다(쉼표) — 같은 영상을 두 번 돌려 «서로 다른 곳»을 잡는다(분석은 매번 조금씩 다를 수 있다)
+const 분석들 = 분석파일.split(',').map((f) => { const j = JSON.parse(readFileSync(f, 'utf8')); return (j.result || j).scenes || [] })
+const 장면 = 분석들[0]
 let 설명 = ''
 if (설명파일) { const j = JSON.parse(readFileSync(설명파일, 'utf8')); 설명 = (Array.isArray(j) ? j : [j]).find((v) => (r.sourceUrl || '').includes(v.id))?.설명란 || '' }
 
@@ -66,7 +67,7 @@ const 분량뽑기 = (s) => new Set([...정분량(s).matchAll(new RegExp(`(\\d+(
 const 한국어 = /[가-힣]/
 function 영상분량(말) {
   const 나 = [...분량뽑기(말)]   // 한국어 자막이 그대로 올 때(얼갈이 편)
-  const 소 = 말.toLowerCase()
+  const 소 = 숫자풀기(말)   // 「one and a half」·「half a」 같은 말을 숫자로
   for (const m of 소.matchAll(/(\d+(?:\.\d+)?(?:\/\d+)?|one|two|three|four|five|half|a)\s+(?:of\s+)?(tablespoons?|tbsp|spoonfuls?|spoons?|teaspoons?|tsp|ml|milliliters?|g|grams?|kg|cups?|minutes?|pinch|cloves?)\b/g)) {
     const n = 숫자말[m[1]] ?? m[1]; const u = 단위말.find(([re]) => re.test(m[2]))?.[1]
     if (u) 나.push(`${n}${u}`)
@@ -87,8 +88,10 @@ const 재료낱말 = (말) => {
   const 나 = []
   if (한국어.test(말)) { for (const w of 우리이름들) if (w.length >= 2 && 말.includes(w)) 나.push(w); return 나 }
   let 남 = 말.toLowerCase()
-  for (const [re, ko] of 사전) if (re.test(남)) { 나.push(ko); 남 = 남.replace(new RegExp(re.source, 'g'), ' ') }
-  return 나
+  // 말한 «차례대로» 세운다(한 문장에 둘이 나올 때 사전 순서로 세우면 순서 검사가 헛경보를 낸다 — 마늘쫑 후추·굴소스)
+  const 자리 = []
+  for (const [re, ko] of 사전) { const m = 남.match(re); if (m) { 자리.push([m.index, ko]); 남 = 남.replace(new RegExp(re.source, 'g'), (s) => ' '.repeat(s.length)) } }
+  return 자리.sort((a, b) => a[0] - b[0]).map(([, ko]) => ko)
 }
 
 // ── 영상 줄 세우기 ─────────────────────────────────────────
@@ -111,7 +114,8 @@ const 걸림 = []
 for (const [q, t] of 영상분량들) if (!우리분량.has(q)) 걸림.push(['① 분량', `영상 ${t} 「${q}」 — 우리 글에 없다`])
 for (const q of 우리분량) if (!영상분량들.has(q) && !설명분량.has(q)) 걸림.push(['① 분량', `우리 글 「${q}」 — 영상에도 설명란에도 없다(눈으로)`])
 // ② 재료
-for (const [k, t] of [...영상재료, ...화면만]) if (!있나(k)) 걸림.push(['② 재료', `영상 ${t} 「${k.split('|')[0]}」 — 우리 글에 없다`])
+for (const [k, t] of 영상재료) if (!있나(k)) 걸림.push(['② 재료', `영상 ${t} 「${k.split('|')[0]}」 — 우리 글에 없다`])
+for (const [k, t] of 화면만) if (!있나(k)) 걸림.push(['② 재료', `영상 ${t} 「${k.split('|')[0]}」 — 화면에만 보였다(곁들임·담음새일 수 있다 → 눈으로)`])
 const 영상말전부 = 줄.map((z) => z.말).join(' ')
 for (const s of 우리재료) {
   const 이름 = 재료이름(s); if (!이름) continue
@@ -132,10 +136,64 @@ for (let i = 1; i < 둘다.length; i++) if (Math.max(...차례들(둘다[i])) < 
   걸림.push(['④ 순서', `영상은 「${둘다[i - 1].split('|')[0]}」(${영상재료.get(둘다[i - 1])}) → 「${둘다[i].split('|')[0]}」(${영상재료.get(둘다[i])}) · 우리는 거꾸로`])
 // ⑤ 설명란 — 설명란에만 있고 영상에도 우리 글에도 없는 분량
 for (const q of 설명분량) if (!영상분량들.has(q) && !우리분량.has(q)) 걸림.push(['⑤ 설명란', `설명란 「${q}」 — 영상에도 우리 글에도 없다(눈으로)`])
+// ⑥ 재료별 분량 — 「N단위 of 재료」·「재료 N단위」를 «짝»으로 묶어 우리 재료 줄의 분량과 맞댄다
+//    (①은 숫자가 «어딘가 있나»만 본다 → 간장 2를 설탕 2로 써도 통과했다. 그 구멍을 막는다)
+function 숫자풀기(s) { return s.toLowerCase()
+  .replace(/\bone and a half\b/g, '1.5').replace(/\btwo and a half\b/g, '2.5').replace(/\bthree and a half\b/g, '3.5')
+  .replace(/\bhalf an?\b/g, '0.5').replace(/\ba third of\b/g, '1/3').replace(/\ba quarter of\b/g, '1/4')
+  .replace(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/g, (w) => ({ one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 })[w])
+  .replace(/\ba (?=(tablespoon|teaspoon|spoonful|spoon|cup|pinch)s?\b)/g, '1 ') }
+const 영단위 = (u) => 단위말.find(([re]) => re.test(u))?.[1]
+function 짝들(말) {
+  const 나 = []
+  if (한국어.test(말)) {
+    for (const m of 말.matchAll(/([가-힣]+(?:\/[가-힣]+)?)\s*(\d+(?:\.\d+)?(?:\/\d+)?)\s*(큰술|작은술|술|스푼|g|kg|ml|컵|알|대|꼬집)/g))
+      나.push({ 재료: m[1], 양: 정분량(`${m[2]}${m[3]}`), 원문: m[0] })
+    return 나
+  }
+  const 소 = 숫자풀기(말)
+  for (const m of 소.matchAll(/(\d+(?:\.\d+)?(?:\/\d+)?)\s*(tablespoons?|tbsp|spoonfuls?|spoons?|teaspoons?|tsp|ml|milliliters?|g|grams?|kg|cups?|pinch(?:es)?|cloves?)\s+(?:of\s+)?(?:the\s+)?([a-z][a-z \-]{1,40}?)(?=\s*(?:[,.;(]|\band\b|\binto\b|\bto\b|\bin\b|$))/g)) {
+    const u = 영단위(m[2]); if (!u) continue
+    const ko = 사전.find(([re]) => re.test(m[3]))?.[1]
+    나.push({ 재료: ko || `❓${m[3].trim()}`, 양: `${m[1]}${u}`, 원문: m[0] })
+  }
+  // 단위 없이 「1/3 of a green onion」 — 파는 「대」, 그 밖은 「개」(우리말 셈)
+  for (const m of 소.matchAll(/(\d+\/\d+|\d+(?:\.\d+)?)\s+of\s+an?\s+([a-z][a-z \-]{1,30}?)(?=\s*(?:[,.;(]|\band\b|$))/g)) {
+    const ko = 사전.find(([re]) => re.test(m[2]))?.[1]
+    나.push({ 재료: ko || `❓${m[2].trim()}`, 양: `${m[1]}${ko === '파' ? '대' : '개'}`, 원문: m[0] })
+  }
+  return 나
+}
+// 「소금」⊂「깨소금」처럼 글자는 겹치지만 다른 재료 — 여기 있으면 «같다»로 안 본다(2026-10-28 깨소금 헛경보 두 번)
+const 다른재료 = { 소금: ['깨소금'], 기름: ['들기름', '참기름', '고추기름'], 파: ['양파', '쪽파'], 마늘: ['마늘쫑'], 물: ['물엿'], 간장: ['굴소스'], 고추: ['고춧가루', '꽈리고추', '청양고추'] }
+const 같은재료 = (긴, x) => 긴.includes(x) && !(다른재료[x] || []).some((d) => 긴.includes(d))
+const 우리줄찾기 = (재료) => 우리재료.filter((s) => 재료.split('|').some((x) => 같은재료(재료이름(s), x) || (x.length >= 2 && 같은재료(x, 재료이름(s)))))
+const 분석짝 = 분석들.map((sc) => sc.flatMap((s) => 짝들((s.audio || '').replace(/^.*Narrator:\s*/i, '')).map((p) => ({ ...p, t: s.timestamp_start }))))
+for (const p of 분석짝[0]) {
+  if (p.재료.startsWith('❓')) { 걸림.push(['⑥ 재료별 분량', `영상 ${p.t} 「${p.원문}」 — 사전에 없는 재료(눈으로 · 사전에 더할 것)`]); continue }
+  const 줄들 = 우리줄찾기(p.재료); if (!줄들.length) continue   // 재료 자체가 없으면 ②가 이미 잡는다
+  const 단위같은 = 줄들.filter((s) => 분량뽑기(s).size && [...분량뽑기(s)].some((q) => q.replace(/[\d./]+/, '') === p.양.replace(/[\d./]+/, '')))
+  if (단위같은.length && !단위같은.some((s) => 분량뽑기(s).has(p.양)))
+    걸림.push(['⑥ 재료별 분량', `영상 ${p.t} 「${p.재료.split('|')[0]} ${p.양}」 ↔ 우리 「${단위같은.join(' / ')}」`])
+}
+// ⑦ 설명란 vs 영상 — 같은 재료인데 분량이 다르면(영상이 주 · 어느 쪽을 썼는지 주석에 남긴다)
+if (설명) for (const 줄 of 설명.split('\n').filter((l) => !l.includes('='))) for (const p of 짝들(줄)) {
+  const 영 = 분석짝[0].find((v) => v.재료.split('|').some((x) => 같은재료(p.재료, x) || 같은재료(x, p.재료)) && v.양.replace(/[\d./]+/, '') === p.양.replace(/[\d./]+/, ''))
+  if (영 && 영.양 !== p.양) 걸림.push(['⑦ 설명란≠영상', `「${p.재료}」 설명란 ${p.양} ↔ 영상 ${영.t} ${영.양} → 영상대로`])
+}
+// ⑧ 분석끼리 다름 — 두 번 돌린 분석에서 한쪽에만 있는 «재료＋분량»
+if (분석짝.length > 1) {
+  // 같은 재료가 한 번은 한국어(「얼갈이배추」), 한 번은 영어(cabbage→얼갈이)로 올 수 있다 → «우리 재료 줄»로 묶어서 센다
+  const 열쇠 = (p) => `${(우리줄찾기(p.재료)[0] && 재료이름(우리줄찾기(p.재료)[0])) || p.재료.split('|')[0]} ${p.양}`
+  const 모음 = 분석짝.map((ps) => new Set(ps.map(열쇠)))
+  for (const k of new Set(모음.flatMap((s) => [...s]))) if (!모음.every((s) => s.has(k)))
+    걸림.push(['⑧ 분석끼리 다름', `「${k}」 — ${모음.map((s, i) => `${i + 1}번 ${s.has(k) ? '있음' : '없음'}`).join(' · ')} (눈으로)`])
+}
+
 // ❓ 사전 밖 — 「넣는다」 뒤에 온 낱말인데 재료로 못 맞춘 것
-const 안재료 = /^(?:add|put|pour|sprinkle)\s+(?:the\s+|some\s+|a\s+)?(it|them|this|that|two|three|one|spoonfuls?|seasoning|sauce|everything|all|more|a little)\b/
+const 안재료 = /^(?:add|put|pour|sprinkle|drizzle|garnish with|top with|season with|mix in|stir in|toss with|coat with|marinate with|place)\s+(?:the\s+|some\s+|a\s+)?(it|them|this|that|two|three|one|spoons?|spoonfuls?|seasoning|sauce|everything|all|more|a little|the root|in|on|to)\b/
 const 모름 = new Set()
-for (const z of 줄) if (!한국어.test(z.말)) for (const w of z.말.toLowerCase().match(/\b(?:add|put|pour|sprinkle)\s+(?:the\s+|some\s+|a\s+)?([a-z]+(?:\s[a-z]+)?)/g) || [])
+for (const z of 줄) if (!한국어.test(z.말)) for (const w of z.말.toLowerCase().match(/\b(?:add|put|pour|sprinkle|drizzle|garnish with|top with|season with|mix in|stir in|toss with|coat with|marinate with|place)\s+(?:the\s+|some\s+|a\s+)?([a-z]+(?:\s[a-z]+)?)/g) || [])
   if (!재료낱말(w).length && !안재료.test(w)) 모름.add(`${z.t} ${w}`)
 
 
