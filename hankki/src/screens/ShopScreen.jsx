@@ -857,9 +857,10 @@ function Curation() {
                     onClick={() => setOpenG((s) => ({ ...s, [key]: !s[key] }))}
                     // 🎨 [창업자 2026-10-28 「더보기가 밝은 색이어서 눈에 안들어와」] 옅은 바탕 → 진한 바탕·흰 글씨 ＋ 화살표
                     //    (그날 거창한 쌀수제비믹스가 «국수·면» 접힌 칸 안에 있는데 창업자가 «없다»로 봤다)
-                    style={{ width: '100%', padding: '10px 0', marginBottom: 4, borderRadius: 11, background: 'var(--brown)', border: 'none', color: '#fff', fontWeight: 800, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    //    ✏️ 같은 날 23:29 창업자 「테두리로 일단 해보자. 깔끔하니까」 — 꽉 찬 판(명암 4~6배)과 견줘 테두리형(흰 바탕 1.1배 · 테두리로 보임)을 골랐다
+                    style={{ width: '100%', padding: '10px 0', marginBottom: 4, borderRadius: 11, background: 'var(--surface)', border: '2px solid var(--brown)', color: 'var(--brown)', fontWeight: 800, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                     {openG[key] ? `${label} 접기` : `${label} ${n}개 더보기`}
-                    <Icon name="chevron-down" size={18} color="#fff" style={{ transform: openG[key] ? 'rotate(180deg)' : 'none' }} />
+                    <Icon name="chevron-down" size={18} color="currentColor" style={{ transform: openG[key] ? 'rotate(180deg)' : 'none' }} />
                   </button>
                 )
                 return (
