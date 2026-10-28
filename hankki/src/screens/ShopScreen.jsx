@@ -855,8 +855,11 @@ function Curation() {
                   <button
                     className="press"
                     onClick={() => setOpenG((s) => ({ ...s, [key]: !s[key] }))}
-                    style={{ width: '100%', padding: '9px 0', marginBottom: 4, borderRadius: 11, background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--brown)', fontWeight: 800, fontSize: 16 }}>
+                    // 🎨 [창업자 2026-10-28 「더보기가 밝은 색이어서 눈에 안들어와」] 옅은 바탕 → 진한 바탕·흰 글씨 ＋ 화살표
+                    //    (그날 거창한 쌀수제비믹스가 «국수·면» 접힌 칸 안에 있는데 창업자가 «없다»로 봤다)
+                    style={{ width: '100%', padding: '10px 0', marginBottom: 4, borderRadius: 11, background: 'var(--brown)', border: 'none', color: '#fff', fontWeight: 800, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                     {openG[key] ? `${label} 접기` : `${label} ${n}개 더보기`}
+                    <Icon name="chevron-down" size={18} color="#fff" style={{ transform: openG[key] ? 'rotate(180deg)' : 'none' }} />
                   </button>
                 )
                 return (
