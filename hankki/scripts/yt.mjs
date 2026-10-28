@@ -86,7 +86,8 @@ if (명령 === 'search') {
   const v = ids ? await 부르기(`videos?part=snippet,statistics&id=${ids}`) : { items: [] }
   찍기(쓰기('other', ids ? 1 : 0, `videos(검색 결과 ${s.items.length})`))
   const 결과 = v.items.map((x) => ({ id: x.id, 제목: x.snippet.title, 채널: x.snippet.channelTitle, 올린날: x.snippet.publishedAt.slice(0, 10),
-    조회수: Number(x.statistics?.viewCount || 0), 분량있음: /\d+\s*(g|ml|큰술|작은술|스푼|숟갈|T|컵|개|대)/.test(x.snippet.description) }))
+    조회수: Number(x.statistics?.viewCount || 0), 분량있음: /\d+\s*(g|ml|큰술|작은술|스푼|숟갈|T|컵|개|대)/.test(x.snippet.description),
+    순서있음: /(^|\n)\s*(\d+[.)]|[①②③④⑤]|STEP|step)/.test(x.snippet.description), 설명란: x.snippet.description }))
     .sort((a, b) => b.조회수 - a.조회수)
   console.log(JSON.stringify(결과, null, 1))
   process.exit(0)
