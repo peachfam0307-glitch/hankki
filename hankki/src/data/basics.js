@@ -8663,9 +8663,8 @@ const RAW_BASICS = [
     title: '그릭요거트 쪽파 볼', from: '2026-12-30',
     category: '양식', folder: '간식', tags: ['그릭요거트', '브런치'],
     time: 10, servings: 2, difficulty: '쉬움',
-    sourceUrl: '',   // ❓ 녹화로만 받음 · 링크 못 받음
+    sourceUrl: 'https://www.instagram.com/reel/De_s1d-tezR/',   // ✅ 창업자 2026-10-28 「꾸덕요거트볼 샌드위치」 링크
     sourceName: 'theeasychan',
-    물어볼것: '그릭요거트 쪽파 볼 원본 링크를 아직 못 받았다',
     // 창업자 「만드는법 영상이 다여」 → 영상 자막 그대로 · 분량 없음
     ingredients: [
       '꾸덕한 그릭요거트', '쪽파', '고운 소금 약간', '다진 견과류', '사워도우',
