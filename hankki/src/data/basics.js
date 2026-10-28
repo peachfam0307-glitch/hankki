@@ -8275,6 +8275,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-jidori-udon',
     title: '지도리우동', from: '2026-11-25',
+    icon: 'n3066',   // 🖼 2026-10-28 새 컷(실제 음식처럼 · 창업자 「넣자」)
     review: '창업자',   // ☑️ 2026-10-28 22:48 창업자 검수 — 「괜찮아」(11/16~11/25 7편 판)
     category: '일식', folder: '일식', tags: ['우동', '닭다리살', '대파', '국물 요리'],
     time: 20, servings: 2, difficulty: '쉬움',
@@ -8300,6 +8301,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-umma-hwangtae-haejangguk',
     title: '엄마표 황태 해장국', from: '2026-11-25',   // ✅ 이름 = 창업자 2026-10-11(11/11 「황태해장국」 정호영 편과 구분)
+    icon: 'n3067',   // 🖼 2026-10-28 새 컷(실제 음식처럼 · 창업자 「넣자」)
     review: '창업자',   // ☑️ 2026-10-28 22:48 창업자 검수 — 「괜찮아」(11/16~11/25 7편 판)
     category: '한식', folder: '한식', tags: ['국물 요리', '해장', '황태'],
     time: 30, servings: 4, difficulty: '쉬움',   // ⏱ 볶고 물 조금씩 4~5번 조리기 + 끓이기
@@ -8324,6 +8326,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-kkaennip-muchim',
     title: '깻잎무침', from: '2026-11-25',
+    icon: 'n3068',   // 🖼 2026-10-28 새 컷(실제 음식처럼 · 창업자 「넣자」)
     review: '창업자',   // ☑️ 2026-10-28 22:48 창업자 검수 — 「괜찮아」(11/16~11/25 7편 판)
     category: '한식', folder: '반찬', tags: ['반찬', '깻잎', '무침'],
     time: 15, servings: 4, difficulty: '쉬움',   // ⏱ 데치기 1 + 헹구기·자르기·무치기
