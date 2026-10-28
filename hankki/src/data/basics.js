@@ -5592,6 +5592,7 @@ const RAW_BASICS = [
     //    원문 = 릴스 캡션(순서) ＋ 양 = 창업자가 준 «해먹은 사람 블로그» 정리(느타리버섯은 뺌 · 창업자)
     //    치킨스톡은 재료에서 빼고 메모로 (창업자 「맛이 부족하면 치킨스톡이나 백간장 조금 넣어도 된다고만」)
     id: 'basic-gul-dangmyeon', title: '굴 당면', from: '2026-11-25',   // 📅 SNS 는 수요일 — 우리집레시피 칸에서 빼고 SNS 상자로(창업자 2026-09-27 「1번으로 가고」)
+    review: '창업자',   // ☑️ 2026-10-28 22:48 창업자 검수 — 「괜찮아」(11/16~11/25 7편 판)
     icon: 'n3046', category: '한식', folder: '한식',   // 🖼 창업자가 뽑아 준 「굴당면」 컷 (2026-09-28)
     time: 20, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DQV1YNpCXP7/',
@@ -5627,6 +5628,7 @@ const RAW_BASICS = [
     // 📮 [창업자 2026-09-27] 창업자 백업(2026-08-18 판) 원문 — SNS 원본 링크가 없어 «우리집레시피»로 (창업자 「그냥 우리집레시피로 하자. 1인분 같아」)
     //    원문의 「숟갈」 = 큰술로 옮김 · 11/23 칸(양념장 둘 뺀 자리)
     id: 'basic-pad-kaprao-moosap', title: '팟카카오무쌉', from: '2026-11-23',
+    review: '창업자',   // ☑️ 2026-10-28 22:48 창업자 검수 — 「괜찮아」(11/16~11/25 7편 판)
     category: '아시안', folder: '아시안',
     time: 15, servings: 1, difficulty: '쉬움',
     origin: '창업자',   // 📮 창업자가 «직접 쓴» 레시피 (백업 뒤에 받음 · 2026-09-27 — 9/7 백업엔 없고 8/18 판에 있었다)
@@ -5660,6 +5662,7 @@ const RAW_BASICS = [
     // 📮 [창업자 2026-09-27] 창업자 백업 원문(8/18·9/7 같음) — 11/23 우리집레시피 넷째 칸(창업자 「한우채끝 소고기양념구이로 하자」)
     //    원문의 T = 큰술 · 원문은 «숙성»에서 끝난다 → 굽는 걸음은 창업자에게 받는다(⛔지어내지 않는다)
     id: 'basic-hanwoo-chaekkeut-gui', title: '소고기양념구이', from: '2026-11-23',   // ✏️ 제목 바꿈(창업자 2026-09-27 「제목을 소고기양념구이로 바꾸자」)
+    review: '창업자',   // ☑️ 2026-10-28 22:48 창업자 검수 — 「괜찮아」(11/16~11/25 7편 판)
     icon: 'n3045', category: '한식', folder: '한식',   // 🖼 창업자가 뽑아 준 「소고기양념구이」 컷 (2026-09-28)
     time: 20, servings: 2, difficulty: '쉬움',
     origin: '창업자',   // 📮 창업자가 «직접 쓴» 레시피 (원래 이름 「한우채끝 소고기양념구이」) · 창업자 「그냥 우리집레시피로 올리자」 · 주인장 뱃지(made) 안 단다
@@ -5929,6 +5932,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-chogandan-yukjeon',
     title: '초간단 육전', from: '2026-11-16',
+    review: '창업자',   // ☑️ 2026-10-28 22:48 창업자 검수 — 「괜찮아」(11/16~11/25 7편 판)
     origin: '창업자',   // 📮 창업자가 «직접 쓴» 레시피
     icon: 'fe_107',
     category: '한식',
@@ -8271,6 +8275,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-jidori-udon',
     title: '지도리우동', from: '2026-11-25',
+    review: '창업자',   // ☑️ 2026-10-28 22:48 창업자 검수 — 「괜찮아」(11/16~11/25 7편 판)
     category: '일식', folder: '일식', tags: ['우동', '닭다리살', '대파', '국물 요리'],
     time: 20, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/DeMBerhhZ-8/',
@@ -8295,6 +8300,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-umma-hwangtae-haejangguk',
     title: '엄마표 황태 해장국', from: '2026-11-25',   // ✅ 이름 = 창업자 2026-10-11(11/11 「황태해장국」 정호영 편과 구분)
+    review: '창업자',   // ☑️ 2026-10-28 22:48 창업자 검수 — 「괜찮아」(11/16~11/25 7편 판)
     category: '한식', folder: '한식', tags: ['국물 요리', '해장', '황태'],
     time: 30, servings: 4, difficulty: '쉬움',   // ⏱ 볶고 물 조금씩 4~5번 조리기 + 끓이기
     sourceUrl: 'https://www.instagram.com/reel/Dd0cWLsJPWJ/',
@@ -8318,6 +8324,7 @@ const RAW_BASICS = [
     ...base,
     id: 'basic-kkaennip-muchim',
     title: '깻잎무침', from: '2026-11-25',
+    review: '창업자',   // ☑️ 2026-10-28 22:48 창업자 검수 — 「괜찮아」(11/16~11/25 7편 판)
     category: '한식', folder: '반찬', tags: ['반찬', '깻잎', '무침'],
     time: 15, servings: 4, difficulty: '쉬움',   // ⏱ 데치기 1 + 헹구기·자르기·무치기
     sourceUrl: 'https://www.instagram.com/reel/DdsbuUyPoI8/',
