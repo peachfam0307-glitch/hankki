@@ -34,6 +34,25 @@ for (const g of 갈래들) {
 }
 // 영상 제목에서 요리 이름 조각을 찾는다 — 우리 편 이름(3자 이상)이 영상 제목 안에 들어 있으면 겹침
 const 겹친편 = (제목) => { const t = 정규(제목); return [...있는이름].find((n) => n.length >= 3 && t.includes(n)) }
+// 「비슷한 우리 편」 — 이름이 통째로 같지 않아도 같은 요리·같은 재료면 보여 준다(⛔빼지는 않는다 · 창업자가 보고 고른다)
+//   📮 2026-10-28 창업자 「우리레시피에 없는 것들이야?」 → 두부조림(3편 있음)·꽈리고추(2편)가 «통째 이름»만 보던 거르기를 통과했다
+//   낱말 = 우리 편 제목의 낱말(2자 이상) · 3자 넘는 낱말은 앞 2자(깻잎장아찌→깻잎)도 본다 · 뜻 없는 말은 뺀다
+const 원제목들 = []
+원제목들.push(...(await import('./recipe.mjs')).레시피들().map((r) => ({ t: r.title, from: r.from })))
+for (const g of 갈래들) { const 글 = execFileSync('git', ['show', `${g}:hankki/src/data/basics.js`], { encoding: 'utf8', maxBuffer: 64 << 20 }); for (const m of 글.matchAll(/title:\s*'([^']+)',\s*from:\s*'([^']+)'/g)) 원제목들.push({ t: m[1], from: m[2] }) }
+const 뜻없음 = /^(반찬|레시피|초간단|간단|우리집|엄마표|만들기|황금|인생|대박|요리|한끼|셰프|선생)$/
+function 비슷한편(제목) {
+  // ⓐ 통째 낱말이 겹치면(「두부조림」) 그것만 · ⓑ 없으면 앞 2자를 영상 제목 «낱말 첫머리»에서만(「깻잎」김치 ○ · 만「들기」 ✕ · 깻잎「김치」 ✕)
+  const t = 정규(제목); const 첫머리 = 제목.split(/[\s#!?"'.,]+/).map(정규).filter(Boolean)
+  const 통째 = new Map(), 앞 = new Map()
+  for (const { t: 우리, from } of 원제목들) for (const w of 우리.split(/[\s·,()]+/).map(정규).filter((w) => w.length >= 2 && !뜻없음.test(w))) {
+    if (t.includes(w)) 통째.set(우리, from || '바로')
+    // ⓒ 영상 낱말이 우리 낱말 안에 들어 있으면(「버섯」 ⊂ 「새송이버섯」·「두부조림」 ⊂ 「순두부조림」)
+    else if (첫머리.some((x) => x.length >= 2 && !뜻없음.test(x) && w.includes(x))) 통째.set(우리, from || '바로')
+    else if (w.length >= 3 && 첫머리.some((x) => x.startsWith(w.slice(0, 2)))) 앞.set(우리, from || '바로')
+  }
+  return [...new Map([...통째, ...앞])].map(([n, f]) => `${n}(${f})`)
+}
 
 // ── 검색 (yt.mjs) ──────────────────────────────────────────
 const 영상 = new Map()
@@ -58,6 +77,7 @@ const 칸 = (v, i) => `
 <div class="c" data-id="${v.id}">
   <div class="h"><b>${i + 1}. ${esc(v.제목)}</b></div>
   <div class="m">${esc(v.채널)} · 조회 ${만(v.조회수)} · ${v.올린날} · 검색 「${esc(v.검색어)}」</div>
+  ${(() => { const s = 비슷한편(v.제목); return s.length ? `<div class="sim">⚠️ 비슷한 우리 편 ${s.length}: ${esc(s.slice(0, 6).join(' · '))}${s.length > 6 ? ' …' : ''}</div>` : '<div class="sim ok">비슷한 우리 편 없음</div>' })()}
   <a href="https://youtu.be/${v.id}" target="_blank">https://youtu.be/${v.id}</a>
   <details><summary>설명란 보기</summary><pre>${esc(v.설명란 || '')}</pre></details>
   <div class="p">${['고른다', '버린다', '모르겠다'].map((k) => `<label><input type="radio" name="${v.id}" value="${k}"> ${k}</label>`).join('')}</div>
@@ -74,6 +94,7 @@ pre{white-space:pre-wrap;font-size:12px;background:#f5efe6;padding:8px;border-ra
 .c.on{outline:2px solid #e08a3c} button{font-size:16px;padding:12px;width:100%;border:0;border-radius:10px;background:#e08a3c;color:#fff;margin-top:12px}
 textarea{width:100%;height:140px;font-size:13px;margin-top:8px;box-sizing:border-box}
 .x{color:#9a8e84;font-size:12px}
+.sim{font-size:13px;color:#a4521f;background:#fbeee2;border-radius:8px;padding:4px 8px;margin:6px 0} .sim.ok{color:#3c7a4a;background:#e9f4ec}
 </style></head><body>
 <h1>유튜브 레시피 후보 ${통과.length}개</h1>
 <div class="s">${todayKST()} · 조회수 순 · 재료 분량＋순서가 설명란에 있는 것만 · 이미 있는 편과 이름 겹치면 뺐다${after ? ` · ${after} 이후 영상` : ''}</div>
