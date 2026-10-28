@@ -8548,6 +8548,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-saesongi-chicken',
+    icon: 'n3059',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
     title: '새송이 치킨', from: '2026-12-16',
     category: '한식', folder: '반찬', tags: ['버섯', '새송이', '안주'],
     time: 25, servings: 2, difficulty: '보통',
@@ -8592,6 +8593,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-gyeran-jjigi',
+    icon: 'n3065',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
     title: '계란 찌기', from: '2026-12-16',
     category: '한식', folder: '반찬', tags: ['계란', '기본'],
     time: 15, servings: 2, difficulty: '쉬움',
@@ -8658,6 +8660,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-greek-yogurt-jjokpa-ball',
+    icon: 'n3062',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
     title: '그릭요거트 쪽파 볼', from: '2026-12-30',
     category: '양식', folder: '간식', tags: ['그릭요거트', '브런치'],
     time: 10, servings: 2, difficulty: '쉬움',
@@ -8678,6 +8681,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-jeonbok-pasta',
+    icon: 'n3061',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
     title: '전복파스타', from: '2026-12-30',
     category: '양식', folder: '양식', tags: ['전복', '문어', '파스타'],
     time: 30, servings: 2, difficulty: '보통',
@@ -8702,6 +8706,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-garibi-bibimbap',
+    icon: 'n3063',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
     title: '가리비 비빔밥', from: '2027-01-13',
     category: '한식', folder: '밥', tags: ['가리비', '부추', '제철'],
     time: 25, servings: 1, difficulty: '쉬움',
@@ -8744,6 +8749,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-maneuljjong-dwaeji-bokkeum',
+    icon: 'n3064',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
     title: '이연복 마늘쫑돼지고기볶음', from: '2027-01-13',
     category: '중식', folder: '중식', tags: ['마늘쫑', '돼지고기'],
     time: 20, servings: 2, difficulty: '쉬움',
@@ -8783,6 +8789,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-kkwari-gochu-jorim-sns',
+    icon: 'n3060',   // 🖼 창업자 2026-10-28 새 컷(「그림은 그대로 넣자」)
     title: '꽈리고추조림', from: '2027-01-27',
     category: '한식', folder: '반찬', tags: ['꽈리고추', '밥도둑'],
     time: 15, servings: 3, difficulty: '쉬움',
